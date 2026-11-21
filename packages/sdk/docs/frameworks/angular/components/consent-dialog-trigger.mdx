@@ -1,15 +1,15 @@
 ---
 title: ConsentDialogTrigger
-description: Add a floating, draggable privacy button to an Angular app with inth-consent-dialog-trigger, and set its corner, size, saved position, accessible name and outputs.
+description: Add a floating draggable privacy button in Angular with inth-consent-dialog-trigger to reopen preferences.
 group: frameworks
 ---
 
+Add a fixed, draggable corner button that reopens the preference dialog on
+every page using `<inth-consent-dialog-trigger>`.
+
 ## Add a floating privacy button
 
-`<inth-consent-dialog-trigger>` is a small round button, fixed to a corner of
-the viewport, that opens the preference dialog. It keeps preferences one click
-away on every page without a footer link. Import
-`ConsentDialogTrigger` and render it next to `<inth-consent-dialog>`:
+Import `ConsentDialogTrigger` and render it beside `<inth-consent-dialog>`:
 
 {/* example: fragment */}
 
@@ -18,50 +18,45 @@ away on every page without a footer link. Import
 <inth-consent-dialog-trigger defaultPosition="bottom-left" size="sm" />
 ```
 
-The dialog's `showTrigger` input renders the same button for you, but only
-after the dialog's deferred code loads. A separate
-`<inth-consent-dialog-trigger>` is part of the page from the first render.
+`<inth-consent-dialog [showTrigger]="true" />` renders the same button only
+after the dialog chunk loads. Rendering `<inth-consent-dialog-trigger>`
+directly shows it from the first render.
 
 ## Inputs and outputs
 
 | Input or output | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `defaultPosition` | `'bottom-right'`, `'bottom-left'`, `'top-right'` or `'top-left'` | `'bottom-right'` | The corner it starts in. |
-| `persistPosition` | `boolean` | `true` | Remembers the corner a visitor drags it to, in local storage. |
-| `showWhen` | `'always'`, `'after-consent'` or `'never'` | `'always'` | `'after-consent'` hides it until the visitor has answered the prompt. `'never'` hides it. |
+| `defaultPosition` | `'bottom-right'`, `'bottom-left'`, `'top-right'` or `'top-left'` | `'bottom-right'` | Starting viewport corner. |
+| `persistPosition` | `boolean` | `true` | Saves the dragged corner in `localStorage`. |
+| `showWhen` | `'always'` or `'never'` | `'always'` | `'never'` hides the button. |
 | `size` | `'sm'`, `'md'` or `'lg'` | `'md'` | Button size. |
-| `label` | `string` | The `trigger.label` translation, "Open privacy settings" in English | Accessible name. |
-| `noStyle` | `boolean` | `false` | Drops Inth's classes, including the fixed positioning. It does not follow the provider's `noStyle`. |
+| `label` | `string` | `'Open privacy settings'` | Accessible `aria-label`. Translate it yourself; not read from `i18n`. |
+| `noStyle` | `boolean` | `false` | Drops `inth` classes, including fixed positioning. Does not inherit provider `noStyle`. |
 | `rootClass` | `string` | none | Extra class on the button. |
-| `(triggerClick)` | `MouseEvent` | | Emits before the dialog opens. Call `$event.preventDefault()` to keep it closed. |
-| `(positionChange)` | corner | | Emits after a drag moves it to another corner. |
+| `(triggerClick)` | `MouseEvent` | | Fires before opening the dialog. Call `$event.preventDefault()` to cancel. |
+| `(positionChange)` | corner | | Fires after dragging snaps the button to another corner. |
 
 ## Behavior
 
-- The button renders only when the policy offers a way to change preferences,
-  and hides while the dialog is open.
-- Visitors can drag it. On release it snaps to the nearest corner in the
-  direction of the drag. A drag does not open the dialog; a click does.
-- It is rendered into `<body>` through `inthPortal`, so a parent's `overflow`
-  or `transform` does not clip it.
-- It starts loading the dialog's code in idle time and on hover or focus, like
-  the other buttons that open the dialog.
-- While `<inth-consent-dev-tools>` is rendered, it becomes a two-button
-  toolbar: the preferences button stays in the corner and a DevTools button
-  sits beside it. See [dev tools](./dev-tools).
+- Renders only when the policy offers preference management, and hides while
+  the dialog is open.
+- Pointer dragging snaps to the nearest corner without opening the dialog; a
+  click opens it.
+- Portals into `<body>` via `inthPortal` to avoid parent clipping.
+- Prefetches the deferred dialog chunk during idle time and on hover or
+  focus.
+- When `<inth-consent-dev-tools>` is mounted, combines into a two-button
+  toolbar; see [Dev tools](./dev-tools).
 
 ## Accessibility
 
-The trigger is a `<button type="button">` with `aria-label`, since it shows
-only an icon. Keep the label in the page's language by passing `label`.
-Dragging needs a pointer; keyboard users activate it with Enter or Space and
-cannot move it, so pick a `defaultPosition` that does not cover your own
-controls.
+Renders as `<button type="button">` with `aria-label` because it shows only
+an icon. Pass a localized `label` and choose a `defaultPosition` that does
+not cover other controls for keyboard users.
 
 ## Style the trigger
 
 The button carries `data-testid="consent-dialog-trigger"`,
-`data-inth-trigger="true"` and `data-inth-rights`. It reads the
-`consentDialogTrigger` and `consentDialogTriggerIcon` theme slots, and its
-colors come from the `--inth-*` tokens; [theme tokens](/docs/customization/tokens)
-lists them.
+`data-inth-trigger="true"` and `data-inth-rights`. It reads
+`consentDialogTrigger` and `consentDialogTriggerIcon` theme slots and
+`--inth-*` tokens; see [theme tokens](/docs/customization/tokens).

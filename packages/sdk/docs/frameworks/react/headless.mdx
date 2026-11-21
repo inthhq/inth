@@ -1,23 +1,20 @@
 ---
 title: Headless
-description: Build a custom consent banner or embed gate in React with the @inth/react/headless hooks inside your InthProvider.
+description: Build a custom React consent banner or embed gate with @inth/react/headless hooks inside InthProvider.
 group: frameworks
 ---
+
+Build a fully custom consent banner or embed gate in React using hooks from `@inth/react/headless`.
 
 ## When to go headless
 
 <import src="../../shared/react/headless.mdx#when-to-go-headless" />
 
-Check for a policy before rendering your own surfaces. `useModel()` from
-`@inth/react` returns `null` while no rule has resolved and `'none'` under a
-rule that owes no consent UI, and the pre-built surfaces render nothing in that
-state.
+Check for an active policy before rendering custom surfaces. `useModel()` from `@inth/react` returns `null` before a rule resolves and `'none'` when no consent UI is owed; the built-in components render nothing in both states.
 
 ## Minimal example
 
-The headless hooks read the runtime from the nearest `InthProvider` from
-`@inth/react`. Render this component inside that provider in place of the stock
-banner, and keep the dialog and persistent preferences control.
+Headless hooks read the runtime from the nearest `InthProvider` from `@inth/react`. Render this banner inside `InthProvider` instead of `ConsentBanner`, keeping `ConsentDialog` and a persistent preferences link mounted:
 
 <include src="../../shared/examples/react/headless-banner.mdx" />
 
@@ -29,7 +26,6 @@ banner, and keep the dialog and persistent preferences control.
 
 <include src="../../shared/examples/react/headless-consent-gate.mdx" />
 
-Render `VideoGate` inside your `InthProvider` around the embed, such as a
-YouTube `iframe`.
+Render `VideoGate` inside `InthProvider` around a third-party embed such as a YouTube `iframe`.
 
 <import src="../../shared/react/headless.mdx#consent-gate-api" />

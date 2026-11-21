@@ -1,6 +1,6 @@
 ---
 title: Rendering and deployment
-description: Use the recommended build-time manifest for SvelteKit server rendering, choose runtime fetching for policy updates without a rebuild, and handle prerendered pages, static sites and SPA mode.
+description: Configure build-time manifests, runtime policy fetching, prerendered pages, static sites, and SPA mode in SvelteKit.
 group: frameworks
 ---
 
@@ -15,15 +15,15 @@ sends to the browser.
 | --- | --- | --- |
 | Server-rendered pages, recommended | Root layout load, from a build-time manifest | None. See the [quickstart](/docs/frameworks/sveltekit/quickstart). |
 | Policy changes must apply without a rebuild | Root layout load, from a manifest fetched at runtime | `mode: manifest({ source: 'runtime' })`. See [fetch the manifest at runtime](#fetch-the-manifest-at-runtime). |
-| Backend resolves every visit | Root layout load calls the backend's `/init` | `mode: hosted()`. See [ask the backend on every request](#ask-the-backend-on-every-request). |
+| Backend resolves every visit | Root layout load calls the backend's `/v1/consent/init` | `mode: hosted()`. See [ask the backend on every request](#ask-the-backend-on-every-request). |
 | A server app with some prerendered pages | Server for most pages, the browser on prerendered ones | `routePrefix: '/api/inth'` and a consent route. See [prerender some pages](#prerender-some-pages). |
 | A fully static site with `adapter-static` | The browser | `mode: hosted()`. See [build a static site](#build-a-static-site). |
 | SPA mode, `ssr = false` | The browser | See [use SPA mode](#use-spa-mode). |
 
 Every path uses the same root layout: `loadConsent` as the server load and
-`InthProvider` with `state={data.consent}`. The quickstart's code is the
-`examples/sveltekit` app in the Inth repository.
-[Data fetching](/docs/concepts/data-fetching) compares `/init`, the manifest
+`InthProvider` with `state={data.consent}`. The quickstart matches the
+SvelteKit [example app](/docs/examples).
+[Data fetching](/docs/concepts/data-fetching) compares `/v1/consent/init`, the manifest
 and browser resolution in general.
 
 ## Bundle the manifest during builds
@@ -46,9 +46,9 @@ import { inthHandle, manifest } from '@inth/svelte/kit';
 export const handle = inthHandle({ mode: manifest({ source: 'runtime' }) });
 ```
 
-Keep `consentManifest` in `vite.config.ts`: it supplies the backend URL. Set
-`consentManifest({ onBuildError: 'runtime' })` so a build does not depend on
-the backend, or pass `inthHandle({ projectUrl })`. `loadConsent` fetches
+Keep `consentManifest` in `vite.config.ts`: it supplies the project URL. Set
+`consentManifest({ source: 'runtime' })` so a build skips the manifest
+download, or pass `inthHandle({ projectUrl })`. `loadConsent` fetches
 `${projectUrl}/v1/consent/manifest`, or the URL in `manifest({ manifestUrl })`.
 
 The server caches the manifest in memory for as long as its `s-maxage`
@@ -56,18 +56,18 @@ allows. After that, within the backend's `stale-while-revalidate` window, it
 serves the stale copy while it refreshes in the background. Past that window,
 the next request waits for a fresh copy, up to the 500 ms budget of
 `loadConsent`. It also reports each resolved visit to the backend so Inth
-still counts visitors it never served `/init` to.
+still counts visitors it never served `/v1/consent/init` to.
 
 Pass the absolute Inth URL as `projectUrl`. A relative URL, such as
-`/api/inth`, is fetched with
+`/api/consent-proxy` for a proxy route mounted in your app, is fetched with
 `event.fetch` inside the app and is never resolved against the request's
 `Host` header. One that points back at the consent route makes the route
 fetch itself.
 
 ## Ask the backend on every request
 
-`mode: hosted()` sends every server render to the backend's `/init`, which
-resolves the visitor's location itself. The browser asks the same `/init` on
+`mode: hosted()` sends every server render to the backend's `/v1/consent/init`, which
+resolves the visitor's location itself. The browser asks the same `/v1/consent/init` on
 pages the server did not resolve:
 
 {/* example: fragment */}
@@ -78,13 +78,13 @@ import { inthHandle, hosted } from '@inth/svelte/kit';
 export const handle = inthHandle({ mode: hosted() });
 ```
 
-`hosted()` reads the backend URL from `consentManifest`, or from the hook's
-`projectUrl` option. The request to `/init` carries the resolved
+`hosted()` reads the project URL from `consentManifest`, or from the hook's
+`projectUrl` option. The request to `/v1/consent/init` carries the resolved
 location, language and GPC, the `user-agent` and, over `https` or to a
 loopback host, the consent cookie alone. Every render waits on the backend,
 up to 500 ms. `consentManifest` still downloads the manifest during the
-build; set `onBuildError: 'runtime'` if a backend outage should not stop the
-build.
+build (warning by default on failure); pass `source: 'runtime'` to skip the
+download.
 
 ## Serve the consent route
 
@@ -110,17 +110,17 @@ export const handle = inthHandle({ routePrefix: '/api/inth' });
 
 | Request | Response |
 | --- | --- |
-| `GET /api/inth/v1/consent/init` | The visitor's resolved policy, like the backend's `/init`. `Cache-Control: private, no-store`. |
+| `GET /api/inth/v1/consent/init` | The visitor's resolved policy, like the backend's `/v1/consent/init`. `Cache-Control: private, no-store`. |
 | `GET /api/inth/v1/consent/manifest` | The manifest, with the backend's `Cache-Control` and `ETag`. Answers `If-None-Match` with `304`. |
 
 The route resolves from the snapshot `consentManifest` downloaded and reads
-the backend URL from it, so it needs no options. It also reads what you pass
+the project URL from it, so it needs no options. It also reads what you pass
 to `inthHandle()`: a `snapshot`, a `projectUrl`, and the mode's own
 `projectUrl` or `manifestUrl`. Set them once, on the handle. Options you pass
 to `createConsentRoute()` win.
 
 This route file exports `GET` only, so a `POST` or `PATCH` to `/api/inth`
-gets a `405`. Consent saves go to the backend URL directly, unless you turn
+gets a `405`. Consent saves go to the project URL directly, unless you turn
 on the proxy described in
 [save consent through your own origin](#save-consent-through-your-own-origin).
 
@@ -146,13 +146,16 @@ Then point saves at the route:
 ```ts title="src/hooks.server.ts"
 import { inthHandle } from '@inth/svelte/kit';
 
-export const handle = inthHandle({ proxy: true, routePrefix: '/api/inth' });
+export const handle = inthHandle({
+	projectUrl: '/api/inth',
+	routePrefix: '/api/inth',
+});
 ```
 
-The browser then saves to `/api/inth`, and the route forwards to the handle's
-`projectUrl`, else the backend URL `consentManifest` read from
-`PUBLIC_INTH_PROJECT_URL`. To forward somewhere else, pass
-`createConsentRoute({ projectUrl, proxy: true })`.
+The route skips a handle `projectUrl` that points at itself, and forwards to
+the project URL `consentManifest` read from `PUBLIC_INTH_PROJECT_URL` (falling
+back to `PUBLIC_C15T_BACKEND_URL` if unset). To
+forward somewhere else, pass `createConsentRoute({ projectUrl, proxy: true })`.
 With the proxy on, `GET`
 still resolves `init` and `manifest` in the process, and the handlers forward
 other requests to `projectUrl`. They forward only
@@ -229,14 +232,14 @@ own handles through `sequence(inthHandle(), yourHandle)` from
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `mode` | `manifest()` | How `loadConsent` resolves the visitor: `manifest()` or `hosted()` from `@inth/svelte/kit`, or `testing()` from `@inth/svelte/testing`. |
+| `mode` | `manifest()` | How `loadConsent` resolves the visitor: `manifest()`, `hosted()` or `testing()` from `@inth/svelte/kit`. |
 | `routePrefix` | none | Where [`createConsentRoute()`](#serve-the-consent-route) is mounted, such as `/api/inth`. Without it, the browser asks the backend's `/v1/consent/init` when it resolves consent itself. |
-| `projectUrl` | The URL `consentManifest` read from `PUBLIC_INTH_PROJECT_URL` | The backend. |
+| `projectUrl` | The URL `consentManifest` read from `PUBLIC_INTH_PROJECT_URL` (falling back to `PUBLIC_C15T_BACKEND_URL`) | Your Inth project URL. |
 | `snapshot` | The manifest `consentManifest` downloaded | A manifest of your own to resolve with. |
 | `cookieName` | `inth` | The consent cookie. Match the provider's `storageConfig.storageKey`. |
 | `country`, `region`, `language` | from headers | Forces one input for every request. |
 
-`inthHandle` sets no cookie. The visitor's subject ID, a UUIDv7, lives in
+`inthHandle` sets no cookie. The visitor's subject ID (`sub_…`) lives in
 the consent records their first save writes, and `loadConsent` reads it from
 those cookies.
 
@@ -264,8 +267,8 @@ prerendered page starts nothing.
 
 The vendor helpers from `@inth/integrations` start this way, except Cloudflare
 Zaraz and Sentry. Those two helpers, and `scripts` entries you write yourself,
-start after hydration. An `InthProvider` from `@inth/svelte` given a
-`runtime` starts nothing from the HTML: its scripts start after hydration.
+start after hydration. An `InthProvider` given a `runtime` starts nothing
+from the HTML: its scripts start after hydration.
 
 To start every `scripts` entry after hydration instead, pass
 `scriptLoader={{ serverStart: false }}` to `InthProvider`.
@@ -308,7 +311,7 @@ Where the browser asks depends on the handle:
 
 - With [`routePrefix` and the consent route](#serve-the-consent-route), it
   asks your own `/api/inth/v1/consent/init`, which resolves from the bundled snapshot.
-- Without them, it asks the backend's `/init`.
+- Without them, it asks the backend's `/v1/consent/init`.
 
 ## Build a static site
 
@@ -335,9 +338,9 @@ export const handle = inthHandle({ mode: hosted() });
 ```
 
 The hook and `loadConsent` still run while SvelteKit prerenders, and return
-no visitor's consent. The browser then calls the backend's `/init`, and the
+no visitor's consent. The browser then calls the backend's `/v1/consent/init`, and the
 backend resolves the visitor's location. Leave out `routePrefix` and the
-consent route. On a static host, the backend URL must be the absolute Inth
+consent route. On a static host, the project URL must be the absolute Inth
 URL, and the backend must allow your site's origin.
 
 ## Use SPA mode
@@ -349,8 +352,8 @@ There is no server HTML to start from, so `InthProvider` renders its children
 once the consent engine has loaded, and the banner appears with them.
 
 With a static SPA fallback page and no server, no server load runs. Delete
-`+layout.server.ts` and the Inth handle, and render `InthProvider` from
-`@inth/svelte` with a browser mode in `+layout.svelte`:
+`+layout.server.ts` and `inthHandle`, and render `InthProvider` with a
+browser mode in `+layout.svelte`:
 
 {/* example: fragment */}
 
@@ -363,9 +366,9 @@ With a static SPA fallback page and no server, no server load runs. Delete
 <InthProvider projectUrl={PUBLIC_INTH_PROJECT_URL} mode={hosted()} {scripts}>
 ```
 
-The browser resolves consent through the backend's `/init`. It takes the
-same props as `InthProvider` from `@inth/svelte/kit`, with `mode` in place of
-`state`.
+The browser resolves consent through the backend's `/v1/consent/init`.
+`@inth/svelte`'s `InthProvider` takes the same props as `@inth/svelte/kit`'s
+`InthProvider`, with `mode` in place of `state`.
 
 ## Taps before hydration
 
@@ -417,27 +420,31 @@ prompt or a privacy signal, IAB, an experiment, a `consentSource`, `gpp`, a
 that may run now and does not start from the HTML. Prerendered pages load it
 as the page starts too, since their HTML is no one visitor's.
 
-`InthProvider` from `@inth/svelte` loads its engine with the page, as
-before. Use `InthProvider` from `@inth/svelte/kit` in a SvelteKit root layout
-to get the deferred start.
+`@inth/svelte`'s `InthProvider` loads its engine with the page, as before. Use
+`InthProvider` from `@inth/svelte/kit` in a SvelteKit root layout to get the
+deferred start.
 
 ## Resolve consent in other server code
 
-`loadConsent` takes any SvelteKit request event, so an endpoint resolves
-consent the way a load does, with the handle's config:
+`resolveRequestConsent` from `@inth/sdk/server` resolves consent without a
+SvelteKit event, for endpoints or code outside a load:
 
 {/* example: fragment */}
 
 ```ts
-// src/routes/api/consent-state/+server.ts
-import { loadConsent } from '@inth/svelte/kit';
-import { json } from '@sveltejs/kit';
+import { resolveRequestConsent } from '@inth/sdk/server';
 
-export const GET = async (event) => json((await loadConsent(event)).consent);
+const state = await resolveRequestConsent({
+	projectUrl: 'https://your-project.inth.app',
+	request: { headers: request.headers },
+});
 ```
 
 It never throws. When the backend fails or takes longer than `timeoutMs`,
-500 ms by default, it returns the stored choice without a policy.
-Import `@inth/svelte/kit` only from server files
-such as `+layout.server.ts`, `+server.ts` and `hooks.server.ts`; imported into
-a component they add server code to the browser bundle.
+500 ms by default, it returns the stored choice without a policy. Pass
+`snapshot` to resolve from a manifest you hold instead of calling
+`/v1/consent/init`. In a load, use `loadConsent`, which reads the request and
+the handle's config from the event. Import `@inth/svelte/kit` and
+`@inth/sdk/server` only from server files such as `+layout.server.ts`,
+`+server.ts` and `hooks.server.ts`; imported into a component they add server
+code to the browser bundle.

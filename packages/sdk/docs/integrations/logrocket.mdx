@@ -1,24 +1,21 @@
 ---
 title: LogRocket
-description: Load LogRocket session replay only after measurement consent with the Inth logRocket helper, including proxied setups, and check it in DevTools.
+description: Load LogRocket session replay only after measurement consent with the Inth logRocket helper.
 seoTitle: LogRocket cookie consent with Inth
-seoDescription: Record LogRocket sessions only with measurement consent. The Inth logRocket helper stops session replay when a visitor withdraws consent.
+seoDescription: Record LogRocket sessions only after measurement consent. The Inth logRocket helper gates initialization and stops replay on withdrawal.
 icon: logrocket
 group: integrations
 ---
 
-The Inth `logRocket` helper keeps LogRocket session replay off the page until
-`measurement` has consent. `LogRocket.init` runs only after `LogRocket.min.js`
-loads. The helper sends no consent signal to LogRocket. If the visitor withdraws
-consent, Inth removes the script element. By default, Inth also reloads the
-page. The reload stops the session replay.
+The `logRocket` helper keeps LogRocket session replay off the page until `measurement` consent is granted, then loads `LogRocket.min.js` and calls `LogRocket.init`. On withdrawal, Inth removes the script element and reloads the page by default to stop recording.
 
 ## Configure LogRocket
 
-Copy the app ID from LogRocket Project Setup. It has the form
-`org-slug/app-slug`. Remove the original LogRocket install.
+Copy your app ID (`org-slug/app-slug`) from LogRocket Project Setup and remove any existing LogRocket installation.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { logRocket } from '@inth/integrations/logrocket';
@@ -32,28 +29,19 @@ export const scripts = [logRocket({ appId: 'your-org/your-app' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `appId` | Required | App ID passed to `LogRocket.init`. The helper trims it. Values that are not two non-empty segments separated by `/` log an error and the script does not load. |
-| `initOptions` | `{}` | Second argument to `LogRocket.init`. Use JSON-serializable values only, so functions such as request sanitizers cannot pass through. |
-| `scriptUrl` | `https://cdn.logrocket.io/LogRocket.min.js` | Loader URL override. A blank value falls back to the default. |
-| `asyncScriptUrl` | None | Proxied URL for LogRocket's logger bundle, set as `window._lrAsyncScript` before the loader runs. Set it only when you proxy LogRocket through your own domain. |
+| `appId` | Required | Trimmed and passed to `LogRocket.init`. Values that are not two non-empty segments separated by `/` log an error and skip loading. |
+| `initOptions` | `{}` | Second argument to `LogRocket.init`. JSON-serializable values only, so functions such as request sanitizers cannot pass through. |
+| `scriptUrl` | `https://cdn.logrocket.io/LogRocket.min.js` | Loader URL override. Blank values use the default. |
+| `asyncScriptUrl` | None | Proxied URL for LogRocket's logger bundle, assigned to `window._lrAsyncScript` before the loader runs. Set only when proxying through your own domain. |
 
 ## Loading and revocation
 
-`logRocket` uses the `measurement` category. When measurement becomes allowed,
-the helper loads `LogRocket.min.js` with `crossorigin="anonymous"` and calls
-`LogRocket.init(appId, initOptions)` after the script loads.
+`logRocket` gates on the `measurement` category. When `measurement` is allowed, the helper loads `LogRocket.min.js` with `crossorigin="anonymous"` and calls `LogRocket.init(appId, initOptions)` after load.
 
-On revocation the helper removes the script element and calls no LogRocket
-API, because LogRocket documents no consent or stop-recording call for the web
-SDK. Recording continues until the page unloads, so Inth's default reload on
-revocation is what stops it. Configure LogRocket's privacy and sanitization
-settings before you deploy, so recordings leave out sensitive DOM, input and
-network data.
+On withdrawal, the helper removes the script element without calling a LogRocket API because the web SDK documents no consent or stop-recording method. Recording continues until unload, so keep `reloadOnConsentRevoked` enabled. Configure LogRocket's privacy and sanitization settings before deploying so recordings omit sensitive DOM, input, and network data.
 
 ## Verify LogRocket
 
-Filter DevTools Network by `logrocket`. After you allow measurement,
-`LogRocket.min.js` loads and `window.LogRocket` exists. With `asyncScriptUrl`,
-check that the logger bundle loads from your proxy URL.
+Filter DevTools Network by `logrocket`. After you allow `measurement`, confirm `LogRocket.min.js` loads and `window.LogRocket` exists. With `asyncScriptUrl`, verify the logger bundle loads from your proxy URL.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

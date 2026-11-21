@@ -1,71 +1,38 @@
 ---
 title: Braze
-description: Keep the Braze SDK disabled until Inth consent allows it and record Google's DMA consent attributes on the Braze user, in Swift, Kotlin, React Native and Expo.
+description: Gate the Braze SDK on Inth consent and sync Google DMA consent attributes in Swift, Kotlin, React Native, and Expo.
 seoTitle: Braze consent for mobile apps with Inth
-seoDescription: Enable and disable the Braze SDK from Inth consent and set Google DMA consent attributes in Swift, Android, React Native and Expo apps.
+seoDescription: Enable and disable the Braze SDK from Inth consent and record Google DMA consent attributes in Swift, Android, React Native, and Expo.
 group: integrations
 ---
 
-The Braze helper keeps the Braze SDK disabled until a category allows it.
-While Braze runs, it records Google's DMA consent in the
-`$google_ad_user_data` and `$google_ad_personalization` custom attributes,
-which Braze forwards to Google in
-[Audience Sync](https://braze.com/docs/partners/canvas_audience_sync/google_audience_sync).
-The category defaults to `marketing`, like the web's email and messaging
-helpers. The two attributes come from the shared
-[Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types).
-
-The helper ships in `InthApple`, `inth-android` and
-`@inth/react-native/integrations`. Inth adds no Braze dependency. The web has
-no Braze helper.
+The bundled Braze helper in `InthApple`, `inth-android`, and `@inth/react-native/integrations` keeps Braze disabled until the visitor grants its category, `marketing` by default. While Braze runs, it writes `$google_ad_user_data` and `$google_ad_personalization` custom attributes from the [Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types) for Braze [Audience Sync](https://braze.com/docs/partners/canvas_audience_sync/google_audience_sync). Your app installs Braze separately. There is no web helper.
 
 ## What the helper changes
 
 | Consent | Braze calls |
 | --- | --- |
 | Category denied or pending at startup | Disable the SDK |
-| Category granted | Enable the SDK, once per grant, then set both attributes |
-| Marketing changes while the category stays granted | Set both attributes |
-| Category withdrawn | Disable the SDK, and nothing else |
+| Category granted | Enable the SDK once per grant, then set both attributes |
+| Marketing changes while category stays granted | Set both attributes |
+| Category withdrawn | Disable the SDK only |
 
-[Disabling Braze](https://www.braze.com/docs/developer_guide/analytics/managing_data_collection)
-cancels its network requests and drops pending work. Android and Swift keep
-the disabled state across launches.
+[Disabling Braze](https://www.braze.com/docs/developer_guide/analytics/managing_data_collection) cancels network requests and drops pending work. Android and Swift persist the disabled state across launches.
 
 ### Braze keeps the last attributes after withdrawal
 
-When the category Braze runs under is withdrawn, the helper disables Braze
-straight away and does **not** write `false` to the two attributes first.
-Braze would drop that write: disabling cancels in-flight requests, and the
-data flush on Swift, Android and React Native (`requestImmediateDataFlush`)
-reports neither success nor failure. Stopping collection at once is the safe
-choice for the user, so Inth does not send a write it cannot confirm.
+When the visitor withdraws the category Braze runs under, the helper disables Braze right away and does **not** write `false` to the two attributes first. Disabling cancels in-flight requests, and `requestImmediateDataFlush` on Swift, Android, and React Native reports neither success nor failure, so Inth stops collection immediately rather than sending a write it cannot confirm.
 
-So Braze's servers keep whatever the attributes last said, which can be
-`true`, and Audience Sync can go on treating the user as consented. To close
-that gap:
+Because Braze's servers keep the last saved values, Audience Sync can keep treating the user as consented. Close that gap in one of two ways:
 
-- Run Braze under a category other than marketing, such as `functionality`
-  for push and in-app messages. Withdrawing marketing then leaves Braze
-  running, and the helper writes `false` through Braze's normal sync.
-- When the category Braze runs under is withdrawn, set
-  `$google_ad_user_data` and `$google_ad_personalization` to `false` from
-  your backend with Braze's [`/users/track` endpoint](https://www.braze.com/docs/api/endpoints/user_data/post_user_track),
-  and remove the user from synced audiences with an Audience Sync step, as
-  Braze's [Audience Sync guide](https://braze.com/docs/partners/canvas_audience_sync/google_audience_sync)
-  requires for withdrawn consent. Inth does not do this for you.
+- Run Braze under a non-marketing category, such as `functionality`, for push notifications and in-app messages. Withdrawing `marketing` leaves Braze running so the helper writes `false` through normal sync.
+- When the user withdraws Braze's category, set `$google_ad_user_data` and `$google_ad_personalization` to `false` from your backend using Braze's [`/users/track` endpoint](https://www.braze.com/docs/api/endpoints/user_data/post_user_track), then remove the user from synced audiences per Braze's [Audience Sync guide](https://braze.com/docs/partners/canvas_audience_sync/google_audience_sync). Inth does not do this for you.
 
 ## Before you start
 
-Complete the [Swift](/docs/frameworks/swift/quickstart),
-[Android](/docs/frameworks/android/quickstart) or
-[React Native](/docs/frameworks/react-native/quickstart) quickstart, with the
-category you choose in your Inth policy and native configuration. Install the
-Braze Swift SDK 7.6 or later, Android SDK, or `@braze/react-native-sdk`.
+Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add your chosen category to your Inth policy and native config. Install Braze Swift SDK 7.6 or later, the Android SDK, or `@braze/react-native-sdk`.
 
-Push notifications and in-app messages need Braze to run. If you treat them as
-part of the app's function rather than marketing, pass
-`functionality` as the category. The DMA attributes still follow marketing.
+Push notifications and in-app messages require Braze to run. If you classify them as app functionality rather than marketing, pass `functionality` as the category. The DMA attributes still follow `marketing`.
 
 ## Connect a Swift app
 
@@ -118,17 +85,15 @@ fun connectBrazeConsent(context: Context, onError: (Exception) -> Unit): BrazeIn
 }
 ```
 
-Braze asks apps to get a fresh `Braze.getInstance` after disabling, which the
-snippet does on each call. `disableSdk` reads `SharedPreferences`; Braze
-suggests a background thread for it.
+Braze requires a fresh `Braze.getInstance` after disabling, which the snippet fetches on each call. `disableSdk` reads `SharedPreferences`, so Braze recommends running it on a background thread.
 
 ## Connect React Native or Expo
 
-Copy the checked connection function into `braze-consent.ts`:
+Copy the connection function into `braze-consent.ts`:
 
 <include src="../shared/examples/react-native-bare/rn-braze-integration.mdx" />
 
-Then supply `@braze/react-native-sdk`:
+Wrap `@braze/react-native-sdk` in `braze-vendor.ts`:
 
 {/* example: fragment */}
 
@@ -154,35 +119,18 @@ export const connectBrazeVendor = (onError: (error: unknown) => void) =>
 	);
 ```
 
-Braze notes that on iOS, `enableSDK` from React Native may only take effect
-on the next launch. Expo needs a development build with Braze's config
-plugin.
+On iOS, Braze notes that `enableSDK` from React Native may take effect only on the next launch. Expo requires a custom native build with Braze's config plugin, not Expo Go.
 
-## Handle user changes, reset and teardown
+## Handle user changes, reset, and teardown
 
-The attributes belong to the current Braze user. After `changeUser`, call
-`syncAfterUserChange()`, `sync()` or `await consent.sync()` to record them on
-the new user. Teardown (`stop()`, `close()` or `disconnect()`) disables Braze
-without writing attributes. To clear data on the device, use Braze's
-`wipeData`.
+The attributes belong to the active Braze user. After `changeUser`, call `syncAfterUserChange()` on Swift, `sync()` on Android, or `await consent.sync()` on React Native to record them on the new user. Calling `stop()`, `close()`, or `disconnect()` disables Braze without writing attributes. To clear device data, call Braze's `wipeData`.
 
 ## Check the integration
 
 1. Launch with no saved choice. Confirm Braze sends no session.
-2. Grant marketing. Confirm a session, and both attributes as `true` on the
-   user's profile.
-3. Withdraw marketing. Confirm Braze stops sending at once, and that your
-   backend update sets both attributes to `false` on the profile.
-4. With `category` set to `functionality`, withdraw marketing only. Confirm
-   both attributes become `false` while Braze keeps running.
+2. Grant `marketing`. Confirm a session and both attributes set to `true` on the user's profile.
+3. Withdraw `marketing`. Confirm Braze stops sending immediately and your backend updates both attributes to `false`.
+4. With `category` set to `functionality`, withdraw `marketing` only. Confirm both attributes switch to `false` while Braze keeps running.
 5. Relaunch after withdrawal. Confirm Braze stays disabled.
 
-The helper tests cover order, withdrawal and category changes with recorded
-calls. They were not run against the Braze SDK. The snippets were written
-against these SDK majors and checked as shown:
-
-| Platform | Version | How |
-| --- | --- | --- |
-| React Native | `@braze/react-native-sdk` 24.0.1 | Type-checked against the package's published types |
-| Android | `android-sdk-base` 45.0.0 | Method signatures read from the published AAR |
-| iOS | Braze Swift SDK 19.2.0 | Checked against the SDK's published API reference |
+Checked against `@braze/react-native-sdk` `24.0.1`, `android-sdk-base` `45.0.0`, and Braze Swift SDK `19.2.0`. Complete [mobile verification](/docs/guides/mobile-verify) on real devices.

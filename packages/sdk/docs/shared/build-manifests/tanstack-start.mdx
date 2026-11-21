@@ -4,18 +4,9 @@ Add the plugin before `tanstackStart()`:
 
 <include src="../examples/tanstack-start/vite-config.mdx" />
 
-The plugin reads the backend URL from `projectUrl`, or from
-`VITE_INTH_PROJECT_URL`, when you leave
-`projectUrl` out. If `VITE_INTH_PROJECT_URL` is unset, the plugin sets it to the URL it used, so app code can read
-`import.meta.env.VITE_INTH_PROJECT_URL` instead of repeating the URL.
+The plugin reads the project URL from `projectUrl`, or from `VITE_INTH_PROJECT_URL` when you omit `projectUrl` (`VITE_C15T_BACKEND_URL` is read as a fallback if unset). When `VITE_INTH_PROJECT_URL` is unset, the plugin populates it with the URL it used so app code can read `import.meta.env.VITE_INTH_PROJECT_URL` without repeating the URL.
 
-The plugin fetches the policy during `vite build`, or in `vite dev` when the
-server first loads it, and serves it to server code as `snapshot` from `@inth/tanstack-start/generated`. In the browser
-bundle, `snapshot` is `undefined`, so the policy never ships to the browser.
-`createConsentStateHandler()` reads the snapshot and the backend URL from
-there, as the
-[quickstart root route](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route)
-shows:
+The plugin fetches the policy during `vite build`, or in `vite dev` when the server first loads it, and exposes it to server code as `snapshot` from `@inth/tanstack-start/generated`. In the browser bundle, `snapshot` is `undefined`, so the policy never ships to the browser. `createConsentStateHandler()` reads the snapshot and project URL from there, as the [quickstart root route](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route) shows:
 
 <include src="../examples/tanstack-start/build-manifest-server-fn.mdx" />
 
@@ -25,18 +16,12 @@ shows:
 
 <include src="../vite-build-manifest.mdx" />
 
-If the fetch fails, `vite build` stops. `vite dev` logs a warning instead,
-and `snapshot` is `undefined`, so the server fetches and caches the policy at
-runtime. To let a build continue the same way, set `onBuildError: 'runtime'`,
-or run it with `INTH_ON_BUILD_ERROR=runtime`:
+By default, if the fetch fails, `vite build` and `vite dev` log a warning and set `snapshot` to `undefined`, so the server fetches and caches the policy at runtime. To stop the build on a failed fetch instead, set `onBuildError: 'fail'`, or run the build with `INTH_ON_BUILD_ERROR=fail`:
 
 {/* example: fragment */}
 
 ```ts title="vite.config.ts"
-consentManifest({ onBuildError: 'runtime' }),
+consentManifest({ onBuildError: 'fail' }),
 ```
 
-For policy updates without a rebuild, pass
-`mode: manifest({ source: 'runtime' })` to `createConsentStateHandler` and
-keep the plugin, which still supplies the backend URL. See
-[runtime fetching](/docs/frameworks/tanstack-start/rendering#await-consent-in-the-loader).
+For policy updates without a rebuild, pass `mode: manifest({ source: 'runtime' })` to `createConsentStateHandler` and keep the plugin so it still supplies the project URL. See [runtime fetching](/docs/frameworks/tanstack-start/rendering#await-consent-in-the-loader).

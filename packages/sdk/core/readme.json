@@ -19,12 +19,12 @@
 		"Call `runtime.start()` in the browser",
 		"Render your banner from `runtime.kernel.getSnapshot()` and update it from `runtime.kernel.subscribe()`",
 		"Record choices with `runtime.kernel.commands.save('all')`, `save('none')`, or an object such as `{ measurement: true }`",
-		"For the full walkthrough, see the [headless runtime guide](https://c15t.com/docs/frameworks/javascript/headless)",
+		"For the full walkthrough, see the [headless runtime guide](https://inth.com/docs/frameworks/javascript/headless)",
 		"```ts\n// src/consent-runtime.ts\nimport { hosted } from '@inth/sdk-core'\nimport { createConsentRuntime } from '@inth/sdk-core/runtime'\n\nexport const runtime = createConsentRuntime({\n  mode: hosted({ projectUrl: 'https://your-project.inth.app' }),\n})\n```"
 	],
-	"docsLink": "https://c15t.com/docs/frameworks/javascript/headless",
-	"quickStartLink": "https://c15t.com/docs/frameworks/javascript/headless",
-	"githubLink": "https://github.com/c15t/c15t",
+	"docsLink": "https://inth.com/docs/frameworks/javascript/headless",
+	"quickStartLink": "https://inth.com/docs/frameworks/javascript/headless",
+	"githubLink": "https://github.com/inthhq/inth",
 	"showCLIGeneration": false,
 	"customSections": {
 		"Related Packages": "- [@inth/sdk](https://www.npmjs.com/package/@inth/sdk): this engine with a stock banner and preference dialog for plain JavaScript and script-tag sites\n- [@inth/integrations](https://www.npmjs.com/package/@inth/integrations): consent-aware analytics, tag manager, pixel, and widget loaders"

@@ -1,104 +1,91 @@
 ---
 title: InthProvider
-description: Mount the Inth banner, preference dialog and floating trigger in Nuxt with the globally registered InthProvider, rendered on the server.
+description: Mount the server-rendered Inth banner, preference dialog, and floating trigger in Nuxt with global InthProvider.
 group: frameworks
 ---
 
+Render the globally registered `InthProvider` once in `app/app.vue` to serve
+the right consent surfaces for each visitor's policy from SSR onward.
+
 ## Render `InthProvider` in `app.vue`
 
-The Nuxt module registers `InthProvider` globally, so you render it without an
-import. Put it in `app.vue`, next to `<NuxtPage />`:
+`@inth/nuxt` registers `InthProvider` globally, so add it beside `<NuxtPage />`
+without an import:
 
 <include src="../../../shared/examples/nuxt/root.mdx" />
 
-`InthProvider` reads the consent runtime the module creates. Keep it in
-`app.vue` so it stays mounted when the route changes. It brings its own
-styles.
+`InthProvider` reads the runtime provided by the Nuxt module and ships its own
+styles. Keep it in `app/app.vue` so it stays mounted across route changes.
 
-The module's plugin already gives every component the consent runtime, so
-nothing needs to sit inside `InthProvider`. Render
-`<InthProvider />` next to `<NuxtPage />` as shown above. If you wrap the app
-in it instead, the page still renders after the banner, dialog and trigger,
-but wrapping adds nothing.
-
-Always mount the Nuxt `InthProvider`, not the Vue one from
-`@inth/vue/vue-plugin`. The Nuxt component renders the banner on the
-server.
+The Nuxt module plugin already provides the runtime to every component;
+`InthProvider` renders the stock consent UI surfaces. Render `<InthProvider />`
+as a sibling rather than wrapping `<NuxtPage />`. Always use Nuxt's global
+`InthProvider`, not the `@inth/vue/vue-plugin` export, so the banner renders
+during SSR.
 
 ## What InthProvider renders
 
-`InthProvider` picks the surfaces for the visitor's policy:
+`InthProvider` picks surfaces based on the visitor's policy:
 
 | Policy | Banner | Preferences |
 | --- | --- | --- |
-| Standard, opt-in or opt-out | [`ConsentBanner`](/docs/frameworks/nuxt/components/consent-banner) | [`ConsentManager`](/docs/frameworks/nuxt/components/consent-manager) |
-| IAB TCF, with a vendor list | [`IABConsentBanner`](/docs/frameworks/nuxt/components/iab-consent-banner) | [`IABConsentDialog`](/docs/frameworks/nuxt/components/iab-consent-dialog) |
+| Standard, opt-in, or opt-out | [`ConsentBanner`](/docs/frameworks/nuxt/components/consent-banner) | [`ConsentManager`](/docs/frameworks/nuxt/components/consent-manager) |
+| IAB TCF with vendor list | [`IABConsentBanner`](/docs/frameworks/nuxt/components/iab-consent-banner) | [`IABConsentDialog`](/docs/frameworks/nuxt/components/iab-consent-dialog) |
 
 It also renders [`ConsentDialogTrigger`](/docs/frameworks/nuxt/components/consent-dialog-trigger)
-when the `showTrigger` option is `true`.
+when `showTrigger: true` is configured.
 
-The banner is part of the server render. When the server resolves the policy, in the default `manifest()` mode or `hosted()`,
-a visitor whose policy asks for consent gets the banner
-in the first HTML, with no layout shift after hydration. On prerendered and
-cached routes the banner appears after the browser resolves the policy. See
+In default `manifest()` or `hosted()` mode, the banner ships in the first
+server HTML with no post-hydration layout shift. On prerendered and cached
+routes, it mounts after browser resolution. See
 [rendering](/docs/frameworks/nuxt/rendering).
 
-The IAB surfaces replace the standard ones only when the module's `iab`
-option is set and the policy uses the `iab` model. The dialog and the IAB
-surfaces load as separate chunks. `InthProvider`
-prefetches the dialog chunk after the page's `load` event, mounts the dialog
-the first time preferences open, and keeps it mounted after that so its close
-animation runs.
-
-The banner and the trigger are separate chunks too, so their CSS is not part
-of your app's entry stylesheets. Every page preloads the banner chunk. With
-Nuxt's `features.inlineStyles`, on by default, it also preloads the banner's
-CSS instead of linking it: a server-rendered banner paints with the styles
-Nuxt writes into the page head, so no Inth stylesheet blocks the first paint.
-The browser applies the CSS with the chunk, before it shows a banner it
-renders itself. The trigger chunk loads after the page mounts, and only when
-`showTrigger` is `true`.
+IAB surfaces activate only when `iab` is enabled and the policy uses `iab`.
+The banner, dialog, trigger, and IAB surfaces load as separate chunks: Nuxt
+inlines SSR banner styles with `features.inlineStyles` so no external consent
+stylesheet blocks first paint, prefetches the dialog chunk after `load` (and
+keeps it mounted after opening for close animations), and loads the trigger
+chunk only when `showTrigger: true`.
 
 ## Theme tokens
 
-The Nuxt module's plugin, not `InthProvider`, writes the `tokens` option
-into a `<style id="inth-css-vars">` tag in the page head, on every page and
-with the module's `nonce`. During server rendering and prerendering the tag is
-in the first HTML. See
-[customize](/docs/frameworks/nuxt/customize#set-theme-tokens).
+The Nuxt plugin writes `tokens` (including defaults) into
+`<style id="inth-css-vars">` in `<head>` on every page, carrying your `nonce`
+if configured. Set token values in module options rather than a `:root` CSS
+rule. See [set theme tokens](/docs/frameworks/nuxt/customize#set-theme-tokens).
 
 ## Props
 
 | Prop | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `country` | `string` | The location from the request headers | Overrides the visitor's country and resolves the policy again. |
-| `region` | `string` | The location from the request headers | Overrides the visitor's region, such as `CA`, and resolves the policy again. |
-| `language` | `string` | The browser language | Overrides the language and resolves the policy again, which fetches the banner and dialog text in that language. |
+| `country` | `string` | Location from request headers | Overrides country and re-resolves the policy. |
+| `region` | `string` | Location from request headers | Overrides region (such as `CA`) and re-resolves the policy. |
+| `language` | `string` | Browser language | Overrides language and re-resolves to fetch copy in that language. |
 
-Use `country` and `region` to preview another region's policy while you
-build, such as `<InthProvider country="DE" />`. Bind `language` to your site's
-current language. See [translations](/docs/frameworks/nuxt/translations).
+Use `country` and `region` to preview regional policies locally (such as
+`<InthProvider country="DE" />`), and bind `language` to your site's locale.
+See [translations](/docs/frameworks/nuxt/translations).
 
 ## Compose the surfaces yourself
 
-`InthProvider` is the same as rendering the banner, dialog and trigger with the
-right conditions. To place them yourself, render them in place of
-`InthProvider`, as in
-[ConsentBanner](/docs/frameworks/nuxt/components/consent-banner#import-the-banner-in-place-of-inthprovider). Do not
-render `InthProvider` next to them, or the visitor sees two banners.
+To place or configure `ConsentBanner`, `ConsentManager`, and IAB components
+directly, render them instead of `InthProvider`. See
+[ConsentBanner](/docs/frameworks/nuxt/components/consent-banner#import-the-banner-in-place-of-inthprovider).
+Never mount both `InthProvider` and individual surfaces together, or visitors
+see two banners.
 
 ## Verify
 
-Build and start the app, then view the source of a page under a policy that
-asks for consent. The HTML holds `data-testid="consent-banner-root"` and the
-`inth-css-vars` style tag. Click Customize and the preference dialog opens.
-Reject, reload, and confirm the banner stays closed.
+Run `nuxt build` and `node .output/server/index.mjs`, then view page source
+under an opt-in policy. Confirm `data-testid="consent-banner-root"` and
+`<style id="inth-css-vars">` are in the HTML, Customize opens preferences, and
+rejecting stays closed after reload.
 
 ## Next steps
 
-- [Nuxt module](/docs/frameworks/nuxt/module) lists the options `InthProvider`
-  reads.
-- [Customize](/docs/frameworks/nuxt/customize) changes tokens, layout and
-  slots.
-- [Headless](/docs/frameworks/nuxt/headless) replaces `InthProvider` with your
+- [Nuxt module](/docs/frameworks/nuxt/module): inspect every option
+  `InthProvider` reads.
+- [Customize](/docs/frameworks/nuxt/customize): customize theme tokens,
+  layout, and slots.
+- [Headless](/docs/frameworks/nuxt/headless): replace `InthProvider` with your
   own markup.

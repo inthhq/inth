@@ -1,0 +1,265 @@
+---
+title: Migrate from c15t
+description: Migrate a c15t or @c15t/* app to @inth/* packages, InthProvider, hooks, callbacks, and themes while keeping visitors' stored choices.
+group: guides
+---
+
+Move an existing `c15t` or `@c15t/*` app onto `@inth/*` packages while keeping visitors' stored consent choices.
+
+<Prompt title="Migrate this app from c15t to Inth" description="Paste into Claude Code, Codex, Cursor or another coding agent at the root of your app.">
+  Migrate this app from `c15t` / `@c15t/*` to `@inth/*`.
+
+  1. List every c15t dependency and import across the repo: `c15t`, `@c15t/nextjs`, `@c15t/react`, `@c15t/scripts`, `@c15t/dev-tools` and `@c15t/browser`.
+  2. Check that React is 18 or later and Next.js is 15 or later, if used. Stop and tell me if either needs a major upgrade, or if the app uses `mode: 'custom'` with `endpointHandlers`.
+  3. Before removing old `c15t` or `@c15t/*` packages from `package.json`, install `@inth/cli` with `npm install -g @inth/cli` if `inth` is missing. Run `inth c15t codemods packages-to-c15t use-consent-manager-to-hooks scripts-to-integrations consent-provider-options root-exports-to-subpaths dev-tools-to-c15t policy-packs-to-policy-rules css-variables-to-v3 postcss-tailwind3 callbacks-to-v3 theme-to-consent-theme iab-option-to-iab-provider --dry-run --json`, review the diff, then run the same command without `--dry-run`.
+  4. Replace the old `c15t` and `@c15t/*` packages in `package.json` with the matching `@inth/*` package, such as `@inth/nextjs`, `@inth/react` or `@inth/sdk`, plus `@inth/integrations` for vendor helpers. After installing, read `node_modules/@inth/<package>/AGENTS.md` and follow its setup guide. Do not guess APIs from memory.
+  5. Rewrite remaining `c15t/*` and `@c15t/*` imports to `@inth/*` and `@inth/integrations/*`. Update renamed APIs (`InthProvider`, `inth.config.ts`, `provideInth`, `inth`, `inth()`, `inthHandle`, `inthProxy`, `--inth-*`, `.inth-dark`, `inth.js`, `window.inth`, `data-inth-*`, `#inth-preferences`), move `backendURL` to `projectUrl` or the `*_INTH_PROJECT_URL` env var, remove manual stylesheet imports unless Tailwind CSS 3 needs `styles: false`, and resolve every `TODO(c15t v3)` comment.
+  6. Run the typecheck and production build. Open the built app in a browser with DevTools Network open and verify that vendor requests wait for consent, rejection survives a reload, and reopening preferences works.
+
+  When done, list the files changed, anything not migrated, and how you checked network requests in the production build.
+</Prompt>
+
+## Prerequisites
+
+- React and React DOM 18 or later, and Next.js 15 or 16 if you use `@inth/nextjs`.
+- ESM imports only. Every `@inth/*` package ships ESM only, so convert any CommonJS `require()` calls on c15t packages to `import`.
+- A project URL. Existing `*.c15t.dev` hosted URLs keep working with `@inth/*` clients, and new projects use `*.inth.app`. `@inth/*` connects to an Inth project through `projectUrl`, so if you need a project, [create an Inth project](https://inth.com/dashboard/sign-up).
+
+## Run the CLI codemods
+
+Run the codemods before removing `c15t` or `@c15t/*` from `package.json`. Codemods such as `packages-to-c15t` and `dev-tools-to-c15t` read your existing dependencies and Tailwind CSS version from `package.json` and match original `@c15t/*` imports in your source files.
+
+Install `@inth/cli`, list the codemods, and preview changes with `--dry-run --json` before applying them:
+
+```bash
+npm install -g @inth/cli
+inth c15t codemods --list
+inth c15t codemods packages-to-c15t use-consent-manager-to-hooks scripts-to-integrations consent-provider-options root-exports-to-subpaths dev-tools-to-c15t policy-packs-to-policy-rules css-variables-to-v3 postcss-tailwind3 callbacks-to-v3 theme-to-consent-theme iab-option-to-iab-provider --dry-run --json
+```
+
+The codemods run locally without sign-in and leave a `TODO(c15t v3)` comment wherever manual edits remain, such as offline or custom modes, `onConsentSet`, and `onBannerFetched`. They never modify `package.json`. When `@c15t/react` or `@c15t/nextjs` is still listed without `c15t@3`, `packages-to-c15t` warns and leaves those scoped specifiers in place, while other codemods rewrite hooks, options, callbacks, and script imports to `c15t/*` or `@c15t/integrations/*`. Swap all remaining `c15t/*` and `@c15t/*` specifiers to `@inth/*` and `@inth/integrations/*` after replacing your packages below.
+
+## Replace packages
+
+Remove `c15t` and `@c15t/*` dependencies and install the `@inth/*` package for your framework, plus `@inth/integrations` for vendor script helpers.
+
+| Old package | New package |
+| --- | --- |
+| `@c15t/nextjs` or `c15t/next` | `@inth/nextjs`, with `/server`, `/pages`, `/api`, `/proxy`, `/build` |
+| `@c15t/react` or `c15t/react` | `@inth/react`, with `/headless`, `/build`, `/iab`, `/gpp` |
+| `c15t` or `@c15t/browser` | `@inth/sdk`, with `/runtime` and `/engine` |
+| `@c15t/scripts` or `@c15t/integrations` | `@inth/integrations`, keeping the same vendor subpaths |
+| `@c15t/dev-tools` | `@inth/nextjs/devtools`, `@inth/react/devtools`, `@inth/sdk/devtools` |
+| Vue or Nuxt | `@inth/vue` or `@inth/nuxt` |
+| Svelte or SvelteKit | `@inth/svelte`, SvelteKit helpers in `@inth/svelte/kit` |
+| Angular, Astro or TanStack Start | `@inth/angular`, `@inth/astro` or `@inth/tanstack-start` |
+
+<CommandTabs command="@inth/nextjs @inth/integrations" mode="install" />
+
+Swap `@inth/nextjs` for your framework package. Drop `@inth/integrations` if you do not use vendor helpers.
+
+## Update providers, URLs and modes
+
+Set `projectUrl` at the top level of your provider or config in place of `backendURL`. Most apps omit `mode` because each package picks the right default: `manifest()` on server-rendered frameworks and `hosted()` on client-only packages.
+
+### Next.js server rendering
+
+`InthProvider` and `resolveConsent()` replace `ConsentManagerProvider`, `ConsentRoot`, `fetchInitialData()`, `ssrData`, and `C15tPrefetch`. Move scripts and options into `inth.config.ts` with `defineConsentConfig()`, wrap `next.config.ts` in `withConsentManifest()` from `@inth/nextjs/build`, and render `InthProvider` in your root layout without `'use client'`:
+
+{/* example: fragment */}
+```tsx title="Before (c15t v2): components/consent-provider.tsx"
+'use client';
+
+import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentManagerProvider,
+} from '@c15t/nextjs';
+
+export function Consent({ children }: { children: React.ReactNode }) {
+	return (
+		<ConsentManagerProvider
+			options={{ mode: 'hosted', backendURL: 'https://your-project.c15t.dev' }}
+		>
+			{children}
+			<ConsentBanner />
+			<ConsentDialog />
+		</ConsentManagerProvider>
+	);
+}
+```
+
+{/* example: fragment */}
+```tsx title="After (@inth/nextjs): app/layout.tsx"
+import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/nextjs';
+import { resolveConsent } from '@inth/nextjs/server';
+
+export default function RootLayout({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
+	return (
+		<html lang="en">
+			<body>
+				<InthProvider state={resolveConsent()}>
+					{children}
+					<ConsentBanner />
+					<ConsentDialog />
+				</InthProvider>
+			</body>
+		</html>
+	);
+}
+```
+
+Mount `InthProvider` once at the root layout. It manages both server hydration and client state.
+
+### React and single-page apps
+
+Replace `ConsentManagerProvider` with `InthProvider` and set `projectUrl`. `hosted()` is the default here, so `mode` is optional:
+
+{/* example: fragment */}
+```tsx title="After (@inth/react): src/consent.tsx"
+import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/react';
+
+export function Consent({ children }: { children: React.ReactNode }) {
+	return (
+		<InthProvider
+			options={{ projectUrl: import.meta.env.VITE_INTH_PROJECT_URL }}
+		>
+			{children}
+			<ConsentBanner />
+			<ConsentDialog />
+		</InthProvider>
+	);
+}
+```
+
+### Environment variables and modes
+
+Set your framework's `*_INTH_PROJECT_URL` variable: `NEXT_PUBLIC_INTH_PROJECT_URL`, `VITE_INTH_PROJECT_URL`, `NUXT_PUBLIC_INTH_PROJECT_URL`, or `PUBLIC_INTH_PROJECT_URL`. `*_INTH_PROJECT_URL` takes precedence when both variables are set; existing `*_C15T_BACKEND_URL` variables remain supported as a fallback for existing apps.
+
+For build-time manifest error handling, set `INTH_ON_BUILD_ERROR`; `C15T_ON_BUILD_ERROR` stays supported as a fallback.
+
+| Old mode or option | New option |
+| --- | --- |
+| `mode: 'hosted'` with `backendURL` | `projectUrl`. Defaults to `manifest()` on SSR, fetching `/v1/consent/manifest`, and `hosted()` on SPAs, fetching `/v1/consent/init`. Pass `mode: hosted()` on SSR to always fetch `/v1/consent/init`. Saves go to `/v1/consent/records`. |
+| `mode: 'offline'` with `offlinePolicy` | `mode: testing()` from `@inth/<pkg>/testing` for tests only; throws in production builds. Use `projectUrl` in production. |
+| `mode: 'custom'` with `endpointHandlers` | Removed. Point `projectUrl` at your Inth project or proxy requests through a same-origin route such as `/api/inth`. |
+
+## Rename components, hooks and callbacks
+
+### Components, adapters and options
+
+| Old name | New name |
+| --- | --- |
+| `ConsentManagerProvider`, `ConsentRoot`, `ConsentProvider` | `InthProvider` |
+| `c15t.config.ts` | `inth.config.ts` |
+| `provideC15t`, `provideC15tServer` | `provideInth` (`@inth/angular`), `provideInthServer` (`@inth/angular/ssr`) |
+| `c15tVue` | `inth` (`@inth/vue`) |
+| `c15t()` Astro integration | `inth()` (`@inth/astro`) |
+| `c15tHandle` | `inthHandle` (`@inth/svelte/kit`) |
+| `c15tProxy` | `inthProxy` (`@inth/nextjs/proxy`) |
+| `CookieBanner`, `@c15t/react/cookie-banner` | `ConsentBanner`, `@inth/react/consent-banner` |
+| `ConsentManagerDialog` | `ConsentDialog` |
+| `ConsentManagerWidget` | `ConsentWidget` |
+| `Frame`, `FrameRoot`, `FrameTitle`, `FrameButton`, `FrameProps` | `ConsentGate`, `ConsentGate.Root`, `ConsentGate.Title`, `ConsentGate.Button`, `ConsentGateProps` |
+| `YouTubeEmbed`, `GoogleMap` | Removed. Wrap your embed in `ConsentGate` |
+| `ConsentButton` | Removed in React and Next.js. Use `ConsentBanner` or `ConsentWidget` buttons, or `useHeadlessConsentUI()` from `/headless` |
+| `DevTools` from `@c15t/dev-tools/react` | `DevTools` from `@inth/nextjs/devtools` or `@inth/react/devtools`, without `namespace` |
+| `translations` | `i18n` |
+| `iframeBlockerConfig` | `iframeBlocker` or `false` |
+| `iab: iab({ ... })` | `<IABProvider>` from `@inth/react/iab` |
+| `c15t.js`, `window.c15tStore`, `window.c15t` | `inth.js`, `window.inth` |
+| `data-c15t-*`, `#c15t-preferences` | `data-inth-*`, `#inth-preferences` |
+
+`ConsentDialogLink` and `ConsentDialogTrigger` keep their names. `ConsentGate` mounts granted embeds after hydration instead of in server HTML, so size its container with `className` or `style` to avoid layout shift.
+
+### Hooks replacing `useConsentManager()`
+
+Focused hooks replace `useConsentManager()` so components only re-render when the slice they read changes. Import state and action hooks from `@inth/react`, `@inth/nextjs`, or `@inth/tanstack-start`, and `useHeadlessConsentUI()` from the matching `/headless` subpath.
+
+| Old `useConsentManager()` field | New hook |
+| --- | --- |
+| `has(category)` | `useConsent(category)` |
+| `consents` | `useConsents()` or `useEffectivePermissions()` |
+| `activeUI`, `setActiveUI(ui)` | `useActiveUI()`, which returns `null` before resolution, and `useSetActiveUI()` |
+| `setConsent(name, value)` | `useSaveConsents()`, called with `{ [name]: value }` |
+| `saveConsents('all')`, `saveConsents('necessary')` | `useHeadlessConsentUI().saveCustomPreferences('all')` or `('none')` |
+| `selectedConsents`, `setSelectedConsent`, `saveConsents('custom')` | `useConsentDraft()` with `values`, `set()`, and `save()` |
+| `consentInfo`, `hasConsented()` | `useExplicitChoice()` and `useExplicitChoice() !== null` |
+| `policyCategories`, `policyScopeMode`, `model` | `usePolicyCategories()`, `usePolicyScopeMode()`, `useModel()` |
+| `locationInfo`, `translationConfig`, `overrides`, `setOverrides()` | `useLocation()`, `useTranslations()`, `useOverrides()`, `useSetOverrides()` |
+| `setLanguage()`, `identifyUser()` | `useSetLanguage()`, `useIdentify()` |
+| `subscribeToConsentChanges()` | `useSubscribeToConsentChanges()` or `onPermissionsChanged` |
+| `useConsentScript()`, `useSSRStatus()` | Removed. Register scripts in `scripts` with `@inth/integrations` |
+
+`useConsentDraft()` and `useHeadlessConsentUI()` share a draft only inside a `ConsentDraftProvider`, which `ConsentWidget` already includes. Without one, call `useConsentDraft().save()` directly.
+
+In plain JavaScript apps, `init()` from `@inth/sdk` for the stock banner or `createConsentRuntime()` from `@inth/sdk/runtime` replace `getOrCreateConsentRuntime()` and `consentStore`. With `createConsentRuntime()`, call `runtime.start()` and read state from `runtime.kernel.getSnapshot()`.
+
+### Callbacks
+
+| Old callback | New callback |
+| --- | --- |
+| `onConsentSet` | `onPermissionsChanged` for effective permissions, or `onChoiceRecorded` for visitor actions |
+| `onConsentChanged` | `onChoiceRecorded`, which fires on every save with `snapshot`, `confirmed`, and `actionAt`, or `onPermissionsChanged` for `previous` vs `snapshot` |
+| `onBannerFetched` | Removed. Read `usePolicyResolution()` in React and Next.js, or `kernel.getSnapshot().resolution` in JavaScript |
+| `onError`, `onBeforeConsentRevocationReload` | Unchanged |
+
+Neither `onChoiceRecorded` nor `onPermissionsChanged` fires at startup when resolved permissions match the defaults. Read `useEffectivePermissions()` in an effect, or `kernel.events.on('init:applied', ...)` in JavaScript, when an external SDK needs the initial state.
+
+## Update styles and integrations
+
+### Remove manual stylesheet imports
+
+Delete `@c15t/react/styles.css` and `@c15t/nextjs/styles.css` imports. Stock components inject `<style>` elements automatically. Keep `@inth/react/styles.css` or `@inth/nextjs/styles.css` only with Tailwind CSS 3 or a named cascade layer, and set `styles: false` in provider options. On Tailwind CSS 3, add `'@inth/react/postcss-tailwind3': {}` or `'@inth/nextjs/postcss-tailwind3': {}` before `tailwindcss` in `postcss.config`.
+
+### Render theme CSS and rename CSS tokens
+
+Providers no longer generate CSS from `options.theme` tokens in the browser. Define tokens with `defineTheme()` and render `<ConsentTheme theme={theme} />` in your root Server Component layout in Next.js App Router, or in `pages/_document.tsx` in Pages Router. Keep `options.theme` for `consentActions` and `slots`.
+
+Rename custom properties and dark-mode classes in your stylesheets:
+
+- `--c15t-*` to `--inth-*`
+- `.c15t-dark` to `.inth-dark`
+- `--consent-widget-*` to `--consent-manager-*`
+- `--frame-*` to `--consent-gate-*`
+
+{/* example: fragment */}
+```tsx title="Theme setup with defineTheme() and ConsentTheme"
+import { ConsentTheme, defineTheme } from '@inth/react';
+
+export const theme = defineTheme({
+	colors: { primary: '#2f6f4e' },
+	radius: { lg: '4px' },
+});
+
+// Render <ConsentTheme theme={theme} /> inside your root layout.
+```
+
+### Move vendor scripts to `@inth/integrations`
+
+Replace `@c15t/scripts/*` imports with `@inth/integrations/*`. Vendor subpaths and helper names stay identical. Helpers that require an ID, such as `googleTagManager`, `posthog`, and `metaPixel`, now log an error and skip loading when the ID is empty.
+
+{/* example: fragment */}
+```ts title="Updated integration imports"
+import { googleTagManager } from '@inth/integrations/google-tag-manager';
+import { posthog } from '@inth/integrations/posthog';
+```
+
+## Keep visitors' existing choices
+
+`@inth/*` stores new choices under the `inth` cookie and `localStorage` key, and reads existing `c15t` v2 records directly as a fallback. It does not rewrite them on page load; the visitor's next accept, reject, or save writes a new `inth` record.
+
+A v2 denial keeps blocking its category. A v2 grant stays valid until the policy's validity period runs out, and then the banner asks again. When a rule comes from a preset and the v2 record noted its policy, the banner also asks again if that policy changed. If v2 set a custom `storageConfig.storageKey`, pass that same name to `storageConfig.storageKey` and `resolveConsent({ cookieName })` on the server so SSR and the browser read the existing cookie. Do not copy permissions into new records yourself.
+
+## Verify the migration
+
+1. Run your typecheck and production build, such as `next build && next start` or `vite build && vite preview`, and resolve every `TODO(c15t v3)` comment.
+2. Load the built app with a pre-migration `c15t` cookie from v2. Confirm the banner stays closed when that choice still applies and any rejected category remains blocked.
+3. Open a private window with DevTools on the Network tab. Confirm vendor requests wait for consent, start after you accept, and stay absent after you click **Reject All** and reload. Confirm saves post to `/v1/consent/records`.
+4. Reopen preferences from your `ConsentDialogLink`, trigger, or `#inth-preferences` link, change a category, save, and confirm the vendor loads or reloads off.
+
+See [Verify consent](/docs/guides/verify-consent) for the full release checklist.

@@ -1,6 +1,6 @@
 ---
 title: IAB TCF
-description: Render the IAB TCF 2.4 banner and preference center on an Astro site with the Inth integration, and configure the CMP ID, vendor list source and publisher restrictions.
+description: Render the IAB TCF 2.4 banner and preference center on an Astro site, configuring CMP ID, vendor list, and restrictions.
 group: frameworks
 ---
 
@@ -27,7 +27,7 @@ inth({ iab: { cmpId: 123 } });
 ```
 
 Replace `123` with your registered CMP ID. A hosted backend can supply the CMP
-ID through `/init`, so `cmpId` is optional when your Inth project has one.
+ID through `/v1/consent/init`, so `cmpId` is optional when your Inth project has one.
 The integration inlines the IAB banner's rules once per page. Its preference
 center rules load before the IAB dialog opens, so there is no IAB stylesheet
 request before the page's first paint. Tailwind CSS 3 sites use the full
@@ -78,10 +78,10 @@ get an IAB policy, render the IAB pair when
 | Mode | Vendor list source |
 | --- | --- |
 | `manifest()` | The server resolves it, and the browser reads it through the same-origin `/api/inth/v1/consent/init` route |
-| `hosted()` | The browser fetches it from the backend's `/init` after the page loads |
+| `hosted()` | The browser fetches it from the backend's `/v1/consent/init` after the page loads |
 | `testing()` | The `gvl` or `gvlUrl` option |
 
-In hosted mode, the backend's `/init` must be reachable from the browser and
+In hosted mode, the backend's `/v1/consent/init` must be reachable from the browser and
 accept requests from your site's origin without server-only credentials. For a
 private backend, put a public same-origin proxy in front of it that adds the
 credentials on the server.

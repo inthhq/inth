@@ -68,8 +68,23 @@ test('package skills link only to pages in the bundle', () => {
 	expect(skill).toContain('[Vue](./docs/frameworks/vue/quickstart.md)');
 	expect(skill).not.toContain('frameworks/next/');
 	expect(skill).not.toContain('troubleshooting.md');
-	expect(skill).toContain('Not recommended for production environments.');
+	expect(skill).not.toContain('migrate-from-c15t.md');
+	expect(skill).toContain('`testing()`');
+	expect(skill).toContain('throws in production builds');
 	expect(skill).toContain('`npm install @inth/vue`');
+
+	const withMigration = renderPackageSkill(
+		'@inth/vue',
+		{ install: '`npm install @inth/vue`', topic: 'the project is a Vue app' },
+		new Set([
+			'concepts/choose-your-setup.md',
+			'frameworks/vue/quickstart.md',
+			'migrate-from-c15t.md',
+		])
+	);
+	expect(withMigration).toContain(
+		'[Migrate from c15t](./docs/migrate-from-c15t.md)'
+	);
 });
 
 test('skills fit the package they ship in', () => {

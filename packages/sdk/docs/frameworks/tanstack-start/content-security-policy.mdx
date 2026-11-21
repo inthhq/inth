@@ -1,41 +1,34 @@
 ---
 title: Content Security Policy
-description: Run Inth in a TanStack Start app under a Content Security Policy, pass the router's per-request nonce to InthProvider, and allow the consent backend and vendor hosts.
+description: Pass TanStack Router's per-request CSP nonce to InthProvider and allow Inth and vendor hosts.
 group: frameworks
 ---
 
+Run Inth in TanStack Start under a strict Content Security Policy by forwarding TanStack Router's per-request nonce to `InthProvider` and allowing your Inth project and vendor origins.
+
 ## What Inth adds to the page
 
-A TanStack Start app with Inth adds these to the page, and your policy must
-allow them:
+A TanStack Start app using Inth adds these elements and requests, each needing a matching CSP directive:
 
 | What | Directive |
 | --- | --- |
-| The `<style>` elements the banner, dialog and other stock components render with Inth's rules | `style-src` with the request nonce |
-| The Inth stylesheet, only if you link it yourself with `styles: false` | `style-src 'self'` |
-| The `<style id="inth-theme">` element, if you render `ConsentTheme` | `style-src` with the request nonce |
-| `<script>` elements the script loader creates for `scripts` entries, both `src` and inline | `script-src` with the request nonce, or each vendor's host |
-| The inline `<script>` that `InthProvider` renders when the visitor's consent or `alwaysLoad` already lets some vendor helper entries in `scripts` run | `script-src` with the request nonce |
-| The inline `consentPrefetchHead` script, on prerendered pages that use it | `script-src` with its hash |
-| Browser requests to `/api/inth/*`, when you mount the consent route | `connect-src 'self'` |
-| Browser requests to your backend's `/v1/consent/init` and `/v1/consent/records` | `connect-src` with the backend origin |
-| Iframes inside `ConsentGate`, and the frames, images and requests your vendors load | `frame-src`, `img-src`, `connect-src` for each vendor |
+| `<style>` elements rendered by the banner, dialog, and other built-in components | `style-src` with the request nonce |
+| Inth stylesheet, only if linked manually with `styles: false` | `style-src 'self'` |
+| `<style id="inth-theme">`, when rendering `ConsentTheme` | `style-src` with the request nonce |
+| `<script>` elements created by the script loader for `scripts` entries | `script-src` with the request nonce or each vendor host |
+| Inline `<script>` emitted by `InthProvider` to start already-allowed `scripts` before hydration | `script-src` with the request nonce |
+| Inline `consentPrefetchHead` script on prerendered pages | `script-src` with its hash |
+| Browser requests to `/api/inth/*` when mounting the same-origin route | `connect-src 'self'` |
+| Browser requests to `/v1/consent/init` and `/v1/consent/records` on your Inth project | `connect-src` with your Inth project origin |
+| Iframes inside `ConsentGate`, plus frames, images, and requests loaded by vendors | `frame-src`, `img-src`, and `connect-src` per vendor |
 
-Requests the Start server makes, such as the manifest fetch in
-`createConsentStateHandler` and the proxied saves from
-`createConsentRoute`, run outside the browser. The browser's policy does
-not apply to them.
+Server-side requests made by `createConsentStateHandler` and `createConsentRoute` run outside the browser and are not subject to browser CSP.
 
 ## Pass the request nonce to Inth
 
-TanStack Router stamps a nonce on the scripts, styles and links it renders when
-the router has `ssr.nonce`. Give Inth the same value, so the script loader,
-the `<style>` elements the stock components render, and `ConsentTheme` use it
-too. This takes three steps.
+When TanStack Router has `ssr.nonce`, it stamps that nonce onto router scripts and styles. Pass the same nonce to Inth in three steps so the script loader, component `<style>` tags, and `ConsentTheme` share it.
 
-**1. Create the nonce and the policy in request middleware.** Generate a new
-nonce for every request, send the policy header, and hand the nonce to the rest
-of the request through the middleware context:
+**1. Create the nonce and header in request middleware.** Generate a fresh nonce per request, set the CSP header, and attach the nonce to middleware context:
 
 ```ts title="src/csp-middleware.ts"
 import { createMiddleware } from '@tanstack/react-start';
@@ -50,7 +43,7 @@ export const cspMiddleware = createMiddleware().server(({ next }) => {
 			"default-src 'self'",
 			`script-src 'nonce-${nonce}' 'strict-dynamic'`,
 			`style-src 'self' 'nonce-${nonce}'`,
-			"connect-src 'self' https://<your-backend-host>",
+			"connect-src 'self' https://<your-project-host>",
 			"img-src 'self' data:",
 		].join('; ')
 	);
@@ -58,16 +51,9 @@ export const cspMiddleware = createMiddleware().server(({ next }) => {
 });
 ```
 
-Add `cspMiddleware` to `requestMiddleware` in `src/start.ts`, creating the file
-with `createStart` if your app has none. If the list also has
-`consentRequestMiddleware()`, put `cspMiddleware` first. Replace
-`https://<your-backend-host>` with the origin of the backend URL from your Inth
-project, and add your vendors' hosts.
+Register `cspMiddleware` in `requestMiddleware` inside `src/start.ts` before `consentRequestMiddleware()` if you use both. Replace `https://<your-project-host>` with your Inth project origin and add your vendor origins.
 
-**2. Give the router the nonce.** `getRouter` runs on the server after the
-global request middleware, so it can read the nonce from the Start context. In
-the browser, TanStack Router reads it back from the
-`<meta property="csp-nonce">` tag that `HeadContent` renders:
+**2. Give the router the nonce.** `getRouter` runs after global request middleware and passes the nonce to SSR; in the browser, TanStack Router reads it back from `<meta property="csp-nonce">` rendered by `HeadContent`:
 
 ```tsx title="src/router.tsx"
 import { createRouter } from '@tanstack/react-router';
@@ -83,10 +69,7 @@ export const getRouter = function getRouter() {
 };
 ```
 
-**3. Pass the router's nonce to InthProvider.** In the root component from the
-[quickstart](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route),
-read the nonce with `useRouter` from `@tanstack/react-router` and pass it as
-`options.nonce`:
+**3. Pass the router's nonce to InthProvider.** In `src/routes/__root.tsx` from the [quickstart](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route), read the nonce with `useRouter` and pass `options={{ nonce }}`:
 
 {/* example: fragment */}
 
@@ -100,88 +83,45 @@ const nonce = useRouter().options.ssr?.nonce;
 >
 ```
 
-If you render `ConsentTheme`, pass it the same value:
-`<ConsentTheme theme={theme} nonce={nonce} />`.
+If you render `ConsentTheme`, pass the same nonce: `<ConsentTheme theme={theme} nonce={nonce} />`.
 
-`InthProvider` reads `options.nonce` when it mounts, and the script loader
-stamps it on every `<script>` it creates. A `nonce` on a single `scripts` entry
-takes precedence for that element.
-
-When the visitor's consent or `alwaysLoad` already lets some vendor helper
-entries in `scripts` run, `InthProvider` also renders an inline `<script>` with
-`options.nonce`. It runs those entries' setup and inserts their tags before the
-page hydrates, with the same nonce or the entry's own. Its content changes with
-each visitor's consent, so a hash can't allow it. If the policy blocks it, the
-script loader starts those entries after hydration instead.
-
-Each full page load gets the nonce of its own request. Do not serve nonce pages from a shared cache, because every
-visitor would get the same nonce.
+`InthProvider` reads `options.nonce` on mount and stamps it onto every `<script>` inserted by the script loader (unless overridden per script) and onto the inline pre-hydration start script. If CSP blocks that inline script, the script loader starts those entries after hydration instead. Never serve nonced HTML from a shared cache.
 
 ## What the nonce does not cover
 
-- **Scripts that a vendor script loads itself**, such as the tags a tag manager
-  injects. `'strict-dynamic'` in the policy above allows scripts that a nonced
-  script adds. Without it, list each vendor's hosts in `script-src`.
-- **Inline `style` attributes.** In the browser, Inth components set their
-  inline styles through React, and a policy does not restrict styles set that
-  way. If the console shows `Refused to apply inline style` for a
-  server-rendered Inth element, add `style-src-attr 'unsafe-inline'`. A nonce
-  cannot allow style attributes.
-- **Iframes, images and requests** your vendors make. Add their hosts to
-  `frame-src`, `img-src` and `connect-src`. A YouTube player inside
-  `ConsentGate` needs `https://www.youtube-nocookie.com` in `frame-src`, for
-  example.
-- **The DevTools panel.** It adds a `<style>` element without a nonce, so under
-  this policy it renders unstyled. Load it only in development.
+- **Nested scripts loaded by vendors**, such as tags inside a tag manager. `'strict-dynamic'` permits them; without it, list each vendor's script hosts in `script-src`.
+- **Inline `style` attributes.** Browser-side React style updates are not blocked by CSP, but if SSR HTML triggers `Refused to apply inline style`, add `style-src-attr 'unsafe-inline'` because nonces do not apply to `style` attributes.
+- **Embeds, images, and API calls.** Add vendor hosts to `frame-src`, `img-src`, and `connect-src`, such as `https://www.youtube-nocookie.com` for YouTube embeds in `ConsentGate`.
+- **DevTools panel.** DevTools injects an un-nonced `<style>` element, so load it only in development.
 
-## Allow the consent backend
+## Allow your Inth project
 
-Which consent requests the browser makes depends on your
-[rendering setup](/docs/frameworks/tanstack-start/rendering):
+Which origins the browser contacts depends on your [rendering setup](/docs/frameworks/tanstack-start/rendering):
 
 | Setup | Browser requests | Policy |
 | --- | --- | --- |
-| Quickstart | `/v1/consent/init` and `/v1/consent/records` on your backend URL | `connect-src` with the backend origin |
-| Consent route with `createConsentStateHandler({ routePrefix: '/api/inth' })` | `/api/inth/v1/consent/init` on your origin, `/v1/consent/records` on your backend URL | `connect-src 'self'` plus the backend origin |
-| Consent route with `proxy: true` on the route and on `createConsentStateHandler({ proxy: true, routePrefix: '/api/inth' })` | Every consent request on your origin | `connect-src 'self'` |
+| Quickstart | `/v1/consent/init` and `/v1/consent/records` on your Inth project URL | `connect-src` with your Inth project origin |
+| Same-origin route with `routePrefix: '/api/inth'` | `/api/inth/v1/consent/init` on your origin, `/v1/consent/records` on your Inth project URL | `connect-src 'self'` plus your Inth project origin |
+| Same-origin route with `proxy: true` and `routePrefix: '/api/inth'` | All consent requests on your origin | `connect-src 'self'` |
 
-Under an IAB TCF policy the browser also loads the Global Vendor List. With the
-consent route and `routePrefix`, it comes through `/api/inth/v1/consent/init`, which
-`'self'` covers. Otherwise the browser fetches it from the URL the policy
-provides, so allow that host in `connect-src`. See
-[IAB TCF](/docs/frameworks/tanstack-start/iab).
+Under an IAB TCF policy, the browser also fetches the Global Vendor List. With `routePrefix`, `/api/inth/v1/consent/init` serves it under `'self'`; otherwise allow the vendor list host in `connect-src`. See [IAB TCF](/docs/frameworks/tanstack-start/iab).
 
 ## Prerendered pages and SPA mode
 
-A prerendered page is the same HTML for every visitor, so it cannot carry a
-per-request nonce. Use host allowlists and hashes instead:
+Prerendered pages are shared across all visitors and cannot use per-request nonces. Use host allowlists and hashes instead:
 
-- List `'self'` and each vendor's script host in `script-src`.
-- `consentPrefetchHead` adds an inline script whose content depends only on
-  its options. Load the page with the policy enforced, copy the `sha256-...`
-  value from the `Refused to execute inline script` console error, and add it
-  to `script-src`. Recompute it when you change the options.
-- `ConsentTheme` output depends only on the theme, so a hash works for it in
-  `style-src` the same way. Recompute it when you change the theme.
+- List `'self'` and each vendor script host in `script-src`.
+- Allow `consentPrefetchHead` and `ConsentTheme` by copying their `sha256-...` hashes from the browser console when CSP is enforced, updating the hashes whenever their options or theme change.
 
-TanStack Start adds its own inline scripts to prerendered pages. Its
-documentation covers how to allow those.
+Consult TanStack Start's docs for allowing TanStack Start's own inline scripts on prerendered pages.
 
 ## Verify
 
-Build the app, start the production server, and load a page with the policy
-enforced, not in report-only mode. Test under a policy that asks for a choice,
-such as an EU opt-in policy.
+Build the app, start the production server with CSP enforced rather than report-only, and open DevTools under an opt-in policy.
 
-1. The banner renders with its theme colors, and the console shows no
-   `Refused to` error that mentions an Inth element, your backend or a vendor.
-2. In the Elements panel, `<style id="inth-theme">` and the
-   `<meta property="csp-nonce">` tag carry the same nonce as the response's
-   `Content-Security-Policy` header. Browsers hide the `nonce` attribute from
-   `getAttribute`, so read the element's `nonce` property in the console.
-3. Before a choice, DevTools Network shows no vendor requests.
-4. Click **Accept All**. The script loader's `<script>` elements, with ids starting
-   `inth-`, carry the nonce, and the vendor requests appear.
-5. The save to `/v1/consent/records` succeeds. A `connect-src` violation here means the
-   backend origin is missing.
-6. Reload. The header has a new nonce, and the elements carry the new value.
+1. Confirm the banner renders with your theme colors and the console shows zero `Refused to` errors for Inth, your project URL, or vendors.
+2. In DevTools Console, verify `<style id="inth-theme">` and `<meta property="csp-nonce">` expose the response nonce via their `.nonce` property.
+3. Before a choice, confirm DevTools Network shows zero vendor requests.
+4. Click **Accept All**. Confirm script loader `<script>` elements (with `inth-` IDs) carry the nonce and vendor requests appear.
+5. Confirm `POST /v1/consent/records` succeeds.
+6. Reload and confirm the response issues a new nonce applied to all elements.

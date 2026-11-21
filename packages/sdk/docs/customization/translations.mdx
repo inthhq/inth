@@ -1,13 +1,18 @@
 ---
 title: Copy and translations
-description: Change consent wording through i18n and test the complete prompt and preferences flow.
+description: Translate Inth consent banners and dialogs across built-in languages, override copy in code, configure language detection, and support RTL layouts.
 group: customization
 ---
 
-## Configure shared messages
+Edit consent banner and dialog copy in your Inth project or override strings in code, with 53 built-in languages and automatic right-to-left layout support.
 
-Use provider `i18n` for wording that should stay consistent across components.
-For React, this fragment belongs in `InthProvider` options:
+## Override copy in your Inth project or in code
+
+Your Inth project supplies base translations via your manifest or `/v1/consent/init`. Edit wording in your project first so changes ship without redeploying.
+
+To override strings site-wide in code, pass `i18n.messages` in provider options:
+
+{/* example: fragment */}
 
 ```tsx
 i18n: {
@@ -24,21 +29,23 @@ i18n: {
 }
 ```
 
-Supply the same message keys in each supported locale. A one-off component prop
-such as `dismissButtonText` is useful for one banner; use translations for a
-site-wide change. Astro's serializable integration options have their own
-types, so verify that shape before copying a React object. The Vue plugin and
-Nuxt module have no `i18n` option; their copy comes from the backend.
+Inth merges `i18n.messages` key by key onto project copy for the active language, checking exact tags like `de-AT` before primary tags like `de`. A code key overrides project copy only when its text differs from Inth's built-in wording for that language, so passing stock bundles never hides edits from your Inth project.
 
-## Load only the languages you use
+- Use component props like `dismissButtonText` only for one-off banner overrides.
+- Astro serializes integration options, so match Astro's `i18n` shape rather than a React object.
+- Vue and Nuxt have no `i18n` option and read copy from your Inth project.
 
-Inth bundles English. Every other language it ships is a separate
-`translations/<code>` entry in your framework package, such as
-`@inth/react/translations/de`, named by its language code. Importing one
-registers Inth's built-in copy for that language. `testing()` can then switch
-to it, and your messages that repeat its wording don't hide backend edits.
-Import them in the file that configures the provider, so they load in the
-browser:
+## Detect and select the visitor language
+
+- **Server-rendered frameworks.** Server helpers read the request `Accept-Language` header so initial HTML renders in the visitor's language. Pass `language` explicitly to match a route locale like `/[lang]`.
+- **Browser-resolved setups.** Browser `/v1/consent/init` requests send the browser `Accept-Language` header, or use `overrides.language` from provider options.
+- **Local testing.** `testing()` reads `i18n.locale`, defaulting to `en`, and ignores browser language.
+
+Unmatched languages fall back to your Inth project's default language.
+
+## Load built-in languages
+
+Inth bundles English. Every other built-in language ships as a separate `translations/<code>` subpath so unused locales stay out of your bundle. Import the locales you need alongside your provider config so `testing()` can switch to them and Inth recognizes their built-in wording:
 
 {/* example: fragment */}
 
@@ -47,8 +54,7 @@ import '@inth/react/translations/de';
 import '@inth/react/translations/fr';
 ```
 
-Each entry also exports that copy as `translations`, if you want to read a
-string or build your messages from it:
+Each entry also exports `translations` if you want to extend built-in strings:
 
 {/* example: fragment */}
 
@@ -56,88 +62,33 @@ string or build your messages from it:
 import { translations as de } from '@inth/react/translations/de';
 ```
 
-The entries are `ar`, `bg`, `bn`, `cs`, `cy`, `da`, `de`, `el`, `es`, `et`,
-`fi`, `fr`, `ga`, `gu`, `he`, `hi`, `hr`, `ht`, `hu`, `id`, `is`, `it`, `ja`,
-`kn`, `ko`, `lb`, `lt`, `lv`, `ml`, `mr`, `ms`, `mt`, `nb`, `nl`, `nn`, `pa`,
-`pl`, `pt`, `rm`, `ro`, `ru`, `sk`, `sl`, `sv`, `ta`, `te`, `th`, `tr`, `ur`,
-`vi`, `yi` and `zh`. `translations/all` still loads every language at once.
-Every framework package has the same entries. Without a framework, import
-them from `@inth/sdk/translations/<code>`.
-
-## Combine messages with backend copy
-
-With a backend or a manifest, the copy it sends for the visitor's language is
-the base. Your `i18n.messages` for that language replace it key by key, and
-keys you leave out keep the backend's wording, including copy edited in your
-Inth project. Inth looks up messages for the exact language first, then for
-its primary language, so `de-AT` uses your `de` messages when there is no
-`de-AT` entry. Messages for other languages are not applied.
-
-A key only overrides the backend when your text differs from Inth's built-in
-wording for that language. So passing a stock bundle to enable a language
-keeps backend edits visible, while a key you actually reworded stays pinned
-in code. Inth only recognizes the built-in wording of English and of the
-languages you [import](#load-only-the-languages-you-use), such as
-`@inth/react/translations/de` or `@inth/react/translations/all`.
+Available entries: `ar`, `bg`, `bn`, `cs`, `cy`, `da`, `de`, `el`, `es`, `et`, `fi`, `fr`, `ga`, `gu`, `he`, `hi`, `hr`, `ht`, `hu`, `id`, `is`, `it`, `ja`, `kn`, `ko`, `lb`, `lt`, `lv`, `ml`, `mr`, `ms`, `mt`, `nb`, `nl`, `nn`, `pa`, `pl`, `pt`, `rm`, `ro`, `ru`, `sk`, `sl`, `sv`, `ta`, `te`, `th`, `tr`, `ur`, `vi`, `yi`, and `zh`. Import `translations/all` to load every locale at once, or use `@inth/sdk/translations/<code>` without a framework.
 
 ## Write labels that describe the action
 
-Accept and Reject record a choice. Customize opens preferences. Acknowledge
-dismisses a notice and does not record a grant. Do not label a notice dismissal
-"Accept all" or make a preferences link sound like it submits an opt-out.
+Match every label to its action. Accept and Reject record a consent decision. Customize opens preferences. Acknowledge dismisses a notice without recording a grant. Do not label a notice dismissal "Accept all" or word a preferences link like an opt-out submission.
 
-The notice acknowledgement uses `common.acknowledge`, with `common.dismiss` as
-a fallback for older translation bundles. Keep the displayed label and the
-command's effect aligned.
+Notice acknowledgement reads `common.acknowledge` and falls back to `common.dismiss` for older bundles.
 
 ## Translate the ConsentGate placeholder
 
-The `ConsentGate` placeholder reads the `consentGate` section:
-
-| Key | Where it shows |
+| Key | Purpose |
 | --- | --- |
-| `consentGate.title` | The placeholder text. `{category}` is replaced by the category's translated title. |
-| `consentGate.actionButton` | The button that opens preferences, with the same `{category}` replacement. |
-| `consentGate.policyBlocked` | React and Vue show it in place of the title, with no button, when a strict policy leaves the category out of scope. |
+| `consentGate.title` | Placeholder heading; `{category}` expands to the category title. |
+| `consentGate.actionButton` | Preferences button label, with the same `{category}` token. |
+| `consentGate.policyBlocked` | Replaces the title in React and Vue with no button when strict policy excludes the category. |
 
-Earlier versions called this section `frame`. Copy under `frame` in
-`i18n.messages` or custom translations still applies. Inth reads it as `consentGate`, a key set under `consentGate`
-wins over the same key under `frame`, and Inth logs a warning once outside
-production. Rename the section to `consentGate` to remove the warning.
+Legacy `frame` keys still fall back to `consentGate` with a one-time development warning. Rename `frame` to `consentGate` to clear it.
 
 ## Show right-to-left languages
 
-Inth sets `dir="rtl"` on its surfaces when the resolved language is Arabic,
-Hebrew, Yiddish, Persian, Urdu, Pashto, Sindhi, Central Kurdish (`ckb`),
-Uyghur, Dhivehi, Syriac or N'Ko. It matches the primary language, so `ar-EG`
-counts as Arabic, and accepts the older codes `iw` and `ji`. A script subtag
-decides over the language: `ku-Arab` and `pa-Arab` are right to left, and
-`sd-Deva` is left to right. Plain `ku` is left to right because it usually
-means Kurmanji, which uses Latin script. Inth ships right-to-left
-translations for Arabic, Hebrew, Urdu and Yiddish. For the others, supply
-your own messages or the copy from your Inth project.
+Inth sets `dir="rtl"` for Arabic, Hebrew, Yiddish, Persian, Urdu, Pashto, Sindhi, Central Kurdish `ckb`, Uyghur, Dhivehi, Syriac, and N'Ko, including regional tags like `ar-EG` and legacy codes `iw` and `ji`. Script subtags take precedence: `ku-Arab` and `pa-Arab` are RTL, while `sd-Deva` and plain `ku` are LTR. Built-in RTL translations ship for `ar`, `he`, `ur`, and `yi`.
 
-What follows the direction:
-
-- Text, headings and the button row in the banner, the preference dialog and
-  the preference widget flow right to left.
-- The HTML script tag, `@inth/sdk` and Astro's banner also set `lang` on
-  their surfaces. React, Vue and Svelte set `dir` only, so set `lang` on
-  `<html>` yourself.
-
-The banner and the floating `ConsentDialogTrigger` stay in their corners. A
-`bottom-left` banner is still at the bottom left in Hebrew, so it doesn't
-jump across the page when the visitor's language changes.
-
-What does not follow yet:
-
-- The IAB TCF dialog aligns several labels, indents and borders to the left.
-
-Test right-to-left pages with a real translation before you ship them.
+- Banner, dialog, and widget text and buttons flow right to left.
+- Banner and `ConsentDialogTrigger` corners stay pinned so `bottom-left` does not jump when language changes.
+- The script tag, `@inth/sdk`, and Astro's banner set both `dir` and `lang`; React, Vue, and Svelte set `dir` only, so set `lang` on `<html>`.
+- The IAB TCF dialog still left-aligns several internal labels, indents, and borders.
 
 ## Test more than English
 
-Try the longest labels you support at a narrow width, with browser zoom and
-right-to-left text where relevant. Check banner actions, category descriptions,
-legal links and the preferences save action. Translate explanations as well as
-buttons so a visitor can make an informed choice.
+Test your longest labels at narrow widths, with browser zoom, and in right-to-left locales. Check banner actions, category descriptions, legal links, and the preferences save button, and translate explanations alongside buttons so visitors can make an informed choice.

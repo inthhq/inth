@@ -38,7 +38,7 @@ export default defineDocsConfig({
 	llms: {
 		sections: [
 			{
-				body: "These docs describe Inth v3. Find your app's row in Choose your setup, then follow that framework guide from start to finish; it names the files to create and the backend URL to use. A visible banner does not prove anything: check that vendor requests wait for consent, that rejection survives a reload, and that preferences can be reopened.",
+				body: "These docs describe the Inth SDK (`@inth/*` packages). Find your app's row in Choose your setup, then follow that framework guide from start to finish; it names the files to create and the project URL to use. A visible banner does not prove anything: check that vendor requests wait for consent, that rejection survives a reload, and that preferences can be reopened.",
 				heading: 'Using these docs',
 				type: 'markdown',
 			},
@@ -47,6 +47,9 @@ export default defineDocsConfig({
 				links: [
 					{
 						urlPath: '/docs/concepts/choose-your-setup',
+					},
+					{
+						urlPath: '/docs/performance',
 					},
 					{
 						urlPath: '/docs/concepts/how-consent-works',
@@ -58,33 +61,7 @@ export default defineDocsConfig({
 						urlPath: '/docs/guides/verify-consent',
 					},
 					{
-						title: 'Upgrade a Next.js app from v2',
-						urlPath: '/docs/frameworks/next/upgrade-v3',
-					},
-					{
-						title: 'Upgrade a React app from v2',
-						urlPath: '/docs/frameworks/react/upgrade-v3',
-					},
-					{
-						title: 'Upgrade a JavaScript app from v2',
-						urlPath: '/docs/frameworks/javascript/upgrade-v3',
-					},
-				],
-				type: 'links',
-			},
-			{
-				heading: 'Compare Inth',
-				links: [
-					{
-						urlPath: '/docs/comparisons',
-					},
-					{
-						title:
-							'Inth vs CookieConsent v3, the vanilla-cookieconsent package',
-						urlPath: '/docs/comparisons/cookieconsent-v3',
-					},
-					{
-						urlPath: '/docs/comparisons/silktide-consent-manager',
+						urlPath: '/docs/migrate-from-c15t',
 					},
 				],
 				type: 'links',
@@ -98,7 +75,13 @@ export default defineDocsConfig({
 	},
 	navigation: [
 		{
-			pages: ['index', 'concepts/choose-your-setup', 'examples'],
+			pages: [
+				'index',
+				'concepts/choose-your-setup',
+				'performance',
+				'migrate-from-c15t',
+				'examples',
+			],
 			title: 'Getting started',
 		},
 		{
@@ -111,7 +94,7 @@ export default defineDocsConfig({
 				'data-fetching',
 				'consent-state',
 			],
-			title: 'Concepts',
+			title: 'Consent',
 		},
 		{
 			base: 'customization',
@@ -214,7 +197,6 @@ export default defineDocsConfig({
 						'static-export',
 						'client-side',
 						'rendering',
-						'upgrade-v3',
 					],
 					slug: 'next',
 					title: 'Next.js',
@@ -351,7 +333,7 @@ export default defineDocsConfig({
 							title: 'Verify and troubleshoot',
 						},
 					],
-					pages: ['quickstart', 'rendering', 'upgrade-v3'],
+					pages: ['quickstart', 'rendering'],
 					slug: 'react',
 					title: 'React',
 				},
@@ -899,7 +881,7 @@ export default defineDocsConfig({
 							title: 'Verify and troubleshoot',
 						},
 					],
-					pages: ['quickstart', 'upgrade-v3'],
+					pages: ['quickstart'],
 					slug: 'javascript',
 					title: 'JavaScript',
 				},
@@ -1174,64 +1156,14 @@ export default defineDocsConfig({
 			slug: 'cli',
 			title: 'CLI',
 		},
-		{
-			base: 'comparisons',
-			pages: [
-				'index',
-				'build-your-own',
-				'axeptio',
-				'borlabs-cookie',
-				'complianz',
-				'consentmanager',
-				'cookie-control',
-				'cookiebot',
-				'cookieconsent-v3',
-				'cookiefirst',
-				'cookiehub',
-				'cookiescript',
-				'cookieyes',
-				'didomi',
-				'enzuzo',
-				'ethyca',
-				'iubenda',
-				'ketch',
-				'klaro',
-				'onetrust',
-				'osano',
-				'react-cookie-consent',
-				'silktide-consent-manager',
-				'sourcepoint',
-				'tarteaucitron',
-				'termly',
-				'trustarc',
-				'usercentrics',
-			],
-			title: 'Comparisons',
-		},
-		{
-			pages: [
-				'contributing/index',
-				'oss/why-open-source',
-				'oss/contributing',
-				'oss/code-of-conduct',
-				'oss/license',
-			],
-			title: 'Project',
-		},
-		{
-			base: 'legals',
-			optional: true,
-			pages: ['cookie-policy', 'privacy-policy'],
-			title: 'Legal',
-		},
 	],
 	product: {
-		docs: 'https://c15t.com/docs',
-		homepage: 'https://c15t.com',
+		docs: 'https://inth.com/docs',
+		homepage: 'https://inth.com',
 		kind: 'library',
 		name: 'Inth',
-		repository: 'https://github.com/c15t/c15t',
+		repository: 'https://github.com/inthhq/inth',
 		tagline:
-			'Consent management for React, Next.js, Vue, Nuxt, Svelte, SvelteKit, Astro, TanStack Start and JavaScript.',
+			'Consent management for React, Next.js, Vue, Nuxt, Svelte, SvelteKit, Astro, TanStack Start, Angular, HTML, JavaScript, React Native, Swift and Android.',
 	},
 });

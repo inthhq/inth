@@ -1,79 +1,70 @@
 ---
 title: Components
-description: Selectors, inputs and behavior of every @inth/angular component and directive, from inth-consent-banner and inth-consent-dialog to inth-consent-gate, *inthIfConsent and the dev tools.
+description: Selectors, imports and shared inputs for every @inth/angular consent component and directive.
 group: frameworks
 ---
 
-Every component and directive is standalone. Import the class into the
-`imports` of the component that uses it, and render it below
-`provideInth()`. One that renders without the provider throws Angular's
-`NullInjectorError` for `ConsentManager`.
+All `@inth/angular` components and directives are standalone. Import each
+class into the component that renders it and place it below `provideInth()`.
+Rendering one without the provider throws `NullInjectorError` for
+`ConsentManager`.
 
 ## Every component
 
-What every page needs comes from `@inth/angular`. The rest has an entry
-point of its own, so a page loads it only when it renders it. The dialog's
-body, with the widget and primitives it renders, is a chunk of its own that
-loads before anyone opens the dialog.
+Core components come from `@inth/angular`. Additional components ship from
+dedicated subpaths so pages download only what they render. The dialog body
+lazy-loads before first open.
 
 | Selector | Class | Import from | Renders | Page |
 | --- | --- | --- | --- | --- |
-| `<inth-consent-banner>` | `ConsentBanner` | `@inth/angular` | The first-layer banner when the policy asks for one. | [ConsentBanner](./components/consent-banner) |
-| `[inthConsentDialogLink]` | `ConsentDialogLink` | `@inth/angular` | Your own button or link that opens preferences. | [ConsentDialogLink](./components/consent-dialog-link) |
-| `*inthIfConsent` | `IfConsent` | `@inth/angular` | A template only while a consent condition holds. | [Embeds](./embeds#render-content-only-while-consent-holds) |
-| `button[inth-consent-button]` | `ConsentButton` | `@inth/angular` | A button that accepts, rejects, saves or opens preferences. | [ConsentButton](./components/consent-button) |
-| `<inth-consent-dialog>` | `ConsentDialog` | `@inth/angular/consent-dialog` | The preference dialog, which loads its body on demand. | [ConsentDialog](./components/consent-dialog) |
-| `<inth-provider>` | `InthProvider` | `@inth/angular/provider` | The banner and the dialog in one tag. | [InthProvider](./components/inth-provider) |
-| `<inth-consent-widget>` | `ConsentWidget` | `@inth/angular/consent-widget` | The preference controls inline, for a settings page. | [ConsentWidget](./components/consent-widget) |
-| `<inth-consent-dialog-trigger>` | `ConsentDialogTrigger` | `@inth/angular/consent-dialog-trigger` | A floating, draggable button that opens preferences. | [ConsentDialogTrigger](./components/consent-dialog-trigger) |
-| `<inth-consent-gate>` | `ConsentGate` | `@inth/angular/consent-gate` | Its content only while a category is allowed. | [ConsentGate](./components/consent-gate) |
-| `<inth-iab-consent-banner>` | `IABConsentBanner` | `@inth/angular/iab` | The IAB TCF banner, for visitors under an IAB policy. | [IABConsentBanner](./components/iab-consent-banner) |
-| `<inth-iab-consent-dialog>` | `IABConsentDialog` | `@inth/angular/iab` | The IAB TCF preference center. | [IABConsentDialog](./components/iab-consent-dialog) |
-| `<inth-consent-dev-tools>` | `ConsentDevTools` | `@inth/angular/devtools` | A development panel for the consent state. | [Dev tools](./components/dev-tools) |
-| `[inthDialog]`, `[inthSwitch]`, `[inthTabs]` and others | `Dialog`, `Switch` and others | Unstyled building blocks for your own UI. | [Primitives](./components/primitives) |
+| `<inth-consent-banner>` | `ConsentBanner` | `@inth/angular` | First-layer banner when the policy requires one. | [ConsentBanner](./components/consent-banner) |
+| `[inthConsentDialogLink]` | `ConsentDialogLink` | `@inth/angular` | Button or link that reopens preferences. | [ConsentDialogLink](./components/consent-dialog-link) |
+| `*inthIfConsent` | `IfConsent` | `@inth/angular` | Template rendered only while a consent condition holds. | [Embeds](./embeds#render-content-only-while-consent-holds) |
+| `button[inth-consent-button]` | `ConsentButton` | `@inth/angular` | Button that accepts, rejects, saves or opens preferences. | [ConsentButton](./components/consent-button) |
+| `<inth-consent-dialog>` | `ConsentDialog` | `@inth/angular/consent-dialog` | Preference dialog that loads its body on demand. | [ConsentDialog](./components/consent-dialog) |
+| `<inth-provider>` | `InthProvider` | `@inth/angular/provider` | Banner and preference dialog in one tag. | [InthProvider](./components/inth-provider) |
+| `<inth-consent-widget>` | `ConsentWidget` | `@inth/angular/consent-widget` | Inline preference controls for a settings page. | [ConsentWidget](./components/consent-widget) |
+| `<inth-consent-dialog-trigger>` | `ConsentDialogTrigger` | `@inth/angular/consent-dialog-trigger` | Floating, draggable button that reopens preferences. | [ConsentDialogTrigger](./components/consent-dialog-trigger) |
+| `<inth-consent-gate>` | `ConsentGate` | `@inth/angular/consent-gate` | Content gated behind a category or vendor. | [ConsentGate](./components/consent-gate) |
+| `<inth-iab-consent-banner>` | `IABConsentBanner` | `@inth/angular/iab` | IAB TCF banner under an IAB policy. | [IABConsentBanner](./components/iab-consent-banner) |
+| `<inth-iab-consent-dialog>` | `IABConsentDialog` | `@inth/angular/iab` | IAB TCF preference center. | [IABConsentDialog](./components/iab-consent-dialog) |
+| `<inth-consent-dev-tools>` | `ConsentDevTools` | `@inth/angular/devtools` | Development panel for inspecting consent state. | [Dev tools](./components/dev-tools) |
+| `[inthDialog]`, `[inthSwitch]`, `[inthTabs]` and others | `Dialog`, `Switch` and others | `@inth/angular/primitives` | Unstyled building blocks for custom UI. | [Primitives](./components/primitives) |
 
-All components use `OnPush` change detection and read state from signals, so
-they work with zoneless change detection and with zone.js.
+All components use `OnPush` change detection and signals, working with both
+zoneless change detection and `zone.js`.
 
 ## Styles
 
-There is no stylesheet to import. Each stock component adds the rules it
-uses to `<head>` as a `<style>` element, once per page, when it first renders.
-On a server-rendered page the rules are in the HTML, so the banner is styled
-before hydration. The dialog's rules load with the dialog's deferred code.
+No stylesheet import is required. Each stock component injects its rules into
+`<head>` as a `<style>` element once per page on first render. Server-rendered
+pages include those rules in the HTML, and the dialog loads its styles with
+its deferred chunk.
 
-The IAB TCF banner and dialog add their own rules. Pages without IAB
-components do not load the IAB sheets.
+IAB components inject their own sheets only when rendered.
 
-To run the stylesheet through Tailwind CSS 3 or put it in a named cascade
-layer, set `styles: false` in `provideInth()` and add
-`@inth/angular/styles.css` to the `styles` array in `angular.json`. With IAB
-TCF, also add `@inth/angular/iab/styles.css` after it. For Tailwind CSS 3,
-list `@inth/angular/postcss-tailwind3` before `tailwindcss` in your PostCSS
-configuration.
-[Stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself)
-explains when.
+To process styles through Tailwind CSS 3 or a named cascade layer, set
+`styles: false` in `provideInth()` and add `@inth/angular/styles.css` (plus
+`@inth/angular/iab/styles.css` if using IAB) to `styles` in `angular.json`.
+For Tailwind CSS 3, place `@inth/angular/postcss-tailwind3` before
+`tailwindcss` in PostCSS. See
+[stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself).
 
 ## When components render nothing
 
-Every consent surface stays hidden until a policy resolves for the visitor,
-and again when the resolved policy asks for no prompt and grants no way to
-change preferences. A missing banner or link is usually a policy result, not
-a rendering bug. See
+Consent surfaces stay hidden until a policy resolves, and remain hidden when
+the policy requires no prompt and exposes no preferences. See
 [why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent).
 
 ## Shared inputs
 
-Several inputs mean the same thing on every component:
-
 | Input | Behavior |
 | --- | --- |
-| `noStyle` | Renders the same markup and behavior without Inth's classes. Set it in `provideInth()` for every component, or on one component. |
-| `rootClass` | Adds your class to the component's root element. |
-| `hideBranding` | Hides the "Secured by" tag on the banner and dialog. The widget hides it by default. |
-| `models` | The policy models a surface renders for: `opt-in`, `opt-out`, `iab` and `none`. |
-| `legalLinks` | Which of the provider's legal links a banner or dialog shows, as an array of keys, or `null` for none. |
-| `disableAnimation` | Turns off enter and exit transitions for one surface. |
+| `noStyle` | Drops `inth` classes while keeping markup and behavior. Set on `provideInth()` or per component. |
+| `rootClass` | Adds a class to the component's root element. |
+| `hideBranding` | Hides the "Secured by" tag on banner and dialog (widget hides it by default). |
+| `models` | Policy models the surface renders for: `opt-in`, `opt-out`, `iab` and `none`. |
+| `legalLinks` | Provider `legalLinks` keys to display, or `null` for none. |
+| `disableAnimation` | Disables enter and exit transitions for that surface. |
 
-Theme slots style one part of one component; [customize](./customize) lists
-them.
+Use theme slots to target individual parts; see [customize](./customize).

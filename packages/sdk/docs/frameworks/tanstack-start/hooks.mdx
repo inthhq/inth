@@ -1,15 +1,14 @@
 ---
 title: Hooks
-description: Read consent permissions, open the preference dialog and save choices in TanStack Start components with the hooks exported from @inth/tanstack-start.
+description: Read consent permissions, open the preference dialog, and save choices in TanStack Start components.
 group: frameworks
 ---
 
+Read consent state, open the preference center, and record visitor actions in TanStack Start components with hooks from `@inth/tanstack-start`.
+
 ## Read only the state you need
 
-`@inth/tanstack-start` re-exports every hook from `@inth/react`. Each hook reads
-the runtime from `InthProvider`, so call hooks in components rendered inside it.
-Any route component qualifies, because `InthProvider` wraps the `Outlet` in the
-root route.
+`@inth/tanstack-start` re-exports every hook from `@inth/react`. Each hook reads the runtime from `InthProvider`, so call hooks in any route or component rendered inside `InthProvider`.
 
 {/* example: fragment */}
 
@@ -22,8 +21,7 @@ export function OptionalFeature() {
 }
 ```
 
-On the server, hooks read the state the root loader resolved, so a route
-renders the same result in the server HTML and in the first browser render.
+During SSR, hooks read the state resolved by the root loader so server HTML matches the first client render.
 
 <import src="../../shared/react/hooks/overview.mdx#read-state" />
 
@@ -46,7 +44,7 @@ export function PrivacyMenuItem() {
 }
 ```
 
-`ConsentDialogLink` does the same without a hook.
+Use `ConsentDialogLink` when you only need a footer or inline button without calling a hook.
 
 ## Save from a visitor action
 
@@ -69,6 +67,4 @@ export function RejectButton() {
 
 ## Where hooks do not work
 
-Hooks need React context, so they do not run in loaders, `beforeLoad`, server
-functions or server routes. On the server, read the request's consent state
-with `resolveConsent` from `@inth/tanstack-start/server`.
+Hooks require React context and cannot run inside loaders, `beforeLoad`, server functions, or server routes. On the server, read request consent state with `resolveConsent` from `@inth/tanstack-start/server`.

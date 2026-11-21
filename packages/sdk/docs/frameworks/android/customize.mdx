@@ -1,45 +1,35 @@
 ---
 title: Customize
-description: Set the Android consent screens' colors, radii, spacing, type, per-part slots, app identity, headline and provider attribution through the native ConsentTheme API.
+description: Style Android Compose consent screens with ConsentTheme colors, typography, spacing, slots, layout, and copy.
 group: frameworks
 ---
 
-Pass a `ConsentTheme` to `InthConsent` to match your app's visual identity.
-The native presenter keeps responsibility for drafts, navigation and saves.
-Start with the [quickstart](/docs/frameworks/android/quickstart) so the same
-screens can be reopened from app settings.
+Pass a `ConsentTheme` to `InthConsent` (or `attachConsent`) to match Inth's native screens to your app while the native presenter handles drafts, navigation, and saves. Start with the [Android quickstart](/docs/frameworks/android/quickstart) so Privacy settings stay reachable.
 
 ## Choose what to change
 
-| Change | Native setting |
+| Customization | Native setting |
 | --- | --- |
 | App name and logo above the headline | `brand` |
 | Headline and introductory copy | `copy` |
-| Colors in light and dark mode | `colors` |
-| Card and button corners | `radius` |
-| Gutters, section gaps and padding | `spacing` |
-| Type sizes and faces | `typography` |
-| One part, such as the decision buttons | `slots` |
-| Provider name in the attribution | `branding` |
-| A page, a sheet or a prompt for the first choice | `firstLayer` |
-| c15t colours or the system's, with your accent | `appearance` |
-| Save Settings at the bottom or in the top bar | `savePlacement` |
-| Entirely app-owned controls | [Headless integration](/docs/frameworks/android/headless) |
+| Light and dark colors | `colors` |
+| Card and button corner radii | `radius` |
+| Page gutters, section gaps, and padding | `spacing` |
+| Type sizes and font families | `typography` |
+| Per-part overrides (such as decision buttons) | `slots` |
+| Provider attribution name and mark | `branding` |
+| First-layer container (`page`, `sheet`, or `prompt`) | `firstLayer` |
+| Stock color palette (`system` or `c15t`) | `appearance` |
+| Save Settings button placement | `savePlacement` |
+| Fully app-owned controls | [Build your own UI](/docs/frameworks/android/headless) |
 
 ## Add your brand
 
-The following theme gives a fictional Pantry app teal links and switches,
-10dp corners, a wider page gutter, an 18sp body size, pill-shaped outlined
-actions, its own logo and a short headline. The light/dark color pairs
-keep the same theme usable in either system appearance.
-
-Create `consent-theme.kt` in your app, using your own package name:
+Create `consent-theme.kt` in your app (updating the package name) to configure light and dark colors, radii, gutters, typography, slot overrides, your logo, and first-layer copy:
 
 <include src="../../shared/examples/native/examples/consent-demo/android-brand-theme.mdx" />
 
-Put your logo in the app's drawable resources. In the quickstart's
-`InthConsent` call, pass the theme as its `theme` argument. This is a change
-to that call, using your own drawable name:
+Add your logo to drawable resources and pass the theme to `InthConsent`:
 
 {/* example: fragment */}
 
@@ -50,46 +40,25 @@ InthConsent(
 )
 ```
 
-Import your app's generated `R` class if the file is outside its namespace.
-The logo appears in the app-identity tile. An unreadable explicit resource falls
-back to the name's initial. `ConsentTheme.Brand.Hidden` removes the app-identity
-area so the headline starts the screen.
+Import your app's generated `R` class if this file sits in another package. An unreadable drawable falls back to the app name's initial. Pass `ConsentTheme.Brand.Hidden` to omit the app-identity header.
 
 ## Keep decision buttons equal
 
-`colors.decision` and `colors.textOnDecision` control the fill and label of
-both Accept all and Reject all. They intentionally share one treatment, and so
-does the `ConsentTheme.Slot.ButtonPrimary` slot. The example changes `primary`
-while keeping the stock decision colors. Below 5:1 text contrast in either
-appearance, the screens use the stock decision colors instead.
+`colors.decision`, `colors.textOnDecision`, and `ConsentTheme.Slot.ButtonPrimary` apply equally to Accept all and Reject all. If custom button colors drop below 5:1 text contrast in either appearance, the screens fall back to stock decision colors. Always verify text contrast in light mode, dark mode, and at the largest system font scale.
 
-When replacing colors, check text contrast for every affected state in both
-appearances. Check the screen at the largest system font scale as well. A
-theme value is not a contrast guarantee.
+## Set typography, spacing, and radii
 
-## Set type, spacing and radii
+Token names match web tokens: `colors.primary` maps to `--inth-primary`, `radius.md` maps to `--inth-radius-md`, and `spacing.lg` maps to `--inth-space-lg`.
 
-Names that have a web token match it: `colors.primary` is `--inth-primary`,
-`radius.md` is `--inth-radius-md` and `spacing.lg` is `--inth-space-lg`.
+`typography.fontSize` configures three Material type groups while preserving relative style ratios and system font scaling (`null` keeps the Material default):
 
-`typography.fontSize` sets three groups of the Material type scale the screens
-use. `sm` sizes bodyMedium, bodySmall and the small labels (14sp by default);
-`base` sizes bodyLarge, the titles under it and labelLarge (16sp); `lg` sizes
-the first-layer headline (34sp) and the larger titles. Each style keeps its
-ratio to its group, and the system font scale still applies. `null` keeps the
-Material size. `typography.fontFamily` sets the face of every style except the
-headline, which `typography.headlineFont` sets: `HeadlineFont.SansSerif` and
-`HeadlineFont.Serif` select system faces, and `HeadlineFont.Custom` accepts a
-bundled Compose `FontFamily`.
+- `sm`: `bodyMedium`, `bodySmall`, and small labels (14sp default).
+- `base`: `bodyLarge`, sub-titles, and `labelLarge` (16sp default).
+- `lg`: first-layer headline (34sp default) and larger titles.
 
-`spacing` sets the page gutters, section gaps and the footer and notice
-padding. A control's own padding stays fixed so its touch target keeps its
-size. `radius.md` rounds buttons and cards; `radius.sm` and `radius.lg` follow
-it until you set them.
+`typography.fontFamily` sets every style except the headline. `typography.headlineFont` sets the headline to `HeadlineFont.SansSerif`, `HeadlineFont.Serif`, or a bundled Compose `FontFamily` via `HeadlineFont.Custom`.
 
-`slots` override one part: `ConsentBannerTitle`, `ConsentBannerDescription`,
-`ButtonPrimary` and `ButtonSecondary`, each with `color`, `backgroundColor`,
-`borderRadius` and `fontSize`.
+`spacing` controls page gutters, section gaps, and footer/notice padding without shrinking touch targets. `radius.md` rounds buttons and cards (`radius.sm` and `radius.lg` inherit it until set). `slots` (`ConsentBannerTitle`, `ConsentBannerDescription`, `ButtonPrimary`, `ButtonSecondary`) override `color`, `backgroundColor`, `borderRadius`, and `fontSize` for one part.
 
 ## Place Save Settings
 
@@ -97,10 +66,7 @@ it until you set them.
 ConsentTheme.current = ConsentTheme(savePlacement = ConsentTheme.SavePlacement.Bottom)
 ```
 
-Privacy Settings keeps Reject All and Accept All together at the bottom. Save
-is a short button at the end of the top app bar by default, which leaves more
-room for the list. `Bottom` makes it a full-width Save Settings button under
-the other two. At large font scales it is always at the bottom.
+Privacy Settings pins Reject All and Accept All together at the bottom. Save sits in the top app bar by default to leave more room for the list. Set `Bottom` to render a full-width Save Settings button below them; large font scales always move Save to the bottom.
 
 ## Choose a first-layer layout
 
@@ -108,93 +74,50 @@ the other two. At large font scales it is always at the bottom.
 ConsentTheme.current = ConsentTheme(firstLayer = ConsentTheme.FirstLayer.Sheet)
 ```
 
-Every layout shows the same text, the same partner link and the same equal
-Accept all and Reject all. Only the container changes.
+Every layout shows the same copy, partner link, and equal Accept all and Reject all actions:
 
-| Layout | What it is |
+| Layout | Behavior |
 | --- | --- |
-| `page` | A full-screen page. The default. |
-| `sheet` | A floating sheet at the bottom, with your app dimmed behind it. |
-| `prompt` | A centred card like a system permission alert, with your app dimmed behind it. |
+| `page` | Full-screen page (default). |
+| `sheet` | Floating bottom sheet over a dimmed app background. |
+| `prompt` | Centered alert-style card over a dimmed app background. |
 
-Settings opened from Customize always take the full screen. At accessibility
-text sizes every layout becomes `page`, so the decisions follow the text in one
-scroll.
+Privacy Settings opened from Customize always fills the screen. At accessibility font sizes, every layout becomes `page` so decisions follow text in one scroll. Under an IAB TCF policy on wide windows such as tablets, `sheet` and `prompt` expand to `page`.
 
-`appearance` chooses the stock colours. `system`, the default, uses the
-platform's backgrounds and text colours with your app's accent colour, and
-centres the page. `c15t` is warm paper and ink. The sheet and the prompt always use the system colours,
-because they sit over your app. Colours you set yourself win in every case.
-
-In an IAB TCF policy, a sheet or prompt is shown as the page in a wide window,
-such as a tablet, so the choice covers the screen. Reject all and Accept all on
-a sheet or prompt are a tint of the surface with the text colour; they do not
-take the primary button slot's colours.
-
-With the system colours, your app's own name stands in for a brand name you
-have not set, and its icon for a brand mark you have not set. Each falls back
-on its own, so a brand name without a mark is shown with the app icon. Accept all and Reject all take your accent colour, darkened until
-white text on it reaches the 5:1 contrast IAB TCF asks for.
-
-The accent colour is your application theme's `colorPrimary`.
+`appearance` picks the stock palette. `system` (default) uses platform backgrounds and text colors with your app theme's `colorPrimary` accent, centers the page, and falls back to your app name and icon whenever `brand` fields are unset. Accept all and Reject all darken your accent until white text reaches 5:1 contrast. `c15t` applies the warm paper and ink palette. `sheet` and `prompt` always use system colors and draw Accept all and Reject all as tinted surfaces rather than `ButtonPrimary` fills. Explicit colors always win.
 
 ## Separate app identity from attribution
 
-`brand` identifies the app. `branding` identifies the consent provider in the
-attribution beneath the actions. The built-in providers are
-`ConsentTheme.Branding.Inth`, the default, and `.C15t`. A custom provider uses
-`Branding.Custom(name, markResId)`; its mark is optional. `showsBranding = false`
-hides that attribution.
+`brand` identifies your app above the headline. `branding` identifies the consent provider beneath the actions: `ConsentTheme.Branding.Inth` (default), `ConsentTheme.Branding.C15t`, or `ConsentTheme.Branding.Custom(name, markResId)`. Set `showsBranding = false` to hide provider attribution.
 
-Changing provider attribution does not replace the app's identity. Set `brand`
-when you want your app's own name and logo above the headline.
+## Configure via application metadata
 
-## Set a default through application metadata
-
-An explicit `theme` argument takes precedence over the global
-`ConsentTheme.current` and application metadata. Metadata is useful when the
-same native presenter is opened through a wrapper.
+An explicit `theme` argument takes priority over `ConsentTheme.current` and manifest metadata. Every shortened key below retains the `com.inth.consent.` prefix:
 
 | Metadata key | Value |
 | --- | --- |
-| `com.inth.consent.PRIMARY`, `TEXT_ON_PRIMARY` | `#RRGGBB`, or a comma-separated light,dark pair. |
-| `com.inth.consent.CANVAS`, `SURFACE`, `SURFACE_MUTED` | Screen and card colors. |
-| `com.inth.consent.TEXT`, `TEXT_MUTED` | Main and muted text colors. |
-| `com.inth.consent.DECISION`, `TEXT_ON_DECISION` | Shared Accept/Reject colors. |
-| `com.inth.consent.RADIUS_SM`, `RADIUS_MD`, `RADIUS_LG` | Radii in dp. |
-| `com.inth.consent.SPACE_XS` to `SPACE_XL` | Spacing steps in dp. |
-| `com.inth.consent.FONT_SIZE_SM`, `FONT_SIZE_BASE`, `FONT_SIZE_LG` | Font sizes in sp. |
-| `com.inth.consent.FONT_FAMILY` | A font resource. |
-| `com.inth.consent.BUTTON_PRIMARY_BORDER_RADIUS` | One slot field, as `<SLOT>_<FIELD>`. |
-| `com.inth.consent.HEADLINE_FONT` | `sans`, `serif` or `rounded`; Android maps `rounded` to sans. |
-| `com.inth.consent.BRAND_NAME`, `BRAND_MARK` | App name and drawable resource. |
-| `com.inth.consent.BRAND` | `false` hides app identity. |
-| `com.inth.consent.HEADLINE`, `INTRODUCTION` | First-layer copy. |
-| `com.inth.consent.FIRST_LAYER` | `page`, `sheet` or `prompt`. |
-| `com.inth.consent.APPEARANCE` | `system` or `c15t`. |
-| `com.inth.consent.SAVE_PLACEMENT` | `top` or `bottom`. |
-| `com.inth.consent.BRANDING_PROVIDER` | `inth` or `c15t`. |
-| `com.inth.consent.BRANDING_NAME`, `BRANDING_MARK` | Custom provider name and drawable. |
-| `com.inth.consent.BRANDING` | `false` hides provider attribution. |
+| `com.inth.consent.PRIMARY`, `TEXT_ON_PRIMARY` | `#RRGGBB` or comma-separated `light,dark` pair |
+| `com.inth.consent.CANVAS`, `SURFACE`, `SURFACE_MUTED` | Screen and card colors |
+| `com.inth.consent.TEXT`, `TEXT_MUTED` | Primary and muted text colors |
+| `com.inth.consent.DECISION`, `TEXT_ON_DECISION` | Shared Accept/Reject colors |
+| `com.inth.consent.RADIUS_SM`, `RADIUS_MD`, `RADIUS_LG` | Radii in dp |
+| `com.inth.consent.SPACE_XS` to `SPACE_XL` | Spacing steps in dp |
+| `com.inth.consent.FONT_SIZE_SM`, `FONT_SIZE_BASE`, `FONT_SIZE_LG` | Font sizes in sp |
+| `com.inth.consent.FONT_FAMILY` | Font resource name |
+| `com.inth.consent.BUTTON_PRIMARY_BORDER_RADIUS` | Slot field as `<SLOT>_<FIELD>` |
+| `com.inth.consent.HEADLINE_FONT` | `sans`, `serif`, or `rounded` (mapped to sans on Android) |
+| `com.inth.consent.BRAND_NAME`, `BRAND_MARK` | App name and drawable resource |
+| `com.inth.consent.BRAND` | `false` hides app identity |
+| `com.inth.consent.HEADLINE`, `INTRODUCTION` | First-layer copy |
+| `com.inth.consent.FIRST_LAYER` | `page`, `sheet`, or `prompt` |
+| `com.inth.consent.APPEARANCE` | `system` or `c15t` |
+| `com.inth.consent.SAVE_PLACEMENT` | `top` or `bottom` |
+| `com.inth.consent.BRANDING_PROVIDER` | `inth` or `c15t` |
+| `com.inth.consent.BRANDING_NAME`, `BRANDING_MARK` | Custom provider name and drawable |
+| `com.inth.consent.BRANDING` | `false` hides provider attribution |
 
-Keys shortened within a row retain the `com.inth.consent.` prefix.
+## Know where copy comes from
 
-## Know where the copy comes from
+Stock screens read labels from `@inth/sdk/translations` using the policy's served language (or `NativeConfig.overrides.language`), falling back to English if unavailable. IAB screens follow the served vendor list's language.
 
-The stock screens read every label from `@inth/sdk/translations`, in the policy's
-translation language: the language `/init` serves, or the `language` in
-`NativeConfig.overrides`. Buttons, headings and category names use the same
-keys as the web banner, so they read "Accept All", "Reject All" and
-"Strictly Necessary". Sentences that only make sense in an app, such as the
-category explanations and save errors, are native-only keys in the same
-package. A language Inth has no copy for falls back to English. IAB screens
-follow the served vendor list's language instead.
-
-`ConsentTheme.Copy` replaces the first-layer headline and introduction. Leave
-a field `null` to keep the translated stock copy. A string you set is shown as
-given in every language, so pass your own translation for each language you
-support. It is not a localization dictionary for the other labels.
-
-IAB purpose and vendor disclosures come from the served authoritative data.
-Keep that copy and required policy links intact. Use the
-[IAB guide](/docs/guides/mobile-iab) when reviewing an advertising flow.
+`ConsentTheme.Copy` overrides only the first-layer headline and introduction. Leave fields `null` to keep translated stock copy; strings you set render verbatim in every language. Keep authoritative IAB vendor disclosures and policy links intact, and review [Mobile IAB and ads](/docs/guides/mobile-iab) before shipping advertising flows.

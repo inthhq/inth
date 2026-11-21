@@ -1,28 +1,30 @@
 ---
 title: Translations
-description: Choose the language of the Inth banner and preference dialog on a plain HTML site, change its wording, and add languages with the script tag.
+description: Pick the banner language, override wording and add test languages on a plain HTML page with the Inth script tag.
 group: frameworks
 ---
 
+Control the language and wording of the Inth banner and preference dialog on
+a plain HTML site.
+
 ## Where the copy comes from
 
-The script tag bundles English only. Other languages come from outside the
-bundle, and which source wins depends on the mode:
+The script tag bundles English only. Other languages load according to mode:
 
 | Mode | Where the copy comes from |
 | --- | --- |
-| Hosted, with `data-project-url` | Your Inth project. The backend picks the language from the visitor's browser, or from `data-language`, and sends its copy with the policy. |
-| Manifest, including a tag loaded from your backend's `/inth.js` | The manifest's translations for the visitor's language. |
-| Local | English, or the language and messages you set in `i18n`. |
+| Hosted (`data-project-url` or `<projectUrl>/inth.js`) | Your Inth project. Inth picks the language from the browser or `data-language` and returns its copy with the policy. |
+| Manifest | The manifest's translations for the visitor's language. |
+| Testing (`inth.testing.js`) | English, plus languages supplied in `i18n.messages`. |
 
-In every mode, your `i18n.messages` for the language in use override that copy
-key by key. Text you set in `ui.banner`, such as `title` or
-`acceptButtonText`, replaces the translated text for all languages.
+In every mode, `i18n.messages` overrides matching keys for the active
+language. Direct strings in `ui.banner` (such as `title` or
+`acceptButtonText`) override translations in every language.
 
 ## Pick the language
 
-In hosted and manifest mode, Inth follows the visitor's browser language. To
-force one, add `data-language` to the tag:
+In hosted and manifest modes, Inth follows the visitor's browser language.
+Force a specific language with `data-language`:
 
 {/* example: fragment */}
 
@@ -34,20 +36,18 @@ force one, add `data-language` to the tag:
 ></script>
 ```
 
-A multilingual site can print each page's language into the tag, for example
-from the `lang` attribute your CMS already writes on `<html>`.
+Multilingual sites can print each page's locale into `data-language` from
+their CMS template.
 
-To switch after load, call `inth.setLanguage('fr')`. With a backend, Inth asks
-the backend for French copy and re-renders the banner and dialog. On a test
-page with `inth.testing.js`, `data-language` and `inth.setLanguage()` switch
-to a language that has copy in the bundle or in `i18n.messages`. A language
-with no copy shows the default copy. See
+To switch languages at runtime, call `inth.setLanguage('fr')`. In hosted
+mode, Inth fetches French copy and re-renders. With `inth.testing.js`,
+`setLanguage()` switches to any language defined in `i18n.messages`; see
 [add a language on a test page](#add-a-language-on-a-test-page).
 
 ## Change the wording
 
-Set `i18n.messages` in a queued `config` call. You only list the keys you
-change; the rest keep their default text:
+Override specific keys in a queued `config` call; omitted keys keep their
+default text:
 
 {/* example: fragment */}
 
@@ -68,25 +68,15 @@ change; the rest keep their default text:
 </script>
 ```
 
-With a backend, the `/init` response or the manifest carries your Inth
-project's copy for the visitor's language. Your `i18n.messages` for that
-language override it key by key, and keys you leave out keep the project's
-copy. Inth looks for the exact language first, then the primary language, so a
-visitor on `de-AT` gets your `de` messages. Messages for other languages are
-not applied.
-
-A key only overrides the backend when your text differs from Inth's built-in
-wording for that language. So passing the stock bundles from
-`@inth/sdk/translations/all` to enable languages keeps edits made in your Inth project visible,
-while a key you actually reworded stays pinned in code. Core bundles only
-English; for other languages, import `@inth/sdk/translations/all` so Inth can
-recognize its stock wording.
+Inth matches the exact language code first, then its primary language
+(`de-AT` falls back to `de`). A key overrides your Inth project's copy only
+when your text differs from the built-in wording for that language, so
+dashboard edits remain visible for keys you did not customize.
 
 ## Add a language on a test page
 
-Load `inth.testing.js`. Queue your `i18n` configuration before that tag. It
-shows the language named in `i18n.locale`, built from your messages over the
-English defaults:
+With `inth.testing.js`, queue `i18n` before the script tag to supply
+translations over the English defaults:
 
 {/* example: fragment */}
 
@@ -116,47 +106,38 @@ English defaults:
 </script>
 ```
 
-Keys you leave out stay in English, so translate every key your banner and
-dialog show. The messages follow the same structure every Inth package uses.
-
-`inth.testing.js` bundles English only, so every other language needs an
-entry in `i18n.messages`. With one entry per language,
-`data-language` and `inth.setLanguage()` switch between them. A regional
-code such as `de-AT` uses the `de` entry when there is no `de-AT` entry. A
-language with no entry shows the default copy.
+Omitted keys stay in English. Provide one entry per language you test so
+`data-language` and `inth.setLanguage()` switch between them.
 
 ## Message keys the stock UI reads
 
 | Key | Where it shows |
 | --- | --- |
-| `cookieBanner.title`, `cookieBanner.description` | Banner heading and text under a choice policy. |
-| `cookieBanner.noticeTitle`, `cookieBanner.noticeDescription` | Banner heading and text under a notice policy. |
+| `cookieBanner.title`, `cookieBanner.description` | Choice banner heading and body. |
+| `cookieBanner.noticeTitle`, `cookieBanner.noticeDescription` | Notice banner heading and body. |
 | `common.acceptAll`, `common.rejectAll`, `common.customize` | Banner and dialog buttons. |
-| `common.acknowledge` | The notice's dismiss button. |
-| `common.save` | The dialog's save button. |
-| `common.securedBy` | The "Secured by" tag. |
-| `consentManagerDialog.title`, `consentManagerDialog.description` | Dialog heading and text. |
-| `consentTypes.measurement.title`, `consentTypes.measurement.description` and the other categories | Each category row in the dialog. |
-| `legalLinks.privacyPolicy`, `legalLinks.cookiePolicy`, `legalLinks.termsOfService` | Legal link labels, when a link has no `label` of its own. |
-| `rights.optOut`, `rights.preferences` | The extra button an opt-out policy adds to the banner. |
+| `common.acknowledge` | Notice dismiss button. |
+| `common.save` | Dialog save button. |
+| `common.securedBy` | "Secured by" tag. |
+| `consentManagerDialog.title`, `consentManagerDialog.description` | Dialog heading and body. |
+| `consentTypes.<category>.title`, `consentTypes.<category>.description` | Each category row in the dialog. |
+| `legalLinks.privacyPolicy`, `legalLinks.cookiePolicy`, `legalLinks.termsOfService` | Legal link labels when no explicit `label` is set. |
+| `rights.optOut`, `rights.preferences` | Extra rights button under opt-out policies. |
 
-The trigger's accessible name is not a message. Set `ui.trigger.ariaLabel`
-per page instead.
+Set the floating trigger's accessible label per page via
+`ui.trigger.ariaLabel`.
 
 ## Right-to-left languages
 
-For a right-to-left language such as Hebrew, the banner and dialog set
-`dir="rtl"`. The banner stays in the same corner. Check wrapping and button order after you switch.
-
-[Copy and translations](/docs/customization/translations) covers labelling
-actions honestly and testing long strings.
+For right-to-left languages such as Hebrew or Arabic, the banner and dialog
+set `dir="rtl"` while staying in their configured corner. Check wrapping and
+button order after switching. See
+[copy and translations](/docs/customization/translations).
 
 ## Check it works
 
-1. Set your browser's preferred language to German and open the page in a
-   private window. With a backend, the banner shows your project's German
-   copy.
-2. Add `data-language="fr"` to the tag and reload. The banner switches to
-   French.
-3. Open the preference dialog. Its title, category names and buttons use the
-   same language as the banner.
+1. Set your browser language to German and open the page in a private window
+   to verify German copy loads from Inth.
+2. Add `data-language="fr"` and reload to confirm French copy renders.
+3. Open the preference dialog and confirm headings, categories and buttons
+   match the banner's language.

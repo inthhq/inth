@@ -16,14 +16,14 @@
 	],
 	"manualInstallation": ["", "```bash\npnpm add @inth/nuxt\n```"],
 	"usage": [
-		"Register the module and set `NUXT_PUBLIC_INTH_PROJECT_URL` to your Inth backend URL",
+		"Register the module and set `NUXT_PUBLIC_INTH_PROJECT_URL` to your Inth project URL",
 		"```ts\n// nuxt.config.ts\nexport default defineNuxtConfig({\n  modules: ['@inth/nuxt'],\n})\n```",
 		"Add `InthProvider` and a link that opens the preference dialog to `app.vue`",
 		"```vue\n<!-- app/app.vue -->\n<template>\n  <InthProvider />\n  <NuxtPage />\n  <footer>\n    <ConsentDialogLink>Privacy settings</ConsentDialogLink>\n  </footer>\n</template>\n```",
-		"For the full setup, see the [Nuxt quickstart](https://c15t.com/docs/frameworks/nuxt/quickstart)"
+		"For the full setup, see the [Nuxt quickstart](https://inth.com/docs/frameworks/nuxt/quickstart)"
 	],
-	"docsLink": "https://c15t.com/docs/frameworks/nuxt/quickstart",
-	"quickStartLink": "https://c15t.com/docs/frameworks/nuxt/quickstart",
+	"docsLink": "https://inth.com/docs/frameworks/nuxt/quickstart",
+	"quickStartLink": "https://inth.com/docs/frameworks/nuxt/quickstart",
 	"showCLIGeneration": false,
 	"showHosting": true
 }

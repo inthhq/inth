@@ -1,15 +1,17 @@
 ---
 title: IABConsentDialog
-description: Render the IAB TCF preference centre in a Vue app with IABConsentDialog, choose its first tab, and build a custom one with composables.
+description: Render the IAB TCF preference center directly in Vue, pick its initial tab, or build a custom one with composables.
 group: frameworks
 ---
 
+Import `IABConsentDialog` directly when composing IAB TCF surfaces without
+`InthProvider`.
+
 ## Import the IAB dialog when you compose surfaces
 
-`InthProvider` loads `IABConsentDialog` for you when the plugin's `iab` option
-is set, the visitor's policy uses IAB TCF and preferences open. Import it only when you compose the IAB
-surfaces yourself. Import it from
-`@inth/vue/vue-plugin`:
+`InthProvider` lazy-loads `IABConsentDialog` automatically when `iab` is
+enabled, the visitor matches an IAB policy, and preferences open. Import it
+from `@inth/vue/vue-plugin` only when composing surfaces yourself:
 
 <include src="../../../shared/examples/vue/iab-surfaces.mdx" />
 
@@ -21,7 +23,7 @@ surfaces yourself. Import it from
 
 ## Next steps
 
-- [IAB TCF](/docs/frameworks/vue/iab) covers vendor list loading and
-  verification.
-- [Composables](/docs/frameworks/vue/composables#iab-tcf) documents
+- [IAB TCF](/docs/frameworks/vue/iab): configure vendor list loading and
+  verify TC Strings.
+- [Composables](/docs/frameworks/vue/composables#iab-tcf): use
   `useConsentIabSelection()` and `useConsentIabSave()`.

@@ -1,14 +1,14 @@
 ---
 title: ConsentDialogTrigger
-description: Add a floating button or toolbar to a TanStack Start app that reopens the Inth preference dialog after the first prompt.
+description: Add a floating ConsentDialogTrigger button or toolbar in TanStack Start to reopen preferences anytime.
 group: frameworks
 ---
 
+Add a draggable floating button or multi-action toolbar inside `InthProvider` so visitors can reopen the preference center from any route.
+
 ## Add a floating preferences button
 
-`ConsentDialogTrigger` is a draggable floating button that opens the
-preference dialog. Render it once inside `InthProvider`, next to the banner and
-dialog:
+Render `ConsentDialogTrigger` once inside `InthProvider`, next to `ConsentBanner` and `ConsentDialog`:
 
 {/* example: fragment */}
 
@@ -16,12 +16,10 @@ dialog:
 import { ConsentDialogTrigger } from '@inth/tanstack-start';
 
 // Inside InthProvider, next to ConsentDialog:
-<ConsentDialogTrigger showWhen="after-consent" />;
+<ConsentDialogTrigger showWhen="after-prompt" />;
 ```
 
-`showWhen="after-consent"` hides the button while a choice or notice is owed, so
-it never competes with the banner. It renders nothing until a policy resolves,
-and nothing under a policy that owes no rights.
+`showWhen="after-prompt"` hides the button while a choice or notice is owed so it never overlaps the banner. It renders nothing until a policy resolves or under a policy that owes no rights.
 
 ## Props
 
@@ -29,9 +27,6 @@ and nothing under a policy that owes no rights.
 
 ## Add your own controls with the toolbar
 
-`ConsentDialogTriggerToolbar` renders one built-in preferences action plus
-controls your app owns, such as a theme toggle. Each action needs a stable
-`id`, a `label`, an `icon` and an `onSelect` callback. Import it from
-`@inth/tanstack-start`.
+`ConsentDialogTriggerToolbar` combines one built-in preferences action with app-owned controls such as a theme toggle. Import it from `@inth/tanstack-start` and give each action a stable `id`, accessible `label`, `icon`, and `onSelect` callback.
 
 <import src="../../../shared/react/components/consent-dialog-trigger.mdx#toolbar-props" />

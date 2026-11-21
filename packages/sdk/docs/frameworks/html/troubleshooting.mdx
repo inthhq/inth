@@ -1,138 +1,116 @@
 ---
 title: Troubleshooting
-description: Fix a missing banner, vendor scripts that run before consent, script tag errors and blocked requests on a plain HTML site that uses the Inth script tag.
+description: Fix missing banners, early vendor scripts, CSP blocks and window.inth queue errors on plain HTML sites.
 group: frameworks
 ---
 
+Diagnose and fix common issues when running the Inth script tag on plain HTML
+pages, CMS themes and static sites.
+
 ## Inspect consent with DevTools
 
-Add the DevTools tag next to the Inth tag while you debug. The panel shows
-consent state, gated scripts, the resolved policy and every event, and its
-Location tab tries the policy for another country. See
-[DevTools](/docs/frameworks/html/dev-tools) for the tag and its attributes.
-Remove the tag before you publish.
+Add `inth.devtools.js` temporarily while debugging to view resolved policy,
+gated scripts, events and test other countries; see
+[DevTools](/docs/frameworks/html/dev-tools). Remove it before publishing.
 
 ## Why is there no banner?
 
-**Check.** In the Network tab, find the request to your backend's `/v1/consent/init`
-endpoint.
+**Check.** Look for the `/v1/consent/init` request in DevTools Network.
 
-**Fix.** Act on what you find:
+**Fix.**
 
-- **The request failed with a CORS error.** Add your site's exact origin,
-  including `https://` and any `www`, to the trusted origins in your Inth
-  project.
-- **The request returned 200.** The policy for your location may not ask for a
-  banner. Many policies show none outside regions with consent laws. Open the
-  DevTools Location tab and try a country such as `DE`.
-- **There is no request.** The tag did not run. Check that the `src` loads,
-  that no other script on the page threw first, and that the tag has no
-  `data-manual`. A Content Security Policy must allow the CDN in `script-src`
-  and your backend in `connect-src`; see
+- **CORS error.** Add your site's exact origin (including `https://` and any
+  `www`) to your Inth project's trusted origins.
+- **200 response with no banner.** Your region's policy may require no prompt.
+  Test `DE` in the DevTools Location tab.
+- **No `/v1/consent/init` request.** Verify the script URL loads, no earlier script
+  threw, `data-manual` is absent, and CSP allows the script host in
+  `script-src` and your project origin in `connect-src`; see
   [Content Security Policy](/docs/frameworks/html/content-security-policy).
-- **You already chose.** A stored choice hides the banner. Open a private
-  window, or clear the `inth` cookie and localStorage key.
+- **Stored choice exists.** Open a private window or clear the `inth` cookie
+  and `localStorage` key.
 
 ## Why does a vendor script run before a choice?
 
-**Check.** Search the page source for the vendor's domain. The script tag only
-holds scripts that are `type="text/plain"` with a `data-inth-category`. A
-second copy added by a theme setting, a plugin or a tag manager runs on its own
-terms.
+**Check.** Search page source for the vendor domain. Only tags with
+`type="text/plain"` and `data-inth-category` are held back.
 
-**Fix.** Remove the second copy, or gate it too.
-
-**Check.** View the published page's source and check that each gated tag still
-has `type="text/plain"`. A caching or optimization plugin can rewrite a gated
-tag's `type` or move it.
-
-**Fix.** Follow
+**Fix.** Remove active duplicates added by theme settings, plugins or tag
+managers. If an optimizer rewrote `type="text/plain"` on your published page,
+exclude `inth.js` and `data-inth-category` tags; see
 [caching and optimization plugins](/docs/frameworks/html/platforms#caching-and-optimization-plugins).
-
-Check the category as well. Under an opt-out policy, optional categories are
-allowed until the visitor refuses, so vendors load on the first visit by
-design.
+Note that opt-out policies allow optional categories until the visitor opts
+out.
 
 ## Why does a gated script never run on a page with a nonce?
 
-**Check.** When the Inth tag has a `nonce` or `data-nonce`, Inth runs only gated
-`text/plain` tags that carry the same nonce. Open the console and look for a
-warning that Inth skipped a `data-inth-category` script, and check the tag in
-the Elements panel for `data-inth-activated="untrusted"`.
+**Check.** Look in the Console for a warning that Inth skipped a
+`data-inth-category` script, and check Elements for
+`data-inth-activated="untrusted"`.
 
-**Fix.** Add `nonce="RANDOM_PER_RESPONSE"`, with the value your server sends, to
-the tag, including tags your own code inserts later. See
+**Fix.** Add the exact per-response `nonce` attribute to every gated
+`<script type="text/plain">`, including dynamically inserted tags; see
 [gated tags on a page with a nonce](/docs/frameworks/html/components/gated-script#gated-tags-on-a-page-with-a-nonce).
 
 ## Why is the banner unstyled or missing its colors?
 
-**Check.** The console shows a CSP violation. A Content Security Policy whose
-`style-src` does not allow the stock UI's `<style>` element blocks it.
+**Check.** Look for a CSP `style-src` error in the Console blocking the stock
+UI `<style>` element.
 
-**Fix.** Put the nonce from your `style-src` on the Inth tag, as `nonce` or
-`data-nonce`, or serve the stylesheet as a file as
-[Content Security Policy](/docs/frameworks/html/content-security-policy#allow-the-stock-uis-styles)
-describes.
+**Fix.** Pass the `style-src` nonce on `inth.js` (`nonce` or `data-nonce`),
+or load `inth.css` as a file; see
+[allow the stock UI's styles](/docs/frameworks/html/content-security-policy#allow-the-stock-uis-styles).
 
 ## Why does the preferences link do nothing?
 
-**Check.** Confirm that the link's `href` ends in `#inth-preferences` and that
-the page loads the Inth tag. With `inth.headless.js` or `ui: { dialog: false }`, the link asks for
-the dialog but nothing renders it.
+**Check.** Confirm the link `href` ends in `#inth-preferences` and `inth.js`
+is loaded. Under `inth.headless.js` or `ui: { dialog: false }`, the link
+emits `'dialog'` on `ui` without rendering stock UI.
 
-**Fix.** Correct the `href` or add the Inth tag. With a headless setup, your
-page must render its own dialog, as [headless](/docs/frameworks/html/headless)
-shows.
+**Fix.** Fix the `href` or mount your own dialog on the `ui` event; see
+[headless](/docs/frameworks/html/headless).
 
 ## Why does the console say "call inth.init() first"?
 
-**Check.** Something called a `window.inth` method directly before the client
-existed, for example from an inline script that ran before the tag, or on a
-page whose tag has `data-manual` before anything called `inth.init()`.
+**Check.** Code called a `window.inth` method before the client started
+(either before `inth.js` ran, or with `data-manual` before `inth.init()`).
 
-**Fix.** Queue the call with `inth.push()`, move it into an `on('ready', ...)`
-listener, or wait for `inth.ready()`. See
+**Fix.** Queue the call with `inth.push()`, wait for `inth.ready()`, or run
+it in an `on('ready', ...)` listener; see
 [which calls you can queue](/docs/frameworks/html/api#which-calls-you-can-queue).
 
 ## Why does the console say a queued call "was skipped"?
 
-**Check.** `inth.push()` received a method it does not queue, such as `has`,
-`getSnapshot` or `dispose`, or a name Inth does not know. A queue cannot hand
-a value back, so Inth skips the call.
+**Check.** `inth.push()` received a synchronous read method (`has`,
+`getSnapshot`, `dispose`) or an unknown method name.
 
-**Fix.** Call those methods inside `inth.onInit()` or after `inth.ready()`.
+**Fix.** Call read methods inside `inth.onInit()` or after `inth.ready()`.
 
 ## Why is my queued configuration ignored?
 
-**Check.** Look for an inline script that assigns `window.inth = [...]`.
-Assignment replaces calls other scripts queued before it.
+**Check.** Look for `window.inth = [...]` overwriting earlier queued calls,
+or a `config` call executed after `inth.js` started.
 
-**Fix.** Use `window.inth = window.inth || []` followed by `inth.push(...)`
-everywhere.
-
-**Check.** Look for a `config` call made after the bundle ran. It does nothing.
-
-**Fix.** Run the `config` call before the tag, or pass the configuration to
-`inth.init()` with `data-manual`.
+**Fix.** Always use `window.inth = window.inth || []` with `inth.push(...)`,
+and run `config` before the tag (or pass options to `inth.init()` with
+`data-manual`).
 
 ## Why does the page throw "Load inth.iab.js instead of inth.js"?
 
-**Check.** Two Inth bundles are on the page, including copies a plugin adds.
+**Check.** Two Inth script bundles are loaded on the same page.
 
-**Fix.** Keep only `inth.iab.js` for an IAB policy, and remove `inth.js`,
+**Fix.** Keep only `inth.iab.js` for IAB policies and remove `inth.js`,
 `inth.testing.js` or `inth.headless.js`.
 
 ## Why did the banner change after a release?
 
-**Check.** The tag's URL has no version, so it follows the newest release.
+**Check.** Your CDN script URL omits a pinned version.
 
-**Fix.** Replace it with an exact version so your page changes only when you
-change it.
+**Fix.** Pin an exact `@inth/sdk@<version>` in the CDN URL so updates happen
+only when you deploy.
 
 ## More help
 
-[Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
-every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because the wrong package is installed, choices that disappear on
-reload, server HTML that differs from the browser, static builds that fail and
-content blockers that hide the consent UI.
+See [troubleshoot consent](/docs/guides/troubleshooting) for cross-framework
+issues including missing banners, lost choices on reload, CORS errors and
+content blockers.

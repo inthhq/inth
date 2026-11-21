@@ -1,50 +1,48 @@
 ---
 title: IAB TCF
-description: Turn on IAB TCF in a Vue app with the Inth Vue plugin's iab option, so visitors under an IAB policy get the IAB banner, preference centre and __tcfapi.
+description: Enable IAB TCF in a Vue app with inth's iab option to render the IAB banner, preference center, and __tcfapi.
 group: frameworks
 ---
 
+Enable IAB TCF in your Vue app so visitors under an IAB policy receive the
+IAB banner, preference center, and `window.__tcfapi`.
+
 ## Turn on IAB TCF
 
-IAB TCF is off until you turn it on. Pass `iab` to the inth plugin; an
-empty object is enough:
+IAB TCF is off by default. Pass `iab` to `inth` in `src/main.ts`; an empty
+object enables it:
 
 <include src="../../shared/examples/vue/iab-opt-in.mdx" />
 
-With `iab` set, `InthProvider` renders the IAB banner and preference centre in
-place of the standard ones while the visitor's policy uses the `iab` model and
-names your CMP ID, and Inth installs `__tcfapi`. Configure the CMP ID and
-vendors in your Inth project. No extra
-component or stylesheet is needed; the IAB components include their own
-styles.
+With `iab` enabled, `InthProvider` automatically switches to the IAB banner and
+preference center whenever the visitor's policy uses the `iab` model with a
+CMP ID, and Inth installs `__tcfapi`. Configure your CMP ID and vendors in
+your Inth project. No extra component or stylesheet is required.
 
-Without `iab`, or with `iab: false` or `iab: { enabled: false }`, IAB stays
-off: no `__tcfapi` is installed and the app never loads `@inth/sdk/iab`. The
-plugin reads `iab` once, when it is installed.
+Leaving `iab` unset, `false`, or `{ enabled: false }` keeps IAB disabled:
+`__tcfapi` is not installed and `@inth/sdk/iab` is never loaded. The plugin
+reads `iab` once on install.
 
-If a visitor's policy uses the `iab` model and the backend sends its vendor
-list while IAB is off, the app throws an `IABUnavailableError` (code
-`INTH_IAB_UNAVAILABLE`). The standard banner does not handle the IAB model,
-so the visitor would otherwise get no working consent UI. When the policy
-arrives with `prefetch`, `app.use()` throws. When the browser resolves the
-policy itself, the plugin throws the error as an uncaught error and
-`InthProvider` renders nothing.
-Set `iab`, or remove the `iab` model from the policy. A backend that answers
-`gvl: null` turns IAB off for the request, and the policy runs as opt-in. See
-[troubleshooting](/docs/frameworks/vue/troubleshooting#the-app-throws-iabunavailableerror).
+If a visitor matches an `iab` policy that returns a vendor list while `iab` is
+disabled, Inth throws `IABUnavailableError` (`INTH_IAB_UNAVAILABLE`) because
+the standard banner cannot satisfy IAB TCF. When the policy arrives via
+`prefetch`, `app.use()` throws; during browser resolution, the plugin throws
+an uncaught error and `InthProvider` renders nothing. Either enable `iab` or
+remove the `iab` model from that policy. If the policy response returns
+`gvl: null`, IAB stays off and the policy runs as opt-in. See
+[IABUnavailableError troubleshooting](/docs/frameworks/vue/troubleshooting#the-app-throws-iabunavailableerror).
 
-To compose the IAB surfaces yourself, import
+To compose surfaces yourself instead of using `InthProvider`, import
 [`IABConsentBanner`](/docs/frameworks/vue/components/iab-consent-banner) and
-[`IABConsentDialog`](/docs/frameworks/vue/components/iab-consent-dialog) and
-render them in place of `InthProvider`. For a custom preference centre, `useConsentIabSelection()`
-reads the visitor's purpose and vendor selection and `useConsentIabSave()`
-writes it and the TC String.
+[`IABConsentDialog`](/docs/frameworks/vue/components/iab-consent-dialog). For
+a custom preference center, use `useConsentIabSelection()` and
+`useConsentIabSave()`.
 
 ## Restrict how vendors use a purpose
 
-Publisher restrictions override a vendor's declared use of one purpose. Set
-them under the plugin's `iab` option. The vendor IDs below are placeholders;
-use vendors from your list whose declarations allow each restriction.
+Publisher restrictions override a vendor's declared legal basis for a purpose.
+Configure them inside `iab` (replace the placeholder vendor IDs with vendors
+from your list whose declarations permit each restriction):
 
 {/* example: fragment */}
 
@@ -62,20 +60,18 @@ app.use(inth, {
 });
 ```
 
-`iab` also takes `publisherCountryCode`, a `vendors` allowlist,
-`customVendors` and `cmpVersion`. Fields you leave out come from the policy:
-the CMP ID, custom vendors and vendor list arrive with the policy. The CMP mounts
-only while the visitor's policy uses the `iab` model.
+`iab` also accepts `publisherCountryCode`, a `vendors` allowlist,
+`customVendors`, and `cmpVersion`. Omitted fields come from your Inth policy.
+The CMP mounts only when the visitor's policy uses the `iab` model.
 
 <include src="../../shared/iab-publisher-restrictions.mdx" />
 
 ## Vendor list loading
 
-The browser receives a reference to the Global Vendor List with the policy.
-The IAB module fetches the full list as soon as it mounts, before the visitor
-clicks, and waits for it before it writes a TC String. A failed fetch leaves
-the banner visible and grants nothing. Allow the list's origin, usually your
-backend, in your CSP `connect-src`. See
+The policy response includes a reference to the Global Vendor List. The IAB
+module fetches the full list as soon as it mounts and waits for it before
+writing a TC String. If the fetch fails, the banner stays open and grants
+nothing. Allow the vendor list's origin in your CSP `connect-src`. See
 [Content Security Policy](/docs/frameworks/vue/content-security-policy).
 
 <include src="../../shared/iab-additional-consent.mdx" />
@@ -84,7 +80,6 @@ backend, in your CSP `connect-src`. See
 
 ## Verify IAB consent
 
-Load the app under your IAB policy and confirm the IAB banner appears. In the
-browser console, `__tcfapi('getTCData', 2, console.log)` returns a TC String
-after you accept or reject. If the console shows an `IABUnavailableError`
-instead, `iab` is not set.
+Load the app under your IAB policy and confirm the IAB banner appears. Accept
+or reject, then run `__tcfapi('getTCData', 2, console.log)` in the browser
+console and confirm a valid TC String is returned.

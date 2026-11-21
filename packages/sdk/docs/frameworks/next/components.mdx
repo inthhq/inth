@@ -1,103 +1,77 @@
 ---
 title: Components
-description: Every Inth component a Next.js app imports from @inth/nextjs, what each renders, which ones are Client Components, and where to start.
+description: Reference for every Inth component exported by @inth/nextjs, whether it runs on the client or server, and where to mount it.
 group: frameworks
 ---
 
-## Component reference
+`@inth/nextjs` exports `InthProvider` and re-exports every React component and
+hook from `@inth/react`. Every component except `ConsentTheme` is a Client
+Component that can still be rendered directly from a Server Component as long
+as its props are serializable.
 
-`@inth/nextjs` exports its own `InthProvider`, `ConsentBanner` and
-`ConsentDialog`, and re-exports every other component and hook from
-`@inth/react`, so a Next.js app needs one import path. The `InthProvider` from
-`@inth/react`, for a runtime you manage yourself, is at `@inth/nextjs/react`. Every component except
-`ConsentTheme` ships with `'use client'`. You can still render them from a
-Server Component, as long as every prop you pass is serializable.
+## Component reference
 
 | Component | Renders | Runs as | Reference |
 | --- | --- | --- | --- |
-| `InthProvider` | The consent runtime, seeded with the state `resolveConsent` returned | Client Component | [InthProvider](/docs/frameworks/next/components/inth-provider) |
-| `ConsentBanner` | The banner, when the visitor's policy asks for one | Client Component | [ConsentBanner](/docs/frameworks/next/components/consent-banner) |
-| `ConsentDialog` | The preference center as a modal | Client Component | [ConsentDialog](/docs/frameworks/next/components/consent-dialog) |
-| `ConsentWidget` | The preference center inline in a page, for a privacy route | Client Component | [ConsentWidget](/docs/frameworks/next/components/consent-widget) |
-| `ConsentDialogLink` | An unstyled button that opens the dialog, for your footer | Client Component | [ConsentDialogLink](/docs/frameworks/next/components/consent-dialog-link) |
-| `ConsentDialogTrigger` | A floating, draggable button that opens the dialog. `ConsentDialogTriggerToolbar` adds your own actions beside it | Client Component | [ConsentDialogTrigger](/docs/frameworks/next/components/consent-dialog-trigger) |
-| `ConsentGate` | Its children while a category is allowed, a placeholder otherwise | Client Component | [ConsentGate](/docs/frameworks/next/components/consent-gate) |
-| `ConsentTheme` | A `<style>` element with your theme tokens | Server-safe | [Customize](/docs/frameworks/next/customize) |
-| `DevTools` from `@inth/nextjs/devtools` | A development panel for consent state, scripts and events | Client Component | [DevTools](/docs/frameworks/next/components/dev-tools) |
+| `InthProvider` | Consent runtime seeded with `resolveConsent()` state | Client Component | [InthProvider](/docs/frameworks/next/components/inth-provider) |
+| `ConsentBanner` | Consent banner when required by the policy | Client Component | [ConsentBanner](/docs/frameworks/next/components/consent-banner) |
+| `ConsentDialog` | Preference center modal | Client Component | [ConsentDialog](/docs/frameworks/next/components/consent-dialog) |
+| `ConsentWidget` | Inline preference center for a privacy page | Client Component | [ConsentWidget](/docs/frameworks/next/components/consent-widget) |
+| `ConsentDialogLink` | Unstyled button opening the dialog, for footers | Client Component | [ConsentDialogLink](/docs/frameworks/next/components/consent-dialog-link) |
+| `ConsentDialogTrigger` | Floating, draggable button opening the dialog (`ConsentDialogTriggerToolbar` adds custom actions) | Client Component | [ConsentDialogTrigger](/docs/frameworks/next/components/consent-dialog-trigger) |
+| `ConsentGate` | Children when a category is allowed, otherwise a placeholder | Client Component | [ConsentGate](/docs/frameworks/next/components/consent-gate) |
+| `ConsentTheme` | `<style>` element declaring theme tokens | Server-safe | [Customize](/docs/frameworks/next/customize) |
+| `DevTools` (`@inth/nextjs/devtools`) | Development panel for state, scripts and events | Client Component | [DevTools](/docs/frameworks/next/components/dev-tools) |
 
-Render every component except `ConsentTheme` inside `InthProvider`, because
-they read the runtime `InthProvider` creates. It already renders the
-`InthProvider` from `@inth/nextjs/react`, so do not mount both.
+Mount every component except `ConsentTheme` inside a single `InthProvider` from
+`@inth/nextjs`. Do not also mount `@inth/react`'s `InthProvider`, because
+`@inth/nextjs`'s `InthProvider` already wraps it.
 
 ## Start with InthProvider, the banner and the dialog
 
-Most apps start with four components. `InthProvider` holds the runtime,
-`ConsentBanner` and `ConsentDialog` ask for a choice, and a
-`ConsentDialogLink` lets visitors reopen their preferences. The quickstart
-renders them in the root layout, a Server Component:
+Most apps mount `InthProvider`, `ConsentBanner`, `ConsentDialog` and
+`ConsentDialogLink` in the root layout (or `pages/_app.tsx` in the
+[Pages Router](/docs/frameworks/next/pages-router)):
 
 <include src="../../shared/examples/nextjs/quickstart-layout.mdx" />
 
-`InthProvider` reads `inth.config.ts`, so the layout passes it only the
-`state` from `resolveConsent`. The
-[Pages Router guide](/docs/frameworks/next/pages-router) renders the same
-components in `pages/_app.tsx`. Add `ConsentWidget`, `ConsentDialogTrigger` or
-`ConsentGate` later, where a page needs them.
-
 ## Server and Client Components
 
-In the App Router, the `'use client'` boundary decides what you can pass as a
-prop:
-
-- **`InthProvider`** reads `inth.config.ts` in the browser, so a Server
-  Component passes it only `state`. The `state` from `resolveConsent`, or its
-  promise, is plain data and can cross. Put functions such as callbacks in
-  the config, not in props from a Server Component.
-- **Banner, dialog, widget, link, trigger and gate** can render straight from
-  a Server Component page or layout under `InthProvider`. Strings, numbers,
-  booleans and JSX children cross the boundary. Function props, such as the
-  `onSelect` handler of a `ConsentDialogTriggerToolbar` action, need a
+- **`InthProvider`:** reads `inth.config.ts` in the browser, so Server
+  Components pass only `state`. Put function options such as callbacks in
+  `inth.config.ts`.
+- **UI components:** render directly from Server Components when passing plain
+  props and JSX. Move components that pass function props (such as toolbar
+  `onSelect` handlers) or call [hooks](/docs/frameworks/next/hooks) into a
   `'use client'` file.
-- **`ConsentTheme`** has no `'use client'` directive. Render it from a Server
-  Component layout and the theme generator stays out of the browser bundle.
-- **`DevTools`** loads only in development. Import it with `next/dynamic` and
-  `ssr: false`, as its page shows.
+- **`ConsentTheme`:** has no `'use client'` directive; render it from a Server
+  Component layout to keep the theme generator out of browser JavaScript.
+- **`DevTools`:** load only in development via `next/dynamic` with
+  `ssr: false`.
 
-A component that reads consent state with a hook, such as `useConsent`, is
-always a Client Component. See [hooks](/docs/frameworks/next/hooks).
+## IAB TCF and other entry points
 
-## IAB TCF components
-
-`@inth/nextjs` does not re-export the IAB TCF components. Import
-`IABProvider`, `IABConsentBanner` and `IABConsentDialog` from `@inth/react/iab`,
-render them inside `InthProvider` next to
-`ConsentBanner` and `ConsentDialog`, and load `@inth/nextjs/styles.css` and
-`@inth/nextjs/iab/styles.css` with `styles: false`. All three are Client
-Components. The stock banner and dialog stay closed
-under an IAB policy. See [IAB TCF](/docs/frameworks/next/iab).
-
-## Other entry points
+For IAB TCF policies, import `IABProvider`, `IABConsentBanner` and
+`IABConsentDialog` from `@inth/react/iab` and mount them inside `InthProvider`
+next to the stock components. See [IAB TCF](/docs/frameworks/next/iab).
 
 | Import | Exports | Use |
 | --- | --- | --- |
-| `@inth/nextjs/components/consent-dialog-link` | `ConsentDialogLink` only | A module that needs the link without loading the rest of the adapter |
-| `@inth/nextjs/headless` | Headless hooks | Your own banner and dialog markup. See [headless](/docs/frameworks/next/headless) |
-| `@inth/nextjs/server` | `resolveConsent` and the other server helpers | Server Components and Route Handlers |
-| `@inth/nextjs/devtools` | `DevTools` | Development only |
+| `@inth/nextjs/components/consent-dialog-link` | `ConsentDialogLink` only | Load the footer link without the rest of the adapter |
+| `@inth/nextjs/headless` | Headless hooks | Custom banner and dialog markup ([Headless](/docs/frameworks/next/headless)) |
+| `@inth/nextjs/server` | `resolveConsent` and server helpers | Server Components and Route Handlers |
+| `@inth/nextjs/devtools` | `DevTools` | Development debugging panel |
 
 ## Check the components
 
-Load the site in a private window under a policy that asks for a choice:
+Open the site in a private window under an opt-in policy:
 
-1. The banner shows, and DevTools Network has no requests to your vendors'
-   hosts.
-2. Click the footer's `ConsentDialogLink`. The dialog opens with every optional
-   category off.
-3. Allow one category and save. Its vendor requests appear, and a
-   `ConsentGate` for that category mounts its children.
-4. Reload. The banner stays closed, and the link still reopens the dialog.
-5. View the page source. With the
+1. Confirm the banner renders and no vendor requests fire in DevTools Network.
+2. Click `ConsentDialogLink` to open the dialog with optional categories off.
+3. Grant a category and save: its scripts load and any matching `ConsentGate`
+   mounts its children.
+4. Reload: the banner stays closed and `ConsentDialogLink` still reopens the
+   dialog. With an
    [awaited layout](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html),
-   a first visit contains an element with
-   `data-testid="consent-banner-root"`, and the page after your choice does
-   not.
+   page source contains `data-testid="consent-banner-root"` only before a
+   choice is saved.

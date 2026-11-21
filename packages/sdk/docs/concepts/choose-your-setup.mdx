@@ -1,13 +1,12 @@
 ---
 title: Choose your setup
-description: Pick the Inth setup for your framework, rendering mode and hosting, and decide who runs the consent backend.
+description: Pick the Inth SDK setup for your web framework, rendering mode or native mobile platform.
 group: concepts
 ---
 
-## Find your app in this table
+Pick the row that matches your framework and rendering mode, then follow its guide from start to finish.
 
-Most apps need one row. Follow its guide from start to finish; each guide links
-to the alternatives it rules out.
+## Web frameworks
 
 | Your app | Setup | Guide |
 | --- | --- | --- |
@@ -22,12 +21,12 @@ to the alternatives it rules out.
 | React with Vite, or another single-page app | Browser resolves consent | [React](/docs/frameworks/react/quickstart) |
 | React Router framework mode, Remix, or another server-rendered React app | Browser resolves consent after hydration | [React rendering](/docs/frameworks/react/rendering#react-router-remix-and-other-server-rendered-apps) |
 | Nuxt with a Nuxt server | Nuxt module resolves consent on the server from a build-time manifest | [Nuxt](/docs/frameworks/nuxt/quickstart) |
-| Nuxt with prerendered or cached routes | Nuxt server for most pages, the browser on prerendered and cached routes | [Nuxt prerendered and cached routes](/docs/frameworks/nuxt/rendering#prerendered-and-cached-routes) |
-| Nuxt with `nuxt generate` on static hosting | Nuxt module, browser resolves consent from the manifest or `/init` | [Nuxt static hosting](/docs/frameworks/nuxt/rendering#deploy-to-static-hosting) |
+| Nuxt with prerendered or cached routes | Nuxt server for most pages, browser on prerendered and cached routes | [Nuxt prerendered and cached routes](/docs/frameworks/nuxt/rendering#prerendered-and-cached-routes) |
+| Nuxt with `nuxt generate` on static hosting | Nuxt module, browser resolves consent from the manifest or `/v1/consent/init` | [Nuxt static hosting](/docs/frameworks/nuxt/rendering#deploy-to-static-hosting) |
 | Nuxt with `ssr: false` | Nuxt module, browser resolves consent from the manifest | [Nuxt single-page app](/docs/frameworks/nuxt/rendering#build-a-single-page-app-with-ssr-false) |
 | Vue with Vite | Vue plugin, browser resolves consent | [Vue](/docs/frameworks/vue/quickstart) |
 | Vue rendered on the server without Nuxt | Vue plugin; the banner mounts after hydration. Use Nuxt for the banner in server HTML. | [Vue rendering](/docs/frameworks/vue/rendering#server-rendering-without-nuxt) |
-| Astro with static output | Browser resolves consent through the hosted backend | [Astro static output](/docs/frameworks/astro/rendering#static-output-with-hosted) |
+| Astro with static output | Browser resolves consent through Inth | [Astro static output](/docs/frameworks/astro/rendering#static-output-with-hosted) |
 | Astro with server output and an adapter | Middleware resolves consent from a build-time manifest | [Astro server output](/docs/frameworks/astro/rendering#server-output-with-manifest) |
 | Svelte with Vite | Svelte provider, browser resolves consent | [Svelte](/docs/frameworks/svelte/quickstart) |
 | SvelteKit with a server | Root layout load resolves consent on the server | [SvelteKit](/docs/frameworks/sveltekit/quickstart) |
@@ -36,16 +35,13 @@ to the alternatives it rules out.
 | Angular with `@angular/ssr` | `provideInthServer()` resolves consent on the server for each request | [Angular rendering](/docs/frameworks/angular/rendering) |
 | Plain HTML, a CMS, a page builder, or a static site generator such as Hugo or Eleventy | One script tag, stock banner included | [HTML](/docs/frameworks/html/quickstart) |
 | JavaScript with a bundler and no UI framework | `@inth/sdk` module, stock banner included | [JavaScript](/docs/frameworks/javascript/quickstart) |
-| Your own UI, or a framework without an adapter such as Solid | Headless runtime | [JavaScript headless](/docs/frameworks/javascript/headless) |
+| Custom UI, or a framework without an adapter such as Solid | Headless runtime | [JavaScript headless](/docs/frameworks/javascript/headless) |
 
-Solid has no Inth adapter. Use the [headless runtime](/docs/frameworks/javascript/headless#use-inth-with-solid)
-and subscribe to it from your components.
+Solid has no dedicated Inth adapter. Use the [headless runtime](/docs/frameworks/javascript/headless#use-inth-with-solid) and subscribe to it from your components.
 
-## Building a native mobile app
+## Native mobile apps
 
-Mobile apps use the native Swift or Kotlin consent engine, including when
-React Native supplies the app's UI. Install it before optional native SDKs
-start, then add the stock screens or your own controls.
+Mobile apps run the native Swift or Kotlin consent engine, including when React Native renders the UI. Start the consent engine before optional native SDKs initialize, then mount the stock screens or your own controls.
 
 | Your app | Guide |
 | --- | --- |
@@ -55,66 +51,41 @@ start, then add the stock screens or your own controls.
 | React Native | [React Native quickstart](/docs/frameworks/react-native/quickstart) |
 | Expo custom native build | [Expo setup](/docs/frameworks/react-native/expo) |
 
-The mobile SDKs are private prereleases. [Mobile availability](/docs/guides/mobile-status)
-explains artifact access and current release scope.
+The mobile SDKs are private prereleases. See [mobile availability](/docs/guides/mobile-status) for artifact access and release scope.
 
-## Decide who runs the consent backend
+## Connect an Inth project
 
-The backend supplies policies and stores consent records. Every web setup above
-works with each option; only the URL changes.
+Inth serves your policies and records consent choices. For automated tests, switch to `testing()` so no network requests leave the test runner.
 
 | Option | Use it when |
 | --- | --- |
-| [Inth](https://inth.com) | You want hosted policies and consent records. The guides use this. |
-| [`testing()`](/docs/concepts/modes#testing) | Tests. A policy resolves in the browser with no backend, and it throws in production builds. |
+| [Inth project](https://inth.com/dashboard/sign-up) | Production, preview and local development. Every guide connects to an Inth project URL. |
+| [`testing()`](/docs/concepts/modes#testing) | Automated tests. Resolves a policy locally with no network calls and throws in production builds. |
 
-To use Inth, create a project, set its policy rules, add your site's origin to
-its trusted origins, and copy the backend URL. The guides use the placeholder
-`https://your-project.inth.app`; replace it with your project's backend URL,
-including any path prefix.
+Create a project in the [Inth dashboard](https://inth.com/dashboard/sign-up) or with `@inth/cli`, configure regional policy rules, add your site's origin to trusted origins, and copy the project URL. The guides use `https://your-project.inth.app` as a placeholder; replace it with your project URL, including any path prefix.
 
 ## Server rendering or browser rendering
 
-Where consent resolves decides what the visitor's first HTML contains.
+Where consent resolves controls what arrives in the first HTML response.
 
 | Rendering | What the visitor gets |
 | --- | --- |
-| The server resolves consent for each request | The server reads the visitor's cookie and location headers, so the browser starts with the answer. The banner can be part of the HTML. In Next.js, TanStack Start, Nuxt, SvelteKit and Angular, scripts the visitor's consent already allows start before hydration. |
-| The browser resolves consent | The HTML is the same for everyone. After the page loads, the browser requests the policy, then shows the banner or runs gated scripts. |
+| The server resolves consent for each request | The server reads the visitor's cookie and location headers, so the browser starts with the answer. The banner can arrive in server HTML. In Next.js, TanStack Start, Nuxt, SvelteKit and Angular, scripts the visitor already permitted start before hydration. |
+| The browser resolves consent | Every visitor receives the same HTML. After the page loads, the browser resolves the policy, then shows the banner or starts gated scripts. |
 
-A static or prerendered page cannot contain one visitor's consent, because the
-same HTML goes to everyone. Static sites still use Inth; the browser talks to it
-directly. A same-origin `/api/inth` route only works where a server runs it.
+A static or prerendered page cannot embed one visitor's consent because every visitor shares the same HTML. Static sites connect directly to Inth from the browser; a same-origin proxy route only works where a server runs it.
 
-Pages that are cached and shared between visitors, such as Next.js ISR or
-`'use cache'` routes, need browser resolution for the same reason. Cache the
-public policy manifest, never a response that contains a visitor's consent.
+Cached routes shared across visitors, such as Next.js ISR or `'use cache'` pages, need browser resolution for the same reason. Cache the public policy manifest, never a response that carries one visitor's consent state.
 
 ## How the server gets the policy
 
-Use a build-time manifest as the default for supported production builds.
-`manifest()` is the default mode in Next.js, TanStack Start, Nuxt, Astro and
-SvelteKit, so their servers resolve requests from the deployment's snapshot.
-React, Vue and Svelte single-page apps have no server, so their quickstarts
-use `hosted()`: the backend reads each visitor's location from the `/init`
-request. They can bundle the manifest for browser resolution too, but a
-regional policy still needs `/init` on a first visit unless the page knows
-the location. The framework quickstarts show the build
-integration. [Consent modes](/docs/concepts/modes) lists every mode, its
-options and the backend URL variable each framework reads.
+Server-rendered frameworks default to `manifest()`. Their build integrations download your project's public policy snapshot once at build time so the server resolves each request locally without calling `/v1/consent/init`. Rebuild after you change policies, translations or vendors in Inth.
 
-<include src="../shared/build-time-manifest.mdx" />
+Single-page apps in React, Vue and Svelte have no application server, so their quickstarts default to `hosted()`. The browser calls `/v1/consent/init`, and Inth reads the visitor's location from that request.
 
-<include src="../shared/build-time-manifest-notes.mdx" />
+If policy edits must reach a server-rendered deployment without a rebuild, switch to a runtime path:
 
-For deployments that need policy updates without a rebuild, choose a runtime
-path:
+- **Cached runtime manifest**, `manifest({ source: 'runtime' })`. Your server downloads and caches the public policy file, then resolves each visitor locally.
+- **Direct `/v1/consent/init`**, `hosted()`. Every visit asks Inth to resolve the visitor directly.
 
-- **Cached manifest**, `manifest({ source: 'runtime' })`.
-  Your server downloads the project's public policy file, caches it, and
-  resolves each visitor locally. Consent saves still go to the backend.
-- **`/init`**, `hosted()`. Each visit asks the backend to resolve the visitor.
-  Simpler, but every page load makes a request to the backend.
-
-[Data fetching](/docs/concepts/data-fetching) compares them in detail,
-including proxies.
+Read [performance](/docs/performance) for measured latency and bundle tradeoffs, [consent modes](/docs/concepts/modes) for every framework's build integration and environment variable, and [data fetching](/docs/concepts/data-fetching) for proxy and transport details.

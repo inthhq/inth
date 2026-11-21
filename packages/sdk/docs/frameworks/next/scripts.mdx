@@ -1,32 +1,30 @@
 ---
 title: Scripts
-description: Register vendor scripts in a Next.js InthProvider, check how each vendor loads, let visitors turn off one vendor, clear stored data after revocation and replace @next/third-parties.
+description: Register vendor scripts in a Next.js InthProvider, manage loading and revocation, send analytics events and replace @next/third-parties.
 group: frameworks
 ---
+
+Add vendor scripts to `inth.config.ts`, control loading and revocation, send
+consent-aware analytics events, and replace `@next/third-parties`.
 
 ## Install the script helpers
 
 The [App Router](/docs/frameworks/next/app-router),
 [Pages Router](/docs/frameworks/next/pages-router) and
 [static export](/docs/frameworks/next/static-export) guides already register
-scripts. Use this page to add vendors to an existing setup or to change how
-they load. Install the helpers if you have not:
+PostHog. Install `@inth/integrations` if it is not installed yet:
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
-Keep `next.config.ts` and the layout from your router guide. Adding a vendor
-needs no server change. Server-rendered state, a streamed promise and
-browser initialization without `state` all reach the same `InthProvider`, and
-no script loads until the browser has a resolved policy and the visitor's
-choice allows it.
+Adding scripts requires no changes to `next.config.ts` or your layout. Scripts
+wait until the browser has a resolved policy and the required category is
+allowed.
 
 <include src="../../shared/next-consent-wrapper.mdx" />
 
 ## Register several vendors
 
-Every helper goes in the same `scripts` array in `inth.config.ts`, in the App
-Router and the Pages Router alike. This config loads Google Tag Manager and
-Meta Pixel together:
+Pass every helper in the same `scripts` array in `inth.config.ts`:
 
 {/* example: fragment */}
 
@@ -43,72 +41,37 @@ export default defineConsentConfig({
 });
 ```
 
-Each helper keeps its own consent rules. Meta Pixel waits for marketing, and
-Google Tag Manager follows the
-[Consent Mode contract](/docs/integrations/google-tag-manager). Remove the
-container and pixel snippets from `pages/_document.tsx` or your layout, so each
-vendor loads once. If they come from `@next/third-parties`, follow
-[migrate from `@next/third-parties`](#migrate-from-nextthird-parties). With an
-empty ID, a helper logs an error and its script does not load, so leave a
-helper out of the array until you have its ID.
+Each helper applies its own consent rules: Meta Pixel waits for `marketing`,
+while Google Tag Manager follows the
+[Consent Mode contract](/docs/integrations/google-tag-manager). Remove old
+snippets from layouts, `pages/_document.tsx` or tag managers so each vendor
+loads once, and omit any helper whose ID is empty.
 
-## Check each vendor's loading behavior
+## Check loading and revocation behavior
 
-The example configures PostHog to load after consent and turns off cookieless
-capture. Its default helper can load before consent and use the SDK's own
-consent controls. Read the [PostHog guide](/docs/integrations/posthog) before
-you change those settings.
-
-Ordinary scripts wait for their category's permission. Give each script a
-stable, unique `id`, and remove any other loader for the same vendor. Helpers
-with `alwaysLoad` can load an SDK before permission is granted, so a category
-alone does not guarantee that no request happens. See the
-[vendor guides](/docs/integrations/overview) for each helper's contract.
-
-Removing a script element cannot undo JavaScript that already ran or requests
-already sent. When a visitor turns off a category they had granted,
-`InthProvider` reloads the page, so the next page runs only permitted code. See
-[reload after revocation](/docs/frameworks/next/components/inth-provider#reload-after-revocation).
-
-Use [custom integrations](/docs/integrations/building-integrations) for a
-vendor without a helper. Google helpers follow the
-[Consent Mode contract](/docs/integrations/google-tag-manager).
-
-## Embeds and other requests
-
-Scripts cover vendor code Inth loads for you. For the rest:
-
-- [Embeds](/docs/frameworks/next/embeds) keeps iframes out of the page with
-  `ConsentGate` or the iframe blocker.
-- [Network blocker](/docs/frameworks/next/network-blocker) holds `fetch` and
-  XHR calls that match a rule until their category is allowed.
-
-## Let visitors turn off one vendor
-
-Optional: a visitor can allow marketing and still switch off one vendor in it.
-Skip this unless your site needs per-vendor choices. Declare
-the vendors and pass them to `InthProvider` as `vendors`; helpers from
-`@inth/integrations` already carry their vendor slug. See
-[vendor consent](/docs/frameworks/next/vendor-consent).
-
-## Clear stored tracking data
-
-Script gating does not remove cookies or Web Storage entries a script already
-wrote. Pass `clearOnRevocation` to `InthProvider` to remove declared data when
-its category is denied. See
-[clear on revocation](/docs/frameworks/next/clear-on-revocation) for
-configuration and browser limits.
-
-To send your own events only to allowed integrations, see
-[send events only to allowed integrations](/docs/integrations/overview#send-events-only-to-allowed-integrations).
+- **Per-vendor contracts.** Standard scripts wait for their category, while
+  helpers with `alwaysLoad` can load an SDK before consent using the vendor's
+  consent API. Check each helper's guide in
+  [Integrations](/docs/integrations/overview), and use
+  [Custom integrations](/docs/integrations/building-integrations) for unlisted
+  vendors.
+- **Revocation reloads.** Removing a `<script>` element does not stop code
+  already running, so `InthProvider` reloads the page when a visitor turns off a
+  granted category. See
+  [reload after revocation](/docs/frameworks/next/components/inth-provider#reload-after-revocation).
+- **Embeds and network calls.** Gate iframes with
+  [Embeds](/docs/frameworks/next/embeds) and hold direct `fetch`/XHR beacons
+  with the [Network blocker](/docs/frameworks/next/network-blocker).
+- **Per-vendor switches and storage cleanup.** Let visitors toggle individual
+  vendors with [Vendor consent](/docs/frameworks/next/vendor-consent), and wipe
+  first-party cookies or storage keys on denial with
+  [Clear on revocation](/docs/frameworks/next/clear-on-revocation).
 
 ## Migrate from `@next/third-parties`
 
-The components in `@next/third-parties/google` add `next/script` tags and
-embeds when the page renders. Inth never sees them, so the banner
-cannot hold them back, and `GoogleAnalytics` and `GoogleTagManager` send no
-Consent Mode signals. Replace each export, keep your IDs, then remove the
-package.
+Components from `@next/third-parties/google` inject scripts and iframes during
+render without checking consent or sending Consent Mode signals. Replace each
+export, then uninstall `@next/third-parties`.
 
 | `@next/third-parties/google` | Inth replacement |
 | --- | --- |
@@ -116,45 +79,33 @@ package.
 | `<GoogleTagManager gtmId="GTM-XXXXXXX" />` | `googleTagManager({ id: 'GTM-XXXXXXX' })` from `@inth/integrations/google-tag-manager` |
 | `sendGAEvent(...args)` | `window.gtag?.(...args)` |
 | `sendGTMEvent(data)` | `window.dataLayer?.push(data)` |
-| `<YouTubeEmbed videoid="VIDEO_ID" />` | `ConsentGate` around a `youtube-nocookie.com` iframe. See [YouTube](/docs/integrations/youtube). |
-| `<GoogleMapsEmbed apiKey="API_KEY" mode="place" />` | `ConsentGate` around a Maps Embed API iframe. See [Google Maps](/docs/integrations/google-maps). |
+| `<YouTubeEmbed videoid="VIDEO_ID" />` | `ConsentGate` around a `youtube-nocookie.com` iframe ([YouTube](/docs/integrations/youtube)) |
+| `<GoogleMapsEmbed apiKey="API_KEY" mode="place" />` | `ConsentGate` around a Maps Embed API iframe ([Google Maps](/docs/integrations/google-maps)) |
 
 ### Replace GoogleAnalytics and GoogleTagManager
 
-Delete the components from `app/layout.tsx`, `pages/_app.tsx` or
-`pages/_document.tsx`. Add a helper for each one to the `scripts` array your
-`InthProvider` receives, with the same measurement ID and container ID:
+Remove the components from `app/layout.tsx`, `pages/_app.tsx` or
+`pages/_document.tsx` and add the matching helpers to `inth.config.ts` (if GA4
+already runs inside GTM, register `googleTagManager` only):
 
 <include src="../../shared/examples/nextjs/third-parties-scripts.mdx" />
 
-Keep only the helpers for the tags you used. If GA4 already runs inside your
-Tag Manager container, register `googleTagManager` alone, or each page view
-counts twice.
-
-The component props map to helper options:
-
-| Prop | Inth |
+| `@next/third-parties` prop | Inth option |
 | --- | --- |
 | `gaId` | `id` on `gtag` |
 | `debugMode` | `config: { debug_mode: true }` on `gtag` |
-| `dataLayerName` on `GoogleAnalytics` | No equivalent. `gtag` always queues on `window.dataLayer`. |
+| `dataLayerName` on `GoogleAnalytics` | Not supported (`gtag` uses `window.dataLayer`) |
 | `gtmId` | `id` on `googleTagManager` |
-| `dataLayerName` on `GoogleTagManager` | `dataLayer` on `googleTagManager`. Keep the same name. |
-| `dataLayer` | No option. Seed the data layer before the container loads. See [keep initial data layer values](#keep-initial-data-layer-values). |
-| `auth`, `preview`, `gtmScriptUrl` | No option. Use a [custom integration](/docs/integrations/building-integrations) for GTM environments or a server-side tagging URL. |
-| `nonce` | `options={{ nonce }}` on `InthProvider`. See [Content Security Policy](/docs/frameworks/next/content-security-policy). |
+| `dataLayerName` on `GoogleTagManager` | `dataLayer` on `googleTagManager` |
+| `dataLayer` | Seed before container load; see [keep initial data layer values](#keep-initial-data-layer-values) |
+| `auth`, `preview`, `gtmScriptUrl` | Use a [custom integration](/docs/integrations/building-integrations) |
+| `nonce` | `options={{ nonce }}` on `InthProvider` ([Content Security Policy](/docs/frameworks/next/content-security-policy)) |
 
 ### Keep initial data layer values
 
-`GoogleTagManager` pushes its `dataLayer` object in the same inline snippet
-that pushes the `gtm.js` start event, before the container script runs, so the
-container's startup triggers can read those values. Pushing the object later,
-like an event, can arrive after those triggers have run.
-
-Seed the queue in the initial HTML instead, before Inth loads the container.
-Add a `beforeInteractive` script to the root `app/layout.tsx`, or to
-`pages/_document.tsx` with the Pages Router. Keep `InthProvider` and the rest
-of your layout as they are:
+To make initial `dataLayer` values available to GTM startup triggers before
+Inth loads the container, seed the queue with a `beforeInteractive` script in
+`app/layout.tsx` (or `pages/_document.tsx`):
 
 {/* example: fragment */}
 
@@ -179,24 +130,17 @@ window.dataLayer.push(${JSON.stringify(initialDataLayer)});`}
 }
 ```
 
-`googleTagManager` keeps an array that already exists, so the queue holds your
-object, then Consent Mode `default`, then the `gtm.js` start event. The script
-sends nothing to Google, so it also works with `loadMode: 'after-consent'`.
-Use the name you pass as `dataLayer` on `googleTagManager`, and pass your
-Content Security Policy nonce to `Script` as `nonce`.
+`googleTagManager` preserves the existing array, so your object lands before
+Consent Mode `default` and `gtm.js`. This sends nothing to Google and works
+with `loadMode: 'after-consent'`. Pass `nonce` to `Script` under CSP.
 
 <import src="../../shared/scripts/google-load-mode.mdx#choose" />
 
 ### Move sendGAEvent and sendGTMEvent calls
 
-`sendGAEvent` only works after the `GoogleAnalytics` component has rendered.
-In `@next/third-parties` 16.x, once you remove the component, every call logs
-`@next/third-parties: GA has not been initialized` and drops the event.
-`sendGTMEvent` still pushes to `window.dataLayer` without its component, but
-importing it keeps the package installed.
-
-Call the `gtag` function and data layer that Inth sets up instead. The
-arguments do not change:
+Removing `<GoogleAnalytics />` breaks `sendGAEvent`. Replace both helpers with
+direct browser calls (or `window[customDataLayerName]?.push(...)` for custom
+GTM data layers):
 
 {/* example: fragment */}
 
@@ -205,80 +149,55 @@ arguments do not change:
 sendGAEvent('event', 'sign_up', { method: 'email' });
 sendGTMEvent({ event: 'sign_up', method: 'email' });
 
-// After: no import needed
+// After
 window.gtag?.('event', 'sign_up', { method: 'email' });
 window.dataLayer?.push({ event: 'sign_up', method: 'email' });
 ```
 
-Call them from browser code, such as an event handler. `window.gtag` and
-`window.dataLayer` exist once Inth has set up the Google helper. Until then the
-optional call does nothing and the event is lost, as with `sendGAEvent`. With a
-custom `dataLayer` name on `googleTagManager`, push to `window[name]`
-instead.
-
-To send one event to every allowed integration rather than to Google alone,
-use [`useEventDispatcher()`](#send-your-own-analytics-events). It drops the
-event while measurement is denied.
+To fan out one event to every allowed integration, use
+[`useEventDispatcher()`](#send-your-own-analytics-events).
 
 ### Replace YouTubeEmbed and GoogleMapsEmbed
 
-`YouTubeEmbed` loads `lite-youtube-embed` from `cdn.jsdelivr.net` and the
-video thumbnail from YouTube before the visitor chooses. `GoogleMapsEmbed`
-renders its Google iframe straight away. Render your own iframe inside
+`YouTubeEmbed` contacts `cdn.jsdelivr.net` and YouTube before consent, and
+`GoogleMapsEmbed` loads its iframe immediately. Wrap a plain iframe in
 `ConsentGate` instead:
 
 <include src="../../shared/examples/nextjs/video-embed.mdx" />
 
-Put the `videoid` in the URL path and the `params` string in its query, and use
-the `playlabel` text as the iframe `title`. For a map, keep the URL
-`GoogleMapsEmbed` built. In `place` mode that is
-`https://www.google.com/maps/embed/v1/place?key=<apiKey>&q=<q>`, with
-`center`, `zoom`, `maptype`, `language` and `region` as further query
-parameters. Other modes need their own parameters, such as `center` and
-`zoom` for `view`, so copy every parameter your component set. The
-[YouTube](/docs/integrations/youtube) and
-[Google Maps](/docs/integrations/google-maps) guides cover categories, sizing
-and placeholders.
+Map `videoid`, `params` and `playlabel` to the iframe `src` and `title`. For
+Maps, keep the `https://www.google.com/maps/embed/v1/<mode>` URL and all query
+parameters from `GoogleMapsEmbed`. See [YouTube](/docs/integrations/youtube)
+and [Google Maps](/docs/integrations/google-maps).
 
-### Remove the package
-
-Search the project for `@next/third-parties`. When nothing imports it,
-uninstall it, for example with `npm uninstall @next/third-parties`. Then open
-the production build in a private window under an opt-in policy. With
-`loadMode: 'after-consent'`, nothing requests `googletagmanager.com` before you
-choose. With the default, Google Tag Assistant shows a `consent` `default`
-command before any tag fires. No request goes to `cdn.jsdelivr.net`, YouTube
-or Google Maps until you allow the embed's category.
+Remove all `@next/third-parties` imports, uninstall the package, and confirm in
+a private window that no requests hit `googletagmanager.com` (with
+`loadMode: 'after-consent'`), `cdn.jsdelivr.net`, YouTube or Google Maps before
+consent.
 
 ## Send your own analytics events
 
-`useEventDispatcher()` from `@inth/nextjs` returns the provider's event
-dispatcher. It sends to the `scripts` you passed to `InthProvider` and checks
-consent when an event goes out. For App Router pageviews, render a client
-component that watches `usePathname()` and `useSearchParams()`:
+`useEventDispatcher()` from `@inth/nextjs` dispatches events only when
+`measurement` is allowed. Track App Router pageviews by watching `usePathname()`
+and `useSearchParams()`:
 
 <include src="../../shared/examples/nextjs/analytics-events.mdx" />
 
-Call `events.track('sign_up', { method: 'email' })` from an event handler for
-your own events. `track` sends to every registered script with an event API and drops the
-event while measurement is denied. `pageview` sends only to the integrations
-named in `pageviews`, and the first call records the path without sending.
-Every dispatcher shares one pageview history for the provider's lifetime.
-See [send events only to allowed integrations](/docs/integrations/overview#send-events-only-to-allowed-integrations)
-for the supported vendors.
+Call `events.track('sign_up', { method: 'email' })` in event handlers.
+`pageview` sends only to integrations listed in `pageviews`, and the first call
+records the initial path without double-sending. See
+[send events only to allowed integrations](/docs/integrations/overview#send-events-only-to-allowed-integrations).
 
 ## Verify the integration
 
-Open the production build in a fresh browser session with DevTools open.
+Open your production build in a private window with DevTools Network open:
 
-1. Under an opt-in policy, no vendor requests anything before you choose.
-2. Open **Privacy settings** and turn on **Analytics** (the `measurement`
-   category) only. PostHog loads, and marketing vendors such as Meta Pixel stay
+1. Under an opt-in policy, confirm no vendor requests fire before consent.
+2. Open **Privacy settings** and enable **Analytics** (`measurement`) only:
+   analytics load while marketing vendors stay blocked.
+3. Reject, reload and confirm no vendor loads.
+4. Revoke a granted category and confirm the page reloads with that vendor
    blocked.
-3. Reject, reload, and reopen **Privacy settings**. The rejection is still
-   selected and no vendor loads.
-4. Turn a granted category off. The page reloads and that vendor does not load
-   again.
 
-The [runnable example](/docs/examples) registers PostHog, and
-[the consent checks](/docs/guides/verify-consent) cover the release checklist.
+See [Verify consent](/docs/guides/verify-consent) for the full release
+checklist.

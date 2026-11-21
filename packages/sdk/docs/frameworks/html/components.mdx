@@ -1,55 +1,53 @@
 ---
 title: Components
-description: Every consent surface and page hook the Inth script tag gives a plain HTML site, from the stock banner and preference dialog to data-inth-action buttons and gated scripts and iframes.
+description: Overview of the consent surfaces and HTML hooks provided by the Inth script tag on plain HTML sites.
 group: frameworks
 ---
 
-## What the script tag puts on your page
+The Inth script tag (`inth.js`) renders three UI surfaces automatically and
+wires four HTML attribute hooks you can place anywhere in your markup.
 
-`inth.js` renders three surfaces of its own and reads four kinds of markup you
-write. Each has its own page:
+## What the script tag puts on your page
 
 | Component | What it is | Page |
 | --- | --- | --- |
-| Banner | The first prompt: a card or bar with the actions the policy requires. | [Banner](/docs/frameworks/html/components/banner) |
-| Preference dialog | The category list where a visitor changes each choice. | [Preference dialog](/docs/frameworks/html/components/dialog) |
-| Floating trigger | An optional corner button that reopens the dialog. | [Floating trigger](/docs/frameworks/html/components/trigger) |
-| `data-inth-action` buttons | Your own buttons that accept, reject, open the dialog or show the banner. | [Action buttons](/docs/frameworks/html/components/action-buttons) |
-| `#inth-preferences` links | Your own links that open the preference dialog. | [Preferences link](/docs/frameworks/html/components/preferences-link) |
-| `<script type="text/plain">` | A vendor script that runs once its category is allowed. | [Gated scripts](/docs/frameworks/html/components/gated-script) |
-| `<iframe data-src>` | An embed that loads once its category is allowed. | [Embeds](/docs/frameworks/html/embeds) |
-| DevTools panel | A debugging panel, loaded from a second tag. | [DevTools](/docs/frameworks/html/dev-tools) |
+| Banner | First prompt: card or bar with the actions the policy requires. | [Banner](/docs/frameworks/html/components/banner) |
+| Preference dialog | Category and vendor list where visitors adjust choices. | [Preference dialog](/docs/frameworks/html/components/dialog) |
+| Floating trigger | Optional corner button that reopens the dialog. | [Floating trigger](/docs/frameworks/html/components/trigger) |
+| `data-inth-action` buttons | Custom buttons that accept, reject, open the dialog or show the banner. | [Action buttons](/docs/frameworks/html/components/action-buttons) |
+| `#inth-preferences` links | Links that reopen the preference dialog with no JavaScript. | [Preferences link](/docs/frameworks/html/components/preferences-link) |
+| `<script type="text/plain">` | Vendor script held until its category is allowed. | [Gated scripts](/docs/frameworks/html/components/gated-script) |
+| `<iframe data-src>` | Embed held until its category is allowed. | [Embeds](/docs/frameworks/html/embeds) |
+| DevTools panel | Debugging panel loaded via a second script tag. | [DevTools](/docs/frameworks/html/dev-tools) |
 
-`inth.headless.js` keeps the four kinds of markup and drops the three
-surfaces, so your page renders the banner and dialog. See
-[headless](/docs/frameworks/html/headless). `inth.iab.js` replaces the banner
-and dialog with IAB TCF versions under an IAB policy. See
+`inth.headless.js` keeps the four HTML hooks and omits the three stock
+surfaces so your page renders its own UI; see
+[headless](/docs/frameworks/html/headless). `inth.iab.js` swaps in IAB TCF
+banner and dialog surfaces under an IAB policy; see
 [IAB TCF](/docs/frameworks/html/iab).
 
 ## Where the surfaces render
 
-The banner, dialog and trigger render inside one host element,
-`<div data-inth-ui>`, which Inth appends to the end of `<body>`. By default
-the host has a shadow root with its own copy of the stylesheet, so your
-theme's CSS does not reach the UI and the UI's CSS does not reach your page.
-[Customize](/docs/frameworks/html/customize) covers theme tokens, CSS inside
-the shadow root, and rendering into the page instead.
+The banner, dialog and trigger mount inside a single `<div data-inth-ui>`
+element appended to `<body>`. By default it uses a shadow root with its own
+stylesheet so site CSS does not interfere with the consent UI. See
+[customize](/docs/frameworks/html/customize) to configure tokens, shadow CSS
+or light DOM rendering.
 
-A tag in `<head>` runs before `<body>` exists. Inth starts resolving the
-policy at once and mounts the UI when the document has parsed.
+When the script tag sits in `<head>`, policy resolution starts immediately
+and surfaces mount once the document finishes parsing.
 
 ## Which surface shows
 
-Inth decides which surface should show from the policy and the visitor's
-records, then renders it:
+Inth picks the active surface from the resolved policy and stored choice:
 
-- **Banner.** Shows when the policy asks for a choice or a notice and the
-  visitor has not answered it. A policy that needs no prompt shows no banner.
-- **Dialog.** Shows only when something opens it, such as the banner's
-  customize button, an action button, a preferences link, the trigger or
+- **Banner.** Renders when the policy requires a choice or notice and the
+  visitor has not answered it.
+- **Dialog.** Opens only when triggered by the banner's Customize button, an
+  action button, a `#inth-preferences` link, the floating trigger or
   `inth.openDialog()`.
-- **Trigger.** Shows while neither the banner nor the dialog is open.
+- **Trigger.** Appears while neither the banner nor the dialog is open.
 
-Saving a choice closes the banner or dialog in the same click. The `ui` event
-reports each change of surface; see
+Saving a choice closes the active surface immediately. Listen to the `ui`
+event to observe surface transitions; see
 [events and callbacks](/docs/frameworks/html/callbacks).

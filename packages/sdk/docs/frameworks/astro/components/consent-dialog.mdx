@@ -1,6 +1,6 @@
 ---
 title: ConsentDialog
-description: Add the Inth preference dialog to an Astro site as an island that downloads only when a visitor opens it, and control when it loads, which framework renders it, how it opens and which legal links it shows.
+description: Add the Inth preference dialog to an Astro site as an on-demand island with framework selection, preloading, and legal links.
 group: frameworks
 ---
 
@@ -84,7 +84,7 @@ off a category that was allowed reloads the page, unless the integration sets
 [withdraw consent without reloading](/docs/frameworks/astro/scripts#withdraw-consent-without-reloading).
 
 The dialog does not open while no policy is resolved, or under a rule that owes
-no consent interface. An `openDialog()` call made while `/init` is still in
+no consent interface. An `openDialog()` call made while `/v1/consent/init` is still in
 flight waits for the answer.
 
 ## Stylesheets

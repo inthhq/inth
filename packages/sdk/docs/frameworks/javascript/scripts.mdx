@@ -1,27 +1,29 @@
 ---
 title: Scripts
-description: Register vendor scripts with @inth/sdk, createConsentRuntime or a consent kernel in JavaScript, and control what happens when a visitor withdraws permission.
+description: Register consent-gated vendor scripts in JavaScript with @inth/sdk, createConsentRuntime or a kernel, and handle withdrawal.
 group: frameworks
 ---
 
+Register vendor scripts so they load only after consent allows their category,
+dispatch analytics events safely, and control revocation behavior.
+
 ## Register scripts where you start Inth
 
-Pass the `scripts` list to whichever API starts Inth. The list is the same in
-each case, built from `@inth/integrations` helpers or your own script objects:
+Pass `scripts` to whichever API starts Inth, using `@inth/integrations`
+helpers or custom script objects:
 
 | Setup | Where `scripts` goes |
 | --- | --- |
-| `@inth/sdk` | `init({ scripts, … })`, as in the [quickstart](/docs/frameworks/javascript/quickstart#start-inth). |
+| `@inth/sdk` | `init({ scripts, ... })`, as in the [quickstart](/docs/frameworks/javascript/quickstart#start-inth). |
 | `@inth/sdk/runtime` | `createConsentRuntime({ mode, scripts })`, as in [headless](/docs/frameworks/javascript/headless#create-the-runtime). |
 | Your own kernel | `createScriptLoader({ kernel, scripts })`. See [script loader](/docs/frameworks/javascript/modules/script-loader#attach-the-loader-to-your-own-kernel). |
 
-The quickstart's `src/main.ts` shows PostHog:
+Example with PostHog in `src/main.ts`:
 
 <include src="../../shared/examples/javascript/init.mdx" />
 
-Each [integration guide](/docs/integrations/overview) gives the helper and
-options for one vendor. For a vendor without a helper, write the object
-yourself:
+Each [integration guide](/docs/integrations/overview) lists the helper for
+one vendor. For a vendor without a helper, define a script object directly:
 
 {/* example: fragment */}
 
@@ -36,100 +38,79 @@ const scripts = [
 ];
 ```
 
-`window.analytics` stands for your vendor's global. The
-[script loader](/docs/frameworks/javascript/modules/script-loader) page lists
-every field and callback.
+See [script loader](/docs/frameworks/javascript/modules/script-loader) for
+every field and lifecycle callback.
 
 ## When the script loader downloads
 
-With `@inth/sdk` from npm, the script loader and the network blocker
-share a separate chunk. It loads when Inth starts, and only if `scripts` is
-not empty or `networkBlocker` has rules, so a page with neither never
-downloads it. On a page with either, the browser requests it after your
-JavaScript has run, which delays a returning visitor's consented scripts and
-held requests by one request.
-
-Your bundler names that chunk, so Inth cannot link it from your HTML. To
-start the download earlier, add a `<link rel="modulepreload">` for the chunk
-your build emits for `@inth/sdk/lib/core/dist/modules/loader-and-blocker.js`. With
-Vite, `.vite/manifest.json` lists it under that path when `build.manifest` is
-on. Give the link `fetchpriority="low"`. Inth needs the chunk only when it
-starts, and at the default priority the preload can delay your app's own
-chunks over HTTP/1.1. The script-tag build, `inth.js`, already contains the
-loader.
+In npm builds of `@inth/sdk`, the script loader and network blocker share a
+lazy chunk that loads only when `scripts` is non-empty or `networkBlocker`
+has rules. To start that fetch earlier, add a `<link rel="modulepreload" fetchpriority="low">`
+for the emitted chunk matching `@inth/sdk/lib/core/dist/modules/loader-and-blocker.js`
+(listed in Vite's `.vite/manifest.json` when `build.manifest` is enabled).
+The script-tag build (`inth.js`) bundles the loader directly.
 
 ## Gate a snippet in your HTML
 
-`@inth/sdk` also runs `<script type="text/plain" data-inth-category>`
-tags in your `index.html` once their category is allowed, in page order. Use
-it for a vendor snippet you would rather keep in HTML. `createConsentRuntime`
-and a plain kernel do not scan the page for these tags;
-`activateGatedScripts(snapshot)` from `@inth/sdk` runs them for you.
+`@inth/sdk` also executes `<script type="text/plain" data-inth-category>`
+tags in `index.html` in document order once allowed. With
+`createConsentRuntime` or a manual kernel, call
+`activateGatedScripts(snapshot)` from `@inth/sdk` yourself.
 
-With the `nonce` option set, `@inth/sdk` runs only the tags that carry the
-same `nonce`, and marks the others `data-inth-activated="untrusted"`. Pass
-`{ nonce }` as the third argument of `activateGatedScripts` for the same
-check. See [Content Security Policy](/docs/frameworks/javascript/content-security-policy).
+When `nonce` is set, `@inth/sdk` activates only gated tags carrying the same
+`nonce`, marking others `data-inth-activated="untrusted"`. Pass `{ nonce }` as
+the third argument to `activateGatedScripts`; see
+[Content Security Policy](/docs/frameworks/javascript/content-security-policy).
 
 ## When a visitor withdraws permission
 
-A script that has run cannot be unloaded. `@inth/sdk` and
-`createConsentRuntime` reload the page after a visitor turns off a category
-they had allowed, so the new page starts without that vendor. Allowing a
-category never reloads.
+Because already-executed scripts cannot be unloaded, `@inth/sdk` and
+`createConsentRuntime` reload the page after a visitor withdraws a previously
+allowed category. Allowing a category never reloads.
 
-Set `reloadOnConsentRevoked: false` to handle withdrawal yourself, for
-example with the vendor's opt-out call in the script's `onConsentChange`.
-Until the next page load, code that already ran keeps running.
-`callbacks.onBeforeConsentRevocationReload` runs right before the reload, for
-work that must finish first. A kernel you create yourself does not reload;
-add `watchRevocationReload` from `@inth/sdk/engine` if you want it.
+Set `reloadOnConsentRevoked: false` to handle withdrawal yourself (for
+example via a vendor's opt-out API in `onConsentChange`). Use
+`callbacks.onBeforeConsentRevocationReload` for synchronous cleanup right
+before reload. On a manual kernel, add `watchRevocationReload` from
+`@inth/sdk/engine` if you want automatic reloads.
 
 ## Keep one owner per vendor
 
-Use stable script IDs and remove the vendor's original snippet, so each
-vendor loads once and only through Inth. Ordinary scripts wait for
-permission. Helpers with `alwaysLoad` load at once and pass consent to the
-vendor's own API instead. Read the individual integration guide before
-assuming all helpers have the same network behavior.
-
-Create `init()` or the runtime once per page. A second client, or a second
-loader on a kernel that `@inth/sdk` or `createConsentRuntime` owns, loads
-vendors twice.
+Use stable script IDs and remove duplicate `<script>` tags or direct SDK
+imports. Ordinary scripts wait for permission; helpers using `alwaysLoad`
+load immediately and forward consent signals to the vendor's API. Initialize
+`init()` or your runtime once per page so vendors never load twice.
 
 ## Let visitors turn off one vendor
 
-Optional: a visitor can allow marketing and still switch off one vendor in it.
-Skip this unless your site needs per-vendor choices. Declare
-the vendors in the `vendors` option and render the switch yourself; helpers
-from `@inth/integrations` already carry their vendor slug. See
+To allow visitors to turn off individual vendors inside an allowed category,
+declare `vendors` on `init()` or `createConsentRuntime`; see
 [vendor consent](/docs/frameworks/javascript/vendor-consent).
 
 ## Clear stored tracking data
 
-Script gating does not remove cookies or Web Storage entries that a script
-already wrote. Configure [clear on revocation](/docs/frameworks/javascript/clear-on-revocation)
-to delete them when their category is denied.
+Gating stops future requests without removing cookies or storage already
+written. Configure
+[clear on revocation](/docs/frameworks/javascript/clear-on-revocation) to
+delete them when a category is denied.
 
 ## Send your own events to allowed vendors
 
-`getEventDispatcher(runtime)` from `@inth/sdk` returns the client's event
-dispatcher. It sends to the client's `scripts` and checks consent when an
-event goes out:
+Use `getEventDispatcher(runtime)` from `@inth/sdk` to send events to
+registered scripts only when consent allows them:
 
 <include src="../../shared/examples/javascript/analytics-events.mdx" />
 
-`track` sends to every registered script with an event API and drops the
-event while measurement is denied. `pageview` sends only to the integrations
-named in `pageviews`, and the first call records the path without sending.
-Every dispatcher shares one pageview history for the provider's lifetime.
-See [send events only to allowed integrations](/docs/integrations/overview#send-events-only-to-allowed-integrations)
-for the supported vendors.
+`track` forwards to every registered script exposing an event API and drops
+events while measurement is denied. `pageview` sends only to integrations
+listed in `pageviews` (the first call records the initial path without
+sending). See
+[send events only to allowed integrations](/docs/integrations/overview#send-events-only-to-allowed-integrations).
 
 ## Check it works
 
-Run the app in a private window with the Network tab open.
+Open the app in a private window with DevTools Network open:
 
-1. Filter for each vendor's host. Nothing loads before a choice.
+1. Filter for each vendor host. Nothing loads before a choice.
 2. Allow one category. Only that category's vendors load.
 3. Withdraw it. The page reloads and the vendor stays absent.

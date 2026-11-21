@@ -1,21 +1,24 @@
 ---
 title: DevTools
-description: Inspect consent state, the resolved policy, location, scripts and consent events in a Vue app during development with ConsentDevTools.
+description: Inspect consent state, matched policies, location, scripts, and events during Vue development with ConsentDevTools.
 group: frameworks
 ---
 
+Mount `ConsentDevTools` in development to inspect live consent state, matched
+policies, script status, and events without shipping debug code to production.
+
 ## Load DevTools only in development
 
-Import `ConsentDevTools` from `@inth/vue/devtools` with a dynamic import that
-runs only in development:
+Dynamically import `ConsentDevTools` from `@inth/vue/devtools` behind
+`import.meta.env.DEV`:
 
 <include src="../../../shared/examples/vue/devtools.mdx" />
 
-Render this component anywhere inside the app that installed
-[the inth plugin](/docs/frameworks/vue/plugin). `import.meta.env.DEV` is
-`false` in production builds, so Vite drops the dynamic import and the panel
-from your production bundle. A static `import` would ship DevTools to every
-visitor even when `v-if` hides it.
+Render this component inside the app that installed
+[the inth plugin](/docs/frameworks/vue/plugin). Because
+`import.meta.env.DEV` evaluates to `false` in production builds, Vite strips
+the dynamic import and panel completely. A static import ships DevTools to
+visitors even if hidden with `v-if`.
 
 <import src="../../../shared/vue/components/dev-tools.mdx#behavior" />
 
@@ -25,13 +28,13 @@ visitor even when `v-if` hides it.
 
 ## Verify
 
-Run `vite` and open the app. A DevTools button appears in the corner you set.
-Open it, pick the Policy panel and check the matched policy for your
-location. Serve a production build with `vite build` and `vite preview`, and
-confirm the DevTools button does not appear.
+Run `vite`, click the DevTools launcher, and open the Policy tab to inspect
+the matched policy. Then run `vite build` and `vite preview` and confirm the
+DevTools button is absent.
 
 ## Next steps
 
-- [Troubleshooting](/docs/frameworks/vue/troubleshooting) uses DevTools to
-  explain a missing banner.
-- [Verify consent](/docs/guides/verify-consent) is the release checklist.
+- [Troubleshooting](/docs/frameworks/vue/troubleshooting): diagnose missing
+  banners with DevTools.
+- [Verify consent](/docs/guides/verify-consent): complete the release
+  checklist.

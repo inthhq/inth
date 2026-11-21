@@ -1,58 +1,37 @@
 ---
 title: Consent in WebViews
-description: Pass the consent a visitor gave in your Swift, Android or React Native app to your own site in a WebView, so web Inth shows no second banner.
+description: Sync consent from a Swift, Kotlin, or React Native app into a WebView so your website follows app consent without showing a second banner.
 group: guides
 seoTitle: Sync app consent into WebViews with Inth
-seoDescription: Hand native consent from a Swift, Kotlin or React Native app to web Inth in a WebView. No second banner, listed origins only, no subject ID.
+seoDescription: Hand native consent from a Swift, Kotlin, or React Native app to web Inth in a WebView with origin allowlisting and no second banner.
 ---
 
-When your app opens your own site in a WebView, the site's banner shows again,
-because web Inth cannot see the choice the visitor made in the app. Two changes
-fix this: the app injects its consent into the WebView, and the site reads it
-with `webViewConsentSource()`.
+Pass consent from a Swift, Kotlin, or React Native app into your website inside a WebView so web Inth follows the app's choice without showing a second banner.
 
-The app stays the consent authority. The page gets a read-only copy and follows
-it as it changes. It shows no banner or dialog, stores no cookie and sends no
-consent record of its own. A "Cookie settings" link on the page asks the app to
-open its preferences screen.
+The app remains the consent authority. The web page gets a read-only copy, shows no banner or dialog, writes no cookie, and sends no consent records. A "Cookie settings" link on the page opens the app's native preferences screen.
 
 ## What crosses into the page
 
-The page receives consent state and nothing else:
+Only consent state crosses into the WebView; subject ID, external ID, location, and records stay in the app.
 
 | Field | Value |
 | --- | --- |
-| `ready` | `true` once the app has loaded stored consent and resolved a policy |
-| `permissions` | The app's effective permissions. Every optional category is `false` until `ready` |
-| `model` | `opt-in`, `opt-out`, `none` or `iab` |
-| `tcString` | The app's committed IAB TC string, when the app runs IAB TCF natively. Otherwise `null` |
-| `gppString` | The app's IAB GPP string, when the app turns GPP on and a section applies. Otherwise `null` |
-| `revision` | The app's snapshot revision |
+| `ready` | `true` once stored consent loads and a policy resolves |
+| `permissions` | Effective permissions (optional categories stay `false` until `ready`) |
+| `model` | `opt-in`, `opt-out`, `none`, or `iab` |
+| `tcString` | Committed IAB TC String when running native IAB TCF, else `null` |
+| `gppString` | IAB GPP string when GPP is on and a section applies, else `null` |
+| `revision` | Snapshot revision number |
 
-The subject ID, external ID, location and consent records stay in the app.
+## Allowlist trusted origins
 
-## Which pages receive it
+List the origins permitted to receive consent, such as `https://www.example.com`. Only the top frame of a listed origin receives consent; unlisted origins and iframes behave like a normal browser.
 
-You list the origins that may receive consent, such as
-`https://www.example.com`. Only the top frame of a page on a listed origin gets
-the state. Each entry must be `https://host` or `https://host:port`. Plain
-`http://` is accepted only for `localhost`, `127.0.0.1` and `[::1]`, for local
-development. Paths, wildcards and non-ASCII host names are rejected; write an
-internationalized domain in its `xn--` form. An empty list, or one bad entry,
-is an error.
+Each entry must be `https://host` or `https://host:port`. Plain `http://` is allowed only for `localhost`, `127.0.0.1`, and `[::1]`. Paths, wildcards, non-ASCII hosts (use punycode `xn--`), and empty lists throw an error.
 
-A page that the visitor navigates to on another origin, and any iframe, gets
-nothing and behaves as it would in a browser.
+## Configure the website
 
-## Set up the site
-
-Pass `webViewConsentSource()` as the `consentSource` option wherever you
-configure Inth. Inside a WebView your app set up for this origin, it returns a
-source that reads the app's consent. Everywhere else, including a normal
-browser and server rendering, it returns `undefined`, and Inth behaves as if
-the option were not set. Import it from the `engine` entry of your framework
-package, here `@inth/react/engine`, or from `@inth/sdk/engine` in plain
-JavaScript.
+Pass `webViewConsentSource()` as `consentSource` in your web Inth options. Inside a configured WebView it returns the native source; in a normal browser or during SSR it returns `undefined` and Inth runs normally. Import it from your framework's `/engine` entry (`@inth/react/engine` or `@inth/sdk/engine`):
 
 {/* example: fragment */}
 
@@ -61,32 +40,21 @@ import { webViewConsentSource } from '@inth/react/engine';
 
 const options = {
 	consentSource: webViewConsentSource(),
-	// ...your existing options, such as mode
+	// ...your existing options, such as projectUrl and mode
 };
 ```
 
-Call it once, when you build the options. The app's script runs before any
-script on the page, so the state is already there.
+Pages that render a banner in server HTML will flash that banner until hydration because the server cannot detect a WebView. Resolve consent in the browser for pages opened in your app to avoid that flash.
 
-On a page that renders the banner in the server HTML, the server cannot tell
-that the page is in a WebView. The banner in the HTML shows until the page
-hydrates, and then disappears. Serve those pages with consent resolved in the
-browser when they open in your app, or accept the brief banner.
+For IAB TCF, the page does not mount `__tcfapi` from the app's TC String; read `webViewConsentSource()?.getState()?.tcString` directly if needed.
 
-For IAB TCF, the page does not serve `__tcfapi` from the app's TC string. Read
-it from `webViewConsentSource()?.getState()?.tcString` if a script on the page
-needs it.
+## Configure the native app
 
-## Set up the app
-
-Attach the helper before the WebView loads the first page, and keep the
-returned object for as long as the WebView lives.
+Attach the helper before loading the first URL and keep the handle alive with the WebView.
 
 ### Swift
 
-`ConsentWebView` is in `InthApple`. It adds a main-frame user script to the web
-view's `WKUserContentController` and replaces it when consent changes, so every
-page load gets the current state, and a loaded page gets each change.
+`ConsentWebView` in `InthApple` adds a main-frame user script to `WKUserContentController` and pushes updates when consent changes:
 
 ```swift
 import InthApple
@@ -117,23 +85,11 @@ final class SiteViewController: UIViewController {
 }
 ```
 
-The initializer throws when an origin is not accepted, or when the web view's
-`WKUserContentController` already serves another core or allowlist. Both are
-programming errors, so surface them rather than swallowing them with `try?`. The
-closure runs on the main actor when a listed page asks for preferences.
-
-A `WKUserContentController` runs its scripts in every web view attached to it,
-so one controller is one consent scope. Web views that share a controller must
-all use the same core and allowlist, and each needs its own helper to receive
-updates. Give a web view with a different scope its own controller. The web view keeps the
-helper alive, so you don't need to hold it; call `close()` to stop it while the
-web view stays in use.
+The initializer throws on invalid origins or if the `WKUserContentController` already serves a different core or allowlist (one controller equals one scope). The callback runs on the main actor; call `close()` to stop syncing while keeping the WebView open.
 
 ### Kotlin
 
-`ConsentWebView` is in `com.inth.android`. It uses
-`WebViewCompat.addDocumentStartJavaScript` from `androidx.webkit`, with your
-origins as the origin rules.
+`ConsentWebView` in `com.inth.android` uses `WebViewCompat.addDocumentStartJavaScript`:
 
 ```kotlin
 import com.inth.android.ConsentWebView
@@ -160,18 +116,11 @@ class SiteActivity : AppCompatActivity() {
 }
 ```
 
-The helper lives as long as the WebView, and attaching again to the same
-WebView replaces it. `attach` throws `IllegalArgumentException` when an origin
-is not accepted. It
-returns `null` when the device's WebView cannot run a script at document start
-(`ConsentWebView.isSupported()` is `false`). Then nothing is injected and the
-page shows its own banner.
+`attach` throws `IllegalArgumentException` on invalid origins and returns `null` when `ConsentWebView.isSupported()` is `false`. Re-attaching replaces the previous helper.
 
 ### React Native
 
-`useWebViewConsent()` returns props for a
-[`react-native-webview`](https://github.com/react-native-webview/react-native-webview)
-`WebView`. Render it under `InthProvider`.
+Call `useWebViewConsent()` under `InthProvider` and spread its props onto `WebView` from `react-native-webview`:
 
 {/* example: fragment */}
 
@@ -189,69 +138,17 @@ export function Site({ onOpenPrivacy }: { onOpenPrivacy: () => void }) {
 }
 ```
 
-The props set `injectedJavaScriptBeforeContentLoaded`, a `ref` that pushes
-changes into the loaded page, and `onMessage`. If your `WebView` has its own
-`onMessage`, call `consent.onMessage(event)` from it. The hook throws when an
-origin is not accepted. It injects nothing when the native build predates the
-helper, so rebuild the app after updating the package.
+If your `WebView` sets `onMessage`, forward events to `consent.onMessage(event)`. Rebuild the native app after updating `@inth/react-native`.
 
-On Android, `react-native-webview` decides when the script runs. Versions that
-inject at document start run it before the page's scripts; older ones run it
-when the page starts loading.
+## Preferences and security
 
-## Choices made in the page
+- **One-way flow.** Calls like `acceptAll()` are refused on the page. Opening preferences triggers `onPreferencesRequested` using a top-frame token so iframes cannot call it.
+- **Revocation.** Updating consent in the app updates the open page; withdrawing an active category reloads the page unless `reloadOnConsentRevoked: false`.
+- **Tamper resistance.** State is injected before page scripts run, cannot be redefined, and only accepts updates matching the WebView's random token. Closing the helper or removing an origin revokes optional categories on the page. See `packages/native-protocol/CONTRACT.md` for wire details.
 
-Consent flows one way, from the app to the page. The page cannot record a
-choice: under `webViewConsentSource()` web Inth shows no banner or dialog, and
-`acceptAll()` and similar calls are refused. A page has no way to prove that a
-person, and not some script on it, made a choice, so the app does not accept
-choices from it.
+## Verify the sync
 
-The page can ask the app to open its preferences. Opening the preference dialog
-on the page, for example from a "Cookie settings" link, calls your
-`onPreferencesRequested`. The request carries a key that only the page's top
-frame holds, so an iframe on your site cannot send one, on any platform.
-Swift and Android also check the frame and origin the WebView reports. React
-Native also checks the page's origin and ignores requests less than a second
-apart. When the visitor saves in the app, the page receives the new state. If a saved change withdraws a category the page was using, web Inth
-reloads the page, unless you set `reloadOnConsentRevoked: false`.
-
-## Security
-
-- Pages on unlisted origins and iframes get nothing. The injected script checks
-  the page's origin itself, so this holds even where the platform cannot filter.
-- Scripts on a listed page can read the state, as they can read any consent
-  state the page uses. They cannot replace it: it is defined before they run,
-  and cannot be redefined.
-- Only the app can change the state. Each WebView gets its own random token,
-  and the page ignores updates without it. Attaching a new helper to the same
-  WebView keeps the token, so a page that is already open keeps following the
-  app.
-- When a page stops being listed, because you remove its origin or close the
-  helper, the app first tells that page to stop: it denies every optional
-  category and no longer follows the app. If it was using a category, web Inth
-  reloads it, and the reload shows your site's own banner. It never keeps a
-  grant the app can no longer update.
-- On iOS, one `WKUserContentController` is one consent scope, because its
-  scripts run in all of its web views. Helpers with the same core and allowlist
-  can share a controller. A helper with a different scope is refused, so one
-  web view's consent never reaches another web view's pages. Android and
-  `react-native-webview` inject per WebView.
-- In a normal browser, `webViewConsentSource()` returns `undefined` unless a
-  script that ran before Inth defined the object. Such a script could equally
-  write Inth's own consent cookie.
-
-`packages/native-protocol/CONTRACT.md` in the Inth repository describes the injected scripts and
-the state in full.
-
-## Check that it works
-
-1. Make a choice in the app, then open your site in the WebView.
-2. No banner shows. In the WebView's developer tools (Safari Web Inspector for
-   iOS, `chrome://inspect` for Android), run
-   `window.__inthNativeConsent.getState()` and compare `permissions` with the
-   app's choice.
-3. Change the choice in the app while the page is open. `getState().revision`
-   goes up, and scripts the change allows start.
-4. Open a page on an origin you did not list. `window.__inthNativeConsent` is
-   `undefined`, and the site's own banner shows.
+1. Save a choice in the app, then open a listed origin in the WebView.
+2. Confirm no banner shows. In Safari Web Inspector (iOS) or `chrome://inspect` (Android), run `window.__inthNativeConsent.getState()` and compare `permissions`.
+3. Change consent in the app while the page stays open. Confirm `getState().revision` increments and allowed scripts start.
+4. Open an unlisted origin. Confirm `window.__inthNativeConsent` is `undefined` and the site's own banner shows.

@@ -1,24 +1,16 @@
 ---
 title: Build your own UI
-description: Build your own SwiftUI consent prompt, preferences and IAB screens from unstyled blocks that carry the draft, saving, copy and accessibility.
+description: Build custom SwiftUI consent prompts, preferences, and IAB screens with headless blocks and native SDK gates.
 group: frameworks
 ---
 
-Build your own consent screens from the headless blocks in `InthConsentUI`.
-They decide when a prompt is owed, hold the draft, save it, supply the
-translated copy and handle VoiceOver. They draw nothing, so layout, type,
-colour and motion are yours. The stock screens run on the same blocks.
+Build custom SwiftUI consent screens using the unstyled headless blocks in `InthConsentUI`. They track whether a prompt is owed, hold drafts, save choices, supply translated copy, and wire VoiceOver while leaving layout, typography, color, and motion to your app.
 
-Link `InthCore`, `InthApple` and `InthConsentUI`. Install with
-`InthApple.install(_:)` during launch, using the same `InthAppleConfiguration`
-as the [quickstart](/docs/frameworks/swift/quickstart), and leave out its
-`.inth` modifier. Your app owns the layout, the privacy-policy link and
-a standing Privacy settings action.
+Link `InthCore`, `InthApple`, and `InthConsentUI`. Call `InthApple.install(_:)` during launch with the same `InthAppleConfiguration` used in the [Swift quickstart](/docs/frameworks/swift/quickstart), and omit `.inth`. Your app owns the layout, privacy policy link, and standing Privacy settings entry.
 
 ## Gate content on a permission
 
-`ConsentGate` shows its content only while the committed decision allows it. An
-unresolved policy counts as not allowed.
+`ConsentGate` renders its content only while the committed decision allows it. An unresolved policy evaluates as not allowed:
 
 {/* example: fragment */}
 
@@ -28,250 +20,147 @@ ConsentGate(vendorId: 755, purposeId: 1) { GoogleAds() }
 ConsentGate(allowed: { $0.isCustomVendorAllowed("internal-ads") }) { HouseAds() }
 ```
 
-The first form takes a category. The second takes an IAB vendor and purpose,
-with `basis:` for legitimate interest. The third takes any check against the
-core, for a purpose alone, a custom partner or an Additional Consent provider.
-`ConsentReady` shows its content once a policy has resolved.
+Use the first form for a category, the second for an IAB vendor and purpose (with optional `basis:` for legitimate interest), and the third for any predicate on the core (such as a single purpose, custom partner, or Additional Consent provider). `ConsentReady` renders once a policy has resolved.
 
 ## Show your own first prompt
 
-Create one `ConsentDraft` and hand it to both blocks. `HeadlessConsentPrompt`
-calls its content only while the resolved policy owes a prompt:
+Create one `ConsentDraft` in a `@StateObject` so unsaved edits survive view updates, and pass it to both blocks. `HeadlessConsentPrompt` renders its content only while the resolved policy owes a prompt:
 
 <include src="../../shared/examples/native/core-swift/custom-consent/swift-headless-prompt.mdx" />
 
-The content receives a `ConsentPromptScope` with what to place and what to
-wire:
+`ConsentPromptScope` provides the copy and actions to wire:
 
-| Member | Use |
+| Member | Purpose |
 | --- | --- |
 | `isNotice` | `true` for a notice to acknowledge, `false` for a consent choice. |
-| `title`, `description`, `detail`, `reason` | The copy, in the policy's language. `reason` says why a prompt is back. |
-| `iab` | The IAB first layer's required text under a TCF policy. |
-| `acceptAll()`, `rejectAll()`, `acknowledge()` | One-tap saves. The prompt leaves once the choice is stored. |
-| `openPreferences()` | Calls your `onOpenPreferences`. |
-| `isStale`, `reload()` | A decision landed elsewhere after the prompt read the record, so its actions do nothing. Show `iabCopy.appSettingsChanged` and wire a control to `reload()`. |
-| `listUnavailable`, `listOutdated`, `refresh()` | The IAB vendor list is stale or offline. Show `listOutdated`, keep Reject all, leave Accept all out and wire a control to `refresh()`. `acceptAll()` does nothing until the list is back. |
-| `acceptAllLabel`, `rejectAllLabel`, `customizeLabel`, `acknowledgeLabel`, `privacyPolicyLabel` | Button and link labels. |
-
-Keep the draft in a `@StateObject`, as the example does, so unsaved edits
-survive view updates.
+| `title`, `description`, `detail`, `reason` | Localized copy in the policy language (`reason` explains re-prompts). |
+| `iab` | Required IAB first-layer copy under a TCF policy. |
+| `acceptAll()`, `rejectAll()`, `acknowledge()` | One-tap saves that dismiss the prompt after storage succeeds. |
+| `openPreferences()` | Calls your `onOpenPreferences` handler. |
+| `isStale`, `reload()` | Set when another surface saved after this prompt loaded. Show `iabCopy.appSettingsChanged` and wire `reload()`. |
+| `listUnavailable`, `listOutdated`, `refresh()` | Set when the IAB vendor list is stale or offline. Show `listOutdated`, keep Reject all, hide Accept all, and wire `refresh()`. |
+| `acceptAllLabel`, `rejectAllLabel`, `customizeLabel`, `acknowledgeLabel`, `privacyPolicyLabel` | Localized button and link labels. |
 
 ## Build a preferences screen with a draft
 
-`HeadlessConsentPreferences` wraps your screen while it is open. Its
-`categories` are rows with a title, a description, a lock and a `binding` for
-your switch:
+`HeadlessConsentPreferences` wraps your preferences screen and exposes `categories` with titles, descriptions, lock state, and switch bindings:
 
 <include src="../../shared/examples/native/core-swift/custom-consent/swift-headless-preferences.mdx" />
 
-A row with `locked` set takes no switch. Show `lockedLabel` in its place:
-"Always on" for `necessary`, "Off" with a `note` for a category that Global
-Privacy Control or a strict scope holds off. `isEnabled` turns false while a
-save runs, while the draft is stale and while an IAB list cannot be edited.
+Hide the switch when `locked` is `true` and render `lockedLabel` ("Always on" for `necessary`, or "Off" plus `note` when GPC or a strict policy restricts the category). `isEnabled` becomes `false` while saving, while stale, or while an IAB list is uneditable.
 
-Edits stay in the draft until `save()`. The draft seeds from the recorded
-choice, never from effective permissions, and follows the record while it has
-no edits. These are the save rules:
+Edits stay in the draft until `save()`. The draft seeds from recorded choices (not effective permissions) and tracks updates while clean. Handle each save state:
 
-| State | What happened | What to show |
+| State | Meaning | UI action |
 | --- | --- | --- |
-| `draft.isSaving` | A save is running. | Disable controls and dismissal. `savingAction` names the pressed one and `showProgress` turns true after 400 ms. |
-| `draft.errorMessage` | Storage refused the write. The edits are kept. | The message, and a control wired to `retry()`. Leave the retry out while `listUnavailable` is true: only `refresh()` helps then. |
-| `draft.isStale` | Another surface recorded a decision after this draft was read, so the core refused the save. | `iabCopy.appSettingsChanged`, and a control wired to `draft.reset()`. |
-| `draft.listUnavailable` | The IAB vendor list is stale or offline. | `iabCopy.appListOutdated`, and a control wired to `draft.refresh()`. |
-| `confirmDiscard` | The person tried to leave with unsaved edits. | Your confirmation, wired to `discard()` and `keepEditing()`. |
+| `draft.isSaving` | A save is in progress. | Disable controls and dismissal. `savingAction` names the active button; `showProgress` turns true after 400 ms. |
+| `draft.errorMessage` | Storage refused the write; edits remain intact. | Display the error and wire `retry()` (omit retry when `listUnavailable` is true; use `refresh()` instead). |
+| `draft.isStale` | Another surface saved after this draft opened. | Show `iabCopy.appSettingsChanged` and wire `draft.reset()`. |
+| `draft.listUnavailable` | The IAB vendor list is stale or offline. | Show `iabCopy.appListOutdated` and wire `draft.refresh()`. |
+| `confirmDiscard` | The user tried to dismiss with unsaved edits. | Show a confirmation wired to `discard()` and `keepEditing()`. |
 
-A save names the snapshot revision the draft was read at. The core refuses it
-with `concurrent-change` when that revision has moved, and the draft keeps the
-edits visible so the person can review them against the new settings. This is
-stricter than React Native, whose draft retries once when no staged category
-was overtaken. Native asks for a reset after any move, as the stock screens do. A
-successful save means the choice is stored on the device and queued for
-delivery, not that the backend has it. `save(_:)` also has an `async` form that
-returns whether the choice was stored.
+Each save passes the snapshot revision the draft read. The core rejects stale writes with `concurrent-change` and retains your edits so the user can review against updated settings. A successful save confirms durable device storage and queues backend delivery; `save(_:)` also offers an `async` overload returning whether storage succeeded.
 
 ## Build your own IAB screen
 
-Under a TCF policy `iab` on the scope, or `draft.iab`, is an `IABDraftHandle`.
-It has the commands `useIAB()` has on the web and in React Native, and the
-core's disclosure as rows:
+Under a TCF policy, `iab` on the scope (or `draft.iab`) exposes an `IABDraftHandle` with disclosure rows and draft commands:
 
 <include src="../../shared/examples/native/core-swift/custom-consent/swift-headless-iab.mdx" />
 
-| Member | What it gives you |
+| Member | Contents |
 | --- | --- |
-| `firstLayer` | The first layer's description with the partner count, the partner link text, the purpose and stack summary, and the legitimate-interest, scope and withdrawal sentences. |
-| `purposes` | Declared purposes with name, description, legal text, illustrations, partner counts, a consent switch and, where a partner relies on it, a legitimate-interest switch. |
-| `specialFeatures` | Declared special features, each with an opt-in. |
-| `specialPurposes`, `features` | What partners use with no choice. Show `specialPurposesExplanation` and `featuresExplanation` with them. Show the features text on a partner's own page too. |
-| `stacks` | Every stack in the vendor list with its purposes and special features. |
-| `vendors`, `vendors(purposeId:)`, `vendor(_:)` | Registered partners with their bases after publisher restrictions, switches, status and `details`, sorted by name. |
-| `customVendors` | Partners outside the vendor list, with `customVendorsHeading` and `customVendorsNotice`. |
-| `adTechProviders` | Google Additional Consent providers, with `adTechProvidersHeading` and `adTechProvidersNotice`. |
-| `publisherRestrictions` | The restrictions your policy declares. The vendor rows already apply them. |
-| `consentStorage` | How long the TC String stays on the device. |
+| `firstLayer` | Description with partner count, partner link text, purpose/stack summary, and legitimate-interest, scope, and withdrawal statements. |
+| `purposes` | Declared purposes with descriptions, legal text, illustrations, partner counts, consent switches, and legitimate-interest switches where declared. |
+| `specialFeatures` | Declared special features with opt-in switches. |
+| `specialPurposes`, `features` | Non-toggleable partner declarations. Show `specialPurposesExplanation` and `featuresExplanation` alongside them and on vendor detail views. |
+| `stacks` | Vendor list stacks with grouped purposes and special features. |
+| `vendors`, `vendors(purposeId:)`, `vendor(_:)` | Registered partners sorted by name with legal bases after publisher restrictions, switches, status, and `details`. |
+| `customVendors` | Non-IAB partners with `customVendorsHeading` and `customVendorsNotice`. |
+| `adTechProviders` | Google Additional Consent providers with `adTechProvidersHeading` and `adTechProvidersNotice`. |
+| `publisherRestrictions` | Policy publisher restrictions (already applied to vendor rows). |
+| `consentStorage` | Maximum retention period of the TC String on the device. |
 
-A vendor's `consent` is `nil` when a publisher restriction left it no consent
-purpose, and `legitimateInterest` is `nil` when it has no such purpose. Offer a
-switch only for a value that is not `nil`. The core refuses a save that turns
-either on for a vendor whose bases are empty. Setting a legitimate-interest
-switch to `false` records an objection. Purposes 1 and 3 to 6 never take
-legitimate interest.
+Render a switch only when a vendor's `consent` or `legitimateInterest` is non-`nil`. The core rejects saves that enable an empty basis. Setting `legitimateInterest` to `false` records an objection; purposes 1 and 3 through 6 never use legitimate interest.
 
-`acceptAll()` stages exactly what the stock Accept all saves. `rejectAll()`
-stages withdrawal of every consent and leaves legitimate interest alone. Both
-save nothing until `save()`. The one-tap actions on the scopes save at once.
-A first decision opens with every consent off and registered vendors'
-legitimate interests not objected to. A custom partner's legitimate interest
-starts off, as on the stock screens.
+`acceptAll()` and `rejectAll()` on the draft stage choices without saving until `save()`. First decisions open with every consent off, registered vendors' legitimate interests unobjected, and custom partners' legitimate interests off. The core validates every ID and basis, encodes the TC String and Additional Consent string, and mirrors `IABTCF_*` keys. Gate ad SDKs on committed decisions (`ConsentGate` or `isIABAllowed`), never on draft rows.
 
-The core checks every ID and legal basis, encodes the TC String and the
-Additional Consent string, and writes the `IABTCF_*` keys exactly as it does
-for the stock screens. Gate vendors on the committed decision with
-`ConsentGate` or the core's `isIABAllowed`, never on the staged rows.
+### Required IAB disclosures
 
-### What your IAB screens must show
+The core satisfies IAB Europe signal checks from `packages/native-protocol/iab/tcf-policy-checks.json` (T1, T3, T4, T6 to T13, P13, P21, P29). Complete CMP registration (T5) with IAB Europe and render the remaining UI checks:
 
-IAB Europe checks a mobile CMP against the list in
-`packages/native-protocol/iab/tcf-policy-checks.json`. The core meets the signal checks
-for any screen: T1 (a TC String only after a save), T3, T4, T6 to T13, P13 and
-P29 (it never sets the non-standard-texts flags), and P21 (a first decision
-opens with every consent off). T5, CMP registration, is yours to complete with
-IAB Europe. A custom screen must render the rest.
-
-| Check | What to render |
+| Check | Required UI |
 | --- | --- |
-| P1, P2 | Show the first layer over most of the screen, apart from terms and your privacy policy. |
-| P3, P4, P5, P12 | `firstLayer.description`, which carries the partner count. |
-| P6 | Draw `firstLayer.partnersLink` as a link that opens your partner list. |
-| P7 | Every item of `firstLayer.summary`. |
-| P8, P9 | `firstLayer.scope` and `firstLayer.withdraw`. |
-| P10, P11, P32 | Accept all and Reject all with the same styling and at least 5:1 contrast, plus Customize. `ConsentActions` keeps their widths equal. |
-| T2 | Reject all through `rejectAll()` on either scope, which turns every consent off. |
-| P14, P15 | Names, descriptions and illustrations from the purpose and feature rows, unchanged, with no switch on features. |
-| P16 | `adTechProviders` and `customVendors` in their own sections with their headings and notices. |
-| P17, P22 | `firstLayer.legitimateInterestNotice`, `legitimateInterestExplanation` and each vendor's legitimate-interest purposes in `details`. |
-| P18, P23 | `rightToObject` and the legitimate-interest switch on each purpose and each vendor. |
-| P19 | Per vendor, from `details`: the privacy-policy link, both lists of purposes, special purposes, features and special features, with the consent switches. |
-| P20 | A switch per row of `specialFeatures`. |
-| P25 | `partnersNote` or the two partner counts on each purpose. |
-| P26 | The legitimate-interest claim link in `details`. |
-| P27, P28 | Retention and data categories in `details`. |
-| P30 | `consentStorage`. |
-| P31 | An entry in your app's settings that opens the preferences screen again. |
+| P1, P2 | Cover most of the screen on the first layer, leaving terms and privacy policy accessible. |
+| P3, P4, P5, P12 | Render `firstLayer.description` including the partner count. |
+| P6 | Render `firstLayer.partnersLink` as a link opening your partner list. |
+| P7 | Render every item in `firstLayer.summary`. |
+| P8, P9 | Render `firstLayer.scope` and `firstLayer.withdraw`. |
+| P10, P11, P32 | Give Accept all and Reject all equal styling and at least 5:1 contrast, plus Customize (`ConsentActions` keeps widths equal). |
+| T2 | Wire Reject all to `rejectAll()` on the scope to withdraw every consent. |
+| P14, P15 | Render purpose and feature names, descriptions, and illustrations unchanged, with no switch on features. |
+| P16 | Place `adTechProviders` and `customVendors` in separate sections with their headings and notices. |
+| P17, P22 | Render `firstLayer.legitimateInterestNotice`, `legitimateInterestExplanation`, and each vendor's legitimate-interest purposes in `details`. |
+| P18, P23 | Render `rightToObject` and legitimate-interest switches on each purpose and vendor. |
+| P19 | Per vendor `details`: privacy policy link, consent and LI purpose lists, special purposes, features, special features, and consent switches. |
+| P20 | Render a switch for each row in `specialFeatures`. |
+| P25 | Show `partnersNote` or both partner counts on each purpose. |
+| P26 | Show the legitimate-interest claim link in `details`. |
+| P27, P28 | Show retention and data categories in `details`. |
+| P30 | Show `consentStorage`. |
+| P31 | Keep a standing Privacy settings entry in your app's settings. |
 
-## Keep the screens accessible
+## Keep custom screens accessible
 
-The two blocks send each save result and error to VoiceOver, once, however many
-blocks share the draft. The preferences block also routes the VoiceOver escape
-gesture through `requestClose()`. The rest is one call each:
+Both headless blocks announce save results and errors to VoiceOver once, even when multiple blocks share a draft. `HeadlessConsentPreferences` also routes the VoiceOver escape gesture through `requestClose()`. Add these modifiers to finish accessibility:
 
-| API | What it does |
+| API | Purpose |
 | --- | --- |
-| `.consentPane(_:)` | Tells VoiceOver a new screen appeared, so focus moves into it. |
-| `.consentInitialFocus()` | Puts VoiceOver focus on the heading or first control when the surface opens. |
-| `ConsentActions { }` | Lays paired actions out at equal width, and stacks them when a label does not fit or at accessibility Dynamic Type sizes. |
+| `.consentPane(_:)` | Announces a new screen and moves VoiceOver focus into it. |
+| `.consentInitialFocus()` | Focuses the heading or first control when the screen opens. |
+| `ConsentActions { }` | Gives paired actions equal width and stacks them at accessibility Dynamic Type sizes or narrow widths. |
 
-Use text styles that scale with Dynamic Type and let rows grow. Test at the
-largest accessibility size.
+Use Dynamic Type styles, let rows expand, and test at the largest accessibility text size.
 
-## Run the custom example
+## Run the custom UI example
 
-`packages/swift/Examples/custom-consent` is a complete custom UI built only
-from the blocks. Follow its README to generate the project and run it. Its
-launch arguments open any screen directly, with `--stock` for the stock
-screens beside it.
-
-The rest of this page covers the engine APIs the blocks are built on. Use them
-for SDK gates outside SwiftUI and for a form that changes one category.
+`packages/swift/Examples/custom-consent` implements a complete custom UI built exclusively from these blocks. Follow its README to generate and run the project; pass `--stock` to compare against stock screens side by side.
 
 ## Keep SDK gates current
 
-`isAllowed(.measurement)` is a cached Boolean read. Use
-`decision(for: .measurement)` when you need to distinguish `.pending` from
-`.denied`. Both keep optional work off until it is permitted.
+`isAllowed(.measurement)` performs a synchronous cached Boolean read. Use `decision(for: .measurement)` when you need to distinguish `.pending` from `.denied`. Keep optional work disabled in both states.
 
-For a service that must start and stop as permission changes, retain a decision
-gate for the service's lifetime. This is the registration used by the runnable
-SwiftUI example:
+For an SDK that must start and stop as consent changes, retain a gate subscription for the service's lifetime:
 
 <include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-observe.mdx" />
 
-The example's `measurement` property is a thread-safe `MeasurementService`.
-It starts collecting only on `.granted` and stops on `.pending` or `.denied`.
-The gate delivers the current decision when it registers and then delivers
-changes. The `ConsentSubscription` it returns owns the callback: retain it for
-as long as you want updates. Calling `cancel()` or releasing the handle ends the
-registration. `onChange` follows the same rule. A closure that captures its
-owner should capture it weakly, as the example does, so the owner can still be
-released.
+The gate delivers the current decision immediately on registration and on every change. Retain the returned `ConsentSubscription` while you want updates; releasing it or calling `cancel()` ends the subscription. Capture owners weakly inside closures to avoid retain cycles.
 
-Gate callbacks can run on any queue, so the service guards its own state. UI
-state should come from `PublishedConsent`, or `ObservableConsent` on iOS 17
-and later, which update on the main actor. The sample republishes the snapshot
-with a Combine sink that needs no hop:
+Gate callbacks can run on any queue, so synchronize access to your service state. For UI state, observe `PublishedConsent` (or `ObservableConsent` on iOS 17+), which publishes on the main actor:
 
 <include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-snapshot.mdx" />
 
-A UIKit controller can subscribe to `decisionPublisher(for:)`, which delivers
-the current decision and then each change on the main thread.
-
-Use your vendor's supported disable, stop or reset API on withdrawal. The
-sample counter is local and makes no network requests; adapt the gate to the
-real SDK you use. Disable that SDK's own automatic initializer before relying
-on a consent gate.
+UIKit controllers can subscribe to `decisionPublisher(for:)` on the main thread. Always disable vendor auto-initializers and invoke the vendor's disable, stop, or reset API on withdrawal.
 
 ## Start a draft from recorded choices
 
-The current permission can differ from a recorded choice under a regional
-policy. Seed a form from `snapshot.explicitChoice`, then capture the snapshot
-revision your form is editing:
+When building a custom form directly on the core APIs, seed controls from `snapshot.explicitChoice` and record the snapshot revision:
 
 <include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-draft.mdx" />
 
-The sample form's Measurement switch edits `draft.measurement`. Changing the
-switch changes only the draft. No native choice is recorded until Save or
-Reject is pressed.
-
-Enable editing only after the core is ready, the category is in the resolved
-scope and restrictions allow it. The sample also refuses IAB editing because
-a category switch cannot represent a complete vendor decision.
+Switch changes edit the draft only; nothing saves until the user taps Save or Reject. Enable editing only when the core is ready, the category is in scope, and no restriction blocks it. Do not use a category-only form under an IAB policy.
 
 ## Save without losing refused drafts
 
-The runnable form commits on a worker and keeps the form open unless the
-native result is `.committed`:
+Commit on a background worker and dismiss the form only when the native result is `.committed`:
 
 <include src="../../shared/examples/native/core-swift/swiftui-consent/swiftui-save.mdx" />
 
-`expectedRevision` prevents an older draft from overwriting a newer choice or
-policy. On `concurrent-change`, keep the edits visible and ask the person to
-reload current settings. On a storage error, retain the draft and show Retry.
-Disable duplicate saves and dismissal while a save is running.
+Passing `expectedRevision` prevents stale drafts from overwriting newer choices. On `concurrent-change`, keep edits visible and prompt the user to reload settings. On storage errors, retain the draft and offer Retry. Disable duplicate saves and dismissal while a save is active.
 
-A committed result means durable local success. Observe `eventStream` for
-`.saveDelivered` or `.saveReplayed` when your app needs to report backend
-delivery separately. A network failure does not reverse a stored withdrawal.
+`.committed` confirms durable local storage; observe `eventStream` for `.saveDelivered` or `.saveReplayed` to track backend delivery separately.
 
-## Run the complete custom form
+## Run the lower-level form example
 
-Open `packages/swift/Examples/swiftui-consent` using its README, add
-`--headless` to the scheme's Run arguments, and launch it. This mode creates
-no `ConsentPresenter` and mounts no `.inth` modifier. Its
-`Sources/headless-preferences.swift` contains the complete form behind the
-snippets above, including readiness, restrictions, retry and reload handling.
+Open `packages/swift/Examples/swiftui-consent` and launch with `--headless` in the scheme's Run arguments to test `Sources/headless-preferences.swift` without mounting `ConsentPresenter` or `.inth`. Apps that ship only custom core-based UI can omit `InthConsentUI`.
 
-The example project links the UI product to support its separate stock mode.
-An app that ships only its own UI can remove that product and its imports.
-Its engine and platform services remain the same.
-
-## Own the complete consent flow
-
-Your custom UI also owns policy-specific disclosures, accept and reject
-actions, accessible save errors, localization and unsaved-edit confirmation.
-Keep a standing Privacy settings action after the initial choice.
-
-Verify refusal, grant, withdrawal, concurrent changes and relaunch with your
-real optional SDKs. [Mobile verification](/docs/guides/mobile-verify) gives the
-remaining app checks.
+Verify refusal, grant, withdrawal, concurrent changes, and relaunch against your real SDKs using the [mobile verification checklist](/docs/guides/mobile-verify).

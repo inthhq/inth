@@ -1,27 +1,17 @@
 ---
 title: Klaviyo
-description: Load Klaviyo signup forms and onsite tracking only after marketing and measurement consent with the Inth klaviyo helper, gate your own events, and check it in DevTools.
+description: Gate Klaviyo signup forms and onsite tracking on marketing and measurement consent with Inth.
 seoTitle: Klaviyo cookie consent with Inth
-seoDescription: Load Klaviyo only after marketing and measurement consent, or show its signup forms with marketing consent only. Set it up with the Inth klaviyo helper.
+seoDescription: Load Klaviyo after marketing and measurement consent, or show signup forms with marketing consent only, using the Inth klaviyo helper.
 icon: klaviyo
 group: integrations
 ---
 
-The Inth `klaviyo` helper keeps Klaviyo.js off the page until both `marketing`
-and `measurement` have consent. Klaviyo.js shows signup forms and also tracks
-visitors on your site. Until then, Inth does not create the `klaviyo` object. If
-the visitor withdraws consent, Inth removes the loader and, by default, reloads
-the page. With `mode: 'forms-only'`, the helper needs only `marketing` and sets
-the Klaviyo `__kla_off` opt-out cookie before the bundle runs. The `category`
-option replaces the default consent condition.
+The `klaviyo` helper keeps `Klaviyo.js` off the page and `window.klaviyo` undefined until both `marketing` and `measurement` are granted. On withdrawal, Inth removes the loader and reloads by default. Use `mode: 'forms-only'` to show signup forms under `marketing` alone while turning onsite tracking off.
 
 ## Configure Klaviyo
 
-Copy the six-character public API key, also called the site ID, from
-**Settings > Account > API keys** in Klaviyo. It appears in every page that
-loads Klaviyo, so it is safe in browser code. Never put a private key
-(`pk_...`) in the browser. If you pass one, the helper logs an error and
-Klaviyo does not load.
+Copy your six-character public API key from **Settings > Account > API keys** in Klaviyo. Never pass a private key (`pk_...`); the helper logs an error and loads nothing.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -31,9 +21,7 @@ import { klaviyo } from '@inth/integrations/klaviyo';
 export const scripts = [klaviyo({ publicApiKey: 'YOUR_PUBLIC_API_KEY' })];
 ```
 
-Remove Klaviyo's own snippet first. On Shopify, BigCommerce, WooCommerce and
-the other platforms where Klaviyo installs Klaviyo.js for you, turn that
-installation off, or Inth is not the only thing loading it.
+Remove Klaviyo's snippet and disable automatic `Klaviyo.js` injection on Shopify, BigCommerce, or WooCommerce so Klaviyo loads only through Inth.
 
 <include src="../shared/integrations/register-scripts.mdx" />
 
@@ -41,26 +29,14 @@ installation off, or Inth is not the only thing loading it.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `publicApiKey` | Required | Six-letter-or-digit public API key. Surrounding whitespace is trimmed. Any other value, including a missing key, logs an error and the script does not load. Private keys get their own message. |
-| `mode` | `'full'` | `'full'` loads forms and web tracking. `'forms-only'` turns Klaviyo's web tracking off before the bundle starts; see [forms-only mode](#forms-only-mode). |
-| `category` | `{ and: ['marketing', 'measurement'] }`, or `'marketing'` in forms-only mode | Consent condition that must hold before Klaviyo.js loads. Accepts any category or `and`/`or`/`not` condition. |
-| `scriptUrl` | `https://static.klaviyo.com/onsite/js/<publicApiKey>/klaviyo.js` | Loader URL override, such as a first-party proxy. Must be `https:`. A blank value falls back to the default. |
+| `publicApiKey` | Required | Six-character alphanumeric public API key. Invalid, missing, or private keys log an error and skip loading. |
+| `mode` | `'full'` | `'full'` loads forms and tracking. `'forms-only'` sets `__kla_off=true` before running; see [Forms-only mode](#forms-only-mode). |
+| `category` | `{ and: ['marketing', 'measurement'] }`, or `'marketing'` in forms-only mode | Consent condition required before `Klaviyo.js` loads. |
+| `scriptUrl` | `https://static.klaviyo.com/onsite/js/<publicApiKey>/klaviyo.js` | `https:` loader URL override. Blank values use the default. |
 
 ## Why Klaviyo needs two categories
 
-One script, Klaviyo.js, serves both signup forms and Active on Site tracking.
-Klaviyo offers no setting or browser API to load one without the other. Forms
-grow your marketing lists, and tracking records which identified visitors are
-on the site and feeds segments, attribution and automated email and SMS flows.
-Klaviyo classifies its `__kla_id` cookie as a targeting cookie.
-
-So by default `klaviyo` loads only when both marketing and measurement are
-allowed. With either category alone, or neither, Inth requests nothing from
-Klaviyo and Klaviyo writes no storage. Once the second category is allowed,
-Klaviyo.js loads without a page reload, once.
-
-If your legal review classifies Klaviyo differently, or your account uses only
-part of it, pass your own condition:
+`Klaviyo.js` bundles signup forms and Active on Site tracking in one script with no split option, and Klaviyo classifies `__kla_id` as a targeting cookie. Override `category` if your legal review uses another mapping:
 
 {/* example: fragment */}
 
@@ -70,9 +46,7 @@ klaviyo({ publicApiKey: 'YOUR_PUBLIC_API_KEY', category: 'marketing' });
 
 ## Forms-only mode
 
-`mode: 'forms-only'` loads Klaviyo.js once marketing is allowed and sets
-Klaviyo's `__kla_off=true` cookie before the bundle runs. Klaviyo documents
-this cookie as the switch that keeps forms working while it stops tracking.
+`mode: 'forms-only'` waits for `marketing` and sets Klaviyo's `__kla_off=true` session cookie before loading:
 
 {/* example: fragment */}
 
@@ -80,59 +54,24 @@ this cookie as the switch that keeps forms working while it stops tracking.
 klaviyo({ publicApiKey: 'YOUR_PUBLIC_API_KEY', mode: 'forms-only' });
 ```
 
-In this mode Klaviyo.js sends no Active on Site events, and `identify` and
-`track` calls send nothing. It is not a cookieless mode:
+Active on Site, `identify`, and `track` send nothing in this mode, with these limits:
 
-- Klaviyo.js still writes an anonymous `__kla_id` cookie, plus the Web Storage
-  keys listed in [storage](#storage-klaviyo-writes).
-- Form views and steps are still reported to Klaviyo's form analytics, and
-  each report carries the anonymous visitor ID from `__kla_id`.
-- Forms cannot target by visitor type, such as hiding a form from existing
-  subscribers.
-- A submission still creates the profile and records the subscription, but
-  the browser stays unidentified, so Klaviyo records no onsite activity for
-  that person afterwards.
-- The mode is fixed when the page loads. Allowing measurement later does not
-  turn tracking on. Switch to `mode: 'full'` in your configuration for that.
-- `__kla_off` is a session cookie, and the helper never deletes it, since a
-  site or visitor may also set it to opt out. If you move a site from
-  forms-only to full mode, visitors who saw the forms-only version keep
-  tracking off until they close the browser.
+- **Not cookieless.** `Klaviyo.js` still writes `__kla_id`, Web Storage keys, and form-analytics events carrying `__kla_id`.
+- **No visitor targeting.** Forms cannot hide from existing subscribers, and submissions create profiles without identifying the browser for later tracking.
+- **Fixed per page load.** Granting `measurement` later does not enable tracking; switch to `mode: 'full'` instead. Inth never deletes `__kla_off`, so visitors moving from forms-only to full mode keep tracking off until they close the browser.
+- **No measurement-only mode.** Klaviyo cannot suppress published forms while tracking visitors.
 
-There is no measurement-only mode. Klaviyo cannot suppress published forms
-while still tracking visitors.
+## Vendor switches, opt-out regions, and IAB mode
 
-## Vendor switches, opt-out regions and IAB mode
+The vendor slug is `klaviyo`; declare it so preference dialogs show its switch. See [vendor consent](/docs/integrations/overview#vendor-switches-and-cookie-cleanup).
 
-The helper sets the vendor slug `klaviyo`, so a visitor can allow marketing
-and measurement and still switch Klaviyo off. Declare the vendor with a name
-and privacy policy URL so your preference UI can show the switch; until then
-Inth logs a warning in the console. See
-[vendor consent for your framework](/docs/integrations/overview#vendor-switches-and-cookie-cleanup).
+- Turning the switch off blocks loading or reloads on revocation. Because `clearOnRevocation` runs per category, a vendor-only toggle leaves existing storage untouched.
+- In opt-out regions like most of the US, `Klaviyo.js` loads on first view unless Global Privacy Control denies both categories.
+- In IAB TCF mode, vendor switches are ignored; Klaviyo loads once TCF purposes 2, 3, and 4 and 7, 8, and 9 are granted.
 
-- With the switch off, Klaviyo.js does not load. Switching it off after
-  Klaviyo has loaded reloads the page, and the new page loads nothing from
-  Klaviyo.
-- `clearOnRevocation` runs per category, so switching off only the vendor
-  leaves `__kla_id` and Klaviyo's other storage in place. Klaviyo stops reading
-  them because it no longer loads.
-- In regions whose policy allows marketing and measurement before a choice,
-  such as most of the US, Klaviyo.js loads on the first page view. A visitor
-  sending Global Privacy Control has both denied, so Klaviyo does not load.
-- In IAB TCF mode, vendor switches are ignored. Klaviyo has no TCF vendor ID
-  in this helper, so it loads once the TCF purposes behind marketing (2, 3
-  and 4) and measurement (7, 8 and 9) are all granted.
+## Send your own events
 
-## Send your own events only with consent
-
-The helper never calls `identify`, `track` or Klaviyo's Viewed Product and
-Added to Cart snippets. Send them from your own code.
-
-Before Klaviyo.js loads, the helper installs the `klaviyo` object from
-Klaviyo's onsite snippet. Calls made before the bundle arrives are queued, and
-Klaviyo.js replays them. The object exists only after the helper's consent
-condition held on this page, so optional chaining drops calls made without
-consent:
+`window.klaviyo` exists only after consent, so optional chaining drops unconsented calls when `reloadOnConsentRevoked` is enabled:
 
 {/* example: fragment */}
 
@@ -143,52 +82,21 @@ window.klaviyo?.track('Added to Cart', {
 });
 ```
 
-This check assumes Inth reloads the page on revocation, which it does by
-default. With `reloadOnConsentRevoked: false`, the object stays after a
-revocation, so check the categories with your framework's consent API before
-each call. In forms-only mode, Klaviyo drops these calls even though the
-object exists.
+With `reloadOnConsentRevoked: false`, check Inth consent before each call. Cookie consent and email or SMS subscription consent are separate records; keep collecting channel opt-ins in your Klaviyo forms.
 
-## Account settings that change what Klaviyo collects
+## Account settings and storage
 
-Inth controls when Klaviyo.js loads. These Klaviyo account settings control
-what it does once loaded:
+Account settings that affect collection after load: **Anonymous visitor activity backfill** (`kl-post-identification-sync`, 14 days, under **Settings > Account > Data**), **Extended ID** and **First-Party ID** (`__kle_id`), and account-wide **Email and SMS click tracking** (`_kx`).
 
-- **Anonymous visitor activity backfill** stores frontend events for
-  unidentified visitors in local storage (`kl-post-identification-sync`) for
-  up to 14 days, then sends them when the visitor is identified. Klaviyo says
-  this needs both analytics and marketing consent. Turn it off under
-  **Settings > Account > Data**, *Enable anonymous visitor tracking*.
-- **Extended ID** and **First-Party ID** restore an identity after `__kla_id`
-  expires; First-Party ID adds a `__kle_id` cookie. Klaviyo recommends
-  updating your cookie notice before enabling either.
-- **Email and SMS click tracking** identifies visitors who arrive from a
-  Klaviyo message through the `_kx` URL parameter. It can only be turned off
-  for the whole account.
-
-## Cookie consent is not subscription consent
-
-Your Inth banner asks whether Klaviyo may run in the browser. A Klaviyo signup
-form asks whether someone wants your emails or texts. They are separate
-records: allowing marketing cookies does not subscribe anyone, and a
-subscription does not grant cookie consent. Keep collecting email and SMS
-consent in Klaviyo forms, with the wording your channels require.
-
-## Storage Klaviyo writes
-
-Observed with Klaviyo.js in October 2026. Klaviyo can change these names.
+Observed storage names, including DataDome bot protection (`datadome`, `dd*`):
 
 | Storage | Names |
 | --- | --- |
-| Cookies | `__kla_id` (up to two years after identification), `__kle_id` with First-Party ID, `__kla_off` in forms-only mode, `datadome` after a form submission triggers bot protection |
+| Cookies | `__kla_id` (up to 2 years), `__kle_id`, `__kla_off`, `datadome` |
 | Local storage | `klaviyoOnsite`, `__kl_key`, `$referrer`, `$last_referrer`, `kl-post-identification-sync`, `ddSession` |
 | Session storage | `klaviyoPagesVisitCountV2`, `klaviyoFormSubmit`, `_kx`, `ddCookieCandidateDomain` |
 
-The `datadome` and `dd*` names come from DataDome, the bot protection Klaviyo
-runs on form submissions.
-
-To delete them when a visitor turns either category off, add them to
-`clearOnRevocation` under both categories:
+Add these to `clearOnRevocation` under both `marketing` and `measurement`, or `marketing` only in forms-only mode. See [clear on revocation](/docs/integrations/overview#vendor-switches-and-cookie-cleanup):
 
 {/* example: fragment */}
 
@@ -217,14 +125,9 @@ const clearOnRevocation = {
 };
 ```
 
-See [clear on revocation for your framework](/docs/integrations/overview#vendor-switches-and-cookie-cleanup)
-for where the option goes. In forms-only mode, list the storage under
-`marketing` only.
-
 ## Content Security Policy
 
-Klaviyo.js appends its modules as new script elements without a nonce. A
-popup signup form with default styling used these hosts in testing:
+`Klaviyo.js` injects module scripts without a nonce. Default popup forms require:
 
 | Directive | Hosts |
 | --- | --- |
@@ -232,27 +135,16 @@ popup signup form with default styling used these hosts in testing:
 | `connect-src` | `https://a.klaviyo.com`, `https://fast.a.klaviyo.com`, `https://static-forms.klaviyo.com` |
 | `style-src` | `https://static.klaviyo.com`, `https://fonts.googleapis.com` |
 | `img-src` | `https://d3k81ch9hvuctc.cloudfront.net` |
-| `frame-src` | `https://geo.captcha-delivery.com`, for the bot check some submissions get |
-
-When DataDome, the bot protection Klaviyo runs on submissions, challenges a
-visitor, it loads its check in a frame. Fonts, images and features differ
-between forms, so test each published form under your policy.
+| `frame-src` | `https://geo.captcha-delivery.com` (DataDome bot challenge) |
 
 ## Verify Klaviyo
 
 Filter DevTools Network by `klaviyo`:
 
-1. Allow marketing only. Nothing loads from Klaviyo, and the Application tab
-   shows no `__kla_id` cookie.
-2. Allow measurement too. `klaviyo.js` loads from
-   `static.klaviyo.com/onsite/js/<your key>/`, followed by Klaviyo's modules
-   from `static.klaviyo.com` and `static-tracking.klaviyo.com`.
-3. In full mode, `await klaviyo.account()` in the console returns your public
-   API key. In forms-only mode it returns `null`.
-4. A published signup form appears in both modes. The form request goes to
-   `static-forms.klaviyo.com/forms/api/v7/<your key>/full-forms`.
-5. In forms-only mode, the console shows Klaviyo's warning that tracking is
-   disabled, and an `identify` call sends no request to
-   `a.klaviyo.com/client/`.
+1. Allow `marketing` only. Nothing loads and no `__kla_id` cookie is set.
+2. Allow `measurement` too. `klaviyo.js` loads from `static.klaviyo.com/onsite/js/<your key>/`, followed by Klaviyo modules.
+3. Run `await klaviyo.account()` in the console. Expect your public key in full mode and `null` in forms-only mode.
+4. Confirm a published form requests `static-forms.klaviyo.com/forms/api/v7/<your key>/full-forms`.
+5. In forms-only mode, confirm the console warns that tracking is disabled and `identify` sends nothing to `a.klaviyo.com/client/`.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

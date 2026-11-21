@@ -1,94 +1,51 @@
 ---
 title: UIKit
-description: Add the native Inth consent prompt to a UIKit app with one root view controller, and keep privacy settings reachable from your own screens.
+description: Host native Inth consent screens in a UIKit app with one root view controller and keep privacy settings reachable.
 group: frameworks
 ---
 
-UIKit apps use the same native core, Keychain storage and consent screens as
-SwiftUI apps. Wrap your root view controller in `ConsentRootViewController` and
-the prompt appears when a choice is needed. React Native and JavaScript are not
-required.
+Host Inth's native consent prompt and privacy settings inside a UIKit app with `ConsentRootViewController`. UIKit uses the same native core, Keychain storage, and SwiftUI screens as SwiftUI apps without a web view or JavaScript runtime.
 
 ## Add the package
 
-Follow [Add the Swift package](/docs/frameworks/swift/quickstart#add-the-swift-package)
-to link `InthCore`, `InthApple` and `InthConsentUI`. Use the project URL from
-your Inth dashboard and the app's HTTPS privacy-policy URL. Your project needs the
-policy and categories described in the
-[quickstart prerequisites](/docs/frameworks/swift/quickstart#before-you-start).
+Follow [Add the Swift package](/docs/frameworks/swift/quickstart#add-the-swift-package) to link `InthCore`, `InthApple`, and `InthConsentUI`. Configure your Inth project URL and HTTPS privacy policy URL as listed in [Before you start](/docs/frameworks/swift/quickstart#before-you-start).
 
 ## Wrap the window root
 
-For a programmatic, scene-based app, use this `AppDelegate.swift`. Each scene
-wraps its root in `ConsentRootViewController`:
+For a programmatic scene-based app, wrap each scene's root view controller in `ConsentRootViewController` inside `AppDelegate.swift`:
 
 <include src="../../shared/examples/native/core-swift/AppleInstallation/swift-uikit-app.mdx" />
 
-Replace both placeholder URLs and `ContentView` with your own root view
-controller. `ContentView` is the SwiftUI view from the
-[quickstart](/docs/frameworks/swift/quickstart#keep-privacy-settings-reachable);
-any `UIViewController` works as `root`. Keep one `@main` entry point in the
-target.
+Replace both placeholder URLs and swap `ContentView` (from the [Swift quickstart](/docs/frameworks/swift/quickstart#keep-privacy-settings-reachable)) for your root `UIViewController`. Keep one `@main` entry point per target.
 
-The app must have scene support enabled in its Application Scene Manifest. This
-delegate supplies `SceneDelegate` programmatically and clears the scene
-storyboard. If your app uses a storyboard or a named scene configuration, keep
-its lifecycle and wrap the root view controller it creates instead.
+Your app must declare Application Scene Manifest support. If your app uses a storyboard or named scene configuration, keep its lifecycle and wrap the root view controller it creates.
 
-`ConsentRootViewController` installs the engine when its view loads, then
-presents the prompt once the policy is ready, once per owed prompt. It keeps
-the prompt above your content. Touches outside the notice card reach your
-views. Status bar and home indicator appearance come from your `root`.
+`ConsentRootViewController` installs the engine when its view loads and presents an owed prompt once the policy resolves. It layers the prompt above your views, passes touches outside the notice card through to your app, and inherits status bar and home indicator styles from `root`. Every scene shares one engine and one prompt so multiple windows never open duplicate sessions.
 
-Every scene shares one engine and one prompt. A second window or a reconnected
-scene shows the same session instead of a new one. `UIHostingController` draws
-the native SwiftUI screens. It does not add a web view, a JavaScript runtime or
-a second consent record.
-
-To present the prompt yourself, pass `autoPresent: false` and call
-`ConsentPrompt.current?.presentPrompt()` when you are ready.
+Pass `autoPresent: false` to control timing yourself and call `ConsentPrompt.current?.presentPrompt()` when ready.
 
 ## Open privacy settings from UIKit
 
-Call `ConsentPrompt.current?.presentPreferences()` on the main actor from your
-Privacy settings action. It opens the same stored choices that SDK gates read,
-and does nothing while a prompt or settings session is already open.
+Call `ConsentPrompt.current?.presentPreferences()` on the main actor from your Privacy settings button. It edits the same stored choices that SDK gates read and is a no-op while another session is open.
 
-To update a UIKit label, create a `PublishedConsent` for `Inth.current` and
-subscribe to `decisionPublisher(for: .measurement)`. It delivers the current
-decision and then each change, on the main thread. Keep the returned
-`AnyCancellable` in the controller.
+To bind a UIKit view to consent changes, create `PublishedConsent` for `Inth.current` and subscribe to `decisionPublisher(for: .measurement)`. It emits the current decision and every update on the main thread. Retain the returned `AnyCancellable` on your controller.
 
-## Handle startup and unlock
+## Handle startup and device unlock
 
-If your app starts optional SDKs during launch, install the engine first in
-`application(_:didFinishLaunchingWithOptions:)` with
-`try? InthApple.install(configuration)`, using the same configuration. The root
-view controller then reuses that engine, and saved consent is available before
-optional SDK startup.
+If your app starts optional SDKs during launch, install the engine first in `application(_:didFinishLaunchingWithOptions:)` with `try? InthApple.install(configuration)` using the same configuration. `ConsentRootViewController` reuses that engine, making saved consent available before optional SDKs initialize.
 
-If Keychain is locked at launch, installation fails and optional collection
-stays off. `ConsentRootViewController` retries after protected data becomes
-available or the app becomes active. It never replaces the store with memory or
-a plaintext file.
+If Keychain is locked at launch, installation fails and optional collection stays off. `ConsentRootViewController` retries once protected data becomes available or the app becomes active, and never falls back to memory or plaintext files.
 
-For a UIKit vendor integration, use the same standing
-[native gate subscription](/docs/frameworks/swift/headless#keep-sdk-gates-current)
-as a SwiftUI app. A permission read during launch alone does not handle later
-withdrawal.
+For third-party SDKs, retain a [native gate subscription](/docs/frameworks/swift/headless#keep-sdk-gates-current) so withdrawals stop collection after launch.
 
-## Check the UIKit journey
+## Verify the UIKit flow
 
-Run the app with a policy that asks for a choice. Reject optional use, navigate
-to your app's settings, reopen Privacy settings and save a different choice.
-Relaunch and confirm that the same choice is restored and the prompt stays
-closed. Repeat after background and foreground transitions, and confirm only
-one prompt is ever on screen.
+Run the app under a policy that requires a choice:
 
-The maintained UIKit demo lives in `examples/native/consent-demo/ios`. Its
-`InthUIKitDemo` scheme hosts the same stock presenter and has local category
-and IAB demonstrations. Those sample policies are separate from your hosted
-project and its review configuration.
+1. Reject optional consent, navigate to your app's settings, reopen **Privacy settings**, and save a new choice.
+2. Relaunch and confirm the choice persists while the prompt stays closed.
+3. Background and foreground the app to confirm only one prompt ever appears.
 
-See [Customize](/docs/frameworks/swift/customize) for styling and
-[mobile verification](/docs/guides/mobile-verify) for the full app checks.
+The runnable UIKit demo lives in `examples/native/consent-demo/ios` under the `InthUIKitDemo` scheme, with local category and IAB fixtures separate from your hosted project.
+
+See [Customize](/docs/frameworks/swift/customize) for styling and [Verify mobile consent](/docs/guides/mobile-verify) for the full release checklist.

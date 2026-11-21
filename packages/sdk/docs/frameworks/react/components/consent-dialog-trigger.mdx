@@ -1,12 +1,14 @@
 ---
 title: ConsentDialogTrigger
-description: Add the Inth ConsentDialogTrigger floating button or toolbar inside a React InthProvider so visitors can reopen the preference center after the first prompt.
+description: Add a floating ConsentDialogTrigger button or toolbar inside a React InthProvider.
 group: frameworks
 ---
 
+Add a draggable floating button or multi-action toolbar inside `InthProvider` so visitors can reopen preferences from any page.
+
 ## Add the trigger inside InthProvider
 
-`ConsentDialogTrigger` is a draggable floating button that opens the preference center. Place it once inside `InthProvider`, next to the banner and dialog from the [quickstart](/docs/frameworks/react/quickstart), so visitors can revisit their choices without a footer link.
+Place `ConsentDialogTrigger` once inside `InthProvider`, next to the banner and dialog from the [quickstart](/docs/frameworks/react/quickstart):
 
 {/* example: fragment */}
 
@@ -14,12 +16,12 @@ group: frameworks
 import { ConsentDialogTrigger } from '@inth/react';
 
 // Inside the InthProvider from your quickstart, next to the dialog:
-<ConsentDialogTrigger showWhen="after-consent" />;
+<ConsentDialogTrigger showWhen="after-prompt" />;
 ```
 
-`showWhen="after-consent"` keeps the button out of the way while a choice or notice is still owed and shows it once the visitor has answered, so the banner and the trigger never compete for the same corner. The default, `always`, shows it whenever the preference center is closed.
+`showWhen="after-prompt"` hides the button while a choice or notice is owed and reveals it after the visitor responds, keeping the banner and trigger from overlapping in the same corner. The default, `always`, shows the button whenever the preference center is closed.
 
-The button carries `data-inth-rights` with the rights the active policy guarantees, so a stylesheet can label it differently under an opt-out rule.
+The button sets `data-inth-rights` with the active policy's rights so CSS can adjust its styling or wording for opt-out rules.
 
 ## Props
 
@@ -27,7 +29,7 @@ The button carries `data-inth-rights` with the rights the active policy guarante
 
 ## Configurable toolbar
 
-Use `ConsentDialogTriggerToolbar` when you want app-owned controls beside the privacy trigger. It always renders exactly one built-in action that opens the preference center, so `actions` only holds controls your app owns.
+Use `ConsentDialogTriggerToolbar` to place app-owned controls beside the privacy trigger. It always renders one built-in preferences action, so pass only app-owned controls in `actions`:
 
 ```tsx
 import { ConsentDialogTriggerToolbar } from '@inth/react';
@@ -53,9 +55,9 @@ import { ConsentDialogTriggerToolbar } from '@inth/react';
 />;
 ```
 
-Each custom action needs a stable `id`, an accessible `label`, an `icon`, and an `onSelect` callback. Use `pressed` for toggle actions and `disabled` for unavailable ones. Your app owns the state behind each action. The preferences action moves to the edge nearest the toolbar's snapped corner while custom actions keep their configured order.
+Each custom action needs a stable `id`, accessible `label`, `icon`, and `onSelect` callback. Use `pressed` for toggles and `disabled` for unavailable controls. The preferences action anchors nearest the snapped corner while custom actions keep their array order.
 
-Toolbars are horizontal by default. Set `orientation="vertical"` to stack the actions and switch arrow-key navigation to up and down:
+Toolbars lay out horizontally by default. Pass `orientation="vertical"` to stack actions vertically and switch arrow-key navigation to up and down:
 
 ```tsx
 <ConsentDialogTriggerToolbar orientation="vertical" actions={toolbarActions} />;
@@ -63,32 +65,23 @@ Toolbars are horizontal by default. Set `orientation="vertical"` to stack the ac
 
 ### When the controls show
 
-Your toolbar actions do not depend on the consent policy, so a theme toggle
-stays available while a banner is up. The built-in preferences action, and the
-single `ConsentDialogTrigger`, follow the policy:
+App-owned toolbar actions stay visible regardless of consent policy. The built-in preferences action and standalone `ConsentDialogTrigger` follow the active rule:
 
 | Situation | Built-in action and `ConsentDialogTrigger` |
 | --- | --- |
-| A choice or notice is still owed, with `showWhen="after-consent"` | Hidden until the visitor answers |
-| `showWhen="never"` on the toolbar | Left out of the toolbar |
-| No policy rule has resolved: resolution failed, no rule matched and you set no default, or init is still withheld | Hidden; appears without a remount once a rule resolves |
-| The rule has `model: 'none'` | Hidden, unless the rule adds `rights: ['preferences']` |
+| A choice or notice is still owed with `showWhen="after-prompt"` | Hidden until the visitor answers |
+| `showWhen="never"` on the toolbar | Omitted from the toolbar |
+| No policy rule has resolved | Hidden; appears automatically once a rule resolves |
+| Rule uses `model: 'none'` | Hidden unless the rule includes `rights: ['preferences']` |
 | Any other case | Shown |
 
-On the toolbar, `showWhen` applies only to the built-in action. On the single
-`ConsentDialogTrigger`, it applies to the whole control. The toolbar renders
-nothing only when it has no visible item.
+On `ConsentDialogTriggerToolbar`, `showWhen` controls only the built-in preferences action; on `ConsentDialogTrigger`, it controls the entire button. The toolbar renders nothing only when it has zero visible items.
 
 ### What the built-in action says
 
-- Under a rule with the `opt-out` right, such as a US opt-out notice, its
-  accessible name is the translated "Do not sell or share my data" and it
-  carries `data-right="opt-out"`.
-- Under any other rule it reads "Manage preferences" and carries
-  `data-right="preferences"`.
-- Either way it opens the preference center. A `preferences.label` you pass
-  replaces the default name, and the button carries `data-inth-rights` with
-  every right on the rule.
+- Under a rule with the `opt-out` right, such as a US opt-out notice, its accessible name is the translated "Do not sell or share my data" with `data-right="opt-out"`.
+- Under any other rule, it reads "Manage preferences" with `data-right="preferences"`.
+- In both cases it opens the preference center, carries `data-inth-rights`, and honors any `preferences.label` override.
 
 ### Toolbar props
 
@@ -96,7 +89,7 @@ nothing only when it has no visible item.
 
 ### Toolbar styling
 
-The toolbar follows the standard precedence: bundled styles, then provider slots, then direct `className` and `style` on the toolbar or on one action. Use `noStyle` for a fully custom implementation.
+Styles resolve in standard order: built-in styles, provider slots, then `className` and `style` on the toolbar or an individual action. Pass `noStyle` for fully custom styling.
 
 {/* example: fragment */}
 
@@ -128,4 +121,4 @@ The toolbar follows the standard precedence: bundled styles, then provider slots
 </InthProvider>;
 ```
 
-The toolbar slot keys are `trigger.toolbar`, `trigger.toolbarItem`, and `trigger.toolbarIcon`. With `noStyle`, style the current position and interaction state through `data-corner`, `data-dragging`, and `data-snapping` on the toolbar element.
+Slot keys are `trigger.toolbar`, `trigger.toolbarItem`, and `trigger.toolbarIcon`. With `noStyle`, target `data-corner`, `data-dragging`, and `data-snapping` on the toolbar element.

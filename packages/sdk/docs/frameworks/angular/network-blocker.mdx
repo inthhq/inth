@@ -1,28 +1,31 @@
 ---
 title: Network blocker
-description: Hold fetch, XMLHttpRequest and HttpClient calls to tracking domains in an Angular app until their consent category is allowed, with the networkBlocker option of provideInth.
+description: Hold fetch, XMLHttpRequest and HttpClient calls to tracking domains in Angular until consent allows them.
 group: frameworks
 ---
 
+Hold `fetch`, `XMLHttpRequest` and Angular `HttpClient` calls to tracking
+domains until their consent category is allowed.
+
 ## When to use the network blocker
 
-The network blocker stops `fetch` and `XMLHttpRequest` calls to domains you
-list until their consent category is allowed. Angular's `HttpClient` sends
-through one of the two, so its requests are covered too. Use it as a backstop
-for tracking calls from code that is already in the app, such as your own
-analytics service or an SDK you import. It is off until you configure it.
+The network blocker intercepts `fetch` and `XMLHttpRequest` calls to domains
+you list until their consent category is allowed. Angular's `HttpClient` runs
+on one of those two transports, so its requests are covered too. Use it as a
+backstop for tracking calls from code already bundled in your app, such as an
+analytics service or an imported SDK. It is off until you configure it.
 
-Load vendor SDKs through the `scripts` option first; see
-[scripts](./scripts). A script that never loads sends nothing, which is
-stronger than blocking its requests one by one.
+Move vendor SDKs into `scripts` first; see [scripts](./scripts). A script
+that never loads sends nothing, which is cleaner than blocking individual
+requests.
 
 ## Configure the rules
 
-Write the configuration in its own module:
+Write the rules in their own module:
 
 <include src="../../shared/examples/angular/network-blocker.mdx" />
 
-Pass it to `provideInth()` in `src/app/app.config.ts`:
+Pass them to `provideInth()` in `src/app/app.config.ts`:
 
 {/* example: fragment */}
 
@@ -31,70 +34,65 @@ provideInth({ mode, scripts, networkBlocker });
 ```
 
 To change the rules later, call
-`ConsentManager.updateOptions({ networkBlocker })`. New rules and `enabled`
-apply, and `false` removes the blocker.
+`ConsentManager.updateOptions({ networkBlocker })`. Passing `false` removes
+the blocker.
 
 <import src="../../shared/react/network-blocker.mdx#rules" />
 
 ## What a blocked request looks like
 
-A blocked `fetch` resolves to a response with status `451` and the status
-text `Request blocked by consent`, and nothing is sent. A blocked
-`XMLHttpRequest` is aborted and fires an `error` event. `HttpClient` turns
-either into an `HttpErrorResponse`: status `451` with `withFetch()`, status
-`0` with the default XHR backend. Requests that match no rule are
-not delayed. With `logBlockedRequests` on, the default, each blocked request
-is logged with `console.warn`; `onRequestBlocked` receives
-`{ method, url, rule }`.
+A blocked `fetch` resolves to status `451` (`Request blocked by consent`)
+without sending a request. A blocked `XMLHttpRequest` aborts and fires an
+`error` event. `HttpClient` surfaces either as an `HttpErrorResponse`: status
+`451` with `withFetch()`, or status `0` with the default XHR backend.
+Unmatched requests pass through without delay. With `logBlockedRequests` on
+(the default), Inth logs each blocked request via `console.warn`;
+`onRequestBlocked` receives `{ method, url, rule }`.
 
 ## When blocking starts
 
-`provideInth()` creates the runtime when the application is created in the
-browser, before any component runs, and the runtime starts holding matching
-requests from then. The blocker module loads when the runtime starts, after
-the first render, and then decides each held request:
+`provideInth()` creates the runtime during application creation, before any
+component runs, and begins holding matching requests immediately. The blocker
+module loads after the first render and resolves held requests:
 
-- While the policy is still loading, a matching request waits instead of
-  failing. When the policy arrives, with the visitor's stored choice applied,
-  the request is sent if its category is allowed and blocked otherwise.
-- If the policy fails to load, optional categories stay denied and the
-  waiting requests are blocked.
-- A synchronous XHR cannot wait. Before the blocker module loads, a matching
-  one throws a `NetworkError` from `send()`.
+- While the policy loads, matching requests wait instead of failing. Once the
+  policy and stored choice arrive, permitted requests go out and denied ones
+  block.
+- If the policy fails to load, optional categories stay denied and waiting
+  requests block.
+- Synchronous XHR cannot wait. Before the blocker loads, a matching
+  synchronous XHR throws `NetworkError` from `send()`.
 
-When the visitor allows a category later, new requests to its domains go
-through. Requests blocked earlier are not replayed.
+When the visitor allows a category later, new matching requests go through.
+Previously blocked requests do not replay.
 
 ## What it cannot stop
 
-The blocker sees only `fetch` and `XMLHttpRequest` calls made after the
-application is created in the browser. It cannot stop:
+The blocker intercepts only `fetch` and `XMLHttpRequest` calls made after
+application creation in the browser. It cannot stop:
 
-- Scripts that run before Angular bootstraps, such as tags in `index.html`,
-  entries in the `scripts` array of `angular.json`, and code at the top level
-  of modules `main.ts` imports.
-- Code that kept its own reference to `fetch` or `XMLHttpRequest` from before
-  the application was created.
-- `navigator.sendBeacon`, `WebSocket`, `EventSource`, and requests made by
-  `<img>`, `<script>` and `<iframe>` elements, web workers and service
-  workers.
-- Requests your server makes, such as `HttpClient` calls during server
-  rendering.
+- Scripts that run before Angular bootstraps, such as `<script>` tags in
+  `index.html`, entries in `angular.json`, and top-level code in modules
+  imported by `main.ts`.
+- Code that cached a reference to `fetch` or `XMLHttpRequest` before
+  application creation.
+- `navigator.sendBeacon`, `WebSocket`, `EventSource`, `<img>`, `<script>` and
+  `<iframe>` requests, web workers and service workers.
+- Server-side requests, such as `HttpClient` calls during SSR.
 
-Keep tracking calls out of that window. Send them from event handlers or
-effects, not at a module's top level, and check
-`ConsentManager.has('measurement')` before you call a vendor from your own
-code.
+Keep tracking calls in event handlers or effects rather than at module top
+level, and check `ConsentManager.has('measurement')` before calling a vendor
+from your own code.
 
 ## Verify the blocker
 
 Open DevTools, clear site data for your origin and reload:
 
-1. Before you choose, requests matching a rule do not reach the network, and
+1. Before choosing, requests matching a rule do not reach the network, and
    the console logs each blocked request.
 2. Allow the rule's category. New matching requests appear in the Network
    panel.
 3. Reject, reload and confirm they stay blocked.
 
-`fetch('https://www.google-analytics.com/g/collect')` in the console returns a
-response with status `451` while measurement is denied.
+Running `fetch('https://www.google-analytics.com/g/collect')` in the console
+returns status `451` while measurement is denied.

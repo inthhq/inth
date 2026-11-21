@@ -12,6 +12,6 @@
 		"",
 		"```bash\npnpm add @inth/sdk-ui\n```"
 	],
-	"docsLink": "https://c15t.com/docs/customization/tokens",
+	"docsLink": "https://inth.com/docs/customization/tokens",
 	"showCLIGeneration": false
 }

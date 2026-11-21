@@ -1,177 +1,109 @@
 ---
 title: Quickstart
-description: Add an Inth cookie banner, preference dialog and consent-gated scripts to an Angular 20, 21 or 22 app with provideInth, standalone components and Inth as the consent backend.
+description: Add a cookie consent banner to an Angular app and hold back analytics until consent allows them.
 group: frameworks
 ---
 
-## Before you start
+Add a consent banner and preference dialog to an Angular app. The browser
+resolves each visitor's policy after bootstrap, and analytics wait until
+consent allows them.
 
-This guide is for an Angular CLI app on Angular 20, 21 or 22, with standalone
-components. It works with zoneless change detection and with zone.js. The
-browser resolves consent after the app bootstraps, so the banner appears after
-the first paint. For a banner in the server HTML, follow this guide first and
-then add [server rendering](/docs/frameworks/angular/rendering).
+<Prompt title="Add Inth consent to this Angular app" description="Paste into Claude Code, Codex, Cursor or another coding agent at the root of your app.">
+  Add Inth consent management to this Angular app.
 
-The guide uses [Inth](https://inth.com) for policies and consent records.
-[Create an Inth project](https://inth.com/dashboard/sign-up), then:
+  1. Check that the app runs Angular 20, 21 or 22 with standalone components. If it uses NgModules or an older Angular version, stop and tell me.
+  2. Install `@inth/angular` and `@inth/integrations`. Read `node_modules/@inth/angular/AGENTS.md`, then follow the Angular quickstart it links to, in order. Do not guess the API from memory.
+  3. Create `src/scripts.ts`. Move every analytics and marketing script into it with the matching helper from `@inth/integrations`, carrying over each vendor's settings. Remove the old script tags from `index.html`, `angular.json` and SDK imports. If a vendor has no helper, tell me.
+  4. In `src/app/app.config.ts`, add `provideInth({ projectUrl, scripts })`. Ask me for my Inth project URL, and use `https://example-inth.inth.app` only for a demo. Keep `provideInth()` in `app.config.ts` so server configs inherit it.
+  5. In the root component (`src/app/app.ts`), render `<inth-consent-banner />`, `<inth-consent-dialog />` from `@inth/angular/consent-dialog`, and a footer button with `inthConsentDialogLink`.
+  6. Run `ng build` and serve `dist/<app>/browser`. In a private browser window, verify no vendor request fires before consent, rejecting survives a reload, and granting analytics from the footer button loads the vendor.
 
-1. Set its policy rules, including the `measurement` category for the
-   vendor below.
-2. Add your app's origin, such as `http://localhost:4200`, to its trusted
-   origins.
-3. Copy the project's backend URL.
+  Then list the files you changed, any script still outside consent, and how you checked the requests.
+</Prompt>
 
-The guide uses `hosted()` mode. The browser asks your backend for each
-visitor's policy, and the backend reads the visitor's location from the
-request, so regional policies need no extra setup. Policy, translation and
-vendor edits reach visitors on their next page load, without a rebuild.
+## Prerequisites
 
-## Install
+- An Angular 20, 21 or 22 app with standalone components (zoneless or
+  `zone.js`). For server HTML, add
+  [server rendering](/docs/frameworks/angular/rendering) next. Not on
+  Angular? See the [framework list](/docs/frameworks).
+- An [Inth project](https://inth.com/dashboard/sign-up?framework=angular)
+  with your app's origin (such as `http://localhost:4200`) in trusted
+  origins.
 
-Install `@inth/angular`. It needs `@angular/common`, `@angular/core`,
-`@angular/forms` and `@angular/platform-browser` 20, 21 or 22, which an
-Angular CLI app already has.
-
-### Install with ng add
-
-Run this in the app's folder:
-
-```bash
-ng add @inth/angular
-```
-
-The Angular CLI installs `@inth/angular`, then asks for your backend URL
-and whether to add the banner and dialog. With
-the default answers it makes two changes:
-
-1. It adds `provideInth({ projectUrl: '...' })` to the
-   providers in `src/app/app.config.ts`, or to the `bootstrapApplication()`
-   call in `src/main.ts` when the app has no config file.
-2. It adds `ConsentBanner` and `ConsentDialog` to the root component's
-   `imports`, and `<inth-consent-banner />` and `<inth-consent-dialog />` to
-   the end of its template. That is `src/app/app.ts` and `app.html`, or
-   `app.component.ts` and `app.component.html` in apps created before
-   Angular 20.
-
-To skip the prompts, pass the answers as flags, such as
-`ng add @inth/angular --project-url=https://your-project.inth.app`. If you
-leave the backend URL empty, it writes `https://your-project.inth.app` with
-a comment to replace it. `--components=false` leaves
-the root component alone. Running
-`ng add` again adds only what is missing. When it cannot find the root
-component, as in an NgModule app, it prints what to add by hand. When it
-cannot tell whether the root providers already include `provideInth()`, it
-adds neither the provider nor the components, and prints both steps.
-
-`ng add` does not create `src/scripts.ts`, add `scripts` to `provideInth()`
-or add a privacy settings button. Install the vendor helpers:
-
-<CommandTabs command="@inth/integrations" mode="install" />
-
-Then continue at [List the vendor scripts](#list-the-vendor-scripts), and
-skip the steps `ng add` already did.
-
-### Install by hand
+## Install the SDK
 
 <CommandTabs command="@inth/angular @inth/integrations" mode="install" />
 
-`@inth/integrations` holds the vendor helpers. Follow every step below.
+You can also run `ng add @inth/angular --project-url=https://your-project.inth.app`
+and then install `@inth/integrations`. Components inject their own styles;
+for Tailwind CSS 3,
+[import the stylesheet yourself](/docs/customization/stylesheets#import-the-stylesheet-yourself).
 
 ## List the vendor scripts
 
-Create `src/scripts.ts` with the vendors Inth should load:
+Create `src/scripts.ts` with the vendors Inth should gate:
 
 <include src="../../shared/examples/angular/scripts.mdx" />
 
-PostHog waits for measurement permission. Replace `phc_your_project_key`
-with your PostHog project key. Remove any `<script>` tags in `index.html` or
-SDK imports that already load PostHog, so Inth is the only thing that loads
-it.
+Replace `phc_your_project_key` with your key, or pick another
+[integration](/docs/integrations/overview). Remove any existing PostHog
+`<script>` tags in `index.html`, entries in `angular.json`, or direct SDK
+imports so PostHog does not load twice.
 
-## Add provideInth
+## Configure provideInth
 
-Add `provideInth()` to the providers in `src/app/app.config.ts`:
+Add `provideInth()` to `providers` in `src/app/app.config.ts`:
 
 <include src="../../shared/examples/angular/app-config.mdx" />
 
-Replace `https://your-project.inth.app` with your project's backend URL,
-including any path prefix. The URL is public configuration, not a secret.
-
-`provideInth()` creates the consent runtime with the application, before any
-component renders, so script gating starts even on routes without a banner.
-It provides `ConsentManager`, `HeadlessConsent` and `ConsentTheme`, which any
-component can `inject()`. In the browser, the runtime starts after the first
-render: it reads the stored choice, starts the script loader and makes one
-`/init` request. The backend picks the policy from the visitor's location and
-language and returns its current version. Consent choices go to the same
-backend.
-
-`provideInth()` adds no change detection of its own. Keep
-`provideZonelessChangeDetection()` or zone.js, whichever your app uses.
-[provideInth](/docs/frameworks/angular/provide-inth) lists every option.
+Replace `https://your-project.inth.app` with your public Inth project URL
+(or `https://example-inth.inth.app` for a demo). `provideInth()` registers
+`ConsentManager`, `HeadlessConsent` and `ConsentTheme` and resolves policy
+from Inth after first render. See
+[provideInth](/docs/frameworks/angular/provide-inth).
 
 ## Render the banner and dialog
 
-Add the components to your root component, `src/app/app.ts`:
+Add the components to `src/app/app.ts`:
 
 <include src="../../shared/examples/angular/app-component.mdx" />
 
-`<inth-consent-banner>` shows the banner when the visitor's policy asks for
-one. `<inth-consent-dialog>`, from `@inth/angular/consent-dialog`, is the
-preference dialog; it loads its code in idle time after the page loads,
-before anyone opens it. `inthConsentDialogLink` turns your own button into the persistent way back
-to preferences. Put it where visitors look for privacy settings, such as the
-footer. The directive hides the button while the policy offers no
-preferences.
+`<inth-consent-banner>` renders when the policy requires a prompt,
+`<inth-consent-dialog>` lazy-loads during idle time, and
+`inthConsentDialogLink` wires a footer button to reopen preferences.
 
-There is no stylesheet to import. Each component adds the rules it uses to
-`<head>` as `<style>` elements when it first renders. With Tailwind CSS 3, or
-to put the rules in a cascade layer, add `@inth/angular/styles.css` to the
-`styles` array in `angular.json` and pass `styles: false` to `provideInth()`;
-see [stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself).
+## Check it works
 
-## Verify consent
+Run `ng build`, serve `dist/<app>/browser`, and open a private window with
+DevTools Network open:
 
-Build with `ng build` and serve the `dist/<app>/browser` folder with any
-static file server, then open the app in a private window with DevTools open
-on the Network tab:
+1. Under an opt-in policy, `/v1/consent/init` runs, the banner appears, and no PostHog
+   request fires.
+2. Click **Reject All** and reload. The banner stays closed and PostHog does
+   not load.
+3. Click **Privacy settings**, turn on **Analytics** (`measurement`) and
+   save. PostHog loads.
+4. Turn **Analytics** off and save. The page reloads and PostHog stays
+   absent.
 
-1. One `/init` request goes to your backend URL and the banner appears. No
-   requests go to PostHog yet.
-2. Select **Reject All**. Reload. The banner stays closed and PostHog requests
-   stay absent.
-3. Select **Privacy settings**, turn on **Analytics** (the `measurement`
-   category) and save. PostHog loads.
-4. Turn it off and save. The page reloads and PostHog does not load.
-
-`window.__inthDebug` in the console shows `pkg: '@inth/angular'`. If the banner does
-not appear, check the `/init` request, then see
-[troubleshooting](/docs/frameworks/angular/troubleshooting).
-[Verify consent](/docs/guides/verify-consent) has the release checklist.
+If no banner appears, check
+[Angular troubleshooting](/docs/frameworks/angular/troubleshooting) and
+[verify consent](/docs/guides/verify-consent).
 
 ## Other setups
 
-**Tests** pass `testing()` from `@inth/angular/testing` as the mode. It resolves a policy
-in the browser with no backend and needs no `projectUrl`. It throws in
-production builds. With no arguments it uses the recommended rules; pass
-`testing({ policy })` to test your own.
+| Your setup | Guide |
+| --- | --- |
+| Server rendering with `@angular/ssr` | [Rendering and deployment](/docs/frameworks/angular/rendering) |
+| Tests without network requests | `testing()` from `@inth/angular/testing`; see [testing](/docs/frameworks/angular/testing) |
+| Custom banner or dialog markup | [Headless](/docs/frameworks/angular/headless) |
 
-{/* example: fragment */}
+## Next steps
 
-```ts
-import { provideInth } from '@inth/angular';
-import { testing } from '@inth/angular/testing';
-
-provideInth({ mode: testing(), scripts });
-```
-
-[Consent modes](/docs/concepts/modes#testing) lists what each country
-shows.
-
-**Server rendering** with `@angular/ssr` puts the banner in the first HTML
-and lets the browser talk only to your own origin. See
-[rendering and deployment](/docs/frameworks/angular/rendering).
-
-Next, [customize](/docs/frameworks/angular/customize) the banner or read
-consent in your own components with
-[ConsentManager](/docs/frameworks/angular/services).
+- [Scripts](/docs/frameworks/angular/scripts): add vendors and dispatch
+  consent-gated analytics events.
+- [Customize](/docs/frameworks/angular/customize): adjust theme tokens,
+  layout, copy and templates.
+- [ConsentManager](/docs/frameworks/angular/services): read permissions and
+  choices as signals.

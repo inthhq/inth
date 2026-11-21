@@ -1,156 +1,115 @@
 ---
 title: Quickstart
-description: Add the Inth banner, preferences and script gating to a plain HTML site, CMS theme, page builder or static site generator with one script tag and no build step.
+description: Add a cookie consent banner and script gating to a plain HTML site with one script tag and no build step.
 group: frameworks
 ---
 
-## Connect Inth
+Add a consent banner, preference dialog and script gating to a plain HTML
+site, CMS theme or static site generator with one `<script>` tag and no build
+step.
 
-[Create an Inth project](https://inth.com/dashboard/sign-up?framework=html), set its policy rules, add your
-site's origin to its trusted origins, and copy the project's backend URL. The
-URL is public configuration. It ends up in your page's HTML, which is expected.
+<Prompt title="Add Inth consent to this HTML site" description="Paste into Claude Code, Codex, Cursor or another coding agent at the root of your site.">
+  Add Inth consent management to this HTML site using the script tag.
 
-This guide loads `@inth/sdk` from your Inth project with a `<script>`
-tag. The tag brings the banner, the preference dialog, stored choices and
-script gating. There is nothing to install or build. If your site has a bundler, the same
-package is available as an ES module; [choose your setup](/docs/concepts/choose-your-setup)
-lists both paths.
+  1. Check that the site serves HTML templates without a framework adapter (Next.js, React, Vue, Svelte, Astro, Angular). If it uses one of those frameworks, stop and tell me.
+  2. If `@inth/sdk` is installed locally, read `node_modules/@inth/sdk/AGENTS.md` and follow the HTML quickstart. Otherwise follow this HTML script tag setup directly without guessing API names.
+  3. Ask me for my Inth project URL, using `https://example-inth.inth.app` only for a demo. Add `<script src="<projectUrl>/inth.js" defer></script>` to the shared `<head>` rendered by every page.
+  4. Find every analytics, marketing and ad script tag across templates. Change each to `<script type="text/plain" data-inth-category="measurement">` (or `marketing`) and remove any duplicate active loaders.
+  5. For third-party iframes (YouTube, Google Maps), move `src` to `data-src` and add `data-category`.
+  6. Add `<a href="#inth-preferences">Privacy settings</a>` to the shared footer.
+  7. Open the site in a private window with DevTools Network open. Confirm no vendor request fires before consent, rejecting survives a reload, and granting analytics from Privacy settings loads the vendor.
+
+  Then list the files you changed, any script still outside consent, and how you checked the requests.
+</Prompt>
+
+## Prerequisites
+
+- Access to your shared `<head>` and footer templates. Using a bundler or UI
+  framework? See the [framework list](/docs/frameworks).
+- An [Inth project](https://inth.com/dashboard/sign-up?framework=html) with
+  your site's origin in trusted origins.
 
 ## Add the script tag
 
-Paste this tag into the `<head>` of every page.
-Replace `https://your-project.inth.app` with the URL from your Inth project,
-and keep `/inth.js` on the end.
+Paste this tag into your shared `<head>`. Replace
+`https://your-project.inth.app` with your Inth project URL (or
+`https://example-inth.inth.app` for a demo) and keep `/inth.js` on the end:
 
 <include src="../../shared/examples/html/script-tag.mdx" />
 
-Inth serves the hosted bundle with your project's backend URL already
-configured, so the tag needs no `data-project-url`. `defer` lets the page keep
-parsing while the script downloads. When it runs, the tag resolves the
-visitor's policy through Inth's `/init`, then shows the banner if the policy
-asks for one.
-A returning visitor who already chose sees no banner. Attributes from the
-[attribute reference](/docs/frameworks/html/attributes-and-api), such as
-`data-language`, still work on this tag.
-
-`inth.js` is small. It starts `/init`, shows the banner when `/init`
-answers, and records an Accept or Reject tapped on it. It then loads
-`inth.hosted.js`, the consent engine and the rest of the UI, after the
-page's `fetchpriority="high"` images have loaded, at the visitor's first
-tap, key press or scroll, or after 10 seconds, whichever comes first. You
-add only the one tag; `inth.js` loads `inth.hosted.js` from the same place.
-See [the two script files](/docs/frameworks/html/attributes-and-api#how-inthjs-loads-inthhostedjs).
-
-Neither file includes the policy presets, the testing transport or manifest
-transport code. `/init` returns the policy resolved for this visitor.
-
-### Where to paste it
-
-The tag belongs in the shared `<head>` that every page renders, such as a WordPress
-child theme's `header.php`, Webflow's head code setting, Shopify's
-`layout/theme.liquid`, or your static site generator's base layout.
-[Install on your platform](/docs/frameworks/html/platforms) gives the exact
-place for each platform, and what to check in caching plugins and tag
-managers.
-
-A page without the tag has no consent state, and its vendor scripts follow
-their own rules. Check a few pages from different templates after you publish.
+Inth serves `inth.js` preconfigured for your project, so no
+`data-project-url` attribute is needed. `inth.js` fetches `/v1/consent/init`, displays
+the banner, handles Accept or Reject clicks, and loads `inth.hosted.js` in
+the background. See
+[how inth.js loads inth.hosted.js](/docs/frameworks/html/attributes-and-api#how-inthjs-loads-inthhostedjs)
+and [Install on your platform](/docs/frameworks/html/platforms) for
+WordPress, Webflow, Shopify, Squarespace, Wix, Framer, Ghost, Hugo, Eleventy
+and Jekyll.
 
 ## Gate your vendor scripts
 
-The tag only controls scripts it knows about. Change each vendor tag's `type`
-to `text/plain` and name its category in `data-inth-category`. The browser
-ignores a `text/plain` script, so the vendor stays off until Inth sees
-permission for that category and runs the script.
+Change each vendor `<script>` tag to `type="text/plain"` and add
+`data-inth-category`:
 
 <include src="../../shared/examples/html/vendor-scripts.mdx" />
 
-The PostHog tag loads the vendor's snippet from a file on your site. Save the
-snippet from your PostHog project settings as that file. A vendor snippet you
-paste inline works the same way: keep it inside the tag and change the tag's
-`type` and category.
-
-Remove the original, active copy of each vendor tag, including copies a theme
-setting or another plugin adds. Use `measurement` for analytics and
-`marketing` for ads and pixels. [Consent categories](/docs/concepts/consent-categories)
-lists all five. [Gated scripts](/docs/frameworks/html/components/gated-script)
-covers load order, and [scripts](/docs/frameworks/html/scripts) covers
-callbacks and what happens when a visitor withdraws permission.
+Remove any active duplicate copy added by a theme or plugin. Use
+`measurement` for analytics and `marketing` for ads; see
+[consent categories](/docs/concepts/consent-categories),
+[gated scripts](/docs/frameworks/html/components/gated-script) and
+[scripts](/docs/frameworks/html/scripts).
 
 ## Gate embeds
 
-Move an iframe's URL from `src` to `data-src` and add `data-category`. Inth
-sets `src` once the category is allowed and removes it again if the visitor
-withdraws permission.
+Move an iframe's `src` to `data-src` and add `data-category`:
 
 <include src="../../shared/examples/html/embed.mdx" />
 
-Without a `src`, the iframe loads nothing. Show a placeholder next to it with
-CSS, such as `iframe:not([src]) { display: none; }` and a message that links to
-privacy settings. [Embeds](/docs/frameworks/html/embeds) has the full
-placeholder markup.
+Inth copies `data-src` to `src` once allowed and removes `src` on revocation.
+Hide empty iframes in CSS; see [embeds](/docs/frameworks/html/embeds).
 
 ## Add a privacy settings link
 
-Visitors need a way to change their choice after the banner closes. A link to
-`#inth-preferences` opens the preference dialog, with no JavaScript on your
-page:
+Add a `#inth-preferences` link to your shared footer so visitors can reopen
+preferences:
 
 <include src="../../shared/examples/html/preferences-link.mdx" />
 
-Put it in the footer of every page. A button with
-`data-inth-action="customize"` does the same, and `data-trigger` on the script
-tag adds a [floating button](/docs/frameworks/html/components/trigger)
-instead. [Components](/docs/frameworks/html/components) lists every surface
-and page hook.
+`data-inth-action="customize"` buttons and `data-trigger` work too; see
+[components](/docs/frameworks/html/components).
 
 ## Check it works
 
-Open the site in a private window with the browser's developer tools open on
-the Network tab.
+Open the published page in a private window with DevTools Network open:
 
-1. Before you choose, filter for `posthog`. There are no requests, and the
-   YouTube iframe has no `src`.
-2. Click **Reject All** and reload. The banner stays closed and the PostHog
-   requests stay absent.
-3. Open **Privacy settings**, turn on **Analytics** (the `measurement` category) and save. PostHog's
-   `array.js` and the YouTube player load.
-4. Open **Privacy settings** again and turn **Analytics** off. The page reloads,
-   and PostHog and YouTube do not load again.
+1. Under an opt-in policy, the banner appears, no `posthog` requests fire,
+   and the YouTube iframe has no `src`.
+2. Click **Reject All** and reload. The banner stays closed and PostHog does
+   not load.
+3. Click **Privacy settings**, turn on **Analytics** (`measurement`) and
+   save. PostHog and YouTube load.
+4. Turn **Analytics** off and save. The page reloads and neither loads again.
 
-If no banner appears, the policy for your location may not ask for one. See
-[troubleshooting](/docs/frameworks/html/troubleshooting). Run the full
-[verification checklist](/docs/guides/verify-consent) before you ship.
+If no banner appears, check
+[HTML troubleshooting](/docs/frameworks/html/troubleshooting) and
+[verify consent](/docs/guides/verify-consent).
 
 ## Other ways to run the tag
 
-- **In tests.** Load `inth.testing.js` on a test page, without
-  `data-project-url`, and Inth resolves the policy in the browser from
-  `data-policy` or its recommended rules. Without `data-country` every
-  visitor gets the strict opt-in fallback. Choices stay in that browser.
-  Never load it on a production page; the other script files contain
-  neither its transport nor the policy presets.
-- **From a CDN.** Load a pinned version from jsDelivr. Use `inth.js` with
-  `data-project-url` for hosted mode:
-  `<script src="https://cdn.jsdelivr.net/npm/@inth/sdk@<version>/lib/browser/dist/inth.js" data-project-url="https://your-project.inth.app" defer></script>`.
-  Replace `<version>` with the exact version listed on
-  [npm](https://www.npmjs.com/package/@inth/sdk?activeTab=versions).
-  `inth.js` loads `inth.hosted.js`, `inth.commit.js`, `inth.records.js` and
-  `inth.dialog.js` from the same folder. If you copy `inth.js` to your own
-  server, copy those four next to it. `inth.dialog.js` is recommended, not
-  required: without it, a Customize tap waits for `inth.hosted.js`, which
-  opens its own copy of the dialog.
-  A URL without a version loads the newest release, so a new release can
-  change your banner without a deploy.
-- **Manifest mode.** Use the `@inth/sdk` ES module for manifest mode
-  with the stock UI, or `inth.headless.js` with your own UI. These clients can
-  fetch or inline the backend's cacheable policy manifest. The IAB script
-  also supports manifest mode for IAB policies. See
-  [modes](/docs/frameworks/html/attributes-and-api#choose-a-mode).
+| Setup | How to load it |
+| --- | --- |
+| Pinned CDN version | Load `https://cdn.jsdelivr.net/npm/@inth/sdk@<version>/lib/browser/dist/inth.js` with `data-project-url` and `defer` (keep companion files in the same folder if mirroring). |
+| Manifest mode | Use `inth.headless.js`, `inth.iab.js`, or `@inth/sdk`; see [choose a mode](/docs/frameworks/html/attributes-and-api#choose-a-mode). |
+| Test pages | Load `inth.testing.js` without `data-project-url` (never deploy to production). |
 
 ## Next steps
 
-- [Customize the banner](/docs/frameworks/html/customize).
-- Read the [attributes](/docs/frameworks/html/attributes-and-api) and
-  [window.inth API](/docs/frameworks/html/api) references.
-- Add [translations](/docs/frameworks/html/translations).
+- [Install on your platform](/docs/frameworks/html/platforms): placement for
+  WordPress, Webflow, Shopify and static site generators.
+- [Customize](/docs/frameworks/html/customize): theme tokens, layout, copy
+  and legal links.
+- [Attributes](/docs/frameworks/html/attributes-and-api) and
+  [window.inth API](/docs/frameworks/html/api): full attribute and runtime
+  reference.
+- [Translations](/docs/frameworks/html/translations): switch languages and
+  override copy.

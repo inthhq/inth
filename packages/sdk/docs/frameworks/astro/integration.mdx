@@ -1,77 +1,52 @@
 ---
 title: Integration options
-description: Reference for every option of the inth() Astro integration, the Astro equivalent of a consent provider, from projectUrl, mode and routePrefix to ui, theme, i18n, middleware and the client entrypoint.
+description: Reference for every option of the inth() Astro integration, from projectUrl, mode, and routePrefix to ui, theme, and i18n.
 group: frameworks
 ---
 
 ## What the integration does
 
-Astro islands never share a component tree, so Inth on Astro has no provider
-component. The `inth()` integration in `astro.config.mjs` takes its place. It
-adds four things to your site:
+Astro islands never share a component tree, so Inth on Astro has no provider component. The `inth()` integration in `astro.config.mjs` takes its place. It adds four things to your site:
 
-- A middleware that resolves consent for each request into
-  `Astro.locals.inth`, which every component reads.
-- A page script that starts one consent runtime per page load. Every script
-  and island on the page shares it.
-- Inth's styles: base and configured IAB banner rules inline in each page,
-  and dialog rules linked before their surface mounts. On a Tailwind CSS 3
-  site, the full base and configured IAB stylesheets run through your CSS
-  pipeline instead.
-- In `manifest()` mode, one route at `/api/inth/[...path]` that answers
-  `/api/inth/v1/consent/init` and `/api/inth/v1/consent/manifest`.
+- A middleware that resolves consent for each request into `Astro.locals.inth`, which every component reads.
+- A page script that starts one consent runtime per page load, shared by every script and island.
+- Inth's styles: base and configured IAB banner rules inline in each page, and dialog rules linked before their surface mounts. On Tailwind CSS 3 sites, the full base and configured IAB stylesheets run through your CSS pipeline instead.
+- In `manifest()` mode, one route at `/api/inth/[...path]` that answers `/api/inth/v1/consent/init` and `/api/inth/v1/consent/manifest`.
 
 <include src="../../shared/examples/astro/server-config.mdx" />
 
-`inth()` works with no options: the backend URL comes from
-`PUBLIC_INTH_PROJECT_URL` and the mode defaults to `manifest()`. List the
-Astro integration of your `ui` framework before `inth()`. Import `inth` and
-the mode helpers from `@inth/astro`.
+`inth()` works with no options: the project URL comes from `PUBLIC_INTH_PROJECT_URL` (falling back to `PUBLIC_C15T_BACKEND_URL` if unset) and the mode defaults to `manifest()`. List the Astro integration of your `ui` framework before `inth()`. Import `inth` and the mode helpers from `@inth/astro`.
 
 ## Options must survive JSON
 
-The integration serializes its options once at build time and hands the same
-JSON to the middleware, the components and the browser. Functions, class
-instances and other live values do not survive that, so `inth()` throws when
-an option holds a function, and names where it is. Put callbacks, vendor
-helpers from `@inth/integrations` and anything else with a function in
-`src/inth.client.ts`, the module [`clientEntrypoint`](#cliententrypoint)
-names.
+The integration serializes its options once at build time and hands the same JSON to the middleware, components, and browser. Functions and class instances do not survive serialization, so `inth()` throws if an option holds a function and names where it is. Put callbacks, vendor helpers from `@inth/integrations`, and anything else containing functions in `src/inth.client.ts`, the module [`clientEntrypoint`](#cliententrypoint) names.
 
-The options are also written into every page, so keep secrets out of them.
-The backend URL is public configuration, not a secret.
+The options are written into every page, so keep secrets out of them. The project URL is public configuration, not a secret.
 
 ## `projectUrl`
 
-Your Inth project URL. The browser saves consent there with
-`POST /v1/consent/records`, `hosted()` asks its `/v1/consent/init`, and `manifest()` reads
-`${projectUrl}/v1/consent/manifest`. It defaults to `PUBLIC_INTH_PROJECT_URL`, read from the environment or a `.env` file in the
-project root when `astro.config.mjs` loads.
+Your Inth project URL. The browser saves consent there with `POST /v1/consent/records`, `hosted()` asks its `/v1/consent/init`, and `manifest()` reads `${projectUrl}/v1/consent/manifest`. It defaults to `PUBLIC_INTH_PROJECT_URL` (falling back to `PUBLIC_C15T_BACKEND_URL` if unset), read from the environment or `.env` when `astro.config.mjs` loads.
 
-On the server, a relative backend URL or `manifestUrl`, such as `/api/inth`,
-resolves against the URL Astro gives the request, `Astro.url`. Inth does not
-read `x-forwarded-host` or other forwarding headers to build it.
+On the server, a relative `projectUrl` or `manifestUrl`, such as `/api/consent-proxy`, resolves against `Astro.url`. Inth does not read `x-forwarded-host` or other forwarding headers to build it.
 
 ## `mode`
 
-Where the visitor's policy comes from. Build it with one of the three
-helpers from `@inth/astro`; they return plain data. Without `mode`, the
-integration uses `manifest()`.
+Where the visitor's policy comes from. Build it with one of the helpers from `@inth/astro`; they return plain data. Without `mode`, the integration uses `manifest()`.
 
 | Helper | Resolves consent | Needs |
 | --- | --- | --- |
-| `manifest()` | On your server, from your project's public policy, downloaded during the build | A server adapter and a backend URL |
-| `manifest({ source: 'runtime' })` | On your server, from the policy fetched and cached at runtime | A server adapter and a backend URL |
-| `manifest({ resolve: 'browser' })` | In the browser, from the manifest | A backend URL. Works on static output: the integration prerenders `${routePrefix}/v1/consent/manifest` |
-| `hosted()` | At your backend's `/v1/consent/init`, from the server on request-rendered pages and from the browser otherwise | A backend URL |
+| `manifest()` | On your server, from your project's public policy downloaded during the build | A server adapter and a project URL |
+| `manifest({ source: 'runtime' })` | On your server, from the policy fetched and cached at runtime | A server adapter and a project URL |
+| `manifest({ resolve: 'browser' })` | In the browser, from the manifest | A project URL. Works on static output: the integration prerenders `${routePrefix}/v1/consent/manifest` |
+| `hosted()` | At Inth's `/v1/consent/init`, from the server on request-rendered pages and from the browser otherwise | A project URL |
 | `testing()` | In the browser and on your server, with no backend | Nothing. Tests only; throws in production builds. |
 
 `manifest()` accepts:
 
 | Field | Type | Effect |
 | --- | --- | --- |
-| `source` | `'build' \| 'runtime'` | `'build'`, the default, uses the snapshot the build downloaded, or fetches at runtime when the build has none. `'runtime'` always fetches at runtime. |
-| `snapshot` | `ConsentManifest` | A manifest you supply, used instead of downloading one. Not combined with `source`. |
+| `source` | `'build' \| 'runtime'` | `'build'` (default) uses the snapshot downloaded at build time, or fetches at runtime when none exists. `'runtime'` always fetches at runtime. |
+| `snapshot` | `ConsentManifest` | A manifest you supply instead of downloading one. Not combined with `source`. |
 | `resolve` | `'server' \| 'browser'` | Where the policy resolves. `'server'` by default. |
 | `manifestUrl` | `string` | Where the manifest is fetched. Defaults to `${projectUrl}/v1/consent/manifest`. |
 | `geoUrl`, `inputs` | `string`, `{ country?, region? }` | The visitor's location, for `resolve: 'browser'` only. |
@@ -80,88 +55,60 @@ integration uses `manifest()`.
 
 | Field | Type | Effect |
 | --- | --- | --- |
-| `projectUrl` | `string` | Backend base URL, in place of the top-level `projectUrl`. Absolute, or same-origin such as `/api/inth` |
-| `headers` | `Record<string, string>` | Extra headers sent with `/v1/consent/init` from the server and the browser. From the server, only geography, language and privacy-signal headers are sent |
+| `projectUrl` | `string` | Project base URL, overriding the top-level `projectUrl`. Absolute, or same-origin such as `/api/consent-proxy` |
+| `headers` | `Record<string, string>` | Extra headers sent with `/v1/consent/init` from the server and the browser. From the server, only geography, language, and privacy-signal headers are sent |
 
-`testing()` from `@inth/astro/testing` accepts `policy`, the rules to resolve. Without them
-it resolves the recommended rule pack. Choices persist in the visitor's cookie
-and localStorage only, and there are no consent records.
+`testing()` from `@inth/astro/testing` accepts `policy`, the rules to resolve. Without it, `testing()` resolves the recommended rule pack. Choices persist in the visitor's cookie and localStorage only, with no remote consent records.
 
-`manifest()` and `hosted()` stop `astro.config` from loading without a
-backend URL, because the server would have no policy to read and the browser
-nowhere to save consent. A `manifest({ snapshot })` needs none for the policy.
+`manifest()` and `hosted()` stop `astro.config` from loading without a project URL, because the server would have no policy to read and the browser nowhere to save consent. A `manifest({ snapshot })` still needs a project URL for saving choices.
 
-[Rendering and deployment](/docs/frameworks/astro/rendering) explains which
-mode fits which Astro output.
+[Rendering and deployment](/docs/frameworks/astro/rendering) explains which mode fits each Astro output.
 
 ## `routePrefix`
 
-The path of the route the integration injects in `manifest()` mode:
-`'/api/inth'` by default. One catch-all, `${routePrefix}/[...path]`, answers
-`${routePrefix}/v1/consent/init` and `${routePrefix}/v1/consent/manifest`. A page whose consent
-changes after it loads, such as after a language change, asks it again.
+The path of the route the integration injects in `manifest()` mode (`'/api/inth'` by default). One catch-all, `${routePrefix}/[...path]`, answers `${routePrefix}/v1/consent/init` and `${routePrefix}/v1/consent/manifest`. Pages whose consent changes after load, such as after a language change, ask it again.
 
-The route renders on demand, so `astro build` with `manifest()` needs a server
-adapter. `manifest({ resolve: 'browser' })` on static output prerenders only
-`${routePrefix}/v1/consent/manifest`. `hosted()` and `testing()` inject nothing. Set
-`routePrefix: false` to inject nothing in `manifest()` mode. The browser then
-asks the backend's `/v1/consent/init`, not a route of your own. See
-[serve the routes yourself](/docs/frameworks/astro/server#serve-the-routes-yourself).
+The route renders on demand, so `astro build` with `manifest()` needs a server adapter. `manifest({ resolve: 'browser' })` on static output prerenders only `${routePrefix}/v1/consent/manifest`. `hosted()` and `testing()` inject nothing. Set `routePrefix: false` to inject nothing in `manifest()` mode; the browser then asks Inth's `/v1/consent/init` directly. See [serve the routes yourself](/docs/frameworks/astro/server#serve-the-routes-yourself).
 
 ## Consent and scripts
 
 | Option | Type | Default | Effect |
 | --- | --- | --- | --- |
-| `onBuildError` | `'fail' \| 'runtime'` | Unset | What a failed build-time manifest fetch does in `manifest()` mode. Unset, `astro build` stops and `astro dev` logs a warning, and the server fetches the policy at runtime. `'fail'` stops both. `'runtime'` lets both continue. A missing backend URL counts as a failed fetch. The `INTH_ON_BUILD_ERROR` environment variable overrides it. See [build-time manifests](/docs/frameworks/astro/rendering#bundle-the-manifest-during-builds). |
+| `onBuildError` | `'fail' \| 'runtime'` | `'runtime'` | Controls failed build-time manifest fetches in `manifest()` mode. By default (`'runtime'`), `astro build` and `astro dev` warn and the server fetches at runtime. `'fail'` stops both. A missing project URL counts as a failed fetch. `INTH_ON_BUILD_ERROR` overrides it. See [build-time manifests](/docs/frameworks/astro/rendering#bundle-the-manifest-during-builds). |
 | `consentCategories` | `AllConsentNames[]` | Inferred from scripts and the policy | Categories the banner and dialog offer |
 | `scripts` | `Script[]` | None | Scripts without callbacks, loaded when their category is allowed. See [Scripts](/docs/frameworks/astro/scripts) |
-| `vendors` | `Vendor[]` | None | Vendors the dialog lists with their own switch inside a category. Merged with vendors from the backend manifest. See [Vendor consent](/docs/frameworks/astro/vendor-consent) |
+| `vendors` | `Vendor[]` | None | Vendors listed in the dialog with their own switch inside a category, merged with vendors from the manifest. See [Vendor consent](/docs/frameworks/astro/vendor-consent) |
 | `networkBlocker` | `{ rules, enabled?, logBlockedRequests? } \| false` | Off | Blocks matching `fetch` and `XMLHttpRequest` calls until consent. See [Network blocker](/docs/frameworks/astro/network-blocker) |
 | `clearOnRevocation` | `ClearOnRevocationConfig` | None | Cookies and storage keys to remove when a category is withdrawn |
-| `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. |
 | `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after a save turns off a category that was allowed |
 | `storageConfig` | `StorageConfig` | `{ storageKey: 'inth' }` | Where the choice is stored |
 
-`storageConfig` takes `storageKey`, the cookie and localStorage name,
-`crossSubdomain` to share the cookie across subdomains, `defaultDomain` to
-set the cookie domain yourself, and `defaultExpiryDays`, which defaults to a
-year. The server reads the same cookie name, so set it here and not only in
-the browser.
+`storageConfig` accepts `storageKey` (the cookie and localStorage name), `crossSubdomain` to share the cookie across subdomains, `defaultDomain` to set the cookie domain explicitly, and `defaultExpiryDays` (defaults to one year). The server reads the same cookie name, so configure it here rather than only in the browser.
 
 ## Appearance and copy
 
 | Option | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `theme` | `Theme` | Stock tokens | Tokens rendered on the server into `<style id="inth-theme">`, plus `consentActions` button styles |
-| `colorScheme` | `'system' \| 'light' \| 'dark' \| 'none'` | `'system'` | Who sets the `inth-dark` class on `<html>` |
-| `presentation` | `{ prompt?, preferences? }` | Floating banner | Banner variant, position, action layout and blocking, and the dialog's blocking and default selections |
-| `legalLinks` | `{ privacyPolicy?, cookiePolicy?, termsOfService? }` | None | Each an `{ href, label? }`. Without `label`, a link reads as the translated name for its type. `ConsentBanner` and `ConsentDialog` show the ones their `legalLinks` prop lists |
+| `colorScheme` | `'system' \| 'light' \| 'dark' \| 'none'` | `'system'` | Controls who sets the `inth-dark` class on `<html>` |
+| `presentation` | `{ prompt?, preferences? }` | Floating banner | Banner variant, position, action layout, and blocking, plus dialog blocking and defaults |
+| `legalLinks` | `{ privacyPolicy?, cookiePolicy?, termsOfService? }` | None | Each an `{ href, label? }`. Without `label`, renders the translated name for its type. `ConsentBanner` and `ConsentDialog` show keys listed in their `legalLinks` prop |
 | `i18n` | `{ locale?, messages?, detectLanguage? }` | Negotiated from `Accept-Language` | Language and wording. See [Translations](/docs/frameworks/astro/translations) |
-| `styles` | `boolean` | `true` | Inlines base and configured IAB banner rules once per page. Dialog rules load before the surface mounts; IAB panel rules load only for the IAB dialog. Tailwind CSS 3 uses the full external stylesheets. `false` delivers no styles, so you import the base and optional IAB stylesheets yourself |
+| `styles` | `boolean` | `true` | Inlines base and configured IAB banner rules once per page. Dialog rules load before mount; Tailwind CSS 3 uses external stylesheets. `false` delivers no styles so you import them yourself |
 
 [Customize](/docs/frameworks/astro/customize) shows each of these in use.
 
 ## `ui`
 
-`ui` picks the framework that renders the preference dialog and the IAB
-dialog islands: `'svelte'`, `'react'` or `'vue'`. Unset, it is the framework
-of the one Astro integration among `@astrojs/svelte`, `@astrojs/react` and
-`@astrojs/vue` your site registers, so the dialog reuses a runtime the site
-already loads. With none or several of them registered, it is `'svelte'`.
-Install that framework's Astro integration and list it before `inth()`.
+`ui` picks the framework that renders the preference dialog and IAB dialog islands: `'svelte'`, `'react'`, or `'vue'`. Unset, it uses the single Astro integration among `@astrojs/svelte`, `@astrojs/react`, and `@astrojs/vue` registered in your site so the dialog reuses your existing runtime. With none or multiple registered, it defaults to `'svelte'`. Install that framework's Astro integration and list it before `inth()`.
 
-`requireUIIntegration`, default `true`, stops the build when the `ui`
-framework's Astro integration is missing. Set it to `false` for a site that
-never opens a dialog, such as one that only shows a notice.
+`requireUIIntegration` (default `true`) stops the build if the `ui` framework's Astro integration is missing. Set it to `false` on a site that never opens a dialog, such as a notice-only site.
 
 See [Dialog islands and your own islands](/docs/frameworks/astro/islands).
 
 ## `iab`
 
-IAB TCF configuration, or `false`. Takes `cmpId`, `cmpVersion`, `vendors`,
-`publisherCountryCode`, `publisherRestrictions`, `gvl`, `gvlUrl` and
-`enabled`, all plain data. See [IAB TCF](/docs/frameworks/astro/iab) for each
-field.
+IAB TCF configuration, or `false`. Accepts `cmpId`, `cmpVersion`, `vendors`, `publisherCountryCode`, `publisherRestrictions`, `gvl`, `gvlUrl`, and `enabled`, all plain data. See [IAB TCF](/docs/frameworks/astro/iab) for each field.
 
 ## `middleware`
 
@@ -170,20 +117,16 @@ field.
 | Field | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `enabled` | `boolean` | `true` | Registers the middleware that sets `Astro.locals.inth` |
-| `skip` | `string[]` | `[]` | Path prefixes the middleware leaves alone. `'/api'` covers `/api/health` but not `/apidocs` |
-| `timeoutMs` | `number \| false` | `500` | Longest a server render waits for the policy. `false` or `Infinity` waits however long the backend takes; any other value that is not a finite, non-negative number uses the default |
+| `skip` | `string[]` | `[]` | Path prefixes the middleware skips. `'/api'` covers `/api/health` but not `/apidocs` |
+| `timeoutMs` | `number \| false` | `500` | Longest a server render waits for the policy. `false` or `Infinity` waits indefinitely; any non-finite or negative value falls back to the default |
+| `trustForwardedHeaders` | `boolean` | `false` | Deprecated. Does nothing: Inth no longer sets a subject ID cookie. Removed in v4 |
+| `subjectCookie` | `boolean` | None | Deprecated. Does nothing: Inth no longer sets a subject ID cookie. Removed in v4 |
 
-The integration's own route under `routePrefix` is always skipped. On a
-skipped route, `Astro.locals.inth` is unset and `ConsentBanner` throws, so
-skip only routes that render no consent components. See
-[Server API](/docs/frameworks/astro/server).
+The integration's own route under `routePrefix` is always skipped. On a skipped route, `Astro.locals.inth` is unset and `ConsentBanner` throws, so skip only routes that render no consent components. See [Server API](/docs/frameworks/astro/server).
 
 ## `clientEntrypoint`
 
-A path to a module whose default export adds live values in the browser. A
-relative path resolves from the project root. Unset, the integration uses
-`src/inth.client.ts`, `.js` or `.mjs` when the file exists, so the quickstart
-sets nothing:
+A path to a module whose default export adds live browser values. Relative paths resolve from the project root. Unset, the integration automatically uses `src/inth.client.ts`, `.js`, or `.mjs` when present:
 
 <include src="../../shared/examples/astro/client-entrypoint.mdx" />
 
@@ -191,34 +134,32 @@ The default export is an `InthClientOptionsExtension` from `@inth/astro`:
 
 | Field | Effect |
 | --- | --- |
-| `scripts` | Scripts added to the integration's `scripts`. Vendor helpers from `@inth/integrations` go here |
-| `callbacks` | `onChoiceRecorded`, `onPermissionsChanged`, `onError` and `onBeforeConsentRevocationReload`. See [Callbacks](/docs/frameworks/astro/callbacks) |
-| `networkBlocker` | Replaces the integration's `networkBlocker`, so it can include `onRequestBlocked` |
+| `scripts` | Scripts added to the integration's `scripts`. Vendor helpers from `@inth/integrations` belong here |
+| `callbacks` | `onChoiceRecorded`, `onPermissionsChanged`, `onError`, and `onBeforeConsentRevocationReload`. See [Callbacks](/docs/frameworks/astro/callbacks) |
+| `networkBlocker` | Replaces the integration's `networkBlocker` so it can include `onRequestBlocked` |
 | `clearOnRevocation` | Replaces the integration's `clearOnRevocation` |
 | `theme` | Merged over the integration's theme for button styles. Tokens here have no effect |
 
-The browser imports this module into the page script, so every page shares
-one copy. Keep it small, because it loads on every page.
+The browser imports this module into the page script, so every page shares one copy. Keep it small because it loads on every page.
 
 ## Errors the integration raises
 
 | Message contains | Cause |
 | --- | --- |
-| `` `mode` must be manifest(), hosted() or testing() `` | `mode` is a transport function, or not built with a helper from `@inth/astro` |
+| `` `mode` must be manifest(), hosted() or testing() `` | `mode` is a transport function or not built with a helper from `@inth/astro` |
 | `is a function` | A serialized option, such as a `scripts` entry from `@inth/integrations`, holds a function. Move it to `src/inth.client.ts` |
-| `manifest() needs a backend URL` | No `projectUrl` or `PUBLIC_INTH_PROJECT_URL` |
-| `manifest({ snapshot }) still needs a backend URL` | A snapshot, but no `projectUrl` or `PUBLIC_INTH_PROJECT_URL`. Saves go to the backend whatever `routePrefix` is |
-| `hosted() needs a backend URL` | No `projectUrl` or `PUBLIC_INTH_PROJECT_URL` |
+| `manifest() needs a backend URL` | No `projectUrl`, `PUBLIC_INTH_PROJECT_URL`, or `PUBLIC_C15T_BACKEND_URL` |
+| `manifest({ snapshot }) still needs a backend URL` | A snapshot without `projectUrl`, `PUBLIC_INTH_PROJECT_URL`, or `PUBLIC_C15T_BACKEND_URL`. Saves go to Inth regardless of `routePrefix` |
+| `hosted() needs a backend URL` | No `projectUrl`, `PUBLIC_INTH_PROJECT_URL`, or `PUBLIC_C15T_BACKEND_URL` |
 | `gives the server no manifest to fetch` | `projectUrl: ''` without `manifest({ manifestUrl })` or `manifest({ snapshot })` |
 | `` `routePrefix` must be a path `` | `routePrefix` is not `false` and does not start with `/` |
-| ``@inth/astro: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.`` | `routePrefix` is `'/'`. A catch-all route at the site root would answer every page |
+| ``@inth/astro: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.`` | `routePrefix` is `'/'`. A catch-all route at the site root would match every page |
 | `clientEntrypoint ... does not exist` | The `clientEntrypoint` path does not resolve to a file |
-| `unknown ui` | `ui` is not `'svelte'`, `'react'` or `'vue'` |
+| `unknown ui` | `ui` is not `'svelte'`, `'react'`, or `'vue'` |
 | `ui: "svelte" needs @astrojs/svelte` | The `ui` framework's Astro integration is missing |
 | `injects an on-demand route` | `astro build` runs in `manifest()` mode with no server adapter |
-| `build-time manifests require an absolute upstream URL` | `onBuildError: 'fail'` with a relative or empty backend URL or `manifestUrl` |
-| `could not fetch the consent manifest` | `astro build` could not download a manifest. In `astro dev`, or with `onBuildError: 'runtime'`, the same message is a warning |
-| `no backend URL is set` | The build has no backend URL to fetch from. `astro build` stops; `astro dev` warns |
+| `build-time manifests require an absolute upstream URL` | `onBuildError: 'fail'` with a relative or empty project URL or `manifestUrl` |
+| `could not fetch the consent manifest` | The integration could not download a manifest. Logs as a warning by default (`onBuildError: 'runtime'`); stops the build when `onBuildError: 'fail'` or `INTH_ON_BUILD_ERROR=fail` is set |
+| `no backend URL is set` | The build has no project URL to fetch from. Logs a warning by default; stops when `onBuildError: 'fail'` is set |
 
-[Troubleshooting](/docs/frameworks/astro/troubleshooting) has the fix for
-each.
+[Troubleshooting](/docs/frameworks/astro/troubleshooting) has the fix for each.

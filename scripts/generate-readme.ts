@@ -14,8 +14,8 @@ const DEFAULT_SUPPORT_SECTIONS = [
 ];
 
 const DEFAULT_CONTRIBUTING_SECTIONS = [
-	'Read the [contribution guidelines](https://c15t.com/docs/oss/contributing) before you open a pull request',
-	'Follow the [code of conduct](https://c15t.com/docs/oss/code-of-conduct)',
+	'Read the [contribution guidelines](https://github.com/inthhq/inth/blob/main/.github/CONTRIBUTING.md) before you open a pull request',
+	'Open an issue or pull request on [GitHub](https://github.com/inthhq/inth)',
 ];
 
 const DEFAULT_SECURITY_SECTION = `## Security
@@ -335,7 +335,7 @@ See the [documentation](${config.docsLink}) for guides, API reference, and examp
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at \`node_modules/${config.packageName}/AGENTS.md\`. It indexes every guide in \`node_modules/${config.packageName}/docs/\`.
 
-On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with \`npx skills add c15t/skills\`.`;
+On the web, every page of the [Inth docs](https://inth.com/docs) has a Markdown version, and [llms.txt](https://inth.com/docs/llms.txt) lists them all.`;
 	}
 
 	const hostingBlock = config.showHosting

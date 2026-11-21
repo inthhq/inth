@@ -30,14 +30,14 @@
 		"Add the tag and reload. The banner appears when the visitor's policy asks for one",
 		"Change vendor tags to `type=\"text/plain\"` with `data-inth-category=\"measurement\"` so they load when the resolved policy allows that category",
 		"Link to `#inth-preferences` so visitors can reopen the preference dialog",
-		"For every attribute and method, see the [HTML docs](https://c15t.com/docs/frameworks/html/attributes-and-api)",
+		"For every attribute and method, see the [HTML docs](https://inth.com/docs/frameworks/html/attributes-and-api)",
 		"```js\nwindow.inth = window.inth || [];\ninth.push(['on', 'consent', () => {\n  if (inth.has('measurement')) {\n    startAnalytics();\n  }\n}]);\n```"
 	],
-	"docsLink": "https://c15t.com/docs/frameworks/html/quickstart",
-	"quickStartLink": "https://c15t.com/docs/frameworks/html/quickstart",
+	"docsLink": "https://inth.com/docs/frameworks/html/quickstart",
+	"quickStartLink": "https://inth.com/docs/frameworks/html/quickstart",
 	"showCLIGeneration": false,
 	"customSections": {
-		"Which Script to Load": "| File | Use it for |\n| --- | --- |\n| `inth.js` | Your Inth project. Set `data-project-url` |\n| `inth.testing.js` | Test pages only: the stock UI with `testing()`, which resolves a policy in the browser with no backend |\n| `inth.headless.js` | The runtime without UI, for your own banner. Can inline or fetch the backend's cacheable `/v1/consent/manifest` |\n| `inth.iab.js` | IAB TCF 2.4. Configure `iab` with your registered CMP ID and vendor list. See the [IAB example](https://c15t.com/docs/frameworks/html/iab) |\n| `inth.devtools.js` | A DevTools panel, with a Location tab to try policies by region |\n| `inth.gpp.js` | IAB GPP (`__gpp`) for US state opt-outs. Also available as `mountGPP` from `@inth/sdk/gpp` |"
+		"Which Script to Load": "| File | Use it for |\n| --- | --- |\n| `inth.js` | Your Inth project. Set `data-project-url` |\n| `inth.testing.js` | Test pages only: the stock UI with `testing()`, which resolves a policy in the browser with no backend |\n| `inth.headless.js` | The runtime without UI, for your own banner. Can inline or fetch the backend's cacheable `/v1/consent/manifest` |\n| `inth.iab.js` | IAB TCF 2.4. Configure `iab` with your registered CMP ID and vendor list. See the [IAB example](https://inth.com/docs/frameworks/html/iab) |\n| `inth.devtools.js` | A DevTools panel, with a Location tab to try policies by region |\n| `inth.gpp.js` | IAB GPP (`__gpp`) for US state opt-outs. Also available as `mountGPP` from `@inth/sdk/gpp` |"
 	},
 	"showHosting": true
 }

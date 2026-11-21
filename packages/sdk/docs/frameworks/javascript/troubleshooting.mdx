@@ -1,90 +1,83 @@
 ---
 title: Troubleshooting
-description: Diagnose vendor scripts that run early, unexpected reloads, empty custom banners, CORS errors, duplicate consent owners and policy resolution in a JavaScript app that uses @inth/sdk or @inth/sdk/runtime.
+description: Fix early or duplicate vendor scripts, unexpected reloads, empty custom banners, CORS/CSP errors and 451 responses in JavaScript.
 group: frameworks
 ---
 
+Diagnose and fix common issues when running `@inth/sdk` or
+`@inth/sdk/runtime` in a bundled JavaScript app.
+
 ## Why do scripts load twice or before consent?
 
-**Check.** Each vendor needs one owner. Look for a snippet left in
-`index.html`, a second `init()` call, or a script loader attached to a kernel
-that `@inth/sdk` or `createConsentRuntime` already owns. Each of these loads
-vendors outside the consent gate or twice.
+**Check.** Look for a leftover vendor snippet in `index.html`, a second
+`init()` call, or a manual script loader attached to a kernel that
+`@inth/sdk` or `createConsentRuntime` already owns.
 
-**Fix.** Call `init()` or create the runtime once per page, in the browser
-entry point, and pass every vendor through its `scripts` list.
+**Fix.** Call `init()` or create the runtime once in your browser entry point
+and register every vendor through its `scripts` array.
 
 ## Why does the page reload when a visitor saves?
 
-**Check.** Did the visitor turn off a category they had allowed?
-`@inth/sdk` and `createConsentRuntime` reload the page then, because code
-that already ran cannot be unloaded. Allowing categories never reloads.
+**Check.** Withdrawing a previously granted category triggers a reload so
+already-running vendor code stops. Granting categories never reloads.
 
-**Fix.** To handle withdrawal yourself, pass `reloadOnConsentRevoked: false`,
-and stop each vendor with its own opt-out call. See
-[scripts](/docs/frameworks/javascript/scripts#when-a-visitor-withdraws-permission).
+**Fix.** Pass `reloadOnConsentRevoked: false` only if every vendor stops
+itself through its own consent API; see
+[when a visitor withdraws permission](/docs/frameworks/javascript/scripts#when-a-visitor-withdraws-permission).
 
 ## Why is my custom banner empty?
 
-**Check.** Confirm that you subscribed before calling `runtime.start()`, that
-you wait for `resolution.status` to be `'matched'`, and that you render
-`promptRequirement.kind` `'notice'` as well as `'choice'`.
+**Check.** Confirm you subscribed before calling `runtime.start()`, wait for
+`resolution.status === 'matched'`, and handle `promptRequirement.kind` values
+`'choice'` and `'notice'`.
 
-**Fix.** Render the headless UI from the snapshot, not from assumptions.
-[Headless](/docs/frameworks/javascript/headless#what-your-ui-must-handle) lists
-what a custom UI must cover.
+**Fix.** Render strictly from the snapshot; see
+[what your UI must handle](/docs/frameworks/javascript/headless#what-your-ui-must-handle).
 
 <include src="../../shared/vite-build-manifest-troubleshooting.mdx" />
 
-## Why does /v1/consent/init fail with a CORS or CSP error?
+## Why does /init fail with a CORS or CSP error?
 
-**Check.** A CORS error means the backend does not trust your app's origin.
+**Check.** A CORS error means your origin is missing from your Inth project's
+trusted origins. A CSP error means `connect-src` blocks your project origin.
 
-**Fix.** Add the exact origin, including the port in development, to your Inth
-project's trusted origins.
-
-**Check.** A CSP error means your policy's `connect-src` lacks the backend's
-origin.
-
-**Fix.** Add the backend's origin to `connect-src`. See
+**Fix.** Add the exact origin (including port in development) to trusted
+origins in Inth, and allow your project origin in `connect-src`; see
 [Content Security Policy](/docs/frameworks/javascript/content-security-policy).
 
 ## Why does a gated script in my HTML never run?
 
-**Check.** With the `nonce` option set, `@inth/sdk` runs only
-`<script type="text/plain" data-inth-category>` tags that carry the same
-nonce. Open the console and look for a warning that Inth skipped a
-`data-inth-category` script, and check the tag for
-`data-inth-activated="untrusted"`.
+**Check.** When `nonce` is set, `@inth/sdk` executes only
+`<script type="text/plain" data-inth-category>` tags carrying the same
+`nonce` and marks others `data-inth-activated="untrusted"`.
 
-**Fix.** Add the page's nonce to the tag, including tags your code inserts
-later. See
+**Fix.** Stamp the per-response `nonce` on every gated tag, including tags
+inserted later; see
 [Content Security Policy](/docs/frameworks/javascript/content-security-policy).
 
 ## Why is the stock banner unstyled?
 
-**Check.** Look at your Content Security Policy's `style-src`. If it does not
-allow the `<style>` element the stock UI adds, the policy blocks it.
+**Check.** Your Content Security Policy `style-src` blocks the `<style>`
+element injected by the stock UI.
 
-**Fix.** Pass the nonce from your `style-src` as the `nonce` option, or import
-`@inth/sdk/styles.css` with `ui: { shadow: false, styles: false }` as
-[Content Security Policy](/docs/frameworks/javascript/content-security-policy#allow-the-stock-uis-styles)
-describes.
+**Fix.** Pass the `style-src` nonce via `nonce`, or import
+`@inth/sdk/styles.css` with `ui: { shadow: false, styles: false }`; see
+[allow the stock UI's styles](/docs/frameworks/javascript/content-security-policy#allow-the-stock-uis-styles).
 
 ## Why does a fetch return status 451?
 
-**Check.** A [network blocker](/docs/frameworks/javascript/modules/network-blocker)
-rule matched the request and its category is not allowed. The console logs
-`[inth] blocked` with the rule's ID.
+**Check.** A
+[network blocker](/docs/frameworks/javascript/modules/network-blocker) rule
+matched the request while its category is denied (Console logs
+`[inth] blocked` with the rule ID).
 
-**Fix.** If the request should not match, check the rule's `domain` and
-`pathIncludes`.
+**Fix.** Adjust the rule's `domain` or `pathIncludes` if the request should
+not match.
 
 ## Inspect the active policy
 
-Call this helper with your kernel: `consent.kernel` from `@inth/sdk`,
-`runtime.kernel` from `createConsentRuntime`, or one you created. It logs the
-current state and later changes without recording a choice.
+Pass `consent.kernel`, `runtime.kernel` or a manual kernel to this helper to
+log policy resolution and permission updates without recording consent:
 
 ```ts title="src/observe-consent-policy.ts"
 import type { ConsentKernel } from '@inth/sdk/engine';
@@ -109,15 +102,12 @@ export function observeConsentPolicy(kernel: ConsentKernel) {
 }
 ```
 
-The helper returns an unsubscribe function. Call it when you remove the
-diagnostic or dispose the app. Production gates should read
-`kernel.getSnapshot().effectivePermissions` at the point where an optional
-feature would run.
+Call the returned unsubscribe function on teardown. In production code, read
+`kernel.getSnapshot().effectivePermissions` right before running an optional
+feature.
 
 ## More help
 
-[Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
-every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because the wrong package is installed, choices that disappear on
-reload, server HTML that differs from the browser, static builds that fail and
-content blockers that hide the consent UI.
+See [troubleshoot consent](/docs/guides/troubleshooting) for cross-framework
+issues including missing banners, lost choices on reload and content
+blockers.

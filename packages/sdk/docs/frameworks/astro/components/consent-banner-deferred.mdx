@@ -1,6 +1,6 @@
 ---
 title: ConsentBannerDeferred
-description: Render the Inth consent banner in an Astro server island, so a cached or prerendered page still shows each visitor the banner for their own location and stored choice.
+description: Render the Inth consent banner in an Astro server island so cached or prerendered pages resolve consent per visitor.
 group: frameworks
 ---
 
@@ -24,7 +24,7 @@ resolves consent for it and the banner arrives with the visitor's own policy.
 | --- | --- |
 | Rendered on each request | `ConsentBanner` |
 | Served from a CDN cache, or prerendered, on a site with a server adapter | `ConsentBannerDeferred` |
-| Built by a static site with no adapter | `ConsentBanner`, which the browser renders after `/init` |
+| Built by a static site with no adapter | `ConsentBanner`, which the browser renders after `/v1/consent/init` |
 
 Server islands need a server adapter. A purely static build cannot answer the
 island request. See

@@ -1,257 +1,164 @@
 ---
 title: Troubleshooting
-description: Diagnose failed Inth consent prefetch and build-time manifest downloads in Next.js, verify manifest requests, and fix a missing inth.config.ts, config errors, unknown server location and prerendering errors.
+description: Diagnose and fix Next.js Inth errors for manifest downloads, missing config, projectUrl, unknown server geography and prerendering.
 group: frameworks
 ---
 
-## Why does the page render when consent prefetch fails?
+Fix Next.js-specific errors in `@inth/nextjs`. For cross-framework issues such
+as a missing banner, CORS errors or choices disappearing on reload, see
+[Troubleshooting](/docs/guides/troubleshooting).
 
-**Check.** `resolveConsent` returns its baseline state when a manifest or
-backend request fails. The page can still render, and the client retries
-initialization. Until policy resolution succeeds, optional categories stay
-denied and the stock banner stays hidden. Check the failed URL and response in
-your server logs, as browser Network tools cannot show a server-side fetch.
+## Page renders without a banner when server prefetch fails
 
-**Fix.** Pass `onError` to `resolveConsent` to report failures in production.
-Without it, the helper logs a warning only outside production.
+**Cause.** When a manifest or `/v1/consent/init` request fails or exceeds `timeoutMs`,
+`resolveConsent` returns a baseline state so the page still renders with
+optional categories denied and no banner while the browser retries on mount.
+Server fetches do not appear in browser DevTools.
 
-**Check.** If the consent route repeatedly calls itself, check its upstream
-URL.
+**Fix.** Pass `onError` to `resolveConsent` to log failures in production
+(without it, warnings log outside production only). If your consent route calls
+itself in a loop, set `projectUrl` or `NEXT_PUBLIC_INTH_PROJECT_URL` to your
+absolute Inth project URL and use `proxy: true` with `routePrefix` for
+same-origin browser requests; see
+[Performance](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin).
 
-**Fix.** Set the config's `projectUrl`, or `NEXT_PUBLIC_INTH_PROJECT_URL`, to
-your absolute Inth project URL. To send the browser through
-`/api/inth`, set `proxy: true` and `routePrefix` instead of a relative
-`projectUrl`; the route keeps the absolute URL. See
-[Next.js optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin).
+## `@inth/nextjs/build: could not fetch the consent manifest`
 
-## Why does `next build` or `next dev` fail to fetch the manifest?
+**Cause.** `withConsentManifest` fetches `${projectUrl}/v1/consent/manifest` during
+`next build`, `next dev` and `next typegen` (10 s timeout). By default
+(`onBuildError: 'runtime'`), a failed fetch or missing URL logs a warning and
+leaves `snapshot` as `undefined` so the server fetches at runtime. With
+`onBuildError: 'fail'` or `INTH_ON_BUILD_ERROR=fail`, the build stops instead.
+Common parenthesized causes:
 
-**Check.** `withConsentManifest` downloads `${projectUrl}/v1/consent/manifest` when
-`next build`, `next dev` or `next typegen` loads `next.config.ts`. When the
-download fails or takes longer than 10 seconds, `next build` stops with an
-error that starts with `@inth/nextjs/build: could not fetch the consent
-manifest from <url> during the build`. `next dev` logs the same message as a
-warning, and `snapshot` from `@inth/nextjs/generated` is `undefined`, so the server
-fetches the policy at runtime. It never reuses an old snapshot. The part in
-parentheses names the cause:
+- `fetch failed` or `no response within 10 seconds`: the build environment
+  cannot reach Inth.
+- `/v1/consent/manifest responded 404` (or another status): wrong project URL, placeholder
+  URL or missing path prefix.
+- `/v1/consent/manifest returned an invalid consent manifest`: endpoint is not a
+  compatible Inth project URL.
+- `no backend URL is set`: neither `projectUrl` nor
+  `NEXT_PUBLIC_INTH_PROJECT_URL` / `NEXT_PUBLIC_C15T_BACKEND_URL` is set.
+- `skipped the consent manifest fetch`: expected for `hosted()`, `testing()`,
+  `manifest({ snapshot })`, `manifest({ source: 'runtime' })`, `output: 'export'`
+  or a relative URL (fails only with `onBuildError: 'fail'`).
+- `@inth/nextjs/build: could not read inth.config.ts`: `inth.config.ts` imports
+  something Node cannot evaluate at build time, such as a stylesheet.
 
-- `fetch failed`, with `ENOTFOUND`, `ECONNREFUSED` or another network error,
-  or `no response within 10 seconds`. The build machine cannot reach the
-  backend.
-- `/v1/consent/manifest responded 404`, or another status. The URL is not your
-  project's backend. Check for the `https://your-project.inth.app`
-  placeholder and a missing path prefix.
-- `/v1/consent/manifest returned an invalid consent manifest.` The URL answered, but not
-  with an Inth manifest. It may be a different service, or a backend that does
-  not support this Inth version.
+**Fix.** Set `NEXT_PUBLIC_INTH_PROJECT_URL` to your absolute Inth project URL
+in `.env.local` and CI build settings. Keep `inth.config.ts` free of non-Node
+imports. To fail builds instead of falling back to runtime, set
+`INTH_ON_BUILD_ERROR=fail`; to skip build-time fetching entirely, use
+[runtime manifest caching](/docs/frameworks/next/optimization#reuse-cached-policy-data).
 
-`no backend URL is set` means the build found no `projectUrl` option, no
-`projectUrl` in `inth.config.ts` and no `NEXT_PUBLIC_INTH_PROJECT_URL`, or empty ones. `next build` stops on it and
-`next dev` warns. A notice that the build `skipped the consent manifest fetch`
-means the backend URL is a path such as `/api/inth`. With
-`onBuildError: 'fail'`, that stops the build with `build-time manifests
-require an absolute upstream URL.` The same notice ending in
-`because inth.config.ts uses hosted()`, `uses testing()`,
-`passes manifest({ snapshot })` or `sets manifest({ source: 'runtime' })` is
-expected: those modes read no build-time manifest.
+## `server-only` cannot be imported from a Client Component
 
-`@inth/nextjs/build: could not read inth.config.ts (...)` is a warning: the
-build could not evaluate the file, so it fetched the manifest as for
-`manifest()`, whatever the file's `mode`. The part in parentheses is the
-error. The usual cause is an import Node can't load at build time, such as a
-stylesheet. Keep `inth.config.ts` to the config and the packages it needs.
+**Cause.** A Client Component imports `@inth/nextjs/generated`.
+`withConsentManifest` keeps the policy snapshot out of browser bundles using
+`server-only`.
 
-**Fix.** Set `NEXT_PUBLIC_INTH_PROJECT_URL` to the absolute backend URL from your Inth
-project wherever
-`next build` runs, including CI. To deploy while the backend is down, run the
-build with `INTH_ON_BUILD_ERROR=runtime`, or set `onBuildError: 'runtime'`.
-The deployment then works without a snapshot, and each server fetches the
-policy on its first request. To drop the build-time fetch, use
-[runtime manifest caching](/docs/frameworks/next/optimization#reuse-cached-policy-data)
-instead.
+**Fix.** Remove the import from client code. Most apps never import
+`@inth/nextjs/generated` directly because `resolveConsent` and the consent
+route read it automatically.
 
-## Why does importing `@inth/nextjs/generated` from a client component fail the build?
+## `snapshot` from `@inth/nextjs/generated` is undefined
 
-**Check.** `next build` or `next dev` reports that `server-only` cannot be
-imported from a Client Component, in a module that imports `@inth/nextjs/generated`.
+**Cause.** Server code reads `snapshot` as `undefined` when
+`withConsentManifest` does not wrap `next.config.ts`, when the build-time fetch
+failed and fell back to runtime, when the project URL is relative or
+`output: 'export'` is set, or when the caller sits in `serverExternalPackages`
+and misses bundler aliases.
 
-**Fix.** `withConsentManifest` keeps the snapshot out of browser bundles, so
-`@inth/nextjs/generated` only works in server code: Server Components, route
-handlers, `getServerSideProps` and API routes. Most apps never import it.
-`resolveConsent` and the consent route read the snapshot themselves, and
-`InthProvider` receives the resolved state.
+**Fix.** Wrap `next.config.ts` with `withConsentManifest`, verify the project
+URL is absolute, and keep `@inth/nextjs` and `@inth/sdk` out of
+`serverExternalPackages`.
 
-## Why is `snapshot` undefined?
+## `[inth] InthProvider found no config`
 
-**Check.** `snapshot` from `@inth/nextjs/generated` is `undefined` in server code.
+**Cause.** `withConsentManifest` only looks for `inth.config.ts` (or `.mts`,
+`.js`, `.mjs`) at the project root next to `next.config.ts`, not inside `src/`.
 
-**Fix.** Check these causes:
+**Fix.** Confirm that `next.config.ts` exports `withConsentManifest(nextConfig)`,
+that `inth.config.ts` sits at the project root with a default export
+(`export default defineConsentConfig(...)`), and restart `next dev`.
 
-- `withConsentManifest` doesn't wrap the config in `next.config.ts`. Without
-  it, `@inth/nextjs/generated` still resolves, but exports `undefined`.
-- The fetch failed in `next dev`, or in a build with
-  `INTH_ON_BUILD_ERROR=runtime`. The server then fetches the policy at
-  runtime.
-- The backend URL is relative, or the config sets `output: 'export'`, so the
-  build skipped the fetch.
-- The code runs in a package listed in `serverExternalPackages`, which stays
-  outside the bundle and doesn't see the alias.
+## `@inth/nextjs: projectUrl is required`
 
-`@inth/nextjs/generated` ships its own types, so `tsc --noEmit` passes on a fresh
-clone without running Next.js first.
+**Cause.** `InthProvider` throws
+``inth: `projectUrl` is required. Set it in your config, or use `mode: testing()` from a /testing entry in tests.``
+when no `inth.config.ts` project URL or env var was available at compile time.
 
-## Verify manifest fetching
+**Fix.** Set `NEXT_PUBLIC_INTH_PROJECT_URL` (falling back to
+`NEXT_PUBLIC_C15T_BACKEND_URL` if unset) in `.env.local` and your host's build
+settings, and verify `withConsentManifest` finds `inth.config.ts`. For tests
+without a backend, set `mode: testing()` in `inth.config.ts`.
 
-Check the Next.js server and browser requests after following the
-[App Router](/docs/frameworks/next/app-router) or
-[Pages Router](/docs/frameworks/next/pages-router) guide:
+## `inth: mode is the hosted() transport itself`
 
-1. Load the page twice. A warm manifest setup resolves policy without calling
-   the upstream backend `/v1/consent/init`. A browser request to your local
-   `/api/inth/v1/consent/init` is expected when client initialization is needed.
-2. Make a consent choice. Confirm the submission reaches the backend
-   `/v1/consent/records` endpoint and reload to check that the choice persists.
-3. Test two locations with different configured policies. Confirm the resolved
-   policy matches each location and that your host passes trusted geography
-   headers to Next.js.
-4. Change a policy, rebuild, then check it. With runtime fetching, check it
-   after the manifest caches refresh instead. Cache the public manifest, never
-   the visitor-specific init response.
-5. If you set `proxy: true`, confirm browser consent requests use `/api/inth`,
-   including submissions. Direct requests to the backend are expected without
-   it.
+**Cause.** `options.mode` received a transport factory (`hosted()`, `testing()`
+or `manifest()`) imported from `@inth/react`, which bundles the transport into
+first-load JavaScript.
 
-## Why does InthProvider warn that it found no config?
+**Fix.** Import `manifest()` or `hosted()` from `@inth/nextjs` (or `testing()`
+from `@inth/nextjs/testing`) and set `mode` in `inth.config.ts`.
 
-**Check.** The browser console shows this warning outside production:
+## `@inth/nextjs: defineConsentConfig`
 
-```txt
-[inth] InthProvider found no config. Export `defineConsentConfig()` as the default export of inth.config.ts at the project root and wrap next.config.ts in `withConsentManifest()`, or pass `config`.
-```
+**Cause.** `defineConsentConfig` validates `inth.config.ts` on the server and
+during builds and throws a `TypeError`, most commonly
+``@inth/nextjs: manifest() needs a backend URL: ... Set NEXT_PUBLIC_INTH_PROJECT_URL at build time, or `projectUrl` in inth.config.ts.``
 
-**Fix.** `withConsentManifest` finds `inth.config.ts`, `.mts`, `.js` or
-`.mjs` in the directory `next build` and `next dev` run from, and nowhere
-else. A config in `src/` is not found. Check that:
+**Fix.** Check the exact message in the
+[config reference](/docs/frameworks/next/data-fetching-reference#config-reference)
+and set `NEXT_PUBLIC_INTH_PROJECT_URL` or `projectUrl`.
 
-- `next.config.ts` exports `withConsentManifest(nextConfig)`.
-- The file is at the project root, next to `next.config.ts`.
-- It has a default export, `export default defineConsentConfig({ ... })`, not
-  only a named one.
-- You restarted `next dev` after adding the file.
+## Visitor location resolves as unknown on the server
 
-Without a config, `InthProvider` reads `NEXT_PUBLIC_INTH_PROJECT_URL`, which
-`withConsentManifest` sets from `NEXT_PUBLIC_C15T_BACKEND_URL` when only that
-is set, uses
-`manifest()` and runs no `scripts`. With no backend URL either, it throws; see
-the next section.
+**Cause.** Inth reads platform headers (`cf-ipcountry`, `x-vercel-ip-country`)
+and never derives location from an IP address. Some hosts strip geo headers
+between middleware/proxy and Server Components.
 
-## Why does InthProvider throw that it needs a backend URL?
+**Fix.** Log `(await headers()).get('x-vercel-ip-country')` (or your host's
+header) in a Server Component. If it is missing there, add `inthProxy` as shown
+in [Geography headers](/docs/frameworks/next/geography-headers) to forward
+`x-inth-country` and `x-inth-region`.
 
-**Check.** The page, or `next build` while it prerenders the page, throws one
-of these errors from `InthProvider`:
+## `Next.js encountered the unstable value Date.now() while prerendering`
 
-- ``@inth/nextjs: manifest() needs a backend URL. Set NEXT_PUBLIC_INTH_PROJECT_URL, or `projectUrl` in inth.config.ts.``
-- ``@inth/nextjs: hosted() needs a backend URL. Set NEXT_PUBLIC_INTH_PROJECT_URL, or `projectUrl` in inth.config.ts.``
+**Cause.** In Next.js 16.3+ with `cacheComponents: true` and
+`partialPrefetching: true`, `next dev` flags `Date.now()` after `headers()`
+during runtime prefetching.
 
-A production build prints only the first sentence, such as
-`@inth/nextjs: manifest() needs a backend URL.`
+**Fix.** Upgrade `@inth/nextjs` to the latest release. `resolveConsent` calls
+`await connection()` before reading the clock, so you do not need to add
+`connection()` in your layout.
 
-`InthProvider` found no `inth.config.ts`, or got a `config` prop without a
-backend URL, and `NEXT_PUBLIC_INTH_PROJECT_URL` was not set when Next.js
-compiled the page.
+## `Next.js encountered data that is not available during a static prerender`
 
-**Fix.** Set `NEXT_PUBLIC_INTH_PROJECT_URL` wherever `next build` and
-`next dev` run, and check that `withConsentManifest` finds `inth.config.ts`
-(see the previous section). Earlier alphas fell back to local mode here;
-now the root throws. To run without a backend, set `mode: testing()` in
-`inth.config.ts`, or pass `options={{ mode: testing() }}` to `InthProvider`.
+**Cause.** A route sets `ensureStatic = 'navigation'` (also throws
+`Next.js encountered uncached or runtime data on a route that must be fully static`
+with an awaited layout) under a root layout that calls `resolveConsent`.
 
-## Why does InthProvider warn that a transport ships in the first-load bundle?
-
-**Check.** The browser console shows a warning such as:
-
-```txt
-[inth] InthProvider `mode` is the hosted() transport itself, so its code ships in the first-load bundle. Use hosted() from @inth/nextjs instead: it is plain data, and the root loads the code only when it runs.
-```
-
-**Fix.** `options.mode` received `hosted()`, `testing()` or `manifest()` from
-`@inth/react`, which are transports. Import the mode from `@inth/nextjs` and set
-it as `mode` in `inth.config.ts`.
-
-## Why does defineConsentConfig throw?
-
-**Check.** `next build`, `next dev` or the first server render fails with a
-`TypeError` that starts with `@inth/nextjs: defineConsentConfig`.
-`withConsentManifest` reads `inth.config.ts` when Next.js loads
-`next.config.ts`, so most config errors stop the build before it compiles.
-The checks run on the server only; the browser copy of the file skips them.
-
-**Fix.** The [config reference](/docs/frameworks/next/data-fetching-reference#config-reference)
-lists each message. The most common is
-``@inth/nextjs: defineConsentConfig needs `projectUrl`, or NEXT_PUBLIC_INTH_PROJECT_URL set at build time.``
-Set the variable in `.env.local` and in your host's build settings, or pass
-`projectUrl`.
-
-## Why is the visitor's location unknown on the server?
-
-**Check.** `resolveConsent` and the consent route read the visitor's
-country and region from hosting platform headers such as `cf-ipcountry` and
-`x-vercel-ip-country`; Inth never derives location from an IP address itself.
-Some platforms expose those headers to Next.js middleware or proxy but strip
-them before Server Components and Route Handlers run, so every visitor falls
-back to your unknown-location rule. Log
-`(await headers()).get('x-vercel-ip-country')`, or your host's equivalent, in
-a Server Component.
-
-**Fix.** If the header is missing there, add `inthProxy` as described in
-[Forward geography headers](/docs/frameworks/next/geography-headers). It
-forwards the resolved values as `x-inth-country` and `x-inth-region`, which
-take precedence everywhere Inth reads location.
-
-## Why does Next.js report an unstable `Date.now()` during prerendering?
-
-**Check.** The error
-`Next.js encountered the unstable value Date.now() while prerendering`,
-pointing at the `await resolveConsent(...)` line, comes from
-`partialPrefetching: true` combined with `cacheComponents: true` (Next.js
-16.3 and later). During the runtime-prefetch stage Next.js resolves
-`headers()` and then flags the `Date.now()` that follows. It only appears in
-`next dev`; `next build` passes because build-time prerenders never resolve
-`headers()`.
-
-**Fix.** Use the current Inth release. `resolveConsent` handles this itself:
-the default App Router request reader calls `await connection()` from
-`next/server` before reading the clock, so the component is already
-request-time when the clock is read. You do not need to add `connection()` to
-your layout. If you still see the error on the current release, report your
-Next.js version and config on
-[c15t/c15t#1107](https://github.com/c15t/c15t/issues/1107).
-
-## Why does `next build` fail on a route with `ensureStatic = 'navigation'`?
-
-**Check.** The build fails with one of these errors, and the route sits under a
-root layout that calls `resolveConsent`:
-
-- `Next.js encountered data that is not available during a static prerender, but is unable to provide a location` (streamed layout)
-- `Next.js encountered uncached or runtime data on a route that must be fully static` (awaited layout)
-
-`'navigation'` requires the whole route to be static, including the root
-layout. `resolveConsent` reads the visitor's cookies and headers, so that
-layout can't be.
-
-**Fix.** Move those pages into their own route group with the browser layout,
-which renders `InthProvider` without `state`. See
+**Fix.** Move `ensureStatic = 'navigation'` routes into a route group with the
+browser layout (`InthProvider` without `state`). See
 [Keep pages static with `ensureStatic`](/docs/frameworks/next/rendering#keep-pages-static-with-ensurestatic).
-`'shell'` and `'prefetch'` work with the server layouts.
 
-## Why does the page throw that no IABProvider is mounted?
+## No IABProvider is mounted
 
 <import src="../../shared/react/iab/overview.mdx#missing-provider" />
 
-## Inspect the active policy
+## Verify manifest fetching and inspect active policy
 
-Place this diagnostic component inside your existing consent
-boundary. It reads state without recording a choice.
+1. Load a server-rendered page twice: no upstream `/v1/consent/init` request fires, and
+   choices post to `/v1/consent/records` (or `/api/inth/v1/consent/records` with `proxy: true`).
+2. Test two regions with different policies and rebuild after policy edits (or
+   wait for cache refresh under runtime caching).
+
+To inspect live resolution inside `InthProvider` without recording a choice,
+temporarily render this Client Component (use `useConsent('marketing')` in
+production instead of subscribing to the full snapshot):
+
+{/* example: fragment */}
 
 ```tsx title="app/consent-policy-debug.tsx"
 'use client';
@@ -280,15 +187,3 @@ export function ConsentPolicyDebug() {
 	);
 }
 ```
-
-The diagnostic subscribes to consent changes. Remove it after verification.
-For a production feature gate, use `useConsent('marketing')` or the category
-your feature needs instead of subscribing to the whole snapshot.
-
-## More help
-
-[Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
-every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because the wrong package is installed, choices that disappear on
-reload, server HTML that differs from the browser, static builds that fail and
-content blockers that hide the consent UI.

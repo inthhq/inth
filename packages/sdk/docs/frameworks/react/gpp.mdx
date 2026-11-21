@@ -1,14 +1,14 @@
 ---
 title: IAB GPP
-description: Add the IAB Global Privacy Platform API (__gpp) to a React app with ConsentGPP from @inth/react/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
+description: Add the IAB Global Privacy Platform (__gpp) API to a React app with ConsentGPP from @inth/react/gpp.
 group: frameworks
 ---
 
+Expose `window.__gpp` in a React app so ad tech such as Prebid.js and Google Ad Manager can read US state privacy signals and the TCF EU consent string.
+
 ## What GPP does
 
-`ConsentGPP` from `@inth/react/gpp` installs `window.__gpp`, the GPP 1.1 CMP
-API, and keeps its GPP string in step with the visitor's choices. Prebid.js,
-Google Ad Manager and other ad tech read US privacy signals from it.
+`ConsentGPP` from `@inth/react/gpp` installs the GPP 1.1 CMP API on `window.__gpp` and keeps its GPP string synchronized with the visitor's consent state.
 
 ## Turn on GPP
 
@@ -25,21 +25,12 @@ import { ConsentGPP } from '@inth/react/gpp';
 </InthProvider>;
 ```
 
-`ConsentGPP` renders nothing. It installs `__gpp` after it mounts and
-removes it when it unmounts. It lives in its own entry, like
-`@inth/react/iab`, so apps that do not import it bundle none of the GPP
-code. `@inth/react` already depends on the IAB code; nothing else to install.
+`ConsentGPP` renders no markup. It registers `__gpp` on mount and removes it on unmount. Because it lives on the `@inth/react/gpp` subpath, apps that do not import it bundle zero GPP code, and no extra package install is required.
 
-The props are the GPP options listed below, for example
-`<ConsentGPP usFallback="none" />`. It works the same with a runtime you
-pass to `InthProvider` as `runtime`.
+Pass any GPP option below as a prop, such as `<ConsentGPP usFallback="none" />`. It works identically when `InthProvider` uses an external `runtime`.
 
-The GPP string follows the policy and location your backend resolves for the
-visitor, so a US visitor's state comes from the backend. With `testing()`
-mode, pass the state yourself, for example
-`overrides: { country: 'US', region: 'CA' }`.
+The GPP string follows the policy and location resolved by your Inth project. In `testing()` mode, pass the state explicitly with `overrides: { country: 'US', region: 'CA' }`.
 
-To add the TCF EU section for visitors under an `iab` policy, set up
-[IAB TCF](/docs/frameworks/react/iab) as well.
+To populate the TCF EU section for visitors under an `iab` policy, also configure [IAB TCF](/docs/frameworks/react/iab).
 
 <include src="../../shared/iab-gpp.mdx" />

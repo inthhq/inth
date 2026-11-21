@@ -2,11 +2,10 @@
 
 ## Every component
 
-Import every component from `@inth/svelte`, except the dev tools panel,
-which comes from `@inth/svelte/devtools`. Render them inside `InthProvider`:
-from `@inth/svelte` in a Svelte app, or from `@inth/svelte/kit` in a
-SvelteKit root layout. A component outside it throws
-`inth: no v3 consent context`.
+Import every component from `@inth/svelte`, except `InthProvider` in SvelteKit
+(from `@inth/svelte/kit`) and the dev tools panel (from `@inth/svelte/devtools`).
+Render them inside a single `InthProvider` at your app root (or root `+layout.svelte`
+in SvelteKit). A component outside it throws `inth: no v3 consent context`.
 
 | Component | Renders | Page |
 | --- | --- | --- |

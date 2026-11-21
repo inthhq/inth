@@ -1,22 +1,16 @@
 ---
 title: E2E testing
-description: Get through the native Inth consent prompt in Maestro, EAS Workflows and agent-device tests of a React Native or Expo app, using stable selectors and shipped subflows.
+description: Handle the native Inth consent prompt in Maestro, EAS Workflows, and agent-device tests with stable selectors and subflows.
 seoTitle: E2E testing the Inth consent prompt with Maestro and Expo
-seoDescription: Stable selectors and ready-made Maestro subflows to accept, reject, or customize the Inth consent prompt in your React Native and Expo E2E tests.
+seoDescription: Stable selectors and shipped Maestro subflows to accept, reject, or customize the Inth consent prompt in React Native and Expo E2E tests.
 group: frameworks
 ---
 
-A fresh install shows the Inth consent prompt before your app's first screen,
-so every end-to-end test meets it. The stock SwiftUI and Compose screens carry
-the same stable selectors on iOS and Android, and `@inth/react-native` ships
-Maestro subflows that answer the prompt. Start each test with one of them, or
-use the selectors to test your consent journeys.
+A fresh install presents the native Inth consent prompt before your first screen. The stock SwiftUI and Compose screens expose identical stable selectors on iOS and Android, and `@inth/react-native` ships ready-made Maestro subflows to dismiss or test consent flows.
 
 ## Answer the prompt in Maestro
 
-Run `dismiss-if-shown.yaml` after `launchApp`. It waits for the prompt, taps
-Reject all, and passes without doing anything when no prompt appears. It also
-dismisses the notice that some regions get instead of a prompt.
+Call `dismiss-if-shown.yaml` right after `launchApp`. It waits for the prompt or notice, taps Reject all (or Got it), and passes cleanly when no prompt appears:
 
 ```yaml title=".maestro/home.yaml"
 appId: com.example.app
@@ -28,12 +22,7 @@ appId: com.example.app
 - assertVisible: 'Welcome!'
 ```
 
-`runFlow` paths are relative to the file that calls them. The example assumes
-`.maestro/` sits next to `node_modules/`. Each subflow declares
-`appId: ${APP_ID}` because Maestro needs an `appId` in every file, but you do
-not set `APP_ID`: a subflow runs in the app of the flow that calls it.
-
-To accept instead, pass `INTH_CHOICE`:
+`runFlow` paths are relative to the calling file. Subflows declare `appId: ${APP_ID}` automatically and inherit the caller's app ID. To accept instead of rejecting, set `INTH_CHOICE: accept-all` (rejecting is safer for unrelated tests so optional SDKs send no test traffic):
 
 ```yaml title=".maestro/home.yaml"
 - runFlow:
@@ -42,28 +31,21 @@ To accept instead, pass `INTH_CHOICE`:
       INTH_CHOICE: accept-all
 ```
 
-Rejecting is the safer default for most suites: optional SDKs stay off, so the
-test sends no analytics or ad traffic. Accept only in tests that need those
-SDKs running.
-
 ### Shipped subflows
 
-All flows are in `node_modules/@inth/react-native/maestro/`.
+All subflows live in `node_modules/@inth/react-native/maestro/`:
 
-| Flow | What it does | Variables |
+| Flow | Action | Variables |
 | --- | --- | --- |
-| `dismiss-if-shown.yaml` | Answers the prompt or notice if one appears within the timeout, then continues | `INTH_CHOICE` (`reject-all` or `accept-all`), `INTH_TIMEOUT` (default 10000 ms) |
-| `accept-all.yaml` | Waits for the first-layer prompt and taps Accept all. Fails if it does not appear | `INTH_TIMEOUT` (default 15000 ms) |
-| `reject-all.yaml` | Waits for the first-layer prompt and taps Reject all. Fails if it does not appear | `INTH_TIMEOUT` |
-| `open-preferences.yaml` | Taps Customize on the prompt or Privacy settings on the notice, then waits for preferences | `INTH_TIMEOUT` |
-| `toggle-category.yaml` | Flips one category switch in preferences | `INTH_CATEGORY`, such as `measurement` or `marketing` |
-| `save-preferences.yaml` | Taps Save in category or IAB preferences and waits for them to close | `INTH_TIMEOUT` |
-| `close-preferences.yaml` | Leaves preferences without saving and confirms Discard if asked | `INTH_TIMEOUT` |
+| `dismiss-if-shown.yaml` | Dismisses a prompt or notice if shown within timeout | `INTH_CHOICE` (`reject-all` or `accept-all`), `INTH_TIMEOUT` (default `10000` ms) |
+| `accept-all.yaml` | Waits for first layer and taps Accept all (fails if absent) | `INTH_TIMEOUT` (default `15000` ms) |
+| `reject-all.yaml` | Waits for first layer and taps Reject all (fails if absent) | `INTH_TIMEOUT` |
+| `open-preferences.yaml` | Taps Customize or Privacy settings and waits for preferences | `INTH_TIMEOUT` |
+| `toggle-category.yaml` | Toggles one category switch in preferences | `INTH_CATEGORY` (such as `measurement` or `marketing`) |
+| `save-preferences.yaml` | Taps Save in category or IAB preferences and waits for close | `INTH_TIMEOUT` |
+| `close-preferences.yaml` | Closes preferences without saving (confirming Discard if prompted) | `INTH_TIMEOUT` |
 
-Set variables with `env` on `runFlow`. Each flow keeps its default when you
-leave a variable out.
-
-### Test a custom choice
+### Test a custom category choice
 
 ```yaml title=".maestro/consent-custom.yaml"
 appId: com.example.app
@@ -79,15 +61,11 @@ appId: com.example.app
 - runFlow: ../node_modules/@inth/react-native/maestro/save-preferences.yaml
 ```
 
-After the last step, the prompt is gone and only measurement is on. Assert
-that through your own UI, for example a screen that shows whether your
-analytics SDK started.
+Assert after saving that your UI reflects measurement enabled while other optional categories stay off.
 
 ### Reopen preferences from your app
 
-Your app opens preferences after the first decision, from its own Privacy
-settings entry that calls `presentPreferences()`. Tap that entry, wait for the
-preferences, then reuse the flows:
+Tap your app's Privacy settings button, wait for the Save control, and reuse the toggle and save subflows:
 
 ```yaml title=".maestro/privacy-settings.yaml"
 - tapOn: 'Privacy settings'
@@ -102,125 +80,69 @@ preferences, then reuse the flows:
 - runFlow: ../node_modules/@inth/react-native/maestro/save-preferences.yaml
 ```
 
-## Start each test from a fresh install
+## Start from a fresh install
 
-Inth keeps the decision in protected storage. On iOS that is the Keychain,
-which survives `clearState`, so use both options on `launchApp` to get the
-prompt again. On Android `clearState` is enough, and Maestro ignores
-`clearKeychain` there, so one flow works on both:
-
-```yaml
-- launchApp:
-    clearState: true
-    clearKeychain: true
-```
-
-`clearKeychain` clears the whole Simulator Keychain, not only your app's
-entries. To keep a decision across tests, for example after one login test
-answers the prompt, leave both options off.
+iOS stores consent in Keychain, which survives `clearState`, so pass both `clearState: true` and `clearKeychain: true` on `launchApp` (Android ignores `clearKeychain`, so one block works on both platforms). Note that `clearKeychain` clears the whole Simulator Keychain; omit both options when carrying a decision across tests.
 
 ## Selectors
 
-Each selector is a SwiftUI `accessibilityIdentifier` on iOS and a Compose
-`testTag` exposed as the view's resource ID on Android. Maestro's `id:`,
-XCUITest's `identifier` and UI Automator's `By.res()` all read them. A part in
-angle brackets is filled at runtime.
+Each selector maps to SwiftUI `accessibilityIdentifier` on iOS and Compose `testTag` (resource ID) on Android, readable by Maestro (`id:`), XCUITest (`identifier`), and UI Automator (`By.res()`). Escape literal dots when combining IDs with `|` in Maestro regexes.
 
-Maestro treats `id:` as a regular expression that must match the whole ID. The
-dots in these IDs match any character, which is harmless. Escape them when you
-combine IDs with `|`.
-
-| Selector | Screen | What it is |
+| Selector | Screen | Element |
 | --- | --- | --- |
-| `inth.first-layer` | First layer | The full-screen prompt |
+| `inth.first-layer` | First layer | Full-screen prompt |
 | `inth.first-layer.title` | First layer | Headline |
 | `inth.first-layer.accept-all` | First layer | Accept all |
-| `inth.first-layer.reject-all` | First layer | Reject all. While policy is still loading it is the only decision |
-| `inth.first-layer.customize` | First layer | Opens preferences inside the prompt |
-| `inth.first-layer.description` | First layer, IAB | The disclosure sentence with the partner count |
-| `inth.first-layer.summary.item.<index>` | First layer, IAB | One purpose in the summary card, from 0 |
-| `inth.first-layer.partner-count` | First layer, IAB | Opens the partner list |
-| `inth.notice` | Notice | The notice card over your app |
-| `inth.notice.acknowledge` | Notice | Got it. Records the dismissal and grants nothing |
+| `inth.first-layer.reject-all` | First layer | Reject all |
+| `inth.first-layer.customize` | First layer | Opens preferences |
+| `inth.first-layer.description` | First layer (IAB) | Disclosure sentence with partner count |
+| `inth.first-layer.summary.item.<index>` | First layer (IAB) | Summary purpose item (0-indexed) |
+| `inth.first-layer.partner-count` | First layer (IAB) | Opens partner list |
+| `inth.notice` | Notice | Notice card |
+| `inth.notice.acknowledge` | Notice | Got it button |
 | `inth.notice.settings` | Notice | Opens preferences |
-| `inth.prefs` | Preferences | The category list |
-| `inth.prefs.category.<category>.switch` | Preferences | Switch for an optional category, such as `measurement` |
-| `inth.prefs.category.<category>.locked` | Preferences | Status of `necessary`, which cannot change. Use it for `necessary` only |
-| `inth.prefs.category.<category>.restricted` | Preferences | An optional category the policy or a privacy signal keeps off. iOS puts it on the row, Android on the row's note |
+| `inth.prefs` | Preferences | Category list |
+| `inth.prefs.category.<category>.switch` | Preferences | Optional category switch (such as `measurement`) |
+| `inth.prefs.category.<category>.locked` | Preferences | Locked status for `necessary` |
+| `inth.prefs.category.<category>.restricted` | Preferences | Restricted optional category indicator |
 | `inth.prefs.accept-all` | Preferences | Accept all |
 | `inth.prefs.reject-all` | Preferences | Reject all |
 | `inth.prefs.save` | Preferences | Save |
-| `inth.prefs.cancel` | Preferences, IAB preferences | Back to the first layer, or Cancel and Close when your app opened preferences |
-| `inth.prefs.discard.confirm` | Preferences, IAB preferences | Discard unsaved changes |
-| `inth.prefs.discard.keep` | Preferences, IAB preferences | Keep editing |
-| `inth.iab` | IAB preferences | The IAB list |
+| `inth.prefs.cancel` | Preferences / IAB | Back, Cancel, or Close |
+| `inth.prefs.discard.confirm` | Preferences / IAB | Discard unsaved changes |
+| `inth.prefs.discard.keep` | Preferences / IAB | Keep editing |
+| `inth.iab` | IAB preferences | IAB purpose list |
 | `inth.iab.accept-all` | IAB preferences | Accept all |
 | `inth.iab.reject-all` | IAB preferences | Reject all |
 | `inth.iab.save` | IAB preferences | Save |
-| `inth.iab.purpose.<purpose>.consent` | IAB preferences | Consent switch for an IAB purpose, by purpose ID |
-| `inth.iab.special-feature.<feature>.switch` | IAB preferences | Opt-in switch for a special feature, by ID |
-| `inth.iab.partners` | IAB preferences | Opens the partner list |
-| `inth.iab.vendors` | Partner list | The IAB partner list |
-| `inth.iab.vendors.search` | Partner list | Search field |
-| `inth.iab.vendors.vendor.<vendor>` | Partner list | One partner, by Global Vendor List ID |
+| `inth.iab.purpose.<purpose>.consent` | IAB preferences | IAB purpose consent switch |
+| `inth.iab.special-feature.<feature>.switch` | IAB preferences | Special feature switch |
+| `inth.iab.partners` | IAB preferences | Opens partner list |
+| `inth.iab.vendors` | Partner list | Partner list container |
+| `inth.iab.vendors.search` | Partner list | Partner search field |
+| `inth.iab.vendors.vendor.<vendor>` | Partner list | Vendor row by GVL ID |
 | `inth.iab.vendors.back` | Partner list | Back to IAB preferences |
-| `inth.privacy-policy` | Any | Your privacy policy link |
+| `inth.privacy-policy` | Any | Privacy policy link |
 
-These selectors are a stable contract. Inth's own tests fail if one goes
-missing from either platform, so a rename cannot slip into a release unnoticed.
-The list is also in `node_modules/@inth/react-native/maestro/selectors.json`.
-Other identifiers on these screens can change in any release.
+Inth's test suite locks these selectors across both platforms (see `node_modules/@inth/react-native/maestro/selectors.json`). At accessibility text sizes, Reject All and Accept All move into the scrolling area; use `scrollUntilVisible` before `tapOn` in large-text tests.
 
-Below the accessibility text sizes, Reject All and Accept All are pinned to the
-bottom of the screen. In Privacy Settings, Save is in the navigation bar by
-default, under the same `save` selector; with `savePlacement: bottom` it is
-pinned under the other two. At the largest sizes Reject All and Accept All
-move into the scrolling page, and Save stays pinned at the bottom.
-The shipped flows scroll to them first. In your own flows, use
-`scrollUntilVisible` before `tapOn` if you test large text.
+## Choose a backend for test builds
 
-## Choose what your test build talks to
+- **Debug builds:** Set `dryRun: true` so prompts and gates work normally without sending records ([details](/docs/frameworks/react-native/configuration#use-dryrun-in-development-and-ci)).
+- **Release builds (including EAS E2E builds):** Release builds reject `dryRun`. Point `projectUrl` at a dedicated staging Inth project per build profile so test traffic stays out of production.
 
-The prompt and its contents come from your Inth project's policy for the
-device's region. Decide where a test build sends consent records:
-
-- In a debug build, set `dryRun: true`. The prompt and gates work as normal and
-  no consent record is sent. See
-  [Use dryRun in development and CI](/docs/frameworks/react-native/configuration#use-dryrun-in-development-and-ci).
-- A release build refuses `dryRun`: no engine starts and every gate stays
-  closed. An EAS simulator build for E2E is a release build, so point it at a
-  separate Inth project for testing instead, with `projectUrl` set per build
-  profile. Its records then stay out of your production project.
-
-The region decides which prompt appears: the first layer, a notice, or none.
-`dismiss-if-shown.yaml` handles all three, so a test that only needs to get
-past consent passes everywhere. A test of one region's journey can pin the
-region from a debug screen with `useSetOverrides()`; see
-[Preview a regional policy](/docs/frameworks/react-native/configuration#preview-a-regional-policy).
-
-To keep the native prompt from appearing at all, pass `autoPresent={false}` to
-`InthProvider` in your test build. No decision is recorded, so each gate
-keeps the region's answer for a user who has not chosen: closed under opt-in
-rules. This suits screens that do not depend on consent; tests of consent
-itself should answer the prompt.
+To test a specific region, pin location in a debug menu via `useSetOverrides()` ([Preview a regional policy](/docs/frameworks/react-native/configuration#preview-a-regional-policy)). For non-consent UI suites, pass `autoPresent={false}` in your test build so optional gates remain closed under opt-in rules without blocking unrelated screens.
 
 ## Run on EAS Workflows
 
-The EAS Workflows `maestro` job checks out your repository, and its
-[documented steps](https://docs.expo.dev/eas/workflows/pre-packaged-jobs/)
-include no dependency install, so do not count on `node_modules` being there.
-Either install dependencies in the job's `after_checkout` hook, or copy the
-flows into your Maestro directory and commit them, repeating the copy when you
-upgrade `@inth/react-native`:
+Because EAS Workflows' `maestro` job does not install `node_modules` by default, install dependencies in `after_checkout` or copy the subflows into `.maestro/inth/` (re-copy when upgrading `@inth/react-native`):
 
 ```sh
 mkdir -p .maestro/inth
 cp node_modules/@inth/react-native/maestro/* .maestro/inth/
 ```
 
-Then call them as `runFlow: inth/dismiss-if-shown.yaml` from a flow in
-`.maestro/`. Add an E2E build profile to `eas.json` that builds for the
-Simulator and the Android Emulator and points at your test project:
+Call them as `runFlow: inth/dismiss-if-shown.yaml` from `.maestro/`. Add an `e2e-test` profile in `eas.json` pointing at your staging Inth project:
 
 ```json title="eas.json"
 {
@@ -237,9 +159,7 @@ Simulator and the Android Emulator and points at your test project:
 }
 ```
 
-Replace the URL with the one from your test project in Inth. Read it in
-`app.config.ts`, beside the rest of your
-[Inth plugin options](/docs/frameworks/react-native/expo#configure-the-plugin):
+Read `INTH_PROJECT_URL` in `app.config.ts` inside your [Inth plugin options](/docs/frameworks/react-native/expo#configure-the-plugin):
 
 {/* example: fragment */}
 
@@ -247,7 +167,7 @@ Replace the URL with the one from your test project in Inth. Read it in
 projectUrl: process.env.INTH_PROJECT_URL ?? 'https://your-project.inth.app',
 ```
 
-Then add a workflow that builds with that profile and runs your flows:
+Wire the build and Maestro jobs in `.eas/workflows/e2e-test-ios.yml` (mirror with `platform: android` for Android):
 
 ```yaml title=".eas/workflows/e2e-test-ios.yml"
 name: e2e-test-ios
@@ -268,25 +188,12 @@ jobs:
       flow_path: ['.maestro/home.yaml', '.maestro/consent-custom.yaml']
 ```
 
-For Android, use `platform: android` and a job named after it. Expo's
-[E2E tests guide](https://docs.expo.dev/eas/workflows/examples/e2e-tests/)
-covers the rest of the workflow setup.
+See Expo's [E2E tests guide](https://docs.expo.dev/eas/workflows/examples/e2e-tests/) for full workflow options.
 
 ## Use agent-device and e2e.com
 
-[e2e.com](https://docs.expo.dev/guides/using-e2e/) drives the Simulator and
-Emulator through Callstack's agent-device, which reads the same accessibility
-tree. The selectors above work as `id=` selectors there, for example
-`agent-device press id=inth.first-layer.reject-all`. Snapshots list them as
-each element's identifier, next to the visible label.
+[e2e.com](https://docs.expo.dev/guides/using-e2e/) drives simulators and emulators via Callstack's `agent-device`, accepting the same selectors as `id=` (for example, `agent-device press id=inth.first-layer.reject-all`). On Android, close one tool's UI Automator session before starting the other on the same emulator to avoid driver timeouts.
 
-On Android, Maestro and agent-device each start their own UI Automator driver.
-Close one tool's session before running the other on the same emulator, or
-Maestro fails with a driver start-up timeout.
+## Custom headless UIs
 
-## Check what the selectors cover
-
-The selectors and flows target the stock native screens that
-`@inth/react-native` presents. If you build your own consent UI with the
-[headless hooks](/docs/frameworks/react-native/headless), give your controls
-your own test IDs. The shipped flows will not find them.
+Shipped selectors and Maestro flows apply to Inth's stock native screens. If you build custom screens with [headless hooks](/docs/frameworks/react-native/headless), attach your own `testID` props.

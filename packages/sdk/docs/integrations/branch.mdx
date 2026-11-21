@@ -1,20 +1,12 @@
 ---
 title: Branch
-description: Set Branch's consumer protection attribution level and Google DMA parameters from Inth consent in Swift, Kotlin, React Native and Expo, while deep links keep working.
+description: Set Branch attribution levels and Google DMA parameters from Inth consent in Swift, Kotlin, React Native, and Expo while keeping deep links working.
 seoTitle: Branch consent for mobile apps with Inth
-seoDescription: Drive Branch attribution levels and DMA parameters from Inth consent in Swift, Android, React Native and Expo, with deep links kept working.
+seoDescription: Drive Branch consumer protection attribution levels and Google DMA parameters from Inth consent in Swift, Android, React Native, and Expo.
 group: integrations
 ---
 
-The Branch helper sets Branch's
-[consumer protection attribution level](https://help.branch.io/developer-hub/honoring-opt-out-of-processing-requests)
-from marketing and measurement, and sends Google's DMA parameters with
-`setDMAParamsForEEA`. At the lowest level Branch still resolves deep links,
-so the app keeps working without consent.
-
-The helper ships in `InthApple`, `inth-android` and
-`@inth/react-native/integrations`. Inth adds no Branch dependency. The web
-has no Branch helper.
+The bundled Branch helper in `InthApple`, `inth-android`, and `@inth/react-native/integrations` maps `marketing` and `measurement` consent to Branch's [consumer protection attribution level](https://help.branch.io/developer-hub/honoring-opt-out-of-processing-requests) and sends Google DMA parameters through `setDMAParamsForEEA`. Even at `NONE`, Branch resolves deterministic deep links so your app keeps working without consent. Your app installs Branch separately. There is no web helper.
 
 ## What the helper changes
 
@@ -24,33 +16,21 @@ has no Branch helper.
 | Only measurement granted | `MINIMAL`: device identifiers for analytics, no advertising frameworks |
 | Neither, or pending | `NONE`: deterministic deep linking only |
 
-When the level goes up, the helper sends the DMA parameters first. When it
-goes down, it lowers the level first. The DMA values come from the shared
-[Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types):
+When the level increases, the helper sends DMA parameters first. When the level drops, it lowers the attribution level first. DMA values come from the [Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types):
 
-| `setDMAParamsForEEA` argument | From |
+| `setDMAParamsForEEA` argument | Source |
 | --- | --- |
 | `eeaRegion` | Your app |
 | `adPersonalizationConsent` | `adPersonalization` |
 | `adUserDataUsageConsent` | `adUserData` |
 
-Inth's policy model says how the app asks for consent, not where the user is,
-so `eeaRegion` comes from your own region logic. Branch needs all three
-arguments.
+Supply `eeaRegion` from your own region logic because Inth's policy model controls how you prompt, not where the user is located. Branch requires all three arguments.
 
 ## Before you start
 
-Complete the [Swift](/docs/frameworks/swift/quickstart),
-[Android](/docs/frameworks/android/quickstart) or
-[React Native](/docs/frameworks/react-native/quickstart) quickstart, with
-`marketing` and `measurement` in your Inth policy and native configuration.
-Install Branch through its [iOS](https://help.branch.io/developer-hub/ios-full-reference),
-[Android](https://help.branch.io/developer-hub/android-full-reference) or
-[React Native](https://help.branch.io/developer-hub/react-native-full-reference)
-guide. React Native needs `react-native-branch` 6.5 or later.
+Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add `marketing` and `measurement` to your Inth policy and native config. Install Branch using its [iOS](https://help.branch.io/developer-hub/ios-full-reference), [Android](https://help.branch.io/developer-hub/android-full-reference), or [React Native](https://help.branch.io/developer-hub/react-native-full-reference) guide. React Native requires `react-native-branch` 6.5 or later.
 
-Connect the helper before Branch initializes its session, so the first
-request already carries the level.
+Connect the helper before Branch initializes its session so the first request carries the attribution level.
 
 ## Connect a Swift app
 
@@ -85,10 +65,7 @@ final class BranchConsentOwner {
 }
 ```
 
-Inth names its type `BranchAttribution` so it does not collide with Branch's
-`BranchAttributionLevel` in a file that imports both. In Branch's iOS SDK,
-`setDMAParamsForEEA` is a class method on `Branch`, while
-`setConsumerProtectionAttributionLevel` is called on `Branch.getInstance()`.
+Inth names its type `BranchAttribution` so it does not collide with Branch's `BranchAttributionLevel`. On iOS, `setDMAParamsForEEA` is a class method on `Branch`, while `setConsumerProtectionAttributionLevel` runs on `Branch.getInstance()`.
 
 ## Connect an Android app
 
@@ -115,16 +92,15 @@ fun connectBranchConsent(inEea: Boolean, onError: (Exception) -> Unit): BranchIn
 }
 ```
 
-Call it after `Branch.getAutoInstance(this)` in `Application.onCreate`, and
-keep the returned helper on the application.
+Call this after `Branch.getAutoInstance(this)` in `Application.onCreate` and retain the returned helper on the `Application`.
 
 ## Connect React Native or Expo
 
-Copy the checked connection function into `branch-consent.ts`:
+Copy the connection function into `branch-consent.ts`:
 
 <include src="../shared/examples/react-native-bare/rn-branch-integration.mdx" />
 
-Then supply `react-native-branch`:
+Wrap `react-native-branch` in `branch-vendor.ts`:
 
 {/* example: fragment */}
 
@@ -148,33 +124,19 @@ export const connectBranchVendor = (
 	);
 ```
 
-The React Native levels are the same strings Branch takes. JavaScript runs
-after Branch's native session starts, so set a default level in native code
-too if the first session must carry it. Expo needs a development build with
-Branch's config plugin.
+React Native uses the same level strings Branch accepts. Because JavaScript runs after Branch's native session starts, also set a default level in native code if the first session must carry it. Expo requires a custom native build with Branch's config plugin, not Expo Go.
 
 ## Handle reset and teardown
 
-`sync()` reapplies the current level and DMA parameters. Teardown (`stop()`,
-`close()` or `disconnect()`) sets `NONE` and sends denied DMA values. Deep
-links keep working.
+Call `syncAfterReset()` on Swift, `sync()` on Android, or `await consent.sync()` on React Native to reapply the current level and DMA parameters. Calling `stop()`, `close()`, or `disconnect()` sets `NONE` and sends denied DMA values while deep links keep working.
 
-When the level goes down, the helper makes both calls even if one of them
-fails, and reports the failure to `onError`.
+When the level drops, Inth runs both calls even if one fails and reports the error to `onError`.
 
 ## Check the integration
 
-1. Launch with no saved choice. Confirm Branch requests carry no advertising
-   or device identifiers, and a deep link still opens.
-2. Grant measurement only. Confirm the minimal level.
-3. Grant marketing. Confirm the full level and DMA consent `true`.
+1. Launch with no saved choice. Confirm Branch requests carry no advertising or device identifiers and a deep link still opens.
+2. Grant `measurement` only. Confirm `MINIMAL`.
+3. Grant `marketing`. Confirm `FULL` and DMA consent `true`.
 4. Withdraw both. Confirm `NONE`.
 
-The helper tests cover level order and category changes with recorded calls.
-They were not run against the Branch SDK. The snippets were written against these SDK majors and checked as shown:
-
-| Platform | Version | How |
-| --- | --- | --- |
-| React Native | `react-native-branch` 7.0.0 | Type-checked against the package's published types |
-| Android | `io.branch.sdk.android:library` 5.21.3 | Method signatures read from the published AAR |
-| iOS | Branch iOS SDK 3.14.2 | Checked against the SDK's public `Branch.h` header |
+Checked against `react-native-branch` `7.0.0`, `io.branch.sdk.android:library` `5.21.3`, and Branch iOS `3.14.2`. Complete [mobile verification](/docs/guides/mobile-verify) on real devices.

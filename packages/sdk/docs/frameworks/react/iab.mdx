@@ -1,19 +1,18 @@
 ---
 title: IAB TCF
-description: Mount the IAB TCF banner and dialog inside a React InthProvider and configure the CMP ID, policy and vendor data.
+description: Mount the IAB TCF banner and dialog inside a React InthProvider with your CMP ID and vendor list.
 group: frameworks
 ---
+
+Add IAB Transparency and Consent Framework support to a React app with `@inth/react/iab`.
 
 ## Prepare the IAB configuration
 
 <import src="../../shared/react/iab/overview.mdx#prepare" />
 
-Import the components from `@inth/react/iab` and render them inside your
-existing `InthProvider` from `@inth/react`.
+Import the IAB components from `@inth/react/iab` and mount them inside your existing `InthProvider` from `@inth/react`.
 
-The IAB banner and dialog render their own styles by default. Leave the
-provider's `styles` option enabled and render the components without a CSS
-import:
+The IAB banner and dialog render their own `<style>` elements by default, so leave `styles` enabled and omit CSS imports:
 
 <include src="../../shared/examples/react/iab-consent.mdx" />
 
@@ -21,11 +20,7 @@ import:
 
 ## Load an external stylesheet
 
-With Tailwind CSS 3, or when you want to put Inth in a named cascade layer,
-import `@inth/react/styles.css` and then `@inth/react/iab/styles.css` at your
-global stylesheet entry. The IAB stylesheet holds the IAB rules and uses the
-base stylesheet's tokens. Set `styles: false` so the components use those
-stylesheets:
+On Tailwind CSS 3, or when placing Inth in a named cascade layer, import `@inth/react/styles.css` followed by `@inth/react/iab/styles.css` in your entry module and set `styles: false` on `InthProvider`:
 
 {/* example: fragment */}
 
@@ -37,15 +32,11 @@ import '@inth/react/iab/styles.css';
 styles: false,
 ```
 
-Tailwind CSS 3 also needs the
-[PostCSS plugin](/docs/customization/tailwind#set-up-tailwind-css-3).
+Tailwind CSS 3 also requires the [PostCSS plugin](/docs/customization/tailwind#set-up-tailwind-css-3).
 
 ## Restrict how vendors use a purpose
 
-Publisher restrictions override a vendor's declared use of one purpose. Pass
-them to `IABProvider` as `publisherRestrictions`. The vendor IDs below are
-placeholders; use vendors from your list whose declarations allow each
-restriction.
+Publisher restrictions override a vendor's declared legal basis for a purpose. Pass them to `IABProvider` via `publisherRestrictions`. Replace the placeholder vendor IDs below with vendors from your Global Vendor List whose declarations allow each restriction:
 
 <include src="../../shared/examples/react/iab-publisher-restrictions.mdx" />
 

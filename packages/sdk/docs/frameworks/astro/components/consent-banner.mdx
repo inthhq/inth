@@ -1,6 +1,6 @@
 ---
 title: ConsentBanner
-description: Render the Inth consent banner as server HTML on an Astro site, with props for copy, legal links and branding, the policy-driven actions, accessibility behavior and the attributes to style it.
+description: Render the Inth consent banner as server HTML on an Astro site, with props for copy, legal links, and styling attributes.
 group: frameworks
 ---
 
@@ -24,14 +24,14 @@ banner and this visitor has not answered yet:
 - A rule with `prompt: 'none'` renders no banner.
 - With no resolved policy, because the backend failed, timed out or matched no
   rule, the server renders a hidden placeholder. The browser renders the banner
-  into it if its own `/init` request resolves a policy.
+  into it if its own `/v1/consent/init` request resolves a policy.
 
 On a prerendered page, the same HTML serves every visitor, so the banner ships
 hidden. A small inline script right after it shows the banner at first paint
 when the visitor has no stored consent. For a visitor with a stored choice,
 the consent runtime decides once it has read the cookie. In `hosted()` and
 `manifest()` modes, the build cannot know the policy, so the page carries the
-placeholder and the browser renders the banner after `/init`. See
+placeholder and the browser renders the banner after `/v1/consent/init`. See
 [Rendering and deployment](/docs/frameworks/astro/rendering).
 
 After a save, the browser hides the banner by setting the `hidden` attribute.

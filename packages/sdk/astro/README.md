@@ -32,7 +32,7 @@ For React or Vue dialogs, install `@astrojs/react react react-dom` or `@astrojs/
 
 ## Usage
 
-1. Set `PUBLIC_INTH_PROJECT_URL` to your Inth backend URL in `.env`
+1. Set `PUBLIC_INTH_PROJECT_URL` to your Inth project URL in `.env`
 2. Register your UI framework, then `inth()`, in `astro.config.mjs`
 
 ```js
@@ -50,7 +50,7 @@ export default defineConfig({
 ```
 
 3. Add `ConsentScript` to `<head>`, and `ConsentBanner`, `ConsentDialog`, and `ConsentDialogLink` to your layout, from `@inth/astro/components`
-4. For static output, the full layout, and island options, see the [Astro quickstart](https://c15t.com/docs/frameworks/astro/quickstart)
+4. For static output, the full layout, and island options, see the [Astro quickstart](https://inth.com/docs/frameworks/astro/quickstart)
 
 ## Hosting
 
@@ -60,29 +60,29 @@ For local development, previews, and tests, `testing()` keeps choices in the bro
 
 ## Documentation
 
-See the [documentation](https://c15t.com/docs/frameworks/astro/quickstart) for guides, API reference, and examples.
+See the [documentation](https://inth.com/docs/frameworks/astro/quickstart) for guides, API reference, and examples.
 
 ## Docs for AI Agents
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at `node_modules/@inth/astro/AGENTS.md`. It indexes every guide in `node_modules/@inth/astro/docs/`.
 
-On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
+On the web, every page of the [Inth docs](https://inth.com/docs) has a Markdown version, and [llms.txt](https://inth.com/docs/llms.txt) lists them all.
 
 ## Support
 
 - Join our [Discord community](https://c15t.link/discord)
-- Open an issue on our [GitHub repository](https://github.com/c15t/c15t/issues)
+- Open an issue on our [GitHub repository](https://github.com/inthhq/inth/issues)
 - Visit [inth.com](https://inth.com) and use the chat widget
 - Contact our support team via email [support@inth.com](mailto:support@inth.com)
 
 ## Contributing
 
-- Read the [contribution guidelines](https://c15t.com/docs/oss/contributing) before you open a pull request
-- Follow the [code of conduct](https://c15t.com/docs/oss/code-of-conduct)
+- Read the [contribution guidelines](https://github.com/inthhq/inth/blob/main/.github/CONTRIBUTING.md) before you open a pull request
+- Open an issue or pull request on [GitHub](https://github.com/inthhq/inth)
 
 ## Security
 
-Do not open a public issue for a security vulnerability. Report it privately through [GitHub's vulnerability reporting](https://github.com/c15t/c15t/security/advisories/new). We examine every valid report.
+Do not open a public issue for a security vulnerability. Report it privately through [GitHub's vulnerability reporting](https://github.com/inthhq/inth/security/advisories/new). We examine every valid report.
 
 - Do not share the vulnerability in public forums, issues, or pull requests
 - Give the steps to reproduce it and the versions it affects
@@ -90,7 +90,7 @@ Do not open a public issue for a security vulnerability. Report it privately thr
 
 ## License
 
-[Apache License 2.0](https://github.com/c15t/c15t/blob/main/LICENSE.md)
+[Apache License 2.0](https://github.com/inthhq/inth/blob/main/LICENSE)
 
 ---
 

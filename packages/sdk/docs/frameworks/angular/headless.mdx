@@ -1,95 +1,96 @@
 ---
 title: Headless
-description: Replace the Inth banner or preference dialog with your own Angular templates while provideInth keeps policy, storage and script loading, using HeadlessConsent, ConsentManager and the primitives.
+description: Build custom Angular consent banners and dialogs using HeadlessConsent, ConsentManager and headless primitives.
 group: frameworks
 ---
+
+Replace the stock banner or preference dialog with your own Angular templates
+while `provideInth()` continues to resolve policies, store choices and gate
+scripts.
 
 ## Choose how much to replace
 
 Try [customization](/docs/frameworks/angular/customize) first: tokens, slots,
-`presentation`, the banner's `ng-template` slots and translations change most
-banners without new markup. Go headless when you need markup the stock
+`presentation`, banner `ng-template` slots and translations cover most visual
+changes without custom markup. Go headless when you need markup the stock
 components cannot produce.
 
 | Goal | Approach |
 | --- | --- |
-| Keep the markup, drop Inth's styles | Set `noStyle` in `provideInth()` or on one component, and style the `data-*` attributes and slot classes. |
-| Your own buttons in the stock banner | The `inthConsentBannerAction` template; see [customize](./customize#replace-parts-of-the-banners-markup). |
-| Your own banner, stock dialog | `HeadlessConsent` for the banner, `<inth-consent-dialog>` for preferences. This page's example. |
-| Your own dialog too | Add `ConsentManager` for the category list and the draft, and the [primitives](./components/primitives) for accessible parts. |
+| Keep the markup, drop Inth's styles | Set `noStyle` in `provideInth()` or on one component, and style `data-*` attributes and slot classes. |
+| Custom buttons in the stock banner | Use the `inthConsentBannerAction` template; see [customize](./customize#replace-parts-of-the-banners-markup). |
+| Custom banner, stock dialog | Use `HeadlessConsent` for the banner and `<inth-consent-dialog>` for preferences. |
+| Custom dialog too | Add `ConsentManager` for the category list and draft, plus [primitives](./components/primitives) for accessible parts. |
 
-`provideInth()`, scripts, `<inth-consent-gate>` and the stored choice work the
-same with any of them. You only replace the markup.
+`provideInth()`, scripts, `<inth-consent-gate>` and stored choices work the
+same in every option.
 
 ## Build a banner with HeadlessConsent
 
-`HeadlessConsent` holds the banner and dialog state, with the policy's
-presentation already resolved, and one method per action. Inject it in any
-component below `provideInth()`.
+`HeadlessConsent` exposes banner and dialog state with the policy's
+presentation resolved, plus one method per action. Inject it in any component
+below `provideInth()`.
 
-This banner renders the actions the policy allows, grouped and ordered the way
-the policy asks, and hides itself when no banner is due:
+This banner renders the actions the policy allows, grouped and ordered as the
+policy requires, and hides itself when no banner is due:
 
 <include src="../../shared/examples/angular/custom-banner.mdx" />
 
-Render it where `<inth-consent-banner>` would go. The stock dialog still
-handles Customize and the preferences link, so keep `<inth-consent-dialog>`.
-It adds its own rules when it opens:
+Render it where `<inth-consent-banner>` would go. Keep `<inth-consent-dialog>`
+if you want the stock dialog to handle Customize and preferences links:
 
 <include src="../../shared/examples/angular/headless-layout.mdx" />
 
 | Member | Purpose |
 | --- | --- |
-| `banner()`, `dialog()` | Signals with the resolved presentation of each surface and `isVisible`. |
-| `banner().actionGroups`, `banner().orderedActions` | The allowed actions, grouped or flat, in the order the policy asks for. |
-| `banner().requiredActions`, `banner().primaryActions` | Actions you must show, and those to emphasize. |
-| `banner().variant`, `banner().position`, `banner().blocking` | The resolved shape, position and blocking behavior, if you want to follow them. |
+| `banner()`, `dialog()` | Signals with resolved presentation for each surface and `isVisible`. |
+| `banner().actionGroups`, `banner().orderedActions` | Allowed actions, grouped or flat, in policy order. |
+| `banner().requiredActions`, `banner().primaryActions` | Actions you must show, and actions to emphasize. |
+| `banner().variant`, `banner().position`, `banner().blocking` | Resolved shape, position and blocking behavior. |
 | `activeUI()` | `'banner'`, `'dialog'` or `'none'`. |
-| `performAction(action)` | `accept`, `reject`, `dismiss`, `save` or `customize`. Customize opens the dialog. |
+| `performAction(action)` | `accept`, `reject`, `dismiss`, `save` or `customize`. `customize` opens the dialog. |
 | `openBanner()`, `openDialog()`, `closeUI()` | Show or hide a surface. |
 | `saveCustomPreferences()` | Record the dialog's draft. |
 
-Render from `actionGroups` or `orderedActions` rather than a fixed list. A
-policy can require a reject button next to accept, or offer only a dismiss
-button for a notice, and a hard-coded pair of buttons breaks those rules.
+Render from `actionGroups` or `orderedActions` instead of a fixed button
+list. Policies may require a reject button next to accept or show only a
+dismiss button for a notice.
 
-The example takes its text from `resolvePromptCopy` and `resolveActionLabels`,
-which `@inth/angular` exports. Pass them
-`ConsentManager.translations()?.translations` and they return the banner's
-title, description and button labels in the active language, with English for
-any missing key. Under a notice, `resolvePromptCopy` reads the notice copy and
-`banner().primaryActions` contains `dismiss`.
-`resolvePreferenceControlLabels` labels an opt-out or preferences button.
+`resolvePromptCopy` and `resolveActionLabels` from `@inth/angular` return the
+banner title, description and button labels in the active language with
+English fallbacks. Under a notice, `resolvePromptCopy` reads notice copy and
+`banner().primaryActions` contains `dismiss`. `resolvePreferenceControlLabels`
+labels an opt-out or preferences button.
 
 ## Build your own preferences
 
-For a custom dialog or settings page, read the category list and the unsaved
-draft from `ConsentManager`. This form uses the headless switch with
-`[ngModel]`, so it needs `FormsModule`:
+For a custom dialog or settings page, read the category list and unsaved
+draft from `ConsentManager`. This form binds the headless switch with
+`[ngModel]`, so it imports `FormsModule`:
 
 <include src="../../shared/examples/angular/own-preferences.mdx" />
 
-`setConsent` changes the draft only. `saveConsents('custom')` records it. If
-the policy changes while the draft is open, `draft.isStale()` becomes `true`
-and saving throws, so the example disables Save and shows a message.
-Translated titles and descriptions are in `copy()`.
-[ConsentManager](./services#work-with-the-draft) covers the draft.
+`setConsent` updates the draft only. `saveConsents('custom')` records it. If
+the policy changes while the draft is open, `draft.isStale()` turns `true`
+and saving throws, so disable Save and display a message. Translated category
+titles and descriptions live in `translationConfig()`.
+[ConsentManager](./services#work-with-the-draft) covers the draft API.
 
 ## Build your own dialog
 
-The dialog primitives give your markup focus trapping, Escape handling, scroll
-locking and ARIA. Open it from the consent manager's active surface, so the
-banner's Customize button and `inthConsentDialogLink` open your dialog:
+The dialog primitives provide focus trapping, Escape handling, scroll locking
+and ARIA attributes. Open your dialog from `activeUI()` so Customize and
+`inthConsentDialogLink` open it:
 
 <include src="../../shared/examples/angular/primitives-dialog.mdx" />
 
-Render it in place of `<inth-consent-dialog>`, not next to it, or both open.
-[Primitives](./components/primitives) lists every part.
+Render it instead of `<inth-consent-dialog>`, not alongside it, or both open.
+[Primitives](./components/primitives) lists every directive.
 
 ## Verify a custom UI
 
 Run the same checks as the stock components: reject, reload and confirm no
 optional vendor requests; allow one category and confirm only its vendors
-load; reopen preferences from your footer link. Test keyboard focus and a
-screen reader on your markup, because Inth no longer owns it.
-[Verify consent](/docs/guides/verify-consent) has the full list.
+load; reopen preferences from your footer link. Test keyboard navigation and
+screen reader output on your custom markup.
+[Verify consent](/docs/guides/verify-consent) has the full checklist.

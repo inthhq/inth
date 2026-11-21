@@ -1,35 +1,25 @@
 ---
 title: Configuration
-description: Configure the React Native app's Inth project URL, dryRun, category scope, native startup, policy resources and Expo build options.
+description: Configure your Inth project URL, dryRun, category scope, IAB TCF, offline policies, and native metadata in React Native.
 group: frameworks
 ---
 
-Configure the consent engine in the native app before React starts. Expo uses
-the config plugin; bare RN uses native metadata. `InthProvider` reads the
-installed engine and has no backend or policy-options prop.
+Configure the consent engine natively before React boots, using the config plugin in Expo or native metadata in bare React Native. `InthProvider` attaches to the installed engine and takes no backend or policy prop.
 
 ## Set your Inth project URL
 
-The mobile SDKs work only with Inth hosted projects. There is one mode, so
-there is no `mode` option and no self-hosted backend on mobile. Set
-`projectUrl` to the project URL from your Inth dashboard. The app fetches
-policy from that project and sends consent records to it.
+The mobile SDKs connect to Inth hosted projects only. Set `projectUrl` to the project URL from your Inth dashboard. The app fetches policy from that project and sends consent records to it.
 
-`projectUrl` takes these forms. Each one becomes
-`https://your-project.inth.app`:
+`projectUrl` normalizes these forms to `https://your-project.inth.app` (trimming surrounding whitespace):
 
-| You write | What happens |
+| Input | Result |
 | --- | --- |
 | `https://your-project.inth.app` | Used as written. |
-| `your-project.inth.app` | A missing scheme means `https`. |
-| `https://your-project.inth.app/` | Trailing slashes are dropped. |
-| `HTTPS://Your-Project.Inth.App` | The scheme and host are lowercased. |
+| `your-project.inth.app` | Missing scheme defaults to `https`. |
+| `https://your-project.inth.app/` | Trailing slashes removed. |
+| `HTTPS://Your-Project.Inth.App` | Scheme and host lowercased. |
 
-Whitespace around the value is trimmed.
-
-Prebuild refuses everything else: another host, `http`, a port, a path, a
-query, a fragment, or a username or password. The error quotes your value and
-names the rule it broke:
+Prebuild and native launch reject every other form (other hosts, `http`, ports, paths, queries, fragments, or credentials) with an error quoting your value:
 
 {/* example: fragment */}
 
@@ -37,34 +27,22 @@ names the rule it broke:
 projectUrl must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "https://consent.example.com": the host must be a project host under inth.app.
 ```
 
-Native startup checks the URL again with the same rule. The URL is public
-binary configuration; keep credentials out of it.
+`projectUrl` is public binary configuration; keep credentials out of it.
 
 ### Replace removed options
 
-`mode` and `initURL` are gone. Prebuild stops with an error that names the
-replacement:
+`mode` and `initURL` were removed. Prebuild stops and points to the replacement:
 
-| Removed | Use instead |
+| Removed option | Replacement |
 | --- | --- |
-| `mode: 'hosted'` | Remove it. Hosted is the only mode. |
-| `mode: 'selfHosted'` | Nothing. Mobile works only with Inth. Set `projectUrl` to your Inth project URL. |
-| `mode: 'offline'` | `dryRun: true` in development and CI. In production keep `projectUrl`; `bundleManifest` or `policy` covers a launch without network. |
-| `mode: 'custom'` | `autoBootstrap: false`. Your native app installs Inth before React Native starts. Custom transports are gone. |
-| `initURL` | Nothing. The app fetches policy from `projectUrl`. |
+| `mode: 'hosted'` | Remove it. Hosted Inth is the only mode. |
+| `mode: 'offline'` | Use `dryRun: true` in development and CI, or `bundleManifest` / `policy` for offline production launches. |
+| `mode: 'custom'` | Set `autoBootstrap: false` and install natively before React Native starts. |
+| `initURL` | Remove it. The app fetches policy from `projectUrl`. |
 
 ## Use dryRun in development and CI
 
-`dryRun: true` runs consent on the device and sends no consent records. The
-prompt, storage, SDK gates and consent signals (the TC string, the GPP string,
-the `IABTCF_*` and `IABGPP_*` keys and Consent Mode) work as normal. The engine
-drops each consent record instead of queueing or sending it. Identity calls,
-such as the one `useIdentify()` returns, change local state and send nothing.
-A save still succeeds, with nothing queued.
-
-The app still fetches policy from `/init`, so you see your project's real
-policy. With a bundled manifest or an in-code `policy`, a dry-run launch needs
-no network.
+Set `dryRun: true` to run prompts, storage, SDK gates, and consent signals (`IABTCF_*`, `IABGPP_*`, Consent Mode) locally while dropping outgoing consent records. `useIdentify()` and `logout()` change local state only, and saves succeed with nothing queued. The app still fetches live policy from `/v1/consent/init` unless paired with a bundled manifest or in-code `policy`:
 
 {/* example: fragment */}
 
@@ -75,155 +53,93 @@ no network.
 }
 ```
 
-A release build refuses `dryRun`. No engine starts, every read answers
-deny-all, and the device log says why. Prebuild cannot see which build comes
-next, so the plugin writes the flag and warns once, and native code decides at
-launch:
+Release builds refuse `dryRun`, leaving no engine installed (every read answers deny-all). Because prebuild does not know the upcoming build type, the plugin warns once and native code enforces it at launch:
 
-| Platform | What counts as a release build | Where the refusal appears |
+| Platform | Release check | Refusal log |
 | --- | --- | --- |
-| iOS | The app was compiled without `DEBUG`. The pod compiles the engine with your app's configuration. | Console, code `INTH_CONFIGURATION_DRY_RUN` |
-| Android | The app is not debuggable (`FLAG_DEBUGGABLE` is off). | Logcat, tag `inth` |
+| iOS | Compiled without `DEBUG` | Console: `INTH_CONFIGURATION_DRY_RUN` |
+| Android | `FLAG_DEBUGGABLE` is off | Logcat tag `inth` |
 
-Remove `dryRun`, or leave its environment variable unset, in release builds.
-
-With `dryRun` on, `projectUrl` also takes any `https` URL, or `http` on
-`localhost`, `127.0.0.1` or `[::1]`, with a port and a path. Usernames,
-passwords, queries and fragments stay refused.
+Leave `dryRun` unset in release builds. In debug builds with `dryRun: true`, `projectUrl` also accepts any `https` URL or `http` on `localhost`, `127.0.0.1`, or `[::1]` with a port and path (credentials, queries, and fragments stay refused).
 
 ## Set Expo options
 
-Use the [complete Expo configuration](/docs/frameworks/react-native/expo#configure-the-plugin)
-for a working `app.config.ts`. The plugin accepts:
+See [Configure the plugin](/docs/frameworks/react-native/expo#configure-the-plugin) for a complete `app.config.ts`. Supported plugin options:
 
 | Option | Purpose |
 | --- | --- |
-| `projectUrl` | Required. The project URL from your Inth dashboard. See [Set your Inth project URL](#set-your-inth-project-url). |
-| `dryRun` | Development and CI switch that drops consent records. Defaults to false. See [Use dryRun in development and CI](#use-dryrun-in-development-and-ci). |
-| `property` | The `property` each consent record names. Defaults to the iOS bundle identifier and the Android application ID. Sent lowercase. |
-| `consentCategories` | Optional app category declaration. |
+| `projectUrl` | Required. Project URL from your Inth dashboard ([rules](#set-your-inth-project-url)). |
+| `dryRun` | Development and CI switch that drops consent records (default `false`; see [dryRun](#use-dryrun-in-development-and-ci)). |
+| `domain` | Domain reported with subject writes. |
+| `consentCategories` | Optional app category scope. |
 | `vendors` | Optional IAB disclosure scope. |
-| `iab` | Optional IAB TCF CMP identity and publisher settings. See [Turn on IAB TCF](#turn-on-iab-tcf). |
-| `gpp` | Optional IAB GPP string and `IABGPP_*` keys. See [IAB GPP](/docs/frameworks/react-native/gpp). |
-| `policyResource` | Build-exported policy JSON, relative to the Expo project. |
-| `bundleManifest` | Fetch the manifest at prebuild with `c15t mobile-manifest` and bundle it. Replaces `policyResource`. See [bundle the manifest at build time](/docs/guides/mobile-offline#bundle-the-manifest-at-build-time). |
-| `policy` | Policy rules in source control, as `{ rules: [...] }` in the backend's `PolicyRule` names. The device resolves them and never calls `/init`. It cannot be combined with `policyResource`, `bundleManifest` or `iab`. See [define the policy in code](/docs/guides/mobile-offline#define-the-policy-in-code). |
-| `androidMavenRepository` | Build-time native artifact repository and credential environment-variable names. |
-| `autoBootstrap` | Whether native launch installs the engine. Defaults to true. Set false when your native app installs it. |
-| `forceGPC` | GPC input for a staged or test build. |
-| `enableAppTrackingTransparency` | Enable Apple's tracking-authorization declarations. Defaults to false. |
-| `trackingUsageDescription` | App-specific plain-text ATT explanation, required when ATT is enabled. |
-| `trackingMarkdownUsageDescription` | Optional expanded ATT copy on supported Apple systems. |
-| `trackingMarkdownUsageDescriptionLocalizations` | Locale-to-copy map for that expanded description. |
-| `skAdNetworkIdentifiers` | Native SKAdNetwork declarations when ATT is enabled. |
-| `privacyTrackingDomains` | Native tracking-domain declarations when ATT is enabled. |
-
-Repository settings affect dependency resolution during the build. They do
-not select the consent backend. Store repository credentials in the build
-environment; the plugin accepts their environment-variable names, not their
-values.
+| `iab` | Optional IAB TCF CMP identity and publisher settings ([details](#turn-on-iab-tcf)). |
+| `gpp` | Optional IAB GPP string and `IABGPP_*` keys ([IAB GPP](/docs/frameworks/react-native/gpp)). |
+| `policyResource` | Build-exported policy JSON path relative to the Expo project. |
+| `bundleManifest` | Fetch and embed the manifest at prebuild with `c15t mobile-manifest` ([offline guide](/docs/guides/mobile-offline#bundle-the-manifest-at-build-time)). |
+| `policy` | In-code `PolicyRule` list resolved on-device without `/v1/consent/init` (cannot mix with `policyResource`, `bundleManifest`, or `iab`; see [define the policy in code](/docs/guides/mobile-offline#define-the-policy-in-code)). |
+| `androidMavenRepository` | Build-time Maven URL and credential env var names (pass names, never secret values). |
+| `autoBootstrap` | Install natively on launch (default `true`; set `false` for app-owned installation). |
+| `forceGPC` | GPC signal override for staging or test builds. |
+| `enableAppTrackingTransparency` | Enable Apple ATT declarations (default `false`). |
+| `trackingUsageDescription` | Plain-text ATT explanation (required when ATT is enabled). |
+| `trackingMarkdownUsageDescription` | Optional expanded EU ATT copy. |
+| `trackingMarkdownUsageDescriptionLocalizations` | Locale map for expanded ATT copy. |
+| `skAdNetworkIdentifiers` | Native SKAdNetwork IDs when ATT is enabled. |
+| `privacyTrackingDomains` | Native tracking domains when ATT is enabled. |
 
 ## Set bare RN metadata
 
-Use these keys when configuring the same engine without Expo:
+Use these keys when configuring bare React Native (see [Bare React Native](/docs/frameworks/react-native/bare) for full file examples):
 
-| Expo option | iOS `Info.plist` key | Android application metadata |
+| Expo option | iOS `Info.plist` key | Android `<meta-data>` key |
 | --- | --- | --- |
 | `projectUrl` | `com.inth.backend.url` | `com.inth.BACKEND_URL` |
-| `dryRun` | `com.inth.dryRun`, boolean | `com.inth.DRY_RUN` |
-| `property` | `com.inth.backend.property` | `com.inth.BACKEND_PROPERTY` |
-| `consentCategories` | `com.inth.categories`, string array | `com.inth.CATEGORIES`, comma-separated |
-| `vendors` | `com.inth.vendors` | `com.inth.VENDORS`, comma-separated |
+| `dryRun` | `com.inth.dryRun` (Boolean) | `com.inth.DRY_RUN` |
+| `domain` | `com.inth.backend.domain` | `com.inth.BACKEND_DOMAIN` |
+| `consentCategories` | `com.inth.categories` (string array) | `com.inth.CATEGORIES` (comma-separated) |
+| `vendors` | `com.inth.vendors` | `com.inth.VENDORS` (comma-separated) |
 | `policyResource` | `com.inth.policy.resource` | `com.inth.POLICY_RESOURCE` |
 | `forceGPC` | `com.inth.forceGPC` | `com.inth.FORCE_GPC` |
-| `iab` | `com.inth.iab.*`, see below | `com.inth.IAB_*`, see below |
+| `iab` | `com.inth.iab.*` (below) | `com.inth.IAB_*` (below) |
 | `autoBootstrap: false` | `com.inth.reactnative.AutoBootstrap` | `com.inth.reactnative.AUTO_BOOTSTRAP` |
 
-The project URL follows the [same rule](#set-your-inth-project-url) as the
-Expo option, and both platforms check it at launch. Follow
-[bare setup](/docs/frameworks/react-native/bare) for the full file context and
-linking steps.
+Remove retired metadata keys (Expo prebuild deletes them automatically):
 
-Remove these retired keys. Expo prebuild deletes them for you.
-
-| Retired key | Use instead |
+| Retired key | Replacement |
 | --- | --- |
-| `com.inth.backend.mode` (iOS), `com.inth.MODE` (Android) | Nothing for hosted. `com.inth.dryRun` or `com.inth.DRY_RUN` in development and CI. |
-| `com.inth.backend.initUrl` (iOS), `com.inth.BACKEND_INIT_URL` (Android) | Nothing. The app fetches policy from the project URL. |
-| `com.inth.backend.domain` (iOS) | `com.inth.backend.property`. |
+| `com.inth.backend.mode` (iOS), `com.inth.MODE` (Android) | Remove for hosted; use `com.inth.dryRun` / `com.inth.DRY_RUN` in debug builds. |
+| `com.inth.backend.initUrl` (iOS), `com.inth.BACKEND_INIT_URL` (Android) | Remove. Policy always loads from `projectUrl`. |
 
-A build that still declares one does not start the engine. iOS logs
-`INTH_CONFIGURATION_RETIRED` with the key and its replacement. Android logs an
-error under the `inth` tag. Every read answers deny-all until you remove the
-key.
+Builds containing retired keys fail to start the engine (iOS logs `INTH_CONFIGURATION_RETIRED`, Android logs under `inth`), leaving every read deny-all until removed.
 
 ## Declare the categories your app uses
 
-Category IDs are `necessary`, `functionality`, `experience`, `measurement` and
-`marketing`. The app declaration and the resolved policy determine the offered
-scope. A declaration narrows scope; it never grants permission.
+Valid category IDs are `necessary`, `functionality`, `experience`, `measurement`, and `marketing`. App declarations narrow scope and never grant permission. Omit `consentCategories` to follow the policy's full scope (empty arrays are rejected). Read `snapshot.consentCategories` when rendering custom controls.
 
-Omit `consentCategories` to use the policy's scope rules. An empty plugin array
-is refused because an empty declaration would be ambiguous. Always read the
-resolved `snapshot.consentCategories` when building your own category list.
-
-Vendor IDs similarly narrow the served IAB disclosures. Omit `vendors` to keep
-the served list. It must be nonempty when supplied. Vendor scope does not
-install CMP/publisher identity or grant a vendor. Use `iab` for that.
+Similarly, `vendors` narrows served IAB disclosures (must be non-empty when set) without enabling IAB or installing CMP identity.
 
 ## Turn on IAB TCF
 
-Set the `iab` plugin option in Expo, or the matching native metadata in bare
-RN. Native startup then installs the engine with IAB TCF on. It writes
-`IABTCF_CmpSdkID` and `IABTCF_CmpSdkVersion` at launch, and the stock native
-presenter can save IAB choices. Leave `iab` out to keep IAB TCF off.
+Configure `iab` in Expo or the matching native keys in bare React Native so startup enables IAB TCF, writes `IABTCF_CmpSdkID` and `IABTCF_CmpSdkVersion`, and lets the native presenter save IAB choices:
 
-| Expo `iab` field | iOS `Info.plist` key | Android metadata | Value |
+| Expo `iab` field | iOS `Info.plist` key | Android metadata | Requirement |
 | --- | --- | --- | --- |
-| `cmpId` | `com.inth.iab.cmpId`, integer | `com.inth.IAB_CMP_ID` | Required. The CMP ID IAB Europe registered for your CMP, 2 to 4095. There is no default. |
-| `cmpVersion` | `com.inth.iab.cmpVersion`, integer | `com.inth.IAB_CMP_VERSION` | Required. Your internal CMP version, 0 to 4095. |
-| `publisherCountryCode` | `com.inth.iab.publisherCountryCode` | `com.inth.IAB_PUBLISHER_COUNTRY_CODE` | Required. Two letters, such as `DE`. |
-| `consentScreen` | `com.inth.iab.consentScreen`, integer | `com.inth.IAB_CONSENT_SCREEN` | Optional. 0 to 63. Defaults to 1. |
+| `cmpId` | `com.inth.iab.cmpId` (integer) | `com.inth.IAB_CMP_ID` | Required. IAB-registered CMP ID (`2` to `4095`). |
+| `cmpVersion` | `com.inth.iab.cmpVersion` (integer) | `com.inth.IAB_CMP_VERSION` | Required. Internal CMP version (`0` to `4095`). |
+| `publisherCountryCode` | `com.inth.iab.publisherCountryCode` | `com.inth.IAB_PUBLISHER_COUNTRY_CODE` | Required. Two-letter ISO code (such as `DE`). |
+| `consentScreen` | `com.inth.iab.consentScreen` (integer) | `com.inth.IAB_CONSENT_SCREEN` | Optional. `0` to `63` (default `1`). |
 
-The Expo plugin stops prebuild when a value is missing or out of range. Native
-startup checks the same ranges. If any `iab` key is present but the set is
-incomplete or out of range, startup logs an error and starts the engine
-without IAB TCF. Category consent still works, no CMP ID is written, and IAB
-saves fail with `iab-unavailable` until you fix the values.
-
-Your Inth project must also serve an IAB policy for the regions where TCF
-applies. Rebuild the native app after changing these values. Apps that need
-publisher restrictions or custom purposes still install the engine
-themselves; see [IAB setup](/docs/guides/mobile-iab).
+Expo fails prebuild on missing or out-of-range values. In bare builds, incomplete or invalid keys log an error and start the engine without IAB (`iab-unavailable` on IAB saves). Configure an IAB policy in your Inth project and rebuild after editing these keys. For publisher restrictions or custom purposes, install the engine natively; see [Mobile IAB and ads](/docs/guides/mobile-iab).
 
 ## Preview a regional policy
 
-The function `useSetOverrides()` returns accepts `country`, `region`, `language` and
-`gpc`. Use these in a debug menu to exercise your policy rules. Omitted values
-stay as they are; explicit null clears country, region or GPC overrides.
-
-Overrides change policy inputs without recording a choice. The effective GPC
-answer is `snapshot.privacySignals.gpc.active`; the detected and overridden
-values remain separate. Remove test overrides before shipping.
+Call the setter from `useSetOverrides()` with `country`, `region`, `language`, or `gpc` in debug menus to test regional rules without recording a choice. Omitted fields remain unchanged; `null` clears an override. `snapshot.privacySignals.gpc.active` reflects the effective GPC state. Remove overrides before shipping.
 
 ## Add a policy for offline startup
 
-A valid bundled policy lets a fresh installation show its prompt while
-disconnected. Set `bundleManifest` or `policyResource` in Expo, or the
-corresponding native metadata. The engine queues the choice and delivers it to
-your Inth project when the app reconnects.
-[Offline policies](/docs/guides/mobile-offline) explains export, embedding,
-expiry and updates.
+Embed a build-time manifest via `bundleManifest` or `policyResource` (or matching native metadata) so fresh offline installs can prompt and queue choices until reconnect. See [Mobile offline consent](/docs/guides/mobile-offline).
 
 ## Let your app install the engine
 
-Use `autoBootstrap: false` when your app owns native installation, as a
-brownfield app does. Install once, before RN and optional SDK startup, with
-`InthApple.install` on iOS and `InthAndroid.install` on Android, then attach
-the RN adapter to that engine. The native installers take the same Inth
-project URL and `dryRun` switch. They do not take a custom transport.
-
-The [native startup guide](/docs/frameworks/react-native/native-behaviour)
-explains ordering and protected-storage recovery. Use
-[mobile IAB setup](/docs/guides/mobile-iab) when your native installation also
-needs CMP and publisher settings.
+Set `autoBootstrap: false` in brownfield apps or apps owning native initialization. Call `InthApple.install` (iOS) or `InthAndroid.install` (Android) once before React Native and optional SDKs start, then attach the RN adapter. See [Native startup and SDK gates](/docs/frameworks/react-native/native-behaviour) and [Mobile IAB and ads](/docs/guides/mobile-iab).

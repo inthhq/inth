@@ -1,36 +1,37 @@
 ---
 title: Embeds
-description: Hold YouTube videos, maps and other iframes on a plain HTML page until their consent category is allowed with data-src and data-category, show a placeholder, and configure the Inth iframe blocker.
+description: Gate YouTube videos, maps and other iframes on a plain HTML page using data-src, data-category and the Inth iframe blocker.
 group: frameworks
 ---
 
+Hold YouTube videos, maps and other third-party iframes on a plain HTML page
+until their consent category is allowed.
+
 ## Gate an iframe
 
-Move the iframe's URL from `src` to `data-src` and name its category in
-`data-category`. The Inth script tag gives the iframe its `src` once the
-category is allowed:
+Move the iframe's URL from `src` to `data-src` and set `data-category`. Inth
+populates `src` once the category is allowed:
 
 <include src="../../shared/examples/html/embed.mdx" />
 
-An iframe with no `src` loads nothing, so the vendor gets no request and sets
-no cookie until the visitor allows the category. Give every embed a `title`
-that says what it shows.
+Without `src`, the iframe sends no request and sets no cookies until the
+visitor allows the category. Include a descriptive `title` on every embed.
 
 ## Attributes
 
 | Attribute | What it does |
 | --- | --- |
-| `data-src` | The embed's URL. Inth moves it to `src` when the gate opens. Only `http:` and `https:` URLs load. A relative URL resolves against the page. |
-| `data-category` | One category name. An unknown name logs a warning and keeps the iframe blocked. |
-| `data-vendor` | Optional vendor ID for vendor-level consent. The iframe also stays blocked while the visitor has turned that vendor off. See [vendor consent](/docs/frameworks/html/vendor-consent). |
-| `data-inth-paused` | Set by Inth when it took away a `src` the iframe already had. Do not set it yourself. |
+| `data-src` | Embed URL copied to `src` when allowed (`http:` and `https:` only; relative URLs resolve against the page). |
+| `data-category` | Category name. Unknown names log a warning and keep the iframe blocked. |
+| `data-vendor` | Optional vendor slug for vendor-level consent; see [vendor consent](/docs/frameworks/html/vendor-consent). |
+| `data-inth-paused` | Set by Inth when removing an existing `src`. Do not set manually. |
 
-Iframes without `data-category` or `data-vendor` are left alone.
+Iframes without `data-category` or `data-vendor` are untouched.
 
 ## Show a placeholder
 
-Inth does not draw anything in place of a blocked iframe. Put your own message
-next to it and hide it once the iframe has a `src`:
+Inth renders no placeholder for blocked iframes. Place your own markup next
+to the iframe and toggle visibility with CSS:
 
 {/* example: fragment */}
 
@@ -51,31 +52,26 @@ next to it and hide it once the iframe has a `src`:
 .embed iframe[src] + .placeholder { display: none; }
 ```
 
-The `#inth-preferences` link opens the preference dialog, where the visitor
-can allow the category. See [preferences link](/docs/frameworks/html/components/preferences-link).
+The `#inth-preferences` link opens the preference dialog; see
+[preferences link](/docs/frameworks/html/components/preferences-link).
 
 ## What happens on withdrawal
 
-When a visitor turns the category off, Inth removes the iframe's `src` and puts
-the URL back in `data-src`, which unloads the embed. The page also reloads by
-default, as it does for scripts.
+When a visitor turns off the category, Inth removes `src` and restores
+`data-src`, unloading the embed, and reloads the page by default.
 
-An iframe written with a normal `src` and a `data-category` starts loading
-before Inth runs, then Inth removes the `src`. The vendor already got its
-request, so always use `data-src`.
+Always author gated iframes with `data-src` instead of `src`. An iframe with
+a plain `src` starts loading before `inth.js` runs.
 
 ## Iframes added later
 
-Inth watches the whole document. An iframe that a page builder, a CMS widget
-or your own script adds later is gated the moment it appears, and so is an
-iframe whose `data-category` changes. This keeps working when a client router
-such as Turbo replaces `<body>` on navigation, and when the Inth tag runs in
-`<head>` before `<body>` exists.
+Inth observes the document, so iframes added dynamically by CMS widgets,
+scripts or client routers such as Turbo are gated automatically.
 
 ## Configure the iframe blocker
 
-The iframe blocker is on by default in every `@inth/sdk` build. Set
-`iframeBlocker` in a queued `config` call to change it:
+The iframe blocker runs by default in every `@inth/sdk` build. Override it
+via a queued `config` call:
 
 {/* example: fragment */}
 
@@ -88,20 +84,17 @@ The iframe blocker is on by default in every `@inth/sdk` build. Set
 
 | Value | Effect |
 | --- | --- |
-| omitted or `{}` | Gate every iframe with `data-category` or `data-vendor`, including ones added later. |
-| `{ disableAutomaticBlocking: true }` | Do not scan or watch the page. Inth sets or removes a `src` only when you call `inth.processIframes()`. See [check iframes yourself](#check-iframes-yourself). |
-| `false` | Turn the blocker off. `data-src` iframes never load. |
+| omitted or `{}` | Automatically gates every iframe with `data-category` or `data-vendor`, including dynamic additions. |
+| `{ disableAutomaticBlocking: true }` | Skips automatic scanning; updates iframes only when you call `inth.processIframes()`. See [check iframes yourself](#check-iframes-yourself). |
+| `false` | Disables the blocker completely; `data-src` iframes never load. |
 
-The categories on gated iframes are added to the preference dialog, as they
-are for gated scripts.
+Categories found on gated iframes are added to the preference dialog.
 
 ## Check iframes yourself
 
-With `iframeBlocker: { disableAutomaticBlocking: true }`, Inth leaves iframes
-alone until your page calls `inth.processIframes()`. Each call pauses gated
-iframes, those with `data-category` or `data-vendor`, that consent does not
-allow, and restores the ones it does. Call it after the policy resolves, after
-you add iframes, and after consent changes:
+With `iframeBlocker: { disableAutomaticBlocking: true }`, call
+`inth.processIframes()` after policy resolution, after inserting iframes and
+on consent changes:
 
 {/* example: fragment */}
 
@@ -114,25 +107,20 @@ you add iframes, and after consent changes:
 </script>
 ```
 
-A queued `processIframes` runs once the policy has resolved, so
-`inth.push(['processIframes'])` is safe before and after the tag loads. With
-automatic blocking on, Inth does this by itself and you do not need to call
-it.
+Queued `processIframes` calls wait until the policy resolves.
 
 ## Vendor embeds
 
-The [integration guides](/docs/integrations/overview) have an HTML tab for
-YouTube, Google Maps and other embeds, with the category each one needs. The
-`youtube-nocookie.com` player still contacts Google when it loads, so gate it
-like any other embed.
+[Integration guides](/docs/integrations/overview) include an HTML tab for
+YouTube, Google Maps and other embeds. `youtube-nocookie.com` still contacts
+Google on load, so gate it like any other embed.
 
 ## Check it works
 
-Open the page in a private window with the Network tab open.
+Open the page in a private window with DevTools Network open:
 
-1. Before you choose, the iframe has no `src` in the Elements panel and there
-   is no request to the embed's host. The placeholder shows.
-2. Allow the category. The iframe gets its `src`, the embed loads and the
-   placeholder hides.
-3. Open preferences and turn the category off. The page reloads and the embed
-   stays unloaded.
+1. Before choosing, the iframe has no `src`, no request hits the embed host,
+   and the placeholder shows.
+2. Allow the category. `src` populates, the embed loads and the placeholder
+   hides.
+3. Turn the category off. The page reloads and the embed stays unloaded.

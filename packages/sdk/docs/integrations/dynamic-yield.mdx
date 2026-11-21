@@ -1,34 +1,17 @@
 ---
 title: Dynamic Yield
-description: Load Dynamic Yield personalization scripts after experience consent, set the page context and synchronize Active Cookie Consent with Inth.
+description: Load Dynamic Yield scripts after experience consent, set page context, and sync Active Cookie Consent with Inth.
 seoTitle: Dynamic Yield cookie consent with Inth
-seoDescription: Gate both Dynamic Yield scripts on experience consent, select a US or EU section, and send Active Cookie Consent updates with Inth.
+seoDescription: Gate both Dynamic Yield scripts on experience consent, choose a US or EU section, and sync Active Cookie Consent with Inth.
 icon: sparkles
 group: integrations
 ---
 
-The Inth `dynamicYield` helper loads Dynamic Yield after `experience` consent.
-It sets `DY.userActiveConsent` before loading `api_dynamic.js`, then loads
-`api_static.js` after the first script finishes. No Dynamic Yield global,
-preconnect, loader request or storage is created before the helper's consent
-gate opens.
-
-Dynamic Yield recommends synchronous scripts directly in the page's `<head>`
-to avoid flicker. Waiting for consent and loading the scripts in sequence
-changes that timing, so visitors can see the original page before a campaign
-applies. Check your campaigns and page rendering with Dynamic Yield before
-using this helper for experiments that need to run before paint.
+The `dynamicYield` helper waits for `experience` consent before creating `window.DY`, setting `DY.userActiveConsent`, and loading `api_dynamic.js` followed by `api_static.js`.
 
 ## Configure Dynamic Yield
 
-Copy the section ID and data center from your section's
-[installation snippet](https://dy.dev/docs/implement-script). Enable
-[Active Cookie Consent](https://dy.dev/docs/active-cookie-consent) with Dynamic
-Yield Support. Preview mode lets you check it first. Dynamic Yield ignores the
-consent API until this setting is enabled for your section.
-
-Remove existing Dynamic Yield snippets, tag-manager tags and preconnects.
-Inth gates only the scripts registered with it.
+Copy the section ID and data center from your section's [installation snippet](https://dy.dev/docs/implement-script). Enable [Active Cookie Consent](https://dy.dev/docs/active-cookie-consent) with Dynamic Yield Support; Dynamic Yield ignores the consent API until that setting is enabled. Remove existing Dynamic Yield snippets, tag-manager tags, and preconnects so only Inth loads them.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -40,61 +23,27 @@ Inth gates only the scripts registered with it.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `sectionId` | Required | Public section ID. Trimmed and URL-encoded as one path segment. Missing or blank values log an error and skip the integration. |
-| `region` | `'us'` | `'us'` uses `cdn.dynamicyield.com`; `'eu'` uses `cdn-eu.dynamicyield.com`. Match the section's data center. |
-| `recommendationContext` | Not set | Page context assigned before either loader runs. Omit to preserve a context your app already set. |
-| `category` | `'experience'` | Inth consent category or condition that gates both loaders and the consent signal. |
-| `nonce` | None | CSP nonce for both loaders. A nonce supplied by your consent provider is forwarded to the second loader too. |
+| `sectionId` | Required | Public section ID, trimmed and URL-encoded as one path segment. Blank values log an error and skip loading. |
+| `region` | `'us'` | `'us'` uses `cdn.dynamicyield.com`; `'eu'` uses `cdn-eu.dynamicyield.com`. Match your section's data center. |
+| `recommendationContext` | Unset | Initial page context set before loading. Omit to keep a context your app sets itself. |
+| `category` | `'experience'` | Consent category or condition gating both loaders and the consent signal. |
+| `nonce` | None | CSP nonce for both loaders. Provider nonces forward to the second loader too. |
 
-`recommendationContext.type` accepts `HOMEPAGE`, `CATEGORY`, `PRODUCT`, `CART`,
-`POST` and `OTHER`. `data` contains the category hierarchy, product SKUs, post ID
-or page identifier. `lng` selects a feed locale such as `en_GB`. Match values
-to the section's product or content feed. See Dynamic Yield's
-[page context guide](https://dy.dev/docs/page-context).
-
-The helper seeds the initial context. Your application owns context updates
-on client-side navigation. Follow Dynamic Yield's
-[context implementation guide](https://dy.dev/docs/code-context) and check
-consent before making your own Dynamic Yield calls.
+`recommendationContext.type` accepts `HOMEPAGE`, `CATEGORY`, `PRODUCT`, `CART`, `POST`, and `OTHER`; `data` holds category hierarchies, product SKUs, post IDs, or page IDs; `lng` selects a feed locale such as `en_GB`. Match your section's feed values per Dynamic Yield's [page context guide](https://dy.dev/docs/page-context). Inth sets only the initial context; update context on client-side navigation per the [context implementation guide](https://dy.dev/docs/code-context) and check consent before calling Dynamic Yield APIs.
 
 ## Loading and revocation
 
-Before consent, neither loader runs and `window.DY` stays absent unless another
-part of your app created it. Granting the mapped consent creates `DY` if
-needed, sets `DY.userActiveConsent = { accepted: true }`, and starts the
-dynamic loader. The static loader starts after the dynamic loader finishes.
+Before consent, Inth creates no Dynamic Yield globals, preconnects, requests, or storage. On grant, Inth creates `window.DY` if absent, sets `DY.userActiveConsent = { accepted: true }`, loads `api_dynamic.js`, and appends `api_static.js` after `api_dynamic.js` finishes. If a visitor withdraws consent while `api_dynamic.js` downloads, Inth skips `api_static.js`; regranting starts a new sequence. There is no `alwaysLoad` or denied-mode preloading option.
 
-Equivalent helper options reuse the same scripts across framework renders.
-Registrations that share the dynamic loader also share its static loader.
-Sharing is scoped to the same section ID and region; different sections or
-regions request their own loader URLs. Dynamic Yield's consent and page
-context still use the page-global `window.DY`, so configure one section and
-region per page.
+Dynamic Yield recommends synchronous `<head>` scripts to prevent flicker. Waiting for consent and loading sequentially means visitors can see the original page before campaigns apply, so verify rendering on pages with pre-paint experiments.
 
-The consent signal is page-global too. It stays granted while any Dynamic
-Yield registration has consent, including registrations with different
-sections or regions. Revoking or removing one registration keeps both loader
-elements while another granted registration uses the same URLs. When a
-section's last granted registration is revoked or removed, the helper removes
-its loader elements. When no registration on the page has consent, it sets
-`DY.userActiveConsent = { accepted: false }`.
-
-If consent is withdrawn while the dynamic loader is downloading, the helper
-skips the static loader. Granting consent again starts a new loader sequence.
-
-The SDK's consent setter applies only when Active Cookie Consent is enabled
-for the section. It changes data collection and personalization behavior. It
-does not unload the SDK or guarantee zero requests from code that already
-ran. Keep Inth's default `reloadOnConsentRevoked` behavior enabled.
-
-Dynamic Yield's denied mode can serve limited experiences. This helper waits
-for consent before loading either script, so it does not use denied-mode
-campaign delivery before consent. There is no `alwaysLoad` option.
+- **Shared registrations.** Equivalent options for the same section ID and region share both loader elements across renders. Because `window.DY` is page-global, configure one section and region per page.
+- **Withdrawal and disposal.** `DY.userActiveConsent` stays `{ accepted: true }` while any Dynamic Yield registration has consent. Removing or revoking a section's last granted registration removes its loader elements; when no registration has consent, Inth sets `DY.userActiveConsent = { accepted: false }`.
+- **Keep `reloadOnConsentRevoked` enabled.** Active Cookie Consent changes collection and personalization only when enabled for the section and does not unload running code or stop in-flight requests.
 
 ## Cookies and storage
 
-Dynamic Yield's [cookie and storage inventory](https://dy.dev/docs/cookie-management)
-includes these cookies. Your section and campaigns determine which appear.
+Dynamic Yield's [cookie and storage inventory](https://dy.dev/docs/cookie-management) caps cookies at 365 days and includes:
 
 | Cookie | Documented lifetime |
 | --- | --- |
@@ -105,26 +54,16 @@ includes these cookies. Your section and campaigns determine which appear.
 | `_dy_cs_storage_items` | 30 days |
 | `_dy_cs_cookie_items` | 30 days |
 
-Dynamic Yield caps cookie storage at 365 days. Its browser storage also
-includes `_dyuss_`, `_dy_tsrc`, `_dyaud_nchc`, `_dyaud_page`, `_dy_device`,
-`_dycst`, `_dy_csc`, `_dyrc`, `_dybatch`, `_dy_cs_session_items` and
-`_dy_cs_local_items`. `_dyaud_sess` uses session storage. Check the vendor
-inventory and your browser for the keys used by your section.
-
-The helper does not delete previously stored cookies or browser storage.
-Configure cleanup for your deployment and verify it after withdrawal.
+Browser storage keys also include `_dyuss_`, `_dy_tsrc`, `_dyaud_nchc`, `_dyaud_page`, `_dy_device`, `_dycst`, `_dy_csc`, `_dyrc`, `_dybatch`, `_dy_cs_session_items`, `_dy_cs_local_items`, and sessionStorage `_dyaud_sess`. Inth does not delete stored cookies or storage on withdrawal; configure cleanup for the keys your section writes.
 
 ## Verify Dynamic Yield
 
-Filter DevTools Network by `dynamicyield.com`. Grant `experience` and check
-that `api_dynamic.js` finishes before the helper appends `api_static.js`.
-Inspect `DY.userActiveConsent.accepted` and your page context. Revoke consent
-and check the next page makes no Dynamic Yield request. Test vendor-specific
-switches and the category override if your app uses them.
+Filter DevTools Network by `dynamicyield.com`:
 
-Sources: [Implement the Dynamic Yield script](https://dy.dev/docs/implement-script),
-[Active Cookie Consent API](https://dy.dev/docs/active-cookie-consent),
-[Active Cookie Consent mode and limited experiences](https://support.dynamicyield.com/hc/en-us/articles/360014728858-Active-Cookie-Consent-Mode-for-User-Data-Privacy-Management),
-and [cookies and local storage](https://dy.dev/docs/cookie-management).
+1. Grant `experience` and confirm `api_dynamic.js` finishes before `api_static.js` loads.
+2. Inspect `DY.userActiveConsent.accepted` and your page context.
+3. Revoke consent and confirm the reloaded page makes no Dynamic Yield requests.
+
+Sources: [Implement the Dynamic Yield script](https://dy.dev/docs/implement-script), [Active Cookie Consent API](https://dy.dev/docs/active-cookie-consent), [Active Cookie Consent mode](https://support.dynamicyield.com/hc/en-us/articles/360014728858-Active-Cookie-Consent-Mode-for-User-Data-Privacy-Management), and [cookies and local storage](https://dy.dev/docs/cookie-management).
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

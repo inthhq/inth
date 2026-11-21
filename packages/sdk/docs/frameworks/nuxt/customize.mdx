@@ -1,34 +1,33 @@
 ---
 title: Customize
-description: Change the Inth banner and dialog in Nuxt with theme tokens, layout presentation, component slots and copy.
+description: Style the Inth consent banner and dialog in Nuxt with theme tokens, layout options, component parts, dark mode, and copy.
 group: frameworks
 ---
+
+Customize the Inth banner and preference dialog in Nuxt by setting theme
+tokens, layout presentation, and component part attributes under `inth` in
+`nuxt.config.ts`.
 
 ## Pick the right option
 
 | You want to change | Use |
 | --- | --- |
-| Colors, fonts, radius, spacing or motion | `tokens` |
-| Banner shape, position, button order or blocking | `presentation` |
-| Classes or attributes on one part of a component | `components` |
-| Light or dark colors | `colorScheme` and `theme.dark` |
-| The text | Your Inth project's translations |
-| The markup | [Headless](/docs/frameworks/nuxt/headless) |
+| Colors, fonts, radius, spacing, or motion | `tokens` |
+| Banner shape, position, button order, or blocking | `presentation` |
+| Classes or attributes on a component part | `components` |
+| Light or dark palette | `colorScheme` and `theme.dark` |
+| Banner and dialog text | Your Inth project's translations |
+| Full markup | [Headless](/docs/frameworks/nuxt/headless) |
 
-The [customization overview](/docs/customization/overview) explains these
-choices across frameworks. Add the options below to the `inth` key in
-`nuxt.config.ts`. They are plain data, so they are safe in module options.
-
-See the [design gallery](/docs/customization/recipes) for five banner designs
-with tested code. Nuxt uses the Vue components and composables it shows.
-`examples/showcase-nuxt-theme` in the Inth repository puts `theme`,
-`colorScheme`, `presentation`, `components` and legal links together in one
-Nuxt app.
+All of these options are plain data and work directly in `nuxt.config.ts`. See
+[customize the interface](/docs/customization/overview) and
+[banner designs](/docs/customization/recipes) for five ready-made designs
+(`examples/showcase-nuxt-theme` combines them in one Nuxt app).
 
 ## Set theme tokens
 
-`tokens` sets Inth's CSS variables. Keys are the variable names without the
-leading `--`.
+`tokens` configures Inth's CSS variables using variable names without the
+leading `--`:
 
 {/* example: fragment */}
 
@@ -45,23 +44,18 @@ export default defineNuxtConfig({
 });
 ```
 
-The Nuxt module's plugin writes the tokens, including the defaults you did
-not set, into a `<style id="inth-css-vars">` tag in the page head on every
-page, whether or not `InthProvider` renders. During server rendering and
-prerendering the tag is in the first HTML, so the banner already has your
-colors. Cached routes keep the tag, because tokens are the same for every
-visitor. With `ssr: false`, the plugin adds the same tag in the browser. A
-page that hydrates server HTML keeps the server's tag, and the browser
-rewrites it only when the config changes at runtime. The
-tag carries the module's `nonce` when you set one. Set tokens through this option rather than
-a `:root` rule in your own CSS, which can lose to that tag depending on
-stylesheet order. [Theme tokens](/docs/customization/tokens) lists every token.
+The Nuxt plugin writes every token (including defaults) into a
+`<style id="inth-css-vars">` tag in `<head>` on every page, carrying your
+`nonce` if configured. During SSR and prerendering, the tag ships in the first
+HTML so the banner paints with your colors right away. Because a `:root` rule
+in your own stylesheet can lose on cascade order, set token values through
+`tokens`. See [theme tokens](/docs/customization/tokens).
 
 ## Change the banner layout
 
-`presentation.prompt` sets the banner's `variant`, `position`, `layout`,
-`primaryActions`, `direction`, `uiProfile` and `blocking`.
-`presentation.preferences` sets the same layout fields for the dialog.
+`presentation.prompt` configures the banner's `variant`, `position`, `layout`,
+`primaryActions`, `direction`, `uiProfile`, and `blocking`.
+`presentation.preferences` sets the same layout fields for the dialog:
 
 {/* example: fragment */}
 
@@ -71,17 +65,16 @@ export default defineNuxtConfig({
 });
 ```
 
-`variant` is `'floating'`, `'bar'`, `'widget'` or `'wall'`, and each accepts
-its own positions. `bar` takes `top` or `bottom`, `wall` takes `center`,
-`widget` takes the four corners, and `floating` takes the corners plus
-`top-center` and `bottom-center`. The policy still has
-the last word. A choice wall always blocks, a notice never blocks, and the
-policy can restore a required button you left out of `layout`.
+Valid positions depend on `variant`: `bar` accepts `top` or `bottom`; `wall`
+accepts `center`; `widget` accepts the four corners; `floating` accepts the
+four corners plus `top-center` and `bottom-center`. The policy keeps final
+authority: a choice wall always blocks, a notice never blocks, and the policy
+restores required buttons omitted from `layout`.
 
 ## Style one part of a component
 
-`components` adds attributes to named parts, such as a class on the banner
-card. The keys match the [component parts](/docs/customization/slots).
+`components` binds Vue attributes (`class`, `style`, not React's `className`)
+via `v-bind` to named [component parts](/docs/customization/slots):
 
 {/* example: fragment */}
 
@@ -96,38 +89,29 @@ export default defineNuxtConfig({
 });
 ```
 
-Vue binds these objects with `v-bind`, so use Vue attribute names such as
-`class` and `style`. React's `className` does not apply. The `ConsentGate`
-placeholder's parts are `components['consent-gate'].root`, `.title` and
-`.button`.
+Style the `ConsentGate` placeholder via `components['consent-gate'].root`,
+`.title`, and `.button`.
 
-With Tailwind CSS, put part classes in `app/app.config.ts` under the same
-`inth` key rather than in `nuxt.config.ts`, because Tailwind scans `app/`. The
-module merges both. [Tailwind CSS](/docs/customization/tailwind) shows the
-Nuxt setup for Tailwind 4 and 3, and
-[class names and CSS-in-JS](/docs/customization/class-names) covers other
-class sources.
+When using Tailwind CSS, put part classes under `inth` in `app/app.config.ts`
+rather than `nuxt.config.ts` so Tailwind scans them. The module merges both.
+See [Tailwind CSS](/docs/customization/tailwind) and
+[class names and CSS-in-JS](/docs/customization/class-names).
 
 ## Turn on dark mode
 
-`colorScheme` in the `inth` key in `nuxt.config.ts` decides when the banner and dialog turn dark:
-`'light'`, `'dark'`, `'system'`, or unset to copy a `dark` class on `<html>`.
-The module ships Inth's stock dark palette, so a `dark` class alone turns the
-banner dark. `theme` takes the same token
-object as the other frameworks, including `theme.dark`, and wins over `tokens`
-where both set a variable. For `'dark'` and `'system'`, the module adds an
-inline script to `<head>` that sets the class before the banner paints.
-`colorScheme: null` leaves `inth-dark` to your site when you set it under the
-`inth` key or in `app/app.config.ts`. Nuxt drops a `null` in inline module
-options before the module reads it.
-[Dark mode](/docs/customization/dark-mode) covers each value and a dark first
-paint.
+Set `colorScheme` under `inth` in `nuxt.config.ts` to `'light'`, `'dark'`,
+`'system'`, or leave it unset to follow a `dark` class on `<html>`. Inth ships
+a built-in dark palette, and `theme` (including `theme.dark`) overrides
+`tokens` per scheme. For `'dark'` and `'system'`, the module injects an inline
+`<head>` script that sets the class before first paint. Set
+`colorScheme: null` under `inth` in `nuxt.config.ts` or `app/app.config.ts`
+(not inline module options, where Nuxt drops `null`) to manage `inth-dark`
+yourself. See [dark mode](/docs/customization/dark-mode).
 
 ## Change the copy
 
-The banner and dialog text come from the translations of your Inth project,
-resolved for the visitor's language. Edit them there. `legalLinks` adds links
-to your privacy policy and similar pages:
+Edit banner and dialog text in your Inth project's translations. Add links to
+legal pages with `legalLinks` and `bannerLegalLinks`:
 
 {/* example: fragment */}
 
@@ -140,22 +124,20 @@ export default defineNuxtConfig({
 });
 ```
 
-[Translations](/docs/frameworks/nuxt/translations) covers the visitor's
-language, and [copy and translations](/docs/customization/translations) covers
-message keys and writing labels.
+See [translations](/docs/frameworks/nuxt/translations) and
+[copy and translations](/docs/customization/translations).
 
 ## Other display options
 
 | Option | What it does |
 | --- | --- |
 | `showTrigger` | Renders the floating [`ConsentDialogTrigger`](/docs/frameworks/nuxt/components/consent-dialog-trigger) from `InthProvider`. |
-| `triggerDefaultPosition`, `triggerSize`, `triggerIcon`, `triggerShowWhen` | Place and style that trigger. |
-| `hideBranding`, `bannerHideBranding`, `dialogHideBranding` | Hide the "Secured by" tag. |
-| `disableAnimation` | Turns off banner and dialog animations. See [motion and animation](/docs/customization/motion). |
-| `consentCategories` | Limits the categories the dialog shows, within the policy's scope. |
+| `triggerDefaultPosition`, `triggerSize`, `triggerIcon`, `triggerShowWhen` | Positions and styles the floating trigger. |
+| `hideBranding`, `bannerHideBranding`, `dialogHideBranding` | Hides the "Secured by" tag. |
+| `disableAnimation` | Disables banner and dialog animations. See [motion and animation](/docs/customization/motion). |
+| `consentCategories` | Limits categories shown in preferences within the policy's scope. |
 
 ## Check the result
 
-Run `nuxt dev` and clear the `inth` cookie and localStorage entry, or use a
-private window, so the banner shows. View the page source to confirm the
-`inth-css-vars` style tag holds your tokens.
+Run `nuxt dev` and open the app in a private window. View page source and
+confirm `<style id="inth-css-vars">` contains your token values.

@@ -1,63 +1,42 @@
 ---
 title: Shopify
-description: Send Inth consent to Shopify's Customer Privacy API from a Hydrogen storefront, so Shopify analytics wait for the visitor's choice and follow each later change.
+description: Sync Inth consent choices to Shopify's Customer Privacy API from a Hydrogen storefront.
 seoTitle: Shopify Hydrogen cookie consent with Inth
-seoDescription: Use your Inth banner as a custom consent banner in Shopify Hydrogen. The Inth Shopify bridge passes each choice to Shopify's Customer Privacy API.
+seoDescription: Use your Inth banner as a custom consent banner in Shopify Hydrogen and sync choices to Shopify's Customer Privacy API.
 group: integrations
 ---
 
-The Inth Shopify bridge sends each consent choice to Shopify's Customer
-Privacy API. Shopify's analytics, and the apps and pixels that read that API,
-then follow your Inth banner instead of Shopify's own. The bridge loads no
-script. Hydrogen's `ShopifyScripts` loads the Customer Privacy API, and the
-bridge's `setup` function holds Hydrogen's analytics events until Shopify has
-the visitor's choice.
+The Inth Shopify bridge forwards each consent choice to Shopify's Customer Privacy API so Shopify analytics, apps, and pixels follow your Inth banner. The bridge loads no scripts. Hydrogen's `ShopifyScripts` loads the Customer Privacy API, and the bridge's `setup` function holds Hydrogen's analytics events until Shopify accepts the visitor's choice.
 
-The [Shopify example](https://github.com/c15t/c15t/tree/v3/examples/shopify-nextjs)
-runs the code on this page in a Next.js app against mock.shop.
+The runnable storefront in `examples/shopify-nextjs`, listed in [examples](/docs/examples#shopify), runs the code on this page against mock.shop.
 
 ## Add the bridge
 
-Set up Inth with the [Next.js quickstart](/docs/frameworks/next/quickstart)
-first, then install the integrations package:
+Complete the [Next.js quickstart](/docs/frameworks/next/quickstart), then install `@inth/integrations`:
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
-Create the bridge once per page and pass its `setup` to `ShopifyScripts` with
-`mode: 'custom-banner'`. A second component feeds the bridge each Inth
-snapshot:
+Create one bridge per page and pass `shopifyPrivacy.setup` to `ShopifyScripts` with `mode: 'custom-banner'`. Mount a second component to feed each Inth snapshot to the bridge:
 
 <include src="../shared/examples/shopify-nextjs/shopify-analytics.mdx" />
 
-Render `ShopifyAnalytics` in the document head, as Hydrogen requires, with
-your shop's details. Render `ShopifyConsentSync` inside `InthProvider`:
+Render `ShopifyAnalytics` in the document head, as Hydrogen requires, and render `ShopifyConsentSync` inside `InthProvider`:
 
 <include src="../shared/examples/shopify-nextjs/shopify-layout.mdx" />
 
 ## Declare the categories
 
-Inth's dialog offers only the categories that something on the page uses.
-Shopify's scripts load through `ShopifyScripts`, not through Inth's `scripts`
-option, so Inth cannot find them. Declare the categories the bridge maps, or
-the dialog shows only Necessary and Shopify receives a denial for everything:
+Inth's preference dialog shows only categories used on the page. Because Shopify loads through `ShopifyScripts` rather than Inth's `scripts` option, declare the mapped categories in `inth.config.ts` and include them in your policy scope. Otherwise the dialog shows only Necessary and Shopify receives denials for every category:
 
 <include src="../shared/examples/shopify-nextjs/shopify-config.mdx" />
 
-The categories must also be in your policy's scope.
-
 ## Serve the Storefront API route
 
-The Customer Privacy API saves each choice by posting to the storefront's own
-`/api/<version>/graphql.json`. Hydrogen's `handleShopifyRoutes` serves that
-route, forwards it to your shop and keeps the cookies Shopify sets. In
-Next.js, call it from `proxy.ts`:
+The Customer Privacy API saves choices by posting to `/api/<version>/graphql.json` on your storefront. Call Hydrogen's `handleShopifyRoutes` from `proxy.ts` to forward that route and preserve Shopify's cookies:
 
 <include src="../shared/examples/shopify-nextjs/shopify-proxy.mdx" />
 
-The consent route needs no handlers. The example adds Hydrogen's cart
-handlers for its cart, and its `lib/shop.ts` holds the store domain and
-market. It has no customer accounts, so it passes a session manager that
-stores nothing. Pass your own if your storefront signs customers in.
+The consent route needs no custom handlers. The example wires Hydrogen's cart handlers, keeps store domain and market config in `lib/shop.ts`, and passes a no-op session manager because it has no customer accounts. Pass your own session manager if your storefront signs customers in.
 
 ## How categories map
 
@@ -68,9 +47,7 @@ stores nothing. Pass your own if your storefront signs customers in.
 | `preferences` | `functionality` |
 | `sale_of_data` | `marketing` |
 
-Each Shopify value is `true` only while its Inth category is allowed in the
-effective permissions, which include policy restrictions. Pass `categories`
-to change the mapping:
+Each Shopify value is `true` only while its mapped Inth category is allowed in `effectivePermissions`, which includes policy restrictions. Override any mapping with `categories`:
 
 {/* example: fragment */}
 
@@ -80,75 +57,39 @@ const shopifyPrivacy = createShopifyCustomerPrivacy({
 });
 ```
 
-`toShopifyConsent(permissions, categories)` returns the same four values for
-your own code.
-
-## When the bridge sends
-
-Shopify records consent only when the visitor makes a choice, so the bridge
-sends nothing until then, or while the policy is pending.
-
-- **Opt-in or IAB policy:** `setup` waits until the visitor answers the
-  banner, including with Reject All, so Hydrogen holds events until then.
-- **Opt-out policy:** `setup` resolves without recording a choice, and
-  Shopify applies its region defaults, including Global Privacy Control,
-  until the visitor saves a choice in Inth. A stale grant is the exception,
-  below.
-
-After the first choice, the bridge sends each change once. When a visitor
-revokes a category, Inth reloads the page and the bridge sends the stored
-choice on load.
-
-While the visitor has no current choice, Shopify may still hold grants from
-an earlier one, for example after that choice expired or a policy change
-asks again. If Inth now denies any of them, the bridge sends `false` for
-those grants only, so Shopify keeps the other signals, including unset ones.
-It counts grants the bridge sent and each `yes` from Shopify's
-`currentVisitorConsent()`, and sends the revocation again if Shopify reports
-a dropped grant again, for example after another tab granted it. If that
-function isn't available, it assumes a choice Inth stored may have granted
-anything. Under an opt-in or IAB policy, Hydrogen keeps holding events until
-the visitor answers. Under opt-out, `setup` resolves once Shopify accepts the
-revocation.
-
-If the Customer Privacy API hasn't loaded yet, the bridge waits for
-Shopify's `consentTrackingApiLoaded` or `shopifyCustomerPrivacyApiLoaded`
-event.
-
-`setup` resolves once Shopify has accepted the visitor's latest choice, and
-Hydrogen then delivers the events that choice allows. If the visitor changes
-their mind while the first request is in flight, `setup` waits for the newer
-one. It never rejects, because Hydrogen stops calling `setup` after a
-rejection. When Shopify rejects a choice, the bridge keeps events blocked and
-sends it again after 1, 2 and 4 seconds, then on the next update. If the
-policy turns pending meanwhile, the bridge drops those retries.
+Call `toShopifyConsent(permissions, categories)` to compute the same four booleans in your own code.
 
 ## Options
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `categories` | The table above | Overrides the Inth category for any of the four Shopify values. |
-| `onSync` | None | Called with what Shopify accepted: the four values for a choice, or the dropped grants for a revocation. |
-| `onError` | Logs to the console | Called when Shopify rejects a choice or `onSync` throws. |
+| `categories` | Default table above | Overrides the Inth category for any of the four Shopify values. |
+| `onSync` | None | Runs after Shopify accepts an update, receiving all four values for a choice or the dropped grants for a revocation. |
+| `onError` | Logs to the console | Runs when Shopify rejects a choice or `onSync` throws. |
 
-The bridge returns `update(snapshot)`, `connect(source)` and `setup()`.
-`connect` follows anything with `getSnapshot` and `subscribe`, such as an Inth
-kernel, and returns a function that stops following it.
+The bridge returns `update(snapshot)`, `connect(source)`, and `setup()`. `connect` subscribes to any source with `getSnapshot` and `subscribe`, such as an Inth kernel, and returns an unsubscribe function.
+
+## Loading and revocation
+
+Shopify records consent only after a visitor acts, so the bridge sends nothing while `policyPending` is `true` or before a choice exists:
+
+- **Opt-in or IAB policy.** `setup` waits until the visitor answers the banner, including Reject All, so Hydrogen holds events until then.
+- **Opt-out policy.** `setup` resolves without recording a choice, and Shopify applies its region defaults, including Global Privacy Control, until the visitor saves a choice in Inth, unless a stale grant must be revoked first.
+
+After the first choice, the bridge sends each change once. When a visitor revokes a category, Inth reloads the page by default and the bridge sends the stored choice on load.
+
+- **Stale grants.** If an earlier choice expired or a policy update prompts again, Shopify may still hold prior grants. When Inth denies any of them, the bridge sends `false` only for those dropped grants so Shopify keeps all other signals, including unset ones. It checks grants it sent plus `yes` values from `currentVisitorConsent()`, and resends the revocation if Shopify reports a dropped grant again from another tab. When `currentVisitorConsent()` is unavailable, it assumes a stored Inth choice may have granted all four values. Opt-in and IAB policies keep holding events until the visitor answers; opt-out resolves `setup` once Shopify accepts the revocation.
+- **API loading and retries.** If the Customer Privacy API is not ready yet, the bridge waits for `consentTrackingApiLoaded` or `shopifyCustomerPrivacyApiLoaded`. `setup` resolves once Shopify accepts the latest choice, waits for newer choices if the visitor changes their mind mid-request, and never rejects because Hydrogen stops calling `setup` after a rejection. On rejection, the bridge keeps events blocked and retries after 1, 2, and 4 seconds, then waits for the next update. Pending policies cancel pending retries.
 
 ## Limits
 
-- Checkout runs on Shopify's domain and doesn't render your storefront code.
-  Shopify reads the stored choice there.
-- Shopify's analytics need a real shop. mock.shop accepts the consent request
-  but sets no consent cookie, so `currentVisitorConsent()` stays empty.
-- The bridge maps categories only; it doesn't translate IAB TCF choices.
+- Checkout runs on Shopify's domain without your storefront code, and Shopify reads the stored choice there.
+- Shopify analytics require a live store. `mock.shop` accepts consent requests without setting a consent cookie, so `currentVisitorConsent()` stays empty.
+- The bridge maps consent categories only and does not translate IAB TCF choices.
 
 ## Verify the bridge
 
-1. In a private window with an opt-in policy, load the page. The network panel
-   shows no `graphql.json` request with `visitorConsent`.
-2. Click Reject All. One request goes out with every value `false`.
-3. Open the dialog, allow Marketing and save. One request goes out with
-   `marketing` and `saleOfData` set to `true`.
-4. On a real shop, run `window.Shopify.customerPrivacy.currentVisitorConsent()`
-   in the console and check it matches your choice.
+1. Load the page in a private window with an opt-in policy and confirm DevTools Network shows no `graphql.json` request containing `visitorConsent`.
+2. Click Reject All and confirm one request fires with every value set to `false`.
+3. Open Privacy settings, allow Marketing, and save. Confirm one request fires with `marketing` and `saleOfData` set to `true`.
+4. On a live store, run `window.Shopify.customerPrivacy.currentVisitorConsent()` in the console and confirm it matches your saved choice.

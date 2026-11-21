@@ -1,31 +1,26 @@
 ---
 title: Compose your own banner
-description: Build a React consent banner from the ConsentBanner parts in @inth/react, with your own markup and buttons, while the policy still decides which actions appear.
+description: Build a custom React consent banner from ConsentBanner compound parts while keeping policy-driven actions.
 group: frameworks
 ---
+
+Build a React consent banner with your own markup and design system buttons using `ConsentBanner` compound parts from `@inth/react`.
 
 ## When to compose
 
 <import src="../../shared/react/compose.mdx#when-to-compose" />
 
-For a banner that shares nothing with the stock markup, use the
-[headless hooks](/docs/frameworks/react/headless). For one changed class,
-token or prop, see [customize](/docs/frameworks/react/customize).
+For a banner sharing no markup with the built-in UI, use [headless hooks](/docs/frameworks/react/headless). To change a single class, token, or prop, see [customize](/docs/frameworks/react/customize).
 
 ## Compose the banner
 
-`CookieBanner` keeps the stock card, title and copy, and renders each action
-the policy asks for as your design system's button. `BrandButton` stands in
-for that button:
+`CookieBanner` keeps the built-in card, title, and copy while rendering each policy action with your own `BrandButton`:
 
 <include src="../../shared/examples/storybook-react/compose-button.mdx" />
 
 <include src="../../shared/examples/storybook-react/compose-banner.mdx" />
 
-The parts read the nearest `InthProvider`. In the `src/consent.tsx` file
-from the [quickstart](/docs/frameworks/react/quickstart), import
-`CookieBanner` from `./cookie-banner` and render it in place of
-`ConsentBanner`, next to `ConsentDialog`:
+All parts read from the nearest `InthProvider`. In `src/consent.tsx` from the [quickstart](/docs/frameworks/react/quickstart), import `CookieBanner` and render it instead of `ConsentBanner`, next to `ConsentDialog`:
 
 {/* example: fragment */}
 
@@ -44,23 +39,18 @@ from the [quickstart](/docs/frameworks/react/quickstart), import
 
 <import src="../../shared/react/compose.mdx#banner-parts" />
 
-[ConsentBanner](/docs/frameworks/react/components/consent-banner) lists the
-stock banner's props, variants and data attributes.
+[ConsentBanner](/docs/frameworks/react/components/consent-banner) lists the built-in banner props, variants, and data attributes.
 
 <import src="../../shared/react/compose.mdx#as-child" />
 
 <import src="../../shared/react/compose.mdx#dialog" />
 
-The parts come from `@inth/react`, like `ConsentDialog` and `ConsentWidget`.
-[ConsentDialog](/docs/frameworks/react/components/consent-dialog) and
-[ConsentWidget](/docs/frameworks/react/components/consent-widget) list every
-part and its slots.
+Import the dialog and widget parts from `@inth/react`. [ConsentDialog](/docs/frameworks/react/components/consent-dialog) and [ConsentWidget](/docs/frameworks/react/components/consent-widget) document every part and slot.
 
 <import src="../../shared/react/compose.mdx#accessibility" />
 
 <import src="../../shared/react/compose.mdx#theming" />
 
-[Customize](/docs/frameworks/react/customize) shows where to set tokens,
-slots and `consentActions` in a React app.
+[Customize](/docs/frameworks/react/customize) shows where to configure tokens, slots, and `consentActions` in React.
 
 <import src="../../shared/react/compose.mdx#verify" />

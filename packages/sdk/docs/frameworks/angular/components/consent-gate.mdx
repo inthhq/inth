@@ -1,41 +1,40 @@
 ---
 title: ConsentGate
-description: Keep an embed or widget out of an Angular page until its consent category, and optionally one vendor, is allowed, with inth-consent-gate and its content and placeholder templates.
+description: Hold Angular embeds or widgets until their consent category and optional vendor are allowed with inth-consent-gate.
 group: frameworks
 ---
 
+Render third-party embeds or widgets only while their consent category is
+allowed, and show a placeholder otherwise, with `<inth-consent-gate>`.
+
 ## Gate an embed
 
-`<inth-consent-gate>` renders its content only while one consent category is
-allowed, and a placeholder otherwise. Import `ConsentGate` and the
-template directives you use:
+Import `ConsentGate` and the template directives you use:
 
 <include src="../../../shared/examples/angular/youtube-embed.mdx" />
 
-The permission is `ConsentManager.effectivePermissions()[category]`, the value
-`has(category)` reads. It can be granted before the visitor chooses, under an
-opt-out policy, and Global Privacy Control can override a recorded grant.
-When the visitor withdraws the category, the content is destroyed without a
-reload.
+The gate reads `ConsentManager.effectivePermissions()[category]` (same as
+`has(category)`). Under an opt-out policy that can be `true` before any
+choice, and Global Privacy Control can override a grant. Withdrawing the
+category destroys the gated content without a page reload.
 
 ## Inputs and templates
 
 | Input or template | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `category` | `AllConsentNames` | required | The category the content needs, such as `'measurement'` or `'marketing'`. |
-| `vendor` | `string` | none | A vendor id the content also needs. The content waits for both the category and `isVendorAllowed(vendor)`. |
-| `noStyle` | `boolean` | provider's `noStyle` | Drops Inth's classes from the built-in placeholder. |
-| `ng-template[inthConsentGateContent]` | template | none | The gated content, created only while allowed. |
-| `ng-template[inthConsentGatePlaceholder]` | template | built-in placeholder | Replaces the placeholder while the category is denied. |
+| `category` | `AllConsentNames` | required | Required category, such as `'measurement'` or `'marketing'`. |
+| `vendor` | `string` | none | Optional vendor ID; waits for both category and `isVendorAllowed(vendor)`. |
+| `noStyle` | `boolean` | provider `noStyle` | Drops `inth` classes from the built-in placeholder. |
+| `ng-template[inthConsentGateContent]` | template | none | Gated content created only while allowed. |
+| `ng-template[inthConsentGatePlaceholder]` | template | built-in placeholder | Custom placeholder shown while denied. |
 
-Without an `inthConsentGateContent` template, the gate projects its children.
-Angular creates projected nodes with the parent view even while the gate
-keeps them out of the document, so an `<iframe>` loads nothing, but a
-component inside still runs its constructor. Use the template for anything
+Without `inthConsentGateContent`, projected children instantiate with the
+parent view even while hidden (an `<iframe>` does not load, but child
+components still construct). Always use the content template for components
 with side effects.
 
-The placeholder template's context has `$implicit` and `category`, the gate's
-category, and `openDialog`, a function that opens the preference dialog:
+The placeholder template receives `$implicit` and `category`, plus
+`openDialog` to open the preference dialog:
 
 {/* example: fragment */}
 
@@ -48,42 +47,32 @@ category, and `openDialog`, a function that opens the preference dialog:
 
 ## Server rendering
 
-The host element stays in the page in every state. Until the gate has
-rendered in the browser it is empty, so the server HTML holds neither the
-content nor the placeholder, and the browser fills it one frame after the
-first render. For gated content in the server HTML, use
+The host element renders empty on the server and fills one frame after the
+first browser render. For gated content in the initial server HTML, use
 [`*inthIfConsent`](../embeds#render-content-only-while-consent-holds).
 
 ## The built-in placeholder
 
-The built-in placeholder shows the `consentGate.title` copy and a button
-labelled with `consentGate.actionButton`, with the category's translated
-title in place of `{category}`. The button opens the preference dialog; it
-does not grant the category, so render `<inth-consent-dialog>` too. Under a
-policy that blocks the category, the button is left out, since preferences
-cannot allow it.
+The built-in placeholder displays `consentGate.title` and a button labelled
+with `consentGate.actionButton` (replacing `{category}` with the translated
+category name). Clicking the button opens `<inth-consent-dialog>`, so keep
+the dialog rendered. When a policy blocks the category completely, the button
+is omitted.
 
-`<inth-consent-gate>` does not add its category to the preference dialog.
-Keep the category in your policy's scope, and in `consentCategories` if you
-set that option.
+`<inth-consent-gate>` does not add its category to the preference dialog; keep
+the category in your policy scope and `consentCategories`.
 
 ## Accessibility
 
-The built-in placeholder is plain text and a `<button>`, so it works without
-the embed. Give the iframe a descriptive `title`, and give visitors who
-decline another way to the content, such as a link to the video's page or a
-store address next to the map.
+Provide a descriptive `title` on gated iframes and offer an alternative link
+or text for visitors who decline.
 
 ## Style the placeholder
 
-Set `class` on `<inth-consent-gate>` to size the wrapper to the embed, for
-example an `aspect-ratio` for a video, so the page does not shift when the
-embed replaces the placeholder.
+Apply sizing classes such as `aspect-ratio` directly on `<inth-consent-gate>`
+so replacing the placeholder causes no layout shift.
 
-To restyle the built-in placeholder, set the `consentGate` slot for the card,
-`consentGateTitle` and `consentGateButton` in `theme.slots`.
-`consentGateButton` applies on top of `buttonPrimary`.
-
-The built-in placeholder carries `data-testid="consent-gate-placeholder"`,
-its title `data-testid="consent-gate-title"` and its button
-`data-testid="consent-gate-button"`.
+Style the built-in placeholder via `consentGate`, `consentGateTitle` and
+`consentGateButton` in `theme.slots` (`consentGateButton` layers over
+`buttonPrimary`). Elements carry `data-testid="consent-gate-placeholder"`,
+`data-testid="consent-gate-title"` and `data-testid="consent-gate-button"`.

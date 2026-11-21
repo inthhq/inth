@@ -1,20 +1,22 @@
 ---
 title: Composables
-description: Every Inth composable for a Vue app, grouped by task, with the difference between a permission and a recorded choice.
+description: Read consent state, record visitor choices, and build custom consent UI in Vue with Inth composables.
 group: frameworks
 ---
 
+Import Inth's Vue composables from `@inth/vue/vue-plugin` to check
+permissions, record choices, or build custom consent interfaces.
+
 ## Import composables
 
-Import every composable from `@inth/vue/vue-plugin`, the same entry point as
-the plugin. This component reads the visitor's permission and recorded
-choice, and opens preferences:
+This component reads the visitor's permission and recorded choice and opens
+preferences:
 
 <include src="../../shared/examples/vue/consent-status.mdx" />
 
-Use `v-if`, not `v-show`, when optional content loads anything from a third
-party. For iframes use [`ConsentGate`](/docs/frameworks/vue/components/consent-gate),
-and for vendor scripts use the plugin's `scripts` option. See
+Use `v-if`, not `v-show`, when gated content loads third-party resources. For
+iframes use [`ConsentGate`](/docs/frameworks/vue/components/consent-gate),
+and for vendor scripts use `scripts` in `inth`. See
 [scripts](/docs/frameworks/vue/scripts).
 
 <import src="../../shared/vue/composables.mdx#rules" />
@@ -25,16 +27,16 @@ and for vendor scripts use the plugin's `scripts` option. See
 
 ## Before the policy resolves
 
-The plugin starts with every optional category denied and no recorded choice
-read. The composables update once the browser has read the stored choice and
-the policy arrives. Until then `useConsentSnapshot().value.policyPending` is
-`true` and `usePolicyResolution()` reports a status other than `'matched'`,
-so you can hold back UI that depends on the answer.
+`inth` starts with every optional category denied and no recorded choice
+loaded. Composables update once the browser reads stored choices and resolves
+the policy. Until then, `useConsentSnapshot().value.policyPending` is `true`
+and `usePolicyResolution().value.status` is not `'matched'`, so you can wait
+before showing state-dependent UI.
 
 <import src="../../shared/vue/composables.mdx#act" />
 
 The `language` prop on [`InthProvider`](/docs/frameworks/vue/components/inth-provider#props)
-does the same from a template binding. See
+switches language from a template binding. See
 [translations](/docs/frameworks/vue/translations).
 
 <import src="../../shared/vue/composables.mdx#headless" />
@@ -46,4 +48,4 @@ preference form from these composables.
 
 <import src="../../shared/vue/composables.mdx#advanced" />
 
-See [callbacks](/docs/frameworks/vue/callbacks) for the `callbacks` option.
+See [callbacks](/docs/frameworks/vue/callbacks) for app-wide event callbacks.

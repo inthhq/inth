@@ -1,45 +1,32 @@
 ---
 title: IAB TCF
-description: Show the IAB TCF banner and dialog in a TanStack Start app for visitors whose policy uses the IAB model, with @inth/react/iab inside InthProvider.
+description: Render the IAB TCF banner and dialog in TanStack Start inside InthProvider using @inth/react/iab.
 group: frameworks
 ---
 
+Add IAB Transparency and Consent Framework support to a TanStack Start app inside `InthProvider`.
+
 ## Before you start
 
-Use the IAB integration when your site needs the Transparency and Consent
-Framework. Enable IAB in your Inth project and give a policy the `iab` model.
-You also need a CMP ID, which IAB Europe assigns when a company registers as a
-CMP at [register.consensu.org/CMP](https://register.consensu.org/CMP). Every TC
-String names the CMP that wrote it, so do not use an ID you did not register.
+Enable IAB in your Inth project, assign the `iab` model to the relevant policy, and obtain a registered CMP ID from IAB Europe at [register.consensu.org/CMP](https://register.consensu.org/CMP). Every TC String names the CMP that wrote it, so never use an unregistered ID in production.
 
-The IAB components ship with `@inth/tanstack-start`; no extra install is needed.
-With the quickstart's root loader, the server resolves IAB visitors like any
-other visitor, and the policy manifest carries the vendor list reference.
+The IAB components ship with `@inth/tanstack-start` without extra installs. With the quickstart root loader, the server resolves IAB visitors alongside standard visitors using the policy manifest.
 
 ## Render the IAB banner and dialog
 
-The stock `ConsentBanner` and `ConsentDialog` stay closed under the `iab`
-model. Render the IAB components inside `InthProvider`, next to them:
+The built-in `ConsentBanner` and `ConsentDialog` stay closed under the `iab` model. Mount the IAB components inside `InthProvider` next to them:
 
 <include src="../../shared/examples/tanstack-start/iab-consent.mdx" />
 
-Render `<IABConsent cmpId={YOUR_CMP_ID} />` in the root route, next to
-`ConsentBanner`. Checking `useModel()` renders the IAB components only for
-visitors whose policy uses the IAB model.
+Render `<IABConsent cmpId={YOUR_CMP_ID} />` in `src/routes/__root.tsx` next to `ConsentBanner`. Checking `useModel()` mounts IAB components only for visitors under an `iab` policy.
 
-The IAB banner and dialog render their own styles by default. Leave
-`InthProvider`'s `styles` option enabled. The banner's styles render in the
-server HTML, and the dialog loads its rules when opened.
+The IAB banner and dialog render their own `<style>` elements by default, putting banner styles into server HTML and loading dialog styles on open.
 
 <import src="../../shared/react/iab/overview.mdx#configure" />
 
 ## Load an external stylesheet
 
-With Tailwind CSS 3, or when you want to put Inth in a named cascade layer,
-link the base stylesheet and then the IAB stylesheet in the root route's
-`head()`. The IAB stylesheet holds the IAB rules and uses the base
-stylesheet's tokens. Set `styles: false` in `InthProvider`'s `options` so the
-components use those stylesheets:
+On Tailwind CSS 3, or when placing Inth in a named cascade layer, link the base stylesheet followed by the IAB stylesheet in `head()` and set `options={{ styles: false }}` on `InthProvider`:
 
 {/* example: fragment */}
 
@@ -55,15 +42,11 @@ import iabCss from '@inth/tanstack-start/iab/styles.css?url';
 options={{ styles: false }}
 ```
 
-Tailwind CSS 3 also needs the
-[PostCSS plugin](/docs/customization/tailwind#set-up-tailwind-css-3).
+Tailwind CSS 3 also requires the [PostCSS plugin](/docs/customization/tailwind#set-up-tailwind-css-3).
 
 ## Restrict how vendors use a purpose
 
-Publisher restrictions override a vendor's declared use of one purpose. Pass
-them to `IABProvider` as `publisherRestrictions`. The vendor IDs below are
-placeholders; use vendors from your list whose declarations allow each
-restriction:
+Publisher restrictions override a vendor's declared legal basis for a purpose. Pass them to `IABProvider` via `publisherRestrictions`. Replace the placeholder vendor IDs below with vendors from your Global Vendor List whose declarations permit each restriction:
 
 {/* example: fragment */}
 

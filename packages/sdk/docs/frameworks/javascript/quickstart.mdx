@@ -1,30 +1,53 @@
 ---
 title: Quickstart
-description: Add the stock Inth banner, preferences and script gating to a JavaScript app built with Vite or another bundler, with no UI framework, using @inth/sdk.
+description: Add a cookie consent banner and script gating to a bundled JavaScript app with @inth/sdk.
 group: frameworks
 ---
 
-## Connect Inth
+Add a consent banner, preference dialog and script gating to a Vite or
+bundled JavaScript app. Your build bundles the policy manifest, and analytics
+wait until consent allows them.
 
-[Create an Inth project](https://inth.com/dashboard/sign-up?framework=javascript), set its policy rules, add your
-app's origin to its trusted origins, and copy the project's backend URL.
+<Prompt title="Add Inth consent to this JavaScript app" description="Paste into Claude Code, Codex, Cursor or another coding agent at the root of your app.">
+  Add Inth consent management to this JavaScript app.
 
-This guide uses `@inth/sdk` as an ES module in a Vite app, with your
-project's policy bundled at build time. `init()` starts the consent runtime
-and mounts the stock banner and preference dialog. For your own UI, use the
-[headless runtime](/docs/frameworks/javascript/headless) instead. Sites
-without a build step load the same package from a script tag;
-[choose your setup](/docs/concepts/choose-your-setup) points to that guide.
+  1. Check that the app uses Vite or another JS bundler without a UI framework adapter (React, Vue, Svelte, Astro, Angular). If it uses a UI framework, stop and tell me.
+  2. Install `@inth/sdk` and `@inth/integrations`. Read `node_modules/@inth/sdk/AGENTS.md`, then follow the JavaScript quickstart it links to, in order. Do not guess the API from memory.
+  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my Inth project URL, using `https://example-inth.inth.app` only for a demo. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
+  4. Add `consentManifest()` from `@inth/sdk/build` to `plugins` in `vite.config.ts`. Add nothing to `.gitignore`.
+  5. In the browser entry file (such as `src/main.ts`), call `init({ mode: manifest(), scripts })` from `@inth/sdk`, moving every analytics and marketing script into `scripts` using `@inth/integrations` helpers. Remove duplicate loaders from `index.html`.
+  6. Gate third-party iframes with `data-src` and `data-category`, and add `<a href="#inth-preferences">Privacy settings</a>` in the footer.
+  7. Run a production build and preview it in a private browser window. Confirm no vendor request fires before consent, rejecting survives a reload, and granting analytics from Privacy settings loads the vendor.
 
-Bundling the policy at build time is the recommended production setup.
-Rebuild after changing policies, translations or vendors.
+  Then list the files you changed, any script still outside consent, and how you checked the requests.
+</Prompt>
 
-## Install
+## Prerequisites
+
+- A JavaScript app built with Vite or another bundler. For a UI framework or
+  plain HTML site, see the [framework list](/docs/frameworks).
+- An [Inth project](https://inth.com/dashboard/sign-up?framework=javascript)
+  with your app's origin in trusted origins.
+
+## Install the SDK
 
 <CommandTabs command="@inth/sdk @inth/integrations" mode="install" />
 
-`@inth/sdk` also supplies the Vite plugin at `@inth/sdk/build`, and
-`@inth/integrations` the PostHog helper used below.
+`@inth/sdk` ships the Vite plugin at `@inth/sdk/build` and mounts styles in a
+shadow root, so no stylesheet import is needed.
+
+## Set the project URL
+
+Add your public Inth project URL (or `https://example-inth.inth.app` for a
+demo) to `.env` and your host's build settings:
+
+```sh title=".env"
+VITE_INTH_PROJECT_URL=https://example-inth.inth.app
+```
+
+Vite reads this at build time, so rebuild after changes. `VITE_INTH_PROJECT_URL`
+wins over any legacy `VITE_C15T_BACKEND_URL`, which is read as a fallback if
+`VITE_INTH_PROJECT_URL` is unset.
 
 ## Bundle your policy
 
@@ -32,119 +55,63 @@ Add `consentManifest` to `vite.config.ts`:
 
 <include src="../../shared/examples/javascript/vite-config.mdx" />
 
-The plugin reads `VITE_INTH_PROJECT_URL`. Set it to your project's backend URL,
-including any path prefix, in `.env` or wherever you build:
-
-```sh title=".env"
-VITE_INTH_PROJECT_URL=https://your-project.inth.app
-```
-
-The c15t name `VITE_C15T_BACKEND_URL` still works as a fallback. When both are
-set, `VITE_INTH_PROJECT_URL` wins.
-
-`consentManifest` downloads your project's public policy from `/manifest`
-during `vite build`, or in `vite dev` when the app first loads it, and serves
-it to your app as `snapshot`
-from `@inth/sdk/generated`. No file is written into your project.
-
-<include src="../../shared/build-time-manifest-notes.mdx" />
-
-<include src="../../shared/vite-build-manifest.mdx" />
+`vite build` and `vite dev` fetch `/v1/consent/manifest` and expose `snapshot` from
+`@inth/sdk/generated` without writing files into your repo. Rebuild after
+policy edits, or set `INTH_ON_BUILD_ERROR=fail` to stop builds on fetch
+errors; see
+[what happens when the download fails](/docs/concepts/modes#what-happens-when-the-download-fails).
 
 ## Start Inth
 
-Call `init()` once, in your browser entry point:
+Call `init()` once in your browser entry point:
 
 <include src="../../shared/examples/javascript/init.mdx" />
 
-`manifest()` resolves the policy from the bundled snapshot in the browser,
-with no `/manifest` request. It reads the snapshot and the backend URL from
-what `consentManifest` downloaded. Consent choices go to that backend, and so
-does an `/init` request when the policy depends on the visitor's country or
-region and `overrides` does not supply it. That request returns the backend's
-current policy, which can be newer than the snapshot. Vite reads
-`VITE_INTH_PROJECT_URL` at build time, so set it before you build, not when
-you serve the files.
+`manifest()` resolves consent from the bundled snapshot and posts saves to
+Inth (pass `hosted()` instead to fetch `/v1/consent/init` on each visit). Replace
+`phc_your_project_key` with your key (add `region: 'us'` for US cloud), keep
+`cookieless_mode: 'never'`, and remove duplicate PostHog tags from
+`index.html`. Withdrawing an allowed category reloads the page; see
+[scripts](/docs/frameworks/javascript/scripts).
 
-To apply policy edits without rebuilding, pass `hosted()` from
-`@inth/sdk` as the mode instead. The browser then requests the policy from
-`/init` on every page load. Your bundle keeps only the mode you import.
+## Gate embeds and add a privacy settings link
 
-PostHog waits for measurement permission with `loadMode: 'after-consent'`, and
-`cookieless_mode: 'never'` turns off its cookieless capture. Replace
-`phc_your_project_key` with your PostHog project key. The PostHog helper sends
-events to PostHog's EU cloud; for a US project, add `region: 'us'`.
-
-Include the measurement category in your Inth policy. Remove any other loader
-for PostHog, such as a snippet in `index.html`, so it loads once and only
-through Inth. Add other vendors to the same list, each with the category it
-needs; the [integration guides](/docs/integrations/overview) give the helper
-for each one.
-
-`init()` returns the client. It reads stored choices, resolves the visitor's
-policy, shows the banner when the policy needs one, and loads each
-script once its category is allowed. The banner renders in a shadow root with
-its own styles, so you do not import a stylesheet. The client lasts for the
-page; call `consent.dispose()` only if your app removes consent entirely.
-
-When a visitor withdraws a permission they had given, the client saves the
-choice and reloads the page, because code that already ran cannot be unloaded.
-[Scripts](/docs/frameworks/javascript/scripts) explains how to change that.
-
-## Gate embeds and add a privacy settings button
-
-Put the embed's URL in `data-src` and name its category in `data-category`.
-The client sets `src` only while that category is allowed:
+Move iframe `src` to `data-src` with `data-category`:
 
 <include src="../../shared/examples/javascript/embed.mdx" />
 
-Visitors need a way to change their choice after the banner closes. The
-client opens the preference dialog from any link to `#inth-preferences`:
+Add a `#inth-preferences` footer link so visitors can reopen preferences:
 
 <include src="../../shared/examples/javascript/preferences-link.mdx" />
 
-A button with `data-inth-action="customize"` opens it too, without code.
-
-## Change the look
-
-Pass theme tokens in `ui.theme`, next to the options your `init()` call
-already has. This example turns the buttons purple and rounds the cards:
+Pass `ui.theme` to match your brand colors and radius (see
+[customize](/docs/frameworks/javascript/customize)):
 
 <include src="../../shared/examples/javascript/theme.mdx" />
 
-`theme` takes the same tokens as every Inth package; see
-[theme tokens](/docs/customization/tokens). `presentation.prompt` changes the
-banner's shape and position, `ui.css` adds CSS inside the shadow root, and
-`i18n` changes the copy. [Customize](/docs/frameworks/javascript/customize)
-covers each option.
-
 ## Check it works
 
-Run the app, open it in a private window, and open the browser's developer
-tools on the Network tab.
+Build and preview in a private window with DevTools Network open:
 
-1. Before you choose, filter for `posthog`. There are no requests, and the
-   YouTube iframe has no `src`.
-2. Click **Reject All** and reload. The banner stays closed and the PostHog
-   requests stay absent.
-3. Click **Privacy settings**, turn on **Analytics** (the `measurement` category) and save. PostHog and
-   the YouTube player load.
-4. Open **Privacy settings** again and turn **Analytics** off. The page reloads,
-   and PostHog and YouTube do not load again.
+1. Under an opt-in policy, the banner appears, no `posthog` requests fire,
+   and the YouTube iframe has no `src`.
+2. Click **Reject All** and reload. The banner stays closed and PostHog does
+   not load.
+3. Click **Privacy settings**, turn on **Analytics** (`measurement`) and
+   save. PostHog and YouTube load.
+4. Turn **Analytics** off and save. The page reloads and neither loads again.
 
-If no banner appears, see [why is there no banner](/docs/guides/troubleshooting#why-is-there-no-banner).
-Run the full [verification checklist](/docs/guides/verify-consent) before you
-ship.
+If no banner appears, check
+[why is there no banner](/docs/guides/troubleshooting#why-is-there-no-banner)
+and [verify consent](/docs/guides/verify-consent).
 
 ## Next steps
 
-- Render your own banner with the [headless runtime](/docs/frameworks/javascript/headless).
-- Inspect consent with [DevTools](/docs/frameworks/javascript/dev-tools).
-- Read consent from your code. `consent.has('measurement')` answers whether a
-  category is allowed now, `consent.on('consent', listener)` reports changes,
-  and `consent.save({ measurement: true })` records a choice. The
-  [@inth/sdk API](/docs/frameworks/javascript/api/browser) lists every
-  method, and [options](/docs/frameworks/javascript/api/browser-options) every
-  option.
-- Run code on consent events with [callbacks](/docs/frameworks/javascript/callbacks).
-- Add languages with [translations](/docs/frameworks/javascript/translations).
+- [Headless runtime](/docs/frameworks/javascript/headless): build custom UI
+  or connect Solid and other frameworks.
+- [@inth/sdk API](/docs/frameworks/javascript/api/browser) and
+  [options](/docs/frameworks/javascript/api/browser-options): full method and
+  option reference.
+- [Callbacks](/docs/frameworks/javascript/callbacks),
+  [translations](/docs/frameworks/javascript/translations) and
+  [DevTools](/docs/frameworks/javascript/dev-tools).

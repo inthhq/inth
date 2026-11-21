@@ -1,54 +1,31 @@
-Account identity, consent and operating-system tracking permission have
-different lifetimes. Use the native engine's commands to change consent so
-its stored decision, platform signals and delivery queue stay consistent.
+Account identity, consent state, and OS tracking permission have separate lifetimes. Always update consent through the native engine so stored decisions, platform signals, and the delivery queue stay in sync.
 
 ## Link an app account
 
-Call `identify(externalId)` after your app knows the signed-in account, and
-`logout()` when it signs out. Await the operation and recheck current native
-gates before resuming optional collection. Keep any backend identity
-verification requirements configured separately.
+Call `identify(externalId)` once the user signs in and `logout()` when they sign out. Await each call and recheck native gates before resuming optional collection.
 
-The Inth subject identifies the consent record. An external ID links that
-subject to an app account. Logout detaches the account; it does not create a
-new subject or delete the backend audit trail. Category receipts can remain
-with the subject. IAB identity transitions retire existing authority and
-retain the withdrawal obligations needed for it.
+The Inth subject identifies the consent record; an external ID links that subject to an app account. Calling `logout()` detaches the account without creating a new subject or deleting backend audit records. Category receipts stay with the subject, while IAB identity transitions retire existing authority and keep required withdrawal obligations.
 
 ## Withdraw optional consent
 
-Use `saveConsents('none')` in React Native, `.necessary` in Swift or
-`CommitIntent.Necessary` in Kotlin for the visitor's explicit refusal or
-withdrawal. Check the result before showing a saved confirmation. React Native
-uses `CommitResult.ok`; Swift uses the commit status, and Kotlin exposes its
-native commit result. Stock presenters keep drafts and retry controls open
-when storage refuses a save.
+Record an explicit refusal or withdrawal with `saveConsents('none')` in React Native, `.necessary` in Swift, or `CommitIntent.Necessary` in Kotlin. Check the commit result (`CommitResult.ok` in React Native, commit status in Swift, or native commit result in Kotlin) before confirming the save. Stock presenters keep drafts open if storage refuses a write.
 
-Withdrawal takes effect locally even while offline. The engine retains its
-delivery obligation. Do not delete app storage, clear the queue or rewrite
-IAB keys instead of recording the withdrawal.
+Withdrawal applies locally immediately, even offline, and queues delivery to Inth. Never delete app storage, clear the queue, or edit IAB keys directly instead of recording a withdrawal.
 
 ## Reset to a new prompt
 
-Reset invalidates local consent so policy resolves again and the app can ask
-for a new choice. It retains the subject and configuration. It does not mean
-reject-all, account erasure or deletion of remote records.
+Reset clears local consent authority so policy resolves again and the app can re-prompt. It preserves the subject and configuration and does not mean reject-all, account erasure, or backend deletion.
 
-| Integration | Consent reset |
+| Platform | Reset command |
 | --- | --- |
 | React Native | `useConsentActions().reset()` |
 | Swift | `reset()` on the installed `ConsentCore` |
-| Kotlin | `reset()` on the installed kernel, available as `Inth.current` |
+| Kotlin | `reset()` on the installed kernel (`Inth.current`) |
 
-Kotlin's static `Inth.uninstall()` is teardown of the process singleton. It leaves
-persisted consent intact and is not the consent-reset command.
+Kotlin's `Inth.uninstall()` only tears down the process singleton and leaves stored consent untouched.
 
-The engine retains required IAB withdrawal obligations when resetting existing
-authority. A request already sent to the network cannot be recalled. If
-storage refuses the reset, report the error and keep optional collection off.
+Reset preserves pending IAB withdrawal obligations. If storage refuses a reset, surface the error and keep optional collection off.
 
 ## Handle deletion separately
 
-Backend deletion and account erasure belong in your app and server workflow.
-Reset does not perform them. On Apple platforms, Keychain records can survive
-app removal, so uninstalling is not a reliable reset procedure.
+Implement account deletion and backend erasure in your app and server workflows; `reset()` does not delete remote records. On iOS, Keychain items can persist after uninstalling the app, so uninstalling is not a reliable reset.

@@ -12,6 +12,7 @@ const frameworkEntryPoints = [
 	['frameworks/astro/quickstart.md', 'Astro quickstart'],
 	['frameworks/svelte/quickstart.md', 'Svelte quickstart'],
 	['frameworks/sveltekit/quickstart.md', 'SvelteKit quickstart'],
+	['frameworks/angular/quickstart.md', 'Angular quickstart'],
 	['frameworks/html/quickstart.md', 'HTML quickstart'],
 	['frameworks/javascript/quickstart.md', 'JavaScript quickstart'],
 	['frameworks/react-native/quickstart.md', 'React Native quickstart'],
@@ -35,14 +36,14 @@ export const withPackageSetupLinks = function withPackageSetupLinks(
 			'## Using these docs\n\nChoose the quickstart for your app: React Native, Expo, SwiftUI, UIKit or Android. Each setup covers installation, consent screens, SDK gates and a privacy-settings entry. Read Mobile availability for private prerelease access and release scope.\n'
 		);
 	}
-	const candidates = bundledFiles.has('frameworks/index.md')
+	const candidates: readonly (readonly [string, string])[] = bundledFiles.has(
+		'frameworks/index.md'
+	)
 		? [['frameworks/index.md', 'Choose your framework']]
 		: frameworkEntryPoints;
-	const setup = [
-		...candidates,
-		['self-host/quickstart.md', 'Backend quickstart'],
-		['cli/quickstart.md', 'CLI quickstart'],
-	].filter(([file]) => file && bundledFiles.has(file));
+	const setup: (readonly [string, string])[] = candidates.filter(
+		([file]) => file && bundledFiles.has(file)
+	);
 	if (setup.length === 0 && bundledFiles.has('integrations/overview.md')) {
 		setup.push(['integrations/overview.md', 'Connect your integrations']);
 	}

@@ -1,24 +1,21 @@
 ---
 title: Reddit Pixel
-description: Load the Reddit Pixel only after marketing consent with the Inth redditPixel helper, guard rdt conversion calls, and check it in DevTools.
+description: Load the Reddit Pixel after marketing consent and disable first-party cookies on withdrawal with Inth.
 seoTitle: Reddit Pixel cookie consent with Inth
-seoDescription: Load the Reddit Pixel only with marketing consent. The Inth redditPixel helper turns off first-party cookies when a visitor withdraws consent.
+seoDescription: Gate the Reddit Pixel on marketing consent with Inth, toggle first-party cookies on revocation, and guard rdt conversion calls.
 icon: reddit
 group: integrations
 ---
 
-The Inth `redditPixel` helper keeps the Reddit Pixel off the page until
-`marketing` has consent. Until then, Inth does not define `rdt`. The helper
-sends no consent signal to Reddit. If the visitor withdraws consent, the helper
-calls `rdt('disableFirstPartyCookies')`. The pixel stays on the page. By
-default, Inth also reloads the page. If `marketing` has consent again, the
-helper calls `rdt('enableFirstPartyCookies')`.
+The `redditPixel` helper keeps the Reddit Pixel off the page and `window.rdt` undefined until `marketing` is granted. On grant, it queues `init` and `PageVisit`, then loads `pixel.js`. On withdrawal, it calls `rdt('disableFirstPartyCookies')` and Inth reloads the page by default.
 
 ## Configure the Reddit Pixel
 
-Copy your Reddit Pixel ID. The helper passes it to `rdt('init', ...)`.
+Copy your Reddit Pixel ID; the helper passes it to `rdt('init', ...)`.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { redditPixel } from '@inth/integrations/reddit-pixel';
@@ -32,30 +29,21 @@ export const scripts = [redditPixel({ pixelId: 't2_YOUR_PIXEL_ID' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `pixelId` | Required | Pixel ID passed to `rdt('init', ...)`. The helper trims it. Empty or whitespace-only values log an error and the script does not load. |
+| `pixelId` | Required | Pixel ID passed to `rdt('init', ...)`, trimmed. Blank values log an error and skip loading. |
 | `trackPageVisit` | `true` | Queues `rdt('track', 'PageVisit')` after `init`. Set `false` to send page visits yourself. |
-| `initOptions` | None | Object passed as the third argument to `rdt('init', ...)`. It accepts Reddit's matching fields, such as `email` and `externalId`, `aam` for automatic advanced matching, `optOut`, and the Limited Data Use fields `dpm`, `dpcc` and `dprc`. |
-| `disableFirstPartyCookies` | None | When set, overrides `initOptions.disableFirstPartyCookies`. |
-| `scriptUrl` | `https://www.redditstatic.com/ads/pixel.js` | Loader URL override. A blank value falls back to the default. |
+| `initOptions` | None | Third argument to `rdt('init', ...)`. Accepts matching fields such as `email` and `externalId`, `aam` for automatic advanced matching, `optOut`, and Limited Data Use fields `dpm`, `dpcc`, and `dprc`. |
+| `disableFirstPartyCookies` | None | Overrides `initOptions.disableFirstPartyCookies` when set. |
+| `scriptUrl` | `https://www.redditstatic.com/ads/pixel.js` | Loader URL override. Blank values use the default. |
 
 ## Loading and revocation
 
-`redditPixel` uses the `marketing` category. Before marketing is allowed, Inth
-defines no `rdt` function and loads nothing from Reddit. When marketing becomes
-allowed, the helper queues `init` and `PageVisit`, then loads `pixel.js`.
+`redditPixel` uses the `marketing` category. Before grant, Inth defines no `rdt` global and loads nothing from Reddit. On grant, it queues `init` and `PageVisit`, then loads `pixel.js`.
 
-On revocation the helper keeps the pixel and calls
-`rdt('disableFirstPartyCookies')`. If the visitor allows marketing again before
-the page reloads, it calls `rdt('enableFirstPartyCookies')`. Disabling cookies
-does not stop the pixel from sending events, so the reload and your own guard
-are what stop tracking.
+On revocation, the helper keeps the pixel and calls `rdt('disableFirstPartyCookies')`. If the visitor allows `marketing` again before reload, it calls `rdt('enableFirstPartyCookies')`. Disabling cookies does not stop the pixel from sending events, so keep page reload enabled and guard your own event calls.
 
 ## Guard your own rdt calls
 
-The helper sends the page visit. Conversions your code sends, such as
-`Purchase` or `Lead`, need their own check. After revocation `window.rdt` still
-exists, so its presence does not mean marketing is allowed. Check the
-permission first, then that the pixel has loaded:
+Because `window.rdt` remains defined after revocation, check `marketing` permission from your framework, such as `useConsent('marketing')` in React, before sending conversions like `Purchase` or `Lead`:
 
 ```ts title="src/track-purchase.ts"
 export function trackPurchase(marketingAllowed: boolean, orderId: string) {
@@ -68,18 +56,12 @@ export function trackPurchase(marketingAllowed: boolean, orderId: string) {
 }
 ```
 
-Pass the current marketing permission from your framework, for example
-`useConsent('marketing')` in React. Set `conversionId` to deduplicate against
-the Conversions API. `@inth/integrations/reddit-pixel` also exports
-`redditPixelEvent`, a typed wrapper around `rdt('track', ...)`. It does nothing
-until `rdt` exists and does not check permission, so apply the same guard
-before calling it.
+Set `conversionId` to deduplicate against the Conversions API. `@inth/integrations/reddit-pixel` also exports `redditPixelEvent`, a typed wrapper around `rdt('track', ...)`. It does not check consent, so keep the same permission guard.
 
 ## Verify the Reddit Pixel
 
-After you allow marketing, `pixel.js` loads from `www.redditstatic.com` and the
-pixel sends one `PageVisit`. Trigger one guarded event and check that its
-request appears. Then revoke marketing. Until the page reloads, calling
-`trackPurchase` sends nothing.
+1. Allow `marketing` and confirm `pixel.js` loads from `www.redditstatic.com` and fires one `PageVisit`.
+2. Trigger one guarded conversion event and confirm its request fires.
+3. Revoke `marketing` and confirm `trackPurchase` sends nothing before reload.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

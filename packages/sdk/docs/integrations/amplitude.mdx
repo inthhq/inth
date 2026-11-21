@@ -1,30 +1,25 @@
 ---
 title: Amplitude
-description: Load Amplitude Browser SDK 2 after web consent, or connect Amplitude Analytics opt-out in Swift, Kotlin, React Native and Expo, with withdrawal and reset handling.
+description: Gate Amplitude Browser SDK 2 on web consent or sync mobile Analytics opt-out with Inth in Swift, Kotlin, React Native, and Expo.
 seoTitle: Amplitude consent for web and mobile with Inth
-seoDescription: Load Amplitude after web measurement consent, or connect its Swift, Android, React Native and Expo opt-out to Inth, with withdrawal and reset.
+seoDescription: Load Amplitude Browser SDK 2 after measurement consent on web, or connect mobile opt-out in Swift, Android, React Native, and Expo with Inth.
 icon: amplitude
 group: integrations
 ---
 
-Use Inth to load Amplitude Browser SDK 2 with [web consent](#web), or connect
-Amplitude Analytics opt-out in [Swift, Kotlin, React Native and Expo](#mobile).
+Gate Amplitude Browser SDK 2 on [web consent](#web), or sync Amplitude Analytics opt-out in [Swift, Kotlin, React Native, and Expo apps](#mobile).
 
 ## Web
 
-The Inth `amplitude` helper keeps the Amplitude Browser SDK 2 off the page until
-`measurement` has consent. Until then, Inth does not define `window.amplitude`.
-When `measurement` has consent, the helper queues `init` and `setOptOut(false)`
-before the SDK loads. If the visitor withdraws consent, the helper calls
-`amplitude.setOptOut(true)`. The SDK stays on the page. By default, Inth also
-reloads the page.
+The `amplitude` helper blocks Amplitude Browser SDK 2 and keeps `window.amplitude` undefined until the visitor grants `measurement` consent. On withdrawal, Inth calls `amplitude.setOptOut(true)`, leaves the SDK mounted, and reloads the page by default.
 
 ### Configure Amplitude
 
-Use your Amplitude project API key. The `amplitude` helper initializes Browser
-SDK 2 for you, so remove any existing Amplitude snippet or `init` call.
+Remove any existing Amplitude snippet or `init` call, then install `@inth/integrations`:
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { amplitude } from '@inth/integrations/amplitude';
@@ -40,72 +35,35 @@ export const scripts = [amplitude({ apiKey: 'YOUR_PROJECT_API_KEY' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `apiKey` | Required | Project API key passed to `amplitude.init`. The helper trims it. Empty or whitespace-only values log an error and the script does not load. |
-| `initOptions` | `{}` | Browser SDK 2 options passed as the second argument to `init`. Use JSON-serializable values only. |
-| `scriptUrl` | `https://cdn.amplitude.com/libs/analytics-browser-2.44.4-min.js.gz` | Loader URL override. The default pins Browser SDK 2 version `2.44.4`. A blank value falls back to the default. |
+| `apiKey` | Required | Project API key passed to `amplitude.init`. Trimmed automatically. Blank values log an error and skip loading. |
+| `initOptions` | `{}` | Browser SDK 2 options passed as the second argument to `init`. Must be JSON-serializable. |
+| `scriptUrl` | `https://cdn.amplitude.com/libs/analytics-browser-2.44.4-min.js.gz` | Loader URL override. Pins Browser SDK 2 version `2.44.4`. Blank values use the default. |
 
 ### Loading and revocation
 
-`amplitude` uses the `measurement` category. Before measurement is allowed,
-Inth defines no `window.amplitude` and loads nothing from Amplitude. When
-measurement becomes allowed, the helper creates the Browser SDK 2 queue stub,
-queues `init(apiKey, initOptions)` and `setOptOut(false)`, then loads the SDK,
-which replays the queue. Amplitude saves an opt-out in its cookie, so the
-queued `setOptOut(false)` clears one left by an earlier revocation.
+`amplitude` gates on `measurement`. On first grant, Inth creates the Browser SDK 2 queue stub, queues `init(apiKey, initOptions)` and `setOptOut(false)` to clear any opt-out cookie left by an earlier revocation, and loads the SDK.
 
-On revocation the helper calls `amplitude.setOptOut(true)` and leaves the SDK
-on the page, because removing the script would not stop the running client.
-If the visitor allows measurement again before the page reloads, the helper
-calls `setOptOut(false)` on that SDK instead of loading a second copy.
+On withdrawal, Inth calls `amplitude.setOptOut(true)` and keeps the script mounted because removing the tag does not stop the running client. Regranting before reload calls `setOptOut(false)` on the existing SDK without loading a second copy.
 
 ### Verify Amplitude
 
-After you allow measurement, the `analytics-browser-2.44.4-min.js.gz` request
-loads and a test event reaches your Amplitude project. Revoke measurement, then
-allow it again on a later page and check that events reach Amplitude again.
+Filter DevTools Network by `cdn.amplitude.com`. Allow `measurement` and confirm `analytics-browser-2.44.4-min.js.gz` loads and a test event reaches Amplitude. Withdraw `measurement`, then allow it again on a reloaded page and confirm events resume.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />
 
 ## Mobile
 
-Use the bundled Amplitude helper to keep Analytics opt-out in sync with native
-Inth permission. Pending or denied permission enables opt-out. A grant disables
-opt-out. The default category is `measurement`.
-
-The helper ships in `InthApple`, `inth-android` and
-`@inth/react-native/integrations`. Your app owns the Amplitude dependency,
-configuration and event calls. The React Native helper uses the JavaScript
-Analytics client's `setOptOut` API; the Swift and Kotlin helpers set the
-native client's `optOut` property.
+The bundled Amplitude helper in `InthApple`, `inth-android`, and `@inth/react-native/integrations` syncs Analytics opt-out with Inth's `measurement` category by default. Pending or denied permission enables opt-out, and a grant disables opt-out. Your app installs Amplitude separately. Swift and Kotlin set the native `optOut` property, while React Native calls `setOptOut`.
 
 ### Before you start
 
-Complete the [Swift](/docs/frameworks/swift/quickstart),
-[Android](/docs/frameworks/android/quickstart) or
-[React Native](/docs/frameworks/react-native/quickstart) quickstart.
-Include `measurement` in your native category configuration and Inth policy. Connect
-the same installed engine your consent UI uses. Mobile SDKs currently have
-[private prerelease access](/docs/guides/mobile-status).
+Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add `measurement` to your native config and Inth policy. See [mobile availability](/docs/guides/mobile-status).
 
-Install the current [iOS Swift](https://amplitude.com/docs/sdks/analytics/ios/ios-swift-sdk),
-[Android Kotlin](https://amplitude.com/docs/sdks/analytics/android/android-kotlin-sdk)
-or [React Native](https://amplitude.com/docs/sdks/analytics/react-native/react-native-sdk)
-Analytics SDK. This mapping targets the current SDK, rather than its legacy
-maintenance library.
-
-Initialize Amplitude with `optOut` enabled before optional collection can begin.
-Configure automatic tracking, advertising identifiers, location and session
-replay separately. A measurement grant does not authorize every Amplitude
-product. For a strict startup, defer initialization until a native gate allows it.
-A JS helper cannot stop an earlier native initializer. See
-[native startup](/docs/frameworks/react-native/native-behaviour).
-
-Expo needs an app build containing the vendor and Inth native modules. Expo Go
-does not provide Inth's native engine.
+Install the current [iOS Swift](https://amplitude.com/docs/sdks/analytics/ios/ios-swift-sdk), [Android Kotlin](https://amplitude.com/docs/sdks/analytics/android/android-kotlin-sdk), or [React Native](https://amplitude.com/docs/sdks/analytics/react-native/react-native-sdk) Analytics SDK, not the legacy maintenance library. Initialize Amplitude with `optOut` enabled and configure automatic tracking, ad IDs, location, and session replay separately. For strict startup gating, defer initialization behind a [native startup gate](/docs/frameworks/react-native/native-behaviour) because a JS helper cannot block an earlier native initializer. Expo requires a custom native build, not Expo Go.
 
 ### Connect a Swift app
 
-Create Amplitude with `optOut` on, then hand its property to the helper:
+Create Amplitude with `optOut: true`, then construct and retain `AmplitudeConsentOwner` on every launch because Amplitude Swift does not persist `optOut`:
 
 ```swift title="AmplitudeConsentOwner.swift"
 import AmplitudeSwift
@@ -124,10 +82,9 @@ final class AmplitudeConsentOwner {
 }
 ```
 
-Amplitude does not persist `optOut`, so create the owner on every launch,
-right after `Amplitude(configuration: Configuration(apiKey: ..., optOut: true))`.
-
 ### Connect an Android app
+
+Create Amplitude with `optOut = true`, then connect and retain the helper on your `Application`:
 
 ```kotlin title="AmplitudeConsent.kt"
 import com.amplitude.android.Amplitude
@@ -144,26 +101,15 @@ fun connectAmplitudeConsent(amplitude: Amplitude, onError: (Exception) -> Unit):
 }
 ```
 
-Create Amplitude with `optOut = true` in its configuration block, then
-connect it. Keep the returned helper on the application.
-
-### Native threading limits
-
-Both native helpers set `optOut` on the thread that publishes the consent
-change. Amplitude reads `optOut` when it processes each event, on its own
-queue, and documents no ordering between the two. An event tracked at the
-moment of withdrawal can still be processed under the old value. Keep your own
-event calls behind current permission, as with every helper here. Earlier
-Inth releases deferred these helpers for this reason; they ship now for
-parity with React Native, with this limit stated.
+Both native helpers set `optOut` on the consent-publishing thread while Amplitude reads `optOut` on its own event queue with no ordering guarantee. Guard your own event calls on current permission so Amplitude does not process events fired during withdrawal under the prior value.
 
 ### Connect React Native or Expo
 
-Copy this function into `amplitude-consent.ts`:
+Copy the connection function into `amplitude-consent.ts`:
 
 <include src="../shared/examples/react-native-bare/rn-amplitude-integration.mdx" />
 
-Connect the modular API after initializing that same Amplitude client:
+Connect the modular API after initializing that Amplitude instance and retain the handle for the app lifetime:
 
 {/* example: fragment */}
 
@@ -177,44 +123,19 @@ const amplitudeConsent = connectAppAmplitude(
 await amplitudeConsent.ready;
 ```
 
-For multiple projects, pass the chosen client's `setOptOut` method through a
-closure. Do not connect the default singleton and send app events to a separate
-instance. Retain the connection for the service lifetime. Report automatic
-failures through `onError`, and handle rejections from `ready`, `sync()` and
-`disconnect()` at their call sites.
+For multiple projects, pass the target instance's `setOptOut` method through a closure instead of connecting the default singleton. Report automatic update failures in `onError`, and handle rejections from `ready`, `sync()`, and `disconnect()` at their call sites.
 
 ### Handle reset and teardown
 
-After an app-owned Amplitude reset completes, call `syncAfterReset()` on the
-Swift owner, `sync()` on the Kotlin helper or `await amplitudeConsent.sync()`.
-This reapplies current native permission without recording a new choice.
+After an Amplitude reset completes, call `syncAfterReset()` on Swift, `sync()` on Android, or `await amplitudeConsent.sync()` on React Native to reapply permission without recording a new choice. For final teardown, call `stop()`, `close()`, or `await amplitudeConsent.disconnect()` to detach and enable opt-out without logging the user out or rotating identity.
 
-For final teardown, call `stop()`, `close()` or `await amplitudeConsent.disconnect()`.
-The helper detaches and enables opt-out.
-It does not log the person out, rotate their identity or shut down unrelated
-app services.
-
-Opt-out blocks new covered event collection. It does not establish that every
-older event queue is deleted or every request stops. Previously queued events
-can still upload. Data already uploaded needs the vendor's
-retention or deletion controls. Keep optional event calls behind current
-permission and check startup as well as the eventual opt-out value.
+Opt-out stops collection of new covered events, but previously queued events can still upload and already-uploaded data requires Amplitude's retention or deletion controls.
 
 ### Verify your app
 
-Check fresh pending startup, refusal, grant and an intentional event, then
-withdrawal. Relaunch after both choices, reset the vendor and reapply permission.
-Check that unrelated consent changes do not submit new opt-out commands.
-Inspect previously queued events separately from events attempted after refusal.
+1. Launch with no saved choice and after Reject all. Confirm opt-out stays enabled.
+2. Grant `measurement` and track a test event. Confirm it arrives.
+3. Withdraw `measurement` and confirm Amplitude drops new events.
+4. Relaunch after grant and refusal, toggle an unrelated category to confirm no extra opt-out call runs, then reset Amplitude and call `sync()`.
 
-The snippets were written against these SDK majors and checked as shown:
-
-| Platform | Version | How |
-| --- | --- | --- |
-| React Native | `@amplitude/analytics-react-native` 1.13.1 | Type-checked against the package's published types |
-| Android | `com.amplitude:analytics-android` 1.37.1 | `optOut` read from the published artifacts |
-| iOS | AmplitudeSwift 1.20.0 | Checked against the SDK's Swift source |
-Helper tests and vendor consumer checks cover the binding;
-they do not prove your app's actual network or device behavior. Follow
-[mobile verification](/docs/guides/mobile-verify) before relying on collection
-and withdrawal behavior.
+Checked against `@amplitude/analytics-react-native` `1.13.1`, `com.amplitude:analytics-android` `1.37.1`, and `AmplitudeSwift` `1.20.0`. Complete [mobile verification](/docs/guides/mobile-verify) on real devices.

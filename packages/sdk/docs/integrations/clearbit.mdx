@@ -1,24 +1,21 @@
 ---
 title: Clearbit
-description: Load the Clearbit enrichment tag only after marketing consent with the Inth clearbit helper, and check it in DevTools.
+description: Load the Clearbit enrichment tag only after marketing consent with the Inth clearbit helper.
 seoTitle: Clearbit cookie consent with Inth
-seoDescription: Load Clearbit only with marketing consent, because Clearbit identifies visitors and their companies. Set it up with the Inth clearbit helper.
+seoDescription: Gate Clearbit enrichment on marketing consent and remove its loader on withdrawal with the Inth clearbit helper.
 icon: clearbit
 group: integrations
 ---
 
-The Inth `clearbit` helper keeps the Clearbit tag, `tags.js`, off the page until
-`marketing` has consent. The category is `marketing`, not `measurement`, because
-Clearbit identifies visitors and their companies. The helper sends no consent
-signal to Clearbit. If the visitor withdraws consent, Inth removes the script
-element. By default, Inth also reloads the page.
+The `clearbit` helper keeps Clearbit's `tags.js` off the page until visitors grant `marketing` consent, then removes the loader and reloads the page on withdrawal.
 
 ## Configure Clearbit
 
-Use the publishable key from your Clearbit tag installation. Do not put a
-secret Clearbit API key in browser code.
+Copy the publishable key from your Clearbit tag installation. Never put a secret Clearbit API key in browser code.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { clearbit } from '@inth/integrations/clearbit';
@@ -32,22 +29,18 @@ export const scripts = [clearbit({ publishableKey: 'YOUR_PUBLISHABLE_KEY' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `publishableKey` | Required | Publishable key. The helper trims it and URL-encodes it into the default loader URL. Empty or non-string values log an error and the script does not load. |
-| `scriptUrl` | `https://tag.clearbitscripts.com/v1/<publishableKey>/tags.js` | Loader URL override. A blank value falls back to the default. |
+| `publishableKey` | Required | Publishable key, trimmed and URL-encoded into the default loader URL. Empty or non-string values log an error and skip loading. |
+| `scriptUrl` | `https://tag.clearbitscripts.com/v1/<publishableKey>/tags.js` | Loader URL override. Blank values use the default. |
 
 ## Loading and revocation
 
-`clearbit` uses the `marketing` category, not `measurement`. Clearbit
-identifies visitors and their companies for enrichment, so Inth treats it as
-marketing even though these docs list it with analytics. The `tags.js` script
-loads with `referrerpolicy="strict-origin-when-cross-origin"` only while
-marketing is allowed. On revocation the helper removes the script element and
-calls no Clearbit API.
+`clearbit` gates on `marketing` instead of `measurement` because Clearbit enriches visitor and company identity. When `marketing` is allowed, Inth loads `tags.js` with `referrerpolicy="strict-origin-when-cross-origin"`. On withdrawal, Inth removes the script element without calling a Clearbit API and reloads the page by default.
 
 ## Verify Clearbit
 
-Filter DevTools Network by `clearbitscripts.com`. After you allow marketing,
-the `tags.js` request carries your publishable key in its path. Allowing
-measurement alone loads nothing from Clearbit.
+Filter DevTools Network by `clearbitscripts.com`:
+
+1. Allow only `measurement` and confirm nothing loads from Clearbit.
+2. Allow `marketing` and confirm `tags.js` loads with your publishable key in its path.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

@@ -1,13 +1,16 @@
 ---
 title: window.inth API
-description: Reference for window.inth on a plain HTML page, covering the call queue, manual start, reading permissions and recorded choices, saving choices, opening the banner and dialog, and properties.
+description: Reference for window.inth on plain HTML pages, covering the call queue, manual init, reading state, saving choices and lifecycle methods.
 group: frameworks
 ---
 
+Control Inth programmatically on a plain HTML page through `window.inth`,
+before or after the script tag loads.
+
 ## Call Inth before and after the tag loads
 
-`window.inth` is the only global the script tag uses. Before the tag runs, it
-is an array of calls. Push `[method, ...args]` entries onto it:
+`window.inth` is the single global the script tag uses. Before `inth.js`
+executes, initialize it as an array and push `[method, ...args]` tuples:
 
 {/* example: fragment */}
 
@@ -19,52 +22,40 @@ is an array of calls. Push `[method, ...args]` entries onto it:
 </script>
 ```
 
-When the tag runs, it replaces the array with the API object and replays the
-calls in order. Always push onto the existing array.
-`window.inth = [[...]]` throws away calls that other scripts queued earlier,
-including the DevTools tag's.
-
-`inth.push([...])` keeps working after the tag has loaded, and runs each call
-by the same rules as a queued one. So a snippet written as
-`window.inth = window.inth || []; inth.push([...])` works whether it runs
-before or after the tag. `push` returns the number of calls it received.
+When the script tag runs, it replaces the array with the API object and
+replays queued calls in order. Never overwrite `window.inth = [[...]]`, which
+drops calls queued by earlier scripts or DevTools. `inth.push([...])` keeps
+working after load using the same queue rules and returns the number of calls
+accepted.
 
 ### Which calls you can queue
 
 | Queued method | When it runs |
 | --- | --- |
-| `config`, `init`, `on`, `onInit` | In place, in queue order, as the bundle loads. |
-| `subscribe` | Once the client exists. |
-| `acceptAll`, `rejectAll`, `save`, `dismissNotice`, `saveIAB`, `showBanner`, `openDialog`, `closeDialog`, `setLanguage`, `identify`, `mountUI`, `processIframes` | In queue order, once the policy has resolved. A queued `openDialog` therefore stays open instead of being replaced by the banner. |
-| Any other method, such as `getSnapshot`, `has`, `hasConsented`, `isVendorAllowed`, `ready` or `dispose`, and names Inth does not know | Skipped, with a console warning. Call them from `onInit` or after `ready()`. |
+| `config`, `init`, `on`, `onInit` | Immediately in queue order as the bundle loads. |
+| `subscribe` | Once the client instance exists. |
+| `acceptAll`, `rejectAll`, `save`, `dismissNotice`, `saveIAB`, `showBanner`, `openDialog`, `closeDialog`, `setLanguage`, `identify`, `mountUI`, `processIframes` | In queue order once the policy resolves (so a queued `openDialog` stays open instead of being overwritten by the banner). |
+| Reads and unknown methods (`getSnapshot`, `has`, `hasConsented`, `isVendorAllowed`, `ready`, `dispose`) | Skipped with a console warning. Call them inside `onInit` or after `ready()`. |
 
-A queued call that throws is reported with `console.error`, and the calls
-after it still run. A queue cannot hand back a return value, which is why
-reads are skipped.
+Errors thrown by a queued call log via `console.error` without blocking later
+queued calls.
 
 ### How options merge
 
-Options merge in this order, with later ones winning:
+Later sources win in this order:
 
-1. The tag's `data-*` attributes.
-2. Each queued `config` call, in order.
-3. Options passed to `inth.init()`, when the tag has `data-manual`.
+1. `data-*` attributes on the script tag.
+2. Queued `config` calls in order.
+3. Options passed to `inth.init()` (with `data-manual`).
 
-`ui`, `ui.banner` and `ui.dialog` merge key by key, so a `config` call that
-sets `ui.theme` keeps the legal links the tag's attributes set. Every other
-option replaces the earlier value.
-
-`config` after the client has started logs a warning and does nothing.
+`ui`, `ui.banner` and `ui.dialog` merge shallowly key by key; all other
+options replace earlier values. Calling `config` after the client starts logs
+a warning and does nothing.
 
 ## Start Inth yourself
 
-With `data-manual` on the tag, the bundle installs `window.inth` and waits.
-`inth.js` still requires a backend URL when `init()` runs. Manifest mode
-needs the `@inth/sdk` ES module, a headless script with your own UI, or
-the IAB script for an IAB policy. Test pages load `inth.testing.js`.
-
-Call `inth.init()` when your page is ready, for example once it knows the
-visitor's country:
+Add `data-manual` to the script tag so Inth installs `window.inth` and waits
+for your page to call `inth.init()`:
 
 {/* example: fragment */}
 
@@ -77,116 +68,95 @@ visitor's country:
 </script>
 ```
 
-`init()` reads the original tag's attributes even if the tag has since been
-removed, layers queued `config` calls and its own options on top, starts the
-client and returns it. Called on `inth.js` before `inth.hosted.js` has
-loaded, it returns a stand-in with the client's methods instead, and
-`inth.onInit()` hands you the client once it exists; see
+`init()` merges tag attributes, queued `config` calls and its own options,
+starts the client and returns it (or a proxy on `inth.js` before
+`inth.hosted.js` arrives; use `inth.onInit()` for the full client). See
 [how inth.js loads inth.hosted.js](/docs/frameworks/html/attributes-and-api#how-inthjs-loads-inthhostedjs).
-A second call returns the same client. Until `init()`,
-queued actions and `subscribe` wait, and direct calls to methods that read or
-change consent throw `call inth.init() first`.
-
-After `inth.dispose()`, a new `inth.init()` starts a fresh client with the
-same attributes and queued `config` calls.
+Direct state reads or writes before `init()` throw `call inth.init() first`.
+After `inth.dispose()`, calling `inth.init()` starts a fresh client.
 
 ## Read state
 
 | Method | Returns | Use it for |
 | --- | --- | --- |
-| `ready()` | a promise of the snapshot | Wait until the policy has resolved. Safe to call before `init()`. |
-| `has(category)` | `boolean` | Whether a category is allowed right now. Accepts a condition such as `{ and: ['measurement', 'marketing'] }`. |
-| `hasConsented()` | `boolean` | Whether the visitor has answered the choice prompt, by a recorded choice or an acknowledgement of a prompt with nothing to decide. |
-| `getSnapshot()` | the snapshot | The full consent state: permissions, recorded choice, policy, prompt and surface. |
-| `subscribe(listener)` | an unsubscribe function | Call `listener` with the snapshot after every change. |
-| `isVendorAllowed(id)` | `boolean` | Whether a vendor may run now: it is declared, its category is allowed and the visitor has not switched it off. `false` for an id nothing declares, with a console warning in development. |
-| `getDeclaredVendors()` | an array of vendors | The vendors from `vendors`, the backend and the slugs on scripts, gated tags and iframes. Empty under an IAB policy. |
-| `getVendorChoice()` | the vendor decision, or `null` | Which vendors the visitor switched off, in `denied`. |
-| `on(event, listener)` | an unsubscribe function | Listen for `ready`, `consent`, `ui` or `error`. Safe to call before `init()`. See [events and callbacks](/docs/frameworks/html/callbacks). |
+| `ready()` | `Promise<ConsentSnapshot>` | Wait for policy resolution. Safe before `init()`. |
+| `has(category)` | `boolean` | Check whether a category or condition (`{ and: ['measurement', 'marketing'] }`) is allowed now. |
+| `hasConsented()` | `boolean` | Check whether the visitor answered the prompt. |
+| `getSnapshot()` | `ConsentSnapshot` | Full state: permissions, recorded choice, policy, prompt and active surface. |
+| `subscribe(listener)` | unsubscribe function | Run `listener(snapshot)` on every state change. |
+| `isVendorAllowed(id)` | `boolean` | `true` when vendor is declared, its category is allowed and it is not switched off. |
+| `getDeclaredVendors()` | `Vendor[]` | Merged vendors from `vendors`, Inth, scripts, gated tags and iframes (empty under IAB). |
+| `getVendorChoice()` | vendor decision or `null` | Vendors switched off by the visitor (`denied`). |
+| `on(event, listener)` | unsubscribe function | Listen to `ready`, `consent`, `ui` or `error`. Safe before `init()`. See [events and callbacks](/docs/frameworks/html/callbacks). |
 
 ### A permission is not a recorded choice
 
-`has('measurement')` answers "may measurement code run now?" Under an opt-out
-policy it is `true` before the visitor has done anything. Use it, or
-`snapshot.effectivePermissions`, to gate code.
-
-`hasConsented()` and `snapshot.explicitChoice` answer "what did the visitor
-decide?" They change only when the visitor accepts, rejects or saves. Use
-them to report or display the visitor's decision, never to gate a vendor.
-[How consent works](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice)
-lists which to read for each task.
-
-Answers can change once the policy resolves, so wait for `inth.ready()` or a
-`ready` listener before you read them at page load.
+`has('measurement')` and `snapshot.effectivePermissions` tell you whether
+code may run now (which can be `true` before any choice under opt-out).
+`hasConsented()` and `snapshot.explicitChoice` tell you what the visitor
+explicitly chose. Wait for `inth.ready()` before reading at page load. See
+[a permission is not a recorded choice](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice).
 
 ## Record a choice
 
-Call these only in response to a visitor's click or key press, never at load.
+Call these only from user interactions, never automatically on page load:
 
 | Method | What it records |
 | --- | --- |
-| `acceptAll()` | Without IAB, allows every category the dialog offers. Under an IAB policy it confirms the vendors' declared processing through the CMP. Optional categories without declared consent purposes remain denied. See [categories under an IAB policy](/docs/concepts/consent-state#categories-under-an-iab-policy). |
-| `rejectAll()` | Denies every optional category the dialog offers. |
-| `save(choices)` | The categories you name, such as `{ measurement: true, marketing: false }`. Categories the dialog does not offer are ignored. A `vendors` map, such as `{ vendors: { 'x-pixel': false } }`, records vendor switches too. Fails under an IAB policy; use `saveIAB()`. |
-| `saveIAB()` | Confirms the IAB purpose and vendor choices set on the CMP. `inth.iab.js` only. See [IAB TCF](/docs/frameworks/html/iab). |
-| `dismissNotice()` | Acknowledges a notice. Grants nothing. Resolves with `{ ok: false, reason: 'not-required' }` when no notice is showing. |
-| `identify(user)` | Links the consent record to a signed-in user, such as `{ externalId: 'user_123', identityProvider: 'auth0' }`. An `identityToken` verifies the link. |
+| `acceptAll()` | Allows every category offered (under IAB, confirms declared vendor processing; optional categories without declared consent purposes stay denied). See [categories under an IAB policy](/docs/concepts/consent-state#categories-under-an-iab-policy). |
+| `rejectAll()` | Denies every optional category offered. |
+| `save(choices)` | Saves named categories (`{ measurement: true, marketing: false }`) and optional `vendors` map. Fails under IAB; use `saveIAB()`. |
+| `saveIAB()` | Confirms IAB purpose and vendor choices (`inth.iab.js` only). See [IAB TCF](/docs/frameworks/html/iab). |
+| `dismissNotice()` | Acknowledges a notice without granting consent. |
+| `identify(user)` | Links the consent record to `{ externalId, identityProvider?, identityToken? }`, where `identityToken` verifies the link on the server. |
 
-`acceptAll()`, `rejectAll()`, `save()` and `saveIAB()` resolve to a result
-with an `ok` flag. The choice applies in the browser and the banner closes
-before the backend request finishes. When the request fails, `ok` is `false`,
-the choice stays in effect, and Inth retries the request later.
+Save methods resolve with `{ ok }`. Choices apply and surfaces close
+immediately; failed network requests retry in the background.
 
 ## Show and hide the UI
 
 | Method | What it does |
 | --- | --- |
-| `showBanner()` | Shows the banner. Records nothing. |
-| `openDialog()` | Opens the preference dialog. Records nothing. |
-| `closeDialog()` | Closes the dialog, or the banner when no dialog is open. Closing the dialog brings the banner back while the policy still owes a choice. Records nothing. |
-| `setLanguage(code)` | Switches language and re-renders with that language's copy, from the backend or, with `inth.testing.js`, from the bundled copy and `i18n.messages`. See [translations](/docs/frameworks/html/translations). |
-| `mountUI(options?)` | Removes the stock UI and mounts it again, with new UI options or the configured ones. Throws in `inth.headless.js`. |
+| `showBanner()` | Opens the banner without recording anything. |
+| `openDialog()` | Opens the preference dialog without recording anything. |
+| `closeDialog()` | Closes the dialog (or banner), restoring the banner if a choice is still due. |
+| `setLanguage(code)` | Switches language and re-renders copy; see [translations](/docs/frameworks/html/translations). |
+| `mountUI(options?)` | Remounts the stock UI with new options. Throws in `inth.headless.js`. |
 
 In `inth.headless.js`, `showBanner`, `openDialog` and `closeDialog` still
-change the surface Inth reports through the `ui` event, so your own banner
-can follow them.
+update the `ui` event for your custom UI.
 
 ## Lifecycle
 
 | Method | What it does |
 | --- | --- |
-| `config(options)` | Adds options before the client starts. See [configuration](/docs/frameworks/html/configuration). |
-| `init(options?)` | Starts the client. Only needed with `data-manual`. |
-| `onInit(listener)` | Calls `listener` with the client once it exists, at once if it already does. Returns a function that cancels the call. |
-| `push(...calls)` | Runs `[method, ...args]` calls by the queue rules above. |
-| `processIframes()` | Pauses gated iframes that consent does not allow and restores the ones it allows. Needed only with `iframeBlocker: { disableAutomaticBlocking: true }`. See [embeds](/docs/frameworks/html/embeds#check-iframes-yourself). |
-| `dispose()` | Removes the UI, the DevTools panel, page listeners, blockers and the scripts Inth added. Code that already ran keeps running. |
+| `config(options)` | Adds options before startup. See [configuration](/docs/frameworks/html/configuration). |
+| `init(options?)` | Starts the client when using `data-manual`. |
+| `onInit(listener)` | Invokes `listener(client)` once ready (or immediately if started). Returns a cancel function. |
+| `push(...calls)` | Executes `[method, ...args]` calls via the queue rules above. |
+| `processIframes()` | Updates gated iframes when `iframeBlocker: { disableAutomaticBlocking: true }`. See [check iframes yourself](/docs/frameworks/html/embeds#check-iframes-yourself). |
+| `dispose()` | Unmounts UI, DevTools, listeners, blockers and loaded script tags. |
 
 ## Properties
 
 | Property | What it holds |
 | --- | --- |
-| `version` | The `@inth/sdk` version. |
-| `pkg` | `@inth/sdk`, `@inth/sdk/testing`, `@inth/sdk/headless` or `@inth/sdk/iab-client`, by bundle. `inth.testing.js` reports `@inth/sdk/testing`. |
-| `mode` | `hosted`, `manifest`, `testing` or `custom` once started, else `null`. A transport factory passed as `mode` reports `custom`, except `hosted()` and `manifest()`. |
-| `hosting` | `'inth'` or `'self-hosted'` once `/v1/consent/init` reports who runs the backend, else `null`. Stays `null` with `inth.testing.js` and with backends older than the field. |
-| `client` | The started client, or `null`. It has the same methods plus `kernel`, `runtime`, `options`, `consentCategories`, `ui` and `setOverrides()`. |
-| `devtools` | The DevTools panel once `inth.devtools.js` mounted it, else `null`. |
-| `hosted`, `manifest` | Transport factories. `inth.js` exports only `hosted`. Headless and IAB export both, for calls such as `inth.init({ mode: inth.manifest({ … }) })` with `data-manual`. |
-| `testing` | `inth.testing.js` only: `inth.testing({ policy })`, for `inth.init({ mode })`. |
+| `version` | `@inth/sdk` version string. |
+| `pkg` | Bundle identifier: `@inth/sdk`, `@inth/sdk/testing`, `@inth/sdk/headless` or `@inth/sdk/iab-client`. |
+| `mode` | `'hosted'`, `'manifest'`, `'testing'` or `'custom'` once started, else `null`. |
+| `client` | Active client instance (`kernel`, `runtime`, `options`, `consentCategories`, `ui`, `setOverrides()`), or `null`. |
+| `devtools` | DevTools instance once `inth.devtools.js` mounts, else `null`. |
+| `hosted`, `manifest` | Transport factories (`inth.js` exports `hosted`; headless and IAB export both). |
+| `testing` | `inth.testing.js` only: `inth.testing({ policy })`. |
 
-`inth.js` reports `pkg: '@inth/sdk'` and `mode: 'hosted'` once started.
-
-`inth.client.setOverrides({ country, region, language, gpc })` changes the
-location, language or GPC signal policy matching uses. The DevTools Location
-tab uses the same inputs.
+Call `inth.client.setOverrides({ country, region, language, gpc })` to
+override location, language or GPC during debugging.
 
 ## Check it works
 
-1. Open the browser console on a page with the tag and run
-   `await inth.ready()`. It resolves with a snapshot whose `resolution.status`
-   is `matched`.
-2. Run `inth.has('measurement')` and `inth.hasConsented()` before and after
-   you click **Reject All**. Under an opt-in policy both start `false`;
-   afterwards `hasConsented()` is `true` and `has` stays `false`.
-3. Run `inth.push(['openDialog'])`. The dialog opens.
+1. Run `await inth.ready()` in the console and verify `resolution.status` is
+   `'matched'`.
+2. Check `inth.has('measurement')` and `inth.hasConsented()` before and after
+   clicking **Reject All** under an opt-in policy: `hasConsented()` becomes
+   `true` while `has('measurement')` stays `false`.
+3. Run `inth.push(['openDialog'])` and confirm the dialog opens.

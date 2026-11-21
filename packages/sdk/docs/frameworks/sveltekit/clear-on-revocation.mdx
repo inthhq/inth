@@ -1,6 +1,6 @@
 ---
 title: Clear on revocation
-description: Delete the first-party cookies and Web Storage keys a consent category owns in a SvelteKit app when that category is denied, with the clearOnRevocation prop on InthProvider.
+description: Delete first-party cookies and Web Storage keys in a SvelteKit app when a consent category is revoked.
 group: frameworks
 ---
 
@@ -16,7 +16,6 @@ Inth deletes them:
 ```svelte title="src/routes/+layout.svelte (partial)"
 <script lang="ts">
 	import type { ConsentManagerOptions } from '@inth/svelte';
-	import { InthProvider } from '@inth/svelte/kit';
 
 	const clearOnRevocation: ConsentManagerOptions['clearOnRevocation'] = {
 		measurement: { cookies: ['_ga', '_ga_*'], localStorage: ['analytics:*'] },

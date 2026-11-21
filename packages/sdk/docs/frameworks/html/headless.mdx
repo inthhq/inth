@@ -1,91 +1,87 @@
 ---
 title: Headless
-description: Render your own consent banner and preferences in plain HTML with inth.headless.js, the ui event and data-inth-action buttons, while Inth keeps resolving the policy, storing choices and gating scripts.
+description: Build a custom plain HTML consent UI with inth.headless.js, the ui event and data-inth-action buttons.
 group: frameworks
 ---
 
+Render your own HTML banner and preference controls with `inth.headless.js`
+while Inth resolves policies, persists choices and gates scripts.
+
 ## When to go headless
 
-Load `inth.headless.js` when theme tokens and CSS cannot give you the banner
-you want, for example a bar that matches your site's markup exactly. The
-headless build keeps everything except the UI:
+Use `inth.headless.js` when tokens and CSS cannot produce the markup you
+need. It includes:
 
-- policy resolution, stored choices and backend saves;
+- policy resolution, persistence and saves to Inth;
 - gated scripts, gated iframes and the network blocker;
-- `window.inth`, its events and the `data-inth-action` page hooks.
+- `window.inth`, consent events and `data-inth-action` hooks.
 
-It ships no banner, no preference dialog, no trigger and no CSS. Before you
-switch, check whether [customize](/docs/frameworks/html/customize) covers the
-change, because a custom UI takes on every duty the stock one handles.
+It omits the stock banner, dialog, trigger and stylesheet. Check
+[customize](/docs/frameworks/html/customize) first, because headless markup
+makes you responsible for policy compliance and accessibility.
 
 ## Build a bottom bar
 
-This block replaces the stock tag. It loads the headless build, then renders a
-bar with Accept, Reject, Preferences and Save controls. The accept, reject,
-customize and dismiss buttons are `data-inth-action` buttons, so they need no
-code. One `ui` listener shows the bar, switches it into preferences mode and
-swaps the buttons for a notice:
+Replace `inth.js` with `inth.headless.js`, wire buttons with
+`data-inth-action`, and toggle visibility from the `ui` event:
 
 <include src="../../shared/examples/html/headless-bar.mdx" />
 
-Put the block at the end of `<body>`.
+Place this markup near the end of `<body>`.
 
 ## Follow the surface Inth wants shown
 
-Inth still decides which surface should show. The `ui` event reports it:
+Listen to the `ui` event to decide which surface to show:
 
 | `ui` payload | What your page shows |
 | --- | --- |
-| `'banner'` | The first prompt. Read `promptRequirement.kind` to choose between a choice and a notice. |
-| `'dialog'` | Your preferences view. A `data-inth-action="customize"` button, a `#inth-preferences` link or `inth.openDialog()` asked for it. |
-| `'none'` | Nothing. Hide the bar. |
+| `'banner'` | First prompt. Check `promptRequirement.kind` for `'choice'` versus `'notice'`. |
+| `'dialog'` | Preferences view triggered by `data-inth-action="customize"`, `#inth-preferences` or `inth.openDialog()`. |
+| `'none'` | Hide all consent surfaces. |
 
-A `ui` listener added after the policy resolved runs at once with the current
-surface, so a late script does not miss the first banner. Your own controls
-change the surface with `inth.showBanner()`, `inth.openDialog()` and
-`inth.closeDialog()`, or the matching `data-inth-action` values. None of them
-records anything.
+Listeners registered after policy resolution receive the current surface
+immediately. Switch surfaces manually with `inth.showBanner()`,
+`inth.openDialog()`, `inth.closeDialog()` or `data-inth-action` buttons
+(none of these record consent).
 
 ## Read the prompt the policy requires
 
-`inth.getSnapshot()` returns the fields a custom UI renders from:
+Read `inth.getSnapshot()` to render policy-compliant controls:
 
 | Field | What it tells your UI |
 | --- | --- |
-| `promptRequirement.kind` | `'choice'` needs a decision, `'notice'` needs only an acknowledgement, `'none'` needs no prompt. |
-| `policyRule.actions.required` | The buttons the policy requires on the first prompt, such as `accept` and `reject`. |
-| `policyRule.actions.allowed` | Every button the policy allows there. |
-| `policyRule.rights` | Rights the visitor has, such as `preferences` and `opt-out`. |
-| `policyRule.scope` | The categories the policy covers. |
-| `effectivePermissions` | Whether each category is allowed right now. |
-| `explicitChoice` | What the visitor recorded, if anything. |
+| `promptRequirement.kind` | `'choice'` needs a decision, `'notice'` needs acknowledgement, `'none'` needs no prompt. |
+| `policyRule.actions.required` | Buttons the policy requires on the first prompt (such as `accept` and `reject`). |
+| `policyRule.actions.allowed` | Every button allowed on the first prompt. |
+| `policyRule.rights` | Visitor rights such as `preferences` and `opt-out`. |
+| `policyRule.scope` | Categories governed by the policy. |
+| `effectivePermissions` | Current permission per category. |
+| `explicitChoice` | Recorded visitor choice, if any. |
 
-Use `inth.has(category)` to set each switch in your preferences view to the
-current permission. Save exactly what the switches show with
+Initialize checkboxes with `inth.has(category)` and save them with
 `inth.save({ measurement: true, marketing: false })`.
 
 ## What your UI must handle
 
-A custom UI takes on everything the stock banner does:
-
-- **Every prompt kind.** Show a decision for `choice`, a dismissable notice
-  for `notice`, and nothing for `none`. Do not assume every prompt is accept
-  or reject, or that no prompt means consent.
-- **The policy's required actions.** Render every action in
-  `policyRule.actions.required`, at equal prominence where the policy asks.
-- **A way back.** Keep a [preferences link](/docs/frameworks/html/components/preferences-link)
-  on every page after the banner closes.
+- **Every prompt kind.** Render choices for `choice`, an acknowledgement for
+  `notice`, and nothing for `none`.
+- **Required actions.** Show every action in `policyRule.actions.required`
+  with equal prominence where required.
+- **A way back.** Keep a
+  [preferences link](/docs/frameworks/html/components/preferences-link) on
+  every page.
 - **Visitor actions only.** Call `save()`, `acceptAll()`, `rejectAll()` and
-  `dismissNotice()` only from a click or key press, never on load.
-- **Accessibility.** Focus, keyboard use, labels, error states and narrow
-  screens are yours. Use native buttons and a labelled region or dialog.
+  `dismissNotice()` only from user interaction.
+- **Accessibility.** Manage focus, keyboard navigation, labels, error states
+  and narrow viewports using native buttons and labelled regions or dialogs.
 
-Read [how consent works](/docs/concepts/how-consent-works) for the difference
-between a permission and a recorded choice.
+See [how consent works](/docs/concepts/how-consent-works) for permissions
+versus recorded choices.
 
 ## Keep the stock dialog with your own banner
 
-To replace only the banner, keep `inth.js` and turn the stock banner off:
+To replace only the banner while keeping the stock dialog, load `inth.js` and
+disable its banner:
 
 {/* example: fragment */}
 
@@ -96,17 +92,17 @@ To replace only the banner, keep `inth.js` and turn the stock banner off:
 </script>
 ```
 
-Your banner then follows the `ui` event for `'banner'`, and its customize
-button opens the stock preference dialog.
+Your custom banner listens to `ui` for `'banner'`, and its customize control
+opens the stock dialog.
 
 ## Check it works
 
-Open the page in a private window with the Network tab open.
+Open the page in a private window with DevTools Network open:
 
-1. The bar appears once the policy resolves, with the buttons your policy
-   requires. Vendor requests are absent.
+1. The bar appears once the policy resolves with the required buttons, and no
+   vendor requests fire.
 2. Click **Reject all** and reload. The bar stays hidden and vendors stay
    blocked.
-3. Click the **Privacy settings** link, turn on Measurement only and click
-   **Save**. Measurement vendors load and marketing vendors do not.
-4. Tab through the bar. Every control is reachable and labelled.
+3. Click **Privacy settings**, allow Measurement only and click **Save**.
+   Only measurement vendors load.
+4. Tab through the bar and confirm every control is reachable and labelled.

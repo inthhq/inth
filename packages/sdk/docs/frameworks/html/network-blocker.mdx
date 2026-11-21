@@ -1,21 +1,23 @@
 ---
 title: Network blocker
-description: Hold fetch and XMLHttpRequest calls from a plain HTML page until their consent category is allowed, with network blocker rules queued on the Inth script tag.
+description: Hold fetch and XMLHttpRequest calls on a plain HTML page until consent allows them using queued networkBlocker rules.
 group: frameworks
 ---
 
+Hold `fetch` and `XMLHttpRequest` requests to tracking domains on a plain
+HTML page until their consent category is allowed.
+
 ## When you need it
 
-Some code sends data with `fetch` or `XMLHttpRequest` from a place you cannot
-change into a `text/plain` tag, such as a theme's bundled script, a plugin, or your own
-code that runs before consent. A network blocker rule holds those requests
-until the rule's category is allowed. Script tags and iframes do not need it;
-gate those with [gated scripts](/docs/frameworks/html/components/gated-script)
-and [embeds](/docs/frameworks/html/embeds).
+Use network blocker rules as a backstop when a bundled theme script, plugin
+or inline code sends tracking requests you cannot convert into a
+`type="text/plain"` tag. Gate normal scripts and iframes with
+[gated scripts](/docs/frameworks/html/components/gated-script) and
+[embeds](/docs/frameworks/html/embeds).
 
 ## Add rules
 
-Queue a `config` call with `networkBlocker` before the script tag:
+Queue a `config` call with `networkBlocker` before `inth.js`:
 
 {/* example: fragment */}
 
@@ -35,7 +37,7 @@ Queue a `config` call with `networkBlocker` before the script tag:
         },
       ],
       onRequestBlocked: ({ method, url, rule }) => {
-        console.info('inth blocked', method, url, rule?.id);
+        console.info('Inth blocked', method, url, rule?.id);
       },
     },
   }]);
@@ -43,63 +45,55 @@ Queue a `config` call with `networkBlocker` before the script tag:
 ```
 
 The first rule blocks every request to `collect.example.com` and its
-subdomains until measurement is allowed. The second blocks only POST requests
-to paths on `example.com` that contain `/api/track`.
+subdomains until `measurement` is allowed. The second blocks only `POST`
+requests to `example.com` paths containing `/api/track`.
 
 ## Rule fields
 
 | Field | Required | What it does |
 | --- | --- | --- |
-| `domain` | Yes | The host to match. Subdomains match too: `example.com` covers `www.example.com`. |
-| `category` | Yes | The category that lets matching requests through. A condition such as `{ and: ['measurement', 'marketing'] }` works too. |
-| `pathIncludes` | No | Match only URLs whose path contains this text. |
-| `methods` | No | Match only these HTTP methods, such as `['POST']`. All methods when omitted. |
-| `id` | No | A name for the rule, shown in logs and passed to `onRequestBlocked`. |
-| `vendor` | No | Also block while the visitor has turned this vendor off. |
-| `vendorId`, `iabPurposes`, `iabLegIntPurposes`, `iabSpecialFeatures` | No | IAB TCF conditions, checked only under an IAB policy. |
+| `domain` | Yes | Host to match, including subdomains (`example.com` covers `www.example.com`). |
+| `category` | Yes | Category or condition such as `{ and: ['measurement', 'marketing'] }`. |
+| `pathIncludes` | No | Matches URLs whose path contains this string. |
+| `methods` | No | Restricts matching to listed HTTP methods (all methods when omitted). |
+| `id` | No | Rule identifier shown in logs and `onRequestBlocked`. |
+| `vendor` | No | Also blocks when the visitor switched this vendor off. |
+| `vendorId`, `iabPurposes`, `iabLegIntPurposes`, `iabSpecialFeatures` | No | IAB TCF conditions, evaluated only under an IAB policy. |
 
 ## Blocker options
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `rules` | required | The rules above. |
-| `enabled` | `true` | `false` keeps the configuration but blocks nothing. |
-| `logBlockedRequests` | `true` | Log each blocked request with `console.warn`. |
-| `onRequestBlocked` | none | Called with `{ method, url, rule }` for each blocked request. |
+| `rules` | required | Rules table above. |
+| `enabled` | `true` | `false` keeps configuration without blocking. |
+| `logBlockedRequests` | `true` | Logs each blocked request with `console.warn`. |
+| `onRequestBlocked` | none | Receives `{ method, url, rule }` for every blocked request. |
 
 ## What a blocked request sees
 
-- A blocked `fetch` resolves with a `451` response. It does not reject, so
-  check `response.ok` in code that expects data.
-- A blocked `XMLHttpRequest` fires an `error` event.
-- A request sent before the policy resolves waits, then goes out or is
-  blocked once Inth knows the visitor's permissions. If the policy fails to
-  load, it is blocked.
-- A request that does not match any rule goes out at once.
+- Blocked `fetch` calls resolve with HTTP status `451` (check `response.ok`).
+- Blocked `XMLHttpRequest` calls fire an `error` event.
+- Requests issued before the policy resolves wait, then proceed or block once
+  permissions resolve (blocked if policy loading fails).
+- Unmatched requests proceed immediately.
 
-The rules' categories are added to the preference dialog, as they are for
-gated scripts.
+Rule categories are added to the preference dialog automatically.
 
 ## What it cannot block
 
-The network blocker patches `fetch` and `XMLHttpRequest` after the script tag
-runs. It does not cover:
+The blocker patches `fetch` and `XMLHttpRequest` once `inth.js` executes. It
+cannot intercept:
 
-- `navigator.sendBeacon`, WebSockets and `EventSource`;
-- requests from `<img>`, `<script>`, `<link>` and `<iframe>` elements;
-- requests sent before the Inth tag ran. With `defer`, the tag runs after the
-  page has parsed, so inline scripts anywhere in the page run before it;
-- requests from other frames and from service workers.
-
-Use gated tags for scripts and iframes. When inline code sends requests while
-the page parses, load the Inth tag without `defer` at the top of `<head>`, so
-it runs first. The banner still waits for the document to parse before it
-mounts.
+- `navigator.sendBeacon`, WebSockets or `EventSource`;
+- `<img>`, `<script>`, `<link>` or `<iframe>` requests;
+- requests fired before `inth.js` ran (with `defer`, inline scripts run
+  earlier; load `inth.js` without `defer` at the top of `<head>` if inline
+  code sends requests during parsing);
+- requests from other frames or service workers.
 
 ## Check it works
 
-1. Open the page in a private window with the console and Network tab open.
-2. Trigger the request, for example by loading the page that sends it. The
-   console shows `[inth] blocked POST https://example.com/api/track (rule: events)`
-   and the Network tab shows no request.
-3. Allow measurement and trigger it again. The request goes out.
+1. Open the page in a private window with Console and Network open.
+2. Trigger the tracked request. Console logs the blocked rule and Network
+   shows no outgoing request.
+3. Allow `measurement` and trigger it again. The request succeeds.

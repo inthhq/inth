@@ -1,179 +1,104 @@
 ---
 title: Troubleshooting
-description: Fix a SvelteKit build that cannot fetch the Inth manifest, a missing bundled policy, a banner missing from server HTML, failed saves through the consent route, a wrong backend URL and ignored theme colors.
+description: Fix SvelteKit manifest fetch errors, missing server HTML banners, 405 save errors, wrong project URLs, and theme overrides.
 group: frameworks
 ---
 
 ## The build, dev server or type check fails fetching the manifest
 
-**Check.** `vite build`, `vite dev` and, on SvelteKit 3, `svelte-kit sync`
-download the policy through the `consentManifest` plugin in `vite.config.ts`.
-`vite build` stops with an error that starts with `@inth/svelte/vite: could
-not fetch the consent manifest`, and `vite dev` logs it as a warning. The part
-in parentheses names the cause:
+**Check.** `vite build`, `vite dev`, and (on SvelteKit 3) `svelte-kit sync` download the policy through the `consentManifest` plugin in `vite.config.ts`. By default (`onBuildError: 'runtime'`), they log a warning starting with `@inth/svelte/vite: could not fetch the consent manifest` and continue with runtime fetching; with `onBuildError: 'fail'` or `INTH_ON_BUILD_ERROR=fail`, the command stops with an error. The text in parentheses names the cause:
 
 | Error | Cause |
 | --- | --- |
-| `/v1/consent/manifest responded 404` | The backend URL is wrong, or still the `https://your-project.inth.app` placeholder. |
-| `no backend URL is set` | Neither the `projectUrl` option nor `PUBLIC_INTH_PROJECT_URL` is set, or it is empty. `vite build` stops; `vite dev` warns. |
-| `skipped the consent manifest fetch` (a notice) | The backend URL is relative, such as `/api/inth`. With `onBuildError: 'fail'`, this is the error `build-time manifests require an absolute upstream URL`. |
-| `/v1/consent/manifest returned an invalid consent manifest.` | The URL answers, but not with an Inth v3 manifest. |
-| `fetch failed` or `no response within 10 seconds` | The machine running the command cannot reach the backend. |
+| `/v1/consent/manifest responded 404` | The project URL is wrong or still points to a placeholder. |
+| `no backend URL is set` | Neither the `projectUrl` option nor `PUBLIC_INTH_PROJECT_URL` (falling back to `PUBLIC_C15T_BACKEND_URL`) is set, or it is empty. Warns by default; stops when `onBuildError: 'fail'`. |
+| `skipped the consent manifest fetch` (a notice) | The project URL is relative, such as `/api/inth`. With `onBuildError: 'fail'`, this throws `build-time manifests require an absolute upstream URL`. |
+| `/v1/consent/manifest returned an invalid consent manifest.` | The URL responds, but not with an Inth manifest. |
+| `fetch failed` or `no response within 10 seconds` | The machine running the command cannot reach Inth. |
 
-**Fix.** Set `PUBLIC_INTH_PROJECT_URL` to your
-project's absolute backend URL where the command runs, in `.env` or the CI environment. The plugin reads it
-when `vite.config.ts` passes no `projectUrl`. Make sure the build machine can
-reach the backend. To deploy while it is down, build with
-`INTH_ON_BUILD_ERROR=runtime`.
-A `check-types` script that starts with `svelte-kit sync` needs the backend
-too.
+**Fix.** Set `PUBLIC_INTH_PROJECT_URL` (falling back to `PUBLIC_C15T_BACKEND_URL` if unset) to your project's absolute URL in `.env` or your CI environment. Make sure the build machine can reach Inth. To deploy during an outage when `onBuildError: 'fail'` is set, build with `INTH_ON_BUILD_ERROR=runtime`. A `check-types` script that starts with `svelte-kit sync` needs access to Inth too.
 
 ## The server fetches the manifest at runtime
 
-**Check.** With the default `manifest()` mode, the server log shows a
-manifest request to the backend, or a page waits on it after a cold start.
-The build had no policy to bundle: `consentManifest` is missing from
-`plugins` in `vite.config.ts`, the fetch failed in `vite dev` or in a build
-with `INTH_ON_BUILD_ERROR=runtime`, or the backend URL is relative.
+**Check.** With the default `manifest()` mode, server logs show a manifest request to Inth, or a page waits on it after a cold start. The build had no policy to bundle: `consentManifest` is missing from `plugins` in `vite.config.ts`, the fetch failed under the default `'runtime'` mode (or `INTH_ON_BUILD_ERROR=runtime`), or the project URL is relative.
 
-**Fix.** Add the plugin or fix the cause from the
-[fetch errors](#the-build-dev-server-or-type-check-fails-fetching-the-manifest),
-then restart `vite dev` or rebuild. A build fetches once, and `vite dev`
-fetches the first time the server loads the policy.
-Until then, the server fetches and caches the policy at runtime.
+**Fix.** Add `consentManifest()` or fix the error from [the fetch errors above](#the-build-dev-server-or-type-check-fails-fetching-the-manifest), then restart `vite dev` or rebuild. A build fetches once, and `vite dev` fetches the first time the server loads the policy.
 
 ## Why is the banner missing from the server HTML?
 
 **Check.** View the page source and search for `consent-banner-root`.
 
-**Fix.** If the banner only appears after hydration, work through these causes
-in order:
+**Fix.** If the banner appears only after hydration, work through these causes in order:
 
-1. **`InthProvider` has no server state.** Check that the root
-   `+layout.server.ts` exports `loadConsent` as `load` and that
-   `+layout.svelte` passes `state={data.consent}`. With
-   `manifest({ resolve: 'browser' })` or `testing()`, the browser resolves
-   the policy by design.
-2. **`loadConsent` fell back.** It returns the stored choice without a policy
-   when resolution fails or takes longer than `timeoutMs`, 500 ms by default.
-   Check the server logs. With runtime fetching or `hosted()`, check the
-   backend's response time, and raise `timeoutMs` if it is slow.
-3. **The page is prerendered.** Prerendered pages never carry a visitor's
-   consent. See
-   [prerender some pages](/docs/frameworks/sveltekit/rendering#prerender-some-pages).
-4. **No banner is due.** The policy for the visitor's location may ask for no
-   prompt, or the visitor already chose. Clear site data and check the policy.
+1. **`InthProvider` has no server state.** Verify the root `+layout.server.ts` exports `loadConsent` as `load` and `+layout.svelte` passes `state={data.consent}`. With `manifest({ resolve: 'browser' })` or `testing()`, the browser resolves the policy by design.
+2. **`loadConsent` fell back.** It returns the stored choice without a policy when resolution fails or exceeds `timeoutMs` (500 ms by default). Check server logs; with runtime fetching or `hosted()`, check response time and raise `timeoutMs` if needed.
+3. **The page is prerendered.** Prerendered pages never carry a visitor's consent. See [prerender some pages](/docs/frameworks/sveltekit/rendering#prerender-some-pages).
+4. **No banner is due.** The policy for the visitor's location may ask for no prompt, or the visitor already chose. Clear site data and check the policy.
 
 ## The banner flashes, or the stored choice is ignored on the server
 
-**Check.** The server reads the choice from the `inth` cookie. Look for a
-changed `storageConfig.storageKey` on the provider. Without a matching cookie
-name, the server reads nothing and renders the banner for every visitor.
+**Check.** The server reads the choice from the `inth` cookie. Look for a custom `storageConfig.storageKey` on the provider; without a matching cookie name, the server reads nothing and renders the banner on every request.
 
 **Fix.** Pass the same name as `cookieName` to `loadConsent` or `inthHandle`.
 
-**Check.** Look at what the layout passes to `InthProvider`. Rebuilding
-`data.consent` from booleans loses the policy and the stored record.
+**Check.** Inspect what the layout passes to `InthProvider`. Rebuilding `data.consent` from booleans drops the policy and stored record.
 
 **Fix.** Pass `data.consent` to `InthProvider` unchanged.
 
 ## Saving fails with 405 from /api/inth
 
-**Check.** `inthHandle({ proxy: true })` sends saves to the consent route,
-but the route does not forward writes. A route file that
-exports only `GET` still answers a save with `405`.
+**Check.** `inthHandle({ projectUrl: '/api/inth' })` sends saves to the consent route, but a route file exporting only `GET` answers writes with `405`.
 
-**Fix.** Pass `proxy: true` to `createConsentRoute` and export
-`POST`, `PATCH`, `PUT`, `DELETE` and `OPTIONS` next to `GET` from the
-catch-all route. See
-[save consent through your own origin](/docs/frameworks/sveltekit/rendering#save-consent-through-your-own-origin).
+**Fix.** Pass `proxy: true` to `createConsentRoute` and export `POST`, `PATCH`, `PUT`, `DELETE`, and `OPTIONS` alongside `GET`. See [save consent through your own origin](/docs/frameworks/sveltekit/rendering#save-consent-through-your-own-origin).
 
 ## The consent route times out or calls itself
 
-**Check.** `createConsentRoute` needs the backend's URL. It reads it from
-`inthHandle()` and then `consentManifest` unless you pass `projectUrl`. A
-relative `projectUrl` names a route in your own app, which the handlers call
-in-process; if it points at `/api/inth`, the route requests itself. To send
-saves through the route, set `inthHandle({ proxy: true })`, not
-`projectUrl: '/api/inth'`.
+**Check.** `createConsentRoute` reads the project URL from `inthHandle()` and then `consentManifest` unless you pass `projectUrl`, skipping a handle `projectUrl` that points at the route itself. A relative `projectUrl` passed directly to `createConsentRoute` calls an in-app route; if it points at `/api/inth`, the route calls itself.
 
-**Fix.** Pass the Inth URL as `projectUrl`, or leave it unset so the route
-uses `PUBLIC_INTH_PROJECT_URL`.
+**Fix.** Pass your absolute Inth URL as `createConsentRoute({ projectUrl })`, or leave it unset so the route uses `PUBLIC_INTH_PROJECT_URL` (or `PUBLIC_C15T_BACKEND_URL`).
 
 ## Consent requests go to the wrong backend
 
-**Check.** Look at `PUBLIC_INTH_PROJECT_URL` in
-`.env`, `.env.local` and the build environment, and at any `projectUrl` in `vite.config.ts`,
-`src/hooks.server.ts` and the provider's `projectUrl` prop. One still has the
-demo project, the placeholder `https://your-project.inth.app`, or a URL from
-another project. The build reads the variable, so the URL for the policy and
-for saves is fixed when you build, and setting it when the built app starts
-changes nothing.
+**Check.** Inspect `PUBLIC_INTH_PROJECT_URL` and `PUBLIC_C15T_BACKEND_URL` in `.env`, `.env.local`, and the build environment, plus any `projectUrl` in `vite.config.ts`, `src/hooks.server.ts`, or `InthProvider`. `PUBLIC_INTH_PROJECT_URL` wins if both are set; `PUBLIC_C15T_BACKEND_URL` is read as a fallback when `PUBLIC_INTH_PROJECT_URL` is unset. The build inlines the URL at build time, so changing it at runtime changes nothing.
 
-**Fix.** Set `PUBLIC_INTH_PROJECT_URL` to your
-Inth project's backend URL, including any path prefix, for the build and for the running app, then
-rebuild. The policy and saves need the same backend.
+**Fix.** Set `PUBLIC_INTH_PROJECT_URL` to your Inth project URL, including any path prefix, remove any stale `PUBLIC_C15T_BACKEND_URL`, and rebuild.
 
 ## Your own `:root` token rules are ignored
 
-**Check.** A theme from `generateThemeCSS()` uses `:root:root`, which outranks a
-plain `:root` rule wherever each one sits in the page. If you also set
-`--inth-*` variables on `:root` in a stylesheet, the generated theme wins for
-every token both set.
+**Check.** CSS from `generateThemeCSS()` uses `:root:root`, which outranks a plain `:root` rule regardless of order.
 
-**Fix.** Move those values into the theme, or write the rule on `:root:root`.
-See [customize](/docs/frameworks/sveltekit/customize).
+**Fix.** Move those values into the theme object, or write the overrides on `:root:root`. See [customize](/docs/frameworks/sveltekit/customize).
+
+## Server code ends up in the browser bundle
+
+**Check.** Look for imports of `@inth/svelte/kit` or `@inth/sdk/server` inside components. Those entry points belong only in `hooks.server.ts`, `+layout.server.ts`, `+page.server.ts`, and `+server.ts`.
+
+**Fix.** Import components from `@inth/svelte` in `.svelte` files, and configure the mode on `inthHandle()` in `hooks.server.ts`.
 
 ## inthHandle() throws on a transport factory
 
-**Check.** `inthHandle({ mode })` received a transport factory. The error reads
-"inthHandle() takes manifest(), hosted() or testing() from @inth/svelte/kit".
-The handle's mode must be data that can reach the browser, and a custom
-transport is code.
+**Check.** `inthHandle({ mode })` received a browser transport instead of a serializable mode object and threw `@inth/svelte: \`mode\` must be manifest() or hosted() from @inth/svelte, or testing() from @inth/svelte/testing.`. The handle's mode must serialize across the server-client boundary.
 
-**Fix.** Pass the transport factory to `InthProvider`'s `mode` prop, and
-keep the handle's `mode` for one of the data modes from `@inth/svelte/kit`.
-
-## The build says a helper is not exported by kit/browser.js
-
-**Check.** `vite build` fails with an error such as
-`"loadConsent" is not exported by ".../@inth/svelte/dist/kit/browser.js"`. A
-component or a universal `+layout.ts` imports a server helper, such as
-`loadConsent`, `inthHandle` or `createConsentRoute`, from `@inth/svelte/kit`.
-In the browser build that path has only `InthProvider`.
-
-**Fix.** Import server helpers in `hooks.server.ts`, `+layout.server.ts`,
-`+page.server.ts` or `+server.ts` only. Components import `InthProvider` from
-`@inth/svelte/kit` and nothing else from it.
+**Fix.** Import `manifest()` or `hosted()` from `@inth/svelte/kit` (or `testing()` from `@inth/svelte/testing`) when passing `mode` to `inthHandle()`.
 
 ## Names from an earlier alpha are missing
 
-**Check.** An import or option from an earlier v3 alpha fails, such as
-`createSvelteKitConsentRouteHandlers`, `inthPreload` or
-`loadConsent(event, { projectUrl })`. `@inth/svelte` was not public in v2, so
-the alphas renamed these with no alias.
+**Check.** An import or option from an earlier v3 alpha fails, such as `createSvelteKitConsentRouteHandlers`, `c15tPreload`, or `loadConsent(event, { projectUrl })`. `@inth/svelte` was not public in v2, so those alpha names have no alias.
 
 **Fix.** Use the current names:
 
 | Removed | Use instead |
 | --- | --- |
 | `ConsentManagerProvider` with `prefetch={...}` | `<InthProvider state={data.consent}>` |
-| `ConsentRoot` from `@inth/svelte` | `InthProvider` from `@inth/svelte/kit` |
-| `ConsentRootState` | `InthProviderState` from `@inth/svelte/kit` |
 | `Frame` | `ConsentGate` |
 | `createSvelteKitConsentRouteHandlers` | `createConsentRoute` |
-| `inthPreload` | Part of `consentManifest()` from `@inth/svelte/vite` |
+| `c15tPreload` | Part of `consentManifest()` from `@inth/svelte/vite` |
 | `ConsentManifestOptions`, `consentManifest({ outputFile })` | Removed |
 | `loadConsent(event, { projectUrl, manifest, initRoute, shared })` returning `prefetch` | `inthHandle({ mode, routePrefix, snapshot, projectUrl })` in `src/hooks.server.ts`, and `export { loadConsent as load }`, which returns `{ consent }` |
-| `resolveConsent()` from `@inth/svelte/server` | `loadConsent(event)` from `@inth/svelte/kit`, in a load or an endpoint |
+| `resolveConsent({ manifest })` from `@inth/svelte/server` | `resolveRequestConsent({ snapshot })` from `@inth/sdk/server` |
 
 <include src="../../shared/svelte/troubleshooting.mdx" />
 
 ## More help
 
-[Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
-every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because the wrong package is installed, choices that disappear on
-reload, server HTML that differs from the browser, static builds that fail and
-content blockers that hide the consent UI. [Verify
-consent](/docs/guides/verify-consent) lists the checks to run before release.
+[Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared across frameworks, including missing banners, early analytics, lost choices, hydration mismatches, and content blockers. [Verify consent](/docs/guides/verify-consent) has the release checklist.

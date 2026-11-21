@@ -1,6 +1,6 @@
 ---
 title: IAB GPP
-description: Expose the IAB Global Privacy Platform API (__gpp) from a SvelteKit app with the provider's gpp option, so ad tech can read US state opt-outs and the TCF EU consent string.
+description: Expose the IAB Global Privacy Platform API (__gpp) in a SvelteKit app so ad tech reads US state opt-outs and TCF consent.
 group: frameworks
 ---
 
@@ -17,11 +17,7 @@ and other props:
 
 {/* example: fragment */}
 
-```svelte title="src/routes/+layout.svelte (partial)"
-<script lang="ts">
-	import { InthProvider } from '@inth/svelte/kit';
-</script>
-
+```svelte title="src/routes/+layout.svelte"
 <InthProvider state={data.consent} {scripts} gpp>
 ```
 

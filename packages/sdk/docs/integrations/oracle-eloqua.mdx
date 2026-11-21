@@ -1,13 +1,13 @@
 ---
 title: Oracle Eloqua
-description: Load Oracle Eloqua after mapped category and vendor consent, configure its tracking settings, and verify loading and withdrawal with Inth.
+description: Load Oracle Eloqua after marketing consent and coordinate opt-in and opt-out commands with Inth.
 seoTitle: Oracle Eloqua cookie consent with Inth
-seoDescription: Gate Oracle Eloqua on category and vendor consent with Inth. Configure the loader, understand withdrawal limits, and verify vendor requests and storage.
+seoDescription: Gate Oracle Eloqua on marketing and vendor consent with Inth, configure first-party tracking, and verify opt-in and opt-out requests.
 icon: chart-line
 group: integrations
 ---
 
-`eloquaTracking` waits for its mapped category and vendor consent before creating vendor globals or downloading Oracle Eloqua. The default category is `marketing`.
+The `eloquaTracking` helper waits for its mapped category, `marketing` by default, and vendor consent before defining `_elqQ` or downloading Oracle Eloqua. On withdrawal, it queues `elqOptOut` and Inth reloads the page by default.
 
 ## Configure Oracle Eloqua
 
@@ -23,40 +23,33 @@ Copy your site ID from Eloqua and remove the original asynchronous tracking snip
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `siteId` | Required | Eloqua site ID. |
+| `siteId` | Required | Eloqua site ID. Missing or blank values log an error and skip loading. |
 | `firstPartyCookieDomain` | Unset | First-party tracking hostname configured in Eloqua. |
-| `category` | `marketing` | Consent condition for the whole loader. |
+| `category` | `'marketing'` | Consent condition for the loader. |
 | `scriptUrl` | `https://img.en25.com/i/elqCfg.min.js` | Custom or proxied loader URL. Blank values use the default. |
 
-Missing or blank required values log an error and never load.
-
-Custom loaders must synchronously append one matching consent response script when `elqOptIn` or `elqOptOut` runs. Preserve `pps=41` for opt-in, `pps=42` for opt-out, and the installed account's `siteid` query parameter. The response itself can complete asynchronously. A deferred or unmatched custom response leaves consent indeterminate. The helper reports the problem and blocks tracking and further consent commands until reload. A `scriptLoader.sources` or script registry entry that moves the loader to another URL makes it a custom loader too.
-
-A custom dispatcher that throws also blocks tracking and further consent commands until reload, even if it appended a matching response before throwing.
+Custom loaders, including URLs moved via `scriptLoader.sources`, must synchronously append one matching consent response script when `elqOptIn` or `elqOptOut` runs, preserving `pps=41` for opt-in, `pps=42` for opt-out, and the installed account's `siteid` query parameter. The response can finish asynchronously. A deferred, unmatched, or throwing custom dispatcher leaves consent indeterminate and blocks tracking and further consent commands until reload.
 
 ## Loading and revocation
 
-After consent, the helper creates `_elqQ`, sets the site ID and optional first-party cookie domain, and downloads the SDK. After loading, it queues `elqOptIn` and waits for its response script before `elqTrackPageView`. The page view uses the full current page URL, including its path, query and fragment, when the response completes.
+After consent, the helper creates `_elqQ`, sets the site ID and optional `firstPartyCookieDomain`, downloads `elqCfg.min.js`, queues `elqOptIn`, and waits for its response before sending `elqTrackPageView` with the full current URL including path, query, and fragment.
 
-The helper sends one consent request at a time. If consent changes while a response is pending, it waits for completion and then sends the latest choice. Withdrawal or disposal during opt-in sends `elqOptOut` after that response finishes and suppresses the page view only when the current owners no longer collectively permit tracking. Disposing one provider preserves the active lifecycle when at least one registered provider remains and every remaining provider still allows tracking. Regrant waits for any pending opt-out before opting in again. Failed responses do not trigger immediate retries or page views. A later consent update or remount can retry a failed request, including an opt-out that failed after disposal. Regrant and category changes preserve Eloqua's installed dispatcher while another provider retains its loader. If a surviving provider needs a new loader, the helper creates a fresh setup queue before loading another SDK. Each SDK execution receives its initial site and first-party settings, which the helper binds to its physical tag before loading. The helper keeps the resulting dispatcher with that tag. A detached download can still execute, so later provider adoption uses the tag's captured dispatcher.
+- **Serialized consent requests.** The helper sends one consent command at a time. Changes during a pending response wait until it settles before sending the latest choice. Withdrawal or disposal during opt-in queues `elqOptOut` afterward and suppresses the page view if no remaining provider permits tracking. Regrant waits for any pending opt-out before opting in again.
+- **No automatic retry loop.** Failed or unappended stock responses log a dispatch failure and send no page view. A later consent update, remount, or script reconciliation can retry. A failed opt-out can leave Eloqua's opt-in cookie in place; the helper does not delete it or report withdrawal as complete.
+- **Multiple providers.** Calling `eloquaTracking` with equivalent options shares one lifecycle across disposal, remount, and differing categories or loader URLs. Every registered provider, including a denied provider that never loaded, must allow the category and vendor before tracking starts. Disposing one provider keeps the active lifecycle while remaining providers allow tracking, and a compatible provider can adopt an already-loaded tag.
+- **One account per page.** Use one `siteId` and normalized `firstPartyCookieDomain` per page; an unset domain differs from a configured one. A provider with a different site ID or domain logs a conflict and blocks tracking through the installed account until removed, even if it starts denied. Changing the installed site or domain requires a reload.
+- **Keep reload enabled.** Eloqua's opt-in and opt-out commands are asynchronous and do not cancel in-flight requests or disable all SDK methods. A hung response can block later choices until reload. The loader stays in the DOM for same-page regrant because Eloqua replaces `_elqQ` with a dispatcher, so keep `reloadOnConsentRevoked` enabled for a clean next page.
 
-Calling `eloquaTracking` again with equivalent options preserves the active consent lifecycle, including pending response handling across disposal and remount. Consent responses for the same site stay serialized when a provider is replaced, even if its category or loader URL changes. When providers share that configuration, every registered provider must allow the category and vendor before tracking starts. A denied provider that has never loaded still participates in this decision. SDK setup waits while a registered provider denies consent. Compatible providers can use different consent categories or loader URLs and still coordinate consent. Regranting either provider sends one page view after opt-in completes, provided every current owner allows tracking.
-
-A provider can adopt an already-loaded compatible tag while another provider denies consent. Once the denying provider is removed or grants consent, the adopter can keep tracking after the original provider is disposed.
-
-Use one site ID and first-party cookie domain per page. Hostname case and surrounding whitespace are normalized. An absent domain differs from a configured domain. Providers with a different site ID or domain conflict with the installed configuration. The helper reports the conflict, blocks the adopter's commands, and blocks tracking through the installed account while that provider remains registered, even if it starts denied. Withdrawal still targets the installed account and waits for its pending response. Removing the conflicting provider releases its blocker. Changing the installed site or domain requires reload, including after its script tag is removed.
-
-If the stock SDK fails to append a consent response, the helper reports the dispatch failure without confirming the request. It sends no page view for a failed opt-in. A later explicit script reconciliation can retry that request; there is no automatic retry loop. A failed opt-out can leave Eloqua's previous opt-in cookie in place. The helper does not delete that cookie or claim withdrawal succeeded.
-
-Keep `reloadOnConsentRevoked` enabled. Eloqua's opt-in and opt-out commands make asynchronous requests; opt-out does not disable every SDK request method or cancel requests already in flight. The helper orders its own consent requests and waits for the first-party opt-in response so a regrant page view does not run while the opt-in cookie still reads `0`. A request that never completes can hold up a later choice until reload. The loader stays in the DOM for same-page regrant because Eloqua replaces its array queue with a dispatcher. Reload gives the next page a fresh tracking lifecycle. Removing a script tag cannot unload the SDK.
-
-Eloqua can set `ELOQUA`, `ELQSTATUS`, `ELQOPTOUT` and first-party `OPTIN` cookies. Oracle documents 13-month tracking cookie lifetimes. Reload does not erase every vendor cookie.
+Eloqua sets `ELOQUA`, `ELQSTATUS`, `ELQOPTOUT`, and first-party `OPTIN` cookies, with documented lifetimes up to 13 months. Reloading does not delete existing vendor cookies.
 
 ## Verify Oracle Eloqua
 
-Use a clean browser profile for the initial-state checks.
+In a clean browser profile, filter DevTools Network by your Eloqua loader host:
 
-Before consent and after unrelated consent, check for no `elqCfg.min.js`, `_elqQ`, Eloqua cookies or browser storage. Grant the mapped category, which defaults to `marketing`, and allow Oracle Eloqua as a vendor. Confirm the real dispatcher replaces the array, then revoke and inspect the opt-out request. Regrant with your configured account and verify page tracking after the asynchronous opt-in completes.
+1. Before consent and after granting an unrelated category, confirm no `elqCfg.min.js` request, `_elqQ` global, cookies, or browser storage appear.
+2. Grant `marketing`, or your mapped category, and allow the Oracle Eloqua vendor. Confirm the real dispatcher replaces the `_elqQ` array and `elqOptIn` completes before `elqTrackPageView`.
+3. Revoke consent and inspect the `elqOptOut` request with `pps=42`.
+4. Regrant consent with your configured account and confirm page tracking fires after the asynchronous opt-in completes.
 
 Sources: [basic tracking](https://docs.oracle.com/en/cloud/saas/marketing/eloqua-user/Help/EloquaAsynchronousTrackingScripts/Tasks/BasicPageTracking.htm), [first-party tracking](https://docs.oracle.com/en/cloud/saas/marketing/eloqua-user/Help/EloquaAsynchronousTrackingScripts/Tasks/BasicPageTrackingFirst.htm), and [opt-in and opt-out commands](https://docs.oracle.com/cloud/latest/marketingcs_gs/OMCAA/Help/EloquaAsynchronousTrackingScripts/Tasks/OptingInAndOut.htm).
 

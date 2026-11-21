@@ -19,9 +19,9 @@ first render.
 | --- | --- | --- | --- |
 | `defaultPosition` | `'bottom-right'`, `'bottom-left'`, `'top-right'` or `'top-left'` | `'bottom-right'` | The corner it starts in. |
 | `persistPosition` | `boolean` | `true` | Remembers the corner a visitor drags it to, in local storage. |
-| `showWhen` | `'always'`, `'after-consent'` or `'never'` | `'always'` | `'after-consent'` waits until the visitor has answered the banner. `'never'` hides it. |
+| `showWhen` | `'always'` or `'never'` | `'always'` | `'never'` hides it. |
 | `size` | `'sm'`, `'md'` or `'lg'` | `'md'` | Button size. |
-| `ariaLabel` | `string` | The `trigger.label` translation, "Open privacy settings" in English | Accessible name. |
+| `ariaLabel` | `string` | `'Open privacy settings'` | Accessible name. Translate it yourself; it does not come from `i18n`. |
 | `noStyle` | `boolean` | `false` | Drops Inth's classes, including the fixed positioning. |
 | `class` | `string` | none | Extra class on the button. |
 | `onclick` | `(event: MouseEvent) => void` | none | Runs before the dialog opens. Call `event.preventDefault()` to stop it. |
@@ -46,9 +46,7 @@ first render.
 ## Accessibility
 
 The trigger is a `<button type="button">` with `aria-label`, since it shows
-only an icon. The label, the toolbar's name and the DevTools button's name
-come from the `trigger` translations, and fall back to English for a
-language that does not set them.
+only an icon. Keep the label in the page's language by passing `ariaLabel`.
 Dragging needs a pointer; keyboard users activate it with Enter or Space and
 cannot move it, so pick a `defaultPosition` that does not cover your own
 controls.

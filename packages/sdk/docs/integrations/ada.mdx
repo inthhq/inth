@@ -1,29 +1,17 @@
 ---
 title: Ada
-description: Load Ada Messaging after functionality consent with the Inth ada helper, configure regional Agents, and stop the widget when consent is revoked.
+description: Load Ada Messaging after functionality consent and stop the widget on revocation with the Inth ada helper.
 seoTitle: Ada Messaging cookie consent with Inth
-seoDescription: Gate Ada Messaging on functionality consent with Inth. Keep the SDK interface private, stop the widget on revocation, and verify its requests and storage.
+seoDescription: Gate Ada Messaging on functionality consent with Inth, keep the SDK interface private, stop the widget on revocation, and verify storage.
 icon: bot
 group: integrations
 ---
 
-Ada Messaging adds an Ada AI Agent chat widget to your site. The Inth `ada`
-helper waits for `functionality` consent before it imports Ada's Messaging Web
-SDK, and it keeps the Messaging interface private.
-
-When the visitor withdraws, the helper calls Ada's `stop()` to remove the
-widget, and Inth reloads the page by default. `stop()` doesn't delete stored
-conversations or cookies.
+The `ada` helper blocks Ada's Messaging Web SDK until the visitor grants `functionality` consent and keeps the Messaging interface private. On withdrawal, it calls `stop()` to remove the widget and Inth reloads the page by default. `stop()` does not delete stored conversations or cookies.
 
 ## Configure Ada Messaging
 
-Get your AI Agent's public `handle` from your Ada team. Most installations
-need only the handle. Set `cluster` or `domain` only when Ada gives you a
-regional configuration.
-
-Remove any existing Ada module snippet, `embed2.js` script tag, or tag-manager
-installation. A separate Ada installation can load before Inth grants consent,
-and Ada allows only one Messaging interface per page.
+Get your AI Agent's public `handle` from Ada, plus `cluster` or `domain` if your account uses a regional setup. Remove any existing Ada module snippet, `embed2.js` tag, or tag-manager copy because Ada allows only one Messaging interface per page. This helper targets the Messaging Web SDK only and does not load the legacy Chat SDK or accept a `legacy` option.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -31,127 +19,48 @@ and Ada allows only one Messaging interface per page.
 
 <include src="../shared/integrations/register-scripts.mdx" />
 
-This helper targets the Messaging Web SDK. It doesn't load the legacy Chat SDK
-and has no `legacy` option.
-
 ## Options
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `handle` | Required | Public AI Agent handle passed to `start()`. Surrounding whitespace is trimmed. If it's missing or blank, Inth logs `ada: missing or invalid handle` and never loads Ada. |
-| `cluster` | Ada's default region | Regional segment, such as `eu`, `us2` or `maple`, or a full cluster domain supplied by Ada. Trimmed. Blank values are omitted. |
-| `domain` | Ada's default domain | Ada base-domain segment. Use only the value Ada gives you. Trimmed. Blank values are omitted. |
+| `handle` | Required | Public AI Agent handle passed to `start()`. Trimmed automatically. Missing or blank values log `ada: missing or invalid handle` and skip loading. |
+| `cluster` | Ada default region | Regional segment such as `eu`, `us2`, or `maple`, or a full cluster domain from Ada. Trimmed, and omitted when blank. |
+| `domain` | Ada default domain | Ada base-domain segment. Use only the value Ada provides. Trimmed, and omitted when blank. |
 
-The helper imports `https://messaging-assets.ada.support/sdk.js`. You can't
-set a custom SDK URL, and the helper doesn't bundle the runtime into your app.
-Ada's entry module imports the current runtime from its CDN.
-
-If your site has a Content Security Policy, allow
-`https://messaging-assets.ada.support` in `script-src`, `connect-src` and
-`frame-src`. Also allow your Agent's API origin in `connect-src`. Follow
-[Ada's CSP instructions](https://docs.ada.cx/messaging/web/getting-started#content-security-policy)
-for the origin that matches your handle and region.
+The helper dynamically imports `https://messaging-assets.ada.support/sdk.js` with no URL override and does not bundle the runtime. For Content Security Policy, allow `https://messaging-assets.ada.support` in `script-src`, `connect-src`, and `frame-src`, plus your Agent API origin in `connect-src` per [Ada's CSP guide](https://docs.ada.cx/messaging/web/getting-started#content-security-policy).
 
 ## Loading and revocation
 
-The helper returns a callback-only Inth script with no `src`. When its consent
-is granted, it imports the SDK, calls the module's `createAdaEmbedInterface()`
-export, and awaits `start({ handle, cluster, domain })`. It creates no
-`window.adaEmbed` or `window.adaSettings` global. Repeated consent updates don't
-start a second widget.
+`ada` returns a callback-only script with no `src`. On grant, it imports the SDK, calls `createAdaEmbedInterface()`, and awaits `start({ handle, cluster, domain })`. It creates no `window.adaEmbed` or `window.adaSettings` global, respects category overrides and the Ada vendor switch, and ignores repeated grants.
 
-The helper checks the permission Inth passes to it, so if you change the
-script's category, the gate changes too. The visitor's Ada vendor switch
-applies inside an allowed category.
-
-### One configuration per page
-
-Keep one Ada helper in your scripts array. Helpers with the same handle,
-cluster and domain share one private interface, and Messaging stops when the
-last of them is revoked or disposed.
-
-A helper with different settings doesn't change the running widget. When it
-gets consent while another configuration is active, it logs a `console.warn`
-(`ada: Ada supports one configuration per page`) and does nothing until the
-page reloads. It stays ignored even after the first configuration stops.
-
-### Stopping the widget
-
-When the last granted registration loses consent or is disposed, the helper
-calls `stop()`. Ada documents that `stop()` removes the SDK frames and
-interrupts a pending `start()`. A later grant waits for the earlier start and
-stop to finish, then starts the same interface again. Once every registration
-is gone and `stop()` has run, a new registration can start it with different
-settings.
-
-If consent is withdrawn while the SDK import is still pending, the helper
-doesn't create or start the interface when the import finishes. Browsers can't
-cancel a dynamic import that has already begun, so the SDK can still fetch its
-dependencies and write its own bootstrap storage. Keep `reloadOnConsentRevoked`
-enabled to end that work. Imported code stays in memory until the page unloads.
-
-Ada has no documented consent signal or opt-out action. `stop()` doesn't
-promise to erase conversation history, stored tokens or cookies. The helper
-doesn't call `deleteHistory()`, which permanently deletes the conversation and
-resets the session.
-
-### Errors
-
-The helper logs failures with `console.error` and doesn't throw:
-
-- If the import fails, the module has no `createAdaEmbedInterface` export, or
-  `start()` rejects, it logs `ada: failed to start Messaging.` and drops the
-  current registrations. The next consent update can try again, or another
-  configuration can start instead.
-- If `stop()` rejects, it logs `ada: failed to stop Messaging.`
+- **One configuration per page.** Registrations with identical `handle`, `cluster`, and `domain` share one private interface. A different configuration granted while one is active logs `ada: Ada supports one configuration per page`, and Inth ignores it until reload even after the first stops.
+- **Stopping the widget.** When the last granted registration loses consent or disposes, Inth calls `stop()`, removing SDK frames and interrupting a pending `start()`. Regrant waits for pending start and stop calls before restarting. Once all registrations are gone and `stop()` completes, a new configuration can start.
+- **In-flight imports.** If the visitor withdraws consent while the dynamic import downloads, Inth skips creating or starting the interface. Browsers cannot cancel an active import, so the module can still fetch dependencies, write bootstrap storage, and stay in memory until unload. Keep `reloadOnConsentRevoked` enabled.
+- **Conversation data.** Ada has no consent signal API. `stop()` does not clear conversations, tokens, or cookies, and Inth never calls `deleteHistory()`.
+- **Errors.** Failures log to `console.error` without throwing. Failed imports, missing `createAdaEmbedInterface`, or rejected `start()` calls log `ada: failed to start Messaging.` and drop current registrations so a later update can retry. Rejected `stop()` calls log `ada: failed to stop Messaging.`
 
 ## Cookies and storage
 
-[Ada's client-side storage list](https://static.ada.support/ada-web-storage-list.html)
-covers several SDK generations and optional integrations. Entries include:
+Entries listed in [Ada's client-side storage reference](https://static.ada.support/ada-web-storage-list.html):
 
 | Name | Purpose and retention |
 | --- | --- |
-| `__Host-ada-session-[session ID]-[generation]` | Server-set HttpOnly refresh credential on the Agent's Ada subdomain. Ada lists a session duration of up to seven days. |
-| `ada-embed_*`, `ada-embed-*`, `ada-functional-storage` | SDK state, session values and version caches. Ada lists these as persistent Web Storage. |
-| `chatter`, `created`, `inLiveChat`, `messagingAuthState` | Conversation, session, handoff and authentication state. Ada lists persistent Web Storage, including entries on the Ada domain. |
+| `__Host-ada-session-[session ID]-[generation]` | HttpOnly refresh cookie on the Agent's Ada subdomain, up to seven days. |
+| `ada-embed_*`, `ada-embed-*`, `ada-functional-storage` | Persistent Web Storage for SDK state, sessions, and version caches. |
+| `chatter`, `created`, `inLiveChat`, `messagingAuthState` | Persistent Web Storage for conversation, session, handoff, and auth state. |
+| `ada-messaging-sdk-rollout:*` | Local storage rollout assignments written on module evaluation. Can remain after `stop()`. |
 
-The hosted SDK bootstrap also stores rollout assignments under
-`ada-messaging-sdk-rollout:*` in the host page's local storage. This happens
-while the module evaluates, which is why Inth gates the import itself.
-Rollout assignments can remain after `stop()`.
-
-Your Agent can embed other services, such as Calendly, YouTube or a live
-support platform. Their storage depends on your configuration, so inspect the
-widget's frames as well as the host page. JavaScript on your page can't read
-or clear Ada's HttpOnly cookies on another origin.
+Embedded services inside your Agent, such as Calendly, YouTube, or live support tools, can add storage in widget frames. Your site cannot read or delete Ada's HttpOnly cookies on another origin.
 
 ## Verify Ada Messaging
 
-Use a private window with an opt-in policy and your real Ada handle. In
-DevTools, disable the Network cache and filter by `ada.support`:
+Filter DevTools Network by `ada.support` in a private window with an opt-in policy and your real handle:
 
-1. Load the page without granting functionality. No Ada module, manifest,
-   iframe or API request appears, and the fresh browser context has no Ada
-   storage.
-2. Reject optional consent and reload. Ada still makes no request.
-3. Allow functionality. Look for `sdk.js`, the rollout manifest, the versioned
-   SDK module and the Ada launcher. `window.adaEmbed` stays undefined.
-4. Revoke functionality or turn off the Ada vendor switch. The helper calls
-   `stop()`, and Inth reloads by default. The new page makes no Ada request.
-   Stored conversation data can remain.
-5. Allow functionality again. The widget starts once. Repeat the grant and
-   revoke steps on a throttled network to check a pending startup.
+1. Load the page before choosing, then reject and reload. Confirm no Ada module, manifest, iframe, API request, or storage appears.
+2. Allow `functionality`. Confirm `sdk.js`, the rollout manifest, the versioned module, and the launcher load while `window.adaEmbed` stays undefined.
+3. Withdraw `functionality` or disable the Ada vendor switch. Confirm `stop()` runs, the page reloads, and no Ada requests fire on the new page.
+4. Repeat grant and revoke on a throttled network to verify pending startup cancellation, and check the console for `ada:` warnings.
 
-Check the console too. An `ada:` warning means a second configuration with
-different settings is in your scripts array.
-
-The helper already calls `stop()`, the opt-out step the shared checklist below
-asks for. Keep the reload enabled anyway, for an import that's still pending.
-
-Sources: [Messaging Web SDK installation](https://docs.ada.cx/messaging/web/getting-started#embed-with-a-module-script),
-[settings and lifecycle actions](https://docs.ada.cx/messaging/web/sdk-api-reference),
-[keep the Messaging interface private](https://docs.ada.cx/messaging/web/security-best-practices#keep-the-client-in-a-private-scope),
-and [Ada's client-side storage list](https://static.ada.support/ada-web-storage-list.html).
+Sources: [Messaging Web SDK installation](https://docs.ada.cx/messaging/web/getting-started#embed-with-a-module-script), [SDK API reference](https://docs.ada.cx/messaging/web/sdk-api-reference), [private interface scope](https://docs.ada.cx/messaging/web/security-best-practices#keep-the-client-in-a-private-scope), and [client-side storage list](https://static.ada.support/ada-web-storage-list.html).
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

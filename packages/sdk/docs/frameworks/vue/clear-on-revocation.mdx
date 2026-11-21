@@ -1,14 +1,17 @@
 ---
 title: Clear on revocation
-description: Delete the first-party cookies and Web Storage keys a consent category owns in a Vue app when that category is denied, with the clearOnRevocation option on the inth plugin.
+description: Delete first-party cookies and Web Storage keys in Vue when a visitor denies a consent category.
 group: frameworks
 ---
 
+Delete cookies and storage keys left behind by a vendor when its category is
+denied, using `clearOnRevocation` in `inth`.
+
 ## Configure cleanup
 
-Gating stops new requests, but it leaves the cookies and storage keys a vendor
-already wrote. List the ones each optional category owns and pass them to the
-plugin in `src/main.ts`. When that category is denied, Inth deletes them:
+Script gating stops new requests, not cookies or storage keys a vendor already
+wrote. List the keys each optional category owns in `src/main.ts` so Inth
+removes them when that category is denied:
 
 {/* example: fragment */}
 
@@ -25,7 +28,7 @@ createApp(App)
 	.mount('#app');
 ```
 
-The plugin reads `clearOnRevocation` once, when the app mounts.
+The plugin reads `clearOnRevocation` once on mount.
 
 <import src="../../shared/scripts/clear-on-revocation.mdx#targets" />
 

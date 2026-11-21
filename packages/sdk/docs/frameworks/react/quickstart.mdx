@@ -1,103 +1,71 @@
 ---
 title: Quickstart
-description: Add a consent banner, preferences dialog and consent-gated scripts to a React single-page app built with Vite, using Inth as the consent backend.
+description: Add a cookie consent banner to a React Vite app and hold back analytics until consent allows them.
 group: frameworks
 ---
 
-## Before you start
+Add a consent banner to a React Vite app. The browser resolves each visitor's policy from Inth, and analytics wait until consent allows them.
 
-This guide sets up a client-rendered React app built with Vite. The browser
-loads the page and asks your consent backend for the visitor's policy, then
-shows the banner or runs the scripts the visitor allowed. The backend reads the
-visitor's location from the request, so regional policies need no extra setup.
+<Prompt title="Add Inth consent to this React app" description="Paste into Claude Code, Codex, Cursor, or another coding agent at the root of your app.">
+  Add Inth consent management to this React Vite app.
 
-- **Next.js or TanStack Start?** Use that framework's guide from the
-  [framework list](/docs/frameworks). Their adapters resolve consent on the
-  server.
-- **React Router framework mode, Remix or another server-rendered React app?**
-  This guide still works. The server renders the page without consent state and
-  the browser resolves it after hydration. Read
-  [rendering](/docs/frameworks/react/rendering#react-router-remix-and-other-server-rendered-apps)
-  for what that means for the first paint.
+  1. Check that the app is a React app built with Vite. If it uses Next.js or TanStack Start, stop and tell me.
+  2. Install `@inth/react` and `@inth/integrations`. Read `node_modules/@inth/react/AGENTS.md`, then follow the React quickstart it links to, in order. Do not guess the API from memory.
+  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
+  4. Add `consentManifest()` from `@inth/react/build` to `vite.config.ts`. Add nothing to `.gitignore`.
+  5. Create `src/consent.tsx` with `InthProvider`, `ConsentBanner`, `ConsentDialog`, and a footer `ConsentDialogLink`. Move every analytics and marketing script into `options.scripts` with the matching helper from `@inth/integrations`, carry over settings such as PostHog's `region` or `apiHost`, and remove old loaders from `index.html` or app code. If a vendor has no helper, tell me.
+  6. Wrap `<App />` in `<Consent>` in `src/main.tsx` and wrap third-party iframes in `ConsentGate`.
+  7. Run `vite build` and `vite preview`. In a browser, check that no vendor request fires before consent, that rejecting survives a reload, and that granting analytics from the footer link loads PostHog.
 
-You need an [Inth project](https://inth.com/dashboard/sign-up?framework=react). In the project, set the policy
-rules for your regions, add your site's origin to the trusted origins, and copy
-the backend URL.
-[Choose your setup](/docs/concepts/choose-your-setup#decide-who-runs-the-consent-backend)
-covers testing without a backend.
+  Then list the files you changed, any script still outside consent, and how you checked the requests.
+</Prompt>
 
-The guide uses `hosted()` mode. Policy, translation and vendor edits in your
-project reach visitors on their next page load, without a rebuild.
+## Prerequisites
 
-## Install Inth
+- A React single-page app built with Vite. For Next.js or TanStack Start, see the [framework list](/docs/frameworks). For React Router framework mode or Remix, see [rendering](/docs/frameworks/react/rendering#react-router-remix-and-other-server-rendered-apps).
+- An [Inth project](https://inth.com/dashboard/sign-up?framework=react) with your site's origin in its trusted origins. See [connect an Inth project](/docs/concepts/choose-your-setup#connect-an-inth-project).
+
+## Install the SDK
 
 <CommandTabs command="@inth/react @inth/integrations" mode="install" />
 
-`@inth/react` contains the React adapter, and the Vite plugin at
-`@inth/react/build`. `@inth/integrations` holds the vendor loaders used below.
+Components render their own `<style>` elements, so no stylesheet import is needed. On Tailwind CSS 3, [import the stylesheet yourself](/docs/frameworks/react/customize#import-the-stylesheet-yourself).
+
+## Set the project URL
+
+Add your Inth project URL, including any path prefix, to `.env` and your host's build settings:
+
+```sh title=".env"
+VITE_INTH_PROJECT_URL=https://example-inth.inth.app
+```
+
+This URL is public. `https://example-inth.inth.app` is a demo project for testing. Vite inlines it at build time, so rebuild after changing it. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`, which is read as a fallback if unset.
 
 ## Add the Vite plugin
 
-Add `consentManifest` to `vite.config.ts`:
+Add `consentManifest()` from `@inth/react/build` to `vite.config.ts`:
 
 <include src="../../shared/examples/react/vite-config.mdx" />
 
-The plugin reads `VITE_INTH_PROJECT_URL`. Set it to your project's backend URL,
-exactly as Inth shows it, including any path prefix, in `.env` or wherever you
-build:
-
-```sh title=".env"
-VITE_INTH_PROJECT_URL=https://your-project.inth.app
-```
-
-The c15t name `VITE_C15T_BACKEND_URL` still works as a fallback. When both are
-set, `VITE_INTH_PROJECT_URL` wins.
-
-`InthProvider` needs the URL as its `projectUrl` option, read from
-`import.meta.env.VITE_INTH_PROJECT_URL` in the next step.
-
-The plugin also adds a small script to `index.html` that sends `/init` while
-your JavaScript downloads, so the banner shows sooner.
-[Rendering](/docs/frameworks/react/rendering#send-init-before-the-app-loads)
-covers when to turn it off.
+`consentManifest()` exposes your project URL on `import.meta.env.VITE_INTH_PROJECT_URL` and adds an inline script to `index.html` that starts `/v1/consent/init` while JavaScript downloads. See [send `/init` before the app loads](/docs/frameworks/react/rendering#send-init-before-the-app-loads).
 
 ## Mount the provider
 
-Create `src/consent.tsx`. `InthProvider` creates the consent runtime and
-loads the scripts. `ConsentBanner` and `ConsentDialog` render when the policy
-asks for them, and `ConsentDialogLink` keeps preferences reachable after the
-banner closes.
+Create `src/consent.tsx`:
 
 <include src="../../shared/examples/react/consent.mdx" />
 
-`hosted()` makes one `/init` request to your backend, started early by the
-script in `index.html`. The backend picks the policy from the visitor's
-location and language and returns its current version. Consent choices go to
-the same backend. Vite reads `VITE_INTH_PROJECT_URL` at build time, so set it
-before you build, not when you serve the files.
+Inth resolves the visitor's policy from `/v1/consent/init`, so policy and translation edits apply without a rebuild.
 
-PostHog waits for measurement permission, so your policy must include that
-category. Replace `phc_your_project_key` with your PostHog project key.
-PostHog uses its EU host; add `region: 'us'` for a US project. Remove any
-other PostHog loader from your app so PostHog loads once.
+Replace `phc_your_project_key` with your PostHog key or pick another [integration](/docs/integrations/overview). PostHog defaults to its EU host; add `region: 'us'` for US projects or `apiHost` for a proxy. Keep `cookieless_mode: 'never'` and remove any existing PostHog loader so it loads once.
 
-`loadMode: 'after-consent'` keeps the PostHog SDK off the page until the
-visitor allows measurement. `cookieless_mode: 'never'` turns off PostHog's
-cookieless capture. See [integrations](/docs/integrations/overview) for other
-vendors.
-
-Wrap your app with it in `src/main.tsx`:
+Wrap your app in `src/main.tsx`, above any client-side router:
 
 <include src="../../shared/examples/react/main.mdx" />
 
-Keep `Consent` mounted for the life of the app. If you use a client-side
-router, render the router inside `Consent` so navigation does not remount the
-provider. There is no stylesheet to import: the banner and dialog render their
-own rules as `<style>` elements.
-
 ## Gate your own features
 
-Read a category's permission with `useConsent` inside the provider:
+Check a category inside the provider with `useConsent`:
 
 {/* example: fragment */}
 
@@ -109,40 +77,23 @@ export function MarketingBanner() {
 }
 ```
 
-`useConsent` returns the permission right now. Under an opt-out policy it can be
-`true` before the visitor has chosen anything. Read
-[how consent works](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice)
-before you record or report choices. For iframes, use
-[`ConsentGate`](/docs/frameworks/react/components/consent-gate).
+For third-party iframes, use [`ConsentGate`](/docs/frameworks/react/components/consent-gate).
 
-## Check that it works
+## Check it works
 
-Build and preview the production bundle with `vite build` and `vite preview`,
-then open the site in a private window with DevTools open on the Network tab.
-Test under a policy that asks for a choice, such as an EU opt-in policy.
+Run `vite build` and `vite preview`, then open a private window with DevTools Network open.
 
-1. **Before a choice.** One `/init` request goes to your backend URL, starting
-   before your JavaScript finishes downloading, and the banner shows. There
-   are no requests to `posthog.com`.
-2. **Reject All.** The banner closes and the vendor requests stay absent.
-3. **Reload.** The banner stays closed and the vendor requests stay absent.
-4. **Privacy settings.** The footer link opens the dialog with **Analytics** (the
-   `measurement` category) and **Marketing** off. Turn on **Analytics** and
-   save. PostHog's `array.js` loads.
-5. **Turn Analytics off again.** The page reloads and PostHog does not load.
+1. Under an opt-in policy, one `/v1/consent/init` request fires, the banner appears, and no requests go to `posthog.com`.
+2. Click **Reject All**, then reload. The banner stays closed and PostHog stays blocked.
+3. Click **Privacy settings**, enable **Analytics**, and click **Save Settings**. PostHog loads.
+4. Open **Privacy settings**, turn **Analytics** off, and click **Save Settings**. The page reloads without PostHog.
 
-If the banner never appears, check the `/init` request to your backend URL. [Troubleshooting](/docs/frameworks/react/troubleshooting)
-covers the common causes. [Verify consent](/docs/guides/verify-consent) has the
-full release checklist.
+Inspect requests in DevTools Network to confirm blocking; a visible banner alone proves nothing. In an opt-out region, pass `overrides: { country: 'DE' }` locally to test an EU policy, then remove it. See [Troubleshooting](/docs/frameworks/react/troubleshooting) and [Verify consent](/docs/guides/verify-consent).
 
 ## Next steps
 
-- [Rendering](/docs/frameworks/react/rendering) for server-rendered React apps and
-  what the first paint contains.
-- [Scripts and embeds](/docs/frameworks/react/scripts) for more vendors, network
-  blocking and data cleanup.
-- [Customize](/docs/frameworks/react/customize) for colors, fonts, layout and copy.
-- [Components](/docs/frameworks/react/components/inth-provider) for
-  every provider option and component prop.
-- The runnable app in `examples/react` of the
-  [Inth repository](https://github.com/c15t/c15t) contains this setup.
+- [Rendering and deployment](/docs/frameworks/react/rendering): SSR React apps, static banners, and build-time manifests.
+- [Scripts](/docs/frameworks/react/scripts): more vendors, revocation cleanup, and analytics events.
+- [Customize](/docs/frameworks/react/customize): theme tokens, layout, and copy.
+- [Components](/docs/frameworks/react/components): full React component and hook reference.
+- [Runnable React example](/docs/examples): run this quickstart as a complete app.

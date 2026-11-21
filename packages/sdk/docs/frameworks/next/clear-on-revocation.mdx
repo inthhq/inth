@@ -1,14 +1,14 @@
 ---
 title: Clear on revocation
-description: Delete the first-party cookies and Web Storage keys a consent category owns in a Next.js app when that category is denied, with clearOnRevocation in inth.config.ts.
+description: Delete first-party cookies and Web Storage keys in Next.js when a consent category is denied using clearOnRevocation.
 group: frameworks
 ---
 
 ## Configure cleanup
 
-Gating stops new requests, but it leaves the cookies and storage keys a vendor
-already wrote. List the ones each optional category owns in
-`inth.config.ts`. When that category is denied, Inth deletes them:
+Script gating prevents new requests, but leaves cookies and Web Storage keys a
+vendor already wrote. Declare the keys each optional category owns in
+`inth.config.ts` so Inth deletes them whenever that category is denied:
 
 {/* example: fragment */}
 
@@ -23,10 +23,9 @@ export default defineConsentConfig({
 });
 ```
 
-`clearOnRevocation` is a top-level option, not inside `options`. Keep your
-`scripts` in the same call. A `clearOnRevocation` prop on `InthProvider` wins
-over the config's. It is read once, when `InthProvider` mounts; remount it to
-change the list.
+Keep `clearOnRevocation` at the top level alongside `scripts`, not inside
+`options`. A `clearOnRevocation` prop on `InthProvider` overrides the config
+value. It is read once when `InthProvider` mounts.
 
 <import src="../../shared/scripts/clear-on-revocation.mdx#targets" />
 

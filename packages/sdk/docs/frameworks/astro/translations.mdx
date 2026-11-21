@@ -1,6 +1,6 @@
 ---
 title: Translations
-description: Set the language and wording of the Inth banner and preference dialog on an Astro site with the integration's i18n option, from Accept-Language negotiation to per-language message overrides and banner props.
+description: Configure language negotiation, per-language message overrides, and banner text props for Inth on an Astro site.
 group: frameworks
 ---
 
@@ -21,7 +21,7 @@ out correctly.
 
 On a static or prerendered page there is no request at build time. The HTML
 starts in `i18n.locale` or English, and the browser switches to the language
-its `/init` answer returns.
+its `/v1/consent/init` answer returns.
 
 Inth ships messages for Arabic, Bangla, Bulgarian, Chinese, Croatian, Czech,
 Danish, Dutch, English, Estonian, Finnish, French, German, Greek, Gujarati,

@@ -1,8 +1,10 @@
 ---
 title: Headless
-description: Build your own consent banner or embed gate markup in a TanStack Start app with the @inth/tanstack-start/headless hooks inside InthProvider.
+description: Build a custom TanStack Start consent banner or embed gate with @inth/tanstack-start/headless hooks.
 group: frameworks
 ---
+
+Build a fully custom consent banner or embed gate in TanStack Start using hooks from `@inth/tanstack-start/headless`.
 
 ## When to go headless
 
@@ -10,10 +12,7 @@ group: frameworks
 
 ## Render your own banner
 
-`@inth/tanstack-start/headless` re-exports the headless hooks from
-`@inth/react/headless`. They read the runtime from `InthProvider`. Render your
-component inside `InthProvider` in place of `ConsentBanner`, and keep
-`ConsentDialog` and a preferences link:
+`@inth/tanstack-start/headless` re-exports all hooks from `@inth/react/headless`. Render your custom banner inside `InthProvider` in place of `ConsentBanner`, keeping `ConsentDialog` and a persistent preferences link mounted:
 
 {/* example: fragment */}
 
@@ -70,20 +69,9 @@ export function Banner() {
 }
 ```
 
-With an awaited root loader, `banner.isVisible` is already `true` on the server
-for a visitor who owes a choice, so your banner is in the first HTML like the
-stock one. With a
-[streamed loader](/docs/frameworks/tanstack-start/rendering#stream-the-page-while-consent-resolves),
-`StreamedConsentSurface` waits for the consent promise in its own `Suspense`
-boundary, so your banner follows in a later chunk of the same response and
-shows before hydration. Call the hooks in a component inside it. Hooks called
-above it read the state from before consent resolved, which has no banner.
-`streamBanner: false` turns this off for your banner as it does for the stock
-one. On a prerendered page, the banner shows after hydration.
+With an awaited root loader, `banner.isVisible` is already `true` on the server so your banner renders in the first HTML. With a [streamed loader](/docs/frameworks/tanstack-start/rendering#stream-the-page-while-consent-resolves), `StreamedConsentSurface` wraps a `Suspense` boundary around the consent promise so your banner streams before hydration. Call headless hooks inside `StreamedConsentSurface`; hooks above it read unresolved state. `options={{ streamBanner: false }}` disables streaming for custom banners just like the built-in banner. On prerendered pages, the banner appears after hydration.
 
-Check for a policy before rendering other custom surfaces. `useModel()` returns
-`null` while no policy has resolved and `'none'` under a policy that owes no
-consent UI.
+Check `useModel()` before rendering custom surfaces: it returns `null` before resolution and `'none'` when no consent UI is owed.
 
 <import src="../../shared/react/headless.mdx#banner-api" />
 
@@ -93,7 +81,6 @@ consent UI.
 
 <include src="../../shared/examples/tanstack-start/headless-consent-gate.mdx" />
 
-Render `VideoGate` inside `InthProvider` around the embed, such as a YouTube
-`iframe`.
+Render `VideoGate` inside `InthProvider` around a third-party embed such as a YouTube `iframe`.
 
 <import src="../../shared/react/headless.mdx#consent-gate-api" />

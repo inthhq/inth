@@ -1,106 +1,54 @@
 ---
 title: Wisepops
-description: Load Wisepops popups, bars, embeds and notification feeds after marketing consent with Inth. Configure its site ID, cookie options and reload behavior.
+description: Load Wisepops popups, bars, embeds, and notification feeds only after marketing consent with Inth.
 seoTitle: Wisepops cookie consent with Inth
-seoDescription: Load Wisepops after marketing consent, configure its site ID and cookie options, and use Inth's reload on consent revocation to stop the running SDK.
+seoDescription: Gate Wisepops behind marketing or experience consent with Inth. Configure siteId, storage options, and reload on withdrawal.
 icon: 'megaphone'
 group: integrations
 ---
 
-The Inth `wisepops` helper loads Wisepops only after `marketing` has consent.
-Before then, it creates no Wisepops snippet queue and writes no Wisepops
-storage. It queues `defaultConsent: 'denied'` before the SDK runs and calls
-`wisepops('consent', 'granted')` after the loader finishes with consent still
-allowed. Keep Inth's default reload on revocation enabled because Wisepops
-cannot revoke consent programmatically.
+The `wisepops` helper keeps Wisepops off the page, leaves `window.wisepops` undefined, and writes no storage until a visitor grants `marketing` consent. It queues `defaultConsent: 'denied'` before the SDK runs and calls `wisepops('consent', 'granted')` once the loader finishes with consent still active. Keep `reloadOnConsentRevoked` enabled because Wisepops cannot revoke consent programmatically.
 
 ## Configure Wisepops
 
-In Wisepops, open **Settings > Install Wisepops** and copy your site's setup
-code. The loader URL contains your public site ID in its `h` parameter:
-`https://wisepops.net/loader.js?v=3&h=YOUR_WISEPOPS_SITE_ID`.
-
-Use the Inth helper in place of the Wisepops installation snippet. Remove
-other Wisepops installations, including any tag manager or CMS plugin that
-loads it, so they do not bypass Inth's consent check. Use one Wisepops site
-ID per document. Reload the page when changing site IDs; replacing a helper
-configuration does not reinitialize an SDK that has already started.
+Open **Settings > Install Wisepops** and copy your public site ID from the `h` query parameter in `https://wisepops.net/loader.js?v=3&h=YOUR_WISEPOPS_SITE_ID`. Remove any direct snippet, tag manager entry, or CMS plugin so Wisepops loads only through Inth. Use one site ID per document and reload if you switch site IDs.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
-The `scripts` export below uses marketing consent. `experienceScripts` is an
-alternative for campaigns whose purpose and policy call for experience
-consent. Register one array.
+Register `scripts` for marketing campaigns, or `experienceScripts` if your policy maps Wisepops to `experience` consent:
 
 <include src="../shared/examples/javascript/wisepops-scripts.mdx" />
 
 <include src="../shared/integrations/register-scripts.mdx" />
 
-To use the experience alternative, change the registration example's import
-to `import { experienceScripts as scripts } from './consent-scripts'`, adjusting
-the relative path for your framework. It also enables Wisepops localStorage.
+To use `experienceScripts`, change the registration import to `import { experienceScripts as scripts } from './consent-scripts'`. That variant also enables `browserStorage: true`.
 
 ## Options
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `siteId` | Required | Public site ID from the setup snippet's `h` parameter. Trimmed and URL-encoded. A missing or blank value logs an error and skips the loader. |
-| `category` | `'marketing'` | Consent category or condition required before any Wisepops setup. Use `'experience'` if it matches your campaign's purpose and policy. |
-| `options.autoPageview` | Wisepops v3 default, `'url'` | `'url'` checks for campaigns after URL changes. `'init'` checks only after initialization. `false` disables automatic pageviews. |
-| `options.browserStorage` | Omitted; new visitors use cookies | `true` stores visitor data in localStorage instead of cookies and migrates existing cookies. The data is then separate for each origin and cannot be shared across subdomains. Wisepops can reuse localStorage selected on an earlier visit. |
-| `options.cookieMaxSize` | Wisepops keeps each cookie under 3 KB | Cookie size limit in bytes. Wisepops removes older visitor history when it reaches the limit. For example, `1024` sets a 1 KB limit. |
-| `nonce` | None | CSP nonce for the inth-managed loader. A nonce from your consent provider also applies. This does not set a nonce on resources created by Wisepops. |
+| `siteId` | Required | Public site ID from the `h` parameter, trimmed and URL-encoded. Missing or blank values log an error and skip loading. |
+| `category` | `'marketing'` | Consent category or condition required before setup. Set `'experience'` if your campaign policy uses it. |
+| `options.autoPageview` | `'url'` | `'url'` checks campaigns on URL changes. `'init'` checks only after initialization. `false` disables automatic pageviews. |
+| `options.browserStorage` | Omitted; cookies | `true` stores visitor data in localStorage instead of cookies and migrates existing cookies. Data stays scoped to one origin and does not cross subdomains. |
+| `options.cookieMaxSize` | Under 3 KB | Cookie size limit in bytes, such as `1024` for 1 KB. Wisepops drops older visitor history past this limit. |
+| `nonce` | None | CSP nonce for the Inth-managed loader. Does not apply to resources Wisepops creates. |
 
-The helper always sets `defaultConsent: 'denied'`; it is not a configurable
-option. The helper grants Wisepops cookie consent only after Inth permits
-the mapped category and the vendor. It has no `alwaysLoad` mode.
-
-The helper's `options` are bootstrap configuration, queued before its loader
-runs. Changing the configuration object does not update an SDK already
-running on the page. Set these values before registering the scripts.
+The helper always sets `defaultConsent: 'denied'`, has no `alwaysLoad` mode, and grants cookie consent only when both the category and Wisepops vendor pass consent. Set `options` before registering `scripts`; mutating them later does not update a running SDK.
 
 ### Single-page applications
 
-The helper uses Wisepops' v3 loader, whose default `autoPageview: 'url'`
-detects URL changes. With `autoPageview: false`, call the browser SDK through
-`window.wisepops?.('pageview')` after your router updates the URL, only while
-the mapped category and Wisepops vendor are allowed. Recheck permission on
-every manual call. The snippet queue can remain after revocation, so the
-existence of `window.wisepops` alone is not a consent check.
-
-Avoid sending manual pageviews alongside automatic ones. Duplicate pageviews
-can cause campaigns to appear and disappear immediately. `autoPageview: false`
-does not stop an SDK that has already started.
+The v3 loader's default `autoPageview: 'url'` detects route changes automatically. If you set `autoPageview: false`, call `window.wisepops?.('pageview')` after navigation only while both the mapped category and Wisepops vendor pass consent. Recheck permission on every manual call because `window.wisepops` stays defined after revocation. Do not trigger manual pageviews while automatic pageviews are enabled, and keep in mind that `autoPageview: false` does not stop a running SDK.
 
 ## Loading and revocation
 
-Once the mapped consent allows Wisepops, Inth creates `window.wisepops` with
-its snippet queue and timestamp, queues the runtime options and appends the
-loader to `<head>`. After the SDK loads, Inth grants Wisepops cookie consent.
-If Inth removes a downloading loader after revocation, the helper ignores
-its later load event and sends no consent grant.
+Once consent passes, Inth creates `window.wisepops` with its snippet queue and timestamp, queues runtime options, appends the loader to `<head>`, and grants cookie consent after load. If revocation removes a downloading loader, Inth ignores its late load event and sends no grant. Do not install Wisepops separately to use its denied mode, which still renders campaigns and sets session cookies.
 
-Wisepops' own denied mode still displays campaigns and uses session-only
-cookies. This helper waits for Inth consent before loading Wisepops at all.
-Do not install Wisepops separately to use its denied mode alongside this
-helper.
-
-On revocation, Inth removes the loader and reloads the page by default. The
-new page does not load Wisepops while the mapped consent is denied. The
-helper does not call `wisepops('consent', 'denied')`: Wisepops documents that
-this call produces an error. The reviewed Wisepops documentation provides no
-shutdown or destroy call for the helper to use.
-
-Keep `reloadOnConsentRevoked` enabled. Setting it to `false` leaves the
-already-running SDK, displayed campaigns, timers and listeners active.
-Removing a script element also cannot guarantee that an in-flight download
-will never execute. A reload ends the document; it does not erase data
-already stored by Wisepops.
+On revocation, Inth removes the loader and reloads the page by default. It does not call `wisepops('consent', 'denied')`, which Wisepops documents as an error, and Wisepops exposes no shutdown API. Disabling `reloadOnConsentRevoked` leaves running campaigns, timers, and listeners active until navigation, and removing a `<script>` tag cannot guarantee an in-flight download will not execute.
 
 ## Cookies and browser storage
 
-Wisepops documents the following first-party cookies on your site's domain.
-Actual values and lifetimes can vary with its configuration and the browser:
+Wisepops documents these first-party cookies on your site's domain:
 
 | Cookie | Documented lifetime |
 | --- | --- |
@@ -112,58 +60,20 @@ Actual values and lifetimes can vary with its configuration and the browser:
 | `wisepops_tld` | Session |
 | `wisepops` | 2 years |
 
-With `options.browserStorage: true`, Wisepops moves visitor data to
-localStorage. Inth does not automatically delete Wisepops cookies or
-localStorage on revocation. Your cleanup can remove only browser-accessible
-data on domains, paths and origins your application can reach. It cannot
-clear HttpOnly cookies or vendor-side records. Wisepops can remember an earlier
-consent grant in its stored state, so reloading with `defaultConsent: 'denied'`
-alone does not reset that grant. After Inth revocation, keep Wisepops blocked
-on the new page.
+With `options.browserStorage: true`, Wisepops stores visitor data in localStorage. Reloading does not delete Wisepops cookies or localStorage, and client-side cleanup cannot remove HttpOnly cookies or server-side records. Because Wisepops can remember a previous grant in its stored state, keep Wisepops blocked on reload after revocation.
 
-Wisepops automatically integrates with Shopify Customer Privacy. Check
-Wisepops' [Shopify consent behavior](https://support.wisepops.com/en/articles/12679556-cookie-consent-mode)
-and your Shopify privacy settings separately. Inth's Wisepops helper does not
-synchronize Inth choices with Shopify. Contact Wisepops support if you need to
-disable its Shopify privacy integration, and use a single installation so a
-Shopify app does not load the vendor outside Inth.
+Wisepops integrates with Shopify Customer Privacy automatically, and Inth does not sync choices with Shopify. Review Wisepops' [Shopify consent behavior](https://support.wisepops.com/en/articles/12679556-cookie-consent-mode), contact Wisepops support if you need that integration disabled, and avoid loading Wisepops through a separate Shopify app.
 
 ## Verify Wisepops
 
-Use a private window with an opt-in policy. Open DevTools Network, disable
-the cache and filter by `wisepops`. Check Cookies, Local Storage and Session
-Storage in the Application panel too.
+In a private window with an opt-in policy, filter DevTools Network by `wisepops` and check Application storage:
 
-1. Load the page before choosing. There should be no Wisepops request, no
-   `window.wisepops` snippet queue and no new Wisepops storage entry.
-2. Reject consent and reload. Wisepops should stay blocked. Then allow an
-   unrelated category, such as `measurement`, while the mapped category
-   remains denied. Repeat the request, global and storage checks.
-3. Allow the mapped category. Expect `loader.js?v=3&h=...` to load without a
-   page reload. The query URL can redirect to a URL under
-   `wisepops.net/h/<siteId>/`. Configured campaigns become eligible, but
-   targeting and publishing settings can still prevent display.
-4. Navigate within your app and check that Wisepops detects URL changes with
-   automatic pageviews enabled. For manual pageviews, also test navigation
-   while the category or vendor is denied.
-5. Withdraw the mapped consent and save. Confirm that Inth reloads the page.
-   The new document should make no Wisepops request and have no snippet queue.
-   Previously stored data can remain; check deletion separately if you
-   configured cleanup.
-6. Test the Wisepops vendor switch inside an allowed category. Turning the
-   vendor off should reload the page and keep Wisepops blocked even though the
-   category remains allowed. Restore the mapped category and vendor permission
-   to check that Wisepops can load again.
+1. Load the page before choosing, reject consent and reload, then allow an unrelated category like `measurement`. Confirm no Wisepops requests, `window.wisepops` global, or storage entries appear.
+2. Allow the mapped category. Confirm `loader.js?v=3&h=...` loads without reload; it may redirect under `wisepops.net/h/<siteId>/`.
+3. Navigate between routes to verify automatic pageviews, or confirm manual pageviews stay blocked when denied.
+4. Withdraw the mapped category and save. Confirm Inth reloads the page and makes no Wisepops requests or queue setup.
+5. Toggle the Wisepops vendor switch off inside an allowed category and confirm the page reloads with Wisepops blocked, then restore it to verify Wisepops loads again.
 
-Keep `reloadOnConsentRevoked` enabled for these checks. Wisepops has no
-documented opt-out API that a callback-only script could call in place of the
-reload.
-
-Sources: [Add Wisepops to a custom website](https://support.wisepops.com/en/articles/9975472-how-to-add-wisepops-to-a-custom-website),
-[public installation snippet](https://wisepops.com/),
-[Cookie Consent Mode](https://support.wisepops.com/en/articles/12679556-cookie-consent-mode),
-[data collection and cookies](https://support.wisepops.com/en/articles/9898232-data-collection-cookies),
-[browser storage and cookie size options](https://support.wisepops.com/en/articles/9898261-limit-the-impact-of-wisepops-cookies-on-your-website),
-and [single-page applications](https://support.wisepops.com/en/articles/9897249-single-page-applications-spa).
+Sources: [Add Wisepops to a custom website](https://support.wisepops.com/en/articles/9975472-how-to-add-wisepops-to-a-custom-website), [public installation snippet](https://wisepops.com/), [Cookie Consent Mode](https://support.wisepops.com/en/articles/12679556-cookie-consent-mode), [data collection and cookies](https://support.wisepops.com/en/articles/9898232-data-collection-cookies), [browser storage and cookie size options](https://support.wisepops.com/en/articles/9898261-limit-the-impact-of-wisepops-cookies-on-your-website), and [single-page applications](https://support.wisepops.com/en/articles/9897249-single-page-applications-spa).
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

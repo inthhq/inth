@@ -1,14 +1,14 @@
 ---
 title: Clear on revocation
-description: Delete the first-party cookies and Web Storage keys a consent category owns on a plain HTML page when that category is denied, with the clearOnRevocation option of the Inth script tag.
+description: Delete first-party cookies and Web Storage keys on a plain HTML page when their consent category is denied.
 group: frameworks
 ---
 
 ## Configure cleanup
 
-Gating stops new requests, but it leaves the cookies and storage keys a vendor
-already wrote. List the ones each optional category owns in the script tag's
-config. When that category is denied, Inth deletes them:
+Gating stops new requests without removing cookies and storage keys a vendor
+already wrote. List what each optional category owns in a queued `config`
+call before `inth.js`. When a category is denied, Inth deletes its entries:
 
 {/* example: fragment */}
 
@@ -24,7 +24,8 @@ config. When that category is denied, Inth deletes them:
 </script>
 ```
 
-Put this before the Inth script tag. Inth reads the config once, at start.
+Place this before the `inth.js` script tag. Inth reads `clearOnRevocation`
+once at startup.
 
 <import src="../../shared/scripts/clear-on-revocation.mdx#targets" />
 

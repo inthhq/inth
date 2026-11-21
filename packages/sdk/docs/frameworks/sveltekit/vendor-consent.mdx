@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing in a SvelteKit app and still turn off one vendor in it, with the vendors prop on InthProvider and getConsentManager.
+description: Let visitors allow a category in a SvelteKit app while turning off individual vendors with InthProvider and getConsentManager.
 group: frameworks
 ---
 
@@ -20,7 +20,6 @@ already carries, and pass them to `InthProvider`:
 ```svelte title="src/routes/+layout.svelte (partial)"
 <script lang="ts">
   import type { ConsentManagerOptions } from '@inth/svelte';
-  import { InthProvider } from '@inth/svelte/kit';
 
   const vendors: NonNullable<ConsentManagerOptions['vendors']> = [
     {

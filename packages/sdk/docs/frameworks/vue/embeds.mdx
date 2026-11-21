@@ -1,18 +1,21 @@
 ---
 title: Embeds
-description: Keep YouTube videos, maps and other iframes out of a Vue page until their consent category is allowed, with ConsentGate or the iframe blocker.
+description: Block YouTube videos, maps, and third-party iframes in Vue until consent allows them using ConsentGate or the iframe blocker.
 group: frameworks
 ---
+
+Hold back third-party iframes in Vue until the visitor allows their consent
+category, using either `ConsentGate` or the built-in iframe blocker.
 
 ## Pick a method
 
 | Method | Use it when |
 | --- | --- |
-| `ConsentGate` | You render the iframe in a Vue component and want a placeholder with a way to open preferences. |
-| The iframe blocker | The iframe comes from markup you do not render with a component, such as CMS content, or you want no wrapper. |
+| `ConsentGate` | You render the iframe in a Vue component and want a placeholder with a button to open preferences. |
+| Iframe blocker | The iframe comes from raw HTML such as CMS content, or you want no wrapper component. |
 
-Both remove the iframe's `src` until the category is allowed, so the embed's
-host receives no request before consent.
+Both approaches omit the iframe's `src` until permission is granted, so the
+embed host receives no requests before consent.
 
 ## Gate an embed with ConsentGate
 
@@ -21,19 +24,18 @@ from `@inth/vue/vue-plugin`:
 
 <include src="../../shared/examples/vue/embed.mdx" />
 
-The iframe does not exist in the page until the visitor allows measurement.
-The `placeholder` slot shows a message and a
-[`ConsentDialogLink`](/docs/frameworks/vue/components/consent-dialog-link)
-until then. When the visitor withdraws measurement, Vue removes the iframe.
+The iframe stays out of the DOM until the visitor allows `measurement`. Until
+then, the `placeholder` slot displays a message and a
+[`ConsentDialogLink`](/docs/frameworks/vue/components/consent-dialog-link).
+When the visitor withdraws `measurement`, Vue removes the iframe.
 
-Pick the category that matches what the embed does. The example uses
-measurement for YouTube because its player measures views. A map or chat
-widget usually belongs under functionality or experience.
+Match the category to what the embed does: use `measurement` for YouTube's
+player, or `functionality` or `experience` for maps and chat widgets.
 
 ## Gate an iframe with the iframe blocker
 
-The Vue plugin runs the iframe blocker by default. Give an iframe `data-src`
-instead of `src`, and a `data-category`:
+`inth` enables the iframe blocker by default. Replace `src` with `data-src`
+and add `data-category`:
 
 {/* example: fragment */}
 
@@ -47,19 +49,19 @@ instead of `src`, and a `data-category`:
 </template>
 ```
 
-Inth sets `src` from `data-src` when the category is allowed and removes it
-when the category is withdrawn. It watches the page, so iframes added later,
-for example by a route change, are handled too. The iframe element stays in
-the page while blocked, empty. Add `data-vendor` with a vendor ID to also
-block the iframe while the visitor has turned that vendor off.
+Inth copies `data-src` to `src` when the category is allowed and clears it on
+revocation. It observes DOM mutations, so iframes added after route navigation
+are gated too. While blocked, the empty `<iframe>` element stays in the DOM.
+Add `data-vendor` with a vendor ID to also block the iframe when that vendor
+is switched off.
 
-Pass `iframeBlocker: false` to the plugin to turn the blocker off.
+Pass `iframeBlocker: false` to `inth` to disable the blocker.
 
 ## Verify
 
-Open the page in a private window with the Network tab open, under a policy
-that asks for consent. No request goes to `youtube-nocookie.com` or
-`google.com/maps`. Allow the category and save: the iframe loads. Withdraw it
-and save: the page reloads without the embed. The
+Open the page in a private window with the Network tab open under an opt-in
+policy. Confirm no requests go to `youtube-nocookie.com` or `google.com/maps`.
+Allow the category and save to load the iframe, then withdraw it and save to
+confirm the page reloads without the embed. See the
 [YouTube](/docs/integrations/youtube) and
-[Google Maps](/docs/integrations/google-maps) guides cover sizing and titles.
+[Google Maps](/docs/integrations/google-maps) guides for sizing and titles.

@@ -1,26 +1,17 @@
 ---
 title: Attentive
-description: Load the Attentive tag only after marketing consent with the Inth attentiveTag helper, and check its requests and storage in DevTools.
+description: Load the Attentive tag only after marketing consent with the Inth attentiveTag helper.
 seoTitle: Attentive cookie consent with Inth
-seoDescription: Keep Attentive signup units and tracking off the page until marketing consent. Set your site slug and check withdrawal with Inth.
+seoDescription: Keep Attentive signup units and on-site tracking off the page until marketing consent with Inth, and verify requests and storage.
 icon: chart-line
 group: integrations
 ---
 
-Attentive shows SMS and email signup units and tracks on-site events for its
-marketing messages. The Inth `attentiveTag` helper waits for `marketing`
-consent before it downloads the Attentive tag. Until then, the page makes no
-request to Attentive.
-
-Attentive has no supported way to stop a running tag. When the visitor
-withdraws, Inth reloads the page, and the next page doesn't load the tag.
+The `attentiveTag` helper blocks Attentive signup units and on-site tracking until the visitor grants `marketing` consent. Attentive has no documented API to stop a running tag, so Inth relies on its default page reload on withdrawal.
 
 ## Configure Attentive
 
-Find the site slug in your Attentive tag URL,
-`https://cdn.attn.tv/<siteSlug>/dtag.js`. If you don't have it, ask your
-Attentive contact for the slug or the full tag URL. Then remove the original
-tag from your site, so that Inth controls when it loads.
+Copy the site slug from your Attentive tag URL at `https://cdn.attn.tv/<siteSlug>/dtag.js` and remove any direct tag snippet from your site.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -32,45 +23,28 @@ tag from your site, so that Inth controls when it loads.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `siteSlug` | Required | Site slug from the tag URL. Whitespace is trimmed. It can contain only ASCII letters, digits, `_` and `-`. A URL, a path, or a missing or blank value logs an error and never loads the tag, even when you set `scriptUrl`. |
-| `category` | `marketing` | Consent condition for the whole loader. |
+| `siteSlug` | Required | Site slug from the tag URL. Trimmed, and must contain only ASCII letters, digits, `_`, and `-`. URLs, paths, or blank values log an error and never load even when `scriptUrl` is set. |
+| `category` | `'marketing'` | Consent condition for the loader. |
 | `scriptUrl` | `https://cdn.attn.tv/<siteSlug>/dtag.js` | Exact tag URL from Attentive or your proxy. Blank values use the default. |
 
 ## Loading and revocation
 
-After consent, the helper adds `dtag.js` at the end of the body. It creates no
-queue or globals of its own. Attentive can then download more bundles, create
-an iframe, show signup units and track events.
+On `marketing` grant, Inth appends `dtag.js` at the end of `document.body` without creating globals or queues. Attentive then downloads its own bundles, creates iframes, shows signup units, and tracks events.
 
-On withdrawal, the tag element stays on the page. If the visitor allows
-marketing again on the same page, the helper reuses that tag instead of
-adding a second one.
-
-Keep `reloadOnConsentRevoked` enabled. Attentive has no documented client API
-that reliably stops all tag behavior. Removing the tag can't unload code that
-already ran, cancel pending requests or remove every iframe. The helper
-doesn't use Attentive's undocumented enable and disable methods. The next page
-doesn't load the tag while marketing is denied.
+On withdrawal, Inth leaves the script element in the DOM and reuses it if the visitor regrants `marketing` before reload. Keep `reloadOnConsentRevoked` enabled because removing the tag cannot unload running code, cancel requests, or clear iframes, and the helper avoids Attentive's undocumented enable and disable methods. The reloaded page does not load Attentive while denied.
 
 ## Cookies and storage
 
-Attentive can set `_attn_`, `__attentive_id`, `__attentive_dv`,
-`__attentive_ss_referrer`, `__attentive_pv`, `__attentive_cco`,
-`attntv_mstore_email`, `attntv_mstore_phone`, `__attentive_ceid`,
-`__attentive_domain` and `__attentive_client_user_id`. Some identifiers, such
-as `__attentive_id`, last up to 390 days. The reload doesn't delete them.
-Check cookies and both browser storage areas for your tag configuration.
+Attentive sets `_attn_`, `__attentive_id` with up to 390 days retention, `__attentive_dv`, `__attentive_ss_referrer`, `__attentive_pv`, `__attentive_cco`, `attntv_mstore_email`, `attntv_mstore_phone`, `__attentive_ceid`, `__attentive_domain`, and `__attentive_client_user_id`. Reloading does not delete them. Inspect cookies and Web Storage in DevTools before configuring cleanup.
 
 ## Verify Attentive
 
-Filter the Network panel by `attn.tv`. Before consent, and after you allow an
-unrelated category, check that there is no `dtag.js` request, no Attentive
-global or iframe, and no Attentive cookies or browser storage. Allow marketing
-and inspect the tag and the bundles it loads. Withdraw marketing and confirm
-that the reloaded page doesn't load them. Test signup units and message
-delivery only with your own Attentive account.
+Filter DevTools Network by `attn.tv` using your own Attentive account:
 
-Sources: Attentive's [tag setup](https://help.attentive.com/hc/en-us/articles/10905920909460-The-Attentive-tag)
-and [cookie list](https://help.attentive.com/hc/en-us/articles/14615673918484-Attentive-cookies).
+1. Before choosing and after allowing an unrelated category, confirm no `dtag.js` request, global, iframe, cookie, or Web Storage entry appears.
+2. Allow `marketing` and confirm `dtag.js` and its child bundles load.
+3. Withdraw `marketing` and confirm the reloaded page sends no Attentive requests.
+
+Sources: [Attentive tag setup](https://help.attentive.com/hc/en-us/articles/10905920909460-The-Attentive-tag) and [Attentive cookies](https://help.attentive.com/hc/en-us/articles/14615673918484-Attentive-cookies).
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

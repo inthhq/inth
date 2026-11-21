@@ -1,10 +1,9 @@
 ---
 title: Mobile IAB GPP
-description: Turn on the IAB Global Privacy Platform string in Swift, Kotlin and React Native apps, and see which US National and TCF EU values the native engine writes to IABGPP_* keys.
+description: Enable IAB Global Privacy Platform strings in Swift, Kotlin, and React Native apps and inspect the IABGPP_* keys the native engine writes.
 group: guides
 ---
 
-The native engine writes the GPP string for ad SDKs in your app and keeps it on
-the consent snapshot. It is off until you pass GPP options to the engine.
+Enable the IAB Global Privacy Platform (GPP) string on mobile so ad SDKs read standard `IABGPP_*` keys alongside `snapshot.gppString`. GPP is off until you configure it on the native engine.
 
 <include src="../shared/mobile/gpp.mdx" />

@@ -1,20 +1,18 @@
 ---
 title: IAB GPP
-description: Add the IAB Global Privacy Platform API (__gpp) to a Next.js app with ConsentGPP from @inth/react/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
+description: Add the IAB Global Privacy Platform API (__gpp) to Next.js with ConsentGPP so ad tech can read US state opt-outs and TCF strings.
 group: frameworks
 ---
 
-## What GPP does
-
-`ConsentGPP` from `@inth/react/gpp` installs `window.__gpp`, the GPP 1.1 CMP
-API, and keeps its GPP string in step with the visitor's choices. Prebid.js,
-Google Ad Manager and other ad tech read US privacy signals from it.
+Install `window.__gpp` (GPP 1.1) in a Next.js app with `ConsentGPP` from
+`@inth/react/gpp` so Prebid.js, Google Ad Manager and other ad tech can read
+US privacy opt-outs and EU TCF strings.
 
 ## Turn on GPP
 
-Render `ConsentGPP` inside `InthProvider`, in the root layout from the
-[App Router](/docs/frameworks/next/app-router) guide or in `pages/_app.tsx`
-from the [Pages Router](/docs/frameworks/next/pages-router) guide.
+Render `ConsentGPP` inside `InthProvider` in your
+[App Router](/docs/frameworks/next/app-router) root layout or
+[Pages Router](/docs/frameworks/next/pages-router) `pages/_app.tsx`:
 
 {/* example: fragment */}
 
@@ -29,20 +27,14 @@ import { ConsentGPP } from '@inth/react/gpp';
 </InthProvider>;
 ```
 
-`ConsentGPP` renders nothing. `__gpp` exists only in the browser: the
-component installs it after it mounts and removes it when it unmounts. Its
-props are plain data, so a Server Component can render it too. Apps that do
-not import `@inth/react/gpp` bundle none of the GPP code.
+`ConsentGPP` renders nothing, installs `window.__gpp` on mount in the browser,
+removes it on unmount, and accepts plain props from Server Components (such as
+`<ConsentGPP usFallback="none" />`). Apps that do not import `@inth/react/gpp`
+bundle no GPP code.
 
-The props are the GPP options listed below, for example
-`<ConsentGPP usFallback="none" />`.
-
-The GPP string follows the policy and location `resolveConsent()` resolves
-for the visitor. A US visitor's state comes from the geo headers your host
-sends; see [geography headers](/docs/frameworks/next/geography-headers) if
-it is missing.
-
-To add the TCF EU section for visitors under an `iab` policy, set up
-[IAB TCF](/docs/frameworks/next/iab) as well.
+The GPP string follows the policy and location resolved by `resolveConsent()`.
+Check [Geography headers](/docs/frameworks/next/geography-headers) if US state
+headers are missing, and set up [IAB TCF](/docs/frameworks/next/iab) to include
+the TCF EU section under `iab` policies.
 
 <include src="../../shared/iab-gpp.mdx" />

@@ -1,14 +1,14 @@
 ---
 title: Hooks
-description: Gate features and save consent choices in React components with the focused hooks exported from @inth/react.
+description: Gate features and save consent choices in React components with focused hooks from @inth/react.
 group: frameworks
 ---
 
+Read consent state and record visitor actions in React components with focused hooks from `@inth/react`.
+
 ## Read only the state you need
 
-Every hook reads the runtime from the nearest `InthProvider`, so call them
-from components rendered inside that provider and import them from
-`@inth/react`.
+Every hook reads the runtime from the nearest `InthProvider`. Call hooks inside that provider and import them from `@inth/react`.
 
 <include src="../../shared/examples/react/optional-feature.mdx" />
 
@@ -16,7 +16,7 @@ from components rendered inside that provider and import them from
 
 ## Save from a visitor action
 
-Render this component inside your existing `InthProvider`.
+Render this component inside your `InthProvider`:
 
 <include src="../../shared/examples/react/reject-button.mdx" />
 

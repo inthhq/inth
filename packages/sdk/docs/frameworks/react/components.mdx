@@ -1,79 +1,57 @@
 ---
 title: Components
-description: Every Inth component a React app imports from @inth/react, what each renders, where each one mounts, and which to start with.
+description: Reference every Inth component exported by @inth/react, what it renders, and where to mount it.
 group: frameworks
 ---
 
-## Component reference
+`@inth/react` exports the provider, consent UI components, and hooks from one entry point. Every component except `InthProvider` and `ConsentTheme` reads the runtime from the nearest `InthProvider`.
 
-`@inth/react` exports the provider, the consent UI and the hooks from one
-import path. Every component except `InthProvider` and `ConsentTheme`
-reads the runtime the provider creates, so render them inside
-`InthProvider`.
+## Component reference
 
 | Component | Renders | Reference |
 | --- | --- | --- |
-| `InthProvider` | The consent runtime, which loads the policy, stores the choice and loads scripts. No markup of its own | [InthProvider](/docs/frameworks/react/components/inth-provider) |
-| `ConsentBanner` | The banner, when the visitor's policy asks for one | [ConsentBanner](/docs/frameworks/react/components/consent-banner) |
-| `ConsentDialog` | The preference center as a modal | [ConsentDialog](/docs/frameworks/react/components/consent-dialog) |
-| `ConsentWidget` | The preference center inline in a page, for a privacy route | [ConsentWidget](/docs/frameworks/react/components/consent-widget) |
-| `ConsentDialogLink` | An unstyled button that opens the dialog, for your footer | [ConsentDialogLink](/docs/frameworks/react/components/consent-dialog-link) |
-| `ConsentDialogTrigger` | A floating, draggable button that opens the dialog. `ConsentDialogTriggerToolbar` adds your own actions beside it | [ConsentDialogTrigger](/docs/frameworks/react/components/consent-dialog-trigger) |
-| `ConsentGate` | Its children while a category is allowed, a placeholder otherwise | [ConsentGate](/docs/frameworks/react/components/consent-gate) |
+| `InthProvider` | The consent runtime that loads policy, stores choices, and runs scripts. Renders no markup of its own | [InthProvider](/docs/frameworks/react/components/inth-provider) |
+| `ConsentBanner` | The consent banner when the visitor's policy requires one | [ConsentBanner](/docs/frameworks/react/components/consent-banner) |
+| `ConsentDialog` | The preference center modal | [ConsentDialog](/docs/frameworks/react/components/consent-dialog) |
+| `ConsentWidget` | The preference center inline on a privacy or settings page | [ConsentWidget](/docs/frameworks/react/components/consent-widget) |
+| `ConsentDialogLink` | An unstyled button that opens the dialog, suited for footers | [ConsentDialogLink](/docs/frameworks/react/components/consent-dialog-link) |
+| `ConsentDialogTrigger` | A floating, draggable corner button that opens the dialog. `ConsentDialogTriggerToolbar` adds app actions beside it | [ConsentDialogTrigger](/docs/frameworks/react/components/consent-dialog-trigger) |
+| `ConsentGate` | Its children when a category is allowed, or a placeholder otherwise | [ConsentGate](/docs/frameworks/react/components/consent-gate) |
 | `ConsentTheme` | A `<style>` element with your theme tokens | [Customize](/docs/frameworks/react/customize) |
-| `DevTools` from `@inth/react/devtools` | A development panel for consent state, scripts and events | [DevTools](/docs/frameworks/react/components/dev-tools) |
+| `DevTools` from `@inth/react/devtools` | A development panel for consent state, scripts, and events | [DevTools](/docs/frameworks/react/components/dev-tools) |
 
-Mount one `InthProvider` at the root of the app and keep it mounted across
-client navigation. The provider reads `mode` and its module options once,
-when it mounts.
+Mount one `InthProvider` at your app root and keep it mounted across route transitions. The provider reads `mode` and module options once on mount.
 
 ## Start with the provider, banner and dialog
 
-Most apps start with four components. `InthProvider` holds the runtime,
-`ConsentBanner` and `ConsentDialog` ask for a choice, and a
-`ConsentDialogLink` lets visitors reopen their preferences. The [quickstart](/docs/frameworks/react/quickstart) puts them in
-one file:
+Most apps start with four components: `InthProvider`, `ConsentBanner`, `ConsentDialog`, and a footer `ConsentDialogLink` so visitors can reopen preferences. The [quickstart](/docs/frameworks/react/quickstart) keeps them together in `src/consent.tsx`:
 
 <include src="../../shared/examples/react/consent.mdx" />
 
-Add `ConsentWidget`, `ConsentDialogTrigger` or `ConsentGate` later, where a
-page needs them. Keep `ConsentDialog` mounted even when you add a widget,
-because the banner's Customize button and every dialog link open it.
+Add `ConsentWidget`, `ConsentDialogTrigger`, or `ConsentGate` where pages need them. Keep `ConsentDialog` mounted even when you add `ConsentWidget`, because the banner's Customize button and `ConsentDialogLink` open the dialog.
 
 ## Server-rendered React apps
 
-React Router framework mode, Remix and other server-rendered React apps use the
-same components. `InthProvider` renders on the server without touching
-browser APIs, and the banner mounts after hydration, once the browser has
-resolved the policy. [Rendering](/docs/frameworks/react/rendering#react-router-remix-and-other-server-rendered-apps)
-explains the trade-off.
+React Router framework mode, Remix, and other SSR React setups use the same components. `InthProvider` renders safely on the server without touching browser APIs, and the banner mounts after hydration once the browser resolves the policy. See [Rendering](/docs/frameworks/react/rendering#react-router-remix-and-other-server-rendered-apps).
 
 ## IAB TCF components
 
-Import `IABProvider`, `IABConsentBanner` and `IABConsentDialog` from
-`@inth/react/iab`, render them inside `InthProvider` next to
-`ConsentBanner` and `ConsentDialog`, and load `@inth/react/styles.css` and
-`@inth/react/iab/styles.css` with `styles: false`. The stock banner and dialog stay closed
-under an IAB policy. See
-[IAB TCF](/docs/frameworks/react/iab).
+Import `IABProvider`, `IABConsentBanner`, and `IABConsentDialog` from `@inth/react/iab` and mount them inside `InthProvider` next to `ConsentBanner` and `ConsentDialog`. The built-in banner and dialog stay closed under an `iab` policy. See [IAB TCF](/docs/frameworks/react/iab).
 
 ## Other entry points
 
 | Import | Exports | Use |
 | --- | --- | --- |
-| `@inth/react/consent-banner`, `@inth/react/consent-dialog`, `@inth/react/consent-widget`, `@inth/react/consent-dialog-link`, `@inth/react/consent-dialog-trigger`, `@inth/react/consent-gate` | One component each | A module that needs one component without the rest of the adapter |
-| `@inth/react/headless` | Headless hooks | Your own banner and dialog markup. See [headless](/docs/frameworks/react/headless) |
-| `@inth/react/server` | `fetchSSRData` | Resolve `/init` in a server loader. See [rendering](/docs/frameworks/react/rendering#skip-the-browsers-first-init-request) |
-| `@inth/react/devtools` | `DevTools` | Development only |
+| `@inth/react/consent-banner`, `@inth/react/consent-dialog`, `@inth/react/consent-widget`, `@inth/react/consent-dialog-link`, `@inth/react/consent-dialog-trigger`, `@inth/react/consent-gate` | One component each | Import a single component without pulling in the rest of the UI |
+| `@inth/react/headless` | Headless hooks | Build custom banner and dialog markup. See [Headless](/docs/frameworks/react/headless) |
+| `@inth/react/server` | `fetchSSRData` and helpers | Resolve `/v1/consent/init` in a server loader. See [Rendering](/docs/frameworks/react/rendering#skip-the-browsers-first-init-request) |
+| `@inth/react/devtools` | `DevTools` | Development debugging only |
 
 ## Check the components
 
-Load the app in a private window under a policy that asks for a choice:
+Load the app in a private window under an opt-in policy:
 
-1. The banner shows, and DevTools Network has no requests to your vendors'
-   hosts.
-2. Click the footer's `ConsentDialogLink`. The dialog opens with every optional
-   category off.
-3. Allow one category and save. Its vendor requests appear, and a
-   `ConsentGate` for that category mounts its children.
-4. Reload. The banner stays closed, and the link still reopens the dialog.
+1. Confirm the banner appears and DevTools Network shows zero vendor requests.
+2. Click the footer `ConsentDialogLink` and confirm the dialog opens with optional categories off.
+3. Enable one category and save. Confirm its vendor requests fire and any `ConsentGate` for that category mounts its children.
+4. Reload and confirm the banner stays closed while the footer link still reopens the dialog.

@@ -1,22 +1,24 @@
 ---
 title: ConsentManager
-description: Render the Inth preference dialog in a Vue app, open it from your own code, and understand its actions, focus handling and styling.
+description: Render and open the Inth preference dialog in Vue, and inspect its actions, accessibility, and styling slots.
 group: frameworks
 ---
 
+Render `ConsentManager` when composing consent surfaces yourself, or open it
+programmatically via `useConsentActiveUI()`.
+
 ## Import the dialog when you compose surfaces
 
-`InthProvider` already renders `ConsentManager` when preferences open. Import
-it yourself only when you compose the surfaces in place of `InthProvider`.
-Import it from `@inth/vue/vue-plugin`:
+`InthProvider` already mounts `ConsentManager` when preferences open. Import it
+from `@inth/vue/vue-plugin` only when composing surfaces in place of
+`InthProvider`:
 
 <include src="../../../shared/examples/vue/consent-surfaces.mdx" />
 
 ## Open the dialog from your code
 
-Set `activeUI` to `'manager'` with `useConsentActiveUI()` from
-`@inth/vue/vue-plugin`. The Vue adapter uses `'manager'` where the React
-adapter uses `'dialog'`.
+Set `activeUI` to `'manager'` using `useConsentActiveUI()` from
+`@inth/vue/vue-plugin` (Vue uses `'manager'` where React uses `'dialog'`):
 
 {/* example: fragment */}
 
@@ -25,9 +27,9 @@ const activeUI = useConsentActiveUI();
 activeUI.value = 'manager';
 ```
 
-For a footer link, use
-[ConsentDialogLink](/docs/frameworks/vue/components/consent-dialog-link),
-which hides itself when the policy offers no preferences.
+For a footer button that automatically hides when the policy offers no
+preferences, use
+[ConsentDialogLink](/docs/frameworks/vue/components/consent-dialog-link).
 
 <import src="../../../shared/vue/components/consent-manager.mdx#behavior" />
 
@@ -39,8 +41,9 @@ which hides itself when the policy offers no preferences.
 
 ## Next steps
 
-- [ConsentWidget](/docs/frameworks/vue/components/consent-widget) renders the
-  same controls inline on a page.
-- [IABConsentDialog](/docs/frameworks/vue/components/iab-consent-dialog)
-  replaces this dialog under an IAB policy when `iab` is set.
-- [Customize](/docs/frameworks/vue/customize) sets tokens and slots.
+- [ConsentWidget](/docs/frameworks/vue/components/consent-widget): render the
+  same controls inline on a privacy page.
+- [IABConsentDialog](/docs/frameworks/vue/components/iab-consent-dialog): the
+  IAB preference center used when `iab` is enabled.
+- [Customize](/docs/frameworks/vue/customize): customize theme tokens and
+  component parts.

@@ -1,27 +1,17 @@
 ---
 title: YouTube
-description: Gate YouTube embeds with Inth v3 in Next.js, TanStack Start, React, Nuxt, Vue, Astro, Svelte, SvelteKit or JavaScript.
+description: Gate YouTube video embeds behind consent with Inth using ConsentGate or data-category across all supported web frameworks.
 seoTitle: YouTube embed cookie consent with Inth
-seoDescription: Show YouTube videos only with consent. Inth loads the video iframe only when its category has consent, in Next.js, React, Vue, Svelte, Astro and HTML.
+seoDescription: Load YouTube video iframes only after consent using Inth ConsentGate or data-category across all supported web frameworks.
 icon: youtube
 group: integrations
 ---
 
-Inth has no YouTube helper. This guide puts a YouTube iframe inside each
-framework's `ConsentGate`, or uses `data-category` with the HTML script tag. The
-example uses the `marketing` category, but you can choose a different category.
-Until that category has consent, the page has no iframe that loads a YouTube
-URL, so the browser does not connect to YouTube. If the visitor withdraws
-consent, `ConsentGate` removes the iframe. With `data-category`, Inth moves the
-URL from `src` to `data-src`.
+Inth gates YouTube videos by wrapping the iframe in your framework's `ConsentGate` or using `data-category` with the HTML script tag, instead of shipping a separate YouTube helper. Until a visitor grants the chosen category, the page contains no YouTube iframe and makes no request to YouTube. On withdrawal, `ConsentGate` unmounts the iframe, and `data-category` moves the URL back from `src` to `data-src`.
 
 ## Configure the video
 
-Use the ID of an embeddable video and the category matching its purpose in your
-policy. This page uses `marketing` because the YouTube player can set
-advertising identifiers. The framework quickstarts gate their demo video on
-`measurement` instead; either works if your policy says so. The current v3 adapters use consent-gated iframes rather than the v2
-`YouTubeEmbed` convenience component.
+Pick an embeddable video ID and the consent category that matches your policy. This example uses `marketing` because the YouTube player can set advertising identifiers; use `measurement` or another category if your policy requires it.
 
 ```ts title="src/embed-config.ts"
 export const embedCategory = 'marketing' as const;
@@ -37,36 +27,16 @@ Replace `VIDEO_ID` before running the example.
 
 ## Customize the player and placeholder
 
-Set playback options in the iframe URL. For example, append `start=36` to begin
-36 seconds into the video. Use supported
-[YouTube player parameters](https://developers.google.com/youtube/player_parameters)
-and reserve at least a 200-by-200-pixel player area.
+Pass supported [YouTube player parameters](https://developers.google.com/youtube/player_parameters) in `embedURL`, such as `start=36`, and reserve at least a 200-by-200-pixel player area.
 
-React and Svelte `ConsentGate` components provide a blocked-state placeholder and
-consent action. Their `placeholder` APIs differ. React takes a node, and
-Svelte takes a snippet. Keep a clear way to reopen preferences when customizing them.
-The Vue and browser examples show that action explicitly. `loading="lazy"` delays an
-allowed iframe for performance; it does not implement consent gating.
+React and Svelte `ConsentGate` render a default blocked-state placeholder with a consent action. Their `placeholder` APIs differ: React accepts a node, and Svelte accepts a snippet. The Vue and browser examples render that action explicitly. Keep a clear control to reopen preferences when customizing the placeholder. `loading="lazy"` defers loading for performance only and does not gate consent.
 
 ## Consent behavior
 
-Add `data-vendor="youtube"` next to `data-category` and declare a `youtube`
-vendor in the runtime's `vendors` option or the backend manifest to let visitors
-turn YouTube off while keeping the rest of the category on. See
-[vendor consent for your framework](/docs/integrations/overview#vendor-switches-and-cookie-cleanup).
+To let visitors disable YouTube while keeping the rest of the category on, add `data-vendor="youtube"` alongside `data-category` and declare a `youtube` vendor in your runtime `vendors` config or policy manifest. See [vendor consent for your framework](/docs/integrations/overview#vendor-switches-and-cookie-cleanup).
 
-Each example keeps the iframe absent until the category is allowed. After
-permission, the iframe can load. Revoking permission removes the iframe and its
-embedded document. Requests already sent cannot be recalled.
+The `youtube-nocookie.com` host does not replace consent gating. If your policy requires zero YouTube traffic before consent, avoid loading remote YouTube thumbnails, preconnecting to YouTube domains, or loading the YouTube IFrame Player API separately. Revoking consent removes the iframe and its document, though requests already sent cannot be recalled.
 
-The `youtube-nocookie.com` hostname does not replace the consent boundary. Avoid
-loading a remote thumbnail, preconnecting to YouTube, or installing the IFrame
-Player API separately if you require no YouTube request before permission.
-This recipe embeds a video; it does not load the JavaScript Player API.
+## Verify YouTube
 
-## Verify the integration
-
-In a fresh opt-in session, confirm no iframe or YouTube request exists. Grant
-marketing permission and play the video, then revoke it and confirm the iframe
-is removed. Test a narrow viewport and keyboard access to the placeholder and
-player. See [consent verification](/docs/guides/verify-consent).
+In a fresh opt-in session, confirm no YouTube iframe or network request exists before consent. Grant `marketing` and play the video, then revoke `marketing` and confirm the iframe disappears. Test both a narrow viewport and keyboard navigation across the placeholder and player. See [consent verification](/docs/guides/verify-consent).

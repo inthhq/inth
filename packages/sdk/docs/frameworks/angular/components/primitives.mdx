@@ -1,86 +1,73 @@
 ---
 title: Primitives
-description: Build your own accessible consent dialog in Angular with the headless inthDialog, inthSwitch, inthTabs, inthAccordion, inthCollapsible and inthPreferenceItem directives, and the focus trap, scroll lock and portal directives.
+description: Build accessible custom Angular consent dialogs using headless directives from @inth/angular/primitives.
 group: frameworks
 ---
 
+Build custom consent dialogs and preference forms in Angular with the same
+keyboard, ARIA and focus behavior as Inth's stock components using
+`@inth/angular/primitives`.
+
 ## When to use the primitives
 
-The stock consent components are built from a set of unstyled, accessible
-directives that `@inth/angular` also exports. Reach for them when you build
-your own preference dialog or settings page with
-[`ConsentManager` and `HeadlessConsent`](../headless) and want the same
-keyboard and focus behavior as the stock dialog. The primitives know nothing
-about consent; bind them to `ConsentManager` signals yourself.
+Use primitives when building your own preference UI with
+[`ConsentManager` and `HeadlessConsent`](../headless). The directives know
+nothing about consent; bind them to `ConsentManager` signals yourself.
 
-They are attribute directives on your own elements, so your markup, classes
-and Angular bindings stay yours. The parent directive holds the state as a
-`model()`, so `[(open)]`, `[(checked)]` and `[(value)]` work with signals.
-Import every directive you use from `@inth/angular/primitives` into the
-component's `imports`. Each class is named for its selector without the `inth` prefix: `[inthSwitch]` is
-`Switch`, and `[inth-preference-item-content]` is `PreferenceItemContent`.
+Each primitive is an attribute directive on your own HTML elements. Parent
+directives expose state via `model()`, supporting `[(open)]`, `[(checked)]`
+and `[(value)]`. Import directives from `@inth/angular/primitives`; class
+names drop the `inth` prefix (for example, `[inthSwitch]` is `Switch`).
 
-The primitives' rules load with the stock `<inth-consent-dialog>`. A page that
-uses the primitives' stock classes without the stock dialog needs
-`@inth/angular/styles.css` in `angular.json` and `styles: false` in
-`provideInth()`.
+If you rely on stock primitive CSS classes without rendering
+`<inth-consent-dialog>`, add `@inth/angular/styles.css` to `angular.json` and
+set `styles: false` in `provideInth()`.
 
 ## Directives
 
 | Primitive | Directives | Root inputs |
 | --- | --- | --- |
-| Dialog | `[inthDialog]` (exported as `inthDialog`), `[inthDialogBackdrop]`, `[inthDialogPositioner]`, `[inthDialogContent]`, `[inthDialogTitle]`, `[inthDialogDescription]`, `[inthDialogClose]` | `open` (model, default `false`), `closeOnEscape` (`true`), `closeOnInteractOutside` (`true`), `trapFocus` (`true`), `preventScroll` (`false`), `lazyMount` (`false`), `unmountOnExit` (`false`) |
-| Switch | `[inthSwitch]` on a `<button>` (exported as `inthSwitch`), `[inthSwitchControl]`, `[inthSwitchThumb]`, `input[inthSwitchHiddenInput]` | `checked` (model, default `false`), `disabled`, `type` (`'button'`) |
-| Tabs | `[inthTabs]` (exported as `inthTabs`), `[inthTabsList]`, `[inthTabsTrigger]`, `[inthTabsContent]` (exported as `inthTabsContent`) | `value` (model), `orientation` (`'horizontal'`), `loop` (`true`), `disabled` |
-| Accordion | `[inthAccordion]`, `[inthAccordionItem]`, `[inthAccordionTrigger]`, `[inthAccordionContent]` | `type` (`'single'` or `'multiple'`, required), `value` (model), `collapsible` (`false`) |
-| Collapsible | `[inthCollapsible]`, `[inthCollapsibleTrigger]`, `[inthCollapsibleContent]`, `[inthCollapsibleIndicator]` | `open` (model, default `false`), `disabled` |
-| PreferenceItem | `[inthPreferenceItem]`, `[inthPreferenceItemHeader]`, `[inthPreferenceItemTrigger]`, `[inthPreferenceItemLeading]`, `[inthPreferenceItemTitle]`, `[inthPreferenceItemMeta]`, `[inthPreferenceItemAuxiliary]`, `[inthPreferenceItemControl]`, `[inth-preference-item-content]`, `ng-template[inthPreferenceItemBody]` | `open` (model, default `false`), `disabled`, `noStyle` |
+| Dialog | `[inthDialog]` (export `inthDialog`), `[inthDialogBackdrop]`, `[inthDialogPositioner]`, `[inthDialogContent]`, `[inthDialogTitle]`, `[inthDialogDescription]`, `[inthDialogClose]` | `open` (`false`), `closeOnEscape` (`true`), `closeOnInteractOutside` (`true`), `trapFocus` (`true`), `preventScroll` (`false`), `lazyMount` (`false`), `unmountOnExit` (`false`) |
+| Switch | `[inthSwitch]` on `<button>` (export `inthSwitch`), `[inthSwitchControl]`, `[inthSwitchThumb]`, `input[inthSwitchHiddenInput]` | `checked` (`false`), `disabled`, `type` (`'button'`) |
+| Tabs | `[inthTabs]` (export `inthTabs`), `[inthTabsList]`, `[inthTabsTrigger]`, `[inthTabsContent]` (export `inthTabsContent`) | `value`, `orientation` (`'horizontal'`), `loop` (`true`), `disabled` |
+| Accordion | `[inthAccordion]`, `[inthAccordionItem]`, `[inthAccordionTrigger]`, `[inthAccordionContent]` | `type` (`'single'` or `'multiple'`), `value`, `collapsible` (`false`) |
+| Collapsible | `[inthCollapsible]`, `[inthCollapsibleTrigger]`, `[inthCollapsibleContent]`, `[inthCollapsibleIndicator]` | `open` (`false`), `disabled` |
+| PreferenceItem | `[inthPreferenceItem]`, `[inthPreferenceItemHeader]`, `[inthPreferenceItemTrigger]`, `[inthPreferenceItemLeading]`, `[inthPreferenceItemTitle]`, `[inthPreferenceItemMeta]`, `[inthPreferenceItemAuxiliary]`, `[inthPreferenceItemControl]`, `[inth-preference-item-content]`, `ng-template[inthPreferenceItemBody]` | `open` (`false`), `disabled`, `noStyle` |
 
-`[inthDialog]` goes on an `<ng-container>` or a wrapper element. Render its
-parts while `dialog.shouldRender()` is `true`: always with the defaults, from
-the first open with `lazyMount`, and only while open with `unmountOnExit`.
-It returns focus to the element that had it when the dialog closes. The
-[headless page](../headless#build-your-own-dialog) has a full dialog.
+Place `[inthDialog]` on `<ng-container>` or a wrapper and render its parts
+while `dialog.shouldRender()` is `true`. Focus returns to the previous
+element on close. See [build your own dialog](../headless#build-your-own-dialog).
 
-A tab panel stays in the DOM with `hidden` while its tab is not selected. To
-leave it out, wrap it in `@if (panel.selected())` with
-`#panel="inthTabsContent"`. A preference item's content renders from the
-first open and then stays. To create it only on first open, such as a long
-vendor list, put it in an `<ng-template inthPreferenceItemBody>` child
-(`PreferenceItemBody`); a plain `<ng-template>` is not rendered. Set
-`forceMount` to render the content while the item has never been opened.
+Inactive tab panels stay in the DOM with `hidden`; wrap in
+`@if (panel.selected())` to unmount them. Use
+`<ng-template inthPreferenceItemBody>` (`PreferenceItemBody`) to defer large
+preference item bodies until first open, or set `forceMount` to render eagerly.
 
 ## Use the switch with Angular forms
 
-`inthSwitch` implements `ControlValueAccessor`, so it works with
-`[(ngModel)]`, `formControlName` and `[formControl]` as well as
-`[(checked)]`. `inthSwitchHiddenInput` mirrors it in a visually hidden
-checkbox, so a native `<form>` submits its value:
+`inthSwitch` implements `ControlValueAccessor` for `[(ngModel)]`,
+`formControlName`, `[formControl]` and `[(checked)]`. Add
+`inthSwitchHiddenInput` for native form submission:
 
 <include src="../../../shared/examples/angular/switch-ngmodel.mdx" />
 
-The switch sets `role="switch"`, `aria-checked` and
-`data-state="checked"` or `"unchecked"`. Click, Enter and Space toggle it.
-Give it an accessible name with `aria-label` or `aria-labelledby`.
+`inthSwitch` sets `role="switch"`, `aria-checked` and `data-state`
+(`"checked"` or `"unchecked"`), toggles on Click, Enter and Space, and needs
+`aria-label` or `aria-labelledby`.
 
 ## Focus trap, scroll lock and portal
 
-Three directives apply the same behavior to your own elements:
-
-| Directive | Use | Input |
+| Directive | Usage | Input |
 | --- | --- | --- |
-| `[inthFocusTrap]` | `[inthFocusTrap]="open()"` | `true`, `false`, or `{ enabled, initialFocus }`. A bare attribute is on. Keeps Tab inside the element while enabled. |
-| `[inthScrollLock]` | `[inthScrollLock]="open()"` | `boolean`. A bare attribute locks. Stops the page scrolling behind the element. |
-| `[inthPortal]` | `inthPortal` or `inthPortal="#modals"` | An element or selector, default `<body>`. Moves the element there after the first browser render and removes it with its view. |
+| `[inthFocusTrap]` | `[inthFocusTrap]="open()"` | `boolean` or `{ enabled, initialFocus }`. Keeps Tab inside the element. |
+| `[inthScrollLock]` | `[inthScrollLock]="open()"` | `boolean`. Locks background scroll. |
+| `[inthPortal]` | `inthPortal` or `inthPortal="#modals"` | Target element or selector (default `<body>`). Moves the element after first browser render. |
 
-All three do nothing on the server. `inthPortal` leaves the element in place
-until the first browser render, so hydration finds the server's markup where
-it rendered it. The stock banner uses these three; the stock dialog uses the
-dialog primitives.
+All three are no-ops on the server so SSR hydration stays intact.
 
 ## Check your custom dialog
 
-Open it with the keyboard only. Tab and Shift+Tab stay inside it, Escape
-closes it, and focus returns to the control that opened it. Each switch
-announces its name and state in a screen reader. See the
-[headless page](../headless) for the consent side of a custom dialog.
+Navigate with keyboard only: confirm Tab stays trapped inside, Escape
+closes the dialog and restores focus, and each switch announces its name and
+state to a screen reader. See [headless](../headless) for consent state
+wiring.

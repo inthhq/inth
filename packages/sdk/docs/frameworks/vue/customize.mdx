@@ -1,96 +1,84 @@
 ---
 title: Customize
-description: Change the Inth banner and dialog in a Vue app with theme tokens, layout presentation, component slots and copy.
+description: Style the Inth consent banner and dialog in Vue with theme tokens, layout options, component parts, dark mode, and copy.
 group: frameworks
 ---
+
+Customize the Inth banner and preference dialog in Vue by passing theme
+tokens, layout options, and component part attributes to `inth`.
 
 ## Pick the right option
 
 | You want to change | Use |
 | --- | --- |
-| Colors, fonts, radius, spacing or motion | `tokens` |
-| Banner shape, position, button order or blocking | `presentation` |
-| Classes or attributes on one part of a component | `components` |
-| Light or dark colors | `colorScheme` and `theme.dark` |
-| The text | Your Inth project's translations |
-| The markup | [Headless](/docs/frameworks/vue/headless) |
+| Colors, fonts, radius, spacing, or motion | `tokens` |
+| Banner shape, position, button order, or blocking | `presentation` |
+| Classes or attributes on a component part | `components` |
+| Light or dark palette | `colorScheme` and `theme.dark` |
+| Banner and dialog text | Your Inth project's translations |
+| Full markup | [Headless](/docs/frameworks/vue/headless) |
 
-The [customization overview](/docs/customization/overview) explains these
-choices across frameworks. All three options go in the object you pass to
-`app.use(inth, ...)`.
-
-See the [design gallery](/docs/customization/recipes) for five banner designs,
-from a bottom bar to a fully custom one, with tested code for this framework.
+Pass these options to `app.use(inth, ...)`. See
+[customize the interface](/docs/customization/overview) for cross-framework
+concepts and [banner designs](/docs/customization/recipes) for five ready-made
+designs with Vue code.
 
 ## A customized setup
 
-This `src/main.ts` sets brand tokens, shows the banner as a bar along the
-bottom of the page, and adds a class to the banner card:
+This `src/main.ts` sets brand tokens, displays a bottom bar banner, and adds a
+custom class to the banner card:
 
 <include src="../../shared/examples/vue/customize.mdx" />
 
-The banner appears as a bar along the bottom of the page, its primary buttons
-use the brand purple, and the card gets the border that your stylesheet sets
-for `brand-consent-card`.
-
 ## Set theme tokens
 
-`tokens` sets Inth's CSS variables. Keys are the variable names without the
-leading `--`. [Theme tokens](/docs/customization/tokens) lists every token.
+`tokens` configures Inth's CSS variables using variable names without the
+leading `--`. See [theme tokens](/docs/customization/tokens) for the full
+list.
 
-The inth plugin adds every token, including the defaults you did not set,
-to `document.head` in a `<style id="inth-css-vars">` element when you install
-it, before the first render. Every Inth component gets them, with or without
-`InthProvider`. A `:root` rule in your stylesheet can lose to that element
-depending on stylesheet order, so set token values through the `tokens`
-option. `defineTheme` from `@inth/vue/vue-plugin` only types a theme object; it
-does not apply anything.
+`inth` writes every token, including defaults, into a
+`<style id="inth-css-vars">` element in `document.head` before the first
+render. Because a `:root` rule in your own CSS can lose on stylesheet order,
+set values through `tokens` instead. `defineTheme` from `@inth/vue/vue-plugin`
+only types a theme object; it does not apply styles on its own.
 
 ## Change the banner layout
 
-`presentation.prompt` sets the banner's `variant`, `position`, `layout`,
-`primaryActions`, `direction`, `uiProfile` and `blocking`.
-`presentation.preferences` sets the same layout fields for the dialog.
+`presentation.prompt` configures the banner's `variant`, `position`, `layout`,
+`primaryActions`, `direction`, `uiProfile`, and `blocking`.
+`presentation.preferences` sets the same layout options for the dialog.
 
-`variant` is `'floating'`, `'bar'`, `'widget'` or `'wall'`, and each accepts
-its own positions. `bar` takes `top` or `bottom`, `wall` takes `center`,
-`widget` takes the four corners, and `floating` takes the corners plus
-`top-center` and `bottom-center`. The policy still has the last word. A choice
-wall always blocks, a notice never blocks, and the policy can restore a
-required button you left out of `layout`.
+Valid positions depend on `variant`: `bar` accepts `top` or `bottom`; `wall`
+accepts `center`; `widget` accepts the four corners; `floating` accepts the
+four corners plus `top-center` and `bottom-center`. The policy always has
+final authority: a choice wall always blocks, a notice never blocks, and the
+policy restores required buttons omitted from `layout`.
 
 [`ConsentBanner`](/docs/frameworks/vue/components/consent-banner#props) also
-takes `variant`, `position` and `blocking` as props when you render it
-yourself.
+accepts `variant`, `position`, and `blocking` props when composed directly.
 
 ## Style one part of a component
 
-`components` adds attributes to named parts, such as the banner card or the
-floating trigger. The keys match the
-[component parts](/docs/customization/slots). Vue binds these objects with
-`v-bind`, so use Vue attribute names such as `class` and `style`. React's
-`className` does not apply. The `ConsentGate` placeholder's parts are
-`components['consent-gate'].root`, `.title` and `.button`.
-[Tailwind CSS](/docs/customization/tailwind) shows the Vue setup for Tailwind 4
-and 3, and [class names and CSS-in-JS](/docs/customization/class-names) covers
-other class sources.
+`components` binds Vue attributes such as `class` and `style` (using `v-bind`,
+not React's `className`) to named
+[component parts](/docs/customization/slots). Style the `ConsentGate`
+placeholder through `components['consent-gate'].root`, `.title`, and
+`.button`. See [Tailwind CSS](/docs/customization/tailwind) and
+[class names and CSS-in-JS](/docs/customization/class-names).
 
 ## Turn on dark mode
 
-`colorScheme` in the `inth` options decides when the banner and dialog turn dark:
-`'light'`, `'dark'`, `'system'`, or unset to copy a `dark` class on `<html>`.
-The plugin ships Inth's stock dark palette, so a `dark` class alone turns the
-banner dark. `theme` takes the same token
-object as the other frameworks, including `theme.dark`, and wins over `tokens`
-where both set a variable.
-[Dark mode](/docs/customization/dark-mode) covers each value and a dark first
-paint.
+Set `colorScheme` in `inth` to `'light'`, `'dark'`, `'system'`, or leave it
+unset to follow a `dark` class on `<html>`. Inth ships a built-in dark
+palette, so a `dark` class turns the banner dark automatically. Pass `theme`
+(including `theme.dark`) to override tokens per scheme; `theme` takes
+precedence over `tokens` where both define a variable. See
+[dark mode](/docs/customization/dark-mode).
 
 ## Change the copy
 
-The banner and dialog text come from the translations of your Inth project,
-resolved for the visitor's language. Edit them there. `legalLinks` adds links
-to your privacy policy and similar pages:
+Edit banner and dialog text in your Inth project's translations. Add links to
+legal pages with `legalLinks` and `bannerLegalLinks`:
 
 {/* example: fragment */}
 
@@ -103,22 +91,20 @@ app.use(inth, {
 });
 ```
 
-[Translations](/docs/frameworks/vue/translations) covers the visitor's
-language, and [copy and translations](/docs/customization/translations) covers
-message keys and writing labels.
+See [translations](/docs/frameworks/vue/translations) and
+[copy and translations](/docs/customization/translations).
 
 ## Other display options
 
 | Option | What it does |
 | --- | --- |
 | `showTrigger` | Renders the floating [`ConsentDialogTrigger`](/docs/frameworks/vue/components/consent-dialog-trigger) from `InthProvider`. |
-| `triggerDefaultPosition`, `triggerSize`, `triggerIcon`, `triggerShowWhen` | Place and style that trigger. |
-| `hideBranding`, `bannerHideBranding`, `dialogHideBranding` | Hide the "Secured by" tag. |
-| `disableAnimation` | Turns off banner and dialog animations. See [motion and animation](/docs/customization/motion). |
-| `consentCategories` | Limits the categories the dialog shows, within the policy's scope. |
+| `triggerDefaultPosition`, `triggerSize`, `triggerIcon`, `triggerShowWhen` | Positions and styles the floating trigger. |
+| `hideBranding`, `bannerHideBranding`, `dialogHideBranding` | Hides the "Secured by" tag. |
+| `disableAnimation` | Disables banner and dialog animations. See [motion and animation](/docs/customization/motion). |
+| `consentCategories` | Limits categories shown in preferences within the policy's scope. |
 
 ## Check the result
 
-Run `vite` and open the app in a private window so the banner shows. In the
-Elements panel, the `<style id="inth-css-vars">` element in `<head>` holds
-your token values.
+Run `vite` and open the app in a private window. Inspect `<head>` in Elements
+and confirm `<style id="inth-css-vars">` contains your token values.

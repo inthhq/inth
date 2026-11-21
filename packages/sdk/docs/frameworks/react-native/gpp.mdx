@@ -1,11 +1,9 @@
 ---
 title: IAB GPP
-description: Turn on the IAB Global Privacy Platform string in a React Native or Expo app, so ad SDKs read US National opt-outs and the TCF EU consent string from IABGPP_* keys.
+description: Enable the IAB Global Privacy Platform string in React Native or Expo so ad SDKs read US National and TCF EU signals.
 group: frameworks
 ---
 
-The native engine writes the GPP string for ad SDKs and exposes it to
-JavaScript through `useGPPString()`. Turn it on in the Expo plugin or the bare
-native metadata.
+The native engine builds the GPP string for ad SDKs and exposes it to JavaScript via `useGPPString()`. Enable it in the Expo config plugin or bare native metadata.
 
 <include src="../../shared/mobile/gpp.mdx" />

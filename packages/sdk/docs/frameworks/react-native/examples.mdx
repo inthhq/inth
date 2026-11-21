@@ -1,137 +1,93 @@
 ---
 title: Examples
-description: Run the SwiftUI, UIKit, Kotlin, React Native and Expo demo apps, including sample IAB choices and hosted review setup.
+description: Run Inth's SwiftUI, UIKit, Kotlin, bare React Native, and Expo demo apps with sample category, notice, and IAB flows.
 group: frameworks
 ---
 
-Use these apps to explore consent before adding it to your app. They live in
-the source repository and use the same native engine and screens as the SDK.
-For installation in your own app, start with the quickstart for your platform
-in the [framework list](/docs/frameworks).
+Explore Inth's native engine and consent screens with the runnable demo apps in the source repository before integrating your own app. To add Inth to your app, pick your platform from the [framework list](/docs/frameworks).
 
 ## Choose an example
 
-| Example | Source | What to try |
+| Example | Source path | Highlights |
 | --- | --- | --- |
-| SwiftUI app | `packages/swift/Examples/swiftui-consent` | Stock screens, a custom category form, a consent-gated counter and Keychain persistence |
-| SwiftUI and UIKit demo | `examples/native/consent-demo/ios` | Category, notice and IAB sample flows, plus hosted review configuration |
-| Kotlin/Compose demo | `examples/native/consent-demo/android` | The same native category and IAB journeys on Android |
-| Bare React Native | `internals/fixtures/react-native-bare` | Native presentation from RN, category hooks and preference reopening |
-| Expo | `internals/fixtures/expo-dev` | Config-plugin setup and native presentation in a custom build |
-| Minimal Swift starters | `packages/swift/Examples/AppleInstallation/Quickstart` | The complete source files used by the Swift quickstart and UIKit guide |
+| SwiftUI app | `packages/swift/Examples/swiftui-consent` | Stock screens, custom category form, consent-gated counter, Keychain persistence |
+| SwiftUI and UIKit demo | `examples/native/consent-demo/ios` | Category, notice, and IAB local fixtures plus hosted review mode |
+| Kotlin/Compose demo | `examples/native/consent-demo/android` | Matching Android category, notice, IAB, and custom UI flows |
+| Bare React Native | `internals/fixtures/react-native-bare` | Native presentation from RN, hooks, and preference reopening |
+| Expo | `internals/fixtures/expo-dev` | Config plugin setup and native presentation in a custom build |
+| Minimal Swift starters | `packages/swift/Examples/AppleInstallation/Quickstart` | Complete source files used by the SwiftUI and UIKit guides |
 
-Local IAB scenarios use sample disclosures and test CMP ID 53. Hosted review
-mode uses the actual project, CMP configuration and platform storage you
-supply. Keep those modes separate when collecting review evidence.
+Local IAB scenarios use sample disclosures with test CMP ID `53`. Keep local fixtures separate from hosted review runs when gathering compliance evidence.
 
 ## Prepare the checkout
 
-Install Bun 1.3.11 and the toolchain for the app you want to run. iOS needs
-Xcode, an installed simulator runtime and XcodeGen. RN iOS builds also need
-CocoaPods. Android needs JDK 17 and the SDK requested by that consumer's build.
-Set `ANDROID_HOME` to your SDK directory.
-
-From the repository root:
+Install Bun `1.3.11` plus the platform toolchain you need: Xcode, an iOS simulator runtime, XcodeGen, and CocoaPods for iOS; JDK 17, Android SDK, and `ANDROID_HOME` for Android. From the repository root:
 
 ```sh
 bun install --frozen-lockfile
 bun run --cwd packages/react-native build
 ```
 
-RN Android consumers need the versioned Maven artifacts described in
-[bare setup](/docs/frameworks/react-native/bare). The standalone native demo
-uses the local producer project.
+React Native Android builds require the versioned `com.inth` Maven repository from [Bare React Native](/docs/frameworks/react-native/bare); the standalone Android demo uses the local Gradle project.
 
 ## Run the SwiftUI app
 
-Generate and open the example project:
+Generate and open the project:
 
 ```sh
 xcodegen generate --spec packages/swift/Examples/swiftui-consent/project.yml
 open packages/swift/Examples/swiftui-consent/InthSwiftUI.xcodeproj
 ```
 
-Run the `InthSwiftUI` scheme. The stock presenter is the default. Add
-`--headless` in the scheme's Run arguments to try the app-owned category form.
-The counter follows measurement permission, so you can see grant and
-withdrawal take effect. The example's README explains hosted configuration.
-
-The [SwiftUI walkthrough](/docs/frameworks/react-native/swiftui) follows this
-larger sample's model, subscriptions and custom draft handling.
+Run the `InthSwiftUI` scheme (add `--headless` to Run arguments for the custom category form). Follow the [SwiftUI walkthrough](/docs/frameworks/react-native/swiftui) for a code tour.
 
 ## Run the SwiftUI or UIKit demo
 
-Generate its project into a new or empty directory outside the checkout:
+Generate the project into a fresh directory outside the checkout:
 
 ```sh
 bun examples/native/consent-demo/ios/generate-project.ts /tmp/inth-consent-demo
 open /tmp/inth-consent-demo/InthConsentDemo.xcodeproj
 ```
 
-Run `InthConsentDemo` for a SwiftUI app lifecycle or `InthUIKitDemo` for UIKit.
-Both host the same presenter. Keep simulator signing enabled so the hosted
-installer's Keychain probe works.
-
-In Debug, choose a local Category, Notice or IAB sample in setup. Each sample
-keeps its own saved choices. Restart to select another profile. For a hosted
-run, supply your project URL and privacy-policy URL. IAB review also asks for
-CMP identity/version and publisher settings, as described under
-[mobile IAB setup](/docs/guides/mobile-iab).
+Run `InthConsentDemo` (SwiftUI) or `InthUIKitDemo` (UIKit) with simulator signing enabled. In Debug, choose a local Category, Notice, or IAB fixture, or enter your hosted project URL, privacy policy URL, and CMP settings ([Mobile IAB and ads](/docs/guides/mobile-iab)).
 
 ## Run the Android demo
 
-Build from the repository root:
+Build from the repository root, then open `packages/android` in Android Studio and run `consent-demo`:
 
 ```sh
 sh packages/android/gradlew -p packages/android :consent-demo:assembleDebug
 ```
 
-Open the native Gradle project in Android Studio and run `consent-demo` on your
-emulator or device. Its setup screen offers the local category, notice and IAB
-scenarios in Debug, plus hosted setup. The demo README contains launch extras
-for the maintained test runners.
-
 ## Run bare React Native
 
-Follow `internals/fixtures/react-native-bare/README.md` for native dependency
-setup, then use the fixture's scripts for Metro and the platform build. Check
-its TypeScript integration with:
+Follow `internals/fixtures/react-native-bare/README.md` for native dependency setup and platform builds, and verify TypeScript types with:
 
 ```sh
 bun run --cwd internals/fixtures/react-native-bare check-types
 ```
 
-Normal native mode opens SwiftUI or Compose screens through the public
-presenter commands. Reopen Privacy settings after a choice, restart the app
-and inspect the restored state. `INTH_FAKE_NATIVE=true` instead selects a
-labelled JavaScript UI fixture; use normal mode to exercise native consent.
+Normal mode launches native SwiftUI/Compose screens (`INTH_FAKE_NATIVE=true` switches to a labeled JavaScript fixture).
 
 ## Run Expo
 
-Follow `internals/fixtures/expo-dev/README.md` and the
-[Expo guide](/docs/frameworks/react-native/expo) for prebuild and native
-configuration. Check its types with:
+Follow `internals/fixtures/expo-dev/README.md` and [Expo and EAS](/docs/frameworks/react-native/expo) to build a custom native binary (Expo Go cannot load native modules), and check types with:
 
 ```sh
 bun run --cwd internals/fixtures/expo-dev check-types
 ```
 
-Use a custom native build. Expo Go cannot load this module. The example
-configures categories through the typed plugin; IAB currently needs app-owned
-native installation.
+Standard TCF configuration uses the plugin's `iab` option; publisher restrictions or custom purposes require app-owned native installation.
 
-## Try the IAB journey
+## Walk through the IAB flow
 
-In the native demo's local IAB scenario:
+In the native demo's local IAB fixture:
 
-1. Open Customize and expand a purpose's details.
-2. Open partners, search and inspect a vendor before changing its choice.
-3. Open Other ad partners for sample Additional Consent providers 10 and 20.
-4. Save a granular choice and inspect the host's native authority output.
-5. Accept all, reopen Privacy settings, then reject all to withdraw.
-6. Restart and check that the saved refusal remains.
+1. Tap **Customize** and expand a purpose's details.
+2. Open the partner list, search, and inspect a vendor before toggling consent.
+3. Open **Other ad partners** for sample Additional Consent providers `10` and `20`.
+4. Save a granular choice and inspect the native authority readout.
+5. Accept all, reopen **Privacy settings**, then reject all and restart to verify the refusal persists.
 
-The provider choices depend on consent for TCF purposes 1, 3 and 4. A
-provider toggle alone does not grant those purposes. Use the hosted review
-mode with current disclosures for real review evidence, then follow
-[mobile verification](/docs/guides/mobile-verify).
+Additional Consent providers require TCF consent for purposes 1, 3, and 4. Use hosted review mode with live disclosures and follow [Verify mobile consent](/docs/guides/mobile-verify) before release.

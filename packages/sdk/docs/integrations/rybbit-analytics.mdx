@@ -1,24 +1,21 @@
 ---
 title: Rybbit Analytics
-description: Load Rybbit Analytics only after measurement consent with the Inth rybbitAnalytics helper, map its tracking options to data attributes, and check it in DevTools.
+description: Load Rybbit Analytics, session replay, and Web Vitals after measurement consent with Inth.
 seoTitle: Rybbit Analytics cookie consent with Inth
-seoDescription: Load Rybbit Analytics, with session replay and web vitals, only with measurement consent. Set it up with the Inth rybbitAnalytics helper.
+seoDescription: Gate Rybbit Analytics on measurement consent with Inth, map tracking options to data attributes, and verify in DevTools.
 icon: rybbit-analytics
 group: integrations
 ---
 
-The Inth `rybbitAnalytics` helper keeps Rybbit Analytics off the page until
-`measurement` has consent. Options such as `sessionReplay` and `webVitals` run
-inside the same script, under the same consent. The helper sends no consent
-signal to Rybbit. If the visitor withdraws consent, Inth removes the script
-element. By default, Inth also reloads the page.
+The `rybbitAnalytics` helper keeps Rybbit Analytics off the page until `measurement` is granted. Features such as `sessionReplay` and `webVitals` run inside the same script under that consent. It sends no consent signal to Rybbit. On withdrawal, Inth removes the script element and reloads the page by default.
 
 ## Configure Rybbit Analytics
 
-Copy the site ID from your Rybbit tracking snippet. The helper passes it to
-the script as `data-site-id`.
+Copy the site ID from your Rybbit tracking snippet; the helper sets it as `data-site-id`.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { rybbitAnalytics } from '@inth/integrations/rybbit-analytics';
@@ -30,12 +27,11 @@ export const scripts = [rybbitAnalytics({ siteId: 'YOUR_SITE_ID' })];
 
 ## Options
 
-Boolean options become `'true'` or `'false'` data attributes. An option you
-leave unset adds no attribute, so Rybbit uses its own default.
+Boolean options become `'true'` or `'false'` data attributes. Unset options add no attribute so Rybbit uses its own defaults.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `siteId` | Required | Site ID as a string or number, set as `data-site-id`. Empty or whitespace-only values log an error and the script does not load. |
+| `siteId` | Required | Site ID as a string or number, set as `data-site-id`. Blank values log an error and skip loading. |
 | `autoTrackPageview` | None | Automatic page views, set as `data-auto-track-pageview`. |
 | `trackSpa` | None | Client-side route tracking, set as `data-track-spa`. |
 | `trackQuery` | None | Query strings in tracked URLs, set as `data-track-query`. |
@@ -43,26 +39,20 @@ leave unset adds no attribute, so Rybbit uses its own default.
 | `trackErrors` | None | JavaScript errors, set as `data-track-errors`. |
 | `sessionReplay` | None | Session replay, set as `data-session-replay`. |
 | `webVitals` | None | Web Vitals, set as `data-web-vitals`. |
-| `skipPatterns` | None | URL patterns to skip, written as a JSON array to `data-skip-patterns`. |
-| `maskPatterns` | None | URL patterns to mask, written as a JSON array to `data-mask-patterns`. |
+| `skipPatterns` | None | URL patterns to skip, serialized as a JSON array to `data-skip-patterns`. |
+| `maskPatterns` | None | URL patterns to mask, serialized as a JSON array to `data-mask-patterns`. |
 | `debounce` | None | Page view debounce interval, set as `data-debounce`. |
-| `apiKey` | None | Tracking API key, set as `data-api-key`. The key is visible in the page source. |
-| `analyticsHost` | None | Self-hosted Rybbit host. The helper loads `<analyticsHost>/script.js`. |
-| `scriptUrl` | `https://app.rybbit.io/api/script.js` | Loader URL override. Takes precedence over `analyticsHost`. Blank values are ignored. |
+| `apiKey` | None | Tracking API key, set as `data-api-key`. Visible in page source. |
+| `analyticsHost` | None | Custom Rybbit host. The helper loads `<analyticsHost>/script.js`. |
+| `scriptUrl` | `https://app.rybbit.io/api/script.js` | Loader URL override. Takes precedence over `analyticsHost`; blank values fall back to `analyticsHost` or the default. |
 
 ## Loading and revocation
 
-`rybbitAnalytics` uses the `measurement` category. The script loads only while
-measurement is allowed, and every feature you turn on, including session
-replay and Web Vitals, runs under that one category. On revocation the helper
-removes the script element and calls no Rybbit API.
+`rybbitAnalytics` uses the `measurement` category and loads only while measurement is allowed. Every enabled feature, including session replay and Web Vitals, runs under that single category. On revocation, the helper removes the script element and calls no Rybbit API.
 
 ## Verify Rybbit Analytics
 
-After you allow measurement, the `script.js` request goes to `app.rybbit.io`
-or your `analyticsHost`, and its script element carries your `data-site-id`.
-Each option you set appears as a data attribute, including explicit `'false'`
-values. If your code calls `window.rybbit.event` or `window.rybbit.identify`,
-check measurement permission before each call.
+1. Allow `measurement` and confirm `script.js` loads from `app.rybbit.io` or your `analyticsHost`, with `data-site-id` and each configured data attribute, including explicit `'false'` values.
+2. If your code calls `window.rybbit.event` or `window.rybbit.identify`, check `measurement` permission before each call.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

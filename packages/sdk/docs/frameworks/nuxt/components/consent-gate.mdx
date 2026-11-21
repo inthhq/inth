@@ -1,30 +1,32 @@
 ---
 title: ConsentGate
-description: Render an iframe or widget in Nuxt only while its consent category is allowed, with the globally registered ConsentGate and a placeholder slot.
+description: Render an iframe or third-party widget in Nuxt only while its consent category is allowed, with SSR support and a fallback slot.
 group: frameworks
 ---
 
+Wrap third-party embeds in globally registered `ConsentGate` so they stay out
+of server HTML and the DOM until their consent category is allowed.
+
 ## Wrap an embed in `ConsentGate`
 
-The Nuxt module registers `ConsentGate` globally. Put the embed in the
-default slot and a placeholder in the `placeholder` slot:
+Put your embed in the default slot and an optional `placeholder` slot without
+needing an import:
 
 <include src="../../../shared/examples/nuxt/embed.mdx" />
 
-The iframe is absent from the page until the visitor allows measurement. The
-placeholder uses `ConsentDialogLink` so the visitor can open preferences
-from it.
+The iframe stays absent until `measurement` is granted. The placeholder uses
+`ConsentDialogLink` so visitors can open preferences right from the embed
+spot.
 
 <import src="../../../shared/vue/components/consent-gate.mdx#behavior" />
 
 ## During server rendering
 
-When the server resolves the policy, in the default `manifest()` mode or `hosted()`, the server
-reads the visitor's consent cookie and evaluates the category before it renders. A
-visitor who allowed the category gets the iframe in the first HTML, and a
-visitor who has not gets the placeholder. On prerendered and cached routes,
-and with `ssr: false`, every visitor gets the placeholder first, and the
-iframe replaces it once the browser resolves the policy.
+In default `manifest()` or `hosted()` mode, SSR evaluates the visitor's
+consent cookie before rendering: visitors who granted the category receive the
+iframe in server HTML, while everyone else receives the placeholder. On
+prerendered, cached, and `ssr: false` routes, every visitor gets the
+placeholder until browser resolution finishes.
 
 <import src="../../../shared/vue/components/consent-gate.mdx#props" />
 
@@ -32,15 +34,14 @@ iframe replaces it once the browser resolves the policy.
 
 ## Verify
 
-View the page source in a private window. It holds the placeholder and no
-`youtube-nocookie.com` iframe. Allow the category in preferences and save:
-the iframe appears and its requests start. Reload and view the source again:
-the iframe is now in the server HTML. Withdraw the category and save, and the
-page reloads without the iframe.
+View page source in a private window and confirm the placeholder renders with
+no `youtube-nocookie.com` iframe. Allow the category and save to load the
+iframe, then reload and view source to confirm SSR includes it. Withdraw the
+category and save to confirm the page reloads without the embed.
 
 ## Next steps
 
-- [Embeds](/docs/frameworks/nuxt/embeds) compares `ConsentGate` with the
+- [Embeds](/docs/frameworks/nuxt/embeds): compare `ConsentGate` with the
   iframe blocker.
 - [YouTube](/docs/integrations/youtube) and
-  [Google Maps](/docs/integrations/google-maps) show complete embeds.
+  [Google Maps](/docs/integrations/google-maps): follow complete embed guides.

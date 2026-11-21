@@ -1,13 +1,16 @@
 ---
 title: ConsentDialogTrigger
-description: Show a floating, draggable button that reopens the Inth preference dialog in a Vue app, and configure its corner, size, icon and label.
+description: Show a floating, draggable button in Vue that reopens Inth preferences and configure its corner, size, icon, and label.
 group: frameworks
 ---
 
+Enable a persistent floating button in Vue so visitors can reopen privacy
+preferences from any page.
+
 ## Turn on the trigger in the plugin options
 
-Turn the trigger on with `showTrigger` in the plugin options. `InthProvider`
-then renders it:
+Enable `showTrigger` in `inth` so `InthProvider` renders the trigger
+automatically:
 
 {/* example: fragment */}
 
@@ -20,8 +23,8 @@ app.use(inth, {
 });
 ```
 
-When you compose the surfaces without `InthProvider`, import the trigger from
-`@inth/vue/vue-plugin` and render it yourself:
+If you compose surfaces without `InthProvider`, import `ConsentDialogTrigger`
+from `@inth/vue/vue-plugin` and render it directly:
 
 <include src="../../../shared/examples/vue/consent-surfaces.mdx" />
 
@@ -29,7 +32,7 @@ When you compose the surfaces without `InthProvider`, import the trigger from
 
 <import src="../../../shared/vue/components/consent-dialog-trigger.mdx#options" />
 
-All trigger options go in the object you pass to `app.use(inth, ...)`.
+Pass all trigger options to `app.use(inth, ...)`.
 
 <import src="../../../shared/vue/components/consent-dialog-trigger.mdx#accessibility" />
 
@@ -37,6 +40,6 @@ All trigger options go in the object you pass to `app.use(inth, ...)`.
 
 ## Next steps
 
-- [ConsentDialogLink](/docs/frameworks/vue/components/consent-dialog-link)
-  is an inline alternative for a footer.
-- [inth plugin](/docs/frameworks/vue/plugin) lists every option.
+- [ConsentDialogLink](/docs/frameworks/vue/components/consent-dialog-link):
+  render an inline footer button instead.
+- [inth plugin](/docs/frameworks/vue/plugin): inspect every plugin option.

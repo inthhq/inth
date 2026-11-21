@@ -1,17 +1,15 @@
 ---
 title: Floating trigger
-description: Add the Inth floating button that reopens the preference dialog on a plain HTML site, and set its corner, size, visibility and accessible name.
+description: Add a floating corner button on plain HTML sites to reopen the Inth preference dialog.
 group: frameworks
 ---
 
+Display a fixed, draggable corner button that reopens the preference dialog
+from any page using `data-trigger`.
+
 ## Add the trigger
 
-The trigger is a small round button in a corner of the page. Clicking it opens
-the [preference dialog](/docs/frameworks/html/components/dialog). It gives
-visitors a way back to their choices on every page, without a link in your
-footer.
-
-Add `data-trigger` to the script tag:
+Add `data-trigger` to the `inth.js` script tag:
 
 {/* example: fragment */}
 
@@ -23,13 +21,14 @@ Add `data-trigger` to the script tag:
 ></script>
 ```
 
-`data-trigger="false"` leaves it off. The trigger is off by default. A footer
-[preferences link](/docs/frameworks/html/components/preferences-link) does the
-same job and fits better on sites with a legal links section.
+The trigger is off by default (`data-trigger="false"` keeps it off). For
+sites with a legal footer, a
+[preferences link](/docs/frameworks/html/components/preferences-link) offers
+the same access without a floating overlay.
 
 ## Set its corner, size and visibility
 
-Pass options under `ui.trigger` in a queued `config` call:
+Configure options under `ui.trigger` in a queued `config` call:
 
 {/* example: fragment */}
 
@@ -53,44 +52,39 @@ Pass options under `ui.trigger` in a queued `config` call:
 
 ## When it shows
 
-The trigger hides while the banner or the dialog is open, and shows when
-neither is. With `showWhen: 'after-consent'`, it also waits until the visitor
-has answered the prompt, so a visitor who has not chosen yet sees only the
-banner.
+The trigger hides while the banner or dialog is open. With
+`showWhen: 'after-consent'`, it stays hidden until the visitor answers the
+initial prompt.
 
 ## Drag it to another corner
 
-Visitors can drag the trigger. It snaps to the nearest corner in the direction
-they moved it, and Inth remembers that corner in the `inth-trigger-position`
-localStorage key. A remembered corner wins over `position` on later visits.
-Set `persistPosition: false` to always start at `position`.
-
-A drag does not open the dialog. A click, Enter or Space does.
+Visitors can drag the trigger to snap it to another corner. Inth saves the
+dragged corner in `localStorage` under `inth-trigger-position`, overriding
+`position` on future visits unless `persistPosition: false` is set. Dragging
+does not open the dialog; clicking or pressing Enter or Space opens it.
 
 ## Keyboard and screen readers
 
-The trigger is a native `button` with only an icon, so `ariaLabel` is its only
-name. Write it in the page's language; the default is English. The trigger is
-in the page's tab order after your content, because Inth appends it to the end
-of `<body>`.
+The trigger is an icon-only native `<button>`, so `ariaLabel` provides its
+accessible name. Translate `ariaLabel` into the page's language. Because the
+UI host appends to `<body>`, the trigger sits at the end of the page tab
+order.
 
 ## Open DevTools from it
 
-While the [DevTools tag](/docs/frameworks/html/dev-tools) is loaded, the
-trigger becomes a two-button toolbar: a DevTools button and the button that
-opens the dialog, which stays in the corner. Clicking the DevTools button opens
-and closes the panel beside the toolbar. Without the DevTools tag, the trigger
-stays a single button.
+When the [DevTools tag](/docs/frameworks/html/dev-tools) is loaded, the
+trigger expands into a two-button toolbar pairing preferences and DevTools
+in the same corner.
 
 ## Style it
 
-The trigger reads the same theme tokens as the banner. In `ui.css`, select it
-with `[data-testid="consent-dialog-trigger"]`. It carries `data-position` with
-its current corner and `data-size` with its size.
+Shared theme tokens apply automatically. In `ui.css`, select
+`[data-testid="consent-dialog-trigger"]` (`data-position` and `data-size`
+reflect the active corner and size).
 
 ## Check it works
 
 1. Accept or reject in the banner. The trigger appears in its corner.
 2. Click it. The preference dialog opens and the trigger hides.
-3. Drag it to the opposite corner and reload. It starts in the new corner.
-4. Press Tab until the trigger has focus and press Enter. The dialog opens.
+3. Drag it to another corner and reload. It stays in the new corner.
+4. Tab to the trigger and press Enter to open the dialog.

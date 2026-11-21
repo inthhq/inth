@@ -1,81 +1,64 @@
 ---
 title: Mobile manifest
-description: Fetch your project's consent manifest at build time and bundle it into an iOS or Android app, with release builds failing on a failed fetch.
+description: Fetch your Inth project manifest at build time and bundle it into iOS or Android apps for offline first launches.
 group: cli
 ---
 
-## Bundle the manifest into a native build
+Fetch your Inth project's `/v1/consent/manifest` at build time and write a policy JSON resource that the iOS and Android SDKs load before the first network response.
 
-`c15t mobile-manifest` fetches the hosted `/manifest` and writes it as the
-policy resource the iOS and Android SDKs read before the first network
-response. Run it as a build step so each build carries the latest policy.
+## Command syntax
+
+Run `mobile-manifest` during your native build so every binary ships with current policy rules:
 
 ```sh
 npx @c15t/cli mobile-manifest \
   --backend-url https://your-project.inth.app \
-  --out inth-policy.json \
+  --out c15t-policy.json \
   --build release
 ```
 
-| Flag | Purpose |
-| --- | --- |
-| `--backend-url` | Required. The project URL from your Inth dashboard, such as `https://your-project.inth.app`. |
-| `--out` | Where to write the resource. Defaults to `c15t-policy.json`. |
-| `--build` | `release` (default) or `debug`. Decides what a failed fetch means. |
-| `--allow-stale-manifest` | Reuse the last fetched copy at `--out` when the fetch fails. |
-| `--expires-in-days` | Days until devices report `policyStale`. Defaults to 30. |
-| `--languages` | Comma-separated languages to compile prompt copy for. English is always included. |
-| `--vendors` | Comma-separated IAB vendor IDs to keep in the bundled GVL. |
-| `--dry-run` | The app is built with `dryRun`. `--backend-url` then takes any `https` URL, or `http` on `localhost`, `127.0.0.1` or `[::1]`. The command still fetches and writes the resource. |
+Use `npx @c15t/cli` rather than `npx c15t` (`c15t` has no npm executable); if `@c15t/cli` is in `devDependencies`, `npx` runs your installed copy.
 
-In a project with `@c15t/cli` installed, `npx` runs that copy. Without it,
-`npx @c15t/cli` downloads the package; `npx c15t` does not work, because the
-`c15t` package on npm has no executable.
+## Options
 
-## The project URL
+| Flag | Default | Purpose |
+| --- | --- | --- |
+| `--backend-url` | Required | Inth project URL, such as `https://your-project.inth.app`. |
+| `--out` | `c15t-policy.json` | Output file path for the bundled JSON resource. |
+| `--build` | `release` | `release` or `debug`. Sets how network failures behave. |
+| `--allow-stale-manifest` | `false` | Reuse an existing file at `--out` for the same project URL when the fetch fails. |
+| `--expires-in-days` | `30` | Days until devices emit `policyStale`. |
+| `--languages` | English | Comma-separated language codes to bundle copy for. English is always included. |
+| `--vendors` | All | Comma-separated IAB vendor IDs to keep in the bundled GVL. |
+| `--dry-run` | `false` | Relax URL checks for debug `dryRun` builds while still fetching and writing the file. |
 
-The command checks `--backend-url` with the rule the native SDKs apply at
-launch, and binds the resource to its normal form,
-`https://your-project.inth.app`. A missing scheme means `https`. Trailing
-slashes are dropped and the host is lowercased. Another host, `http`, a port, a path, a query, a
-fragment, or a username or password fails with `FLAG_INVALID`.
+## Project URL and dry-run builds
 
-A debug build with `dryRun` on can point at a staging or loopback backend.
-Pass `--dry-run` for that build, so the command accepts the URL the app uses:
+The command validates `--backend-url` with the native SDK rules and binds the output to its normalized `https://your-project.inth.app` form (missing scheme defaults to `https`, trailing slashes are stripped, host is lowercased). Passing `http`, another host, a port, a path, query parameters, fragments, or credentials fails with `FLAG_INVALID`.
+
+For debug builds using `dryRun` against staging or loopback servers, pass `--dry-run` to allow any `https` URL or `http` on `localhost`, `127.0.0.1`, or `[::1]`:
 
 ```sh
 npx @c15t/cli mobile-manifest \
   --backend-url http://localhost:8787 \
-  --out inth-policy.json \
+  --out c15t-policy.json \
   --build debug \
   --dry-run
 ```
 
-Leave `--dry-run` off release builds. A release app refuses `dryRun`, and the
-strict rule then refuses the URL too. The Expo plugin's `bundleManifest`
-passes `--dry-run` when its `dryRun` option is on.
+Never pass `--dry-run` on release builds, because release apps refuse `dryRun`. Expo's `bundleManifest` passes `--dry-run` automatically when `dryRun` is enabled.
 
-## When the backend cannot be reached
+## Failure behavior
 
-The fetch counts as failed when no response arrives, or the backend answers
-`5xx`, `408` or `429`.
+Network errors and HTTP `5xx`, `408`, or `429` count as fetch failures:
 
-- A release build fails, so no release ships without its manifest.
-- A debug build prints a warning and continues with no bundled manifest. It
-  deletes any earlier copy at `--out`, so an old manifest cannot ship by
-  accident.
-- With `--allow-stale-manifest`, both reuse the last fetched copy, if one for
-  the same backend is at `--out`. Air-gapped CI can commit or cache that copy.
+- **Release builds** exit non-zero so releases never ship without a manifest.
+- **Debug builds** warn, continue, and delete any existing file at `--out` to avoid shipping stale policy.
+- **`--allow-stale-manifest`** reuses an existing file at `--out` matching `--backend-url` for air-gapped CI.
 
-A backend that answers with anything else fails every build, debug included,
-with or without `--allow-stale-manifest`: a `404`, a response that is not a
-manifest, or a manifest that does not pass validation is a configuration
-problem to fix, not an outage to wait out.
+Configuration errors (`404`, non-manifest responses, invalid manifests, or missing conservative opt-in/IAB fallback with no preselected optional categories) fail every build. Expired manifests still prompt and save choices offline while emitting `policyStale`; see [mobile offline consent](/docs/guides/mobile-offline).
 
-An expired manifest still works on the device: it shows the prompt, records
-choices and emits `policyStale` until the app reaches the backend. See
-[mobile offline consent](/docs/guides/mobile-offline).
+## Verify the output
 
-The manifest needs a conservative opt-in or IAB fallback for unknown
-geography, with no preselected optional categories. The command fails when
-that rule is missing, whatever the build type.
+1. Run the command with `--build release` against your Inth project URL and confirm exit code `0` and valid JSON at `--out`.
+2. Re-run with `--build release` against an unreachable URL (without `--allow-stale-manifest`) and confirm a non-zero exit.

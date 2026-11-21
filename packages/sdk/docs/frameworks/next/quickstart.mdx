@@ -1,74 +1,55 @@
 ---
 title: Quickstart
-description: Add Inth consent management to a Next.js App Router app with Inth, a build-time policy manifest and consent-gated scripts, then check it works. Links to the Pages Router and static export guides.
+description: Add a cookie consent banner to a Next.js App Router app and hold back analytics until consent allows them.
 group: frameworks
 ---
 
-## Before you start
+Add a consent banner to a Next.js App Router app. Your server resolves each
+visitor's consent in the same response as the page, and analytics wait until
+consent allows them.
 
-This guide is for the App Router on a Next.js server, the setup most Next.js
-apps use. When you finish, your server works out each visitor's consent and
-sends it in the same response as the page. The browser makes no `/v1/consent/init`
-request, and analytics wait until consent allows them. Consent
-choices are saved to Inth.
+<Prompt title="Add Inth consent to this Next.js app" description="Paste into Claude Code, Codex, Cursor or another coding agent at the root of your app.">
+  Add Inth consent management to this Next.js App Router app.
 
-Not using Next.js? Each framework has its own guide, including React with Vite
-and plain JavaScript. Pick yours from the [framework list](/docs/frameworks).
+  1. Check that the app uses the App Router on a Next.js server. If it uses the Pages Router, `output: 'export'` or cached pages, stop and tell me.
+  2. Install `@inth/nextjs` and `@inth/integrations`. Read `node_modules/@inth/nextjs/AGENTS.md`, then follow the Next.js quickstart it links to, in order. Do not guess the API from memory.
+  3. Set `NEXT_PUBLIC_INTH_PROJECT_URL` in `.env.local`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `NEXT_PUBLIC_INTH_PROJECT_URL` wins over any legacy `NEXT_PUBLIC_C15T_BACKEND_URL`.
+  4. Wrap the Next.js config in `withConsentManifest` from `@inth/nextjs/build`. Add nothing to `.gitignore`.
+  5. Create `inth.config.ts` at the project root. Move every analytics and marketing script into it with the matching helper from `@inth/integrations`, carry over vendor settings such as PostHog's `region` or `apiHost`, and remove old loaders (`next/script`, `@next/third-parties`, tag managers). If a vendor has no helper, tell me.
+  6. In the root layout, render `InthProvider` with `state={resolveConsent()}` (not awaited), plus `ConsentBanner`, `ConsentDialog` and a footer `ConsentDialogLink`. Do not add `'use client'`, and mount a single `InthProvider` in the root layout.
+  7. Run `next build` and `next start`. In a browser, verify no vendor request fires before consent, rejecting survives a reload, and granting analytics loads PostHog.
 
-Using the Pages Router, `output: 'export'` or cached pages? Find your app in
-[Use another router or deployment](#use-another-router-or-deployment) first.
+  List the files changed, any script still outside consent, and how you checked the requests.
+</Prompt>
 
-You need an [Inth project](https://inth.com/dashboard/sign-up?framework=next). Set its policy rules, add your
-site's origin to its trusted origins, and copy its backend URL. The URL is
-public configuration, not a secret.
+## Prerequisites
 
-This setup bundles your policy into the build. We recommend it for
-production, but it means you rebuild after you change policies, translations
-or vendors.
+- A Next.js App Router app on a server. Using Pages Router, `output: 'export'` or cached pages? See [Use another router or deployment](#use-another-router-or-deployment). Other frameworks are in the [framework list](/docs/frameworks).
+- An [Inth project](https://inth.com/dashboard/sign-up?framework=next) with your origin in trusted origins.
 
-## Install Inth
+## Install the SDK
 
 <CommandTabs command="@inth/nextjs @inth/integrations" mode="install" />
 
-You don't need to import a stylesheet, because the components add their own
-`<style>` elements. Tailwind CSS 3 is the exception. Import the stylesheet
-yourself and set `styles: false`, as
-[Customize](/docs/frameworks/next/customize#load-the-stylesheet-yourself)
-shows.
+Components render their own styles. On Tailwind CSS 3, [load the stylesheet yourself](/docs/frameworks/next/customize#load-the-stylesheet-yourself).
 
-## Set the backend URL
+## Set the project URL
 
-Set your project's backend URL, including any path prefix, in `.env.local` and
-in your host's build settings:
+Add your project URL to `.env.local` and your host's build settings:
 
 ```sh title=".env.local"
 NEXT_PUBLIC_INTH_PROJECT_URL=https://example-inth.inth.app
 ```
 
-The c15t name `NEXT_PUBLIC_C15T_BACKEND_URL` still works as a fallback. When both are
-set, `NEXT_PUBLIC_INTH_PROJECT_URL` wins.
-
-`https://example-inth.inth.app` is a demo project you can use to try the
-setup. Next.js inlines `NEXT_PUBLIC_` variables at build time. The build, the
-server and the browser all see the same URL, and changing it on a deployed app
-does nothing until you rebuild.
+`https://example-inth.inth.app` is a public demo project. Rebuild after changing it. `NEXT_PUBLIC_INTH_PROJECT_URL` wins over legacy `NEXT_PUBLIC_C15T_BACKEND_URL` (used as a fallback when unset).
 
 ## Bundle the manifest during builds
 
-<include src="../../shared/build-time-manifest.mdx" />
-
-Wrap your Next.js config in `withConsentManifest`. An existing config object
-or function goes in as the first argument, unchanged:
+Wrap your Next.js config in `withConsentManifest`:
 
 <include src="../../shared/examples/nextjs/quickstart-next-config.mdx" />
 
-`next build` and `next dev` fetch `${NEXT_PUBLIC_INTH_PROJECT_URL}/v1/consent/manifest`
-and write the policy to `node_modules/.cache/inth/`. That's outside your source
-tree, so there's nothing to add to `.gitignore`. `resolveConsent` finds the
-file on its own. When the build produced a snapshot, `next start` serves it
-without fetching the policy again.
-
-<include src="../../shared/build-time-manifest-notes.mdx" />
+`next build` and `next dev` bundle your policy so the server skips runtime fetches. Rebuild after editing policies, translations or vendors. Failed downloads warn and fall back to runtime fetching; set `INTH_ON_BUILD_ERROR=fail` to stop builds on errors ([download failures](/docs/concepts/modes#what-happens-when-the-download-fails)).
 
 ## Add the consent config
 
@@ -76,84 +57,41 @@ Create `inth.config.ts` at the project root:
 
 <include src="../../shared/examples/nextjs/quickstart-config.mdx" />
 
-`withConsentManifest` finds this file, so `InthProvider` and `resolveConsent`
-read it without an import. Export the config as the file's default export.
-The browser bundle includes this file too, so keep secrets out of it. Scripts
-are fine.
-
-The config sets no `mode`, so it uses `manifest()`: the server resolves each
-visitor from the bundled policy. [Consent modes](/docs/concepts/modes) lists
-the alternatives.
-
-The example holds PostHog back until `measurement` is allowed. Swap
-`phc_your_project_key` for your key, or use whichever
-[integration](/docs/integrations/overview) your app needs.
-`cookieless_mode: 'never'` stops PostHog from switching to cookieless capture
-after a rejection. Remove any PostHog loader you already have in `next/script`
-or your tag manager. Otherwise PostHog loads twice, and the old copy ignores
-consent.
+This file ships to the browser, so keep secrets out. Replace `phc_your_project_key` (or pick another [integration](/docs/integrations/overview)), add `region: 'us'` or `apiHost` if needed, keep `cookieless_mode: 'never'`, and remove old PostHog loaders.
 
 ## Resolve consent in the root layout
 
-Render `InthProvider` in the root layout and pass it `resolveConsent()` without
-awaiting it:
+Render `InthProvider` in your root layout with `resolveConsent()` unawaited:
 
 <include src="../../shared/examples/nextjs/quickstart-layout.mdx" />
 
-The layout is a Server Component. `@inth/nextjs` gives it `InthProvider`,
-`ConsentBanner`, `ConsentDialog` and `ConsentDialogLink` as client components,
-so you don't need a `'use client'` wrapper. It already wraps the
-`InthProvider` from `@inth/nextjs/react`, so don't mount both.
-
-Because the layout doesn't await `resolveConsent()`, Next.js sends the page
-without waiting for it and streams the consent result later in the same response. Until
-it arrives, the banner stays hidden and every optional category stays denied,
-so nothing loads early. If you want the banner in the first HTML, see
-[render the banner in the server HTML](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html).
+Mount one `InthProvider` in the root layout without `'use client'`. Unawaited `resolveConsent()` streams the page while blocking optional categories until resolved. For server-rendered banner HTML, see [App Router](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html).
 
 ## Check it works
 
-Start the production build with `next build` and `next start`, then open the
-site in a fresh browser session with DevTools open.
+Run `next build && next start` and open a private window with DevTools Network open:
 
-1. Under an opt-in policy, the banner appears and the Network panel shows no
-   PostHog request.
-2. Click **Reject All**, then reload. The banner stays closed and PostHog does
-   not load.
-3. Open **Privacy settings** in the footer and turn on **Analytics** (the
-   `measurement` category). PostHog loads.
-4. Open **Privacy settings** again and turn **Analytics** off. The page
-   reloads and PostHog does not load again.
-5. The browser makes no `/v1/consent/init` request, and choices post to
-   `${projectUrl}/v1/consent/records`.
+1. Under an opt-in policy, the banner shows with no PostHog or `/v1/consent/init` request.
+2. Click **Reject All** and reload. The banner stays closed and PostHog stays blocked.
+3. Open **Privacy settings**, enable **Analytics**, and save. PostHog loads and `POST /v1/consent/records` succeeds.
+4. Disable **Analytics** and save. The page reloads without PostHog.
 
-If the banner does not appear, see
-[why is there no banner](/docs/guides/troubleshooting#why-is-there-no-banner)
-and [Next.js troubleshooting](/docs/frameworks/next/troubleshooting).
-[Verify consent](/docs/guides/verify-consent) has the release checklist.
-Check the Network panel, not just the banner. A banner can appear while
-analytics still load.
+No banner? Test EU rules locally with `resolveConsent({ country: 'DE' })`, then remove it. See [why is there no banner](/docs/guides/troubleshooting#why-is-there-no-banner), [Next.js troubleshooting](/docs/frameworks/next/troubleshooting) and [verify consent](/docs/guides/verify-consent).
 
 ## Use another router or deployment
 
 | Your app | Guide |
 | --- | --- |
-| App Router with a Next.js server | [App Router](/docs/frameworks/next/app-router), the full version of this quickstart |
-| Pages Router with a Next.js server | [Pages Router](/docs/frameworks/next/pages-router) |
-| `output: 'export'`, with either router | [Static export](/docs/frameworks/next/static-export) |
-| Static, ISR or `'use cache'` pages, Cache Components, `ensureStatic`, or the banner in the first HTML | [Rendering and deployment](/docs/frameworks/next/rendering) |
-| The fewest files, with consent resolved in the browser | [Client-side initialization](/docs/frameworks/next/client-side) |
-
-Tests run without a backend through `testing()` from `@inth/nextjs/testing`,
-which throws in production builds. See
-[testing configuration](/docs/frameworks/next/data-fetching-reference#testing-configuration).
+| App Router (full guide) | [App Router](/docs/frameworks/next/app-router) |
+| Pages Router | [Pages Router](/docs/frameworks/next/pages-router) |
+| `output: 'export'` | [Static export](/docs/frameworks/next/static-export) |
+| Static, ISR, `'use cache'` or awaited banner | [Rendering and deployment](/docs/frameworks/next/rendering) |
+| Browser-only initialization | [Client-side initialization](/docs/frameworks/next/client-side) |
+| Offline tests | [Testing configuration](/docs/frameworks/next/data-fetching-reference#testing-configuration) |
 
 ## Next steps
 
-- [App Router](/docs/frameworks/next/app-router): the awaited layout, the
-  consent route for static pages, and backend `/v1/consent/init` instead of the manifest.
-- [Scripts](/docs/frameworks/next/scripts): more vendors and how each loads
-  and revokes.
-- [Customize](/docs/frameworks/next/customize): theme, layout and copy.
-- [Runnable Next.js example](/docs/examples): this quickstart as an app you
-  can run.
+- [App Router](/docs/frameworks/next/app-router): await consent or serve a consent route.
+- [Scripts](/docs/frameworks/next/scripts): gate more vendors and control loading.
+- [Customize](/docs/frameworks/next/customize): change theme, layout and copy.
+- [Examples](/docs/examples): run this quickstart as a complete app.

@@ -1,15 +1,12 @@
 ---
 title: Content Security Policy
-description: Write a Content Security Policy for a SvelteKit app using Inth with SvelteKit's csp option, covering vendor hosts, Inth's style elements, the server-rendered theme style and style attributes.
+description: Configure a Content Security Policy for a SvelteKit app using Inth, covering vendor hosts, inline styles, and nonces.
 group: frameworks
 ---
 
 ## Configure csp
 
-SvelteKit writes the `Content-Security-Policy` header when you set its `csp`
-option. In SvelteKit 3 that option goes to the `sveltekit()` plugin in
-`vite.config.ts`. SvelteKit adds nonces or hashes to its own inline scripts.
-Add the hosts Inth and your vendors need to the directives:
+SvelteKit writes the `Content-Security-Policy` header when you set its `csp` option. In SvelteKit 3, pass `csp` to the `sveltekit()` plugin in `vite.config.ts`. SvelteKit adds nonces or hashes to its own inline scripts. Add the hosts Inth and your vendors need to the directives:
 
 {/* example: fragment */}
 
@@ -32,95 +29,42 @@ export default defineConfig({
 
 On SvelteKit 2, set the same `csp` object as `kit.csp` in `svelte.config.js`.
 
-Replace `https://your-project.inth.app` with the backend URL from your Inth
-project, and list each vendor's script host.
+Replace `https://your-project.inth.app` with your Inth project URL, and list each vendor's script host.
 
-SvelteKit does not pass the nonce it generates to your components, so the
-provider's `nonce` prop cannot reuse it. Allow vendor hosts in `script-src`
-instead. Host sources still apply next to SvelteKit's nonces, as long as the
-list has no `'strict-dynamic'`.
+SvelteKit does not pass the nonce it generates to your components, so the provider's `nonce` prop cannot reuse it. Allow vendor hosts in `script-src` instead. Host sources still apply alongside SvelteKit's nonces as long as the list has no `'strict-dynamic'`.
 
-The `<link rel="modulepreload">` tag that `inthHandle` adds for the script
-loader and network blocker chunk takes the nonce SvelteKit put on its own
-scripts, unless the provider has a `nonce` of its own. The chunk is on your
-own origin, so `'self'` covers it too.
+The `<link rel="modulepreload">` tag that `inthHandle` adds for the script loader and network blocker chunk takes the nonce SvelteKit put on its own scripts, unless the provider has its own `nonce`. The chunk lives on your own origin, so `'self'` covers it too.
 
 ## Allow the banner's tap script
 
-A server-rendered `ConsentBanner` puts an inline `<script data-inth-early-tap>`
-ahead of its markup. It holds a tap made before the page hydrates; see
-[taps before hydration](./rendering#taps-before-hydration). The script takes
-the provider's `nonce`, or else `inthHandle` gives it the nonce SvelteKit put
-on its own scripts, so `mode: 'nonce'` and `mode: 'auto'` on a page rendered
-for each request admit it. Its text is the same on every page, so on a
-prerendered page you can allow it by the SHA-256 hash of its text. A policy
-that blocks it changes nothing else: a tap before hydration then does nothing.
+A server-rendered `ConsentBanner` puts an inline `<script data-inth-early-tap>` ahead of its markup to hold a tap made before hydration; see [taps before hydration](./rendering#taps-before-hydration). The script takes the provider's `nonce`, or `inthHandle` copies SvelteKit's script nonce, so `mode: 'nonce'` and `mode: 'auto'` on request-rendered pages admit it. Its text is identical on every page, so on a prerendered page you can allow it by its SHA-256 hash. Blocking it has no other effect: taps before hydration simply wait until hydration completes.
 
 ## Allow the server start script
 
-When the visitor's consent already allows some vendor helper entries in
-`scripts`, through a stored choice or a policy that asks for none, `inthHandle`
-adds an inline `<script>` at the end of `<body>`. It runs those entries' setup
-and inserts their tags before the page hydrates, and the script loader adopts
-the tags. Entries with `alwaysLoad` start this way whatever the visitor chose.
-Its content changes with each visitor's consent, so a hash can't allow it.
+When a visitor's consent already allows vendor helper entries in `scripts` (through a stored choice or a policy that requires no prompt), `inthHandle` adds an inline `<script>` at the end of `<body>` to run setup and insert their tags before hydration. Entries with `alwaysLoad` start this way regardless of choice. Because its content varies per visitor, a hash cannot allow it.
 
-The script takes the provider's `nonce`, or else the nonce SvelteKit put on
-its own scripts, and the tags it inserts carry the same nonce. Under
-`mode: 'nonce'`, or `mode: 'auto'` on a page rendered for each request, the
-policy admits it with nothing more to add. A `nonce` on a single `scripts`
-entry takes precedence for that entry's tag.
+The script takes the provider's `nonce`, or SvelteKit's script nonce, and passes that nonce to the tags it inserts. Under `mode: 'nonce'`, or `mode: 'auto'` on request-rendered pages, no extra directive is needed. A `nonce` on an individual `scripts` entry overrides it for that tag. If your policy blocks the script, the script loader starts those entries after hydration instead.
 
-If your policy blocks the script, the script loader starts those entries
-after hydration instead.
+## Allow Inth style elements
 
-## Allow Inth's style elements
+Inth components add their rules as `<style>` elements. On a server-rendered page, `inthHandle` writes the banner's rules into `<head>` with the provider's `nonce`, or SvelteKit's script nonce, so a nonce-based policy admits them. Prerendered pages under `mode: 'auto'` get hashes instead of nonces, leaving no nonce for `inthHandle` to copy.
 
-Inth's components add their rules as `<style>` elements. On a server-rendered
-page, `inthHandle` writes the banner's rules into the HTML `<head>` with the
-provider's `nonce`, or else the nonce SvelteKit put on its own scripts, so a
-nonce-based policy admits them. A prerendered page under `mode: 'auto'` gets
-hashes instead of nonces, so there is no nonce for `inthHandle` to copy.
+Dialogs and other components that first render in the browser use the provider's `nonce`, or inherit the nonce from an existing Inth style or page script. Your `style-src` must allow that nonce.
 
-The standard and IAB dialogs and other components that first render in the
-browser use the provider's `nonce`, or inherit the nonce from an existing
-Inth style or a page script. Your `style-src` must allow that nonce.
-
-For a prerendered page, or when your policy does not allow those nonces, set
-`styles={false}` on `InthProvider` and import
-`@inth/svelte/styles.css` in your root layout. With IAB TCF, also import
-`@inth/svelte/iab/styles.css` after it. `'self'` covers those stylesheets.
+For a prerendered page, or when your policy does not allow those nonces, set `styles={false}` on `InthProvider` and import `@inth/svelte/styles.css` in your root layout. With IAB TCF, also import `@inth/svelte/iab/styles.css` after it. `'self'` covers both stylesheets.
 
 ## Allow the generated theme
 
-The `<style id="inth-theme">` element from
-[customize](./customize#render-brand-tokens-on-the-server) is inline CSS that
-you render with `{@html}`. SvelteKit's `csp` option adds no nonce or hash to it, so a
-`style-src` without `'unsafe-inline'` blocks it and the banner falls back to
-the stock colors. Either add the SHA-256 hash of the element's text to
-`style-src`, which stays fixed while the theme does not change, or switch to
-[a stylesheet](./customize#use-a-stylesheet-instead), which `'self'` covers.
-Browsers ignore `'unsafe-inline'` in a list that also has a nonce or hash, so
-adding it does not help under `mode: 'nonce'` or `'auto'`.
+The `<style id="inth-theme">` element from [customize](./customize#render-brand-tokens-on-the-server) is inline CSS rendered with `{@html}`. SvelteKit's `csp` option adds no nonce or hash to it, so a `style-src` without `'unsafe-inline'` blocks it and the banner falls back to stock colors. Either add the SHA-256 hash of the element's text to `style-src` (stable until the theme changes), or switch to [a stylesheet](./customize#use-a-stylesheet-instead), which `'self'` covers. Browsers ignore `'unsafe-inline'` when a nonce or hash is also present, so adding it does not help under `mode: 'nonce'` or `'auto'`.
 
 ## Style attributes in server HTML
 
-In the browser, Svelte sets `style` values through the DOM, which a policy
-does not block. Server-rendered HTML is different. A `style` attribute in the
-HTML is inline style, and `style-src` without `'unsafe-inline'` blocks it.
-Inth renders `style` attributes for theme slot `style` values and for the
-position of `ConsentDialogTrigger`. Svelte does not set them again during
-hydration, so a blocked value stays unapplied.
+In the browser, Svelte sets `style` values through the DOM, which CSP allows. Server-rendered HTML is different: a `style` attribute in HTML counts as inline style, and `style-src` without `'unsafe-inline'` blocks it. Inth renders `style` attributes for theme slot `style` values and for `ConsentDialogTrigger` positioning. Svelte does not reapply them during hydration, so a blocked value stays unapplied.
 
-Use class names in theme slots instead of `style` objects, or allow style
-attributes with a separate `style-src-attr 'unsafe-inline'` directive.
+Use class names in theme slots instead of `style` objects, or allow style attributes with `style-src-attr 'unsafe-inline'`.
 
 ## Server requests
 
-`loadConsent`, `inthHandle` and the manifest route call the backend from your
-server, which the browser's policy does not govern. Only the browser's own
-requests, such as saving a choice, need the backend in `connect-src`. With
-the [consent proxy](./rendering#save-consent-through-your-own-origin), those
-go to your own origin and `'self'` covers them.
+`loadConsent`, `inthHandle`, and the manifest route call Inth from your server, outside the browser's CSP. Only browser requests, such as saving a choice, need your Inth project origin in `connect-src`. With the [consent proxy](./rendering#save-consent-through-your-own-origin), browser requests go to your own origin and `'self'` covers them.
 
 <include src="../../shared/svelte/content-security-policy.mdx" />

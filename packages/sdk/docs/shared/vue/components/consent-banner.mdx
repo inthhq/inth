@@ -10,56 +10,52 @@ group: reference
   ## What ConsentBanner renders
 
   `ConsentBanner` renders the first-layer banner while `activeUI` is
-  `'banner'`. It renders nothing until the visitor's policy has resolved,
-  when the policy asks for no prompt, and when a `bannerModels` or `models`
-  option leaves out the policy's model.
+  `'banner'`. It renders nothing until the visitor's policy resolves, when the
+  policy asks for no prompt, or when `bannerModels` or `models` excludes the
+  policy's model.
 
-  The policy decides the buttons:
+  The policy decides which buttons appear:
 
-  - A `choice` prompt shows Reject All, Accept All and Customize. Customize is
-    the primary button by default, so Accept All and Reject All look the same.
+  - A `choice` prompt shows Reject All, Accept All, and Customize. Customize
+    uses the primary style by default so Accept All and Reject All have equal
+    weight.
   - A `notice` prompt shows an OK button. When the policy grants an opt-out or
-    preferences right, the banner adds a button styled as underlined text,
-    labelled "Do not sell or share my data" or "Manage preferences", that
-    opens preferences.
+    preferences right, the banner adds an underlined text button ("Do not sell
+    or share my data" or "Manage preferences") that opens preferences.
   - A policy with prompt `none` shows no banner.
 
-  Each button runs one command. Accept All and Reject All record a choice for
-  every category the policy covers, and the banner closes. Customize sets
-  `activeUI` to `'manager'`, which opens `ConsentManager` if it is mounted.
-  OK records that the visitor dismissed the notice. Dismissing grants nothing
+  Accept All and Reject All record a choice for every category in the policy
+  and close the banner. Customize sets `activeUI` to `'manager'`, opening
+  `ConsentManager` if mounted. OK records a notice dismissal, grants nothing,
   and leaves earlier refusals in place.
 
-  The text comes from the translations the backend resolved for the visitor:
-  `cookieBanner.title` and `cookieBanner.description` for a choice,
-  `cookieBanner.noticeTitle` and `cookieBanner.noticeDescription` for a
-  notice, and `common.acceptAll`, `common.rejectAll`, `common.customize` and
-  `common.acknowledge` for the buttons. `bannerLegalLinks` picks which of your
-  `legalLinks` appear under the description. The banner has no slots and no
-  text props.
+  Copy comes from the resolved Inth translations: `cookieBanner.title` and
+  `cookieBanner.description` for a choice, `cookieBanner.noticeTitle` and
+  `cookieBanner.noticeDescription` for a notice, and `common.acceptAll`,
+  `common.rejectAll`, `common.customize`, and `common.acknowledge` for
+  buttons. `bannerLegalLinks` chooses which `legalLinks` appear below the
+  description. The banner has no slots or text props.
 
-  `ConsentBanner` moves itself into `document.body` once it has mounted.
-  During server rendering it renders in place, so the banner can be part of
-  the server HTML.
+  `ConsentBanner` moves itself into `document.body` after mounting. During
+  server rendering it renders in place so the banner can ship in server HTML.
 
   ## Variants and positions
 
-  The policy decides which actions the banner offers. The variant decides the
-  shape they take.
+  The policy decides the actions; the variant decides the layout.
 
   | Variant | Shape | Positions | Default position |
   | --- | --- | --- | --- |
-  | `floating` | A card in a corner or centred on an edge. The default. | `bottom-left`, `bottom-right`, `top-left`, `top-right`, `bottom-center`, `top-center` | `bottom-left` |
-  | `bar` | A full-width bar along the top or bottom edge. | `top`, `bottom` | `bottom` |
-  | `widget` | A compact card with smaller type. | `bottom-left`, `bottom-right`, `top-left`, `top-right` | `bottom-right` |
-  | `wall` | A centred card over a backdrop that blocks the page. | `center` | `center` |
+  | `floating` | Card in a corner or centered on an edge (default). | `bottom-left`, `bottom-right`, `top-left`, `top-right`, `bottom-center`, `top-center` | `bottom-left` |
+  | `bar` | Full-width bar along the top or bottom edge. | `top`, `bottom` | `bottom` |
+  | `widget` | Compact card with smaller type. | `bottom-left`, `bottom-right`, `top-left`, `top-right` | `bottom-right` |
+  | `wall` | Centered card over a blocking backdrop. | `center` | `center` |
 
-  The policy has the last word. A choice `wall` always blocks. A notice never
-  blocks, and a notice `wall` falls back to `floating`. A position the variant
-  does not accept falls back to the variant's default. Each correction logs a
-  `[inth]` warning in the browser console.
+  The policy has final authority. A choice `wall` always blocks. A notice
+  never blocks, and a notice `wall` falls back to `floating`. An invalid
+  position falls back to the variant's default. Each fallback logs a `[inth]`
+  warning in the console.
 
-  Right-to-left languages keep the same position; only the text direction
+  Right-to-left languages keep the same corner or edge; only text direction
   changes.
 </section>
 
@@ -68,42 +64,40 @@ group: reference
 
   | Prop | Type | Default | Behavior |
   | --- | --- | --- | --- |
-  | `variant` | `'floating' \| 'bar' \| 'widget' \| 'wall'` | `presentation.prompt.variant`, else `'floating'` | Shape of the banner. |
-  | `position` | `PromptPosition` | `presentation.prompt.position`, else the variant's default | Where the banner sits. Must be valid for the variant. |
-  | `blocking` | `boolean` | `presentation.prompt.blocking`, else `true` for `wall` only | Backdrop, scroll lock and focus trap, as one value. |
+  | `variant` | `'floating' \| 'bar' \| 'widget' \| 'wall'` | `presentation.prompt.variant`, else `'floating'` | Banner layout shape. |
+  | `position` | `PromptPosition` | `presentation.prompt.position`, else the variant's default | Banner placement. Must be valid for the variant. |
+  | `blocking` | `boolean` | `presentation.prompt.blocking`, else `true` for `wall` only | Enables backdrop, scroll lock, and focus trap together. |
 
-  A prop you set beats the matching `presentation.prompt` option. Leave a prop
-  unset to follow your Inth options. `PromptVariant` and `PromptPosition` are
-  exported as types from `@inth/vue`.
+  Explicit props override `presentation.prompt`. Leave a prop unset to follow
+  your Inth options. `PromptVariant` and `PromptPosition` are exported as
+  types from `@inth/vue`.
 </section>
 
 <section id="accessibility">
   ## Accessibility and focus
 
-  - A non-blocking banner is a `region` labelled with the banner title. It does
-    not trap focus or lock scrolling, so the page stays usable with a keyboard
-    and a pointer.
-  - A blocking banner is a `dialog` with `aria-modal="true"`. It shows a
-    backdrop, locks page scrolling, moves focus to the banner card and keeps
-    Tab inside the card.
+  - A non-blocking banner renders as a `region` labeled by its title. It does
+    not trap focus or lock scrolling.
+  - A blocking banner renders as a `dialog` with `aria-modal="true"`. It shows
+    a backdrop, locks page scrolling, moves focus to the banner card, and
+    traps Tab inside the card.
   - The banner has no close button, and Escape does not dismiss it. The
-    visitor answers with one of its buttons.
-  - Every action is a native `button`. The banner sets `dir` from the resolved
+    visitor responds with one of its action buttons.
+  - Every action is a native `button`, and `dir` matches the resolved
     language.
 </section>
 
 <section id="styling">
   ## Style the banner
 
-  [Theme tokens](/docs/customization/tokens) change colors, type, radius,
-  spacing and motion. The `components.banner` option adds attributes, such as
-  `class` or `style`, to these parts: `root`, `overlay`, `cardShell`, `card`,
-  `header`, `title`, `footer`, `actions`, `actionGroup`, `rights` and
-  `rightLink`. `components.description.banner` and `components.tag.banner`
-  reach the description and the branding tag.
-  [Component slots](/docs/customization/slots) lists every part.
+  [Theme tokens](/docs/customization/tokens) control colors, type, radius,
+  spacing, and motion. `components.banner` binds attributes such as `class` or
+  `style` to `root`, `overlay`, `cardShell`, `card`, `header`, `title`,
+  `footer`, `actions`, `actionGroup`, `rights`, and `rightLink`.
+  `components.description.banner` and `components.tag.banner` target the
+  description and branding tag. See [component parts](/docs/customization/slots).
 
-  The root element carries attributes you can target from CSS:
+  The root element exposes these data attributes for CSS selectors:
 
   | Attribute | Values |
   | --- | --- |
@@ -114,17 +108,15 @@ group: reference
   | `data-blocking` | `true`, present only while blocking |
 
   `bannerHideBranding`, or `hideBranding` for every surface, hides the
-  "Secured by" tag. `disableAnimation` turns off the enter and exit
-  transitions.
+  "Secured by" tag. `disableAnimation` turns off enter and exit transitions.
 </section>
 
 <section id="verify">
   ## Verify
 
   Open the page in a private window under a policy that asks for a choice.
-  The banner appears with Reject All and Accept All side by side. Tab through
-  it and confirm every button is reachable. Click Customize and the preference
-  dialog opens. Reject, reload, and confirm the banner stays closed. In the
-  Elements panel, the root element carries the `data-variant` and
-  `data-position` you set.
+  Confirm Reject All and Accept All appear side by side and every button is
+  reachable with Tab. Click Customize to open preferences, then reject and
+  reload to confirm the banner stays closed. In Elements, confirm the root
+  element carries your `data-variant` and `data-position`.
 </section>

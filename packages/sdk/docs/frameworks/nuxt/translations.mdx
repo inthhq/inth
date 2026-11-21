@@ -1,48 +1,43 @@
 ---
 title: Translations
-description: Where the Inth banner and dialog text comes from in Nuxt, how the server picks the visitor's language, and how to switch it at runtime.
+description: Control how @inth/nuxt selects visitor language on the server and switches consent UI copy at runtime.
 group: frameworks
 ---
 
+Serve consent banner and dialog copy in each visitor's language from server
+HTML and keep it synced with your Nuxt app's locale switcher.
+
 ## Where the text comes from
 
-The banner, dialog and IAB text comes from the translations in your Inth
-project. The policy carries the
-text for the visitor's language. Edit copy there, not in your Nuxt code. The
-module has no option for message overrides.
+Banner, dialog, and IAB copy comes from the translations in your Inth project
+and arrives with the policy. Edit copy in Inth rather than in Nuxt code;
+`@inth/nuxt` has no message override option.
 
-[Copy and translations](/docs/customization/translations) lists the message
-keys and how to write labels that describe each action.
+See [copy and translations](/docs/customization/translations) for message keys
+and button label guidance.
 
 ## How Inth picks the language
 
-The request's `Accept-Language` header decides:
+The incoming `Accept-Language` header decides:
 
-- In the default `manifest()` mode, the Nuxt server reads the header during
-  server rendering and resolves the text from the bundled or cached
-  manifest. The banner is in the visitor's language in the first HTML, and
-  the browser bundle carries no translations.
-- With `hosted()`, the server forwards the header to the backend's `/init`.
-- With `manifest({ resolve: 'browser' })`, the browser reads
-  `navigator.language` and resolves the text from the bundled manifest. The
-  bundle carries English base copy; another language's base copy loads from
-  your site the first time a visitor resolves to it.
+- In default `manifest()` mode, the Nuxt server reads `Accept-Language` during
+  SSR and resolves copy from the bundled or cached manifest so the first HTML
+  ships localized with no translations in the browser bundle.
+- In `hosted()` mode, SSR forwards `Accept-Language` to Inth's `/v1/consent/init`.
+- In `manifest({ resolve: 'browser' })` mode, the browser reads
+  `navigator.language` and loads non-English copy on demand from your site.
 
-On prerendered and cached routes the browser requests `/api/inth/v1/consent/init` after
-hydration, and that request carries the browser's own header. When your
-project has no text for the language, the backend picks its fallback
-language.
-
-The text direction follows the resolved language. Right-to-left languages
-render the banner and dialog with `dir="rtl"`. The banner stays in the same
-corner.
+On prerendered and cached routes, the browser calls `/api/inth/v1/consent/init` after
+hydration using its own `Accept-Language` header. When a language has no
+translation in your project, the policy's fallback language applies.
+Right-to-left languages render with `dir="rtl"` while keeping the banner in
+the same corner.
 
 ## Follow your site's language
 
-Bind the `language` prop of the Nuxt `InthProvider` to your site's current
-language, for example from `@nuxtjs/i18n`. When the prop changes,
-`InthProvider` stores the language and resolves the policy again, which
-fetches the text in that language:
+Bind `InthProvider`'s `language` prop to your current locale (such as from
+`@nuxtjs/i18n`). Changing the prop stores the locale and re-resolves the
+policy to fetch updated copy:
 
 {/* example: fragment */}
 
@@ -50,25 +45,28 @@ fetches the text in that language:
 <InthProvider :language="locale" />
 ```
 
-From your own language switcher, assign the language to
-`useConsentLanguage()`. A new language runs init again. Assigning the current
-language does nothing:
+From a custom language switcher, assign the locale to the auto-imported
+`useConsentLanguage()`. Assigning a new language fetches updated copy;
+assigning the current language does nothing:
 
 <include src="../../shared/examples/nuxt/language-switcher.mdx" />
 
-The assignment alone loads the new text. The example's extra
-`kernel.commands.init()` call repeats the request and is not needed.
+The assignment alone loads the new copy. The extra `kernel.commands.init()`
+call in the snippet repeats the request and is not required.
 
-## Trigger labels
+## Text that does not come from translations
 
-`ConsentDialogLink`, the `ConsentGate` placeholder and `ConsentDialogTrigger`
-read their default text from the translations, in English until init has
-delivered copy. The trigger's accessible name is `trigger.label`; the
-`triggerAriaLabel` option overrides it in every language.
+`ConsentDialogLink` and the `ConsentGate` placeholder read their defaults from
+translations (English until init finishes). One option must be localized in
+code when your site supports multiple languages:
+
+| Text | Where | How to change it |
+| --- | --- | --- |
+| "Open privacy settings" | `ConsentDialogTrigger` label | Set `triggerAriaLabel` under `inth`. |
 
 ## Verify
 
-Request a page with `curl -H 'Accept-Language: de' <your-url>` under a policy
-that asks for consent, and confirm the banner text in the HTML is German, if
-your project translates German. Switch the language in the browser with your
-switcher and confirm the banner and dialog text change without a reload.
+Run `curl -H 'Accept-Language: de' <your-url>` against a page under an opt-in
+policy and confirm the server HTML shows German copy (if translated in Inth).
+Switch locales in the browser and confirm banner and dialog copy updates
+without a reload.

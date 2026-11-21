@@ -1,31 +1,30 @@
 ---
 title: Components
-description: Every Inth Vue component, its import path and what it renders, with a page for each one's props, behavior, accessibility and styling.
+description: Reference for every Inth Vue component, its import path, and when to mount InthProvider versus individual surfaces.
 group: frameworks
 ---
 
+Every Inth Vue component reads the consent runtime provided by
+[the inth plugin](/docs/frameworks/vue/plugin) and ships its own styles.
+
 ## Component reference
 
-Every component reads the consent runtime that
-[the inth plugin](/docs/frameworks/vue/plugin) provides, so it must render
-inside the app that called `app.use(inth, ...)`. Each component imports its
-own styles; there is no stylesheet to add.
-
+Render components inside the Vue app that called `app.use(inth, ...)`.
 Import every component except `ConsentDevTools` by name from
-`@inth/vue/vue-plugin`. A bundler keeps only the components you import.
+`@inth/vue/vue-plugin` so your bundler tree-shakes unused components.
 
 | Component | What it renders |
 | --- | --- |
-| [`InthProvider`](/docs/frameworks/vue/components/inth-provider) | The banner and, once opened, the preference dialog. Switches to the IAB surfaces under an IAB policy when `iab` is set. |
-| [`ConsentBanner`](/docs/frameworks/vue/components/consent-banner) | The first-layer banner on its own. |
-| [`ConsentManager`](/docs/frameworks/vue/components/consent-manager) | The preference dialog on its own. |
-| [`ConsentWidget`](/docs/frameworks/vue/components/consent-widget) | Category switches and save actions inline, for a privacy page. |
-| [`ConsentDialogLink`](/docs/frameworks/vue/components/consent-dialog-link) | A button that opens preferences. |
-| [`ConsentDialogTrigger`](/docs/frameworks/vue/components/consent-dialog-trigger) | A floating, draggable button that opens preferences. |
-| [`ConsentGate`](/docs/frameworks/vue/components/consent-gate) | Its default slot while a category is allowed, otherwise its `placeholder` slot. |
-| [`IABConsentBanner`](/docs/frameworks/vue/components/iab-consent-banner) | The IAB TCF first layer. |
-| [`IABConsentDialog`](/docs/frameworks/vue/components/iab-consent-dialog) | The IAB TCF preference centre. |
-| [`ConsentDevTools`](/docs/frameworks/vue/components/dev-tools) | A development panel for the consent runtime, from `@inth/vue/devtools`. |
+| [`InthProvider`](/docs/frameworks/vue/components/inth-provider) | Banner and preference dialog (switching to IAB surfaces under an IAB policy when `iab` is set). |
+| [`ConsentBanner`](/docs/frameworks/vue/components/consent-banner) | First-layer banner on its own. |
+| [`ConsentManager`](/docs/frameworks/vue/components/consent-manager) | Preference dialog on its own. |
+| [`ConsentWidget`](/docs/frameworks/vue/components/consent-widget) | Inline category switches and save buttons for a privacy page. |
+| [`ConsentDialogLink`](/docs/frameworks/vue/components/consent-dialog-link) | Button that reopens preferences. |
+| [`ConsentDialogTrigger`](/docs/frameworks/vue/components/consent-dialog-trigger) | Floating, draggable button that reopens preferences. |
+| [`ConsentGate`](/docs/frameworks/vue/components/consent-gate) | Default slot while a category is allowed, otherwise its `placeholder` slot. |
+| [`IABConsentBanner`](/docs/frameworks/vue/components/iab-consent-banner) | IAB TCF first layer. |
+| [`IABConsentDialog`](/docs/frameworks/vue/components/iab-consent-dialog) | IAB TCF preference center. |
+| [`ConsentDevTools`](/docs/frameworks/vue/components/dev-tools) | Development inspection panel, imported from `@inth/vue/devtools`. |
 
 {/* example: fragment */}
 
@@ -33,30 +32,27 @@ Import every component except `ConsentDevTools` by name from
 import { ConsentDialogLink, ConsentGate } from '@inth/vue/vue-plugin';
 ```
 
-The components ship as `.vue` files. Keep
+Because the components ship as `.vue` files, keep
 [`consentManifest()`](/docs/frameworks/vue/quickstart#add-the-vite-plugin) in
-`vite.config.ts`: it keeps them out of Vite's dependency pre-bundling, which
-cannot compile them.
+`vite.config.ts` so Vite excludes them from dependency pre-bundling.
 
 ## InthProvider or the parts
 
-`InthProvider` renders `ConsentBanner` and `ConsentManager`, or the IAB
-components when `iab` is set, for the visitor's policy. Mount `InthProvider`, or mount the parts,
-never both, or the visitor sees two banners. Use the parts when you need a
-different variant per route or want to place the surfaces yourself.
+`InthProvider` renders `ConsentBanner` and `ConsentManager` (or the IAB
+components when `iab` is enabled) automatically for each visitor's policy.
+Mount either `InthProvider` or the individual surfaces, never both, so visitors
+do not see two banners. Compose the individual components only when you need
+different variants per route or custom placement.
 
 ## Building blocks
 
-The stock surfaces are built from smaller components that
-`@inth/vue/vue-plugin` also exports: `ConsentButton`, `ConsentSwitch`,
-`ConsentActions`, `ConsentLink`, `ConsentDescription`, `ConsentTag` and
-`ConsentBrandingIcon`. `ConsentLegalLinks` is only at
-`@inth/vue/runtime/components/consent-legal-links.vue`. For consent UI in your own markup, use the
-[headless composables](/docs/frameworks/vue/headless) instead. They give you
-the policy's actions and the draft state without the stock markup.
+`@inth/vue/vue-plugin` also exports smaller building blocks: `ConsentButton`,
+`ConsentSwitch`, `ConsentActions`, `ConsentLink`, `ConsentDescription`,
+`ConsentTag`, and `ConsentBrandingIcon`. `ConsentLegalLinks` lives at
+`@inth/vue/runtime/components/consent-legal-links.vue`. For custom consent
+markup, use the [headless composables](/docs/frameworks/vue/headless) instead.
 
-`ConsentLink` renders one legal link, such as
-`<ConsentLink context="banner" link="privacyPolicy" />`, with the URL from
-`legalLinks`. Pass `href` to use a different URL. With no URL from either, it
-renders nothing. `ConsentLegalLinks` skips the same links, so a key listed in
-`bannerLegalLinks` or `dialogLegalLinks` without a URL leaves no empty link.
+`ConsentLink` renders a single legal link such as
+`<ConsentLink context="banner" link="privacyPolicy" />` using `legalLinks` or
+an explicit `href` prop, and renders nothing if neither supplies a URL.
+`ConsentLegalLinks` skips missing URLs the same way.

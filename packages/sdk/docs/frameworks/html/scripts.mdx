@@ -1,28 +1,27 @@
 ---
 title: Scripts
-description: Hold vendor scripts on a plain HTML page until the visitor allows their category, load scripts with callbacks, handle withdrawal and clear vendor cookies with the Inth script tag and no build step.
+description: Gate vendor scripts on a plain HTML page with text/plain tags or queued config callbacks, and handle withdrawal.
 group: frameworks
 ---
 
-## Choose how to gate a script
+Hold vendor scripts on a plain HTML page until their consent category is
+allowed, run lifecycle callbacks, and handle withdrawal cleanly.
 
-The Inth script tag has two ways to hold a vendor script until its category is
-allowed:
+## Choose how to gate a script
 
 | Form | Use it when |
 | --- | --- |
-| A `<script type="text/plain" data-inth-category>` tag in your HTML | You paste a vendor snippet into a theme, a CMS field or a page builder. No JavaScript of your own. |
-| A `scripts` entry in a queued `config` call | You need a callback after the vendor loads, on an error, or when consent changes. |
+| `<script type="text/plain" data-inth-category>` in HTML | You paste a vendor snippet into a theme, CMS field or page builder with no JavaScript. |
+| A `scripts` entry in a queued `config` call | You need callbacks on load, error or consent change. |
 
-Both wait for the same permission and both add their category to the
-preference dialog. Iframes use `data-src` instead; see
-[embeds](/docs/frameworks/html/embeds). Requests your own code sends with
-`fetch` use the [network blocker](/docs/frameworks/html/network-blocker).
+Both wait for the same permission and register their category in the
+preference dialog. Gate iframes with [embeds](/docs/frameworks/html/embeds)
+and `fetch` calls with the
+[network blocker](/docs/frameworks/html/network-blocker).
 
 ## Gate a pasted snippet
 
-Change the vendor's tag to `type="text/plain"` and add
-`data-inth-category`:
+Change the vendor tag to `type="text/plain"` and add `data-inth-category`:
 
 {/* example: fragment */}
 
@@ -33,29 +32,28 @@ Change the vendor's tag to `type="text/plain"` and add
 <script type="text/plain" data-inth-category="marketing" src="https://vendor.example/tag.js"></script>
 ```
 
-On a page whose Inth tag has a nonce, add the same `nonce` to each gated tag,
-or Inth skips it. See
+When your Inth script tag carries a CSP nonce, add the same `nonce` to each
+gated tag or Inth skips it; see
 [gated tags on a page with a nonce](/docs/frameworks/html/components/gated-script#gated-tags-on-a-page-with-a-nonce).
 The [quickstart](/docs/frameworks/html/quickstart#gate-your-vendor-scripts)
-shows this with PostHog. [Gated scripts](/docs/frameworks/html/components/gated-script)
-covers load order, copied attributes and tags added after load.
+shows PostHog, and
+[gated scripts](/docs/frameworks/html/components/gated-script) covers load
+order, copied attributes and dynamically added tags.
 
 ## What happens when a visitor withdraws permission
 
-A script that has run cannot be stopped. When a visitor turns off a category
-they had allowed, Inth saves the choice and reloads the page. The new page
-starts with the vendor tag inert again. Allowing a category never reloads.
+A script that has already executed cannot be unloaded. When a visitor turns
+off a previously allowed category, Inth saves the choice and reloads the page
+so gated tags start inert again. Granting a category never reloads.
 
-To handle withdrawal yourself, for example by calling a vendor's opt-out
-function, set `reloadOnConsentRevoked: false` in `config`. Then Inth does not
-reload and the vendor code that already ran keeps running until the next page
-load. `callbacks.onBeforeConsentRevocationReload` runs right before the
-reload, if you need to flush something first. See
+To handle withdrawal yourself, such as calling a vendor's opt-out API, set
+`reloadOnConsentRevoked: false` in `config`. `callbacks.onBeforeConsentRevocationReload`
+runs right before a reload if you need to flush state; see
 [events and callbacks](/docs/frameworks/html/callbacks).
 
 ## Load a script with callbacks
 
-List the script under `scripts` in a queued `config` call before the tag:
+Queue a `config` call with `scripts` before the script tag:
 
 {/* example: fragment */}
 
@@ -78,53 +76,47 @@ List the script under `scripts` in a queued `config` call before the tag:
 </script>
 ```
 
-`analytics.track` and `analytics.optOut` stand for your vendor's own API.
-Inth adds the script to `<head>` once measurement is allowed, and removes the
-element again when the visitor withdraws it.
+Inth appends the script to `<head>` once `measurement` is allowed and removes
+the element on revocation.
 
 | Field | What it does |
 | --- | --- |
-| `id` | A unique, stable name for the script. Required. |
-| `category` | The category it needs, such as `'measurement'`. Required. It also accepts a condition such as `{ and: ['measurement', 'marketing'] }`. |
-| `src` or `textContent` | The URL to load, or inline code to run. One is required unless `callbackOnly` is `true` or returns `true`. |
-| `callbackOnly` | `true` or a zero-argument predicate returning `true` adds no element and only runs callbacks. Predicates also run for diagnostics and server startup; keep them free of side effects and safe on the server. |
-| `alwaysLoad` | Load whatever the consent state. Use it only for tags that manage consent themselves. |
-| `persistAfterConsentRevoked` | `true` keeps the element after withdrawal, including pending downloads. `'loaded'` keeps only elements whose load event completed; pending and failed loads are removed. |
+| `id` | Unique, stable script name. Required. |
+| `category` | Required category or condition such as `{ and: ['measurement', 'marketing'] }`. |
+| `src` or `textContent` | Script URL or inline code. Required unless `callbackOnly` is `true` or returns `true`. |
+| `callbackOnly` | `true` or a zero-argument predicate skips inserting a `<script>` element and runs callbacks only. |
+| `alwaysLoad` | Loads regardless of consent. Use only for tags that manage consent themselves. |
+| `persistAfterConsentRevoked` | `true` keeps the element after withdrawal; `'loaded'` keeps only completed loads. |
 | `target` | `'head'` (default) or `'body'`. |
-| `async`, `defer`, `nonce`, `fetchPriority`, `attributes` | Attributes for the created `<script>` element. Without its own `nonce`, the script gets the Inth tag's nonce. |
-| `anonymizeId` | Give the element a random `id` so blockers cannot match it by name. On by default. |
-| `vendor` | A vendor ID for vendor-level consent. See [vendor consent](/docs/frameworks/html/vendor-consent). |
-| `onBeforeLoad`, `onLoad`, `onError` | Run before a load attempt, after the script loads, or when it fails. |
-| `onConsentChange` | Run each time the script's consent changes. The argument has `hasConsent` and `consents`. |
-| `onDispose` | Run when the script is removed from the configuration or Inth is disposed. |
+| `async`, `defer`, `nonce`, `fetchPriority`, `attributes` | Attributes on the inserted `<script>`. Defaults to the Inth tag's nonce if omitted. |
+| `anonymizeId` | Gives the element a random `id` (default `true`). |
+| `vendor` | Vendor slug for vendor-level consent; see [vendor consent](/docs/frameworks/html/vendor-consent). |
+| `onBeforeLoad`, `onLoad`, `onError` | Run before load, after load or on failure. |
+| `onConsentChange` | Runs whenever consent for this script changes, receiving `{ hasConsent, consents }`. |
+| `onDispose` | Runs when the script is removed or Inth disposes. |
 
-Every callback receives the script's `id`, the created element's
-`elementId`, `hasConsent`, the current `consents`, and the `element` when
-there is one.
+Every callback receives `id`, `elementId`, `hasConsent`, `consents` and
+`element` (when present).
 
-For a plain vendor snippet, the `text/plain` tag is simpler and works in any
-CMS field that accepts HTML. The vendor helpers in `@inth/integrations`, such as
-the PostHog and Google tag helpers, are ES modules that need a bundler. On a
-plain HTML page, paste the vendor's own snippet into a `text/plain` tag.
+`@inth/integrations` helpers are ES modules for bundled apps. On a plain HTML
+page, paste the vendor's snippet into a `text/plain` tag.
 
 ## Clear cookies when permission is withdrawn
 
-Gating stops new requests but does not delete what a vendor already stored.
-Add `clearOnRevocation` to the config to delete named cookies and storage keys
-when their category is denied. See
+Gating stops new requests without deleting cookies a vendor already wrote.
+Add `clearOnRevocation` to `config` to remove named cookies and storage keys
+when their category is denied; see
 [clear on revocation](/docs/frameworks/html/clear-on-revocation).
 
 ## Google Consent Mode and tag managers
 
-The script tag does not send Google Consent Mode signals. The Google tag and
-Google Tag Manager helpers in `@inth/integrations` do, but they need a bundler. On
-a plain HTML page, gate Google's snippet like any other vendor. Google then
-loads only after consent, so it sends nothing before a choice.
-[Gated scripts](/docs/frameworks/html/components/gated-script#load-order)
-shows the GA4 snippet with its two tags in the right order.
+The plain HTML script tag does not emit Google Consent Mode signals
+automatically. Gate Google's snippet as a `text/plain` tag so nothing fires
+before consent; [gated scripts](/docs/frameworks/html/components/gated-script#load-order)
+shows GA4's two tags in order.
 
-If you need Consent Mode instead, load Google's snippet ungated and send the
-signals yourself. Put this before Google's tags:
+If you require Consent Mode signals before opt-in, load Google ungated and
+push updates from the `consent` event ahead of Google's tags:
 
 ```html
 <script>
@@ -150,17 +142,15 @@ signals yourself. Put this before Google's tags:
 </script>
 ```
 
-With Consent Mode, Google receives requests before a choice, marked as denied.
-Decide which behavior your policy needs before you pick one.
-
-The vendor guides under [integrations](/docs/integrations/overview) have an
-HTML tab with the no-build setup.
+Consent Mode sends cookieless pings to Google before a choice with optional
+types denied. Choose the approach your policy requires. Vendor pages under
+[integrations](/docs/integrations/overview) include an HTML tab for no-build
+setups.
 
 ## Check it works
 
-Open the page in a private window with the Network tab open.
+Open the page in a private window with DevTools Network open:
 
-1. Filter for each vendor's domain. Nothing loads before a choice.
-2. Allow one category. Only that category's vendors load, and each `onLoad`
-   runs.
-3. Turn the category off again. The page reloads and the vendor stays absent.
+1. Filter for each vendor domain. Nothing loads before a choice.
+2. Allow one category. Only that category's vendors load and `onLoad` fires.
+3. Turn the category off. The page reloads and the vendor stays absent.

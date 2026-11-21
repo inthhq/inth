@@ -1,28 +1,28 @@
 ---
 title: ConsentBanner
-description: Show the Inth cookie banner in an Angular app with inth-consent-banner, and set its variant, position, button layout, copy, ng-template slots, accessibility and styling hooks.
+description: Render the Inth consent banner in Angular with inth-consent-banner, configuring layout, copy, templates and styling.
 group: frameworks
 ---
 
+Show the first-layer consent prompt in Angular with `<inth-consent-banner>`.
+
 ## Render the banner
 
-Import `ConsentBanner` and render `<inth-consent-banner>` once, in
-your root component, next to `<inth-consent-dialog>` so its Customize button
-has a dialog to open:
+Import `ConsentBanner` and render `<inth-consent-banner>` once in your root
+component next to `<inth-consent-dialog>` so its Customize button can open
+preferences:
 
 <include src="../../../shared/examples/angular/app-component.mdx" />
 
-The banner decides for itself whether to show, so do not wrap it in `@if`. It
-renders into `<body>` through `inthPortal`, so it escapes the stacking and
-overflow of the element you put it in. On the server it renders in place, and
-it moves to `<body>` after the first browser render, so hydration finds the
-server's markup.
+Do not wrap it in `@if`: the banner decides when to show from the resolved
+policy. It portals into `<body>` via `inthPortal` after the first browser
+render to avoid stacking and overflow clipping while preserving SSR hydration.
 
 ## Change the shape
 
-`variant` and `position` set the shape for one banner. The `presentation`
-option of `provideInth()` sets them for every surface; an input on the banner
-wins. This banner is a full-width bar along the bottom edge:
+Set `variant` and `position` on the banner, or configure them globally via
+`presentation` in `provideInth()`. Component inputs override provider
+defaults:
 
 <include src="../../../shared/examples/angular/bottom-bar.mdx" />
 
@@ -33,112 +33,97 @@ wins. This banner is a full-width bar along the bottom edge:
 | `widget` | `bottom-right` (default), `bottom-left`, `top-left`, `top-right` |
 | `wall` | `center` |
 
-A notice defaults to `bar` and a choice prompt to `floating`. A position that
-does not fit the variant falls back to the variant's default and logs a
-warning in development. When the page's text direction is right to left and
-you set no position, a corner position flips to the other side.
+Notices default to `bar` and choice prompts default to `floating`. Invalid
+positions fall back to the variant default with a dev warning. In
+right-to-left languages with no explicit position, corner positions flip
+horizontally.
 
 ## Inputs
 
 | Input | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `variant` | `'floating'`, `'bar'`, `'widget'` or `'wall'` | from the policy | Shape of the banner. |
-| `position` | see the table above | the variant's default | Where the banner sits. |
-| `blocking` | `boolean` | `false` | Adds a backdrop, locks scrolling, traps focus and ignores outside clicks. `wall` is always blocking; a notice never is. |
-| `layout` | `ConsentBannerLayout`: an array of `'accept'`, `'reject'`, `'customize'`, `'dismiss'` or nested groups | from the policy | Button order and grouping, such as `[['reject', 'accept'], 'customize']`. |
-| `primaryButton` | one action or an array | from the policy | Which buttons get the primary style. |
-| `heading`, `description` | `string` | translated copy | Replace the heading and body for this banner. |
-| `acceptButtonText`, `rejectButtonText`, `customizeButtonText`, `dismissButtonText` | `string` | translated copy | Replace one button label for this banner. |
-| `legalLinks` | array of `LegalLinks` keys, or `null` | every configured link | Which of the provider's `legalLinks` to show after the description. `null` shows none. |
+| `variant` | `'floating'`, `'bar'`, `'widget'` or `'wall'` | from policy | Banner shape. |
+| `position` | see table above | variant default | Banner placement. |
+| `blocking` | `boolean` | `false` | Adds backdrop, locks scroll, traps focus and ignores outside clicks. `wall` is always blocking; notices never are. |
+| `layout` | `ConsentBannerLayout` | from policy | Button order and grouping, such as `[['reject', 'accept'], 'customize']`. |
+| `primaryButton` | one action or array | from policy | Buttons that receive primary styling. |
+| `heading`, `description` | `string` | translated copy | Override heading and body for this banner. |
+| `acceptButtonText`, `rejectButtonText`, `customizeButtonText`, `dismissButtonText` | `string` | translated copy | Override individual button labels. |
+| `legalLinks` | array of `LegalLinks` keys, or `null` | all configured links | Legal links shown after description. `null` hides all. |
 | `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag. |
-| `models` | `Model[]` | `['opt-in', 'opt-out']` | Policy models this banner renders for. IAB policies render `<inth-iab-consent-banner>` instead. |
-| `noStyle` | `boolean` | provider's `noStyle` | Drops Inth's classes, keeping markup and behavior. |
-| `disableAnimation` | `boolean` | provider's value | Shows without the fade-in. The banner leaves at once either way. |
-| `scrollLock`, `trapFocus` | `boolean` | from `presentation` | Lock page scroll or trap focus while the banner shows. |
+| `models` | `Model[]` | `['opt-in', 'opt-out']` | Policy models rendered by this banner. IAB uses `<inth-iab-consent-banner>`. |
+| `noStyle` | `boolean` | provider `noStyle` | Drops `inth` classes while keeping markup and behavior. |
+| `disableAnimation` | `boolean` | provider value | Disables fade-in transition. |
+| `scrollLock`, `trapFocus` | `boolean` | from `presentation` | Lock scroll or trap focus while open. |
 | `rootClass` | `string` | none | Extra class on the root element. |
 
-The policy wins where it conflicts with `layout` or `primaryButton`. A policy
-that requires a reject button next to accept keeps it, whatever the layout
-says. For copy used across the site, use the `i18n` option or your backend's
-translations; see [translations](../translations).
+Where `layout` or `primaryButton` conflicts with the policy, the policy wins.
+For site-wide copy changes, see [translations](../translations).
 
 ## Replace the title, description or buttons
 
-Three `ng-template` slots replace parts of the banner's markup and keep the
-rest. Put them inside `<inth-consent-banner>` and import their directives:
+Pass `ng-template` slots inside `<inth-consent-banner>` and import their
+directives:
 
 <include src="../../../shared/examples/angular/banner-templates.mdx" />
 
 | Directive | Replaces | Template context |
 | --- | --- | --- |
-| `ng-template[inthConsentBannerTitle]` (`ConsentBannerTitle`) | The title's text. The `<h2>` and its classes stay. | `$implicit`, the resolved title; `notice`, whether the policy asks for a notice. |
-| `ng-template[inthConsentBannerDescription]` (`ConsentBannerDescription`) | The description's text. The legal links still follow it. | `$implicit`, the resolved description; `notice`. |
-| `ng-template[inthConsentBannerAction]` (`ConsentBannerAction`) | Each action button, once per action the policy shows. | `$implicit`, the action id; `label`; `primary`; `variant`; `mode`; `testId`, the stock button's `data-testid`. |
+| `ng-template[inthConsentBannerTitle]` (`ConsentBannerTitle`) | Title text inside `<h2>` | `$implicit` (title), `notice` |
+| `ng-template[inthConsentBannerDescription]` (`ConsentBannerDescription`) | Description text (legal links stay) | `$implicit` (description), `notice` |
+| `ng-template[inthConsentBannerAction]` (`ConsentBannerAction`) | Each action button | `$implicit` (action id), `label`, `primary`, `variant`, `mode`, `testId` |
 
-The templates are type-checked: `let-action` is a `ConsentBannerButton`, so
-binding it to `[action]` on `ConsentButton` compiles under strict templates.
-Keep `testId` on your button if your tests select the stock test ids.
+Templates are strictly typed: `let-action` is a `ConsentBannerButton` and
+binds cleanly to `[action]` on `ConsentButton`. Preserve `testId` if your
+tests query stock test IDs.
 
 ## When the banner shows
 
-`<inth-consent-banner>` renders when all of these are true:
+`<inth-consent-banner>` renders when:
 
-- A policy has resolved for the visitor and it asks for a prompt.
-- The visitor has not chosen yet, or the policy asks them to choose again.
-- The active surface is the banner, not the dialog or nothing.
-- The policy's model is in `models`.
+- A policy has resolved and requires a prompt.
+- The visitor has not recorded a choice, or the policy requires re-prompting.
+- `activeUI()` is `'banner'`.
+- The resolved model is listed in `models`.
 
-A visitor in a region without a consent law, or one who already chose, gets
-no banner. That is a policy result; see
-[why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent).
+See [why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent)
+when no banner appears.
 
-A choice prompt shows Accept, Reject and Customize, in the order the policy
-asks for. A notice, such as an opt-out policy that only informs, shows a
-dismiss button and its own title and description from the `noticeTitle` and
-`noticeDescription` translations. Dismissing a notice records the dismissal,
-not a grant.
+Choice prompts show Accept, Reject and Customize in policy order. Notices show
+a dismiss button using `noticeTitle` and `noticeDescription`; dismissing a
+notice records acknowledgement rather than consent. When the policy grants
+visitor rights such as opting out of sale, each appears as a button opening
+the preference dialog.
 
-When the policy grants visitor rights, such as opting out of sale, the banner
-shows each one as a text button that opens the preference dialog.
-
-Accept and Reject record the choice and close the banner in the same task.
-The backend request runs after; a failed request is retried and does not
-reopen the banner. Customize opens `<inth-consent-dialog>`, so render the
-dialog too.
+Accept and Reject record the choice and close the banner immediately, then
+send the request to Inth in the background.
 
 ## Accessibility
 
-- The banner card is a `region` labelled by the banner title. With `blocking`,
-  it becomes a `dialog` with `aria-modal="true"`, and focus stays inside it
-  until the visitor chooses.
-- The title is an `h2`. Buttons are `<button type="button">` with their
-  visible text as the accessible name.
-- The banner does not move focus when it appears, unless focus trapping is on.
-  Visitors reach it with Tab.
-- With `prefers-reduced-motion`, the banner appears and leaves without a
-  transition.
-- The root sets `dir` from the active language, so right-to-left copy lays out
-  correctly.
+- Renders as a `region` labelled by its `<h2>` title, or a `dialog` with
+  `aria-modal="true"` and focus trap when `blocking` is enabled.
+- Uses native `<button type="button">` controls.
+- Does not steal focus on mount unless focus trapping is active.
+- Respects `prefers-reduced-motion` and sets `dir` from the active language.
 
 ## Style the banner
 
-`<inth-consent-banner>` reads these theme slots from the `theme` option:
-`consentBanner`, `consentBannerCard`, `consentBannerHeader`,
-`consentBannerTitle`, `consentBannerDescription`, `consentBannerFooter`,
+`<inth-consent-banner>` reads these `theme.slots` keys: `consentBanner`,
+`consentBannerCard`, `consentBannerHeader`, `consentBannerTitle`,
+`consentBannerDescription`, `consentBannerFooter`,
 `consentBannerFooterSubGroup`, `consentBannerRights`,
-`consentBannerRightLink`, `consentBannerTag` and `consentBannerOverlay`.
-[Customize](../customize) shows how to pass them.
+`consentBannerRightLink`, `consentBannerTag` and `consentBannerOverlay`. See
+[customize](../customize).
 
-The root element carries `data-testid="consent-banner-root"` and these
-attributes for CSS and tests:
+The root carries `data-testid="consent-banner-root"` and these attributes:
 
 | Attribute | Value |
 | --- | --- |
 | `data-prompt` | `choice` or `notice` |
 | `data-model` | `opt-in`, `opt-out` or `iab` |
-| `data-variant` | the resolved variant |
-| `data-position` | the resolved position |
+| `data-variant` | resolved variant |
+| `data-position` | resolved position |
 | `data-blocking` | `true` when blocking |
 
-Each button carries `data-action` with `accept`, `reject`, `customize` or
+Each button carries `data-action` set to `accept`, `reject`, `customize` or
 `dismiss`.

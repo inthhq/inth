@@ -1,59 +1,43 @@
 ---
 title: Translations
-description: Where Inth banner and dialog copy comes from in TanStack Start, how the server and browser pick the visitor's language, and how to override copy and switch languages from the root route.
+description: Override Inth banner and dialog copy in TanStack Start and switch languages on the server or browser.
 group: frameworks
 ---
 
+Customize Inth banner and dialog copy in TanStack Start, override messages per language, and switch languages at runtime.
+
 ## Where the copy comes from
 
-The banner, dialog, widget and gate placeholder read their text from the
-translations in your Inth project. The policy carries the copy for the visitor's language. Edit
-wording there first, so it changes without a deploy.
+The banner, dialog, widget, and gate placeholder read from the translations configured in your Inth project. Edit wording in Inth first so copy changes apply without a deploy.
 
-Code can override that copy in two places:
+Override copy in code in two places:
 
-- `options.i18n` on `InthProvider` changes a message everywhere it appears.
-- Text props on `ConsentBanner` change one banner.
+- `options.i18n` on `InthProvider` replaces a message everywhere it appears.
+- Text props on `ConsentBanner` replace copy on one banner.
 
-[Copy and translations](/docs/customization/translations) lists the message
-keys and explains how code messages combine with the project's copy.
+See [Copy and translations](/docs/customization/translations) for message keys and merge rules.
 
 ## How Inth picks the language
 
-In the [quickstart](/docs/frameworks/tanstack-start/quickstart) setup, the
-root loader's `resolveConsent` reads the request's `Accept-Language` header.
-It resolves the policy and its copy from the bundled manifest on the server, so
-the banner in the first HTML is already in the visitor's language.
+In the [quickstart](/docs/frameworks/tanstack-start/quickstart) setup, the root loader reads the request `Accept-Language` header and resolves policy copy from the bundled manifest on the server, so the banner arrives in the visitor's language in the first HTML.
 
-To override the header, set `language` in one of these places:
+Override the detected language in one of three places:
 
-- `consentRequestMiddleware({ language })` in `src/start.ts` fixes one
-  language for every request.
-- `createConsentStateHandler({ language })` fixes one language for
-  the root loader.
-- `resolveConsent({ language })` from
-  `@inth/tanstack-start/server`, called in your own server function, takes a
-  different language per request, such as the locale from your URL.
+- `consentRequestMiddleware({ language })` in `src/start.ts` fixes one language for every request.
+- `createConsentStateHandler({ language })` fixes one language for the root loader.
+- `resolveConsent({ language })` from `@inth/tanstack-start/server`, inside a custom server function, picks a language per request such as a URL locale.
 
-When the browser resolves consent, as on
-[prerendered and static pages](/docs/frameworks/tanstack-start/rendering#spa-mode-prerendered-pages-and-static-hosts),
-the `/init` request carries the browser's own `Accept-Language` header.
+When consent resolves in the browser, such as on [prerendered and static pages](/docs/frameworks/tanstack-start/rendering#spa-mode-prerendered-pages-and-static-hosts), `/v1/consent/init` sends the browser's `Accept-Language` header. If your project has no translation for the requested language, Inth returns its fallback language.
 
-When your project has no copy for the requested language, the backend
-returns its fallback language.
-
-The banner, dialog and widget set `dir` from the active language. Right-to-left
-languages such as Arabic and Hebrew render with `dir="rtl"`. The banner stays
-in the same corner.
+The banner, dialog, and widget set `dir` from the active language. Right-to-left languages such as Arabic and Hebrew render with `dir="rtl"` while keeping the banner in the same corner.
 
 ## Change the copy in code
 
-Keep the messages in their own module:
+Define messages in a separate module:
 
 <include src="../../shared/examples/tanstack-start/i18n.mdx" />
 
-Import it in `src/routes/__root.tsx` and pass it under `options` on
-`InthProvider`:
+Import it in `src/routes/__root.tsx` and pass it under `options` on `InthProvider`:
 
 {/* example: fragment */}
 
@@ -65,25 +49,13 @@ Import it in `src/routes/__root.tsx` and pass it under `options` on
 >
 ```
 
-The root route component renders on the server and again in the browser, so
-both read the same module and your messages are already in the server HTML.
-Import the module in the component. Do not return it from the loader or a
-server function. Loader data is serialized for the browser, and it should
-carry only the consent state.
+Import `i18n` in the root route component rather than returning it from a loader or server function so server and browser renders share the same copy without bloating serialized loader data.
 
-For the visitor's language, your messages replace the project's copy key by
-key. Keys you leave out keep the project's wording, and messages for other
-languages are not applied. `InthProvider` reads `i18n` once, when it mounts. In
-development it logs a warning if `i18n` changes later.
-
-`i18n.locale` sets the language of the copy when no backend or server state
-supplies one, as with `testing()`. It defaults to `en`.
+For the active language, your messages replace project copy key by key while omitted keys keep your project wording. `InthProvider` reads `i18n` once on mount and logs a development warning if it changes later. `i18n.locale` sets the language (`en` by default) when no server state or Inth project supplies one, such as in `testing()` mode.
 
 ## Change one banner's copy
 
-`ConsentBanner` takes `title`, `description`, `acceptButtonText`,
-`rejectButtonText`, `customizeButtonText` and `dismissButtonText`. The props
-replace the text in every language, so pass values in the page's language:
+`ConsentBanner` accepts `title`, `description`, `acceptButtonText`, `rejectButtonText`, `customizeButtonText`, and `dismissButtonText`. These props override text in every language, so pass strings already translated for the current page:
 
 {/* example: fragment */}
 
@@ -96,26 +68,16 @@ replace the text in every language, so pass values in the page's language:
 
 ## Switch the language at runtime
 
-`useSetLanguage()` stores the new language, and `useInit()` resolves the policy
-again, which fetches the copy for that language. Call both from your language
-switcher:
+`useSetLanguage()` updates the active language and `useInit()` resolves the policy again to fetch translations for that language:
 
 <include src="../../shared/examples/tanstack-start/language-switcher.mdx" />
 
-Setting the language without calling `init()` changes nothing on screen. Your
-`i18n` messages for the new language apply on top of the copy that arrives.
-Render the switcher anywhere inside `InthProvider`.
+Calling `setLanguage()` without `init()` leaves on-screen text unchanged. Your `i18n` overrides for the new language apply on top of the fetched copy. Render the switcher inside `InthProvider`.
 
-If your site changes language through its own i18n library, run the same two
-calls when its locale changes. To make the server HTML match too, pass the
-locale to `resolveConsent` as `language`.
+If your app manages locale through an i18n library, run the same two calls when the locale changes and pass that locale as `language` to `resolveConsent` so server HTML matches.
 
 ## Verify
 
-1. Under a policy that shows a banner, request a page with
-   `curl -H 'Accept-Language: de' <your-url>`. If your project translates
-   German, the banner text in the HTML is German.
-2. Open the page in the browser and check that a message you set in `i18n`
-   shows in the banner.
-3. Switch the language with your switcher. DevTools Network shows a new
-   `/init` request, and the banner and dialog text change without a reload.
+1. Under a policy showing a banner, run `curl -H 'Accept-Language: de' <your-url>`. If your project translates German, confirm the banner in the HTML is German.
+2. Open the page in a browser and confirm any string overridden in `i18n` appears in the banner.
+3. Switch languages with your switcher and confirm DevTools Network shows a new `/v1/consent/init` request updating the banner and dialog without reloading.

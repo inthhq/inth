@@ -1,18 +1,21 @@
 ---
 title: ConsentDialogLink
-description: Add a Privacy settings button that reopens the Inth preference dialog in a Vue app, and hide it when the policy offers no preferences.
+description: Add a button that reopens the Inth preference dialog in Vue and hides itself when no preferences apply.
 group: frameworks
 ---
 
+Place `ConsentDialogLink` in your footer or embed placeholders so visitors can
+reopen privacy preferences at any time.
+
 ## Import the link into your footer
 
-Import `ConsentDialogLink` from `@inth/vue/vue-plugin` and put it in your
-footer, next to your privacy policy link:
+Import `ConsentDialogLink` from `@inth/vue/vue-plugin` and render it beside
+your privacy policy link:
 
 <include src="../../../shared/examples/vue/app.mdx" />
 
-Pass content in the default slot to change the label. The
-[embed example](/docs/frameworks/vue/embeds) uses it inside a placeholder as
+Pass default slot content to override the label. The
+[embeds guide](/docs/frameworks/vue/embeds) uses it inside a placeholder as
 "Choose video permissions".
 
 <import src="../../../shared/vue/components/consent-dialog-link.mdx#behavior" />
@@ -23,7 +26,7 @@ Pass content in the default slot to change the label. The
 
 ## Next steps
 
-- [ConsentDialogTrigger](/docs/frameworks/vue/components/consent-dialog-trigger)
-  is a floating alternative.
-- [Composables](/docs/frameworks/vue/composables#open-the-banner-or-preferences)
+- [ConsentDialogTrigger](/docs/frameworks/vue/components/consent-dialog-trigger):
+  use a floating corner button instead.
+- [Composables](/docs/frameworks/vue/composables#open-the-banner-or-preferences):
   open preferences from your own button.

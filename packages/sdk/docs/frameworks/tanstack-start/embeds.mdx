@@ -1,8 +1,10 @@
 ---
 title: Embeds
-description: Keep YouTube videos, maps and other iframes out of a TanStack Start page until their consent category is allowed, with ConsentGate or the iframe blocker in InthProvider.
+description: Block YouTube, map, and other third-party iframes in TanStack Start until consent allows them.
 group: frameworks
 ---
+
+Keep third-party iframes out of your TanStack Start pages until the visitor allows their consent category.
 
 ## Pick a method
 
@@ -11,31 +13,21 @@ group: frameworks
 | `ConsentGate` | You render the iframe in a React component and want a placeholder until the visitor allows its category. |
 | The iframe blocker | The iframe comes from HTML you do not render with React, such as CMS or Markdown content. |
 
-Both keep the iframe's `src` out of the page until the category is allowed, so
-the embed's host receives no request before consent.
+Both keep `src` off the iframe until consent allows it, preventing requests to the embed host before consent.
 
 ## Gate an embed with ConsentGate
 
-Wrap the iframe in `ConsentGate` in any route under the root route that
-mounts `InthProvider`:
+Wrap the iframe in `ConsentGate` in any route rendered under `InthProvider`:
 
 <include src="../../shared/examples/tanstack-start/video-embed.mdx" />
 
-The server HTML contains the placeholder, never the iframe, unless the root
-loader resolved measurement as allowed. The placeholder shows a message and a
-[`ConsentDialogLink`](/docs/frameworks/tanstack-start/components/consent-dialog-link)
-until then. When the visitor withdraws measurement, React removes the iframe.
+Server HTML renders the placeholder, never the iframe, while `measurement` is denied. The placeholder displays a message and a [`ConsentDialogLink`](/docs/frameworks/tanstack-start/components/consent-dialog-link) until the visitor allows `measurement`. If consent is later withdrawn, React unmounts the iframe.
 
-Pick the category that matches what the embed does. The example uses
-measurement for YouTube because its player measures views. A map or chat
-widget usually belongs under functionality or experience.
-[ConsentGate](/docs/frameworks/tanstack-start/components/consent-gate)
-documents the built-in placeholder and every prop.
+Pick the category matching what the embed does: YouTube uses `measurement` because its player tracks views, while maps and chat widgets usually belong under `functionality` or `experience`. See [ConsentGate](/docs/frameworks/tanstack-start/components/consent-gate).
 
 ## Gate an iframe with the iframe blocker
 
-`InthProvider` runs the iframe blocker in the browser by default. Give an
-iframe `data-src` instead of `src`, and a `data-category`:
+`InthProvider` enables the iframe blocker in the browser by default. Put the URL in `data-src` instead of `src` and add `data-category`:
 
 {/* example: fragment */}
 
@@ -47,26 +39,16 @@ iframe `data-src` instead of `src`, and a `data-category`:
 ></iframe>
 ```
 
-The server HTML has no `src`, so nothing loads before hydration. After
-hydration, Inth sets `src` from `data-src` when the category is allowed and
-removes `src` when the category is withdrawn. It watches the page, so iframes
-added by client-side navigation are handled too. Add `data-vendor` with a
-vendor ID to also block the iframe while the visitor has turned that vendor
-off.
+Server HTML ships without `src`, so nothing loads before hydration. After hydration, Inth copies `data-src` to `src` when allowed and clears `src` when revoked, watching the DOM so iframes added during client navigation work too. Add `data-vendor` with a vendor ID to also gate on individual vendor toggles.
 
-To turn the blocker off, set `iframeBlocker: false` in `InthProvider`'s
-`options`.
+To disable the blocker, pass `options={{ iframeBlocker: false }}` on `InthProvider`.
 
 ## Verify the embeds
 
-Open the production build in a private window with DevTools open, under a
-policy that asks for consent.
+Open the production build in a private window with DevTools open under an opt-in policy.
 
-1. View the page source. No iframe has a `src` pointing at
-   `youtube-nocookie.com` or `google.com/maps`, and the Network panel shows no
-   request to them.
-2. Allow the embed's category and save. The iframe loads.
-3. Withdraw the category and save. The page reloads without the embed.
+1. View page source and confirm no iframe has a `src` pointing at `youtube-nocookie.com` or `google.com/maps`, and DevTools Network shows zero requests to them.
+2. Allow the embed's category and save. Confirm the iframe loads.
+3. Withdraw the category and save. Confirm the page reloads without the embed.
 
-The [YouTube](/docs/integrations/youtube) and
-[Google Maps](/docs/integrations/google-maps) guides cover sizing and titles.
+See the [YouTube](/docs/integrations/youtube) and [Google Maps](/docs/integrations/google-maps) guides for responsive sizing and accessible titles.

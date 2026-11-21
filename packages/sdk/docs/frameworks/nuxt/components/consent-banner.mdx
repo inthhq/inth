@@ -1,32 +1,34 @@
 ---
 title: ConsentBanner
-description: Render the Inth consent banner in Nuxt, choose its variant and position, and understand what it shows for each policy.
+description: Render the Inth first-layer consent banner directly in Nuxt, configure its variant and position, and style its parts.
 group: frameworks
 ---
 
+Import `ConsentBanner` directly when composing consent surfaces yourself
+instead of using global `InthProvider`.
+
 ## Import the banner in place of `InthProvider`
 
-`InthProvider` already renders `ConsentBanner`. Import the banner yourself
-only when you compose the surfaces, for example to set its variant in the
-template. The Nuxt module does not register `ConsentBanner` globally, so
-import it from `@inth/nuxt/components/consent-banner`:
+`InthProvider` already renders `ConsentBanner`. Because `@inth/nuxt` does not
+register `ConsentBanner` globally, import it from
+`@inth/nuxt/components/consent-banner` when you want to set its variant in
+templates or control placement:
 
 <include src="../../../shared/examples/nuxt/consent-surfaces.mdx" />
 
-Render this component in `app.vue` in place of `InthProvider`. Render
-`ConsentManager` with it, or Customize opens nothing. A statically imported
-`ConsentManager` is part of your main bundle, while `InthProvider` loads the
-dialog as a separate chunk. Unlike `InthProvider`, these components do not
-switch to the IAB surfaces under an IAB policy. The module still writes the
-`tokens` option to the page head.
+Mount this in `app/app.vue` instead of `InthProvider`, alongside
+`ConsentManager` so Customize opens preferences. Statically importing
+`ConsentManager` adds it to your main bundle, whereas `InthProvider`
+code-splits it. Direct composition does not switch to IAB surfaces under an
+IAB policy. The module still writes your `tokens` to `<head>`.
 
 <import src="../../../shared/vue/components/consent-banner.mdx#behavior" />
 
 <import src="../../../shared/vue/components/consent-banner.mdx#props" />
 
-To set the variant for every banner without importing the component, use
-`presentation.prompt` in the module options. See
-[customize](/docs/frameworks/nuxt/customize#change-the-banner-layout).
+To configure the banner variant globally without importing `ConsentBanner`,
+set `presentation.prompt` under `inth` in `nuxt.config.ts`. See
+[change the banner layout](/docs/frameworks/nuxt/customize#change-the-banner-layout).
 
 <import src="../../../shared/vue/components/consent-banner.mdx#accessibility" />
 
@@ -36,8 +38,9 @@ To set the variant for every banner without importing the component, use
 
 ## Next steps
 
-- [ConsentManager](/docs/frameworks/nuxt/components/consent-manager) is the
-  dialog Customize opens.
-- [Headless](/docs/frameworks/nuxt/headless) builds a banner from your own
+- [ConsentManager](/docs/frameworks/nuxt/components/consent-manager): the
+  dialog opened by Customize.
+- [Headless](/docs/frameworks/nuxt/headless): build a banner with your own
   markup.
-- [Banner designs](/docs/customization/recipes) shows tested designs.
+- [Banner designs](/docs/customization/recipes): explore five ready-made
+  designs.

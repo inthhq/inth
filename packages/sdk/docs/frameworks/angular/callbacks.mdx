@@ -1,29 +1,29 @@
 ---
 title: Callbacks
-description: Run your own code in an Angular app when a visitor records a choice, permissions change or a banner shows, with the callbacks option of provideInth and script callbacks.
+description: Run Angular code when a visitor records consent, permissions change or a banner shows using provider and script callbacks.
 group: frameworks
 ---
 
-## Pick the right callback
+React to consent choices, permission changes and banner impressions in Angular
+using `provideInth()` callbacks, script callbacks or `ConsentManager` signals.
 
-Run your own code when consent changes through the `callbacks` option of
-`provideInth()`, a script's own callbacks, or a signal in one component:
+## Pick the right callback
 
 | You want to | Use |
 | --- | --- |
 | Send a choice to your analytics or CRM when the visitor makes one | `callbacks.onChoiceRecorded` |
-| Start or stop your own code when what may run changes | `callbacks.onPermissionsChanged` |
+| Start or stop code when effective permissions change | `callbacks.onPermissionsChanged` |
 | Count banner and dialog impressions | `callbacks.onSurfaceShown` |
 | Report failed backend requests | `callbacks.onError` |
 | Show a message or flush data before a withdrawal reloads the page | `callbacks.onBeforeConsentRevocationReload` |
-| Call a vendor's own consent API after its script loads | The script's `onConsentChange` |
+| Call a vendor's consent API after its script loads | The script's `onConsentChange` |
 | React to consent inside one component | A `ConsentManager` signal in `computed()` or `effect()` |
 
 ## onChoiceRecorded or onPermissionsChanged
 
 `onChoiceRecorded` runs only when the visitor accepts, rejects or saves.
-`onPermissionsChanged` runs whenever effective permissions change, whatever
-the cause:
+`onPermissionsChanged` runs whenever effective permissions change for any
+reason:
 
 | Event | `onChoiceRecorded` | `onPermissionsChanged` |
 | --- | --- | --- |
@@ -33,18 +33,17 @@ the cause:
 | A recorded choice expires | No | Yes |
 | Visitor dismisses a notice | No | No |
 
-Use `onChoiceRecorded` for consent records and audit trails, because it fires
-only for a visitor's action. Use `onPermissionsChanged` to start or stop code,
-because it covers every way a permission changes. Never treat
+Use `onChoiceRecorded` for consent logs and audit trails. Use
+`onPermissionsChanged` to start or stop features. Never treat
 `onPermissionsChanged` as proof that the visitor agreed to something.
 
 ## Pass callbacks to the provider
 
-Write the callbacks in their own module:
+Define the callbacks in a separate module:
 
 <include src="../../shared/examples/angular/consent-callbacks.mdx" />
 
-Then pass them in `src/app/app.config.ts`, next to `mode`:
+Pass them in `src/app/app.config.ts`:
 
 {/* example: fragment */}
 
@@ -52,58 +51,57 @@ Then pass them in `src/app/app.config.ts`, next to `mode`:
 provideInth({ mode, scripts, callbacks });
 ```
 
-The callbacks are plain functions, outside any injection context, so they
-cannot call `inject()`. To reach an Angular service from one, read
-`ConsentManager` signals in an `effect()` instead, as shown below.
+Callbacks run as plain functions outside Angular's injection context, so they
+cannot call `inject()`. To reach an Angular service, read `ConsentManager`
+signals in an `effect()` instead.
 
 | Callback | Payload |
 | --- | --- |
-| `onChoiceRecorded` | `snapshot`, the state after the choice; `confirmed`, the categories this action recorded; `actionAt`, the time. |
-| `onPermissionsChanged` | `snapshot`, the state after the change; `previous`, the permissions before it. |
-| `onSurfaceShown` | `surface`, the surface that opened; `shownAt`, the time; `snapshot`; `experiment`, the assigned arm if any. Once per opening, never for a hydrated record or a server render. |
+| `onChoiceRecorded` | `snapshot` (state after choice), `confirmed` (categories recorded), `actionAt` (timestamp). |
+| `onPermissionsChanged` | `snapshot` (state after change), `previous` (permissions before change). |
+| `onSurfaceShown` | `surface`, `shownAt`, `snapshot`, `experiment` (assigned arm if any). Fires once per opening, never for hydrated records or server renders. |
 | `onError` | `error`, a message string. |
-| `onBeforeConsentRevocationReload` | `preferences`, the permissions after the withdrawal. |
+| `onBeforeConsentRevocationReload` | `preferences`, permissions after withdrawal. |
 
-Callbacks run after Inth updates its own state, so `snapshot` and
-`ConsentManager` already hold the new values. Visitor actions happen in the
-browser, and the runtime never starts on the server, so the callbacks run in
-the browser only.
+Callbacks run after Inth updates its state, so `snapshot` and `ConsentManager`
+already hold the new values. Because the runtime does not start on the server,
+callbacks run in the browser only.
 
 `onBeforeConsentRevocationReload` runs synchronously right before the reload.
-Keep it short; the page is about to unload. It does not run when you set
-`reloadOnConsentRevoked: false`.
+Keep it brief because the page is about to unload. It does not fire when
+`reloadOnConsentRevoked` is `false`.
 
 ## Script callbacks
 
-Each entry in `scripts` takes its own callbacks:
+Each entry in `scripts` accepts lifecycle callbacks:
 
 | Callback | Runs |
 | --- | --- |
-| `onBeforeLoad` | Before the loader adds the script. |
-| `onLoad` | When the script loaded. |
-| `onError` | When the script failed to load. |
-| `onConsentChange` | When consent changes after the script loaded. Use it to call the vendor's own consent API. |
-| `onDispose` | When the configuration is removed or the application is destroyed. |
+| `onBeforeLoad` | Before the loader inserts the script. |
+| `onLoad` | After the script finishes loading. |
+| `onError` | When the script fails to load. |
+| `onConsentChange` | When consent changes after load. Call the vendor's consent API here. |
+| `onDispose` | When the script configuration is removed or the app destroys. |
 
-Helpers from `@inth/integrations` already set these for their vendor.
+Helpers from `@inth/integrations` configure these for each vendor.
 [Building integrations](/docs/integrations/building-integrations) shows how to
-write them.
+write custom ones.
 
 ## React inside one component
 
-For a component that shows or reacts to consent, read `ConsentManager`
-signals. A `computed()` re-renders the template; an `effect()` runs code, and
-goes away with the component. For a kernel event, such as a recorded choice,
-subscribe in an `effect()` with `onCleanup`.
-[ConsentManager](./services#listen-to-consent-events) has the example.
+Inside a component, read `ConsentManager` signals. `computed()` derives
+template state and `effect()` runs side effects with automatic cleanup. To
+subscribe to kernel events, register the listener inside an `effect()` with
+`onCleanup`. [ConsentManager](./services#listen-to-consent-events) shows an
+example.
 
 ## Verify the callbacks
 
 Open the console, clear site data and reload:
 
-1. The banner shows. `onSurfaceShown` logs `banner`.
-2. Accept in the banner. `onChoiceRecorded` and `onPermissionsChanged` both
+1. The banner appears. `onSurfaceShown` logs `banner`.
+2. Accept in the banner. Both `onChoiceRecorded` and `onPermissionsChanged`
    log.
 3. Dismiss a notice, if your policy shows one. Neither logs.
-4. Withdraw a category you allowed. `onBeforeConsentRevocationReload` logs,
-   then the page reloads.
+4. Withdraw an allowed category. `onBeforeConsentRevocationReload` logs, then
+   the page reloads.

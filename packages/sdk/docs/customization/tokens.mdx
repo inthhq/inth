@@ -1,34 +1,27 @@
 ---
 title: Theme tokens
-description: Change Inth's colors, type, radius, spacing, shadows and motion with theme tokens, and see every --inth-* variable with its default.
+description: Customize Inth colors, typography, radius, spacing, shadows, and motion with defineTheme(), ConsentTheme, and --inth-* CSS variables.
 group: customization
 ---
 
-## Where tokens come from
+Style every Inth banner, preference dialog, and trigger from one place using `defineTheme()`, `ConsentTheme`, or `--inth-*` CSS variables.
 
-Inth's components take their colors from `--inth-*` CSS variables, and most
-of their fonts, radii, spacing, shadows and motion too. Inth's rules set the
-defaults. You change them with a theme object or with CSS, and every part
-that reads a token changes with it. Some values are still fixed for one
-component, such as button padding, the radius of the "Secured by" tag and
-several font sizes and weights, so a token change does not move them. Restyle
-those parts through [slots](/docs/customization/slots) or your own CSS.
-[Stylesheets and CSS layers](/docs/customization/stylesheets)
-covers how Inth loads its rules, and [dark mode](/docs/customization/dark-mode)
-covers the dark set of tokens.
+## Define a theme with `defineTheme()`
 
-## Set semantic values together
+Every `@inth/*` web framework package exports `defineTheme()`. Pair primary colors with hover and foreground colors so buttons stay readable in every state:
 
-This React theme changes the brand color and large corner radius. Include
-hover and foreground colors when overriding raw variables so the button remains
-readable in each state.
+{/* example: fragment */}
 
 ```ts
 import { defineTheme } from '@inth/react';
 
 export const theme = defineTheme({
-	colors: { primary: '#2f6f4e' },
-	radius: { lg: '4px' },
+	colors: {
+		primary: '#2f6f4e',
+		primaryHover: '#24563c',
+		textOnPrimary: '#ffffff',
+	},
+	radius: { lg: '4px', md: '4px' },
 	consentActions: {
 		primary: { variant: 'primary', mode: 'filled' },
 		dismiss: { variant: 'neutral', mode: 'stroke' },
@@ -36,38 +29,22 @@ export const theme = defineTheme({
 });
 ```
 
-`defineTheme` comes from your framework package: `@inth/react`, `@inth/vue`,
-`@inth/nuxt` and the rest all export it. Where the theme goes depends on the
-framework:
-
 | Framework | Tokens | `consentActions` |
 | --- | --- | --- |
-| Next.js, TanStack Start, React | `<ConsentTheme theme={theme} />`, rendered on the server where the app has one | `theme` in the provider options |
-| Nuxt, Vue | `theme` or `tokens` in the module or plugin options | Not available |
-| Astro | `theme` in the integration options | The same `theme` |
-| Svelte, SvelteKit | `generateThemeCSS(theme)` from `@inth/svelte` on the server, in a `<style>` element, or `--inth-*` variables in your stylesheet | `theme` on `InthProvider`, from `@inth/svelte` or `@inth/svelte/kit` |
+| Next.js, TanStack Start, React | `<ConsentTheme theme={theme} />`, server-rendered when available | Provider `theme` option |
+| Nuxt, Vue | `theme` or `tokens` in module or plugin options | Not available |
+| Astro | `theme` in `inth()` integration options | Same `theme` object |
+| Svelte, SvelteKit | `generateThemeCSS(theme)` in `<style>`, or `--inth-*` CSS | `theme` on provider or root |
+| Angular | Global `--inth-*` CSS or `generateThemeCSS(theme)` | `theme` in `provideInth()` |
 | HTML, JavaScript | `ui.theme` | Not available |
 
-React and Svelte providers do not turn tokens in their `theme` option into
-CSS, and warn in development when a theme holds tokens but the page has no
-`<style id="inth-theme">`. Your framework's customize page shows the full
-setup.
+React, Svelte, and Angular providers read only `consentActions` and slot styles from `theme`. They do not emit token CSS, and warn in development if `theme` sets tokens without a `<style id="inth-theme">` element.
 
-`consentActions` selects styling by action role. A per-action entry overrides
-`primary`, which overrides `default`.
+`consentActions` styles buttons by action role. A per-action entry overrides `primary`, which overrides `default`.
 
-## Combine a generated theme with your own CSS
+## Override generated tokens with CSS
 
-`generateThemeCSS` writes its variables on `:root:root` and
-`.inth-theme-root.inth-theme-root`, more specific than Inth's defaults. The
-theme therefore overrides the defaults whether its
-`<style>` element comes before or after Inth's rules. The same output backs
-`ConsentTheme` in React, Next.js and TanStack Start, Astro's `theme` option and
-the script tag's `ui.theme`.
-
-A `--inth-*` variable you set on plain `:root` in your own CSS loses to a
-generated theme that sets the same variable, even when your rule loads later.
-Put the value in the theme, or raise your selector:
+`ConsentTheme`, `generateThemeCSS()`, Astro's `theme`, and `ui.theme` emit variables on `:root:root` and `.inth-theme-root.inth-theme-root`, outranking Inth defaults regardless of load order. Plain `:root` rules lose to generated themes, so put overrides in your theme object or match `:root:root`:
 
 ```css
 :root:root {
@@ -75,79 +52,54 @@ Put the value in the theme, or raise your selector:
 }
 ```
 
-Scoped rules such as `[data-prompt] { --inth-primary: ... }` set the variable
-on the banner element itself, so they still apply inside it.
+Scoped rules like `[data-prompt] { --inth-primary: #2f6f4e; }` set the variable on the banner element directly and override `:root:root` inside it.
 
-## Every token
+## Token reference
 
-Every framework uses the same tokens. A theme object, such as `ConsentTheme`'s
-`theme`, Astro's and Vue's `theme` or the script tag's `ui.theme`, takes the
-theme key, such as `radius.lg`. Vue and Nuxt `tokens` take the CSS variable
-name without the leading `--`, such as `inth-radius-lg`. A stylesheet sets the
-CSS variable itself. Your framework's customize page shows where each one goes.
-[Motion and animation](/docs/customization/motion) explains the duration and
-easing tokens.
+Theme objects use nested keys like `radius.lg`, Vue and Nuxt `tokens` omit `--` as `'inth-radius-lg'`, and stylesheets use `--inth-radius-lg`. See [dark mode](/docs/customization/dark-mode), [motion](/docs/customization/motion), and [stylesheets](/docs/customization/stylesheets) for dark overrides, timing, and load order.
 
 <include src="../shared/reference/theme-tokens.mdx" />
 
-The radius tokens round different parts. `radius.lg` rounds the banner card,
-the preference dialog, `ConsentGate` placeholders and the floating trigger.
-`radius.md` rounds buttons, accordions, tabs and the vendor list.
-`radius.sm` rounds small parts inside the banner and dialog. To give the banner
-and its buttons the same 4px corners, set both `lg` and `md`.
+`radius.lg` rounds cards, dialogs, `ConsentGate` placeholders, and the floating trigger. `radius.md` rounds buttons, accordions, tabs, and vendor lists. `radius.sm` rounds inner controls. Set both `radius.lg` and `radius.md` for matching card and button corners. Style fixed properties like button padding through [component parts](/docs/customization/slots).
 
-## Target a prompt with CSS
+## Scope tokens and adjust sizing
+
+Target specific prompts with rendered `data-*` attributes instead of internal class names:
 
 ```css
 [data-prompt][data-model='opt-in'] {
   --inth-primary: #2f6f4e;
   --inth-primary-hover: #24563c;
-  --inth-text-on-primary: #fff;
+  --inth-text-on-primary: #ffffff;
 }
 ```
 
-Use attributes exposed by the rendered component, not guessed class names.
-The script tag's banner has no `data-prompt` or `data-model`. Test the prompt
-and the preferences dialog separately because tokens scoped to one prompt do
-not automatically reach a portaled dialog.
+The script tag omits `data-prompt` and `data-model`. Because the preference dialog renders in a portal, tokens scoped to `[data-prompt]` do not reach it. Test both surfaces.
 
 | Size variable | Default | Target |
 | --- | --- | --- |
 | `--consent-banner-max-width` | `440px` | Floating card |
 | `--consent-banner-widget-max-width` | `20rem` | Widget |
 | `--consent-banner-wall-max-width` | `30rem` | Choice wall |
-| `--consent-banner-padding-mobile` | `var(--inth-space-md)` | Inset of the floating card's and choice wall's text and buttons, below 640px |
-| `--consent-banner-padding` | `var(--inth-space-lg)` | The same inset from 640px up |
+| `--consent-banner-padding-mobile` | `var(--inth-space-md)` | Floating card and choice wall inset below 640px |
+| `--consent-banner-padding` | `var(--inth-space-lg)` | Floating card and choice wall inset at 640px and up |
+| `--consent-dialog-card-padding-mobile` | `var(--inth-space-md)` | Dialog inset and outer gap below 640px |
+| `--consent-dialog-card-padding` | `var(--inth-space-lg)` | Dialog inset and outer gap at 640px and up |
 
-| `--consent-dialog-card-padding-mobile` | `var(--inth-space-md)` | Inset inside the preferences dialog's card, and the gap around it, below 640px |
-| `--consent-dialog-card-padding` | `var(--inth-space-lg)` | The same inset and gap from 640px up |
+Bar and widget variants ignore both `--consent-banner-padding*` variables. Banner footers wrap actions by card width, not viewport width. Under the default `compact` profile, cards narrower than `22rem` place Reject and Accept on one row with Customize full-width below.
 
-The text and the buttons share one inset, so they start on the same edge.
-The bar and the widget set their own padding and ignore both banner
-variables.
+## Control stacking order with z-index
 
-The banner footer lays out its actions by the card's width, not the
-viewport's. With the default `compact` profile, a card narrower than 22rem
-puts Reject and Accept on one row and Customize on a full-width row below
-them, on any screen size.
-
-Test long translations and small screens after changing width or typography.
-A compact banner must still fit the required actions.
-
-## Stack the banner with your own layers
-
-The banner and its overlay sit at the top of the page's stacking order by
-default. Lower them when a navbar, drawer, or chat widget should cover the
-banner.
+Lower these variables when a navbar, drawer, or chat widget should sit above the banner:
 
 | Variable | Default | Target |
 | --- | --- | --- |
 | `--consent-banner-z-index` | `999998` | Banner |
-| `--consent-banner-overlay-z-index` | `999997` | Backdrop of a blocking banner |
+| `--consent-banner-overlay-z-index` | `999997` | Blocking banner backdrop |
 | `--iab-consent-banner-z-index` | `999998` | IAB TCF banner |
-| `--iab-consent-banner-overlay-z-index` | `999997` | IAB TCF banner backdrop |
-| `--consent-dialog-z-index` | `999999` | Preferences dialog |
-| `--consent-dialog-overlay-z-index` | `999998` | Preferences dialog backdrop |
+| `--iab-consent-banner-overlay-z-index` | `999997` | IAB TCF backdrop |
+| `--consent-dialog-z-index` | `999999` | Preference dialog |
+| `--consent-dialog-overlay-z-index` | `999998` | Preference dialog backdrop |
 
 ```css
 :root {
@@ -156,33 +108,22 @@ banner.
 }
 ```
 
-Keep each z-index above its overlay's, or the backdrop covers the card it
-belongs to. Keep the dialog above the banner so Customize opens on top.
+Keep each surface z-index above its overlay, and keep the dialog above the banner. Non-blocking banners only capture clicks on the card and branding tag, so clicks around them pass through to your page.
 
-Only the card and the "Secured by" tag take clicks. Clicks on the space
-around a floating card, or beside the tag on a bar, reach the page. A
-blocking banner catches every click.
+## Style the "Secured by" tag
 
-## Restyle the "Secured by" tag
-
-The tag sits on the edge of the banner and dialog cards and uses the primary
-color by default. Set these variables on `:root`, or on an element that
-contains the tag. The dialog renders in a portal, so a variable set on the
-banner does not reach the dialog's tag.
+Declare branding tag variables on `:root` so both the banner and the portaled dialog inherit them:
 
 | Variable | Default | Target |
 | --- | --- | --- |
 | `--consent-branding-tag-background-color` | `var(--inth-primary)` | Tag background |
 | `--consent-branding-tag-border-color` | `--inth-primary` mixed 14% toward black | Tag border |
-| `--consent-branding-tag-text-color` | `var(--inth-text-on-primary, #fff)` | "Secured by" and the wordmark |
-| `--consent-branding-tag-mark-color` | The text color | c15t mark or Inth logo |
-| `--consent-branding-tag-shadow` | Inset highlight and a 1px drop shadow | Tag shadow |
-| `--consent-branding-tag-attached-edge-width` | `0px` | Border on the edge that meets the card |
+| `--consent-branding-tag-text-color` | `var(--inth-text-on-primary, #fff)` | "Secured by" text and wordmark |
+| `--consent-branding-tag-mark-color` | Tag text color | Inth logo mark |
+| `--consent-branding-tag-shadow` | Inset highlight and 1px shadow | Tag shadow |
+| `--consent-branding-tag-attached-edge-width` | `0px` | Border meeting the card |
 
-The stylesheet does not declare these variables. Each default resolves on the
-tag, so a `--inth-primary` you scope to a banner still colors the tag.
-
-This makes the tag look like a tab of the card:
+Inth leaves these variables undeclared so defaults resolve on the tag and follow a scoped `--inth-primary`. Set `--consent-branding-tag-attached-edge-width: 1px` to draw a single border where the tag meets the card without doubling borders:
 
 ```css
 :root {
@@ -193,9 +134,3 @@ This makes the tag look like a tab of the card:
   --consent-branding-tag-shadow: none;
 }
 ```
-
-The edge that meets the card has no border by default. Above the banner the
-tag overlaps the card's top border by 1px and covers it. Below the dialog the
-tag starts under the card's bottom border. Set
-`--consent-branding-tag-attached-edge-width: 1px` to draw that edge. It is
-drawn over the card's border, so the two borders do not stack.

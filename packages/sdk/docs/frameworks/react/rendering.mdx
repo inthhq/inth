@@ -1,210 +1,124 @@
 ---
 title: Rendering and deployment
-description: How Inth resolves consent in client-rendered React apps, React Router framework mode, Remix and other server-rendered React apps without an Inth adapter.
+description: Resolve consent in client-rendered React apps, static builds, React Router framework mode, and Remix.
 group: frameworks
 ---
 
-## Pick your rendering path
+`@inth/react` resolves consent in the browser for every React app, including server-rendered setups. What changes between setups is what the initial HTML contains.
 
-`@inth/react` resolves consent in the browser. That works for every React app,
-including server-rendered ones. What changes is what the first HTML contains.
+## Pick your rendering path
 
 | Your app | Where consent resolves | Setup |
 | --- | --- | --- |
-| Vite, or another client-rendered single-page app | Browser, after the bundle loads | [Quickstart](/docs/frameworks/react/quickstart) |
+| Vite or another client-rendered single-page app | Browser, after the bundle loads | [Quickstart](/docs/frameworks/react/quickstart) |
 | Prerendered or static HTML | Browser, after the page loads | [Quickstart](/docs/frameworks/react/quickstart), see [static pages](#static-and-prerendered-pages) |
 | React Router framework mode, Remix, or another server-rendered React app | Browser, after hydration | [Quickstart](/docs/frameworks/react/quickstart), see [server-rendered apps](#react-router-remix-and-other-server-rendered-apps) |
 | Next.js or TanStack Start | Server, per request | That framework's guide in the [framework list](/docs/frameworks) |
 
-Pick the Next.js or TanStack Start adapter if you use those frameworks. They
-read the visitor's cookie and location on the server, so the banner can be in
-the first HTML. [Choose your setup](/docs/concepts/choose-your-setup#server-rendering-or-browser-rendering)
-explains the difference in general terms.
+Use the Next.js or TanStack Start adapter if you run those frameworks: they read the visitor's cookie and location on the server so the banner can ship in the first HTML. [Choose your setup](/docs/concepts/choose-your-setup#server-rendering-or-browser-rendering) compares both models.
 
 ## Client-rendered apps
 
-The [quickstart](/docs/frameworks/react/quickstart) and `examples/react` in
-the Inth repository use `hosted()` from `@inth/react`. It reads the backend URL
-from the provider's `projectUrl` option, which the quickstart reads from
-`VITE_INTH_PROJECT_URL`.
-Policy edits apply on the next page load, without a rebuild. The page loads
-like this:
+The [quickstart](/docs/frameworks/react/quickstart) connects `InthProvider` to your Inth project URL, which uses `hosted()` mode by default. Policy edits apply on the next page load without a rebuild:
 
-1. The page loads with no consent state. Every optional category is denied.
-2. The browser requests `GET /v1/consent/init` from your backend URL. A
-   [script in `index.html`](#send-init-before-the-app-loads) sends it while
-   the JavaScript downloads. The backend picks the visitor's policy from their
-   location. With an `experiment`, pass it to the plugin as
-   `initPrefetch: { experiment }` so the early request carries the visitor's
-   arm. Without that, the provider sends its own `/v1/consent/init` when it mounts.
-3. The provider applies the policy and any stored choice. It shows the banner
-   if the policy asks for one, and loads the scripts the visitor allowed.
+1. The page loads with no consent state and every optional category denied.
+2. The browser sends `/v1/consent/init` to your Inth project URL. A [script in `index.html`](#send-init-before-the-app-loads) starts it while JavaScript downloads, and Inth picks the policy from the visitor's location. With an `experiment`, pass `initPrefetch: { experiment }` to `consentManifest()` so the early request carries the visitor's arm; otherwise the provider sends its own `/v1/consent/init` on mount.
+3. The provider applies the policy and any stored choice, shows the banner if required, and loads allowed scripts.
 
-Until step 3 finishes, gated scripts and `ConsentGate` embeds stay blocked. If
-the backend request fails, they stay blocked and no banner shows.
+Until step 3 finishes, gated scripts and `ConsentGate` embeds stay blocked. If `/v1/consent/init` fails, they remain blocked and no banner renders.
 
-### Send `/v1/consent/init` before the app loads
+### Send `/init` before the app loads
 
 <include src="../../shared/vite-init-prefetch.mdx" />
 
 ### Show the banner from `index.html`
 
-`vite build` also puts the stock banner in `index.html`, hidden. When the
-early `/v1/consent/init` answers, the inline script shows it, so the banner appears
-before your JavaScript has downloaded. `<ConsentBanner />` takes its place
-when it renders, in the same frame. A tap on it before then hides it, and
-the choice is recorded once the app has loaded.
+`vite build` also places the default banner in `index.html`, hidden. When the early `/v1/consent/init` answers, the inline script reveals it before your JavaScript finishes downloading. `<ConsentBanner />` takes over in the same frame once React renders. Clicking a button before React loads hides the banner immediately and records the choice once the app boots.
 
-The build reads your backend's manifest and renders the banner of its first
-choice policy, in the language of `<html lang>`, or English. The page shows
-it only when all of these match the `/v1/consent/init` answer:
+The build reads your project manifest and renders the banner for its first choice policy in the language of `<html lang>`, or English. The page shows that static banner only when all of these match the `/v1/consent/init` response:
 
 - the policy
 - the language
 - the branding
-- the banner's title, description and button labels
+- the banner title, description, and button labels
 
-It also stays hidden when the visitor has a stored choice. Otherwise the page
-removes it, and the app shows its banner as before.
+It also stays hidden if the visitor already has a stored choice. Otherwise the inline script removes it and React renders its own banner.
 
-While the static banner shows, the app loads less Inth code up front. The
-code that reads the `/v1/consent/init` answer, and `<ConsentBanner />`'s own code, load
-after the page's `fetchpriority="high"` images, or at once when the visitor
-taps, presses a key or scrolls. On a slow connection they don't share
-bandwidth with your hero image. A tap on the static banner before then still
-hides it at once and is applied when that code arrives.
+While the static banner is shown, the app defers downloading `<ConsentBanner />` and the `/v1/consent/init` handler until after `fetchpriority="high"` images finish, or immediately on tap, keypress, or scroll, avoiding bandwidth competition with your hero image. Banner stylesheets move from JavaScript into `index.html` so they ship once.
 
-The banner's stylesheets move from the JavaScript into `index.html`, so they
-ship once.
-
-The build can't read your provider's options. Turn the static banner off with
-`consentManifest({ staticBanner: false })` when your banner looks different
-from the stock one on its first render. That includes these cases:
+The build cannot inspect your runtime provider options. Disable the static banner with `consentManifest({ staticBanner: false })` whenever your initial banner differs from the default:
 
 - custom `i18n` messages
 - `legalLinks`
-- a `theme`
+- a custom `theme`
 - `components` slots
 - props on `<ConsentBanner />`
-- a banner of your own
+- a composed or headless banner
 
-Only pages whose entry imports `ConsentBanner` get it, and only in a
-production build with the `/v1/consent/init` script. If the manifest fetch fails, the
-build warns and leaves the banner out. Under a Content Security Policy, set
-Vite's `html.cspNonce`, or allow the hashes of the inline scripts and styles.
+Only entry pages importing `ConsentBanner` receive the static banner, and only in production builds with `/v1/consent/init` prefetch enabled. If the manifest fetch fails during the build, Vite logs a warning and omits the static banner. Under a Content Security Policy, set Vite's `html.cspNonce` or allow the inline script and style hashes.
 
 ## React Router, Remix and other server-rendered apps
 
-React Router framework mode, Remix and similar frameworks have no Inth adapter.
-Use the quickstart's `Consent` component and render it in your root component,
-around the outlet. In React Router framework mode that is `app/root.tsx`.
+React Router framework mode, Remix, and similar frameworks use `@inth/react` directly. Render the quickstart `Consent` component in your root layout around the outlet, such as `app/root.tsx` in React Router framework mode.
 
-`InthProvider` renders on the server without touching browser APIs, and the
-browser takes over after hydration:
+`InthProvider` renders on the server without touching browser APIs, and the browser takes over after hydration:
 
-- The server HTML contains your page but no banner and no consent state.
-- After hydration the browser calls `/v1/consent/init`, then shows the banner if the
-  policy asks for one.
-- The server render and the first browser render agree, so hydration does not
-  warn or change a stored choice.
+- Server HTML contains your page with no banner and no consent state.
+- After hydration, the browser calls `/v1/consent/init` and shows the banner if the policy requires one.
+- Server and initial client renders match, so hydration produces no warnings and never overwrites a stored choice.
 
-The Vite setup needs no change. The banner renders in the browser and brings
-its own `<style>` element, so there is no stylesheet to import.
+Your Vite config needs no changes, and components render their own `<style>` elements without an extra stylesheet import.
 
-These frameworks render their own HTML, so the Vite plugin can't add the
-early `/v1/consent/init` script. Put `buildPrefetchScript({ projectUrl })` from `@inth/react/engine` in
-a `<script>` in the root `<head>` instead, unless your loader supplies
-`initialData` as described below. The two are alternatives: with
-`initialData` the provider never reads the script's response.
+Because these frameworks render their own HTML document, the Vite plugin cannot inject the early `/v1/consent/init` script into `index.html`. Render `buildPrefetchScript({ projectUrl })` from `@inth/react/engine` inside a `<script>` in your root `<head>` instead, unless your server loader passes `initialData` as shown below.
 
 ### Skip the browser's first init request
 
-This is optional. `fetchSSRData` from `@inth/react/server` calls the backend's
-`/v1/consent/init` from your server loader, forwarding the visitor's location and
-language headers. Pass the result to the browser, wrap it in a promise and give
-it to `hosted({ projectUrl, initialData })` from `@inth/react/transports`, passed as
-the provider's `mode`. The provider's first init then uses that
-response instead of a network request.
+Optionally, call `fetchSSRData` from `@inth/react/server` in your server loader to run `/v1/consent/init` server-side with the visitor's location and language headers. Pass the returned value to the browser, wrap it in a promise, and hand it to `hosted({ projectUrl, initialData })` from `@inth/react/transports` as the provider `mode`. The provider then consumes that response instead of issuing a browser `/v1/consent/init`.
 
-Know its limits before you add it:
+Keep these limits in mind:
 
-- It saves the browser's round trip to the backend. It does not put the banner
-  in the server HTML; the banner still mounts after hydration.
-- Every page view makes a server-to-server `/v1/consent/init` request. Do not cache the
-  loader response, because it contains one visitor's policy.
-- It returns `undefined` when the request has no location or language headers,
-  and the browser then requests `/v1/consent/init` as usual.
-- `mode` is read once, when the provider mounts. Create the `hosted()` mode once
-  in the browser rather than on every render.
-- A relative `projectUrl` resolves against the request's `host` header, over
-  `https` for a domain name and over `http` for `localhost`, an IP address or
-  a single-label host. `fetchSSRData` ignores `x-forwarded-host`,
-  `x-forwarded-proto` and `forwarded`, and does not send them to the backend.
-  Behind a proxy that overwrites those headers, pass
-  `trustForwardedHeaders: true` to use them.
-- If your server answers requests for any `Host` header, such as a Node server
-  exposed directly or a proxy that forwards `Host` from its default virtual
-  host, pass `fetchSSRData` an absolute `projectUrl`. A relative one resolves
-  against whatever `Host` the request sent.
+- It removes the browser round trip to Inth, but does not render the banner in server HTML; the banner still mounts after hydration.
+- Every request calls `/v1/consent/init` server-to-server. Never cache the loader response across visitors.
+- It returns `undefined` when the request lacks location and language headers, falling back to browser `/v1/consent/init`.
+- The provider reads `mode` once on mount, so create the `hosted()` mode once rather than on every render.
+- A relative `projectUrl` resolves against the request `Host` header (`https` for domain names, `http` for `localhost`, IP addresses, or single-label hosts). `fetchSSRData` ignores `x-forwarded-host`, `x-forwarded-proto`, and `forwarded` unless you pass `trustForwardedHeaders: true` behind a trusted proxy.
+- If your server accepts arbitrary `Host` headers, pass an absolute `projectUrl` to `fetchSSRData`.
 
 ### Render the banner in the server HTML
 
-Inth has no framework-neutral helper for this. `InthProvider` accepts a
-server-resolved `prefetch` state, but the Next.js and TanStack Start adapters
-build that state from the request's cookie, headers and a cached policy
-manifest. Building it by hand ties your app to internal shapes. If the banner
-must be part of the first paint, use one of those adapters. Otherwise keep the
-browser path.
+Inth does not ship a framework-neutral helper for server-rendered banners. While `InthProvider` accepts a server-resolved `prefetch` payload, building it manually from cookies, headers, and a cached manifest ties your app to internal shapes. If the banner must appear in the first server HTML, use `@inth/nextjs` or `@inth/tanstack-start`.
 
 ## Static and prerendered pages
 
-A prerendered page is the same HTML for every visitor, so it cannot contain one
-visitor's consent. Use the quickstart's setup. `/v1/consent/init` requests and consent
-saves go to the backend URL directly, so the static host needs no server
-route. Add the site's
-origin to the trusted origins in your Inth project.
+Prerendered HTML is shared across all visitors, so it cannot contain one visitor's consent state. Use the quickstart setup: `/v1/consent/init` and `/v1/consent/records` go directly to your Inth project URL, so static hosts need no server routes. Add your site's origin to your Inth project's trusted origins.
 
-Do not cache a response that contains a visitor's consent in a CDN or a shared
-page cache. [Data fetching](/docs/concepts/data-fetching) covers what is safe to
-cache.
+Never cache a response containing a visitor's consent in a CDN or shared page cache. See [Data fetching](/docs/concepts/data-fetching) for caching rules.
 
 ## Where the browser sends requests
 
-With `hosted()`, the browser calls two backend endpoints:
+In `hosted()` mode, the browser calls two endpoints on your Inth project:
 
 | Request | When |
 | --- | --- |
-| `GET {url}/v1/consent/init` | Once per page load, to resolve the policy |
-| `POST {url}/v1/consent/records` | When the visitor accepts, rejects or saves |
+| `GET {url}/v1/consent/init` | Once per page load to resolve the policy |
+| `POST {url}/v1/consent/records` | When the visitor accepts, rejects, or saves |
 
-These requests go to the backend's origin, so it must list your site as a
-trusted origin.
-[Data fetching](/docs/concepts/data-fetching) compares this with proxies.
+Add your site's origin to your Inth project's trusted origins so cross-origin requests succeed. [Data fetching](/docs/concepts/data-fetching) compares direct requests and same-origin proxies.
 
 ## Check the rendering path
 
-1. Open the page in a private window and view the page source. In a
-   server-rendered app the HTML contains your content and no element with
-   `data-testid="consent-banner-root"`.
-2. In DevTools Network, confirm one `/v1/consent/init` request runs, unless you supply
-   `initialData`.
-3. The banner appears once the policy resolves. Vendor requests stay absent
-   until you allow their category.
+1. Open the site in a private window and view page source. In a server-rendered React app, the HTML includes your page content and no `data-testid="consent-banner-root"` element.
+2. Open DevTools Network and confirm one `/v1/consent/init` request fires unless you passed `initialData`.
+3. Confirm the banner renders once the policy resolves and vendor requests stay blocked until allowed.
 
 ## Bundle the policy at build time
 
-`manifest()` resolves the policy in the browser from a snapshot the build
-downloaded. It saves the `/v1/consent/init` request only in these cases:
+`manifest()` resolves the policy in the browser from a build-time snapshot. It avoids `/v1/consent/init` only when:
 
-- The policy has no location rules, or every location gets the same banner.
-- The page already knows the visitor's location, for example from an edge
-  worker, and passes it as `inputs`.
-- You run a same-origin `geoUrl` route that returns the location.
+- Your policy has no location rules, or every location shows the same banner.
+- The page already knows the visitor's location, such as from an edge worker, and passes it via `inputs`.
+- You run a same-origin `geoUrl` endpoint returning the visitor's location.
 
-Otherwise the browser still calls `/v1/consent/init` on a first visit and uses the
-backend's answer, so the bundle adds bytes without saving a request.
-`consentManifest` warns during the build when that happens. The resolver adds
-about 3 KB gzipped to the bundle, and policy edits need a rebuild. The browser
-sends no `/v1/consent/init`, so the backend doesn't count visitors it resolves this way.
+Otherwise the browser still calls `/v1/consent/init` on a first visit, adding bundle bytes without saving a request, and `consentManifest()` logs a build warning. The browser resolver adds about 3 KB gzipped, policy updates require a rebuild, and visits resolved locally do not send `/v1/consent/init`.
 
 <include src="../../shared/build-manifests/react.mdx" />

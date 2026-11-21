@@ -1,10 +1,9 @@
 # @inth/react-native: native consent for mobile
 
 <p>
-<a href="https://github.com/c15t/c15t"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/c15t/c15t/stars.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/github/c15t/c15t/stars.svg?variant=outline&mode=light" alt="Stars"></picture></a>
-<a href="https://github.com/c15t/c15t/blob/main/LICENSE.md"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/c15t/c15t/license.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/github/c15t/c15t/license.svg?variant=outline&mode=light" alt="License"></picture></a>
+<a href="https://github.com/inthhq/inth"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/inthhq/inth/stars.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/github/inthhq/inth/stars.svg?variant=outline&mode=light" alt="Stars"></picture></a>
+<a href="https://github.com/inthhq/inth/blob/main/LICENSE"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/github/inthhq/inth/license.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/github/inthhq/inth/license.svg?variant=outline&mode=light" alt="License"></picture></a>
 <a href="https://c15t.link/discord"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/discord/1312171102268690493.svg?variant=outline&mode=light" alt="Discord"></picture></a>
-<a href="https://skills.sh/c15t/skills/c15t"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/skills/c15t/skills/c15t.svg?variant=outline&mode=dark"><img src="https://shieldcn.dev/skills/c15t/skills/c15t.svg?variant=outline&mode=light" alt="Skills"></picture></a>
 <a href="https://inth.com?utm_source=npm&utm_medium=readme&utm_campaign=oss_readme&utm_content=%40inth%2Freact-native"><picture><source media="(prefers-color-scheme: dark)" srcset="https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?color=ffc803&labelTextColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAzOTMgNDAwIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNMTgyLjY2MiAwdjM2Ljg5NWgtNTkuMDMxdjgyLjczM2g1OS4wMzF2MzYuODkzSDI3LjQ4MnYtMzYuODkzaDU5LjAzVjM2Ljg5NWgtNTkuMDNWMHpNMzIxLjk0MSA4OS44NVYwaDM1LjM1NXYxNTYuNTIxaC0yNS43MTNsLTg2LjEzNy05MC4zNjR2OTAuMzY0aC0zNS4zNTVWMGgyNi4zNTV6Ii8%2BPHBhdGggZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzE4LjU3MSAxODUuNzE0aDc0LjI4NlY0MDBIMFYxODUuNzE0aDI3Mi44NTd2LTQ3LjE0M3ptLTI5MS4wOSAyOC45Njl2MzcuMTE4aDU4LjEzN3YxMTkuNjI4aDM2Ljg5NVYyNTEuODAxaDU4LjU4NHYtMzcuMTE4em0xODIuNjEuMjI0djE1Ni41MjJoMzYuODk0VjMxMy41OWg3My4zNDF2NTcuODM5aDM3LjExOFYyMTQuOTA3aC0zNy4xMTh2NjEuNzg4aC03My4zNDF2LTYxLjc4OHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg%3D%3D&valueColor=000000&mode=dark"><img src="https://shieldcn.dev/badge/Made%20By-Inth-ffc803.svg?color=ffc803&labelTextColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGZpbGw9Im5vbmUiIHZpZXdCb3g9IjAgMCAzOTMgNDAwIj48cGF0aCBmaWxsPSIjMDAwIiBkPSJNMTgyLjY2MiAwdjM2Ljg5NWgtNTkuMDMxdjgyLjczM2g1OS4wMzF2MzYuODkzSDI3LjQ4MnYtMzYuODkzaDU5LjAzVjM2Ljg5NWgtNTkuMDNWMHpNMzIxLjk0MSA4OS44NVYwaDM1LjM1NXYxNTYuNTIxaC0yNS43MTNsLTg2LjEzNy05MC4zNjR2OTAuMzY0aC0zNS4zNTVWMGgyNi4zNTV6Ii8%2BPHBhdGggZmlsbD0iIzAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMzE4LjU3MSAxODUuNzE0aDc0LjI4NlY0MDBIMFYxODUuNzE0aDI3Mi44NTd2LTQ3LjE0M3ptLTI5MS4wOSAyOC45Njl2MzcuMTE4aDU4LjEzN3YxMTkuNjI4aDM2Ljg5NVYyNTEuODAxaDU4LjU4NHYtMzcuMTE4em0xODIuNjEuMjI0djE1Ni41MjJoMzYuODk0VjMxMy41OWg3My4zNDF2NTcuODM5aDM3LjExOFYyMTQuOTA3aC0zNy4xMTh2NjEuNzg4aC03My4zNDF2LTYxLjc4OHoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg%3D%3D&valueColor=000000&mode=light" alt="Made by Inth"></picture></a>
 </p>
 
@@ -28,15 +27,15 @@ Native consent screens, saved privacy choices and SDK gates for React Native and
 
 ## Installation
 
-The mobile SDK is a private prerelease. Obtain the package tarball and its matching Android artifacts from the maintainer, then follow the [React Native quickstart](https://c15t.com/docs/frameworks/react-native/quickstart) or [Expo setup](https://c15t.com/docs/frameworks/react-native/expo). [Mobile availability](https://c15t.com/docs/guides/mobile-status) records distribution and first-release scope.
+The mobile SDK is a private prerelease. Obtain the package tarball and its matching Android artifacts from the maintainer, then follow the [React Native quickstart](https://inth.com/docs/frameworks/react-native/quickstart) or [Expo setup](https://inth.com/docs/frameworks/react-native/expo). [Mobile availability](https://inth.com/docs/guides/mobile-status) records distribution and first-release scope.
 
 ## Documentation
 
-See the [documentation](https://c15t.com/docs/frameworks/react-native/quickstart) for guides, API reference, and examples.
+See the [documentation](https://inth.com/docs/frameworks/react-native/quickstart) for guides, API reference, and examples.
 
 ## Compatibility and updates
 
-For a new app, target RN 0.88 with React 19.3, or Expo 58, and verify native builds and consent journeys before shipping. Older matrix versions remain compatibility targets for existing apps; Inth compatibility does not extend upstream maintenance. The Expo plugin raises the iOS deployment target to at least 16.4 and preserves higher targets. Compatibility checks cover packed types, maintained source types, Codegen and Expo prebuild; they do not establish native runtime acceptance for every version. We review each stable RN and Expo release, announce removals, and raise compatibility floors in an Inth major release. See [compatibility and updates](https://c15t.com/docs/frameworks/react-native/platform-support).
+For a new app, target RN 0.88 with React 19.3, or Expo 58, and verify native builds and consent journeys before shipping. Older matrix versions remain compatibility targets for existing apps; Inth compatibility does not extend upstream maintenance. The Expo plugin raises the iOS deployment target to at least 16.4 and preserves higher targets. Compatibility checks cover packed types, maintained source types, Codegen and Expo prebuild; they do not establish native runtime acceptance for every version. We review each stable RN and Expo release, announce removals, and raise compatibility floors in an Inth major release. See [compatibility and updates](https://inth.com/docs/frameworks/react-native/platform-support).
 
 ## Native setup before JavaScript
 
@@ -50,19 +49,19 @@ Check `CommitResult.ok` after each `useSaveConsents()` call. A resolved promise 
 
 Start with the guide for your app. The package also includes version-matched Markdown under `docs/` for offline reading.
 
-- [React Native quickstart](https://c15t.com/docs/frameworks/react-native/quickstart)
-- [Expo and EAS](https://c15t.com/docs/frameworks/react-native/expo)
-- [Bare React Native](https://c15t.com/docs/frameworks/react-native/bare)
-- [Build your own UI](https://c15t.com/docs/frameworks/react-native/headless)
-- [Customize native screens](https://c15t.com/docs/frameworks/react-native/customize)
-- [Commands and outcomes](https://c15t.com/docs/frameworks/react-native/usage)
-- [Native SDK gates](https://c15t.com/docs/frameworks/react-native/native-behaviour)
-- [SwiftUI quickstart and UIKit](https://c15t.com/docs/frameworks/swift/quickstart)
-- [Kotlin Android quickstart](https://c15t.com/docs/frameworks/android/quickstart)
-- [Mobile SDK integrations](https://c15t.com/docs/integrations/overview#mobile-sdks)
-- [Offline consent](https://c15t.com/docs/guides/mobile-offline)
-- [IAB and advertising](https://c15t.com/docs/guides/mobile-iab)
-- [Verify mobile consent](https://c15t.com/docs/guides/mobile-verify)
+- [React Native quickstart](https://inth.com/docs/frameworks/react-native/quickstart)
+- [Expo and EAS](https://inth.com/docs/frameworks/react-native/expo)
+- [Bare React Native](https://inth.com/docs/frameworks/react-native/bare)
+- [Build your own UI](https://inth.com/docs/frameworks/react-native/headless)
+- [Customize native screens](https://inth.com/docs/frameworks/react-native/customize)
+- [Commands and outcomes](https://inth.com/docs/frameworks/react-native/usage)
+- [Native SDK gates](https://inth.com/docs/frameworks/react-native/native-behaviour)
+- [SwiftUI quickstart and UIKit](https://inth.com/docs/frameworks/swift/quickstart)
+- [Kotlin Android quickstart](https://inth.com/docs/frameworks/android/quickstart)
+- [Mobile SDK integrations](https://inth.com/docs/integrations/overview#mobile-sdks)
+- [Offline consent](https://inth.com/docs/guides/mobile-offline)
+- [IAB and advertising](https://inth.com/docs/guides/mobile-iab)
+- [Verify mobile consent](https://inth.com/docs/guides/mobile-verify)
 
 ## IAB and ads
 
@@ -70,33 +69,33 @@ Native IAB and Additional Consent APIs do not establish IAB registration, Google
 
 ## Inth hosted only, with dryRun for development
 
-The mobile SDK works only with Inth hosted projects. Set `projectUrl` to the project URL from your Inth dashboard; prebuild and native startup refuse any other host. There is no `mode`, `initURL`, self-hosted backend or custom transport. A bundled manifest or an in-code `policy` covers a first launch without network, and queued records deliver after reconnecting. `dryRun: true` is for development and CI: consent works on the device and no consent record is sent. A release build refuses to start Inth with it. Set `autoBootstrap: false` when your native app installs the engine itself. The React components and headless hooks work the same either way. Browser script-loader and CSS APIs are not native SDK gates. See [configuration](https://c15t.com/docs/frameworks/react-native/configuration).
+The mobile SDK works only with Inth hosted projects. Set `projectUrl` to the project URL from your Inth dashboard; prebuild and native startup refuse any other host. There is no `mode`, `initURL`, self-hosted backend or custom transport. A bundled manifest or an in-code `policy` covers a first launch without network, and queued records deliver after reconnecting. `dryRun: true` is for development and CI: consent works on the device and no consent record is sent. A release build refuses to start Inth with it. Set `autoBootstrap: false` when your native app installs the engine itself. The React components and headless hooks work the same either way. Browser script-loader and CSS APIs are not native SDK gates. See [configuration](https://inth.com/docs/frameworks/react-native/configuration).
 
 ## First release scope
 
-The first release includes native presenters, RN hooks and category commands, app-owned native installation, IAB CMP settings through the Expo plugin or native metadata, and standalone Swift/Kotlin APIs. A separate UI-free RN package is deferred. See [mobile availability](https://c15t.com/docs/guides/mobile-status) for the supported integration paths.
+The first release includes native presenters, RN hooks and category commands, app-owned native installation, IAB CMP settings through the Expo plugin or native metadata, and standalone Swift/Kotlin APIs. A separate UI-free RN package is deferred. See [mobile availability](https://inth.com/docs/guides/mobile-status) for the supported integration paths.
 
 ## Docs for AI Agents
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at `node_modules/@inth/react-native/AGENTS.md`. It indexes every guide in `node_modules/@inth/react-native/docs/`.
 
-On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
+On the web, every page of the [Inth docs](https://inth.com/docs) has a Markdown version, and [llms.txt](https://inth.com/docs/llms.txt) lists them all.
 
 ## Support
 
 - Join our [Discord community](https://c15t.link/discord)
-- Open an issue on our [GitHub repository](https://github.com/c15t/c15t/issues)
+- Open an issue on our [GitHub repository](https://github.com/inthhq/inth/issues)
 - Visit [inth.com](https://inth.com) and use the chat widget
 - Contact our support team via email [support@inth.com](mailto:support@inth.com)
 
 ## Contributing
 
-- Read the [contribution guidelines](https://c15t.com/docs/oss/contributing) before you open a pull request
-- Follow the [code of conduct](https://c15t.com/docs/oss/code-of-conduct)
+- Read the [contribution guidelines](https://github.com/inthhq/inth/blob/main/.github/CONTRIBUTING.md) before you open a pull request
+- Open an issue or pull request on [GitHub](https://github.com/inthhq/inth)
 
 ## Security
 
-Do not open a public issue for a security vulnerability. Report it privately through [GitHub's vulnerability reporting](https://github.com/c15t/c15t/security/advisories/new). We examine every valid report.
+Do not open a public issue for a security vulnerability. Report it privately through [GitHub's vulnerability reporting](https://github.com/inthhq/inth/security/advisories/new). We examine every valid report.
 
 - Do not share the vulnerability in public forums, issues, or pull requests
 - Give the steps to reproduce it and the versions it affects
@@ -104,7 +103,7 @@ Do not open a public issue for a security vulnerability. Report it privately thr
 
 ## License
 
-[Apache License 2.0](https://github.com/c15t/c15t/blob/main/LICENSE.md)
+[Apache License 2.0](https://github.com/inthhq/inth/blob/main/LICENSE)
 
 ---
 

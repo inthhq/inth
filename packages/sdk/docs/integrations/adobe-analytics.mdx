@@ -1,26 +1,21 @@
 ---
 title: Adobe Analytics
-description: Load an Adobe Data Collection Tags property only after measurement consent with the Inth adobeAnalytics helper, and check its extensions in DevTools.
+description: Load an Adobe Data Collection Tags property for Adobe Analytics only after measurement consent with Inth.
 seoTitle: Adobe Analytics cookie consent with Inth
-seoDescription: Load Adobe Analytics only with measurement consent. The Inth adobeAnalytics helper gates your Adobe Data Collection Tags property.
+seoDescription: Gate your Adobe Data Collection Tags property on measurement consent with the Inth adobeAnalytics helper.
 icon: adobe-analytics
 group: integrations
 ---
 
-The Inth `adobeAnalytics` helper keeps your Adobe Data Collection Tags property
-off the page until `measurement` has consent. This property loads Adobe
-Analytics. The helper sends no consent signal to Adobe, so every extension in
-the property runs under the consent for `measurement`. If the visitor withdraws
-consent, Inth removes the script element. By default, Inth also reloads the
-page.
+The `adobeAnalytics` helper blocks your Adobe Data Collection Tags property until the visitor grants `measurement` consent. It sends no consent signal to Adobe, so every extension in the property runs under `measurement`. On withdrawal, Inth removes the script element and reloads the page by default.
 
 ## Configure Adobe Analytics
 
-Copy the full embed URL for your property environment from the Adobe Data
-Collection embed code. Adobe has no shared loader that takes only an account
-ID, so `adobeAnalytics` needs the whole URL. Remove the original embed code.
+Copy the full embed URL for your property environment from Adobe Data Collection and remove the original embed snippet. Adobe has no shared loader keyed by account ID alone.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { adobeAnalytics } from '@inth/integrations/adobe-analytics';
@@ -39,26 +34,18 @@ export const scripts = [
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `scriptUrl` | Required | Full `https:` embed URL of the Tags property environment. Self-hosted embeds work. The helper trims the value. Empty, unparseable and non-`https:` URLs log an error and the script does not load. |
-| `async` | `true` | Loads the Tags library asynchronously. Set `false` only for a legacy synchronous deployment. |
-| `seedAdobeDataLayer` | `true` | Sets `window.adobeDataLayer` to an empty array before the library loads, only when the global is undefined. |
+| `scriptUrl` | Required | Full `https:` embed URL for your Tags property environment. Custom-hosted embed URLs work. Trimmed automatically. Blank, invalid, or non-`https:` URLs log an error and skip loading. |
+| `async` | `true` | Loads the Tags library asynchronously. Set `false` only for legacy synchronous deployments. |
+| `seedAdobeDataLayer` | `true` | Initializes `window.adobeDataLayer` to `[]` before loading when undefined. |
 
 ## Loading and revocation
 
-`adobeAnalytics` uses the `measurement` category. The property embed loads
-only while measurement is allowed. On revocation the helper removes the script
-element and calls no Adobe API.
+`adobeAnalytics` gates on `measurement` and loads your property embed only while allowed. On withdrawal, Inth removes the script element without calling any Adobe API.
 
-The property can load Adobe Analytics, Web SDK and other extensions through its
-rules. Inth sees only the embed script, so every extension runs under the one
-measurement permission. If a rule loads a service with another purpose, such
-as advertising, configure that rule in Adobe to respect your consent model too.
+Because Inth controls only the embed loader, every extension enabled in the property, including Analytics and Web SDK, runs under `measurement`. If a rule loads an advertising or non-measurement tool, configure that rule in Adobe Tags to check your consent state too.
 
 ## Verify Adobe Analytics
 
-After you allow measurement, the request for your embed URL appears, then the
-requests from the extensions the property enables. `window._satellite` exists
-once the Tags library runs. Check that each extension's requests match the
-measurement purpose.
+Filter DevTools Network by your embed host, such as `assets.adobedtm.com`. Allow `measurement` and confirm your embed URL loads, `window._satellite` is defined, and extension requests fire only for measurement tools.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

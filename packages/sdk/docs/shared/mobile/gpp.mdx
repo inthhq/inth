@@ -1,44 +1,27 @@
 ## What GPP does on a device
 
-With GPP on, the native engine builds an IAB Global Privacy Platform string
-for the visitor's current state. It publishes the string as
-`snapshot.gppString` and writes the standard `IABGPP_*` keys to standard
-`UserDefaults` on iOS and the default `SharedPreferences` on Android, next to
-the `IABTCF_*` keys. Ad SDKs that read GPP in apps, such as Google Mobile Ads
-and Prebid Mobile, read `IABGPP_HDR_GppString` and `IABGPP_GppSID`.
+With GPP enabled, the native engine builds an IAB Global Privacy Platform string for the visitor's current state, exposes it as `snapshot.gppString`, and writes standard `IABGPP_*` keys to `UserDefaults` on iOS and default `SharedPreferences` on Android alongside `IABTCF_*`. Ad SDKs such as Google Mobile Ads and Prebid Mobile read `IABGPP_HDR_GppString` and `IABGPP_GppSID`.
 
 The device encodes two sections:
 
-- US National (`usnat`, section 7), MSPA US National version 2.
-- TCF EU (`tcfeuv2`, section 2): the TC String the engine already committed,
-  unchanged.
+- **US National (`usnat`, section 7).** MSPA US National version 2. US state sections such as `usca` are not encoded on mobile; every US visitor receives US National.
+- **TCF EU (`tcfeuv2`, section 2).** The committed TC String unchanged.
 
-US state sections, such as `usca`, are not encoded on mobile. A US visitor
-gets US National wherever they are in the US.
-
-GPP is off until you turn it on. A US section reports that your app shows the
-sale, sharing and targeted advertising opt-out notices, and only you can make
-that claim.
+GPP stays off until you enable it. Enabling a US section declares that your app displays sale, sharing, and targeted advertising opt-out notices.
 
 ## Turn GPP on
 
-Pick the path for your app. Each one turns GPP on with the defaults below.
+Enable GPP for your platform with the default options:
 
-**Expo.** Set the plugin's `gpp` option and rebuild the native app:
-
-{/* example: fragment */}
+**Expo.** Add `gpp: true` to the plugin config and rebuild:
 
 ```json title="app.json"
 ["@inth/react-native", { "projectUrl": "https://your-project.inth.app", "gpp": true }]
 ```
 
-**Bare React Native.** Add `com.inth.gpp` as a Boolean `true` to
-`Info.plist`, and `<meta-data android:name="com.inth.GPP" android:value="true" />`
-to the `<application>` element of `AndroidManifest.xml`.
+**Bare React Native.** Add Boolean `com.inth.gpp` (`true`) to `Info.plist`, and `<meta-data android:name="com.inth.GPP" android:value="true" />` inside `<application>` in `AndroidManifest.xml`.
 
-**Swift.** Pass `GPPOptions` to `InthAppleConfiguration(gpp:)`:
-
-{/* example: fragment */}
+**Swift.** Pass `GPPOptions()` to `InthAppleConfiguration(gpp:)`:
 
 ```swift
 let configuration = InthAppleConfiguration(
@@ -47,76 +30,50 @@ let configuration = InthAppleConfiguration(
 )
 ```
 
-**Kotlin.** Pass `GppOptions` in `NativeConfig`:
-
-{/* example: fragment */}
+**Kotlin.** Pass `GppOptions()` in `NativeConfig`:
 
 ```kotlin
 NativeConfig(backendUrl = "https://your-project.inth.app", gpp = GppOptions())
 ```
 
-Replace `https://your-project.inth.app` with the URL from your Inth project.
+Replace `https://your-project.inth.app` with your Inth project URL.
 
 ## GPP options
 
 | Option | Default | Expo field | iOS `Info.plist` key | Android metadata |
 | --- | --- | --- | --- | --- |
-| Turn GPP on | off | `gpp: true` or an object | `com.inth.gpp`, Boolean | `com.inth.GPP` |
+| Turn GPP on | off | `gpp: true` or object | `com.inth.gpp` (Boolean) | `com.inth.GPP` |
 | `mspaMode` | unset | `gpp.mspaMode` | `com.inth.gpp.mspaMode` | `com.inth.GPP_MSPA_MODE` |
-| `optOutCategories` | `marketing` | `gpp.optOutCategories` | `com.inth.gpp.optOutCategories`, array | `com.inth.GPP_OPT_OUT_CATEGORIES`, comma-separated |
-| `tcf` | `true` | `gpp.tcf` | `com.inth.gpp.tcf`, Boolean | `com.inth.GPP_TCF` |
+| `optOutCategories` | `marketing` | `gpp.optOutCategories` | `com.inth.gpp.optOutCategories` (array) | `com.inth.GPP_OPT_OUT_CATEGORIES` (comma-separated) |
+| `tcf` | `true` | `gpp.tcf` | `com.inth.gpp.tcf` (Boolean) | `com.inth.GPP_TCF` |
 
-- `mspaMode` is `opt-out-option` or `service-provider`. Set it only if you
-  signed the IAB Multi-State Privacy Agreement; the transaction is then
-  reported as covered. In service provider mode the opt-outs and their notices
-  are reported as not applicable. The Expo plugin stops prebuild on any other
-  value. A native key with another value reads as unset.
-- `optOutCategories` lists the categories whose refusal reports an opt-out of
-  sale, sharing and targeted advertising. Leave it out to use `marketing`. An
-  empty list means no category drives the opt-outs, so they always report
-  "did not opt out", as `optOutCategories: []` does on web. Write the empty
-  list as `optOutCategories: []` in Expo, an empty array (`<array/>`) under
-  `com.inth.gpp.optOutCategories` in `Info.plist`, and the value `none` for
-  `com.inth.GPP_OPT_OUT_CATEGORIES` on Android. `necessary` is always granted,
-  so it never drives them.
-- `tcf: false` leaves the TCF EU section out under an `iab` policy.
+- **`mspaMode`.** Accepts `opt-out-option` or `service-provider`. Set it only if you signed the IAB Multi-State Privacy Agreement; the transaction is then reported as covered. In `service-provider` mode, opt-outs and notices are reported as not applicable. Expo prebuild fails on any other value; native keys ignore unrecognized values.
+- **`optOutCategories`.** Lists categories whose refusal signals opt-out of sale, sharing, and targeted advertising (defaults to `marketing`). Pass an empty list (`[]` in Expo, `<array/>` in `Info.plist`, or `none` on Android) so no category triggers opt-out. `necessary` is always granted and never drives opt-outs.
+- **`tcf: false`.** Omits the TCF EU section under an `iab` policy.
 
-## How the policy decides the section
+## How the policy selects a section
 
-The policy rule your backend matched decides whether a section applies. Nothing
-applies until the engine is ready and a rule matched.
+Nothing is written until the engine is ready and matches a policy rule:
 
 | Matched rule and visitor | Section |
 | --- | --- |
-| `iab` rule, after the visitor saved an IAB choice | TCF EU (2): the committed TC String |
-| `iab` rule, before any IAB choice, or with `tcf: false` | None |
-| Any other rule with the `preferences` or `opt-out` right, visitor in the US | US National (7) |
-| A `none` rule without those rights, or a visitor outside the US | None |
+| `iab` rule, after the visitor saved an IAB choice | TCF EU (2), using the committed TC String |
+| `iab` rule, before any IAB choice or with `tcf: false` | None |
+| Any other rule with `preferences` or `opt-out` right, visitor in the US | US National (7) |
+| A `none` rule without those rights, or visitor outside the US | None |
 
-Every `opt-in` and `opt-out` rule has the `preferences` right. The visitor's
-country is the app's `country` override when set, else the location the
-backend resolved. When no section applies, `gppString` is `null` and the
-engine removes every `IABGPP_*` key.
+Every `opt-in` and `opt-out` rule includes the `preferences` right. Country comes from the app's `country` override if set, otherwise from `/v1/consent/init`. When no section applies, `gppString` is `null` and the engine clears every `IABGPP_*` key.
 
 ## What US National reports
 
-- `SaleOptOut`, `SharingOptOut` and `TargetedAdvertisingOptOut`: `1` (opted
-  out) when any opt-out category is not permitted, otherwise `2`. A refusal, a
-  GPC signal the rule maps to `marketing`, and an opt-in rule without a grant
-  all count.
-- The three opt-out notices: `1` (given).
-- `SharingNotice`: `1` when the rule has the `disclosure` right, otherwise `2`.
-- `Gpc`: `snapshot.privacySignals.gpc.active`, even when the rule does not map
-  GPC to a category.
-- `MspaCoveredTransaction`: `2` (not covered) unless you set `mspaMode`.
-- Sensitive data, known-child and personal data consents, and the two sensitive
-  data notices: `0` (not applicable). Inth has no category for them, so the
-  string states that the app does not process that data. If your app does,
-  collect and signal that consent separately.
+- `SaleOptOut`, `SharingOptOut`, and `TargetedAdvertisingOptOut` are `1` (opted out) when any opt-out category is not permitted (via refusal, a GPC-mapped rule, or an ungranted opt-in rule), otherwise `2`.
+- All three opt-out notices are `1` (given).
+- `SharingNotice` is `1` when the rule has the `disclosure` right, otherwise `2`.
+- `Gpc` mirrors `snapshot.privacySignals.gpc.active`.
+- `MspaCoveredTransaction` is `2` (not covered) unless `mspaMode` is set.
+- Sensitive data, known-child, personal data consents, and sensitive data notices are `0` (not applicable). Collect and signal those separately if your app processes sensitive data.
 
-IAB Tech Lab published US National version 3 in November 2026. No IAB
-reference decoder reads it yet, and web Inth encodes version 2, so the mobile
-engine encodes version 2 as well.
+Both web and mobile Inth encode US National version 2 for compatibility with current IAB reference decoders.
 
 ## The `IABGPP_*` keys
 
@@ -124,25 +81,18 @@ engine encodes version 2 as well.
 | --- | --- | --- |
 | `IABGPP_HDR_Version` | String | `"1"` |
 | `IABGPP_HDR_Sections` | String | Section IDs joined with `_`, such as `"7"` |
-| `IABGPP_HDR_GppString` | String | The full GPP string |
-| `IABGPP_GppSID` | String | Sections in force, the same IDs as `IABGPP_HDR_Sections` |
-| `IABGPP_2_String`, `IABGPP_7_String` | String | Each section's string |
-| `IABGPP_2_TCString` | String | The TC String, under the name the TCF EU section uses |
-| `IABGPP_TCFEU2_*` | Integer or String | The `IABTCF_*` consent values, renamed by the TCF EU section's table |
+| `IABGPP_HDR_GppString` | String | Full GPP string |
+| `IABGPP_GppSID` | String | Active section IDs, matching `IABGPP_HDR_Sections` |
+| `IABGPP_2_String`, `IABGPP_7_String` | String | Individual section strings |
+| `IABGPP_2_TCString` | String | TC String under the TCF EU section key |
+| `IABGPP_TCFEU2_*` | Integer or String | `IABTCF_*` consent values mapped to GPP naming |
 
-The IAB specifications define no per-field keys for US National, so the engine
-writes none. Read the section from `IABGPP_7_String` or decode the full string.
+IAB defines no per-field keys for US National. Read `IABGPP_7_String` or decode the full GPP string.
 
-## Check the signal
+## Verify the signal
 
-In React Native, read the string with `useGPPString()` from
-`@inth/react-native`. It returns `null` while GPP is off or no section
-applies. In Swift and Kotlin, read `snapshot().gppString` from the engine.
+Read the string with `useGPPString()` in `@inth/react-native` or `snapshot().gppString` in Swift and Kotlin. Both return `null` when GPP is off or no section applies.
 
-For a US visitor under an `opt-out` rule who has refused nothing, the string is
-`DBABLA~CVQqAAAAAACA.QA` and `IABGPP_GppSID` is `"7"`. After the visitor
-refuses `marketing`, it becomes `DBABLA~CVQVAAAAAACA.QA`: `SaleOptOut` changed
-from `2` to `1`.
+For a US visitor under an `opt-out` rule with no refusals, the string is `DBABLA~CVQqAAAAAACA.QA` and `IABGPP_GppSID` is `"7"`. After refusing `marketing`, it updates to `DBABLA~CVQVAAAAAACA.QA` (`SaleOptOut` changes from `2` to `1`).
 
-GPP reports what the visitor chose. It does not stop an SDK from collecting
-data. Keep gating SDKs with the native consent gates.
+GPP communicates user choices to ad SDKs; it does not block SDK execution on its own. Continue gating SDKs with native consent gates.

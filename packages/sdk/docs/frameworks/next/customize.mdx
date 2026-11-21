@@ -1,24 +1,19 @@
 ---
 title: Customize
-description: Load the Inth stylesheet yourself in Next.js when you need to, and change colors, radius, button roles, component parts, dark mode and banner shape with ConsentTheme and InthProvider options.
+description: Style Inth components in Next.js with ConsentTheme tokens, component slots, dark mode, banner variants and optional CSS imports.
 group: frameworks
 ---
 
-## See the designs
-
-See the [design gallery](/docs/customization/recipes) for five banner designs,
-from a bottom bar to a fully custom one. Its React code works in Next.js with
-the same components imported from `@inth/nextjs`.
+Customize Inth's banner, dialog and buttons in Next.js with theme tokens, slot
+classes, banner variants and dark mode. See the
+[design gallery](/docs/customization/recipes) for five ready-to-copy banner
+recipes (import the same components from `@inth/nextjs`).
 
 ## Load the stylesheet yourself
 
-A Next.js app imports no Inth stylesheet. `ConsentBanner`, `ConsentDialog`
-and the other stock components render the rules they use as `<style>`
-elements, in the server HTML for a server-rendered banner.
-
-Import the stylesheet yourself with Tailwind CSS 3, to put Inth's rules in a
-named cascade layer. Set `styles: false` under `options` in
-`inth.config.ts`, so the components add no second copy:
+By default, stock components render their own `<style>` elements, so you import
+no stylesheet. With Tailwind CSS 3, load the stylesheet yourself so Inth's
+rules sit in a named cascade layer. Disable inline styles in `inth.config.ts`:
 
 {/* example: fragment */}
 
@@ -28,8 +23,7 @@ import { defineConsentConfig } from '@inth/nextjs';
 export default defineConsentConfig({ options: { styles: false } });
 ```
 
-Then import Inth once from the global stylesheet that `app/layout.tsx` or
-`pages/_app.tsx` loads:
+Import `@inth/nextjs/styles.css` once in your global stylesheet:
 
 {/* example: fragment */}
 
@@ -43,21 +37,14 @@ Then import Inth once from the global stylesheet that `app/layout.tsx` or
 
 <import src="../../shared/react/styling/overview.mdx#tokens-intro" />
 
-Define the theme in a module without `'use client'`, so Server and Client
-Components can both import it:
+Define your theme in a shared module without `'use client'`:
 
 <include src="../../shared/examples/nextjs/theme.mdx" />
 
-Render `ConsentTheme` from a Server Component layout. This layout themes the
-routes under `app/branded`:
+Render `ConsentTheme` in a Server Component layout (or in `pages/_document.tsx`
+for the Pages Router) so `<style id="inth-theme">` ships in the server HTML:
 
 <include src="../../shared/examples/nextjs/branded-layout.mdx" />
-
-To theme the whole site, render `<ConsentTheme theme={brandTheme} />` in your
-root layout, before `InthProvider`. View the page source to check that
-the `<style id="inth-theme">` element is in the server HTML. In the Pages
-Router, render `ConsentTheme` in `pages/_document.tsx`, which runs only on the
-server.
 
 <import src="../../shared/react/styling/overview.mdx#theme-migration" />
 
@@ -65,9 +52,9 @@ server.
 
 <import src="../../shared/react/styling/overview.mdx#token-roles" />
 
-`ConsentTheme` renders tokens only. Components read `consentActions` in the
-browser, so pass a theme that contains them through `options` in
-`inth.config.ts`:
+`ConsentTheme` emits CSS tokens only. Because components read `consentActions`
+in the browser, pass that theme through `options.theme` in `inth.config.ts`
+alongside your existing `scripts`:
 
 {/* example: fragment */}
 
@@ -90,12 +77,12 @@ import { actionTheme } from './lib/theme';
 export default defineConsentConfig({ options: { theme: actionTheme } });
 ```
 
-Keep your `scripts` and other options in the same call.
-
 ## Change the banner's shape
 
-For a full-width notice, use the `bar` variant. In a Client Component inside
-the existing root, replace the stock banner with:
+Read the active policy in a Client Component to switch variants per region (see
+[ConsentBanner variants](/docs/frameworks/next/components/consent-banner#variants)):
+
+{/* example: fragment */}
 
 ```tsx title="components/regional-banner.tsx"
 'use client';
@@ -110,12 +97,8 @@ export function RegionalBanner() {
 }
 ```
 
-[ConsentBanner](/docs/frameworks/next/components/consent-banner#variants)
-lists every variant and position.
-
-To remove the notice card's radius, add these values to the existing
-`options.components.banner` slots. The root owns `data-prompt`, so the card
-uses Tailwind's `group` selector to read it:
+To target specific parts with Tailwind or custom classes, pass slot overrides
+under `options.components.banner`:
 
 ```ts
 const bannerSlots = {
@@ -126,34 +109,27 @@ const bannerSlots = {
 	},
 };
 
-// In the existing options.components object:
+// In options.components:
 // banner: bannerSlots
 ```
 
 <import src="../../shared/react/styling/overview.mdx#slot-recipes" />
 
-[Component parts](/docs/customization/slots) lists every component's part keys,
-including the `ConsentGate` placeholder's `components['consent-gate'].root`,
-`.title` and `.button`, and [class names and CSS-in-JS](/docs/customization/class-names) covers CSS
-Modules, vanilla-extract, StyleX and Emotion.
+See [Component parts](/docs/customization/slots) for every slot key (including
+`components['consent-gate']`) and
+[Class names and CSS-in-JS](/docs/customization/class-names) for CSS Modules,
+vanilla-extract, StyleX and Emotion.
 
 ## Turn on dark mode and change motion
 
-Pass `colorScheme` to `ConsentTheme` in your layout and the same value in
-`options` on `InthProvider`. Leave it unset to follow a `dark` class on
-`<html>`, such as the one next-themes sets, and add dark colors with
-`theme.dark`. [Dark mode](/docs/customization/dark-mode) covers each value
-and a dark first paint.
-
-`options.disableAnimation` on `InthProvider` turns off the banner and dialog
-animations, and the same prop on `ConsentBanner` or `ConsentDialog` overrides
-it for one surface. [Motion and animation](/docs/customization/motion) covers
-the duration and easing tokens and reduced motion.
+Pass the same `colorScheme` to `ConsentTheme` and `InthProvider`'s `options`, or
+leave it unset to follow a `dark` class on `<html>` (such as `next-themes`).
+See [Dark mode](/docs/customization/dark-mode). Turn off animations globally
+with `options.disableAnimation` or per component on `ConsentBanner` and
+`ConsentDialog`; see [Motion and animation](/docs/customization/motion).
 
 ## Check the result
 
-Open the page in a fresh session. The banner uses your colors and radius, and
-the primary action has the style you set. Choices, policy and actions are the
-same as with the default design; customizing never records a choice. The
-[customization overview](/docs/customization/overview) covers tokens, parts,
-copy and headless UI across frameworks.
+Open the page in a private window and confirm your colors, radius and button
+styles appear. Customizing never alters consent behavior or records a choice.
+See [Customize the interface](/docs/customization/overview) for the full guide.

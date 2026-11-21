@@ -1,42 +1,36 @@
 ---
 title: Embeds
-description: Keep YouTube videos, maps and other iframes out of a Next.js page until their consent category is allowed, with ConsentGate or the iframe blocker in InthProvider.
+description: Keep YouTube videos, maps and third-party iframes out of Next.js pages until consent is granted using ConsentGate or the iframe blocker.
 group: frameworks
 ---
+
+Hold back YouTube players, maps and other third-party iframes until the visitor
+allows their consent category so no embed host receives requests before
+consent.
 
 ## Pick a method
 
 | Method | Use it when |
 | --- | --- |
-| `ConsentGate` | You render the iframe in a React component and want a placeholder until the visitor allows its category. |
-| The iframe blocker | The iframe comes from markup you do not render with a component, such as CMS or Markdown content. |
-
-Both keep the iframe's `src` out of the page until the category is allowed, so
-the embed's host receives no request before consent.
+| `ConsentGate` | You render the iframe in React and want a built-in placeholder with a button to open preferences. |
+| Iframe blocker | The iframe comes from raw HTML, Markdown or a CMS. |
 
 ## Gate an embed with ConsentGate
 
-Wrap the iframe in `ConsentGate` in a Client Component:
+Wrap the iframe in `ConsentGate` inside a Client Component:
 
 <include src="../../shared/examples/nextjs/video-embed.mdx" />
 
-Import `VideoEmbed` into any page or Server Component under the layout that
-mounts `InthProvider`; only this file needs `'use client'`. The iframe stays out
-of the page until the visitor allows measurement, and a placeholder with a
-button that opens the preference dialog takes its place.
-
-Pick the category that matches what the embed does. The example uses
-measurement for YouTube because its player measures views. A map or chat
-widget usually belongs under functionality or experience.
-
-What the server HTML contains depends on how your layout passes consent state.
-[ConsentGate](/docs/frameworks/next/components/consent-gate) covers the
-default, awaited and Pages Router layouts, the placeholder and its props.
+Import `VideoEmbed` into any Server Component or page under `InthProvider`. Pick
+a category that matches the embed (`measurement` for YouTube; `functionality`
+or `experience` for maps or chat). See
+[ConsentGate](/docs/frameworks/next/components/consent-gate) for SSR behavior,
+placeholders and props.
 
 ## Gate an iframe with the iframe blocker
 
-`InthProvider` runs the iframe blocker in the browser by default. Give an
-iframe `data-src` instead of `src`, and a `data-category`:
+`InthProvider` runs the iframe blocker by default. Replace `src` with `data-src`
+and add `data-category` (plus optional `data-vendor` for per-vendor blocking):
 
 {/* example: fragment */}
 
@@ -48,26 +42,19 @@ iframe `data-src` instead of `src`, and a `data-category`:
 ></iframe>
 ```
 
-The server HTML has no `src`, so nothing loads before hydration. After
-hydration, Inth sets `src` from `data-src` when the category is allowed and
-removes `src` when the category is withdrawn. It watches the page, so iframes
-added by client-side navigation are handled too. Add `data-vendor` with a
-vendor ID to also block the iframe while the visitor has turned that vendor
-off.
-
-To turn the blocker off, pass `options={{ iframeBlocker: false }}` to
-`InthProvider`.
+Because server HTML omits `src`, nothing loads before hydration. After
+hydration, Inth copies `data-src` to `src` when allowed, strips it on
+revocation, and watches DOM mutations across client-side navigations. Pass
+`options={{ iframeBlocker: false }}` on `InthProvider` to disable it.
 
 ## Verify the embeds
 
-Open the production build in a private window with DevTools open, under a
-policy that asks for consent.
+Open your production build in a private window under an opt-in policy:
 
-1. View the page source. No iframe has a `src` pointing at
-   `youtube-nocookie.com` or `google.com/maps`, and the Network panel shows no
-   request to them.
-2. Allow the embed's category and save. The iframe loads.
-3. Withdraw the category and save. The page reloads without the embed.
+1. View page source and DevTools Network: no iframe has a third-party `src` and
+   no request hits `youtube-nocookie.com` or `google.com/maps`.
+2. Grant the embed's category and save: the iframe loads.
+3. Revoke the category and save: the page reloads without the embed.
 
-The [YouTube](/docs/integrations/youtube) and
-[Google Maps](/docs/integrations/google-maps) guides cover sizing and titles.
+See [YouTube](/docs/integrations/youtube) and
+[Google Maps](/docs/integrations/google-maps) for embed sizing and titles.

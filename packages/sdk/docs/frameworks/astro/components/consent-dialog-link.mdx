@@ -1,6 +1,6 @@
 ---
 title: ConsentDialogLink
-description: Add a footer button or link that reopens the Inth preference dialog or the IAB TCF preference center on an Astro site, with no JavaScript of its own.
+description: Add a zero-JavaScript footer button or link that reopens the Inth preference dialog or IAB TCF center on an Astro site.
 group: frameworks
 ---
 
@@ -35,7 +35,7 @@ manage:
 - The resolved rule has `prompt: 'none'` and no rights, so it owes no consent
   interface.
 
-The browser removes `hidden` as soon as a later `/init` answer supplies a rule
+The browser removes `hidden` as soon as a later `/v1/consent/init` answer supplies a rule
 that owes one, and adds it back if the rule stops owing one.
 
 If your own CSS sets `display` on the link, keep `[hidden]` hidden too, for

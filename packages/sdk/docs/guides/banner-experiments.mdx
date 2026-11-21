@@ -1,330 +1,64 @@
 ---
 title: Banner experiments
-description: Run A/B tests on consent banner presentation with any feature-flag provider or built-in weighted assignment, and attribute every impression and choice to its arm.
+description: Run A/B tests on consent banner presentation with a feature flag or built-in assignment, and track impressions and choices per arm.
 group: guides
 ---
 
-## Vary presentation, not policy
+Run A/B tests on consent banner layout, position, actions, and theme tokens while keeping policy rules and copy identical across every arm.
 
-An experiment changes only how the prompt and the preference center look:
-variant, position, layout, primary actions, blocking. The policy rule, its
-categories and its copy stay the same for every arm, so every arm records a
-choice under the same policy fingerprint.
+**Prerequisites**
 
-Your normal `presentation` is the `control` arm; without one, `control` is
-the stock banner. Every other arm lists only what it changes. Add the
-experiment to the provider you already have and pass the arm your feature flag
-resolved. In the React example, the `Consent` wrapper takes the arm as a prop:
+- An Inth project whose policy prompts for at least one category. Under `scopeMode: 'permissive'`, declare categories via `consentCategories`, `scripts`, or `vendors`. Without declared categories, clicks record notice acknowledgements instead of choices and `onChoiceRecorded` never fires.
+
+## Define the experiment
+
+Your existing `presentation` option is the `control` arm (or the stock banner if omitted). Each key in `arms` lists only the overrides. Add `experiment` to your provider and pass the arm resolved by your feature flag:
 
 <include src="../shared/examples/react/experiment-consent.mdx" />
 
-`defineExperiment()` from the `engine` entry of your framework package
-(`@inth/react/engine` here, or `@inth/sdk/engine` in plain JavaScript)
-returns its argument and has TypeScript check
-the arm names in `arm` and `split`. The callbacks forward each impression and
-choice to `window.dataLayer`; see
-[send the events to your own analytics](#send-the-events-to-your-own-analytics-too).
-
-Your flag provider returns a plain string. To check it before passing it as
-`arm`, type it with `ExperimentArmName`, which is `control` plus
-the experiment's arm names:
+`defineExperiment()` from your framework's `/engine` entry (`@inth/react/engine` or `@inth/sdk/engine`) returns its input and checks arm names in `arm` and `split`. Narrow flag strings with `ExperimentArmName`:
 
 {/* example: fragment */}
 
 ```ts
 import type { ExperimentArmName } from '@inth/react';
 
-// 'control' | 'wall'
 type BannerArm = ExperimentArmName<typeof bannerExperiment>;
 
 const armFromFlag = (value: string | undefined): BannerArm | undefined =>
 	value === 'control' || value === 'wall' ? value : undefined;
 ```
 
-Omit `arm` to let Inth pick, and set `split` to weight the arms:
-
-```ts
-experiment: { ...bannerExperiment, split: { control: 60, wall: 40 } }
-```
-
 | Field | Purpose |
 | --- | --- |
-| `id` | Stable experiment name, recorded with every choice |
-| `arms` | What each arm changes, merged over `presentation`. `control` is your `presentation` and is not listed |
-| `arm` | The arm your flag resolved: `control` or a key of `arms` |
-| `split` | Relative weights when Inth picks the arm; default equal. Keys are `control` and the arms |
-| `acknowledgeDiagnostics` | Run an arm that trips a presentation diagnostic and record that you reviewed it |
+| `id` | Stable experiment ID recorded with every impression and choice |
+| `arms` | Overrides merged over `presentation` (omit `control`) |
+| `arm` | Arm from your flag (`control` or a key of `arms`). Omit for built-in assignment |
+| `split` | Relative arm weights for built-in assignment (equal by default) |
+| `acknowledgeDiagnostics` | Run an arm that trips a presentation diagnostic and record your review |
 
-Inth merges the arm over `presentation`, exposes it as `snapshot.experiment`,
-sends it with `/v1/consent/init`, and records it on the choices of visitors the banner
-showed it to, so you can compare opt-in rate and time to decision per arm.
+The same `experiment` option works in `@inth/nextjs`, `@inth/react`, `@inth/vue`, `@inth/svelte`, `@inth/astro`, `@inth/tanstack-start`, and `@inth/sdk`. Inth reads `experiment` once at mount; remount the provider (for example with a React `key`) to switch experiments. Assignment code loads in a separate chunk only on pages that configure `experiment`.
 
-The same option exists in `@inth/nextjs` (`InthProvider` `options`), `@inth/vue`,
-`@inth/svelte`, the `inth()` Astro integration from `@inth/astro`, and
-`@inth/sdk`. On a server-rendered page in Next.js, TanStack Start or
-SvelteKit, pass it to `resolveConsent` instead, which counts the arm and hands
-it to the client; see [Vercel Flags SDK](#vercel-flags-sdk).
+### Vary theme tokens
 
-`experiment` is read once, when the provider mounts. Changing it later has
-no effect; remount the provider (a `key` in React) to switch experiments.
+Include `theme` overrides next to an arm's presentation fields to merge one token group deep over your host `theme`:
 
-Assignment and arm validation load as a separate chunk, only on pages that
-set `experiment`. A site without an experiment does not download them.
-
-An experiment compares choices, so the banner has to ask about at least one
-category. Under a rule with `scopeMode: 'permissive'`, the banner asks only
-about the categories your site declares through `consentCategories`,
-`scripts` or `vendors`. With none declared, it asks about none: accepting or rejecting records a notice
-acknowledgement instead of a choice, `onChoiceRecorded` never fires, and the
-experiment counts impressions without choices. Outside production, Inth logs
-a warning the first time the banner shows an arm in that state.
-
-### Astro
-
-The Astro banner is server-rendered HTML that the browser only shows or
-hides, so the arm is resolved on the server. To pick it per request, set
-`middleware: false` in `inth()` and compose the consent middleware yourself
-with `experimentArm`, where `bannerExperimentFlag` stands for your flag lookup:
-
-{/* example: fragment */}
-
-```ts title="src/middleware.ts"
-import { consentMiddleware } from '@inth/astro/middleware';
-
-export const onRequest = consentMiddleware({
-	experimentArm: async (context) => await bannerExperimentFlag(context),
-});
-```
-
-Return `undefined` to run no experiment for that request. A fixed
-`experiment.arm` in `inth()` puts every visitor in one arm, which only
-suits a staged rollout. Prerendered routes render once for every visitor, so
-they get no per-request arm. `inth()` throws at config time when
-`experiment` has neither.
-
-### Vary the theme
-
-An arm can carry `theme` overrides next to its presentation fragment. They
-merge over the host `theme` one token group deep, so an arm can change one
-colour or radius and keep the rest of your palette. Arrays and scalars are
-replaced.
-
-```tsx
+```ts
 experiment: {
 	id: 'button-style',
 	arms: {
 		bold: {
-			theme: {
-				colors: { primary: '#0a0a0a' },
-				radius: { lg: '4px' },
-			},
+			theme: { colors: { primary: '#0a0a0a' }, radius: { lg: '4px' } },
 		},
 	},
 }
 ```
 
-Read the merged theme with `useResolvedTheme()` in React,
-`useResolvedTheme(theme)` in Vue, `getConsentManager().theme` in Svelte and
-`client.theme` in `@inth/sdk`. Astro renders the arm's tokens with the
-banner. In React, `consentActions` and slot overrides apply through the
-provider, but colour, radius and other tokens reach the page through
-`ConsentTheme`. Render it from the resolved theme in a client component inside
-the provider, with both imported from `@inth/react`:
+Render `<ConsentTheme theme={useResolvedTheme()} />` inside the React provider, or `<ConsentTheme theme={resolveExperimentTheme(theme, experiment, { arm })} />` in a Server Component. Other frameworks expose `useResolvedTheme(theme)` in Vue, `getConsentManager().theme` in Svelte, and `client.theme` in `@inth/sdk`.
 
-{/* example: fragment */}
+### Acknowledge presentation diagnostics
 
-```tsx
-<ConsentTheme theme={useResolvedTheme()} />;
-```
-
-Rendered from a client component, `ConsentTheme` ships the theme generator.
-With an arm from your flag, you can instead render
-`<ConsentTheme theme={resolveExperimentTheme(theme, experiment, { arm })} />`
-from a Server Component. Per-action styling through
-`theme.consentActions` runs through the same prominence check as
-presentation: an arm that fills accept and outlines reject trips
-`equivalent-prominence-overridden` and needs `acknowledgeDiagnostics: true`.
-
-## Resolve the arm with a flag provider
-
-Resolve the arm wherever your flags live and pass its name as `arm`. Inth
-records `assignedBy: 'host'` and never re-assigns a visitor you assigned.
-
-### Vercel Flags SDK
-
-Give the flag three values. `off` keeps a visitor out of the test; `control`
-and `wall` split the rest. Set the weights in the Vercel dashboard, so
-you can roll out and widen the test without a deploy: start at 90% `off`,
-check that both arms arrive, then move to 0% `off` for the real run.
-
-```ts title="src/flags.ts"
-import { vercelAdapter } from '@flags-sdk/vercel';
-import { flag } from 'flags/next';
-
-export const bannerExperimentFlag = flag<'off' | 'control' | 'wall'>({
-	key: 'banner-shape',
-	adapter: vercelAdapter(),
-	identify, // your existing identify
-	defaultValue: 'off',
-});
-```
-
-Keep `identify` returning a stable id. Vercel splits on it, so a visitor
-keeps their arm when you change the weights.
-
-Resolve the flag where consent resolves and pass the experiment to
-`resolveConsent`. The server reports the arm with `/v1/consent/init`, and the returned
-state carries the experiment to `InthProvider`, so the client needs no
-`experiment` option of its own. In Next.js, do this in the root layout:
-
-<include src="../shared/examples/nextjs/experiment-layout.mdx" />
-
-`@/lib/flags` exports the flag above. `ExperimentConsent` is the `Consent`
-wrapper from the
-[App Router guide](/docs/frameworks/next/app-router) with the event callbacks
-from [send the events to your own analytics](#send-the-events-to-your-own-analytics-too)
-in `options`. The layout awaits consent inside `<Suspense>`, as in
-[render the banner in the server HTML](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html),
-so the banner is in the server HTML already showing the visitor's arm.
-`resolveConsent` in `@inth/tanstack-start/server` and `loadConsent`
-in `@inth/svelte/kit` take the same `experiment`.
-
-If you pass `resolveConsent()` to `InthProvider` without awaiting it (the
-streaming layout), the client mounts before the state arrives. Pass the
-same experiment to the client options as well; Inth warns in development
-when the streamed state carries an experiment the client did not get.
-
-### PostHog
-
-PostHog resolves flags asynchronously in the browser. Because `experiment`
-is read once at mount, wait for the flags, then mount the provider with the
-resolved arm. Do not wait forever: a blocked or slow flags request would
-leave the visitor with no banner and you with no consent. After a second,
-mount without the experiment. Those visitors see `presentation` and are not
-counted in either arm. This component wraps the `Consent` component from
-[the first example](#vary-presentation-not-policy):
-
-```tsx title="src/flagged-consent.tsx"
-import posthog from 'posthog-js';
-import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
-
-import { Consent } from './consent';
-
-export const FlaggedConsent = ({ children }: { children: ReactNode }) => {
-	const [arm, setArm] = useState<'control' | 'wall' | 'off' | null>(null);
-	useEffect(() => {
-		// The first answer wins: the provider reads the arm once.
-		const fallback = setTimeout(
-			() => setArm((current) => current ?? 'off'),
-			1000
-		);
-		const unsubscribe = posthog.onFeatureFlags(() => {
-			const flag = posthog.getFeatureFlag('banner-shape');
-			setArm((current) => current ?? (flag === 'wall' ? 'wall' : 'control'));
-		});
-		return () => {
-			clearTimeout(fallback);
-			unsubscribe();
-		};
-	}, []);
-	if (arm === null) {
-		// Flags not loaded yet: no provider, no banner.
-		return children;
-	}
-	return <Consent arm={arm}>{children}</Consent>;
-};
-```
-
-### LaunchDarkly, GrowthBook, Statsig
-
-```ts
-const arm = ldClient.stringVariation('banner-shape', 'control');
-const arm = growthbook.getFeatureValue('banner-shape', 'control');
-const arm = StatsigClient.instance()
-	.getExperiment('banner-shape')
-	.get('arm', 'control');
-```
-
-An `arm` that is not `control` or a key of `arms` logs an error and runs no
-experiment for that visitor; the page still renders. Treat that as a flag
-misconfiguration.
-
-## Let Inth assign the arm
-
-Omit `arm` and Inth picks one by `split` (equal by default) when the page
-starts, before `/v1/consent/init`, and records `assignedBy: 'inth'`. A visitor who
-already saw an arm keeps it.
-
-The banner waits until the arm is picked, so the visitor never sees the base
-banner swap for their arm. On a server-rendered page that means the banner is
-not in the server HTML; it appears once the browser has loaded the
-assignment chunk. If the chunk fails to load, the base banner shows and no
-experiment runs. To keep the banner in the server HTML, resolve the arm on
-the server and pass it as `arm`.
-
-Once the banner has shown the arm, Inth stores `{ id, arm }` under
-`inth-experiment-v1` in localStorage (a cookie when localStorage is
-unavailable), so the visitor keeps seeing the banner they saw. An arm a c15t
-build stored under `c15t-experiment-v1` is kept and moved to the Inth key.
-Nothing is stored for a visitor who is never prompted, and nothing is stored
-for a host-resolved arm: your flag provider decides that one on every visit.
-The record holds no identifier. It exists only to keep the consent banner
-consistent, so treat it like the consent record itself when you describe
-your storage.
-
-A `split` that gives no arm a positive weight, or that names an arm that does
-not exist, logs an error and runs no experiment. An arm missing from the
-split gets no visitors.
-
-```ts
-experiment: {
-	id: 'banner-shape',
-	arms: { wall: { prompt: { variant: 'wall' } } },
-	split: { control: 60, wall: 40 },
-}
-```
-
-Changing `id` starts a new experiment and re-assigns everyone. Removing an
-arm re-assigns only the visitors who were in it. For a clean analysis, change
-`id` rather than editing the arms of a running experiment.
-
-Built-in assignment is not available in Astro; see
-[Astro](#astro).
-
-A Vite app's early `/v1/consent/init` script, from `consentManifest()`, picks the arm
-the same way when you pass it the experiment, and the app then runs that
-arm. Import the same object into `vite.config.ts`:
-
-{/* example: fragment */}
-
-```ts title="vite.config.ts"
-consentManifest({ initPrefetch: { experiment: bannerExperiment } });
-```
-
-Without it, the app sends its own `/v1/consent/init` for visitors who have not chosen
-yet. The same goes for `consentPrefetchHead` in TanStack Start and
-`buildPrefetchScript` elsewhere, which take the same `experiment` option.
-
-When a feature flag picks the arm, leave `experiment` out of
-`initPrefetch`. The script would pick its own arm and send it to the
-backend, and the app would then send a second `/v1/consent/init` with the flag's arm.
-
-## Acknowledge presentation diagnostics
-
-Each arm is resolved under the visitor's policy the same way `presentation`
-is. An arm that trips a diagnostic, for example
-`equivalent-prominence-overridden` because it makes accept primary while
-reject stays neutral, is not shown under that policy: those visitors see the
-base presentation, are not counted in the experiment, and Inth logs the
-diagnostics. Set `acknowledgeDiagnostics: true` to run the arm anyway. Inth
-then logs the diagnostics as a warning once per policy and records
-`acknowledgedDiagnostics: true` with the arm on every choice. You own the
-legal review of that arm; Inth records that you made it.
-
-The check runs in the browser once the policy is known, so catch a rejected
-arm before you deploy with `validateExperiment` in a test. `euPolicy` and
-`presentation` stand for the policy and presentation your site uses:
+Inth validates each arm against the visitor's policy. An arm that triggers a diagnostic (such as `equivalent-prominence-overridden`) is skipped and logged while the visitor sees the base banner. Set `acknowledgeDiagnostics: true` to run it anyway and record `acknowledgedDiagnostics: true` on choices. Catch rejected arms in CI with `validateExperiment()`:
 
 {/* example: fragment */}
 
@@ -336,167 +70,72 @@ test('banner-shape arms pass under the EU policy', () => {
 });
 ```
 
-It throws for an invalid definition and for arms with unacknowledged
-diagnostics.
+## Assign visitors to an arm
 
-## Read the assignment
+### Use a feature flag provider
+
+Pass the resolved arm as `arm`. Inth records `assignedBy: 'host'` and never reassigns the visitor. An invalid `arm` logs an error and runs no experiment without breaking the page.
+
+On server-rendered pages in Next.js, TanStack Start, or SvelteKit, resolve the flag on the server and pass `experiment` to `resolveConsent()`. The server reports `{ id, arm }` with `/v1/consent/init` and renders the arm in server HTML:
+
+<include src="../shared/examples/nextjs/experiment-layout.mdx" />
+
+If you pass `resolveConsent()` to `InthProvider` without awaiting it (streaming layout), pass the same `experiment` to the client options because the client mounts before the streamed state arrives.
+
+In Astro, set `middleware: false` in `inth()` and resolve the arm per request in `src/middleware.ts` (return `undefined` to exclude a request; prerendered routes cannot resolve per-request arms):
 
 {/* example: fragment */}
 
-```tsx
-import {
-	useExperiment,
-	useResolvedPresentation,
-	useResolvedTheme,
-} from '@inth/react';
+```ts title="src/middleware.ts"
+import { consentMiddleware } from '@inth/astro/middleware';
 
-const { id, arm, assignedBy } = useExperiment() ?? {};
-const presentation = useResolvedPresentation();
-const theme = useResolvedTheme();
+export const onRequest = consentMiddleware({
+	experimentArm: async (context) => await bannerExperimentFlag(context),
+});
 ```
 
-React exposes three hooks:
+For browser-side async flag SDKs such as PostHog, wait briefly (such as 1 second) before mounting the provider so the arm is ready at mount, then fall back so a blocked flag request never hides the banner.
 
-- `useExperiment()` returns the assigned arm (`id`, `arm`, `assignedBy`,
-  `acknowledgedDiagnostics`), or `null` while no experiment is configured
-  or no arm is assigned yet.
-- `useResolvedPresentation()` returns `presentation` with the assigned
-  arm merged over it per surface. While no arm is assigned it returns
-  `presentation` itself. The stock banner, dialog and widget render from it,
-  as do `usePromptPresentation()` and `usePreferencesPresentation()`.
-- `useResolvedTheme()` returns `theme` with the arm's `theme` merged one
-  token group deep over it. While no arm is assigned, or the arm has no
-  `theme`, it returns `theme` itself. The provider injects this merged theme.
+### Let Inth assign the arm
 
-Built-in assignment lands after mount, so `useExperiment()` is `null` on the
-server render and during hydration and the resolved hooks return the base
-values. The banner is held until then, and a clean preferences draft reseeds
-from the arm's `preferences.defaults` when it lands. An
-arm from your flag is known from the first render, on the server too.
+Omit `arm` and optionally set `split` weights to let Inth pick the arm before `/v1/consent/init`:
 
-Vue exposes `useExperiment()`, `useResolvedPresentation()` and
-`useResolvedTheme(theme)`, Svelte `getConsentManager().experiment`,
-`.presentation` and `.theme`, and `@inth/sdk` `client.presentation` and
-`client.theme`. Every adapter also reports the arm on `snapshot.experiment`.
+```ts
+experiment: {
+	id: 'banner-shape',
+	arms: { wall: { prompt: { variant: 'wall' } } },
+	split: { control: 60, wall: 40 },
+}
+```
 
-## What is recorded
+Inth records `assignedBy: 'inth'`, holds the banner until assignment completes, and persists `{ id, arm }` under `inth-experiment-v1` in localStorage (or a cookie fallback) once shown. Nothing is stored when no banner shows or when a flag assigns the arm.
 
-An impression or a choice carries the arm only once the banner has shown it
-in the current page. A returning visitor who reopens the preference center
-from a footer link, or saves from an inline widget, never saw the arm's
-banner, so their choice is recorded without it and does not count toward any
-arm.
+- **SSR pages.** Built-in assignment runs after hydration, so it does not render in server HTML or attach to a server `/v1/consent/init`. Use a server-side flag on SSR pages. Built-in assignment is unavailable in Astro.
+- **Early `/v1/consent/init` prefetch.** Pass `experiment` to `consentManifest({ initPrefetch })`, `consentPrefetchHead`, or `buildPrefetchScript` for built-in assignment. Omit it when a feature flag picks the arm so prefetch does not send a mismatched `/v1/consent/init`.
 
-Each choice saved through `POST /v1/consent/records` carries in `metadata`:
+Change `id` for a new test instead of editing arms on a running experiment.
 
-| Key | Value |
-| --- | --- |
-| `experiment` | `{ id, arm, assignedBy, acknowledgedDiagnostics }` |
-| `timeToDecisionMs` | Milliseconds from the surface's first impression to the action |
+## Send the events to your own analytics too
 
-`uiSource` on the same record names the surface (`banner`, `dialog`,
-`widget`). The `surface:shown` and `choice:recorded` kernel events and the
-`onSurfaceShown` and `onChoiceRecorded` callbacks carry the same
-`experiment` object, so impressions and decisions can be joined per arm in
-your analytics without a backend query.
+`onSurfaceShown` and `onChoiceRecorded` receive `experiment: { id, arm, assignedBy, acknowledgedDiagnostics }` once the banner shows the arm on the current page. Check `if (experiment)` before forwarding, because it is `undefined` outside the test and when returning visitors reopen preferences from a footer link.
 
-## Measure the results
+The React example above pushes `inth_surface_shown` and `inth_choice_recorded` to `window.dataLayer`. For PostHog or another tool, call `posthog.capture()` with `experiment.id`, `experiment.arm`, and `surface` or `consentAction`.
 
-An opt-in rate needs two counts per arm: how many visitors the banner was
-owed to, and how many of them accepted. Inth sends both to the backend on
-its own; you do not wire anything up.
+Impressions fire before consent. If your analytics tool waits for consent, it misses decliners' impressions and inflates opt-in rates. Use Inth's backend counts for accurate opt-in rates.
 
-- **Visitors owed the banner.** While a visitor has no stored choice, every
-  `/v1/consent/init` carries their arm as `<id>=<arm>` in the `experiment` query
-  parameter, and the backend puts it on that request's session report as
-  `experiment: { id, arm }`. In manifest mode, the server render or the
-  init route puts it on the report it sends to `POST /v1/consent/sessions`. A visitor
-  who already chose is not shown the banner, so is not counted. A
-  server-to-server caller can send the `x-inth-experiment` header instead.
-- **Choices.** Every choice saved through `POST /v1/consent/records` carries the arm
-  in `metadata.experiment`, as above.
+## Read state and results
 
-On a server-rendered page the server calls `/v1/consent/init`, not the browser, so the
-server has to know the arm. Pass the experiment to `resolveConsent`, as in
-[Vercel Flags SDK](#vercel-flags-sdk): it sends only `{ id, arm }` to the
-backend and hands the full experiment to the client in its state.
-`resolveConsent` takes `experiment` in `@inth/nextjs/server` and
-`@inth/tanstack-start/server`, as `loadConsent` does in `@inth/svelte/kit`;
-Astro and Nuxt pass the arm they rendered on their own. When Inth picks the arm in the browser,
-the browser's own `/v1/consent/init` carries it, so a server-rendered page that skips
-the client `/v1/consent/init` has no count for built-in assignment. Resolve the arm with
-a flag on those pages.
+Read the active arm via `useExperiment()`, `useResolvedPresentation()`, and `useResolvedTheme()` in React, `useExperiment()` in Vue, `getConsentManager().experiment` in Svelte, or `snapshot.experiment` everywhere.
 
-### Where the counts go
+Inth attaches `{ id, arm }` to `/v1/consent/init` (and `POST /v1/consent/sessions` in manifest mode) for undecided visitors, and records `metadata.experiment` and `metadata.timeToDecisionMs` on every `POST /v1/consent/records` choice. Experiment summaries, opt-in rates, and median time to decision per arm are available in your Inth dashboard and API.
 
-The Inth dashboard reads both counts for you.
+Compare median `timeToDecisionMs` rather than mean so idle tabs do not skew results. Under `opt-out` with `prompt: 'notice'`, compare `opt_out` choices per visitor owed the banner. Copy is excluded from experiments because `copyRevision` hashes into the prompt fingerprint and re-prompts returning visitors.
 
-The opt-in rate of an arm is visitors with an `accept_all` choice under that
-arm, divided by visitors whose session reports carry the arm. Count
-visitors, not requests: an undecided visitor sends a report on every page
-until they choose. Deduplicate the reports per visitor the way you count
-sessions.
+## Verify and end the experiment
 
-### Send the events to your own analytics too
+1. Open your site in a private window with DevTools **Network** open.
+2. Confirm the expected arm renders and `snapshot.experiment` reports the right `id`, `arm`, and `assignedBy`.
+3. Verify `/v1/consent/init` carries `experiment=<id>=<arm>` (or server `resolveConsent` received the arm).
+4. Accept or reject the banner and confirm `POST /v1/consent/records` includes `metadata.experiment` and `metadata.timeToDecisionMs`, and your callbacks fired.
 
-The `onSurfaceShown` and `onChoiceRecorded` callbacks carry the same
-`experiment` object, so a few lines forward them to any tool. The
-[React example](#vary-presentation-not-policy) pushes both to
-`window.dataLayer` for Google Tag Manager, as `inth_surface_shown` with the
-surface and `inth_choice_recorded` with the consent action. To send them to
-PostHog instead, call `posthog.capture()` with the same fields in the
-callbacks. The callbacks run for every impression and choice; check
-`experiment` first, because it is `undefined` for visitors outside the test.
-
-An impression fires before any consent exists. If your analytics tool loads
-only after consent, it never sees a decliner's impression, and its opt-in
-rate trends towards 100%. The backend counts above do not have that gap.
-
-### Read the results
-
-Consent rates move by a few points, not by half. At a 30% base rate you need
-roughly 2,500 visitors per arm to detect a 5-point change with 80% power,
-and about 10,000 per arm to detect 2 points. Run a sample-size calculator
-against your own base rate before you start, decide the stop date up front,
-and do not stop early on a good-looking day.
-
-Under an `opt-out` policy with `prompt: 'notice'`, dismissing the notice
-records no choice, so compare arms on opt-outs instead: `opt_out` choices
-per visitor owed the banner.
-
-Time to decision is the median `timeToDecisionMs` per arm over the choices.
-Use the median, not the mean: a visitor who leaves the tab open skews the
-mean without saying anything about the arm.
-
-## Try it
-
-Every example app under `internals/fixtures/` runs this experiment outside the pages
-the docs publish. Each page shows the assigned arm and the events the
-callbacks sent. Adding `arm=wall` sets the arm the way a flag would, so the
-page shows `assignedBy: host`. Run each command in the example's directory.
-
-| Example | Start | Open |
-| --- | --- | --- |
-| Next.js | `bun run dev` | `/experiment`, with the arm from a stand-in flag: `?arm=wall`, `?arm=off` to leave the test, `control` otherwise |
-| TanStack Start | `INTH_EXPERIMENT=1 bun run dev` | `/consent-example?experiment=1`, then add `&arm=wall` |
-| React | `bun run dev` | `/experiment.html`, then add `?arm=wall` |
-| Nuxt | `INTH_NUXT_EXPERIMENT=1 bun run dev`; add `INTH_NUXT_EXPERIMENT_ARM=wall` for the wall arm | `/consent-example` |
-| Vue | `bun run dev` | `/?experiment=1`, then add `&arm=wall` |
-| Astro | `INTH_EXPERIMENT=1 bun run dev` | `/consent-example?experiment=1` runs `control`, as Astro has no built-in assignment; add `&arm=wall` |
-| Svelte | `bun run dev` | `/?experiment=1`, then add `&arm=wall` |
-| SvelteKit | `bun run dev` | `/experiment-example?experiment=1`, then add `&arm=wall` |
-| HTML script tag | `bun run dev` | `/?experiment=1`, then add `&arm=wall` |
-| JavaScript | `bun run dev` | `/experiment/`, then add `?arm=wall` |
-
-## End an experiment
-
-Move the winning arm's fragment into `presentation` (and its `theme` into
-`theme`), then remove `experiment`. Visitors keep their consent; the stored
-arm is ignored once no experiment reads it.
-
-## Copy is out of scope
-
-Arms change presentation and theme tokens only. Copy is not a variant dimension because
-`copyRevision` is hashed into the prompt fingerprint: a copy change re-prompts
-every returning visitor, so a copy experiment would re-prompt them on each
-arm switch. Vary layout, shape, position and action prominence instead.
+To end the test, copy the winning arm into `presentation` (and its `theme` into `theme`) and remove `experiment`. Existing visitors keep their consent.

@@ -41,13 +41,13 @@ test('umbrella bundles use the framework picker instead of every adapter', () =>
 	expect(result).not.toContain('/quickstart.md');
 });
 
-test('backend bundles link their own setup without frontend guides', () => {
+test('integration bundles link their overview when no framework quickstart is bundled', () => {
 	const result = withPackageSetupLinks(
 		index,
-		new Set(['self-host/quickstart.md'])
+		new Set(['integrations/overview.md'])
 	);
 	expect(result).toContain(
-		'[Backend quickstart](./docs/self-host/quickstart.md)'
+		'[Connect your integrations](./docs/integrations/overview.md)'
 	);
 	expect(result).not.toContain('frameworks/');
 });

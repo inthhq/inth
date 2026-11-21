@@ -1,97 +1,88 @@
 ---
 title: Nuxt module
-description: What the Inth Nuxt module registers, where each option goes between nuxt.config.ts and app.config.ts, and every module option.
+description: Reference for @inth/nuxt registrations, splitting options between nuxt.config.ts and app.config.ts, and every module option.
 group: frameworks
 ---
 
+Register `@inth/nuxt` in `nuxt.config.ts` to add server-side policy
+resolution, global consent components, auto-imported composables, and a local
+consent route to your Nuxt app.
+
 ## Register the module
 
-Add `@inth/nuxt` to `modules` in `nuxt.config.ts` and configure it under the
-`inth` key:
+Add `@inth/nuxt` to `modules` in `nuxt.config.ts` and configure options under
+the `inth` key:
 
 <include src="../../shared/examples/nuxt/nuxt-config.mdx" />
 
-`@inth/nuxt` is the Nuxt module. You do not install a separate Nuxt package or
-call `app.use()`. The [quickstart](/docs/frameworks/nuxt/quickstart) covers
-the whole setup.
+`@inth/nuxt` needs no separate plugin package and no `app.use()`. See the
+[quickstart](/docs/frameworks/nuxt/quickstart) for the complete setup.
 
 ## What the module registers
 
 | What | Details |
 | --- | --- |
-| Components | `InthProvider`, `ConsentWidget`, `ConsentDialogLink`, `ConsentDialogTrigger` and `ConsentGate`, all global. See [components](/docs/frameworks/nuxt/components). |
-| Composables | Every composable `@inth/vue/vue-plugin` exports, auto-imported. See [composables](/docs/frameworks/nuxt/composables). |
-| A Nuxt plugin | Creates the consent runtime for each request on the server and once in the browser, resolves the visitor's policy during server rendering, and writes the `tokens` option into the page head. |
-| A server route | In `manifest()` mode, the default, one catch-all at `${routePrefix}/**` that answers `GET /api/inth/v1/consent/init` and `GET /api/inth/v1/consent/manifest`. `routePrefix: false`, `hosted()` and `testing()` add none. |
-| The `#inth/composables` alias | Points at the module's composables, for the few that are not auto-imported. |
+| Components | `InthProvider`, `ConsentWidget`, `ConsentDialogLink`, `ConsentDialogTrigger`, and `ConsentGate`, registered globally. See [components](/docs/frameworks/nuxt/components). |
+| Composables | Every composable exported by `@inth/vue/vue-plugin`, auto-imported. See [composables](/docs/frameworks/nuxt/composables). |
+| Nuxt plugin | Creates the consent runtime per request on the server and once in the browser, resolves the visitor's policy during SSR, and writes `tokens` into `<head>`. |
+| Server route | In default `manifest()` mode, adds `${routePrefix}/**` serving `GET /api/inth/v1/consent/init` and `GET /api/inth/v1/consent/manifest`. `routePrefix: false`, `hosted()`, and `testing()` add no route. |
+| `#inth/composables` alias | Exposes composables that are not auto-imported. |
 
-In the browser, the plugin starts the consent modules once the app has
-mounted. A page with `ssr: false` has no server HTML to hydrate, so there the
-plugin starts them before the mount, and the policy request runs while the
-app mounts. With `manifest({ resolve: 'browser' })` the resolver starts
-loading as soon as the plugin runs, and the modules still start after the
-mount. Starting reads the stored choice, applies Global Privacy Control,
-and starts the script loader, clear-on-revocation, the network blocker, the
-iframe blocker and, with `iab` set and an IAB policy, the IAB module.
+In the browser, the plugin starts consent modules after mount (or before mount
+on `ssr: false` pages where no server HTML hydrates). Starting reads stored
+choices, applies Global Privacy Control, and activates the script loader,
+`clearOnRevocation`, network blocker, iframe blocker, and IAB module when
+enabled.
 
-With `hosted()`, the module also writes a small inline script into the head
-of each `ssr: false` page. It calls your backend's `/init` while the
-browser parses the HTML, and the plugin uses that response instead of sending
-its own request.
+In `hosted()` mode, the module injects a small inline script into `<head>` on
+`ssr: false` pages to start `/v1/consent/init` while HTML parses.
 
 ## nuxt.config.ts or app.config.ts
 
-The module merges the `inth` key of `app/app.config.ts` over its options in
-`nuxt.config.ts`. Arrays from both files are combined. The module types both
-keys, including when you register it as `@inth/nuxt`.
+The module merges `inth` from `app/app.config.ts` over `inth` in
+`nuxt.config.ts` and combines arrays from both files. Both files are typed
+automatically.
 
-| Put it in | Options |
+| File | Put these options here |
 | --- | --- |
-| `nuxt.config.ts` | Plain data: `projectUrl`, `tokens`, `presentation`, `components`, `legalLinks`, trigger options, network blocker `rules`. Also the options that only work here: `mode`, `routePrefix`, `onBuildError`, `initPrefetch` and `devtools`. |
-| `app/app.config.ts` | Anything with a function: `scripts`, `callbacks`, `networkBlocker.onRequestBlocked`. |
+| `nuxt.config.ts` | Serializable data (`projectUrl`, `tokens`, `presentation`, `components`, `legalLinks`, trigger options, network blocker `rules`) and build-only options (`mode`, `routePrefix`, `onBuildError`, `initPrefetch`, `devtools`). |
+| `app/app.config.ts` | Options containing functions: `scripts`, `callbacks`, and `networkBlocker.onRequestBlocked`. |
 
-Module options reach the browser as JSON through `runtimeConfig.public`,
-which drops functions. `app.config.ts` is part of the browser bundle, so it
-keeps functions.
+Module options serialize to JSON via `runtimeConfig.public` and strip
+functions, whereas `app.config.ts` ships in the browser bundle with functions
+intact.
 
-App config can change while the page runs, through `updateAppConfig()` or hot
-reload. The browser applies a change to `scripts`, `networkBlocker`,
-`iframeBlocker`, `vendors`, `consentCategories`, `callbacks` and
-`reloadOnConsentRevoked`. Storage, backend and experiment options are read
-once when the page loads. `mode` and `routePrefix` never change at runtime.
+Changes to `app.config.ts` via `updateAppConfig()` or HMR update `scripts`,
+`networkBlocker`, `iframeBlocker`, `vendors`, `consentCategories`,
+`callbacks`, and `reloadOnConsentRevoked` live. Storage, project URL, and
+experiment options are read once at load; `mode` and `routePrefix` are fixed
+at build time.
 
-## Change the backend URL at runtime
+## Change the project URL at runtime
 
-Nuxt applies `NUXT_PUBLIC_*` environment variables over
-`runtimeConfig.public` when the server starts. To point a built app at another
-backend without rebuilding it, set `NUXT_PUBLIC_INTH_PROJECT_URL`:
+Nuxt overrides `runtimeConfig.public` from `NUXT_PUBLIC_*` environment
+variables at server startup. Point a built server at a different Inth project
+URL without rebuilding:
 
 ```sh
 NUXT_PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app \
   node .output/server/index.mjs
 ```
 
-`NUXT_PUBLIC_INTH_PROJECT_URL` works the same way when the build read its
-URL from that variable or had none. It never replaces a `projectUrl` from
-`nuxt.config.ts` or a `NUXT_PUBLIC_INTH_PROJECT_URL`.
+`NUXT_PUBLIC_INTH_PROJECT_URL` wins over any legacy
+`NUXT_PUBLIC_C15T_BACKEND_URL`, which is read as a fallback if unset. Keep
+`projectUrl` in `nuxt.config.ts` (not `app.config.ts`), because bundled
+`app.config.ts` values override runtime config.
 
-The browser, server rendering and the consent route all use this value. Keep
-`projectUrl` in `nuxt.config.ts`: a value in `app.config.ts` is bundled with
-the app and takes precedence over runtime config.
+When a build bundles a snapshot, the consent route serves that bundled policy,
+so changing the runtime URL only redirects consent saves. Rebuild to switch
+policies, or use `manifest({ source: 'runtime' })`.
 
-When the build bundles a manifest, the policy comes from the build. The
-consent route serves the bundled snapshot and never downloads one, so the
-variable only changes where consent saves and session reports go. To use
-another project's policy, set the URL when you build and build again, or use
-`manifest({ source: 'runtime' })`.
-
-The consent route can reach the backend at an address the browser does not
-use, such as an internal hostname. Set `NUXT_INTH_PROJECT_URL` for that. Only
-the consent route reads it, and only when it downloads the manifest at
-runtime or falls back to the backend's `/init`.
-
-`nuxt generate` writes the config into the static files, so a static site
-picks up a new URL only when you generate it again.
+To reach your Inth endpoint from the Nitro server via a different internal
+URL, set `NUXT_INTH_PROJECT_URL` (or legacy `NUXT_C15T_BACKEND_URL`); only the
+server consent route reads it.
+`nuxt generate` bakes config into static files, so changing the URL requires
+regenerating.
 
 ## Options
 
@@ -99,67 +90,64 @@ picks up a new URL only when you generate it again.
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `projectUrl` | `NUXT_PUBLIC_INTH_PROJECT_URL` | Your Inth project URL. The build downloads the manifest from it and consent saves go to it. The module reads the variable when the build starts, and Nuxt applies it again at runtime. |
-| `mode` | `manifest()` | Where the visitor's policy comes from. Import `manifest()` or `hosted()` from `@inth/nuxt`, or `testing()` from `@inth/nuxt/testing`. `nuxt.config.ts` only: the build picks the snapshots and the browser code from its `type` and `resolve`, so a `runtimeConfig.public.inth.mode` is ignored, and so is a runtime `NUXT_PUBLIC_INTH_MODE_TYPE` or `NUXT_PUBLIC_INTH_MODE_RESOLVE`, with a warning. Its `manifestUrl` and `projectUrl` can still change at runtime, through `NUXT_PUBLIC_INTH_MODE_MANIFEST_URL` and `NUXT_PUBLIC_INTH_MODE_BACKEND_URL`. See [the modes](#modes). |
-| `routePrefix` | `'/api/inth'` | Path of the consent route the module adds in `manifest()` mode. It answers `${routePrefix}/v1/consent/init` and `${routePrefix}/v1/consent/manifest`. `false` adds no route: the server render resolves from the snapshot directly, and the browser asks the backend's `/v1/consent/init`. `'/'` stops the build with ``@inth/nuxt: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.`` `nuxt.config.ts` only: the route is mounted at build time, so a `runtimeConfig.public.inth.routePrefix` or a runtime `NUXT_PUBLIC_INTH_ROUTE_PREFIX` is ignored, with a warning. |
-| `onBuildError` | Unset | What a failed build-time manifest download does in `manifest()` mode. Unset, `nuxt build` stops and `nuxt dev` logs a warning, and the server fetches the policy at runtime. `'fail'` stops both. `'runtime'` lets both continue. A missing backend URL stops both in `manifest()` mode, with or without a snapshot, because the browser saves consent there. The `INTH_ON_BUILD_ERROR` environment variable overrides it. The download waits at most 10 seconds. |
-| `timeoutMs` | `500` | Longest wait for the policy during server rendering. `false` or `Infinity` waits as long as the backend takes; any other value that is not a finite, non-negative number uses the default. |
-| `initPrefetch` | `true` | Pages with `ssr: false` in `hosted()` mode start `/init` from an inline script in the page head, before the app's JavaScript loads. Skipped when `consentSource`, `experiment` or `hosted({ headers })` is set, and when Nitro auto-imports are off, as under `future.compatibilityVersion: 5`, because the server cannot then read `app.config.ts`. `false` turns it off. To turn it off for some routes, set the route rule `inth: { initPrefetch: false }`. See [Content Security Policy](/docs/frameworks/nuxt/content-security-policy#allow-the-early-init-script). |
-| `devtools` | `true` | Adds an Inth tab to Nuxt DevTools in development. Production builds don't include it. See [DevTools](/docs/frameworks/nuxt/components/dev-tools). |
+| `projectUrl` | `NUXT_PUBLIC_INTH_PROJECT_URL`, then `NUXT_PUBLIC_C15T_BACKEND_URL` | Your Inth project URL. Used for manifest downloads and consent saves. |
+| `mode` | `manifest()` | Policy source imported from `@inth/nuxt` (`manifest()`, `hosted()`, or `testing()`). `nuxt.config.ts` only; runtime overrides of `mode.type` or `mode.resolve` are ignored with a warning, while `NUXT_PUBLIC_INTH_MODE_MANIFEST_URL` and `NUXT_PUBLIC_INTH_MODE_PROJECT_URL` still apply at runtime. See [modes](#modes). |
+| `routePrefix` | `'/api/inth'` | Mount path for `${routePrefix}/v1/consent/init` and `${routePrefix}/v1/consent/manifest` in `manifest()` mode. Set `false` to disable the route. `'/'` fails the build. `nuxt.config.ts` only. |
+| `onBuildError` | `'runtime'` | Controls failed build-time manifest downloads in `manifest()` mode. `'runtime'` logs a warning and falls back to runtime fetching; `'fail'` stops `nuxt build` and `nuxt dev`. A missing project URL still stops `manifest()` mode because the browser needs it to save choices. `INTH_ON_BUILD_ERROR` overrides this option. Timeout is 10 seconds. |
+| `timeoutMs` | `500` | Maximum wait in milliseconds for policy resolution during SSR. `false` or `Infinity` disables the timeout. |
+| `initPrefetch` | `true` | Injects an early `/v1/consent/init` script on `ssr: false` pages in `hosted()` mode. Skipped when `consentSource`, `experiment`, or `hosted({ headers })` is set, or when Nitro auto-imports are off. Disable globally with `false` or per route with `inth: { initPrefetch: false }`. See [Content Security Policy](/docs/frameworks/nuxt/content-security-policy#allow-the-early-init-script). |
+| `devtools` | `true` | Adds an Inth tab to Nuxt DevTools in development. Excluded from production builds. See [DevTools](/docs/frameworks/nuxt/components/dev-tools). |
 
 ### Modes
 
 | Mode | Where the policy comes from |
 | --- | --- |
-| `manifest()` | The default. The build downloads the manifest and the server resolves each visitor from it. The browser bundle holds no snapshot or resolver. |
-| `manifest({ source: 'runtime' })` | The server fetches the manifest at runtime, caches it and refreshes it in the background. Policy edits apply without a rebuild. |
-| `manifest({ snapshot })` | A manifest you supply, for example imported from a JSON file in `nuxt.config.ts`. The build downloads nothing. Consent saves still go to `projectUrl`, so it needs one. |
-| `manifest({ resolve: 'browser' })` | The browser resolves the policy from the manifest, for `nuxt generate` and static hosting. Only this mode adds the snapshot to the browser bundle. Takes `geoUrl` and `inputs` for the visitor's location. Pair it with `routePrefix: false` on a static host. |
-| `hosted()` | Every server render, and the browser on pages the server did not resolve, asks the backend's `/init`. |
-| `testing()` | The browser resolves policy rules with no backend. `testing({ policy })` replaces Inth's recommended rules. Tests only; throws in production builds. |
+| `manifest()` | Default. Downloads the manifest at build time and resolves policies on the server with no snapshot or resolver in the browser bundle. |
+| `manifest({ source: 'runtime' })` | Fetches, caches, and background-refreshes the manifest on the server so policy edits apply without rebuilding. |
+| `manifest({ snapshot })` | Uses a manifest object you import in `nuxt.config.ts`. Still requires `projectUrl` for saving choices. |
+| `manifest({ resolve: 'browser' })` | Bundles the snapshot for browser resolution on `nuxt generate` static sites. Accepts `geoUrl` and `inputs`. Pair with `routePrefix: false`. |
+| `hosted()` | Calls Inth's `/v1/consent/init` on every server render and on pages the server did not resolve. |
+| `testing()` | Evaluates local rules in the browser without a project URL. Pass `testing({ policy })` to override defaults. Throws in production builds. |
 
-`manifest()` also takes `manifestUrl`, the URL the build and the server
-download the manifest from, by default `${projectUrl}/v1/consent/manifest`.
-[Rendering and deployment](/docs/frameworks/nuxt/rendering) explains which
-mode fits which deployment.
+`manifest()` also accepts `manifestUrl` (defaults to `${projectUrl}/v1/consent/manifest`).
+See [rendering and deployment](/docs/frameworks/nuxt/rendering).
 
 ### Consent and storage
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `consentCategories` | The policy's categories | Limits the categories the dialog and widget show, within the policy's scope. |
-| `vendors` | Unset | Vendors listed under their category with their own switch. See [vendor consent](/docs/frameworks/nuxt/vendor-consent). |
-| `storageConfig` | `{ storageKey: 'inth' }` | Cookie and localStorage name, `crossSubdomain`, `defaultDomain` and `defaultExpiryDays`. Use the same value in both config files. |
+| `consentCategories` | Policy categories | Limits categories shown in the dialog and widget within the policy's scope. |
+| `vendors` | Unset | Lists declared vendors under their category with per-vendor switches. See [vendor consent](/docs/frameworks/nuxt/vendor-consent). |
+| `storageConfig` | `{ storageKey: 'inth' }` | Cookie and localStorage key name, `crossSubdomain`, `defaultDomain`, and `defaultExpiryDays`. Keep identical across `nuxt.config.ts` and `app.config.ts`. |
 | `reloadOnConsentRevoked` | `true` | Reloads the page when a save withdraws a granted category or vendor. |
-| `clearOnRevocation` | Unset | Deletes first-party cookies and storage keys for a withdrawn category. See [clear on revocation](/docs/frameworks/nuxt/clear-on-revocation). |
-| `experimentalScriptRegistry` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. Read once. |
-| `iab` | Off | Turns IAB TCF on; `{}` is enough. Also takes publisher settings, such as `publisherRestrictions`; fields left out come from the policy. Unset, `false` or `{ enabled: false }` leaves IAB off, and an `iab` policy with a vendor list throws an `IABUnavailableError`. Set it here, not only in `app.config.ts`, so pages prefetch the IAB banner. See [IAB TCF](/docs/frameworks/nuxt/iab). |
+| `clearOnRevocation` | Unset | Deletes first-party cookies and storage keys for withdrawn categories. See [clear on revocation](/docs/frameworks/nuxt/clear-on-revocation). |
+| `iab` | Off | Enables IAB TCF (`{}` is enough) and accepts publisher settings such as `publisherRestrictions`. Set it in `nuxt.config.ts` so pages prefetch the IAB banner. Unset, `false`, or `{ enabled: false }` causes `IABUnavailableError` under IAB policies with a vendor list. See [IAB TCF](/docs/frameworks/nuxt/iab). |
 
-### Scripts, blocking and events
+### Scripts, blocking, and events
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `scripts` | Unset | Vendor scripts that load by consent category. `app.config.ts` only. See [scripts](/docs/frameworks/nuxt/scripts). |
-| `networkBlocker` | Off | Rules that hold `fetch` and XHR requests until their category is allowed. See [network blocker](/docs/frameworks/nuxt/network-blocker). |
-| `iframeBlocker` | On | Gates iframes that carry `data-src` and `data-category`. `false` turns it off. See [embeds](/docs/frameworks/nuxt/embeds). |
-| `nonce` | Unset | A nonce for every script the loader creates and for the theme token style tag. See [Content Security Policy](/docs/frameworks/nuxt/content-security-policy). |
-| `callbacks` | Unset | `app.config.ts` only. See [callbacks](/docs/frameworks/nuxt/callbacks). |
+| `scripts` | Unset | Vendor scripts gated by consent category (`app.config.ts` only). See [scripts](/docs/frameworks/nuxt/scripts). |
+| `networkBlocker` | Off | Holds matching `fetch` and XHR calls until allowed. See [network blocker](/docs/frameworks/nuxt/network-blocker). |
+| `iframeBlocker` | On | Gates iframes carrying `data-src` and `data-category`. Set `false` to disable. See [embeds](/docs/frameworks/nuxt/embeds). |
+| `nonce` | Unset | CSP nonce for loaded scripts and `<style id="inth-css-vars">`. See [Content Security Policy](/docs/frameworks/nuxt/content-security-policy). |
+| `callbacks` | Unset | App-wide callbacks (`app.config.ts` only). See [callbacks](/docs/frameworks/nuxt/callbacks). |
 
 ### Appearance
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `tokens` | The default theme | CSS variables the module writes into a `<style id="inth-css-vars">` tag in the page head on every page. See [customize](/docs/frameworks/nuxt/customize#set-theme-tokens). |
-| `presentation` | Policy defaults | Banner and dialog variant, position, action layout and blocking. |
-| `components` | Unset | Attributes, such as `class`, for named parts of each component. |
-| `legalLinks`, `bannerLegalLinks`, `dialogLegalLinks` | None shown | Links to your privacy policy and similar pages, and which surfaces show them. |
-| `hideBranding` and its per-surface forms | `false` | Hide the "Secured by" tag. |
-| `showTrigger` and the `trigger*` options | `false` | The floating trigger. See [ConsentDialogTrigger](/docs/frameworks/nuxt/components/consent-dialog-trigger). |
-| `disableAnimation` | `false` | Turns off banner and dialog transitions. |
-| `models`, `bannerModels`, `iabBannerModels`, `iabDialogModels` | Every model | Limit which policy models show a surface. |
+| `tokens` | Default theme | CSS variables written to `<style id="inth-css-vars">` in `<head>`. See [customize](/docs/frameworks/nuxt/customize#set-theme-tokens). |
+| `presentation` | Policy defaults | Banner and dialog variant, position, action layout, and blocking. |
+| `components` | Unset | Vue attributes such as `class` and `style` for named component parts. |
+| `legalLinks`, `bannerLegalLinks`, `dialogLegalLinks` | None shown | Privacy policy links and which surfaces display them. |
+| `hideBranding` and per-surface forms | `false` | Hides the "Secured by" tag. |
+| `showTrigger` and `trigger*` | `false` | Configures the floating trigger. See [ConsentDialogTrigger](/docs/frameworks/nuxt/components/consent-dialog-trigger). |
+| `disableAnimation` | `false` | Disables banner and dialog transitions. |
+| `models`, `bannerModels`, `iabBannerModels`, `iabDialogModels` | Every model | Limits which policy models render each surface. |
 
 ## Verify
 
-Run `nuxt dev` and request `/api/inth/v1/consent/init` in the default `manifest()` mode.
-It returns JSON with the resolved policy for your location. View the source of a page under a policy that asks for consent and
-find `data-testid="consent-banner-root"`.
+Run `nuxt dev` and request `/api/inth/v1/consent/init` in default `manifest()` mode to
+confirm JSON returns the resolved policy. View the source of a page under an
+opt-in policy and confirm `data-testid="consent-banner-root"` is in the HTML.

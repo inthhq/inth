@@ -1,13 +1,13 @@
 ---
 title: Customize
-description: Change the stock @inth/sdk banner, preference dialog and floating trigger in a bundled JavaScript app with theme tokens, CSS, layout, copy, legal links and UI options.
+description: Style the stock @inth/sdk banner, preference dialog and trigger in JavaScript with theme tokens, CSS, layout and legal links.
 group: frameworks
 ---
 
-## Pick the right option
+Customize the stock banner, preference dialog and floating trigger mounted by
+`init()` from `@inth/sdk`.
 
-The stock UI from `init()` in `@inth/sdk` is a banner, a preference
-dialog and an optional floating trigger. Each change has one place to go:
+## Pick the right option
 
 | Change | Option |
 | --- | --- |
@@ -18,32 +18,27 @@ dialog and an optional floating trigger. Each change has one place to go:
 | Banner text | `ui.banner` |
 | Wording and languages everywhere | `i18n`; see [translations](/docs/frameworks/javascript/translations) |
 | Legal links | `legalLinks` with `ui.banner.legalLinks` and `ui.dialog.legalLinks` |
-| A reopen button | `ui.trigger` |
-| Entirely different markup | [Headless](/docs/frameworks/javascript/headless) |
+| Floating reopen button | `ui.trigger` |
+| Custom markup | [Headless](/docs/frameworks/javascript/headless) |
 
-The [design gallery](/docs/customization/recipes) shows banner designs built
-from these options.
+See the [design gallery](/docs/customization/recipes) for five ready banner
+designs.
 
 ## Change colors, radius and fonts
 
-Pass tokens in `ui.theme`. This version of `init()` turns the buttons purple
-and rounds the cards:
+Pass design tokens under `ui.theme`:
 
 <include src="../../shared/examples/javascript/theme.mdx" />
 
-`theme` takes the same token object as every Inth package; see
-[theme tokens](/docs/customization/tokens). The banner, the dialog and the
-trigger all read it. `ui.colorScheme` picks `'light'`, `'dark'` or
-`'system'`, the default, which follows the visitor's setting. `null` follows a
-`dark` or `inth-dark` class on your page's `<html>` instead.
-[Dark mode](/docs/customization/dark-mode) covers dark tokens in
-`ui.theme.dark`.
+The banner, dialog and trigger share the same token object documented in
+[theme tokens](/docs/customization/tokens). `ui.colorScheme` selects
+`'light'`, `'dark'`, `'system'` (default) or `null` (follows a `dark` or
+`inth-dark` class on `<html>`). See [dark mode](/docs/customization/dark-mode).
 
 ## Add CSS inside the shadow root
 
-The UI renders in a shadow root with its own copy of the stylesheet, so your
-app's CSS does not reach it and its CSS does not reach your app. To target
-one part, pass CSS in `ui.css`. Inth adds it after the bundled stylesheet:
+By default the stock UI renders inside a shadow root with its own stylesheet.
+Append targeted rules after the bundled stylesheet with `ui.css`:
 
 {/* example: fragment */}
 
@@ -53,24 +48,21 @@ ui: {
 },
 ```
 
-Every part has a `data-testid`, such as `consent-banner-card`,
+Target parts via `data-testid` (`consent-banner-card`,
 `consent-banner-accept-button`, `consent-dialog-root`,
-`consent-widget-switch-measurement` and `consent-dialog-trigger`. Inspect the
-UI in the browser's element panel to find one.
-
-To style parts with classes from your own stylesheet, such as a Tailwind or
-CSS Modules build, put the classes on parts with `ui.theme.slots` and link the
-stylesheet into the shadow root with `ui.stylesheetUrls`. Page CSS can also
-reach a part by its slot key with `[data-inth-ui]::part(consentBannerCard)`.
-[Class names and CSS-in-JS](/docs/customization/class-names) and
-[Tailwind CSS](/docs/customization/tailwind) show both, and
-[component parts](/docs/customization/slots) lists the slot keys.
+`consent-widget-switch-measurement`, `consent-dialog-trigger`). To use
+classes from an external stylesheet such as Tailwind or CSS Modules, assign
+classes in `ui.theme.slots` with `ui.stylesheetUrls`, or style parts from
+page CSS via `[data-inth-ui]::part(consentBannerCard)`. See
+[class names and CSS-in-JS](/docs/customization/class-names),
+[Tailwind CSS](/docs/customization/tailwind) and
+[component parts](/docs/customization/slots).
 
 ## Use your own stylesheet
 
-`ui: { shadow: false }` renders into the page, so your stylesheet applies.
-Inth still adds its own stylesheet. To load it from your bundle instead,
-import it and turn the inline copy off:
+Set `ui: { shadow: false }` to render into the page DOM. To bundle the
+stylesheet instead of injecting a `<style>` element, import it and set
+`styles: false`:
 
 {/* example: fragment */}
 
@@ -83,21 +75,15 @@ const consent = init({
 });
 ```
 
-If your bundler runs Tailwind 3, add `@inth/sdk/postcss-tailwind3` before
-`tailwindcss` in your PostCSS plugins, using the object form:
-`{ '@inth/sdk/postcss-tailwind3': {}, tailwindcss: {} }`. Without the
-plugin, Tailwind 3 drops the imported rules without an
-error and its preflight overrides the UI. A page that keeps the default shadow
-root needs none of this, because page CSS does not reach the UI.
-
-`ui: { shadow: false, noStyle: true }` renders markup with no Inth classes,
-for a design written from scratch. Parts keep their `data-testid`. Your app's
-global rules reach the UI in either mode, so check buttons and headings after
-you switch.
+With Tailwind 3, add `@inth/sdk/postcss-tailwind3` before `tailwindcss` in
+your PostCSS config (`{ '@inth/sdk/postcss-tailwind3': {}, tailwindcss: {} }`)
+so Tailwind 3 does not drop rules or reset buttons. Set
+`ui: { shadow: false, noStyle: true }` to render unstyled markup keeping all
+`data-testid` hooks.
 
 ## Change the banner's layout
 
-`presentation.prompt` sets the banner's shape, position and button layout:
+Configure shape, position and button arrangement under `presentation.prompt`:
 
 {/* example: fragment */}
 
@@ -114,22 +100,19 @@ presentation: {
 | `widget` | `bottom-right` (default), `bottom-left`, `top-left`, `top-right` |
 | `wall` | `center` |
 
-`layout`, `primaryActions`, `direction`, `uiProfile` and `blocking` arrange
-the buttons and decide whether the banner blocks the page.
-`presentation.preferences` does the same for the dialog and adds `defaults`,
-the starting state of switches the visitor has not set. The policy still
-wins. A notice never blocks, a wall always does, and required buttons come
-back if a layout drops them.
+`layout`, `primaryActions`, `direction`, `uiProfile` and `blocking` also work
+on `presentation.preferences` (plus `defaults` for initial switch states).
+Policy requirements always win over conflicting layout options.
 
 ## Change the banner text
 
 <import src="../../shared/browser/client-options.mdx#banner" />
 
-The dialog's copy comes from translations only.
+Dialog wording comes from translations only.
 
 ## Show legal links
 
-Set the links once and list them per surface:
+Define URLs once and select which appear on each surface:
 
 {/* example: fragment */}
 
@@ -144,23 +127,20 @@ ui: {
 },
 ```
 
-Each link opens in a new tab unless its `target` says otherwise. `label`
-replaces the translated link text.
-
 ## Add the floating trigger
 
-`ui: { trigger: true }` shows a corner button that opens the dialog while no
-other surface is open. Visitors can drag it to another corner, and Inth
-remembers that corner. While the [DevTools panel](/docs/frameworks/javascript/dev-tools)
-is mounted, the trigger also carries a button that opens it.
+Set `ui: { trigger: true }` to display a draggable corner button that reopens
+the dialog. When [DevTools](/docs/frameworks/javascript/dev-tools) is
+mounted, the trigger combines both controls in one corner.
 
 <import src="../../shared/browser/client-options.mdx#trigger" />
 
 ## Mount the UI somewhere else
 
-`ui.container` takes an element or a selector for the UI host, instead of
-`<body>`. `consent.mountUI(options)` removes the UI and mounts it again with
-new options, for example after your app changes theme:
+Set `ui.container` to an element or CSS selector instead of `document.body`.
+Call `consent.mountUI(options)` to remount the UI with updated options (such
+as after switching themes); pass every `ui` option you want to keep because
+it replaces the prior `ui` config:
 
 {/* example: fragment */}
 
@@ -168,24 +148,16 @@ new options, for example after your app changes theme:
 consent.mountUI({ colorScheme: 'dark', theme });
 ```
 
-The options you pass replace the configured `ui` options, so include every
-option you still want, such as `theme` here.
-
 ## Keyboard and screen readers
 
-The stock UI handles focus for you. A blocking banner and the dialog keep
-Tab inside themselves and stop the page scrolling. Escape closes the dialog
-without saving, wherever focus is, including a non-blocking dialog. The
-dialog has no close button by design. Surfaces set `lang` and `dir` from the resolved language.
-Transitions follow the visitor's reduced motion setting, and
-`ui.disableAnimation` turns them off. `ui.banner.disableAnimation` and
-`ui.dialog.disableAnimation` set it for one surface; see
+Blocking banners and the dialog trap focus and lock page scroll. Escape
+closes the dialog without saving. Surfaces set `lang` and `dir` from the
+resolved language and follow `prefers-reduced-motion` (override via
+`ui.disableAnimation` or per-surface `disableAnimation`); see
 [motion and animation](/docs/customization/motion).
 
 ## Check it works
 
-1. Run the app and open it in a private window. The banner uses your
-   tokens and layout.
-2. Open the dialog. It uses the same tokens and shows your legal links.
-3. Switch your system between light and dark mode. With `colorScheme:
-   'system'`, the UI follows.
+1. Open the app in a private window and verify tokens and layout apply.
+2. Open the dialog and confirm shared tokens and legal links render.
+3. Toggle OS light/dark mode and verify `colorScheme: 'system'` updates.

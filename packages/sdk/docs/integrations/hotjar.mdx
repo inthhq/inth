@@ -1,30 +1,21 @@
 ---
 title: Hotjar
-description: Load Hotjar only after measurement consent with the Inth hotjar helper, and check its loader and recordings in DevTools.
+description: Load Hotjar only after measurement consent with the Inth hotjar helper.
 seoTitle: Hotjar cookie consent with Inth
-seoDescription: Load Hotjar only with measurement consent. The Inth hotjar helper keeps the Hotjar loader off the page and stops recordings on withdrawal.
+seoDescription: Load Hotjar only after measurement consent. The Inth hotjar helper blocks the loader until granted and stops recordings on withdrawal.
 icon: hotjar
 group: integrations
 ---
 
-Hotjar records what visitors do on your pages, so it should load only when
-consent allows analytics. The Inth `hotjar` helper waits until the
-`measurement` category is allowed before it adds the Hotjar loader. Until then,
-Inth doesn't define `window._hjSettings` or `window.hj`, and it loads nothing
-from Hotjar. Under an opt-in policy, that wait lasts until the visitor allows
-analytics.
-
-Withdrawal needs more care. Inth sends Hotjar no consent signal, so it can't
-tell a running recording to stop. By default it reloads the page instead, and
-the reload ends the recording.
+The `hotjar` helper keeps Hotjar off the page until `measurement` consent is granted. Before consent, Inth does not define `window._hjSettings` or `window.hj` and loads nothing from Hotjar. On withdrawal, Inth reloads the page by default to stop active recordings.
 
 ## Configure Hotjar
 
-Find your site ID in the Hotjar tracking code. It's the `hjid` value. Then
-delete the tracking code from your app. Inth doesn't control that snippet, so
-if it stays, Hotjar loads and records even after the visitor rejects analytics.
+Copy your site ID (`hjid`) from the Hotjar tracking code, then remove that snippet from your app so Hotjar loads only through Inth.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { hotjar } from '@inth/integrations/hotjar';
@@ -38,35 +29,22 @@ export const scripts = [hotjar({ siteId: 1234567 })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `siteId` | Required | Site ID as a number or string. Set as `window._hjSettings.hjid` and used in the default loader URL. If it's missing, empty or `0`, Inth logs an error and never loads Hotjar. |
-| `version` | `6` | Script version, set as `window._hjSettings.hjsv` and the `sv` query parameter of the default loader URL. |
+| `siteId` | Required | Site ID as a number or string, assigned to `window._hjSettings.hjid` and the default loader URL. Missing, empty, or `0` values log an error and skip loading. |
+| `version` | `6` | Script version, assigned to `window._hjSettings.hjsv` and the `sv` query parameter on the default loader URL. |
 | `scriptUrl` | `https://static.hotjar.com/c/hotjar-<siteId>.js?sv=<version>` | Loader URL override. |
 
 ## Loading and revocation
 
-`hotjar` uses the `measurement` category. When `measurement` is allowed, the
-helper sets `window._hjSettings` and a `window.hj` stub that queues calls, then
-loads the Hotjar script. If your page already defines either global, the helper
-leaves it alone.
+`hotjar` gates on the `measurement` category. When `measurement` is allowed, the helper defines `window._hjSettings` and a queueing `window.hj` stub, then inserts the Hotjar script. If your page already defines either global, the helper leaves it untouched.
 
-When the visitor withdraws, the helper removes the script element. Hotjar is
-already running by then, so removing the element doesn't stop it. The default
-page reload does. If you set `reloadOnConsentRevoked: false`, Hotjar keeps
-recording until the visitor leaves the page.
+On withdrawal, Inth sends no consent signal to Hotjar and removes the script element. Removing the element does not stop a running recording, so keep `reloadOnConsentRevoked` enabled. With `reloadOnConsentRevoked: false`, Hotjar keeps recording until the visitor leaves the page.
+
+`window.hj` stays defined after withdrawal, so check `measurement` permission before calling `hj()`.
 
 ## Verify Hotjar
 
-Filter the DevTools Network panel by `hotjar`. After you allow measurement,
-the loader appears and `window._hjSettings.hjid` holds your site ID. If it
-holds a different ID, other code on the page set `_hjSettings` before Inth, and
-the helper left it alone. Find and remove that code. By default
-the loader is `hotjar-<siteId>.js` from `static.hotjar.com`. If you set
-`scriptUrl`, look for that URL instead.
+Filter DevTools Network by `hotjar`. After you allow `measurement`, `hotjar-<siteId>.js` loads from `static.hotjar.com` (or your `scriptUrl`) and `window._hjSettings.hjid` matches your site ID. If `_hjSettings.hjid` holds another ID, find and remove the code that set `_hjSettings` before Inth.
 
-Then watch one recording of a real screen in your app. Hotjar decides what to
-mask, not Inth, so check that it hides the fields you expect.
-
-`window.hj` stays defined after withdrawal. If your own code calls `hj()`,
-check the measurement permission first.
+Watch one recording of a real screen to confirm Hotjar masks the fields you expect. Hotjar controls masking, not Inth.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

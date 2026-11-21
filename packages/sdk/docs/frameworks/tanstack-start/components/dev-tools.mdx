@@ -1,6 +1,6 @@
 ---
 title: DevTools
-description: Inspect consent state, location, loaded scripts and consent events in a TanStack Start app during development, on its own or inside TanStack Devtools.
+description: Inspect consent state, location, scripts, and events in TanStack Start development builds with DevTools.
 group: frameworks
 ---
 
@@ -8,8 +8,7 @@ group: frameworks
 
 ## Render DevTools inside `InthProvider` in development
 
-Render `DevTools` from `@inth/tanstack-start/devtools` inside `InthProvider`, and load it
-only in development builds with Vite's `import.meta.env.DEV`:
+Render `DevTools` from `@inth/react/devtools` inside `InthProvider`, gated on Vite's `import.meta.env.DEV` so production bundles never include it:
 
 {/* example: fragment */}
 
@@ -18,7 +17,7 @@ import { lazy, Suspense } from 'react';
 
 const DevTools = import.meta.env.DEV
 	? lazy(() =>
-			import('@inth/tanstack-start/devtools').then(({ DevTools }) => ({
+			import('@inth/react/devtools').then(({ DevTools }) => ({
 				default: DevTools,
 			}))
 		)
@@ -33,8 +32,7 @@ export function ConsentDevTools() {
 }
 ```
 
-If your app already renders TanStack Devtools, add `inthDevtools()` to its
-`plugins` instead, as shown below.
+If your app already uses TanStack Devtools, register `inthDevtools()` in its `plugins` array instead, as shown below.
 
 <import src="../../../shared/react/components/dev-tools.mdx#customization" />
 

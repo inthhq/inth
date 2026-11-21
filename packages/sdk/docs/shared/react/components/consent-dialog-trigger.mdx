@@ -1,6 +1,6 @@
 ---
 title: "ConsentDialogTrigger"
-description: "Shared ConsentDialogTrigger reference tables for the React and Next.js adapters."
+description: "Shared ConsentDialogTrigger reference tables for React, TanStack Start, and Next.js."
 group: reference
 ---
 
@@ -11,28 +11,25 @@ group: reference
   | --- | --- | --- | --- |
   | `icon` | `'branding' \| 'fingerprint' \| 'settings' \| ReactNode` | `'branding'` | Icon rendered inside the button. |
   | `defaultPosition` | `'bottom-left' \| 'bottom-right' \| 'top-left' \| 'top-right'` | `'bottom-right'` | Corner the button starts in. |
-  | `persistPosition` | `boolean` | `true` | Remember the corner the visitor dragged it to. |
-  | `showWhen` | `'always' \| 'after-consent' \| 'never'` | `'always'` | When the button is visible. `after-consent` waits until no choice or notice is owed. |
+  | `persistPosition` | `boolean` | `true` | Remembers the corner the visitor dragged it to. |
+  | `showWhen` | `'always' \| 'after-prompt' \| 'never'` | `'always'` | Controls when the button appears. `after-prompt` waits until no choice or notice is owed. |
   | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Button size. |
-  | `ariaLabel` | `string` | `trigger.label` translation ("Open privacy settings") | Accessible name. |
-  | `noStyle` | `boolean` | `false` | Remove the default styling. |
+  | `ariaLabel` | `string` | `'Open privacy settings'` | Accessible name. |
+  | `noStyle` | `boolean` | `false` | Removes default styling. |
 </section>
 
 <section id="toolbar-props">
   | Prop | Type | Default | Description |
   | --- | --- | --- | --- |
   | `actions` | `ConsentDialogTriggerToolbarAction[]` | `[]` | App-owned actions rendered beside the preferences action. |
-  | `preferences` | `ConsentDialogTriggerToolbarPreferences` | `{}` | Overrides for the built-in action: `icon`, `label`, `onSelect`, `className`, `style`. The label defaults to the opt-out or preferences right on the active rule. |
+  | `preferences` | `ConsentDialogTriggerToolbarPreferences` | `{}` | Overrides for the built-in action: `icon`, `label`, `onSelect`, `className`, and `style`. The label defaults to the opt-out or preferences right on the active rule. |
   | `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Layout direction. |
   | `defaultPosition` | `CornerPosition` | `'bottom-right'` | Corner the toolbar starts in. |
-  | `persistPosition` | `boolean` | `true` | Remember the dragged corner. |
-  | `showWhen` | `'always' \| 'after-consent' \| 'never'` | `'always'` | When the built-in preferences action is visible. App-owned actions always render. `after-consent` waits until no choice or notice is owed. |
+  | `persistPosition` | `boolean` | `true` | Remembers the dragged corner. |
+  | `showWhen` | `'always' \| 'after-prompt' \| 'never'` | `'always'` | Controls when the built-in preferences action appears. App-owned actions always render. `after-prompt` waits until no choice or notice is owed. |
   | `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Size of each action. |
-  | `ariaLabel` | `string` | `trigger.toolbarLabel` translation ("Privacy controls") | Accessible name for the toolbar group. |
-  | `noStyle` | `boolean` | `false` | Remove the default styling. |
+  | `ariaLabel` | `string` | `'Privacy controls'` | Accessible name for the toolbar group. |
+  | `noStyle` | `boolean` | `false` | Removes default styling. |
 
-  While `<ConsentDevTools>` is mounted, the toolbar adds a DevTools button at
-  the end farthest from its corner and opens the DevTools panel beside itself.
-  The ready-made `ConsentDialogTrigger` switches to this toolbar layout for as
-  long as DevTools is mounted.
+  While `<ConsentDevTools>` is mounted, the toolbar adds a DevTools button at the end farthest from its corner and opens the DevTools panel beside itself. The built-in `ConsentDialogTrigger` switches to this toolbar layout while DevTools is mounted.
 </section>

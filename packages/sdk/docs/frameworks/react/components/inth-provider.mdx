@@ -1,110 +1,68 @@
 ---
 title: InthProvider
-description: Mount InthProvider in a React app and configure its backend, scripts, storage, blocking and presentation options.
+description: Mount InthProvider in React and configure your Inth project, scripts, storage, blocking, and UI.
 group: frameworks
 ---
 
+Mount one `InthProvider` at your React app root to manage policy resolution, stored consent choices, and consent-gated scripts.
+
 ## Mount one provider
 
-`InthProvider` creates the consent runtime, loads the policy, stores the
-visitor's choice and loads consent-gated scripts. Render one provider at the
-root of your app and put the banner, dialog and a preferences link inside it.
-The [quickstart](/docs/frameworks/react/quickstart) does this in
-`src/consent.tsx`:
+The [quickstart](/docs/frameworks/react/quickstart) mounts `InthProvider` alongside the banner, dialog, and footer preferences link in `src/consent.tsx`:
 
 <include src="../../../shared/examples/react/consent.mdx" />
 
-`hosted()` from `@inth/react` asks the backend's `/init` for the visitor's
-policy on each page load, and sends consent choices to the same backend. It
-uses the backend URL `consentManifest()` read from `VITE_INTH_PROJECT_URL`.
-Set it to the backend URL from your Inth project. To
-resolve a bundled policy in the browser instead, pass `manifest()` from
-`@inth/react`; see
-[rendering](/docs/frameworks/react/rendering#bundle-the-policy-at-build-time).
-The Next.js and TanStack Start adapters export `InthProvider` instead, which wraps
-this provider and passes it server-resolved state.
+Passing `projectUrl` (or `mode: hosted()`) resolves each visitor's policy from `/v1/consent/init` on your Inth project and saves choices to `/v1/consent/records`. `consentManifest()` reads the URL from `VITE_INTH_PROJECT_URL` (falling back to `VITE_C15T_BACKEND_URL` if unset). To resolve a build-time snapshot in the browser instead, pass `manifest()` from `@inth/react`; see [Rendering](/docs/frameworks/react/rendering#bundle-the-policy-at-build-time). Next.js and TanStack Start export their own `InthProvider` that wraps `@inth/react`'s `InthProvider` with server-resolved state.
 
 ## Provider options
 
-Keep the provider mounted across client navigation. It reads `mode`,
-`prefetch`, `persistence`, `storageConfig`, `clearOnRevocation`, `i18n` and
-`experiment` once, when it mounts. Outside production, changing `mode`,
-`i18n`, `experiment`, `persistence` or `storageConfig` logs a warning. Remount
-the provider to change them. `scripts`, `vendors`, `networkBlocker`,
-`iframeBlocker`, `consentCategories`, `overrides`, `user`, `callbacks` and
-`enabled` apply when they change.
+Keep `InthProvider` mounted across route navigation. It reads `mode`, `prefetch`, `persistence`, `storageConfig`, `clearOnRevocation`, `i18n`, and `experiment` once on mount and logs a development warning if those options change; remount the provider to update them. `scripts`, `vendors`, `networkBlocker`, `iframeBlocker`, `consentCategories`, `overrides`, `user`, `callbacks`, and `enabled` update live when changed.
 
 | Option | Purpose |
 | --- | --- |
-| `mode` | Optional. Omitted, or `hosted()`, asks the backend's `/init`. `manifest()` resolves a bundled policy. `testing()` from `@inth/react/testing` resolves a policy with no backend, for tests. See [consent modes](/docs/concepts/modes). |
+| `projectUrl` | Your Inth project URL. Uses `hosted()` mode when `mode` is omitted |
+| `mode` | Optional. Omitted or `hosted()` calls `/v1/consent/init` on your Inth project; `manifest()` resolves a build-time snapshot; `testing()` from `@inth/react/testing` runs offline for tests. See [Consent modes](/docs/concepts/modes) |
 | `prefetch` | Server-resolved state, or a promise of it, from a framework adapter's server helper |
-| `scripts` | Consent-gated vendor scripts. See [scripts and embeds](/docs/frameworks/react/scripts) |
-| `vendors` | Vendors listed under their category with their own switch. See [vendor consent](/docs/frameworks/react/vendor-consent) |
+| `scripts` | Consent-gated vendor scripts. See [Scripts](/docs/frameworks/react/scripts) |
+| `vendors` | Vendors listed under their category with individual switches. See [Vendor consent](/docs/frameworks/react/vendor-consent) |
 | `scriptLoader` | Options for the script loader module |
-| `networkBlocker` | Rules that hold `fetch` and `XMLHttpRequest` calls until their category is allowed, or `false` |
-| `iframeBlocker` | Gates DOM iframes that carry `data-category`. On by default; `false` turns it off |
-| `persistence` | Stores the visitor's choice in a cookie and localStorage. On by default |
+| `networkBlocker` | Rules holding `fetch` and `XMLHttpRequest` calls until their category is allowed, or `false` |
+| `iframeBlocker` | Gates DOM iframes carrying `data-category`. Enabled by default; pass `false` to disable |
+| `persistence` | Stores the visitor's choice in a cookie and `localStorage`. Enabled by default |
 | `storageConfig` | Storage key and cookie settings for the stored choice |
-| `clearOnRevocation` | Cookies and storage keys to delete when a category is denied |
-| `experimentalScriptRegistry` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. Defaults to `false`; read once. |
-| `reloadOnConsentRevoked` | Reload the page after the visitor turns off a granted category or vendor. Defaults to `true` |
-| `consentCategories` | Categories the preference dialog offers alongside those your scripts use, within the policy's scope |
-| `overrides` | Force the country, region or language the policy is resolved for, for testing |
-| `user` | Link consent records to a signed-in user |
-| `callbacks` | Choice, permission and error events |
+| `clearOnRevocation` | Cookies and storage keys deleted when a category is denied |
+| `reloadOnConsentRevoked` | Reloads the page after a visitor revokes a granted category or vendor. Defaults to `true` |
+| `consentCategories` | Categories offered in the preference dialog alongside script categories, within policy scope |
+| `overrides` | Forces country, region, or language for testing |
+| `user` | Links consent records to a signed-in user |
+| `callbacks` | Choice, permission, error, and revocation-reload hooks |
 | `i18n` | Languages and message overrides |
-| `legalLinks` | Privacy policy and other links shown in the banner and dialog |
-| `theme` | `consentActions` and slot styles. Tokens go through `ConsentTheme`; see [customize](/docs/frameworks/react/customize) |
+| `legalLinks` | Privacy policy and other legal links rendered in the banner and dialog |
+| `theme` | `consentActions` and slot styles. Put CSS tokens in `ConsentTheme`; see [Customize](/docs/frameworks/react/customize) |
 | `components` | Slot attributes per component part |
-| `presentation` | Banner and dialog shape, position and blocking |
-| `experiment` | A/B test of `presentation`, read once at mount. See [banner experiments](/docs/guides/banner-experiments) |
-| `journey` | Random id that links each `/init` to the save that follows. See [session reports](/docs/concepts/data-fetching#link-an-init-to-the-save-that-follows) |
-| `colorScheme` | `'light'`, `'dark'`, `'system'`, or `null` to leave the `inth-dark` class alone |
-| `noStyle`, `disableAnimation` | Drop the built-in styles, or turn off animations |
-| `preloadDialog` | When the deferred `ConsentDialog` starts loading: `'idle'` (default) or `'intent'`; see [ConsentDialog](/docs/frameworks/react/components/consent-dialog#behavior) |
-| `nonce` | Content Security Policy nonce for script elements Inth inserts |
-| `enabled` | Set `false` only when you deliberately bypass consent enforcement |
+| `presentation` | Banner and dialog variant, position, and blocking |
+| `experiment` | A/B test of `presentation`, read once on mount. See [Banner experiments](/docs/guides/banner-experiments) |
+| `journey` | Random ID linking `/v1/consent/init` to the save that follows. See [Data fetching](/docs/concepts/data-fetching#link-an-init-to-the-save-that-follows) |
+| `colorScheme` | `'light'`, `'dark'`, `'system'`, or `null` to leave the `inth-dark` class untouched |
+| `noStyle`, `disableAnimation` | Drops built-in styles or turns off animations |
+| `preloadDialog` | Controls when the deferred `ConsentDialog` downloads: `'idle'` (default) or `'intent'`. See [ConsentDialog](/docs/frameworks/react/components/consent-dialog#behavior) |
+| `nonce` | Content Security Policy nonce applied to Inth `<script>` and `<style>` elements |
+| `enabled` | Set `false` only to deliberately bypass consent enforcement |
 
-`enabled: false` grants categories and allows gated loading while suppressing
-consent UI. It is not a way to fix failed initialization or hide a banner in
-production.
+`enabled: false` grants all categories and suppresses consent UI. Never use it to silence initialization errors or hide a banner in production.
 
 ## Observe changes without inventing choices
 
-`onChoiceRecorded` reports explicit accept, reject and save actions.
-`onPermissionsChanged` also covers changes caused by policy, expiry or privacy
-signals. Hydration and notice dismissal do not become explicit choices.
+`onChoiceRecorded` fires on explicit accept, reject, and save actions. `onPermissionsChanged` fires for any effective permission change, including policy updates, expiry, and privacy signals. Hydration and notice dismissal never create explicit choices.
 
-An externally owned runtime can be passed through `runtime`. Its owner must
-start and dispose it. A provider borrowing that runtime must not initialize or
-dispose a second copy. Passing a different `runtime` moves the provider and its
-hooks to the new runtime's kernel and unsubscribes them from the previous one.
-The previous runtime keeps running until its owner disposes it. Switch the
-provider to another runtime, or unmount it, before disposing the runtime it
-renders. Changing between a borrowed runtime and a provider-created one still
-requires remounting the provider. IAB actions taken before its handle is ready
-wait for that handle. If the provider unmounts or switches runtimes first, a
-pending `save()` rejects with an `AbortError` instead of waiting indefinitely.
-See [how consent works](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice) and
-[choose your setup](/docs/concepts/choose-your-setup).
+To manage the runtime externally, pass it via the `runtime` prop. The owner starts and disposes it; `InthProvider` never starts or disposes a borrowed runtime. Passing a different `runtime` moves the provider and its hooks to the new kernel without disposing the previous one; switch or unmount the provider before disposing an old runtime. Switching between a borrowed runtime and a provider-created runtime requires remounting. Pending IAB `save()` calls reject with `AbortError` if the provider unmounts or switches runtimes before the IAB handle is ready. See [How consent works](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice) and [Choose your setup](/docs/concepts/choose-your-setup).
 
 ## Reload after revocation
 
-Removing a script cannot stop code that already ran. A vendor's listeners,
-timers and widgets keep working until the page unloads. When an accept, reject
-or save turns off a category or vendor that was granted, the provider reloads
-the page once the save request settles, so the next page runs only permitted
-code. `onBeforeConsentRevocationReload` runs just before the reload.
+Removing a `<script>` tag cannot stop vendor listeners, timers, or widgets already running in memory. When an accept, reject, or save turns off a previously granted category or vendor, `InthProvider` reloads the page after the save request finishes and calls `onBeforeConsentRevocationReload` right before reloading.
 
-Otherwise, expiry, policy changes and privacy signals do not reload the page. Set
-`reloadOnConsentRevoked: false` only when every gated vendor stops itself on
-revocation, for example through its own opt-out API.
+Expiry, policy changes, and privacy signals do not reload the page. Set `reloadOnConsentRevoked: false` only when every gated vendor cleanly stops itself on revocation.
 
 ## Clear data when consent is denied
 
-Set `options.clearOnRevocation` to declare cookies, localStorage keys, and
-sessionStorage keys by optional consent category. Cleanup waits for policy
-resolution, then clears denied categories and later allowed-to-denied
-transitions. This option is initial-only. See
-[clear on revocation](/docs/frameworks/react/clear-on-revocation) for examples,
-cookie scopes, and browser limits.
+Configure `options.clearOnRevocation` to list cookies, `localStorage` keys, and `sessionStorage` keys per optional category. Inth clears denied categories once policy resolves and whenever a category transitions from allowed to denied. This option is read once on mount. See [Clear on revocation](/docs/frameworks/react/clear-on-revocation).
