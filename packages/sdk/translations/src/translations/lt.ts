@@ -173,13 +173,21 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Naudojimosi sąlygos',
 	},
 	optOut: {
+		action: 'Atsisakyti',
 		description:
 			'Ši svetainė neparduos ir nesidalins jūsų asmens duomenimis, o jūsų pasirinkimas išsaugotas šioje naršyklėje.',
 		done: 'Atlikta',
+		headingAll:
+			'Jūsų asmeninės informacijos pardavimas, dalijimasis ir tikslinė reklama',
+		headingSaleAndShare:
+			'Jūsų asmeninės informacijos pardavimas ir dalijimasis',
+		headingSaleAndTargetedAds:
+			'Jūsų asmeninės informacijos pardavimas ir tikslinė reklama',
 		lockedByAccount:
 			'Jūsų paskyra atsisakė, ir tai galite pakeisti prisijungę.',
 		lockedByGpc:
 			'Jūsų naršyklės Global Privacy Control signalas įjungtas, todėl tai lieka išjungta.',
+		notOptedOut: 'Šioje naršyklėje neatsisakėte.',
 		receiptAccount: 'Atsisakėte šioje naršyklėje ir savo paskyroje.',
 		receiptAccountWithRights:
 			'Atsisakėte {rights} šioje naršyklėje ir savo paskyroje.',

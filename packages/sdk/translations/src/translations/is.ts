@@ -170,13 +170,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Þjónustuskilmálar',
 	},
 	optOut: {
+		action: 'Afþakka',
 		description:
 			'Þessi vefsíða mun ekki selja eða deila persónuupplýsingum þínum og val þitt er vistað í þessum vafra.',
 		done: 'Lokið',
+		headingAll:
+			'Sala og miðlun persónuupplýsinga þinna og markvissar auglýsingar',
+		headingSaleAndShare: 'Sala og miðlun persónuupplýsinga þinna',
+		headingSaleAndTargetedAds:
+			'Sala persónuupplýsinga þinna og markvissar auglýsingar',
 		lockedByAccount:
 			'Reikningur þinn hefur afþakkað og þú getur breytt þessu eftir innskráningu.',
 		lockedByGpc:
 			'Global Privacy Control-merki vafrans þíns er virkt, svo þetta helst óvirkt.',
+		notOptedOut: 'Þú hefur ekki afþakkað í þessum vafra.',
 		receiptAccount: 'Þú hefur afþakkað í þessum vafra og á reikningnum þínum.',
 		receiptAccountWithRights:
 			'Þú hefur afþakkað {rights} í þessum vafra og á reikningnum þínum.',

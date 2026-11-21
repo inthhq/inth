@@ -171,13 +171,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Användarvillkor',
 	},
 	optOut: {
+		action: 'Avsäg dig',
 		description:
 			'Den här webbplatsen säljer eller delar inte dina personuppgifter, och ditt val är sparat i den här webbläsaren.',
 		done: 'Klar',
+		headingAll:
+			'Försäljning och delning av dina personuppgifter samt riktad reklam',
+		headingSaleAndShare: 'Försäljning och delning av dina personuppgifter',
+		headingSaleAndTargetedAds:
+			'Försäljning av dina personuppgifter och riktad reklam',
 		lockedByAccount:
 			'Ditt konto har valt bort detta, och du kan ändra det efter att du loggat in.',
 		lockedByGpc:
 			'Webbläsarens Global Privacy Control-signal är på, så detta förblir avstängt.',
+		notOptedOut: 'Du har inte avsagt dig i den här webbläsaren.',
 		receiptAccount: 'Du har valt bort i den här webbläsaren och på ditt konto.',
 		receiptAccountWithRights:
 			'Du har valt bort {rights} i den här webbläsaren och på ditt konto.',

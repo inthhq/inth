@@ -170,13 +170,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Pakalpojumu sniegšanas noteikumi',
 	},
 	optOut: {
+		action: 'Atteikties',
 		description:
 			'Šī vietne nepārdos un nekopīgos jūsu personas datus, un jūsu izvēle ir saglabāta šajā pārlūkprogrammā.',
 		done: 'Gatavs',
+		headingAll:
+			'Jūsu personas datu pārdošana, kopīgošana un mērķtiecīga reklāma',
+		headingSaleAndShare: 'Jūsu personas datu pārdošana un kopīgošana',
+		headingSaleAndTargetedAds:
+			'Jūsu personas datu pārdošana un mērķtiecīga reklāma',
 		lockedByAccount:
 			'Jūsu konts ir atteicies, un jūs varat to mainīt pēc pierakstīšanās.',
 		lockedByGpc:
 			'Jūsu pārlūkprogrammas Global Privacy Control signāls ir ieslēgts, tāpēc tas paliek izslēgts.',
+		notOptedOut: 'Šajā pārlūkprogrammā neesat atteicies.',
 		receiptAccount: 'Jūs esat atteicies šajā pārlūkprogrammā un savā kontā.',
 		receiptAccountWithRights:
 			'Jūs esat atteicies no {rights} šajā pārlūkprogrammā un savā kontā.',

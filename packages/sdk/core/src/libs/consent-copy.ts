@@ -304,10 +304,11 @@ export const resolveOptOutCopy = function resolveOptOutCopy(
 	);
 };
 
-const rightsPhraseFor = function rightsPhraseFor(
-	copy: OptOutTranslations,
+type StandardOptOutRights = 'all' | 'sale-and-share' | 'sale-and-targeted-ads';
+
+const standardRightsFor = function standardRightsFor(
 	rights: readonly OptOutRight[]
-): string | null {
+): StandardOptOutRights | null {
 	const unique = new Set(rights);
 	if (!unique.has('sale')) {
 		return null;
@@ -315,15 +316,58 @@ const rightsPhraseFor = function rightsPhraseFor(
 	const hasShare = unique.has('share');
 	const hasTargetedAds = unique.has('targeted_ads');
 	if (unique.size === 3 && hasShare && hasTargetedAds) {
-		return copy.rightsAll;
+		return 'all';
 	}
 	if (unique.size === 2 && hasShare) {
-		return copy.rightsSaleAndShare;
+		return 'sale-and-share';
 	}
 	if (unique.size === 2 && hasTargetedAds) {
+		return 'sale-and-targeted-ads';
+	}
+	return null;
+};
+
+const rightsPhraseFor = function rightsPhraseFor(
+	copy: OptOutTranslations,
+	rights: readonly OptOutRight[]
+): string | null {
+	const combo = standardRightsFor(rights);
+	if (combo === 'all') {
+		return copy.rightsAll;
+	}
+	if (combo === 'sale-and-share') {
+		return copy.rightsSaleAndShare;
+	}
+	if (combo === 'sale-and-targeted-ads') {
 		return copy.rightsSaleAndTargetedAds;
 	}
 	return null;
+};
+
+/**
+ * Resolve the heading for the sale-and-sharing block in the preference dialog.
+ *
+ * Names confirmed rights only for the three standard combinations (sale+share,
+ * sale+targeted_ads, all three). Any other set, or unconfirmed rights (which
+ * `resolveOptOutReceipt` leaves empty), keeps the configured opt-out link title.
+ */
+export const resolveOptOutBlockHeading = function resolveOptOutBlockHeading(
+	translations: Partial<Translations> | undefined,
+	receipt: { readonly rights: readonly OptOutRight[] },
+	variant: OptOutLinkVariant = 'do-not-sell'
+): string {
+	const copy = resolveOptOutCopy(translations);
+	const combo = standardRightsFor(receipt.rights);
+	if (combo === 'all') {
+		return copy.headingAll;
+	}
+	if (combo === 'sale-and-share') {
+		return copy.headingSaleAndShare;
+	}
+	if (combo === 'sale-and-targeted-ads') {
+		return copy.headingSaleAndTargetedAds;
+	}
+	return resolveOptOutLink(translations, variant).label;
 };
 
 /**

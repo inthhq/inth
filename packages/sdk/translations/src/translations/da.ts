@@ -170,13 +170,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Servicevilkår',
 	},
 	optOut: {
+		action: 'Frameld',
 		description:
 			'Dette websted sælger eller deler ikke dine personoplysninger, og dit valg er gemt i denne browser.',
 		done: 'Færdig',
+		headingAll:
+			'Salg og deling af dine personoplysninger samt målrettet annoncering',
+		headingSaleAndShare: 'Salg og deling af dine personoplysninger',
+		headingSaleAndTargetedAds:
+			'Salg af dine personoplysninger og målrettet annoncering',
 		lockedByAccount:
 			'Din konto har fravalgt dette, og du kan ændre det efter login.',
 		lockedByGpc:
 			'Din browsers Global Privacy Control-signal er slået til, så dette forbliver slået fra.',
+		notOptedOut: 'Du har ikke frameldt dig i denne browser.',
 		receiptAccount: 'Du er frameldt i denne browser og på din konto.',
 		receiptAccountWithRights:
 			'Du er frameldt {rights} i denne browser og på din konto.',

@@ -164,12 +164,17 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'תנאי שירות',
 	},
 	optOut: {
+		action: 'ביטול הסכמה',
 		description:
 			'אתר זה לא ימכור או ישתף את המידע האישי שלך, והבחירה שלך נשמרה בדפדפן זה.',
 		done: 'סיום',
+		headingAll: 'מכירה ושיתוף של המידע האישי שלך ופרסום ממוקד',
+		headingSaleAndShare: 'מכירה ושיתוף של המידע האישי שלך',
+		headingSaleAndTargetedAds: 'מכירה של המידע האישי שלך ופרסום ממוקד',
 		lockedByAccount: 'החשבון שלך ביטל השתתפות, ותוכל לשנות זאת לאחר ההתחברות.',
 		lockedByGpc:
 			'אות Global Privacy Control של הדפדפן שלך פעיל, ולכן אפשרות זו נשארת כבויה.',
+		notOptedOut: 'לא ביטלת הסכמה בדפדפן זה.',
 		receiptAccount: 'ביטלת את ההשתתפות בדפדפן זה ובחשבון שלך.',
 		receiptAccountWithRights:
 			'ביטלת את ההשתתפות ב-{rights} בדפדפן זה ובחשבון שלך.',

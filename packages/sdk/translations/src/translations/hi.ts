@@ -167,13 +167,18 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'सेवा की शर्तें',
 	},
 	optOut: {
+		action: 'ऑप्ट आउट करें',
 		description:
 			'यह साइट आपकी व्यक्तिगत जानकारी नहीं बेचेगी या साझा नहीं करेगी, और आपकी पसंद इस ब्राउज़र में सहेजी गई है।',
 		done: 'पूर्ण',
+		headingAll: 'आपकी व्यक्तिगत जानकारी की बिक्री और साझाकरण तथा लक्षित विज्ञापन',
+		headingSaleAndShare: 'आपकी व्यक्तिगत जानकारी की बिक्री और साझाकरण',
+		headingSaleAndTargetedAds: 'आपकी व्यक्तिगत जानकारी की बिक्री और लक्षित विज्ञापन',
 		lockedByAccount:
 			'आपके खाते ने ऑप्ट-आउट किया है, और आप साइन इन करने के बाद इसे बदल सकते हैं।',
 		lockedByGpc:
 			'आपके ब्राउज़र का Global Privacy Control सिग्नल चालू है, इसलिए यह बंद रहता है।',
+		notOptedOut: 'आपने इस ब्राउज़र पर ऑप्ट आउट नहीं किया है।',
 		receiptAccount: 'आप इस ब्राउज़र और अपने खाते में ऑप्ट-आउट हो गए हैं।',
 		receiptAccountWithRights:
 			'आप इस ब्राउज़र और अपने खाते में {rights} से ऑप्ट-आउट हो गए हैं।',

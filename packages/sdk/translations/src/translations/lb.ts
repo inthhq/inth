@@ -170,13 +170,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Notzungsbedingungen',
 	},
 	optOut: {
+		action: 'Ofmellen',
 		description:
 			'Dës Websäit verkeeft oder deelt Är perséinlech Daten net, an Är Auswiel ass an dësem Browser gespäichert.',
 		done: 'Fäerdeg',
+		headingAll:
+			'Verkaf an Deelen vun Äre perséinlechen Daten an zilgeriicht Reklamm',
+		headingSaleAndShare: 'Verkaf an Deelen vun Äre perséinlechen Daten',
+		headingSaleAndTargetedAds:
+			'Verkaf vun Äre perséinlechen Daten an zilgeriicht Reklamm',
 		lockedByAccount:
 			'Äre Kont huet ofgeleent, an Dir kënnt dat no der Umeldung änneren.',
 		lockedByGpc:
 			'D’Global-Privacy-Control-Signal vun Ärem Browser ass aktiv, dowéinst bleift dëst ausgeschalt.',
+		notOptedOut: 'Dir hutt Iech an dësem Browser net ofgemellt.',
 		receiptAccount: 'Dir sidd an dësem Browser an an Ärem Kont ofgemellt.',
 		receiptAccountWithRights:
 			'Dir sidd an dësem Browser an an Ärem Kont vu {rights} ofgemellt.',

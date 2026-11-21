@@ -171,13 +171,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Uvjeti pružanja usluge',
 	},
 	optOut: {
+		action: 'Odustani',
 		description:
 			'Ova web-lokacija neće prodavati ni dijeliti vaše osobne podatke, a vaš je izbor spremljen u ovom pregledniku.',
 		done: 'Gotovo',
+		headingAll:
+			'Prodaja i dijeljenje vaših osobnih podataka te ciljano oglašavanje',
+		headingSaleAndShare: 'Prodaja i dijeljenje vaših osobnih podataka',
+		headingSaleAndTargetedAds:
+			'Prodaja vaših osobnih podataka i ciljano oglašavanje',
 		lockedByAccount:
 			'Vaš je račun zatražio isključivanje, a to možete promijeniti nakon prijave.',
 		lockedByGpc:
 			'Signal Global Privacy Control u vašem pregledniku je uključen, pa ova postavka ostaje isključena.',
+		notOptedOut: 'Niste odustali u ovom pregledniku.',
 		receiptAccount: 'Isključeni ste u ovom pregledniku i na svom računu.',
 		receiptAccountWithRights:
 			'Isključeni ste iz {rights} u ovom pregledniku i na svom računu.',

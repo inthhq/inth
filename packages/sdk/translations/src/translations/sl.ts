@@ -170,13 +170,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Pogoji uporabe',
 	},
 	optOut: {
+		action: 'Odjava',
 		description:
 			'To spletno mesto ne bo prodajalo ali delilo vaših osebnih podatkov, vaša izbira pa je shranjena v tem brskalniku.',
 		done: 'Končano',
+		headingAll:
+			'Prodaja in deljenje vaših osebnih podatkov ter ciljno oglaševanje',
+		headingSaleAndShare: 'Prodaja in deljenje vaših osebnih podatkov',
+		headingSaleAndTargetedAds:
+			'Prodaja vaših osebnih podatkov in ciljno oglaševanje',
 		lockedByAccount:
 			'Vaš račun se je odjavil in to lahko spremenite po prijavi.',
 		lockedByGpc:
 			'Signal Global Privacy Control v vašem brskalniku je vklopljen, zato to ostaja izklopljeno.',
+		notOptedOut: 'V tem brskalniku se niste odjavili.',
 		receiptAccount: 'Odjavljeni ste v tem brskalniku in v svojem računu.',
 		receiptAccountWithRights:
 			'Odjavljeni ste od {rights} v tem brskalniku in v svojem računu.',

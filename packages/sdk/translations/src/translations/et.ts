@@ -170,13 +170,18 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Kasutustingimused',
 	},
 	optOut: {
+		action: 'Loobu',
 		description:
 			'See sait ei müü ega jaga teie isikuandmeid ja teie valik on selles brauseris salvestatud.',
 		done: 'Valmis',
+		headingAll: 'Teie isikuandmete müük, jagamine ja suunatud reklaam',
+		headingSaleAndShare: 'Teie isikuandmete müük ja jagamine',
+		headingSaleAndTargetedAds: 'Teie isikuandmete müük ja suunatud reklaam',
 		lockedByAccount:
 			'Teie konto on loobunud ja saate seda muuta pärast sisselogimist.',
 		lockedByGpc:
 			'Teie brauseri Global Privacy Control signaal on sisse lülitatud, seega jääb see välja lülitatuks.',
+		notOptedOut: 'Te ei ole selles brauseris loobunud.',
 		receiptAccount: 'Olete selles brauseris ja oma kontol loobunud.',
 		receiptAccountWithRights:
 			'Olete selles brauseris ja oma kontol loobunud järgmisest: {rights}.',

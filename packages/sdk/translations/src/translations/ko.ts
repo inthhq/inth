@@ -177,13 +177,18 @@ export const translations: CompleteTranslations = {
 		termsOfService: '서비스 이용약관',
 	},
 	optOut: {
+		action: '거부',
 		description:
 			'이 사이트는 귀하의 개인정보를 판매하거나 공유하지 않으며, 선택 내용은 이 브라우저에 저장됩니다.',
 		done: '완료',
+		headingAll: '개인정보 판매 및 공유와 맞춤형 광고',
+		headingSaleAndShare: '개인정보 판매 및 공유',
+		headingSaleAndTargetedAds: '개인정보 판매 및 맞춤형 광고',
 		lockedByAccount:
 			'계정에서 거부로 설정되어 있으며, 로그인 후 변경할 수 있습니다.',
 		lockedByGpc:
 			'브라우저의 Global Privacy Control 신호가 켜져 있어 이 설정은 꺼진 상태로 유지됩니다.',
+		notOptedOut: '이 브라우저에서 거부하지 않았습니다.',
 		receiptAccount: '이 브라우저와 계정에서 거부 설정이 적용되었습니다.',
 		receiptAccountWithRights:
 			'이 브라우저와 계정에서 {rights}에 대한 거부 설정이 적용되었습니다.',

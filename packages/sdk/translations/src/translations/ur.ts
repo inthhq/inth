@@ -177,13 +177,19 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'شرائطِ خدمت',
 	},
 	optOut: {
+		action: 'آپٹ آؤٹ کریں',
 		description:
 			'یہ سائٹ آپ کی ذاتی معلومات فروخت یا شیئر نہیں کرے گی، اور آپ کا انتخاب اس براؤزر میں محفوظ ہے۔',
 		done: 'مکمل',
+		headingAll: 'آپ کی ذاتی معلومات کی فروخت اور اشتراک اور ہدف بند اشتہارات',
+		headingSaleAndShare: 'آپ کی ذاتی معلومات کی فروخت اور اشتراک',
+		headingSaleAndTargetedAds:
+			'آپ کی ذاتی معلومات کی فروخت اور ہدف بند اشتہارات',
 		lockedByAccount:
 			'آپ کے اکاؤنٹ نے آپٹ آؤٹ کیا ہے، اور آپ سائن ان کرنے کے بعد اسے تبدیل کر سکتے ہیں۔',
 		lockedByGpc:
 			'آپ کے براؤزر کا Global Privacy Control سگنل آن ہے، اس لیے یہ بند رہتا ہے۔',
+		notOptedOut: 'آپ نے اس براؤزر پر آپٹ آؤٹ نہیں کیا ہے۔',
 		receiptAccount: 'آپ اس براؤزر اور اپنے اکاؤنٹ میں آپٹ آؤٹ ہو چکے ہیں۔',
 		receiptAccountWithRights:
 			'آپ اس براؤزر اور اپنے اکاؤنٹ میں {rights} سے آپٹ آؤٹ ہو چکے ہیں۔',

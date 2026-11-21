@@ -159,12 +159,17 @@ export const translations: CompleteTranslations = {
 		termsOfService: '服务条款',
 	},
 	optOut: {
+		action: '选择退出',
 		description:
 			'本网站不会出售或共享您的个人信息，您的选择已保存在此浏览器中。',
 		done: '完成',
+		headingAll: '出售和共享您的个人信息以及定向广告',
+		headingSaleAndShare: '出售和共享您的个人信息',
+		headingSaleAndTargetedAds: '出售您的个人信息以及定向广告',
 		lockedByAccount: '您的账户已选择退出，您可以在登录后更改此设置。',
 		lockedByGpc:
 			'您浏览器的 Global Privacy Control 信号已开启，因此此选项保持关闭。',
+		notOptedOut: '您尚未在此浏览器中选择退出。',
 		receiptAccount: '您已在此浏览器和您的账户中退出。',
 		receiptAccountWithRights: '您已在此浏览器和您的账户中退出{rights}。',
 		receiptBrowser: '您已在此浏览器中退出。',

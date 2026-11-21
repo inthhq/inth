@@ -5,6 +5,7 @@ import {
 	resolveActionLabels,
 	resolveCategoryTitle,
 	resolveIABCopy,
+	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
 	resolveOptOutLink,
 	resolveOptOutReceiptSentence,
@@ -13,6 +14,7 @@ import {
 	resolveSurfaceTranslations,
 	resolveTriggerLabels,
 } from '../consent-copy';
+import { resolveOptOutReceipt } from '../opt-out-state';
 
 describe('consent copy', () => {
 	it('reads the notice copy on a notice prompt', () => {
@@ -231,6 +233,68 @@ describe('consent copy', () => {
 				scope: 'account',
 			})
 		).toBe("You're opted out on this browser and your account.");
+	});
+
+	it('resolves the opt-out block heading from confirmed rights and stays neutral before confirmation', () => {
+		expect(resolveOptOutBlockHeading(en, { rights: [] })).toBe(
+			'Do Not Sell or Share My Personal Information'
+		);
+		expect(
+			resolveOptOutBlockHeading(en, { rights: [] }, 'privacy-choices')
+		).toBe('Your Privacy Choices');
+		expect(
+			resolveOptOutBlockHeading(
+				en,
+				{ rights: [] },
+				'california-privacy-choices'
+			)
+		).toBe('Your California Privacy Choices');
+
+		expect(resolveOptOutBlockHeading(en, { rights: ['sale', 'share'] })).toBe(
+			'Sale and sharing of your personal information'
+		);
+		expect(
+			resolveOptOutBlockHeading(en, { rights: ['sale', 'targeted_ads'] })
+		).toBe('Sale of your personal information and targeted advertising');
+		expect(
+			resolveOptOutBlockHeading(en, {
+				rights: ['sale', 'share', 'targeted_ads'],
+			})
+		).toBe(
+			'Sale and sharing of your personal information and targeted advertising'
+		);
+
+		// Unlisted combinations stay on the configured link title.
+		expect(
+			resolveOptOutBlockHeading(en, { rights: ['sale'] }, 'privacy-choices')
+		).toBe('Your Privacy Choices');
+		expect(
+			resolveOptOutBlockHeading(
+				en,
+				{ rights: ['share', 'targeted_ads'] },
+				'do-not-sell'
+			)
+		).toBe('Do Not Sell or Share My Personal Information');
+
+		// A local all-three fallback before backend confirmation stays neutral.
+		const unconfirmedReceipt = resolveOptOutReceipt(
+			{
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: 1_700_000_000_000,
+					rights: ['sale', 'share', 'targeted_ads'],
+				},
+			},
+			{
+				localAct: 'button',
+				reference: 'ref-local-fallback',
+				rightsConfirmed: false,
+			}
+		);
+		expect(
+			resolveOptOutBlockHeading(en, unconfirmedReceipt, 'privacy-choices')
+		).toBe('Your Privacy Choices');
 	});
 });
 

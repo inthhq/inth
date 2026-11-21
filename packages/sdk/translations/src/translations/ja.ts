@@ -178,13 +178,18 @@ export const translations: CompleteTranslations = {
 		termsOfService: '利用規約',
 	},
 	optOut: {
+		action: 'オプトアウト',
 		description:
 			'このサイトはあなたの個人情報を販売または共有しません。この選択はこのブラウザに保存されています。',
 		done: '完了',
+		headingAll: '個人情報の販売・共有およびターゲティング広告',
+		headingSaleAndShare: '個人情報の販売および共有',
+		headingSaleAndTargetedAds: '個人情報の販売およびターゲティング広告',
 		lockedByAccount:
 			'アカウントでオプトアウトが設定されています。サインイン後に変更できます。',
 		lockedByGpc:
 			'ブラウザのGlobal Privacy Control信号がオンになっているため、これはオフのままになります。',
+		notOptedOut: 'このブラウザではオプトアウトしていません。',
 		receiptAccount: 'このブラウザとアカウントでオプトアウトされています。',
 		receiptAccountWithRights:
 			'このブラウザとアカウントで{rights}からオプトアウトされています。',

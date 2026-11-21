@@ -171,12 +171,18 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Podmienky používania služby',
 	},
 	optOut: {
+		action: 'Odhlásiť sa',
 		description:
 			'Táto stránka nebude predávať ani zdieľať vaše osobné údaje a vaša voľba je uložená v tomto prehliadači.',
 		done: 'Hotovo',
+		headingAll: 'Predaj a zdieľanie vašich osobných údajov a cielená reklama',
+		headingSaleAndShare: 'Predaj a zdieľanie vašich osobných údajov',
+		headingSaleAndTargetedAds:
+			'Predaj vašich osobných údajov a cielená reklama',
 		lockedByAccount: 'Váš účet sa odhlásil a po prihlásení to môžete zmeniť.',
 		lockedByGpc:
 			'Signál Global Privacy Control vo vašom prehliadači je zapnutý, takže toto zostáva vypnuté.',
+		notOptedOut: 'V tomto prehliadači ste sa nezahlásili na odhlásenie.',
 		receiptAccount: 'Ste odhlásení v tomto prehliadači a vo svojom účte.',
 		receiptAccountWithRights:
 			'Ste odhlásení z {rights} v tomto prehliadači a vo svojom účte.',

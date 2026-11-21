@@ -172,13 +172,21 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Termos de Serviço',
 	},
 	optOut: {
+		action: 'Recusar',
 		description:
 			'Este site não venderá nem compartilhará suas informações pessoais, e sua escolha está salva neste navegador.',
 		done: 'Concluído',
+		headingAll:
+			'Venda e compartilhamento de suas informações pessoais e publicidade direcionada',
+		headingSaleAndShare:
+			'Venda e compartilhamento de suas informações pessoais',
+		headingSaleAndTargetedAds:
+			'Venda de suas informações pessoais e publicidade direcionada',
 		lockedByAccount:
 			'Sua conta optou por sair, e você pode alterar isso após fazer login.',
 		lockedByGpc:
 			'O sinal Global Privacy Control do seu navegador está ativado, portanto esta opção permanece desativada.',
+		notOptedOut: 'Você não recusou neste navegador.',
 		receiptAccount: 'Você optou por sair neste navegador e na sua conta.',
 		receiptAccountWithRights:
 			'Você optou por sair de {rights} neste navegador e na sua conta.',

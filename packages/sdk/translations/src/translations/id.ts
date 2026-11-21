@@ -171,13 +171,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Syarat Layanan',
 	},
 	optOut: {
+		action: 'Pilih keluar',
 		description:
 			'Situs ini tidak akan menjual atau membagikan informasi pribadi Anda, dan pilihan Anda disimpan di peramban ini.',
 		done: 'Selesai',
+		headingAll:
+			'Penjualan dan pembagian informasi pribadi Anda serta iklan bertarget',
+		headingSaleAndShare: 'Penjualan dan pembagian informasi pribadi Anda',
+		headingSaleAndTargetedAds:
+			'Penjualan informasi pribadi Anda dan iklan bertarget',
 		lockedByAccount:
 			'Akun Anda telah memilih keluar, dan Anda dapat mengubahnya setelah masuk.',
 		lockedByGpc:
 			'Sinyal Global Privacy Control peramban Anda aktif, sehingga ini tetap nonaktif.',
+		notOptedOut: 'Anda belum memilih keluar di browser ini.',
 		receiptAccount:
 			'Anda telah memilih keluar di browser ini dan di akun Anda.',
 		receiptAccountWithRights:

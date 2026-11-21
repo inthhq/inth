@@ -173,13 +173,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Termeni și condiții',
 	},
 	optOut: {
+		action: 'Renunță',
 		description:
 			'Acest site nu va vinde și nu va partaja informațiile tale personale, iar alegerea ta este salvată în acest browser.',
 		done: 'Gata',
+		headingAll:
+			'Vânzarea și partajarea datelor dvs. personale și publicitatea direcționată',
+		headingSaleAndShare: 'Vânzarea și partajarea datelor dvs. personale',
+		headingSaleAndTargetedAds:
+			'Vânzarea datelor dvs. personale și publicitatea direcționată',
 		lockedByAccount:
 			'Contul tău a renunțat și poți schimba aceasta după autentificare.',
 		lockedByGpc:
 			'Semnalul Global Privacy Control al browserului tău este activ, așa că această opțiune rămâne dezactivată.',
+		notOptedOut: 'Nu ați renunțat în acest browser.',
 		receiptAccount: 'Ai renunțat în acest browser și pe contul tău.',
 		receiptAccountWithRights:
 			'Ai renunțat la {rights} în acest browser și pe contul tău.',

@@ -171,13 +171,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Brukarvilkår',
 	},
 	optOut: {
+		action: 'Reservere meg',
 		description:
 			'Denne nettstaden vil ikkje selje eller dele personopplysningane dine, og valet ditt er lagra i denne nettlesaren.',
 		done: 'Ferdig',
+		headingAll:
+			'Sal og deling av personopplysningane dine samt målretta annonsering',
+		headingSaleAndShare: 'Sal og deling av personopplysningane dine',
+		headingSaleAndTargetedAds:
+			'Sal av personopplysningane dine og målretta annonsering',
 		lockedByAccount:
 			'Kontoen din har reservert seg, og du kan endre dette etter innlogging.',
 		lockedByGpc:
 			'Nettlesaren sitt Global Privacy Control-signal er på, så dette vert verande av.',
+		notOptedOut: 'Du har ikkje reservert deg i denne nettlesaren.',
 		receiptAccount:
 			'Du har reservert deg i denne nettlesaren og på kontoen din.',
 		receiptAccountWithRights:

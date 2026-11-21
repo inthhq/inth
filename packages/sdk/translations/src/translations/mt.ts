@@ -172,13 +172,20 @@ export const translations: CompleteTranslations = {
 		termsOfService: 'Termini tas-Servizz',
 	},
 	optOut: {
+		action: 'Agħżel li toħroġ',
 		description:
 			'Dan is-sit mhux se jbigħ jew jaqsam l-informazzjoni personali tiegħek, u l-għażla tiegħek hija salvata fuq dan il-brawżer.',
 		done: 'Lest',
+		headingAll:
+			'Bejgħ u qsim tal-informazzjoni personali tiegħek u reklamar immirat',
+		headingSaleAndShare: 'Bejgħ u qsim tal-informazzjoni personali tiegħek',
+		headingSaleAndTargetedAds:
+			'Bejgħ tal-informazzjoni personali tiegħek u reklamar immirat',
 		lockedByAccount:
 			'Il-kont tiegħek għażel li joħroġ, u tista’ tibdel dan wara li tidħol.',
 		lockedByGpc:
 			'Is-sinjal Global Privacy Control tal-brawżer tiegħek huwa mixgħul, għalhekk dan jibqa’ mitfi.',
+		notOptedOut: 'Ma għażiltx li toħroġ fuq dan il-brawżer.',
 		receiptAccount:
 			'Inti għażilt li toħroġ fuq dan il-brawżer u fuq il-kont tiegħek.',
 		receiptAccountWithRights:
