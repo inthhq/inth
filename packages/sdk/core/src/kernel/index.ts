@@ -232,6 +232,7 @@ export const createKernel = function createKernel(
 			emit: eventBus.emit,
 			on: eventBus.on,
 		},
+		getOptOutRequestsInFlight: outbox.getOptOutRequestsInFlight,
 		getProvisionalSubject: records.getProvisionalSubject,
 		getRecordsGeneration: runtime.getGeneration,
 		getServerSnapshot: () => serverSnapshot,
@@ -242,6 +243,7 @@ export const createKernel = function createKernel(
 		markLive: runtime.markLive,
 		markProvisionalSubject: records.markProvisionalSubject,
 		onOptOutGpcReportedChange: runtime.onOptOutGpcReportedChange,
+		onOptOutRequestsChange: outbox.onOptOutRequestsChange,
 		refresh: lifecycle.refresh,
 		replaySaves: lifecycle.replaySaves,
 		set: {

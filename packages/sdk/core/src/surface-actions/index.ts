@@ -43,20 +43,22 @@ export type { ConsentSurfaceIAB } from './blanket';
 export { saveIABConsentSurface } from './iab-save';
 export {
 	claimOptOutConfirmationHost,
-	clearPendingOptOutConfirmation,
 	closeOptOutConfirmation,
 	hasOptOutConfirmationHost,
-	hasPendingOptOutConfirmation,
 	isOptOutConfirmationOpen,
 	isOptOutTrigger,
-	markPendingOptOutConfirmation,
 	openOptOutConfirmation,
 	optOutConsentSurface,
 	readFocusedElement,
 	subscribeOptOutConfirmation,
 	takeOptOutConfirmationOpener,
-	watchPendingOptOutConfirmation,
 } from './opt-out';
+export {
+	clearPendingOptOutConfirmation,
+	hasPendingOptOutConfirmation,
+	markPendingOptOutConfirmation,
+	watchPendingOptOutConfirmation,
+} from './opt-out-reload';
 export type { OptOutSurfaceContext } from './opt-out';
 export {
 	hasConsentPreferences,

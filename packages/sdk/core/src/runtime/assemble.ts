@@ -27,7 +27,7 @@ import type { NetworkHold } from '../modules/network-blocker/hold';
 import type { PersistenceHandle } from '../modules/persistence/types';
 import type { ScriptLoaderHandle } from '../modules/script-loader/types';
 import { resolveWindowDebugMode } from '../modules/window-debug';
-import { watchPendingOptOutConfirmation } from '../surface-actions/opt-out';
+import { watchPendingOptOutConfirmation } from '../surface-actions/opt-out-reload';
 import type { HydrationRecords } from '../types';
 import { stringifyRuntimeError, wireRuntimeCallbacks } from './callbacks';
 import { mountRuntimeGPP } from './gpp-mount';
