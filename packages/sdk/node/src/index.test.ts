@@ -950,6 +950,18 @@ describe('documents', () => {
 		assert.strictEqual(sent.length, 0);
 	});
 
+	it('sends a dot as a query value, where it moves nothing', async () => {
+		const { inth, sent } = stubbed([
+			() => Response.json({ categories: { marketing: true } }),
+		]);
+		const consent = await inth.consents.check({ externalId: '..' });
+		assert.isNull(consent.error);
+		assert.strictEqual(
+			new URL(sent[0]?.url ?? '').searchParams.get('externalId'),
+			'..'
+		);
+	});
+
 	it('refuses a dot segment, which would move the call to another route', async () => {
 		const { inth, sent } = stubbed([checked]);
 		const linked = await inth.users.identify({

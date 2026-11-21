@@ -560,21 +560,24 @@ const settledBeforeBody = (
 };
 
 /**
- * `value` as one path segment, or `undefined` for a string no URL can carry,
+ * `value` percent-encoded, or `undefined` for a string no URL can carry,
  * such as one with a lone UTF-16 surrogate, which `encodeURIComponent` throws on
  */
-const segment = (value: string): string | undefined => {
-	// A dot segment would move the request to another route, and an empty
-	// one would name none
-	if (value === '' || value === '.' || value === '..') {
-		return undefined;
-	}
+const encoded = (value: string): string | undefined => {
 	try {
 		return encodeURIComponent(value);
 	} catch {
 		return undefined;
 	}
 };
+
+/**
+ * `value` as one path segment, or `undefined` when it cannot be one. A dot
+ * segment would move the request to another route, and an empty one would
+ * name none. Path only: in a query, `.` is an ordinary value
+ */
+const segment = (value: string): string | undefined =>
+	value === '' || value === '.' || value === '..' ? undefined : encoded(value);
 
 /**
  * The name of the first value no URL can carry, or `undefined` when all can.
@@ -586,7 +589,7 @@ const uncarried = (
 ): string | undefined =>
 	Object.keys(values).find((name) => {
 		const value = values[name];
-		return value !== undefined && segment(value) === undefined;
+		return value !== undefined && encoded(value) === undefined;
 	});
 
 /** The refusal for a parameter no URL can carry */
