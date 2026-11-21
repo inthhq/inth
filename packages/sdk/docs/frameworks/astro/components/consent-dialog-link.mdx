@@ -16,7 +16,9 @@ its own. By default it carries `data-inth-action="customize"`, and the same
 shared listener the banner uses opens the dialog on click. With
 `right="opt-out"` under an opt-out policy, the click follows the resolved
 `presentation.optOutLink` title: `'do-not-sell'` (the default) records an
-opt-out in one click and opens the confirmation view, while
+opt-out in one click and opens the confirmation view with a receipt (honored
+status line, covered scope and backend-confirmed rights, recorded time, and
+local reference when this browser created the opt-out), while
 `'privacy-choices'` and `'california-privacy-choices'` open the preference
 dialog without recording an opt-out. Programmatic calls to `client.optOut()`
 still opt out in one step whatever `presentation.optOutLink` is set to. Under
