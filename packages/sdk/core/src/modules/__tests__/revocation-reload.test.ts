@@ -350,6 +350,32 @@ describe('watchRevocationReload with an external consent source', () => {
 	});
 });
 
+describe('an opt-out click while an external consent source owns consent', () => {
+	it('reloads nothing, writes no marker and asks the source for its preferences', async () => {
+		const kernel = createKernel({
+			initialExternalPermissions: { marketing: true, measurement: true },
+			initialPolicyResolution: matchedResolution(
+				optOutRule({ categories: ['marketing', 'measurement'] })
+			),
+		});
+		const { reload } = watch(kernel);
+		const requested = vi.fn();
+		kernel.events.on('preferences:requested', requested);
+
+		await expect(optOutConsentSurface(kernel)).resolves.toEqual({
+			ok: false,
+			reason: 'not-available',
+		});
+		await vi.runAllTimersAsync();
+
+		expect(requested).toHaveBeenCalledOnce();
+		expect(reload).not.toHaveBeenCalled();
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+		expect(isOptOutConfirmationOpen(kernel)).toBe(false);
+		expect(kernel.getSnapshot().optOut).toBeNull();
+	});
+});
+
 describe('watchRevocationReload with durable opt-out', () => {
 	const createOptOutKernel = (
 		config: Partial<KernelConfig> = {},
