@@ -118,7 +118,7 @@ asks the backend's `/v1/consent/init`, not a route of your own. See
 | `vendors` | `Vendor[]` | None | Vendors the dialog lists with their own switch inside a category. Merged with vendors from the backend manifest. See [Vendor consent](/docs/frameworks/astro/vendor-consent) |
 | `networkBlocker` | `{ rules, enabled?, logBlockedRequests? } \| false` | Off | Blocks matching `fetch` and `XMLHttpRequest` calls until consent. See [Network blocker](/docs/frameworks/astro/network-blocker) |
 | `clearOnRevocation` | `ClearOnRevocationConfig` | None | Cookies and storage keys to remove when a category is withdrawn |
-| `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. |
+| `experimentalScriptRegistry` | `boolean` or object | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. An entry with Inth's release signature loads once it verifies. Pass `{ requireSignatures: true }` to refuse entries without one. |
 | `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after a save turns off a category that was allowed |
 | `storageConfig` | `StorageConfig` | `{ storageKey: 'inth' }` | Where the choice is stored |
 

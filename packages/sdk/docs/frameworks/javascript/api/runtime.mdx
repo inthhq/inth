@@ -45,7 +45,7 @@ Only `mode` is required.
 | `vendors` | `Vendor[]` | none | Vendors offered for vendor-level consent outside IAB. |
 | `nonce` | `string` | none | CSP nonce the script loader puts on every `<script>` it creates. A script's own `nonce` wins. |
 | `scriptLoader` | `{ onDebug?, sources? }` | none | `onDebug` receives every script loader lifecycle event. `sources` loads a script from another URL, keyed by script `id`, such as a vetted copy on your own host: `{ posthog: { src, integrity, attributes? } }`. Only the URL changes; an integration's setup, attributes and callbacks still run. `integrity` also sets `crossorigin="anonymous"`; an `integrity` with no hash a browser can parse keeps the script from loading, because the browser would run it unchecked. `attributes` sets `data-*` attributes on the tag that the script does not set itself, and removes those set to `null`. A script with its own `integrity` keeps it, and keeps its own URL when the entry lists a different hash. Fields Inth does not know are ignored. Read when the script loader starts. |
-| `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Load `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. See [Inth script registry](#inth-script-registry-experimental). Read when the runtime starts. Every framework package takes it in the same options. |
+| `experimentalScriptRegistry` | `boolean` or `{ requireSignatures?, signingKeys? }` | `false` | Experimental. Load `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. An entry with Inth's release signature loads once it verifies; `{ requireSignatures: true }` refuses entries without one. `true` takes the defaults. See [Inth script registry](#inth-script-registry-experimental) and [release signatures](#release-signatures). Read when the runtime starts. Every framework package takes it in the same options. |
 | `iab` | IAB options or `false` | none | CMP settings. Needs `createIAB`. |
 | `createIAB` | `createIAB` from `@inth/sdk/iab` | none | The IAB module factory. Without it, `iab` is ignored. |
 | `consentSource` | `{ getPermissions, subscribe, openPreferences }` | none | Take consent from another authority. Inth then shows no banner or dialog, stores nothing and mounts no IAB CMP. Pass `webViewConsentSource()` to follow an Inth mobile app when the page runs in its WebView; see [consent in WebViews](/docs/guides/mobile-webview). Read once. |
@@ -66,7 +66,13 @@ request. `sources` lists a source per script `id`:
     "sources": {
       "posthog": {
         "src": "https://acme.inth.app/scripts/posthog@0123456789abcdef.js",
-        "integrity": "sha384-…"
+        "integrity": "sha384-…",
+        "signature": {
+          "keyId": "…",
+          "value": "…",
+          "sha256": "…",
+          "signedAt": "2026-11-18T10:00:00.000Z"
+        }
       },
       "plausible-analytics": {
         "src": "https://acme.inth.app/scripts/plausible-analytics@fedcba9876543210.js",
@@ -78,9 +84,14 @@ request. `sources` lists a source per script `id`:
 }
 ```
 
+An entry with a `signature`, such as `posthog` here, applies only once the
+signature verifies. An entry with none, such as `plausible-analytics`, loads on
+its `integrity` hash unless you set `requireSignatures: true`; see
+[release signatures](#release-signatures).
+
 Inth ignores fields it does not know in `scriptRegistry`. The runtime reads the
 list from `snapshot.scriptRegistry.sources`. With a prefetched
-init, scripts load by it at once. Otherwise each script an
+init, scripts skip the wait for init. Otherwise each script an
 `@inth/integrations` helper built waits for init, then:
 
 - With an entry, it loads from the entry's `src` with its `integrity` and
@@ -124,7 +135,85 @@ with an entry can start from its own URL there before the engine loads.
 
 The list's hashes come from the same backend that serves the files. They stop a
 copy that changed after the registry recorded it, but not a backend that sends
-another list. Scripts you write yourself are not affected.
+another list. Release signatures, below, cover that case. Scripts you write
+yourself are not affected.
+
+### Release signatures
+
+An entry can carry Inth's release signature. The public keys ship in
+`@inth/sdk`. Before a script loads from an entry that has one, Inth checks the
+signature with WebCrypto:
+
+- It must be a `released` signature. A version Inth fetched but held back has
+  none.
+- It must cover the entry's `integrity`, so it is for these bytes.
+- It must cover the URL the integration would load from the vendor, so a
+  release of one script can't be moved onto another.
+- The key must be one Inth ships for the environment. An unknown key fails.
+
+The script waits while Inth checks the signature, and no tag for the registry's
+URL goes on the page before the check passes. Each result is cached, so an
+entry is checked again only after the cache fills and starts over. A
+server start skips a script until its server process has checked that entry,
+and leaves the first render's script to the loader. A page that is not a secure
+context, such as plain http on a host other than localhost, has no WebCrypto,
+so no signature verifies there. A server start can still start a script
+there that its own check passed; the browser then refuses the entry, reports
+it, and leaves that copy running without consent updates.
+
+```ts
+createConsentRuntime({
+	projectUrl: '/api/inth',
+	experimentalScriptRegistry: {
+		requireSignatures: true, // opt-in; the default is false
+		signingKeys: 'production', // default; 'preview' for an Inth preview deployment
+	},
+});
+```
+
+| Entry | `requireSignatures: false` (default) | `requireSignatures: true` |
+| --- | --- | --- |
+| Valid signature | Loads from the registry | Loads from the registry |
+| Invalid signature | Loads nothing | Loads nothing |
+| No signature (absent or `null`) | Loads from the registry on its hash; `onDebug` reports it | Loads nothing |
+
+Turn on `requireSignatures` only once every entry your project uses carries a
+signature. Until then, the scripts without one load nothing.
+
+"Loads nothing" works like a `null` entry. The script does not load from the
+registry or from the vendor's URL, and `onDebug` reports an `error`. The report
+for a missing signature when signatures are not required is an `error` at
+`step` scope, and the script still loads. A server start can run such a script
+before the browser's loader sends that report.
+
+`signingKeys: 'preview'` trusts only the keys of Inth's preview deployments,
+and then no production key. Use it only against a preview project.
+
+#### What signatures protect
+
+With `@inth/sdk` installed from npm and `requireSignatures: true`, someone who
+controls Inth's database or gateway can change the list, but can't make your
+page load bytes from the registry that Inth never released. The keys come from the package your build installed, not from Inth's
+servers.
+
+#### What they don't protect
+
+- The hosted `/inth.js`. A page that loads the SDK from Inth's gateway gets the
+  verifier and its keys from that same gateway, so whoever controls the gateway
+  controls the check. Install the package from npm to get this protection.
+- An older release. A signature has no expiry and can't be withdrawn yet, so a
+  backend that controls the list can serve a version Inth signed and later
+  rejected.
+- A compromised signing key, which can sign any bytes.
+- A new signing key. An SDK that does not ship it refuses entries signed with
+  it, and those scripts load nothing until you update `@inth/sdk`.
+- Tag `attributes`. The signature does not cover them.
+- Hashes your own script pins. A script whose `integrity` lists several hashes
+  keeps them all on the registry's tag, so bytes that match any of them run,
+  including ones Inth did not sign.
+- A missing entry. A script the list leaves out loads from its vendor's URL, as
+  it would without the registry. Signatures cover the entries in the list, not
+  whether the list is complete.
 
 ## What start and dispose do
 
