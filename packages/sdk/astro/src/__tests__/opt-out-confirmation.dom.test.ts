@@ -322,6 +322,9 @@ describe('browser-rendered banner optOutLink variants', () => {
 	it('renders the default do-not-sell title without an icon', () => {
 		const link = renderLinkFor('do-not-sell');
 		expect(link?.getAttribute('data-inth-action')).toBe('opt-out');
+		expect(link?.getAttribute('data-inth-rights')).toBe(
+			'disclosure opt-out preferences'
+		);
 		expect(link?.getAttribute('data-opt-out-variant')).toBe('do-not-sell');
 		expect(link?.textContent).toBe(
 			'Do Not Sell or Share My Personal Information'

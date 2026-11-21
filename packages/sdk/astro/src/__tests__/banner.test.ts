@@ -533,7 +533,7 @@ describe('<ConsentBanner /> without a resolved policy', () => {
 		const hidden = await container.renderToString(ConsentDialogLink, {
 			locals: { inth: await withoutPolicy() },
 		});
-		const trigger = /<[^>]*data-testid="consent-dialog-trigger"[^>]*>/u.exec(
+		const trigger = /<[^>]*data-testid="consent-dialog-link"[^>]*>/u.exec(
 			hidden
 		)?.[0];
 		expect(trigger).toBeDefined();
@@ -543,7 +543,7 @@ describe('<ConsentBanner /> without a resolved policy', () => {
 		const shown = await container.renderToString(ConsentDialogLink, {
 			locals: { inth: await buildLocals() },
 		});
-		const visible = /<[^>]*data-testid="consent-dialog-trigger"[^>]*>/u.exec(
+		const visible = /<[^>]*data-testid="consent-dialog-link"[^>]*>/u.exec(
 			shown
 		)?.[0];
 		expect(visible).toBeDefined();
@@ -605,6 +605,9 @@ describe('<ConsentBanner /> under a notice prompt', () => {
 		// row. It records the opt-out in one click through the delegated handler.
 		expect(optOutButton).toContain('data-action="right"');
 		expect(optOutButton).toContain('data-inth-action="opt-out"');
+		expect(optOutButton).toContain(
+			'data-inth-rights="disclosure opt-out preferences"'
+		);
 		expect(optOutButton).toContain('data-opt-out-variant="do-not-sell"');
 		expect(optOutButton).toContain(bannerStyles.rightLink);
 		expect(optOutButton).not.toContain('data-variant=');
@@ -694,8 +697,11 @@ describe('<ConsentBanner /> under a notice prompt', () => {
 			});
 			const footerLink = new JSDOM(
 				footerLinkHtml
-			).window.document.querySelector('[data-testid="consent-dialog-trigger"]');
+			).window.document.querySelector('[data-testid="consent-dialog-link"]');
 			expect(footerLink?.getAttribute('data-inth-action')).toBe('opt-out');
+			expect(footerLink?.getAttribute('data-inth-rights')).toBe(
+				'disclosure opt-out preferences'
+			);
 			expect(footerLink?.getAttribute('data-opt-out-variant')).toBe(
 				'privacy-choices'
 			);
@@ -875,7 +881,7 @@ describe('<ConsentBanner /> under a none rule', () => {
 			locals: { inth: locals },
 		});
 		expect(
-			/<[^>]*data-testid="consent-dialog-trigger"[^>]*>/u.exec(trigger)?.[0]
+			/<[^>]*data-testid="consent-dialog-link"[^>]*>/u.exec(trigger)?.[0]
 		).toContain('hidden');
 	});
 
@@ -891,7 +897,7 @@ describe('<ConsentBanner /> under a none rule', () => {
 			locals: { inth: locals },
 		});
 		expect(
-			/<[^>]*data-testid="consent-dialog-trigger"[^>]*>/u.exec(trigger)?.[0]
+			/<[^>]*data-testid="consent-dialog-link"[^>]*>/u.exec(trigger)?.[0]
 		).not.toContain('hidden');
 	});
 });

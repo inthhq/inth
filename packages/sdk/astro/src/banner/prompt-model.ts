@@ -98,6 +98,7 @@ export interface PromptModel {
 	textDirection: 'ltr' | 'rtl';
 	language: string | undefined;
 	model: string;
+	policyRights: string;
 	prompt: string | undefined;
 	position: string;
 	variant: string;
@@ -365,6 +366,7 @@ export const resolvePromptModel = function resolvePromptModel(
 			bundle?.legalLinks
 		),
 		model: snapshot.policyRule.model,
+		policyRights: snapshot.policyRule.rights.join(' '),
 		position,
 		prompt:
 			snapshot.policyRule.prompt === 'none'
