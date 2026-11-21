@@ -209,10 +209,12 @@ export const storybookOptOutInit: InitOutput = {
 export const useStorybookOptOutConsent = function useStorybookOptOutConsent(
 	kind: 'request' | 'gpc' | 'account'
 ) {
-	const config: ConsentConfig = {
+	const config: ConsentConfig & { overrides?: { gpc: boolean } } = {
 		...storybookConsentConfig,
-		...(kind === 'gpc' ? { overrides: { gpc: true } } : {}),
-	} as ConsentConfig;
+	};
+	if (kind === 'gpc') {
+		config.overrides = { gpc: true };
+	}
 	const now = Date.now();
 	const context = createVueConsentKernelContext({
 		config,

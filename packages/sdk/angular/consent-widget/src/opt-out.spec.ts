@@ -84,6 +84,16 @@ const part = <ElementType extends HTMLElement = HTMLElement>(
 	testId: string
 ) => root.querySelector<ElementType>(`[data-testid="${testId}"]`);
 
+/** The element with `testId`, which the test expects to be rendered. */
+const required = <ElementType extends HTMLElement = HTMLElement>(
+	root: HTMLElement,
+	testId: string
+): ElementType => {
+	const element = part<ElementType>(root, testId);
+	expect.assert(element, `${testId} is not rendered`);
+	return element;
+};
+
 describe('Angular consent widget opt-out parity', () => {
 	test('shows request status, seeds stored grants off, keeps opt-out on untouched save and lifts on opt-in save', async () => {
 		const now = Date.now();
@@ -112,37 +122,37 @@ describe('Angular consent widget opt-out parity', () => {
 		});
 		const root = fixture.nativeElement as HTMLElement;
 
-		const status = part(root, 'consent-widget-opt-out-status');
+		const status = required(root, 'consent-widget-opt-out-status');
 		expect(status).not.toBeNull();
-		expect(status?.getAttribute('role')).toBe('status');
-		expect(status?.textContent?.trim()).toBe('Opt-out request honored');
-		expect(status?.classList).toContain('brand-opt-out-status');
+		expect(status.getAttribute('role')).toBe('status');
+		expect(status.textContent?.trim()).toBe('Opt-out request honored');
+		expect(status.classList).toContain('brand-opt-out-status');
 		expect(consent.optOutState()).toMatchObject({
 			honored: true,
 			lock: null,
 			via: 'request',
 		});
 
-		const marketing = part<HTMLButtonElement>(
+		const marketing = required<HTMLButtonElement>(
 			root,
 			'consent-widget-switch-marketing'
 		);
-		const measurement = part<HTMLButtonElement>(
+		const measurement = required<HTMLButtonElement>(
 			root,
 			'consent-widget-switch-measurement'
 		);
-		const functionality = part<HTMLButtonElement>(
+		const functionality = required<HTMLButtonElement>(
 			root,
 			'consent-widget-switch-functionality'
 		);
-		expect(marketing?.getAttribute('aria-checked')).toBe('false');
-		expect(marketing?.disabled).toBe(false);
-		expect(measurement?.getAttribute('aria-checked')).toBe('false');
-		expect(functionality?.getAttribute('aria-checked')).toBe('true');
+		expect(marketing.getAttribute('aria-checked')).toBe('false');
+		expect(marketing.disabled).toBe(false);
+		expect(measurement.getAttribute('aria-checked')).toBe('false');
+		expect(functionality.getAttribute('aria-checked')).toBe('true');
 		expect(part(root, 'consent-widget-restriction-marketing')).toBeNull();
 
 		// An untouched save does not re-confirm the stored grant or lift the opt-out.
-		part(root, 'consent-widget-footer-save-button')?.click();
+		required(root, 'consent-widget-footer-save-button').click();
 		await fixture.whenStable();
 		fixture.detectChanges();
 		expect(consent.optOut()).not.toBeNull();
@@ -150,10 +160,10 @@ describe('Angular consent widget opt-out parity', () => {
 		expect(consent.explicitChoice()?.categories.marketing?.value).toBe(false);
 
 		// Turning marketing on and saving lifts the device opt-out.
-		marketing?.click();
+		marketing.click();
 		fixture.detectChanges();
-		expect(marketing?.getAttribute('aria-checked')).toBe('true');
-		part(root, 'consent-widget-footer-save-button')?.click();
+		expect(marketing.getAttribute('aria-checked')).toBe('true');
+		required(root, 'consent-widget-footer-save-button').click();
 		await fixture.whenStable();
 		fixture.detectChanges();
 		expect(consent.optOut()).toBeNull();
@@ -186,39 +196,39 @@ describe('Angular consent widget opt-out parity', () => {
 		});
 		const root = fixture.nativeElement as HTMLElement;
 
-		const status = part(root, 'consent-widget-opt-out-status');
-		expect(status?.getAttribute('role')).toBe('status');
-		expect(status?.textContent?.trim()).toBe(
+		const status = required(root, 'consent-widget-opt-out-status');
+		expect(status.getAttribute('role')).toBe('status');
+		expect(status.textContent?.trim()).toBe(
 			'Opt-out preference signal honored'
 		);
 		expect(consent.optOutState().lock).toBe('gpc-active');
 
 		for (const category of ['marketing', 'measurement'] as const) {
-			const sw = part<HTMLButtonElement>(
+			const sw = required<HTMLButtonElement>(
 				root,
 				`consent-widget-switch-${category}`
 			);
-			const notice = part(root, `consent-widget-restriction-${category}`);
-			expect(sw?.disabled).toBe(true);
-			expect(sw?.getAttribute('aria-checked')).toBe('false');
-			expect(sw?.getAttribute('aria-describedby')).toBe(notice?.id);
-			expect(notice?.textContent).toContain('Global Privacy Control');
+			const notice = required(root, `consent-widget-restriction-${category}`);
+			expect(sw.disabled).toBe(true);
+			expect(sw.getAttribute('aria-checked')).toBe('false');
+			expect(sw.getAttribute('aria-describedby')).toBe(notice.id);
+			expect(notice.textContent).toContain('Global Privacy Control');
 
-			sw?.click();
-			sw?.dispatchEvent(
+			sw.click();
+			sw.dispatchEvent(
 				new KeyboardEvent('keydown', { bubbles: true, key: ' ' })
 			);
-			sw?.dispatchEvent(
+			sw.dispatchEvent(
 				new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })
 			);
 			fixture.detectChanges();
-			expect(sw?.getAttribute('aria-checked')).toBe('false');
+			expect(sw.getAttribute('aria-checked')).toBe('false');
 		}
 
 		expect(part(root, 'consent-widget-restriction-functionality')).toBeNull();
 
 		// Untouched save does not grant locked categories.
-		part(root, 'consent-widget-footer-save-button')?.click();
+		required(root, 'consent-widget-footer-save-button').click();
 		await fixture.whenStable();
 		fixture.detectChanges();
 		expect(consent.effectivePermissions().marketing).toBe(false);
@@ -228,7 +238,7 @@ describe('Angular consent widget opt-out parity', () => {
 		);
 
 		// Accept all grants unlocked categories without granting locked ones.
-		part(root, 'consent-widget-footer-accept-all-button')?.click();
+		required(root, 'consent-widget-footer-accept-all-button').click();
 		await fixture.whenStable();
 		fixture.detectChanges();
 		expect(consent.effectivePermissions().functionality).toBe(true);
@@ -261,24 +271,24 @@ describe('Angular consent widget opt-out parity', () => {
 		const root = fixture.nativeElement as HTMLElement;
 
 		expect(
-			part(root, 'consent-widget-opt-out-status')?.textContent?.trim()
+			required(root, 'consent-widget-opt-out-status').textContent?.trim()
 		).toBe('Opt-out request honored');
 		expect(consent.optOutState().lock).toBe('held-by-account');
 
-		const marketing = part<HTMLButtonElement>(
+		const marketing = required<HTMLButtonElement>(
 			root,
 			'consent-widget-switch-marketing'
 		);
-		const notice = part(root, 'consent-widget-restriction-marketing');
-		expect(marketing?.disabled).toBe(false);
-		expect(marketing?.getAttribute('aria-checked')).toBe('false');
-		expect(marketing?.getAttribute('aria-describedby')).toBe(notice?.id);
-		expect(notice?.textContent).toContain('account');
+		const notice = required(root, 'consent-widget-restriction-marketing');
+		expect(marketing.disabled).toBe(false);
+		expect(marketing.getAttribute('aria-checked')).toBe('false');
+		expect(marketing.getAttribute('aria-describedby')).toBe(notice.id);
+		expect(notice.textContent).toContain('account');
 
-		marketing?.click();
+		marketing.click();
 		fixture.detectChanges();
-		expect(marketing?.getAttribute('aria-checked')).toBe('true');
-		part(root, 'consent-widget-footer-save-button')?.click();
+		expect(marketing.getAttribute('aria-checked')).toBe('true');
+		required(root, 'consent-widget-footer-save-button').click();
 		await fixture.whenStable();
 		fixture.detectChanges();
 		expect(consent.optOut()?.heldBy).toBe('person');
