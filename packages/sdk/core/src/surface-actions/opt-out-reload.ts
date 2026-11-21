@@ -70,6 +70,36 @@ export const clearPendingOptOutConfirmation =
 		}
 	};
 
+/** Whether `snapshot` can show the confirmation: an opt-out is held and neither the dialog nor an IAB model is active. */
+const canShowConfirmation = (
+	snapshot: ReturnType<ConsentKernel['getSnapshot']>
+): boolean =>
+	snapshot.activeUI !== 'dialog' &&
+	snapshot.policyRule.model !== 'iab' &&
+	resolveOptOutState(snapshot).honored;
+
+/**
+ * Drop the post-reload marker when the reload it waited for will not happen,
+ * so a later load in this tab does not open a confirmation out of nowhere.
+ *
+ * With `open`, show the confirmation view on this document instead, because
+ * no reload is coming and the visitor must still see the opt-out was honored.
+ * Does nothing when no marker is set.
+ */
+export const releasePendingOptOutConfirmation =
+	function releasePendingOptOutConfirmation(
+		kernel: ConsentKernel,
+		open: boolean
+	): void {
+		if (!hasPendingOptOutConfirmation()) {
+			return;
+		}
+		clearPendingOptOutConfirmation();
+		if (open && canShowConfirmation(kernel.getSnapshot())) {
+			openOptOutConfirmation(kernel, null);
+		}
+	};
+
 /**
  * Reopen the opt-out confirmation view once on a reloaded document when a
  * revocation reload set the post-reload marker in `sessionStorage`.
@@ -111,11 +141,7 @@ export const watchPendingOptOutConfirmation =
 			}
 			stop();
 			clearPendingOptOutConfirmation();
-			if (
-				snapshot.activeUI !== 'dialog' &&
-				snapshot.policyRule.model !== 'iab' &&
-				resolveOptOutState(snapshot).honored
-			) {
+			if (canShowConfirmation(snapshot)) {
 				openOptOutConfirmation(kernel, null);
 			}
 		};
