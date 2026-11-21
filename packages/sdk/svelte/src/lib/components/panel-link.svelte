@@ -4,11 +4,12 @@
 	import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 	import type { Snippet } from 'svelte';
 
-	import { getConsentContext } from '../context.svelte';
+	import { getConsentContext, getThemeContext } from '../context.svelte';
 	import ConsentButton from './action-button.svelte';
 	import OptOutIcon from './icons/opt-out-icon.svelte';
 
 	const consent = getConsentContext();
+	const theme = getThemeContext();
 
 	let {
 		children,
@@ -61,13 +62,8 @@
 		onclick={handleClick}
 		{...restProps}
 	>
-		{#if showOptOutIcon}
-			<OptOutIcon class={noStyle ? '' : bannerStyles.optOutIcon || ''} />
-		{/if}
-		{#if children}
-			{@render children()}
-		{:else}
-			{defaultLabel}
-		{/if}
+		{#if showOptOutIcon}<OptOutIcon
+				class={theme.noStyle ? '' : bannerStyles.optOutIcon || ''}
+			/>{/if}{#if children}{@render children()}{:else}{defaultLabel}{/if}
 	</ConsentButton>
 {/if}

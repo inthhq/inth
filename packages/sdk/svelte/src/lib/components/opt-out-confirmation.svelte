@@ -272,6 +272,7 @@
 			class={overlayStyle.className || ''}
 			style={toStyleAttributeValue(overlayStyle.style)}
 			data-disable-animation={disableAnimation ? '' : undefined}
+			data-slot={undefined}
 			data-testid="opt-out-confirmation-overlay"
 		/>
 		<Dialog.Positioner
@@ -290,7 +291,9 @@
 				lang={language}
 				aria-labelledby="opt-out-confirmation-title"
 				aria-describedby="opt-out-confirmation-description"
+				data-slot={undefined}
 				data-testid="opt-out-confirmation-root"
+				id={undefined}
 				{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
 				onkeydown={handleControlledDismiss}
 			>

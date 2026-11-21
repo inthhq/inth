@@ -20,8 +20,6 @@ import { ConsentTheme } from '../core/consent-theme';
 import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const ICON_ATTR = 'data-inth-opt-out-icon';
-const LABEL_ATTR = 'data-inth-opt-out-label';
 
 const createOptOutIconElement = function createOptOutIconElement(
 	doc: Document,
@@ -31,7 +29,6 @@ const createOptOutIconElement = function createOptOutIconElement(
 	svg.setAttribute('aria-hidden', 'true');
 	svg.setAttribute('focusable', 'false');
 	svg.setAttribute('viewBox', CPPA_OPT_OUT_ICON.viewBox);
-	svg.setAttribute(ICON_ATTR, '');
 	if (className) {
 		svg.setAttribute('class', className);
 	}
@@ -117,6 +114,9 @@ export class ConsentDialogLink {
 		);
 	});
 
+	#icon: SVGSVGElement | null = null;
+	#labelNode: Text | null = null;
+
 	constructor() {
 		const isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 		const destroyRef = inject(DestroyRef);
@@ -124,48 +124,46 @@ export class ConsentDialogLink {
 		effect(() => {
 			const link = this.optOutLink();
 			const host = this.#element.nativeElement;
-			const existingIcon = host.querySelector(`[${ICON_ATTR}]`);
-			const existingLabel = host.querySelector(`[${LABEL_ATTR}]`);
+			const iconClass = this.#theme.noStyle()
+				? undefined
+				: bannerStyles.optOutIcon;
 			if (!link) {
-				existingIcon?.remove();
-				existingLabel?.remove();
+				this.#icon?.remove();
+				this.#icon = null;
+				this.#labelNode?.remove();
+				this.#labelNode = null;
 				return;
 			}
 			const needsIcon = link.variant === 'privacy-choices';
-			if (needsIcon && !existingIcon) {
-				const icon = createOptOutIconElement(
-					host.ownerDocument,
-					this.#theme.noStyle() ? undefined : bannerStyles.optOutIcon
-				);
-				host.prepend(icon);
-			} else if (!needsIcon && existingIcon) {
-				existingIcon.remove();
+			if (needsIcon) {
+				if (!this.#icon) {
+					this.#icon = createOptOutIconElement(host.ownerDocument, iconClass);
+					host.prepend(this.#icon);
+				} else if (iconClass) {
+					this.#icon.setAttribute('class', iconClass);
+				} else {
+					this.#icon.removeAttribute('class');
+				}
+			} else if (this.#icon) {
+				this.#icon.remove();
+				this.#icon = null;
 			}
 			// Provide the statutory label when the host has no custom text.
 			const customText = [...host.childNodes]
-				.filter(
-					(node) =>
-						node !== existingIcon &&
-						node !== existingLabel &&
-						!(
-							node instanceof Element &&
-							(node.hasAttribute(ICON_ATTR) || node.hasAttribute(LABEL_ATTR))
-						)
-				)
+				.filter((node) => node !== this.#icon && node !== this.#labelNode)
 				.map((node) => node.textContent ?? '')
 				.join('')
 				.trim();
 			if (!customText) {
-				const labelEl =
-					existingLabel ??
-					Object.assign(host.ownerDocument.createElement('span'), {});
-				if (!existingLabel) {
-					labelEl.setAttribute(LABEL_ATTR, '');
-					host.append(labelEl);
+				if (this.#labelNode) {
+					this.#labelNode.textContent = link.label;
+				} else {
+					this.#labelNode = host.ownerDocument.createTextNode(link.label);
+					host.append(this.#labelNode);
 				}
-				labelEl.textContent = link.label;
-			} else if (existingLabel) {
-				existingLabel.remove();
+			} else if (this.#labelNode) {
+				this.#labelNode.remove();
+				this.#labelNode = null;
 			}
 		});
 

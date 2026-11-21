@@ -13,18 +13,15 @@ import {
 	ConsentManager,
 	ConsentStyles,
 	ConsentTheme,
+	FocusTrap,
 	Portal,
+	ScrollLock,
 	SURFACE_SCOPES,
+	ɵInitialFocus as InitialFocus,
 	ɵNoStyleScope as NoStyleScope,
 	ɵresolveNoStyle as resolveNoStyle,
 } from '@inth/angular';
 import { DIALOG_SHEETS } from '@inth/angular/consent-widget';
-import {
-	Dialog,
-	DialogBackdrop,
-	DialogContent,
-	DialogPositioner,
-} from '@inth/angular/primitives';
 import {
 	closeOptOutConfirmation,
 	isOptOutConfirmationOpen,
@@ -54,120 +51,115 @@ import {
  */
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [Dialog, DialogBackdrop, DialogContent, DialogPositioner, Portal],
+	imports: [FocusTrap, InitialFocus, Portal, ScrollLock],
 	providers: [NoStyleScope],
 	selector: 'inth-opt-out-confirmation-panel',
-	template: `<ng-container
-		inthDialog
-		#dialog="inthDialog"
-		[open]="isOpen()"
-		(openChange)="closeWhenDismissed($event)"
-		[closeOnInteractOutside]="false"
-		[closeOnEscape]="!controlled()"
-		[trapFocus]="true"
-		[preventScroll]="true"
-		[lazyMount]="true"
-		[unmountOnExit]="true"
-	>
-		@if (dialog.shouldRender()) {
+	template: `@if (isOpen()) {
+		<div
+			inthPortal
+			style="display: contents;"
+		>
 			<div
-				inthPortal
-				style="display: contents;"
+				aria-hidden="true"
+				role="presentation"
+				data-state="open"
+				[class]="overlayStyle().className || ''"
+				[attr.style]="styleOf(overlayStyle())"
+				[attr.data-disable-animation]="disableMotion() ? '' : null"
+				data-testid="opt-out-confirmation-overlay"
+			></div>
+			<div
+				[class]="positionerClass()"
+				[attr.data-disable-animation]="disableMotion() ? '' : null"
+				data-state="open"
+				[attr.dir]="textDirection()"
 			>
 				<div
-					inthDialogBackdrop
-					[class]="overlayStyle().className || ''"
-					[attr.style]="styleOf(overlayStyle())"
-					[attr.data-disable-animation]="disableMotion() ? '' : null"
-					data-testid="opt-out-confirmation-overlay"
-				></div>
-				<div
-					inthDialogPositioner
-					[class]="positionerClass()"
-					[attr.data-disable-animation]="disableMotion() ? '' : null"
+					[inthFocusTrap]="{ enabled: true, initialFocus: 'first-tabbable' }"
+					inthInitialFocus
+					[inthScrollLock]="true"
+					[class]="contentClass()"
+					[attr.style]="styleOf(rootStyle())"
 					[attr.dir]="textDirection()"
+					[attr.lang]="language()"
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="opt-out-confirmation-title"
+					aria-describedby="opt-out-confirmation-description"
+					data-state="open"
+					data-testid="opt-out-confirmation-root"
+					data-inth-surface="dialog"
+					tabindex="-1"
+					(keydown)="requestCloseOnEscape($event)"
 				>
 					<div
-						inthDialogContent
-						[class]="contentClass()"
-						[attr.style]="styleOf(rootStyle())"
-						[attr.dir]="textDirection()"
-						[attr.lang]="language()"
-						aria-labelledby="opt-out-confirmation-title"
-						aria-describedby="opt-out-confirmation-description"
-						data-testid="opt-out-confirmation-root"
-						data-inth-surface="dialog"
-						(keydown)="requestCloseOnEscape($event)"
+						[class]="cardStyle().className || ''"
+						[attr.style]="styleOf(cardStyle())"
+						data-testid="opt-out-confirmation-card"
+						tabindex="-1"
 					>
 						<div
-							[class]="cardStyle().className || ''"
-							[attr.style]="styleOf(cardStyle())"
-							data-testid="opt-out-confirmation-card"
-							tabindex="-1"
+							[class]="headerStyle().className || ''"
+							[attr.style]="styleOf(headerStyle())"
+							data-testid="opt-out-confirmation-header"
 						>
-							<div
-								[class]="headerStyle().className || ''"
-								[attr.style]="styleOf(headerStyle())"
-								data-testid="opt-out-confirmation-header"
+							<h2
+								[class]="titleStyle().className || ''"
+								[attr.style]="styleOf(titleStyle())"
+								data-testid="opt-out-confirmation-title"
+								id="opt-out-confirmation-title"
 							>
-								<h2
-									[class]="titleStyle().className || ''"
-									[attr.style]="styleOf(titleStyle())"
-									data-testid="opt-out-confirmation-title"
-									id="opt-out-confirmation-title"
-								>
-									{{ optOutLink().label }}
-								</h2>
-							</div>
-							<p
-								[class]="statusStyle().className || ''"
-								[attr.style]="styleOf(statusStyle())"
-								data-testid="opt-out-confirmation-status"
-								role="status"
+								{{ optOutLink().label }}
+							</h2>
+						</div>
+						<p
+							[class]="statusStyle().className || ''"
+							[attr.style]="styleOf(statusStyle())"
+							data-testid="opt-out-confirmation-status"
+							role="status"
+						>
+							{{ statusText() }}
+						</p>
+						<p
+							[class]="descriptionStyle().className || ''"
+							[attr.style]="styleOf(descriptionStyle())"
+							data-testid="opt-out-confirmation-description"
+							id="opt-out-confirmation-description"
+						>
+							{{ optOutCopy().description }}
+						</p>
+						<div
+							[class]="footerStyle().className || ''"
+							[attr.style]="styleOf(footerStyle())"
+							data-testid="opt-out-confirmation-footer"
+						>
+							<button
+								type="button"
+								[class]="doneButtonStyle().className || ''"
+								[attr.style]="styleOf(doneButtonStyle())"
+								[attr.data-mode]="resolvedNoStyle() ? null : 'filled'"
+								[attr.data-size]="resolvedNoStyle() ? null : 'small'"
+								[attr.data-variant]="resolvedNoStyle() ? null : 'primary'"
+								data-testid="opt-out-confirmation-done-button"
+								(click)="close()"
 							>
-								{{ statusText() }}
-							</p>
-							<p
-								[class]="descriptionStyle().className || ''"
-								[attr.style]="styleOf(descriptionStyle())"
-								data-testid="opt-out-confirmation-description"
-								id="opt-out-confirmation-description"
+								{{ optOutCopy().done }}
+							</button>
+							<a
+								href="#inth-preferences"
+								[class]="preferencesLinkStyle().className || ''"
+								[attr.style]="styleOf(preferencesLinkStyle())"
+								data-testid="opt-out-confirmation-preferences-link"
+								(click)="openPreferences($event)"
 							>
-								{{ optOutCopy().description }}
-							</p>
-							<div
-								[class]="footerStyle().className || ''"
-								[attr.style]="styleOf(footerStyle())"
-								data-testid="opt-out-confirmation-footer"
-							>
-								<button
-									type="button"
-									[class]="doneButtonStyle().className || ''"
-									[attr.style]="styleOf(doneButtonStyle())"
-									[attr.data-mode]="resolvedNoStyle() ? null : 'filled'"
-									[attr.data-size]="resolvedNoStyle() ? null : 'small'"
-									[attr.data-variant]="resolvedNoStyle() ? null : 'primary'"
-									data-testid="opt-out-confirmation-done-button"
-									(click)="close()"
-								>
-									{{ optOutCopy().done }}
-								</button>
-								<a
-									href="#inth-preferences"
-									[class]="preferencesLinkStyle().className || ''"
-									[attr.style]="styleOf(preferencesLinkStyle())"
-									data-testid="opt-out-confirmation-preferences-link"
-									(click)="openPreferences($event)"
-								>
-									{{ controls().preferences }}
-								</a>
-							</div>
+								{{ controls().preferences }}
+							</a>
 						</div>
 					</div>
 				</div>
 			</div>
-		}
-	</ng-container>`,
+		</div>
+	}`,
 })
 export class OptOutConfirmationPanel {
 	readonly #consent = inject(ConsentManager);
@@ -358,6 +350,15 @@ export class OptOutConfirmationPanel {
 				const captured = takeOptOutConfirmationOpener(kernel);
 				if (captured) {
 					this.#opener = captured;
+				} else if (!this.#opener) {
+					const active = document.activeElement;
+					if (
+						active instanceof HTMLElement &&
+						active !== document.body &&
+						active !== document.documentElement
+					) {
+						this.#opener = active;
+					}
 				}
 				return;
 			}
@@ -402,13 +403,6 @@ export class OptOutConfirmationPanel {
 	}
 
 	/** @internal */
-	protected closeWhenDismissed(open: boolean): void {
-		if (!open) {
-			this.close();
-		}
-	}
-
-	/** @internal */
 	protected openPreferences(event: MouseEvent): void {
 		event.preventDefault();
 		this.#consent.setActiveUI('dialog');
@@ -416,7 +410,8 @@ export class OptOutConfirmationPanel {
 
 	/** @internal */
 	protected requestCloseOnEscape(event: KeyboardEvent): void {
-		if (this.controlled() && isDialogDismissKey(event.key)) {
+		if (isDialogDismissKey(event.key) && !event.defaultPrevented) {
+			event.preventDefault();
 			this.close();
 		}
 	}
