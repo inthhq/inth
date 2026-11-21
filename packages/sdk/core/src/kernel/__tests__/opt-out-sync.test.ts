@@ -720,6 +720,82 @@ describe('opt-out network sync and queue', () => {
 		reloaded.dispose();
 	});
 
+	test('a browser whose own GPC flag turns on reports it once for a clicked opt-out and not again on later loads', async () => {
+		// The signal comes from `navigator.globalPrivacyControl`, read when the
+		// kernel starts, as it does in a page with no server-resolved signal.
+		const previous = Object.getOwnPropertyDescriptor(
+			navigator,
+			'globalPrivacyControl'
+		);
+		const setBrowserSignal = (value: boolean) =>
+			Object.defineProperty(navigator, 'globalPrivacyControl', {
+				configurable: true,
+				value,
+			});
+		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>((payload) =>
+			Promise.resolve({ ok: true, subjectId: payload.subjectId })
+		);
+		const load = async () => {
+			const kernel = kernelOn({ transport: { optOut } });
+			const persistence = createPersistence({ kernel });
+			await kernel.commands.init();
+			return {
+				kernel,
+				unload: () => {
+					persistence.dispose();
+					kernel.dispose();
+				},
+			};
+		};
+		try {
+			// The visitor clicks the link while the browser sends no signal.
+			setBrowserSignal(false);
+			const clicked = await load();
+			await clicked.kernel.commands.optOut();
+			await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(1));
+			expect(optOut.mock.calls[0]?.[0].method).toBe('button');
+			await vi.waitFor(() =>
+				expect(readStoredOptOutRecord(undefined, NOW)).toMatchObject({
+					record: { method: 'button' },
+				})
+			);
+			clicked.unload();
+
+			// They turn the signal on. The next load reports it once.
+			setBrowserSignal(true);
+			const signalled = await load();
+			expect(signalled.kernel.getSnapshot().privacySignals.gpc.active).toBe(
+				true
+			);
+			await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(2));
+			expect(optOut.mock.calls[1]?.[0].method).toBe('gpc');
+			expect(signalled.kernel.getSnapshot().optOut?.method).toBe('button');
+			await vi.waitFor(() =>
+				expect(readStoredOptOutRecord(undefined, NOW)).toMatchObject({
+					record: { gpcReported: true, method: 'button' },
+				})
+			);
+			signalled.unload();
+
+			for (let visit = 0; visit < 2; visit += 1) {
+				// oxlint-disable-next-line no-await-in-loop -- Each load follows the last.
+				const next = await load();
+				next.kernel.refresh();
+				// oxlint-disable-next-line no-await-in-loop -- Each load follows the last.
+				await flushMacrotasks();
+				expect(next.kernel.getSnapshot().optOut?.method).toBe('button');
+				next.unload();
+			}
+			expect(optOut).toHaveBeenCalledTimes(2);
+		} finally {
+			if (previous) {
+				Object.defineProperty(navigator, 'globalPrivacyControl', previous);
+			} else {
+				Reflect.deleteProperty(navigator, 'globalPrivacyControl');
+			}
+		}
+	});
+
 	test('account-held propagated opt-out with GPC on sends one gpc request, keeps the mark across a propagated/both answer, and reload sends none', async () => {
 		const personOptOut: OptOutRecord = {
 			heldBy: 'person',
