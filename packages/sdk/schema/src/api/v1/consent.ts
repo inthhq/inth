@@ -1,77 +1,44 @@
 /**
  * `/v1/consent/*` schemas: init, manifest, records and sessions.
  *
+ * Each one is the schema generated from the backend's OpenAPI document
+ * (`./generated/schemas`), with the SDK's own rules added where the document
+ * leaves them out. Init answers with the same shape the 3.x routes do, so
+ * its schema is the shared one.
+ *
  * @packageDocumentation
  */
 
 import * as v from 'valibot';
 
-import { ADDITIONAL_CONSENT_V2_PATTERN } from '../../shared/ad-tech-provider';
 import type { ConsentManifest } from '../../shared/consent-manifest';
-import { isPlainPolicyObject } from '../../shared/policy-rule';
 import { POLICY_OPTIONAL_CATEGORIES } from '../../shared/policy-rule-invariants';
 import { initOutputSchema } from '../init';
 import type { InitOutput } from '../init';
 import {
-	consentSessionJourneySchema,
-	consentSessionReportSchema,
-} from '../session';
-import { subjectCategoryReceiptWireSchema } from '../subject/choice-wire';
-import { vendorChoiceWireSchema } from '../subject/vendor-choice-wire';
-import {
 	v1CanonicalSubjectIdSchema,
-	v1EpochMillisecondsSchema,
-	v1ExternalIdSchema,
 	v1IdempotencyKeySchema,
-	v1IdentityProviderSchema,
-	v1IdentityTokenSchema,
-	v1PropertySchema,
 	v1SubjectIdSchema,
 } from './common';
-
-const plainObjectSchema = v.custom<Record<string, unknown>>(
-	(input) => isPlainPolicyObject(input),
-	'Expected a plain object'
-);
+import {
+	consentRecordRequestSchema,
+	consentRecordResponseSchema,
+	consentSessionRequestSchema,
+	getV1ConsentInitQuerySchema,
+	getV1ConsentManifestQuerySchema,
+	postV1ConsentRecordsQuerySchema,
+} from './generated/schemas';
+import { jsonObject } from './json-schema';
 
 // ---------------------------------------------------------------------------
-// GET /v1/consent/init
+// GET /v1/consent/init and GET /v1/consent/manifest
 // ---------------------------------------------------------------------------
-
-const optionalQueryString = (description: string) =>
-	v.optional(v.pipe(v.string(), v.description(description)));
 
 /** Query of `GET /v1/consent/init`. */
-export const v1ConsentInitQuerySchema = v.object({
-	country: optionalQueryString('Country override, ISO 3166-1 alpha-2.'),
-	experiment: optionalQueryString(
-		'Banner-experiment arm as `<id>=<arm>`, while no choice is stored.'
-	),
-	gpc: v.optional(
-		v.pipe(
-			v.picklist(['0', '1']),
-			v.description('Global Privacy Control override.')
-		)
-	),
-	journey: v.optional(
-		v.pipe(v.string(), v.uuid(), v.description('Consent journey ID.'))
-	),
-	journeyScope: v.optional(
-		v.pipe(v.picklist(['page', 'tab']), v.description('Consent journey scope.'))
-	),
-	region: optionalQueryString('Region override, ISO 3166-2 subdivision code.'),
-	stored: v.optional(
-		v.pipe(
-			v.picklist(['0', '1']),
-			v.description('Whether a choice was stored when the journey started.')
-		)
-	),
-});
+export const v1ConsentInitQuerySchema = getV1ConsentInitQuerySchema;
 
 /** Query of `GET /v1/consent/manifest`. */
-export const v1ConsentManifestQuerySchema = v.object({
-	language: optionalQueryString('Only the banner text in this language.'),
-});
+export const v1ConsentManifestQuerySchema = getV1ConsentManifestQuerySchema;
 
 export const v1ConsentInitOutputSchema = initOutputSchema;
 
@@ -80,10 +47,7 @@ export const v1ConsentInitOutputSchema = initOutputSchema;
 // ---------------------------------------------------------------------------
 
 /** Query of `POST /v1/consent/records`: the journey the save belongs to. */
-export const v1ConsentRecordQuerySchema = v.pick(v1ConsentInitQuerySchema, [
-	'journey',
-	'journeyScope',
-]);
+export const v1ConsentRecordQuerySchema = postV1ConsentRecordsQuerySchema;
 
 /** Categories an answer may hold a receipt for. */
 export const V1_ANSWER_CATEGORIES = [
@@ -92,16 +56,6 @@ export const V1_ANSWER_CATEGORIES = [
 ] as const;
 
 export type V1AnswerCategory = (typeof V1_ANSWER_CATEGORIES)[number];
-
-const answerCategoryEntries = Object.fromEntries(
-	V1_ANSWER_CATEGORIES.map((category) => [
-		category,
-		v.optional(subjectCategoryReceiptWireSchema),
-	])
-) as Record<
-	V1AnswerCategory,
-	v.OptionalSchema<typeof subjectCategoryReceiptWireSchema, undefined>
->;
 
 /**
  * The subject's answer after an action: one receipt for every category with
@@ -113,48 +67,7 @@ const answerCategoryEntries = Object.fromEntries(
  * leaves out keeps its stored receipt. So an answer may be partial, such as
  * a queued save a newer action partly superseded.
  */
-export const v1ConsentAnswerSchema = v.pipe(
-	plainObjectSchema,
-	v.strictObject({
-		categories: v.pipe(
-			plainObjectSchema,
-			v.strictObject(answerCategoryEntries)
-		),
-	})
-);
-
-/** The policy decision a save asserts when it carries no snapshot token. */
-const decisionAssertionEntries = {
-	country: v.optional(
-		v.nullable(
-			v.pipe(v.string(), v.description('Country input of the decision.'))
-		)
-	),
-	fingerprint: v.optional(
-		v.pipe(v.string(), v.description('Runtime policy fingerprint asserted.'))
-	),
-	gpc: v.optional(
-		v.pipe(v.boolean(), v.description('Global Privacy Control input.'))
-	),
-	language: v.optional(
-		v.pipe(v.string(), v.description('Language input of the decision.'))
-	),
-	policyId: v.optional(
-		v.nullable(
-			v.pipe(
-				v.string(),
-				v.description(
-					'Policy ID to recompute on write. Null asserts that no policy matched.'
-				)
-			)
-		)
-	),
-	region: v.optional(
-		v.nullable(
-			v.pipe(v.string(), v.description('Region input of the decision.'))
-		)
-	),
-};
+export const v1ConsentAnswerSchema = consentRecordRequestSchema.entries.answer;
 
 /**
  * Body of `POST /v1/consent/records`: one banner answer.
@@ -166,70 +79,13 @@ const decisionAssertionEntries = {
  * save still succeeds.
  */
 export const v1ConsentRecordInputSchema = v.pipe(
-	v.object({
-		...decisionAssertionEntries,
-		addtlConsent: v.optional(
-			v.pipe(
-				v.string(),
-				v.regex(
-					ADDITIONAL_CONSENT_V2_PATTERN,
-					'Invalid Additional Consent v2 string'
-				),
-				v.description(
-					'Google Additional Consent v2 string. Stored only with tcString.'
-				)
-			)
-		),
-		answer: v1ConsentAnswerSchema,
-		confirmed: v.pipe(
-			v.array(v.picklist(V1_ANSWER_CATEGORIES)),
-			v.description('Categories this action confirmed. May be empty.')
-		),
-		consentAction: v.optional(
-			v.pipe(
-				v.string(),
-				v.description('User action that produced this answer.'),
-				v.examples(['all', 'necessary', 'custom'])
-			)
-		),
-		externalId: v.optional(v1ExternalIdSchema),
-		givenAt: v1EpochMillisecondsSchema,
-		idempotencyKey: v1IdempotencyKeySchema,
-		identityProvider: v.optional(v1IdentityProviderSchema),
-		identityToken: v.optional(v1IdentityTokenSchema),
-		metadata: v.optional(
-			v.pipe(
-				v.record(v.string(), v.unknown()),
-				v.description('Audit metadata to store with the answer.')
-			)
-		),
-		model: v.optional(
-			v.pipe(
-				v.string(),
-				v.description('Consent model the client applied.'),
-				v.examples(['opt-in', 'opt-out', 'iab'])
-			)
-		),
-		policySnapshotToken: v.optional(
-			v.pipe(
-				v.string(),
-				v.description('Signed policy snapshot token from init.')
-			)
-		),
-		property: v1PropertySchema,
-		subjectId: v1SubjectIdSchema,
-		tcString: v.optional(
-			v.pipe(v.string(), v.description('IAB TCF TC string.'))
-		),
-		uiSource: v.optional(
-			v.pipe(
-				v.string(),
-				v.description('UI surface that collected the answer.'),
-				v.examples(['banner', 'dialog', 'widget'])
-			)
-		),
-		vendorChoice: v.optional(vendorChoiceWireSchema),
-	}),
+	jsonObject(
+		v.object({
+			...consentRecordRequestSchema.entries,
+			idempotencyKey: v1IdempotencyKeySchema,
+			subjectId: v1SubjectIdSchema,
+		})
+	),
 	v.forward(
 		v.check(
 			(input) =>
@@ -249,55 +105,33 @@ export const v1ConsentRecordInputSchema = v.pipe(
  * verify, and `refused` a token that verified for a person the backend will
  * not link, such as one who was erased.
  */
-export const v1ConsentRecordLinkSchema = v.variant('stored', [
-	v.object({
-		stored: v.literal(true),
-		verifiedBy: v.literal('identity_token'),
-	}),
-	v.object({
-		reason: v.picklist(['unverified', 'invalid_token', 'refused']),
-		stored: v.literal(false),
-	}),
-]);
+export const v1ConsentRecordLinkSchema =
+	consentRecordResponseSchema.entries.link.wrapped;
 
 /**
  * Answer of `POST /v1/consent/records`. `subjectId` is canonical: the client
  * stores it in place of a `sub_` ID.
  */
-export const v1ConsentRecordOutputSchema = v.object({
-	link: v.optional(v1ConsentRecordLinkSchema),
-	recordId: v.pipe(
-		v.string(),
-		v.uuid('Record ID must be a UUID'),
-		v.description('ID of the event that recorded the save.')
-	),
-	subjectId: v1CanonicalSubjectIdSchema,
-});
+export const v1ConsentRecordOutputSchema = jsonObject(
+	v.object({
+		...consentRecordResponseSchema.entries,
+		subjectId: v1CanonicalSubjectIdSchema,
+	})
+);
 
 // ---------------------------------------------------------------------------
 // POST /v1/consent/sessions
 // ---------------------------------------------------------------------------
 
-const { domain: _journeyDomain, ...journeyEntries } =
-	consentSessionJourneySchema.entries;
-
 /** The consent journey of a session report, with its site as `property`. */
-export const v1ConsentSessionJourneySchema = v.object({
-	...journeyEntries,
-	property: v.optional(v1PropertySchema),
-});
-
-const { tenantId: _tenantId, ...reportEntries } =
-	consentSessionReportSchema.entries;
+export const v1ConsentSessionJourneySchema =
+	consentSessionRequestSchema.entries.journey.wrapped;
 
 /**
  * Body of `POST /v1/consent/sessions`, sent by a server that resolved init
  * from a manifest. The visitor's IP and user agent travel as headers.
  */
-export const v1ConsentSessionReportSchema = v.object({
-	...reportEntries,
-	journey: v.optional(v1ConsentSessionJourneySchema),
-});
+export const v1ConsentSessionReportSchema = consentSessionRequestSchema;
 
 // ---------------------------------------------------------------------------
 // Types

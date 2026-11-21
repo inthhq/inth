@@ -5,46 +5,46 @@
  * Without a secret key a link needs an `identityToken` that verifies for
  * `externalId`. There is no route for a browser to read a subject.
  *
+ * Each one is the schema generated from the backend's OpenAPI document, with
+ * the SDK's subject ID rules in place of the document's plain string and
+ * UUID.
+ *
  * @packageDocumentation
  */
 
 import * as v from 'valibot';
 
+import { v1CanonicalSubjectIdSchema, v1SubjectIdSchema } from './common';
 import {
-	v1CanonicalSubjectIdSchema,
-	v1ExternalIdSchema,
-	v1IdentityProviderSchema,
-	v1IdentityTokenSchema,
-	v1SubjectIdSchema,
-} from './common';
+	identityTokenRequestSchema,
+	identityTokenResponseSchema,
+	postV1SubjectsByIdLinkPathSchema,
+	subjectLinkRequestSchema,
+	subjectLinkResponseSchema,
+} from './generated/schemas';
+import { jsonObject } from './json-schema';
 
-export const v1SubjectLinkParamsSchema = v.object({
-	id: v1SubjectIdSchema,
-});
+export const v1SubjectLinkParamsSchema = jsonObject(
+	v.object({
+		...postV1SubjectsByIdLinkPathSchema.entries,
+		id: v1SubjectIdSchema,
+	})
+);
 
-export const v1SubjectLinkInputSchema = v.object({
-	externalId: v1ExternalIdSchema,
-	identityProvider: v.optional(v1IdentityProviderSchema),
-	identityToken: v.optional(v1IdentityTokenSchema),
-});
+export const v1SubjectLinkInputSchema = subjectLinkRequestSchema;
 
-export const v1SubjectLinkOutputSchema = v.object({
-	externalId: v1ExternalIdSchema,
-	subjectId: v1CanonicalSubjectIdSchema,
-	verifiedBy: v.picklist(['secret_key', 'identity_token']),
-});
+export const v1SubjectLinkOutputSchema = jsonObject(
+	v.object({
+		...subjectLinkResponseSchema.entries,
+		subjectId: v1CanonicalSubjectIdSchema,
+	})
+);
 
 // POST /v1/subjects/identity-tokens (secret key)
 
-export const v1SubjectIdentityTokenInputSchema = v.object({
-	externalId: v1ExternalIdSchema,
-	identityProvider: v.optional(v1IdentityProviderSchema),
-});
+export const v1SubjectIdentityTokenInputSchema = identityTokenRequestSchema;
 
-export const v1SubjectIdentityTokenOutputSchema = v.object({
-	expiresAt: v.pipe(v.string(), v.isoTimestamp()),
-	token: v1IdentityTokenSchema,
-});
+export const v1SubjectIdentityTokenOutputSchema = identityTokenResponseSchema;
 
 export type V1SubjectIdentityTokenInput = v.InferOutput<
 	typeof v1SubjectIdentityTokenInputSchema

@@ -2,6 +2,10 @@
  * Shapes every `/v1` route shares: subject IDs, idempotency keys, the
  * property a consent or acceptance belongs to, and the error body.
  *
+ * Each one starts from the schema generated from the backend's OpenAPI
+ * document (`./generated/schemas`). A rule the document leaves out and the
+ * backend still applies, such as the form of a subject ID, is added here.
+ *
  * @packageDocumentation
  */
 
@@ -9,31 +13,38 @@ import * as v from 'valibot';
 
 import {
 	V1_LEGACY_SUBJECT_ID_PATTERN,
-	V1_PROPERTY_MAX_LENGTH,
-	V1_PROPERTY_PATTERN,
 	V1_UUID_PATTERN,
 	V1_UUID_V7_PATTERN,
 } from './constants';
+import {
+	consentRecordRequestSchema,
+	consentRecordResponseSchema,
+	subjectLinkRequestSchema,
+	v1ErrorSchema,
+} from './generated/schemas';
+import { jsonObject, jsonRecord } from './json-schema';
 
-/** A canonical subject ID, as every `/v1` response names it. */
+/**
+ * A canonical subject ID, as every `/v1` response names it. The document
+ * says a UUID; the backend makes a UUIDv7 in lowercase, and the SDK stores it.
+ */
 export const v1CanonicalSubjectIdSchema = v.pipe(
-	v.string(),
+	consentRecordResponseSchema.entries.subjectId,
 	v.regex(V1_UUID_V7_PATTERN, 'Subject ID must be a lowercase UUIDv7'),
-	v.description('Canonical subject ID: a UUIDv7 in lowercase canonical text.'),
 	v.examples(['0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c'])
 );
 
-/** A subject ID a `/v1` request may carry: a UUIDv7, or a `sub_` ID. */
+/**
+ * A subject ID a `/v1` request may carry: a UUIDv7, or a `sub_` ID. The
+ * document says only a string.
+ */
 export const v1SubjectIdSchema = v.pipe(
-	v.string(),
+	consentRecordRequestSchema.entries.subjectId,
 	v.check(
 		(value) =>
 			V1_UUID_V7_PATTERN.test(value) ||
 			V1_LEGACY_SUBJECT_ID_PATTERN.test(value),
 		'Subject ID must be a lowercase UUIDv7 or a sub_ ID'
-	),
-	v.description(
-		'Client-made subject ID: a lowercase UUIDv7, or the sub_ ID a c15t client stored.'
 	),
 	v.examples([
 		'0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
@@ -43,84 +54,64 @@ export const v1SubjectIdSchema = v.pipe(
 
 /**
  * A UUID the client makes once per user action and sends again on every
- * retry of it. The backend records the action once.
+ * retry of it. The backend records the action once. The document's format
+ * takes either case; its description, and the backend, ask for lowercase.
  */
 export const v1IdempotencyKeySchema = v.pipe(
-	v.string(),
+	consentRecordRequestSchema.entries.idempotencyKey,
 	v.regex(V1_UUID_PATTERN, 'Idempotency key must be a lowercase UUID'),
-	v.description(
-		'UUID made once per user action and reused on every retry of that action.'
-	),
 	v.examples(['0193e5a8-7c1e-7b7a-9d7e-2f0c9a3b4d5e'])
 );
 
-/** Where consent was given. See {@link V1_PROPERTY_PATTERN}. */
-export const v1PropertySchema = v.pipe(
-	v.string(),
-	v.maxLength(
-		V1_PROPERTY_MAX_LENGTH,
-		`Property must be at most ${V1_PROPERTY_MAX_LENGTH} characters`
-	),
-	v.regex(
-		V1_PROPERTY_PATTERN,
-		'Property must be a lowercase host name or app ID'
-	),
-	v.description(
-		'Lowercase host name of a site, or the application or bundle ID of an app.'
-	),
-	v.examples(['www.example.com', 'com.example.app'])
-);
+/** Where consent was given: a lowercase host name or app ID. */
+export const v1PropertySchema = consentRecordRequestSchema.entries.property;
 
 /** The person's ID in your own system. */
-export const v1ExternalIdSchema = v.pipe(
-	v.string(),
-	v.minLength(1, 'External ID must not be empty'),
-	v.description('ID of the person in your authentication system.'),
-	v.examples(['user_123'])
-);
+export const v1ExternalIdSchema = subjectLinkRequestSchema.entries.externalId;
 
 /** Name of the identity provider that issued an external ID. */
-export const v1IdentityProviderSchema = v.pipe(
-	v.string(),
-	v.minLength(1, 'Identity provider must not be empty'),
-	v.description('Identity provider that issued the external ID.'),
-	v.examples(['clerk', 'auth0'])
-);
+export const v1IdentityProviderSchema =
+	subjectLinkRequestSchema.entries.identityProvider.wrapped;
 
 /** Signed proof of an external ID, minted by your server. */
-export const v1IdentityTokenSchema = v.pipe(
-	v.string(),
-	v.description('Identity token signed by your server, proving externalId.')
-);
+export const v1IdentityTokenSchema =
+	subjectLinkRequestSchema.entries.identityToken.wrapped;
 
 /** Epoch milliseconds, from 1970 to the latest time `Date` can represent. */
 export const v1EpochMillisecondsSchema = v.pipe(
-	v.number(),
-	v.integer(),
-	v.minValue(0),
-	v.maxValue(8_640_000_000_000_000),
-	v.description('Epoch milliseconds.'),
-	v.examples([1_763_467_200_000])
+	consentRecordRequestSchema.entries.givenAt,
+	v.description('Epoch milliseconds.')
 );
 
-/** `error.details` of a validation failure. */
-export const v1ValidationDetailsSchema = v.object({
-	fieldErrors: v.record(v.string(), v.array(v.string())),
-	formErrors: v.array(v.string()),
-});
+/**
+ * `error.details` of a validation failure. The document leaves `details`
+ * open.
+ */
+export const v1ValidationDetailsSchema = jsonObject(
+	v.object({
+		fieldErrors: jsonRecord(v.string(), v.array(v.string())),
+		formErrors: v.array(v.string()),
+	})
+);
+
+const errorEntries = v1ErrorSchema.entries.error.entries;
 
 /**
  * The body of every `/v1` failure, from the backend and from the gateway.
- * `code` is any string, so a code added later still parses.
+ * `code` is any string, where the document lists the codes, so a code added
+ * later still parses.
  */
-export const v1ErrorBodySchema = v.object({
-	error: v.object({
-		code: v.pipe(v.string(), v.minLength(1)),
-		details: v.optional(v.unknown()),
-		message: v.string(),
-	}),
-	requestId: v.string(),
-});
+export const v1ErrorBodySchema = jsonObject(
+	v.object({
+		...v1ErrorSchema.entries,
+		error: jsonObject(
+			v.object({
+				...errorEntries,
+				code: v.pipe(v.string(), v.minLength(1)),
+			})
+		),
+	})
+);
 
 export type V1ErrorBody = v.InferOutput<typeof v1ErrorBodySchema>;
 export type V1ValidationDetails = v.InferOutput<
