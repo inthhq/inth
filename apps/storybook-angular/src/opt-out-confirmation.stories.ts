@@ -30,6 +30,7 @@ const meta = {
 				mode: storybookMode([storybookOptOutPolicy]),
 				overrides: { country: 'US', gpc: args.gpc, region: 'CA' },
 				presentation: { optOutLink: args.optOutLink },
+				reloadOnConsentRevoked: false,
 			},
 		}),
 		moduleMetadata: {

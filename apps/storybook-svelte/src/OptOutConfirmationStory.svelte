@@ -28,6 +28,7 @@
 		mode: storybookMode([storybookOptOutPolicy]),
 		overrides: { country: 'US', gpc, region: 'CA' },
 		presentation: { optOutLink },
+		reloadOnConsentRevoked: false,
 	}}
 >
 	{#if gpc}

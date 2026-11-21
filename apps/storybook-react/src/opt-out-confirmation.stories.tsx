@@ -48,6 +48,7 @@ export const RequestHonored: Story = {
 				mode: storybookMode([storybookOptOutPolicy]),
 				overrides: { country: 'US', gpc: false, region: 'CA' },
 				presentation: { optOutLink: 'do-not-sell' },
+				reloadOnConsentRevoked: false,
 			}}
 		>
 			<ConsentBanner disableAnimation />
@@ -76,6 +77,7 @@ export const SignalHonored: Story = {
 				mode: storybookMode([storybookOptOutPolicy]),
 				overrides: { country: 'US', gpc: true, region: 'CA' },
 				presentation: { optOutLink: 'privacy-choices' },
+				reloadOnConsentRevoked: false,
 			}}
 		>
 			<ConsentDialogLink right="opt-out" />
