@@ -250,13 +250,10 @@ type Found =
  * for now. Each entry says which side has to change.
  */
 type DocumentGaps =
-	// For the SDK to add. It reads `sources` and nothing else from the
-	// registry: it loads no runtime `files` and does not refuse a loader for
-	// `refuseIfSet`. With `{ unavailable: true }` it has no list, so every
-	// script loads from its own URL.
-	| 'registry list.files: only in document'
+	// The SDK reads a list without `sources` as one that names no script,
+	// so each loads from its own URL. With `{ unavailable: true }` it has no
+	// list, so every script loads from its own URL.
 	| 'registry list.sources: optional in SDK, required in document'
-	| 'registry sources.*.refuseIfSet: only in document'
 	// The manifest type is shared with the 3.x routes, whose producer may
 	// name a tenant. `/v1` names none, and the SDK does not send it on.
 	| 'manifest answer.tenantId: only in SDK'

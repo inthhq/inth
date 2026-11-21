@@ -100,8 +100,11 @@ const SERVER_STARTED_WAITING_FIELDS = [
 	'iabLegIntPurposes',
 	'iabPurposes',
 	'iabSpecialFeatures',
-	// The server start already applied its source.
+	// The server start already applied its source, and its refuseIfSet.
 	'integration',
+	// The guard below needs every field classified; this one's generated
+	// test passes without the field too, as a control.
+	'integrationOptions',
 	'observeConsentBeforeLoad',
 	'onBeforeLoad',
 	'onConsentChange',

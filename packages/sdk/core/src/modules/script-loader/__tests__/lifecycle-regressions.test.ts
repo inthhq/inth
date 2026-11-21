@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { afterEach, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { choiceRecords } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
@@ -1247,4 +1247,50 @@ test('records completion when onLoad removes its own element without replacing t
 	document.head.querySelector('script')?.dispatchEvent(new Event('load'));
 	expect(document.head.querySelector('script')).toBeNull();
 	expect(getScriptDiagnostics(kernel)[0]?.status).toBe('loaded');
+});
+
+describe('the script registry file pin', () => {
+	const nativeAppendChild = Node.prototype.appendChild;
+	const registryKernel = () =>
+		createConsentKernel({
+			initialScriptRegistry: {
+				files: {
+					'https://cdn.vendor.example/logger.js': {
+						integrity: 'sha384-abc',
+						src: 'https://acme.inth.app/scripts/logger@0123456789abcdef.js',
+					},
+				},
+			},
+		});
+
+	test('is released when a callback feedback loop shuts the loader down', () => {
+		const kernel = registryKernel();
+		let allowed = true;
+		let calls = 0;
+		const loader = createScriptLoader({
+			kernel,
+			onDebug: () => undefined,
+			registry: { waitForInit: false },
+			scripts: [
+				{
+					callbackOnly: true,
+					category: 'necessary',
+					id: 'feedback-loop',
+					onConsentChange: () => {
+						calls += 1;
+						if (calls < 1000) {
+							allowed = !allowed;
+							void kernel.commands.save({ measurement: allowed });
+						}
+					},
+				},
+			],
+		});
+		disposers.push(kernel.dispose, loader.dispose);
+		expect(Node.prototype.appendChild).not.toBe(nativeAppendChild);
+
+		void kernel.commands.save({ measurement: allowed });
+		expect(calls).toBeLessThan(1000);
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+	});
 });

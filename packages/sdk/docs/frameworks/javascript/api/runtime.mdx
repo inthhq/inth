@@ -45,7 +45,7 @@ Only `mode` is required.
 | `vendors` | `Vendor[]` | none | Vendors offered for vendor-level consent outside IAB. |
 | `nonce` | `string` | none | CSP nonce the script loader puts on every `<script>` it creates. A script's own `nonce` wins. |
 | `scriptLoader` | `{ onDebug?, sources? }` | none | `onDebug` receives every script loader lifecycle event. `sources` loads a script from another URL, keyed by script `id`, such as a vetted copy on your own host: `{ posthog: { src, integrity, attributes? } }`. Only the URL changes; an integration's setup, attributes and callbacks still run. `integrity` also sets `crossorigin="anonymous"`; an `integrity` with no hash a browser can parse keeps the script from loading, because the browser would run it unchecked. `attributes` sets `data-*` attributes on the tag that the script does not set itself, and removes those set to `null`. A script with its own `integrity` keeps it, and keeps its own URL when the entry lists a different hash. Fields Inth does not know are ignored. Read when the script loader starts. |
-| `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Load `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. See [Inth script registry](#inth-script-registry-experimental). Read when the runtime starts. Every framework package takes it in the same options. |
+| `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Load `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks, and the files their loaders download from the registry's `files`. See [Inth script registry](#inth-script-registry-experimental). Read when the runtime starts. Every framework package takes it in the same options. |
 | `iab` | IAB options or `false` | none | CMP settings. Needs `createIAB`. |
 | `createIAB` | `createIAB` from `@inth/sdk/iab` | none | The IAB module factory. Without it, `iab` is ignored. |
 | `consentSource` | `{ getPermissions, subscribe, openPreferences }` | none | Take consent from another authority. Inth then shows no banner or dialog, stores nothing and mounts no IAB CMP. Pass `webViewConsentSource()` to follow an Inth mobile app when the page runs in its WebView; see [consent in WebViews](/docs/guides/mobile-webview). Read once. |
@@ -125,6 +125,156 @@ with an entry can start from its own URL there before the engine loads.
 The list's hashes come from the same backend that serves the files. They stop a
 copy that changed after the registry recorded it, but not a backend that sends
 another list. Scripts you write yourself are not affected.
+
+### Files a loader downloads
+
+Some vendor scripts are small loaders that download more code while they run.
+Today the registry pins one such file: LogRocket's `LogRocket.min.js` inserts
+`https://cdn.logrocket.io/logger-1.min.js`, about 780 KB. `sources` pins only
+the loader. `scriptRegistry.files` pins the file it downloads, keyed by the
+exact absolute URL the loader requests:
+
+```json
+{
+  "scriptRegistry": {
+    "sources": {
+      "logrocket": {
+        "src": "https://acme.inth.app/scripts/logrocket@0123456789abcdef.js?logger=fedcba9876543210",
+        "integrity": "sha384-…"
+      }
+    },
+    "files": {
+      "https://cdn.logrocket.io/logger-1.min.js": {
+        "src": "https://acme.inth.app/scripts/logrocket/logger@fedcba9876543210.js",
+        "integrity": "sha384-…"
+      }
+    }
+  }
+}
+```
+
+Once a list that names files has arrived, Inth changes a script element whose
+URL `files` lists just before the browser fetches it:
+
+- With an entry, the element loads from the entry's `src` with its `integrity`
+  and `crossorigin="anonymous"`. The browser refuses bytes that do not match,
+  and Inth does not try the vendor's URL. An element with its own `integrity`
+  keeps it, and loads from the registry only when the entry lists that hash.
+- With `null`, or an entry with no https `src` or no hash, the element points at
+  an empty `data:` script under a hash it does not have. The browser fetches
+  nothing from either URL and fires `error`, so the loader's own failure
+  handling runs.
+- A URL that `files` does not list is not changed.
+
+Inth matches URLs after it resolves a relative URL against the page and drops
+the fragment. Everything else must match exactly. The query string is part of
+the URL, so `logger-1.min.js?v=2` does not match `logger-1.min.js`.
+
+Inth checks a script element as a page method inserts it, or the node holding
+it: `appendChild`, `insertBefore`, `append`, `before`, `replaceWith`,
+`insertAdjacentElement`, `Range.insertNode` or a similar method. It also
+checks a script already on the page as it gets its first `src` through
+`script.src` or `setAttribute`. Scripts that Inth creates go through the same
+check. To do this, the script loader patches those DOM methods once the list
+names files. On `dispose()` it puts back each method it is still the outermost
+wrapper of. Under a wrapper another library added later, its own stays in that
+library's chain and does nothing until a list names files again.
+
+Nothing waits for the list. Integrations wait for init as described above, so
+LogRocket's loader starts only after the pin is in place. Every other script
+loads as it would without Inth. A script that a list names, but that some other
+code inserts before init answers, loads from its own URL. When the list names no
+files, or init fails, Inth patches nothing. When a prefetched list names files,
+a server start leaves integrations for the loader to start.
+
+#### What `files` does not cover
+
+`files` sees only script elements that this realm's DOM methods insert after
+the list arrives. These load code without Inth seeing it:
+
+- A listed file that other code inserts before init answers.
+- `document.write` of a script tag.
+- `eval` or `new Function` on code a loader fetched itself.
+- `import()`, and static `import` statements inside a module script, the
+  pinned one included.
+- Workers, including `importScripts` in a worker.
+- Iframes, including `srcdoc` frames, and a script element made with another
+  frame's DOM methods.
+- Code that kept its own reference to a DOM method, such as
+  `const append = Node.prototype.appendChild`, before the pin went on. If such
+  code writes that method back while the pin is on, the pin is off for that
+  method until a script loader with a list starts again, which puts it back.
+- A script inside a shadow root of a node the page inserts. A script the page
+  inserts into a shadow root that is already on the page is checked.
+- A `src` that a script already on the page gets through `setAttributeNS`,
+  `setAttributeNode` or `attributes.setNamedItem`, and a `<script>` inside an
+  inline SVG.
+- A script tag in your HTML, or one that a deferred root or the script-tag build
+  starts before the script loader runs.
+- A URL that a page override gives the loader and that the list does not name,
+  such as LogRocket's `window.__SDKCONFIG__.loggerURL`, or `window._lrAsyncScript`
+  set by your own code.
+
+Pages that enforce Trusted Types for scripts are not supported yet: Inth writes
+script URLs as plain strings.
+
+#### Options that move a loader's downloads
+
+Some integration options tell a loader to download its code from another
+server, which `files` cannot pin. For LogRocket these are `asyncScriptUrl`,
+`initOptions.sdkServer` and `initOptions.enterpriseServer`. For such a loader,
+the registry's `sources` entry lists those options in `refuseIfSet`, as dotted
+paths into the integration's options:
+
+```json
+{
+  "logrocket": {
+    "src": "https://acme.inth.app/scripts/logrocket@0123456789abcdef.js?logger=fedcba9876543210",
+    "integrity": "sha384-…",
+    "refuseIfSet": [
+      "asyncScriptUrl",
+      "initOptions.sdkServer",
+      "initOptions.enterpriseServer"
+    ]
+  }
+}
+```
+
+When your options set any listed path, the script loads nothing: not from the
+registry, and not from the vendor's URL. `onDebug` reports an `error` that names
+the path. Inth reads an option as the loader does: `undefined`, `null`, `''`,
+`false` and `0` count as unset, and so does a blank `asyncScriptUrl`. For
+LogRocket that means a page that moves the logger with `asyncScriptUrl`, or sets
+`sdkServer` or `enterpriseServer`, gets no LogRocket at all while the registry
+is on: the loader would fetch a file the list does not name. A script that
+carries no options to check also loads nothing. A `refuseIfSet` that is not a list of paths makes the entry one
+Inth cannot use. To load such a script with that option, give it your own
+`scriptLoader.sources` entry, which wins over the list.
+
+Only a Content Security Policy closes these gaps in your page, for files on a
+vendor host. Allow the registry and your own origin, and no vendor host:
+
+```http
+Content-Security-Policy: script-src 'self' https://acme.inth.app; worker-src blob:
+```
+
+- `script-src` lists only the gateway and your own origin. When a vendor host
+  is not on the list, the browser blocks every unpinned request to it,
+  whichever API makes it.
+- Do not add `'strict-dynamic'`. It lets a trusted script load any script, and
+  the browser then ignores the host list.
+- Do not add `'unsafe-eval'`, which lets code a loader fetched run through
+  `eval`.
+- `worker-src blob:` lets a loader start a worker from code it already has, as
+  LogRocket does. It does not allow worker files from a vendor host.
+
+The policy applies to your page and to `srcdoc` frames, not to a frame loaded
+from another origin, which runs under that origin's own policy. Add `frame-src`
+to limit which origins your page can frame.
+
+If you add a `'nonce-…'` for inline scripts, keep vendor code out of them. An
+inline script with a nonce can `import()` a module from any URL, because the
+browser gives the nonce to the import as well.
 
 ## What start and dispose do
 

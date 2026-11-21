@@ -418,6 +418,15 @@ export interface Script {
 	integration?: string;
 
 	/**
+	 * The options the `@inth/integrations` helper was called with, as given.
+	 * With `experimentalScriptRegistry`, a registry entry's `refuseIfSet`
+	 * reads them: when they set a path it lists, the script does not load.
+	 * A helper sets it when its loader can download code from a server its
+	 * options name, such as LogRocket's `initOptions.sdkServer`.
+	 */
+	integrationOptions?: Readonly<Record<string, unknown>>;
+
+	/**
 	 * IAB TCF vendor ID - links script to a registered vendor.
 	 *
 	 * Only evaluated in IAB mode, where the script loads when this vendor has

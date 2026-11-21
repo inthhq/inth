@@ -250,6 +250,63 @@ describe('serverScriptStart', () => {
 		).toBeUndefined();
 	});
 
+	test('leaves integrations to the client when the prefetched list names files, and starts the rest', () => {
+		// The loader pins the files an integration's loader downloads only
+		// once it runs, so an integration started from the HTML would fetch
+		// them unpinned. A script the registry does not manage is not held.
+		run(
+			serverScriptStart({
+				experimentalScriptRegistry: true,
+				mode,
+				prefetch: {
+					...prefetchFor({ marketing: true }),
+					initialScriptRegistry: {
+						files: {
+							'https://cdn.pixel.example/runtime.js': {
+								integrity: 'sha384-registry',
+								src: 'https://acme.inth.app/scripts/pixel/runtime@0123456789abcdef.js',
+							},
+						},
+						sources: {
+							pixel: {
+								integrity: 'sha384-registry',
+								src: 'https://acme.inth.app/scripts/pixel@0123456789abcdef.js',
+							},
+						},
+					},
+				},
+				scripts: [
+					{ ...pixel, integration: 'pixel' },
+					{ ...pixel, id: 'plain', src: 'https://cdn.plain.example/plain.js' },
+				],
+			})
+		);
+		expect(
+			Array.from(document.head.querySelectorAll('script'), (script) =>
+				script.getAttribute('src')
+			)
+		).toEqual(['https://cdn.plain.example/plain.js']);
+	});
+
+	// A control: it passes without the registry too, and guards that a
+	// pending list holds no script the registry does not manage.
+	test('starts a plain script while the registry list is pending', () => {
+		run(
+			serverScriptStart({
+				experimentalScriptRegistry: true,
+				mode,
+				prefetch: {
+					...prefetchFor({ marketing: true }),
+					initialPolicyPending: true,
+				},
+				scripts: [pixel],
+			})
+		);
+		expect(document.head.querySelector('script')?.getAttribute('src')).toBe(
+			pixel.src
+		);
+	});
+
 	test('starts an integration from its own URL when the prefetch carries no registry list', () => {
 		run(
 			serverScriptStart({

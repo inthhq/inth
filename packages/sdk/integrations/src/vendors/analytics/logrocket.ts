@@ -167,13 +167,21 @@ export const logRocket = function logRocket(options: LogRocketOptions): Script {
 		} satisfies VendorManifest;
 	}
 
-	return resolveManifest(manifest, {
+	// One copy for the registry's check and for `LogRocket.init`, so options
+	// changed after this call cannot pass one and reach the other.
+	const initOptions = { ...options.initOptions };
+	const script = resolveManifest(manifest, {
 		appId,
 		asyncScriptUrl,
-		initOptions: options.initOptions ?? {},
+		initOptions,
 		scriptUrl: resolveScriptUrl(
 			options.scriptUrl,
 			DEFAULT_LOGROCKET_SCRIPT_URL
 		),
 	});
+	// `asyncScriptUrl`, `initOptions.sdkServer` and `enterpriseServer` move
+	// where the loader downloads its logger, so the script registry reads
+	// them, as the loader does: a blank `asyncScriptUrl` is unset.
+	script.integrationOptions = { ...options, asyncScriptUrl, initOptions };
+	return script;
 };

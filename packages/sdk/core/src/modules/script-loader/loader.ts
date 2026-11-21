@@ -10,6 +10,8 @@ import { createDebugEmitter } from './debug';
 import { registerScriptDiagnostics } from './diagnostics';
 import type { ScriptDiagnostic, ScriptDiagnosticStatus } from './diagnostics';
 import { buildReconcilePass, hasScriptConsent } from './eligibility';
+import { pinRegistryFiles } from './files';
+import type { FilePin } from './files';
 import {
 	flushPendingMounts,
 	mountScript,
@@ -37,6 +39,23 @@ import type {
 } from './types';
 
 const MAX_RECONCILE_PASSES = 100;
+
+/** Why a held script does not load, for `onDebug`. */
+const heldMessage = (
+	reason: HeldScript['reason'],
+	script: Script,
+	path: string | undefined
+): string => {
+	if (reason === 'unparsable') {
+		return `scriptLoader.sources gives ${script.id} an integrity with no hash a browser can parse, so it does not load: the browser would run it unchecked.`;
+	}
+	if (reason === 'option') {
+		return script.integrationOptions
+			? `The script registry refuses ${script.id} because its options set ${path}: with it, its loader downloads code from a server the registry cannot pin. It loads neither from the registry nor from ${script.src}.`
+			: `The script registry refuses ${script.id} unless its options leave ${path} unset, and ${script.id} carries no integrationOptions to check, so it loads neither from the registry nor from ${script.src}.`;
+	}
+	return `The script registry holds ${script.id} back, or lists it without an https src and an integrity hash, so it loads neither from the registry nor from ${script.src}.`;
+};
 
 const validateScripts = (scripts: Script[]): void => {
 	for (const script of scripts) {
@@ -104,6 +123,30 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		? readRegistry(kernel.getSnapshot())
 		: { status: 'failed' };
 	let stopWaiting: (() => void) | undefined;
+	// The registry's files pin what LogRocket's loader downloads while it
+	// runs. The pin goes on once a list that names files is here: when a
+	// prefetch carried it, before this loader first mounts, and otherwise
+	// before the scripts that waited for it mount. Nothing waits for it, and
+	// it comes off however the loader shuts down.
+	let filePin: FilePin | null | undefined;
+	let pinReleased = false;
+	const releasePin = (): void => {
+		pinReleased = true;
+		filePin?.dispose();
+		filePin = undefined;
+	};
+	const pinFiles = (state: ScriptRegistryState): void => {
+		if (
+			!options.registry ||
+			pinReleased ||
+			filePin !== undefined ||
+			state.status !== 'listed' ||
+			Object.keys(state.files ?? {}).length === 0
+		) {
+			return;
+		}
+		filePin = pinRegistryFiles(state.files ?? {});
+	};
 	const withSources = createScriptSourceResolver(
 		options.sources,
 		options.registry ? () => registryState : undefined
@@ -122,17 +165,15 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		// loads from, so it is not compared with its vendor URL meanwhile.
 		validateScripts(resolved.scripts);
 		({ held } = resolved);
-		for (const { reason, script } of held) {
+		for (const { path, reason, script } of held) {
 			if (reason === 'waiting' || refusedIds.has(script.id)) {
 				continue;
 			}
 			refusedIds.add(script.id);
 			emit({
 				action: 'error',
-				message:
-					reason === 'unparsable'
-						? `scriptLoader.sources gives ${script.id} an integrity with no hash a browser can parse, so it does not load: the browser would run it unchecked.`
-						: `The script registry holds ${script.id} back, or lists it without an https src and an integrity hash, so it loads neither from the registry nor from ${script.src}.`,
+				data: path === undefined ? undefined : { refuseIfSet: path },
+				message: heldMessage(reason, script, path),
 				scope: 'lifecycle',
 				scriptId: script.id,
 				source: 'script-loader',
@@ -556,6 +597,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		cleaningUp = false;
 		diagnostics?.dispose();
 		diagnostics = undefined;
+		stopWaiting?.();
 		for (const [scriptId, element] of new Map([
 			...retainedElements,
 			...loadedElements,
@@ -570,6 +612,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 				);
 			}
 		}
+		releasePin();
 		loadedElements.clear();
 		retainedElements.clear();
 		ownedScriptIds.clear();
@@ -743,6 +786,8 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			}
 			registryState = state;
 			stopWaiting?.();
+			// Before the waiting scripts mount, so their loaders find it.
+			pinFiles(state);
 			if (disposed || (held.length === 0 && !staged)) {
 				return;
 			}
@@ -771,6 +816,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		};
 	}
 	try {
+		pinFiles(registryState);
 		// Observe initial mounts too, including synchronous inline execution.
 		reconcileRequested = true;
 		forceReconcile = true;

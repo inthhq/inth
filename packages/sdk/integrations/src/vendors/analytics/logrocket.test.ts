@@ -56,6 +56,39 @@ describe('logRocket', () => {
 		expect(init).toHaveBeenCalledWith('inthfake/inthfake', initOptions);
 	});
 
+	it('initializes with the options the registry checked, not ones changed later', () => {
+		const globalRef = getTestGlobal();
+		const init = vi.fn();
+		globalRef.LogRocket = { init };
+		const initOptions: Record<string, unknown> = {};
+		const script = logRocket({ appId: 'c15tfake/c15tfake', initOptions });
+		initOptions.sdkServer = 'https://logrocket.internal.example';
+
+		script.onLoad?.(
+			createCallbackInfo({
+				consents: grantedMeasurementConsentState,
+				hasConsent: true,
+				id: script.id,
+			})
+		);
+
+		expect(init).toHaveBeenCalledWith('c15tfake/c15tfake', {});
+		expect(script.integrationOptions?.initOptions).toEqual({});
+	});
+
+	it('shows the registry the asyncScriptUrl the loader reads, a blank one as unset', () => {
+		expect(
+			logRocket({ appId: 'c15tfake/c15tfake', asyncScriptUrl: '  ' })
+				.integrationOptions?.asyncScriptUrl
+		).toBeUndefined();
+		expect(
+			logRocket({
+				appId: 'c15tfake/c15tfake',
+				asyncScriptUrl: ' https://lr.example/logger.js ',
+			}).integrationOptions?.asyncScriptUrl
+		).toBe('https://lr.example/logger.js');
+	});
+
 	it('honors a custom loader URL', () => {
 		const script = logRocket({
 			appId: 'inthfake/inthfake',

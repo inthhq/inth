@@ -40,6 +40,13 @@ const mode = transportMode({
 	save: () => Promise.resolve({ ok: true }),
 });
 
+/** A mode whose init answers `answer`, carrying `scriptRegistry`. */
+const initMode = (answer: () => Promise<Record<string, unknown>>) =>
+	transportMode({
+		init: answer as never,
+		save: () => Promise.resolve({ ok: true }),
+	});
+
 const vendorScript = (overrides: Partial<Script> = {}): Script => ({
 	anonymizeId: false,
 	attributes: { 'data-api-host': 'https://api.vendor.example' },
@@ -512,13 +519,6 @@ describe('experimentalScriptRegistry', () => {
 		});
 
 	const necessaryOther: Script = { ...otherScript, category: 'necessary' };
-
-	/** A mode whose init answers `answer`, carrying `scriptRegistry`. */
-	const initMode = (answer: () => Promise<Record<string, unknown>>) =>
-		transportMode({
-			init: answer as never,
-			save: () => Promise.resolve({ ok: true }),
-		});
 
 	const listed = (scriptSources: Record<string, unknown>) =>
 		initMode(() =>
@@ -1452,6 +1452,456 @@ describe('experimentalScriptRegistry', () => {
 				integrity: HASH_INTEGRITY,
 				src: HASH_SRC,
 			})
+		);
+		runtime.dispose();
+	});
+});
+
+describe('experimentalScriptRegistry files', () => {
+	const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';
+	const HASH_SRC = 'https://acme.inth.app/scripts/vendor@0123456789abcdef.js';
+	const LOGGER_SRC = 'https://cdn.vendor.example/logger-1.min.js';
+	const LOGGER_HASH_SRC =
+		'https://acme.inth.app/scripts/vendor-logger@0123456789abcdef.js';
+	const HASH_INTEGRITY =
+		'sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
+	const LOGGER_INTEGRITY =
+		'sha384-ZZZuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
+
+	const registry = {
+		files: {
+			[LOGGER_SRC]: { integrity: LOGGER_INTEGRITY, src: LOGGER_HASH_SRC },
+		},
+		sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+	};
+
+	/** The logger tag, as the vendor's loader would insert it. */
+	const insertLogger = () => {
+		const tag = document.createElement('script');
+		tag.src = LOGGER_SRC;
+		document.head.appendChild(tag);
+		return tag;
+	};
+
+	const pinnedLogger = {
+		crossorigin: 'anonymous',
+		integrity: LOGGER_INTEGRITY,
+		src: LOGGER_HASH_SRC,
+		type: null,
+	};
+
+	const fetched = (tag: HTMLScriptElement) => ({
+		crossorigin: tag.getAttribute('crossorigin'),
+		integrity: tag.getAttribute('integrity'),
+		src: tag.getAttribute('src'),
+		type: tag.getAttribute('type'),
+	});
+
+	/**
+	 * A registry integration whose setup stands in for its loader: jsdom
+	 * runs no fetched script, so the setup inserts the logger, as the loader
+	 * would once it runs.
+	 */
+	const loaderScript = (loaded: HTMLScriptElement[]): Script => ({
+		anonymizeId: false,
+		category: 'necessary',
+		id: 'vendor',
+		integration: 'vendor',
+		onBeforeLoad: () => {
+			loaded.push(insertLogger());
+		},
+		src: VENDOR_SRC,
+	});
+
+	const integration = (): Script => ({
+		anonymizeId: false,
+		category: 'necessary',
+		id: 'vendor',
+		integration: 'vendor',
+		src: VENDOR_SRC,
+	});
+
+	const nativeAppendChild = Node.prototype.appendChild;
+	const runtimes: { dispose: () => void }[] = [];
+	/** Start a runtime the test's cleanup disposes, even when it fails. */
+	const begin = (options: Parameters<typeof createConsentRuntime>[0]) => {
+		const runtime = createConsentRuntime(options);
+		runtimes.push(runtime);
+		runtime.start();
+		return runtime;
+	};
+
+	afterEach(() => {
+		for (const runtime of runtimes.splice(0)) {
+			runtime.dispose();
+		}
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+	});
+
+	test("pins a file the integration's loader inserts, by the list init carries", async () => {
+		const loaded: HTMLScriptElement[] = [];
+		begin({
+			experimentalScriptRegistry: true,
+			mode: initMode(() => Promise.resolve({ scriptRegistry: registry })),
+			persistence: false,
+			scripts: [loaderScript(loaded)],
+		});
+
+		await vi.waitFor(() => expect(loaded).toHaveLength(1));
+		expect(fetchAttributes('vendor').src).toBe(HASH_SRC);
+		expect(fetched(loaded[0] as HTMLScriptElement)).toEqual(pinnedLogger);
+	});
+
+	test('holds nothing and patches nothing while init is pending, then pins once the list arrives', async () => {
+		let answer: (response: Record<string, unknown>) => void = () => undefined;
+		begin({
+			experimentalScriptRegistry: true,
+			mode: initMode(
+				() =>
+					new Promise((resolve) => {
+						answer = resolve;
+					})
+			),
+			persistence: false,
+			scripts: [
+				integration(),
+				{
+					anonymizeId: false,
+					category: 'necessary',
+					id: 'widget',
+					src: 'https://cdn.other.example/widget.js',
+				},
+			],
+		});
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+		expect(fetched(element('widget') as HTMLScriptElement)).toEqual({
+			crossorigin: null,
+			integrity: null,
+			src: 'https://cdn.other.example/widget.js',
+			type: null,
+		});
+		// Inserted before the list is here, it goes as it came.
+		expect(fetched(insertLogger()).src).toBe(LOGGER_SRC);
+
+		answer({ scriptRegistry: registry });
+		await vi.waitFor(() =>
+			expect(Node.prototype.appendChild).not.toBe(nativeAppendChild)
+		);
+		expect(fetched(insertLogger())).toEqual(pinnedLogger);
+	});
+
+	// A control, as are the next two: they pass without the pin too, and
+	// guard that it stays off unless a list names files.
+	test('patches nothing when init fails', async () => {
+		let fail: (error: Error) => void = () => undefined;
+		begin({
+			experimentalScriptRegistry: true,
+			mode: initMode(
+				() =>
+					new Promise((_resolve, reject) => {
+						fail = reject;
+					})
+			),
+			persistence: false,
+			scripts: [integration()],
+		});
+
+		fail(new Error('offline'));
+		await vi.waitFor(() =>
+			expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+		);
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+	});
+
+	test("routes a script the SDK itself creates, and keeps the loader's pin", () => {
+		begin({
+			enabled: false,
+			experimentalScriptRegistry: true,
+			mode,
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: false,
+				initialScriptRegistry: registry,
+			},
+			scripts: [
+				{
+					anonymizeId: false,
+					category: 'necessary',
+					id: 'logger',
+					src: LOGGER_SRC,
+				},
+				{
+					anonymizeId: false,
+					attributes: { integrity: HASH_INTEGRITY },
+					category: 'necessary',
+					id: 'pinned',
+					src: `${LOGGER_SRC}#pinned`,
+				},
+			],
+		});
+
+		expect(fetched(element('logger') as HTMLScriptElement)).toEqual(
+			pinnedLogger
+		);
+		// Its own pin lists other bytes, so it keeps the vendor URL.
+		expect(fetched(element('pinned') as HTMLScriptElement)).toEqual({
+			crossorigin: null,
+			integrity: HASH_INTEGRITY,
+			src: `${LOGGER_SRC}#pinned`,
+			type: null,
+		});
+	});
+
+	test('does not patch the DOM when the list names no files', async () => {
+		begin({
+			experimentalScriptRegistry: true,
+			mode: initMode(() =>
+				Promise.resolve({
+					scriptRegistry: { sources: registry.sources },
+				})
+			),
+			persistence: false,
+			scripts: [integration()],
+		});
+
+		await vi.waitFor(() =>
+			expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
+		);
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+	});
+
+	test('leaves the DOM alone with the registry off, even when init lists files', async () => {
+		begin({
+			mode: initMode(() => Promise.resolve({ scriptRegistry: registry })),
+			persistence: false,
+			scripts: [integration()],
+		});
+
+		await vi.waitFor(() =>
+			expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+		);
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+		expect(fetched(insertLogger()).src).toBe(LOGGER_SRC);
+	});
+
+	test('restores the DOM when the runtime is disposed', () => {
+		const runtime = begin({
+			enabled: false,
+			experimentalScriptRegistry: true,
+			mode,
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: false,
+				initialScriptRegistry: registry,
+			},
+			scripts: [integration()],
+		});
+		expect(Node.prototype.appendChild).not.toBe(nativeAppendChild);
+
+		runtime.dispose();
+		expect(Node.prototype.appendChild).toBe(nativeAppendChild);
+	});
+});
+
+describe('experimentalScriptRegistry refuseIfSet', () => {
+	const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';
+	const HASH_SRC = 'https://acme.inth.app/scripts/vendor@0123456789abcdef.js';
+	const HASH_INTEGRITY =
+		'sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
+	const PATHS = ['initOptions.sdkServer', 'initOptions.enterpriseServer'];
+
+	/** Start with a prefetched list, so the list applies at once. */
+	const startListed = (
+		script: Partial<Script>,
+		entry: Record<string, unknown> = {
+			integrity: HASH_INTEGRITY,
+			refuseIfSet: PATHS,
+			src: HASH_SRC,
+		}
+	) => {
+		const onDebug = vi.fn();
+		const runtime = createConsentRuntime({
+			experimentalScriptRegistry: true,
+			mode,
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: false,
+				initialScriptRegistry: { sources: { vendor: entry as never } },
+			},
+			scriptLoader: { onDebug },
+			scripts: [
+				{
+					anonymizeId: false,
+					category: 'necessary',
+					id: 'vendor',
+					integration: 'vendor',
+					src: VENDOR_SRC,
+					...script,
+				},
+			],
+		});
+		runtime.start();
+		const refusal = () =>
+			onDebug.mock.calls
+				.map(
+					([event]) =>
+						event as { action: string; data?: unknown; message: string }
+				)
+				.find((event) => event.action === 'error');
+		return { refusal, runtime };
+	};
+
+	test.each([
+		['a URL', 'https://lr.example.com'],
+		['any string', 'x'],
+		['true', true],
+		['a number', 1],
+		['an object', {}],
+		['an array', []],
+	])(
+		'loads nothing when the options set a listed path to %s',
+		(_case, value) => {
+			const { refusal, runtime } = startListed({
+				integrationOptions: { initOptions: { enterpriseServer: value } },
+			});
+
+			expect(element('vendor')).toBeNull();
+			expect(refusal()).toMatchObject({
+				data: { refuseIfSet: 'initOptions.enterpriseServer' },
+				message: expect.stringContaining(
+					'its options set initOptions.enterpriseServer'
+				),
+			});
+			runtime.dispose();
+		}
+	);
+
+	test("refuses by a top-level path, as LogRocket's asyncScriptUrl is", () => {
+		const entry = {
+			integrity: HASH_INTEGRITY,
+			refuseIfSet: [...PATHS, 'asyncScriptUrl'],
+			src: HASH_SRC,
+		};
+		const moved = startListed(
+			{
+				integrationOptions: {
+					asyncScriptUrl: 'https://lr.example.com/logger.js',
+					initOptions: {},
+				},
+			},
+			entry
+		);
+		expect(element('vendor')).toBeNull();
+		expect(moved.refusal()).toMatchObject({
+			data: { refuseIfSet: 'asyncScriptUrl' },
+		});
+		moved.runtime.dispose();
+
+		// The helper publishes a blank asyncScriptUrl as undefined.
+		const unset = startListed(
+			{ integrationOptions: { asyncScriptUrl: undefined, initOptions: {} } },
+			entry
+		);
+		expect(element('vendor')?.getAttribute('src')).toBe(HASH_SRC);
+		unset.runtime.dispose();
+	});
+
+	// Controls, as are the next two: they pass without refuseIfSet too, and
+	// guard that an unset option, one on the prototype, or the page's own
+	// source does not refuse a script.
+	test.each([
+		['undefined', undefined],
+		['null', null],
+		["''", ''],
+		['false', false],
+		['0', 0],
+	])('loads from the registry when a listed path is %s', (_case, value) => {
+		const { refusal, runtime } = startListed({
+			integrationOptions: {
+				initOptions: { enterpriseServer: value, sdkServer: value },
+			},
+		});
+
+		expect(fetchAttributes('vendor').src).toBe(HASH_SRC);
+		expect(refusal()).toBeUndefined();
+		runtime.dispose();
+	});
+
+	test('reads a path through own properties only, and a missing step as unset', () => {
+		const inherited = Object.create({ sdkServer: 'https://lr.example.com' });
+		const { runtime } = startListed({
+			integrationOptions: { initOptions: inherited, other: { sdkServer: 'x' } },
+		});
+
+		expect(fetchAttributes('vendor').src).toBe(HASH_SRC);
+		runtime.dispose();
+	});
+
+	test('loads nothing when the script carries no options to check', () => {
+		const { refusal, runtime } = startListed({});
+
+		expect(element('vendor')).toBeNull();
+		expect(refusal()?.message).toContain('carries no integrationOptions');
+		runtime.dispose();
+	});
+
+	test('loads nothing for an entry whose refuseIfSet is not a list of paths', () => {
+		const { refusal, runtime } = startListed(
+			{ integrationOptions: {} },
+			{
+				integrity: HASH_INTEGRITY,
+				refuseIfSet: 'initOptions.sdkServer',
+				src: HASH_SRC,
+			}
+		);
+
+		expect(element('vendor')).toBeNull();
+		expect(refusal()?.message).toContain('holds vendor back');
+		runtime.dispose();
+	});
+
+	test("lets the page's own scriptLoader.sources entry win, as it does over the rest of the list", () => {
+		const runtime = createConsentRuntime({
+			experimentalScriptRegistry: true,
+			mode,
+			persistence: false,
+			prefetch: {
+				initialPolicyPending: false,
+				initialScriptRegistry: {
+					sources: {
+						vendor: {
+							integrity: HASH_INTEGRITY,
+							refuseIfSet: PATHS,
+							src: HASH_SRC,
+						},
+					},
+				},
+			},
+			scriptLoader: {
+				sources: {
+					vendor: {
+						integrity: HASH_INTEGRITY,
+						src: 'https://site.example/vendor.js',
+					},
+				},
+			},
+			scripts: [
+				{
+					anonymizeId: false,
+					category: 'necessary',
+					id: 'vendor',
+					integration: 'vendor',
+					integrationOptions: {
+						initOptions: { sdkServer: 'https://lr.example.com' },
+					},
+					src: VENDOR_SRC,
+				},
+			],
+		});
+		runtime.start();
+
+		expect(fetchAttributes('vendor').src).toBe(
+			'https://site.example/vendor.js'
 		);
 		runtime.dispose();
 	});

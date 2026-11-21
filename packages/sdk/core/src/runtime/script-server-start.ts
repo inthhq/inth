@@ -329,21 +329,19 @@ const serverStartCandidates = function serverStartCandidates(
 	failedPredicates: Set<Script>
 ): Script[] {
 	// With the registry on, scripts start from the sources the prefetched
-	// init carries, as the loader would load them. Without a resolved
-	// prefetch, an integration the list may name waits for the loader.
+	// init carries, as the loader would load them.
 	const { prefetch } = options;
+	const registry = options.experimentalScriptRegistry
+		? readScriptRegistry({
+				policyPending:
+					prefetch?.initialPolicyPending ?? !prefetch?.initialPolicyResolution,
+				resolution: prefetch?.initialPolicyResolution,
+				scriptRegistry: prefetch?.initialScriptRegistry ?? null,
+			})
+		: undefined;
 	const { scripts } = createScriptSourceResolver(
 		options.scriptLoader?.sources,
-		options.experimentalScriptRegistry
-			? () =>
-					readScriptRegistry({
-						policyPending:
-							prefetch?.initialPolicyPending ??
-							!prefetch?.initialPolicyResolution,
-						resolution: prefetch?.initialPolicyResolution,
-						scriptRegistry: prefetch?.initialScriptRegistry ?? null,
-					})
-			: undefined
+		registry ? () => registry : undefined
 	)(options.scripts ?? []);
 	if (
 		options.scriptLoader?.serverStart === false ||
@@ -351,7 +349,17 @@ const serverStartCandidates = function serverStartCandidates(
 	) {
 		return [];
 	}
+	// An integration started from the HTML runs before the loader pins the
+	// files its loader downloads (`files.ts`), so it would fetch them from
+	// the vendor: while the list names files, integrations wait for the
+	// loader. Scripts the registry does not manage still start.
+	const pinsFiles =
+		registry?.status === 'listed' &&
+		Object.keys(registry.files ?? {}).length > 0;
 	return scripts.filter((script) => {
+		if (pinsFiles && script.integration) {
+			return false;
+		}
 		try {
 			return !isCallbackOnly(script);
 		} catch {
