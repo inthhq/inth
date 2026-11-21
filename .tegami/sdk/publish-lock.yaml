@@ -2,6 +2,9 @@ core:changelogs:
   - content: "---\npackages:\n  group:sdk:\n    type: patch\n---\n\n### First alpha of the Inth consent SDK\n\n`@inth/sdk` and the framework packages publish as `0.0.0-alpha.0` under the `alpha` dist-tag: `@inth/react`, `@inth/nextjs`, `@inth/tanstack-start`, `@inth/vue`, `@inth/nuxt`, `@inth/svelte`, `@inth/astro`, `@inth/angular` and `@inth/integrations`. Install the package for your framework with the tag, such as `npm install @inth/react@alpha`.\n"
     filename: 2026-11-18-sdk-first-alpha.md
     v: 0.0.0
+  - content: "---\npackages:\n  npm:@inth/node:\n    type: patch\n---\n\n### First alpha of the Inth server client\n\n`@inth/node` calls the Inth `/v1` API from your server: check what a user consents to, link a browser to your user, mint identity tokens, and publish, check and record acceptance of legal documents. It runs on Node.js 20.3 or later, Vercel Functions and Cloudflare Workers. Install it with the tag: `npm install @inth/node@alpha`.\n"
+    filename: 2026-11-21-node-first-alpha.md
+    v: 0.0.0
 core:packages:
   - changelogIds:
       - 2026-11-18-sdk-first-alpha.md
@@ -18,6 +21,10 @@ core:packages:
   - changelogIds:
       - 2026-11-18-sdk-first-alpha.md
     id: npm:@inth/nextjs
+    updated: true
+  - changelogIds:
+      - 2026-11-21-node-first-alpha.md
+    id: npm:@inth/node
     updated: true
   - changelogIds:
       - 2026-11-18-sdk-first-alpha.md
@@ -52,6 +59,8 @@ npm:packages:
     id: npm:@inth/integrations
   - distTag: alpha
     id: npm:@inth/nextjs
+  - distTag: alpha
+    id: npm:@inth/node
   - distTag: alpha
     id: npm:@inth/nuxt
   - distTag: alpha
