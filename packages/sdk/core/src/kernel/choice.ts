@@ -683,14 +683,18 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			existingSubjectId === null
 				? null
 				: (outcome.subjectId ?? existingSubjectId);
+		const current = getSnapshot();
 		const fresh =
 			runtime.getOptOutActVersion() === actVersion &&
 			runtime.getGeneration() === generation &&
-			(getSnapshot().subject?.subjectId ?? null) === expectedSubjectId;
+			(current.subject?.subjectId ?? null) === expectedSubjectId;
 		if (!fresh) {
 			return { ok: false, reason: 'held-by-account' };
 		}
 		if (outcome.optOut === null) {
+			if (optOutLiftBlocker(current) === 'gpc-active') {
+				return { ok: false, reason: 'gpc-active' };
+			}
 			batch(() => {
 				runtime.noteOptOutAct();
 				commit({ now: runtime.now(), optOut: null });
@@ -1214,7 +1218,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				result.ok &&
 				liftsAccountOptOut &&
 				runtime.getOptOutActVersion() === optOutActVersion &&
-				runtime.getGeneration() === generation
+				runtime.getGeneration() === generation &&
+				optOutLiftBlocker(getSnapshot()) === 'held-by-account'
 			) {
 				void liftAccountOptOutAfterSave(
 					subjectId,

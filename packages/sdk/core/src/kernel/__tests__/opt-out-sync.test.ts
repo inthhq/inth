@@ -2494,4 +2494,106 @@ describe('opt-out network sync and queue', () => {
 		expect(kernel.getSnapshot().optOut).toEqual(accountOptOut);
 		kernel.dispose();
 	});
+
+	test('GPC turning on during a granting save blocks the post-save account lift', async () => {
+		const accountOptOut: OptOutRecord = {
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+		};
+		const saveDeferred = Promise.withResolvers<SaveResult>();
+		const save = vi.fn<NonNullable<KernelTransport['save']>>(
+			() => saveDeferred.promise
+		);
+		const liftOptOut = vi.fn<NonNullable<KernelTransport['liftOptOut']>>(
+			(payload) =>
+				Promise.resolve({
+					ok: true,
+					optOut: null,
+					subjectId: payload.subjectId,
+				})
+		);
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: accountOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			initialUser: { externalId: 'user_123', identityToken: 'tok_1' },
+			transport: { liftOptOut, save },
+		});
+
+		const grantSave = kernel.commands.save({ marketing: true });
+		await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+
+		kernel.set.privacySignals({ gpc: true });
+		saveDeferred.resolve({ ok: true, subjectId: SUBJECT });
+		await grantSave;
+		await flushMacrotasks();
+
+		expect(liftOptOut).not.toHaveBeenCalled();
+		expect(kernel.getSnapshot().optOut).toEqual(accountOptOut);
+		kernel.dispose();
+	});
+
+	test('GPC turning on while an account lift is in flight prevents clearing the held opt-out', async () => {
+		const accountOptOut: OptOutRecord = {
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+		};
+		const optInLift = Promise.withResolvers<LiftOptOutTransportResult>();
+		const liftFromOptIn = vi.fn<NonNullable<KernelTransport['liftOptOut']>>(
+			() => optInLift.promise
+		);
+		const first = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: accountOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			initialUser: { externalId: 'user_123', identityToken: 'tok_1' },
+			transport: { liftOptOut: liftFromOptIn },
+		});
+		const lifted = vi.fn();
+		first.events.on('opt-out:lifted', lifted);
+
+		const optInPromise = first.commands.optIn();
+		await vi.waitFor(() => expect(liftFromOptIn).toHaveBeenCalledTimes(1));
+		first.set.privacySignals({ gpc: true });
+		optInLift.resolve({ ok: true, optOut: null, subjectId: SUBJECT });
+
+		expect(await optInPromise).toEqual({ ok: false, reason: 'gpc-active' });
+		expect(first.getSnapshot().optOut).toEqual(accountOptOut);
+		expect(lifted).not.toHaveBeenCalled();
+		first.dispose();
+
+		const postSaveLift = Promise.withResolvers<LiftOptOutTransportResult>();
+		const liftAfterSave = vi.fn<NonNullable<KernelTransport['liftOptOut']>>(
+			() => postSaveLift.promise
+		);
+		const save = vi.fn<NonNullable<KernelTransport['save']>>((payload) =>
+			Promise.resolve({ ok: true, subjectId: payload.subjectId })
+		);
+		const second = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: accountOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			initialUser: { externalId: 'user_123', identityToken: 'tok_1' },
+			transport: { liftOptOut: liftAfterSave, save },
+		});
+
+		await second.commands.save({ marketing: true });
+		await vi.waitFor(() => expect(liftAfterSave).toHaveBeenCalledTimes(1));
+		second.set.privacySignals({ gpc: true });
+		postSaveLift.resolve({ ok: true, optOut: null, subjectId: SUBJECT });
+		await flushMacrotasks();
+
+		expect(second.getSnapshot().optOut).toEqual(accountOptOut);
+		second.dispose();
+	});
 });
