@@ -635,6 +635,13 @@ const createStoredLists = function createStoredLists(
  */
 export type EnqueueResult = 'queued' | 'superseded' | 'unstored';
 
+/**
+ * Outcome of queueing an opt-out act. `queued` means stored durably, `memory`
+ * means kept in the process-only fallback store, and `unstored` means the write
+ * was refused.
+ */
+export type OptOutEnqueueResult = 'queued' | 'memory' | 'unstored';
+
 /** `retry` keeps the entry for another attempt; the others remove it. */
 type ReplayOutcome = 'saved' | 'retry' | 'rejected';
 
@@ -669,7 +676,7 @@ export interface QueueWorker {
 	/** Queue what `current()` still holds, read inside the transaction. */
 	enqueue: (current: () => SavePayload | null) => Promise<EnqueueResult>;
 	/** Queue one opt-out act (record or lift), without its identity token. */
-	enqueueOptOut: (act: OptOutAct) => Promise<'queued' | 'unstored'>;
+	enqueueOptOut: (act: OptOutAct) => Promise<OptOutEnqueueResult>;
 	/** Drop `payload` and the queued saves it superseded. */
 	discard: (payload: SavePayload) => Promise<void>;
 	/** Drop one opt-out act by its idempotency key. */
@@ -834,13 +841,14 @@ export const createQueueWorker = function createQueueWorker({
 
 	const enqueueOptOut = function enqueueOptOut(
 		act: OptOutAct
-	): Promise<'queued' | 'unstored'> {
+	): Promise<OptOutEnqueueResult> {
 		return store.transact((tx) => {
 			const now = Date.now();
 			const pending = appendOptOut(readPendingOptOuts(tx, now), act, now);
-			return tx.write('optOuts', normalizePendingOptOuts(pending, now))
-				? 'queued'
-				: 'unstored';
+			if (!tx.write('optOuts', normalizePendingOptOuts(pending, now))) {
+				return 'unstored';
+			}
+			return tx.durable === false ? 'memory' : 'queued';
 		});
 	};
 

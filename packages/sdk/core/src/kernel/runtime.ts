@@ -90,6 +90,8 @@ export interface KernelRuntime {
 	noteOptOutAct: () => number;
 	/** Whether this browser has already reported its GPC signal for the held opt-out record. */
 	isOptOutGpcReported: () => boolean;
+	/** Monotonic fence bumped whenever the GPC report mark or attempt state clears. */
+	getOptOutGpcReportEpoch: () => number;
 	/** Set or clear the local GPC report mark. `notify` informs persistence listeners. */
 	setOptOutGpcReported: (reported: boolean, notify?: boolean) => void;
 	/** Subscribe to live changes to the local GPC report mark. */
@@ -144,6 +146,10 @@ export const createRuntime = function createRuntime(
 	let gpcReported =
 		options.initialOptOutGpcReported === true &&
 		options.initialSnapshot.optOut !== null;
+	// Process-only latch so a failed outbox write does not retry in a loop on
+	// this page load while keeping the persisted mark unset.
+	let gpcReportAttempted = gpcReported;
+	let gpcReportEpoch = 0;
 	let gpcReportedListeners: ListenerSet<boolean> | undefined;
 	/**
 	 * The surface the kernel, not the adapter, hid in the last commit: a
@@ -176,6 +182,14 @@ export const createRuntime = function createRuntime(
 		reported: boolean,
 		notify = true
 	): void {
+		if (reported) {
+			gpcReportAttempted = true;
+		} else {
+			if (gpcReported || gpcReportAttempted) {
+				gpcReportEpoch += 1;
+			}
+			gpcReportAttempted = false;
+		}
 		if (gpcReported === reported) {
 			return;
 		}
@@ -203,7 +217,8 @@ export const createRuntime = function createRuntime(
 			setOptOutGpcReported(false, current.optOut !== null);
 			return;
 		}
-		if (gpcSignalReportDue(current, live, gpcReported)) {
+		if (gpcSignalReportDue(current, live, gpcReported || gpcReportAttempted)) {
+			gpcReportAttempted = true;
 			onGpcSignalReportDue?.(current, actionAt);
 		}
 	};
@@ -451,6 +466,7 @@ export const createRuntime = function createRuntime(
 		// listeners still observe this transition first.
 		if (recordedGpcOptOut) {
 			optOutActVersion += 1;
+			gpcReportAttempted = true;
 			publish(current, adopted, shown, adopted.optOut);
 		} else {
 			publish(current, adopted, shown, null);
@@ -534,6 +550,7 @@ export const createRuntime = function createRuntime(
 		emit,
 		getGeneration: () => generation,
 		getOptOutActVersion: () => optOutActVersion,
+		getOptOutGpcReportEpoch: () => gpcReportEpoch,
 		getSnapshot,
 		invalidateRecords: () => {
 			generation += 1;

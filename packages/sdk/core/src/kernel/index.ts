@@ -128,15 +128,34 @@ export const createKernel = function createKernel(
 		// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
 		records.noteRecordedSubject(snapshot.subject?.subjectId);
 		// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
-		runtime.setOptOutGpcReported(true);
+		const actVersion = runtime.getOptOutActVersion();
+		// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
+		const generation = runtime.getGeneration();
+		// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
+		const gpcReportEpoch = runtime.getOptOutGpcReportEpoch();
 		// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
 		void outbox.sendOptOut(
 			buildOptOutPayload(snapshot, { method: 'gpc' }, actionAt, uiSource),
 			{
-				// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
-				actVersion: runtime.getOptOutActVersion(),
-				// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
-				generation: runtime.getGeneration(),
+				actVersion,
+				generation,
+				onGpcReported: () => {
+					// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
+					const current = runtime.getSnapshot();
+					if (
+						// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
+						runtime.getOptOutActVersion() === actVersion &&
+						// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
+						runtime.getGeneration() === generation &&
+						// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
+						runtime.getOptOutGpcReportEpoch() === gpcReportEpoch &&
+						current.optOut !== null &&
+						current.privacySignals.gpc.active
+					) {
+						// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
+						runtime.setOptOutGpcReported(true);
+					}
+				},
 			}
 		);
 	};
