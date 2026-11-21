@@ -90,9 +90,13 @@ const mountWidget = async (options: {
 		customFetch: vi.fn(() => new Response('{}')) as unknown as typeof fetch,
 		hideBranding: true,
 		projectUrl: 'https://consent.example',
-		...(options.gpc ? { overrides: { gpc: true } } : {}),
-		...(options.theme ? { theme: options.theme } : {}),
-	} as ConsentConfig;
+	} as ConsentConfig & { overrides?: { gpc: boolean } };
+	if (options.gpc) {
+		config.overrides = { gpc: true };
+	}
+	if (options.theme) {
+		config.theme = options.theme;
+	}
 	const context = createVueConsentKernelContext({
 		config,
 		initialRecords: options.initialRecords,
@@ -139,6 +143,33 @@ const mountWidget = async (options: {
 const part = <ElementType extends HTMLElement = HTMLElement>(testId: string) =>
 	document.querySelector<ElementType>(`[data-testid="${testId}"]`);
 
+/** The element with `testId`, which the test expects to be rendered. */
+const required = <ElementType extends HTMLElement = HTMLElement>(
+	testId: string
+): ElementType => {
+	const element = part<ElementType>(testId);
+	expect.assert(element, `${testId} is not rendered`);
+	return element;
+};
+
+/** A switch GPC locks stays off through a click and both activation keys. */
+const expectGpcLockedSwitch = async (category: 'marketing' | 'measurement') => {
+	const sw = required<HTMLButtonElement>(`consent-widget-switch-${category}`);
+	const notice = required(`consent-widget-restriction-${category}`);
+	expect(sw.disabled).toBe(true);
+	expect(sw.getAttribute('aria-checked')).toBe('false');
+	expect(sw.getAttribute('aria-describedby')).toBe(notice.id);
+	expect(notice.textContent).toContain('Global Privacy Control');
+
+	sw.click();
+	sw.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: ' ' }));
+	sw.dispatchEvent(
+		new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })
+	);
+	await flushPromises();
+	expect(sw.getAttribute('aria-checked')).toBe('false');
+};
+
 describe('Vue consent widget opt-out parity', () => {
 	test('shows request status, seeds stored grants off, keeps opt-out on untouched save and lifts on opt-in save', async () => {
 		const now = Date.now();
@@ -164,34 +195,36 @@ describe('Vue consent widget opt-out parity', () => {
 			},
 		});
 
-		const status = part('consent-widget-opt-out-status');
+		const status = required('consent-widget-opt-out-status');
 		expect(status).not.toBeNull();
-		expect(status?.getAttribute('role')).toBe('status');
-		expect(status?.textContent?.trim()).toBe('Opt-out request honored');
-		expect(status?.classList).toContain('brand-opt-out-status');
+		expect(status.getAttribute('role')).toBe('status');
+		expect(status.textContent?.trim()).toBe('Opt-out request honored');
+		expect(status.classList).toContain('brand-opt-out-status');
 
-		expect(part('opt-out-composable')?.textContent).toContain('"honored":true');
-		expect(part('opt-out-composable')?.textContent).toContain(
+		expect(required('opt-out-composable').textContent).toContain(
+			'"honored":true'
+		);
+		expect(required('opt-out-composable').textContent).toContain(
 			'"via":"request"'
 		);
 
-		const marketing = part<HTMLButtonElement>(
+		const marketing = required<HTMLButtonElement>(
 			'consent-widget-switch-marketing'
 		);
-		const measurement = part<HTMLButtonElement>(
+		const measurement = required<HTMLButtonElement>(
 			'consent-widget-switch-measurement'
 		);
-		const functionality = part<HTMLButtonElement>(
+		const functionality = required<HTMLButtonElement>(
 			'consent-widget-switch-functionality'
 		);
-		expect(marketing?.getAttribute('aria-checked')).toBe('false');
-		expect(marketing?.disabled).toBe(false);
-		expect(measurement?.getAttribute('aria-checked')).toBe('false');
-		expect(functionality?.getAttribute('aria-checked')).toBe('true');
+		expect(marketing.getAttribute('aria-checked')).toBe('false');
+		expect(marketing.disabled).toBe(false);
+		expect(measurement.getAttribute('aria-checked')).toBe('false');
+		expect(functionality.getAttribute('aria-checked')).toBe('true');
 		expect(part('consent-widget-restriction-marketing')).toBeNull();
 
 		// An untouched save does not re-confirm the stored grant or lift the opt-out.
-		part('consent-widget-footer-save-button')?.click();
+		required('consent-widget-footer-save-button').click();
 		await flushPromises();
 		expect(context.snapshot.value.optOut).not.toBeNull();
 		expect(context.snapshot.value.effectivePermissions.marketing).toBe(false);
@@ -200,10 +233,10 @@ describe('Vue consent widget opt-out parity', () => {
 		).toBe(false);
 
 		// Turning marketing back on and saving lifts the device opt-out.
-		marketing?.click();
+		marketing.click();
 		await flushPromises();
-		expect(marketing?.getAttribute('aria-checked')).toBe('true');
-		part('consent-widget-footer-save-button')?.click();
+		expect(marketing.getAttribute('aria-checked')).toBe('true');
+		required('consent-widget-footer-save-button').click();
 		await flushPromises();
 		expect(context.snapshot.value.optOut).toBeNull();
 		expect(context.snapshot.value.effectivePermissions.marketing).toBe(true);
@@ -230,38 +263,22 @@ describe('Vue consent widget opt-out parity', () => {
 			now,
 		});
 
-		const status = part('consent-widget-opt-out-status');
-		expect(status?.getAttribute('role')).toBe('status');
-		expect(status?.textContent?.trim()).toBe(
+		const status = required('consent-widget-opt-out-status');
+		expect(status.getAttribute('role')).toBe('status');
+		expect(status.textContent?.trim()).toBe(
 			'Opt-out preference signal honored'
 		);
-		expect(part('opt-out-composable')?.textContent).toContain(
+		expect(required('opt-out-composable').textContent).toContain(
 			'"lock":"gpc-active"'
 		);
 
-		for (const category of ['marketing', 'measurement'] as const) {
-			const sw = part<HTMLButtonElement>(`consent-widget-switch-${category}`);
-			const notice = part(`consent-widget-restriction-${category}`);
-			expect(sw?.disabled).toBe(true);
-			expect(sw?.getAttribute('aria-checked')).toBe('false');
-			expect(sw?.getAttribute('aria-describedby')).toBe(notice?.id);
-			expect(notice?.textContent).toContain('Global Privacy Control');
-
-			sw?.click();
-			sw?.dispatchEvent(
-				new KeyboardEvent('keydown', { bubbles: true, key: ' ' })
-			);
-			sw?.dispatchEvent(
-				new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })
-			);
-			await flushPromises();
-			expect(sw?.getAttribute('aria-checked')).toBe('false');
-		}
+		await expectGpcLockedSwitch('marketing');
+		await expectGpcLockedSwitch('measurement');
 
 		expect(part('consent-widget-restriction-functionality')).toBeNull();
 
 		// Untouched save does not grant locked categories.
-		part('consent-widget-footer-save-button')?.click();
+		required('consent-widget-footer-save-button').click();
 		await flushPromises();
 		expect(context.snapshot.value.effectivePermissions.marketing).toBe(false);
 		expect(context.snapshot.value.effectivePermissions.measurement).toBe(false);
@@ -270,7 +287,7 @@ describe('Vue consent widget opt-out parity', () => {
 		).not.toBe(true);
 
 		// Accept all grants unlocked categories without granting locked ones.
-		part('consent-widget-footer-accept-all-button')?.click();
+		required('consent-widget-footer-accept-all-button').click();
 		await flushPromises();
 		expect(context.snapshot.value.effectivePermissions.functionality).toBe(
 			true
@@ -300,26 +317,26 @@ describe('Vue consent widget opt-out parity', () => {
 			now,
 		});
 
-		expect(part('consent-widget-opt-out-status')?.textContent?.trim()).toBe(
+		expect(required('consent-widget-opt-out-status').textContent?.trim()).toBe(
 			'Opt-out request honored'
 		);
-		expect(part('opt-out-composable')?.textContent).toContain(
+		expect(required('opt-out-composable').textContent).toContain(
 			'"lock":"held-by-account"'
 		);
 
-		const marketing = part<HTMLButtonElement>(
+		const marketing = required<HTMLButtonElement>(
 			'consent-widget-switch-marketing'
 		);
-		const notice = part('consent-widget-restriction-marketing');
-		expect(marketing?.disabled).toBe(false);
-		expect(marketing?.getAttribute('aria-checked')).toBe('false');
-		expect(marketing?.getAttribute('aria-describedby')).toBe(notice?.id);
-		expect(notice?.textContent).toContain('account');
+		const notice = required('consent-widget-restriction-marketing');
+		expect(marketing.disabled).toBe(false);
+		expect(marketing.getAttribute('aria-checked')).toBe('false');
+		expect(marketing.getAttribute('aria-describedby')).toBe(notice.id);
+		expect(notice.textContent).toContain('account');
 
-		marketing?.click();
+		marketing.click();
 		await flushPromises();
-		expect(marketing?.getAttribute('aria-checked')).toBe('true');
-		part('consent-widget-footer-save-button')?.click();
+		expect(marketing.getAttribute('aria-checked')).toBe('true');
+		required('consent-widget-footer-save-button').click();
 		await flushPromises();
 		expect(context.snapshot.value.optOut?.heldBy).toBe('person');
 		expect(context.snapshot.value.effectivePermissions.marketing).toBe(false);

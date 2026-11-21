@@ -177,24 +177,14 @@ export const renderAstroStory = function renderAstroStory(
 		entry.config && typeof entry.config === 'object'
 			? (entry.config as Record<string, unknown>)
 			: {};
-	const config =
-		variant.openOptOutConfirmation === 'signal'
-			? {
-					...baseConfig,
-					initialGpc: true,
-					initialPolicyResolution:
-						baseConfig.initialPolicyResolution ??
-						storybookOptOutPolicyResolution,
-					initialRecords: storybookOptOutRecords('gpc'),
-				}
-			: variant.openOptOutConfirmation === 'request'
-				? {
-						...baseConfig,
-						initialPolicyResolution:
-							baseConfig.initialPolicyResolution ??
-							storybookOptOutPolicyResolution,
-					}
-				: baseConfig;
+	const config: Record<string, unknown> = { ...baseConfig };
+	if (variant.openOptOutConfirmation) {
+		config.initialPolicyResolution ??= storybookOptOutPolicyResolution;
+	}
+	if (variant.openOptOutConfirmation === 'signal') {
+		config.initialGpc = true;
+		config.initialRecords = storybookOptOutRecords('gpc');
+	}
 	(window as unknown as Record<string, unknown>).__inthAstroConfig = config;
 
 	if (variant.dark) {

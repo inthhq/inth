@@ -97,7 +97,7 @@ const mountTree = async function mountTree(
 	} = {}
 ) {
 	const rule = options.rule ?? noticeRule();
-	const config: ConsentConfig = {
+	const base = {
 		consentCategories: [
 			'necessary',
 			'functionality',
@@ -112,9 +112,11 @@ const mountTree = async function mountTree(
 			? { optOutLink: options.optOutLink }
 			: undefined,
 		projectUrl: 'https://consent.example',
-		...(options.gpc ? { overrides: { gpc: true } } : {}),
-		...options.config,
-	} as ConsentConfig;
+	} as ConsentConfig & { overrides?: { gpc: boolean } };
+	if (options.gpc) {
+		base.overrides = { gpc: true };
+	}
+	const config: ConsentConfig = { ...base, ...options.config };
 	const context = createVueConsentKernelContext({
 		config,
 		prefetch: buildInit(rule, options.location),
