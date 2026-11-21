@@ -513,7 +513,7 @@
 		"/v1/consent/records": {
 			"post": {
 				"operationId": "postV1ConsentRecords",
-				"description": "Saves a banner answer for a subject and property, merged with the answer already stored: for each category, the receipt confirmed later wins, and a category left out keeps what is stored. A retry with the same idempotencyKey is recorded once and answered as the first try was. With externalId and an identityToken that names it, the subject is linked to that person. An identity never fails a save: `link` says whether the link was stored.",
+				"description": "Saves a banner answer for a subject and property, merged with the answer already stored. Saves are ordered by arrival, not by the device’s clock: the latest save to arrive wins for the categories it lists in `confirmed`, and a category left out keeps what is stored. A receipt the save carries from an earlier act, without listing it in `confirmed`, replaces the stored one only when it is newer by the device’s clock and no later than the save itself. No time is refused for being ahead of the server’s clock: a `givenAt` later than the server’s clock is stored as the server’s time, and receipts dated after the save follow it. The server stores the times it settled on and keeps what the device sent beside them. A retry with the same idempotencyKey is recorded once and answered as the first try was. With externalId and an identityToken that names it, the subject is linked to that person. An identity never fails a save: `link` says whether the link was stored.",
 				"responses": {
 					"200": {
 						"content": {
@@ -1116,6 +1116,316 @@
 					},
 					"required": true
 				}
+			}
+		},
+		"/v1/consent/check": {
+			"get": {
+				"operationId": "getV1ConsentCheck",
+				"description": "For a person, by your account ID for them: each consent category they answered, and whether they grant it now. Answers from every device linked to the person count, and per category the one confirmed last stands, so a refusal on one device takes back a grant made earlier on another. With property, only answers given on that site or app count; without it, answers on every property do. Needs the secret key.",
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ConsentCheckResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"invalid_request"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "invalid_request"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"unauthorized"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "unauthorized"
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"forbidden"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "forbidden"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"not_found"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "not_found"
+					},
+					"409": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"conflict"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "conflict"
+					},
+					"429": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"rate_limited"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "rate_limited",
+						"headers": {
+							"Retry-After": {
+								"description": "Seconds to wait before trying again.",
+								"schema": {
+									"type": "integer"
+								}
+							}
+						}
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"server_error"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "server_error"
+					},
+					"502": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"bad_gateway"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "bad_gateway"
+					},
+					"504": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/V1Error"
+										},
+										{
+											"properties": {
+												"error": {
+													"properties": {
+														"code": {
+															"enum": [
+																"gateway_timeout"
+															],
+															"type": "string"
+														}
+													}
+												}
+											}
+										}
+									]
+								}
+							}
+						},
+						"description": "gateway_timeout"
+					}
+				},
+				"security": [
+					{
+						"bearerAuth": []
+					}
+				],
+				"summary": "Check what a person consents to",
+				"tags": [
+					"Consent"
+				],
+				"x-inth-access": "secret-key",
+				"parameters": [
+					{
+						"description": "Your account ID for the person.",
+						"in": "query",
+						"name": "externalId",
+						"required": true,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					},
+					{
+						"description": "A site’s host name, or an app’s application or bundle ID, in lower case. Leave it out to count every property.",
+						"in": "query",
+						"name": "property",
+						"required": false,
+						"schema": {
+							"minLength": 1,
+							"type": "string"
+						}
+					}
+				]
 			}
 		},
 		"/v1/subjects/{id}/link": {
@@ -2972,6 +3282,24 @@
 	},
 	"components": {
 		"schemas": {
+			"ConsentCheckResponse": {
+				"type": "object",
+				"properties": {
+					"categories": {
+						"type": "object",
+						"propertyNames": {
+							"type": "string"
+						},
+						"additionalProperties": {
+							"type": "boolean"
+						},
+						"description": "Each consent category the person answered, and whether they grant it now. A category they never answered, or whose grant has run out, is left out: your policy’s default applies to it."
+					}
+				},
+				"required": [
+					"categories"
+				]
+			},
 			"ConsentInitResponse": {
 				"type": "object",
 				"properties": {
@@ -5191,7 +5519,7 @@
 						"type": "integer",
 						"minimum": 0,
 						"maximum": 8640000000000000,
-						"description": "When the visitor gave this answer, in epoch milliseconds."
+						"description": "When the visitor gave this answer by the device’s clock, in epoch milliseconds. Send the device’s clock as it is: the server orders saves by arrival. A time later than the server’s clock is stored as the server’s time."
 					},
 					"gpc": {
 						"type": "boolean",
@@ -5587,7 +5915,7 @@
 						"type": "integer",
 						"minimum": 0,
 						"maximum": 8640000000000000,
-						"description": "When the subject accepted the releases, in epoch milliseconds."
+						"description": "When the subject accepted the releases by the device’s clock, in epoch milliseconds. A time later than the server’s clock is stored as the server’s time."
 					},
 					"context": {
 						"type": "object",

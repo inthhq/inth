@@ -169,7 +169,7 @@ export interface KernelUser {
 	identityProvider?: string;
 	/**
 	 * Signed proof of `externalId`, minted by your server with
-	 * `createIdentityToken` from `@c15t/node-sdk`. The backend counts the
+	 * `users.createIdentityToken` from `@inth/node`. The backend counts the
 	 * link in reads by external id only when it verifies. Short-lived: pass a
 	 * fresh one on each page load rather than storing it.
 	 *
