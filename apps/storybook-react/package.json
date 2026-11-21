@@ -1,34 +1,34 @@
 {
-	"name": "@inth/storybook-react",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"build": "storybook build",
-		"prestorybook": "pnpm --dir ../../packages/sdk/core run prebuild && pnpm --dir ../../packages/sdk/react run prebuild && pnpm --dir ../../packages/sdk/iab run prebuild",
-		"storybook": "pnpm run prestorybook && portless run --name storybook-react sh -c 'storybook dev --port \"$PORT\" --host \"$HOST\"'",
-		"test-storybook": "test-storybook --url ${STORYBOOK_URL:-http://127.0.0.1:6006}"
-	},
-	"dependencies": {
-		"@inth/conformance": "workspace:*",
-		"@inth/react": "workspace:*",
-		"@inth/sdk": "workspace:*",
-		"react": "^19.2.7",
-		"react-dom": "^19.2.7"
-	},
-	"devDependencies": {
-		"@emotion/css": "11.13.5",
-		"@storybook/addon-a11y": "10.4.6",
-		"@storybook/react-vite": "10.4.6",
-		"@storybook/test-runner": "^0.24.4",
-		"@stylexjs/stylex": "0.19.1",
-		"@stylexjs/unplugin": "0.19.1",
-		"@tanstack/react-devtools": "0.10.13",
-		"@types/node": "25.5.0",
-		"@types/react": "19.2.17",
-		"@vanilla-extract/css": "1.21.2",
-		"@vanilla-extract/vite-plugin": "5.2.6",
-		"storybook": "10.4.6",
-		"typescript": "6.0.3",
-		"vite": "7.3.2"
-	}
+  "name": "@inth/storybook-react",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "storybook build",
+    "prestorybook": "pnpm --dir ../../packages/sdk/core run prebuild && pnpm --dir ../../packages/sdk/react run prebuild && pnpm --dir ../../packages/sdk/iab run prebuild",
+    "storybook": "pnpm run prestorybook && portless run --name storybook-react sh -c 'storybook dev --port \"$PORT\" --host \"$HOST\"'",
+    "test-storybook": "test-storybook --url ${STORYBOOK_URL:-http://127.0.0.1:6006}"
+  },
+  "dependencies": {
+    "@inth/conformance": "workspace:*",
+    "@inth/react": "workspace:*",
+    "@inth/sdk": "workspace:*",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@emotion/css": "11.13.5",
+    "@storybook/addon-a11y": "10.4.6",
+    "@storybook/react-vite": "10.4.6",
+    "@storybook/test-runner": "^0.24.4",
+    "@stylexjs/stylex": "0.19.1",
+    "@stylexjs/unplugin": "0.19.1",
+    "@tanstack/react-devtools": "0.10.13",
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.17",
+    "@vanilla-extract/css": "1.21.2",
+    "@vanilla-extract/vite-plugin": "5.2.6",
+    "storybook": "10.4.6",
+    "typescript": "6.0.3",
+    "vite": "7.3.2"
+  }
 }

@@ -1,343 +1,343 @@
 {
-	"name": "@inth/sdk-translations",
-	"version": "0.0.0-alpha.0",
-	"private": true,
-	"description": "Translations for Inth in 53 languages. Typed i18n strings for Inth banners, dialogs and preference centers.",
-	"keywords": [
-		"i18n",
-		"inth",
-		"localization",
-		"translations",
-		"typescript"
-	],
-	"homepage": "https://inth.com",
-	"bugs": {
-		"url": "https://github.com/inthhq/inth/issues"
-	},
-	"license": "Apache-2.0",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/inthhq/inth.git",
-		"directory": "packages/sdk/translations"
-	},
-	"files": [
-		"dist",
-		"dist-types"
-	],
-	"type": "module",
-	"sideEffects": [
-		"./dist/all.js",
-		"./dist/languages/*.js"
-	],
-	"main": "./dist/index.js",
-	"types": "./dist-types/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist-types/index.d.ts",
-			"import": "./dist/index.js",
-			"default": "./dist/index.js"
-		},
-		"./all": {
-			"types": "./dist-types/all.d.ts",
-			"import": "./dist/all.js",
-			"default": "./dist/all.js"
-		},
-		"./en": {
-			"types": "./dist-types/translations/en.d.ts",
-			"import": "./dist/translations/en.js",
-			"default": "./dist/translations/en.js"
-		},
-		"./ar": {
-			"types": "./dist-types/languages/ar.d.ts",
-			"import": "./dist/languages/ar.js",
-			"default": "./dist/languages/ar.js"
-		},
-		"./bg": {
-			"types": "./dist-types/languages/bg.d.ts",
-			"import": "./dist/languages/bg.js",
-			"default": "./dist/languages/bg.js"
-		},
-		"./bn": {
-			"types": "./dist-types/languages/bn.d.ts",
-			"import": "./dist/languages/bn.js",
-			"default": "./dist/languages/bn.js"
-		},
-		"./cs": {
-			"types": "./dist-types/languages/cs.d.ts",
-			"import": "./dist/languages/cs.js",
-			"default": "./dist/languages/cs.js"
-		},
-		"./cy": {
-			"types": "./dist-types/languages/cy.d.ts",
-			"import": "./dist/languages/cy.js",
-			"default": "./dist/languages/cy.js"
-		},
-		"./da": {
-			"types": "./dist-types/languages/da.d.ts",
-			"import": "./dist/languages/da.js",
-			"default": "./dist/languages/da.js"
-		},
-		"./de": {
-			"types": "./dist-types/languages/de.d.ts",
-			"import": "./dist/languages/de.js",
-			"default": "./dist/languages/de.js"
-		},
-		"./el": {
-			"types": "./dist-types/languages/el.d.ts",
-			"import": "./dist/languages/el.js",
-			"default": "./dist/languages/el.js"
-		},
-		"./es": {
-			"types": "./dist-types/languages/es.d.ts",
-			"import": "./dist/languages/es.js",
-			"default": "./dist/languages/es.js"
-		},
-		"./et": {
-			"types": "./dist-types/languages/et.d.ts",
-			"import": "./dist/languages/et.js",
-			"default": "./dist/languages/et.js"
-		},
-		"./fi": {
-			"types": "./dist-types/languages/fi.d.ts",
-			"import": "./dist/languages/fi.js",
-			"default": "./dist/languages/fi.js"
-		},
-		"./fr": {
-			"types": "./dist-types/languages/fr.d.ts",
-			"import": "./dist/languages/fr.js",
-			"default": "./dist/languages/fr.js"
-		},
-		"./ga": {
-			"types": "./dist-types/languages/ga.d.ts",
-			"import": "./dist/languages/ga.js",
-			"default": "./dist/languages/ga.js"
-		},
-		"./gu": {
-			"types": "./dist-types/languages/gu.d.ts",
-			"import": "./dist/languages/gu.js",
-			"default": "./dist/languages/gu.js"
-		},
-		"./he": {
-			"types": "./dist-types/languages/he.d.ts",
-			"import": "./dist/languages/he.js",
-			"default": "./dist/languages/he.js"
-		},
-		"./hi": {
-			"types": "./dist-types/languages/hi.d.ts",
-			"import": "./dist/languages/hi.js",
-			"default": "./dist/languages/hi.js"
-		},
-		"./hr": {
-			"types": "./dist-types/languages/hr.d.ts",
-			"import": "./dist/languages/hr.js",
-			"default": "./dist/languages/hr.js"
-		},
-		"./ht": {
-			"types": "./dist-types/languages/ht.d.ts",
-			"import": "./dist/languages/ht.js",
-			"default": "./dist/languages/ht.js"
-		},
-		"./hu": {
-			"types": "./dist-types/languages/hu.d.ts",
-			"import": "./dist/languages/hu.js",
-			"default": "./dist/languages/hu.js"
-		},
-		"./id": {
-			"types": "./dist-types/languages/id.d.ts",
-			"import": "./dist/languages/id.js",
-			"default": "./dist/languages/id.js"
-		},
-		"./is": {
-			"types": "./dist-types/languages/is.d.ts",
-			"import": "./dist/languages/is.js",
-			"default": "./dist/languages/is.js"
-		},
-		"./it": {
-			"types": "./dist-types/languages/it.d.ts",
-			"import": "./dist/languages/it.js",
-			"default": "./dist/languages/it.js"
-		},
-		"./ja": {
-			"types": "./dist-types/languages/ja.d.ts",
-			"import": "./dist/languages/ja.js",
-			"default": "./dist/languages/ja.js"
-		},
-		"./kn": {
-			"types": "./dist-types/languages/kn.d.ts",
-			"import": "./dist/languages/kn.js",
-			"default": "./dist/languages/kn.js"
-		},
-		"./ko": {
-			"types": "./dist-types/languages/ko.d.ts",
-			"import": "./dist/languages/ko.js",
-			"default": "./dist/languages/ko.js"
-		},
-		"./lb": {
-			"types": "./dist-types/languages/lb.d.ts",
-			"import": "./dist/languages/lb.js",
-			"default": "./dist/languages/lb.js"
-		},
-		"./lt": {
-			"types": "./dist-types/languages/lt.d.ts",
-			"import": "./dist/languages/lt.js",
-			"default": "./dist/languages/lt.js"
-		},
-		"./lv": {
-			"types": "./dist-types/languages/lv.d.ts",
-			"import": "./dist/languages/lv.js",
-			"default": "./dist/languages/lv.js"
-		},
-		"./ml": {
-			"types": "./dist-types/languages/ml.d.ts",
-			"import": "./dist/languages/ml.js",
-			"default": "./dist/languages/ml.js"
-		},
-		"./mr": {
-			"types": "./dist-types/languages/mr.d.ts",
-			"import": "./dist/languages/mr.js",
-			"default": "./dist/languages/mr.js"
-		},
-		"./ms": {
-			"types": "./dist-types/languages/ms.d.ts",
-			"import": "./dist/languages/ms.js",
-			"default": "./dist/languages/ms.js"
-		},
-		"./mt": {
-			"types": "./dist-types/languages/mt.d.ts",
-			"import": "./dist/languages/mt.js",
-			"default": "./dist/languages/mt.js"
-		},
-		"./nb": {
-			"types": "./dist-types/languages/nb.d.ts",
-			"import": "./dist/languages/nb.js",
-			"default": "./dist/languages/nb.js"
-		},
-		"./nl": {
-			"types": "./dist-types/languages/nl.d.ts",
-			"import": "./dist/languages/nl.js",
-			"default": "./dist/languages/nl.js"
-		},
-		"./nn": {
-			"types": "./dist-types/languages/nn.d.ts",
-			"import": "./dist/languages/nn.js",
-			"default": "./dist/languages/nn.js"
-		},
-		"./pa": {
-			"types": "./dist-types/languages/pa.d.ts",
-			"import": "./dist/languages/pa.js",
-			"default": "./dist/languages/pa.js"
-		},
-		"./pl": {
-			"types": "./dist-types/languages/pl.d.ts",
-			"import": "./dist/languages/pl.js",
-			"default": "./dist/languages/pl.js"
-		},
-		"./pt": {
-			"types": "./dist-types/languages/pt.d.ts",
-			"import": "./dist/languages/pt.js",
-			"default": "./dist/languages/pt.js"
-		},
-		"./rm": {
-			"types": "./dist-types/languages/rm.d.ts",
-			"import": "./dist/languages/rm.js",
-			"default": "./dist/languages/rm.js"
-		},
-		"./ro": {
-			"types": "./dist-types/languages/ro.d.ts",
-			"import": "./dist/languages/ro.js",
-			"default": "./dist/languages/ro.js"
-		},
-		"./ru": {
-			"types": "./dist-types/languages/ru.d.ts",
-			"import": "./dist/languages/ru.js",
-			"default": "./dist/languages/ru.js"
-		},
-		"./sk": {
-			"types": "./dist-types/languages/sk.d.ts",
-			"import": "./dist/languages/sk.js",
-			"default": "./dist/languages/sk.js"
-		},
-		"./sl": {
-			"types": "./dist-types/languages/sl.d.ts",
-			"import": "./dist/languages/sl.js",
-			"default": "./dist/languages/sl.js"
-		},
-		"./sv": {
-			"types": "./dist-types/languages/sv.d.ts",
-			"import": "./dist/languages/sv.js",
-			"default": "./dist/languages/sv.js"
-		},
-		"./ta": {
-			"types": "./dist-types/languages/ta.d.ts",
-			"import": "./dist/languages/ta.js",
-			"default": "./dist/languages/ta.js"
-		},
-		"./te": {
-			"types": "./dist-types/languages/te.d.ts",
-			"import": "./dist/languages/te.js",
-			"default": "./dist/languages/te.js"
-		},
-		"./th": {
-			"types": "./dist-types/languages/th.d.ts",
-			"import": "./dist/languages/th.js",
-			"default": "./dist/languages/th.js"
-		},
-		"./tr": {
-			"types": "./dist-types/languages/tr.d.ts",
-			"import": "./dist/languages/tr.js",
-			"default": "./dist/languages/tr.js"
-		},
-		"./ur": {
-			"types": "./dist-types/languages/ur.d.ts",
-			"import": "./dist/languages/ur.js",
-			"default": "./dist/languages/ur.js"
-		},
-		"./vi": {
-			"types": "./dist-types/languages/vi.d.ts",
-			"import": "./dist/languages/vi.js",
-			"default": "./dist/languages/vi.js"
-		},
-		"./yi": {
-			"types": "./dist-types/languages/yi.d.ts",
-			"import": "./dist/languages/yi.js",
-			"default": "./dist/languages/yi.js"
-		},
-		"./zh": {
-			"types": "./dist-types/languages/zh.d.ts",
-			"import": "./dist/languages/zh.js",
-			"default": "./dist/languages/zh.js"
-		}
-	},
-	"scripts": {
-		"build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
-		"check-types": "tsc --noEmit",
-		"dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
-		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
-		"generate:i18n": "lingo.dev i18n",
-		"lint": "oxlint -c ../../../oxlint.sdk.config.ts ./src",
-		"test": "vitest run",
-		"test:watch": "vitest"
-	},
-	"devDependencies": {
-		"@inth/typescript-config": "workspace:*",
-		"@inth/vitest-config": "workspace:*",
-		"@rslib/core": "0.23.2",
-		"@types/node": "25.5.0",
-		"@types/react": "19.2.17",
-		"@vitest/browser": "4.1.10",
-		"@vitest/coverage-istanbul": "4.1.10",
-		"jsdom": "25.0.1",
-		"lingo.dev": "^0.137.8",
-		"oxfmt": "0.65.0",
-		"oxlint": "1.80.0",
-		"react": "19.2.7",
-		"typescript": "7.0.2",
-		"vite": "8.1.3",
-		"vitest": "4.1.10"
-	},
-	"browserslist": [
-		">0.2%",
-		"not dead",
-		"not op_mini all"
-	]
+  "name": "@inth/sdk-translations",
+  "version": "0.0.0-alpha.0",
+  "private": true,
+  "description": "Translations for Inth in 53 languages. Typed i18n strings for Inth banners, dialogs and preference centers.",
+  "keywords": [
+    "i18n",
+    "inth",
+    "localization",
+    "translations",
+    "typescript"
+  ],
+  "homepage": "https://inth.com",
+  "bugs": {
+    "url": "https://github.com/inthhq/inth/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inthhq/inth.git",
+    "directory": "packages/sdk/translations"
+  },
+  "files": [
+    "dist",
+    "dist-types"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./dist/all.js",
+    "./dist/languages/*.js"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist-types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist-types/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./all": {
+      "types": "./dist-types/all.d.ts",
+      "import": "./dist/all.js",
+      "default": "./dist/all.js"
+    },
+    "./en": {
+      "types": "./dist-types/translations/en.d.ts",
+      "import": "./dist/translations/en.js",
+      "default": "./dist/translations/en.js"
+    },
+    "./ar": {
+      "types": "./dist-types/languages/ar.d.ts",
+      "import": "./dist/languages/ar.js",
+      "default": "./dist/languages/ar.js"
+    },
+    "./bg": {
+      "types": "./dist-types/languages/bg.d.ts",
+      "import": "./dist/languages/bg.js",
+      "default": "./dist/languages/bg.js"
+    },
+    "./bn": {
+      "types": "./dist-types/languages/bn.d.ts",
+      "import": "./dist/languages/bn.js",
+      "default": "./dist/languages/bn.js"
+    },
+    "./cs": {
+      "types": "./dist-types/languages/cs.d.ts",
+      "import": "./dist/languages/cs.js",
+      "default": "./dist/languages/cs.js"
+    },
+    "./cy": {
+      "types": "./dist-types/languages/cy.d.ts",
+      "import": "./dist/languages/cy.js",
+      "default": "./dist/languages/cy.js"
+    },
+    "./da": {
+      "types": "./dist-types/languages/da.d.ts",
+      "import": "./dist/languages/da.js",
+      "default": "./dist/languages/da.js"
+    },
+    "./de": {
+      "types": "./dist-types/languages/de.d.ts",
+      "import": "./dist/languages/de.js",
+      "default": "./dist/languages/de.js"
+    },
+    "./el": {
+      "types": "./dist-types/languages/el.d.ts",
+      "import": "./dist/languages/el.js",
+      "default": "./dist/languages/el.js"
+    },
+    "./es": {
+      "types": "./dist-types/languages/es.d.ts",
+      "import": "./dist/languages/es.js",
+      "default": "./dist/languages/es.js"
+    },
+    "./et": {
+      "types": "./dist-types/languages/et.d.ts",
+      "import": "./dist/languages/et.js",
+      "default": "./dist/languages/et.js"
+    },
+    "./fi": {
+      "types": "./dist-types/languages/fi.d.ts",
+      "import": "./dist/languages/fi.js",
+      "default": "./dist/languages/fi.js"
+    },
+    "./fr": {
+      "types": "./dist-types/languages/fr.d.ts",
+      "import": "./dist/languages/fr.js",
+      "default": "./dist/languages/fr.js"
+    },
+    "./ga": {
+      "types": "./dist-types/languages/ga.d.ts",
+      "import": "./dist/languages/ga.js",
+      "default": "./dist/languages/ga.js"
+    },
+    "./gu": {
+      "types": "./dist-types/languages/gu.d.ts",
+      "import": "./dist/languages/gu.js",
+      "default": "./dist/languages/gu.js"
+    },
+    "./he": {
+      "types": "./dist-types/languages/he.d.ts",
+      "import": "./dist/languages/he.js",
+      "default": "./dist/languages/he.js"
+    },
+    "./hi": {
+      "types": "./dist-types/languages/hi.d.ts",
+      "import": "./dist/languages/hi.js",
+      "default": "./dist/languages/hi.js"
+    },
+    "./hr": {
+      "types": "./dist-types/languages/hr.d.ts",
+      "import": "./dist/languages/hr.js",
+      "default": "./dist/languages/hr.js"
+    },
+    "./ht": {
+      "types": "./dist-types/languages/ht.d.ts",
+      "import": "./dist/languages/ht.js",
+      "default": "./dist/languages/ht.js"
+    },
+    "./hu": {
+      "types": "./dist-types/languages/hu.d.ts",
+      "import": "./dist/languages/hu.js",
+      "default": "./dist/languages/hu.js"
+    },
+    "./id": {
+      "types": "./dist-types/languages/id.d.ts",
+      "import": "./dist/languages/id.js",
+      "default": "./dist/languages/id.js"
+    },
+    "./is": {
+      "types": "./dist-types/languages/is.d.ts",
+      "import": "./dist/languages/is.js",
+      "default": "./dist/languages/is.js"
+    },
+    "./it": {
+      "types": "./dist-types/languages/it.d.ts",
+      "import": "./dist/languages/it.js",
+      "default": "./dist/languages/it.js"
+    },
+    "./ja": {
+      "types": "./dist-types/languages/ja.d.ts",
+      "import": "./dist/languages/ja.js",
+      "default": "./dist/languages/ja.js"
+    },
+    "./kn": {
+      "types": "./dist-types/languages/kn.d.ts",
+      "import": "./dist/languages/kn.js",
+      "default": "./dist/languages/kn.js"
+    },
+    "./ko": {
+      "types": "./dist-types/languages/ko.d.ts",
+      "import": "./dist/languages/ko.js",
+      "default": "./dist/languages/ko.js"
+    },
+    "./lb": {
+      "types": "./dist-types/languages/lb.d.ts",
+      "import": "./dist/languages/lb.js",
+      "default": "./dist/languages/lb.js"
+    },
+    "./lt": {
+      "types": "./dist-types/languages/lt.d.ts",
+      "import": "./dist/languages/lt.js",
+      "default": "./dist/languages/lt.js"
+    },
+    "./lv": {
+      "types": "./dist-types/languages/lv.d.ts",
+      "import": "./dist/languages/lv.js",
+      "default": "./dist/languages/lv.js"
+    },
+    "./ml": {
+      "types": "./dist-types/languages/ml.d.ts",
+      "import": "./dist/languages/ml.js",
+      "default": "./dist/languages/ml.js"
+    },
+    "./mr": {
+      "types": "./dist-types/languages/mr.d.ts",
+      "import": "./dist/languages/mr.js",
+      "default": "./dist/languages/mr.js"
+    },
+    "./ms": {
+      "types": "./dist-types/languages/ms.d.ts",
+      "import": "./dist/languages/ms.js",
+      "default": "./dist/languages/ms.js"
+    },
+    "./mt": {
+      "types": "./dist-types/languages/mt.d.ts",
+      "import": "./dist/languages/mt.js",
+      "default": "./dist/languages/mt.js"
+    },
+    "./nb": {
+      "types": "./dist-types/languages/nb.d.ts",
+      "import": "./dist/languages/nb.js",
+      "default": "./dist/languages/nb.js"
+    },
+    "./nl": {
+      "types": "./dist-types/languages/nl.d.ts",
+      "import": "./dist/languages/nl.js",
+      "default": "./dist/languages/nl.js"
+    },
+    "./nn": {
+      "types": "./dist-types/languages/nn.d.ts",
+      "import": "./dist/languages/nn.js",
+      "default": "./dist/languages/nn.js"
+    },
+    "./pa": {
+      "types": "./dist-types/languages/pa.d.ts",
+      "import": "./dist/languages/pa.js",
+      "default": "./dist/languages/pa.js"
+    },
+    "./pl": {
+      "types": "./dist-types/languages/pl.d.ts",
+      "import": "./dist/languages/pl.js",
+      "default": "./dist/languages/pl.js"
+    },
+    "./pt": {
+      "types": "./dist-types/languages/pt.d.ts",
+      "import": "./dist/languages/pt.js",
+      "default": "./dist/languages/pt.js"
+    },
+    "./rm": {
+      "types": "./dist-types/languages/rm.d.ts",
+      "import": "./dist/languages/rm.js",
+      "default": "./dist/languages/rm.js"
+    },
+    "./ro": {
+      "types": "./dist-types/languages/ro.d.ts",
+      "import": "./dist/languages/ro.js",
+      "default": "./dist/languages/ro.js"
+    },
+    "./ru": {
+      "types": "./dist-types/languages/ru.d.ts",
+      "import": "./dist/languages/ru.js",
+      "default": "./dist/languages/ru.js"
+    },
+    "./sk": {
+      "types": "./dist-types/languages/sk.d.ts",
+      "import": "./dist/languages/sk.js",
+      "default": "./dist/languages/sk.js"
+    },
+    "./sl": {
+      "types": "./dist-types/languages/sl.d.ts",
+      "import": "./dist/languages/sl.js",
+      "default": "./dist/languages/sl.js"
+    },
+    "./sv": {
+      "types": "./dist-types/languages/sv.d.ts",
+      "import": "./dist/languages/sv.js",
+      "default": "./dist/languages/sv.js"
+    },
+    "./ta": {
+      "types": "./dist-types/languages/ta.d.ts",
+      "import": "./dist/languages/ta.js",
+      "default": "./dist/languages/ta.js"
+    },
+    "./te": {
+      "types": "./dist-types/languages/te.d.ts",
+      "import": "./dist/languages/te.js",
+      "default": "./dist/languages/te.js"
+    },
+    "./th": {
+      "types": "./dist-types/languages/th.d.ts",
+      "import": "./dist/languages/th.js",
+      "default": "./dist/languages/th.js"
+    },
+    "./tr": {
+      "types": "./dist-types/languages/tr.d.ts",
+      "import": "./dist/languages/tr.js",
+      "default": "./dist/languages/tr.js"
+    },
+    "./ur": {
+      "types": "./dist-types/languages/ur.d.ts",
+      "import": "./dist/languages/ur.js",
+      "default": "./dist/languages/ur.js"
+    },
+    "./vi": {
+      "types": "./dist-types/languages/vi.d.ts",
+      "import": "./dist/languages/vi.js",
+      "default": "./dist/languages/vi.js"
+    },
+    "./yi": {
+      "types": "./dist-types/languages/yi.d.ts",
+      "import": "./dist/languages/yi.js",
+      "default": "./dist/languages/yi.js"
+    },
+    "./zh": {
+      "types": "./dist-types/languages/zh.d.ts",
+      "import": "./dist/languages/zh.js",
+      "default": "./dist/languages/zh.js"
+    }
+  },
+  "scripts": {
+    "build": "rslib build && node ../../../scripts/normalize-dist-types.mjs",
+    "check-types": "tsc --noEmit",
+    "dev": "sh -c 'rslib build --no-dts --no-clean && rslib build --watch --no-dts --no-clean'",
+    "fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
+    "generate:i18n": "lingo.dev i18n",
+    "lint": "oxlint -c ../../../oxlint.sdk.config.ts ./src",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@inth/typescript-config": "workspace:*",
+    "@inth/vitest-config": "workspace:*",
+    "@rslib/core": "0.23.2",
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.17",
+    "@vitest/browser": "4.1.10",
+    "@vitest/coverage-istanbul": "4.1.10",
+    "jsdom": "25.0.1",
+    "lingo.dev": "^0.137.8",
+    "oxfmt": "0.65.0",
+    "oxlint": "1.80.0",
+    "react": "19.2.7",
+    "typescript": "7.0.2",
+    "vite": "8.1.3",
+    "vitest": "4.1.10"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not op_mini all"
+  ]
 }

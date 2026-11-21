@@ -1,2 +1,2 @@
 // Tegami updates this constant with the package manifests.
-export const VERSION = "0.0.8";
+export const VERSION = "0.0.9";

@@ -1,20 +1,20 @@
 {
-	"name": "@inth/example-nuxt",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"build": "nuxt build",
-		"check-types": "nuxt typecheck",
-		"dev": "nuxt dev",
-		"start": "node .output/server/index.mjs"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/nuxt": "workspace:*",
-		"nuxt": "^4.5.1"
-	},
-	"devDependencies": {
-		"typescript": "6.0.3",
-		"vue-tsc": "^3.3.6"
-	}
+  "name": "@inth/example-nuxt",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "check-types": "nuxt typecheck",
+    "dev": "nuxt dev",
+    "start": "node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/nuxt": "workspace:*",
+    "nuxt": "^4.5.1"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vue-tsc": "^3.3.6"
+  }
 }

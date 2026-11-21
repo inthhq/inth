@@ -1,18 +1,18 @@
 {
-	"name": "@inth/doc-snippets-nuxt",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"check-types": "nuxt typecheck"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/nuxt": "workspace:*",
-		"h3": "1.15.11",
-		"nuxt": "^4.5.1"
-	},
-	"devDependencies": {
-		"typescript": "6.0.3",
-		"vue-tsc": "^3.3.6"
-	}
+  "name": "@inth/doc-snippets-nuxt",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/nuxt": "workspace:*",
+    "h3": "1.15.11",
+    "nuxt": "^4.5.1"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vue-tsc": "^3.3.6"
+  }
 }

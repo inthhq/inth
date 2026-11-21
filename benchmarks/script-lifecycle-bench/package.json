@@ -1,31 +1,31 @@
 {
-	"name": "@inth/script-lifecycle-bench",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/script-lifecycle tsx scripts/run-bench.ts",
-		"bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/script-lifecycle tsx scripts/run-bench.ts",
-		"bench:gate": "BENCH_OUTPUT_DIR=../../.benchmarks/head/consent-gate tsx scripts/run-gate.ts",
-		"bench:nightly": "BENCH_ITERATIONS=15 BENCH_OUTPUT_DIR=../../.benchmarks/nightly/script-lifecycle tsx scripts/run-bench.ts",
-		"bench:script-count": "BENCH_OUTPUT_DIR=../../.benchmarks/current/script-count tsx scripts/run-script-count-bench.ts",
-		"build": "next build",
-		"dev": "next dev",
-		"start": "next start"
-	},
-	"dependencies": {
-		"@inth/benchmarking": "workspace:*",
-		"@inth/react": "workspace:*",
-		"@inth/sdk": "workspace:*",
-		"next": "16.2.10",
-		"react": "19.2.7",
-		"react-dom": "19.2.7"
-	},
-	"devDependencies": {
-		"@types/node": "25.5.0",
-		"@types/react": "19.2.17",
-		"esbuild": "^0.28.1",
-		"playwright": "1.61.1",
-		"tsx": "4.23.0",
-		"typescript": "6.0.3"
-	}
+  "name": "@inth/script-lifecycle-bench",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/script-lifecycle tsx scripts/run-bench.ts",
+    "bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/script-lifecycle tsx scripts/run-bench.ts",
+    "bench:gate": "BENCH_OUTPUT_DIR=../../.benchmarks/head/consent-gate tsx scripts/run-gate.ts",
+    "bench:nightly": "BENCH_ITERATIONS=15 BENCH_OUTPUT_DIR=../../.benchmarks/nightly/script-lifecycle tsx scripts/run-bench.ts",
+    "bench:script-count": "BENCH_OUTPUT_DIR=../../.benchmarks/current/script-count tsx scripts/run-script-count-bench.ts",
+    "build": "next build",
+    "dev": "next dev",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@inth/benchmarking": "workspace:*",
+    "@inth/react": "workspace:*",
+    "@inth/sdk": "workspace:*",
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.0",
+    "@types/react": "19.2.17",
+    "esbuild": "^0.28.1",
+    "playwright": "1.61.1",
+    "tsx": "4.23.0",
+    "typescript": "6.0.3"
+  }
 }

@@ -1,22 +1,22 @@
 {
-	"name": "@inth/fixture-nuxt-vapor",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"build": "nuxt build",
-		"check-types": "nuxt typecheck",
-		"dev": "nuxt dev",
-		"start": "node .output/server/index.mjs"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/nuxt": "workspace:*",
-		"nuxt": "4.6.0",
-		"vue": "3.6.0-rc.10"
-	},
-	"devDependencies": {
-		"@types/node": "25.5.0",
-		"typescript": "6.0.3",
-		"vue-tsc": "^3.3.6"
-	}
+  "name": "@inth/fixture-nuxt-vapor",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "check-types": "nuxt typecheck",
+    "dev": "nuxt dev",
+    "start": "node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/nuxt": "workspace:*",
+    "nuxt": "4.6.0",
+    "vue": "3.6.0-rc.10"
+  },
+  "devDependencies": {
+    "@types/node": "25.5.0",
+    "typescript": "6.0.3",
+    "vue-tsc": "^3.3.6"
+  }
 }

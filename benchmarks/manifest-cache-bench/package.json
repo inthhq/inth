@@ -1,21 +1,21 @@
 {
-	"name": "@inth/manifest-cache-bench",
-	"private": true,
-	"description": "Benchmarks fetchCachedManifest against a simulated Vercel CDN fronting an Inth /manifest origin.",
-	"type": "module",
-	"scripts": {
-		"bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/manifest-cache tsx src/run.ts",
-		"bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/manifest-cache tsx src/run.ts",
-		"bench:quick": "BENCH_OUTPUT_DIR=../../.benchmarks/current/manifest-cache tsx src/run.ts --quick",
-		"build": "echo 'manifest cache benchmarks are source-only'"
-	},
-	"dependencies": {
-		"@inth/benchmarking": "workspace:*",
-		"@inth/sdk": "workspace:*"
-	},
-	"devDependencies": {
-		"@types/node": "22.19.11",
-		"tsx": "4.23.0",
-		"typescript": "6.0.3"
-	}
+  "name": "@inth/manifest-cache-bench",
+  "private": true,
+  "description": "Benchmarks fetchCachedManifest against a simulated Vercel CDN fronting an Inth /manifest origin.",
+  "type": "module",
+  "scripts": {
+    "bench": "BENCH_OUTPUT_DIR=../../.benchmarks/current/manifest-cache tsx src/run.ts",
+    "bench:ci": "BENCH_OUTPUT_DIR=../../.benchmarks/head/manifest-cache tsx src/run.ts",
+    "bench:quick": "BENCH_OUTPUT_DIR=../../.benchmarks/current/manifest-cache tsx src/run.ts --quick",
+    "build": "echo 'manifest cache benchmarks are source-only'"
+  },
+  "dependencies": {
+    "@inth/benchmarking": "workspace:*",
+    "@inth/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.11",
+    "tsx": "4.23.0",
+    "typescript": "6.0.3"
+  }
 }

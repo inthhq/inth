@@ -1,123 +1,123 @@
 {
-	"name": "@inth/nuxt",
-	"version": "0.0.0-alpha.0",
-	"description": "Nuxt module for Inth cookie consent: banner, consent dialog, preference center, consent route and build-time manifest.",
-	"keywords": [
-		"banner",
-		"ccpa",
-		"cmp",
-		"consent",
-		"consent-banner",
-		"cookie-banner",
-		"cookie-consent",
-		"gdpr",
-		"iab-tcf",
-		"nuxt",
-		"nuxt-cookie-consent",
-		"nuxt-module",
-		"privacy"
-	],
-	"homepage": "https://inth.com",
-	"bugs": {
-		"url": "https://github.com/inthhq/inth/issues"
-	},
-	"license": "Apache-2.0",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/inthhq/inth.git",
-		"directory": "packages/sdk/nuxt"
-	},
-	"files": [
-		"dist",
-		"schema",
-		"docs",
-		"AGENTS.md",
-		"SKILL.md"
-	],
-	"type": "module",
-	"sideEffects": [
-		"./dist/translations/*.js"
-	],
-	"main": "./dist/module.mjs",
-	"types": "./dist/module.d.mts",
-	"exports": {
-		".": {
-			"types": "./dist/module.d.mts",
-			"import": "./dist/module.mjs",
-			"default": "./dist/module.mjs"
-		},
-		"./devtools": {
-			"types": "./dist/devtools.d.mts",
-			"import": "./dist/devtools.mjs",
-			"default": "./dist/devtools.mjs"
-		},
-		"./components/*": {
-			"types": "./dist/components/*.d.ts",
-			"import": "./dist/components/*.mjs",
-			"default": "./dist/components/*.mjs"
-		},
-		"./testing": {
-			"types": "./dist/testing.d.mts",
-			"import": "./dist/testing.mjs",
-			"default": "./dist/testing.mjs"
-		},
-		"./engine": {
-			"types": "./dist/engine.d.mts",
-			"import": "./dist/engine.mjs",
-			"default": "./dist/engine.mjs"
-		},
-		"./translations/*": {
-			"types": "./dist/translations/*.d.ts",
-			"import": "./dist/translations/*.js",
-			"default": "./dist/translations/*.js"
-		},
-		"./package.json": "./package.json"
-	},
-	"publishConfig": {
-		"access": "public",
-		"tag": "alpha"
-	},
-	"scripts": {
-		"build": "nuxt-module-build build",
-		"build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/nuxt",
-		"check-types": "nuxt typecheck playground",
-		"dev": "nuxt dev playground",
-		"dev:build": "nuxt build playground",
-		"dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground",
-		"prepack": "pnpm run build:docs && pnpm run build",
-		"test": "vitest run"
-	},
-	"dependencies": {
-		"@inth/sdk": "workspace:*",
-		"@inth/vue": "workspace:*",
-		"@nuxt/kit": "^3.0.0 || ^4.0.0",
-		"defu": "^6.1.4",
-		"ufo": "^1.6.1"
-	},
-	"devDependencies": {
-		"@inth/typescript-config": "workspace:*",
-		"@inth/vitest-config": "workspace:*",
-		"@nuxt/module-builder": "^1.0.2",
-		"@types/node": "25.5.0",
-		"@vitejs/plugin-vue": "6.0.7",
-		"@vitest/coverage-istanbul": "4.1.10",
-		"@vue/runtime-core": "3.5.43",
-		"@vue/test-utils": "^2.4.6",
-		"h3": "1.15.11",
-		"jsdom": "^25.0.0",
-		"nitropack": "2.13.4",
-		"nuxt": "^4.5.1",
-		"pathe": "^2.0.3",
-		"typescript": "6.0.3",
-		"unbuild": "^3.6.1",
-		"vite": "8.1.3",
-		"vitest": "4.1.10",
-		"vue": "^3.5.39",
-		"vue-tsc": "^3.3.3"
-	},
-	"peerDependencies": {
-		"nuxt": "^3.0.0 || ^4.0.0",
-		"vue": "^3.5.39 || ^3.6.0-0"
-	},
-	"schema": "./schema/nuxt.schema.d.ts"
+  "name": "@inth/nuxt",
+  "version": "0.0.0-alpha.0",
+  "description": "Nuxt module for Inth cookie consent: banner, consent dialog, preference center, consent route and build-time manifest.",
+  "keywords": [
+    "banner",
+    "ccpa",
+    "cmp",
+    "consent",
+    "consent-banner",
+    "cookie-banner",
+    "cookie-consent",
+    "gdpr",
+    "iab-tcf",
+    "nuxt",
+    "nuxt-cookie-consent",
+    "nuxt-module",
+    "privacy"
+  ],
+  "homepage": "https://inth.com",
+  "bugs": {
+    "url": "https://github.com/inthhq/inth/issues"
+  },
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inthhq/inth.git",
+    "directory": "packages/sdk/nuxt"
+  },
+  "files": [
+    "dist",
+    "schema",
+    "docs",
+    "AGENTS.md",
+    "SKILL.md"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./dist/translations/*.js"
+  ],
+  "main": "./dist/module.mjs",
+  "types": "./dist/module.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/module.d.mts",
+      "import": "./dist/module.mjs",
+      "default": "./dist/module.mjs"
+    },
+    "./devtools": {
+      "types": "./dist/devtools.d.mts",
+      "import": "./dist/devtools.mjs",
+      "default": "./dist/devtools.mjs"
+    },
+    "./components/*": {
+      "types": "./dist/components/*.d.ts",
+      "import": "./dist/components/*.mjs",
+      "default": "./dist/components/*.mjs"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.mts",
+      "import": "./dist/testing.mjs",
+      "default": "./dist/testing.mjs"
+    },
+    "./engine": {
+      "types": "./dist/engine.d.mts",
+      "import": "./dist/engine.mjs",
+      "default": "./dist/engine.mjs"
+    },
+    "./translations/*": {
+      "types": "./dist/translations/*.d.ts",
+      "import": "./dist/translations/*.js",
+      "default": "./dist/translations/*.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "scripts": {
+    "build": "nuxt-module-build build",
+    "build:docs": "bun ../../../scripts/generate-package-docs.ts @inth/nuxt",
+    "check-types": "nuxt typecheck playground",
+    "dev": "nuxt dev playground",
+    "dev:build": "nuxt build playground",
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxt prepare playground",
+    "prepack": "pnpm run build:docs && pnpm run build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@inth/sdk": "workspace:*",
+    "@inth/vue": "workspace:*",
+    "@nuxt/kit": "^3.0.0 || ^4.0.0",
+    "defu": "^6.1.4",
+    "ufo": "^1.6.1"
+  },
+  "devDependencies": {
+    "@inth/typescript-config": "workspace:*",
+    "@inth/vitest-config": "workspace:*",
+    "@nuxt/module-builder": "^1.0.2",
+    "@types/node": "25.5.0",
+    "@vitejs/plugin-vue": "6.0.7",
+    "@vitest/coverage-istanbul": "4.1.10",
+    "@vue/runtime-core": "3.5.43",
+    "@vue/test-utils": "^2.4.6",
+    "h3": "1.15.11",
+    "jsdom": "^25.0.0",
+    "nitropack": "2.13.4",
+    "nuxt": "^4.5.1",
+    "pathe": "^2.0.3",
+    "typescript": "6.0.3",
+    "unbuild": "^3.6.1",
+    "vite": "8.1.3",
+    "vitest": "4.1.10",
+    "vue": "^3.5.39",
+    "vue-tsc": "^3.3.3"
+  },
+  "peerDependencies": {
+    "nuxt": "^3.0.0 || ^4.0.0",
+    "vue": "^3.5.39 || ^3.6.0-0"
+  },
+  "schema": "./schema/nuxt.schema.d.ts"
 }
