@@ -1848,4 +1848,233 @@ describe('opt-out network sync and queue', () => {
 		expect(await queuedOptOuts(browserStore)).toEqual([]);
 		second.dispose();
 	});
+
+	test.each(['optIn', 'save'] as const)(
+		'a failed account lift from %s stays queued without its token, replays on the next page with the same key, and clears the record on a null answer',
+		async (action) => {
+			const browserStore = createBrowserOutboxStore();
+			const accountOptOut: OptOutRecord = {
+				heldBy: 'person',
+				method: 'api',
+				recordedAt: NOW - 1000,
+				rights: ['sale', 'share'],
+			};
+			const failedKeys: string[] = [];
+			const failLift = vi.fn<NonNullable<KernelTransport['liftOptOut']>>(
+				(payload) => {
+					failedKeys.push(payload.idempotencyKey);
+					return Promise.reject(new Error('offline'));
+				}
+			);
+			const first = kernelOn(
+				{
+					initialRecords: {
+						now: NOW,
+						optOut: accountOptOut,
+						subject: { subjectId: SUBJECT },
+					},
+					initialUser: {
+						externalId: 'user_123',
+						identityProvider: 'clerk',
+						identityToken: 'secret-first-token',
+					},
+					transport: {
+						liftOptOut: failLift,
+						save: (payload) =>
+							Promise.resolve({ ok: true, subjectId: payload.subjectId }),
+					},
+				},
+				browserStore
+			);
+			const firstPersistence = createPersistence({
+				kernel: first,
+				skipHydration: true,
+			});
+
+			const actionResult =
+				action === 'optIn'
+					? await first.commands.optIn({ uiSource: 'dialog' })
+					: await first.commands.save(
+							{ marketing: true },
+							{ uiSource: 'dialog' }
+						);
+			expect(actionResult).toMatchObject(
+				action === 'optIn'
+					? { ok: false, reason: 'held-by-account' }
+					: { ok: true }
+			);
+			await vi.waitFor(() => expect(failLift).toHaveBeenCalledTimes(1));
+
+			expect(first.getSnapshot().optOut).toEqual(accountOptOut);
+			expect(failedKeys).toHaveLength(1);
+			await vi.waitFor(async () =>
+				expect(await queuedOptOuts(browserStore)).toHaveLength(1)
+			);
+			const rawStored = window.localStorage.getItem(
+				PENDING_OPT_OUTS_STORAGE_KEY
+			);
+			expect(rawStored).toBeTruthy();
+			expect(rawStored).not.toContain('secret-first-token');
+			const queued = await queuedOptOuts(browserStore);
+			expect(queued[0]?.kind).toBe('lift');
+			expect(queued[0]?.idempotencyKey).toBe(failedKeys[0]);
+			firstPersistence.dispose();
+			first.dispose();
+
+			// Next page with the same user and a fresh token replays the lift with
+			// the same idempotency key; a null answer clears the account opt-out.
+			const replayed: LiftOptOutPayload[] = [];
+			const synced: (Readonly<OptOutRecord> | null)[] = [];
+			const second = kernelOn(
+				{
+					initialRecords: {
+						now: NOW,
+						optOut: accountOptOut,
+						subject: { subjectId: SUBJECT },
+					},
+					initialUser: {
+						externalId: 'user_123',
+						identityProvider: 'clerk',
+						identityToken: 'fresh-replay-token',
+					},
+					transport: {
+						liftOptOut: (payload) => {
+							replayed.push(payload);
+							return Promise.resolve({
+								ok: true,
+								optOut: null,
+								subjectId: payload.subjectId,
+							});
+						},
+					},
+				},
+				browserStore
+			);
+			second.events.on('opt-out:synced', ({ optOut }) => synced.push(optOut));
+
+			await second.commands.init();
+			await vi.waitFor(() => expect(replayed).toHaveLength(1));
+			await vi.waitFor(async () =>
+				expect(await queuedOptOuts(browserStore)).toEqual([])
+			);
+			expect(replayed[0]?.idempotencyKey).toBe(failedKeys[0]);
+			expect(replayed[0]?.user?.identityToken).toBe('fresh-replay-token');
+			expect(second.getSnapshot().optOut).toBeNull();
+			expect(second.getSnapshot().effectivePermissions.marketing).toBe(true);
+			expect(synced).toEqual([null]);
+			second.dispose();
+		}
+	);
+
+	test('replaying a queued account lift never attaches a different user token and drops a permanently refused lift', async () => {
+		const accountOptOut: OptOutRecord = {
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+		};
+		const first = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: accountOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			initialUser: {
+				externalId: 'user_123',
+				identityProvider: 'clerk',
+				identityToken: 'tok_user_123',
+			},
+			transport: {
+				liftOptOut: vi.fn().mockRejectedValue(new Error('offline')),
+			},
+		});
+
+		const failed = await first.commands.optIn();
+		expect(failed).toEqual({ ok: false, reason: 'held-by-account' });
+		expect(await queuedOptOuts()).toHaveLength(1);
+		first.dispose();
+
+		// A different user must not supply their identity token to user_123's queued lift.
+		const replayed: LiftOptOutPayload[] = [];
+		const otherUser = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: accountOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			initialUser: {
+				externalId: 'user_999',
+				identityProvider: 'clerk',
+				identityToken: 'tok_other_user',
+			},
+			transport: {
+				liftOptOut: (payload) => {
+					replayed.push(payload);
+					return Promise.resolve({
+						ok: true,
+						optOut: accountOptOut,
+						subjectId: payload.subjectId,
+					});
+				},
+			},
+		});
+		await otherUser.commands.init();
+		await vi.waitFor(() => expect(replayed).toHaveLength(1));
+		expect(replayed[0]?.user?.externalId).toBe('user_123');
+		expect(replayed[0]?.user?.identityToken).toBeUndefined();
+		expect(await queuedOptOuts()).toEqual([]);
+		otherUser.dispose();
+
+		// A permanently rejected account lift (400 invalid_request) is dropped from the queue.
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const { fetch } = stubFetch(() => v1Error(400, 'invalid_request'));
+		const transport = createV1HostedTransport({
+			fetch,
+			projectUrl: PROJECT_URL,
+			property: 'www.example.com',
+		});
+		const rejected = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: accountOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			initialUser: { externalId: 'user_123', identityToken: 'tok_user_123' },
+			transport: { liftOptOut: transport.liftOptOut },
+		});
+		const rejectedResult = await rejected.commands.optIn();
+		expect(rejectedResult).toEqual({ ok: false, reason: 'held-by-account' });
+		expect(await queuedOptOuts()).toEqual([]);
+		expect(warn).toHaveBeenCalled();
+		rejected.dispose();
+	});
+
+	test('an answered account lift that remains held-by-account removes itself from the queue', async () => {
+		const accountOptOut: OptOutRecord = {
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+		};
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: accountOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			transport: {
+				liftOptOut: (payload) =>
+					Promise.resolve({
+						ok: true,
+						optOut: accountOptOut,
+						subjectId: payload.subjectId,
+					}),
+			},
+		});
+
+		const result = await kernel.commands.optIn();
+		expect(result).toEqual({ ok: false, reason: 'held-by-account' });
+		expect(await queuedOptOuts()).toEqual([]);
+		kernel.dispose();
+	});
 });

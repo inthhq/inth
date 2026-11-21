@@ -144,7 +144,8 @@ export const buildOptOutPayload = function buildOptOutPayload(
 
 /**
  * Build the transport payload for an opt-out lift, with one idempotency key
- * and no `rights` so the backend lifts every right the device holds.
+ * and no `rights` so the backend lifts every right the device holds, and
+ * account-held rights too when the current user carries a verified token.
  */
 export const buildLiftOptOutPayload = function buildLiftOptOutPayload(
 	snapshot: ConsentSnapshot,
