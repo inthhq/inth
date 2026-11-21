@@ -112,6 +112,11 @@ describe('kernel event mapping', () => {
 			{ ok: true, subjectId: 'test', type: 'save:replayed' },
 			{ type: 'command:init:started' },
 			{ result: { ok: true }, type: 'command:init:completed' },
+			{ type: 'command:opt-out:started' },
+			{
+				result: { ok: false, reason: 'not-available' },
+				type: 'command:opt-out:completed',
+			},
 			{ type: 'command:save:started' },
 			{ result: { ok: true }, type: 'command:save:completed' },
 			{

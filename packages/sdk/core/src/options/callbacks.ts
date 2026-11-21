@@ -60,8 +60,9 @@ export interface Callbacks {
 	 *
 	 * @remarks
 	 * Runs when `reloadOnConsentRevoked` is enabled (the default) and an
-	 * accept, reject or save turns off a category or vendor that was
-	 * granted. Expiry, policy changes and privacy signals do not reload.
+	 * accept, reject, save or one-click opt-out turns off a category or
+	 * vendor that was granted. Expiry, policy changes, privacy signals and
+	 * backend-synced opt-outs do not reload.
 	 * Use it to show a loading state or call a vendor's shutdown API.
 	 *
 	 * Runs synchronously before the reload, so avoid long-running work.

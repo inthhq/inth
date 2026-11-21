@@ -43,15 +43,19 @@ export type { ConsentSurfaceIAB } from './blanket';
 export { saveIABConsentSurface } from './iab-save';
 export {
 	claimOptOutConfirmationHost,
+	clearPendingOptOutConfirmation,
 	closeOptOutConfirmation,
 	hasOptOutConfirmationHost,
+	hasPendingOptOutConfirmation,
 	isOptOutConfirmationOpen,
 	isOptOutTrigger,
+	markPendingOptOutConfirmation,
 	openOptOutConfirmation,
 	optOutConsentSurface,
 	readFocusedElement,
 	subscribeOptOutConfirmation,
 	takeOptOutConfirmationOpener,
+	watchPendingOptOutConfirmation,
 } from './opt-out';
 export type { OptOutSurfaceContext } from './opt-out';
 export {

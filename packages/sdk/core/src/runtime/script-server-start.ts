@@ -27,6 +27,7 @@ import {
 import type { Script } from '../libs/script-loader/types';
 import { storageFor } from '../libs/storage-for';
 import {
+	OPT_OUT_CONFIRMATION_STORAGE_KEY,
 	resolveStorageKeys,
 	STORED_NAMES_CHECK,
 	storageKeyFamilies,
@@ -708,6 +709,7 @@ export const storedChoiceCheckScript = function storedChoiceCheckScript(
 	}
 	// Clears an earlier render's verifier first, such as after a remount: it
 	// checks another snapshot, and the test below may return before setting
-	// this one's.
-	return `(function(){${pageRenderFor(renderId)}${newerStoredDecision(snapshot, resolveStorageKeys(storageFor(options)), true)}g.current=function(){try{return!z()}catch(x){return false}}})()`;
+	// this one's. A pending post-reload opt-out confirmation also wakes the
+	// engine at once so the confirmation view opens without waiting.
+	return `(function(){${pageRenderFor(renderId)}${newerStoredDecision(snapshot, resolveStorageKeys(storageFor(options)), true)}var o=function(){try{return sessionStorage.getItem(${inlineJSON(OPT_OUT_CONFIRMATION_STORAGE_KEY)})!==null}catch(e){return false}};g.current=function(){try{return!z()&&!o()}catch(x){return false}}})()`;
 };

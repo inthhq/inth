@@ -49,7 +49,7 @@ Saves update the browser optimistically before sending to Inth. Stock surfaces a
 | 2 | Next task | Writes the record to the consent cookie and `localStorage`. |
 | 3 | After write queues | Posts the consent payload to Inth. |
 | 4 | On network settle | Emits `command:save:completed` and settles promises from `kernel.commands.save()`, `performAction()`, and `saveConsents()`. |
-| 5 | Next task on revocation | If a previously allowed category or vendor turned off, runs `onBeforeConsentRevocationReload` and reloads the page after the last in-flight save settles. Set `reloadOnConsentRevoked: false` to handle revocation yourself. |
+| 5 | Next task on revocation | If a save or one-click opt-out turned off a previously allowed category or vendor, runs `onBeforeConsentRevocationReload` and reloads the page after the last in-flight save or opt-out command settles. When a one-click opt-out triggers a reload, the confirmation view opens once on the new document instead of flashing before the reload. Privacy signals, expiry, policy changes, and backend-synced opt-outs do not reload. Set `reloadOnConsentRevoked: false` to handle revocation yourself. |
 
 ### Surface transitions
 

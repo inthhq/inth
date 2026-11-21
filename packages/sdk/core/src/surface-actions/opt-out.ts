@@ -8,6 +8,8 @@
  */
 
 import { resolveOptOutState } from '../libs/opt-out-state';
+import { OPT_OUT_CONFIRMATION_STORAGE_KEY } from '../libs/storage-keys';
+import { willReloadOnRevocation } from '../modules/revocation-reload';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -21,6 +23,65 @@ import {
 	showConsentSurface,
 } from './rules';
 
+const readSessionStorage = (): Storage | null => {
+	if (typeof window === 'undefined') {
+		return null;
+	}
+	try {
+		return window.sessionStorage;
+	} catch {
+		return null;
+	}
+};
+
+/**
+ * Record in `sessionStorage` that the next document in this tab should open
+ * the opt-out confirmation view once after a revocation reload.
+ *
+ * Degrades silently when `sessionStorage` is blocked or unavailable.
+ */
+export const markPendingOptOutConfirmation =
+	function markPendingOptOutConfirmation(): boolean {
+		const storage = readSessionStorage();
+		if (!storage) {
+			return false;
+		}
+		try {
+			storage.setItem(OPT_OUT_CONFIRMATION_STORAGE_KEY, '1');
+			return true;
+		} catch {
+			return false;
+		}
+	};
+
+/** Whether this tab has a post-reload opt-out confirmation pending. */
+export const hasPendingOptOutConfirmation =
+	function hasPendingOptOutConfirmation(): boolean {
+		const storage = readSessionStorage();
+		if (!storage) {
+			return false;
+		}
+		try {
+			return storage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY) !== null;
+		} catch {
+			return false;
+		}
+	};
+
+/** Clear the post-reload opt-out confirmation marker for this tab. */
+export const clearPendingOptOutConfirmation =
+	function clearPendingOptOutConfirmation(): void {
+		const storage = readSessionStorage();
+		if (!storage) {
+			return;
+		}
+		try {
+			storage.removeItem(OPT_OUT_CONFIRMATION_STORAGE_KEY);
+		} catch {
+			// Blocked storage degrades to no confirmation after reload.
+		}
+	};
+
 interface ConfirmationEntry {
 	hosts: Set<symbol>;
 	listeners: Set<() => void>;
@@ -28,10 +89,15 @@ interface ConfirmationEntry {
 	opener: HTMLElement | null;
 }
 
-const entries = new WeakMap<ConsentKernel, ConfirmationEntry>();
+type ConfirmationKey = ConsentKernel['events'];
 
-const entryFor = function entryFor(kernel: ConsentKernel): ConfirmationEntry {
-	let entry = entries.get(kernel);
+const keyOf = (kernel: ConsentKernel): ConfirmationKey | undefined =>
+	kernel?.events;
+
+const entries = new WeakMap<ConfirmationKey, ConfirmationEntry>();
+
+const entryFor = function entryFor(key: ConfirmationKey): ConfirmationEntry {
+	let entry = entries.get(key);
 	if (!entry) {
 		entry = {
 			hosts: new Set(),
@@ -39,7 +105,7 @@ const entryFor = function entryFor(kernel: ConsentKernel): ConfirmationEntry {
 			open: false,
 			opener: null,
 		};
-		entries.set(kernel, entry);
+		entries.set(key, entry);
 	}
 	return entry;
 };
@@ -74,7 +140,11 @@ export const readFocusedElement =
 export const closeOptOutConfirmation = function closeOptOutConfirmation(
 	kernel: ConsentKernel
 ): void {
-	const entry = entries.get(kernel);
+	const key = keyOf(kernel);
+	if (!key) {
+		return;
+	}
+	const entry = entries.get(key);
 	if (!entry?.open) {
 		return;
 	}
@@ -88,8 +158,12 @@ export const openOptOutConfirmation = function openOptOutConfirmation(
 	kernel: ConsentKernel,
 	opener?: HTMLElement | null
 ): void {
+	const key = keyOf(kernel);
+	if (!key) {
+		return;
+	}
 	onSurfaceNavigation(closeOptOutConfirmation);
-	const entry = entryFor(kernel);
+	const entry = entryFor(key);
 	entry.opener = opener === undefined ? readFocusedElement() : opener;
 	entry.open = true;
 	notify(entry);
@@ -99,7 +173,8 @@ export const openOptOutConfirmation = function openOptOutConfirmation(
 export const isOptOutConfirmationOpen = function isOptOutConfirmationOpen(
 	kernel: ConsentKernel
 ): boolean {
-	return entries.get(kernel)?.open === true;
+	const key = keyOf(kernel);
+	return key !== undefined && entries.get(key)?.open === true;
 };
 
 /** Read and clear the element that opened the confirmation view. */
@@ -107,7 +182,8 @@ export const takeOptOutConfirmationOpener =
 	function takeOptOutConfirmationOpener(
 		kernel: ConsentKernel
 	): HTMLElement | null {
-		const entry = entries.get(kernel);
+		const key = keyOf(kernel);
+		const entry = key ? entries.get(key) : undefined;
 		if (!entry) {
 			return null;
 		}
@@ -116,15 +192,47 @@ export const takeOptOutConfirmationOpener =
 		return opener;
 	};
 
+/** Whether a standalone opt-out confirmation host is mounted for `kernel`. */
+export const hasOptOutConfirmationHost = function hasOptOutConfirmationHost(
+	kernel: ConsentKernel
+): boolean {
+	const key = keyOf(kernel);
+	return key !== undefined && (entries.get(key)?.hosts.size ?? 0) > 0;
+};
+
 /** Subscribe to opt-out confirmation state transitions for `kernel`. */
 export const subscribeOptOutConfirmation = function subscribeOptOutConfirmation(
 	kernel: ConsentKernel,
 	listener: () => void
 ): () => void {
-	const entry = entryFor(kernel);
-	entry.listeners.add(listener);
+	const initialKey = keyOf(kernel);
+	if (!initialKey) {
+		return () => undefined;
+	}
+	let currentKey = initialKey;
+	entryFor(currentKey).listeners.add(listener);
+
+	const followAttach = () => {
+		const nextKey = keyOf(kernel);
+		if (!nextKey || nextKey === currentKey) {
+			return;
+		}
+		entries.get(currentKey)?.listeners.delete(listener);
+		currentKey = nextKey;
+		entryFor(currentKey).listeners.add(listener);
+		if (
+			entries.get(currentKey)?.open === true ||
+			(entries.get(currentKey)?.hosts.size ?? 0) > 0
+		) {
+			listener();
+		}
+	};
+
+	const unsubscribeSnapshot = kernel.subscribe(followAttach);
+
 	return () => {
-		entry.listeners.delete(listener);
+		entries.get(currentKey)?.listeners.delete(listener);
+		unsubscribeSnapshot();
 	};
 };
 
@@ -137,7 +245,11 @@ export const claimOptOutConfirmationHost = function claimOptOutConfirmationHost(
 	kernel: ConsentKernel,
 	token: symbol
 ): () => void {
-	const entry = entryFor(kernel);
+	const key = keyOf(kernel);
+	if (!key) {
+		return () => undefined;
+	}
+	const entry = entryFor(key);
 	entry.hosts.add(token);
 	notify(entry);
 	return () => {
@@ -146,12 +258,61 @@ export const claimOptOutConfirmationHost = function claimOptOutConfirmationHost(
 	};
 };
 
-/** Whether a standalone opt-out confirmation host is mounted for `kernel`. */
-export const hasOptOutConfirmationHost = function hasOptOutConfirmationHost(
-	kernel: ConsentKernel
-): boolean {
-	return (entries.get(kernel)?.hosts.size ?? 0) > 0;
-};
+/**
+ * Reopen the opt-out confirmation view once on a reloaded document when a
+ * revocation reload set the post-reload marker in `sessionStorage`.
+ *
+ * Waits until `kernel`'s policy has settled. Clears the marker once checked
+ * and opens the confirmation view only when an opt-out is held on this
+ * document and neither the dialog nor an IAB model is active.
+ *
+ * @returns A disposer that stops watching.
+ */
+export const watchPendingOptOutConfirmation =
+	function watchPendingOptOutConfirmation(kernel: ConsentKernel): () => void {
+		if (!hasPendingOptOutConfirmation()) {
+			return () => undefined;
+		}
+		let settled = false;
+		let unsubscribeSnapshot: (() => void) | undefined;
+		let unsubscribeInit: (() => void) | undefined;
+
+		const stop = () => {
+			settled = true;
+			unsubscribeSnapshot?.();
+			unsubscribeInit?.();
+			unsubscribeSnapshot = undefined;
+			unsubscribeInit = undefined;
+		};
+
+		const check = () => {
+			if (settled) {
+				return;
+			}
+			if (!hasPendingOptOutConfirmation()) {
+				stop();
+				return;
+			}
+			const snapshot = kernel.getSnapshot();
+			if (snapshot.policyPending) {
+				return;
+			}
+			stop();
+			clearPendingOptOutConfirmation();
+			if (
+				snapshot.activeUI !== 'dialog' &&
+				snapshot.policyRule.model !== 'iab' &&
+				resolveOptOutState(snapshot).honored
+			) {
+				openOptOutConfirmation(kernel, null);
+			}
+		};
+
+		unsubscribeSnapshot = kernel.subscribe(check);
+		unsubscribeInit = kernel.events.on('init:applied', check);
+		check();
+		return stop;
+	};
 
 /**
  * Whether a floating trigger or toolbar preferences item acts as an opt-out
@@ -183,10 +344,10 @@ export interface OptOutSurfaceContext {
  * When an external CMP owns consent, record nothing and ask that provider to
  * open its own preferences; the result is `not-available`.
  *
- * `commands.optOut()` records locally before its first `await`, so the
- * confirmation view opens synchronously without waiting on the network.
- * When called on a deferred stand-in kernel whose command replays once the
- * engine attaches, the confirmation view opens once the command settles.
+ * When a revocation reload is due for this opt-out, defers the confirmation
+ * view to the next document through `sessionStorage` so it does not flash
+ * before the reload. When no reload is due, opens the confirmation view
+ * synchronously without waiting on the network.
  */
 export const optOutConsentSurface = function optOutConsentSurface(
 	kernel: ConsentKernel,
@@ -213,12 +374,17 @@ export const optOutConsentSurface = function optOutConsentSurface(
 		showConsentSurface(kernel, 'none');
 	}
 	const action = beginAction(kernel);
-	const openedSynchronously = resolveOptOutState(kernel.getSnapshot()).honored;
-	if (openedSynchronously) {
+	const after = kernel.getSnapshot();
+	const honoredSynchronously = resolveOptOutState(after).honored;
+	const reloadingSynchronously =
+		honoredSynchronously && willReloadOnRevocation(kernel, before, after);
+	if (reloadingSynchronously) {
+		markPendingOptOutConfirmation();
+	} else if (honoredSynchronously) {
 		openOptOutConfirmation(kernel, opener);
 	}
 	// Fall back to the preference centre if a custom kernel reports
-	// not-available, or open once a deferred stand-in kernel settles.
+	// not-available, or handle a deferred stand-in kernel once it settles.
 	// oxlint-disable-next-line promise/prefer-await-to-then -- Synchronous open must not await the network.
 	void pending.then(
 		(result) => {
@@ -226,18 +392,23 @@ export const optOutConsentSurface = function optOutConsentSurface(
 				return;
 			}
 			if (!result.ok && result.reason === 'not-available') {
+				clearPendingOptOutConfirmation();
 				closeOptOutConfirmation(kernel);
 				showConsentSurface(kernel, 'dialog');
 				return;
 			}
-			if (
-				!openedSynchronously &&
-				result.ok &&
-				kernel.getSnapshot().activeUI !== 'dialog' &&
-				resolveOptOutState(kernel.getSnapshot()).honored &&
-				!isOptOutConfirmationOpen(kernel)
-			) {
-				openOptOutConfirmation(kernel, opener);
+			if (!honoredSynchronously && result.ok) {
+				const settled = kernel.getSnapshot();
+				if (
+					settled.activeUI !== 'dialog' &&
+					resolveOptOutState(settled).honored
+				) {
+					if (willReloadOnRevocation(kernel, before, settled)) {
+						markPendingOptOutConfirmation();
+					} else if (!isOptOutConfirmationOpen(kernel)) {
+						openOptOutConfirmation(kernel, opener);
+					}
+				}
 			}
 		},
 		() => undefined

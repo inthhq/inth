@@ -862,6 +862,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			if (before.evaluationPolicy.model !== 'opt-out') {
 				return { ok: false, reason: 'not-available' };
 			}
+			emit({ type: 'command:opt-out:started' });
 			const currentTime = runtime.now();
 			const actionAt =
 				context?.actionAt !== undefined &&
@@ -874,11 +875,13 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				defaultOptOutRights()
 			);
 			if (nextOptOut === null) {
-				return {
+				const result: OptOutResult = {
 					changed: false,
 					ok: true,
 					optOut: before.optOut as Readonly<OptOutRecord>,
 				};
+				emit({ result, type: 'command:opt-out:completed' });
+				return result;
 			}
 			const subjectId = before.subject?.subjectId ?? generateUuidV7();
 			const subject = saveSubject(before, subjectId);
@@ -918,7 +921,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			);
 			await outbox.sendOptOut(payload, { actVersion, generation });
 			const current = getSnapshot().optOut;
-			return {
+			const result: OptOutResult = {
 				changed: true,
 				ok: true,
 				optOut:
@@ -926,6 +929,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 						? current
 						: recorded,
 			};
+			emit({ result, type: 'command:opt-out:completed' });
+			return result;
 		},
 
 		// oxlint-disable-next-line complexity -- One action records categories and vendors together in a fixed order.

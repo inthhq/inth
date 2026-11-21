@@ -4,13 +4,36 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+	explicitChoice,
 	matchedResolution,
 	NOW,
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import { createConsentKernel } from '../../kernel';
-import type { KernelConfig, KernelVendorsState, SaveResult } from '../../types';
+import {
+	createConsentKernel,
+	createKernel as createInternalKernel,
+} from '../../kernel';
+import { createMemoryOutboxStore } from '../../kernel/save-outbox';
+import type { SaveOutboxStore } from '../../kernel/save-outbox';
+import { OPT_OUT_CONFIRMATION_STORAGE_KEY } from '../../libs/storage-keys';
+import { createStandInKernel } from '../../runtime/stand-in-kernel';
+import {
+	clearPendingOptOutConfirmation,
+	closeOptOutConfirmation,
+	hasPendingOptOutConfirmation,
+	isOptOutConfirmationOpen,
+	markPendingOptOutConfirmation,
+	optOutConsentSurface,
+	subscribeOptOutConfirmation,
+	watchPendingOptOutConfirmation,
+} from '../../surface-actions/opt-out';
+import type {
+	KernelConfig,
+	KernelVendorsState,
+	OptOutResult,
+	SaveResult,
+} from '../../types';
 import { watchRevocationReload } from '../revocation-reload';
 
 const vendors: KernelVendorsState = {
@@ -28,14 +51,20 @@ const vendors: KernelVendorsState = {
 
 const kernels: { dispose: () => void }[] = [];
 
-const createKernel = (config: Partial<KernelConfig> = {}) => {
-	const kernel = createConsentKernel({
+const createKernel = (
+	config: Partial<KernelConfig> = {},
+	outboxStore?: SaveOutboxStore
+) => {
+	const fullConfig: KernelConfig = {
 		initialPolicyResolution: matchedResolution(
 			optInRule({ categories: ['marketing', 'measurement'] })
 		),
 		now: NOW,
 		...config,
-	});
+	};
+	const kernel = outboxStore
+		? createInternalKernel(fullConfig, { outboxStore })
+		: createConsentKernel(fullConfig);
 	kernels.push(kernel);
 	return kernel;
 };
@@ -67,9 +96,14 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	vi.restoreAllMocks();
 	for (const kernel of kernels.splice(0)) {
+		closeOptOutConfirmation(
+			kernel as Parameters<typeof closeOptOutConfirmation>[0]
+		);
 		kernel.dispose();
 	}
+	window.sessionStorage.clear();
 	vi.useRealTimers();
 });
 
@@ -250,5 +284,406 @@ describe('watchRevocationReload with an external consent source', () => {
 		await vi.runAllTimersAsync();
 
 		expect(reload).not.toHaveBeenCalled();
+	});
+});
+
+describe('watchRevocationReload with durable opt-out', () => {
+	const createOptOutKernel = (
+		config: Partial<KernelConfig> = {},
+		outboxStore?: SaveOutboxStore
+	) =>
+		createKernel(
+			{
+				initialPolicyResolution: matchedResolution(
+					optOutRule({
+						categories: ['marketing', 'measurement'],
+						privacySignals: {
+							gpc: { denyCategories: ['marketing', 'measurement'] },
+						},
+					})
+				),
+				...config,
+			},
+			outboxStore
+		);
+
+	it('reloads once after a one-click opt-out turns off a granted category', async () => {
+		const kernel = createOptOutKernel();
+		const { onBeforeReload, reload } = watch(kernel);
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+
+		await kernel.commands.optOut();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		await vi.runAllTimersAsync();
+
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(onBeforeReload.mock.calls[0]?.[0].preferences.marketing).toBe(false);
+		expect(reload).toHaveBeenCalledOnce();
+		expect(onBeforeReload.mock.invocationCallOrder[0]).toBeLessThan(
+			reload.mock.invocationCallOrder[0] ?? 0
+		);
+	});
+
+	it('does not reload when marketing and measurement are already denied', async () => {
+		const resolution = matchedResolution(
+			optOutRule({ categories: ['marketing', 'measurement'] })
+		);
+		const kernel = createKernel({
+			initialPolicyResolution: resolution,
+			initialRecords: {
+				choice: explicitChoice(
+					{ marketing: false, measurement: false },
+					resolution.fingerprints.choice,
+					NOW - 1000
+				),
+			},
+		});
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(false);
+		const { onBeforeReload, reload } = watch(kernel);
+
+		await kernel.commands.optOut();
+		await vi.runAllTimersAsync();
+
+		expect(onBeforeReload).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+	});
+
+	it('does not reload on a second optOut() when a record is already held', async () => {
+		const kernel = createOptOutKernel();
+		const { onBeforeReload, reload } = watch(kernel);
+
+		await kernel.commands.optOut();
+		await vi.runAllTimersAsync();
+		expect(reload).toHaveBeenCalledOnce();
+
+		reload.mockClear();
+		onBeforeReload.mockClear();
+
+		const second = await kernel.commands.optOut();
+		expect(second).toMatchObject({ changed: false, ok: true });
+		await vi.runAllTimersAsync();
+
+		expect(onBeforeReload).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+	});
+
+	it('does not reload when a Global Privacy Control signal records an opt-out', async () => {
+		const kernel = createOptOutKernel();
+		kernel.markLive();
+		const { onBeforeReload, reload } = watch(kernel);
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+
+		kernel.set.privacySignals({ gpc: true });
+		await vi.runAllTimersAsync();
+
+		expect(kernel.getSnapshot().optOut?.method).toBe('gpc');
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(onBeforeReload).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+	});
+
+	it('does not reload when an opt-out is applied from a backend answer', async () => {
+		const resolution = matchedResolution(
+			optOutRule({ categories: ['marketing', 'measurement'] })
+		);
+		const kernel = createOptOutKernel({
+			transport: {
+				init: () =>
+					Promise.resolve({
+						location: { countryCode: 'US', regionCode: 'CA' },
+						policyResolution: resolution,
+						records: {
+							optOut: {
+								heldBy: 'person',
+								method: 'api',
+								recordedAt: NOW - 1000,
+								rights: ['sale', 'share'],
+							},
+						},
+					}),
+			},
+		});
+		const { onBeforeReload, reload } = watch(kernel);
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+
+		await kernel.commands.init();
+		await vi.runAllTimersAsync();
+
+		expect(kernel.getSnapshot().optOut?.method).toBe('api');
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(onBeforeReload).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+	});
+
+	it('does not reload on optIn() or a save that lifts an opt-out', async () => {
+		const heldOptOut = {
+			heldBy: 'device' as const,
+			method: 'button' as const,
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'] as ('sale' | 'share')[],
+		};
+
+		const optInKernel = createOptOutKernel({
+			initialRecords: { optOut: heldOptOut },
+		});
+		const optInWatcher = watch(optInKernel);
+		await optInKernel.commands.optIn();
+		await vi.runAllTimersAsync();
+		expect(optInKernel.getSnapshot().optOut).toBeNull();
+		expect(optInKernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+		expect(optInWatcher.onBeforeReload).not.toHaveBeenCalled();
+		expect(optInWatcher.reload).not.toHaveBeenCalled();
+
+		const saveKernel = createOptOutKernel({
+			initialRecords: { optOut: heldOptOut },
+		});
+		const saveWatcher = watch(saveKernel);
+		await saveKernel.commands.save({ marketing: true });
+		await vi.runAllTimersAsync();
+		expect(saveKernel.getSnapshot().optOut).toBeNull();
+		expect(saveKernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+		expect(saveWatcher.onBeforeReload).not.toHaveBeenCalled();
+		expect(saveWatcher.reload).not.toHaveBeenCalled();
+	});
+
+	it('does not reload on optOut() when disabled', async () => {
+		const kernel = createOptOutKernel();
+		const { onBeforeReload, reload } = watch(kernel, { enabled: false });
+
+		await kernel.commands.optOut();
+		await vi.runAllTimersAsync();
+
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(onBeforeReload).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+	});
+
+	it('does not reload on optOut() under an opt-in policy', async () => {
+		const kernel = createKernel();
+		const { onBeforeReload, reload } = watch(kernel);
+		await grantMarketing(kernel);
+
+		const result = await kernel.commands.optOut();
+		await vi.runAllTimersAsync();
+
+		expect(result).toEqual({ ok: false, reason: 'not-available' });
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(onBeforeReload).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+	});
+
+	it('waits for the opt-out request before reloading and replays a failed opt-out on a new kernel', async () => {
+		const outboxStore = createMemoryOutboxStore();
+		let finishOptOut: (result: OptOutResult) => void = () => undefined;
+		const sentKeys: string[] = [];
+		const first = createOptOutKernel(
+			{
+				transport: {
+					optOut: (payload) => {
+						sentKeys.push(payload.idempotencyKey);
+						return new Promise<OptOutResult>((resolve) => {
+							finishOptOut = resolve;
+						});
+					},
+				},
+			},
+			outboxStore
+		);
+		const { reload } = watch(first);
+
+		const optingOut = first.commands.optOut();
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(sentKeys).toHaveLength(1);
+		expect(reload).not.toHaveBeenCalled();
+
+		// Request fails: reload still happens once the attempt settles, and
+		// the entry remains queued in the outbox store for the next load.
+		finishOptOut({ ok: false });
+		await optingOut;
+		await vi.advanceTimersByTimeAsync(0);
+		expect(reload).toHaveBeenCalledOnce();
+
+		// A new kernel over the same outbox store replays the failed opt-out
+		// with the same idempotency key.
+		vi.useRealTimers();
+		const replayedKeys: string[] = [];
+		const second = createOptOutKernel(
+			{
+				transport: {
+					optOut: (payload) => {
+						replayedKeys.push(payload.idempotencyKey);
+						return Promise.resolve({ ok: true });
+					},
+				},
+			},
+			outboxStore
+		);
+		await second.commands.init();
+		await vi.waitFor(() => {
+			expect(replayedKeys).toEqual(sentKeys);
+		});
+	});
+
+	it('reloads once when a save refuses marketing under an opt-out rule and also records an opt-out', async () => {
+		const kernel = createOptOutKernel();
+		const { onBeforeReload, reload } = watch(kernel);
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+
+		await kernel.commands.save({ marketing: false });
+		await vi.runAllTimersAsync();
+
+		expect(kernel.getSnapshot().optOut?.method).toBe('button');
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(reload).toHaveBeenCalledOnce();
+	});
+});
+
+describe('opt-out confirmation across a revocation reload', () => {
+	const createOptOutKernel = (config: Partial<KernelConfig> = {}) =>
+		createKernel({
+			initialPolicyResolution: matchedResolution(
+				optOutRule({ categories: ['marketing', 'measurement'] })
+			),
+			...config,
+		});
+
+	it('defers confirmation to sessionStorage when a reload is due and opens it once on the next load', async () => {
+		const first = createOptOutKernel();
+		const { reload } = watch(first);
+
+		const pending = optOutConsentSurface(first);
+		// Does not flash open on the old document before reload.
+		expect(isOptOutConfirmationOpen(first)).toBe(false);
+		expect(
+			window.sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)
+		).toBe('1');
+		expect(hasPendingOptOutConfirmation()).toBe(true);
+
+		await pending;
+		await vi.runAllTimersAsync();
+		expect(reload).toHaveBeenCalledOnce();
+		expect(isOptOutConfirmationOpen(first)).toBe(false);
+
+		const recorded = first.getSnapshot().optOut;
+		expect(recorded).not.toBeNull();
+
+		// Second load with the held opt-out: opens once, clears the marker,
+		// records nothing new, and does not reload again.
+		const second = createOptOutKernel({
+			initialRecords: { optOut: recorded ?? undefined },
+		});
+		const secondWatch = watch(second);
+		const onRecorded = vi.fn();
+		second.events.on('opt-out:recorded', onRecorded);
+
+		const stopSecond = watchPendingOptOutConfirmation(second);
+		expect(isOptOutConfirmationOpen(second)).toBe(true);
+		expect(
+			window.sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)
+		).toBeNull();
+		expect(onRecorded).not.toHaveBeenCalled();
+		await vi.runAllTimersAsync();
+		expect(secondWatch.reload).not.toHaveBeenCalled();
+		stopSecond();
+
+		// Third load: marker is already cleared, so confirmation does not open.
+		const third = createOptOutKernel({
+			initialRecords: { optOut: recorded ?? undefined },
+		});
+		const stopThird = watchPendingOptOutConfirmation(third);
+		expect(isOptOutConfirmationOpen(third)).toBe(false);
+		stopThird();
+	});
+
+	it('opens confirmation immediately when reload is disabled or nothing granted was turned off', async () => {
+		const disabled = createOptOutKernel();
+		watch(disabled, { enabled: false });
+		await optOutConsentSurface(disabled);
+		expect(isOptOutConfirmationOpen(disabled)).toBe(true);
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+
+		const alreadyDenied = createOptOutKernel({
+			initialRecords: {
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 1000,
+					rights: ['sale', 'share'],
+				},
+			},
+		});
+		watch(alreadyDenied);
+		await optOutConsentSurface(alreadyDenied);
+		expect(isOptOutConfirmationOpen(alreadyDenied)).toBe(true);
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+	});
+
+	it('ignores and clears a pending marker when no opt-out is held on the new document', () => {
+		markPendingOptOutConfirmation();
+		const kernel = createOptOutKernel();
+		const stop = watchPendingOptOutConfirmation(kernel);
+		expect(isOptOutConfirmationOpen(kernel)).toBe(false);
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+		stop();
+	});
+
+	it('degrades without throwing when sessionStorage is blocked', async () => {
+		vi.spyOn(window, 'sessionStorage', 'get').mockImplementation(() => {
+			throw new DOMException('Blocked', 'SecurityError');
+		});
+		expect(markPendingOptOutConfirmation()).toBe(false);
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+		expect(() => clearPendingOptOutConfirmation()).not.toThrow();
+
+		const kernel = createOptOutKernel();
+		const { reload } = watch(kernel);
+		await optOutConsentSurface(kernel);
+		await vi.runAllTimersAsync();
+		expect(reload).toHaveBeenCalledOnce();
+		expect(isOptOutConfirmationOpen(kernel)).toBe(false);
+
+		const next = createOptOutKernel({
+			initialRecords: { optOut: kernel.getSnapshot().optOut ?? undefined },
+		});
+		const stop = watchPendingOptOutConfirmation(next);
+		expect(isOptOutConfirmationOpen(next)).toBe(false);
+		stop();
+	});
+
+	it('propagates post-reload confirmation through a deferred stand-in kernel', async () => {
+		const heldOptOut = {
+			heldBy: 'device' as const,
+			method: 'button' as const,
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'] as ('sale' | 'share')[],
+		};
+		const real = createOptOutKernel({
+			initialRecords: { optOut: heldOptOut },
+		});
+		const standIn = createStandInKernel({
+			requestEngine: () => undefined,
+			snapshot: { ...real.getSnapshot() },
+		});
+		const onChange = vi.fn();
+		const unsubscribe = subscribeOptOutConfirmation(standIn.kernel, onChange);
+
+		markPendingOptOutConfirmation();
+		const stop = watchPendingOptOutConfirmation(real);
+		expect(isOptOutConfirmationOpen(real)).toBe(true);
+
+		standIn.attach(real);
+		await Promise.resolve();
+		expect(isOptOutConfirmationOpen(standIn.kernel)).toBe(true);
+		expect(onChange).toHaveBeenCalled();
+
+		closeOptOutConfirmation(standIn.kernel);
+		expect(isOptOutConfirmationOpen(standIn.kernel)).toBe(false);
+		expect(isOptOutConfirmationOpen(real)).toBe(false);
+
+		unsubscribe();
+		stop();
+		standIn.dispose();
 	});
 });

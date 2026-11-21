@@ -24,6 +24,8 @@ const EVENT_TYPES = [
 	'save:replayed',
 	'command:init:started',
 	'command:init:completed',
+	'command:opt-out:started',
+	'command:opt-out:completed',
 	'command:save:started',
 	'command:save:completed',
 	'command:error',
@@ -308,6 +310,25 @@ export function kernelEventToDevToolsEvent(
 					event.result.ok,
 					'Initialization completed',
 					'Initialization failed'
+				),
+				timestamp,
+				type: event.type,
+			};
+		case 'command:opt-out:started':
+			return {
+				id,
+				message: 'Opt-out started',
+				timestamp,
+				type: event.type,
+			};
+		case 'command:opt-out:completed':
+			return {
+				data: resultData(event.result),
+				id,
+				message: outcomeMessage(
+					event.result.ok,
+					'Opt-out completed',
+					'Opt-out failed'
 				),
 				timestamp,
 				type: event.type,

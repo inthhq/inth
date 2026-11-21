@@ -92,7 +92,7 @@ const nextFrame = () =>
 		requestAnimationFrame(resolve);
 	});
 
-const createRuntime = () => {
+const createRuntime = (options: { reloadOnConsentRevoked?: boolean } = {}) => {
 	// An init near the end of a test starts an outbox replay that can
 	// outlive `dispose()`. Every runtime shares the outbox in localStorage,
 	// so that replay can resend the save the next test just queued. A
@@ -125,6 +125,7 @@ const createRuntime = () => {
 			projectUrl: '/api/inth',
 		}),
 		prefetch: { initRetry: false },
+		reloadOnConsentRevoked: options.reloadOnConsentRevoked ?? false,
 	});
 	runtimes.push(runtime);
 	return runtime;
