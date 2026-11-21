@@ -1,50 +1,41 @@
 ---
 title: Content Security Policy
-description: Run Inth on an Astro site under a strict Content Security Policy, with a per-request nonce from your middleware or with Astro's own hash-based CSP, and allow the consent backend and vendors.
+description: Configure a strict Content Security Policy on an Astro site using Inth with middleware nonces or Astro's hash-based CSP.
 group: frameworks
 ---
 
 ## What Inth adds to the page
 
-A Content Security Policy for an Astro site with Inth has to allow these:
+A Content Security Policy for an Astro site using Inth must allow these resources:
 
 | What | Where it comes from | Directive |
 | --- | --- | --- |
 | The color-scheme script | Inline, in `<head>`, with `colorScheme` `'system'` or `'dark'` | `script-src` |
 | The banner reveal script | Inline, after a banner on a prerendered page | `script-src` |
 | The early-tap script | Inline, before a server-rendered banner whose consent engine loads after the page | `script-src` |
-| `<style data-inth-styles="inth-first-paint">`, the banner's rules | Inline, in `<head>` from `ConsentScript`, or from the banner on a layout without it, unless `styles: false` or the site uses Tailwind CSS 3. On a page the server shows no banner, the browser adds the same element, with the page's nonce, when the dialog opens | `style-src` |
+| `<style data-inth-styles="inth-first-paint">`, the banner's rules | Inline, in `<head>` from `ConsentScript`, or from the banner on a layout without it, unless `styles: false` or the site uses Tailwind CSS 3. On a page where the server shows no banner, the browser adds the same element with the page's nonce when the dialog opens | `style-src` |
 | `<style data-inth-styles="inth-iab-first-paint">`, the IAB banner's rules | Inline alongside the base rules when IAB is configured | `style-src` |
 | `<style id="inth-theme">` | Inline, when the integration sets `theme` | `style-src` |
-| The page script that starts the consent client, the banner's click handler, and the consent engine it loads | Bundled module scripts from your own origin | `script-src 'self'` |
+| The page script that starts the consent client, the banner's click handler, and the consent engine | Bundled module scripts from your own origin | `script-src 'self'` |
 | The dialog's stylesheet, IAB panel rules for the IAB dialog, and Svelte primitives | Stylesheets from your own origin, linked before the dialog mounts | `style-src 'self'` |
-| Full base and configured IAB stylesheets on a Tailwind CSS 3 site, or the stylesheets you import with `styles: false` | Stylesheets from your own origin | `style-src 'self'` |
+| Full base and configured IAB stylesheets on a Tailwind CSS 3 site, or stylesheets you import with `styles: false` | Stylesheets from your own origin | `style-src 'self'` |
 | Vendor `<script>` elements | Created by the script loader when a category is allowed | `script-src`, plus each vendor's hosts |
 | Gated inline scripts | Your own `type="text/plain"` scripts, copied into live scripts | `script-src` |
 
-The per-visitor boot payload is not on this list. `ConsentScript` and the
-banners render it as a `<script type="application/json" data-inth-config>`
-data block, and `ConsentBanner` adds the state it rendered from as a
-`data-inth-boot` data block. The browser never runs a data block, so a policy does not need to
-allow it.
+The per-visitor boot payload is not on this list. `ConsentScript` and the banners render it as a `<script type="application/json" data-inth-config>` data block, and `ConsentBanner` adds the state it rendered from as a `data-inth-boot` data block. Browsers never execute data blocks, so your CSP does not need to allow them.
 
-The dialog islands can render `style` attributes, for example on animated
-sections. If your policy blocks style attributes, allow them with a separate
-`style-src-attr 'unsafe-inline'` directive.
+The dialog islands can render `style` attributes, for example on animated sections. If your policy blocks style attributes, allow them with `style-src-attr 'unsafe-inline'`.
 
-Choose one way to allow the inline code:
+Choose one approach to allow the inline code:
 
 | Policy | Use it when |
 | --- | --- |
-| A nonce from your own middleware | Pages render on each request, and you set the policy header yourself |
-| Astro's CSP, `security.csp` | You want Astro to write the policy, including on prerendered pages, and the site does not use `ClientRouter` |
+| A nonce from your own middleware | Pages render on each request and you set the policy header yourself |
+| Astro's CSP, `security.csp` | You want Astro to generate hashes, including on prerendered pages, and the site does not use `ClientRouter` |
 
 ## Allow Inth with a nonce
 
-Set `Astro.locals.inth.nonce` in your own middleware. The Inth middleware
-runs first, with `order: 'pre'`, so `Astro.locals.inth` exists by the time
-yours runs. Generate a nonce per request, set it, render, then send the policy
-header with the same nonce:
+Set `Astro.locals.inth.nonce` in your own middleware. Inth's middleware runs first with `order: 'pre'`, so `Astro.locals.inth` exists before yours runs. Generate a nonce per request, assign it, render, and send the header with the same nonce:
 
 {/* example: fragment */}
 
@@ -65,19 +56,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
 });
 ```
 
-With the nonce set, every inline `<script>` and `<style>` that `ConsentScript`,
-`ConsentBanner` and `IABConsentBanner` render carries it. The browser runtime
-reads the nonce from the `data-inth-config` data block and puts it on:
+With the nonce set, every inline `<script>` and `<style>` rendered by `ConsentScript`, `ConsentBanner`, and `IABConsentBanner` carries it. The browser runtime reads the nonce from `data-inth-config` and stamps it on:
 
-- The vendor scripts the script loader injects, unless a script entry sets its
-  own `nonce`.
-- The gated `type="text/plain"` scripts it activates.
-- The stylesheet links it adds the first time a dialog opens.
+- Vendor scripts injected by the script loader, unless a script entry sets its own `nonce`.
+- Gated `type="text/plain"` scripts it activates.
+- Stylesheet links added the first time a dialog opens.
 
 ### Put the nonce on your gated scripts
 
-When the page has a nonce, Inth activates a gated `type="text/plain"` script
-only if the tag carries that same nonce. Add it to each gated tag you write:
+When the page has a nonce, Inth activates a gated `type="text/plain"` script only if the tag carries that same nonce. Add it to each gated tag you write:
 
 {/* example: fragment */}
 
@@ -92,44 +79,23 @@ only if the tag carries that same nonce. Add it to each gated tag you write:
 </script>
 ```
 
-Inth skips a gated tag without the nonce, logs a console warning, marks the
-tag `data-inth-activated="untrusted"` and never tries it again. The check
-exists because Inth activates a tag by creating a new `<script>`, and a policy
-with `'strict-dynamic'` runs a script that trusted code creates without
-checking its nonce. Without the check, a tag injected through an HTML
-injection hole would run once its category was allowed.
+Inth skips a gated tag without the nonce, logs a console warning, marks it `data-inth-activated="untrusted"`, and never retries it. This check prevents an injected HTML tag from running under `'strict-dynamic'` once its category is allowed.
 
-Gated tags you insert later from your own code need the nonce too. When you
-call `activateGatedScripts(snapshot, container, nonce)` from
-`@inth/astro/client` for that markup, pass the page's nonce as the third
-argument so the same check applies. Pages without a nonce activate every
-gated tag.
+Gated tags you insert dynamically need the nonce too. Pass the page's nonce as the third argument to `activateGatedScripts(snapshot, container, nonce)` from `@inth/astro/client`. Pages without a nonce activate every gated tag.
 
-A nonce only works on pages rendered on each request. A prerendered page is
-built once, so every visitor would share one nonce. Use Astro's CSP for
-prerendered pages.
+Nonces work only on request-rendered pages. A prerendered page is built once, so every visitor would share the same nonce. Use Astro's CSP for prerendered pages.
 
-The nonce covers what the Inth components render. Scripts and stylesheets of
-your own that Astro inlines need the nonce or a hash from you.
+The nonce covers elements rendered by Inth components. Your own inline scripts and stylesheets still need a nonce or hash.
 
 ### Pass the nonce to `ConsentBanner` and `ConsentBannerDeferred`
 
-`ConsentBanner` reads `Astro.locals.inth.nonce` by default. Its `nonce` prop
-sets the value for that banner only.
+`ConsentBanner` reads `Astro.locals.inth.nonce` by default. Its `nonce` prop overrides the value for that banner only.
 
-`ConsentBannerDeferred` passes the page's nonce to its server island. The
-island renders in a request of its own, but the page's policy is the one that
-applies to the markup the island inserts.
-
-Astro loads a server island with inline scripts that carry no nonce, and one
-of them changes on every render. A nonce policy set from middleware therefore
-blocks the loader, and the deferred banner never arrives. On pages with
-`ConsentBannerDeferred`, use Astro's CSP, which hashes the loader on each
-render, or render `ConsentBanner` instead.
+`ConsentBannerDeferred` forwards the page's nonce to its server island. Astro loads server islands with inline scripts that carry no nonce, and one script changes per render, so a middleware nonce policy blocks the island loader. On pages with `ConsentBannerDeferred`, use Astro's CSP (which hashes the loader per render) or render `ConsentBanner` instead.
 
 ## Allow Inth with Astro's CSP
 
-Turn on Astro's CSP with `security.csp`, or `experimental.csp` in Astro 5:
+Enable Astro's CSP with `security.csp` (or `experimental.csp` in Astro 5):
 
 {/* example: fragment */}
 
@@ -140,46 +106,35 @@ export default defineConfig({
 });
 ```
 
-The Inth integration adds the hashes of the inline code it can render to that
-policy, with the hash algorithm you configured:
+The `inth()` integration adds hashes for the inline code it renders using your configured hash algorithm:
 
 - The color-scheme script.
 - The reveal scripts of `ConsentBanner` and `IABConsentBanner`.
 - The banner's early-tap script.
-- Base and configured IAB banner rules, unless `styles: false` or Tailwind
-  CSS 3 uses external stylesheets.
+- Base and configured IAB banner rules, unless `styles: false` or Tailwind CSS 3 uses external stylesheets.
 - The theme stylesheet.
-- The inline `textContent` of each entry in the integration's `scripts`
-  option, which the script loader injects.
+- The inline `textContent` of each entry in the integration's `scripts` option.
 
-You do not need `'unsafe-inline'`. Leave it out, because Astro drops the hashes
-from a directive that lists it.
+Leave `'unsafe-inline'` out, because Astro drops hashes from any directive that includes it.
 
-Some code still needs your own entry in the policy:
+Add these entries yourself:
 
-- Gated `type="text/plain"` scripts you write yourself. Add the hash of each
-  one's text to `security.csp.scriptDirective.hashes`.
-- Scripts registered from the `clientEntrypoint` module. The integration
-  cannot see them when it computes the hashes, so add the hash of each inline
-  one yourself. With Astro's CSP on, Inth logs a console error that names
-  each inline entrypoint script the policy is missing and the hash to add.
-- Vendor script hosts. Add them to `security.csp.scriptDirective.resources`,
-  together with `'self'`, which a custom list no longer includes.
+- Gated `type="text/plain"` scripts you author: add each script's hash to `security.csp.scriptDirective.hashes`.
+- Inline scripts registered in `clientEntrypoint`: the integration cannot see them at config time. With Astro's CSP enabled, Inth logs a console error naming each missing inline entrypoint script and the hash to add.
+- Vendor script hosts: add them to `security.csp.scriptDirective.resources`, alongside `'self'`, because a custom list omits `'self'`.
 
-Astro's CSP does not support `ClientRouter`. On a site that uses it, allow the
-inline code with a nonce instead.
+Astro's CSP does not support `ClientRouter`. Use a middleware nonce on sites with `ClientRouter`.
 
-## Allow the consent backend in `connect-src`
+## Allow Inth in `connect-src`
 
-The browser sends consent to `${projectUrl}/v1/consent/records`, and requests `/v1/consent/init`
-when the server did not resolve the policy. Allow those origins:
+The browser saves consent to `${projectUrl}/v1/consent/records` and requests `/v1/consent/init` when the server did not resolve the policy. Allow these origins:
 
 | Mode | Browser requests go to |
 | --- | --- |
-| `manifest()`, the default | Your own origin for `/api/inth/v1/consent/init`, and the backend origin for `/v1/consent/records` |
-| `manifest({ resolve: 'browser' })` | Your own origin for `/api/inth/v1/consent/manifest`, the backend origin for `/v1/consent/records`, and `geoUrl` if set |
-| `hosted()` | The backend origin, for `/v1/consent/init` and `/v1/consent/records` |
-| `testing()` | No consent backend |
+| `manifest()` (default) | Your own origin for `/api/inth/v1/consent/init`, and your Inth project origin for `/v1/consent/records` |
+| `manifest({ resolve: 'browser' })` | Your own origin for `/api/inth/v1/consent/manifest`, your Inth project origin for `/v1/consent/records`, and `geoUrl` if set |
+| `hosted()` | Your Inth project origin for `/v1/consent/init` and `/v1/consent/records` |
+| `testing()` | No remote requests |
 
 {/* example: fragment */}
 
@@ -187,29 +142,15 @@ when the server did not resolve the policy. Allow those origins:
 connect-src 'self' https://your-project.inth.app;
 ```
 
-Replace `https://your-project.inth.app` with the URL from your Inth project.
-Server-side requests from the middleware and the
-injected routes run in Astro and are not subject to the browser's policy.
-Under an IAB TCF policy, the browser fetches the vendor list from the `/v1/consent/init`
-route or the URL the policy names. Allow that host too.
+Replace `https://your-project.inth.app` with your Inth project URL. Server-side requests from the middleware and injected routes run in Astro and are outside the browser's CSP. Under an IAB TCF policy, allow the Global Vendor List host if it differs from your origin.
 
-Vendors add their own hosts to `script-src`, `connect-src`, `img-src` and
-`frame-src`. Each [integration guide](/docs/integrations/overview) lists the
-requests to expect.
+Vendors add their own hosts to `script-src`, `connect-src`, `img-src`, and `frame-src`. Each [integration guide](/docs/integrations/overview) lists the requests to expect.
 
 ## Check your policy
 
-1. Load a server-rendered page with the policy enforced, not report-only, and
-   open the DevTools Console. No `Refused to execute inline script` or
-   `Refused to apply inline style` error appears.
-2. View the page source. With a nonce policy, the color-scheme `<script>`,
-   `<style id="inth-theme">` and `<script type="application/json"
-   data-inth-config>` carry a `nonce` attribute that matches the
-   `content-security-policy` response header. The Elements panel shows the
-   attribute empty, because browsers hide a nonce's value after checking it.
-3. The banner renders with your theme colors, and its buttons record a choice.
-4. Open the preference dialog. It is styled, and the Console shows no
-   `style-src` violation.
-5. Allow a category that gates a vendor. The vendor's script loads, and no
-   `connect-src` or `script-src` violation mentions its host.
-6. Save a choice. The request to `/v1/consent/records` succeeds in DevTools Network.
+1. Load a server-rendered page with the policy enforced (not report-only) and open the DevTools Console. Confirm no `Refused to execute inline script` or `Refused to apply inline style` error appears.
+2. View the page source. Under a nonce policy, confirm the color-scheme `<script>`, `<style id="inth-theme">`, and `<script type="application/json" data-inth-config>` carry a `nonce` matching the response header. (The Elements panel hides nonce values after checking them.)
+3. Confirm the banner renders with your theme colors and records a choice.
+4. Open the preference dialog and confirm it is styled with no `style-src` violation.
+5. Allow a category gating a vendor. Confirm the vendor loads with no `connect-src` or `script-src` violations.
+6. Save a choice and confirm `POST /v1/consent/records` succeeds in DevTools Network.

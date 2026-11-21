@@ -28,8 +28,7 @@ const isRootRelative = (url: string): boolean =>
 /**
  * Resolve site documentation URLs to version-matched files when bundled.
  * Pages missing from the package's filtered bundle point at `siteOrigin`,
- * the docs site for the package's release, because c15t.com documents the
- * previous major during a new major's prereleases.
+ * the docs site for the package's release.
  */
 export const packageDocLink = (
 	url: string,
@@ -62,7 +61,7 @@ export const packageDocLink = (
  * verbatim, so prompts carry absolute URLs that still work once pasted into
  * an agent outside the site.
  */
-export const PROMPT_DOCS_ORIGIN = 'https://v3.c15t.com';
+export const PROMPT_DOCS_ORIGIN = 'https://inth.com';
 
 const escapeRegExp = (text: string): string =>
 	text.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
@@ -71,7 +70,7 @@ const escapeRegExp = (text: string): string =>
  * Docs paths in prompt text, either root-relative or on
  * {@link PROMPT_DOCS_ORIGIN}. A path starts after whitespace, an opening
  * bracket or a quote, and stops before closing punctuation, so
- * "/docs/upgrade-v3.md." keeps its sentence's full stop. The Markdown
+ * "/docs/migrate-from-c15t.md." keeps its sentence's full stop. The Markdown
  * converter wraps absolute URLs in angle brackets; the optional groups
  * capture them so a bundled path loses them.
  */
@@ -82,7 +81,7 @@ const promptDocPath = new RegExp(
 
 /**
  * Rewrite docs paths inside a copyable prompt, such as
- * `https://v3.c15t.com/docs/frameworks/next/upgrade-v3.md`. In a package
+ * `https://inth.com/docs/migrate-from-c15t.md`. In a package
  * bundle they become the bundled file, relative to the page holding the
  * prompt, because those docs match the installed version. Absolute URLs to
  * pages outside the bundle stay as written; root-relative paths point at

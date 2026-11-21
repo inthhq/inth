@@ -1,25 +1,21 @@
 ---
 title: Heap
-description: Load the Heap config script and heap.js only after measurement consent with the Inth heap helper, and check it in DevTools.
+description: Load Heap config and heap.js only after measurement consent with the Inth heap helper.
 seoTitle: Heap cookie consent with Inth
-seoDescription: Load Heap only with measurement consent. The Inth heap helper keeps heap_config.js off the page and stops Heap when a visitor withdraws consent.
+seoDescription: Gate Heap analytics on measurement consent and reload on withdrawal to stop heap.js with Inth.
 icon: heap
 group: integrations
 ---
 
-The Inth `heap` helper keeps Heap off the page until `measurement` has consent.
-Until then, Inth does not define `window.heap` or load `heap_config.js`, which
-loads the heap.js runtime. The helper never calls `heap.stopTracking`. If the
-visitor withdraws consent, Inth removes the config script element. By default,
-Inth also reloads the page. The reload stops heap.js.
+The `heap` helper keeps `window.heap` undefined and `heap_config.js` off the page until visitors grant `measurement` consent, then reloads the page on withdrawal to stop `heap.js`.
 
 ## Configure Heap
 
-Copy the environment ID from your Heap installation snippet. The `heap` helper
-loads that environment's `heap_config.js`, which then loads the heap.js
-runtime. Remove the original Heap snippet.
+Copy the environment ID from your Heap snippet and remove the original Heap snippet from your site.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { heap } from '@inth/integrations/heap';
@@ -33,30 +29,21 @@ export const scripts = [heap({ envId: 'YOUR_ENVIRONMENT_ID' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `envId` | Required | Environment ID. Set as `heap.envId` and `heap.appid`, and used in the default loader URL. The helper trims it. Empty values log an error and the script does not load. |
-| `clientConfig` | `{}` | Client configuration set on `heap.clientConfig`. Values must be JSON-serializable with finite numbers; other values throw a `TypeError`. The helper always sets `shouldFetchServerConfig: false` and overrides any value you pass for it. |
-| `scriptUrl` | `https://cdn.us.heap-api.com/config/<envId>/heap_config.js` | Config loader URL override. A blank value falls back to the default. |
+| `envId` | Required | Environment ID assigned to `heap.envId`, `heap.appid`, and the default loader URL. Trimmed automatically; blank values log an error and skip loading. |
+| `clientConfig` | `{}` | Assigned to `heap.clientConfig`. Must be JSON-serializable with finite numbers or throws `TypeError`. Inth always forces `shouldFetchServerConfig: false`. |
+| `scriptUrl` | `https://cdn.us.heap-api.com/config/<envId>/heap_config.js` | Config loader URL override. Blank values use the default. |
 
 ## Loading and revocation
 
-`heap` uses the `measurement` category. When measurement becomes allowed, the
-helper creates `window.heap` with stubs for the heap.js v5 methods, which queue
-calls in `window.heapReadyCb`. Then it loads the config script, and heap.js
-replays the queued calls once it is ready.
+`heap` gates on `measurement`. On grant, Inth creates `window.heap` with heap.js v5 queue stubs backed by `window.heapReadyCb`, then loads `heap_config.js`, which loads `heap.js` and replays queued calls.
 
-On revocation the helper removes the config script element and calls no Heap
-API. It does not call `heap.stopTracking`, so heap.js keeps capturing until the
-page unloads. If the visitor allows measurement again before the page reloads,
-the helper keeps the methods of the running heap.js instead of replacing them
-with queue stubs. If you set `reloadOnConsentRevoked: false`, call
-`window.heap.stopTracking()` from the `onConsentChange` callback of a
-callback-only script. See
-[custom integrations](/docs/integrations/building-integrations).
+On withdrawal, Inth removes the config script element without calling `heap.stopTracking`, so `heap.js` keeps capturing until the default reload. If a visitor regrants `measurement` before reload, Inth keeps the live `heap.js` methods instead of overwriting them with stubs. With `reloadOnConsentRevoked: false`, register a callback-only script whose `onConsentChange` calls `window.heap.stopTracking()`; see [custom integrations](/docs/integrations/building-integrations).
 
 ## Verify Heap
 
-Filter DevTools Network by `heap`. After you allow measurement, the
-`heap_config.js` request for your environment ID loads, followed by the heap.js
-runtime it selects. `window.heap.envId` holds your environment ID.
+Filter DevTools Network by `heap`:
+
+1. Allow `measurement` and confirm `heap_config.js` loads for your environment ID, followed by the `heap.js` runtime.
+2. Confirm `window.heap.envId` matches your environment ID.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

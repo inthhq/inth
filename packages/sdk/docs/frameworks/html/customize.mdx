@@ -1,33 +1,33 @@
 ---
 title: Customize
-description: Change the Inth script tag banner on a plain HTML site with theme tokens, extra CSS, layout, copy and legal links, or replace it with your own HTML.
+description: Style the Inth script tag banner on plain HTML sites with theme tokens, CSS, layout options, copy and legal links.
 group: frameworks
 ---
 
+Customize the stock script tag banner and dialog using theme tokens, shadow
+root CSS, layout options, legal links or your own HTML.
+
 ## See the designs
 
-See the [design gallery](/docs/customization/recipes) for five banner designs,
-including a custom bottom bar built on the headless script tag.
+See the [design gallery](/docs/customization/recipes) for five tested banner
+designs, including a custom bottom bar built on the headless script tag.
 
 ## Change colors, radius and fonts
 
-Queue a `config` call with `ui.theme` before the script tag. This block turns
-the buttons purple and rounds the cards:
+Queue a `config` call with `ui.theme` before `inth.js`:
 
 <include src="../../shared/examples/html/theme.mdx" />
 
-Put the block in the same `<head>` as the tag. The tag has `defer`, so any
-inline script above or below it runs first. `theme` takes the same token
-object as the other Inth packages; [theme tokens](/docs/customization/tokens)
-lists every token and what it changes. The banner, the preference dialog and
-the trigger button all read the same tokens.
+Place the block in `<head>`. Because `inth.js` uses `defer`, inline scripts
+run before it starts. `theme` uses the same token object as every Inth
+package; [theme tokens](/docs/customization/tokens) lists every token. The
+banner, preference dialog and floating trigger all share these tokens.
 
 ## Add CSS inside the shadow root
 
-The banner renders in a shadow root with its own copy of the stylesheet, so a
-theme's global `button {}` rule cannot reach it and the banner cannot restyle
-your page. To target one part, pass CSS in `ui.css`. Inth adds it after the
-bundled stylesheet, inside the shadow root:
+By default the UI renders inside a shadow root with its own stylesheet so
+site CSS cannot break the banner. Pass extra rules in `ui.css` to append them
+after the bundled stylesheet inside the shadow root:
 
 {/* example: fragment */}
 
@@ -40,23 +40,18 @@ bundled stylesheet, inside the shadow root:
 </script>
 ```
 
-Select parts by their `data-testid` attributes, which match the other Inth
-packages. Inspect the banner in the browser's element panel to find a part's
-`data-testid`.
-
-To style parts with classes from your own stylesheet, such as a Tailwind
-build, put the classes on parts with `ui.theme.slots` and link the stylesheet
-into the shadow root with `ui.stylesheetUrls`. Page CSS can also reach a part
-by its slot key with `[data-inth-ui]::part(consentBannerCard)`.
-[Class names and CSS-in-JS](/docs/customization/class-names) and
-[Tailwind CSS](/docs/customization/tailwind) show both, and
-[component parts](/docs/customization/slots) lists the slot keys.
+Target parts by `data-testid`. To apply classes from an external stylesheet
+such as Tailwind, set `ui.theme.slots` and pass `ui.stylesheetUrls` into the
+shadow root, or target parts from page CSS with
+`[data-inth-ui]::part(consentBannerCard)`. See
+[class names and CSS-in-JS](/docs/customization/class-names),
+[Tailwind CSS](/docs/customization/tailwind) and
+[component parts](/docs/customization/slots).
 
 ## Style it with your own stylesheet
 
-Add `data-shadow="false"` to the script tag, or set `ui: { shadow: false }`, and
-Inth renders the UI into the page. Inth still adds its stylesheet, and your
-page's CSS now applies too:
+Add `data-shadow="false"` to the script tag (or `ui: { shadow: false }`) to
+render into the page DOM so page CSS applies directly:
 
 {/* example: fragment */}
 
@@ -66,22 +61,16 @@ page's CSS now applies too:
 }
 ```
 
-Your theme's global rules reach the banner in this mode, so check buttons and
-headings after you switch. In the page, Inth's rules sit in
-`@layer components`, and any CSS outside a layer beats them whatever its
-specificity. That includes a theme's global `button {}` rule and Tailwind 3's
-preflight, which removes the button padding and card borders. On a site with
-Tailwind 3 or such global rules, keep the default shadow root. To write every rule yourself, set
-`ui: { shadow: false, noStyle: true }`. Inth then renders unstyled markup with
-the same `data-testid` attributes.
-
-Inth puts its stylesheet in a `<style>` element next to the UI. To serve the
-stylesheet as a file instead, set `ui: { shadow: false, styles: false }` and
-link `dist/inth.css` from the same package version as the script.
+In light DOM, Inth's rules sit in `@layer components`, so unlayered site
+rules (including Tailwind 3 preflight or global `button {}` styles) override
+them. Keep the shadow root if your site uses Tailwind 3 or aggressive resets.
+Set `ui: { shadow: false, noStyle: true }` to drop stock styles completely
+while keeping `data-testid` hooks, or `ui: { shadow: false, styles: false }`
+to serve `dist/inth.css` as an external stylesheet.
 
 ## Change the banner's shape and position
 
-`presentation.prompt` sets the banner's shape and position:
+Configure `presentation.prompt`:
 
 {/* example: fragment */}
 
@@ -101,58 +90,53 @@ link `dist/inth.css` from the same package version as the script.
 | `widget` | `bottom-right` (default), `bottom-left`, `top-left`, `top-right` |
 | `wall` | `center` |
 
-The [banner](/docs/frameworks/html/components/banner#change-the-layout) page
-lists the button layout options. The policy still wins. A notice never blocks the page, a choice wall always
-does, and a policy's required buttons stay visible.
-[Keep behavior and appearance separate](/docs/customization/overview#keep-behavior-and-appearance-separate)
-explains the split.
+See [banner layout](/docs/frameworks/html/components/banner#change-the-layout)
+for button grouping. Where presentation conflicts with policy rules, the
+policy wins; see
+[keep behavior and appearance separate](/docs/customization/overview#keep-behavior-and-appearance-separate).
 
 ## Change the copy and language
 
-For one-off wording, set `ui.banner.title`, `description`, `acceptButtonText`,
-`rejectButtonText` or `customizeButtonText`; the [banner](/docs/frameworks/html/components/banner#change-the-text)
-page lists them. For wording shared by the banner and the dialog, and for other
-languages, see [translations](/docs/frameworks/html/translations).
+Override single banner strings with `ui.banner.title`, `description`,
+`acceptButtonText`, `rejectButtonText` or `customizeButtonText`; see
+[banner text](/docs/frameworks/html/components/banner#change-the-text). For
+shared wording and languages, see
+[translations](/docs/frameworks/html/translations).
 
-The bundle only carries English. Other languages come from your Inth project,
-the policy manifest or your `i18n` messages. Your `i18n` messages for the
-language in use override the project's or manifest's copy key by key, and
-keys you leave out keep that copy. `data-language="de"` on the tag forces a
-language instead of the browser's.
+The script bundles English only; other languages load from your Inth project,
+manifest or `i18n` messages. Add `data-language="de"` on the tag to force a
+language.
 
 ## Show legal links
 
-Add `data-privacy-policy-url`, `data-cookie-policy-url` or `data-terms-url` to
-the tag and the banner and dialog show those links. To show different links on
-each surface, set `legalLinks` in `config`, then list the links for each
-surface in `ui.banner.legalLinks` and `ui.dialog.legalLinks`. An empty list or
-`null` hides links on that surface.
+Add `data-privacy-policy-url`, `data-cookie-policy-url` or `data-terms-url`
+to the tag to display links on both surfaces. To pick different links per
+surface, configure `legalLinks` in `config` and pass arrays to
+`ui.banner.legalLinks` and `ui.dialog.legalLinks` (`null` or `[]` hides
+them).
 
-`data-hide-branding` removes the "Secured by" tag from both surfaces.
+Add `data-hide-branding` to remove the "Secured by" tag from both surfaces.
 
 ## Set dark mode and animation
 
-`data-color-scheme` picks `light`, `dark` or `system`, the default. Set it to
-`none` to follow a `dark` or `inth-dark` class on your page's `<html>`
-instead. [Dark mode](/docs/customization/dark-mode) covers dark tokens in
-`ui.theme.dark`.
+`data-color-scheme` accepts `light`, `dark`, `system` (default), or `none`
+(follows a `dark` or `inth-dark` class on `<html>`). See
+[dark mode](/docs/customization/dark-mode) for `ui.theme.dark` tokens.
 
-`data-disable-animation` turns off the banner and dialog animations. Without
-it, Inth skips them for visitors who ask for reduced motion.
-[Motion and animation](/docs/customization/motion) covers per-surface settings
-and the duration tokens.
+`data-disable-animation` disables banner and dialog transitions. By default,
+Inth respects `prefers-reduced-motion`; see
+[motion and animation](/docs/customization/motion).
 
 ## Build your own banner
 
-Load `inth.headless.js` instead of `inth.js` and write the banner in your own
-HTML. The runtime still resolves the policy, stores choices and gates scripts,
-and `data-inth-action` buttons work without code. [Headless](/docs/frameworks/html/headless)
-walks through a complete bottom bar.
+Load `inth.headless.js` instead of `inth.js` to render custom HTML while
+keeping policy resolution, storage, script gating and `data-inth-action`
+buttons. See [headless](/docs/frameworks/html/headless).
 
 ## Check it works
 
-1. Open the page in a private window. The banner uses your colors and radius.
-2. Open the preference dialog and turn on the floating trigger, if you use it.
-   Both use the same tokens as the banner.
-3. Switch your system between light and dark mode. With
-   `data-color-scheme="system"`, the banner follows it.
+1. Open the page in a private window and verify your colors and radius apply.
+2. Open the preference dialog (and floating trigger if enabled) to confirm
+   shared tokens apply.
+3. Toggle OS light/dark mode and confirm `data-color-scheme="system"`
+   updates.

@@ -1,33 +1,32 @@
 ---
 title: Content Security Policy
-description: Allow the Inth script tag, its stylesheet, backend requests, gated scripts and embeds under a Content Security Policy on a plain HTML site, with nonces or allowed origins.
+description: Allow the Inth script tag, styles, API requests, gated scripts and embeds under a strict Content Security Policy.
 group: frameworks
 ---
 
-## What Inth needs from your policy
+Configure your Content Security Policy directives so `inth.js`, its styles,
+Inth API requests, gated scripts and embeds work securely with nonces or host
+allowlists.
 
-The script tag loads one file, sends requests to your backend, adds a
-`<style>` element for the stock UI, and runs your gated scripts and iframes
-when they are allowed. Each needs a directive:
+## What Inth needs from your policy
 
 | Directive | Allow | Why |
 | --- | --- | --- |
-| `script-src` | The host that serves `inth.js`, such as `https://your-project.inth.app`. Add `https://cdn.jsdelivr.net` for `inth.gpp.js`, `inth.devtools.js`, or a bundle you load from the CDN. | The Inth bundle. |
-| `script-src` | A nonce or hash for each inline script | Your queued `config` and `on` calls, and inline gated snippets. |
-| `script-src` | Each vendor's script origin | Gated `<script src>` tags and `scripts` entries. |
-| `connect-src` | Your backend's origin, such as `https://your-project.inth.app` | `/v1/consent/init`, `/v1/consent/records`, and `/v1/consent/manifest` in manifest mode. |
-| `style-src` | The same nonce as the Inth tag, or the host you serve `inth.css` from | The stock UI's `<style>` element, or the stylesheet file. |
-| `frame-src` | Each embed's origin, such as `https://www.youtube-nocookie.com` | Gated iframes. |
-| `img-src`, `connect-src` | Each vendor's collection endpoints | What the vendor scripts send once they run. |
+| `script-src` | Host serving `inth.js` (such as `https://your-project.inth.app`), plus `https://cdn.jsdelivr.net` for CDN bundles, `inth.gpp.js` or `inth.devtools.js`. | Inth script bundles. |
+| `script-src` | Nonce or hash for inline scripts | Queued `config`/`on` blocks and inline gated snippets. |
+| `script-src` | Each vendor script origin | Gated `<script src>` tags and `scripts` entries. |
+| `connect-src` | Your Inth project origin (`https://your-project.inth.app`) | `/v1/consent/init`, `/v1/consent/records`, and `/v1/consent/manifest` in manifest mode. |
+| `style-src` | Matching nonce or the host serving `inth.css` | Stock UI `<style>` element or external stylesheet. |
+| `frame-src` | Each embed origin (such as `https://www.youtube-nocookie.com`) | Gated iframes. |
+| `img-src`, `connect-src` | Vendor telemetry endpoints | Requests sent by vendors after consent. |
 
-A missing `connect-src` entry is the most common failure. The `/v1/consent/init`
-request fails with a CSP error in the console, no policy resolves, and no
-banner shows.
+A missing `connect-src` entry is the most common failure: `/v1/consent/init` is blocked,
+no policy resolves, and no banner appears.
 
 ## Use a nonce
 
-With a nonce-based policy, put the nonce on the Inth tag, on every inline
-script that talks to `window.inth`, and on every gated inline script:
+Stamp the per-response nonce on the Inth script tag, inline queue scripts and
+every gated `<script type="text/plain">`:
 
 {/* example: fragment */}
 
@@ -46,42 +45,26 @@ script that talks to `window.inth`, and on every gated inline script:
 </script>
 ```
 
-Your server generates `RANDOM_PER_RESPONSE` for each response and sends the
-same value in the header, such as
-`Content-Security-Policy: script-src 'nonce-RANDOM_PER_RESPONSE' 'strict-dynamic'; style-src 'nonce-RANDOM_PER_RESPONSE'`.
-A static host that cannot vary the response cannot use a nonce; list origins
+Send the same nonce in your response header (for example,
+`Content-Security-Policy: script-src 'nonce-RANDOM_PER_RESPONSE' 'strict-dynamic'; style-src 'nonce-RANDOM_PER_RESPONSE'`).
+Static hosts that cannot vary responses per request should allowlist origins
 and hashes instead.
 
-The Inth tag reads its own `nonce` and puts it on the stock UI's `<style>`
-element and on every script that a `scripts` entry in `config` loads. An
-entry's own `nonce` wins. To give Inth a nonce without putting it on the tag,
-for example when `script-src` allows the tag by its origin, set
-`data-nonce="RANDOM_PER_RESPONSE"` on the tag instead. `data-nonce` wins over
-the tag's `nonce`.
-
-Once the Inth tag has a nonce, Inth runs only the gated `text/plain` tags
-that carry the same nonce. Inth runs a gated tag by creating a new `<script>`,
-and `'strict-dynamic'` lets scripts that trusted code creates run without a
-nonce, so without this check a tag injected into your page would run once its
-category was allowed. Inth skips a gated tag without the nonce, logs a console
-warning and marks the tag `data-inth-activated="untrusted"`. It never copies
-the nonce onto a gated tag, so add `nonce="RANDOM_PER_RESPONSE"` to every gated
-tag you write, including tags your own code inserts later.
-
-When Inth runs a gated tag, it copies that tag's `nonce` to the tag it
-creates, so the browser accepts the snippet. With `'strict-dynamic'`, scripts
-that Inth creates are trusted because the Inth tag itself carries the nonce.
-Without `'strict-dynamic'`, each vendor origin must be in `script-src`.
+Inth reads its tag's `nonce` (or `data-nonce`, which takes precedence) and
+applies it to the stock UI's `<style>` element and scripts loaded via
+`config.scripts`. Once a nonce is set, Inth executes only gated `text/plain`
+tags carrying that exact nonce, marking others `data-inth-activated="untrusted"`
+so injected HTML cannot run under `'strict-dynamic'`. Inth copies each valid
+gated tag's `nonce` onto the active `<script>` it creates.
 
 ## Allow the stock UI's styles
 
-`inth.js` renders its CSS in a `<style>` element inside the UI's shadow root.
-Theme tokens and `ui.css` go into the same element. The element carries the
-nonce from the Inth tag, or from `data-nonce`, so
-`style-src 'nonce-RANDOM_PER_RESPONSE'` allows it without `'unsafe-inline'`.
+`inth.js` injects its CSS (including theme tokens and `ui.css`) into a
+`<style>` element inside the shadow root carrying the tag's nonce, so
+`style-src 'nonce-RANDOM_PER_RESPONSE'` works without `'unsafe-inline'`.
 
-A host that cannot send a nonce can render into the page and serve the
-stylesheet as a file instead:
+Without per-request nonces, render into light DOM and load the stylesheet as
+a file from the same package version:
 
 {/* example: fragment */}
 
@@ -93,26 +76,20 @@ stylesheet as a file instead:
 </script>
 ```
 
-With `styles: false` and no `theme` or `css` option, Inth adds no `<style>`
-element. Put your token overrides in your own stylesheet. Your site's CSS now
-reaches the banner, so check it after the switch. Use the same version for
-the stylesheet and the script.
-
-`inth.headless.js` adds no styles at all. The DevTools panel adds its own
-`<style>` element, so remove its tag before you apply a strict policy.
+With `styles: false` and no `theme` or `css` option, Inth injects no
+`<style>` element; put token overrides in your own stylesheet.
+`inth.headless.js` injects no styles at all. Remove `inth.devtools.js` before
+enforcing a strict production policy.
 
 ## IAB TCF
 
-`inth.iab.js` loads the Global Vendor List through your backend in hosted
-mode, so the backend's origin in `connect-src` covers it. It adds
-`dist/inth.iab.css` rules to the same `<style>` element as the stock UI.
+`inth.iab.js` fetches the Global Vendor List through your Inth project in
+hosted mode (covered by `connect-src`) and injects `dist/inth.iab.css` into
+the same nonced `<style>` element.
 
 ## Check it works
 
-1. Send your policy as `Content-Security-Policy-Report-Only` first, and open
-   the page with the console open.
-2. The console shows no CSP violation for the Inth tag, `/v1/consent/init` or the
-   banner's styles. The banner renders styled.
-3. Allow each category. Each vendor's script and requests load without a
-   violation.
-4. Switch the header to `Content-Security-Policy` and repeat.
+1. Start with `Content-Security-Policy-Report-Only` and watch the Console.
+2. Confirm no CSP violations fire for `inth.js`, `/v1/consent/init` or banner styles.
+3. Grant each category and verify vendor scripts and requests pass.
+4. Switch to enforcing `Content-Security-Policy` and re-test.

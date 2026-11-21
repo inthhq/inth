@@ -1,25 +1,21 @@
 ---
 title: LinkedIn Insight Tag
-description: Load the LinkedIn Insight Tag only after marketing consent with the Inth linkedinInsights helper, guard lintrk conversion calls, and check it in DevTools.
+description: Load the LinkedIn Insight Tag only after marketing consent with the Inth linkedinInsights helper.
 seoTitle: LinkedIn Insight Tag cookie consent with Inth
-seoDescription: Load the LinkedIn Insight Tag only with marketing consent. The Inth linkedinInsights helper keeps insight.min.js off the page until then.
+seoDescription: Load the LinkedIn Insight Tag only with marketing consent. The Inth linkedinInsights helper keeps insight.min.js off the page until granted.
 icon: linkedin
 group: integrations
 ---
 
-The Inth `linkedinInsights` helper keeps the LinkedIn Insight Tag,
-`insight.min.js`, off the page until `marketing` has consent. Until then, Inth
-sets no LinkedIn globals. The helper sends no consent signal to LinkedIn. If the
-visitor withdraws consent, Inth removes the script element. By default, Inth
-also reloads the page.
+The `linkedinInsights` helper keeps `insight.min.js` off the page and sets no LinkedIn globals until `marketing` consent is granted. On withdrawal, Inth removes the script element without calling a LinkedIn API and reloads the page by default.
 
 ## Configure the LinkedIn Insight Tag
 
-Copy the partner ID from LinkedIn Campaign Manager under Data, Signals manager,
-Insight Tag. Remove the original Insight Tag snippet and its `<noscript>`
-tracking image.
+Copy your partner ID from LinkedIn Campaign Manager under **Data > Signals manager > Insight Tag**. Remove the original Insight Tag snippet and its `<noscript>` tracking image.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { linkedinInsights } from '@inth/integrations/linkedin-insights';
@@ -33,26 +29,18 @@ export const scripts = [linkedinInsights({ id: 'YOUR_PARTNER_ID' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `id` | Required | Partner ID. The helper trims it, sets it as `_linkedin_partner_id` and appends it to `_linkedin_data_partner_ids`. Empty or whitespace-only values log an error and the script does not load. |
-| `scriptSrc` | `https://snap.licdn.com/li.lms-analytics/insight.min.js` | Loader URL override. A blank value falls back to the default. |
+| `id` | Required | Partner ID. Trimmed, assigned to `_linkedin_partner_id`, and appended to `_linkedin_data_partner_ids`. Blank values log an error and skip loading. |
+| `scriptSrc` | `https://snap.licdn.com/li.lms-analytics/insight.min.js` | Loader URL override. Blank values use the default. |
 
 ## Loading and revocation
 
-`linkedinInsights` uses the `marketing` category. Before marketing is allowed,
-Inth sets no LinkedIn globals and loads nothing from LinkedIn. When marketing
-becomes allowed, the helper sets the partner ID globals, defines the `lintrk`
-queue, then loads `insight.min.js`.
+`linkedinInsights` gates on the `marketing` category. When `marketing` is allowed, the helper sets the partner ID globals, defines the `lintrk` queue, and loads `insight.min.js`.
 
-On revocation the helper removes the script element and calls no LinkedIn API,
-so the page reload is what stops the tag. `window.lintrk` stays defined until
-then.
+On withdrawal, the helper removes the script element without calling a LinkedIn API. `window.lintrk` stays defined until Inth reloads the page.
 
 ## Guard your own lintrk calls
 
-The Insight Tag tracks page views itself. Conversions your code sends through
-`lintrk('track', ...)` need their own check, because `window.lintrk` still
-exists after revocation. Check the permission first, then that the tag is set
-up:
+The Insight Tag tracks page views automatically. Conversions sent with `lintrk('track', ...)` need their own consent check because `window.lintrk` stays defined after withdrawal:
 
 ```ts title="src/track-signup.ts"
 export function trackSignup(marketingAllowed: boolean) {
@@ -61,16 +49,10 @@ export function trackSignup(marketingAllowed: boolean) {
 }
 ```
 
-Pass the current marketing permission from your framework, for example
-`useConsent('marketing')` in React. Use the conversion ID from your LinkedIn
-conversion. `@inth/integrations/linkedin-insights` exports no event wrapper.
+Pass the current `marketing` permission from your framework, such as `useConsent('marketing')` in React, and replace `1234567` with your LinkedIn conversion ID. `@inth/integrations/linkedin-insights` exports no event wrapper.
 
 ## Verify the LinkedIn Insight Tag
 
-After you allow marketing, `insight.min.js` loads from `snap.licdn.com`, and
-`window._linkedin_data_partner_ids` in the console contains your partner ID.
-Trigger one guarded conversion and check that its request to LinkedIn appears.
-Then revoke marketing. Until the page reloads, calling `trackSignup` sends
-nothing.
+Allow `marketing` and confirm `insight.min.js` loads from `snap.licdn.com` and `window._linkedin_data_partner_ids` contains your partner ID. Trigger a guarded conversion and verify its request to LinkedIn fires. Revoke `marketing` and confirm `trackSignup` sends nothing before reload.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

@@ -1,20 +1,22 @@
 ---
 title: ConsentWidget
-description: Put the Inth category switches and save actions inline on a Nuxt privacy settings page with the globally registered ConsentWidget.
+description: Render Inth category switches and save buttons inline on a Nuxt privacy settings page with global ConsentWidget.
 group: frameworks
 ---
 
+Embed inline consent controls directly inside a Nuxt privacy or account
+settings page using globally registered `ConsentWidget`.
+
 ## Add the widget to your privacy page
 
-The Nuxt module registers `ConsentWidget` globally. Render it on your privacy
-or account settings page without an import:
+`@inth/nuxt` registers `ConsentWidget` globally, so render it without an
+import:
 
 <include src="../../../shared/examples/nuxt/privacy-page.mdx" />
 
-Keep `InthProvider` in `app.vue` too, so visitors on other pages still get the
-banner. When the server resolves the policy, in the default `manifest()` mode or `hosted()`, the
-widget renders on the server with the visitor's recorded choice already applied to the
-switches.
+Keep `InthProvider` in `app/app.vue` so visitors on other routes still see the
+banner. In default `manifest()` or `hosted()` mode, SSR renders
+`ConsentWidget` with the visitor's stored switches already applied.
 
 <import src="../../../shared/vue/components/consent-widget.mdx#behavior" />
 
@@ -28,7 +30,7 @@ switches.
 
 ## Next steps
 
-- [ConsentManager](/docs/frameworks/nuxt/components/consent-manager) shows
-  these controls in a dialog.
-- [Composables](/docs/frameworks/nuxt/composables#build-a-preference-form)
-  build a preference form from your own markup.
+- [ConsentManager](/docs/frameworks/nuxt/components/consent-manager): render
+  these controls inside a modal dialog.
+- [Composables](/docs/frameworks/nuxt/composables#build-a-preference-form):
+  build a custom preference form.

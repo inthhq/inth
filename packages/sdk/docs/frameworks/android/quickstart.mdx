@@ -1,33 +1,21 @@
 ---
 title: Quickstart
-description: Add native consent screens and a permanent privacy-settings entry to a Kotlin Android app, with optional SDKs gated before startup.
+description: Add native Inth consent screens to a Kotlin Android app with Jetpack Compose and gate optional SDKs before startup.
 group: frameworks
 ---
 
-This guide adds Inth to a Kotlin app with Jetpack Compose. The Android engine
-stores choices on the device, loads policy from Inth, and exposes consent to
-native SDKs before any JavaScript runs. Compose supplies the consent screens.
+Add a native consent prompt and Privacy settings entry to a Kotlin Android app with Jetpack Compose. Inth persists choices locally, loads policy from your project, and exposes synchronous SDK gates at launch.
 
-## Before you start
+## Prerequisites
 
-Use Android API 24 or later, compile SDK 36 and JDK 17. Keep the Gradle, Android
-Gradle Plugin, Kotlin and Compose configuration that already works in your app.
-
-You need an [Inth project](https://inth.com), its HTTPS project URL and your
-app's privacy-policy URL. In Inth, configure the regions and categories your
-app needs. Include `measurement` if you plan to gate analytics with it.
-
-The Android SDK is currently a private prerelease. Obtain the versioned Maven
-repository and matching artifacts from the maintainer. The current native
-version is `3.0.0-alpha.1`. See [mobile availability](/docs/guides/mobile-status)
-for distribution and release scope.
+- Android API 24+, compile SDK 36+, JDK 17, Jetpack Compose, and Material 3.
+- An [Inth project](https://inth.com) with regional policies, `measurement` category, and its HTTPS project URL (`https://your-project.inth.app`).
+- Your app's HTTPS privacy policy URL.
+- Private prerelease Maven access for `com.inth` (`3.0.0-alpha.1`); see [mobile availability](/docs/guides/mobile-status).
 
 ## Add the dependencies
 
-In `settings.gradle.kts`, add the supplied repository inside your existing
-`dependencyResolutionManagement.repositories` block. This keeps `com.inth`
-resolution in one repository. The repository can be an HTTPS URL or an absolute
-path to a supplied Maven directory.
+Add your Maven repository in `settings.gradle.kts` inside `dependencyResolutionManagement.repositories`, scoped to `com.inth`:
 
 {/* example: fragment */}
 
@@ -48,11 +36,7 @@ exclusiveContent {
 }
 ```
 
-Set `inth.repository` in your user Gradle properties or build-worker
-configuration. For an authenticated repository, supply its credentials through
-the two environment variables. Build workers need access to the same artifacts.
-
-Add the platform and UI modules to your app's dependencies:
+Set `inth.repository` in Gradle properties and export credentials for authenticated repositories. Add the dependencies in `app/build.gradle.kts` (omit `inth-consent-ui` for [custom UI](/docs/frameworks/android/headless)):
 
 {/* example: fragment */}
 
@@ -61,66 +45,21 @@ implementation("com.inth:inth-android:3.0.0-alpha.1")
 implementation("com.inth:inth-consent-ui:3.0.0-alpha.1")
 ```
 
-`inth-android` brings in the consent core. `inth-consent-ui` adds Compose
-presentation. This guide assumes your app already uses `activity-compose`,
-Material 3 and the Compose compiler plugin. For an app with its own UI, follow
-[headless integration](/docs/frameworks/android/headless) and omit the UI module.
+## Install and mount the screens
 
-## Install once and mount the screens
-
-Create `ConsentApplication.kt` in your app's source directory. The checked
-example below includes the Application and Activity classes in one file. Change
-the package name to your app's package, replace `https://your-project.inth.app`
-with the URL from Inth, and set your real privacy-policy URL.
+Create `ConsentApplication.kt`, update the package name, and replace both placeholder URLs:
 
 <include src="../../shared/examples/native/examples/consent-demo/android-quickstart.mdx" />
 
-`InthAndroid.install` selects Android persistence and transport, hydrates saved
-choices, and starts policy resolution. It also owns foreground and reconnect
-refresh. Install before optional SDK startup. Disable analytics and advertising
-SDK auto-initializers that can collect before `Application.onCreate`.
+`InthAndroid.install` hydrates saved choices synchronously and starts policy resolution before optional SDKs boot (disable vendor auto-initializers). `InthConsent` presents an owed prompt across rotations; place **Privacy settings** in your app settings calling `ConsentPrompt.of(core).presentPreferences()`. Enable [`dryRun`](/docs/frameworks/android/configuration#run-without-sending-records) in debug builds to drop outgoing records.
 
-The Android SDK works only with Inth hosted projects. `backendUrl` must be
-your project URL. Any other host, a port, a path, a query or credentials make
-`InthAndroid.install` throw `InthProjectUrlException`, whose message quotes
-your value and names the rule it broke. For development and CI,
-[`dryRun`](/docs/frameworks/android/configuration#run-without-sending-records)
-keeps consent on the device and sends no records.
-
-The status line reads `decisionFlow(ConsentCategory.MEASUREMENT)` with
-`collectAsState()`, so it changes as soon as a choice is saved or withdrawn,
-with no observer code in the Activity.
-
-`InthConsent(privacyPolicyUrl = ...)` is the whole prompt. Once the policy is
-ready it presents an owed prompt by itself, once per owed prompt. A stored
-choice that is still valid shows nothing. A new policy or an expired choice
-presents it again. Keep it mounted beside your app content.
-
-Every screen that mounts `InthConsent` shares one `ConsentPrompt` per core.
-Rotation and Activity recreation keep the open prompt and its draft, and two
-screens never show two prompts. Put the **Privacy settings** button in your
-real settings screen so it stays reachable after the first prompt closes.
-`ConsentPrompt.of(core).presentPreferences()` opens settings from anywhere.
-
-To present the prompt yourself, pass `autoPresent = false` and call
-`ConsentPrompt.of(core).presentPrompt()` when you are ready.
-
-### Activities without Compose
-
-An Activity that builds its content with views makes one call after
-`setContentView`. Call it on every `onCreate`; the prompt survives
-recreation:
+For View-based Activities without Compose, call `attachConsent` after `setContentView`:
 
 <include src="../../shared/examples/native/examples/consent-demo/android-views.mdx" />
 
-`attachConsent` adds the stock screens above the Activity's content and returns
-the shared `ConsentPrompt`. It takes the same `autoPresent` and `theme`
-arguments as `InthConsent`.
+## Register the manifest entries
 
-Register the classes and permissions in your existing manifest. Keep your
-app's theme, icons and launch intent filter. Replace `com.inth.demo` with the
-package name you used in the Kotlin file. Register `SettingsActivity` too if
-you use the views example:
+Add permissions and register your classes in `AndroidManifest.xml`:
 
 {/* example: fragment */}
 
@@ -133,55 +72,27 @@ you use the views example:
 </application>
 ```
 
-Internet access is needed for hosted policy and delivery. Network-state access
-lets Inth retry when connectivity returns; launch and foreground retries still
-work without it.
-
 ## Gate analytics
 
-Consent screens record choices. Each optional SDK still needs an integration
-that starts or enables collection only while its category is allowed, then stops
-collection after withdrawal. Use the retained
-[measurement gate](/docs/frameworks/android/headless#keep-analytics-in-sync)
-for that lifecycle. A one-time startup read does not cover later changes.
+Wire each optional SDK to a retained [measurement gate](/docs/frameworks/android/headless#keep-analytics-in-sync) so collection starts on `GRANTED` and stops on withdrawal.
 
-## Check that it works
+## Check it works
 
-Build and launch the app against a policy that asks for a choice.
+Launch against an opt-in policy:
 
-1. On a fresh installation, the consent screen appears and optional analytics
-   stays off.
-2. Choose **Reject all**, then close and relaunch the app. The prompt stays
-   closed and analytics stays off.
-3. Open **Privacy settings**, enable Analytics and save. The screen shows
-   Measurement allowed, and your analytics integration can now enable
-   collection.
-4. Reopen settings and turn Analytics off. The screen shows Measurement off and
-   collection stops, including after another process restart.
-5. Repeat the refusal and restart while offline. The choice persists locally;
-   delivery retries after reconnecting.
+1. Fresh install: prompt opens; analytics stays off.
+2. Tap **Reject all** and relaunch: prompt stays closed; analytics stays off.
+3. Open **Privacy settings**, enable Analytics, and save: gate opens.
+4. Disable Analytics, save, and relaunch: collection stays off.
+5. Reject offline, then reconnect: refusal persists and delivers on reconnect.
 
-If the screen never appears, check the project URL, resolved policy and
-`Inth.isReady()`. A policy that needs no choice will not force a banner. A fresh
-offline app needs an [embedded policy](/docs/guides/mobile-offline) to show its
-first prompt.
+Offline first launches require an [offline policy](/docs/guides/mobile-offline).
 
 ## Next steps
 
-- [Connect mobile SDKs](/docs/integrations/overview#mobile-sdks) with bundled Firebase
-  Analytics and PostHog helpers.
-
-- [Configuration](/docs/frameworks/android/configuration) for scope, native
-  startup metadata and identity.
-
-- [Customize](/docs/frameworks/android/customize) for app identity, colors and
-  copy.
-
-- [Headless integration](/docs/frameworks/android/headless) for your own
-  screens and native SDK gates.
-
-- [IAB and advertising](/docs/guides/mobile-iab) for purpose/vendor authority,
-  Additional Consent and ads-SDK integration.
-
-- [Verify mobile consent](/docs/guides/mobile-verify) for the complete app
-  acceptance checklist.
+- [Connect mobile SDKs](/docs/integrations/overview#mobile-sdks): wire Firebase Analytics and PostHog.
+- [Configuration](/docs/frameworks/android/configuration): set URLs, `dryRun`, manifest startup, and identity.
+- [Customize](/docs/frameworks/android/customize): theme branding, colors, typography, layout, and copy.
+- [Build your own UI](/docs/frameworks/android/headless): build custom Compose screens and gates.
+- [Mobile IAB and ads](/docs/guides/mobile-iab): configure TCF, Additional Consent, and ad gates.
+- [Verify mobile consent](/docs/guides/mobile-verify): run the release checklist.

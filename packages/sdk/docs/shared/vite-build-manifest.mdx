@@ -7,4 +7,4 @@ a build first.
 The plugin can't see the options your app passes to `manifest()`. When the
 app passes `source: 'runtime'` or `manifestUrl`, set
 `consentManifest({ source: 'runtime' })` too. The build then downloads no
-manifest, so it doesn't fail when the backend's `/manifest` is down.
+manifest, so it doesn't fail when the backend's `/v1/consent/manifest` is down.

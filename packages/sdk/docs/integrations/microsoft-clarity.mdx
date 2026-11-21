@@ -1,26 +1,21 @@
 ---
 title: Microsoft Clarity
-description: Load Microsoft Clarity only after measurement consent with the Inth clarity helper, send Consent V2 storage signals and check them in DevTools.
+description: Load Microsoft Clarity after measurement consent and send Consent V2 storage signals with the Inth clarity helper.
 seoTitle: Microsoft Clarity cookie consent with Inth
 seoDescription: Load Microsoft Clarity only after measurement consent. The Inth clarity helper sends Clarity consentv2 signals for analytics and ad storage.
 icon: microsoft-clarity
 group: integrations
 ---
 
-The Inth `clarity` helper keeps Microsoft Clarity off the page until
-`measurement` has consent. Before the script loads, and after each consent
-change, the helper calls `clarity('consentv2', ...)`. `measurement` controls
-`analytics_Storage`, and `marketing` controls `ad_Storage`. The `defaultConsent`
-option replaces the values in the first call. After the visitor withdraws
-consent, Clarity stays on the page and gets `analytics_Storage: 'denied'`. By
-default, Inth also reloads the page.
+The `clarity` helper keeps Microsoft Clarity off the page until `measurement` consent is granted, then sends `clarity('consentv2', ...)` signals mapped from `measurement` and `marketing`. On withdrawal, Clarity stays on the page with `analytics_Storage: 'denied'`, and Inth reloads the page by default.
 
 ## Configure Microsoft Clarity
 
-Copy the project ID from your Clarity tracking code, where it follows
-`https://www.clarity.ms/tag/`. The helper builds the loader URL from it.
+Copy the project ID that follows `https://www.clarity.ms/tag/` in your Clarity snippet, then remove the original snippet from your app so Clarity loads only through Inth.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { clarity } from '@inth/integrations/microsoft-clarity';
@@ -34,31 +29,18 @@ export const scripts = [clarity({ id: 'YOUR_PROJECT_ID' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `id` | Required | Clarity project ID. Surrounding whitespace is trimmed. Unless you set `scriptUrl`, an empty ID logs an error and the script does not load. |
-| `defaultConsent` | Inth state | Consent V2 value queued once, before the loader. `true` or `false` sets both channels. An object sets `ad_Storage` or `analytics_Storage`, also accepted as `marketing` and `measurement`; channels you leave out follow Inth. Later updates always follow Inth. `true` grants ad storage even while marketing is denied. |
+| `id` | Required | Clarity project ID, trimmed automatically. Without `scriptUrl`, an empty ID logs an error and skips loading. |
+| `defaultConsent` | Inth state | Consent V2 value queued once before load. `true` or `false` sets both channels; an object sets `ad_Storage` or `analytics_Storage`, or aliases `marketing` and `measurement`, with omitted channels following Inth. Later updates always follow Inth. Setting `true` grants ad storage even while `marketing` is denied. |
 | `scriptUrl` | `https://www.clarity.ms/tag/<id>` | Loader URL override. |
 
 ## Loading and revocation
 
-`clarity` uses the `measurement` category, so Clarity loads only while
-measurement is allowed. Before the loader runs, the helper queues
-`clarity('consentv2', ...)` with `analytics_Storage` taken from measurement and
-`ad_Storage` taken from marketing. While Clarity is on the page, every
-permission change sends a new `consentv2` call, so allowing marketing later
-grants `ad_Storage` without reloading Clarity.
+`clarity` gates on the `measurement` category. Before the loader runs, the helper queues `clarity('consentv2', ...)` with `analytics_Storage` from `measurement` and `ad_Storage` from `marketing`. While Clarity is mounted, every permission change sends a new `consentv2` call, so granting `marketing` later enables `ad_Storage` without reloading Clarity.
 
-On measurement revocation the helper keeps the Clarity script and sends
-`consentv2` with `analytics_Storage` set to `denied`. If the visitor allows
-measurement again before the page reloads, it sends `granted`. A visitor who
-turns off the `microsoft-clarity` vendor gets both channels denied. Denied
-storage limits what Clarity stores; it does not mean Clarity sends no requests.
-See Microsoft's
-[Consent V2 API](https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-consent-api-v2).
+On `measurement` withdrawal, the helper keeps Clarity mounted and sends `consentv2` with `analytics_Storage: 'denied'`. Re-allowing `measurement` before reload sends `granted`. Turning off the `microsoft-clarity` vendor denies both channels. Denied storage limits what Clarity stores rather than blocking all requests. See Microsoft's [Consent V2 API](https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-consent-api-v2).
 
 ## Verify Microsoft Clarity
 
-Allow only marketing first. Clarity does not load, because it waits for
-measurement. Then allow measurement. The request to
-`www.clarity.ms/tag/<id>` appears without a page reload.
+Allow only `marketing` first and confirm Clarity does not load. Then allow `measurement` and confirm `www.clarity.ms/tag/<id>` loads without a page reload.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

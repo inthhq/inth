@@ -1,96 +1,56 @@
 ---
 title: "IAB TCF"
-description: "Shared IAB TCF setup guidance for the React and Next.js adapters."
+description: "Shared IAB TCF setup guidance for React, TanStack Start, and Next.js."
 group: reference
 ---
 
 {/* This file is NOT rendered directly. Sections are imported by framework pages. */}
 
 <section id="prepare">
-  Use the IAB integration when your application needs the Transparency and Consent
-  Framework. Configure an IAB policy, the correct CMP identity and vendor data for
-  your deployment. A demo CMP ID is not a production configuration.
+  Use the IAB integration when your application needs the Transparency and Consent Framework. Configure an IAB policy, your registered CMP ID, and vendor data in your Inth project. Do not use a demo CMP ID in production.
 
-  A CMP ID is assigned to a company when it registers as a CMP with IAB Europe
-  ([register.consensu.org/CMP](https://register.consensu.org/CMP)). Every TC
-  String names the CMP that wrote it, so an ID you did not register attributes
-  your users' consent records to someone else. Omitting it leaves the add-on
-  unmounted: no `__tcfapi`, and no TC String written.
+  IAB Europe assigns a CMP ID when a company registers as a CMP at [register.consensu.org/CMP](https://register.consensu.org/CMP). Every TC String names the CMP that wrote it, so an unregistered ID attributes your visitors' consent records to someone else. Omitting `cmpId` leaves the add-on unmounted, with no `__tcfapi` and no TC String.
 
-  Mount the IAB components inside an existing consent provider connected to Inth.
+  Mount the IAB components inside an existing consent provider connected to your Inth project.
 </section>
 
 <section id="configure">
-  Supply the CMP ID from your deployment's IAB configuration. Keep a persistent
-  preferences entry point through the surrounding consent provider.
+  Supply the CMP ID from your IAB configuration. Keep a persistent preferences entry point through the surrounding consent provider.
 
   ## Resolve the policy before rendering
 
-  IAB components remain hidden until an applicable policy resolves. Forcing a
-  dialog open does not create a policy or vendor list. Inspect resolution and the
-  Global Vendor List response before changing rendering conditions.
+  IAB components stay hidden until an applicable policy resolves. Forcing a dialog open does not create a policy or vendor list. Check policy resolution and the Global Vendor List response before changing rendering conditions.
 
-  IAB presentation follows `presentation.prompt.blocking` and
-  `presentation.preferences.blocking`. A blocking dialog needs focus management,
-  scroll locking and a backdrop together.
+  IAB presentation follows `presentation.prompt.blocking` and `presentation.preferences.blocking`. A blocking dialog manages focus, scroll locking, and a backdrop together.
 
   ## Mount IABProvider for every IAB policy
 
-  IAB is opt-in. The standard `ConsentBanner` and `ConsentDialog` do not
-  handle the IAB model, so when a visitor's policy uses it, the backend
-  sends its vendor list and the app has no `IABProvider`, they throw an
-  `IABUnavailableError` (code `INTH_IAB_UNAVAILABLE`):
-  `inth: this visitor's policy uses IAB TCF, but no <IABProvider> is mounted`.
-  The error happens during render, on the server and in the browser, so
-  your error boundary or the framework's error overlay shows it. Render `IABProvider` from
-  `@inth/react/iab` for those visitors, or remove the `iab` model from the
-  policy.
+  IAB is opt-in. The standard `ConsentBanner` and `ConsentDialog` do not handle the `iab` model. When a visitor's policy uses `iab`, your Inth project sends its vendor list, and no `IABProvider` is mounted, they throw `IABUnavailableError` with code `INTH_IAB_UNAVAILABLE`: `inth: this visitor's policy uses IAB TCF, but no <IABProvider> is mounted`. The error throws during render on the server and in the browser, so your error boundary or framework error overlay catches it. Render `IABProvider` from `@inth/react/iab` for those visitors, or remove the `iab` model from the policy.
 
   ## When the dialog loads
 
-  `IABConsentDialog` loads its code on demand, so the first page load
-  carries the banner without the preference center. The code downloads at
-  the first of:
+  `IABConsentDialog` loads its code on demand so the first page load carries the banner without the preference center. The browser downloads the dialog chunk at the first of these events:
 
-  - The browser's first idle period after the page's `load` event, while
-    the IAB banner is shown.
+  - The first idle period after the page's `load` event while the IAB banner is visible.
   - Hover or focus on the banner's Customize button or partners link.
   - The dialog opening.
 
-  A visitor who opens the dialog before the download finishes waits for
-  it. `open={true}` and `showTrigger` load it on mount, under a model the
-  dialog's `models` prop lists. Under another model, `showTrigger` loads
-  only the trigger. Set
-  `preloadDialog: 'intent'` in the consent provider options to skip the
-  idle download. Idle loading is also skipped with Save-Data on, on `2g`
-  and `slow-2g` connections, and while offline.
+  A visitor who opens the dialog before the download finishes waits for it. Passing `open={true}` or `showTrigger` loads the chunk on mount under a model listed in the dialog's `models` prop. Under another model, `showTrigger` loads only the trigger. Set `preloadDialog: 'intent'` in the consent provider options to skip idle downloading. Inth also skips idle loading when Save-Data is on, on `2g` and `slow-2g` connections, and while offline.
 
   ## Verify vendor and purpose choices
 
-  Test category choices alongside vendor, purpose, legitimate-interest and special
-  feature controls used by your integration. Confirm the TC String and `__tcfapi`
-  reflect the saved state, and verify the vendor's actual requests. A category-only
-  banner test does not establish that the IAB flow works.
+  Test category choices alongside vendor, purpose, legitimate-interest, and special feature controls. Confirm the TC String and `__tcfapi` reflect the saved state, and check the vendor's actual network requests. Testing categories alone does not confirm that the IAB flow works.
 </section>
 
 <section id="missing-provider">
-  The visitor's policy uses the `iab` model and the backend sent its vendor
-  list, but no `IABProvider` is mounted. The standard banner and dialog do
-  not handle the IAB model, so they throw rather than leave the visitor
-  with no consent UI. Server and browser render the same error.
+  The visitor's policy uses the `iab` model and your Inth project sent its vendor list, but no `IABProvider` is mounted. The standard banner and dialog do not handle the `iab` model, so they throw instead of leaving the visitor without consent UI. Server and browser render the same error.
 
   Fix it one of two ways:
 
-  - If the site uses IAB TCF, render `IABProvider` with `IABConsentBanner`
-    and `IABConsentDialog` from `@inth/react/iab` inside your consent
-    provider. They can sit next to the standard banner.
-  - If it does not, remove the `iab` model from the policy for that region
-    in your Inth project or policy pack.
+  - If the site uses IAB TCF, render `IABProvider` with `IABConsentBanner` and `IABConsentDialog` from `@inth/react/iab` inside your consent provider. They can sit next to the standard banner.
+  - If it does not, remove the `iab` model from the policy for that region in your Inth project.
 
-  A backend that answers `gvl: null` turns IAB off for that request. The
-  policy then runs as opt-in and nothing throws.
+  A response with `gvl: null` turns IAB off for that request. The policy then runs as opt-in and nothing throws.
 
-  The check passes once `@inth/react/iab` has loaded. If you import the IAB
-  components with a dynamic `import()`, a render of the standard banner
-  that happens before the import finishes still throws.
+  The check passes once `@inth/react/iab` loads. If you load the IAB components with a dynamic `import()`, a render of the standard banner before that import finishes still throws.
 </section>

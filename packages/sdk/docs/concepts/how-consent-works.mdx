@@ -1,122 +1,84 @@
 ---
 title: How consent works
-description: What Inth decides on each page load, the difference between a permission and a recorded choice, and what happens when a visitor saves.
+description: Learn how Inth evaluates policies, stored choices, and browser privacy signals on every page load to gate scripts and save consent.
 group: concepts
 ---
 
-## What Inth decides on each page load
+On every page load, Inth evaluates your project's policy, the visitor's stored choice, and live browser privacy signals to decide which consent categories can run right now.
 
-On every page load Inth answers one question for each consent category: is
-this allowed right now? To answer it, Inth:
+## What Inth evaluates on load
 
-1. Selects a **policy** for the visitor, usually by country and region. The
-   policy says whether optional categories start denied (opt-in) or allowed
-   (opt-out), and whether to show a banner.
-2. Reads the visitor's **stored choice** from a cookie and localStorage, if
-   there is one that still matches the policy.
-3. Reads **privacy signals** such as Global Privacy Control (GPC).
+Inth computes permissions from three inputs:
 
-The result is a set of **permissions**, one per category. Components, script
-loaders, embeds and your own code read those permissions. Nothing optional
-runs until the policy has resolved: while it loads, and if it fails, every
-optional category is denied.
+1. **Your project's policy.** Inth matches the visitor's country and region to a policy rule. The rule sets whether optional categories start denied under `opt-in` or allowed under `opt-out`, and whether to show a banner.
+2. **The visitor's stored choice.** Inth reads the consent cookie and `localStorage` if a valid record exists under the matched policy.
+3. **Live privacy signals.** Inth reads browser signals such as Global Privacy Control on every evaluation.
 
-A banner is only the interface. It does not stop a script you load with a
-plain `<script>` tag or a vendor SDK you initialize yourself. To gate that code,
-register it with Inth. See [integrations](/docs/integrations/overview).
+The result is a map of **permissions**, one boolean per category. Components, script loaders, iframe gates, and network rules read those permissions. While the policy loads, or if resolution fails, every optional category stays denied.
+
+A banner is only the interface. It cannot stop a plain `<script>` tag or a vendor SDK you initialize yourself. Register third-party code with Inth so it waits for permission. See [integrations](/docs/integrations/overview).
 
 ## Categories
 
 | Category | Use it for |
 | --- | --- |
-| `necessary` | Code the site cannot work without. Always allowed. |
+| `necessary` | Core features required to operate. Always allowed. |
 | `functionality` | Optional features such as support chat. |
 | `measurement` | Analytics and usage measurement. |
-| `experience` | Personalization. |
-| `marketing` | Advertising, retargeting and pixels. |
+| `experience` | Personalization and experimentation. |
+| `marketing` | Advertising, retargeting, and pixels. |
 
-Assign a category by what the code does, not by what would be convenient.
-Calling analytics `necessary` does not make it necessary.
-[Consent categories](/docs/concepts/consent-categories) explains which
-categories the preference dialog shows and how policy scope affects them.
+Assign categories by what the code does. Labeling analytics as `necessary` does not make it necessary. See [consent categories](/docs/concepts/consent-categories) for discovery and dialog rules.
 
-## Policies
-
-A policy has a **model** and a **prompt**:
+## Policy models and prompts
 
 | Model | Optional categories before a choice |
 | --- | --- |
 | `opt-in` | Denied until the visitor allows them. |
 | `opt-out` | Allowed until the visitor refuses them or sends a privacy signal. |
-| `iab` | Controlled by an IAB TCF consent string. |
-| `none` | Allowed, with no prompt. |
+| `iab` | Governed by an IAB TCF 2.4 consent string. |
+| `none` | Allowed with no initial prompt. |
 
 | Prompt | What the visitor sees |
 | --- | --- |
-| `choice` | A banner asking for a decision. |
-| `notice` | A notice they can dismiss. Dismissing records an acknowledgement, not consent. |
-| `none` | Nothing on load. The policy can still require a way to open preferences. |
+| `choice` | A banner asking the visitor to accept, reject, or customize categories. |
+| `notice` | A dismissible notice. Dismissing records an acknowledgement, not consent. |
+| `none` | No banner on load. The rule can still require a preferences link. |
 
-With [Inth](https://inth.com) you manage policies in your project, and the app
-receives them from the backend. Changing a stylesheet or importing a preset in
-the browser does not override a hosted policy.
-[Policies](/docs/concepts/policies) covers presets, scope, and why a banner may
-not appear.
+Configure policies in your [Inth](https://inth.com) project. Styling or client code does not override your hosted policy. See [policies](/docs/concepts/policies).
 
 ## A permission is not a recorded choice
 
-These two values answer different questions, and mixing them up is the most
-common integration bug:
+Mixing up permissions and recorded choices is the most common consent integration bug.
 
-- **Permission** (`effectivePermissions`, `useConsent('measurement')`) answers
-  "may this run now?" Under an opt-out policy it can be `true` before the
-  visitor has done anything.
-- **Recorded choice** (`explicitChoice`) answers "what did the visitor decide?"
-  It only changes when the visitor accepts, rejects or saves preferences.
+| Concept | Read from | What it answers |
+| --- | --- | --- |
+| Permission | `effectivePermissions`, `useConsent('measurement')` | May this code run now? Can be `true` under `opt-out` before any action. |
+| Recorded choice | `explicitChoice` | What did the visitor decide? Changes only on accept, reject, or save. |
+| Prompt state | `promptRequirement` | Does the policy still require a banner or notice? |
+| Active rule | `policyRule` | Which rule applies to this visitor? |
+| Load status | `resolution.status` | Did the policy resolve to `'matched'`? |
 
-| Task | Read |
-| --- | --- |
-| Load a script or render an optional feature | Permission |
-| Show what the visitor chose, or report consent rates | Recorded choice |
-| Decide whether a prompt is needed | `promptRequirement` |
-| Find out why a region behaves differently | `policyRule` |
-| Check that the policy loaded | `resolution.status` |
-
-Never turn a permission into a saved choice. Hydrating server state, reading a
-cookie or rendering a component does not count as a visitor action.
-`onChoiceRecorded` fires only for a visitor's action; `onPermissionsChanged`
-also fires when a choice expires or a privacy signal changes.
+Never copy a permission into a saved choice. Hydrating server state, reading a cookie, or mounting a component is not a visitor action. `onChoiceRecorded` fires only on visitor action. `onPermissionsChanged` also fires when a choice expires or a privacy signal changes.
 
 ## Notices and privacy signals
 
-Dismissing a notice acknowledges it. It grants nothing and leaves earlier
-refusals in place.
+Dismissing a notice records an acknowledgement only. It grants no optional categories and leaves earlier refusals intact.
 
-GPC is a browser setting that asks sites not to sell or share data. Inth reads
-it live on every evaluation and applies the restrictions your policy configures
-for it. It never becomes a stored refusal: when the browser stops sending GPC,
-the restriction ends. The backend also sees the current value.
+Global Privacy Control, or GPC, asks sites not to sell or share personal data. Inth reads GPC live on every evaluation and applies the restrictions configured in your policy. GPC never becomes a stored refusal. When the browser stops sending GPC, the restriction ends. Inth also receives the current GPC value on backend requests.
 
 ## What happens when a visitor saves
 
-When a visitor clicks Accept, Reject or Save, Inth:
+When a visitor clicks Accept, Reject, or Save, Inth runs four steps:
 
-1. Updates permissions and closes the banner or dialog in the same click.
-   Scripts, embeds and network rules follow the new permissions immediately.
-2. Writes the choice to the cookie and localStorage.
-3. Sends the choice to the consent backend. If the request fails, the choice
-   stays saved in the browser and the request is retried later.
-4. Reloads the page if the visitor turned off something they had allowed.
-   Code that already ran cannot be unloaded, so the reload starts a page with
-   only permitted code. Set `reloadOnConsentRevoked: false` to handle revocation
-   yourself.
+1. Updates `effectivePermissions` and closes the banner or dialog in the same click, so gated scripts, embeds, and network rules react right away.
+2. Writes the choice to the consent cookie and `localStorage`.
+3. Sends the choice to Inth. If the request fails, the choice stays saved in the browser and Inth retries automatically.
+4. Reloads the page if the visitor revoked a previously allowed category, because already-executed code cannot be unloaded. Set `reloadOnConsentRevoked: false` to handle revocation yourself.
 
-The [consent state reference](/docs/concepts/consent-state) documents the exact
-ordering, retries, server hydration and how open tabs stay in step.
+## Next steps
 
-## Where consent data comes from
-
-A consent backend supplies policies and stores consent records. Use your Inth
-project, or keep policies in the browser for local development with
-`testing()`. [Choose your setup](/docs/concepts/choose-your-setup)
-walks through the options for your framework and hosting.
+- [Policies](/docs/concepts/policies): Configure regional opt-in, opt-out, IAB, and notice rules.
+- [Consent categories](/docs/concepts/consent-categories): Map scripts and embeds to categories.
+- [Consent state reference](/docs/concepts/consent-state): Inspect save ordering, retries, IAB mapping, and tab sync.
+- [Choose your setup](/docs/concepts/choose-your-setup): Pick the SDK setup for your framework and hosting.

@@ -1,86 +1,46 @@
 ---
 title: Native startup and SDK gates
-description: Install consent before React Native starts, prevent optional native SDK auto-start and react to later grants and withdrawals.
+description: Initialize Inth before React Native boots, block vendor auto-start, and react to consent grants and withdrawals natively.
 group: frameworks
 ---
 
-A native analytics or advertising SDK can start before React mounts. Put its
-startup behind a native consent gate. Use React hooks for work that starts
-in React, and native subscriptions for work whose lifetime belongs to iOS or
-Android.
+Native analytics and advertising SDKs often initialize before React mounts. Gate their startup natively so zero pre-consent traffic fires, and use React hooks only for work owned by JavaScript.
 
 ## Install before JavaScript starts
 
-The Expo plugin and bare RN configuration install the engine through native
-launch hooks. By the time `InthProvider` attaches, that engine has restored
-saved choices and started resolving policy. The provider checks the native
-protocol; it does not create another consent engine.
+Both the Expo plugin and bare React Native metadata install Inth through native launch hooks. Before `InthProvider` mounts, the native engine hydrates saved choices and begins policy resolution. `InthProvider` attaches to that engine and checks protocol compatibility rather than creating a second instance.
 
-| Setup | Native configuration belongs in |
+| Setup | Where native startup lives |
 | --- | --- |
-| Expo | The Inth config plugin, followed by prebuild and a native rebuild |
-| Bare RN, iOS | The app target's `Info.plist`, or app-owned native installation |
-| Bare RN, Android | Application metadata and the launch initializer, or app-owned installation |
+| Expo | Config plugin in `app.config.ts`, applied by prebuild and native build |
+| Bare RN (iOS) | App target `Info.plist` or app-owned native installation |
+| Bare RN (Android) | `AndroidManifest.xml` metadata and AndroidX Startup, or app-owned installation |
 
-Follow [Expo](/docs/frameworks/react-native/expo) or
-[bare setup](/docs/frameworks/react-native/bare) before adding SDK gates.
-Disable the vendor's automatic collection and launch hooks. Check its manifest
-initializers, app-delegate setup and config plugins. Inth does not intercept
-arbitrary native network requests.
+Finish [Expo](/docs/frameworks/react-native/expo) or [bare setup](/docs/frameworks/react-native/bare) first. Disable every optional vendor's automatic collection, manifest initializers, app-delegate hooks, and config plugins. Inth does not intercept arbitrary native network calls.
 
 ## Read the cached native gate
 
-| Platform | Boolean permission | Decision |
+| Platform | Boolean permission | Decision state |
 | --- | --- | --- |
 | Swift | `Inth.isAllowed(.measurement)` | `Inth.decision(for: .measurement)` |
 | Kotlin | `Inth.isAllowed(ConsentCategory.MEASUREMENT)` | `Inth.decision(ConsentCategory.MEASUREMENT)` |
 
-These reads use in-memory native state. They perform no disk or network work
-on the calling thread. The decision distinguishes pending, denied and granted.
-Keep collection off for pending and denied. A fresh app can remain pending
-while it waits for policy; let necessary app features continue working.
-
-Effective permission can follow a regional policy default before the person
-records a choice. Read recorded choice separately when your app reports what
-the person explicitly selected.
+Both reads inspect in-memory native state with no disk or network I/O. `decision` distinguishes pending, denied, and granted; keep optional collection off for both pending and denied while allowing necessary app features to run. Because effective permission can reflect a regional policy default before any explicit save, read recorded choices separately when displaying user selections.
 
 ## Subscribe for the integration's lifetime
 
-Retain the Swift gate subscription or Android `gate`/`gateDecision` handle in
-the owner of your optional SDK integration. Register after installation and
-use the initial delivered permission to configure collection. Apply later
-changes through the vendor's supported enable, disable or shutdown API.
+Retain a Swift gate subscription or Kotlin `gate`/`gateDecision` handle inside the app-wide owner of each optional SDK. Register after installation to apply the initial decision and respond to every later grant, withdrawal, policy update, identity change, or foreground refresh through the vendor's enable, disable, or shutdown API.
 
-Close the subscription when that integration ends. Do not tie an app-wide
-analytics gate to a short-lived React component or an Activity that rotates.
-Marshal UI work to the platform's main thread because native callbacks can
-arrive on a worker. Native UI code can read state from Kotlin's `snapshotFlow`
-and `decisionFlow`, or Swift's `PublishedConsent`, which need no hop.
-
-A single launch-time check misses withdrawal. The subscription must also cover
-policy changes, identity changes, foreground refresh and recovery.
+Close the handle only when that SDK owner ends (never tie an app-wide analytics gate to a short-lived screen or rotating Activity). Native callbacks may run on worker threads, so marshal UI work onto the main thread, or observe `snapshotFlow`/`decisionFlow` in Kotlin and `PublishedConsent` in Swift.
 
 ## Handle unavailable storage
 
-Apple's installer checks Keychain before installing the engine. If it reports
-`protectedStorageUnavailable`, keep optional SDKs off and retry when protected
-data becomes available or the app activates. Retry the protected installation;
-do not replace its store with memory or a plaintext file.
+On iOS, `InthApple.install` checks Keychain access before installing. If it reports `protectedStorageUnavailable`, leave optional SDKs disabled and retry once protected data unlocks or the app becomes active. Never substitute memory or plaintext storage.
 
-On Android, treat storage read and write errors as unavailable authority. Keep
-failed saves visible and retry after storage recovers. Do not turn an absent
-record into a grant.
+On Android, treat storage read or write errors as closed consent gates, keep failed saves visible, and retry once storage recovers.
 
 ## Keep collection and delivery separate
 
-A native commit stores a choice locally before attempting delivery. Launch,
-foreground and reconnect can replay queued saves. A network failure after
-local withdrawal must not reenable collection.
+Every native commit writes locally before attempting network delivery, replaying queued saves on launch, foreground, and reconnect. A network failure after withdrawal must never re-enable collection. See [Commands and outcomes](/docs/frameworks/react-native/usage) and [Mobile offline consent](/docs/guides/mobile-offline).
 
-[Commands and outcomes](/docs/frameworks/react-native/usage) explains which
-result confirms a local save. [Offline consent](/docs/guides/mobile-offline)
-covers fresh offline prompting and retained delivery.
-
-Advertising also needs the relevant vendor/purpose/provider permission.
-Apple tracking features may need ATT as another independent gate. Follow
-[IAB and ads](/docs/guides/mobile-iab) for those checks.
+For ad SDKs, combine category checks with native IAB vendor, purpose, Additional Consent, and ATT gates; see [Mobile IAB and ads](/docs/guides/mobile-iab).

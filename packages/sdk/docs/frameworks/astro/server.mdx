@@ -1,6 +1,6 @@
 ---
 title: Server API
-description: How the Inth middleware resolves consent for each Astro request, what Astro.locals.inth holds, the helpers in @inth/astro/server, the injected consent route, and how to cache server-rendered pages safely.
+description: Reference for Astro's Inth middleware, Astro.locals.inth, @inth/astro/server helpers, injected routes, and safe page caching.
 group: frameworks
 ---
 
@@ -16,12 +16,12 @@ islands. For each request it:
 3. Resolves the policy through the integration's `mode`.
 4. Stores the result in `Astro.locals.inth`.
 
-It sets no cookie. The visitor's subject ID, a UUIDv7, lives in the consent
+It sets no cookie. The visitor's subject ID (`sub_…`) lives in the consent
 records their first save writes, and the middleware reads it from those
 cookies.
 
 The components render from `Astro.locals.inth`, and `ConsentScript` inlines
-it for the browser. A server-rendered page therefore needs no `/init` request
+it for the browser. A server-rendered page therefore needs no `/v1/consent/init` request
 from the browser.
 
 A render waits up to 500 ms for the policy. When the backend is slower, the
@@ -35,13 +35,13 @@ because the build has no visitor. `hosted()` and `manifest()` leave the
 policy for the browser. `testing()` resolves it at build time, because it
 needs no request.
 
-In `hosted()` mode the render's `/init` request carries the resolved
+In `hosted()` mode the render's `/v1/consent/init` request carries the resolved
 location, language and GPC, the `user-agent`, the mode's configured consent
 headers and, while the visitor has no stored choice, the experiment arm. Over
 `https` or to a loopback host it also carries the consent cookie, never the
 rest of the cookie jar; over plain HTTP to any other host it carries no
 cookie. The render never requests the integration's own consent route: a
-backend URL that resolves to it on the request's origin renders without a
+project URL that resolves to it on the request's origin renders without a
 server decision.
 
 ## Type `Astro.locals.inth`
@@ -135,7 +135,7 @@ the manifest. Without one, the server keeps the manifest in memory and
 refreshes it in the background.
 On Cloudflare, Inth hands that refresh to the adapter's `waitUntil`, so the
 request context stays alive until it finishes. The browser saves consent to
-the backend URL directly, not to this route.
+the project URL directly, not to this route.
 
 Change the path with `routePrefix: '/consent'`. With
 `manifest({ resolve: 'browser' })` and no adapter, the integration prerenders
@@ -146,17 +146,16 @@ fetches. `hosted()` and `testing()` inject no route.
 
 With `routePrefix: false`, the integration injects nothing and `astro build`
 no longer needs an adapter for it. The browser then asks the backend's
-`/init` whenever a page inits again, and never calls a route of your own at
-that path. To keep `/init` on your origin, keep the injected route and move
+`/v1/consent/init` whenever a page inits again, and never calls a route of your own at
+that path. To keep `/v1/consent/init` on your origin, keep the injected route and move
 it with `routePrefix` instead.
 
 The handlers the injected route uses are exported as
 `createConsentRouteHandlers({ options })` from `@inth/astro/server`. Mount
 them yourself for other clients, or for browser resolution: with
 `mode: manifest({ resolve: 'browser', manifestUrl: '/api/inth/v1/consent/manifest' })`,
-the browser fetches the manifest from your route, and the route reads
-`${projectUrl}/v1/consent/manifest`. `GET(request, { locals, path })` dispatches by
-the route's rest parameter, or by the last path segment without one.
+the browser fetches the manifest from your route. `GET(request, { locals })`
+dispatches by the last path segment.
 
 ## Helpers in `@inth/astro/server`
 
@@ -190,6 +189,6 @@ register `onRequest` from `@inth/astro/middleware` with Astro's `sequence()` in
    contains `data-testid="consent-banner-root"` and a
    `<script type="application/json" data-inth-config>` data block.
 2. Choose, then reload. The source has no banner markup, and DevTools Network
-   shows no browser request to `/init` on that page.
+   shows no browser request to `/v1/consent/init` on that page.
 3. Request `/api/inth/v1/consent/init` and check the `Cache-Control: private, no-store`
    response header.

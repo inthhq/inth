@@ -1,15 +1,14 @@
 ---
 title: Clear on revocation
-description: Delete the first-party cookies and Web Storage keys a consent category owns in a React app when that category is denied, with the clearOnRevocation option on InthProvider.
+description: Delete first-party cookies and Web Storage keys in React when a visitor withdraws consent.
 group: frameworks
 ---
 
+Delete first-party cookies and Web Storage keys owned by an optional category when a visitor revokes consent in React.
+
 ## Configure cleanup
 
-Gating stops new requests, but it leaves the cookies and storage keys a vendor
-already wrote. List the ones each optional category owns and add them to the
-provider options in `src/consent.tsx`. When that category is denied, Inth
-deletes them:
+Gating stops new vendor requests, but leaves behind cookies and storage entries already written. List the keys each optional category owns in `InthProvider` options so Inth deletes them when that category is denied:
 
 {/* example: fragment */}
 
@@ -24,10 +23,7 @@ const clearOnRevocation: ClearOnRevocationConfig = {
 <InthProvider options={{ mode, scripts, clearOnRevocation }}>
 ```
 
-The provider reads `clearOnRevocation` once, when it mounts; remount it to
-change the list. A provider that borrows a `runtime` does not read it.
-Configure cleanup on the runtime owner instead, with
-`createConsentRuntime({ clearOnRevocation })`.
+`InthProvider` reads `clearOnRevocation` once on mount; remount it to update the list. A provider borrowing an external `runtime` ignores this option; pass `clearOnRevocation` to `createConsentRuntime({ clearOnRevocation })` instead.
 
 <import src="../../shared/scripts/clear-on-revocation.mdx#targets" />
 

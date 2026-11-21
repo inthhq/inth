@@ -1,22 +1,24 @@
 ---
 title: IABConsentBanner
-description: Render the IAB TCF first layer in a Vue app with IABConsentBanner, when to import it instead of relying on InthProvider, and its props.
+description: Render the IAB TCF first-layer consent banner directly in Vue when composing surfaces without InthProvider.
 group: frameworks
 ---
 
+Import `IABConsentBanner` directly only when every policy on your site uses
+IAB TCF and you compose surfaces yourself instead of mounting `InthProvider`.
+
 ## Import the IAB banner in place of `InthProvider`
 
-`InthProvider` renders `IABConsentBanner` for you when the plugin's `iab`
-option is set and the visitor's policy uses IAB TCF. Import it only when every policy on your site is IAB and you
-compose the surfaces yourself. Import it from
+`InthProvider` renders `IABConsentBanner` automatically when `iab` is set and
+the visitor matches an IAB policy. To compose it directly, import it from
 `@inth/vue/vue-plugin`:
 
 <include src="../../../shared/examples/vue/iab-surfaces.mdx" />
 
-Render this in place of `InthProvider`, and set the plugin's `iab` option; see
-[IAB TCF](/docs/frameworks/vue/iab). A visitor whose policy is not IAB sees
-nothing from these components. Without `iab`, an IAB policy throws an
-`IABUnavailableError` instead.
+Mount this in place of `InthProvider` and enable `iab` in `inth` (see
+[IAB TCF](/docs/frameworks/vue/iab)). Visitors under non-IAB policies see
+nothing from these components. If `iab` is unset, an IAB policy throws
+`IABUnavailableError`.
 
 <import src="../../../shared/vue/components/iab-consent-banner.mdx#behavior" />
 
@@ -26,7 +28,6 @@ nothing from these components. Without `iab`, an IAB policy throws an
 
 ## Next steps
 
-- [IAB TCF](/docs/frameworks/vue/iab) turns on IAB in your policy and
-  verifies the TC String.
-- [IABConsentDialog](/docs/frameworks/vue/components/iab-consent-dialog) is
-  the preference centre this banner opens.
+- [IAB TCF](/docs/frameworks/vue/iab): enable IAB and verify the TC String.
+- [IABConsentDialog](/docs/frameworks/vue/components/iab-consent-dialog): the
+  preference center opened by this banner.

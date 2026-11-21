@@ -1,74 +1,62 @@
 ---
 title: Troubleshoot native consent
-description: Resolve native installation, policy, protected-storage, presenter and IAB problems in Swift and Android apps.
+description: Fix missing native consent screens, Keychain storage errors, Gradle artifact resolution, failed saves, and IAB setup issues on iOS and Android.
 group: guides
 ---
 
-Start with the installation error, resolved policy and current native gate.
-Keep optional collection off while consent is unavailable.
+Diagnose native installation, policy, protected storage, presenter, and IAB issues in Swift and Kotlin apps. Keep optional collection disabled while consent is unavailable.
 
-## The screen never appears
+## Consent screen never appears
 
-Check that the installed core is ready, `policyPending` is false and its
-prompt requirement asks for a choice. A saved choice, a notice-only policy or
-a policy that needs no prompt can explain the absence. Use Privacy settings
-to reopen saved preferences; the owed-prompt command need not show a first
-layer again.
+**Cause.** Either `policyPending` is `true`, a choice is already stored, the matched policy requires no prompt (or is notice-only), or the presenter was attached to a different core or unmounted host view.
 
-If policy is pending, inspect `/init` against the exact HTTPS project URL and
-the selected country/language. Check the policy in Inth before adding UI
-fallbacks. If the native core is ready, confirm the same core was passed to
-the presenter and its view is mounted in the active host.
+**Fix.** Check that the installed core is ready and `policyPending` is `false`. If policy is pending, inspect `/v1/consent/init` against your exact HTTPS Inth project URL and selected country and language. Confirm you passed the same core instance to the presenter and mounted its view in the active host. Use Privacy settings to reopen saved preferences.
 
-## Swift installation reports protectedStorageUnavailable
+**Confirm.** Reset consent or test on a fresh install in an opt-in region and verify the prompt presents.
 
-The Apple installer checks Keychain before installing the core. Retry after
-protected data becomes available or the app activates. Keep the installation
-error visible and optional SDKs off in the meantime. A simulator app needs
-working signing; an unsigned simulator build can fail the Keychain probe.
+## `protectedStorageUnavailable` on Swift installation
 
-Do not switch to memory or plaintext storage to make the error disappear.
-Memory and file-backed stores are development tools with different
-persistence and protection properties.
+**Cause.** The Apple installer probes Keychain before installing the core. Protected data is not yet available (for example before first unlock or while backgrounded), or an unsigned simulator build cannot access Keychain.
 
-## Gradle cannot resolve com.inth
+**Fix.** Retry installation after protected data becomes available or the app becomes active, and enable working signing on simulator builds. Do not switch to memory or plaintext stores in production; those are development-only tools.
 
-Check the app's dependency repository, not `pluginManagement.repositories`.
-All required artifacts must exist at the native version you selected. For
-the private pilot, supply the repository URL and credentials through the
-build environment. Keep them out of app resources and committed files.
+**Confirm.** Launch on a signed simulator or device and confirm `InthApple.install` succeeds without throwing.
 
-A repository on your laptop is not available to EAS or another build worker.
-Make the versioned artifacts reachable from that worker, then rebuild.
+## Gradle cannot resolve `com.inth` artifacts
+
+**Cause.** The Maven repository was declared inside `pluginManagement.repositories` instead of dependency repositories, artifact versions do not match across `inth-core`, `inth-android`, and `inth-consent-ui`, or a remote build worker (such as EAS) cannot reach a local repository on your machine.
+
+**Fix.** Add the versioned Maven repository to dependency repositories, align all three artifacts on one native version, and pass repository URL and credentials via build environment variables reachable from CI and build workers. Never commit credentials or place them in app resources.
+
+**Confirm.** Run a clean Gradle sync and release build.
 
 ## Save fails or preferences stay open
 
-A resolved operation can refuse a commit. Read the result's reason. Keep the
-draft visible, fix the cause and retry the explicit action.
+**Cause.** A commit operation can refuse a save and return a failure reason while leaving the draft open.
 
-| Reason | What to do |
+| Reason | Fix |
 | --- | --- |
 | `policy-pending` | Resolve policy before granting optional consent |
 | `queue-write-failed` | Recover durable storage; do not confirm a save |
-| `concurrent-change` | Reload current state and ask the visitor to review it |
+| `concurrent-change` | Reload current state and ask the visitor to review again |
 | Missing or stale IAB disclosures | Refresh the authoritative GVL and provider data |
 
-A network failure after a durable local save is a delivery problem. It must
-not restore an earlier permission or discard a withdrawal.
+A network failure after a durable local save is a delivery issue, not a save failure. It never restores an earlier permission or drops a withdrawal.
 
-## An ad SDK starts before consent
+**Confirm.** Fix the reported cause, retry the save action, and verify the commit succeeds and closes the dialog.
 
-Inspect that SDK's manifest initializers, app-delegate hooks, plugins and
-automatic collection settings. Disable optional auto-start and install Inth
-before the vendor. Retain a native gate subscription so later withdrawal
-also changes collection. A UI control alone cannot stop native requests.
+## Ad SDK starts before consent
 
-## The app has categories but cannot save IAB choices
+**Cause.** The vendor SDK starts automatically through an Android manifest initializer, an iOS app-delegate hook, a build plugin, or an auto-collection flag before Inth installs.
 
-Confirm the resolved policy is IAB and native CMP/publisher configuration was
-installed before the first engine. Category scope and vendor filtering do not
-provide that configuration. Read [mobile IAB setup](/docs/guides/mobile-iab)
-for native settings and the current RN/Expo limits.
+**Fix.** Disable optional auto-start in the vendor SDK, install Inth before initializing vendors, and retain a native gate subscription so later withdrawals reconfigure or stop collection.
 
-After recovery, rerun the affected steps from
-[Verify mobile consent](/docs/guides/mobile-verify).
+**Confirm.** Inspect startup logs and proxy traffic on a fresh install and verify zero optional vendor requests occur before consent.
+
+## Categories work, but IAB choices fail to save
+
+**Cause.** The matched policy is not an IAB policy, or native CMP and publisher configuration was not installed before creating the first engine. Category scope and vendor filtering alone do not enable IAB.
+
+**Fix.** Configure an IAB policy in Inth and install native CMP settings before startup; see [mobile IAB setup](/docs/guides/mobile-iab).
+
+**Confirm.** Save an IAB choice and rerun the relevant checks in [Verify mobile consent](/docs/guides/mobile-verify).

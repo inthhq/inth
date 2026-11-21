@@ -1,26 +1,14 @@
 ---
 title: Google Consent Mode in Inth helpers
-description: When the Google helpers load, what they send before a choice, and how Inth categories map to Google consent types.
+description: How Inth maps consent categories to Google Consent Mode v2 types on web and mobile.
 group: integrations
 ---
 
 ## Google loads before a choice by default
 
-With the default `loadMode: 'always'`, the `googleTagManager` and `gtag`
-helpers set `alwaysLoad: true`. Before the visitor chooses, the helper creates
-the `dataLayer` queue, sends `gtag('consent', 'default', ...)` with the current
-permissions and loads Google's script. After each permission change it sends
-`gtag('consent', 'update', ...)`. Google's tags then adjust what they store and
-send; see Google's
-[Consent Mode overview](https://developers.google.com/tag-platform/security/concepts/consent-mode).
+With the default `loadMode: 'always'`, `googleTagManager` and `gtag` set `alwaysLoad: true`. Before the visitor chooses, the helper creates the `dataLayer` queue, sends `gtag('consent', 'default', ...)` with the current permissions, and loads Google's script. Each later permission change sends `gtag('consent', 'update', ...)`. Google tags adjust what they store and send based on those signals; see Google's [Consent Mode overview](https://developers.google.com/tag-platform/security/concepts/consent-mode).
 
-So the browser contacts Google before consent. If your policy requires no
-Google request until the visitor allows it, set `loadMode: 'after-consent'`.
-The helper then creates nothing and requests nothing until its category is
-allowed. When it loads, it sends the `default` command first, with the
-permissions at that moment, and `update` commands after later changes. Under
-an `opt-out` or `none` policy, optional categories are allowed before a
-choice, so the helper loads on the first page.
+Because the browser contacts Google before a choice in `'always'` mode, set `loadMode: 'after-consent'` if your policy requires zero requests to Google until the visitor allows the category. In `'after-consent'` mode, the helper creates nothing and sends no requests until the category is allowed. Once allowed, it sends `default` with the current permissions before starting Google, then `update` on later changes. Under an `opt-out` or `none` policy, optional categories start allowed, so the helper loads on the first page.
 
 ## How categories map to Google consent types
 
@@ -32,21 +20,8 @@ choice, so the helper loads on the first page.
 | `marketing` | `ad_storage`, `ad_user_data`, `ad_personalization` |
 | `experience` | `personalization_storage` |
 
-Each Google type is `granted` when its category is allowed and `denied`
-otherwise. If a visitor turns off the helper's vendor, every optional type is
-sent as `denied`. The `consentMapping` option replaces the whole table, so
-include every category you still want signalled.
+Each Google type is `granted` when its category is allowed and `denied` otherwise. If a visitor switches the helper's vendor off, every optional type is sent as `denied`. The `consentMapping` option replaces the full table, so include every category you want signaled.
 
-Under an opt-out policy, the default command can grant types before the
-visitor has chosen anything. That is a permission, not a recorded choice.
+Under an `opt-out` policy, the `default` command can grant types before the visitor chooses. That reflects an effective permission, not a recorded choice.
 
-The Swift, Android and React Native SDKs use the same table, and no mobile
-option replaces it. A pending policy denies every optional type. Firebase
-Analytics takes four of these types: `analytics_storage`, `ad_storage`,
-`ad_user_data` and `ad_personalization`. The
-[Firebase Analytics integration](/docs/integrations/firebase-analytics) sends
-all four. Swift exposes the table as `GoogleConsentMode` and
-`GoogleConsentType` in `InthApple`, Android in
-`com.inth.android.integrations`, and React Native as
-`resolveGoogleConsentMode` in `@inth/react-native/integrations`. Each mobile
-copy is tested against the web mapping, so they cannot drift apart.
+Swift, Android, and React Native use the same table with no custom override. Pending policies deny every optional type. [Firebase Analytics](/docs/integrations/firebase-analytics) sends four of these types: `analytics_storage`, `ad_storage`, `ad_user_data`, and `ad_personalization`. Swift exposes the mapping as `GoogleConsentMode` and `GoogleConsentType` in `InthApple`, Android in `com.inth.android.integrations`, and React Native as `resolveGoogleConsentMode` in `@inth/react-native/integrations`.

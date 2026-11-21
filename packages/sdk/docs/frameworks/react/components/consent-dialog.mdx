@@ -1,16 +1,14 @@
 ---
 title: ConsentDialog
-description: Open the Inth preference center as a modal ConsentDialog in a React app, wire its triggers and control blocking, focus and policy gating.
+description: Mount the modal ConsentDialog preference center in React, wire triggers, and control blocking and focus.
 group: frameworks
 ---
 
+Mount `ConsentDialog` once inside `InthProvider`, next to `ConsentBanner`, to provide a modal preference center.
+
 ## Open the preference center
 
-`ConsentDialog` is the modal preference center. Mount it once inside
-`InthProvider`, next to the banner, and it opens whenever something makes
-`dialog` the active surface: the banner's Customize button, a
-`ConsentDialogLink` in your footer, a `ConsentDialogTrigger`, or your own
-code.
+`ConsentDialog` opens whenever `dialog` becomes the active surface: from the banner's Customize button, `ConsentDialogLink`, `ConsentDialogTrigger`, or your own code.
 
 <include src="../../../shared/examples/react/consent.mdx" />
 
@@ -22,7 +20,7 @@ To hide the "Secured by" tag in the dialog card, pass `hideBranding`:
 <ConsentDialog hideBranding />;
 ```
 
-To open it from your own component, set the active surface:
+To open the dialog from a custom button or menu item, call `useSetActiveUI`:
 
 ```tsx
 import { useSetActiveUI } from '@inth/react';
@@ -37,11 +35,7 @@ export function PrivacyMenuItem() {
 }
 ```
 
-`ConsentDialogLink` does the same with the policy's rights exposed for
-styling; see [ConsentDialogLink](./consent-dialog-link). For a floating
-button, see [ConsentDialogTrigger](./consent-dialog-trigger). Under an IAB
-policy, mount `IABConsentDialog` from the [IAB guide](/docs/frameworks/react/iab)
-instead; this dialog stays closed for the `iab` model.
+Use [ConsentDialogLink](./consent-dialog-link) for footer links with `data-inth-rights`, or [ConsentDialogTrigger](./consent-dialog-trigger) for a floating corner button. Under an IAB policy, mount `IABConsentDialog` from the [IAB TCF guide](/docs/frameworks/react/iab) because `ConsentDialog` stays closed under the `iab` model.
 
 <import src="../../../shared/react/components/consent-dialog.mdx#props" />
 
@@ -51,8 +45,6 @@ instead; this dialog stays closed for the `iab` model.
 
 <import src="../../../shared/react/components/consent-dialog.mdx#composition" />
 
-The compound parts import from `@inth/react` as properties of `ConsentDialog`,
-and `ConsentWidget` from the same module. See
-[customize](/docs/frameworks/react/customize) for slots and tokens.
+Import compound parts from `@inth/react` as properties of `ConsentDialog`, alongside `ConsentWidget`. See [Customize](/docs/frameworks/react/customize) for slots and tokens.
 
 <import src="../../../shared/react/components/consent-dialog.mdx#verify" />

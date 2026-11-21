@@ -1,29 +1,32 @@
 ---
 title: Callbacks
-description: Run code on a plain HTML page when Inth resolves the policy, when a visitor records a choice, when permissions change or when a request fails, with window.inth events, DOM events and config callbacks.
+description: Run code on plain HTML pages when consent resolves, changes or fails using window.inth events, DOM events and config callbacks.
 group: frameworks
 ---
+
+React to policy resolution, recorded choices, permission changes and errors
+on a plain HTML page through `window.inth` events, `inth:*` DOM events or
+`config` callbacks.
 
 ## Pick the hook for the job
 
 | You want to | Use |
 | --- | --- |
-| Start or stop your own code as permissions change | The `consent` event, or `callbacks.onPermissionsChanged` |
-| Know that a visitor clicked accept, reject or save | `callbacks.onChoiceRecorded` |
-| Wait until Inth knows the visitor's permissions | The `ready` event, or `inth.ready()` |
-| Show, hide or switch your own banner | The `ui` event |
-| Report failed backend calls | The `error` event, or `callbacks.onError` |
-| Flush data before the reload after a withdrawal | `callbacks.onBeforeConsentRevocationReload` |
-| Listen from a script that does not use `window.inth` | The `inth:*` events on `document` |
+| Start or stop code when permissions change | `consent` event or `callbacks.onPermissionsChanged` |
+| Know when a visitor clicked accept, reject or save | `callbacks.onChoiceRecorded` |
+| Wait until permissions resolve | `ready` event or `inth.ready()` |
+| Show, hide or switch a custom banner | `ui` event |
+| Report failed network calls | `error` event or `callbacks.onError` |
+| Flush data right before a withdrawal reload | `callbacks.onBeforeConsentRevocationReload` |
+| Listen from code that does not touch `window.inth` | `inth:*` events on `document` |
 
-Most pages need only the `consent` event. Prefer gating a vendor with a
-[gated script](/docs/frameworks/html/components/gated-script) where you can,
-because that works before any script of yours runs.
+Prefer [gated scripts](/docs/frameworks/html/components/gated-script) for
+vendor tags because they block scripts before custom JavaScript runs.
 
 ## Listen for events
 
-Queue `on` calls before the tag. Inth attaches them when it starts, so they
-hear the first `ready` and `consent` events:
+Queue `on` calls before `inth.js` so listeners catch the initial `ready` and
+`consent` events:
 
 {/* example: fragment */}
 
@@ -38,18 +41,15 @@ hear the first `ready` and `consent` events:
 </script>
 ```
 
-`startAnalytics` stands for your own code. After the tag has loaded,
-`inth.on(event, listener)` works directly and returns a function that removes
-the listener.
+After load, call `inth.on(event, listener)` directly; it returns an
+unsubscribe function.
 
 <import src="../../shared/browser/client-options.mdx#events" />
 
 ## Listen on document
 
-Each event is also dispatched on `document` as a `CustomEvent` named
-`inth:ready`, `inth:consent`, `inth:ui` or `inth:error`, with the payload in
-`event.detail`. A script that loads in any order, such as a tag manager
-snippet, can listen without touching `window.inth`:
+Each event also dispatches on `document` as a `CustomEvent` (`inth:ready`,
+`inth:consent`, `inth:ui`, `inth:error`) with the payload in `event.detail`:
 
 {/* example: fragment */}
 
@@ -62,13 +62,12 @@ snippet, can listen without touching `window.inth`:
 </script>
 ```
 
-Unlike `inth.on`, a `document` listener added after an event fired does not
-receive it. Add it before the Inth tag runs, or read the current state with
-`inth.getSnapshot()` once `window.inth` is the API.
+Unlike `inth.on()`, `document` listeners do not replay past events. Attach
+them before `inth.js` runs or inspect `inth.getSnapshot()` afterward.
 
 ## Config callbacks
 
-Callbacks go under `callbacks` in a queued `config` call:
+Pass lifecycle callbacks under `callbacks` in a queued `config` call:
 
 {/* example: fragment */}
 
@@ -83,7 +82,7 @@ Callbacks go under `callbacks` in a queued `config` call:
       onPermissionsChanged: ({ snapshot, previous }) => {
         console.log('permissions', previous, '->', snapshot.effectivePermissions);
       },
-      onError: ({ error }) => console.warn('inth:', error),
+      onError: ({ error }) => console.warn('Inth:', error),
     },
   }]);
 </script>
@@ -91,51 +90,36 @@ Callbacks go under `callbacks` in a queued `config` call:
 
 | Callback | Payload | When it runs |
 | --- | --- | --- |
-| `onChoiceRecorded` | `{ snapshot, confirmed, actionAt }` | A visitor accepted, rejected or saved. `confirmed` lists the categories this action recorded. |
-| `onPermissionsChanged` | `{ snapshot, previous }` | Effective permissions changed value, for any reason. |
-| `onError` | `{ error }`, a message string | A backend call or another command failed. |
-| `onBeforeConsentRevocationReload` | `{ preferences }` | Right before the reload that follows a withdrawal. Runs synchronously; keep it short. |
+| `onChoiceRecorded` | `{ snapshot, confirmed, actionAt }` | Visitor accepted, rejected or saved. |
+| `onPermissionsChanged` | `{ snapshot, previous }` | Effective permissions changed for any reason. |
+| `onError` | `{ error }` (message string) | A backend request or command failed. |
+| `onBeforeConsentRevocationReload` | `{ preferences }` | Synchronously right before a withdrawal reload. Keep it brief. |
 
 ## A recorded choice is not a permission change
 
-`onChoiceRecorded` and `onPermissionsChanged` answer different questions:
-
-- `onChoiceRecorded` runs only for a visitor's own accept, reject or save. It
-  does not run when a stored choice is restored at load. Use it to report
-  consent rates or to thank the visitor.
-- `onPermissionsChanged` runs whenever what may run changes. That
-  includes a save that changed something, a stored choice restored at load, a
-  policy resolving, a choice expiring and a GPC signal. Use it to start and stop your code.
-
-A save that leaves every permission as it was can run `onChoiceRecorded`
-without `onPermissionsChanged`. Dismissing a notice runs neither, because it
-records no choice and changes no permission.
-[How consent works](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice)
-explains the difference.
+`onChoiceRecorded` fires only on explicit visitor actions (never on restored
+stored choices), making it suitable for consent analytics and audit logs.
+`onPermissionsChanged` fires whenever permitted behavior changes (saves,
+restored choices, policy resolution, expiry or GPC), making it the hook to
+start and stop code. Dismissing a notice fires neither. See
+[a permission is not a recorded choice](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice).
 
 ## Follow every change with subscribe
 
-`inth.subscribe(listener)` calls your listener with the full snapshot after
-every change, including UI and policy changes that the events above skip. It
-suits code that renders from the whole state, such as a custom banner. Queue
-it like `on`; it attaches as soon as the client exists.
+`inth.subscribe(listener)` runs with the full snapshot on every state change,
+including UI and policy transitions. Queue it like `on`.
 
 ## Errors thrown by your listeners
 
-A listener that throws does not fail the action that caused the event. Inth
-logs the error with `console.error`, then runs the later `on` listeners for
-the same event and dispatches the matching `inth:*` event on `document`. The
-same holds for a `ready` or `ui` listener that `inth.on()` runs at once after
-the policy resolved, so `inth.on()` still returns the function that removes
-the listener. Keep listeners quick, because they run synchronously while the
-change is applied.
+An error in one listener logs to `console.error` without aborting the consent
+action, subsequent listeners or `inth:*` DOM events. Keep listeners fast
+because they run synchronously.
 
 ## Check it works
 
-1. Add a `consent` listener that logs `effectivePermissions` and an
-   `onChoiceRecorded` callback that logs `confirmed`.
-2. Open the page in a private window under an opt-in policy. Neither logs,
-   because nothing is allowed yet and nobody has chosen.
-3. Click **Accept All**. Both log.
-4. Reload. The `consent` listener logs the restored permissions and
-   `onChoiceRecorded` stays silent.
+1. Register a `consent` listener logging `effectivePermissions` and an
+   `onChoiceRecorded` callback logging `confirmed`.
+2. Open the page in a private window under an opt-in policy; neither logs.
+3. Click **Accept All**; both log.
+4. Reload; `consent` logs restored permissions while `onChoiceRecorded` stays
+   silent.

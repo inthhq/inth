@@ -1,32 +1,30 @@
 ---
 title: Content Security Policy
-description: Pass a per-request CSP nonce to InthProvider in Next.js and allow the consent backend in connect-src.
+description: Pass a per-request CSP nonce to InthProvider in Next.js and allow your Inth project origin in connect-src.
 group: frameworks
 ---
 
+Configure a strict Content Security Policy with `@inth/nextjs` by forwarding a
+per-request nonce to `InthProvider` and allowing your Inth project origin in
+`connect-src`.
+
 ## Pass the request nonce to InthProvider
 
-Read the nonce from the `x-nonce` request header in the root layout and pass it
-as `options={{ nonce }}` on `InthProvider`. This is the standard Next.js
-nonce pattern: your `proxy.ts` (Next.js 16) or `middleware.ts` (Next.js 15)
-generates a nonce per request, sets the `Content-Security-Policy` response
-header with `'nonce-<value>'` in `script-src` and `style-src`, and forwards the
-same value on the request as `x-nonce`. See the
-[Next.js CSP guide](https://nextjs.org/docs/app/guides/content-security-policy)
-for the header-generating proxy.
+Generate a per-request nonce in `proxy.ts` (Next.js 16) or `middleware.ts`
+(Next.js 15), set `Content-Security-Policy` with `'nonce-<value>'` on
+`script-src` and `style-src`, and forward `x-nonce` on the request as described
+in the
+[Next.js CSP guide](https://nextjs.org/docs/app/guides/content-security-policy).
 
-If you also run [`inthProxy`](/docs/frameworks/next/geography-headers), set
-both `x-nonce` and the generated `Content-Security-Policy` header on
-`request.headers` before calling it, and set the policy on the returned
-response as well. Next.js reads the nonce for its own bootstrap and page
-scripts from the request-side policy header, so forwarding only `x-nonce`
-leaves the framework scripts without a nonce and the browser blocks hydration.
-`inthProxy` copies the incoming request headers into the forwarded request, so
-both headers travel with the geography headers.
+If you also use [`inthProxy`](/docs/frameworks/next/geography-headers), set
+both `x-nonce` and `Content-Security-Policy` on `request.headers` before
+calling `inthProxy` and set the policy header on the returned response, so
+Next.js can stamp its own bootstrap scripts.
 
-Then read the header in the root layout and pass it to `InthProvider` as
-`options.nonce`. A string can cross from a Server Component to a Client
-Component, so no wrapper is needed:
+Read `x-nonce` in your root layout and pass it to `InthProvider` as
+`options={{ nonce }}`:
+
+{/* example: fragment */}
 
 ```tsx title="app/layout.tsx"
 import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/nextjs';
@@ -63,121 +61,70 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 }
 ```
 
-Reading `headers()` keeps the route dynamic, which a per-request nonce requires
-anyway. Do not combine a nonce-based policy with `cacheComponents: true`
-(Partial Prerendering): the static shell is rendered once at build time, so its
-scripts cannot carry a per-request nonce and the browser blocks them. Next.js
-documents this limitation in its CSP guide. For a prerendered shell use the
-hash-based policy that guide describes; a host-only `script-src` such as
-`'self'` does not authorize Next.js's inline bootstrap scripts and would need
-`'unsafe-inline'`, which defeats the policy. Otherwise keep the route fully
-dynamic and use the nonce.
-
-`options.nonce` is read when `InthProvider` mounts. The provider keeps the latest
-value in a ref, but the script loader is created once per runtime, so a nonce
-that changes during client-side navigation is not applied to scripts already
-created. Each full page load gets the fresh nonce from its own request.
+Per-request nonces require dynamic rendering and cannot be combined with
+`cacheComponents: true` (Partial Prerendering); use a hash-based CSP for
+prerendered shells instead. `options.nonce` is read at mount per full page
+load; client-side navigations keep the initial nonce.
 
 ## What the nonce applies to
 
-Inth stamps a nonce on these DOM nodes:
+Inth stamps `options.nonce` onto:
 
-- Every `<script>` element the script loader creates for a `scripts` entry,
-  both `src` and inline `textContent` scripts, gets `options.nonce`. A `nonce`
-  set on an individual `scripts` entry takes precedence for that element.
-- The `<style>` elements that the banner, dialog and other stock components
-  render with Inth's rules get `options.nonce`. With a nonce set, they render
-  next to each component instead of moving into `<head>`, because React drops
-  the nonce of a style it moves.
-- The inline `<script>` that a server-rendered `ConsentBanner` puts before its
-  buttons gets `options.nonce`. It holds a tap the visitor makes before the
-  page hydrates. If the policy blocks it, the banner still works after
-  hydration, but a tap before then does nothing.
-- The inline `<script>` that `InthProvider` renders when the visitor's consent or
-  `alwaysLoad` already lets some vendor helper entries in `scripts` run gets
-  `options.nonce`. It runs those entries' setup and inserts their tags before
-  the page hydrates. [Rendering](/docs/frameworks/next/rendering#start-allowed-scripts-before-hydration)
-  lists the helpers that start this way. The script elements it inserts take the same nonce, or the
-  entry's own `nonce`. Its content changes with each visitor's consent, so a
-  hash-based policy can't allow it. If the policy blocks it, the script loader
-  starts those entries after hydration instead.
-- The inline `<script>` that `InthProvider` renders after the page whenever it
-  has a `state` gets `options.nonce`. For a visitor the consent engine must
-  serve at once, such as a returning visitor with consent, it preloads the
-  engine's chunks that the browser recorded on an earlier visit; otherwise it
-  is empty. Its content is the same for every visitor, so a hash-based policy
-  can allow it. If the policy blocks it, the engine loads when `InthProvider`'s
-  first-load chunk runs. See
-  [Performance](/docs/frameworks/next/optimization#start-returning-visitors-scripts-sooner).
-- The `<style id="inth-theme">` element that `ConsentTheme` renders with the
-  theme's `--inth-*` custom properties gets its `nonce` prop. Pass it the same
-  request nonce: `<ConsentTheme theme={theme} nonce={nonce} />`.
+- Every `<script>` created by the script loader for `scripts` entries (an
+  entry's own `nonce` overrides `options.nonce`).
+- Inline `<style>` tags rendered by `ConsentBanner`, `ConsentDialog` and other
+  stock components (rendered inline beside each component instead of hoisted to
+  `<head>` so React preserves the nonce).
+- The `<style id="inth-theme">` element from `ConsentTheme` when you pass
+  `<ConsentTheme theme={theme} nonce={nonce} />`.
+- Stock `ConsentBanner`'s pre-hydration tap script (blocking it only disables
+  taps before hydration).
+- `InthProvider`'s
+  [pre-hydration script loader](/docs/frameworks/next/rendering#start-allowed-scripts-before-hydration)
+  (dynamic per visitor, so incompatible with hash-only CSP; if blocked, scripts
+  load after hydration).
+- `InthProvider`'s
+  [engine chunk preloader](/docs/frameworks/next/optimization#start-returning-visitors-scripts-sooner)
+  (static across visitors, so compatible with hashes; if blocked, the engine
+  loads normally).
 
-It does not apply to anything else:
+What the nonce does not cover:
 
-- Scripts that a vendor script loads itself, such as a tag manager injecting
-  its tags, do not receive the nonce. Add `'strict-dynamic'` to `script-src` so
-  scripts loaded by a nonced script are allowed, or list those vendor hosts
-  explicitly.
-- The prebuilt stylesheet `@inth/nextjs/styles.css`, if you import it with
-  `styles: false`, is a regular stylesheet from your own origin. It is covered
-  by `style-src 'self'`, not by the nonce. Use that setup when a page cannot
-  carry a per-request nonce.
-- Inline `style` attributes on rendered components. A nonce cannot authorize
-  style attributes, and browsers ignore `'unsafe-inline'` in a `style-src` list
-  that also contains a nonce or hash. Allow them with a separate
-  `style-src-attr 'unsafe-inline'` directive, or with `'unsafe-hashes'` plus
-  the matching `'sha256-...'` values; hashes only work for static values, not
-  for the animated collapse heights. The IAB TCF dialog, the consent dialog
-  trigger toolbar and the animated collapse used inside the dialogs render
-  inline `style` attributes. Check the
-  browser console with your policy enforced to see whether your setup triggers
-  a `style-src` violation.
-- Iframes, images or requests made by vendor scripts. Allow those hosts in
-  `frame-src`, `img-src` and `connect-src` according to each vendor.
+- **Nested vendor scripts.** Scripts injected by a vendor (such as tags loaded
+  by GTM) do not inherit the nonce. Add `'strict-dynamic'` to `script-src` or
+  allowlist vendor hosts.
+- **External stylesheet.** If you import `@inth/nextjs/styles.css` with
+  `styles: false`, cover it with `style-src 'self'`.
+- **Inline `style` attributes.** The IAB dialog, trigger toolbar and animated
+  collapses use inline `style` attributes. Allow them with
+  `style-src-attr 'unsafe-inline'` if your policy triggers `style-src`
+  violations.
+- **Vendor requests and embeds.** Allow each vendor's hosts in `frame-src`,
+  `img-src` and `connect-src`.
 
-## Allow the consent backend in connect-src
+## Allow your Inth project in connect-src
 
-The browser sends consent submissions to `${projectUrl}/v1/consent/records`, and, when
-the browser initializes or retries after a failed server prefetch, requests to
-`${projectUrl}/v1/consent/init` or the manifest URL. Add the backend origin to
-`connect-src`, and the manifest origin too when the mode's `manifestUrl` is an
-absolute URL on a different host such as a CDN:
+Allow your Inth project origin (and any separate manifest CDN host) in
+`connect-src` for `/v1/consent/records`, `/v1/consent/init` and `/v1/consent/manifest` requests:
 
 ```txt title="Content-Security-Policy (partial)"
-connect-src 'self' https://<your-backend-host> https://<your-manifest-host>;
+connect-src 'self' https://<your-project-host> https://<your-manifest-host>;
 ```
 
-Use the endpoint host supplied by your Inth project.
-With `proxy: true` and `routePrefix: '/api/inth'`, as
-[Optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin)
-shows, the browser sends every consent request to `/api/inth` and `'self'`
-covers them; the Next.js server connects to the backend outside the browser's
-CSP.
-
-IAB TCF policies can fetch the Global Vendor List from the URL the policy
-provides; allow that host in `connect-src` if you use the
-[IAB TCF add-on](/docs/frameworks/next/iab). Server-side prefetch runs
-in Next.js and is not subject to the browser's CSP.
+With `proxy: true` and `routePrefix: '/api/inth'` (see
+[Performance](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin)),
+`'self'` covers every browser consent request because the Next.js server talks
+to Inth outside the browser's CSP. If you use the
+[IAB TCF add-on](/docs/frameworks/next/iab), also allow the Global Vendor List
+host in `connect-src`.
 
 ## Verify
 
-Load a page with the policy enforced, not in report-only mode, and open the
-browser console. The banner should render with its theme colors and no CSP
-violation should mention `inth-theme`. Grant a category that gates one of your
-`scripts` entries, then check:
+Load a page with the policy enforced (not report-only) and check DevTools:
 
-- The injected `<script>` element carries the request's nonce. Browsers hide
-  the value from `getAttribute('nonce')`; read the element's `nonce` property
-  in the console or inspect it in the Elements panel.
-- The `<style id="inth-theme">` element carries the same nonce and the
-  `--inth-*` variables are applied to the banner.
-- No `Refused to load the script` or `Refused to apply inline style` errors
-  mention an Inth element. A refused vendor dependency points to a missing
-  `'strict-dynamic'` or vendor host.
-- The consent submission to `/v1/consent/records` succeeds. A `connect-src` violation
-  here means the backend origin is missing.
-
-Reload with a different nonce and confirm the elements update. A stale nonce
-after a full page load usually means a cached HTML response; nonce-based pages
-must not be served from a shared cache.
+1. No CSP errors reference `inth-theme` or an Inth script or style element.
+2. Grant a category and inspect the injected `<script>` element's `.nonce`
+   property (`getAttribute('nonce')` is hidden by browsers) and
+   `<style id="inth-theme">` to confirm they match the request nonce.
+3. Confirm the `POST /v1/consent/records` request succeeds without a `connect-src` error.
+4. Reload and confirm the nonce updates (a stale nonce indicates cached HTML).

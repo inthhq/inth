@@ -1,16 +1,16 @@
 ---
 title: IABConsentDialog
-description: Show the IAB TCF 2.4 preference center with purposes, features and vendors in an Angular app with inth-iab-consent-dialog.
+description: Render the IAB TCF 2.4 preference center with purposes, features and vendors in Angular using inth-iab-consent-dialog.
 group: frameworks
 ---
 
+Render the IAB TCF 2.4 preference center with Purposes and Vendors tabs in
+Angular using `<inth-iab-consent-dialog>`.
+
 ## Show the TCF preference center
 
-`<inth-iab-consent-dialog>` is the IAB TCF preference center. It has two
-tabs: purposes, with stacks, special features, features and legitimate
-interest objections, and vendors, with IAB vendors, custom vendors and Google
-ad tech providers. Render it next to `<inth-iab-consent-banner>`; the banner's
-Customize button opens it:
+Render `<inth-iab-consent-dialog>` alongside `<inth-iab-consent-banner>` so
+the banner's Customize button and footer preferences links can open it:
 
 <include src="../../../shared/examples/angular/iab-surfaces.mdx" />
 
@@ -18,18 +18,16 @@ Customize button opens it:
 
 | Input | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `open` | `boolean` | follows the consent state | Shows the dialog regardless of the active surface. While `open` is `true`, the dialog stays open, even after Escape. Bind `[(open)]` to close it on Escape, the close button and its actions. |
-| `initialTab` | `'purposes'` or `'vendors'` | `'purposes'` | The tab it opens on, for example from a "See our partners" link. |
+| `open` | `boolean` | follows consent state | Controlled visibility. Bind `[(open)]` so Escape, close and actions update it. |
+| `initialTab` | `'purposes'` or `'vendors'` | `'purposes'` | Initial active tab. |
 | `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag. |
-| `models` | `Model[]` | `['iab']` | Policy models it opens for. |
-| `noStyle` | `boolean` | provider's `noStyle` | Drops Inth's classes. |
-| `disableAnimation` | `boolean` | provider's value | Skips the backdrop's fade-in. |
+| `models` | `Model[]` | `['iab']` | Policy models handled. |
+| `noStyle` | `boolean` | provider `noStyle` | Drops `inth` classes. |
+| `disableAnimation` | `boolean` | provider value | Skips backdrop fade-in. |
 | `rootClass` | `string` | none | Extra class on the dialog card. |
 
-It has one output, `openChange`. It emits `false` when the visitor presses
-Escape or the close button, after a save, accept all or reject all, and
-when the dialog's code fails to load. With
-a one-way `[open]`, handle `(openChange)` yourself:
+`openChange` emits `false` on Escape, close button click, after saving,
+accepting or rejecting, or if the dialog chunk fails to load:
 
 ```html
 <inth-iab-consent-dialog [(open)]="preferencesOpen" />
@@ -37,31 +35,28 @@ a one-way `[open]`, handle `(openChange)` yourself:
 
 ## Behavior
 
-- It opens when the active surface is `'dialog'` under an IAB policy, the
-  same state `<inth-consent-dialog>` uses for other policies. Opening
-  preferences from `inthConsentDialogLink` therefore shows this dialog to IAB
-  visitors and `<inth-consent-dialog>` to everyone else.
-- Its body is a chunk of its own. It loads when the dialog first opens, and
-  is prefetched in idle time before that. If the load fails, the next open
-  tries again, and the IAB banner comes back in the meantime.
-- Switches change purpose consent, legitimate interest, special feature
-  opt-ins and vendor consent in the TCF state. Save writes a new TC String.
-- It needs the Global Vendor List. While the list loads,
-  `ConsentManager.iab()?.isLoadingGVL` is `true`.
+- Opens when `activeUI` is `'dialog'` under an IAB policy, so
+  `inthConsentDialogLink` automatically opens this dialog for IAB visitors
+  and `<inth-consent-dialog>` for everyone else.
+- Lazy-loads its body chunk on first open (prefetched during idle time). If
+  loading fails, the next open retries and the banner restores in the
+  meantime.
+- Switches update purpose consent, legitimate interest, special feature
+  opt-ins and vendor consent; Save encodes a new TC String.
+- While the Global Vendor List loads, `ConsentManager.iab()?.isLoadingGVL` is
+  `true`.
 
 ## Accessibility
 
-The preference center is a `dialog` labelled with its title, with a close
-button labelled from the `common.close` translation. Escape closes it. While
-it is blocking, which is the default, focus stays inside it and the page does
-not scroll. The purposes and vendors tabs are keyboard-operable tabs.
+Renders as a `dialog` labelled by its title with a localized close button
+(`common.close`). Escape closes it. Blocking mode (default) traps focus and
+locks scroll. Purposes and Vendors tabs support keyboard navigation.
 
 ## Style the dialog
 
-The dialog adds its rules when it opens, including the base rules it needs
-when rendered without a banner. With `styles: false`, add
-`@inth/angular/styles.css` and `@inth/angular/iab/styles.css` to
-`angular.json`. It reads the `iabConsentDialog`, `iabConsentDialogCard`,
+Injects its CSS when opened. With `styles: false`, include both
+`@inth/angular/styles.css` and `@inth/angular/iab/styles.css` in
+`angular.json`. Reads `iabConsentDialog`, `iabConsentDialogCard`,
 `iabConsentDialogHeader`, `iabConsentDialogFooter`, `iabConsentDialogTag` and
 `iabConsentDialogOverlay` theme slots. The root carries
 `data-testid="iab-consent-dialog-root"`.

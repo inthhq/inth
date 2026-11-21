@@ -1,25 +1,17 @@
 ---
 title: The Trade Desk
-description: Load The Trade Desk with Inth after marketing consent and verify its loader, storage and revocation behavior.
+description: Load The Trade Desk Universal Pixel only after marketing consent with the Inth theTradeDeskPixel helper.
 seoTitle: The Trade Desk consent with Inth
-seoDescription: Load The Trade Desk Universal Pixel only after marketing consent. Learn what theTradeDeskPixel queues, which cookies remain and how to verify it.
+seoDescription: Gate The Trade Desk Universal Pixel behind marketing consent with Inth. Configure advertiser and pixel IDs, storage, and reload on withdrawal.
 icon: radar
 group: integrations
 ---
 
-The Trade Desk Universal Pixel records conversions and builds ad audiences.
-The Inth `theTradeDeskPixel` helper waits until the `marketing` category is
-allowed before it defines the pixel globals and adds the loader.
-
-The Trade Desk has no API to stop its SDK. When the visitor withdraws, the
-helper leaves the SDK on the page, and Inth's default page reload removes it.
+The `theTradeDeskPixel` helper keeps The Trade Desk Universal Pixel off the page and its globals undefined until a visitor grants `marketing` consent. Because The Trade Desk provides no stop API, Inth leaves the loader mounted and reloads the page on withdrawal by default.
 
 ## Configure The Trade Desk
 
-Copy the advertiser ID and Universal Pixel IDs from your account snippet. This
-helper uses the Universal Pixel 3 loader. Unified ID 2.0 setup is separate.
-Then delete the direct snippet and any tag manager copy, so they can't load
-The Trade Desk without consent.
+Copy the advertiser ID and Universal Pixel IDs from your account snippet. This helper loads Universal Pixel 3; Unified ID 2.0 setup is separate. Remove any direct snippet or tag manager copy before installing `@inth/integrations`:
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -31,58 +23,36 @@ The Trade Desk without consent.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `advertiserId` | Required | Public advertiser ID. Trimmed. If it's missing or blank, Inth logs an error and never loads the pixel. |
-| `pixelIds` | Required | Nonempty array of public Universal Pixel IDs, each trimmed. If the array is empty or any entry is blank, Inth logs an error and skips the whole helper. |
-| `enableCookieSyncing` | Vendor default | Passed to `init` when set. `false` turns off cookie syncing, but it doesn't stop all cookies and doesn't make loading before consent safe. |
-| `dataProcessingOption` | None | Limited data use setting, such as `{ policies: ['LDU'], region: 'US-CO' }`. It doesn't replace consent. |
-| `scriptUrl` | `https://js.adsrvr.org/up_loader.3.0.0.js` | Loader URL override. A blank value uses the default. Walmart DSP accounts use `https://azjs.adsrvr.org/thetradedesk-ads/up_loader.3.0.0.js`. |
+| `advertiserId` | Required | Public advertiser ID, trimmed. Missing or blank values log an error and skip loading. |
+| `pixelIds` | Required | Non-empty array of public Universal Pixel IDs, each trimmed. An empty array or any blank entry logs an error and skips the helper. |
+| `enableCookieSyncing` | Vendor default | Passed to `init` when set. Setting `false` disables cookie syncing but does not stop all cookies or allow loading before consent. |
+| `dataProcessingOption` | None | Limited data use setting, such as `{ policies: ['LDU'], region: 'US-CO' }`. Does not replace consent. |
+| `scriptUrl` | `https://js.adsrvr.org/up_loader.3.0.0.js` | Loader URL override. Blank values use the default. Walmart DSP accounts use `https://azjs.adsrvr.org/thetradedesk-ads/up_loader.3.0.0.js`. |
 
 ## Loading and revocation
 
-When `marketing` is allowed, the helper creates the `ttdConversionEventsLayer`
-array and a `ttdConversionEvents` function that pushes each call's arguments
-onto it. It queues one `init` call and one `event` call, then adds the loader
-as an async script. If you set `dataProcessingOption`, the helper passes it as
-`dataProcessingOption` to `init` and as `data_processing_option` on the event.
-If your page already defines `ttdConversionEvents` or the layer, the helper
-leaves them alone.
+When a visitor grants `marketing`, the helper creates `ttdConversionEventsLayer` and `ttdConversionEvents` if absent, queues one `init` and one `event` call, and inserts the async loader. When `dataProcessingOption` is set, the helper passes it as `dataProcessingOption` to `init` and as `data_processing_option` on the event.
 
-The SDK reads TCF and GPP signals where they apply. Those signals control what
-the vendor does after it loads. They don't replace the Inth gate. Send your own
-conversion calls only while marketing and any vendor consent stay granted.
+The SDK reads TCF and GPP signals after loading, which do not replace the Inth gate. Guard your own conversion calls on current `marketing` and vendor consent.
 
-The Trade Desk documents no way to stop or tear down the SDK in the browser.
-On withdrawal, the helper keeps the loader element on the page. Keep Inth's
-default `reloadOnConsentRevoked` enabled. Without the reload, existing code,
-requests and frames can keep running until the visitor navigates. If the
-visitor grants consent again on the same page, the helper reuses that loader
-and doesn't queue `init` or the event a second time.
+Because The Trade Desk documents no stop or teardown API, Inth leaves the loader element mounted on withdrawal and relies on `reloadOnConsentRevoked`. Disabling reload lets running code, requests, and frames continue until navigation. Regranting consent before reload reuses the loader without queueing `init` or the initial event again.
 
 ## Cookies and storage
 
-The Trade Desk documents the `TDID` identifier cookie on `adsrvr.org`, with a
-one-year lifetime. A read-only request using the guide's sample IDs returned a
-`TDID` cookie even with cookie syncing turned off. The served SDK also reads
-local storage debugging flags and can read existing GA4 cookies when
-configured. This list isn't a complete cookie inventory.
+The Trade Desk documents the `TDID` cookie on `adsrvr.org` with a one-year lifetime, which appeared in read-only tests even with `enableCookieSyncing: false`. The served SDK can also read local storage debug flags and existing GA4 cookies when configured. Treat this as a starting point, not an exhaustive inventory.
 
-For CSP, the guide lists `js.adsrvr.org` for scripts, and `insight.adsrvr.org`
-and `match.adsrvr.org` for frames. Realtime conversion connections use
-`insight.adsrvr.org`. Account options can add hosts.
+For Content Security Policy, allow `js.adsrvr.org` for scripts, `insight.adsrvr.org` and `match.adsrvr.org` for frames, and `insight.adsrvr.org` for realtime conversions. Account settings may require extra hosts.
 
 ## Verify The Trade Desk
 
-In a fresh browser profile, deny consent and allow only an unrelated category.
-Filter Network by `adsrvr.org` and confirm that no requests, globals, cookies,
-local storage or session storage appear. Grant `marketing` and check the loader
-URL against your account snippet. Withdraw consent and confirm the page
-reloads. The Trade Desk must stay blocked on the new page. Check storage in
-DevTools as well as Network.
+Filter DevTools Network by `adsrvr.org` in a fresh browser profile and inspect storage in Application:
 
-The browser monitor blocks collection, so it doesn't confirm that your account
-receives events.
+1. Deny consent, then allow an unrelated category. Confirm no requests, globals, cookies, local storage, or session storage appear.
+2. Allow `marketing` and confirm the loader URL matches your account snippet.
+3. Withdraw `marketing` and confirm the page reloads with The Trade Desk blocked on the new page.
 
-Sources: [Universal Pixel guide](https://open.thetradedesk.com/provider/docsApp/GuidesProvider/data/doc/TrackingTagsUniversalPixel)
-and [privacy policy](https://www.thetradedesk.com/legal/privacy).
+Browser privacy monitors can block collection, so a clean Network trace does not prove events reached your account.
+
+Sources: [Universal Pixel guide](https://open.thetradedesk.com/provider/docsApp/GuidesProvider/data/doc/TrackingTagsUniversalPixel) and [privacy policy](https://www.thetradedesk.com/legal/privacy).
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

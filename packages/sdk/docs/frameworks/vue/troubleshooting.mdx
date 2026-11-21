@@ -1,134 +1,120 @@
 ---
 title: Troubleshooting
-description: Fix common Inth Vue plugin problems, from unresolved imports and a missing banner to tokens that do not apply and scripts that load twice.
+description: Fix common Inth Vue issues including Vite pre-bundling errors, missing banners, IABUnavailableError, and duplicate scripts.
 group: frameworks
 ---
 
-## Vite fails to pre-bundle Inth's .vue files
+Diagnose and fix Vue-specific setup, bundling, theming, and runtime errors
+with `@inth/vue`.
 
-**Check.** `vite dev` reports an error from dependency optimization for a
-`.vue` file under `@inth/vue`, or the mode throws `inth: hosted() has no
-backend URL`. `consentManifest()` is missing from the `plugins` array of
-`vite.config.ts`.
+## Vite fails to pre-bundle `.vue` files or throws "has no backend URL"
 
-**Fix.** Add `consentManifest()` from `@inth/vue/vite` to the `plugins` array,
-next to `@vitejs/plugin-vue`, and set `VITE_INTH_PROJECT_URL`. See the
-[quickstart](/docs/frameworks/vue/quickstart#add-the-vite-plugin).
+**Check.** `vite dev` fails during dependency optimization on a `.vue` file
+inside `@inth/vue`, or `hosted()` throws `inth: hosted() has no backend URL`.
+`consentManifest()` is missing from `vite.config.ts`.
+
+**Fix.** Add `consentManifest()` from `@inth/vue/vite` next to `vue()` in
+`vite.config.ts`, and set `VITE_INTH_PROJECT_URL` (falling back to
+`VITE_C15T_BACKEND_URL` if unset).
+See [add the Vite plugin](/docs/frameworks/vue/quickstart#add-the-vite-plugin).
 
 ## app.use() throws "pass `mode`"
 
-**Check.** The plugin options have no `mode`. Earlier v3 alphas took
-`projectUrl`, `manifest`, `manifestUrl` and `manifestSnapshot` on the plugin.
+**Check.** `inth` options omit `mode`.
 
-**Fix.** Pass `mode: hosted()`, `manifest()` or `testing()` from
-`@inth/vue/vue-plugin`. Move `projectUrl` into the mode, such as
-`hosted({ projectUrl })`, or let `consentManifest()` supply it.
+**Fix.** Pass `mode: hosted()`, `manifest()`, or `testing()` from
+`@inth/vue/vue-plugin` (or `@inth/vue/testing`). Pass `projectUrl` to the mode
+factory if you do not use `consentManifest()`.
 
 <include src="../../shared/vite-build-manifest-troubleshooting.mdx" />
 
 ## A composable throws "Kernel not found"
 
-**Check.** The component is outside the app that installed `inth`, for
-example in a separate `createApp()` instance, or the composable ran outside
-`setup`.
+**Check.** The component renders outside the `createApp()` instance that
+installed `inth`, or the composable ran outside `setup`.
 
-**Fix.** Install the plugin on the app that renders the component, and call
-composables inside `setup`.
+**Fix.** Install `inth` on the same app instance and call composables
+inside `setup`.
 
 ## Why is there no banner?
 
-**Check.** [DevTools](/docs/frameworks/vue/components/dev-tools) shows the
-matched policy. With `hosted()`, find the `/v1/consent/init` request in the Network tab;
-with `manifest({ source: 'runtime' })`, the `/v1/consent/manifest` request.
+**Check.** Open [DevTools](/docs/frameworks/vue/components/dev-tools) to
+inspect the matched policy, and check `/v1/consent/init` (`hosted()`) or `/v1/consent/manifest`
+(`manifest({ source: 'runtime' })`) in the Network tab.
 
-**Fix.** Work through these causes in order:
+**Fix.** Check these causes in order:
 
-1. **The visitor's policy asks for no banner.** A policy with prompt `none`
-   shows no banner, which is common in opt-out regions. See
+1. **The matched policy requires no banner.** Policies with `prompt: 'none'`
+   (common in opt-out regions) show no banner. See
    [why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent).
-2. **`manifest()` resolves the unknown-location policy.** With
-   `initFallback: false` and no `inputs` or `geoUrl`, every visitor gets the
-   policy your project assigns when the location is unknown. Switch to
-   `hosted()`, or check that rule and rebuild.
-3. **`InthProvider` is inside a route that unmounts.** Put it in the root
-   component.
-4. **The backend did not answer.** With `hosted()`, `/v1/consent/init` must return
-   200; with a runtime manifest, `/v1/consent/manifest` must. A CORS error means your site's origin is missing from the
-   Inth project's trusted origins. While resolution fails, Inth shows no UI and
-   keeps every optional category denied.
-5. **A stored choice exists.** Clear the `inth` cookie and localStorage entry,
-   or use a private window.
+2. **`manifest()` resolved the unknown-location rule.** With
+   `initFallback: false` and no `inputs` or `geoUrl`, every visitor gets your
+   unknown-location policy. Switch to `hosted()` or configure location inputs.
+3. **`InthProvider` unmounts on navigation.** Move `<InthProvider />` to
+   `src/App.vue`.
+4. **The policy request failed.** Confirm `/v1/consent/init` or `/v1/consent/manifest` returns 200.
+   A CORS error means your site's origin is missing from your Inth project's
+   trusted origins. While resolution fails, Inth hides the UI and denies
+   optional categories.
+5. **A choice is already stored.** Clear the `inth` cookie and localStorage
+   key, or test in a private window.
 
 ## The app throws IABUnavailableError
 
-**Check.** The error has the code `INTH_IAB_UNAVAILABLE` and reads
-"inth: this visitor's policy uses IAB TCF, but `iab` is not set." The
-visitor's policy uses the `iab` model and the backend sent its vendor list,
-but the plugin has no `iab` option, or has `iab: false` or
-`iab: { enabled: false }`. The standard banner does not handle the IAB model,
-so Inth throws rather than leave the visitor with no consent UI.
-`app.use()` throws when the policy arrives with `prefetch`; otherwise the
-error is uncaught once the policy resolves, and `InthProvider` renders
-nothing.
+**Check.** The console shows `INTH_IAB_UNAVAILABLE` ("inth: this visitor's
+policy uses IAB TCF, but `iab` is not set."). The matched policy uses the
+`iab` model with a vendor list, but `iab` is unset, `false`, or
+`{ enabled: false }`.
 
-**Fix.** If the site uses IAB TCF, pass `iab` to the plugin, such as
-`app.use(inth, { iab: {} })`. See [IAB TCF](/docs/frameworks/vue/iab).
-If it does not, remove the `iab` model from the policy for that region in
-your Inth project or policy pack. A backend that answers `gvl: null` turns
-IAB off for that request, and nothing throws.
+**Fix.** Pass `iab: {}` to `inth` (`app.use(inth, { iab: {} })`) if
+your site uses IAB TCF. See [IAB TCF](/docs/frameworks/vue/iab). Otherwise,
+remove the `iab` model from that regional policy in Inth.
 
 ## Tokens in my CSS do not apply
 
-**Check.** The inth plugin appends a `<style id="inth-css-vars">` element to
-`<head>` when you install it. The element sets every token, including the
-defaults. A `:root` rule in your stylesheet for the same variable competes
-with it on source order, so it may lose.
+**Check.** `inth` appends `<style id="inth-css-vars">` to `<head>` with
+every token, including defaults. A `:root` rule in your stylesheet can lose on
+cascade order.
 
-**Fix.** Set values through the plugin's `tokens` option. See
-[customize](/docs/frameworks/vue/customize#set-theme-tokens).
+**Fix.** Pass custom values through `inth`'s `tokens` option instead. See
+[set theme tokens](/docs/frameworks/vue/customize#set-theme-tokens).
 
 ## A script loads twice, or before consent
 
-**Check.** Look for the vendor in both the plugin's `scripts` and a
-`createScriptLoader` call.
+**Check.** Look for duplicate vendor registration in both `inth`'s
+`scripts` and a manual `createScriptLoader()` call, or a leftover `<script>`
+tag in `index.html`.
 
-**Fix.** Keep only `scripts`.
-
-**Check.** Look for the vendor's own snippet in `index.html`, or SDK
-initialization in your code.
-
-**Fix.** Remove it so Inth is the only loader.
+**Fix.** Remove manual loaders and keep only `scripts` on `inth`.
 
 ## The page flashes without the banner on a server-rendered Vue app
 
-**Check.** Inth does not support server rendering for plain Vue.
+**Check.** Plain `@inth/vue` resolves consent in the browser only and renders
+the banner after hydration.
 
-**Fix.** Use the Inth Nuxt module. See
+**Fix.** Use `@inth/nuxt` for server-rendered banners, or inline theme tokens
+as shown in
 [server rendering without Nuxt](/docs/frameworks/vue/rendering#server-rendering-without-nuxt).
 
-## Names from an earlier alpha are missing
+## Renamed exports fail to resolve
 
-**Check.** An import or component from an earlier v3 alpha fails to resolve,
-such as `@inth/vue/consent-root`, `ConsentPreferencesLink` or the default
-export of `@inth/vue/vite`. The v3 alphas removed names that never shipped in
-a stable release, with no alias.
+**Check.** Imports such as `@inth/vue/consent-root`, `ConsentPreferencesLink`,
+`ConsentFrame`, or the default export of `@inth/vue/vite` fail to resolve.
 
-**Fix.** Use the current names:
+**Fix.** Update to the current names:
 
-| Removed | Use instead |
+| Old name | Current name |
 | --- | --- |
-| Vue plugin options `projectUrl`, `manifest`, `manifestSnapshot`, `manifestUrl`, `customFetch`, `domain` | `mode`, a factory from `@inth/vue/vue-plugin` that takes them |
-| The default `inth` export of `@inth/vue/vite` | `consentManifest` from `@inth/vue/vite`. The Vue app plugin keeps the name `inth`. |
+| Plugin options `projectUrl`, `manifest`, `manifestSnapshot`, `manifestUrl`, `customFetch`, `domain` | `mode` factory from `@inth/vue/vue-plugin` |
+| Default `inth` export of `@inth/vue/vite` | `consentManifest` from `@inth/vue/vite` (`inth` remains the Vue plugin export) |
 | `@inth/vue/consent-root`, `@inth/vue/consent-widget` | Named exports from `@inth/vue/vue-plugin` |
-| `ConsentRoot`, `runtime/components/consent-root.vue` | `InthProvider`, `runtime/components/inth-provider.vue` |
 | `ConsentPreferencesLink`, `runtime/components/consent-preferences-link.vue` | `ConsentDialogLink`, `consent-dialog-link.vue` |
 | `ConsentFrame` | `ConsentGate` |
 | `hosted({ url })` | `hosted({ projectUrl })`, or `VITE_INTH_PROJECT_URL` |
 
+For shared package and API renames, see [migrate from c15t](/docs/migrate-from-c15t).
+
 ## More help
 
-[Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
-every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because the wrong package is installed, choices that disappear on
-reload, server HTML that differs from the browser, static builds that fail and
-content blockers that hide the consent UI.
+[Troubleshoot consent](/docs/guides/troubleshooting) covers cross-framework
+issues including CORS errors, lost choices, and content blockers.

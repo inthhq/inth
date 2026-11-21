@@ -1,33 +1,24 @@
 ---
 title: ConsentDialog
-description: Mount ConsentDialog as a Client Component inside a Next.js InthProvider to open the preference center from the banner, links and triggers.
+description: Mount ConsentDialog inside a Next.js InthProvider to open the modal preference center from banners, links and triggers.
 group: frameworks
 ---
 
 ## Open the preference center
 
-`ConsentDialog` is the modal preference center. It is a Client Component that
-a Server Component layout can render, inside the `InthProvider` that already
-provides the consent runtime, as in the
-[App Router](/docs/frameworks/next/app-router) and
-[Pages Router](/docs/frameworks/next/pages-router) setups. Mount it once,
-next to the banner; it opens whenever something makes `dialog` the active
-surface: the banner's Customize button, a `ConsentDialogLink` in your footer,
-a `ConsentDialogTrigger`, or your own code.
+`ConsentDialog` is the modal preference center. Render it once inside
+`InthProvider` in your [App Router](/docs/frameworks/next/app-router) root
+layout or [Pages Router](/docs/frameworks/next/pages-router) `pages/_app.tsx`:
 
 <include src="../../../shared/examples/nextjs/quickstart-layout.mdx" />
 
-Pass props on that element, for example `<ConsentDialog hideBranding />`.
+Pass props directly on the element, such as `<ConsentDialog hideBranding />`.
+`ConsentDialog` renders nothing on the server and mounts through a portal after
+hydration.
 
-The dialog renders nothing on the
-server. It mounts through a portal after hydration, so it does not change the
-server HTML or the streamed shell. If the visitor owes a choice or notice,
-routes that await `resolveConsent` can render the banner on the server. Pages Router pages without `getServerSideProps` show it
-after browser policy resolution. No banner appears when the policy requires
-no prompt or an existing record already satisfies it.
+Open it from any Client Component inside `InthProvider` with `useSetActiveUI()`:
 
-To open it from another Client Component inside the boundary, set the active
-surface:
+{/* example: fragment */}
 
 ```tsx title="components/privacy-menu-item.tsx"
 'use client';
@@ -44,11 +35,11 @@ export function PrivacyMenuItem() {
 }
 ```
 
-`ConsentDialogLink` does the same with the policy's rights exposed for
-styling; see [ConsentDialogLink](./consent-dialog-link). For a floating
-button, see [ConsentDialogTrigger](./consent-dialog-trigger). Under an IAB
-policy, mount `IABConsentDialog` from the [IAB guide](/docs/frameworks/next/iab)
-instead; this dialog stays closed for the `iab` model.
+For footer links and floating controls, see
+[ConsentDialogLink](./consent-dialog-link) and
+[ConsentDialogTrigger](./consent-dialog-trigger). For IAB TCF policies, mount
+`IABConsentDialog` from [IAB TCF](/docs/frameworks/next/iab) instead (this
+dialog stays closed under the `iab` model).
 
 <import src="../../../shared/react/components/consent-dialog.mdx#props" />
 
@@ -58,9 +49,8 @@ instead; this dialog stays closed for the `iab` model.
 
 <import src="../../../shared/react/components/consent-dialog.mdx#composition" />
 
-The compound parts import from `@inth/nextjs` as properties of `ConsentDialog`,
-and `ConsentWidget` from the same module. Server Components cannot render
-them: keep the composition in a file with `'use client'`. See
+Import compound parts (`ConsentDialog.*` and `ConsentWidget`) from
+`@inth/nextjs` inside a `'use client'` file. See
 [Customize](/docs/frameworks/next/customize) for slots and tokens.
 
 <import src="../../../shared/react/components/consent-dialog.mdx#verify" />

@@ -1,24 +1,17 @@
 ---
 title: Marketo Munchkin
-description: Load Adobe Marketo Munchkin after marketing consent, configure its account and cookie options, and verify tracking and revocation with Inth.
+description: Load Adobe Marketo Munchkin only after marketing consent with the Inth marketoMunchkin helper.
 seoTitle: Marketo Munchkin cookie consent with Inth
-seoDescription: Wait for marketing consent before loading Marketo Munchkin. Set your account ID, configure cookies and check revocation with Inth.
+seoDescription: Wait for marketing consent before loading Marketo Munchkin. Configure your account ID, init options, and revocation with Inth.
 icon: chart-line
 group: integrations
 ---
 
-Munchkin is Adobe Marketo's script for tracking known and anonymous leads on
-your site. The Inth `marketoMunchkin` helper waits for `marketing` consent
-before it requests Munchkin or initializes tracking. Until then, it creates no
-Munchkin global, cookie or browser storage.
-
-Munchkin has no API to stop tracking. When the visitor withdraws, Inth removes
-the loader and reloads the page, and the reload ends tracking.
+The `marketoMunchkin` helper waits for `marketing` consent before loading Adobe Marketo Munchkin or calling `Munchkin.init`. Before consent, it creates no Munchkin global, cookie, or browser storage. On withdrawal, Inth removes the loader and reloads the page by default to end tracking.
 
 ## Configure Marketo Munchkin
 
-Copy your Munchkin account ID from Marketo's installation snippet. Then remove
-the Munchkin tag from your site, so that Inth controls when it loads.
+Copy your Munchkin account ID from Marketo's snippet and remove the original tag from your site so Inth controls loading.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -30,43 +23,27 @@ the Munchkin tag from your site, so that Inth controls when it loads.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `munchkinId` | Required | Public account ID. Whitespace is trimmed. If it's missing or blank, Inth logs an error and never loads Munchkin. |
-| `initOptions` | `{}` | Passed to `Munchkin.init`, for example `cookieAnon`, `anonymizeIP`, `apiOnly` and `cookieLifeDays`. |
-| `category` | `marketing` | Consent condition that gates the whole loader. |
-| `scriptUrl` | `https://munchkin.marketo.net/munchkin.js` | Custom or proxied loader URL. Blank values use the default. Other Munchkin requests need their own proxy configuration. |
+| `munchkinId` | Required | Public account ID, trimmed automatically. Missing or blank values log an error and skip loading. |
+| `initOptions` | `{}` | Passed to `Munchkin.init`, such as `cookieAnon`, `anonymizeIP`, `apiOnly`, and `cookieLifeDays`. |
+| `category` | `marketing` | Consent condition that gates the loader. |
+| `scriptUrl` | `https://munchkin.marketo.net/munchkin.js` | Custom or proxied loader URL. Blank values use the default; other Munchkin requests need separate proxy config. |
 
-`cookieAnon: false` stops Munchkin from creating cookies for new anonymous
-visitors and tracking them. It is not a consent switch. Visitors who already
-have a tracking cookie are still tracked.
+`cookieAnon: false` stops Munchkin from creating cookies for new anonymous visitors, not visitors who already have a tracking cookie. It is not a consent switch.
 
 ## Loading and revocation
 
-After consent, Inth downloads the SDK and calls `Munchkin.init` once with the
-account ID and `initOptions`. If the visitor withdraws while the SDK
-downloads, the helper skips initialization. Changes to other categories don't
-initialize Munchkin again.
+When the configured category is allowed, Inth downloads the SDK and calls `Munchkin.init` once with `munchkinId` and `initOptions`. If consent is withdrawn while downloading, the helper skips initialization. Changes to other categories do not reinitialize Munchkin.
 
-Keep `reloadOnConsentRevoked` enabled. Removing the loader doesn't stop the
-running SDK or its listeners. The next page doesn't load Munchkin while its
-consent is denied.
+Because removing the script element does not stop the running SDK or its listeners, keep `reloadOnConsentRevoked` enabled so the next page loads without Munchkin.
 
 ## Cookies and storage
 
-Munchkin can set `_mkto_trk` for two years by default. The reload doesn't
-remove it. Marketo's separate `marketo_opt_out=true` URL flow sets
-`mkto_opt_out` and turns tracking off. The helper doesn't set that opt-out,
-because it would also block tracking after a later consent grant.
+Munchkin writes `_mkto_trk` for two years by default, and reloading does not delete it. The helper does not trigger Marketo's `marketo_opt_out=true` URL flow (`mkto_opt_out`), because that cookie would also block tracking after a later consent grant.
 
 ## Verify Marketo Munchkin
 
-Filter the Network panel by `munchkin.marketo.net`. Before consent, check that
-there is no loader request, no `window.Munchkin`, no `_mkto_trk` cookie and no
-vendor browser storage. Allow the category set in `category`, which defaults
-to `marketing`, and check that the SDK loads and initializes. Reject that
-category again and check that the reloaded page makes no Munchkin request. For
-example, with `category: 'experience'`, allow and reject `experience`.
+Filter DevTools Network by `munchkin.marketo.net`. Before consent, confirm no loader request, `window.Munchkin`, `_mkto_trk` cookie, or vendor storage appears. Allow the configured `category` (default `marketing`) and confirm the SDK loads and initializes. Reject that category and confirm the reloaded page makes no Munchkin request.
 
-Sources: Adobe's [async installation snippet](https://experienceleague.adobe.com/en/docs/marketo-developer/marketo/javascriptapi/leadtracking/lead-tracking)
-and [configuration reference](https://experienceleague.adobe.com/en/docs/marketo-developer/marketo/javascriptapi/leadtracking/configuration).
+Sources: Adobe's [async installation snippet](https://experienceleague.adobe.com/en/docs/marketo-developer/marketo/javascriptapi/leadtracking/lead-tracking) and [configuration reference](https://experienceleague.adobe.com/en/docs/marketo-developer/marketo/javascriptapi/leadtracking/configuration).
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

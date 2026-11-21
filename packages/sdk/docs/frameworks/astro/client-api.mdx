@@ -1,6 +1,6 @@
 ---
 title: Client API
-description: Reference for @inth/astro/client on an Astro site, grouped by task, from reading permissions and recorded choices to opening dialogs, saving consent, gated scripts, the page runtime and analytics events.
+description: Reference for @inth/astro/client covering permissions, recorded choices, dialogs, saving consent, gated scripts, and events.
 group: frameworks
 ---
 
@@ -65,7 +65,7 @@ The snapshot fields you are most likely to read:
 | `activeUI` | `'banner'`, `'dialog'` or `'none'`, and `null` before the policy resolves |
 | `model` | The policy's model: `'opt-in'`, `'opt-out'`, `'iab'` or `'none'` |
 | `policyRule` | The matched rule, with its `id`, `prompt` and `rights` |
-| `policyPending` | `true` while the first `/init` answer is outstanding |
+| `policyPending` | `true` while the first `/v1/consent/init` answer is outstanding |
 | `location` | Country and region the backend resolved, or `null` |
 | `translations` | The active language and its translation bundle |
 
@@ -96,7 +96,7 @@ console warning that names the id.
 | `preloadDialog()` | Downloads the dialog without opening it |
 
 `openDialog()` downloads and mounts the dialog island the first time. While
-the first `/init` answer is outstanding, it waits for it, then opens nothing
+the first `/v1/consent/init` answer is outstanding, it waits for it, then opens nothing
 if the policy owes no consent interface.
 
 `ConsentDialogLink` needs no script. For a control you render yourself,
@@ -133,8 +133,8 @@ made. A save that turns off a category that was allowed reloads the page,
 unless the integration sets `reloadOnConsentRevoked: false`.
 
 Call `identify()` after your visitor signs in. `externalId` is your own user
-ID. `identityProvider`, `properties` and an
-`identityToken` that verifies the link are optional.
+ID. `identityProvider`, `properties`, and an optional signed `identityToken`
+that verifies the link are optional.
 
 ## Run gated inline scripts
 

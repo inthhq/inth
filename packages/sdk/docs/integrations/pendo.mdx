@@ -1,27 +1,17 @@
 ---
 title: Pendo
-description: Load Pendo after measurement consent, configure its tracking settings, and verify loading and withdrawal with Inth.
+description: Load and initialize Pendo only after measurement consent, with pause and resume support in Inth.
 seoTitle: Pendo cookie consent with Inth
-seoDescription: Load and initialize Pendo only after measurement consent. The Inth pendo helper stops and resumes event sending and keeps the visitor's identity.
+seoDescription: Gate the Pendo web agent on measurement consent with Inth, pause and resume event sending while preserving visitor identity, and verify storage.
 icon: chart-line
 group: integrations
 ---
 
-Pendo records product usage and shows in-app guides. The Inth `pendo` helper
-waits until the `measurement` category is allowed before it downloads the
-Pendo agent, and it calls `pendo.initialize()` only once the agent has loaded
-and consent is still granted. Until then, Inth defines no `pendo` global.
-
-When the visitor withdraws, the helper calls `pendo.stopSendingEvents()`. If
-consent comes back on the same page, it calls `startSendingEvents()` and keeps
-the same visitor identity. Inth still reloads the page by default.
+The `pendo` helper waits for `measurement` consent before downloading the Pendo web agent and calls `pendo.initialize()` only if consent is still granted after load. Until then, Inth defines no `window.pendo` global. On withdrawal, the helper calls `pendo.stopSendingEvents()`, resumes with `startSendingEvents()` on same-page regrant, and Inth reloads the page by default.
 
 ## Configure Pendo
 
-Copy the web agent API key from Pendo. Then delete Pendo's install snippet from
-your app, and any tag manager copy, so Pendo can't load outside Inth. Pass
-visitor and account metadata only when your app has permission to identify the
-visitor.
+Copy your web agent API key from Pendo and remove Pendo's install snippet and any tag-manager copy. Pass `visitor` and `account` metadata only when your app has permission to identify the visitor.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -33,69 +23,39 @@ visitor.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `apiKey` | Required | Web agent API key. Trimmed and URL-encoded into the default loader URL. If it's missing or blank, Inth logs an error and never loads Pendo. |
-| `visitor` | Unset | Visitor metadata passed to `pendo.initialize()`. Replaces any `visitor` in `initializeOptions`. |
-| `account` | Unset | Account metadata passed to `pendo.initialize()`. Replaces any `account` in `initializeOptions`. |
-| `initializeOptions` | Unset | Other `initialize()` options, such as `disableCookies`, `localStorageOnly`, `excludeAllText` and `cookieDomain`. |
-| `category` | `measurement` | Consent category or condition that must be allowed before the agent loads. |
-| `scriptUrl` | `https://cdn.pendo.io/agent/static/<apiKey>/pendo.js` | Custom, regional or proxied agent URL. A blank value uses the default. |
+| `apiKey` | Required | Web agent API key, trimmed and URL-encoded into the default loader URL. Missing or blank values log an error and skip loading. |
+| `visitor` | Unset | Visitor metadata passed to `pendo.initialize()`. Overrides `visitor` inside `initializeOptions`. |
+| `account` | Unset | Account metadata passed to `pendo.initialize()`. Overrides `account` inside `initializeOptions`. |
+| `initializeOptions` | Unset | Additional `pendo.initialize()` options such as `disableCookies`, `localStorageOnly`, `excludeAllText`, and `cookieDomain`. |
+| `category` | `'measurement'` | Consent category or condition required before the agent loads. |
+| `scriptUrl` | `https://cdn.pendo.io/agent/static/<apiKey>/pendo.js` | Custom, regional, or proxied agent URL. Blank values use the default. |
 
 ## Loading and revocation
 
-When the category is allowed, the helper adds the agent as an async script. It
-doesn't queue calls before the agent loads. After the script loads, it checks
-consent again and calls `initialize()` with your options. If the visitor
-withdrew while the agent was downloading, the helper doesn't initialize. It
-initializes on the next grant instead. Calling `pendo()` again with equal
-options, such as on a rerender, returns the same script, so Pendo initializes
-only once per page.
+After consent, the helper loads `pendo.js` asynchronously without queuing calls beforehand. Once loaded, it rechecks consent before calling `pendo.initialize()`. If the visitor withdrew during download, initialization waits until the next grant. Calling `pendo()` again with equal options returns the same script so Pendo initializes once per page.
 
-If the loaded script doesn't define `window.pendo`, for example because the API
-key or `scriptUrl` is wrong, the helper logs
-`pendo: loader did not install the Pendo API` and does nothing else. It doesn't
-throw.
+If the loaded script does not define `window.pendo`, for example because of an invalid `apiKey` or `scriptUrl`, the helper logs `pendo: loader did not install the Pendo API` and does not throw.
 
-On withdrawal, the helper keeps the agent on the page and calls
-`stopSendingEvents()`. On a later grant it calls `startSendingEvents()` and
-doesn't initialize a second time. This keeps the visitor's identity across
-reversible consent changes.
+On withdrawal, the helper keeps the agent on the page and calls `pendo.stopSendingEvents()`. On a later grant, it calls `pendo.startSendingEvents()` without reinitializing, preserving the visitor's identity.
 
-The helper never calls `clearSession()`, because that starts a new anonymous
-visitor and can send identification events. If a visitor signs out while Pendo
-is loaded and consent is granted, call `pendo.clearSession()` yourself before
-you identify the next visitor. Don't call it to withdraw consent, or while
-consent is denied. To remove data Pendo already collected, use your account's
-data deletion or Do Not Process controls.
-
-Stopping events doesn't delete Pendo's cookies or local storage, and guides
-already on the page stay there. Keep `reloadOnConsentRevoked` enabled if the
-next page must run without Pendo loaded.
+- **Never calls `clearSession()`.** Calling `pendo.clearSession()` starts a new anonymous visitor and can send identification events. Call it yourself only when a visitor signs out while Pendo is loaded and consented, never during consent withdrawal or denial. Use your Pendo account's data deletion or Do Not Process controls to remove collected data.
+- **Storage and active guides.** Stopping events does not delete cookies or local storage, and guides already on screen remain visible. Keep `reloadOnConsentRevoked` enabled if the next page must run without Pendo loaded.
 
 ## Cookies and storage
 
-Pendo storage keys usually start with `_pendo_` and include the app ID. Cookie
-behavior depends on `initialize()` options such as `disableCookies`,
-`localStorageOnly` and `cookieDomain`.
+Pendo storage keys typically start with `_pendo_` and include the app ID. Cookie behavior depends on `initializeOptions` such as `disableCookies`, `localStorageOnly`, and `cookieDomain`.
 
 ## Verify Pendo
 
-Filter the DevTools Network panel by `pendo.io`. Before consent, and with only
-an unrelated category allowed, check that no Pendo request, `pendo` global,
-cookie or storage entry appears. Allow measurement and confirm that the agent
-loads and initializes once. Withdraw consent and confirm the page reloads with
-Pendo blocked.
+Filter DevTools Network by `pendo.io`:
 
-If you set `reloadOnConsentRevoked: false`, withdraw consent and check that
-`pendo.isSendingEvents()` returns `false`. Grant again and confirm that event
-sending resumes without a new anonymous visitor. Test guide behavior with your
-own account.
+1. Before consent and with only an unrelated category allowed, confirm no Pendo requests, `window.pendo` global, cookies, or `_pendo_` storage appear.
+2. Allow `measurement` and confirm the agent loads and initializes once.
+3. Withdraw consent and confirm the page reloads with Pendo blocked.
+4. If you set `reloadOnConsentRevoked: false`, withdraw consent and confirm `pendo.isSendingEvents()` returns `false`, then grant again and confirm sending resumes without creating a new anonymous visitor. Test guide behavior in your own account.
 
-If the console shows `pendo: loader did not install the Pendo API`, check the
-API key and `scriptUrl`.
+If the console logs `pendo: loader did not install the Pendo API`, verify `apiKey` and `scriptUrl`.
 
-Sources: [installation](https://support.pendo.io/hc/en-us/articles/360031862272-Install-Pendo-on-a-single-page-web-application),
-[collection prevention](https://support.pendo.io/hc/en-us/articles/17541315915035-Data-collection-prevention-strategies),
-[event controls](https://web-sdk.pendo.io/public/events) and
-[cookies](https://web-sdk.pendo.io/cookies/).
+Sources: [installation](https://support.pendo.io/hc/en-us/articles/360031862272-Install-Pendo-on-a-single-page-web-application), [collection prevention](https://support.pendo.io/hc/en-us/articles/17541315915035-Data-collection-prevention-strategies), [event controls](https://web-sdk.pendo.io/public/events), and [cookies](https://web-sdk.pendo.io/cookies/).
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

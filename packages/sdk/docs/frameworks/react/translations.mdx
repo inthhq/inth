@@ -1,53 +1,42 @@
 ---
 title: Translations
-description: Where Inth banner and dialog copy comes from in a React app, how the browser picks the visitor's language, and how to override copy and switch languages with the provider's i18n option and hooks.
+description: Override banner and dialog copy in React and switch languages at runtime with i18n options and hooks.
 group: frameworks
 ---
 
+Customize Inth banner and dialog copy in a React app, override strings per language, and switch languages at runtime.
+
 ## Where the copy comes from
 
-The banner, dialog, widget and gate placeholder read their text from one set
-of translations for the visitor's language. Which set depends on the
-provider's `mode`:
+The banner, dialog, widget, and gate placeholder read from one translation set for the visitor's language, depending on the provider `mode`:
 
 | Mode | Copy comes from |
 | --- | --- |
-| `hosted()` | The backend's `/init` response for the visitor's language, from the translations in your Inth project, with your `i18n` messages for that language on top |
-| `testing()` | Your `i18n` messages, merged over bundled English |
+| `hosted()` | Your Inth project's `/v1/consent/init` response for the visitor's language, with your `i18n` messages merged on top |
+| `testing()` | Your `i18n` messages merged over bundled English |
 
-With a backend, edit wording in your Inth project first, so it changes without
-a deploy. Code can override that copy in two places:
+Edit wording in your Inth project first so copy changes ship without a deploy. Override copy in code in two places:
 
-- `i18n` in the `InthProvider` options changes a message everywhere it
-  appears.
-- Text props on `ConsentBanner` change one banner.
+- `i18n` in `InthProvider` options replaces a message everywhere it appears.
+- Text props on `ConsentBanner` replace copy on one banner.
 
-[Copy and translations](/docs/customization/translations) lists the message
-keys and explains how code messages combine with the project's copy.
+See [Copy and translations](/docs/customization/translations) for message keys and merge rules.
 
 ## How Inth picks the language
 
-In `hosted()` mode the browser's `/init` request carries its own
-`Accept-Language` header, and the backend answers with copy in that language.
-When your project has no copy for it, the backend returns its fallback
-language. Set `overrides.language` in the provider options to request a
-specific language instead.
+In `hosted()` mode, the browser sends its `Accept-Language` header to `/v1/consent/init` and Inth returns copy in that language, falling back to your project's default language when untranslated. Set `overrides.language` in provider options to request a specific language instead.
 
-In `testing()` mode, `i18n.locale` picks the language, `en` by default. The
-browser's language is not read.
+In `testing()` mode, `i18n.locale` sets the language (`en` by default) and the browser language is ignored.
 
-The banner, dialog and widget set `dir` from the active language. Right-to-left
-languages such as Arabic and Hebrew render with `dir="rtl"`. The banner stays
-in the same corner.
+The banner, dialog, and widget set `dir` from the active language. Right-to-left languages such as Arabic and Hebrew render with `dir="rtl"` while keeping the banner in the same corner.
 
 ## Change the copy in code
 
-Keep the messages in their own module:
+Define messages in a separate module:
 
 <include src="../../shared/examples/react/i18n.mdx" />
 
-Pass them to the provider in the file that renders it, such as
-`src/consent.tsx` from the [quickstart](/docs/frameworks/react/quickstart):
+Pass `i18n` to `InthProvider` in `src/consent.tsx` from the [quickstart](/docs/frameworks/react/quickstart):
 
 {/* example: fragment */}
 
@@ -55,20 +44,13 @@ Pass them to the provider in the file that renders it, such as
 <InthProvider options={{ mode, scripts, i18n }}>
 ```
 
-For the visitor's language, your messages replace the backend's copy key by
-key. Keys you leave out keep the project's wording, and messages for other
-languages are not applied. In `testing()` mode Inth bundles only English, so
-keys you leave out for another language show in English.
+For the active language, your messages replace project copy key by key while omitted keys keep your project wording. Messages for other languages are ignored. In `testing()` mode, Inth bundles only English, so omitted keys in other languages fall back to English.
 
-The provider reads `i18n` once, when it mounts. In development it logs a
-warning if `i18n` changes later. Define the object at module level, as above,
-rather than inside a component.
+The provider reads `i18n` once on mount and logs a development warning if it changes later. Define the object at module level rather than inside a component.
 
 ## Change one banner's copy
 
-`ConsentBanner` takes `title`, `description`, `acceptButtonText`,
-`rejectButtonText`, `customizeButtonText` and `dismissButtonText`. The props
-replace the text in every language, so pass values in the page's language:
+`ConsentBanner` accepts `title`, `description`, `acceptButtonText`, `rejectButtonText`, `customizeButtonText`, and `dismissButtonText`. These props override text in every language, so pass strings already translated for the current page:
 
 {/* example: fragment */}
 
@@ -81,29 +63,18 @@ replace the text in every language, so pass values in the page's language:
 
 ## Switch the language at runtime
 
-`useSetLanguage()` stores the new language, and `useInit()` resolves the policy
-again, which fetches the copy for that language. Call both from your language
-switcher:
+`useSetLanguage()` updates the active language and `useInit()` resolves the policy again to fetch translations for that language. Call both in your language switcher:
 
 <include src="../../shared/examples/react/language-switcher.mdx" />
 
-Setting the language without calling `init()` changes nothing on screen. Your
-`i18n` messages for the new language apply on top of the copy that arrives.
-Render the switcher anywhere inside `InthProvider`.
+Calling `setLanguage()` without `init()` leaves on-screen copy unchanged. Your `i18n` overrides for the new language apply on top of the fetched copy. Render the switcher inside `InthProvider`.
 
-Switching needs a backend. In `testing()` mode the copy stays in the
-`i18n.locale` language.
+Runtime switching requires an Inth project connection. In `testing()` mode, copy stays in `i18n.locale`.
 
-If your site changes language through its own i18n library, you can instead
-pass its locale as `overrides.language` in the provider options. When that
-value changes, the provider resolves the policy again in the new language.
+If your app already manages locale through an i18n library, pass its locale as `overrides.language` in `InthProvider` options instead; changing that value re-resolves the policy in the new language.
 
 ## Verify
 
-1. Set your browser language to one your project translates, clear site data
-   and reload under a policy that shows a banner. DevTools Network shows the
-   `/init` request with that `Accept-Language` header, and the banner uses
-   that language.
-2. Check that a message you set in `i18n` shows in the banner.
-3. Switch the language with your switcher. A new `/init` request runs, and the
-   banner and dialog text change without a reload.
+1. Set your browser language to a language translated in your Inth project, clear site data, and reload under a policy showing a banner. Confirm DevTools Network shows `/v1/consent/init` with that `Accept-Language` header and the banner renders in that language.
+2. Confirm any string overridden in `i18n` appears in the banner.
+3. Switch languages with your switcher and confirm a new `/v1/consent/init` request updates the banner and dialog without reloading.

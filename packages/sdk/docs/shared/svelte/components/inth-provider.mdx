@@ -1,13 +1,16 @@
-{/* Shared by the Svelte and SvelteKit InthProvider pages: the props both components take. */}
+{/* Shared by the Svelte InthProvider and SvelteKit InthProvider pages, after each page's mount section. */}
 
 ## Props
 
-Both `InthProvider` components, from `@inth/svelte` and `@inth/svelte/kit`,
-take these props. The `ConsentManagerOptions` type from `@inth/svelte` lists
-them. The props only one component takes follow the table.
+Pass each option as a top-level prop, or group them in `options`. When both
+set the same option, the top-level prop wins. The `ConsentManagerOptions` type
+from `@inth/svelte` lists every option. SvelteKit's `InthProvider` takes the
+same props, except that `state` replaces `mode` and `prefetch`.
 
 | Prop | Type | Default | Behavior |
 | --- | --- | --- | --- |
+| `mode` | `manifest()` or `hosted()` from `@inth/svelte`, or `testing()` from `@inth/svelte/testing` | `hosted()` | Where policies come from and where choices are saved. Read once; remount the provider to change it. SvelteKit's `InthProvider` builds it from `state`, or takes a `custom()` transport as `mode`. |
+| `prefetch` | `ConsentState` | none | Server-resolved state, such as the result of `resolveConsent`. With a resolved policy in it, the first render already knows whether to show the banner, and the browser skips its own policy request. SvelteKit's `InthProvider` passes it from `state`. Read once. |
 | `scripts` | `Script[]` | none | Vendor scripts that load when their category is allowed. Updates after mount: new scripts go to the loader. See [scripts](../scripts). |
 | `consentCategories` | `AllConsentNames[]` | the policy's categories | Categories the preference UI offers, within the policy's scope. Updates after mount. |
 | `theme` | `Theme` | none | Slot classes and `consentActions` button styles. Design tokens in it are not applied in the browser. Updates after mount. |
@@ -29,13 +32,58 @@ them. The props only one component takes follow the table.
 | `storageConfig` | `StorageConfig` | cookie and key `inth` | Names and lifetime of the stored choice. Read once. On SvelteKit, pass the same name as `cookieName` to the server helpers. |
 | `persistence` | `boolean` or options | `true` | `false` keeps choices in memory only. Read once. |
 | `clearOnRevocation` | `ClearOnRevocationConfig` | off | Deletes first-party cookies and storage entries when their category is withdrawn. Loads on demand. See [clearing data on revocation](../clear-on-revocation). Read once. |
-| `experimentalScriptRegistry` | `boolean` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. Read once. |
 | `vendors` | `Vendor[]` | none | Vendors offered for vendor-level consent outside IAB. See [vendor consent](../vendor-consent). Updates after mount: a new list replaces the declared vendors. |
 | `nonce` | `string` | none | Content Security Policy nonce for the `<script>` elements the script loader adds. See [Content Security Policy](../content-security-policy). Read when the loader starts. |
-| `enabled` | `boolean` | `true` | `false` grants every category, hides all consent UI and skips `/init`. Updates after mount: turning it off renders a separate permissive state and keeps the visitor's stored choice for when it is turned back on. |
+| `enabled` | `boolean` | `true` | `false` grants every category, hides all consent UI and skips `/v1/consent/init`. Updates after mount: turning it off renders a separate permissive state and keeps the visitor's stored choice for when it is turned back on. |
+| `runtime` | `ConsentRuntime` | none | A runtime you created with `createConsentRuntime()`. See [share one runtime](#share-one-runtime). |
+| `options` | `ConsentManagerOptions` | none | The same options as one object. |
+| `children` | `Snippet` | none | Your app. The provider renders no markup of its own. |
 
 "Read once" options are read when the provider is created. Changing them later
 has no effect until the provider remounts, and outside production a change to
 `mode`, `i18n` or `experiment` logs a warning. Options that update after mount
-are compared with their previous values, so a change that only touches
-`theme` sends no request.
+are compared with their previous values, so a new `options` object that only
+changes `theme` sends no request. Tests pass `testing({ policy })` from
+`@inth/svelte/testing` as `mode` to resolve a policy with no backend.
+
+## What the provider does when it mounts
+
+The provider creates the consent runtime while the component initializes, on
+the server and in the browser. Creating it has no side effects, so the server
+can render the banner from `prefetch`. In the browser, `onMount` starts the
+runtime:
+
+1. It reads the stored choice from the cookie and local storage.
+2. It starts the script loader, the iframe blocker and, if configured, the
+   network blocker and the IAB TCF add-on.
+3. It resolves the policy with its `mode`, unless `prefetch` already holds
+   one.
+
+When the provider unmounts, it stops all of them. Keep one provider at the root of the app, so it stays mounted across
+navigation and every component can reach it.
+
+With `networkBlocker`, matching requests are held from the moment the provider
+is created in the browser, before its children run their own code, until the
+blocker decides them.
+
+## Share one runtime
+
+Pass `runtime` when two component trees that cannot share Svelte context need
+the same consent state. Create it with `createConsentRuntime()` from
+`@inth/svelte`, pass it to each provider, and call `runtime.start()` and
+`runtime.dispose()` yourself. A provider never starts or disposes a runtime it
+did not create. Options that build the runtime, such as `mode`, `scripts` and
+`callbacks`, come from your `createConsentRuntime()` call; display options such
+as `theme` and `noStyle` still apply per provider.
+
+## Verify the provider
+
+Open the page in a private window with DevTools open:
+
+1. The banner appears once the policy resolves. `window.inth` in the console
+   shows `pkg: '@inth/svelte'`.
+2. The Network panel shows the request your mode makes: none for
+   `manifest()` with a bundled snapshot, one `/v1/consent/init` for `hosted()`, and
+   none when the page came with a server-resolved state.
+3. A component that calls `getConsentManager()` renders without the
+   `inth: no v3 consent context` error.

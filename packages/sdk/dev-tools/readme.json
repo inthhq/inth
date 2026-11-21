@@ -1,6 +1,6 @@
 {
 	"title": "@inth/sdk-dev-tools: Kernel-first consent debugging",
-	"description": "Framework-neutral developer tools for inspecting Inth v3 consent state, resolved policy, location, IAB state, kernel events, and actions.",
+	"description": "Framework-neutral developer tools for inspecting Inth consent state, resolved policy, location, IAB state, kernel events, and actions.",
 	"features": [
 		"Explicit ConsentKernel binding with no global store discovery",
 		"Isolated state and event history for multiple providers",
@@ -9,7 +9,7 @@
 	],
 	"prerequisites": [
 		"Node.js 20.19 or later",
-		"An Inth v3 ConsentKernel",
+		"An Inth ConsentKernel",
 		"A browser DOM"
 	],
 	"manualInstallation": [
@@ -24,7 +24,7 @@
 		"Use the framework adapter when the kernel is held in framework context",
 		"Load DevTools only during development"
 	],
-	"docsLink": "https://c15t.com/docs/frameworks/react/components/dev-tools",
-	"quickStartLink": "https://c15t.com/docs/frameworks/react/components/dev-tools",
+	"docsLink": "https://inth.com/docs/frameworks/react/components/dev-tools",
+	"quickStartLink": "https://inth.com/docs/frameworks/react/components/dev-tools",
 	"showCLIGeneration": false
 }

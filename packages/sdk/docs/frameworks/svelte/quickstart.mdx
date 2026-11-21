@@ -1,184 +1,87 @@
 ---
 title: Quickstart
-description: Add an Inth cookie banner, preference dialog and consent-gated scripts to a Svelte 5 app built with Vite, using Inth as the consent backend.
+description: Add a cookie consent banner to a Svelte 5 Vite app and hold back analytics until consent allows them.
 group: frameworks
 ---
 
-## Before you start
+Add a consent banner and preference dialog to a Svelte 5 Vite app. The browser resolves each visitor's policy from Inth, and analytics wait until consent allows them.
 
-This guide is for a Svelte 5.20 or later app without SvelteKit, such as a Vite
-single-page app. The browser resolves consent after the page loads, so the
-banner appears after the first paint. For a banner in the server HTML, use
-SvelteKit; [choose your setup](/docs/concepts/choose-your-setup) compares the
-options. The `examples/svelte` app in the Inth repository is the finished
-result.
+<Prompt title="Add Inth consent to this Svelte app" description="Paste into Claude Code, Codex, Cursor or another coding agent at the root of your app.">
+  Add Inth consent management to this Svelte 5 Vite app.
 
-The guide uses [Inth](https://inth.com) for policies and consent records.
-[Create an Inth project](https://inth.com/dashboard/sign-up?framework=svelte), then:
+  1. Check that the app uses Svelte 5.20 or later with Vite and without SvelteKit. If it uses SvelteKit, stop and tell me.
+  2. Install `@inth/svelte` and `@inth/integrations`. Read `node_modules/@inth/svelte/AGENTS.md`, then follow the Svelte quickstart it links to, in order. Do not guess the API from memory.
+  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
+  4. Add `consentManifest()` from `@inth/svelte/vite` to `plugins` in `vite.config.ts`. Add nothing to `.gitignore`: the plugin writes no files to the project.
+  5. In `src/App.svelte`, wrap the app in `InthProvider` with `mode={hosted()}` and move analytics and marketing scripts into `scripts` using helpers from `@inth/integrations`. Carry over vendor settings such as PostHog's `region` or `apiHost`, and remove old `<script>` tags or SDK imports. If a vendor has no helper, tell me.
+  6. Render `ConsentBanner`, `ConsentDialog`, and a `ConsentDialogLink` in the footer inside `InthProvider`.
+  7. Run `vite build` and `vite preview`. Check in a browser that no vendor request fires before consent, rejection survives a reload, and granting analytics from the footer loads the vendor.
 
-1. Set its policy rules, including the `measurement` category for the
-   vendor below.
-2. Add your app's origin, such as `http://localhost:5173`, to its trusted
-   origins.
-3. Copy the project's backend URL.
+  Then list the files you changed, any script still outside consent, and how you checked the requests.
+</Prompt>
 
-The guide uses `hosted()` mode. The browser asks your backend for each
-visitor's policy, and the backend reads the visitor's location from the
-request, so regional policies need no extra setup. Policy, translation and
-vendor edits reach visitors on their next page load, without a rebuild.
+## Prerequisites
 
-## Install
+- A Svelte 5.20+ app built with Vite. On SvelteKit or another framework? See [choose your setup](/docs/concepts/choose-your-setup) or the [framework list](/docs/frameworks).
+- An [Inth project](https://inth.com/dashboard/sign-up?framework=svelte) with your app's origin in its trusted origins.
+
+## Install the SDK
 
 <CommandTabs command="@inth/svelte @inth/integrations" mode="install" />
 
-`@inth/svelte` exports the Svelte components and consent modes. `@inth/integrations` holds the vendor helpers.
+Components inject their own styles on first render, so there is no stylesheet to import. On Tailwind CSS 3, [import the stylesheet yourself](/docs/customization/stylesheets#import-the-stylesheet-yourself) and pass `styles={false}`.
+
+## Set the project URL
+
+Add your Inth project URL, including any path prefix, to `.env` and your host's build settings:
+
+```sh title=".env"
+VITE_INTH_PROJECT_URL=https://example-inth.inth.app
+```
+
+The URL is public, not a secret. `https://example-inth.inth.app` is a demo project. Vite inlines this value at build time, so rebuild after changing it. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`, which is read as a fallback if unset.
 
 ## Add the Vite plugin
 
-Add `consentManifest` to the plugins in `vite.config.ts`:
+Add `consentManifest()` to `plugins` in `vite.config.ts`:
 
 <include src="../../shared/examples/svelte/vite-config.mdx" />
 
-Set `VITE_INTH_PROJECT_URL` to your project's backend URL, including any path
-prefix, in `.env` or your build environment:
-
-```sh title=".env"
-VITE_INTH_PROJECT_URL=https://your-project.inth.app
-```
-
-The c15t name `VITE_C15T_BACKEND_URL` still works as a fallback. When both are
-set, `VITE_INTH_PROJECT_URL` wins.
-
-`consentManifest` hands the backend URL to `InthProvider`. No file is
-written into your project. Without the plugin, pass the URL as the
-provider's `projectUrl` prop.
-
-The plugin also adds a small script to `index.html` that sends `/init` while
-your JavaScript downloads, so the banner shows sooner.
-[Send `/init` early](#send-init-early) covers when to turn it off.
+`consentManifest` passes the project URL to `InthProvider` and adds a small script to `index.html` that starts `/v1/consent/init` while your JavaScript downloads. Without the plugin, pass `projectUrl` directly to `InthProvider`.
 
 ## Mount the provider
 
-Render `InthProvider` around your app in `src/App.svelte`, with the
-vendor scripts Inth should load:
+Wrap your app in `InthProvider` in `src/App.svelte` and register your vendor scripts:
 
 <include src="../../shared/examples/svelte/app.mdx" />
 
-The `<main>` element stands in for your app's content. `hosted()` from
-`@inth/svelte` makes one `/init` request to `VITE_INTH_PROJECT_URL`, started
-early by the script in `index.html`. The backend picks the policy from the
-visitor's location and language and returns its current version. Consent choices go to the same
-backend. Vite writes the variable into the bundle at build time, so changing
-it means a rebuild.
+Replace `phc_your_project_key` with your key, or pick another [integration](/docs/integrations/overview). Keep `cookieless_mode: 'never'`, or PostHog falls back to cookieless capture after a rejection. Remove any existing PostHog `<script>` tags or SDK imports so PostHog loads only through Inth.
 
-PostHog waits for measurement permission. Replace `phc_your_project_key`
-with your PostHog project key. Remove any `<script>` tags or SDK imports that
-already load PostHog, so Inth is the only thing that loads it.
+Keep `InthProvider` at the root of your app. `ConsentDialog` loads lazily in its own chunk, and `ConsentDialogLink` lets visitors reopen preferences from the footer.
 
-The provider starts consent when it mounts and stops it when it unmounts, so
-keep it at the root of the app.
+## Check it works
 
-`ConsentBanner` shows the banner when the visitor's policy asks for one.
-`ConsentDialog` is the preference dialog; it loads in its own chunk after the
-page, before anyone opens it. `ConsentDialogLink` is the persistent way back to
-preferences. Put it where visitors look for privacy settings, such as the
-footer.
+Run `vite build` and `vite preview`, then open the app in a private window with DevTools open on the Network panel.
 
-There is no stylesheet to import. Each component adds the rules it uses to
-`<head>` when it first renders: the banner its own rules and the theme
-tokens, the trigger and `ConsentGate` theirs. They load in small chunks of
-their own, and the components stay hidden until they arrive. A server-rendered
-SvelteKit page has the banner's rules in its HTML already, so the browser loads
-nothing more. With Tailwind CSS 3, import
-`@inth/svelte/styles.css` yourself and pass `styles={false}` to the provider;
-see [stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself).
+1. Under an opt-in policy, one `/v1/consent/init` request goes to Inth, the banner appears, and no PostHog request fires.
+2. Click **Reject All**, then reload. The banner stays closed and PostHog does not load.
+3. Open **Privacy settings** in the footer, turn on **Analytics**, and click **Save Settings**. PostHog loads.
+4. Open **Privacy settings** again, turn **Analytics** off, and click **Save Settings**. The page reloads and PostHog does not load.
 
-## Verify consent
+Inspect requests in the Network panel to confirm blocking; a visible banner alone proves nothing. If no banner appears, inspect `/v1/consent/init` and see [Svelte troubleshooting](/docs/frameworks/svelte/troubleshooting). [Verify consent](/docs/guides/verify-consent) has the full checklist.
 
-Build and preview the production bundle with `vite build` and `vite preview`,
-then open the app in a private window with DevTools open on the Network tab:
+## Use another setup
 
-1. One `/init` request goes to your backend URL, starting before your
-   JavaScript finishes downloading, and the banner appears. No requests go to
-   PostHog yet.
-2. Select **Reject All**. Reload. The banner stays closed and PostHog requests
-   stay absent.
-3. Select **Privacy settings**, turn on **Analytics** (the `measurement`
-   category) and save. PostHog loads.
-4. Turn it off and save. The page reloads and PostHog does not load.
+| Your setup | Option |
+| --- | --- |
+| Tests without a backend | Pass `mode={testing()}` from `@inth/svelte/testing`; see [testing mode](/docs/concepts/modes#testing) |
+| Bundled policy at build time | Pass `mode={manifest()}` when location rules do not vary or your page supplies `inputs`; see [consent modes](/docs/concepts/modes) |
+| Custom `fetch`, `headers`, or `projectUrl` on `hosted()` | Pass `initPrefetch: false` to `consentManifest()` to prevent a duplicate `/v1/consent/init` |
+| Banner in server HTML | Use SvelteKit; see [choose your setup](/docs/concepts/choose-your-setup) |
 
-If the banner does not appear, check the `/init` request, then see
-[troubleshooting](/docs/frameworks/svelte/troubleshooting).
-[Verify consent](/docs/guides/verify-consent) has the release checklist.
+## Next steps
 
-## Send `/init` early
-
-<include src="../../shared/vite-init-prefetch.mdx" />
-
-## Other setups
-
-**Tests** pass `testing()` from `@inth/svelte/testing` as the mode. It resolves a policy
-in the browser with no backend and needs no `projectUrl`. It throws in
-production builds. With no arguments it uses the recommended rules; pass
-`testing({ policy })` to test your own.
-
-{/* example: fragment */}
-
-```svelte
-import { testing } from '@inth/svelte/testing';
-
-<InthProvider mode={testing()}>
-```
-
-[Consent modes](/docs/concepts/modes#testing) lists what each country
-shows.
-
-**A bundled policy** with `manifest()` saves the `/init` request in a few
-cases; see [bundle the policy at build time](#bundle-the-policy-at-build-time).
-
-**Astro** can render these Svelte components as islands. Its integration uses
-Svelte for the dialog by default. Pick the Astro row in
-[choose your setup](/docs/concepts/choose-your-setup).
-
-Next, [customize](/docs/frameworks/svelte/customize) the banner or read
-consent in your own components with [context getters](/docs/frameworks/svelte/getters).
-
-## Bundle the policy at build time
-
-`manifest()` resolves the policy in the browser from a snapshot
-`consentManifest` downloads during `vite build`. It saves the `/init` request
-only in these cases:
-
-- The policy has no location rules, or every location gets the same banner.
-- The page already knows the visitor's location, for example from an edge
-  worker, and passes it as `manifest({ inputs: { country, region } })`.
-- You run a same-origin route that returns the location and set it as
-  `geoUrl`.
-
-Otherwise the browser still calls `/init` on a first visit and uses the
-backend's answer, so the bundle adds bytes without saving a request.
-`consentManifest` warns during the build when that happens. The resolver adds
-about 3 KB gzipped, loaded as its own chunk, and the backend doesn't count
-visitors the browser resolves this way. Swap the mode in `src/App.svelte`:
-
-{/* example: fragment */}
-
-```svelte title="src/App.svelte (partial)"
-<script lang="ts">
-	import { InthProvider, manifest } from '@inth/svelte';
-</script>
-
-<InthProvider mode={manifest()} {scripts}>
-```
-
-The bundle carries the policy and English copy. A visitor who resolves to
-another language loads that language's copy the first time it is needed.
-
-<include src="../../shared/build-time-manifest-notes.mdx" />
-
-<include src="../../shared/vite-build-manifest.mdx" />
-
-`manifest({ source: 'runtime' })` fetches the manifest from the backend when
-the page loads, so policy edits apply without a rebuild.
-`manifest({ manifestUrl })` fetches it from another URL, such as a CDN,
-instead of using the build's snapshot.
+- [Scripts](/docs/frameworks/svelte/scripts): add more vendors and control revocation.
+- [Customize](/docs/frameworks/svelte/customize): change tokens, slot styles, layout, and copy.
+- [Context getters](/docs/frameworks/svelte/getters): read permissions and open dialogs from components.
+- [Runnable Svelte example](/docs/examples): run this quickstart as a complete app.

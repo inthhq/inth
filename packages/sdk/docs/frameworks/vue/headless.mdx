@@ -1,69 +1,67 @@
 ---
 title: Headless
-description: Build your own consent banner and preference form in a Vue app with the Inth composables instead of InthProvider.
+description: Build a custom consent banner and preference form in Vue with Inth composables instead of InthProvider.
 group: frameworks
 ---
 
+Replace Inth's stock banner and dialog with your own Vue components while
+keeping policy resolution, script gating, and consent storage.
+
 ## When to go headless
 
-Tokens, `presentation` and `components` slots change most designs without
-new markup. See [customize](/docs/frameworks/vue/customize) first. Go
-headless when the consent UI has to be your own markup, such as a design
-system component.
+Check [customize](/docs/frameworks/vue/customize) first if you only need
+different colors, layout, or classes. Go headless when the consent UI must use
+your own markup or design system components.
 
-Headless changes only the UI. The Vue plugin still resolves the policy,
-stores choices, loads your `scripts` and gates iframes.
+Headless replaces only the UI. `inth` still resolves policies, stores
+choices, loads `scripts`, and gates iframes.
 
 ## Install the plugin as usual
 
-Install `inth` exactly as in the [quickstart](/docs/frameworks/vue/quickstart),
-with the Vite plugin and your `scripts`:
+Install `inth` with `consentManifest()` and your `scripts`, just like the
+[quickstart](/docs/frameworks/vue/quickstart):
 
 <include src="../../shared/examples/vue/headless-main.mdx" />
 
 ## Write the consent UI
 
-This component shows a banner while `activeUI` is `'banner'` and a preference
-form while it is `'manager'`:
+Render a banner while `activeUI` is `'banner'` and a preference form while it
+is `'manager'`:
 
 <include src="../../shared/examples/vue/headless-prompt.mdx" />
 
-`useConsentSave()` records Accept all or Reject all. Recording a choice
-satisfies the prompt, so Inth sets `activeUI` to `null` and the banner closes.
-`useConsentDraft()` holds the preference form. `displayedCategories` lists the
-categories the policy lets the visitor choose, `values` holds each switch, and
-`save()` records them. Preferences stay open after a save, so close them
-yourself. [Composables](/docs/frameworks/vue/composables#build-a-preference-form)
-lists every field of the draft.
+`useConsentSave()` records Accept All or Reject All and closes the banner by
+setting `activeUI` to `null`. `useConsentDraft()` holds preference switches in
+`values`, lists selectable categories in `displayedCategories`, and records
+them on `save()`. Close preferences yourself after `save()` resolves. See
+[build a preference form](/docs/frameworks/vue/composables#build-a-preference-form)
+for every draft property.
 
-Add focus handling, a close control and styles before you ship this. The
-component keeps the bare markup so the consent logic is easy to read.
+Add focus trapping, a close button, and styles before shipping.
 
 ## Mount it instead of InthProvider
 
-Render your component where `InthProvider` would go, and keep a way to reopen
-preferences:
+Render your component where `InthProvider` would go and keep a button that sets
+`activeUI` to `'manager'` so visitors can reopen preferences:
 
 <include src="../../shared/examples/vue/headless-app.mdx" />
 
-Setting `activeUI` to `'manager'` opens your preference form. Do not render
-`InthProvider` as well, or the visitor sees two banners.
+Do not render `InthProvider` alongside your custom component, or visitors see
+two banners.
 
 ## Show the buttons the policy requires
 
-A policy can require buttons and forbid others. For a notice, it requires a
-dismiss action instead of Accept and Reject. Read the resolved actions with
-`useConsentPolicyActions('prompt')` and render `primaryActions` and
-`actionGroups` from it, rather than hard-coding the buttons. Call
-`useDismissNotice()` for a notice's dismiss action. Dismissing records an
-acknowledgement, not consent.
+Policies vary in which buttons they require or forbid. A notice prompt, for
+example, requires a dismiss action instead of Accept and Reject. Read
+`primaryActions` and `actionGroups` from `useConsentPolicyActions('prompt')`
+instead of hard-coding buttons, and call `useDismissNotice()` to dismiss a
+notice (recording an acknowledgement, not consent).
 
-`usePromptRequirement()` tells you whether the policy asks for a choice, a
-notice or nothing.
+Use `usePromptRequirement()` to check whether the policy requires a `'choice'`,
+a `'notice'`, or `'none'`.
 
 ## Verify the custom UI
 
-Run through [verify consent](/docs/guides/verify-consent) with your
-component. Check that Reject all is as easy to reach as Accept all, that the
-preference form lists the policy's categories, and that a rejection survives a
-reload.
+Run through [verify consent](/docs/guides/verify-consent). Confirm Reject All
+is as easy to reach as Accept All, preferences list the policy's categories,
+and rejections persist across reloads.

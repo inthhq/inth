@@ -1,177 +1,64 @@
 ---
 title: Expo Observe
-description: Gate Expo Observe (EAS Observe) in Expo apps with Inth. Observe records on the device from native launch, so Inth can only turn its sending on and off.
+description: Gate Expo Observe telemetry dispatching on measurement consent in Expo apps with Inth.
 seoTitle: Expo Observe consent in Expo apps with Inth
-seoDescription: Hold back Expo Observe launch metrics, events and crash reports until measurement consent. Covers what Observe sends, when it starts and its limits.
+seoDescription: Hold back Expo Observe launch metrics, events, and crash reports until measurement consent with Inth, including startup and recording limits.
 group: integrations
 ---
 
-[Expo Observe](https://docs.expo.dev/eas/observe/introduction/), formerly EAS
-Observe, measures app startup and records events and crash reports on your
-users' devices. The `expo-observe` package has no consent API and no way to
-turn recording off. It does have a persisted switch that stops sending:
-`Observe.configure({ dispatchingEnabled })`. This page connects that switch to
-Inth's `measurement` category.
+[Expo Observe](https://docs.expo.dev/eas/observe/introduction/), formerly EAS Observe, records startup metrics, events, and crash reports from native app launch. `expo-observe` has no consent API and no way to turn local recording off, but it persists a send switch via `Observe.configure({ dispatchingEnabled })`. This guide wires that switch to Inth's `measurement` category so Inth controls whether queued data leaves the device.
 
-Recording on the device starts before React Native loads and keeps going
-whatever you pass to `configure`. Inth decides whether Observe's queue leaves
-the device. It cannot stop Observe from writing that queue.
+## What Observe collects and when it sends
 
-## What Observe collects and sends
+With `expo-observe` installed and your root component wrapped in `ObserveRoot.wrap`, Observe automatically records cold and warm launches, bundle load, time to first render, time to interactive via `markInteractive()` (with frame, thermal, battery, and launch-network summaries), unhandled JS errors (SDK 57+), native crashes, and EAS Update download timings. Your code can add more via `Observe.logEvent`, `Observe.reportError`, `ObserveErrorBoundary`, spans, navigation integrations, and `networkTraces`.
 
-With `expo-observe` installed and your root component wrapped in
-`ObserveRoot.wrap`, Observe records these without further calls:
+Every event includes app, release, device, and route context plus a persisted random install ID (`expo.eas_client.id`). Expo states Observe collects no PII, and its iOS privacy manifest declares crash, performance, diagnostic, device ID, and product interaction data as not linked to the user or used for tracking. Confirm with privacy counsel whether this data needs consent in your markets.
 
-- Cold launch, warm launch, bundle load and time to first render.
-- Time to interactive, when your code calls `markInteractive()`.
-- Frame, thermal, battery and network details on each time-to-interactive
-  event, plus a summary of the network requests made during launch.
-- Unhandled JavaScript errors (SDK 57 and later) and native crash reports.
-- EAS Update download timings, for apps that use EAS Update.
+Observe sends OTLP payloads to `https://o.expo.dev/<project id>` (or `extra.eas.observe.endpointUrl`) when `extra.eas.projectId` is set. Debug builds send only when `dispatchInDebug` is `true`.
 
-Your code adds more through `Observe.logEvent`, `Observe.reportError`,
-`ObserveErrorBoundary`, spans, the navigation integrations and the
-`networkTraces` option.
-
-Every event carries app, release, device and route context and the EAS
-client ID (`expo.eas_client.id`). That ID is a random identifier for the
-installation. Observe stores it in native preferences, and it stays the same
-across launches and app updates. Expo's documentation says Observe collects no
-personally identifiable information. The iOS privacy manifest in
-`expo-observe` declares crash data, performance data, other diagnostic data,
-a device ID and product interaction, all marked as not linked to the user and
-not used for tracking. Whether that data needs consent where your app ships is
-a question for your privacy counsel. Inth can't answer it for you.
-
-Observe sends its data over OTLP to `https://o.expo.dev/<project id>`, or to
-the `extra.eas.observe.endpointUrl` in your app config. It needs
-`extra.eas.projectId` to send. Debug builds send only when
-`dispatchInDebug` is `true`.
-
-## When Observe starts
-
-`expo-observe` has no config plugin. Expo autolinking adds its native modules
-and app delegate hooks to every development and production build. On iOS,
-recording starts when the app delegate begins initializing, before the
-JavaScript bundle loads. Android records from its application and activity
-lifecycle hooks. Observe writes everything to a local database and sends the
-queue at these points:
+Because Expo autolinking hooks into native startup before JavaScript loads, Observe writes events to a local database and flushes them at these points:
 
 | Platform | Observe sends the queue when |
 | --- | --- |
 | iOS | The app resigns active or is about to terminate |
-| Android | An activity goes to the background. A WorkManager job sends once the device is online |
+| Android | An activity backgrounds and a WorkManager job runs online |
 | Both | Your code calls `Observe.dispatchEvents()` |
 
-At each send, Observe reads the configuration that the last `configure` call
-saved. With `dispatchingEnabled: false`, it marks pending metrics and logs as
-sent and deletes pending spans, without sending them. The saved value applies
-to later launches until the next `configure` call. An install that has never
-called `configure` sends.
-
-Observe has no setting in the app config or the native project that starts a
-build with sending off. It also has no API that delays recording until later.
+At each send, Observe checks the last saved `configure` state. With `dispatchingEnabled: false`, it marks pending metrics and logs as sent and deletes pending spans without transmitting them. A fresh install that has never called `configure` defaults to sending, and Observe has no build-time setting to start with sending disabled.
 
 ## Choose the category
 
-Use `measurement`, the Inth category for analytics and performance
-measurement. `dispatchingEnabled` covers metrics, events, spans and errors
-together. If your legal review lets crash reports run without consent, SDK 58
-can send them alone: keep `dispatchingEnabled: true` and pass `sampleRate: 0`
-with `errorSampleRate: 1` while measurement is denied. Observe then sends only
-JavaScript errors and crash reports. SDK 57 and earlier have no
-`errorSampleRate`, and `sampleRate` covers errors too, so there you can only
-gate everything together.
+Use `measurement`. `dispatchingEnabled` controls metrics, events, spans, and errors together. On SDK 58+, if your legal review allows crash reports without consent, keep `dispatchingEnabled: true` and pass `sampleRate: 0` with `errorSampleRate: 1` while `measurement` is denied. SDK 57 and earlier lack `errorSampleRate`, so all telemetry must be gated together.
 
 ## Gate sending with Inth
 
-Complete the [Expo setup](/docs/frameworks/react-native/expo) and include
-`measurement` in your Inth policy and the plugin's `consentCategories`. Then
-follow Expo's setup for `expo-observe`. Create this component:
+Complete the [Expo setup](/docs/frameworks/react-native/expo), include `measurement` in your Inth policy and plugin `consentCategories`, and install `expo-observe`. Then create this component:
 
 <include src="../shared/examples/expo/expo-observe-consent.mdx" />
 
-Render `<ObserveConsent />` once, inside `InthProvider`, in the root
-component you wrap with `ObserveRoot.wrap`. For Expo Router, that is the
-root `_layout.tsx`. Keep it mounted for the life of the app.
+Render `<ObserveConsent />` once inside `InthProvider` in the root component wrapped by `ObserveRoot.wrap` (such as Expo Router's root `_layout.tsx`) and keep it mounted for the app lifetime.
 
-`useConsentDecision('measurement')` is `pending` until the native engine has
-read stored consent and resolved the policy. While it is `pending`, a
-returning user keeps the value the previous launch saved, so they do not lose
-that launch's metrics even when the policy cannot load. A new user, for whom
-`useInthBootstrap().hasStoredSnapshot` is `false`, has no grant to keep, so
-the component turns sending off until they decide, even if the policy never
-loads. The same happens when the decision goes back to `pending` later in the
-session, for example after `reset()`, because the earlier grant no longer
-holds. Under an opt-in policy the decision is `denied` until someone grants
-measurement, and after a refusal; Observe then discards its queue at the next
-send. When the decision changes, the
-effect saves the new value after React renders, usually well before Observe's
-next send; see the withdrawal race below.
+While `useConsentDecision('measurement')` is `pending`, a returning user (`useInthBootstrap().hasStoredSnapshot === true`) keeps their previous saved state so launch metrics are not lost, while a new user (`hasStoredSnapshot === false`) or a post-`reset()` session turns sending off until a decision arrives. Under an opt-in policy, `denied` persists `dispatchingEnabled: false` so Observe drops its queue on the next send.
 
-`Observe.configure` replaces the whole configuration on every call. Fields you
-leave out go back to their defaults, which include `sampleRate` and
-`integrations`, plus `errorSampleRate`, `networkTraces` and
-`errorHandlingEnabled` on SDK 58.
-Remove any other `configure` call from your app and move its options into
-`observeConfig`.
-
-On SDK 55, `expo-observe` 0.2.x has a default export only. Import it with
-`import Observe from 'expo-observe'` and type the options with its `Config`
-type. `dispatchingEnabled` works the same way.
+`Observe.configure` replaces the entire configuration on every call, resetting omitted fields (`sampleRate`, `integrations`, and SDK 58's `errorSampleRate`, `networkTraces`, and `errorHandlingEnabled`) to their defaults. Remove other `configure` calls and put all options in `observeConfig`. On SDK 55 (`expo-observe` 0.2.x), use `import Observe from 'expo-observe'` and the `Config` type.
 
 ## What the gate does not cover
 
-**The first launch.** Before JavaScript runs `ObserveConsent`, Observe uses
-its default and sends. If someone opens the app for the first time and moves
-it to the background before React mounts, Observe sends what it has recorded
-so far. Later launches use the value the previous launch saved.
+- **First launch.** If a new user backgrounds the app before React mounts `<ObserveConsent />`, Observe uses its default and sends recorded startup data.
+- **Data recorded before a grant.** Observe records locally while sending is off and discards only on a send attempt. Granting `measurement` before any send attempt flushes the earlier startup queue.
+- **Withdrawal race.** Because the React effect runs after render while Observe sends natively on background, backgrounding immediately after withdrawal can still send under the previous saved value.
+- **Local recording.** Observe always writes metrics, events, and crashes to the device database.
 
-**Data recorded before a grant.** Observe keeps recording while sending is
-off and discards the queue only at a send attempt. If someone grants
-measurement before Observe has tried to send, the queue goes out with the
-grant. That queue can include the startup metrics of the launch that showed
-the consent prompt.
-
-**A withdrawal right before the app leaves the screen.** The effect runs
-after React renders, and Observe sends from native code when the app goes to
-the background. If someone withdraws measurement and the app goes to the
-background before the effect has run, Observe can still send with the earlier
-saved value.
-
-**Recording itself.** Observe writes metrics, events and crash reports to the
-device whatever the consent state. Inth cannot change that.
-
-If your app cannot accept these gaps, you have three honest options:
-
-1. Leave `expo-observe` out of builds for the markets where you have no legal
-   basis to run it before consent.
-2. Ship it ungated where your legal basis covers performance and crash
-   monitoring without consent. Say so in your privacy policy.
-3. Ask Expo for a build-time setting that starts with sending off, or for a
-   way to turn recording off, in the
-   [Expo repository](https://github.com/expo/expo/issues).
+If your app cannot accept these gaps, omit `expo-observe` from builds in markets requiring pre-consent gating, ship it ungated with privacy-policy disclosure where legally permitted, or request a build-time off switch in the [Expo repository](https://github.com/expo/expo/issues).
 
 ## Check the gate
 
-Test a release build, or set `dispatchInDebug: true` in `observeConfig` for
-a development build. Watch requests to `o.expo.dev`, or your custom
-endpoint, with a proxy such as Proxyman or Charles.
+Test a release build, or set `dispatchInDebug: true` in `observeConfig` for a dev build, and inspect requests to `o.expo.dev` with Proxyman or Charles:
 
-1. Install fresh and wait for the consent prompt before you background the
-   app. Background it without choosing. No request should go to
-   `/v1/metrics`, `/v1/logs` or `/v1/traces`.
-2. Reject all and background the app. Observe should send nothing.
-3. Grant measurement and background the app. Requests to `/v1/metrics` and
-   `/v1/logs` should follow.
-4. Withdraw measurement, use the app and background it. Observe should send
-   nothing.
-5. Relaunch after a refusal and background the app before you open privacy
-   settings. Observe should send nothing.
+1. Fresh install, wait for the consent prompt, then background without choosing. Confirm no requests go to `/v1/metrics`, `/v1/logs`, or `/v1/traces`.
+2. Reject all and background. Confirm nothing sends.
+3. Grant `measurement` and background. Confirm `/v1/metrics` and `/v1/logs` requests fire.
+4. Withdraw `measurement`, use the app, and background. Confirm nothing sends.
+5. Relaunch after refusal and background before opening privacy settings. Confirm nothing sends.
 
-The component is type-checked against `expo-observe` 58.0.19 in this
-repository. The behavior above comes from the source of `expo-observe` 58.0.19
-and `expo-app-metrics` 58.0.15.
-SDK 56 and 57 packages ship the same `dispatchingEnabled` option. This page
-has not been checked against a real device's network traffic. Run the steps
-above with the versions you ship.
+Type-checked against `expo-observe` `58.0.19` and `expo-app-metrics` `58.0.15` (SDK 56 and 57 ship the same `dispatchingEnabled` option). Verify network traffic on real devices with your shipped versions.

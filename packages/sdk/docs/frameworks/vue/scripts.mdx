@@ -1,97 +1,93 @@
 ---
 title: Scripts
-description: Load vendor scripts by consent category in a Vue app with the Inth Vue plugin, and what happens when a visitor withdraws consent.
+description: Load vendor scripts by consent category in Vue with inth and control revocation reloads and analytics events.
 group: frameworks
 ---
 
+Register analytics and marketing scripts with `inth` so Inth loads them
+only when their consent category is allowed.
+
 ## Register vendor scripts
 
-A banner does not stop a script you load with a `<script>` tag in
-`index.html` or a vendor SDK you initialize yourself. Remove those loaders and
-register the vendor with Inth instead, so Inth loads it only while its
-category is allowed.
-
-Pass the helpers from `@inth/integrations` to the plugin as `scripts`:
+A consent banner does not stop `<script>` tags in `index.html` or vendor SDKs
+you initialize directly. Remove those loaders and pass helpers from
+`@inth/integrations` to `inth` via `scripts`:
 
 <include src="../../shared/examples/vue/main.mdx" />
 
-The plugin starts one script loader when the app mounts, after it has applied
-the visitor's stored choice and privacy signals. Do not also call
-`createScriptLoader` from a component. A component's `onMounted` runs before
-the plugin has read the stored choice, and each script would load twice.
+The plugin starts one script loader on mount after reading stored choices and
+privacy signals. Do not call `createScriptLoader` in a component; `onMounted`
+runs before stored choices apply and loads each script twice.
 
-Every vendor guide under [integrations](/docs/integrations/overview) gives the
-helper and options for that vendor.
+See [integrations](/docs/integrations/overview) for every vendor helper and
+its options.
 
 ## Register scripts from a component
 
-The plugin's `scripts` option covers scripts known when the app starts. For
-one a component decides at runtime, such as a tenant's tag or a script one
-route needs, call `useScriptLoader()`. It adds the scripts to the app's one
-loader, so they never load twice, and removes them when the component
-unmounts. Pass a ref or getter and a change reconciles.
+For scripts decided at runtime, such as a tenant tag or a route-specific
+script, call `useScriptLoader()`. It registers scripts with the app's single
+loader, prevents duplicates, and cleans them up on unmount. Passing a ref or
+getter reconciles updates automatically.
 
 <include src="../../shared/examples/vue/script-loader.mdx" />
 
-The returned handle has `updateScripts(next)` to swap them and `dispose()` to
-remove them before the component unmounts. Withdrawing consent reloads the
-page as it does for configured scripts.
+The returned handle exposes `updateScripts(next)` to replace scripts and
+`dispose()` to remove them early. Revoking consent reloads the page just like
+plugin-level scripts.
 
 ## Embeds and other requests
 
-Scripts cover vendor code Inth loads for you. For the rest:
+`scripts` covers code Inth loads for you. For other third-party requests:
 
-- [Embeds](/docs/frameworks/vue/embeds) gates iframes with `ConsentGate` or
+- [Embeds](/docs/frameworks/vue/embeds): gate iframes with `ConsentGate` or
   the iframe blocker.
-- [Network blocker](/docs/frameworks/vue/network-blocker) holds `fetch` and
-  XHR calls that match a rule until their category is allowed.
+- [Network blocker](/docs/frameworks/vue/network-blocker): hold matching
+  `fetch` and XHR calls until their category is allowed.
 
 ## When a visitor withdraws consent
 
-Removing a script tag cannot stop code that already ran. When a save turns off
-a category or vendor that was allowed, Inth reloads the page so the new
-document starts with only permitted code. Set `reloadOnConsentRevoked: false`
-to handle revocation yourself, or use the
-[`onBeforeConsentRevocationReload` callback](/docs/frameworks/vue/callbacks#before-a-revocation-reload)
-to run code before the reload.
+Removing a `<script>` tag cannot stop JavaScript already running in memory.
+When a save withdraws a granted category or vendor, Inth reloads the page so
+only permitted code executes. Set `reloadOnConsentRevoked: false` to handle
+revocation yourself, or register
+[`onBeforeConsentRevocationReload`](/docs/frameworks/vue/callbacks#before-a-revocation-reload)
+to run cleanup before the reload.
 
-`clearOnRevocation` deletes first-party cookies and storage keys that belong to
-a category when it is withdrawn. See
+Use `clearOnRevocation` to delete first-party cookies and storage keys when a
+category is denied. See
 [clear on revocation](/docs/frameworks/vue/clear-on-revocation).
 
 ## Let visitors turn off one vendor
 
-Optional: a visitor can allow marketing and still switch off one vendor in it.
-Skip this unless your site needs per-vendor choices. Declare
-the vendors in the `vendors` option; helpers from `@inth/integrations` already carry
-their vendor slug. See [vendor consent](/docs/frameworks/vue/vendor-consent).
+To let visitors allow a category while switching off individual vendors inside
+it, declare them in `vendors`. Built-in `@inth/integrations` helpers already
+include their vendor slug. See
+[vendor consent](/docs/frameworks/vue/vendor-consent).
 
 ## Content Security Policy
 
-Allow each vendor's script host in `script-src`. The plugin's `nonce` option
-adds a nonce to every script the loader creates. See
+Allow each vendor's script host in `script-src`, or pass `nonce` to `inth`
+to attach a nonce to every loaded script. See
 [Content Security Policy](/docs/frameworks/vue/content-security-policy).
 
 ## Send your own analytics events
 
-`useEventDispatcher()` from `@inth/vue/vue-plugin` returns the app's event dispatcher. It
-sends to the `scripts` in your Inth config and checks consent when an event
-goes out. Call it in `setup` and send a pageview each time the route changes:
+`useEventDispatcher()` from `@inth/vue/vue-plugin` dispatches events to the
+`scripts` in your config and checks consent before sending. Call it in `setup`
+to track route changes:
 
 <include src="../../shared/examples/vue/analytics-events.mdx" />
 
-Call `events.track('sign_up', { method: 'email' })` from an event handler for
-your own events. `track` sends to every registered script with an event API and drops the
-event while measurement is denied. `pageview` sends only to the integrations
-named in `pageviews`, and the first call records the path without sending.
-Every dispatcher shares one pageview history for the provider's lifetime.
-See [send events only to allowed integrations](/docs/integrations/overview#send-events-only-to-allowed-integrations)
-for the supported vendors.
+Call `events.track('sign_up', { method: 'email' })` from event handlers.
+`track` forwards to every registered script with an event API and drops events
+while measurement is denied. `pageview` targets only the integrations listed
+in `pageviews`, records the initial path without sending, and shares pageview
+history across dispatchers for the runtime's lifetime. See
+[send events only to allowed integrations](/docs/integrations/overview#send-events-only-to-allowed-integrations).
 
 ## Verify gating
 
-In a private window, open the Network tab and load the app under a policy that
-asks for consent. Requests to your vendors are absent.
-Allow one category and save, and only that category's vendors load. Withdraw
-it, and the page reloads without loading the vendor again.
-[Verify consent](/docs/guides/verify-consent) has the full checklist.
+Open the app in a private window with the Network tab open under an opt-in
+policy. Confirm vendor requests stay absent, allow one category and confirm
+only its vendors load, then withdraw it and confirm the page reloads without
+the vendor. See [verify consent](/docs/guides/verify-consent).

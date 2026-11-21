@@ -1,6 +1,6 @@
 ---
 title: IABConsentBanner
-description: Render the IAB TCF 2.4 banner as server HTML on an Astro site with Inth, with the purposes, partner count and actions TCF requires, its props, accessibility and styling attributes.
+description: Render the IAB TCF 2.4 banner as server HTML on an Astro site with Inth, covering purposes, partner counts, and styling.
 group: frameworks
 ---
 
@@ -39,7 +39,7 @@ The banner needs a resolved IAB policy and a vendor list, because every line
 of its copy counts from the list.
 
 - With server output, `manifest()` and `hosted()` get the vendor list through
-  `/init`, and the banner is part of the first HTML.
+  `/v1/consent/init`, and the banner is part of the first HTML.
 - In `testing()` mode, set `iab.gvl` or `iab.gvlUrl`, or the server has no
   list to render from.
 - On a prerendered page, or while the list has not arrived, the server renders

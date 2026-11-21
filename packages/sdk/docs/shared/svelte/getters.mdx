@@ -67,7 +67,7 @@ explains the difference.
 | `location` | The country and region the policy resolved for. |
 | `overrides` | The forced country, region, language or GPC value, if any. |
 | `consentCategories`, `consentTypes` | The categories the preference UI offers, as names and as full definitions. |
-| `copy`, `translations` | The copy the components render, with English filling every key the active language leaves out, and the active language's translations as the backend sent them. |
+| `translationConfig`, `translations` | The active copy and language. |
 | `legalLinks`, `presentation` | The provider's `legalLinks` and `presentation` props. |
 | `user`, `subject` | The identified user and the backend's subject for this visitor. |
 
@@ -146,7 +146,6 @@ the manager for values that update.
 | `nonIABVendors` | Custom vendors outside the IAB list. |
 | `acceptAll()`, `rejectAll()` | Accept All sets vendor and purpose consent for declared consent purposes, separate vendor and purpose legitimate-interest signals for declared legitimate-interest purposes, and opt-ins for declared special features. Reject All clears these signals. |
 | `setPurposeConsent(id, value)`, `setPurposeLegitimateInterest(id, value)` | Change one purpose. |
-| `setPurposeObjection(id, objected)` | Object to a purpose's legitimate interest, or withdraw the objection, for the purpose and every vendor using it on that basis. |
 | `setVendorConsent(id, value)`, `setVendorLegitimateInterest(id, value)` | Change one vendor. |
 | `setSpecialFeatureOptIn(id, value)` | Change one special feature. |
 | `save()` | Writes the TC String and records the choice. |
@@ -181,7 +180,7 @@ call it and does not update.
 | Export | Purpose |
 | --- | --- |
 | `manifest()` | The `mode` that resolves the policy in the browser from the manifest `consentManifest()` downloaded. |
-| `hosted({ projectUrl })` | The `mode` that asks your Inth project's `/v1/consent/init` for every visitor. |
+| `hosted({ projectUrl })` | The `mode` that asks Inth's `/v1/consent/init` for every visitor. |
 | `testing({ policy })` | The `mode` that resolves policies in the browser with no backend. Not recommended for production environments. |
 | `createConsentRuntime(options)` | Creates a runtime to share between providers, through their `runtime` prop. |
 | `resolveConsentPresentation(input)` | Resolves the banner or dialog shape and actions a policy asks for, as `getHeadlessConsent()` does. |

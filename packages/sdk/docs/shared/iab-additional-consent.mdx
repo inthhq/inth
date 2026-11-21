@@ -11,19 +11,17 @@ Inth ignores IDs that Google does not list. When Google removes a provider
 from the list, usually because it joined the Global Vendor List, it leaves
 the AC string on the visitor's next page load.
 
-### List the providers in your Inth project
+### List the providers in Inth or in the browser
 
-List the providers in your Inth project's IAB settings. Inth loads each
-provider's name and privacy policy, and sends them in `/v1/consent/init` to
-every visitor whose policy uses IAB TCF. Framework servers and browsers that
-resolve init from the manifest load the same providers.
+Configure Google Additional Consent providers in your Inth project's IAB
+settings so `/v1/consent/init` and your project manifest send them to every visitor
+under an IAB policy.
 
-### List the providers in the browser
-
-`testing()` has no backend, so with it pass `additionalConsent` with your other IAB options: the
-`IABProvider` props in React, Next.js and TanStack Start, the `createIAB`
-options in JavaScript, and the `iab` option of the Vue, Nuxt, Svelte, Astro
-and script-tag setups. A list passed here replaces the one the backend sent.
+When using `testing()` or overriding the list in code, pass `additionalConsent`
+with your other IAB options: the `IABProvider` props in React, Next.js and
+TanStack Start, the `createIAB` options in JavaScript, and the `iab` option of
+the Angular, Vue, Nuxt, Svelte, Astro and script-tag setups. A list passed in
+the browser replaces the one from Inth.
 
 {/* example: fragment */}
 
@@ -41,11 +39,10 @@ lists for it, and a consent switch. Accept All switches every provider on,
 and Reject All switches them off. The banner's partner count includes them.
 
 The names and links come from `https://gvl.inth.app/additional-consent`.
-The backend fetches them when the providers are listed in its manifest. When
-they are listed in the browser, Inth fetches them as the CMP mounts, in
-parallel with the vendor list. To serve the list yourself, set `endpoint` in
-the manifest's `additionalConsent`, or `url` in the browser option. Inth
-requests `?providerIds=89,2572` and expects JSON in this shape:
+When providers are listed in the browser, Inth fetches them as the CMP mounts,
+in parallel with the vendor list. To serve the list from your own endpoint,
+set `url` in `additionalConsent`. Inth requests `?providerIds=89,2572` and
+expects JSON in this shape:
 
 ```json
 {
@@ -90,9 +87,6 @@ When the visitor's policy does not use IAB TCF, `__tcfapi` reports
 `gdprApplies: false` and returns no `tcString` or `addtlConsent`. CMP API v2
 allows only `cmpId`, `cmpVersion` and `tcfPolicyVersion` beside it, plus the
 status fields.
-
-Inth records the AC string with each consent, beside the TC String.
-Consents saved without a TC String store none.
 
 ### Send the string with ad requests
 

@@ -1,27 +1,27 @@
 ---
 title: ConsentManager
-description: Reference for ConsentManager in an Angular app, from reading permissions and recorded choices as signals to saving, the preference draft, IAB state and kernel events.
+description: Reference for ConsentManager in Angular, covering consent signals, saving choices, preference drafts, IAB state and kernel events.
 group: frameworks
 ---
 
-`ConsentManager` is the consent state of the application, as signals, and the
-methods that change it. `provideInth()` provides it. Inject it in any
+`ConsentManager` exposes consent state as Angular signals and provides methods
+to update and save choices. `provideInth()` provides it. Inject it in any
 component, directive or service:
 
 <include src="../../shared/examples/angular/consent-status.mdx" />
 
 Every readable field is a `Signal`, so it works in templates, `computed()` and
-`effect()` and updates `OnPush` components without `markForCheck()`. Read it
-with a call: `consent.activeUI()`, not `consent.activeUI`. Methods such as
-`has()` and `isVendorAllowed()` read signals too, so a template or
+`effect()` and updates `OnPush` components without `markForCheck()`. Call each
+signal to read it: `consent.activeUI()`, not `consent.activeUI`. Methods such
+as `has()` and `isVendorAllowed()` read signals too, so a template or
 `computed()` that calls them updates when consent changes.
 
 ## Read a permission or a recorded choice
 
 | Member | Value |
 | --- | --- |
-| `has(condition)` | `true` while a category, or a condition such as `{ and: ['measurement', 'marketing'] }` or `{ or: [...] }` or `{ not: ... }`, is allowed now. |
-| `effectivePermissions()` | What each category may do now, after the policy, the stored choice and privacy signals. |
+| `has(condition)` | `true` while a category, or a condition such as `{ and: ['measurement', 'marketing'] }`, `{ or: [...] }` or `{ not: ... }`, is allowed now. |
+| `effectivePermissions()` | What each category may do now, after the policy, stored choice and privacy signals. |
 | `explicitChoice()` | The visitor's recorded choice, or `null` before one. |
 | `noticeDismissal()` | The record of a dismissed notice. A dismissal is not a grant. |
 | `privacySignals()` | Global Privacy Control and other signals. |
@@ -29,25 +29,25 @@ with a call: `consent.activeUI()`, not `consent.activeUI`. Methods such as
 | `vendorChoice()` | The vendors the visitor turned off. |
 
 `has()` and `effectivePermissions()` can be `true` before the visitor
-chooses, under an opt-out policy, and Global Privacy Control can turn a
-recorded grant off. Use `explicitChoice()` to know whether the visitor
+chooses under an opt-out policy, and Global Privacy Control can turn a
+recorded grant off. Use `explicitChoice()` to check whether the visitor
 actually chose, never `has()`.
 
 ## Read the policy and the UI state
 
 | Member | Value |
 | --- | --- |
-| `hasPolicy()` | Whether a policy rule is resolved for this visitor. Every Inth component renders nothing until it is. |
-| `policyPending()` | Whether a policy is still being resolved. |
+| `hasPolicy()` | Whether a policy rule has resolved for this visitor. Stock components render nothing until it is `true`. |
+| `policyPending()` | Whether a policy is still resolving. |
 | `policyRule()` | The resolved rule: `model`, `prompt`, `rights`, scope and more. |
 | `model()` | `'iab'` under an IAB policy, else the rule's model: `opt-in`, `opt-out` or `none`. |
 | `hasConsentUi()` | Whether the rule owes any consent UI. |
 | `hasConsentPreferences()` | Whether Inth or an external CMP offers a way back to preferences. `inthConsentDialogLink` hides its host while this is `false`. |
 | `activeUI()` | `'banner'`, `'dialog'` or `'none'`. |
-| `location()`, `resolution()` | The visitor's resolved location, and how the policy was resolved. |
+| `location()`, `resolution()` | The visitor's resolved location, and how the policy resolved. |
 | `consentCategories()`, `consentTypes()` | The categories the preference UI shows, and their metadata. |
 | `presentation()`, `theme()`, `experiment()` | The configured presentation and theme, with the assigned experiment arm merged in. |
-| `copy()`, `translations()` | The copy the components render, with English filling every key the active language leaves out, and the active language's translations as the backend sent them. |
+| `translations()`, `translationConfig()` | The resolved copy in the active language, and the full configuration components read. |
 | `legalLinks()` | The provider's `legalLinks`. |
 | `options()` | The provider's options, as changed by `updateOptions()`. |
 | `snapshot()` | The whole kernel snapshot. Each field above is a slice of it. |
@@ -69,14 +69,14 @@ The other snapshot fields are signals too: `restrictions()`,
 | `clearRecords()` | Clears receipts, identity and stored records, for tests and dev tools. |
 | `updateOptions(patch)` | Changes provider options after bootstrap. See [provideInth](./provide-inth#change-options-after-bootstrap). |
 
-`saveConsents()` closes the surface in the same task once the kernel has
-recorded the choice. The backend request runs after. A failed request is
-retried and does not reopen the banner. `saveConsents()` rejects when the
-save fails, so `await` it and handle the error where you show your own UI.
+`saveConsents()` closes the surface in the same task once the kernel records
+the choice, and sends the request to Inth afterward. Failed requests retry
+without reopening the banner. `saveConsents()` rejects when the save fails, so
+`await` it and handle errors in custom UI.
 
 ## Work with the draft
 
-The preference dialog, `<inth-consent-widget>` and your own preference UI
+The preference dialog, `<inth-consent-widget>` and custom preference UIs
 stage changes on one draft before saving:
 
 | Member | Value or effect |
@@ -90,11 +90,10 @@ stage changes on one draft before saving:
 | `getDisplayedConsents()` | Metadata for the categories to show, in order. |
 | `getDisplayedVendors(category)` | The vendors to list under one category. |
 
-The draft code is not part of the first load. The first read of
-`draft.values()`, `draft.vendors()` or `draft.isStale()` in the browser loads
-it; until it arrives they read empty and `false`, and calls to `setConsent()`
-wait in order. [Headless](./headless#build-your-own-preferences) has a full
-example.
+The draft module loads lazily on the first read of `draft.values()`,
+`draft.vendors()` or `draft.isStale()` in the browser. Until it arrives,
+those signals read empty and `false`, and `setConsent()` calls queue in
+order. [Headless](./headless#build-your-own-preferences) has a full example.
 
 `selectedConsentTypes()` and `setSelectedConsent()` are older names for
 `selectedConsents()` and `setConsent()`.
@@ -114,40 +113,39 @@ is `true` when the resolved policy needs IAB and `provideInth()` has no
 | `nonIABVendors` | Custom vendors outside the IAB list. |
 | `acceptAll()`, `rejectAll()` | Stage every TCF signal on, or off. |
 | `setPurposeConsent(id, value)`, `setPurposeLegitimateInterest(id, value)` | Change one purpose. |
-| `setPurposeObjection(id, objected)` | Object to a purpose's legitimate interest, or withdraw the objection, for the purpose and every vendor using it on that basis. |
 | `setVendorConsent(id, value)`, `setVendorLegitimateInterest(id, value)` | Change one vendor. |
 | `setSpecialFeatureOptIn(id, value)` | Change one special feature. |
 | `setAdTechProviderConsent(id, value)` | Change one Google ad tech provider (Additional Consent). |
 | `save()` | Writes the TC String and records the choice. |
 | `preferenceCenterTab`, `setPreferenceCenterTab(tab)` | The tab `<inth-iab-consent-dialog>` shows. |
 
-Until the TCF add-on finishes loading, the action methods queue and replay.
+Until the TCF add-on finishes loading, action methods queue and replay.
 `whenIABReady()` from `@inth/angular` resolves once it has loaded. See
 [IAB TCF](./iab) for setup.
 
 ## Listen to consent events
 
-For values you render, read signals. For code that must run on an event, such
-as an analytics call when a choice is recorded, subscribe to the kernel's
-events in an `effect()`, so the listener goes with the component:
+For values you render, read signals. For side effects on an event, such as an
+analytics call when a choice is recorded, subscribe to the kernel's events in
+an `effect()` so cleanup follows the component:
 
 <include src="../../shared/examples/angular/consent-events.mdx" />
 
 `kernel()` is a signal because the provider swaps the kernel when `enabled`
-changes. The `effect()` subscribes again when it does.
+changes. The `effect()` re-subscribes when it does.
 `subscribeToConsentChanges(listener)` calls `listener` with the effective
-permissions after each change and returns a function that stops it; use it
-from code outside Angular's reactivity.
+permissions after each change and returns an unsubscribe function for code
+outside Angular's reactivity.
 
 ## Other services and helpers
 
 | Export | Use |
 | --- | --- |
 | `HeadlessConsent` | Banner and dialog state with the presentation resolved. See [headless](./headless). |
-| `ConsentTheme` | The provider's `theme`, `noStyle`, `disableAnimation`, `scrollLock`, `trapFocus`, `colorScheme`, `legalLinks`, `preloadDialog`, `styles` and `nonce`, as signals. |
+| `ConsentTheme` | Provider `theme`, `noStyle`, `disableAnimation`, `scrollLock`, `trapFocus`, `colorScheme`, `legalLinks`, `preloadDialog`, `styles` and `nonce` as signals. |
 | `injectEventDispatcher()` | Send analytics events to the provider's scripts. See [scripts](./scripts#send-your-own-analytics-events). |
 | `resolvePromptCopy`, `resolveActionLabels`, `resolvePreferenceControlLabels` | Banner copy and button labels in the active language. |
-| `resolveIABCopy` | IAB copy with English fallbacks, for a custom IAB banner: `resolveIABCopy(consent.copy())`. |
+| `getIABTranslations` | IAB copy with English fallbacks, for a custom IAB banner. |
 | `createConsentRuntime` | A runtime you own, for [sharing one](./provide-inth#share-one-runtime). |
 
 ## Verify the state you read

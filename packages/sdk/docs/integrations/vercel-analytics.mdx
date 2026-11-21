@@ -1,24 +1,21 @@
 ---
 title: Vercel Analytics
-description: Load the Vercel Web Analytics script only after measurement consent with the Inth vercelAnalytics helper, choose the debug script, and check it in DevTools.
+description: Load Vercel Web Analytics only after measurement consent with the Inth vercelAnalytics helper.
 seoTitle: Vercel Analytics cookie consent with Inth
-seoDescription: Load Vercel Web Analytics only with measurement consent. Set it up with the Inth vercelAnalytics helper and check it in DevTools.
+seoDescription: Gate Vercel Web Analytics behind measurement consent with Inth. Configure debug mode, custom endpoints, and verify requests in DevTools.
 icon: vercel-analytics
 group: integrations
 ---
 
-The Inth `vercelAnalytics` helper keeps Vercel Web Analytics off the page until
-`measurement` has consent. Until then, Inth does not define `window.va`. The
-helper sends no consent signal to Vercel. If the visitor withdraws consent, Inth
-removes the script element. By default, Inth also reloads the page.
+The `vercelAnalytics` helper keeps Vercel Web Analytics off the page and leaves `window.va` undefined until a visitor grants `measurement` consent. It sends no consent signal to Vercel. On revocation, Inth removes the script element and reloads the page by default.
 
 ## Configure Vercel Analytics
 
-Enable Web Analytics for the project in Vercel. Remove the `Analytics`
-component or `inject()` call from `@vercel/analytics` so Inth loads the
-script once.
+Enable Web Analytics for your project in Vercel, then remove any `Analytics` component or `inject()` call from `@vercel/analytics` so Inth loads the script once.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { vercelAnalytics } from '@inth/integrations/vercel-analytics';
@@ -33,30 +30,22 @@ export const scripts = [vercelAnalytics()];
 | Option | Default | Behavior |
 | --- | --- | --- |
 | `dsn` | None | Project DSN for deployments outside Vercel, set as `data-dsn`. |
-| `disableAutoTrack` | None | `true` sets `data-disable-auto-track="1"` and stops automatic page views. |
+| `disableAutoTrack` | None | `true` sets `data-disable-auto-track="1"` and disables automatic page views. |
 | `mode` | None | `'development'` loads the debug script. `'auto'` and `'production'` load the production script. The helper does not detect your environment. |
 | `debug` | None | `true` loads `https://va.vercel-scripts.com/v1/script.debug.js`. |
-| `endpoint` | None | Custom ingestion endpoint, set as `data-endpoint`. |
+| `endpoint` | None | Custom ingestion endpoint set as `data-endpoint`. |
 | `scriptUrl` | `https://va.vercel-scripts.com/v1/script.js` | Loader URL override. Takes precedence over `mode` and `debug`. |
 
 The helper also sets `data-sdkn="inth"` on the script element.
 
 ## Loading and revocation
 
-`vercelAnalytics` uses the `measurement` category. When measurement becomes
-allowed, the helper defines the `window.vaq` queue and a `window.va` stub,
-unless they exist, then loads the script. Calls to `window.va` made before the
-script finishes loading wait in `window.vaq`.
+`vercelAnalytics` gates on `measurement`. On grant, the helper defines `window.vaq` and `window.va` if absent, then inserts the script. Calls queued in `window.vaq` before the script loads flush once it runs.
 
-On revocation the helper removes the script element and calls no Vercel API.
+On revocation, Inth removes the script element without calling a Vercel API. Because `window.va` stays defined until reload, check `measurement` permission before sending custom events.
 
 ## Verify Vercel Analytics
 
-After you allow measurement, `script.js` loads from `va.vercel-scripts.com`
-with `data-sdkn="inth"`, and each client-side navigation sends one page view.
-With `debug` or `mode: 'development'` the helper loads `script.debug.js`
-instead, so a working debug build does not prove your production settings.
-After revocation `window.va` still exists, so if your code sends custom events
-through it, check measurement permission before each call.
+Allow `measurement` and confirm `script.js` loads from `va.vercel-scripts.com` with `data-sdkn="inth"`, and each client-side navigation sends one page view. With `debug: true` or `mode: 'development'`, the helper loads `script.debug.js` instead, so verify your production configuration separately.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

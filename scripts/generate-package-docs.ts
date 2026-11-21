@@ -89,6 +89,8 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 	},
 	{
 		include: [
+			'performance.mdx',
+			'migrate-from-c15t.mdx',
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
 			'frameworks/react/**/*.mdx',
@@ -101,11 +103,12 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			install: '`npm install @inth/react`',
 			topic: 'the project is a React app, such as Vite or React Router',
 		},
-		summary:
-			'React v3 consent components, hooks, Inth setup and customization.',
+		summary: 'React consent components, hooks, Inth setup and customization.',
 	},
 	{
 		include: [
+			'performance.mdx',
+			'migrate-from-c15t.mdx',
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
 			'frameworks/next/**/*.mdx',
@@ -120,10 +123,12 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 				'the project is a Next.js app with the App Router, Pages Router or static export',
 		},
 		summary:
-			'Next.js v3 App Router, Pages Router, static export and hydration with Inth.',
+			'Next.js App Router, Pages Router, static export and hydration with Inth.',
 	},
 	{
 		include: [
+			'performance.mdx',
+			'migrate-from-c15t.mdx',
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
 			'frameworks/vue/**/*.mdx',
@@ -136,10 +141,12 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			install: '`npm install @inth/vue`',
 			topic: 'the project is a Vue app without Nuxt',
 		},
-		summary: 'Vue v3 plugin, Vite setup and server rendering with Inth.',
+		summary: 'Vue plugin, Vite setup and server rendering with Inth.',
 	},
 	{
 		include: [
+			'performance.mdx',
+			'migrate-from-c15t.mdx',
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
 			'frameworks/nuxt/**/*.mdx',
@@ -152,10 +159,12 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			install: '`npm install @inth/nuxt`',
 			topic: 'the project is a Nuxt 3 or 4 app',
 		},
-		summary: 'Nuxt v3 module, SSR, static hosting and components with Inth.',
+		summary: 'Nuxt module, SSR, static hosting and components with Inth.',
 	},
 	{
 		include: [
+			'performance.mdx',
+			'migrate-from-c15t.mdx',
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
 			'frameworks/svelte/**/*.mdx',
@@ -170,10 +179,12 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			topic: 'the project is a Svelte or SvelteKit app',
 		},
 		summary:
-			'Svelte and SvelteKit v3 providers, request loading and static hosting with Inth.',
+			'Svelte and SvelteKit providers, request loading and static hosting with Inth.',
 	},
 	{
 		include: [
+			'performance.mdx',
+			'migrate-from-c15t.mdx',
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
 			'frameworks/angular/**/*.mdx',
@@ -188,10 +199,12 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 				'the project is an Angular 20, 21 or 22 app, with or without `@angular/ssr`',
 		},
 		summary:
-			'Angular v3 provider, standalone components, signals, headless directives and server rendering with Inth.',
+			'Angular provider, standalone components, signals, headless directives and server rendering with Inth.',
 	},
 	{
 		include: [
+			'performance.mdx',
+			'migrate-from-c15t.mdx',
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
 			'frameworks/astro/**/*.mdx',
@@ -205,10 +218,12 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			topic: 'the project is an Astro site',
 		},
 		summary:
-			'Astro v3 static and server integration, dialog adapters and runtime ownership.',
+			'Astro static and server integration, dialog adapters and runtime ownership with Inth.',
 	},
 	{
 		include: [
+			'performance.mdx',
+			'migrate-from-c15t.mdx',
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
 			'frameworks/tanstack-start/**/*.mdx',
@@ -222,11 +237,12 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 			topic: 'the project is a TanStack Start app',
 		},
 		summary:
-			'TanStack Start v3 server functions, request middleware and consent boundaries.',
+			'TanStack Start server functions, request middleware and consent boundaries with Inth.',
 	},
 	{
 		include: [
-			'frameworks/*/upgrade-v3.mdx',
+			'performance.mdx',
+			'migrate-from-c15t.mdx',
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
 			'frameworks/*/scripts.mdx',
@@ -244,10 +260,12 @@ export const PACKAGE_DOCS_CONFIGS: PackageDocsConfig[] = [
 				'the project loads analytics, pixels, tag managers or embeds that must wait for consent',
 		},
 		summary:
-			'Consent-aware vendor integrations and Consent Mode loading contracts.',
+			'Consent-aware vendor integrations and Consent Mode loading contracts for Inth.',
 	},
 	{
 		include: [
+			'performance.mdx',
+			'migrate-from-c15t.mdx',
 			'concepts/**/*.mdx',
 			'guides/**/!(mobile-*).mdx',
 			'frameworks/html/**/*.mdx',
@@ -332,8 +350,7 @@ const runLeadtype = async function runLeadtype(config: PackageDocsConfig) {
 		throw new Error(`leadtype package docs failed for ${config.name}`);
 	}
 
-	// Links to pages outside the bundle go to the docs site for this
-	// package's release, not whichever major c15t.com documents today.
+	// Links to pages outside the bundle point at the Inth docs site.
 	const { version } = JSON.parse(
 		readFileSync(join(outDir, 'package.json'), 'utf8')
 	) as { version: string };

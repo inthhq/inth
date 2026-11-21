@@ -15,12 +15,7 @@ export default {
 };
 ```
 
-Without `projectUrl`, the plugin reads `VITE_INTH_PROJECT_URL`. The plugin
-fetches the policy during `vite build`, or in `vite dev` when the app first
-loads it, and serves it as `snapshot` from `@inth/react/generated`. A build fetches
-only when the app uses `manifest()`. In `src/consent.tsx`, create the
-provider's mode with `manifest()` from `@inth/react` instead of `hosted()`. It
-reads the snapshot and the backend URL from `@inth/react/generated`:
+Without `projectUrl`, the plugin reads `VITE_INTH_PROJECT_URL` (falling back to `VITE_C15T_BACKEND_URL` if unset). The plugin fetches the policy during `vite build`, or in `vite dev` when the app first loads it, and exposes it as `snapshot` from `@inth/react/generated`. A build fetches only when the app uses `manifest()`. In `src/consent.tsx`, create the provider's mode with `manifest()` from `@inth/react` instead of `hosted()`. It reads the snapshot and project URL from `@inth/react/generated`:
 
 {/* example: fragment */}
 
@@ -30,28 +25,15 @@ import { manifest } from '@inth/react';
 const mode = manifest();
 ```
 
-Keep passing `mode` to `InthProvider`. The browser resolves the snapshot
-without `/manifest` when it has the geography the policy needs, or the policy
-does not depend on geography. Supply known country and region through `inputs`
-or overrides to keep regional resolution on the snapshot.
+Keep passing `mode` to `InthProvider`. The browser resolves the snapshot without `/v1/consent/manifest` when it has the geography the policy needs, or when the policy does not depend on geography. Supply a known country and region through `inputs` or overrides to keep regional resolution on the snapshot.
 
-When the build has no snapshot, as in `vite dev` after a failed fetch,
-`snapshot` is `undefined`, and the browser fetches
-`${projectUrl}/v1/consent/manifest` instead.
+When the build has no snapshot, as in `vite dev` after a failed fetch, `snapshot` is `undefined`, and the browser fetches `${projectUrl}/v1/consent/manifest` instead.
 
-When the required country or region is missing, the transport calls backend
-`/init` and uses its resolved policy and translations. That response can use
-newer backend policy than the build snapshot. `InthProvider` sends that
-request while it first renders, before the page mounts, unless the visitor has
-a stored choice.
+When the required country or region is missing, the transport calls `/v1/consent/init` on your Inth project and uses its resolved policy and translations. That response can use newer policy rules than the build snapshot. `InthProvider` sends that request during its first render, before the page mounts, unless the visitor already has a stored choice.
 
-The browser cannot guess the banner from the snapshot alone when locations
-differ. With a European opt-in rule and no banner elsewhere, a banner shown
-before `/init` answers would vanish for most of the world. The exception is a
-policy whose country and region rules all show the same banner, with a default
-rule that covers everywhere else: the browser resolves it at once.
+The browser cannot guess the banner from the snapshot alone when locations differ. With a European opt-in rule and no banner elsewhere, a banner shown before `/v1/consent/init` answers would disappear for most of the world. The exception is a policy whose country and region rules all show the same banner, with a default rule covering everywhere else: the browser resolves it immediately.
 
-Policy and resolver code are part of the browser bundle.
+Policy and resolver code are included in the browser bundle.
 
 <include src="../build-time-manifest-notes.mdx" />
 

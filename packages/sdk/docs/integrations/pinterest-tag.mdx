@@ -1,26 +1,21 @@
 ---
 title: Pinterest Tag
-description: Load the Pinterest Tag only after marketing consent with the Inth pinterestTag helper, guard pintrk event calls, and check it in DevTools.
+description: Load the Pinterest Tag after marketing consent and sync pintrk setconsent signals with Inth.
 seoTitle: Pinterest Tag cookie consent with Inth
-seoDescription: Load the Pinterest Tag only with marketing consent. The Inth pinterestTag helper sends pintrk setconsent signals for you.
+seoDescription: Gate the Pinterest Tag on marketing consent with Inth, sync pintrk setconsent signals, and guard conversion event calls.
 icon: pinterest
 group: integrations
 ---
 
-The Inth `pinterestTag` helper keeps the Pinterest Tag off the page until
-`marketing` has consent. Until then, Inth does not define `pintrk`. When
-`marketing` has consent, the helper queues `load`, `pintrk('setconsent', true)`,
-and a page visit before the loader. If the visitor withdraws consent, the helper
-calls `pintrk('setconsent', false)`. The tag stays on the page. By default, Inth
-also reloads the page.
+The `pinterestTag` helper keeps the Pinterest Tag off the page and `window.pintrk` undefined until `marketing` is granted. On grant, it queues `load`, `pintrk('setconsent', true)`, and a page visit before loading `core.js`. On withdrawal, it calls `pintrk('setconsent', false)` and Inth reloads the page by default.
 
 ## Configure the Pinterest Tag
 
-Copy the numeric tag ID from Pinterest Ads Manager. Remove Pinterest's base
-code and its `<noscript>` image. The helper does not emit that image, because
-it fires without JavaScript and Inth cannot gate it.
+Copy your numeric tag ID from Pinterest Ads Manager. Remove Pinterest's base snippet and its `<noscript>` image; the helper omits that image because it fires without JavaScript and cannot be consent-gated.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { pinterestTag } from '@inth/integrations/pinterest-tag';
@@ -34,29 +29,20 @@ export const scripts = [pinterestTag({ tagId: '2613654212508' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `tagId` | Required | Tag ID passed to `pintrk('load', ...)`. The helper trims it. Empty or whitespace-only values log an error and the script does not load. |
-| `loadOptions` | None | Object passed as the third argument to `pintrk('load', ...)`, such as `em` or `external_id` for enhanced match. Pass user data only when your app has the permission it needs. |
+| `tagId` | Required | Numeric tag ID passed to `pintrk('load', ...)`, trimmed. Blank values log an error and skip loading. |
+| `loadOptions` | None | Third argument to `pintrk('load', ...)`, such as `em` or `external_id` for enhanced match. Pass user data only with appropriate permission. |
 | `trackPageVisit` | `true` | Queues `pintrk('page')` after `load`. Set `false` to send page visits yourself. |
-| `scriptUrl` | `https://s.pinimg.com/ct/core.js` | Loader URL override. A blank value falls back to the default. |
+| `scriptUrl` | `https://s.pinimg.com/ct/core.js` | Loader URL override. Blank values use the default. |
 
 ## Loading and revocation
 
-`pinterestTag` uses the `marketing` category. Before marketing is allowed, Inth
-defines no `pintrk` function and loads nothing from Pinterest. When marketing
-becomes allowed, the helper queues `load`, `pintrk('setconsent', true)` and
-the page visit, then loads `core.js`.
+`pinterestTag` uses the `marketing` category. Before grant, Inth defines no `pintrk` global and makes no Pinterest requests. On grant, it queues `load`, `pintrk('setconsent', true)`, and the page visit, then loads `core.js`.
 
-On revocation the helper keeps the tag and calls
-`pintrk('setconsent', false)`, which Pinterest documents as stopping events
-and clearing its first-party storage. If the visitor allows marketing again
-before the page reloads, the helper calls `pintrk('setconsent', true)`.
+On revocation, the helper keeps the tag and calls `pintrk('setconsent', false)`, which Pinterest documents as stopping events and clearing first-party storage. If the visitor allows `marketing` again before reload, the helper calls `pintrk('setconsent', true)`.
 
 ## Guard your own pintrk calls
 
-The helper sends the page visit. Events your code sends, such as `checkout` or
-`lead`, need their own check. After revocation `window.pintrk` still exists, so
-its presence does not mean marketing is allowed. Check the permission first,
-then that the tag has loaded:
+The helper sends only the initial page visit. Because `window.pintrk` remains defined after revocation, check `marketing` permission from your framework, such as `useConsent('marketing')` in React, before sending events like `checkout` or `lead`:
 
 ```ts title="src/track-checkout.ts"
 export function trackCheckout(marketingAllowed: boolean, orderId: string) {
@@ -71,22 +57,14 @@ export function trackCheckout(marketingAllowed: boolean, orderId: string) {
 }
 ```
 
-Pass the current marketing permission from your framework, for example
-`useConsent('marketing')` in React. Put product details in `line_items`, and
-set `event_id` to deduplicate against the Conversions API. Pinterest reports
-conversions only for its 20 event types. It keeps other event names for
-audience targeting.
+Include product details in `line_items` and set `event_id` to deduplicate against the Conversions API. Pinterest reports conversions only for its 20 standard event types and uses other event names for audience targeting.
 
-`@inth/integrations/pinterest-tag` also exports `pinterestTagEvent`, a typed wrapper
-around `pintrk('track', ...)`. It does nothing until `pintrk` exists and does
-not check permission, so apply the same guard before calling it. Its optional
-third argument receives Pinterest's `(didInit, error)` result.
+`@inth/integrations/pinterest-tag` also exports `pinterestTagEvent`, a typed wrapper around `pintrk('track', ...)` whose optional third argument receives Pinterest's `(didInit, error)` callback. It does not check consent, so keep the same permission guard.
 
 ## Verify the Pinterest Tag
 
-After you allow marketing, `core.js` loads from `s.pinimg.com` and Pinterest
-Tag Helper shows the page visit. Trigger one guarded event and check that Tag
-Helper records it. Then revoke marketing. Until the page reloads, calling
-`trackCheckout` sends nothing.
+1. Allow `marketing` and confirm `core.js` loads from `s.pinimg.com` and Pinterest Tag Helper records the page visit.
+2. Trigger one guarded conversion event and confirm Tag Helper records it.
+3. Revoke `marketing` and confirm `trackCheckout` sends nothing before reload.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

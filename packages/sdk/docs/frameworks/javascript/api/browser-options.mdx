@@ -1,39 +1,37 @@
 ---
 title: "@inth/sdk options"
-description: Every option init() and createConsentClient() from @inth/sdk accept in a bundled JavaScript app, from the mode to scripts, blockers, callbacks, storage, presentation and the stock UI.
+description: Reference for every option accepted by init() and createConsentClient() in @inth/sdk.
 group: frameworks
 ---
 
-## Pass options to init
+Reference for all options passed to `init()` and `createConsentClient()` in
+`@inth/sdk`, `@inth/sdk/headless` and `@inth/sdk/iab-client`.
 
-`init()` and `createConsentClient()` from `@inth/sdk`,
-`@inth/sdk/headless` and `@inth/sdk/iab-client` take one options object:
+## Pass options to init
 
 <include src="../../../shared/examples/javascript/init.mdx" />
 
 `projectUrl` is required unless `mode` is `testing()` or `enabled` is
-`false`. `mode` is optional: `manifest()` or `hosted()` from the same entry,
-or `testing()` from `@inth/sdk/testing`. Every other option is optional. The
-options are read when the client is created. To change
-`ui`, call `mountUI()` again; to change anything else, dispose the client and
-create a new one.
+`false`. `mode` is optional (`manifest()` or `hosted()` from the same entry,
+or `testing()` from `@inth/sdk/testing`). Options are read once at creation;
+call `mountUI()` to update UI options, or dispose and recreate the client to
+change anything else.
 
-The `@inth/sdk/hosted` entry accepts the same UI, gating and lifecycle
-options. Its connection options are restricted to hosted mode, and it
-requires a backend URL. See [mode-specific configuration](/docs/frameworks/javascript/api/browser#choose-a-bundle-for-one-mode).
+`@inth/sdk/hosted` accepts the same UI, gating and lifecycle options while
+restricting connection options to hosted mode; see
+[choose a bundle for one mode](/docs/frameworks/javascript/api/browser#choose-a-bundle-for-one-mode).
 
 <import src="../../../shared/browser/client-options.mdx#connection" />
 
-[Transports](/docs/frameworks/javascript/transports) compares the modes and
-shows each with an example.
+See [transports](/docs/frameworks/javascript/transports) for mode comparisons.
 
 <import src="../../../shared/browser/client-options.mdx#gating" />
 
-Each has a guide: [scripts](/docs/frameworks/javascript/scripts),
+Guides: [scripts](/docs/frameworks/javascript/scripts),
 [iframe blocker](/docs/frameworks/javascript/modules/iframe-blocker),
 [network blocker](/docs/frameworks/javascript/modules/network-blocker),
-[clear on revocation](/docs/frameworks/javascript/clear-on-revocation)
-and [callbacks](/docs/frameworks/javascript/callbacks).
+[clear on revocation](/docs/frameworks/javascript/clear-on-revocation) and
+[callbacks](/docs/frameworks/javascript/callbacks).
 
 <import src="../../../shared/browser/client-options.mdx#presentation" />
 
@@ -45,12 +43,12 @@ and [callbacks](/docs/frameworks/javascript/callbacks).
 
 <import src="../../../shared/browser/client-options.mdx#trigger" />
 
-[Customize](/docs/frameworks/javascript/customize) shows these options at
-work.
+See [customize](/docs/frameworks/javascript/customize) for styling examples.
 
 ## Options the client passes to the runtime
 
-`@inth/sdk` builds a [consent runtime](/docs/frameworks/javascript/api/runtime)
-for you and passes every option in the tables above through, including
-`nonce`, `persistence`, `scriptLoader` and `vendors`. Two runtime options have
-no client equivalent: the `@inth/sdk/iab-client` entry supplies `createIAB`.
+`@inth/sdk` constructs a
+[consent runtime](/docs/frameworks/javascript/api/runtime) internally and
+forwards every option above (including `nonce`, `persistence`, `scriptLoader`
+and `vendors`). `@inth/sdk/iab-client` supplies `createIAB`, and the client
+disables `windowDebug` on the runtime so `window.inth` is not overwritten.

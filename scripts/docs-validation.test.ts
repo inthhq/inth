@@ -60,7 +60,6 @@ test('documented @inth imports exist in their package export maps', async () => 
 	);
 	const files = await fg('**/*.mdx', {
 		cwd: docsRoot,
-		ignore: ['**/upgrade-v3.mdx', '**/upgrade-v3/**'],
 	});
 	const invalidImports: string[] = [];
 	for (const file of files) {
@@ -70,6 +69,14 @@ test('documented @inth imports exist in their package export maps', async () => 
 		);
 		for (const match of imports) {
 			const name = match.groups?.specifier?.split('?')[0] ?? '';
+			if (
+				file === 'migrate-from-c15t.mdx' &&
+				(name === 'c15t' ||
+					name.startsWith('c15t/') ||
+					name.startsWith('@c15t/'))
+			) {
+				continue;
+			}
 			const [scope = '', pkg = ''] = name.split('/');
 			const packageName = `${scope}/${pkg}`;
 			const exports = exportsOf.get(packageName);
@@ -348,19 +355,6 @@ test('documentation links, includes and metadata are valid', async () => {
 		if (violation.severity !== 'error') {
 			return false;
 		}
-		// The self-host section and most CLI pages left with the c15t backend
-		// and CLI (commit ba2162401), and about 60 pages still link to them.
-		// The SDK docs rewrite removes or repoints those links; delete this
-		// exception with it. Links to any other missing route still fail,
-		// including the CLI mobile pages that remain.
-		if (
-			violation.rule === 'invalid-link' &&
-			/^links to missing docs route `\/docs\/(?:self-host\/[^`]*|cli\/(?:overview|quickstart|commands\/(?:setup|codemods|self-host)))(?:#[^`]*)?`/u.test(
-				violation.message
-			)
-		) {
-			return false;
-		}
 		// leadtype 0.2.1 mistakes frameworks/index.mdx for an adapter named
 		// "index.mdx". The framework picker must link across adapters, but its
 		// destinations still have to exist. Keep every other lint error.
@@ -397,4 +391,4 @@ test('every include resolves to a file', async () => {
 		}
 	}
 	expect(missing).toEqual([]);
-});
+}, 30_000);

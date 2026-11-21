@@ -1,58 +1,47 @@
 ---
 title: Customize
-description: Set the app identity, light and dark colors, radii, spacing, type, per-part slots, first-layer copy and provider attribution on Inth's native SwiftUI consent screens.
+description: Style Inth's native SwiftUI and UIKit consent screens with ConsentTheme colors, typography, spacing, slots, layout, and copy.
 group: frameworks
 ---
 
-Use `ConsentTheme` to match the stock screens to your app. The same theme
-works in a SwiftUI app and in a UIKit-hosted presenter. It changes native
-appearance while the presenter continues to own drafts, saving and navigation.
+Pass a `ConsentTheme` to style Inth's native consent screens in SwiftUI and UIKit while the native presenter handles drafts, saving, and navigation.
 
 ## Set your app's theme
 
-Create `AppConsentTheme.swift` in your app target. This example gives the
-consent screen your app's name and asset, changes the primary color in both
-appearances, widens the page gutter, sets a larger body size and a serif
-headline, rounds the outlined actions into pills, and uses Inth provider
-attribution:
+Create `AppConsentTheme.swift` in your app target to set your app identity, light and dark colors, spacing, typography, slot overrides, and attribution:
 
 <include src="../../shared/examples/native/core-swift/AppleInstallation/swift-app-theme.mdx" />
 
-Replace `My app` with your app name and add an image named `AppPrivacyMark`
-to the app's asset catalog, or use the name of an existing asset. The
-introduction should describe your app's actual purposes. This copy example
-assumes both measurement and marketing are in scope.
+Replace `My app` with your app name and add an `AppPrivacyMark` asset to your asset catalog (or pass an existing asset name). Write an introduction that matches the categories in your policy.
 
-Pass the theme to the `.inth` modifier from the [quickstart](/docs/frameworks/swift/quickstart):
+Pass the theme to `.inth` from the [Swift quickstart](/docs/frameworks/swift/quickstart):
 
 <include src="../../shared/examples/native/core-swift/AppleInstallation/swift-themed-root.mdx" />
 
-`ConsentRootViewController` takes the same `theme` argument in a UIKit app.
-The primary color applies to switches, links and Save. Accept all and Reject
-all keep the same `decision` fill and `textOnDecision` label treatment.
+`ConsentRootViewController` accepts the same `theme` argument in UIKit. `colors.primary` styles switches, links, and Save, while Accept all and Reject all always share `colors.decision` and `colors.textOnDecision`.
 
 ## Choose what to change
 
-| Setting | Use it for |
+| Setting | Purpose |
 | --- | --- |
-| `brand.name`, `brand.markImageName` | Your app's identity above the headline |
-| `brand = .hidden` | Removing that app identity block |
-| `copy.headline`, `copy.introduction` | First-layer wording |
-| `colors.canvas`, `surface`, `surfaceMuted` | Page, cards and subordinate content |
+| `brand.name`, `brand.markImageName` | App name and mark above the headline |
+| `brand = .hidden` | Hide the app identity header |
+| `copy.headline`, `copy.introduction` | First-layer headline and body text |
+| `colors.canvas`, `surface`, `surfaceMuted` | Page, card, and secondary backgrounds |
 | `colors.text`, `textMuted` | Primary and supporting text |
-| `colors.primary`, `textOnPrimary` | Links, switches and the Save action |
-| `colors.decision`, `textOnDecision` | Both Accept all and Reject all |
-| `radius.md` | Card and button shape; `radius.sm` and `radius.lg` follow it until set |
-| `spacing.xs` to `spacing.xl` | Page gutters, section gaps and padding |
-| `typography.fontSize.sm`, `.base`, `.lg` | Supporting, body and headline sizes; `nil` keeps the text style |
-| `typography.fontFamily` | A bundled font for every role except the headline |
-| `typography.headlineFont` | System sans, serif, rounded or a bundled custom headline font |
-| `slots` | One part: `.consentBannerTitle`, `.consentBannerDescription`, `.buttonPrimary` or `.buttonSecondary` |
-| `branding` | `.inth`, `.c15t` or `.custom(name:markImageName:)` provider attribution. `.inth` is the default |
-| `showsBranding` | Visibility of the provider attribution |
-| `firstLayer` | `.page`, `.sheet` or `.prompt`: how the first choice is presented |
-| `appearance` | `.system` (default) or `.paper`: where the stock colours come from |
-| `savePlacement` | `.top` (default) or `.bottom`: where Save sits in Privacy Settings |
+| `colors.primary`, `textOnPrimary` | Links, switches, and Save action |
+| `colors.decision`, `textOnDecision` | Shared fill and label for Accept all and Reject all |
+| `radius.md` | Card and button radius (`radius.sm` and `radius.lg` inherit it until set) |
+| `spacing.xs` to `spacing.xl` | Page gutters, section gaps, and padding |
+| `typography.fontSize.sm`, `.base`, `.lg` | Supporting, body, and headline sizes (`nil` keeps the system style) |
+| `typography.fontFamily` | Bundled font for every text role except the headline |
+| `typography.headlineFont` | System sans, serif, rounded, or a bundled headline font |
+| `slots` | Overrides for `.consentBannerTitle`, `.consentBannerDescription`, `.buttonPrimary`, or `.buttonSecondary` |
+| `branding` | `.inth` (default), `.c15t`, or `.custom(name:markImageName:)` provider attribution |
+| `showsBranding` | Toggle provider attribution visibility |
+| `firstLayer` | `.page`, `.sheet`, or `.prompt` container for the initial choice |
+| `appearance` | `.system` (default) or `.c15t` stock color palette |
+| `savePlacement` | `.top` (default) or `.bottom` position for Save in Privacy Settings |
 
 ## Place Save Settings
 
@@ -60,11 +49,7 @@ all keep the same `decision` fill and `textOnDecision` label treatment.
 ConsentTheme.current = ConsentTheme(savePlacement: .bottom)
 ```
 
-Privacy Settings keeps Reject All and Accept All together at the bottom. Save
-is a short button at the trailing end of the navigation bar by default, which
-leaves more room for the list. `.bottom` makes it a full-width Save Settings
-button under the other two. At accessibility text sizes it is always at the
-bottom.
+Privacy Settings pins Reject All and Accept All together at the bottom. By default, Save sits in the trailing navigation bar to leave more room for the list. Setting `.bottom` places a full-width Save Settings button below the other two actions. At accessibility text sizes, Save always moves to the bottom.
 
 ## Choose a first-layer layout
 
@@ -72,101 +57,48 @@ bottom.
 ConsentTheme.current = ConsentTheme(firstLayer: .sheet)
 ```
 
-Every layout shows the same text, the same partner link and the same equal
-Accept all and Reject all. Only the container changes.
+Every container renders the same copy, partner link, and equal Accept all and Reject all actions:
 
-| Layout | What it is |
+| Layout | Behavior |
 | --- | --- |
-| `page` | A full-screen page. The default. |
-| `sheet` | A floating sheet at the bottom, with your app dimmed behind it. |
-| `prompt` | A centred card like a system permission alert, with your app dimmed behind it. |
+| `page` | Full-screen page (default). |
+| `sheet` | Floating bottom sheet over a dimmed app background. |
+| `prompt` | Centered alert-style card over a dimmed app background. |
 
-Settings opened from Customize always take the full screen. At accessibility
-text sizes every layout becomes `page`, so the decisions follow the text in one
-scroll.
+Privacy Settings opened from Customize always fills the screen. At accessibility text sizes, every layout switches to `page` so decisions scroll naturally after the text. Under an IAB TCF policy on wide windows such as iPad, `sheet` and `prompt` expand to `page`.
 
-`appearance` chooses the stock colours. `system`, the default, uses the
-platform's backgrounds and text colours with your app's accent colour, and
-centres the page. `c15t` is warm paper and ink. The sheet and the prompt always use the system colours,
-because they sit over your app. Colours you set yourself win in every case.
+`appearance` picks the base palette. `system` (default) uses platform backgrounds, text colors, and your app's `AccentColor` bundle asset (falling back to system blue), centers the page, and falls back to your app name and icon whenever `brand` fields are unset. Accept all and Reject all darken your accent color until white text reaches 5:1 contrast. `c15t` applies the warm paper and ink palette. `sheet` and `prompt` always use system colors and draw Accept all and Reject all as tinted surfaces rather than `buttonPrimary` fills. Explicit colors you set always win.
 
-In an IAB TCF policy, a sheet or prompt is shown as the page in a wide window,
-such as a tablet, so the choice covers the screen. Reject all and Accept all on
-a sheet or prompt are a tint of the surface with the text colour; they do not
-take the primary button slot's colours.
+Token names match web tokens (`primary` maps to `--inth-primary`, `radius.md` maps to `--inth-radius-md`). `typography.fontSize` scales grouped styles (`sm` for subheadline/footnote/caption, `base` for body/headline, `lg` for large title) while preserving Dynamic Type scaling. `spacing` leaves control padding untouched to protect tap targets. Slot fields (`color`, `backgroundColor`, `borderRadius`, `fontSize`) override one part; `buttonPrimary` falls back to stock decision colors if contrast drops below 5:1.
 
-With the system colours, your app's own name stands in for a brand name you
-have not set, and its icon for a brand mark you have not set. Each falls back
-on its own, so a brand name without a mark is shown with the app icon. Accept all and Reject all take your accent colour, darkened until
-white text on it reaches the 5:1 contrast IAB TCF asks for.
+`ConsentThemeColor` takes sRGB `0xRRGGBB` values for `light` and `dark` (omitting `dark` reuses `light`). Always check contrast in both modes. Hiding app identity with `.hidden` does not hide provider attribution.
 
-The accent colour is the `AccentColor` asset in your app's bundle, or the system
-blue when there is none.
+## Configure via Info.plist
 
-Names that have a web token match it: `primary` is `--inth-primary`, and
-`radius.md` is `--inth-radius-md`. A font size groups text styles: `sm` sizes
-subheadline, footnote and captions, `base` sizes body and headline, and `lg`
-sizes the large title. Each style keeps its ratio to its group, and Dynamic
-Type still scales it. Spacing does not change a control's own padding, so tap
-targets keep their size. A slot's `color`, `backgroundColor`, `borderRadius`
-and `fontSize` override the tokens for that part only; `buttonPrimary` colors
-fall back to the stock decision colors below 5:1 contrast.
-
-`ConsentThemeColor` takes sRGB `0xRRGGBB` values for `light` and `dark`.
-Omitting `dark` uses the light value in both appearances. Keep text legible
-against every surface. The SDK does not certify a custom palette's contrast.
-
-App identity and provider attribution have separate purposes. Hiding the app
-identity with `.hidden` does not hide the small provider mark beside or below
-the first-layer controls.
-
-## Configure appearance without changing view code
-
-When no explicit theme is passed, the presenter uses `ConsentTheme.current`
-with supported `Info.plist` values applied. Set `current` once during app
-startup, before constructing the consent root. An explicit modifier theme has
-priority over both.
+Without an explicit modifier theme, the presenter reads `ConsentTheme.current` overlaid with `Info.plist` keys. Set `ConsentTheme.current` once at launch before constructing the root view. An explicit modifier theme takes highest priority.
 
 | `Info.plist` key | Value |
 | --- | --- |
-| `com.inth.consent.brandName` | Your app's name |
+| `com.inth.consent.brandName` | App name |
 | `com.inth.consent.brandMark` | Image asset name |
-| `com.inth.consent.primary` | `#RRGGBB` or `#RRGGBB,#RRGGBB` for light,dark |
-| `com.inth.consent.textOnPrimary` | Label color using the same format |
-| `com.inth.consent.radiusMd`, `spaceLg`, `fontSizeBase` | A number of points; the other steps follow the same pattern |
-| `com.inth.consent.buttonPrimary.borderRadius` | One slot field, as `<slot>.<field>` |
+| `com.inth.consent.primary` | `#RRGGBB` or `#RRGGBB,#RRGGBB` for `light,dark` |
+| `com.inth.consent.textOnPrimary` | Label color in the same format |
+| `com.inth.consent.radiusMd`, `spaceLg`, `fontSizeBase` | Point value (other steps follow the same pattern) |
+| `com.inth.consent.buttonPrimary.borderRadius` | Slot override as `<slot>.<field>` |
 | `com.inth.consent.headline` | First-layer headline |
 | `com.inth.consent.introduction` | First-layer introduction |
-| `com.inth.consent.firstLayer` | `page`, `sheet` or `prompt` |
-| `com.inth.consent.appearance` | `system` or `paper` |
+| `com.inth.consent.firstLayer` | `page`, `sheet`, or `prompt` |
+| `com.inth.consent.appearance` | `system` or `c15t` |
 | `com.inth.consent.savePlacement` | `top` or `bottom` |
 | `com.inth.consent.brandingProvider` | `inth` or `c15t` |
-| `com.inth.consent.branding` | Boolean controlling provider attribution |
+| `com.inth.consent.branding` | Native Boolean controlling provider attribution |
 
-Use a native Boolean for `branding`, rather than the string `"false"`.
-Other color, size and slot keys are declared in `ConsentTheme.InfoPlistKey`.
+Use a native Boolean for `com.inth.consent.branding`, not the string `"false"`. See `ConsentTheme.InfoPlistKey` for the complete list of keys.
 
 ## Account for language and screen size
 
-The stock screens read every label from `@inth/sdk/translations`, in the policy's
-translation language: the language `/init` serves, or `overrides.language` in
-`InthAppleConfiguration`. Buttons, headings and category names use the web banner's keys,
-so they read "Accept All" and "Reject All". App-only sentences, such as the
-category explanations and save errors, come from native-only keys in the same
-package. A language Inth has no copy for falls back to English. IAB screens
-follow the served vendor list's language.
+Stock screens pull labels from `@inth/sdk/translations` using the policy's served language (or `overrides.language` in `InthAppleConfiguration`), falling back to English if unavailable. IAB screens follow the served vendor list's language.
 
-`ConsentTheme.Copy` changes the headline and introduction. Leave a field `nil`
-to keep the translated stock copy; a string you set is shown as given in every
-language. It is not a localization dictionary for the other labels.
+`ConsentTheme.Copy` overrides only the first-layer headline and introduction. Leave fields `nil` to keep translated stock copy; any string you pass displays verbatim in every language.
 
-The presenter follows Dynamic Type, safe areas and window geometry. On
-supported iOS layouts with enough side-column space, compact attribution can
-sit beside the actions. It falls back inline when that area is unavailable
-or accessibility text needs more room. No device-model check is required.
-
-Test light and dark appearance, the largest text sizes, narrow and wide windows,
-and VoiceOver after changing the theme. Keep Accept and Reject equally
-prominent and Privacy settings reachable after either choice. If the layout
-itself needs different controls, use
-[app-owned UI](/docs/frameworks/swift/headless).
+The presenter adapts to Dynamic Type, safe areas, and window geometry, placing compact attribution beside the actions when side-column space permits and falling back inline otherwise. Test light mode, dark mode, largest Dynamic Type sizes, compact and wide windows, and VoiceOver after theme changes. For custom layouts or controls, use [Build your own UI](/docs/frameworks/swift/headless).

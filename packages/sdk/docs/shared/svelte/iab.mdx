@@ -24,10 +24,10 @@ automatically:
 {/* example: fragment */}
 
 ```svelte
-<!-- Svelte: src/App.svelte, with InthProvider from @inth/svelte -->
+<!-- Svelte: src/App.svelte -->
 <InthProvider mode={manifest()} {scripts} iab={{ cmpId: registeredCmpId }}>
 
-<!-- SvelteKit: src/routes/+layout.svelte, with InthProvider from @inth/svelte/kit -->
+<!-- SvelteKit: src/routes/+layout.svelte -->
 <InthProvider state={data.consent} {scripts} iab={{ cmpId: registeredCmpId }}>
 ```
 
@@ -88,9 +88,7 @@ and vendor consents, `isLoadingGVL`, and the actions `acceptAll()`,
 member.
 
 For a custom IAB banner, `@inth/svelte/headless` exports
-`resolveIABBannerSummary` and `processGVLForDialog`, the same helpers
-`@inth/sdk/iab/headless` has, and `resolveIABCopy`: `resolveIABCopy(consent.copy)`
-is the IAB copy with English fallbacks.
+`getIABBannerDisplayItems`, `processGVLData` and `getIABTranslations`.
 
 ## Restrict how vendors use a purpose
 

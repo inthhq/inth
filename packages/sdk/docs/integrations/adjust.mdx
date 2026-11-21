@@ -1,60 +1,39 @@
 ---
 title: Adjust
-description: Keep the Adjust SDK disabled until Inth consent allows it and send third-party sharing with Google's DMA options, in Swift, Kotlin, React Native and Expo.
+description: Gate the Adjust mobile SDK on Inth consent and send Google DMA third-party sharing in Swift, Kotlin, React Native, and Expo.
 seoTitle: Adjust consent for mobile apps with Inth
-seoDescription: Enable and disable Adjust from Inth consent and send Google DMA third-party sharing in Swift, Android, React Native and Expo apps.
+seoDescription: Enable and disable Adjust from Inth consent and send Google DMA third-party sharing in Swift, Android, React Native, and Expo apps.
 group: integrations
 ---
 
-The Adjust helper keeps the SDK disabled until a category allows it. When
-the category is granted it enables Adjust and sends
-[third-party sharing](https://dev.adjust.com/en/sdk/android/features/privacy)
-with Google's `google_dma` options. The category defaults to `marketing`. The
-DMA values come from the shared
-[Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types),
-so marketing grants them.
-
-The helper ships in `InthApple`, `inth-android` and
-`@inth/react-native/integrations`. Inth adds no Adjust dependency. The web
-has no Adjust helper.
+The bundled Adjust helper in `InthApple`, `inth-android`, and `@inth/react-native/integrations` keeps Adjust disabled until the visitor grants its category, `marketing` by default, then enables Adjust and sends [third-party sharing](https://dev.adjust.com/en/sdk/android/features/privacy) with Google's `google_dma` options. Your app installs Adjust separately. There is no web helper.
 
 ## What the helper changes
 
 | Consent | Adjust calls |
 | --- | --- |
 | Category denied or pending | `disable()` |
-| Category granted | `enable()`, once per grant, then third-party sharing |
-| Marketing changes while the category stays granted | Third-party sharing only |
+| Category granted | `enable()` once per grant, then third-party sharing |
+| Marketing changes while category stays granted | Third-party sharing only |
 
-Adjust sends nothing while disabled, ignores calls made while disabled and
-remembers the disabled state across launches. That is why the helper enables
-first and sends sharing second, and sends no sharing on withdrawal.
+Adjust sends nothing while disabled, drops calls made while disabled, and persists the disabled state across launches. The helper enables Adjust before sending sharing and skips sharing on withdrawal.
 
-| Third-party sharing | From |
+DMA values come from the [Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types):
+
+| Third-party sharing field | Source |
 | --- | --- |
 | Sharing enabled | `adUserData` |
 | `google_dma` `eea` | Your app |
 | `google_dma` `ad_personalization` | `adPersonalization` |
 | `google_dma` `ad_user_data` | `adUserData` |
 
-Inth's policy model says how the app asks for consent, not where the user
-is, so `eea` comes from your own region logic. Adjust and Google expect `"1"`
-only for users in the European Economic Area.
+Supply `eea` from your own region logic because Inth's policy model controls how you prompt, not where the user is located. Send `"1"` only for EEA users.
 
 ## Before you start
 
-Complete the [Swift](/docs/frameworks/swift/quickstart),
-[Android](/docs/frameworks/android/quickstart) or
-[React Native](/docs/frameworks/react-native/quickstart) quickstart, with
-`marketing` in your Inth policy and native configuration. Install Adjust SDK
-v5 through its [iOS](https://dev.adjust.com/en/sdk/ios/features/privacy),
-[Android](https://dev.adjust.com/en/sdk/android/features/privacy) or
-[React Native](https://dev.adjust.com/en/sdk/react-native/features/privacy)
-guide.
+Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add `marketing` to your Inth policy and native config. Install Adjust SDK v5 using its [iOS](https://dev.adjust.com/en/sdk/ios/features/privacy), [Android](https://dev.adjust.com/en/sdk/android/features/privacy), or [React Native](https://dev.adjust.com/en/sdk/react-native/features/privacy) guide.
 
-Connect the helper **before** `Adjust.initSdk`. Adjust holds `disable`,
-`enable` and third-party sharing calls made before initialization and applies
-them at start, so the first session already follows consent.
+Connect the helper **before** `Adjust.initSdk`. Adjust queues pre-init `disable`, `enable`, and third-party sharing calls and applies them at startup so the first session follows consent.
 
 ## Connect a Swift app
 
@@ -86,8 +65,7 @@ final class AdjustConsentOwner {
 }
 ```
 
-Create the owner, then call `Adjust.initSdk`. Keep it for the app's
-lifetime.
+Create and retain the owner for the app lifetime before calling `Adjust.initSdk`.
 
 ## Connect an Android app
 
@@ -116,16 +94,15 @@ fun connectAdjustConsent(inEea: Boolean, onError: (Exception) -> Unit): AdjustIn
 }
 ```
 
-Call it in `Application.onCreate` before `Adjust.initSdk(config)`, and keep
-the returned helper on the application.
+Call this in `Application.onCreate` before `Adjust.initSdk(config)` and retain the returned helper on the `Application`.
 
 ## Connect React Native or Expo
 
-Copy the checked connection function into `adjust-consent.ts`:
+Copy the connection function into `adjust-consent.ts`:
 
 <include src="../shared/examples/react-native-bare/rn-adjust-integration.mdx" />
 
-Then supply `react-native-adjust`:
+Wrap `react-native-adjust` in `adjust-vendor.ts`:
 
 {/* example: fragment */}
 
@@ -164,34 +141,17 @@ export const connectAdjustVendor = (
 	);
 ```
 
-Call it before `Adjust.initSdk`. JavaScript runs after native startup, so a
-persisted disabled state from an earlier launch is what holds Adjust back
-until then. Expo needs a development build with both native modules.
+Call this before `Adjust.initSdk`. Because JavaScript runs after native startup, Adjust relies on its persisted disabled state from prior launches until JS connects. Expo requires a custom native build, not Expo Go.
 
 ## Handle reset and teardown
 
-`sync()` enables Adjust again if allowed and resends third-party sharing.
-Teardown (`stop()`, `close()` or `disconnect()`) disables Adjust. Neither
-call deletes data. For an erasure request, use Adjust's `gdprForgetMe`, which
-is permanent.
+Call `syncAfterReset()` on Swift, `sync()` on Android, or `await adjustConsent.sync()` on React Native to re-enable Adjust when allowed and resend third-party sharing. Calling `stop()`, `close()`, or `disconnect()` disables Adjust without deleting data. For permanent erasure, call Adjust's `gdprForgetMe`.
 
 ## Check the integration
 
-1. Launch with no saved choice. Confirm `Adjust.isEnabled` reports `false`
-   and no session reaches Adjust.
-2. Grant marketing. Confirm a third-party sharing package with the
-   `google_dma` options set to `1`, followed by sessions.
-3. Withdraw. Confirm Adjust is disabled and sends nothing more.
+1. Launch with no saved choice. Confirm `Adjust.isEnabled` returns `false` and no session reaches Adjust.
+2. Grant `marketing`. Confirm a third-party sharing package with `google_dma` values set to `1`, followed by session requests.
+3. Withdraw `marketing`. Confirm Adjust disables and sends nothing further.
 4. Relaunch after withdrawal. Confirm Adjust starts disabled.
 
-The helper tests cover enable order, withdrawal during enable and
-marketing-only changes with recorded calls. They were not run against the
-Adjust SDK.
-
-The snippets were written against these SDK majors and checked as shown:
-
-| Platform | Version | How |
-| --- | --- | --- |
-| React Native | `react-native-adjust` 5.8.1 | Type-checked against the package's published types |
-| Android | `adjust-android` 5.8.1 | Method signatures read from the published AAR |
-| iOS | Adjust 5.8.1 | Checked against the SDK's public headers |
+Checked against `react-native-adjust` `5.8.1`, `adjust-android` `5.8.1`, and Adjust iOS `5.8.1`. Complete [mobile verification](/docs/guides/mobile-verify) on real devices.

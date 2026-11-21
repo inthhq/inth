@@ -1,33 +1,22 @@
 ---
 title: Configuration
-description: Configure the Android project URL, category scope, startup metadata, policy refresh and identity without starting a second consent engine.
+description: Configure the Android Inth project URL, dryRun, category scope, manifest startup, and identity for a single engine.
 group: frameworks
 ---
 
-Pass `NativeConfig` to `InthAndroid.install` once during app startup. The
-[quickstart](/docs/frameworks/android/quickstart) uses hosted Inth policy and
-Android's default storage and lifecycle services.
+Pass `NativeConfig` to `InthAndroid.install` once during app startup. The [Android quickstart](/docs/frameworks/android/quickstart) uses hosted Inth policy with Android's default storage and lifecycle services.
 
 ## Set your Inth project URL
 
-The Android SDK works only with Inth hosted projects. `backendUrl` is the
-project URL from your Inth dashboard, such as `https://your-project.inth.app`.
-The app fetches policy from that project and sends consent records to it.
-There is no self-hosted backend, no mode without a backend and no `initUrl`
-on mobile.
+The Android SDK connects to Inth hosted projects only. Set `backendUrl` to the project URL from your Inth dashboard, such as `https://your-project.inth.app`. The app fetches policy from that project and sends consent records to it.
 
-`InthAndroid.install` checks the value and uses its normal form,
-`https://your-project.inth.app`:
+`InthAndroid.install` normalizes `backendUrl` to `https://your-project.inth.app`:
 
-- A missing scheme means `https`, so `your-project.inth.app` works.
-- Trailing slashes and surrounding whitespace are dropped, and the scheme and
-  host are lowercased.
-- Another host, `http`, a port, a path, a query, a fragment, or a username or
-  password is refused.
+- A missing scheme defaults to `https`, so `your-project.inth.app` works.
+- Trailing slashes and surrounding whitespace are trimmed, and scheme and host are lowercased.
+- Any other host, `http`, a port, a path, a query, a fragment, or credentials are refused.
 
-A refused value throws `InthProjectUrlException`. Its `reason` is one of
-`empty`, `malformed`, `scheme`, `credentials`, `host`, `port`, `path` or
-`query`, and its message quotes your value:
+An invalid value throws `InthProjectUrlException` with `reason` (`empty`, `malformed`, `scheme`, `credentials`, `host`, `port`, `path`, or `query`) and a descriptive message:
 
 {/* example: fragment */}
 
@@ -35,19 +24,13 @@ A refused value throws `InthProjectUrlException`. Its `reason` is one of
 backendUrl must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "https://consent.example.com": the host must be a project host under inth.app.
 ```
 
-The installer handles HTTP transport, foreground refresh and reconnect retry.
-With an [offline policy](/docs/guides/mobile-offline), it delivers queued
-choices and refreshes policy when the app reconnects.
+The installer handles HTTP transport, foreground refresh, and reconnect retry. With an [offline policy](/docs/guides/mobile-offline), it queues offline choices and delivers them on reconnect.
 
 ## Run without sending records
 
-`NativeConfig(dryRun = true)` is for development and CI. The prompt, storage,
-gates and consent signals work as normal. The engine drops consent records
-instead of queueing or sending them, and `identify` and `logout` change local
-state and send nothing. A save returns `ok` true with `queued` false.
+Set `NativeConfig(dryRun = true)` in development and CI. Prompts, storage, gates, and consent signals work normally, while consent records are dropped instead of queued or sent. `identify` and `logout` update local state only, and saves return `ok = true` with `queued = false`.
 
-The app still fetches policy from `/init`, so you see your project's real
-policy. With `bundledPolicy` or `policy`, a dry-run launch needs no network.
+The app still fetches live policy from `/v1/consent/init` unless paired with `bundledPolicy` or `policy`:
 
 {/* example: fragment */}
 
@@ -61,40 +44,25 @@ InthAndroid.install(
 )
 ```
 
-Use your app's own `BuildConfig`. The SDK ships as release AARs, so it cannot
-read its own build type. It checks the host app's `FLAG_DEBUGGABLE` at
-runtime. An app that is not debuggable refuses `dryRun`:
-`InthAndroid.install` throws `IllegalStateException` and installs no engine.
-
-In a debuggable app, `dryRun` also lets `backendUrl` be any `https` URL, or
-`http` on `localhost`, `127.0.0.1` or `[::1]`, with a port and a path.
+Read your app's own `BuildConfig.DEBUG` because the SDK ships as release AARs. At runtime, the installer checks `FLAG_DEBUGGABLE`; non-debuggable builds throw `IllegalStateException` and install no engine. In debuggable builds, `dryRun` also allows any `https` URL or `http` on `localhost`, `127.0.0.1`, or `[::1]` with a port and path.
 
 ## Set the categories your app uses
 
-The quickstart declares necessary, measurement and marketing. The available
-`ConsentCategory` values are:
+Available `ConsentCategory` values:
 
-| Value | Use |
+| Value | Purpose |
 | --- | --- |
-| `NECESSARY` | Required app functions. Always permitted. |
+| `NECESSARY` | Required app functions (always permitted). |
 | `FUNCTIONALITY` | Optional functionality. |
 | `EXPERIENCE` | Optional experience features. |
 | `MEASUREMENT` | Analytics and usage measurement. |
 | `MARKETING` | Advertising and marketing features. |
 
-`consentCategories` declares your app's scope. The resolved policy still
-controls what is offered and permitted. Declaring measurement does not grant it.
-
-When scope is absent or empty, strict policies offer their full scope;
-permissive policies offer necessary-only scope with an acknowledgement prompt.
-Use an explicit list when the app integrates known optional categories.
+`consentCategories` declares your app's scope; the resolved policy controls what is offered and permitted. When omitted or empty, strict policies offer their full scope while permissive policies offer `NECESSARY` with an acknowledgement notice. Declare explicit categories whenever your app integrates optional SDKs.
 
 ## Use manifest startup instead
 
-For category consent with default platform services, the bundled AndroidX
-Startup initializer can install Inth before the first Activity. In that setup,
-provide application metadata instead of the quickstart's explicit
-`installConsent` call:
+For category consent with default platform services, the bundled AndroidX Startup initializer can install Inth before the first Activity. Add metadata in `AndroidManifest.xml` instead of calling `InthAndroid.install`:
 
 {/* example: fragment */}
 
@@ -105,15 +73,9 @@ provide application metadata instead of the quickstart's explicit
 </application>
 ```
 
-Change the project URL before building. The library manifest supplies the Inth
-initializer registration. With no usable project URL, the initializer leaves
-Inth inactive and optional gates closed.
+Without a valid project URL, the initializer leaves Inth inactive and optional gates closed.
 
-Use explicit installation when the app supplies IAB identity or other
-app-owned configuration. Repeated installation retains the first
-engine; it does not update its configuration. Remove only Inth's initializer
-metadata if you need to suppress automatic installation, preserving other
-AndroidX Startup users:
+Use explicit installation in `Application.onCreate` when configuring IAB identity or custom startup options. Repeated installation keeps the first engine without updating configuration. To disable automatic startup while keeping other AndroidX Startup initializers intact, remove `InthInitializer`:
 
 {/* example: fragment */}
 
@@ -126,72 +88,39 @@ AndroidX Startup users:
 </provider>
 ```
 
-Declare `xmlns:tools="http://schemas.android.com/tools"` on the manifest root
-when using this override. Disabling Inth's initializer does not disable vendor
-initializers. Configure each optional SDK's startup separately.
+Add `xmlns:tools="http://schemas.android.com/tools"` to the manifest root. Disabling `InthInitializer` does not affect vendor auto-initializers; disable those separately.
 
 ## Native configuration reference
 
 | Setting | Purpose |
 | --- | --- |
-| `backendUrl` | Required. The project URL from your Inth dashboard. |
-| `dryRun` | Development and CI switch that drops consent records. Defaults to false. A build that is not debuggable refuses it. |
-| `property` | Property each consent record names. Defaults to the application ID, and is sent in lowercase. |
+| `backendUrl` | Required. Project URL from your Inth dashboard. |
+| `dryRun` | Development and CI switch that drops consent records (default `false`; refused in non-debuggable builds). |
+| `domain` | Domain reported with consent records (defaults to the project URL host). |
 | `consentCategories` | App category scope. |
-| `vendors` | Optional IAB vendor scope. Absent or empty keeps the served list. |
+| `vendors` | Optional IAB vendor scope (omitting keeps the served list). |
 | `iab` | Registered CMP identity and publisher settings for an IAB policy. |
-| `iabListMaxAgeMs` | Maximum age of IAB disclosures, seven days by default. |
-| `bundledPolicy` | Manifest bundled at build time, used when no live or cached `/init` response is available. |
-| `policy` | `ConsentPolicy` kept in source control. The device resolves it and never calls `/init`; records still go to `backendUrl`. It does not mix with `bundledPolicy`. |
-| `overrides` | Country, region, language or GPC inputs for controlled QA. |
-| `detectedGpc` | A GPC signal supplied by a real platform integration. |
-| `extraHeaders` | App-owned transport headers. |
-| `maxPendingSaves` | Durable delivery queue limit, up to 20. |
-| `platform` | The app type the backend records for each request. Defaults to `android`. |
+| `iabListMaxAgeMs` | Maximum age of IAB disclosures (default 7 days). |
+| `bundledPolicy` | Build-time manifest used when no live or cached `/v1/consent/init` response exists. |
+| `policy` | In-code `ConsentPolicy` resolved on-device without calling `/v1/consent/init`; records still go to `backendUrl`. Cannot mix with `bundledPolicy`. |
+| `overrides` | Country, region, language, or GPC inputs for QA. |
+| `detectedGpc` | Real platform GPC signal input. |
+| `extraHeaders` | App-owned HTTP transport headers. |
+| `maxPendingSaves` | Durable delivery queue cap (up to 20). |
+| `platform` | Platform label sent in `x-inth-platform` as `<platform>-><sdkVersion>` (defaults to `android`). |
 
-`platform` labels requests in the `x-inth-platform` header, as
-`<platform>-><sdkVersion>`. Keep the default `android` in a Kotlin or Java app.
-In a React Native app that installs the engine itself, with `AUTO_BOOTSTRAP`
-off, set `platform = InthProtocol.PLATFORM_REACT_NATIVE` (`rn`). A React Native
-app that keeps the automatic startup already sends `rn`. Set `null` to send no
-platform header. The value is attribution only and changes no consent decision.
+Keep `platform` as `android` in Kotlin and Java apps. In a React Native app that disables `AUTO_BOOTSTRAP` and installs natively, set `platform = InthProtocol.PLATFORM_REACT_NATIVE` (`rn`); automatic React Native startup sets `rn` automatically. Pass `null` to omit the header.
 
-The corresponding manifest keys are `com.inth.BACKEND_URL`, `DRY_RUN`,
-`BACKEND_PROPERTY`, `CATEGORIES`, `POLICY_RESOURCE` and `POLICY_RULES`, with the
-same `com.inth.` prefix. `POLICY_RESOURCE` names a bundled manifest in app
-assets, and `POLICY_RULES` names an asset holding in-code policy rules as
-JSON. Declare one of the two, never both. Native configuration supports more
-options than manifest startup.
+Matching manifest keys use the `com.inth.` prefix: `BACKEND_URL`, `DRY_RUN`, `BACKEND_DOMAIN`, `CATEGORIES`, `POLICY_RESOURCE` (bundled asset path), and `POLICY_RULES` (in-code JSON asset path; never declare both).
 
-Manifest startup refuses a project URL that breaks the rule above, `DRY_RUN`
-in an app that is not debuggable, and the retired keys `com.inth.MODE` and
-`com.inth.BACKEND_INIT_URL`. It logs one error under the `inth` tag and
-leaves the engine uninstalled, so every read answers deny-all. Remove the
-retired keys. Use `com.inth.DRY_RUN` in development and CI in place of
-`com.inth.MODE`. `com.inth.BACKEND_INIT_URL` has no replacement, because the
-app fetches policy from the project URL.
+Manifest startup rejects invalid project URLs, `DRY_RUN` in non-debuggable builds, and retired keys (`com.inth.MODE`, `com.inth.BACKEND_INIT_URL`). It logs an error under the `inth` tag and leaves the engine uninstalled (every read answers deny-all). Remove retired keys and use `com.inth.DRY_RUN` in debug builds.
 
 ## Handle identity and reset
 
-`Inth.identify(KernelUser(...))` associates the installation with your app's
-external account. `Inth.logout()` detaches that identity. Neither creates a new
-Inth subject or deletes the backend audit trail. Recheck current gates after
-identity changes; IAB authority may be retired and a new choice required.
+`Inth.identify(KernelUser(...))` links the installation to an external account, and `Inth.logout()` detaches it without creating a new subject or deleting backend audit records. Recheck gates after identity transitions because IAB authority may retire.
 
-For an explicit withdrawal, save `CommitIntent.Necessary` and inspect the commit
-result. For a start-over control, call the installed kernel's
-`Inth.current?.reset()`. This resets local consent and resolves policy again.
-`Inth.uninstall()` only drops the singleton for teardown and leaves persisted
-consent unchanged. Neither operation is a backend account-deletion API.
+For explicit withdrawal, save `CommitIntent.Necessary` and check the commit result. To reset local consent and re-resolve policy, call `Inth.current?.reset()`. `Inth.uninstall()` only clears the process singleton without touching stored consent. Neither is a backend account-deletion API.
 
-## Handle a policy or storage failure
+## Handle policy or storage failures
 
-`Inth.decision(category)` distinguishes `PENDING`, `DENIED` and `GRANTED`.
-Keep optional collection off while policy or storage is unavailable. Let the
-person continue using necessary app functions and offer retry where appropriate.
-
-Listen for native errors using a retained `onError` callback. Do not replace a
-failed durable save with an in-memory success message. See
-[headless saves](/docs/frameworks/android/headless#save-a-category-form) for
-the result contract and [mobile verification](/docs/guides/mobile-verify) for
-failure and recovery checks.
+`Inth.decision(category)` distinguishes `PENDING`, `DENIED`, and `GRANTED`. Keep optional collection off while policy or storage is unavailable, keep necessary features usable, and register a retained `onError` callback. Never show a save confirmation after a durable write failure. See [Save a category form](/docs/frameworks/android/headless#save-a-category-form) and [Verify mobile consent](/docs/guides/mobile-verify).

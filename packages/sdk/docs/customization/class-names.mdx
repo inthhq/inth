@@ -1,120 +1,76 @@
 ---
 title: Class names and CSS-in-JS
-description: Style Inth's component parts with CSS Modules, vanilla-extract, StyleX, Emotion or plain class names, and see which approach works in each framework.
+description: Style Inth consent components with CSS Modules, vanilla-extract, StyleX, Emotion, or plain classes in every supported framework.
 group: customization
 ---
 
+Apply CSS Modules, vanilla-extract, StyleX, Emotion, or plain class names to any Inth component part without `!important`.
+
 ## Pass a class to a part
 
-CSS Modules, vanilla-extract, StyleX, Emotion and Tailwind all end up as a class
-on an element and a rule in a stylesheet. Give Inth the class through your
-framework's part API, and the rule wins over Inth's own rule for that part:
-Inth's rules sit in the `components` cascade layer, and an unlayered rule from
-your stylesheet outranks any layered one.
+Inth places its stock rules inside `@layer components`. Any unlayered class rule you pass through your framework's part API outranks Inth's rule for the same property regardless of load order.
 
-Each example below adds a 3px colored border and 4px corners to the banner card.
-The React examples run as Storybook stories in CI, which check that each class
-lands on the card and that the computed border comes from the class, not from
-Inth's own card rule. The script tag examples run in the example app's browser
-tests.
-
-| Framework | Part API | Class key | Inline `style` | Where the class's CSS must load |
+| Framework | Part API | Class key | Inline `style` | Where CSS must load |
 | --- | --- | --- | --- | --- |
-| Next.js, TanStack Start, React | `components.<component>.<part>`, or `theme.slots` | `className` | Yes | Anywhere on the page |
-| Nuxt, Vue | `components.<component>.<part>`, or `theme.slots` | `class` (`className` in `theme.slots`) | Yes | Anywhere on the page |
-| Svelte, SvelteKit | `theme.slots`, or `class` on a component | A string, or `className` in a slot object | Yes | A global stylesheet, or `:global()` |
-| Astro | `theme.slots` in the integration options, or `class` on `ConsentBanner` | A string, or `className` in a slot object | Yes | A global stylesheet |
-| HTML, JavaScript | `ui.theme.slots` | A string, or `className` in a slot object | Yes | Inside the shadow root through `ui.stylesheetUrls`, or anywhere with `shadow: false` |
+| Next.js, TanStack Start, React | `components.<component>.<part>` or `theme.slots` | `className` | Yes | Anywhere on the page |
+| Nuxt, Vue | `components.<component>.<part>` or `theme.slots` | `class`, or `className` in `theme.slots` | Yes | Anywhere on the page |
+| Svelte, SvelteKit | `theme.slots` or `class` on a component | String or `className` | Yes | Global stylesheet or `:global()` |
+| Astro | `theme.slots` in `inth()` or `class` on `ConsentBanner` | String or `className` | Yes | Global stylesheet |
+| HTML, JavaScript | `ui.theme.slots` | String or `className` | Yes | Inside shadow root via `ui.stylesheetUrls`, or anywhere with `shadow: false` |
 
-[Component parts](/docs/customization/slots) lists the parts and their keys in
-each framework.
+See [Component parts](/docs/customization/slots) for every part key. Each example below adds a 3px colored border and 4px corners to the banner card.
 
 ## CSS Modules
 
-Import the module and pass its class. This works wherever your bundler compiles
-CSS Modules:
+Import the module and pass the generated class to `components.banner.card`:
 
 <include src="../shared/examples/storybook-react/class-names-css-modules-css.mdx" />
 
 <include src="../shared/examples/storybook-react/class-names-css-modules.mdx" />
 
-Pass `components` in your `InthProvider` options, or in `options` on
-`InthProvider` in Next.js and TanStack Start.
+Pass `components` inside `options` on `InthProvider` in React, Next.js, and TanStack Start.
 
 ## vanilla-extract
 
-vanilla-extract compiles `style()` calls in `.css.ts` files to static CSS at
-build time. Add its plugin for your bundler, such as
-`@vanilla-extract/vite-plugin`, then pass the class:
+Configure your bundler plugin such as `@vanilla-extract/vite-plugin`, define styles in a `.css.ts` file, and pass the compiled class:
 
 <include src="../shared/examples/storybook-react/class-names-vanilla-extract.mdx" />
 
 ## StyleX
 
-`stylex.props()` returns `className` and, for dynamic values, `style`. A React
-part accepts both, so spread the result into the part. Add the StyleX compiler
-plugin for your bundler, such as `@stylexjs/unplugin`:
+Configure your StyleX compiler plugin such as `@stylexjs/unplugin` and spread `stylex.props()` into a React part. Spread passes both `className` and dynamic `style` props:
 
 <include src="../shared/examples/storybook-react/class-names-stylex.mdx" />
 
-StyleX writes atomic classes into an unlayered stylesheet, so they outrank
-Inth's layered rules without extra specificity.
+StyleX emits unlayered atomic classes, so they beat Inth's layered rules automatically.
 
 ## Emotion
 
-`css()` from `@emotion/css` returns a class name and inserts its rule into a
-`<style>` element in the document `<head>` when your code runs:
+Call `css()` from `@emotion/css` and pass the returned class name:
 
 <include src="../shared/examples/storybook-react/class-names-emotion.mdx" />
 
-Emotion inserts its rules into the page, not into a shadow root. With the HTML
-script tag or `@inth/sdk`, set `ui: { shadow: false }` so the UI renders
-in the page where those rules reach it. `ui.stylesheetUrls` cannot carry them,
-because they have no URL.
+Emotion injects `<style>` tags into document `<head>`, not into shadow roots. When using the HTML script tag or `@inth/sdk`, set `ui: { shadow: false }` so Emotion rules reach the UI.
 
-## Use other frameworks' part APIs
+## Framework differences
 
-Vue and Nuxt bind a part's object to the element with `v-bind`, so write
-`class` rather than `className`. A class string from CSS Modules,
-vanilla-extract or Emotion works the same way. To use StyleX, map its
-`className` to `class`.
+- **Vue and Nuxt.** Part objects bind with `v-bind`, so write `class` instead of `className`. CSS Modules, vanilla-extract, and Emotion strings work directly; with StyleX, map `stylex.props().className` to `class`.
+- **Svelte and SvelteKit.** Scoped `<style>` blocks do not reach Inth parts. Define classes in a global stylesheet or with `:global(.your-class)`.
+- **Astro.** Integration options in `astro.config.mjs` must serialize, so `theme.slots` accepts plain class strings from global CSS or Tailwind rather than imported CSS Module bindings.
 
-Svelte scopes component styles, so a class defined in a component's `<style>`
-block does not reach an Inth part. Define it in a global stylesheet or with
-`:global(.your-class)`. `theme.slots` accepts a string or
-`{ className, style }`, and `class` on `ConsentBanner` goes on the banner root.
+## Style the script tag shadow root
 
-Astro serializes its integration options, so `theme.slots` in
-`astro.config.mjs` takes plain strings and objects. Use class names from a
-global stylesheet or Tailwind there. Build-time tools that export class names
-from a module, such as CSS Modules, cannot reach `astro.config.mjs`.
+The HTML script tag and `init()` from `@inth/sdk` render inside a shadow root, so page stylesheets do not apply automatically. Choose one approach:
 
-## Style the script tag's shadow root
-
-The script tag and `init()` from `@inth/sdk` render into a shadow root. A
-class from your page's stylesheet reaches a part only if the stylesheet reaches
-the shadow root. Pick one:
-
-- **`ui.stylesheetUrls`.** Inth links each URL inside the shadow root, after
-  its own stylesheet. Link the stylesheet that holds your classes, such as your
-  CSS Modules or Tailwind build.
-- **`::part()`.** Every part with a slot key carries it in a `part` attribute.
-  Page CSS can style it with `[data-inth-ui]::part(consentBannerCard)`,
-  without any class.
-- **`ui.css`.** A string of CSS that Inth adds inside the shadow root.
-- **`shadow: false`.** Inth renders into the page and every page stylesheet
-  applies, including Emotion's.
-
-This example links a Tailwind build into the shadow root and puts utilities on
-two parts:
+- **`ui.stylesheetUrls`.** Links your compiled CSS Modules or Tailwind stylesheet inside the shadow root after Inth's stylesheet.
+- **`::part()`.** Styles any part with a slot key from page CSS using `[data-inth-ui]::part(consentBannerCard)`.
+- **`ui.css`.** Injects a raw CSS string inside the shadow root.
+- **`ui: { shadow: false }`.** Renders into the light DOM so all page CSS, including Emotion, applies directly.
 
 <include src="../shared/examples/html/tailwind-classes.mdx" />
 
 ## Check the result
 
-1. Open the page in a private window so the banner shows.
-2. Select the banner card in the Elements panel. It carries your class.
-3. In the Styles panel, your rule applies and Inth's rule for the same
-   property is struck out. If your class is on the element but its rule is
-   missing, the stylesheet does not reach the part. Check the "Where the class's CSS
-   must load" column in [Pass a class to a part](#pass-a-class-to-a-part).
+1. Open the site in a private window so the consent banner renders.
+2. Inspect the banner card in DevTools Elements and confirm your class is on the element.
+3. Check DevTools Styles to verify your border applies and Inth's rule for the same property is crossed out. If your class is present without a matching rule, check the "Where CSS must load" column in [Pass a class to a part](#pass-a-class-to-a-part).

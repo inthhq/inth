@@ -1,126 +1,91 @@
 ---
 title: Script loader
-description: Reference for the Inth script loader in JavaScript, covering every Script field, lifecycle callbacks, updateScripts, disposal and createScriptLoader for a kernel you own.
+description: Reference for the Inth script loader in JavaScript, covering Script fields, lifecycle callbacks, updateScripts and createScriptLoader.
 group: frameworks
 ---
 
+Reference for the script loader module that inserts vendor `<script>` tags
+when consent allows them and removes them on withdrawal.
+
 ## What the script loader does
 
-The script loader adds a vendor's `<script>` to the page once the script's
-category is allowed, and removes the element again when the visitor withdraws
-it. `@inth/sdk` and `createConsentRuntime` create one from their `scripts`
-option. Create one yourself only for a kernel you built with
-`createConsentKernel`.
-
-The [scripts guide](/docs/frameworks/javascript/scripts) shows where the list
-goes in each setup. The helpers in `@inth/integrations` return `Script` objects for
-common vendors; each [integration guide](/docs/integrations/overview) covers
-one.
+`@inth/sdk` and `createConsentRuntime` create a script loader automatically
+from their `scripts` option. Call `createScriptLoader` directly only when
+managing a manual kernel. See [scripts](/docs/frameworks/javascript/scripts)
+and [integrations](/docs/integrations/overview).
 
 ## Script fields
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `id` | `string` | required | A unique, stable name. The loader tracks the script by it. |
-| `category` | category or condition | required | What must be allowed, such as `'measurement'` or `{ and: ['measurement', 'marketing'] }`. |
-| `src` | `string` | none | The URL to load. |
-| `resourceKey` | `string` | `id` | The DOM resource identity. Matching keys share one element within and across loaders, while each logical script keeps its callbacks and consent state. Use different keys for different resources under the same script ID. |
-| `textContent` | `string` | none | Inline code to run instead of `src`. |
-| `callbackOnly` | `boolean` or `() => boolean` | `false` | Add no element when `true` or when the predicate returns `true`. Evaluated before each new mount, for diagnostics and for server startup. Keep predicates free of side effects and safe on the server. |
-| `alwaysLoad` | `boolean` | `false` | Load whatever the consent state, for tags that manage consent themselves through the vendor's API. |
-| `observeConsentBeforeLoad` | `boolean` | `false` | Notify `onConsentChange` during initial denial and subsequent updates before the resource loads. Useful for integrations that coordinate a shared SDK. |
-| `persistAfterConsentRevoked` | `boolean` or `'loaded'` | `false` | `true` keeps the element after withdrawal, including pending downloads. `'loaded'` keeps only elements whose load event completed; pending and failed loads are removed. |
-| `persistAfterDispose` | `boolean` | `false` | Keep an inserted element after configuration removal or loader disposal, while releasing its lifecycle callbacks. |
-| `target` | `'head' \| 'body'` | `'head'` | Where the element goes. |
-| `async`, `defer` | `boolean` | none | Attributes on the created element. |
-| `nonce` | `string` | the runtime's `nonce` | CSP nonce for this element. |
+| `id` | `string` | required | Unique, stable identifier. |
+| `category` | category or condition | required | Required category or condition such as `{ and: ['measurement', 'marketing'] }`. |
+| `src` | `string` | none | External script URL. |
+| `resourceKey` | `string` | `id` | Shared DOM element identity across registrations while keeping independent callbacks. |
+| `textContent` | `string` | none | Inline JavaScript code. |
+| `callbackOnly` | `boolean` or `() => boolean` | `false` | Skips DOM insertion and runs callbacks only (keep predicates side-effect-free and server-safe). |
+| `alwaysLoad` | `boolean` | `false` | Loads immediately regardless of consent (for tags managing consent internally). |
+| `observeConsentBeforeLoad` | `boolean` | `false` | Fires `onConsentChange` during initial denial and before load. |
+| `persistAfterConsentRevoked` | `boolean` or `'loaded'` | `false` | `true` keeps the tag on withdrawal; `'loaded'` keeps only completed loads. |
+| `persistAfterDispose` | `boolean` | `false` | Retains an inserted element after removal or disposal while releasing callbacks. |
+| `target` | `'head' \| 'body'` | `'head'` | Insertion target. |
+| `async`, `defer` | `boolean` | none | Script loading attributes. |
+| `nonce` | `string` | runtime `nonce` | CSP nonce for this element. |
 | `fetchPriority` | `'high' \| 'low' \| 'auto'` | none | Fetch priority hint. |
-| `attributes` | `Record<string, string>` | none | Other attributes for the element. |
-| `anonymizeId` | `boolean` | `true` | Give the element a random `id`, so content blockers cannot match it by name. |
-| `vendor` | `string` | none | A vendor slug for vendor-level consent. The script also waits while the visitor has turned that vendor off. |
-| `vendorId`, `iabPurposes`, `iabLegIntPurposes`, `iabSpecialFeatures` | IAB IDs | none | Under an IAB policy, the TC string decides instead of the category. |
+| `attributes` | `Record<string, string>` | none | Extra attributes on the `<script>` element. |
+| `anonymizeId` | `boolean` | `true` | Assigns a random `id` attribute. |
+| `vendor` | `string` | none | Vendor slug for non-IAB vendor consent. |
+| `vendorId`, `iabPurposes`, `iabLegIntPurposes`, `iabSpecialFeatures` | IAB IDs | none | Evaluated against the TC String under IAB policies. |
 
 ## Lifecycle callbacks
 
-Each callback receives `{ id, elementId, hasConsent, consents, element?,
-error?, vendor? }`.
+Each callback receives `{ id, elementId, hasConsent, consents, element?, error?, vendor? }`:
 
 | Callback | When it runs |
 | --- | --- |
-| `onBeforeLoad` | Before a load attempt. It can run again for the same script if consent changes before the load starts, so make it safe to repeat. |
-| `onLoad` | After the script loaded. Use it for set-up that needs the vendor's code. |
-| `onError` | When the script failed to load. |
-| `onConsentChange` | Each time a loaded script's consent changes. With `observeConsentBeforeLoad`, also during initial denial and later changes before loading. Use it for a vendor's opt-out call when you turn off the reload. |
-| `onDispose` | When the configuration is removed or the loader is disposed, including a script that never loaded. |
+| `onBeforeLoad` | Before each load attempt (must be idempotent). |
+| `onLoad` | After the script finishes loading. |
+| `onError` | When loading fails. |
+| `onConsentChange` | On consent updates after load (or before load when `observeConsentBeforeLoad` is `true`). |
+| `onDispose` | When removed from config or when the loader disposes. |
 
-Withdrawal alone does not call `onDispose`. With the default reload, the page
-reloads after withdrawal anyway; with `reloadOnConsentRevoked: false`, use
-`onConsentChange` to stop the vendor.
+Consent withdrawal does not call `onDispose`. With
+`reloadOnConsentRevoked: false`, use `onConsentChange` to call the vendor's
+opt-out API.
 
-When scripts share an element, each active registration receives its own
-`onLoad` or `onError` callback. A registration that joins after Inth observed
-completion receives that callback in a microtask, after its consent callback,
-using its current callbacks and consent. Inline scripts share their deferred
-completion too. Removing a registration cancels its pending callback. Inth does
-not infer completion for elements added outside the loader.
-
-Removing the original loader transfers ownership to a remaining loader. Inth
-removes an element it created when the last loader releases it, unless a
-registration that released it by removal or disposal set
-`persistAfterDispose`. That setting does not apply to consent withdrawal.
-
-Use `persistAfterDispose` for an SDK that must remain installed for the rest
-of the page. Disposal still releases callbacks. A later registration with
-the same resource identity can adopt the retained element and receive its
-load or error completion, including a download that finished without an
-owner. This preserves the existing source and element attributes; it does
-not apply new SDK configuration or stop running code. The integration must
-reconcile supported settings and reject incompatible changes.
+Shared elements (via `resourceKey`) deliver `onLoad`/`onError` to every
+active registration and remove the DOM element only when the last owning
+loader releases it (unless `persistAfterDispose` is set).
 
 ## Update the list
 
-`loader.updateScripts(next)` replaces the configuration and reconciles at
-once:
+`loader.updateScripts(next)` reconciles the active script list immediately:
 
-- A DOM script with the same `id`, source, inline code and attributes keeps its
-  element when its `onDispose` callback is unchanged. Replacing the
-  configuration object with the same callback preserves that lifecycle.
-  Changes to other callback functions alone do not reload it.
-- Changing the source, inline code or attributes starts a new load.
-- A DOM script with `onDispose` keeps its lifecycle when the resource and
-  disposal callback stay the same. Adding, removing or changing the callback,
-  or changing the resource, disposes the previous configuration and starts a
-  new load. Keep the callback stable across rerenders, or supply a new
-  callback when replacement needs cleanup.
-- A callback-only script with `onDispose` is tracked by object, so replacing
-  the object disposes the previous configuration, even with the same callback.
-- Set `persistAfterDispose` to keep an inserted resource on purpose.
-- A removed script releases its element. Shared external elements stay while
-  another loader still uses them.
+- Unchanged DOM scripts (same `id`, source/code, attributes and `onDispose`
+  reference) keep their element without reloading.
+- Changing source, inline code, attributes or `onDispose` disposes the prior
+  registration and reloads.
+- Callback-only scripts with `onDispose` are tracked by object identity.
+- Removed scripts release their elements (unless shared or
+  `persistAfterDispose`).
 
-Updates requested from inside a callback run after the current pass; the
-latest wins. A chain of callbacks that keeps changing consent or the list is
-stopped after 100 passes, and the loader disposes itself.
-
-`loader.getLoadedScriptIds()` lists the scripts currently loaded.
+Re-entrant updates settle after the current pass and halt after 100 passes.
+Call `loader.getLoadedScriptIds()` to inspect loaded script IDs.
 
 ## Attach the loader to your own kernel
 
-A kernel from `createConsentKernel` has no loader. This file creates one with
-persistence, before initialization:
+Create the loader before calling `commands.init()`:
 
 <include src="../../../shared/examples/javascript/kernel.mdx" />
 
 `createScriptLoader({ kernel, scripts, nonce?, onDebug? })` returns the
-handle. `onDebug` receives every lifecycle step, for logging. Dispose the
-loader before the kernel. Do not attach a loader to a kernel that
-`@inth/sdk` or `createConsentRuntime` owns; each already has one.
+handle (`onDebug` receives every lifecycle event). Dispose the loader before
+its kernel, and never attach a second loader to a client or runtime kernel.
 
 ## Check it works
 
-1. Filter the Network tab for the vendor's host. Nothing loads before a
-   choice.
-2. Allow the category. The vendor loads and `onLoad` runs. In the Elements
-   panel, the script sits in `<head>` with a random `id`.
-3. With `reloadOnConsentRevoked: false`, withdraw the category.
-   `onConsentChange` runs with `hasConsent: false` and the element is gone.
+1. Filter DevTools Network for the vendor host: nothing loads before consent.
+2. Allow the category: the script loads in `<head>` with a randomized `id`
+   and `onLoad` fires.
+3. With `reloadOnConsentRevoked: false`, withdraw the category:
+   `onConsentChange` fires with `hasConsent: false` and the element removes.

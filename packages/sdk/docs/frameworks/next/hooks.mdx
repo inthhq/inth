@@ -1,16 +1,17 @@
 ---
 title: Hooks
-description: Gate features and save consent choices in Next.js Client Components with the focused hooks exported from @inth/nextjs.
+description: Gate features and save consent choices in Next.js Client Components with focused hooks from @inth/nextjs.
 group: frameworks
 ---
 
 ## Read only the state you need
 
-Every hook reads the runtime from the `InthProvider` set up in your
+Import hooks from `@inth/nextjs` and call them in Client Components rendered
+inside `InthProvider` from your
 [App Router](/docs/frameworks/next/app-router) or
-[Pages Router](/docs/frameworks/next/pages-router) guide, so call them from a
-Client Component rendered inside that root and import them from
-`@inth/nextjs`.
+[Pages Router](/docs/frameworks/next/pages-router) setup:
+
+{/* example: fragment */}
 
 ```tsx title="components/optional-feature.tsx"
 'use client';
@@ -27,7 +28,9 @@ export function OptionalFeature() {
 
 ## Save from a visitor action
 
-Place this Client Component inside your existing consent boundary.
+Render this Client Component inside `InthProvider`:
+
+{/* example: fragment */}
 
 ```tsx title="components/reject-button.tsx"
 'use client';

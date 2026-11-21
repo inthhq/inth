@@ -1,19 +1,22 @@
 ---
 title: ConsentWidget
-description: Put the Inth category switches and save actions inline on a Vue privacy settings page with ConsentWidget from @inth/vue/vue-plugin.
+description: Render Inth category switches and save buttons inline on a Vue privacy settings page with ConsentWidget.
 group: frameworks
 ---
+
+Embed inline consent controls directly inside a privacy or account settings
+page with `ConsentWidget`.
 
 ## Import the widget into your settings page
 
 Import `ConsentWidget` from `@inth/vue/vue-plugin` and render it on your
-privacy or account settings page:
+settings page:
 
 <include src="../../../shared/examples/vue/privacy-settings.mdx" />
 
-Render the page inside the app that installed
-[the inth plugin](/docs/frameworks/vue/plugin). Keep `InthProvider` mounted
-too, so visitors on other pages still get the banner.
+Render it inside the app that installed
+[the inth plugin](/docs/frameworks/vue/plugin), and keep `InthProvider`
+mounted so visitors on other routes still see the banner.
 
 <import src="../../../shared/vue/components/consent-widget.mdx#behavior" />
 
@@ -27,7 +30,7 @@ too, so visitors on other pages still get the banner.
 
 ## Next steps
 
-- [ConsentManager](/docs/frameworks/vue/components/consent-manager) shows
-  these controls in a dialog.
-- [Composables](/docs/frameworks/vue/composables#build-a-preference-form)
-  build a preference form from your own markup.
+- [ConsentManager](/docs/frameworks/vue/components/consent-manager): render
+  these controls inside a modal dialog.
+- [Composables](/docs/frameworks/vue/composables#build-a-preference-form):
+  build a custom preference form.

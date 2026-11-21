@@ -1,18 +1,16 @@
 ---
 title: IAB GPP
-description: Turn on the IAB Global Privacy Platform API (__gpp) in a Vue app with the Inth Vue plugin's gpp option, so ad tech can read US state opt-outs and the TCF EU consent string.
+description: Enable the IAB Global Privacy Platform API (__gpp) in Vue with inth's gpp option for US state opt-outs and TCF EU strings.
 group: frameworks
 ---
 
-## What GPP does
-
-The `gpp` option installs `window.__gpp`, the GPP 1.1 CMP API, and keeps its
-GPP string in step with the visitor's choices. Prebid.js, Google Ad Manager
-and other ad tech read US privacy signals from it.
+Enable `window.__gpp` (GPP 1.1 CMP API) in your Vue app so ad tech such as
+Prebid.js and Google Ad Manager can read US state privacy signals and TCF EU
+consent strings.
 
 ## Turn on GPP
 
-Pass `gpp` to the Vue plugin in `src/main.ts`:
+Pass `gpp: true` to `inth` in `src/main.ts`:
 
 {/* example: fragment */}
 
@@ -31,19 +29,18 @@ createApp(App)
 	.mount('#app');
 ```
 
-The plugin loads `@inth/sdk/iab/gpp` when the app mounts, so apps without `gpp`
-never download it. The Vue integration already depends on `@inth/sdk/iab`;
-nothing else to install. Unmounting the app removes `__gpp`.
+The plugin lazy-loads `@inth/sdk/iab/gpp` on mount, so apps without `gpp`
+never download it. `@inth/vue` already depends on `@inth/sdk/iab`, so no
+extra package is needed. Unmounting the app removes `window.__gpp`.
 
-Replace `https://your-project.inth.app` with your project's backend URL. The
-GPP string follows the policy and location Inth resolves for the visitor, so
-a US visitor's state comes from the backend.
+The GPP string follows the policy and location resolved by Inth for the
+visitor, including US state detection.
 
-If you pass the plugin a `runtime` created with `createConsentRuntime()`, the
-plugin ignores `gpp`. Set `gpp` and `loadGPP: () => import('@inth/vue/gpp')`
-on that runtime instead.
+If you pass a custom `runtime` created with `createConsentRuntime()`,
+`inth` ignores `gpp`. Configure `gpp` and
+`loadGPP: () => import('@inth/vue/gpp')` directly on that runtime instead.
 
-To add the TCF EU section for visitors under an `iab` policy, set up
-[IAB TCF](/docs/frameworks/vue/iab) as well.
+To include the TCF EU section for visitors under an `iab` policy, also enable
+[IAB TCF](/docs/frameworks/vue/iab).
 
 <include src="../../shared/iab-gpp.mdx" />

@@ -1,64 +1,29 @@
 ---
 title: Tailwind CSS
-description: Use Inth's styles with Tailwind CSS 4 or 3 in every framework, put utilities on Inth component parts, and use Tailwind's dark variant with Inth.
+description: Use Inth consent styles with Tailwind CSS 4 or 3, apply utility classes to component parts, and sync Tailwind dark mode.
 group: customization
 ---
 
-## How Inth's styles meet Tailwind
+Use Inth alongside Tailwind CSS 4 with zero extra CSS config, or add the PostCSS plugin for Tailwind CSS 3 so preflight does not strip banner styles.
 
-Inth's component rules live in the CSS cascade layer `components`. Each Inth
-stylesheet starts with Tailwind CSS 4's layer order,
-`@layer properties, theme, base, components, utilities;`, and cascade layers
-rank by the order they are first named. On Tailwind 4, Inth's rules stay above
-Tailwind's preflight in `base` and below your utilities in `utilities`,
-whichever stylesheet loads first. A plain utility such as `p-2` on an Inth part
-wins without `!important`.
-
-Tailwind CSS 3 has no cascade layers. It treats `@layer components` as its own
-directive and fails the build on a stylesheet that uses it without a matching
-`@tailwind components`. Inth's Tailwind 3 PostCSS plugin removes the layer
-wrappers from Inth's stylesheets before Tailwind 3 runs. Inth's rules then
-win by specificity, as they did in c15t v2, so a utility on an Inth part needs
-Tailwind's important modifier, such as `!p-2`. The plugin cannot reach the
-`<style>` elements Inth renders itself, so on Tailwind 3 you turn those off
-with `styles: false` and import the stylesheet instead. The Astro integration
-does this for you when it finds Tailwind 3.
-
-The setups below come from fixtures that CI builds for each framework and
-checks in Chromium. The Next.js snippets come from the Next.js 16 Turbopack
-fixture. The Next.js 15 and webpack fixtures use the same files. The check
-confirms that Inth's banner and dialog keep their styles under Tailwind's
-preflight, that a padding utility on the banner root
-beats Inth's own padding, and that the `dark:` variant applies. The fixtures run
-without a backend, so they use `testing()` mode or a local `projectUrl`. Keep the
-`mode` or `projectUrl` from your quickstart.
+| Version | Extra Inth setup | Utility override syntax |
+| --- | --- | --- |
+| Tailwind CSS 4 | None. Inth `@layer components` sits above `base` and below `utilities`. | Plain utilities such as `p-2` win without `!important`. |
+| Tailwind CSS 3 | Set `styles: false`, add `<package>/postcss-tailwind3` before `tailwindcss`, and import `styles.css` first. | Prefix overrides with `!`, such as `!p-2`. |
 
 ## Set up Tailwind CSS 4
 
-Install Tailwind's plugin for your build tool and add it to the build. Inth
-loads its own styles in every framework, so your CSS entry holds only
-Tailwind. Do not import Inth's stylesheet next to Tailwind 4: the stock
-components already render the same rules, and the import would hold back the
-first paint.
+Install Tailwind 4 for your build tool. Do not import an Inth stylesheet alongside Tailwind 4; stock components inject layered rules automatically, and a manual import blocks first paint.
 
 <Tabs items={['Next.js', 'TanStack Start', 'React', 'Nuxt', 'Vue', 'Astro', 'Svelte', 'SvelteKit', 'HTML', 'JavaScript']}>
   <Tab value="Next.js">
-    Next.js runs Tailwind 4 through `@tailwindcss/postcss`:
-
     <include src="../shared/examples/tailwind-v4/next-16-turbopack/postcss-config.mdx" />
-
-    Import Tailwind in the global stylesheet that `app/layout.tsx` or
-    `pages/_app.tsx` loads:
 
     <include src="../shared/examples/tailwind-v4/next-16-turbopack/tailwind-css.mdx" />
   </Tab>
 
   <Tab value="TanStack Start">
-    Add `@tailwindcss/vite` before the TanStack Start plugin:
-
     <include src="../shared/examples/tailwind-v4/tanstack-start/vite-config.mdx" />
-
-    Import Tailwind from the stylesheet your root route links:
 
     <include src="../shared/examples/tailwind-v4/tanstack-start/tailwind-css.mdx" />
   </Tab>
@@ -66,41 +31,23 @@ first paint.
   <Tab value="React">
     <include src="../shared/examples/tailwind-v4/react/vite-config.mdx" />
 
-    Import this stylesheet from your entry module:
-
     <include src="../shared/examples/tailwind-v4/react/tailwind-css.mdx" />
   </Tab>
 
   <Tab value="Nuxt">
-    Add `@tailwindcss/vite` under `vite.plugins` and list your CSS entry in
-    `css`. The Vue components load Inth's styles themselves:
-
     <include src="../shared/examples/tailwind-v4/nuxt/nuxt-config.mdx" />
-
-    Your CSS entry imports Tailwind and declares the dark variant:
 
     <include src="../shared/examples/tailwind-v4/nuxt/tailwind-css.mdx" />
   </Tab>
 
   <Tab value="Vue">
-    The Vue components load their own stylesheets, so the CSS entry holds only
-    Tailwind:
-
     <include src="../shared/examples/tailwind-v4/vue/vite-config.mdx" />
-
-    Import this stylesheet from `src/main.ts`:
 
     <include src="../shared/examples/tailwind-v4/vue/tailwind-css.mdx" />
   </Tab>
 
   <Tab value="Astro">
-    Inth inlines the banner's rules into each page and links the dialog's
-    when it opens, so the CSS entry holds only Tailwind. Add
-    `@tailwindcss/vite` under `vite.plugins`:
-
     <include src="../shared/examples/tailwind-v4/astro/astro-config.mdx" />
-
-    Import this stylesheet from your layout:
 
     <include src="../shared/examples/tailwind-v4/astro/tailwind-css.mdx" />
   </Tab>
@@ -108,146 +55,72 @@ first paint.
   <Tab value="Svelte">
     <include src="../shared/examples/tailwind-v4/svelte/vite-config.mdx" />
 
-    Import this stylesheet from `src/main.ts`:
-
     <include src="../shared/examples/tailwind-v4/svelte/tailwind-css.mdx" />
   </Tab>
 
   <Tab value="SvelteKit">
     <include src="../shared/examples/tailwind-v4/sveltekit/vite-config.mdx" />
 
-    Import this stylesheet from your root `+layout.svelte`:
-
     <include src="../shared/examples/tailwind-v4/sveltekit/tailwind-css.mdx" />
   </Tab>
 
   <Tab value="HTML">
-    The script tag renders its UI in a shadow root with its own copy of Inth's
-    stylesheet. Build your Tailwind CSS as usual and link it from the page:
-
     <include src="../shared/examples/tailwind-v4/html/tailwind-css.mdx" />
 
-    To put utilities on Inth's parts, link the same build into the shadow root
-    with `ui.stylesheetUrls`, as in
-    [put utilities on Inth parts](#put-utilities-on-inth-parts).
+    Link your built stylesheet into the shadow root via `ui.stylesheetUrls`. See [Put utilities on component parts](#put-utilities-on-component-parts).
   </Tab>
 
   <Tab value="JavaScript">
-    `init()` from `@inth/sdk` renders into a shadow root, the same way as
-    the script tag. Build Tailwind as usual for your page. To put utilities on
-    Inth's parts, pass the URL of your built stylesheet in
-    `ui.stylesheetUrls`, as in
-    [put utilities on Inth parts](#put-utilities-on-inth-parts).
+    Build Tailwind for your page and pass its URL to `ui.stylesheetUrls` in `init()`. See [Put utilities on component parts](#put-utilities-on-component-parts).
   </Tab>
 </Tabs>
 
 ## Set up Tailwind CSS 3
 
-Tailwind 3's preflight is unlayered, so it beats the layered rules Inth
-renders itself and strips the banner's padding and borders. On Tailwind 3,
-turn those rules off with `styles: false` and import Inth's `styles.css`
-through a PostCSS plugin. The Astro integration needs only the plugin: it
-detects Tailwind 3 and links `@inth/astro/styles.css` itself. Every Inth
-package that ships a stylesheet exports the plugin as
-`<package>/postcss-tailwind3`, so use the one from the package you installed:
+Tailwind 3 treats `@layer components` as a directive and its unlayered preflight overrides Inth's layered `<style>` tags. Every package exports `<package>/postcss-tailwind3` to unwrap Inth's layers before Tailwind 3 runs.
 
-| You installed | Plugin name |
-| --- | --- |
-| A framework package, such as `@inth/react` or `@inth/svelte` | That package's plugin, such as `@inth/react/postcss-tailwind3` |
-| `@inth/sdk` (script tag in the light DOM) | `@inth/sdk/postcss-tailwind3` |
+1. Set `styles: false` in provider options for Next.js, TanStack Start, React, Svelte, and SvelteKit. Skip in Vue, Nuxt, and Astro.
+2. Add `<package>/postcss-tailwind3` before `tailwindcss` in your PostCSS config using object syntax to preserve order.
+3. Import `<package>/styles.css` above `@tailwind` directives. Skip in Vue, Nuxt, and Astro; Astro detects Tailwind 3 and adds `@inth/astro/styles.css` automatically. Placing `@import` below `@tailwind` breaks Turbopack and warns in Vite.
+4. Set `darkMode: 'class'` so `dark:` matches Inth's `dark` class.
 
-They are the same plugin.
-
-Make four changes:
-
-1. Set `styles: false` where you configure Inth: `options` in Next.js
-   `inth.config.ts`, `options` on `InthProvider` in TanStack Start and React,
-   and `styles={false}` on `InthProvider` in Svelte and SvelteKit.
-   Vue, Nuxt and Astro need no change.
-2. Add the plugin to your PostCSS plugins, before `tailwindcss`. Write the plugins as an object, as the examples below do.
-   PostCSS runs them in the order of the keys. Next.js also accepts an array
-   of plugin names, but Vite's PostCSS loader rejects that form.
-3. Import Inth's stylesheet above the `@tailwind` directives, whatever your
-   build tool. Vue, Nuxt and Astro skip this step. Vite drops an `@import`
-   that follows another rule, with the warning
-   `@import must precede all other statements`, and the banner renders
-   unstyled. Next.js 16 with Turbopack fails the build.
-4. Set `darkMode: 'class'` so Tailwind's `dark:` variant follows the same
-   `dark` class Inth reads.
-
-The plugin also processes the stylesheets the Vue and Nuxt components import,
-and the one the Astro integration adds on a Tailwind 3 site. Without it,
-Tailwind 3 stops
-the build with "`@layer components` is used but no matching
-`@tailwind components` directive is present", or purges Inth's rules, because
-Inth's class names never appear in your source.
-
-Tailwind 3 has no cascade layers, so Inth's selectors outrank a single utility
-class. Add the important modifier to utilities you pass to Inth parts:
-`!bg-red-500`, `hover:!bg-red-500`. A bare `bg-red-500` has no effect. Theme
-tokens work the same on Tailwind 3 and 4.
-
-Create React App ignores PostCSS config files, so Tailwind 3 cannot run the
-plugin and the build fails on Inth's stylesheet. Add the plugin before
-`tailwindcss` through CRACO, eject, or move the app to Vite.
+Prefix utility overrides on Inth parts with `!`, such as `!bg-red-500` and `hover:!bg-red-500`. For Create React App or toolchains that cannot add PostCSS plugins, use CRACO, switch to Vite, or import the pre-unlayered `styles.tw3.css` and `iab/styles.tw3.css` from `@inth/react`, `@inth/nextjs`, or `@inth/tanstack-start`.
 
 <Tabs items={['Next.js', 'TanStack Start', 'React', 'Nuxt', 'Vue', 'Astro', 'Svelte', 'SvelteKit', 'HTML', 'JavaScript']}>
   <Tab value="Next.js">
-    Next.js loads `postcss.config.mjs` itself:
+    Set `styles: false` in `InthProvider` options:
 
     <include src="../shared/examples/tailwind-v3/next-16-turbopack/postcss-config.mdx" />
 
-    Scan `app/` and turn on the class-based dark variant:
-
     <include src="../shared/examples/tailwind-v3/next-16-turbopack/tailwind-config.mdx" />
-
-    Import `@inth/nextjs/styles.css` above the directives. Turbopack fails the
-    build when the import sits below them. The same order works with
-    webpack. Set `styles: false` in `InthProvider`'s `options` as well:
 
     <include src="../shared/examples/tailwind-v3/next-16-turbopack/tailwind-css.mdx" />
   </Tab>
 
   <Tab value="TanStack Start">
+    Set `styles: false` on `InthProvider`:
+
     <include src="../shared/examples/tailwind-v3/tanstack-start/postcss-config.mdx" />
 
-    Scan your source and turn on the class-based dark variant:
-
     <include src="../shared/examples/tailwind-v3/tanstack-start/tailwind-config.mdx" />
-
-    Import `@inth/tanstack-start/styles.css` above the directives, in the
-    stylesheet your root route links, and set `styles: false` in
-    `InthProvider`'s `options`:
 
     <include src="../shared/examples/tailwind-v3/tanstack-start/tailwind-css.mdx" />
   </Tab>
 
   <Tab value="React">
+    Set `styles: false` on `InthProvider`:
+
     <include src="../shared/examples/tailwind-v3/react/postcss-config.mdx" />
 
-    Scan your source and turn on the class-based dark variant:
-
     <include src="../shared/examples/tailwind-v3/react/tailwind-config.mdx" />
-
-    Import `@inth/react/styles.css` above the directives, import this
-    stylesheet from your entry module, and set `styles: false` in the
-    `InthProvider` options:
 
     <include src="../shared/examples/tailwind-v3/react/tailwind-css.mdx" />
   </Tab>
 
   <Tab value="Nuxt">
-    Nuxt reads PostCSS plugins from `postcss.plugins` in `nuxt.config.ts`, in
-    the order listed:
-
     <include src="../shared/examples/tailwind-v3/nuxt/nuxt-config.mdx" />
 
-    Scan `app/` and turn on the class-based dark variant:
-
     <include src="../shared/examples/tailwind-v3/nuxt/tailwind-config.mdx" />
-
-    The Vue components load Inth's styles themselves, and the plugin processes
-    them too, so the CSS entry holds only the directives:
 
     <include src="../shared/examples/tailwind-v3/nuxt/tailwind-css.mdx" />
   </Tab>
@@ -255,12 +128,7 @@ plugin and the build fails on Inth's stylesheet. Add the plugin before
   <Tab value="Vue">
     <include src="../shared/examples/tailwind-v3/vue/postcss-config.mdx" />
 
-    Scan your source and turn on the class-based dark variant:
-
     <include src="../shared/examples/tailwind-v3/vue/tailwind-config.mdx" />
-
-    The Vue components load their own stylesheets, and the plugin processes
-    them too, so the CSS entry holds only the directives:
 
     <include src="../shared/examples/tailwind-v3/vue/tailwind-css.mdx" />
   </Tab>
@@ -268,83 +136,48 @@ plugin and the build fails on Inth's stylesheet. Add the plugin before
   <Tab value="Astro">
     <include src="../shared/examples/tailwind-v3/astro/postcss-config.mdx" />
 
-    Scan your source and turn on the class-based dark variant:
-
     <include src="../shared/examples/tailwind-v3/astro/tailwind-config.mdx" />
-
-    When the integration finds Tailwind 3 in the project, it adds
-    `@inth/astro/styles.css` to every page through Astro's CSS pipeline
-    instead of inlining the banner's rules, so the plugin processes it. You
-    do not set `styles: false` or import Inth's stylesheet, and the CSS
-    entry holds only the directives. The first paint still waits for that
-    stylesheet:
 
     <include src="../shared/examples/tailwind-v3/astro/tailwind-css.mdx" />
   </Tab>
 
   <Tab value="Svelte">
+    Pass `styles={false}` to `InthProvider`:
+
     <include src="../shared/examples/tailwind-v3/svelte/postcss-config.mdx" />
 
-    Scan your source and turn on the class-based dark variant:
-
     <include src="../shared/examples/tailwind-v3/svelte/tailwind-config.mdx" />
-
-    Import `@inth/svelte/styles.css` above the directives, import this
-    stylesheet from `src/main.ts`, and pass `styles={false}` to
-    `InthProvider`:
 
     <include src="../shared/examples/tailwind-v3/svelte/tailwind-css.mdx" />
   </Tab>
 
   <Tab value="SvelteKit">
+    Pass `styles={false}` to `InthProvider`:
+
     <include src="../shared/examples/tailwind-v3/sveltekit/postcss-config.mdx" />
 
-    Scan your source and turn on the class-based dark variant:
-
     <include src="../shared/examples/tailwind-v3/sveltekit/tailwind-config.mdx" />
-
-    Import `@inth/svelte/styles.css` above the directives, import this
-    stylesheet from your root `+layout.svelte`, and pass `styles={false}` to
-    `InthProvider`:
 
     <include src="../shared/examples/tailwind-v3/sveltekit/tailwind-css.mdx" />
   </Tab>
 
   <Tab value="HTML">
-    In the default shadow root, Inth's stylesheet never meets Tailwind, so the
-    page's Tailwind 3 setup needs nothing from Inth:
-
     <include src="../shared/examples/tailwind-v3/html/tailwind-css.mdx" />
 
-    To render the UI in the page instead, see
-    [render the UI in the light DOM](#render-the-ui-in-the-light-dom).
+    The shadow root isolates Inth from Tailwind 3. For light DOM setup, see [Render the UI in the light DOM](#render-the-ui-in-the-light-dom).
   </Tab>
 
   <Tab value="JavaScript">
-    `init()` renders into a shadow root by default, where Inth's stylesheet
-    never meets Tailwind. To render the UI in the page and build Inth's rules
-    into your Tailwind CSS, see
-    [render the UI in the light DOM](#render-the-ui-in-the-light-dom).
+    The shadow root isolates `init()` from Tailwind 3. For light DOM setup, see [Render the UI in the light DOM](#render-the-ui-in-the-light-dom).
   </Tab>
 </Tabs>
 
-## Put utilities on Inth parts
+## Put utilities on component parts
 
-Pass utilities to a component part through your framework's part API. The
-fixtures put padding on the banner root, which Inth also pads, with a different
-value in dark mode. On Tailwind 4 a plain utility wins. On Tailwind 3, add `!`,
-as in `!p-[7px] dark:!p-[11px]`, because Inth's unlayered rules outrank a plain
-utility. [Component parts](/docs/customization/slots) lists the parts each
-framework exposes.
-
-Tailwind only generates classes it finds in the files its `content` globs or
-`@source` rules scan. Keep part classes in a scanned file.
+Place part utilities in files scanned by Tailwind's `content` globs or `@source`. On Tailwind 3, add `!` such as `!p-[7px] dark:!p-[11px]`. See [Component parts](/docs/customization/slots).
 
 <Tabs items={['Next.js', 'TanStack Start', 'React', 'Nuxt', 'Vue', 'Astro', 'Svelte', 'SvelteKit', 'HTML', 'JavaScript']}>
   <Tab value="Next.js">
-    Add the classes to `options.components` on `InthProvider`, in the
-    `'use client'` wrapper from your quickstart:
-
     <include src="../shared/examples/tailwind-v4/next-16-turbopack/slot.mdx" />
   </Tab>
 
@@ -357,29 +190,22 @@ Tailwind only generates classes it finds in the files its `content` globs or
   </Tab>
 
   <Tab value="Nuxt">
-    Tailwind scans `app/`, not `nuxt.config.ts`, so put part classes in
-    `app/app.config.ts` under the `inth` key. The module merges it with the
-    `inth` options in `nuxt.config.ts`. Vue takes `class`, not `className`:
+    Put classes in `app/app.config.ts` using `class` so Tailwind scans them:
 
     <include src="../shared/examples/tailwind-v4/nuxt/slot.mdx" />
   </Tab>
 
   <Tab value="Vue">
-    Add the classes to `components` in the `inth` options. Vue takes
-    `class`, not `className`:
+    Use `class` in `inth` options:
 
     <include src="../shared/examples/tailwind-v4/vue/slot.mdx" />
   </Tab>
 
   <Tab value="Astro">
-    `class` on `ConsentBanner` goes on the banner root:
-
     <include src="../shared/examples/tailwind-v4/astro/slot.mdx" />
   </Tab>
 
   <Tab value="Svelte">
-    `class` on `ConsentBanner` goes on the banner root:
-
     <include src="../shared/examples/tailwind-v4/svelte/slot.mdx" />
   </Tab>
 
@@ -388,24 +214,17 @@ Tailwind only generates classes it finds in the files its `content` globs or
   </Tab>
 
   <Tab value="HTML">
-    Put the classes on parts with `ui.theme.slots`, and link your Tailwind
-    build into the shadow root with `ui.stylesheetUrls`. Keep the page's own
-    link too. Tailwind 4 registers some of its variables with `@property`,
-    which only takes effect in the page's stylesheets, not a shadow root's:
+    Link Tailwind into the shadow root via `ui.stylesheetUrls` and keep the page `<link>` for Tailwind 4 `@property` rules:
 
     <include src="../shared/examples/html/tailwind-classes.mdx" />
-
-    Tailwind must scan the file that holds the slot classes.
   </Tab>
 
   <Tab value="JavaScript">
-    Pass `ui.stylesheetUrls` and `ui.theme.slots` to `init()`. Keep a link to
-    the same stylesheet on the page, because Tailwind 4's `@property` rules
-    only take effect there:
+    Pass `ui.stylesheetUrls` and `ui.theme.slots` to `init()`, keeping the page `<link>` for Tailwind 4 `@property` rules:
 
     {/* example: fragment */}
 
-    ```ts title="src/consent.ts (partial)"
+    ```ts title="src/consent.ts"
     ui: {
       stylesheetUrls: ['/tailwind.css'],
       theme: {
@@ -420,57 +239,27 @@ Tailwind only generates classes it finds in the files its `content` globs or
 
 ## Use the dark variant
 
-The fixtures make Tailwind's `dark:` variant follow a `dark` class on `<html>`:
-`@custom-variant dark (&:where(.dark, .dark *));` on Tailwind 4 and
-`darkMode: 'class'` on Tailwind 3. Inth's stylesheet reads the same class, and
-in React, Next.js, TanStack Start, Vue, Nuxt, Svelte and SvelteKit an unset
-`colorScheme` also copies it into `inth-dark`. One toggle then switches your
-utilities and Inth's dark tokens together.
-
-Astro and the script tag follow the system setting by default. [Dark mode](/docs/customization/dark-mode) covers each
-case.
+Configure `@custom-variant dark (&:where(.dark, .dark *));` in Tailwind 4 or `darkMode: 'class'` in Tailwind 3. Inth reads the same `.dark` class on `<html>` so one toggle switches both. Astro and the script tag follow system color scheme by default. See [Dark mode](/docs/customization/dark-mode).
 
 ## Render the UI in the light DOM
 
-The script tag and `init()` render into a shadow root, so your page's CSS does
-not reach Inth and Inth's CSS does not reach your page. To style the UI with
-your page's Tailwind build directly, render it in the page with
-`data-shadow="false"` or `ui: { shadow: false }`.
+Render the script tag or `init()` in the light DOM with `data-shadow="false"` or `ui: { shadow: false }`.
 
-On Tailwind 4, that is the whole change. Inth still injects its layered
-stylesheet, and the layer order keeps it above preflight:
+On Tailwind 4, no extra config is needed:
 
 <include src="../shared/examples/tailwind-v4/html/script-tag-light-dom.mdx" />
 
-On Tailwind 3, keep the default shadow root. Tailwind 3's preflight is
-unlayered, so in the page it beats Inth's layered rules whatever their
-specificity and removes the button padding and card borders. Linking
-`inth.css` from the page does not help, because nothing removes its layers.
-
-To render in the light DOM anyway, turn the injected sheet off with
-`styles: false`, and build Inth's rules into your Tailwind CSS with the plugin
-instead:
+On Tailwind 3, keep the shadow root unless you compile Inth into Tailwind. Set `styles: false`, import `@inth/sdk/styles.css` above `@tailwind`, and add `@inth/sdk/postcss-tailwind3` before `tailwindcss`:
 
 <include src="../shared/examples/tailwind-v3/html/script-tag-light-dom.mdx" />
-
-Import `@inth/sdk/styles.css` above the directives in your Tailwind entry.
-Install `@inth/sdk`, which provides both the stylesheet and
-`@inth/sdk/postcss-tailwind3`:
 
 <include src="../shared/examples/tailwind-v3/html/tailwind-css-light-dom.mdx" />
 
 <include src="../shared/examples/tailwind-v3/html/postcss-config.mdx" />
 
-In the light DOM your page's global rules reach the banner too, so check
-buttons and headings after the switch.
-
 ## Check the result
 
-1. Build the app and open it in a private window. The banner has its card
-   background, border and button padding, so preflight did not reset it.
-2. Inspect the part you gave a utility. In the Styles panel, your utility is
-   applied and Inth's rule for the same property is struck out.
-3. Add the `dark` class to `<html>`. Your `dark:` utility applies and, where
-   Inth follows the class, the banner switches to dark colors.
-4. Open the preference dialog. Its rules come from a separate stylesheet in
-   most frameworks, so check that it is styled too.
+1. Build and open the site in a private window. Verify the banner card keeps its background, border, and button padding.
+2. Inspect a customized part in DevTools Styles. Your utility applies and Inth's rule is crossed out.
+3. Add `dark` to `<html>` and confirm both `dark:` utilities and Inth dark tokens apply.
+4. Open the preference dialog and confirm its styles load.

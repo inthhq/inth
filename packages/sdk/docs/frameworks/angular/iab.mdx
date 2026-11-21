@@ -1,97 +1,89 @@
 ---
 title: IAB TCF
-description: Turn on the IAB TCF 2.4 banner and preference center in an Angular app with inth-iab-consent-banner, inth-iab-consent-dialog and the iab option of provideInth.
+description: Enable the IAB TCF 2.4 banner and preference center in Angular with provideInth and the IAB components.
 group: frameworks
 ---
 
+Enable IAB TCF 2.4 consent in Angular so ad partners can read confirmed TC
+Strings through `__tcfapi`.
+
 ## Before you turn on IAB TCF
 
-Use IAB TCF when your ad partners require a TC String. It needs an IAB policy
-in your Inth project and a CMP ID. IAB Europe assigns a CMP ID to a company
-when it registers as a CMP
+Use IAB TCF when your ad partners require a TC String. You need an IAB policy
+in your Inth project and a registered CMP ID. IAB Europe assigns a CMP ID
+when a company registers as a CMP
 ([register.consensu.org/CMP](https://register.consensu.org/CMP)). Every TC
-String names the CMP that wrote it, so an ID you did not register attributes
-your visitors' consent to someone else. Example CMP IDs in Inth demos are not
-production configuration.
+String names the CMP that wrote it, so never ship a demo CMP ID in
+production.
 
-`@inth/angular` loads the TCF add-on from `@inth/sdk/iab`, which it installs as a
-dependency. The add-on arrives through a dynamic import, so apps without the
-`iab` option never download it.
+`@inth/angular` lazy-loads the TCF add-on from `@inth/sdk/iab`. Apps that do
+not set the `iab` option never download it.
 
 ## Add the IAB components
 
-Turn IAB on with the `iab` option of `provideInth()`, keeping your existing
-`mode`, `scripts` and other options. `registeredCmpId` stands for the number
-IAB Europe assigned to your company:
+Enable IAB through the `iab` option of `provideInth()`, keeping your existing
+`mode`, `scripts` and other options. Replace `registeredCmpId` with your
+company's IAB Europe CMP ID:
 
 <include src="../../shared/examples/angular/iab-config.mdx" />
 
-Then render `<inth-iab-consent-banner>` and `<inth-iab-consent-dialog>` next
-to the standard components. The standard components cover visitors whose
-policy is not IAB, such as those outside Europe:
+Render `<inth-iab-consent-banner>` and `<inth-iab-consent-dialog>` alongside
+the standard components, which handle visitors outside IAB regions:
 
 <include src="../../shared/examples/angular/iab-surfaces.mdx" />
 
-The IAB banner adds its first-paint rules before its elements render. The IAB
-dialog adds its rules when it opens, including the base rules it needs when
-rendered without a banner. Each sheet appears once per page.
+The IAB banner injects its first-paint rules before rendering, and the IAB
+dialog injects its rules when it opens. Each stylesheet attaches once per
+page.
 
-To run the CSS through Tailwind CSS 3 or put it in a named cascade layer,
-set `styles: false` in `provideInth()` and add `@inth/angular/styles.css`
-followed by `@inth/angular/iab/styles.css` to the `styles` array in
-`angular.json`.
-[Stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself)
-explains when to use that option.
+To run styles through Tailwind CSS 3 or a named cascade layer, set
+`styles: false` in `provideInth()` and add `@inth/angular/styles.css`
+followed by `@inth/angular/iab/styles.css` to `styles` in `angular.json`. See
+[stylesheets and CSS layers](/docs/customization/stylesheets#import-the-stylesheet-yourself).
 
 | `iab` option | Purpose |
 | --- | --- |
-| `cmpId` | Your registered CMP ID. A hosted backend can supply it instead. |
-| `cmpVersion` | Your CMP version, written into the TC String. |
+| `cmpId` | Your registered CMP ID. Inth can supply it from your project settings instead. |
+| `cmpVersion` | Your CMP version written into the TC String. |
 | `vendors` | Limit the Global Vendor List to these vendor IDs. |
-| `customVendors` | Vendors outside the IAB list, with their purposes and data use. |
-| `publisherRestrictions` | Override how vendors may use a purpose. See below. |
-| `publisherCountryCode` | Your country, written into the TC String. |
-| `additionalConsent` | Google Additional Consent settings. See below. |
-| `gvl`, `gvlUrl` | Supply the vendor list, or change where it is fetched from. |
-| `enabled` | `false` keeps the configuration but leaves the add-on unmounted. |
+| `customVendors` | Vendors outside the IAB list with their purposes and data use. |
+| `publisherRestrictions` | Override how vendors may use a purpose. |
+| `publisherCountryCode` | Your country code written into the TC String. |
+| `additionalConsent` | Google Additional Consent settings. |
+| `gvl`, `gvlUrl` | Provide the vendor list directly or change its URL. |
+| `enabled` | `false` keeps configuration but leaves the add-on unmounted. |
 
-Pass `iab: false`, or omit it, to leave IAB off. If a visitor's policy then
-uses the `iab` model and the backend sends its vendor list,
-`ConsentManager.iabUnavailable()` turns `true` and the provider reports an
-`IABUnavailableError` (code `INTH_IAB_UNAVAILABLE`) to Angular's
-`ErrorHandler`. The standard banner does not handle the IAB model, so the
-visitor would otherwise get no working consent UI. Set `iab`, or remove the
-`iab` model from the policy. A backend that answers `gvl: null` turns IAB off
-for the request, and the policy runs as opt-in.
+Omit `iab` or pass `iab: false` to keep IAB off. If a visitor's policy uses
+the `iab` model and Inth returns a vendor list without `iab` configured,
+`ConsentManager.iabUnavailable()` becomes `true` and Angular's `ErrorHandler`
+receives an `IABUnavailableError` (code `INTH_IAB_UNAVAILABLE`). Either
+configure `iab` or remove the `iab` model from that region's policy. When
+`gvl: null` comes back for a request, the policy falls back to opt-in.
 
 [IABConsentBanner](./components/iab-consent-banner) and
 [IABConsentDialog](./components/iab-consent-dialog) list each component's
 inputs.
 
-`<inth-iab-consent-banner>` and `<inth-iab-consent-dialog>` stay hidden until
-an IAB policy resolves for the visitor. Forcing the dialog open does not
-create a policy or a vendor list, so check the policy resolution and the
-vendor list request before changing how they render.
+Both IAB components stay hidden until an IAB policy resolves for the visitor.
 
 ## Read the TCF state
 
-`ConsentManager.iab()` holds the live IAB state: the vendor list, purpose and
-vendor consents, `isLoadingGVL`, and the actions `acceptAll()`,
-`rejectAll()`, `setPurposeConsent()`, `setVendorConsent()`,
-`setSpecialFeatureOptIn()` and `save()`. It is `null` when IAB is off. The
-actions queue until the add-on loads; `whenIABReady()` resolves once it has.
+`ConsentManager.iab()` holds live IAB state: the vendor list, purpose and
+vendor consents, `isLoadingGVL`, and actions `acceptAll()`, `rejectAll()`,
+`setPurposeConsent()`, `setVendorConsent()`, `setSpecialFeatureOptIn()` and
+`save()`. It is `null` when IAB is off. Actions queue until the add-on loads;
+`whenIABReady()` resolves once ready.
 [ConsentManager](./services#read-and-change-iab-tcf-consent) lists every
 member.
 
-For a custom IAB banner, `resolveIABCopy(consent.copy())`, with
-`resolveIABCopy` from `@inth/angular/iab`, returns the IAB copy with English
-fallbacks.
+For a custom IAB banner, `getIABTranslations()` from `@inth/angular/iab`
+returns IAB copy with English fallbacks.
 
 ## Restrict how vendors use a purpose
 
-Pass publisher restrictions in the `iab` option as `publisherRestrictions`,
-for example `[{ purposeId: 4, restrictionType: 0, vendorIds: [10, 755] }]` to
-stop vendors 10 and 755 using purpose 4. Use vendors from your own list whose
+Pass publisher restrictions in `iab.publisherRestrictions`, for example
+`[{ purposeId: 4, restrictionType: 0, vendorIds: [10, 755] }]` to block
+vendors 10 and 755 from using purpose 4. Use vendors from your own list whose
 declarations allow each restriction.
 
 <include src="../../shared/iab-publisher-restrictions.mdx" />
@@ -102,7 +94,7 @@ declarations allow each restriction.
 
 ## Verify the TCF flow
 
-Accept, reject and save purpose and vendor choices, then check in the console
-that `__tcfapi('getTCData', 2, console.log)` returns a TC String that matches
-what you chose. Reload and confirm it persists. Check the vendors' actual
-requests too; a category banner test does not show that the IAB flow works.
+Accept, reject and save purpose and vendor choices, then run
+`__tcfapi('getTCData', 2, console.log)` in the console and verify the TC
+String matches your selection. Reload and confirm it persists, and check
+actual vendor network requests.

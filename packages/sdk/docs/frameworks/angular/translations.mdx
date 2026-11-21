@@ -1,23 +1,25 @@
 ---
 title: Translations
-description: Change Inth banner and dialog copy in an Angular app with component inputs, banner templates or the i18n option of provideInth, and switch languages at runtime.
+description: Customize Inth banner and dialog copy in Angular with component inputs, templates or i18n, and switch languages at runtime.
 group: frameworks
 ---
+
+Change consent copy across your Angular app or switch languages at runtime.
 
 ## Where the copy comes from
 
 The banner, dialog, widget, gate placeholder and IAB components read their
-text from one set of translations for the visitor's language. Which set
-depends on the `mode` you pass to `provideInth()`:
+text from one translation set for the visitor's language. Which set depends on
+the `mode` you pass to `provideInth()`:
 
 | Mode | Copy comes from | Languages |
 | --- | --- | --- |
-| `hosted()` | The backend's `/init` response, in the language the browser or server asked for, with your `i18n` messages for that language on top | Every language the backend bundles: ar, bg, bn, cs, cy, da, de, el, en, es, et, fi, fr, ga, gu, he, hi, hr, ht, hu, id, is, it, ja, kn, ko, lb, lt, lv, ml, mr, ms, mt, nb, nl, nn, pa, pl, pt, rm, ro, ru, sk, sl, sv, ta, te, th, tr, ur, vi, yi and zh |
-| `manifest()` | The manifest's translations over the base copy for the visitor's language, with your `i18n` messages on top | English base copy is bundled; another language's base copy loads the first time a visitor needs it |
-| `testing()` | The `i18n` option, merged over bundled English | English, plus any language you supply in full |
+| `hosted()` | Inth's `/v1/consent/init` response in the requested language, with your `i18n` messages on top | Every language Inth bundles: ar, bg, bn, cs, cy, da, de, el, en, es, et, fi, fr, ga, gu, he, hi, hr, ht, hu, id, is, it, ja, kn, ko, lb, lt, lv, ml, mr, ms, mt, nb, nl, nn, pa, pl, pt, rm, ro, ru, sk, sl, sv, ta, te, th, tr, ur, vi, yi and zh |
+| `manifest()` | Manifest translations over base copy for the visitor's language, with your `i18n` messages on top | English base copy is bundled; other languages load on first need |
+| `testing()` | The `i18n` option merged over bundled English | English, plus any language you supply in full |
 
-The browser bundle carries English only. Other languages arrive from the
-backend, or from messages you pass.
+The browser bundle includes English only. Other languages load from Inth or
+from messages you pass.
 
 ## Change the copy for one banner
 
@@ -34,37 +36,33 @@ win in every mode:
 />
 ```
 
-The inputs replace the text in every language, so pass values in the page's
-language, for example from `$localize` or your own i18n library. For markup in
-the title or description, such as a link, use the `inthConsentBannerTitle` and
-`inthConsentBannerDescription` templates; see
-[ConsentBanner](./components/consent-banner#replace-the-title-description-or-buttons).
+Inputs replace the text in every language, so pass localized values from
+`$localize` or your i18n library. For markup inside the title or description,
+use the `inthConsentBannerTitle` and `inthConsentBannerDescription` templates;
+see [ConsentBanner](./components/consent-banner#replace-the-title-description-or-buttons).
 
 ## Change the copy site-wide
 
 Pass `i18n` to `provideInth()`. `messages` holds partial translations per
-language; the keys you leave out keep Inth's copy:
+language; omitted keys keep Inth's copy:
 
 <include src="../../shared/examples/angular/consent-i18n.mdx" />
 
-`locale` selects the language the runtime starts in, `en` by default.
-`provideInth()` reads `i18n` once, when the application starts.
+`locale` selects the starting language (`en` by default). `provideInth()`
+reads `i18n` once at startup.
 
-In `hosted()` mode, the backend's copy for the visitor's language is the base,
-and your `i18n` messages for that language replace it key by key. Keys you do
-not list keep the backend's copy, including copy edited in your Inth project.
-Inth picks the messages for the exact language first, then for its primary
-language, so a visitor resolved to `de-AT` gets your `de` messages when there
-is no `de-AT` entry. Messages for other languages are not applied.
+In `hosted()` mode, Inth's copy for the visitor's language is the base, and
+your `i18n` messages override it key by key. Unlisted keys keep the copy from
+your Inth project. Inth checks the exact language first, then its primary
+language, so `de-AT` uses your `de` messages when no `de-AT` entry exists.
 
-A key only overrides the backend when your text differs from Inth's built-in
-wording for that language. So passing the stock bundles from
-`@inth/angular/translations/all` to enable languages keeps backend edits visible,
-while a key you actually reworded stays pinned in code. Core bundles only
-English; for other languages, import `@inth/angular/translations/all` so Inth can
-recognize its stock wording.
+A key overrides Inth only when your text differs from the built-in wording for
+that language. Passing stock bundles from `@inth/angular/translations/all`
+keeps project edits visible while pinning keys you reworded. Core bundles only
+English; for other languages, import `@inth/angular/translations/all` so Inth
+recognizes its stock wording.
 
-In `testing()` mode, `i18n` is the only source of copy, and it applies from the
+In `testing()` mode, `i18n` is the only source of copy and applies from the
 first render.
 
 ## Common message keys
@@ -77,8 +75,8 @@ first render.
 | `common.acknowledge` | The notice's dismiss button. |
 | `common.securedBy` | The "Secured by" tag. |
 | `consentManagerDialog.title`, `consentManagerDialog.description` | Preference dialog heading and body. |
-| `consentTypes.<category>.title`, `consentTypes.<category>.description` | A category's name and description, such as `consentTypes.measurement.title`. |
-| `consentGate.title`, `consentGate.actionButton` | The `<inth-consent-gate>` placeholder. `{category}` is replaced by the category title. |
+| `consentTypes.<category>.title`, `consentTypes.<category>.description` | Category name and description, such as `consentTypes.measurement.title`. |
+| `consentGate.title`, `consentGate.actionButton` | `<inth-consent-gate>` placeholder. `{category}` becomes the category title. |
 
 [Copy and translations](/docs/customization/translations) covers wording for
 each action and testing long labels.
@@ -86,23 +84,22 @@ each action and testing long labels.
 ## Switch the language
 
 `ConsentManager.setLanguage(code)` switches the language and resolves the
-policy again, so a hosted backend returns copy in the new language and your
-`i18n` messages for that language apply on top. Call it from your language
-switcher:
+policy again, fetching copy in the new language and applying your `i18n`
+messages on top. Call it from your language switcher:
 
 <include src="../../shared/examples/angular/language-switcher.mdx" />
 
-The visitor's language otherwise comes from the `Accept-Language` header, or
-from `overrides.language` in `provideInth()`. An app built with Angular's
-`@angular/localize` serves one build per locale; pass that build's
-`LOCALE_ID` as `overrides: { language }` so the consent copy matches the page.
+Otherwise the visitor's language comes from `Accept-Language` or
+`overrides.language` in `provideInth()`. With Angular's `@angular/localize`,
+pass the build's `LOCALE_ID` as `overrides: { language }` so consent copy
+matches the page.
 
-The root of the banner, dialog and widget sets `dir` from the active
-language, so right-to-left languages such as Hebrew lay out correctly.
+The banner, dialog and widget set `dir` from the active language so
+right-to-left languages lay out properly.
 
 ## Verify the copy
 
 Open the page with the browser language set to each language you support.
-The banner, the dialog's category names and the gate placeholder all use that
-language. Then choose a narrow window and zoom to 200%: long labels wrap
-without cutting off.
+Confirm the banner, dialog category names and gate placeholder render in that
+language. Narrow the window and zoom to 200% to confirm long labels wrap
+cleanly.

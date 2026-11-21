@@ -1,243 +1,160 @@
 ---
 title: Component parts
-description: Find every part of Inth's banner, dialog, widget, trigger and ConsentGate placeholder, its key in your framework's part API, and the data attributes to select on.
+description: Reference every Inth banner, dialog, widget, trigger, and ConsentGate part key across frameworks, plus data state attributes and noStyle.
 group: customization
 ---
 
+Find the part key, `data-testid`, and `data-*` state attributes for every stock Inth UI element.
+
 ## Which part API your framework uses
 
-Each framework has one way to add classes, inline styles or attributes to a
-single part of a stock component. The keys differ between the two
-vocabularies, so a configuration from one does not work in the other.
+Frameworks use nested `components` keys or flat `theme.slots` keys. Keys do not interchange across vocabularies.
 
-| Framework | Part API | Keys look like | Class key |
-| --- | --- | --- | --- |
-| Next.js, TanStack Start | `options.components` in Next.js `inth.config.ts`, or on `InthProvider` | `components.banner.card` | `className` |
-| React | `components` in the `InthProvider` options | `components.banner.card` | `className` |
-| Nuxt | `components` in the `inth` options, or in `app/app.config.ts` | `components.banner.card` | `class` |
-| Vue | `components` in the `inth` options | `components.banner.card` | `class` |
-| Astro | `theme.slots` in the `inth()` integration options | `slots.consentBannerCard` | A string, or `className` |
-| Svelte, SvelteKit | `theme.slots` on `InthProvider`, from `@inth/svelte` or `@inth/svelte/kit` | `slots.consentBannerCard` | A string, or `className` |
-| HTML, JavaScript | `ui.theme.slots` | `slots.consentBannerCard` | A string, or `className` |
+| Framework | Part API | Class key |
+| --- | --- | --- |
+| Next.js, TanStack Start | `options.components` in `inth.config.ts` or `InthProvider` | `className` |
+| React | `components` on `InthProvider` | `className` |
+| Nuxt, Vue | `components` in `inth` options (`nuxt.config.ts`, `app/app.config.ts`, or `app.use(inth, ...)`) | `class` |
+| Astro | `theme.slots` in `inth()` options | String or `className` |
+| Svelte, SvelteKit | `theme.slots` on `InthProvider` | String or `className` |
+| HTML, JavaScript | `ui.theme.slots` | String or `className` |
 
-React and Vue also read `theme.slots` from the theme in their options, and
-apply each slot to the matching `components` part, such as
-`consentDialogCard` to `dialog.card` and `toggle` to `switch.root`. Where both
-set the same part, classes from both apply, inline styles merge with
-`components` winning per property, and any other attribute in `components`
-replaces the theme's. In Vue and Nuxt, each part object is bound with
-`v-bind`, so write `class` and `style` rather than React's `className`.
-
-Svelte's stock components, and Astro's `ConsentBanner`, `IABConsentBanner`
-and `ConsentDialogTrigger`, also take a `class` prop. On `ConsentBanner` it
-goes on the banner root.
-
-This React fragment belongs in the provider options:
+React and Vue also map `theme.slots` onto `components`, combining classes and merging inline styles with `components` winning per property. Vue and Nuxt bind objects via `v-bind`, so use `class` instead of `className`. Svelte stock components and Astro's `ConsentBanner`, `IABConsentBanner`, and `ConsentDialogTrigger` also accept a root `class` prop.
 
 {/* example: fragment */}
 
 ```tsx
-components: {
-  banner: {
-    card: { className: 'brand-card' },
-    title: { style: { fontWeight: 600 } },
-  },
-},
+components: { banner: { card: { className: 'brand-card' }, title: { style: { fontWeight: 600 } } } },
 ```
-
-The same parts with `theme.slots`, which every framework reads:
 
 {/* example: fragment */}
 
 ```ts
-theme: {
-  slots: {
-    consentBannerCard: 'brand-card',
-    consentBannerTitle: 'brand-title',
-  },
-},
+theme: { slots: { consentBannerCard: 'brand-card', consentBannerTitle: { className: 'brand-title' } } },
 ```
 
-A slot can also be `{ className, style }`. Svelte applies both on every part,
-including the IAB banner and dialog.
-
-[Class names and CSS-in-JS](/docs/customization/class-names) covers CSS
-Modules, vanilla-extract, StyleX and Emotion, and
-[Tailwind CSS](/docs/customization/tailwind) covers utilities on parts.
+See [Class names and CSS-in-JS](/docs/customization/class-names) and [Tailwind CSS](/docs/customization/tailwind).
 
 ## Banner parts
 
-| Part | `components` key | `theme.slots` key | `data-testid` |
+| Part | `components` | `theme.slots` | `data-testid` |
 | --- | --- | --- | --- |
-| Positioning root, with the state attributes | `banner.root` | `consentBanner` | `consent-banner-root` |
-| Card sizing and branding container | `banner.cardShell` | None | |
+| Positioning root | `banner.root` | `consentBanner` | `consent-banner-root` |
+| Card shell | `banner.cardShell` | None | |
 | Visible card | `banner.card` | `consentBannerCard` | `consent-banner-card` |
-| Title and description container | `banner.header` | `consentBannerHeader` | |
+| Header | `banner.header` | `consentBannerHeader` | |
 | Title | `banner.title` | `consentBannerTitle` | |
 | Description | `description.banner` | `consentBannerDescription` | |
-| Action area | `banner.footer` | `consentBannerFooter` | |
-| Group of action groups | `banner.actions` | None | |
-| One group of equally prominent actions | `banner.actionGroup` | `consentBannerFooterSubGroup` | |
-| Group of right links | `banner.rights` | `consentBannerRights` | |
-| One right link | `banner.rightLink` | `consentBannerRightLink` | |
-| Backdrop of a blocking banner | `banner.overlay` | `consentBannerOverlay` | |
-| "Secured by" tag | `tag.banner` | `consentBannerTag` | `consent-banner-branding` |
-| Filled and outlined buttons | `button.primary`, `button.secondary` | `buttonPrimary`, `buttonSecondary` | |
+| Footer | `banner.footer` | `consentBannerFooter` | |
+| Actions wrapper | `banner.actions` | None | |
+| Action group | `banner.actionGroup` | `consentBannerFooterSubGroup` | |
+| Rights group | `banner.rights` | `consentBannerRights` | |
+| Right link | `banner.rightLink` | `consentBannerRightLink` | |
+| Backdrop | `banner.overlay` | `consentBannerOverlay` | |
+| Branding tag | `tag.banner` | `consentBannerTag` | `consent-banner-branding` |
+| Buttons | `button.primary`, `button.secondary` | `buttonPrimary`, `buttonSecondary` | |
 
-The button parts apply to every Inth button of that style, in the banner and
-the dialog. The script tag's banner has no rights group, so
-`consentBannerRights` does not apply there.
+Button parts apply across banner and dialog. The script tag banner omits the rights group.
 
 ## Preference dialog parts
 
-| Part | `components` key | `theme.slots` key | `data-testid` |
+| Part | `components` | `theme.slots` | `data-testid` |
 | --- | --- | --- | --- |
 | Positioner | `dialog.root` | None | |
-| Dialog container | `dialog.container` | `consentDialog` | `consent-dialog-root` |
+| Container | `dialog.container` | `consentDialog` | `consent-dialog-root` |
 | Card | `dialog.card` | `consentDialogCard` | |
 | Header | `dialog.header` | `consentDialogHeader` | |
 | Title | `dialog.title` | `consentDialogTitle` | |
 | Description | `description.dialog` | `consentDialogDescription` | |
 | Content | `dialog.content` | `consentDialogContent` | |
 | Backdrop | `dialog.overlay` | `consentDialogOverlay` | |
-| "Secured by" tag | `tag.dialog` | `consentDialogTag` | |
+| Branding tag | `tag.dialog` | `consentDialogTag` | |
 
-The stock dialog's footer is the preference widget's footer. Style it with
-`consentWidgetFooter`. There is no `consentDialogFooter` slot.
+Style the dialog footer with `consentWidgetFooter`; there is no `consentDialogFooter` slot.
 
 ## Preference widget parts
 
-The widget is the list of categories inside the dialog. React and Vue call it
-`manager`.
-
-| Part | `components` key | `theme.slots` key |
+| Part | `components` | `theme.slots` |
 | --- | --- | --- |
-| Widget root | `manager.root` | `consentWidget` |
+| Root | `manager.root` | `consentWidget` |
 | Footer | `manager.footer` | `consentWidgetFooter` |
-| Group of action groups | `manager.actions` | None |
-| One action group | `manager.actionGroup` | `consentWidgetFooterSubGroup` |
-| Category accordion | `accordion.root`, `accordion.triggerRow`, `accordion.arrow`, `accordion.header`, `accordion.title`, `accordion.control`, `accordion.contentViewport`, `accordion.contentInner` | `consentWidgetAccordion` |
-| One accordion item | `accordion-item.root`, `accordion-item.trigger`, `accordion-item.content` | None |
+| Actions wrapper | `manager.actions` | None |
+| Action group | `manager.actionGroup` | `consentWidgetFooterSubGroup` |
+| Accordion | `accordion.root`, `accordion.triggerRow`, `accordion.arrow`, `accordion.header`, `accordion.title`, `accordion.control`, `accordion.contentViewport`, `accordion.contentInner` | `consentWidgetAccordion` |
+| Accordion item | `accordion-item.root`, `accordion-item.trigger`, `accordion-item.content` | None |
 | Category switch | `switch.root`, `switch.track`, `switch.thumb` | `toggle` |
 | Vendor list | `vendor-list.root`, `vendor-list.trigger`, `vendor-list.content`, `vendor-list.item`, `vendor-list.header`, `vendor-list.name`, `vendor-list.description`, `vendor-list.link`, `vendor-list.control` | None |
-| "Secured by" tag | `tag.manager` | `consentWidgetTag` |
+| Branding tag | `tag.manager` in React, `tag.dialog` in Vue | `consentWidgetTag` |
 
 ## Floating trigger parts
 
-| Part | `components` key | `theme.slots` key |
+| Part | `components` | `theme.slots` |
 | --- | --- | --- |
 | Button | `trigger.root` | `consentDialogTrigger` |
 | Icon | `trigger.icon` | `consentDialogTriggerIcon` |
 | Label | `trigger.text` | None |
-| Toolbar, its items and icons | `trigger.toolbar`, `trigger.toolbarItem`, `trigger.toolbarIcon` | `consentDialogTriggerToolbar`, `consentDialogTriggerToolbarItem`, `consentDialogTriggerToolbarIcon` |
+| Toolbar | `trigger.toolbar`, `trigger.toolbarItem`, `trigger.toolbarIcon` | `consentDialogTriggerToolbar`, `consentDialogTriggerToolbarItem`, `consentDialogTriggerToolbarIcon` |
 
-React renders the toolbar from `ConsentDialogTriggerToolbar`, and while
-`ConsentDevTools` is mounted. Vue renders it only while `ConsentDevTools` is
-mounted. In Astro, the toolbar slots reach the React dialog.
+React renders the toolbar from `ConsentDialogTriggerToolbar` or `ConsentDevTools`; Vue only with `ConsentDevTools`; Astro passes toolbar slots to the React dialog island.
 
 ## Legal links and IAB TCF parts
 
-| Component | `components` keys | `theme.slots` keys |
+| Component | `components` | `theme.slots` |
 | --- | --- | --- |
-| Legal links | `legal-links.root`, and `link.banner`, `link.dialog`, `link.manager` for one link | None |
+| Legal links | `legal-links.root`, `link.banner`, `link.dialog`, `link.manager` | None |
 | IAB banner | `iab-banner.root`, `cardShell`, `card`, `header`, `title`, `description`, `partnersLink`, `purposeList`, `purposeMore`, `legitimateInterestNotice`, `footer`, `actions`, `actionGroup`, `overlay` | `iabConsentBanner`, `iabConsentBannerCard`, `iabConsentBannerHeader`, `iabConsentBannerFooter`, `iabConsentBannerTag`, `iabConsentBannerOverlay` |
 | IAB dialog | `iab-dialog.root`, `card`, `header`, `headerContent`, `title`, `description`, `closeButton`, `body`, `content`, `loading`, `footer`, `tabs`, `tabsList`, `tabTrigger`, `tabIndicator`, `tabPanel`, `specialPurposes`, `consentNotice`, `actions`, `actionGroup`, `overlay` | `iabConsentDialog`, `iabConsentDialogCard`, `iabConsentDialogHeader`, `iabConsentDialogFooter`, `iabConsentDialogTag`, `iabConsentDialogOverlay` |
-| IAB purpose, stack and vendor rows | `iab-purpose-item.*`, `iab-stack-item.*`, `iab-vendor-list.*` | None |
-
-Legal links take no `theme.slots` key. They keep their stock link class, and
-a description slot's classes stay on the description around them.
+| IAB rows | `iab-purpose-item.*`, `iab-stack-item.*`, `iab-vendor-list.*` | None |
 
 ## ConsentGate placeholder parts
 
-`ConsentGate` shows a placeholder card while its category is denied. React,
-Next.js, TanStack Start, Vue, Nuxt, Svelte and SvelteKit render the same
-three parts:
+Supported in React, Next.js, TanStack Start, Vue, Nuxt, Svelte, and SvelteKit. `consent-gate.button` layers on `button.primary` or `buttonPrimary`.
 
-| Part | `components` key | `theme.slots` key | `data-testid` |
+| Part | `components` | `theme.slots` | `data-testid` |
 | --- | --- | --- | --- |
 | Placeholder card | `consent-gate.root` | `consentGate` | `consent-gate-placeholder` |
 | Title | `consent-gate.title` | `consentGateTitle` | `consent-gate-title` |
-| Button that opens preferences | `consent-gate.button` | `consentGateButton` | `consent-gate-button` |
+| Preferences button | `consent-gate.button` | `consentGateButton` | `consent-gate-button` |
 
-The button part applies on top of `button.primary`, or `buttonPrimary`. The
-parts only reach the built-in placeholder. A placeholder you pass yourself
-takes your own classes, and the wrapper around the gate takes `className` in
-React or `class` in Svelte. Astro, HTML and JavaScript have no `ConsentGate`.
+## Style shadow root parts with ::part()
 
-## Style parts from outside the script tag's shadow root
-
-The script tag and `init()` render into a shadow root. Every part that has a
-`theme.slots` key carries it in a `part` attribute, so page CSS can reach it
-with `::part()`:
+In the script tag and `init()`, every `theme.slots` key is exposed via `part`:
 
 {/* example: fragment */}
 
 ```css
-[data-inth-ui]::part(consentBannerCard) {
-  border: 3px solid #6943a3;
-}
+[data-inth-ui]::part(consentBannerCard) { border: 3px solid #6943a3; }
 ```
 
 ## Select on state attributes
 
-Parts carry `data-*` attributes that describe their state. Select on these
-instead of guessing at markup:
-
 | Element | Attributes |
 | --- | --- |
 | Banner root | `data-prompt`, `data-model`, `data-variant`, `data-position`, `data-blocking` |
-| Action buttons | `data-action` (`accept`, `reject`, `customize`, `dismiss` or `save`), `data-variant`, `data-mode` |
-| Footer and action groups | `data-direction`, `data-fill`, `data-split` |
+| Action buttons | `data-action` with `accept`, `reject`, `customize`, `dismiss`, or `save`; `data-variant`; `data-mode` |
+| Footer, groups | `data-direction`, `data-fill`, `data-split` |
 | Right links | `data-action="right"`, `data-right` |
-| Preference dialog | `data-state` (`open` or `closed`), on the elements listed in [motion](/docs/customization/motion#animate-your-own-rules-on-dialog-state) |
-| Category switch | `data-state`, `data-disabled` |
+| Dialog | `data-state` with `open` or `closed`, see [motion](/docs/customization/motion#animate-your-own-rules-on-dialog-state) |
+| Switch | `data-state`, `data-disabled` |
 
-The script tag's banner root has `data-variant`, `data-position` and
-`data-blocking` only, with `data-blocking` set to `"true"` or `"false"`. Its
-right links carry `data-action="customize"`.
+The script tag banner root exposes only `data-variant`, `data-position`, and `data-blocking`, and its right links use `data-action="customize"`. Notice prompts render `data-action="dismiss"`.
 
-The banner card does not inherit the root's attributes. With Tailwind, give
-the root `group` and read the root's attribute from a child part:
+The banner card does not inherit root attributes. In Tailwind, add `group` to `banner.root` and style children with `group-data-[variant=bar]:rounded-none`.
 
-{/* example: fragment */}
+## Do not target generated class names
 
-```tsx
-components: {
-  banner: {
-    root: { className: 'group' },
-    card: { className: 'group-data-[variant=bar]:rounded-none' },
-  },
-},
-```
+Stock CSS Module classes end in a build hash like `inth-ui-card-lgjVq` that changes across builds and disappears under `noStyle`. Target part APIs, `data-testid`, `data-*`, or `::part()`.
 
-Test notices as well as choice prompts. A notice has an acknowledge action,
-`data-action="dismiss"`, instead of accept and reject.
+## Remove default classes with noStyle
 
-## Do not target Inth's class names
+`noStyle` strips stock classes while keeping markup, behavior, part classes, `data-testid`, and `data-*` attributes. You own all layout, spacing, focus, and responsive CSS.
 
-Inth's stock class names are generated from CSS Modules and end in a hash, such
-as `inth-ui-card-lgjVq`. The hash changes whenever the source CSS changes, and
-the classes disappear under `noStyle`. A rule that targets one breaks on an
-upgrade without warning. Target a part API, `data-testid`, a `data-*`
-attribute or `::part()` instead.
-
-## Remove Inth's classes with noStyle
-
-`noStyle` renders the same markup and behavior without Inth's stock classes. It
-keeps your part classes and styles, `data-testid` and the `data-*` attributes.
-It does not replace layout, spacing, focus indicators or responsive behavior,
-so use it when you intend to write all of that yourself.
-
-| Framework | Where |
+| Framework | Where to set `noStyle` |
 | --- | --- |
-| Next.js, TanStack Start, React | `noStyle` in the provider options for every component, or the `noStyle` prop on `ConsentBanner`, `ConsentDialog`, `ConsentWidget`, `ConsentDialogTrigger` and the IAB components |
-| Svelte, SvelteKit | `noStyle` in the provider options, or the prop on a stock component |
+| Next.js, TanStack Start, React | Provider options or component `noStyle` prop including IAB |
+| Svelte, SvelteKit | Provider options or component `noStyle` prop |
 | Astro | `noStyle` prop on `ConsentBanner` and `IABConsentBanner` |
 | HTML, JavaScript | `ui.noStyle`, which also drops the bundled stylesheet |
-| Vue, Nuxt | The `noStyle` prop on `ConsentWidget`, and on the `PreferenceItemRoot` and `PreferenceItemContent` primitives, whose other parts follow the root. The banner, dialog and trigger have no `noStyle` |
+| Vue, Nuxt | `noStyle` prop on `ConsentWidget`, `PreferenceItemRoot`, `PreferenceItemContent` |
 
-In `theme.slots`, `{ noStyle: true }` on one slot replaces that part's stock
-classes in Svelte, Astro's banner and the script tag. React and Vue, including
-Astro's React and Vue dialog islands, ignore a slot's `noStyle`, so its classes
-apply on top of the stock ones. If the markup itself must change, use your framework's compound
-components or headless API.
+Per-slot `{ noStyle: true }` in `theme.slots` works in Svelte, Astro's banner, and the script tag; React and Vue ignore it. Use compound components or the headless API to change markup.

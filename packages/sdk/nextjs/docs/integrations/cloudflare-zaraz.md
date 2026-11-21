@@ -1,46 +1,27 @@
 ---
 title: Cloudflare Zaraz
-description: Sync Inth permissions to Cloudflare Zaraz purposes with the Inth
-  cloudflareZaraz bridge, which runs on every page without loading a script, and
-  check the tools it controls.
+description: Sync Inth consent categories to Cloudflare Zaraz purposes with the
+  callback-only cloudflareZaraz bridge.
 seoTitle: Cloudflare Zaraz consent with Inth
-seoDescription: Connect your cookie banner to Cloudflare Zaraz. The Inth
-  cloudflareZaraz helper turns on each Zaraz purpose only while its Inth
-  category has consent.
+seoDescription: Connect Inth consent permissions to Cloudflare Zaraz purposes so
+  each Zaraz tool runs only while its mapped category is allowed.
 icon: cloudflare-web-analytics
 group: integrations
 ---
 
-The Inth `cloudflareZaraz` helper connects Inth consent to Cloudflare Zaraz
-under the `necessary` category. The helper loads no script. Cloudflare loads
-Zaraz and its tools for every visitor, so the Zaraz purposes control which tools
-run. When the Zaraz consent API is ready, the helper calls
-`zaraz.consent.set()`. A purpose is `true` only while the Inth category that you
-map to it in `purposes` has consent. When a purpose changes to `true`, the
-helper calls `zaraz.consent.sendQueuedEvents()`.
+The `cloudflareZaraz` bridge syncs Inth consent permissions to Cloudflare Zaraz purposes without loading a script.
 
 ## Configure Cloudflare Zaraz
 
-`cloudflareZaraz` connects Inth to an existing Zaraz installation. It inserts
-no script and configures no tools. Zaraz loads the tools; Inth decides which
-purposes they may use. In the Zaraz dashboard:
+Update your Zaraz dashboard first so Zaraz defers to Inth:
 
-1. Enable Consent Management and create purposes for the Inth categories you
-   use.
-2. Assign a purpose to every tool that needs permission. Zaraz runs a tool
-   without a purpose regardless of consent.
-3. Turn off automatic display of the Zaraz consent modal. Inth owns the UI.
-4. Turn off **Automatic Pageview Tracking**, and automatic SPA pageviews too if
-   your app sends them itself.
-5. Copy the purpose IDs, not the purpose names, into the mapping below.
+1. Enable Consent Management and create purposes for the Inth categories you use.
+2. Assign a purpose to every tool that requires consent. Zaraz runs tools without a purpose regardless of consent.
+3. Disable automatic display of the Zaraz consent modal so Inth owns the UI.
+4. Disable **Automatic Pageview Tracking**, and automatic SPA pageviews if your app tracks routes itself.
+5. Copy the purpose IDs, not the purpose names, for the mapping below.
 
-Zaraz keeps its own consent cookie. An automatic pageview can run with a grant
-from a previous visit before Inth applies the current permissions. With
-automatic pageviews off, send the first pageview from `onReady`, which runs
-after the first synchronization. DOM-ready, timer and click triggers you add in
-Zaraz can still run before the bridge starts; audit them. Cloudflare documents
-[purpose assignment](https://developers.cloudflare.com/zaraz/consent-management/)
-and [pageview settings](https://developers.cloudflare.com/zaraz/reference/settings/).
+Zaraz keeps its own consent cookie, so an automatic pageview can fire with a prior visit's grant before Inth applies current permissions. With automatic pageviews off, send the first pageview from `onReady`, which runs after the first sync. Audit custom DOM-ready, timer, and click triggers in Zaraz because they can still fire before the bridge starts. See Cloudflare's [purpose assignment](https://developers.cloudflare.com/zaraz/consent-management/) and [pageview settings](https://developers.cloudflare.com/zaraz/reference/settings/) docs.
 
 | Package manager | Command                          |
 | :-------------- | :------------------------------- |
@@ -68,31 +49,17 @@ export const scripts = [
 ];
 ```
 
-Register one bridge per app. Keep Zaraz's own loader and its dashboard tools
-when you follow the registration steps below; remove only standalone loaders
-for tools that Zaraz already runs, including a separate `@inth/integrations` helper
-for the same tool. If Zaraz auto-injection is off, load
-[Zaraz manually](https://developers.cloudflare.com/zaraz/advanced/load-zaraz-manually/)
-once.
+Register one bridge per app. Keep Zaraz's own loader and dashboard tools when following the steps below, and remove standalone loaders or separate `@inth/integrations` helpers for tools Zaraz already runs. If Zaraz auto-injection is off, [load Zaraz manually](https://developers.cloudflare.com/zaraz/advanced/load-zaraz-manually/) once.
 
 ## Register the scripts
 
-Complete your [framework quickstart](https://c15t.com/docs/frameworks) first. Keep its Inth
-endpoint, policy, styles and consent UI. Remove the vendor's original script,
-SDK initializer or tag-manager entry, so the vendor loads only through Inth.
+Complete your [framework quickstart](https://inth.com/docs/frameworks) first, and remove the vendor's original snippet, SDK initializer, or tag manager entry so the vendor loads only through Inth.
 
-The vendor pages put the helper in `src/consent-scripts.ts`. If your framework
-quickstart already has a `scripts` array, such as the one in `inth.config.ts`
-in the Next.js guide, add the helper to that array instead of creating a
-second file.
-The `scripts` export is a configuration, not an initializer. Add it to the Inth provider you already have, at the registration
-point for your framework below. These are edits to that provider, not a second
-provider.
+The vendor guides put helpers in `src/consent-scripts.ts`. If your quickstart already defines a `scripts` array, add the helper to that array instead. Pass `scripts` to your existing Inth provider below rather than mounting a second provider.
 
 **Next.js**
 
-Add the configuration to `scripts` in `inth.config.ts`, next to
-`next.config.ts`:
+Add `scripts` to `inth.config.ts`, next to `next.config.ts`:
 
 ```ts title="inth.config.ts"
 import { defineConsentConfig } from '@inth/nextjs';
@@ -101,17 +68,11 @@ import { scripts } from './src/consent-scripts';
 export default defineConsentConfig({ scripts });
 ```
 
-Keep the rest of your config, such as `mode` and `routePrefix`, in the
-same call. `InthProvider` reads the config in the browser, so the layout
-keeps passing only `state`. App Router, Pages Router and static export all
-read the same file. See
-[Next.js scripts and embeds](../frameworks/next/scripts.md).
+Keep your existing options, such as `mode` and `routePrefix`, in the same call. `InthProvider` reads this file in the browser for App Router, Pages Router, and static export, so your layout keeps passing only `state`. See [Next.js scripts and embeds](../frameworks/next/scripts.md).
 
 **TanStack Start**
 
-Import the configuration into your root route and pass it to the existing
-`InthProvider` as a top-level prop. Keep the loader from the
-[TanStack Start quickstart](https://c15t.com/docs/frameworks/tanstack-start/quickstart):
+Import `scripts` in your root route and pass them as a top-level prop on your existing `InthProvider`. Keep the loader from the [TanStack Start quickstart](https://inth.com/docs/frameworks/tanstack-start/quickstart):
 
 ```tsx title="src/routes/__root.tsx"
 import { scripts } from '../consent-scripts';
@@ -119,15 +80,11 @@ import { scripts } from '../consent-scripts';
 <InthProvider state={consent} scripts={scripts}>
 ```
 
-Import vendor helpers in the root route module, not in a server function.
-A server function's return value must be serializable, and script
-configurations carry callbacks. See
-[TanStack Start scripts](https://c15t.com/docs/frameworks/tanstack-start/scripts).
+Import vendor helpers in the root route module, not in a server function, because script configurations carry callbacks that cannot be serialized. See [TanStack Start scripts](https://inth.com/docs/frameworks/tanstack-start/scripts).
 
 **React**
 
-Add the configuration to the existing `InthProvider` options, next to
-`mode`:
+Pass `scripts` alongside `mode` in your existing `InthProvider` options:
 
 ```tsx title="src/consent.tsx"
 import { scripts } from './consent-scripts';
@@ -135,15 +92,11 @@ import { scripts } from './consent-scripts';
 <InthProvider options={{ mode, scripts }}>
 ```
 
-`mode` is the `manifest()` value from the
-[React quickstart](https://c15t.com/docs/frameworks/react/quickstart). Keep the banner,
-dialog and preferences link inside the provider. See
-[React scripts and embeds](https://c15t.com/docs/frameworks/react/scripts).
+`mode` is the `manifest()` value from the [React quickstart](https://inth.com/docs/frameworks/react/quickstart). Keep your banner, dialog, and preferences link inside the provider. See [React scripts and embeds](https://inth.com/docs/frameworks/react/scripts).
 
 **Nuxt**
 
-Register the scripts under the `inth` key in `app/app.config.ts`. Adjust the
-relative import to where you created `consent-scripts.ts`:
+Register `scripts` under `inth` in `app/app.config.ts`. Adjust the import path to match where you created `consent-scripts.ts`:
 
 ```ts title="app/app.config.ts"
 import { scripts } from '../src/consent-scripts';
@@ -153,16 +106,11 @@ export default defineAppConfig({
 });
 ```
 
-The Nuxt module merges this over its options in `nuxt.config.ts` and starts
-one script loader in the browser after hydration, once it has applied the
-visitor's stored choice and privacy signals. Keep `scripts` out of
-`nuxt.config.ts`, which reaches the browser as JSON and drops the vendor
-callbacks. Write the vendor IDs into `consent-scripts.ts`. See
-[Nuxt scripts and embeds](https://c15t.com/docs/frameworks/nuxt/scripts).
+The Nuxt module merges this over `nuxt.config.ts` and starts one script loader in the browser after hydration. Keep `scripts` out of `nuxt.config.ts`, which serializes to JSON and strips vendor callbacks. See [Nuxt scripts and embeds](https://inth.com/docs/frameworks/nuxt/scripts).
 
 **Vue**
 
-Pass the scripts to the existing `inth` plugin call in `src/main.ts`:
+Pass `scripts` to your existing `inth` plugin registration in `src/main.ts`:
 
 ```ts title="src/main.ts"
 import { inth, manifest } from '@inth/vue/vue-plugin';
@@ -174,17 +122,11 @@ app.use(inth, {
 });
 ```
 
-Keep your existing `mode` and other options. The plugin starts one
-script loader when the app mounts, after it has applied the visitor's stored
-choice. Do not also call `createScriptLoader` from a component. See
-[Vue scripts and embeds](https://c15t.com/docs/frameworks/vue/scripts).
+Keep your existing `mode` and other options. The plugin owns the script loader, so do not call `createScriptLoader` from a component. See [Vue scripts and embeds](https://inth.com/docs/frameworks/vue/scripts).
 
 **Astro**
 
-Add the scripts to the client entrypoint from the
-[Astro quickstart](https://c15t.com/docs/frameworks/astro/quickstart), `src/inth.client.ts`,
-which the integration finds on its own. Keep `astro.config.mjs` as it is.
-If the module already exports scripts, combine the two arrays.
+Export `scripts` from the client entrypoint `src/inth.client.ts` created in the [Astro quickstart](https://inth.com/docs/frameworks/astro/quickstart). If it already exports scripts, merge the arrays. Leave `astro.config.mjs` unchanged.
 
 ```ts title="src/inth.client.ts"
 import type { InthClientOptionsExtension } from '@inth/astro';
@@ -193,16 +135,11 @@ import { scripts } from './consent-scripts';
 export default { scripts } satisfies InthClientOptionsExtension;
 ```
 
-Vendor helpers contain callbacks, and the integration options in
-`astro.config.mjs` are serialized into the page, so do not put helpers in
-the integration's `scripts` option. The integration passes the client
-entrypoint to the one runtime every page shares, including across
-`ClientRouter` navigation.
+Do not place vendor helpers in `astro.config.mjs`, which serializes options into the page and drops callbacks. The integration attaches this client entrypoint to the shared runtime across pages and `ClientRouter` navigation.
 
 **Svelte**
 
-Import the scripts in the component that owns your existing provider and
-pass them as a top-level prop:
+Import `scripts` in the component that renders your existing provider and pass them as a top-level prop:
 
 ```svelte title="src/App.svelte"
 <script lang="ts">
@@ -215,13 +152,11 @@ pass them as a top-level prop:
 </InthProvider>
 ```
 
-Retain the styles and consent UI from the [Svelte quickstart](https://c15t.com/docs/frameworks/svelte/quickstart).
-The provider owns the loader and disposes it on unmount.
+Keep the styles and consent UI from the [Svelte quickstart](https://inth.com/docs/frameworks/svelte/quickstart). The provider owns and disposes the script loader.
 
 **SvelteKit**
 
-Add the scripts to the existing `InthProvider` in the root layout. Keep the
-handle and the layout load from the [SvelteKit quickstart](https://c15t.com/docs/frameworks/sveltekit/quickstart).
+Pass `scripts` to your existing `InthProvider` in the root layout. Keep the handle and layout load from the [SvelteKit quickstart](https://inth.com/docs/frameworks/sveltekit/quickstart):
 
 ```svelte title="src/routes/+layout.svelte"
 <script lang="ts">
@@ -237,15 +172,11 @@ handle and the layout load from the [SvelteKit quickstart](https://c15t.com/docs
 </InthProvider>
 ```
 
-Import vendor helpers in the layout component, not in `+layout.server.ts`:
-a server load cannot send functions to the browser. Prerendered, static and
-SPA-mode pages use the same `scripts` prop. If you pass an externally owned
-`runtime` to the provider, register scripts when creating that runtime instead.
+Import vendor helpers in the layout component, not in `+layout.server.ts`, because server load functions cannot return callbacks. Prerendered, static, and SPA pages use the same `scripts` prop. If you pass an external `runtime`, register `scripts` when creating that runtime instead.
 
 **Angular**
 
-Pass the scripts to the existing `provideInth()` call in
-`src/app/app.config.ts`, next to `mode`:
+Pass `scripts` to your existing `provideInth()` call in `src/app/app.config.ts`, next to `mode`:
 
 ```ts title="src/app/app.config.ts"
 import { provideZonelessChangeDetection } from '@angular/core';
@@ -267,20 +198,11 @@ export const appConfig: ApplicationConfig = {
 };
 ```
 
-Keep the mode, styles and consent UI from the
-[Angular quickstart](https://c15t.com/docs/frameworks/angular/quickstart). The runtime
-starts one script loader in the browser after the first render, once it
-has applied the visitor's stored choice. With server rendering, the
-server starts the scripts the stored choice already allows. Keep
-`provideInth()` in `app.config.ts`, which the server config merges, not
-in a server-only file. See
-[Angular scripts](https://c15t.com/docs/frameworks/angular/scripts).
+Keep your mode, styles, and consent UI from the [Angular quickstart](https://inth.com/docs/frameworks/angular/quickstart). Keep `provideInth()` in `app.config.ts`, which the server config merges, rather than in a server-only file. See [Angular scripts](https://inth.com/docs/frameworks/angular/scripts).
 
 **HTML**
 
-The helpers in `@inth/integrations` are ES modules that need a bundler. On a
-page that loads the Inth script tag, paste the vendor's own snippet instead
-and keep it inert until its category is allowed:
+`@inth/integrations` helpers are ES modules that require a bundler. On a plain HTML page using the Inth script tag, paste the vendor's snippet inside an inert `<script type="text/plain">` element:
 
 ```html
 <script type="text/plain" data-inth-category="measurement">
@@ -288,14 +210,11 @@ and keep it inert until its category is allowed:
 </script>
 ```
 
-Use the category this guide names for the vendor. Inth runs the snippet
-once that category is allowed, and reloads the page when the visitor
-withdraws it. Helper options on this page, such as `loadMode`, do not apply
-to a pasted snippet. See [HTML scripts](https://c15t.com/docs/frameworks/html/scripts).
+Use the category listed for the vendor on this page. Inth runs the snippet once that category is allowed and reloads the page on withdrawal. Helper options such as `loadMode` do not apply to pasted snippets. See [HTML scripts](https://inth.com/docs/frameworks/html/scripts).
 
 **JavaScript**
 
-Pass the scripts to `init()` from `@inth/sdk`, next to your mode:
+Pass `scripts` to `init()` from `@inth/sdk`, alongside `mode`:
 
 ```ts
 import { init, manifest } from '@inth/sdk';
@@ -307,73 +226,37 @@ const consent = init({
 });
 ```
 
-Keep the mode from your quickstart. With
-`createConsentRuntime` from `@inth/sdk/runtime`, pass `scripts` to it instead.
-A kernel you create yourself needs a loader from
-`@inth/sdk/modules/script-loader`. Attach one loader per kernel. See
-[JavaScript scripts](https://c15t.com/docs/frameworks/javascript/scripts).
+With `createConsentRuntime` from `@inth/sdk/runtime`, pass `scripts` there instead. If you construct a kernel manually, attach one loader from `@inth/sdk/modules/script-loader`. See [JavaScript scripts](https://inth.com/docs/frameworks/javascript/scripts).
 
 ## Options
 
-| Option             | Default  | Behavior                                                                                                                                                                  |
-| ------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `purposes`         | Required | Maps Inth categories to Zaraz purpose IDs. A category can list several IDs. An empty mapping, a blank ID, an ID with surrounding whitespace or an ID mapped twice throws. |
-| `hideBuiltInModal` | `true`   | Hides the Zaraz modal if it is visible. Also turn off auto-display in Zaraz.                                                                                              |
-| `sendQueuedEvents` | `true`   | Calls `zaraz.consent.sendQueuedEvents()` after a purpose changes from denied to allowed. Set `false` to discard pageviews Zaraz queued before consent.                    |
-| `onReady`          | None     | Runs once after the first successful synchronization, even when every purpose is denied.                                                                                  |
-| `onError`          | None     | Receives synchronization errors.                                                                                                                                          |
+| Option             | Default  | Behavior                                                                                                                                            |
+| ------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `purposes`         | Required | Maps Inth categories to Zaraz purpose ID arrays. Throws on an empty mapping, a blank ID, surrounding whitespace, or an ID mapped to two categories. |
+| `hideBuiltInModal` | `true`   | Hides the Zaraz modal if visible. Also disable auto-display in Zaraz.                                                                               |
+| `sendQueuedEvents` | `true`   | Calls `zaraz.consent.sendQueuedEvents()` when a purpose changes from denied to allowed. Set `false` to discard pre-consent queued pageviews.        |
+| `onReady`          | None     | Runs once after the first successful sync, even when every purpose is denied.                                                                       |
+| `onError`          | None     | Receives sync errors.                                                                                                                               |
 
 ## Loading and revocation
 
-`cloudflareZaraz` returns a callback-only script with the `necessary` category
-and `alwaysLoad`, so the bridge runs for every visitor. That does not make the
-tools behind it necessary. Control each tool through its Zaraz purpose.
+`cloudflareZaraz` registers a callback-only script under `necessary` with `alwaysLoad`, so the bridge runs on every page. That does not make the underlying tools necessary; each tool stays gated by its Zaraz purpose.
 
-The bridge's vendor slug is `cloudflare-zaraz`. Declare a vendor with that
-`id` to give visitors a switch for Zaraz in the preference dialog. While a
-visitor has it switched off, the bridge denies every purpose mapped to an
-optional category, whatever the categories allow. See
-[vendor consent for your framework](./overview.md#vendor-switches-and-cookie-cleanup).
+The vendor slug is `cloudflare-zaraz`. Declare it in your vendor list to show a switch in the preference dialog; turning it off denies every purpose mapped to an optional category regardless of category grants. See [vendor consent](./overview.md#vendor-switches-and-cookie-cleanup).
 
-When the Zaraz consent API is ready, the bridge reads `zaraz.consent.getAll()`
-and sets each returned purpose to `true` only if its mapped category is
-allowed in Inth's effective permissions, which include policy restrictions.
-Purposes you did not map are set to `false`. If the API is not ready,
-the bridge waits for the `zarazConsentAPIReady` event and applies the latest
-permissions; it does not poll. On each consent change it calls
-`zaraz.consent.set()` only when a value differs, then replays queued events
-for newly allowed purposes. Revocation sets purposes to `false` and replays
-nothing. Zaraz returns only purposes attached to enabled tools, so a mapped ID
-missing from `getAll()` gets no grant.
+When the Zaraz consent API is ready, the bridge reads `zaraz.consent.getAll()` and sets each returned purpose to `true` only when its mapped category is allowed in Inth's effective permissions, including policy rules. The bridge sets unmapped purposes to `false`. If the API is not ready yet, the bridge listens for `zarazConsentAPIReady` without polling. On later changes, it calls `zaraz.consent.set()` only for changed values and replays queued events for newly allowed purposes via `zaraz.consent.sendQueuedEvents()`. Revocation sets purposes to `false` and replays nothing. Zaraz only returns purposes attached to enabled tools, so an ID absent from `getAll()` receives no grant.
 
-If a Zaraz call throws, `onReady` waits and the bridge retries on the next
-consent change or readiness event. Without `onError`, the error reaches the
-script loader's debug events, or the browser's error handler for readiness
-events. A failed revocation can leave the previous Zaraz grant in place, and a
-retried replay can send a queued event twice. Disposing the loader detaches the
-bridge but does not revoke purposes or stop tools that already ran. The bridge
-maps categories to purposes only; it does not translate IAB TCF choices.
+* **Errors and retries.** If a Zaraz call throws, `onReady` waits and the bridge retries on the next consent change or readiness event. Without `onError`, errors surface to the script loader's debug events or the browser's error handler. A failed revocation can leave a prior grant active, and a retried replay can send a queued event twice.
+* **Disposal and IAB.** Disposing the loader detaches the bridge without revoking purposes or stopping running tools. The bridge maps categories to purposes only and does not translate IAB TCF choices.
 
 ## Verify Cloudflare Zaraz
 
-Test with isolated destinations. `getAll()` shows what the bridge set, but only
-a tool's own requests show whether it respected that.
+Test with isolated destinations. `getAll()` confirms what the bridge sent, while destination network requests confirm each tool respected it:
 
-1. In a private window with an opt-in policy, load the page. The bridge adds
-   no script element. `zaraz.consent.getAll()` returns `false` for every
-   purpose, the Zaraz modal stays hidden, and no purpose-gated tool sends a
-   request.
-2. Click Reject, then reload. Every purpose is still `false`.
-3. Open Privacy settings and allow measurement. Without a reload, the
-   measurement purposes become `true`, the queued pageview replays and
-   measurement tools send requests. Marketing tools stay silent.
-4. Turn measurement off again and save. Inth reloads the page, and the new
-   page starts with every purpose `false`.
-5. In the console, call `zaraz.consent.set()` to grant a purpose that Inth
-   denies, then reload. The bridge sets it back to `false` before `onReady`
-   runs.
+1. Load the page in a private window with an opt-in policy. Confirm the bridge adds no script element, `zaraz.consent.getAll()` returns `false` for every purpose, the Zaraz modal stays hidden, and no gated tool sends requests.
+2. Click Reject and reload. Confirm every purpose remains `false`.
+3. Open Privacy settings and allow `measurement`. Without reloading, confirm measurement purposes turn `true`, the queued pageview replays, measurement tools fire, and marketing tools stay silent.
+4. Revoke `measurement` and save. Confirm Inth reloads the page and every purpose starts `false`.
+5. In the console, grant a denied purpose with `zaraz.consent.set()`, then reload. Confirm the bridge resets it to `false` before `onReady` runs.
 
-[Cloudflare Web Analytics](./cloudflare-web-analytics.md) is a
-separate product with its own helper. See the
-[consent verification guide](../guides/verify-consent.md) for navigation and
-hosting checks.
+[Cloudflare Web Analytics](./cloudflare-web-analytics.md) is a separate product with its own helper. See the [consent verification guide](../guides/verify-consent.md) for navigation and hosting checks.

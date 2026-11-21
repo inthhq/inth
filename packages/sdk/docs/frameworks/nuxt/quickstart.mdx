@@ -1,151 +1,125 @@
 ---
 title: Quickstart
-description: Add Inth to a server-rendered Nuxt app with the Nuxt module, Inth, consent-gated scripts and a preferences link.
+description: Add a cookie consent banner to a server-rendered Nuxt app and hold back analytics until consent allows them.
 group: frameworks
 ---
 
-## Before you start
+Add a consent banner to a server-rendered Nuxt app. Your server resolves each
+visitor's policy in the first HTML response, and analytics wait until consent
+allows them.
 
-This guide is for a Nuxt app that runs a Nuxt server, built with `nuxt build`
-and deployed to Node or a serverless preset. The server resolves each
-visitor's policy, so the banner is part of the first HTML. Prerendered routes
-and routes cached with `swr`, `isr` or `cache` rules work with the same setup;
-the browser resolves the visitor on those routes after hydration. For
-`nuxt generate` on a static host, or `ssr: false`, follow
-[deploy to static hosting](/docs/frameworks/nuxt/rendering#deploy-to-static-hosting)
-instead.
-[Choose your setup](/docs/concepts/choose-your-setup) compares every option.
+<Prompt title="Add Inth consent to this Nuxt app" description="Paste into Claude Code, Codex, Cursor or another coding agent at the root of your app.">
+  Add Inth consent management to this server-rendered Nuxt app.
 
-The guide uses [Inth](https://inth.com) for policies and consent records.
-[Create a project](https://inth.com/dashboard/sign-up?framework=nuxt), set its policy rules, add your site's origin to its trusted
-origins, and copy the backend URL. Tests run
-without a backend through `testing()`; see
-[consent modes](/docs/concepts/modes#testing).
+  1. Check that the app runs on a Nuxt server (`nuxt build`). If it uses `nuxt generate` for static hosting or sets `ssr: false`, stop and tell me.
+  2. Install `@inth/nuxt` and `@inth/integrations`. Read `node_modules/@inth/nuxt/AGENTS.md`, then follow the Nuxt quickstart it links to, in order. Do not guess the API from memory.
+  3. Set `NUXT_PUBLIC_INTH_PROJECT_URL` in `.env`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `NUXT_PUBLIC_INTH_PROJECT_URL` wins over any legacy `NUXT_PUBLIC_C15T_BACKEND_URL`.
+  4. Register `'@inth/nuxt'` in `modules` in `nuxt.config.ts`. Keep `scripts` and `callbacks` out of `nuxt.config.ts`.
+  5. Add `InthProvider` and `ConsentDialogLink` to `app/app.vue`, outside `<NuxtPage />`. Wrap third-party iframes in `ConsentGate`.
+  6. Register every analytics and marketing script under `inth.scripts` in `app/app.config.ts` with the matching helper from `@inth/integrations`, carry over settings such as PostHog's `region` or `apiHost`, and remove old loaders including `@nuxt/scripts` trackers and `nuxt-gtag`. If a vendor has no helper, tell me.
+  7. Run `nuxt build` and `node .output/server/index.mjs`. Check that `data-testid="consent-banner-root"` is in the server HTML, no vendor request fires before consent, rejecting survives a reload, and granting analytics loads PostHog.
 
-The setup bundles your policy into the server at build time, the
-recommended production setup. Rebuild after changing policies, translations
-or vendors.
+  Then list the files you changed, any script still outside consent, and how you checked the requests.
+</Prompt>
 
-## Install Inth
+## Prerequisites
+
+- A Nuxt app running on a Nuxt server (`nuxt build`). For `nuxt generate` or
+  `ssr: false`, follow
+  [deploy to static hosting](/docs/frameworks/nuxt/rendering#deploy-to-static-hosting).
+  Not on Nuxt? See the [framework list](/docs/frameworks).
+- An [Inth project](https://inth.com/dashboard/sign-up?framework=nuxt) with
+  your site's origin in its trusted origins.
+
+## Install the SDK
 
 <CommandTabs command="@inth/nuxt @inth/integrations" mode="install" />
 
-`@inth/nuxt` is the Nuxt module. You do not install a separate Nuxt package.
+The components ship their own styles, so there is no stylesheet to import.
+
+## Set the project URL
+
+Add your Inth project URL (including any path prefix) to `.env` and your
+host's build settings:
+
+```sh title=".env"
+NUXT_PUBLIC_INTH_PROJECT_URL=https://example-inth.inth.app
+```
+
+This URL is public; `https://example-inth.inth.app` is a demo project.
+`NUXT_PUBLIC_INTH_PROJECT_URL` wins over any legacy
+`NUXT_PUBLIC_C15T_BACKEND_URL`, which is read as a fallback if unset.
 
 ## Add the Nuxt module
 
-Register the module in `nuxt.config.ts`:
+Register `@inth/nuxt` in `nuxt.config.ts`:
 
 <include src="../../shared/examples/nuxt/nuxt-config.mdx" />
 
-Set `NUXT_PUBLIC_INTH_PROJECT_URL` to your project's backend URL, including
-any path prefix, in `.env` or wherever you build. The module reads it, so the
-config needs no `projectUrl`. The policy is fixed at build time: setting
-`NUXT_PUBLIC_INTH_PROJECT_URL` on a running server moves consent saves, not
-the policy, so build again to switch projects.
-
-```sh title=".env"
-NUXT_PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
-```
-
-The c15t name `NUXT_PUBLIC_C15T_BACKEND_URL` still works as a fallback. When both are
-set, `NUXT_PUBLIC_INTH_PROJECT_URL` wins.
-
-The module's default mode, `manifest()`, fetches your project's public
-policy once, during `nuxt build` and when `nuxt dev` starts, and embeds it in
-the server bundle. It also adds one consent route to your Nuxt server,
-`/api/inth/**`, which answers `/api/inth/v1/consent/init` and `/api/inth/v1/consent/manifest`. The
-server resolves each visitor from the bundled policy and the request's
-location and language headers, so rendering a page never waits on Inth. The
-browser bundle carries no policy and no resolver. Consent saves still go to
-Inth. [Data fetching](/docs/concepts/data-fetching) compares this with
-calling the backend on every request.
-
-<include src="../../shared/build-time-manifest-notes.mdx" />
-
-To apply policy edits without rebuilding, set
-`inth: { mode: manifest({ source: 'runtime' }) }`, with `manifest` imported
-from `@inth/nuxt`. The server then fetches and caches the policy at runtime.
-[Rendering and deployment](/docs/frameworks/nuxt/rendering) covers the other
-modes.
+Default `manifest()` mode bundles your policy into the server during
+`nuxt build` and `nuxt dev`, adds `/api/inth/**` for browser fallbacks, and
+never waits on Inth during SSR. Rebuild after policy edits, or set
+`mode: manifest({ source: 'runtime' })` in
+[rendering and deployment](/docs/frameworks/nuxt/rendering).
 
 ## Mount the consent UI
 
-Add `InthProvider` and a preferences link to `app.vue`:
+Add `InthProvider` and `ConsentDialogLink` to `app/app.vue`, outside
+`<NuxtPage />`:
 
 <include src="../../shared/examples/nuxt/root.mdx" />
 
-`InthProvider` renders the banner when the visitor's policy asks for one and
-loads the preference dialog when it opens. `ConsentDialogLink` renders a
-button that reopens preferences, labelled with the dialog's title in the
-visitor's language: Privacy Settings in English. It renders nothing until the
-policy offers preferences.
-
-The module registers these components and the consent composables, so you
-write no imports and no `app.use()`. Keep `InthProvider` in `app.vue`, outside
-`<NuxtPage />`, so it stays mounted across navigation. The components bring
-their own styles.
+`@inth/nuxt` registers these components and all composables globally, so no
+imports or `app.use()` are needed.
 
 ## Register consent-gated scripts
 
-Remove any existing PostHog snippet so the script loads once, and add
-measurement to your Inth policy.
-
-Register PostHog in `app/app.config.ts`. It waits for measurement permission.
+Register PostHog under `inth.scripts` in `app/app.config.ts` (keep `scripts`
+and `callbacks` out of `nuxt.config.ts`, which strips functions):
 
 <include src="../../shared/examples/nuxt/app-config.mdx" />
 
-Replace `phc_your_project_key` with your PostHog project key. PostHog
-defaults to its EU region; set `region: 'us'` for a US project.
-
-The module merges the `inth` key of `app.config.ts` over its options in
-`nuxt.config.ts`, then starts one script loader in the browser after
-hydration. Put options that contain functions, such as `scripts` and
-`callbacks`, in `app.config.ts`. Module options in `nuxt.config.ts`
-reach the browser as JSON, which drops functions.
+Replace `phc_your_project_key` with your key (or pick another
+[integration](/docs/integrations/overview)). Add `region: 'us'` for US
+PostHog or `apiHost` for a proxy, keep `cookieless_mode: 'never'`, and remove
+any existing PostHog snippet or module.
 
 ## Gate an embed
 
-Wrap third-party iframes in `ConsentGate`. The iframe does not exist in the
-page until its category is allowed, and it is removed when the visitor
-withdraws permission.
+Wrap third-party iframes in `ConsentGate` and render `<VideoEmbed />` where
+needed:
 
 <include src="../../shared/examples/nuxt/embed.mdx" />
 
-Nuxt registers components in `app/components` for you. Render
-`<VideoEmbed />` in a page where the video belongs.
+## Check it works
 
-## Verify the setup
+Run `nuxt build` and `node .output/server/index.mjs`, then open the site in a
+private window on the DevTools Network tab.
 
-Build and start the production server with `nuxt build` and
-`node .output/server/index.mjs`. Open the site in a private window with your
-browser's DevTools on the Network tab, under a policy that asks for consent.
-
-1. Load a page and view its source. The banner markup,
-   `data-testid="consent-banner-root"`, is in the HTML. The Network tab shows
-   no requests to `posthog.com` or `youtube-nocookie.com`.
-2. Click **Reject All**, then reload. The banner stays closed and the vendor
+1. Under an opt-in policy, view source and confirm
+   `data-testid="consent-banner-root"` is in the HTML. No requests go to
+   `posthog.com` or `youtube-nocookie.com`.
+2. Click **Reject All** and reload. The banner stays closed and vendor
    requests stay absent.
-3. Click **Privacy settings**, turn on **Analytics** (the `measurement`
-   category) and save. PostHog's `array.js` loads and the video appears.
-4. Turn **Analytics** off and save. The page reloads, the video is gone and
-   PostHog does not load again.
+3. Click **Privacy settings**, enable **Analytics**, and click **Save
+   Settings**. PostHog loads and the video appears.
+4. Open **Privacy settings**, disable **Analytics**, and save. The page
+   reloads without PostHog or the video.
 
-[Verify consent](/docs/guides/verify-consent) has the full release checklist.
+Inspect requests in the Network tab to confirm blocking; a visible banner
+alone proves nothing. To preview an EU policy locally, pass
+`<InthProvider country="DE" />` temporarily. See
+[troubleshooting](/docs/frameworks/nuxt/troubleshooting) and
+[verify consent](/docs/guides/verify-consent).
 
 ## Next steps
 
-- [Rendering and deployment](/docs/frameworks/nuxt/rendering) covers
-  prerendered and cached routes, `nuxt generate` and `ssr: false`.
-- [Nuxt module](/docs/frameworks/nuxt/module) lists every option and where it
-  goes.
-- [Scripts](/docs/frameworks/nuxt/scripts), [embeds](/docs/frameworks/nuxt/embeds)
-  and the [network blocker](/docs/frameworks/nuxt/network-blocker) cover
-  gating and revocation.
-- [Geography headers](/docs/frameworks/nuxt/geography-headers) explains how
-  the server finds the visitor's location.
-- [Customize](/docs/frameworks/nuxt/customize) changes colors, layout and copy.
-- [Components](/docs/frameworks/nuxt/components) and
-  [composables](/docs/frameworks/nuxt/composables) list the full API.
-- [Troubleshooting](/docs/frameworks/nuxt/troubleshooting) covers common
-  failures.
+- [Rendering and deployment](/docs/frameworks/nuxt/rendering): configure
+  prerendered routes, `nuxt generate`, and `ssr: false`.
+- [Nuxt module](/docs/frameworks/nuxt/module): inspect every module option.
+- [Scripts](/docs/frameworks/nuxt/scripts): add vendors or migrate off
+  `@nuxt/scripts` and `nuxt-gtag`.
+- [Geography headers](/docs/frameworks/nuxt/geography-headers): configure
+  trusted CDN geo headers.
+- [Customize](/docs/frameworks/nuxt/customize): change tokens, layout, and
+  copy.

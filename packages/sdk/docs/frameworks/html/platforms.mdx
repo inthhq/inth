@@ -1,29 +1,32 @@
 ---
 title: Install on your platform
-description: Where to paste the Inth script tag, gated vendor snippets and the privacy settings link in WordPress, Webflow, Shopify, Squarespace, Wix, Framer, Ghost, Hugo, Eleventy and Jekyll.
+description: Paste the Inth script tag, gated snippets and privacy settings link in WordPress, Webflow, Shopify, Ghost and static site generators.
 group: frameworks
 ---
 
+Find where to add the Inth script tag, gated vendor snippets and privacy
+settings link in common CMS platforms, page builders and static site
+generators.
+
 ## What every platform needs
 
-Whatever builds your pages, three pieces go in three places:
+Every platform needs three pieces:
 
 | Piece | Where it goes |
 | --- | --- |
-| The Inth script tag from the [quickstart](/docs/frameworks/html/quickstart#add-the-script-tag) | The shared `<head>` every page renders. |
-| Each vendor snippet, changed to `type="text/plain"` | Wherever the vendor told you to paste it. Remove the original copy. |
-| A link to `#inth-preferences` | The footer or legal menu every page renders. |
+| The Inth script tag from the [quickstart](/docs/frameworks/html/quickstart#add-the-script-tag) | The shared `<head>` rendered on every page. |
+| Each vendor snippet changed to `type="text/plain"` | Wherever the vendor instructs, removing any active duplicate. |
+| A link to `#inth-preferences` | The shared footer or legal navigation menu. |
 
-The tag must be on every page. A page without it has no consent state, and its
-vendor scripts follow their own rules. After you publish, check a page from
-each template your site uses, such as the home page, a blog post and a
-product page.
+A page missing the tag has no consent state and its vendor scripts run
+unchecked. After publishing, verify pages across every template (home, blog,
+product).
 
 ## WordPress
 
-Add the tag to your child theme's `header.php`, right before `</head>`. Edits
-to a parent theme are lost when it updates. A block theme without
-`header.php` can print the tag from the child theme's `functions.php`:
+Add the tag to your child theme's `header.php` right before `</head>` so
+parent theme updates do not overwrite it. For a block theme without
+`header.php`, hook `wp_head` in the child theme's `functions.php`:
 
 {/* example: fragment */}
 
@@ -33,109 +36,95 @@ add_action('wp_head', function () {
 }, 1);
 ```
 
-Priority `1` prints the tag before other plugins' head output. Replace the
-backend URL with your Inth project's URL.
+Priority `1` outputs the tag ahead of other plugins. Replace the URL with
+your Inth project URL.
 
-Plugins that add analytics or pixels for you, such as a site stats plugin or
-a marketing integration, print active tags you cannot change to
-`text/plain`. Turn off that plugin's tracking output and paste the vendor's
-snippet as a gated tag instead, or keep the plugin and hold its requests with
-a [network blocker](/docs/frameworks/html/network-blocker) rule.
-
-Add the privacy settings link as a custom link in your footer menu, with the
-URL `#inth-preferences`.
+If an analytics or marketing plugin prints active tags you cannot change to
+`text/plain`, disable its script output and paste a gated tag instead, or
+hold its requests with a
+[network blocker](/docs/frameworks/html/network-blocker) rule. Add a custom
+link to `#inth-preferences` in your footer menu.
 
 ## Webflow
 
-Paste the tag in Site settings, Custom code, Head code. Paste gated vendor
-snippets there too, or in an Embed element for one page. Put the
-`#inth-preferences` link in your footer component. Publish the site after each
-change; custom code does not run in the Designer.
+Paste the tag in Site settings, Custom code, Head code. Place gated vendor
+snippets there or inside an Embed element, and add `#inth-preferences` to
+your footer component. Publish after each edit; custom code does not run in
+the Designer.
 
 ## Shopify
 
-Edit your theme's code and paste the tag in `layout/theme.liquid`, before
-`</head>`. Put the privacy settings link in the footer menu with the URL
-`#inth-preferences`. Checkout pages do not render `theme.liquid`, so the tag
-does not run there.
+Edit your theme and paste the tag in `layout/theme.liquid` before `</head>`.
+Add `#inth-preferences` to your footer navigation. Checkout pages do not
+render `theme.liquid`.
 
-Apps that install tracking tags add them outside your theme. Check the page
-source for each vendor after you install Inth, and turn off an app's own
-tracking where it offers a setting.
+Check page source after publishing and disable tracking in any Shopify apps
+that inject tags outside your theme.
 
 ## Squarespace
 
-Paste the tag in the Code Injection page's Header field. Code injection is not
-available on every plan. Add a footer link with the URL `#inth-preferences`.
+Paste the tag in Settings, Developer Tools, Code Injection, Header (plan
+dependent) and add `#inth-preferences` to your footer.
 
 ## Wix
 
-Add the tag as custom code in your site settings, placed in the head and
-loaded on all pages. Custom code needs a site plan with a connected domain.
-Add a footer link to `#inth-preferences`.
+Add the tag under Settings, Custom Code in the `<head>` on all pages
+(requires a connected domain), and add a footer link to `#inth-preferences`.
 
 ## Framer
 
-Paste the tag in your site settings' custom code, in the section for the start
-or end of `<head>`. Add a link with the URL `#inth-preferences` in your
-footer. Publish to see it on the live site.
+Paste the tag in Site Settings, General, Custom Code (`<head>`), add a footer
+link to `#inth-preferences`, and publish.
 
 ## Ghost
 
-Paste the tag in Settings, Code injection, Site header. Add a navigation item
-with the URL `#inth-preferences` to the secondary navigation, which most
-themes render in the footer.
+Paste the tag in Settings, Code injection, Site header, and add a
+`#inth-preferences` item to Secondary navigation for the footer.
 
 ## Hugo
 
-Add the tag to the template that renders `<head>`, usually
-`layouts/_default/baseof.html` or a head partial. Copy a theme's file into
-your own `layouts/` directory before editing it, so a theme update does not
-overwrite your change.
+Add the tag to the `<head>` layout (`layouts/_default/baseof.html` or a head
+partial). Copy theme files into your site's `layouts/` directory before
+editing so theme updates do not overwrite them.
 
 ## Eleventy
 
-Add the tag to the base layout in your `_includes` directory that every page
-extends.
+Add the tag to the base layout in `_includes` extended by every page.
 
 ## Jekyll
 
-Add the tag to `_includes/head.html` or `_layouts/default.html`. Copy a
-theme's file into your site before editing it.
+Add the tag to `_includes/head.html` or `_layouts/default.html`, copying
+theme layouts into your repository first.
 
 ## Plain HTML and server includes
 
-Add the tag to each page's `<head>`, or to the shared header include your
-server uses.
+Add the tag to each page's `<head>` or your shared server header include.
 
 ## Tag managers
 
-Do not load the Inth tag from Google Tag Manager or another tag manager. The
-tag manager runs its own tags before Inth could decide anything, and it is a
-vendor that needs consent itself. Load Inth directly in `<head>`, then gate the
-tag manager's snippet like any other vendor. [Scripts](/docs/frameworks/html/scripts#google-consent-mode-and-tag-managers)
-covers Google Consent Mode.
+Do not load `inth.js` through Google Tag Manager or another tag manager. The
+tag manager runs before Inth can decide permissions and requires consent
+itself. Load `inth.js` directly in `<head>` and gate the tag manager snippet
+like any other vendor; see
+[Google Consent Mode and tag managers](/docs/frameworks/html/scripts#google-consent-mode-and-tag-managers).
 
 ## Caching and optimization plugins
 
-Plugins and CDN features that combine, defer or delay scripts can rewrite a
-gated tag's `type`, move it, or delay the Inth tag until the first click. Any
-of these breaks gating. Exclude the Inth tag, `inth.js`, and every tag with
-`data-inth-category` from script optimization. Then check the page source of
-the published site. Each gated tag still has `type="text/plain"` before a
-choice.
+Script optimizers that combine, rewrite or delay JavaScript can break
+`type="text/plain"` tags or delay `inth.js` until user interaction. Exclude
+`inth.js` and every tag carrying `data-inth-category` from script
+optimization, then check published page source to confirm gated tags keep
+`type="text/plain"`.
 
-A full-page cache is safe. The tag reads the visitor's choice in the browser,
-so every visitor can get the same cached HTML.
+Full-page HTML caching is safe because the tag resolves visitor choices in
+the browser.
 
 ## Check it works
 
-On the published site, open a page from each template in a private window
-with the Network tab open.
+Open a page from each template in a private window with DevTools Network open:
 
-1. The banner appears, and filtering for each vendor's domain shows no
-   request before a choice.
-2. Click **Reject All** and open another page. The banner stays closed.
+1. The banner appears and no vendor domain requests fire before a choice.
+2. Click **Reject All** and navigate to another page. The banner stays closed.
 3. Click the footer's privacy settings link. The preference dialog opens.
-4. View the page source. There is one Inth tag, and every vendor snippet is
+4. View page source: one Inth script tag is present, and vendor snippets use
    `type="text/plain"`.

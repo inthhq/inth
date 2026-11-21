@@ -1,26 +1,21 @@
 ---
 title: Cloudflare Web Analytics
-description: Load the Cloudflare Web Analytics beacon only after measurement consent with the Inth cloudflareWebAnalytics helper, and check it in DevTools.
+description: Load the Cloudflare Web Analytics beacon only after measurement consent with the Inth cloudflareWebAnalytics helper.
 seoTitle: Cloudflare Web Analytics cookie consent with Inth
-seoDescription: Load the Cloudflare Web Analytics beacon only with measurement consent. Set it up with the Inth cloudflareWebAnalytics helper.
+seoDescription: Gate the Cloudflare Web Analytics beacon on measurement consent and verify loading and revocation with Inth.
 icon: cloudflare-web-analytics
 group: integrations
 ---
 
-The Inth `cloudflareWebAnalytics` helper keeps the Cloudflare Web Analytics
-beacon, `beacon.min.js`, off the page until `measurement` has consent.
-Cloudflare says that the beacon sets no cookies, but Inth still waits for
-consent. The helper sends no consent signal to Cloudflare. If the visitor
-withdraws consent, Inth removes the script element. By default, Inth also
-reloads the page.
+The `cloudflareWebAnalytics` helper keeps Cloudflare's `beacon.min.js` off the page until visitors grant `measurement` consent, then removes the loader and reloads the page on withdrawal.
 
 ## Configure Cloudflare Web Analytics
 
-Copy the beacon token from the Web Analytics installation snippet. If
-Cloudflare adds the beacon to this site automatically, turn that off so the
-page has one beacon and Inth controls it.
+Copy the beacon token from your Web Analytics snippet. Turn off automatic beacon injection in Cloudflare so only Inth loads the beacon.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { cloudflareWebAnalytics } from '@inth/integrations/cloudflare-web-analytics';
@@ -34,22 +29,19 @@ export const scripts = [cloudflareWebAnalytics({ token: 'YOUR_BEACON_TOKEN' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `token` | Required | Beacon token, written into the `data-cf-beacon` attribute. The helper trims it. Empty values log an error and the script does not load. |
-| `spa` | `true` | Written into `data-cf-beacon`. Turns on Cloudflare's route tracking for single-page apps. Set `false` for a site with only full page loads. |
+| `token` | Required | Beacon token written into `data-cf-beacon`. Trimmed automatically; blank values log an error and skip loading. |
+| `spa` | `true` | Written into `data-cf-beacon` to enable SPA route tracking. Set `false` for sites with full page loads only. |
 | `scriptUrl` | `https://static.cloudflareinsights.com/beacon.min.js` | Loader URL override. |
 
 ## Loading and revocation
 
-`cloudflareWebAnalytics` uses the `measurement` category. Cloudflare Web
-Analytics sets no cookies, but the helper still waits for measurement
-permission. It loads `beacon.min.js` with `defer`. On revocation the helper
-removes the script element and calls no Cloudflare API.
+Although Cloudflare states the beacon sets no cookies, `cloudflareWebAnalytics` still waits for `measurement` consent and loads `beacon.min.js` with `defer` once allowed. On withdrawal, Inth removes the script element without calling a Cloudflare API and reloads the page by default.
 
 ## Verify Cloudflare Web Analytics
 
-Filter DevTools Network by `cloudflareinsights.com`. After you allow
-measurement, `beacon.min.js` loads and its script element carries
-`data-cf-beacon` with your token and `"spa":true`. Change route in your app and
-check that the beacon reports the new page.
+Filter DevTools Network by `cloudflareinsights.com`:
+
+1. Allow `measurement` and confirm `beacon.min.js` loads with your token and `"spa":true` in `data-cf-beacon`.
+2. Navigate to another route and confirm the beacon reports the new page.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

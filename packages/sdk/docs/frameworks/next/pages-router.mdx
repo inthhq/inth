@@ -1,51 +1,43 @@
 ---
 title: Pages Router
-description: Set up Inth in the Next.js Pages Router with Inth, a build-time policy manifest, getServerSideProps and consent-gated scripts.
+description: Set up Inth in the Next.js Pages Router with a build-time policy manifest, getServerSideProps and consent-gated scripts.
 group: frameworks
 ---
 
-## Before you start
+Set up Inth in a Next.js Pages Router app on a Next.js server. Your build
+bundles your project's public policy manifest, `withConsentProps` resolves
+consent in `getServerSideProps`, and static pages resolve in the browser
+through a local consent API route.
 
-This guide uses [Inth](https://inth.com) for policies and consent records. Your
-Next.js build bundles the project's public policy manifest. The server resolves consent
-for each visitor in `getServerSideProps`, through `withConsentProps`. The browser sends consent choices to
-Inth.
+## Prerequisites
 
-[Tests](/docs/frameworks/next/data-fetching-reference#testing-configuration)
-run without a backend through `testing()`.
+- An [Inth project](https://inth.com) with your site's origin added to its
+  trusted origins.
+- A Next.js server. For `output: 'export'`, see
+  [Static export](/docs/frameworks/next/static-export). For tests without a
+  backend, see
+  [testing configuration](/docs/frameworks/next/data-fetching-reference#testing-configuration).
+  [Rendering and deployment](/docs/frameworks/next/rendering) compares all
+  paths.
+- Trusted location headers from your host for region-specific policies; see
+  [Geography headers](/docs/frameworks/next/geography-headers).
 
-This setup needs a Next.js server. For `output: 'export'`, follow
-[static export](/docs/frameworks/next/static-export).
-[Rendering and deployment](/docs/frameworks/next/rendering) compares every
-path.
-
-Location-based policies need trusted location headers from your host. Without
-them, Inth applies your unknown-location rule. See
-[Forward geography headers](/docs/frameworks/next/geography-headers) before
-you deploy.
-
-## Install Inth and configure your backend
-
-[Create an Inth project](https://inth.com), set its policy rules and add your
-site's origin to its trusted origins. Copy the project's backend URL.
+## Install the SDK
 
 <CommandTabs command="@inth/nextjs @inth/integrations" mode="install" />
 
-## Set the backend URL
+## Set the project URL
 
-Set `NEXT_PUBLIC_INTH_PROJECT_URL` to your project's backend URL, including
-any path prefix, in `.env.local` and in your host's build settings:
+Add your Inth project URL (including any path prefix) to `.env.local` and your
+host's build settings:
 
 ```sh title=".env.local"
 NEXT_PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-The c15t name `NEXT_PUBLIC_C15T_BACKEND_URL` still works as a fallback. When both are
-set, `NEXT_PUBLIC_INTH_PROJECT_URL` wins.
-
-Next.js inlines `NEXT_PUBLIC_` variables at build time, so the build, the
-server and the browser use the same URL, and changing the variable on a built
-app has no effect until you rebuild.
+Next.js inlines `NEXT_PUBLIC_` variables at build time, so rebuild after
+changing the URL. `NEXT_PUBLIC_INTH_PROJECT_URL` wins over any legacy
+`NEXT_PUBLIC_C15T_BACKEND_URL`, which is read as a fallback if unset.
 
 ## Bundle the manifest during builds
 
@@ -53,68 +45,54 @@ app has no effect until you rebuild.
 
 ## Add the consent config
 
-Create `inth.config.ts` at the project root, next to `next.config.ts`:
+Create `inth.config.ts` at the project root next to `next.config.ts`:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-config.mdx" />
 
-`withConsentManifest` finds the file, so `InthProvider`, `withConsentProps` and
-the consent route read it without an import. The file is bundled into the
-browser as well as the server, so it can hold `scripts` but must hold no
-secrets. The config sets no `mode`, so it uses `manifest()`; see
-[consent modes](/docs/concepts/modes).
-
-`routePrefix` names the consent route below. Pages without
-`getServerSideProps` resolve consent in the browser through it.
-
-PostHog waits for measurement consent here. Replace `phc_your_project_key`
-with your project key, or use the [integration](/docs/integrations/overview)
-your application needs.
+`withConsentManifest` wires this file into `InthProvider`, `withConsentProps`
+and the consent route automatically. Because the browser bundle includes it,
+keep secrets out of it. `routePrefix` connects pages without
+`getServerSideProps` to the local API route below. Replace
+`phc_your_project_key` with your PostHog key or another
+[integration](/docs/integrations/overview).
 
 ## Add the consent API route
 
-Create one catch-all API route under `routePrefix`:
+Create a catch-all API route under `routePrefix`:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-consent-route.mdx" />
 
-It answers `GET /api/inth/v1/consent/init` and `GET /api/inth/v1/consent/manifest` from the bundled
-snapshot. With runtime fetching, it fetches `${projectUrl}/v1/consent/manifest` and
-caches the public policy. Any other path under `/api/inth` returns 404, and
-methods other than `GET` and `HEAD` get `405`. The file must be named
-`[...inth].ts`; for another name, pass the parameter as the second argument,
-such as `createPagesConsentRoute({}, 'path')` for `[...path].ts`.
+The route answers `GET /api/inth/v1/consent/init` and
+`GET /api/inth/v1/consent/manifest` from the
+bundled snapshot (or runtime cache), returns 404 for other paths and 405 for
+non-`GET`/`HEAD` requests. Name the file `[...inth].ts`, or pass a custom
+parameter name as the second argument, such as
+`createPagesConsentRoute({}, 'path')` for `[...path].ts`.
 
 ## Mount one root for every page
 
-There is no Inth stylesheet to import. The components render their own rules
-as `<style>` elements, so no stylesheet request holds back the first paint.
-With Tailwind CSS 3, import `@inth/nextjs/styles.css` yourself and set
-`styles: false` in `InthProvider`'s `options`, as
-[Customize](/docs/frameworks/next/customize#load-the-stylesheet-yourself)
-shows.
+Components render their own `<style>` elements. On Tailwind CSS 3,
+[load the stylesheet yourself](/docs/frameworks/next/customize#load-the-stylesheet-yourself).
 
-Render `InthProvider` in `_app.tsx`. It reads the state a page resolved on the
-server from `pageProps.consent`:
+Render `InthProvider` in `pages/_app.tsx`, passing `pageProps.consent`:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-app.mdx" />
 
-A page with `withConsentProps` supplies `consent`. On any other page,
-including static and `getStaticProps` pages, `consent` is undefined, and the
-browser asks `/api/inth/v1/consent/init` after hydration. That route resolves the
-bundled policy with the browser request's location headers.
+Pages using `withConsentProps` supply `consent`. Static and `getStaticProps`
+pages leave `consent` undefined, so the browser resolves through
+`/api/inth/v1/consent/init` after hydration.
 
 ## Resolve consent in getServerSideProps
 
-Export `withConsentProps()` from `@inth/nextjs/pages` as the page's
-`getServerSideProps`:
+Export `withConsentProps()` from `@inth/nextjs/pages` as `getServerSideProps`:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-ssr.mdx" />
 
-It resolves the visitor's consent from `inth.config.ts` and adds it to the
-page's props as `consent`, with `undefined` fields removed, as Next.js
-requires. The page renders the banner in the server HTML, and the browser
-applies the same state without a `/v1/consent/init` request.
+It resolves consent from `inth.config.ts`, strips `undefined` fields for
+Next.js serialization and passes `props.consent` so the banner renders in the
+server HTML with no browser `/v1/consent/init` request.
 
-A page with its own `getServerSideProps` passes it in:
+To combine it with your own `getServerSideProps`, wrap your function:
 
 {/* example: fragment */}
 
@@ -124,54 +102,40 @@ export const getServerSideProps = withConsentProps(async ({ params }) => ({
 }));
 ```
 
-Consent resolves while the page's function runs, and its `redirect` and
-`notFound` results pass through unchanged. `resolveConsent` options, such as
-`timeoutMs`, go in the second argument.
-
-`withConsentProps` sets no cookie. It reads the visitor's subject ID from
-the consent records their first save wrote. If you changed
-`storageConfig.storageKey`, pass the same key as `cookieName` in the second
-argument so the server reads the same cookie.
-
-Add `withConsentProps` to every page that should render consent on the
-server. Do not resolve consent in `getStaticProps`. It runs without the
-visitor's request, so it cannot read their cookies or location. If the
-snapshot is missing and the runtime manifest request fails or takes longer
-than `timeoutMs`, 500 ms by default, the page renders without a policy and the
-browser retries after hydration.
+Consent resolves in parallel with your handler, `redirect` and `notFound` pass
+through unchanged, and `resolveConsent` options (such as `timeoutMs` or a
+custom `cookieName` matching `storageConfig.storageKey`) go in the second
+argument. Never resolve consent in `getStaticProps`, which has no visitor
+request. If a runtime manifest fetch fails or exceeds `timeoutMs` (500 ms
+default), the page renders without a policy and the browser retries on mount.
 
 ## Use backend init instead of the manifest
 
-Set `mode: hosted()` in `inth.config.ts` and remove `routePrefix` and
-`pages/api/inth/[...inth].ts`. Keep `withConsentManifest`, which finds the
-config. With `hosted()` it downloads no manifest, so `next build` does not
-contact the backend. `_app.tsx` and the pages stay the same. `withConsentProps` and the browser now call
-`${projectUrl}/v1/consent/init`, and consent choices still go to
-`${projectUrl}/v1/consent/records`. For a browser-only setup with no server work, follow
-[client-side initialization](/docs/frameworks/next/client-side).
-
-Keeping browser saves on your origin with
-[`proxy: true`](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin) is optional with
-either source.
+To resolve via `${projectUrl}/v1/consent/init` per visit, set `mode: hosted()` in
+`inth.config.ts` and remove `routePrefix` and `pages/api/inth/[...inth].ts`.
+Keep `withConsentManifest` in `next.config.ts` so the SDK finds
+`inth.config.ts`; it skips the manifest download in `hosted()` mode. For a
+browser-only setup, see
+[Client-side initialization](/docs/frameworks/next/client-side). Same-origin
+proxying with
+[`proxy: true`](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin)
+is optional with either mode.
 
 ## Verify the setup
 
-Start the production build with `next build` and `next start`, then open a
-page that exports `withConsentProps` in a fresh browser session with DevTools
-open.
+Run `next build` and `next start`, then open a `withConsentProps` page in a
+private window with DevTools open:
 
-1. View the page source. It contains `data-testid="consent-banner-root"`.
-2. Under an opt-in policy, the Network panel shows no PostHog request. Click
-   **Reject All** and reload. The banner stays closed and PostHog does not
-   load.
-3. Open **Privacy settings** and turn on **Analytics** (the `measurement`
-   category). PostHog loads.
-4. Navigate to another page with a Next.js `Link` and reopen
-   **Privacy settings**. The choice is still selected.
-5. Open a static page directly. It shows the same choice, resolved in the
-   browser through `/api/inth/v1/consent/init`.
+1. View page source and confirm `data-testid="consent-banner-root"` is present.
+2. Under an opt-in policy, confirm no PostHog request fires. Click
+   **Reject All** and reload; the banner stays closed and PostHog stays blocked.
+3. Open **Privacy settings** and enable **Analytics** (`measurement`). PostHog
+   loads.
+4. Navigate via Next.js `Link` and reopen **Privacy settings** to confirm the
+   choice persists.
+5. Open a static page directly and confirm it resolves the same choice through
+   `/api/inth/v1/consent/init`.
 
-Pages with `withConsentProps` make no `/v1/consent/init` request, and choices post to
-`${projectUrl}/v1/consent/records`. [Script loading](/docs/frameworks/next/scripts)
-explains each vendor's loading and revocation behavior, and
-[the consent checks](/docs/guides/verify-consent) cover the release checklist.
+Confirm `withConsentProps` pages make no `/v1/consent/init` request and saves post to
+`${projectUrl}/v1/consent/records`. See [Scripts](/docs/frameworks/next/scripts) and
+[Verify consent](/docs/guides/verify-consent).

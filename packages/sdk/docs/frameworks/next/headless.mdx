@@ -1,6 +1,6 @@
 ---
 title: Headless
-description: Build a custom consent banner or embed gate in Next.js with the @inth/nextjs/headless hooks inside your existing InthProvider.
+description: Build a custom consent banner or embed gate in Next.js using @inth/nextjs/headless hooks inside InthProvider.
 group: frameworks
 ---
 
@@ -8,18 +8,17 @@ group: frameworks
 
 <import src="../../shared/react/headless.mdx#when-to-go-headless" />
 
-Check for a policy before rendering your own surfaces. `useModel()` from
-`@inth/nextjs` returns `null` while no rule has resolved and `'none'` under a rule
-that owes no consent UI, and the pre-built surfaces render nothing in that
-state.
+Before rendering custom UI, check `useModel()` from `@inth/nextjs`: it returns
+`null` while unresolved and `'none'` when no consent UI is owed.
 
 ## Minimal example
 
-The headless hooks read the runtime from the `InthProvider` set up in your
+Render this Client Component inside `InthProvider` from your
 [App Router](/docs/frameworks/next/app-router) or
-[Pages Router](/docs/frameworks/next/pages-router) guide, so they only run in a
-Client Component. Render this component inside that existing root in place
-of the stock banner. Keep the dialog and persistent preferences control.
+[Pages Router](/docs/frameworks/next/pages-router) setup in place of
+`ConsentBanner`, keeping `ConsentDialog` and a persistent preferences link:
+
+{/* example: fragment */}
 
 ```tsx title="components/consent-banner.tsx"
 'use client';
@@ -76,14 +75,12 @@ export function Banner() {
 }
 ```
 
-With the [streamed layout](/docs/frameworks/next/rendering#stream-or-await-consent-in-the-app-router),
-`InthProvider` gets a pending promise. `StreamedConsentSurface` waits for it in
-its own `Suspense` boundary, so your banner follows in a later chunk of the
-same response and shows before hydration, like the stock one. Call the hooks
-in a component inside it. Hooks called above it read the state from before
-consent resolved, which has no banner. Without the surface, the banner shows
-after hydration. With an awaited layout, the surface renders its children as
-they are.
+With the
+[streamed layout](/docs/frameworks/next/rendering#stream-or-await-consent-in-the-app-router),
+`StreamedConsentSurface` waits inside its own `Suspense` boundary so your
+custom banner arrives before hydration like the stock banner (call the hooks
+inside it, not above it). With an awaited layout, it renders its children
+directly.
 
 <import src="../../shared/react/headless.mdx#banner-api" />
 
@@ -93,9 +90,7 @@ they are.
 
 <include src="../../shared/examples/nextjs/headless-consent-gate.mdx" />
 
-The hook reads the runtime from `InthProvider`, so the gate is a Client
-Component. Render `VideoGate` inside your existing `InthProvider` around the
-embed, such as a YouTube `iframe`. A Server Component can render it and pass
-the embed as children.
+Render `VideoGate` inside `InthProvider` around any embed; Server Components can
+render it and pass the embed as children.
 
 <import src="../../shared/react/headless.mdx#consent-gate-api" />

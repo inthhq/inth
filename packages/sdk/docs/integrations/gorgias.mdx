@@ -1,30 +1,19 @@
 ---
 title: Gorgias Chat
-description: Load Gorgias Chat after functionality consent, disable its Segment analytics when measurement is denied, and verify loading and revocation with Inth.
+description: Load Gorgias Chat after functionality consent and disable Segment tracking when measurement is denied with Inth.
 seoTitle: Gorgias Chat cookie consent with Inth
-seoDescription: Load Gorgias Chat with functionality consent. Disable Segment tracking when measurement is denied and use a page reload to stop the running widget.
+seoDescription: Gate Gorgias Chat on functionality consent, disable its Segment analytics without measurement consent, and verify revocation with Inth.
 icon: messages-square
 group: integrations
 ---
 
-Gorgias Chat adds the Gorgias support chat widget to your store or site. The
-Inth `gorgiasChat` helper waits for `functionality` consent before it adds the
-Gorgias loader. When the widget is ready, the helper turns off its Segment
-analytics unless `measurement` is also allowed.
-
-Gorgias has no shutdown API, so the helper can't stop a running widget. By
-default Inth reloads the page on withdrawal, and the reload stops it.
+The `gorgiasChat` helper waits for `functionality` consent before loading Gorgias Chat and disables its Segment analytics unless `measurement` is also allowed.
 
 ## Configure Gorgias Chat
 
-Copy the public app key from the v3 installation snippet in your Gorgias Chat
-settings. The key is the last part of
-`https://config.gorgias.chat/bundle-loader/YOUR_APP_KEY`. A v2 snippet uses an
-`applicationId` instead. Pass that value as `appKey` with `version: 2`.
+Copy the public app key from your v3 Gorgias Chat snippet at `https://config.gorgias.chat/bundle-loader/YOUR_APP_KEY`. For a v2 snippet, pass its `applicationId` as `appKey` with `version: 2`.
 
-Remove any existing Gorgias snippet or automatic installation from your theme,
-tag manager or store app. An installation outside Inth can load Gorgias before
-consent, and the Gorgias loader skips duplicate installations.
+Remove any existing Gorgias snippet, tag-manager tag, or store app auto-install first; an external copy loads before consent, and Gorgias skips duplicate installations.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -36,91 +25,36 @@ consent, and the Gorgias loader skips duplicate installations.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `appKey` | Required | Public v3 app key from the installation snippet, or the v2 `applicationId` with `version: 2`. Trimmed and URL-encoded. If it's missing or blank, Inth logs `gorgiasChat: missing or invalid appKey` and never loads Gorgias. |
-| `version` | `3` | Installation snippet version, `2` or `3`. Version 3 loads `https://config.gorgias.chat/bundle-loader/<appKey>`. Version 2 loads `https://config.gorgias.chat/gorgias-chat-bundle-loader.js?applicationId=<appKey>`. |
+| `appKey` | Required | Public v3 app key, or v2 `applicationId` when `version` is `2`, trimmed and URL-encoded. Blank values log `gorgiasChat: missing or invalid appKey` and skip loading. |
+| `version` | `3` | Snippet version: `3` loads `https://config.gorgias.chat/bundle-loader/<appKey>`; `2` loads `https://config.gorgias.chat/gorgias-chat-bundle-loader.js?applicationId=<appKey>`. |
 
 ## Loading and revocation
 
-Until its consent gate allows Gorgias, the helper adds no vendor script,
-creates no vendor global and writes no vendor cookies or storage. The default
-category is `functionality`. If you map the script to another category, that
-category and the visitor's Gorgias vendor switch control the loader.
+Before consent, Inth adds no script, creates no globals, and writes no storage. The default category is `functionality`; overriding `category` gates the loader on that category plus the visitor's Gorgias vendor switch.
 
-After consent, Inth appends the loader to `<body>`. Gorgias then starts the
-widget asynchronously. The helper listens for `gorgias-widget-loaded` before
-it appends the loader. If `window.GorgiasChat` exists when the loader finishes,
-it also waits for `GorgiasChat.init()` to resolve, whichever comes first. When
-the widget is ready, the helper reads the current measurement choice, not the
-one from when the loader started.
+On grant, Inth listens for `gorgias-widget-loaded`, appends the loader to `<body>`, and also awaits `GorgiasChat.init()` if `window.GorgiasChat` is present when the loader finishes, acting on whichever resolves first. When ready, it checks the current `measurement` permission. Revocation, disposal, or a loader error cancels pending readiness listeners, though it cannot cancel Gorgias's own startup once executed. If `GorgiasChat.init()` rejects while consent remains allowed, Inth logs `gorgiasChat: chat initialization failed.` and stops waiting.
 
-Revocation, disposal or a loader error cancels the helper's pending readiness
-work. It can't cancel Gorgias's own startup once the loader has run. If
-`GorgiasChat.init()` rejects while consent still allows Gorgias, the helper
-logs `gorgiasChat: chat initialization failed.` and stops waiting.
-
-On revocation, Inth removes the loader. If the widget is already ready, the
-helper also calls `disableSegment()`, even when measurement is still allowed.
-Gorgias's `close()` and `hideChat(true)` methods only change the widget's
-visibility. They don't stop its requests or clear its session, and Gorgias
-documents no full shutdown API. Keep `reloadOnConsentRevoked` enabled.
+On withdrawal, Inth removes the loader and calls `disableSegment()` if the widget is ready, even while `measurement` stays allowed. Because Gorgias has no shutdown API and `close()` and `hideChat(true)` only hide the UI without stopping requests or clearing sessions, keep `reloadOnConsentRevoked` enabled.
 
 ## Measurement consent and Segment
 
-When the widget becomes ready without measurement consent, the helper calls
-`GorgiasChat.disableSegment()` right away. It also calls it if the
-visitor withdraws measurement while the widget stays allowed. This follows
-Gorgias's
-[documented analytics customization](https://docs.gorgias.com/en-US/html-snippets-for-chat-customization-460197).
+When the widget becomes ready without `measurement` consent, or when a visitor withdraws `measurement` later, Inth calls `GorgiasChat.disableSegment()` per Gorgias's [analytics customization docs](https://docs.gorgias.com/en-US/html-snippets-for-chat-customization-460197).
 
-Gorgias has no call to turn Segment back on. Once it's off, it stays off for
-that page, even if the visitor then allows measurement. After a reload with
-measurement allowed, the new widget uses its default analytics.
-
-`disableSegment()` only works after the widget starts. It doesn't prove that
-the widget sent no analytics request before its ready event. Check the requests
-your own widget and account settings produce.
+Gorgias provides no API to re-enable Segment on the same page; regranting `measurement` restores default analytics only after a reload. Because `disableSegment()` runs after the widget initializes, inspect Network requests to verify nothing fires before the ready event.
 
 ## Cookies and storage
 
-The Gorgias help pages don't list the widget's cookie names, storage keys or
-lifetimes in full. A Chromium probe of the public Gorgias help-center
-installation found the `_dd_s` cookie and these localStorage keys after
-functionality consent: `gorgias.ai-agent-state`, `gorgias.version`,
-`gorgias.storage-updated-at` and `gorgias.language-loaded`. They remained
-after revocation. Account API and collection requests were blocked, so this is
-a partial list, not a verified chat session. Names and lifetimes can change by
-version and account.
-
-A reload stops the running widget but doesn't delete cookies or storage that
-Gorgias already created. Record the widget's storage after you grant consent
-and again after you start a conversation, then add your own cleanup rules where
-you need them. Gorgias's
-[chat privacy disclosure](https://docs.gorgias.com/en-US/chat-add-a-privacy-disclosure-361578)
-can describe how you handle chat data. It doesn't replace the consent gate.
+Gorgias does not publish a complete cookie and storage inventory. Probing Gorgias's public help-center installation observed `_dd_s` and `localStorage` keys `gorgias.ai-agent-state`, `gorgias.version`, `gorgias.storage-updated-at`, and `gorgias.language-loaded`, all persisting after revocation; actual keys vary by version and account. Reloading stops the widget without clearing stored data, so inspect storage before and after starting a chat and add cleanup rules as needed. Gorgias's [chat privacy disclosure](https://docs.gorgias.com/en-US/chat-add-a-privacy-disclosure-361578) explains data handling to visitors and does not replace the consent gate.
 
 ## Verify Gorgias Chat
 
-Use your own app key in a private window with an opt-in policy. In DevTools,
-filter Network by `gorgias` and check Application for cookies, localStorage
-and sessionStorage.
+Test with your real app key in a private window with an opt-in policy, filtering DevTools Network by `gorgias`:
 
-1. Before a choice, and after you reject functionality and reload, no Gorgias
-   script or request appears.
-2. Grant functionality. The loader requests your app key, and the widget
-   appears for an active Gorgias installation.
-3. Leave measurement denied and check the widget's Segment requests.
-   `disableSegment()` runs after the widget is ready, so check the first load
-   as well as later interactions.
-4. Revoke functionality. The page reloads, and the new page makes no Gorgias
-   request. Check stored data separately, because the reload doesn't remove it.
+1. Before choosing, and after rejecting `functionality` and reloading, confirm no Gorgias requests fire.
+2. Grant `functionality` and confirm the loader requests your app key and the widget renders. A placeholder or deleted key still returns HTTP 200 with a warning, so verify the widget itself appears.
+3. Leave `measurement` denied and check first-load and interaction requests for Segment traffic.
+4. Revoke `functionality` and confirm the page reloads with no Gorgias requests, then inspect Application storage separately.
 
-A placeholder or deleted app key still returns HTTP 200, with only a warning
-that the installation is incorrect or deleted. That response doesn't prove the
-widget works. Check that the widget appears.
-
-Sources: [customize the chat widget with HTML and JavaScript](https://docs.gorgias.com/en-US/customize-the-chat-widget-with-HTML-and-JavaScript-286032),
-[HTML snippets for chat customization](https://docs.gorgias.com/en-US/html-snippets-for-chat-customization-460197),
-[add a privacy disclosure](https://docs.gorgias.com/en-US/chat-add-a-privacy-disclosure-361578),
-and [Gorgias privacy notice](https://www.gorgias.com/legal/privacy).
+Sources: [customize the chat widget](https://docs.gorgias.com/en-US/customize-the-chat-widget-with-HTML-and-JavaScript-286032), [HTML snippets for chat customization](https://docs.gorgias.com/en-US/html-snippets-for-chat-customization-460197), [add a privacy disclosure](https://docs.gorgias.com/en-US/chat-add-a-privacy-disclosure-361578), and [Gorgias privacy notice](https://www.gorgias.com/legal/privacy).
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

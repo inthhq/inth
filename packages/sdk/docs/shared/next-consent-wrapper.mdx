@@ -1,31 +1,28 @@
 ---
 title: Next.js consent and scripts
-description: Register scripts in the Next.js inth.config.ts used by the router guides.
+description: Register vendor scripts in inth.config.ts for Next.js App Router and Pages Router apps.
 group: frameworks
 ---
 
 ## Register scripts in inth.config.ts
 
-The [runnable Next.js example](/docs/examples) loads PostHog under the
-measurement category. Replace the placeholder `phc_your_project_key` with your
-project key, or replace the helper with the
-[integration](/docs/integrations/overview) your application uses. Include the
-measurement category in your policy.
-
-Put the scripts in `inth.config.ts`, next to `next.config.ts`:
+Add vendor helpers to `scripts` in `inth.config.ts`, next to `next.config.ts`.
+This example holds PostHog back until `measurement` consent is granted. Replace
+`phc_your_project_key` with your key or another
+[integration](/docs/integrations/overview):
 
 <include src="./examples/nextjs/quickstart-config.mdx" />
 
-PostHog waits for measurement consent here. `cookieless_mode: 'never'` disables
-cookieless capture after rejection. Remove any existing PostHog loader,
-including `next/script` and tag-manager entries, so the integration loads once.
+Keep `cookieless_mode: 'never'` so PostHog does not switch to cookieless
+capture after a rejection, and remove any other PostHog loader from
+`next/script` or a tag manager.
 
-`withConsentManifest` in `next.config.ts` finds the file, and `InthProvider`
-reads its `scripts` in the browser, so a Server Component layout renders
-`InthProvider` without passing them. The file is bundled into the browser as
-well as the server, so it must hold no secrets.
+`withConsentManifest` finds `inth.config.ts` automatically and `InthProvider`
+reads its `scripts` in the browser, so your Server Component layout passes only
+`state`. The browser bundle includes this file, so keep secrets out of it.
 
-`scripts`, `vendors`, `clearOnRevocation`, `networkBlocker`, `persistence`,
-`scriptLoader` and `options` can also be passed to `InthProvider` as props,
-which win over the config. Functions can't cross from a Server Component to a
-Client Component, so pass them as props only from a `'use client'` file.
+You can also pass `scripts`, `vendors`, `clearOnRevocation`, `networkBlocker`,
+`persistence`, `scriptLoader` and `options` directly as props on `InthProvider`,
+where props override the config. Because functions cannot cross from a Server
+Component to a Client Component, pass function props only from a `'use client'`
+file.

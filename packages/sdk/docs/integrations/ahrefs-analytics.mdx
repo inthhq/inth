@@ -1,24 +1,21 @@
 ---
 title: Ahrefs Analytics
-description: Load Ahrefs Web Analytics only after measurement consent with the Inth ahrefsAnalytics helper, and check it in DevTools.
+description: Load Ahrefs Web Analytics only after measurement consent with the Inth ahrefsAnalytics helper.
 seoTitle: Ahrefs Analytics cookie consent with Inth
-seoDescription: Load Ahrefs Web Analytics only with measurement consent. The Inth ahrefsAnalytics helper keeps analytics.js off the page until then.
+seoDescription: Gate Ahrefs Web Analytics on measurement consent with the Inth ahrefsAnalytics helper and verify analytics.js loading.
 icon: ahrefs
 group: integrations
 ---
 
-The Inth `ahrefsAnalytics` helper keeps Ahrefs Web Analytics off the page until
-`measurement` has consent. Ahrefs says that its analytics sets no cookies, but
-Inth still does not load `analytics.js` before consent. The helper sends no
-consent signal to Ahrefs. If the visitor withdraws consent, Inth removes the
-script element. By default, Inth also reloads the page.
+The `ahrefsAnalytics` helper blocks `analytics.js` until the visitor grants `measurement` consent, even though Ahrefs reports that its script sets no cookies. It sends no consent signal to Ahrefs. On withdrawal, Inth removes the script element and reloads the page by default.
 
 ## Configure Ahrefs Analytics
 
-Copy the project key from the Ahrefs installation snippet. The helper passes it
-to the analytics script as `data-key`.
+Copy your project key from the Ahrefs installation snippet and remove any direct `<script>` tag. Inth passes the key as `data-key`.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { ahrefsAnalytics } from '@inth/integrations/ahrefs-analytics';
@@ -32,20 +29,15 @@ export const scripts = [ahrefsAnalytics({ key: 'YOUR_PROJECT_KEY' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `key` | Required | Project key. Empty or whitespace-only values log an error and the script does not load. |
+| `key` | Required | Project key passed as `data-key`. Blank values log an error and skip loading. |
 | `scriptUrl` | `https://analytics.ahrefs.com/analytics.js` | Loader URL override. |
 
 ## Loading and revocation
 
-`ahrefsAnalytics` uses the `measurement` category. The script loads only while
-measurement is allowed. On revocation the helper removes the script element and
-calls no Ahrefs API.
+`ahrefsAnalytics` gates on `measurement` and loads `analytics.js` only while allowed. On revocation, Inth removes the script element without calling any Ahrefs API. Guard your own `window.AhrefsAnalytics?.sendEvent` calls on current `measurement` permission.
 
 ## Verify Ahrefs Analytics
 
-After you allow measurement, the `analytics.js` request appears and its script
-element carries your `data-key`. If your code calls
-`window.AhrefsAnalytics?.sendEvent`, check measurement permission before each
-call.
+Filter DevTools Network by `analytics.ahrefs.com`. Allow `measurement` and confirm `analytics.js` loads with your `data-key` attribute on its script element.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

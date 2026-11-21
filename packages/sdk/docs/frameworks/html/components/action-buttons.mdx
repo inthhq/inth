@@ -1,13 +1,15 @@
 ---
 title: Action buttons
-description: Make your own HTML buttons accept, reject, open preferences, dismiss a notice or reopen the banner with the data-inth-action attribute and the Inth script tag, with no JavaScript.
+description: Wire custom HTML buttons to accept, reject, open preferences or dismiss notices with data-inth-action and no JavaScript.
 group: frameworks
 ---
 
+Turn any HTML button into an Inth consent control using `data-inth-action`
+with zero custom JavaScript.
+
 ## Wire a button without code
 
-Add `data-inth-action` to any element and Inth runs that action when a
-visitor clicks it. The page needs no script of its own:
+Add `data-inth-action` to an element:
 
 {/* example: fragment */}
 
@@ -15,56 +17,47 @@ visitor clicks it. The page needs no script of its own:
 <button type="button" data-inth-action="customize">Cookie settings</button>
 ```
 
-This works with `inth.js`, `inth.testing.js`,
-`inth.headless.js` and `inth.iab.js`, and with `init()` from `@inth/sdk`
-in a bundled app.
+Works across `inth.js`, `inth.testing.js`, `inth.headless.js`, `inth.iab.js`
+and `init()` from `@inth/sdk`.
 
 ## Actions
 
 <import src="../../../shared/browser/client-options.mdx#page-actions" />
 
-An unknown value does nothing. Accept and reject close the banner or dialog in
-the same click, then send the choice to the backend in the background.
+Unknown values are ignored. `accept` and `reject` close the active surface
+immediately and send the choice to Inth in the background.
 
 ## How clicks are matched
 
-Inth listens for clicks on the whole document, so:
+Inth delegates clicks on `document`, so:
 
-- Buttons added after the page loaded, for example by a page builder widget
-  or a CMS block, work too.
-- A click on a child element counts. An icon inside
-  `<button data-inth-action="accept">` triggers the action.
-- Inth calls `preventDefault()` on the click. A `data-inth-action` link does
-  not navigate, and a `data-inth-action` button inside a form does not submit
-  it.
+- buttons added dynamically after page load work automatically;
+- clicks on nested elements (such as an icon inside the button) trigger the
+  action;
+- Inth calls `preventDefault()`, preventing link navigation and form
+  submission.
 
 ## Only record choices from visitor clicks
 
-`accept` and `reject` record a consent choice. Keep them on controls a visitor
-clicks on purpose, with labels that say what they do. Do not trigger them
-from script with `element.click()`, and do not hide an accept button inside a
-larger clickable area.
-
-Use `customize` for a "Cookie settings" or "Privacy choices" control. It only
-opens the dialog, so it is safe anywhere.
+`accept` and `reject` record legal consent choices. Place them on clearly
+labelled buttons the visitor intentionally clicks, never triggered via
+`element.click()` or hidden inside broader clickable containers. Use
+`customize` for "Cookie settings" controls that only open the dialog.
 
 ## Build a banner from action buttons
 
-The [headless build](/docs/frameworks/html/headless) renders no banner, so your
-page writes one from these buttons. The headless page shows a complete bottom
-bar that uses `accept`, `reject`, `customize` and `dismiss`, and switches
-between them by policy.
+With the [headless build](/docs/frameworks/html/headless), combine
+`data-inth-action` buttons (`accept`, `reject`, `customize`, `dismiss`) with
+the `ui` event to build a custom banner.
 
 ## Accessibility
 
-Inth adds no role, label or keyboard handling. Use a native `button` for
-actions and an `a` for navigation, so the control is focusable and responds to
-Enter and Space. A `div` with `data-inth-action` responds to clicks only.
+Inth adds no ARIA role or keyboard behavior. Always use a native `<button>`
+for actions so keyboard users can focus and trigger them with Enter or Space.
 
 ## Check it works
 
-1. Add a `data-inth-action="reject"` button to a page and open it in a private
+1. Add a `data-inth-action="reject"` button and open the page in a private
    window.
-2. Click the button. The banner closes, and in DevTools the Network tab shows
-   the save request to your backend's `/v1/consent/records`.
+2. Click the button. The banner closes and DevTools Network shows `POST /v1/consent/records`.
 3. Reload. The banner stays closed.

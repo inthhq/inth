@@ -1,54 +1,52 @@
 ---
 title: Preferences link
-description: Let visitors reopen Inth privacy settings on a plain HTML site from a footer link, a CMS menu item or a page builder link to the inth-preferences fragment, with no JavaScript.
+description: "Reopen Inth privacy settings on a plain HTML site from any footer or CMS menu link to #inth-preferences."
 group: frameworks
 ---
 
+Let visitors reopen the preference dialog from any footer link, CMS menu item,
+or page builder without writing JavaScript by linking to `#inth-preferences`.
+
 ## Add a privacy settings link
 
-Visitors need a way to change their choice after the banner closes. A link
-whose `href` ends in `#inth-preferences` opens the preference dialog:
+Point an anchor's `href` to `#inth-preferences`:
 
 <include src="../../../shared/examples/html/preferences-link.mdx" />
 
-Put it in the footer or legal links menu that every page renders. The link
-works in places where you cannot add a `data-*` attribute or a script, such as
-a CMS menu editor or a page builder's link field. Set the menu item's URL to
-`#inth-preferences`.
+Add it to the shared footer or legal menu rendered on every page. Because it
+uses a plain URL fragment, it works inside CMS menu editors where you cannot
+set `data-inth-*` attributes.
 
 ## How the link behaves
 
-- Inth matches any `a[href]` whose `href` ends in `#inth-preferences`. A
-  link to `/about#inth-preferences` opens the dialog on the current page and
-  does not go to `/about`.
-- A click opens the dialog and records nothing. Inth calls `preventDefault()`,
-  so the URL does not change and the page does not scroll.
-- Links added after the page loaded work, because Inth listens for clicks on
-  the whole document.
-- Opening a URL that already contains `#inth-preferences` does not open the
-  dialog. Only a click does.
+- Inth matches any `a[href]` ending in `#inth-preferences`. A path such as
+  `/about#inth-preferences` also opens the dialog on the current page without
+  navigating.
+- Clicking opens the dialog without saving, and calls `preventDefault()` so
+  the URL and scroll position do not change.
+- Links inserted after page load work through document-level click
+  delegation.
+- Loading a URL that already contains `#inth-preferences` does not open the
+  dialog; only clicks do.
 
-A `<button data-inth-action="customize">` does the same thing. Use whichever
-fits your markup; see [action buttons](/docs/frameworks/html/components/action-buttons).
+You can also use `<button data-inth-action="customize">`; see
+[action buttons](/docs/frameworks/html/components/action-buttons).
 
 ## Word the link for your visitors
 
-"Privacy settings", "Cookie settings" and "Your privacy choices" all work.
-Some US state privacy laws name specific link text, such as "Do not sell or
-share my personal information". Inth does not change your link text by
-region, so choose the wording your policy requires.
+Use wording appropriate for your regions, such as "Privacy settings", "Cookie
+settings", "Your privacy choices", or "Do not sell or share my personal
+information" where US state laws require it. Inth does not rewrite your link
+text by region.
 
 ## When the dialog is off
 
-With `ui: { dialog: false }` or `inth.headless.js`, the link makes `dialog`
-the active surface but nothing renders it. Your page must render its own
-dialog when the `ui` event reports `'dialog'`. See
-[headless](/docs/frameworks/html/headless).
+With `ui: { dialog: false }` or `inth.headless.js`, clicking the link emits
+`'dialog'` on the `ui` event without rendering stock UI. Render your own
+dialog in response; see [headless](/docs/frameworks/html/headless).
 
 ## Check it works
 
-1. Click the link on any page. The preference dialog opens and the address
-   bar keeps its URL.
+1. Click the link on any page. The dialog opens and the URL stays unchanged.
 2. Change a category and save. The dialog closes.
-3. Check a page from each template your site uses, because the link only
-   works where the footer renders it.
+3. Verify the link works across every page template on your site.

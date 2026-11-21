@@ -1,74 +1,38 @@
 ---
 title: Singular
-description: Start Singular only after Inth consent allows it, then stop, resume and limit its data sharing in Swift, Kotlin, React Native and Expo, with Google's DMA signals passed through Singular.
+description: Start Singular only after Inth consent allows it, then stop, resume, and limit data sharing in Swift, Android, React Native, and Expo.
 seoTitle: Singular consent for mobile apps with Inth
-seoDescription: Stop, resume and limit Singular data sharing from Inth consent in Swift, Android, React Native and Expo apps, with DMA signals for Google.
+seoDescription: Start, stop, resume, and limit Singular data sharing from Inth consent in Swift, Android, React Native, and Expo, with Google DMA signals.
 group: integrations
 ---
 
-The Singular helper starts Singular only once a category allows it, then
-resumes tracking and records a GDPR opt-in, and stops all tracking on
-withdrawal. It sets
-[`limitDataSharing`](https://support.singular.net/hc/en-us/articles/23269267011611--March-2024-Google-Updates-for-the-EU-Digital-Markets-Act-DMA)
-from marketing, and Singular passes that to Google as the DMA consent
-signals. The category defaults to `marketing`.
+The bundled Singular helper in `InthApple`, `inth-android`, and `@inth/react-native/integrations` starts Singular only after consent passes, resumes tracking, records a GDPR opt-in, and stops tracking on withdrawal. It drives [`limitDataSharing`](https://support.singular.net/hc/en-us/articles/23269267011611--March-2024-Google-Updates-for-the-EU-Digital-Markets-Act-DMA) from `marketing` so Singular forwards Google DMA consent signals. The default category is `marketing`.
 
-The helper ships in `InthApple`, `inth-android` and
-`@inth/react-native/integrations`. Inth adds no Singular dependency. The web
-has no Singular helper.
+Install Singular separately. Inth ships no web helper for Singular.
 
 ## What the helper changes
 
 | Consent | Singular calls |
 | --- | --- |
-| Category never granted yet | Nothing: Singular is not started |
-| Category granted for the first time | Your `start` callback with the data-sharing limit, then `limitDataSharing`, `resumeAllTracking()` and `trackingOptIn()` |
-| Category granted again after withdrawal | `limitDataSharing`, `resumeAllTracking()` and `trackingOptIn()` |
-| Category withdrawn after Singular started | `stopAllTracking()`, then `limitDataSharing(true)` |
-| Marketing changes while the category stays granted | `limitDataSharing` only |
+| Category never granted | Nothing. Singular does not start. |
+| Category granted for the first time | Your `start` callback with the data-sharing limit, then `limitDataSharing`, `resumeAllTracking()`, and `trackingOptIn()`. |
+| Category granted again after withdrawal | `limitDataSharing`, `resumeAllTracking()`, and `trackingOptIn()`. |
+| Category withdrawn after Singular started | `stopAllTracking()`, then `limitDataSharing(true)`. |
+| Marketing changes while category stays granted | `limitDataSharing` only. |
 
-`limitDataSharing` receives `true` unless `adUserData` and
-`adPersonalization` are both granted, as in the shared
-[Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types).
-Singular keeps the stopped state across launches until
-`resumeAllTracking()` runs.
+The helper passes `true` to `limitDataSharing` unless both `adUserData` and `adPersonalization` pass consent, matching the shared [Consent Mode mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types). Singular keeps tracking stopped across launches until `resumeAllTracking()` runs.
 
 ### Why the helper starts Singular
 
-Singular ignores `stopAllTracking`, `resumeAllTracking`, `trackingOptIn` and
-`limitDataSharing` until it is initialized. In Android SDK 12.17.0 each one
-logs "Singular SDK not initialized" and returns, and the React Native wrapper
-passes the calls straight through to the native SDK. Initializing Singular
-sends a session at once, and no config option starts it stopped. So no order
-of "connect, then initialize" or "initialize, then connect" keeps a denied
-launch silent. Instead, the helper calls your `start` callback on the first
-grant, with the data-sharing limit for the config, and makes no Singular call
-before that.
+Singular ignores `stopAllTracking`, `resumeAllTracking`, `trackingOptIn`, and `limitDataSharing` before initialization. In Android SDK 12.17.0, each logs `"Singular SDK not initialized"` and returns, and the React Native wrapper forwards calls straight to the native SDK. Initializing Singular also sends a session immediately, and no config option starts it stopped. Calling your `start` callback on the first grant keeps a denied launch silent.
 
-If starting fails (Swift and Kotlin `start` return `false`, or it throws or
-rejects), the helper reports it, makes no tracking call, and tries `start`
-again on the next consent update or `sync()`. That holds at launch too, when a
-saved grant makes the helper start Singular as you create it: the helper stays
-connected and reports the failure instead of throwing (on React Native,
-`ready` rejects). Calls that restrict tracking, such as `stopAllTracking()` and
-`limitDataSharing(true)`, still follow consent after a failed start, because
-Singular may have started anyway.
+If `start` fails by returning `false` in Swift or Kotlin, throwing, or rejecting, the helper reports the error, makes no tracking call, and retries `start` on the next consent update or `sync()`. At launch with a saved grant, the helper stays connected and reports the failure instead of throwing, while `ready` rejects on React Native. Restrictive calls such as `stopAllTracking()` and `limitDataSharing(true)` still follow consent after a failed start because Singular may have initialized anyway.
 
 ## Before you start
 
-Complete the [Swift](/docs/frameworks/swift/quickstart),
-[Android](/docs/frameworks/android/quickstart) or
-[React Native](/docs/frameworks/react-native/quickstart) quickstart, with
-`marketing` in your Inth policy and native configuration. Install Singular
-through its [iOS](https://support.singular.net/hc/en-us/articles/36198287576987-iOS-SDK-Data-Privacy),
-[Android](https://support.singular.net/hc/en-us/articles/37157391877019-Android-SDK-Methods-Reference)
-or [React Native](https://support.singular.net/hc/en-us/articles/36069276969627-React-Native-SDK-Data-Privacy)
-guide.
+Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart with `marketing` in your Inth policy and native config. Install Singular using its [iOS](https://support.singular.net/hc/en-us/articles/36198287576987-iOS-SDK-Data-Privacy), [Android](https://support.singular.net/hc/en-us/articles/37157391877019-Android-SDK-Methods-Reference), or [React Native](https://support.singular.net/hc/en-us/articles/36069276969627-React-Native-SDK-Data-Privacy) guide.
 
-**Do not initialize Singular yourself.** Put `Singular.init` (Android, React
-Native) or `Singular.start` (iOS) inside the helper's `start` callback, and
-connect the helper at startup in its place. If the app needs Singular before
-consent, for example to resolve Singular Links, this helper does not fit.
+**Do not initialize Singular yourself.** Put `Singular.init` on Android and React Native, or `Singular.start` on iOS, inside the helper's `start` callback and connect the helper at startup. If your app requires Singular before consent, such as for resolving Singular Links, skip this helper.
 
 ## Connect a Swift app
 
@@ -124,8 +88,7 @@ fun connectSingularConsent(context: Context, onError: (Exception) -> Unit): Sing
 }
 ```
 
-Call it in `Application.onCreate` in place of `Singular.init`, and keep the
-returned helper on the application.
+Call `connectSingularConsent` in `Application.onCreate` instead of `Singular.init`, and retain the returned helper on the `Application` instance.
 
 ## Connect React Native or Expo
 
@@ -133,7 +96,7 @@ Copy the checked connection function into `singular-consent.ts`:
 
 <include src="../shared/examples/react-native-bare/rn-singular-integration.mdx" />
 
-Then supply `singular-react-native`:
+Then wire `singular-react-native`:
 
 {/* example: fragment */}
 
@@ -161,38 +124,25 @@ export const connectSingularVendor = (onError: (error: unknown) => void) =>
 	);
 ```
 
-Call `connectSingularVendor` at startup in place of `Singular.init`. On React
-Native's New Architecture, Singular documents `NativeSingular` from
-`singular-react-native/js/NativeSingular` with the same methods. Expo needs a
-development build with Singular's native module.
+Call `connectSingularVendor` at startup instead of `Singular.init`. On React Native's New Architecture, Singular documents `NativeSingular` from `singular-react-native/js/NativeSingular` with the same methods. Expo requires a development build that includes Singular's native module.
 
 ## Handle reset and teardown
 
-`sync()` reapplies current consent and records another opt-in if allowed.
-Teardown (`stop()`, `close()` or `disconnect()`) stops all tracking if
-Singular started. Neither
-deletes data Singular already received.
+Call `sync()` to reapply current consent and record another opt-in when allowed. Call `stop()`, `close()`, or `disconnect()` to stop tracking if Singular has started. Neither deletes data Singular already received.
 
-On withdrawal, the helper makes both calls, `stopAllTracking()` and
-`limitDataSharing(true)`, even if one of them fails, and reports the failure
-to `onError`.
+On withdrawal, the helper calls both `stopAllTracking()` and `limitDataSharing(true)` even if one fails, and reports any error to `onError`.
 
-## Check the integration
+## Verify Singular
 
-1. Launch with no saved choice. Confirm Singular sends nothing and logs no
-   initialization.
-2. Grant marketing. Confirm Singular initializes, tracking resumes, one
-   opt-in, and data sharing is not limited.
-3. With `category` set to measurement, grant measurement, then change
-   marketing. Confirm only the data-sharing limit changes.
-4. Withdraw. Confirm `isAllTrackingStopped()` is `true`, and that a relaunch
-   with consent still withdrawn sends nothing.
+1. Launch with no saved choice. Confirm Singular sends nothing and logs no initialization.
+2. Grant `marketing`. Confirm Singular initializes, resumes tracking, records one opt-in, and sets `limitDataSharing` to `false`.
+3. With `category` set to `measurement`, grant `measurement`, then toggle `marketing`. Confirm only `limitDataSharing` changes.
+4. Withdraw consent. Confirm `isAllTrackingStopped()` returns `true` and a relaunch sends nothing.
 
-The helper tests cover order and category changes with recorded calls. They
-were not run against the Singular SDK. The snippets were written against these SDK majors and checked as shown:
+Inth tests verify call order and category transitions against recorded stubs rather than a live Singular SDK. Checked SDK versions:
 
-| Platform | Version | How |
+| Platform | Version | Verification |
 | --- | --- | --- |
-| React Native | `singular-react-native` 4.3.1 | Type-checked against the package's published types |
-| Android | `singular_sdk` 12.17.0 | Method signatures, and the before-init behaviour above, read from the published AAR |
-| iOS | Singular iOS SDK 12.16.0 | Checked against the SDK's public `Singular.h` header |
+| React Native | `singular-react-native` 4.3.1 | Type-checked against published package types |
+| Android | `singular_sdk` 12.17.0 | Signatures and pre-init behavior read from the published AAR |
+| iOS | Singular iOS SDK 12.16.0 | Checked against the public `Singular.h` header |

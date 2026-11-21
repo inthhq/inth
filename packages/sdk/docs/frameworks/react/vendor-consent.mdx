@@ -1,19 +1,18 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing in a React app and still turn off one vendor in it, with the vendors option on InthProvider and useVendorAllowed.
+description: Let React visitors allow a category while disabling individual vendors with options.vendors and hooks.
 group: frameworks
 ---
+
+Let visitors allow a category such as marketing while still turning off individual vendors inside it.
 
 <import src="../../shared/scripts/vendor-consent.mdx#how" />
 
 ## Declare the vendors
 
-Declaring a vendor turns on vendor switches. Built-in `@inth/integrations`
-helpers then list their own vendor by name, so you only declare a vendor for a
-script of your own, or to replace a helper's name and privacy policy.
+Declaring a vendor enables vendor switches. Built-in `@inth/integrations` helpers automatically list their vendor by name once vendor switches are active, so declare vendors only for custom scripts or to override a helper's display name and privacy policy URL.
 
-Declare the vendors next to the scripts in `src/scripts.ts`, using the `vendor`
-slug each script already carries:
+Define `vendors` next to `scripts` in `src/scripts.ts`, matching the `vendor` slug on each script:
 
 {/* example: fragment */}
 
@@ -30,7 +29,7 @@ export const vendors: Vendor[] = [
 ];
 ```
 
-Then add them to the provider options in `src/consent.tsx`:
+Pass `vendors` to `InthProvider` in `src/consent.tsx`:
 
 {/* example: fragment */}
 
@@ -40,32 +39,23 @@ import { scripts, vendors } from './scripts';
 <InthProvider options={{ mode, scripts, vendors }}>
 ```
 
-`vendors` is a live option, like `scripts`: passing a new list replaces the
-declared vendors. A provider that borrows a `runtime` does not accept
-`vendors`; declare them in `createConsentRuntime({ vendors })` instead.
+`vendors` is a live option like `scripts`: passing a new array replaces the declared list. If `InthProvider` borrows a `runtime`, pass `vendors` to `createConsentRuntime({ vendors })` instead.
 
 <import src="../../shared/scripts/vendor-consent.mdx#fields" />
 
 <import src="../../shared/scripts/vendor-consent.mdx#targets" />
 
-`ConsentGate` checks a category only. To render a component only while one
-vendor is allowed, read `useVendorAllowed('youtube')` and render it when the
-hook returns `true`. [Embeds](/docs/frameworks/react/embeds) covers the iframe
-blocker's `data-vendor` attribute.
+`ConsentGate` checks a category only. To gate a component on a single vendor, check `useVendorAllowed('youtube')` and render when it returns `true`. See [Embeds](/docs/frameworks/react/embeds) for the iframe blocker's `data-vendor` attribute.
 
 ## What the preference dialog shows
 
-`ConsentDialog` and `ConsentWidget` list each declared vendor under its
-category, with its own switch.
+`ConsentDialog` and `ConsentWidget` list each declared vendor under its category with its own switch.
 
 <import src="../../shared/scripts/vendor-consent.mdx#dialog" />
 
 ## Build your own vendor switch
 
-`useVendorDraft()` from `@inth/react` reads and stages vendor switches on the
-same draft the category switches use, so one save records both.
-`useVendorAllowed(id)` returns whether a vendor may run now: it is declared,
-its category is allowed and the visitor has not switched it off.
+`useVendorDraft()` from `@inth/react` reads and stages vendor toggles on the same draft used by category switches so one save commits both. `useVendorAllowed(id)` returns whether a vendor can run right now: it is declared, its category is allowed, and the visitor has not switched it off.
 
 {/* example: fragment */}
 
@@ -83,15 +73,7 @@ const xPixelAllowed = useVendorAllowed('x-pixel');
 <button type="button" onClick={() => save()}>Save</button>
 ```
 
-`save()` resolves `{ ok: false }` without recording anything when the policy
-or the vendor list changed under the edit. Call `reset()` to start again.
-`useDeclaredVendors()` returns the declared vendors, and `useVendorChoice()`
-returns the recorded vendor decision, or `null` before the visitor made one.
-To list vendors under each category in your own preference center, call
-`useVendorsListedUnder(category)` from `@inth/react/headless`. It returns the
-vendors the stock dialog lists in that category's row, in declared order. A
-vendor known only from a script's `vendor` slug stays listed after the
-visitor turns it off, so they can turn it back on.
+`save()` resolves `{ ok: false }` without recording anything if the policy or vendor list changed during editing; call `reset()` to reseed. `useDeclaredVendors()` returns the declared list, and `useVendorChoice()` returns the recorded vendor denials or `null` before a choice is recorded. To list vendors under each category in a custom preference center, call `useVendorsListedUnder(category)` from `@inth/react/headless`. A vendor known only from a script slug stays listed after being turned off so the visitor can re-enable it.
 
 <import src="../../shared/scripts/vendor-consent.mdx#undeclared" />
 

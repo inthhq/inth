@@ -1,112 +1,60 @@
 ---
 title: Data fetching
-description: Choose the recommended build-time policy snapshot or runtime manifest fetching, backend /v1/consent/init, browser resolution or local rules, and understand where consent choices are saved.
+description: Choose how your app fetches Inth policies, reports sessions, links journey IDs, and proxies consent requests on your own origin.
 group: concepts
 ---
 
+Inth separates where a policy resolves from where choices are saved. Every path below reads policy configuration from your Inth project and saves choices to Inth, except `testing()`.
+
 ## Compare the fetching paths
 
-Every path below talks to your Inth project. Only `testing()` removes backend
-requests. For a recommendation by framework, start with
-[choose your setup](/docs/concepts/choose-your-setup).
-
-| Fetching path | Where policy resolves | Where choices are submitted | Choose it when |
+| Fetching path | Where policy resolves | Where choices go | Choose it when |
 | --- | --- | --- | --- |
-| Build-time manifest, recommended for server-rendered apps | Your server resolves a bundled policy snapshot with each visitor's inputs | Your Inth project | Your framework renders on the server, supports a build integration, and policy changes can ship with a rebuild |
-| Cached manifest on your server | Your application resolves public policy data with each request's location and signals | Your Inth project | Policy changes must reach the app without rebuilding, or builds cannot access the backend |
-| Regular backend `/v1/consent/init` | The consent backend | The same backend | You have no application server, as in a React, Vue or Svelte single-page app, want the fewest moving parts, or need backend-owned request resolution |
-| Manifest in the browser | The browser, using a supplied location, or `/v1/consent/init` when the policy needs one it doesn't have | Your Inth project | The policy has no location rules or the page knows the visitor's location, and you accept about 3 KB more bundle and a rebuild for policy edits |
-| `testing()` | The browser or local runtime, using the test's rules | No backend submission | Tests only. It throws in production builds. |
+| Build-time manifest | Your server, from a build snapshot | Inth | You run SSR and policy edits can ship with a rebuild. |
+| Runtime cached manifest | Your server, caching `/v1/consent/manifest` | Inth | Policy edits must apply without rebuilding. |
+| Hosted `/v1/consent/init` | Inth `/v1/consent/init` | Inth | You build a React, Vue, or Svelte SPA or static site with no app server. |
+| Browser manifest | Browser, with supplied location or `/v1/consent/init` fallback | Inth | Your policy has no location rules or your edge host injects `{ country, region }`. |
+| `testing()` | Browser, from local test rules | Nowhere | Local and automated tests only. Throws in production builds. |
+
+Find your framework's recommended path in [choose your setup](/docs/concepts/choose-your-setup). Compare latency and bundle impact in [performance](/docs/performance).
 
 ## What is a consent manifest?
 
-A manifest is a versioned policy document served by `GET /v1/consent/manifest`. It contains
-policy rules, translation configuration and related consent configuration. It
-is public configuration, not a visitor's saved choices. A resolver combines the
-manifest with country, region, language and privacy signals to produce an init
-result for one visitor.
+A consent manifest is a versioned public JSON document served by `GET ${projectUrl}/v1/consent/manifest`. It holds your project's policy rules, translations, and consent configuration. It contains no secrets, no visitor identifiers, and no saved consent records.
 
-Reusing the public document avoids asking the consent backend to resolve policy
-for every application request. Cache misses and revalidation still fetch the
-manifest, and consent writes still need the backend. Measure the deployed
-request path before promising a latency improvement.
+A resolver combines that public manifest with each visitor's country, region, language, and privacy signals to produce an init result per request. Because the manifest is public, your build or server reuses one copy across all visitors instead of calling `/v1/consent/init` on every page load.
 
-Do not put secrets, visitor identifiers or consent records into a manifest.
-Keep personalized init responses out of shared caches. Changing a policy also
-requires a refresh strategy for cached or build-time manifests.
+Keep personalized init responses out of shared caches. After editing policies, translations, or vendors in Inth, rebuild build-time apps or wait for runtime caches to revalidate. See [download the manifest at build time](/docs/concepts/modes#download-the-manifest-at-build-time) and [what happens when the download fails](/docs/concepts/modes#what-happens-when-the-download-fails).
 
-## Use a build-time manifest by default
+## Session counting
 
-<include src="../shared/build-time-manifest.mdx" />
+Inth counts visitor sessions from `/v1/consent/init` requests. Because server-side manifest resolution skips `/v1/consent/init`, server adapters post a session report to `POST ${projectUrl}/v1/consent/sessions` after the page response finishes.
 
-`manifest()` is the default mode in every server-rendered framework.
-[Consent modes](/docs/concepts/modes#download-the-manifest-at-build-time)
-covers each framework's build integration and what happens when the
-download fails.
-
-The framework quickstarts include the build integration for supported
-deployments. Server resolution uses the snapshot without an upstream manifest
-request. Browser resolution includes the policy and resolver in the client
-bundle, and still calls `/v1/consent/init` for a regional policy when the browser doesn't
-know the visitor's location, so the React, Vue and Svelte quickstarts use
-`hosted()` instead. Static Nuxt and
-Astro sites and script-tag sites keep the runtime setup from their guides.
-
-<include src="../shared/build-time-manifest-notes.mdx" />
-
-## How manifest mode counts visitors
-
-The backend counts visitors from `/v1/consent/init` requests, and manifest resolution
-skips them. To keep the count, the server adapters send a session report after
-each resolution: the host posts to the backend's `POST /v1/consent/sessions` from the
-server, after the response. The browser sends nothing, and the report stores
-no identity; the visitor's IP address and user agent are forwarded under the
-backend's usual IP handling. Static output resolves in the browser and sends
-no report.
+The browser sends no request for this report, and the payload stores no visitor identity. Visitor IP and user agent follow standard Inth privacy handling. Static sites resolving manifests in the browser send no session report.
 
 ## Link an init to the save that follows
 
-Each page load gets a journey id, a random UUID sent on requests Inth already
-makes:
+Inth attaches a random UUID journey ID to link each initialization with the consent save that follows:
 
-| Request | Query parameters |
+| Request | Journey fields |
 | --- | --- |
-| `GET /v1/consent/init` | `journey`, `journeyScope`, `stored` (`1` if a choice or notice dismissal was stored) |
-| `POST /v1/consent/records` | `journey`, `journeyScope` |
+| `/v1/consent/init` | Query parameters `journey`, `journeyScope`, and `stored` set to `1` when a stored choice or notice dismissal exists |
+| `POST /v1/consent/records` | Query parameters `journey` and `journeyScope` |
+| `POST /v1/consent/sessions` | JSON field `journey: { id, scope, storedChoice, prompt, domain }` |
 
-Session reports carry it as `journey: { id, scope, storedChoice, prompt, domain }`.
-A report and a save with the same `id` belong to one page load. `prompt` is
-`due`, `stored` or `not-required`; a page that falls back to the default opt-in
-banner counts as `due` or `stored`. A stored answer counts as `stored` even if a
-policy change makes Inth ask again.
+`prompt` is `'due'`, `'stored'`, or `'not-required'`. A stored answer counts as `'stored'` even when a policy update triggers a new prompt. The journey ID is random, never equals the subject ID, and is never stored in a cookie. Offline save replays omit it.
 
-The id is random, is never the subject id and is never written to a cookie.
-Every save that carries one follows a `/v1/consent/init` or report with the same id.
-Saves replayed after going offline carry none.
-
-| `journey` | Behavior |
+| `journey` option | Behavior |
 | --- | --- |
-| `'page'` (default) | One id per page load, in memory. |
-| `'tab'` | Kept in `sessionStorage` while a prompt is due, and removed once the visitor chooses or no prompt is due. Only when the browser resolves init; server-rendered pages use `'page'`. |
-| `false` | No journey. |
+| `'page'` | Default. One journey ID per page load, kept in memory. |
+| `'tab'` | Stored in `sessionStorage` while a prompt is due and cleared once the visitor chooses or no prompt is due. Browser-resolved init only; SSR pages use `'page'`. |
+| `false` | Disables journey IDs. |
 
-Set it on the runtime or provider. In Next.js use `defineConsentConfig({ journey })`;
-in TanStack Start pass the same value to `resolveConsent` and `InthProvider`; with
-the inline prefetch script, pass it to `buildPrefetchScript` or to
-`consentManifest({ initPrefetch: { journey } })`. Left unset, the script
-continues a `'tab'` journey the tab already holds. A tab's first page has
-none, so its `/v1/consent/init` reports the scope as `'page'`. The id still links it to
-the save. Pass `journey: 'tab'` to the script too if you report on scope. Vue, Svelte, Astro
-and the script tag use `'page'`. A manifest that resolves locally in the
-browser reports no init, so it sends no journey.
+Set `journey` on your runtime or provider: `defineConsentConfig({ journey })` in Next.js, matching values on `resolveConsent` and `InthProvider` in TanStack Start, or `buildPrefetchScript` and `consentManifest({ initPrefetch: { journey } })` for head prefetching. Vue, Svelte, Astro, and the script tag use `'page'`. Browser-only manifest resolution without `/v1/consent/init` sends no journey ID. If you pass a custom `fetch` to `hosted()`, match on URL pathname because requests include query parameters.
 
-If you pass a transport `hosted()` a `fetch`, match on the path: URLs now carry a query string.
+## Hosted `/init` and head prefetching
 
-## What does regular `/v1/consent/init` do?
-
-`hosted()` uses `${projectUrl}/v1/consent/init` for initialization and
-`${projectUrl}/v1/consent/records` for consent submissions. `projectUrl` is
-your Inth project URL, or a same-origin route in front of it.
+`hosted()` resolves policies through `GET ${projectUrl}/v1/consent/init` and posts choices to `POST ${projectUrl}/v1/consent/records`.
 
 {/* example: fragment */}
 
@@ -116,35 +64,19 @@ import { defineConsentConfig, hosted } from '@inth/nextjs';
 export default defineConsentConfig({ mode: hosted() });
 ```
 
-Each framework passes the mode in a different place, and server-rendered
-frameworks take the data `hosted()` from their own package.
-[Consent modes](/docs/concepts/modes#import-the-factories-from-your-framework-package)
-lists where each one goes.
+See [import the factories from your framework package](/docs/concepts/modes#import-the-factories-from-your-framework-package) for where each framework passes `mode`.
 
-A regular backend `/v1/consent/init` request lets the backend resolve the visitor context.
-A same-origin URL named `/api/inth/v1/consent/init` can instead resolve from a cached
-manifest in your application. The URL name alone does not tell you which path
-runs.
+In browser-resolved apps, an inline `<head>` script starts `/v1/consent/init` while your bundle downloads so `hosted()` reuses the response. Vite apps add this through `consentManifest()` by default, Nuxt injects it on `ssr: false` pages, and TanStack Start exports `consentPrefetchHead`. Elsewhere, render `buildPrefetchScript({ projectUrl })` from your package's `/engine` entry, such as `@inth/react/engine`. Pass the same `experiment` config to the prefetch script when running banner experiments so `hosted()` does not send a second `/v1/consent/init`.
 
-In the browser, an inline script in `<head>` can start `/v1/consent/init` while the
-app's JavaScript downloads, and `hosted()` uses that response. Vite apps get
-it from `consentManifest()` by default, Nuxt adds it to pages with
-`ssr: false`, and TanStack Start has `consentPrefetchHead`. Elsewhere, render
-`buildPrefetchScript({ projectUrl })` from your framework package's `engine`
-entry, such as `@inth/react/engine`, yourself. If Inth assigns
-a banner experiment's arm, give the script the same `experiment`, or
-`hosted()` sends a second `/v1/consent/init` for visitors who have not chosen yet.
+## Same-origin proxy
 
-## How do transports and proxies differ?
+A proxy routes browser consent HTTP requests through your own origin, such as `/api/inth`, instead of directly to `https://your-project.inth.app`. This removes an extra browser DNS lookup and TLS handshake. Your app server still connects to Inth for manifest refreshes and consent writes, and vendor scripts keep their own origins.
 
-A transport implements initialization, saving and optional record operations.
-A proxy changes where HTTP requests travel. It does not change the policy
-resolver or make personalized responses safe to cache.
+Server-rendered frameworks enable proxying with `proxy: true` and a consent route like `routePrefix: '/api/inth'`. Every framework rejects `routePrefix: '/'` so the route cannot shadow your site root. See the [Next.js proxy recipe](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin).
 
-For a same-origin init route that resolves a manifest, the hosted transport can
-separate policy reads and record writes. With a backend rewrite mounted at
-`/api/inth`, a single-page app can use the transport `hosted()` from
-`@inth/sdk/engine`:
+In an SPA with a reverse proxy at `/api/inth` and a manifest-backed init endpoint, separate init and write paths with `initUrl`:
+
+{/* example: fragment */}
 
 ```ts title="src/consent-mode.ts"
 import { hosted } from '@inth/sdk/engine';
@@ -155,74 +87,13 @@ export const mode = hosted({
 });
 ```
 
-The route must return the Inth init response contract. Inth adds its inputs to
-`initUrl` as the query parameters `country`, `region`, `gpc` and `experiment`,
-replacing any of your own with the same name. Because `initUrl` is set, `assertDecisionInputs` defaults to
-`true`: saves carry the policy decision they were made against when init
-returned no signed policy snapshot token, so the backend can reject a save
-made against a stale policy. Server-rendered frameworks do this for you when
-you set `routePrefix`: the browser re-inits through `${routePrefix}/v1/consent/init`.
-Every framework rejects `routePrefix: '/'` when it sets up, because a
-catch-all consent route at the site root would catch every page.
+Setting `initUrl` appends Inth query parameters to `initUrl` and defaults `assertDecisionInputs` to `true`, attaching decision inputs on saves when init returned no signed policy snapshot token. Static exports cannot serve runtime routes or rewrites; use your absolute Inth `projectUrl` or a proxy at your static host.
 
-The init route resolves policy; the backend rewrite forwards `/api/inth/v1/consent/records`
-and other record endpoints. Configure both if you choose this optional proxy
-variant. Server-rendered frameworks do both with one option: `proxy: true` in
-Next.js `inth.config.ts` or TanStack Start's `createConsentStateHandler`,
-with a consent route created with `proxy: true`. The
-[Next.js recipe](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin)
-shows the configuration. A direct absolute backend URL works
-without a rewrite.
+## Verify your fetching path
 
-This optional optimization keeps Inth requests on the app's origin and avoids a separate browser DNS lookup
-and TLS connection to the consent backend. The app server still connects to
-the upstream backend for manifest refreshes and consent writes. Vendor scripts
-and vendor requests keep their own origins.
+Inspect server logs and the browser Network panel separately, because server manifest fetches never appear in browser DevTools:
 
-The rewrite destination and the init route use the absolute upstream endpoint,
-such as `https://your-project.inth.app`. The browser uses `/api/inth` without
-needing the upstream URL. A static export cannot serve a Next.js route or
-rewrite at runtime; use the absolute Inth URL or a proxy provided by the static
-host instead.
-
-## How do I test without a backend?
-
-Pass `testing()` from your framework package's `/testing` entry as `mode`.
-It resolves a policy in the browser, sends no request and needs no
-`projectUrl`. It throws when `NODE_ENV` is `production`, and its code is only
-in bundles that import the `/testing` entry.
-
-{/* example: fragment */}
-
-```tsx title="src/consent.test.tsx"
-import { InthProvider } from '@inth/react';
-import { testing } from '@inth/react/testing';
-
-<InthProvider options={{ overrides: { country: 'DE' }, mode: testing() }} />;
-```
-
-With no `policy`, `testing()` uses the recommended rule pack, and the
-location overrides pick the rule. Pass `testing({ policy })` with your own
-[policy rules](/docs/concepts/policies) to test another prompt, such as the
-opt-out notice. See [consent modes](/docs/concepts/modes#testing).
-
-`testing()` is not a fallback. When the manifest is unavailable,
-`manifest()` asks the backend's `/v1/consent/init`. If hosted initialization fails
-before a policy resolves, optional permissions remain denied and the stock
-prompt stays hidden.
-
-## Verify the selected path
-
-Inspect browser and server requests separately. A server manifest fetch will
-not appear in the browser's Network panel. With a build-time snapshot, start a
-fresh production server and confirm it makes no upstream `/v1/consent/manifest` request.
-After a policy edit, rebuild and confirm the new policy appears. On a runtime
-manifest path, check that
-page requests do not call the backend `/v1/consent/init`, a visitor's choice still reaches
-the backend's `/v1/consent/records`, and policy changes become visible after the configured
-refresh. With a same-origin consent proxy, the browser should call only
-`/api/inth` paths for consent HTTP traffic; inspect server logs to verify their
-upstream destinations.
-
-Test different locations, missing location headers, GPC, returning choices and
-backend failure. See [verification](/docs/guides/verify-consent).
+- **Build-time manifest.** Confirm zero upstream `/v1/consent/manifest` calls on page load. Edit a policy in Inth, rebuild, and confirm the change appears.
+- **Runtime manifest.** Confirm page loads skip `/v1/consent/init`, choices reach `/v1/consent/records`, and policy edits appear after cache revalidation.
+- **Same-origin proxy.** Confirm browser consent requests hit only `/api/inth/*` and verify upstream forwarding in server logs.
+- **Edge cases.** Test region overrides, missing geo headers, GPC, saved choices, and network failures. See [verify consent](/docs/guides/verify-consent).

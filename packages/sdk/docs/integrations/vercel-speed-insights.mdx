@@ -1,27 +1,21 @@
 ---
 title: Vercel Speed Insights
-description: Load the Vercel Speed Insights collector only after measurement consent with the Inth vercelSpeedInsights helper, drop Web Vitals reports on revocation, and check it in DevTools.
+description: Load Vercel Speed Insights after measurement consent and drop Web Vitals reports on revocation with Inth.
 seoTitle: Vercel Speed Insights cookie consent with Inth
-seoDescription: Load Vercel Speed Insights only with measurement consent. The Inth vercelSpeedInsights helper drops every Web Vitals report after a withdrawal.
+seoDescription: Gate Vercel Speed Insights behind measurement consent with Inth. Drop Web Vitals reports on withdrawal via beforeSend and verify in DevTools.
 icon: vercel-analytics
 group: integrations
 ---
 
-The Inth `vercelSpeedInsights` helper keeps the Vercel Speed Insights collector
-off the page until `measurement` has consent. The helper sends no consent signal
-to Vercel. It registers a `beforeSend` callback that drops every Web Vitals
-report while `measurement` has no consent. If the visitor withdraws consent,
-Inth removes the script element. The collector keeps running, so the callback
-drops its reports. By default, Inth also reloads the page.
+The `vercelSpeedInsights` helper keeps the Vercel Speed Insights collector off the page until a visitor grants `measurement` consent. It registers a `beforeSend` callback that drops Web Vitals reports whenever `measurement` is denied, including after revocation while the collector stays in memory before reload.
 
 ## Configure Vercel Speed Insights
 
-Enable Speed Insights for the project in Vercel. Remove the `SpeedInsights`
-component or `injectSpeedInsights()` call from `@vercel/speed-insights`. The
-collector starts once per page, so a copy loaded outside Inth keeps reporting
-before consent.
+Enable Speed Insights for your project in Vercel, then remove any `SpeedInsights` component or `injectSpeedInsights()` call from `@vercel/speed-insights`. The collector initializes once per page, so a second copy loaded outside Inth keeps reporting before consent.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { vercelSpeedInsights } from '@inth/integrations/vercel-speed-insights';
@@ -35,53 +29,33 @@ export const scripts = [vercelSpeedInsights()];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `dsn` | None | Project DSN for deployments outside Vercel, set as `data-dsn`. Reports go to Vercel's vitals endpoint for that DSN. |
+| `dsn` | None | Project DSN for deployments outside Vercel, set as `data-dsn`. Sends reports to Vercel's vitals endpoint for that DSN. |
 | `mode` | None | `'development'` loads the debug script. `'auto'` and `'production'` load the production script. The helper does not detect your environment. |
-| `debug` | None | `true` loads `https://va.vercel-scripts.com/v1/speed-insights/script.debug.js`, which logs reports to the console and sends nothing. |
-| `endpoint` | None | Custom vitals endpoint, set as `data-endpoint`. |
+| `debug` | None | `true` loads `https://va.vercel-scripts.com/v1/speed-insights/script.debug.js`, which logs reports to the console without sending network requests. |
+| `endpoint` | None | Custom vitals endpoint set as `data-endpoint`. |
 | `scriptUrl` | `https://va.vercel-scripts.com/v1/speed-insights/script.js` | Loader URL override, such as `/_vercel/speed-insights/script.js` on Vercel. Takes precedence over `mode` and `debug`. |
-| `sampleRate` | `1` | Share of page loads that report, from `0` to `1`, set as `data-sample-rate`. Other values throw a `TypeError`. |
-| `beforeSend` | None | Edits or drops a report while measurement is allowed. Return the event, with a changed `url` if needed, or `null` to drop it. |
+| `sampleRate` | `1` | Share of page loads that report, from `0` to `1`, set as `data-sample-rate`. Out-of-range values throw a `TypeError`. |
+| `beforeSend` | None | Edits or drops reports while `measurement` is allowed. Return the modified event or `null` to drop it. |
 
-The helper also sets `data-sdkn="inth"` on the script element. Without `dsn`
-or `endpoint`, the collector posts to `/_vercel/speed-insights/vitals` on your
-own origin, which exists only on Vercel deployments with Speed Insights on.
+The helper sets `data-sdkn="inth"` on the script element. Without `dsn` or `endpoint`, the collector posts to `/_vercel/speed-insights/vitals` on your origin, which exists only on Vercel deployments with Speed Insights enabled.
 
 ## Loading and revocation
 
-`vercelSpeedInsights` uses the `measurement` category. When measurement becomes
-allowed, the helper defines the `window.siq` queue and a `window.si` stub,
-unless they exist, registers a `beforeSend` callback and loads the script.
+`vercelSpeedInsights` gates on `measurement`. On grant, the helper defines `window.siq` and `window.si` if absent, registers its `beforeSend` guard, and loads the collector.
 
-The collector keeps its listeners after its script element is removed and
-sends queued reports on `pagehide` and navigation. On revocation the helper
-removes the script element and its `beforeSend` callback starts returning
-`null`, so no report is sent, including during the reload Inth runs on
-revocation. A later grant re-adds the script, which does not start a second
-collector, and reports resume. Reports also stop when the provider that owns
-the scripts unmounts.
+Removing the script element does not stop the collector's listeners or queued `pagehide` reports. On revocation, Inth removes the script element and switches `beforeSend` to return `null`, blocking all reports including during reload. Regranting consent re-adds the script without starting a second collector and resumes reporting. Unmounting the owning consent provider also stops reports.
 
-The collector holds one `beforeSend` callback. Pass yours through the
-`beforeSend` option. Calling `window.si('beforeSend', ...)` yourself replaces
-the helper's consent check.
+The collector supports one `beforeSend` callback. Pass yours through the helper's `beforeSend` option; calling `window.si('beforeSend', ...)` directly overwrites Inth's consent guard.
 
-A framework that starts allowed scripts from the server HTML starts the
-collector before the app hydrates, and the helper registers its callback at
-hydration. With a `beforeSend` option, the collector waits for hydration
-instead, so your callback sees every report.
+When a framework boots allowed scripts from server HTML, the collector starts before hydration and Inth attaches its callback at hydration. If you pass a custom `beforeSend` option, the collector waits for hydration so your callback inspects every report.
 
-Reports only cover page loads after consent. The collector reads buffered
-paint and navigation timings, but interactions before consent are missed. The
-helper does not set `data-route`, so Vercel groups reports by URL rather than
-by route pattern such as `/blog/[slug]`.
+Reports cover page loads after consent only: the collector reads buffered paint and navigation timings, but misses interactions from before consent. Because the helper omits `data-route`, Vercel groups reports by URL rather than route patterns like `/blog/[slug]`.
 
 ## Verify Vercel Speed Insights
 
-Filter DevTools Network by `speed-insights`. After you allow measurement,
-`script.js` loads from `va.vercel-scripts.com` with `data-sdkn="inth"`. Change
-route or switch tabs, and a `POST` to `/_vercel/speed-insights/vitals` follows.
-Automated browsers that set `navigator.webdriver` load the collector but send
-nothing. With `debug` or `mode: 'development'` the reports appear in the
-console instead.
+Filter DevTools Network by `speed-insights`:
+
+1. Allow `measurement` and confirm `script.js` loads from `va.vercel-scripts.com` with `data-sdkn="inth"`.
+2. Change routes or switch tabs and confirm a `POST` request goes to `/_vercel/speed-insights/vitals`. Automated browsers with `navigator.webdriver` load the script without sending reports, and `debug: true` or `mode: 'development'` logs reports to the console instead.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

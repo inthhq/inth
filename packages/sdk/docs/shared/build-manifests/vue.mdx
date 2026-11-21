@@ -1,14 +1,15 @@
 <include src="../build-time-manifest.mdx" />
 
 `consentManifest()` from `@inth/vue/vite` downloads the policy during
-`vite build`, when the app uses `manifest()`, and in `vite dev` when the app
+`vite build` when the app uses `manifest()`, and in `vite dev` when the app
 first loads it:
 
 <include src="../examples/vue/vite-config.mdx" />
 
-Without a `projectUrl` option, the plugin reads `VITE_INTH_PROJECT_URL`, from the environment or `.env`. `manifest()` from `@inth/vue/vue-plugin`, with no
-options, reads the downloaded policy and the same backend URL, so `src/main.ts`
-needs no import of the snapshot:
+Without a `projectUrl` option, the plugin reads `VITE_INTH_PROJECT_URL`
+(falling back to `VITE_C15T_BACKEND_URL` if unset) from the environment or `.env`. Calling `manifest()`
+from `@inth/vue/vue-plugin` with no options reads the downloaded policy and the
+same project URL, so `src/main.ts` needs no import of the snapshot:
 
 {/* example: fragment */}
 
@@ -18,14 +19,14 @@ import { inth, manifest } from '@inth/vue/vue-plugin';
 app.use(inth, { mode: manifest(), scripts });
 ```
 
-The browser resolves the visitor's policy from the bundled snapshot, with no
-`/manifest` request. When the policy depends on the visitor's country or
-region and neither `inputs` nor `geoUrl` supplies one, the browser asks the
-backend's `/init` instead. The app bundles the policy and English copy, and
-loads the resolver as its own chunk when it needs it.
+The browser resolves the visitor's policy from the bundled snapshot with no
+`/v1/consent/manifest` request. When the policy depends on the visitor's country or
+region and neither `inputs` nor `geoUrl` supplies one, the browser calls
+Inth's `/v1/consent/init` instead. The app bundles the policy and English copy, and
+loads the resolver in a separate chunk when needed.
 
-When the build has no snapshot, as in `vite dev` after a failed download,
-`manifest()` fetches `${projectUrl}/v1/consent/manifest` when the app starts.
+When the build has no snapshot, such as after a failed download, `manifest()`
+fetches `${projectUrl}/v1/consent/manifest` when the app starts.
 
 <include src="../build-time-manifest-notes.mdx" />
 

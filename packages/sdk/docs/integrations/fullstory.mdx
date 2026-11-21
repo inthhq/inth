@@ -1,17 +1,17 @@
 ---
 title: FullStory
-description: Load FullStory after measurement consent, configure its tracking settings, and verify loading and withdrawal with Inth.
+description: Load FullStory after measurement consent, configure regional endpoints, and handle shutdown on withdrawal with Inth.
 seoTitle: FullStory cookie consent with Inth
-seoDescription: Gate FullStory on measurement consent with Inth. Configure the loader, understand withdrawal limits, and verify vendor requests and storage.
+seoDescription: Gate FullStory on measurement consent, configure regional hosts, handle capture shutdown and restart, and verify storage with Inth.
 icon: chart-line
 group: integrations
 ---
 
-`fullStory` waits for `measurement` consent before creating vendor globals or downloading FullStory.
+The `fullStory` helper waits for `measurement` consent before creating FullStory globals or downloading the SDK, then calls `shutdown` and reloads the page on withdrawal.
 
 ## Configure FullStory
 
-Copy your organization ID from FullStory setup and remove the original snippet. For regional IDs such as `o-ABC123-eu1`, Inth selects the regional FullStory host and SDK download before loading. That ID uses `eu1.fullstory.com` and `edge.eu1.fullstory.com/s/fs.js`. Legacy IDs and the `na1` region use the US defaults.
+Copy your organization ID from FullStory setup and remove any existing FullStory snippet so no other installer creates `window.FS`. Regional IDs such as `o-ABC123-eu1` automatically select `eu1.fullstory.com` and `edge.eu1.fullstory.com/s/fs.js`; legacy IDs and `na1` use the US defaults.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -23,38 +23,34 @@ Copy your organization ID from FullStory setup and remove the original snippet. 
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `orgId` | Required | FullStory organization ID. |
-| `host` | Regional FullStory host | `fullstory.com` for US and legacy IDs; `eu1.fullstory.com` for EU IDs. |
-| `script` | Regional FullStory edge | Script host and path without a scheme, such as `edge.eu1.fullstory.com/s/fs.js`. |
-| `elementConsent` | `false` | Also set consent for elements marked capture with consent. |
-| `category` | `measurement` | Consent condition for the whole loader. |
-| `scriptUrl` | HTTPS URL from `script`, with `org` | Exact download URL override. Nonblank values are trimmed, kept unchanged and receive no added `org`. Blank values use the derived URL. |
+| `orgId` | Required | FullStory organization ID. Blank values log an error and skip loading. |
+| `host` | Regional host | `fullstory.com` for US and legacy IDs; `eu1.fullstory.com` for EU IDs. |
+| `script` | Regional edge | Script host and path without scheme, such as `edge.eu1.fullstory.com/s/fs.js`. |
+| `elementConsent` | `false` | Syncs consent for elements marked capture-with-consent through `setIdentity`. |
+| `category` | `'measurement'` | Consent condition for the entire loader. |
+| `scriptUrl` | Derived HTTPS URL with `org` | Exact download URL override. Trimmed and kept unchanged without appending `org`. Blank values use the derived URL. |
 
-The helper trims organization and endpoint values and treats blank overrides as missing. FullStory-owned `host` and `script` values receive the organization's region, replacing an existing region label when needed. Custom proxy or Relay hosts and script paths stay unchanged. The host and script resolve independently: a custom `host` alone does not change the default `script`. `scriptUrl` never changes the SDK's `script` environment value.
-
-Missing or blank required values log an error and never load.
+Inth trims organization and endpoint values and treats blank overrides as unset. FullStory-owned `host` and `script` values adopt the organization's region, while custom proxy or Relay hosts stay unchanged. `host` and `script` resolve independently, and `scriptUrl` chooses only the downloaded file without changing the SDK's `script` environment value.
 
 ## Loading and revocation
 
-After consent, the helper creates FullStory's v2 callable queue with six-field command records. Async commands such as `FS('getSessionAsync')` return promises while the SDK loads and after its dispatcher is ready. It configures `captureOnStartup: false` and downloads the SDK. An uninterrupted first allowed load calls `start`. A load that completes while consent is denied, or after the last owner is removed, calls `shutdown`. After any helper-issued `shutdown`, regrant or remount calls `restart`, even if the helper never called `start`. Optional element consent follows the mapped permission through `setIdentity`.
+Before consent, Inth creates no FullStory globals or requests. On grant, it creates FullStory's v2 callable queue with six-field command records so async calls such as `FS('getSessionAsync')` return promises before and after the dispatcher loads, configures `captureOnStartup: false`, and downloads the SDK.
 
-Equivalent registrations share one download and recorder. Each registration must grant the mapped consent before capture can start or resume, including registrations that have never loaded. Removing a denying registration reapplies the remaining registrations' consent, including when they use different `elementConsent` settings. Initial denial creates no FullStory globals or requests. Removing the last registration shuts down capture. Mounting the same configuration again resumes the retained recorder with `restart` without downloading the SDK again.
+- **Start, shutdown, and restart.** An uninterrupted allowed load calls `start`. If a visitor denies consent or your app removes the last registration before load completes, Inth calls `shutdown`. After any helper-issued `shutdown`, regranting or remounting calls `restart`, even if `start` never ran.
+- **Shared registrations.** Equivalent effective `orgId`, `host`, `script`, and `scriptUrl` values share one download and recorder. Every active registration must permit the mapped consent before capture starts or resumes, including registrations that have not loaded yet. Removing a denying registration reapplies the remaining registrations' consent, including differing `elementConsent` flags. Removing the last registration shuts down capture; remounting the same config resumes with `restart` without redownloading.
+- **Fixed settings per page.** Once bootstrap starts, changing effective `orgId`, `host`, `script`, or `scriptUrl` throws until a page reload because FullStory does not support replacing an initialized recorder in place.
+- **Pending downloads.** Because removing an async script does not stop an in-flight download from executing, Inth retains the pending bootstrap so remounts reuse it instead of loading twice. Without `MutationObserver`, a setup interrupted before script insertion can require a reload; a nested synchronous mount still shares the retained recorder.
+- **Keep `reloadOnConsentRevoked` enabled.** `shutdown` stops capture but does not erase cookies or unload FullStory. Capture state reapplies on each page load.
 
-Keep `orgId`, `host`, `script` and `scriptUrl` fixed for the page. Inth compares their effective values, so omitted regional defaults and explicit equivalent endpoints share the recorder. After bootstrap begins, Inth requires a page reload to change these effective settings and rejects incompatible configurations explicitly.
+## Cookies and storage
 
-Removing an async script does not guarantee that its pending download cannot execute, so Inth retains the pending bootstrap too. Remounting the same configuration waits for that download instead of inserting another script. If a script update interrupts setup before insertion, the next mount inserts the SDK without initializing FullStory twice.
-
-Without `MutationObserver`, Inth prevents a second download, but setup interrupted before insertion can require a reload. A nested synchronous mount can leave an outer registration on a source-less placeholder; it still shares the retained recorder and consent state.
-
-FullStory documents `init` before capture starts; Inth does not support replacing an initialized recorder in place. `scriptUrl` chooses the downloaded file, while `script` configures the SDK's environment. An existing `FS` from another installer must be removed from the site's setup before using this helper.
-
-Shutdown stops capture, but does not erase cookies or unload the SDK. Keep `reloadOnConsentRevoked` enabled when your policy also requires a fresh page without loaded vendor code. Capture state is reapplied on every page.
-
-FullStory can set `fs_uid` and `fs_cid` cookies for one year, `fs_lua` for 30 minutes, and `_fs_tab_id` in sessionStorage. Inspect your account configuration for additional storage.
+FullStory can write `fs_uid` and `fs_cid` cookies for 1 year, `fs_lua` for 30 minutes, and `_fs_tab_id` in `sessionStorage`. Check your account settings for additional storage.
 
 ## Verify FullStory
 
-Check for no FullStory request, `FS`, FullStory configuration globals, cookies or browser storage before consent and after unrelated consent. Grant measurement and verify the real v2 dispatcher installed. With your own account, verify capture starts, shutdown stops it, and regrant restarts it once.
+1. Before consent and after granting an unrelated category, confirm no FullStory requests, `FS` global, config globals, cookies, or browser storage exist.
+2. Grant `measurement` and confirm the v2 dispatcher installs and capture starts.
+3. Revoke `measurement` and confirm capture shuts down, then regrant to confirm it restarts once.
 
 Sources: [getting started](https://developer.fullstory.com/browser/getting-started/), [asynchronous methods](https://developer.fullstory.com/browser/asynchronous-methods/), [configuration](https://developer.fullstory.com/browser/fullcapture/configure-capture/), [capture controls](https://developer.fullstory.com/browser/fullcapture/capture-data/), [element consent](https://developer.fullstory.com/browser/fullcapture/user-consent/), and [cookie consent](https://help.fullstory.com/hc/en-us/articles/35988237543191-Cookie-Consent-Management-with-Fullstory).
 

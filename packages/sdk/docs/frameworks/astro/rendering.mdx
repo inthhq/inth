@@ -1,6 +1,6 @@
 ---
 title: Rendering and deployment
-description: Choose how Inth resolves consent on an Astro site, from static output with hosted() or browser-resolved manifest() to server output with manifest(), prerendered pages, server islands, ClientRouter and local development.
+description: Configure Inth consent resolution on Astro static output, server output, prerendered pages, server islands, and ClientRouter.
 group: frameworks
 ---
 
@@ -12,7 +12,7 @@ browser finishes the job. A page rendered per request can.
 
 | Your site | Astro setup | Inth mode | Banner in the first HTML |
 | --- | --- | --- | --- |
-| Static pages on any static host | `output: 'static'`, no adapter | `hosted()` | No. The browser renders it after `/init` |
+| Static pages on any static host | `output: 'static'`, no adapter | `hosted()` | No. The browser renders it after `/v1/consent/init` |
 | Static pages, with the policy resolved in the browser | `output: 'static'`, no adapter | `manifest({ resolve: 'browser' })` | No. The browser renders it after reading the manifest |
 | Pages rendered on each request | `output: 'server'` and an adapter | `manifest()`, the default | Yes |
 | A server build with some prerendered pages | `output: 'server'`, `prerender = true` on those pages | `manifest()` | Only on the request-rendered pages |
@@ -31,7 +31,7 @@ across frameworks.
 
 Astro builds every page once. At build time there is no visitor, so
 `ConsentBanner` renders an empty, hidden placeholder. In the browser, Inth
-reads the visitor's consent cookie, calls your backend's `/init` directly, and
+reads the visitor's consent cookie, calls your backend's `/v1/consent/init` directly, and
 renders the banner into the placeholder when the policy says to show one. A
 returning visitor keeps their choice, because it comes from their own cookie.
 
@@ -44,7 +44,7 @@ and without an adapter `astro build` stops with an error that names it.
 ## Static output with browser resolution
 
 `manifest({ resolve: 'browser' })` resolves the policy in the browser from
-your project's manifest, with no request to the backend's `/init`:
+your project's manifest, with no request to the backend's `/v1/consent/init`:
 
 {/* example: fragment */}
 
@@ -82,19 +82,19 @@ visitor's decision, so keep it out of shared caches. See
 `manifest()` resolves each request on the server from your project's public
 policy file. By default the build downloads that file and bundles it, so a
 render never waits on the backend for the policy. With
-`manifest({ source: 'runtime' })`, in `astro dev` when the fetch fails, or
-with `onBuildError: 'runtime'`, the server downloads and caches the file at
+`manifest({ source: 'runtime' })`, or when a build-time fetch fails under the
+default `onBuildError: 'runtime'`, the server downloads and caches the file at
 runtime. The browser asks the injected `/api/inth/v1/consent/init` route when it needs a
-decision, and saves consent to the backend URL. A server-rendered page ships
+decision, and saves consent to the project URL. A server-rendered page ships
 only the code that saves consent; the code that resolves a policy loads when
-a page asks again. `manifest()` needs the backend URL as `projectUrl` or
-`PUBLIC_INTH_PROJECT_URL`; without it, the
+a page asks again. `manifest()` needs the project URL as `projectUrl`,
+`PUBLIC_INTH_PROJECT_URL`, or `PUBLIC_C15T_BACKEND_URL`; without it, the
 config fails to load.
 [Data fetching](/docs/concepts/data-fetching) compares this with calling
-`/init` for every render.
+`/v1/consent/init` for every render.
 
 `hosted()` also works with server output. Every server render then calls the
-backend's `/init`, so each page view waits on a backend request.
+backend's `/v1/consent/init`, so each page view waits on a backend request.
 
 ### Bundle the manifest during builds
 
@@ -119,7 +119,7 @@ inth({ middleware: { timeoutMs: 800 } });
 ```
 
 Set `timeoutMs: false` to wait however long the backend takes. With
-`hosted()`, keep the budget above the backend's usual `/init` response time.
+`hosted()`, keep the budget above the backend's usual `/v1/consent/init` response time.
 
 ### Skip routes that never render consent
 
@@ -177,7 +177,7 @@ Inth creates one consent runtime per page load and keeps it across swaps. After
 each swap it re-attaches to the new page's banner, gated scripts and dialog
 triggers, applies the color scheme again, and keeps any stylesheet it linked
 for the dialog. The
-visitor's choice and an open dialog both carry over, and no new `/init`
+visitor's choice and an open dialog both carry over, and no new `/v1/consent/init`
 request is made.
 
 Your own scripts run once per page load, like Inth's. To update markup after a
@@ -272,10 +272,10 @@ stylesheet. Opening the dialog on that page adds the stylesheet first.
 
 - **Server output:** view the page source of a first visit. It contains
   `data-testid="consent-banner-root"`. After you choose and reload, it does not.
-  In DevTools Network, the browser does not request `/init` on a server-rendered
+  In DevTools Network, the browser does not request `/v1/consent/init` on a server-rendered
   page.
 - **Static output or a prerendered page:** the page source has no banner
-  markup. In DevTools Network, the browser requests `/init` from your backend
+  markup. In DevTools Network, the browser requests `/v1/consent/init` from your backend
   with `hosted()`, `/api/inth/v1/consent/manifest` with
   `manifest({ resolve: 'browser' })`, or `/api/inth/v1/consent/init` in a server build,
   and the banner appears after it returns.

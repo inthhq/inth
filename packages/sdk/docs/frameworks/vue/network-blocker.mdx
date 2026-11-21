@@ -1,22 +1,23 @@
 ---
 title: Network blocker
-description: Hold fetch and XMLHttpRequest calls in a Vue app until their consent category is allowed, with rules passed to the Inth Vue plugin.
+description: Block matching fetch and XMLHttpRequest calls in a Vue app until consent allows their category using inth.
 group: frameworks
 ---
 
+Hold `fetch` and `XMLHttpRequest` requests matching a rule until their consent
+category is allowed, as a backstop alongside registered vendor scripts.
+
 ## Add rules
 
-The network blocker stops `fetch` and `XMLHttpRequest` calls that match a
-rule until the rule's category is allowed. Use it as a backstop for tracking
-calls your own code or a vendor SDK makes. Load vendor SDKs through
-[`scripts`](/docs/frameworks/vue/scripts) first, so they do not run at all
-before consent.
+Register vendor SDKs through [`scripts`](/docs/frameworks/vue/scripts) first
+so they never execute before consent. Use the network blocker to catch
+tracking calls from your own code or third-party modules.
 
-Define the rules in their own file:
+Define rules in a dedicated file:
 
 <include src="../../shared/examples/vue/network-blocker.mdx" />
 
-Pass them to the plugin in `src/main.ts`:
+Pass `networkBlocker` to `inth` in `src/main.ts`:
 
 {/* example: fragment */}
 
@@ -26,54 +27,50 @@ app.use(inth, { mode: hosted(), networkBlocker, scripts });
 
 ## Match requests with rules
 
-Each rule names a `domain` and the consent `category` a request needs. The
-domain also matches its subdomains, so `google-analytics.com` covers
-`www.google-analytics.com`. `pathIncludes` narrows a rule to paths that
-contain a substring, and `methods` narrows it to HTTP methods. `category`
-also takes conditions such as `{ and: ['measurement', 'marketing'] }`.
+Each rule specifies a `domain` (including subdomains, so `google-analytics.com`
+matches `www.google-analytics.com`) and a `category`. Narrow rules with
+`pathIncludes` and `methods`, or pass category expressions such as
+`{ and: ['measurement', 'marketing'] }`.
 
-Add `vendor` with a vendor ID to also block the request while the visitor has
-turned that vendor off. Rules for IAB TCF vendors use `vendorId` and the
-`iabPurposes` fields instead.
+Add `vendor` with a vendor ID to block requests when a visitor turns that
+vendor off. For IAB TCF vendors, use `vendorId` and `iabPurposes`.
 
 | Option | Default | Purpose |
 | --- | --- | --- |
-| `rules` | Required | The rules above. |
-| `enabled` | `true` | `false` keeps the rules but stops blocking. |
-| `logBlockedRequests` | `true` | Logs each blocked request with `console.warn`. |
-| `onRequestBlocked` | Unset | Called with `{ method, url, rule }` for each blocked request. |
+| `rules` | Required | Array of matching rules. |
+| `enabled` | `true` | Set `false` to keep rules configured without blocking. |
+| `logBlockedRequests` | `true` | Logs blocked requests via `console.warn`. |
+| `onRequestBlocked` | Unset | Callback receiving `{ method, url, rule }` for each blocked request. |
 
 ## What a blocked request looks like
 
-A blocked `fetch` resolves to a `451` response with the status text
-`Request blocked by consent`, and nothing is sent. A blocked XHR is aborted
-and fires an `error` event. Requests that match no rule are not delayed.
+Blocked `fetch` calls resolve with a `451` response (`Request blocked by
+consent`) without sending a network request. Blocked `XMLHttpRequest` calls
+abort and emit an `error` event. Unmatched requests pass through unchanged.
 
 ## When blocking starts
 
-The plugin starts holding matching requests when `app.use(inth, ...)`
-runs, before your app mounts. While consent is unknown, a matching request
-waits instead of failing. Once the policy has loaded and the stored choice
-applies, a waiting request is sent if consent allows it and blocked
-otherwise. If the policy fails to load, optional categories stay denied and
-waiting requests are blocked.
+`app.use(inth, ...)` activates the blocker before the app mounts. While
+consent is still resolving, matching requests wait rather than failing. Once
+the policy and stored choice load, queued requests either proceed or get
+blocked. If policy loading fails, optional categories stay denied and queued
+requests are blocked.
 
 ## What it cannot stop
 
-The blocker sees only `fetch` and `XMLHttpRequest` calls made after
-`app.use()` runs. It cannot stop:
+The blocker only intercepts `fetch` and `XMLHttpRequest` calls made after
+`app.use()` runs. It cannot block:
 
-- Scripts in `index.html` and modules that run before `src/main.ts`.
-- Code that saved its own reference to `fetch` before the plugin installed.
-- `navigator.sendBeacon`, `WebSocket`, `EventSource`, and requests from
-  `<img>`, `<script>` and `<iframe>` elements, web workers and service
-  workers.
+- Scripts in `index.html` or modules executing before `src/main.ts`.
+- Code that cached a reference to `fetch` before the plugin installed.
+- `navigator.sendBeacon`, `WebSocket`, `EventSource`, `<img>`, `<script>`,
+  `<iframe>`, web workers, and service workers.
 
-Check `useConsent()` before you call a vendor from your own code, and treat
-the blocker as a backstop.
+Check `useConsent()` before calling vendor APIs in your own code and use the
+network blocker as a safety net.
 
 ## Verify
 
-Open the Network tab, clear site data and reload. Requests that match a rule
-do not appear until you allow their category, and the console lists each
-blocked request. Reject, reload, and check that they still do not appear.
+Clear site data, open the Network tab, and reload. Confirm matching requests
+stay absent until you allow their category and appear as console warnings when
+blocked. Reject, reload, and confirm they remain blocked.

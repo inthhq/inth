@@ -1,6 +1,6 @@
 ---
 title: "ConsentWidget"
-description: "Shared ConsentWidget reference for the React and Next.js adapters."
+description: "Shared ConsentWidget reference for React, TanStack Start, and Next.js."
 group: reference
 ---
 
@@ -11,137 +11,56 @@ group: reference
 
   | Prop | Type | Default | Description |
   | --- | --- | --- | --- |
-  | `hideBranding` | `boolean` | `true` | A standalone widget hides the "Secured by" tag. Pass `false` to show it. |
-  | `uiSource` | `string` | `'widget'` | Source identifier recorded with saves made from this widget. Inside `ConsentDialog` it inherits `'dialog'`. |
-  | `disableAnimation` | `boolean` | `false` | Skips animations in the widget's parts. |
-  | `noStyle` | `boolean` | `false` | Removes the built-in styling from every part. |
+  | `hideBranding` | `boolean` | `true` | Hides the "Secured by" tag on a standalone widget. Pass `false` to show it. |
+  | `uiSource` | `string` | `'widget'` | Source identifier recorded with saves made from this widget. Inherits `'dialog'` inside `ConsentDialog`. |
+  | `disableAnimation` | `boolean` | `false` | Skips animations in the widget parts. |
+  | `noStyle` | `boolean` | `false` | Removes built-in styling from every part. |
 </section>
 
 <section id="behavior">
   ## Behavior
 
-  The widget is the preference center without the modal around it: an
-  accordion with one row per category, each with a switch, followed by the
-  Reject All, Accept All and Save Settings actions. `ConsentDialog` renders this same
-  widget inside its card. Standalone, the widget renders in place, takes part
-  in server rendering, and does not touch the active surface, so it suits a
-  privacy page or an account settings screen.
+  `ConsentWidget` renders the preference center inline without a modal: an accordion with one row and switch per category, followed by Reject All, Accept All, and Save Settings actions. `ConsentDialog` renders this widget inside its card. Standalone, it renders in place during SSR and never modifies the active surface, fitting a privacy page or account settings screen.
 
-  The rows are `necessary` plus the categories in the active policy's scope,
-  narrowed to the categories the provider declares: `options.consentCategories`
-  and the categories of its scripts, network rules, vendors and discovered
-  frames. When nothing is declared, a permissive policy shows only `necessary`
-  and a strict one its whole scope.
-  The `necessary` switch is on and disabled. Row titles and descriptions come
-  from `consentTypes.<category>.title` and `.description`; the action labels
-  from `common.rejectAll`, `common.acceptAll` and `common.save`. One row is
-  expanded at a time.
+  Rows include `necessary` plus categories in the active policy's scope that the provider declares through `options.consentCategories`, scripts, network rules, vendors, or discovered frames. When nothing is declared, a permissive policy lists only `necessary` and a strict policy lists its full scope. The `necessary` switch is always on and disabled. Row copy comes from `consentTypes.<category>.title` and `.description`; action labels come from `common.rejectAll`, `common.acceptAll`, and `common.save`. One row expands at a time.
 
   ### Draft and save
 
-  Switches edit a draft, not the visitor's permissions. Nothing is recorded
-  until Save. The draft seeds each category from the recorded choice; without
-  one it uses `presentation.preferences.defaults` from the provider options,
-  and without that it is on under an opt-out rule and on only for the rule's
-  preselected categories under an opt-in rule. Save records the displayed
-  categories, then reseeds the draft from the new record. Accept All and
-  Reject All record immediately without a separate Save. A save answers a
-  choice prompt, so an open choice banner closes; it does not dismiss a
-  `notice` prompt, which keeps its own acknowledgement record. Unsaved toggles
-  are lost when the widget unmounts.
+  Toggling switches edits a draft without changing live permissions until the visitor saves. The draft seeds from the recorded choice; without one, it uses `presentation.preferences.defaults` from the provider options, or defaults on under an opt-out rule and on only for preselected categories under an opt-in rule. Save records the displayed categories and reseeds the draft. Accept All and Reject All record immediately. Saving answers a choice prompt and closes an open choice banner, while leaving a `notice` prompt open until acknowledged. Unsaved toggles reset when the widget unmounts.
 
-  When the policy changes in a way that affects the choice while the draft has
-  unsaved toggles, the widget shows an alert, "The privacy policy changed.
-  Review the current choices before saving.", with a Review choices button
-  that resets the draft. Save is refused until then. A draft without unsaved
-  toggles reseeds silently.
+  If the policy changes in a way that affects choices while the draft has unsaved edits, the widget displays an alert, "The privacy policy changed. Review the current choices before saving.", with a Review choices button that resets the draft, and blocks saving until reviewed. A clean draft reseeds silently.
 
-  A saved grant that the current policy or a privacy signal such as Global
-  Privacy Control overrides shows a note under its row: "Your saved choice is
-  restricted by the current privacy settings." The switch still reflects the
-  saved value; the effective permission is off.
+  When the policy or a privacy signal such as Global Privacy Control overrides a saved grant, the row shows "Your saved choice is restricted by the current privacy settings." The switch keeps the saved value while effective permission stays off.
 
   ### Vendors
 
-  When the provider declares `vendors`, each category's expanded description
-  ends with one card per vendor whose category condition names that category,
-  styled like a category row: the vendor's name and a switch on the header,
-  and its description and privacy policy link behind the card's own expand
-  control. Cards start collapsed, so a long list stays one line per vendor,
-  and the category list scrolls inside the dialog rather than growing it.
-  A collapsed category or card renders its content element empty and mounts
-  the content the first time it opens, then keeps it mounted, so a long
-  vendor list costs nothing until a visitor expands its category.
-  Vendor switches edit the same draft as the category
-  switches and record on Save. Saving with one vendor off denies that vendor
-  only; the category stays granted and its other vendors keep loading. While
-  the category is off in the draft the vendor switches are disabled, with the
-  hint "Turn on this category to choose vendors." A vendor declared
-  `disabled`, or one that only falls under `necessary`, is listed without a
-  switch. Accept All and Reject All clear every vendor denial, including one
-  staged but not yet saved. Under an `iab` policy no vendor rows render.
-  Vendors that are only referenced by a script slug, without a name and
-  privacy policy URL, still gate loading but are not listed, and so does a
-  vendor whose condition negates a category, since no category row can
-  host it. See
-  [vendor consent](../vendor-consent).
+  When the provider declares `vendors`, each expanded category ends with one collapsible card per vendor whose condition names that category: vendor name and switch in the header, description and privacy policy link inside. Cards start collapsed so long lists stay compact and scroll inside the dialog. Collapsed categories and vendor cards leave their content unmounted until first expanded, avoiding extra render work upfront.
+
+  Vendor switches edit the same draft and record on Save. Disabling one vendor denies only that vendor while keeping the category and its other vendors active. While the parent category is off in the draft, its vendor switches disable with the hint "Turn on this category to choose vendors." Vendors marked `disabled`, or limited to `necessary`, render without a switch. Accept All and Reject All clear all vendor denials, including unsaved ones. Under an `iab` policy, no vendor rows render. Vendors referenced only by script slug without a name and privacy policy URL, or with negated category conditions, still gate loading without appearing as rows. See [vendor consent](../vendor-consent).
 
   ### Actions
 
-  The preference center always renders Reject All, Accept All and Save Settings, with
-  Save Settings as the primary action. `presentation.preferences.layout`,
-  `primaryActions`, `direction` and `uiProfile` in the provider options
-  reorder and restyle them; a layout that omits one of the three has it
-  restored. Customize and dismiss actions never render here.
+  The preference center always shows Reject All, Accept All, and Save Settings, with Save Settings marked primary. `presentation.preferences.layout`, `primaryActions`, `direction`, and `uiProfile` in the provider options reorder and restyle them; any omitted action is restored. Customize and dismiss never appear here.
 
   ### When consent is not owed
 
-  Without a resolved policy rule the widget renders nothing and appears as
-  soon as a rule resolves, without a remount. A rule with `model: 'none'` and
-  an empty `rights` list renders nothing; a `none` rule that lists any right,
-  such as `['disclosure']`, renders the widget and Save completes without
-  writing a consent record.
+  Without a resolved policy rule, the widget renders nothing and appears automatically once a rule resolves. A rule with `model: 'none'` and an empty `rights` list renders nothing; a `none` rule listing any right such as `['disclosure']` renders the widget and Save finishes without writing a consent record.
 
-  For a fully custom preference center, `useConsentDraft()` returns the same
-  draft: `values`, `displayedCategories`, `vendors`, `isDirty`, `isStale`,
-  `set`, `update`, `setVendor`, `acceptAll`, `rejectAll`, `save` and `reset`.
-  A custom vendor control alone takes `useVendorDraft()`, the vendor slice of
-  that draft: `vendors`, `setVendor`, `isDirty`, `isStale`, `save` and `reset`.
-  `useDeclaredVendors()`, `useVendorChoice()` and `useVendorAllowed(id)` read
-  the declared list, the recorded denials and one vendor's effective result.
+  For a custom preference center, `useConsentDraft()` returns the same draft: `values`, `displayedCategories`, `vendors`, `isDirty`, `isStale`, `set`, `update`, `setVendor`, `acceptAll`, `rejectAll`, `save`, and `reset`. For custom vendor controls alone, `useVendorDraft()` exposes the vendor slice: `vendors`, `setVendor`, `isDirty`, `isStale`, `save`, and `reset`. `useDeclaredVendors()`, `useVendorChoice()`, and `useVendorAllowed(id)` read the declared list, recorded denials, and per-vendor effective state.
 </section>
 
 <section id="accessibility">
   ## Accessibility
 
-  Each row is a disclosure: a button that expands the category description
-  and a switch beside it, so a visitor can read the description without
-  changing the choice. Each switch has the category title as its accessible
-  name. A category's vendor cards sit in a `region` named "Vendors" with the
-  count; each card's expand button carries `aria-expanded`, each vendor
-  switch is named "Allow" followed by the vendor name, and is described by
-  the vendor's name element. The policy-change alert uses `role="alert"`, and a restriction note is
-  an `output` element linked to its switch through `aria-describedby`. The
-  root's `dir` attribute follows the active language.
+  Each row is a disclosure pairing a button that expands the description with a switch beside it, so visitors can read descriptions without toggling consent. Each switch uses the category title as its accessible name. Vendor cards sit inside a `region` labelled "Vendors" with the count; each card toggle sets `aria-expanded`, and each vendor switch is named "Allow" plus the vendor name and described by the vendor's name element. The policy-change alert uses `role="alert"`, and restriction notes use an `output` element linked with `aria-describedby`. The root sets `dir` from the active language.
 </section>
 
 <section id="composition">
   ## Composition
 
-  Every part is available as `ConsentWidget.<Part>`. `Root` provides the
-  draft and accepts `noStyle`, `disableAnimation` and `uiSource`. `Accordion`
-  and `AccordionItems` render the stock rows; `AccordionItem`,
-  `AccordionTrigger`, `AccordionTriggerInner`, `AccordionContent`,
-  `AccordionArrow` and `Switch` build your own; `VendorList` renders one
-  category's vendor rows and takes a `category` prop. `PolicyActions` renders the
-  resolved actions in `Footer` and `FooterSubGroup` and accepts `renderAction`
-  to replace one button; `AcceptAllButton`, `RejectButton`, `SaveButton` and
-  `CustomizeButton` are the individual buttons.
+  Every part is available as `ConsentWidget.<Part>`. `Root` supplies the draft and accepts `noStyle`, `disableAnimation`, and `uiSource`. `Accordion` and `AccordionItems` render the built-in rows; `AccordionItem`, `AccordionTrigger`, `AccordionTriggerInner`, `AccordionContent`, `AccordionArrow`, and `Switch` let you build custom rows; `VendorList` renders one category's vendor rows for a `category` prop. `PolicyActions` renders the resolved actions inside `Footer` and `FooterSubGroup` and accepts `renderAction` to replace any button; `AcceptAllButton`, `RejectButton`, `SaveButton`, and `CustomizeButton` render individual buttons.
 
-  `Accordion` is controlled: pass `value` and `onValueChange`, or no
-  category description ever opens. The stock `ConsentWidget` holds that state
-  for you. In this component, `ConsentWidget` comes from the same import as
-  the example at the top of the page:
+  `Accordion` is controlled: pass `value` and `onValueChange` or no category description opens. The built-in `ConsentWidget` manages that state for you. In this snippet, `ConsentWidget` comes from the same import shown at the top of the page:
 
   ```tsx
   import { useState } from 'react';
@@ -163,32 +82,13 @@ group: reference
   }
   ```
 
-  Provider component slots for the stock structure are `manager.root`,
-  `manager.footer`, `manager.actionGroup`, `accordion.root`,
-  `accordion.triggerRow`, `accordion.title`, `accordion.control`,
-  `accordion-item.root`, `accordion-item.trigger`, `accordion-item.content`,
-  `vendor-list.root`, `vendor-list.trigger`, `vendor-list.content`,
-  `vendor-list.item`, `vendor-list.header`,
-  `vendor-list.name`, `vendor-list.description`, `vendor-list.link`,
-  `vendor-list.control` and `tag.manager`.
+  Provider component slots for the built-in layout are `manager.root`, `manager.footer`, `manager.actionGroup`, `accordion.root`, `accordion.triggerRow`, `accordion.title`, `accordion.control`, `accordion-item.root`, `accordion-item.trigger`, `accordion-item.content`, `vendor-list.root`, `vendor-list.trigger`, `vendor-list.content`, `vendor-list.item`, `vendor-list.header`, `vendor-list.name`, `vendor-list.description`, `vendor-list.link`, `vendor-list.control`, and `tag.manager`.
 
-  `ConsentWidget` from the package root and from the
-  `@inth/react/consent-widget` subpath loads its code in a separate chunk the
-  first time it renders, so a page that never renders it does not download
-  it. `@inth/react/components/consent-widget` exports the widget without that
-  deferral, plus each part as a named export.
+  `ConsentWidget` from the package root and `@inth/react/consent-widget` loads its code in a separate chunk on first render, keeping pages that never render it smaller. `@inth/react/components/consent-widget` exports the widget without deferral plus each part as a named export.
 </section>
 
 <section id="verify">
   ## Verify
 
-  Visit the page with the widget. Use a displayed optional category whose permission is
-  not restricted by policy or privacy signals such as GPC. One row per displayed
-  category appears, with `necessary` on and disabled. Turn that category on:
-  `useConsent('<category>')`
-  elsewhere on the page still reports the old value. Choose Save: it now
-  reports `true`. An open choice banner closes when the save answers its
-  prompt; a notice banner stays open until acknowledged. Reload the page: the
-  switch keeps the saved value. Without a saved choice or configured draft
-  defaults, optional switches start on under an opt-out rule.
+  Open the page with the widget and test an optional in-scope category not restricted by policy or GPC. Confirm one row appears per displayed category with `necessary` on and disabled. Toggle the category on and confirm `useConsent('<category>')` elsewhere still returns the previous value. Click Save and confirm it updates to `true`. An open choice banner closes when the save answers its prompt; a notice banner stays open until acknowledged. Reload the page and confirm the switch keeps the saved state. Without a saved choice or configured draft defaults, optional switches start on under an opt-out rule.
 </section>

@@ -1,8 +1,10 @@
 ---
 title: Customize
-description: Change the colors, fonts, layout, button styles and copy of the Inth banner and dialog in a TanStack Start app with theme tokens, InthProvider options and component parts, and load the stylesheet yourself when you need to.
+description: Style the Inth banner and dialog in TanStack Start with theme tokens, InthProvider options, and slots.
 group: frameworks
 ---
+
+Change the colors, typography, layout, button styles, and wording of the Inth banner and dialog in a TanStack Start app.
 
 ## Pick the right tool
 
@@ -16,25 +18,13 @@ group: frameworks
 | Labels and languages | [Copy and translations](#change-the-copy) |
 | Different markup entirely | [Headless](/docs/frameworks/tanstack-start/headless) |
 
-`InthProvider` passes every option other than its own props through `options`
-to the React provider, so the React styling options apply unchanged.
-[Customization](/docs/customization/overview) explains how the choices relate.
-
-See the [design gallery](/docs/customization/recipes) for five banner designs,
-from a bottom bar to a fully custom one, with tested code for this framework.
+`@inth/tanstack-start`'s `InthProvider` forwards everything under `options` to `@inth/react`'s `InthProvider`, so all React styling options work identically. See [Customization](/docs/customization/overview) and the [design gallery](/docs/customization/recipes) for tested banner designs.
 
 ## Load the stylesheet yourself
 
-The [quickstart](/docs/frameworks/tanstack-start/quickstart) root route links
-no Inth stylesheet. `ConsentBanner`, `ConsentDialog` and the other stock
-components render the rules they use as `<style>` elements, in the server
-HTML for the banner. The rules live in `@layer components`, so Tailwind 4
-utilities override them without extra specificity.
+The [quickstart](/docs/frameworks/tanstack-start/quickstart) root route links no stylesheet: `ConsentBanner`, `ConsentDialog`, and other built-in components render their own `<style>` elements, putting banner CSS directly into the server HTML inside `@layer components` so Tailwind CSS 4 utilities override it cleanly.
 
-Load the stylesheet yourself with Tailwind CSS 3, to put Inth's rules in a
-named cascade layer. Set `styles: false` in `InthProvider`'s
-`options`, so the components add no second copy, and link the stylesheet
-through `head()`:
+Load the stylesheet yourself on Tailwind CSS 3 to place Inth's rules in a named cascade layer. Set `options={{ styles: false }}` on `InthProvider` and link the stylesheet in `head()`:
 
 {/* example: fragment */}
 
@@ -48,19 +38,13 @@ import consentCss from '@inth/tanstack-start/styles.css?url';
 options={{ styles: false }}
 ```
 
-If your app already has a global stylesheet, you can `@import` the Inth
-stylesheet from it instead. Tailwind 3 needs a PostCSS plugin and the import
-above the `@tailwind` directives;
-[Tailwind CSS](/docs/customization/tailwind#set-up-tailwind-css-3) shows the
-setup, and [stylesheets and CSS layers](/docs/customization/stylesheets)
-explains the layer order.
+You can also `@import` it at the top of your global stylesheet above `@tailwind` directives. Tailwind CSS 3 also requires the PostCSS plugin; see [Tailwind CSS](/docs/customization/tailwind#set-up-tailwind-css-3) and [Stylesheets and CSS layers](/docs/customization/stylesheets).
 
 ## Change colors, fonts and radius
 
-Colors, radii, shadows, typography and motion come from `--inth-*` CSS
-variables. Pick one of two ways to set them:
+Colors, radii, shadows, typography, and motion come from `--inth-*` CSS variables. Choose one of two approaches:
 
-- **Set the variables in your CSS.** Nothing extra ships to the browser:
+- **Set the variables in CSS.** Ships zero extra JavaScript to the browser:
 
   ```css title="src/styles.css"
   :root {
@@ -71,10 +55,7 @@ variables. Pick one of two ways to set them:
   }
   ```
 
-- **Render `ConsentTheme` in the root route.** Use this when the theme lives in
-  TypeScript. The root component renders on the server, so the `<style>`
-  element is in the first HTML. It also runs in the browser, so the theme
-  generator ships in the bundle.
+- **Render `ConsentTheme` in the root route.** Use this when the theme lives in TypeScript. The root route renders it into the initial server HTML, and the browser also includes the theme generator.
 
   {/* example: fragment */}
 
@@ -87,23 +68,13 @@ variables. Pick one of two ways to set them:
   });
   ```
 
-  In the root component, render `<ConsentTheme theme={theme} />` from
-  `@inth/tanstack-start` inside `<head>`, after `<HeadContent />`.
+  In `src/routes/__root.tsx`, render `<ConsentTheme theme={theme} />` from `@inth/tanstack-start` inside `<head>`, after `<HeadContent />`.
 
-`ConsentTheme` outranks a plain `:root` rule, wherever each one loads. If you
-use both, a variable set in both places takes the `ConsentTheme` value. Write
-your CSS overrides on `:root:root` to beat it, or move the values into the
-theme.
-
-[Theme tokens](/docs/customization/tokens) lists every variable and scoping
-tokens to one consent model.
+`ConsentTheme` outranks a plain `:root` rule regardless of load order. If you mix both, use `:root:root` in CSS to beat `ConsentTheme`, or keep all tokens in one place. See [Theme tokens](/docs/customization/tokens).
 
 ## Style the action buttons
 
-`consentActions` decides how each action looks. `default` applies to every
-button, `primary` to the action the policy or your props mark primary, and
-`accept`, `reject`, `customize` and `dismiss` to one action each. Pass it
-through `InthProvider`'s `options`:
+`consentActions` sets button styling per role: `default`, `primary`, `accept`, `reject`, `customize`, and `dismiss`. Pass it in `InthProvider`'s `options`:
 
 {/* example: fragment */}
 
@@ -121,22 +92,15 @@ through `InthProvider`'s `options`:
 >
 ```
 
-`options.theme` only reads `consentActions` and slot styles. Tokens passed there
-do nothing, and the provider logs a warning in development.
+`options.theme` reads only `consentActions` and slot styles; token fields passed there are ignored with a development warning.
 
 ## Change the banner shape
 
-`ConsentBanner` takes `variant` (`floating`, `bar`, `widget` or `wall`) and
-`position`, such as `<ConsentBanner variant="bar" position="bottom" />`. To use
-one shape everywhere, set `options.presentation.prompt` on `InthProvider`
-instead. [ConsentBanner](/docs/frameworks/tanstack-start/components/consent-banner#variants)
-lists every variant and position.
+Pass `variant` (`floating`, `bar`, `widget`, or `wall`) and `position` to `ConsentBanner`, such as `<ConsentBanner variant="bar" position="bottom" />`, or set `options.presentation.prompt` on `InthProvider` for a global default. See [ConsentBanner](/docs/frameworks/tanstack-start/components/consent-banner#variants).
 
 ## Style one component part
 
-Each component part is a slot that accepts any attribute its element takes,
-such as `className` or `style`. Set slots in `InthProvider`'s
-`options.components`, keyed by component and part:
+Configure slots under `options.components` on `InthProvider`, keyed by component and part:
 
 {/* example: fragment */}
 
@@ -150,39 +114,18 @@ options={{
 }}
 ```
 
-[Component parts](/docs/customization/slots) lists the keys for every component
-and when to drop the built-in styles with `noStyle`. The `ConsentGate`
-placeholder's parts are `components['consent-gate'].root`, `.title` and
-`.button`.
-[Class names and CSS-in-JS](/docs/customization/class-names) covers CSS
-Modules, vanilla-extract, StyleX and Emotion.
+See [Component parts](/docs/customization/slots) for all slot keys (`ConsentGate` uses `components['consent-gate'].root`, `.title`, and `.button`) and `noStyle`, and [Class names and CSS-in-JS](/docs/customization/class-names) for styling libraries.
 
 ## Turn on dark mode and change motion
 
-Pass `colorScheme` to `ConsentTheme` in the root route and the same value in
-`options` on `InthProvider`. Leave it unset to follow a `dark` class on
-`<html>`, and add dark colors with `theme.dark`.
-[Dark mode](/docs/customization/dark-mode) covers each value and a dark first
-paint.
+Pass the same `colorScheme` to `ConsentTheme` and `InthProvider` `options`. Omit it to follow a `dark` class on `<html>`, and configure dark colors via `theme.dark`. See [Dark mode](/docs/customization/dark-mode).
 
-`options.disableAnimation` on `InthProvider` turns off the banner and dialog
-animations, and the same prop on `ConsentBanner` or `ConsentDialog` overrides
-it for one surface. [Motion and animation](/docs/customization/motion) covers
-the duration and easing tokens and reduced motion.
+Set `options.disableAnimation` on `InthProvider` to turn off animations globally, or pass `disableAnimation` to a single banner or dialog. See [Motion and animation](/docs/customization/motion).
 
 ## Change the copy
 
-Labels, descriptions and languages come from the translations in your Inth
-project and from `options.i18n` on `InthProvider`. For the visitor's language,
-`i18n.messages` replace the project's copy key by key, and keys you leave out
-keep the project's wording.
-[Copy and translations](/docs/customization/translations) shows the message
-keys.
+Labels, descriptions, and languages come from your Inth project translations and `options.i18n` on `InthProvider`. For the active language, `i18n.messages` replaces project copy key by key while keeping omitted keys intact. See [Copy and translations](/docs/customization/translations).
 
 ## Check the result
 
-Clear site data and reload under a policy that shows a banner. View the page
-source: with an awaited loader, the banner is in the HTML with your classes
-and, if you render `ConsentTheme`, a `<style id="inth-theme">` element. Open
-the preference dialog too, since it reads the same tokens. Test a narrow
-window, keyboard focus and contrast on the primary button.
+Clear site data and reload under a policy showing a banner. View page source: with an awaited loader, the banner appears in server HTML with your classes and, if used, `<style id="inth-theme">`. Inspect the preferences dialog too, check narrow viewports, verify keyboard focus, and test primary button contrast.

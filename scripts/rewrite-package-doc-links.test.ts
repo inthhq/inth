@@ -33,7 +33,7 @@ test('unresolved conversion errors stop publication', async () => {
 	).rejects.toThrow('Incomplete documentation conversion');
 });
 
-const site = 'https://c15t.com';
+const site = 'https://inth.com';
 const files = new Set(['guides/data-fetching.md', 'frameworks/index.md']);
 
 test('bundled links work offline and retain anchors', () => {
@@ -52,13 +52,8 @@ test('bundled links work offline and retain anchors', () => {
 
 test('topics outside the bundle link to the website', () => {
 	expect(
-		packageDocLink(
-			'/docs/self-host/quickstart',
-			'guides/data-fetching.md',
-			files,
-			site
-		)
-	).toBe('https://c15t.com/docs/self-host/quickstart');
+		packageDocLink('/docs/performance', 'guides/data-fetching.md', files, site)
+	).toBe('https://inth.com/docs/performance');
 	expect(
 		packageDocLink('https://inth.com', 'guides/data-fetching.md', files, site)
 	).toBe('https://inth.com');
@@ -88,7 +83,7 @@ test('relative website routes become local Markdown links', () => {
 
 test('other root-relative site paths link to the website', () => {
 	expect(packageDocLink('/llms-full.txt', 'index.md', files, site)).toBe(
-		'https://c15t.com/llms-full.txt'
+		'https://inth.com/llms-full.txt'
 	);
 	expect(
 		packageDocLink('//cdn.example.com/a.js', 'index.md', files, site)
@@ -96,112 +91,110 @@ test('other root-relative site paths link to the website', () => {
 });
 
 const promptFiles = new Set([
-	'upgrade-v3.md',
-	'frameworks/next/upgrade-v3.md',
-	'frameworks/react/upgrade-v3.md',
+	'migrate-from-c15t.md',
+	'frameworks/next/quickstart.md',
+	'frameworks/react/quickstart.md',
 ]);
 
 test('prompt docs URLs become bundled files relative to the page', () => {
 	expect(
 		packagePromptLinks(
-			'Read https://v3.c15t.com/docs/frameworks/next/upgrade-v3.md first and follow it in order.',
-			'frameworks/next/upgrade-v3.md',
+			'Read https://inth.com/docs/frameworks/next/quickstart.md first and follow it in order.',
+			'frameworks/next/quickstart.md',
 			promptFiles,
 			site
 		)
-	).toBe('Read ./upgrade-v3.md first and follow it in order.');
+	).toBe('Read ./quickstart.md first and follow it in order.');
 	expect(
 		packagePromptLinks(
-			'Read the guide: https://v3.c15t.com/docs/frameworks/next/upgrade-v3.md, https://v3.c15t.com/docs/frameworks/react/upgrade-v3.md or https://v3.c15t.com/docs/frameworks/javascript/upgrade-v3.md. Then read https://v3.c15t.com/docs/upgrade-v3.md.',
-			'upgrade-v3.md',
+			'Read the guide: https://inth.com/docs/frameworks/next/quickstart.md, https://inth.com/docs/frameworks/react/quickstart.md or https://inth.com/docs/frameworks/javascript/quickstart.md. Then read https://inth.com/docs/migrate-from-c15t.md.',
+			'migrate-from-c15t.md',
 			promptFiles,
 			site
 		)
 	).toBe(
-		'Read the guide: ./frameworks/next/upgrade-v3.md, ./frameworks/react/upgrade-v3.md or https://v3.c15t.com/docs/frameworks/javascript/upgrade-v3.md. Then read ./upgrade-v3.md.'
+		'Read the guide: ./frameworks/next/quickstart.md, ./frameworks/react/quickstart.md or https://inth.com/docs/frameworks/javascript/quickstart.md. Then read ./migrate-from-c15t.md.'
 	);
 });
 
 test('bundled prompt paths drop autolink brackets', () => {
 	expect(
 		packagePromptLinks(
-			'Read <https://v3.c15t.com/docs/upgrade-v3.md> and <https://v3.c15t.com/docs/frameworks/javascript/upgrade-v3.md>.',
-			'frameworks/next/upgrade-v3.md',
+			'Read <https://inth.com/docs/migrate-from-c15t.md> and <https://inth.com/docs/frameworks/javascript/quickstart.md>.',
+			'frameworks/next/quickstart.md',
 			promptFiles,
 			site
 		)
 	).toBe(
-		'Read ../../upgrade-v3.md and <https://v3.c15t.com/docs/frameworks/javascript/upgrade-v3.md>.'
+		'Read ../../migrate-from-c15t.md and <https://inth.com/docs/frameworks/javascript/quickstart.md>.'
 	);
 });
 
 test('root-relative prompt paths resolve like links', () => {
 	expect(
 		packagePromptLinks(
-			'Read /docs/upgrade-v3.md or /docs/frameworks/javascript/upgrade-v3.md.',
-			'frameworks/next/upgrade-v3.md',
+			'Read /docs/migrate-from-c15t.md or /docs/frameworks/javascript/quickstart.md.',
+			'frameworks/next/quickstart.md',
 			promptFiles,
 			site
 		)
 	).toBe(
-		'Read ../../upgrade-v3.md or https://c15t.com/docs/frameworks/javascript/upgrade-v3.md.'
+		'Read ../../migrate-from-c15t.md or https://inth.com/docs/frameworks/javascript/quickstart.md.'
 	);
 });
 
 test('prompt text keeps paths that are not site docs', () => {
 	const text =
-		'Proxy /api/inth, keep `src/docs/notes.md`, and read /docsets/x, https://v3.c15t.com/docsets/x or https://inth.com/docs/a.md.';
-	expect(packagePromptLinks(text, 'upgrade-v3.md', promptFiles, site)).toBe(
-		text
-	);
+		'Proxy /api/inth, keep `src/docs/notes.md`, and read /docsets/x, https://inth.com/docsets/x or https://example.com/docs/a.md.';
+	expect(
+		packagePromptLinks(text, 'migrate-from-c15t.md', promptFiles, site)
+	).toBe(text);
 	expect(
 		packagePromptLinks(
-			'(/docs/upgrade-v3.md#backend)\n/docs/frameworks/react/upgrade-v3.md',
-			'frameworks/next/upgrade-v3.md',
+			'(/docs/migrate-from-c15t.md#prerequisites)\n/docs/frameworks/react/quickstart.md',
+			'frameworks/next/quickstart.md',
 			promptFiles,
 			site
 		)
-	).toBe('(../../upgrade-v3.md#backend)\n../react/upgrade-v3.md');
+	).toBe('(../../migrate-from-c15t.md#prerequisites)\n../react/quickstart.md');
 });
 
 test('AGENTS.md root-relative links resolve beside the docs directory', () => {
 	expect(
 		packageIndexLinks(
-			'[Index](/docs/llms.txt) · [Full](/llms-full.txt) · [Guide](/docs/upgrade-v3) · [Kept](./docs/upgrade-v3.md)',
+			'[Index](/docs/llms.txt) · [Full](/llms-full.txt) · [Guide](/docs/migrate-from-c15t) · [Kept](./docs/migrate-from-c15t.md)',
 			promptFiles,
 			site
 		)
 	).toBe(
-		'[Index](https://c15t.com/docs/llms.txt) · [Full](https://c15t.com/llms-full.txt) · [Guide](./docs/upgrade-v3.md) · [Kept](./docs/upgrade-v3.md)'
+		'[Index](https://inth.com/docs/llms.txt) · [Full](https://inth.com/llms-full.txt) · [Guide](./docs/migrate-from-c15t.md) · [Kept](./docs/migrate-from-c15t.md)'
 	);
 });
 
 test('unbundled pages use the docs site of the package release', () => {
-	// The @inth/cli bundle holds upgrade-v3.md but not the framework guides,
-	// and c15t.com documents v2 during the v3 prereleases.
-	const cliFiles = new Set(['upgrade-v3.md']);
-	const v3 = docsOriginForVersion('3.0.0-alpha.9');
-	expect(v3).toBe('https://v3.c15t.com');
+	const bundleFiles = new Set(['migrate-from-c15t.md']);
+	const origin = docsOriginForVersion('0.0.0-alpha.0');
+	expect(origin).toBe('https://inth.com');
 	expect(
 		packageDocLink(
-			'/docs/frameworks/next/upgrade-v3',
-			'upgrade-v3.md',
-			cliFiles,
-			v3
+			'/docs/frameworks/next/quickstart',
+			'migrate-from-c15t.md',
+			bundleFiles,
+			origin
 		)
-	).toBe('https://v3.c15t.com/docs/frameworks/next/upgrade-v3');
+	).toBe('https://inth.com/docs/frameworks/next/quickstart');
 	expect(
 		packagePromptLinks(
-			'Read /docs/frameworks/react/upgrade-v3.md, then /docs/upgrade-v3.md.',
-			'upgrade-v3.md',
-			cliFiles,
-			v3
+			'Read /docs/frameworks/react/quickstart.md, then /docs/migrate-from-c15t.md.',
+			'migrate-from-c15t.md',
+			bundleFiles,
+			origin
 		)
 	).toBe(
-		'Read https://v3.c15t.com/docs/frameworks/react/upgrade-v3.md, then ./upgrade-v3.md.'
+		'Read https://inth.com/docs/frameworks/react/quickstart.md, then ./migrate-from-c15t.md.'
 	);
-	expect(packageIndexLinks('[Full](/llms-full.txt)', cliFiles, v3)).toBe(
-		'[Full](https://v3.c15t.com/llms-full.txt)'
+	expect(packageIndexLinks('[Full](/llms-full.txt)', bundleFiles, origin)).toBe(
+		'[Full](https://inth.com/llms-full.txt)'
 	);
-	expect(docsOriginForVersion('3.0.0')).toBe('https://c15t.com');
+	expect(docsOriginForVersion('1.0.0')).toBe('https://inth.com');
 });

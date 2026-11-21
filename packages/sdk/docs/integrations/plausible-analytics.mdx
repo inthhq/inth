@@ -1,25 +1,21 @@
 ---
 title: Plausible Analytics
-description: Load the Plausible Analytics tracker only after measurement consent with the Inth plausibleAnalytics helper, and check it in DevTools.
+description: Load Plausible Analytics after measurement consent with Inth and configure modern or legacy snippets.
 seoTitle: Plausible Analytics cookie consent with Inth
-seoDescription: Load Plausible Analytics only with measurement consent. Set it up with the Inth plausibleAnalytics helper and check it in DevTools.
+seoDescription: Gate Plausible Analytics on measurement consent with Inth using scriptId or legacy domain loaders, and verify events in DevTools.
 icon: plausible
 group: integrations
 ---
 
-The Inth `plausibleAnalytics` helper keeps Plausible Analytics off the page
-until `measurement` has consent. Until then, Inth does not define
-`window.plausible`. The helper sends no consent signal to Plausible. If the
-visitor withdraws consent, Inth removes the script element. By default, Inth
-also reloads the page.
+The `plausibleAnalytics` helper keeps Plausible Analytics off the page and `window.plausible` undefined until `measurement` is granted. It sends no consent signal to Plausible. On withdrawal, Inth removes the script element and reloads the page by default.
 
 ## Configure Plausible Analytics
 
-Copy the script ID from your Plausible installation snippet. It is the part of
-the `pa-<id>.js` file name. Sites that still use the legacy domain-based
-snippet can pass `domain` instead of `scriptId`.
+Copy the script ID from your Plausible snippet, the part inside `pa-<id>.js`. Sites using the legacy domain-based snippet can pass `domain` instead of `scriptId`.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { plausibleAnalytics } from '@inth/integrations/plausible-analytics';
@@ -33,39 +29,29 @@ export const scripts = [plausibleAnalytics({ scriptId: 'YOUR_SCRIPT_ID' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `scriptId` | None | Script ID for the `pa-<scriptId>.js` loader. Takes precedence over `domain` and `extension`. |
-| `domain` | None | Legacy site domain, set as `data-domain`. When neither `scriptId` nor `domain` has a non-empty value, the helper logs an error and the script does not load. |
-| `extension` | None | Legacy script extension or array of extensions, such as `['file-downloads', 'outbound-links']`. The helper joins them into `script.<extensions>.js`. Ignored with `scriptId`. |
+| `scriptId` | None | Script ID for `pa-<scriptId>.js`. Takes precedence over `domain` and `extension`. |
+| `domain` | None | Legacy site domain, set as `data-domain`. If both `scriptId` and `domain` are blank, the helper logs an error and skips loading. |
+| `extension` | None | Legacy script extension or array, such as `['file-downloads', 'outbound-links']`, joined into `script.<extensions>.js`. Ignored when `scriptId` is set. |
 | `customProperties` | None | Properties sent with each page view. |
-| `endpoint` | None | Custom event endpoint. With `domain`, the helper also sets it as `data-api`. |
+| `endpoint` | None | Custom event endpoint. With `domain`, also sets `data-api`. |
 | `fileDownloads` | None | `{ fileExtensions?: string[] }` for file download tracking. |
 | `hashBasedRouting` | None | `true` tracks hash-based routes. |
-| `autoCapturePageviews` | None | `false` stops automatic page views. |
-| `captureOnLocalhost` | None | `true` records visits on localhost. |
+| `autoCapturePageviews` | None | `false` disables automatic page views. |
+| `captureOnLocalhost` | None | `true` records visits on `localhost`. |
 | `scriptUrl` | `https://plausible.io/js/pa-<scriptId>.js`, or `https://plausible.io/js/script.js` with `domain` | Loader URL override. |
 
-The helper passes `customProperties`, `endpoint`, `fileDownloads`,
-`hashBasedRouting`, `autoCapturePageviews` and `captureOnLocalhost` as init
-options on `window.plausible.o`, which the `scriptId` loader reads. With the
-legacy loader, choose features with `extension`.
+The helper writes `customProperties`, `endpoint`, `fileDownloads`, `hashBasedRouting`, `autoCapturePageviews`, and `captureOnLocalhost` to `window.plausible.o`, which the `scriptId` loader reads. With the legacy loader, select features through `extension`.
 
 ## Loading and revocation
 
-`plausibleAnalytics` uses the `measurement` category. When measurement becomes
-allowed, the helper defines a queueing `window.plausible` stub, unless one
-already exists, and then loads the tracker. Calls made before the tracker
-finishes loading wait in the stub's queue.
+`plausibleAnalytics` uses the `measurement` category. On grant, the helper defines a queueing `window.plausible` stub if one does not already exist, then loads the tracker so calls queued before load still run.
 
-On revocation the helper removes the script element and calls no Plausible
-API. Plausible sets no cookies, but Inth still waits for measurement
-permission before loading it.
+On revocation, the helper removes the script element and calls no Plausible API. Plausible sets no cookies, but Inth still waits for `measurement` permission before loading it.
 
 ## Verify Plausible Analytics
 
-After you allow measurement, the `pa-<scriptId>.js` request appears, or
-`script.js` with your `data-domain` for the legacy loader. A page view request
-then goes to `plausible.io/api/event`, or to your `endpoint`. After revocation
-`window.plausible` still exists, so if your code sends custom events through
-it, check measurement permission before each call.
+1. Allow `measurement` and confirm `pa-<scriptId>.js`, or `script.js` with `data-domain` for legacy snippets, loads in DevTools Network.
+2. Confirm a page view request goes to `plausible.io/api/event` or your custom `endpoint`.
+3. Because `window.plausible` remains defined after revocation, check `measurement` permission before sending custom events.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

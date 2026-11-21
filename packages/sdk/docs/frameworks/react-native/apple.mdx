@@ -1,47 +1,42 @@
 ---
 title: iOS native installation
-description: Understand the Swift products included in a React Native app and attach RN to an app-owned native installation.
+description: Understand the Swift consent products bundled with React Native and attach RN to an app-owned iOS installation.
 group: frameworks
 ---
 
-The React Native package includes the Swift consent engine, Apple platform
-services and SwiftUI presenter in its CocoaPods target. This page covers that
-native ownership and app-owned installation in an RN app. For a standalone
-SwiftUI or UIKit app, choose Swift in the [framework list](/docs/frameworks).
+`@inth/react-native` bundles the Swift consent engine, Apple platform services, and SwiftUI presenter inside its CocoaPods target. Use this guide when your React Native app owns native iOS initialization. For standalone SwiftUI or UIKit apps, choose Swift in the [framework list](/docs/frameworks).
 
 ## Resolve the source products
 
-For authorized source integration, add `packages/swift` as a local Swift package in Xcode. Link `InthApple` and `InthCore`; add `InthConsentUI` only if you use the SwiftUI stock screens. The RN path is different: its CocoaPods target compiles these sources into `InthReactNative`.
+In React Native, `InthReactNative.podspec` compiles the vendored Swift sources directly into `InthReactNative`. Do not also link the standalone `InthCore`, `InthApple`, or `InthConsentUI` SwiftPM products from `packages/swift` into the same React Native process, or your app will run two competing consent authorities.
 
-The mobile UI target is iOS 16.4 or later. The source manifest also lists other Apple targets for core use; that is not a tested consent-UI or ATT support claim for those targets.
+The mobile consent UI targets iOS 16.4 or later.
 
 ## Install before optional SDKs
 
-This existing source example shows the public installer. Replace its placeholder with your Inth project URL and configure its policy before use.
+Call `InthApple.install` during app startup before initializing optional native SDKs or attaching React Native, replacing the placeholder with your Inth project URL:
 
 <include src="../../shared/examples/native/core-swift/AppleInstallation/apple-install.mdx" />
 
-Call it from app startup before optional SDK initialization or RN attachment. The installer validates storage, hydrates synchronously and returns the process's native core. It defaults to Keychain. Repeated installation returns the same engine and keeps its original configuration.
+The installer verifies Keychain access, hydrates saved choices synchronously, and returns the process-wide core (repeated calls return the same engine without changing configuration). Gate optional SDKs with `Inth.isAllowed(.measurement)` or `Inth.decision(for: .measurement)` and keep a subscription active so withdrawals stop collection.
 
-Read `Inth.isAllowed(.measurement)` or `Inth.decision(for: .measurement)` before starting the corresponding optional SDK. Keep an observation alive to stop or reconfigure collection after withdrawal. Unknown or unavailable consent keeps the SDK off.
-
-`protectedStorageUnavailable` leaves no new core installed. Retry after protected-data availability or activation; never fall back to plaintext or memory. The repository's SwiftUI/UIKit installation examples show retry ownership. Keychain may survive reinstall, so uninstall is not a reset guarantee.
+If Keychain is locked at launch, `protectedStorageUnavailable` leaves no engine installed. Retry when protected data becomes available or the app becomes active, and never fall back to memory or plaintext storage. Keychain entries can persist across uninstalls.
 
 ## Present native screens
 
-Apply `.inth(privacyPolicyURL:theme:autoPresent:)` to your SwiftUI root, or make `ConsentRootViewController(root:privacyPolicyURL:)` the window root in UIKit. Both attach to the installed core through the shared `ConsentPrompt`, which owns drafts and presents an owed choice by default. `autoPresent: false` leaves presenting to `ConsentPrompt.current?.presentPrompt()`. When native code presents the prompt, pass `autoPresent={false}` to the JavaScript `InthProvider` so only one side presents it. `ConsentTheme` configures the [native appearance](/docs/frameworks/react-native/customize). An IAB host must supply native CMP/publisher settings and current disclosures before accepting vendor decisions.
+Apply `.inth(privacyPolicyURL:theme:autoPresent:)` to your SwiftUI root, or host `ConsentRootViewController(root:privacyPolicyURL:)` in UIKit. Both share `ConsentPrompt` on the installed core and present an owed choice by default. Pass `autoPresent: false` to control timing via `ConsentPrompt.current?.presentPrompt()`. Whenever native code presents the prompt, pass `autoPresent={false}` to JavaScript's `InthProvider` so only one side presents it. Style screens with `ConsentTheme` (see [Customize](/docs/frameworks/react-native/customize)).
 
-## Attach to an RN CocoaPods host
+## Attach to a React Native CocoaPods host
 
-Import only `InthReactNative` for host-owned installation in a CocoaPods RN app. Set `com.inth.reactnative.AutoBootstrap` to false, call that module's `InthApple.install`, then `InthReactNativeBootstrap.install(core)` before RN starts. Do not also link separately compiled core/platform products, which would create competing singleton authorities.
+For host-owned installation in a CocoaPods React Native app:
 
-The monorepo root also has a Swift package named `inth` for standalone apps.
-It exports `InthCore`, `InthApple` and `InthConsentUI`. An RN CocoaPods app
-already compiles those sources inside `InthReactNative`; linking separate
-copies would create competing process authorities.
+1. Set `com.inth.reactnative.AutoBootstrap` to `false` in `Info.plist`.
+2. Import only `InthReactNative`.
+3. Create `InthAppleConfiguration(backendURL:)` with `configuration.platform = "rn"` so requests attribute to React Native rather than Swift.
+4. Call `InthApple.install(configuration)` and then `InthReactNativeBootstrap.install(core)` before starting the React Native bridge.
 
-## Use ATT and custom services separately
+## Manage ATT and lifecycle
 
-`InthApple.tracking` shares the explicit ATT orchestration with RN. It requires the app's usage description and never changes Inth consent. The stock prompt asks for ATT after consent by default, only with marketing granted; see [ask for ATT after the consent prompt](/docs/frameworks/react-native/iab#ask-for-att-after-the-consent-prompt). Platform services own foreground/reachability subscriptions; `InthApple.shutdown()` tears down those subscriptions without clearing consent.
+`InthApple.tracking` coordinates App Tracking Transparency separately from Inth consent (requiring `NSUserTrackingUsageDescription` in `Info.plist`). By default, the stock prompt asks for ATT after consent when marketing is granted; see [ask for ATT after the consent prompt](/docs/frameworks/react-native/iab#ask-for-att-after-the-consent-prompt). Platform services own foreground and reachability refresh; `InthApple.shutdown()` tears down those subscriptions without clearing stored consent.
 
-`InthAppleConfiguration` is the only installation an app uses. Its `backendURL` is the project URL from your Inth dashboard, and `InthApple.install` throws `invalidBackendURL` for any other host. Pass `dryRun: true` inside `#if DEBUG` for development and CI; a release build throws `dryRunInReleaseBuild`. The `CoreConfig` installer and the transport types are internal API for Inth's own tests and fixtures.
+`InthAppleConfiguration` accepts only your Inth dashboard project URL (any other host throws `invalidBackendURL`). Pass `dryRun: true` inside `#if DEBUG` for development and CI (release builds throw `dryRunInReleaseBuild`).

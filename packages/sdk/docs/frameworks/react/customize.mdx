@@ -1,8 +1,10 @@
 ---
 title: Customize
-description: Change the colors, fonts, layout, button styles and copy of the Inth banner and dialog in a React app with theme tokens, provider options and slots, and load the stylesheet yourself when you need to.
+description: Style the Inth banner and dialog in React with theme tokens, provider options, slots, and dark mode.
 group: frameworks
 ---
+
+Change the colors, typography, layout, button styles, and wording of the Inth banner and dialog in a React app.
 
 ## Pick the right tool
 
@@ -16,21 +18,13 @@ group: frameworks
 | Labels and languages | [Copy and translations](#change-the-copy) |
 | Different markup entirely | [Headless](/docs/frameworks/react/headless) |
 
-[Customization](/docs/customization/overview) explains how these choices relate
-across frameworks.
-
-See the [design gallery](/docs/customization/recipes) for five banner designs,
-from a bottom bar to a fully custom one, with tested code for this framework.
+[Customization](/docs/customization/overview) compares these options across frameworks, and the [design gallery](/docs/customization/recipes) shows five tested banner designs for React.
 
 ## Import the stylesheet yourself
 
-A React app imports no Inth stylesheet. `ConsentBanner`, `ConsentDialog` and
-the other stock components render the rules they use as `<style>` elements.
+A React app imports no stylesheet by default: `ConsentBanner`, `ConsentDialog`, and the other built-in components render their own `<style>` elements.
 
-Import the stylesheet yourself with Tailwind CSS 3, to put Inth's rules in a
-named cascade layer. Set `styles: false` in the provider
-options, so the components add no second copy, and import the stylesheet once
-in the module that renders `InthProvider`:
+Import the stylesheet yourself on Tailwind CSS 3 to place Inth's rules in a named cascade layer. Set `styles: false` in the provider options so components stop injecting duplicate `<style>` elements, and import `@inth/react/styles.css` once in the module that renders `InthProvider`:
 
 {/* example: fragment */}
 
@@ -41,20 +35,15 @@ import '@inth/react/styles.css';
 styles: false,
 ```
 
-To import the stylesheet from CSS instead, put it at the top of your global
-stylesheet, above any `@tailwind` directives. `postcss-import`, which Vite
-uses, ignores an `@import` that follows other rules. Tailwind 3 also needs a
-PostCSS plugin;
-[Tailwind CSS](/docs/customization/tailwind#set-up-tailwind-css-3) shows the
-setup.
+If you import it from CSS instead, place it at the top of your global stylesheet above any `@tailwind` directives because Vite's `postcss-import` ignores `@import` statements after other rules. Tailwind CSS 3 also requires the PostCSS plugin; see [Tailwind CSS](/docs/customization/tailwind#set-up-tailwind-css-3).
 
 ## Change colors, fonts and radius
 
 <import src="../../shared/react/styling/overview.mdx#tokens-intro" />
 
-A single-page app has no server render, so pick one of two ways:
+In a single-page app without server rendering, choose one of two approaches:
 
-- **Set the variables in your CSS.** Nothing extra ships to the browser:
+- **Set the variables in CSS.** Adds zero JavaScript to your bundle:
 
   ```css title="src/index.css"
   :root {
@@ -65,9 +54,7 @@ A single-page app has no server render, so pick one of two ways:
   }
   ```
 
-- **Render `ConsentTheme` next to the provider.** Use this when the theme lives
-  in TypeScript or changes at runtime. The browser downloads the theme
-  generator.
+- **Render `ConsentTheme` next to the provider.** Use this when the theme lives in TypeScript or changes at runtime; the browser downloads the theme generator.
 
   {/* example: fragment */}
 
@@ -80,24 +67,15 @@ A single-page app has no server render, so pick one of two ways:
   });
   ```
 
-  In `src/consent.tsx`, render `<ConsentTheme theme={theme} />` from
-  `@inth/react` just before `<InthProvider>`.
+  In `src/consent.tsx`, render `<ConsentTheme theme={theme} />` from `@inth/react` just before `<InthProvider>`.
 
-In a server-rendered app, such as React Router framework mode, render
-`ConsentTheme` in the root component so the `<style>` element is part of the
-server HTML. [Theme tokens](/docs/customization/tokens) lists every variable.
+In a server-rendered app such as React Router framework mode, render `ConsentTheme` in the root component so the `<style>` element ships in server HTML. [Theme tokens](/docs/customization/tokens) lists every variable.
 
-`ConsentTheme` outranks a plain `:root` rule, wherever each one loads. If you
-use both, a variable set in both places takes the `ConsentTheme` value. Write
-your CSS overrides on `:root:root` to beat it, or move the values into the
-theme.
+`ConsentTheme` outranks a plain `:root` rule regardless of load order. If you combine both, use `:root:root` in CSS to override `ConsentTheme`, or keep all token values in one place.
 
 ## Style the action buttons
 
-`consentActions` decides how each action looks. `default` applies to every
-button, `primary` to the action the policy or your props mark primary, and
-`accept`, `reject`, `customize` and `dismiss` to one action each. Pass it
-through the provider's `theme` option:
+`consentActions` sets how each button role looks: `default` styles every button, `primary` styles primary actions, and `accept`, `reject`, `customize`, and `dismiss` style one role each. Pass it in the provider `theme` option:
 
 {/* example: fragment */}
 
@@ -116,16 +94,11 @@ through the provider's `theme` option:
 >
 ```
 
-The provider's `theme` option only reads `consentActions` and slot styles.
-Tokens passed there do nothing, and the provider logs a warning in development.
-Changing button styles does not change the policy or expire a saved choice.
+The provider `theme` option reads only `consentActions` and slot styles. Token fields passed there are ignored with a development warning. Changing button styles never alters the policy or expires a saved choice.
 
 ## Change the banner shape
 
-`ConsentBanner` takes `variant` (`floating`, `bar`, `widget` or `wall`) and
-`position`. To use one shape everywhere, set `presentation.prompt` in the
-provider options instead. This banner is a full-width bar for notices and a
-card for choices:
+`ConsentBanner` accepts `variant` (`floating`, `bar`, `widget`, or `wall`) and `position`. To apply one shape globally, set `presentation.prompt` in the provider options. This example uses a full-width bar for notices and a floating card for choices:
 
 {/* example: fragment */}
 
@@ -140,51 +113,26 @@ export function RegionalBanner() {
 }
 ```
 
-Render `RegionalBanner` in place of `ConsentBanner` inside the provider.
-[ConsentBanner](/docs/frameworks/react/components/consent-banner#variants)
-lists every variant and position, and how to order buttons per policy.
+Render `RegionalBanner` instead of `ConsentBanner` inside the provider. [ConsentBanner](/docs/frameworks/react/components/consent-banner#variants) lists every variant, position, and per-policy button layout.
 
 ## Style one component part
 
-Each component part is a slot. Set slots in the provider options under
-`components`, keyed by component and part. A slot takes any attribute the
-element accepts, such as `className` or `style`.
+Each component part is a slot configured under `options.components`, keyed by component and part. A slot accepts any attribute the element supports, including `className` and `style`.
 
 <import src="../../shared/react/styling/overview.mdx#slot-recipes" />
 
-[Component parts](/docs/customization/slots) lists every component's part keys
-and when to drop the built-in styles with `noStyle`. The `ConsentGate`
-placeholder's parts are `components['consent-gate'].root`, `.title` and
-`.button`.
-[Class names and CSS-in-JS](/docs/customization/class-names) covers CSS
-Modules, vanilla-extract, StyleX and Emotion, and
-[Tailwind CSS](/docs/customization/tailwind) covers utilities on parts.
+[Component parts](/docs/customization/slots) lists every slot key and explains `noStyle`. `ConsentGate`'s placeholder parts are `components['consent-gate'].root`, `.title`, and `.button`. See [Class names and CSS-in-JS](/docs/customization/class-names) and [Tailwind CSS](/docs/customization/tailwind) for styling examples.
 
 ## Turn on dark mode and change motion
 
-Pass `colorScheme` in the provider options and the same value to
-`ConsentTheme`. Leave it unset to follow a `dark` class on `<html>`, and add
-dark colors with `theme.dark`. [Dark mode](/docs/customization/dark-mode)
-covers each value and a dark first paint.
+Pass the same `colorScheme` to `InthProvider` and `ConsentTheme`. Omit it to follow a `dark` class on `<html>`, and customize dark colors with `theme.dark`. See [Dark mode](/docs/customization/dark-mode).
 
-`disableAnimation` in the provider options turns off the banner and dialog
-animations, and the same prop on `ConsentBanner` or `ConsentDialog` overrides
-it for one surface. [Motion and animation](/docs/customization/motion) covers
-the duration and easing tokens and reduced motion.
+Set `disableAnimation` in provider options to disable animations across the banner and dialog, or pass `disableAnimation` to a single component. See [Motion and animation](/docs/customization/motion) for timing tokens and reduced motion.
 
 ## Change the copy
 
-Labels, descriptions and languages come from the translations in your Inth
-project and from the provider's `i18n` option. For the visitor's language,
-`i18n.messages` replace the project's copy key by key, and keys you leave out
-keep the project's wording.
-[Copy and translations](/docs/customization/translations) shows the message
-keys. For one banner, `ConsentBanner` also accepts text props such as
-`dismissButtonText`.
+Labels, descriptions, and languages come from your Inth project translations and the provider `i18n` option. For the active language, `i18n.messages` replaces project copy key by key while leaving omitted keys untouched. See [Copy and translations](/docs/customization/translations) for message keys, or pass text props such as `dismissButtonText` directly to `ConsentBanner`.
 
 ## Check the result
 
-Clear site data and reload under a policy that shows a banner. Check the banner
-and the preferences dialog, since both read the same tokens. Test a narrow
-window, keyboard focus and contrast on the primary button. In development, the
-console warns if `theme` holds tokens but the page has no `inth-theme` style.
+Clear site data and reload under a policy that shows a banner. Inspect both the banner and the preferences dialog, check narrow viewports, test keyboard focus, and verify button contrast. In development, check the console to make sure no `inth-theme` warning appears.

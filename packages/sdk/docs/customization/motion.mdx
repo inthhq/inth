@@ -1,26 +1,27 @@
 ---
 title: Motion and animation
-description: Change how fast Inth's banner and dialog animate with duration and easing tokens, turn animations off per surface with disableAnimation, and check reduced-motion behavior in each framework.
+description: Customize Inth animation timing with motion tokens, turn animations off with disableAnimation, and animate on dialog data-state.
 group: customization
 ---
 
-## Change the speed with motion tokens
+Adjust Inth's transition timing with motion tokens, turn animations off globally or per surface with `disableAnimation`, and respect `prefers-reduced-motion` automatically.
 
-Inth animates its surfaces with three durations and five easing curves. Set
-them in the theme's `motion` object, or as CSS variables:
+## Customize duration and easing tokens
+
+Inth uses three durations and five easing curves. Override them in your theme's `motion` object or as `--inth-*` CSS variables:
 
 | CSS variable | Theme key | Default | Used by |
 | --- | --- | --- | --- |
 | `--inth-duration-fast` | `motion.duration.fast` | `80ms` | Banner fade out, buttons, tabs |
-| `--inth-duration-normal` | `motion.duration.normal` | `150ms` | Preference dialog, late banner fade in, switches, accordions |
+| `--inth-duration-normal` | `motion.duration.normal` | `150ms` | Dialog, late banner fade in, switches, accordions |
 | `--inth-duration-slow` | `motion.duration.slow` | `200ms` | Legal links, floating trigger |
 | `--inth-easing` | `motion.easing` | `cubic-bezier(0.4, 0, 0.2, 1)` | Switches, accordions |
-| `--inth-easing-out` | `motion.easingOut` | `cubic-bezier(0.215, 0.61, 0.355, 1)` | Preference dialog, late banner fade in, floating trigger hover |
+| `--inth-easing-out` | `motion.easingOut` | `cubic-bezier(0.215, 0.61, 0.355, 1)` | Dialog, late banner fade in, trigger hover |
 | `--inth-easing-in` | `motion.easingIn` | `cubic-bezier(0.55, 0.055, 0.675, 0.19)` | Banner fade out |
-| `--inth-easing-in-out` | `motion.easingInOut` | `cubic-bezier(0.645, 0.045, 0.355, 1)` | Floating trigger snapping to a corner |
-| `--inth-easing-spring` | `motion.easingSpring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | The dialog's scale in |
+| `--inth-easing-in-out` | `motion.easingInOut` | `cubic-bezier(0.645, 0.045, 0.355, 1)` | Trigger corner snap |
+| `--inth-easing-spring` | `motion.easingSpring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Dialog scale in |
 
-This theme slows the dialog down and removes its overshoot:
+This theme slows the preference dialog and removes spring overshoot:
 
 {/* example: fragment */}
 
@@ -33,76 +34,47 @@ export const theme = {
 };
 ```
 
-The banner never slides in. When it shows with the page, it is part of the
-first paint and appears on its first frame. When it arrives more than 100ms
-after the page first painted, such as after a slow script or a client-side
-init, it fades in over `--inth-duration-normal` instead, and its root and
-backdrop carry `data-entry="late"`. A banner rendered on the server always
-shows at once. When it hides, Vue, Svelte and the script tag fade it out over
-`--inth-duration-fast`.
+Banners never slide in. Initial-paint and server-rendered banners appear on frame one. Banners arriving over 100ms late fade in over `--inth-duration-normal` with `data-entry="late"`. Vue, Svelte, and the script tag fade banners out over `--inth-duration-fast`. Pass `motion` tokens through your framework's theme API, documented in [theme tokens](/docs/customization/tokens); Vue and Nuxt `tokens` omit `--`, such as `'inth-duration-normal': '220ms'`.
 
-The theme goes where your framework's other tokens go. See
-[theme tokens](/docs/customization/tokens) and your framework's customize page.
-In Vue and Nuxt, set `tokens` with the variable name without the leading
-`--`, such as `'inth-duration-normal': '220ms'`.
+## Turn animations off with `disableAnimation`
 
-## Turn animations off
+`disableAnimation` removes banner fades, dialog transitions, and trigger hover or snap transitions. Per-surface props override the global setting:
 
-`disableAnimation` removes the banner's fades, the enter and exit
-transitions of the dialogs, and the hover and snap transitions of the floating
-`ConsentDialogTrigger`. Set it once for every surface, then override it for one
-surface where your framework allows:
-
-| Framework | For every surface | For one surface |
+| Framework | Global | Per surface |
 | --- | --- | --- |
-| Next.js, TanStack Start | `options.disableAnimation` in Next.js `inth.config.ts`, or on `InthProvider` | `disableAnimation` prop on `ConsentBanner`, `ConsentDialog`, `IABConsentBanner`, `IABConsentDialog` |
-| React | `disableAnimation` in the `InthProvider` options | The same component props |
-| Nuxt | `disableAnimation` in the `inth` module options | `disableAnimation` prop on `consent-banner.vue`, `consent-manager.vue` and the IAB banner and dialog, when you render them yourself |
-| Vue | `disableAnimation` in the `inth` options | The same component props |
-| Astro | `disableAnimation` in the `inth()` integration options | `disableAnimation` prop on `ConsentBanner`, `ConsentDialog`, `IABConsentBanner`, `IABConsentDialog` |
-| Svelte, SvelteKit | `disableAnimation` on `InthProvider`, from `@inth/svelte` or `@inth/svelte/kit` | `disableAnimation` prop on `ConsentBanner`, `ConsentDialog`, `IABConsentBanner`, `IABConsentDialog` |
-| HTML | `data-disable-animation` on the script tag, or `ui.disableAnimation` in `config` | `ui.banner.disableAnimation`, `ui.dialog.disableAnimation` |
-| JavaScript | `ui.disableAnimation` in `init()` | `ui.banner.disableAnimation`, `ui.dialog.disableAnimation` |
+| Next.js, TanStack Start | `options.disableAnimation` in `inth.config.ts` or `InthProvider` | `disableAnimation` prop |
+| React | `disableAnimation` in `InthProvider` options | `disableAnimation` prop |
+| Nuxt | `inth.disableAnimation` in `nuxt.config.ts` | `disableAnimation` prop on mounted surfaces |
+| Vue | `disableAnimation` in `inth` options | `disableAnimation` prop on mounted surfaces |
+| Astro | `disableAnimation` in `inth()` options | `disableAnimation` prop |
+| Svelte, SvelteKit | `disableAnimation` on `InthProvider` | `disableAnimation` prop |
+| Angular | `disableAnimation` in `provideInth()` | `[disableAnimation]` input |
+| HTML | `data-disable-animation` or `ui.disableAnimation` | `ui.banner` or `ui.dialog` `disableAnimation` |
+| JavaScript | `ui.disableAnimation` in `init()` | `ui.banner` or `ui.dialog` `disableAnimation` |
 
-A value on one surface wins over the value for every surface.
+In Vue and Nuxt, `InthProvider` renders surfaces without props, so per-surface overrides require mounting the banner and dialog components directly.
 
-Vue's `InthProvider` renders the banner and dialog without props, so in Vue and
-Nuxt a per-surface value only applies when you render the surface components
-yourself.
+## Respect `prefers-reduced-motion`
 
-## Follow the visitor's reduced motion setting
-
-Inth's stylesheet stops the banner, dialog, floating trigger, switches, tabs
-and accordions from animating while the visitor asks for reduced motion. The
-rules sit in a `prefers-reduced-motion: reduce` media query, so they apply in
-every framework and follow the setting as it changes, with no option to set.
-
-`disableAnimation: false` does not bring the animations back for these
-visitors, because the stylesheet rule applies whatever the option says.
+Inth stops animations on banners, dialogs, triggers, switches, tabs, and accordions when `prefers-reduced-motion: reduce` matches. The CSS rule works across all frameworks, updates live, and cannot be overridden by `disableAnimation: false`.
 
 ## Animate your own rules on dialog state
 
-The preference dialog marks its open state with `data-state`, `open` or
-`closed`, so a rule can animate your own additions to it. Which element
-carries the attribute depends on the framework:
+The preference dialog sets `data-state="open"` or `data-state="closed"` for custom transitions:
 
 | Framework | Elements with `data-state` |
 | --- | --- |
-| HTML, JavaScript | Dialog overlay, positioner and content |
-| Svelte, SvelteKit | Dialog backdrop, positioner and content |
-| Vue, Nuxt | Dialog content and overlay. The dialog unmounts when it closes, so you only see `open` |
-| React, Next.js, TanStack Start | Not on `ConsentDialog`. The `Dialog` primitive's trigger, overlay, content and close parts carry it |
+| HTML, JavaScript | Dialog overlay, positioner, and content |
+| Svelte, SvelteKit | Dialog backdrop, positioner, and content |
+| Vue, Nuxt | Dialog content and overlay. Unmounts on close, so only `open` appears |
+| Angular | Dialog primitives: overlay, content, trigger, and close |
+| React, Next.js, TanStack Start | `Dialog` primitive trigger, overlay, content, and close parts, not `ConsentDialog` |
 
-Banners do not carry `data-state`. Read `data-prompt`, `data-variant` and the
-other attributes in [component parts](/docs/customization/slots) instead.
+Banners do not set `data-state`. Use `data-prompt`, `data-variant`, and other attributes from [component parts](/docs/customization/slots).
 
-## Stop transitions while you switch themes
+## Pause transitions during theme switches
 
-Every Inth stylesheet has an `inth-no-transitions` class that sets
-`transition` and `animation` to `none` on an element and its children. Add it
-to `<html>` while your app swaps themes, so colors change in one frame. Force
-a style and layout pass before you remove it. Otherwise the browser computes
-the new theme only after the class is gone, and the change animates:
+Add `.inth-no-transitions` to `<html>` while swapping themes, force layout, then remove it:
 
 {/* example: fragment */}
 
@@ -110,21 +82,14 @@ the new theme only after the class is gone, and the change animates:
 const root = document.documentElement;
 root.classList.add('inth-no-transitions');
 applyYourTheme();
-// Reading layout applies the new theme while transitions are off.
 root.getBoundingClientRect();
 root.classList.remove('inth-no-transitions');
 ```
 
-This assumes `applyYourTheme` changes classes or custom properties
-synchronously. If your framework applies the theme in a later render, run the
-last two lines after that render commits.
+If theme updates commit in a later render, run the last two lines after commit.
 
-## Check the result
+## Verify motion settings
 
-1. In DevTools, open the Rendering panel and emulate
-   `prefers-reduced-motion: reduce`. Reload with site data cleared.
-2. The banner appears without sliding in.
-3. Open the preference dialog and toggle a switch. The switch changes without
-   animating.
-4. Turn the emulation off, set a slower `motion.duration.normal`, and open the
-   dialog again. It fades in at the new speed.
+1. Open DevTools Rendering, emulate `prefers-reduced-motion: reduce`, clear site data, and reload.
+2. Confirm the banner appears without animating and dialog switches toggle immediately.
+3. Disable emulation, increase `motion.duration.normal`, and reopen the dialog to confirm slower animation.

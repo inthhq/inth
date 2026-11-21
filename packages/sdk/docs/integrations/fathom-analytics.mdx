@@ -1,26 +1,21 @@
 ---
 title: Fathom Analytics
-description: Load Fathom Analytics only after measurement consent with the Inth fathomAnalytics helper, set its SPA mode, and check it in DevTools.
+description: Load Fathom Analytics only after measurement consent with the Inth fathomAnalytics helper.
 seoTitle: Fathom Analytics cookie consent with Inth
-seoDescription: Load Fathom Analytics only with measurement consent. The Inth fathomAnalytics helper keeps script.js off the page until then.
+seoDescription: Gate Fathom Analytics on measurement consent, configure SPA tracking, and verify loading and revocation with Inth.
 icon: fathom-analytics
 group: integrations
 ---
 
-The Inth `fathomAnalytics` helper keeps Fathom Analytics off the page until
-`measurement` has consent. Fathom says that it sets no cookies, but Inth still
-does not load Fathom's `script.js` before consent. The helper sends no consent
-signal to Fathom, and it does not call `blockTrackingForMe`. If the visitor
-withdraws consent, Inth removes the script element. By default, Inth also
-reloads the page.
+The `fathomAnalytics` helper keeps Fathom's `script.js` off the page until visitors grant `measurement` consent, then removes the loader and reloads the page on withdrawal.
 
 ## Configure Fathom Analytics
 
-Copy the site ID from your Fathom embed code, where it is the `data-site`
-value. If your app changes routes without a full page load, also pass `spa`.
-Without it, the helper leaves Fathom's SPA route tracking off.
+Copy the `data-site` value from your Fathom embed code. Pass `spa` if your app navigates client-side; otherwise Fathom's SPA tracking stays off.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { fathomAnalytics } from '@inth/integrations/fathom-analytics';
@@ -34,25 +29,21 @@ export const scripts = [fathomAnalytics({ site: 'YOUR_SITE_ID', spa: 'auto' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `site` | Required | Site ID, set as `data-site`. The helper trims it. Empty or whitespace-only values log an error and the script does not load. |
-| `spa` | None | `'auto'`, `'history'` or `'hash'`, set as `data-spa`. When omitted, the script has no `data-spa` attribute and SPA route tracking stays off. |
-| `auto` | None | Sets `data-auto` to `'true'` or `'false'` to control automatic page views. When omitted, Fathom's default applies. |
-| `canonical` | None | Sets `data-canonical` to control canonical URL tracking. When omitted, Fathom's default applies. |
-| `honorDnt` | None | Sets `data-honor-dnt` to control whether Fathom honors Do Not Track. When omitted, Fathom's default applies. |
-| `scriptUrl` | `https://cdn.usefathom.com/script.js` | Loader URL override. A blank value falls back to the default. |
+| `site` | Required | Site ID written to `data-site`. Trimmed automatically; blank values log an error and skip loading. |
+| `spa` | None | `'auto'`, `'history'`, or `'hash'`, written to `data-spa`. Omit to leave SPA route tracking off. |
+| `auto` | None | Sets `data-auto` to `'true'` or `'false'` for automatic page views. Omit to use Fathom's default. |
+| `canonical` | None | Sets `data-canonical` for canonical URL tracking. Omit to use Fathom's default. |
+| `honorDnt` | None | Sets `data-honor-dnt` to honor Do Not Track. Omit to use Fathom's default. |
+| `scriptUrl` | `https://cdn.usefathom.com/script.js` | Loader URL override. Blank values use the default. |
 
 ## Loading and revocation
 
-`fathomAnalytics` uses the `measurement` category. Fathom sets no cookies, but
-the helper still waits for measurement permission. It loads `script.js` with
-`defer`. On revocation the helper removes the script element and calls no
-Fathom API. It does not call `window.fathom.blockTrackingForMe`.
+Although Fathom states it sets no cookies, `fathomAnalytics` still waits for `measurement` consent and loads `script.js` with `defer` once allowed. On withdrawal, Inth removes the script element without calling `window.fathom.blockTrackingForMe` and reloads the page by default.
 
 ## Verify Fathom Analytics
 
-After you allow measurement, `script.js` loads from `cdn.usefathom.com` and its
-script element carries your `data-site` and `data-spa` values. Change route in
-your app and check that it sends one page view, not two. If your code calls
-`window.fathom?.trackEvent`, check measurement permission before each call.
+1. Allow `measurement` and confirm `cdn.usefathom.com/script.js` loads with your `data-site` and `data-spa` attributes.
+2. Navigate between routes and confirm each change sends one page view, not two.
+3. Guard your own `window.fathom?.trackEvent` calls on current `measurement` permission.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

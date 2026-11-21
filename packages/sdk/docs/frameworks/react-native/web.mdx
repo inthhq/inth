@@ -1,61 +1,32 @@
 ---
 title: Expo web
-description: Run the same @inth/react-native import on Expo web. The provider, hooks and React Native consent components use the Inth browser engine and your Inth project.
+description: Run @inth/react-native on Expo web using the Inth browser engine and your existing Expo plugin configuration.
 group: frameworks
 ---
 
-A universal Expo app imports `@inth/react-native` once for iOS, Android and
-web. On iOS and Android, consent runs in the native core inside the app binary.
-On web there is no binary, so the same `InthProvider`, hooks and components
-run on `@inth/sdk`, the engine the Inth web SDKs use. Both talk to the same
-Inth project.
+A universal Expo app imports `@inth/react-native` once for iOS, Android, and web. On iOS and Android, consent runs inside the native core. On web, the same `InthProvider`, hooks, and React Native components run on `@inth/sdk` against the same Inth project.
 
-Expo web works with Expo SDK 55 through 58 and Metro, the default web bundler.
-The web build reads its configuration from the Expo config plugin, so you
-configure Inth once in `app.config.ts`.
+Expo web supports Expo SDK 55 through 58 with Metro, reading configuration written by the Expo config plugin in `app.config.ts`.
 
 ## Install the web engine
 
-Install `@inth/sdk` next to `@inth/react-native`, plus Expo's web
-dependencies if the app does not have them yet:
+Install `@inth/sdk` alongside `@inth/react-native` and Expo's web packages:
 
 ```sh
 npx expo install @inth/sdk react-dom react-native-web @expo/metro-runtime
 ```
 
-`@inth/sdk` is an optional peer dependency. Metro reads it only for web
-bundles. iOS and Android bundles contain none of it, so a native-only app does
-not need it.
+`@inth/sdk` is an optional peer dependency bundled only for web builds (excluded from iOS and Android binaries). Web support requires Expo's Metro bundler (`.web.js` resolution); webpack setups are unsupported. For standalone web apps outside Expo, use `@inth/sdk` directly.
 
-Web support needs Expo's Metro bundler, which picks the web files by their
-`.web.js` extension. Other bundlers, such as webpack in a Next.js app with
-React Native Web, are not supported. For a web app outside Expo, use the web
-SDK, `@inth/sdk`.
+`npx expo start --web` bypasses the plugin's Expo Go check because browsers need no native build. Still use a custom native build rather than Expo Go on iOS and Android.
 
-`npx expo start --web` skips the plugin's Expo Go check, because a browser
-needs no native build. Do not open that same server in Expo Go: Expo Go has
-no consent module. Use a development build for iOS and Android.
+## Share plugin configuration on web
 
-## Use the plugin configuration on web
+The [Expo config plugin](/docs/frameworks/react-native/expo#configure-the-plugin) writes `projectUrl`, `dryRun`, `domain`, `consentCategories`, and `forceGPC` into `extra.inth`, which the web engine reads automatically. Restart Metro with `--clear` after editing plugin options. `npx expo start --web`, `expo export`, and `expo serve` run without generated `ios` or `android` folders.
 
-The [Expo config plugin](/docs/frameworks/react-native/expo#configure-the-plugin)
-writes `projectUrl`, `dryRun`, `domain`, `consentCategories` and `forceGPC` to
-`extra.inth` in the app config. Expo inlines the app config into the web
-bundle, and the web engine reads its options from there. There is no web-only
-option to set.
+## Render consent UI on web
 
-After changing the plugin options, restart the bundler with `--clear`.
-
-The plugin's Expo Go check passes `npx expo start --web`, `expo export` and
-`expo serve` without generated `ios` or `android` folders, because the web
-build needs no native module.
-
-## Draw the consent UI on web
-
-Web has no native consent screens. The provider treats a web build like a
-binary built with `nativeUI: false`: it presents nothing by itself, and it does
-not need `privacyPolicyUrl` on web. Mount the React Native components, or your
-own UI inside `ConsentPrompt`, for web:
+Because web has no stock native screens, `InthProvider` behaves like `nativeUI: false` and does not auto-present or require `privacyPolicyUrl`. Mount `ConsentBanner` (or your own `ConsentPrompt` UI) on web only:
 
 {/* example: fragment */}
 
@@ -73,68 +44,48 @@ export default function App() {
 }
 ```
 
-Keep the `Platform.OS` check if iOS and Android use the native screens, so
-they do not draw the banner twice.
+Keep the `Platform.OS === 'web'` guard so iOS and Android do not show a duplicate banner. For Privacy settings on web, render `ConsentDialog` with `open` and `onRequestClose` (`presentConsentPrompt()` and `presentPreferences()` reject with `INTH_NATIVE_UI_EXCLUDED`). In development, if an owed prompt stays unrendered for three seconds without `ConsentBanner` or `ConsentPrompt`, the console logs a warning.
 
-For a privacy-settings entry on web, render `ConsentDialog` with `open` and
-`onRequestClose`. `presentConsentPrompt()` and `presentPreferences()` open the
-native screens, so on web they reject with `INTH_NATIVE_UI_EXCLUDED`.
-
-If an owed prompt has no `ConsentBanner` or `ConsentPrompt` mounted for three
-seconds, a development build warns in the browser console.
-
-## What works on web
+## Supported web features
 
 | Feature | Web behavior |
 | --- | --- |
-| `InthProvider`, `useConsent`, `useConsentDecision`, `useSnapshot` and the other read hooks | Same API. The snapshot comes from the browser engine. |
-| `ConsentGate`, `ConsentReady`, `ConsentPrompt` | Same API. |
-| `ConsentBanner`, `ConsentDialog`, `ConsentPreferences` | Render through React Native for Web. |
-| Saving a choice (`useSaveConsents`, `commit`) | Saves to the browser's cookie and `localStorage`, then sends the record to your Inth project. A save the network refuses is queued and retried. |
-| `reset()` | Withdraws the choice and keeps the Inth subject id, as on native. |
-| `useSetOverrides()` | Sets country, region, language and GPC, then fetches the policy again. |
-| `useIdentify()` | Links the external id to the Inth subject. |
-| `dryRun` | Fetches the real policy from `/init` and sends no consent records. |
+| `InthProvider`, `useConsent`, `useConsentDecision`, `useSnapshot`, read hooks | Identical API backed by the browser engine. |
+| `ConsentGate`, `ConsentReady`, `ConsentPrompt` | Identical API. |
+| `ConsentBanner`, `ConsentDialog`, `ConsentPreferences` | Render via React Native for Web. |
+| `useSaveConsents`, `commit` | Save to browser cookies and `localStorage`, then deliver to Inth with offline retry. |
+| `reset()` | Withdraws choices while keeping the Inth subject ID. |
+| `useSetOverrides()` | Updates country, region, language, or GPC and re-fetches policy. |
+| `useIdentify()` | Links an external account ID to the Inth subject. |
+| `dryRun` | Fetches live `/v1/consent/init` policy and drops outgoing consent records. |
 
-The web engine reads the browser's own Global Privacy Control signal. Consent
-choices on web are stored per browser, separately from the app on a device.
+The browser engine detects browser Global Privacy Control automatically and stores consent per browser, separate from native mobile installs.
 
-## What stays native-only
+## Native-only features
 
-| Native feature | On web |
+| Feature | Web behavior |
 | --- | --- |
-| Stock native consent screens and auto-present | No native screens. Mount `ConsentBanner` or your own UI. |
+| Stock native screens and auto-present | Unavailable; mount `ConsentBanner` or custom UI. |
 | `presentConsentPrompt()`, `presentPreferences()` | Reject with `INTH_NATIVE_UI_EXCLUDED`. |
-| `onConsentPresenterOutcome()` | Never called, since web opens no native sessions. Read consent from the hooks instead. |
-| App Tracking Transparency | `useTrackingAuthorization()` reports `unsupported`, as on Android. Requests reject with `INTH_TRACKING_UNSUPPORTED`. Consent alone decides tracking. |
-| WebView consent sync | `useWebViewConsent()` gets no payload; there is no native core to share state with. |
-| IAB TCF and GPP | `snapshot.iab` and `useGPPString()` are `null`. A TCF commit fails with `iab-unavailable`. The web engine has no IAB support, so it treats an IAB policy as opt-in category consent, as the web SDK does without its IAB addon: no TC string is written. If your project needs TCF on web, do not run it on this client. |
-| `logout()` | Changes nothing. The external id stays linked until the page reloads. Call `reset()` to drop the records on a shared device. |
-| `policyResource`, `bundleManifest` and in-code `policy` | Native-only. Web always fetches the policy from your project's `/init`. |
-| `bootstrap.hasStoredSnapshot` | Always `false`, because the bootstrap is read before the browser engine loads storage. To tell a returning visitor, wait for `useConsentStatus().ready` and read the snapshot. |
+| `onConsentPresenterOutcome()` | Never fires; read state from hooks. |
+| App Tracking Transparency | `useTrackingAuthorization()` returns `unsupported`; requests reject with `INTH_TRACKING_UNSUPPORTED`. |
+| WebView consent sync | `useWebViewConsent()` returns no payload. |
+| IAB TCF and GPP | `snapshot.iab` and `useGPPString()` return `null`; TCF commits fail with `iab-unavailable`. The web client falls back to opt-in category consent without writing a TC String. |
+| `logout()` | No-op until page reload; call `reset()` on shared devices. |
+| `policyResource`, `bundleManifest`, in-code `policy` | Native-only; web always loads policy from `/v1/consent/init`. |
+| `bootstrap.hasStoredSnapshot` | Always `false` before browser hydration; wait for `useConsentStatus().ready`. |
 
-## Check `dryRun` before a release
+## Check `dryRun` before releasing
 
-A production web bundle refuses `dryRun`, as a native release build does. The
-engine does not start, every optional category reads as denied, the snapshot
-carries `error.code === 'INTH_CONFIGURATION_DRY_RUN'`, and the browser console
-logs the reason. `npx expo export --platform web` builds a production bundle.
-Leave `dryRun` off, or unset its environment variable, for release builds.
+Production web builds (`npx expo export --platform web`) refuse `dryRun`, leaving every optional category denied and setting `error.code === 'INTH_CONFIGURATION_DRY_RUN'`. Leave `dryRun` unset in release builds.
 
 ## Statically rendered pages
 
-Expo Router can pre-render web pages on the server. The web client is built
-so that on the server and during the first browser render the snapshot is not
-ready and every optional category reads as `pending`. The server HTML and the
-first browser render then match, and the engine reads stored consent and
-fetches `/init` after hydration. This path has not been tested with an Expo
-Router static export yet. Check for hydration warnings in your app before you
-rely on it.
+On server pre-renders and the initial browser render, the web client starts unready with optional categories set to `pending` so server HTML matches client hydration, then reads stored consent and calls `/v1/consent/init` after hydration. Check for hydration warnings before relying on Expo Router static export.
 
-## Verify it
+## Check it works
 
-1. Run `npx expo start --web` and open the page.
-2. The banner appears once the policy loads from your project.
-3. Choose **Accept all**. `useConsentDecision('measurement')` changes to
-   `granted`.
-4. Reload. The banner stays closed and the decision is still `granted`.
+1. Run `npx expo start --web` and open the app.
+2. Confirm the banner renders once `/v1/consent/init` resolves.
+3. Click **Accept all** and confirm `useConsentDecision('measurement')` switches to `granted`.
+4. Reload and confirm the banner stays closed while `measurement` remains `granted`.

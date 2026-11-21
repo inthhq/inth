@@ -1,15 +1,14 @@
 ---
 title: ConsentDialogLink
-description: Add a ConsentDialogLink to a React footer so visitors reopen the Inth preference center from your own text link, with asChild and rights data.
+description: Add a ConsentDialogLink to your React footer so visitors can reopen privacy preferences anytime.
 group: frameworks
 ---
 
+Add an unstyled button in your React footer or legal menu so visitors can reopen the preference center after closing the banner.
+
 ## Reopen the preference center from your footer
 
-`ConsentDialogLink` is an unstyled button that opens the consent dialog.
-Put it where your site already keeps its legal links, so preferences stay
-reachable after the banner closes. It needs a mounted `ConsentDialog` in the
-same `InthProvider`; the [quickstart](../quickstart) mounts both.
+`ConsentDialogLink` requires a mounted `ConsentDialog` inside the same `InthProvider`. The [quickstart](../quickstart) mounts both.
 
 ```tsx title="src/site-footer.tsx"
 import { ConsentDialogLink } from '@inth/react';
@@ -29,12 +28,9 @@ export function SiteFooter() {
 }
 ```
 
-Render `SiteFooter` inside the `Consent` wrapper from your quickstart so the
-link can reach the provider. It renders a `button`, so the CSS for
-`.footer-link` should reset button chrome if your footer styles target
-anchors only.
+Render `SiteFooter` inside the `Consent` wrapper from your quickstart. Because `ConsentDialogLink` renders a `<button>`, reset button chrome in `.footer-link` if your footer styles target anchors only.
 
-To reuse an existing link component, pass `asChild`:
+To wrap your own link element instead, pass `asChild`:
 
 ```tsx
 <ConsentDialogLink asChild>
@@ -46,7 +42,7 @@ To reuse an existing link component, pass `asChild`:
 
 <import src="../../../shared/react/components/consent-dialog-link.mdx#behavior" />
 
-`ConsentDialogTrigger` has its own page: [ConsentDialogTrigger](./consent-dialog-trigger).
+See [ConsentDialogTrigger](./consent-dialog-trigger) for a floating corner button.
 
 <import src="../../../shared/react/components/consent-dialog-link.mdx#accessibility" />
 

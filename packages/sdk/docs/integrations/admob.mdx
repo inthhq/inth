@@ -1,63 +1,37 @@
 ---
 title: AdMob
-description: Connect Google Mobile Ads (AdMob) to native Inth consent in Swift, Kotlin, React Native and Expo, with limited ads, personalization and restricted data processing driven by marketing.
+description: Connect AdMob limited ads, personalization, and RDP to Inth marketing consent in Swift, Kotlin, React Native, and Expo.
 seoTitle: AdMob consent for mobile apps with Inth
-seoDescription: Drive Google Mobile Ads personalization, limited ads and restricted data processing from Inth consent in Swift, Android, React Native and Expo.
+seoDescription: Drive Google Mobile Ads limited ads, personalization, and restricted data processing from Inth consent in Swift, Android, React Native, and Expo.
 group: integrations
 ---
 
-The AdMob helper reads the three Google Consent Mode advertising types from
-Inth consent and hands them to your app, which applies them to Google Mobile
-Ads. Marketing grants `ad_storage`, `ad_user_data` and `ad_personalization`,
-with the same [category mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types)
-the web uses. Pending consent denies all three.
-
-The helper ships in `InthApple`, `inth-android` and
-`@inth/react-native/integrations`. Google Mobile Ads stays a dependency your
-app installs; Inth adds none.
+The bundled AdMob helper in `InthApple`, `inth-android`, and `@inth/react-native/integrations` maps Inth's `marketing` consent to `ad_storage`, `ad_user_data`, and `ad_personalization`, matching the [web Google Tag mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types). Pending permission denies all three. Your app installs Google Mobile Ads separately.
 
 ## What the helper changes
 
 | Consent | Google Mobile Ads setting |
 | --- | --- |
-| `adStorage` denied | `gad_has_consent_for_cookies` set to `0`, which turns on [limited ads](https://support.google.com/admob/answer/10105530) |
-| `adStorage` granted | `gad_has_consent_for_cookies` removed |
-| `adUserData` or `adPersonalization` denied | Publisher privacy treatment set to disabled, and `gad_rdp` set for [restricted data processing](https://developers.google.com/admob/android/privacy/us-states) |
-| Both granted | Publisher privacy treatment set to enabled, and `gad_rdp` removed |
+| `adStorage` denied | Sets `gad_has_consent_for_cookies` to `0`, enabling [limited ads](https://support.google.com/admob/answer/10105530) |
+| `adStorage` granted | Removes `gad_has_consent_for_cookies` |
+| `adUserData` or `adPersonalization` denied | Sets publisher privacy treatment to disabled and sets `gad_rdp` for [restricted data processing](https://developers.google.com/admob/android/privacy/us-states) |
+| Both granted | Sets publisher privacy treatment to enabled and removes `gad_rdp` |
 
-Google Mobile Ads reads `gad_has_consent_for_cookies` and `gad_rdp` from the
-default `SharedPreferences` on Android and `UserDefaults.standard` on iOS when
-it loads an ad. The [publisher privacy treatment](https://developers.google.com/admob/android/targeting#publisher_privacy_treatment)
-applies to every later request in the session. When several signals apply,
-Google uses the most restrictive one.
+Google Mobile Ads reads `gad_has_consent_for_cookies` and `gad_rdp` from default `SharedPreferences` on Android and `UserDefaults.standard` on iOS when loading an ad. [Publisher privacy treatment](https://developers.google.com/admob/android/targeting#publisher_privacy_treatment) applies to all subsequent requests in the session. When multiple signals apply, Google uses the most restrictive one.
 
-### EEA, UK and Switzerland
+### EEA, UK, and Switzerland
 
-In these regions Google serves personalized or non-personalized ads only when
-the request carries a TC string from a
-[Google-certified CMP](https://developers.google.com/admob/android/privacy/ad-serving-modes).
-Without one, Google serves limited ads at most. The settings above do not
-replace that. Under an IAB policy, the native core writes the `IABTCF_` keys
-that Google reads; see [mobile IAB and ads](/docs/guides/mobile-iab).
+In these regions, Google serves personalized or non-personalized ads only when the request includes a TC string from a [Google-certified CMP](https://developers.google.com/admob/android/privacy/ad-serving-modes). Otherwise it serves limited ads at most. Under an IAB policy, Inth's native core writes the `IABTCF_` keys Google reads. See [mobile IAB and ads](/docs/guides/mobile-iab).
 
 ## Before you start
 
-Complete the [Swift](/docs/frameworks/swift/quickstart),
-[Android](/docs/frameworks/android/quickstart) or
-[React Native](/docs/frameworks/react-native/quickstart) quickstart. Include
-`marketing` in your Inth policy and native configuration. Install Google
-Mobile Ads through Google's [iOS](https://developers.google.com/admob/ios/quick-start),
-[Android](https://developers.google.com/admob/android/quick-start) or
-[React Native](https://docs.page/invertase/react-native-google-mobile-ads)
-instructions. Inth's mobile packages are a private prerelease; see
-[mobile availability](/docs/guides/mobile-status).
+Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add `marketing` to your Inth policy and native config. See [mobile availability](/docs/guides/mobile-status). Install Google Mobile Ads using Google's [iOS](https://developers.google.com/admob/ios/quick-start), [Android](https://developers.google.com/admob/android/quick-start), or [React Native](https://docs.page/invertase/react-native-google-mobile-ads) guide.
 
-Connect the helper before you request the first ad. The helper does not
-request App Tracking Transparency.
+Connect the helper before requesting the first ad. The helper does not request App Tracking Transparency.
 
 ## Connect a Swift app
 
-Create the helper after installing Inth, and keep it for the app's lifetime:
+Create and retain `AdMobConsent` for the app lifetime after installing Inth:
 
 ```swift title="AdMobConsent.swift"
 import InthApple
@@ -92,14 +66,11 @@ final class AdMobConsent {
 }
 ```
 
-`core` is the `ConsentCore` your installation returns. The helper applies the
-current state before its initializer returns, and later calls run on the
-thread that publishes the consent change. Releasing the owner denies every
-advertising type.
+The helper applies current permission before `init` returns and runs later updates on the consent-publishing thread. Releasing the owner denies all three advertising types.
 
 ## Connect an Android app
 
-Create the helper in your `Application` after installing Inth:
+Create and retain the helper on your `Application` after installing Inth:
 
 ```kotlin title="AdMobConsent.kt"
 import android.content.Context
@@ -136,17 +107,15 @@ fun connectAdMobConsent(context: Context, onError: (Exception) -> Unit): AdMobIn
 }
 ```
 
-Keep the returned helper on the application. Replace `onError` with a handler
-that does not throw; it receives failures from automatic updates. The
-constructor, `sync()` and `close()` throw to their caller instead.
+Keep `onError` non-throwing. It handles automatic update errors while construction, `sync()`, and `close()` throw to their caller.
 
 ## Connect React Native or Expo
 
-Copy the checked connection function into `admob-consent.ts`:
+Copy the connection function into `admob-consent.ts`:
 
 <include src="../shared/examples/react-native-bare/rn-admob-integration.mdx" />
 
-Then supply Google Mobile Ads from `react-native-google-mobile-ads`:
+Wrap `react-native-google-mobile-ads` in `admob-vendor.ts`:
 
 {/* example: fragment */}
 
@@ -168,44 +137,19 @@ export const connectAdMobVendor = (onError: (error: unknown) => void) =>
 	);
 ```
 
-Await the returned handle's `ready` before you request ads. To request only
-non-personalized ads on a given request, pass `requestNonPersonalizedAdsOnly`
-from the same consent.
+Await `ready` before requesting ads. Pass `requestNonPersonalizedAdsOnly` on individual ad requests from the same permission when needed.
 
-`react-native-google-mobile-ads` cannot write `gad_has_consent_for_cookies`
-or `gad_rdp`, so the React Native helper cannot turn on limited ads or
-restricted data processing. If you need them, use the Swift and Kotlin
-helpers in your native code. Expo needs a development build with both native
-modules; Expo Go cannot load them.
+`react-native-google-mobile-ads` cannot write `gad_has_consent_for_cookies` or `gad_rdp`, so the JS helper cannot enable limited ads or restricted data processing. Use the Swift and Kotlin helpers in native code when you need those flags. Expo requires a custom native build, not Expo Go.
 
 ## Handle reset and teardown
 
-If app code changes these settings, call `syncAfterReset()` on the Swift
-owner, `sync()` on the Kotlin helper or `await consent.sync()` in React Native.
-This reapplies current consent without recording a choice.
-
-For final teardown, use `stop()`, `close()` or `await consent.disconnect()`.
-These detach the helper and deny every advertising type. They do not affect
-ads already loaded.
+Call `syncAfterReset()` on Swift, `sync()` on Android, or `await consent.sync()` on React Native to reapply permission without recording a new choice. For final teardown, call `stop()`, `close()`, or `await consent.disconnect()` to detach and deny all advertising types. Already-loaded ads stay as requested.
 
 ## Check the integration
 
-1. Launch with no saved choice. Confirm `gad_has_consent_for_cookies` is `0`,
-   `gad_rdp` is set and ad requests carry the privacy treatment.
-2. Grant marketing. Confirm both keys are removed and personalization is
-   enabled.
-3. Withdraw marketing. Confirm the denied settings return.
-4. Grant or withdraw measurement only. Confirm nothing changes.
+1. Launch with no saved choice. Confirm `gad_has_consent_for_cookies` is `0`, `gad_rdp` is set, and ad requests carry disabled privacy treatment.
+2. Grant `marketing`. Confirm both keys are removed and personalization is enabled.
+3. Withdraw `marketing`. Confirm the denied settings return.
+4. Toggle `measurement` only. Confirm nothing changes.
 
-The Inth helper tests cover consent order, withdrawal and reset with recorded
-calls. They were not run against Google Mobile Ads itself. Inspect real ad
-requests with Google's [Ad Inspector](https://developers.google.com/admob/android/ad-inspector)
-or a proxy before you ship.
-
-The snippets were written against these SDK majors and checked as shown:
-
-| Platform | Version | How |
-| --- | --- | --- |
-| React Native | `react-native-google-mobile-ads` 17.4.0 | Type-checked against the package's published types |
-| Android | Google Mobile Ads 25 (`play-services-ads-api` 25.5.0) | Method signatures read from the published AAR |
-| iOS | Google Mobile Ads 13 | Checked against Google's documentation only, not compiled |
+Inspect live requests with Google's [Ad Inspector](https://developers.google.com/admob/android/ad-inspector) or a proxy. Checked against `react-native-google-mobile-ads` `17.4.0`, Android `play-services-ads-api` `25.5.0`, and iOS Google Mobile Ads `13` docs. Complete [mobile verification](/docs/guides/mobile-verify) on real devices.

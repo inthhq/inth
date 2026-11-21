@@ -1,14 +1,13 @@
 ---
 title: "Hooks"
-description: "Shared consent hook guidance for the React and Next.js adapters."
+description: "Shared consent hook guidance for React, TanStack Start, and Next.js."
 group: reference
 ---
 
 {/* This file is NOT rendered directly. Sections are imported by framework pages. */}
 
 <section id="read-state">
-  Call hooks inside the consent provider. `useConsent` reads effective permission,
-  which can be true under an opt-out policy without a recorded grant.
+  Call hooks inside the consent provider. `useConsent` reads effective permission, which can be `true` under an opt-out policy before the visitor records a choice.
 
   | Need | Hook |
   | --- | --- |
@@ -24,15 +23,7 @@ group: reference
 </section>
 
 <section id="save-guidance">
-  This is an isolated action example, not a complete policy-aware banner. Use the
-  stock UI or headless surface actions for a complete prompt. Do not call save on
-  mount to persist a state derived from permissions.
+  This is an isolated action example, not a complete policy-aware banner. Use the built-in UI or headless surface actions for a full prompt. Never call save on mount to persist state derived from permissions.
 
-  Use focused hooks for feature gates. For a complete custom prompt or preference
-  center, use `useHeadlessConsentUI()` for surface actions and `useConsentDraft()`
-  for staged choices, inside one `ConsentDraftProvider` so the save commits the
-  same draft. v3 has no `useConsentManager()`; the
-  [`use-consent-manager-to-hooks` codemod](/docs/cli/commands/codemods#migrate-useconsentmanager-to-v3-hooks)
-  rewrites most of its calls to hooks. Read [how consent works](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice) before
-  treating a callback as evidence of a choice.
+  Use focused hooks for feature gates. For a custom prompt or preference center, use `useHeadlessConsentUI()` for surface actions and `useConsentDraft()` for staged choices inside one `ConsentDraftProvider` so saving commits the same draft. Inth replaces `useConsentManager()` with focused selector hooks; see [Migrate from c15t](/docs/migrate-from-c15t) for moving c15t v2 hook calls to Inth hooks. Read [how consent works](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice) before treating a callback as proof of a recorded choice.
 </section>

@@ -1,13 +1,15 @@
 ---
 title: Configuration
-description: Every option you can pass to the Inth script tag on a plain HTML page through a queued config call, including scripts with callbacks, the network blocker, theme tokens, presentation, translations and storage.
+description: Reference for every queued config option on the Inth script tag, including scripts, blockers, theme, translations and storage.
 group: frameworks
 ---
 
+Configure advanced Inth script tag options on plain HTML pages through a
+queued `config` call before `inth.js` runs.
+
 ## Pass options before the tag
 
-Attributes on the script tag cover the common options. For everything else,
-queue a `config` call in an inline script before the tag:
+Queue `config` in an inline `<script>` ahead of the deferred `inth.js` tag:
 
 {/* example: fragment */}
 
@@ -26,24 +28,19 @@ queue a `config` call in an inline script before the tag:
 ></script>
 ```
 
-The tag has `defer`, so an inline script anywhere in `<head>` runs before it.
-Later `config` calls win over earlier ones, and all of them win over the tag's
-attributes. `ui`, `ui.banner` and `ui.dialog` merge key by key; other options
-replace the earlier value. A `config` call after the client started does
-nothing and logs a warning. [window.inth API](/docs/frameworks/html/api#how-options-merge)
-explains the order.
-
-A `config` object can hold functions, such as script callbacks, because it
-never leaves the page.
+Later `config` calls override earlier ones, and all override tag attributes.
+`ui`, `ui.banner` and `ui.dialog` merge shallowly key by key; other options
+replace earlier values. Calling `config` after startup logs a warning and
+does nothing; see [how options merge](/docs/frameworks/html/api#how-options-merge).
 
 <import src="../../shared/browser/client-options.mdx#connection" />
 
-The [attributes reference](/docs/frameworks/html/attributes-and-api#choose-a-mode)
-compares the modes and their bundle files.
+See [choose a mode](/docs/frameworks/html/attributes-and-api#choose-a-mode)
+for bundle and mode comparison.
 
 <import src="../../shared/browser/client-options.mdx#gating" />
 
-Each of these has a guide: [scripts](/docs/frameworks/html/scripts),
+See the guides for [scripts](/docs/frameworks/html/scripts),
 [embeds](/docs/frameworks/html/embeds),
 [network blocker](/docs/frameworks/html/network-blocker) and
 [events and callbacks](/docs/frameworks/html/callbacks).
@@ -52,8 +49,7 @@ Each of these has a guide: [scripts](/docs/frameworks/html/scripts),
 
 <import src="../../shared/browser/client-options.mdx#ui" />
 
-The banner, dialog and trigger options are on their component pages:
-[banner](/docs/frameworks/html/components/banner),
+Surface-specific options live on [banner](/docs/frameworks/html/components/banner),
 [preference dialog](/docs/frameworks/html/components/dialog) and
 [floating trigger](/docs/frameworks/html/components/trigger).
 
@@ -67,19 +63,19 @@ The banner, dialog and trigger options are on their component pages:
 | `data-policy` | `policy` (`inth.testing.js` only) |
 | `data-categories` | `consentCategories` |
 | `data-country`, `data-region`, `data-language` | `overrides.country`, `overrides.region`, `overrides.language` |
-| `data-privacy-policy-url`, `data-cookie-policy-url`, `data-terms-url` | `legalLinks`, plus `ui.banner.legalLinks` and `ui.dialog.legalLinks` |
+| `data-privacy-policy-url`, `data-cookie-policy-url`, `data-terms-url` | `legalLinks`, `ui.banner.legalLinks`, `ui.dialog.legalLinks` |
 | `data-color-scheme` | `ui.colorScheme` |
 | `data-trigger` | `ui.trigger: true` |
-| `data-hide-branding` | `ui.banner.hideBranding` and `ui.dialog.hideBranding` |
+| `data-hide-branding` | `ui.banner.hideBranding`, `ui.dialog.hideBranding` |
 | `data-shadow="false"` | `ui.shadow: false` |
 | `data-no-ui` | `ui: false` |
-| `data-nonce`, or the tag's own `nonce` | `nonce` |
+| `data-nonce` or tag `nonce` | `nonce` |
 
 ## Store the consent cookie across subdomains
 
-By default Inth stores choices in a cookie and a localStorage key named `inth`
-on the current host, for 365 days. To share one choice between
-`www.example.com` and `shop.example.com`, set `storageConfig`:
+By default Inth stores choices in cookie and `localStorage` key `inth` on the
+current host for 365 days. Share consent across subdomains with
+`storageConfig`:
 
 {/* example: fragment */}
 
@@ -92,15 +88,12 @@ on the current host, for 365 days. To share one choice between
 </script>
 ```
 
-`crossSubdomain` sets the cookie on the root domain. `defaultDomain`, such as
-`'.example.com'`, sets it explicitly when `crossSubdomain` is off. Use the
-same settings on every site that shares the cookie. localStorage stays per
-host, so a tab on another subdomain picks up a change when it next becomes
-visible. [Consent state](/docs/concepts/consent-state#keep-open-tabs-in-step)
-explains the rules.
+`crossSubdomain` targets the root domain; `defaultDomain` (such as
+`'.example.com'`) sets an explicit domain and takes precedence. Use identical
+settings on every subdomain. See
+[keep open tabs in step](/docs/concepts/consent-state#keep-open-tabs-in-step).
 
 ## Turn consent management off
 
-`enabled: false` allows every category, shows no UI and loads every
-configured script at once, as for a visitor who accepted everything. Use it
-for internal preview builds, not for visitors a consent law covers.
+`enabled: false` grants all categories, hides consent UI and runs all scripts
+immediately. Use only for internal previews, never for real visitors.

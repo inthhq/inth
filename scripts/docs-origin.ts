@@ -1,42 +1,24 @@
-/** Docs origin for stable releases and release lines without their own site. */
-export const INTH_DOCS_ORIGIN = 'https://c15t.com';
+/** Docs origin for all Inth releases. */
+export const INTH_DOCS_ORIGIN = 'https://inth.com';
 
 /**
- * Docs sites for the prereleases of a new major version, keyed by major.
- * c15t.com documents the current stable major until the new one ships.
- */
-const PRERELEASE_DOCS_ORIGINS: ReadonlyMap<string, string> = new Map([
-	['3', 'https://v3.c15t.com'],
-]);
-
-/**
- * The docs site for an Inth release. Prereleases of a new major
- * (`3.0.0-alpha.3`) have their own site, such as https://v3.c15t.com, while
- * c15t.com still documents the previous major. Everything else uses
- * https://c15t.com.
+ * The docs site for an Inth release. All Inth releases publish their docs
+ * under https://inth.com (for example https://inth.com/docs/performance).
  *
  * This module imports nothing, so repository scripts can use it without a
  * built CLI.
  *
- * @param version - An Inth package version.
+ * @param _version - An Inth package version.
  * @returns An origin without a trailing slash.
  *
  * @example
  * ```ts
- * docsOriginForVersion('3.0.0-alpha.3'); // 'https://v3.c15t.com'
- * docsOriginForVersion('3.2.1'); // 'https://c15t.com'
+ * docsOriginForVersion('0.0.0-alpha.0'); // 'https://inth.com'
+ * docsOriginForVersion('1.0.0'); // 'https://inth.com'
  * ```
  */
 export const docsOriginForVersion = function docsOriginForVersion(
-	version: string
+	_version: string
 ): string {
-	const separator = version.indexOf('-');
-	if (separator === -1) {
-		return INTH_DOCS_ORIGIN;
-	}
-	const [major = '', minor, patch] = version.slice(0, separator).split('.');
-	if (minor !== '0' || patch !== '0') {
-		return INTH_DOCS_ORIGIN;
-	}
-	return PRERELEASE_DOCS_ORIGINS.get(major) ?? INTH_DOCS_ORIGIN;
+	return INTH_DOCS_ORIGIN;
 };

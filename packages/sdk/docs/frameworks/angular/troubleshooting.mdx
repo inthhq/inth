@@ -1,134 +1,107 @@
 ---
 title: Troubleshooting
-description: Fix a missing Inth banner, a NullInjectorError, unstyled components, ignored theme colors, hydration mismatches and vendors that load before consent in an Angular app.
+description: Fix missing banners, NullInjectorError, unstyled components, ignored theme tokens, hydration mismatches and early vendor loads in Angular.
 group: frameworks
 ---
 
+Diagnose and fix common Inth setup issues in Angular applications.
+
 ## Why is there no banner?
 
-**Check.** Render `consent.policyRule().prompt` and `consent.location()` from
-an injected `ConsentManager`, or open the [dev tools](./components/dev-tools).
-In the Network panel, find the `/v1/consent/init` request.
+**Check.** Inspect `consent.policyRule().prompt` and `consent.location()`
+from an injected `ConsentManager`, or open [Dev tools](./components/dev-tools).
+Check the `/v1/consent/init` request in the Network panel.
 
-**Fix.** Work through these causes in order:
+**Fix.**
 
-1. **The policy asks for no prompt.** Visitors in regions without a consent
-   law, and opt-out policies with no prompt, get no banner. See
+1. **The policy requires no prompt.** Regions without a consent requirement
+   and silent opt-out policies show no banner. See
    [why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent).
-2. **A choice is already stored.** Clear site data for your origin, or use the
-   dev tools panel, and reload.
-3. **The backend request failed.** A CORS error means your site's origin is
-   not in the Inth project's trusted origins. A 404 means the backend URL is
-   wrong. While the request fails, optional categories stay denied and no
-   banner shows.
+2. **A choice is already stored.** Clear site data for your origin or reset
+   in DevTools, then reload.
+3. **The request to Inth failed.** A CORS error means your origin is missing
+   from the project's trusted origins. A 404 means `projectUrl` is wrong.
+   While `/v1/consent/init` fails, optional categories stay denied and no banner renders.
 4. **The component is not imported.** Angular reports
    `'inth-consent-banner' is not a known element` at build time. Add
    `ConsentBanner` to the component's `imports`.
-5. **The policy uses the IAB model without the `iab` option.** The console
-   shows an `IABUnavailableError`. Set `iab` in `provideInth()` and render
+5. **The policy uses IAB without the `iab` option.** The console shows
+   `IABUnavailableError`. Add `iab` to `provideInth()` and render
    `<inth-iab-consent-banner>`; see [IAB TCF](./iab).
 
 ## NullInjectorError: No provider for ConsentManager
 
-**Check.** A component, directive or `injectEventDispatcher()` call ran in an
-injector without `provideInth()` above it.
+**Check.** A component, directive or `injectEventDispatcher()` ran outside an
+injector with `provideInth()`.
 
-**Fix.** Add `provideInth()` to the `providers` of your `ApplicationConfig`.
-If you provide it in a lazy route's `providers`, every Inth component must
-render inside that route, not in the root component. With server rendering,
-keep `provideInth()` in `app.config.ts`, which `app.config.server.ts` merges,
-so the server and the browser both have it.
+**Fix.** Add `provideInth()` to `providers` in `ApplicationConfig`. If you
+provide it on a lazy route, render every consent component inside that route.
+With SSR, keep `provideInth()` in `app.config.ts` so `app.config.server.ts`
+merges it.
 
-**Check.** If the provider is there, check that the app resolves one copy of
-`@inth/angular`. Two copies, for example from a linked package, create two
-separate `ConsentManager` classes.
-
-**Fix.** Make the app resolve a single copy, and run `ng cache clean` after
-you change it.
+If `provideInth()` is already registered, confirm the app resolves a single
+copy of `@inth/angular` (duplicate linked copies create distinct
+`ConsentManager` tokens), then run `ng cache clean`.
 
 ## Theme colors are ignored
 
-**Check.** The `theme` option applies slot styles and `consentActions` only.
-Colors, radius, typography and other tokens in `theme` are not turned into
-CSS in the browser, and in development `ConsentTheme` logs a warning about
-it.
+**Check.** The `theme` option applies slot styles and `consentActions` only;
+design tokens in `theme` are not converted to CSS in the browser.
 
-**Fix.** Set the `--inth-*` variables on `:root` in a global stylesheet, or
-render `generateThemeCSS()` output as `<style id="inth-theme">`. The
-[customize page](./customize) shows both.
+**Fix.** Define `--inth-*` variables on `:root` in a global stylesheet, or
+inject `generateThemeCSS()` output in `<style id="inth-theme">`. See
+[customize](./customize).
 
-**Check.** If you set the variables in a component's `styles`, Angular scopes
-them to that component.
-
-**Fix.** Move them to a file in the `styles` array of `angular.json`, or to
-`src/styles.css`.
-
-**Check.** If your values still lose, inspect the element. A generated theme
-uses `:root:root`, so it beats your own `:root` rule.
-
-**Fix.** Write your rule on `:root:root` too, or move the value into the theme.
+If you placed variables in a component's `styles`, move them to `src/styles.css`
+or a file in `angular.json` `styles` because Angular scopes component styles.
+If a generated theme still wins over your `:root` rule, write your override on
+`:root:root`.
 
 ## A slot class has no effect
 
-**Check.** The class is defined in a component's `styles`. Angular's emulated
-encapsulation adds an attribute selector to it, and Inth's elements do not
-carry your component's attribute.
+**Check.** The class lives in a component's `styles`. Angular's emulated view
+encapsulation scopes it to an attribute that Inth's elements do not carry.
 
-**Fix.** Define slot classes in a global stylesheet.
+**Fix.** Move slot classes to a global stylesheet.
 
 ## The dialog or banner has no styles
 
-**Check.** Look in `<head>` for `<style data-inth-styles>` elements, and in
-the console for a Content Security Policy error.
+**Check.** Look for `<style data-inth-styles>` elements in `<head>` and check
+the console for Content Security Policy errors.
 
 **Fix.**
 
-- No Inth `<style>` element: `provideInth()` sets `styles: false` or
-  `noStyle`. With `styles: false`, add `@inth/angular/styles.css` to the
-  `styles` array in `angular.json`.
-- The console reports a blocked inline style: set `ngCspNonce` on your root
-  element or provide `CSP_NONCE`, or set `styles: false` and import the
-  stylesheet. The [Content Security Policy page](./content-security-policy)
-  covers both.
-- IAB TCF components are unstyled with `styles: false`: add
-  `@inth/angular/styles.css` and `@inth/angular/iab/styles.css` together.
+- If no `<style data-inth-styles>` exists, check whether `provideInth()` sets
+  `styles: false` or `noStyle`. With `styles: false`, add
+  `@inth/angular/styles.css` to `styles` in `angular.json`.
+- If CSP blocked inline styles, set `ngCspNonce`, provide `CSP_NONCE`, or set
+  `styles: false` and import the stylesheet; see
+  [Content Security Policy](./content-security-policy).
+- If IAB components are unstyled with `styles: false`, add
+  `@inth/angular/iab/styles.css` after `@inth/angular/styles.css`.
 
 ## The server HTML and the browser disagree
 
-**Check.** With server rendering, the console shows an Angular hydration
-error (`NG0500` and similar) near an Inth component, or the banner flashes
-after load.
+**Check.** The console logs an Angular hydration error (`NG0500` or similar)
+near a consent component, or the banner flashes after load.
 
-**Fix.** Check that `provideClientHydration()` is in `app.config.ts` and
-`provideInthServer()` in `app.config.server.ts`. The browser reads the
-server's state through `TransferState`, so both renders start from the same
-consent. A route rendered with `RenderMode.Prerender` is shared by every
-visitor and carries no visitor's consent; render consent pages with
-`RenderMode.Server`. See [rendering](./rendering).
+**Fix.** Confirm `provideClientHydration()` is in `app.config.ts` and
+`provideInthServer()` is in `app.config.server.ts`. Routes built with
+`RenderMode.Prerender` share one HTML document across all visitors; use
+`RenderMode.Server` for per-visitor consent HTML. See [rendering](./rendering).
 
 ## A vendor loads before consent, or twice
 
-**Check.** The vendor is still loaded some other way: a `<script>` tag in
-`index.html`, an entry in the `scripts` array of `angular.json`, a tag
-manager, or an SDK import in your code. Check the Network panel with site
-data cleared; nothing from the vendor should load before you allow its
-category.
+**Check.** Clear site data and watch the Network panel before clicking
+anything. If the vendor still loads, another loader exists in `index.html`,
+`angular.json`, a tag manager or a direct SDK import.
 
-**Fix.** Remove the other loader and keep only the `scripts` registration.
+**Fix.** Remove the duplicate loader and register the vendor only in `scripts`.
 
 ## The page reloads after saving
 
-**Check.** When a save withdraws a category that was granted, the runtime
-reloads the page so code that already ran is gone. This is expected.
+**Check.** Withdrawing a previously granted category triggers a reload so
+already-running vendor code stops. This is expected behavior.
 
-**Fix.** Set `reloadOnConsentRevoked: false` in `provideInth()` only if every
-registered vendor stops itself through its consent API.
-
-## Names from an earlier alpha are missing
-
-**Check.** Angular reports `'inth-consent-root' is not a known element`, or the
-import from `@inth/angular/consent-root` fails. The v3 alphas renamed it with
-no alias.
-
-**Fix.** Import `InthProvider` from `@inth/angular/provider` and render
-`<inth-provider>`. Its inputs are unchanged.
+**Fix.** Set `reloadOnConsentRevoked: false` in `provideInth()` only when
+every registered vendor stops itself via its own consent API.

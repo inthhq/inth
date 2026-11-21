@@ -1,15 +1,14 @@
 ---
 title: ConsentDialog
-description: Open the Inth preference dialog in a TanStack Start app, reopen it from your own controls, and control blocking, focus and policy gating.
+description: Mount the modal ConsentDialog preference center in TanStack Start and control triggers, blocking, and focus.
 group: frameworks
 ---
 
+Mount `ConsentDialog` once inside `InthProvider`, next to `ConsentBanner`, to provide a modal preference center.
+
 ## Render the preference dialog
 
-`ConsentDialog` is the modal preference center. Render it once inside
-`InthProvider`, next to the banner. It opens when the banner's Customize button,
-a `ConsentDialogLink`, a `ConsentDialogTrigger` or your own code makes `dialog`
-the active surface:
+`ConsentDialog` opens whenever `dialog` becomes the active surface: from the banner's Customize button, `ConsentDialogLink`, `ConsentDialogTrigger`, or your own component via `useSetActiveUI`:
 
 {/* example: fragment */}
 
@@ -26,9 +25,7 @@ export function PrivacyMenuItem() {
 }
 ```
 
-Under an IAB policy the dialog stays closed; render `IABConsentDialog` as
-described in [IAB TCF](/docs/frameworks/tanstack-start/iab). Provider options
-such as `preloadDialog` go through `InthProvider`'s `options` prop.
+Under an `iab` policy, `ConsentDialog` stays closed; mount `IABConsentDialog` from [IAB TCF](/docs/frameworks/tanstack-start/iab). Pass provider options such as `preloadDialog` via `InthProvider`'s `options` prop.
 
 <import src="../../../shared/react/components/consent-dialog.mdx#props" />
 

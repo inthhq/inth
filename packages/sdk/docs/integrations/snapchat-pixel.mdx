@@ -1,23 +1,21 @@
 ---
 title: Snapchat Pixel
-description: Load the Snapchat Pixel only after marketing consent with the Inth snapchatPixel helper, guard snaptr event calls, and check it in DevTools.
+description: Load the Snapchat Pixel only after marketing consent with the Inth snapchatPixel helper.
 seoTitle: Snapchat Pixel cookie consent with Inth
-seoDescription: Load the Snapchat Pixel only with marketing consent. The Inth snapchatPixel helper keeps scevent.min.js off the page until then.
+seoDescription: Gate the Snapchat Pixel behind marketing consent with Inth. Keep scevent.min.js off the page until granted and guard snaptr event calls.
 icon: snapchat
 group: integrations
 ---
 
-The Inth `snapchatPixel` helper keeps the Snapchat Pixel off the page until
-`marketing` has consent. Until then, Inth does not define `snaptr`. The helper
-sends no consent signal to Snapchat. If the visitor withdraws consent, Inth
-removes the script element. By default, Inth also reloads the page.
+The `snapchatPixel` helper keeps the Snapchat Pixel off the page and leaves `window.snaptr` undefined until a visitor grants `marketing` consent. It sends no consent signal to Snapchat. On revocation, Inth removes the script element and reloads the page by default.
 
 ## Configure the Snapchat Pixel
 
-Copy the pixel ID from Snapchat Ads Manager. The helper passes it to
-`snaptr('init', ...)`.
+Copy your pixel ID from Snapchat Ads Manager and remove any existing pixel snippet or tag manager entry, then install `@inth/integrations`:
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { snapchatPixel } from '@inth/integrations/snapchat-pixel';
@@ -31,28 +29,20 @@ export const scripts = [snapchatPixel({ pixelId: 'YOUR_PIXEL_ID' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `pixelId` | Required | Pixel ID passed to `snaptr('init', ...)`. The helper trims it. Empty or whitespace-only values log an error and the script does not load. |
-| `initOptions` | None | Object passed as the third argument to `snaptr('init', ...)`, such as `user_email`. Pass user data only when your app has the permission it needs. |
+| `pixelId` | Required | Pixel ID passed to `snaptr('init', ...)`. Trimmed automatically; blank values log an error and skip loading. |
+| `initOptions` | None | Object passed as the third argument to `snaptr('init', ...)`, such as `user_email`. Pass user data only when your app has permission to share it. |
 | `trackPageView` | `true` | Queues `snaptr('track', 'PAGE_VIEW')` after `init`. Set `false` to send page views yourself. |
-| `scriptUrl` | `https://sc-static.net/scevent.min.js` | Loader URL override. A blank value falls back to the default. |
+| `scriptUrl` | `https://sc-static.net/scevent.min.js` | Loader URL override. Blank values fall back to the default. |
 
 ## Loading and revocation
 
-`snapchatPixel` uses the `marketing` category. Before marketing is allowed,
-Inth defines no `snaptr` function and loads nothing from Snapchat. When
-marketing becomes allowed, the helper queues `init` and `PAGE_VIEW`, then loads
-`scevent.min.js`.
+`snapchatPixel` gates on `marketing`. Before a visitor allows `marketing`, Inth defines no `window.snaptr` and makes no Snapchat request. Once allowed, the helper queues `init` and optional `PAGE_VIEW`, then loads `scevent.min.js`.
 
-On revocation the helper removes the script element and calls no Snapchat API,
-so the page reload is what stops the pixel. `window.snaptr` stays defined
-until then.
+On revocation, Inth removes the script element without calling a Snapchat API, so `window.snaptr` stays defined until the default page reload unloads the pixel.
 
 ## Guard your own snaptr calls
 
-The helper sends the page view. Events your code sends, such as `PURCHASE` or
-`SIGN_UP`, need their own check. After revocation `window.snaptr` still
-exists, so its presence does not mean marketing is allowed. Check the
-permission first, then that the pixel has loaded:
+Because `window.snaptr` stays defined after revocation, check current `marketing` permission from your framework, such as `useConsent('marketing')` in React, before sending events like `PURCHASE` or `SIGN_UP`:
 
 ```ts title="src/track-purchase.ts"
 export function trackPurchase(marketingAllowed: boolean, orderId: string) {
@@ -66,19 +56,10 @@ export function trackPurchase(marketingAllowed: boolean, orderId: string) {
 }
 ```
 
-Pass the current marketing permission from your framework, for example
-`useConsent('marketing')` in React. Set `client_dedup_id` to deduplicate
-against the Conversions API. `@inth/integrations/snapchat-pixel` also exports
-`snapchatPixelEvent`, a typed wrapper around `snaptr('track', ...)`. It does
-nothing until `snaptr` exists and does not check permission, so apply the same
-guard before calling it.
+Set `client_dedup_id` to deduplicate against the Conversions API. `@inth/integrations/snapchat-pixel` also exports `snapchatPixelEvent`, a typed wrapper around `snaptr('track', ...)`. It no-ops until `snaptr` exists and does not check consent itself, so guard it with your permission check too.
 
 ## Verify the Snapchat Pixel
 
-After you allow marketing, `scevent.min.js` loads from `sc-static.net` and the
-pixel sends one `PAGE_VIEW`. If your router also sends `PAGE_VIEW`, check that
-the first page sends one, not two. Trigger one guarded event and check that
-its request appears. Then revoke marketing. Until the page reloads, calling
-`trackPurchase` sends nothing.
+Allow `marketing` and confirm `scevent.min.js` loads from `sc-static.net` with one `PAGE_VIEW` request. If your router also sends `PAGE_VIEW`, confirm the initial page fires once. Trigger a guarded event and verify its request appears, then revoke `marketing` and confirm `trackPurchase` sends nothing before reload.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

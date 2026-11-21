@@ -1,20 +1,21 @@
 ---
 title: Network blocker
-description: Hold fetch and XMLHttpRequest calls in a JavaScript app until their consent category is allowed, with networkBlocker rules in @inth/sdk or createConsentRuntime, or createNetworkBlocker on your own kernel.
+description: Hold fetch and XMLHttpRequest calls in JavaScript until consent allows them with networkBlocker rules.
 group: frameworks
 ---
 
+Hold `fetch` and `XMLHttpRequest` requests to tracking domains until their
+consent category is allowed.
+
 ## When you need it
 
-The network blocker holds `fetch` and `XMLHttpRequest` calls that match a rule
-until the rule's category is allowed. Use it for requests you cannot move
-behind the [script loader](/docs/frameworks/javascript/modules/script-loader),
-such as a first-party events endpoint or a vendor SDK you bundle yourself.
+Use the network blocker for requests you cannot move behind the
+[script loader](/docs/frameworks/javascript/modules/script-loader), such as a
+first-party events endpoint or a bundled vendor SDK.
 
 ## Add rules
 
-With `@inth/sdk` or `createConsentRuntime`, pass `networkBlocker` next to
-your other options:
+Pass `networkBlocker` to `init()` or `createConsentRuntime()`:
 
 {/* example: fragment */}
 
@@ -32,64 +33,57 @@ networkBlocker: {
 },
 ```
 
-Rules start holding matching requests when the client or runtime is created,
-before `start()`, so a request sent early in your app still waits.
-
-For a kernel you created yourself, attach the module:
+Matching requests are held as soon as the client or runtime is constructed,
+even before `start()` runs. For a manual kernel, attach
+`createNetworkBlocker`:
 
 <include src="../../../shared/examples/javascript/network-blocker.mdx" />
 
 `createNetworkBlocker` returns `{ dispose, updateRules, setEnabled }`.
-`updateRules(next)` takes effect on the next request. `setEnabled(false)`
-keeps the patches but lets everything through. `dispose()` restores `fetch`
-and `XMLHttpRequest`. Dispose blockers in the reverse order you created them.
+Dispose blockers in reverse creation order so original `fetch` and
+`XMLHttpRequest` references restore cleanly.
 
 ## Rule fields
 
 | Field | Required | What it does |
 | --- | --- | --- |
-| `domain` | Yes | The host to match. Subdomains match too. |
-| `category` | Yes | The category, or a condition, that lets matching requests through. |
-| `pathIncludes` | No | Match only URLs whose path contains this text. |
-| `methods` | No | Match only these HTTP methods. All methods when omitted. |
-| `id` | No | A name shown in logs and passed to `onRequestBlocked`. |
-| `vendor` | No | Also block while the visitor has turned this vendor off. |
-| `vendorId`, `iabPurposes`, `iabLegIntPurposes`, `iabSpecialFeatures` | No | IAB conditions, checked only under an IAB policy. |
+| `domain` | Yes | Host to match, including subdomains. |
+| `category` | Yes | Required category or condition. |
+| `pathIncludes` | No | Matches URLs whose path contains this string. |
+| `methods` | No | Restricts to listed HTTP methods (all methods if omitted). |
+| `id` | No | Rule identifier for logs and `onRequestBlocked`. |
+| `vendor` | No | Also blocks when the visitor turned this vendor off. |
+| `vendorId`, `iabPurposes`, `iabLegIntPurposes`, `iabSpecialFeatures` | No | IAB TCF conditions under an IAB policy. |
 
 ## Blocker options
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `rules` | required | The rules. |
-| `enabled` | `true` | `false` keeps the configuration but blocks nothing. |
-| `logBlockedRequests` | `true` | Log each blocked request with `console.warn`, as `[inth] blocked POST https://… (rule: events)`. |
-| `onRequestBlocked` | none | Called with `{ method, url, rule }` for each blocked request. |
+| `rules` | required | Rule list above. |
+| `enabled` | `true` | `false` keeps configuration without blocking. |
+| `logBlockedRequests` | `true` | Logs blocked requests with `console.warn` (`[inth] blocked ...`). |
+| `onRequestBlocked` | none | Receives `{ method, url, rule }` for each blocked request. |
 
 ## What a blocked request sees
 
-- A blocked `fetch` resolves with a `451` response. Check `response.ok`.
-- A blocked `XMLHttpRequest` aborts and fires an `error` event.
-- A request sent while the policy is still loading waits, then goes out or
-  is blocked. If the policy fails to load, it is blocked.
-- A synchronous XHR cannot wait. While matching requests are held, a
-  matching synchronous XHR throws a `NetworkError`.
-- When the blocker loads on demand and its chunk fails to load, requests its
-  rules match are blocked, including ones already waiting for it, even for
-  granted categories. Nothing can check consent for them. The chunk is tried
-  again when the browser comes back online, and the blocker then decides
-  requests as usual.
-- Requests that match no rule go out at once.
+- Blocked `fetch` calls resolve with HTTP status `451` (check `response.ok`).
+- Blocked `XMLHttpRequest` calls abort and fire an `error` event.
+- Requests sent while policy loads wait until resolution (blocked if policy
+  loading fails); synchronous XHRs throw `NetworkError` instead of waiting.
+- If an on-demand blocker chunk fails to load, matching requests block until
+  the browser comes back online and the retry succeeds.
+- Unmatched requests proceed immediately.
 
 ## What it cannot block
 
-It patches `fetch` and `XMLHttpRequest` in the page's own window. It does not
-cover `navigator.sendBeacon`, WebSockets, `EventSource`, requests from
-elements such as `<img>` and `<script>`, other frames, or service workers.
+The blocker patches `fetch` and `XMLHttpRequest` in the current window only.
+It does not intercept `navigator.sendBeacon`, WebSockets, `EventSource`,
+`<img>`/`<script>` requests, other frames or service workers.
 
 ## Check it works
 
-1. Send a matching request before any choice. The console logs
-   `[inth] blocked …` and the Network tab shows nothing.
-2. Allow the category and send it again. It goes out.
-3. Withdraw the category with `reloadOnConsentRevoked: false`. The next
-   request is blocked again.
+1. Trigger a matching request before choosing; Console logs `[inth] blocked`
+   and Network shows no request.
+2. Allow the category and repeat; the request succeeds.
+3. With `reloadOnConsentRevoked: false`, withdraw the category and confirm
+   subsequent requests block again.

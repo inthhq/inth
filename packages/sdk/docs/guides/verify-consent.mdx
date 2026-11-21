@@ -1,107 +1,66 @@
 ---
 title: Verify consent
-description: Check in a production build that vendor requests wait for consent, rejection survives a reload, preferences reopen and privacy signals apply.
+description: Verify in a production build that tracking scripts wait for consent, rejections persist across reloads, preferences reopen, and GPC applies.
 group: guides
 ---
 
-## What you are checking
+Verify in a production build that optional scripts wait for permission, choices survive reloads, preferences reopen, and regional rules apply before you deploy.
 
-A banner on screen proves only that the banner renders. Before shipping,
-confirm four things in a production build:
+Run every check against a production build (`next build && next start`, `vite preview`, or your framework's equivalent). Dev servers load modules differently and hide bundling or manifest issues.
 
-1. Optional vendors make no requests before the visitor allows them.
-2. A rejection survives a reload and a new tab.
-3. The visitor can reopen preferences and change their mind.
-4. The policy is right for each location you serve.
+## Prepare the browser
 
-Run the checks against `next build && next start`, `vite preview`, or your
-framework's equivalent. Dev servers load code differently and hide problems.
+1. Open a private window so no prior choice is stored.
+2. Open DevTools **Network** and enable **Disable cache** and **Preserve log**.
+3. List every vendor domain your site uses, such as `posthog.com`, `googletagmanager.com`, `connect.facebook.net`, or `youtube-nocookie.com`.
 
-## Set up the browser
+Remove duplicate loaders before testing: raw `<script>` tags, framework analytics plugins, tag manager page-view triggers, and ungated embeds. Inth only controls scripts and embeds registered through it.
 
-1. Open a private window, so no earlier choice is stored.
-2. Open DevTools, select Network, and turn on **Disable cache** and
-   **Preserve log**.
-3. List the vendors you expect, such as `posthog.com`, `googletagmanager.com`,
-   `connect.facebook.net` or `youtube-nocookie.com`. You will filter by each.
+## Walk through the visitor flow
 
-Before testing, list every place a vendor could load: `<script>` tags,
-framework analytics plugins, tag manager tags and embeds. Inth cannot hold
-back code it does not load. Remove duplicates first, or the results mean
-nothing.
-
-## Run the visitor flow
-
-| Step | What to check |
+| Step | What to verify |
 | --- | --- |
-| Load the page | The banner appears under an opt-in policy. Filter Network by each vendor domain; opt-in vendors show no requests. |
-| Click Reject | The banner closes. Vendor domains still show no requests. |
-| Reload | No banner. Still no vendor requests. DevTools Application shows an `inth` cookie. |
-| Open a new tab on the same site | Same result as the reload. |
-| Open preferences from your footer link | The dialog opens with the categories you rejected turned off. |
-| Allow one category and save | Only vendors in that category start loading. The others stay silent. |
-| Turn that category off again | The page reloads, and the vendor does not load after the reload. |
-| Navigate between pages without a full reload | Each vendor loads once, not once per navigation. |
+| Fresh opt-in visit | The banner appears. Filter **Network** by each optional vendor domain and confirm zero requests. |
+| Click Reject | The banner closes. Optional vendor domains still show zero requests. |
+| Reload and open a new tab | The banner stays closed and vendor domains stay silent. DevTools **Application** shows an `inth` cookie and an `inth` localStorage entry. |
+| Open preferences from your footer link | The dialog opens with rejected categories toggled off. |
+| Enable one category and save | Only vendors in that category make network requests. Other categories stay silent. |
+| Revoke that category and save | The page reloads (unless `reloadOnConsentRevoked: false`) and the revoked vendor does not load after the reload. |
+| Navigate between pages | Each allowed vendor loads once, not once per client-side navigation. |
 
-By default, Google Tag and Google Tag Manager load before consent on purpose
-and send Consent Mode signals. For them, check that the consent state in the
-request parameters changes when the visitor chooses, not that requests are
-absent. With `loadMode: 'after-consent'`, they follow the table above. See
-[Google Tag Manager](/docs/integrations/google-tag-manager).
+Google Tag and Google Tag Manager load before consent by default to send Google Consent Mode signals. Verify their request parameters switch from denied to granted when a visitor consents, or set `loadMode: 'after-consent'` to block their requests until consent. See [Google Tag Manager](/docs/integrations/google-tag-manager).
 
-## Check each location
+## Check regional rules and GPC
 
-Policies usually differ by region. Test at least:
+Test at least three visitor contexts:
 
-- A location that needs a choice, such as Germany or the United Kingdom.
-- A location without a prompt, such as a US state without a privacy law in
-  your rules.
-- A request with no location headers at all. Inth applies your policy's
-  fallback for unknown locations; make sure that fallback is what you want.
+- **Opt-in region** (such as Germany or the UK): banner appears and optional vendors wait.
+- **No-prompt or opt-out region** (such as a US state matching your rules): policy behaves as configured.
+- **Unknown location** (no geo headers): your fallback rule applies.
 
-Use a VPN, your host's geolocation preview, or the `country` option on your
-framework's server helper while testing. Remove test overrides before you
-deploy.
+Use a VPN, your host's geolocation preview, or the `country` option on your server helper while testing, and remove test overrides before deploying.
 
-## Check privacy signals
+To verify Global Privacy Control, enable GPC in your browser (on by default in Brave and DuckDuckGo, or under Privacy settings in Firefox). Reload and confirm categories restricted for GPC are denied without clicking. Turn GPC off and confirm the restriction clears.
 
-Turn on Global Privacy Control in the browser. Brave and DuckDuckGo send it by
-default; in Firefox, enable it in Privacy settings. Reload and confirm the
-categories your policy restricts for GPC are denied, without the visitor
-having clicked anything. Turn GPC off and confirm the restriction ends.
+## Check the production manifest and failure behavior
 
-## Check failure behavior
+If you use `manifest()` with build-time bundling, inspect **Network** on a fresh load:
 
-Make the request that initializes consent fail, then reload. Depending on your
-setup, that is the backend `/v1/consent/init`, a same-origin init route, a manifest fetch,
-or the `/v1/consent/init` a bundled manifest falls back to when a regional policy needs a
-location the browser does not know.
+- Server-rendered apps make no browser `/v1/consent/init` request.
+- Single-page apps with a non-regional policy make no `/v1/consent/init` request.
+- Confirm the banner copy, categories, and vendors match your latest Inth project settings. Rebuild if they are stale.
 
-- For a request the browser makes, block it in DevTools (right-click the
-  request, then **Block request URL**).
-- When the server resolves consent before the page loads, the browser never
-  sees that request. Make it fail on the server instead, for example by
-  pointing the backend URL at an unreachable address for one run.
+Next, force initialization to fail and reload:
 
-No banner appears, and vendors that wait for consent send no requests. Skip this
-check only if the page makes no initialization request at all, such as a
-build-time manifest with no regional fallback. A helper that always loads, such
-as `gtag` with its default `loadMode`, still loads; check that it reports denied
-consent. A missing banner must never mean "allowed". Then undo the change and
-confirm the page recovers.
+- **Browser request** (`/v1/consent/init`, `/v1/consent/manifest`, or same-origin init route): right-click the request in **Network**, select **Block request URL**, and reload.
+- **Server-resolved consent**: point `projectUrl` at an unreachable URL for one local run and reload.
 
-## Check the interface
+Confirm no banner appears and no consent-gated vendor makes a request. A missing banner must never grant consent. Undo the block and confirm the page recovers.
 
-- Tab through the banner and dialog with the keyboard only. Focus stays inside
-  a modal dialog and returns to the button that opened it when it closes.
-- Set the viewport to 375 pixels wide and switch to a language with long
-  labels, such as German.
-- After applying your theme, check text contrast and that focus rings are
-  visible.
+## Check keyboard access and layout
 
-## Record the result
+- Tab through the banner and dialog with keyboard only. Focus stays trapped inside modal dialogs and returns to the trigger button on close.
+- Test at 375 px width in a language with long labels such as German.
+- Confirm text contrast and visible focus rings after applying your theme.
 
-Write down the framework, the rendering mode, the policy you tested, and the
-requests you saw before and after consent. "The banner appears" is not a test
-result. If something fails, [troubleshooting](/docs/guides/troubleshooting)
-starts with three checks that locate most problems.
+If any step fails, run the three diagnostic checks in [Troubleshooting](/docs/guides/troubleshooting).

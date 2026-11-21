@@ -1,93 +1,64 @@
 ---
 title: Components
-description: InthProvider and the consent banner, dialog, widget, links, gate and DevTools components a TanStack Start app imports from @inth/tanstack-start.
+description: Reference InthProvider and all consent UI components exported by @inth/tanstack-start.
 group: frameworks
 ---
 
-## Import from @inth/tanstack-start
+`@inth/tanstack-start` exports `InthProvider` and re-exports every UI component and hook from `@inth/react` under one import path. All components render on the server using the state resolved by your root loader.
 
-`@inth/tanstack-start` exports its own `InthProvider`, `ConsentBanner` and
-`ConsentDialog`, and re-exports every other component and hook from
-`@inth/react`. The `InthProvider` from `@inth/react` is at
-`@inth/tanstack-start/react`. Import them from `@inth/tanstack-start` so your app has
-one import path. They behave the same as in a React app, and render on the
-server with the state the root loader resolved.
+## Import from @inth/tanstack-start
 
 | Component | Renders | Reference |
 | --- | --- | --- |
-| `InthProvider` | The consent runtime, seeded with the root loader's state | [Below](#inthprovider) |
-| `ConsentBanner` | The banner, when the policy asks for one | [ConsentBanner](/docs/frameworks/tanstack-start/components/consent-banner) |
+| `InthProvider` | The consent runtime seeded with your root loader's state | [Below](#inthprovider) |
+| `ConsentBanner` | The consent banner when the policy requires one | [ConsentBanner](/docs/frameworks/tanstack-start/components/consent-banner) |
 | `ConsentDialog` | The preference dialog | [ConsentDialog](/docs/frameworks/tanstack-start/components/consent-dialog) |
-| `ConsentWidget` | The preference controls inline in a page | [ConsentWidget](/docs/frameworks/tanstack-start/components/consent-widget) |
-| `ConsentDialogLink` | A button that opens the dialog, for your footer | [ConsentDialogLink](/docs/frameworks/tanstack-start/components/consent-dialog-link) |
-| `ConsentDialogTrigger` | A floating, draggable button that opens the dialog. `ConsentDialogTriggerToolbar` adds your own actions beside it | [ConsentDialogTrigger](/docs/frameworks/tanstack-start/components/consent-dialog-trigger) |
-| `ConsentGate` | Its children only while a category is allowed | [ConsentGate](/docs/frameworks/tanstack-start/components/consent-gate) |
+| `ConsentWidget` | Preference controls inline on a privacy page | [ConsentWidget](/docs/frameworks/tanstack-start/components/consent-widget) |
+| `ConsentDialogLink` | An unstyled button that opens the dialog, suited for footers | [ConsentDialogLink](/docs/frameworks/tanstack-start/components/consent-dialog-link) |
+| `ConsentDialogTrigger` | A floating, draggable corner button that opens the dialog. `ConsentDialogTriggerToolbar` adds app actions beside it | [ConsentDialogTrigger](/docs/frameworks/tanstack-start/components/consent-dialog-trigger) |
+| `ConsentGate` | Its children while a category is allowed, or a placeholder otherwise | [ConsentGate](/docs/frameworks/tanstack-start/components/consent-gate) |
 | `ConsentTheme` | A `<style>` element with your theme tokens | [Customize](/docs/frameworks/tanstack-start/customize) |
-| `DevTools` from `@inth/tanstack-start/devtools` | A development panel for consent state and scripts | [DevTools](/docs/frameworks/tanstack-start/components/dev-tools) |
+| `DevTools` from `@inth/react/devtools` | A development panel for consent state and scripts | [DevTools](/docs/frameworks/tanstack-start/components/dev-tools) |
 
-Render every component inside `InthProvider`. Do not also mount the
-`InthProvider` from `@inth/tanstack-start/react`; this one already renders it.
+Render all consent components inside a single `InthProvider` from `@inth/tanstack-start`. Do not also mount `@inth/react`'s `InthProvider`, because `@inth/tanstack-start`'s `InthProvider` already wraps it.
 
 ## InthProvider
 
-`InthProvider` wraps the app in the root route. It takes the state the root
-loader resolved on the server and creates the consent runtime from it, so the
-server HTML and the first browser render match. The
-[quickstart](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route)
-shows it in context.
+`InthProvider` wraps your app in `src/routes/__root.tsx`, creating the runtime from server-resolved state so server HTML matches the first client render. See the [quickstart](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route).
 
 | Prop | Purpose |
 | --- | --- |
-| `state` | Required. The loader's consent state, a promise of it for a [streamed loader](/docs/frameworks/tanstack-start/rendering#stream-the-page-while-consent-resolves), or `{}` for [pages without a server render](/docs/frameworks/tanstack-start/rendering#spa-mode-prerendered-pages-and-static-hosts) |
-| `scripts` | Consent-gated vendor scripts. See [scripts and embeds](/docs/frameworks/tanstack-start/scripts) |
-| `vendors` | Vendors listed under their category with their own switch |
-| `networkBlocker` | Rules that hold `fetch` and `XMLHttpRequest` calls until their category is allowed |
-| `clearOnRevocation` | Cookies and storage keys to delete when a category is denied |
-| `persistence` | Stores the visitor's choice. On by default |
+| `state` | Required. Loader consent state, a promise for a [streamed loader](/docs/frameworks/tanstack-start/rendering#stream-the-page-while-consent-resolves), or `{}` for [prerendered or SPA pages](/docs/frameworks/tanstack-start/rendering#spa-mode-prerendered-pages-and-static-hosts) |
+| `scripts` | Consent-gated vendor scripts. See [Scripts](/docs/frameworks/tanstack-start/scripts) |
+| `vendors` | Vendors listed under their category with individual switches |
+| `networkBlocker` | Rules holding `fetch` and `XMLHttpRequest` calls until their category is allowed |
+| `clearOnRevocation` | Cookies and storage keys deleted when a category is denied |
+| `persistence` | Stores the visitor's choice. Enabled by default |
 | `scriptLoader` | Options for the script loader module |
-| `options` | Any other option of the `InthProvider` from `@inth/tanstack-start/react`, such as `theme`, `i18n`, `presentation`, `callbacks`, `consentCategories`, `reloadOnConsentRevoked`, `preloadDialog` or the experimental `experimentalScriptRegistry` |
+| `options` | Any other `InthProvider` option, such as `theme`, `i18n`, `presentation`, `callbacks`, `consentCategories`, `reloadOnConsentRevoked`, or `preloadDialog` |
 
-The state carries the backend URL, the mode and the route prefix you passed
-to `createConsentStateHandler`, so `InthProvider` has no props for them. With
-`state={{}}`, it takes the backend URL from `consentManifest()` and uses
-`manifest()`. Without a backend URL from either, it throws, unless the mode is
-`testing()`. `options.mode` replaces the state's mode: `manifest()` or
-`hosted()` from `@inth/tanstack-start`, `testing()` from
-`@inth/tanstack-start/testing`, or a transport such as
-a transport factory.
+`state` carries the project URL, mode, and route prefix from `createConsentStateHandler`. With `state={{}}`, `InthProvider` reads the URL from `consentManifest()` and uses `manifest()`, throwing if neither supplies a URL unless `mode` is `testing()`. `options.mode` overrides the state's mode.
 
-`InthProvider` creates the runtime once, when it mounts, and ignores later
-changes to `state`. Keep it in the root route so client navigation never
-remounts it.
+`InthProvider` initializes its runtime once on mount and ignores later `state` prop changes. Keep it in the root route so navigation never remounts it.
 
-The root entry also exports `consentPrefetchHead` for pages without a server
-render, and `buildPrefetchScript`, the script builder behind it.
+The root entry also exports `consentPrefetchHead` and `buildPrefetchScript` for prerendered or SPA pages.
 
 ## Server and other entry points
 
 | Import | Exports | Use |
 | --- | --- | --- |
-| `@inth/tanstack-start` | `manifest`, `hosted`, `local` | The modes, as data for `createConsentStateHandler({ mode })`. See [consent modes](/docs/concepts/modes) |
-| `@inth/tanstack-start/server` | `createConsentStateHandler`, `resolveConsent`, `consentLoaderOptions`, `mergeInitIntoConsentState` | Resolve the visitor's state in a server function. `createConsentStateHandler` takes `mode`, `routePrefix`, `proxy`, `snapshot` and the `resolveConsent` options |
-| `@inth/tanstack-start/middleware` | `consentRequestMiddleware` | Read location, language and privacy headers on every request. See [geography headers](/docs/frameworks/tanstack-start/geography-headers) |
+| `@inth/tanstack-start` | `manifest`, `hosted`, `testing` | Serializable mode config for `createConsentStateHandler({ mode })`. See [Consent modes](/docs/concepts/modes) |
+| `@inth/tanstack-start/server` | `createConsentStateHandler`, `resolveConsent`, `consentLoaderOptions`, `mergeInitIntoConsentState` | Resolve visitor state in a server function |
+| `@inth/tanstack-start/middleware` | `consentRequestMiddleware` | Normalize location, language, and GPC headers on every request. See [Geography headers](/docs/frameworks/tanstack-start/geography-headers) |
 | `@inth/tanstack-start/api` | `createConsentRoute` | Serve `/api/inth/*` from `src/routes/api/inth/$.ts` |
-| `@inth/tanstack-start/build` | `consentManifest` | Vite plugin that bundles the manifest at build time. See the [quickstart](/docs/frameworks/tanstack-start/quickstart#bundle-your-policy-at-build-time) |
-| `@inth/tanstack-start/generated` | `snapshot`, `projectUrl` | The manifest and backend URL the plugin fetched. `snapshot` is `undefined` in the browser bundle |
-| `@inth/tanstack-start/static` | `createStaticConsentResolver`, `loadStaticManifest`, `createStaticManifestModule`, `resolveUnknownLocationInit` | Lower-level helpers for a build-time manifest. See [rendering](/docs/frameworks/tanstack-start/rendering#spa-mode-prerendered-pages-and-static-hosts) |
+| `@inth/tanstack-start/build` | `consentManifest` | Vite plugin bundling the policy manifest at build time. See [Quickstart](/docs/frameworks/tanstack-start/quickstart#bundle-your-policy-at-build-time) |
+| `@inth/tanstack-start/generated` | `snapshot`, `projectUrl` | Build-time manifest and project URL (`snapshot` is `undefined` in browser builds) |
+| `@inth/tanstack-start/static` | `createStaticConsentResolver`, `loadStaticManifest`, `createStaticManifestModule`, `resolveUnknownLocationInit` | Lower-level build-time manifest helpers. See [Rendering](/docs/frameworks/tanstack-start/rendering#spa-mode-prerendered-pages-and-static-hosts) |
 | `@inth/tanstack-start/headless` | Headless hooks | [Custom markup](/docs/frameworks/tanstack-start/headless) |
-| `@inth/tanstack-start/components/consent-dialog-link` | `ConsentDialogLink` only | A module that needs the link without loading the rest of the adapter |
+| `@inth/tanstack-start/components/consent-dialog-link` | `ConsentDialogLink` only | Import the link without pulling in the full adapter |
 
-`resolveConsent` is the function behind `createConsentStateHandler`. Call it
-directly from a server route or middleware that already holds the `Request`,
-and pass it as `request`. Import `server`, `middleware` and `api` only from
-server code.
+Call `resolveConsent({ request })` directly inside server routes or middleware that already hold a `Request`. Import `/server`, `/middleware`, and `/api` only in server code.
 
 ## IAB TCF components
 
-Import `IABProvider`, `IABConsentBanner` and `IABConsentDialog` from
-`@inth/react/iab`, render them inside `InthProvider` next to
-`ConsentBanner` and `ConsentDialog`, and load
-`@inth/tanstack-start/styles.css` and `@inth/tanstack-start/iab/styles.css`
-with `styles: false`. The stock banner and dialog stay closed
-under an IAB policy. See
-[IAB TCF](/docs/frameworks/tanstack-start/iab).
+Import `IABProvider`, `IABConsentBanner`, and `IABConsentDialog` from `@inth/react/iab` and mount them inside `InthProvider` next to `ConsentBanner` and `ConsentDialog`. The built-in banner and dialog stay closed under an `iab` policy. See [IAB TCF](/docs/frameworks/tanstack-start/iab).

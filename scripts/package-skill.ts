@@ -100,14 +100,14 @@ export const renderPackageSkill = function renderPackageSkill(
 			'## Rules',
 			'',
 			'- Use the maintainer-provided private package and native artifacts. Do not invent an npm version, Maven repository, SwiftPM tag or certification claim.',
-			"- Start with the developer's Inth project URL and authored policy. The repository reference apps use https://example-inth.inth.app/. A backend URL is public configuration, not a secret.",
+			"- Start with the developer's Inth project URL and authored policy. The repository reference apps use https://example-inth.inth.app/. A project URL is public configuration, not a secret.",
 			'- Install one native engine before optional SDKs and before React Native starts. InthProvider attaches to it; JavaScript does not bootstrap another engine.',
 			'- Disable vendor auto-initializers. Gate native startup on cached native permissions and reevaluate after withdrawal. React hooks alone cannot gate startup before JavaScript.',
 			'- Check CommitResult.ok. A resolved promise can refuse a commit. ok:true with queued:true is durable local success; it does not prove network delivery.',
 			'- Keep drafts open after refused commits. Never turn a policy refresh, hydration, ATT result or notice acknowledgement into a consent grant.',
 			'- Keep hosted transport when embedding an offline policy. Verify endpoint binding, authority expiry and original disclosure timestamps. Withdrawals must persist without network access.',
 			'- ATT is separate. Marketing consent, a TC String and platform storage keys do not prove AdMob interoperability, Google certification or IAB registration.',
-			'- Prefer native stock presenter commands. Configure their supported themes natively. Use headless hooks when the app owns the UI. Mobile works only with Inth hosted projects; there is no self-hosted backend or custom transport.',
+			'- Prefer native stock presenter commands. Configure their supported themes natively. Use headless hooks when the app owns the UI. Mobile works only with Inth hosted projects.',
 			'- Match RN, React, Expo and native protocol versions. Native APIs, themes, permissions, Codegen and bundled-policy changes require a new binary.',
 			'',
 			'./docs/README.md lists every bundled page. Verify real native builds and device journeys separately from JavaScript type checks.',
@@ -122,6 +122,11 @@ export const renderPackageSkill = function renderPackageSkill(
 			link(bundledFiles, `frameworks/${dir}/quickstart.md`, label)
 		)
 		.filter(Boolean);
+	const migration = link(
+		bundledFiles,
+		'migrate-from-c15t.md',
+		'Migrate from c15t'
+	);
 	const lines = [
 		'---',
 		`name: ${slug}`,
@@ -130,7 +135,7 @@ export const renderPackageSkill = function renderPackageSkill(
 		'',
 		`# ${heading}`,
 		'',
-		'The Markdown under `./docs` matches the installed version. Read it before writing code: v3 renamed most v2 APIs, so remembered examples are usually wrong.',
+		`The Markdown under \`./docs\` matches the installed version. Read it before writing code instead of guessing APIs from memory.${migration ? ` Migrating an existing c15t app? Follow ${migration}.` : ''}`,
 		'',
 		'## Before writing code',
 		'',
@@ -154,10 +159,10 @@ export const renderPackageSkill = function renderPackageSkill(
 		'## Rules',
 		'',
 		`- Install with ${skill.install}. Keep every Inth package on the same release.`,
-		"- The backend URL is the user's Inth project URL. It is public configuration. Never invent one; ask for it or read it from the environment.",
+		"- `projectUrl` is the user's Inth project URL. It is public configuration. Never invent one; ask for it or read it from the environment.",
 		'- Register analytics, pixels and embeds through Inth and remove the vendor\'s own loader or plugin. With a bundler, use `@inth/integrations` helpers and `ConsentGate`. On a plain HTML page, change the vendor\'s `<script>` to `type="text/plain"` with `data-inth-category`. A banner does not block code loaded elsewhere.',
 		'- Gate features on the current permission. Never save a consent choice on page load or from code; only a visitor action records one.',
-		'- Offline mode keeps policies in code and choices in the browser, with no consent records. Not recommended for production environments.',
+		"- Use `testing()` from the package's `/testing` subpath in tests and local development: it resolves policies in code with no network requests and throws in production builds.",
 		'- Keep one consent provider or root for the whole app, mounted outside route-level components.',
 		'',
 		'## Customize with the smallest change',

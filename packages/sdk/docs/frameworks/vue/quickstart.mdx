@@ -1,131 +1,124 @@
 ---
 title: Quickstart
-description: Add Inth to a Vue 3 app built with Vite, using the Vue plugin, Inth, consent-gated scripts and a preferences link.
+description: Add a cookie consent banner to a Vue 3 Vite app and hold back analytics until consent allows them.
 group: frameworks
 ---
 
-## Before you start
+Add a consent banner to a Vue 3 app built with Vite. The browser resolves each
+visitor's policy from Inth, and analytics wait until consent allows them.
 
-This guide is for a Vue 3 single-page app built with Vite. After the page
-loads, the browser asks your consent backend for the visitor's policy, so the
-app works on any static host. The backend reads the visitor's location from
-the request, so regional policies need no extra setup. For a Vue app that
-renders on the server, use the Inth Nuxt module.
-[Choose your setup](/docs/concepts/choose-your-setup) compares every option.
+<Prompt title="Add Inth consent to this Vue app" description="Paste into Claude Code, Codex, Cursor or another coding agent at the root of your app.">
+  Add Inth consent management to this Vue 3 Vite app.
 
-The guide uses [Inth](https://inth.com) for policies and consent records.
-[Create a project](https://inth.com/dashboard/sign-up?framework=vue), set its policy rules, add your site's origin to its trusted
-origins, and copy the backend URL. Tests run
-without a backend through `testing()`; see
-[consent modes](/docs/concepts/modes#testing).
+  1. Check that the app is a Vue 3 app built with Vite. If it uses Nuxt or a custom Vue SSR server, stop and tell me.
+  2. Install `@inth/vue` and `@inth/integrations`. Read `node_modules/@inth/vue/AGENTS.md`, then follow the Vue quickstart it links to, in order. Do not guess the API from memory.
+  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
+  4. Add `consentManifest()` from `@inth/vue/vite` next to `vue()` in `vite.config.ts`. Add nothing to `.gitignore`.
+  5. Install `inth` with `mode: hosted()` in `src/main.ts`. Move every analytics and marketing script into `scripts` with the matching helper from `@inth/integrations`, carry over settings such as PostHog's `region` or `apiHost`, and remove old loaders from `index.html` or app code. If a vendor has no helper, tell me.
+  6. Render `InthProvider` and a `ConsentDialogLink` in `src/App.vue`, and wrap third-party iframes in `ConsentGate`.
+  7. Run `vite build` and `vite preview`. In a browser, check that no vendor request fires before consent, that rejecting survives a reload, and that granting analytics from the footer link loads PostHog.
 
-The guide uses `hosted()` mode. Policy, translation and vendor edits in your
-project reach visitors on their next page load, without a rebuild.
+  Then list the files you changed, any script still outside consent, and how you checked the requests.
+</Prompt>
 
-## Install Inth
+## Prerequisites
+
+- A Vue 3 single-page app built with Vite. For Nuxt or another framework, see
+  the [framework list](/docs/frameworks).
+- An [Inth project](https://inth.com/dashboard/sign-up?framework=vue) with
+  your site's origin in its trusted origins.
+
+## Install the SDK
 
 <CommandTabs command="@inth/vue @inth/integrations" mode="install" />
 
+The components ship their own styles, so there is no stylesheet to import.
+
+## Set the project URL
+
+Add your Inth project URL (including any path prefix) to `.env` and your
+host's build settings:
+
+```sh title=".env"
+VITE_INTH_PROJECT_URL=https://example-inth.inth.app
+```
+
+This URL is public; `https://example-inth.inth.app` is a demo project. Vite
+inlines it at build time, so rebuild after changes. `VITE_INTH_PROJECT_URL`
+wins over any legacy `VITE_C15T_BACKEND_URL`, which is read as a fallback if
+unset.
+
 ## Add the Vite plugin
 
-Add `consentManifest()` from `@inth/vue/vite` to `vite.config.ts`, next to
-`@vitejs/plugin-vue`:
+Add `consentManifest()` from `@inth/vue/vite` next to `vue()` in
+`vite.config.ts`:
 
 <include src="../../shared/examples/vue/vite-config.mdx" />
 
-Set `VITE_INTH_PROJECT_URL` to your project's backend URL, including any
-path prefix, in `.env` or wherever you build:
-
-```sh title=".env"
-VITE_INTH_PROJECT_URL=https://your-project.inth.app
-```
-
-The c15t name `VITE_C15T_BACKEND_URL` still works as a fallback. When both are
-set, `VITE_INTH_PROJECT_URL` wins.
-
-`consentManifest()` hands the backend URL to the Vue plugin, and keeps the
-Inth components, which ship as `.vue` files, out of Vite's dependency
-pre-bundling. No file is written into your project.
-
-The plugin also adds a small script to `index.html` that sends `/init` while
-your JavaScript downloads, so the banner shows sooner.
-[Rendering](/docs/frameworks/vue/rendering#send-init-before-the-app-loads)
-covers when to turn it off.
+`consentManifest()` passes your project URL to the plugin, excludes Inth's
+`.vue` files from dependency pre-bundling, and injects an early `/v1/consent/init`
+prefetch into `index.html`. See
+[send `/init` before the app loads](/docs/frameworks/vue/rendering#send-init-before-the-app-loads).
 
 ## Install the Vue plugin
 
-Install the plugin from `@inth/vue/vue-plugin` in `src/main.ts`:
+Install `inth` from `@inth/vue/vue-plugin` in `src/main.ts` and register
+vendor scripts:
 
 <include src="../../shared/examples/vue/main.mdx" />
 
-The plugin creates the consent runtime for this app. When the app mounts, it
-reads the visitor's stored choice, resolves their policy, and starts the
-script loader for the `scripts` you pass. `mode: hosted()` makes one `/init`
-request to your backend, started early by the script in `index.html`. The
-backend picks the policy from the visitor's location and language and returns
-its current version. Consent choices go to the same backend URL. Vite reads
-`VITE_INTH_PROJECT_URL` at build time, so set it before you build, not when
-you serve the files.
+`mode: hosted()` calls Inth's `/v1/consent/init` to resolve each visitor's policy from
+their location and language so policy edits apply without rebuilding.
 
-## Register consent-gated scripts
-
-Remove any existing PostHog snippet so the script loads once, and add
-measurement to your Inth policy. The `scripts` option in `src/main.ts` loads
-PostHog once the visitor allows measurement.
-
-Replace `phc_your_project_key` with your PostHog project key. PostHog
-defaults to its EU region; set `region: 'us'` for a US project.
+The example holds PostHog until `measurement` is granted. Replace
+`phc_your_project_key` with your key (or pick another
+[integration](/docs/integrations/overview)). Add `region: 'us'` for US
+PostHog or `apiHost` for a proxy, keep `cookieless_mode: 'never'`, and remove
+any existing PostHog loader.
 
 ## Mount the consent UI
 
+Render `InthProvider` and `ConsentDialogLink` in `src/App.vue`:
+
 <include src="../../shared/examples/vue/app.mdx" />
 
-`InthProvider` renders the banner when the visitor's policy asks for one and
-loads the preference dialog when it opens. `ConsentDialogLink` renders a
-button that reopens preferences. Without slot content, its label is the
-dialog's title in the visitor's language: Privacy Settings in English. It
-renders nothing until the policy offers preferences. Replace the `<main>`
-element with your own content or router view. Keep `InthProvider` in the root
-component so it stays mounted. The components bring their own styles; there
-is no stylesheet to import.
+Keep `InthProvider` in the root component across route changes.
 
 ## Gate an embed
 
-Wrap third-party iframes in `ConsentGate`. The iframe does not exist in the
-page until its category is allowed, and it is removed when the visitor
-withdraws permission.
+Wrap third-party iframes in `ConsentGate` and render `<VideoEmbed />` where
+needed:
 
 <include src="../../shared/examples/vue/embed.mdx" />
 
-Render `<VideoEmbed />` in a page where the video belongs.
+## Check it works
 
-## Verify the setup
+Run `vite build` and `vite preview`, then open the site in a private window on
+the DevTools Network tab.
 
-Build and preview the production app with `vite build` and `vite preview`.
-Open it in a private window with your browser's DevTools on the Network tab,
-under a policy that asks for consent.
-
-1. Load the page. One `/init` request goes to your backend URL, starting
-   before your JavaScript finishes downloading, and the banner appears. No requests to `posthog.com` or `youtube-nocookie.com` appear.
-2. Click **Reject All**, then reload. The banner stays closed and the vendor
+1. Under an opt-in policy, `/v1/consent/init` runs, the banner appears, and no requests
+   go to `posthog.com` or `youtube-nocookie.com`.
+2. Click **Reject All** and reload. The banner stays closed and vendor
    requests stay absent.
-3. Click **Privacy settings**, turn on **Analytics** (the `measurement` category) and save. PostHog's `array.js`
-   loads and the video appears.
-4. Turn **Analytics** off and save. The page reloads, the video is gone and
-   PostHog does not load again.
+3. Click **Privacy settings**, enable **Analytics**, and click **Save
+   Settings**. PostHog loads and the video appears.
+4. Open **Privacy settings**, disable **Analytics**, and save. The page
+   reloads without PostHog or the video.
 
-[Verify consent](/docs/guides/verify-consent) has the full release checklist.
+Inspect requests in the Network tab to confirm blocking; a visible banner
+alone proves nothing. To preview an EU policy locally, pass
+`<InthProvider country="DE" />` temporarily. See
+[troubleshooting](/docs/frameworks/vue/troubleshooting) and
+[verify consent](/docs/guides/verify-consent).
 
 ## Next steps
 
-- [Rendering and deployment](/docs/frameworks/vue/rendering) covers static
-  hosting, each `mode` and server rendering.
-- [inth plugin](/docs/frameworks/vue/plugin) lists every option.
-- [Scripts](/docs/frameworks/vue/scripts), [embeds](/docs/frameworks/vue/embeds)
-  and the [network blocker](/docs/frameworks/vue/network-blocker) cover
-  gating and revocation.
-- [Customize](/docs/frameworks/vue/customize) changes colors, layout and copy.
+- [Rendering and deployment](/docs/frameworks/vue/rendering): compare
+  `hosted()`, `manifest()`, and `testing()`.
+- [inth plugin](/docs/frameworks/vue/plugin): inspect every plugin option.
+- [Scripts](/docs/frameworks/vue/scripts): add more vendors and control
+  revocation.
+- [Customize](/docs/frameworks/vue/customize): change tokens, layout, and
+  copy.
 - [Components](/docs/frameworks/vue/components) and
-  [composables](/docs/frameworks/vue/composables) list the full API.
-- [Troubleshooting](/docs/frameworks/vue/troubleshooting) covers common
-  failures.
+  [composables](/docs/frameworks/vue/composables): explore the full Vue API.

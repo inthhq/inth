@@ -1,6 +1,6 @@
 ---
 title: Geography headers
-description: Which request headers SvelteKit's Inth helpers read for country, region, language and Global Privacy Control, how to trust them, and how to test another location.
+description: Learn which request headers SvelteKit Inth helpers read for country, region, language, and Global Privacy Control.
 group: frameworks
 ---
 
@@ -31,7 +31,7 @@ and `x-inth-region` at your proxy from whatever location data it has.
 
 With a build-time snapshot, as in the quickstart, `loadConsent` resolves the
 policy in the server process from these inputs and makes no policy request.
-In `hosted()` mode, it sends the resolved inputs to the backend's `/init` as
+In `hosted()` mode, it sends the resolved inputs to the backend's `/v1/consent/init` as
 `x-inth-country`, `x-inth-region`, `accept-language` and `sec-gpc`, along
 with `user-agent`. It adds the visitor IP as `x-forwarded-for` only with
 `trustForwardedHeaders: true`. It never forwards `forwarded`,

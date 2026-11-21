@@ -1,29 +1,29 @@
 ---
 title: Components
-description: Every Inth component in Nuxt, which ones the Nuxt module registers globally, which you import, and a page for each one's props and behavior.
+description: Reference for every Inth Nuxt component, which ones register globally, which require imports, and Vue Vapor support.
 group: frameworks
 ---
 
-## Component reference
+`@inth/nuxt` registers core consent components globally so you use them in
+templates without imports, and exports optional surfaces by path. Every
+component ships its own styles.
 
-Every component reads the consent runtime the Nuxt module creates, and each
-imports its own styles. The module registers the components marked Global, so
-you use them in templates without an import. Import the others by path.
+## Component reference
 
 | Component | In Nuxt | What it renders |
 | --- | --- | --- |
-| [`InthProvider`](/docs/frameworks/nuxt/components/inth-provider) | Global | The banner, rendered on the server, and the preference dialog once opened. Switches to the IAB surfaces under an IAB policy when `iab` is set. |
-| [`ConsentWidget`](/docs/frameworks/nuxt/components/consent-widget) | Global | Category switches and save actions inline, for a privacy page. |
-| [`ConsentDialogLink`](/docs/frameworks/nuxt/components/consent-dialog-link) | Global | A button that opens preferences. |
-| [`ConsentDialogTrigger`](/docs/frameworks/nuxt/components/consent-dialog-trigger) | Global | A floating, draggable button that opens preferences. |
-| [`ConsentGate`](/docs/frameworks/nuxt/components/consent-gate) | Global | Its default slot while a category is allowed, otherwise its `placeholder` slot. |
-| [`ConsentBanner`](/docs/frameworks/nuxt/components/consent-banner) | `@inth/nuxt/components/consent-banner` | The first-layer banner on its own. |
-| [`ConsentManager`](/docs/frameworks/nuxt/components/consent-manager) | `@inth/nuxt/components/consent-manager` | The preference dialog on its own. |
-| [`IABConsentBanner`](/docs/frameworks/nuxt/components/iab-consent-banner) | `@inth/nuxt/components/iab-consent-banner` | The IAB TCF first layer. |
-| [`IABConsentDialog`](/docs/frameworks/nuxt/components/iab-consent-dialog) | `@inth/nuxt/components/iab-consent-dialog` | The IAB TCF preference centre. |
-| [`ConsentDevTools`](/docs/frameworks/nuxt/components/dev-tools) | `@inth/nuxt/devtools` | A development panel for the consent runtime. |
+| [`InthProvider`](/docs/frameworks/nuxt/components/inth-provider) | Global | Server-rendered banner and preference dialog (switches to IAB surfaces under an IAB policy when `iab` is set). |
+| [`ConsentWidget`](/docs/frameworks/nuxt/components/consent-widget) | Global | Inline category switches and save buttons for a privacy page. |
+| [`ConsentDialogLink`](/docs/frameworks/nuxt/components/consent-dialog-link) | Global | Button that reopens preferences. |
+| [`ConsentDialogTrigger`](/docs/frameworks/nuxt/components/consent-dialog-trigger) | Global | Floating, draggable button that reopens preferences. |
+| [`ConsentGate`](/docs/frameworks/nuxt/components/consent-gate) | Global | Default slot while a category is allowed, otherwise its `placeholder` slot. |
+| [`ConsentBanner`](/docs/frameworks/nuxt/components/consent-banner) | `@inth/nuxt/components/consent-banner` | First-layer banner on its own. |
+| [`ConsentManager`](/docs/frameworks/nuxt/components/consent-manager) | `@inth/nuxt/components/consent-manager` | Preference dialog on its own. |
+| [`IABConsentBanner`](/docs/frameworks/nuxt/components/iab-consent-banner) | `@inth/nuxt/components/iab-consent-banner` | IAB TCF first layer. |
+| [`IABConsentDialog`](/docs/frameworks/nuxt/components/iab-consent-dialog) | `@inth/nuxt/components/iab-consent-dialog` | IAB TCF preference center. |
+| [`ConsentDevTools`](/docs/frameworks/nuxt/components/dev-tools) | `@inth/nuxt/devtools` | Development inspection panel. |
 
-Import the path components inside a Nuxt component's `<script setup>`:
+Import non-global components inside `<script setup>`:
 
 {/* example: fragment */}
 
@@ -33,40 +33,33 @@ import ConsentBanner from '@inth/nuxt/components/consent-banner';
 
 ## InthProvider or the parts
 
-`InthProvider` renders `ConsentBanner` and `ConsentManager`, or the IAB
-components when `iab` is set, for the visitor's policy. Mount `InthProvider`, or mount the parts,
-never both, or the visitor sees two banners. Always use the global
-`InthProvider` in Nuxt, not the one `@inth/vue/vue-plugin` exports. The global
-one renders the banner on the server. The module writes theme tokens into the page head
-whether you mount `InthProvider` or the parts.
+`InthProvider` renders `ConsentBanner` and `ConsentManager` (or the IAB
+components when `iab` is enabled) automatically for each visitor's policy.
+Mount either `InthProvider` or individual surfaces, never both, so visitors do
+not see two banners. Always use the global Nuxt `InthProvider` rather than the
+plain Vue export from `@inth/vue/vue-plugin` so the banner renders on the
+server.
 
 ## Use the components in Vue Vapor
 
-Nuxt 4.6 and later can compile your components with Vue Vapor. Vapor needs
-Vue 3.6, which is a release candidate, so install `vue` 3.6 alongside Nuxt and
-turn on `vue.vapor`:
+Nuxt 4.6+ supports Vue Vapor with Vue 3.6 enabled via `vue.vapor`:
 
 <include src="../../shared/examples/nuxt/vapor-nuxt-config.mdx" />
 
-Mark a page or component with `<script setup vapor>` to compile it with Vapor.
-Inth's components stay on the virtual DOM, and Nuxt renders them inside Vapor
-components through its interop layer. Mount `InthProvider` in a Vapor
-`app.vue`, pass slots to `ConsentGate` or `ConsentDialogLink`, and call
-the composables in a Vapor `<script setup>`, as you would elsewhere:
+In `<script setup vapor>` components, Nuxt renders Inth's virtual-DOM consent
+components through its interop layer. `InthProvider`, `ConsentGate`,
+`ConsentDialogLink`, and all composables work normally:
 
 <include src="../../shared/examples/nuxt/vapor-embed.mdx" />
 
-Vapor does not make the banner or the preference dialog faster, because they
-still render with the virtual DOM. The interop layer ships the Vapor runtime
-next to the virtual DOM one, so expect more JavaScript, not less: the
-`/consent-example` page of `internals/fixtures/nuxt-vapor` downloads about 18%
-more JavaScript than the same app without Vapor.
+Because the consent surfaces still use the virtual DOM, Vapor interop ships
+both runtimes (roughly 18% more client JavaScript in our `nuxt-vapor` fixture
+compared to standard Vue).
 
 ## Building blocks
 
-The stock surfaces are built from smaller components that the package also
-exports under `@inth/nuxt/components/`: `consent-button`, `consent-switch`,
-`consent-actions`, `consent-link`, `consent-legal-links`,
-`consent-description`, `consent-tag` and `consent-branding-icon`. For consent
-UI in your own markup, use the [headless composables](/docs/frameworks/nuxt/headless) instead. They give you
-the policy's actions and the draft state without the stock markup.
+Smaller building blocks are exported under `@inth/nuxt/components/`:
+`consent-button`, `consent-switch`, `consent-actions`, `consent-link`,
+`consent-legal-links`, `consent-description`, `consent-tag`, and
+`consent-branding-icon`. For custom markup, use the
+[headless composables](/docs/frameworks/nuxt/headless) instead.

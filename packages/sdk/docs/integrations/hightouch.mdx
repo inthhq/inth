@@ -1,24 +1,21 @@
 ---
 title: Hightouch
-description: Load the Hightouch Events browser SDK only after measurement consent with the Inth hightouch helper, and check page events in DevTools.
+description: Load the Hightouch Events browser SDK only after measurement consent with the Inth hightouch helper.
 seoTitle: Hightouch cookie consent with Inth
-seoDescription: Load the Hightouch Events SDK only with measurement consent. The Inth hightouch helper creates the htevents queue only with consent.
+seoDescription: Gate the Hightouch Events browser SDK on measurement consent and verify page events and revocation with Inth.
 icon: hightouch
 group: integrations
 ---
 
-The Inth `hightouch` helper keeps the Hightouch Events browser SDK off the page
-until `measurement` has consent. Until then, Inth does not create the
-`window.htevents` queue or load `events.min.js`. The helper sends no consent
-signal to Hightouch. If the visitor withdraws consent, Inth removes the script
-element. By default, Inth also reloads the page.
+The `hightouch` helper keeps `window.htevents` undefined and `events.min.js` off the page until visitors grant `measurement` consent, then removes the loader and reloads the page on withdrawal.
 
 ## Configure Hightouch
 
-Copy the write key from your Hightouch Event Source. Remove the original
-Hightouch snippet.
+Copy the write key from your Hightouch Event Source and remove any existing Hightouch snippet.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { hightouch } from '@inth/integrations/hightouch';
@@ -32,28 +29,23 @@ export const scripts = [hightouch({ writeKey: 'YOUR_WRITE_KEY' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `writeKey` | Required | Event Source write key passed to `htevents.load`. The helper trims it. Empty values log an error and the script does not load. |
-| `apiHost` | None | API host passed in the load options. Without it, the SDK uses `us-east-1.hightouch-events.com`. Set it only for another region or a first-party tracking host. A blank value is dropped. |
+| `writeKey` | Required | Event Source write key passed to `htevents.load`. Trimmed automatically; blank values log an error and skip loading. |
+| `apiHost` | None | Load-option API host override. Defaults to `us-east-1.hightouch-events.com` when omitted or blank. Set only for another region or a first-party tracking host. |
 | `trackPageView` | `true` | Queues `htevents.page()` after `load`. Set `false` when your router sends page calls. |
-| `scriptUrl` | `https://cdn.hightouch-events.com/browser/release/v1-latest/events.min.js` | Loader URL override. A blank value falls back to the default. |
+| `scriptUrl` | `https://cdn.hightouch-events.com/browser/release/v1-latest/events.min.js` | Loader URL override. Blank values use the default. |
 
 ## Loading and revocation
 
-`hightouch` uses the `measurement` category. When measurement becomes allowed,
-the helper creates the `window.htevents` queue with the snippet's methods,
-stores the write key and load options on it, and queues `load` and, by
-default, `page`. Then it loads `events.min.js`, which replays the queue.
+`hightouch` gates on `measurement`. On grant, Inth creates the `window.htevents` queue with the snippet's methods, stores the write key and load options, queues `load` and optional `page`, and loads `events.min.js` to replay the queue.
 
-On revocation the helper removes the script element and calls no Hightouch API.
-An Event Source can forward events to other destinations, so check each
-destination's purpose in Hightouch as well.
+On withdrawal, Inth removes the script element without calling a Hightouch API and reloads the page by default. Because an Event Source can forward events to downstream destinations, verify each destination's consent purpose in Hightouch too.
 
 ## Verify Hightouch
 
-Filter DevTools Network by `hightouch`. After you allow measurement,
-`events.min.js` loads and a page event reaches your API host. With client-side
-routing, check that each route change sends one page event, not two.
-`window.htevents` still exists after revocation, so check measurement
-permission before your own `htevents.track` calls.
+Filter DevTools Network by `hightouch`:
+
+1. Allow `measurement` and confirm `events.min.js` loads and a page event reaches your API host.
+2. Navigate between routes and confirm each route change sends one page event, not two.
+3. Because `window.htevents` remains defined after revocation before reload, guard your own `htevents.track` calls on current `measurement` permission.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

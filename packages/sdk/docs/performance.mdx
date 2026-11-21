@@ -1,0 +1,77 @@
+---
+title: Performance
+description: How Inth removes /v1/consent/init latency with build-time manifests, streams SSR consent without blocking paint, and defers UI and engine JavaScript.
+group: concepts
+---
+
+The Inth SDK keeps consent off your critical rendering path. Build-time policy manifests remove request-time `/v1/consent/init` calls on supported server-rendered frameworks, streamed SSR paints page HTML before consent resolves, and dynamic imports defer the preference dialog, engine, and translations until needed.
+
+## Zero `/v1/consent/init` at request time
+
+Server-rendered frameworks with a bundled manifest default to `manifest()`. Their build integration fetches your public policy snapshot from `/v1/consent/manifest` once during the build:
+
+- Next.js: `withConsentManifest()` from `@inth/nextjs/build`
+- TanStack Start: `consentManifest()` from `@inth/tanstack-start/build`
+- SvelteKit: `consentManifest()` from `@inth/svelte/vite`
+- Nuxt and Astro: built into `@inth/nuxt` and `@inth/astro`
+- Angular SSR: `provideInthServer()` from `@inth/angular/ssr` via `manifest()` or `createConsentRoute()`. Client-only `provideInth()` defaults to `hosted()`.
+
+Client-side apps using `@inth/react`, `@inth/vue`, `@inth/svelte`, or `@inth/sdk` default to `hosted()` and can opt in with `consentManifest()` from their package's build or Vite entry.
+
+At request time, your server resolves consent locally from the snapshot, cookie, location headers, language, and Global Privacy Control signal. No upstream `/v1/consent/init` request blocks the page response. Consent saves post to `/v1/consent/records`, and server adapters send detached background session reports to `/v1/consent/sessions` after the response finishes.
+
+In our Next.js manifest benchmark with 150 ms simulated upstream latency, warm manifest resolution cut median server response time for a new visitor from about 158 ms to about 7 ms.
+
+Rebuild after changing policies, translations, or vendors in Inth. If CI caches build output, force a fresh build.
+
+## Non-blocking SSR streaming
+
+In Next.js App Router, pass `resolveConsent()` to `InthProvider` without `await`, or stream consent from the root loader in TanStack Start. The server sends page HTML immediately while consent resolves in the same HTTP response; until then, the banner stays hidden and optional categories stay denied.
+
+In our consent-boundary benchmark under 4x CPU throttling, the streamed layout painted in about 90 ms, with a 92 ms median, while an awaited layout wrapped in `Suspense` painted in about 390 ms, with a 388 to 396 ms median, because React held the page reveal. When the upstream manifest hung for 10 seconds, the streamed layout still painted in 24 to 44 ms while the awaited layout stayed blank for 10 seconds.
+
+## Deferred UI and engine chunks
+
+First-load JavaScript carries only what the initial visit needs. The preference dialog, floating trigger, IAB TCF runtime, browser policy resolver, script loader, and non-English translations load on demand via `import()`.
+
+In Next.js, `InthProvider` also keeps the consent engine out of first-load JavaScript until `fetchpriority="high"` images load, the visitor interacts, or 10 seconds pass, keeping it off Largest Contentful Paint. Taps on Accept, Reject, or Customize still work before the engine loads: Accept and Reject update state and start plain permitted scripts immediately, and Customize prefetches the dialog chunk on pointer down.
+
+In the React bundle benchmark comparing `ConsentBanner` and `ConsentDialog` against c15t 2.0.0, current React components are 50.6 KB smaller raw and 13.0 KB smaller gzip. JavaScript dropped 68.5 KB raw, or 15.6 KB gzip, as styling moved into 17.9 KB raw, or 2.6 KB gzip, of CSS.
+
+## Inlined SSR styles and pre-hydration script start
+
+Stock components emit only the CSS rules they render. A server-rendered `ConsentBanner` inlines token, button, and banner rules in HTML, while dialog CSS loads with the dialog chunk. Removing the render-blocking stylesheet cut Next.js first paint from about 650 ms to about 370 ms under 4x CPU throttling and 150 ms RTT.
+
+In Next.js, TanStack Start, Nuxt, SvelteKit, and Angular SSR, scripts already allowed by a returning visitor or opt-out policy can start before hydration instead of waiting for the framework to boot.
+
+## Optional runtime tuning
+
+| Strategy | When to use it | Tradeoff |
+| --- | --- | --- |
+| Build-time manifest, `manifest()` | Default for server-rendered apps | Fastest cold and warm responses; policy edits need a rebuild |
+| Runtime manifest cache, `manifest({ source: 'runtime' })` | Policy edits apply without a rebuild | Warm servers resolve locally and refresh in the background; cold instances wait once for `/v1/consent/manifest` |
+| Inline `/v1/consent/init` prefetch | SPAs and static routes using `hosted()` | Starts `/v1/consent/init` in `<head>` while JS downloads; one upstream request per visit |
+| Same-origin proxy, `proxy: true` | Strict `connect-src 'self'` CSP or single origin | Avoids a second browser DNS and TLS hop; adds a server hop for saves |
+
+**Runtime manifest caching.** `mode: manifest({ source: 'runtime' })` fetches `/v1/consent/manifest` at runtime, caches it in memory and the Next.js Data Cache for 300 seconds by default, and refreshes expired copies in the background with `stale-while-revalidate`.
+
+**Inline `/v1/consent/init` prefetch for SPAs.** SPAs can start `/v1/consent/init` from an inline `<head>` script while JS downloads. Vite apps get this from `consentManifest()`, Nuxt adds it on `ssr: false` pages, TanStack Start exports `consentPrefetchHead`, and other apps can render `buildPrefetchScript({ projectUrl })` from their package's `/engine` entry, such as `@inth/react/engine`.
+
+**Same-origin proxy.** `proxy: true` with `routePrefix` in Next.js or TanStack Start routes saves through your app's origin. Measure host latency first, because each save hops through your server to Inth.
+
+## Benchmark conditions
+
+The figures above come from local synthetic benchmarks run between July and September 2026 on an Apple M5 Pro running Chromium via Playwright against localhost Next.js 16 production builds and a local fixture backend:
+
+- **Manifest SSR latency, 2026-09-10.** 10 steady-state samples per arm for new visitors on awaited SSR with 150 ms injected upstream latency.
+- **Consent-boundary paint, 2026-09-25.** 9 interleaved samples per arm on a Next.js 16 App Router build with `cacheComponents: true`, HTTP/2, and 4x CPU throttling.
+- **Bundle and CSS comparisons, July to September 2026.** Deterministic gzipped route asset measurements on local production builds.
+
+These runs isolate relative SDK overhead rather than production field latency. Measure your own host and traffic before tuning caching or streaming boundaries.
+
+## Next steps
+
+- [Consent modes](/docs/concepts/modes): compare `manifest()`, `hosted()`, and `testing()` across every framework.
+- [Data fetching](/docs/concepts/data-fetching): configure runtime caching, session reporting, journey IDs, and same-origin proxies.
+- [Choose your setup](/docs/concepts/choose-your-setup): pick the right rendering path for your framework.
+- [Next.js performance](/docs/frameworks/next/optimization): tune cache revalidation, background refresh, and engine loading in Next.js.

@@ -1,27 +1,20 @@
 ---
 title: Test your app
-description: Unit- and component-test a React Native or Expo app that uses @inth/react-native, with jest-expo, React Native Testing Library and a fake native consent core.
+description: Unit- and component-test React Native and Expo apps with jest-expo, React Native Testing Library, and a fake consent core.
 group: frameworks
 ---
 
-Jest and Vitest run your components without the native consent module, so a
-`InthProvider` on its own throws `NativeInthUnavailableError` there.
-`@inth/react-native/testing` gives a test the real consent client over a fake
-native core: you choose the starting consent, render your screens, check what
-they saved and answer the native prompt the way a person would.
+Jest and Vitest run without the native Inth module, so mounting `InthProvider` directly throws `NativeInthUnavailableError`. Use `@inth/react-native/testing` to run the real consent client over an in-memory fake core: pick the initial consent state, render your screens, assert what they saved, and answer the native prompt.
 
 ## Set up Jest with jest-expo
 
-Expo's recommended setup is the `jest-expo` preset with React Native Testing
-Library. Install them as dev dependencies:
+Install `jest-expo` and React Native Testing Library as dev dependencies:
 
 ```bash
 npx expo install --dev jest-expo jest @types/jest @testing-library/react-native test-renderer
 ```
 
-`@inth/react-native` ships ES modules, and `jest-expo` only compiles packages
-in its allowlist. Add `@inth` to the preset's `transformIgnorePatterns` entry
-in `package.json`:
+Because `@inth/react-native` ships ES modules, add `@inth` to `transformIgnorePatterns` in `package.json`:
 
 ```json title="package.json"
 {
@@ -37,118 +30,63 @@ in `package.json`:
 }
 ```
 
-Without it, Jest stops at the first import with `Must use import to load ES
-Module`. This setting replaces the preset's whole list. If your project uses
-Reanimated, also keep the preset's `/node_modules/react-native-reanimated/plugin/`
-entry. You can read your installed preset's list in
-`node_modules/jest-expo/jest-preset.js`.
-
-Importing `@inth/react-native` in Jest does not touch the native module. The
-lookup runs when a provider or client first needs it, so plain logic tests
-can import the package without a test client.
+Without `@inth` in the allowlist, Jest stops with `Must use import to load ES Module`. Keep any extra entries your preset needs (such as `/node_modules/react-native-reanimated/plugin/`; check `node_modules/jest-expo/jest-preset.js`). Plain logic tests can import `@inth/react-native` without creating a test client because native lookup waits until a provider or client starts.
 
 ## Write a component test
 
-This screen turns analytics on only while measurement is allowed, and has its
-own accept button:
+This screen enables analytics while measurement is allowed and exposes an accept button:
 
 <include src="../../shared/examples/react-native-bare/testing-screen.mdx" />
 
-The test creates a test client, passes its `client` to `InthProvider`, and
-drives the screen with React Native Testing Library:
+Create a test client, pass `consent.client` to `InthProvider`, and drive the UI with React Native Testing Library:
 
 <include src="../../shared/examples/react-native-bare/testing-component-test.mdx" />
 
-Run `npm test`. All three tests pass:
-
-- The first presses the screen's button, waits for `Analytics on`, and checks
-  that the app sent accept all.
-- The second changes consent from the native side and sees the screen follow
-  it.
-- The third lets the provider present the native prompt, then answers it.
-
-React Native Testing Library 14 makes `render` and `fireEvent` async, so
-`await` them.
+Run `npm test` to verify all three cases: saving accept-all from the screen, reacting to a native-side consent update, and answering the auto-presented native prompt. (`render` and `fireEvent` are async in React Native Testing Library 14, so `await` them.)
 
 ## Choose the starting consent
 
-`createTestConsentClient(options)` takes the state the native core holds when
-the test starts. Call it once per test. Each call replaces the previous test
-client.
+Call `createTestConsentClient(options)` once per test (each call replaces the previous test client):
 
-| Option | Default | What it does |
+| Option | Default | Behavior |
 | --- | --- | --- |
-| `consent` | `'unset'` | `'unset'`: no choice yet, the prompt is owed and optional categories are denied. `'granted'` or `'denied'`: a stored choice for every optional category. An object such as `{ measurement: true }`: a stored choice where the categories you leave out are denied. |
-| `ready` | `true` | `false` keeps the core starting, so every optional category reads `pending` and `useConsent` returns `false`. Call `consent.setReady()` to finish. |
-| `nativeUI` | `true` | `false` tests a build without the stock native screens. The provider then presents nothing; render it with `autoPresent={false}` so it needs no `privacyPolicyUrl`. |
-| `trackingAuthorization` | `'unsupported'` | The App Tracking Transparency answer. `'unsupported'` is Android's answer, so nothing asks Apple. |
-| `snapshot` | none | Raw snapshot fields set over the others, such as `{ model: 'opt-out' }`. |
+| `consent` | `'unset'` | `'unset'` owes a prompt with optional categories denied; `'granted'` or `'denied'` stores that choice for all optional categories; an object like `{ measurement: true }` stores those choices with omitted categories denied. |
+| `ready` | `true` | `false` holds startup in `pending` (`useConsent` returns `false`) until you call `consent.setReady()`. |
+| `nativeUI` | `true` | `false` simulates a build without stock native screens (render `InthProvider` with `autoPresent={false}`). |
+| `trackingAuthorization` | `'unsupported'` | Simulated Apple ATT status (`'unsupported'` matches Android). |
+| `snapshot` | none | Raw snapshot field overrides such as `{ model: 'opt-out' }`. |
 
 ## Check what the app saved
 
-`consent.commits` lists what your JavaScript sent to the native core, in
-order:
+`consent.commits` records every JavaScript save sent to the core in order:
 
-| Your code | Entry |
+| App call | Recorded entry |
 | --- | --- |
 | `useSaveConsents()('all')` | `{ action: 'all' }` |
 | `useSaveConsents()('none')` | `{ action: 'necessary' }` |
 | `useSaveConsents()({ measurement: true })` | `{ action: 'explicit', consents: { measurement: true } }` |
 
-The fake stores each commit the way the native core does: the categories it
-names change and the hooks rerender. Accept all and reject all answer the
-prompt. A per-category save answers only the categories it names, and the
-others keep their value, so the prompt stays owed until every category in the
-policy has an answer.
+Accept all and reject all satisfy the owed prompt; per-category saves update only the named categories while leaving the prompt owed until every in-scope category has an answer.
 
 ## Change consent from the native side
 
-Consent can change outside your JavaScript, for example on a native screen. In
-a test, call `consent.setConsent(state)` with the same values `consent` takes.
-`consent.setReady()` finishes start-up, and `consent.setReady(false)` goes back
-to it. Components that read a category that moved rerender at once. The
-helpers wrap the change in React's `act` when React Native Testing Library has
-turned on its act environment, so you do not wrap them yourself.
+Call `consent.setConsent(state)` with the same shapes accepted by `consent`, or toggle readiness with `consent.setReady(true | false)`. Affected hooks rerender immediately, wrapped in React's `act` automatically when the act environment is enabled.
 
 ## Answer the native prompt
 
-The fake presenter behaves like the native one, but draws nothing:
+The fake presenter mirrors native lifecycle rules without rendering UI:
 
-- An `InthProvider` that presents (the default, with a `privacyPolicyUrl`)
-  opens the owed prompt by itself as soon as it mounts. `consent.prompt.current`
-  then has `automatic: true`.
-- `presentConsentPrompt()` opens the prompt when one is owed, and answers
-  `not-required` when it is not. `presentPreferences()` always opens. Both
-  answer `already-presented` while a screen is open.
-- `consent.prompt.acceptAll()`, `rejectAll()` and `save({ marketing: true })`
-  store the choice and close the screen with a `committed` outcome.
-  `acknowledge()` answers a notice: it records the acknowledgement, stores no
-  consent and closes the screen with an `acknowledged` outcome.
-  `dismiss()` closes it without an answer, and the prompt stays owed. A
-  provider does not open a dismissed choice prompt again by itself until the
-  prompt changes, for example after consent is reset; a notice opens again.
-- As on a device, an answer is not stored, and the screen stays open, while the
-  policy is pending, or when standing preferences were opened before consent
-  changed elsewhere. The first layer follows such changes and saves normally.
-  The choice actions throw on a notice, and `acknowledge()` throws on anything
-  that is not a notice. `save()` with nothing changed and nothing owed closes
-  the screen as `dismissed` and writes nothing.
-- `client.reset()` leaves the cold-start state: nothing granted, no policy and
-  no prompt. Call `consent.setReady()` to finish start-up; the policy resolves
-  again and the choice prompt is owed.
+- A default `InthProvider` (with `privacyPolicyUrl`) opens an owed prompt on mount (`consent.prompt.current` has `automatic: true`).
+- `presentConsentPrompt()` opens when owed (`not-required` otherwise), `presentPreferences()` always opens, and both return `already-presented` while open.
+- `consent.prompt.acceptAll()`, `rejectAll()`, and `save({ marketing: true })` persist choices and close with `committed`. `acknowledge()` closes a notice with `acknowledged` without granting optional consent. `dismiss()` closes without saving (keeping the choice owed without re-auto-presenting until the requirement changes).
+- Saves do not commit while policy is pending or when standing preferences are stale. Choice actions throw on notices, `acknowledge()` throws on non-notices, and calling prompt methods while `consent.prompt.isOpen` is `false` throws.
+- `client.reset()` returns to cold start until you call `consent.setReady()`.
 
-Check `consent.prompt.isOpen` to see whether a screen is open. Answering when
-none is open throws, so a test that expected a prompt fails at that line.
-Choices made on the native screens do not appear in `consent.commits`, because
-the native screens save without going through JavaScript. Read the result from
-your rendered screen or from `consent.client.getSnapshot()`.
+Native prompt answers do not appear in `consent.commits`; read them from rendered UI or `consent.client.getSnapshot()`.
 
-## Test a component that renders its own provider
+## Test components with their own provider
 
-The test client is also the app's shared client until the next test client
-replaces it. A root component that renders `<InthProvider>` without a
-`client` prop, and integrations created without a `client` option, reach the
-same fake. You can render your whole `App` without changing it:
+The active test client also backs the default shared client, so you can render an unmodified root `<App />`:
 
 {/* example: fragment */}
 
@@ -161,25 +99,12 @@ expect(consent.prompt.isOpen).toBe(true);
 
 ## Use Vitest
 
-`createTestConsentClient` does not depend on Jest. In Vitest, your setup must
-load React Native the way any React Native component test needs, for example
-with a plugin that compiles `react-native` or an alias to a stand-in. Once
-`react-native` resolves, the test code is the same, with `test` and `expect`
-imported from `vitest`. Add `@inth/react-native` to `server.deps.inline` as
-well: the package leaves some imports without a file extension so Metro can
-pick each platform's file, and Node cannot load those on its own. A test that
-runs under a web preset gets the web client, which has no native screens:
-pass `nativeUI: false` to `createTestConsentClient()` and drive the
-JavaScript UI, since `consent.prompt` simulates the native screens only.
+`createTestConsentClient` works with Vitest once `react-native` is configured for your runner and `@inth/react-native` is added to `server.deps.inline` (so Node resolves extensionless platform imports). Under a web preset, pass `nativeUI: false` and test your JS banner because `consent.prompt` simulates native screens only.
 
-## What the fake does not cover
+## Limits of the fake core
 
-- It stores categories, not IAB TCF choices. An IAB save applies its category
-  consents and ignores the vendor and purpose choices.
-- `identify`, `logout`, `refresh` and `setOverrides` resolve without changing
-  consent.
-- A tracking request answers with `trackingAuthorization` and never shows a
-  prompt.
+- Category consent only (IAB vendor and purpose choices are ignored).
+- `identify`, `logout`, `refresh`, and `setOverrides` resolve as no-ops.
+- Tracking requests return `trackingAuthorization` without prompting.
 
-To check the real native screens, policy resolution and storage, run the app
-on a device. See [Verify mobile consent](/docs/frameworks/react-native/verify).
+Verify real native screens, policy resolution, and Keychain/SharedPreferences persistence on a device using [Verify mobile consent](/docs/frameworks/react-native/verify).

@@ -1,15 +1,14 @@
 ---
 title: ConsentWidget
-description: Embed the Inth preference controls inline on a TanStack Start privacy page with ConsentWidget, recording a choice only when the visitor saves.
+description: Embed the Inth preference center inline on a TanStack Start privacy page with ConsentWidget.
 group: frameworks
 ---
 
+Embed category switches and Save, Accept All, and Reject All actions directly on a TanStack Start privacy or settings route.
+
 ## Embed the preference center in a page
 
-`ConsentWidget` renders the category switches and the Reject All, Accept All
-and Save Settings actions in the page flow instead of a modal. Use it on a privacy or
-settings route. Keep `ConsentDialog` in the root route too, so the banner's
-Customize button still has a dialog to open.
+`ConsentWidget` renders the preference center inline without a modal. Keep `ConsentDialog` mounted in the root route so the banner's Customize button and footer links still open the modal:
 
 {/* example: fragment */}
 
@@ -30,9 +29,7 @@ const PrivacyPage = () => (
 export const Route = createFileRoute('/privacy')({ component: PrivacyPage });
 ```
 
-The widget uses `InthProvider`'s policy, translations and backend. It needs no
-second provider. `useConsentDraft` and `ConsentDraftProvider` also import from
-`@inth/tanstack-start`.
+`ConsentWidget` shares `InthProvider`'s policy, translations, and Inth project connection without a second provider. Import `useConsentDraft` and `ConsentDraftProvider` from `@inth/tanstack-start`.
 
 <import src="../../../shared/react/components/consent-widget.mdx#props" />
 

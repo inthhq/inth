@@ -1,65 +1,62 @@
 ---
 title: IABConsentBanner
-description: Show the IAB TCF 2.4 first-layer banner to visitors under an IAB policy in an Angular app with inth-iab-consent-banner, its inputs and behavior.
+description: Render the IAB TCF 2.4 first-layer banner in Angular with inth-iab-consent-banner.
 group: frameworks
 ---
 
+Render the IAB TCF 2.4 first-layer consent banner for visitors under an IAB
+policy with `<inth-iab-consent-banner>`.
+
 ## Show the TCF banner
 
-`<inth-iab-consent-banner>` is the first layer of the IAB TCF consent flow. It
-lists the purposes, special features and number of vendors from the Global
-Vendor List, and offers Accept all, Reject all and Customize. It renders only
-for visitors whose resolved policy uses the `iab` model, so render it next to
-the standard `<inth-consent-banner>`, which covers everyone else:
+`<inth-iab-consent-banner>` lists TCF purposes, special features and partner
+counts from the Global Vendor List, with Accept all, Reject all and Customize
+actions. Render it next to `<inth-consent-banner>`, which handles visitors
+outside IAB regions:
 
 <include src="../../../shared/examples/angular/iab-surfaces.mdx" />
 
-Turn IAB on with the `iab` option of `provideInth()` first; [IAB TCF](../iab)
-covers the CMP ID, the vendor list and the provider options.
+Configure the `iab` option on `provideInth()` first; see [IAB TCF](../iab).
 
 ## Inputs
 
 | Input | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `primaryButton` | `'accept'`, `'reject'` or `'customize'` | `'customize'` | Which button gets the primary style. |
+| `primaryButton` | `'accept'`, `'reject'` or `'customize'` | `'customize'` | Button given primary styling. |
 | `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag. |
-| `models` | `Model[]` | `['iab']` | Policy models the banner renders for. |
-| `noStyle` | `boolean` | provider's `noStyle` | Drops Inth's classes. |
-| `disableAnimation` | `boolean` | provider's value | Shows and hides without a transition. |
-| `scrollLock`, `trapFocus` | `boolean` | provider's value | Lock page scroll or trap focus while the banner shows. The policy's presentation can still make it blocking. |
+| `models` | `Model[]` | `['iab']` | Policy models rendered by this banner. |
+| `noStyle` | `boolean` | provider `noStyle` | Drops `inth` classes. |
+| `disableAnimation` | `boolean` | provider value | Disables enter and exit transitions. |
+| `scrollLock`, `trapFocus` | `boolean` | provider value | Lock page scroll or trap focus while open. Policy presentation can still enforce blocking. |
 | `rootClass` | `string` | none | Extra class on the root element. |
 
-The banner has no text inputs. Its copy comes from the IAB translations, in
-the visitor's language. `resolveIABCopy(consent.copy())` from
-`@inth/angular/iab` returns the same copy for a custom IAB banner.
+Copy comes from IAB translations in the visitor's language. Use
+`getIABTranslations()` from `@inth/angular/iab` for custom IAB banners.
 
 ## Behavior
 
-- The banner stays hidden until an IAB policy resolves and the vendor list is
-  available. Forcing it does not create either.
-- Accept all and Reject all record the visitor's TCF choice and write the TC
-  String. The banner closes as soon as the click is handled. It comes back
-  only if nothing could be recorded, such as when the vendor list failed to
-  load, so the visitor can try again. A failed backend request never reopens
-  it.
-- Customize opens `<inth-iab-consent-dialog>` on the purposes tab, so render
-  it too. The partners link in the description opens it on the vendors tab.
-- The `__tcfapi` function is available once the TCF add-on loads, whether or
-  not the banner is showing, so vendor scripts can read the TC String.
+- Stays hidden until an IAB policy resolves and the Global Vendor List loads.
+- Accept all and Reject all record TCF consent, write the TC String and close
+  immediately. The banner reopens only if recording failed locally (such as a
+  missing GVL).
+- Customize opens `<inth-iab-consent-dialog>` on the purposes tab; the
+  partners link opens it on the vendors tab.
+- `__tcfapi` becomes available once the TCF add-on loads regardless of banner
+  visibility.
 
 ## Accessibility
 
-The banner card is a `region` labelled with the banner title. When the
-banner is blocking, it becomes a `dialog` with `aria-modal="true"`. The title
-is an `h2`, and every control is a native `<button>`.
+Renders as a `region` labelled by its `<h2>` title, or a modal `dialog` with
+`aria-modal="true"` when blocking. All actions are native `<button>`
+elements.
 
 ## Style the banner
 
-`<inth-iab-consent-banner>` adds its own rules to `<head>`, including the
-first-paint rules it needs before its elements render. With `styles: false`,
-add `@inth/angular/iab/styles.css` after `@inth/angular/styles.css` in
-`angular.json`. It reads the `iabConsentBanner`, `iabConsentBannerCard`,
+Injects its own CSS into `<head>` on mount. With `styles: false`, add
+`@inth/angular/iab/styles.css` after `@inth/angular/styles.css` in
+`angular.json`. Reads `iabConsentBanner`, `iabConsentBannerCard`,
 `iabConsentBannerHeader`, `iabConsentBannerFooter`, `iabConsentBannerTag` and
-`iabConsentBannerOverlay` theme slots. Buttons carry
+`iabConsentBannerOverlay` theme slots. Action buttons carry
 `data-testid="iab-consent-banner-accept-button"`,
-`iab-consent-banner-reject-button` and `iab-consent-banner-customize-button`.
+`data-testid="iab-consent-banner-reject-button"` and
+`data-testid="iab-consent-banner-customize-button"`.

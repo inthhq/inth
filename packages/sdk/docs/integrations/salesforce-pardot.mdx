@@ -1,29 +1,17 @@
 ---
 title: Salesforce Account Engagement
-description: Gate Salesforce Account Engagement tracking on marketing consent, configure its consent API or classic Pardot snippet, and verify revocation with Inth.
+description: Gate Salesforce Account Engagement tracking on marketing consent using the Tracking and Consent API or classic Pardot snippet with Inth.
 seoTitle: Salesforce Pardot cookie consent with Inth
-seoDescription: Load Account Engagement only after marketing consent. Configure Pardot tracking, revoke consent and verify vendor requests with Inth.
+seoDescription: Load Salesforce Account Engagement only after marketing consent with Inth, revoke via pdt('revokeConsent'), and verify storage.
 icon: chart-line
 group: integrations
 ---
 
-Account Engagement, formerly Pardot, tracks visitors and prospects for
-Salesforce B2B marketing. The Inth `pardotTracking` helper waits for
-`marketing` consent before it creates Pardot globals or downloads the tracker.
-The default mode uses Account Engagement's Tracking and Consent API. The
-helper also supports the classic `pd.js` snippet.
-
-When the visitor withdraws, consent mode calls `pdt('revokeConsent')`. Classic
-mode has no revoke call. In both modes, Inth reloads the page, and the reload
-stops the running tracker.
+The `pardotTracking` helper waits for `marketing` consent before creating Pardot globals or downloading Salesforce Account Engagement, formerly Pardot. It defaults to `consent` mode for the Tracking and Consent API and also supports `classic` mode for the `pd.js` snippet. On withdrawal, `consent` mode calls `pdt('revokeConsent')`, and Inth reloads the page by default in both modes.
 
 ## Configure Salesforce Account Engagement
 
-Turn on the Tracking and Consent API in Account Engagement before you use
-consent mode, and use its verified tracker domain. Copy `piAId` and `piCId`
-from the generated tracking snippet as they are. They already include
-Salesforce's +1000 offset, and the helper doesn't add it again. Then remove
-the original tracking snippet.
+Enable the Tracking and Consent API in Account Engagement before using `consent` mode, and use your verified tracker domain. Copy `piAId` and `piCId` exactly from the generated snippet; they already include Salesforce's +1000 offset, and the helper does not add it again. Remove the original tracking snippet.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
@@ -37,62 +25,37 @@ Replace `pi.pardot.com` in the example with your verified tracker domain.
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `piAId` | Required | Account ID from the tracking snippet, as a string or number. Must be a positive integer. |
-| `piCId` | Required | Campaign ID from the tracking snippet, as a string or number. Must be a positive integer. |
-| `piDomain` | Required in consent mode | Verified tracker hostname, without a scheme or path. |
-| `mode` | `consent` | `consent` uses the Tracking and Consent API. `classic` loads the older `pd.js` snippet, which has no revoke call. |
-| `piHostname` | `pi.pardot.com` | Tracker hostname in classic mode, set as `window.piHostname`. |
-| `category` | `marketing` | Consent condition for the whole loader. |
-| `scriptUrl` | `https://<piDomain>/pdt.js?aid=<piAId>` | Loader override. Classic mode defaults to `https://pi.pardot.com/pd.js`. Blank overrides use the default. |
+| `piAId` | Required | Account ID from the tracking snippet, as a string or positive integer. |
+| `piCId` | Required | Campaign ID from the tracking snippet, as a string or positive integer. |
+| `piDomain` | Required in `consent` mode | Verified tracker hostname without scheme or path. |
+| `mode` | `'consent'` | `'consent'` uses the Tracking and Consent API. `'classic'` loads `pd.js`, which has no revoke call. |
+| `piHostname` | `'pi.pardot.com'` | Tracker hostname in `classic` mode, set as `window.piHostname`. |
+| `category` | `'marketing'` | Consent condition for the loader. |
+| `scriptUrl` | `https://<piDomain>/pdt.js?aid=<piAId>` | Loader URL override. Classic mode defaults to `https://pi.pardot.com/pd.js`; blank values use the default. |
 
-The helper logs an error and never loads the tracker when a required value is
-missing or blank, when an ID isn't a safe positive integer, when a tracker
-domain isn't a hostname, or when `mode` isn't `consent` or `classic`.
+The helper logs an error and skips loading if a required value is blank, an ID is not a safe positive integer, a tracker domain is not a hostname, or `mode` is neither `'consent'` nor `'classic'`.
 
 ## Loading and revocation
 
-Consent mode starts after hydration, even when the visitor allowed marketing
-on an earlier visit. It waits for the client loader to confirm the SDK is
-ready before it turns tracking on. Classic mode can start from the
-server-rendered HTML.
+Consent mode starts after hydration, even when `marketing` was granted on an earlier visit, waiting for the client loader to confirm the SDK is ready before enabling tracking. Classic mode can start from server-rendered HTML.
 
-After consent, the helper creates the `pdt.cq` queue and configures the
-tracker with numeric IDs. It hides Salesforce's own consent banner without
-changing consent, and starts with `setOptIn(false)`. After the SDK loads, it
-calls `setOptIn(true)` and sends one page view. Changes to other categories
-don't send another view. A detached in-flight load can't turn tracking on.
+After consent, the helper creates the `pdt.cq` queue with numeric IDs, hides Salesforce's built-in consent banner without changing consent, and starts with `setOptIn(false)`. Once `pdt.js` loads, it calls `setOptIn(true)` and sends one page view. Changes to unrelated categories do not trigger extra page views, and a detached in-flight load cannot enable tracking.
 
-On withdrawal, the helper calls `pdt('revokeConsent')`. It doesn't call
-`clearTrackingCookies`, because that also deletes the cookie that records the
-refusal, so later page views could be tracked. On a new grant, the helper
-reuses the tracker configuration and sends a new page view through the loaded
-SDK. The consent-mode loader stays in the DOM, because downloading `pdt.js`
-again replaces its configured dispatcher. If you call `pardotTracking` again
-with the same options, the helper keeps the tracker configuration across the
-new grant. Classic mode can't stop its running SDK through this helper.
-
-Keep `reloadOnConsentRevoked` enabled in both modes. Clearing consent makes
-vendor requests, and late in-flight responses can restore cookies. Removing a
-script doesn't stop pending requests. The next page doesn't load Pardot while
-its consent is denied.
+- **Revocation in consent mode.** The helper calls `pdt('revokeConsent')`. It never calls `clearTrackingCookies`, because that deletes the refusal cookie and could allow later tracking. The loader stays in the DOM because reloading `pdt.js` replaces its configured dispatcher. On regrant, or when `pardotTracking` is called again with equal options, the helper reuses the configuration and sends a new page view.
+- **Revocation in classic mode.** Classic `pd.js` has no stop or revoke call.
+- **Keep reload enabled.** Keep `reloadOnConsentRevoked` enabled in both modes. Clearing consent makes vendor requests, late in-flight responses can restore cookies, and removing a script element does not stop pending requests.
 
 ## Cookies and storage
 
-Pardot can set `visitor_id<id>`, `visitor_id<id>-hash`, `pi_opt_in<id>`,
-`lpv<id>` and `pardot` cookies. A cookie suffix can be the account ID minus
-1000\. The reload doesn't erase vendor cookies.
+Pardot sets `visitor_id<id>`, `visitor_id<id>-hash`, `pi_opt_in<id>`, `lpv<id>`, and `pardot` cookies, where `<id>` can be the account ID minus 1000. Reloading does not erase existing vendor cookies.
 
 ## Verify Salesforce Account Engagement
 
-Before consent, check that there is no `pdt.js` or `pd.js` request, no `pdt` or
-`piAId` global, and no vendor cookies or browser storage. Allow an unrelated
-category and check again. Allow marketing to load the consent dispatcher, then
-withdraw it. Confirm that the refusal cookie stays until your own cleanup or
-its expiry. Allow marketing again and check for one new page view with your
-own account.
+1. Before consent and after allowing only an unrelated category, confirm no `pdt.js` or `pd.js` request, `pdt` or `piAId` global, cookies, or browser storage appear.
+2. Allow `marketing` and confirm the consent dispatcher loads and sends one page view.
+3. Withdraw `marketing` and confirm `pdt('revokeConsent')` runs and the refusal cookie persists until cleanup or expiry.
+4. Allow `marketing` again and confirm one new page view fires with your account.
 
-Sources: Salesforce's [setup guide](https://developer.salesforce.com/docs/marketing/pardot/guide/tracking-and-consent-getting-started.html),
-[consent functions](https://developer.salesforce.com/docs/marketing/pardot/guide/tracking-and-consent-functions.html)
-and [classic snippet](https://help.salesforce.com/s/articleView?id=000381476\&language=en_US\&type=1).
+Sources: Salesforce's [setup guide](https://developer.salesforce.com/docs/marketing/pardot/guide/tracking-and-consent-getting-started.html), [consent functions](https://developer.salesforce.com/docs/marketing/pardot/guide/tracking-and-consent-functions.html), and [classic snippet](https://help.salesforce.com/s/articleView?id=000381476\&language=en_US\&type=1).
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

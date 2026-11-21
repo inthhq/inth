@@ -1,15 +1,14 @@
 ---
 title: ConsentBanner
-description: Render the Inth consent banner in a TanStack Start app, set its variant and position, and override its labels.
+description: Render the Inth consent banner in TanStack Start, set its variant and position, and override labels.
 group: frameworks
 ---
 
+Render `ConsentBanner` once inside `InthProvider`, next to `ConsentDialog`, so visitors see the right prompt in the initial server HTML.
+
 ## Render the banner
 
-Render `ConsentBanner` once inside `InthProvider`, next to `ConsentDialog`. The
-[quickstart](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route)
-does this in the root route. With an awaited root loader, the banner is part of
-the server HTML for visitors who owe a choice.
+The [quickstart](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route) mounts `ConsentBanner` in `src/routes/__root.tsx`. With an awaited root loader, the banner ships in the first HTML for visitors who owe a choice.
 
 {/* example: fragment */}
 
@@ -20,11 +19,7 @@ import { ConsentBanner } from '@inth/tanstack-start';
 <ConsentBanner variant="bar" position="bottom" />;
 ```
 
-The banner renders what the active policy requires. A `choice` prompt shows
-reject and accept at equal prominence, plus customize when the policy offers it.
-A `notice` prompt shows an "OK" button and a "Do not sell or share my data"
-button that opens preferences. A policy with `prompt: 'none'` renders nothing,
-and so does a visitor whose policy has not resolved.
+The banner adapts to the active policy rule. A `choice` prompt displays Reject and Accept at equal prominence plus Customize when offered. A `notice` prompt displays an "OK" button and a "Do not sell or share my data" button that opens preferences. A rule with `prompt: 'none'`, or an unresolved policy, renders nothing.
 
 ## Props
 
@@ -32,9 +27,7 @@ and so does a visitor whose policy has not resolved.
 
 ## Variants
 
-The policy decides which actions the banner offers. The variant decides their
-shape. Set `variant` on the banner, or `options.presentation.prompt` on
-`InthProvider` for every banner. The prop wins.
+The policy determines which actions appear, while `variant` sets the banner shape. Pass `variant` on `ConsentBanner`, or configure `options.presentation.prompt` on `InthProvider` for a global default. The component prop takes precedence.
 
 | Variant | Positions | Default |
 | --- | --- | --- |
@@ -43,8 +36,4 @@ shape. Set `variant` on the banner, or `options.presentation.prompt` on
 | `widget` | `bottom-left`, `bottom-right`, `top-left`, `top-right` | `bottom-right` |
 | `wall` | `center` | `center` |
 
-A `wall` blocks the page until the visitor answers. A notice never blocks, so a
-notice `wall` falls back to `floating`. Every part is also available as
-`ConsentBanner.<Part>` for custom layouts, such as `ConsentBanner.Root`,
-`ConsentBanner.Card` and `ConsentBanner.PolicyActions`.
-[Customize](/docs/frameworks/tanstack-start/customize) covers tokens and slots.
+A `wall` blocks page interaction until the visitor responds; notices never block, so a notice `wall` falls back to `floating`. Every part is available as `ConsentBanner.<Part>` (`Root`, `Card`, `PolicyActions`, and more) for custom layouts. See [Customize](/docs/frameworks/tanstack-start/customize) for tokens and slots.

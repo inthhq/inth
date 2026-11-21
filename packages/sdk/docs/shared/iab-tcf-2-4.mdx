@@ -1,13 +1,13 @@
 ## Inth's IAB CMP registration
 
-Inth makes Inth. Inth's legal entity, Consent Management Inc., is registered
-with IAB Europe as a CMP under CMP ID 490. The
+Inth's legal entity, Consent Management Inc., is registered with IAB Europe
+as a CMP under CMP ID 490. The
 [IAB Europe CMP list](https://iabeurope.eu/cmp-list/) shows it under the name
 Consent Management Inc.
 
 ## How the preference centre shows features
 
-The stock IAB preference centres in React, Next.js, Vue, Svelte, Astro and the
+The stock IAB preference centres in React, Next.js, Vue, Svelte, Astro, Angular and the
 script tag follow TCF 2.4 and Policies v5.0.b. Special purposes stay in their
 locked section with a lock icon, because the visitor cannot object to them.
 
@@ -69,8 +69,8 @@ Inth stores TCF choices per site and browser, which the TCF calls
 service-specific scope. It does not sync TC strings across devices, and every
 TC string it writes has `IsServiceSpecific` set to `1`.
 
-Do not use your own account data to skip the TCF banner on another device. That
-turns the choice into multi-device scope, which the TCF requires you to disclose
-in the first layer, and Inth does not show that disclosure. The
-`isServiceSpecific` option is deprecated. Inth ignores it and logs a warning
-when you pass `false`.
+Do not use `/consent/check` or your own account data to skip the TCF banner on
+another device. That turns the choice into multi-device scope, which the TCF
+requires you to disclose in the first layer, and Inth does not show that
+disclosure. The `isServiceSpecific` option is deprecated. Inth ignores it and
+logs a warning when you pass `false`.

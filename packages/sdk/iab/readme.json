@@ -29,11 +29,11 @@
 		"Configure Inth with the IAB consent model for jurisdictions that require TCF workflows",
 		"Use the React IAB components for a prebuilt TCF banner and preference center",
 		"Use headless APIs when you need a custom IAB consent experience",
-		"Use `createGPP` from `@inth/sdk-iab/gpp` to signal US state opt-outs and GPC to ad tech; see the [IAB GPP docs](https://c15t.com/docs/frameworks/javascript/gpp)",
-		"For full implementation details, see the [IAB TCF 2.4 docs](https://c15t.com/docs/frameworks/react/iab)"
+		"Use `createGPP` from `@inth/sdk-iab/gpp` to signal US state opt-outs and GPC to ad tech; see the [IAB GPP docs](https://inth.com/docs/frameworks/javascript/gpp)",
+		"For full implementation details, see the [IAB TCF 2.4 docs](https://inth.com/docs/frameworks/react/iab)"
 	],
-	"docsLink": "https://c15t.com/docs/frameworks/react/iab",
-	"quickStartLink": "https://c15t.com/docs/frameworks/react/iab",
+	"docsLink": "https://inth.com/docs/frameworks/react/iab",
+	"quickStartLink": "https://inth.com/docs/frameworks/react/iab",
 	"showCLIGeneration": false,
 	"customSections": {
 		"Related Packages": "- [@inth/react](https://www.npmjs.com/package/@inth/react): React IAB consent banner, dialog, and hooks through @inth/react/iab\n- [@inth/sdk](https://www.npmjs.com/package/@inth/sdk): the consent engine with this IAB TCF support"

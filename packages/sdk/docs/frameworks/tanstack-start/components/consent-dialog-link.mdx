@@ -1,16 +1,14 @@
 ---
 title: ConsentDialogLink
-description: Add a ConsentDialogLink to a TanStack Start footer so visitors can reopen the Inth preference dialog from your own text link.
+description: Add a ConsentDialogLink to your TanStack Start footer so visitors can reopen privacy preferences anytime.
 group: frameworks
 ---
 
+Add an unstyled button to your TanStack Start footer or legal menu so visitors can reopen preferences after closing the banner.
+
 ## Reopen preferences from your footer
 
-`ConsentDialogLink` is an unstyled button that opens the preference dialog.
-Put it where your site keeps its legal links so preferences stay reachable
-after the banner closes. The
-[quickstart](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route)
-renders one in the root route's footer.
+The [quickstart](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route) renders `ConsentDialogLink` inside the root route footer.
 
 {/* example: fragment */}
 
@@ -29,12 +27,9 @@ export function SiteFooter() {
 }
 ```
 
-Render the footer inside `InthProvider`, with `ConsentDialog` mounted. It
-renders a `button`; pass `asChild` to render your own link element instead.
+Render your footer inside `InthProvider` with `ConsentDialog` mounted. `ConsentDialogLink` renders a `<button>` by default; pass `asChild` to render your own link element instead.
 
-`@inth/tanstack-start/components/consent-dialog-link` exports `ConsentDialogLink`
-and nothing else. Import from that path when a module needs only the link, so
-it does not load the rest of the adapter.
+To avoid pulling the full adapter into a module that only renders the footer link, import from `@inth/tanstack-start/components/consent-dialog-link`.
 
 <import src="../../../shared/react/components/consent-dialog-link.mdx#props" />
 

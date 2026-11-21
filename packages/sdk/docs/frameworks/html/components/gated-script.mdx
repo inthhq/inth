@@ -1,61 +1,58 @@
 ---
 title: Gated scripts
-description: Hold a vendor's script tag on a plain HTML page until its consent category is allowed with type="text/plain" and data-inth-category, including load order, copied attributes and what happens on withdrawal.
+description: Hold vendor script tags on plain HTML pages until consent allows them with type="text/plain" and data-inth-category.
 group: frameworks
 ---
 
+Hold third-party `<script>` tags inert until their consent category is
+allowed using `type="text/plain"` and `data-inth-category`.
+
 ## Make a script wait for consent
 
-Change the vendor's `<script>` to `type="text/plain"` and name the category it
-needs in `data-inth-category`. Browsers do not run a `text/plain` script. Once
-the category is allowed, Inth puts a normal copy of the tag in its place, and
-the browser runs the copy.
+Change the vendor tag's `type` to `text/plain` and add `data-inth-category`.
+Browsers ignore `text/plain` scripts until Inth replaces them with an active
+copy once consent allows that category:
 
 <include src="../../../shared/examples/html/gated-scripts.mdx" />
 
-The first tag loads a file, the second holds the vendor's snippet inline.
-Both forms work. Remove the original, active copy of each vendor tag so it
-cannot run on its own.
+Both external (`src`) and inline snippets work. Remove the original active
+copy of each vendor tag so it cannot run before consent.
 
 ## Attributes
 
 | Attribute | Required | What it does |
 | --- | --- | --- |
-| `type="text/plain"` | Yes | Stops the browser running the script. A tag without it runs at once, whatever its category. |
-| `data-inth-category` | Yes | One category name: `necessary`, `functionality`, `experience`, `measurement` or `marketing`. |
-| `data-inth-vendor` | No | A vendor slug. The tag also waits while the visitor has switched that vendor off. See [vendor consent](/docs/frameworks/html/vendor-consent). |
-| `src` | No | Load the script from a URL. Without it, Inth runs the tag's inline text. |
-| `async` | No | Load without waiting for earlier gated scripts, and let later ones start without waiting for this one. |
-| `data-inth-activated` | Set by Inth | `true` once Inth has run the tag, `invalid` when its category name is unknown, `untrusted` when the page has a nonce and the tag lacks it. Do not set it yourself. |
+| `type="text/plain"` | Yes | Stops the browser from executing the script until activated. |
+| `data-inth-category` | Yes | Category name: `necessary`, `functionality`, `experience`, `measurement` or `marketing`. |
+| `data-inth-vendor` | No | Vendor slug; tag also waits if the visitor turned this vendor off. See [vendor consent](/docs/frameworks/html/vendor-consent). |
+| `src` | No | External script URL. Without `src`, Inth executes the inline body. |
+| `async` | No | Loads in parallel without blocking subsequent gated tags. |
+| `data-inth-activated` | Set by Inth | `true` once run, `invalid` for an unknown category, `untrusted` if missing a required CSP nonce. Do not set manually. |
 
-`necessary` is always allowed, so a `necessary` tag runs as soon as Inth
-starts. A category name Inth does not know logs a console warning, and the tag
-never runs.
+`necessary` tags run immediately when Inth starts. Unknown category names log
+a console warning and never run.
 
 ## What Inth copies to the new tag
 
-The replacement tag gets `src`, `async`, `defer`, `crossorigin`, `integrity`,
-`referrerpolicy`, `id`, `nonce`, every other `data-*` attribute, and the
-inline text. It gets `data-inth-activated="true"` in place of `type`. Other
-attributes, such as `class` or `fetchpriority`, are not copied.
+The activated `<script>` preserves `src`, `async`, `defer`, `crossorigin`,
+`referrerpolicy`, `id`, `nonce`, all other `data-*` attributes and inline
+code, replacing `type` with `data-inth-activated="true"`. Other attributes
+such as `class` or `fetchpriority` are not copied.
 
-The copied `nonce` keeps a nonce-based Content Security Policy working. A
-`defer` attribute has no effect on a script added after the page parsed, so
-ordering follows the rules below instead.
+Copying `nonce` keeps nonce-based CSP working. `defer` has no effect on
+dynamically inserted scripts, so rely on page order below.
 
 ## Load order
 
-Inth runs allowed tags in page order:
+Inth activates permitted tags in document order:
 
-- An external script without `async` finishes loading, or fails, before Inth
-  runs the next tag. An inline snippet after a library tag can use that
-  library.
-- An external script with `async` starts loading and Inth moves on at once.
-- Tags that become allowed later, after a visitor accepts, run in page order
-  among themselves.
+- External tags without `async` finish loading (or failing) before the next
+  gated tag runs, so inline snippets after a library tag can safely call it.
+- External tags with `async` start loading without blocking subsequent tags.
+- Tags granted later run in page order among themselves.
 
-Google's GA4 snippet shows why this matters. Its first tag loads the library
-and its second calls it:
+For example, GA4's library tag and inline config tag stay ordered when you
+leave `async` off the first tag:
 
 {/* example: fragment */}
 
@@ -69,23 +66,19 @@ and its second calls it:
 </script>
 ```
 
-Leave `async` off the first tag so the library loads before the second tag
-runs.
-
 ## When Inth looks for tags
 
-- When it starts, which runs every tag a returning visitor already allowed.
-- After every change to permissions, such as an accept, a save, or a policy
-  that resolves.
-- When a new gated tag is added to the page, for example by a page builder
-  widget. A new tag whose category is already allowed runs straight away.
+- On startup (immediately running tags already allowed for returning
+  visitors).
+- After any permission change (accept, save or policy resolution).
+- When a new gated tag is inserted dynamically into the DOM.
 
-Each tag runs at most once per page load.
+Each tag executes at most once per page load.
 
 ## Gated tags on a page with a nonce
 
-When the Inth tag has a nonce, from its own `nonce` attribute or from
-`data-nonce`, Inth runs only the gated tags that carry the same nonce:
+When the Inth script tag carries a `nonce` or `data-nonce`, Inth executes
+only gated tags carrying the exact same `nonce`:
 
 {/* example: fragment */}
 
@@ -95,41 +88,35 @@ When the Inth tag has a nonce, from its own `nonce` attribute or from
 </script>
 ```
 
-Inth skips a gated tag without the nonce, logs a console warning and marks the
-tag `data-inth-activated="untrusted"`. The tag's category is not added to the
-preference dialog. Inth never copies the nonce onto a gated tag, so add it to
-every gated tag, including tags your own code inserts later. This check stops
-markup injected into your page from running as a trusted script once its
-category is allowed. A page without a nonce runs every gated tag.
-[Content Security Policy](/docs/frameworks/html/content-security-policy)
-covers the rest of the policy.
+Gated tags missing the matching nonce are skipped, logged with a warning,
+marked `data-inth-activated="untrusted"`, and excluded from dialog
+categories. This prevents injected markup from executing when a visitor
+grants consent. See
+[Content Security Policy](/docs/frameworks/html/content-security-policy).
 
 ## The categories reach the dialog
 
-Inth adds the category of every gated tag to the categories the
-[preference dialog](/docs/frameworks/html/components/dialog) offers, as long as
-the policy covers it. A visitor can then allow a category because your page
-uses it.
+Inth adds every valid gated tag's category to the
+[preference dialog](/docs/frameworks/html/components/dialog) within the
+policy scope.
 
 ## What happens when a visitor withdraws permission
 
-A script that ran cannot be stopped. When a visitor turns off a category they
-had allowed, Inth saves the choice and reloads the page, and the new page
-starts with the tag inert again. [Scripts](/docs/frameworks/html/scripts#what-happens-when-a-visitor-withdraws-permission)
-covers turning the reload off and cleaning up cookies.
+When a visitor turns off an allowed category, Inth saves the choice and
+reloads the page so gated tags start inert again. See
+[what happens when a visitor withdraws permission](/docs/frameworks/html/scripts#what-happens-when-a-visitor-withdraws-permission).
 
 ## When to use config scripts instead
 
-A gated tag is the simplest form and works in any CMS field that accepts
-HTML. Use a `scripts` entry in `config` instead when you need a callback after
-the vendor loads or when consent changes. See
+Use a `scripts` entry in `config` when you need `onLoad`, `onError` or
+`onConsentChange` callbacks; see
 [load a script with callbacks](/docs/frameworks/html/scripts#load-a-script-with-callbacks).
 
 ## Check it works
 
-Open the page in a private window with the Network tab open.
+Open the page in a private window with DevTools Network open:
 
-1. Filter for the vendor's domain. Nothing loads before a choice.
-2. Allow the tag's category. The vendor's request appears, and in the Elements
-   panel the tag now has `data-inth-activated="true"` and no `type`.
-3. Reload. The vendor loads at once, before you touch the banner.
+1. Filter for the vendor domain. Nothing loads before a choice.
+2. Allow the category. The request fires and the element gains
+   `data-inth-activated="true"` with no `type`.
+3. Reload. The vendor loads immediately from stored consent.

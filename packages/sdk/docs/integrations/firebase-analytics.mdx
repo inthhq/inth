@@ -1,51 +1,26 @@
 ---
 title: Firebase Analytics
-description: Connect Firebase Analytics to native Inth permissions in Swift, Kotlin, React Native and Expo, with withdrawal, reset and startup handling.
+description: Connect Firebase Analytics Consent Mode v2 signals to native Inth permissions in Swift, Kotlin, React Native, and Expo.
 seoTitle: Firebase Analytics consent for mobile with Inth
-seoDescription: Connect Firebase Analytics to Inth in Swift, Android, React Native and Expo, with all four Consent Mode v2 signals driven by consent.
+seoDescription: Connect Firebase Analytics to Inth in Swift, Android, React Native, and Expo with all four Consent Mode v2 signals driven by consent.
 group: integrations
 ---
 
-Use the bundled Firebase Analytics helper to send Firebase's four Consent
-Mode v2 signals from Inth consent and to enable collection while measurement
-is granted. Measurement drives `analytics_storage`. Marketing drives
-`ad_storage`, `ad_user_data` and `ad_personalization`. This is the same
-[category mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types)
-the web's Google helpers use. Pending permission denies every signal and
-keeps collection disabled.
+The bundled Firebase Analytics helper in `InthApple`, `inth-android`, and `@inth/react-native/integrations` maps Inth permissions to Firebase's four Consent Mode v2 signals and collection switch. `measurement` drives `analytics_storage` and collection; `marketing` drives `ad_storage`, `ad_user_data`, and `ad_personalization`, matching the [web Google Tag mapping](/docs/integrations/google-tag#how-categories-map-to-google-consent-types). Pending permission denies every signal and keeps collection disabled.
 
-The helper is included in `InthApple`, `inth-android` and
-`@inth/react-native/integrations`. Firebase remains a dependency your app
-installs. Adding Inth does not add Firebase to the app.
-
-For browser analytics, follow the [Google Tag integration](/docs/integrations/google-tag).
-This page covers Firebase Analytics in native mobile apps.
+Your app installs Firebase separately. For web apps, use [Google Tag](/docs/integrations/google-tag).
 
 ## Before you start
 
-Complete the [Swift](/docs/frameworks/swift/quickstart),
-[Android](/docs/frameworks/android/quickstart) or
-[React Native](/docs/frameworks/react-native/quickstart) quickstart. Your Inth
-policy and native configuration must include `measurement`, and `marketing`
-if the app runs Google ads or ad measurement. A category the policy does not
-include stays denied. Use the same installed engine for the consent screens
-and the integration.
+Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add `measurement`, plus `marketing` if you run Google ads, to your Inth policy and native config. See [mobile availability](/docs/guides/mobile-status).
 
-Add Firebase through its official [Apple](https://firebase.google.com/docs/ios/setup),
-[Android](https://firebase.google.com/docs/android/setup) or
-[React Native Firebase](https://rnfirebase.io/analytics/usage) instructions.
-Configure the Firebase app and Analytics module before connecting its APIs.
-Inth's mobile packages are currently a private prerelease; see
-[mobile availability](/docs/guides/mobile-status) for installation access.
-
-The helper sends Consent Mode signals to Firebase only. It does not grant IAB
-vendor permissions, configure Google Mobile Ads or request ATT. Use
-[mobile IAB and ads](/docs/guides/mobile-iab) for advertising requirements.
+Install Firebase using the [Apple](https://firebase.google.com/docs/ios/setup), [Android](https://firebase.google.com/docs/android/setup), or [React Native Firebase](https://rnfirebase.io/analytics/usage) setup guides first. This helper updates Firebase Consent Mode only, not IAB, Google Mobile Ads, or ATT; see [mobile IAB and ads](/docs/guides/mobile-iab).
 
 ## Control native startup first
 
-Set Firebase's collection default to disabled in the app's native build
-configuration. For iOS, add this Boolean to the app target's `Info.plist`:
+Disable Firebase Analytics collection by default in your native build config.
+
+In iOS `Info.plist`:
 
 {/* example: fragment */}
 
@@ -54,7 +29,7 @@ configuration. For iOS, add this Boolean to the app target's `Info.plist`:
 <false/>
 ```
 
-On Android, add this metadata inside your manifest's existing `application`:
+In Android `AndroidManifest.xml`, inside `<application>`:
 
 {/* example: fragment */}
 
@@ -64,21 +39,13 @@ On Android, add this metadata inside your manifest's existing `application`:
 	android:value="false" />
 ```
 
-These are startup defaults. Firebase persists runtime collection settings, and
-a previous runtime grant overrides the default on a later launch. Install
-Inth and reconcile the vendor's collection permission in native startup before
-optional collection can begin. Where your Firebase setup permits it, defer
-vendor initialization until native permission allows it. Inspect any
-automatically registered Android providers or app-delegate setup in that path.
-[Firebase's collection guide](https://firebase.google.com/docs/analytics/configure-data-collection)
-explains the persisted setting.
+Firebase persists runtime collection grants across launches, overriding these defaults. Reconcile Inth permission early in native startup; see [Firebase's collection guide](https://firebase.google.com/docs/analytics/configure-data-collection).
 
 ### Deny Consent Mode signals by default
 
-Firebase reads its Consent Mode defaults at launch, before the helper sends
-the first `setConsent`. Without defaults, Firebase sets no consent values.
-Set all four to denied, so nothing is granted before Inth's consent is read.
-For iOS, add these Booleans to the app target's `Info.plist`:
+Set all four Consent Mode defaults to denied so nothing is granted at launch before Inth runs.
+
+In iOS `Info.plist`:
 
 {/* example: fragment */}
 
@@ -93,7 +60,7 @@ For iOS, add these Booleans to the app target's `Info.plist`:
 <false/>
 ```
 
-On Android, add this metadata inside the manifest's `application`:
+In Android `AndroidManifest.xml`, inside `<application>`:
 
 {/* example: fragment */}
 
@@ -112,10 +79,7 @@ On Android, add this metadata inside the manifest's `application`:
 	android:value="false" />
 ```
 
-React Native Firebase writes the same keys from `firebase.json`, and on
-Android it writes `true` for a key that file leaves out. In a bare React
-Native app, set the four keys to `false` in `firebase.json` next to the
-collection default:
+In bare React Native, set all five keys to `false` in `firebase.json`. On Android, React Native Firebase defaults omitted keys to `true`:
 
 {/* example: fragment */}
 
@@ -131,29 +95,15 @@ collection default:
 }
 ```
 
-In an Expo app, Inth's config plugin writes the four denied defaults into
-`Info.plist` and `AndroidManifest.xml` on every prebuild. On Android it marks
-them `tools:replace="android:value"`, so they win over React Native
-Firebase's library values.
-
-For React Native and Expo, a JavaScript connection runs after native startup.
-It cannot prevent earlier Firebase collection. Apply the native settings
-through the vendor's supported build configuration and keep the
-[native startup gate](/docs/frameworks/react-native/native-behaviour). Expo
-needs a custom native build containing both packages. Inth's config plugin
-writes only the Consent Mode defaults above. It does not install or configure
-Firebase, and Expo Go cannot load this integration.
+In Expo, Inth's config plugin writes the four denied Consent Mode defaults with `tools:replace="android:value"` on every prebuild. Keep the [native startup gate](/docs/frameworks/react-native/native-behaviour) because JavaScript runs after native launch. Expo needs a custom native build, not Expo Go.
 
 ## Connect a Swift app
 
-Create `FirebaseAnalyticsOwner.swift` in your app target. This owner retains
-the bundled helper and exposes teardown and reset synchronization:
+Add `FirebaseAnalyticsOwner.swift` to your app target:
 
 <include src="../shared/examples/native/core-swift/AppleInstallation/swift-firebase-analytics-binding.mdx" />
 
-After the native Inth engine and your Firebase app are installed, construct
-the owner with Firebase's actual APIs. This fragment belongs in the app's
-service setup; retain `firebaseOwner` as an app-lifetime property:
+After installing Inth and Firebase, construct and retain `firebaseOwner` for the app lifetime:
 
 {/* example: fragment */}
 
@@ -174,26 +124,15 @@ let firebaseOwner = FirebaseAnalyticsOwner(
 )
 ```
 
-`core` is the `ConsentCore` returned by the app's installation. The helper
-applies current permission before its initializer returns. Firebase callbacks
-run synchronously on the registering thread or the thread publishing a native
-consent change. Pass the vendor calls directly; dispatching them into separate
-asynchronous tasks can reorder grants and withdrawals.
-
-The helper follows the shared Consent Mode mapping, so no category option
-exists. Keep the owner alive across screen changes. Releasing it cancels the
-integration, denies every signal and disables collection.
+Pass direct Firebase calls; async dispatch can reorder grants and withdrawals. The helper applies current permission before returning, and releasing it denies all signals and disables collection.
 
 ## Connect an Android app
 
-Copy this helper into your app's Kotlin source directory, using your app's
-package name:
+Add this helper using your app's package name:
 
 <include src="../shared/examples/native/examples/consent-demo/android-firebase-integration.mdx" />
 
-Call it from your `Application` service setup after installing Inth and
-configuring Firebase. Map the helper's four signals to the Firebase instance
-you actually use:
+Call it from `Application` startup and retain `firebaseConsent` on an application or service owner:
 
 {/* example: fragment */}
 
@@ -221,28 +160,15 @@ val firebaseConsent = connectAppFirebaseAnalytics(
 )
 ```
 
-Retain `firebaseConsent` on the application or service owner. The native core keeps
-applying consent until you call `close()`, even if the app drops the handle. Replace
-`reportAnalyticsError` with an error handler that works while optional
-analytics is disabled and does not throw. The required `onError` receives automatic update
-failures. Construction, `sync()` and `close()` can also throw to their caller;
-handle those failures in the app's service lifecycle.
-
-Native callbacks run synchronously and are serialized per helper. Do not post
-the vendor changes into independent jobs. The helper disables collection
-before changing consent and enables it only while measurement remains
-allowed. A vendor failure means you cannot assume that the requested change
-reached Firebase.
+Callbacks run synchronously and disable collection before updating consent. `onError` must work while analytics is disabled and must not throw; construction, `sync()`, and `close()` can throw. The native core keeps applying consent until `close()`.
 
 ## Connect React Native or Expo
 
-Copy the checked connection function into `firebase-consent.ts`:
+Copy the connection function into `firebase-consent.ts`:
 
 <include src="../shared/examples/react-native-bare/rn-firebase-integration.mdx" />
 
-In a separate `firebase-vendor.ts` file, supply React Native Firebase's modular
-functions. This fragment assumes the installed Firebase app is the one
-returned by `getAnalytics()`:
+Wrap React Native Firebase's modular functions in `firebase-vendor.ts`:
 
 {/* example: fragment */}
 
@@ -268,9 +194,7 @@ export function connectFirebaseVendor(onError: (error: unknown) => void) {
 }
 ```
 
-Call `connectFirebaseVendor` once from app startup, retain its returned handle
-and await `ready` inside your existing asynchronous startup function before
-using Analytics. For example:
+Call `connectFirebaseVendor` once at startup, retain the handle across routes, and await `ready`:
 
 {/* example: fragment */}
 
@@ -279,52 +203,21 @@ const firebaseConsent = connectFirebaseVendor(reportAnalyticsError);
 await firebaseConsent.ready;
 ```
 
-The `onError` callback receives initial and later failures. `ready`, `sync()`
-and `disconnect()` also reject when their vendor operations fail, so handle
-those promises at their call sites. Keep the handle in an app-lifetime owner;
-a route's effect should not disconnect app-wide analytics on navigation.
-
-The connection serializes asynchronous Firebase calls and rereads native
-permission before enabling collection. While permission is pending, it
-disables collection and sends every field as `false`. Each update sends
-`analytics_storage` from measurement and the three advertising fields from
-marketing. Collection is enabled only while `analytics_storage` is `true`.
+Handle errors in `onError` and the `ready`, `sync()`, and `disconnect()` promises. The helper serializes async calls and rereads native permission before enabling collection.
 
 ## Handle reset and teardown
 
-If app code resets Firebase's settings, reapply current Inth permission after
-the reset completes. Call `syncAfterReset()` on the Swift owner, `sync()` on
-the Kotlin helper or `await firebaseConsent.sync()` in React Native. This
-updates Firebase without recording a new consent choice.
-
-For final service teardown, use the Swift owner's `stop()`, Kotlin's
-`close()` or `await firebaseConsent.disconnect()` in React Native. These
-detach the subscription and request collection disablement. They do not
-delete historical Firebase data or retract requests already sent.
+After resetting Firebase settings, reapply permission without creating a consent record via `syncAfterReset()` on Swift, `sync()` on Android, or `await firebaseConsent.sync()` on React Native. For final teardown, call `stop()`, `close()`, or `await firebaseConsent.disconnect()`. Teardown disables collection but does not delete historical data.
 
 ## Check the integration
 
-Use Firebase's supported debug tools and inspect actual collection in your
-app. Test a policy that asks for a choice:
+Test an opt-in policy with Firebase debug tools:
 
-1. Launch with no saved choice. Confirm all four signals are denied and
-   collection stays disabled while native permission is pending and after
-   Reject all.
-2. Grant measurement only. Confirm analytics storage is granted, the three
-   advertising fields stay denied and collection becomes enabled.
-3. Grant marketing. Confirm ad storage, ad user data and ad personalization
-   become granted.
-4. Withdraw both. Confirm collection is disabled and all four signals become
-   denied.
-5. Terminate and relaunch after both grant and refusal. Check native startup
-   before JavaScript as well as the eventual SDK state.
-6. Reset vendor settings, call `sync()` and confirm that current permission
-   is reapplied without creating a consent record.
-7. Exercise your vendor-failure handler and final teardown.
+1. Launch pending and after Reject all; confirm all four signals stay denied and collection stays off.
+2. Grant `measurement` only; confirm `analytics_storage` is granted, ad signals stay denied, and collection turns on.
+3. Grant `marketing`; confirm all three ad signals become granted.
+4. Withdraw both; confirm collection turns off and all four signals return to denied.
+5. Relaunch after grant and refusal, verifying native startup before JavaScript.
+6. Reset Firebase settings, call `sync()`, and verify permission reapplies without a new record.
 
-The Inth helper tests exercise native authority, lifecycle changes, reset and
-callback ordering. The RN mapping was type-checked against React Native
-Firebase 27.1.0; native mappings follow Firebase's published API references.
-These checks do not establish real Firebase startup or network behavior on
-your devices. Complete the [mobile verification](/docs/guides/mobile-verify)
-steps with the Firebase versions and build configuration your app ships.
+Type-checked against React Native Firebase `27.1.0`. Complete [mobile verification](/docs/guides/mobile-verify) on real devices.

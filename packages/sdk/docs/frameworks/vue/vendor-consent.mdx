@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing in a Vue app and still turn off one vendor in it, with the vendors option on the inth plugin and useConsentDraft.
+description: Let visitors toggle individual vendors inside a consent category in Vue using the vendors option and useConsentDraft.
 group: frameworks
 ---
 
@@ -8,12 +8,13 @@ group: frameworks
 
 ## Declare the vendors
 
-Declaring a vendor turns on vendor switches. Built-in `@inth/integrations`
-helpers then list their own vendor by name, so you only declare a vendor for a
-script of your own, or to replace a helper's name and privacy policy.
+Declaring at least one vendor turns on per-vendor switches. Built-in
+`@inth/integrations` helpers then appear automatically by name, so you only
+declare vendors for custom scripts or to override a helper's name or privacy
+policy URL.
 
-Declare the vendors next to the scripts in `src/scripts.ts`, using the `vendor`
-slug each script already carries:
+Declare vendors alongside your scripts in `src/scripts.ts`, matching each
+script's `vendor` slug:
 
 {/* example: fragment */}
 
@@ -30,7 +31,7 @@ export const vendors: Vendor[] = [
 ];
 ```
 
-Then pass them to the plugin in `src/main.ts`:
+Pass `vendors` to `inth` in `src/main.ts`:
 
 {/* example: fragment */}
 
@@ -44,22 +45,22 @@ createApp(App).use(inth, { mode: hosted(), scripts, vendors }).mount('#app');
 
 <import src="../../shared/scripts/vendor-consent.mdx#targets" />
 
-`ConsentGate` checks a category only. For an iframe, add `data-vendor` and use
-the iframe blocker; see [embeds](/docs/frameworks/vue/embeds).
+`ConsentGate` checks categories only. To gate an iframe by vendor, add
+`data-vendor` and use the iframe blocker in
+[embeds](/docs/frameworks/vue/embeds).
 
 ## What the preference dialog shows
 
-`ConsentManager`, which `InthProvider` renders, and `ConsentWidget` list each
-declared vendor under its category, with its own switch.
+`ConsentManager` (rendered by `InthProvider`) and `ConsentWidget` list each
+declared vendor under its category with its own switch.
 
 <import src="../../shared/scripts/vendor-consent.mdx#dialog" />
 
 ## Build your own vendor switch
 
-`useConsentDraft()` from `@inth/vue/vue-plugin` holds the category and vendor
-switches of a preference form. `vendors` has one value per declared vendor,
-`setVendor(id, granted)` changes one, and `save()` records the categories and
-the vendors that changed:
+`useConsentDraft()` from `@inth/vue/vue-plugin` manages category and vendor
+switches for a custom preference form. Read `vendors`, update a switch with
+`setVendor(id, granted)`, and call `save()`:
 
 {/* example: fragment */}
 
@@ -80,14 +81,14 @@ const { vendors, setVendor, save } = useConsentDraft();
 </template>
 ```
 
-`save()` resolves `{ ok: false }` without recording anything while `isStale`
-is `true`. [Composables](/docs/frameworks/vue/composables) covers the draft.
+`save()` resolves `{ ok: false }` without saving while `isStale` is `true`.
+See [composables](/docs/frameworks/vue/composables) for the full draft API.
 
 ## Check whether a vendor may run
 
-`useVendorAllowed(id)` from `@inth/vue/vue-plugin` returns a computed that is
-`true` while the vendor may run: it is declared, its category is allowed and
-the visitor has not switched it off.
+`useVendorAllowed(id)` from `@inth/vue/vue-plugin` returns a computed boolean
+that is `true` when the vendor is declared, its category is allowed, and the
+visitor has not switched it off:
 
 {/* example: fragment */}
 

@@ -1,20 +1,19 @@
 ---
 title: Network blocker
-description: Hold fetch and XMLHttpRequest calls in a Next.js app until their consent category is allowed, with networkBlocker rules in inth.config.ts.
+description: Block fetch and XMLHttpRequest calls in Next.js until consent is granted with networkBlocker rules in inth.config.ts.
 group: frameworks
 ---
 
 ## Add rules
 
-The network blocker stops `fetch` and `XMLHttpRequest` calls to domains you
-list until the visitor grants their category. Use it for beacons and API calls
-that bypass script loading, such as a pixel fired by an SDK already on the
-page. Load vendor SDKs through [`scripts`](/docs/frameworks/next/scripts)
-first, so they do not run at all before consent.
+Use the network blocker for browser `fetch` and `XMLHttpRequest` beacons that
+bypass script loading. Register vendor SDKs through
+[`scripts`](/docs/frameworks/next/scripts) first so they never execute before
+consent.
 
-Define the rules in `inth.config.ts`. `onRequestBlocked` is a function, so the
-rules cannot be passed as a prop from a Server Component, but the config is
-bundled into the browser and can hold them.
+Declare `networkBlocker` in `inth.config.ts` alongside your `scripts` (it can
+include `onRequestBlocked` functions because the config bundles into the
+browser):
 
 {/* example: fragment */}
 
@@ -40,11 +39,10 @@ export default defineConsentConfig({
 });
 ```
 
-Keep your `scripts` in the same call. Keep the page content inside
-`InthProvider`. Blocking starts when it renders, so
-components outside it that send requests while rendering, and modules evaluated
-before it, are not covered. Requests your server makes, in Server Components,
-route handlers or `getServerSideProps`, are not blocked either.
+Blocking starts when `InthProvider` renders in the browser, so keep page content
+inside it. Module top-level requests evaluated before `InthProvider` and
+server-side requests in Server Components, Route Handlers or
+`getServerSideProps` are not intercepted.
 
 <import src="../../shared/react/network-blocker.mdx#rules" />
 
@@ -54,10 +52,10 @@ route handlers or `getServerSideProps`, are not blocked either.
 
 ## Verify the blocked requests
 
-Open the production build in a private window with the DevTools Network panel
-open, under a policy that asks for consent.
+Open your production build in a private window with DevTools Network open under
+an opt-in policy:
 
-1. Before a choice, requests matching a rule are absent from the Network panel,
-   and the console logs each blocked request.
-2. Allow the rule's category and save. Matching requests go out.
-3. Reject, reload, and check that they stay absent.
+1. Confirm requests matching a rule do not appear in Network and log as blocked
+   in the console.
+2. Grant the rule's category and save: matching requests succeed.
+3. Reject, reload and confirm those requests stay blocked.

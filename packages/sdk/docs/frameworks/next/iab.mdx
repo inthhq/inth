@@ -8,15 +8,12 @@ group: frameworks
 
 <import src="../../shared/react/iab/overview.mdx#prepare" />
 
-Next.js uses the React IAB components. There is no `@inth/nextjs/iab` JavaScript
-entry point, so import the components from `@inth/react/iab` and render this
-Client Component inside the `InthProvider` from your
+Import `IABProvider`, `IABConsentBanner` and `IABConsentDialog` from
+`@inth/react/iab` (there is no `@inth/nextjs/iab` JS entry point) and render
+this Client Component inside `InthProvider` from your
 [App Router](/docs/frameworks/next/app-router) or
-[Pages Router](/docs/frameworks/next/pages-router) setup.
-
-The IAB banner and dialog render their own styles by default. Leave
-`InthProvider`'s `styles` option enabled. The banner's styles render in the
-server HTML, and the dialog loads its rules when opened.
+[Pages Router](/docs/frameworks/next/pages-router) setup. Both components
+render their own inline styles by default.
 
 <include src="../../shared/examples/nextjs/iab-consent.mdx" />
 
@@ -24,11 +21,9 @@ server HTML, and the dialog loads its rules when opened.
 
 ## Load an external stylesheet
 
-With Tailwind CSS 3, or when you want to put Inth in a named cascade layer,
-import `@inth/nextjs/styles.css` and then `@inth/nextjs/iab/styles.css` at your global
-stylesheet entry. The IAB stylesheet holds the IAB rules and uses the base
-stylesheet's tokens. Set `styles: false` in `InthProvider`'s `options` so the
-components use those stylesheets:
+On Tailwind CSS 3, or to place Inth styles in a named cascade layer, set
+`options: { styles: false }` in `inth.config.ts` and import both stylesheets in
+order from your global stylesheet:
 
 {/* example: fragment */}
 
@@ -37,15 +32,13 @@ components use those stylesheets:
 @import '@inth/nextjs/iab/styles.css';
 ```
 
-Tailwind CSS 3 also needs the
+Tailwind CSS 3 also requires the
 [PostCSS plugin](/docs/customization/tailwind#set-up-tailwind-css-3).
 
 ## Restrict how vendors use a purpose
 
-Publisher restrictions override a vendor's declared use of one purpose. Pass
-them to `IABProvider` as `publisherRestrictions`. The vendor IDs below are
-placeholders; use vendors from your list whose declarations allow each
-restriction.
+Pass `publisherRestrictions` to `IABProvider` to override how a vendor uses a
+purpose (replace the placeholder vendor IDs with vendors from your list):
 
 <include src="../../shared/examples/nextjs/iab-publisher-restrictions.mdx" />
 

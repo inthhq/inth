@@ -1,18 +1,22 @@
 ---
 title: Callbacks
-description: Run code in a Nuxt app when a visitor records a consent choice, when permissions change, before a revocation reload, and when Inth reports an error.
+description: Run Nuxt code when visitors record consent choices, when permissions change, before revocation reloads, or on errors.
 group: frameworks
 ---
 
+Register app-wide callbacks under `inth.callbacks` in `app/app.config.ts` to
+react to consent decisions, permission changes, revocation reloads, and
+errors.
+
 ## Register callbacks
 
-Callbacks are functions, so they go under the `inth` key of
-`app/app.config.ts`, not in `nuxt.config.ts`. Module options reach the
-browser as JSON, which drops functions. Keep the callbacks in their own file:
+Because callbacks are functions, put them in `app/app.config.ts`, never in
+`nuxt.config.ts` (which serializes to JSON and strips functions). Keep your
+callbacks in a dedicated module:
 
 <include src="../../shared/examples/nuxt/callbacks.mdx" />
 
-Then add them next to `scripts` in `app/app.config.ts`:
+Pass them alongside `scripts` in `app/app.config.ts`:
 
 {/* example: fragment */}
 
@@ -20,46 +24,42 @@ Then add them next to `scripts` in `app/app.config.ts`:
 export default defineAppConfig({ inth: { callbacks, scripts } });
 ```
 
-The module wires the callbacks once when its plugin runs. Visitor actions
-happen in the browser, so that is where these callbacks run.
+The module wires callbacks once when its plugin initializes in the browser.
 
 ## Available callbacks
 
 | Callback | Runs when | Receives |
 | --- | --- | --- |
-| `onChoiceRecorded` | The visitor clicks Accept All, Reject All or Save Settings, in the stock UI or through `useConsentSave()`. | `snapshot`, `confirmed` (the categories the action covered) and `actionAt` |
-| `onPermissionsChanged` | Any effective permission changes value. | `snapshot` and `previous`, the permissions before the change |
-| `onBeforeConsentRevocationReload` | A save withdraws a granted category or vendor, right before Inth reloads the page. | `preferences`, the permissions after the save |
-| `onError` | A consent command fails, for example a save the backend rejects. | `error`, a message string |
+| `onChoiceRecorded` | A visitor clicks Accept All, Reject All, or Save Settings in stock UI or via `useConsentSave()`. | `snapshot`, `confirmed` (categories covered by the action), and `actionAt` |
+| `onPermissionsChanged` | Any effective permission changes value. | `snapshot` and `previous` (permissions before the change) |
+| `onBeforeConsentRevocationReload` | A save withdraws a granted category or vendor, right before Inth reloads the page. | `preferences` (permissions after the save) |
+| `onError` | A consent command fails, such as a rejected save request. | `error` (message string) |
 
 ## onChoiceRecorded or onPermissionsChanged
 
-`onChoiceRecorded` fires only for a visitor's action. Use it to count consent
-decisions or to send the choice to your own analytics.
+`onChoiceRecorded` runs only for explicit visitor actions. Use it to track
+consent decisions or log opt-in rates.
 
-`onPermissionsChanged` also fires when a stored choice expires, when a new
-policy applies, and when a privacy signal such as Global Privacy Control
-changes, with no action from the visitor. Use it to start or stop code that
-depends on a permission. Do not treat it as evidence that the visitor chose
-anything.
+`onPermissionsChanged` also fires when a stored choice expires, a new policy
+applies, or a browser signal such as Global Privacy Control changes without
+visitor input. Use it to gate runtime code, not to record user decisions.
 
-Dismissing a notice fires neither callback, because it records no choice and
-changes no permission. Subscribe to it with
-`useConsentKernel().events.on('notice:dismissed', listener)`.
-[How consent works](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice)
-explains the difference.
+Dismissing a notice triggers neither callback because it records no choice and
+changes no permission. Subscribe to notice dismissals with
+`useConsentKernel().events.on('notice:dismissed', listener)`. See
+[a permission is not a recorded choice](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice).
 
 ## Before a revocation reload
 
-Removing a script tag cannot stop code that already ran, so Inth reloads the
-page after a save withdraws a granted category or vendor.
-`onBeforeConsentRevocationReload` runs synchronously right before that. Use
-it to call a vendor's shutdown API. Avoid long work, because the reload does
-not wait. Set `reloadOnConsentRevoked: false` to handle revocation yourself.
+Because removing a `<script>` tag cannot stop already-running code, Inth
+reloads the page after a visitor withdraws a granted category or vendor.
+`onBeforeConsentRevocationReload` runs synchronously right before that reload.
+Use it for quick vendor shutdown calls; the reload does not wait for async
+work. Set `reloadOnConsentRevoked: false` to handle revocation yourself.
 
 ## Verify
 
-Open the console, load a page and click **Accept All**. `onChoiceRecorded` logs
-once and `onPermissionsChanged` logs the new permissions. Reload: neither logs
-a new choice. Withdraw a category in preferences and save, and the
-revocation callback runs before the page reloads.
+Open DevTools Console, load a page, and click **Accept All**. Confirm
+`onChoiceRecorded` and `onPermissionsChanged` log once. Reload and confirm
+neither fires again. Open preferences, withdraw a category, and save to
+confirm `onBeforeConsentRevocationReload` runs before the page reloads.

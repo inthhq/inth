@@ -1,6 +1,6 @@
 ---
 title: ConsentScript
-description: Put the Inth ConsentScript component in the head of an Astro layout so the browser starts with the server's consent decision, the right color scheme and your theme tokens.
+description: Add Inth's ConsentScript to an Astro layout head to inline the server decision, color scheme, and theme tokens.
 group: frameworks
 ---
 
@@ -27,7 +27,7 @@ renders is inline, so it works before any module script has loaded.
 The boot payload is a JSON data block holding the resolved consent
 configuration: the policy, the visitor's stored consent and the translations
 for the negotiated language. The browser starts from it, so a page rendered on
-the server needs no `/init` request and the banner does not flicker. The
+the server needs no `/v1/consent/init` request and the banner does not flicker. The
 payload escapes `<`, so translated text cannot close the script tag.
 
 With `colorScheme: 'light'` or `'none'`, there is no color-scheme script.

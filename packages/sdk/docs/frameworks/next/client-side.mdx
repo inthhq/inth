@@ -1,93 +1,78 @@
 ---
 title: Client-side initialization
-description: Initialize Inth in the browser in a Next.js app with hosted() mode, without server prefetch, a consent route or API handlers.
+description: Initialize Inth in the browser in Next.js using hosted() mode, without server prefetch or consent API routes.
 group: frameworks
 ---
 
-## When to initialize in the browser
+Resolve consent purely in the browser using `hosted()` mode. Every page can
+stay static, the HTML is identical for all visitors, and the browser calls
+`${projectUrl}/v1/consent/init` after hydration.
 
-This setup has the fewest files. The browser calls your Inth backend's `/v1/consent/init`
-after the page loads, so the server does no consent work and every page can be
-static. The HTML is the same for every visitor, and the banner appears after
-hydration.
+Use this setup when you want the fewest files and do not need the banner in
+server HTML. For server resolution with zero `/v1/consent/init` calls, use the
+[App Router](/docs/frameworks/next/app-router) or
+[Pages Router](/docs/frameworks/next/pages-router) guide. For
+`output: 'export'`, see [Static export](/docs/frameworks/next/static-export).
+[Rendering and deployment](/docs/frameworks/next/rendering) compares all paths.
 
-Use it when you do not need the banner in the server HTML and do not want a
-consent route. For a server app, the [App Router](/docs/frameworks/next/app-router)
-and [Pages Router](/docs/frameworks/next/pages-router) guides resolve consent
-on the server and make no `/v1/consent/init` request per visit. For `output: 'export'`,
-follow [static export](/docs/frameworks/next/static-export).
-[Rendering and deployment](/docs/frameworks/next/rendering) compares every
-path.
-
-Until the policy resolves, optional categories stay denied and the banner
-stays hidden.
+Until policy resolves, optional categories stay denied and the banner stays
+hidden.
 
 ## Configure the backend and the mode
 
-[Create an Inth project](https://inth.com), set its policy rules and add your
-site's origin to its trusted origins.
+Create an [Inth project](https://inth.com), configure its policy rules and add
+your site's origin to its trusted origins. Then install the SDK:
 
 <CommandTabs command="@inth/nextjs @inth/integrations" mode="install" />
 
-Set `NEXT_PUBLIC_INTH_PROJECT_URL` to your project's backend URL, including
-any path prefix, in `.env.local` and in your host's build settings:
+Set `NEXT_PUBLIC_INTH_PROJECT_URL` (including any path prefix) in `.env.local`
+and your host's build settings:
 
 ```sh title=".env.local"
 NEXT_PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-The c15t name `NEXT_PUBLIC_C15T_BACKEND_URL` still works as a fallback. When both are
-set, `NEXT_PUBLIC_INTH_PROJECT_URL` wins.
+`NEXT_PUBLIC_INTH_PROJECT_URL` wins over any legacy `NEXT_PUBLIC_C15T_BACKEND_URL`, which is read as a fallback if unset.
 
-Create `inth.config.ts` at the project root with `mode: hosted()`:
+Create `inth.config.ts` at the project root with `mode: hosted()`, and add your
+`scripts` as shown in the
+[quickstart](/docs/frameworks/next/quickstart#add-the-consent-config) (keep
+secrets out of this file):
 
 <include src="../../shared/examples/nextjs/client-side-config.mdx" />
 
-`hosted()` initializes through `${projectUrl}/v1/consent/init` and posts choices to
-`${projectUrl}/v1/consent/records`. Add your `scripts` to the same config, as the
-[quickstart](/docs/frameworks/next/quickstart#add-the-consent-config) shows.
-The file is bundled into the browser, so it must hold no secrets.
-
-Wrap `next.config.ts` in `withConsentManifest`, which finds `inth.config.ts`:
+Wrap `next.config.ts` in `withConsentManifest` so the SDK locates
+`inth.config.ts` (it skips the manifest download in `hosted()` mode):
 
 <include src="../../shared/examples/nextjs/next-config.mdx" />
 
-With `hosted()` it downloads no manifest, so `next build` does not contact the
-backend.
-
 ## Mount the root without state
 
-The components render their own styles. With Tailwind CSS 3,
+Components render their own styles. On Tailwind CSS 3,
 [load the stylesheet yourself](/docs/frameworks/next/customize#load-the-stylesheet-yourself).
-In the App Router, render `InthProvider` in the root layout without `state`:
+
+In the App Router, render `InthProvider` in `app/layout.tsx` without `state`:
 
 <include src="../../shared/examples/nextjs/browser-layout.mdx" />
 
-In the Pages Router, render it in `_app.tsx`. Without `withConsentProps`,
-`pageProps.consent` is undefined on every page:
+In the Pages Router, render it in `pages/_app.tsx` without `withConsentProps`:
 
 <include src="../../shared/examples/nextjs-pages-router/pages-app.mdx" />
 
-Without server state, `InthProvider` initializes in the browser. Keep it
-mounted across client navigation.
-
-## Optional same-origin requests
-
-With `routePrefix` and `proxy: true` in `inth.config.ts` and a consent route
-that forwards saves, the browser sends every consent request to your own
-origin, which saves it a separate connection to the backend's domain. It
-needs a Next.js server. See
-[optimization](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin).
+Keep one `InthProvider` mounted across navigation. To route browser requests
+through your own origin on a Next.js server, add `routePrefix` and
+`proxy: true` as shown in
+[Performance](/docs/frameworks/next/optimization#keep-browser-consent-requests-on-your-origin).
 
 ## Verify browser initialization
 
-Open the production build in a fresh browser session with DevTools open.
+Open your production build in a private window with DevTools open:
 
-1. The browser calls `${projectUrl}/v1/consent/init` once, then shows the banner. No
-   PostHog request runs.
-2. Click **Reject All** and reload. The banner stays closed and PostHog does
-   not load.
-3. Open **Privacy settings**. The rejection is still selected. Turn on
-   **Analytics** (the `measurement` category); PostHog loads.
-4. Block the backend's domain in DevTools and reload in a fresh session. No
-   banner appears and no vendor loads. A hidden banner is not permission.
+1. Confirm the browser calls `${projectUrl}/v1/consent/init` once, shows the banner and
+   sends no PostHog request.
+2. Click **Reject All**, reload, and confirm the banner stays closed and
+   PostHog stays blocked.
+3. Open **Privacy settings**, confirm the rejection is selected, and enable
+   **Analytics** (`measurement`) so PostHog loads.
+4. Block your Inth domain in DevTools and reload in a fresh session: no banner
+   appears and no vendor loads.

@@ -9,19 +9,19 @@ group: reference
 <section id="behavior">
   ## What IABConsentDialog renders
 
-  `IABConsentDialog` is the IAB TCF preference centre. It opens while
-  `activeUI` is `'manager'`, the `iab` option is set, and the policy uses the
-  `iab` model. `InthProvider` loads it in place of `ConsentManager` under such
-  a policy.
+  `IABConsentDialog` renders the IAB TCF preference center while `activeUI` is
+  `'manager'`, `iab` is enabled, and the visitor's policy uses the `iab`
+  model. `InthProvider` loads it in place of `ConsentManager` under an IAB
+  policy.
 
-  It has two tabs. Purposes lists each purpose, stack and special feature with
-  consent and legitimate-interest switches. Vendors lists every vendor,
-  including your custom vendors, with a search field and per-vendor switches.
-  The footer saves the selection, or accepts or rejects everything, and writes
-  the TC String.
+  The dialog has two tabs. Purposes lists each purpose, stack, and special
+  feature with consent and legitimate-interest switches. Vendors lists every
+  vendor, including custom vendors, with search and per-vendor switches. The
+  footer saves the selection or accepts or rejects everything and writes the
+  TC String.
 
-  To build your own preference centre instead, read and change the selection
-  with `useConsentIabSelection()` and save it with `useConsentIabSave()`.
+  To build a custom preference center, read and edit selections with
+  `useConsentIabSelection()` and persist them with `useConsentIabSave()`.
 </section>
 
 <section id="props">
@@ -29,17 +29,17 @@ group: reference
 
   | Prop | Type | Default | Behavior |
   | --- | --- | --- | --- |
-  | `initialTab` | `'purposes' \| 'vendors'` | The tab the banner asked for, else `'purposes'` | Which tab the dialog opens on. |
+  | `initialTab` | `'purposes' \| 'vendors'` | Tab requested by the banner, else `'purposes'` | Initial active tab when the dialog opens. |
 </section>
 
 <section id="accessibility">
   ## Accessibility and styling
 
-  The dialog renders in `document.body` with `role="dialog"`. While blocking
-  it sets `aria-modal="true"`, locks scrolling and traps focus. It has a close
-  button. The `components['iab-dialog']` option adds attributes to parts such
-  as `root`, `card`, `header`, `tabsList`, `tabPanel` and `footer`, and
-  `components['iab-purpose-item']`, `components['iab-stack-item']` and
-  `components['iab-vendor-list']` reach the rows. `iabDialogHideBranding`
+  The dialog renders in `document.body` with `role="dialog"` and a close
+  button. While blocking, it sets `aria-modal="true"`, locks scrolling, and
+  traps focus. `components['iab-dialog']` binds attributes to `root`, `card`,
+  `header`, `tabsList`, `tabPanel`, and `footer`.
+  `components['iab-purpose-item']`, `components['iab-stack-item']`, and
+  `components['iab-vendor-list']` target row parts. `iabDialogHideBranding`
   hides the "Secured by" tag.
 </section>

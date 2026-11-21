@@ -1,67 +1,59 @@
 ---
 title: Policies
-description: How policy models, prompts and scope decide what Inth asks visitors, where to change the rules, and why a banner may not appear.
+description: Configure regional consent policies in Inth with opt-in, opt-out, IAB TCF, notice prompts, scope modes, and local testing overrides.
 group: concepts
 ---
 
-## What the policy controls
+Inth matches each visitor to a regional policy rule in your project, deciding the permission model, prompt type, category scope, and privacy controls without branching in your app code.
 
-A policy rule selects the permission model, categories, prompt and persistent
-privacy controls for a visitor. Your app reads the resolved rule and effective
-permissions. It should not choose a different rule just to hide a banner.
+## What a policy rule controls
 
-| Policy setting | What your app should expect |
+Your app reads the resolved rule and `effectivePermissions`. Do not swap rules in client code just to hide a banner.
+
+| Policy setting | Behavior |
 | --- | --- |
-| `model: 'opt-in'` | Optional categories in scope wait for consent. |
-| `model: 'opt-out'` | Categories in scope can be allowed before a choice. Saved refusals and privacy signals can restrict them. |
-| `model: 'none'` | Categories in scope are allowed without an initial prompt. Stock consent controls stay hidden unless the rule grants privacy rights. |
-| `prompt: 'choice'` | The banner asks for a choice when the current state requires one. |
-| `prompt: 'notice'` | Dismissing the notice records an acknowledgement, not a consent grant. |
-| `prompt: 'none'` | No automatic prompt. The rule can still require a way to open preferences. |
-| `scopeMode: 'strict'` | Optional categories outside the rule's scope stay denied. |
+| `model: 'opt-in'` | Optional categories in scope stay denied until the visitor grants consent. |
+| `model: 'opt-out'` | Categories in scope start allowed. Saved refusals and privacy signals such as GPC can restrict them. |
+| `model: 'iab'` | Categories and vendors follow IAB TCF 2.4 purpose consent, legitimate interest, and TC string rules. |
+| `model: 'none'` | Categories in scope run without an initial prompt. Stock consent UI stays hidden unless the rule grants privacy rights. |
+| `prompt: 'choice'` | Shows a banner asking for a decision whenever a choice is missing, expired, or invalidated by a policy update. |
+| `prompt: 'notice'` | Shows a dismissible notice. Dismissing records an acknowledgement, not consent. |
+| `prompt: 'none'` | Shows no automatic banner on load. The rule can still require a preferences entry point. |
+| `scopeMode: 'strict'` | Denies optional categories outside the rule's configured category list. |
+| `scopeMode: 'permissive'` | Allows out-of-scope categories unless another restriction applies. |
+| Regional matching | Matches visitors by country and region or state, with a fallback rule for unknown locations. |
+| Privacy rights | Controls persistent preferences access so visitors who rejected tracking or dismissed a notice can change their mind later. |
 
-Keep a persistent preferences entry point wherever the policy provides that
-right. A visitor who dismissed a notice or rejected tracking still needs a way
-to revisit their choice. Stock components read the rule's rights; custom UI
-must do the same.
+Keep a persistent preferences link or trigger wherever the resolved rule grants that right. Stock Inth components check the rule's rights automatically; custom UI must do the same.
 
-Use `effectivePermissions` to gate a script or embed. A `true` value under an
-opt-out rule does not mean the visitor clicked Accept. Read `explicitChoice`
-when you need the visitor's recorded decision. See
-[how consent works](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice) for these distinctions.
+Gate scripts and embeds with `effectivePermissions`, not `explicitChoice`. Under an opt-out rule, `effectivePermissions` can be `true` before the visitor clicks anything. See [a permission is not a recorded choice](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice).
 
-## Where to change the rules
+## Where rules live
 
-For Inth, configure policy rules on your hosted project. The app receives those
-rules through the configured [data-fetching path](/docs/concepts/data-fetching). Importing
-`recommendedPolicyRules()` or changing browser styling does not override the
-hosted policy.
+Define and publish policy rules in your [Inth](https://inth.com) project. Your app receives those rules through your configured [data-fetching path](/docs/concepts/data-fetching), either bundled at build time or fetched at runtime.
 
-Browser-only setups own their rules locally; see
-[choose your setup](/docs/concepts/choose-your-setup).
+App styling, component props, and browser-side imports do not override your hosted Inth policy. Policy presets are starting templates, not legal advice. Review each rule's model, categories, and expiry against your actual data processing before allowing optional categories by default.
 
-Presets are starting configurations. Select them for your actual processing,
-and review their assumptions before allowing optional categories by default.
-A country match does not establish a legal basis for a vendor's data use.
+## Test policies locally
+
+To test regional behavior locally or in automated tests without network calls, pass `testing()` from your framework package's `/testing` entry along with location `overrides`:
+
+- `overrides: { country: 'DE' }` or `'GB'` matches an opt-in banner in the built-in rule pack.
+- `overrides: { country: 'DE' }` with IAB enabled matches the IAB TCF banner.
+- `overrides: { country: 'US', region: 'CA' }` matches an opt-out rule with no automatic banner.
+- `overrides: { country: 'JP' }` matches a no-prompt `none` rule.
+- An omitted or unknown country uses the pack's strict opt-in fallback. A US country without a state uses the US opt-out fallback.
+
+Pass `testing({ policy })` with custom `PolicyRule` objects to test rules the default pack does not include, such as `prompt: 'notice'`. These defaults belong to the local test pack, not your live Inth project. See [testing()](/docs/concepts/modes#testing) for examples.
 
 ## Why the banner may be absent
 
-A missing banner can be an expected policy outcome or an initialization problem.
-Check `resolution.status` before interpreting the active model.
+A missing banner can be the expected result of a policy rule or an initialization error. Always inspect `resolution.status` before reading `policyRule` or `model`.
 
-| State | What to check |
+| Snapshot state | Cause and what to inspect |
 | --- | --- |
-| A policy matched and `promptRequirement.kind` is `none` | The rule does not ask for an initial prompt, or the stored records already satisfy it. Check persistent preferences separately. |
-| A policy matched but a category is denied | Inspect `effectivePermissions`, `explicitChoice`, `privacySignals` and `restrictions`. A saved refusal or GPC can keep it denied. |
-| No policy has matched | Check backend connectivity, location inputs and policy configuration. Optional categories stay denied while resolution is unresolved. |
+| `resolution.status === 'matched'` and `promptRequirement.kind === 'none'` | The matched rule needs no initial prompt, or stored records already satisfy it. Check persistent preferences separately. |
+| `resolution.status === 'matched'` and a category is denied | Inspect `effectivePermissions`, `explicitChoice`, `privacySignals`, and `restrictions`. A saved refusal, strict scope, or live GPC signal can keep a category denied even with no banner. |
+| `resolution.status` is `'no-match'`, `'failed'`, or `'unconfigured'` | Policy resolution did not match. Check your Inth `projectUrl`, network connectivity, location headers, and project policy configuration. Optional categories stay denied until a policy matches. |
 
-Do not treat `policyRule` alone as proof that a policy resolved. The snapshot
-also carries a safe rule for evaluation while resolution is pending or failed.
-Use `resolution.policy` only after checking for `status: 'matched'`.
-
-The local `recommendedPolicyRules()` pack uses opt-in rules for Europe and
-Québec, opt-out for its supported US privacy states, and a no-prompt `none`
-default for other known locations. An unknown country uses its strict opt-in
-fallback. A US country with a missing state gets the US opt-out fallback.
-These are the local pack's defaults, not a promise about your Inth project.
-Browser-only mode does not discover a visitor's country from their IP address.
+Do not treat `policyRule` alone as proof that your policy loaded. While resolution is pending or after it fails, the snapshot populates `policyRule` with a strict opt-in fallback so optional code stays blocked. Read `resolution.policy` only when `resolution.status === 'matched'`.

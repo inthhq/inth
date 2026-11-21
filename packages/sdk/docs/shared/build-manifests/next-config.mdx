@@ -1,51 +1,39 @@
-Wrap your Next.js config in `withConsentManifest`. An existing config object
-or function goes in as the first argument, unchanged:
+Wrap your Next.js config in `withConsentManifest`. Pass an existing config
+object or function as the first argument, unchanged:
 
 <include src="../examples/nextjs/next-config.mdx" />
 
-`next build`, `next dev` and `next typegen` fetch `${projectUrl}/v1/consent/manifest` and
-write the policy to `node_modules/.cache/inth/`, outside your source tree, so
-there is nothing to keep out of Git. `next start` serves the built snapshot and
-fetches no policy. Without a `projectUrl` option, the build reads the
-`projectUrl` in `inth.config.ts`, which defaults to
-`NEXT_PUBLIC_INTH_PROJECT_URL`, so saves
-and the snapshot point at the same
-project.
+`next build`, `next dev` and `next typegen` download `${projectUrl}/v1/consent/manifest`
+into `node_modules/.cache/inth/`, outside your source tree, so nothing needs to
+go in `.gitignore`. `next start` serves that bundled snapshot with no policy
+fetch. Without a `projectUrl` option, the build reads `projectUrl` from
+`inth.config.ts`, then `NEXT_PUBLIC_INTH_PROJECT_URL` (falling back to
+`NEXT_PUBLIC_C15T_BACKEND_URL` if unset).
 
-The wrapper reads `inth.config.ts` the way Next.js reads `next.config.ts`, and
-skips the fetch for `mode: hosted()`, `mode: testing()`,
-`manifest({ snapshot })` and `manifest({ source: 'runtime' })`, which read no
-build-time manifest. Those builds never contact the backend. If the file can't
-be read at build time, for example because it imports something Node can't
-load, the build warns and fetches as for `manifest()`.
+The wrapper reads `inth.config.ts` (or `.mts`, `.js`, `.mjs`) at the project
+root, next to `next.config.ts`, and aliases `@inth/nextjs/generated` to the
+cache in Turbopack and webpack. `InthProvider`, `resolveConsent` and the consent
+route read both automatically. Server code can import `snapshot` directly from
+`@inth/nextjs/generated`, while importing it in a Client Component fails the
+build via `server-only`. The wrapper also adds `@inth/sdk` and `@inth/nextjs`
+to `transpilePackages` so Pages Router server bundles apply the aliases;
+packages listed in `serverExternalPackages` stay external and fetch policy at
+runtime.
 
-The wrapper also finds `inth.config.ts` (or `.mts`, `.js`, `.mjs`) at the
-project root, next to `next.config.ts`, and points `@inth/nextjs/generated` at the
-cache, in Turbopack and webpack. `InthProvider`, `resolveConsent` and the
-consent route read both without an import. Server code that needs the
-snapshot itself imports `snapshot` from `@inth/nextjs/generated`. Only server
-bundles get the snapshot: in a browser bundle,
-`@inth/nextjs/generated` imports `server-only`, so importing it from a client
-component fails the build. The wrapper also adds `@inth/sdk` and `@inth/nextjs` to
-`transpilePackages`, so Pages Router server bundles see the
-aliases. A package you list in `serverExternalPackages` stays external: it
-reads no `inth.config.ts` and fetches the policy at runtime.
+`withConsentManifest` skips the fetch for `mode: hosted()`, `mode: testing()`,
+`manifest({ snapshot })`, `manifest({ source: 'runtime' })`, relative URLs and
+`output: 'export'`. If `inth.config.ts` fails to load at build time, for
+example because of a non-Node import, the build warns and fetches as for
+`manifest()`.
 
-If the fetch fails, `next build` stops. `next dev` logs a warning instead, and
-`snapshot` is `undefined`, so the server fetches and caches the policy at
-runtime, as with
+If the fetch fails or no project URL is set, `next build` and `next dev` log a
+warning and leave `snapshot` as `undefined`, so the server falls back to
 [runtime manifest caching](/docs/frameworks/next/optimization#reuse-cached-policy-data).
-To let a build continue the same way, set `onBuildError: 'runtime'`, or run it
-with `INTH_ON_BUILD_ERROR=runtime`:
+To stop the build on a failed fetch, missing URL or relative URL instead, set
+`onBuildError: 'fail'` or `INTH_ON_BUILD_ERROR=fail`:
 
 {/* example: fragment */}
 
 ```ts title="next.config.ts"
-export default withConsentManifest(nextConfig, { onBuildError: 'runtime' });
+export default withConsentManifest(nextConfig, { onBuildError: 'fail' });
 ```
-
-A missing backend URL counts as a failed fetch. The build skips the fetch and
-leaves `snapshot` `undefined` when the backend URL is relative, or when the
-config sets `output: 'export'`, which has no server to use the snapshot. With
-`onBuildError: 'fail'`, a relative URL stops the build. A static export always
-skips the fetch.

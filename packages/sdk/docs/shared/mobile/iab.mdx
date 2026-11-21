@@ -1,330 +1,108 @@
 ## Prepare your Inth project
 
-Configure an IAB policy for the regions where the app will use TCF. The policy
-must serve the current Global Vendor List and the disclosures for every
-Additional Consent provider you intend to offer. A category policy with a
-`marketing` toggle does not supply those vendor choices.
+Configure an IAB policy in your Inth project for regions using TCF. The policy must serve the current Global Vendor List (GVL) and disclosures for every Google Additional Consent provider you offer. A category-only policy does not supply vendor disclosures.
 
-Use the CMP identity and internal CMP version supplied for your deployment.
-The internal CMP version is separate from your app version and SDK version.
-Set the publisher's two-letter country code and keep the consent language
-consistent with the disclosure text the app displays.
-
-For Google's publisher App review, include Google vendor 755 and the intended
-Additional Consent providers. The shared example project at
-`https://example-inth.inth.app/` currently serves category policies. Configure
-its IAB policy before using it for a hosted IAB run.
+Set the CMP ID and internal CMP version assigned to your deployment (separate from your app and SDK versions), your two-letter publisher country code, and a consent language matching your disclosure text. For Google's publisher App review, include Google vendor `755` and your Additional Consent providers.
 
 ## Install IAB configuration natively
 
-Install the native engine once, before presenting consent or starting an ad
-SDK. Use the same engine for the presenter and all gates.
+Install the native engine once before showing consent or starting ad SDKs, and share that engine across your presenter and gates.
 
 ### Swift
 
-This helper installs the core with Apple transport, protected storage and the
-standard UserDefaults signal bus. Pass your approved deployment settings; the
-function deliberately has no sample CMP identity.
+This helper installs the core with Apple transport, protected storage, and the `UserDefaults` signal bus. Pass your approved deployment settings:
 
 <include src="../examples/native/core-swift/AppleInstallation/swift-iab-config.mdx" />
 
 ### Kotlin
 
-Pass `IabConfiguration` through `NativeConfig` to the Android platform
-installer:
+Pass `IabConfiguration` inside `NativeConfig` to `InthAndroid.install(context, config)`:
 
 <include src="../examples/native/examples/consent-demo/android-iab-config.mdx" />
 
-Pass the returned configuration to `InthAndroid.install(context, config)`
-instead of the category-only configuration in the Android quickstart.
-
 ### React Native and Expo
 
-Expo apps set the plugin's `iab` option with `cmpId`, `cmpVersion`,
-`publisherCountryCode` and an optional `consentScreen`. Bare RN apps set the
-matching `com.inth.iab.*` `Info.plist` keys and `com.inth.IAB_*` Android
-metadata. Automatic startup then installs the engine with IAB TCF on and
-writes the CMP ID and version to the platform signal store. There is no
-default CMP ID. [Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf)
-lists the keys, ranges and what happens when a value is invalid.
+In Expo, configure the plugin's `iab` option with `cmpId`, `cmpVersion`, `publisherCountryCode`, and optional `consentScreen`. In bare React Native, set the matching `com.inth.iab.*` `Info.plist` keys and `com.inth.IAB_*` Android metadata. Automatic startup installs the engine with IAB TCF enabled and writes CMP metadata to platform storage. See [Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf).
 
-The plugin's `vendors` option only narrows disclosures; it does not turn IAB
-on. For publisher restrictions or custom purposes, turn automatic startup off,
-install the engine natively with the Swift or Kotlin configuration above, then
-attach the RN adapter to that engine.
+The plugin's `vendors` option narrows disclosures but does not enable IAB. If you need publisher restrictions or custom purposes, disable automatic startup, install the engine natively with the Swift or Kotlin setup above, and attach the React Native adapter to it.
 
 ## Present the consent flow
 
-Use the native presenter from your platform quickstart. The stock IAB flow
-handles purpose and partner choices, legitimate-interest objections, special
-features, publisher restrictions, Additional Consent providers and custom
-partners.
+Use the native presenter from your platform quickstart. The stock flow covers purpose and vendor consent, legitimate-interest objections, special features, publisher restrictions, Additional Consent providers, and custom partners. Keep a Privacy settings entry point available after dismissal so users can update or withdraw consent.
 
-The visitor can open Customize, inspect purpose details, search partners and
-read their disclosures before saving. Keep a Privacy settings action in the
-app after the first layer closes so the visitor can change or withdraw their
-choice.
-
-In React Native you can draw the IAB screens yourself with `useIAB()` and
-`useTCString()`; the native engine still validates and commits the selection.
-See [Build your own IAB screen](/docs/frameworks/react-native/headless#build-your-own-iab-screen).
+In React Native, you can also build custom IAB screens with `useIAB()` and `useTCString()`, backed by native validation and commits; see [Build your own IAB screen](/docs/frameworks/react-native/headless#build-your-own-iab-screen).
 
 ### Custom partners
 
-Custom vendors you configure in the policy's IAB settings reach the app with
-the vendor list. The stock flow lists them on their own Custom Partners page,
-apart from IAB partners, each with its purposes, data use and privacy policy,
-and its own consent and legitimate-interest switches. Accept all grants them
-and Reject all withdraws their consent, as on the web.
+Custom vendors configured in your Inth policy appear on a dedicated Custom Partners page in the stock flow, separate from IAB partners. Accept all grants them and Reject all withdraws them.
 
-Their choices are stored with the native decision but never in the TC String,
-which only names IAB vendors. Check one with `isCustomVendorAllowed(id)` on
-either platform. The id is the vendor's configured id as a string. In React
-Native, `useIABSnapshot()?.customVendors` lists them, and `useIAB()`'s
-`setVendorConsent` and `setVendorLegitimateInterest` take their ids.
+Because the TC String encodes IAB vendors only, check custom partner permissions with `isCustomVendorAllowed(id)` (string ID) on Swift and Kotlin. In React Native, read `useIABSnapshot()?.customVendors` and update choices through `useIAB()` (`setVendorConsent` and `setVendorLegitimateInterest`).
 
-Draft changes are not consent. A successful save validates the current
-disclosures and stores the decision locally. If the list changed while the
-visitor was editing, keep the draft visible and ask them to review the current
-list. Network delivery can complete later.
+Draft edits are not active consent until saved. If vendor disclosures change while the visitor is editing, keep the draft visible and ask them to review the updated list.
 
-## Gate the actual ad integration
+## Gate ad integrations
 
-Disable the ad SDK's automatic startup. Before initialization or an ad request,
-check the current native permission for the vendor, purpose and legal basis
-that integration uses. Swift exposes `isIABAllowed`; Kotlin exposes
-`isIabAllowed`. Additional Consent integrations use
-`isAdTechProviderAllowed`. Keep the subscription alive so withdrawal stops or
-reconfigures collection through the vendor's supported API.
+Disable automatic startup on your ad SDKs. Before initializing an SDK or requesting ads, check the native gate for the vendor, purpose, and legal basis:
 
-For a custom partner, check `isCustomVendorAllowed(id)` instead. To know which
-Inth categories the committed decision grants by the web's rules, read
-`iabPurposeCategories()`; custom partners' purposes count there too.
+- **TCF vendors.** `isIABAllowed` (Swift) or `isIabAllowed` (Kotlin).
+- **Google Additional Consent.** `isAdTechProviderAllowed` (requires TCF consent for purposes 1, 3, and 4).
+- **Custom partners.** `isCustomVendorAllowed(id)`.
+- **Derived categories.** `iabPurposeCategories()` maps committed IAB and custom partner choices to Inth categories.
 
-TCF consent, legitimate interest, special-feature opt-in and Additional
-Consent are distinct answers. Additional Consent providers depend on consent
-for TCF purposes 1, 3 and 4. A category grant or the existence of a TC String
-does not replace these checks.
+Keep gate subscriptions active so withdrawals stop or reconfigure ad collection. A category grant or non-empty TC String does not replace these checks.
 
 ## Inspect platform signals
 
-The platform adapters mirror committed signals into standard UserDefaults on
-iOS and application-default SharedPreferences on Android. Other SDKs read
-these stores. The protected native record remains the consent authority.
+Platform adapters mirror committed signals into standard `UserDefaults` on iOS and default `SharedPreferences` on Android while keeping protected storage as the authority:
 
 | Signal | Meaning |
 | --- | --- |
 | `IABTCF_TCString` | Encoded native TCF decision |
-| `IABTCF_gdprApplies` | The platform integer describing applicability |
-| Purpose and vendor consent fields | Consent vectors for the committed decision |
-| Purpose and vendor LI fields | Legitimate-interest vectors, separate from consent |
-| `IABTCF_AddtlConsent` | Additional Consent v2 provider decision |
+| `IABTCF_gdprApplies` | Platform integer indicating GDPR applicability |
+| Purpose and vendor consent fields | Committed consent bit vectors |
+| Purpose and vendor LI fields | Legitimate-interest bit vectors |
+| `IABTCF_AddtlConsent` | Additional Consent v2 provider selections |
 
-Inspect actual stored values after save, withdrawal and relaunch. Do not
-write these keys manually or cache their values as permanent permission in
-JavaScript. Reset, identity changes and expired disclosures can invalidate
-authority. The native gate accounts for that validity.
+Never write these keys manually or cache them in JavaScript as permanent authority; resets, identity changes, and expired disclosures invalidate them.
 
 ## Keep ATT separate
 
-On iOS, ATT authorizes platform tracking. Request it explicitly only if your
-app needs it, with your app-specific usage description. An ATT grant does not
-grant an Inth category or vendor, and an Inth grant does not bypass ATT denial.
-Android has no ATT prompt.
+On iOS, App Tracking Transparency (ATT) authorizes cross-app tracking. Request ATT only if your app tracks users, with a clear usage description. An ATT grant never grants Inth category or vendor consent, and Inth consent never bypasses ATT denial. Android has no ATT prompt.
 
-In RN, `useTrackingAuthorization()` reads ATT status and
-`useIsTrackingAllowed(category)` combines it with category permission. Those
-hooks do not replace IAB vendor and purpose checks.
+In React Native, `useTrackingAuthorization()` reads ATT status and `useIsTrackingAllowed(category)` combines ATT with category consent. Neither replaces IAB vendor and purpose checks.
 
 ## Ask for ATT after the consent prompt
 
-When your app enables ATT, the stock prompt also decides when Apple's alert
-appears. By default the consent prompt comes first. Apple's alert follows once
-the prompt has closed, and only if the person granted marketing. Someone who
-refused marketing never sees it.
+When ATT is enabled (`enableAppTrackingTransparency` in Expo or `NSUserTrackingUsageDescription` in `Info.plist`), the stock prompt coordinates Apple's ATT alert. By default (`afterConsent`), the consent prompt appears first, and Apple's alert follows only if the visitor granted marketing.
 
-Set the order with `trackingRequest` on `<InthProvider>` in React Native, or
-on `.inth(...)` and `ConsentRootViewController` in Swift:
+Configure the timing with `trackingRequest` on `<InthProvider>` in React Native, or on `.inth(...)` and `ConsentRootViewController` in Swift:
 
-| Value | What happens |
+| Value | Behavior |
 | --- | --- |
-| `afterConsent` (default) | The consent prompt first. Apple's alert after it closes, only while marketing is granted. |
-| `beforeConsent` | Apple's alert first, then the consent prompt, whether the prompt opens by itself or your app opens it. Not recommended; see below. |
-| `manual` | Nothing automatic. Call `requestTrackingAuthorization()`, `useTrackingRequest()` or `InthApple.tracking.request` yourself. |
+| `afterConsent` (default) | Shows the consent prompt first, then Apple's ATT alert after dismissal only if marketing is granted. |
+| `beforeConsent` | Shows Apple's ATT alert before the consent prompt. Not recommended; use only if product or legal review requires it. |
+| `manual` | No automatic ATT request. Call `requestTrackingAuthorization()`, `useTrackingRequest()`, or `InthApple.tracking.request` directly. |
 
-The SDK asks Apple only when all of these hold:
+The SDK requests ATT only when ATT is enabled, Apple's status is not determined, marketing is not refused (by a stored choice, GPC, or TC String), the app is foregrounded, no Inth screen is open, and an Inth root is mounted. Under `afterConsent`, ATT fires after closing a prompt with marketing granted, on a later launch where stored consent already grants marketing and ATT is undetermined, or after enabling marketing in privacy settings. With `autoPresent` off, nothing fires at launch, and custom JS consent UIs must call `useTrackingRequest()` or `requestTrackingAuthorization()` themselves.
 
-- The app enabled ATT: `enableAppTrackingTransparency` in the Expo plugin, or
-  `NSUserTrackingUsageDescription` in `Info.plist`.
-- Apple's answer is still not determined. Once Apple has answered, the SDK asks
-  again only with the yearly re-ask below, which is off by default.
-- Marketing is not refused: by a stored choice, by a GPC signal, or by any other
-  explicit denial on the snapshot. This holds in every order, including
-  `beforeConsent`. Apple asks apps not to show its alert to people who opted
-  out in a separate consent control. Under an IAB TCF policy, the TC String
-  counts too; see [ATT and IAB TCF](#att-and-iab-tcf).
-- The app is active. Apple shows nothing to an app that is not active, so the
-  request waits for the app to return to the foreground.
-- No Inth screen is open. That includes a notice card, and a prompt or settings
-  screen that is still animating away. The request waits until it has gone.
-- An Inth root is still mounted: the provider in React Native, or an attached
-  scene in Swift. If the last one goes away while a request waits, the request
-  is dropped. A root that mounts later decides again.
+With `beforeConsent`, Apple's alert runs right before an owed or programmatically opened consent prompt (or at launch if no prompt is owed and marketing is not refused), at most once per launch, and never delays user-opened privacy settings.
 
-With `afterConsent`, three moments can lead to Apple's alert:
-
-- The person closes the consent prompt with marketing granted.
-- A later launch where a stored choice already grants marketing, no prompt is
-  owed, and Apple was never asked. The rule "after consent, only with marketing
-  granted" already holds, so the SDK asks once the engine has an answer.
-- The person changes marketing from denied to granted in privacy settings.
-
-With `autoPresent` off, nothing is asked at launch. With `afterConsent`, Apple's
-alert still follows a prompt or settings screen your app opens through Inth.
-
-### When to use `beforeConsent`
-
-Prefer the default. `beforeConsent` shows Apple's alert before the person has
-seen your consent prompt, so they answer it without knowing what tracking is
-for. It also asks people who will refuse marketing in the prompt a moment
-later, which is the order Apple's guidance steers away from: "You should not
-display the ATT prompt to users who have opted out of all relevant legal consent
-choices." Use it only when a product or legal review has asked for that order.
-
-How it behaves:
-
-- Apple's alert comes right before a consent prompt opens: one that opens by
-  itself, one the SDK opens after another screen closes, or one your app opens
-  with `presentConsentPrompt()` in React Native or `ConsentPrompt.presentPrompt()`
-  in Swift.
-- A launch that owes no consent prompt asks at launch, while Apple's answer is
-  not determined and marketing is not refused: granted, or no stored choice
-  that refuses it.
-- It asks at most once per launch, and only under the conditions above, so a
-  stored refusal of marketing skips it. If a later prompt opens after that
-  refusal is gone, for example after a reset, it asks then.
-- Privacy settings the person opens are never delayed. They asked for those
-  controls, and Apple's alert is not one of them.
-- It is in force from the first render of `<InthProvider>`, before your own
-  components' effects run. In Swift, a `presentPrompt()` call made before the
-  `.inth` scene has attached, for example from a view's `onAppear`, waits
-  for that scene and follows its order.
-- If the provider unmounts while your app's own `presentConsentPrompt()` call
-  waits, that call opens the prompt without Apple's alert.
-
-On Apple's expanded EU sheet, Additional Information closes Apple's sheet with
-no answer recorded and opens Inth's privacy settings. Closing them applies the
-after-consent rule in either order, so Apple's alert returns only while
-marketing is granted. With `beforeConsent`, a tap on the sheet shown before an
-owed prompt lets that prompt open as the controls; closing it applies the same
-rule.
-
-Apple shows the Additional Information button only when something will handle
-the tap. The stock UI does, so the SDK asks for the button when it can open its
-own screens. A React Native app that draws its own consent UI, or a build
-without the stock native screens, gets the button only by passing
-`onTrackingAdditionalInformation` to `<InthProvider>`, which runs on a tap.
-Your own calls to `requestTrackingAuthorization()` and `InthApple.tracking.request`
-show no button unless you pass a handler (`onAdditionalInformation:` in Swift);
-`useTrackingRequest()` asks for it and opens its preference centre.
-
-With `autoPresent={false}` and your own JavaScript consent UI, nothing in
-React Native asks Apple automatically: the provider asks after sessions the
-native screens report, and your UI does not open those. Call
-`useTrackingRequest()` or `requestTrackingAuthorization()` after your own
-consent step, and gate on `useIsTrackingAllowed('marketing')`. Germany, France, Italy, Poland and Romania always get the
-full-page sheet; the rest of the EU gets it when the app prefers it, which Inth
-does. `NSUserTrackingMarkdownUsageDescription` (`trackingMarkdownUsageDescription`
-in the Expo plugin) is the optional rich-text copy for that sheet.
+On Apple's expanded EU ATT sheet (shown in Germany, France, Italy, Poland, Romania, and the rest of the EU when preferred; optional rich copy via `NSUserTrackingMarkdownUsageDescription` or `trackingMarkdownUsageDescription`), tapping Additional Information opens Inth's privacy settings. Custom UIs receive this button by passing `onTrackingAdditionalInformation` on `<InthProvider>` or `onAdditionalInformation:` in Swift.
 
 ### Ask again after a year (EU)
 
-In the European Union Apple lets an app show its alert again one year after the
-person's previous answer, whichever way it went. It is off by default. Turn it
-on with `trackingReprompt` on `<InthProvider>` in React Native, or
-`trackingReprompt:` on `.inth(...)` and `ConsentRootViewController` in
-Swift:
-
-| Value | What happens |
-| --- | --- |
-| `never` (default) | Only while Apple's answer is not determined. |
-| `yearly` | Also once per launch when the answer is `authorized` or `denied`, marketing is granted, and 365 days have passed since the SDK last saw an answer. |
-
-Apple decides whether anything shows. There is no way to ask Apple whether the
-person is eligible, so the SDK calls the request and Apple either prompts or
-returns the stored answer at once. Outside the EU the call shows nothing.
-
-The SDK stores when it last saw an answer. An answer given before this version
-has no stored time, so the SDK stores the current time when it first reads it
-and waits a full year from then. On a re-ask the stored time moves only when
-Apple's answer changes. Apple gives no way to tell "shown and answered the
-same" from "not shown", and a silent return must not restart the year, so an
-unchanged answer costs one silent call per launch until it changes. It never asks again when marketing is
-refused, when tracking is restricted, or with `trackingRequest` set to
-`manual`. If the person turned off "Allow Apps to Request to Track", Apple shows
-nothing and returns the stored answer.
-
-Android has no ATT, so `trackingRequest` does nothing there.
-
-Apple's answer never changes stored consent, and consent never stands in for
-Apple's answer. Gate tracking on both, for example with
-`useIsTrackingAllowed('marketing')`.
+In the EU, Apple allows re-prompting ATT one year after a previous answer. Enable it with `trackingReprompt="yearly"` on `<InthProvider>` or `trackingReprompt: .yearly` in Swift (defaults to `never`). When enabled, the SDK re-requests once per launch if status is `authorized` or `denied`, marketing is granted, and 365 days have passed since the last recorded answer. It never re-prompts when marketing is refused, tracking is restricted, or `trackingRequest` is `manual`. Android ignores `trackingRequest` and `trackingReprompt`.
 
 ### ATT and IAB TCF
 
-ATT and TCF answer different questions, and tracking needs both:
+ATT and TCF are independent gates, and tracking requires both. Refusal in either blocks tracking; the SDK never writes ATT status into the TC String or alters ATT based on TCF.
 
-- TCF records the person's legal consent in the TC String: which purposes and
-  vendors they allow.
-- ATT is Apple's own gate on the device: whether this app may track them across
-  other companies' apps and websites.
-- A refusal in either stops tracking. An `authorized` ATT answer does not grant
-  a purpose or vendor, and a TCF consent does not bypass an ATT denial.
-- The SDK never writes an ATT answer into the TC String, and never changes the
-  ATT answer because of the TC String.
+Under an IAB TCF policy, the after-consent ATT check treats `marketing` as consented when every TCF purpose among 2, 3, and 4 requested by any vendor (or custom partner) is consented, at least one vendor, custom partner, or Google ad tech provider can track, and Inth's `marketing` category is granted. Accept all triggers ATT; Reject all never does.
 
-This gate decides only whether the SDK asks Apple. It does not decide whether a
-vendor may read the advertising identifier: purpose 1, that vendor's consent
-and the ATT answer do.
+Apple's [user privacy and data use](https://developer.apple.com/app-store/user-privacy-and-data-use/) guidance advises against showing ATT to users who already opted out in a consent prompt, and App Review Guidelines 5.1.1(iv) and 5.1.2(i) prohibit forcing or rewarding tracking consent.
 
-Under an IAB TCF policy, the after-consent rule reads marketing the way the web
-IAB module derives it from the TC String: the `marketing` category stands for
-TCF purposes 2, 3 and 4, and counts as consented only when every one of them
-that some vendor asks consent for is consented. Custom partners count as
-vendors here. Someone must also be able to track: at least one consented
-vendor or custom partner that asks consent for one of those purposes, or a
-consented Google ad tech provider. The Inth `marketing` category must be
-granted as well. So Accept all asks Apple, Reject all never does, and a custom
-choice asks only when it grants those purposes to a vendor or custom partner.
-A stored TC String that does not counts as a refusal, so `beforeConsent` skips
-it too.
+## Verify the integration
 
-Additional Information on Apple's sheet opens the TCF preferences. When the
-person closes them, Apple's alert comes back only if those purposes are still
-consented.
+Run the [mobile verification checklist](/docs/guides/mobile-verify) with your actual ad and mediation SDK versions across fresh startup, rejection, granular save, accept-all, withdrawal, and restart, checking decoded TC Strings and typed platform storage.
 
-### Why consent comes first
-
-Apple's
-[user privacy and data use](https://developer.apple.com/app-store/user-privacy-and-data-use/)
-page lets apps show a consent management platform alongside ATT, and says not
-to show the ATT prompt to people who opted out of all relevant choices in that
-separate control. Asking only after a marketing grant follows that rule. It
-also keeps the order the purpose string can explain: the person has just been
-told what tracking is for.
-
-App Review Guideline 5.1.1(iv) forbids manipulating or forcing consent, and
-5.1.2(i) forbids requiring tracking to use the app or rewarding it. The stock
-prompt does neither. If you add your own screen before Apple's alert, keep it
-transparent about the data use and do not mimic the system alert.
-
-## Check the complete integration
-
-Use the [mobile verification checklist](/docs/guides/mobile-verify) with the
-actual ad SDK and mediation versions. Check fresh startup, rejection, granular
-save, accept-all, withdrawal and process restart. Verify visible choices
-against platform storage and decoded TC Strings.
-
-No AdMob adapter or UMP replacement is provided by this guide. Google App
-certification and IAB mobile validation remain separate requirements. See
-[mobile availability](/docs/guides/mobile-status) before planning a rollout.
+This guide does not provide an AdMob adapter or UMP replacement. See [mobile availability](/docs/guides/mobile-status) for certification status and release scope.

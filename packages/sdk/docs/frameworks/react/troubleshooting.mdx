@@ -1,25 +1,22 @@
 ---
 title: Troubleshooting
-description: Fix a missing banner, early vendor requests, unstyled components and theme warnings in a React app that uses @inth/react.
+description: Fix missing banners, early vendor requests, missing styles, and theme warnings in @inth/react apps.
 group: frameworks
 ---
 
+Diagnose and resolve common setup issues in React apps using `@inth/react`.
+
 ## There is no banner
 
-**Check.** In DevTools Network, find the `GET` request to `/v1/consent/init` on your
-backend URL. With `hosted()`, the browser sends it while the provider first
-renders. With a bundled `manifest()`, the browser makes no request before the
-banner unless the policy depends on a country or region it does not know.
+**Check.** Open DevTools Network and look for `/v1/consent/init` on your Inth project URL. With `hosted()`, the browser sends it during the provider's first render. With bundled `manifest()`, the browser makes no `/v1/consent/init` request unless the policy needs a country or region it does not know.
 
 | What you see | Cause | Fix |
 | --- | --- | --- |
-| No request and no banner | `InthProvider` is not mounted, an error stopped `src/consent.tsx` from rendering, or the bundled policy asks for no banner | Check the console for errors, render one provider at the app root as in the [quickstart](/docs/frameworks/react/quickstart), and inspect the active policy with the component below |
-| `/v1/consent/init` fails with a CORS error | Your site's origin is not trusted | Add the exact origin, including port in development, to the trusted origins in your Inth project |
-| `/v1/consent/init` returns 200 | The policy for this visitor asks for no banner, or a stored choice is still valid | Inspect the active policy with the component below, or clear site data |
+| No request and no banner | `InthProvider` is not mounted, an error stopped `src/consent.tsx` from rendering, or the bundled policy requires no banner | Check the console for errors, mount one provider at the app root as in the [quickstart](/docs/frameworks/react/quickstart), and inspect the active policy below |
+| `/v1/consent/init` fails with a CORS error | Your site's origin is not trusted | Add the exact origin, including port in development, to trusted origins in your Inth project |
+| `/v1/consent/init` returns 200 | The visitor's policy requires no banner, or a valid stored choice already exists | Inspect the active policy below, or clear site data |
 
-A policy with `prompt: 'none'` shows no banner by design, and so does a
-returning visitor with a valid stored choice. [Policies](/docs/concepts/policies)
-explains why a region may not show one.
+A policy with `prompt: 'none'` shows no banner by design, as does a returning visitor with a valid stored choice. See [Policies](/docs/concepts/policies).
 
 <include src="../../shared/vite-build-manifest-troubleshooting.mdx" />
 
@@ -29,8 +26,7 @@ explains why a region may not show one.
 
 ## Inspect the active policy
 
-Render this component inside `InthProvider`. It reads state and records no
-choice:
+Render this temporary component inside `InthProvider` to inspect resolved state without recording a choice:
 
 {/* example: fragment */}
 
@@ -60,67 +56,36 @@ export function ConsentPolicyDebug() {
 }
 ```
 
-The component re-renders on every consent change. Remove it after you finish.
-For a feature gate, use `useConsent('marketing')` or the category you need.
+This component re-renders on every consent change, so remove it after debugging. Use `useConsent('marketing')` or the specific category hook for feature gates.
 
 ## A vendor loads before the visitor chooses
 
-**Check.** Search `index.html`, your entry module and any tag manager for the
-vendor's script or SDK initializer.
+**Check.** Search `index.html`, your entry modules, and any tag manager for the vendor's script tag or SDK initializer.
 
-**Fix.** Remove every loader except the one in `options.scripts`. Inth only
-gates scripts registered with it, and the network blocker cannot stop code that
-runs before the provider renders. [Scripts and embeds](/docs/frameworks/react/scripts)
-covers the options.
+**Fix.** Remove every loader except the one in `options.scripts`. Inth only gates scripts registered with it, and the network blocker cannot stop code running before `InthProvider` renders. See [Scripts](/docs/frameworks/react/scripts).
 
 ## The banner has no styles
 
-**Check.** In DevTools Elements, the banner has classes but no rules apply.
-Look for Inth's `<style>` element: `<style data-href="inth-tokens inth-button inth-banner">`
-in `<head>` on React 19, or `<style data-inth-styles>` next to the banner on
-React 18 or with a `nonce`. Check the console for a Content Security Policy
-error.
+**Check.** In DevTools Elements, the banner has classes but no CSS rules apply. Look for Inth's `<style>` element: `<style data-href="inth-tokens inth-button inth-banner">` in `<head>` on React 19, or `<style data-inth-styles>` next to the banner on React 18 or when `nonce` is set. Check the console for Content Security Policy errors.
 
 **Fix.**
 
-- No Inth `<style>` element: the provider sets `styles: false` or `noStyle`.
-  With `styles: false`, import `@inth/react/styles.css` once in the module
-  that renders the provider.
-- The console reports a blocked inline style: set the provider's `nonce`, as
-  [Content Security Policy](/docs/frameworks/react/content-security-policy)
-  shows.
-- Under Tailwind 3, buttons lose their padding and cards their borders:
-  Tailwind 3's unlayered preflight beats Inth's layered rules. Set
-  `styles: false`, import `@inth/react/styles.css` above the `@tailwind`
-  directives and add `@inth/react/postcss-tailwind3` before `tailwindcss` in your
-  PostCSS config. Without the plugin, Tailwind 3 drops Inth's rules or fails
-  the build with
-  `` `@layer components` is used but no matching `@tailwind components` directive is present ``.
-  See [Tailwind CSS](/docs/customization/tailwind#set-up-tailwind-css-3).
+- No Inth `<style>` element: `options.styles` is `false` or `noStyle` is set. With `styles: false`, import `@inth/react/styles.css` once in the module that renders `InthProvider`.
+- Blocked inline style in the console: pass `options.nonce` to `InthProvider`. See [Content Security Policy](/docs/frameworks/react/content-security-policy).
+- Missing button padding or borders on Tailwind CSS 3: Tailwind 3's unlayered preflight overrides Inth's layered rules. Set `styles: false`, import `@inth/react/styles.css` above `@tailwind`, and add `@inth/react/postcss-tailwind3` before `tailwindcss` in your PostCSS config. Without that plugin, Tailwind 3 drops Inth's rules or fails the build with `` `@layer components` is used but no matching `@tailwind components` directive is present ``. See [Tailwind CSS](/docs/customization/tailwind#set-up-tailwind-css-3).
 
 ## The console warns that theme tokens are no longer turned into CSS
 
-**Check.** `options.theme` holds colors, radius or other tokens, and the page
-has no `inth-theme` style element. The provider only reads `consentActions`
-and slot styles from `theme`.
+**Check.** `options.theme` contains color, radius, or other tokens while the page has no `inth-theme` style element. `InthProvider` reads only `consentActions` and slot styles from `theme`.
 
-**Fix.** Move the tokens to your CSS or render `ConsentTheme`, as shown in
-[customize](/docs/frameworks/react/customize#change-colors-fonts-and-radius).
+**Fix.** Move tokens into your CSS or render `ConsentTheme`. See [Customize](/docs/frameworks/react/customize#change-colors-fonts-and-radius).
 
 ## The banner is missing from server-rendered HTML
 
-**Check.** Your app uses React Router framework mode, Remix or another
-server-rendered setup without an Inth adapter. There this is expected: the
-browser resolves consent after hydration.
+**Check.** Your app uses React Router framework mode, Remix, or another SSR setup without a dedicated Inth server adapter. Inth resolves consent in the browser after hydration in those setups.
 
-**Fix.** None is needed for consent to work.
-[Rendering](/docs/frameworks/react/rendering#react-router-remix-and-other-server-rendered-apps)
-explains the options.
+**Fix.** No change is required for consent gating to work. See [Rendering](/docs/frameworks/react/rendering#react-router-remix-and-other-server-rendered-apps) for available options.
 
 ## More help
 
-[Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
-every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because the wrong package is installed, choices that disappear on
-reload, server HTML that differs from the browser, static builds that fail and
-content blockers that hide the consent UI.
+See [Troubleshoot consent](/docs/guides/troubleshooting) for cross-framework issues including missing banners, early analytics, lost choices on reload, hydration mismatches, and content blockers.

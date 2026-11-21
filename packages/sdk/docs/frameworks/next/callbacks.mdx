@@ -1,19 +1,19 @@
 ---
 title: Callbacks
-description: Run code in a Next.js app when a visitor records a consent choice, when permissions change, when a request fails and before the revocation reload, from inth.config.ts.
+description: Run callbacks in a Next.js app when visitors record consent, permissions change, requests fail or before revocation reloads.
 group: frameworks
 ---
 
+Subscribe to consent lifecycle events in `inth.config.ts` and report server
+prefetch failures from `resolveConsent()`.
+
 ## Put callbacks in inth.config.ts
 
-Callbacks are functions, and a Server Component cannot pass functions to a
-Client Component. React serializes every prop a layout passes across that
-boundary. `inth.config.ts` is bundled into the browser, so put the callbacks
-there instead, under `options`. Define them in a module:
+Because Server Components cannot pass functions to Client Components, define
+browser callbacks in a module and attach them under `options` in
+`inth.config.ts`:
 
 <include src="../../shared/examples/nextjs/callbacks.mdx" />
-
-Then pass them in the config:
 
 {/* example: fragment */}
 
@@ -25,61 +25,46 @@ import { callbacks } from './lib/consent-callbacks';
 export default defineConsentConfig({ options: { callbacks } });
 ```
 
-`InthProvider` reads the config in the App Router layout and in the
-[Pages Router](/docs/frameworks/next/pages-router) `_app.tsx` alike, so the
-same file covers both routers. Keep your existing `scripts` and other options
-in the same call.
-
-`InthProvider` subscribes the callbacks after it mounts in the browser. Server
-rendering never calls them. The provider calls the latest `callbacks` object
-it received, so a new object on a later render takes effect without a
-remount.
+`InthProvider` reads this file in both App Router layouts and
+[Pages Router](/docs/frameworks/next/pages-router) `_app.tsx`. Keep your
+existing `scripts` and options in the same call. Callbacks subscribe after
+mount in the browser, never run during SSR, and always invoke the latest
+object passed.
 
 ## Available callbacks
 
 | Callback | Runs when | Receives |
 | --- | --- | --- |
-| `onChoiceRecorded` | The visitor clicks Accept All, Reject All or Save Settings, in the stock UI or through `useSaveConsents()`. | `snapshot`, the state after the choice; `confirmed`, the categories this action recorded; `actionAt`, the time as a millisecond timestamp |
-| `onPermissionsChanged` | Any effective permission changes value. | `snapshot`, the state after the change; `previous`, the permissions before it |
-| `onError` | A consent command fails in the browser, such as a failed `/init` request or a save the backend rejects. | `error`, a message string |
-| `onBeforeConsentRevocationReload` | A save withdrew a granted category or vendor, right before Inth reloads the page. | `preferences`, the permissions after the save |
+| `onChoiceRecorded` | Visitor clicks Accept All, Reject All or Save Settings (stock UI or `useSaveConsents()`) | `snapshot`, `confirmed` categories, `actionAt` timestamp (ms) |
+| `onPermissionsChanged` | Any effective permission changes value | `snapshot`, `previous` permissions |
+| `onError` | A browser consent command fails (`/v1/consent/init` or `/v1/consent/records`) | `error` message string |
+| `onBeforeConsentRevocationReload` | Right before Inth reloads the page after a save withdraws a granted category or vendor | `preferences` after the save |
 
-The type for the whole object is `InthProviderCallbacks` from `@inth/nextjs`.
-Callbacks run after Inth updates its state, so `snapshot` and hooks such as
-`useConsent()` already hold the new values.
+Import the object type as `InthProviderCallbacks` from `@inth/nextjs`.
+Callbacks fire after state updates, so `snapshot` and hooks already reflect the
+new values.
 
 ## onChoiceRecorded or onPermissionsChanged
-
-`onChoiceRecorded` runs only for a visitor's action. `onPermissionsChanged`
-runs whenever effective permissions change, whatever the cause:
 
 | Event | `onChoiceRecorded` | `onPermissionsChanged` |
 | --- | --- | --- |
 | Visitor accepts, rejects or saves | Yes | Yes, if a permission changed |
-| A policy resolves in the browser and allows categories before any choice | No | Yes |
+| Policy resolves and allows categories before any choice | No | Yes |
 | Global Privacy Control turns off a grant | No | Yes |
-| A recorded choice expires | No | Yes |
+| Recorded choice expires | No | Yes |
 | Visitor dismisses a notice | No | No |
 
-Use `onChoiceRecorded` for consent analytics and audit trails, because it
-fires only when the visitor chose. Use `onPermissionsChanged` to start or stop
-your own code. Never treat it as proof that the visitor agreed to anything,
-and never save consent from it.
-[How consent works](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice)
-explains the difference.
-
-Dismissing a notice records no choice and changes no permission. Read it with
-`useNoticeDismissal()` instead. For consent inside one component, use the
-[hooks](/docs/frameworks/next/hooks), which re-render the component when
-consent changes.
+Use `onChoiceRecorded` for audit trails and consent analytics. Use
+`onPermissionsChanged` to start or stop features (never treat it as proof of
+consent or call save inside it; see
+[a permission is not a recorded choice](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice)).
+Track notice dismissals with `useNoticeDismissal()`, and use
+[hooks](/docs/frameworks/next/hooks) inside individual components.
 
 ## Report server-side failures
 
-The provider's `onError` runs in the browser. `resolveConsent` has its own
-`onError` option for the server. It runs when the manifest or `/init` request
-fails or runs out of `timeoutMs` during rendering. The page still renders with
-the request-only state and the browser resolves consent after hydration.
-Without the option, `resolveConsent` logs a warning outside production.
+Pass `onError` to `resolveConsent()` to catch server manifest or `/v1/consent/init`
+failures and timeouts (without it, warnings log outside production only):
 
 {/* example: fragment */}
 
@@ -87,34 +72,23 @@ Without the option, `resolveConsent` logs a warning outside production.
 const state = resolveConsent({ onError: (error) => reportToMonitoring(error) });
 ```
 
-This option is fine in the layout, because it runs on the server and never
-crosses to the browser. `reportToMonitoring` stands for your own error
-reporter.
+This runs only on the server and never crosses the client boundary.
 
 ## Before a revocation reload
 
-Removing a script tag cannot stop code that already ran, so Inth reloads the
-page after an accept, reject or save turns off a category or vendor that was
-granted. The reload waits for the save request to finish. Right before it,
-`onBeforeConsentRevocationReload` runs synchronously. Use it to call a
-vendor's shutdown API or flush queued events. Keep it short, because the
-reload does not wait for promises.
-
-A choice that expires, a new policy and a privacy signal change permissions
-without a visitor action, so they do not reload the page.
-
-To handle revocation yourself, set `reloadOnConsentRevoked: false` in
-`options` on `InthProvider`. Code the visitor turned off then keeps running
-until the next full page load, and `onBeforeConsentRevocationReload` never
-runs.
+When a visitor revokes a granted category or vendor, Inth waits for the save to
+settle, calls `onBeforeConsentRevocationReload` synchronously, and reloads the
+page so running vendor code stops. Keep the handler short and synchronous (the
+reload does not await promises). Expiry, policy updates and privacy signals do
+not trigger reloads. Set `options: { reloadOnConsentRevoked: false }` only if
+every vendor cleans up via its own opt-out API.
 
 ## Verify
 
-1. Add the callbacks from this page, open the console and DevTools Network,
-   clear site data and reload under a policy that shows a banner.
-2. Click **Accept All**. `onChoiceRecorded` and `onPermissionsChanged` both log,
-   and the save request to your backend appears in Network.
-3. Reload. `onChoiceRecorded` does not log again.
-4. Open Privacy settings, turn off a category you allowed and save.
-   `onBeforeConsentRevocationReload` logs, then the page reloads. After the
-   reload, that category's vendor requests are absent from Network.
+1. Clear site data and load under an opt-in policy with DevTools open.
+2. Click **Accept All**: `onChoiceRecorded` and `onPermissionsChanged` log and
+   `/v1/consent/records` succeeds.
+3. Reload: `onChoiceRecorded` does not fire again.
+4. Open **Privacy settings**, turn off an allowed category and save:
+   `onBeforeConsentRevocationReload` logs, the page reloads, and that vendor's
+   requests stop.

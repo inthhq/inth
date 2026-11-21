@@ -1,46 +1,33 @@
 ---
 title: Android native dependencies
-description: Resolve the native artifacts used by React Native and understand which Android module owns consent, platform services and presentation.
+description: Resolve the Android Maven artifacts used by React Native and manage native engine ownership, gates, and Compose screens.
 group: frameworks
 ---
 
-The RN Android adapter resolves versioned native artifacts. The consent core
-owns policy and choices, Android services own platform integration, and the
-Compose module provides stock screens. Follow [bare setup](/docs/frameworks/react-native/bare)
-or [Expo setup](/docs/frameworks/react-native/expo) for the app configuration.
-For a standalone Kotlin app, choose Android in the [framework list](/docs/frameworks).
+The React Native Android adapter depends on versioned `com.inth` Maven artifacts: `inth-core` (policy and consent state), `inth-android` (platform storage, transport, and lifecycle), and `inth-consent-ui` (Compose screens). Follow [Bare React Native](/docs/frameworks/react-native/bare) or [Expo and EAS](/docs/frameworks/react-native/expo) for app configuration. For standalone Kotlin apps, choose Android in the [framework list](/docs/frameworks).
 
 ## Resolve the native modules
 
-The candidate native coordinates use group `com.inth` and version `3.0.0-alpha.1`. `inth-core` is a JVM JAR. `inth-android` is the platform AAR and exposes core types. `inth-consent-ui` owns Compose presentation. Use the same native version for these artifacts, independently of RN npm semver.
+Prerelease Android artifacts use group `com.inth` and version `3.0.0-alpha.1` (`inth-core` JVM JAR, `inth-android` AAR, and `inth-consent-ui` AAR). Keep all three on the exact native version pinned by `@inth/react-native`, regardless of the npm package semver.
 
-Configure the supplied Maven repository in the host's dependency resolution and obtain credentials through your build system. Do not embed repository tokens in the manifest or app. A local staging directory, a source composite build or a successful producer build does not prove remote registry resolution.
-
-Consumer floors are API 24, compile SDK 36 and JDK 17. RN 0.87, RN 0.88 and
-Expo 58 require compile SDK 37. Use the higher requirement of Inth and your
-host; a newer compile SDK does not raise the minimum Android version on which
-the app can run. Keep the host's compatible Gradle, Android Gradle Plugin and
-Kotlin versions; do not load the native producer's plugin build into an
-Expo/RN app. See the [candidate matrix](/docs/frameworks/react-native/platform-support).
+Configure your supplied Maven repository in Gradle dependency resolution and pass credentials through your build environment (never in manifests or app code). Minimum floors are Android API 24, compile SDK 36 (37 for RN 0.87, RN 0.88, and Expo 58), and JDK 17. Keep your host's compatible Gradle, AGP, and Kotlin versions; see [Compatibility and updates](/docs/frameworks/react-native/platform-support).
 
 ## Install before SDK startup
 
-This source example compiles with the native demo. Call it before optional vendor startup and use the cached gate before enabling measurement. Replace the designated reference endpoint with your own Inth project URL.
+When owning native installation, call `InthAndroid.install` before initializing optional SDKs or React Native, replacing the placeholder URL with your Inth project URL:
 
 <include src="../../shared/examples/native/examples/consent-demo/android-install.mdx" />
 
-`InthAndroid.install` selects platform storage, HTTP transport and foreground/reachability services, then hydrates the native authority. Do not create a second kernel for UI or RN. Manifest-based startup through `InthInitializer` is an alternative when the app supplies `com.inth.BACKEND_URL` and its configuration metadata.
+`InthAndroid.install` configures persistence, HTTP transport, and foreground/reconnect refresh, then hydrates saved choices synchronously. Keep one kernel per process. Standard apps can use `InthInitializer` manifest metadata (`com.inth.BACKEND_URL`) instead of calling `install` manually.
 
-Disable vendor auto-initializers that can run before your installation and gate. Keep `android.permission.INTERNET`. `ACCESS_NETWORK_STATE` enables reconnect observation; launch and foreground retry remain available when it is absent. Treat storage and policy errors as closed optional gates and inspect native errors.
+Disable vendor auto-initializers that can fire before `Application.onCreate`. Keep `android.permission.INTERNET`, and include `ACCESS_NETWORK_STATE` for reconnect retries alongside launch and foreground retries. Treat storage and policy failures as closed optional gates.
 
 ## Keep gates current
 
-`Inth.decision` distinguishes pending, denied and granted. `gate` and `gateDecision` provide native subscriptions; close the handle when its owner ends. Stop or reconfigure optional collection when the gate closes. A startup-only check does not cover withdrawal.
+`Inth.decision` distinguishes `PENDING`, `DENIED`, and `GRANTED`. Retain a `gate` or `gateDecision` subscription and close it when its owner ends so withdrawal stops optional collection immediately.
 
-For app-owned installation or IAB settings, use `NativeConfig` and the existing platform installer. `backendUrl` is the project URL from your Inth dashboard, such as `https://your-project.inth.app`; the installer throws on any other host. A build-exported resource uses `bundledPolicy`, or the platform's `com.inth.POLICY_RESOURCE` assets entry. The installer replays the durable queue to your Inth project on foreground and reconnect.
+In `NativeConfig`, `backendUrl` must be your Inth project URL (any other host throws). Use `bundledPolicy` (or `com.inth.POLICY_RESOURCE`) for offline first launches; the installer replays queued saves on foreground and reconnect.
 
-## Add Compose screens deliberately
+## Present Compose screens
 
-Retrieve the installed kernel through `Inth.current`, which is null before bootstrap. Render `InthConsent(privacyPolicyUrl = ...)` in a Compose host, or call `attachConsent(privacyPolicyUrl)` from an Activity after `setContentView`. Both attach to the installed kernel through the shared `ConsentPrompt`, which owns drafts, saves, search and reopening, and presents an owed choice by default. `autoPresent = false` leaves presenting to `ConsentPrompt.current?.presentPrompt()`. When native code presents the prompt, pass `autoPresent={false}` to the JavaScript `InthProvider` so only one side presents it. Use `ConsentTheme` for [supported native customization](/docs/frameworks/react-native/customize).
-
-The standalone platform AAR does not require stock UI. RN's packaged host adds its UI dependency because its presenter commands need it. Neither path establishes Google/AdMob interoperability or certification.
+Access the installed kernel via `Inth.current` (returns `null` before bootstrap). Mount `InthConsent(privacyPolicyUrl = ...)` in Compose or call `attachConsent(privacyPolicyUrl)` after `setContentView` in a View-based Activity. Both share `ConsentPrompt` and present an owed choice by default (`autoPresent = false` defers to `ConsentPrompt.current?.presentPrompt()`). When native code presents the prompt, pass `autoPresent={false}` to JavaScript's `InthProvider` so only one side presents it. Configure appearance via `ConsentTheme` (see [Customize](/docs/frameworks/react-native/customize)).

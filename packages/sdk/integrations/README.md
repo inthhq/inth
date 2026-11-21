@@ -17,31 +17,31 @@ pnpm add @inth/integrations
 
 ## Documentation
 
-See the [documentation](https://c15t.com/docs/integrations) for guides, API reference, and examples.
+See the [documentation](https://inth.com/docs/integrations/overview) for guides, API reference, and examples.
 
 ## Integrations
 
-- **Google Tag Manager**: Sends current permissions through Google Consent Mode v2; configure consent checks for non-Google tags ([guide](https://c15t.com/docs/integrations/google-tag-manager))
-- **Cloudflare Zaraz**: Maps Inth effective permissions to Zaraz purpose IDs for tools managed in Cloudflare ([guide](https://c15t.com/docs/integrations/cloudflare-zaraz))
-- **Google Analytics 4 + Google Ads (gtag.js)**: Consent Mode v2 defaults and consent updates when users make a choice ([guide](https://c15t.com/docs/integrations/google-tag))
+- **Google Tag Manager**: Sends current permissions through Google Consent Mode v2; configure consent checks for non-Google tags ([guide](https://inth.com/docs/integrations/google-tag-manager))
+- **Cloudflare Zaraz**: Maps Inth effective permissions to Zaraz purpose IDs for tools managed in Cloudflare ([guide](https://inth.com/docs/integrations/cloudflare-zaraz))
+- **Google Analytics 4 + Google Ads (gtag.js)**: Consent Mode v2 defaults and consent updates when users make a choice ([guide](https://inth.com/docs/integrations/google-tag))
 - **Conversion pixels**: Meta Pixel, OpenAI Pixel, Pinterest Tag, TikTok Pixel, LinkedIn Insights, Microsoft UET (Microsoft Ads), X Pixel, Reddit Pixel, Snapchat Pixel
-- **PostHog**: Loads before or after measurement consent, with switches that stop PostHog downloading its surveys, heatmaps, dead clicks and web vitals modules or requesting `/flags` ([guide](https://c15t.com/docs/integrations/posthog))
+- **PostHog**: Loads before or after measurement consent, with switches that stop PostHog downloading its surveys, heatmaps, dead clicks and web vitals modules or requesting `/flags` ([guide](https://inth.com/docs/integrations/posthog))
 - **Analytics**: Amplitude, FullStory, Heap, Segment, Statable, RudderStack, Hightouch, Mixpanel, Microsoft Clarity, Hotjar, Lucky Orange, Plausible, Fathom, Matomo, Umami, Vercel Analytics, Vercel Speed Insights, OneDollarStats
-- **Experimentation and personalization**: Adobe Target, Appcues, Dynamic Yield, Optimizely Web Experimentation and Wisepops. Wisepops waits for marketing consent by default; the others wait for experience consent ([guide](https://c15t.com/docs/integrations/overview#experimentation-and-personalization))
-- **Sentry**: Loads Sentry from its CDN or works with your own SDK; Session Replay and user data wait for measurement, and error monitoring can too ([guide](https://c15t.com/docs/integrations/sentry))
-- **Email and SMS**: ActiveCampaign site tracking, loaded after marketing consent ([guide](https://c15t.com/docs/integrations/activecampaign)); Attentive loads after marketing consent and requires a page reload on withdrawal; Customer.io loads after marketing consent by default ([guide](https://c15t.com/docs/integrations/customer-io)). Insider, loaded after marketing consent; Klaviyo loads only once marketing and measurement are both allowed; Marketo Munchkin and Salesforce Account Engagement load after marketing consent ([guide](https://c15t.com/docs/integrations/overview#email-and-sms))
+- **Experimentation and personalization**: Adobe Target, Appcues, Dynamic Yield, Optimizely Web Experimentation and Wisepops. Wisepops waits for marketing consent by default; the others wait for experience consent ([guide](https://inth.com/docs/integrations/overview#experimentation-and-personalization))
+- **Sentry**: Loads Sentry from its CDN or works with your own SDK; Session Replay and user data wait for measurement, and error monitoring can too ([guide](https://inth.com/docs/integrations/sentry))
+- **Email and SMS**: ActiveCampaign site tracking, loaded after marketing consent ([guide](https://inth.com/docs/integrations/activecampaign)); Attentive loads after marketing consent and requires a page reload on withdrawal; Customer.io loads after marketing consent by default ([guide](https://inth.com/docs/integrations/customer-io)). Insider, loaded after marketing consent; Klaviyo loads only once marketing and measurement are both allowed; Marketo Munchkin and Salesforce Account Engagement load after marketing consent ([guide](https://inth.com/docs/integrations/overview#email-and-sms))
 - **Chat widgets**: Ada, Intercom, Crisp, Front Chat, Gorgias Chat, Zendesk Messaging
-- **Shopify**: Sends Inth consent to Shopify's Customer Privacy API from a Hydrogen storefront ([guide](https://c15t.com/docs/integrations/shopify))
-- **HubSpot**: Loads after marketing consent ([guide](https://c15t.com/docs/integrations/hubspot))
-- **Default**: Pixel after measurement consent or standalone Forms SDK after functionality consent, with configurable categories and an opt-in always mode for the Pixel ([guide](https://c15t.com/docs/integrations/default-com))
-- **The Trade Desk**: Loads after marketing consent ([guide](https://c15t.com/docs/integrations/the-trade-desk))
-- **LiveIntent**: Loads after marketing consent ([guide](https://c15t.com/docs/integrations/liveintent))
-- **AdRoll**: Loads after marketing consent ([guide](https://c15t.com/docs/integrations/adroll))
-- **Vector**: Loads after marketing consent ([guide](https://c15t.com/docs/integrations/vector))
-- **RB2B**: Loads after marketing consent ([guide](https://c15t.com/docs/integrations/rb2b))
-- **Amazon Ads**: Loads after marketing consent ([guide](https://c15t.com/docs/integrations/amazon-ads))
-- **Clay**: Loads after marketing consent ([guide](https://c15t.com/docs/integrations/clay))
-- **Pendo**: Loads after measurement consent; stops and resumes event sending when consent changes ([guide](https://c15t.com/docs/integrations/pendo))
+- **Shopify**: Sends Inth consent to Shopify's Customer Privacy API from a Hydrogen storefront ([guide](https://inth.com/docs/integrations/shopify))
+- **HubSpot**: Loads after marketing consent ([guide](https://inth.com/docs/integrations/hubspot))
+- **Default**: Pixel after measurement consent or standalone Forms SDK after functionality consent, with configurable categories and an opt-in always mode for the Pixel ([guide](https://inth.com/docs/integrations/default-com))
+- **The Trade Desk**: Loads after marketing consent ([guide](https://inth.com/docs/integrations/the-trade-desk))
+- **LiveIntent**: Loads after marketing consent ([guide](https://inth.com/docs/integrations/liveintent))
+- **AdRoll**: Loads after marketing consent ([guide](https://inth.com/docs/integrations/adroll))
+- **Vector**: Loads after marketing consent ([guide](https://inth.com/docs/integrations/vector))
+- **RB2B**: Loads after marketing consent ([guide](https://inth.com/docs/integrations/rb2b))
+- **Amazon Ads**: Loads after marketing consent ([guide](https://inth.com/docs/integrations/amazon-ads))
+- **Clay**: Loads after marketing consent ([guide](https://inth.com/docs/integrations/clay))
+- **Pendo**: Loads after measurement consent; stops and resumes event sending when consent changes ([guide](https://inth.com/docs/integrations/pendo))
 
 ## Example
 
@@ -59,23 +59,23 @@ const scripts = [
 
 This package ships its documentation as Markdown, matched to the installed version. After you install it, point your coding agent at `node_modules/@inth/integrations/AGENTS.md`. It indexes every guide in `node_modules/@inth/integrations/docs/`.
 
-On the web, every page of the [Inth docs](https://c15t.com/docs) has a Markdown version, and [llms.txt](https://c15t.com/docs/llms.txt) lists them all. Install the c15t agent skills with `npx skills add c15t/skills`.
+On the web, every page of the [Inth docs](https://inth.com/docs) has a Markdown version, and [llms.txt](https://inth.com/docs/llms.txt) lists them all.
 
 ## Support
 
 - Join our [Discord community](https://c15t.link/discord)
-- Open an issue on our [GitHub repository](https://github.com/c15t/c15t/issues)
+- Open an issue on our [GitHub repository](https://github.com/inthhq/inth/issues)
 - Visit [inth.com](https://inth.com) and use the chat widget
 - Contact our support team via email [support@inth.com](mailto:support@inth.com)
 
 ## Contributing
 
-- Read the [contribution guidelines](https://c15t.com/docs/oss/contributing) before you open a pull request
-- Follow the [code of conduct](https://c15t.com/docs/oss/code-of-conduct)
+- Read the [contribution guidelines](https://github.com/inthhq/inth/blob/main/.github/CONTRIBUTING.md) before you open a pull request
+- Open an issue or pull request on [GitHub](https://github.com/inthhq/inth)
 
 ## Security
 
-Do not open a public issue for a security vulnerability. Report it privately through [GitHub's vulnerability reporting](https://github.com/c15t/c15t/security/advisories/new). We examine every valid report.
+Do not open a public issue for a security vulnerability. Report it privately through [GitHub's vulnerability reporting](https://github.com/inthhq/inth/security/advisories/new). We examine every valid report.
 
 - Do not share the vulnerability in public forums, issues, or pull requests
 - Give the steps to reproduce it and the versions it affects
@@ -83,7 +83,7 @@ Do not open a public issue for a security vulnerability. Report it privately thr
 
 ## License
 
-[Apache License 2.0](https://github.com/c15t/c15t/blob/main/LICENSE.md)
+[Apache License 2.0](https://github.com/inthhq/inth/blob/main/LICENSE)
 
 ---
 

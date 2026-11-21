@@ -1,14 +1,12 @@
 ---
 title: IAB GPP
-description: Expose the IAB Global Privacy Platform API (__gpp) from an Angular app with the gpp option of provideInth, so ad tech can read US state opt-outs and the TCF EU consent string.
+description: Expose window.__gpp in Angular with the gpp option of provideInth so ad tech reads US state opt-outs and TCF strings.
 group: frameworks
 ---
 
-## What GPP does
-
-The `gpp` option of `provideInth()` installs `window.__gpp`, the GPP 1.1 CMP
-API, and keeps its GPP string in step with the visitor's choices. Prebid.js,
-Google Ad Manager and other ad tech read US privacy signals from it.
+Expose `window.__gpp` (GPP 1.1 CMP API) in your Angular app so ad tech such
+as Prebid.js and Google Ad Manager can read US privacy opt-outs and the TCF
+EU consent string.
 
 ## Turn on GPP
 
@@ -21,24 +19,23 @@ existing `mode`, `scripts` and other options:
 provideInth({ mode, scripts, gpp: true });
 ```
 
-`gpp: true` or `gpp: {}` uses the defaults. Pass an object to change them,
-such as `gpp: { usFallback: 'none' }`; the options are listed below. Omit
-`gpp`, or pass `gpp: false`, to leave it off.
+`gpp: true` or `gpp: {}` uses defaults. Pass an object to configure options,
+such as `gpp: { usFallback: 'none' }`. Omit `gpp` or pass `gpp: false` to
+leave it off.
 
-`@inth/angular` loads the GPP code from `@inth/sdk/iab/gpp`, which it installs as
-a dependency, through a dynamic import. Apps without `gpp` never download it.
-The runtime installs `__gpp` once that chunk arrives, in the browser only, and
-removes it when the application is destroyed.
+`@inth/angular` lazy-loads GPP from `@inth/sdk/iab/gpp` through a dynamic
+import, so apps without `gpp` never download it. The runtime installs `__gpp`
+in the browser once the chunk loads and removes it on app destroy.
 
-The US section follows the policy and location your Inth project resolves for
-the visitor. With `testing()` mode, pass the location yourself, for example
+The US section follows the policy and location your Inth project resolves. In
+`testing()` mode, pass the location through `overrides`, such as
 `overrides: { country: 'US', region: 'CA' }`.
 
-The TCF EU section needs IAB TCF as well. Set it up with
+The TCF EU section requires IAB TCF as well; see
 [IAB TCF](/docs/frameworks/angular/iab).
 
-With an external `runtime`, `provideInth()` ignores `gpp`. Set `gpp` and
-`loadGPP: () => import('@inth/angular/gpp')` in that runtime's
-`createConsentRuntime()` call instead.
+With an external `runtime`, `provideInth()` ignores `gpp`. Pass `gpp` and
+`loadGPP: () => import('@inth/angular/gpp')` to `createConsentRuntime()`
+instead.
 
 <include src="../../shared/iab-gpp.mdx" />

@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing in a Next.js app and still turn off one vendor in it, with vendors in inth.config.ts and useVendorAllowed.
+description: Let Next.js visitors toggle individual vendors inside a category with vendors in inth.config.ts and useVendorAllowed.
 group: frameworks
 ---
 
@@ -8,12 +8,11 @@ group: frameworks
 
 ## Declare the vendors
 
-Declaring a vendor turns on vendor switches. Built-in `@inth/integrations`
-helpers then list their own vendor by name, so you only declare a vendor for a
-script of your own, or to replace a helper's name and privacy policy.
-
-Declare the vendors next to the scripts in `inth.config.ts`, using the
-`vendor` slug each script already carries:
+Declaring at least one vendor enables per-vendor switches. Built-in
+`@inth/integrations` helpers expose their own vendor metadata automatically, so
+declare entries only for custom scripts or to override a helper's name or
+privacy policy URL. Add `vendors` at the top level of `inth.config.ts`
+alongside `scripts` (a `vendors` prop on `InthProvider` overrides the config):
 
 {/* example: fragment */}
 
@@ -32,31 +31,25 @@ export default defineConsentConfig({
 });
 ```
 
-`vendors` is a top-level option, not inside `options`. Keep your `scripts` in
-the same call. A `vendors` prop on `InthProvider` wins over the config's.
-
 <import src="../../shared/scripts/vendor-consent.mdx#fields" />
 
 <import src="../../shared/scripts/vendor-consent.mdx#targets" />
 
-`ConsentGate` checks a category only. To render a component only while one
-vendor is allowed, read `useVendorAllowed('youtube')` and render it when the
-hook returns `true`. [Embeds](/docs/frameworks/next/embeds) covers the iframe
-blocker's `data-vendor` attribute.
+`ConsentGate` checks a category only. To gate a component on a single vendor,
+check `useVendorAllowed('youtube')`. For raw iframes, use `data-vendor` with
+the iframe blocker in [Embeds](/docs/frameworks/next/embeds).
 
 ## What the preference dialog shows
 
-`ConsentDialog` and `ConsentWidget` list each declared vendor under its
-category, with its own switch.
+`ConsentDialog` and `ConsentWidget` list each declared vendor with its own
+toggle under its category.
 
 <import src="../../shared/scripts/vendor-consent.mdx#dialog" />
 
 ## Build your own vendor switch
 
-`useVendorDraft()` from `@inth/nextjs` reads and stages vendor switches on the
-same draft the category switches use, so one save records both.
-`useVendorAllowed(id)` returns whether a vendor may run now: it is declared,
-its category is allowed and the visitor has not switched it off.
+Use `useVendorDraft()` and `useVendorAllowed(id)` from `@inth/nextjs` to stage
+and save vendor toggles alongside category switches:
 
 {/* example: fragment */}
 
@@ -76,15 +69,11 @@ const xPixelAllowed = useVendorAllowed('x-pixel');
 <button type="button" onClick={() => save()}>Save</button>
 ```
 
-`save()` resolves `{ ok: false }` without recording anything when the policy
-or the vendor list changed under the edit. Call `reset()` to start again.
-`useDeclaredVendors()` returns the declared vendors, and `useVendorChoice()`
-returns the recorded vendor decision, or `null` before the visitor made one.
-To list vendors under each category in your own preference center, call
-`useVendorsListedUnder(category)` from `@inth/nextjs/headless`. It returns the
-vendors the stock dialog lists in that category's row, in declared order. A
-vendor known only from a script's `vendor` slug stays listed after the
-visitor turns it off, so they can turn it back on.
+`save()` resolves `{ ok: false }` if the policy or vendor list changed mid-edit
+(call `reset()` to retry). Use `useDeclaredVendors()` and `useVendorChoice()`
+to inspect declared vendors and saved decisions, and
+`useVendorsListedUnder(category)` from `@inth/nextjs/headless` to list a
+category's vendors in a custom preference center.
 
 <import src="../../shared/scripts/vendor-consent.mdx#undeclared" />
 

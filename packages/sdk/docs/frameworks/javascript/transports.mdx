@@ -1,146 +1,94 @@
 ---
 title: Transports
-description: Choose where a JavaScript app's Inth policy comes from and where choices go, with projectUrl and the hosted, manifest and testing modes for @inth/sdk, createConsentRuntime and your own kernel.
+description: Configure hosted(), manifest(), and testing() transports in JavaScript with @inth/sdk, createConsentRuntime, and createConsentKernel.
 group: frameworks
 ---
 
+A transport tells the Inth consent kernel where to resolve a visitor's policy and where to record consent choices.
+
 ## Compare the transports
 
-A transport tells the kernel which policy applies to this visitor and where
-to record their choice.
-
-| Transport | Policy comes from | Choices go to | Use it when |
+| Transport | Policy source | Choice destination | Use it when |
 | --- | --- | --- | --- |
-| `manifest()` with a build-time snapshot, recommended | Public policy bundled during the build, resolved in the browser | The backend's `/v1/consent/records` | You use Vite and can rebuild after policy edits. Regional policies may still request location. |
-| `hosted()` | The backend's `/v1/consent/init`, per visit | The backend's `/v1/consent/records` | Policy changes must apply without rebuilding, or you need backend resolution on every visit. |
-| `manifest()` at runtime | The backend's public `/v1/consent/manifest`, resolved in the browser | The backend's `/v1/consent/records` | You want the banner to render without a per-visit `/v1/consent/init` request and cannot bundle the policy. |
-| `testing()` | A policy you pass, or the recommended rules, resolved in the browser | Nowhere; the browser only | Tests. It throws in production builds. |
+| `manifest()` with build snapshot | Public policy bundled in Vite, resolved in browser | `${projectUrl}/v1/consent/records` | You use Vite and rebuild after policy edits. Regional rules may still need location. |
+| `hosted()` | `${projectUrl}/v1/consent/init`, per visit | `${projectUrl}/v1/consent/records` | Policy edits apply without rebuilding, or you want server resolution per visit. |
+| `manifest()` at runtime | Public `${projectUrl}/v1/consent/manifest`, resolved in browser | `${projectUrl}/v1/consent/records` | You want to avoid per-visit `/v1/consent/init` calls without bundling the policy. |
+| `testing()` | Local policy rules, resolved in browser | Browser storage only | Tests. Throws in production builds. |
 
-Every setup needs `projectUrl`, your Inth project URL, unless the mode is
-`testing()`. With no `mode`, a JavaScript app asks the backend's `/v1/consent/init`.
-
-[Consent modes](/docs/concepts/modes) covers the same factories in every
-framework, and [data fetching](/docs/concepts/data-fetching) compares the
-paths in more depth, including what each one sends.
+Every transport except `testing()` requires `projectUrl`, your Inth project URL. When you omit `mode`, a JavaScript app defaults to `hosted()` and calls `/v1/consent/init`. See [consent modes](/docs/concepts/modes) and [data fetching](/docs/concepts/data-fetching) for cross-framework defaults and request flows.
 
 ## Pass a transport
 
-Each setup takes the transport in a slightly different form:
-
-| Setup | Where it goes |
+| Setup | How to pass the transport |
 | --- | --- |
 | `@inth/sdk` | `init({ projectUrl, mode })`. `mode` is optional: `manifest()` or `hosted()` from `@inth/sdk`, or `testing()` from `@inth/sdk/testing`. |
-| `createConsentRuntime` | `projectUrl`, and an optional `mode` from the same entries. |
-| Script tag | `data-project-url`, and `data-mode="hosted"` or `"manifest"` on the headless and IAB scripts. Tests load `inth.testing.js`. |
-| `createConsentKernel` | `transport`, the transport object itself, such as `createV1HostedTransport({ projectUrl })`. |
+| `createConsentRuntime` | `projectUrl` and optional `mode` from the same entries. |
+| Script tag | `data-project-url`, plus `data-mode="hosted"` or `"manifest"` on headless and IAB tags. Tests load `inth.testing.js`. |
+| `createConsentKernel` | `transport`, such as `createV1HostedTransport({ projectUrl })`. |
 
-A factory is created once. To switch transports, dispose the client or
-runtime and create a new one.
-
-`init()` from `@inth/sdk` bundles the hosted transport, and the manifest
-and testing code only when you import them. Passing a mode name throws:
+Transports are created once; dispose the client or runtime to switch transports. `init()` bundles only `hosted()` by default, loading manifest and testing code only when imported. Passing a string mode name throws:
 
 ```txt
 @inth/sdk: `mode` must be hosted() or manifest() from @inth/sdk, or testing() from @inth/sdk/testing. Mode names like "hosted" work only in the script-tag builds.
 ```
 
-Leaving out `projectUrl` throws:
+Omitting `projectUrl` outside `testing()` throws:
 
 ```txt
-@inth/sdk: `projectUrl` is required. Set it to your Inth project URL, or use `mode: testing()` from @inth/sdk/testing in tests.
+@inth/sdk: `projectUrl` is required. Set it to your Inth project URL (data-project-url on a script tag), or use testing() from @inth/sdk/testing in tests.
 ```
 
 ## Hosted
 
-With `projectUrl` and no mode, or with `mode: hosted()`, the runtime asks your
-Inth backend's `/v1/consent/init` for each visitor and saves to its `/v1/consent/records`:
+With `projectUrl` and no `mode`, or with `mode: hosted()`, the runtime resolves policies from `${projectUrl}/v1/consent/init` and posts choices to `${projectUrl}/v1/consent/records`:
 
 <include src="../../shared/examples/javascript/runtime.mdx" />
 
-`hosted()` takes no options; it uses the `projectUrl` you pass. For a kernel you
-create yourself, `createV1HostedTransport({ projectUrl })` from
-`@inth/sdk/transports` takes these options:
+`hosted()` takes no options and reads `projectUrl` from the client or runtime. When building a kernel directly, `createV1HostedTransport({ projectUrl })` from `@inth/sdk/transports` accepts:
 
-| Option | What it does |
+| Option | Behavior |
 | --- | --- |
-| `projectUrl` | Your Inth project URL. Relative URLs such as `/api/inth` work behind a same-origin consent route. |
-| `headers` | Request headers to forward on `/v1/consent/init`: `accept-language`, the geo headers and `sec-gpc`. Meant for server code forwarding a visitor's request. |
-| `fetch` | A `fetch` implementation, for tests or unusual runtimes. |
-| `property` | The host name or app ID recorded with each save. Defaults to the page's host name. |
-| `initUrl` | Send `/v1/consent/init` somewhere else, such as a same-origin route, while saves still go to `projectUrl`. Saves then assert the policy they were made against. |
-| `assertDecisionInputs` | Send the resolved policy inputs with each save, so the backend can reject a save made against a stale policy. Defaults to `false`; `hosted()` turns it on when `initUrl` is set. |
+| `projectUrl` | Your Inth project URL. Relative paths such as `/api/inth` work behind a same-origin consent route. |
+| `headers` | Forwarded init headers, `accept-language`, geo headers, and `sec-gpc`, when server code forwards a visitor request. |
+| `fetch` | Custom `fetch` implementation for tests or non-standard runtimes. |
+| `property` | Hostname or app ID recorded with each save. Defaults to the page hostname. |
+| `initUrl` | Alternate URL for `/v1/consent/init`, such as a same-origin route, while saves still post to `projectUrl`. |
+| `assertDecisionInputs` | Sends resolved policy inputs with each save so Inth rejects saves against a stale policy. Defaults to `false`; `hosted()` enables it when `initUrl` is set. |
 
-Add your app's origin to the Inth project's trusted origins, or the browser
-blocks consent saves with a CORS error.
-
-A cross-origin `/v1/consent/init` is a CORS simple request: the overrides and
-experiment arm go in the query string, and the request carries no cookies, so
-the browser sends it without an `OPTIONS` preflight.
-Saves still go out with cookies and still need the trusted origin.
+Add your app's origin to your Inth project's trusted origins, or browsers block consent saves with a CORS error. Cross-origin `/v1/consent/init` requests pass overrides and experiment arms in the query string without cookies, avoiding an `OPTIONS` preflight; saves include cookies and require the trusted origin.
 
 ## Manifest
 
-`manifest()` from `@inth/sdk` resolves the policy in the browser from the
-backend's public manifest. With no options it uses the snapshot and backend
-URL `consentManifest()` downloaded; without a snapshot it fetches
-`${projectUrl}/v1/consent/manifest` once. When the manifest is unavailable, it asks the
-backend's `/v1/consent/init` and logs a warning. It works with `init()` and with
-`createConsentRuntime`:
+`manifest()` from `@inth/sdk` resolves policies in the browser from your project's public manifest. With no options, it uses the build snapshot and project URL from `consentManifest()`. Without a snapshot, it fetches `${projectUrl}/v1/consent/manifest` once and falls back to `/v1/consent/init` with a warning if unavailable:
 
 <include src="../../shared/examples/javascript/transport-manifest.mdx" />
 
-| Option | What it does |
+| Option | Behavior |
 | --- | --- |
-| `manifestUrl` | Where to fetch the manifest when the page loads. The build's snapshot is not used, but saves still go to the build's backend URL. Without one, a URL that ends in `/v1/consent/manifest` also gives the backend URL. |
-| `snapshot` | The manifest object itself, inlined into the page. No manifest request at all. Defaults to the build's snapshot unless you set `manifestUrl`. |
-| `source` | `'runtime'` ignores the build's snapshot and fetches the manifest. You can pass `snapshot` or `source`, not both. |
-| `projectUrl` | Where saves go. Defaults to the build's backend URL. Required otherwise, unless `manifestUrl` ends in `/v1/consent/manifest`. `''` means this origin. |
-| `inputs` | `{ country, region }` known ahead of time, such as a country your edge injected into the page. |
-| `geoUrl` | A same-origin route that answers `{ country, region }`, asked when the policy needs a location the page doesn't have. |
-| `initFallback` | `false` resolves for an unknown location instead of asking the backend's `/v1/consent/init`. Defaults to `true`. |
-| `fetch` | A `fetch` implementation. |
+| `manifestUrl` | Runtime manifest URL. Ignores the build snapshot; derives `projectUrl` when ending in `/v1/consent/manifest`. |
+| `snapshot` | Inlined manifest object with zero manifest requests. Defaults to the build snapshot unless `manifestUrl` is set. |
+| `source` | `'runtime'` ignores the build snapshot and fetches `/v1/consent/manifest` at runtime. Mutually exclusive with `snapshot`. |
+| `projectUrl` | Save destination. Defaults to the build's project URL, or the base of `manifestUrl`. Pass `''` for the current origin. |
+| `inputs` | `{ country, region }` known ahead of time, such as edge-injected values. |
+| `geoUrl` | Same-origin endpoint returning `{ country, region }`, queried when the policy needs a location. |
+| `initFallback` | Set `false` to resolve for an unknown location instead of calling `/v1/consent/init`. Defaults to `true`. |
+| `fetch` | Custom `fetch` implementation. |
 
-When some locations get a different banner than others, or no banner, and
-neither the page nor `geoUrl` supplies a country, the transport asks the
-backend's `/v1/consent/init` instead, so the answer stays correct. That visitor's banner
-waits for the round trip. Rules keyed by country or region that all give the
-same banner (same model, prompt, categories, copy and GPC handling, only the
-rule id differs) resolve in the browser, so the banner shows without a
-request. Such a manifest needs a default rule, plus a fallback rule when it
-has region rules, so that every location matches one. When the location is
-unknown, an IAB policy behind country or region rules still goes to `/v1/consent/init`.
-`manifestNeedsLocation(manifest)` from `@inth/sdk` tells you in advance.
+When rules vary by region and neither `inputs` nor `geoUrl` supplies a country, the transport calls `/v1/consent/init` to match the visitor's region. Regional rules with identical banners resolve locally when the manifest has a default rule and region fallback. Unknown-location IAB policies and pages with IAB GPP, via `gpp`, `<ConsentGPP>`, `mountGPP()`, or the script tag without `gpp: false`, still call `/v1/consent/init`. Check ahead of time with `manifestNeedsLocation(manifest)` from `@inth/sdk`.
 
-The browser bundle carries English base copy. Another language's base copy
-loads the first time a visitor needs it, and the manifest's own translations
-apply on top.
+The browser bundle includes English base copy and lazy-loads other languages before applying manifest translations. Without location inputs, `getSnapshot().location` and `useLocation()` report `null` for country and region.
 
-A manifest resolved in the browser without a known location reports no
-location: `getSnapshot().location` and `useLocation()` have a `null` country
-and region. Code that reads the visitor's country should supply it through
-`inputs`, or use `/v1/consent/init`. IAB GPP needs it for its US state sections, so when
-GPP is on, through the runtime's `gpp` option, `<ConsentGPP>` or `mountGPP()`,
-an unknown location goes to `/v1/consent/init` even when every location gets the same
-banner. The script-tag build counts GPP as on, because `inth.gpp.js` can load
-after `init()`; pass `gpp: false` to `inth.init()` to resolve in the browser on
-pages that do not load it.
-
-`createV1ManifestTransport` from `@inth/sdk/transports/manifest` is for server
-code only. It bundles every language. Browser code uses `manifest()`, or
-`createBrowserManifestTransport` from `@inth/sdk/transports/manifest-browser`.
+Server code uses `createV1ManifestTransport` from `@inth/sdk/transports/manifest` with all languages bundled. Browser code uses `manifest()` or `createBrowserManifestTransport` from `@inth/sdk/transports/manifest-browser`.
 
 ### Bundle the manifest during Vite builds
 
-The [quickstart](/docs/frameworks/javascript/quickstart) and
-`examples/javascript` in the Inth repository use this setup.
+The [quickstart](/docs/frameworks/javascript/quickstart) and `examples/javascript` use this Vite setup:
 
 <include src="../../shared/build-manifests/javascript.mdx" />
 
 ## Testing
 
-`testing()` from `@inth/sdk/testing` resolves a policy in the browser and
-sends nothing. It needs no `projectUrl`, and it throws in production builds,
-so a test configuration that reaches production fails on load.
+`testing()` from `@inth/sdk/testing` resolves policies locally with zero network requests and requires no `projectUrl`. It throws in production builds so test configurations never ship live.
 
 {/* example: fragment */}
 
@@ -157,25 +105,15 @@ init({
 });
 ```
 
-| Option | Default | What it does |
+| Option | Default | Behavior |
 | --- | --- | --- |
-| `policy` | the recommended rules | A `PolicyRule` or an array of them, resolved instead of the recommended pack. |
-| `iab` | whether `iab` is configured | Resolve the IAB TCF variant of the recommended pack. |
+| `policy` | Recommended rules | A `PolicyRule` or array of rules resolved instead of the recommended pack. |
+| `iab` | Matches `iab` config | Resolves the IAB TCF variant of the recommended pack. |
 
-The recommended rules are strict opt-in for Europe, the UK, Quebec and unknown
-locations, opt-out for US states with a privacy law, and no prompt elsewhere.
-The browser cannot see the visitor's country, so set `overrides.country` to
-pick a rule. [Policies](/docs/concepts/policies) lists the presets.
-
-A test page with no bundler loads `inth.testing.js`, which takes preset names
-in `data-policy`; see [Modes](/docs/concepts/modes#testing).
+The recommended pack uses opt-in for Europe, the UK, Quebec, and unknown locations, opt-out for US states with privacy laws, and no prompt elsewhere. Pass `overrides.country` to test a specific region. See [policies](/docs/concepts/policies) for all presets, or load `inth.testing.js` with `data-policy` on pages without a bundler; see [modes](/docs/concepts/modes#testing).
 
 ## Check it works
 
-1. With hosted mode, the Network tab shows one `/v1/consent/init` request per fresh
-   visit and a `/v1/consent/records` request after a choice.
-2. With a build-time manifest, it shows no `/v1/consent/manifest` request. With runtime
-   manifest mode, it shows a `/v1/consent/manifest` request. Neither calls `/v1/consent/init`, unless
-   the policy needs a country the page did not supply.
-3. In a test with `testing()`, it shows no Inth request at all, and the
-   choice survives a reload.
+1. In hosted mode, DevTools Network shows one `/v1/consent/init` request per fresh visit and a `POST` to `/v1/consent/records` after a choice.
+2. With a build-time manifest, DevTools Network shows zero `/v1/consent/manifest` requests; with runtime manifest mode, it shows one `/v1/consent/manifest` request. Neither calls `/v1/consent/init` unless the policy needs a location the page did not supply.
+3. With `testing()`, DevTools Network shows zero Inth requests and saved choices survive a reload.

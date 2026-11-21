@@ -1,14 +1,16 @@
 ---
 title: ConsentDialogTrigger
-description: Show a floating, draggable button that reopens the Inth preference dialog in Nuxt, and configure its corner, size, icon and label.
+description: Show a floating, draggable button in Nuxt that reopens Inth preferences and configure its corner, size, icon, and label.
 group: frameworks
 ---
 
+Enable a persistent floating button in Nuxt so visitors can reopen privacy
+preferences from any page.
+
 ## Turn on the trigger in `nuxt.config.ts`
 
-Turn the trigger on with `showTrigger` in the module options. `InthProvider`
-then renders it. The trigger options are plain data, so they can go in
-`nuxt.config.ts`:
+Enable `showTrigger` under `inth` in `nuxt.config.ts` so `InthProvider` renders
+the trigger automatically:
 
 {/* example: fragment */}
 
@@ -18,8 +20,8 @@ export default defineNuxtConfig({
 });
 ```
 
-The module also registers `ConsentDialogTrigger` globally. When you compose
-the surfaces without `InthProvider`, render it yourself:
+`@inth/nuxt` also registers `ConsentDialogTrigger` globally, so you can render
+it directly when composing surfaces without `InthProvider`:
 
 <include src="../../../shared/examples/nuxt/consent-surfaces.mdx" />
 
@@ -27,8 +29,8 @@ the surfaces without `InthProvider`, render it yourself:
 
 <import src="../../../shared/vue/components/consent-dialog-trigger.mdx#options" />
 
-All trigger options go under the `inth` key in `nuxt.config.ts` or
-`app.config.ts`.
+Configure trigger options under `inth` in `nuxt.config.ts` or
+`app/app.config.ts`.
 
 <import src="../../../shared/vue/components/consent-dialog-trigger.mdx#accessibility" />
 
@@ -36,6 +38,6 @@ All trigger options go under the `inth` key in `nuxt.config.ts` or
 
 ## Next steps
 
-- [ConsentDialogLink](/docs/frameworks/nuxt/components/consent-dialog-link)
-  is an inline alternative for a footer.
-- [Nuxt module](/docs/frameworks/nuxt/module) lists every option.
+- [ConsentDialogLink](/docs/frameworks/nuxt/components/consent-dialog-link):
+  render an inline footer button instead.
+- [Nuxt module](/docs/frameworks/nuxt/module): inspect every module option.

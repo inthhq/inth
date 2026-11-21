@@ -1,19 +1,18 @@
 ---
 title: ConsentGate
-description: Consent-gate an iframe in Next.js with ConsentGate inside InthProvider; with server prefetch the server HTML carries the placeholder for a denied category, and a granted embed mounts after hydration.
+description: Gate iframes and third-party widgets behind consent in Next.js with ConsentGate inside InthProvider.
 group: frameworks
 ---
 
 ## Gate an embed behind consent
 
-`ConsentGate` mounts its children only while the effective permission for one
-consent category is granted, and shows a placeholder otherwise. Wrap any
-iframe or third-party widget that would set cookies or contact a vendor on
-load. It is a Client Component; render it from any route under the layout
-that mounts the `InthProvider` from your
+`ConsentGate` mounts its children only while a consent category is granted and
+renders a placeholder with a button to open `ConsentDialog` otherwise. Wrap any
+iframe or widget inside a Client Component under `InthProvider` from your
 [App Router](/docs/frameworks/next/app-router) or
-[Pages Router](/docs/frameworks/next/pages-router) setup, which also mounts
-the `ConsentDialog` the placeholder button opens.
+[Pages Router](/docs/frameworks/next/pages-router) setup:
+
+{/* example: fragment */}
 
 ```tsx title="components/product-video.tsx"
 'use client';
@@ -35,52 +34,28 @@ export function ProductVideo() {
 }
 ```
 
-Import `ProductVideo` into any page or Server Component; only this file needs
-`'use client'`. `marketing` must be in your policy scope. `ConsentGate`
-registers its category when it mounts, so the preference center lists
-Marketing even if you set `options.consentCategories` without it.
+Import `ProductVideo` into any Server Component or page. `ConsentGate`
+registers its category in the preference center on mount, does not read the
+clock during SSR (so static and `cacheComponents: true` pages stay prerendered
+without an extra `Suspense` boundary), and should be given `className` or
+`style` dimensions to prevent layout shift.
 
-`ConsentGate` does not read the clock during server rendering, so a page that
-renders it can still be prerendered, including with `cacheComponents: true`.
-It does not need a `Suspense` boundary of its own. On a static page the
-prerendered HTML contains the placeholder, and the embed replaces it after
-the browser resolves policy and the category is allowed.
+How SSR HTML renders depends on your layout:
 
-The placeholder names the category using its title from your translations. Set
-`className` or `style` on `ConsentGate` to reserve the embed's space, so the page
-does not shift when the placeholder is replaced.
-
-With the default App Router layout, which passes the pending
-`resolveConsent` result, the server HTML contains the placeholder, and the
-browser swaps in the embed after it applies the resolved state if the
-category is granted. No request reaches the embed's host before that.
-
-With the
-[awaited layout](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html),
-the server decides from the resolved rule and the request cookie whether the
-category is allowed. Pages Router works the same way when `getServerSideProps`
-awaits `resolveConsent` from `@inth/nextjs/pages` and passes the result
-through `state` to `InthProvider`, as in the
-[Pages Router guide](../pages-router). A denied category gets the placeholder
-in the server HTML. A granted category gets an empty wrapper, and the embed
-mounts once hydration completes. With the awaited layout the page streams
-inside a `Suspense` boundary, and React moves streamed HTML into place after
-parsing it; an iframe that was already in that HTML would load twice.
-Hydration keeps the server's decision as long as the browser's privacy
-signals agree with the request: a `navigator.globalPrivacyControl`
-that the request did not carry as `Sec-GPC` is re-detected on hydration and
-can withdraw a category. Under an opt-in rule a new
-visitor gets the placeholder and a returning visitor who allowed `marketing`
-gets the iframe; under an opt-out rule a new visitor already has effective
-permission, so the iframe renders until they opt out.
+- **Streamed App Router and static layouts:** server HTML renders the
+  placeholder; the iframe mounts after hydration if allowed.
+- **[Awaited App Router](/docs/frameworks/next/app-router#render-the-banner-in-the-server-html)
+  and [Pages Router](../pages-router) SSR:** denied categories render the
+  placeholder in server HTML, while granted categories render an empty wrapper
+  and mount the iframe after hydration so streamed iframes never load twice.
+  Browser `navigator.globalPrivacyControl` is re-checked on hydration.
 
 <import src="../../../shared/react/components/consent-gate.mdx#props" />
 
 <import src="../../../shared/react/components/consent-gate.mdx#behavior" />
 
-To read the same permission in your own Client Components, use `useConsent`
-from `@inth/nextjs`; the `useIframeBlocker` and `useNetworkBlocker` module
-hooks also import from there.
+To check permissions directly in Client Components, import `useConsent`,
+`useIframeBlocker` or `useNetworkBlocker` from `@inth/nextjs`.
 
 <import src="../../../shared/react/components/consent-gate.mdx#composition" />
 

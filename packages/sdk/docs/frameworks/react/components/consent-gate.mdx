@@ -1,17 +1,14 @@
 ---
 title: ConsentGate
-description: Gate a YouTube or map iframe behind consent with ConsentGate in React, showing a placeholder that opens the preference center until the category is allowed.
+description: Gate third-party embeds in React with ConsentGate, showing a placeholder until consent allows them.
 group: frameworks
 ---
 
+Wrap third-party iframes or widgets in `ConsentGate` so they mount only when their consent category is allowed.
+
 ## Gate an embed behind consent
 
-`ConsentGate` mounts its children only while the effective permission for one
-consent category is granted, and shows a placeholder otherwise. Wrap any
-iframe or third-party widget that would set cookies or contact a vendor on
-load. Render it anywhere inside the `InthProvider` from your
-[quickstart](../quickstart), which also mounts the `ConsentDialog` the
-placeholder button opens.
+Render `ConsentGate` anywhere inside `InthProvider` from the [quickstart](../quickstart), alongside `ConsentDialog` so the placeholder button can open preferences:
 
 ```tsx title="src/product-video.tsx"
 import { ConsentGate } from '@inth/react';
@@ -31,22 +28,15 @@ export function ProductVideo() {
 }
 ```
 
-`marketing` must be in your policy scope. If you set a non-empty
-`options.consentCategories` list on `InthProvider`, include `marketing`
-there too so the preference center can display and save it. `ConsentGate` does
-not add categories to that list.
+Ensure `marketing` is in your policy scope. If you set a non-empty `options.consentCategories` array on `InthProvider`, include `marketing` there too so the preference center lists it. `ConsentGate` does not add categories to `options.consentCategories`.
 
-The placeholder names the category using its title from your translations. Set `className` or `style`
-on `ConsentGate` to reserve the embed's space, so the page does not shift when the
-placeholder is replaced.
+The placeholder uses the translated category title. Set `className` or `style` on `ConsentGate` to reserve the embed's dimensions and prevent layout shift when the embed loads.
 
 <import src="../../../shared/react/components/consent-gate.mdx#props" />
 
 <import src="../../../shared/react/components/consent-gate.mdx#behavior" />
 
-To read the same permission in your own components, use `useConsent` from
-`@inth/react`; the `useIframeBlocker` and `useNetworkBlocker` module hooks
-also import from there.
+To read category permission directly in React components, use `useConsent` from `@inth/react`. `useIframeBlocker` and `useNetworkBlocker` also export from `@inth/react`.
 
 <import src="../../../shared/react/components/consent-gate.mdx#composition" />
 

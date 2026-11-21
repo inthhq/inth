@@ -1,20 +1,22 @@
 ---
 title: ConsentGate
-description: Render an iframe or widget in a Vue app only while its consent category is allowed, with a placeholder slot until then.
+description: Render an iframe or third-party widget in Vue only while its consent category is allowed, with a fallback placeholder.
 group: frameworks
 ---
 
+Wrap third-party embeds in `ConsentGate` so they stay out of the DOM until the
+visitor allows their consent category.
+
 ## Import `ConsentGate` and wrap an embed
 
-Import `ConsentGate` from `@inth/vue/vue-plugin`.
-Put the embed in the default slot and a placeholder in the `placeholder`
-slot:
+Import `ConsentGate` from `@inth/vue/vue-plugin`, put your embed in the
+default slot, and add an optional `placeholder` slot:
 
 <include src="../../../shared/examples/vue/embed.mdx" />
 
-The iframe is absent from the page until the visitor allows measurement. The
-placeholder uses `ConsentDialogLink` so the visitor can open preferences
-from it.
+The iframe stays absent until `measurement` is granted. The placeholder uses
+`ConsentDialogLink` so visitors can open preferences right from the embed
+spot.
 
 <import src="../../../shared/vue/components/consent-gate.mdx#behavior" />
 
@@ -24,14 +26,14 @@ from it.
 
 ## Verify
 
-Load the page in a private window with the Network tab open. The placeholder
-shows and no request goes to the embed's host. Allow the category in
-preferences and save: the iframe appears and its requests start. Withdraw the
-category and save: the page reloads without the iframe.
+Open the page in a private window with the Network tab open. Confirm the
+placeholder renders with zero requests to the embed host. Allow the category
+and save to load the iframe, then withdraw it and save to confirm the page
+reloads without the embed.
 
 ## Next steps
 
-- [Embeds](/docs/frameworks/vue/embeds) compares `ConsentGate` with the
-  iframe blocker.
+- [Embeds](/docs/frameworks/vue/embeds): compare `ConsentGate` with the iframe
+  blocker.
 - [YouTube](/docs/integrations/youtube) and
-  [Google Maps](/docs/integrations/google-maps) show complete embeds.
+  [Google Maps](/docs/integrations/google-maps): follow complete embed guides.

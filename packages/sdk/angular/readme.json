@@ -22,8 +22,8 @@
 		"```ts\n// app.config.ts\nimport { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';\nimport { hosted, provideInth } from '@inth/angular';\n\nexport const appConfig: ApplicationConfig = {\n  providers: [\n    provideZonelessChangeDetection(),\n    provideInth({ mode: hosted({ projectUrl: 'https://your-project.inth.app' }) }),\n  ],\n};\n```",
 		"```html\n<!-- Rendered only once the visitor allows marketing -->\n<iframe *inthIfConsent=\"'marketing'; else blocked\" src=\"https://www.youtube.com/embed/…\"></iframe>\n<ng-template #blocked>Allow marketing cookies to watch this video.</ng-template>\n```"
 	],
-	"docsLink": "https://c15t.com/docs/frameworks/angular/quickstart",
-	"quickStartLink": "https://c15t.com/docs/frameworks/angular/quickstart",
+	"docsLink": "https://inth.com/docs/frameworks/angular/quickstart",
+	"quickStartLink": "https://inth.com/docs/frameworks/angular/quickstart",
 	"showCLIGeneration": false,
 	"showHosting": true
 }

@@ -1,12 +1,15 @@
 ---
 title: DevTools
-description: Add the Inth DevTools panel to a plain HTML page with a second script tag to inspect consent, gated scripts, the resolved policy and events, and to test other countries.
+description: Add inth.devtools.js to a plain HTML page to inspect consent state, scripts, policies, events and test other countries.
 group: frameworks
 ---
 
+Inspect consent state, gated scripts, resolved policies and events on any
+plain HTML page by adding `inth.devtools.js` during development.
+
 ## Add the panel
 
-Add the DevTools tag next to the Inth tag while you debug:
+Include `inth.devtools.js` beside `inth.js` while debugging:
 
 {/* example: fragment */}
 
@@ -19,69 +22,61 @@ Add the DevTools tag next to the Inth tag while you debug:
 ></script>
 ```
 
-Tag order does not matter. Loaded first, the DevTools tag queues itself on
-`window.inth` and mounts once the client starts. Loaded after, it mounts at
-once. With `data-manual` on the Inth tag, it waits for `inth.init()`.
+Tag order does not matter: loaded first it queues on `window.inth`; loaded
+after it mounts immediately (or after `inth.init()` with `data-manual`).
 
 | Attribute | What it does |
 | --- | --- |
-| `data-open` | Open the panel on load. `data-open="false"` keeps it closed. |
-| `data-tab` | The first tab: `consents`, `scripts`, `location`, `policy`, `iab`, `events` or `actions`. An unknown value is ignored. |
-| `data-position` | The corner: `bottom-right`, `bottom-left`, `top-right` or `top-left`. |
+| `data-open` | Opens the panel on load (`data-open="false"` keeps it closed). |
+| `data-tab` | Initial tab: `consents`, `scripts`, `location`, `policy`, `iab`, `events` or `actions`. |
+| `data-position` | Corner: `bottom-right`, `bottom-left`, `top-right` or `top-left`. |
 
-The panel renders in its own shadow root, so your theme's CSS does not change
-it.
+The panel mounts inside its own shadow root so site styles do not affect it.
 
 ## Open DevTools from the trigger
 
-With `data-trigger` on the Inth tag, the trigger shows a DevTools button next
-to its own while the panel is mounted, and the panel hides its floating
-launcher, so one control sits in the corner. The DevTools button sits at the
-end farthest from the corner. The panel opens just past the trigger, aligned
-with its outer edge, and follows it when you drag the trigger to another
-corner.
-
-The trigger hides while the banner or the dialog is open. The panel then shows
-its own launcher in the `data-position` corner until the trigger returns. With
-`inth.headless.js` there is no trigger, so the panel always keeps its launcher.
+When `data-trigger` is enabled, the floating trigger merges into a two-button
+toolbar with DevTools and hides the standalone launcher until the banner or
+dialog hides the trigger. With `inth.headless.js`, DevTools keeps its own
+launcher.
 
 ## What each tab shows
 
 | Tab | Shows |
 | --- | --- |
-| Consents | Each category's current permission, with switches and **Save changes**, **Accept all** and **Reject optional** buttons. Those buttons record a real choice. |
-| Scripts | Scripts from `config` and their state: blocked, loading, loaded, failed or retained. A page scan lists other script and iframe elements. |
-| Location | The country, region, language and GPC signal. **Apply and refresh** resolves the policy again with your values; **Clear overrides** goes back to detection. |
-| Policy | The resolved policy rule and the prompt it requires. |
-| IAB | Purposes, vendors and the TC string, under an IAB policy with `inth.iab.js`. |
-| Events | Every consent event in order. |
+| Consents | Current permissions with switches and real save/accept/reject buttons. |
+| Scripts | Configured scripts and their status, plus a DOM scan of scripts and iframes. |
+| Location | Country, region, language and GPC overrides with **Apply and refresh** and **Clear overrides**. |
+| Policy | Resolved policy rule and required prompt. |
+| IAB | Purposes, vendors and TC String when running `inth.iab.js`. |
+| Events | Chronological consent event log. |
 | Actions | **Show banner**, **Open preferences** and **Clear stored records**. |
 
-The page scan in the Scripts tab lists what is in the DOM. It is not proof
-that a request was sent or held back; check the Network tab for that.
+The Scripts tab DOM scan lists elements in the page; always verify actual
+network blocking in DevTools Network.
 
 ## Use it from the console
 
-Once mounted, the panel is `inth.devtools` in the console. Call
-`inth.devtools.destroy()` to remove it. `inth.dispose()` removes it too.
+Access the mounted instance at `inth.devtools`. Call `inth.devtools.destroy()`
+or `inth.dispose()` to unmount it.
 
 ## Test another country
 
-A policy that depends on location shows different banners around the world.
-Open the Location tab, set the country to `DE`, or `US` with region `CA`, and
-click **Apply and refresh**. The banner follows the policy for that location,
-without a VPN. The override lasts until you reload.
+Open the Location tab, enter a country such as `DE` or `US` with region `CA`,
+and click **Apply and refresh** to test regional policies without a VPN.
+Overrides reset on reload.
 
 ## Keep it out of production
 
-The panel shows internal consent state to anyone who opens the page. Remove
-the tag before you publish, or print it only in a staging template. It also
-adds a `<style>` element, which a strict [Content Security Policy](/docs/frameworks/html/content-security-policy)
+Remove `inth.devtools.js` before publishing or render it only on staging
+builds. It exposes internal consent state and injects a `<style>` element
+that a strict [Content Security Policy](/docs/frameworks/html/content-security-policy)
 blocks.
 
 ## Check it works
 
-1. Add the tag and reload. The panel opens on the tab you chose.
-2. Click **Accept All** in the banner. The Events tab lists the save, and
-   the Consents tab shows each category allowed.
-3. Remove the tag and reload. No panel appears and `inth.devtools` is `null`.
+1. Add the tag and reload; confirm the panel opens on your chosen tab.
+2. Click **Accept All** in the banner; verify the save appears in Events and
+   categories turn allowed in Consents.
+3. Remove the tag and reload; confirm no panel renders and `inth.devtools` is
+   `null`.

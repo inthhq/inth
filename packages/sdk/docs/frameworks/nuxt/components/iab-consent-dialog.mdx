@@ -1,15 +1,18 @@
 ---
 title: IABConsentDialog
-description: Render the IAB TCF preference centre in Nuxt with IABConsentDialog, choose its first tab, and build a custom one with composables.
+description: Render the IAB TCF preference center directly in Nuxt, pick its initial tab, or build a custom one with composables.
 group: frameworks
 ---
 
+Import `IABConsentDialog` directly when composing IAB TCF surfaces without
+`InthProvider`.
+
 ## Import the IAB dialog when you compose surfaces
 
-`InthProvider` loads `IABConsentDialog` for you when the module's `iab` option
-is set, the visitor's policy uses IAB TCF and preferences open. Import it only when you compose the IAB
-surfaces yourself. The module does not register it globally, so import it
-from `@inth/nuxt/components/iab-consent-dialog`:
+`InthProvider` lazy-loads `IABConsentDialog` automatically when `iab` is
+enabled, the visitor matches an IAB policy, and preferences open. Import it
+from `@inth/nuxt/components/iab-consent-dialog` only when composing surfaces
+yourself:
 
 <include src="../../../shared/examples/nuxt/iab-surfaces.mdx" />
 
@@ -21,7 +24,7 @@ from `@inth/nuxt/components/iab-consent-dialog`:
 
 ## Next steps
 
-- [IAB TCF](/docs/frameworks/nuxt/iab) covers vendor list loading and
-  verification.
-- [Composables](/docs/frameworks/nuxt/composables#iab-tcf) documents
+- [IAB TCF](/docs/frameworks/nuxt/iab): configure vendor list loading and
+  verify TC Strings.
+- [Composables](/docs/frameworks/nuxt/composables#iab-tcf): use
   `useConsentIabSelection()` and `useConsentIabSave()`.

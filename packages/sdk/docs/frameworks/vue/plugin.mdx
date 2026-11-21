@@ -1,115 +1,111 @@
 ---
 title: inth plugin
-description: Install Inth in a Vue app with app.use(inth), what the plugin starts when the app mounts, and every option it accepts.
+description: Configure Inth in a Vue app with app.use(inth), understand its mount lifecycle, and inspect every option.
 group: frameworks
 ---
 
-## Install the plugin
+Install `inth` from `@inth/vue/vue-plugin` in `src/main.ts` to create the
+consent runtime and provide it to every Vue component.
 
-Import `inth` from `@inth/vue/vue-plugin` and pass it to `app.use()` in
-`src/main.ts`:
+## Install the plugin
 
 <include src="../../shared/examples/vue/main.mdx" />
 
-Nuxt apps install `@inth/nuxt` instead of calling `app.use()`. The
-[quickstart](/docs/frameworks/vue/quickstart) covers `consentManifest()`, the
-Vite plugin that supplies the backend URL to `hosted()`.
+Nuxt apps use `@inth/nuxt` instead of `app.use()`. The
+[quickstart](/docs/frameworks/vue/quickstart) sets up `consentManifest()`, the
+Vite plugin that passes your project URL to `hosted()`.
 
 ## What the plugin does
 
-`app.use(inth, options)` creates one consent runtime for the app and
-provides it to every component. It also adds your `tokens` to
-`document.head` in a `<style id="inth-css-vars">` element, before the first
-render. Nothing else runs in the browser until the root component mounts.
-Then the plugin, in order:
+`app.use(inth, options)` creates one consent runtime for the app, provides
+it to every component, and injects `tokens` into `document.head` in a
+`<style id="inth-css-vars">` element before the first render. Once the root
+component mounts, the plugin runs these steps in order:
 
-1. Reads the visitor's stored choice from the `inth` cookie and
-   localStorage.
+1. Reads the visitor's stored choice from the `inth` cookie and localStorage.
 2. Applies Global Privacy Control when the browser sends it.
-3. Starts the script loader for `scripts`, clear-on-revocation, the network
-   blocker and the iframe blocker.
-4. Resolves the visitor's policy with the `mode` you passed: from the
-   backend's `/init` with `hosted()`, from the manifest in the browser with
-   `manifest()`, or from local rules with `testing()`.
-5. With the `iab` option set, loads the IAB TCF module once a policy uses the
+3. Starts the script loader for `scripts`, `clearOnRevocation`, the network
+   blocker, and the iframe blocker.
+4. Resolves the visitor's policy using `mode`: `/v1/consent/init` with `hosted()`, the
+   manifest in the browser with `manifest()`, or local rules with `testing()`.
+5. Loads the IAB TCF module when `iab` is set and the matched policy uses the
    `iab` model.
 
-Until the policy arrives, every optional category is denied, so gated scripts
-and iframes wait. On Vue 3.5 and later, `app.unmount()` stops every module
-and removes the token style element.
-Composables called outside this app throw `[inth] Kernel not found`.
+Until the policy resolves, optional categories stay denied so gated scripts
+and iframes wait. On Vue 3.5+, `app.unmount()` stops every module and removes
+the token style element. Calling composables outside this app throws
+`[inth] Kernel not found`.
 
 ## Options
 
-`mode` is required unless you pass a `runtime`; every other option is
-optional. Options that hold
-functions, such as `scripts` and `callbacks`, work here because the plugin
-runs in the browser.
+Pass `mode` unless you supply a `runtime`; every other option is optional.
+Options containing functions, such as `scripts` and `callbacks`, work here
+because the plugin runs in the browser.
 
 ### Policy source
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `mode` | `hosted()` | Where the visitor's policy comes from: `hosted()` or `manifest()` from `@inth/vue/vue-plugin`, or `testing()` from `@inth/vue/testing`. See [rendering](/docs/frameworks/vue/rendering). |
-| `consentCategories` | The policy's categories | Limits the categories the dialog and widget show, within the policy's scope. |
-| `vendors` | Unset | Vendors listed under their category with their own switch. See [vendor consent](/docs/frameworks/vue/vendor-consent). |
-| `storageConfig` | `{ storageKey: 'inth' }` | Cookie and localStorage name, `crossSubdomain`, `defaultDomain` and `defaultExpiryDays`, 365 by default. |
+| `mode` | Required (`hosted()` recommended) | Policy source: `hosted()` or `manifest()` from `@inth/vue/vue-plugin`, or `testing()` from `@inth/vue/testing`. See [rendering](/docs/frameworks/vue/rendering). |
+| `consentCategories` | Policy categories | Limits which categories the dialog and widget display within the policy's scope. |
+| `vendors` | Unset | Lists declared vendors under their category with per-vendor switches. See [vendor consent](/docs/frameworks/vue/vendor-consent). |
+| `storageConfig` | `{ storageKey: 'inth' }` | Configures cookie and localStorage key name, `crossSubdomain`, `defaultDomain`, and `defaultExpiryDays` (default 365). |
 
-The backend URL, a custom `fetch` and the save `domain` are options of the
-mode, not the plugin:
+Configure the project URL, custom `fetch`, and save `domain` on the mode
+factory rather than the plugin:
 
 | Mode | Options |
 | --- | --- |
-| `hosted()` | `projectUrl`, by default the one `consentManifest()` read from `VITE_INTH_PROJECT_URL`. `headers`, `fetch`, `domain`. |
-| `manifest()` | `projectUrl` and the build snapshot default to what `consentManifest()` downloaded. `source: 'runtime'` fetches the manifest when the app starts; `manifestUrl` fetches it from that URL instead of using the snapshot; `snapshot` takes one you supply. `geoUrl`, `inputs`, `initFallback`, `headers`, `credentials`, `fetch`, `domain`. |
-| `testing()` | From `@inth/vue/testing`, for tests. `policy`: the rules to resolve; omitted, Inth's recommended rules. Throws in production builds. |
+| `hosted()` | `projectUrl` (defaults to what `consentManifest()` read from `VITE_INTH_PROJECT_URL` or `VITE_C15T_BACKEND_URL`), `headers`, `fetch`, `domain`. |
+| `manifest()` | `projectUrl` and build snapshot from `consentManifest()`, plus `source: 'runtime'`, `manifestUrl`, `snapshot`, `geoUrl`, `inputs`, `initFallback`, `headers`, `credentials`, `fetch`, `domain`. |
+| `testing()` | From `@inth/vue/testing` for tests only. `policy` overrides Inth's recommended rules. Throws in production builds. |
 
-`hosted()` and `manifest()` throw when they have no backend URL: add
-`consentManifest()` to `vite.config.ts` and set `VITE_INTH_PROJECT_URL`, or pass `projectUrl`.
+`hosted()` and `manifest()` throw without a project URL. Add
+`consentManifest()` to `vite.config.ts` and set `VITE_INTH_PROJECT_URL` (or
+`VITE_C15T_BACKEND_URL`), or pass `projectUrl`.
 
 ### Scripts and blocking
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `scripts` | Unset | Vendor scripts that load by consent category. See [scripts](/docs/frameworks/vue/scripts). |
-| `networkBlocker` | Off | Rules that hold `fetch` and XHR requests until their category is allowed. See [network blocker](/docs/frameworks/vue/network-blocker). |
-| `iframeBlocker` | On | Gates iframes that carry `data-src` and `data-category`. `false` turns it off. See [embeds](/docs/frameworks/vue/embeds). |
-| `nonce` | Unset | Content Security Policy nonce for every script the loader creates and for the token style element. See [Content Security Policy](/docs/frameworks/vue/content-security-policy). |
+| `scripts` | Unset | Vendor scripts gated by consent category. See [scripts](/docs/frameworks/vue/scripts). |
+| `networkBlocker` | Off | Rules holding matching `fetch` and XHR requests until allowed. See [network blocker](/docs/frameworks/vue/network-blocker). |
+| `iframeBlocker` | On | Gates iframes carrying `data-src` and `data-category`. Set `false` to disable. See [embeds](/docs/frameworks/vue/embeds). |
+| `nonce` | Unset | CSP nonce added to every loaded script and to `<style id="inth-css-vars">`. See [Content Security Policy](/docs/frameworks/vue/content-security-policy). |
 | `reloadOnConsentRevoked` | `true` | Reloads the page when a save withdraws a granted category or vendor. |
-| `clearOnRevocation` | Unset | Deletes first-party cookies and storage keys for a withdrawn category. See [clear on revocation](/docs/frameworks/vue/clear-on-revocation). |
-| `experimentalScriptRegistry` | `false` | Experimental. Loads `@inth/integrations` scripts from the sources the Inth script registry lists in the consent manifest, each with an integrity hash the browser checks. Read once. |
-| `iab` | Off | Turns IAB TCF on; `{}` is enough. Also takes publisher settings, such as `publisherRestrictions`; fields left out come from the policy. Unset, `false` or `{ enabled: false }` leaves IAB off, and an `iab` policy with a vendor list throws an `IABUnavailableError`. See [IAB TCF](/docs/frameworks/vue/iab). |
+| `clearOnRevocation` | Unset | Deletes first-party cookies and storage keys for withdrawn categories. See [clear on revocation](/docs/frameworks/vue/clear-on-revocation). |
+| `iab` | Off | Enables IAB TCF (`{}` is enough) and accepts publisher settings such as `publisherRestrictions`. Unset, `false`, or `{ enabled: false }` leaves IAB off, causing an `IABUnavailableError` on IAB policies with a vendor list. See [IAB TCF](/docs/frameworks/vue/iab). |
 
-### Events and other tools
+### Events
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `callbacks` | Unset | `onChoiceRecorded`, `onPermissionsChanged`, `onError` and `onBeforeConsentRevocationReload`. See [callbacks](/docs/frameworks/vue/callbacks). |
+| `callbacks` | Unset | Registers `onChoiceRecorded`, `onPermissionsChanged`, `onError`, and `onBeforeConsentRevocationReload`. See [callbacks](/docs/frameworks/vue/callbacks). |
 
 ### Appearance
 
 | Option | Default | What it does |
 | --- | --- | --- |
-| `tokens` | The default theme | CSS variables the plugin adds to `document.head` in a `<style id="inth-css-vars">` element. See [customize](/docs/frameworks/vue/customize#set-theme-tokens). |
-| `presentation` | Policy defaults | Banner and dialog variant, position, action layout and blocking. |
-| `components` | Unset | Attributes, such as `class`, for named parts of each component. |
-| `legalLinks`, `bannerLegalLinks`, `dialogLegalLinks` | None shown | Links to your privacy policy and similar pages, and which surfaces show them. |
-| `hideBranding`, `bannerHideBranding`, `dialogHideBranding`, `iabBannerHideBranding`, `iabDialogHideBranding` | `false` | Hide the "Secured by" tag. |
-| `showTrigger` and the `trigger*` options | `false` | The floating trigger. See [ConsentDialogTrigger](/docs/frameworks/vue/components/consent-dialog-trigger). |
+| `tokens` | Default theme | CSS variables written to `<style id="inth-css-vars">` in `document.head`. See [customize](/docs/frameworks/vue/customize#set-theme-tokens). |
+| `presentation` | Policy defaults | Banner and dialog variant, position, action layout, and blocking. |
+| `components` | Unset | Vue attributes such as `class` and `style` for named component parts. |
+| `legalLinks`, `bannerLegalLinks`, `dialogLegalLinks` | None shown | Links to your privacy policy and which surfaces display them. |
+| `hideBranding`, `bannerHideBranding`, `dialogHideBranding`, `iabBannerHideBranding`, `iabDialogHideBranding` | `false` | Hides the "Secured by" tag. |
+| `showTrigger` and `trigger*` | `false` | Configures the floating trigger. See [ConsentDialogTrigger](/docs/frameworks/vue/components/consent-dialog-trigger). |
 | `disableAnimation` | `false` | Turns off banner and dialog transitions. |
-| `models`, `bannerModels`, `iabBannerModels`, `iabDialogModels` | Every model | Limit which policy models show a surface. |
+| `models`, `bannerModels`, `iabBannerModels`, `iabDialogModels` | Every model | Limits which policy models render each surface. |
 
 ### Advanced
 
 | Option | What it does |
 | --- | --- |
-| `runtime` | A runtime created elsewhere with `createConsentRuntime()`, in place of `mode`. The plugin renders it and neither starts nor stops it, and ignores `callbacks`, blockers, `scripts` and `tokens`, which the runtime's owner configures. |
-| `prefetch`, `initialRecords` | A resolved policy and stored records from a server, used for the first render. Plain Vue has no server helper that produces them. |
+| `runtime` | Uses an existing runtime from `createConsentRuntime()` instead of `mode`. The plugin renders it without starting or stopping it and ignores `callbacks`, blockers, `scripts`, and `tokens`. |
+| `prefetch`, `initialRecords` | Pre-resolved policy and stored records for the first render. Plain Vue provides no server helper to generate these. |
 
 ## Verify
 
-Open the app with the Network tab open. `hosted()` requests the backend's
-`/init`. `manifest()` with a bundled snapshot makes no policy request unless
-the policy needs a location the browser doesn't have, and
-`manifest({ source: 'runtime' })` requests `${projectUrl}/v1/consent/manifest`. In
-the Application panel, an `inth` cookie appears after you accept or reject.
+Open the app with the Network tab open. `hosted()` requests `/v1/consent/init`,
+`manifest()` with a build snapshot sends no policy request unless location is
+required, and `manifest({ source: 'runtime' })` requests
+`${projectUrl}/v1/consent/manifest`. After accepting or rejecting, confirm an `inth`
+cookie appears in the Application panel.

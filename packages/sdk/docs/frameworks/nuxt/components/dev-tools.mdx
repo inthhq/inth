@@ -1,21 +1,23 @@
 ---
 title: DevTools
-description: Inspect consent state, the resolved policy, location, scripts and consent events in a Nuxt app during development with ConsentDevTools.
+description: Inspect consent state, matched policies, location, scripts, and events in Nuxt via Nuxt DevTools or ConsentDevTools.
 group: frameworks
 ---
 
+Inspect live consent state, resolved policies, script status, and events in
+development using either the built-in Nuxt DevTools tab or the floating
+`ConsentDevTools` panel.
+
 ## Load DevTools only in development
 
-The module does not register `ConsentDevTools`. Import it from
-`@inth/nuxt/devtools` with a dynamic import that runs only in development:
+`@inth/nuxt` does not register `ConsentDevTools` globally. Dynamically import
+it from `@inth/nuxt/devtools` behind `import.meta.dev`:
 
 <include src="../../../shared/examples/nuxt/devtools.mdx" />
 
-Render this component anywhere in your app, such as `app.vue`.
-`import.meta.dev` is `false` in production builds, so the dynamic import and
-the panel stay out of your production bundle. A static `import` would ship
-DevTools to every visitor even when `v-if` hides it. The panel mounts in the
-browser only.
+Render it inside `app/app.vue`. Because `import.meta.dev` evaluates to `false`
+in production builds, the panel stays out of production bundles. A static
+import ships DevTools to visitors even when hidden with `v-if`.
 
 <import src="../../../shared/vue/components/dev-tools.mdx#behavior" />
 
@@ -23,16 +25,13 @@ browser only.
 
 ## Inspect consent in Nuxt DevTools
 
-In development, the module adds a **Inth** tab to Nuxt DevTools, so you don't
-need to render `ConsentDevTools` to inspect consent. Open Nuxt DevTools with
-Shift + Option + D (Shift + Alt + D on Windows and Linux) and choose Inth. The
-tab shows consent values, scripts, location, the resolved policy, IAB state,
-events and consent actions. It follows the DevTools light or dark theme.
+In development, `@inth/nuxt` adds an **Inth** tab directly to Nuxt DevTools, so
+you do not need to mount `ConsentDevTools`. Open Nuxt DevTools with
+Shift + Option + D (Shift + Alt + D on Windows and Linux) and select **Inth**
+to view consents, scripts, location, policy, IAB state, events, and actions.
 
-Nuxt enables its DevTools by default in development. Production builds don't
-register the tab, its `/__inth_devtools__` page or the client plugin that
-exposes the kernel to it. To turn the tab off in development, set
-`devtools: false`:
+Production builds exclude the tab, its `/__inth_devtools__` route, and its
+client plugin. To disable the tab in development, set `devtools: false`:
 
 {/* example: fragment */}
 
@@ -43,21 +42,20 @@ export default defineNuxtConfig({
 });
 ```
 
-The tab's event history starts when you first open it. Nuxt DevTools keeps the
-tab loaded, so switching to another tab and back keeps the history. Saves and
-actions in the tab change the app's real consent state, as they would through
-the banner.
+Event history begins when you first open the tab and persists across tab
+switches. Actions taken in the tab update your app's live consent state.
 
 <import src="../../../shared/vue/components/dev-tools.mdx#embedded-panel" />
 
 ## Verify
 
-Run `nuxt dev` and open the app. A DevTools button appears in the corner you
-set. Open the Location panel and check the country the server resolved. Build
-with `nuxt build`, start the server and confirm the button does not appear.
+Run `nuxt dev`, open the DevTools panel or Nuxt DevTools tab, and check the
+Location tab for the server-resolved country. Then run `nuxt build`, start the
+production server, and confirm DevTools is absent.
 
 ## Next steps
 
-- [Troubleshooting](/docs/frameworks/nuxt/troubleshooting) uses DevTools to
-  explain a missing banner.
-- [Verify consent](/docs/guides/verify-consent) is the release checklist.
+- [Troubleshooting](/docs/frameworks/nuxt/troubleshooting): diagnose missing
+  banners with DevTools.
+- [Verify consent](/docs/guides/verify-consent): complete the release
+  checklist.

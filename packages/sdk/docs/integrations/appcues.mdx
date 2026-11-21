@@ -1,118 +1,68 @@
 ---
 title: Appcues
-description: Load Appcues onboarding flows after experience consent, configure US or EU accounts, and reset the visitor on revocation.
+description: Load Appcues onboarding flows after experience consent and reset user state on revocation with Inth.
 seoTitle: Appcues cookie consent with Inth
-seoDescription: Gate the Appcues SDK on experience consent with Inth. Configure account settings, reset user state on revocation, and verify browser storage.
+seoDescription: Gate the Appcues SDK on experience consent with Inth, configure US or EU accounts, reset state on revocation, and verify storage.
 icon: list-checks
 group: integrations
 ---
 
-Appcues shows onboarding flows, tooltips and checklists inside your app. The
-Inth `appcues` helper waits for `experience` consent before it sets
-`AppcuesSettings` or requests the SDK.
-
-On withdrawal, the helper calls `Appcues.reset()` and removes the loader, then
-Inth reloads the page. `reset()` clears the user and any flow in progress, but
-the SDK keeps running until the reload, so keep `reloadOnConsentRevoked` on.
+The `appcues` helper blocks `AppcuesSettings` and the Appcues SDK until the visitor grants `experience` consent. On withdrawal, it calls `Appcues.reset()`, removes the loader, and reloads the page by default so the running SDK stops cleanly.
 
 ## Configure Appcues
 
-Copy your account ID from the
-[Appcues installation snippet](https://docs.appcues.com/install-appcues-web/install-the-appcues-sdk).
-Set `region: 'eu'` for an EU account. Then remove the Appcues snippet and any
-tag-manager entry so Appcues can't load outside Inth.
+Copy your account ID from the [Appcues installation snippet](https://docs.appcues.com/install-appcues-web/install-the-appcues-sdk), set `region: 'eu'` for EU accounts, and remove any existing Appcues snippet or tag-manager copy.
 
 <CommandTabs command="@inth/integrations" mode="install" />
 
 <include src="../shared/examples/javascript/appcues-scripts.mdx" />
 
-Inside `onReady`, read the signed-in user from your auth state. Replace the
-`identify` placeholder with that user's real, unique, stable ID before you
-enable the call. Enable `group` after `identify` with the real group ID, if
-you need it. Send `track` only for an event that actually happened. Skip
-these calls when nobody is signed in. `onReady` runs once per successful
-loader load, including when consent was already granted at page startup.
-
-If sign-in completes after `onReady`, identify the user from your app's auth
-change handler. Right before you call `window.Appcues.identify`, check that
-the method exists, the user is still signed in, and Inth's current consent
-allows both the script's category and the `appcues` vendor. The category
-defaults to `experience`; check your override instead if you changed it. Skip
-identification if any check fails. If Appcues hasn't loaded yet, let
-`onReady` read the current user when it runs.
-
 <include src="../shared/integrations/register-scripts.mdx" />
+
+Inside `onReady`, read the signed-in user from your auth state, replace the `identify` placeholder with a real stable ID, call `group` after `identify` if needed, and skip these calls when signed out. Send `track` only for events that actually occurred. `onReady` runs once per successful loader load, including when consent is already granted at startup.
+
+If sign-in finishes after `onReady`, check that `window.Appcues?.identify` exists, the user is signed in, and Inth allows both the script's category, `experience` by default, and the `appcues` vendor before calling `identify`.
 
 ## Options
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `accountId` | Required | Account ID from Appcues. Surrounding whitespace is trimmed and the ID is encoded as one URL path segment. Missing or blank IDs log an error and skip loading. |
-| `region` | `'us'` | Loads from `fast.appcues.com`, or from `fast.eu.appcues.com` for `'eu'`. |
-| `settings` | `{ enableURLDetection: true }` | JSON-serializable `AppcuesSettings`, merged over the default URL detection setting. Replaces any existing `window.AppcuesSettings`. Set `enableURLDetection: false` to handle page changes yourself. |
-| `scriptUrl` | `https://fast.appcues.com/<accountId>.js` | Override for a proxy or custom loader. A blank override uses the default. This changes only the account loader, not later SDK requests. |
-| `onReady` | None | Synchronous callback after the account loader sets `window.Appcues`, while the script still has consent. Runs once per successful loader load. Use it for `identify`, `group` and `track`. |
+| `accountId` | Required | Appcues account ID. Trimmed and URL-encoded as one path segment. Blank values log an error and skip loading. |
+| `region` | `'us'` | `'us'` loads from `fast.appcues.com`, and `'eu'` loads from `fast.eu.appcues.com`. |
+| `settings` | `{ enableURLDetection: true }` | JSON-serializable `AppcuesSettings` merged over the default, replacing any existing `window.AppcuesSettings`. Set `enableURLDetection: false` to track route changes yourself. |
+| `scriptUrl` | `https://fast.appcues.com/<accountId>.js` | Proxy or custom account loader override. Blank values use the default. Affects only the account loader, not later SDK requests. |
+| `onReady` | None | Synchronous callback run once per successful load after `window.Appcues` exists and while consent still holds. |
 
-The helper has no `category` option. To change the consent mapping, override
-the returned script's `category` when you register it. The helper has no mode
-that loads before consent.
+The helper has no `category` option or pre-consent load mode. To change the category, override `category` on the returned script object before registering it.
 
 ## Loading and revocation
 
-After experience consent, Inth sets `AppcuesSettings` and loads
-`https://fast.appcues.com/<accountId>.js`, or the EU host for `region: 'eu'`.
-The account loader requests the Appcues runtime. Put startup calls to
-`identify`, `group` and `track` inside `onReady`. The account loader exposes
-these methods and buffers calls until the runtime finishes loading, as in
-Appcues' documented `AppcuesReady` pattern. Inth doesn't create an
-`AppcuesReady` global or queue visitor callbacks. If the loader fails or
-doesn't set `window.Appcues`, `onReady` doesn't run.
+On `experience` grant, Inth sets `AppcuesSettings` and loads your account loader, which buffers `identify`, `group`, and `track` calls until the runtime finishes loading. Inth creates no `AppcuesReady` global and skips `onReady` if the loader fails or does not set `window.Appcues`.
 
-Revoking consent or removing a pending loader stops its `onReady` from
-running. A new grant starts a new loader. Recreating the helper before the
-download completes uses the current callback. Recreating it after completion
-doesn't replay `onReady`. Read the current visitor inside the callback, and
-check consent again for later calls. If you start async work inside
-`onReady`, check consent and auth again before you call Appcues after an
-`await`, timer or event.
+Revoking consent or removing a pending loader cancels its `onReady`. Recreating the helper before the download finishes swaps to the new callback. Recreating it after completion does not replay `onReady`. If `onReady` starts async work, recheck consent and auth after every `await`, timer, or event before calling Appcues.
 
-On revocation, Inth calls the documented
-[`Appcues.reset()`](https://docs.appcues.com/dev-api-data/javascript-api-developer)
-when it's available and removes the loader element. Reset clears user state
-and flows in progress. It doesn't unload the SDK, stop every listener or
-cancel remote JavaScript that was already downloading. Keep
-`reloadOnConsentRevoked` enabled so the next page starts without Appcues. A
-new grant loads the SDK again, and repeated grants don't add another loader.
+On revocation, Inth calls [`Appcues.reset()`](https://docs.appcues.com/dev-api-data/javascript-api-developer) when available and removes the loader element. Because `reset()` clears user state and active flows without unloading the SDK, stopping listeners, or canceling in-flight scripts, keep `reloadOnConsentRevoked` enabled. Regranting after removal loads the SDK again without duplicating loaders.
 
 ## Cookies and storage
 
-Appcues documents
-[local and session storage](https://docs.appcues.com/security-privacy/faq-required-cookies-local-storage-and-session-data),
-including the localStorage keys `apc_ann_errors`, `apc_local_id`,
-`apc_user_id` and `apc_next_content_id`. Session keys include `apc_user`,
-`apc_debug_enabled`, `apc_debug_url`, `apc_curr_flow`, `apc_curr_checklist`,
-`apc_cl:{id}` and `apc_followed_test_link`. The SDK can change its storage
-across releases. Reset doesn't promise to erase every Appcues key.
+Documented in [Appcues' storage FAQ](https://docs.appcues.com/security-privacy/faq-required-cookies-local-storage-and-session-data):
+
+| Storage | Keys |
+| --- | --- |
+| Local storage | `apc_ann_errors`, `apc_local_id`, `apc_user_id`, `apc_next_content_id` |
+| Session storage | `apc_user`, `apc_debug_enabled`, `apc_debug_url`, `apc_curr_flow`, `apc_curr_checklist`, `apc_cl:{id}`, `apc_followed_test_link` |
+
+Appcues can change keys across SDK releases, and `reset()` does not erase every key.
 
 ## Verify Appcues
 
-In a fresh browser profile, deny all optional consent and allow measurement
-alone. Check that neither Appcues host is requested, `window.Appcues`,
-`window.AppcuesSettings` and `window.AppcuesReady` are absent, and no Appcues
-cookie, localStorage or sessionStorage key appears. Grant experience and check
-the account loader, the runtime and `onReady`. Revoke consent while the loader
-is still downloading and confirm that `onReady` doesn't run when that download
-finishes. Revoke experience and confirm the page reloads and the loader stays
-absent until a new grant.
+In a fresh browser profile with your real account ID, filter Network by `appcues.com`:
 
-The automated monitor uses a fake account and checks that the loader is
-reachable. It doesn't prove that a real account's onboarding flow starts. Use
-your own account to check flow targeting and identification.
+1. Deny optional consent and allow `measurement` only. Confirm no Appcues requests, storage, or `Appcues`, `AppcuesSettings`, or `AppcuesReady` globals appear.
+2. Allow `experience`. Confirm the account loader, runtime, and `onReady` run once and your flows target as configured.
+3. Revoke `experience` while the loader downloads on a throttled network and confirm `onReady` does not run.
+4. Revoke `experience` after load and confirm the page reloads with Appcues absent until regranted.
 
-Sources:
-[install the Appcues SDK](https://docs.appcues.com/install-appcues-web/install-the-appcues-sdk),
-[JavaScript API](https://docs.appcues.com/dev-api-data/javascript-api-developer)
-and
-[cookies, local storage and session data](https://docs.appcues.com/security-privacy/faq-required-cookies-local-storage-and-session-data).
+Sources: [install the Appcues SDK](https://docs.appcues.com/install-appcues-web/install-the-appcues-sdk), [JavaScript API](https://docs.appcues.com/dev-api-data/javascript-api-developer), and [cookies, local storage, and session data](https://docs.appcues.com/security-privacy/faq-required-cookies-local-storage-and-session-data).
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

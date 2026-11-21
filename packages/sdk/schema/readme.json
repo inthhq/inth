@@ -12,6 +12,6 @@
 		"",
 		"```bash\npnpm add @inth/sdk-schema\n```"
 	],
-	"docsLink": "https://c15t.com/docs",
+	"docsLink": "https://inth.com/docs",
 	"showCLIGeneration": false
 }

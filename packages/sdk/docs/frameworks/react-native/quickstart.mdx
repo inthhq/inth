@@ -1,172 +1,77 @@
 ---
 title: Quickstart
-description: Add native consent screens and a privacy-settings entry to React Native or Expo, then keep optional SDKs behind consent gates.
+description: Add native Inth consent screens and a privacy-settings entry to React Native or Expo, then gate optional SDKs.
 group: frameworks
 ---
 
-Inth gives your app a native consent prompt, saved preferences and hooks for
-reading permissions in React. SwiftUI renders the iOS screens and Compose
-renders the Android screens. Choices live in the native engine, so an optional
-SDK can check them before JavaScript starts.
+Add native SwiftUI and Compose consent screens, durable preference storage, and React hooks to React Native or Expo. Choices live in the native engine so optional SDKs can check consent before JavaScript boots.
 
 ## Before you start
 
-You need a React Native app with the New Architecture enabled, or an Expo SDK
-55 through 58 app with a custom native build. Expo Go cannot load the native
-module. The current integration targets RN 0.83.x through 0.88.x, React
-`>=19.2.0 <19.4.0`, iOS 16.4 and Android API 24 or later. Use the React version
-your RN or Expo release prescribes. Check
-[compatibility](/docs/frameworks/react-native/platform-support) if you are
-upgrading an existing app.
-
-For a new app, target RN 0.88 with React 19.3, or Expo 58, and verify the native
-build and consent journeys before shipping. Older pairings remain available
-for existing apps; Inth compatibility does not extend upstream maintenance.
-
-The mobile SDK is currently a private prerelease. Obtain the package tarball
-and access to its matching Android Maven artifacts from your maintainer.
-[Mobile availability](/docs/guides/mobile-status) tracks distribution and release
-scope.
-
-This guide uses an [Inth project](https://inth.com) for policy and consent
-records. In your project:
-
-1. Configure the policy for the regions your app serves.
-2. Include the categories your app uses, such as measurement and marketing.
-3. Copy the project URL and prepare your app's HTTPS privacy-policy URL.
-
-The project URL is public configuration, such as
-`https://your-project.inth.app`. It is not an API key. Hosted policy changes
-reach the app when it next refreshes policy. The mobile SDK works only with
-Inth hosted projects. [Configuration](/docs/frameworks/react-native/configuration)
-covers the accepted URL forms, `dryRun` for development and CI, and app-owned
-native installation.
+- React Native `0.83.x` through `0.88.x` (New Architecture, React `>=19.2.0 <19.4.0`) or Expo SDK 55 through 58 with a custom native build (Expo Go is unsupported). Target RN 0.88 or Expo 58 for new apps; see [compatibility](/docs/frameworks/react-native/platform-support).
+- iOS 16.4+ and Android API 24+.
+- An [Inth project](https://inth.com) with regional policies, your categories (`measurement`, `marketing`), its HTTPS project URL (`https://your-project.inth.app`), and your HTTPS privacy policy URL.
+- Private prerelease `@inth/react-native` tarball and Android Maven access; see [mobile availability](/docs/guides/mobile-status).
 
 ## Install the package
 
-Run this in your app directory, replacing the path with the tarball you
-received:
+Install the tarball in your app directory (`@inth/react-native` is separate from `@inth/sdk`):
 
 ```sh
 npm install /absolute/path/to/inth-react-native.tgz
 ```
 
-React Native uses `@inth/react-native` as a separate package. The web packages
-do not include it.
-
 ## Configure the native app
 
-The backend URL belongs in native build configuration. `InthProvider` attaches
-to that installed engine after JavaScript starts.
+Configure your Inth project URL natively so the engine initializes before React mounts, then return here:
 
-| App | Native setup |
+| App type | Setup guide |
 | --- | --- |
-| Expo | Follow [Expo and EAS](/docs/frameworks/react-native/expo) to add the config plugin and build a native app. |
-| Bare React Native | Follow [bare setup](/docs/frameworks/react-native/bare) to configure CocoaPods, Maven and native launch metadata. |
+| Expo | [Expo and EAS](/docs/frameworks/react-native/expo): add the config plugin and build a native binary. |
+| Bare React Native | [Bare React Native](/docs/frameworks/react-native/bare): link CocoaPods, add Maven, and set metadata. |
 
-Complete the setup for each platform you ship, then return here. Native
-configuration changes require a new app binary.
+Mobile connects to Inth hosted projects only; see [Configuration](/docs/frameworks/react-native/configuration) for URL rules and `dryRun`.
 
 ## Add the consent provider
 
-Wrap your app in `InthProvider` in `App.tsx` and pass your privacy-policy
-URL. The provider presents the native consent prompt when the policy asks for
-one:
+Wrap your root in `InthProvider` in `App.tsx` with an absolute HTTPS privacy policy URL (ASCII DNS host):
 
 <include src="../../shared/examples/react-native-bare/app-entry.mdx" />
 
-The native consent prompt decides when to open, as it does in a Swift or Kotlin
-app: it waits until the native core has restored saved choices and resolved the
-policy, then presents once per owed prompt. A stored
-choice that is still valid shows nothing. A new policy or an expired choice
-presents it again on the next launch or refresh. The native presenter handles
-choices, navigation, saving and retry. React receives the updated consent
-snapshot.
-
-Replace `https://example.com/privacy` with your app's privacy policy. The
-prompt links to it. It must be an absolute HTTPS URL with an ASCII DNS host
-(write an internationalized domain in its `xn--` form). The provider throws on
-render if the URL is missing or is one a native presenter would refuse.
-
-Keep one provider mounted above your app navigation. A nested provider reuses
-the outer one and never presents a second prompt.
+`InthProvider` attaches to the native engine and opens the stock prompt once a choice is owed. Keep one provider above navigation.
 
 ## Keep privacy settings reachable
 
-People must be able to change their choice after the first prompt closes.
-Create `setup.tsx` with a button that opens the native privacy settings:
+Add a standing Privacy settings button in `setup.tsx` or your settings screen:
 
 <include src="../../shared/examples/react-native-bare/native-root.mdx" />
 
-Move the button into your settings screen if you prefer. It works anywhere
-under the provider.
+Pass `autoPresent={false}` when rendering custom UI via [headless APIs](/docs/frameworks/react-native/headless).
 
-You do not need to mount `ConsentBanner` or `ConsentDialog` with this setup.
-If you render them, or build your own prompt with the
-[headless APIs](/docs/frameworks/react-native/headless), pass
-`autoPresent={false}` so the provider does not also present the native one.
-`presentConsentPrompt` and `presentPreferences` keep working with
-`autoPresent={false}`.
+## Gate analytics and optional SDKs
 
-## Gate analytics and other optional work
-
-A consent screen does not stop an SDK that your app already starts. Remove the
-vendor's unconditional initialization and subscribe to the permission it needs.
-For measurement code owned by React, this hook starts collection on a grant
-and calls your cleanup function when permission closes:
+Disable vendor auto-start and subscribe in React, returning the vendor's stop callback:
 
 <include src="../../shared/examples/react-native-bare/headless-gate.mdx" />
 
-Pass a stable `start` function that returns the vendor's actual stop or disable
-operation. Mount the hook under `InthProvider`. The tracking variant is only for
-a feature that also needs Apple's tracking authorization.
-
-Native analytics and advertising initializers can run before React. Put those
-behind [native startup gates](/docs/frameworks/react-native/native-behaviour) as
-well. Hiding a React component does not stop a native background service.
+For native SDKs that launch before React, add [native startup gates](/docs/frameworks/react-native/native-behaviour) too.
 
 ## Check that it works
 
-Build the app, then test with a policy that asks for a choice:
+Build a native binary and test under an opt-in policy:
 
-1. Open an installation with no saved choice. The native consent prompt appears
-   and optional collection stays off.
-2. Choose Reject all. The prompt closes and optional collection stays off.
-3. Terminate and reopen the app. The refusal remains and the prompt stays
-   closed while that choice is valid.
-4. Open Privacy settings. Enable measurement and save. The measurement gate
-   opens and your integration starts collection.
-5. Open Privacy settings again and disable measurement. The gate closes and
-   your integration stops collection.
+1. Fresh install: prompt opens; optional collection stays off.
+2. Tap **Reject all** and relaunch: refusal persists; prompt stays closed.
+3. Open **Privacy settings**, enable measurement, and save: gate opens.
+4. Disable measurement and save: gate closes and collection stops.
 
-A `committed` presenter outcome confirms that the choice was saved on the
-device. Backend delivery can happen later, including after reconnecting.
-[Commands and outcomes](/docs/frameworks/react-native/usage) explains that
-boundary. Use the [mobile verification guide](/docs/guides/mobile-verify) for
-offline, storage-failure and accessibility checks.
-
-## First release scope
-
-The current path includes native stock screens, React hooks and category
-commands. App-owned React UI uses the [headless APIs](/docs/frameworks/react-native/headless).
-To ship without the stock native screens, see
-[Build without the stock native screens](/docs/frameworks/react-native/headless#build-without-the-stock-native-screens).
-See [mobile availability](/docs/guides/mobile-status) for the release scope and
-[IAB setup](/docs/guides/mobile-iab) for CMP configuration.
+`committed` confirms durable local storage; backend delivery can finish after reconnect. See [Commands and outcomes](/docs/frameworks/react-native/usage) and [Verify mobile consent](/docs/guides/mobile-verify).
 
 ## Next steps
 
-- [Connect mobile SDKs](/docs/integrations/overview#mobile-sdks) with bundled Firebase
-  Analytics and PostHog helpers.
-
-- [Customize the screens](/docs/frameworks/react-native/customize) to change
-  colors, app identity and provider attribution.
-
-- [Build your own UI](/docs/frameworks/react-native/headless) with hooks and
-  native category commands.
-
-- [Add an offline policy](/docs/guides/mobile-offline) for a fresh installation
-  without network access.
-
-- [Run the examples](/docs/frameworks/react-native/examples) to explore native,
-  bare React Native and Expo apps.
+- [Connect mobile SDKs](/docs/integrations/overview#mobile-sdks): wire Firebase Analytics and PostHog.
+- [Customize](/docs/frameworks/react-native/customize): theme native screens, branding, and attribution.
+- [Build your own UI](/docs/frameworks/react-native/headless): render custom screens or [exclude stock native screens](/docs/frameworks/react-native/headless#build-without-the-stock-native-screens).
+- [Mobile IAB and ads](/docs/guides/mobile-iab): configure TCF, Additional Consent, and ATT.
+- [Mobile offline consent](/docs/guides/mobile-offline): bundle an offline startup policy.
+- [Examples](/docs/frameworks/react-native/examples): run SwiftUI, UIKit, Android, bare RN, and Expo demos.

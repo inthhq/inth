@@ -1,14 +1,17 @@
 ---
 title: Clear on revocation
-description: Delete the first-party cookies and Web Storage keys a consent category owns in a Nuxt app when that category is denied, with the clearOnRevocation option of the Inth Nuxt module.
+description: Delete first-party cookies and Web Storage keys in Nuxt when a visitor denies a consent category.
 group: frameworks
 ---
 
+Delete cookies and storage keys left behind by a vendor when its category is
+denied, using `clearOnRevocation` in `@inth/nuxt`.
+
 ## Configure cleanup
 
-Gating stops new requests, but it leaves the cookies and storage keys a vendor
-already wrote. List the ones each optional category owns under the `inth` key
-in `nuxt.config.ts`. When that category is denied, Inth deletes them:
+Script gating stops new requests, not cookies or storage keys a vendor already
+wrote. List the keys each optional category owns under `inth` in
+`nuxt.config.ts` so Inth removes them when that category is denied:
 
 {/* example: fragment */}
 
@@ -23,9 +26,8 @@ export default defineNuxtConfig({
 });
 ```
 
-`clearOnRevocation` is plain data, so it can go in `nuxt.config.ts` or in the
-`inth` key of `app/app.config.ts`. The module reads it once, in the browser,
-after hydration.
+`clearOnRevocation` is plain data and works in either `nuxt.config.ts` or
+`app/app.config.ts`. The module reads it once in the browser after hydration.
 
 <import src="../../shared/scripts/clear-on-revocation.mdx#targets" />
 

@@ -1,40 +1,31 @@
 ---
 title: IAB GPP
-description: Add the IAB Global Privacy Platform API (__gpp) to a JavaScript app with mountGPP from @inth/sdk/gpp, so ad tech can read US state opt-outs and the TCF EU consent string.
+description: Expose window.__gpp in JavaScript with mountGPP from @inth/sdk/gpp for US state opt-outs and TCF EU strings.
 group: frameworks
 ---
 
-## What GPP does
-
-`mountGPP()` from `@inth/sdk/gpp` installs `window.__gpp`, the GPP 1.1
-CMP API, and keeps its GPP string in step with the visitor's choices.
-Prebid.js, Google Ad Manager and other ad tech read US privacy signals from
-it.
+Install `window.__gpp` (GPP 1.1 CMP API) in a JavaScript app with `mountGPP()`
+so ad tech such as Prebid.js and Google Ad Manager can read US privacy
+opt-outs and the TCF EU string.
 
 ## Turn on GPP
 
-Pass the client from `init()` to `mountGPP()`:
+Pass the client returned by `init()` to `mountGPP()`:
 
 <include src="../../shared/examples/javascript/gpp.mdx" />
 
-`mountGPP()` lives in its own entry, so apps that do not import
-`@inth/sdk/gpp` bundle none of the GPP code. `@inth/sdk` already
-depends on `@inth/sdk/iab`; nothing else to install. The second argument takes
-the GPP options listed below, for example `mountGPP(consent, { usFallback:
-'none' })`. Call `gpp.dispose()` to remove `__gpp`, before
-`consent.dispose()` if you dispose the client.
+Apps that do not import `@inth/sdk/gpp` bundle zero GPP code. Pass optional
+GPP settings as the second argument (for example,
+`mountGPP(consent, { usFallback: 'none' })`). Call `gpp.dispose()` before
+`consent.dispose()` when tearing down.
 
-Replace `https://your-project.inth.app` with your project's backend URL. The
-GPP string follows the policy and location Inth resolves for the visitor, so
-a US visitor's state comes from the backend. With `testing()` mode, pass the
-state yourself, for example `overrides: { country: 'US', region: 'CA' }`.
-
-To add the TCF EU section for visitors under an `iab` policy, set up
-[IAB TCF](/docs/frameworks/javascript/iab) as well.
+With `testing()` mode, supply a US location via `overrides`, such as
+`overrides: { country: 'US', region: 'CA' }`. To include the TCF EU section
+under an `iab` policy, also enable [IAB TCF](/docs/frameworks/javascript/iab).
 
 ## Use GPP with your own runtime
 
-`createConsentRuntime()` takes a `gpp` option and the loader for it:
+Configure `gpp` and `loadGPP` on `createConsentRuntime()`:
 
 {/* example: fragment */}
 
@@ -50,8 +41,7 @@ const runtime = createConsentRuntime({
 runtime.start();
 ```
 
-With any other consent kernel, call `createGPP({ kernel })` from
-`@inth/sdk/iab/gpp`. It takes the options below and returns the same handle as
-`mountGPP()`. Both throw when a CMP that has already loaded owns `__gpp`.
+On a manual kernel, call `createGPP({ kernel })` from `@inth/sdk/iab/gpp`.
+Both `mountGPP()` and `createGPP()` throw if another CMP already owns `__gpp`.
 
 <include src="../../shared/iab-gpp.mdx" />

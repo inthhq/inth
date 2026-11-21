@@ -1,138 +1,105 @@
 ---
 title: Rendering and deployment
-description: Choose the Inth Nuxt module's mode and routePrefix for server rendering, prerendered and cached routes, nuxt generate on static hosting, and ssr false.
+description: Configure @inth/nuxt mode and routePrefix for SSR, prerendered and cached routes, nuxt generate static hosting, and ssr false.
 group: frameworks
 ---
 
+Choose how `@inth/nuxt` resolves policies across server-rendered routes,
+cached routes, static exports, and single-page apps.
+
 ## Pick the setup for your deployment
 
-Two module options in `nuxt.config.ts` decide where each visitor's policy
-comes from. `mode` is `manifest()`, `hosted()` or `testing()`, imported from
-`@inth/nuxt`. `routePrefix` is where the module adds its consent route.
+Configure `mode` (`manifest()`, `hosted()`, or `testing()` from `@inth/nuxt`)
+and `routePrefix` under `inth` in `nuxt.config.ts`:
 
-| Your deployment | `inth` options | Banner in the first HTML |
+| Your deployment | `inth` options | Banner in first HTML |
 | --- | --- | --- |
-| A Nuxt server renders each request (`nuxt build`) | None: `mode` defaults to `manifest()` and `routePrefix` to `'/api/inth'`. See the [quickstart](/docs/frameworks/nuxt/quickstart). | Yes |
-| A Nuxt server with some prerendered or cached routes (`routeRules` with `prerender`, `swr`, `isr` or `cache`) | The same. See [prerendered and cached routes](#prerendered-and-cached-routes). | No on those routes, yes elsewhere |
-| Policy edits must apply without a rebuild | `mode: manifest({ source: 'runtime' })`. See [fetch the manifest at runtime](#fetch-the-manifest-at-runtime). | Yes |
-| Static hosting with `nuxt generate` | `mode: manifest({ resolve: 'browser' })` and `routePrefix: false`, or `mode: hosted()`. See [deploy to static hosting](#deploy-to-static-hosting). | No |
-| A single-page app with `ssr: false` | The same as static hosting. See [build a single-page app](#build-a-single-page-app-with-ssr-false). | No |
+| Nuxt server rendering each request (`nuxt build`) | None (`mode` defaults to `manifest()` and `routePrefix` to `'/api/inth'`). See the [quickstart](/docs/frameworks/nuxt/quickstart). | Yes |
+| Nuxt server with prerendered or cached routes (`prerender`, `swr`, `isr`, `cache`) | Same defaults. See [prerendered and cached routes](#prerendered-and-cached-routes). | No on cached routes, yes elsewhere |
+| Policy edits without rebuilding | `mode: manifest({ source: 'runtime' })`. See [fetch the manifest at runtime](#fetch-the-manifest-at-runtime). | Yes |
+| Static hosting (`nuxt generate`) | `mode: manifest({ resolve: 'browser' })` and `routePrefix: false`, or `mode: hosted()`. See [deploy to static hosting](#deploy-to-static-hosting). | No |
+| Single-page app (`ssr: false`) | Same as static hosting. See [build a single-page app](#build-a-single-page-app-with-ssr-false). | No |
 
-`mode` and `routePrefix` are read from `nuxt.config.ts` only. They decide
-what the build bundles and which routes the server has, so `app.config.ts`
-cannot change them. Import the modes from `@inth/nuxt`, the module entry: they
-return plain data that reaches the browser through runtime config. Passing a
-transport, such as `manifest` from `@inth/vue/vue-plugin`, throws during setup.
-
-The module has one configuration for the whole app. It decides per route
-whether the HTML belongs to one visitor or to everyone.
+Set `mode` and `routePrefix` in `nuxt.config.ts` only; `app.config.ts` cannot
+override them. Import mode factories from `@inth/nuxt` so they serialize as
+plain data; passing browser transports throws during setup.
 
 ## Render each request on the server
 
 By default, every server render reads the visitor's consent cookie and
 location headers, resolves their policy from the bundled snapshot, and sends
-the result with the page. The browser reuses it during hydration, so the
-banner needs no extra request. The browser bundle holds no resolver, snapshot or policy
-rules. The [quickstart](/docs/frameworks/nuxt/quickstart) sets this up, and
-`examples/nuxt` in the Inth repository runs it.
+the result with the HTML. The browser hydrates without an extra policy
+request, and the browser bundle carries no resolver, snapshot, or policy
+rules. The [quickstart](/docs/frameworks/nuxt/quickstart) and `examples/nuxt`
+use this setup.
 
-The server render sets no cookie. The visitor's subject ID, a UUIDv7, lives
-in the consent records their first save writes, and the render reads it from
-those cookies.
+Server renders never set cookies; the visitor's subject ID (`sub_...`) is
+written on their first save and read from cookies afterward.
 
-When the visitor's consent already allows some `scripts` entries, through a
-stored choice or a policy that asks for none, the server render adds an inline
-script at the end of `<body>`. After first paint, it runs those entries' setup
-and inserts their tags, so they start loading before the app hydrates. Entries
-with `alwaysLoad` start this way whatever the visitor chose. The script loader
-adopts those tags instead of inserting its own. Nothing starts from the HTML
-while the policy asks the visitor to choose, not even `alwaysLoad` entries, and
-a prerendered route starts nothing.
+When a visitor's stored choice or policy already allows vendor helper entries
+in `scripts` (or for `alwaysLoad` entries when no prompt is required), SSR
+appends an inline script at the end of `<body>` that starts those tags after
+first paint, before hydration, and the script loader adopts them. Built-in
+`@inth/integrations` helpers support this except Cloudflare Zaraz and Sentry,
+which start after hydration along with custom scripts. Prerendered routes and
+pages showing a prompt start nothing from HTML. Set
+`scriptLoader: { serverStart: false }` under `inth` to start all scripts after
+hydration instead.
 
-The vendor helpers from `@inth/integrations` start this way, except Cloudflare
-Zaraz and Sentry. Those two helpers, and `scripts` entries you write yourself,
-start after hydration.
+The module mounts `${routePrefix}/**` (`/api/inth/**` by default), serving
+`GET /api/inth/v1/consent/init` and `GET /api/inth/v1/consent/manifest`. SSR resolves through it
+in-process via Nitro's local fetch, and the browser calls it on prerendered
+routes or after an SSR timeout. Customize the path with `routePrefix`.
 
-To start every `scripts` entry after hydration instead, set
-`scriptLoader: { serverStart: false }` under `inth` in `nuxt.config.ts` or
-`app.config.ts`.
+SSR waits up to `timeoutMs` (default 500 ms) for policy resolution. If runtime
+fetching times out or fails, the page renders without consent UI, optional
+categories stay denied, and the browser resolves the policy after hydration.
 
-The module adds one catch-all route at `${routePrefix}/**`, `/api/inth/**` by
-default. It answers `GET /api/inth/v1/consent/init`, the visitor's resolved policy, and
-`GET /api/inth/v1/consent/manifest`, the deployment's manifest. The server render
-resolves through the init route in-process, through Nitro's local fetch, so
-it never leaves the server. The browser uses the init route when it resolves
-the policy itself, for example on a prerendered route or after a server
-render that timed out. Change the path with `routePrefix: '/consent'`.
-
-Server rendering waits at most `timeoutMs`, 500 milliseconds by default, for
-the policy. With a bundled snapshot that is local work. When the server
-fetches the manifest at runtime and the backend is slow or down, the page
-renders without consent UI in the HTML, optional categories stay denied,
-gated scripts and iframes stay blocked, and the browser resolves the policy
-after hydration.
-
-A banner in the server HTML shows before the app hydrates, which on a slow
-phone can take seconds. The stock banner puts a small inline script in front of
-its buttons that holds an Accept all, Reject all, notice dismiss or Customize
-tap made in that gap. Accept, reject and dismiss hide the banner at once. When
-the banner hydrates and the runtime has started, Inth records the choice with
-the time of the tap, saves it and loads the scripts it allows; Customize opens
-the dialog. A tap on a banner for one model or prompt is dropped when the
-browser resolves another, and the banner shows again.
+Because a server-rendered banner appears before hydration finishes, the stock
+banner includes a small inline script before its buttons that captures any
+Accept All, Reject All, dismiss, or Customize tap made during hydration.
+Accept, reject, and dismiss hide the banner immediately; once hydrated, Inth
+records the choice with the original tap timestamp and loads allowed scripts
+(or opens the dialog for Customize).
 
 ### When the consent engine loads
 
-For a visitor the server render asks to choose, the browser's first load
-holds no consent engine. The app hydrates from the state the server rendered
-with, so `useConsentSnapshot()`, `useConsentKernel()` and the other
-composables return it at once. The engine, which also brings the stock
-banner's code, loads at the first of these:
+When SSR prompts a new visitor to choose, the browser hydrates from server
+state without loading the consent engine on initial load. Composables read
+server state right away, and the engine (plus interactive banner code) loads
+at the earliest of:
 
-- every `<img fetchpriority="high">` on the page has loaded or failed (the
-  window `load` event when there is none)
-- the first pointer press, key press or scroll outside the banner
-- page code calls something only the engine answers, such as
-  `kernel.set.overrides()` or `clearRecords()`
-- 10 seconds after hydration
+- All `<img fetchpriority="high">` elements finishing (or `window` `load` if
+  none exist).
+- The first pointer press, key press, or scroll outside the banner.
+- App code calling an engine-only method such as `kernel.set.overrides()` or
+  `clearRecords()`.
+- 10 seconds after hydration.
 
-The banner stays server HTML until then. An Accept all or Reject all tapped
-before the engine loads takes effect in the tap's own task: the consent state
-the composables return changes, and script loaders on the provided kernel
-start the scripts the choice allows. A moment later Inth stores the consent
-record, queues the save and calls `onChoiceRecorded` and
-`onPermissionsChanged`. The engine then loads, starts from that record and
-sends the save. It records nothing a second time. Customize opens the dialog
-without the engine, and a save from the dialog takes the same path. The
-module's build gives the dialog's code a few files of its own, so the tap
-fetches it in about one round trip; the engine loads once the dialog is on
-screen.
+Tapping Accept All or Reject All before the engine loads updates composable
+state and starts allowed scripts in the same task, then stores the record,
+fires `onChoiceRecorded` and `onPermissionsChanged`, and lets the engine send
+the save once loaded. Clicking Customize loads the dialog without waiting for
+the engine.
 
-The browser loads the engine as the app starts, and the server render
-preloads it, for everyone else: a returning visitor, a policy with a notice
-prompt or a privacy signal, IAB, an experiment, a `consentSource`, `gpp`, a
-`networkBlocker`, or a `scripts` entry that may run now and does not start
-from the HTML. Routes the server does not render per visitor (prerendered,
-cached or `ssr: false`) load it as the app starts too.
+The browser loads the engine immediately (and SSR preloads it) for returning
+visitors, notice prompts, privacy signals, IAB, experiments, `consentSource`,
+`gpp`, `networkBlocker`, immediately runnable non-HTML scripts, and
+prerendered, cached, or `ssr: false` routes.
 
-The Inth code the first load does run goes into one chunk, so the page makes
-one request for it rather than one per module it shares with the engine.
-The module adds this chunk group to the client build when Vite builds with
-Rolldown 1.2 or later and the app sets no `codeSplitting`, `advancedChunks`
-or `manualChunks` of its own.
+First-load Inth code is grouped into one client chunk when building with
+Rolldown 1.2+ and no custom `codeSplitting`, `advancedChunks`, or
+`manualChunks` config.
 
 ### Without the consent route
 
-`routePrefix: false` adds no route. The server render still resolves each
-visitor from the bundled snapshot, and the browser asks the backend's `/v1/consent/init`
-whenever it resolves the policy itself, such as on a prerendered page. Keep
-the route unless something else owns `/api/inth`.
+Set `routePrefix: false` to omit the Nitro route. SSR still resolves from the
+bundled snapshot, while browser fallbacks call Inth's `/v1/consent/init` directly.
 
 ### Ask the backend on every render
 
-`mode: hosted()` sends every server render to the backend's `/init`, which
-resolves the visitor's location itself. The module adds no route and bundles
-no snapshot:
+Set `mode: hosted()` to call Inth's `/v1/consent/init` on every server render without
+bundling a snapshot or adding a server route:
 
 {/* example: fragment */}
 
@@ -145,12 +112,9 @@ export default defineNuxtConfig({
 });
 ```
 
-That request carries the resolved location, language and GPC and the
-`user-agent`, and, over `https` or to a loopback host, the consent cookie
-alone, never the rest of the cookie jar. Every render waits on the backend,
-up to `timeoutMs`. Prefer the default `manifest()`, or
-`manifest({ source: 'runtime' })` when you need policy updates without a
-rebuild.
+SSR forwards location, language, GPC, `user-agent`, and (over HTTPS or
+loopback) the consent cookie alone. Because every render waits on Inth up to
+`timeoutMs`, prefer `manifest()` or `manifest({ source: 'runtime' })`.
 
 ## Bundle the manifest during builds
 
@@ -158,9 +122,9 @@ rebuild.
 
 ## Fetch the manifest at runtime
 
-`manifest({ source: 'runtime' })` skips the build-time download. The server
-fetches the public manifest the first time it needs it, caches it, and
-refreshes it in the background, so policy edits apply without a rebuild:
+Set `manifest({ source: 'runtime' })` to skip the build-time fetch and let the
+server fetch, cache, and background-refresh `${projectUrl}/v1/consent/manifest` so policy
+edits apply without rebuilding:
 
 {/* example: fragment */}
 
@@ -173,20 +137,17 @@ export default defineNuxtConfig({
 });
 ```
 
-By default the server fetches `${projectUrl}/v1/consent/manifest`. Set
-`manifest({ manifestUrl })` to fetch from another URL. The consent route and
-the server render share the cache. The first render after a cold start waits
-for the fetch, up to `timeoutMs`.
+Pass `manifest({ manifestUrl })` to fetch from a custom URL. The consent route
+and SSR share the cache; only the first request after a cold start waits up to
+`timeoutMs`.
 
 ## Prerendered and cached routes
 
-A prerendered route, or one with a `prerender`, `swr`, `isr` or `cache` route
-rule, sends the same HTML to every visitor. The module renders that HTML
-without any visitor's consent record, location or request headers, so it has
-no banner. After hydration the browser requests the visitor's policy from
-`/api/inth/v1/consent/init` and reads their stored choice, then shows the banner if the
-policy asks for one. With `hosted()`, or `routePrefix: false`, the browser
-asks the backend's `/init` instead.
+Routes using `prerender`, `swr`, `isr`, or `cache` route rules serve shared
+HTML to all visitors, so the module renders them without visitor cookies,
+headers, or a banner. After hydration, the browser calls `/api/inth/v1/consent/init`
+(or Inth's `/v1/consent/init` with `hosted()` or `routePrefix: false`), reads stored
+choices, and displays the banner if required:
 
 {/* example: fragment */}
 
@@ -196,104 +157,65 @@ export default defineNuxtConfig({
 });
 ```
 
-Keep the quickstart setup. Routes without these rules
-still render per request with the banner in the HTML. Until the browser has
-the policy, optional categories stay denied and gated scripts and iframes stay
-blocked.
-
-The browser also keeps the visitor's choice in localStorage. When localStorage
-holds a newer denial than the consent cookie the server read, the browser
-applies the denial, so an older cookie cannot undo a rejection.
+Unmatched routes continue rendering per request with the banner in server
+HTML. Until browser resolution completes, optional categories stay denied. If
+localStorage holds a newer denial than the cookie read on the server, the
+browser applies the denial.
 
 ## Deploy to static hosting
 
-`nuxt generate` prerenders every page with server rendering on, so crawlers
-get your content in the HTML. A static host has no Nuxt server, so no
-consent route exists and no server resolves visitors. With the default
-`manifest()`, `nuxt generate` logs a warning that it cannot resolve the
-policy there. Pick a mode that lets the browser resolve it:
+`nuxt generate` produces static files with no Nitro server, so `/api/inth`
+does not exist and default `manifest()` logs a warning. Choose a browser
+resolution mode instead:
 
-- **`manifest({ resolve: 'browser' })` with `routePrefix: false`.** The build
-  bundles the manifest into the browser bundle, and the browser resolves the
-  policy. A policy that depends on location still asks the backend, as
-  described below.
-- **`hosted()`.** The browser calls your backend's `/init` directly, and the
-  backend resolves the visitor's location.
+- **`manifest({ resolve: 'browser' })` with `routePrefix: false`.** Embeds the
+  manifest and English copy in the browser bundle (non-English copy loads on
+  demand).
+- **`hosted()`.** Calls Inth's `/v1/consent/init` directly from the browser so Inth
+  resolves location.
 
 <include src="../../shared/examples/nuxt-static/static-config.mdx" />
 
-`examples/nuxt-static` uses `ssr: false` as well; `nuxt generate` works the
-same without it. Run `nuxt generate` and deploy `.output/public`. Every page
-renders without a banner in its HTML, and the browser resolves each visitor
-after hydration, as on a [prerendered route](#prerendered-and-cached-routes).
+Run `nuxt generate` and deploy `.output/public`. Pages render without a banner
+in static HTML and resolve in the browser after hydration.
 
-With browser resolution, only the manifest and English copy are in the
-bundle. The resolver loads as its own chunk when the app starts, and a
-visitor who resolves to another language loads that language's text the
-first time it is needed.
-
-The browser has no request location. When your policy depends on the
-visitor's country or region and neither `inputs` nor `geoUrl` supplies one,
-the browser asks the backend's `/v1/consent/init` on the first visit, as every
-single-page app does. It doesn't apply the rule for an unknown location,
-which could be another region's. To resolve by location in the browser, pass
-`manifest({ resolve: 'browser', geoUrl: '/geo' })` with a route on your own
-origin, such as an edge function your host runs, that returns the visitor's
-`country` and `region` as JSON, for example `{ "country": "DE", "region": "BE" }`. Inth resolves the
-policy again when the response arrives. Or use `hosted()`.
-
-Consent saves go to the backend from the browser, so the backend must allow
-your site's origin. With Inth, add it to the project's trusted origins.
+With `manifest({ resolve: 'browser' })`, if your policy depends on location
+and neither `inputs` nor `geoUrl` is set, the browser falls back to Inth's
+`/v1/consent/init` on first visit rather than applying the unknown-location rule. To
+resolve locally, pass `manifest({ resolve: 'browser', geoUrl: '/geo' })`
+pointing to a same-origin endpoint returning `{ "country": "DE", "region": "BE" }`,
+or use `hosted()`. Add your site's origin to your Inth project's trusted
+origins so browser saves succeed.
 
 ## Build a single-page app with ssr: false
 
-`ssr: false` turns the site into a single-page app. Nuxt sends an empty shell
-and renders every page in the browser, so crawlers that do not run JavaScript
-see no content. That is the tradeoff. Prerendering works without it, so use
-`ssr: false` only when you want a single-page app for other reasons.
+`ssr: false` disables server rendering so every page renders in the browser.
+On static hosts, use the [static hosting](#deploy-to-static-hosting) setup
+above (`examples/nuxt-static` demonstrates this). With a Nuxt server, default
+`manifest()` also works by calling `/api/inth/v1/consent/init` from the browser.
 
-On a static host, use the [static hosting](#deploy-to-static-hosting) config
-above. The module reads the visitor's stored choice from their own cookie,
-and the browser resolves the policy from the bundled manifest. The banner
-appears once the resolver chunk loads. `examples/nuxt-static` in the Inth
-repository builds this setup. With a Nuxt server, the default `manifest()`
-also works: the browser asks the server's `/api/inth/v1/consent/init`.
-
-With `hosted()`, the module adds a small inline script to the head of every
-`ssr: false` page, prerendered ones included, that starts the backend's
-`/init` request while the browser parses the HTML. The app uses that response
-once its JavaScript loads, so the policy request no longer waits for the
-app's bundle. The script contains your backend URL and nothing about the
-visitor. Turn it off with the module option `initPrefetch: false`, or for one
-route with `routeRules: { '/path': { inth: { initPrefetch: false } } }`. Use
-the route rule when a client plugin changes Inth's configuration for that
-route, because the server cannot see that change and the early request would
-go unused.
+In `hosted()` mode, the module injects a small inline `<head>` script on
+`ssr: false` pages to start `/v1/consent/init` while HTML parses. Disable it globally
+with `initPrefetch: false` or per route with
+`routeRules: { '/path': { inth: { initPrefetch: false } } }` if a client
+plugin modifies Inth options on that route.
 
 ## Module options
 
-The [Nuxt module](/docs/frameworks/nuxt/module#backend-and-rendering) page
-lists `mode`, `routePrefix`, `onBuildError`, `timeoutMs` and
-`reportSessions` with their defaults.
-
-The server reads the visitor's location from request headers. See
-[geography headers](/docs/frameworks/nuxt/geography-headers) for the list and
-for which ones to trust.
+See [Nuxt module](/docs/frameworks/nuxt/module#backend-and-rendering) for
+`mode`, `routePrefix`, `onBuildError`, and `timeoutMs`, and
+[geography headers](/docs/frameworks/nuxt/geography-headers) for location
+header detection.
 
 ## Verify your deployment
 
-For request-time rendering, view the page source under a policy that asks for
-consent and find `data-testid="consent-banner-root"`. Reject, reload, and
-confirm the banner stays closed.
-
-For a prerendered or cached route, view the page source and confirm it has no
-`consent-banner-root`. Open the Network tab and reload. The browser requests
-`/api/inth/v1/consent/init` after the page loads, and the banner appears. Reject, reload,
-and confirm the banner stays closed.
-
-For static output with browser resolution, serve `.output/public` and open
-the Network tab. The browser makes no request to the backend's `/manifest` or
-`/init`, and none to `/api/inth`. With `hosted()`, it requests the backend's
-`/init` once per page load. Reject, reload, and confirm the banner stays
-closed. Then follow [verify consent](/docs/guides/verify-consent) for the
-vendor checks.
+- **Request-time SSR.** View source under an opt-in policy and confirm
+  `data-testid="consent-banner-root"` is present. Reject, reload, and confirm
+  it stays closed.
+- **Prerendered or cached routes.** Confirm `consent-banner-root` is absent
+  from HTML source, the browser calls `/api/inth/v1/consent/init`, and rejection persists
+  across reloads.
+- **Static hosting.** Serve `.output/public` and check the Network tab:
+  browser-resolved `manifest()` sends no `/v1/consent/manifest`, `/v1/consent/init`, or `/api/inth`
+  request when location is unneeded; `hosted()` calls `/v1/consent/init` once per load.
+  Finish with [verify consent](/docs/guides/verify-consent).

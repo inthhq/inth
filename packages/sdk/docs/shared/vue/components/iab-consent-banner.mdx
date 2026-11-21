@@ -9,24 +9,24 @@ group: reference
 <section id="behavior">
   ## What IABConsentBanner renders
 
-  `IABConsentBanner` is the IAB TCF first layer. It renders while `activeUI`
-  is `'banner'`, the `iab` option is set, and the visitor's policy uses the
-  `iab` model with a vendor list. `InthProvider` renders it in place of
-  `ConsentBanner` under such a policy, so you only import it to compose the
+  `IABConsentBanner` renders the IAB TCF first layer while `activeUI` is
+  `'banner'`, `iab` is enabled, and the visitor's policy uses the `iab` model
+  with a vendor list. `InthProvider` renders it automatically in place of
+  `ConsentBanner` under an IAB policy, so import it only when composing
   surfaces yourself.
 
-  The banner lists the purposes, stacks and special features your vendors
-  use, with the vendor count as a link. Its footer has Reject All, Accept All
-  and Customize.
+  The banner lists the purposes, stacks, and special features your vendors
+  use, with the vendor count as a link. Its footer shows Reject All, Accept
+  All, and Customize.
 
-  - Accept All and Reject All save an IAB choice and write the TC String. The
-    banner waits for the full Global Vendor List before it saves. If the list
-    fails to load, the banner stays open and nothing is granted.
-  - Customize opens the IAB preference centre on its Purposes tab.
-  - The vendor count link opens it on its Vendors tab.
+  - Accept All and Reject All save an IAB choice and write the TC String after
+    the Global Vendor List finishes loading. If the list fails to load, the
+    banner stays open and grants nothing.
+  - Customize opens the IAB preference center on the Purposes tab.
+  - The vendor count link opens the Vendors tab.
 
-  Its text comes from the IAB translations the backend resolved. The component
-  loads its own styles.
+  Copy comes from the resolved IAB translations, and the component ships its
+  own styles.
 </section>
 
 <section id="props">
@@ -34,19 +34,19 @@ group: reference
 
   | Prop | Type | Default | Behavior |
   | --- | --- | --- | --- |
-  | `primaryButton` | `'reject' \| 'accept' \| 'customize'` | `'customize'` | Which action gets the primary style. |
+  | `primaryButton` | `'reject' \| 'accept' \| 'customize'` | `'customize'` | Sets which action receives the primary button style. |
 
-  Keep Accept All and Reject All at the same prominence unless your legal
-  review says otherwise.
+  Keep Accept All and Reject All at equal prominence unless legal review
+  specifies otherwise.
 </section>
 
 <section id="accessibility">
   ## Accessibility and styling
 
-  The banner renders in `document.body`. When the prompt is blocking it is a
-  `dialog` with `aria-modal="true"` and traps focus. Otherwise it is a
-  `region`. The `components['iab-banner']` option adds attributes to its
-  parts, such as `root`, `card`, `title`, `purposeList`, `partnersLink` and
-  `footer`. `iabBannerHideBranding` hides the "Secured by" tag, and
-  `iabBannerModels` limits which policy models show it.
+  The banner renders in `document.body`. When blocking, it renders as a
+  `dialog` with `aria-modal="true"` and traps focus; otherwise it renders as a
+  `region`. `components['iab-banner']` binds attributes to parts including
+  `root`, `card`, `title`, `purposeList`, `partnersLink`, and `footer`.
+  `iabBannerHideBranding` hides the "Secured by" tag, and `iabBannerModels`
+  limits which policy models display it.
 </section>

@@ -1,137 +1,87 @@
 ---
 title: Troubleshooting
-description: Fix build-time manifest failures, a missing server-rendered banner, server function errors, proxy and firewall failures, and early vendor requests in a TanStack Start app that uses Inth.
+description: Fix manifest build errors, missing SSR banners, server function issues, and proxy failures in TanStack Start.
 group: frameworks
 ---
 
+Diagnose and resolve common build, SSR, proxy, and script issues in TanStack Start apps using `@inth/tanstack-start`.
+
 ## vite build or vite dev can't fetch the manifest
 
-**Check.** Read the message. The `consentManifest` plugin downloads the
-manifest once per build, and in `vite dev` the first time the server loads
-it. When the download fails or takes longer than 10
-seconds, `vite build` stops with an error that starts with
-`@inth/tanstack-start/build: could not fetch the consent manifest from <url>
-during the build`. `vite dev` logs the same message as a warning and keeps
-going. `snapshot` from `@inth/tanstack-start/generated` is then `undefined`, so the server
-fetches the policy at runtime.
+**Check.** Read the error or warning message. `consentManifest()` downloads the policy once per build and on first server load in `vite dev`. By default (`onBuildError: 'runtime'`), if the fetch fails or exceeds 10 seconds, both `vite build` and `vite dev` log a warning and set `snapshot` to `undefined` so the server falls back to runtime fetching. With `onBuildError: 'fail'` or `INTH_ON_BUILD_ERROR=fail`, `vite build` exits with an error starting with `@inth/tanstack-start/build: could not fetch the consent manifest from <url> during the build`.
 
 | Message | Fix |
 | --- | --- |
-| `no backend URL is set` | Set `VITE_INTH_PROJECT_URL` in `.env` or the build environment, or pass `projectUrl`. `vite build` stops on this; `vite dev` warns |
-| `skipped the consent manifest fetch because ... is not an absolute http(s) URL` | Set `VITE_INTH_PROJECT_URL` to the absolute backend URL, such as `https://your-project.inth.app`, not `/api/inth`. With `onBuildError: 'fail'`, this is the error `build-time manifests require an absolute upstream URL` |
-| `/v1/consent/manifest responded 404` | The URL is not an Inth backend, or it is missing a path prefix. Copy the backend URL from Inth exactly |
-| `/v1/consent/manifest responded` with another status | The backend refused or failed the request. Check that the project exists and that the build machine can reach it |
-| `/v1/consent/manifest returned an invalid consent manifest` | The URL answered with something other than an Inth manifest, such as an HTML page. Check the URL |
-| `fetch failed`, with `ENOTFOUND` or another network error, or `no response within 10 seconds` | The build machine cannot reach the backend. Allow the request. To deploy while the backend is down, build with `INTH_ON_BUILD_ERROR=runtime`, or switch to [runtime fetching](/docs/frameworks/tanstack-start/rendering#await-consent-in-the-loader) |
+| `no backend URL is set` | Set `VITE_INTH_PROJECT_URL` (falling back to `VITE_C15T_BACKEND_URL` if unset) in `.env` or build env, or pass `projectUrl` to `consentManifest()` |
+| `skipped the consent manifest fetch because ... is not an absolute http(s) URL` | Use your absolute Inth project URL such as `https://your-project.inth.app`, not `/api/inth`. With `onBuildError: 'fail'`, this raises `build-time manifests require an absolute upstream URL` |
+| `/v1/consent/manifest responded 404` | Copy the exact project URL from Inth, including any path prefix |
+| `/v1/consent/manifest responded` with another status | Confirm the Inth project exists and the build machine can reach it |
+| `/v1/consent/manifest returned an invalid consent manifest` | Verify the URL points to your Inth project rather than an HTML page or redirect |
+| `fetch failed` (`ENOTFOUND` or network error) or `no response within 10 seconds` | Allow outbound HTTPS from the build machine, override `onBuildError: 'fail'` with `INTH_ON_BUILD_ERROR=runtime`, or switch to [runtime fetching](/docs/frameworks/tanstack-start/rendering#await-consent-in-the-loader) |
 
 ## snapshot is undefined
 
-**Check.** Log `snapshot` from `@inth/tanstack-start/generated` in the server function. In the
-browser bundle it is always `undefined`: the plugin keeps the policy on the
-server. On the server, it is `undefined` when Vite had no policy to serve:
-`consentManifest` is missing from `plugins` in `vite.config.ts`, the fetch
-failed in `vite dev` or in a build with `INTH_ON_BUILD_ERROR=runtime`, or the
-backend URL is relative.
+**Check.** Log `snapshot` from `@inth/tanstack-start/generated` inside your server function. In the browser bundle, `snapshot` is always `undefined` by design. On the server, it is `undefined` when `consentManifest()` is missing from `vite.config.ts`, the fetch failed under the default `'runtime'` mode (or `INTH_ON_BUILD_ERROR=runtime`), or the project URL is relative.
 
-**Fix.** `createConsentStateHandler` and `createConsentRoute` read the
-snapshot themselves, so most apps never import it. On the server, add the
-plugin or fix the
-[fetch error](#vite-build-or-vite-dev-cant-fetch-the-manifest), then restart
-`vite dev` or rebuild. While `snapshot` is `undefined`, the
-server fetches and caches the policy at runtime.
+**Fix.** Add `consentManifest()` before `tanstackStart()` in `vite.config.ts` or resolve the [manifest fetch error](#vite-build-or-vite-dev-cant-fetch-the-manifest), then restart `vite dev` or rebuild. While `snapshot` is `undefined`, the server fetches and caches the policy at runtime.
 
 ## The banner is not in the server HTML
 
-**Check.** View the page source under a policy that asks for a choice. Look for
-`data-testid="consent-banner-root"`.
+**Check.** View page source under an opt-in policy and search for `data-testid="consent-banner-root"`.
 
 | Cause | Fix |
 | --- | --- |
-| The root loader streams the consent promise and sets `streamBanner: false` | Expected. The banner mounts after hydration. Remove the option, or await the server function; see [rendering](/docs/frameworks/tanstack-start/rendering) |
-| The page is prerendered or the app runs in SPA mode | Expected. The browser resolves consent after the page loads |
-| With runtime fetching, the backend took longer than 500 ms, often on the first request after a start | The server rendered without consent and the browser resolved it. Later requests use the cached manifest. Raise `timeoutMs` in `createConsentStateHandler` if needed |
-| No country header reaches the server | Check that your host or CDN adds a geo header; [geography headers](/docs/frameworks/tanstack-start/geography-headers) lists the ones Inth reads. Without one the visitor gets your fallback policy |
-| The visitor has a stored choice | Expected. The server reads the `inth` cookie and renders no banner |
+| Root loader streams the promise with `streamBanner: false` | Expected: the banner mounts after hydration. Remove `streamBanner: false` or await the loader; see [Rendering](/docs/frameworks/tanstack-start/rendering) |
+| Page is prerendered or app runs in SPA mode | Expected: the browser resolves consent after load |
+| Runtime fetch exceeded 500 ms on cold start | Server rendered without consent and the browser resolved it. Subsequent requests hit cache; increase `timeoutMs` on `createConsentStateHandler` if needed |
+| No country header reaches the server | Verify your host or CDN sends a geo header; see [Geography headers](/docs/frameworks/tanstack-start/geography-headers). Without one, your fallback policy applies |
+| Visitor already has a stored choice | Expected: the server reads the `inth` cookie and omits the banner |
 
 ## The server function fails to resolve at runtime
 
-**Check.** Find where you call `createServerFn()`. Start's compiler
-identifies each server function by the file and the top-level assignment where
-you call it, so a call inside a package, a function or a conditional fails.
+**Check.** Inspect where `createServerFn()` is called. TanStack Start's compiler detects server functions only at top-level module declarations; calls inside helper functions, conditionals, or npm packages fail.
 
-**Fix.** Declare `const getConsentState = createServerFn(...).handler(createConsentStateHandler())`
-at the top level of your own route module, as in the
-[quickstart](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route).
+**Fix.** Declare `const getConsentState = createServerFn(...).handler(createConsentStateHandler())` at top level in your route module, matching the [quickstart](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-the-root-route).
 
 ## A serialization error mentions a function
 
-**Check.** Look at what your server functions and loaders return. Something
-with functions in it, such as vendor script configurations or a `hosted()`
-transport from `@inth/react`, cannot be serialized. `hosted()` from
-`@inth/tanstack-start` is plain data and can be returned.
+**Check.** Inspect what your server functions and loaders return. Vendor script helpers and transports from `@inth/react` contain functions and cannot be serialized (`hosted()` and `manifest()` from `@inth/tanstack-start` are plain serializable data).
 
-**Fix.** Return only the consent state from the server function. Import
-`scripts` in the root route module and pass them to `InthProvider` there.
+**Fix.** Return only the consent state from the server function. Import `scripts` in the root route module and pass them directly to `InthProvider`.
 
 ## The same-origin setup never renders the banner on the server
 
-**Check.** Look at the `projectUrl` you pass to `createConsentStateHandler`,
-or `VITE_INTH_PROJECT_URL`. When it is `/api/inth`, the helper skips the fetch
-and returns only the cookie and header state, because a server that fetches
-its own route during a render can stall.
+**Check.** Inspect `projectUrl` passed to `createConsentStateHandler`, plus `VITE_INTH_PROJECT_URL` and `VITE_C15T_BACKEND_URL`. Passing `/api/inth` as `projectUrl` skips server fetching to avoid a server rendering deadlock.
 
-**Fix.** Keep `VITE_INTH_PROJECT_URL` absolute, and don't pass `projectUrl:
-'/api/inth'`. To send the browser's requests through the route, pass
-`routePrefix: '/api/inth'` and `proxy: true` to `createConsentStateHandler`
-instead.
+**Fix.** Keep `VITE_INTH_PROJECT_URL` set to your absolute Inth project URL, and pass `routePrefix: '/api/inth'` and `proxy: true` to `createConsentStateHandler` instead.
 
 ## Saves through /api/inth fail with 403 or a challenge page
 
-**Check.** The backend's firewall blocks the proxied `POST /v1/consent/records`. A
-server cannot solve a browser challenge, such as Vercel Attack Challenge Mode
-or Cloudflare Super Bot Fight Mode.
+**Check.** A WAF or bot challenge (such as Vercel Attack Challenge Mode or Cloudflare Super Bot Fight Mode) blocks the server-side proxied `POST /v1/consent/records`.
 
-**Fix.** Exempt the consent paths from the challenge. Requests from the route
-carry an `x-inth-proxy: @inth/tanstack-start` header you can match in a
-firewall rule. If rate limits treat every visitor as one IP address, and your
-host overwrites `x-forwarded-for`, set `trustForwardedHeaders: true` on
-`createConsentRoute`.
+**Fix.** Exempt consent paths from browser challenges using the `x-inth-proxy: @inth/tanstack-start` header. If rate limits group all visitors behind one IP and your host overwrites `x-forwarded-for`, set `trustForwardedHeaders: true` on `createConsentRoute`.
 
 ## The browser calls /api/inth/v1/consent/init and gets a 404
 
-**Check.** `InthProvider` calls `/api/inth/v1/consent/init` only when the state carries
-`routePrefix: '/api/inth'`, from `createConsentStateHandler`. Confirm that the
-app mounts the consent route at `src/routes/api/inth/$.ts`.
+**Check.** `InthProvider` calls `/api/inth/v1/consent/init` only when `createConsentStateHandler` sets `routePrefix: '/api/inth'`. Verify `src/routes/api/inth/$.ts` is mounted.
 
-**Fix.** Mount the
-[same-origin route](/docs/frameworks/tanstack-start/rendering#keep-consent-requests-on-your-origin),
-or remove `routePrefix`, so the browser calls your backend directly. Earlier
-alphas sent init to `/api/inth/v1/consent/init` by default; now there is no default.
+**Fix.** Mount the [same-origin route](/docs/frameworks/tanstack-start/rendering#keep-consent-requests-on-your-origin), or remove `routePrefix` so the browser calls your Inth project directly.
 
-## InthProvider throws that it needs a backend URL
+## InthProvider throws that it needs a project URL
 
-**Check.** The page throws one of these errors from `InthProvider`:
+**Check.** The page throws an error from `InthProvider` such as:
 
-- ``inth: manifest() needs a backend URL. Set `projectUrl` in your config.``
-- ``inth: hosted() needs a backend URL. Set `projectUrl` on the mode or in your config.``
+- ``inth: `projectUrl` is required. Set it in your config, or use `mode: testing()` from a /testing entry in tests.``
 
-The state names no backend URL and `consentManifest()` supplied none, for
-example on a page with `state={{}}` and no plugin in `vite.config.ts`.
+Neither the loader state nor `consentManifest()` supplied a project URL (for example, `state={{}}` without the Vite plugin).
 
-**Fix.** Add `consentManifest()` to `vite.config.ts` and set
-`VITE_INTH_PROJECT_URL`. Earlier alphas fell back to local mode here; now
-the root throws. To run without a backend, pass `mode: testing()` to
-`createConsentStateHandler`, or `state={{ mode: testing() }}`.
+**Fix.** Add `consentManifest()` to `vite.config.ts` and set `VITE_INTH_PROJECT_URL` (falling back to `VITE_C15T_BACKEND_URL` if unset). To run offline for tests, pass `mode: testing()` to `createConsentStateHandler` or `state={{ mode: testing() }}`.
 
 ## A vendor loads before the visitor chooses
 
-**Check.** Search route `head()` definitions, your root component and any tag
-manager for the vendor's script or SDK initializer.
+**Check.** Search route `head()` definitions, your root component, and any tag manager for vendor `<script>` tags or SDK initializers.
 
-**Fix.** Remove every loader except the one in `InthProvider`'s `scripts`. Inth
-only gates scripts registered with it.
-[Scripts and embeds](/docs/frameworks/tanstack-start/scripts) covers the
-options.
+**Fix.** Remove every loader outside `InthProvider`'s `scripts` prop. Inth only gates scripts registered with it; see [Scripts](/docs/frameworks/tanstack-start/scripts).
 
 ## The page throws that no IABProvider is mounted
 
@@ -139,8 +89,7 @@ options.
 
 ## Inspect the active policy
 
-Render this component inside `InthProvider`. It reads state and records no
-choice:
+Render this temporary component inside `InthProvider` to inspect resolved state without recording a choice:
 
 {/* example: fragment */}
 
@@ -168,43 +117,27 @@ export function ConsentPolicyDebug() {
 }
 ```
 
-`location` shows the country and region the server resolved. Remove the
-component after you finish.
+`location` shows the country and region resolved on the server. Remove the component after debugging.
 
 ## Names from an earlier alpha are missing
 
-**Check.** TypeScript or the build reports a missing export or option, such as
-`createConsentServerRoute`, `DEFAULT_INIT_ROUTE` or `InthProvider`'s
-`projectUrl` prop. The v3 alphas removed names that never shipped in a stable
-release, with no alias.
+**Check.** TypeScript reports missing exports or props such as `createConsentServerRoute`, `DEFAULT_INIT_ROUTE`, or `projectUrl` on `InthProvider`.
 
-**Fix.** Use the current names:
+**Fix.** Update to the current Inth API:
 
 | Removed | Use instead |
 | --- | --- |
-| `ConsentRoot` and `ConsentRootProps` | `InthProvider` and `InthProviderProps` |
-| `ConsentProvider` from `@inth/tanstack-start` | `InthProvider` from `@inth/tanstack-start/react` |
-| `ConsentProviderOptions`, `ConsentProviderCallbacks` and `ConsentProviderPrefetch` | `InthProviderOptions`, `InthProviderCallbacks` and `InthProviderPrefetch` from `@inth/tanstack-start/react`. `InthProviderOptions` from `@inth/tanstack-start` is the root's `options` |
-| `InthProvider`'s `projectUrl` and `routePrefix` props | `createConsentStateHandler({ routePrefix })`. The state carries the backend URL, the mode and the route prefix. |
-| `InthProvider`'s `initRoute` prop, and `DEFAULT_INIT_ROUTE` | `createConsentStateHandler({ routePrefix: '/api/inth' })`. There is no default route any more. |
-| `createConsentServerRoute`, and its `manifestGET`, `initGET` and `proxyHandler` | `createConsentRoute()`, which returns `GET`, plus the write methods with `proxy` |
-| `createConsentStateHandler({ projectUrl, manifest })` | `createConsentStateHandler()`, which reads both from `consentManifest()`, or `{ snapshot }` |
-| `manifestUrl` on the state handler | `mode: manifest({ manifestUrl })` |
-| `ConsentManifestOptions`, `resolveStrictestDefaultInit` | `ResolveConsentOptions`; `resolveUnknownLocationInit` |
-| Falling back to local mode when no backend URL is set | `InthProvider` throws. Pass `mode: testing()` to run without a backend. |
-| `hosted`, `offline` and `manifest` from `@inth/tanstack-start` as transports | They are data for `createConsentStateHandler({ mode })` now. |
+| `InthProvider` `projectUrl` and `routePrefix` props | `createConsentStateHandler({ routePrefix })` so state carries URL, mode, and route prefix |
+| `InthProvider` `initRoute` prop and `DEFAULT_INIT_ROUTE` | `createConsentStateHandler({ routePrefix: '/api/inth' })` (no default route) |
+| `createConsentServerRoute` (`manifestGET`, `initGET`, `proxyHandler`) | `createConsentRoute()`, returning `GET` plus write handlers when `proxy: true` |
+| `createConsentStateHandler({ projectUrl, manifest })` | `createConsentStateHandler()`, reading from `consentManifest()`, or `{ snapshot }` |
+| `manifestUrl` on state handler | `mode: manifest({ manifestUrl })` |
+| `ConsentManifestOptions`, `resolveStrictestDefaultInit` | `ResolveConsentOptions`, `resolveUnknownLocationInit` |
+| Silent fallback to local mode when URL is unset | Pass `mode: testing()` explicitly for offline mode |
+| `hosted`, `offline`, and `manifest` as transport functions | Pass them as serializable mode data to `createConsentStateHandler({ mode })` |
 
-The renames shared by every framework:
-
-<include src="../../shared/upgrade-v3/earlier-alpha-modes.mdx" />
-
-`Frame` and its parts still work, with a one-time warning outside production.
-Use `ConsentGate` instead.
+For shared package and API renames, see [Migrate from c15t](/docs/migrate-from-c15t). Replace deprecated `Frame` imports with `ConsentGate`.
 
 ## More help
 
-[Troubleshoot consent](/docs/guides/troubleshooting) covers problems shared by
-every framework, such as a missing banner, analytics that load before a choice,
-imports that fail because the wrong package is installed, choices that disappear on
-reload, server HTML that differs from the browser, static builds that fail and
-content blockers that hide the consent UI.
+See [Troubleshoot consent](/docs/guides/troubleshooting) for cross-framework issues including missing banners, early analytics, lost choices on reload, hydration mismatches, and content blockers.

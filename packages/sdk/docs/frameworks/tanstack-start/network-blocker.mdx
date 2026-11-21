@@ -1,16 +1,14 @@
 ---
 title: Network blocker
-description: Hold fetch and XMLHttpRequest calls in a TanStack Start app until their consent category is allowed, with networkBlocker rules on InthProvider.
+description: Hold browser fetch and XMLHttpRequest calls in TanStack Start until consent allows them with networkBlocker.
 group: frameworks
 ---
 
+Hold browser `fetch` and `XMLHttpRequest` calls to vendor domains in TanStack Start until their consent category is allowed.
+
 ## Add rules
 
-Pass `networkBlocker` rules to `InthProvider` to stop `fetch` and
-`XMLHttpRequest` calls to a domain until its category is allowed. Use it as a
-backstop for beacons an SDK sends itself. Load vendor SDKs through
-[`scripts`](/docs/frameworks/tanstack-start/scripts) first, so they do not run
-at all before consent.
+Pass `networkBlocker` as a top-level prop on `InthProvider` as a backstop for beacons or API calls sent by bundled SDKs. Prefer registering vendor SDKs through [`scripts`](/docs/frameworks/tanstack-start/scripts) first so they do not run before consent.
 
 {/* example: fragment */}
 
@@ -38,8 +36,7 @@ const networkBlocker = {
 >
 ```
 
-The blocker runs in the browser only. It does not see requests your server
-functions or server routes make.
+The network blocker runs in the browser only and never intercepts requests made by server functions or server routes.
 
 <import src="../../shared/react/network-blocker.mdx#rules" />
 
@@ -49,10 +46,8 @@ functions or server routes make.
 
 ## Verify the blocked requests
 
-Open DevTools Network in a private window, under a policy that asks for
-consent.
+Open DevTools Network in a private window under an opt-in policy.
 
-1. Before a choice, requests matching a rule are absent, and the console logs
-   each blocked request.
-2. Allow the rule's category and save. Matching requests go out.
-3. Reject, reload, and check that they stay absent.
+1. Before a choice, confirm requests matching a rule do not appear and the console logs each blocked request.
+2. Allow the rule's category and save. Confirm matching requests fire.
+3. Reject, reload, and confirm they stay absent.

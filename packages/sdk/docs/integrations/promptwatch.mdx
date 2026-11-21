@@ -1,23 +1,21 @@
 ---
 title: Promptwatch
-description: Load the Promptwatch attribution client only after measurement consent with the Inth promptwatch helper, and check it in DevTools.
+description: Load the Promptwatch attribution client after measurement consent with Inth.
 seoTitle: Promptwatch cookie consent with Inth
-seoDescription: Load the Promptwatch client only with measurement consent. Set it up with the Inth promptwatch helper and check it in DevTools.
+seoDescription: Gate the Promptwatch browser client on measurement consent with Inth and verify data-project-id loading in DevTools.
 icon: promptwatch
 group: integrations
 ---
 
-The Inth `promptwatch` helper keeps the Promptwatch client script off the page
-until `measurement` has consent. The helper sends no consent signal to
-Promptwatch. If the visitor withdraws consent, Inth removes the script element.
-By default, Inth also reloads the page.
+The `promptwatch` helper keeps the Promptwatch client script off the page until `measurement` is granted. It sends no consent signal to Promptwatch. On withdrawal, Inth removes the script element and reloads the page by default.
 
 ## Configure Promptwatch
 
-Copy the project ID from your Promptwatch dashboard. The helper passes it to
-the client script as `data-project-id`.
+Copy the project ID from your Promptwatch dashboard. The helper passes it to the script as `data-project-id`.
 
 <CommandTabs command="@inth/integrations" mode="install" />
+
+{/* example: fragment */}
 
 ```ts title="src/consent-scripts.ts"
 import { promptwatch } from '@inth/integrations/promptwatch';
@@ -31,22 +29,17 @@ export const scripts = [promptwatch({ projectId: 'YOUR_PROJECT_ID' })];
 
 | Option | Default | Behavior |
 | --- | --- | --- |
-| `projectId` | Required | Project ID from the Promptwatch dashboard. Empty or whitespace-only values log an error and the script does not load. |
-| `scriptUrl` | `https://ingest.promptwatch.com/js/client.min.js` | Loader URL override. Blank values fall back to the default. |
+| `projectId` | Required | Project ID from the Promptwatch dashboard. Blank values log an error and skip loading. |
+| `scriptUrl` | `https://ingest.promptwatch.com/js/client.min.js` | Loader URL override. Blank values use the default. |
 
 ## Loading and revocation
 
-`promptwatch` uses the `measurement` category. The client loads only while
-measurement is allowed. On revocation the helper removes the script element
-and calls no Promptwatch API.
+`promptwatch` uses the `measurement` category and loads only while measurement is allowed. On revocation, the helper removes the script element and calls no Promptwatch API.
 
-The helper controls only the browser client. If your server also sends events
-to Promptwatch, check the visitor's measurement permission there as well.
+The helper gates only the browser client. If your server also sends events to Promptwatch, check the visitor's `measurement` permission on the server too.
 
 ## Verify Promptwatch
 
-After you allow measurement, the `client.min.js` request goes to
-`ingest.promptwatch.com` and its script element carries your
-`data-project-id`.
+Allow `measurement` and confirm `client.min.js` loads from `ingest.promptwatch.com` with your `data-project-id` attribute on the script element.
 
 <include src="../shared/integrations/vendor-revocation-and-verify.mdx" />

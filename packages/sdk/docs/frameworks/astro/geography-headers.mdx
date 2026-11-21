@@ -1,6 +1,6 @@
 ---
 title: Geography headers
-description: Which request headers the Inth Astro middleware reads for the visitor's country, region, language and Global Privacy Control, how to check your host sends them, and how to test a region locally.
+description: Learn which request headers Inth's Astro middleware reads for country, region, language, and Global Privacy Control.
 group: frameworks
 ---
 
@@ -9,11 +9,11 @@ group: frameworks
 On server output, the Inth middleware reads the visitor's location from the
 request headers your host adds, and resolves the policy for that location.
 The headers never leave your server. With `hosted()`, the middleware sends
-the resolved values to your backend's `/init` as Inth override headers. With
+the resolved values to Inth's `/v1/consent/init` as `x-inth-*` override headers. With
 `manifest()`, it resolves the policy itself.
 
 On a static or prerendered page, there is no request at build time. The
-browser's own `/init` request carries the location instead, and your backend
+browser's own `/v1/consent/init` request carries the location instead, and your backend
 or the `/api/inth/v1/consent/init` route reads it from that request.
 
 ## Which headers are read?
@@ -71,10 +71,10 @@ them. Blocking direct access to your origin keeps requests on that edge, but
 it does not replace the stripping, because a forwarded client header still
 passes through.
 
-The browser's own `/init` request carries the same overrides as the
+The browser's own `/v1/consent/init` request carries the same overrides as the
 `country`, `region` and `gpc` query parameters, so that a
 cross-origin request needs no CORS preflight. The init route treats them like
-the `x-inth-*` headers, so strip them from `/init` requests at the same edge.
+the `x-inth-*` headers, so strip them from `/v1/consent/init` requests at the same edge.
 
 ## Test a region locally
 
@@ -90,7 +90,7 @@ curl -H 'accept-language: de-DE,de;q=0.9' http://localhost:4321/
 
 The HTML contains the banner for that region, or none for a region whose
 policy shows no banner. In a browser, a header-rewriting extension that sets
-`x-inth-country` does the same for every request, including `/init`.
+`x-inth-country` does the same for every request, including `/v1/consent/init`.
 
 ## Check the geography
 

@@ -1,6 +1,6 @@
 ---
 title: Vendor consent
-description: Let visitors allow a category such as marketing in a JavaScript app and still turn off one vendor in it, with the vendors option on createConsentRuntime and a vendor switch you render yourself.
+description: Let visitors turn off individual vendors inside an allowed category in JavaScript using vendors on init() or createConsentRuntime.
 group: frameworks
 ---
 
@@ -9,18 +9,16 @@ group: frameworks
 ## Declare the vendors and record a switch
 
 Declaring a vendor turns on vendor switches. Built-in `@inth/integrations`
-helpers then list their own vendor by name, so you only declare a vendor for a
-script of your own, or to replace a helper's name and privacy policy.
+helpers then list their own vendor by name, so declare a vendor only for
+custom scripts or to replace a helper's name and privacy policy.
 
-With `createConsentRuntime`, declare the vendors, then render the switch in
-your own UI with the [headless runtime](/docs/frameworks/javascript/headless).
-The stock preference dialog that `init()` from `@inth/sdk` mounts lists
-vendor switches on its own. This module declares X Pixel, reads whether it
-may run, and records a new switch:
+With `createConsentRuntime`, declare the vendors and render switches in your
+[headless UI](/docs/frameworks/javascript/headless). The stock preference
+dialog mounted by `init()` renders vendor switches automatically:
 
 <include src="../../shared/examples/javascript/vendor-consent.mdx" />
 
-Pass `vendors` to the runtime next to `scripts`:
+Pass `vendors` next to `scripts`:
 
 {/* example: fragment */}
 
@@ -34,17 +32,14 @@ export const runtime = createConsentRuntime({
 });
 ```
 
-`init()` from `@inth/sdk` accepts the same `vendors` option. Its client
-exposes the runtime as `client.runtime`, so the functions above work with it
-too.
-
-`isVendorAllowed(snapshot, id)` from `@inth/sdk/engine` backs `canVendorRun()`.
+`init()` from `@inth/sdk` takes the same `vendors` option and exposes the
+runtime as `client.runtime`. `isVendorAllowed(snapshot, id)` from
+`@inth/sdk/engine` backs `canVendorRun()`.
 
 <import src="../../shared/scripts/vendor-consent.mdx#undeclared" />
 
-Call `saveVendorSwitch(runtime, 'x-pixel', false)` from your switch's change
-handler. To confirm categories and vendors in one action, pass both to the
-kernel's save:
+Call `saveVendorSwitch(runtime, 'x-pixel', false)` from your switch change
+handler, or save categories and vendors together:
 
 {/* example: fragment */}
 
@@ -56,19 +51,18 @@ await runtime.kernel.commands.save({
 });
 ```
 
-To stage vendor switches next to category switches and save them together,
-use a [preference draft](/docs/frameworks/javascript/headless#build-a-preference-form-with-a-draft):
-`draft.setVendor(id, granted)` stages one, and `draft.reset()` drops them.
-`runtime.kernel.getSnapshot().vendors?.declared` lists the declared vendors,
-and `vendorChoice` holds the recorded decision.
+To stage vendor switches alongside category switches before saving, use a
+[preference draft](/docs/frameworks/javascript/headless#build-a-preference-form-with-a-draft):
+`draft.setVendor(id, granted)` stages a vendor and `draft.reset()` clears it.
+Read declared vendors from `runtime.kernel.getSnapshot().vendors?.declared`
+and recorded denials from `vendorChoice`.
 
 <import src="../../shared/scripts/vendor-consent.mdx#fields" />
 
 <import src="../../shared/scripts/vendor-consent.mdx#targets" />
 
-[Iframe blocker](/docs/frameworks/javascript/modules/iframe-blocker) and
-[network blocker](/docs/frameworks/javascript/modules/network-blocker) cover
-those targets.
+See [iframe blocker](/docs/frameworks/javascript/modules/iframe-blocker) and
+[network blocker](/docs/frameworks/javascript/modules/network-blocker).
 
 <import src="../../shared/scripts/vendor-consent.mdx#storage" />
 
@@ -76,13 +70,12 @@ those targets.
 
 ## Verify vendor consent
 
-Test the production build in a private window with DevTools Network open and
-filtered to `ads-twitter.com`:
+Test your production build in a private window with DevTools Network filtered
+to `ads-twitter.com`:
 
-1. Register `xPixel()` and declare `x-pixel`. Allow marketing. `uwt.js`
+1. Register `xPixel()` and declare `x-pixel`. Allow marketing; `uwt.js`
    loads.
-2. Switch X Pixel off in your control. Inth reloads the page. After the reload
-   there is no `uwt.js` request, and other marketing scripts still load.
-3. Reload again. `canVendorRun(runtime, 'x-pixel')` still returns `false`.
-4. Record Accept all with `runtime.kernel.commands.save('all')`. `uwt.js`
-   loads again.
+2. Switch X Pixel off. Inth reloads the page; `uwt.js` stays absent while
+   other marketing scripts load.
+3. Reload again. `canVendorRun(runtime, 'x-pixel')` returns `false`.
+4. Call `runtime.kernel.commands.save('all')`. `uwt.js` loads again.

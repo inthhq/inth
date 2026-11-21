@@ -18,10 +18,10 @@
 	"usage": [
 		"Add `consentManifest()` from `@inth/vue/vite` to `vite.config.ts`",
 		"Install the plugin with `app.use(inth, { mode: hosted() })` from `@inth/vue/vue-plugin`, and render `InthProvider` in `App.vue`",
-		"For the full setup, see the [Vue quickstart](https://c15t.com/docs/frameworks/vue/quickstart)"
+		"For the full setup, see the [Vue quickstart](https://inth.com/docs/frameworks/vue/quickstart)"
 	],
-	"docsLink": "https://c15t.com/docs/frameworks/vue/quickstart",
-	"quickStartLink": "https://c15t.com/docs/frameworks/vue/quickstart",
+	"docsLink": "https://inth.com/docs/frameworks/vue/quickstart",
+	"quickStartLink": "https://inth.com/docs/frameworks/vue/quickstart",
 	"showCLIGeneration": false,
 	"showHosting": true
 }

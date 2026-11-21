@@ -1,8 +1,11 @@
 ---
 title: Customize
-description: Change Inth's colors, shape, button styles, copy and markup in an Angular app with a token stylesheet, theme slots, component inputs and ng-template slots.
+description: Style Inth consent components in Angular with CSS tokens, theme slots, component inputs and ng-template slots.
 group: frameworks
 ---
+
+Change the colors, shape, button styles, copy and markup of Inth's Angular
+components using CSS variables, theme slots or templates.
 
 ## Pick the right tool
 
@@ -16,60 +19,57 @@ group: frameworks
 | Markup inside the banner's title, description or buttons | `ng-template` slots on `<inth-consent-banner>` |
 | Different markup altogether | [Headless](/docs/frameworks/angular/headless) |
 
-[Customization](/docs/customization/overview) explains how the pieces fit
+[Customization](/docs/customization/overview) explains how these layers fit
 together across frameworks.
 
 ## Set brand colors and radius
 
 Write the `--inth-*` variables on `:root` in a global stylesheet. Inth's
-default tokens carry no specificity, so your rule replaces them wherever each
-loads:
+default tokens carry zero specificity, so your rule overrides them regardless
+of load order:
 
 <include src="../../shared/examples/angular/theme-css.mdx" />
 
 Add the file to the `styles` array of your build target in `angular.json`,
 or `@import` it from `src/styles.css`. Do not put it in a component's
-`styles`: Angular scopes component styles to that component, and the
-variables must be on `:root`.
+`styles`: Angular scopes component styles, and the variables must sit on
+`:root`.
 
-Set a hover color and a text color with the primary color, so buttons stay
+Pair a hover color and text color with the primary color so buttons remain
 readable in each state. [Theme tokens](/docs/customization/tokens) lists
 every variable.
 
-Do not put colors, radius or other tokens in the `theme` option. In the
-browser, `theme` applies slots and `consentActions` only; the token values
-are ignored. In development, `ConsentTheme` logs a warning when `theme` has
-tokens and the page has no `<style id="inth-theme">`.
+Do not put colors, radius or other design tokens in the `theme` option. In
+the browser, `theme` applies slots and `consentActions` only; design tokens
+in it are ignored. In development, `ConsentTheme` warns when `theme` carries
+tokens without a `<style id="inth-theme">` element.
 
-If your tokens come from data at runtime, `generateThemeCSS(theme)` from
-`@inth/angular` turns a theme object into the same CSS. Put the result in a `<style id="inth-theme">` element, and expect
-the generator to add to your bundle. Its selectors outrank the stock
-defaults, so the element works wherever it sits. They also outrank a plain
-`:root` rule of your own, so if you mix both, write your overrides on
-`:root:root`.
+If your tokens come from runtime data, `generateThemeCSS(theme)` from
+`@inth/angular` converts a theme object into CSS. Render the result inside a
+`<style id="inth-theme">` element. Its selectors outrank stock defaults and
+plain `:root` rules, so write manual overrides on `:root:root` if you mix
+both.
 
 ## Switch to dark tokens
 
-The `colorScheme` option switches on the dark token set: `'dark'` always,
-`'system'` when the operating system prefers dark, `'light'` never. It
-toggles an `inth-dark` class on `<html>`. Left unset, `ConsentTheme` copies a
-`dark` class on `<html>` into `inth-dark`, so an app with its own dark mode
-toggle gets the dark tokens without the option. Pass `null` if your app sets
-`inth-dark` itself. Override dark values under `:root.dark` and
+`colorScheme` toggles the `inth-dark` class on `<html>`: `'dark'` always,
+`'system'` when the OS prefers dark, `'light'` never. Left unset,
+`ConsentTheme` mirrors a `dark` class on `<html>` into `inth-dark`, so apps
+with an existing dark mode toggle work automatically. Pass `null` if your app
+manages `inth-dark` directly. Override dark tokens under `:root.dark` and
 `:root.inth-dark` in your stylesheet. [Dark mode](/docs/customization/dark-mode)
-covers a dark first paint.
+covers dark first paint.
 
 ## Style one part with theme slots
 
 The `theme` option applies slot styles in the browser. A slot takes a class
-name, or `{ className, style, noStyle }`:
+name or `{ className, style, noStyle }`:
 
 <include src="../../shared/examples/angular/theme.mdx" />
 
-Pass it as `theme` to `provideInth()`. Define the class in a global
-stylesheet: the components render outside your component's view
-encapsulation, so a class in a component's `styles` does not reach them
-unless you use `::ng-deep`. The Angular components read these slots:
+Pass it as `theme` to `provideInth()`. Define slot classes in a global
+stylesheet, because consent components render outside your component's view
+encapsulation. Angular components read these slots:
 
 | Component | Slots |
 | --- | --- |
@@ -82,27 +82,21 @@ unless you use `::ng-deep`. The Angular components read these slots:
 | `<inth-consent-gate>` | `consentGate`, `consentGateTitle`, `consentGateButton` |
 | Buttons in every component | `buttonPrimary`, `buttonSecondary` |
 
-Slot names are not React's `components.banner.card` keys; do not copy a React
-configuration. Use slots when one part should change and tokens when a value
-should change everywhere. The `rootClass` input on a component, such as
-`<inth-consent-banner rootClass="...">`, goes on its root.
-[Component parts](/docs/customization/slots) explains the attributes each
-element carries, and [Tailwind CSS](/docs/customization/tailwind) covers
-Tailwind 4 and 3.
+Slot names differ from React's `components.banner.card` keys. Use slots to
+style one part and tokens to change values globally. `rootClass` on any
+component adds a class to its root element.
+[Component parts](/docs/customization/slots) documents data attributes, and
+[Tailwind CSS](/docs/customization/tailwind) covers Tailwind 4 and 3.
 
 ## Change button styles by action
 
-`theme.consentActions` in the same theme picks each button's style by what it
-does, whichever order the policy puts the buttons in. The theme above sets
-outlined neutral buttons by default, filled primary buttons for the policy's
-primary action, and a filled neutral Reject button. A per-action entry
-overrides `primary`, which overrides `default`. The policy decides which
-action is primary.
+`theme.consentActions` styles each button by action regardless of button
+order. A per-action entry overrides `primary`, which overrides `default`. The
+policy decides which action is primary.
 
 ## Change the banner shape, position and copy
 
-Set the shape on the banner itself, or for every surface with the
-`presentation` option:
+Set the shape on the banner component or globally via `presentation`:
 
 <include src="../../shared/examples/angular/bottom-bar.mdx" />
 
@@ -113,46 +107,43 @@ Set the shape on the banner itself, or for every surface with the
 | `widget` | `bottom-right` (default), `bottom-left`, `top-left`, `top-right` |
 | `wall` | `center` |
 
-`blocking` adds a backdrop, locks scrolling, traps focus and stops outside
-clicks from closing the banner. `layout` and `primaryButton` change the button
-order and emphasis. The policy wins where they conflict. A policy that
-requires a reject button keeps it, whatever the layout says.
+`blocking` adds a backdrop, locks scroll, traps focus and blocks outside
+clicks. `layout` and `primaryButton` set button order and emphasis. Where
+they conflict, the policy wins: a policy requiring a reject button always
+keeps it.
 
-The text inputs, such as `heading` and `rejectButtonText`, replace the copy for
-this banner in every language. For site-wide copy, pass `i18n`;
-[translations](./translations) covers both.
+Text inputs such as `heading` and `rejectButtonText` replace copy for that
+banner in every language. For site-wide copy, pass `i18n`; see
+[translations](./translations).
 
 ## Replace parts of the banner's markup
 
-`<inth-consent-banner>` takes three `ng-template` slots. The policy still
-decides which actions show and in what order:
+`<inth-consent-banner>` accepts three `ng-template` slots while the policy
+still controls which actions show and in what order:
 
 <include src="../../shared/examples/angular/banner-templates.mdx" />
 
 | Template | Replaces | Context |
 | --- | --- | --- |
-| `inthConsentBannerTitle` | The text inside the `<h2>` | `let-title`, the resolved title; `let-notice="notice"` |
-| `inthConsentBannerDescription` | The description text. Legal links still follow it. | `let-description`; `let-notice="notice"` |
+| `inthConsentBannerTitle` | Text inside the `<h2>` | `let-title`, resolved title; `let-notice="notice"` |
+| `inthConsentBannerDescription` | Description text (legal links follow it) | `let-description`; `let-notice="notice"` |
 | `inthConsentBannerAction` | Each action button | `let-action`, `label`, `primary`, `variant`, `mode` and `testId` |
 
-`ConsentButton` (`button[inth-consent-button]`) records the action and takes
-the stock button styles, so a custom action template stays styled and
-working. Import each template directive and the banner into your component's
-`imports`.
+`ConsentButton` (`button[inth-consent-button]`) wires click handling and
+stock button styles so custom action templates stay functional. Import each
+template directive into your component's `imports`.
 
 ## Turn off animations
 
-`disableAnimation` in `provideInth()` turns off the banner and dialog
-animations, and the same input on `<inth-consent-banner>`,
-`<inth-consent-dialog>`, `<inth-iab-consent-banner>` or
-`<inth-iab-consent-dialog>` overrides it for one surface. Left unset, it
-follows the visitor's reduced motion setting.
-[Motion and animation](/docs/customization/motion) covers the duration and
-easing tokens.
+`disableAnimation` in `provideInth()` disables banner and dialog transitions,
+and the same input on `<inth-consent-banner>`, `<inth-consent-dialog>`,
+`<inth-iab-consent-banner>` or `<inth-iab-consent-dialog>` overrides it per
+surface. When unset, components follow `prefers-reduced-motion`.
+[Motion and animation](/docs/customization/motion) covers duration and easing
+tokens.
 
 ## Remove Inth's styles
 
-Set `noStyle` on one component or in `provideInth()` to render the same
-markup and behavior without Inth's classes. Style the `data-*` attributes and
-your slot classes instead. For different markup, see
-[headless](./headless).
+Set `noStyle` on one component or in `provideInth()` to keep the stock markup
+and behavior without `inth` classes. Style the `data-*` attributes and slot
+classes yourself. For fully custom markup, see [headless](./headless).

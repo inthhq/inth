@@ -1,14 +1,16 @@
 ---
 title: Embeds
-description: Keep YouTube videos, maps and other iframes out of an Angular page until their consent category is allowed, with inth-consent-gate, *inthIfConsent or the iframe blocker.
+description: Gate YouTube videos, maps and other iframes on consent in Angular with inth-consent-gate, *inthIfConsent or the iframe blocker.
 group: frameworks
 ---
 
+Hold YouTube videos, maps and other third-party iframes until the visitor
+allows their consent category.
+
 ## Pick a way to gate the embed
 
-A YouTube video, a map or a social post in an iframe contacts its vendor as
-soon as it loads. Inth offers three ways to keep it from loading before
-consent:
+An iframe contacts its vendor as soon as it loads. Inth offers three ways to
+hold it until consent allows it:
 
 | Your markup | Use | Placeholder |
 | --- | --- | --- |
@@ -16,41 +18,39 @@ consent:
 | A template where you want your own fallback, or a condition on several categories | `*inthIfConsent` on the iframe | Your `else` template, or none |
 | HTML you do not control, such as CMS content or `[innerHTML]` | The iframe blocker with `data-category` and `data-src` | None; the iframe stays empty |
 
-All three use the visitor's effective permission, and all three remove the
-embed again when the visitor withdraws it.
+All three check effective permission and remove the embed when the visitor
+withdraws consent.
 
 ## Wrap the iframe in inth-consent-gate
 
 <include src="../../shared/examples/angular/youtube-embed.mdx" />
 
-The iframe is in an `ng-template inthConsentGateContent`, so Angular creates
+The iframe sits in an `ng-template inthConsentGateContent`, so Angular creates
 it only while measurement is allowed and destroys it when measurement is
-withdrawn. The browser never requests it before. The
-`inthConsentGatePlaceholder` template replaces the built-in placeholder and
-includes an `inthConsentDialogLink` button, so a visitor can allow the category
-from the embed's own spot. Keep `<inth-consent-dialog>` rendered for that
+withdrawn. The `inthConsentGatePlaceholder` template replaces the built-in
+placeholder and includes a `inthConsentDialogLink` button so visitors can
+enable the category inline. Keep `<inth-consent-dialog>` rendered for that
 button. [inth-consent-gate](./components/consent-gate) lists its inputs.
 
 Use the content template for anything with side effects. Without it, the gate
-projects its children with `<ng-content>`: Angular creates projected nodes
-with the parent view even while the gate keeps them out of the document, so an
-`<iframe>` loads nothing, but a component inside still runs its constructor.
+projects children with `<ng-content>`: Angular instantiates projected
+components with the parent view even while hidden, so an `<iframe>` loads
+nothing, but a component inside still runs its constructor.
 
-Pick the category the vendor's embed needs. YouTube and maps usually fit
-`measurement` or `marketing`; check what each vendor sets.
+Pick the category the vendor's embed requires. YouTube and maps usually fit
+`measurement` or `marketing`.
 
 ## Render content only while consent holds
 
-`*inthIfConsent` works like `@if` with a consent condition. It takes a
-category name, or a condition such as `{ and: ['functionality', 'marketing'] }`,
-and an optional `else` template:
+`*inthIfConsent` works like `@if` with a consent condition. Pass a category
+name or a condition such as `{ and: ['functionality', 'marketing'] }`, plus
+an optional `else` template:
 
 <include src="../../shared/examples/angular/if-consent.mdx" />
 
-The directive renders on the server too, from the state the server resolved,
-so its output can be in the first HTML. `<inth-consent-gate>` renders an
-empty host on the server and fills it one frame after the first browser
-render.
+The directive renders on the server from the server-resolved state, so its
+output appears in the first HTML. `<inth-consent-gate>` renders an empty host
+on the server and fills it one frame after the first browser render.
 
 ## Gate iframes you do not render
 
@@ -67,23 +67,21 @@ The iframe blocker is on by default. It watches the page for iframes with a
 ></iframe>
 ```
 
-- While the category is denied, the iframe has no `src`, so it loads nothing.
-- When the category is allowed, the blocker copies `data-src` to `src`.
-  Only `http` and `https` URLs are used.
-- When the category is withdrawn, the blocker removes `src` again.
+- While the category is denied, the iframe has no `src` and loads nothing.
+- When the category is allowed, the blocker copies `data-src` to `src` (only
+  `http` and `https` URLs).
+- When the category is withdrawn, the blocker removes `src`.
 
-Iframes without `data-category` or `data-vendor` are never touched. Put
+Iframes without `data-category` or `data-vendor` are untouched. Put
 `data-src` in the HTML instead of `src`; an iframe that arrives with `src`
-already starts loading before the blocker sees it. Add `data-vendor` with a
-vendor slug to also keep the iframe empty while the visitor has that vendor
-turned off. Angular's sanitizer keeps `data-*` attributes in `[innerHTML]`
-but drops `<iframe>` elements, so CMS HTML with iframes needs
-`DomSanitizer.bypassSecurityTrustHtml()` for content you trust.
+starts loading before the blocker sees it. Add `data-vendor` with a vendor
+slug to also block the iframe when the visitor switches that vendor off.
+Angular's sanitizer drops `<iframe>` elements in `[innerHTML]`, so trusted
+CMS HTML with iframes needs `DomSanitizer.bypassSecurityTrustHtml()`.
 
-The blocker has no placeholder. Style the empty iframe, or place a note and a
-`inthConsentDialogLink` button next to it.
-
-Pass `iframeBlocker: false` to `provideInth()` to turn the blocker off.
+The blocker renders no placeholder. Style the empty iframe, or place a note
+and a `inthConsentDialogLink` button next to it. Pass `iframeBlocker: false`
+to `provideInth()` to disable the blocker.
 
 ## Vendor guides
 

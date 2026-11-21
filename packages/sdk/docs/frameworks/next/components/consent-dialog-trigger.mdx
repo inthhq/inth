@@ -1,16 +1,16 @@
 ---
 title: ConsentDialogTrigger
-description: Add the floating ConsentDialogTrigger button or toolbar to a Next.js InthProvider so visitors can reopen the preference center.
+description: Add a floating ConsentDialogTrigger button or multi-action toolbar to a Next.js InthProvider to reopen preferences.
 group: frameworks
 ---
 
 ## Add the trigger next to the banner
 
-`ConsentDialogTrigger` is a draggable floating button that opens the preference center. Place it once, next to the banner and dialog, so visitors can revisit their choices without a footer link.
+`ConsentDialogTrigger` is a draggable floating button that opens
+`ConsentDialog`. Mount it inside `InthProvider` from your
+[quickstart](/docs/frameworks/next/quickstart) alongside the banner and dialog:
 
-Keep the boundary and transport from your
-[router setup](/docs/frameworks/next/quickstart). Add this component as a child
-of the existing boundary, alongside its banner and dialog:
+{/* example: fragment */}
 
 ```tsx title="components/privacy-trigger.tsx"
 'use client';
@@ -18,13 +18,15 @@ of the existing boundary, alongside its banner and dialog:
 import { ConsentDialogTrigger } from '@inth/nextjs';
 
 export function PrivacyTrigger() {
-	return <ConsentDialogTrigger showWhen="after-consent" />;
+	return <ConsentDialogTrigger showWhen="after-prompt" />;
 }
 ```
 
-`showWhen="after-consent"` keeps the button out of the way while a choice or notice is still owed and shows it once the visitor has answered, so the banner and the trigger never compete for the same corner. The default, `always`, shows it whenever the preference center is closed.
-
-The button carries `data-inth-rights` with the rights the active policy guarantees, so a stylesheet can label it differently under an opt-out rule.
+`showWhen="after-prompt"` hides the trigger until the visitor answers the
+banner (default is `always`). The trigger hides automatically when no rule has
+resolved or under `model: 'none'` (unless `rights: ['preferences']` is set),
+and carries `data-inth-rights` and `data-right` (`"opt-out"` or
+`"preferences"`) for styling.
 
 ## Props
 
@@ -32,12 +34,12 @@ The button carries `data-inth-rights` with the rights the active policy guarante
 
 ## Configurable toolbar
 
-Use `ConsentDialogTriggerToolbar` when you want app-owned controls beside the privacy trigger. It always renders exactly one built-in action that opens the preference center, so `actions` only holds controls your app owns.
+Use `ConsentDialogTriggerToolbar` inside a `'use client'` component to place
+app-owned actions beside the built-in preferences trigger:
 
-This partial example belongs in a Client Component inside the existing boundary.
-Define the theme state, icons and callbacks in that component.
+{/* example: fragment */}
 
-```tsx
+```tsx title="components/site-toolbar.tsx (partial)"
 import { ConsentDialogTriggerToolbar } from '@inth/nextjs';
 
 <ConsentDialogTriggerToolbar
@@ -61,15 +63,11 @@ import { ConsentDialogTriggerToolbar } from '@inth/nextjs';
 />;
 ```
 
-Each custom action needs a stable `id`, an accessible `label`, an `icon`, and an `onSelect` callback. Use `pressed` for toggle actions and `disabled` for unavailable ones. Your app owns the state behind each action. The preferences action moves to the edge nearest the toolbar's snapped corner while custom actions keep their configured order.
-
-The toolbar does not depend on the consent policy. Your actions always render, so a theme toggle stays available while a banner is up. On the toolbar, `showWhen` applies only to the built-in preferences action: `after-consent` hides that one item while a choice or notice is owed and shows it once the visitor has answered, and `never` leaves it out. The toolbar renders nothing only when it has no visible item. On the single `ConsentDialogTrigger`, `showWhen` applies to the whole control.
-
-No policy, no UI. When no rule has resolved, because resolution failed, no rule matched and you set no default, or init is still withheld, the built-in preferences action and the single `ConsentDialogTrigger` render nothing; app-owned toolbar actions still do. They appear as soon as a rule resolves, without a remount. A rule with `model: 'none'` owes no rights, so the built-in action and the single trigger hide under it too, unless the rule adds `rights: ['preferences']`. The policy chooses what the control says, you choose where and when it sits, and it disappears only when there is nothing to manage.
-
-The built-in action names the strongest right the active rule guarantees. Under a rule that carries the `opt-out` right, such as a US opt-out notice, its accessible name is the translated "Do not sell or share my data" and the button carries `data-right="opt-out"`. Under any other rule it reads "Manage preferences" with `data-right="preferences"`. Either way it opens the preference center, and a `preferences.label` you pass replaces the default. The button also carries `data-inth-rights` with every right on the rule.
-
-Toolbars are horizontal by default. Set `orientation="vertical"` to stack the actions and switch arrow-key navigation to up and down:
+App-owned `actions` always render regardless of policy state, while `showWhen`
+(`'always'`, `'after-prompt'` or `'never'`) controls only the built-in
+preferences button. The preferences button uses "Do not sell or share my data"
+under opt-out rules and "Manage preferences" otherwise (override with
+`preferences.label`). Set `orientation="vertical"` to stack actions vertically:
 
 ```tsx
 <ConsentDialogTriggerToolbar orientation="vertical" actions={toolbarActions} />;
@@ -81,11 +79,10 @@ Toolbars are horizontal by default. Set `orientation="vertical"` to stack the ac
 
 ### Toolbar styling
 
-The toolbar follows the standard precedence: bundled styles, then provider slots, then direct `className` and `style` on the toolbar or on one action. Use `noStyle` for a fully custom implementation.
-
-Add these slot values to `options.components` on your existing
-`InthProvider`. Merge them with any existing component
-slots and retain the configured transport:
+Override toolbar slots in `options.components.trigger` (`toolbar`,
+`toolbarItem`, `toolbarIcon`), pass `className` directly on the toolbar or
+individual actions, or pass `noStyle` and style via `data-corner`,
+`data-dragging` and `data-snapping`:
 
 ```ts
 const triggerSlots = {
@@ -94,12 +91,6 @@ const triggerSlots = {
 	toolbarIcon: { className: 'my-toolbar-icon' },
 };
 
-// In the existing options.components object:
+// In options.components:
 // trigger: triggerSlots
 ```
-
-For one toolbar, pass `className="fixed-toolbar"` directly. Each app-owned
-item also accepts `className`, such as `className: 'support-action'` on your
-support action. Keep its icon and callback in the Client Component.
-
-The toolbar slot keys are `trigger.toolbar`, `trigger.toolbarItem`, and `trigger.toolbarIcon`. With `noStyle`, style the current position and interaction state through `data-corner`, `data-dragging`, and `data-snapping` on the toolbar element.

@@ -1,104 +1,79 @@
 ---
 title: Geography headers
-description: Which request headers the Inth Nuxt module reads for the visitor's country, region, language and Global Privacy Control, and how to trust and test them.
+description: See which request headers @inth/nuxt reads for country, region, language, and GPC, and how to trust and test them.
 group: frameworks
 ---
 
+`@inth/nuxt` reads visitor geography from request headers supplied by your
+host or CDN so server renders and `/api/inth/v1/consent/init` match regional policies.
+
 ## How Nuxt finds the visitor's location
 
-The Nuxt server reads the visitor's location from request headers that your
-host or CDN adds. It never looks up an IP address itself. The headers are read
-in three places:
+The Nuxt server never runs IP geolocation itself. It reads location headers in
+three places:
 
-- During server rendering, the Inth plugin reads them from the page request.
-- In the default `manifest()` mode, the `/api/inth/v1/consent/init` route reads them
-  from the browser's own request, for example on a prerendered route.
-- In `hosted()` mode, the plugin forwards them to your backend's `/init`.
+- During SSR, the Inth plugin reads them from the incoming page request.
+- In default `manifest()` mode, `/api/inth/v1/consent/init` reads them from browser
+  requests on prerendered or cached routes.
+- In `hosted()` mode, the plugin forwards them to Inth's `/v1/consent/init`.
 
-With `manifest({ resolve: 'browser' })`, no request reaches your server, so
-the browser has no location. Pass `geoUrl` to `manifest()` with a route that
-returns the visitor's `country` and `region`, or a policy that depends on
-location asks the backend's `/init` on the first visit. See
+With `manifest({ resolve: 'browser' })`, no request hits your server, so pass
+`geoUrl` or let the browser fall back to `/v1/consent/init` on first visit. See
 [deploy to static hosting](/docs/frameworks/nuxt/rendering#deploy-to-static-hosting).
 
-When no location header is present, the location stays unknown and your
-policy's rule for unknown locations applies.
-
-A country can also arrive without a region, for example from Cloudflare
-without its visitor location headers setting. If your policy has rules for
-regions of that country, such as California, Inth can't tell which one
-applies. It uses the rule that lists the country in `regionFallbacks`, and
-otherwise the rule for unknown locations. Inth's recommended rules send a US
-visitor without a state to the US opt-out rule this way.
+When no location header is present, your unknown-location policy rule applies.
+If a country arrives without a region (such as Cloudflare without visitor
+location headers enabled) and your policy has state-level rules like
+California, Inth applies any matching `regionFallbacks` rule before falling
+back to the unknown-location rule.
 
 ## Which headers are read?
 
-Within each row, the first header with a value wins:
+Within each row, the first non-empty header wins:
 
-| Input | Headers, highest precedence first | Source |
+| Input | Headers (highest precedence first) | Source |
 | --- | --- | --- |
-| Country | `x-inth-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` | Inth override, Cloudflare, Vercel, CloudFront, generic |
-| Region | `x-inth-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` | Inth override, Cloudflare, Vercel, generic |
-| Global Privacy Control | `x-inth-gpc`, `sec-gpc` | Inth override, browser signal |
+| Country | `x-inth-country`, `cf-ipcountry`, `x-vercel-ip-country`, `x-amz-cf-ipcountry`, `x-country-code`, `x-country` | Override, Cloudflare, Vercel, CloudFront, generic |
+| Region | `x-inth-region`, `cf-region-code`, `x-vercel-ip-country-region`, `x-region-code` | Override, Cloudflare, Vercel, generic |
+| Global Privacy Control | `x-inth-gpc`, `sec-gpc` | Override, browser signal |
 | Language | `accept-language` | Browser |
 
-Vercel sends its headers without setup. Cloudflare sends `cf-region-code`
-only with its visitor location headers setting turned on. CloudFront's own
-`CloudFront-Viewer-Country` and `CloudFront-Viewer-Country-Region` headers are
-not in the list. Map them to `x-inth-country` and `x-inth-region` at the edge,
-for example with a CloudFront Function, as in
-[AWS's viewer-request example](https://github.com/aws-samples/amazon-cloudfront-functions/tree/main/redirect-based-on-country).
+Vercel sends its headers automatically. Cloudflare sends `cf-region-code` only
+when its visitor location headers setting is enabled. Map CloudFront's
+`CloudFront-Viewer-Country` and `CloudFront-Viewer-Country-Region` headers to
+`x-inth-country` and `x-inth-region` at the edge (see
+[AWS's viewer-request example](https://github.com/aws-samples/amazon-cloudfront-functions/tree/main/redirect-based-on-country)).
 
-The init route responds with `Cache-Control: private, no-store`, because its
-answer belongs to one visitor.
+`/api/inth/v1/consent/init` always responds with `Cache-Control: private, no-store`.
 
 ## Trust only your own infrastructure
 
-The `x-inth-*` headers always win, by design. A visitor who sends
-`x-inth-country: US` picks their own policy unless something removes the
-header first. The header only changes the policy for the visitor who sent it.
-For geography you can trust, configure the edge that terminates all your
-traffic, such as your CDN or load balancer, to delete incoming
-`x-inth-country`, `x-inth-region` and `x-inth-gpc` headers before it sets any
-of its own.
+Because `x-inth-*` override headers take highest precedence, configure your
+edge CDN or load balancer to strip incoming `x-inth-country`, `x-inth-region`,
+and `x-inth-gpc` headers before setting trusted values. Also block direct
+origin access so clients cannot spoof platform headers such as `cf-ipcountry`.
 
-Stripping the headers also turns off the `country` and `region` props of
-`InthProvider` when the server resolves the policy. In the browser, those
-props reach the `/api/inth/v1/consent/init` route as the `country`, `region`
-and `gpc` query parameters, which the route reads like the `x-inth-*`
-headers. Stripping headers does not remove them: have the edge drop those
-query parameters from requests to that route too.
+Stripping `x-inth-*` at the edge disables `<InthProvider country="..." />`
+overrides in production, because those props send `x-inth-country` and
+`x-inth-region` to `/api/inth/v1/consent/init`.
 
-Do not strip them in a Nitro server middleware. During server rendering, the
-Inth plugin forwards the visitor's location headers to the module's init
-route inside the same server, and a middleware runs for that internal request
-too. A middleware that deletes or rewrites location headers there removes the
-location the plugin has forwarded.
-
-If a client can reach your origin without passing through your CDN, it can
-send any platform header, such as `cf-ipcountry`. Block direct origin access
-with your host's origin protection.
+Do not strip location headers in a Nitro server middleware. During SSR, the
+Inth plugin forwards location headers to `/api/inth/v1/consent/init` internally, and
+Nitro middleware runs on that internal request too.
 
 ## Test another region
 
-Use one of these while you build, never in production:
+Use these methods during development only:
 
-- Render `<InthProvider country="DE" />`, or pass `region` too. Inth resolves
-  the policy again for that location. When the server resolves the policy,
-  this only works while nothing strips the `x-inth-*` headers.
-- Send the override header yourself, for example
-  `curl -H 'x-inth-country: DE' http://localhost:3000/api/inth/v1/consent/init`. This
-  only works while nothing strips the header.
-- Use a VPN or your host's geography testing tools against a deployment.
-
-The `internals/fixtures/nuxt` test app in the Inth repository has a demo
-middleware that turns `?country=DE` into an override header. It lets any visitor pick their
-policy, so do not copy it into production.
+- Pass `<InthProvider country="DE" />` (and optionally `region`), when the edge
+  does not strip `x-inth-*`.
+- Query `curl -H 'x-inth-country: DE' http://localhost:3000/api/inth/v1/consent/init`.
+- Test a deployed environment through a VPN or your host's geo testing tools.
 
 ## Verify
 
-Deploy and load the site from two locations with different policy rules, for
-example through a VPN. View the source of each page: an opt-in region has
-`data-testid="consent-banner-root"` in the HTML, and a region with no prompt
-does not. Then request `/api/inth/v1/consent/init` with `curl -H 'x-inth-country: US'`
-against production and confirm the resolved location ignores the header.
+Load your deployed site from two regions with different policies (for example
+via VPN) and inspect the HTML source: an opt-in region includes
+`data-testid="consent-banner-root"`, while a no-prompt region does not. Run
+`curl -H 'x-inth-country: US' https://<your-domain>/api/inth/v1/consent/init` and confirm
+production ignores the spoofed header.
