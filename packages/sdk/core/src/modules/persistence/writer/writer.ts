@@ -391,7 +391,8 @@ export const createPersistenceWriter = function createPersistenceWriter(
 			{ ...snapshot, subject },
 			storageConfig,
 			at,
-			kernel.isOptOutGpcReported()
+			kernel.isOptOutGpcReported(),
+			kernel.getOptOutReceiptData()
 		);
 		if (!wrote) {
 			state.optOutRecorded ||= !subjectOnly;

@@ -318,7 +318,7 @@ const fingerprint = function fingerprint(value: unknown): string {
 const ABSENT: Record<StoredRecordKind, string> = {
 	choice: fingerprint(null),
 	notice: fingerprint([null, null]),
-	optOut: fingerprint([null, null, false]),
+	optOut: fingerprint([null, null, false, null, null, false]),
 	vendors: fingerprint([null, null]),
 };
 
@@ -353,6 +353,9 @@ export const fingerprintStoredRecords = function fingerprintStoredRecords(
 			stored.optOut,
 			stored.optOut ? (read.optOutSubject ?? null) : null,
 			stored.optOut ? stored.optOutGpcReported === true : false,
+			stored.optOut ? (stored.optOutReference ?? null) : null,
+			stored.optOut ? (stored.optOutLocalAct ?? null) : null,
+			stored.optOut ? stored.optOutRightsConfirmed === true : false,
 		]);
 	}
 	if (stored.vendorChoice !== undefined) {
@@ -813,6 +816,19 @@ const applyVoided = function applyVoided(
 	}
 };
 
+const copyOptOutMeta = function copyOptOutMeta(
+	stored: HydrationRecords,
+	records: HydrationRecords,
+	copyUnsetGpcMark: boolean
+): void {
+	if (copyUnsetGpcMark || stored.optOutGpcReported === true) {
+		records.optOutGpcReported = stored.optOutGpcReported === true;
+	}
+	records.optOutReference = stored.optOutReference ?? null;
+	records.optOutLocalAct = stored.optOutLocalAct ?? null;
+	records.optOutRightsConfirmed = stored.optOutRightsConfirmed === true;
+};
+
 const reconcileOptOutRecord = function reconcileOptOutRecord(
 	view: ConsentSnapshot,
 	stored: HydrationRecords,
@@ -831,18 +847,17 @@ const reconcileOptOutRecord = function reconcileOptOutRecord(
 		)
 	) {
 		records.optOut = stored.optOut ?? null;
-		if (stored.optOut && stored.optOutGpcReported) {
-			records.optOutGpcReported = true;
+		if (stored.optOut) {
+			copyOptOutMeta(stored, records, true);
 		}
 		return;
 	}
 	if (
 		view.optOut !== null &&
 		stored.optOut &&
-		stored.optOutGpcReported === true &&
 		sameRecord(view.optOut, stored.optOut)
 	) {
-		records.optOutGpcReported = true;
+		copyOptOutMeta(stored, records, false);
 	}
 };
 

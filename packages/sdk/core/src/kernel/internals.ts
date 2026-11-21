@@ -8,6 +8,7 @@
  *
  * @internal
  */
+import type { OptOutReceiptData } from '../libs/opt-out-state';
 import type {
 	ConsentKernel,
 	HydrationRecords,
@@ -86,6 +87,23 @@ export interface InternalKernel extends ConsentKernel {
 	 */
 	onOptOutGpcReportedChange: (
 		listener: (reported: boolean) => void
+	) => () => void;
+	/**
+	 * Local-only receipt data kept beside the held opt-out record.
+	 */
+	getOptOutReceiptData: () => Readonly<OptOutReceiptData>;
+	/**
+	 * Immutable revision-0 local receipt data, matching `getServerSnapshot()`.
+	 */
+	getServerOptOutReceiptData: () => Readonly<OptOutReceiptData>;
+	/**
+	 * Subscribe to changes in local opt-out receipt data.
+	 */
+	onOptOutReceiptDataChange: (
+		listener: (
+			data: Readonly<OptOutReceiptData>,
+			fromHydration?: boolean
+		) => void
 	) => () => void;
 	/**
 	 * Number of direct opt-out and lift requests currently in flight.

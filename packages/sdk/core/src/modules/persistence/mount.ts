@@ -483,6 +483,13 @@ export const mountPersistence = function mountPersistence(
 				request('optOut');
 			}
 		}),
+		kernel.onOptOutReceiptDataChange((_data, fromHydration) => {
+			if (!fromHydration && kernel.getSnapshot().optOut !== null) {
+				state.optOutRecorded = true;
+				state.optOutSynced = true;
+				request('optOut');
+			}
+		}),
 	];
 
 	/**
@@ -494,14 +501,18 @@ export const mountPersistence = function mountPersistence(
 	): HydrationRecords {
 		const queued = queuedWrites.get(consentKey);
 		const snapshot = queued?.getSnapshot();
+		const receipt = queued?.getOptOutReceiptData();
 		// The snapshot's subject, notice and vendor records under their
 		// hydration names; hydration ignores every other field.
-		return snapshot && queued
+		return snapshot && queued && receipt
 			? {
 					...records,
 					...snapshot,
 					choice: snapshot.explicitChoice,
 					optOutGpcReported: queued.isOptOutGpcReported(),
+					optOutLocalAct: receipt.localAct,
+					optOutReference: receipt.reference,
+					optOutRightsConfirmed: receipt.rightsConfirmed,
 				}
 			: records;
 	};
@@ -682,6 +693,52 @@ export const mountPersistence = function mountPersistence(
 		return undefined;
 	};
 
+	const copySeededOptOutMeta = function copySeededOptOutMeta(
+		records: HydrationRecords,
+		patch: HydrationRecords
+	): void {
+		if (records.optOutGpcReported) {
+			patch.optOutGpcReported = true;
+		}
+		if (records.optOutReference) {
+			patch.optOutReference = records.optOutReference;
+		}
+		if (records.optOutLocalAct) {
+			patch.optOutLocalAct = records.optOutLocalAct;
+		}
+		if (records.optOutRightsConfirmed) {
+			patch.optOutRightsConfirmed = true;
+		}
+	};
+
+	const mergeSeededOptOutMeta = function mergeSeededOptOutMeta(
+		records: HydrationRecords,
+		patch: HydrationRecords
+	): void {
+		if (records.optOutGpcReported === true && !kernel.isOptOutGpcReported()) {
+			patch.optOutGpcReported = true;
+		}
+		const currentReceipt = kernel.getOptOutReceiptData();
+		if (
+			records.optOutReference &&
+			currentReceipt.reference !== records.optOutReference
+		) {
+			patch.optOutReference = records.optOutReference;
+		}
+		if (
+			records.optOutLocalAct &&
+			currentReceipt.localAct !== records.optOutLocalAct
+		) {
+			patch.optOutLocalAct = records.optOutLocalAct;
+		}
+		if (
+			records.optOutRightsConfirmed === true &&
+			!currentReceipt.rightsConfirmed
+		) {
+			patch.optOutRightsConfirmed = true;
+		}
+	};
+
 	const patchSeededOptOut = function patchSeededOptOut(
 		snapshot: ConsentSnapshot,
 		records: HydrationRecords,
@@ -699,19 +756,17 @@ export const mountPersistence = function mountPersistence(
 		);
 		if (optOut) {
 			patch.optOut = optOut.value;
-			if (optOut.value !== null && records.optOutGpcReported) {
-				patch.optOutGpcReported = true;
+			if (optOut.value !== null) {
+				copySeededOptOutMeta(records, patch);
 			}
 			return;
 		}
 		if (
 			keptOptOut !== null &&
 			records.optOut &&
-			records.optOutGpcReported === true &&
-			!kernel.isOptOutGpcReported() &&
 			sameOptOut(keptOptOut, records.optOut)
 		) {
-			patch.optOutGpcReported = true;
+			mergeSeededOptOutMeta(records, patch);
 		}
 	};
 

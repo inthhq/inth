@@ -17,6 +17,7 @@
  * Clearing (`clear-records.ts`) is `hydrate()` with `null`s followed by
  * `records:cleared`, which the save outbox listens for.
  */
+import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state';
 import type {
 	ConsentSnapshot,
 	HydrationRecords,
@@ -136,6 +137,56 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		}
 	};
 
+	const applyHydratedOptOutReceipt = function applyHydratedOptOutReceipt(
+		before: ConsentSnapshot,
+		hydrated: ValidatedRecords
+	): void {
+		if (hydrated.optOut === null) {
+			runtime.setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA, true);
+			return;
+		}
+		if (hydrated.optOut !== undefined) {
+			runtime.setOptOutReceiptData(
+				{
+					localAct: hydrated.optOutLocalAct ?? null,
+					reference: hydrated.optOutReference ?? null,
+					rightsConfirmed: hydrated.optOutRightsConfirmed === true,
+				},
+				true
+			);
+			return;
+		}
+		const hasReceiptPatch =
+			hydrated.optOutLocalAct !== undefined ||
+			hydrated.optOutReference !== undefined ||
+			hydrated.optOutRightsConfirmed !== undefined;
+		if (!hasReceiptPatch) {
+			return;
+		}
+		if (before.optOut === null) {
+			runtime.setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA, true);
+			return;
+		}
+		const current = runtime.getOptOutReceiptData();
+		runtime.setOptOutReceiptData(
+			{
+				localAct:
+					hydrated.optOutLocalAct === undefined
+						? current.localAct
+						: hydrated.optOutLocalAct,
+				reference:
+					hydrated.optOutReference === undefined
+						? current.reference
+						: hydrated.optOutReference,
+				rightsConfirmed:
+					hydrated.optOutRightsConfirmed === undefined
+						? current.rightsConfirmed
+						: hydrated.optOutRightsConfirmed,
+			},
+			true
+		);
+	};
+
 	const applyRecords = function applyRecords(
 		records: HydrationRecords,
 		fromServer: boolean
@@ -151,10 +202,29 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		let reset = false;
 		if (fromServer) {
 			patch = foldServerRecords(before, validated.records, at);
+			if (
+				validated.records.optOut &&
+				patch.optOut === validated.records.optOut &&
+				validated.records.optOut.rights.length > 0
+			) {
+				const current = runtime.getOptOutReceiptData();
+				runtime.setOptOutReceiptData(
+					before.optOut === null
+						? { localAct: null, reference: null, rightsConfirmed: true }
+						: {
+								localAct: current.localAct,
+								reference: current.reference,
+								rightsConfirmed: true,
+							}
+				);
+			}
 		} else {
 			const {
 				choice,
 				optOutGpcReported: _gpcMark,
+				optOutLocalAct: _localAct,
+				optOutReference: _reference,
+				optOutRightsConfirmed: _rightsConfirmed,
 				...rest
 			} = validated.records;
 			patch = { ...rest, now: at };
@@ -166,6 +236,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				patch.iab = { ...before.iab, authority: null, tcString: null };
 			}
 			applyHydratedGpcMark(before, validated.records);
+			applyHydratedOptOutReceipt(before, validated.records);
 		}
 		const changed = commit(patch);
 		const touchedOptOut =

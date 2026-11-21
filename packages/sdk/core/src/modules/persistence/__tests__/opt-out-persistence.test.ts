@@ -1072,4 +1072,54 @@ describe('opt-out persistence lifecycle', () => {
 			}
 		}
 	});
+
+	it('stores reference in localStorage only, keeps localAct and rightsConfirmed in cookie and localStorage, and restores them on hydration', () => {
+		const record: StoredOptOutRecord = {
+			heldBy: 'both',
+			localAct: 'button',
+			method: 'propagated',
+			recordedAt: NOW - 500,
+			reference: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+			rights: ['sale', 'share'],
+			rightsConfirmed: true,
+			subject: { subjectId: 'sub_receipt' },
+			version: 1,
+		};
+		const compact = encodeOptOutRecordCompact(record);
+		expect(compact).not.toContain('0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c');
+		expect(decodeOptOutRecordCompact(compact, NOW)).toEqual({
+			ok: true,
+			record: {
+				heldBy: 'both',
+				localAct: 'button',
+				method: 'propagated',
+				recordedAt: NOW - 500,
+				rights: ['sale', 'share'],
+				rightsConfirmed: true,
+				subject: { subjectId: 'sub_receipt' },
+				version: 1,
+			},
+		});
+		const json = encodeOptOutRecord(record);
+		expect(decodeOptOutRecord(JSON.parse(json), NOW)).toEqual({
+			ok: true,
+			record,
+		});
+
+		expect(writeStoredOptOutRecord(record, undefined, NOW).ok).toBe(true);
+		const read = readStoredRecords(undefined, NOW);
+		expect(read.records.optOutReference).toBe(record.reference);
+		expect(read.records.optOutLocalAct).toBe('button');
+		expect(read.records.optOutRightsConfirmed).toBe(true);
+		expect('reference' in (read.records.optOut as object)).toBe(false);
+		expect('localAct' in (read.records.optOut as object)).toBe(false);
+		expect('rightsConfirmed' in (read.records.optOut as object)).toBe(false);
+
+		// When localStorage is cleared/blocked, cookie still restores localAct and rightsConfirmed.
+		window.localStorage.clear();
+		const cookieOnly = readStoredRecords(undefined, NOW);
+		expect(cookieOnly.records.optOutReference).toBeUndefined();
+		expect(cookieOnly.records.optOutLocalAct).toBe('button');
+		expect(cookieOnly.records.optOutRightsConfirmed).toBe(true);
+	});
 });

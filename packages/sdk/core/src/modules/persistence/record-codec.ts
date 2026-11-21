@@ -49,6 +49,7 @@ import {
 	validateOptOutRecord,
 } from '../../consent-record/validation';
 import type { RecordIssue } from '../../consent-record/validation';
+import type { OptOutLocalAct } from '../../libs/opt-out-state';
 import { isValidVendorId } from '../../libs/vendors';
 import type { VendorChoice } from '../../types';
 
@@ -118,6 +119,15 @@ export type StoredOptOutRecord = OptOutRecord & {
 	 * stay unchanged and backend answers do not overwrite it.
 	 */
 	gpcReported?: boolean;
+	/**
+	 * Local idempotency reference of the opt-out act recorded in this browser.
+	 * Stored in localStorage only to keep the cookie small.
+	 */
+	reference?: string;
+	/** Method of the opt-out act recorded in this browser (`'button'` or `'gpc'`). */
+	localAct?: OptOutLocalAct;
+	/** Whether `rights` were confirmed by a backend answer. */
+	rightsConfirmed?: boolean;
 };
 
 /** Structural issue found while decoding a stored record. */
@@ -924,6 +934,19 @@ const CODE_TO_OPT_OUT_HOLDER: ReadonlyMap<string, OptOutHolder> = new Map(
 	])
 );
 
+/** Compact opt-out local-act codes. The encoder repeats them. @internal */
+export const OPT_OUT_LOCAL_ACT_CODES = {
+	button: 'b',
+	gpc: 'g',
+} as const satisfies Record<OptOutLocalAct, string>;
+
+const CODE_TO_OPT_OUT_LOCAL_ACT: ReadonlyMap<string, OptOutLocalAct> = new Map(
+	Object.entries(OPT_OUT_LOCAL_ACT_CODES).map(([act, code]) => [
+		code,
+		act as OptOutLocalAct,
+	])
+);
+
 // ---------------------------------------------------------------------------
 // Durable opt-out record (JSON + compact cookie projection)
 // ---------------------------------------------------------------------------
@@ -938,7 +961,62 @@ const OPT_OUT_STORED_KEYS = [
 	'heldBy',
 	'subject',
 	'gpcReported',
+	'reference',
+	'localAct',
+	'rightsConfirmed',
 ] as const;
+
+const readOptionalOptOutBoolean = function readOptionalOptOutBoolean(
+	input: Record<string, unknown>,
+	key: string,
+	issues: StorageIssue[]
+): boolean {
+	const value = ownValue(input, key);
+	if (value === undefined) {
+		return false;
+	}
+	if (typeof value === 'boolean') {
+		return value;
+	}
+	issues.push({ code: 'invalid-boolean', path: key });
+	return false;
+};
+
+const readOptionalOptOutMeta = function readOptionalOptOutMeta(
+	input: Record<string, unknown>,
+	issues: StorageIssue[]
+): {
+	gpcReported: boolean;
+	localAct: OptOutLocalAct | undefined;
+	reference: string | undefined;
+	rightsConfirmed: boolean;
+} {
+	const gpcReported = readOptionalOptOutBoolean(input, 'gpcReported', issues);
+	const rightsConfirmed = readOptionalOptOutBoolean(
+		input,
+		'rightsConfirmed',
+		issues
+	);
+	const rawReference = ownValue(input, 'reference');
+	let reference: string | undefined;
+	if (rawReference !== undefined) {
+		if (isNonEmptyString(rawReference)) {
+			reference = rawReference;
+		} else {
+			issues.push({ code: 'invalid-identifier', path: 'reference' });
+		}
+	}
+	const rawLocalAct = ownValue(input, 'localAct');
+	let localAct: OptOutLocalAct | undefined;
+	if (rawLocalAct !== undefined) {
+		if (rawLocalAct === 'button' || rawLocalAct === 'gpc') {
+			localAct = rawLocalAct;
+		} else {
+			issues.push({ code: 'invalid-value', path: 'localAct' });
+		}
+	}
+	return { gpcReported, localAct, reference, rightsConfirmed };
+};
 
 /**
  * Validates a parsed stored opt-out record. Future `recordedAt` timestamps are
@@ -966,15 +1044,7 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 		}
 	}
 	const subject = validateSubject(ownValue(input, 'subject'), issues);
-	const rawGpcReported = ownValue(input, 'gpcReported');
-	let gpcReported = false;
-	if (rawGpcReported !== undefined) {
-		if (typeof rawGpcReported === 'boolean') {
-			gpcReported = rawGpcReported;
-		} else {
-			issues.push({ code: 'invalid-boolean', path: 'gpcReported' });
-		}
-	}
+	const meta = readOptionalOptOutMeta(input, issues);
 	const inner = validateOptOutRecord(
 		{
 			heldBy: ownValue(input, 'heldBy'),
@@ -997,10 +1067,43 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 	if (subject) {
 		record.subject = subject;
 	}
-	if (gpcReported) {
+	if (meta.gpcReported) {
 		record.gpcReported = true;
 	}
+	if (meta.reference) {
+		record.reference = meta.reference;
+	}
+	if (meta.localAct) {
+		record.localAct = meta.localAct;
+	}
+	if (meta.rightsConfirmed) {
+		record.rightsConfirmed = true;
+	}
 	return { ok: true, record };
+};
+
+const COMPACT_OPT_OUT_CORE_KEYS = new Set(['r', 'm', 't', 'h']);
+
+const checkCompactOptOutField = function checkCompactOptOutField(
+	key: string,
+	value: string,
+	issues: StorageIssue[]
+): void {
+	if (key === 'g' || key === 'c') {
+		if (value !== '1') {
+			issues.push({ code: 'invalid-boolean', path: key });
+		}
+		return;
+	}
+	if (key === 'a') {
+		if (!CODE_TO_OPT_OUT_LOCAL_ACT.has(value)) {
+			issues.push({ code: 'invalid-value', path: key });
+		}
+		return;
+	}
+	if (!COMPACT_OPT_OUT_CORE_KEYS.has(key)) {
+		issues.push({ code: 'unknown-key', path: key });
+	}
 };
 
 /** Decodes a compact opt-out cookie through the shared validator. */
@@ -1018,15 +1121,7 @@ export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 		if (readSubjectField(key, value, subject, issues)) {
 			continue;
 		}
-		if (key === 'g') {
-			if (value !== '1') {
-				issues.push({ code: 'invalid-boolean', path: 'g' });
-			}
-			continue;
-		}
-		if (key !== 'r' && key !== 'm' && key !== 't' && key !== 'h') {
-			issues.push({ code: 'unknown-key', path: key });
-		}
+		checkCompactOptOutField(key, value, issues);
 	}
 	if (issues.length > 0) {
 		return { issues, ok: false };
@@ -1043,6 +1138,7 @@ export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 	}
 	const rawMethod = fields.get('m');
 	const rawHolder = fields.get('h');
+	const rawLocalAct = fields.get('a');
 	const candidate: Record<string, unknown> = {
 		heldBy:
 			rawHolder === undefined
@@ -1061,6 +1157,12 @@ export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 	}
 	if (fields.get('g') === '1') {
 		candidate.gpcReported = true;
+	}
+	if (rawLocalAct !== undefined) {
+		candidate.localAct = CODE_TO_OPT_OUT_LOCAL_ACT.get(rawLocalAct);
+	}
+	if (fields.get('c') === '1') {
+		candidate.rightsConfirmed = true;
 	}
 	return decodeOptOutRecord(candidate, now);
 };

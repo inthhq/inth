@@ -33,7 +33,7 @@ import type { OptionalConsentCategory } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { extractConsentNamesFromCondition, has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
-import { generateUuidV7 } from '../libs/subject-uuid';
+import { createIdempotencyKey, generateUuidV7 } from '../libs/subject-uuid';
 import { vendorAxisActive } from '../libs/vendors';
 import { toggleableVendorIds } from '../modules/vendor-denial';
 import type { PresentedSelection } from '../policy-choice';
@@ -890,6 +890,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			}
 			const subjectId = before.subject?.subjectId ?? generateUuidV7();
 			const subject = saveSubject(before, subjectId);
+			const reference = createIdempotencyKey();
 			const patch: SnapshotPatch = {
 				now: currentTime,
 				optOut: nextOptOut,
@@ -898,6 +899,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			applyNoticeAcknowledgement(patch, before, actionAt);
 			const { actVersion, after, generation, recorded } = batch(() => {
 				const nextActVersion = runtime.noteOptOutAct();
+				runtime.setOptOutReceiptData({
+					localAct: 'button',
+					reference,
+					rightsConfirmed: false,
+				});
 				commit(patch);
 				const committed = getSnapshot();
 				const optOut = committed.optOut as Readonly<OptOutRecord>;
@@ -922,7 +928,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				after,
 				recorded,
 				actionAt,
-				context?.uiSource
+				context?.uiSource,
+				reference
 			);
 			await outbox.sendOptOut(payload, { actVersion, generation });
 			const current = getSnapshot().optOut;
@@ -1108,6 +1115,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			}
 			applyNoticeAcknowledgement(patch, before, actionAt);
 			applySaveAuthority(patch, before, context?.iabAuthority);
+			const recordedOptOutReference =
+				recordedOptOut === null ? undefined : createIdempotencyKey();
 			// Listeners run when the batch closes, after this action's events
 			// are queued: `after` and the events carry this action's snapshot
 			// even when a listener records another choice in response.
@@ -1116,6 +1125,13 @@ export const createChoiceRecorder = function createChoiceRecorder({
 					liftsOptOut || recordedOptOut !== null || keepsOptOut
 						? runtime.noteOptOutAct()
 						: runtime.getOptOutActVersion();
+				if (recordedOptOutReference !== undefined) {
+					runtime.setOptOutReceiptData({
+						localAct: 'button',
+						reference: recordedOptOutReference,
+						rightsConfirmed: false,
+					});
+				}
 				commit(patch);
 				const committed = getSnapshot();
 				// Records generation at the moment the action landed. A hydration
@@ -1197,7 +1213,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 						after,
 						after.optOut as Readonly<OptOutRecord>,
 						actionAt,
-						uiSource
+						uiSource,
+						recordedOptOutReference
 					),
 					{ actVersion: optOutActVersion, generation }
 				);

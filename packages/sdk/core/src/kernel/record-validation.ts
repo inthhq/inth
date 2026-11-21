@@ -26,6 +26,7 @@ import {
 	validateOptOutRecord,
 } from '../consent-record/validation';
 import type { RecordIssue } from '../consent-record/validation';
+import type { OptOutLocalAct } from '../libs/opt-out-state';
 import { isValidVendorId } from '../libs/vendors';
 import type { HydrationRecords, VendorChoice } from '../types';
 
@@ -36,6 +37,9 @@ export interface ValidatedRecords {
 	noticeDismissal?: NoticeDismissal | null;
 	optOut?: OptOutRecord | null;
 	optOutGpcReported?: boolean;
+	optOutReference?: string | null;
+	optOutLocalAct?: OptOutLocalAct | null;
+	optOutRightsConfirmed?: boolean;
 	vendorChoice?: VendorChoice | null;
 }
 
@@ -131,6 +135,48 @@ export const validateVendorChoice = function validateVendorChoice(
 	};
 };
 
+const validateOptOutMetaFields = function validateOptOutMetaFields(
+	input: HydrationRecords,
+	records: ValidatedRecords,
+	issues: RecordIssue[]
+): void {
+	if (input.optOutGpcReported !== undefined) {
+		if (typeof input.optOutGpcReported === 'boolean') {
+			records.optOutGpcReported = input.optOutGpcReported;
+		} else {
+			issues.push({ code: 'invalid-boolean', path: 'optOutGpcReported' });
+		}
+	}
+	if (input.optOutReference !== undefined) {
+		if (
+			input.optOutReference === null ||
+			isNonEmptyString(input.optOutReference)
+		) {
+			records.optOutReference = input.optOutReference;
+		} else {
+			issues.push({ code: 'invalid-identifier', path: 'optOutReference' });
+		}
+	}
+	if (input.optOutLocalAct !== undefined) {
+		if (
+			input.optOutLocalAct === null ||
+			input.optOutLocalAct === 'button' ||
+			input.optOutLocalAct === 'gpc'
+		) {
+			records.optOutLocalAct = input.optOutLocalAct;
+		} else {
+			issues.push({ code: 'invalid-value', path: 'optOutLocalAct' });
+		}
+	}
+	if (input.optOutRightsConfirmed !== undefined) {
+		if (typeof input.optOutRightsConfirmed === 'boolean') {
+			records.optOutRightsConfirmed = input.optOutRightsConfirmed;
+		} else {
+			issues.push({ code: 'invalid-boolean', path: 'optOutRightsConfirmed' });
+		}
+	}
+};
+
 /**
  * Validate hydration input. Keys that are omitted stay omitted so the
  * caller can preserve current values; `null` passes through as an explicit
@@ -198,13 +244,7 @@ export const validateHydrationRecords = function validateHydrationRecords(
 			}
 		}
 	}
-	if (input.optOutGpcReported !== undefined) {
-		if (typeof input.optOutGpcReported === 'boolean') {
-			records.optOutGpcReported = input.optOutGpcReported;
-		} else {
-			issues.push({ code: 'invalid-boolean', path: 'optOutGpcReported' });
-		}
-	}
+	validateOptOutMetaFields(input, records, issues);
 	if (input.vendorChoice !== undefined) {
 		if (input.vendorChoice === null) {
 			records.vendorChoice = null;

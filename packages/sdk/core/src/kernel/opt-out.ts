@@ -7,6 +7,8 @@ import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
 import { optOutLiftBlocker } from '../consent-record/opt-out-rules';
 import { validateOptOutRecord } from '../consent-record/validation';
+import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state';
+import type { OptOutReceiptData } from '../libs/opt-out-state';
 import { createIdempotencyKey } from '../libs/subject-uuid';
 import type {
 	ConsentSnapshot,
@@ -111,7 +113,8 @@ export const buildOptOutPayload = function buildOptOutPayload(
 	snapshot: ConsentSnapshot,
 	optOut: Pick<OptOutRecord, 'method'>,
 	actionAt: number,
-	uiSource?: SaveUISource
+	uiSource?: SaveUISource,
+	idempotencyKey: string = createIdempotencyKey()
 ): OptOutPayload {
 	const country =
 		snapshot.overrides.country ?? snapshot.location?.countryCode ?? null;
@@ -122,7 +125,7 @@ export const buildOptOutPayload = function buildOptOutPayload(
 	const payload: OptOutPayload = {
 		country,
 		givenAt: actionAt,
-		idempotencyKey: createIdempotencyKey(),
+		idempotencyKey,
 		method: optOut.method === 'gpc' ? 'gpc' : 'button',
 		policyId:
 			snapshot.resolution.status === 'matched'
@@ -176,7 +179,32 @@ export interface OptOutAnswerFence {
 	subjectId: string | null;
 	/** Only a lift answer may clear `snapshot.optOut` to `null`. */
 	allowClear: boolean;
+	/** Whether `incoming` came from a backend answer (`false` for the local 404 fallback). */
+	confirmed?: boolean;
 }
+
+const nextSyncedOptOutReceipt = function nextSyncedOptOutReceipt(
+	currentOptOut: Readonly<OptOutRecord> | null,
+	nextOptOut: OptOutRecord | null,
+	currentReceipt: Readonly<OptOutReceiptData>,
+	confirmed: boolean
+): OptOutReceiptData {
+	if (nextOptOut === null) {
+		return EMPTY_OPT_OUT_RECEIPT_DATA;
+	}
+	if (currentOptOut === null) {
+		return {
+			localAct: null,
+			reference: null,
+			rightsConfirmed: confirmed,
+		};
+	}
+	return {
+		localAct: currentReceipt.localAct,
+		reference: currentReceipt.reference,
+		rightsConfirmed: currentReceipt.rightsConfirmed || confirmed,
+	};
+};
 
 /**
  * Apply the backend's authoritative opt-out answer to `runtime` when it is
@@ -213,10 +241,27 @@ export const applySyncedOptOut = function applySyncedOptOut(
 	if (next === null && optOutLiftBlocker(current) === 'gpc-active') {
 		return false;
 	}
+	const confirmed = fence.confirmed !== false;
+	const currentReceipt = runtime.getOptOutReceiptData();
+	const nextReceipt = nextSyncedOptOutReceipt(
+		current.optOut,
+		next,
+		currentReceipt,
+		confirmed
+	);
+	const receiptChanged =
+		nextReceipt.localAct !== currentReceipt.localAct ||
+		nextReceipt.reference !== currentReceipt.reference ||
+		nextReceipt.rightsConfirmed !== currentReceipt.rightsConfirmed;
 	if (sameOptOutRecord(current.optOut, next)) {
-		return false;
+		if (!receiptChanged) {
+			return false;
+		}
+		runtime.setOptOutReceiptData(nextReceipt);
+		return true;
 	}
 	runtime.batch(() => {
+		runtime.setOptOutReceiptData(nextReceipt);
 		runtime.commit({ now: runtime.now(), optOut: next });
 		const after = runtime.getSnapshot();
 		runtime.emit({

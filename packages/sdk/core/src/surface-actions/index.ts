@@ -44,6 +44,8 @@ export { saveIABConsentSurface } from './iab-save';
 export {
 	claimOptOutConfirmationHost,
 	closeOptOutConfirmation,
+	getOptOutReceiptData,
+	getServerOptOutReceiptData,
 	hasOptOutConfirmationHost,
 	isOptOutConfirmationOpen,
 	isOptOutTrigger,
@@ -51,6 +53,7 @@ export {
 	optOutConsentSurface,
 	readFocusedElement,
 	subscribeOptOutConfirmation,
+	subscribeOptOutReceiptData,
 	takeOptOutConfirmationOpener,
 } from './opt-out';
 export {

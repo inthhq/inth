@@ -21,7 +21,9 @@
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
 import type { ExperimentAssignment, ExperimentGate } from '../libs/experiment';
-import { generateUuidV7 } from '../libs/subject-uuid';
+import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state';
+import type { OptOutReceiptData } from '../libs/opt-out-state';
+import { createIdempotencyKey, generateUuidV7 } from '../libs/subject-uuid';
 import type {
 	ConsentSnapshot,
 	KernelEvent,
@@ -96,6 +98,20 @@ export interface KernelRuntime {
 	setOptOutGpcReported: (reported: boolean, notify?: boolean) => void;
 	/** Subscribe to live changes to the local GPC report mark. */
 	onOptOutGpcReportedChange: (listener: Listener<boolean>) => () => void;
+	/** Local-only receipt data kept beside the held opt-out record. */
+	getOptOutReceiptData: () => Readonly<OptOutReceiptData>;
+	/** Update the local-only receipt data. `fromHydration` suppresses persistence write-back. */
+	setOptOutReceiptData: (
+		data: OptOutReceiptData,
+		fromHydration?: boolean
+	) => void;
+	/** Subscribe to changes in local opt-out receipt data. */
+	onOptOutReceiptDataChange: (
+		listener: (
+			data: Readonly<OptOutReceiptData>,
+			fromHydration?: boolean
+		) => void
+	) => () => void;
 	/** Reconcile the GPC report mark and trigger a held-record report when due. */
 	syncGpcSignal: (actionAt?: number) => void;
 	/**
@@ -120,6 +136,8 @@ export interface RuntimeOptions {
 	initialSnapshot: ConsentSnapshot;
 	/** Initial local GPC report mark hydrated from stored records. */
 	initialOptOutGpcReported?: boolean;
+	/** Initial local opt-out receipt data hydrated from stored records. */
+	initialOptOutReceiptData?: Readonly<OptOutReceiptData>;
 	emit: (event: KernelEvent) => void;
 	/** Shared with the event bus so snapshots and events keep one order. */
 	dispatcher: Dispatcher;
@@ -151,6 +169,16 @@ export const createRuntime = function createRuntime(
 	let gpcReportAttempted = gpcReported;
 	let gpcReportEpoch = 0;
 	let gpcReportedListeners: ListenerSet<boolean> | undefined;
+	let optOutReceiptData: Readonly<OptOutReceiptData> =
+		options.initialSnapshot.optOut !== null && options.initialOptOutReceiptData
+			? Object.freeze({ ...options.initialOptOutReceiptData })
+			: EMPTY_OPT_OUT_RECEIPT_DATA;
+	let optOutReceiptListeners:
+		| ListenerSet<{
+				data: Readonly<OptOutReceiptData>;
+				fromHydration: boolean;
+		  }>
+		| undefined;
 	/**
 	 * The surface the kernel, not the adapter, hid in the last commit: a
 	 * derived `activeUI` change (a save clearing the prompt) rather than an
@@ -198,6 +226,38 @@ export const createRuntime = function createRuntime(
 			dispatcher.batch(() => {
 				if (gpcReportedListeners) {
 					dispatcher.deliver(gpcReportedListeners, reported);
+				}
+			});
+		}
+	};
+
+	const setOptOutReceiptData = function setOptOutReceiptData(
+		next: OptOutReceiptData,
+		fromHydration = false
+	): void {
+		const normalized: Readonly<OptOutReceiptData> =
+			next.localAct === null && next.reference === null && !next.rightsConfirmed
+				? EMPTY_OPT_OUT_RECEIPT_DATA
+				: Object.freeze({
+						localAct: next.localAct,
+						reference: next.reference,
+						rightsConfirmed: next.rightsConfirmed,
+					});
+		if (
+			optOutReceiptData.localAct === normalized.localAct &&
+			optOutReceiptData.reference === normalized.reference &&
+			optOutReceiptData.rightsConfirmed === normalized.rightsConfirmed
+		) {
+			return;
+		}
+		optOutReceiptData = normalized;
+		if (optOutReceiptListeners) {
+			dispatcher.batch(() => {
+				if (optOutReceiptListeners) {
+					dispatcher.deliver(optOutReceiptListeners, {
+						data: normalized,
+						fromHydration,
+					});
 				}
 			});
 		}
@@ -467,8 +527,16 @@ export const createRuntime = function createRuntime(
 		if (recordedGpcOptOut) {
 			optOutActVersion += 1;
 			gpcReportAttempted = true;
+			setOptOutReceiptData({
+				localAct: 'gpc',
+				reference: createIdempotencyKey(),
+				rightsConfirmed: false,
+			});
 			publish(current, adopted, shown, adopted.optOut);
 		} else {
+			if (adopted.optOut === null) {
+				setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA, true);
+			}
 			publish(current, adopted, shown, null);
 			syncGpcSignalState(current, adopted, adopted.evaluatedAt);
 		}
@@ -551,6 +619,7 @@ export const createRuntime = function createRuntime(
 		getGeneration: () => generation,
 		getOptOutActVersion: () => optOutActVersion,
 		getOptOutGpcReportEpoch: () => gpcReportEpoch,
+		getOptOutReceiptData: () => optOutReceiptData,
 		getSnapshot,
 		invalidateRecords: () => {
 			generation += 1;
@@ -566,8 +635,15 @@ export const createRuntime = function createRuntime(
 			gpcReportedListeners ??= createListenerSet();
 			return gpcReportedListeners.add(listener);
 		},
+		onOptOutReceiptDataChange(listener) {
+			optOutReceiptListeners ??= createListenerSet();
+			return optOutReceiptListeners.add(({ data, fromHydration }) => {
+				listener(data, fromHydration);
+			});
+		},
 		setExperiment,
 		setOptOutGpcReported,
+		setOptOutReceiptData,
 		subscribe(listener) {
 			listeners ??= createListenerSet();
 			return listeners.add(listener);
