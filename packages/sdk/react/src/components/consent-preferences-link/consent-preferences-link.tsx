@@ -20,6 +20,7 @@ import {
 	usePolicyRule,
 	useResolvedPresentation,
 } from '~/hooks';
+import { useTheme } from '~/hooks/use-theme';
 
 /**
  * Inline trigger for opening the consent dialog or exercising the opt-out
@@ -58,6 +59,7 @@ export const ConsentDialogLink = createForwardRef<
 	const translations = useTranslations();
 	const presentation = useResolvedPresentation();
 	const optOut = useOptOut();
+	const { noStyle: themeNoStyle } = useTheme();
 
 	if (!hasConsentUI) {
 		// Nothing to open: without a policy, or under a `none` rule with no
@@ -74,7 +76,9 @@ export const ConsentDialogLink = createForwardRef<
 		? optOutLink.label
 		: translations.consentManagerDialog.title;
 	const icon = showOptOutIcon ? (
-		<OptOutIcon className={noStyle ? undefined : bannerStyles.optOutIcon} />
+		<OptOutIcon
+			className={themeNoStyle ? undefined : bannerStyles.optOutIcon}
+		/>
 	) : null;
 
 	const handleClick = (event: MouseEvent<HTMLButtonElement>) => {

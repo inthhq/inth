@@ -37,7 +37,7 @@ const meta = {
 		},
 		template: args.gpc
 			? `
-			<button inthConsentDialogLink right="opt-out" type="button"></button>
+			<button inthConsentDialogLink [right]="'opt-out'" type="button"></button>
 			<inth-consent-dialog [disableAnimation]="true" />
 		`
 			: `

@@ -194,11 +194,15 @@ const preferencesLinkAttrs = computed(() =>
 				v-bind="
 					slotAttrs(config.components?.['opt-out-confirmation']?.overlay, [
 						styles.overlay,
-						isOpen ? styles.overlayVisible : styles.overlayHidden,
+						disableAnimation
+							? undefined
+							: isOpen
+								? styles.overlayVisible
+								: styles.overlayHidden,
 					])
 				"
 				data-testid="opt-out-confirmation-overlay"
-				:data-disable-animation="disableAnimation ? true : undefined"
+				:data-disable-animation="disableAnimation ? '' : undefined"
 			/>
 			<div
 				:class="[
@@ -209,7 +213,7 @@ const preferencesLinkAttrs = computed(() =>
 							? styles.dialogVisible
 							: styles.dialogHidden,
 				]"
-				:data-disable-animation="disableAnimation ? true : undefined"
+				:data-disable-animation="disableAnimation ? '' : undefined"
 				:data-state="isOpen ? 'open' : 'closed'"
 				:dir="textDirection"
 			>
