@@ -665,6 +665,12 @@ export interface QueueWorkerOptions {
 	runtime: KernelRuntime;
 	store: SaveOutboxStore;
 	tools: QueueTools;
+	/** Opt-out act version when a save queued on this kernel was recorded. */
+	getSaveActVersion?: (
+		idempotencyKey: string | undefined
+	) => number | undefined;
+	/** Whether this instance has a direct opt-out or lift request in flight. */
+	hasOptOutInFlight?: () => boolean;
 	/** Whether this instance already owns a direct send for the action. */
 	isSending?: (payload: SavePayload) => boolean;
 	/** Whether this instance already owns a direct send for an opt-out act. */
@@ -742,6 +748,8 @@ export const createQueueWorker = function createQueueWorker({
 	runtime,
 	store,
 	tools,
+	getSaveActVersion = () => undefined,
+	hasOptOutInFlight = () => false,
 	isSending = () => false,
 	isSendingOptOut = () => false,
 }: QueueWorkerOptions): QueueWorker {
@@ -1113,7 +1121,11 @@ export const createQueueWorker = function createQueueWorker({
 		key: string | undefined,
 		outcome: ReplayOutcome,
 		isEntry: (candidate: PendingSaveEntry) => boolean
-	): Promise<{ attempts: number | null; written: boolean }> {
+	): Promise<{
+		attempts: number | null;
+		hasPendingOptOuts: boolean;
+		written: boolean;
+	}> {
 		return store.transact((tx) => {
 			let counted: number | null = null;
 			const next: PendingSaveEntry[] = [];
@@ -1132,7 +1144,11 @@ export const createQueueWorker = function createQueueWorker({
 					next.push({ ...candidate, attempts: counted });
 				}
 			}
-			return { attempts: counted, written: tx.write('saves', next) };
+			return {
+				attempts: counted,
+				hasPendingOptOuts: readPendingOptOuts(tx).length > 0,
+				written: tx.write('saves', next),
+			};
 		});
 	};
 
@@ -1183,7 +1199,7 @@ export const createQueueWorker = function createQueueWorker({
 		let failure: unknown;
 		let canonical: string | undefined;
 		let answeredOptOut: OptOutRecord | undefined;
-		const actVersion = runtime.getOptOutActVersion();
+		const actVersion = getSaveActVersion(key) ?? runtime.getOptOutActVersion();
 		const generation = runtime.getGeneration();
 		try {
 			const result = await save(entry.payload);
@@ -1213,7 +1229,7 @@ export const createQueueWorker = function createQueueWorker({
 		// The entry's attempts after this one, or `null` when another kernel
 		// removed it, or counted this attempt, while the request was out; and
 		// whether storage took the updated list.
-		const { attempts, written } = await recordSaveAttempt(
+		const { attempts, hasPendingOptOuts, written } = await recordSaveAttempt(
 			key,
 			outcome,
 			isEntry
@@ -1225,7 +1241,12 @@ export const createQueueWorker = function createQueueWorker({
 			outcome === 'saved' ? canonical : undefined,
 			moved
 		);
-		if (outcome === 'saved' && answeredOptOut !== undefined) {
+		if (
+			outcome === 'saved' &&
+			answeredOptOut !== undefined &&
+			!hasPendingOptOuts &&
+			!hasOptOutInFlight()
+		) {
 			applySyncedOptOut(runtime, answeredOptOut, {
 				actVersion,
 				allowClear: false,

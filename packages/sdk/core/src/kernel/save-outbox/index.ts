@@ -253,6 +253,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	// Instance-local: another page must still recover a stranded request.
 	const directSends = new Set<SavePayload>();
 	const directOptOutSends = new Set<string>();
+	const saveActVersions = new Map<string, number>();
 	let optOutRequestsInFlight = 0;
 	const optOutRequestListeners = new Set<(inFlight: number) => void>();
 	const notifyOptOutRequests = (): void => {
@@ -297,6 +298,9 @@ export const createSaveOutbox = function createSaveOutbox({
 			try {
 				const { createQueueWorker } = await loadQueue();
 				worker ??= createQueueWorker({
+					getSaveActVersion: (key) =>
+						key === undefined ? undefined : saveActVersions.get(key),
+					hasOptOutInFlight: () => directOptOutSends.size > 0,
 					isSending,
 					isSendingOptOut,
 					runtime,
@@ -355,6 +359,9 @@ export const createSaveOutbox = function createSaveOutbox({
 	};
 
 	const discard = async function discard(payload: SavePayload): Promise<void> {
+		if (payload.idempotencyKey !== undefined) {
+			saveActVersions.delete(payload.idempotencyKey);
+		}
 		if (await hasQueued('saves')) {
 			await (await loadWorker())?.discard(payload);
 		}
@@ -399,6 +406,7 @@ export const createSaveOutbox = function createSaveOutbox({
 
 	const clear = function clear(): Promise<void> {
 		clearVersion += 1;
+		saveActVersions.clear();
 		// At once, so the page can close before the lock is granted: a later
 		// page must not replay the cleared subject's saves or opt-outs. Then
 		// again under the lock, after any transaction that read the lists first.
@@ -517,7 +525,11 @@ export const createSaveOutbox = function createSaveOutbox({
 			result.subjectId,
 			action.snapshot.subject?.subjectId
 		);
-		if (result.optOut !== undefined) {
+		if (
+			result.optOut !== undefined &&
+			directOptOutSends.size === 0 &&
+			!(await hasQueued('optOuts'))
+		) {
 			applySyncedOptOut(runtime, result.optOut, {
 				actVersion: action.optOutActVersion,
 				allowClear: false,
@@ -535,6 +547,9 @@ export const createSaveOutbox = function createSaveOutbox({
 		reassign: boolean
 	): Promise<SaveResult> {
 		const { confirmed, generation, snapshot: actionSnapshot } = action;
+		if (payload.idempotencyKey !== undefined) {
+			saveActVersions.set(payload.idempotencyKey, action.optOutActVersion);
+		}
 		const currentPayload = (): SavePayload | null => {
 			const current = getSnapshot();
 			if (

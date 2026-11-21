@@ -2596,4 +2596,49 @@ describe('opt-out network sync and queue', () => {
 		expect(second.getSnapshot().optOut).toEqual(accountOptOut);
 		second.dispose();
 	});
+
+	test('a replayed save answer does not reinstate an opt-out cleared by a newer local lift', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const heldOptOut: OptOutRecord = {
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+		};
+		const save = vi
+			.fn<NonNullable<KernelTransport['save']>>()
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockImplementation((payload) =>
+				Promise.resolve({
+					ok: true,
+					optOut: heldOptOut,
+					subjectId: payload.subjectId,
+				})
+			);
+		const liftOptOut = vi
+			.fn<NonNullable<KernelTransport['liftOptOut']>>()
+			.mockRejectedValue(new Error('offline'));
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: heldOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			transport: { liftOptOut, save },
+		});
+
+		const firstSave = await kernel.commands.save({ functionality: true });
+		expect(firstSave.ok).toBe(false);
+
+		await kernel.commands.optIn();
+		expect(kernel.getSnapshot().optOut).toBeNull();
+
+		kernel.replaySaves();
+		await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+		await flushMacrotasks();
+
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+		kernel.dispose();
+	});
 });
