@@ -10,7 +10,8 @@ import type { SignUpForm } from './app';
 const inth = new Inth();
 
 export const signUp = async (request: Request, form: SignUpForm) => {
-	const shown = await readShownDocuments(request);
+	// What this form showed, by the ID it carries
+	const shown = await readShownDocuments(request, form.formId);
 	if (!form.accepted || !shown) {
 		// Show the form again, with the documents in force
 		return null;

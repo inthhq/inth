@@ -9,21 +9,27 @@ export interface ShownDocument {
 }
 
 export interface SignUpForm {
+	/** The ID the server gave this form when it showed it */
+	readonly formId: string;
 	readonly email: string;
 	/** The visitor ticked the box that accepts the terms and privacy policy */
 	readonly accepted: boolean;
 }
 
+/** Keeps what one form showed in the visitor's session, under a new random ID */
 export const saveShownDocuments = (
 	_request: Request,
 	_documents: readonly ShownDocument[]
-): Promise<void> => Promise.resolve();
+): Promise<string> => Promise.resolve(crypto.randomUUID());
 
+/** What the form with this ID showed, from the same visitor's session */
 export const readShownDocuments = (
-	_request: Request
+	_request: Request,
+	_formId: string
 ): Promise<readonly ShownDocument[] | undefined> => Promise.resolve(undefined);
 
-export const renderSignUpForm = (_documents: {
+export const renderSignUpForm = (_form: {
+	readonly formId: string;
 	readonly terms: InthDocument;
 	readonly privacy: InthDocument;
 }): Response => new Response('');
