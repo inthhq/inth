@@ -57,9 +57,10 @@ which `@inth/svelte` exports. Pass them
 title, description and button labels in the active language, with English for
 any missing key. Under a notice, `resolvePromptCopy` reads the
 notice copy and `banner.primaryActions` contains `dismiss`.
-`resolvePreferenceControlLabels` labels a preferences button, and
+`resolvePreferenceControlLabels` labels a preferences button,
 `resolveOptOutLink` resolves the statutory opt-out link title and icon marker
-for `presentation.optOutLink`.
+for `presentation.optOutLink`, and `resolveOptOutReceiptSentence` formats the
+receipt sentence from `getConsentManager().optOutReceipt`.
 
 ## Build your own preferences
 
