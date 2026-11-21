@@ -74,17 +74,69 @@ export const WithVendorsExpanded: Story = {
 	play: expandedVendors,
 };
 
-/** Durable opt-out honored by a visitor request; switches stay off and usable. */
+/** Under an opt-out policy before the visitor opts out. */
+export const OptOutNotOptedOut: Story = {
+	render: () => (
+		<StorybookConsentProvider
+			options={{
+				...editableConsentOptions,
+				mode: storybookMode([storybookOptOutPolicy]),
+				overrides: { country: 'US', gpc: false, region: 'CA' },
+				prefetch: {
+					initialPolicyResolution: storybookOptOutPolicyResolution,
+				},
+				presentation: { optOutLink: 'do-not-sell' },
+			}}
+		>
+			<div style={{ width: '32rem' }}>
+				<ConsentWidget />
+			</div>
+		</StorybookConsentProvider>
+	),
+};
+
+/** Durable opt-out honored by a visitor request before backend rights confirmation. */
 export const OptOutHonoredByRequest: Story = {
 	render: () => (
 		<StorybookConsentProvider
 			options={{
 				...editableConsentOptions,
 				mode: storybookMode([storybookOptOutPolicy]),
+				overrides: { country: 'US', gpc: false, region: 'CA' },
 				prefetch: {
 					initialPolicyResolution: storybookOptOutPolicyResolution,
-					initialRecords: storybookOptOutRecords('request'),
+					initialRecords: {
+						...storybookOptOutRecords('request'),
+						optOutReference: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+					},
 				},
+				presentation: { optOutLink: 'do-not-sell' },
+			}}
+		>
+			<div style={{ width: '32rem' }}>
+				<ConsentWidget />
+			</div>
+		</StorybookConsentProvider>
+	),
+};
+
+/** Durable opt-out with sale and sharing confirmed by the backend. */
+export const OptOutConfirmedSaleAndShare: Story = {
+	render: () => (
+		<StorybookConsentProvider
+			options={{
+				...editableConsentOptions,
+				mode: storybookMode([storybookOptOutPolicy]),
+				overrides: { country: 'US', gpc: false, region: 'CA' },
+				prefetch: {
+					initialPolicyResolution: storybookOptOutPolicyResolution,
+					initialRecords: {
+						...storybookOptOutRecords('request'),
+						optOutReference: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+						optOutRightsConfirmed: true,
+					},
+				},
+				presentation: { optOutLink: 'do-not-sell' },
 			}}
 		>
 			<div style={{ width: '32rem' }}>
