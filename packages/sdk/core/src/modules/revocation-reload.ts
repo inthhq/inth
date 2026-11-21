@@ -4,6 +4,7 @@ import { registerOptOutReloadHook } from '../surface-actions/opt-out';
 import {
 	clearPendingOptOutConfirmation,
 	markPendingOptOutConfirmation,
+	releasePendingOptOutConfirmation,
 } from '../surface-actions/opt-out-reload';
 /**
  * Reload the page after a visitor revokes a permission.
@@ -199,6 +200,15 @@ export const watchRevocationReload = function watchRevocationReload({
 		}
 	};
 
+	// The opt-out click wrote a marker and skipped its confirmation because a
+	// reload was due. When no watcher will reload after all, drop the marker
+	// and show the confirmation on this document.
+	const cancelDueReload = () => {
+		if (!isRevocationReloadEnabled(kernel)) {
+			releasePendingOptOutConfirmation(kernel, true);
+		}
+	};
+
 	const armCapTimer = () => {
 		if (
 			disposed ||
@@ -238,6 +248,7 @@ export const watchRevocationReload = function watchRevocationReload({
 		}
 		revoked = false;
 		if (typeof window === 'undefined' || !isEnabled()) {
+			cancelDueReload();
 			return;
 		}
 		const preferences = kernel.getSnapshot().effectivePermissions;
@@ -279,6 +290,7 @@ export const watchRevocationReload = function watchRevocationReload({
 		if (typeof window === 'undefined' || !isEnabled()) {
 			clearTimers();
 			revoked = false;
+			cancelDueReload();
 			return;
 		}
 		timer = setTimeout(fireReload, 0);
@@ -343,5 +355,10 @@ export const watchRevocationReload = function watchRevocationReload({
 			unsubscribe();
 		}
 		clearTimers();
+		// A reload this watcher owed will not happen. Its surface may be gone
+		// with it, so only the marker is dropped here.
+		if (revoked && !isRevocationReloadEnabled(kernel)) {
+			releasePendingOptOutConfirmation(kernel, false);
+		}
 	};
 };

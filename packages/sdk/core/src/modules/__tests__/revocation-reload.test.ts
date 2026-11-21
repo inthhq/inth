@@ -998,6 +998,83 @@ describe('opt-out confirmation across a revocation reload', () => {
 		expect(hasPendingOptOutConfirmation()).toBe(false);
 	});
 
+	/** A later load in the same tab that holds `kernel`'s opt-out record. */
+	const laterLoadOpensConfirmation = (
+		kernel: ReturnType<typeof createKernel>
+	) => {
+		const later = createOptOutKernel({
+			initialRecords: { optOut: kernel.getSnapshot().optOut ?? undefined },
+		});
+		const stop = watchPendingOptOutConfirmation(later);
+		const open = isOptOutConfirmationOpen(later);
+		stop();
+		return open;
+	};
+
+	it.each([
+		['before the opt-out command completes', false],
+		['after the reload is scheduled', true],
+	] as const)(
+		'clears the marker and opens confirmation at once when reloads are switched off %s',
+		async (_when, afterScheduled) => {
+			const kernel = createOptOutKernel();
+			let enabled = true;
+			const reload = vi.fn();
+			watchRevocationReload({
+				isEnabled: () => enabled,
+				kernel,
+				reload,
+			});
+
+			const pending = optOutConsentSurface(kernel);
+			expect(hasPendingOptOutConfirmation()).toBe(true);
+			expect(isOptOutConfirmationOpen(kernel)).toBe(false);
+			if (afterScheduled) {
+				await pending;
+			}
+			enabled = false;
+			await pending;
+			await vi.runAllTimersAsync();
+
+			expect(reload).not.toHaveBeenCalled();
+			expect(hasPendingOptOutConfirmation()).toBe(false);
+			expect(isOptOutConfirmationOpen(kernel)).toBe(true);
+			expect(laterLoadOpensConfirmation(kernel)).toBe(false);
+		}
+	);
+
+	it('clears the marker when the watcher is disposed before a due reload fires', async () => {
+		const kernel = createOptOutKernel();
+		const { dispose, reload } = watch(kernel);
+
+		const pending = optOutConsentSurface(kernel);
+		expect(hasPendingOptOutConfirmation()).toBe(true);
+		await pending;
+		dispose();
+		await vi.runAllTimersAsync();
+
+		expect(reload).not.toHaveBeenCalled();
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+		expect(laterLoadOpensConfirmation(kernel)).toBe(false);
+	});
+
+	it('keeps the marker when one of two watchers is disposed and the other still reloads', async () => {
+		const kernel = createOptOutKernel();
+		const first = watch(kernel);
+		const second = watch(kernel);
+
+		const pending = optOutConsentSurface(kernel);
+		await pending;
+		first.dispose();
+		expect(hasPendingOptOutConfirmation()).toBe(true);
+		await vi.runAllTimersAsync();
+
+		expect(second.reload).toHaveBeenCalledOnce();
+		expect(hasPendingOptOutConfirmation()).toBe(true);
+		second.dispose();
+	});
+
 	it('ignores and clears a pending marker when no opt-out is held on the new document', () => {
 		markPendingOptOutConfirmation();
 		const kernel = createOptOutKernel();
