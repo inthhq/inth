@@ -1105,6 +1105,41 @@ describe('opt-out confirmation across a revocation reload', () => {
 		second.dispose();
 	});
 
+	it('does not reload again for an opt-out on a page that came back from an opt-out reload with the marker present', async () => {
+		// The page reloaded for an opt-out, and the record did not survive:
+		// storage kept nothing, or the site cleared it. The opt-out runs again
+		// before the marker is consumed.
+		markPendingOptOutConfirmation();
+		const kernel = createOptOutKernel();
+		const { onBeforeReload, reload } = watch(kernel);
+
+		await optOutConsentSurface(kernel);
+		await vi.runAllTimersAsync();
+
+		expect(reload).not.toHaveBeenCalled();
+		expect(onBeforeReload).not.toHaveBeenCalled();
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+		expect(isOptOutConfirmationOpen(kernel)).toBe(true);
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+	});
+
+	it('does not reload again once the reloaded page found no opt-out for its marker', async () => {
+		markPendingOptOutConfirmation();
+		const kernel = createOptOutKernel();
+		const stop = watchPendingOptOutConfirmation(kernel);
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+		expect(isOptOutConfirmationOpen(kernel)).toBe(false);
+		const { reload } = watch(kernel);
+
+		await optOutConsentSurface(kernel);
+		await vi.runAllTimersAsync();
+
+		expect(reload).not.toHaveBeenCalled();
+		expect(isOptOutConfirmationOpen(kernel)).toBe(true);
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+		stop();
+	});
+
 	it('ignores and clears a pending marker when no opt-out is held on the new document', () => {
 		markPendingOptOutConfirmation();
 		const kernel = createOptOutKernel();
