@@ -135,7 +135,7 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			consentCategories: CATEGORIES,
 			policy: 'opt-out',
 		},
-		props: { force: true },
+		props: { disableAnimation: true, force: true },
 	},
 	{
 		component: 'consent-banner',
@@ -146,7 +146,7 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			policy: 'opt-out',
 			presentation: { optOutLink: 'privacy-choices' },
 		},
-		props: { force: true },
+		props: { disableAnimation: true, force: true },
 	},
 	{
 		component: 'opt-out-confirmation',
@@ -157,6 +157,7 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			consentCategories: CATEGORIES,
 			policy: 'opt-out',
 		},
+		props: { disableAnimation: true },
 	},
 	{
 		component: 'opt-out-confirmation',
@@ -166,7 +167,9 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			colorScheme: 'light',
 			consentCategories: CATEGORIES,
 			policy: 'opt-out',
+			presentation: { optOutLink: 'privacy-choices' },
 		},
+		props: { disableAnimation: true },
 	},
 	{
 		component: 'consent-dialog',

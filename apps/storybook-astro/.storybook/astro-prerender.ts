@@ -246,6 +246,14 @@ const renderVariants = async function renderVariants(
 			const clean = (html: string) =>
 				stripDevAttributes(html.replace(SCRIPT_TAG, '')).trim();
 			let html = clean(raw);
+			if (variant.openOptOutConfirmation === 'signal') {
+				// oxlint-disable-next-line no-await-in-loop -- One shared container.
+				const link = await renderPart(
+					COMPONENT_FILES['consent-dialog-trigger'] as string,
+					{ right: 'opt-out' }
+				);
+				html = `${clean(link)}${html}`;
+			}
 			if (variant.recipePage) {
 				// oxlint-disable-next-line no-await-in-loop -- See above.
 				const [trigger, dialog] = await Promise.all([
