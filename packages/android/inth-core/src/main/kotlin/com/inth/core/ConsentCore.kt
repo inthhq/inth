@@ -34,8 +34,12 @@ import com.inth.core.model.QueuedSave
 import com.inth.core.model.SavePayload
 import com.inth.core.policy.EvaluationPolicy
 import com.inth.core.policy.NoticeDismissal
+import com.inth.core.policy.OptOutLock
 import com.inth.core.policy.PolicyEvaluator
 import com.inth.core.policy.PolicyPrompt
+import com.inth.core.policy.ResolvedOptOutState
+import com.inth.core.policy.resolveCategoryOptOutLock
+import com.inth.core.policy.resolveOptOutState
 import com.inth.core.spi.Clock
 import com.inth.core.spi.TaskExecutor
 import com.inth.core.store.InthStore
@@ -775,6 +779,25 @@ class ConsentCore @InthInternalApi constructor(
 	 * is not ready or the policy is still pending.
 	 */
 	fun isAllowed(category: ConsentCategory): Boolean = snapshot().isAllowed(category)
+
+	/**
+	 * Headless opt-out display state for the current snapshot and active policy.
+	 *
+	 * Reads cached state and never blocks on disk or network.
+	 */
+	fun optOutState(): ResolvedOptOutState = synchronized(mutationLock) {
+		resolveOptOutState(snapshot(), evaluationPolicy)
+	}
+
+	/**
+	 * Why [category]'s preference switch is locked or annotated for an opt-out or privacy signal,
+	 * or `null` when it is neither.
+	 *
+	 * Reads cached state and never blocks on disk or network.
+	 */
+	fun categoryOptOutLock(category: ConsentCategory): OptOutLock? = synchronized(mutationLock) {
+		resolveCategoryOptOutLock(snapshot(), evaluationPolicy, category)
+	}
 
 	/**
 	 * Call [onChange] now with the current permission for [category], then again on

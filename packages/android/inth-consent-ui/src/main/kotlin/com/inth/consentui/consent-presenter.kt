@@ -12,6 +12,8 @@ import com.inth.consentui.headless.initialIabChoices
 import com.inth.core.*
 import com.inth.core.iab.*
 import com.inth.core.model.*
+import com.inth.core.policy.OptOutLock
+import com.inth.core.policy.ResolvedOptOutState
 import kotlinx.coroutines.*
 import java.util.UUID
 
@@ -109,6 +111,12 @@ class ConsentPresenter(val core: ConsentCore, autoPresent: Boolean = true) : Vie
     /** The same summary for a custom (non-IAB) partner. */
     fun customPartnerStatus(id: String): String = iabRows?.customVendors?.firstOrNull { it.id == id }?.statusLabel ?: iabCopy.appOff
     val offeredCategories get() = draft.displayedCategories
+    /** Opt-out display state for the current snapshot and active policy. */
+    val optOutState: ResolvedOptOutState get() = draft.optOutState
+    /** Honored opt-out status line, or `null` when no opt-out is held. */
+    val optOutStatus: String? get() = draft.optOutStatus
+    /** Opt-out or privacy signal lock reason for [category], or `null`. */
+    fun categoryOptOutLock(category: ConsentCategory): OptOutLock? = draft.categoryOptOutLock(category)
     /**
      * What the last refused commit means for the person; the retry is offered beside it. Stays set
      * while a retry is in flight, so the footer does not reflow under the thumb, and clears only on
