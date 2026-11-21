@@ -135,3 +135,28 @@ private fun optOutLock(
 	}
 	return null
 }
+
+/**
+ * Answer whether the visitor is opted out of sale, sharing and targeted advertising right now.
+ *
+ * Port of `isOptedOut` in `packages/sdk/core/src/libs/opt-out-state.ts`: returns `true` when
+ * a durable opt-out record is held. Otherwise, when [categories] is non-null, returns `true`
+ * when any listed category is not permitted in `effectivePermissions`. When [categories] is
+ * `null`, checks [PolicyEvaluator.optOutDecidingCategory] for [policy] (returns `false` when
+ * none is in scope). Passing [categories] overrides only the category check; a held opt-out
+ * record still returns `true`.
+ */
+fun isOptedOut(
+	snapshot: ConsentSnapshot,
+	policy: EvaluationPolicy?,
+	categories: List<ConsentCategory>? = null,
+): Boolean {
+	if (snapshot.optOut != null) {
+		return true
+	}
+	if (categories != null) {
+		return categories.any { !snapshot.effectivePermissions[it] }
+	}
+	val deciding = PolicyEvaluator.optOutDecidingCategory(policy)
+	return deciding != null && !snapshot.effectivePermissions[deciding]
+}

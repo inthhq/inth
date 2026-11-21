@@ -135,8 +135,7 @@ class GppFixtureTest {
 		val raw = options.jsonObject
 		return GppOptions(
 			mspaMode = raw["mspaMode"]?.jsonPrimitive?.contentOrNull?.let { GppMspaMode.fromWireName(it)!! },
-			optOutCategories = raw["optOutCategories"]?.jsonArray?.map { ConsentCategory.fromWireName(it.jsonPrimitive.content)!! }
-				?: listOf(ConsentCategory.MARKETING),
+			optOutCategories = raw["optOutCategories"]?.jsonArray?.map { ConsentCategory.fromWireName(it.jsonPrimitive.content)!! },
 			tcf = (raw["tcf"] as? JsonPrimitive)?.boolean ?: true,
 		)
 	}
@@ -213,16 +212,26 @@ class GppCoreTest {
 	 * US visitor has to be served a US location: `GPPTests.swift` once served Germany and
 	 * got no section, correctly.
 	 */
-	private fun initFor(country: String) = initSuccess(
+	private fun initFor(
+		country: String,
+		model: String = "\"opt-out\"",
+		prompt: String = "\"choice\"",
+		scope: String = """["experience","functionality","marketing","measurement"]""",
+	) = initSuccess(
 		body = JsonObject(
-			Json.parseToJsonElement(initBody(model = "\"opt-out\"")).jsonObject +
+			Json.parseToJsonElement(initBody(model = model, prompt = prompt, scope = scope)).jsonObject +
 				("location" to JsonObject(mapOf("countryCode" to JsonPrimitive(country), "regionCode" to JsonNull))),
 		).toString(),
 	)
 
-	private fun transport(country: String = "US") = RecordingTransport()
-		.respondInit(initFor(country))
-		.respondInit(initFor(country))
+	private fun transport(
+		country: String = "US",
+		model: String = "\"opt-out\"",
+		prompt: String = "\"choice\"",
+		scope: String = """["experience","functionality","marketing","measurement"]""",
+	) = RecordingTransport()
+		.respondInit(initFor(country, model, prompt, scope))
+		.respondInit(initFor(country, model, prompt, scope))
 
 	@Test fun `a US opt-out visitor gets usnat on the snapshot and in storage, and a refusal opts out`() {
 		val bus = RecordingTcStorageBus()
@@ -259,17 +268,90 @@ class GppCoreTest {
 		assertTrue(bus.live.keys.none { it.startsWith("IABGPP_") })
 	}
 
-	@Test fun `an empty opt-out list drives no opt-out when marketing is refused`() {
+	@Test fun `an empty opt-out list drives no opt-out without a record, while a held opt-out record still reports opted out`() {
+		// Under opt-in, refusing marketing creates no opt-out record, so an empty override reports not opted out.
+		val optInBus = RecordingTcStorageBus()
+		val optInCore = testKernel(
+			config(GppOptions(optOutCategories = emptyList())),
+			InthStore(InMemoryKeyValueStore(), tcStorageBus = optInBus),
+			FixedClock(),
+			transport(model = "\"opt-in\""),
+		)
+		optInCore.bootstrap()
+		assertTrue(optInCore.save(CommitIntent.Necessary).ok)
+		assertNull(optInCore.snapshot().optOut)
+		assertEquals(false, optInCore.snapshot().effectivePermissions.marketing)
+		assertEquals(noChoice, optInCore.snapshot().gppString)
+		assertEquals(TcBusValue.TextValue(noChoice), optInBus.live[GppStorageBusKeys.HDR_GPP_STRING])
+
+		// Under opt-out, refusing marketing records a durable opt-out, which still reports opted out even with empty optOutCategories.
+		val optOutBus = RecordingTcStorageBus()
+		val optOutCore = testKernel(
+			config(GppOptions(optOutCategories = emptyList())),
+			InthStore(InMemoryKeyValueStore(), tcStorageBus = optOutBus),
+			FixedClock(),
+			transport(model = "\"opt-out\""),
+		)
+		optOutCore.bootstrap()
+		assertTrue(optOutCore.save(CommitIntent.Necessary).ok)
+		assertTrue(optOutCore.snapshot().optOut != null)
+		assertEquals(optedOut, optOutCore.snapshot().gppString)
+		assertEquals(TcBusValue.TextValue(optedOut), optOutBus.live[GppStorageBusKeys.HDR_GPP_STRING])
+	}
+
+	@Test fun `optOut and optIn update GPP even when effectivePermissions do not change`() {
 		val bus = RecordingTcStorageBus()
-		val core = testKernel(config(GppOptions(optOutCategories = emptyList())), InthStore(InMemoryKeyValueStore(), tcStorageBus = bus),
-			FixedClock(), transport())
+		val core = testKernel(
+			config(GppOptions()),
+			InthStore(InMemoryKeyValueStore(), tcStorageBus = bus),
+			FixedClock(),
+			transport(scope = """["functionality"]"""),
+		)
 		core.bootstrap()
-		assertTrue(core.save(CommitIntent.Necessary).ok)
-		assertEquals(false, core.snapshot().effectivePermissions.marketing)
-		// The same bytes as a visitor who refused nothing: SaleOptOut, SharingOptOut and
-		// TargetedAdvertisingOptOut stay 2, where the default list would report 1.
+		// Neither marketing nor measurement is in scope, so default check reports not opted out.
+		assertEquals(noChoice, core.snapshot().gppString)
+
+		assertTrue(core.optOut().ok)
+		assertEquals(optedOut, core.snapshot().gppString)
+		assertEquals(TcBusValue.TextValue(optedOut), bus.live[GppStorageBusKeys.HDR_GPP_STRING])
+
+		assertTrue(core.optIn().ok)
 		assertEquals(noChoice, core.snapshot().gppString)
 		assertEquals(TcBusValue.TextValue(noChoice), bus.live[GppStorageBusKeys.HDR_GPP_STRING])
+	}
+
+	@Test fun `default GPP check follows measurement when marketing is not in scope`() {
+		val core = testKernel(
+			config(GppOptions()),
+			InthStore(InMemoryKeyValueStore()),
+			FixedClock(),
+			transport(model = "\"opt-in\"", scope = """["functionality","measurement"]"""),
+		)
+		core.bootstrap()
+		// No opt-out record, measurement is deciding and not yet granted -> opted out.
+		assertEquals(optedOut, core.snapshot().gppString)
+
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to true))).ok)
+		assertEquals(noChoice, core.snapshot().gppString)
+
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MEASUREMENT to false))).ok)
+		assertEquals(optedOut, core.snapshot().gppString)
+	}
+
+	@Test fun `explicit optOutCategories overrides the category check when no record is held`() {
+		val core = testKernel(
+			config(GppOptions(optOutCategories = listOf(ConsentCategory.MEASUREMENT))),
+			InthStore(InMemoryKeyValueStore()),
+			FixedClock(),
+			transport(model = "\"opt-in\""),
+		)
+		core.bootstrap()
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false, ConsentCategory.MEASUREMENT to true))).ok)
+		assertNull(core.snapshot().optOut)
+		assertEquals(noChoice, core.snapshot().gppString)
+
+		assertTrue(core.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true, ConsentCategory.MEASUREMENT to false))).ok)
+		assertEquals(optedOut, core.snapshot().gppString)
 	}
 
 	@Test fun `GPP stays off until the app turns it on`() {
