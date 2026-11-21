@@ -242,7 +242,12 @@ object Inth {
 		kernel.get()?.dismissNotice()
 	}
 
-	/** Record a durable button opt-out under an `opt-out` policy, or refuse when unavailable. */
+	/**
+	 * Record a durable button opt-out under an `opt-out` policy, or refuse when unavailable.
+	 *
+	 * Performs a blocking durable write. Android app code should call `ConsentCore.awaitOptOut()`
+	 * from `inth-android` rather than calling this on the main thread.
+	 */
 	fun optOut(): OptOutResult {
 		val active = kernel.get() ?: return OptOutResult(
 			ok = false,
@@ -253,7 +258,13 @@ object Inth {
 		return active.optOut()
 	}
 
-	/** Lift a held device opt-out record, or refuse with the reason it cannot be lifted. */
+	/**
+	 * Lift a held durable opt-out record, or refuse with the reason it cannot be lifted.
+	 *
+	 * Performs blocking disk I/O, and blocks on the network when the account holds the record.
+	 * Android app code should call `ConsentCore.awaitOptIn()` from `inth-android` rather than
+	 * calling this on the main thread.
+	 */
 	fun optIn(): OptInResult {
 		val active = kernel.get() ?: return OptInResult(
 			ok = false,
