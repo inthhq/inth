@@ -34,14 +34,16 @@ const Capture = () => {
 const grantThenRevoke = async (reloadOnConsentRevoked?: boolean) => {
 	reload.mockClear();
 	const onBeforeConsentRevocationReload = vi.fn();
+	const storageKey = `inth-reload-${crypto.randomUUID().slice(0, 8)}`;
 	await render(
 		<InthProvider
 			options={{
 				callbacks: { onBeforeConsentRevocationReload },
 				mode: transportMode({ save: () => Promise.resolve({ ok: true }) }),
-				persistence: false,
+				persistence: { sync: false },
 				prefetch: policyFixture(),
 				reloadOnConsentRevoked,
+				storageConfig: { storageKey },
 			}}
 		>
 			<Capture />
@@ -70,16 +72,18 @@ test('honours `reloadOnConsentRevoked: false`', async () => {
 test('reloads once after a one-click opt-out turns off a granted category', async () => {
 	reload.mockClear();
 	const onBeforeConsentRevocationReload = vi.fn();
+	const storageKey = `inth-reload-${crypto.randomUUID().slice(0, 8)}`;
 	await render(
 		<InthProvider
 			options={{
 				callbacks: { onBeforeConsentRevocationReload },
 				mode: transportMode({}),
-				persistence: false,
+				persistence: { sync: false },
 				prefetch: policyFixture(undefined, {
 					model: 'opt-out',
 					prompt: 'notice',
 				}),
+				storageConfig: { storageKey },
 			}}
 		>
 			<Capture />

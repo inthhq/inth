@@ -53,7 +53,7 @@ other option is optional.
 | `iab` | `ProviderIABOptions` or `false` | off | IAB TCF settings. Read once. See [IAB TCF](./iab). |
 | `gpp` | `boolean` or GPP options | off | Installs `window.__gpp`. See [GPP](./gpp). |
 | `callbacks` | `InthCallbacks` | none | `onChoiceRecorded`, `onPermissionsChanged`, `onSurfaceShown`, `onError` and `onBeforeConsentRevocationReload`. See [callbacks](./callbacks). |
-| `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after a save or one-click opt-out withdraws a category or vendor that was granted. Privacy signals and backend-synced opt-outs do not reload. |
+| `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after a save or one-click opt-out withdraws a category or vendor that was granted. Privacy signals and backend-synced opt-outs do not reload. With `persistence: false`, nothing reloads because a reload would discard the choice it was for. |
 | `clearOnRevocation` | `ClearOnRevocationConfig` | off | Deletes first-party cookies and storage entries when their category is withdrawn. See [clear on revocation](./clear-on-revocation). Read once. |
 | `overrides` | `{ country?, region?, language?, gpc? }` | none | Forces the location, language or Global Privacy Control signal the policy resolves for. |
 | `user` | `User` | none | Identity sent with the policy request and every saved choice. |
