@@ -2,7 +2,13 @@ import type { ConsentSnapshot, Translations } from '@inth/sdk-core';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
 import {
 	resolveOptOutCopy,
+	resolveOptOutReceipt,
+	resolveOptOutReceiptSentence,
 	resolveOptOutState,
+} from '@inth/sdk-core/surface-state';
+import type {
+	OptOutReceipt,
+	OptOutReceiptData,
 } from '@inth/sdk-core/surface-state';
 
 import { classes } from '../generated/styles';
@@ -13,6 +19,7 @@ import { h, readDurationMs, supportsStartingStyle } from './dom';
 import { setupFocusTrap, setupScrollLock } from './locks';
 import {
 	closeOptOutConfirmation,
+	getOptOutReceiptData,
 	isOptOutConfirmationOpen,
 	readFocusedElement,
 	takeOptOutConfirmationOpener,
@@ -21,12 +28,96 @@ import type { Surface, SurfaceContext } from './surface';
 
 const DEFAULT_DURATION_MS = 200;
 
+const formatRecordedAt = function formatRecordedAt(
+	at: number,
+	language: string | undefined
+): string {
+	try {
+		return new Intl.DateTimeFormat(language, {
+			dateStyle: 'medium',
+			timeStyle: 'short',
+		}).format(at);
+	} catch {
+		return new Intl.DateTimeFormat(undefined, {
+			dateStyle: 'medium',
+			timeStyle: 'short',
+		}).format(at);
+	}
+};
+
+const buildReceiptDetails = function buildReceiptDetails(
+	receipt: OptOutReceipt,
+	optOutCopy: ReturnType<typeof resolveOptOutCopy>,
+	language: string | undefined,
+	styles: typeof classes.optOutConfirmation,
+	noStyle: boolean
+): HTMLDListElement | null {
+	if (receipt.at === null && receipt.reference === null) {
+		return null;
+	}
+	const rowClass = noStyle ? '' : styles.receiptRow;
+	const labelClass = noStyle ? '' : styles.receiptLabel;
+	const valueClass = noStyle ? '' : styles.receiptValue;
+	const rows: HTMLElement[] = [];
+	if (receipt.at !== null) {
+		rows.push(
+			h(
+				'div',
+				{ class: rowClass },
+				h('dt', { class: labelClass }, optOutCopy.recordedLabel),
+				h(
+					'dd',
+					{ class: valueClass },
+					h(
+						'time',
+						{
+							'data-testid': 'opt-out-confirmation-recorded-at',
+							datetime: new Date(receipt.at).toISOString(),
+						},
+						formatRecordedAt(receipt.at, language)
+					)
+				)
+			)
+		);
+	}
+	if (receipt.reference !== null) {
+		rows.push(
+			h(
+				'div',
+				{ class: rowClass },
+				h('dt', { class: labelClass }, optOutCopy.referenceLabel),
+				h(
+					'dd',
+					{ class: valueClass },
+					h(
+						'code',
+						{
+							class: noStyle ? '' : styles.reference,
+							'data-testid': 'opt-out-confirmation-reference',
+						},
+						receipt.reference
+					)
+				)
+			)
+		);
+	}
+	return h(
+		'dl',
+		{
+			class: noStyle ? '' : styles.receipt,
+			'data-testid': 'opt-out-confirmation-receipt',
+		},
+		...rows
+	);
+};
+
 /**
  * The focused opt-out confirmation view.
  *
  * Shown after the visitor activates an opt-out link under an opt-out policy.
- * Displays the link title, an honored status line (`role="status"`), plain
- * confirmation text, a single Done button and a link to full preferences.
+ * Displays the link title, an honored status line (`role="status"`), a receipt
+ * naming scope, confirmed rights, time and local reference, a Done button and
+ * a link to full preferences.
  */
 // oxlint-disable-next-line max-lines-per-function -- Build, open, close and reconcile are one lifecycle.
 export const createOptOutConfirmation = function createOptOutConfirmation(
@@ -47,6 +138,7 @@ export const createOptOutConfirmation = function createOptOutConfirmation(
 		translations: ConsentSnapshot['translations'];
 		policyRule: ConsentSnapshot['policyRule'];
 		optOut: ConsentSnapshot['optOut'];
+		receiptData: Readonly<OptOutReceiptData>;
 		gpcActive: boolean;
 		experiment: ConsentSnapshot['experiment'];
 		optOutLinkVariant: string | undefined;
@@ -71,10 +163,20 @@ export const createOptOutConfirmation = function createOptOutConfirmation(
 			| undefined;
 		const optOutCopy = resolveOptOutCopy(bundle);
 		const optOutState = resolveOptOutState(snapshot);
+		const receiptData = getOptOutReceiptData(ctx.client.kernel);
+		const receipt = resolveOptOutReceipt(snapshot, receiptData);
+		const receiptSentence = resolveOptOutReceiptSentence(bundle, receipt);
 		const statusText =
 			optOutState.via === 'signal'
 				? optOutCopy.statusSignal
 				: optOutCopy.statusRequest;
+		const receiptDetails = buildReceiptDetails(
+			receipt,
+			optOutCopy,
+			copy.language,
+			styles,
+			noStyle
+		);
 
 		const doneButton = slot(
 			slot(
@@ -179,10 +281,11 @@ export const createOptOutConfirmation = function createOptOutConfirmation(
 									'data-testid': 'opt-out-confirmation-description',
 									id: 'opt-out-confirmation-description',
 								},
-								optOutCopy.description
+								receiptSentence
 							),
 							'optOutConfirmationDescription'
 						),
+						receiptDetails,
 						slot(
 							h(
 								'div',
@@ -231,6 +334,7 @@ export const createOptOutConfirmation = function createOptOutConfirmation(
 			optOut: snapshot.optOut,
 			optOutLinkVariant,
 			policyRule: snapshot.policyRule,
+			receiptData,
 			translations: snapshot.translations,
 		};
 	};
@@ -351,6 +455,7 @@ export const createOptOutConfirmation = function createOptOutConfirmation(
 				return;
 			}
 			const optOutLinkVariant = ctx.client.presentation?.optOutLink;
+			const receiptData = getOptOutReceiptData(ctx.client.kernel);
 			if (
 				positioner &&
 				closeTimer === undefined &&
@@ -358,6 +463,7 @@ export const createOptOutConfirmation = function createOptOutConfirmation(
 				renderedFrom.translations === snapshot.translations &&
 				renderedFrom.policyRule === snapshot.policyRule &&
 				renderedFrom.optOut === snapshot.optOut &&
+				renderedFrom.receiptData === receiptData &&
 				renderedFrom.gpcActive === snapshot.privacySignals.gpc.active &&
 				renderedFrom.experiment === snapshot.experiment &&
 				renderedFrom.optOutLinkVariant === optOutLinkVariant

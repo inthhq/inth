@@ -1,4 +1,11 @@
 import { policyRulePresets } from '@inth/sdk-core';
+import type {
+	OptOutPayload,
+	OptOutTransportResult,
+	ProviderTransportFactory,
+} from '@inth/sdk-core';
+import { createTestingMode } from '@inth/sdk-core/testing';
+import { V1_UUID_PATTERN } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { classes } from '../generated/styles';
@@ -1230,13 +1237,147 @@ describe('mountConsentUI', () => {
 			expect(status.textContent).toBe('Opt-out request honored');
 			expect(
 				query(root, 'opt-out-confirmation-description').textContent
-			).toContain('not sell or share');
+			).toContain('this browser');
+			const recordedAt = query<HTMLTimeElement>(
+				root,
+				'opt-out-confirmation-recorded-at'
+			);
+			expect(recordedAt.getAttribute('datetime')).toBeTruthy();
+			expect(recordedAt.textContent?.trim()).not.toBe('');
+			const reference = query(root, 'opt-out-confirmation-reference');
+			expect(reference.textContent).toMatch(V1_UUID_PATTERN);
+			expect(
+				confirmation.querySelectorAll('input, textarea, select')
+			).toHaveLength(0);
 			const buttons = [...confirmation.querySelectorAll('button')];
 			expect(buttons).toHaveLength(1);
 			expect(buttons[0]?.textContent).toBe('Done');
 			expect(
 				query(root, 'opt-out-confirmation-preferences-link').textContent
 			).toBe('Manage preferences');
+		});
+
+		it('updates receipt from browser to account coverage when backend answers with heldBy both while keeping reference unchanged', async () => {
+			let resolveAnswer: ((result: OptOutTransportResult) => void) | undefined;
+			let sentPayload: OptOutPayload | undefined;
+			const baseMode = createTestingMode('@inth/sdk/test', {
+				policy: noticePolicy,
+			}).transport;
+			const deferredOptOutMode: ProviderTransportFactory = Object.assign(
+				(context: Parameters<ProviderTransportFactory>[0]) => ({
+					...baseMode(context),
+					optOut: (payload: OptOutPayload) => {
+						sentPayload = payload;
+						return new Promise<OptOutTransportResult>((resolve) => {
+							resolveAnswer = resolve;
+						});
+					},
+				}),
+				{ kind: 'offline' as const }
+			);
+
+			const { root } = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					mode: deferredOptOutMode,
+					overrides: { country: 'US', region: 'CA' },
+					persistence: false,
+					reloadOnConsentRevoked: false,
+				}
+			);
+
+			query(root, 'consent-banner-right-opt-out-button').click();
+
+			await vi.waitFor(() => {
+				expect(query(root, 'opt-out-confirmation-root')).not.toBeNull();
+			});
+			const beforeDescription = query(
+				root,
+				'opt-out-confirmation-description'
+			).textContent;
+			const beforeReference = query(
+				root,
+				'opt-out-confirmation-reference'
+			).textContent;
+			expect(beforeDescription).toBeTruthy();
+			expect(beforeDescription?.toLowerCase()).not.toContain('account');
+			expect(beforeReference).toMatch(V1_UUID_PATTERN);
+			expect(query(root, 'opt-out-confirmation-recorded-at')).not.toBeNull();
+
+			await vi.waitFor(() => expect(resolveAnswer).toBeDefined());
+			resolveAnswer?.({
+				ok: true,
+				optOut: {
+					heldBy: 'both',
+					method: 'button',
+					recordedAt: sentPayload?.givenAt ?? Date.now(),
+					rights: ['sale', 'share'],
+				},
+				subjectId: sentPayload?.subjectId,
+			});
+
+			await vi.waitFor(() => {
+				expect(
+					query(
+						root,
+						'opt-out-confirmation-description'
+					).textContent?.toLowerCase()
+				).toContain('account');
+			});
+			expect(
+				query(root, 'opt-out-confirmation-description').textContent
+			).toContain('sale and sharing');
+			expect(query(root, 'opt-out-confirmation-reference').textContent).toBe(
+				beforeReference
+			);
+			expect(sentPayload?.idempotencyKey).toBe(beforeReference);
+		});
+
+		it('renders no reference for an account-held record this browser did not create', async () => {
+			const link = document.createElement('button');
+			link.type = 'button';
+			link.setAttribute('data-inth-action', 'opt-out');
+			link.textContent = 'Do Not Sell or Share My Personal Information';
+			document.body.append(link);
+
+			const { root } = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', region: 'CA' },
+					persistence: false,
+					policy: noticePolicy,
+					prefetch: {
+						initialRecords: {
+							optOut: {
+								heldBy: 'person',
+								method: 'propagated',
+								recordedAt: Date.now() - 60_000,
+								rights: ['sale', 'share'],
+							},
+							optOutRightsConfirmed: true,
+						},
+					},
+					reloadOnConsentRevoked: false,
+				}
+			);
+
+			link.click();
+
+			await vi.waitFor(() => {
+				expect(query(root, 'opt-out-confirmation-root')).not.toBeNull();
+			});
+			expect(
+				query(
+					root,
+					'opt-out-confirmation-description'
+				).textContent?.toLowerCase()
+			).toContain('account');
+			expect(query(root, 'opt-out-confirmation-recorded-at')).not.toBeNull();
+			expect(
+				root.querySelector('[data-testid="opt-out-confirmation-reference"]')
+			).toBeNull();
 		});
 
 		it('Done closes the view and returns focus to the triggering link; Escape closes it; Manage preferences opens preferences', async () => {

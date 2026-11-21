@@ -8,9 +8,11 @@
  */
 export {
 	closeOptOutConfirmation,
+	getOptOutReceiptData,
 	isOptOutConfirmationOpen,
 	openOptOutConfirmation,
 	readFocusedElement,
 	subscribeOptOutConfirmation,
+	subscribeOptOutReceiptData,
 	takeOptOutConfirmationOpener,
 } from '@inth/sdk-core/surface-actions';
