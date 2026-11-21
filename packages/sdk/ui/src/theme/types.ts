@@ -425,6 +425,8 @@ export interface ComponentSlots {
 
 	/** Root wrapper for the consent widget/preferences panel. */
 	consentWidget?: SlotStyle;
+	/** Sale-and-sharing opt-out block at the top of the preference panel. */
+	consentWidgetOptOut?: SlotStyle;
 	/** Status banner announcing an honored opt-out in the preference panel. */
 	consentWidgetOptOutStatus?: SlotStyle;
 	/** Accordion region listing consent categories. */

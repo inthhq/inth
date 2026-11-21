@@ -84,6 +84,7 @@ export interface ConsentComponentSlots<T = Record<string, unknown>> {
 	};
 	manager?: {
 		root?: T;
+		optOut?: T;
 		optOutStatus?: T;
 		footer?: T;
 		actions?: T;
@@ -382,6 +383,7 @@ export const CONSENT_COMPONENT_SLOT_KEY_MAP = {
 		actionGroup: true,
 		actions: true,
 		footer: true,
+		optOut: true,
 		optOutStatus: true,
 		root: true,
 	},

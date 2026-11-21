@@ -47,6 +47,7 @@ export const THEME_SLOT_COMPONENT_KEYS = {
 	consentWidgetAccordion: 'accordion.root',
 	consentWidgetFooter: 'manager.footer',
 	consentWidgetFooterSubGroup: 'manager.actionGroup',
+	consentWidgetOptOut: 'manager.optOut',
 	consentWidgetOptOutStatus: 'manager.optOutStatus',
 	consentWidgetTag: 'tag.manager',
 	iabConsentBanner: 'iab-banner.root',

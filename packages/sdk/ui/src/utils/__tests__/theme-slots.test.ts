@@ -97,13 +97,14 @@ describe('applyThemeSlots', () => {
 		});
 	});
 
-	test('maps the consentGate and consentWidgetOptOutStatus slots', () => {
+	test('maps the consentGate, consentWidgetOptOut and consentWidgetOptOutStatus slots', () => {
 		expect(
 			applyThemeSlots(
 				{
 					consentGate: 'gate-card',
 					consentGateButton: 'gate-button',
 					consentGateTitle: 'gate-title',
+					consentWidgetOptOut: 'opt-out-block',
 					consentWidgetOptOutStatus: 'opt-out-status',
 				},
 				undefined,
@@ -116,6 +117,7 @@ describe('applyThemeSlots', () => {
 				title: { class: 'gate-title' },
 			},
 			manager: {
+				optOut: { class: 'opt-out-block' },
 				optOutStatus: { class: 'opt-out-status' },
 			},
 		});

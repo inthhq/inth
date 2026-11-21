@@ -20,6 +20,7 @@ import {
 	SaveButton,
 } from './atoms/button';
 import { Footer, FooterSubGroup } from './atoms/footer';
+import { OptOut } from './atoms/opt-out';
 import { OptOutStatus } from './atoms/opt-out-status';
 import { Root } from './atoms/root';
 import { PolicyActions } from './policy-actions';
@@ -45,6 +46,8 @@ export interface ConsentWidgetCompoundComponent extends FC<ConsentWidgetProps> {
 	VendorList: typeof VendorList;
 	// Root component
 	Root: typeof Root;
+	/** Direct sale-and-sharing opt-out block above the category list. */
+	OptOut: typeof OptOut;
 	/** Status banner announcing an honored opt-out above the category list. */
 	OptOutStatus: typeof OptOutStatus;
 	// Button components
@@ -114,6 +117,7 @@ const ConsentWidget = Object.assign(ConsentWidgetComponent, {
 	CustomizeButton,
 	Footer,
 	FooterSubGroup,
+	OptOut,
 	OptOutStatus,
 
 	PolicyActions,
@@ -163,6 +167,7 @@ export {
 	Footer,
 	FooterSubGroup,
 } from './atoms/footer';
+export { ConsentWidgetOptOut, OptOut } from './atoms/opt-out';
 export {
 	ConsentWidgetOptOutStatus,
 	OptOutStatus,
