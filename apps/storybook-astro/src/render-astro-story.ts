@@ -18,6 +18,7 @@ import {
 	registerIAB,
 	registerTransport,
 } from '@inth/astro/client';
+import type { OptOutPayload } from '@inth/sdk/engine';
 import { createLazyIABFactory } from '@inth/sdk/runtime';
 import { mountRuntimeIAB } from '@inth/sdk/runtime/on-demand';
 import prerendered from 'virtual:inth-astro-prerendered';
@@ -31,12 +32,14 @@ import {
 	storybookPolicy,
 } from '../../storybook-consent-policy';
 import { requireStoryVariant } from './story-variants';
-import type { AstroUIAdapter } from './story-variants';
+import type { AstroStoryVariant, AstroUIAdapter } from './story-variants';
 
 const DIALOG_HOST_ID = 'inth-dialog-host';
+const STORY_OPT_OUT_REFERENCE = '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d';
 
 const registered = new Set<string>();
 let activeStoryPolicy: 'default' | 'opt-out' = 'default';
+let activeOptOutAnswer: AstroStoryVariant['optOutAnswer'];
 
 // Every story resolves its policy in the browser when it inits again, such as
 // when its dialog opens: the IAB rule when the story turns IAB on, else the
@@ -54,7 +57,25 @@ registerTransport(() =>
 				return storyModes.iab(context);
 			}
 			if (activeStoryPolicy === 'opt-out') {
-				return storyModes.optOut(context);
+				const base = storyModes.optOut(context);
+				const answer = activeOptOutAnswer;
+				if (!answer) {
+					return base;
+				}
+				return {
+					...base,
+					optOut: (payload: OptOutPayload) =>
+						Promise.resolve({
+							ok: true,
+							optOut: {
+								heldBy: answer.heldBy,
+								method: payload.method,
+								recordedAt: payload.givenAt,
+								rights: [...answer.rights],
+							},
+							subjectId: payload.subjectId,
+						}),
+				};
 			}
 			return storyModes.default(context);
 		},
@@ -137,6 +158,50 @@ const resetPage = function resetPage(): void {
 	clearCookies();
 };
 
+const applyOptOutStoryConfig = function applyOptOutStoryConfig(
+	config: Record<string, unknown>,
+	variant: AstroStoryVariant
+): void {
+	if (variant.options?.policy === 'opt-out' || variant.openOptOutConfirmation) {
+		config.initialPolicyResolution ??= storybookOptOutPolicyResolution;
+	}
+	const state =
+		variant.optOutState ??
+		(variant.openOptOutConfirmation === 'signal' ? 'gpc' : undefined);
+	if (state === 'gpc') {
+		config.initialGpc = true;
+		config.initialPrivacySignals = { gpc: true };
+		config.initialRecords = storybookOptOutRecords('gpc');
+		return;
+	}
+	if (state === 'request') {
+		config.initialRecords = {
+			...storybookOptOutRecords('request'),
+			optOutReference: STORY_OPT_OUT_REFERENCE,
+		};
+		return;
+	}
+	if (state === 'request-confirmed') {
+		config.initialRecords = {
+			...storybookOptOutRecords('request'),
+			optOutReference: STORY_OPT_OUT_REFERENCE,
+			optOutRightsConfirmed: true,
+		};
+		return;
+	}
+	if (state === 'account-adopted') {
+		config.initialRecords = {
+			optOut: {
+				heldBy: 'person',
+				method: 'propagated',
+				recordedAt: Date.now() - 60_000,
+				rights: ['sale', 'share', 'targeted_ads'],
+			},
+			optOutRightsConfirmed: true,
+		};
+	}
+};
+
 /**
  * Render one catalogued Astro variant into the Storybook canvas.
  *
@@ -157,6 +222,7 @@ export const renderAstroStory = function renderAstroStory(
 
 	resetPage();
 	activeStoryPolicy = variant.options?.policy ?? 'default';
+	activeOptOutAnswer = variant.optOutAnswer;
 	registerAdapters(variant.ui ?? 'svelte');
 	if (variant.options?.iab) {
 		registerIAB({
@@ -178,13 +244,7 @@ export const renderAstroStory = function renderAstroStory(
 			? (entry.config as Record<string, unknown>)
 			: {};
 	const config: Record<string, unknown> = { ...baseConfig };
-	if (variant.openOptOutConfirmation) {
-		config.initialPolicyResolution ??= storybookOptOutPolicyResolution;
-	}
-	if (variant.openOptOutConfirmation === 'signal') {
-		config.initialGpc = true;
-		config.initialRecords = storybookOptOutRecords('gpc');
-	}
+	applyOptOutStoryConfig(config, variant);
 	(window as unknown as Record<string, unknown>).__inthAstroConfig = config;
 
 	if (variant.dark) {

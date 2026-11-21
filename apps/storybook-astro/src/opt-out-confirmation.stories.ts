@@ -26,6 +26,30 @@ export const RequestHonored: Story = {
 	render: () => renderAstroStory('opt-out-confirmation--request-honored'),
 };
 
+export const RequestConfirmed: Story = {
+	play: async () => {
+		const status = await within(document.body).findByTestId(
+			'opt-out-confirmation-status'
+		);
+		await waitFor(() =>
+			expect(status).toHaveTextContent('Opt-out request honored')
+		);
+	},
+	render: () => renderAstroStory('opt-out-confirmation--request-confirmed'),
+};
+
+export const AccountCovered: Story = {
+	play: async () => {
+		const status = await within(document.body).findByTestId(
+			'opt-out-confirmation-status'
+		);
+		await waitFor(() =>
+			expect(status).toHaveTextContent('Opt-out request honored')
+		);
+	},
+	render: () => renderAstroStory('opt-out-confirmation--account-covered'),
+};
+
 export const SignalHonored: Story = {
 	play: async () => {
 		const status = await within(document.body).findByTestId(
@@ -36,4 +60,16 @@ export const SignalHonored: Story = {
 		);
 	},
 	render: () => renderAstroStory('opt-out-confirmation--signal-honored'),
+};
+
+export const AccountAdopted: Story = {
+	play: async () => {
+		const status = await within(document.body).findByTestId(
+			'opt-out-confirmation-status'
+		);
+		await waitFor(() =>
+			expect(status).toHaveTextContent('Opt-out request honored')
+		);
+	},
+	render: () => renderAstroStory('opt-out-confirmation--account-adopted'),
 };
