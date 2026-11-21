@@ -1,4 +1,6 @@
 import { readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -201,6 +203,108 @@ export default mergeConfig(
 					});
 				},
 				name: 'subject-conflict-fixture',
+			},
+			{
+				configureServer(server) {
+					const received: Record<string, unknown>[] = [];
+					let backendOrigin: string | null = null;
+					const backend = createServer((request, response) => {
+						const origin = request.headers.origin ?? '*';
+						response.setHeader('Access-Control-Allow-Origin', origin);
+						response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+						response.setHeader('Access-Control-Allow-Headers', 'content-type');
+						if (request.method === 'OPTIONS') {
+							// Hold the CORS preflight past same-tick navigation so a
+							// non-keepalive fetch is cancelled when the page leaves.
+							setTimeout(() => {
+								response.statusCode = 204;
+								response.end();
+							}, 150);
+							return;
+						}
+						if (
+							request.url === '/v1/consent/opt-outs' &&
+							request.method === 'POST'
+						) {
+							const chunks: Buffer[] = [];
+							request.on('data', (chunk: Buffer) => chunks.push(chunk));
+							request.on('end', () => {
+								try {
+									received.push(
+										JSON.parse(
+											Buffer.concat(chunks).toString('utf8')
+										) as Record<string, unknown>
+									);
+								} catch {
+									// Ignore malformed bodies.
+								}
+								response.setHeader('Content-Type', 'application/json');
+								response.end(
+									JSON.stringify({
+										optOut: {
+											heldBy: 'device',
+											method: 'button',
+											recordedAt: Date.now(),
+											rights: ['sale', 'share'],
+										},
+										recordId: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+										subjectId: '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c',
+									})
+								);
+							});
+							return;
+						}
+						response.statusCode = 404;
+						response.end();
+					});
+					backend.listen(0, '127.0.0.1', () => {
+						const address = backend.address() as AddressInfo | null;
+						if (address) {
+							backendOrigin = `http://127.0.0.1:${address.port}`;
+						}
+					});
+					backend.unref();
+					server.httpServer?.once('close', () => {
+						backend.close();
+						backend.closeAllConnections?.();
+					});
+
+					server.middlewares.use((request, response, next) => {
+						const path = request.url?.split('?')[0];
+						if (path === '/__inth-test__/keepalive') {
+							response.setHeader('Content-Type', 'text/html');
+							response.end(
+								readFileSync(
+									resolve(__dirname, 'src/__tests__/fixtures/keepalive.html')
+								)
+							);
+							return;
+						}
+						if (path === '/__inth-test__/keepalive-done') {
+							response.setHeader('Content-Type', 'text/html');
+							response.end('<!doctype html><html><body>done</body></html>');
+							return;
+						}
+						if (path === '/__inth-test__/keepalive-origin') {
+							response.setHeader('Content-Type', 'application/json');
+							response.end(JSON.stringify({ origin: backendOrigin }));
+							return;
+						}
+						if (path === '/__inth-test__/keepalive-received') {
+							if (request.method === 'DELETE') {
+								received.length = 0;
+								response.statusCode = 204;
+								response.end();
+								return;
+							}
+							response.setHeader('Content-Type', 'application/json');
+							response.end(JSON.stringify(received));
+							return;
+						}
+						next();
+					});
+				},
+				name: 'keepalive-fixture',
 			},
 		],
 		resolve: {

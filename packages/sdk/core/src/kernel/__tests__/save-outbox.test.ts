@@ -2132,4 +2132,71 @@ describe('save outbox: replay failures and dropped saves', () => {
 		first.kernel.dispose();
 		second.dispose();
 	});
+
+	test('queues a save for replay when the browser rejects keepalive with a TypeError', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		let rejectKeepalive = true;
+		const sentKeys: string[] = [];
+		const fetch = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+			const bodyText = typeof init?.body === 'string' ? init.body : '';
+			const parsed = bodyText
+				? (JSON.parse(bodyText) as { idempotencyKey?: string })
+				: {};
+			if (parsed.idempotencyKey) {
+				sentKeys.push(parsed.idempotencyKey);
+			}
+			// Simulate the browser's aggregate 64 KiB keepalive rejection:
+			// throw TypeError only when keepalive is true and the body is large.
+			if (
+				rejectKeepalive &&
+				init?.keepalive === true &&
+				new TextEncoder().encode(bodyText).byteLength > 2048
+			) {
+				return Promise.reject(
+					new TypeError('Failed to fetch: keepalive payload limit exceeded')
+				);
+			}
+			return Promise.resolve(
+				new Response(JSON.stringify({ recordId: RECORD, subjectId: SUBJECT }), {
+					headers: { 'content-type': 'application/json' },
+					status: 200,
+				})
+			);
+		}) as unknown as typeof globalThis.fetch;
+
+		const transport = createV1HostedTransport({
+			fetch,
+			projectUrl: 'https://your-project.inth.app',
+			property: 'www.example.com',
+		});
+		const kernel = kernelOn({
+			initialRecords: { subject: { subjectId: SUBJECT } },
+			initialUser: {
+				externalId: 'user_123',
+				properties: { note: 'x'.repeat(3000) },
+			},
+			transport: { init: vi.fn().mockResolvedValue({}), save: transport.save },
+		});
+		const errors: unknown[] = [];
+		kernel.events.on('command:error', ({ error }) => errors.push(error));
+
+		const result = await kernel.commands.save('all');
+		expect(result.ok).toBe(false);
+		expect(errors).toHaveLength(1);
+		expect(errors[0]).toBeInstanceOf(TypeError);
+		expect(await queued()).toHaveLength(1);
+		expect(sentKeys).toHaveLength(1);
+
+		// Once aggregate keepalive headroom is free on the next load, replay succeeds
+		// with the same idempotency key.
+		rejectKeepalive = false;
+		await kernel.commands.init();
+		await vi.waitFor(async () => {
+			expect(await queued()).toEqual([]);
+		});
+		expect(sentKeys).toHaveLength(2);
+		expect(sentKeys[1]).toBe(sentKeys[0]);
+		expect(warn).toHaveBeenCalled();
+		kernel.dispose();
+	});
 });

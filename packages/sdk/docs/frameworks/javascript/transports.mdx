@@ -57,6 +57,14 @@ With `projectUrl` and no `mode`, or with `mode: hosted()`, the runtime resolves 
 
 Add your app's origin to your Inth project's trusted origins, or browsers block consent saves with a CORS error. Cross-origin `/v1/consent/init` requests pass overrides and experiment arms in the query string without cookies, avoiding an `OPTIONS` preflight; saves include cookies and require the trusted origin.
 
+Requests to `/v1/consent/records`, `/v1/consent/opt-outs` and
+`/v1/consent/opt-outs/lift` pass `keepalive: true` to `fetch` when their UTF-8
+body is at most 32 KiB, so a revocation reload or tab close does not cancel
+them. Larger bodies go out without `keepalive`, and any request the browser
+rejects or drops stays in the localStorage queue for replay on the next page.
+To the backend, a keepalive request is an ordinary `POST` request and needs no
+server-side changes.
+
 ## Manifest
 
 `manifest()` from `@inth/sdk` resolves policies in the browser from your project's public manifest. With no options, it uses the build snapshot and project URL from `consentManifest()`. Without a snapshot, it fetches `${projectUrl}/v1/consent/manifest` once and falls back to `/v1/consent/init` with a warning if unavailable:
