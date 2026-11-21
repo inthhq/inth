@@ -401,6 +401,7 @@ class ConsentCore @InthInternalApi constructor(
 	 * local act is ignored.
 	 */
 	private var optOutActVersion = 0L
+	private var optOutGpcReported = false
 
 	/**
 	 * Monotonic counter bumped whenever stored records are reset, guarded by [mutationLock].
@@ -560,6 +561,7 @@ class ConsentCore @InthInternalApi constructor(
 						it >= 0
 					}
 				noticeDismissal = envelope.noticeDismissal
+				optOutGpcReported = envelope.optOutGpcReported && restored.optOut != null
 			}
 			val hydratedOverrides = merge(restored.overrides, config.overrides)
 			val hydrated = restored.copy(
@@ -608,18 +610,13 @@ class ConsentCore @InthInternalApi constructor(
 						choiceScopeOf(envelope.evaluationPolicy),
 					)
 				)
-				if (gpcRecorded) {
-					optOutActVersion += 1
-					if (!config.dryRun) {
-						gpcOptOut = buildOptOutEntry(
-							snapshot = evaluated,
-							policy = envelope.evaluationPolicy,
-							method = OptOutMethod.GPC,
-							actionAt = now,
-							uiSource = null,
-						)
-					}
-				}
+				gpcOptOut = reconcileGpcOptOutLocked(
+					previous = hydrated,
+					evaluated = evaluated,
+					policy = envelope.evaluationPolicy,
+					now = now,
+					gpcRecorded = gpcRecorded,
+				)?.entry
 				publishPure(evaluated)
 			}
 			persist(optOutEntry = gpcOptOut)
@@ -1205,11 +1202,15 @@ class ConsentCore @InthInternalApi constructor(
 			else -> null
 		}
 		val identityToken = currentIdentityTokenFor(payload.user)
+		val nextOptOutGpcReported: Boolean
 		val envelope = synchronized(mutationLock) {
+			nextOptOutGpcReported =
+				if (liftsOptOut || recordedOptOut || published.optOut == null) false else optOutGpcReported
 			SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
 				snapshot = published.copy(iab = null),
 				evaluationPolicy = policy,
 				noticeDismissal = acknowledgement ?: noticeDismissal,
+				optOutGpcReported = nextOptOutGpcReported,
 				gvl = published.iab?.gvl,
 				iabConsent = if (isIab) nextIab else committedIab,
 				lastIabActionAt = if (isIab) actionAt else lastIabActionAt,
@@ -1248,6 +1249,7 @@ class ConsentCore @InthInternalApi constructor(
 			if (liftsOptOut || recordedOptOut) {
 				optOutActVersion += 1
 			}
+			optOutGpcReported = nextOptOutGpcReported
 			actVersion = optOutActVersion
 			generation = recordsGeneration
 			installSnapshot(published)
@@ -1351,7 +1353,8 @@ class ConsentCore @InthInternalApi constructor(
                 policy = policy, noticeDismissal = dismissal, now = now, choiceScope = choiceScopeOf(policy))
             val envelope = SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
                 snapshot = next.copy(iab = null), evaluationPolicy = policy,
-                noticeDismissal = dismissal, gvl = state.get().iab?.gvl, iabConsent = committedIab,
+                noticeDismissal = dismissal, optOutGpcReported = optOutGpcReported,
+                gvl = state.get().iab?.gvl, iabConsent = committedIab,
                 additionalConsentList = additionalConsentList,
 				customVendors = customVendors, iabListFetchedAt = iabListFetchedAt, lastIabActionAt = lastIabActionAt)
             Triple(next, dismissal, envelope)
@@ -1477,6 +1480,7 @@ class ConsentCore @InthInternalApi constructor(
 		var generation: Long
 		synchronized(mutationLock) {
 			optOutActVersion += 1
+			optOutGpcReported = false
 			actVersion = optOutActVersion
 			generation = recordsGeneration
 			noticeDismissal = plan.second
@@ -1635,6 +1639,7 @@ class ConsentCore @InthInternalApi constructor(
 			var generation: Long
 			synchronized(mutationLock) {
 				optOutActVersion += 1
+				optOutGpcReported = false
 				actVersion = optOutActVersion
 				generation = recordsGeneration
 				installSnapshot(plan.first)
@@ -1733,6 +1738,7 @@ class ConsentCore @InthInternalApi constructor(
 				store.flush()
 				synchronized(mutationLock) {
 					optOutActVersion += 1
+					optOutGpcReported = false
 					installSnapshot(prepared.first)
 				}
 				publishCurrentTcStorageBus()
@@ -2133,26 +2139,13 @@ class ConsentCore @InthInternalApi constructor(
 			)
 				published = published.copy(model = ConsentModel.IAB)
 			published = validateIab(published)
-			if (gpcRecorded) {
-				optOutActVersion += 1
-				if (!config.dryRun) {
-					val entry = buildOptOutEntry(
-						snapshot = published,
-						policy = evaluationPolicy,
-						method = OptOutMethod.GPC,
-						actionAt = now,
-						uiSource = null,
-					)
-					gpcAct = GpcQueuedAct(
-						entry = entry,
-						fence = OptOutAnswerFence(
-							actVersion = optOutActVersion,
-							generation = recordsGeneration,
-							allowClear = false,
-						),
-					)
-				}
-			}
+			gpcAct = reconcileGpcOptOutLocked(
+				previous = current,
+				evaluated = published,
+				policy = evaluationPolicy,
+				now = now,
+				gpcRecorded = gpcRecorded,
+			)
 			installSnapshot(published)
 		}
 		persist(optOutEntry = gpcAct?.entry)
@@ -2420,6 +2413,7 @@ class ConsentCore @InthInternalApi constructor(
 			iabListOffline = false
 			committedIab = null
 			noticeDismissal = null
+			optOutGpcReported = false
 			published = ConsentSnapshot.denyAll(current.subject ?: resolved, now)
 					.copy(
 				// The list goes with the policy. Not because a wipe has anything to hide -- the list
@@ -2725,32 +2719,26 @@ class ConsentCore @InthInternalApi constructor(
 				choiceScope = choiceScopeOf(evaluationPolicy),
 			)
 			published = validateIab(published)
+			val gpcReportNeeded = gpcSignalReportDue(published, evaluationPolicy, optOutGpcReported)
+			val gpcClearNeeded = optOutGpcReported && (
+				published.optOut == null ||
+					(base.privacySignals.gpc.active && !published.privacySignals.gpc.active) ||
+					(!published.policyPending && !published.privacySignals.gpc.active)
+				)
 			if (!online && !mapped.policyUnreadable && evaluationPolicy?.model == ConsentModel.IAB &&
 				base.iab?.gvl != null && listIsUsable() &&
 				customVendors == heldCustomVendors && committedIab == heldIab &&
+				!gpcRecorded && !gpcReportNeeded && !gpcClearNeeded &&
 				published.copy(revision = base.revision, evaluatedAt = base.evaluatedAt,
 					error = base.error, nextDeadline = base.nextDeadline) == base
 			) return@mutate InitApplied(changed = false, error = emitted)
-			if (gpcRecorded) {
-				optOutActVersion += 1
-				if (!config.dryRun) {
-					val entry = buildOptOutEntry(
-						snapshot = published,
-						policy = evaluationPolicy,
-						method = OptOutMethod.GPC,
-						actionAt = now,
-						uiSource = null,
-					)
-					gpcAct = GpcQueuedAct(
-						entry = entry,
-						fence = OptOutAnswerFence(
-							actVersion = optOutActVersion,
-							generation = recordsGeneration,
-							allowClear = false,
-						),
-					)
-				}
-			}
+			gpcAct = reconcileGpcOptOutLocked(
+				previous = base,
+				evaluated = published,
+				policy = evaluationPolicy,
+				now = now,
+				gpcRecorded = gpcRecorded,
+			)
 			installSnapshot(published)
 		}
 
@@ -3149,11 +3137,13 @@ class ConsentCore @InthInternalApi constructor(
 					choiceScope = choiceScopeOf(policy),
 				)
 				val next = validateIab(evaluated)
+				val nextReported = if (nextOptOut == null) false else optOutGpcReported
 				val envelope = SnapshotEnvelope(
 					bundledPolicyAuthority = bundledPolicyAuthority,
 					snapshot = next.copy(iab = null, gppString = null),
 					evaluationPolicy = policy,
 					noticeDismissal = noticeDismissal,
+					optOutGpcReported = nextReported,
 					gvl = next.iab?.gvl,
 					iabConsent = committedIab,
 					additionalConsentList = additionalConsentList,
@@ -3161,13 +3151,14 @@ class ConsentCore @InthInternalApi constructor(
 					iabListFetchedAt = iabListFetchedAt,
 					lastIabActionAt = lastIabActionAt,
 				)
-				next to envelope
+				Triple(next, envelope, nextReported)
 			} ?: return@mutate false
 			if (!store.writeEnvelope(prepared.second, publishBus = false)) {
 				return@mutate false
 			}
 			store.flush()
 			synchronized(mutationLock) {
+				optOutGpcReported = prepared.third
 				installSnapshot(prepared.first)
 			}
 			publishCurrentTcStorageBus()
@@ -3432,22 +3423,25 @@ class ConsentCore @InthInternalApi constructor(
 					)
 			val next = if (evaluationPolicy?.model == ConsentModel.IAB)
 				evaluated.copy(effectivePermissions = ConsentState.DENY_ALL) else evaluated
+			val nextReported = if (reset || next.optOut == null) false else optOutGpcReported
 			val envelope =
 				SnapshotEnvelope(bundledPolicyAuthority = bundledPolicyAuthority,
 					snapshot = next.copy(iab = null),
 					evaluationPolicy = if (reset) null else evaluationPolicy,
+					optOutGpcReported = nextReported,
 					gvl = if (reset) null else next.iab?.gvl,
 					lastIabActionAt = lastIabActionAt,
 					iabListFetchedAt = if (reset) null else iabListFetchedAt,
 					additionalConsentList = if (reset) null else additionalConsentList,
 					customVendors = if (reset) null else customVendors,
 				)
-			envelope to next
+			Triple(envelope, next, nextReported)
 		} ?: return null
 		if (!store.replace(prepared.first, clearOptOuts = reset)) return false
 		synchronized(mutationLock) {
 			committedIab = null
 			noticeDismissal = null
+			optOutGpcReported = prepared.third
 			if (reset) {
 				recordsGeneration += 1
 				additionalConsentList = null
@@ -3701,6 +3695,7 @@ class ConsentCore @InthInternalApi constructor(
 				snapshot = snapshot.copy(iab = null, gppString = null),
 				evaluationPolicy = evaluationPolicy,
 				noticeDismissal = noticeDismissal,
+				optOutGpcReported = optOutGpcReported && snapshot.optOut != null,
 				gvl = snapshot.iab?.gvl,
 					iabConsent = committedIab,
 					additionalConsentList = additionalConsentList,
@@ -3755,6 +3750,20 @@ class ConsentCore @InthInternalApi constructor(
 	)
 
 	/**
+	 * Whether this live core sees an active GPC signal under a matched, non-provisional
+	 * rule that maps it. Port of `gpcSignalApplicable` in `packages/sdk/core/src/kernel/opt-out.ts`.
+	 */
+	private fun gpcSignalApplicable(
+		snapshot: ConsentSnapshot,
+		policy: EvaluationPolicy?,
+	): Boolean =
+		!snapshot.policyPending &&
+			snapshot.resolution.matched &&
+			snapshot.privacySignals.gpc.active &&
+			policy != null &&
+			policy.gpcDenyCategories.isNotEmpty()
+
+	/**
 	 * Whether this live core must record a durable GPC opt-out for [snapshot] under [policy].
 	 *
 	 * Port of `gpcOptOutDue` in `packages/sdk/core/src/kernel/opt-out.ts`: fires once when a
@@ -3763,13 +3772,80 @@ class ConsentCore @InthInternalApi constructor(
 	private fun gpcOptOutDue(
 		snapshot: ConsentSnapshot,
 		policy: EvaluationPolicy?,
-	): Boolean =
-		!snapshot.policyPending &&
-			snapshot.resolution.matched &&
-			snapshot.privacySignals.gpc.active &&
-			policy != null &&
-			policy.gpcDenyCategories.isNotEmpty() &&
-			snapshot.optOut == null
+	): Boolean = gpcSignalApplicable(snapshot, policy) && snapshot.optOut == null
+
+	/**
+	 * Whether this live core must report an active GPC signal for an opt-out record already held
+	 * on the device. Port of `gpcSignalReportDue` in `packages/sdk/core/src/kernel/opt-out.ts`.
+	 */
+	private fun gpcSignalReportDue(
+		snapshot: ConsentSnapshot,
+		policy: EvaluationPolicy?,
+		reported: Boolean,
+	): Boolean = gpcSignalApplicable(snapshot, policy) && snapshot.optOut != null && !reported
+
+	/**
+	 * Updates [optOutGpcReported] for [evaluated] and returns one queued `gpc` opt-out act
+	 * when either [gpcRecorded] just created a record or [gpcSignalReportDue] holds for a
+	 * record already held. Must be called under [mutationLock].
+	 */
+	private fun reconcileGpcOptOutLocked(
+		previous: ConsentSnapshot,
+		evaluated: ConsentSnapshot,
+		policy: EvaluationPolicy?,
+		now: Long,
+		gpcRecorded: Boolean,
+	): GpcQueuedAct? {
+		if (gpcRecorded) {
+			optOutActVersion += 1
+			if (config.dryRun) {
+				return null
+			}
+			optOutGpcReported = true
+			val entry = buildOptOutEntry(
+				snapshot = evaluated,
+				policy = policy,
+				method = OptOutMethod.GPC,
+				actionAt = now,
+				uiSource = null,
+			)
+			return GpcQueuedAct(
+				entry = entry,
+				fence = OptOutAnswerFence(
+					actVersion = optOutActVersion,
+					generation = recordsGeneration,
+					allowClear = false,
+				),
+			)
+		}
+		if (
+			evaluated.optOut == null ||
+			(previous.privacySignals.gpc.active && !evaluated.privacySignals.gpc.active) ||
+			(!evaluated.policyPending && !evaluated.privacySignals.gpc.active)
+		) {
+			optOutGpcReported = false
+			return null
+		}
+		if (!gpcSignalReportDue(evaluated, policy, optOutGpcReported) || config.dryRun) {
+			return null
+		}
+		optOutGpcReported = true
+		val entry = buildOptOutEntry(
+			snapshot = evaluated,
+			policy = policy,
+			method = OptOutMethod.GPC,
+			actionAt = now,
+			uiSource = null,
+		)
+		return GpcQueuedAct(
+			entry = entry,
+			fence = OptOutAnswerFence(
+				actVersion = optOutActVersion,
+				generation = recordsGeneration,
+				allowClear = false,
+			),
+		)
+	}
 
 	/** Record a local GPC opt-out on [snapshot] when [gpcOptOutDue] holds. */
 	private fun maybeRecordGpcOptOut(

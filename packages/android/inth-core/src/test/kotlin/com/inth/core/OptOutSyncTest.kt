@@ -326,11 +326,261 @@ class OptOutSyncTest {
 		assertNull(sent.uiSource)
 		assertEquals(serverGpc, kernel.snapshot().optOut)
 
-		// Refreshing or toggling GPC off and on does not send a second opt-out.
+		// Refreshing or changing unrelated overrides does not send a second opt-out.
 		kernel.refresh()
+		kernel.setOverrides(KernelOverrides(language = "fr"))
+		assertEquals(1, transport.optOutRequests.size)
+		assertTrue(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		// Turning GPC off clears the mark; turning it back on sends one new gpc request.
 		kernel.setOverrides(KernelOverrides(gpc = false))
+		assertEquals(1, transport.optOutRequests.size)
+		assertFalse(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		kernel.setOverrides(KernelOverrides(gpc = true))
+		assertEquals(2, transport.optOutRequests.size)
+		assertEquals(OptOutMethod.GPC, transport.optOutRequests[1].first.method)
+		assertTrue(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+	}
+
+	@Test
+	fun `click then signal sends one gpc opt-out without changing local optOut, and restart sends none`() {
+		val backend = InMemoryKeyValueStore()
+		seedSubject(backend)
+		val clock = FixedClock(NOW)
+		val buttonAnswer = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = NOW,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		val gpcAnswer = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.GPC,
+			recordedAt = NOW + 100,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		val tasks = ArrayDeque<() -> Unit>()
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = buttonAnswer))
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = gpcAnswer))
+		val first = testKernel(
+			store = InthStore(backend),
+			clock = clock,
+			transport = transport,
+			executor = TaskExecutor { tasks.addLast(it) },
+		)
+		first.bootstrap()
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+		assertTrue(first.optOut().ok)
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+		assertEquals(1, transport.optOutRequests.size)
+		assertEquals(OptOutMethod.BUTTON, transport.optOutRequests[0].first.method)
+		assertEquals(buttonAnswer, first.snapshot().optOut)
+		assertFalse(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		// Turning GPC on queues one gpc request without mutating snapshot.optOut before delivery.
+		first.setOverrides(KernelOverrides(gpc = true))
+		assertEquals(buttonAnswer, first.snapshot().optOut)
+		assertTrue(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+		assertEquals(2, transport.optOutRequests.size)
+		val gpcSent = transport.optOutRequests[1].first
+		assertEquals(OptOutMethod.GPC, gpcSent.method)
+		assertEquals("snapshot-token", gpcSent.policySnapshotToken)
+		assertEquals(SUBJECT, gpcSent.subjectId)
+		assertNotEquals(transport.optOutRequests[0].first.idempotencyKey, gpcSent.idempotencyKey)
+		assertEquals(gpcAnswer, first.snapshot().optOut)
+		assertTrue(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		// Refreshing or changing unrelated state does not send again.
+		first.refresh()
+		first.setOverrides(KernelOverrides(language = "fr"))
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+		assertEquals(2, transport.optOutRequests.size)
+
+		// Restart over the same store with GPC still on sends nothing.
+		val restartTransport = RecordingTransport().respondInit(optOutInit())
+		val restarted = testKernel(
+			config = TEST_CONFIG.copy(detectedGpc = true),
+			store = InthStore(backend),
+			clock = clock,
+			transport = restartTransport,
+		)
+		restarted.bootstrap()
+		restarted.refresh()
+		assertTrue(restartTransport.optOutRequests.isEmpty())
+	}
+
+	@Test
+	fun `account-held propagated opt-out with GPC on sends one gpc request, keeps mark across propagated and both answer, and restart sends none`() {
+		val backend = InMemoryKeyValueStore()
+		val personOptOut = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.PROPAGATED,
+			recordedAt = NOW - 5_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+		val bothOptOut = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.PROPAGATED,
+			recordedAt = NOW - 5_000,
+			heldBy = OptOutHolder.BOTH,
+		)
+		seedOptOut(backend, personOptOut)
+		val clock = FixedClock(NOW)
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = bothOptOut))
+		val first = testKernel(
+			config = TEST_CONFIG.copy(detectedGpc = true),
+			store = InthStore(backend),
+			clock = clock,
+			transport = transport,
+		)
+
+		first.bootstrap()
+
+		assertEquals(1, transport.optOutRequests.size)
+		assertEquals(OptOutMethod.GPC, transport.optOutRequests.single().first.method)
+		assertEquals(bothOptOut, first.snapshot().optOut)
+		assertTrue(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		// Restart sees method=propagated, heldBy=both, and the stored mark stops a second send.
+		val restartTransport = RecordingTransport().respondInit(optOutInit())
+		val restarted = testKernel(
+			config = TEST_CONFIG.copy(detectedGpc = true),
+			store = InthStore(backend),
+			clock = clock,
+			transport = restartTransport,
+		)
+		restarted.bootstrap()
+		restarted.refresh()
+		assertEquals(bothOptOut, restarted.snapshot().optOut)
+		assertTrue(restartTransport.optOutRequests.isEmpty())
+	}
+
+	@Test
+	fun `held record with GPC off sends nothing on bootstrap, refresh or restart`() {
+		val backend = InMemoryKeyValueStore()
+		val held = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.PROPAGATED,
+			recordedAt = NOW - 5_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+		seedOptOut(backend, held)
+		val clock = FixedClock(NOW)
+		val transport = RecordingTransport().respondInit(optOutInit())
+		val kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+
+		kernel.bootstrap()
+		kernel.refresh()
+		assertTrue(transport.optOutRequests.isEmpty())
+		assertEquals(held, kernel.snapshot().optOut)
+		assertFalse(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+	}
+
+	@Test
+	fun `after GPC goes off and comes back on for a held record, one new gpc request is sent`() {
+		val backend = InMemoryKeyValueStore()
+		val held = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = NOW - 5_000,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		seedOptOut(backend, held)
+		val clock = FixedClock(NOW)
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = held))
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = held))
+		val kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+		kernel.bootstrap()
+		assertTrue(transport.optOutRequests.isEmpty())
+
+		// Turn on -> one gpc request.
 		kernel.setOverrides(KernelOverrides(gpc = true))
 		assertEquals(1, transport.optOutRequests.size)
+		val firstKey = transport.optOutRequests[0].first.idempotencyKey
+		assertTrue(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		// Turn off -> no request, stored mark cleared.
+		kernel.setOverrides(KernelOverrides(gpc = false))
+		assertEquals(1, transport.optOutRequests.size)
+		assertFalse(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		// Turn back on -> one new gpc request with a new key.
+		kernel.setOverrides(KernelOverrides(gpc = true))
+		assertEquals(2, transport.optOutRequests.size)
+		assertEquals(OptOutMethod.GPC, transport.optOutRequests[1].first.method)
+		assertNotEquals(firstKey, transport.optOutRequests[1].first.idempotencyKey)
+		assertTrue(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		// Clear override (GPC is now off because detectedGpc is false) and restart with detectedGpc = true.
+		kernel.setOverrides(KernelOverrides(), merge = false)
+		assertFalse(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		val restartTransport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = held))
+		val restarted = testKernel(
+			config = TEST_CONFIG.copy(detectedGpc = true),
+			store = InthStore(backend),
+			clock = clock,
+			transport = restartTransport,
+		)
+		restarted.bootstrap()
+		assertEquals(1, restartTransport.optOutRequests.size)
+		assertEquals(OptOutMethod.GPC, restartTransport.optOutRequests.single().first.method)
+	}
+
+	@Test
+	fun `older stored envelope without optOutGpcReported reads as unmarked, sends once on upgrade, and restart sends none`() {
+		val backend = InMemoryKeyValueStore()
+		val held = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.GPC,
+			recordedAt = NOW - 5_000,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		seedOptOut(backend, held)
+		// Strip optOutGpcReported to simulate an envelope persisted by an older build.
+		val raw = json.parseToJsonElement(assertNotNull(backend.read(InthStoreKeys.SNAPSHOT))).jsonObject
+		val older = JsonObject(raw.filterKeys { it != "optOutGpcReported" })
+		backend.putSilently(InthStoreKeys.SNAPSHOT, older.toString())
+
+		val decoded = assertNotNull(InthStore(backend).readEnvelope())
+		assertFalse(decoded.optOutGpcReported)
+
+		val clock = FixedClock(NOW)
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = held))
+		val upgraded = testKernel(
+			config = TEST_CONFIG.copy(detectedGpc = true),
+			store = InthStore(backend),
+			clock = clock,
+			transport = transport,
+		)
+		upgraded.bootstrap()
+		assertEquals(1, transport.optOutRequests.size)
+		assertEquals(OptOutMethod.GPC, transport.optOutRequests.single().first.method)
+		assertTrue(assertNotNull(InthStore(backend).readEnvelope()).optOutGpcReported)
+
+		val restartTransport = RecordingTransport().respondInit(optOutInit())
+		val restarted = testKernel(
+			config = TEST_CONFIG.copy(detectedGpc = true),
+			store = InthStore(backend),
+			clock = clock,
+			transport = restartTransport,
+		)
+		restarted.bootstrap()
+		assertTrue(restartTransport.optOutRequests.isEmpty())
 	}
 
 	@Test

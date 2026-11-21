@@ -33,6 +33,8 @@ data class SnapshotEnvelope(
 	val iabConsent: com.inth.core.iab.IabCommittedConsent? = null,
 	val pendingSaves: List<@Serializable(with = EnvelopeQueuedSaveSerializer::class) QueuedSave>? = null,
 	val pendingOptOuts: List<@Serializable(with = EnvelopeQueuedOptOutSerializer::class) QueuedOptOut>? = null,
+	/** Whether this device has already queued a GPC opt-out request for the held opt-out record. Absent or `false` in an older envelope reads as not reported. */
+	val optOutGpcReported: Boolean = false,
 	val evaluationPolicy: EvaluationPolicy? = null,
 	val noticeDismissal: NoticeDismissal? = null,
 	/**

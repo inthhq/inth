@@ -2250,6 +2250,13 @@ the contract moved, not the kernel.
   `privacySignals.gpc.active` is true under a matched rule that maps GPC. The first
   time a live kernel sees an active GPC signal under a matched rule with a GPC deny
   list, it records a durable opt-out with `method: 'gpc'` and `heldBy: 'device'`.
+  When GPC is active under a matched rule with a GPC deny list while the device already
+  holds an opt-out record it has not yet reported GPC for, the core sends one `gpc`
+  opt-out request without modifying `snapshot.optOut` locally, stores a local mark
+  (`optOutGpcReported` in Kotlin's stored envelope, defaulting to `false` when absent
+  in an older envelope) so restarts do not repeat the request, preserves that mark
+  across backend opt-out answers, and clears it when the record is cleared or GPC
+  turns off.
   When the signal stops, the `gpc` restriction lifts, while the durable opt-out
   record stays and keeps `marketing` and `measurement` in scope restricted with
   `opt-out`, except when a non-deciding category holds a valid explicit grant
