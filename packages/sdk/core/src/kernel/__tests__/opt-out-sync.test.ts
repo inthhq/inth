@@ -535,17 +535,38 @@ describe('opt-out network sync and queue', () => {
 			])
 		);
 
-		// Re-evaluating or toggling GPC does not send again.
+		// Re-evaluating or changing unrelated state does not send again.
 		kernel.refresh();
-		kernel.set.privacySignals({ gpc: false });
-		kernel.set.privacySignals({ gpc: true });
+		kernel.set.language('fr');
 		await flushMacrotasks();
 		expect(optOut).toHaveBeenCalledTimes(1);
+
+		// Turning GPC off clears the local mark; turning it back on sends one
+		// new request without emitting another opt-out:recorded.
+		kernel.set.privacySignals({ gpc: false });
+		await flushMacrotasks();
+		expect(optOut).toHaveBeenCalledTimes(1);
+
+		kernel.set.privacySignals({ gpc: true });
+		await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(2));
+		expect(optOut.mock.calls[1]?.[0].method).toBe('gpc');
+		expect(recordedRights).toEqual([[]]);
 		kernel.dispose();
 	});
 
-	test('with GPC on and a record already held, loading sends no opt-out', async () => {
-		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>();
+	test('with GPC on and an unmarked gpc record held (pre-upgrade), first load sends one gpc request and a reload sends none', async () => {
+		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>((payload) =>
+			Promise.resolve({
+				ok: true,
+				optOut: {
+					heldBy: 'device',
+					method: 'gpc',
+					recordedAt: NOW - 5000,
+					rights: ['sale', 'share'],
+				},
+				subjectId: payload.subjectId,
+			})
+		);
 		const held: OptOutRecord = {
 			heldBy: 'device',
 			method: 'gpc',
@@ -561,18 +582,407 @@ describe('opt-out network sync and queue', () => {
 			},
 			transport: { optOut },
 		});
+		const persistence = createPersistence({ kernel, skipHydration: true });
 		const recorded = vi.fn();
 		kernel.events.on('opt-out:recorded', recorded);
 
 		await kernel.commands.init();
+		await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(1));
+		const firstCall = optOut.mock.calls[0]?.[0];
+		expect(firstCall?.method).toBe('gpc');
+		expect(firstCall).toBeDefined();
+		expect('rights' in (firstCall as OptOutPayload)).toBe(false);
 		kernel.refresh();
 		kernel.replaySaves();
 		await flushMacrotasks();
 
 		expect(kernel.getSnapshot().optOut).toEqual(held);
 		expect(recorded).not.toHaveBeenCalled();
-		expect(optOut).not.toHaveBeenCalled();
+		expect(optOut).toHaveBeenCalledTimes(1);
+		persistence.dispose();
 		kernel.dispose();
+
+		// Reload over the same storage reads the stored mark and sends nothing.
+		const reloaded = kernelOn({
+			initialPrivacySignals: { gpc: true },
+			transport: { optOut },
+		});
+		const reloadedPersistence = createPersistence({ kernel: reloaded });
+		await reloaded.commands.init();
+		reloaded.refresh();
+		reloaded.replaySaves();
+		await flushMacrotasks();
+
+		expect(reloaded.getSnapshot().optOut).toEqual(held);
+		expect(optOut).toHaveBeenCalledTimes(1);
+		reloadedPersistence.dispose();
+		reloaded.dispose();
+
+		// A kernel seeded with optOutGpcReported: true sends no opt-out at load.
+		const seeded = kernelOn({
+			initialPrivacySignals: { gpc: true },
+			initialRecords: {
+				now: NOW,
+				optOut: held,
+				optOutGpcReported: true,
+				subject: { subjectId: SUBJECT },
+			},
+			transport: { optOut },
+		});
+		await seeded.commands.init();
+		await flushMacrotasks();
+		expect(optOut).toHaveBeenCalledTimes(1);
+		seeded.dispose();
+
+		// A non-live kernel (server render) never sends or sets the mark.
+		const serverKernel = kernelOn({
+			initialPrivacySignals: { gpc: true },
+			initialRecords: {
+				now: NOW,
+				optOut: held,
+				subject: { subjectId: SUBJECT },
+			},
+			transport: { optOut },
+		});
+		await flushMacrotasks();
+		expect(optOut).toHaveBeenCalledTimes(1);
+		expect(serverKernel.isOptOutGpcReported()).toBe(false);
+		serverKernel.dispose();
+	});
+
+	test('click then signal sends one gpc opt-out without changing snapshot.optOut or emitting opt-out:recorded, and reload sends none', async () => {
+		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>((payload) =>
+			Promise.resolve({
+				ok: true,
+				optOut: {
+					heldBy: 'device',
+					method: payload.method,
+					recordedAt: payload.givenAt,
+					rights: ['sale', 'share'],
+				},
+				subjectId: payload.subjectId,
+			})
+		);
+		const first = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: { optOut },
+		});
+		const firstPersistence = createPersistence({ kernel: first });
+		const recorded = vi.fn();
+		first.events.on('opt-out:recorded', recorded);
+
+		await first.commands.init();
+		await first.commands.optOut();
+		await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(1));
+		expect(optOut.mock.calls[0]?.[0].method).toBe('button');
+		expect(recorded).toHaveBeenCalledTimes(1);
+		const beforeSignal = first.getSnapshot().optOut;
+
+		// Turning GPC on sends one gpc request without recording a new local opt-out.
+		first.set.privacySignals({ gpc: true });
+		expect(first.getSnapshot().optOut).toBe(beforeSignal);
+		expect(recorded).toHaveBeenCalledTimes(1);
+
+		await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(2));
+		const gpcPayload = optOut.mock.calls[1]?.[0] as OptOutPayload;
+		expect(gpcPayload).toMatchObject({
+			country: 'US',
+			method: 'gpc',
+			policySnapshotToken: 'snapshot-token',
+			region: 'CA',
+			subjectId: SUBJECT,
+		});
+		expect(gpcPayload.idempotencyKey).toMatch(V1_UUID_PATTERN);
+		expect(gpcPayload.idempotencyKey).not.toBe(
+			optOut.mock.calls[0]?.[0].idempotencyKey
+		);
+		expect('rights' in gpcPayload).toBe(false);
+
+		first.refresh();
+		first.set.language('fr');
+		await flushMacrotasks();
+		expect(optOut).toHaveBeenCalledTimes(2);
+		firstPersistence.dispose();
+		first.dispose();
+
+		// Reload over the same storage and queue store sends nothing.
+		const reloaded = kernelOn({
+			initialPrivacySignals: { gpc: true },
+			transport: { optOut },
+		});
+		const secondPersistence = createPersistence({ kernel: reloaded });
+		await reloaded.commands.init();
+		reloaded.refresh();
+		await flushMacrotasks();
+
+		expect(optOut).toHaveBeenCalledTimes(2);
+		secondPersistence.dispose();
+		reloaded.dispose();
+	});
+
+	test('account-held propagated opt-out with GPC on sends one gpc request, keeps the mark across a propagated/both answer, and reload sends none', async () => {
+		const personOptOut: OptOutRecord = {
+			heldBy: 'person',
+			method: 'propagated',
+			recordedAt: NOW - 5000,
+			rights: ['sale', 'share'],
+		};
+		const bothOptOut: OptOutRecord = {
+			heldBy: 'both',
+			method: 'propagated',
+			recordedAt: NOW - 5000,
+			rights: ['sale', 'share'],
+		};
+		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>((payload) =>
+			Promise.resolve({
+				ok: true,
+				optOut: bothOptOut,
+				subjectId: payload.subjectId,
+			})
+		);
+		const first = kernelOn({
+			initialPrivacySignals: { gpc: true },
+			initialRecords: {
+				now: NOW,
+				optOut: personOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			transport: { optOut },
+		});
+		const firstPersistence = createPersistence({
+			kernel: first,
+			skipHydration: true,
+		});
+		const recorded = vi.fn();
+		const synced: (Readonly<OptOutRecord> | null)[] = [];
+		first.events.on('opt-out:recorded', recorded);
+		first.events.on('opt-out:synced', ({ optOut: next }) => synced.push(next));
+
+		await first.commands.init();
+		await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(1));
+		const sentAccountGpc = optOut.mock.calls[0]?.[0];
+		expect(sentAccountGpc).toMatchObject({
+			method: 'gpc',
+			policySnapshotToken: 'snapshot-token',
+			subjectId: SUBJECT,
+		});
+		expect(sentAccountGpc).toBeDefined();
+		expect('rights' in (sentAccountGpc as OptOutPayload)).toBe(false);
+		expect(recorded).not.toHaveBeenCalled();
+
+		await vi.waitFor(() =>
+			expect(first.getSnapshot().optOut).toEqual(bothOptOut)
+		);
+		expect(synced).toEqual([bothOptOut]);
+		await flushMacrotasks();
+		expect(optOut).toHaveBeenCalledTimes(1);
+		firstPersistence.dispose();
+		first.dispose();
+
+		// Reload sees method=propagated, heldBy=both, and the stored mark stops a second send.
+		const reloaded = kernelOn({
+			initialPrivacySignals: { gpc: true },
+			transport: { optOut },
+		});
+		const secondPersistence = createPersistence({ kernel: reloaded });
+		expect(reloaded.getSnapshot().optOut).toEqual(bothOptOut);
+
+		await reloaded.commands.init();
+		reloaded.refresh();
+		await flushMacrotasks();
+		expect(optOut).toHaveBeenCalledTimes(1);
+		secondPersistence.dispose();
+		reloaded.dispose();
+	});
+
+	test('with a held record and GPC off, loading and refreshing send nothing', async () => {
+		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>();
+		const held: OptOutRecord = {
+			heldBy: 'person',
+			method: 'propagated',
+			recordedAt: NOW - 5000,
+			rights: ['sale', 'share'],
+		};
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: held,
+				subject: { subjectId: SUBJECT },
+			},
+			transport: { optOut },
+		});
+
+		await kernel.commands.init();
+		kernel.refresh();
+		await flushMacrotasks();
+
+		expect(optOut).not.toHaveBeenCalled();
+		expect(kernel.getSnapshot().optOut).toEqual(held);
+		kernel.dispose();
+	});
+
+	test('after GPC goes off and comes back on for a held record, one new gpc request is sent', async () => {
+		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>((payload) =>
+			Promise.resolve({
+				ok: true,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 5000,
+					rights: ['sale', 'share'],
+				},
+				subjectId: payload.subjectId,
+			})
+		);
+		const held: OptOutRecord = {
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 5000,
+			rights: ['sale', 'share'],
+		};
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: held,
+				subject: { subjectId: SUBJECT },
+			},
+			transport: { optOut },
+		});
+		const persistence = createPersistence({ kernel, skipHydration: true });
+		const recorded = vi.fn();
+		kernel.events.on('opt-out:recorded', recorded);
+
+		await kernel.commands.init();
+		expect(optOut).not.toHaveBeenCalled();
+
+		// Signal turns on: one gpc request.
+		kernel.set.privacySignals({ gpc: true });
+		await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(1));
+		const firstKey = optOut.mock.calls[0]?.[0].idempotencyKey;
+
+		// Signal goes off: no request, mark cleared in memory and storage.
+		kernel.set.privacySignals({ gpc: false });
+		await flushMacrotasks();
+		expect(optOut).toHaveBeenCalledTimes(1);
+
+		// Signal comes back on: one new gpc request with a new idempotency key.
+		kernel.set.privacySignals({ gpc: true });
+		await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(2));
+		expect(optOut.mock.calls[1]?.[0].method).toBe('gpc');
+		expect(optOut.mock.calls[1]?.[0].idempotencyKey).not.toBe(firstKey);
+		expect(recorded).not.toHaveBeenCalled();
+
+		// Turn off and reload with GPC on: cleared mark in storage triggers one new request.
+		kernel.set.privacySignals({ gpc: false });
+		await flushMacrotasks();
+		persistence.dispose();
+		kernel.dispose();
+
+		const reloaded = kernelOn({
+			initialPrivacySignals: { gpc: true },
+			transport: { optOut },
+		});
+		const reloadedPersistence = createPersistence({ kernel: reloaded });
+		await reloaded.commands.init();
+		await vi.waitFor(() => expect(optOut).toHaveBeenCalledTimes(3));
+		expect(optOut.mock.calls[2]?.[0].method).toBe('gpc');
+		reloadedPersistence.dispose();
+		reloaded.dispose();
+	});
+
+	test('a 404 backend and a transport without optOut send nothing for a held record when GPC activates', async () => {
+		const consoleError = vi
+			.spyOn(console, 'error')
+			.mockImplementation(() => undefined);
+		const consoleWarn = vi
+			.spyOn(console, 'warn')
+			.mockImplementation(() => undefined);
+
+		// Transport without optOut sends and queues nothing.
+		const noOptOutKernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 5000,
+					rights: ['sale', 'share'],
+				},
+				subject: { subjectId: SUBJECT },
+			},
+			transport: {
+				save: (payload) =>
+					Promise.resolve({ ok: true, subjectId: payload.subjectId }),
+			},
+		});
+		await noOptOutKernel.commands.init();
+		noOptOutKernel.set.privacySignals({ gpc: true });
+		await flushMacrotasks();
+		expect(await queuedOptOuts()).toEqual([]);
+		noOptOutKernel.dispose();
+
+		// Backend that answered 404 on an earlier optOut() gets no request when GPC activates.
+		const { calls, fetch } = stubFetch(() => v1Error(404, 'not_found'));
+		const transport = createV1HostedTransport({
+			fetch,
+			projectUrl: PROJECT_URL,
+			property: 'www.example.com',
+		});
+		const unsupportedKernel = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: {
+				liftOptOut: transport.liftOptOut,
+				optOut: transport.optOut,
+			},
+		});
+		await unsupportedKernel.commands.init();
+		await unsupportedKernel.commands.optOut();
+		expect(calls).toHaveLength(1);
+
+		unsupportedKernel.set.privacySignals({ gpc: true });
+		await flushMacrotasks();
+		expect(calls).toHaveLength(1);
+		expect(await queuedOptOuts()).toEqual([]);
+		expect(consoleError).not.toHaveBeenCalled();
+		expect(consoleWarn).not.toHaveBeenCalled();
+		unsupportedKernel.dispose();
+
+		// If the held-record GPC request itself gets 404, no error is logged and off-then-on sends nothing more.
+		const direct404 = stubFetch(() => v1Error(404, 'not_found'));
+		const directTransport = createV1HostedTransport({
+			fetch: direct404.fetch,
+			projectUrl: PROJECT_URL,
+			property: 'www.example.com',
+		});
+		const directKernel = kernelOn({
+			initialPrivacySignals: { gpc: true },
+			initialRecords: {
+				now: NOW,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 5000,
+					rights: ['sale', 'share'],
+				},
+				subject: { subjectId: SUBJECT },
+			},
+			transport: {
+				liftOptOut: directTransport.liftOptOut,
+				optOut: directTransport.optOut,
+			},
+		});
+		await directKernel.commands.init();
+		await vi.waitFor(() => expect(direct404.calls).toHaveLength(1));
+		await flushMacrotasks();
+
+		directKernel.set.privacySignals({ gpc: false });
+		directKernel.set.privacySignals({ gpc: true });
+		await flushMacrotasks();
+		expect(direct404.calls).toHaveLength(1);
+		expect(await queuedOptOuts()).toEqual([]);
+		expect(consoleError).not.toHaveBeenCalled();
+		expect(consoleWarn).not.toHaveBeenCalled();
+		directKernel.dispose();
 	});
 
 	test('with GPC on and no record left after a lift, the signal records and sends a new opt-out', async () => {

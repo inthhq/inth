@@ -35,6 +35,7 @@ export interface ValidatedRecords {
 	subject?: ConsentSubject | null;
 	noticeDismissal?: NoticeDismissal | null;
 	optOut?: OptOutRecord | null;
+	optOutGpcReported?: boolean;
 	vendorChoice?: VendorChoice | null;
 }
 
@@ -195,6 +196,13 @@ export const validateHydrationRecords = function validateHydrationRecords(
 					}))
 				);
 			}
+		}
+	}
+	if (input.optOutGpcReported !== undefined) {
+		if (typeof input.optOutGpcReported === 'boolean') {
+			records.optOutGpcReported = input.optOutGpcReported;
+		} else {
+			issues.push({ code: 'invalid-boolean', path: 'optOutGpcReported' });
 		}
 	}
 	if (input.vendorChoice !== undefined) {

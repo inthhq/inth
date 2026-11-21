@@ -462,6 +462,13 @@ export const mountPersistence = function mountPersistence(
 			state.optOutSynced = true;
 			request('optOut');
 		}),
+		kernel.onOptOutGpcReportedChange(() => {
+			if (kernel.getSnapshot().optOut !== null) {
+				state.optOutRecorded = true;
+				state.optOutSynced = true;
+				request('optOut');
+			}
+		}),
 	];
 
 	/**
@@ -471,11 +478,17 @@ export const mountPersistence = function mountPersistence(
 	const withQueued = function withQueued(
 		records: HydrationRecords
 	): HydrationRecords {
-		const snapshot = queuedWrites.get(consentKey)?.getSnapshot();
+		const queued = queuedWrites.get(consentKey);
+		const snapshot = queued?.getSnapshot();
 		// The snapshot's subject, notice and vendor records under their
 		// hydration names; hydration ignores every other field.
-		return snapshot
-			? { ...records, ...snapshot, choice: snapshot.explicitChoice }
+		return snapshot && queued
+			? {
+					...records,
+					...snapshot,
+					choice: snapshot.explicitChoice,
+					optOutGpcReported: queued.isOptOutGpcReported(),
+				}
 			: records;
 	};
 
@@ -655,6 +668,38 @@ export const mountPersistence = function mountPersistence(
 		return undefined;
 	};
 
+	const patchSeededOptOut = function patchSeededOptOut(
+		snapshot: ConsentSnapshot,
+		records: HydrationRecords,
+		epoch: number,
+		outranks: boolean,
+		patch: HydrationRecords
+	): void {
+		const keptOptOut = optOutSinceEpoch(snapshot.optOut, epoch);
+		const optOut = seededRecordPatch(
+			snapshot.optOut,
+			keptOptOut,
+			records.optOut,
+			outranks ||
+				(records.optOut?.recordedAt ?? -1) > (keptOptOut?.recordedAt ?? -1)
+		);
+		if (optOut) {
+			patch.optOut = optOut.value;
+			if (optOut.value !== null && records.optOutGpcReported) {
+				patch.optOutGpcReported = true;
+			}
+			return;
+		}
+		if (
+			keptOptOut !== null &&
+			records.optOut &&
+			records.optOutGpcReported === true &&
+			!kernel.isOptOutGpcReported()
+		) {
+			patch.optOutGpcReported = true;
+		}
+	};
+
 	const applyNewerStoredRecords =
 		function applyNewerStoredRecords(): ConsentSubject | null {
 			const at = now();
@@ -701,17 +746,13 @@ export const mountPersistence = function mountPersistence(
 			if (vendors) {
 				patch.vendorChoice = vendors.value;
 			}
-			const keptOptOut = optOutSinceEpoch(snapshot.optOut, epochs.optOut);
-			const optOut = seededRecordPatch(
-				snapshot.optOut,
-				keptOptOut,
-				records.optOut,
-				outranks.optOut ||
-					(records.optOut?.recordedAt ?? -1) > (keptOptOut?.recordedAt ?? -1)
+			patchSeededOptOut(
+				snapshot,
+				records,
+				epochs.optOut,
+				outranks.optOut,
+				patch
 			);
-			if (optOut) {
-				patch.optOut = optOut.value;
-			}
 			if (Object.keys(patch).length > 0) {
 				kernel.hydrate({ ...patch, now: at });
 			}

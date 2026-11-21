@@ -112,6 +112,30 @@ export const createRecordsBoundary = function createRecordsBoundary({
 	// only and is gone on the next page load.
 	let provisionalSubjectId: string | null = null;
 
+	const applyHydratedGpcMark = function applyHydratedGpcMark(
+		before: ConsentSnapshot,
+		hydrated: ValidatedRecords
+	): void {
+		if (hydrated.optOut === null) {
+			runtime.setOptOutGpcReported(false, false);
+			return;
+		}
+		if (hydrated.optOutGpcReported !== undefined) {
+			const hasOptOut =
+				hydrated.optOut === undefined
+					? before.optOut !== null
+					: hydrated.optOut !== null;
+			runtime.setOptOutGpcReported(
+				hydrated.optOutGpcReported && hasOptOut,
+				false
+			);
+			return;
+		}
+		if (hydrated.optOut !== undefined) {
+			runtime.setOptOutGpcReported(false, false);
+		}
+	};
+
 	const applyRecords = function applyRecords(
 		records: HydrationRecords,
 		fromServer: boolean
@@ -128,7 +152,11 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		if (fromServer) {
 			patch = foldServerRecords(before, validated.records, at);
 		} else {
-			const { choice, ...rest } = validated.records;
+			const {
+				choice,
+				optOutGpcReported: _gpcMark,
+				...rest
+			} = validated.records;
 			patch = { ...rest, now: at };
 			if (choice !== undefined) {
 				patch.explicitChoice = choice;
@@ -137,8 +165,15 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			if (reset && before.iab) {
 				patch.iab = { ...before.iab, authority: null, tcString: null };
 			}
+			applyHydratedGpcMark(before, validated.records);
 		}
 		const changed = commit(patch);
+		const touchedOptOut =
+			validated.records.optOut !== undefined ||
+			validated.records.optOutGpcReported !== undefined;
+		if (!changed && !fromServer && touchedOptOut) {
+			runtime.syncGpcSignal(at);
+		}
 		const after = getSnapshot();
 		if (
 			reset ||

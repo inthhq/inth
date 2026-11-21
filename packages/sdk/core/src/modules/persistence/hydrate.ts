@@ -109,7 +109,12 @@ const kernelOptOutRecord = function kernelOptOutRecord(
 	if (!record) {
 		return null;
 	}
-	const { subject: _subject, version: _version, ...optOut } = record;
+	const {
+		gpcReported: _gpcReported,
+		subject: _subject,
+		version: _version,
+		...optOut
+	} = record;
 	return optOut;
 };
 
@@ -194,6 +199,9 @@ const composeRecords = function composeRecords(
 		subject: recorded,
 		vendorChoice: kernelVendorChoice(vendorRecord),
 	};
+	if (optOutRecord?.gpcReported) {
+		records.optOutGpcReported = true;
+	}
 	return {
 		candidates: selection.candidates,
 		epoch,
@@ -329,6 +337,7 @@ const readRecords = function readRecords(
 	}
 	if (!optOut?.ok && optOutUnavailable) {
 		delete stored.records.optOut;
+		delete stored.records.optOutGpcReported;
 	}
 	return stored;
 };

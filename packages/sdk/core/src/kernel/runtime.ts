@@ -30,7 +30,7 @@ import type {
 } from '../types';
 import { createListenerSet } from './dispatch';
 import type { Dispatcher, ListenerSet } from './dispatch';
-import { gpcOptOutDue } from './opt-out';
+import { gpcOptOutDue, gpcSignalReportDue } from './opt-out';
 import { buildNextSnapshot, isUnchangedPatch, snapshotChanged } from './patch';
 import type { SnapshotPatch } from './patch';
 import { freezeSnapshot, isPromptSurface } from './snapshot';
@@ -88,6 +88,14 @@ export interface KernelRuntime {
 	getOptOutActVersion: () => number;
 	/** Record that a local opt-out act happened and return the new counter. */
 	noteOptOutAct: () => number;
+	/** Whether this browser has already reported its GPC signal for the held opt-out record. */
+	isOptOutGpcReported: () => boolean;
+	/** Set or clear the local GPC report mark. `notify` informs persistence listeners. */
+	setOptOutGpcReported: (reported: boolean, notify?: boolean) => void;
+	/** Subscribe to live changes to the local GPC report mark. */
+	onOptOutGpcReportedChange: (listener: Listener<boolean>) => () => void;
+	/** Reconcile the GPC report mark and trigger a held-record report when due. */
+	syncGpcSignal: (actionAt?: number) => void;
 	/**
 	 * Mark the kernel live in a visitor's browser: from here on, every commit
 	 * that leaves a prompt surface visible stamps its first impression. A
@@ -108,11 +116,15 @@ export interface KernelRuntime {
 
 export interface RuntimeOptions {
 	initialSnapshot: ConsentSnapshot;
+	/** Initial local GPC report mark hydrated from stored records. */
+	initialOptOutGpcReported?: boolean;
 	emit: (event: KernelEvent) => void;
 	/** Shared with the event bus so snapshots and events keep one order. */
 	dispatcher: Dispatcher;
 	/** Called after a commit moved `nextDeadline`. */
 	onDeadlineChange: () => void;
+	/** Called when a live kernel must report an active GPC signal for an already-held opt-out. */
+	onGpcSignalReportDue?: (snapshot: ConsentSnapshot, actionAt: number) => void;
 	/** Rights placed on an automatically recorded GPC opt-out. */
 	defaultOptOutRights?: () => OptOutRight[];
 }
@@ -125,9 +137,14 @@ export const createRuntime = function createRuntime(
 		dispatcher,
 		emit,
 		onDeadlineChange,
+		onGpcSignalReportDue,
 	} = options;
 	let snapshot = options.initialSnapshot;
 	let live = false;
+	let gpcReported =
+		options.initialOptOutGpcReported === true &&
+		options.initialSnapshot.optOut !== null;
+	let gpcReportedListeners: ListenerSet<boolean> | undefined;
 	/**
 	 * The surface the kernel, not the adapter, hid in the last commit: a
 	 * derived `activeUI` change (a save clearing the prompt) rather than an
@@ -154,6 +171,42 @@ export const createRuntime = function createRuntime(
 
 	const getSnapshot = () => snapshot;
 	const now = () => Date.now();
+
+	const setOptOutGpcReported = function setOptOutGpcReported(
+		reported: boolean,
+		notify = true
+	): void {
+		if (gpcReported === reported) {
+			return;
+		}
+		gpcReported = reported;
+		if (notify && gpcReportedListeners) {
+			dispatcher.batch(() => {
+				if (gpcReportedListeners) {
+					dispatcher.deliver(gpcReportedListeners, reported);
+				}
+			});
+		}
+	};
+
+	const syncGpcSignalState = function syncGpcSignalState(
+		previous: ConsentSnapshot,
+		current: ConsentSnapshot,
+		actionAt: number
+	): void {
+		if (
+			current.optOut === null ||
+			(previous.privacySignals.gpc.active &&
+				!current.privacySignals.gpc.active) ||
+			(live && !current.policyPending && !current.privacySignals.gpc.active)
+		) {
+			setOptOutGpcReported(false, current.optOut !== null);
+			return;
+		}
+		if (gpcSignalReportDue(current, live, gpcReported)) {
+			onGpcSignalReportDue?.(current, actionAt);
+		}
+	};
 
 	/**
 	 * Whether the visible prompt surface still lacks its first impression
@@ -398,8 +451,11 @@ export const createRuntime = function createRuntime(
 		// listeners still observe this transition first.
 		if (recordedGpcOptOut) {
 			optOutActVersion += 1;
+			publish(current, adopted, shown, adopted.optOut);
+		} else {
+			publish(current, adopted, shown, null);
+			syncGpcSignalState(current, adopted, adopted.evaluatedAt);
 		}
-		publish(current, adopted, shown, recordedGpcOptOut ? adopted.optOut : null);
 		if (adopted.nextDeadline !== current.nextDeadline) {
 			onDeadlineChange();
 		}
@@ -462,11 +518,13 @@ export const createRuntime = function createRuntime(
 		// Only the stamp changes, so skip the patch checks a commit runs:
 		// this sits on every first visit's init.
 		if (!impressionDue(current)) {
+			syncGpcSignalState(current, current, at);
 			return;
 		}
 		snapshot = stampCurrent(current, at);
 		hiddenBySave = null;
 		publish(current, snapshot, current.activeUI);
+		syncGpcSignalState(current, snapshot, at);
 	};
 
 	return {
@@ -480,16 +538,25 @@ export const createRuntime = function createRuntime(
 		invalidateRecords: () => {
 			generation += 1;
 		},
+		isOptOutGpcReported: () => gpcReported,
 		markLive,
 		noteOptOutAct: () => {
 			optOutActVersion += 1;
 			return optOutActVersion;
 		},
 		now,
+		onOptOutGpcReportedChange(listener) {
+			gpcReportedListeners ??= createListenerSet();
+			return gpcReportedListeners.add(listener);
+		},
 		setExperiment,
+		setOptOutGpcReported,
 		subscribe(listener) {
 			listeners ??= createListenerSet();
 			return listeners.add(listener);
+		},
+		syncGpcSignal: (actionAt: number = now()) => {
+			syncGpcSignalState(snapshot, snapshot, actionAt);
 		},
 	};
 };

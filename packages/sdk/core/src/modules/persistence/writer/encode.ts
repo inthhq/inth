@@ -353,13 +353,17 @@ export const encodeOptOutRecord = function encodeOptOutRecord(
 	if (record.subject && Object.keys(record.subject).length > 0) {
 		encoded.subject = { ...record.subject };
 	}
+	if (record.gpcReported) {
+		encoded.gpcReported = true;
+	}
 	return JSON.stringify(encoded);
 };
 
 /**
  * Compact durable opt-out for the `<key>-opt-out` cookie:
  * `v=1&r=<sa|sh|ta...>&m=<b|g|a|p>&t=<recordedAt>&h=<d|p|b>`, followed by
- * the subject fields (`sid`, `eid`, `idp`).
+ * the subject fields (`sid`, `eid`, `idp`) and `g=1` when the browser has
+ * already reported its GPC signal for this record.
  */
 export const encodeOptOutRecordCompact = function encodeOptOutRecordCompact(
 	record: StoredOptOutRecord
@@ -376,5 +380,8 @@ export const encodeOptOutRecordCompact = function encodeOptOutRecordCompact(
 		field('h', OPT_OUT_HOLDER_TO_CODE[record.heldBy]),
 		...subjectFields(record.subject),
 	];
+	if (record.gpcReported) {
+		fields.push(field('g', 1));
+	}
 	return fields.join(FIELD_SEPARATOR);
 };

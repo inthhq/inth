@@ -70,6 +70,18 @@ export interface InternalKernel extends ConsentKernel {
 	 * that queued its save without a kernel. Does nothing once disposed.
 	 */
 	replaySaves: () => void;
+	/**
+	 * Whether this browser has already handed a GPC opt-out request to the save
+	 * outbox for the currently held opt-out record.
+	 */
+	isOptOutGpcReported: () => boolean;
+	/**
+	 * Subscribe to live changes to the local GPC report mark so persistence
+	 * stores it beside the opt-out record without emitting `opt-out:recorded`.
+	 */
+	onOptOutGpcReportedChange: (
+		listener: (reported: boolean) => void
+	) => () => void;
 	readonly events: ConsentKernel['events'] & {
 		/** Announce an event the kernel did not produce itself. */
 		emit: (event: KernelEvent) => void;

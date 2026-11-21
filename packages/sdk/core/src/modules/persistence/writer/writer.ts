@@ -386,7 +386,13 @@ export const createPersistenceWriter = function createPersistenceWriter(
 			subjectOnly,
 			read
 		);
-		writeOptOutToStorage(store, { ...snapshot, subject }, storageConfig, at);
+		writeOptOutToStorage(
+			store,
+			{ ...snapshot, subject },
+			storageConfig,
+			at,
+			kernel.isOptOutGpcReported()
+		);
 		markWritten('optOut', sameRecord(subject, snapshot.subject));
 	});
 	const writes = {

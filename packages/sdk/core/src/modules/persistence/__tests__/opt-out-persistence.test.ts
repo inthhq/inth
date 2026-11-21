@@ -540,4 +540,121 @@ describe('opt-out persistence lifecycle', () => {
 		persistence.dispose();
 		kernel.dispose();
 	});
+
+	it('stores gpcReported beside the opt-out record in cookie and localStorage, keeps it out of OptOutRecord, preserves it across sync, and clears it when GPC turns off', async () => {
+		const markedRecord: StoredOptOutRecord = {
+			gpcReported: true,
+			heldBy: 'person',
+			method: 'propagated',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+			subject: { subjectId: 'sub_gpc_mark' },
+			version: 1,
+		};
+		const compact = encodeOptOutRecordCompact(markedRecord);
+		expect(compact).toBe(
+			`v=1&r=sa|sh&m=p&t=${NOW - 1000}&h=p&sid=sub_gpc_mark&g=1`
+		);
+		expect(decodeOptOutRecordCompact(compact, NOW)).toEqual({
+			ok: true,
+			record: markedRecord,
+		});
+		const json = encodeOptOutRecord(markedRecord);
+		expect(decodeOptOutRecord(JSON.parse(json), NOW)).toEqual({
+			ok: true,
+			record: markedRecord,
+		});
+		expect(
+			decodeOptOutRecordCompact(`v=1&r=sa&m=b&t=${NOW - 1}&h=d&g=0`, NOW).ok
+		).toBe(false);
+		expect(
+			decodeOptOutRecord(
+				{
+					gpcReported: 'yes',
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 1,
+					rights: ['sale'],
+					version: 1,
+				},
+				NOW
+			).ok
+		).toBe(false);
+
+		expect(writeStoredOptOutRecord(markedRecord, undefined, NOW).ok).toBe(true);
+		const read = readStoredRecords(undefined, NOW);
+		expect(read.records.optOut).toEqual({
+			heldBy: 'person',
+			method: 'propagated',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+		});
+		expect('gpcReported' in (read.records.optOut as object)).toBe(false);
+		expect(read.records.optOutGpcReported).toBe(true);
+
+		const fromCookie = readStoredRecordsFromCookieHeader(
+			document.cookie,
+			undefined,
+			NOW
+		);
+		expect(fromCookie.optOut).toEqual(read.records.optOut);
+		expect(fromCookie.optOutGpcReported).toBe(true);
+
+		// A live kernel that sends a GPC report persists the mark, preserves it
+		// across a propagated/both backend answer, and clears it when GPC turns off.
+		clearAll();
+		const optOut = vi.fn((payload) =>
+			Promise.resolve({
+				ok: true,
+				optOut: {
+					heldBy: 'both' as const,
+					method: 'propagated' as const,
+					recordedAt: NOW - 500,
+					rights: ['sale' as const, 'share' as const],
+				},
+				subjectId: payload.subjectId,
+			})
+		);
+		const kernel = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialPolicyResolution: usOptOutResolution(),
+			initialPrivacySignals: { gpc: true },
+			initialRecords: {
+				now: NOW,
+				optOut: {
+					heldBy: 'person',
+					method: 'propagated',
+					recordedAt: NOW - 500,
+					rights: ['sale', 'share'],
+				},
+				subject: { subjectId: 'sub_gpc_mark' },
+			},
+			now: NOW,
+			transport: { optOut },
+		});
+		const persistence = createPersistence({ kernel, skipHydration: true });
+
+		await kernel.commands.init();
+		await flushWrites();
+		expect(optOut).toHaveBeenCalledTimes(1);
+		expect(readStoredOptOutRecord(undefined, NOW)).toMatchObject({
+			ok: true,
+			record: {
+				gpcReported: true,
+				heldBy: 'both',
+				method: 'propagated',
+			},
+		});
+
+		kernel.set.privacySignals({ gpc: false });
+		await flushWrites();
+		const clearedMark = readStoredOptOutRecord(undefined, NOW);
+		expect(clearedMark).toMatchObject({ ok: true });
+		expect(
+			clearedMark?.ok ? clearedMark.record.gpcReported : 'invalid'
+		).toBeUndefined();
+
+		persistence.dispose();
+		kernel.dispose();
+	});
 });

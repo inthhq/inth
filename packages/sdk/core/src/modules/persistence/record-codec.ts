@@ -112,6 +112,12 @@ export type StoredOptOutRecord = OptOutRecord & {
 	 * the same subject across reloads.
 	 */
 	subject?: ConsentSubject;
+	/**
+	 * Whether this browser has already handed a GPC opt-out request to the save
+	 * outbox for this held record. Kept outside `OptOutRecord` so wire records
+	 * stay unchanged and backend answers do not overwrite it.
+	 */
+	gpcReported?: boolean;
 };
 
 /** Structural issue found while decoding a stored record. */
@@ -931,6 +937,7 @@ const OPT_OUT_STORED_KEYS = [
 	'recordedAt',
 	'heldBy',
 	'subject',
+	'gpcReported',
 ] as const;
 
 /**
@@ -959,6 +966,15 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 		}
 	}
 	const subject = validateSubject(ownValue(input, 'subject'), issues);
+	const rawGpcReported = ownValue(input, 'gpcReported');
+	let gpcReported = false;
+	if (rawGpcReported !== undefined) {
+		if (typeof rawGpcReported === 'boolean') {
+			gpcReported = rawGpcReported;
+		} else {
+			issues.push({ code: 'invalid-boolean', path: 'gpcReported' });
+		}
+	}
 	const inner = validateOptOutRecord(
 		{
 			heldBy: ownValue(input, 'heldBy'),
@@ -981,6 +997,9 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 	if (subject) {
 		record.subject = subject;
 	}
+	if (gpcReported) {
+		record.gpcReported = true;
+	}
 	return { ok: true, record };
 };
 
@@ -997,6 +1016,12 @@ export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 	const subject: ConsentSubject = {};
 	for (const [key, value] of fields) {
 		if (readSubjectField(key, value, subject, issues)) {
+			continue;
+		}
+		if (key === 'g') {
+			if (value !== '1') {
+				issues.push({ code: 'invalid-boolean', path: 'g' });
+			}
 			continue;
 		}
 		if (key !== 'r' && key !== 'm' && key !== 't' && key !== 'h') {
@@ -1033,6 +1058,9 @@ export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 	};
 	if (Object.keys(subject).length > 0) {
 		candidate.subject = subject;
+	}
+	if (fields.get('g') === '1') {
+		candidate.gpcReported = true;
 	}
 	return decodeOptOutRecord(candidate, now);
 };
