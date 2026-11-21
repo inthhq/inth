@@ -186,6 +186,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Das Global-Privacy-Control-Signal deines Browsers ist aktiv, daher bleibt dies deaktiviert.',
 		notOptedOut: 'Du bist in diesem Browser nicht abgemeldet.',
+		optInCancel: 'Abgemeldet bleiben',
+		optInConfirm: 'Wieder einwilligen',
+		optInDescription:
+			'Mit der Bestätigung endet dein Widerspruch in diesem Browser.',
+		optInDescriptionWithRights:
+			'Mit der Bestätigung endet dein Widerspruch gegen {rights} in diesem Browser.',
+		optInLink: 'Wieder einwilligen…',
+		optInTitle: 'Wieder einwilligen?',
 		receiptAccount: 'Du bist in diesem Browser und in deinem Konto abgemeldet.',
 		receiptAccountWithRights:
 			'Du bist in diesem Browser und in deinem Konto von {rights} abgemeldet.',

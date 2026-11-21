@@ -191,6 +191,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Isyarat Global Privacy Control pelayar anda dihidupkan, jadi tetapan ini kekal dimatikan.',
 		notOptedOut: 'Anda belum memilih keluar pada pelayar ini.',
+		optInCancel: 'Kekal tidak menyertai',
+		optInConfirm: 'Sertai semula',
+		optInDescription:
+			'Mengesahkan menamatkan pilihan keluar anda pada pelayar ini.',
+		optInDescriptionWithRights:
+			'Mengesahkan menamatkan pilihan keluar anda daripada {rights} pada pelayar ini.',
+		optInLink: 'Sertai semula…',
+		optInTitle: 'Sertai semula?',
 		receiptAccount:
 			'Anda telah memilih keluar pada pelayar ini dan akaun anda.',
 		receiptAccountWithRights:

@@ -134,6 +134,13 @@ describe('bundled optOut translations', () => {
 			lockedByGpc:
 				"Your browser's Global Privacy Control signal is on, so this stays off.",
 			notOptedOut: "You haven't opted out on this browser.",
+			optInCancel: 'Stay opted out',
+			optInConfirm: 'Opt back in',
+			optInDescription: 'Confirming ends your opt-out on this browser.',
+			optInDescriptionWithRights:
+				'Confirming ends your opt-out of {rights} on this browser.',
+			optInLink: 'Opt back in…',
+			optInTitle: 'Opt back in?',
 			receiptAccount: "You're opted out on this browser and your account.",
 			receiptAccountWithRights:
 				"You're opted out of {rights} on this browser and your account.",
@@ -155,6 +162,12 @@ describe('bundled optOut translations', () => {
 		'headingSaleAndShare',
 		'headingSaleAndTargetedAds',
 		'notOptedOut',
+		'optInCancel',
+		'optInConfirm',
+		'optInDescription',
+		'optInDescriptionWithRights',
+		'optInLink',
+		'optInTitle',
 		'statusRequest',
 		'statusSignal',
 		'description',
@@ -178,6 +191,12 @@ describe('bundled optOut translations', () => {
 		'headingSaleAndShare',
 		'headingSaleAndTargetedAds',
 		'notOptedOut',
+		'optInCancel',
+		'optInConfirm',
+		'optInDescription',
+		'optInDescriptionWithRights',
+		'optInLink',
+		'optInTitle',
 		'statusRequest',
 		'statusSignal',
 		'description',
@@ -203,6 +222,7 @@ describe('bundled optOut translations', () => {
 			}
 			expect(optOut?.receiptBrowserWithRights).toContain('{rights}');
 			expect(optOut?.receiptAccountWithRights).toContain('{rights}');
+			expect(optOut?.optInDescriptionWithRights).toContain('{rights}');
 		}
 	);
 

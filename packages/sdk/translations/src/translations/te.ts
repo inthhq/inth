@@ -183,6 +183,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'మీ బ్రౌజర్ యొక్క Global Privacy Control సిగ్నల్ ఆన్‌లో ఉంది, కాబట్టి ఇది ఆఫ్‌లోనే ఉంటుంది.',
 		notOptedOut: 'మీరు ఈ బ్రౌజర్‌లో వైదొలగలేదు.',
+		optInCancel: 'ఆప్ట్-అవుట్‌లోనే ఉండండి',
+		optInConfirm: 'మళ్ళీ ఆప్ట్-ఇన్ చేయండి',
+		optInDescription: 'నిర్ధారించడం ఈ బ్రౌజర్‌లో మీ ఆప్ట్-అవుట్‌ను ముగిస్తుంది.',
+		optInDescriptionWithRights:
+			'నిర్ధారించడం ఈ బ్రౌజర్‌లో {rights} నుండి మీ ఆప్ట్-అవుట్‌ను ముగిస్తుంది.',
+		optInLink: 'మళ్ళీ ఆప్ట్-ఇన్ చేయండి…',
+		optInTitle: 'మళ్ళీ ఆప్ట్-ఇన్ చేయాలా?',
 		receiptAccount: 'ఈ బ్రౌజర్‌లో మరియు మీ ఖాతాలో మీరు ఆప్ట్-అవుట్ చేశారు.',
 		receiptAccountWithRights:
 			'ఈ బ్రౌజర్‌లో మరియు మీ ఖాతాలో మీరు {rights} నుండి ఆప్ట్-అవుట్ చేశారు.',

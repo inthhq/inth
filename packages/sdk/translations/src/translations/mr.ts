@@ -186,6 +186,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'तुमच्या ब्राउझरचा Global Privacy Control सिग्नल सुरू आहे, त्यामुळे हे बंद राहते.',
 		notOptedOut: 'तुम्ही या ब्राउझरवर ऑप्ट आउट केलेले नाही.',
+		optInCancel: 'ऑप्ट-आउट राहा',
+		optInConfirm: 'पुन्हा ऑप्ट-इन करा',
+		optInDescription: 'पुष्टी केल्याने या ब्राउझरवरील तुमचे ऑप्ट-आउट समाप्त होते.',
+		optInDescriptionWithRights:
+			'पुष्टी केल्याने या ब्राउझरवरील {rights} साठी तुमचे ऑप्ट-आउट समाप्त होते.',
+		optInLink: 'पुन्हा ऑप्ट-इन करा…',
+		optInTitle: 'पुन्हा ऑप्ट-इन करायचे का?',
 		receiptAccount: 'तुम्ही या ब्राउझरवर आणि तुमच्या खात्यावर ऑप्ट-आउट केले आहे.',
 		receiptAccountWithRights:
 			'तुम्ही या ब्राउझरवर आणि तुमच्या खात्यावर {rights} मधून ऑप्ट-आउट केले आहे.',

@@ -190,6 +190,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Tarayıcınızın Global Privacy Control sinyali açık olduğundan bu ayar kapalı kalır.',
 		notOptedOut: 'Bu tarayıcıda vazgeçmediniz.',
+		optInCancel: 'Devre dışı kal',
+		optInConfirm: 'Yeniden katıl',
+		optInDescription:
+			'Onaylamak bu tarayıcıdaki devre dışı bırakma tercihinizi sonlandırır.',
+		optInDescriptionWithRights:
+			'Onaylamak bu tarayıcıdaki {rights} için devre dışı bırakma tercihinizi sonlandırır.',
+		optInLink: 'Yeniden katıl…',
+		optInTitle: 'Yeniden katılmak istiyor musunuz?',
 		receiptAccount: 'Bu tarayıcıda ve hesabınızda kapsam dışı bırakıldınız.',
 		receiptAccountWithRights:
 			'Bu tarayıcıda ve hesabınızda {rights} kapsamı dışında bırakıldınız.',

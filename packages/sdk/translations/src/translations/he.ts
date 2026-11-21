@@ -175,6 +175,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'אות Global Privacy Control של הדפדפן שלך פעיל, ולכן אפשרות זו נשארת כבויה.',
 		notOptedOut: 'לא ביטלת הסכמה בדפדפן זה.',
+		optInCancel: 'להישאר מוסר',
+		optInConfirm: 'להצטרף מחדש',
+		optInDescription: 'האישור מסיים את הביטול שלך בדפדפן זה.',
+		optInDescriptionWithRights:
+			'האישור מסיים את הביטול שלך עבור {rights} בדפדפן זה.',
+		optInLink: 'להצטרף מחדש…',
+		optInTitle: 'להצטרף מחדש?',
 		receiptAccount: 'ביטלת את ההשתתפות בדפדפן זה ובחשבון שלך.',
 		receiptAccountWithRights:
 			'ביטלת את ההשתתפות ב-{rights} בדפדפן זה ובחשבון שלך.',

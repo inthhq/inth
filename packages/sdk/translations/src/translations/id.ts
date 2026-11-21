@@ -185,6 +185,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Sinyal Global Privacy Control peramban Anda aktif, sehingga ini tetap nonaktif.',
 		notOptedOut: 'Anda belum memilih keluar di browser ini.',
+		optInCancel: 'Tetap menolak',
+		optInConfirm: 'Ikut kembali',
+		optInDescription: 'Mengonfirmasi mengakhiri penolakan Anda di browser ini.',
+		optInDescriptionWithRights:
+			'Mengonfirmasi mengakhiri penolakan Anda atas {rights} di browser ini.',
+		optInLink: 'Ikut kembali…',
+		optInTitle: 'Ikut kembali?',
 		receiptAccount:
 			'Anda telah memilih keluar di browser ini dan di akun Anda.',
 		receiptAccountWithRights:

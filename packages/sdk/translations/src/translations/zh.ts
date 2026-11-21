@@ -170,6 +170,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'您浏览器的 Global Privacy Control 信号已开启，因此此选项保持关闭。',
 		notOptedOut: '您尚未在此浏览器中选择退出。',
+		optInCancel: '保持退出状态',
+		optInConfirm: '重新加入',
+		optInDescription: '确认后将结束您在此浏览器上的退出状态。',
+		optInDescriptionWithRights:
+			'确认后将结束您在此浏览器上对{rights}的退出状态。',
+		optInLink: '重新加入…',
+		optInTitle: '重新加入？',
 		receiptAccount: '您已在此浏览器和您的账户中退出。',
 		receiptAccountWithRights: '您已在此浏览器和您的账户中退出{rights}。',
 		receiptBrowser: '您已在此浏览器中退出。',

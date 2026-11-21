@@ -5,6 +5,7 @@ import {
 	resolveActionLabels,
 	resolveCategoryTitle,
 	resolveIABCopy,
+	resolveOptInConfirmationSentence,
 	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
 	resolveOptOutLink,
@@ -295,6 +296,34 @@ describe('consent copy', () => {
 		expect(
 			resolveOptOutBlockHeading(en, unconfirmedReceipt, 'privacy-choices')
 		).toBe('Your Privacy Choices');
+	});
+
+	it('resolves the opt-in confirmation sentence neutrally before confirmation and names confirmed rights after', () => {
+		expect(resolveOptInConfirmationSentence(en, { rights: [] })).toBe(
+			'Confirming ends your opt-out on this browser.'
+		);
+		expect(
+			resolveOptInConfirmationSentence(en, { rights: ['sale', 'share'] })
+		).toBe(
+			'Confirming ends your opt-out of sale and sharing on this browser.'
+		);
+		expect(
+			resolveOptInConfirmationSentence(en, {
+				rights: ['sale', 'targeted_ads'],
+			})
+		).toBe(
+			'Confirming ends your opt-out of sale and targeted advertising on this browser.'
+		);
+		expect(
+			resolveOptInConfirmationSentence(en, {
+				rights: ['sale', 'share', 'targeted_ads'],
+			})
+		).toBe(
+			'Confirming ends your opt-out of sale, sharing and targeted advertising on this browser.'
+		);
+		expect(resolveOptInConfirmationSentence(en, { rights: ['sale'] })).toBe(
+			'Confirming ends your opt-out on this browser.'
+		);
 	});
 });
 

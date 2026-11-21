@@ -187,6 +187,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'O sinal Global Privacy Control do seu navegador está ativado, portanto esta opção permanece desativada.',
 		notOptedOut: 'Você não recusou neste navegador.',
+		optInCancel: 'Manter exclusão',
+		optInConfirm: 'Voltar a aceitar',
+		optInDescription: 'Confirmar encerra sua exclusão neste navegador.',
+		optInDescriptionWithRights:
+			'Confirmar encerra sua exclusão de {rights} neste navegador.',
+		optInLink: 'Voltar a aceitar…',
+		optInTitle: 'Voltar a aceitar?',
 		receiptAccount: 'Você optou por sair neste navegador e na sua conta.',
 		receiptAccountWithRights:
 			'Você optou por sair de {rights} neste navegador e na sua conta.',

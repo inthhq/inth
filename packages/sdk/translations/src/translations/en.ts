@@ -189,6 +189,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			"Your browser's Global Privacy Control signal is on, so this stays off.",
 		notOptedOut: "You haven't opted out on this browser.",
+		optInCancel: 'Stay opted out',
+		optInConfirm: 'Opt back in',
+		optInDescription: 'Confirming ends your opt-out on this browser.',
+		optInDescriptionWithRights:
+			'Confirming ends your opt-out of {rights} on this browser.',
+		optInLink: 'Opt back in…',
+		optInTitle: 'Opt back in?',
 		receiptAccount: "You're opted out on this browser and your account.",
 		receiptAccountWithRights:
 			"You're opted out of {rights} on this browser and your account.",

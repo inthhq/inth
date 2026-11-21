@@ -184,6 +184,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'D’Global-Privacy-Control-Signal vun Ärem Browser ass aktiv, dowéinst bleift dëst ausgeschalt.',
 		notOptedOut: 'Dir hutt Iech an dësem Browser net ofgemellt.',
+		optInCancel: 'Ofgemellt bleiwen',
+		optInConfirm: 'Erëm zoustëmmen',
+		optInDescription:
+			'Mat der Bestätegung endegt ären Widdersproch op dësem Browser.',
+		optInDescriptionWithRights:
+			'Mat der Bestätegung endegt ären Widdersproch géint {rights} op dësem Browser.',
+		optInLink: 'Erëm zoustëmmen…',
+		optInTitle: 'Erëm zoustëmmen?',
 		receiptAccount: 'Dir sidd an dësem Browser an an Ärem Kont ofgemellt.',
 		receiptAccountWithRights:
 			'Dir sidd an dësem Browser an an Ärem Kont vu {rights} ofgemellt.',

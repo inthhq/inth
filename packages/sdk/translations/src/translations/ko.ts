@@ -189,6 +189,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'브라우저의 Global Privacy Control 신호가 켜져 있어 이 설정은 꺼진 상태로 유지됩니다.',
 		notOptedOut: '이 브라우저에서 거부하지 않았습니다.',
+		optInCancel: '옵트아웃 유지',
+		optInConfirm: '다시 옵트인',
+		optInDescription: '확인하면 이 브라우저에서의 옵트아웃이 종료됩니다.',
+		optInDescriptionWithRights:
+			'확인하면 이 브라우저에서의 {rights} 옵트아웃이 종료됩니다.',
+		optInLink: '다시 옵트인…',
+		optInTitle: '다시 옵트인하시겠습니까?',
 		receiptAccount: '이 브라우저와 계정에서 거부 설정이 적용되었습니다.',
 		receiptAccountWithRights:
 			'이 브라우저와 계정에서 {rights}에 대한 거부 설정이 적용되었습니다.',

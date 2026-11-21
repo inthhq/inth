@@ -185,6 +185,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Nettlesaren sitt Global Privacy Control-signal er på, så dette vert verande av.',
 		notOptedOut: 'Du har ikkje reservert deg i denne nettlesaren.',
+		optInCancel: 'Ver framleis avmeld',
+		optInConfirm: 'Meld deg inn att',
+		optInDescription:
+			'Stadfesting avsluttar avmeldinga di i denne nettlesaren.',
+		optInDescriptionWithRights:
+			'Stadfesting avsluttar avmeldinga di frå {rights} i denne nettlesaren.',
+		optInLink: 'Meld deg inn att…',
+		optInTitle: 'Melde deg inn att?',
 		receiptAccount:
 			'Du har reservert deg i denne nettlesaren og på kontoen din.',
 		receiptAccountWithRights:

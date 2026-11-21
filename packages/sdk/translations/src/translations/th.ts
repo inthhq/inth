@@ -182,6 +182,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'สัญญาณ Global Privacy Control ของเบราว์เซอร์เปิดอยู่ ตัวเลือกนี้จึงยังคงปิดอยู่',
 		notOptedOut: 'คุณยังไม่ได้เลือกไม่รับในเบราว์เซอร์นี้',
+		optInCancel: 'ยังคงไม่เข้าร่วม',
+		optInConfirm: 'เข้าร่วมอีกครั้ง',
+		optInDescription: 'การยืนยันจะสิ้นสุดการเลือกไม่รับของคุณบนเบราว์เซอร์นี้',
+		optInDescriptionWithRights:
+			'การยืนยันจะสิ้นสุดการเลือกไม่รับ{rights}ของคุณบนเบราว์เซอร์นี้',
+		optInLink: 'เข้าร่วมอีกครั้ง…',
+		optInTitle: 'เข้าร่วมอีกครั้งหรือไม่?',
 		receiptAccount: 'คุณได้เลือกไม่รับในเบราว์เซอร์นี้และบัญชีของคุณแล้ว',
 		receiptAccountWithRights: 'คุณได้เลือกไม่รับ{rights}ในเบราว์เซอร์นี้และบัญชีของคุณแล้ว',
 		receiptBrowser: 'คุณได้เลือกไม่รับในเบราว์เซอร์นี้แล้ว',

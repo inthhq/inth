@@ -53,6 +53,18 @@ export interface OptOutTranslations {
 	statusSignal: string;
 	/** Neutral status sentence shown when the visitor has not opted out on this browser. */
 	notOptedOut: string;
+	/** Cancel button label in the two-step opt-in confirmation dialog. */
+	optInCancel: string;
+	/** Confirm button label in the two-step opt-in confirmation dialog. */
+	optInConfirm: string;
+	/** Neutral body sentence in the two-step opt-in confirmation dialog. */
+	optInDescription: string;
+	/** Body sentence naming confirmed rights in the two-step opt-in confirmation dialog. Use `{rights}`. */
+	optInDescriptionWithRights: string;
+	/** Link label in the sale-and-sharing block to start opting back in. */
+	optInLink: string;
+	/** Title of the two-step opt-in confirmation dialog. */
+	optInTitle: string;
 	/** Block heading when confirmed rights are `sale` and `share`. */
 	headingSaleAndShare: string;
 	/** Block heading when confirmed rights are `sale` and `targeted_ads`. */

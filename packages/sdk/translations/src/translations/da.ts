@@ -184,6 +184,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Din browsers Global Privacy Control-signal er slået til, så dette forbliver slået fra.',
 		notOptedOut: 'Du har ikke frameldt dig i denne browser.',
+		optInCancel: 'Forbliv frameldt',
+		optInConfirm: 'Tilmeld igen',
+		optInDescription: 'Bekræftelse afslutter din framelding i denne browser.',
+		optInDescriptionWithRights:
+			'Bekræftelse afslutter din framelding af {rights} i denne browser.',
+		optInLink: 'Tilmeld igen…',
+		optInTitle: 'Vil du tilmelde dig igen?',
 		receiptAccount: 'Du er frameldt i denne browser og på din konto.',
 		receiptAccountWithRights:
 			'Du er frameldt {rights} i denne browser og på din konto.',

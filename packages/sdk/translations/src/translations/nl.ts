@@ -186,6 +186,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Het Global Privacy Control-signaal van je browser staat aan, dus dit blijft uitgeschakeld.',
 		notOptedOut: 'U bent in deze browser niet afgemeld.',
+		optInCancel: 'Afgemeld blijven',
+		optInConfirm: 'Opnieuw aanmelden',
+		optInDescription: 'Bevestigen beëindigt je afmelding in deze browser.',
+		optInDescriptionWithRights:
+			'Bevestigen beëindigt je afmelding voor {rights} in deze browser.',
+		optInLink: 'Opnieuw aanmelden…',
+		optInTitle: 'Opnieuw aanmelden?',
 		receiptAccount: 'Je bent afgemeld in deze browser en op je account.',
 		receiptAccountWithRights:
 			'Je bent afgemeld voor {rights} in deze browser en op je account.',

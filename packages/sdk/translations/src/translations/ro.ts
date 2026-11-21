@@ -187,6 +187,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Semnalul Global Privacy Control al browserului tău este activ, așa că această opțiune rămâne dezactivată.',
 		notOptedOut: 'Nu ați renunțat în acest browser.',
+		optInCancel: 'Rămâi dezabonat',
+		optInConfirm: 'Reînscrie-te',
+		optInDescription: 'Confirmarea încheie renunțarea ta în acest browser.',
+		optInDescriptionWithRights:
+			'Confirmarea încheie renunțarea ta la {rights} în acest browser.',
+		optInLink: 'Reînscrie-te…',
+		optInTitle: 'Te reînscrii?',
 		receiptAccount: 'Ai renunțat în acest browser și pe contul tău.',
 		receiptAccountWithRights:
 			'Ai renunțat la {rights} în acest browser și pe contul tău.',

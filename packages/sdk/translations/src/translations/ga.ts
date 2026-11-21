@@ -187,6 +187,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Tá comhartha Global Privacy Control do bhrabhsálaí ar siúl, mar sin fanann sé seo múchta.',
 		notOptedOut: 'Níor dhiúltaigh tú ar an mbrabhsálaí seo.',
+		optInCancel: 'Fan diúltaithe',
+		optInConfirm: 'Roghnaigh isteach arís',
+		optInDescription:
+			'Cuireann deimhniú deireadh le do dhiúltú ar an mbrabhsálaí seo.',
+		optInDescriptionWithRights:
+			'Cuireann deimhniú deireadh le do dhiúltú do {rights} ar an mbrabhsálaí seo.',
+		optInLink: 'Roghnaigh isteach arís…',
+		optInTitle: 'Roghnaigh isteach arís?',
 		receiptAccount:
 			'Tá tú tar éis diúltú sa bhrabhsálaí seo agus ar do chuntas.',
 		receiptAccountWithRights:

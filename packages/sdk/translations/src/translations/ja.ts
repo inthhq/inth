@@ -190,6 +190,13 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'ブラウザのGlobal Privacy Control信号がオンになっているため、これはオフのままになります。',
 		notOptedOut: 'このブラウザではオプトアウトしていません。',
+		optInCancel: 'オプトアウトを維持',
+		optInConfirm: '再度オプトインする',
+		optInDescription: '確認すると、このブラウザでのオプトアウトが終了します。',
+		optInDescriptionWithRights:
+			'確認すると、このブラウザでの{rights}のオプトアウトが終了します。',
+		optInLink: '再度オプトインする…',
+		optInTitle: '再度オプトインしますか？',
 		receiptAccount: 'このブラウザとアカウントでオプトアウトされています。',
 		receiptAccountWithRights:
 			'このブラウザとアカウントで{rights}からオプトアウトされています。',

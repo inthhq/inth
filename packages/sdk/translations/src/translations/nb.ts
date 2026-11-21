@@ -185,6 +185,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Nettleserens Global Privacy Control-signal er på, så dette forblir av.',
 		notOptedOut: 'Du har ikke reservert deg i denne nettleseren.',
+		optInCancel: 'Forbli avmeldt',
+		optInConfirm: 'Meld deg inn igjen',
+		optInDescription:
+			'Bekreftelse avslutter avmeldingen din i denne nettleseren.',
+		optInDescriptionWithRights:
+			'Bekreftelse avslutter avmeldingen din fra {rights} i denne nettleseren.',
+		optInLink: 'Meld deg inn igjen…',
+		optInTitle: 'Melde deg inn igjen?',
 		receiptAccount:
 			'Du har reservert deg i denne nettleseren og på kontoen din.',
 		receiptAccountWithRights:

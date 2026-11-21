@@ -184,6 +184,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Jūsu pārlūkprogrammas Global Privacy Control signāls ir ieslēgts, tāpēc tas paliek izslēgts.',
 		notOptedOut: 'Šajā pārlūkprogrammā neesat atteicies.',
+		optInCancel: 'Palikt atteikušamies',
+		optInConfirm: 'Piekrist vēlreiz',
+		optInDescription:
+			'Apstiprināšana izbeidz jūsu atteikšanos šajā pārlūkprogrammā.',
+		optInDescriptionWithRights:
+			'Apstiprināšana izbeidz jūsu atteikšanos no {rights} šajā pārlūkprogrammā.',
+		optInLink: 'Piekrist vēlreiz…',
+		optInTitle: 'Piekrist vēlreiz?',
 		receiptAccount: 'Jūs esat atteicies šajā pārlūkprogrammā un savā kontā.',
 		receiptAccountWithRights:
 			'Jūs esat atteicies no {rights} šajā pārlūkprogrammā un savā kontā.',

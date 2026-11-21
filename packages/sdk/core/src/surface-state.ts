@@ -28,6 +28,7 @@ export {
 	resolveActionLabels,
 	resolveCategoryTitle,
 	resolveIABCopy,
+	resolveOptInConfirmationSentence,
 	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
 	resolveOptOutLink,

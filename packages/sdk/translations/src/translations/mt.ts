@@ -186,6 +186,14 @@ export const translations: CompleteTranslations = {
 		lockedByGpc:
 			'Is-sinjal Global Privacy Control tal-brawżer tiegħek huwa mixgħul, għalhekk dan jibqa’ mitfi.',
 		notOptedOut: 'Ma għażiltx li toħroġ fuq dan il-brawżer.',
+		optInCancel: "Ibqa' eskluż",
+		optInConfirm: "Erġa' aċċetta",
+		optInDescription:
+			'Il-konferma ttemm l-esklużjoni tiegħek fuq dan il-browser.',
+		optInDescriptionWithRights:
+			'Il-konferma ttemm l-esklużjoni tiegħek minn {rights} fuq dan il-browser.',
+		optInLink: "Erġa' aċċetta…",
+		optInTitle: "Trid terġa' taċċetta?",
 		receiptAccount:
 			'Inti għażilt li toħroġ fuq dan il-brawżer u fuq il-kont tiegħek.',
 		receiptAccountWithRights:
