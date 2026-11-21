@@ -30,6 +30,7 @@ import {
 import {
 	resolveOptOutCopy,
 	resolveOptOutLink,
+	resolveOptOutReceiptSentence,
 	resolvePreferenceControlLabels,
 } from '@inth/sdk/surface-state';
 import { isDialogDismissKey, onDialogDismiss } from '@inth/sdk/ui/primitives';
@@ -42,6 +43,23 @@ import {
 	resolveStyles,
 	toStyleAttributeValue,
 } from '@inth/sdk/ui/utils';
+
+const formatRecordedAt = function formatRecordedAt(
+	at: number,
+	language: string
+): string {
+	try {
+		return new Intl.DateTimeFormat(language, {
+			dateStyle: 'medium',
+			timeStyle: 'short',
+		}).format(at);
+	} catch {
+		return new Intl.DateTimeFormat(undefined, {
+			dateStyle: 'medium',
+			timeStyle: 'short',
+		}).format(at);
+	}
+};
 
 /**
  * The opt-out confirmation view body, loaded lazily by `<inth-opt-out-confirmation>`
@@ -126,8 +144,67 @@ import {
 							data-testid="opt-out-confirmation-description"
 							id="opt-out-confirmation-description"
 						>
-							{{ optOutCopy().description }}
+							{{ receiptSentence() }}
 						</p>
+						@if (hasReceiptDetails()) {
+							<dl
+								[class]="resolvedNoStyle() ? '' : styles.receipt || ''"
+								data-testid="opt-out-confirmation-receipt"
+							>
+								@if (recordedAt(); as recorded) {
+									<div
+										[class]="resolvedNoStyle() ? '' : styles.receiptRow || ''"
+									>
+										<dt
+											[class]="
+												resolvedNoStyle() ? '' : styles.receiptLabel || ''
+											"
+										>
+											{{ optOutCopy().recordedLabel }}
+										</dt>
+										<dd
+											[class]="
+												resolvedNoStyle() ? '' : styles.receiptValue || ''
+											"
+										>
+											<time
+												[attr.datetime]="recorded.iso"
+												data-testid="opt-out-confirmation-recorded-at"
+											>
+												{{ recorded.formatted }}
+											</time>
+										</dd>
+									</div>
+								}
+								@if (receipt().reference; as reference) {
+									<div
+										[class]="resolvedNoStyle() ? '' : styles.receiptRow || ''"
+									>
+										<dt
+											[class]="
+												resolvedNoStyle() ? '' : styles.receiptLabel || ''
+											"
+										>
+											{{ optOutCopy().referenceLabel }}
+										</dt>
+										<dd
+											[class]="
+												resolvedNoStyle() ? '' : styles.receiptValue || ''
+											"
+										>
+											<code
+												[class]="
+													resolvedNoStyle() ? '' : styles.reference || ''
+												"
+												data-testid="opt-out-confirmation-reference"
+											>
+												{{ reference }}
+											</code>
+										</dd>
+									</div>
+								}
+							</dl>
+						}
 						<div
 							[class]="footerStyle().className || ''"
 							[attr.style]="styleOf(footerStyle())"
@@ -200,8 +277,12 @@ export class OptOutConfirmationPanel {
 	});
 
 	/** @internal */
+	protected readonly styles = styles;
+	/** @internal */
+	protected readonly receipt = this.#consent.optOutReceipt;
+	/** @internal */
 	protected readonly language = computed(
-		() => this.#consent.translations()?.language ?? null
+		() => this.#consent.translations()?.language ?? 'en'
 	);
 	/** @internal */
 	protected readonly textDirection = computed(() =>
@@ -211,6 +292,26 @@ export class OptOutConfirmationPanel {
 	protected readonly optOutCopy = computed(() =>
 		resolveOptOutCopy(this.#consent.copy())
 	);
+	/** @internal */
+	protected readonly receiptSentence = computed(() =>
+		resolveOptOutReceiptSentence(this.#consent.copy(), this.receipt())
+	);
+	/** @internal */
+	protected readonly hasReceiptDetails = computed(() => {
+		const receipt = this.receipt();
+		return receipt.at !== null || receipt.reference !== null;
+	});
+	/** @internal */
+	protected readonly recordedAt = computed(() => {
+		const { at } = this.receipt();
+		if (at === null) {
+			return null;
+		}
+		return {
+			formatted: formatRecordedAt(at, this.language()),
+			iso: new Date(at).toISOString(),
+		};
+	});
 	/** @internal */
 	protected readonly optOutLink = computed(() =>
 		resolveOptOutLink(

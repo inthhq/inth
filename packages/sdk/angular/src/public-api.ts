@@ -70,11 +70,20 @@ export {
 export {
 	resolveActionLabels,
 	resolveConsentPresentation,
+	resolveOptInConfirmationSentence,
+	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
 	resolveOptOutLink,
+	resolveOptOutReceipt,
+	resolveOptOutReceiptSentence,
 	resolveOptOutState,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
+} from '@inth/sdk/surface-state';
+export type {
+	OptOutReceipt,
+	OptOutReceiptScope,
+	OptOutReceiptSource,
 } from '@inth/sdk/surface-state';
 
 export type {
@@ -186,6 +195,7 @@ export type {
 export { bannerVisibility as ɵbannerVisibility } from './lib/banner/banner-visibility';
 export type { BannerVisibility as ɵBannerVisibility } from './lib/banner/banner-visibility';
 export { Overlay as ɵOverlay } from './lib/overlay/overlay';
+export { OptInConfirmation as ɵOptInConfirmation } from './lib/dialog/opt-in-confirmation';
 export {
 	focusInitially as ɵfocusInitially,
 	InitialFocus as ɵInitialFocus,

@@ -111,8 +111,12 @@ import type {
 			[unmountOnExit]="true"
 		>
 			@if (dialog.shouldRender()) {
+				<!-- data-disable-animation on the portal wrapper stops the
+				     data-state keyframes on the overlay and positioner without
+				     putting an extra attribute on consent-dialog-overlay. -->
 				<div
 					inthPortal
+					[attr.data-disable-animation]="disableMotion() ? '' : null"
 					style="display: contents;"
 				>
 					@if (preferences().blocking) {
@@ -120,12 +124,9 @@ import type {
 							inthDialogBackdrop
 							[class]="overlayStyle().className || ''"
 							[attr.style]="styleOf(overlayStyle())"
-							[attr.data-disable-animation]="disableMotion() ? '' : null"
 							data-testid="consent-dialog-overlay"
 						></div>
 					}
-					<!-- data-disable-animation stops the data-state keyframes the
-					     stylesheet runs on the overlay and positioner. -->
 					<div
 						inthDialogPositioner
 						[class]="positionerClass()"
@@ -190,6 +191,7 @@ import type {
 											data-testid="consent-widget-root"
 											[hideBranding]="true"
 											[noStyle]="resolvedNoStyle()"
+											[uiSource]="'dialog'"
 										></div>
 									}
 								</div>

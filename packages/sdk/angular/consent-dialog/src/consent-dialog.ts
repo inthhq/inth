@@ -22,6 +22,7 @@ import type { ComponentRef, Type } from '@angular/core';
 import {
 	ConsentManager,
 	registerDialogWarmer,
+	ɵOptInConfirmation as OptInConfirmation,
 	ɵreturnFocusAfterDialog as returnFocusAfterDialog,
 } from '@inth/angular';
 import type { ActiveUI } from '@inth/sdk/engine';
@@ -73,10 +74,13 @@ export const CONSENT_DIALOG_PANEL = new InjectionToken<
 	// The server renders nothing here, and the body is created in the
 	// browser: there is nothing to hydrate.
 	host: { ngSkipHydration: 'true' },
-	imports: [OptOutConfirmation],
+	imports: [OptInConfirmation, OptOutConfirmation],
 	selector: 'inth-consent-dialog',
 	template: `<inth-opt-out-confirmation
 			[embedded]="true"
+			[noStyle]="noStyle()"
+			[disableAnimation]="disableAnimation()"
+		/><inth-opt-in-confirmation
 			[noStyle]="noStyle()"
 			[disableAnimation]="disableAnimation()"
 		/><ng-container #body />`,
