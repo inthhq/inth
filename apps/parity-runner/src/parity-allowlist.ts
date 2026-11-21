@@ -65,6 +65,30 @@ export const PARITY_ALLOWLIST: readonly ParityAllowEntry[] = [
 		check: 'dom',
 		framework: 'astro',
 		reason:
+			"Astro's server-rendered banner carries the attributes its client boot reads (`data-inth-visible` on the root, `data-inth-action` on each button) and the `lang` the server resolved, the same way `Core/Consent Banner/Default` does. The opt-out link itself matches React.",
+		slot: '*',
+		story: 'Core/Consent Banner/Opt Out Link',
+	},
+	{
+		check: 'dom',
+		framework: 'astro',
+		reason:
+			"Astro's server-rendered banner carries the attributes its client boot reads (`data-inth-visible` on the root, `data-inth-action` on each button) and the `lang` the server resolved, the same way `Core/Consent Banner/Default` does. The Privacy Choices link and its icon match React.",
+		slot: '*',
+		story: 'Core/Consent Banner/Privacy Choices Link',
+	},
+	{
+		check: 'dom',
+		framework: 'astro',
+		reason:
+			"Astro's server-rendered opt-out link carries the attributes its client boot reads (`data-inth-action`, `data-inth-dialog`, `data-inth-surface`). The confirmation view matches React on DOM, accessibility, styles and geometry.",
+		slot: '*',
+		story: 'Core/Opt Out Confirmation/Signal Honored',
+	},
+	{
+		check: 'dom',
+		framework: 'astro',
+		reason:
 			"Astro's server-rendered IAB banner carries the attributes its client boot reads — `data-inth-visible` on the root — and the `lang` the server resolved, the same way the core banner does. Nothing else renders them because nothing else needs them.",
 		slot: '*',
 		story: 'IAB/IAB Consent Banner/Default',
