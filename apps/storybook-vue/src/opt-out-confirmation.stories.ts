@@ -43,6 +43,7 @@ export const RequestHonored: Story = {
 				{
 					disableAnimation: true,
 					presentation: { optOutLink: 'do-not-sell' },
+					reloadOnConsentRevoked: false,
 				},
 				storybookOptOutInit
 			);
@@ -74,6 +75,7 @@ export const SignalHonored: Story = {
 					disableAnimation: true,
 					overrides: { gpc: true },
 					presentation: { optOutLink: 'privacy-choices' },
+					reloadOnConsentRevoked: false,
 				},
 				storybookOptOutInit
 			);
