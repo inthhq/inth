@@ -20,7 +20,9 @@ import type { SaveOutboxStore } from '../../kernel/save-outbox';
 import { OPT_OUT_CONFIRMATION_STORAGE_KEY } from '../../libs/storage-keys';
 import { createStandInKernel } from '../../runtime/stand-in-kernel';
 import {
+	claimOptOutConfirmationHost,
 	closeOptOutConfirmation,
+	hasOptOutConfirmationHost,
 	isOptOutConfirmationOpen,
 	optOutConsentSurface,
 	subscribeOptOutConfirmation,
@@ -1167,6 +1169,78 @@ describe('opt-out confirmation across a revocation reload', () => {
 
 		unsubscribe();
 		stop();
+		standIn.dispose();
+	});
+
+	it('carries a standalone confirmation host claim across stand-in kernel attachment', () => {
+		const real = createOptOutKernel();
+		const standIn = createStandInKernel({
+			requestEngine: () => undefined,
+			snapshot: { ...real.getSnapshot() },
+		});
+		const onStandInChange = vi.fn();
+		const onRealChange = vi.fn();
+		const release = claimOptOutConfirmationHost(
+			standIn.kernel,
+			Symbol('standalone')
+		);
+		const unsubscribeStandIn = subscribeOptOutConfirmation(
+			standIn.kernel,
+			onStandInChange
+		);
+		const unsubscribeReal = subscribeOptOutConfirmation(real, onRealChange);
+
+		expect(hasOptOutConfirmationHost(standIn.kernel)).toBe(true);
+		expect(hasOptOutConfirmationHost(real)).toBe(false);
+
+		standIn.attach(real);
+
+		expect(hasOptOutConfirmationHost(standIn.kernel)).toBe(true);
+		expect(hasOptOutConfirmationHost(real)).toBe(true);
+		expect(onStandInChange).toHaveBeenCalled();
+		expect(onRealChange).toHaveBeenCalled();
+
+		onStandInChange.mockClear();
+		onRealChange.mockClear();
+		release();
+
+		expect(hasOptOutConfirmationHost(standIn.kernel)).toBe(false);
+		expect(hasOptOutConfirmationHost(real)).toBe(false);
+		expect(onStandInChange).toHaveBeenCalled();
+		expect(onRealChange).toHaveBeenCalled();
+
+		unsubscribeStandIn();
+		unsubscribeReal();
+		standIn.dispose();
+	});
+
+	it('notifies subscribers when a confirmation open on a stand-in closes on engine attachment', async () => {
+		const heldOptOut = {
+			heldBy: 'device' as const,
+			method: 'button' as const,
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'] as ('sale' | 'share')[],
+		};
+		const real = createOptOutKernel({
+			initialRecords: { optOut: heldOptOut },
+		});
+		const standIn = createStandInKernel({
+			requestEngine: () => undefined,
+			snapshot: { ...real.getSnapshot() },
+		});
+		const onChange = vi.fn();
+		const unsubscribe = subscribeOptOutConfirmation(standIn.kernel, onChange);
+
+		const pending = optOutConsentSurface(standIn.kernel);
+		expect(isOptOutConfirmationOpen(standIn.kernel)).toBe(true);
+		onChange.mockClear();
+
+		standIn.attach(real);
+		expect(isOptOutConfirmationOpen(standIn.kernel)).toBe(false);
+		expect(onChange).toHaveBeenCalled();
+
+		await pending;
+		unsubscribe();
 		standIn.dispose();
 	});
 });
