@@ -150,7 +150,7 @@ androidComponents {
 
 On iOS, write straight into the built app bundle (and list the output path in Output Files if user script sandboxing is enabled) so debug builds that skip fetching do not copy an old file.
 
-Manifest export requires a conservative opt-in or IAB fallback rule with no preselected optional categories. For scoped IAB apps, pass `--vendors` with comma-separated vendor IDs. Export also includes custom (non-IAB) vendors and fails if two custom vendors share an ID. Pass `--dry-run` on debug builds pointing at staging or loopback hosts.
+Manifest export requires a conservative opt-in or IAB fallback rule with no preselected optional categories. For scoped IAB apps, pass `--vendors` with comma-separated vendor IDs. Export also includes custom (non-IAB) vendors and fails if two custom vendors share an ID. Pass `--dry-run` on debug builds pointing at staging or loopback hosts. Repository maintainers re-export example app fixtures with `bunx tsx scripts/export-mobile-policy.ts`, which takes an explicit `--expires-at`.
 
 ## Include the resource in the app
 
