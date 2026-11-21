@@ -215,13 +215,15 @@ export const subscribeOptOutConfirmation = function subscribeOptOutConfirmation(
 		if (!nextKey || nextKey === currentKey) {
 			return;
 		}
-		entries.get(currentKey)?.listeners.delete(listener);
+		const previous = entries.get(currentKey);
+		const wasOpen = previous?.open === true;
+		const hadHost = (previous?.hosts.size ?? 0) > 0;
+		previous?.listeners.delete(listener);
 		currentKey = nextKey;
-		entryFor(currentKey).listeners.add(listener);
-		if (
-			entries.get(currentKey)?.open === true ||
-			(entries.get(currentKey)?.hosts.size ?? 0) > 0
-		) {
+		const next = entryFor(currentKey);
+		next.listeners.add(listener);
+		const hasHost = next.hosts.size > 0;
+		if (wasOpen !== next.open || hadHost !== hasHost) {
 			listener();
 		}
 	};
@@ -243,16 +245,35 @@ export const claimOptOutConfirmationHost = function claimOptOutConfirmationHost(
 	kernel: ConsentKernel,
 	token: symbol
 ): () => void {
-	const key = keyOf(kernel);
-	if (!key) {
+	const initialKey = keyOf(kernel);
+	if (!initialKey) {
 		return () => undefined;
 	}
-	const entry = entryFor(key);
-	entry.hosts.add(token);
-	notify(entry);
+	let currentKey = initialKey;
+	const initialEntry = entryFor(currentKey);
+	initialEntry.hosts.add(token);
+	notify(initialEntry);
+
+	const followAttach = () => {
+		const nextKey = keyOf(kernel);
+		if (!nextKey || nextKey === currentKey) {
+			return;
+		}
+		entries.get(currentKey)?.hosts.delete(token);
+		currentKey = nextKey;
+		const nextEntry = entryFor(currentKey);
+		nextEntry.hosts.add(token);
+		notify(nextEntry);
+	};
+
+	const unsubscribeSnapshot = kernel.subscribe(followAttach);
+
 	return () => {
-		entry.hosts.delete(token);
-		notify(entry);
+		unsubscribeSnapshot();
+		const entry = entries.get(currentKey);
+		if (entry?.hosts.delete(token)) {
+			notify(entry);
+		}
 	};
 };
 
