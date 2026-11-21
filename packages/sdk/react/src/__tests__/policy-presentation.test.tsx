@@ -233,6 +233,7 @@ describe('policy presentation reference behavior', () => {
 						}),
 						now,
 					},
+					reloadOnConsentRevoked: false,
 				}}
 			>
 				<Capture />

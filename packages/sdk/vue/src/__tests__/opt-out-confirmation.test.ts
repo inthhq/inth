@@ -1,5 +1,8 @@
-import type { OptOutLinkVariant } from '@inth/sdk/engine';
-import { policyRulePresets } from '@inth/sdk/engine';
+import type * as Engine from '@inth/sdk/engine';
+import {
+	OPT_OUT_CONFIRMATION_STORAGE_KEY,
+	policyRulePresets,
+} from '@inth/sdk/engine';
 import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
@@ -40,6 +43,17 @@ import {
 } from '../runtime/utils/symbols';
 import { createVueConsentKernelContext } from './test-kernel';
 import type { VueConsentKernelContext } from './test-kernel';
+
+const reload = vi.hoisted(() => vi.fn());
+// oxlint-disable-next-line anti-slop/no-module-mocking -- jsdom cannot perform navigation on `window.location.reload`. The factory returns the real module and records the reload instead.
+vi.mock('@inth/sdk/engine', async (importOriginal) => {
+	const actual = await importOriginal<typeof Engine>();
+	return {
+		...actual,
+		watchRevocationReload: (options: Engine.RevocationReloadOptions) =>
+			actual.watchRevocationReload({ ...options, reload }),
+	};
+});
 
 const query = <Element extends HTMLElement>(testId: string) =>
 	document.querySelector<Element>(`[data-testid="${testId}"]`);
@@ -91,7 +105,7 @@ const mountTree = async function mountTree(
 		rule?: PolicyRule;
 		location?: { countryCode: string | null; regionCode: string | null };
 		gpc?: boolean;
-		optOutLink?: OptOutLinkVariant;
+		optOutLink?: Engine.OptOutLinkVariant;
 		config?: Partial<ConsentConfig>;
 		start?: boolean;
 	} = {}
@@ -112,6 +126,7 @@ const mountTree = async function mountTree(
 			? { optOutLink: options.optOutLink }
 			: undefined,
 		projectUrl: 'https://consent.example',
+		reloadOnConsentRevoked: false,
 	} as ConsentConfig & { overrides?: { gpc: boolean } };
 	if (options.gpc) {
 		base.overrides = { gpc: true };
@@ -146,17 +161,25 @@ const mountTree = async function mountTree(
 	return context;
 };
 
-afterEach(async () => {
-	if (mounted) {
-		closeOptOutConfirmation(mounted.context.kernel);
-		const { element } = mounted.wrapper;
-		mounted.wrapper.unmount();
-		element.remove();
-		mounted.context.dispose();
-		mounted = null;
-		await flushPromises();
+const unmountCurrent = async function unmountCurrent(): Promise<void> {
+	if (!mounted) {
+		return;
 	}
+	const current = mounted;
+	mounted = null;
+	closeOptOutConfirmation(current.context.kernel);
+	const { element } = current.wrapper;
+	current.wrapper.unmount();
+	element?.remove();
+	current.context.dispose();
+	await flushPromises();
+};
+
+afterEach(async () => {
+	await unmountCurrent();
+	reload.mockClear();
 	localStorage.clear();
+	sessionStorage.clear();
 	for (const cookie of document.cookie.split(';')) {
 		const name = cookie.split('=')[0]?.trim();
 		if (name) {
@@ -352,7 +375,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		['do-not-sell', 'Do Not Sell or Share My Personal Information', false],
 		['privacy-choices', 'Your Privacy Choices', true],
 		['california-privacy-choices', 'Your California Privacy Choices', true],
-	] as [OptOutLinkVariant, string, boolean][])(
+	] as [Engine.OptOutLinkVariant, string, boolean][])(
 		'renders optOutLink=%s with exact title and icon=%s',
 		async (optOutLink, expectedTitle, expectIcon) => {
 			await mountTree(
@@ -549,5 +572,93 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		await vi.waitFor(() =>
 			expect(query('opt-out-confirmation-root')).not.toBeNull()
 		);
+	});
+
+	test('defers confirmation across a revocation reload, shows it once on the next load, and not on the load after that', async () => {
+		const onBeforeReload = vi.fn();
+		const first = await mountTree(
+			defineComponent({
+				render: () => [
+					h(ConsentBanner, { disableAnimation: true }),
+					h(ConsentManager, { disableAnimation: true }),
+				],
+			}),
+			{
+				config: {
+					callbacks: { onBeforeConsentRevocationReload: onBeforeReload },
+					reloadOnConsentRevoked: true,
+				},
+				start: true,
+			}
+		);
+
+		await vi.waitFor(() =>
+			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+		);
+		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+
+		// Does not flash on the old document before reload.
+		expect(query('opt-out-confirmation-root')).toBeNull();
+		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBe('1');
+		await vi.waitFor(() => expect(reload).toHaveBeenCalledOnce());
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(query('opt-out-confirmation-root')).toBeNull();
+
+		const recorded = first.kernel.getSnapshot().optOut;
+		expect(recorded).not.toBeNull();
+
+		// Tear down the first document mount before simulating the reload.
+		await unmountCurrent();
+		reload.mockClear();
+
+		// Next load after reload: opens once with the honored status, clears the
+		// marker, records nothing again, and does not reload again.
+		const second = await mountTree(
+			defineComponent({
+				render: () => [h(ConsentManager, { disableAnimation: true })],
+			}),
+			{
+				config: {
+					initialRecords: { optOut: recorded ?? undefined },
+					reloadOnConsentRevoked: true,
+				},
+				start: true,
+			}
+		);
+		const onRecorded = vi.fn();
+		second.kernel.events.on('opt-out:recorded', onRecorded);
+
+		await vi.waitFor(() =>
+			expect(query('opt-out-confirmation-root')).not.toBeNull()
+		);
+		expect(query('opt-out-confirmation-status')?.textContent?.trim()).toBe(
+			'Opt-out request honored'
+		);
+		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBeNull();
+		expect(onRecorded).not.toHaveBeenCalled();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		expect(reload).not.toHaveBeenCalled();
+
+		await unmountCurrent();
+
+		// Load after that: marker is cleared, so confirmation does not reopen.
+		await mountTree(
+			defineComponent({
+				render: () => [h(ConsentManager, { disableAnimation: true })],
+			}),
+			{
+				config: {
+					initialRecords: { optOut: recorded ?? undefined },
+					reloadOnConsentRevoked: true,
+				},
+				start: true,
+			}
+		);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		expect(query('opt-out-confirmation-root')).toBeNull();
 	});
 });

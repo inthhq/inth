@@ -35,7 +35,7 @@ Import `callbacks` in the route component rather than returning functions from a
 | `onChoiceRecorded` | The visitor clicks Accept All, Reject All, or Save Settings in built-in UI or via `useSaveConsents()`. | `snapshot`, state after the choice; `confirmed`, categories recorded by this action; `actionAt`, millisecond timestamp |
 | `onPermissionsChanged` | Any effective permission changes value. | `snapshot`, state after the change; `previous`, permissions before it |
 | `onError` | A browser consent command fails, such as a failed `/v1/consent/init` or rejected `/v1/consent/records` save. | `error`, message string |
-| `onBeforeConsentRevocationReload` | A save revokes a granted category or vendor, right before Inth reloads the page. | `preferences`, permissions after the save |
+| `onBeforeConsentRevocationReload` | A save or one-click opt-out revokes a granted category or vendor, right before Inth reloads the page. Privacy signals and backend-synced opt-outs do not reload. | `preferences`, permissions after the withdrawal |
 
 The full object type is `InthProviderCallbacks` from `@inth/tanstack-start`. Callbacks run after state updates, so `snapshot` and hooks such as `useConsent()` already return the new values.
 

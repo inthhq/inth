@@ -1,4 +1,11 @@
-import type { ConsentSnapshot } from '@inth/sdk/engine';
+import type {
+	ConsentSnapshot,
+	RevocationReloadOptions,
+} from '@inth/sdk/engine';
+import {
+	OPT_OUT_CONFIRMATION_STORAGE_KEY,
+	watchRevocationReload,
+} from '@inth/sdk/engine';
 import { onDemandRuntimeModules } from '@inth/sdk/runtime/on-demand';
 import {
 	EARLY_TAP_ROOT,
@@ -28,7 +35,13 @@ import '@inth/vue/vue-plugin';
 import { testResolution, testRule } from './policy-fixture';
 import { ISLAND_RENDER_TIMEOUT } from './react-dialog-island';
 
-registerRuntimeModules(onDemandRuntimeModules);
+const reload = vi.fn();
+
+registerRuntimeModules({
+	...onDemandRuntimeModules,
+	watchRevocationReload: (options: RevocationReloadOptions) =>
+		watchRevocationReload({ ...options, reload }),
+});
 
 const OPT_OUT_RULE = {
 	...testRule,
@@ -72,7 +85,9 @@ afterEach(async () => {
 	}
 	resetEarlyTapGlobals();
 	(window as unknown as Record<string, unknown>).__inthAstroConfig = undefined;
+	reload.mockClear();
 	localStorage.clear();
+	sessionStorage.clear();
 	for (const cookie of document.cookie.split(';')) {
 		const name = cookie.split('=')[0]?.trim();
 		if (name) {
@@ -84,7 +99,8 @@ afterEach(async () => {
 const mountBannerAndClient = (
 	ui: 'react' | 'vue',
 	options: Partial<InthAstroOptions> = {},
-	rule: typeof OPT_OUT_RULE | typeof testRule = OPT_OUT_RULE
+	rule: typeof OPT_OUT_RULE | typeof testRule = OPT_OUT_RULE,
+	initialRecords: Record<string, unknown> = {}
 ): AstroConsentClient => {
 	if (ui === 'react') {
 		registerDialogAdapter('react', () => Promise.resolve(reactDialogAdapter));
@@ -96,7 +112,7 @@ const mountBannerAndClient = (
 
 	(window as unknown as Record<string, unknown>).__inthAstroConfig = {
 		initialPolicyResolution: testResolution(rule),
-		initialRecords: {},
+		initialRecords,
 		initialTranslations: { language: 'en', translations: {} },
 		now: Date.now(),
 	};
@@ -104,6 +120,7 @@ const mountBannerAndClient = (
 		consentCategories: ['necessary', 'measurement', 'marketing'],
 		disableAnimation: true,
 		mode: testingMode({ policy: [rule] }),
+		reloadOnConsentRevoked: false,
 		ui,
 		...options,
 	});
@@ -290,6 +307,87 @@ describe.each(['react', 'vue'] as const)(
 				document.querySelector('[data-testid="opt-out-confirmation-root"]')
 			).toBeNull();
 		});
+
+		it('defers confirmation across a revocation reload, shows it once on the next load, and not on the load after that', async () => {
+			const first = mountBannerAndClient(ui, {
+				reloadOnConsentRevoked: true,
+			});
+
+			const bannerLink = document.querySelector<HTMLButtonElement>(
+				'[data-testid="consent-banner-right-link-opt-out"]'
+			);
+			expect(bannerLink).not.toBeNull();
+			bannerLink?.click();
+
+			// Does not flash on the old document before reload.
+			await vi.waitFor(() =>
+				expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBe(
+					'1'
+				)
+			);
+			expect(
+				document.querySelector('[data-testid="opt-out-confirmation-root"]')
+			).toBeNull();
+			await vi.waitFor(() => expect(reload).toHaveBeenCalledOnce());
+			expect(
+				document.querySelector('[data-testid="opt-out-confirmation-root"]')
+			).toBeNull();
+
+			const recorded = first.getConsent().optOut;
+			expect(recorded).not.toBeNull();
+			for (const step of cleanup.splice(0).reverse()) {
+				// oxlint-disable-next-line no-await-in-loop -- Tear down in reverse mount order.
+				await step();
+			}
+			reload.mockClear();
+
+			// Next load after reload: opens once with the honored status, clears the
+			// marker, records nothing again, and does not reload again.
+			const second = mountBannerAndClient(
+				ui,
+				{ reloadOnConsentRevoked: true },
+				OPT_OUT_RULE,
+				{ optOut: recorded ?? undefined }
+			);
+			const onRecorded = vi.fn();
+			second.runtime?.kernel.events.on('opt-out:recorded', onRecorded);
+
+			await vi.waitFor(
+				() =>
+					expect(
+						document.querySelector('[data-testid="opt-out-confirmation-root"]')
+					).not.toBeNull(),
+				ISLAND_RENDER_TIMEOUT
+			);
+			expect(
+				document.querySelector('[data-testid="opt-out-confirmation-status"]')
+					?.textContent
+			).toContain('Opt-out request honored');
+			expect(
+				sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)
+			).toBeNull();
+			expect(onRecorded).not.toHaveBeenCalled();
+			await new Promise((resolve) => {
+				setTimeout(resolve, 20);
+			});
+			expect(reload).not.toHaveBeenCalled();
+
+			for (const step of cleanup.splice(0).reverse()) {
+				// oxlint-disable-next-line no-await-in-loop -- Tear down in reverse mount order.
+				await step();
+			}
+
+			// Load after that: marker is cleared, so confirmation does not reopen.
+			mountBannerAndClient(ui, { reloadOnConsentRevoked: true }, OPT_OUT_RULE, {
+				optOut: recorded ?? undefined,
+			});
+			await new Promise((resolve) => {
+				setTimeout(resolve, 20);
+			});
+			expect(
+				document.querySelector('[data-testid="opt-out-confirmation-root"]')
+			).toBeNull();
+		});
 	}
 );
 
@@ -360,6 +458,7 @@ describe('early tap replay for the opt-out link', () => {
 			consentCategories: ['necessary', 'measurement', 'marketing'],
 			disableAnimation: true,
 			mode: testingMode({ policy: [OPT_OUT_RULE] }),
+			reloadOnConsentRevoked: false,
 			ui: 'react',
 		});
 		const config = {

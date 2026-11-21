@@ -26,7 +26,7 @@ same props, except that `state` replaces `mode` and `prefetch`.
 | `iframeBlocker` | `{ disableAutomaticBlocking?: boolean }` or `false` | on | Gates iframes that carry `data-category`. Updates after mount: `false` removes the blocker and a new `disableAutomaticBlocking` rebuilds it. See [embeds](../embeds). |
 | `iab` | `ProviderIABOptions` or `false` | off | IAB TCF settings. Read once. See [IAB TCF](../iab). |
 | `callbacks` | `InthProviderCallbacks` | none | `onChoiceRecorded`, `onPermissionsChanged`, `onError` and `onBeforeConsentRevocationReload`. The latest functions are called. See [callbacks](../callbacks). |
-| `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after a save withdraws a category or vendor that was granted. |
+| `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after a save or one-click opt-out withdraws a category or vendor that was granted. Privacy signals and backend-synced opt-outs do not reload. |
 | `overrides` | `{ country?, region?, language?, gpc? }` | none | Forces the location, language or Global Privacy Control signal the policy resolves for. A change after mount resolves the policy again. |
 | `user` | `User` | none | Identity sent with the policy request and every saved choice, so the choice is linked to your user ID. A different user after mount is identified with the backend; the user you mount with is not identified separately. |
 | `storageConfig` | `StorageConfig` | cookie and key `inth` | Names and lifetime of the stored choice. Read once. On SvelteKit, pass the same name as `cookieName` to the server helpers. |

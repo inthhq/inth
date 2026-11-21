@@ -79,8 +79,11 @@ produces the same actions on every framework:
 - A rule that keeps preferences reachable adds a "Manage preferences" button.
 
 Under an opt-out rule, activating the opt-out link records the opt-out in one
-click, denies the opt-out categories immediately, and opens the opt-out
-confirmation view (`OptOutConfirmation`). Set `presentation.optOutLink` in the
+click and denies the opt-out categories immediately. When that turns off a
+category that was running and `reloadOnConsentRevoked` is enabled, Inth waits
+for the opt-out request, reloads the page, and opens the opt-out confirmation
+view (`OptOutConfirmation`) once on the new page; otherwise it opens
+immediately. Set `presentation.optOutLink` in the
 integration options to `'do-not-sell'`, `'privacy-choices'`, or
 `'california-privacy-choices'`; the two "Privacy Choices" forms always render
 with the California Privacy Protection Agency opt-out icon. Under any other

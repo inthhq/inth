@@ -24,7 +24,10 @@ group: reference
     Personal Information" (or "Your Privacy Choices" / "Your California Privacy
     Choices" with the California Privacy Protection Agency opt-out icon when
     `presentation.optOutLink` is set). Activating it under an opt-out policy
-    records the opt-out in one click and opens `OptOutConfirmation`. When only
+    records the opt-out in one click. When that turns off a category that was
+    running and `reloadOnConsentRevoked` is enabled, Inth waits for the opt-out
+    request, reloads the page, and opens `OptOutConfirmation` once on the new
+    page; otherwise `OptOutConfirmation` opens immediately. When only
     the `preferences` right is shown, the link opens `ConsentManager`.
   - A policy with prompt `none` shows no banner.
 

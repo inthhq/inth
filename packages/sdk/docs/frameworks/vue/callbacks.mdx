@@ -30,7 +30,7 @@ Inth wires callbacks once when the plugin installs.
 | --- | --- | --- |
 | `onChoiceRecorded` | A visitor clicks Accept All, Reject All, or Save Settings in stock UI or via `useConsentSave()`. | `snapshot`, `confirmed` (categories covered by the action), and `actionAt` |
 | `onPermissionsChanged` | Any effective permission changes value. | `snapshot` and `previous` (permissions before the change) |
-| `onBeforeConsentRevocationReload` | A save withdraws a granted category or vendor, right before Inth reloads the page. | `preferences` (permissions after the save) |
+| `onBeforeConsentRevocationReload` | A save or one-click opt-out withdraws a granted category or vendor, right before Inth reloads the page. Privacy signals and backend-synced opt-outs do not reload. | `preferences` (permissions after the withdrawal) |
 | `onError` | A consent command fails, such as a rejected save request. | `error` (message string) |
 
 ## onChoiceRecorded or onPermissionsChanged
@@ -50,7 +50,8 @@ changes no permission. Subscribe to notice dismissals with
 ## Before a revocation reload
 
 Because removing a `<script>` tag cannot stop already-running code, Inth
-reloads the page after a visitor withdraws a granted category or vendor.
+reloads the page after a save or one-click opt-out withdraws a granted category
+or vendor. Privacy signals and backend-synced opt-outs do not reload.
 `onBeforeConsentRevocationReload` runs synchronously right before that reload.
 Use it for quick vendor shutdown calls; the reload does not wait for async
 work. Set `reloadOnConsentRevoked: false` to handle revocation yourself.

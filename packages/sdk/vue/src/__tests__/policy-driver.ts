@@ -424,6 +424,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 			hideBranding: true,
 			// IAB is opt-in; an `iab` scenario stands for an app that turned it on.
 			iab: setup.policy.model === 'iab' ? {} : undefined,
+			reloadOnConsentRevoked: false,
 			// React's trigger shows by default; scenarios open it before a choice.
 			triggerShowWhen: 'always',
 		};

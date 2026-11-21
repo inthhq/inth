@@ -1,5 +1,8 @@
 import type { ConsentKernel, OptOutLinkVariant } from '@inth/sdk/engine';
-import { policyRulePresets } from '@inth/sdk/engine';
+import {
+	OPT_OUT_CONFIRMATION_STORAGE_KEY,
+	policyRulePresets,
+} from '@inth/sdk/engine';
 import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
@@ -68,6 +71,7 @@ afterEach(() => {
 	>;
 	host[EARLY_TAPS_WINDOW_KEY]?.stop?.();
 	Reflect.deleteProperty(window, EARLY_TAPS_WINDOW_KEY);
+	sessionStorage.clear();
 });
 
 describe('one-step opt-out and confirmation view in React', () => {
@@ -80,6 +84,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 					overrides: { country: 'US', region: 'CA' },
 					persistence: false,
 					prefetch: policyFixture(undefined, noticeRule()),
+					reloadOnConsentRevoked: false,
 				}}
 			>
 				<KernelCapture />
@@ -143,6 +148,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 						undefined,
 						policyRulePresets.usPrivacyStatesOptOut()
 					),
+					reloadOnConsentRevoked: false,
 				}}
 			>
 				<KernelCapture />
@@ -341,6 +347,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 						undefined,
 						policyRulePresets.usPrivacyStatesOptOut()
 					),
+					reloadOnConsentRevoked: false,
 				}}
 			>
 				<KernelCapture />
@@ -387,6 +394,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 					overrides: { country: 'US', region: 'CA' },
 					persistence: false,
 					prefetch: policyFixture(undefined, noticeRule()),
+					reloadOnConsentRevoked: false,
 					theme: {
 						slots: {
 							optOutConfirmation: 'slot-root',
@@ -474,6 +482,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 					overrides: { country: 'US', region: 'CA' },
 					persistence: false,
 					prefetch: policyFixture(undefined, noticeRule()),
+					reloadOnConsentRevoked: false,
 				}}
 			>
 				<KernelCapture />
@@ -496,5 +505,100 @@ describe('one-step opt-out and confirmation view in React', () => {
 		);
 
 		unmount();
+	});
+
+	test('defers confirmation across a revocation reload, shows it once on the next load, and not on the load after that', async () => {
+		const onBeforeReload = vi.fn();
+		const first = await render(
+			<InthProvider
+				options={{
+					callbacks: { onBeforeConsentRevocationReload: onBeforeReload },
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					mode: testing(),
+					overrides: { country: 'US', region: 'CA' },
+					persistence: false,
+					prefetch: policyFixture(undefined, noticeRule()),
+				}}
+			>
+				<KernelCapture />
+				<ConsentBanner disableAnimation />
+				<ConsentDialog disableAnimation />
+			</InthProvider>
+		);
+
+		await vi.waitFor(() =>
+			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+		);
+		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+
+		// Does not flash on the old document before reload.
+		expect(query('opt-out-confirmation-root')).toBeNull();
+		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBe('1');
+		await vi.waitFor(() => expect(onBeforeReload).toHaveBeenCalledOnce());
+		expect(query('opt-out-confirmation-root')).toBeNull();
+
+		const recorded = activeKernel?.getSnapshot().optOut;
+		expect(recorded).not.toBeNull();
+		first.unmount();
+
+		// Next load after reload: opens once with the honored status, clears the
+		// marker, records nothing again, and does not reload again.
+		const onSecondBeforeReload = vi.fn();
+		const second = await render(
+			<InthProvider
+				options={{
+					callbacks: { onBeforeConsentRevocationReload: onSecondBeforeReload },
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					mode: testing(),
+					overrides: { country: 'US', region: 'CA' },
+					persistence: false,
+					prefetch: {
+						...policyFixture(undefined, noticeRule()),
+						initialRecords: { optOut: recorded ?? undefined },
+					},
+				}}
+			>
+				<KernelCapture />
+				<ConsentDialog disableAnimation />
+			</InthProvider>
+		);
+
+		await vi.waitFor(() =>
+			expect(query('opt-out-confirmation-root')).not.toBeNull()
+		);
+		expect(query('opt-out-confirmation-status')?.textContent).toBe(
+			'Opt-out request honored'
+		);
+		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBeNull();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		expect(onSecondBeforeReload).not.toHaveBeenCalled();
+		second.unmount();
+
+		// Load after that: marker is cleared, so confirmation does not reopen.
+		const third = await render(
+			<InthProvider
+				options={{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					mode: testing(),
+					overrides: { country: 'US', region: 'CA' },
+					persistence: false,
+					prefetch: {
+						...policyFixture(undefined, noticeRule()),
+						initialRecords: { optOut: recorded ?? undefined },
+					},
+				}}
+			>
+				<KernelCapture />
+				<ConsentDialog disableAnimation />
+			</InthProvider>
+		);
+
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		expect(query('opt-out-confirmation-root')).toBeNull();
+		third.unmount();
 	});
 });

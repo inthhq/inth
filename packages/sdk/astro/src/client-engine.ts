@@ -51,6 +51,7 @@ import {
 	saveConsentBlanket,
 	saveConsentSurface,
 	showConsentSurface,
+	subscribeOptOutConfirmation,
 } from '@inth/sdk/surface-actions';
 import { THEME_STYLE_ELEMENT_ID } from '@inth/sdk/ui/theme';
 import { setupColorScheme } from '@inth/sdk/ui/utils/color-scheme';
@@ -756,6 +757,15 @@ const createClient = function createClient(
 		return !disposed;
 	};
 
+	const unsubscribeOptOutConfirmation = subscribeOptOutConfirmation(
+		runtime.kernel,
+		() => {
+			if (!disposed && isOptOutConfirmationOpen(runtime.kernel)) {
+				void ensureDialogMounted('preferences');
+			}
+		}
+	);
+
 	const client: AstroEngineClient = {
 		// Under an IAB policy the blanket goes through the CMP handle, so the
 		// TC string records it. Any surface closes on the local record.
@@ -779,6 +789,7 @@ const createClient = function createClient(
 			resetDialogWarming();
 			detachPageSwapListeners();
 			releaseBlocking?.();
+			unsubscribeOptOutConfirmation();
 			closeOptOutConfirmation(runtime.kernel);
 			void dialog?.destroy();
 			dialog = null;
@@ -852,7 +863,14 @@ const createClient = function createClient(
 			const optOutTask = optOutConsentSurface(runtime.kernel, {
 				opener: resolvedOpener,
 			});
-			await Promise.all([optOutTask, ensureDialogMounted('preferences')]);
+			if (isOptOutConfirmationOpen(runtime.kernel)) {
+				await Promise.all([optOutTask, ensureDialogMounted('preferences')]);
+			} else {
+				await optOutTask;
+				if (!disposed && isOptOutConfirmationOpen(runtime.kernel)) {
+					await ensureDialogMounted('preferences');
+				}
+			}
 		},
 		options,
 		ready: Promise.resolve(),

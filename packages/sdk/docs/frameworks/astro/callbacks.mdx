@@ -33,7 +33,7 @@ export default { callbacks, scripts } satisfies InthClientOptionsExtension;
 | --- | --- | --- |
 | `onChoiceRecorded` | The visitor selects accept, reject or save | `{ snapshot, confirmed, actionAt }` |
 | `onPermissionsChanged` | Any effective permission changes value | `{ snapshot, previous }` |
-| `onBeforeConsentRevocationReload` | A save turned off a category that was allowed, just before the page reloads | `{ preferences }` |
+| `onBeforeConsentRevocationReload` | A save or one-click opt-out turned off a category that was allowed, just before the page reloads | `{ preferences }` |
 | `onError` | Inth reports an error, such as a failed request | `{ error }`, a message string |
 
 ## `onChoiceRecorded` versus `onPermissionsChanged`
@@ -59,8 +59,9 @@ that.
 
 ## Stop code when consent is withdrawn
 
-By default, Inth reloads the page after a save turns off a category that was
-allowed, because it cannot stop code that has already run.
+By default, Inth reloads the page after a save or one-click opt-out turns off
+a category that was allowed, because it cannot stop code that has already run.
+Privacy signals and backend-synced opt-outs do not reload.
 `onBeforeConsentRevocationReload` runs synchronously just before that reload.
 Use it for quick work, such as calling a vendor's opt-out API. The reload does
 not wait for promises.
