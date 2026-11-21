@@ -8,6 +8,8 @@
 
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
+import type { AllConsentNames } from '../consent/consent-types';
+import { optOutDecidingCategory } from './types';
 import type { EvaluationPolicy } from './types';
 
 /**
@@ -57,4 +59,60 @@ export const optOutLiftBlocker = function optOutLiftBlocker(
 		return 'held-by-account';
 	}
 	return null;
+};
+
+/** Snapshot fields read by {@link saveWouldLiftOptOut}. */
+export interface SaveOptOutLiftSnapshot extends OptOutLiftSnapshot {
+	readonly evaluationPolicy: Pick<
+		EvaluationPolicy,
+		'choiceScope' | 'gpcDenyCategories' | 'model' | 'scope'
+	>;
+}
+
+/**
+ * Whether a category save would attempt to lift a held opt-out under an
+ * opt-out policy.
+ *
+ * Uses the kernel's deciding-category and lift-blocker rules. Returns `true`
+ * when the active model is `opt-out`, a durable opt-out is held, Global
+ * Privacy Control is not blocking the lift, and the save grants the deciding
+ * category (`marketing`, else `measurement`). Under an `opt-in` policy,
+ * returns `false` so accepts keep lifting in one step.
+ *
+ * Account-held opt-outs return `true` when GPC is off because a save that
+ * grants the deciding category requests a backend lift, which succeeds for a
+ * verified account and therefore requires two-step confirmation under
+ * 11 CCR §7028(a).
+ */
+export const saveWouldLiftOptOut = function saveWouldLiftOptOut(
+	snapshot: SaveOptOutLiftSnapshot,
+	input:
+		| 'all'
+		| 'none'
+		| (Partial<Record<AllConsentNames, boolean>> & {
+				vendors?: Record<string, boolean>;
+		  }),
+	categories?: readonly AllConsentNames[]
+): boolean {
+	if (snapshot.evaluationPolicy.model !== 'opt-out') {
+		return false;
+	}
+	const blocker = optOutLiftBlocker(snapshot);
+	if (blocker === 'not-opted-out' || blocker === 'gpc-active') {
+		return false;
+	}
+	const deciding = optOutDecidingCategory(snapshot.evaluationPolicy);
+	if (deciding === null) {
+		return false;
+	}
+	if (input === 'all') {
+		return (
+			snapshot.evaluationPolicy.choiceScope.includes(deciding) &&
+			(categories === undefined || categories.includes(deciding))
+		);
+	}
+	if (input === 'none') {
+		return false;
+	}
+	return input[deciding] === true;
 };

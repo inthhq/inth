@@ -25,6 +25,10 @@ import type {
 	SavePayload,
 } from '../../types';
 import { createPreferenceDraft } from '../index';
+import {
+	confirmOptInConfirmation,
+	isOptInConfirmationOpen,
+} from '../../surface-actions/opt-in';
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -633,10 +637,13 @@ describe('opt-out and GPC restrictions', () => {
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 		expect(recorded(kernel).marketing).toBe(false);
 
-		// Turning marketing back on and saving lifts the device opt-out.
+		// Turning marketing back on and saving opens the two-step confirmation; confirming lifts the device opt-out.
 		draft.set('marketing', true);
 		expect(draft.getState().values.marketing).toBe(true);
 		await draft.save();
+		expect(isOptInConfirmationOpen(kernel)).toBe(true);
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+		await confirmOptInConfirmation(kernel);
 		expect(kernel.getSnapshot().optOut).toBeNull();
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
 	});

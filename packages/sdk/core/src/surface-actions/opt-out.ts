@@ -125,7 +125,7 @@ const notify = function notify(entry: ConfirmationEntry): void {
  */
 export const readFocusedElement =
 	function readFocusedElement(): HTMLElement | null {
-		if (typeof document === 'undefined') {
+		if (typeof document === 'undefined' || typeof HTMLElement === 'undefined') {
 			return null;
 		}
 		let active: Element | null = document.activeElement;

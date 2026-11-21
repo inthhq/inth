@@ -42,6 +42,23 @@ export { replayEarlyConsentTaps } from './early-taps';
 export type { ConsentSurfaceIAB } from './blanket';
 export { saveIABConsentSurface } from './iab-save';
 export {
+	claimOptInConfirmationHost,
+	closeOptInConfirmation,
+	confirmOptInConfirmation,
+	isActiveOptInConfirmationHost,
+	isOptInConfirmationOpen,
+	openOptInConfirmation,
+	optInConsentSurface,
+	saveConsentSurfaceWithOptInCheck,
+	subscribeOptInConfirmation,
+	takeOptInConfirmationOpener,
+} from './opt-in';
+export type {
+	OptInPendingAction,
+	OptInSurfaceContext,
+	SaveWithOptInCheckOptions,
+} from './opt-in';
+export {
 	claimOptOutConfirmationHost,
 	closeOptOutConfirmation,
 	getOptOutReceiptData,
