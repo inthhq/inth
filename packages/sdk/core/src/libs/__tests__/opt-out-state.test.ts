@@ -13,6 +13,7 @@ import type { OptOutRecord } from '../../types';
 import {
 	isOptedOut,
 	resolveCategoryOptOutLock,
+	resolveOptOutReceipt,
 	resolveOptOutState,
 } from '../opt-out-state';
 
@@ -450,5 +451,189 @@ describe('isOptedOut', () => {
 		expect(isOptedOut({ ...base, optOut: heldRecord }, ['functionality'])).toBe(
 			true
 		);
+	});
+});
+
+describe('resolveOptOutReceipt', () => {
+	test('returns an empty receipt when no opt-out record is held', () => {
+		expect(resolveOptOutReceipt(createSnapshot({}))).toEqual({
+			at: null,
+			optedOut: false,
+			reference: null,
+			rights: [],
+			scope: null,
+			source: null,
+		});
+	});
+
+	test('keeps scope browser and rights empty before backend confirmation, including under local all-three fallback', () => {
+		const receipt = resolveOptOutReceipt(
+			createSnapshot({
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW,
+					rights: ['sale', 'share', 'targeted_ads'],
+				},
+			}),
+			{
+				localAct: 'button',
+				reference: 'ref-local-1',
+				rightsConfirmed: false,
+			}
+		);
+		expect(receipt).toEqual({
+			at: NOW,
+			optedOut: true,
+			reference: 'ref-local-1',
+			rights: [],
+			scope: 'browser',
+			source: 'click',
+		});
+	});
+
+	test('names confirmed rights and switches scope to account only for person or both', () => {
+		const deviceConfirmed = resolveOptOutReceipt(
+			createSnapshot({
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW,
+					rights: ['sale', 'share'],
+				},
+			}),
+			{
+				localAct: 'button',
+				reference: 'ref-local-2',
+				rightsConfirmed: true,
+			}
+		);
+		expect(deviceConfirmed.scope).toBe('browser');
+		expect(deviceConfirmed.source).toBe('click');
+		expect(deviceConfirmed.rights).toEqual(['sale', 'share']);
+
+		const bothConfirmed = resolveOptOutReceipt(
+			createSnapshot({
+				optOut: {
+					heldBy: 'both',
+					method: 'propagated',
+					recordedAt: NOW,
+					rights: ['sale', 'share'],
+				},
+			}),
+			{
+				localAct: 'button',
+				reference: 'ref-local-2',
+				rightsConfirmed: true,
+			}
+		);
+		expect(bothConfirmed).toEqual({
+			at: NOW,
+			optedOut: true,
+			reference: 'ref-local-2',
+			rights: ['sale', 'share'],
+			scope: 'account',
+			source: 'click',
+		});
+	});
+
+	test('never reports click for an account-held record created on another device', () => {
+		const fromOtherDevice = resolveOptOutReceipt(
+			createSnapshot({
+				optOut: {
+					heldBy: 'person',
+					method: 'button',
+					recordedAt: NOW,
+					rights: ['sale', 'share'],
+				},
+			}),
+			{
+				localAct: null,
+				reference: null,
+				rightsConfirmed: true,
+			}
+		);
+		expect(fromOtherDevice).toEqual({
+			at: NOW,
+			optedOut: true,
+			reference: null,
+			rights: ['sale', 'share'],
+			scope: 'account',
+			source: 'account',
+		});
+
+		const bothWithoutLocalAct = resolveOptOutReceipt(
+			createSnapshot({
+				optOut: {
+					heldBy: 'both',
+					method: 'button',
+					recordedAt: NOW,
+					rights: ['sale', 'targeted_ads'],
+				},
+			}),
+			{
+				localAct: null,
+				reference: null,
+				rightsConfirmed: true,
+			}
+		);
+		expect(bothWithoutLocalAct.source).toBe('account');
+		expect(bothWithoutLocalAct.reference).toBeNull();
+	});
+
+	test('distinguishes gpc, api, and device-held fallback sources', () => {
+		expect(
+			resolveOptOutReceipt(
+				createSnapshot({
+					optOut: {
+						heldBy: 'person',
+						method: 'api',
+						recordedAt: NOW,
+						rights: ['sale'],
+					},
+				}),
+				{ localAct: null, reference: null, rightsConfirmed: true }
+			).source
+		).toBe('api');
+
+		expect(
+			resolveOptOutReceipt(
+				createSnapshot({
+					optOut: {
+						heldBy: 'both',
+						method: 'propagated',
+						recordedAt: NOW,
+						rights: ['sale', 'share'],
+					},
+				}),
+				{ localAct: 'gpc', reference: 'ref-gpc', rightsConfirmed: true }
+			).source
+		).toBe('gpc');
+
+		expect(
+			resolveOptOutReceipt(
+				createSnapshot({
+					optOut: {
+						heldBy: 'device',
+						method: 'gpc',
+						recordedAt: NOW,
+						rights: ['sale', 'share'],
+					},
+				})
+			).source
+		).toBe('gpc');
+
+		expect(
+			resolveOptOutReceipt(
+				createSnapshot({
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW,
+						rights: ['sale', 'share'],
+					},
+				})
+			).source
+		).toBe('click');
 	});
 });

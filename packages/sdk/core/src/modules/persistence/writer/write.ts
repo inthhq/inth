@@ -9,6 +9,7 @@
  * receipt.
  */
 
+import type { OptOutReceiptData } from '../../../libs/opt-out-state';
 import type { ConsentSnapshot } from '../../../types';
 import type {
 	StoredConsentEnvelope,
@@ -145,7 +146,8 @@ export const writeOptOutToStorage = function writeOptOutToStorage(
 	snapshot: ConsentSnapshot,
 	storageConfig: StorageConfig | undefined,
 	now: number,
-	gpcReported = false
+	gpcReported = false,
+	receiptData?: Readonly<OptOutReceiptData>
 ): boolean {
 	if (typeof document === 'undefined') {
 		return true;
@@ -159,6 +161,15 @@ export const writeOptOutToStorage = function writeOptOutToStorage(
 	const record: StoredOptOutRecord = { ...snapshot.optOut, version: 1 };
 	if (gpcReported) {
 		record.gpcReported = true;
+	}
+	if (receiptData?.reference) {
+		record.reference = receiptData.reference;
+	}
+	if (receiptData?.localAct) {
+		record.localAct = receiptData.localAct;
+	}
+	if (receiptData?.rightsConfirmed) {
+		record.rightsConfirmed = true;
 	}
 	if (snapshot.subject && Object.keys(snapshot.subject).length > 0) {
 		record.subject = { ...snapshot.subject };

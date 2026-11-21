@@ -226,7 +226,11 @@ const foldInitResponse = function foldInitResponse(
 	response: InitResponse,
 	now: number,
 	translationOverrides?: TranslationOverrides
-): { patch: SnapshotPatch; recordIssues: RecordIssue[] | null } {
+): {
+	adoptedServerOptOut: boolean;
+	patch: SnapshotPatch;
+	recordIssues: RecordIssue[] | null;
+} {
 	const patch: SnapshotPatch = { now, policyPending: false };
 
 	if (response.resolvedOverrides) {
@@ -345,12 +349,19 @@ const foldInitResponse = function foldInitResponse(
 	}
 
 	let recordIssues: RecordIssue[] | null = null;
+	let adoptedServerOptOut = false;
 	if (response.records) {
 		const validated = validateHydrationRecords(response.records, now);
 		if (validated.ok === true) {
 			// Server receipts merge by newest confirmation per category so a
 			// local action made before init resolved is never overwritten.
-			Object.assign(patch, foldServerRecords(current, validated.records, now));
+			const foldedRecords = foldServerRecords(current, validated.records, now);
+			Object.assign(patch, foldedRecords);
+			adoptedServerOptOut = Boolean(
+				validated.records.optOut &&
+				foldedRecords.optOut === validated.records.optOut &&
+				validated.records.optOut.rights.length > 0
+			);
 			// Adopting stored records is not the visitor's choice: a dialog they
 			// opened while init was in flight stays open until they save.
 			if (current.activeUI === 'dialog') {
@@ -366,7 +377,7 @@ const foldInitResponse = function foldInitResponse(
 		patch.subject = { ...subject, subjectId: response.subjectId };
 	}
 
-	return { patch, recordIssues };
+	return { adoptedServerOptOut, patch, recordIssues };
 };
 
 export interface InitLifecycleOptions {
@@ -544,6 +555,27 @@ export const createInitLifecycle = function createInitLifecycle({
 			: { error, ok: false };
 	};
 
+	const noteAdoptedServerOptOut = function noteAdoptedServerOptOut(
+		current: ConsentSnapshot,
+		adopted: boolean,
+		fromHydration = false
+	): void {
+		if (!adopted) {
+			return;
+		}
+		const existing = runtime.getOptOutReceiptData();
+		runtime.setOptOutReceiptData(
+			current.optOut === null
+				? { localAct: null, reference: null, rightsConfirmed: true }
+				: {
+						localAct: existing.localAct,
+						reference: existing.reference,
+						rightsConfirmed: true,
+					},
+			fromHydration
+		);
+	};
+
 	const runInitAttempt = async function runInitAttempt(
 		attempt: number
 	): Promise<InitResult> {
@@ -611,6 +643,7 @@ export const createInitLifecycle = function createInitLifecycle({
 					folded.recordIssues
 				);
 			}
+			noteAdoptedServerOptOut(current, folded.adoptedServerOptOut);
 			runtime.announce(folded.patch, 'init:applied', snapshot.policyPending);
 			clearRetry();
 			const result = complete({ ok: true });
@@ -756,6 +789,7 @@ export const createInitLifecycle = function createInitLifecycle({
 			runtime.now(),
 			translationOverrides
 		);
+		noteAdoptedServerOptOut(current, folded.adoptedServerOptOut, !afterStart);
 		if (afterStart) {
 			runtime.announce(folded.patch, 'init:applied', current.policyPending);
 			replaySaves();

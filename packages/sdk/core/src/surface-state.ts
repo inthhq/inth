@@ -45,12 +45,18 @@ export type {
 export {
 	isOptedOut,
 	resolveCategoryOptOutLock,
+	resolveOptOutReceipt,
 	resolveOptOutState,
 } from './libs/opt-out-state';
 export type {
 	CategoryOptOutLockSnapshot,
 	OptOutCheckSnapshot,
+	OptOutLocalAct,
 	OptOutLock,
+	OptOutReceipt,
+	OptOutReceiptData,
+	OptOutReceiptScope,
+	OptOutReceiptSource,
 	OptOutVia,
 	ResolvedOptOutState,
 } from './libs/opt-out-state';

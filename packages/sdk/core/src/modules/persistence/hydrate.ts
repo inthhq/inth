@@ -111,6 +111,9 @@ const kernelOptOutRecord = function kernelOptOutRecord(
 	}
 	const {
 		gpcReported: _gpcReported,
+		localAct: _localAct,
+		reference: _reference,
+		rightsConfirmed: _rightsConfirmed,
 		subject: _subject,
 		version: _version,
 		...optOut
@@ -166,6 +169,27 @@ const validRecord = function validRecord<RecordType>(
 	return read?.ok ? read.record : null;
 };
 
+const attachOptOutMeta = function attachOptOutMeta(
+	records: HydrationRecords,
+	optOutRecord: StoredOptOutRecord | null
+): void {
+	if (!optOutRecord) {
+		return;
+	}
+	if (optOutRecord.gpcReported) {
+		records.optOutGpcReported = true;
+	}
+	if (optOutRecord.reference) {
+		records.optOutReference = optOutRecord.reference;
+	}
+	if (optOutRecord.localAct) {
+		records.optOutLocalAct = optOutRecord.localAct;
+	}
+	if (optOutRecord.rightsConfirmed) {
+		records.optOutRightsConfirmed = true;
+	}
+};
+
 /**
  * Builds the records from decoded reads. Anything confirmed before the
  * clear epoch (the newer of the stored epoch and the envelope's own) was
@@ -199,9 +223,7 @@ const composeRecords = function composeRecords(
 		subject: recorded,
 		vendorChoice: kernelVendorChoice(vendorRecord),
 	};
-	if (optOutRecord?.gpcReported) {
-		records.optOutGpcReported = true;
-	}
+	attachOptOutMeta(records, optOutRecord);
 	return {
 		candidates: selection.candidates,
 		epoch,
@@ -338,6 +360,9 @@ const readRecords = function readRecords(
 	if (!optOut?.ok && optOutUnavailable) {
 		delete stored.records.optOut;
 		delete stored.records.optOutGpcReported;
+		delete stored.records.optOutReference;
+		delete stored.records.optOutLocalAct;
+		delete stored.records.optOutRightsConfirmed;
 	}
 	return stored;
 };

@@ -7,7 +7,12 @@
  * `KernelActiveUI`.
  */
 
-import { resolveOptOutState } from '../libs/opt-out-state';
+import type { InternalKernel } from '../kernel/internals';
+import {
+	EMPTY_OPT_OUT_RECEIPT_DATA,
+	resolveOptOutState,
+} from '../libs/opt-out-state';
+import type { OptOutReceiptData } from '../libs/opt-out-state';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -232,6 +237,52 @@ export const subscribeOptOutConfirmation = function subscribeOptOutConfirmation(
 
 	return () => {
 		entries.get(currentKey)?.listeners.delete(listener);
+		unsubscribeSnapshot();
+	};
+};
+
+/** Read the local-only opt-out receipt data held by `kernel`. */
+export const getOptOutReceiptData = function getOptOutReceiptData(
+	kernel: ConsentKernel
+): Readonly<OptOutReceiptData> {
+	return (
+		(kernel as Partial<InternalKernel>).getOptOutReceiptData?.() ??
+		EMPTY_OPT_OUT_RECEIPT_DATA
+	);
+};
+
+/** Read the immutable revision-0 local opt-out receipt data for SSR hydration. */
+export const getServerOptOutReceiptData = function getServerOptOutReceiptData(
+	kernel: ConsentKernel
+): Readonly<OptOutReceiptData> {
+	return (
+		(kernel as Partial<InternalKernel>).getServerOptOutReceiptData?.() ??
+		EMPTY_OPT_OUT_RECEIPT_DATA
+	);
+};
+
+/** Subscribe to local opt-out receipt data changes on `kernel` (including stand-in attach). */
+export const subscribeOptOutReceiptData = function subscribeOptOutReceiptData(
+	kernel: ConsentKernel,
+	listener: () => void
+): () => void {
+	let current = (kernel as Partial<InternalKernel>).onOptOutReceiptDataChange;
+	let unsubscribeData = current?.(() => {
+		listener();
+	});
+	const unsubscribeSnapshot = kernel.subscribe(() => {
+		const next = (kernel as Partial<InternalKernel>).onOptOutReceiptDataChange;
+		if (next !== current) {
+			unsubscribeData?.();
+			current = next;
+			unsubscribeData = current?.(() => {
+				listener();
+			});
+			listener();
+		}
+	});
+	return () => {
+		unsubscribeData?.();
 		unsubscribeSnapshot();
 	};
 };

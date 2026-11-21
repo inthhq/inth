@@ -47,6 +47,8 @@
 import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
 import type { OptOutRight } from '@inth/sdk-schema/types';
 
+import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state';
+import type { OptOutReceiptData } from '../libs/opt-out-state';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -116,10 +118,22 @@ export const createKernel = function createKernel(
 		initialSnapshot.optOut !== null &&
 		config.initialRecords?.optOutGpcReported === true;
 
+	const initialOptOutReceiptData: Readonly<OptOutReceiptData> =
+		initialSnapshot.optOut === null
+			? EMPTY_OPT_OUT_RECEIPT_DATA
+			: Object.freeze({
+					localAct: config.initialRecords?.optOutLocalAct ?? null,
+					reference: config.initialRecords?.optOutReference ?? null,
+					rightsConfirmed:
+						config.initialRecords?.optOutRightsConfirmed === true,
+				});
+	const serverOptOutReceiptData = initialOptOutReceiptData;
+
 	const sendGpcOptOut = function sendGpcOptOut(
 		snapshot: ConsentSnapshot,
 		actionAt: number,
-		uiSource?: SaveUISource
+		uiSource?: SaveUISource,
+		idempotencyKey?: string
 	): void {
 		// oxlint-disable-next-line no-use-before-define -- Checked only after assembly.
 		if (!transport?.optOut || outbox.areOptOutsUnsupported()) {
@@ -135,7 +149,13 @@ export const createKernel = function createKernel(
 		const gpcReportEpoch = runtime.getOptOutGpcReportEpoch();
 		// oxlint-disable-next-line no-use-before-define -- Called only after assembly.
 		void outbox.sendOptOut(
-			buildOptOutPayload(snapshot, { method: 'gpc' }, actionAt, uiSource),
+			buildOptOutPayload(
+				snapshot,
+				{ method: 'gpc' },
+				actionAt,
+				uiSource,
+				idempotencyKey
+			),
 			{
 				actVersion,
 				generation,
@@ -165,6 +185,7 @@ export const createKernel = function createKernel(
 		dispatcher,
 		emit: eventBus.emit,
 		initialOptOutGpcReported,
+		initialOptOutReceiptData,
 		initialSnapshot,
 		// oxlint-disable-next-line no-use-before-define -- Commits run only after assembly.
 		onDeadlineChange: () => lifecycle.armDeadline(),
@@ -221,7 +242,12 @@ export const createKernel = function createKernel(
 			noteRecorded(event);
 		}
 		if (event.optOut.method === 'gpc') {
-			sendGpcOptOut(event.snapshot, event.actionAt, event.uiSource);
+			sendGpcOptOut(
+				event.snapshot,
+				event.actionAt,
+				event.uiSource,
+				runtime.getOptOutReceiptData().reference ?? undefined
+			);
 		}
 	});
 	eventBus.on('notice:dismissed', (event) => {
@@ -251,10 +277,12 @@ export const createKernel = function createKernel(
 			emit: eventBus.emit,
 			on: eventBus.on,
 		},
+		getOptOutReceiptData: runtime.getOptOutReceiptData,
 		getOptOutRequestsInFlight: outbox.getOptOutRequestsInFlight,
 		getProvisionalSubject: records.getProvisionalSubject,
 		getRecordsGeneration: runtime.getGeneration,
 		getSavesHold: outbox.getHold,
+		getServerOptOutReceiptData: () => serverOptOutReceiptData,
 		getServerSnapshot: () => serverSnapshot,
 		getSnapshot: runtime.getSnapshot,
 		holdSaves: outbox.hold,
@@ -263,6 +291,7 @@ export const createKernel = function createKernel(
 		markLive: runtime.markLive,
 		markProvisionalSubject: records.markProvisionalSubject,
 		onOptOutGpcReportedChange: runtime.onOptOutGpcReportedChange,
+		onOptOutReceiptDataChange: runtime.onOptOutReceiptDataChange,
 		onOptOutRequestsChange: outbox.onOptOutRequestsChange,
 		refresh: lifecycle.refresh,
 		replaySaves: lifecycle.replaySaves,

@@ -23,6 +23,7 @@ import {
 	optInPromptAllowedAt,
 	OPT_OUT_REPROMPT_WAIT_MS,
 } from '../../consent-record';
+import { resolveOptOutReceipt } from '../../libs/opt-out-state';
 import { PENDING_OPT_OUTS_STORAGE_KEY } from '../../libs/storage-keys';
 import { createPersistence } from '../../modules/persistence';
 import { readStoredOptOutRecord } from '../../modules/persistence/record-storage';
@@ -2820,6 +2821,297 @@ describe('opt-out network sync and queue', () => {
 		kernel.replaySaves();
 		await vi.waitFor(async () => expect(await queuedOptOuts()).toEqual([]));
 		expect(delivered).toEqual(['record', 'lift']);
+		kernel.dispose();
+	});
+});
+
+describe('opt-out receipt local data', () => {
+	test('click records a reference equal to the POST /v1/consent/opt-outs idempotency key and preserves it across answer, GPC report, reload, and second tab', async () => {
+		const { fetch, calls } = stubFetch(
+			() =>
+				json(200, {
+					optOut: {
+						heldBy: 'both',
+						method: 'button',
+						recordedAt: NOW,
+						rights: ['sale', 'share'],
+					},
+					recordId: RECORD,
+					subjectId: SUBJECT,
+				}),
+			() =>
+				json(200, {
+					optOut: {
+						heldBy: 'both',
+						method: 'propagated',
+						recordedAt: NOW,
+						rights: ['sale', 'share'],
+					},
+					recordId: '0193e5a8-9b00-7d3a-9b1c-6e3f8a0b1c2d',
+					subjectId: SUBJECT,
+				})
+		);
+		const transport = createV1HostedTransport({
+			fetch,
+			projectUrl: PROJECT_URL,
+			property: 'www.example.com',
+		});
+		const kernel = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: { liftOptOut: transport.liftOptOut, optOut: transport.optOut },
+		});
+		const persistence = createPersistence({ kernel });
+		const secondTab = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: { liftOptOut: transport.liftOptOut, optOut: transport.optOut },
+		});
+		const secondPersistence = createPersistence({ kernel: secondTab });
+		await kernel.commands.init();
+
+		const pendingOptOut = kernel.commands.optOut({ uiSource: 'banner' });
+
+		// Before backend answers: scope is browser, rights are empty, reference is set.
+		const beforeAnswer = resolveOptOutReceipt(
+			kernel.getSnapshot(),
+			kernel.getOptOutReceiptData()
+		);
+		expect(beforeAnswer.optedOut).toBe(true);
+		expect(beforeAnswer.scope).toBe('browser');
+		expect(beforeAnswer.source).toBe('click');
+		expect(beforeAnswer.rights).toEqual([]);
+		expect(beforeAnswer.reference).toMatch(V1_UUID_PATTERN);
+
+		await pendingOptOut;
+		await flushMacrotasks();
+
+		// Reference equals the idempotency key sent to POST /v1/consent/opt-outs.
+		const postCallIndex = calls.findIndex((call) =>
+			call.url.endsWith('/v1/consent/opt-outs')
+		);
+		expect(postCallIndex).toBeGreaterThanOrEqual(0);
+		const sentBody = bodyAt(calls, postCallIndex);
+		expect(sentBody.idempotencyKey).toBe(beforeAnswer.reference);
+
+		// Unchanged after backend answer (different recordId); scope is now account and rights confirmed.
+		const afterAnswer = resolveOptOutReceipt(
+			kernel.getSnapshot(),
+			kernel.getOptOutReceiptData()
+		);
+		expect(afterAnswer.reference).toBe(beforeAnswer.reference);
+		expect(afterAnswer.scope).toBe('account');
+		expect(afterAnswer.source).toBe('click');
+		expect(afterAnswer.rights).toEqual(['sale', 'share']);
+
+		// A later GPC signal sends a GPC report without changing the click reference or source.
+		kernel.set.privacySignals({ gpc: true });
+		await vi.waitFor(() =>
+			expect(
+				calls.filter((call) => call.url.endsWith('/v1/consent/opt-outs'))
+			).toHaveLength(2)
+		);
+		await flushMacrotasks();
+
+		const afterGpcReport = resolveOptOutReceipt(
+			kernel.getSnapshot(),
+			kernel.getOptOutReceiptData()
+		);
+		expect(afterGpcReport.reference).toBe(beforeAnswer.reference);
+		expect(afterGpcReport.source).toBe('click');
+
+		// Second tab reconciles and sees the exact same reference and confirmed rights.
+		secondPersistence.reconcile();
+		const tabReceipt = resolveOptOutReceipt(
+			secondTab.getSnapshot(),
+			secondTab.getOptOutReceiptData()
+		);
+		expect(tabReceipt.reference).toBe(beforeAnswer.reference);
+		expect(tabReceipt.source).toBe('click');
+		expect(tabReceipt.scope).toBe('account');
+		expect(tabReceipt.rights).toEqual(['sale', 'share']);
+
+		// Reload into a brand-new kernel hydrates the same reference and receipt.
+		const reloaded = kernelOn({
+			transport: { liftOptOut: transport.liftOptOut, optOut: transport.optOut },
+		});
+		const reloadedPersistence = createPersistence({ kernel: reloaded });
+		const reloadedReceipt = resolveOptOutReceipt(
+			reloaded.getSnapshot(),
+			reloaded.getOptOutReceiptData()
+		);
+		expect(reloadedReceipt.reference).toBe(beforeAnswer.reference);
+		expect(reloadedReceipt.source).toBe('click');
+		expect(reloadedReceipt.scope).toBe('account');
+		expect(reloadedReceipt.rights).toEqual(['sale', 'share']);
+
+		reloadedPersistence.dispose();
+		reloaded.dispose();
+		secondPersistence.dispose();
+		secondTab.dispose();
+		persistence.dispose();
+		kernel.dispose();
+	});
+
+	test('adopted record from identify() has no reference and source is account, never click', async () => {
+		const kernel = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: {
+				identify: () =>
+					Promise.resolve({
+						optOut: {
+							heldBy: 'person',
+							method: 'button',
+							recordedAt: NOW - 1000,
+							rights: ['sale', 'share'],
+						},
+						subjectId: SUBJECT,
+					}),
+			},
+		});
+
+		await kernel.commands.identify({
+			externalId: 'user_adopted',
+			identityToken: 'tok_adopted',
+		});
+
+		const receipt = resolveOptOutReceipt(
+			kernel.getSnapshot(),
+			kernel.getOptOutReceiptData()
+		);
+		expect(receipt).toEqual({
+			at: NOW - 1000,
+			optedOut: true,
+			reference: null,
+			rights: ['sale', 'share'],
+			scope: 'account',
+			source: 'account',
+		});
+		kernel.dispose();
+	});
+
+	test('lifting clears the reference and a subsequent opt-out receives a new one', async () => {
+		const kernel = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+		});
+
+		await kernel.commands.optOut();
+		const firstRef = kernel.getOptOutReceiptData().reference;
+		expect(firstRef).toMatch(V1_UUID_PATTERN);
+
+		expect(await kernel.commands.optIn()).toEqual({ ok: true, optOut: null });
+		expect(kernel.getOptOutReceiptData()).toEqual({
+			localAct: null,
+			reference: null,
+			rightsConfirmed: false,
+		});
+
+		await kernel.commands.optOut();
+		const secondRef = kernel.getOptOutReceiptData().reference;
+		expect(secondRef).toMatch(V1_UUID_PATTERN);
+		expect(secondRef).not.toBe(firstRef);
+		kernel.dispose();
+	});
+
+	test('rights stay empty under local fallback (no optOut transport and 404) while still generating a reference', async () => {
+		// No optOut method on transport.
+		const noTransport = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: {},
+		});
+		await noTransport.commands.optOut();
+		expect(noTransport.getSnapshot().optOut?.rights).toEqual([
+			'sale',
+			'share',
+			'targeted_ads',
+		]);
+		const noTransportReceipt = resolveOptOutReceipt(
+			noTransport.getSnapshot(),
+			noTransport.getOptOutReceiptData()
+		);
+		expect(noTransportReceipt.reference).toMatch(V1_UUID_PATTERN);
+		expect(noTransportReceipt.rights).toEqual([]);
+		expect(noTransportReceipt.scope).toBe('browser');
+		expect(noTransportReceipt.source).toBe('click');
+		noTransport.dispose();
+
+		// 404 fallback fills all three rights locally without confirming them.
+		const notFound = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: {
+				optOut: () => Promise.resolve({ ok: false, unsupported: true }),
+			},
+		});
+		await notFound.commands.optOut();
+		await flushMacrotasks();
+		expect(notFound.getSnapshot().optOut?.rights).toEqual([
+			'sale',
+			'share',
+			'targeted_ads',
+		]);
+		const notFoundReceipt = resolveOptOutReceipt(
+			notFound.getSnapshot(),
+			notFound.getOptOutReceiptData()
+		);
+		expect(notFoundReceipt.reference).toMatch(V1_UUID_PATTERN);
+		expect(notFoundReceipt.rights).toEqual([]);
+		expect(notFoundReceipt.scope).toBe('browser');
+		expect(notFoundReceipt.source).toBe('click');
+		notFound.dispose();
+	});
+
+	test('live GPC opt-out creates localAct gpc and a reference matching the POST idempotency key', async () => {
+		const { fetch, calls } = stubFetch(() =>
+			json(200, {
+				optOut: {
+					heldBy: 'device',
+					method: 'gpc',
+					recordedAt: NOW,
+					rights: ['sale', 'share'],
+				},
+				recordId: RECORD,
+				subjectId: SUBJECT,
+			})
+		);
+		const transport = createV1HostedTransport({
+			fetch,
+			projectUrl: PROJECT_URL,
+			property: 'www.example.com',
+		});
+		const kernel = kernelOn({
+			initialPrivacySignals: { gpc: true },
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: { optOut: transport.optOut },
+		});
+
+		await kernel.commands.init();
+		const beforeAnswer = resolveOptOutReceipt(
+			kernel.getSnapshot(),
+			kernel.getOptOutReceiptData()
+		);
+		expect(beforeAnswer.optedOut).toBe(true);
+		expect(beforeAnswer.source).toBe('gpc');
+		expect(beforeAnswer.reference).toMatch(V1_UUID_PATTERN);
+
+		await vi.waitFor(() =>
+			expect(
+				calls.filter((call) => call.url.endsWith('/v1/consent/opt-outs'))
+			).toHaveLength(1)
+		);
+		await flushMacrotasks();
+
+		const postIndex = calls.findIndex((call) =>
+			call.url.endsWith('/v1/consent/opt-outs')
+		);
+		expect(bodyAt(calls, postIndex).idempotencyKey).toBe(
+			beforeAnswer.reference
+		);
+
+		const afterAnswer = resolveOptOutReceipt(
+			kernel.getSnapshot(),
+			kernel.getOptOutReceiptData()
+		);
+		expect(afterAnswer.reference).toBe(beforeAnswer.reference);
+		expect(afterAnswer.source).toBe('gpc');
+		expect(afterAnswer.rights).toEqual(['sale', 'share']);
 		kernel.dispose();
 	});
 });

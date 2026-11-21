@@ -470,6 +470,7 @@ export const createSaveOutbox = function createSaveOutbox({
 				{
 					actVersion: runtime.getOptOutActVersion(),
 					allowClear: false,
+					confirmed: false,
 					generation: runtime.getGeneration(),
 					subjectId: current.subject?.subjectId ?? null,
 				}

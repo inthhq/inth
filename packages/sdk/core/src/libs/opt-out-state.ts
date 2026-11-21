@@ -5,6 +5,8 @@
  * `@inth/sdk/surface-state` without pulling in the kernel or evaluator.
  */
 
+import type { OptOutRight } from '@inth/sdk-schema/types';
+
 import {
 	optInPromptAllowedAt,
 	optOutLiftBlocker,
@@ -158,4 +160,106 @@ export const isOptedOut = function isOptedOut(
 	}
 	const deciding = optOutDecidingCategory(snapshot.evaluationPolicy);
 	return deciding !== null && snapshot.effectivePermissions[deciding] !== true;
+};
+
+/** How this browser recorded the held opt-out, if it did. */
+export type OptOutLocalAct = 'button' | 'gpc';
+
+/** Local-only receipt data kept beside the held opt-out record. */
+export interface OptOutReceiptData {
+	/** Idempotency key of the act that recorded the opt-out in this browser, or `null`. */
+	readonly reference: string | null;
+	/** Method of the opt-out act recorded in this browser, or `null` when adopted. */
+	readonly localAct: OptOutLocalAct | null;
+	/** Whether the held record's `rights` were confirmed by a backend answer. */
+	readonly rightsConfirmed: boolean;
+}
+
+/** Empty local opt-out receipt data. @internal */
+export const EMPTY_OPT_OUT_RECEIPT_DATA: Readonly<OptOutReceiptData> =
+	Object.freeze({
+		localAct: null,
+		reference: null,
+		rightsConfirmed: false,
+	});
+
+/** Scope covered by a held opt-out receipt. */
+export type OptOutReceiptScope = 'browser' | 'account';
+
+/** Origin shown on a held opt-out receipt. */
+export type OptOutReceiptSource = 'click' | 'gpc' | 'account' | 'api';
+
+/** Receipt details derived from a consent snapshot and local opt-out data. */
+export interface OptOutReceipt {
+	/** A durable opt-out record is held. */
+	optedOut: boolean;
+	/** Whether only this browser or also the account is covered, or `null` when not opted out. */
+	scope: OptOutReceiptScope | null;
+	/** How the opt-out reached this browser, or `null` when not opted out. */
+	source: OptOutReceiptSource | null;
+	/** Epoch milliseconds when the opt-out was recorded, or `null`. */
+	at: number | null;
+	/** Local idempotency reference for an opt-out this browser recorded, or `null`. */
+	reference: string | null;
+	/** Refused rights safe to name; empty unless confirmed by a backend answer. */
+	rights: readonly OptOutRight[];
+}
+
+const EMPTY_OPT_OUT_RIGHTS: readonly OptOutRight[] = Object.freeze([]);
+
+/**
+ * Derive receipt details for an opt-out surface from a consent snapshot and
+ * the local receipt metadata kept beside the held record.
+ *
+ * @param snapshot - The current consent snapshot.
+ * @param local - Optional local-only receipt data for this browser.
+ * @returns The derived opt-out receipt.
+ */
+export const resolveOptOutReceipt = function resolveOptOutReceipt(
+	snapshot: Pick<ConsentSnapshot, 'optOut'>,
+	local?: Partial<OptOutReceiptData> | null
+): OptOutReceipt {
+	const { optOut } = snapshot;
+	if (!optOut) {
+		return {
+			at: null,
+			optedOut: false,
+			reference: null,
+			rights: EMPTY_OPT_OUT_RIGHTS,
+			scope: null,
+			source: null,
+		};
+	}
+	const localAct = local?.localAct ?? null;
+	const scope: OptOutReceiptScope =
+		optOut.heldBy === 'person' || optOut.heldBy === 'both'
+			? 'account'
+			: 'browser';
+	let source: OptOutReceiptSource;
+	if (
+		localAct === 'button' ||
+		(localAct === null &&
+			optOut.heldBy === 'device' &&
+			optOut.method === 'button')
+	) {
+		source = 'click';
+	} else if (
+		localAct === 'gpc' ||
+		(localAct === null && optOut.heldBy === 'device' && optOut.method === 'gpc')
+	) {
+		source = 'gpc';
+	} else if (localAct === null && optOut.method === 'api') {
+		source = 'api';
+	} else {
+		source = 'account';
+	}
+	return {
+		at: optOut.recordedAt,
+		optedOut: true,
+		reference: local?.reference ?? null,
+		rights:
+			local?.rightsConfirmed === true ? optOut.rights : EMPTY_OPT_OUT_RIGHTS,
+		scope,
+		source,
+	};
 };

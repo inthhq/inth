@@ -361,6 +361,21 @@ export interface HydrationRecords {
 	 * reported.
 	 */
 	optOutGpcReported?: boolean;
+	/**
+	 * Local idempotency reference of the act that recorded the hydrated opt-out
+	 * in this browser, or `null` when adopted from elsewhere.
+	 */
+	optOutReference?: string | null;
+	/**
+	 * Method of the opt-out act recorded in this browser (`'button'` or `'gpc'`),
+	 * or `null` when adopted from elsewhere.
+	 */
+	optOutLocalAct?: 'button' | 'gpc' | null;
+	/**
+	 * Whether the hydrated opt-out record's `rights` were confirmed by a backend
+	 * answer. Local fallback rights are not confirmation.
+	 */
+	optOutRightsConfirmed?: boolean;
 	/** Vendors the subject turned off. `null` clears the denial list. */
 	vendorChoice?: VendorChoice | null;
 	/** Evaluation time in epoch milliseconds. Defaults to `Date.now()`. */

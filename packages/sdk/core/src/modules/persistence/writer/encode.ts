@@ -22,6 +22,7 @@ import type {
 	ConsentSubject,
 	ExplicitChoice,
 } from '../../../consent-record/types';
+import type { OptOutLocalAct } from '../../../libs/opt-out-state';
 import type {
 	StoredConsentEnvelope,
 	StoredIabMetadata,
@@ -83,10 +84,18 @@ export const OPT_OUT_HOLDER_CODES = [
 	['person', 'p'],
 ] as const satisfies readonly (readonly [OptOutHolder, string])[];
 
+/** Compact opt-out local-act codes. @internal */
+export const OPT_OUT_LOCAL_ACT_CODES = [
+	['button', 'b'],
+	['gpc', 'g'],
+] as const satisfies readonly (readonly [OptOutLocalAct, string])[];
+
 const OPT_OUT_METHOD_TO_CODE: Readonly<Record<OptOutMethod, string>> =
 	Object.fromEntries(OPT_OUT_METHOD_CODES) as Record<OptOutMethod, string>;
 const OPT_OUT_HOLDER_TO_CODE: Readonly<Record<OptOutHolder, string>> =
 	Object.fromEntries(OPT_OUT_HOLDER_CODES) as Record<OptOutHolder, string>;
+const OPT_OUT_LOCAL_ACT_TO_CODE: Readonly<Record<OptOutLocalAct, string>> =
+	Object.fromEntries(OPT_OUT_LOCAL_ACT_CODES) as Record<OptOutLocalAct, string>;
 
 const field = function field(key: string, value: string | number): string {
 	return `${key}${KEY_VALUE_SEPARATOR}${value}`;
@@ -356,14 +365,25 @@ export const encodeOptOutRecord = function encodeOptOutRecord(
 	if (record.gpcReported) {
 		encoded.gpcReported = true;
 	}
+	if (record.reference) {
+		encoded.reference = record.reference;
+	}
+	if (record.localAct) {
+		encoded.localAct = record.localAct;
+	}
+	if (record.rightsConfirmed) {
+		encoded.rightsConfirmed = true;
+	}
 	return JSON.stringify(encoded);
 };
 
 /**
  * Compact durable opt-out for the `<key>-opt-out` cookie:
  * `v=1&r=<sa|sh|ta...>&m=<b|g|a|p>&t=<recordedAt>&h=<d|p|b>`, followed by
- * the subject fields (`sid`, `eid`, `idp`) and `g=1` when the browser has
- * already reported its GPC signal for this record.
+ * the subject fields (`sid`, `eid`, `idp`), `g=1` when the browser has
+ * already reported its GPC signal, `a=<b|g>` for the local act, and `c=1`
+ * when rights were confirmed by the backend. `reference` stays in
+ * localStorage only to keep cookie size small.
  */
 export const encodeOptOutRecordCompact = function encodeOptOutRecordCompact(
 	record: StoredOptOutRecord
@@ -382,6 +402,12 @@ export const encodeOptOutRecordCompact = function encodeOptOutRecordCompact(
 	];
 	if (record.gpcReported) {
 		fields.push(field('g', 1));
+	}
+	if (record.localAct) {
+		fields.push(field('a', OPT_OUT_LOCAL_ACT_TO_CODE[record.localAct]));
+	}
+	if (record.rightsConfirmed) {
+		fields.push(field('c', 1));
 	}
 	return fields.join(FIELD_SEPARATOR);
 };
