@@ -2411,4 +2411,42 @@ describe('opt-out network sync and queue', () => {
 		firstPersistence.dispose();
 		first.dispose();
 	});
+
+	test('save() granting marketing does not lift an account-held opt-out when the save fails', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const accountOptOut: OptOutRecord = {
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+		};
+		const save = vi.fn<NonNullable<KernelTransport['save']>>(() =>
+			Promise.resolve({ ok: false })
+		);
+		const liftOptOut = vi.fn<NonNullable<KernelTransport['liftOptOut']>>(
+			(payload) =>
+				Promise.resolve({
+					ok: true,
+					optOut: null,
+					subjectId: payload.subjectId,
+				})
+		);
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: accountOptOut,
+				subject: { subjectId: SUBJECT },
+			},
+			initialUser: { externalId: 'user_123', identityToken: 'tok_1' },
+			transport: { liftOptOut, save },
+		});
+
+		const saveResult = await kernel.commands.save({ marketing: true });
+		await flushMacrotasks();
+
+		expect(saveResult.ok).toBe(false);
+		expect(liftOptOut).not.toHaveBeenCalled();
+		expect(kernel.getSnapshot().optOut).toEqual(accountOptOut);
+		kernel.dispose();
+	});
 });

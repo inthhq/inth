@@ -1207,6 +1207,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				snapshot: after,
 			});
 			if (
+				result.ok &&
 				liftsAccountOptOut &&
 				runtime.getOptOutActVersion() === optOutActVersion &&
 				runtime.getGeneration() === generation
