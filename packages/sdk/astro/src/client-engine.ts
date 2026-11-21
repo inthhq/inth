@@ -48,15 +48,18 @@ import { clearOnRevocationOnDemand } from '@inth/sdk/runtime/on-demand-factories
 import type { ConsentRuntimeModules } from '@inth/sdk/runtime/provider';
 import {
 	activateOptOutLink,
+	closeOptInConfirmation,
 	closeOptOutConfirmation,
 	hasConsentPreferences,
 	hasConsentUI,
+	isOptInConfirmationOpen,
 	isOptOutConfirmationOpen,
 	optOutConsentSurface,
 	readFocusedElement,
 	saveConsentBlanket,
 	saveConsentSurface,
 	showConsentSurface,
+	subscribeOptInConfirmation,
 	subscribeOptOutConfirmation,
 } from '@inth/sdk/surface-actions';
 import { THEME_STYLE_ELEMENT_ID } from '@inth/sdk/ui/theme';
@@ -773,14 +776,34 @@ const createClient = function createClient(
 		}
 	);
 
+	const unsubscribeOptInConfirmation = subscribeOptInConfirmation(
+		runtime.kernel,
+		() => {
+			if (
+				!disposed &&
+				!extension.consentSource &&
+				isOptInConfirmationOpen(runtime.kernel)
+			) {
+				void ensureDialogMounted('preferences');
+			}
+		}
+	);
+
 	const client: AstroEngineClient = {
 		// Under an IAB policy the blanket goes through the CMP handle, so the
-		// TC string records it. Any surface closes on the local record.
+		// TC string records it. Under an opt-out policy while opted out,
+		// accepting opens the two-step opt-in confirmation dialog.
 		async acceptAll() {
-			await saveConsentBlanket(runtime.kernel, 'all', runtime.iab);
+			const task = saveConsentBlanket(runtime.kernel, 'all', runtime.iab);
+			if (!extension.consentSource && isOptInConfirmationOpen(runtime.kernel)) {
+				await Promise.all([task, ensureDialogMounted('preferences')]);
+				return;
+			}
+			await task;
 		},
 		closeDialog() {
 			closeOptOutConfirmation(runtime.kernel);
+			closeOptInConfirmation(runtime.kernel);
 			showConsentSurface(runtime.kernel, 'none');
 			dialog?.close();
 		},
@@ -797,7 +820,9 @@ const createClient = function createClient(
 			detachPageSwapListeners();
 			releaseBlocking?.();
 			unsubscribeOptOutConfirmation();
+			unsubscribeOptInConfirmation();
 			closeOptOutConfirmation(runtime.kernel);
+			closeOptInConfirmation(runtime.kernel);
 			void dialog?.destroy();
 			dialog = null;
 			dialogKind = null;
@@ -964,7 +989,9 @@ const createClient = function createClient(
 		const kind = dialogKind ?? 'preferences';
 		const tab = dialogTab;
 		const dialogOpen = runtime.kernel.getSnapshot().activeUI === 'dialog';
-		const confirmationOpen = isOptOutConfirmationOpen(runtime.kernel);
+		const confirmationOpen =
+			isOptOutConfirmationOpen(runtime.kernel) ||
+			isOptInConfirmationOpen(runtime.kernel);
 		if (
 			disposed ||
 			!releaseDetachedDialog() ||

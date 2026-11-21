@@ -52,6 +52,10 @@ export default mergeConfig(
 				['@inth/nextjs', resolve(__dirname, './src/index.ts')],
 				// Astro's source island must share this test suite's React contexts
 				// and coverage, rather than importing a second copy from dist.
+				[
+					'@inth/react/components/consent-dialog',
+					resolve(__dirname, './src/components/panel/index.ts'),
+				],
 				['@inth/react/iab', resolve(__dirname, './src/iab.ts')],
 				['@inth/react/context', resolve(__dirname, './src/context.ts')],
 				['@inth/react', resolve(__dirname, './src/index.ts')],

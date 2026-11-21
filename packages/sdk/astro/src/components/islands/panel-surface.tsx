@@ -16,7 +16,8 @@
  * copy: the switch would flip, and the save would commit nothing.
  */
 
-import { ConsentDialog, ConsentDraftProvider, InthProvider } from '@inth/react';
+import { ConsentDraftProvider, InthProvider } from '@inth/react';
+import { ConsentDialog } from '@inth/react/components/consent-dialog';
 import type { LegalLinks } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { useEffect, useState } from 'react';
