@@ -22,18 +22,38 @@ group: reference
 
   - Save records the current switches. Accept All and Reject All record a
     choice for every unlocked category in the policy.
-  - When a durable opt-out is held, the widget inside the dialog shows a status
-    line (`role="status"`) above the category list and keeps opted-out
-    categories off by default. While Global Privacy Control is active under a
-    policy that maps it, signal-restricted switches and `marketing` (or
-    `measurement` when `marketing` is not in scope) stay off and disabled with
-    the GPC notice below each locked row, and Save Settings and Accept All skip
-    locked categories. When an account holds the opt-out and GPC is off, the
-    account notice appears below `marketing` (or `measurement` when `marketing`
-    is not in scope) and the switches stay usable. Turning `measurement` on
-    while `marketing` stays off allows `measurement` without lifting the
-    opt-out; turning `marketing` back on and saving asks the backend to lift the account's opt-out, which stays in force until the backend confirms it. Read the same
-    state with `useOptOutState()`.
+  - Under an `opt-out` policy, a sale-and-sharing block renders first, above
+    the category list and outside any accordion item. Before the visitor opts
+    out, the block shows the configured opt-out link title, a neutral status
+    sentence, and an `Opt out` button that records the opt-out in one click
+    with no Save step. Once a durable opt-out is held, the button disappears
+    and the block shows the status line (`role="status"`), receipt sentence,
+    recorded time, and local reference. When the backend confirms the refused
+    rights, the heading names them. When Global Privacy Control is not locking
+    the opt-out, the block also shows an `Opt back in…` link. Under an
+    `opt-in` policy, no block renders.
+  - Under an `opt-out` policy while an opt-out is held, opting back in uses a
+    two-step confirmation dialog. Clicking `Opt back in…`, clicking Accept All,
+    or turning `marketing` back on and clicking Save Settings opens a separate
+    modal dialog instead of saving right away (`measurement` decides when
+    `marketing` is not in scope). Focus starts on Cancel, both buttons have
+    equal prominence, and pressing Escape cancels with nothing saved.
+    Confirming runs the pending action and lifts a device opt-out, or asks the
+    backend to lift an account opt-out. Under an `opt-in` policy, Accept All
+    still lifts a held opt-out in one step.
+  - While Global Privacy Control is active under a policy that maps it,
+    signal-restricted switches and `marketing` (or `measurement` when
+    `marketing` is not in scope) stay off and disabled with the GPC notice
+    below each locked row, no `Opt back in…` link appears, and Save Settings
+    and Accept All skip locked categories. When an account holds the opt-out
+    and GPC is off, the account notice appears below `marketing` (or
+    `measurement` when `marketing` is not in scope) and the switches stay
+    usable. Turning `measurement` on while `marketing` stays off allows
+    `measurement` without lifting the opt-out and skips confirmation. Turning
+    `marketing` back on and saving, or clicking `Opt back in…`, opens
+    confirmation before asking the backend to lift the account's opt-out, which
+    stays in force until the backend confirms it. Read the same state and
+    receipt with `useOptOutState()` and `useOptOutReceipt()`.
   - After a save, the dialog closes. The banner reappears only if the policy
     still requires a choice.
   - Pressing Escape closes the dialog without saving. The banner reappears if
@@ -59,16 +79,19 @@ group: reference
 
   Each category switch is a `button` with `role="switch"`, `aria-checked`, and
   the category title as its label. Each row expands with a button setting
-  `aria-expanded` and `aria-controls`.
+  `aria-expanded` and `aria-controls`. Under an `opt-out` policy, the
+  sale-and-sharing block renders as a `section` labelled by its heading above
+  the category list, with `role="status"` on the honored status line inside it.
 </section>
 
 <section id="styling">
   ## Style the dialog
 
   `components.dialog` binds attributes to `root`, `overlay`, `container`,
-  `card`, `header`, `title`, and `content`. The category list inside uses
-  `components.manager`, `components.accordion`, `components['accordion-item']`,
-  `components.switch`, and `components['vendor-list']`. See
+  `card`, `header`, `title`, and `content`. The preference widget inside uses
+  `components.manager` (including `optOut` and `optOutStatus`),
+  `components.accordion`, `components['accordion-item']`, `components.switch`,
+  and `components['vendor-list']`. See
   [component parts](/docs/customization/slots). `presentation.preferences`
   configures footer `layout`, `primaryActions`, `direction`, `uiProfile`, and
   `blocking`.

@@ -22,18 +22,39 @@ group: reference
     granted it. Otherwise they start from the recorded choice, or from the
     policy's defaults before any choice (on under an opt-out policy or for
     preselected categories, otherwise off).
-  - When a durable opt-out is held, a status line (`role="status"`) appears
-    above the category list: "Opt-out request honored" for a visitor request,
-    or "Opt-out preference signal honored" when GPC recorded or enforces it.
-    While GPC is active under a policy that maps it, signal-restricted switches
+  - Under an `opt-out` policy, a sale-and-sharing block renders first, above
+    the category list and outside any accordion item. Before the visitor opts
+    out, the block shows the configured opt-out link title, a neutral status
+    sentence, and an `Opt out` button that records the opt-out in one click
+    with no Save step. Once a durable opt-out is held, the button disappears
+    and the block shows the status line (`role="status"`): "Opt-out request
+    honored" for a visitor request, or "Opt-out preference signal honored" when
+    GPC recorded or enforces it. Below the status line, the block shows the
+    receipt sentence, recorded time, and local reference. When the backend
+    confirms the refused rights, the heading names them. When GPC is not
+    locking the opt-out, an `Opt back in…` link appears below the receipt.
+    Under an `opt-in` policy, no block renders.
+  - Under an `opt-out` policy while an opt-out is held, opting back in uses a
+    two-step confirmation dialog. Clicking `Opt back in…`, clicking Accept All,
+    or turning `marketing` back on and clicking Save Settings opens a separate
+    modal dialog instead of saving right away (`measurement` decides when
+    `marketing` is not in scope). Focus starts on Cancel, both buttons have
+    equal prominence, and pressing Escape cancels with nothing saved.
+    Confirming runs the pending action and lifts a device opt-out, or asks the
+    backend to lift an account opt-out. Under an `opt-in` policy, Accept All
+    still lifts a held opt-out in one step.
+  - While GPC is active under a policy that maps it, signal-restricted switches
     and `marketing` (or `measurement` when `marketing` is not in scope) stay
-    off and disabled with a notice below each locked row, and Accept All and
-    Save skip locked categories. When an account holds the opt-out and GPC is
-    off, the account notice appears below `marketing` (or `measurement` when
-    `marketing` is not in scope) and the switches stay usable. Turning
-    `measurement` on while `marketing` stays off allows `measurement` without
-    lifting the opt-out; turning `marketing` back on and saving asks the backend to lift the account's opt-out, which stays in force until the backend confirms it. Read
-    the same derived state with `useOptOutState()`.
+    off and disabled with a notice below each locked row, no `Opt back in…`
+    link appears, and Accept All and Save skip locked categories. When an
+    account holds the opt-out and GPC is off, the account notice appears below
+    `marketing` (or `measurement` when `marketing` is not in scope) and the
+    switches stay usable. Turning `measurement` on while `marketing` stays off
+    allows `measurement` without lifting the opt-out and skips confirmation.
+    Turning `marketing` back on and saving, or clicking `Opt back in…`, opens
+    confirmation before asking the backend to lift the account's opt-out, which
+    stays in force until the backend confirms it. Read the same derived state
+    and receipt with `useOptOutState()` and `useOptOutReceipt()`.
   - A choice saved elsewhere updates untouched switches and preserves edits
     the visitor already made.
   - If the policy changes while the page is open, the widget shows "Privacy
@@ -60,17 +81,19 @@ group: reference
 
   Each switch is a `button` with `role="switch"`, `aria-checked`, and the
   category title as its label. Each row expands with a button setting
-  `aria-expanded` and `aria-controls`, keeping one row open at a time. An
-  honored opt-out renders a status line with `role="status"` above the list,
-  and a GPC or account lock notice renders as an `output` element linked to
-  its switch with `aria-describedby`. Footer actions are native buttons. Place
-  a heading above the widget as shown.
+  `aria-expanded` and `aria-controls`, keeping one row open at a time. Under an
+  `opt-out` policy, the sale-and-sharing block renders as a `section` labelled
+  by its heading above the list, with `role="status"` on the honored status
+  line inside it. A GPC or account lock notice renders as an `output` element
+  linked to its switch with `aria-describedby`. Footer actions are native
+  buttons. Place a heading above the widget as shown.
 </section>
 
 <section id="styling">
   ## Style the widget
 
-  `ConsentWidget` reads `components.manager` for its root, opt-out status line
+  `ConsentWidget` reads `components.manager` for its root, sale-and-sharing
+  block (`optOut`, theme slot `consentWidgetOptOut`), opt-out status line
   (`optOutStatus`), and footer, `components.accordion` and
   `components['accordion-item']` for rows, `components.switch` for switches,
   and `components['vendor-list']` for vendor rows. See

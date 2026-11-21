@@ -47,6 +47,7 @@ group: reference
   | `useStoredConsent()` | Computed recorded choice, or `null` | Read the same value as `useExplicitChoice()`. |
   | `useNoticeDismissal()` | Computed dismissal record, or `null` | Check whether the visitor dismissed a notice. |
   | `useOptOutState()` | Computed opt-out display state | Check whether an opt-out is honored, how it was recorded and whether GPC or an account locks it. |
+  | `useOptOutReceipt()` | Computed opt-out receipt | Read what a held opt-out covers (this browser or the account), when it was recorded, the local reference, and confirmed rights. |
   | `usePrivacySignals()` | Computed privacy signals | Read whether Global Privacy Control was detected and applied. |
   | `useConsentRestrictions()` | Computed restrictions | Inspect why a policy or privacy signal limits a permission. |
   | `usePolicyRule()` | Computed policy rule | Read the `model`, `prompt`, `scope`, and `rights` of the matched policy. |
@@ -73,8 +74,10 @@ group: reference
 
   `useOptOut()` returns a function that records a durable opt-out in one click
   and opens `OptOutConfirmation` under an opt-out policy regardless of
-  `presentation.optOutLink`. Under other policy models it opens the preference
-  dialog.
+  `presentation.optOutLink`. `OptOutConfirmation` shows the status line,
+  receipt sentence, recorded time, and local reference when this browser
+  recorded the opt-out. Under other policy models `useOptOut()` opens the
+  preference dialog.
 
   ## Open the banner or preferences
 
@@ -111,7 +114,10 @@ group: reference
   The draft starts from the recorded choice, or from the policy's defaults
   before any choice (on under an opt-out policy or for preselected categories,
   otherwise off). A choice saved elsewhere updates untouched switches.
-  `save()` does not close the UI; set `activeUI` to `null` afterward.
+  Under an `opt-out` policy while an opt-out is held, a `save()` that would
+  lift the opt-out opens the two-step confirmation dialog instead of saving
+  right away. `save()` does not close the UI; set `activeUI` to `null`
+  afterward.
 
   ## Render the actions the policy requires
 
