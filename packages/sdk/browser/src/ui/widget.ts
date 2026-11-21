@@ -2,7 +2,10 @@ import {
 	consentTypes,
 	resolveCategoryOptOutLock,
 	resolveCategoryTitle,
+	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
+	resolveOptOutReceipt,
+	resolveOptOutReceiptSentence,
 	resolveOptOutState,
 	resolveVendorListCopy,
 	vendorsListedUnder,
@@ -10,11 +13,14 @@ import {
 import type {
 	AllConsentNames,
 	ConsentSnapshot,
+	OptOutLinkVariant,
+	OptOutReceipt,
 	PresentationAction,
 	ResolvedOptOutState,
 	Translations,
 } from '@inth/sdk-core';
 import { createPreferenceDraft } from '@inth/sdk-core/preference-draft';
+import { optOutConsentSurface } from '@inth/sdk-core/surface-actions';
 import type {
 	CompleteTranslations,
 	OptOutTranslations,
@@ -26,6 +32,8 @@ import { renderActionFooter, resolveActions } from './actions';
 import { renderBranding } from './branding';
 import { resolveCopy } from './copy';
 import { cx, h, svg } from './dom';
+import { buildReceiptDetails } from './opt-out-confirmation';
+import { getOptOutReceiptData } from './opt-out-confirmation-state';
 import type { SurfaceContext } from './surface';
 import { createVendorList } from './vendor-list';
 import type { VendorList } from './vendor-list';
@@ -96,9 +104,17 @@ const resolveRowCopy = function resolveRowCopy(
 	};
 };
 
+const WIDGET_RECEIPT_TEST_IDS = {
+	receipt: 'consent-widget-opt-out-receipt',
+	recordedAt: 'consent-widget-opt-out-recorded-at',
+	reference: 'consent-widget-opt-out-reference',
+} as const;
+
 const optOutRenderKey = function optOutRenderKey(
 	snapshot: ConsentSnapshot,
-	optOutState: ResolvedOptOutState
+	optOutState: ResolvedOptOutState,
+	receipt: OptOutReceipt,
+	optOutLinkVariant: OptOutLinkVariant | undefined
 ): string {
 	const gpcRestricted = Object.entries(snapshot.restrictions)
 		.filter(([, reasons]) => reasons?.includes('gpc'))
@@ -106,13 +122,161 @@ const optOutRenderKey = function optOutRenderKey(
 		.sort()
 		.join(',');
 	return [
+		optOutState.available,
 		optOutState.honored,
 		optOutState.via ?? '',
 		optOutState.lock ?? '',
 		optOutState.decidingCategory ?? '',
 		optOutState.categories.join(','),
 		gpcRestricted,
+		receipt.at ?? '',
+		receipt.reference ?? '',
+		receipt.scope ?? '',
+		receipt.rights.join(','),
+		optOutLinkVariant ?? '',
 	].join('|');
+};
+
+/**
+ * Render the sale-and-sharing block at the top of preferences under an opt-out
+ * policy.
+ *
+ * California rules state: "A notification or tool regarding cookies, such as a
+ * cookie banner or cookie controls, is not by itself an acceptable method for
+ * submitting requests to opt-out of sale/sharing ... An acceptable method for
+ * submitting requests to opt-out of sale/sharing must address the sale and
+ * sharing of personal information." (11 CCR §7026(a)(4)).
+ */
+const buildOptOutSection = function buildOptOutSection(params: {
+	bundle: Partial<Translations> | undefined;
+	ctx: SurfaceContext;
+	language: string | undefined;
+	optOutCopy: OptOutTranslations;
+	optOutLinkVariant: OptOutLinkVariant | undefined;
+	optOutState: ResolvedOptOutState;
+	receipt: OptOutReceipt;
+}): HTMLElement | null {
+	const {
+		bundle,
+		ctx,
+		language,
+		optOutCopy,
+		optOutLinkVariant,
+		optOutState,
+		receipt,
+	} = params;
+	const { noStyle, slot } = ctx;
+	const statusLine = optOutState.honored
+		? slot(
+				h(
+					'p',
+					{
+						class: noStyle ? '' : classes.manager.optOutStatus,
+						'data-testid': 'consent-widget-opt-out-status',
+						role: 'status',
+					},
+					optOutState.via === 'signal'
+						? optOutCopy.statusSignal
+						: optOutCopy.statusRequest
+				),
+				'consentWidgetOptOutStatus'
+			)
+		: null;
+
+	if (!optOutState.available) {
+		return statusLine;
+	}
+
+	const heading = resolveOptOutBlockHeading(bundle, receipt, optOutLinkVariant);
+	const headingEl = h(
+		'h3',
+		{
+			class: noStyle ? '' : classes.manager.optOutHeading,
+			'data-testid': 'consent-widget-opt-out-heading',
+			id: 'consent-widget-opt-out-heading',
+		},
+		heading
+	);
+
+	if (optOutState.honored) {
+		const receiptSentence = resolveOptOutReceiptSentence(bundle, receipt);
+		const receiptDetails = buildReceiptDetails(
+			receipt,
+			optOutCopy,
+			language,
+			classes.optOutConfirmation,
+			noStyle,
+			WIDGET_RECEIPT_TEST_IDS
+		);
+		// Opt-back-in action mounts below the receipt when added.
+		return slot(
+			h(
+				'section',
+				{
+					'aria-labelledby': 'consent-widget-opt-out-heading',
+					class: noStyle ? '' : classes.manager.optOut,
+					'data-testid': 'consent-widget-opt-out',
+				},
+				headingEl,
+				statusLine,
+				h(
+					'p',
+					{
+						class: noStyle ? '' : classes.optOutConfirmation.description,
+						'data-testid': 'consent-widget-opt-out-description',
+					},
+					receiptSentence
+				),
+				receiptDetails
+			),
+			'consentWidgetOptOut'
+		);
+	}
+
+	const optOutButton = slot(
+		h(
+			'button',
+			{
+				class: noStyle ? '' : classes.button.button,
+				'data-mode': noStyle ? undefined : 'filled',
+				'data-size': noStyle ? undefined : 'small',
+				'data-testid': 'consent-widget-opt-out-button',
+				'data-variant': noStyle ? undefined : 'primary',
+				onclick: () => {
+					void optOutConsentSurface(ctx.client.kernel, { uiSource: 'dialog' });
+				},
+				type: 'button',
+			},
+			optOutCopy.action
+		),
+		'buttonPrimary'
+	);
+
+	return slot(
+		h(
+			'section',
+			{
+				'aria-labelledby': 'consent-widget-opt-out-heading',
+				class: noStyle ? '' : classes.manager.optOut,
+				'data-testid': 'consent-widget-opt-out',
+			},
+			headingEl,
+			h(
+				'p',
+				{
+					class: noStyle ? '' : classes.manager.optOutDescription,
+					'data-testid': 'consent-widget-opt-out-description',
+				},
+				optOutCopy.notOptedOut
+			),
+			h(
+				'div',
+				{ class: noStyle ? '' : classes.manager.optOutActions },
+				optOutButton
+			)
+		),
+		'consentWidgetOptOut'
+	);
 };
 
 const buildArrow = function buildArrow(): SVGSVGElement {
@@ -503,9 +667,11 @@ export const createWidget = function createWidget(
 	const rebuild = function rebuild(
 		snapshot: ConsentSnapshot,
 		optOutState: ResolvedOptOutState,
+		receipt: OptOutReceipt,
+		optOutLinkVariant: OptOutLinkVariant | undefined,
 		optOutKey: string
 	): void {
-		const { t, dir, actions } = resolveCopy(snapshot);
+		const { t, dir, actions, language } = resolveCopy(snapshot);
 		const bundle = snapshot.translations?.translations as
 			| Partial<Translations>
 			| undefined;
@@ -533,22 +699,15 @@ export const createWidget = function createWidget(
 			)
 		);
 
-		const optOutStatus = optOutState.honored
-			? slot(
-					h(
-						'p',
-						{
-							class: noStyle ? '' : classes.manager.optOutStatus,
-							'data-testid': 'consent-widget-opt-out-status',
-							role: 'status',
-						},
-						optOutState.via === 'signal'
-							? optOutCopy.statusSignal
-							: optOutCopy.statusRequest
-					),
-					'consentWidgetOptOutStatus'
-				)
-			: null;
+		const optOutSection = buildOptOutSection({
+			bundle,
+			ctx,
+			language,
+			optOutCopy,
+			optOutLinkVariant,
+			optOutState,
+			receipt,
+		});
 
 		const list = slot(
 			h('div', {
@@ -560,10 +719,10 @@ export const createWidget = function createWidget(
 		for (const row of rows) {
 			list.append(row.item);
 		}
-		if (optOutStatus) {
+		if (optOutSection) {
 			element.append(
+				optOutSection,
 				review,
-				optOutStatus,
 				list,
 				buildFooter(snapshot, actions)
 			);
@@ -604,7 +763,17 @@ export const createWidget = function createWidget(
 			draft.setDefaults(ctx.client.presentation?.preferences?.defaults);
 			const categories = draft.getState().displayedCategories.join(',');
 			const optOutState = resolveOptOutState(snapshot);
-			const optOutKey = optOutRenderKey(snapshot, optOutState);
+			const receipt = resolveOptOutReceipt(
+				snapshot,
+				getOptOutReceiptData(ctx.client.kernel)
+			);
+			const optOutLinkVariant = ctx.client.presentation?.optOutLink;
+			const optOutKey = optOutRenderKey(
+				snapshot,
+				optOutState,
+				receipt,
+				optOutLinkVariant
+			);
 			if (
 				!renderedFrom ||
 				renderedFrom.categories !== categories ||
@@ -615,7 +784,7 @@ export const createWidget = function createWidget(
 				renderedFrom.vendorChoice !== snapshot.vendorChoice ||
 				renderedFrom.optOutKey !== optOutKey
 			) {
-				rebuild(snapshot, optOutState, optOutKey);
+				rebuild(snapshot, optOutState, receipt, optOutLinkVariant, optOutKey);
 				return;
 			}
 			patchAll();

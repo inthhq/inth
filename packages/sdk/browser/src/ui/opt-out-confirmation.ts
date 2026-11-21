@@ -45,12 +45,26 @@ const formatRecordedAt = function formatRecordedAt(
 	}
 };
 
-const buildReceiptDetails = function buildReceiptDetails(
+/** Test ids applied to the opt-out receipt definition list. */
+export interface ReceiptDetailsTestIds {
+	receipt: string;
+	recordedAt: string;
+	reference: string;
+}
+
+const CONFIRMATION_RECEIPT_TEST_IDS: ReceiptDetailsTestIds = {
+	receipt: 'opt-out-confirmation-receipt',
+	recordedAt: 'opt-out-confirmation-recorded-at',
+	reference: 'opt-out-confirmation-reference',
+};
+
+export const buildReceiptDetails = function buildReceiptDetails(
 	receipt: OptOutReceipt,
 	optOutCopy: ReturnType<typeof resolveOptOutCopy>,
 	language: string | undefined,
 	styles: typeof classes.optOutConfirmation,
-	noStyle: boolean
+	noStyle: boolean,
+	testIds: ReceiptDetailsTestIds = CONFIRMATION_RECEIPT_TEST_IDS
 ): HTMLDListElement | null {
 	if (receipt.at === null && receipt.reference === null) {
 		return null;
@@ -71,7 +85,7 @@ const buildReceiptDetails = function buildReceiptDetails(
 					h(
 						'time',
 						{
-							'data-testid': 'opt-out-confirmation-recorded-at',
+							'data-testid': testIds.recordedAt,
 							datetime: new Date(receipt.at).toISOString(),
 						},
 						formatRecordedAt(receipt.at, language)
@@ -93,7 +107,7 @@ const buildReceiptDetails = function buildReceiptDetails(
 						'code',
 						{
 							class: noStyle ? '' : styles.reference,
-							'data-testid': 'opt-out-confirmation-reference',
+							'data-testid': testIds.reference,
 						},
 						receipt.reference
 					)
@@ -105,7 +119,7 @@ const buildReceiptDetails = function buildReceiptDetails(
 		'dl',
 		{
 			class: noStyle ? '' : styles.receipt,
-			'data-testid': 'opt-out-confirmation-receipt',
+			'data-testid': testIds.receipt,
 		},
 		...rows
 	);
