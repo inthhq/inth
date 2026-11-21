@@ -1,6 +1,7 @@
 'use client';
 
 import type { PolicyRight } from '@inth/sdk/schema/types';
+import { activateOptOutLink } from '@inth/sdk/surface-actions';
 import { resolveOptOutLink } from '@inth/sdk/surface-state';
 import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import {
@@ -16,11 +17,11 @@ import type { ConsentButtonProps } from '~/components/shared/primitives/button.t
 import { OptOutIcon } from '~/components/shared/ui/opt-out-icon';
 import {
 	useHasConsentPreferences,
-	useOptOut,
 	usePolicyRule,
 	useResolvedPresentation,
 } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
+import { useKernel } from '~/kernel-selector';
 
 /**
  * Inline trigger for opening the consent dialog or exercising the opt-out
@@ -28,9 +29,12 @@ import { useTheme } from '~/hooks/use-theme';
  *
  * @remarks
  * Renders an unstyled button by default so site styles can define the visual
- * appearance. When `right="opt-out"` is set, activating the link records an
- * opt-out in one click and opens the confirmation view under an opt-out
- * policy, or falls back to the preference center under other models.
+ * appearance. When `right="opt-out"` is set under an opt-out policy, the
+ * action follows the resolved `presentation.optOutLink` title: `'do-not-sell'`
+ * records an opt-out in one click and opens the confirmation view, while
+ * `'privacy-choices'` and `'california-privacy-choices'` open the preference
+ * center without recording an opt-out. Under other models it opens the
+ * preference center.
  */
 export interface ConsentDialogLinkProps extends Omit<
 	ConsentButtonProps,
@@ -44,8 +48,7 @@ export interface ConsentDialogLinkProps extends Omit<
 	children?: ReactNode;
 	/**
 	 * Persistent right this link exercises. Set to `'opt-out'` for a
-	 * "Do Not Sell or Share" / "Your Privacy Choices" footer link that opts out
-	 * in one step.
+	 * "Do Not Sell or Share" or "Your Privacy Choices" footer link.
 	 */
 	right?: Exclude<PolicyRight, 'disclosure'>;
 }
@@ -54,11 +57,11 @@ export const ConsentDialogLink = createForwardRef<
 	HTMLButtonElement,
 	ConsentDialogLinkProps
 >(({ children, noStyle = true, right, onClick, asChild, ...props }, ref) => {
+	const kernel = useKernel();
 	const policy = usePolicyRule();
 	const hasConsentUI = useHasConsentPreferences();
 	const translations = useTranslations();
 	const presentation = useResolvedPresentation();
-	const optOut = useOptOut();
 	const { noStyle: themeNoStyle } = useTheme();
 
 	if (!hasConsentUI) {
@@ -83,8 +86,8 @@ export const ConsentDialogLink = createForwardRef<
 
 	const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
 		onClick?.(event);
-		if (isOptOut && !event.defaultPrevented) {
-			void optOut();
+		if (optOutLink && !event.defaultPrevented) {
+			void activateOptOutLink(kernel, optOutLink.variant);
 		}
 	};
 

@@ -6,6 +6,7 @@ import {
 	forgetOwnedVendors,
 	IABUnavailableError,
 	isVendorAllowed,
+	resolveOptOutLink,
 } from '@inth/sdk-core';
 import type {
 	AllConsentNames,
@@ -28,6 +29,7 @@ import type {
 	RuntimeGPPOptions,
 } from '@inth/sdk-core/runtime';
 import {
+	activateOptOutLink,
 	optOutConsentSurface,
 	saveConsentSurface,
 	saveConsentSurfaceWithOptInCheck,
@@ -465,6 +467,13 @@ export const createConsentClientWith = function createConsentClientWith(
 			? saveIAB('rejectAll')
 			: saveSelection('none');
 
+	const resolvedPresentation = (): ConsentPresentation | undefined =>
+		applyExperimentAssignment(
+			options.presentation,
+			runtime.experiment,
+			kernel.getSnapshot().experiment
+		);
+
 	const onPageClick = function onPageClick(event: MouseEvent): void {
 		const action = resolvePageAction(event.target);
 		if (!action) {
@@ -494,7 +503,11 @@ export const createConsentClientWith = function createConsentClientWith(
 				break;
 			}
 			case 'opt-out': {
-				void optOut();
+				const { variant } = resolveOptOutLink(
+					undefined,
+					resolvedPresentation()?.optOutLink
+				);
+				void activateOptOutLink(kernel, variant);
 				break;
 			}
 			case 'dismiss': {
@@ -605,11 +618,7 @@ export const createConsentClientWith = function createConsentClientWith(
 		optOut,
 		options,
 		get presentation(): ConsentPresentation | undefined {
-			return applyExperimentAssignment(
-				options.presentation,
-				runtime.experiment,
-				kernel.getSnapshot().experiment
-			);
+			return resolvedPresentation();
 		},
 		processIframes() {
 			runtime.processIframes();

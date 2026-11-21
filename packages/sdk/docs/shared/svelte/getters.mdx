@@ -90,7 +90,7 @@ other categories as they were. **Privacy settings** opens the dialog.
 | `saveConsents('all')` | Records every category in scope as allowed. |
 | `saveConsents('necessary')` | Records only `necessary`, rejecting the rest. |
 | `dismissNotice()` | Records that the visitor dismissed a notice. Only works while a notice is due. |
-| `requestOptOut()` | Records an opt-out in one click and opens `OptOutConfirmation` under an opt-out policy, or opens the preference dialog under other models. |
+| `requestOptOut()` | Records an opt-out in one click and opens `OptOutConfirmation` under an opt-out policy regardless of `presentation.optOutLink`, or opens the preference dialog under other models. |
 | `setLanguage(code)` | Switches the language and resolves the policy again for it. |
 | `getDisplayedConsents()` | The categories to render in your own preference UI. |
 | `getDisplayedVendors(category)` | The vendors to list under one category. Empty under an IAB policy. |

@@ -37,11 +37,11 @@ export const RequestHonored: Story = {
 export const SignalHonored: Story = {
 	args: {
 		gpc: true,
-		optOutLink: 'privacy-choices',
+		optOutLink: 'do-not-sell',
 	},
 	play: async () => {
 		const link = await within(document.body).findByRole('button', {
-			name: 'Your Privacy Choices',
+			name: 'Do Not Sell or Share My Personal Information',
 		});
 		await userEvent.click(link);
 		const status = await within(document.body).findByTestId(

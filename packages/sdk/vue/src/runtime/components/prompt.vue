@@ -5,7 +5,10 @@ import type {
 	PromptVariant,
 } from '@inth/sdk/engine';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
-import { replayEarlyConsentTaps } from '@inth/sdk/surface-actions';
+import {
+	activateOptOutLink,
+	replayEarlyConsentTaps,
+} from '@inth/sdk/surface-actions';
 import {
 	resolveActionLabels,
 	resolveOptOutLink,
@@ -35,7 +38,6 @@ import {
 	useConsentKernelContext,
 	useConsentSnapshot,
 	useHasConsentUi,
-	useOptOut,
 } from '../composables';
 import { useConsentPolicyActions } from '../composables/use-consent-policy-actions';
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
@@ -86,7 +88,6 @@ const textDirection = computed(() =>
 	getTextDirection(init.value?.translations?.language)
 );
 const save = useConsentSave();
-const optOut = useOptOut();
 const kernel = useConsentKernel();
 const snapshot = useConsentSnapshot();
 
@@ -178,7 +179,9 @@ const optOutLink = computed(() =>
 
 const onRight = function onRight(right: string) {
 	if (right === 'opt-out') {
-		void optOut({ uiSource: 'banner' });
+		void activateOptOutLink(kernel, optOutLink.value.variant, {
+			uiSource: 'banner',
+		});
 		return;
 	}
 	activeUI.value = 'manager';

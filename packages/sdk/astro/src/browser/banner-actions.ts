@@ -82,6 +82,24 @@ export interface DeferredClientHooks {
 
 const deferredHooks = new WeakMap<AstroConsentClient, DeferredClientHooks>();
 
+type OptOutLinkHandler = (opener: HTMLElement | null) => Promise<void>;
+
+const optOutLinkHandlers = new WeakMap<AstroConsentClient, OptOutLinkHandler>();
+
+/**
+ * Register the handler that activates a `data-inth-action="opt-out"` element
+ * according to the resolved `optOutLink` variant, keeping `client.optOut()`
+ * programmatic.
+ *
+ * @internal
+ */
+export const registerOptOutLinkHandler = function registerOptOutLinkHandler(
+	client: AstroConsentClient,
+	handler: OptOutLinkHandler
+): void {
+	optOutLinkHandlers.set(client, handler);
+};
+
 /**
  * Register what the listener does for the first-load shell's client, which
  * has no runtime until its engine loads.
@@ -208,6 +226,24 @@ export const attachBannerActions = function attachBannerActions(): void {
 			return;
 		}
 		if (resolved.action === 'opt-out') {
+			const handler = optOutLinkHandlers.get(client);
+			if (handler) {
+				void handler(resolved.element);
+				return;
+			}
+			const hooks = deferredHooks.get(client);
+			if (hooks) {
+				void (async () => {
+					const engine = await hooks.engine();
+					const engineHandler = optOutLinkHandlers.get(engine);
+					if (engineHandler) {
+						await engineHandler(resolved.element);
+					} else {
+						await engine.optOut(resolved.element);
+					}
+				})();
+				return;
+			}
 			void client.optOut(resolved.element);
 			return;
 		}

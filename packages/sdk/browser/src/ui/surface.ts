@@ -1,4 +1,9 @@
-import type { ConsentSnapshot, LegalLinks, SaveResult } from '@inth/sdk-core';
+import type {
+	ConsentSnapshot,
+	LegalLinks,
+	ResolvedOptOutLink,
+	SaveResult,
+} from '@inth/sdk-core';
 import type { LegalLinksTranslations } from '@inth/sdk-translations';
 import { resolveLegalLinkEntries } from '@inth/sdk-ui/utils/legal-links';
 
@@ -23,6 +28,8 @@ export interface SurfaceContext {
 	slot: SlotApplier;
 	/** Banner Accept All handler that enforces two-step opt-in confirmation. */
 	acceptFromBanner?: () => Promise<SaveResult>;
+	/** Handles an opt-out link click according to its resolved link variant. */
+	onOptOutLink?: (variant: ResolvedOptOutLink['variant']) => void;
 }
 
 /** A mounted surface. */

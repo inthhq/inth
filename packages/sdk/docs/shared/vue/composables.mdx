@@ -72,8 +72,9 @@ group: reference
   Use it only for a policy whose prompt is `notice`.
 
   `useOptOut()` returns a function that records a durable opt-out in one click
-  and opens `OptOutConfirmation` under an opt-out policy. Under other policy
-  models it opens the preference dialog.
+  and opens `OptOutConfirmation` under an opt-out policy regardless of
+  `presentation.optOutLink`. Under other policy models it opens the preference
+  dialog.
 
   ## Open the banner or preferences
 

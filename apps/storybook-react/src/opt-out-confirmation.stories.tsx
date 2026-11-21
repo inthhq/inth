@@ -148,7 +148,7 @@ export const AccountCovered: Story = {
 export const SignalHonored: Story = {
 	play: async () => {
 		const link = await within(document.body).findByRole('button', {
-			name: 'Your Privacy Choices',
+			name: 'Do Not Sell or Share My Personal Information',
 		});
 		await userEvent.click(link);
 		const status = await within(document.body).findByTestId(
@@ -164,7 +164,7 @@ export const SignalHonored: Story = {
 				...editableConsentOptions,
 				mode: storybookMode([storybookOptOutPolicy]),
 				overrides: { country: 'US', gpc: true, region: 'CA' },
-				presentation: { optOutLink: 'privacy-choices' },
+				presentation: { optOutLink: 'do-not-sell' },
 				reloadOnConsentRevoked: false,
 			}}
 		>

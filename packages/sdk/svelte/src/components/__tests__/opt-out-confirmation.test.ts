@@ -212,22 +212,16 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 				overrides: { country: 'US', gpc: true, region: 'CA' },
 				presentation: { optOutLink: 'privacy-choices' },
 			},
-			{ showBanner: true, showDialog: false, showStandaloneConfirmation: true }
+			{ showBanner: false, showDialog: false, showStandaloneConfirmation: true }
 		);
 
 		await waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+			expect(activeContext?.kernel.getSnapshot().optOut?.method).toBe('gpc')
 		);
-		expect(activeContext?.kernel.getSnapshot().optOut?.method).toBe('gpc');
 		const onRecorded = vi.fn();
 		activeContext?.kernel.events.on('opt-out:recorded', onRecorded);
 
-		const link = query<HTMLButtonElement>(
-			'consent-banner-right-link-opt-out'
-		) as HTMLButtonElement;
-		expect(link.textContent?.trim()).toBe('Your Privacy Choices');
-		expect(link.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
-		await fireEvent.click(link);
+		void activeContext?.state.requestOptOut();
 
 		await waitFor(() =>
 			expect(query('opt-out-confirmation-root')).not.toBeNull()
@@ -503,5 +497,74 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 		});
 		expect(query('opt-out-confirmation-root')).toBeNull();
 		third.view.unmount();
+	});
+
+	test.each(['privacy-choices', 'california-privacy-choices'] as const)(
+		'opens the dialog and records nothing from banner link, footer link and trigger when optOutLink=%s',
+		async (optOutLink) => {
+			const { view } = renderSuite(
+				{ presentation: { optOutLink } },
+				{
+					showBanner: true,
+					showDialog: true,
+					showLink: true,
+					showTrigger: true,
+				}
+			);
+
+			await waitFor(() =>
+				expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+			);
+			await fireEvent.click(
+				query<HTMLButtonElement>(
+					'consent-banner-right-link-opt-out'
+				) as HTMLButtonElement
+			);
+			await waitFor(() => expect(query('consent-dialog-root')).not.toBeNull());
+			expect(activeContext?.kernel.getSnapshot().optOut).toBeNull();
+			expect(query('opt-out-confirmation-root')).toBeNull();
+
+			activeContext?.kernel.set.activeUI('none');
+			await waitFor(() => expect(query('consent-dialog-root')).toBeNull());
+
+			await fireEvent.click(
+				query<HTMLButtonElement>('consent-dialog-link') as HTMLButtonElement
+			);
+			await waitFor(() => expect(query('consent-dialog-root')).not.toBeNull());
+			expect(activeContext?.kernel.getSnapshot().optOut).toBeNull();
+			expect(query('opt-out-confirmation-root')).toBeNull();
+
+			activeContext?.kernel.set.activeUI('none');
+			await waitFor(() =>
+				expect(query('consent-dialog-trigger')).not.toBeNull()
+			);
+
+			await fireEvent.click(
+				query<HTMLButtonElement>('consent-dialog-trigger') as HTMLButtonElement
+			);
+			await waitFor(() => expect(query('consent-dialog-root')).not.toBeNull());
+			expect(activeContext?.kernel.getSnapshot().optOut).toBeNull();
+			expect(query('opt-out-confirmation-root')).toBeNull();
+
+			view.unmount();
+		}
+	);
+
+	test('keeps requestOptOut opting out in one step even when optOutLink is privacy-choices', async () => {
+		const { view } = renderSuite(
+			{ presentation: { optOutLink: 'privacy-choices' } },
+			{ showBanner: false, showDialog: true }
+		);
+
+		await waitFor(() => expect(activeContext).not.toBeNull());
+		void activeContext?.state.requestOptOut();
+
+		await waitFor(() =>
+			expect(query('opt-out-confirmation-root')).not.toBeNull()
+		);
+		expect(activeContext?.kernel.getSnapshot().optOut?.method).toBe('button');
+		expect(query('consent-dialog-root')).toBeNull();
+
+		view.unmount();
 	});
 });

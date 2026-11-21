@@ -244,24 +244,18 @@ describe('one-step opt-out and confirmation view in React', () => {
 				}}
 			>
 				<KernelCapture />
-				<ConsentBanner disableAnimation />
+				<OptOutButton />
 				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 
 		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+			expect(activeKernel?.getSnapshot().optOut?.method).toBe('gpc')
 		);
-		expect(activeKernel?.getSnapshot().optOut?.method).toBe('gpc');
 		const onRecorded = vi.fn();
 		activeKernel?.events.on('opt-out:recorded', onRecorded);
 
-		const link = query<HTMLButtonElement>(
-			'consent-banner-right-link-opt-out'
-		) as HTMLButtonElement;
-		expect(link.textContent).toBe('Your Privacy Choices');
-		expect(link.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
-		link.click();
+		query<HTMLButtonElement>('custom-opt-out')?.click();
 
 		await vi.waitFor(() =>
 			expect(query('opt-out-confirmation-root')).not.toBeNull()

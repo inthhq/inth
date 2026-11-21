@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { ConsentDialogTriggerVisibility } from '@inth/sdk/schema/config';
-	import { isOptOutTrigger } from '@inth/sdk/surface-actions';
+	import {
+		activateOptOutLink,
+		isOptOutTrigger,
+	} from '@inth/sdk/surface-actions';
 	import {
 		resolveOptOutLink,
 		resolveTriggerLabels,
@@ -255,7 +258,7 @@
 		onclick?.(e);
 		if (!e.defaultPrevented) {
 			if (isOptOut) {
-				void consent.state.requestOptOut();
+				void activateOptOutLink(consent.kernel, optOutLink.variant);
 			} else {
 				consent.state.setActiveUI('dialog');
 			}

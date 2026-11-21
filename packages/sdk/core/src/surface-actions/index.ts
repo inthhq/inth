@@ -59,6 +59,7 @@ export type {
 	SaveWithOptInCheckOptions,
 } from './opt-in';
 export {
+	activateOptOutLink,
 	claimOptOutConfirmationHost,
 	closeOptOutConfirmation,
 	getOptOutReceiptData,

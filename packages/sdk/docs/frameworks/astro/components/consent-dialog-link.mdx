@@ -13,17 +13,21 @@ choice at any time. Its children are the label:
 
 `ConsentDialogLink` renders a plain `<button>` or `<a>` with no styles of
 its own. By default it carries `data-inth-action="customize"`, and the same
-shared listener the banner uses opens the dialog on click. Pass
-`right="opt-out"` to make it record an opt-out in one click and open the
-confirmation view under an opt-out policy (falling back to the preference
-dialog under other models).
+shared listener the banner uses opens the dialog on click. With
+`right="opt-out"` under an opt-out policy, the click follows the resolved
+`presentation.optOutLink` title: `'do-not-sell'` (the default) records an
+opt-out in one click and opens the confirmation view, while
+`'privacy-choices'` and `'california-privacy-choices'` open the preference
+dialog without recording an opt-out. Programmatic calls to `client.optOut()`
+still opt out in one step whatever `presentation.optOutLink` is set to. Under
+other models the link opens the preference dialog.
 
 ## Props
 
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `kind` | `'preferences' \| 'iab'` | `'preferences'` | Which dialog to open |
-| `right` | `'opt-out' \| 'preferences'` | None | Pass `'opt-out'` to record an opt-out in one click and open the confirmation view under an opt-out rule. When the slot is empty, uses the label resolved from `presentation.optOutLink`, and always renders the California Privacy Protection Agency opt-out icon for `'privacy-choices'` and `'california-privacy-choices'` |
+| `right` | `'opt-out' \| 'preferences'` | None | Under an opt-out rule, `'opt-out'` follows `presentation.optOutLink`: `'do-not-sell'` records an opt-out in one click and opens the confirmation view, while `'privacy-choices'` and `'california-privacy-choices'` render with the California Privacy Protection Agency opt-out icon and open the preference dialog without recording an opt-out. When the slot is empty, uses the label resolved from `presentation.optOutLink` |
 | `as` | `'button' \| 'a'` | `'button'` | Renders a `<button type="button">`, or an `<a href="#inth-preferences">` |
 | `class` | `string` | None | Class names for your own styles |
 | `noStyle` | `boolean` | `false` | Omits the bundled icon class name when `right="opt-out"` renders the Privacy Choices icon |

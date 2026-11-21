@@ -314,29 +314,39 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 	});
 
 	test('shows GPC signal wording when opted out via Global Privacy Control', async () => {
+		const CustomButton = defineComponent({
+			setup() {
+				const optOut = useOptOut();
+				return () =>
+					h(
+						'button',
+						{
+							'data-testid': 'custom-opt-out',
+							onClick: () => {
+								void optOut();
+							},
+							type: 'button',
+						},
+						'Opt out'
+					);
+			},
+		});
+
 		const context = await mountTree(
 			defineComponent({
 				render: () => [
-					h(ConsentBanner, { disableAnimation: true }),
+					h(CustomButton),
 					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
 			{ gpc: true, optOutLink: 'privacy-choices', start: true }
 		);
 
-		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
 		expect(context.kernel.getSnapshot().optOut?.method).toBe('gpc');
 		const onRecorded = vi.fn();
 		context.kernel.events.on('opt-out:recorded', onRecorded);
 
-		const link = query<HTMLButtonElement>(
-			'consent-banner-right-link-opt-out'
-		) as HTMLButtonElement;
-		expect(link.textContent?.trim()).toBe('Your Privacy Choices');
-		expect(link.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
-		link.click();
+		query<HTMLButtonElement>('custom-opt-out')?.click();
 
 		await vi.waitFor(() =>
 			expect(query('opt-out-confirmation-root')).not.toBeNull()
@@ -660,5 +670,94 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 			setTimeout(resolve, 20);
 		});
 		expect(query('opt-out-confirmation-root')).toBeNull();
+	});
+
+	test.each(['privacy-choices', 'california-privacy-choices'] as const)(
+		'opens the dialog and records nothing from banner link, footer link and trigger when optOutLink=%s',
+		async (optOutLink) => {
+			const context = await mountTree(
+				defineComponent({
+					render: () => [
+						h(ConsentBanner, { disableAnimation: true }),
+						h(ConsentDialogLink, { right: 'opt-out' }),
+						h(ConsentDialogTrigger),
+						h(ConsentManager, { disableAnimation: true }),
+					],
+				}),
+				{
+					config: { triggerShowWhen: 'always' },
+					optOutLink,
+				}
+			);
+
+			await vi.waitFor(() =>
+				expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+			);
+			query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+			await vi.waitFor(() =>
+				expect(query('consent-dialog-root')).not.toBeNull()
+			);
+			expect(context.kernel.getSnapshot().optOut).toBeNull();
+			expect(query('opt-out-confirmation-root')).toBeNull();
+
+			context.kernel.set.activeUI('none');
+			await vi.waitFor(() => expect(query('consent-dialog-root')).toBeNull());
+
+			query<HTMLButtonElement>('consent-dialog-link')?.click();
+			await vi.waitFor(() =>
+				expect(query('consent-dialog-root')).not.toBeNull()
+			);
+			expect(context.kernel.getSnapshot().optOut).toBeNull();
+			expect(query('opt-out-confirmation-root')).toBeNull();
+
+			context.kernel.set.activeUI('none');
+			await vi.waitFor(() =>
+				expect(query('consent-dialog-trigger')).not.toBeNull()
+			);
+
+			query<HTMLButtonElement>('consent-dialog-trigger')?.click();
+			await vi.waitFor(() =>
+				expect(query('consent-dialog-root')).not.toBeNull()
+			);
+			expect(context.kernel.getSnapshot().optOut).toBeNull();
+			expect(query('opt-out-confirmation-root')).toBeNull();
+		}
+	);
+
+	test('keeps useOptOut opting out in one step even when optOutLink is privacy-choices', async () => {
+		const CustomButton = defineComponent({
+			setup() {
+				const optOut = useOptOut();
+				return () =>
+					h(
+						'button',
+						{
+							'data-testid': 'custom-opt-out',
+							onClick: () => {
+								void optOut();
+							},
+							type: 'button',
+						},
+						'Opt out'
+					);
+			},
+		});
+
+		const context = await mountTree(
+			defineComponent({
+				render: () => [
+					h(CustomButton),
+					h(ConsentManager, { disableAnimation: true }),
+				],
+			}),
+			{ optOutLink: 'privacy-choices' }
+		);
+
+		query<HTMLButtonElement>('custom-opt-out')?.click();
+		await vi.waitFor(() =>
+			expect(query('opt-out-confirmation-root')).not.toBeNull()
+		);
+		expect(context.kernel.getSnapshot().optOut?.method).toBe('button');
+		expect(query('consent-dialog-root')).toBeNull();
 	});
 });

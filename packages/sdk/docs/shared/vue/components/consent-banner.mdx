@@ -20,15 +20,18 @@ group: reference
     uses the primary style by default so Accept All and Reject All have equal
     weight.
   - A `notice` prompt shows an OK button. When the policy grants an opt-out
-    right, the banner adds an underlined link labelled "Do Not Sell or Share My
-    Personal Information" (or "Your Privacy Choices" / "Your California Privacy
-    Choices" with the California Privacy Protection Agency opt-out icon when
-    `presentation.optOutLink` is set). Activating it under an opt-out policy
-    records the opt-out in one click. When that turns off a category that was
-    running and `reloadOnConsentRevoked` is enabled, Inth waits for the opt-out
-    request, reloads the page, and opens `OptOutConfirmation` once on the new
-    page; otherwise `OptOutConfirmation` opens immediately. When only
-    the `preferences` right is shown, the link opens `ConsentManager`.
+    right, the banner adds an underlined link whose action follows
+    `presentation.optOutLink`. With the default `'do-not-sell'` ("Do Not Sell
+    or Share My Personal Information"), activating the link records the opt-out
+    in one click and opens `OptOutConfirmation` (reloading first when that
+    turns off a running category and `reloadOnConsentRevoked` is enabled). With
+    `'privacy-choices'` ("Your Privacy Choices") or
+    `'california-privacy-choices'` ("Your California Privacy Choices"), the
+    link renders with the California Privacy Protection Agency opt-out icon and
+    opens `ConsentManager` without recording an opt-out. Programmatic calls to
+    `useOptOut()` still opt out in one step whatever `presentation.optOutLink`
+    is set to. When only the `preferences` right is shown, the link opens
+    `ConsentManager`.
   - A policy with prompt `none` shows no banner.
 
   <include src="../../privacy-choices-link.mdx" />

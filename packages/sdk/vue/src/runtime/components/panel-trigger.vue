@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ConsentDialogTriggerSize } from '@inth/sdk/schema/config';
-import { isOptOutTrigger } from '@inth/sdk/surface-actions';
+import { activateOptOutLink, isOptOutTrigger } from '@inth/sdk/surface-actions';
 import {
 	resolveOptOutLink,
 	resolveTriggerLabels,
@@ -36,7 +36,6 @@ import {
 	useConsentKernel,
 	useConsentSnapshot,
 	useHasConsentPreferences,
-	useOptOut,
 	useOptOutConfirmationOpen,
 	usePolicyRule,
 	usePromptRequirement,
@@ -47,6 +46,7 @@ import { useSurfaceTranslations } from '../composables/use-surface-translations'
 import { slotAttrs } from '../utils/slot-attrs';
 import TriggerIcon from './trigger-icon.vue';
 
+const kernel = useConsentKernel();
 const activeUI = useConsentActiveUI();
 const config = useConsentConfig();
 const policy = usePolicyRule();
@@ -54,7 +54,6 @@ const snapshot = useConsentSnapshot();
 const presentation = useResolvedPresentation();
 const init = useConsentInit();
 const translations = useSurfaceTranslations();
-const optOut = useOptOut();
 const confirmationOpen = useOptOutConfirmationOpen();
 
 const mounted = useMounted();
@@ -86,7 +85,7 @@ const isVisible = computed(
 
 // With <ConsentDevTools> mounted, the trigger becomes a two-item toolbar
 // that carries the DevTools launcher, so one control occupies the corner.
-const devTools = useDevToolsLauncher(useConsentKernel(), isVisible);
+const devTools = useDevToolsLauncher(kernel, isVisible);
 const showToolbar = devTools.available;
 const devToolsOpen = devTools.isOpen;
 
@@ -166,7 +165,7 @@ const motionClasses = computed(() => [
 const openDialog = function openDialog(event: MouseEvent) {
 	if (!drag.endsDrag(event)) {
 		if (isOptOut.value) {
-			void optOut();
+			void activateOptOutLink(kernel, optOutLink.value.variant);
 		} else {
 			activeUI.value = 'manager';
 		}

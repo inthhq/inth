@@ -198,7 +198,13 @@ export const createBanner = function createBanner(
 							'data-variant': noStyle ? undefined : 'neutral',
 							onclick: () => {
 								if (control === 'opt-out') {
-									dropRejection(ctx.client.optOut());
+									if (ctx.onOptOutLink) {
+										ctx.onOptOutLink(copy.optOutLink.variant);
+									} else if (copy.optOutLink.variant === 'privacy-choices') {
+										ctx.client.openDialog();
+									} else {
+										dropRejection(ctx.client.optOut());
+									}
 								} else {
 									ctx.client.openDialog();
 								}

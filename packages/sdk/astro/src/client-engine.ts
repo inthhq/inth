@@ -19,7 +19,12 @@
  * @internal
  */
 
-import { isVendorAllowed, watchRevocationReload } from '@inth/sdk/engine';
+import {
+	applyExperimentAssignment,
+	isVendorAllowed,
+	resolveOptOutLink,
+	watchRevocationReload,
+} from '@inth/sdk/engine';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -42,6 +47,7 @@ import { createConsentRuntimeWith } from '@inth/sdk/runtime/on-demand';
 import { clearOnRevocationOnDemand } from '@inth/sdk/runtime/on-demand-factories';
 import type { ConsentRuntimeModules } from '@inth/sdk/runtime/provider';
 import {
+	activateOptOutLink,
 	closeOptOutConfirmation,
 	hasConsentPreferences,
 	hasConsentUI,
@@ -65,6 +71,7 @@ import {
 } from './banner/slot';
 import {
 	attachBannerActions,
+	registerOptOutLinkHandler,
 	resetDialogWarming,
 } from './browser/banner-actions';
 import type { DeferredCommitted } from './browser/commit';
@@ -892,6 +899,53 @@ const createClient = function createClient(
 		configurable: true,
 		value: (dispatcherOptions: RuntimeEventDispatcherOptions) =>
 			getRuntimeEventDispatcher(runtime, dispatcherOptions),
+	});
+
+	registerOptOutLinkHandler(client, async (opener) => {
+		const resolvedOpener = opener ?? readFocusedElement();
+		if (disposed) {
+			return;
+		}
+		const resolveVariant = () => {
+			const presentation = applyExperimentAssignment(
+				options.presentation,
+				options.experiment,
+				runtime.kernel.getSnapshot().experiment
+			);
+			return resolveOptOutLink(undefined, presentation?.optOutLink).variant;
+		};
+		if (extension.consentSource) {
+			await activateOptOutLink(runtime.kernel, resolveVariant(), {
+				opener: resolvedOpener,
+			});
+			return;
+		}
+		await whenPolicySettled(runtime.kernel);
+		if (disposed || !hasConsentUI(runtime.kernel.getSnapshot())) {
+			return;
+		}
+		const task = activateOptOutLink(runtime.kernel, resolveVariant(), {
+			opener: resolvedOpener,
+		});
+		if (!task) {
+			await ensureDialogMounted('preferences');
+			return;
+		}
+		if (
+			runtime.kernel.getSnapshot().policyRule.model !== 'opt-out' ||
+			isOptOutConfirmationOpen(runtime.kernel)
+		) {
+			await Promise.all([task, ensureDialogMounted('preferences')]);
+			return;
+		}
+		await task;
+		if (
+			!disposed &&
+			(isOptOutConfirmationOpen(runtime.kernel) ||
+				runtime.kernel.getSnapshot().activeUI === 'dialog')
+		) {
+			await ensureDialogMounted('preferences');
+		}
 	});
 
 	// A preference dialog the shell opened before the engine loaded is this

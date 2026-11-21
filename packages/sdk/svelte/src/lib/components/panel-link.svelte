@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PolicyRight } from '@inth/sdk/schema/types';
+	import { activateOptOutLink } from '@inth/sdk/surface-actions';
 	import { resolveOptOutLink } from '@inth/sdk/surface-state';
 	import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 	import type { Snippet } from 'svelte';
@@ -44,9 +45,9 @@
 
 	const handleClick = function handleClick(e: MouseEvent) {
 		onclick?.(e);
-		if (isOptOut && !e.defaultPrevented) {
+		if (optOutLink && !e.defaultPrevented) {
 			e.preventDefault();
-			void consent.state.requestOptOut();
+			void activateOptOutLink(consent.kernel, optOutLink.variant);
 		}
 	};
 </script>

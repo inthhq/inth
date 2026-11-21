@@ -12,7 +12,7 @@ group: reference
   | Prop | Type | Default | Description |
   | --- | --- | --- | --- |
   | `children` | `ReactNode` | dialog title or opt-out link label | The visible label, such as "Privacy settings" or "Manage preferences". Also sets the accessible name. When `right="opt-out"` is set and omitted, uses the resolved opt-out link title from `presentation.optOutLink`. |
-  | `right` | `'opt-out' \| 'preferences'` | none | Set to `'opt-out'` for a link that records an opt-out in one click and opens `OptOutConfirmation` under an opt-out policy. With `'privacy-choices'` or `'california-privacy-choices'`, the California Privacy Protection Agency opt-out icon renders beside the label. |
+  | `right` | `'opt-out' \| 'preferences'` | none | Set to `'opt-out'` for an opt-out link under an opt-out policy. With `'do-not-sell'` (the default), activating the link records an opt-out in one click and opens `OptOutConfirmation`. With `'privacy-choices'` or `'california-privacy-choices'`, the California Privacy Protection Agency opt-out icon renders beside the label and activating the link opens `ConsentDialog` without recording an opt-out. |
   | `asChild` | `boolean` | `false` | Renders your own element, such as an anchor, instead of a `button`, and attaches the click handler to it. |
   | `noStyle` | `boolean` | `true` | Omits Inth button classes. Native browser styles remain unless your CSS resets them. Pass `false` to render it as an Inth button with `variant` and `mode`. |
   | `onClick` | `(event) => void` | none | Runs before the dialog opens. Call `event.preventDefault()` to keep it closed. |
@@ -25,7 +25,7 @@ group: reference
 <section id="behavior">
   ## Behavior
 
-  `ConsentDialogLink` renders a `button` with `type="button"` and no Inth styling by default. Clicking it opens a mounted `ConsentDialog` without saving or changing permissions. When `right="opt-out"` is set under an `opt-out` policy, one click records the opt-out immediately and opens `OptOutConfirmation` (rendered lazily by `ConsentDialog` or a standalone `OptOutConfirmation`). `OptOutConfirmation` renders a receipt with the honored status line, the covered scope and backend-confirmed rights, the recorded timestamp, and a selectable local reference when this browser created the opt-out. Under other policy models the link falls back to opening the preference center.
+  `ConsentDialogLink` renders a `button` with `type="button"` and no Inth styling by default. Clicking it opens a mounted `ConsentDialog` without saving or changing permissions. When `right="opt-out"` is set under an `opt-out` policy, the click follows the resolved `presentation.optOutLink` title: `'do-not-sell'` records an opt-out in one click and opens `OptOutConfirmation` (rendered lazily by `ConsentDialog` or a standalone `OptOutConfirmation`), while `'privacy-choices'` and `'california-privacy-choices'` open `ConsentDialog` and record nothing. `OptOutConfirmation` renders a receipt with the honored status line, the covered scope and backend-confirmed rights, the recorded timestamp, and a selectable local reference when this browser created the opt-out. Programmatic calls to `useOptOut()` still opt out in one step whatever `presentation.optOutLink` is set to. Under other policy models the link opens the preference center.
 
   The element carries `data-inth-rights` listing the active policy rule's rights, such as `disclosure opt-out preferences` under a US opt-out rule or `disclosure preferences` under an opt-in rule, so CSS or a `::after` label can adapt the wording by region.
 

@@ -1,4 +1,5 @@
 import type { PolicyRight } from '@inth/sdk/schema/types';
+import { activateOptOutLink } from '@inth/sdk/surface-actions';
 import { resolveOptOutLink } from '@inth/sdk/surface-state';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/consent-banner';
@@ -27,13 +28,13 @@ import {
 	useConsentTracking,
 } from '~/context/consent-tracking-context';
 import {
-	useOptOut,
 	usePolicyRule,
 	useResolvedPresentation,
 	useSetActiveUI,
 } from '~/hooks';
 import { useFocusTrap } from '~/hooks/use-focus-trap';
 import { useTheme } from '~/hooks/use-theme';
+import { useKernel } from '~/kernel-selector';
 import { useUIConfig } from '~/ui-config-context';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
@@ -487,9 +488,9 @@ const ConsentBannerRightLink = createForwardRef<
 		const policy = usePolicyRule();
 		const { components } = useUIConfig();
 		const { noStyle: contextNoStyle } = useTheme();
+		const kernel = useKernel();
 		const { uiSource } = useConsentTracking();
 		const setActiveUI = useSetActiveUI();
-		const optOut = useOptOut();
 		const resolvedNoStyle = Boolean(noStyle ?? contextNoStyle);
 		const optOutLink =
 			right === 'opt-out'
@@ -511,8 +512,10 @@ const ConsentBannerRightLink = createForwardRef<
 		const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
 			onClick?.(event);
 			if (!event.defaultPrevented) {
-				if (right === 'opt-out') {
-					void optOut({ uiSource: toSaveUISource(uiSource) });
+				if (optOutLink) {
+					void activateOptOutLink(kernel, optOutLink.variant, {
+						uiSource: toSaveUISource(uiSource),
+					});
 				} else {
 					setActiveUI('dialog');
 				}

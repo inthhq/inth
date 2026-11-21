@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PolicyRight } from '@inth/sdk/schema/types';
+import { activateOptOutLink } from '@inth/sdk/surface-actions';
 import { resolveOptOutLink } from '@inth/sdk/surface-state';
 
 import '@inth/sdk/ui/styles/components/consent-banner.css';
@@ -8,8 +9,8 @@ import { computed } from 'vue';
 
 import {
 	useConsentActiveUI,
+	useConsentKernel,
 	useHasConsentPreferences,
-	useOptOut,
 	usePolicyRule,
 } from '../composables';
 import { useResolvedPresentation } from '../composables/experiment';
@@ -18,19 +19,18 @@ import OptOutIcon from './opt-out-icon.vue';
 
 const props = defineProps<{
 	/**
-	 * Persistent right this link exercises. Set to `'opt-out'` to record an
-	 * opt-out in one click and open `OptOutConfirmation` under an opt-out
-	 * policy.
+	 * Persistent right this link exercises. Set to `'opt-out'` for a
+	 * "Do Not Sell or Share" or "Your Privacy Choices" link.
 	 */
 	right?: Exclude<PolicyRight, 'disclosure'>;
 }>();
 
+const kernel = useConsentKernel();
 const policy = usePolicyRule();
 const activeUI = useConsentActiveUI();
 const hasConsentUi = useHasConsentPreferences();
 const translations = useSurfaceTranslations();
 const presentation = useResolvedPresentation();
-const optOut = useOptOut();
 
 const isOptOut = computed(() => props.right === 'opt-out');
 const optOutLink = computed(() =>
@@ -49,8 +49,8 @@ const label = computed(() =>
 );
 
 const onClick = function onClick() {
-	if (isOptOut.value) {
-		void optOut();
+	if (optOutLink.value) {
+		void activateOptOutLink(kernel, optOutLink.value.variant);
 		return;
 	}
 	activeUI.value = 'manager';
