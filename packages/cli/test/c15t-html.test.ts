@@ -119,12 +119,84 @@ it.each(["EXDEV", "EPERM", "ENOTSUP", "EOPNOTSUPP", "ENOSYS"])(
     const result = apply(root);
     expect(result.created).toEqual(["index.html"]);
     expect(fs.readFileSync(fault.target, "utf-8")).toContain(
-      "https://site.inth.app/c15t.js"
+      "https://site.inth.app/inth.js"
     );
     expect(fs.readdirSync(root)).toEqual(["index.html"]);
     expect(apply(root).created).toEqual([]);
   }
 );
+
+const legacyPage = (head: string, body: string): string => `<!doctype html>
+<html>
+  <head>
+${head}  </head>
+  <body>
+${body}  </body>
+</html>
+`;
+
+it("asks to rename c15t snippets instead of adding second copies", () => {
+  const root = directory();
+  const page = legacyPage(
+    '    <script src="https://site.inth.app/c15t.js" defer></script>\n',
+    '    <a href="#c15t-preferences">Privacy settings</a>\n'
+  );
+  fs.writeFileSync(fault.target, page);
+  const { instructions } = apply(root).plan;
+  expect(fs.readFileSync(fault.target, "utf-8")).toBe(page);
+  expect(
+    instructions.filter((instruction) => instruction.startsWith("Add to"))
+  ).toEqual([]);
+  expect(
+    instructions.filter((instruction) => instruction.includes("still uses"))
+  ).toEqual([
+    expect.stringMatching(
+      /^index\.html still uses \/c15t\.js\. Inth uses \/inth\.js instead\..*\n<script/su
+    ),
+    expect.stringMatching(
+      /^index\.html still uses #c15t-preferences\. Inth uses #inth-preferences instead\..*\n<a href="#inth-preferences">/su
+    ),
+  ]);
+});
+
+it("asks to rename an old preferences link next to a new script", () => {
+  const root = directory();
+  const page = legacyPage(
+    "",
+    '    <a href="#c15t-preferences">Privacy settings</a>\n'
+  );
+  fs.writeFileSync(fault.target, page);
+  const { instructions } = apply(root).plan;
+  expect(
+    instructions.filter((instruction) => instruction.startsWith("Add to"))
+  ).toEqual([
+    expect.stringMatching(
+      /^Add to index\.html:\n<script\s+src="[^"]+\/inth\.js"/u
+    ),
+  ]);
+  expect(
+    instructions.filter((instruction) => instruction.includes("still uses"))
+  ).toEqual([expect.stringContaining("still uses #c15t-preferences")]);
+});
+
+it("asks to remove an old consent script that runs next to the new one", () => {
+  const root = directory();
+  const page = legacyPage(
+    '    <script src="https://site.inth.app/inth.js" defer></script>\n    <script src="https://site.inth.app/c15t.js" defer></script>\n',
+    '    <a href="#inth-preferences">Privacy settings</a>\n'
+  );
+  fs.writeFileSync(fault.target, page);
+  const { instructions } = apply(root).plan;
+  expect(fs.readFileSync(fault.target, "utf-8")).toBe(page);
+  expect(
+    instructions.filter((instruction) => instruction.startsWith("Add to"))
+  ).toEqual([]);
+  expect(
+    instructions.filter((instruction) => instruction.includes("/c15t.js"))
+  ).toEqual([
+    "index.html uses both /inth.js and /c15t.js. Remove the copy that uses /c15t.js, so only one consent snippet runs.",
+  ]);
+});
 
 it("does not copy after an unrelated hard-link error", () => {
   const root = directory();

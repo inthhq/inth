@@ -115,9 +115,9 @@ const preserveNextEntries = (
     } else if (stem.endsWith("/_app")) {
       guidance =
         "Keep your providers and styles. Import InthProvider, ConsentBanner, ConsentDialog, and ConsentDialogLink from '@inth/nextjs'. Wrap <Component {...pageProps} /> and the consent components in <InthProvider state={pageProps.consent}>.";
-    } else if (stem.endsWith("/[...c15t]")) {
+    } else if (stem.endsWith("/[...inth]")) {
       guidance =
-        "Keep or adapt your existing consent handler. Import createPagesConsentRoute from '@inth/nextjs/pages' and use createPagesConsentRoute() as the default handler for /api/c15t.";
+        "Keep or adapt your existing consent handler. Import createPagesConsentRoute from '@inth/nextjs/pages' and use createPagesConsentRoute() as the default handler for /api/inth.";
     }
     generation.instructions.push(
       `Integrate c15t into ${existing}: ${guidance}`
@@ -163,6 +163,27 @@ export const adaptNextGeneration = (
     generation.merge = merge;
     generation.instructions = generation.instructions.map((instruction) =>
       instruction.replaceAll(`${router}/`, `src/${router}/`)
+    );
+  }
+  // @inth/nextjs/build reads the first of these it finds, so a generated
+  // inth.config.ts would shadow an existing .mts, .js or .mjs config. Target
+  // the existing file instead so setup's overwrite check protects it.
+  const consentConfig = [
+    "inth.config.ts",
+    "inth.config.mts",
+    "inth.config.js",
+    "inth.config.mjs",
+  ].find((name) => existsSync(join(cwd, name)));
+  const consentContent = generation.files["inth.config.ts"];
+  if (
+    consentConfig &&
+    consentConfig !== "inth.config.ts" &&
+    consentContent !== undefined
+  ) {
+    delete generation.files["inth.config.ts"];
+    generation.files[consentConfig] = consentContent;
+    generation.instructions = generation.instructions.map((instruction) =>
+      instruction.replaceAll("inth.config.ts", consentConfig)
     );
   }
   const config = ["next.config.js", "next.config.mjs", "next.config.ts"].find(

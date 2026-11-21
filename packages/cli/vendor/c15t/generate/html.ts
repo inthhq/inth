@@ -9,12 +9,12 @@ const escapeAttribute = (value: string): string =>
 		.replaceAll('>', '&gt;');
 
 /**
- * The script tag that loads `c15t.js` from the backend.
+ * The script tag that loads `inth.js` from the backend.
  * @param backendURL Validated backend URL.
  * @returns The tag, one attribute per line.
  */
 export const scriptTag = (backendURL: string): string => `<script
-	src="${escapeAttribute(`${backendURL.replace(/\/+$/u, '')}/c15t.js`)}"
+	src="${escapeAttribute(`${backendURL.replace(/\/+$/u, '')}/inth.js`)}"
 	defer
 ></script>`;
 
@@ -30,21 +30,21 @@ const vendorTag = (script: string): string => {
 	const vendor = VENDOR_TAGS[script];
 	if (!vendor) {
 		throw new Error(
-			`The script tag has no ${script} integration. Gate its snippet by changing the tag's type to text/plain and adding data-c15t-category.`
+			`The script tag has no ${script} integration. Gate its snippet by changing the tag's type to text/plain and adding data-inth-category.`
 		);
 	}
 	return `<!-- ${vendor.name}'s snippet, saved as a file on your site -->
 <script
 	type="text/plain"
-	data-c15t-category="${vendor.category}"
+	data-inth-category="${vendor.category}"
 	src="/${script}.js"
 ></script>`;
 };
 
 /**
- * Generate the script-tag quickstart: `c15t.js` in `<head>` and a privacy
+ * Generate the script-tag quickstart: `inth.js` in `<head>` and a privacy
  * settings link in `<body>`. Hosted mode only, because the backend serves
- * `c15t.js`.
+ * `inth.js`.
  * @param options Backend URL.
  * @returns `index.html` for a project without one, and how to add the
  * snippets to an existing page.
@@ -55,7 +55,7 @@ export const generateHtmlBoilerplate = (
 ): BoilerplateTemplate => {
 	if (options.mode !== 'hosted' || !options.backendURL) {
 		throw new Error(
-			'The script tag loads c15t.js from your backend. Generate it in hosted mode with --backend-url.'
+			'The script tag loads inth.js from your backend. Generate it in hosted mode with --backend-url.'
 		);
 	}
 	const tag = [
@@ -69,10 +69,10 @@ export const generateHtmlBoilerplate = (
 	return {
 		dependencies: [],
 		files: {
-			'index.html': htmlPage('c15t with a script tag', `${indented}\n`, ''),
+			'index.html': htmlPage('Inth with a script tag', `${indented}\n`, ''),
 		},
 		instructions: [
-			'To hold another vendor script until consent, change its tag to type="text/plain" and add data-c15t-category, such as data-c15t-category="measurement".',
+			'To hold another vendor script until consent, change its tag to type="text/plain" and add data-inth-category, such as data-inth-category="measurement".',
 			...options.scripts.map(
 				(script) =>
 					`Save ${VENDOR_TAGS[script]?.name ?? script}'s snippet as /${script}.js on your site.`
@@ -80,14 +80,19 @@ export const generateHtmlBoilerplate = (
 		],
 		merge: {
 			'index.html': {
-				// Each snippet on its own: a page may already load c15t.js
-				// without the preferences link, or the other way round.
+				// Each snippet on its own: a page may already load inth.js
+				// without the preferences link, or the other way round. A page
+				// that still loads c15t.js already has a consent script.
 				inserts: [
-					{ before: '</head>', content: tag, marker: '/c15t.js' },
+					{
+						before: '</head>',
+						content: tag,
+						marker: ['/inth.js', '/c15t.js'],
+					},
 					{
 						before: '</body>',
 						content: PREFERENCES_LINK,
-						marker: '#c15t-preferences',
+						marker: ['#inth-preferences', '#c15t-preferences'],
 					},
 				],
 				type: 'insert',

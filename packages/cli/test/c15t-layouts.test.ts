@@ -45,7 +45,7 @@ it.each(["page.jsx", "page.js", "js"])(
       expect.arrayContaining([
         `pages/_app.${extension}`,
         `pages/index.${extension}`,
-        `pages/api/c15t/[...c15t].${extension}`,
+        `pages/api/inth/[...inth].${extension}`,
       ])
     );
     expect(await readdir(path.join(directory, "pages"))).toEqual([
@@ -57,7 +57,7 @@ it.each(["page.jsx", "page.js", "js"])(
       [
         `pages/_app.${extension}`,
         `pages/index.${extension}`,
-        `pages/api/c15t/[...c15t].${extension}`,
+        `pages/api/inth/[...inth].${extension}`,
       ].map(async (filename) => {
         const content = await readFile(path.join(directory, filename), "utf-8");
         expect(() => transformSync(content, { loader: "jsx" })).not.toThrow();
@@ -80,7 +80,7 @@ it.each([
       { cwd: directory }
     );
     expect(result.created).toContain("pages/_app.tsx");
-    expect(result.created).toContain("pages/api/c15t/[...c15t].ts");
+    expect(result.created).toContain("pages/api/inth/[...inth].ts");
     expect(
       await readFile(path.join(directory, "next.config.mjs"), "utf-8")
     ).toBe(config);
@@ -97,7 +97,7 @@ it("reads a real extension property after comments without stripping URL strings
     { cwd: directory }
   );
   expect(result.created).toContain("pages/_app.page.js");
-  expect(result.created).toContain("pages/api/c15t/[...c15t].page.js");
+  expect(result.created).toContain("pages/api/inth/[...inth].page.js");
   expect(await readFile(path.join(directory, "next.config.mjs"), "utf-8")).toBe(
     config
   );
@@ -126,6 +126,71 @@ it.each(["", "src/"])("honors App Router extensions in %s", async (root) => {
       instruction.startsWith(`Integrate c15t into ${name}:`)
     )
   ).toBe(true);
+});
+
+it("asks a JavaScript page to rename its c15t preferences link", async () => {
+  const page =
+    '<!doctype html>\n<html>\n  <body>\n    <a href="#c15t-preferences">Privacy settings</a>\n  </body>\n</html>\n';
+  await writeFile(path.join(directory, "index.html"), page);
+  const result = await runGenerationWorkflow(
+    ["setup", "--framework", "javascript", "--apply", "--skip-install"],
+    context,
+    { cwd: directory }
+  );
+  expect(await readFile(path.join(directory, "index.html"), "utf-8")).toBe(
+    page
+  );
+  expect(
+    result.plan.instructions.filter((instruction) =>
+      instruction.startsWith("Add to index.html:")
+    )
+  ).toEqual([]);
+  expect(
+    result.plan.instructions.filter((instruction) =>
+      instruction.includes("still uses")
+    )
+  ).toEqual([
+    expect.stringMatching(
+      /^index\.html still uses #c15t-preferences\. Inth uses #inth-preferences instead\..*\n<a href="#inth-preferences">/su
+    ),
+  ]);
+});
+
+it.each(["inth.config.mts", "inth.config.js", "inth.config.mjs"])(
+  "targets an existing %s instead of shadowing it with inth.config.ts",
+  async (name) => {
+    const content = "export default { scripts: [] };\n";
+    await writeFile(path.join(directory, name), content);
+    await expect(
+      runGenerationWorkflow(
+        ["setup", "--framework", "next-app", "--apply", "--skip-install"],
+        context,
+        { cwd: directory }
+      )
+    ).rejects.toThrow(`Refusing to overwrite existing file: ${name}`);
+    expect(await readFile(path.join(directory, name), "utf-8")).toBe(content);
+    expect(await readdir(directory)).not.toContain("inth.config.ts");
+  }
+);
+
+it("points an existing Pages API handler at the generated route prefix", async () => {
+  const name = "pages/api/inth/[...inth].ts";
+  const content = "export default function handler() {}\n";
+  await mkdir(path.join(directory, "pages/api/inth"), { recursive: true });
+  await writeFile(path.join(directory, name), content);
+  const result = await runGenerationWorkflow(
+    ["setup", "--framework", "next-pages", "--apply", "--skip-install"],
+    context,
+    { cwd: directory }
+  );
+  expect(await readFile(path.join(directory, name), "utf-8")).toBe(content);
+  expect(
+    result.plan.instructions.find((instruction) =>
+      instruction.startsWith(`Integrate c15t into ${name}:`)
+    )
+  ).toContain(
+    "createPagesConsentRoute() as the default handler for /api/inth."
+  );
 });
 
 it.each(["page.tsx", "page.jsx", "page.js"])(
@@ -198,6 +263,26 @@ it.each([undefined, "npm"] as const)(
     expect(result.created).toContain("index.html");
     expect(result.plan.dependencies).toEqual([]);
     expect(result.installed).toBe(false);
+  }
+);
+
+it.each(["src/inth.client.js", "src/inth.client.mjs"])(
+  "targets an existing %s instead of shadowing it with src/inth.client.ts",
+  async (name) => {
+    const content = "export default { scripts: [] };\n";
+    await mkdir(path.join(directory, "src"), { recursive: true });
+    await writeFile(path.join(directory, name), content);
+    await expect(
+      runGenerationWorkflow(
+        ["setup", "--framework", "astro-static", "--apply", "--skip-install"],
+        { generation: { ...context.generation, scripts: ["posthog"] } },
+        { cwd: directory }
+      )
+    ).rejects.toThrow(`Refusing to overwrite existing file: ${name}`);
+    expect(await readFile(path.join(directory, name), "utf-8")).toBe(content);
+    expect(await readdir(path.join(directory, "src"))).not.toContain(
+      "inth.client.ts"
+    );
   }
 );
 

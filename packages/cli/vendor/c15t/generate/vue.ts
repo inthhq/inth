@@ -24,7 +24,7 @@ const nuxtFiles = (options: BoilerplateOptions): Record<string, string> => {
 </template>
 `,
 		'nuxt.config.ts': `${offline ? "import { offline } from '@inth/nuxt';\n\n" : ''}export default defineNuxtConfig({
-${offline ? '\tc15t: { mode: offline() },\n' : ''}	compatibilityDate: '2026-07-04',
+${offline ? '\tinth: { mode: offline() },\n' : ''}	compatibilityDate: '2026-07-04',
 	modules: ['@inth/nuxt'],
 });
 `,
@@ -33,7 +33,7 @@ ${offline ? '\tc15t: { mode: offline() },\n' : ''}	compatibilityDate: '2026-07-0
 		files['app/app.config.ts'] = `${sortImports(scriptImports(options.scripts))}
 
 export default defineAppConfig({
-	c15t: {
+	inth: {
 ${scriptsProperty(options.scripts, '\t\t')}	},
 });
 `;
@@ -53,7 +53,7 @@ import { ConsentDialogLink, InthProvider } from '@inth/vue/vue-plugin';
 <template>
 	<InthProvider />
 	<main>
-		<h1>c15t with Vue</h1>
+		<h1>Inth with Vue</h1>
 		<p>${options.scripts.includes('posthog') ? 'PostHog loads after you allow measurement.' : 'Your app goes here.'}</p>
 	</main>
 	<footer>
@@ -63,14 +63,14 @@ import { ConsentDialogLink, InthProvider } from '@inth/vue/vue-plugin';
 `,
 		'src/main.ts': `${sortImports([
 			...scriptImports(options.scripts),
-			`import { c15tVue, ${mode} } from '@inth/vue/vue-plugin';`,
+			`import { inthVue, ${mode} } from '@inth/vue/vue-plugin';`,
 			"import { createApp } from 'vue';",
 		])}
 
 import App from './App.vue';
 
 createApp(App)
-	.use(c15tVue, {
+	.use(inthVue, {
 		mode: ${mode}(),
 ${scriptsProperty(options.scripts, '\t\t')}	})
 	.mount('#app');
@@ -105,7 +105,7 @@ export const generateVueBoilerplate = (
 		files: nuxt ? nuxtFiles(options) : vueFiles(options),
 		instructions: [
 			nuxt
-				? 'The @inth/nuxt module registers InthProvider and ConsentDialogLink and adds a consent route at /api/c15t. Keep any other modules when you merge nuxt.config.ts.'
+				? 'The @inth/nuxt module registers InthProvider and ConsentDialogLink and adds a consent route at /api/inth. Keep any other modules when you merge nuxt.config.ts.'
 				: 'src/App.vue shows where InthProvider and ConsentDialogLink go. Move them into your own root component if you keep it.',
 			...vendorInstruction(options, nuxt ? 'app/app.config.ts' : 'src/main.ts'),
 			...offlineInstruction(options),

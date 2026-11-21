@@ -5,6 +5,90 @@ import type { FileMerge } from './types.ts';
 const indentUnit = (content: string): string =>
 	content.match(/^(?:\t| +)(?=\S)/mu)?.[0] ?? '\t';
 
+/** Whether `content` has `marker`, or any of the markers in a list. */
+const hasMarker = (
+	content: string,
+	marker: string | string[] | undefined
+): boolean => {
+	if (marker === undefined) {
+		return false;
+	}
+	if (typeof marker === 'string') {
+		return content.includes(marker);
+	}
+	return marker.some((entry) => content.includes(entry));
+};
+
+/** A snippet a file still has under an older name. */
+export interface LegacySnippet {
+	/** The older name the file uses, such as `#c15t-preferences`. */
+	found: string;
+	/** The name the generated snippet uses, such as `#inth-preferences`. */
+	current: string;
+	/** The generated snippet that replaces the old one. */
+	content: string;
+	/** Whether the file also has the current name, so the old copy is extra. */
+	duplicate: boolean;
+}
+
+/**
+ * Find snippets an existing file has under an older name. In a marker list,
+ * the first entry is the current name and the rest are older names that
+ * still count as present, so setup adds no second copy. The SDK only answers
+ * to the current name, so the caller should ask for a rename, or for removal
+ * when the file has both.
+ * @param existing Current contents of the project's file.
+ * @param merge How the generated file merges into it.
+ * @returns One entry per older name the file uses.
+ */
+export const legacySnippets = (
+	existing: string,
+	merge: FileMerge | undefined
+): LegacySnippet[] => {
+	if (merge?.type !== 'insert') {
+		return [];
+	}
+	const found: LegacySnippet[] = [];
+	const check = (marker: string | string[] | undefined, content: string) => {
+		if (marker === undefined || typeof marker === 'string') {
+			return;
+		}
+		const current = marker[0];
+		if (current === undefined) {
+			return;
+		}
+		const duplicate = existing.includes(current);
+		for (let index = 1; index < marker.length; index += 1) {
+			const name = marker[index];
+			if (name !== undefined && existing.includes(name)) {
+				found.push({ found: name, current, content, duplicate });
+			}
+		}
+	};
+	for (const insert of merge.inserts) {
+		check(insert.marker, insert.content);
+	}
+	// The file-level marker covers every snippet, so report it once.
+	check(merge.marker, merge.inserts.map((insert) => insert.content).join('\n'));
+	return found;
+};
+
+/**
+ * Describe each snippet a file still has under an older name.
+ * @param path The file's path in the project.
+ * @param snippets What {@link legacySnippets} found.
+ * @returns One instruction per snippet.
+ */
+export const legacySnippetInstructions = (
+	path: string,
+	snippets: LegacySnippet[]
+): string[] =>
+	snippets.map(({ found, current, content, duplicate }) =>
+		duplicate
+			? `${path} uses both ${current} and ${found}. Remove the copy that uses ${found}, so only one consent snippet runs.`
+			: `${path} still uses ${found}. Inth uses ${current} instead. Update it to match this snippet, and keep its other attributes:\n${content}`
+	);
+
 /**
  * Apply a generated file to the file a project already has.
  * @param existing Current contents of the project's file.
@@ -16,8 +100,8 @@ const indentUnit = (content: string): string =>
  * @example
  * mergeFile('<body>\n</body>\n', '', {
  *   type: 'insert',
- *   marker: '#c15t-preferences',
- *   inserts: [{ before: '</body>', content: '<a href="#c15t-preferences">Privacy settings</a>' }],
+ *   marker: '#inth-preferences',
+ *   inserts: [{ before: '</body>', content: '<a href="#inth-preferences">Privacy settings</a>' }],
  * });
  */
 export const mergeFile = (
@@ -34,12 +118,12 @@ export const mergeFile = (
 	if (merge.type === 'env') {
 		return mergeEnvFile(existing, generated);
 	}
-	if (merge.marker !== undefined && existing.includes(merge.marker)) {
+	if (hasMarker(existing, merge.marker)) {
 		return existing;
 	}
 	let merged = existing;
 	for (const { before, content, marker } of merge.inserts) {
-		if (marker !== undefined && merged.includes(marker)) {
+		if (hasMarker(merged, marker)) {
 			continue;
 		}
 		if (before === '') {

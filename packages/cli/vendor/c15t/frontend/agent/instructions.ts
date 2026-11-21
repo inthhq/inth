@@ -230,8 +230,8 @@ Do this before installing anything; the result decides which path you take when 
    Does the target app's package.json, or what it resolves to in the lockfile, list an
    @inth SDK package (such as @inth/sdk, @inth/nextjs, @inth/react or @inth/svelte), c15t
    or a browser-side @c15t/* package (such as @c15t/nextjs, @c15t/react, @c15t/svelte,
-   @c15t/browser or @c15t/scripts), or does a page load c15t.js with a script tag (from a
-   CDN, an Inth project or a self-hosted backend)? Count a workspace package the app
+   @c15t/browser or @c15t/scripts), or does a page load inth.js or c15t.js with a script tag
+   (from a CDN, an Inth project or a self-hosted backend)? Count a workspace package the app
    depends on or imports, such as a shared UI package that exports the provider; skip
    workspaces the app does not reach. Server and tooling packages (@c15t/backend,
    @c15t/node-sdk, @c15t/cli, @inth/cli) don't count.
