@@ -15,6 +15,7 @@ import type {
 	InthApiCode,
 	InthDocument,
 	InthDocumentCheck,
+	InthDocumentType,
 	InthOptions,
 	InthRequestOptions,
 } from './index';
@@ -826,6 +827,29 @@ it('refuses an option that is not a string, as an InthError', () => {
 	}
 });
 
+it('names the field when one call has limits it cannot use', async () => {
+	const { inth, sent } = stubbed([checked]);
+	const refused = await checkTerms(inth, { timeout: 0 });
+	assert.strictEqual(refused.error?.code, 'invalid_request');
+	assert.hasAllKeys(refused.error?.details?.fieldErrors, ['timeout']);
+	assert.strictEqual(sent.length, 0);
+});
+
+it('reads the global fetch on each call, so a test can replace it later', async () => {
+	const inth = new Inth({ projectUrl: PROJECT_URL, secretKey: SECRET });
+	const urls: string[] = [];
+	vi.stubGlobal('fetch', (input: RequestInfo | URL) => {
+		urls.push(String(input));
+		return Promise.resolve(checked());
+	});
+	try {
+		assert.isNull((await checkTerms(inth)).error);
+		assert.strictEqual(urls.length, 1);
+	} finally {
+		vi.unstubAllGlobals();
+	}
+});
+
 it('reads the key and the project URL from the environment', async () => {
 	vi.stubEnv('INTH_SECRET_KEY', SECRET);
 	vi.stubEnv('INTH_PROJECT_URL', PROJECT_URL);
@@ -860,6 +884,16 @@ it('types each answer by what was asked', async () => {
 	expectTypeOf<
 		Awaited<ReturnType<Inth['documents']['publish']>>['data']
 	>().toEqualTypeOf<InthDocument | null>();
+	// A list built at run time may hold any of its type's members, so each
+	// entry may be absent
+	const asked: InthDocumentType[] = ['terms_us'];
+	const dynamic = await inth.documents.check({
+		externalId: 'user_7',
+		types: asked,
+	});
+	expectTypeOf(dynamic.data).toEqualTypeOf<Readonly<
+		Partial<Record<InthDocumentType, InthDocumentCheck>>
+	> | null>();
 	// The API's listed codes autocomplete, and an unlisted one still fits
 	expectTypeOf<InthError['apiCode']>().toEqualTypeOf<InthApiCode | undefined>();
 	expectTypeOf<'document_unknown'>().toExtend<InthApiCode>();
@@ -933,18 +967,21 @@ describe('documents', () => {
 			Response.json({ document: { ...DOCUMENT, id: 'doc_1' } });
 
 		it('never tries a publish again, which a newer one may have followed', async () => {
-			for (const failure of [
-				() => new Response('Gateway Timeout', { status: 504 }),
-				limited,
-			]) {
+			for (const [failure, mayBeStored] of [
+				[() => new Response('Gateway Timeout', { status: 504 }), true],
+				// A rate limit refused it before anything was stored
+				[limited, false],
+			] as const) {
 				const { inth, sent } = stubbed([failure, publishedOk]);
 				// oxlint-disable-next-line no-await-in-loop -- One stubbed client at a time
 				const published = await inth.documents.publish(PUBLISH);
 				assert.isNotNull(published.error);
-				// It may have been stored, so a caller's generic retry must not
-				// send it again
+				// A caller's generic retry must not send it again
 				assert.isFalse(published.error?.retryable);
-				assert.match(String(published.error?.message), /documents\.current/u);
+				assert.strictEqual(
+					/documents\.current/u.test(String(published.error?.message)),
+					mayBeStored
+				);
 				assert.strictEqual(sent.length, 1);
 			}
 		});
@@ -1022,6 +1059,20 @@ describe('documents', () => {
 			acceptedAt: new Date(1763467200000),
 		});
 		assert.deepNestedInclude(sent[0], { 'body.acceptedAt': 1763467200000 });
+	});
+
+	it('refuses an acceptedAt that is not whole milliseconds, naming the field', async () => {
+		const { inth, sent } = stubbed([ACCEPTED]);
+		for (const acceptedAt of [Number.NaN, Number.POSITIVE_INFINITY, 1.5, -1]) {
+			// oxlint-disable-next-line no-await-in-loop -- One call at a time, on one stub
+			const refused = await inth.documents.accept({
+				...ACCEPTANCE,
+				acceptedAt,
+			});
+			assert.strictEqual(refused.error?.code, 'invalid_request');
+			assert.hasAllKeys(refused.error?.details?.fieldErrors, ['acceptedAt']);
+		}
+		assert.strictEqual(sent.length, 0);
 	});
 
 	it('reads a Date made in another realm', async () => {

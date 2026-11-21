@@ -10,8 +10,8 @@
  *
  * No method throws for a request that fails. Each resolves to `{ data, error }`
  * with exactly one of the two set, so a failure is in the types and cannot be
- * missed. Only two things throw: `new Inth()`, an `InthError` for a key or an
- * address it cannot use, and `hashDocument`, for anything but bytes.
+ * missed. Only two things throw: `new Inth()`, an `InthError` for options it
+ * cannot use, and `hashDocument`, for anything but bytes.
  *
  * It imports no Node module, only `fetch`, `AbortSignal` and Web Crypto, so it
  * runs on Node, Vercel Functions and Cloudflare Workers alike.
@@ -135,6 +135,12 @@ export class InthError extends Error {
 	/** The id to quote to support, when the API sent one */
 	readonly requestId: string | undefined;
 	/**
+	 * What `fetch` or the body read threw, for an answer that never arrived.
+	 * Declared here so the published type has it whatever `lib` a caller
+	 * compiles with; `Error` sets it
+	 */
+	declare readonly cause: unknown;
+	/**
 	 * Whether sending the same call again later may succeed: a network
 	 * failure, a timeout, a 429 or a 5xx. The client tries these again itself
 	 * within `maxRetries`, unless the API asked for a longer wait than it
@@ -190,6 +196,9 @@ const failed = (error: InthError): InthResult<never> => ({ data: null, error });
  * document types your project has:
  *
  * ```ts
+ * // The import makes this file extend @inth/node rather than replace it
+ * import '@inth/node';
+ *
  * declare module '@inth/node' {
  * 	interface Register {
  * 		documentTypes: 'privacy_policy' | 'terms_and_conditions';
@@ -335,6 +344,17 @@ export interface IdentifyParams {
 	readonly identityProvider?: string;
 }
 
+/**
+ * The answer to `documents.check`, keyed by the types asked for. A list
+ * written in the call, such as `['privacy_policy']`, has an entry for each
+ * type. A list built at run time may hold any of its type's members, so each
+ * entry may be absent
+ */
+export type InthDocumentChecks<Types extends readonly InthDocumentType[]> =
+	number extends Types['length']
+		? Readonly<Partial<Record<Types[number], InthDocumentCheck>>>
+		: Readonly<Record<Types[number], InthDocumentCheck>>;
+
 export interface CheckDocumentsParams<
 	Types extends readonly InthDocumentType[],
 > {
@@ -377,19 +397,24 @@ const json = v.pipe(v.string(), v.parseJson());
 const unusableLimits = (limits: {
 	readonly maxRetries?: number | undefined;
 	readonly timeout?: number | undefined;
-}): string | undefined => {
+}):
+	| { readonly name: 'maxRetries' | 'timeout'; readonly reason: string }
+	| undefined => {
 	const { maxRetries, timeout } = limits;
 	if (
 		maxRetries !== undefined &&
 		!(Number.isInteger(maxRetries) && maxRetries >= 0)
 	) {
-		return '`maxRetries` must be a whole number, 0 or more';
+		return { name: 'maxRetries', reason: 'must be a whole number, 0 or more' };
 	}
 	if (
 		timeout !== undefined &&
 		!(Number.isInteger(timeout) && timeout > 0 && timeout <= MAX_TIMEOUT_MS)
 	) {
-		return `\`timeout\` must be a whole number of milliseconds, from 1 to ${MAX_TIMEOUT_MS}`;
+		return {
+			name: 'timeout',
+			reason: `must be a whole number of milliseconds, from 1 to ${MAX_TIMEOUT_MS}`,
+		};
 	}
 	return undefined;
 };
@@ -685,6 +710,13 @@ const refusedField = (name: string, reason: string): InthResult<never> => {
 	);
 };
 
+/** The refusal for a query value no URL can carry */
+const unusableQuery = (name: string): InthResult<never> =>
+	refusedField(
+		name,
+		'cannot be sent in a URL: it holds a character no URL can carry, such as a lone UTF-16 surrogate'
+	);
+
 /** The refusal for a parameter no URL can carry */
 const unusableSegment = (name: string): InthResult<never> =>
 	refusedField(
@@ -794,7 +826,7 @@ class Consents {
 			property: params.property,
 		});
 		if (unusable !== undefined) {
-			return unusableSegment(unusable);
+			return unusableQuery(unusable);
 		}
 		const query = new URLSearchParams({ externalId: params.externalId });
 		if (params.property !== undefined) {
@@ -1134,22 +1166,23 @@ class Documents {
 			options
 		);
 		if (answer.error?.retryable) {
-			// It may have been stored, so it must not be sent again unchecked
+			// It may have been stored, so it must not be sent again unchecked. A
+			// rate limit, the API's or the edge's, refused it before any store
 			const { error } = answer;
+			const stored =
+				error.code === 'rate_limited'
+					? ''
+					: '. The version may have been stored: check documents.current before you publish again';
 			return failed(
-				new InthError(
-					error.code,
-					`${error.message}. The version may have been stored: check documents.current before you publish again`,
-					{
-						apiCode: error.apiCode,
-						cause: error.cause,
-						details: error.details,
-						requestId: error.requestId,
-						retryAfter: error.retryAfter,
-						retryable: false,
-						status: error.status,
-					}
-				)
+				new InthError(error.code, `${error.message}${stored}`, {
+					apiCode: error.apiCode,
+					cause: error.cause,
+					details: error.details,
+					requestId: error.requestId,
+					retryAfter: error.retryAfter,
+					retryable: false,
+					status: error.status,
+				})
 			);
 		}
 		return answer.error ? answer : ok(answer.data.document);
@@ -1209,6 +1242,15 @@ class Documents {
 		const acceptedTime = timeOf(params.acceptedAt);
 		if (Number.isNaN(acceptedTime)) {
 			return invalidDate('acceptedAt');
+		}
+		if (
+			typeof params.acceptedAt === 'number' &&
+			!(Number.isSafeInteger(params.acceptedAt) && params.acceptedAt >= 0)
+		) {
+			return refusedField(
+				'acceptedAt',
+				'must be a whole number of milliseconds since the epoch'
+			);
 		}
 		// Copied once, so the body and the check below read the same list
 		const acceptances = params.acceptances.map(({ hash, type }) => ({
@@ -1273,13 +1315,13 @@ class Documents {
 	async check<const Types extends readonly InthDocumentType[]>(
 		params: CheckDocumentsParams<Types>,
 		options?: InthRequestOptions
-	): Promise<InthResult<Readonly<Record<Types[number], InthDocumentCheck>>>> {
+	): Promise<InthResult<InthDocumentChecks<Types>>> {
 		// Copied once, so the query and the check below read the same list
 		const types = [...params.types];
 		const query = { externalId: params.externalId, types: types.join(',') };
 		const unusable = uncarried(query);
 		if (unusable !== undefined) {
-			return unusableSegment(unusable);
+			return unusableQuery(unusable);
 		}
 		// The answer must hold each type asked for: checked as it is read, so a
 		// failure keeps its status and request id
@@ -1301,11 +1343,7 @@ class Documents {
 			return answer;
 		}
 		// SAFETY: the schema above found every type asked for among the results
-		return ok(
-			answer.data.documents as Readonly<
-				Record<Types[number], InthDocumentCheck>
-			>
-		);
+		return ok(answer.data.documents as InthDocumentChecks<Types>);
 	}
 }
 
@@ -1376,10 +1414,13 @@ export class Inth {
 				'Inth cannot send this secret key: it holds characters a header cannot carry.'
 			);
 		}
-		const fetcher = options.fetch ?? fetch;
+		// The global is read on each call, not here: a test may replace it after
+		// the client is made, and a runtime without one fails a call, not setup
+		const fetcher: typeof fetch =
+			options.fetch ?? ((input, init) => globalThis.fetch(input, init));
 		const unusable = unusableLimits(options);
 		if (unusable !== undefined) {
-			throw unusableSetup(unusable);
+			throw unusableSetup(`\`${unusable.name}\` ${unusable.reason}`);
 		}
 
 		/** One attempt: a parsed answer, or why there is none */
@@ -1476,7 +1517,7 @@ export class Inth {
 			const cancelled = overrides?.signal;
 			const badLimits = unusableLimits({ maxRetries: asked, timeout });
 			if (badLimits !== undefined) {
-				return failed(new InthError('invalid_request', badLimits));
+				return refusedField(badLimits.name, badLimits.reason);
 			}
 			const retries = request.once ? 0 : asked;
 			for (let tried = 0; ; tried += 1) {
