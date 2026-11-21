@@ -22,8 +22,10 @@ pnpm add @inth/node
 ## Installation
 
 ```bash
-pnpm add @inth/node
+pnpm add @inth/node @inth/sdk
 ```
+
+`@inth/sdk/server` reads the subject ID from the consent cookie, for `users.identify`.
 
 ## Usage
 

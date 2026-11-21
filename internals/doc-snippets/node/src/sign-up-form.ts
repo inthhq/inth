@@ -14,12 +14,13 @@ export const showSignUp = async (request: Request): Promise<Response> => {
 		// Do not show the form without the documents
 		throw terms.error ?? privacy.error;
 	}
-	// Keep what this visitor was shown on the server, where they cannot
-	// change it. Link to /terms/${terms.data.version} in the form
-	await saveShownDocuments(request, [
+	// Keep what this form showed on the server, where the visitor cannot
+	// change it, under an ID of its own: two open forms may show different
+	// versions. Link to /terms/${terms.data.version} in the form
+	const formId = await saveShownDocuments(request, [
 		{ hash: terms.data.hash, type: 'terms_us' },
 		{ hash: privacy.data.hash, type: 'privacy_policy' },
 	]);
-	return renderSignUpForm({ privacy: privacy.data, terms: terms.data });
+	return renderSignUpForm({ formId, privacy: privacy.data, terms: terms.data });
 };
 // #endregion docs:node-sign-up-form

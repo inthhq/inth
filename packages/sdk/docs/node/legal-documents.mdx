@@ -29,21 +29,23 @@ make an old version current after a newer one. When it fails, call
 
 ## Show the version in force at sign-up
 
-When you render the sign-up form, fetch the version in force for each type,
-and keep the hashes you showed on the server, such as in the session:
+When you render the sign-up form, fetch the version in force for each type.
+Keep the hashes it showed on the server, such as in the session, under an ID
+you put in the form:
 
 <include src="../shared/examples/node/node-sign-up-form.mdx" />
 
 Link to that version's own URL, not to a page whose content can change while
 the form is open. Keep the hashes out of the form: the visitor can change a
 form field, and the API records any version the project published, including
-an older one.
+an older one. The ID keeps two open forms apart when a new version is
+published between them.
 
 ## Record the acceptance
 
 When the form comes back with the box ticked, create the user. Then record
-the versions you showed, with the visitor's IP address and user agent from the
-request:
+the versions that form showed, with the visitor's IP address and user agent
+from the request:
 
 <include src="../shared/examples/node/node-sign-up.mdx" />
 
