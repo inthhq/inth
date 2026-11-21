@@ -148,7 +148,7 @@ OptOutConfirmationStatus.displayName = 'OptOutConfirmationStatus';
 
 const OptOutConfirmationDescription = createForwardRef<
 	HTMLParagraphElement,
-	Omit<BoxProps, 'slotKey'>
+	BoxProps
 >(({ children, asChild, ...props }, ref) => {
 	const translations = useTranslations();
 	const receipt = useOptOutReceipt();
@@ -175,64 +175,77 @@ OptOutConfirmationDescription.displayName = 'OptOutConfirmationDescription';
 
 export interface OptOutConfirmationDetailsProps extends HTMLAttributes<HTMLDListElement> {
 	noStyle?: boolean;
+	recordedAtTestId?: string;
+	referenceTestId?: string;
 }
 
 const OptOutConfirmationDetails = createForwardRef<
 	HTMLDListElement,
 	OptOutConfirmationDetailsProps
->(({ className, noStyle, ...props }, ref) => {
-	const receipt = useOptOutReceipt();
-	const translations = useTranslations();
-	const language = useTranslationLanguage();
-	const optOutCopy = resolveOptOutCopy(translations);
-	const { noStyle: contextNoStyle } = useTheme();
-	const finalNoStyle = Boolean(noStyle ?? contextNoStyle);
-	if (receipt.at === null && receipt.reference === null) {
-		return null;
+>(
+	(
+		{
+			className,
+			noStyle,
+			recordedAtTestId = 'opt-out-confirmation-recorded-at',
+			referenceTestId = 'opt-out-confirmation-reference',
+			...props
+		},
+		ref
+	) => {
+		const receipt = useOptOutReceipt();
+		const translations = useTranslations();
+		const language = useTranslationLanguage();
+		const optOutCopy = resolveOptOutCopy(translations);
+		const { noStyle: contextNoStyle } = useTheme();
+		const finalNoStyle = Boolean(noStyle ?? contextNoStyle);
+		if (receipt.at === null && receipt.reference === null) {
+			return null;
+		}
+		const dlClassName = finalNoStyle
+			? className
+			: [styles.receipt, className].filter(Boolean).join(' ');
+		const rowClassName = finalNoStyle ? undefined : styles.receiptRow;
+		const labelClassName = finalNoStyle ? undefined : styles.receiptLabel;
+		const valueClassName = finalNoStyle ? undefined : styles.receiptValue;
+		const refClassName = finalNoStyle ? undefined : styles.reference;
+		return (
+			<dl
+				ref={ref}
+				className={dlClassName}
+				data-testid="opt-out-confirmation-receipt"
+				{...props}
+			>
+				{receipt.at !== null && (
+					<div className={rowClassName}>
+						<dt className={labelClassName}>{optOutCopy.recordedLabel}</dt>
+						<dd className={valueClassName}>
+							<time
+								dateTime={new Date(receipt.at).toISOString()}
+								data-testid={recordedAtTestId}
+							>
+								{formatRecordedAt(receipt.at, language)}
+							</time>
+						</dd>
+					</div>
+				)}
+				{receipt.reference !== null && (
+					<div className={rowClassName}>
+						<dt className={labelClassName}>{optOutCopy.referenceLabel}</dt>
+						<dd className={valueClassName}>
+							<code
+								className={refClassName}
+								data-testid={referenceTestId}
+							>
+								{receipt.reference}
+							</code>
+						</dd>
+					</div>
+				)}
+			</dl>
+		);
 	}
-	const dlClassName = finalNoStyle
-		? className
-		: [styles.receipt, className].filter(Boolean).join(' ');
-	const rowClassName = finalNoStyle ? undefined : styles.receiptRow;
-	const labelClassName = finalNoStyle ? undefined : styles.receiptLabel;
-	const valueClassName = finalNoStyle ? undefined : styles.receiptValue;
-	const refClassName = finalNoStyle ? undefined : styles.reference;
-	return (
-		<dl
-			ref={ref}
-			className={dlClassName}
-			data-testid="opt-out-confirmation-receipt"
-			{...props}
-		>
-			{receipt.at !== null && (
-				<div className={rowClassName}>
-					<dt className={labelClassName}>{optOutCopy.recordedLabel}</dt>
-					<dd className={valueClassName}>
-						<time
-							dateTime={new Date(receipt.at).toISOString()}
-							data-testid="opt-out-confirmation-recorded-at"
-						>
-							{formatRecordedAt(receipt.at, language)}
-						</time>
-					</dd>
-				</div>
-			)}
-			{receipt.reference !== null && (
-				<div className={rowClassName}>
-					<dt className={labelClassName}>{optOutCopy.referenceLabel}</dt>
-					<dd className={valueClassName}>
-						<code
-							className={refClassName}
-							data-testid="opt-out-confirmation-reference"
-						>
-							{receipt.reference}
-						</code>
-					</dd>
-				</div>
-			)}
-		</dl>
-	);
-});
+);
 OptOutConfirmationDetails.displayName = 'OptOutConfirmationDetails';
 
 const OptOutConfirmationFooter = createForwardRef<
