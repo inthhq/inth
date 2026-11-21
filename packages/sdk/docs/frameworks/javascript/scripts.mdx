@@ -67,7 +67,7 @@ the third argument to `activateGatedScripts`; see
 Because already-executed scripts cannot be unloaded, `@inth/sdk` and
 `createConsentRuntime` reload the page after a visitor withdraws a previously
 allowed category, whether through preferences or a one-click opt-out. The
-reload waits up to one second for in-flight consent, opt-out and lift
+reload waits up to one second, counted from when the choice is stored on the device, for in-flight consent, opt-out and lift
 requests; requests use `keepalive` and replay from the stored queue on the
 next page if they have not settled in time. Privacy signals and backend-synced
 opt-outs do not reload. Allowing a category never reloads.

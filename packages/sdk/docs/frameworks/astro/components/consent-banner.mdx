@@ -79,7 +79,10 @@ produces the same actions on every framework:
 - A rule that keeps preferences reachable adds a "Manage preferences" button.
 
 Under an opt-out rule, activating the opt-out link records the opt-out in one
-click and denies the opt-out categories immediately. When that turns off a
+click and switches off `marketing` and `measurement` in scope at once. One
+exception: a `measurement` grant the visitor gave explicitly stands while
+`marketing` holds an explicit refusal, so do not rely on the opt-out alone to
+stop measurement code. When that turns off a
 category that was running and `reloadOnConsentRevoked` is enabled, Inth waits
 for the opt-out request, reloads the page, and opens the opt-out confirmation
 view (`OptOutConfirmation`) once on the new page; otherwise it opens

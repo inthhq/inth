@@ -32,7 +32,7 @@ group: reference
     account notice appears below `marketing` (or `measurement` when `marketing`
     is not in scope) and the switches stay usable. Turning `measurement` on
     while `marketing` stays off allows `measurement` without lifting the
-    opt-out; turning `marketing` back on and saving lifts it. Read the same
+    opt-out; turning `marketing` back on and saving asks the backend to lift the account's opt-out, which stays in force until the backend confirms it. Read the same
     state with `useOptOutState()`.
   - After a save, the dialog closes. The banner reappears only if the policy
     still requires a choice.
