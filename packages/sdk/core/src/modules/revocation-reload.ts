@@ -4,13 +4,15 @@ import { vendorAxisActive } from '../libs/vendors';
  *
  * Unmounting a script cannot undo code that already ran: listeners, timers,
  * history hooks and widgets stay alive until the page unloads. When an
- * explicit accept, reject or save turns off a category or vendor that was
- * effectively granted, the page reloads once every in-flight save settles,
- * so the next document starts with only the permitted code.
+ * explicit accept, reject, save or one-click opt-out turns off a category or
+ * vendor that was effectively granted, the page reloads once every in-flight
+ * save or opt-out settles, so the next document starts with only the
+ * permitted code.
  *
- * Expiry, policy changes and privacy signals do not reload: they change
- * permissions without a visitor action. An external consent source owns its
- * own decisions, so any withdrawal it reports reloads the same way.
+ * Expiry, policy changes, privacy signals and backend-synced opt-outs do not
+ * reload: they change permissions without a visitor action on this page. An
+ * external consent source owns its own decisions, so any withdrawal it
+ * reports reloads the same way.
  */
 import type {
 	ConsentKernel,
@@ -20,9 +22,14 @@ import type {
 } from '../types';
 import { evaluateConsent } from './has';
 
+const activeWatchers = new WeakMap<
+	ConsentKernel['events'],
+	Set<() => boolean>
+>();
+
 /** Options for {@link watchRevocationReload}. */
 export interface RevocationReloadOptions {
-	/** Kernel whose save commands are watched. */
+	/** Kernel whose save and opt-out commands are watched. */
 	kernel: ConsentKernel;
 	/**
 	 * Read when a reload is due. Return `false` to skip it.
@@ -63,8 +70,8 @@ const hasRevokedCategory = function hasRevokedCategory(
 /**
  * Whether a permission that was effectively granted before an action is
  * denied after it. Covers categories and, outside IAB, vendor switches.
- * @param before - Snapshot when the save started.
- * @param after - Snapshot the save recorded.
+ * @param before - Snapshot when the command started.
+ * @param after - Snapshot the command recorded.
  * @returns `true` when code allowed to run before is no longer allowed.
  */
 export const hasRevokedPermission = function hasRevokedPermission(
@@ -97,12 +104,48 @@ export const hasRevokedPermission = function hasRevokedPermission(
 };
 
 /**
+ * Whether {@link watchRevocationReload} is active and enabled for `kernel` in
+ * a browser window.
+ */
+export const isRevocationReloadEnabled = function isRevocationReloadEnabled(
+	kernel: ConsentKernel
+): boolean {
+	if (typeof window === 'undefined' || !kernel) {
+		return false;
+	}
+	const watchers = activeWatchers.get(kernel.events);
+	if (!watchers) {
+		return false;
+	}
+	for (const enabled of watchers) {
+		if (enabled()) {
+			return true;
+		}
+	}
+	return false;
+};
+
+/**
+ * Whether moving `kernel` from `before` to `after` triggers a revocation
+ * reload under an active {@link watchRevocationReload} watcher.
+ */
+export const willReloadOnRevocation = function willReloadOnRevocation(
+	kernel: ConsentKernel,
+	before: ConsentSnapshot,
+	after: ConsentSnapshot
+): boolean {
+	return (
+		isRevocationReloadEnabled(kernel) && hasRevokedPermission(before, after)
+	);
+};
+
+/**
  * Reloads the page after an explicit action or an external consent source
  * revokes a granted permission.
  *
- * The reload waits for every in-flight save to complete so the backend
- * request is not cancelled, and runs in a later macrotask so stored records
- * and synchronous consent callbacks finish first.
+ * The reload waits for every in-flight save or opt-out to complete so the
+ * backend request is not cancelled, and runs in a later macrotask so stored
+ * records and synchronous consent callbacks finish first.
  * Framework adapters call this; applications set `reloadOnConsentRevoked`.
  * @returns A disposer that stops watching and cancels a pending reload.
  * @internal
@@ -113,24 +156,37 @@ export const watchRevocationReload = function watchRevocationReload({
 	getOnBeforeReload,
 	reload = reloadWindow,
 }: RevocationReloadOptions): Unsubscribe {
-	let savesInFlight = 0;
-	let saveStartSnapshot: ConsentSnapshot | null = null;
+	let commandsInFlight = 0;
+	let commandStartSnapshot: ConsentSnapshot | null = null;
 	let revoked = false;
 	let timer: ReturnType<typeof setTimeout> | null = null;
 
-	// A save runs synchronously from `started` to its recorded events, so
-	// the latest start snapshot is always the recording save's baseline.
+	let watchers = activeWatchers.get(kernel.events);
+	if (!watchers) {
+		watchers = new Set();
+		activeWatchers.set(kernel.events, watchers);
+	}
+	watchers.add(isEnabled);
+
+	// A save or opt-out runs synchronously from `started` to its recorded
+	// events, so the latest start snapshot is always the recording command's
+	// baseline.
+	const onCommandStarted = () => {
+		commandsInFlight += 1;
+		commandStartSnapshot = kernel.getSnapshot();
+	};
+
 	const onRecorded = ({ snapshot }: { snapshot: ConsentSnapshot }) => {
 		if (
-			saveStartSnapshot &&
-			hasRevokedPermission(saveStartSnapshot, snapshot)
+			commandStartSnapshot &&
+			hasRevokedPermission(commandStartSnapshot, snapshot)
 		) {
 			revoked = true;
 		}
 	};
 
 	const scheduleReload = () => {
-		if (savesInFlight > 0 || !revoked || timer !== null) {
+		if (commandsInFlight > 0 || !revoked || timer !== null) {
 			return;
 		}
 		if (typeof window === 'undefined' || !isEnabled()) {
@@ -146,17 +202,26 @@ export const watchRevocationReload = function watchRevocationReload({
 		}, 0);
 	};
 
+	const onCommandCompleted = () => {
+		commandsInFlight = Math.max(0, commandsInFlight - 1);
+		if (commandsInFlight === 0) {
+			commandStartSnapshot = null;
+		}
+		scheduleReload();
+	};
+
 	const subscriptions = [
-		kernel.events.on('command:save:started', () => {
-			savesInFlight += 1;
-			saveStartSnapshot = kernel.getSnapshot();
-		}),
+		kernel.events.on('command:save:started', onCommandStarted),
+		kernel.events.on('command:opt-out:started', onCommandStarted),
 		kernel.events.on('choice:recorded', onRecorded),
 		kernel.events.on('vendors:recorded', onRecorded),
-		kernel.events.on('command:save:completed', () => {
-			savesInFlight = Math.max(0, savesInFlight - 1);
-			scheduleReload();
+		kernel.events.on('opt-out:recorded', ({ optOut, snapshot }) => {
+			if (optOut.method === 'button') {
+				onRecorded({ snapshot });
+			}
 		}),
+		kernel.events.on('command:save:completed', onCommandCompleted),
+		kernel.events.on('command:opt-out:completed', onCommandCompleted),
 		// An external source has no save commands; its reported decision is
 		// the visitor action.
 		kernel.events.on('permissions:changed', ({ previous, snapshot }) => {
@@ -171,6 +236,10 @@ export const watchRevocationReload = function watchRevocationReload({
 	];
 
 	return () => {
+		watchers?.delete(isEnabled);
+		if (watchers?.size === 0) {
+			activeWatchers.delete(kernel.events);
+		}
 		for (const unsubscribe of subscriptions) {
 			unsubscribe();
 		}

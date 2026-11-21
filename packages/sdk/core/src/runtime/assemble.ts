@@ -27,6 +27,7 @@ import type { NetworkHold } from '../modules/network-blocker/hold';
 import type { PersistenceHandle } from '../modules/persistence/types';
 import type { ScriptLoaderHandle } from '../modules/script-loader/types';
 import { resolveWindowDebugMode } from '../modules/window-debug';
+import { watchPendingOptOutConfirmation } from '../surface-actions/opt-out';
 import type { HydrationRecords } from '../types';
 import { stringifyRuntimeError, wireRuntimeCallbacks } from './callbacks';
 import { mountRuntimeGPP } from './gpp-mount';
@@ -309,6 +310,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			// stored, and before init, which carries it.
 			if (enabled && !consentSource) {
 				disposers.push(journey.start(kernel));
+				disposers.push(watchPendingOptOutConfirmation(kernel));
 			}
 			if (enabled && consentSource) {
 				disposers.push(modules.connectConsentSource(kernel, consentSource));

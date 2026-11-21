@@ -999,6 +999,8 @@ export type KernelEvent =
 	  }
 	| { type: 'command:init:started' }
 	| { type: 'command:init:completed'; result: InitResult }
+	| { type: 'command:opt-out:started' }
+	| { type: 'command:opt-out:completed'; result: OptOutResult }
 	| { type: 'command:save:started' }
 	| { type: 'command:save:completed'; result: SaveResult }
 	| { type: 'command:error'; command: string; error: unknown };

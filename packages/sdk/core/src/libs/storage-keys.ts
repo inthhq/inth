@@ -63,6 +63,12 @@ export const JOURNEY_STORAGE_KEY = 'inth-journey-v1';
 export const C15T_JOURNEY_STORAGE_KEY = 'c15t-journey-v1';
 
 /**
+ * One-shot `sessionStorage` marker set before a revocation reload caused by
+ * an opt-out so the next document opens the opt-out confirmation view once.
+ */
+export const OPT_OUT_CONFIRMATION_STORAGE_KEY = 'inth-opt-out-confirmation-v1';
+
+/**
  * The keys one consent storage key derives. Notice dismissals, vendor
  * denials and the clear epoch get their own keys derived from the consent
  * key so a custom `storageKey` moves them all together.

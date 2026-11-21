@@ -103,8 +103,8 @@ hydrates storage and syncs tabs automatically.
 | `iab:set` | `snapshot` | IAB state updated. |
 | `records:cleared` | none | Stored records cleared. |
 | `save:replayed` | `subjectId`, `ok`, `rejected?` | Queued save replayed. |
-| `command:init:started`, `command:save:started` | none | Command started. |
-| `command:init:completed`, `command:save:completed` | `result` | Command finished. |
+| `command:init:started`, `command:opt-out:started`, `command:save:started` | none | Command started. |
+| `command:init:completed`, `command:opt-out:completed`, `command:save:completed` | `result` | Command finished. |
 | `command:error` | `command`, `error` | Command failed. |
 
 Use `choice:recorded` for visitor decisions and `permissions:changed` to gate
@@ -134,7 +134,7 @@ Attach only the modules you need and dispose them before the kernel:
 | Network blocker | `@inth/sdk/modules/network-blocker` | [Network blocker](/docs/frameworks/javascript/modules/network-blocker) |
 | Iframe blocker | `@inth/sdk/modules/iframe-blocker` | [Iframe blocker](/docs/frameworks/javascript/modules/iframe-blocker) |
 | Clear on revocation | `@inth/sdk/modules/clear-on-revocation` | [Clear on revocation](/docs/frameworks/javascript/clear-on-revocation) |
-| Reload after withdrawal | `watchRevocationReload` from `@inth/sdk/engine` | Reloads page after withdrawal; returns disposer |
+| Reload after withdrawal | `watchRevocationReload` from `@inth/sdk/engine` | Reloads page after a save or `commands.optOut()` turns off an allowed category once in-flight requests finish (privacy signals and backend-synced opt-outs do not reload); returns disposer |
 
 `createConsentKernel(config)` takes a `transport` instance (such as
 `createHostedTransport({ projectUrl })` from `@inth/sdk/engine`) plus:

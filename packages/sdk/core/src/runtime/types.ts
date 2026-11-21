@@ -504,11 +504,11 @@ export interface ConsentRuntimeOptions {
 	 */
 	experimentalScriptRegistry?: boolean | ExperimentalScriptRegistryOptions;
 	/**
-	 * Reload the page after an accept, reject or save turns off a category or
-	 * vendor that was granted, or after a `consentSource` withdraws one.
-	 * Removing a script cannot stop code that already ran, so the reload
-	 * starts a document with only permitted code. Waits for the save request.
-	 * Set `false` to handle revocation yourself.
+	 * Reload the page after an accept, reject, save or one-click opt-out turns
+	 * off a category or vendor that was granted, or after a `consentSource`
+	 * withdraws one. Removing a script cannot stop code that already ran, so
+	 * the reload starts a document with only permitted code. Waits for the
+	 * save or opt-out request. Set `false` to handle revocation yourself.
 	 * @default true
 	 */
 	reloadOnConsentRevoked?: boolean;

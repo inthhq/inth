@@ -337,6 +337,7 @@ export type { ConsentJourneyOption, JourneyState } from './libs/journey';
 export {
 	EXPERIMENT_STORAGE_KEY,
 	JOURNEY_STORAGE_KEY,
+	OPT_OUT_CONFIRMATION_STORAGE_KEY,
 } from './libs/storage-keys';
 export type {
 	ConsentPresentation,
@@ -394,7 +395,12 @@ export {
 	isVendorDenied,
 } from './modules/has';
 export type { RevocationReloadOptions } from './modules/revocation-reload';
-export { watchRevocationReload } from './modules/revocation-reload';
+export {
+	hasRevokedPermission,
+	isRevocationReloadEnabled,
+	watchRevocationReload,
+	willReloadOnRevocation,
+} from './modules/revocation-reload';
 export type { ResolveVendorsInput, VendorOwner } from './libs/vendors';
 export { declareOwnedVendors, forgetOwnedVendors } from './libs/vendors';
 export { vendorsListedUnder } from './libs/vendor-listing';

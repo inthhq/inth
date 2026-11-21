@@ -20,6 +20,7 @@ import {
 	C15T_SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 	EXPERIMENT_STORAGE_KEY,
 	JOURNEY_STORAGE_KEY,
+	OPT_OUT_CONFIRMATION_STORAGE_KEY,
 	PENDING_SAVES_STORAGE_KEY,
 	resolveStorageKeys,
 	storageKeyFamilies,
@@ -62,6 +63,10 @@ export const clearOnRevocationTools: ClearOnRevocationTools = {
 	cookieDomainsOf,
 	gateState: getEffectiveGateState,
 	optionalConsentCategories: OPTIONAL_CONSENT_CATEGORIES,
-	ownedSessionStorageKeys: [JOURNEY_STORAGE_KEY, C15T_JOURNEY_STORAGE_KEY],
+	ownedSessionStorageKeys: [
+		JOURNEY_STORAGE_KEY,
+		C15T_JOURNEY_STORAGE_KEY,
+		OPT_OUT_CONFIRMATION_STORAGE_KEY,
+	],
 	ownedStorageKeys,
 };
