@@ -27,6 +27,8 @@ const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_RETRIES = 2;
 const RETRY_BASE_MS = 250;
 const RETRY_CAP_MS = 5000;
+/** The latest time a `Date` can hold, and the latest `acceptedAt` the API takes */
+const MAX_EPOCH_MS = 8_640_000_000_000_000;
 /** The longest timer `AbortSignal.timeout` and `setTimeout` take */
 const MAX_TIMEOUT_MS = 2_147_483_647;
 
@@ -170,7 +172,12 @@ export class InthError extends Error {
 			readonly cause?: unknown;
 		} = {}
 	) {
-		super(message, 'cause' in options ? { cause: options.cause } : undefined);
+		// Set only when there is one, so an error without a cause has no
+		// `cause` of its own
+		super(
+			message,
+			options.cause === undefined ? undefined : { cause: options.cause }
+		);
 		this.code = code;
 		this.status = options.status ?? 0;
 		this.apiCode = options.apiCode;
@@ -344,16 +351,48 @@ export interface IdentifyParams {
 	readonly identityProvider?: string;
 }
 
-/**
- * The answer to `documents.check`, keyed by the types asked for. A list
- * written in the call, such as `['privacy_policy']`, has an entry for each
- * type. A list built at run time may hold any of its type's members, so each
- * entry may be absent
- */
-export type InthDocumentChecks<Types extends readonly InthDocumentType[]> =
+/** True when `T` is a union of more than one member */
+type IsUnion<T, All = T> = T extends unknown
+	? [All] extends [T]
+		? false
+		: true
+	: never;
+
+/** True when `T` names exactly one document type */
+type IsOneType<T> = string extends T
+	? false
+	: true extends IsUnion<T>
+		? false
+		: true;
+
+/** The types a fixed list is sure to hold: each element that names one type */
+type SureTypes<Types extends readonly InthDocumentType[]> = {
+	[Index in keyof Types]: IsOneType<Types[Index]> extends true
+		? Types[Index]
+		: never;
+}[number];
+
+/** One list's answer: its sure types required, any other it may hold optional */
+type ChecksFor<Types extends readonly InthDocumentType[]> =
 	number extends Types['length']
 		? Readonly<Partial<Record<Types[number], InthDocumentCheck>>>
-		: Readonly<Record<Types[number], InthDocumentCheck>>;
+		: Readonly<
+				{ [Type in SureTypes<Types>]: InthDocumentCheck } & {
+					[
+						Type in Exclude<Types[number], SureTypes<Types>>
+					]?: InthDocumentCheck;
+				}
+			>;
+
+/**
+ * The answer to `documents.check`, keyed by the types asked for. A type
+ * written in the call, such as `['privacy_policy']`, is sure to have an entry.
+ * A list built at run time, or an element that may be one of several types,
+ * may leave a type out, so its entry is optional. One of several lists, such
+ * as `isEu ? ['terms_eu'] : ['terms_us']`, is answered as one of their answers
+ */
+export type InthDocumentChecks<Types extends readonly InthDocumentType[]> =
+	Types extends unknown ? ChecksFor<Types> : never;
 
 export interface CheckDocumentsParams<
 	Types extends readonly InthDocumentType[],
@@ -723,6 +762,41 @@ const unusableSegment = (name: string): InthResult<never> =>
 		name,
 		'cannot be sent in a URL: it is empty or a dot segment, or holds a character no URL can carry'
 	);
+
+/**
+ * The body as text, or why it could not be read. Gives up when `signal`
+ * aborts and cancels the body: a fetch's own body stops with the signal, but
+ * a body an injected `fetch` made may not, and must not hold the call
+ */
+const readText = async (
+	response: Response,
+	signal: AbortSignal
+): Promise<{ readonly text: string } | { readonly failure: unknown }> => {
+	let giveUp = (): void => undefined;
+	const aborted = new Promise<{ readonly failure: unknown }>((resolve) => {
+		giveUp = () => {
+			void discard(response);
+			resolve({ failure: signal.reason });
+		};
+	});
+	if (signal.aborted) {
+		giveUp();
+	} else {
+		signal.addEventListener('abort', giveUp, { once: true });
+	}
+	const reading = (async () => {
+		try {
+			return { text: await response.text() };
+		} catch (error) {
+			return { failure: error };
+		}
+	})();
+	try {
+		return await Promise.race([reading, aborted]);
+	} finally {
+		signal.removeEventListener('abort', giveUp);
+	}
+};
 
 const wait = (milliseconds: number, signal: AbortSignal | undefined) =>
 	new Promise<void>((resolve) => {
@@ -1198,7 +1272,8 @@ class Documents {
 	 *   type: 'terms_us',
 	 * });
 	 * if (error) throw error;
-	 * // Link to terms.version, and send terms.hash back with the form
+	 * // Link to terms.version. Keep terms.hash on the server, such as in the
+	 * // session, to record with the acceptance: never take it from the form
 	 */
 	async current(
 		params: CurrentDocumentParams,
@@ -1226,9 +1301,11 @@ class Documents {
 	 * each try
 	 *
 	 * @example
+	 * // The releases your server showed and kept, never hashes from the form
+	 * const shown = await readShownDocuments(request);
 	 * const { error } = await inth.documents.accept({
 	 *   externalId: user.id,
-	 *   acceptances: [{ type: 'terms_us', hash: form.termsHash }],
+	 *   acceptances: shown,
 	 *   context: {
 	 *     ipAddress: request.ip,
 	 *     userAgent: request.headers.get('user-agent') ?? undefined,
@@ -1243,13 +1320,20 @@ class Documents {
 		if (Number.isNaN(acceptedTime)) {
 			return invalidDate('acceptedAt');
 		}
+		// A Date and a number are held to the one range the API takes
+		const acceptedAt =
+			acceptedTime ??
+			(typeof params.acceptedAt === 'number' ? params.acceptedAt : Date.now());
 		if (
-			typeof params.acceptedAt === 'number' &&
-			!(Number.isSafeInteger(params.acceptedAt) && params.acceptedAt >= 0)
+			!(
+				Number.isSafeInteger(acceptedAt) &&
+				acceptedAt >= 0 &&
+				acceptedAt <= MAX_EPOCH_MS
+			)
 		) {
 			return refusedField(
 				'acceptedAt',
-				'must be a whole number of milliseconds since the epoch'
+				`must be a whole number of milliseconds since the epoch, from 0 to ${MAX_EPOCH_MS}`
 			);
 		}
 		// Copied once, so the body and the check below read the same list
@@ -1278,10 +1362,7 @@ class Documents {
 			{
 				body: JSON.stringify({
 					acceptances,
-					acceptedAt:
-						typeof params.acceptedAt === 'number'
-							? params.acceptedAt
-							: (acceptedTime ?? Date.now()),
+					acceptedAt,
 					context: {
 						ipAddress: params.context.ipAddress,
 						userAgent: params.context.userAgent,
@@ -1466,11 +1547,9 @@ export class Inth {
 			// The body can still fail after the headers arrive. One that
 			// stalls is a timeout and one that is cut off is a network failure;
 			// neither is an answer in the wrong shape
-			let readFailure: unknown;
-			const text = await response.text().catch((error: unknown) => {
-				readFailure = error;
-				return undefined;
-			});
+			const bodyRead = await readText(response, signal);
+			const text = 'text' in bodyRead ? bodyRead.text : undefined;
+			const readFailure = 'failure' in bodyRead ? bodyRead.failure : undefined;
 			if (text === undefined && !response.ok) {
 				// The status says what happened, and its `Retry-After` still holds
 				return { error: refusalError(response, undefined, requestId) };

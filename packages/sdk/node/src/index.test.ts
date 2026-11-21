@@ -586,6 +586,22 @@ describe('retries and limits', () => {
 		assert.strictEqual(calls, 2);
 	});
 
+	it('gives up on a body that ignores the signal, as one an injected fetch made may', async () => {
+		const inth = new Inth({
+			// A body that never arrives and never hears the timeout
+			fetch: () =>
+				Promise.resolve(
+					new Response(new ReadableStream({ start: () => undefined }))
+				),
+			maxRetries: 0,
+			projectUrl: PROJECT_URL,
+			secretKey: SECRET,
+			timeout: 20,
+		});
+		const stalled = await checkTerms(inth);
+		assert.strictEqual(stalled.error?.code, 'timeout');
+	});
+
 	it('reports an answer cut off mid-body as a network failure, and tries again', async () => {
 		let calls = 0;
 		const inth = new Inth({
@@ -894,6 +910,28 @@ it('types each answer by what was asked', async () => {
 	expectTypeOf(dynamic.data).toEqualTypeOf<Readonly<
 		Partial<Record<InthDocumentType, InthDocumentCheck>>
 	> | null>();
+	// An element that may be one of several types leaves each optional
+	const chosen = (): 'terms_us' | 'privacy_policy' => 'terms_us';
+	const picked = await inth.documents.check({
+		externalId: 'user_7',
+		types: [chosen()],
+	});
+	if (picked.error === null) {
+		expectTypeOf(picked.data.terms_us).toEqualTypeOf<
+			InthDocumentCheck | undefined
+		>();
+	}
+	// One of several lists is answered as one of their answers
+	const eu = Math.random() > 1;
+	const either = await inth.documents.check({
+		externalId: 'user_7',
+		types: eu ? ['terms_eu', 'privacy_policy'] : ['terms_us', 'privacy_policy'],
+	});
+	if (either.error === null) {
+		expectTypeOf(either.data.privacy_policy).toEqualTypeOf<InthDocumentCheck>();
+		// @ts-expect-error -- only one of the two lists asks for `terms_eu`
+		assert.isDefined(either.data.terms_eu);
+	}
 	// The API's listed codes autocomplete, and an unlisted one still fits
 	expectTypeOf<InthError['apiCode']>().toEqualTypeOf<InthApiCode | undefined>();
 	expectTypeOf<'document_unknown'>().toExtend<InthApiCode>();
@@ -978,6 +1016,8 @@ describe('documents', () => {
 				assert.isNotNull(published.error);
 				// A caller's generic retry must not send it again
 				assert.isFalse(published.error?.retryable);
+				// An answer that arrived has no cause of its own
+				assert.isFalse(Object.hasOwn(published.error ?? {}, 'cause'));
 				assert.strictEqual(
 					/documents\.current/u.test(String(published.error?.message)),
 					mayBeStored
@@ -1063,7 +1103,15 @@ describe('documents', () => {
 
 	it('refuses an acceptedAt that is not whole milliseconds, naming the field', async () => {
 		const { inth, sent } = stubbed([ACCEPTED]);
-		for (const acceptedAt of [Number.NaN, Number.POSITIVE_INFINITY, 1.5, -1]) {
+		for (const acceptedAt of [
+			Number.NaN,
+			Number.POSITIVE_INFINITY,
+			1.5,
+			-1,
+			8_640_000_000_000_001,
+			// A Date is held to the same range as a number
+			new Date(-1),
+		]) {
 			// oxlint-disable-next-line no-await-in-loop -- One call at a time, on one stub
 			const refused = await inth.documents.accept({
 				...ACCEPTANCE,
