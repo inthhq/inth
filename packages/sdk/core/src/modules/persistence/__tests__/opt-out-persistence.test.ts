@@ -861,4 +861,143 @@ describe('opt-out persistence lifecycle', () => {
 		expect(identical.optOut).not.toHaveBeenCalled();
 		identical.dispose();
 	});
+
+	it('stops reporting when two tabs hold opposite GPC overrides over shared storage', async () => {
+		const keys = resolveStorageKeys(undefined);
+		const held: StoredOptOutRecord = {
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+			subject: { subjectId: 'sub_two_tabs' },
+			version: 1,
+		};
+		expect(writeStoredOptOutRecord(held, undefined, NOW).ok).toBe(true);
+
+		let optOutWrites = 0;
+		const spy = vi.spyOn(window.localStorage, 'setItem');
+		const original = spy.getMockImplementation();
+		spy.mockImplementation((key: string, value: string) => {
+			const previous = window.localStorage.getItem(key);
+			original?.(key, value);
+			if (key === keys.optOut) {
+				optOutWrites += 1;
+				if (value !== previous) {
+					setTimeout(() => {
+						window.dispatchEvent(new StorageEvent('storage', { key }));
+					}, 0);
+				}
+			}
+		});
+
+		const optOut = vi.fn((payload: { subjectId: string }) =>
+			Promise.resolve({
+				ok: true,
+				optOut: {
+					heldBy: 'device' as const,
+					method: 'button' as const,
+					recordedAt: NOW - 1000,
+					rights: ['sale' as const, 'share' as const],
+				},
+				subjectId: payload.subjectId,
+			})
+		);
+		const tabGpcOff = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialOverrides: { gpc: false },
+			initialPolicyResolution: usOptOutResolution(),
+			now: NOW,
+			transport: { optOut },
+		});
+		const tabGpcOn = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialOverrides: { gpc: true },
+			initialPolicyResolution: usOptOutResolution(),
+			now: NOW,
+			transport: { optOut },
+		});
+		const offPersistence = createPersistence({ kernel: tabGpcOff });
+		const onPersistence = createPersistence({ kernel: tabGpcOn });
+
+		try {
+			await tabGpcOff.commands.init();
+			await tabGpcOn.commands.init();
+
+			await vi.advanceTimersByTimeAsync(100);
+			expect(optOut).toHaveBeenCalledTimes(1);
+
+			const writesAfterSettle = optOutWrites;
+			await vi.advanceTimersByTimeAsync(100);
+			expect(optOut).toHaveBeenCalledTimes(1);
+			expect(optOutWrites).toBe(writesAfterSettle);
+		} finally {
+			offPersistence.dispose();
+			onPersistence.dispose();
+			tabGpcOff.dispose();
+			tabGpcOn.dispose();
+			if (original) {
+				spy.mockImplementation(original);
+			} else {
+				spy.mockRestore();
+			}
+		}
+	});
+
+	it('reconciles a true mark from another tab for the same record and clears the mark when storage replaces the record', async () => {
+		const held: StoredOptOutRecord = {
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 2000,
+			rights: ['sale', 'share'],
+			subject: { subjectId: 'sub_mark_sync' },
+			version: 1,
+		};
+		expect(writeStoredOptOutRecord(held, undefined, NOW).ok).toBe(true);
+
+		const optOut = vi.fn((payload: { subjectId: string }) =>
+			Promise.resolve({
+				ok: true,
+				optOut: {
+					heldBy: 'device' as const,
+					method: 'button' as const,
+					recordedAt: NOW - 500,
+					rights: ['sale' as const, 'share' as const],
+				},
+				subjectId: payload.subjectId,
+			})
+		);
+		const kernel = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialOverrides: { gpc: true },
+			initialPolicyResolution: usOptOutResolution(),
+			now: NOW,
+			transport: { optOut },
+		});
+		const persistence = createPersistence({ kernel });
+
+		// Another tab reports GPC for the same record before this tab goes live.
+		expect(
+			writeStoredOptOutRecord({ ...held, gpcReported: true }, undefined, NOW).ok
+		).toBe(true);
+		persistence.reconcile();
+
+		await kernel.commands.init();
+		await flushWrites();
+		expect(optOut).not.toHaveBeenCalled();
+
+		// Another tab replaces the record with a newer unmarked opt-out.
+		expect(
+			writeStoredOptOutRecord(
+				{ ...held, recordedAt: NOW - 500 },
+				undefined,
+				NOW
+			).ok
+		).toBe(true);
+		persistence.reconcile();
+		await flushWrites();
+
+		expect(optOut).toHaveBeenCalledTimes(1);
+		persistence.dispose();
+		kernel.dispose();
+	});
 });
