@@ -6,11 +6,16 @@
 import { runInNewContext } from 'node:vm';
 
 import * as v from 'valibot';
-import { assert, describe, it } from 'vitest';
+import { assert, describe, expectTypeOf, it, vi } from 'vitest';
 
 import document from '../../schema/vendor/backend-openapi/openapi.json' with { type: 'json' };
-import { hashDocument, Inth } from './index';
-import type { InthOptions, InthRequestOptions } from './index';
+import { hashDocument, Inth, InthError } from './index';
+import type {
+	InthDocument,
+	InthDocumentCheck,
+	InthOptions,
+	InthRequestOptions,
+} from './index';
 import { version } from './version';
 
 const SECRET = 'inth_prj_test';
@@ -37,7 +42,6 @@ const stubbed = (
 ) => {
 	const sent: Sent[] = [];
 	const inth = new Inth({
-		baseUrl: PROJECT_URL,
 		fetch: async (input, init) => {
 			const request = new Request(input, init);
 			const text = await request.text();
@@ -50,6 +54,7 @@ const stubbed = (
 			const next = responses[Math.min(sent.length - 1, responses.length - 1)];
 			return next ? next() : Response.error();
 		},
+		projectUrl: PROJECT_URL,
 		secretKey: SECRET,
 		...options,
 	});
@@ -88,7 +93,7 @@ describe('what each call sends', () => {
 
 			const linked = await inth.users.identify({
 				externalId: 'user_1',
-				provider: 'workos',
+				identityProvider: 'workos',
 				subjectId,
 			});
 
@@ -240,7 +245,9 @@ describe('what each call sends', () => {
 	});
 
 	it('calls the project URL it was given, without a trailing slash', async () => {
-		const { inth, sent } = stubbed([checked], { baseUrl: `${PROJECT_URL}/` });
+		const { inth, sent } = stubbed([checked], {
+			projectUrl: `${PROJECT_URL}/`,
+		});
 		await checkTerms(inth);
 		assert.strictEqual(
 			sent[0]?.url,
@@ -367,6 +374,36 @@ describe('a /v1 refusal', () => {
 		});
 		assert.strictEqual(refused.error?.requestId, 'req_header');
 	});
+
+	it('keeps what the API found wrong with each field', async () => {
+		const details = {
+			fieldErrors: { effectiveDate: ['Expected an ISO date'] },
+			formErrors: ['The body is incomplete'],
+		};
+		for (const [sent, expected] of [
+			[details, details],
+			// A form the client does not read is left out, not guessed at
+			['Invalid body', undefined],
+		] as const) {
+			const { inth } = stubbed([
+				() =>
+					Response.json(
+						{
+							error: {
+								code: 'invalid_request',
+								details: sent,
+								message: 'Invalid request body',
+							},
+							requestId: 'req_1',
+						},
+						{ status: 400 }
+					),
+			]);
+			// oxlint-disable-next-line no-await-in-loop -- One stubbed client at a time
+			const refused = await checkTerms(inth);
+			assert.deepStrictEqual(refused.error?.details, expected);
+		}
+	});
 });
 
 describe('retries and limits', () => {
@@ -467,6 +504,7 @@ describe('retries and limits', () => {
 		]);
 		const refused = await checkTerms(inth);
 		assert.strictEqual(refused.error?.code, 'unauthorized');
+		assert.isFalse(refused.error?.retryable);
 		assert.strictEqual(sent.length, 1);
 	});
 
@@ -480,14 +518,36 @@ describe('retries and limits', () => {
 			checked,
 		]);
 		const refused = await checkTerms(inth);
-		assert.strictEqual(refused.error?.code, 'rate_limited');
+		assert.deepStrictEqual(
+			{
+				code: refused.error?.code,
+				retryAfter: refused.error?.retryAfter,
+				retryable: refused.error?.retryable,
+			},
+			{ code: 'rate_limited', retryAfter: 60_000, retryable: true }
+		);
 		assert.strictEqual(sent.length, 1);
+	});
+
+	it('keeps what fetch threw when no answer arrived', async () => {
+		const thrown = new TypeError('fetch failed');
+		const { inth } = stubbed(
+			[
+				() => {
+					throw thrown;
+				},
+			],
+			{ maxRetries: 0 }
+		);
+		const failure = await checkTerms(inth);
+		assert.strictEqual(failure.error?.code, 'network_error');
+		assert.isTrue(failure.error?.retryable);
+		assert.strictEqual(failure.error?.cause, thrown);
 	});
 
 	it('reports a body that stalls as a timeout, and tries again', async () => {
 		let calls = 0;
 		const inth = new Inth({
-			baseUrl: PROJECT_URL,
 			fetch: (_url, init) => {
 				calls += 1;
 				const signal = init?.signal;
@@ -506,6 +566,7 @@ describe('retries and limits', () => {
 				);
 			},
 			maxRetries: 1,
+			projectUrl: PROJECT_URL,
 			secretKey: SECRET,
 			timeout: 20,
 		});
@@ -517,7 +578,6 @@ describe('retries and limits', () => {
 	it('reports an answer cut off mid-body as a network failure, and tries again', async () => {
 		let calls = 0;
 		const inth = new Inth({
-			baseUrl: PROJECT_URL,
 			fetch: () => {
 				calls += 1;
 				const body = new ReadableStream({
@@ -528,6 +588,7 @@ describe('retries and limits', () => {
 				return Promise.resolve(new Response(body));
 			},
 			maxRetries: 1,
+			projectUrl: PROJECT_URL,
 			secretKey: SECRET,
 		});
 		const cut = await checkTerms(inth);
@@ -538,7 +599,6 @@ describe('retries and limits', () => {
 	it('reads a refusal whose body breaks by its status, and keeps its Retry-After', async () => {
 		let calls = 0;
 		const inth = new Inth({
-			baseUrl: PROJECT_URL,
 			fetch: () => {
 				calls += 1;
 				const body = new ReadableStream({
@@ -553,6 +613,7 @@ describe('retries and limits', () => {
 					})
 				);
 			},
+			projectUrl: PROJECT_URL,
 			secretKey: SECRET,
 		});
 		const limitedCall = await checkTerms(inth);
@@ -580,7 +641,7 @@ describe('retries and limits', () => {
 	it('takes only a timeout that a timer can wait out', async () => {
 		for (const timeout of [1.5, 0, 2 ** 31]) {
 			assert.throws(
-				() => new Inth({ baseUrl: PROJECT_URL, secretKey: SECRET, timeout }),
+				() => new Inth({ projectUrl: PROJECT_URL, secretKey: SECRET, timeout }),
 				/whole number of milliseconds/u
 			);
 		}
@@ -593,7 +654,6 @@ describe('retries and limits', () => {
 	it('reports a redirect instead of following it with the key', async () => {
 		const redirects: string[] = [];
 		const inth = new Inth({
-			baseUrl: PROJECT_URL,
 			fetch: (input, init) => {
 				redirects.push(new Request(input, init).redirect);
 				return Promise.resolve(
@@ -603,6 +663,7 @@ describe('retries and limits', () => {
 					})
 				);
 			},
+			projectUrl: PROJECT_URL,
 			secretKey: SECRET,
 		});
 		const redirected = await checkTerms(inth);
@@ -631,7 +692,6 @@ describe('retries and limits', () => {
 
 	it('reports a timeout as one, whatever error fetch rejects with', async () => {
 		const inth = new Inth({
-			baseUrl: PROJECT_URL,
 			// Rejects with a plain AbortError once the signal fires, as some
 			// fetch implementations do in place of a TimeoutError
 			fetch: (_input, init) =>
@@ -641,6 +701,7 @@ describe('retries and limits', () => {
 					);
 				}),
 			maxRetries: 0,
+			projectUrl: PROJECT_URL,
 			secretKey: SECRET,
 			timeout: 10,
 		});
@@ -690,8 +751,8 @@ describe('answers it cannot use', () => {
 });
 
 it('cannot be made with a project URL it cannot use', () => {
-	const make = (baseUrl: string) => () =>
-		new Inth({ baseUrl, secretKey: SECRET });
+	const make = (projectUrl: string) => () =>
+		new Inth({ projectUrl, secretKey: SECRET });
 	// No scheme: fetch would refuse every call, so the constructor does
 	assert.throws(make('your-project.inth.app'), /full URL/u);
 	// The key must not cross a network in the clear
@@ -720,13 +781,63 @@ it('cannot be made with a project URL it cannot use', () => {
 	}
 });
 
-it('cannot be made without a key or a project URL', () => {
-	assert.throws(() => new Inth({ baseUrl: PROJECT_URL, secretKey: ' ' }));
-	assert.throws(() => new Inth({ baseUrl: ' ', secretKey: SECRET }));
-	// Pasted with a line break inside
-	assert.throws(
-		() => new Inth({ baseUrl: PROJECT_URL, secretKey: 'inth_prj_\ntest' })
-	);
+it('cannot be made without a key or a project URL, and says so as an InthError', () => {
+	for (const make of [
+		() => new Inth({ projectUrl: PROJECT_URL, secretKey: ' ' }),
+		() => new Inth({ projectUrl: ' ', secretKey: SECRET }),
+		// Pasted with a line break inside
+		() => new Inth({ projectUrl: PROJECT_URL, secretKey: 'inth_prj_\ntest' }),
+	]) {
+		const thrown = (() => {
+			try {
+				make();
+			} catch (error) {
+				return error;
+			}
+			return undefined;
+		})();
+		assert.instanceOf(thrown, InthError);
+		assert.strictEqual((thrown as InthError).code, 'invalid_request');
+	}
+});
+
+it('reads the key and the project URL from the environment', async () => {
+	vi.stubEnv('INTH_SECRET_KEY', SECRET);
+	vi.stubEnv('INTH_PROJECT_URL', PROJECT_URL);
+	try {
+		const urls: string[] = [];
+		const inth = new Inth({
+			fetch: (input) => {
+				urls.push(String(input));
+				return Promise.resolve(checked());
+			},
+		});
+		await checkTerms(inth);
+		assert.deepStrictEqual(urls, [
+			`${PROJECT_URL}/v1/documents/check?externalId=user_7&types=terms_us`,
+		]);
+	} finally {
+		vi.unstubAllEnvs();
+	}
+});
+
+it('types each answer by what was asked', async () => {
+	const { inth } = stubbed([checked]);
+	const { data } = await checkTerms(inth);
+	expectTypeOf(data).toEqualTypeOf<Readonly<
+		Record<'terms_us', InthDocumentCheck>
+	> | null>();
+	// @ts-expect-error -- `dpa` was not asked for
+	assert.isUndefined(data?.dpa);
+	expectTypeOf<
+		Awaited<ReturnType<Inth['documents']['current']>>['data']
+	>().toEqualTypeOf<InthDocument | null>();
+	expectTypeOf<
+		Awaited<ReturnType<Inth['documents']['publish']>>['data']
+	>().toEqualTypeOf<InthDocument | null>();
+	// The API's listed codes autocomplete, and an unlisted one still fits
+	expectTypeOf<'document_unknown'>().toExtend<InthError['apiCode']>();
+	expectTypeOf<'RATE_LIMITED'>().toExtend<InthError['apiCode']>();
 });
 
 describe('documents', () => {
@@ -826,6 +937,45 @@ describe('documents', () => {
 		});
 	});
 
+	it('publishes a Date as an ISO date, and refuses one that names no time', async () => {
+		const { inth, sent } = stubbed([
+			() => Response.json({ document: { ...DOCUMENT, id: 'doc_1' } }),
+		]);
+		const PUBLISH = { hash: HASH, type: 'terms_us', version: '2026-11-18' };
+
+		const invalid = await inth.documents.publish({
+			...PUBLISH,
+			effectiveDate: new Date(''),
+		});
+		assert.strictEqual(invalid.error?.code, 'invalid_request');
+		assert.strictEqual(sent.length, 0);
+
+		await inth.documents.publish({
+			...PUBLISH,
+			effectiveDate: new Date(Date.UTC(2026, 10, 18)),
+		});
+		assert.deepNestedInclude(sent[0], {
+			'body.effectiveDate': '2026-11-18T00:00:00.000Z',
+		});
+	});
+
+	it('records a Date as milliseconds since the epoch, and refuses one that names no time', async () => {
+		const { inth, sent } = stubbed([ACCEPTED]);
+
+		const invalid = await inth.documents.accept({
+			...ACCEPTANCE,
+			acceptedAt: new Date(''),
+		});
+		assert.strictEqual(invalid.error?.code, 'invalid_request');
+		assert.strictEqual(sent.length, 0);
+
+		await inth.documents.accept({
+			...ACCEPTANCE,
+			acceptedAt: new Date(1763467200000),
+		});
+		assert.deepNestedInclude(sent[0], { 'body.acceptedAt': 1763467200000 });
+	});
+
 	it('reads the version in force on the /v1 route, without the key', async () => {
 		const answer = { document: { ...DOCUMENT, id: 'doc_1' } };
 		const { inth, sent } = stubbed([() => Response.json(answer)]);
@@ -841,7 +991,7 @@ describe('documents', () => {
 				url: `${PROJECT_URL}/v1/documents/terms_us/current`,
 			},
 		]);
-		assert.deepStrictEqual(current, { data: answer, error: null });
+		assert.deepStrictEqual(current, { data: answer.document, error: null });
 	});
 
 	it("records acceptances for a person, with the visitor's context", async () => {
