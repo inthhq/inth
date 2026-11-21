@@ -1,0 +1,47 @@
+---
+title: PrivacyChoicesLink
+description: Add a PrivacyChoicesLink to your React footer for US opt-out regions so visitors can open privacy choices in ConsentDialog.
+group: frameworks
+---
+
+Add a footer link for US opt-out regions that renders the configured opt-out title with the California Privacy Protection Agency opt-out icon when required and always opens `ConsentDialog`.
+
+## Add the link to your footer
+
+Mount `PrivacyChoicesLink` inside the same `InthProvider` as `ConsentDialog`:
+
+{/* example: fragment */}
+
+```tsx title="src/site-footer.tsx"
+import { PrivacyChoicesLink } from '@inth/react';
+
+export function SiteFooter() {
+	return (
+		<footer>
+			<nav aria-label="Legal">
+				<a href="/privacy">Privacy policy</a>
+				<a href="/terms">Terms</a>
+				<PrivacyChoicesLink className="footer-link" />
+			</nav>
+		</footer>
+	);
+}
+```
+
+Pass `variant` to override `presentation.optOutLink` on a single link, or `asChild` to render your own element:
+
+```tsx
+<PrivacyChoicesLink variant="california-privacy-choices" asChild>
+	<a href="#privacy-choices">Your California Privacy Choices</a>
+</PrivacyChoicesLink>;
+```
+
+<import src="../../../shared/react/components/privacy-choices-link.mdx#props" />
+
+<import src="../../../shared/react/components/privacy-choices-link.mdx#behavior" />
+
+See [ConsentDialogLink](./consent-dialog-link) for a link that shows under every policy that offers preferences.
+
+<import src="../../../shared/react/components/privacy-choices-link.mdx#accessibility" />
+
+<import src="../../../shared/react/components/privacy-choices-link.mdx#verify" />

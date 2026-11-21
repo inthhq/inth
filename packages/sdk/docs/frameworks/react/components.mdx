@@ -15,6 +15,7 @@ group: frameworks
 | `ConsentDialog` | The preference center modal | [ConsentDialog](/docs/frameworks/react/components/consent-dialog) |
 | `ConsentWidget` | The preference center inline on a privacy or settings page | [ConsentWidget](/docs/frameworks/react/components/consent-widget) |
 | `ConsentDialogLink` | An unstyled button that opens the dialog, suited for footers | [ConsentDialogLink](/docs/frameworks/react/components/consent-dialog-link) |
+| `PrivacyChoicesLink` | A footer link for US opt-out regions that renders the configured opt-out title and opens the dialog | [PrivacyChoicesLink](/docs/frameworks/react/components/privacy-choices-link) |
 | `ConsentDialogTrigger` | A floating, draggable corner button that opens the dialog. `ConsentDialogTriggerToolbar` adds app actions beside it | [ConsentDialogTrigger](/docs/frameworks/react/components/consent-dialog-trigger) |
 | `ConsentGate` | Its children when a category is allowed, or a placeholder otherwise | [ConsentGate](/docs/frameworks/react/components/consent-gate) |
 | `ConsentTheme` | A `<style>` element with your theme tokens | [Customize](/docs/frameworks/react/customize) |
@@ -42,7 +43,7 @@ Import `IABProvider`, `IABConsentBanner`, and `IABConsentDialog` from `@inth/rea
 
 | Import | Exports | Use |
 | --- | --- | --- |
-| `@inth/react/consent-banner`, `@inth/react/consent-dialog`, `@inth/react/consent-widget`, `@inth/react/consent-dialog-link`, `@inth/react/consent-dialog-trigger`, `@inth/react/consent-gate` | One component each | Import a single component without pulling in the rest of the UI |
+| `@inth/react/consent-banner`, `@inth/react/consent-dialog`, `@inth/react/consent-widget`, `@inth/react/consent-dialog-link`, `@inth/react/privacy-choices-link`, `@inth/react/consent-dialog-trigger`, `@inth/react/consent-gate` | One component each | Import a single component without pulling in the rest of the UI |
 | `@inth/react/headless` | Headless hooks | Build custom banner and dialog markup. See [Headless](/docs/frameworks/react/headless) |
 | `@inth/react/server` | `fetchSSRData` and helpers | Resolve `/v1/consent/init` in a server loader. See [Rendering](/docs/frameworks/react/rendering#skip-the-browsers-first-init-request) |
 | `@inth/react/devtools` | `DevTools` | Development debugging only |

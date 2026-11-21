@@ -219,6 +219,10 @@ export default mergeConfig(
 					__dirname,
 					'../react/dist/components/panel-link/index.js'
 				),
+				'@inth/react/components/privacy-choices-link': resolve(
+					__dirname,
+					'../react/dist/components/privacy-choices-link/index.js'
+				),
 				'@inth/react/postcss-tailwind3': resolve(
 					__dirname,
 					'../react/dist/postcss-tailwind3.js'

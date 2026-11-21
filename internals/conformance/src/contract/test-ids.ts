@@ -142,6 +142,7 @@ export const TEST_IDS = {
 		status: 'opt-out-confirmation-status',
 		title: 'opt-out-confirmation-title',
 	},
+	privacyChoicesLink: 'privacy-choices-link',
 	vuePrimitive: {
 		// Generic Vue wrapper around rendered policy action buttons.
 		actions: 'consent-actions',
