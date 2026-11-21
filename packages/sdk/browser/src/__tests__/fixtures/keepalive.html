@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+	<head>
+		<script>
+			globalThis.__vitest_browser_runner__ ??= {
+				wrapDynamicImport: (load) => load(),
+			};
+		</script>
+		<script
+			type="module"
+			src="/src/__tests__/fixtures/keepalive-page.ts"
+		></script>
+	</head>
+	<body></body>
+</html>

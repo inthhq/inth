@@ -103,6 +103,27 @@ export interface V1RecordTransport extends KernelTransport {
 	) => Promise<{ subjectId: string; optOut?: OptOutRecord } | undefined>;
 }
 
+/**
+ * Per-request UTF-8 byte ceiling for `fetch`'s `keepalive` flag.
+ *
+ * Browsers cap all in-flight keepalive requests for a page at 64 KiB total
+ * and reject requests that exceed the cap with a `TypeError`. Using 32 KiB
+ * per request (half the browser limit) leaves headroom for a save and an
+ * opt-out or lift request to leave together. Bodies above this ceiling send
+ * without `keepalive`, and any aggregate rejection stays queued for replay.
+ */
+const MAX_KEEPALIVE_BODY_BYTES = 32 * 1024;
+
+let textEncoder: TextEncoder | undefined;
+
+const utf8ByteLength = function utf8ByteLength(value: string): number {
+	if (typeof TextEncoder === 'function') {
+		textEncoder ??= new TextEncoder();
+		return textEncoder.encode(value).byteLength;
+	}
+	return value.length * 3;
+};
+
 const readOptOut = function readOptOut(
 	value: unknown
 ): OptOutRecord | undefined {
@@ -275,13 +296,19 @@ export const createV1RecordTransport = function createV1RecordTransport(
 	const fetchImpl = resolveV1Fetch(options.fetch, 'createV1RecordTransport');
 	const property = resolveProperty(base, options.property);
 
-	const post = (url: string, body: unknown) =>
-		fetchImpl(url, {
-			body: JSON.stringify(body),
+	const post = (url: string, body: unknown, keepalive = false) => {
+		const serialized = JSON.stringify(body);
+		const init: RequestInit = {
+			body: serialized,
 			credentials: options.credentials,
 			headers: { ...V1_JSON_HEADERS },
 			method: 'POST',
-		});
+		};
+		if (keepalive && utf8ByteLength(serialized) <= MAX_KEEPALIVE_BODY_BYTES) {
+			init.keepalive = true;
+		}
+		return fetchImpl(url, init);
+	};
 
 	return {
 		async identify(user, subjectId) {
@@ -319,7 +346,8 @@ export const createV1RecordTransport = function createV1RecordTransport(
 		async liftOptOut(payload): Promise<V1LiftOptOutResult> {
 			const response = await post(
 				`${base}${V1_ROUTES.optOutLift}`,
-				buildV1ConsentOptOutLiftBody(payload, property)
+				buildV1ConsentOptOutLiftBody(payload, property),
+				true
 			);
 			if (!response.ok) {
 				const failure = await readOptOutFailure(
@@ -343,7 +371,8 @@ export const createV1RecordTransport = function createV1RecordTransport(
 		async optOut(payload): Promise<V1OptOutResult> {
 			const response = await post(
 				`${base}${V1_ROUTES.optOuts}`,
-				buildV1ConsentOptOutBody(payload, property)
+				buildV1ConsentOptOutBody(payload, property),
+				true
 			);
 			if (!response.ok) {
 				const failure = await readOptOutFailure(
@@ -393,7 +422,8 @@ export const createV1RecordTransport = function createV1RecordTransport(
 				{
 					...buildV1ConsentRecordBody(payload, property),
 					...buildDecisionAssertion(payload, decision?.inputs()),
-				}
+				},
+				true
 			);
 			if (!response.ok) {
 				throw await readSaveFailure(

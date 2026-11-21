@@ -1009,3 +1009,104 @@ describe('liftOptOut: POST /v1/consent/opt-outs/lift', () => {
 		);
 	});
 });
+
+describe('keepalive on consent, opt-out and lift requests', () => {
+	const KEEP_ALIVE_LIMIT = 32_768;
+
+	test('sends save, optOut and liftOptOut with keepalive: true and leaves it off identify', async () => {
+		const { calls, fetch } = stubFetch(
+			() => json(200, { recordId: RECORD, subjectId: SUBJECT }),
+			() =>
+				json(200, {
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: ACTION_AT,
+						rights: ['sale', 'share'],
+					},
+					recordId: RECORD,
+					subjectId: SUBJECT,
+				}),
+			() => json(200, { optOut: null, recordId: RECORD, subjectId: SUBJECT }),
+			() =>
+				json(200, {
+					externalId: 'user_123',
+					subjectId: SUBJECT,
+					verifiedBy: 'identity_token',
+				})
+		);
+		const transport = transportWith(fetch);
+
+		await transport.save(savePayload());
+		await transport.optOut({
+			givenAt: ACTION_AT,
+			idempotencyKey: KEY,
+			method: 'button',
+			subjectId: SUBJECT,
+			user: null,
+		});
+		await transport.liftOptOut({
+			givenAt: ACTION_AT,
+			idempotencyKey: KEY,
+			subjectId: SUBJECT,
+			user: null,
+		});
+		await transport.identify(
+			{ externalId: 'user_123', identityToken: 'token' },
+			SUBJECT
+		);
+
+		expect(calls).toHaveLength(4);
+		expect(calls[0]?.init.keepalive).toBe(true);
+		expect(calls[1]?.init.keepalive).toBe(true);
+		expect(calls[2]?.init.keepalive).toBe(true);
+		expect('keepalive' in (calls[3]?.init ?? {})).toBe(false);
+	});
+
+	test('omits keepalive when the serialized body exceeds the UTF-8 byte threshold', async () => {
+		const { calls, fetch } = stubFetch(() =>
+			json(200, { recordId: RECORD, subjectId: SUBJECT })
+		);
+		const transport = transportWith(fetch);
+
+		// ASCII body larger than 32 KiB.
+		await transport.save(
+			savePayload({
+				user: {
+					externalId: 'user_123',
+					properties: { blob: 'a'.repeat(KEEP_ALIVE_LIMIT) },
+				},
+			})
+		);
+		expect('keepalive' in (calls[0]?.init ?? {})).toBe(false);
+
+		// Multi-byte UTF-8 body: string length is well below 32,768 characters,
+		// while the UTF-8 byte length exceeds 32,768 bytes (3 bytes per char).
+		const multibyte = '\u4e2d'.repeat(12_000);
+		expect(multibyte.length).toBeLessThan(KEEP_ALIVE_LIMIT);
+		expect(new TextEncoder().encode(multibyte).byteLength).toBeGreaterThan(
+			KEEP_ALIVE_LIMIT
+		);
+		await transport.save(
+			savePayload({
+				user: {
+					externalId: 'user_123',
+					properties: { blob: multibyte },
+				},
+			})
+		);
+		expect(String(calls[1]?.init.body).length).toBeLessThan(KEEP_ALIVE_LIMIT);
+		expect('keepalive' in (calls[1]?.init ?? {})).toBe(false);
+
+		// Body below the threshold still carries keepalive: true.
+		await transport.save(
+			savePayload({
+				user: {
+					externalId: 'user_123',
+					properties: { blob: 'a'.repeat(1024) },
+				},
+			})
+		);
+		expect(calls[2]?.init.keepalive).toBe(true);
+	});
+});
