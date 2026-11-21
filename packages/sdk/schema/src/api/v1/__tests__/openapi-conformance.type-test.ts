@@ -1,9 +1,5 @@
 import type * as v from 'valibot';
 
-import type {
-	components,
-	operations,
-} from '../../../../vendor/backend-openapi/openapi.generated';
 import type { ConsentManifest } from '../../../shared/consent-manifest';
 import type {
 	ScriptRegistryWire,
@@ -30,6 +26,7 @@ import type {
 	v1DocumentPublishInputSchema,
 	v1DocumentPublishOutputSchema,
 } from '../documents';
+import type { components, operations } from '../generated/types';
 import type {
 	v1SubjectIdentityTokenInputSchema,
 	v1SubjectIdentityTokenOutputSchema,
@@ -41,8 +38,11 @@ import type { ExpectNone, WireDiff } from './wire-diff';
 
 /*
  * The `/v1` schemas against the types generated from the backend's OpenAPI
- * document (`vendor/backend-openapi/`). A field renamed, added or removed on
- * either side, or a change in its type or optionality, fails `check-types`.
+ * document (`vendor/backend-openapi/`). Most are the generated schemas with
+ * the SDK's rules added, so this mainly guards those additions, and the init
+ * and manifest shapes the SDK shares with the 3.x routes. A field renamed,
+ * added or removed on either side, or a change in its type or optionality,
+ * fails `check-types`.
  *
  * Each shape is compared as the SDK sends or reads it: a schema's output,
  * except the publish body, whose `requiresAcceptance` has a default and is

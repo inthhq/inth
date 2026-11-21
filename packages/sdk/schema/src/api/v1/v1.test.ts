@@ -7,6 +7,7 @@ import {
 	v1ConsentRecordOutputSchema,
 	v1ConsentSessionReportSchema,
 	v1DocumentAcceptancesInputSchema,
+	v1DocumentAcceptancesOutputSchema,
 	v1DocumentCheckOutputSchema,
 	v1DocumentCurrentOutputSchema,
 	v1DocumentPublishInputSchema,
@@ -17,6 +18,7 @@ import {
 	v1SubjectIdSchema,
 	v1SubjectLinkInputSchema,
 	v1SubjectLinkOutputSchema,
+	v1SubjectLinkParamsSchema,
 } from './index';
 
 const SUBJECT = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';
@@ -156,17 +158,91 @@ describe('POST /v1/consent/records', () => {
 		).toBe(false);
 	});
 
+	it.each([
+		['a sub_ subject ID', { subjectId: 'sub_2VZxR7YmNpKq3WfLs8TgHd' }, true],
+		[
+			'a UUIDv4 subject ID',
+			{ subjectId: '0193e5a8-6f00-4c3a-8a1b-5d2e7f9a0b1c' },
+			false,
+		],
+		[
+			'an uppercase idempotency key',
+			{ idempotencyKey: KEY.toUpperCase() },
+			false,
+		],
+	])('takes %s: %s', (_label, change, valid) => {
+		expect(
+			v.is(v1ConsentRecordInputSchema, { ...contractRecord, ...change })
+		).toBe(valid);
+	});
+
+	it.each([
+		['an answer', { answer: [] }],
+		['the categories of an answer', { answer: { categories: [] } }],
+		['the metadata', { metadata: [] }],
+	])('refuses an array as %s', (_label, change) => {
+		// No confirmed category, so the receipt check passes and only the
+		// shape of the change can refuse the body.
+		const body = { ...contractRecord, confirmed: [], ...change };
+		expect(v.is(v1ConsentRecordInputSchema, body)).toBe(false);
+	});
+
+	const receipt = contractRecord.answer.categories.measurement;
+
+	it.each([
+		['a Date as the categories', { answer: { categories: new Date(0) } }],
+		['a Map as the categories', { answer: { categories: new Map() } }],
+		[
+			'an answer that inherits its categories',
+			{ answer: Object.create({ categories: {} }) },
+		],
+		[
+			'a key the categories inherit',
+			{ answer: JSON.parse('{"categories":{"toString":1}}') },
+		],
+		[
+			'an array with a kind as a basis',
+			{
+				answer: {
+					categories: {
+						measurement: {
+							...receipt,
+							basis: Object.assign([], { kind: 'legacy-v2' }),
+						},
+					},
+				},
+			},
+		],
+		[
+			'a Map as the vendor grants',
+			{
+				vendorChoice: {
+					confirmedAt: 1_763_467_200_000,
+					grants: new Map(),
+					version: 1,
+				},
+			},
+		],
+	])('refuses %s', (_label, change) => {
+		// No confirmed category, so the receipt check passes and only the
+		// shape of the change can refuse the body.
+		const body = { ...contractRecord, confirmed: [], ...change };
+		expect(v.is(v1ConsentRecordInputSchema, body)).toBe(false);
+	});
+
 	it('rejects a body without an idempotency key', () => {
 		const { idempotencyKey: _key, ...rest } = contractRecord;
 		expect(v.safeParse(v1ConsentRecordInputSchema, rest).success).toBe(false);
 	});
 
-	it('rejects an answer with a field besides categories', () => {
+	it('rejects an answer with a field besides categories, at its path', () => {
 		const result = v.safeParse(v1ConsentRecordInputSchema, {
 			...contractRecord,
 			answer: { ...contractRecord.answer, version: 3 },
 		});
-		expect(result.success).toBe(false);
+		expect(result.issues?.map((issue) => v.getDotPath(issue))).toEqual([
+			'answer.version',
+		]);
 	});
 
 	it('accepts a partial answer that leaves categories out', () => {
@@ -217,6 +293,15 @@ describe('POST /v1/consent/records answer', () => {
 		expect(result.link).toEqual(link);
 	});
 
+	it('rejects a subject ID that is a UUID but not a UUIDv7', () => {
+		expect(
+			v.is(v1ConsentRecordOutputSchema, {
+				recordId: RECORD,
+				subjectId: '0193e5a8-6f00-4c3a-8a1b-5d2e7f9a0b1c',
+			})
+		).toBe(false);
+	});
+
 	it('rejects an answer without a recordId', () => {
 		expect(
 			v.safeParse(v1ConsentRecordOutputSchema, { subjectId: SUBJECT }).success
@@ -248,6 +333,15 @@ describe('POST /v1/consent/sessions', () => {
 });
 
 describe('POST /v1/subjects/:id/link', () => {
+	it.each([
+		[SUBJECT, true],
+		['sub_2VZxR7YmNpKq3WfLs8TgHd', true],
+		[SUBJECT.toUpperCase(), false],
+		['user_123', false],
+	])('takes %s as the subject in the path: %s', (id, valid) => {
+		expect(v.is(v1SubjectLinkParamsSchema, { id })).toBe(valid);
+	});
+
 	it('rejects an empty identity provider', () => {
 		expect(
 			v.is(v1SubjectLinkInputSchema, {
@@ -265,6 +359,16 @@ describe('POST /v1/subjects/:id/link', () => {
 				verifiedBy: 'identity_token',
 			})
 		).toBe(true);
+	});
+
+	it('rejects an answer whose subject is not a UUIDv7', () => {
+		expect(
+			v.is(v1SubjectLinkOutputSchema, {
+				externalId: 'user_123',
+				subjectId: '0193e5a8-6f00-4c3a-8a1b-5d2e7f9a0b1c',
+				verifiedBy: 'identity_token',
+			})
+		).toBe(false);
 	});
 });
 
@@ -329,6 +433,14 @@ describe('documents', () => {
 		).toBe(valid);
 	});
 
+	it('refuses a current document whose hash is not lowercase sha256 hex', () => {
+		expect(
+			v.is(v1DocumentCurrentOutputSchema, {
+				document: { ...current, hash: HASH.toUpperCase() },
+			})
+		).toBe(false);
+	});
+
 	it('refuses a current document without id', () => {
 		const { id: _id, ...document } = current;
 		expect(v.is(v1DocumentCurrentOutputSchema, { document })).toBe(false);
@@ -371,6 +483,20 @@ describe('documents', () => {
 		).toBe(true);
 	});
 
+	it.each([
+		['an IPv4 address', '203.0.113.7', true],
+		['an IPv6 address', '2001:db8::1', true],
+		['a host name', 'example.com', false],
+	])('takes %s as the context IP address: %s', (_label, ipAddress, valid) => {
+		expect(
+			v.is(v1DocumentAcceptancesInputSchema, {
+				...acceptances,
+				context: { ipAddress, userAgent: 'test' },
+				subjectId: SUBJECT,
+			})
+		).toBe(valid);
+	});
+
 	it.each(['', 'proof-token', HASH.toUpperCase(), HASH.slice(0, -1)])(
 		'refuses an acceptance with the hash %j',
 		(hash) => {
@@ -383,6 +509,55 @@ describe('documents', () => {
 			).toBe(false);
 		}
 	);
+
+	const recorded = {
+		acceptances: [
+			{
+				acceptedAt: 1_763_467_200_000,
+				hash: HASH,
+				type: 'terms_us',
+				version: '2026-11-18',
+			},
+		],
+		subjectId: SUBJECT,
+	};
+
+	it.each([
+		['the recorded acceptances', {}, true],
+		[
+			'a subject that is not a UUIDv7',
+			{ subjectId: '0193e5a8-6f00-4c3a-8a1b-5d2e7f9a0b1c' },
+			false,
+		],
+		[
+			'an uppercase hash',
+			{
+				acceptances: [{ ...recorded.acceptances[0], hash: HASH.toUpperCase() }],
+			},
+			false,
+		],
+	])('reads %s in the answer: %s', (_label, change, valid) => {
+		expect(
+			v.is(v1DocumentAcceptancesOutputSchema, { ...recorded, ...change })
+		).toBe(valid);
+	});
+
+	it.each([
+		['an uppercase idempotency key', { idempotencyKey: KEY.toUpperCase() }],
+		[
+			'a UUIDv4 subject ID',
+			{ subjectId: '0193e5a8-6f00-4c3a-8a1b-5d2e7f9a0b1c' },
+		],
+		['an array as the context', { context: [] }],
+	])('refuses acceptances with %s', (_label, change) => {
+		expect(
+			v.is(v1DocumentAcceptancesInputSchema, {
+				...acceptances,
+				subjectId: SUBJECT,
+				...change,
+			})
+		).toBe(false);
+	});
 
 	it.each([
 		[0, false],
@@ -445,5 +620,13 @@ describe('v1 error body', () => {
 		});
 		expect(body.error.code).toBe('invalid_request');
 		expect(body.requestId).toBe('req_1');
+	});
+
+	it('reads a code the document does not list yet', () => {
+		const body = v.parse(v1ErrorBodySchema, {
+			error: { code: 'quota_exceeded', message: 'Over quota' },
+			requestId: 'req_2',
+		});
+		expect(body.error.code).toBe('quota_exceeded');
 	});
 });
