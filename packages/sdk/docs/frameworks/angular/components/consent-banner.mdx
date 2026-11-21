@@ -95,8 +95,11 @@ notice records acknowledgement rather than consent.
 
 When the policy grants the `opt-out` right, the banner shows an underlined
 opt-out link. Under an opt-out policy, activating it records the opt-out in one
-click and opens `<inth-opt-out-confirmation>` (rendered lazily by
-`<inth-consent-dialog>` or a standalone `<inth-opt-out-confirmation>`). Set
+click. When that turns off a category that was running and
+`reloadOnConsentRevoked` is enabled, Inth waits for the opt-out request,
+reloads the page, and opens `<inth-opt-out-confirmation>` once on the new page;
+otherwise it opens immediately (rendered lazily by `<inth-consent-dialog>` or a
+standalone `<inth-opt-out-confirmation>`). Set
 `presentation.optOutLink` in `provideInth()` to `'do-not-sell'`,
 `'privacy-choices'`, or `'california-privacy-choices'`; the two "Privacy
 Choices" forms always render with the California Privacy Protection Agency

@@ -66,3 +66,26 @@ test('honours `reloadOnConsentRevoked: false`', async () => {
 	expect(onBeforeConsentRevocationReload).not.toHaveBeenCalled();
 	expect(reload).not.toHaveBeenCalled();
 });
+
+test('reloads once after a one-click opt-out turns off a granted category', async () => {
+	reload.mockClear();
+	const onBeforeConsentRevocationReload = vi.fn();
+	await render(
+		<InthProvider
+			options={{
+				callbacks: { onBeforeConsentRevocationReload },
+				mode: transportMode({}),
+				persistence: false,
+				prefetch: policyFixture(undefined, {
+					model: 'opt-out',
+					prompt: 'notice',
+				}),
+			}}
+		>
+			<Capture />
+		</InthProvider>
+	);
+	await kernel.commands.optOut();
+	await vi.waitFor(() => expect(reload).toHaveBeenCalledOnce());
+	expect(onBeforeConsentRevocationReload).toHaveBeenCalledOnce();
+});

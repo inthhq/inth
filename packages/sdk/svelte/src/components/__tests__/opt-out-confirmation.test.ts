@@ -1,5 +1,8 @@
-import type { OptOutLinkVariant } from '@inth/sdk/engine';
-import { policyRulePresets } from '@inth/sdk/engine';
+import type * as Engine from '@inth/sdk/engine';
+import {
+	OPT_OUT_CONFIRMATION_STORAGE_KEY,
+	policyRulePresets,
+} from '@inth/sdk/engine';
 import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
@@ -16,6 +19,17 @@ import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { policyFixture } from '../../__tests__/policy-fixture';
 import type { ConsentContextValue } from '../../lib/context.svelte';
 import type { ConsentManagerOptions } from '../../lib/types';
+
+const reload = vi.hoisted(() => vi.fn());
+// oxlint-disable-next-line anti-slop/no-module-mocking -- jsdom cannot perform navigation on `window.location.reload`. The factory returns the real module and records the reload instead.
+vi.mock('@inth/sdk/engine', async (importOriginal) => {
+	const actual = await importOriginal<typeof Engine>();
+	return {
+		...actual,
+		watchRevocationReload: (options: Engine.RevocationReloadOptions) =>
+			actual.watchRevocationReload({ ...options, reload }),
+	};
+});
 
 const query = <Element extends HTMLElement>(testId: string) =>
 	document.querySelector<Element>(`[data-testid="${testId}"]`);
@@ -44,6 +58,7 @@ const renderSuite = (
 		overrides: { country: 'US', region: 'CA' },
 		persistence: false,
 		prefetch: policyFixture({}, noticeRule()),
+		reloadOnConsentRevoked: false,
 		...options,
 	};
 	const view = render(OptOutConfirmationFixture, {
@@ -68,6 +83,8 @@ afterEach(() => {
 	>;
 	host[EARLY_TAPS_WINDOW_KEY]?.stop?.();
 	Reflect.deleteProperty(window, EARLY_TAPS_WINDOW_KEY);
+	reload.mockClear();
+	sessionStorage.clear();
 });
 
 describe('one-step opt-out and confirmation view in Svelte', () => {
@@ -243,7 +260,7 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 		['do-not-sell', 'Do Not Sell or Share My Personal Information', false],
 		['privacy-choices', 'Your Privacy Choices', true],
 		['california-privacy-choices', 'Your California Privacy Choices', true],
-	] as [OptOutLinkVariant, string, boolean][])(
+	] as [Engine.OptOutLinkVariant, string, boolean][])(
 		'renders optOutLink=%s with exact title and icon=%s',
 		async (optOutLink, expectedTitle, expectIcon) => {
 			const { view } = renderSuite(
@@ -402,5 +419,79 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 		);
 
 		view.unmount();
+	});
+
+	test('defers confirmation across a revocation reload, shows it once on the next load, and not on the load after that', async () => {
+		const onBeforeReload = vi.fn();
+		const first = renderSuite({
+			callbacks: { onBeforeConsentRevocationReload: onBeforeReload },
+			reloadOnConsentRevoked: true,
+		});
+
+		await waitFor(() =>
+			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+		);
+		await fireEvent.click(
+			query<HTMLButtonElement>(
+				'consent-banner-right-link-opt-out'
+			) as HTMLButtonElement
+		);
+
+		// Does not flash on the old document before reload.
+		expect(query('opt-out-confirmation-root')).toBeNull();
+		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBe('1');
+		await waitFor(() => expect(reload).toHaveBeenCalledOnce());
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(query('opt-out-confirmation-root')).toBeNull();
+
+		const recorded = activeContext?.kernel.getSnapshot().optOut;
+		expect(recorded).not.toBeNull();
+		first.view.unmount();
+		activeContext = null;
+		reload.mockClear();
+
+		// Next load after reload: opens once with the honored status, clears the
+		// marker, records nothing again, and does not reload again.
+		const second = renderSuite(
+			{
+				prefetch: {
+					...policyFixture({}, noticeRule()),
+					initialRecords: { optOut: recorded ?? undefined },
+				},
+				reloadOnConsentRevoked: true,
+			},
+			{ showBanner: false, showDialog: true }
+		);
+
+		await waitFor(() =>
+			expect(query('opt-out-confirmation-root')).not.toBeNull()
+		);
+		expect(query('opt-out-confirmation-status')?.textContent?.trim()).toBe(
+			'Opt-out request honored'
+		);
+		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBeNull();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		expect(reload).not.toHaveBeenCalled();
+		second.view.unmount();
+		activeContext = null;
+
+		// Load after that: marker is cleared, so confirmation does not reopen.
+		const third = renderSuite(
+			{
+				prefetch: {
+					...policyFixture({}, noticeRule()),
+					initialRecords: { optOut: recorded ?? undefined },
+				},
+				reloadOnConsentRevoked: true,
+			},
+			{ showBanner: false, showDialog: true }
+		);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		expect(query('opt-out-confirmation-root')).toBeNull();
+		third.view.unmount();
 	});
 });

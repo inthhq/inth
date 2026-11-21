@@ -135,8 +135,11 @@ export function CompactBanner() {
 - `ConsentBanner.Rights` and `ConsentBanner.RightLink` (`right="opt-out"` or
   `"preferences"`, supports `asChild`) render preference links. Under an
   `opt-out` policy, activating `right="opt-out"` records the opt-out in one
-  click and opens `OptOutConfirmation`; under other models it opens the
-  preference center. Set `presentation.optOutLink` to `'do-not-sell'`,
+  click. When that turns off a category that was running and
+  `reloadOnConsentRevoked` is enabled, Inth waits for the opt-out request,
+  reloads the page, and opens `OptOutConfirmation` once on the new page;
+  otherwise `OptOutConfirmation` opens immediately. Under other models it opens
+  the preference center. Set `presentation.optOutLink` to `'do-not-sell'`,
   `'privacy-choices'`, or `'california-privacy-choices'`; the two "Privacy
   Choices" forms always render with the California Privacy Protection Agency
   opt-out icon.

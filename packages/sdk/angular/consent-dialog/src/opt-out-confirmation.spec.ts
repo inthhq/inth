@@ -10,11 +10,15 @@ import type { InthProviderOptions } from '@inth/angular';
 import { ConsentDialogTrigger } from '@inth/angular/consent-dialog-trigger';
 import { testing } from '@inth/angular/testing';
 import type { OptOutLinkVariant } from '@inth/sdk/engine';
-import { policyRulePresets } from '@inth/sdk/engine';
+import {
+	OPT_OUT_CONFIRMATION_STORAGE_KEY,
+	policyRulePresets,
+} from '@inth/sdk/engine';
 import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
 } from '@inth/sdk/runtime/page-globals';
+import type * as RuntimeProvider from '@inth/sdk/runtime/provider';
 import {
 	EARLY_CONSENT_TAP_SCRIPT,
 	closeOptOutConfirmation,
@@ -23,6 +27,18 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { ConsentDialog } from './consent-dialog';
 import { OptOutConfirmation } from './opt-out-confirmation';
+
+const reload = vi.hoisted(() => vi.fn());
+// oxlint-disable-next-line anti-slop/no-module-mocking -- jsdom cannot perform navigation on `window.location.reload`. The factory returns the real module and records the reload instead.
+vi.mock('@inth/sdk/runtime/provider', async (importOriginal) => {
+	const actual = await importOriginal<typeof RuntimeProvider>();
+	return {
+		...actual,
+		watchRevocationReload: (
+			options: Parameters<typeof actual.watchRevocationReload>[0]
+		) => actual.watchRevocationReload({ ...options, reload }),
+	};
+});
 
 const query = <Element extends HTMLElement>(testId: string) =>
 	document.querySelector<Element>(`[data-testid="${testId}"]`);
@@ -99,6 +115,7 @@ const boot = async <Host>(
 				}),
 				overrides: { country: 'US', region: 'CA' },
 				persistence: false,
+				reloadOnConsentRevoked: false,
 				...options,
 			} as InthProviderOptions),
 		],
@@ -123,6 +140,8 @@ afterEach(() => {
 	>;
 	host[EARLY_TAPS_WINDOW_KEY]?.stop?.();
 	Reflect.deleteProperty(window, EARLY_TAPS_WINDOW_KEY);
+	reload.mockClear();
+	sessionStorage.clear();
 });
 
 describe('one-step opt-out and confirmation view in Angular', () => {
@@ -432,5 +451,71 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 			await fixture.whenStable();
 			expect(query('opt-out-confirmation-root')).not.toBeNull();
 		});
+	});
+
+	test('defers confirmation across a revocation reload, shows it once on the next load, and not on the load after that', async () => {
+		const onBeforeReload = vi.fn();
+		const first = await boot(BannerDialogHost, {
+			callbacks: { onBeforeConsentRevocationReload: onBeforeReload },
+			reloadOnConsentRevoked: true,
+		});
+
+		await vi.waitFor(() =>
+			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+		);
+		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		await first.fixture.whenStable();
+
+		// Does not flash on the old document before reload.
+		expect(query('opt-out-confirmation-root')).toBeNull();
+		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBe('1');
+		await vi.waitFor(() => expect(reload).toHaveBeenCalledOnce());
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(query('opt-out-confirmation-root')).toBeNull();
+
+		const recorded = first.consent.snapshot().optOut;
+		expect(recorded).not.toBeNull();
+		activeConsent = null;
+		reload.mockClear();
+
+		// Next load after reload: opens once with the honored status, clears the
+		// marker, records nothing again, and does not reload again.
+		const second = await boot(BannerDialogHost, {
+			prefetch: {
+				initialRecords: { optOut: recorded ?? undefined },
+			},
+			reloadOnConsentRevoked: true,
+		});
+		const onRecorded = vi.fn();
+		second.consent.kernel().events.on('opt-out:recorded', onRecorded);
+
+		await vi.waitFor(async () => {
+			await second.fixture.whenStable();
+			expect(query('opt-out-confirmation-root')).not.toBeNull();
+		});
+		expect(query('opt-out-confirmation-status')?.textContent?.trim()).toBe(
+			'Opt-out request honored'
+		);
+		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBeNull();
+		expect(onRecorded).not.toHaveBeenCalled();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		expect(reload).not.toHaveBeenCalled();
+		closeOptOutConfirmation(second.consent.kernel());
+		activeConsent = null;
+
+		// Load after that: marker is cleared, so confirmation does not reopen.
+		const third = await boot(BannerDialogHost, {
+			prefetch: {
+				initialRecords: { optOut: recorded ?? undefined },
+			},
+			reloadOnConsentRevoked: true,
+		});
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		await third.fixture.whenStable();
+		expect(query('opt-out-confirmation-root')).toBeNull();
 	});
 });

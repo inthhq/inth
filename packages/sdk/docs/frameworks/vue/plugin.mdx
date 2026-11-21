@@ -72,7 +72,7 @@ factory rather than the plugin:
 | `networkBlocker` | Off | Rules holding matching `fetch` and XHR requests until allowed. See [network blocker](/docs/frameworks/vue/network-blocker). |
 | `iframeBlocker` | On | Gates iframes carrying `data-src` and `data-category`. Set `false` to disable. See [embeds](/docs/frameworks/vue/embeds). |
 | `nonce` | Unset | CSP nonce added to every loaded script and to `<style id="inth-css-vars">`. See [Content Security Policy](/docs/frameworks/vue/content-security-policy). |
-| `reloadOnConsentRevoked` | `true` | Reloads the page when a save withdraws a granted category or vendor. |
+| `reloadOnConsentRevoked` | `true` | Reloads the page when a save or one-click opt-out withdraws a granted category or vendor. Privacy signals and backend-synced opt-outs do not reload. |
 | `clearOnRevocation` | Unset | Deletes first-party cookies and storage keys for withdrawn categories. See [clear on revocation](/docs/frameworks/vue/clear-on-revocation). |
 | `iab` | Off | Enables IAB TCF (`{}` is enough) and accepts publisher settings such as `publisherRestrictions`. Unset, `false`, or `{ enabled: false }` leaves IAB off, causing an `IABUnavailableError` on IAB policies with a vendor list. See [IAB TCF](/docs/frameworks/vue/iab). |
 

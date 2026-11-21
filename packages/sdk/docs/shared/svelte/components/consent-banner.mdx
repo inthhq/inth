@@ -68,7 +68,10 @@ not a grant.
 
 When the policy grants the `opt-out` right, the banner shows an underlined
 opt-out link. Under an opt-out policy, activating it records the opt-out in one
-click and opens `OptOutConfirmation` (rendered lazily by `ConsentDialog` or a
+click. When that turns off a category that was running and
+`reloadOnConsentRevoked` is enabled, Inth waits for the opt-out request,
+reloads the page, and opens `OptOutConfirmation` once on the new page;
+otherwise it opens immediately (rendered lazily by `ConsentDialog` or a
 standalone `OptOutConfirmation`). Set `presentation.optOutLink` on
 `InthProvider` to `'do-not-sell'`, `'privacy-choices'`, or
 `'california-privacy-choices'`; the two "Privacy Choices" forms always render

@@ -35,6 +35,7 @@ const renderWithRule = function renderWithRule(
 					id: 'trigger-rights-test',
 					...rule,
 				}),
+				reloadOnConsentRevoked: false,
 			}}
 		>
 			<ConsentBanner />

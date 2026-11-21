@@ -38,7 +38,7 @@ object passed.
 | `onChoiceRecorded` | Visitor clicks Accept All, Reject All or Save Settings (stock UI or `useSaveConsents()`) | `snapshot`, `confirmed` categories, `actionAt` timestamp (ms) |
 | `onPermissionsChanged` | Any effective permission changes value | `snapshot`, `previous` permissions |
 | `onError` | A browser consent command fails (`/v1/consent/init` or `/v1/consent/records`) | `error` message string |
-| `onBeforeConsentRevocationReload` | Right before Inth reloads the page after a save withdraws a granted category or vendor | `preferences` after the save |
+| `onBeforeConsentRevocationReload` | Right before Inth reloads the page after a save or one-click opt-out withdraws a granted category or vendor. Privacy signals and backend-synced opt-outs do not reload | `preferences` after the withdrawal |
 
 Import the object type as `InthProviderCallbacks` from `@inth/nextjs`.
 Callbacks fire after state updates, so `snapshot` and hooks already reflect the

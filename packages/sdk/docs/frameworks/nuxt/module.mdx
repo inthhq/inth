@@ -119,7 +119,7 @@ See [rendering and deployment](/docs/frameworks/nuxt/rendering).
 | `consentCategories` | Policy categories | Limits categories shown in the dialog and widget within the policy's scope. |
 | `vendors` | Unset | Lists declared vendors under their category with per-vendor switches. See [vendor consent](/docs/frameworks/nuxt/vendor-consent). |
 | `storageConfig` | `{ storageKey: 'inth' }` | Cookie and localStorage key name, `crossSubdomain`, `defaultDomain`, and `defaultExpiryDays`. Keep identical across `nuxt.config.ts` and `app.config.ts`. |
-| `reloadOnConsentRevoked` | `true` | Reloads the page when a save withdraws a granted category or vendor. |
+| `reloadOnConsentRevoked` | `true` | Reloads the page when a save or one-click opt-out withdraws a granted category or vendor. Privacy signals and backend-synced opt-outs do not reload. |
 | `clearOnRevocation` | Unset | Deletes first-party cookies and storage keys for withdrawn categories. See [clear on revocation](/docs/frameworks/nuxt/clear-on-revocation). |
 | `iab` | Off | Enables IAB TCF (`{}` is enough) and accepts publisher settings such as `publisherRestrictions`. Set it in `nuxt.config.ts` so pages prefetch the IAB banner. Unset, `false`, or `{ enabled: false }` causes `IABUnavailableError` under IAB policies with a vendor list. See [IAB TCF](/docs/frameworks/nuxt/iab). |
 

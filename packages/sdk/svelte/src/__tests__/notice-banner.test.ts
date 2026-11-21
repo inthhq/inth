@@ -41,6 +41,7 @@ const renderFixture = (
 			mode: transportMode({}),
 			persistence: false,
 			prefetch,
+			reloadOnConsentRevoked: false,
 		},
 		...props,
 	});

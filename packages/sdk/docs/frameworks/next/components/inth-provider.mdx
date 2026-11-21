@@ -67,7 +67,7 @@ Pass `scripts`, `vendors`, `clearOnRevocation`, `persistence` and
 | `i18n` | Language overrides and message dictionary. |
 | `storageConfig` | Browser cookie/storage configuration (`storageKey` must match `resolveConsent` `cookieName`). |
 | `enabled` | Set `false` only to bypass consent enforcement completely (never use to hide errors in production). |
-| `reloadOnConsentRevoked` | Reload page when a visitor revokes a granted category or vendor (defaults to `true`). |
+| `reloadOnConsentRevoked` | Reload page when a save or one-click opt-out revokes a granted category or vendor. Privacy signals and backend-synced opt-outs do not reload. Defaults to `true`. |
 
 ## Managing an external runtime
 

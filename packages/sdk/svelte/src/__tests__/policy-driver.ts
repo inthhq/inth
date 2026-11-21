@@ -416,6 +416,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 					now: setup.clock.now(),
 				},
 				presentation,
+				reloadOnConsentRevoked: false,
 			},
 			probeGates: setup.probeGates,
 		};

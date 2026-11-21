@@ -19,7 +19,7 @@ import { ConsentBanner } from '@inth/tanstack-start';
 <ConsentBanner variant="bar" position="bottom" />;
 ```
 
-The banner adapts to the active policy rule. A `choice` prompt displays Reject and Accept at equal prominence plus Customize when offered. A `notice` prompt displays an "OK" button and a "Do Not Sell or Share My Personal Information" link that records an opt-out in one click and opens `OptOutConfirmation`. Set `presentation.optOutLink` on `InthProvider` to switch to `'privacy-choices'` or `'california-privacy-choices'` with the California Privacy Protection Agency opt-out icon. A rule with `prompt: 'none'`, or an unresolved policy, renders nothing.
+The banner adapts to the active policy rule. A `choice` prompt displays Reject and Accept at equal prominence plus Customize when offered. A `notice` prompt displays an "OK" button and a "Do Not Sell or Share My Personal Information" link that records an opt-out in one click. When that turns off a category that was running and `reloadOnConsentRevoked` is enabled, Inth waits for the opt-out request, reloads the page, and opens `OptOutConfirmation` once on the new page; otherwise `OptOutConfirmation` opens immediately. Set `presentation.optOutLink` on `InthProvider` to switch to `'privacy-choices'` or `'california-privacy-choices'` with the California Privacy Protection Agency opt-out icon. A rule with `prompt: 'none'`, or an unresolved policy, renders nothing.
 
 <include src="../../../shared/privacy-choices-link.mdx" />
 

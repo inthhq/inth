@@ -31,7 +31,7 @@ Keep `InthProvider` mounted across route navigation. It reads `mode`, `prefetch`
 | `persistence` | Stores the visitor's choice in a cookie and `localStorage`. Enabled by default |
 | `storageConfig` | Storage key and cookie settings for the stored choice |
 | `clearOnRevocation` | Cookies and storage keys deleted when a category is denied |
-| `reloadOnConsentRevoked` | Reloads the page after a visitor revokes a granted category or vendor. Defaults to `true` |
+| `reloadOnConsentRevoked` | Reloads the page after a save or one-click opt-out revokes a granted category or vendor. Privacy signals and backend-synced opt-outs do not reload. Defaults to `true` |
 | `consentCategories` | Categories offered in the preference dialog alongside script categories, within policy scope |
 | `overrides` | Forces country, region, or language for testing |
 | `user` | Links consent records to a signed-in user |
