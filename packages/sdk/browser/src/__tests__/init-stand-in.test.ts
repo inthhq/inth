@@ -176,6 +176,7 @@ afterEach(() => {
 	delete target.inth;
 	Reflect.deleteProperty(target, PREFETCH_WINDOW_KEY);
 	localStorage.clear();
+	sessionStorage.clear();
 	for (const cookie of document.cookie.split(';')) {
 		const name = cookie.split('=')[0]?.trim();
 		if (name) {
@@ -392,7 +393,7 @@ describe('early opt-out tap before the engine loads', () => {
 	});
 
 	it('queues optOut and loads the engine when the banner opt-out link is tapped early', async () => {
-		const standIn = start();
+		const standIn = start([['config', { reloadOnConsentRevoked: false }]]);
 		answerInit.resolve(optOutInitBody());
 		await vi.waitFor(() => {
 			expect(banner()).not.toBeNull();

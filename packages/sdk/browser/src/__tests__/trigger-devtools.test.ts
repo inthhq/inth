@@ -77,6 +77,7 @@ afterEach(() => {
 		client.dispose();
 	}
 	localStorage.clear();
+	sessionStorage.clear();
 	document.body.replaceChildren();
 });
 
@@ -180,6 +181,7 @@ describe('trigger with DevTools', () => {
 			{
 				overrides: { country: 'US', region: 'CA' },
 				policy: ['usPrivacyStatesOptOut'],
+				reloadOnConsentRevoked: false,
 				ui,
 			},
 			{ mountUI: mountConsentUI, pkg: '@inth/sdk/test' }

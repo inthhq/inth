@@ -20,6 +20,7 @@
  * @internal
  */
 
+import { OPT_OUT_CONFIRMATION_STORAGE_KEY } from '@inth/sdk-core';
 import type { ConsentSnapshot, KernelEvent, SaveResult } from '@inth/sdk-core';
 import {
 	configFromPrefetchedInit,
@@ -882,6 +883,16 @@ export const runInitScript = function runInitScript(
 			setSnapshot(resolved);
 			startScripts(resolved);
 			if (resolved.activeUI !== 'banner') {
+				try {
+					if (
+						window.sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY) !==
+						null
+					) {
+						loadEngine();
+					}
+				} catch {
+					// Blocked sessionStorage degrades to no confirmation after reload.
+				}
 				return;
 			}
 			if (

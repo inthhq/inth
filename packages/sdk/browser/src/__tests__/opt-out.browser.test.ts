@@ -4,7 +4,10 @@
  * restoration, and real pointer/keyboard interaction.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { policyRulePresets } from '@inth/sdk-core';
+import {
+	OPT_OUT_CONFIRMATION_STORAGE_KEY,
+	policyRulePresets,
+} from '@inth/sdk-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { createTestingConsentClient } from '../testing-global';
@@ -18,11 +21,13 @@ afterEach(() => {
 		client.dispose();
 	}
 	clearBrowserConsentStorage();
+	sessionStorage.clear();
 	document.body.replaceChildren();
 });
 
 const startClient = async function startClient(options: {
 	gpc?: boolean;
+	reloadOnConsentRevoked?: boolean;
 	ui?: ConsentUIOptions;
 }): Promise<ConsentClient> {
 	const client = createTestingConsentClient(
@@ -35,6 +40,7 @@ const startClient = async function startClient(options: {
 					prompt: 'notice',
 				},
 			],
+			reloadOnConsentRevoked: options.reloadOnConsentRevoked ?? false,
 			ui: { colorScheme: 'light', disableAnimation: true, ...options.ui },
 		},
 		{ mountUI: mountConsentUI, pkg: '@inth/sdk/test' }
@@ -154,5 +160,56 @@ describe('opt-out UI in Chromium', () => {
 		expect(marketing.getAttribute('aria-checked')).toBe('false');
 		marketing.click();
 		expect(marketing.getAttribute('aria-checked')).toBe('false');
+	});
+
+	it('shows the confirmation view once on the next load after a reload and not on the load after that', async () => {
+		const first = await startClient({
+			reloadOnConsentRevoked: false,
+			ui: { colorScheme: 'light', disableAnimation: true },
+		});
+		await first.optOut();
+		await expect
+			.poll(() =>
+				first.ui?.root.querySelector(
+					'[data-testid="opt-out-confirmation-root"]'
+				)
+			)
+			.toBeTruthy();
+		// Wait for persistence to store the opt-out record before tearing down.
+		await expect.poll(() => localStorage.getItem('inth-opt-out')).toBeTruthy();
+		first.dispose();
+
+		// Simulate the post-reload document carrying the session marker.
+		sessionStorage.setItem(OPT_OUT_CONFIRMATION_STORAGE_KEY, '1');
+		const second = await startClient({
+			reloadOnConsentRevoked: true,
+			ui: { colorScheme: 'light', disableAnimation: true },
+		});
+		const secondRoot = second.ui?.root as ShadowRoot;
+		await expect
+			.poll(() =>
+				secondRoot.querySelector<HTMLElement>(
+					'[data-testid="opt-out-confirmation-status"]'
+				)
+			)
+			.toBeTruthy();
+		expect(
+			secondRoot.querySelector('[data-testid="opt-out-confirmation-status"]')
+				?.textContent
+		).toBe('Opt-out request honored');
+		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBeNull();
+		second.dispose();
+
+		// Third load: marker was cleared, so confirmation does not open again.
+		const third = await startClient({
+			reloadOnConsentRevoked: true,
+			ui: { colorScheme: 'light', disableAnimation: true },
+		});
+		await new Promise((resolve) => {
+			setTimeout(resolve, 30);
+		});
+		expect(
+			third.ui?.root.querySelector('[data-testid="opt-out-confirmation-root"]')
+		).toBeNull();
 	});
 });

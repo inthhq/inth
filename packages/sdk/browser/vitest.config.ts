@@ -276,6 +276,13 @@ export default mergeConfig(
 								),
 							},
 							{
+								find: /^@inth\/sdk-core\/surface-actions$/u,
+								replacement: resolve(
+									__dirname,
+									'../core/src/surface-actions/index.ts'
+								),
+							},
+							{
 								find: '@inth/sdk-core/runtime',
 								replacement: resolve(__dirname, '../core/src/runtime/index.ts'),
 							},

@@ -66,7 +66,9 @@ the third argument to `activateGatedScripts`; see
 
 Because already-executed scripts cannot be unloaded, `@inth/sdk` and
 `createConsentRuntime` reload the page after a visitor withdraws a previously
-allowed category. Allowing a category never reloads.
+allowed category, whether through preferences or a one-click opt-out. Privacy
+signals and backend-synced opt-outs do not reload. Allowing a category never
+reloads.
 
 Set `reloadOnConsentRevoked: false` to handle withdrawal yourself (for
 example via a vendor's opt-out API in `onConsentChange`). Use
