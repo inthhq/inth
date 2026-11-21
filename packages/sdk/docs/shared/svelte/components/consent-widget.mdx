@@ -36,18 +36,44 @@ an unsaved draft that every consent component on the page shares. The save
 button records the draft; the accept and reject buttons record every unlocked
 category at once.
 
-When a durable opt-out is held, the widget shows a status line
-(`role="status"`) above the category list: "Opt-out request honored" for a
-visitor request, or "Opt-out preference signal honored" when GPC recorded or
-enforces it. While GPC is active under a policy that maps it, signal-restricted
-switches and `marketing` (or `measurement` when `marketing` is not in scope)
-stay off and disabled with a notice below each locked row, and Save Settings
-and Accept All skip locked categories. When an account holds the opt-out and
-GPC is off, the account notice appears below `marketing` (or `measurement` when
-`marketing` is not in scope) and the switches stay usable. Turning `measurement`
-on while `marketing` stays off allows `measurement` without lifting the
-opt-out; turning `marketing` back on and saving asks the backend to lift the account's opt-out, which stays in force until the backend confirms it. Read the same derived
-state from `getConsentManager().optOutState`.
+Under an `opt-out` policy, the widget renders a sale-and-sharing block first,
+above the category list and outside any accordion item. Under any other policy
+model, no block renders and the layout stays unchanged.
+
+- Before the visitor opts out, the block shows the configured opt-out link
+  title from `presentation.optOutLink`, a neutral status sentence and an
+  `Opt out` button. One click records the opt-out immediately with no category
+  switch and no Save step.
+- Once a durable opt-out is held, the button is removed and the block shows
+  the status line (`role="status"`): "Opt-out request honored" for a visitor
+  request, or "Opt-out preference signal honored" when GPC recorded or enforces
+  it. Below the status line, the block shows the receipt sentence, recorded
+  time and local reference. When a backend answer confirms the refused rights,
+  the heading names them; before confirmation, it keeps the configured link
+  title. When GPC is not locking the opt-out, an `Opt back in…` link appears
+  below the receipt.
+- While GPC is active under a policy that maps it, signal-restricted switches
+  and `marketing` (or `measurement` when `marketing` is not in scope) stay off
+  and disabled with a notice below each locked row, no `Opt back in…` link
+  appears, and Save Settings and Accept All skip locked categories.
+- When an account holds the opt-out and GPC is off, the account notice appears
+  below `marketing` (or `measurement` when `marketing` is not in scope) and the
+  switches stay usable. Clicking `Opt back in…`, clicking Accept All, or
+  turning `marketing` back on and saving opens a separate confirmation dialog
+  first. Confirming asks the backend to lift the account opt-out, which stays
+  in force until the backend confirms it.
+- When a device holds the opt-out and GPC is off, opting back in takes two
+  steps under an `opt-out` policy. Clicking `Opt back in…`, clicking Accept
+  All, or turning `marketing` back on and saving opens a separate modal
+  confirmation dialog (`measurement` decides when `marketing` is not in scope).
+  Focus starts on `Stay opted out`, both buttons have equal prominence and
+  Escape cancels with nothing saved. Confirming lifts the opt-out and applies
+  the pending save. Turning `measurement` on while `marketing` stays off allows
+  `measurement` without lifting the opt-out and skips confirmation. Under an
+  `opt-in` policy, Accept still lifts a held opt-out in one step.
+
+Read the same derived state and receipt from `getConsentManager().optOutState`
+and `getConsentManager().optOutReceipt`.
 
 A category with declared vendors lists them under its description, each with
 its own switch, so a visitor can allow a category and still turn one vendor
@@ -71,8 +97,8 @@ recorded under the new one.
 
 ## Style the widget
 
-`ConsentWidget` reads the `consentWidget`, `consentWidgetOptOutStatus`,
-`consentWidgetAccordion`, `consentWidgetFooter`,
+`ConsentWidget` reads the `consentWidget`, `consentWidgetOptOut`,
+`consentWidgetOptOutStatus`, `consentWidgetAccordion`, `consentWidgetFooter`,
 `consentWidgetFooterSubGroup` and `consentWidgetTag` theme slots. The root
 carries `data-testid="consent-widget-root"`, and each category row carries
 `data-testid="consent-widget-accordion-item-<category>"`.

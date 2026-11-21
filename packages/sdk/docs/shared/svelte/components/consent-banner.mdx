@@ -70,9 +70,11 @@ When the policy grants the `opt-out` right, the banner shows an underlined
 opt-out link whose action follows the resolved `presentation.optOutLink` title.
 With the default `'do-not-sell'` ("Do Not Sell or Share My Personal
 Information"), activating the link records the opt-out in one click and opens
-`OptOutConfirmation` (reloading first when that turns off a running category
-and `reloadOnConsentRevoked` is enabled; rendered lazily by `ConsentDialog` or
-a standalone `OptOutConfirmation`). With `'privacy-choices'` or
+`OptOutConfirmation` with a receipt showing the honored status line, covered
+scope and backend-confirmed rights, recorded time and local reference when this
+browser created the opt-out (reloading first when that turns off a running
+category and `reloadOnConsentRevoked` is enabled; rendered lazily by
+`ConsentDialog` or a standalone `OptOutConfirmation`). With `'privacy-choices'` or
 `'california-privacy-choices'`, the link renders with the California Privacy
 Protection Agency opt-out icon and opens `ConsentDialog` without recording an
 opt-out. Programmatic calls to `requestOptOut()` still opt out in one step
@@ -82,6 +84,8 @@ is shown, the link opens `ConsentDialog`.
 <include src="../../privacy-choices-link.mdx" />
 
 Accept and Reject record the choice and close the banner in the same task.
+Under an `opt-out` policy while an opt-out is held, Accept opens the two-step
+opt-in confirmation dialog instead of saving right away.
 The backend request runs after; a failed request is retried and does not
 reopen the banner. Customize opens `ConsentDialog`, so render the dialog too.
 
