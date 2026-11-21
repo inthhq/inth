@@ -839,9 +839,10 @@ const reconcileOptOutRecord = function reconcileOptOutRecord(
 	if (
 		view.optOut !== null &&
 		stored.optOut &&
+		stored.optOutGpcReported === true &&
 		sameRecord(view.optOut, stored.optOut)
 	) {
-		records.optOutGpcReported = stored.optOutGpcReported === true;
+		records.optOutGpcReported = true;
 	}
 };
 
