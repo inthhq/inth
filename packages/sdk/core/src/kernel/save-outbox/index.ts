@@ -161,6 +161,10 @@ export interface SaveOutbox {
 	adoptSubject: (from: string, to: string) => Promise<string | null>;
 	/** Whether an opt-out route answered `404` on this kernel. */
 	areOptOutsUnsupported: () => boolean;
+	/** Number of direct opt-out and lift requests currently in flight. */
+	getOptOutRequestsInFlight: () => number;
+	/** Subscribe to changes in the in-flight opt-out and lift request count. */
+	onOptOutRequestsChange: (listener: (inFlight: number) => void) => () => void;
 }
 
 export interface SaveOutboxOptions {
@@ -240,6 +244,25 @@ export const createSaveOutbox = function createSaveOutbox({
 	// Instance-local: another page must still recover a stranded request.
 	const directSends = new Set<SavePayload>();
 	const directOptOutSends = new Set<string>();
+	let optOutRequestsInFlight = 0;
+	const optOutRequestListeners = new Set<(inFlight: number) => void>();
+	const notifyOptOutRequests = (): void => {
+		for (const listener of [...optOutRequestListeners]) {
+			listener(optOutRequestsInFlight);
+		}
+	};
+	const trackOptOutRequest = async function trackOptOutRequest<Result>(
+		run: () => Promise<Result>
+	): Promise<Result> {
+		optOutRequestsInFlight += 1;
+		notifyOptOutRequests();
+		try {
+			return await run();
+		} finally {
+			optOutRequestsInFlight = Math.max(0, optOutRequestsInFlight - 1);
+			notifyOptOutRequests();
+		}
+	};
 	// By key: the stored entry of a save in flight is still this action
 	// after it was narrowed, or moved to another subject id.
 	const isSending = (payload: SavePayload): boolean =>
@@ -759,20 +782,38 @@ export const createSaveOutbox = function createSaveOutbox({
 		adoptSubject,
 		areOptOutsUnsupported: () => optOutsUnsupported,
 		clear,
+		getOptOutRequestsInFlight: () => optOutRequestsInFlight,
 		hold(until) {
 			held = Promise.allSettled([held, until]);
 		},
-		liftAccountOptOut: (payload) => performAccountLift(payload, true),
+		liftAccountOptOut: (payload) =>
+			optOutsUnsupported || !transport?.liftOptOut
+				? Promise.resolve({ ok: false })
+				: trackOptOutRequest(() => performAccountLift(payload, true)),
+		onOptOutRequestsChange(listener) {
+			optOutRequestListeners.add(listener);
+			return () => {
+				optOutRequestListeners.delete(listener);
+			};
+		},
 		replay,
 		send: (payload, action) =>
 			trackDirectSend(payload, () => performSendAction(payload, action, true)),
 		sendOptOut: (payload, context) =>
-			trackDirectOptOut(payload.idempotencyKey, () =>
-				performSendOptOut({ kind: 'record', payload }, context, true)
-			),
+			optOutsUnsupported || (!transport?.optOut && !held)
+				? Promise.resolve()
+				: trackOptOutRequest(() =>
+						trackDirectOptOut(payload.idempotencyKey, () =>
+							performSendOptOut({ kind: 'record', payload }, context, true)
+						)
+					),
 		sendOptOutLift: (payload, context) =>
-			trackDirectOptOut(payload.idempotencyKey, () =>
-				performSendOptOut({ kind: 'lift', payload }, context, true)
-			),
+			optOutsUnsupported || (!transport?.liftOptOut && !held)
+				? Promise.resolve()
+				: trackOptOutRequest(() =>
+						trackDirectOptOut(payload.idempotencyKey, () =>
+							performSendOptOut({ kind: 'lift', payload }, context, true)
+						)
+					),
 	};
 };

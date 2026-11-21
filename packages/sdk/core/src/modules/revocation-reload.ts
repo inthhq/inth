@@ -1,4 +1,10 @@
+import type { InternalKernel } from '../kernel/internals';
 import { vendorAxisActive } from '../libs/vendors';
+import { registerOptOutReloadHook } from '../surface-actions/opt-out';
+import {
+	clearPendingOptOutConfirmation,
+	markPendingOptOutConfirmation,
+} from '../surface-actions/opt-out-reload';
 /**
  * Reload the page after a visitor revokes a permission.
  *
@@ -6,8 +12,8 @@ import { vendorAxisActive } from '../libs/vendors';
  * history hooks and widgets stay alive until the page unloads. When an
  * explicit accept, reject, save or one-click opt-out turns off a category or
  * vendor that was effectively granted, the page reloads once every in-flight
- * save or opt-out settles, so the next document starts with only the
- * permitted code.
+ * save, opt-out or lift request settles, so the next document starts with
+ * only the permitted code.
  *
  * Expiry, policy changes, privacy signals and backend-synced opt-outs do not
  * reload: they change permissions without a visitor action on this page. An
@@ -156,7 +162,9 @@ export const watchRevocationReload = function watchRevocationReload({
 	getOnBeforeReload,
 	reload = reloadWindow,
 }: RevocationReloadOptions): Unsubscribe {
+	const internal = kernel as Partial<InternalKernel>;
 	let commandsInFlight = 0;
+	let optOutRequestsInFlight = internal.getOptOutRequestsInFlight?.() ?? 0;
 	let commandStartSnapshot: ConsentSnapshot | null = null;
 	let revoked = false;
 	let timer: ReturnType<typeof setTimeout> | null = null;
@@ -186,7 +194,12 @@ export const watchRevocationReload = function watchRevocationReload({
 	};
 
 	const scheduleReload = () => {
-		if (commandsInFlight > 0 || !revoked || timer !== null) {
+		if (
+			commandsInFlight > 0 ||
+			optOutRequestsInFlight > 0 ||
+			!revoked ||
+			timer !== null
+		) {
 			return;
 		}
 		if (typeof window === 'undefined' || !isEnabled()) {
@@ -211,6 +224,14 @@ export const watchRevocationReload = function watchRevocationReload({
 	};
 
 	const subscriptions = [
+		registerOptOutReloadHook(kernel, {
+			clearPending: clearPendingOptOutConfirmation,
+			markPending: markPendingOptOutConfirmation,
+			willReload: (before, after) =>
+				typeof window !== 'undefined' &&
+				isEnabled() &&
+				hasRevokedPermission(before, after),
+		}),
 		kernel.events.on('command:save:started', onCommandStarted),
 		kernel.events.on('command:opt-out:started', onCommandStarted),
 		kernel.events.on('choice:recorded', onRecorded),
@@ -222,6 +243,14 @@ export const watchRevocationReload = function watchRevocationReload({
 		}),
 		kernel.events.on('command:save:completed', onCommandCompleted),
 		kernel.events.on('command:opt-out:completed', onCommandCompleted),
+		...(internal.onOptOutRequestsChange
+			? [
+					internal.onOptOutRequestsChange((inFlight) => {
+						optOutRequestsInFlight = inFlight;
+						scheduleReload();
+					}),
+				]
+			: []),
 		// An external source has no save commands; its reported decision is
 		// the visitor action.
 		kernel.events.on('permissions:changed', ({ previous, snapshot }) => {

@@ -19,22 +19,27 @@ import type { SaveOutboxStore } from '../../kernel/save-outbox';
 import { OPT_OUT_CONFIRMATION_STORAGE_KEY } from '../../libs/storage-keys';
 import { createStandInKernel } from '../../runtime/stand-in-kernel';
 import {
-	clearPendingOptOutConfirmation,
 	closeOptOutConfirmation,
-	hasPendingOptOutConfirmation,
 	isOptOutConfirmationOpen,
-	markPendingOptOutConfirmation,
 	optOutConsentSurface,
 	subscribeOptOutConfirmation,
-	watchPendingOptOutConfirmation,
 } from '../../surface-actions/opt-out';
+import {
+	clearPendingOptOutConfirmation,
+	hasPendingOptOutConfirmation,
+	markPendingOptOutConfirmation,
+	watchPendingOptOutConfirmation,
+} from '../../surface-actions/opt-out-reload';
 import type {
 	KernelConfig,
 	KernelVendorsState,
+	LiftOptOutTransportResult,
 	OptOutResult,
+	OptOutTransportResult,
 	SaveResult,
 } from '../../types';
 import { watchRevocationReload } from '../revocation-reload';
+import { createScriptLoader } from '../script-loader';
 
 const vendors: KernelVendorsState = {
 	declared: [
@@ -538,6 +543,232 @@ describe('watchRevocationReload with durable opt-out', () => {
 		expect(onBeforeReload).toHaveBeenCalledOnce();
 		expect(reload).toHaveBeenCalledOnce();
 	});
+
+	it('waits for a pending opt-out request started by save() before reloading and resolves save() first', async () => {
+		let finishOptOut: (result: OptOutTransportResult) => void = () => undefined;
+		const optOut = vi.fn(
+			() =>
+				new Promise<OptOutTransportResult>((resolve) => {
+					finishOptOut = resolve;
+				})
+		);
+		const kernel = createOptOutKernel({
+			transport: {
+				optOut,
+				save: () => Promise.resolve({ ok: true }),
+			},
+		});
+		const { onBeforeReload, reload } = watch(kernel);
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+
+		const saving = kernel.commands.save({ marketing: false });
+		await vi.advanceTimersByTimeAsync(0);
+		const saveResult = await saving;
+		expect(saveResult.ok).toBe(true);
+		expect(optOut).toHaveBeenCalledOnce();
+
+		// The save resolved, but the opt-out request is still in flight.
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(onBeforeReload).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+
+		finishOptOut({ ok: true });
+		await vi.advanceTimersByTimeAsync(0);
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(reload).toHaveBeenCalledOnce();
+	});
+
+	it('waits for a pending account opt-out lift started by save() when another category was revoked', async () => {
+		let finishLift: (result: LiftOptOutTransportResult) => void = () =>
+			undefined;
+		const liftOptOut = vi.fn(
+			() =>
+				new Promise<LiftOptOutTransportResult>((resolve) => {
+					finishLift = resolve;
+				})
+		);
+		const kernel = createKernel({
+			initialPolicyResolution: matchedResolution(
+				optOutRule({
+					categories: ['functionality', 'marketing', 'measurement'],
+					privacySignals: {
+						gpc: { denyCategories: ['marketing'] },
+					},
+				})
+			),
+			initialRecords: {
+				optOut: {
+					heldBy: 'person',
+					method: 'api',
+					recordedAt: NOW - 1000,
+					rights: ['sale', 'share'],
+				},
+			},
+			transport: {
+				liftOptOut,
+				save: () => Promise.resolve({ ok: true }),
+			},
+		});
+		const { onBeforeReload, reload } = watch(kernel);
+		// Marketing is denied by the account-held opt-out; functionality is still granted.
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(kernel.getSnapshot().effectivePermissions.functionality).toBe(true);
+
+		const saving = kernel.commands.save({
+			functionality: false,
+			marketing: true,
+		});
+		await vi.advanceTimersByTimeAsync(0);
+		const saveResult = await saving;
+		expect(saveResult.ok).toBe(true);
+		expect(liftOptOut).toHaveBeenCalledOnce();
+
+		// The save resolved, but the account opt-out lift is still in flight.
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(onBeforeReload).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+
+		finishLift({ ok: true, optOut: null });
+		await vi.advanceTimersByTimeAsync(0);
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(reload).toHaveBeenCalledOnce();
+	});
+
+	it('waits for a pending device opt-out lift started by save() when another category was revoked', async () => {
+		let finishLift: (result: LiftOptOutTransportResult) => void = () =>
+			undefined;
+		const liftOptOut = vi.fn(
+			() =>
+				new Promise<LiftOptOutTransportResult>((resolve) => {
+					finishLift = resolve;
+				})
+		);
+		const kernel = createKernel({
+			initialPolicyResolution: matchedResolution(
+				optOutRule({
+					categories: ['functionality', 'marketing', 'measurement'],
+					privacySignals: {
+						gpc: { denyCategories: ['marketing'] },
+					},
+				})
+			),
+			initialRecords: {
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 1000,
+					rights: ['sale', 'share'],
+				},
+			},
+			transport: {
+				liftOptOut,
+				save: () => Promise.resolve({ ok: true }),
+			},
+		});
+		const { onBeforeReload, reload } = watch(kernel);
+		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+		expect(kernel.getSnapshot().effectivePermissions.functionality).toBe(true);
+
+		const saving = kernel.commands.save({
+			functionality: false,
+			marketing: true,
+		});
+		await vi.advanceTimersByTimeAsync(0);
+		const saveResult = await saving;
+		expect(saveResult.ok).toBe(true);
+		expect(liftOptOut).toHaveBeenCalledOnce();
+
+		// The save resolved, but the device opt-out lift is still in flight.
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(onBeforeReload).not.toHaveBeenCalled();
+		expect(reload).not.toHaveBeenCalled();
+
+		finishLift({ ok: true, optOut: null });
+		await vi.advanceTimersByTimeAsync(0);
+		expect(onBeforeReload).toHaveBeenCalledOnce();
+		expect(reload).toHaveBeenCalledOnce();
+	});
+});
+
+describe('script loader denial callbacks before revocation reload', () => {
+	const createOptOutKernel = () =>
+		createKernel({
+			initialPolicyResolution: matchedResolution(
+				optOutRule({ categories: ['marketing', 'measurement'] })
+			),
+		});
+
+	it.each(['optOut', 'saveNone'] as const)(
+		'runs loaded tag onConsentChange denials before onBeforeConsentRevocationReload and reload on %s',
+		async (action) => {
+			const order: string[] = [];
+			const kernel = createOptOutKernel();
+			const reload = vi.fn(() => {
+				order.push('reload');
+			});
+			const onBeforeReload = vi.fn(() => {
+				order.push('onBeforeReload');
+			});
+			const disposeReload = watchRevocationReload({
+				getOnBeforeReload: () => onBeforeReload,
+				isEnabled: () => true,
+				kernel,
+				reload,
+			});
+			const loader = createScriptLoader({
+				kernel,
+				scripts: [
+					{
+						category: 'marketing',
+						id: `marketing-tag-${action}`,
+						onConsentChange: ({ consents, hasConsent }) => {
+							if (!hasConsent && consents.marketing === false) {
+								order.push('gated:denied');
+							}
+						},
+						textContent: 'window.__tagLoaded = true;',
+					},
+					{
+						alwaysLoad: true,
+						category: 'marketing',
+						id: `always-load-tag-${action}`,
+						onConsentChange: ({ consents, hasConsent }) => {
+							if (!hasConsent && consents.marketing === false) {
+								order.push('alwaysLoad:denied');
+							}
+						},
+						textContent: 'window.__alwaysLoaded = true;',
+					},
+				],
+			});
+			try {
+				expect(loader.getLoadedScriptIds()).toEqual(
+					expect.arrayContaining([
+						`marketing-tag-${action}`,
+						`always-load-tag-${action}`,
+					])
+				);
+
+				if (action === 'optOut') {
+					await kernel.commands.optOut();
+				} else {
+					await kernel.commands.save('none');
+				}
+				await vi.runAllTimersAsync();
+
+				expect(order).toEqual([
+					'gated:denied',
+					'alwaysLoad:denied',
+					'onBeforeReload',
+					'reload',
+				]);
+			} finally {
+				loader.dispose();
+				disposeReload();
+				document.head.innerHTML = '';
+			}
+		}
+	);
 });
 
 describe('opt-out confirmation across a revocation reload', () => {

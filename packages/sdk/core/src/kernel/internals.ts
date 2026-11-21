@@ -82,6 +82,14 @@ export interface InternalKernel extends ConsentKernel {
 	onOptOutGpcReportedChange: (
 		listener: (reported: boolean) => void
 	) => () => void;
+	/**
+	 * Number of direct opt-out and lift requests currently in flight.
+	 */
+	getOptOutRequestsInFlight: () => number;
+	/**
+	 * Subscribe to changes in the in-flight opt-out and lift request count.
+	 */
+	onOptOutRequestsChange: (listener: (inFlight: number) => void) => () => void;
 	readonly events: ConsentKernel['events'] & {
 		/** Announce an event the kernel did not produce itself. */
 		emit: (event: KernelEvent) => void;
