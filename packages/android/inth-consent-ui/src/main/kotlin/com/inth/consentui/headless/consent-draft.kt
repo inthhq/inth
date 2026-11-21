@@ -15,6 +15,11 @@ import com.inth.core.iab.IabPresentation
 import com.inth.core.model.ConsentCategory
 import com.inth.core.model.ConsentModel
 import com.inth.core.model.ConsentSnapshot
+import com.inth.core.policy.OptOutLock
+import com.inth.core.policy.OptOutVia
+import com.inth.core.policy.PolicyEvaluator
+import com.inth.core.policy.ResolvedOptOutState
+import com.inth.core.policy.resolveCategoryOptOutLock
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +27,8 @@ import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 /** What a consent control asks the core to record. */
 enum class ConsentWriteAction {
@@ -41,9 +48,11 @@ enum class ConsentWriteAction {
  * @property locked The person cannot change it: `necessary`, or a category a restriction such
  *   as Global Privacy Control holds off.
  * @property lockedLabel The state to show in place of a switch when [locked].
- * @property note Why a locked optional category is off.
+ * @property note Why a locked optional category is off, or why the deciding category is held by
+ *   the visitor's account.
  * @property enabled Whether the switch takes input now. `false` while a save runs, while the
  *   draft is stale, and while an IAB vendor list cannot be edited.
+ * @property optOutLock Opt-out or privacy signal lock reason for this row, if any.
  */
 @Stable
 class ConsentCategoryRow internal constructor(
@@ -56,6 +65,7 @@ class ConsentCategoryRow internal constructor(
     val checked: Boolean,
     val enabled: Boolean,
     val onCheckedChange: (Boolean) -> Unit,
+    val optOutLock: OptOutLock? = null,
 )
 
 /**
@@ -88,6 +98,8 @@ class ConsentDraft internal constructor(
 
     /** The snapshot the draft last read. */
     var snapshot by mutableStateOf(core.snapshot()); internal set
+    /** Opt-out display state derived from [snapshot] and the active policy. */
+    var optOutState by mutableStateOf(core.optOutState()); private set
     /** A save is running. Disable your controls and do not close the screen. */
     var isSaving by mutableStateOf(false); private set
     /** The action being saved while [isSaving], so only its control shows progress. */
@@ -173,6 +185,17 @@ class ConsentDraft internal constructor(
     /** One row per displayed category, with its copy, lock and switch binding. */
     val categories: List<ConsentCategoryRow> get() = displayedCategories.map(::category)
 
+    /** Honored opt-out status line for preferences, or `null` when no opt-out is held. */
+    val optOutStatus: String? get() {
+        if (!optOutState.honored) return null
+        val text = optOutCopy(snapshot)
+        return if (optOutState.via == OptOutVia.SIGNAL) text.statusSignal else text.statusRequest
+    }
+
+    /** Why [category] is locked or annotated for an opt-out or privacy signal, or `null`. */
+    fun categoryOptOutLock(category: ConsentCategory): OptOutLock? =
+        resolveCategoryOptOutLock(snapshot, optOutState, category)
+
     /** The row for one category. */
     fun category(category: ConsentCategory): ConsentCategoryRow {
         val text = copy
@@ -183,21 +206,33 @@ class ConsentDraft internal constructor(
             ConsentCategory.MEASUREMENT -> text.measurementTitle to text.measurementDescription
             ConsentCategory.MARKETING -> text.marketingTitle to text.marketingDescription
         }
-        val locked = !category.optional || isRestricted(category)
-        val gpc = "gpc" in snapshot.restrictions[category.wireName].orEmpty()
+        val optOutLock = categoryOptOutLock(category)
+        val gpcLocked = optOutLock == OptOutLock.GPC_ACTIVE
+        val strictScope = PolicyEvaluator.RESTRICTION_STRICT_SCOPE in snapshot.restrictions[category.wireName].orEmpty()
+        val locked = !category.optional || gpcLocked || strictScope
+        val optOutText = optOutCopy(snapshot)
+        val note = when {
+            !category.optional -> null
+            gpcLocked -> optOutText.lockedByGpc
+            strictScope -> text.notOffered
+            optOutLock == OptOutLock.HELD_BY_ACCOUNT -> optOutText.lockedByAccount
+            else -> null
+        }
         return ConsentCategoryRow(
             category, title, description, locked,
             lockedLabel = if (!locked) null else if (category.optional) iabCopy.appOff else iabCopy.appAlwaysOn,
-            note = if (locked && category.optional) (if (gpc) text.restrictedByGpc else text.notOffered) else null,
+            note = note,
             checked = if (category.optional) categoryChoices[category] == true else true,
             enabled = !locked && isEditable,
             onCheckedChange = { setCategory(category, it) },
+            optOutLock = optOutLock,
         )
     }
 
     /** A restriction such as Global Privacy Control or a strict scope holds this category off. */
     fun isRestricted(category: ConsentCategory): Boolean =
-        snapshot.restrictions[category.wireName].orEmpty().any { it == "gpc" || it == "strict-scope" }
+        categoryOptOutLock(category) == OptOutLock.GPC_ACTIVE ||
+            PolicyEvaluator.RESTRICTION_STRICT_SCOPE in snapshot.restrictions[category.wireName].orEmpty()
 
     /** Stage one optional category. Ignored for `necessary`, while saving, while stale, and for a restricted category. */
     fun setCategory(category: ConsentCategory, enabled: Boolean) {
@@ -235,13 +270,23 @@ class ConsentDraft internal constructor(
     /** Drop staged edits and read the saved record again. Clears [isStale] and the error. */
     fun reset() {
         if (isSaving) return
-        snapshot = core.snapshot(); disclosure = core.iabPresentation()
+        snapshot = core.snapshot(); optOutState = core.optOutState(); disclosure = core.iabPresentation()
         baseRevision = snapshot.revision
         // No IAB decision yet: no choice at all, or a usable list with no saved IAB decision. A
         // list that can't be edited hides the saved decision, so it never counts as first time.
         choices = disclosure?.let { initialIabChoices(it, firstTime = snapshot.explicitChoice == null || (it.canEdit && core.iabConsent == null)) } ?: IabChoices()
-        categoryChoices = displayedCategories.filter { it.optional }.associateWith { snapshot.explicitChoice?.valueOf(it) ?: false }
+        // Seed each optional switch from what the visitor effectively has, keeping categories
+        // restricted by an opt-out or GPC off even if an older explicit choice granted them.
+        categoryChoices = displayedCategories.filter { it.optional }.associateWith(::seededCategoryValue)
         seedCategories = categoryChoices; seedChoices = choices; errorCode = null; failedAction = null; isStale = false
+    }
+
+    private fun seededCategoryValue(category: ConsentCategory): Boolean {
+        val reasons = snapshot.restrictions[category.wireName].orEmpty()
+        if (PolicyEvaluator.RESTRICTION_OPT_OUT in reasons || PolicyEvaluator.RESTRICTION_GPC in reasons) {
+            return false
+        }
+        return snapshot.effectivePermissions[category]
     }
 
     /**
@@ -286,6 +331,7 @@ class ConsentDraft internal constructor(
     internal fun commit(action: ConsentWriteAction, settled: (Boolean) -> Unit) {
         val revision = baseRevision
         val categoryDraft = categoryChoices.toMap()
+        val gpcLocked = displayedCategories.filter { it.optional && categoryOptOutLock(it) == OptOutLock.GPC_ACTIVE }.toSet()
         val choiceDraft = choices
         val iab = isIab
         isSaving = true; savingAction = action; showProgress = false; lastAction = action
@@ -294,7 +340,16 @@ class ConsentDraft internal constructor(
                 if (action == ConsentWriteAction.ACKNOWLEDGE) core.dismissNotice() to "queue-write-failed"
                 else {
                     val intent = when (action) {
-                        ConsentWriteAction.ACCEPT_ALL -> CommitIntent.All
+                        ConsentWriteAction.ACCEPT_ALL ->
+                            if (!iab && gpcLocked.isNotEmpty()) {
+                                CommitIntent.Custom(
+                                    displayedCategories
+                                        .filter { it.optional && it !in gpcLocked }
+                                        .associateWith { true },
+                                )
+                            } else {
+                                CommitIntent.All
+                            }
                         ConsentWriteAction.REJECT_ALL -> CommitIntent.Necessary
                         else -> if (iab) CommitIntent.Iab(choiceDraft, categoryDraft) else CommitIntent.Custom(categoryDraft)
                     }
@@ -305,7 +360,7 @@ class ConsentDraft internal constructor(
                 withTimeoutOrNull(400) { write.await() } ?: run { showProgress = true; write.await() }
             }
             isSaving = false; savingAction = null; showProgress = false
-            snapshot = core.snapshot()
+            snapshot = core.snapshot(); optOutState = core.optOutState()
             if (result.first) {
                 errorCode = null; failedAction = null
                 announcement = if (action == ConsentWriteAction.ACKNOWLEDGE) copy.noticeAcknowledged else copy.choicesSaved
@@ -324,7 +379,14 @@ class ConsentDraft internal constructor(
         if (next.revision < snapshot.revision) return
         val wasPending = snapshot.policyPending
         snapshot = next
+        optOutState = core.optOutState()
         if (!isSaving && !isDirty && follows(wasPending, next)) reset()
+        else if (isDirty) {
+            val locked = categoryChoices.keys.filter { categoryOptOutLock(it) == OptOutLock.GPC_ACTIVE }
+            if (locked.isNotEmpty()) {
+                categoryChoices = categoryChoices + locked.associateWith { false }
+            }
+        }
         if (reloadAfterRefresh && !next.policyPending) {
             if (isDirty) {
                 disclosure = core.iabPresentation()
@@ -336,7 +398,7 @@ class ConsentDraft internal constructor(
     }
 
     /** Read the core's snapshot now, outside a change notification. */
-    internal fun sync() { snapshot = core.snapshot() }
+    internal fun sync() { snapshot = core.snapshot(); optOutState = core.optOutState() }
 
     /** "Last changed" with the date in the copy's language, not the device's. */
     fun lastChanged(epochMs: Long): String {
@@ -360,3 +422,37 @@ internal fun initialIabChoices(presentation: IabPresentation, firstTime: Boolean
 internal fun List<Int>.select(id: Int, enabled: Boolean) = (if (enabled) this + id else this - id).distinct().sorted()
 internal fun List<Long>.select(id: Long, enabled: Boolean) = (if (enabled) this + id else this - id).distinct().sorted()
 internal fun List<String>.select(id: String, enabled: Boolean) = (if (enabled) this + id else this - id).distinct().sorted()
+
+internal data class OptOutCopy(
+    val statusRequest: String,
+    val statusSignal: String,
+    val lockedByGpc: String,
+    val lockedByAccount: String,
+)
+
+private val DEFAULT_OPT_OUT_COPY = OptOutCopy(
+    statusRequest = "Opt-out request honored",
+    statusSignal = "Opt-out preference signal honored",
+    lockedByGpc = "Your browser's Global Privacy Control signal is on, so this stays off.",
+    lockedByAccount = "Your account has opted out, and you can change this after signing in.",
+)
+
+/**
+ * Reads `optOut.*` copy from the served translation bundle when present, falling back to
+ * the same English strings as `@inth/sdk-translations`.
+ */
+internal fun optOutCopy(snapshot: ConsentSnapshot): OptOutCopy {
+    val section = snapshot.translations?.get("optOut") as? JsonObject ?: return DEFAULT_OPT_OUT_COPY
+    fun string(key: String, fallback: String): String =
+        (section[key] as? JsonPrimitive)
+            ?.takeIf { it.isString }
+            ?.content
+            ?.takeIf { it.isNotBlank() }
+            ?: fallback
+    return OptOutCopy(
+        statusRequest = string("statusRequest", DEFAULT_OPT_OUT_COPY.statusRequest),
+        statusSignal = string("statusSignal", DEFAULT_OPT_OUT_COPY.statusSignal),
+        lockedByGpc = string("lockedByGpc", DEFAULT_OPT_OUT_COPY.lockedByGpc),
+        lockedByAccount = string("lockedByAccount", DEFAULT_OPT_OUT_COPY.lockedByAccount),
+    )
+}

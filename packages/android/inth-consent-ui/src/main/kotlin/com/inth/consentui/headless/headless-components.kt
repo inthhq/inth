@@ -30,6 +30,7 @@ import com.inth.core.ConsentCore
 import com.inth.core.iab.IabLegalBasis
 import com.inth.core.model.ConsentCategory
 import com.inth.core.model.ConsentSnapshot
+import com.inth.core.policy.ResolvedOptOutState
 
 private fun installedCore(): ConsentCore = requireNotNull(Inth.current) { "Install Inth before using the headless consent blocks" }
 
@@ -235,6 +236,10 @@ class ConsentPreferencesScope internal constructor(val draft: ConsentDraft, priv
     var confirmDiscard by mutableStateOf(false); private set
     /** One row per category in scope. */
     val categories: List<ConsentCategoryRow> get() = draft.categories
+    /** Opt-out display state for the current snapshot and active policy. */
+    val optOutState: ResolvedOptOutState get() = draft.optOutState
+    /** Honored opt-out status line, or `null` when no opt-out is held. */
+    val optOutStatus: String? get() = draft.optOutStatus
     /** The IAB selection and disclosure. `null` outside a TCF policy. */
     val iab: IabDraftHandle? get() = draft.iab
     val title: String get() = if (draft.isIab) draft.iabCopy.preferenceCenterTitle else draft.copy.privacySettings

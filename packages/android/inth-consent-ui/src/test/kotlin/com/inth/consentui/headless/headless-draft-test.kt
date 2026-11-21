@@ -241,7 +241,207 @@ class HeadlessDraftTest {
         assertNotNull(iab.consentStorage)
     }
 
+    @Test fun savingMeasurementUnderAHeldOptOutDoesNotLiftStaleMarketingGrant() {
+        val core = optOutCore()
+        assertTrue(core.save(com.inth.core.CommitIntent.All).ok)
+        assertTrue(core.optOut().ok)
+        assertNotNull(core.snapshot().optOut)
+        assertEquals(true, core.snapshot().explicitChoice?.valueOf(ConsentCategory.MARKETING))
+
+        val draft = draft(core)
+        assertFalse("marketing must start off under a held opt-out", draft.category(ConsentCategory.MARKETING).checked)
+        assertFalse("measurement must start off under a held opt-out", draft.category(ConsentCategory.MEASUREMENT).checked)
+        draft.setCategory(ConsentCategory.MEASUREMENT, true)
+        var saved: Boolean? = null
+        draft.save { saved = it }
+
+        assertEquals(true, saved)
+        assertNotNull("editing measurement must keep the held opt-out", core.snapshot().optOut)
+        assertFalse("editing measurement must leave marketing denied", core.isAllowed(ConsentCategory.MARKETING))
+        assertTrue("measurement grant should stand while marketing stays off", core.isAllowed(ConsentCategory.MEASUREMENT))
+    }
+
+    @Test fun savingMeasurementUnderAnOptOutRuleWithNoStoredChoiceDoesNotRecordAnOptOut() {
+        val core = optOutCore()
+        assertNull(core.snapshot().explicitChoice)
+        assertNull(core.snapshot().optOut)
+
+        val draft = draft(core)
+        assertTrue("marketing must start on under an opt-out rule with no choice", draft.category(ConsentCategory.MARKETING).checked)
+        assertTrue("measurement must start on under an opt-out rule with no choice", draft.category(ConsentCategory.MEASUREMENT).checked)
+        draft.setCategory(ConsentCategory.MEASUREMENT, false)
+        var saved: Boolean? = null
+        draft.save { saved = it }
+
+        assertEquals(true, saved)
+        assertNull("editing measurement alone must not record an opt-out", core.snapshot().optOut)
+        assertTrue("marketing stays allowed when the visitor only turned measurement off", core.isAllowed(ConsentCategory.MARKETING))
+        assertFalse(core.isAllowed(ConsentCategory.MEASUREMENT))
+    }
+
+    @Test fun aCategoryLockedByGpcCannotBeToggledAndAcceptAllSkipsLockedCategories() {
+        val core = optOutCore(
+            gpcDenyCategories = """["marketing"]""",
+            detectedGpc = true,
+        )
+        val draft = draft(core)
+
+        assertTrue(draft.optOutState.honored)
+        assertEquals(com.inth.core.policy.OptOutVia.SIGNAL, draft.optOutState.via)
+        assertEquals("Opt-out preference signal honored", draft.optOutStatus)
+        val marketing = draft.category(ConsentCategory.MARKETING)
+        assertTrue(marketing.locked)
+        assertFalse(marketing.enabled)
+        assertFalse(marketing.checked)
+        assertEquals(com.inth.core.policy.OptOutLock.GPC_ACTIVE, marketing.optOutLock)
+        assertEquals("Your browser's Global Privacy Control signal is on, so this stays off.", marketing.note)
+
+        // Toggling a GPC-locked category does nothing.
+        draft.setCategory(ConsentCategory.MARKETING, true)
+        assertFalse(draft.category(ConsentCategory.MARKETING).checked)
+        assertFalse(draft.isDirty)
+
+        // Measurement is not mapped by GPC here, so it stays editable under the opt-out.
+        val measurement = draft.category(ConsentCategory.MEASUREMENT)
+        assertFalse(measurement.locked)
+        assertTrue(measurement.enabled)
+        assertFalse(measurement.checked)
+        assertNull(measurement.optOutLock)
+        draft.setCategory(ConsentCategory.MEASUREMENT, true)
+        assertTrue(draft.category(ConsentCategory.MEASUREMENT).checked)
+
+        // Accept All leaves GPC-locked marketing off while granting unlocked categories.
+        draft.save(ConsentWriteAction.ACCEPT_ALL)
+        assertNotNull(core.snapshot().optOut)
+        assertFalse(core.isAllowed(ConsentCategory.MARKETING))
+        assertNull(core.snapshot().explicitChoice?.valueOf(ConsentCategory.MARKETING))
+        assertTrue(core.isAllowed(ConsentCategory.FUNCTIONALITY))
+    }
+
+    @Test fun accountHeldOptOutAnnotatesMarketingOnlyAndLeavesSwitchesEditable() {
+        val store = Memory()
+        val core = optOutCore(store = store)
+        val snapshot = core.snapshot()
+        val accountOptOut = com.inth.core.model.OptOutRecord(
+            rights = listOf(com.inth.core.model.OptOutRight.SALE, com.inth.core.model.OptOutRight.SHARE),
+            method = com.inth.core.model.OptOutMethod.API,
+            recordedAt = 1_770_000_000_000L,
+            heldBy = com.inth.core.model.OptOutHolder.PERSON,
+        )
+        store.write(
+            com.inth.core.store.InthStoreKeys.SNAPSHOT,
+            com.inth.core.store.InthJson.storage.encodeToString(
+                com.inth.core.store.SnapshotEnvelope.serializer(),
+                com.inth.core.store.SnapshotEnvelope(snapshot = snapshot.copy(optOut = accountOptOut)),
+            ),
+        )
+        val reloaded = optOutCore(store = store)
+        val draft = draft(reloaded)
+
+        assertEquals("Opt-out request honored", draft.optOutStatus)
+        val marketing = draft.category(ConsentCategory.MARKETING)
+        assertFalse("account-held opt-out annotates marketing without locking it", marketing.locked)
+        assertTrue(marketing.enabled)
+        assertFalse(marketing.checked)
+        assertEquals(com.inth.core.policy.OptOutLock.HELD_BY_ACCOUNT, marketing.optOutLock)
+        assertEquals("Your account has opted out, and you can change this after signing in.", marketing.note)
+
+        val measurement = draft.category(ConsentCategory.MEASUREMENT)
+        assertFalse(measurement.locked)
+        assertNull(measurement.optOutLock)
+        assertNull(measurement.note)
+
+        draft.setCategory(ConsentCategory.MARKETING, true)
+        assertTrue(draft.category(ConsentCategory.MARKETING).checked)
+    }
+
+    @Test fun turningMarketingOnLiftsDeviceHeldOptOutAndUntouchedCommitNeverGrantsRestrictedCategories() {
+        val core = optOutCore()
+        assertTrue(core.optOut().ok)
+        assertNotNull(core.snapshot().optOut)
+
+        val untouched = draft(core)
+        var untouchedSaved: Boolean? = null
+        untouched.commit(ConsentWriteAction.SAVE) { untouchedSaved = it }
+        assertEquals(true, untouchedSaved)
+        assertNotNull("an untouched commit under a held opt-out must not lift it", core.snapshot().optOut)
+        assertFalse(core.isAllowed(ConsentCategory.MARKETING))
+        assertFalse(core.isAllowed(ConsentCategory.MEASUREMENT))
+
+        // With marketing left off and measurement turned on, measurement ends up permitted and the opt-out stays.
+        val partial = draft(core)
+        partial.setCategory(ConsentCategory.MEASUREMENT, true)
+        var partialSaved: Boolean? = null
+        partial.save { partialSaved = it }
+        assertEquals(true, partialSaved)
+        assertNotNull(core.snapshot().optOut)
+        assertFalse(core.isAllowed(ConsentCategory.MARKETING))
+        assertTrue(core.isAllowed(ConsentCategory.MEASUREMENT))
+
+        // Turning marketing on lifts the device-held opt-out.
+        val lifting = draft(core)
+        lifting.setCategory(ConsentCategory.MARKETING, true)
+        var liftSaved: Boolean? = null
+        lifting.save { liftSaved = it }
+        assertEquals(true, liftSaved)
+        assertNull(core.snapshot().optOut)
+        assertTrue(core.isAllowed(ConsentCategory.MARKETING))
+    }
+
     private fun draft(core: ConsentCore) = ConsentDraft(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined)
+
+    private fun optOutCore(
+        store: KeyValueStore = Memory(),
+        gpcDenyCategories: String = """["marketing","measurement"]""",
+        scope: String = """["experience","functionality","marketing","measurement"]""",
+        detectedGpc: Boolean = false,
+    ): ConsentCore {
+        val body = """
+            {
+              "location": { "countryCode": "US", "regionCode": "CA" },
+              "policySnapshotToken": "fixture-token",
+              "policyResolution": {
+                "version": 1,
+                "status": "matched",
+                "policyId": "us-ca-opt-out",
+                "matchedBy": "region",
+                "fingerprints": {
+                  "policy": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                  "choice": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                },
+                "policy": {
+                  "id": "us-ca-opt-out",
+                  "model": "opt-out",
+                  "prompt": "none",
+                  "scope": $scope,
+                  "scopeMode": "permissive",
+                  "preselectedCategories": [],
+                  "actions": {
+                    "allowed": ["accept", "customize", "reject"],
+                    "required": ["accept", "reject"],
+                    "equivalent": [["accept", "reject"]]
+                  },
+                  "rights": ["disclosure", "opt-out", "preferences"],
+                  "validity": { "choiceMs": 31536000000, "noticeMs": 31536000000 },
+                  "privacySignals": { "gpc": { "denyCategories": $gpcDenyCategories } },
+                  "proof": { "storeIp": false, "storeUserAgent": false, "storeLanguage": true },
+                  "copyRevision": null
+                }
+              }
+            }
+        """.trimIndent()
+        val client = object : HttpClient {
+            override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
+                HttpResponse(200, emptyMap(), body) else HttpResponse(503)
+        }
+        val config = NativeConfig(
+            backendUrl = "https://fixture.invalid",
+            consentCategories = ConsentCategory.entries,
+            detectedGpc = detectedGpc,
+        )
+        return ConsentCore(config, InthStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT).also { it.bootstrap() }
+    }
 
     private class Memory : KeyValueStore {
         @Volatile var refuseNext = false

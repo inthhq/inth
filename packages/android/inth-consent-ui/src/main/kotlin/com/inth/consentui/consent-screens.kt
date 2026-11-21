@@ -907,12 +907,13 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
 /** The 14sp row title, at medium weight: what iOS sets as a subheadline. */
 @Composable private fun subheadlineStyle(): TextStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
 
-@Composable private fun RowLabel(title: String, description: String? = null, note: String? = null, modifier: Modifier = Modifier) {
+@Composable private fun RowLabel(title: String, description: String? = null, note: String? = null, modifier: Modifier = Modifier, noteTag: String? = null) {
     val theme = LocalConsentTheme.current
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(title, style = subheadlineStyle(), color = theme.colors.text.color())
         if (!description.isNullOrEmpty()) Body(description, style = footnoteStyle())
-        if (note != null) Text(note, style = MaterialTheme.typography.bodySmall, color = theme.colors.textMuted.color())
+        if (note != null) Text(note, style = MaterialTheme.typography.bodySmall, color = theme.colors.textMuted.color(),
+            modifier = if (noteTag != null) Modifier.testTag(noteTag) else Modifier)
     }
 }
 
@@ -930,14 +931,14 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
 }
 
 @Composable private fun ChoiceRow(title: String, description: String, value: Boolean, id: String, enabled: Boolean = true, note: String? = null,
-    icon: ImageVector? = null, inset: Dp = 16.dp, onChange: (Boolean) -> Unit) {
+    noteTag: String? = null, icon: ImageVector? = null, inset: Dp = 16.dp, onChange: (Boolean) -> Unit) {
     val large = LocalDensity.current.fontScale >= 1.5f
     val modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 56.dp)
         .toggleable(value, enabled = enabled, role = Role.Switch, onValueChange = onChange).testTag(id).padding(horizontal = inset, vertical = 12.dp)
-    if (large) Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) { RowLabel(title, description, note); Switch(value, null, enabled = enabled) }
+    if (large) Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) { RowLabel(title, description, note, noteTag = noteTag); Switch(value, null, enabled = enabled) }
     else Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         RowIcon(icon)
-        RowLabel(title, description, note, Modifier.weight(1f))
+        RowLabel(title, description, note, Modifier.weight(1f), noteTag = noteTag)
         Spacer(Modifier.width(16.dp))
         Switch(value, null, enabled = enabled)
     }
@@ -959,7 +960,8 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
 @Composable private fun Category(p: ConsentPresenter, c: ConsentCategory) {
     val row = p.draft.category(c)
     val icon = SummaryIcons.category(c.wireName)
-    if (!row.locked) ChoiceRow(row.title, row.description, row.checked, "inth.prefs.category.${c.wireName}.switch", row.enabled, icon = icon, onChange = row.onCheckedChange)
+    if (!row.locked) ChoiceRow(row.title, row.description, row.checked, "inth.prefs.category.${c.wireName}.switch", row.enabled,
+        note = row.note, noteTag = if (row.note != null) "inth.prefs.category.${c.wireName}.restricted" else null, icon = icon, onChange = row.onCheckedChange)
     else StatusRow(row.title, row.description, row.lockedLabel.orEmpty(), "inth.prefs.category.${c.wireName}.locked",
         note = row.note, noteTag = if (c.optional) "inth.prefs.category.${c.wireName}.restricted" else null, icon = icon)
 }
@@ -1004,6 +1006,13 @@ private fun LazyListScope.group(count: Int, key: (Int) -> Any, content: @Composa
                             Text(p.iabCopy.format(p.iabCopy.appIabPartnerCount, mapOf("count" to "${p.disclosure?.vendors?.size ?: 0}")), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = theme.colors.primary.color())
                         }
                     } else Body(p.copy.preferencesDescription)
+                }
+            }
+            p.optOutStatus?.let { status ->
+                item {
+                    InfoCallout(Modifier.padding(horizontal = 8.dp, vertical = 8.dp).testTag("inth.prefs.opt-out-status")) {
+                        Text(status)
+                    }
                 }
             }
             if (page && showsShortcuts(p)) item { DecisionGroup(p, first = false, DecisionPart.SHORTCUTS, Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp)) }

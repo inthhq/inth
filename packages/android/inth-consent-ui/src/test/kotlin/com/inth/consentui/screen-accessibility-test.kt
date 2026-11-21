@@ -14,6 +14,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.ColorUtils
@@ -308,6 +309,90 @@ class ScreenAccessibilityTest {
             val contrast = ColorUtils.calculateContrast(scheme.outline.toArgb(), background.toArgb())
             assertTrue("Off switch contrast was $contrast", contrast >= 3.0)
         }
+    }
+
+    @Test fun preferencesShowHonoredOptOutStatusAndAccountHeldNoteOnMarketing() {
+        Dispatchers.setMain(Dispatchers.Unconfined)
+        try {
+            val store = DecisionStore()
+            val optOutBody = """
+                {
+                  "location": { "countryCode": "US", "regionCode": "CA" },
+                  "policySnapshotToken": "fixture-token",
+                  "policyResolution": {
+                    "version": 1,
+                    "status": "matched",
+                    "policyId": "us-ca-opt-out",
+                    "matchedBy": "region",
+                    "fingerprints": {
+                      "policy": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                      "choice": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                      "notice": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                    },
+                    "policy": {
+                      "id": "us-ca-opt-out",
+                      "model": "opt-out",
+                      "prompt": "none",
+                      "scope": ["experience", "functionality", "marketing", "measurement"],
+                      "scopeMode": "permissive",
+                      "preselectedCategories": [],
+                      "actions": {
+                        "allowed": ["accept", "customize", "reject"],
+                        "required": ["accept", "reject"],
+                        "equivalent": [["accept", "reject"]]
+                      },
+                      "rights": ["disclosure", "opt-out", "preferences"],
+                      "validity": { "choiceMs": 31536000000, "noticeMs": 31536000000 },
+                      "privacySignals": { "gpc": { "denyCategories": ["marketing"] } },
+                      "proof": { "storeIp": false, "storeUserAgent": false, "storeLanguage": true },
+                      "copyRevision": null
+                    }
+                  }
+                }
+            """.trimIndent()
+            val client = object : HttpClient {
+                override fun send(request: HttpRequest) = if (request.method == HttpRequest.GET)
+                    HttpResponse(200, emptyMap(), optOutBody) else HttpResponse(503)
+            }
+            val config = NativeConfig("https://fixture.invalid", consentCategories = ConsentCategory.entries)
+            val seededCore = ConsentCore(config, InthStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
+            seededCore.bootstrap()
+            val accountRecord = com.inth.core.model.OptOutRecord(
+                rights = listOf(com.inth.core.model.OptOutRight.SALE),
+                method = com.inth.core.model.OptOutMethod.API,
+                recordedAt = 1_770_000_000_000L,
+                heldBy = com.inth.core.model.OptOutHolder.PERSON,
+            )
+            store.write(
+                com.inth.core.store.InthStoreKeys.SNAPSHOT,
+                com.inth.core.store.InthJson.storage.encodeToString(
+                    com.inth.core.store.SnapshotEnvelope.serializer(),
+                    com.inth.core.store.SnapshotEnvelope(snapshot = seededCore.snapshot().copy(optOut = accountRecord)),
+                ),
+            )
+            val core = ConsentCore(config, InthStore(store), transport = HostedTransport(client, config), executor = TaskExecutor.DIRECT)
+            core.bootstrap()
+            lateinit var presenter: ConsentPresenter
+            compose.setContent {
+                presenter = remember { ConsentPresenter(core, autoPresent = false) }
+                InthConsent(presenter, "https://app.test/privacy")
+            }
+            compose.runOnIdle { presenter.presentPreferences() }
+            compose.waitForIdle()
+            compose.onNodeWithTag("inth.prefs.opt-out-status").assertIsDisplayed()
+            compose.onNode(
+                androidx.compose.ui.test.hasAnyAncestor(androidx.compose.ui.test.hasTestTag("inth.prefs.opt-out-status")) and
+                    androidx.compose.ui.test.hasText("Opt-out request honored"),
+            ).assertIsDisplayed()
+            compose.onNodeWithTag("inth.prefs").performScrollToNode(
+                androidx.compose.ui.test.hasTestTag("inth.prefs.category.marketing.switch"),
+            )
+            compose.onNodeWithTag("inth.prefs.category.marketing.switch").assertExists()
+            compose.onNodeWithTag("inth.prefs.category.marketing.restricted", useUnmergedTree = true)
+                .assertTextEquals("Your account has opted out, and you can change this after signing in.")
+            compose.onNodeWithTag("inth.prefs.category.measurement.restricted", useUnmergedTree = true)
+                .assertDoesNotExist()
+        } finally { Dispatchers.resetMain() }
     }
 
     private fun show(store: DecisionStore, theme: ConsentTheme = ConsentTheme.default, language: String? = null): ConsentPresenter {
