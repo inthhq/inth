@@ -251,9 +251,13 @@ type Found =
  */
 type DocumentGaps =
 	// The SDK reads a list without `sources` as one that names no script,
-	// so each loads from its own URL. With `{ unavailable: true }` it has no
-	// list, so every script loads from its own URL.
+	// so each loads from its own URL.
 	| 'registry list.sources: optional in SDK, required in document'
+	// The document's registry is a list or `{ unavailable: true }`; the SDK
+	// reads both with one type, so `unavailable` sits beside the list. With
+	// it and no entry in the list, the SDK loads by the last list this
+	// browser stored, as the document asks.
+	| 'registry list.unavailable: only in SDK'
 	// The manifest type is shared with the 3.x routes, whose producer may
 	// name a tenant. `/v1` names none, and the SDK does not send it on.
 	| 'manifest answer.tenantId: only in SDK'

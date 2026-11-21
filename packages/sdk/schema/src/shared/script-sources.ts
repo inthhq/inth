@@ -62,6 +62,15 @@ export interface ScriptRegistryWire {
 	 * URL the loader requests.
 	 */
 	files?: ScriptFilesWire;
+	/**
+	 * `true` when the backend answered but could not read the project's
+	 * registry, such as during an incident. It comes without `sources` and
+	 * `files`, and differs from no `scriptRegistry` at all, which means the
+	 * project has no registry: Inth keeps the last list this browser
+	 * received and loads by it, as when `/v1/consent/init` fails. Alongside
+	 * a list it is ignored, and the list applies.
+	 */
+	unavailable?: boolean;
 }
 
 /**

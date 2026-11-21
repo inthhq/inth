@@ -96,11 +96,55 @@ init, scripts load by it at once. Otherwise each script an
   no https `src`, or an attribute that is not a string or `null`. `onDebug`
   reports an `error` for it.
 
-When init fails or carries no list, every script loads from its vendor's URL.
+When init answers without a list, every script loads from its vendor's URL.
 A runtime with `enabled: false` or a `consentSource` never calls `/v1/consent/init`, so it
-uses only a prefetched list. The runtime reads the list once, when init first
-answers or first fails. A later init, including a retry after a failure, does
-not move scripts that already loaded.
+uses only a prefetched list.
+
+#### When init fails
+
+Inth remembers the last list this browser received and loads by it when init
+fails, such as during an outage, a rate limit or a blocked request. It does the
+same when init answers `"scriptRegistry": { "unavailable": true }`, which the
+backend sends when it could not read the project's registry. The remembered
+list works exactly as a fresh one, `sources`, `files`, `null` entries and
+`refuseIfSet` included, and Inth checks it the same way, so a stored list it
+cannot read counts as no list. Without a remembered list, every script loads
+from its vendor's URL.
+
+When init fails, optional categories stay denied, so only `necessary` scripts
+load and the list applies to those. After an `unavailable` answer the visitor's
+choices apply as usual, and the list applies to every script that loads.
+
+- **Stored like the rest of Inth's state.** The list is kept in `localStorage`
+  under `inth-script-registry:v1:` followed by the runtime's absolute
+  `projectUrl`. It is written only once the visitor has made a choice, when Inth
+  stores its own record, and never with `persistence: false`, which turns it
+  off entirely. A page whose scripts are all `necessary` gets no choice, so
+  nothing is remembered for it.
+- **Per backend.** One project's list is never read for another project or
+  backend on the same origin. A runtime with no `projectUrl`, or one that never
+  calls `/v1/consent/init`, remembers nothing.
+- **Replaced by every answer.** Each init that answers replaces the list. An
+  answer with no `scriptRegistry` removes it, so turning the registry off for a
+  project takes effect on the next visit that reaches `/v1/consent/init`. An `unavailable`
+  answer leaves it, even beside empty `sources` and `files`.
+- **Seven days at most.** After that the list is dropped, and a failed init
+  loads from vendor URLs again. A remembered list can name a version the
+  registry has rejected since. The registry then answers that URL with an
+  error, and the hash stops any other bytes, so the script does not load.
+- **256 KB at most.** A stored value larger than that is refused and removed.
+  A list for every integration is about 30 KB.
+- **Not a defence against the page.** Any script on your origin can edit
+  `localStorage`. The remembered list keeps scripts pinned through honest
+  failures; it does not protect against code already running on the page.
+- **Storage unavailable.** In private browsing, with storage blocked, or with
+  storage full, Inth remembers nothing and a failed init loads from vendor URLs.
+
+The runtime reads the list once, when init first answers or first fails. A later
+init, including a retry that succeeds after a failure, replaces the remembered
+list but does not move or unload scripts that already loaded, from the
+remembered list or from the vendor. A later `null` entry takes effect on the
+next page load.
 
 When a script's registry copy fails to load, because the bytes do not match or
 the backend answers 423 or 410, Inth calls its `onError` and does not try the

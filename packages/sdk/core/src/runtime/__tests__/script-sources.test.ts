@@ -519,15 +519,32 @@ describe('experimentalScriptRegistry', () => {
 		});
 
 	const necessaryOther: Script = { ...otherScript, category: 'necessary' };
+	/** The backend the runtimes below ask, so the browser remembers its list. */
+	const BACKEND = 'https://acme.inth.app';
+	const MEMORY_KEY = 'inth-script-registry:v1:';
+	/** Persistence on, as the remembered list needs, without other tabs. */
+	const PERSISTED = { sync: false } as const;
+	afterEach(() => {
+		localStorage.clear();
+		for (const cookie of document.cookie.split(';')) {
+			const name = cookie.split('=')[0]?.trim();
+			if (name) {
+				document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+			}
+		}
+	});
 
 	const listed = (scriptSources: Record<string, unknown>) =>
 		initMode(() =>
 			Promise.resolve({ scriptRegistry: { sources: scriptSources } })
 		);
 
-	/** A runtime with consent management on and no stored consent. */
+	/**
+	 * A runtime with consent management on and no stored consent, unless
+	 * the test passes `persistence`.
+	 */
 	const startWith = (
-		options: Omit<ConsentRuntimeOptions, 'mode' | 'persistence'> & {
+		options: Omit<ConsentRuntimeOptions, 'mode'> & {
 			mode: ProviderTransportFactory;
 		}
 	) => {
@@ -777,13 +794,16 @@ describe('experimentalScriptRegistry', () => {
 		runtime.dispose();
 	});
 
-	test("loads from the vendor URL when init fails, over a pending prefetch's list", async () => {
+	// A control: it passes without the remembered list too, and guards that a
+	// browser that remembers nothing still loads from the vendor.
+	test("loads from the vendor URL when init fails and the browser remembers no list, over a pending prefetch's list", async () => {
 		const runtime = startWith({
 			mode: initMode(() => Promise.reject(new TypeError('offline'))),
 			prefetch: {
 				initialPolicyPending: true,
 				initialScriptRegistry: { sources: { vendor: null } },
 			},
+			projectUrl: BACKEND,
 			scripts: [integrationScript()],
 		});
 
@@ -791,6 +811,259 @@ describe('experimentalScriptRegistry', () => {
 			expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
 		);
 		runtime.dispose();
+	});
+
+	describe('when init fails, the list the browser remembers', () => {
+		/** An init that answers, with a policy, carrying `scriptRegistry`. */
+		const answering = (scriptRegistry: unknown, projectUrl = BACKEND) =>
+			startWith({
+				mode: initMode(() =>
+					Promise.resolve({
+						policyResolution: {
+							...matchedResolution(optInRule({ id: 'opt-in' })),
+							version: 1,
+						},
+						scriptRegistry,
+					})
+				),
+				persistence: PERSISTED,
+				projectUrl,
+				// An optional script too, so the visitor has a choice to make.
+				scripts: [integrationScript(), otherScript],
+			});
+		const failing = (projectUrl = BACKEND) =>
+			startWith({
+				mode: initMode(() => Promise.reject(new TypeError('offline'))),
+				persistence: PERSISTED,
+				projectUrl,
+				scripts: [integrationScript()],
+			});
+		/** What the browser remembers for `projectUrl`. */
+		const stored = (projectUrl = BACKEND) => {
+			const raw = localStorage.getItem(
+				`${MEMORY_KEY}${new URL(projectUrl).href}`
+			);
+			return raw ? (JSON.parse(raw) as { registry: unknown }).registry : null;
+		};
+		/**
+		 * Answer once with `scriptRegistry` to a visitor who then makes a
+		 * choice, so the browser remembers it.
+		 */
+		const remember = async (
+			scriptRegistry: Record<string, unknown> | undefined,
+			projectUrl = BACKEND
+		) => {
+			const runtime = answering(scriptRegistry, projectUrl);
+			await vi.waitFor(() =>
+				expect(runtime.kernel.getSnapshot().policyPending).toBe(false)
+			);
+			await runtime.kernel.commands.save('all');
+			await vi.waitFor(() =>
+				expect(stored(projectUrl)).toEqual(scriptRegistry ?? null)
+			);
+			runtime.dispose();
+			document.head.innerHTML = '';
+		};
+
+		test('loads a script from the source it lists', async () => {
+			await remember({
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			});
+			const runtime = failing();
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor')).toMatchObject({
+					integrity: HASH_INTEGRITY,
+					src: HASH_SRC,
+				})
+			);
+			runtime.dispose();
+		});
+
+		test('loads nothing for a script it blocked, or one whose options it refuses', async () => {
+			await remember({
+				sources: {
+					vendor: {
+						integrity: HASH_INTEGRITY,
+						refuseIfSet: ['initOptions.server'],
+						src: HASH_SRC,
+					},
+				},
+			});
+			const refused = startWith({
+				mode: initMode(() => Promise.reject(new TypeError('offline'))),
+				persistence: PERSISTED,
+				projectUrl: BACKEND,
+				scripts: [
+					integrationScript({
+						integrationOptions: { initOptions: { server: 'https://x' } },
+					}),
+				],
+			});
+			await new Promise((resolve) => {
+				setTimeout(resolve, 50);
+			});
+			expect(srcs()).toEqual([]);
+			refused.dispose();
+
+			await remember({ sources: { vendor: null } });
+			const blocked = failing();
+			await new Promise((resolve) => {
+				setTimeout(resolve, 50);
+			});
+			expect(srcs()).toEqual([]);
+			blocked.dispose();
+		});
+
+		test("is one backend's alone", async () => {
+			await remember(
+				{ sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } } },
+				'https://other.inth.app'
+			);
+			const runtime = failing();
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+			);
+			runtime.dispose();
+		});
+
+		test('is forgotten when init answers without a list', async () => {
+			await remember({
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			});
+			await remember(undefined);
+			const runtime = failing();
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+			);
+			runtime.dispose();
+		});
+
+		test('is kept and used when init answers that the backend could not read the registry', async () => {
+			const list = {
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			};
+			await remember(list);
+			const runtime = answering({ unavailable: true });
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor')).toMatchObject({
+					integrity: HASH_INTEGRITY,
+					src: HASH_SRC,
+				})
+			);
+			expect(stored()).toEqual(list);
+			runtime.dispose();
+		});
+
+		// A control, like the one above: nothing remembered, nothing changes.
+		test('leaves the vendor URL when the backend could not read the registry and none is remembered', async () => {
+			const runtime = answering({ unavailable: true });
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+			);
+			expect(stored()).toBeNull();
+			runtime.dispose();
+		});
+
+		test('ignores unavailable beside a list: the list applies and is remembered', async () => {
+			await remember({ sources: { vendor: null } });
+			const list = {
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			};
+			const runtime = answering({ ...list, unavailable: true });
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
+			);
+			await vi.waitFor(() => expect(stored()).toEqual(list));
+			runtime.dispose();
+		});
+
+		test('is stored only once the visitor has made a choice', async () => {
+			const list = {
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			};
+			const runtime = answering(list);
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
+			);
+			expect(stored()).toBeNull();
+
+			await runtime.kernel.commands.save('none');
+			await vi.waitFor(() => expect(stored()).toEqual(list));
+			runtime.dispose();
+		});
+
+		test('is neither stored nor read with persistence: false', async () => {
+			const list = {
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			};
+			const unpersisted = startWith({
+				mode: initMode(() =>
+					Promise.resolve({
+						policyResolution: {
+							...matchedResolution(optInRule({ id: 'opt-in' })),
+							version: 1,
+						},
+						scriptRegistry: list,
+					})
+				),
+				projectUrl: BACKEND,
+				scripts: [integrationScript(), otherScript],
+			});
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
+			);
+			await unpersisted.kernel.commands.save('all');
+			expect(localStorage.length).toBe(0);
+			unpersisted.dispose();
+			document.head.innerHTML = '';
+
+			await remember(list);
+			const failingUnpersisted = startWith({
+				mode: initMode(() => Promise.reject(new TypeError('offline'))),
+				projectUrl: BACKEND,
+				scripts: [integrationScript()],
+			});
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+			);
+			failingUnpersisted.dispose();
+		});
+
+		test('is kept and used when unavailable comes beside empty maps', async () => {
+			const list = {
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			};
+			await remember(list);
+			const runtime = answering({ files: {}, sources: {}, unavailable: true });
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
+			);
+			expect(stored()).toEqual(list);
+			runtime.dispose();
+		});
+
+		test('is no list when storage throws, and nothing else breaks', async () => {
+			await remember({
+				sources: { vendor: { integrity: HASH_INTEGRITY, src: HASH_SRC } },
+			});
+			vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+				throw new DOMException('blocked', 'SecurityError');
+			});
+			const runtime = failing();
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
+			);
+			runtime.dispose();
+			vi.restoreAllMocks();
+		});
 	});
 
 	test('loads by the list a manifest carries', async () => {
@@ -871,7 +1144,7 @@ describe('experimentalScriptRegistry', () => {
 		runtime.dispose();
 	});
 
-	test("settles on the first failed init, so a retry's list does not move a loaded script", async () => {
+	test("settles on the first failed init, so a retry's list does not move a loaded script, but is remembered", async () => {
 		let calls = 0;
 		const runtime = startWith({
 			mode: initMode(() => {
@@ -880,8 +1153,11 @@ describe('experimentalScriptRegistry', () => {
 					? Promise.reject(new TypeError('offline'))
 					: Promise.resolve({ scriptRegistry: { sources: { vendor: null } } });
 			}),
-			scripts: [integrationScript()],
+			persistence: PERSISTED,
+			projectUrl: BACKEND,
+			scripts: [integrationScript(), otherScript],
 		});
+		await runtime.kernel.commands.save('all');
 
 		await vi.waitFor(() =>
 			expect(fetchAttributes('vendor').src).toBe(VENDOR_SRC)
@@ -893,7 +1169,15 @@ describe('experimentalScriptRegistry', () => {
 				}),
 			{ timeout: 3000 }
 		);
-		expect(srcs()).toEqual([VENDOR_SRC]);
+		expect(srcs().filter((src) => src !== otherScript.src)).toEqual([
+			VENDOR_SRC,
+		]);
+		await vi.waitFor(() =>
+			expect(
+				JSON.parse(localStorage.getItem(`${MEMORY_KEY}${BACKEND}/`) ?? 'null')
+					?.registry
+			).toEqual({ sources: { vendor: null } })
+		);
 		runtime.dispose();
 	});
 

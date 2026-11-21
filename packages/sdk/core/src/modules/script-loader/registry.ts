@@ -8,7 +8,7 @@ import type {
 	ScriptRegistryState,
 } from './sources';
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
 
 /**
@@ -168,6 +168,21 @@ export const parseRegistryFiles = function parseRegistryFiles(
  * prefetch.
  * @internal
  */
+const entries = (map: unknown): number =>
+	isRecord(map) ? Object.keys(map).length : 0;
+
+/**
+ * Whether an answer's registry says the backend could not read it
+ * (`unavailable`), with no entry beside it: empty maps count as none. A
+ * list with at least one entry beside it wins.
+ *
+ * @internal
+ */
+export const registryUnavailable = (registry: unknown): boolean =>
+	isRecord(registry) &&
+	registry.unavailable === true &&
+	entries(registry.sources) + entries(registry.files) === 0;
+
 export const readScriptRegistry = function readScriptRegistry(snapshot: {
 	readonly policyPending: boolean;
 	readonly resolution?: Pick<ConsentSnapshot['resolution'], 'status'>;
@@ -184,7 +199,7 @@ export const readScriptRegistry = function readScriptRegistry(snapshot: {
 	}
 	const sources = parseRegistrySources(snapshot.scriptRegistry?.sources);
 	const files = parseRegistryFiles(snapshot.scriptRegistry?.files);
-	if (!(sources || files)) {
+	if (!(sources || files) || registryUnavailable(snapshot.scriptRegistry)) {
 		return { status: 'failed' };
 	}
 	return { files: files ?? {}, sources: sources ?? {}, status: 'listed' };

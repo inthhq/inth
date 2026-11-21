@@ -24,7 +24,7 @@ import {
 	hasSameResource,
 	normalizeScripts,
 } from './normalize';
-import { readScriptRegistry } from './registry';
+import { readScriptRegistry, registryUnavailable } from './registry';
 import { createScriptSourceResolver } from './sources';
 import type { HeldScript, ScriptRegistryState } from './sources';
 import type {
@@ -112,13 +112,54 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		);
 		declareOwners(kernel, scripts, ownerSource);
 	};
+	const memory = options.registry?.waitForInit
+		? options.registry.memory
+		: undefined;
 	// Read once init resolves; a later init's list does not move scripts.
-	const readRegistry = (snapshot: ConsentSnapshot): ScriptRegistryState =>
-		readScriptRegistry(
+	// When init fails, or answers that the backend could not read the
+	// registry, the last list this browser received from the backend
+	// stands in for it, read as a fresh one is.
+	const readRegistry = (snapshot: ConsentSnapshot): ScriptRegistryState => {
+		const state = readScriptRegistry(
 			options.registry?.waitForInit
 				? snapshot
 				: { ...snapshot, policyPending: false }
 		);
+		const remembered =
+			state.status === 'failed' &&
+			(snapshot.resolution?.status === 'failed' ||
+				registryUnavailable(snapshot.scriptRegistry))
+				? memory?.read()
+				: undefined;
+		return remembered === undefined
+			? state
+			: readScriptRegistry({
+					policyPending: false,
+					scriptRegistry: remembered as ConsentSnapshot['scriptRegistry'],
+				});
+	};
+	// Each answer replaces the remembered list, a list-less one with none,
+	// so turning the registry off takes effect. One whose registry the
+	// backend could not read leaves it. A list is stored as the SDK's own
+	// state is: once the visitor has made a choice. Until then it waits,
+	// and is stored when the choice comes.
+	let remembered: unknown = Symbol('nothing remembered yet');
+	const remember = (snapshot: ConsentSnapshot): void => {
+		// A failed init leaves the policy pending, so this is an answer.
+		if (
+			!memory ||
+			snapshot.policyPending ||
+			snapshot.scriptRegistry === remembered ||
+			registryUnavailable(snapshot.scriptRegistry) ||
+			(snapshot.scriptRegistry !== null && snapshot.explicitChoice === null)
+		) {
+			return;
+		}
+		remembered = snapshot.scriptRegistry;
+		memory.write(snapshot.scriptRegistry);
+	};
+	remember(kernel.getSnapshot());
+	const stopRemembering = memory ? kernel.subscribe(remember) : undefined;
 	let registryState: ScriptRegistryState = options.registry
 		? readRegistry(kernel.getSnapshot())
 		: { status: 'failed' };
@@ -598,6 +639,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		diagnostics?.dispose();
 		diagnostics = undefined;
 		stopWaiting?.();
+		stopRemembering?.();
 		for (const [scriptId, element] of new Map([
 			...retainedElements,
 			...loadedElements,
