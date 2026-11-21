@@ -98,6 +98,12 @@ const config: StorybookConfig = {
 						),
 					},
 					{
+						find: /^@inth\/react\/components\/consent-dialog$/u,
+						replacement: workspace(
+							'packages/sdk/react/src/components/panel/index.ts'
+						),
+					},
+					{
 						find: /^@inth\/react\/iab$/u,
 						replacement: workspace('packages/sdk/react/src/iab.ts'),
 					},
