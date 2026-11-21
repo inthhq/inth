@@ -88,12 +88,21 @@ do not rely on the opt-out alone to stop measurement code. When that turns off a
 category that was running and `reloadOnConsentRevoked` is enabled, Inth waits
 for the opt-out request, reloads the page, and opens the opt-out confirmation
 view (`OptOutConfirmation`) once on the new page; otherwise it opens
-immediately. With `'privacy-choices'` or `'california-privacy-choices'`, the
-link renders with the California Privacy Protection Agency opt-out icon and
-opens the preference dialog without recording an opt-out. Programmatic calls to
-`client.optOut()` still opt out in one step whatever `presentation.optOutLink`
-is set to. Under any other model, or for the `preferences` right, the link
-opens the preference dialog.
+immediately. The confirmation view shows a receipt with the honored status line,
+the covered scope (this browser, or this browser and the account, naming refused
+rights once the backend confirms them), the recorded time, a selectable local
+reference when this browser created the opt-out, a **Done** button, and a
+**Manage preferences** link. With `'privacy-choices'` or
+`'california-privacy-choices'`, the link renders with the California Privacy
+Protection Agency opt-out icon and opens the preference dialog without recording
+an opt-out. Programmatic calls to `client.optOut()` still opt out in one step
+whatever `presentation.optOutLink` is set to. Under any other model, or for the
+`preferences` right, the link opens the preference dialog.
+
+Under an opt-out rule while an opt-out is held, clicking **Accept All** on a
+choice banner opens the separate two-step opt-in confirmation dialog instead of
+saving right away. Nothing changes until the visitor confirms. Under an opt-in
+rule, **Accept All** still lifts a held opt-out in one step.
 [How consent works](/docs/concepts/how-consent-works) explains prompts, rights
 and recorded choices.
 

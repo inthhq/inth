@@ -83,6 +83,34 @@ off a category that was allowed reloads the page, unless the integration sets
 `reloadOnConsentRevoked: false`. See
 [withdraw consent without reloading](/docs/frameworks/astro/scripts#withdraw-consent-without-reloading).
 
+### Sale-and-sharing block and two-step opt back in
+
+Under an `opt-out` policy, the dialog renders a sale-and-sharing block first,
+above the category list and outside any accordion item. Under an `opt-in` or
+other policy model, no block renders.
+
+- Before the visitor opts out, the block shows the configured opt-out link
+  title, a neutral status sentence, and an **Opt out** button. One click records
+  the opt-out through the shared action without toggling a category or clicking
+  **Save Settings**.
+- Once an opt-out is held, the button disappears and the block shows the
+  honored status line (`role="status"`), receipt sentence, recorded time, and
+  local reference when this browser created the opt-out. Once the backend
+  confirms the refused rights, the heading updates to name them. Before
+  confirmation, it keeps the configured link title.
+- When Global Privacy Control is not locking the opt-out, the block shows an
+  **Opt back in…** link. Clicking **Opt back in…**, clicking **Accept All**, or
+  turning `marketing` back on and clicking **Save Settings** (`measurement`
+  when `marketing` is not in scope) opens a separate modal confirmation dialog
+  instead of saving right away. Focus starts on **Stay opted out**, both buttons
+  have equal prominence, and pressing Escape cancels with nothing saved.
+  Confirming lifts a device opt-out or asks the backend to lift an account
+  opt-out. Turning `measurement` on while `marketing` stays off saves without
+  confirmation and keeps the opt-out held.
+- While Global Privacy Control is active under a policy that maps it, restricted
+  switches stay off and disabled, and no **Opt back in…** link renders. Under an
+  `opt-in` policy, **Accept All** still lifts a held opt-out in one step.
+
 The dialog does not open while no policy is resolved, or under a rule that owes
 no consent interface. An `openDialog()` call made while `/v1/consent/init` is still in
 flight waits for the answer.
@@ -102,9 +130,9 @@ dialog's rules too, and `@inth/astro/primitives.css` for the Svelte dialog. See
 ## Across `ClientRouter` navigation
 
 The dialog host is part of `<body>`, which `ClientRouter` replaces. When a
-visitor navigates with the dialog open, Inth mounts it again on the new page,
-so it stays open. A stylesheet Inth linked for the dialog carries over to the
-new page too.
+visitor navigates while the preference dialog or an opt-out or opt-in
+confirmation dialog is open, Inth mounts it again on the new page, so it stays
+open. A stylesheet Inth linked for the dialog carries over to the new page too.
 
 ## Accessibility
 

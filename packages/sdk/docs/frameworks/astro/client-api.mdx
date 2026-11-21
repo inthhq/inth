@@ -92,8 +92,8 @@ console warning that names the id.
 | Member | Does |
 | --- | --- |
 | `openDialog(kind?, tab?)` | Opens `'preferences'` (default) or `'iab'`. For `'iab'`, `tab` is `'purposes'` or `'vendors'` |
-| `optOut(opener?)` | Records an opt-out in one click and opens the confirmation view under an opt-out rule regardless of `presentation.optOutLink`, or opens the preference dialog under other models. Also available as `client.optOut()` |
-| `client.closeDialog()` | Closes the open dialog or opt-out confirmation view. The banner comes back while the policy still owes a choice |
+| `optOut(opener?)` | Records an opt-out in one click and opens the confirmation view with a receipt under an opt-out rule regardless of `presentation.optOutLink`, or opens the preference dialog under other models. Also available as `client.optOut()` |
+| `client.closeDialog()` | Closes the open dialog or opt-out/opt-in confirmation view. The banner comes back while the policy still owes a choice |
 | `preloadDialog()` | Downloads the dialog without opening it |
 
 `openDialog()` downloads and mounts the dialog island the first time. While
@@ -117,7 +117,7 @@ document.querySelector('#privacy-link')?.addEventListener('click', () => {
 
 | Member | Does |
 | --- | --- |
-| `client.acceptAll()` | Without IAB, saves a grant for every category in scope. Under an IAB policy, an optional category is granted only if a listed or custom vendor declares a consent purpose mapped to it after publisher restrictions apply. The CMP sets vendor and purpose consent for declared consent purposes, separate legitimate-interest signals for declared legitimate-interest purposes, and opt-ins for declared special features. The TC string records these signals. See [categories under an IAB policy](/docs/concepts/consent-state#categories-under-an-iab-policy) |
+| `client.acceptAll()` | Without IAB, saves a grant for every category in scope. Under an `opt-out` policy while an opt-out is held, opens the two-step opt-in confirmation dialog and saves nothing until confirmed. Under an IAB policy, an optional category is granted only if a listed or custom vendor declares a consent purpose mapped to it after publisher restrictions apply. The CMP sets vendor and purpose consent for declared consent purposes, separate legitimate-interest signals for declared legitimate-interest purposes, and opt-ins for declared special features. The TC string records these signals. See [categories under an IAB policy](/docs/concepts/consent-state#categories-under-an-iab-policy) |
 | `client.rejectAll()` | Saves a rejection of everything except `necessary`, through the CMP under an IAB policy |
 | `client.save(consents)` | Saves the categories you pass, such as `{ measurement: true }`. A `vendors` map, such as `{ vendors: { posthog: false } }`, saves vendor switches too |
 | `client.identify(user)` | Links the consent record to your own user, as `{ externalId }` |
