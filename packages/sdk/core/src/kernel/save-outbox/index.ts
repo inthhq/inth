@@ -6,9 +6,9 @@
  * newer state superseded, queueing what the transport could not take,
  * replaying the queue, moving the visitor to a new subject id when the
  * backend refuses theirs, and asking for a retry when the browser comes back
- * online. `sendOptOut()` and `sendOptOutLift()` run durable opt-out acts
- * through the same outbox, in their own `optOuts` slot in the
- * {@link SaveOutboxStore}.
+ * online. `sendOptOut()`, `sendOptOutLift()` and `liftAccountOptOut()` run
+ * durable opt-out acts through the same outbox, in their own `optOuts` slot in
+ * the {@link SaveOutboxStore}.
  *
  * The send path loads with the kernel. Everything that reads the stored
  * queue (validation, replay, reassignment) is in `queue.ts`, imported the
@@ -105,7 +105,7 @@ export interface OptOutActionContext {
 	generation: number;
 }
 
-/** Outcome of an immediate, non-queued account opt-out lift. */
+/** Outcome of a queued account opt-out lift. */
 export interface AccountLiftOutcome {
 	ok: boolean;
 	optOut?: OptOutRecord | null;
@@ -131,8 +131,8 @@ export interface SaveOutbox {
 		context: OptOutActionContext
 	) => Promise<void>;
 	/**
-	 * Send one account-held opt-out lift now without queueing on failure.
-	 * Handles `404` and `409 subject_conflict`.
+	 * Queue and send one account-held opt-out lift. Keeps it queued for replay
+	 * on failure and handles `404` and `409 subject_conflict`.
 	 */
 	liftAccountOptOut: (
 		payload: LiftOptOutPayload
@@ -616,13 +616,13 @@ export const createSaveOutbox = function createSaveOutbox({
 		}
 	};
 
-	const trackDirectOptOut = async function trackDirectOptOut(
+	const trackDirectOptOut = async function trackDirectOptOut<Result>(
 		idempotencyKey: string,
-		run: () => Promise<void>
-	): Promise<void> {
+		run: () => Promise<Result>
+	): Promise<Result> {
 		directOptOutSends.add(idempotencyKey);
 		try {
-			await run();
+			return await run();
 		} finally {
 			directOptOutSends.delete(idempotencyKey);
 		}
@@ -734,12 +734,25 @@ export const createSaveOutbox = function createSaveOutbox({
 		}
 	};
 
+	// oxlint-disable-next-line complexity -- Direct account lift shares queue-before-send, 404, 409 reassignment and rejection cleanup.
 	const performAccountLift = async function performAccountLift(
 		payload: LiftOptOutPayload,
-		reassign: boolean
+		reassign: boolean,
+		alreadyQueued = false
 	): Promise<AccountLiftOutcome> {
 		const lift = transport?.liftOptOut;
 		if (optOutsUnsupported || !lift) {
+			return { ok: false };
+		}
+		const startedClear = clearVersion;
+		const act: OptOutAct = { kind: 'lift', payload };
+		const staged: 'queued' | 'unstored' = alreadyQueued
+			? 'queued'
+			: await enqueueOptOut(act);
+		if (held) {
+			await held;
+		}
+		if (optOutsUnsupported || clearVersion !== startedClear) {
 			return { ok: false };
 		}
 		try {
@@ -749,8 +762,15 @@ export const createSaveOutbox = function createSaveOutbox({
 				return { ok: false, unsupported: true };
 			}
 			if (!result.ok) {
+				if (clearVersion === startedClear) {
+					warnOptOutFailed(
+						staged === 'queued' ? 'queued' : await enqueueOptOut(act)
+					);
+					retryWhenOnline();
+				}
 				return { ok: false };
 			}
+			await discardOptOut(payload.idempotencyKey);
 			const adopted = await adoptServerSubjectById(
 				result.subjectId,
 				payload.subjectId
@@ -765,15 +785,33 @@ export const createSaveOutbox = function createSaveOutbox({
 				await markOptOutsUnsupported();
 				return { ok: false, unsupported: true };
 			}
-			if (reassign && isSubjectConflict(error)) {
+			if (
+				reassign &&
+				clearVersion === startedClear &&
+				isSubjectConflict(error)
+			) {
 				const subjectId =
 					(await (await loadWorker())?.reassignSubject(payload.subjectId)) ??
 					null;
 				if (subjectId !== null) {
-					return performAccountLift({ ...payload, subjectId }, false);
+					return performAccountLift(
+						{ ...payload, subjectId },
+						false,
+						staged === 'queued'
+					);
 				}
 			}
 			emit({ command: 'optIn', error, type: 'command:error' });
+			if (isConsentSaveRejection(error)) {
+				warnOptOutFailed('rejected', error);
+				await discardOptOut(payload.idempotencyKey);
+			} else if (clearVersion === startedClear) {
+				warnOptOutFailed(
+					staged === 'queued' ? 'queued' : await enqueueOptOut(act),
+					error
+				);
+				retryWhenOnline();
+			}
 			return { ok: false };
 		}
 	};
@@ -789,7 +827,11 @@ export const createSaveOutbox = function createSaveOutbox({
 		liftAccountOptOut: (payload) =>
 			optOutsUnsupported || !transport?.liftOptOut
 				? Promise.resolve({ ok: false })
-				: trackOptOutRequest(() => performAccountLift(payload, true)),
+				: trackOptOutRequest(() =>
+						trackDirectOptOut(payload.idempotencyKey, () =>
+							performAccountLift(payload, true)
+						)
+					),
 		onOptOutRequestsChange(listener) {
 			optOutRequestListeners.add(listener);
 			return () => {

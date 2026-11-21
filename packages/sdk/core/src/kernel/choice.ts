@@ -10,7 +10,8 @@
  *   reassignment.
  * - `optOut()` and `optIn()` record and lift durable opt-out records and
  *   hand their acts to the save outbox. Lifting an account-held opt-out
- *   waits for the backend's lift answer before clearing locally.
+ *   queues the lift in the same outbox and waits for the backend's answer
+ *   before clearing locally.
  * - `dismissNotice()` records the local notice dismissal only.
  * - Drafts stage what a no-input `save()` confirms. They are bound to the
  *   choice contract they were presented under and dropped, never
