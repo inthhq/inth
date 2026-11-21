@@ -6,6 +6,7 @@ import com.inth.core.model.ConsentSnapshot
 import com.inth.core.model.PolicyResolution
 import com.inth.core.policy.EvaluationPolicy
 import com.inth.core.policy.PolicyRight
+import com.inth.core.policy.isOptedOut
 
 /**
  * MSPA mode for covered transactions: `GPPMspaMode` in `@c15t/iab/gpp`. Leave it unset
@@ -37,13 +38,15 @@ enum class GppMspaMode(val wireName: String) {
  * claim on its own.
  *
  * @property mspaMode MSPA mode. `null` reports the transaction as not covered.
- * @property optOutCategories Categories whose refusal opts the visitor out of sale,
- *   sharing and targeted advertising.
+ * @property optOutCategories Optional override for the categories checked when no opt-out
+ *   record is held. `null` defaults to the active policy's deciding category (`marketing`
+ *   when in scope, else `measurement` when in scope). A held opt-out record always reports
+ *   opted out regardless of this override.
  * @property tcf Include the TCF EU section, the committed TC String, under an `iab` rule.
  */
 data class GppOptions(
 	val mspaMode: GppMspaMode? = null,
-	val optOutCategories: List<ConsentCategory> = listOf(ConsentCategory.MARKETING),
+	val optOutCategories: List<ConsentCategory>? = null,
 	val tcf: Boolean = true,
 )
 
@@ -115,7 +118,7 @@ object GppResolver {
 		options: GppOptions,
 	): Map<String, List<Int>> {
 		val disclosed = PolicyRight.DISCLOSURE in policy.rights
-		val optedOut = options.optOutCategories.any { !snapshot.effectivePermissions[it] }
+		val optedOut = isOptedOut(snapshot, policy, options.optOutCategories)
 		val covered = options.mspaMode != null
 		val serviceProvider = options.mspaMode == GppMspaMode.SERVICE_PROVIDER
 		fun yesNo(value: Boolean) = if (value) 1 else 2

@@ -402,13 +402,14 @@ object InthAndroid {
 	/**
 	 * `com.inth.GPP_OPT_OUT_CATEGORIES`, keeping "not set" apart from "set to empty".
 	 *
-	 * An absent key keeps the default, `marketing`. A present key is the app's list: `none`
-	 * or a blank value is the empty list, meaning no category drives the sale, sharing and
-	 * targeted advertising opt-outs, which is what `GppOptions(optOutCategories = emptyList())`
-	 * and web's `optOutCategories: []` mean. Names neither core knows are dropped.
+	 * An absent key stays `null` so [com.inth.core.gpp.GppResolver] defaults to the active
+	 * policy's deciding category. A present key overrides the category check when no opt-out
+	 * record is held: `none` or a blank value is the empty list, matching
+	 * `GppOptions(optOutCategories = emptyList())` and web's `optOutCategories: []`. Names
+	 * neither core knows are dropped.
 	 */
-	internal fun declaredGppOptOutCategories(raw: Any?): List<ConsentCategory> {
-		if (raw == null) return listOf(ConsentCategory.MARKETING)
+	internal fun declaredGppOptOutCategories(raw: Any?): List<ConsentCategory>? {
+		if (raw == null) return null
 		val text = raw.toString().trim()
 		if (text.isEmpty() || text.equals(GPP_NO_OPT_OUT_CATEGORIES, ignoreCase = true)) return emptyList()
 		return text.split(',').mapNotNull { ConsentCategory.fromWireName(it.trim()) }.distinct()
@@ -531,8 +532,9 @@ object InthAndroid {
 	const val META_GPP_MSPA_MODE = "com.inth.GPP_MSPA_MODE"
 
 	/**
-	 * Comma-separated categories whose refusal reports a GPP opt-out. Absent means `marketing`;
-	 * `none` means no category drives the opt-outs.
+	 * Comma-separated categories whose refusal reports a GPP opt-out when no opt-out record is
+	 * held. Absent defaults to the active policy's deciding category; `none` means no category
+	 * check runs when no opt-out record is held.
 	 */
 	const val META_GPP_OPT_OUT_CATEGORIES = "com.inth.GPP_OPT_OUT_CATEGORIES"
 

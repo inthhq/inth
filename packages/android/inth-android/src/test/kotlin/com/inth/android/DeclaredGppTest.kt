@@ -44,11 +44,11 @@ class DeclaredGppTest {
 	}
 
 	@Test
-	fun `an absent opt-out list keeps marketing, and a present empty one stays empty`() {
+	fun `an absent opt-out list stays null for the policy default, and a present empty one stays empty`() {
 		fun read(value: Any?) = config(
 			base + listOfNotNull(InthAndroid.META_GPP to true, value?.let { InthAndroid.META_GPP_OPT_OUT_CATEGORIES to it }),
 		)?.gpp?.optOutCategories
-		assertEquals(listOf(ConsentCategory.MARKETING), read(null))
+		assertNull(read(null))
 		assertEquals(emptyList<ConsentCategory>(), read("none"))
 		assertEquals(emptyList<ConsentCategory>(), read("NONE"))
 		assertEquals(emptyList<ConsentCategory>(), read(""))
