@@ -1,5 +1,6 @@
 'use client';
 
+import { optInConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
@@ -27,6 +28,7 @@ import {
 	useResolvedPresentation,
 } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
+import { useKernel } from '~/kernel-selector';
 import { useUIConfig } from '~/ui-config-context';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
@@ -56,6 +58,7 @@ export const ConsentWidgetOptOut = createForwardRef<
 	const translations = useTranslations();
 	const presentation = useResolvedPresentation();
 	const optOut = useOptOut();
+	const kernel = useKernel();
 	const { uiSource } = useConsentTracking();
 	const { noStyle: contextNoStyle } = useTheme();
 	const { components } = useUIConfig();
@@ -113,7 +116,20 @@ export const ConsentWidgetOptOut = createForwardRef<
 							recordedAtTestId="consent-widget-opt-out-recorded-at"
 							referenceTestId="consent-widget-opt-out-reference"
 						/>
-						{/* Opt-back-in action mounts below the receipt when added. */}
+						{optOutState.lock !== 'gpc-active' && (
+							<button
+								type="button"
+								className={finalNoStyle ? undefined : styles.optInLink}
+								data-testid="consent-widget-opt-in-link"
+								onClick={() => {
+									optInConsentSurface(kernel, {
+										uiSource: toSaveUISource(uiSource),
+									});
+								}}
+							>
+								{copy.optInLink}
+							</button>
+						)}
 					</>
 				) : (
 					<>

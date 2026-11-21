@@ -133,10 +133,15 @@ describe('consent widget opt-out parity', () => {
 		expect(kernel.getSnapshot().optOut).not.toBeNull();
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 
-		// Turning marketing on and saving lifts the device opt-out.
+		// Turning marketing on and saving opens the two-step confirmation; confirming lifts the device opt-out.
 		await marketing.click();
 		await expect.element(marketing).toHaveAttribute('aria-checked', 'true');
 		await page.getByTestId('consent-widget-footer-save-button').click();
+		await expect
+			.element(page.getByTestId('opt-in-confirmation-root'))
+			.toBeVisible();
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+		await page.getByTestId('opt-in-confirmation-confirm-button').click();
 		await vi.waitFor(() => {
 			expect(kernel.getSnapshot().optOut).toBeNull();
 		});
@@ -303,13 +308,20 @@ describe('consent widget opt-out parity', () => {
 			.element(marketing)
 			.toHaveAttribute('aria-describedby', notice?.id ?? '');
 
-		// The switch stays usable and stages a toggle on.
+		// The switch stays usable and stages a toggle on; saving asks for confirmation before requesting the lift.
 		await marketing.click();
 		await expect.element(marketing).toHaveAttribute('aria-checked', 'true');
 		await page.getByTestId('consent-widget-footer-save-button').click();
+		await expect
+			.element(page.getByTestId('opt-in-confirmation-root'))
+			.toBeVisible();
+		await page.getByTestId('opt-in-confirmation-confirm-button').click();
 		await vi.waitFor(() => {
-			expect(kernel.getSnapshot().optOut?.heldBy).toBe('person');
+			expect(
+				document.querySelector('[data-testid="opt-in-confirmation-root"]')
+			).toBeNull();
 		});
+		expect(kernel.getSnapshot().optOut?.heldBy).toBe('person');
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
 
 		unmount();

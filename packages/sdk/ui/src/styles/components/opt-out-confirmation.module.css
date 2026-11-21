@@ -337,6 +337,18 @@
 		color: var(--opt-out-confirmation-foreground-color-dark);
 	}
 
+	.root[data-stacked]:not(:global(.headless)) {
+		z-index: calc(var(--opt-out-confirmation-z-index) + 2);
+	}
+
+	.overlay[data-stacked]:not(:global(.headless)) {
+		z-index: calc(var(--opt-out-confirmation-overlay-z-index) + 2);
+	}
+
+	.root[data-stacked] .footer:not(:global(.headless)) {
+		justify-content: flex-end;
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.dialogVisible:not(:global(.headless)),
 		.dialogHidden:not(:global(.headless)),

@@ -17,6 +17,12 @@ import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal
 import { BrandingTag } from '~/components/shared/ui/branding';
 import { useComponentConfig } from '~/hooks/use-component-config';
 import { useIABPolicyGuard } from '~/hooks/use-iab-policy-guard';
+import { useOptInConfirmationHost } from '~/hooks/use-opt-out';
+import { createDeferredModule } from '~/utils/deferred-module';
+
+const LazyOptInConfirmation = createDeferredModule(
+	() => import('~/components/opt-in-confirmation')
+).component((module) => module.OptInConfirmation);
 
 import { StreamedConsentSurface } from '../shared/streamed-surface';
 import { ConsentBannerRoot } from './atoms/root';
@@ -238,6 +244,7 @@ const ConsentBannerContent: FC<ConsentBannerProps> = ({
 }) => {
 	// Outside the banner's own error boundary, which would swallow it.
 	useIABPolicyGuard();
+	const optInConfirmationActive = useOptInConfirmationHost();
 	const primaryActions =
 		typeof primaryButton === 'string' ? [primaryButton] : primaryButton;
 	const { banner } = useHeadlessConsentUI({
@@ -334,9 +341,16 @@ const ConsentBannerContent: FC<ConsentBannerProps> = ({
 	};
 
 	return (
-		<ErrorBoundary
-			fallback={<div>Something went wrong with the Consent Banner.</div>}
-		>
+		<>
+			{optInConfirmationActive && (
+				<LazyOptInConfirmation
+					disableAnimation={config.disableAnimation}
+					noStyle={config.noStyle}
+				/>
+			)}
+			<ErrorBoundary
+				fallback={<div>Something went wrong with the Consent Banner.</div>}
+			>
 			<ConsentBannerRoot
 				{...config}
 				models={models}
@@ -405,6 +419,7 @@ const ConsentBannerContent: FC<ConsentBannerProps> = ({
 				</Box>
 			</ConsentBannerRoot>
 		</ErrorBoundary>
+		</>
 	);
 };
 
