@@ -25,6 +25,7 @@ export {
 	useModel,
 	useNoticeDismissal,
 	useOptOut,
+	useOptOutReceipt,
 	useOptOutState,
 	useOverrides,
 	usePolicyCategories,

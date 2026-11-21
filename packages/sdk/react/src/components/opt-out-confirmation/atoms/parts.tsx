@@ -4,6 +4,7 @@ import { closeOptOutConfirmation } from '@inth/sdk/surface-actions';
 import {
 	resolveOptOutCopy,
 	resolveOptOutLink,
+	resolveOptOutReceiptSentence,
 	resolvePreferenceControlLabels,
 } from '@inth/sdk/surface-state';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
@@ -12,6 +13,7 @@ import { forwardRef as createForwardRef, isValidElement } from 'react';
 import type {
 	AnchorHTMLAttributes,
 	ButtonHTMLAttributes,
+	HTMLAttributes,
 	MouseEvent,
 	ReactNode,
 	Ref,
@@ -22,16 +24,35 @@ import { Slot } from '~/components/shared/libs/slot';
 import { Box } from '~/components/shared/primitives/box';
 import type { BoxProps } from '~/components/shared/primitives/box';
 import {
+	useOptOutReceipt,
 	useOptOutState,
 	useResolvedPresentation,
 	useSetActiveUI,
 } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
+import { useTranslationLanguage } from '~/hooks/use-translation-language';
 import { useKernel } from '~/kernel-selector';
 import { useUIConfig } from '~/ui-config-context';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 const PREFERENCES_HASH = '#inth-preferences';
+
+const formatRecordedAt = function formatRecordedAt(
+	at: number,
+	language: string
+): string {
+	try {
+		return new Intl.DateTimeFormat(language, {
+			dateStyle: 'medium',
+			timeStyle: 'short',
+		}).format(at);
+	} catch {
+		return new Intl.DateTimeFormat(undefined, {
+			dateStyle: 'medium',
+			timeStyle: 'short',
+		}).format(at);
+	}
+};
 
 const OptOutConfirmationCard = createForwardRef<
 	HTMLDivElement,
@@ -130,7 +151,8 @@ const OptOutConfirmationDescription = createForwardRef<
 	Omit<BoxProps, 'slotKey'>
 >(({ children, asChild, ...props }, ref) => {
 	const translations = useTranslations();
-	const optOutCopy = resolveOptOutCopy(translations);
+	const receipt = useOptOutReceipt();
+	const sentence = resolveOptOutReceiptSentence(translations, receipt);
 	return (
 		<Box
 			ref={ref as Ref<HTMLDivElement>}
@@ -144,12 +166,74 @@ const OptOutConfirmationDescription = createForwardRef<
 			{asChild && isValidElement(children) ? (
 				children
 			) : (
-				<p>{children ?? optOutCopy.description}</p>
+				<p>{children ?? sentence}</p>
 			)}
 		</Box>
 	);
 });
 OptOutConfirmationDescription.displayName = 'OptOutConfirmationDescription';
+
+export interface OptOutConfirmationDetailsProps extends HTMLAttributes<HTMLDListElement> {
+	noStyle?: boolean;
+}
+
+const OptOutConfirmationDetails = createForwardRef<
+	HTMLDListElement,
+	OptOutConfirmationDetailsProps
+>(({ className, noStyle, ...props }, ref) => {
+	const receipt = useOptOutReceipt();
+	const translations = useTranslations();
+	const language = useTranslationLanguage();
+	const optOutCopy = resolveOptOutCopy(translations);
+	const { noStyle: contextNoStyle } = useTheme();
+	const finalNoStyle = Boolean(noStyle ?? contextNoStyle);
+	if (receipt.at === null && receipt.reference === null) {
+		return null;
+	}
+	const dlClassName = finalNoStyle
+		? className
+		: [styles.receipt, className].filter(Boolean).join(' ');
+	const rowClassName = finalNoStyle ? undefined : styles.receiptRow;
+	const labelClassName = finalNoStyle ? undefined : styles.receiptLabel;
+	const valueClassName = finalNoStyle ? undefined : styles.receiptValue;
+	const refClassName = finalNoStyle ? undefined : styles.reference;
+	return (
+		<dl
+			ref={ref}
+			className={dlClassName}
+			data-testid="opt-out-confirmation-receipt"
+			{...props}
+		>
+			{receipt.at !== null && (
+				<div className={rowClassName}>
+					<dt className={labelClassName}>{optOutCopy.recordedLabel}</dt>
+					<dd className={valueClassName}>
+						<time
+							dateTime={new Date(receipt.at).toISOString()}
+							data-testid="opt-out-confirmation-recorded-at"
+						>
+							{formatRecordedAt(receipt.at, language)}
+						</time>
+					</dd>
+				</div>
+			)}
+			{receipt.reference !== null && (
+				<div className={rowClassName}>
+					<dt className={labelClassName}>{optOutCopy.referenceLabel}</dt>
+					<dd className={valueClassName}>
+						<code
+							className={refClassName}
+							data-testid="opt-out-confirmation-reference"
+						>
+							{receipt.reference}
+						</code>
+					</dd>
+				</div>
+			)}
+		</dl>
+	);
+});
+OptOutConfirmationDetails.displayName = 'OptOutConfirmationDetails';
 
 const OptOutConfirmationFooter = createForwardRef<
 	HTMLDivElement,
@@ -286,6 +370,8 @@ export {
 	OptOutConfirmationCard,
 	OptOutConfirmationDescription as Description,
 	OptOutConfirmationDescription,
+	OptOutConfirmationDetails as Details,
+	OptOutConfirmationDetails,
 	OptOutConfirmationDoneButton as DoneButton,
 	OptOutConfirmationDoneButton,
 	OptOutConfirmationFooter as Footer,

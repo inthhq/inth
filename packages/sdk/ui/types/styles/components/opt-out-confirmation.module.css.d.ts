@@ -15,6 +15,11 @@ declare const styles: {
   readonly "overlayHidden": string;
   readonly "overlayVisible": string;
   readonly "preferencesLink": string;
+  readonly "receipt": string;
+  readonly "receiptLabel": string;
+  readonly "receiptRow": string;
+  readonly "receiptValue": string;
+  readonly "reference": string;
   readonly "root": string;
   readonly "status": string;
   readonly "title": string;

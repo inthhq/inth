@@ -1,4 +1,10 @@
-import type { ConsentKernel, OptOutLinkVariant } from '@inth/sdk/engine';
+import type {
+	ConsentKernel,
+	OptOutLinkVariant,
+	OptOutPayload,
+	OptOutTransportResult,
+	ProviderTransportFactory,
+} from '@inth/sdk/engine';
 import {
 	OPT_OUT_CONFIRMATION_STORAGE_KEY,
 	policyRulePresets,
@@ -7,6 +13,7 @@ import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
 } from '@inth/sdk/runtime/page-globals';
+import { V1_UUID_PATTERN } from '@inth/sdk/schema/types';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import {
 	EARLY_CONSENT_TAP_SCRIPT,
@@ -123,9 +130,16 @@ describe('one-step opt-out and confirmation view in React', () => {
 		const status = query('opt-out-confirmation-status');
 		expect(status?.getAttribute('role')).toBe('status');
 		expect(status?.textContent).toBe('Opt-out request honored');
-		expect(query('opt-out-confirmation-description')?.textContent).toContain(
-			'not sell or share'
+		const recordedAt = query<HTMLTimeElement>(
+			'opt-out-confirmation-recorded-at'
 		);
+		expect(recordedAt).not.toBeNull();
+		expect(recordedAt?.getAttribute('datetime')).toBeTruthy();
+		expect(recordedAt?.textContent?.trim()).not.toBe('');
+		const reference = query('opt-out-confirmation-reference');
+		expect(reference).not.toBeNull();
+		expect(reference?.textContent).toMatch(V1_UUID_PATTERN);
+		expect(root.querySelectorAll('input, textarea, select')).toHaveLength(0);
 		const buttons = [...root.querySelectorAll('button')];
 		expect(buttons).toHaveLength(1);
 		expect(buttons[0]?.textContent).toBe('Done');
@@ -538,7 +552,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 
 		const recorded = activeKernel?.getSnapshot().optOut;
 		expect(recorded).not.toBeNull();
-		first.unmount();
+		await first.unmount();
 
 		// Next load after reload: opens once with the honored status, clears the
 		// marker, records nothing again, and does not reload again.
@@ -572,7 +586,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 			setTimeout(resolve, 20);
 		});
 		expect(onSecondBeforeReload).not.toHaveBeenCalled();
-		second.unmount();
+		await second.unmount();
 
 		// Load after that: marker is cleared, so confirmation does not reopen.
 		const third = await render(
@@ -596,6 +610,126 @@ describe('one-step opt-out and confirmation view in React', () => {
 			setTimeout(resolve, 20);
 		});
 		expect(query('opt-out-confirmation-root')).toBeNull();
-		third.unmount();
+		await third.unmount();
+	});
+
+	test('updates receipt from browser to account coverage when backend answers with heldBy both while keeping reference unchanged', async () => {
+		let resolveAnswer: ((result: OptOutTransportResult) => void) | undefined;
+		let sentPayload: OptOutPayload | undefined;
+		const deferredOptOutMode: ProviderTransportFactory = Object.assign(
+			() => ({
+				optOut: (payload: OptOutPayload) => {
+					sentPayload = payload;
+					return new Promise<OptOutTransportResult>((resolve) => {
+						resolveAnswer = resolve;
+					});
+				},
+			}),
+			{ kind: 'offline' as const }
+		);
+
+		const { unmount } = await render(
+			<InthProvider
+				options={{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					mode: deferredOptOutMode,
+					overrides: { country: 'US', region: 'CA' },
+					persistence: false,
+					prefetch: policyFixture(undefined, noticeRule()),
+					reloadOnConsentRevoked: false,
+				}}
+			>
+				<KernelCapture />
+				<ConsentBanner disableAnimation />
+				<ConsentDialog disableAnimation />
+			</InthProvider>
+		);
+
+		await vi.waitFor(() =>
+			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+		);
+		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+
+		await vi.waitFor(() =>
+			expect(query('opt-out-confirmation-root')).not.toBeNull()
+		);
+		const beforeDescription = query(
+			'opt-out-confirmation-description'
+		)?.textContent;
+		const beforeReference = query(
+			'opt-out-confirmation-reference'
+		)?.textContent;
+		expect(beforeDescription).toBeTruthy();
+		expect(beforeDescription?.toLowerCase()).not.toContain('account');
+		expect(beforeReference).toMatch(V1_UUID_PATTERN);
+		expect(query('opt-out-confirmation-recorded-at')).not.toBeNull();
+
+		await vi.waitFor(() => expect(resolveAnswer).toBeDefined());
+		resolveAnswer?.({
+			ok: true,
+			optOut: {
+				heldBy: 'both',
+				method: 'button',
+				recordedAt: sentPayload?.givenAt ?? Date.now(),
+				rights: ['sale', 'share'],
+			},
+			subjectId: sentPayload?.subjectId,
+		});
+
+		await vi.waitFor(() =>
+			expect(
+				query('opt-out-confirmation-description')?.textContent?.toLowerCase()
+			).toContain('account')
+		);
+		expect(query('opt-out-confirmation-reference')?.textContent).toBe(
+			beforeReference
+		);
+		expect(sentPayload?.idempotencyKey).toBe(beforeReference);
+
+		await unmount();
+	});
+
+	test('renders no reference for an account-held record this browser did not create', async () => {
+		const { unmount } = await render(
+			<InthProvider
+				options={{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					mode: testing(),
+					overrides: { country: 'US', region: 'CA' },
+					persistence: false,
+					prefetch: {
+						...policyFixture(undefined, noticeRule()),
+						initialRecords: {
+							optOut: {
+								heldBy: 'person',
+								method: 'propagated',
+								recordedAt: Date.now() - 60_000,
+								rights: ['sale', 'share'],
+							},
+							optOutRightsConfirmed: true,
+						},
+					},
+					reloadOnConsentRevoked: false,
+				}}
+			>
+				<KernelCapture />
+				<ConsentDialogLink right="opt-out" />
+				<ConsentDialog disableAnimation />
+			</InthProvider>
+		);
+
+		await vi.waitFor(() => expect(query('consent-dialog-link')).not.toBeNull());
+		query<HTMLButtonElement>('consent-dialog-link')?.click();
+
+		await vi.waitFor(() =>
+			expect(query('opt-out-confirmation-root')).not.toBeNull()
+		);
+		expect(
+			query('opt-out-confirmation-description')?.textContent?.toLowerCase()
+		).toContain('account');
+		expect(query('opt-out-confirmation-recorded-at')).not.toBeNull();
+		expect(query('opt-out-confirmation-reference')).toBeNull();
+
+		await unmount();
 	});
 });
