@@ -564,8 +564,9 @@ const settledBeforeBody = (
  * such as one with a lone UTF-16 surrogate, which `encodeURIComponent` throws on
  */
 const segment = (value: string): string | undefined => {
-	// A dot segment would move the request to another route
-	if (value === '.' || value === '..') {
+	// A dot segment would move the request to another route, and an empty
+	// one would name none
+	if (value === '' || value === '.' || value === '..') {
 		return undefined;
 	}
 	try {
@@ -593,7 +594,7 @@ const unusableSegment = (name: string): InthResult<never> =>
 	failed(
 		new InthError(
 			'invalid_request',
-			`\`${name}\` cannot be sent in a URL: it is a dot segment, or holds a character no URL can carry`
+			`\`${name}\` cannot be sent in a URL: it is empty or a dot segment, or holds a character no URL can carry`
 		)
 	);
 
@@ -1097,16 +1098,23 @@ class Documents {
 		params: CheckDocumentsParams<Types>,
 		options?: InthRequestOptions
 	): Promise<InthResult<Readonly<Record<Types[number], InthDocumentCheck>>>> {
-		const query = {
-			externalId: params.externalId,
-			types: params.types.join(','),
-		};
+		// Copied once, so the query and the check below read the same list
+		const types = [...params.types];
+		const query = { externalId: params.externalId, types: types.join(',') };
 		const unusable = uncarried(query);
 		if (unusable !== undefined) {
 			return unusableSegment(unusable);
 		}
-		const answer = await this.#send(
+		// The answer must hold each type asked for: checked as it is read, so a
+		// failure keeps its status and request id
+		const answeredAll = v.pipe(
 			checkAnswer,
+			v.check(({ documents }) =>
+				types.every((type) => Object.hasOwn(documents, type))
+			)
+		);
+		const answer = await this.#send(
+			answeredAll,
 			{
 				method: 'GET',
 				path: `/v1/documents/check?${new URLSearchParams(query)}`,
@@ -1116,18 +1124,7 @@ class Documents {
 		if (answer.error) {
 			return answer;
 		}
-		const missing = params.types.find(
-			(type) => !Object.hasOwn(answer.data.documents, type)
-		);
-		if (missing !== undefined) {
-			return failed(
-				new InthError(
-					'unexpected_response',
-					`The API did not answer for the type "${missing}"`
-				)
-			);
-		}
-		// SAFETY: every type asked for was just found among the results
+		// SAFETY: the schema above found every type asked for among the results
 		return ok(
 			answer.data.documents as Readonly<
 				Record<Types[number], InthDocumentCheck>

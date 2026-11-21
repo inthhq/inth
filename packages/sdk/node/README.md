@@ -3,7 +3,7 @@
 The Inth client for a customer's server.
 
 ```sh
-npm install @inth/node
+npm install @inth/node@alpha
 ```
 
 It links browsers to your own users, reads what they consent to, publishes your legal

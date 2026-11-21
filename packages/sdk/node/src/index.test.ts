@@ -658,12 +658,25 @@ describe('retries and limits', () => {
 
 describe('answers it cannot use', () => {
 	it('reports an answer that leaves out a type that was asked for', async () => {
-		const { inth } = stubbed([() => Response.json({ documents: {} })]);
+		const { inth } = stubbed([
+			() =>
+				Response.json(
+					{ documents: {} },
+					{ headers: { 'x-request-id': 'req_partial' } }
+				),
+		]);
 		const answer = await inth.documents.check({
 			externalId: 'user_7',
 			types: ['privacy_policy'],
 		});
-		assert.strictEqual(answer.error?.code, 'unexpected_response');
+		assert.deepStrictEqual(
+			{
+				code: answer.error?.code,
+				requestId: answer.error?.requestId,
+				status: answer.error?.status,
+			},
+			{ code: 'unexpected_response', requestId: 'req_partial', status: 200 }
+		);
 	});
 
 	it('reports a link answer that names no subject', async () => {
@@ -944,8 +957,10 @@ describe('documents', () => {
 			subjectId: '..',
 		});
 		const current = await inth.documents.current({ type: '.' });
+		const unnamed = await inth.documents.current({ type: '' });
 		assert.strictEqual(linked.error?.code, 'invalid_request');
 		assert.strictEqual(current.error?.code, 'invalid_request');
+		assert.strictEqual(unnamed.error?.code, 'invalid_request');
 		assert.strictEqual(sent.length, 0);
 	});
 
