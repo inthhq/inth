@@ -3,6 +3,7 @@ import {
 	expandedVendors,
 } from '@inth/conformance/play/consent-widget';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
+import { expect, within } from 'storybook/test';
 
 import ConsentWidgetOptOutStory from './consent-widget-opt-out-story.svelte';
 import ConsentWidgetVendorsStory from './consent-widget-vendors-story.svelte';
@@ -37,7 +38,15 @@ export const WithVendorsExpanded: Story = {
 	play: expandedVendors,
 };
 
-/** Durable opt-out honored by a visitor request; switches stay off and usable. */
+/** Under an opt-out policy before the visitor opts out. */
+export const OptOutNotOptedOut: Story = {
+	render: () => ({
+		Component: ConsentWidgetOptOutStory,
+		props: { kind: 'not-opted-out' },
+	}),
+};
+
+/** Durable opt-out honored by a visitor request before backend rights confirmation. */
 export const OptOutHonoredByRequest: Story = {
 	render: () => ({
 		Component: ConsentWidgetOptOutStory,
@@ -45,8 +54,36 @@ export const OptOutHonoredByRequest: Story = {
 	}),
 };
 
-/** Durable opt-out honored by an active GPC signal; restricted switches are locked off. */
+/** Durable opt-out with sale and sharing confirmed by the backend. */
+export const OptOutConfirmedSaleAndShare: Story = {
+	render: () => ({
+		Component: ConsentWidgetOptOutStory,
+		props: { kind: 'confirmed' },
+	}),
+};
+
+/** Durable opt-out honored by a visitor request with the "Opt back in…" link. */
+export const OptOutWithOptInLink: Story = {
+	play: async ({ canvasElement }) => {
+		const link = await within(canvasElement).findByTestId(
+			'consent-widget-opt-in-link'
+		);
+		await expect(link).toBeVisible();
+	},
+	render: () => ({
+		Component: ConsentWidgetOptOutStory,
+		props: { kind: 'request' },
+	}),
+};
+
+/** Durable opt-out honored by an active GPC signal; restricted switches are locked off and no opt-in link is shown. */
 export const OptOutGpcLocked: Story = {
+	play: async ({ canvasElement }) => {
+		await within(canvasElement).findByTestId('consent-widget-opt-out-status');
+		await expect(
+			within(canvasElement).queryByTestId('consent-widget-opt-in-link')
+		).toBeNull();
+	},
 	render: () => ({
 		Component: ConsentWidgetOptOutStory,
 		props: { kind: 'gpc' },

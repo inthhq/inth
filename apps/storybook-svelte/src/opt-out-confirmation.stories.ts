@@ -15,29 +15,47 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+const clickBannerOptOut = async () => {
+	const link = await within(document.body).findByTestId(
+		'consent-banner-right-link-opt-out'
+	);
+	await userEvent.click(link);
+	const status = await within(document.body).findByTestId(
+		'opt-out-confirmation-status'
+	);
+	await waitFor(() =>
+		expect(status).toHaveTextContent('Opt-out request honored')
+	);
+};
+
 export const RequestHonored: Story = {
 	args: {
-		gpc: false,
 		optOutLink: 'do-not-sell',
+		variant: 'request',
 	},
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-banner-right-link-opt-out'
-		);
-		await userEvent.click(link);
-		const status = await within(document.body).findByTestId(
-			'opt-out-confirmation-status'
-		);
-		await waitFor(() =>
-			expect(status).toHaveTextContent('Opt-out request honored')
-		);
+	play: clickBannerOptOut,
+};
+
+export const RequestConfirmed: Story = {
+	args: {
+		optOutLink: 'do-not-sell',
+		variant: 'confirmed',
 	},
+	play: clickBannerOptOut,
+};
+
+export const AccountCovered: Story = {
+	args: {
+		optOutLink: 'do-not-sell',
+		variant: 'account-covered',
+	},
+	play: clickBannerOptOut,
 };
 
 export const SignalHonored: Story = {
 	args: {
-		gpc: true,
 		optOutLink: 'do-not-sell',
+		variant: 'signal',
 	},
 	play: async () => {
 		const link = await within(document.body).findByRole('button', {
@@ -49,6 +67,25 @@ export const SignalHonored: Story = {
 		);
 		await waitFor(() =>
 			expect(status).toHaveTextContent('Opt-out preference signal honored')
+		);
+	},
+};
+
+export const AccountAdopted: Story = {
+	args: {
+		optOutLink: 'do-not-sell',
+		variant: 'account-adopted',
+	},
+	play: async () => {
+		const link = await within(document.body).findByTestId(
+			'consent-dialog-link'
+		);
+		await userEvent.click(link);
+		const status = await within(document.body).findByTestId(
+			'opt-out-confirmation-status'
+		);
+		await waitFor(() =>
+			expect(status).toHaveTextContent('Opt-out request honored')
 		);
 	},
 };
