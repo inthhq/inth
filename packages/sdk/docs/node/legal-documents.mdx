@@ -58,7 +58,8 @@ const user = await createUser(form);
 
 const acceptance = {
 	idempotencyKey: crypto.randomUUID(),
-	acceptedAt: new Date(),
+	// A number, so a job that saves this as JSON resends the same time
+	acceptedAt: Date.now(),
 	externalId: user.id,
 	acceptances: [
 		{ type: 'terms_us', hash: form.termsHash },

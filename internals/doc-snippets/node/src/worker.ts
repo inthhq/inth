@@ -1,6 +1,8 @@
 // #region docs:node-worker title="worker.ts"
 import { Inth } from '@inth/node';
 
+import { getSessionUser } from './session';
+
 interface Env {
 	INTH_PROJECT_URL: string;
 	INTH_SECRET_KEY: string;
@@ -12,8 +14,13 @@ export default {
 			projectUrl: env.INTH_PROJECT_URL,
 			secretKey: env.INTH_SECRET_KEY,
 		});
-		const externalId = new URL(request.url).searchParams.get('user') ?? '';
-		const { data, error } = await inth.consents.check({ externalId });
+		// The signed-in user, never an ID the caller sends: the secret key
+		// can read any user's consent
+		const user = await getSessionUser(request);
+		if (!user) {
+			return new Response('Sign in first', { status: 401 });
+		}
+		const { data, error } = await inth.consents.check({ externalId: user.id });
 		if (error) {
 			return Response.json({ error: error.message }, { status: 502 });
 		}

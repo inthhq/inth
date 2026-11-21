@@ -1,0 +1,10 @@
+// #region docs:node-register title="inth.d.ts"
+// The import makes this file extend @inth/node rather than replace it
+import '@inth/node';
+
+declare module '@inth/node' {
+	interface Register {
+		documentTypes: 'privacy_policy' | 'terms_us' | 'terms_eu';
+	}
+}
+// #endregion docs:node-register
