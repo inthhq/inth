@@ -64,6 +64,11 @@ export type PendingOptOutEntry = OptOutAct & {
 /** Access to the stored lists inside one {@link SaveOutboxStore.transact}. */
 export interface OutboxTransaction {
 	/**
+	 * False when the store fell back to process-only memory and cannot survive a
+	 * page reload. Omitted means durable.
+	 */
+	durable?: boolean;
+	/**
 	 * The stored value: `undefined` when nothing is stored, `null` when the
 	 * stored data cannot be read. Never trusted; the outbox validates it.
 	 */
@@ -332,6 +337,7 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
 				}
 			};
 			const tx: OutboxTransaction = {
+				durable: storage !== memory,
 				read(slot) {
 					const value = readKey(SLOT_KEYS[slot]);
 					if (!Array.isArray(value) || !value.some(isAdopted)) {
@@ -417,8 +423,18 @@ export const createBrowserOutboxStore = function createBrowserOutboxStore(
  */
 export const createMemoryOutboxStore =
 	function createMemoryOutboxStore(): SaveOutboxStore {
+		const values = new Map<string, string>();
+		const shared: TextStorage = {
+			getItem: (key) => values.get(key) ?? null,
+			removeItem: (key) => {
+				values.delete(key);
+			},
+			setItem: (key, value) => {
+				values.set(key, value);
+			},
+		};
 		return createBrowserOutboxStore({
-			localStorage: () => null,
+			localStorage: () => shared,
 			locks: () => null,
 		});
 	};

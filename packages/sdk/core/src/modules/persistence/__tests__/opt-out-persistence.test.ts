@@ -18,7 +18,11 @@ import {
 	optOutRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
-import { STORAGE_KEY_V2, resolveStorageKeys } from '../../../libs/storage-keys';
+import {
+	PENDING_OPT_OUTS_STORAGE_KEY,
+	STORAGE_KEY_V2,
+	resolveStorageKeys,
+} from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent';
 import {
 	readStoredRecords,
@@ -659,5 +663,116 @@ describe('opt-out persistence lifecycle', () => {
 
 		persistence.dispose();
 		kernel.dispose();
+	});
+
+	it('does not write g=1 or gpcReported when the outbox refuses to queue the GPC report, and persists it once a working load reports', async () => {
+		writeStoredOptOutRecord(
+			{
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW - 500,
+				rights: ['sale', 'share'],
+				subject: { subjectId: 'sub_gpc_unstored' },
+				version: 1,
+			},
+			undefined,
+			NOW
+		);
+
+		const spy = vi.spyOn(window.localStorage, 'setItem');
+		const original = spy.getMockImplementation();
+		spy.mockImplementation((key: string, value: string) => {
+			if (key === PENDING_OPT_OUTS_STORAGE_KEY) {
+				throw new DOMException('full', 'QuotaExceededError');
+			}
+			original?.(key, value);
+		});
+		try {
+			const pending = Promise.withResolvers<never>();
+			const inFlight = vi.fn(() => pending.promise);
+			const first = createConsentKernel({
+				initialLocation: { countryCode: 'US', regionCode: 'CA' },
+				initialPolicyResolution: usOptOutResolution(),
+				initialPrivacySignals: { gpc: true },
+				now: NOW,
+				transport: { optOut: inFlight },
+			});
+			const firstPersistence = createPersistence({ kernel: first });
+			await first.commands.init();
+			await flushWrites();
+
+			expect(inFlight).toHaveBeenCalledTimes(1);
+			const storedAfterRefusal = readStoredOptOutRecord(undefined, NOW);
+			expect(storedAfterRefusal).toMatchObject({
+				ok: true,
+				record: { method: 'button' },
+			});
+			expect(
+				storedAfterRefusal?.ok
+					? storedAfterRefusal.record.gpcReported
+					: 'invalid'
+			).toBeUndefined();
+			expect(
+				readStoredRecordsFromCookieHeader(document.cookie, undefined, NOW)
+					.optOutGpcReported
+			).toBeUndefined();
+			firstPersistence.dispose();
+			first.dispose();
+		} finally {
+			if (original) {
+				spy.mockImplementation(original);
+			} else {
+				spy.mockRestore();
+			}
+		}
+
+		const working = vi.fn((payload) =>
+			Promise.resolve({
+				ok: true,
+				optOut: {
+					heldBy: 'device' as const,
+					method: 'button' as const,
+					recordedAt: NOW - 500,
+					rights: ['sale' as const, 'share' as const],
+				},
+				subjectId: payload.subjectId,
+			})
+		);
+		const second = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialPolicyResolution: usOptOutResolution(),
+			initialPrivacySignals: { gpc: true },
+			now: NOW,
+			transport: { optOut: working },
+		});
+		const secondPersistence = createPersistence({ kernel: second });
+		await second.commands.init();
+		await flushWrites();
+
+		expect(working).toHaveBeenCalledTimes(1);
+		expect(readStoredOptOutRecord(undefined, NOW)).toMatchObject({
+			ok: true,
+			record: { gpcReported: true, method: 'button' },
+		});
+		expect(
+			readStoredRecordsFromCookieHeader(document.cookie, undefined, NOW)
+				.optOutGpcReported
+		).toBe(true);
+		secondPersistence.dispose();
+		second.dispose();
+
+		const third = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialPolicyResolution: usOptOutResolution(),
+			initialPrivacySignals: { gpc: true },
+			now: NOW,
+			transport: { optOut: working },
+		});
+		const thirdPersistence = createPersistence({ kernel: third });
+		await third.commands.init();
+		await flushWrites();
+		expect(working).toHaveBeenCalledTimes(1);
+		thirdPersistence.dispose();
+		third.dispose();
 	});
 });

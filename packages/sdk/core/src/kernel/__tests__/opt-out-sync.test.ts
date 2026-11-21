@@ -112,6 +112,28 @@ const flushMacrotasks = () =>
 		setTimeout(resolve, 25);
 	});
 
+const withRefusedPendingOptOutsWrite = async (
+	run: () => Promise<void>
+): Promise<void> => {
+	const spy = vi.spyOn(window.localStorage, 'setItem');
+	const original = spy.getMockImplementation();
+	spy.mockImplementation((key: string, value: string) => {
+		if (key === PENDING_OPT_OUTS_STORAGE_KEY) {
+			throw new DOMException('full', 'QuotaExceededError');
+		}
+		original?.(key, value);
+	});
+	try {
+		await run();
+	} finally {
+		if (original) {
+			spy.mockImplementation(original);
+		} else {
+			spy.mockRestore();
+		}
+	}
+};
+
 describe('opt-out network sync and queue', () => {
 	test('optOut() sends one request with a UUID key, queues on failure, and replays across a reload with the same key', async () => {
 		const offline = vi
@@ -2076,5 +2098,317 @@ describe('opt-out network sync and queue', () => {
 		expect(result).toEqual({ ok: false, reason: 'held-by-account' });
 		expect(await queuedOptOuts()).toEqual([]);
 		kernel.dispose();
+	});
+
+	test('when the outbox refuses to store a held-record GPC report, no report mark is persisted and the next working load sends it once', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const okOptOut = vi.fn<NonNullable<KernelTransport['optOut']>>((payload) =>
+			Promise.resolve({
+				ok: true,
+				optOut: {
+					heldBy: 'device',
+					method: payload.method,
+					recordedAt: payload.givenAt,
+					rights: ['sale', 'share'],
+				},
+				subjectId: payload.subjectId,
+			})
+		);
+
+		// Visitor clicks opt-out while GPC is off.
+		const clicked = kernelOn(
+			{
+				initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+				transport: { optOut: okOptOut },
+			},
+			createBrowserOutboxStore()
+		);
+		const clickedPersistence = createPersistence({ kernel: clicked });
+		await clicked.commands.init();
+		await clicked.commands.optOut();
+		await vi.waitFor(() => expect(okOptOut).toHaveBeenCalledTimes(1));
+		await flushMacrotasks();
+		clickedPersistence.dispose();
+		clicked.dispose();
+
+		// Next load has GPC on, but localStorage refuses the pending opt-outs key
+		// and the request fails before delivery.
+		await withRefusedPendingOptOutsWrite(async () => {
+			const offlineOptOut = vi
+				.fn<NonNullable<KernelTransport['optOut']>>()
+				.mockRejectedValue(new Error('offline'));
+			const refused = kernelOn(
+				{
+					initialPrivacySignals: { gpc: true },
+					transport: { optOut: offlineOptOut },
+				},
+				createBrowserOutboxStore()
+			);
+			const refusedPersistence = createPersistence({ kernel: refused });
+			await refused.commands.init();
+			await vi.waitFor(() => expect(offlineOptOut).toHaveBeenCalledTimes(1));
+			// Unrelated commits on this page must not retry in a loop.
+			refused.refresh();
+			refused.set.language('fr');
+			await flushMacrotasks();
+
+			expect(offlineOptOut).toHaveBeenCalledTimes(1);
+			expect(refused.isOptOutGpcReported()).toBe(false);
+			expect(
+				window.localStorage.getItem(PENDING_OPT_OUTS_STORAGE_KEY)
+			).toBeNull();
+			const storedAfterRefusal = readStoredOptOutRecord(undefined, Date.now());
+			expect(storedAfterRefusal).toMatchObject({
+				ok: true,
+				record: { method: 'button' },
+			});
+			expect(
+				storedAfterRefusal?.ok
+					? storedAfterRefusal.record.gpcReported
+					: 'invalid'
+			).toBeUndefined();
+			expect(document.cookie).not.toContain('&g=1');
+			refusedPersistence.dispose();
+			refused.dispose();
+		});
+		warn.mockRestore();
+
+		// Reload with a working store reports GPC once and persists the mark.
+		const workingOptOut = vi.fn<NonNullable<KernelTransport['optOut']>>(
+			(payload) =>
+				Promise.resolve({
+					ok: true,
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW,
+						rights: ['sale', 'share'],
+					},
+					subjectId: payload.subjectId,
+				})
+		);
+		const second = kernelOn(
+			{
+				initialPrivacySignals: { gpc: true },
+				transport: { optOut: workingOptOut },
+			},
+			createBrowserOutboxStore()
+		);
+		const secondPersistence = createPersistence({ kernel: second });
+		await second.commands.init();
+		await vi.waitFor(() => expect(workingOptOut).toHaveBeenCalledTimes(1));
+		expect(workingOptOut.mock.calls[0]?.[0].method).toBe('gpc');
+		await vi.waitFor(() =>
+			expect(readStoredOptOutRecord(undefined, Date.now())).toMatchObject({
+				ok: true,
+				record: { gpcReported: true, method: 'button' },
+			})
+		);
+		expect(document.cookie).toContain('&g=1');
+		secondPersistence.dispose();
+		second.dispose();
+
+		// Third load sees the persisted mark and sends nothing.
+		const third = kernelOn(
+			{
+				initialPrivacySignals: { gpc: true },
+				transport: { optOut: workingOptOut },
+			},
+			createBrowserOutboxStore()
+		);
+		const thirdPersistence = createPersistence({ kernel: third });
+		await third.commands.init();
+		third.refresh();
+		await flushMacrotasks();
+		expect(workingOptOut).toHaveBeenCalledTimes(1);
+		thirdPersistence.dispose();
+		third.dispose();
+	});
+
+	test('when the outbox refuses to store a first-recorded GPC opt-out and the page reloads before delivery, no report mark is persisted and the next load sends it once', async () => {
+		await withRefusedPendingOptOutsWrite(async () => {
+			const inFlight = Promise.withResolvers<OptOutTransportResult>();
+			const hangingOptOut = vi.fn<NonNullable<KernelTransport['optOut']>>(
+				() => inFlight.promise
+			);
+			const first = kernelOn(
+				{
+					initialPrivacySignals: { gpc: true },
+					initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+					transport: { optOut: hangingOptOut },
+				},
+				createBrowserOutboxStore()
+			);
+			const firstPersistence = createPersistence({ kernel: first });
+			await first.commands.init();
+			await vi.waitFor(() => expect(hangingOptOut).toHaveBeenCalledTimes(1));
+			first.refresh();
+			first.set.language('fr');
+			await flushMacrotasks();
+
+			expect(first.getSnapshot().optOut?.method).toBe('gpc');
+			expect(hangingOptOut).toHaveBeenCalledTimes(1);
+			expect(first.isOptOutGpcReported()).toBe(false);
+			expect(
+				window.localStorage.getItem(PENDING_OPT_OUTS_STORAGE_KEY)
+			).toBeNull();
+			const storedAfterRefusal = readStoredOptOutRecord(undefined, Date.now());
+			expect(storedAfterRefusal).toMatchObject({
+				ok: true,
+				record: { method: 'gpc' },
+			});
+			expect(
+				storedAfterRefusal?.ok
+					? storedAfterRefusal.record.gpcReported
+					: 'invalid'
+			).toBeUndefined();
+			expect(document.cookie).not.toContain('&g=1');
+			firstPersistence.dispose();
+			first.dispose();
+		});
+
+		// Next load with a working store sends the GPC report once and persists the mark.
+		const workingOptOut = vi.fn<NonNullable<KernelTransport['optOut']>>(
+			(payload) =>
+				Promise.resolve({
+					ok: true,
+					optOut: {
+						heldBy: 'device',
+						method: 'gpc',
+						recordedAt: payload.givenAt,
+						rights: ['sale', 'share'],
+					},
+					subjectId: payload.subjectId,
+				})
+		);
+		const second = kernelOn(
+			{
+				initialPrivacySignals: { gpc: true },
+				transport: { optOut: workingOptOut },
+			},
+			createBrowserOutboxStore()
+		);
+		const secondPersistence = createPersistence({ kernel: second });
+		await second.commands.init();
+		await vi.waitFor(() => expect(workingOptOut).toHaveBeenCalledTimes(1));
+		expect(workingOptOut.mock.calls[0]?.[0].method).toBe('gpc');
+		await vi.waitFor(() =>
+			expect(readStoredOptOutRecord(undefined, Date.now())).toMatchObject({
+				ok: true,
+				record: { gpcReported: true, method: 'gpc' },
+			})
+		);
+		expect(document.cookie).toContain('&g=1');
+		secondPersistence.dispose();
+		second.dispose();
+
+		// Third load sees the persisted mark and sends nothing.
+		const third = kernelOn(
+			{
+				initialPrivacySignals: { gpc: true },
+				transport: { optOut: workingOptOut },
+			},
+			createBrowserOutboxStore()
+		);
+		const thirdPersistence = createPersistence({ kernel: third });
+		await third.commands.init();
+		third.refresh();
+		await flushMacrotasks();
+		expect(workingOptOut).toHaveBeenCalledTimes(1);
+		thirdPersistence.dispose();
+		third.dispose();
+	});
+
+	test('when the outbox refuses to store a GPC report but the direct request is answered, the report mark is persisted and reload sends none', async () => {
+		const answeredOptOut = vi.fn<NonNullable<KernelTransport['optOut']>>(
+			(payload) =>
+				Promise.resolve({
+					ok: true,
+					optOut: {
+						heldBy: 'device',
+						method: 'gpc',
+						recordedAt: payload.givenAt,
+						rights: ['sale', 'share'],
+					},
+					subjectId: payload.subjectId,
+				})
+		);
+		await withRefusedPendingOptOutsWrite(async () => {
+			const first = kernelOn(
+				{
+					initialPrivacySignals: { gpc: true },
+					initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+					transport: { optOut: answeredOptOut },
+				},
+				createBrowserOutboxStore()
+			);
+			const firstPersistence = createPersistence({ kernel: first });
+			await first.commands.init();
+			await vi.waitFor(() => expect(answeredOptOut).toHaveBeenCalledTimes(1));
+			await vi.waitFor(() =>
+				expect(readStoredOptOutRecord(undefined, Date.now())).toMatchObject({
+					ok: true,
+					record: { gpcReported: true, method: 'gpc' },
+				})
+			);
+			expect(first.isOptOutGpcReported()).toBe(true);
+			firstPersistence.dispose();
+			first.dispose();
+		});
+
+		const reloaded = kernelOn(
+			{
+				initialPrivacySignals: { gpc: true },
+				transport: { optOut: answeredOptOut },
+			},
+			createBrowserOutboxStore()
+		);
+		const secondPersistence = createPersistence({ kernel: reloaded });
+		await reloaded.commands.init();
+		reloaded.refresh();
+		await flushMacrotasks();
+		expect(answeredOptOut).toHaveBeenCalledTimes(1);
+		secondPersistence.dispose();
+		reloaded.dispose();
+	});
+
+	test('when the browser outbox falls back to memory without localStorage and reloads before delivery, the cookie carries no report mark', async () => {
+		const inFlight = Promise.withResolvers<OptOutTransportResult>();
+		const hangingOptOut = vi.fn<NonNullable<KernelTransport['optOut']>>(
+			() => inFlight.promise
+		);
+		const memoryFallbackStore = createBrowserOutboxStore({
+			localStorage: () => null,
+			locks: () => null,
+		});
+		const first = kernelOn(
+			{
+				initialPrivacySignals: { gpc: true },
+				initialRecords: {
+					now: NOW,
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW - 500,
+						rights: ['sale', 'share'],
+					},
+					subject: { subjectId: SUBJECT },
+				},
+				transport: { optOut: hangingOptOut },
+			},
+			memoryFallbackStore
+		);
+		const firstPersistence = createPersistence({
+			kernel: first,
+			skipHydration: true,
+		});
+		await first.commands.init();
+		await vi.waitFor(() => expect(hangingOptOut).toHaveBeenCalledTimes(1));
+		await flushMacrotasks();
+
+		expect(first.isOptOutGpcReported()).toBe(false);
+		expect(document.cookie).not.toContain('&g=1');
+		firstPersistence.dispose();
+		first.dispose();
 	});
 });
