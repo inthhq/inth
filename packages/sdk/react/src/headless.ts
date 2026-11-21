@@ -13,6 +13,8 @@ export {
 	resolveActionLabels,
 	resolveOptOutCopy,
 	resolveOptOutLink,
+	resolveOptOutReceipt,
+	resolveOptOutReceiptSentence,
 	resolveOptOutState,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
@@ -20,7 +22,12 @@ export {
 export type {
 	OptOutLinkIcon,
 	OptOutLinkVariant,
+	OptOutLocalAct,
 	OptOutLock,
+	OptOutReceipt,
+	OptOutReceiptData,
+	OptOutReceiptScope,
+	OptOutReceiptSource,
 	OptOutResult,
 	OptOutVia,
 	PreferenceControl,
@@ -68,6 +75,7 @@ export { useColorScheme } from './hooks/use-color-scheme';
 export { useFocusTrap } from './hooks/use-focus-trap';
 export { useIABPolicyGuard } from './hooks/use-iab-policy-guard';
 export { useOptOut } from './hooks/use-opt-out';
+export { useOptOutReceipt } from './hooks/use-opt-out-receipt';
 export { useOptOutState } from './hooks/use-opt-out-state';
 export { useScrollLock } from './hooks/use-scroll-lock';
 // IAB headless hook lives on the `@inth/react/iab` subpath.

@@ -7,6 +7,7 @@ import { useComponentConfig } from '~/hooks/use-component-config';
 import {
 	OptOutConfirmationCard,
 	OptOutConfirmationDescription,
+	OptOutConfirmationDetails,
 	OptOutConfirmationDoneButton,
 	OptOutConfirmationFooter,
 	OptOutConfirmationHeader,
@@ -75,6 +76,7 @@ export const OptOutConfirmation: FC<OptOutConfirmationProps> = ({
 				</OptOutConfirmationHeader>
 				<OptOutConfirmationStatus />
 				<OptOutConfirmationDescription />
+				<OptOutConfirmationDetails />
 				<OptOutConfirmationFooter>
 					<OptOutConfirmationDoneButton />
 					<OptOutConfirmationPreferencesLink />

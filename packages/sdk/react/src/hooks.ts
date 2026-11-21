@@ -454,6 +454,7 @@ export const useExperiment =
 // their imports (experiment arms, vendor evaluation) out of a page that
 // only reads consent.
 export { useOptOut } from './hooks/use-opt-out';
+export { useOptOutReceipt } from './hooks/use-opt-out-receipt';
 export { useOptOutState } from './hooks/use-opt-out-state';
 export {
 	usePreferencesPresentation,

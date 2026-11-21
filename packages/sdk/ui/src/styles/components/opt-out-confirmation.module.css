@@ -245,6 +245,63 @@
 		color: var(--opt-out-confirmation-muted-color-dark);
 	}
 
+	.receipt:not(:global(.headless)) {
+		margin: 0;
+		padding: var(--inth-space-sm);
+		border-radius: var(--inth-radius-md);
+		border: 1px solid var(--opt-out-confirmation-border-color);
+		display: flex;
+		flex-direction: column;
+		gap: var(--inth-space-xs);
+		font-size: var(--inth-font-size-sm);
+		line-height: var(--inth-line-height-normal);
+	}
+
+	:global(.inth-dark) .receipt:not(:global(.headless)) {
+		border-color: var(--opt-out-confirmation-border-color-dark);
+	}
+
+	.receiptRow:not(:global(.headless)) {
+		display: flex;
+		flex-direction: column;
+		gap: var(--inth-space-xs);
+	}
+
+	.receiptLabel:not(:global(.headless)) {
+		margin: 0;
+		color: var(--opt-out-confirmation-muted-color);
+		font-weight: var(--inth-font-weight-medium);
+	}
+
+	:global(.inth-dark) .receiptLabel:not(:global(.headless)) {
+		color: var(--opt-out-confirmation-muted-color-dark);
+	}
+
+	.receiptValue:not(:global(.headless)) {
+		margin: 0;
+		color: var(--opt-out-confirmation-foreground-color);
+	}
+
+	:global(.inth-dark) .receiptValue:not(:global(.headless)) {
+		color: var(--opt-out-confirmation-foreground-color-dark);
+	}
+
+	.reference:not(:global(.headless)) {
+		font-family: var(
+			--inth-font-family-mono,
+			ui-monospace,
+			SFMono-Regular,
+			Menlo,
+			Monaco,
+			Consolas,
+			monospace
+		);
+		font-size: var(--inth-font-size-sm);
+		line-height: var(--inth-line-height-normal);
+		word-break: break-all;
+		user-select: all;
+	}
+
 	.footer:not(:global(.headless)) {
 		display: flex;
 		flex-wrap: wrap;
