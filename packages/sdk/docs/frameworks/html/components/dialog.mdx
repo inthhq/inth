@@ -75,21 +75,31 @@ model, no block renders.
   sentence, recorded time, and local reference. When the backend confirms the
   refused rights, the heading updates to name them (`sale` and `share`, `sale`
   and `targeted_ads`, or all three); before confirmation, it keeps the
-  configured link title.
+  configured link title. When GPC is not locking the opt-out, an **Opt back
+  in…** link appears below the receipt.
 - While the browser's GPC signal is active under a policy that maps it, the
   signal-restricted switches and `marketing` (or `measurement` when `marketing`
-  is not in scope) stay off and disabled. A notice below each locked row
-  explains why and is linked to the switch with `aria-describedby`. **Save
-  Settings** and **Accept All** do not present or grant locked categories.
+  is not in scope) stay off and disabled, and no **Opt back in…** link appears.
+  A notice below each locked row explains why and is linked to the switch with
+  `aria-describedby`. **Save Settings** and **Accept All** do not present or
+  grant locked categories.
 - When an account holds the opt-out and GPC is off, the notice appears below
   `marketing` (or `measurement` when `marketing` is not in scope) to explain
   that the account has opted out, and the switches remain usable. Turning
-  `marketing` back on and saving asks the backend to lift the account opt-out.
-- When the opt-out is device-held and GPC is off, turning `marketing` back on
-  and saving lifts the opt-out (`measurement` decides when `marketing` is not in
-  scope). Turning `measurement` back on while `marketing` stays off keeps
-  `measurement` allowed and leaves the opt-out in place. Saving without changing
-  a switch keeps the opt-out in place.
+  `marketing` back on and saving, clicking **Accept All**, or clicking **Opt
+  back in…** opens a separate confirmation dialog first. Confirming asks the
+  backend to lift the account opt-out, and a refused request leaves it in place.
+- When the opt-out is device-held and GPC is off, opting back in uses a
+  two-step confirmation dialog under an `opt-out` policy (11 CCR §7028(a)).
+  Turning `marketing` back on and saving, clicking **Accept All**, or clicking
+  **Opt back in…** opens a separate modal dialog instead of saving right away
+  (`measurement` decides when `marketing` is not in scope). Focus starts on
+  **Stay opted out**, both buttons have equal prominence, and Escape cancels
+  with nothing saved. Confirming lifts the opt-out and applies the pending
+  save. Turning `measurement` back on while `marketing` stays off keeps
+  `measurement` allowed, skips confirmation, and leaves the opt-out in place.
+  Saving without changing a switch keeps the opt-out in place. Under an
+  `opt-in` policy, **Accept All** still lifts a held opt-out in one step.
 
 ## Buttons
 
@@ -131,6 +141,9 @@ Shared theme tokens apply automatically (see
 | `consent-widget-opt-out-button` | Direct one-click opt-out button before opting out. |
 | `consent-widget-opt-out-status` | Honored opt-out status line (`role="status"`). |
 | `consent-widget-opt-out-receipt`, `consent-widget-opt-out-recorded-at`, `consent-widget-opt-out-reference` | Receipt list, recorded time, and local reference while opted out. |
+| `consent-widget-opt-in-link` | "Opt back in…" link shown below the receipt while opted out and not locked by GPC. |
+| `opt-in-confirmation-root`, `opt-in-confirmation-card`, `opt-in-confirmation-title`, `opt-in-confirmation-description` | Separate modal confirmation dialog for two-step opt-in under an `opt-out` policy. |
+| `opt-in-confirmation-cancel-button`, `opt-in-confirmation-confirm-button` | Equal-prominence cancel ("Stay opted out") and confirm ("Opt back in") buttons. |
 | `consent-widget-accordion-item-<category>` | Category row (for example, `measurement`). |
 | `consent-widget-switch-<category>` | Category switch. |
 | `consent-widget-restriction-<category>` | GPC or account lock notice below a restricted category row. |
