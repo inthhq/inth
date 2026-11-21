@@ -357,6 +357,44 @@ describe('opt-out storage and hydration', () => {
 		expect(readStoredOptOutRecord(undefined, NOW)).toBeNull();
 	});
 
+	it('takes a strictly newer local record as it is and unions rights only on equal times', () => {
+		const keys = resolveStorageKeys(undefined);
+		const older: StoredOptOutRecord = {
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW - 2000,
+			rights: ['sale', 'share'],
+			version: 1,
+		};
+		writeStoredOptOutRecord(older, undefined, NOW);
+
+		// The cookie write for a newer answer that dropped a right failed, so
+		// only the local copy is new.
+		const newer: StoredOptOutRecord = {
+			...older,
+			recordedAt: NOW - 1000,
+			rights: ['sale'],
+		};
+		window.localStorage.setItem(keys.optOut, encodeOptOutRecord(newer));
+		expect(readStoredOptOutRecord(undefined, NOW)).toMatchObject({
+			ok: true,
+			record: { recordedAt: NOW - 1000, rights: ['sale'] },
+		});
+
+		// Equal times: a dropped cookie write must not lose a right.
+		window.localStorage.setItem(
+			keys.optOut,
+			encodeOptOutRecord({ ...older, rights: ['targeted_ads'] })
+		);
+		expect(readStoredOptOutRecord(undefined, NOW)).toMatchObject({
+			ok: true,
+			record: {
+				recordedAt: NOW - 2000,
+				rights: ['sale', 'share', 'targeted_ads'],
+			},
+		});
+	});
+
 	it('voids an opt-out record written before the clear epoch', () => {
 		writeStoredOptOutRecord(
 			{

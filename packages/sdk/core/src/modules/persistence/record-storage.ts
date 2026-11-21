@@ -1240,6 +1240,9 @@ export const readStoredOptOutRecord = function readStoredOptOutRecord(
 				if (fromLocal.record.recordedAt < fromCookie.record.recordedAt) {
 					return fromCookie;
 				}
+				if (fromLocal.record.recordedAt > fromCookie.record.recordedAt) {
+					return fromLocal;
+				}
 				const mergedRights = new Set([
 					...fromCookie.record.rights,
 					...fromLocal.record.rights,
