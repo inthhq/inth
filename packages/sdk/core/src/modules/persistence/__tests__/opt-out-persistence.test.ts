@@ -635,16 +635,19 @@ describe('opt-out persistence lifecycle', () => {
 		const persistence = createPersistence({ kernel, skipHydration: true });
 
 		await kernel.commands.init();
-		await flushWrites();
+		// The request leaves through the save queue, whose code loads on
+		// demand, so wait for the answer to be stored, not for a fixed time.
+		await vi.waitFor(() =>
+			expect(readStoredOptOutRecord(undefined, NOW)).toMatchObject({
+				ok: true,
+				record: {
+					gpcReported: true,
+					heldBy: 'both',
+					method: 'propagated',
+				},
+			})
+		);
 		expect(optOut).toHaveBeenCalledTimes(1);
-		expect(readStoredOptOutRecord(undefined, NOW)).toMatchObject({
-			ok: true,
-			record: {
-				gpcReported: true,
-				heldBy: 'both',
-				method: 'propagated',
-			},
-		});
 
 		kernel.set.privacySignals({ gpc: false });
 		await flushWrites();
