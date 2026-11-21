@@ -1779,12 +1779,11 @@ describe('mountConsentUI', () => {
 			const block = query(root, 'consent-widget-opt-out');
 			const accordion = query(root, 'consent-widget-accordion');
 			expect(block.classList).toContain('brand-opt-out-block');
-			expect(
-				Boolean(
-					block.compareDocumentPosition(accordion) &
-					Node.DOCUMENT_POSITION_FOLLOWING
-				)
-			).toBe(true);
+			expect([
+				...root.querySelectorAll(
+					'[data-testid="consent-widget-opt-out"], [data-testid="consent-widget-accordion"]'
+				),
+			]).toEqual([block, accordion]);
 			expect(
 				block.closest('[data-testid^="consent-widget-accordion-item-"]')
 			).toBeNull();
