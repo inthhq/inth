@@ -1,24 +1,24 @@
 {
-	"name": "@inth/no-tw-css-test",
-	"private": true,
-	"scripts": {
-		"build": "rm -rf .next && next build",
-		"dev": "next dev --port 3123",
-		"start": "next start --port 3123"
-	},
-	"dependencies": {
-		"@inth/benchmarking": "workspace:*",
-		"@inth/nextjs": "workspace:*",
-		"@inth/react": "workspace:*",
-		"@inth/sdk": "workspace:*",
-		"next": "15.5.16",
-		"react": "19.2.7",
-		"react-dom": "19.2.7"
-	},
-	"devDependencies": {
-		"@types/node": "22.14.1",
-		"@types/react": "19.2.17",
-		"@types/react-dom": "19.2.3",
-		"typescript": "6.0.3"
-	}
+  "name": "@inth/no-tw-css-test",
+  "private": true,
+  "scripts": {
+    "build": "rm -rf .next && next build",
+    "dev": "next dev --port 3123",
+    "start": "next start --port 3123"
+  },
+  "dependencies": {
+    "@inth/benchmarking": "workspace:*",
+    "@inth/nextjs": "workspace:*",
+    "@inth/react": "workspace:*",
+    "@inth/sdk": "workspace:*",
+    "next": "15.5.16",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.14.1",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "typescript": "6.0.3"
+  }
 }

@@ -1,24 +1,24 @@
 {
-	"name": "@inth/example-showcase-preference-center",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"build": "next build",
-		"check-types": "next typegen && tsc --noEmit",
-		"dev": "next dev --port 3111",
-		"start": "next start --port 3111"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/nextjs": "workspace:*",
-		"next": "16.2.10",
-		"react": "19.2.7",
-		"react-dom": "19.2.7"
-	},
-	"devDependencies": {
-		"@types/node": "^25.5.0",
-		"@types/react": "^19.2.17",
-		"@types/react-dom": "^19.2.3",
-		"typescript": "6.0.3"
-	}
+  "name": "@inth/example-showcase-preference-center",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "next build",
+    "check-types": "next typegen && tsc --noEmit",
+    "dev": "next dev --port 3111",
+    "start": "next start --port 3111"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/nextjs": "workspace:*",
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "6.0.3"
+  }
 }

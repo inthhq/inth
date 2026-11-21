@@ -1,17 +1,17 @@
 {
-	"name": "@inth/doc-snippets-svelte",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"check-types": "svelte-check --tsconfig ./tsconfig.json"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/svelte": "workspace:*",
-		"svelte": "^5.56.4"
-	},
-	"devDependencies": {
-		"svelte-check": "^4.4.5",
-		"typescript": "6.0.3"
-	}
+  "name": "@inth/doc-snippets-svelte",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check-types": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/svelte": "workspace:*",
+    "svelte": "^5.56.4"
+  },
+  "devDependencies": {
+    "svelte-check": "^4.4.5",
+    "typescript": "6.0.3"
+  }
 }

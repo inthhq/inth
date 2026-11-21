@@ -1,21 +1,21 @@
 {
-	"name": "@inth/example-nuxt-static",
-	"private": true,
-	"type": "module",
-	"scripts": {
-		"build": "nuxt generate",
-		"check-types": "nuxt typecheck",
-		"dev": "nuxt dev",
-		"start": "vite preview --outDir .output/public --host 127.0.0.1"
-	},
-	"dependencies": {
-		"@inth/integrations": "workspace:*",
-		"@inth/nuxt": "workspace:*",
-		"nuxt": "^4.5.1"
-	},
-	"devDependencies": {
-		"typescript": "6.0.3",
-		"vite": "8.1.3",
-		"vue-tsc": "^3.3.6"
-	}
+  "name": "@inth/example-nuxt-static",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt generate",
+    "check-types": "nuxt typecheck",
+    "dev": "nuxt dev",
+    "start": "vite preview --outDir .output/public --host 127.0.0.1"
+  },
+  "dependencies": {
+    "@inth/integrations": "workspace:*",
+    "@inth/nuxt": "workspace:*",
+    "nuxt": "^4.5.1"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "vite": "8.1.3",
+    "vue-tsc": "^3.3.6"
+  }
 }
