@@ -4,15 +4,25 @@ import type {
 	SaveUISource,
 } from '@inth/sdk/engine';
 import {
+	claimOptInConfirmationHost,
+	getOptOutReceiptData,
+	getServerOptOutReceiptData,
 	hasConsentPreferences,
 	hasConsentUI,
 	hasOptOutConfirmationHost,
+	isActiveOptInConfirmationHost,
+	isOptInConfirmationOpen,
 	isOptOutConfirmationOpen,
 	optOutConsentSurface,
+	subscribeOptInConfirmation,
 	subscribeOptOutConfirmation,
+	subscribeOptOutReceiptData,
 } from '@inth/sdk/surface-actions';
-import { resolveOptOutState } from '@inth/sdk/surface-state';
-import { computed, inject, onScopeDispose, ref } from 'vue';
+import {
+	resolveOptOutReceipt,
+	resolveOptOutState,
+} from '@inth/sdk/surface-state';
+import { computed, inject, onScopeDispose, ref, shallowRef } from 'vue';
 
 import {
 	symbolKernel,
@@ -61,6 +71,25 @@ export const useNoticeDismissal = () => useSnapshotField('noticeDismissal');
 export const useOptOutState = () => {
 	const snapshot = useConsentSnapshot();
 	return computed(() => resolveOptOutState(snapshot.value));
+};
+/** Read the opt-out receipt derived from the current snapshot and local receipt data. */
+export const useOptOutReceipt = () => {
+	const kernel = useConsentKernel();
+	const snapshot = useConsentSnapshot();
+	const local = shallowRef(
+		typeof window === 'undefined'
+			? getServerOptOutReceiptData(kernel)
+			: getOptOutReceiptData(kernel)
+	);
+	if (typeof window !== 'undefined') {
+		const stop = subscribeOptOutReceiptData(kernel, () => {
+			local.value = getOptOutReceiptData(kernel);
+		});
+		onScopeDispose(stop);
+	}
+	return computed(() =>
+		resolveOptOutReceipt({ optOut: snapshot.value.optOut }, local.value)
+	);
 };
 /** Read detected and active user-agent privacy signals. */
 export const usePrivacySignals = () => useSnapshotField('privacySignals');
@@ -139,3 +168,45 @@ export const useHasOptOutConfirmationHost =
 		onScopeDispose(stop);
 		return hasHost;
 	};
+
+/**
+ * Reactive open state of the two-step opt-in confirmation dialog for the active kernel.
+ *
+ * @internal
+ */
+export const useOptInConfirmationOpen = function useOptInConfirmationOpen() {
+	const kernel = useConsentKernel();
+	const open = ref(isOptInConfirmationOpen(kernel));
+	const stop = subscribeOptInConfirmation(kernel, () => {
+		open.value = isOptInConfirmationOpen(kernel);
+	});
+	onScopeDispose(stop);
+	return open;
+};
+
+/**
+ * Claim a host slot for the two-step opt-in confirmation dialog and return
+ * whether this host should render it right now.
+ *
+ * @internal
+ */
+export const useOptInConfirmationHost = function useOptInConfirmationHost() {
+	const kernel = useConsentKernel();
+	const token = Symbol('OptInConfirmation');
+	const active = ref(false);
+	const update = () => {
+		active.value =
+			isOptInConfirmationOpen(kernel) &&
+			isActiveOptInConfirmationHost(kernel, token);
+	};
+	if (typeof window !== 'undefined') {
+		const release = claimOptInConfirmationHost(kernel, token);
+		const stop = subscribeOptInConfirmation(kernel, update);
+		update();
+		onScopeDispose(() => {
+			stop();
+			release();
+		});
+	}
+	return active;
+};

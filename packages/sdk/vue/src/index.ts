@@ -22,8 +22,12 @@ export type {
 } from '@inth/sdk/engine';
 export {
 	resolveActionLabels,
+	resolveOptInConfirmationSentence,
+	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
 	resolveOptOutLink,
+	resolveOptOutReceipt,
+	resolveOptOutReceiptSentence,
 	resolveOptOutState,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
@@ -31,7 +35,12 @@ export {
 export type {
 	OptOutLinkIcon,
 	OptOutLinkVariant,
+	OptOutLocalAct,
 	OptOutLock,
+	OptOutReceipt,
+	OptOutReceiptData,
+	OptOutReceiptScope,
+	OptOutReceiptSource,
 	OptOutResult,
 	OptOutVia,
 	PreferenceControl,

@@ -8,6 +8,7 @@ import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import {
 	activateOptOutLink,
 	replayEarlyConsentTaps,
+	saveConsentSurfaceWithOptInCheck,
 } from '@inth/sdk/surface-actions';
 import {
 	resolveActionLabels,
@@ -21,6 +22,7 @@ import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import { getTextDirection } from '@inth/sdk/ui/utils';
 import {
 	computed,
+	defineAsyncComponent,
 	mergeProps,
 	onBeforeUnmount,
 	onMounted,
@@ -39,6 +41,7 @@ import {
 	useConsentSnapshot,
 	useHasConsentUi,
 } from '../composables';
+import { useOptInConfirmationHost } from '../composables/kernel';
 import { useConsentPolicyActions } from '../composables/use-consent-policy-actions';
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
 import { useLateEntry } from '../composables/use-late-entry';
@@ -90,6 +93,10 @@ const textDirection = computed(() =>
 const save = useConsentSave();
 const kernel = useConsentKernel();
 const snapshot = useConsentSnapshot();
+const optInConfirmationActive = useOptInConfirmationHost();
+const LazyOptInConfirmation = defineAsyncComponent(
+	() => import('./opt-in-confirmation.vue')
+);
 
 const transitionStyles = bannerStyles as Record<string, string>;
 
@@ -140,8 +147,7 @@ const isOpen = computed(() => {
 	return (
 		activeUI.value === 'banner' &&
 		matchesModel &&
-		!snapshot.value.policyPending &&
-		snapshot.value.promptRequirement.kind !== 'none'
+		!snapshot.value.policyPending
 	);
 });
 
@@ -204,7 +210,21 @@ const onAction = function onAction(action: PresentationAction) {
 		return;
 	}
 	if (action === 'accept') {
-		save('all');
+		const current = kernel.getSnapshot();
+		const available = [
+			'necessary' as const,
+			...(current.evaluationPolicy.choiceScope ?? current.policyRule.scope),
+		];
+		void saveConsentSurfaceWithOptInCheck(
+			kernel,
+			'all',
+			() =>
+				kernel.commands.save('all', {
+					categories: available,
+					uiSource: 'banner',
+				}),
+			{ categories: available }
+		);
 		return;
 	}
 	if (action === 'reject') {
@@ -214,6 +234,10 @@ const onAction = function onAction(action: PresentationAction) {
 </script>
 
 <template>
+	<LazyOptInConfirmation
+		v-if="optInConfirmationActive"
+		:disable-animation="props.disableAnimation"
+	/>
 	<Teleport
 		to="body"
 		:disabled="!mounted"

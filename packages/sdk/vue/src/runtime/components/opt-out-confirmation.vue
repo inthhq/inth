@@ -9,6 +9,7 @@ import {
 import {
 	resolveOptOutCopy,
 	resolveOptOutLink,
+	resolveOptOutReceiptSentence,
 	resolveOptOutState,
 	resolvePreferenceControlLabels,
 } from '@inth/sdk/surface-state';
@@ -30,7 +31,10 @@ import {
 	useConsentSnapshot,
 } from '../composables';
 import { useResolvedPresentation } from '../composables/experiment';
-import { useOptOutConfirmationOpen } from '../composables/kernel';
+import {
+	useOptOutConfirmationOpen,
+	useOptOutReceipt,
+} from '../composables/kernel';
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
 import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import {
@@ -40,6 +44,7 @@ import {
 	DialogRoot,
 } from '../primitives';
 import { slotAttrs } from '../utils/slot-attrs';
+import OptOutReceiptDetails from './opt-out-receipt-details.vue';
 
 const props = withDefaults(
 	defineProps<{
@@ -73,6 +78,7 @@ const init = useConsentInit();
 const presentation = useResolvedPresentation();
 const translations = useSurfaceTranslations();
 const confirmationOpen = useOptOutConfirmationOpen();
+const receipt = useOptOutReceipt();
 
 let releaseHost: (() => void) | undefined;
 onMounted(() => {
@@ -91,6 +97,9 @@ const optOutState = computed(() => resolveOptOutState(snapshot.value));
 const optOutCopy = computed(() => resolveOptOutCopy(translations.value));
 const optOutLink = computed(() =>
 	resolveOptOutLink(translations.value, presentation.value?.optOutLink)
+);
+const receiptSentence = computed(() =>
+	resolveOptOutReceiptSentence(translations.value, receipt.value)
 );
 const controls = computed(() =>
 	resolvePreferenceControlLabels(translations.value)
@@ -289,8 +298,9 @@ const preferencesLinkAttrs = computed(() =>
 							id="opt-out-confirmation-description"
 							data-testid="opt-out-confirmation-description"
 						>
-							{{ optOutCopy.description }}
+							{{ receiptSentence }}
 						</p>
+						<OptOutReceiptDetails />
 						<div
 							v-bind="
 								slotAttrs(

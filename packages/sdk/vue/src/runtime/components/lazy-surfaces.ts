@@ -34,6 +34,9 @@ export const LazyConsentManager = defineAsyncComponent(
 export const LazyOptOutConfirmation = defineAsyncComponent(
 	() => import('./opt-out-confirmation.vue')
 );
+export const LazyOptInConfirmation = defineAsyncComponent(
+	() => import('./opt-in-confirmation.vue')
+);
 export const LazyIabConsentBanner = defineAsyncComponent(
 	() => import('./iab-prompt.vue')
 );
