@@ -30,6 +30,7 @@ import type {
 import {
 	optOutConsentSurface,
 	saveConsentSurface,
+	saveConsentSurfaceWithOptInCheck,
 	saveIABConsentSurface,
 	showConsentSurface,
 } from '@inth/sdk-core/surface-actions';
@@ -52,7 +53,10 @@ import type {
 	ConsentUIMounter,
 	ConsentUIOptions,
 } from './types';
-import { closeOptOutConfirmation } from './ui/opt-out-confirmation-state';
+import {
+	closeOptInConfirmation,
+	closeOptOutConfirmation,
+} from './ui/opt-out-confirmation-state';
 
 export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions';
 
@@ -399,14 +403,17 @@ export const createConsentClientWith = function createConsentClientWith(
 	// Surfaces close and follow through core's surface actions: a save
 	// closes on the local record, explicit navigation supersedes it.
 	const closeSurfaces = (): void => {
+		closeOptInConfirmation(kernel);
 		closeOptOutConfirmation(kernel);
 		showConsentSurface(kernel, 'none');
 	};
 	const openDialog = (): void => {
+		closeOptInConfirmation(kernel);
 		closeOptOutConfirmation(kernel);
 		showConsentSurface(kernel, 'dialog');
 	};
 	const showBanner = (): void => {
+		closeOptInConfirmation(kernel);
 		closeOptOutConfirmation(kernel);
 		showConsentSurface(kernel, 'banner');
 	};
@@ -466,7 +473,16 @@ export const createConsentClientWith = function createConsentClientWith(
 		event.preventDefault();
 		switch (action) {
 			case 'accept': {
-				void acceptAll();
+				if (kernel.getSnapshot().policyRule.model === 'iab') {
+					void saveIAB('acceptAll');
+				} else {
+					void saveConsentSurfaceWithOptInCheck(
+						kernel,
+						'all',
+						() => kernel.commands.save('all', { categories: categories() }),
+						{ categories: categories() }
+					);
+				}
 				break;
 			}
 			case 'reject': {
@@ -508,6 +524,7 @@ export const createConsentClientWith = function createConsentClientWith(
 			}
 			disposed = true;
 			started = false;
+			closeOptInConfirmation(kernel);
 			closeOptOutConfirmation(kernel);
 			detachPageActions?.();
 			detachPageActions = null;

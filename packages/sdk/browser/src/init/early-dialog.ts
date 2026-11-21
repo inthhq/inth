@@ -23,6 +23,7 @@ import { stylesheet } from '../generated/dialog-styles';
 import type { GlobalApiBase } from '../global-base';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { createDialog } from '../ui/dialog';
+import { createOptInConfirmation } from '../ui/opt-in-confirmation';
 import { createOptOutConfirmation } from '../ui/opt-out-confirmation';
 import { createStyle } from '../ui/root';
 import type { Surface } from '../ui/surface';
@@ -142,20 +143,28 @@ export const openEarlyDialog = function openEarlyDialog(
 			};
 			// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
 			void engine.ready().then(release, release);
+			const confirmationCtx = {
+				client: engine,
+				disableAnimation:
+					uiOptions.disableAnimation ?? prefersReducedMotion(),
+				legalLinks: options.legalLinks,
+				noStyle: false,
+				root: ui.themeRoot,
+				slot: (element: HTMLElement | null) => element,
+			};
+			const dialogOptions =
+				typeof uiOptions.dialog === 'object' ? uiOptions.dialog : {};
 			const optOutConfirmation = createOptOutConfirmation(
-				{
-					client: engine,
-					disableAnimation:
-						uiOptions.disableAnimation ?? prefersReducedMotion(),
-					legalLinks: options.legalLinks,
-					noStyle: false,
-					root: ui.themeRoot,
-					slot: (element) => element,
-				},
-				typeof uiOptions.dialog === 'object' ? uiOptions.dialog : {}
+				confirmationCtx,
+				dialogOptions
+			);
+			const optInConfirmation = createOptInConfirmation(
+				confirmationCtx,
+				dialogOptions
 			);
 			return {
 				destroy: () => {
+					optInConfirmation.destroy();
 					optOutConfirmation.destroy();
 					surface.destroy();
 				},
@@ -164,6 +173,7 @@ export const openEarlyDialog = function openEarlyDialog(
 					if (!holding || next.activeUI === 'dialog') {
 						sync(next);
 					}
+					optInConfirmation.sync(next);
 				},
 			};
 		},

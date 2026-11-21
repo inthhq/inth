@@ -15,6 +15,7 @@ import { createBanner } from './banner';
 import { createDialog } from './dialog-surface';
 import { h } from './dom';
 import {
+	subscribeOptInConfirmation,
 	subscribeOptOutConfirmation,
 	subscribeOptOutReceiptData,
 } from './opt-out-confirmation-state';
@@ -285,6 +286,7 @@ export const mountConsentUI = function mountConsentUI(
 	};
 	const unsubscribe = client.subscribe(update);
 	const unsubscribeOptOut = subscribeOptOutConfirmation(client.kernel, update);
+	const unsubscribeOptIn = subscribeOptInConfirmation(client.kernel, update);
 	const unsubscribeOptOutReceipt = subscribeOptOutReceiptData(
 		client.kernel,
 		update
@@ -295,6 +297,7 @@ export const mountConsentUI = function mountConsentUI(
 		destroy() {
 			unsubscribe();
 			unsubscribeOptOut();
+			unsubscribeOptIn();
 			unsubscribeOptOutReceipt();
 			releaseScheme();
 			for (const surface of surfaces) {

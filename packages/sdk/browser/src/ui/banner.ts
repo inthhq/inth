@@ -1,5 +1,6 @@
 import type { ConsentSnapshot, PresentationAction } from '@inth/sdk-core';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
+import { saveConsentSurfaceWithOptInCheck } from '@inth/sdk-core/surface-actions';
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
 import { dropRejection } from '../drop-rejection';
@@ -148,7 +149,18 @@ export const createBanner = function createBanner(
 					noStyle,
 					onAction: (action) => {
 						if (action === 'accept') {
-							dropRejection(ctx.client.acceptAll());
+							dropRejection(
+								saveConsentSurfaceWithOptInCheck(
+									ctx.client.kernel,
+									'all',
+									() =>
+										ctx.client.kernel.commands.save('all', {
+											categories: ctx.client.consentCategories,
+											uiSource: 'banner',
+										}),
+									{ categories: ctx.client.consentCategories }
+								)
+							);
 						} else if (action === 'reject') {
 							dropRejection(ctx.client.rejectAll());
 						} else if (action === 'dismiss') {

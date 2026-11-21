@@ -8,7 +8,9 @@ import { renderBranding } from './branding';
 import { resolveCopy } from './copy';
 import { h, readDurationMs, supportsStartingStyle } from './dom';
 import { setupFocusTrap, setupScrollLock } from './locks';
+import { createOptInConfirmation } from './opt-in-confirmation';
 import { createOptOutConfirmation } from './opt-out-confirmation';
+import { isOptInConfirmationOpen } from './opt-out-confirmation-state';
 import { renderLegalLinks } from './surface';
 import type { Surface, SurfaceContext } from './surface';
 import { createWidget } from './widget';
@@ -49,7 +51,11 @@ export const createDialog = function createDialog(
 	const onKeyDown = function onKeyDown(event: KeyboardEvent): void {
 		// The dialog's own handler runs first for keys pressed inside it and
 		// marks the event handled, so the document listener skips it.
-		if (event.key === 'Escape' && !event.defaultPrevented) {
+		if (
+			event.key === 'Escape' &&
+			!event.defaultPrevented &&
+			!isOptInConfirmationOpen(ctx.client.kernel)
+		) {
 			event.preventDefault();
 			ctx.client.closeDialog();
 		}
@@ -292,9 +298,11 @@ export const createDialog = function createDialog(
 	};
 
 	const optOutConfirmation = createOptOutConfirmation(ctx, options);
+	const optInConfirmation = createOptInConfirmation(ctx, options);
 
 	return {
 		destroy() {
+			optInConfirmation.destroy();
 			optOutConfirmation.destroy();
 			removeNow();
 		},
@@ -304,6 +312,7 @@ export const createDialog = function createDialog(
 				snapshot.activeUI === 'dialog' && snapshot.policyRule.model !== 'iab';
 			if (!shouldShow) {
 				close();
+				optInConfirmation.sync(snapshot);
 				return;
 			}
 			if (
@@ -316,9 +325,11 @@ export const createDialog = function createDialog(
 				renderedFrom.experiment === snapshot.experiment
 			) {
 				widget?.sync(snapshot);
+				optInConfirmation.sync(snapshot);
 				return;
 			}
 			open(snapshot);
+			optInConfirmation.sync(snapshot);
 		},
 	};
 };

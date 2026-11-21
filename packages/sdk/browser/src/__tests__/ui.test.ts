@@ -1601,7 +1601,7 @@ describe('mountConsentUI', () => {
 			expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
 			expect(client.getSnapshot().effectivePermissions.measurement).toBe(true);
 
-			// Re-open, turn marketing on, and save to lift the opt-out.
+			// Re-open, turn marketing on, and save; confirm the two-step dialog to lift the opt-out.
 			client.openDialog();
 			await vi.waitFor(() => {
 				expect(query(root, 'consent-dialog-root')).not.toBeNull();
@@ -1613,6 +1613,13 @@ describe('mountConsentUI', () => {
 				)
 			).toBe('true');
 			query(root, 'consent-widget-footer-save-button').click();
+			await vi.waitFor(() => {
+				expect(
+					root.querySelector('[data-testid="opt-in-confirmation-root"]')
+				).not.toBeNull();
+			});
+			expect(client.getSnapshot().optOut).not.toBeNull();
+			query(root, 'opt-in-confirmation-confirm-button').click();
 
 			expect(client.getSnapshot().optOut).toBeNull();
 			expect(client.getSnapshot().effectivePermissions.marketing).toBe(true);
@@ -1746,10 +1753,16 @@ describe('mountConsentUI', () => {
 				)
 			).toBeNull();
 
-			// The switch stays usable and stages a toggle on.
+			// The switch stays usable and stages a toggle on; saving asks for confirmation before requesting the lift.
 			marketing.click();
 			expect(marketing.getAttribute('aria-checked')).toBe('true');
 			query(root, 'consent-widget-footer-save-button').click();
+			await vi.waitFor(() => {
+				expect(
+					root.querySelector('[data-testid="opt-in-confirmation-root"]')
+				).not.toBeNull();
+			});
+			query(root, 'opt-in-confirmation-confirm-button').click();
 			// Without a backend that clears the account opt-out, the category stays off.
 			expect(client.getSnapshot().optOut?.heldBy).toBe('person');
 			expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
