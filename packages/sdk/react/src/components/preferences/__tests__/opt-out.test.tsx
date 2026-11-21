@@ -376,12 +376,11 @@ describe('sale-and-sharing block in dialog and widget', () => {
 		const accordion = document.querySelector(
 			'[data-testid="consent-widget-accordion"]'
 		) as HTMLElement;
-		expect(
-			Boolean(
-				block.compareDocumentPosition(accordion) &
-				Node.DOCUMENT_POSITION_FOLLOWING
-			)
-		).toBe(true);
+		expect([
+			...document.querySelectorAll(
+				'[data-testid="consent-widget-opt-out"], [data-testid="consent-widget-accordion"]'
+			),
+		]).toEqual([block, accordion]);
 		expect(
 			block.closest('[data-testid^="consent-widget-accordion-item-"]')
 		).toBeNull();
