@@ -58,3 +58,34 @@ test('browser client delegates preferences and loads scripts only for external g
 	}
 	expect(detach).toHaveBeenCalledTimes(1);
 });
+
+test('optOut() under an external source opens its preferences and records nothing here', async () => {
+	const openPreferences = vi.fn();
+	const client = createConsentClient({
+		consentSource: {
+			getPermissions: () => ({ marketing: true }),
+			openPreferences,
+			subscribe: () => () => undefined,
+		},
+		iframeBlocker: false,
+	});
+	client.start();
+	try {
+		await client.ready();
+		// The source connects after the client is ready.
+		await vi.waitFor(() =>
+			expect(client.getSnapshot().externalPermissions?.marketing).toBe(true)
+		);
+
+		await expect(client.optOut()).resolves.toEqual({
+			ok: false,
+			reason: 'not-available',
+		});
+
+		expect(openPreferences).toHaveBeenCalledTimes(1);
+		expect(client.getSnapshot().optOut).toBeNull();
+		expect(client.getSnapshot().activeUI).toBe('none');
+	} finally {
+		client.dispose();
+	}
+});

@@ -417,10 +417,13 @@ export const createConsentClientWith = function createConsentClientWith(
 	const optOut = (): Promise<OptOutResult> => {
 		const opener = readFocusedElement();
 		const before = kernel.getSnapshot();
-		const pending = kernel.commands.optOut({ uiSource: before.activeUI });
 		if (before.externalPermissions) {
-			return pending;
+			// An external CMP owns the decision, and the kernel rejects a local
+			// opt-out. Ask that provider to open its own preferences instead.
+			openDialog();
+			return Promise.resolve({ ok: false, reason: 'not-available' });
 		}
+		const pending = kernel.commands.optOut({ uiSource: before.activeUI });
 		if (!resolveOptOutState(before).available) {
 			openDialog();
 			return pending;
