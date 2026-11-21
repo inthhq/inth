@@ -28,7 +28,8 @@ When identity tokens are not enabled for the project, the call returns
 
 ## Link the browser
 
-In the browser, pass the token to the Inth client's `identify`:
+In the browser, pass the token to `identify` on the Inth client your web
+package gives you, such as the client from `init()` in `@inth/sdk`:
 
 ```ts title="client.ts"
 await client.identify({ externalId: user.id, identityToken: token });

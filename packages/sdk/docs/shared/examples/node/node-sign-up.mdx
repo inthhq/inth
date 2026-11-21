@@ -1,0 +1,42 @@
+{/* Generated from internals/doc-snippets/node/src/sign-up.ts (docs:node-sign-up) by scripts/sync-example-docs.ts. Edit the source file. */}
+
+```ts title="sign-up.ts"
+import { Inth } from '@inth/node';
+import type { AcceptDocumentsParams } from '@inth/node';
+
+import { clientIp, createUser, readShownDocuments, saveForRetry } from './app';
+import type { SignUpForm } from './app';
+
+const inth = new Inth();
+
+export const signUp = async (request: Request, form: SignUpForm) => {
+	const shown = await readShownDocuments(request);
+	if (!form.accepted || !shown) {
+		// Show the form again, with the documents in force
+		return null;
+	}
+	const user = await createUser(form);
+
+	// The whole call, kept as it is, so a resend records it once
+	const acceptance: AcceptDocumentsParams = {
+		acceptances: shown,
+		// A number, so a job that saves this as JSON resends the same time
+		acceptedAt: Date.now(),
+		context: {
+			ipAddress: clientIp(request),
+			userAgent: request.headers.get('user-agent') ?? undefined,
+		},
+		externalId: user.id,
+		idempotencyKey: crypto.randomUUID(),
+	};
+	const { error } = await inth.documents.accept(acceptance);
+	if (error?.retryable) {
+		// It may or may not be recorded. Resend it, unchanged, from a job
+		await saveForRetry(acceptance);
+	} else if (error) {
+		// Refused. documents.check asks them again at their next sign-in
+		console.error(error);
+	}
+	return user;
+};
+```

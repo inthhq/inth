@@ -55,7 +55,7 @@ Without them, a call returns `forbidden`.
 | `documents.publish({ type, version, hash, effectiveDate, requiresAcceptance? })` | `InthDocument` | Publishes a version and makes it current. Sent once, never retried. |
 | `documents.current({ type })` | `InthDocument` | The version in force. The request carries no key, but `new Inth()` still needs one. |
 | `documents.accept({ externalId?, subjectId?, acceptances, context, acceptedAt?, property?, idempotencyKey? })` | `InthAcceptances` | Records acceptances for a user, a device or both. All or none. |
-| `documents.check({ externalId, types })` | `Record<type, InthDocumentCheck>` | `accepted` and `acceptedLatest` for each type asked about. |
+| `documents.check({ externalId, types })` | `InthDocumentChecks` | `accepted` and `acceptedLatest` for each type asked about. With a list built at run time, each entry is typed as possibly absent. |
 
 `effectiveDate` takes a `Date` or an ISO 8601 string. `acceptedAt` takes a
 `Date` or milliseconds since the epoch, and defaults to the time of the call.
@@ -66,8 +66,8 @@ that call only. Every method resolves to `{ data, error }`; see
 
 ## hashDocument
 
-`hashDocument(bytes)` returns `sha256:` and the lowercase hex SHA-256 of the
-bytes, the form `documents.publish` takes. It throws a `TypeError` for a
+`hashDocument(bytes)` resolves to `sha256:` and the lowercase hex SHA-256 of
+the bytes, the form `documents.publish` takes. Await it. It throws a `TypeError` for a
 string: pass the file's bytes, such as `readFile(path)` without an encoding.
 
 ## Your project's document types
