@@ -17,13 +17,13 @@ Pass `gpp` to the Vue plugin in `src/main.ts`:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-import { inthVue, hosted } from '@inth/vue/vue-plugin';
+import { inth, hosted } from '@inth/vue/vue-plugin';
 import { createApp } from 'vue';
 
 import App from './App.vue';
 
 createApp(App)
-	.use(inthVue, {
+	.use(inth, {
 		// Loads @inth/sdk/iab/gpp and installs `__gpp` once the app mounts.
 		gpp: true,
 		mode: hosted(),

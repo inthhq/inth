@@ -21,7 +21,7 @@ Pass them to the plugin in `src/main.ts`:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-app.use(inthVue, { mode: hosted(), networkBlocker, scripts });
+app.use(inth, { mode: hosted(), networkBlocker, scripts });
 ```
 
 ## Match requests with rules
@@ -51,7 +51,7 @@ and fires an `error` event. Requests that match no rule are not delayed.
 
 ## When blocking starts
 
-The plugin starts holding matching requests when `app.use(inthVue, ...)`
+The plugin starts holding matching requests when `app.use(inth, ...)`
 runs, before your app mounts. While consent is unknown, a matching request
 waits instead of failing. Once the policy has loaded and the stored choice
 applies, a waiting request is sent if consent allows it and blocked

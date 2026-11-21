@@ -11,7 +11,7 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, inject } from 'vue';
 
-import { inthVue, manifest } from '../index';
+import { inth, manifest } from '../index';
 import { symbolKernel } from '../runtime/utils/symbols';
 import { setGenerated } from './generated';
 
@@ -62,7 +62,7 @@ const mountWith = function mountWith(
 			},
 		})
 	);
-	app.use(inthVue, { mode });
+	app.use(inth, { mode });
 	app.mount(container);
 	cleanups.push(() => {
 		app.unmount();

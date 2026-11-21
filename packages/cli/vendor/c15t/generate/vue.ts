@@ -63,14 +63,14 @@ import { ConsentDialogLink, InthProvider } from '@inth/vue/vue-plugin';
 `,
 		'src/main.ts': `${sortImports([
 			...scriptImports(options.scripts),
-			`import { inthVue, ${mode} } from '@inth/vue/vue-plugin';`,
+			`import { inth, ${mode} } from '@inth/vue/vue-plugin';`,
 			"import { createApp } from 'vue';",
 		])}
 
 import App from './App.vue';
 
 createApp(App)
-	.use(inthVue, {
+	.use(inth, {
 		mode: ${mode}(),
 ${scriptsProperty(options.scripts, '\t\t')}	})
 	.mount('#app');

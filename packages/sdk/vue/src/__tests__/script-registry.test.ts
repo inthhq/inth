@@ -12,7 +12,7 @@ import { translations } from '@inth/sdk/translations/en';
 import { afterEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h } from 'vue';
 
-import { inthVue } from '../index';
+import { inth } from '../index';
 
 const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';
 const REGISTRY_SRC = 'https://acme.inth.app/scripts/vendor@0123456789abcdef.js';
@@ -70,7 +70,7 @@ const loadedTag = async (experimentalScriptRegistry?: boolean) => {
 	const container = document.createElement('div');
 	document.body.append(container);
 	const app = createApp(defineComponent({ setup: () => () => h('main') }));
-	app.use(inthVue, {
+	app.use(inth, {
 		experimentalScriptRegistry,
 		projectUrl: 'https://consent.example.test',
 		scripts: [vendor],

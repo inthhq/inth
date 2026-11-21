@@ -12,7 +12,7 @@ then renders it:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-app.use(inthVue, {
+app.use(inth, {
 	mode: hosted(),
 	scripts,
 	showTrigger: true,
@@ -29,7 +29,7 @@ When you compose the surfaces without `InthProvider`, import the trigger from
 
 <import src="../../../shared/vue/components/consent-dialog-trigger.mdx#options" />
 
-All trigger options go in the object you pass to `app.use(inthVue, ...)`.
+All trigger options go in the object you pass to `app.use(inth, ...)`.
 
 <import src="../../../shared/vue/components/consent-dialog-trigger.mdx#accessibility" />
 
@@ -39,4 +39,4 @@ All trigger options go in the object you pass to `app.use(inthVue, ...)`.
 
 - [ConsentDialogLink](/docs/frameworks/vue/components/consent-dialog-link)
   is an inline alternative for a footer.
-- [inthVue plugin](/docs/frameworks/vue/plugin) lists every option.
+- [inth plugin](/docs/frameworks/vue/plugin) lists every option.

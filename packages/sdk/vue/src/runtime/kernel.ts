@@ -258,7 +258,7 @@ const resolveTransportFactory = function resolveTransportFactory(
 	}
 	if (!mode) {
 		throw new Error(
-			"inth: pass `projectUrl`, such as `app.use(inthVue, { projectUrl: '/api/inth' })`, or `mode: manifest()` with `manifest` from `@inth/vue/vue-plugin`."
+			"inth: pass `projectUrl`, such as `app.use(inth, { projectUrl: '/api/inth' })`, or `mode: manifest()` with `manifest` from `@inth/vue/vue-plugin`."
 		);
 	}
 	return mode;
@@ -383,7 +383,7 @@ export type VueIABHost = 'nuxt' | 'vue';
 
 const IAB_UNAVAILABLE_FIX: Record<VueIABHost, string> = {
 	nuxt: 'Set `inth: { iab: {} }` in nuxt.config.ts, or `iab: { cmpId }` when your backend sends no CMP ID',
-	vue: 'Pass `iab` to the Inth plugin, such as `app.use(inthVue, { iab: {} })`',
+	vue: 'Pass `iab` to the Inth plugin, such as `app.use(inth, { iab: {} })`',
 };
 
 /**

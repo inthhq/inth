@@ -3,7 +3,7 @@ import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 import { createApp, createSSRApp, defineComponent, h, toValue } from 'vue';
 import type { App } from 'vue';
 
-import { inthVue, generateTokensCSS } from './test-plugin';
+import { inth, generateTokensCSS } from './test-plugin';
 
 const nuxt = vi.hoisted(() => ({
 	head: [] as unknown[],
@@ -80,7 +80,7 @@ describe('the Vue plugin applies tokens', () => {
 			vi.fn(() => Promise.resolve(new Response('{}', { status: 503 })))
 		);
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));
-		app.use(inthVue, {
+		app.use(inth, {
 			nonce: 'style-nonce',
 			projectUrl: 'https://consent.example.test',
 			tokens: { 'inth-primary': '#2f6f4e' },
@@ -105,7 +105,7 @@ describe('the Vue plugin applies tokens', () => {
 		);
 		const mountApp = () => {
 			const app = createApp(defineComponent({ setup: () => () => h('main') }));
-			app.use(inthVue, {
+			app.use(inth, {
 				projectUrl: 'https://consent.example.test',
 				tokens: { 'inth-primary': '#2f6f4e' },
 			});
@@ -134,7 +134,7 @@ describe('the Vue plugin applies tokens', () => {
 		serverStyle.id = 'inth-css-vars';
 		document.head.append(serverStyle);
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));
-		app.use(inthVue, {
+		app.use(inth, {
 			projectUrl: 'https://consent.example.test',
 			tokens: { 'inth-primary': '#2f6f4e' },
 		});
@@ -152,7 +152,7 @@ describe('the Vue plugin applies tokens', () => {
 			projectUrl: 'https://consent.example.test',
 		});
 		const app = createApp(defineComponent({ setup: () => () => h('main') }));
-		app.use(inthVue, { runtime });
+		app.use(inth, { runtime });
 
 		expect(tokensStyle()).toBeNull();
 		runtime.dispose();

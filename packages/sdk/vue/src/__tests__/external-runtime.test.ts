@@ -7,7 +7,7 @@ import { defineComponent, h, inject } from 'vue';
 
 import { createIAB } from '../../../iab/src';
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import { inthVue } from '../index';
+import { inth } from '../index';
 import { createVueConsentKernelContext } from '../runtime/kernel';
 import { selectedMode } from '../runtime/modes';
 import { symbolKernel } from '../runtime/utils/symbols';
@@ -101,14 +101,14 @@ describe('starting a context around an external runtime', () => {
 	});
 });
 
-describe('the inthVue plugin', () => {
+describe('the inth plugin', () => {
 	test('provides the runtime kernel and leaves its lifecycle alone', () => {
 		const runtime = createRuntime();
 		const dispose = vi.spyOn(runtime.kernel, 'dispose');
 		const init = vi.spyOn(runtime.kernel.commands, 'init');
 
 		const wrapper = mount(KernelProbe, {
-			global: { plugins: [[inthVue, { runtime }]] },
+			global: { plugins: [[inth, { runtime }]] },
 		});
 
 		expect(wrapper.vm.$.appContext.provides[symbolKernel as symbol]).toBe(

@@ -6,7 +6,7 @@ group: frameworks
 
 ## Turn on IAB TCF
 
-IAB TCF is off until you turn it on. Pass `iab` to the inthVue plugin; an
+IAB TCF is off until you turn it on. Pass `iab` to the inth plugin; an
 empty object is enough:
 
 <include src="../../shared/examples/vue/iab-opt-in.mdx" />
@@ -49,7 +49,7 @@ use vendors from your list whose declarations allow each restriction.
 {/* example: fragment */}
 
 ```ts title="src/main.ts (partial)"
-app.use(inthVue, {
+app.use(inth, {
 	iab: {
 		publisherRestrictions: [
 			// Vendors 10 and 755 may not use purpose 4.

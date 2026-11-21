@@ -1,6 +1,6 @@
 ---
 title: Clear on revocation
-description: Delete the first-party cookies and Web Storage keys a consent category owns in a Vue app when that category is denied, with the clearOnRevocation option on the inthVue plugin.
+description: Delete the first-party cookies and Web Storage keys a consent category owns in a Vue app when that category is denied, with the clearOnRevocation option on the inth plugin.
 group: frameworks
 ---
 
@@ -14,7 +14,7 @@ plugin in `src/main.ts`. When that category is denied, Inth deletes them:
 
 ```ts title="src/main.ts (partial)"
 createApp(App)
-	.use(inthVue, {
+	.use(inth, {
 		mode: hosted(),
 		scripts,
 		clearOnRevocation: {

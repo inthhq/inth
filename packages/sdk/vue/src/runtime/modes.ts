@@ -1,5 +1,5 @@
 /**
- * The transports a plain Vue app's `app.use(inthVue, …)` selects:
+ * The transports a plain Vue app's `app.use(inth, …)` selects:
  * `manifest()` for `mode`, and the hosted backend for `projectUrl`.
  *
  * Each is the transport itself, imported statically: a single-page app has
@@ -82,9 +82,9 @@ const missingProjectUrl = function missingProjectUrl(
  * @throws {Error} When no backend URL is set or derivable.
  * @example
  * ```ts
- * import { inthVue, manifest } from '@inth/vue/vue-plugin';
+ * import { inth, manifest } from '@inth/vue/vue-plugin';
  *
- * app.use(inthVue, { mode: manifest() });
+ * app.use(inth, { mode: manifest() });
  * ```
  */
 export const manifest = function manifest(

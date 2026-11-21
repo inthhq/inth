@@ -7,7 +7,7 @@
  *
  * The island is mounted as its own Vue app rather than grafted onto the
  * host app — Astro islands never share an app instance. The consent state
- * lives on the page runtime, which the `inthVue` plugin borrows: it builds
+ * lives on the page runtime, which the `inth` plugin borrows: it builds
  * no kernel of its own and disposes nothing.
  *
  * The island itself is registered by the integration rather than imported
@@ -27,7 +27,7 @@ import { buildProviderProps } from './provider-props';
 /** The Vue 3 dialog surface implementation. */
 export const vueDialogAdapter: ConsentDialogAdapter = {
 	async mount(context: ConsentDialogContext): Promise<ConsentDialogHandle> {
-		const [{ createApp }, { inthVue }, surface] = await Promise.all([
+		const [{ createApp }, { inth }, surface] = await Promise.all([
 			import('vue'),
 			import('@inth/vue/vue-plugin'),
 			requireDialogSurface('vue')(),
@@ -43,7 +43,7 @@ export const vueDialogAdapter: ConsentDialogAdapter = {
 		});
 		// The Vue dialog reads its link list from the plugin config rather
 		// than a prop, as `dialogLegalLinks` does in a Nuxt or Vue app.
-		app.use(inthVue, {
+		app.use(inth, {
 			...options,
 			dialogLegalLinks: context.legalLinks,
 			runtime,

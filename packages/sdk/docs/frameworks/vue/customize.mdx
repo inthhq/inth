@@ -17,7 +17,7 @@ group: frameworks
 
 The [customization overview](/docs/customization/overview) explains these
 choices across frameworks. All three options go in the object you pass to
-`app.use(inthVue, ...)`.
+`app.use(inth, ...)`.
 
 See the [design gallery](/docs/customization/recipes) for five banner designs,
 from a bottom bar to a fully custom one, with tested code for this framework.
@@ -38,7 +38,7 @@ for `brand-consent-card`.
 `tokens` sets Inth's CSS variables. Keys are the variable names without the
 leading `--`. [Theme tokens](/docs/customization/tokens) lists every token.
 
-The inthVue plugin adds every token, including the defaults you did not set,
+The inth plugin adds every token, including the defaults you did not set,
 to `document.head` in a `<style id="inth-css-vars">` element when you install
 it, before the first render. Every Inth component gets them, with or without
 `InthProvider`. A `:root` rule in your stylesheet can lose to that element
@@ -77,7 +77,7 @@ other class sources.
 
 ## Turn on dark mode
 
-`colorScheme` in the `inthVue` options decides when the banner and dialog turn dark:
+`colorScheme` in the `inth` options decides when the banner and dialog turn dark:
 `'light'`, `'dark'`, `'system'`, or unset to copy a `dark` class on `<html>`.
 The plugin ships Inth's stock dark palette, so a `dark` class alone turns the
 banner dark. `theme` takes the same token
@@ -95,7 +95,7 @@ to your privacy policy and similar pages:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-app.use(inthVue, {
+app.use(inth, {
 	bannerLegalLinks: ['privacyPolicy'],
 	legalLinks: { privacyPolicy: { href: '/privacy' } },
 	mode: hosted(),

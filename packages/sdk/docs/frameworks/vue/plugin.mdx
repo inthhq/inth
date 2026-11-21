@@ -1,12 +1,12 @@
 ---
-title: inthVue plugin
-description: Install Inth in a Vue app with app.use(inthVue), what the plugin starts when the app mounts, and every option it accepts.
+title: inth plugin
+description: Install Inth in a Vue app with app.use(inth), what the plugin starts when the app mounts, and every option it accepts.
 group: frameworks
 ---
 
 ## Install the plugin
 
-Import `inthVue` from `@inth/vue/vue-plugin` and pass it to `app.use()` in
+Import `inth` from `@inth/vue/vue-plugin` and pass it to `app.use()` in
 `src/main.ts`:
 
 <include src="../../shared/examples/vue/main.mdx" />
@@ -17,7 +17,7 @@ Vite plugin that supplies the backend URL to `hosted()`.
 
 ## What the plugin does
 
-`app.use(inthVue, options)` creates one consent runtime for the app and
+`app.use(inth, options)` creates one consent runtime for the app and
 provides it to every component. It also adds your `tokens` to
 `document.head` in a `<style id="inth-css-vars">` element, before the first
 render. Nothing else runs in the browser until the root component mounts.

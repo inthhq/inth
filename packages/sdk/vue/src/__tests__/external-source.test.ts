@@ -5,7 +5,7 @@ import { defineComponent, h, inject, nextTick } from 'vue';
 
 import PanelTrigger from '../runtime/components/panel-trigger.vue';
 import { symbolKernel, symbolActiveUI } from '../runtime/utils/symbols';
-import { inthVue } from './test-plugin';
+import { inth } from './test-plugin';
 
 test('Vue plugin options own one external authority and share script lifecycle', async () => {
 	let permissions: Partial<ConsentState> | null = null;
@@ -58,7 +58,7 @@ test('Vue plugin options own one external authority and share script lifecycle',
 			global: {
 				plugins: [
 					[
-						inthVue,
+						inth,
 						{ consentSource: source, iframeBlocker: false, scripts: [script] },
 					],
 				],
@@ -96,7 +96,7 @@ test('the persistent Vue trigger opens external preferences through the manager 
 		global: {
 			plugins: [
 				[
-					inthVue,
+					inth,
 					{
 						consentSource: {
 							getPermissions: () => ({}),

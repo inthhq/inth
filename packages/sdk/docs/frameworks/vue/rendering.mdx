@@ -7,7 +7,7 @@ group: frameworks
 ## Pick the setup for your deployment
 
 The Vue plugin runs in the browser only. The `mode` option of
-`app.use(inthVue, { mode })` decides where each visitor's policy comes from.
+`app.use(inth, { mode })` decides where each visitor's policy comes from.
 Import the mode from `@inth/vue/vue-plugin`:
 
 | Your app | `mode` |
@@ -32,9 +32,9 @@ resolves the current policy and returns the text in the visitor's language:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-import { inthVue, hosted } from '@inth/vue/vue-plugin';
+import { inth, hosted } from '@inth/vue/vue-plugin';
 
-app.use(inthVue, { mode: hosted(), scripts });
+app.use(inth, { mode: hosted(), scripts });
 ```
 
 `hosted()` reads the backend URL from `consentManifest()`, or takes it as
@@ -101,9 +101,9 @@ policy from it, so policy edits apply without a rebuild:
 {/* example: fragment */}
 
 ```ts title="src/main.ts"
-import { inthVue, manifest } from '@inth/vue/vue-plugin';
+import { inth, manifest } from '@inth/vue/vue-plugin';
 
-app.use(inthVue, { mode: manifest({ source: 'runtime' }), scripts });
+app.use(inth, { mode: manifest({ source: 'runtime' }), scripts });
 ```
 
 Keep `consentManifest()` in `vite.config.ts`: `manifest()` reads the backend
@@ -132,9 +132,9 @@ and throws in production builds.
 
 ```ts title="src/main.ts"
 import { testing } from '@inth/vue/testing';
-import { inthVue } from '@inth/vue/vue-plugin';
+import { inth } from '@inth/vue/vue-plugin';
 
-app.use(inthVue, { mode: testing(), scripts });
+app.use(inth, { mode: testing(), scripts });
 ```
 
 Without options, `testing()` uses Inth's recommended policy rules. Pass

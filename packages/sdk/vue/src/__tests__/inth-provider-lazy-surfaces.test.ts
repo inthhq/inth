@@ -29,7 +29,7 @@ import {
 } from '../runtime/utils/symbols';
 import type { RuntimeConsentConfig } from './test-kernel';
 import { createVueConsentKernelContext } from './test-kernel';
-import { inthVue } from './test-plugin';
+import { inth } from './test-plugin';
 
 const initFixture: InitOutput = {
 	branding: 'inth',
@@ -117,7 +117,7 @@ describe.each([
 	test('renders the banner and, after mount, the lazy dialog trigger', async () => {
 		const wrapper = mount(Root, {
 			attachTo: document.body,
-			global: { plugins: [[inthVue, config]] },
+			global: { plugins: [[inth, config]] },
 		});
 		try {
 			expect(await waitFor(banner)).toBeTruthy();
