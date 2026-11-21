@@ -299,7 +299,7 @@ export type V1ConsentOptOutOutput = Omit<
 	v.InferOutput<typeof v1ConsentOptOutOutputSchema>,
 	'optOut'
 > & {
-	optOut: V1EffectiveOptOut;
+	optOut: V1EffectiveOptOut | null;
 };
 export type V1ConsentOptOutLiftInput = v.InferOutput<
 	typeof v1ConsentOptOutLiftInputSchema
