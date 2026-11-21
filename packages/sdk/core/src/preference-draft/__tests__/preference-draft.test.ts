@@ -18,6 +18,10 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../kernel';
 import { vendorsListedUnder } from '../../libs/vendor-listing';
+import {
+	confirmOptInConfirmation,
+	isOptInConfirmationOpen,
+} from '../../surface-actions/opt-in';
 import type {
 	ConsentKernel,
 	KernelConfig,
@@ -25,10 +29,6 @@ import type {
 	SavePayload,
 } from '../../types';
 import { createPreferenceDraft } from '../index';
-import {
-	confirmOptInConfirmation,
-	isOptInConfirmationOpen,
-} from '../../surface-actions/opt-in';
 
 afterEach(() => {
 	vi.restoreAllMocks();

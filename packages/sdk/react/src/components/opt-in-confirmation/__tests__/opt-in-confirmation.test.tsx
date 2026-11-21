@@ -59,14 +59,19 @@ const Capture = () => {
 	return null;
 };
 
-const renderOptOutDialog = async function renderOptOutDialog(params: {
-	gpc?: boolean;
-	heldBy?: 'device' | 'person';
-	mode?: ProviderTransportFactory;
-	rightsConfirmed?: boolean;
-	rule?: typeof CHOICE_OPT_OUT_RULE | typeof NOTICE_OPT_OUT_RULE | typeof OPT_IN_RULE;
-	standaloneWidget?: boolean;
-} = {}) {
+const renderOptOutDialog = async function renderOptOutDialog(
+	params: {
+		gpc?: boolean;
+		heldBy?: 'device' | 'person';
+		mode?: ProviderTransportFactory;
+		rightsConfirmed?: boolean;
+		rule?:
+			| typeof CHOICE_OPT_OUT_RULE
+			| typeof NOTICE_OPT_OUT_RULE
+			| typeof OPT_IN_RULE;
+		standaloneWidget?: boolean;
+	} = {}
+) {
 	const rule = params.rule ?? NOTICE_OPT_OUT_RULE;
 	const fixture = policyFixture(undefined, rule);
 	const now = fixture.now ?? Date.now();
@@ -161,9 +166,7 @@ describe('never ask an opted-out visitor to opt back in automatically (React)', 
 			</InthProvider>
 		);
 
-		await expect
-			.element(page.getByTestId('consent-banner-root'))
-			.toBeVisible();
+		await expect.element(page.getByTestId('consent-banner-root')).toBeVisible();
 		expect(kernel.getSnapshot().promptRequirement.kind).toBe('notice');
 		expect(
 			document.querySelector('[data-testid="consent-banner-accept-button"]')

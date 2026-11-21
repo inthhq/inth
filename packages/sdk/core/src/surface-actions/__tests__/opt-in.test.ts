@@ -1,9 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { saveWouldLiftOptOut } from '../../consent-record/opt-out-rules';
-import { createConsentKernel } from '../../index';
-import type { ConsentKernel, KernelConfig } from '../../index';
-import { createPreferenceDraft } from '../../preference-draft/index';
 import {
 	choiceRecords,
 	matchedResolution,
@@ -11,6 +7,10 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { saveWouldLiftOptOut } from '../../consent-record/opt-out-rules';
+import { createConsentKernel } from '../../index';
+import type { ConsentKernel, KernelConfig } from '../../index';
+import { createPreferenceDraft } from '../../preference-draft/index';
 import {
 	closeOptInConfirmation,
 	confirmOptInConfirmation,
@@ -21,7 +21,12 @@ import {
 	subscribeOptInConfirmation,
 } from '../index';
 
-const CATEGORIES = ['necessary', 'functionality', 'marketing', 'measurement'] as const;
+const CATEGORIES = [
+	'necessary',
+	'functionality',
+	'marketing',
+	'measurement',
+] as const;
 
 const createOptOutKernel = function createOptOutKernel(
 	config: Partial<KernelConfig> = {},
@@ -113,9 +118,9 @@ describe('saveWouldLiftOptOut predicate', () => {
 			now: NOW,
 		});
 		expect(saveWouldLiftOptOut(optIn.getSnapshot(), 'all')).toBe(false);
-		expect(
-			saveWouldLiftOptOut(optIn.getSnapshot(), { marketing: true })
-		).toBe(false);
+		expect(saveWouldLiftOptOut(optIn.getSnapshot(), { marketing: true })).toBe(
+			false
+		);
 	});
 
 	test('returns true for held-by-account opt-out when GPC is off because save requests a lift', () => {
@@ -181,9 +186,9 @@ describe('opt-in confirmation registry', () => {
 				return current.events;
 			},
 			getSnapshot: () => current.getSnapshot(),
-			subscribe(cb: () => void) {
-				listeners.add(cb);
-				return () => listeners.delete(cb);
+			subscribe(listener: () => void) {
+				listeners.add(listener);
+				return () => listeners.delete(listener);
 			},
 		} as unknown as ConsentKernel;
 
@@ -193,8 +198,8 @@ describe('opt-in confirmation registry', () => {
 
 		openOptInConfirmation(second, () => undefined);
 		current = second;
-		for (const cb of listeners) {
-			cb();
+		for (const notifyListener of listeners) {
+			notifyListener();
 		}
 
 		expect(onState).toHaveBeenCalledTimes(1);

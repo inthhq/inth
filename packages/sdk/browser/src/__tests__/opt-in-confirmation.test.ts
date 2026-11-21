@@ -100,13 +100,18 @@ const optInPolicy = [
 	},
 ];
 
-const mountOptedOut = async function mountOptedOut(params: {
-	gpc?: boolean;
-	heldBy?: 'device' | 'person';
-	mode?: ProviderTransportFactory;
-	policy?: typeof noticeOptOutPolicy | typeof choiceOptOutPolicy | typeof optInPolicy;
-	rightsConfirmed?: boolean;
-} = {}) {
+const mountOptedOut = function mountOptedOut(
+	params: {
+		gpc?: boolean;
+		heldBy?: 'device' | 'person';
+		mode?: ProviderTransportFactory;
+		policy?:
+			| typeof noticeOptOutPolicy
+			| typeof choiceOptOutPolicy
+			| typeof optInPolicy;
+		rightsConfirmed?: boolean;
+	} = {}
+) {
 	const now = Date.now();
 	const gpc = params.gpc ?? false;
 	return mount(
@@ -143,7 +148,9 @@ describe('never ask an opted-out visitor to opt back in automatically (script-ta
 		expect(client.getSnapshot().explicitChoice).toBeNull();
 		expect(client.getSnapshot().promptRequirement).toEqual({ kind: 'none' });
 		expect(client.getSnapshot().activeUI).toBe('none');
-		expect(root.querySelector('[data-testid="consent-banner-root"]')).toBeNull();
+		expect(
+			root.querySelector('[data-testid="consent-banner-root"]')
+		).toBeNull();
 	});
 
 	it('3b: opt-out notice returning after expiry or fingerprint change offers no granting action before optInPromptAllowedAt', async () => {
@@ -211,7 +218,9 @@ describe('never ask an opted-out visitor to opt back in automatically (script-ta
 		expect(client.getSnapshot().privacySignals.gpc.active).toBe(false);
 		expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
 		expect(client.getSnapshot().activeUI).toBe('none');
-		expect(root.querySelector('[data-testid="consent-banner-root"]')).toBeNull();
+		expect(
+			root.querySelector('[data-testid="consent-banner-root"]')
+		).toBeNull();
 
 		client.openDialog();
 		await vi.waitFor(() => {
@@ -292,8 +301,10 @@ describe('two-step opt-in confirmation (script-tag)', () => {
 		});
 
 		const text =
-			query(root, 'opt-in-confirmation-description').textContent?.toLowerCase() ??
-			'';
+			query(
+				root,
+				'opt-in-confirmation-description'
+			).textContent?.toLowerCase() ?? '';
 		expect(text).toContain('sale');
 		expect(text).toContain('sharing');
 		expect(text).not.toContain('targeted');
