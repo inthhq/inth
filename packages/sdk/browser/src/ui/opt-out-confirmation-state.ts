@@ -7,12 +7,17 @@
  * @internal
  */
 export {
+	closeOptInConfirmation,
 	closeOptOutConfirmation,
+	confirmOptInConfirmation,
 	getOptOutReceiptData,
+	isOptInConfirmationOpen,
 	isOptOutConfirmationOpen,
 	openOptOutConfirmation,
 	readFocusedElement,
+	subscribeOptInConfirmation,
 	subscribeOptOutConfirmation,
 	subscribeOptOutReceiptData,
+	takeOptInConfirmationOpener,
 	takeOptOutConfirmationOpener,
 } from '@inth/sdk-core/surface-actions';

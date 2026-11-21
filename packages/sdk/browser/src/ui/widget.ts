@@ -20,7 +20,11 @@ import type {
 	Translations,
 } from '@inth/sdk-core';
 import { createPreferenceDraft } from '@inth/sdk-core/preference-draft';
-import { optOutConsentSurface } from '@inth/sdk-core/surface-actions';
+import {
+	optInConsentSurface,
+	optOutConsentSurface,
+	saveConsentSurface,
+} from '@inth/sdk-core/surface-actions';
 import type {
 	CompleteTranslations,
 	OptOutTranslations,
@@ -208,7 +212,21 @@ const buildOptOutSection = function buildOptOutSection(params: {
 			noStyle,
 			WIDGET_RECEIPT_TEST_IDS
 		);
-		// Opt-back-in action mounts below the receipt when added.
+		const optInLink =
+			optOutState.lock === 'gpc-active'
+				? null
+				: h(
+						'button',
+						{
+							class: noStyle ? '' : classes.manager.optInLink,
+							'data-testid': 'consent-widget-opt-in-link',
+							onclick: () => {
+								optInConsentSurface(ctx.client.kernel, { uiSource: 'dialog' });
+							},
+							type: 'button',
+						},
+						optOutCopy.optInLink
+					);
 		return slot(
 			h(
 				'section',
@@ -227,7 +245,8 @@ const buildOptOutSection = function buildOptOutSection(params: {
 					},
 					receiptSentence
 				),
-				receiptDetails
+				receiptDetails,
+				optInLink
 			),
 			'consentWidgetOptOut'
 		);
@@ -640,6 +659,16 @@ export const createWidget = function createWidget(
 			onAction: (action) => {
 				// Accept all and Reject all supersede every staged switch.
 				if (action === 'accept') {
+					if (ctx.client.kernel.events) {
+						void saveConsentSurface(ctx.client.kernel, () =>
+							draft.save({
+								categories: ctx.client.consentCategories,
+								input: 'all',
+								uiSource: 'dialog',
+							})
+						);
+						return;
+					}
 					acceptUnlocked();
 					return;
 				}
@@ -648,8 +677,23 @@ export const createWidget = function createWidget(
 					void ctx.client.rejectAll();
 					return;
 				}
-				// The displayed categories and only the vendors the visitor
-				// moved; nothing while the draft is stale.
+				if (ctx.client.kernel.events) {
+					if (draft.getState().isStale) {
+						patchAll();
+						return;
+					}
+					void saveConsentSurface(
+						ctx.client.kernel,
+						() =>
+							draft.save({
+								categories: ctx.client.consentCategories,
+								uiSource: 'dialog',
+							}),
+						() => !draft.getState().isDirty
+					);
+					return;
+				}
+				// Stand-in dialog before engine load: save through the stand-in.
 				const input = draft.toSaveInput();
 				if (input) {
 					void ctx.client.save(input);
