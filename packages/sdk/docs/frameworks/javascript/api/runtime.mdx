@@ -33,7 +33,7 @@ so the module is safe to import on the server.
 | `clearOnRevocation` | cookies and storage keys per category | off | Deletes named browser data when denied (read once); see [clear on revocation](/docs/frameworks/javascript/clear-on-revocation). |
 | `persistence` | `boolean` or `{ storageConfig?, skipHydration?, sync? }` | `true` | Persists choices in cookie and `localStorage` with cross-tab sync (`false` keeps in memory only); see [persistence](/docs/frameworks/javascript/modules/persistence). |
 | `storageConfig` | `{ storageKey?, crossSubdomain?, defaultDomain?, defaultExpiryDays? }` | key `inth`, 365 days | Cookie and `localStorage` naming and lifetime. |
-| `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after an accept, reject, save or one-click opt-out turns off a granted category or vendor, once the request finishes. Privacy signals and backend-synced opt-outs do not reload. |
+| `reloadOnConsentRevoked` | `boolean` | `true` | Reloads the page after an accept, reject, save or one-click opt-out turns off a granted category or vendor, waiting up to one second for in-flight requests. Privacy signals and backend-synced opt-outs do not reload. |
 | `callbacks` | `{ onChoiceRecorded?, onPermissionsChanged?, onError?, onBeforeConsentRevocationReload? }` | none | Lifecycle hooks; see [callbacks](/docs/frameworks/javascript/callbacks). |
 | `overrides` | `{ country?, region?, language?, gpc? }` | none | Explicit policy inputs. |
 | `prefetch` | kernel config | none | Server-resolved init answer (`start()` skips `/v1/consent/init` unless `initialPolicyPending` is set). |

@@ -235,6 +235,7 @@ export const createKernel = function createKernel(
 		getOptOutRequestsInFlight: outbox.getOptOutRequestsInFlight,
 		getProvisionalSubject: records.getProvisionalSubject,
 		getRecordsGeneration: runtime.getGeneration,
+		getSavesHold: outbox.getHold,
 		getServerSnapshot: () => serverSnapshot,
 		getSnapshot: runtime.getSnapshot,
 		holdSaves: outbox.hold,

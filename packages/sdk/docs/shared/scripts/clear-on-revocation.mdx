@@ -75,8 +75,9 @@ group: reference
   the current origin's `localStorage` and `sessionStorage`. It cannot delete
   `HttpOnly` cookies or another origin's data; expire those from your server.
   A vendor SDK still running on the page can write its cookies again, which is
-  one reason Inth reloads the page after a revocation. Deletion failures do
-  not block the consent update. See
+  one reason Inth reloads the page after a revocation, waiting at most one
+  second for in-flight consent requests while `keepalive` and the stored queue
+  deliver them. Deletion failures do not block the consent update. See
   [MDN on cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Cookies).
 </section>
 

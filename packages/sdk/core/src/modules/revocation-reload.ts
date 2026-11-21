@@ -12,8 +12,8 @@ import {
  * history hooks and widgets stay alive until the page unloads. When an
  * explicit accept, reject, save or one-click opt-out turns off a category or
  * vendor that was effectively granted, the page reloads once every in-flight
- * save, opt-out or lift request settles, so the next document starts with
- * only the permitted code.
+ * save, opt-out or lift request settles, or after one second, whichever comes
+ * first, so the next document starts with only the permitted code.
  *
  * Expiry, policy changes, privacy signals and backend-synced opt-outs do not
  * reload: they change permissions without a visitor action on this page. An
@@ -56,6 +56,15 @@ export interface RevocationReloadOptions {
 const reloadWindow = function reloadWindow(): void {
 	window.location.reload();
 };
+
+/**
+ * Maximum time to wait for in-flight save, opt-out and lift requests before
+ * reloading after a permission revocation. Vendor stop calls have already run,
+ * the choice and opt-out record are already stored locally, and delivery no
+ * longer depends on the wait because requests use `keepalive` and replay from
+ * the stored queue.
+ */
+const REVOCATION_RELOAD_WAIT_CAP_MS = 1000;
 
 const hasRevokedCategory = function hasRevokedCategory(
 	before: Readonly<ConsentState>,
@@ -149,9 +158,9 @@ export const willReloadOnRevocation = function willReloadOnRevocation(
  * Reloads the page after an explicit action or an external consent source
  * revokes a granted permission.
  *
- * The reload waits for every in-flight save or opt-out to complete so the
- * backend request is not cancelled, and runs in a later macrotask so stored
- * records and synchronous consent callbacks finish first.
+ * The reload waits for every in-flight save, opt-out or lift request to
+ * complete, up to {@link REVOCATION_RELOAD_WAIT_CAP_MS}, and runs in a later
+ * macrotask so stored records and synchronous consent callbacks finish first.
  * Framework adapters call this; applications set `reloadOnConsentRevoked`.
  * @returns A disposer that stops watching and cancels a pending reload.
  * @internal
@@ -167,7 +176,10 @@ export const watchRevocationReload = function watchRevocationReload({
 	let optOutRequestsInFlight = internal.getOptOutRequestsInFlight?.() ?? 0;
 	let commandStartSnapshot: ConsentSnapshot | null = null;
 	let revoked = false;
+	let disposed = false;
 	let timer: ReturnType<typeof setTimeout> | null = null;
+	let capTimer: ReturnType<typeof setTimeout> | null = null;
+	let waitingOnHold = false;
 
 	let watchers = activeWatchers.get(kernel.events);
 	if (!watchers) {
@@ -175,6 +187,68 @@ export const watchRevocationReload = function watchRevocationReload({
 		activeWatchers.set(kernel.events, watchers);
 	}
 	watchers.add(isEnabled);
+
+	const clearTimers = () => {
+		if (timer !== null) {
+			clearTimeout(timer);
+			timer = null;
+		}
+		if (capTimer !== null) {
+			clearTimeout(capTimer);
+			capTimer = null;
+		}
+	};
+
+	const armCapTimer = () => {
+		if (
+			disposed ||
+			capTimer !== null ||
+			timer !== null ||
+			typeof window === 'undefined'
+		) {
+			return;
+		}
+		// oxlint-disable-next-line no-use-before-define -- Mutual callback with fireReload.
+		capTimer = setTimeout(fireReload, REVOCATION_RELOAD_WAIT_CAP_MS);
+	};
+
+	const fireReload = () => {
+		clearTimers();
+		if (disposed || !revoked) {
+			return;
+		}
+		// Never reload while persistence is still loading its write code and
+		// storage holds the pre-revocation grant. Once the local write lands,
+		// either the command finishes or the cap counts from there.
+		const hold = internal.getSavesHold?.();
+		if (hold) {
+			if (!waitingOnHold) {
+				waitingOnHold = true;
+				void (async () => {
+					await hold;
+					waitingOnHold = false;
+					if (!disposed && revoked) {
+						armCapTimer();
+						// oxlint-disable-next-line no-use-before-define -- Mutual callback with scheduleReload.
+						scheduleReload();
+					}
+				})();
+			}
+			return;
+		}
+		revoked = false;
+		if (typeof window === 'undefined' || !isEnabled()) {
+			return;
+		}
+		const preferences = kernel.getSnapshot().effectivePermissions;
+		getOnBeforeReload?.()?.({ preferences: { ...preferences } });
+		reload();
+	};
+
+	const markRevoked = () => {
+		revoked = true;
+		armCapTimer();
+	};
 
 	// A save or opt-out runs synchronously from `started` to its recorded
 	// events, so the latest start snapshot is always the recording command's
@@ -189,7 +263,7 @@ export const watchRevocationReload = function watchRevocationReload({
 			commandStartSnapshot &&
 			hasRevokedPermission(commandStartSnapshot, snapshot)
 		) {
-			revoked = true;
+			markRevoked();
 		}
 	};
 
@@ -203,16 +277,11 @@ export const watchRevocationReload = function watchRevocationReload({
 			return;
 		}
 		if (typeof window === 'undefined' || !isEnabled()) {
+			clearTimers();
 			revoked = false;
 			return;
 		}
-		timer = setTimeout(() => {
-			timer = null;
-			const preferences = kernel.getSnapshot().effectivePermissions;
-			revoked = false;
-			getOnBeforeReload?.()?.({ preferences: { ...preferences } });
-			reload();
-		}, 0);
+		timer = setTimeout(fireReload, 0);
 	};
 
 	const onCommandCompleted = () => {
@@ -258,13 +327,14 @@ export const watchRevocationReload = function watchRevocationReload({
 				snapshot.externalPermissions &&
 				hasRevokedCategory(previous, snapshot.effectivePermissions)
 			) {
-				revoked = true;
+				markRevoked();
 				scheduleReload();
 			}
 		}),
 	];
 
 	return () => {
+		disposed = true;
 		watchers?.delete(isEnabled);
 		if (watchers?.size === 0) {
 			activeWatchers.delete(kernel.events);
@@ -272,9 +342,6 @@ export const watchRevocationReload = function watchRevocationReload({
 		for (const unsubscribe of subscriptions) {
 			unsubscribe();
 		}
-		if (timer !== null) {
-			clearTimeout(timer);
-			timer = null;
-		}
+		clearTimers();
 	};
 };

@@ -44,7 +44,9 @@ order, copied attributes and dynamically added tags.
 
 A script that has already executed cannot be unloaded. When a visitor turns
 off a previously allowed category through preferences or a one-click opt-out,
-Inth records the change and reloads the page so gated tags start inert again.
+Inth records the change and reloads the page, waiting at most one second for
+in-flight consent, opt-out and lift requests while `keepalive` and the stored
+queue deliver them. The new page starts with the vendor tag inert again.
 Privacy signals and backend-synced opt-outs do not reload. Granting a category
 never reloads.
 
