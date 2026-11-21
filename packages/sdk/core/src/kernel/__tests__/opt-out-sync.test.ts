@@ -437,9 +437,11 @@ describe('opt-out network sync and queue', () => {
 		await flushMacrotasks();
 
 		expect(recordedRights).toEqual([[]]);
-		expect(kernel.getSnapshot().optOut).toEqual(serverOptOut);
+		const held = kernel.getSnapshot().optOut;
+		expect(held).toEqual(serverOptOut);
+		expect.assert(held);
 		expect(synced).toEqual([serverOptOut]);
-		expect(optInPromptAllowedAt(kernel.getSnapshot().optOut)).toBe(
+		expect(optInPromptAllowedAt(held)).toBe(
 			serverTime + OPT_OUT_REPROMPT_WAIT_MS
 		);
 		const stored = readStoredOptOutRecord(undefined, Date.now());
