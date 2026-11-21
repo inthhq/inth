@@ -26,7 +26,7 @@ export interface WriteScheduler {
 }
 
 export const createWriteScheduler = function createWriteScheduler(
-	write: () => void
+	write: () => 'retry' | undefined
 ): WriteScheduler {
 	let pending = false;
 	let timer: ReturnType<typeof setTimeout> | null = null;
@@ -39,6 +39,14 @@ export const createWriteScheduler = function createWriteScheduler(
 		pending = false;
 	};
 
+	const run = function run(): void {
+		timer = null;
+		pending = false;
+		if (write() === 'retry') {
+			pending = true;
+		}
+	};
+
 	return {
 		cancel,
 		flush() {
@@ -46,18 +54,14 @@ export const createWriteScheduler = function createWriteScheduler(
 				return;
 			}
 			cancel();
-			write();
+			run();
 		},
 		schedule() {
-			if (pending) {
+			pending = true;
+			if (timer !== null) {
 				return;
 			}
-			pending = true;
-			timer = setTimeout(() => {
-				timer = null;
-				pending = false;
-				write();
-			}, 0);
+			timer = setTimeout(run, 0);
 		},
 	};
 };

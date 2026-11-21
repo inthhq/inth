@@ -386,13 +386,18 @@ export const createPersistenceWriter = function createPersistenceWriter(
 			subjectOnly,
 			read
 		);
-		writeOptOutToStorage(
+		const wrote = writeOptOutToStorage(
 			store,
 			{ ...snapshot, subject },
 			storageConfig,
 			at,
 			kernel.isOptOutGpcReported()
 		);
+		if (!wrote) {
+			state.optOutRecorded ||= !subjectOnly;
+			state.optOutSynced ||= synced;
+			return 'retry';
+		}
 		markWritten('optOut', sameRecord(subject, snapshot.subject));
 	});
 	const writes = {
@@ -504,7 +509,9 @@ export const createPersistenceWriter = function createPersistenceWriter(
 
 	// Coalesces bursts of triggers (one save writes several keys) into one
 	// read in a later macrotask.
-	const scheduledReconcile = createWriteScheduler(reconcile);
+	const scheduledReconcile = createWriteScheduler(() => {
+		reconcile();
+	});
 
 	return {
 		adopt(read, iab) {
