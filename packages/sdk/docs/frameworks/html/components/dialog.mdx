@@ -58,13 +58,24 @@ Each switch initializes in this precedence order:
 
 Closing without saving discards unsaved switch changes.
 
-## Honored opt-outs and locked switches
+## Sale-and-sharing opt-out block and locked switches
 
-When a durable opt-out is held, the dialog displays a status line
-(`role="status"`) above the category list: "Opt-out request honored" for a
-visitor request, or "Opt-out preference signal honored" when Global Privacy
-Control recorded or enforces it.
+Under an `opt-out` policy, the dialog renders a sale-and-sharing block first,
+above the category list and outside any accordion item. Under any other policy
+model, no block renders.
 
+- Before the visitor opts out, the block displays the configured opt-out link
+  title (`presentation.optOutLink`), a neutral status sentence, and an **Opt
+  out** button. One click records the opt-out through the same shared action as
+  the opt-out link, without touching category switches or **Save Settings**.
+- Once a durable opt-out is held, the button is removed and the block shows the
+  status line (`role="status"`): "Opt-out request honored" for a visitor
+  request, or "Opt-out preference signal honored" when Global Privacy Control
+  recorded or enforces it. Below the status line, it renders the receipt
+  sentence, recorded time, and local reference. When the backend confirms the
+  refused rights, the heading updates to name them (`sale` and `share`, `sale`
+  and `targeted_ads`, or all three); before confirmation, it keeps the
+  configured link title.
 - While the browser's GPC signal is active under a policy that maps it, the
   signal-restricted switches and `marketing` (or `measurement` when `marketing`
   is not in scope) stay off and disabled. A notice below each locked row
@@ -115,7 +126,11 @@ Shared theme tokens apply automatically (see
 | `consent-dialog-root` | Dialog element. |
 | `consent-dialog-card`, `consent-dialog-header`, `consent-dialog-content` | Card and inner sections. |
 | `consent-dialog-title`, `consent-dialog-description` | Heading and description. |
+| `consent-widget-opt-out` | Sale-and-sharing opt-out block (`consentWidgetOptOut` slot / `::part`). |
+| `consent-widget-opt-out-heading`, `consent-widget-opt-out-description` | Opt-out block heading and status or receipt sentence. |
+| `consent-widget-opt-out-button` | Direct one-click opt-out button before opting out. |
 | `consent-widget-opt-out-status` | Honored opt-out status line (`role="status"`). |
+| `consent-widget-opt-out-receipt`, `consent-widget-opt-out-recorded-at`, `consent-widget-opt-out-reference` | Receipt list, recorded time, and local reference while opted out. |
 | `consent-widget-accordion-item-<category>` | Category row (for example, `measurement`). |
 | `consent-widget-switch-<category>` | Category switch. |
 | `consent-widget-restriction-<category>` | GPC or account lock notice below a restricted category row. |
