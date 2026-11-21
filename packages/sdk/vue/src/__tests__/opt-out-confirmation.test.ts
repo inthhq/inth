@@ -1,3 +1,9 @@
+import type {
+	HydrationRecords,
+	OptOutPayload,
+	OptOutTransportResult,
+	ProviderTransportFactory,
+} from '@inth/sdk/engine';
 import type * as Engine from '@inth/sdk/engine';
 import {
 	OPT_OUT_CONFIRMATION_STORAGE_KEY,
@@ -9,6 +15,7 @@ import {
 } from '@inth/sdk/runtime/page-globals';
 import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import {
+	V1_UUID_PATTERN,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
@@ -107,6 +114,8 @@ const mountTree = async function mountTree(
 		gpc?: boolean;
 		optOutLink?: Engine.OptOutLinkVariant;
 		config?: Partial<ConsentConfig>;
+		initialRecords?: HydrationRecords;
+		mode?: ProviderTransportFactory;
 		start?: boolean;
 	} = {}
 ) {
@@ -134,6 +143,8 @@ const mountTree = async function mountTree(
 	const config: ConsentConfig = { ...base, ...options.config };
 	const context = createVueConsentKernelContext({
 		config,
+		initialRecords: options.initialRecords,
+		mode: options.mode,
 		prefetch: buildInit(rule, options.location),
 	});
 	if (options.gpc) {
@@ -238,9 +249,16 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		const status = query('opt-out-confirmation-status');
 		expect(status?.getAttribute('role')).toBe('status');
 		expect(status?.textContent?.trim()).toBe('Opt-out request honored');
-		expect(query('opt-out-confirmation-description')?.textContent).toContain(
-			'not sell or share'
+		const recordedAt = query<HTMLTimeElement>(
+			'opt-out-confirmation-recorded-at'
 		);
+		expect(recordedAt).not.toBeNull();
+		expect(recordedAt?.getAttribute('datetime')).toBeTruthy();
+		expect(recordedAt?.textContent?.trim()).not.toBe('');
+		const reference = query('opt-out-confirmation-reference');
+		expect(reference).not.toBeNull();
+		expect(reference?.textContent?.trim()).toMatch(V1_UUID_PATTERN);
+		expect(root.querySelectorAll('input, textarea, select')).toHaveLength(0);
 		const buttons = [...root.querySelectorAll('button')];
 		expect(buttons).toHaveLength(1);
 		expect(buttons[0]?.textContent?.trim()).toBe('Done');
@@ -759,5 +777,109 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		);
 		expect(context.kernel.getSnapshot().optOut?.method).toBe('button');
 		expect(query('consent-dialog-root')).toBeNull();
+	});
+
+	test('updates receipt from browser to account coverage when backend answers with heldBy both while keeping reference unchanged', async () => {
+		let resolveAnswer: ((result: OptOutTransportResult) => void) | undefined;
+		let sentPayload: OptOutPayload | undefined;
+		const deferredOptOutMode: ProviderTransportFactory = Object.assign(
+			() => ({
+				optOut: (payload: OptOutPayload) => {
+					sentPayload = payload;
+					return new Promise<OptOutTransportResult>((resolve) => {
+						resolveAnswer = resolve;
+					});
+				},
+			}),
+			{ kind: 'offline' as const }
+		);
+
+		await mountTree(
+			defineComponent({
+				render: () => [
+					h(ConsentBanner, { disableAnimation: true }),
+					h(ConsentManager, { disableAnimation: true }),
+				],
+			}),
+			{ mode: deferredOptOutMode }
+		);
+
+		await vi.waitFor(() =>
+			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+		);
+		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		await flushPromises();
+
+		await vi.waitFor(() =>
+			expect(query('opt-out-confirmation-root')).not.toBeNull()
+		);
+		const beforeDescription = query(
+			'opt-out-confirmation-description'
+		)?.textContent?.trim();
+		const beforeReference = query(
+			'opt-out-confirmation-reference'
+		)?.textContent?.trim();
+		expect(beforeDescription).toBeTruthy();
+		expect(beforeDescription?.toLowerCase()).not.toContain('account');
+		expect(beforeReference).toMatch(V1_UUID_PATTERN);
+		expect(query('opt-out-confirmation-recorded-at')).not.toBeNull();
+
+		await vi.waitFor(() => expect(resolveAnswer).toBeDefined());
+		resolveAnswer?.({
+			ok: true,
+			optOut: {
+				heldBy: 'both',
+				method: 'button',
+				recordedAt: sentPayload?.givenAt ?? Date.now(),
+				rights: ['sale', 'share'],
+			},
+			subjectId: sentPayload?.subjectId,
+		});
+		await flushPromises();
+
+		await vi.waitFor(() =>
+			expect(
+				query('opt-out-confirmation-description')?.textContent?.toLowerCase()
+			).toContain('account')
+		);
+		expect(query('opt-out-confirmation-reference')?.textContent?.trim()).toBe(
+			beforeReference
+		);
+		expect(sentPayload?.idempotencyKey).toBe(beforeReference);
+	});
+
+	test('renders no reference for an account-held record this browser did not create', async () => {
+		await mountTree(
+			defineComponent({
+				render: () => [
+					h(ConsentDialogLink, { right: 'opt-out' }),
+					h(ConsentManager, { disableAnimation: true }),
+				],
+			}),
+			{
+				initialRecords: {
+					optOut: {
+						heldBy: 'person',
+						method: 'propagated',
+						recordedAt: Date.now() - 60_000,
+						rights: ['sale', 'share'],
+					},
+					optOutRightsConfirmed: true,
+				},
+			}
+		);
+
+		await vi.waitFor(() => expect(query('consent-dialog-link')).not.toBeNull());
+		query<HTMLButtonElement>('consent-dialog-link')?.click();
+		await flushPromises();
+
+		await vi.waitFor(() =>
+			expect(query('opt-out-confirmation-root')).not.toBeNull()
+		);
+		expect(
+			query('opt-out-confirmation-description')?.textContent?.toLowerCase()
+		).toContain('account');
+		expect(query('opt-out-confirmation-recorded-at')).not.toBeNull();
+		expect(query('opt-out-confirmation-reference')).toBeNull();
 	});
 });
