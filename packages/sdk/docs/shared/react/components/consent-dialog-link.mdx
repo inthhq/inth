@@ -25,7 +25,7 @@ group: reference
 <section id="behavior">
   ## Behavior
 
-  `ConsentDialogLink` renders a `button` with `type="button"` and no Inth styling by default. Clicking it opens a mounted `ConsentDialog` without saving or changing permissions. When `right="opt-out"` is set under an `opt-out` policy, one click records the opt-out immediately and opens `OptOutConfirmation` (rendered lazily by `ConsentDialog` or a standalone `OptOutConfirmation`). Under other policy models it falls back to opening the preference center.
+  `ConsentDialogLink` renders a `button` with `type="button"` and no Inth styling by default. Clicking it opens a mounted `ConsentDialog` without saving or changing permissions. When `right="opt-out"` is set under an `opt-out` policy, one click records the opt-out immediately and opens `OptOutConfirmation` (rendered lazily by `ConsentDialog` or a standalone `OptOutConfirmation`). `OptOutConfirmation` renders a receipt with the honored status line, the covered scope and backend-confirmed rights, the recorded timestamp, and a selectable local reference when this browser created the opt-out. Under other policy models the link falls back to opening the preference center.
 
   The element carries `data-inth-rights` listing the active policy rule's rights, such as `disclosure opt-out preferences` under a US opt-out rule or `disclosure preferences` under an opt-in rule, so CSS or a `::after` label can adapt the wording by region.
 

@@ -67,8 +67,8 @@ buttons and order required by the policy:
 without granting consent.
 
 Use `resolveActionLabels`, `resolvePreferenceControlLabels`, `resolveOptOutLink`,
-`resolveOptOutCopy` and `resolvePromptCopy` from `@inth/sdk/engine`,
-`@inth/sdk/surface-state` or `@inth/sdk/headless` with
+`resolveOptOutCopy`, `resolveOptOutReceiptSentence` and `resolvePromptCopy` from
+`@inth/sdk/engine`, `@inth/sdk/surface-state` or `@inth/sdk/headless` with
 `snapshot.translations?.translations` to get localized copy with English
 fallbacks. `resolveOptOutLink` resolves `'do-not-sell'`, `'privacy-choices'`
 or `'california-privacy-choices'` and returns
@@ -90,6 +90,10 @@ an opt-out confirmation or preference surface renders from a snapshot:
 `available`, `honored`, `via` (`'signal'`, `'request'` or `null`), `lock`
 (`'gpc-active'`, `'held-by-account'` or `null`), `categories`,
 `decidingCategory` and `optInPromptAllowedAt`.
+`resolveOptOutReceipt(snapshot, local)` derives the receipt fields (`optedOut`,
+`scope`, `source`, `at`, `reference` and backend-confirmed `rights`), and
+`resolveOptOutReceiptSentence(translations, receipt)` formats the matching
+receipt sentence.
 `resolveCategoryOptOutLock(snapshot, category)` returns `'gpc-active'`,
 `'held-by-account'` or `null` for one category row.
 
