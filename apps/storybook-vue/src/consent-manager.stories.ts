@@ -78,7 +78,6 @@ export const OptOutNotOptedOut: Story = {
 			setupStorybookOptOutConsent('none', {
 				activeUI: 'manager',
 				configOverrides: {
-					disableAnimation: true,
 					presentation: { optOutLink: 'do-not-sell' },
 				},
 			});
@@ -95,7 +94,6 @@ export const OptOutHonoredByRequest: Story = {
 			setupStorybookOptOutConsent('request', {
 				activeUI: 'manager',
 				configOverrides: {
-					disableAnimation: true,
 					presentation: { optOutLink: 'do-not-sell' },
 				},
 				initialRecords: {
@@ -115,7 +113,6 @@ export const OptOutConfirmedSaleAndShare: Story = {
 			setupStorybookOptOutConsent('request', {
 				activeUI: 'manager',
 				configOverrides: {
-					disableAnimation: true,
 					presentation: { optOutLink: 'do-not-sell' },
 				},
 				initialRecords: {
@@ -142,7 +139,6 @@ export const OptOutGpcLocked: Story = {
 			setupStorybookOptOutConsent('gpc', {
 				activeUI: 'manager',
 				configOverrides: {
-					disableAnimation: true,
 					presentation: { optOutLink: 'privacy-choices' },
 				},
 			});
@@ -173,7 +169,6 @@ export const OptInConfirmation: Story = {
 			setupStorybookOptOutConsent('request', {
 				activeUI: 'manager',
 				configOverrides: {
-					disableAnimation: true,
 					presentation: { optOutLink: 'do-not-sell' },
 				},
 				initialRecords: {
@@ -203,7 +198,6 @@ export const OptInConfirmationConfirmedRights: Story = {
 			setupStorybookOptOutConsent('request', {
 				activeUI: 'manager',
 				configOverrides: {
-					disableAnimation: true,
 					presentation: { optOutLink: 'do-not-sell' },
 				},
 				initialRecords: {

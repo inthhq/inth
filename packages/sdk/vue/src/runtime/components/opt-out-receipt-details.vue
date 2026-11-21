@@ -47,7 +47,9 @@ const receipt = useOptOutReceipt();
 const optOutCopy = computed(() => resolveOptOutCopy(translations.value));
 const language = computed(() => init.value?.translations?.language);
 const recordedIso = computed(() =>
-	receipt.value.at === null ? undefined : new Date(receipt.value.at).toISOString()
+	receipt.value.at === null
+		? undefined
+		: new Date(receipt.value.at).toISOString()
 );
 const recordedFormatted = computed(() =>
 	receipt.value.at === null

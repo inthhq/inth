@@ -456,7 +456,9 @@ describe('sale-and-sharing block in dialog and widget', () => {
 		);
 
 		required('consent-widget-opt-out-button').click();
-		await vi.waitFor(() => expect(context.snapshot.value.optOut).not.toBeNull());
+		await vi.waitFor(() =>
+			expect(context.snapshot.value.optOut).not.toBeNull()
+		);
 		expect(context.snapshot.value.effectivePermissions.marketing).toBe(false);
 		expect(context.snapshot.value.activeUI).not.toBe('dialog');
 
@@ -493,7 +495,9 @@ describe('sale-and-sharing block in dialog and widget', () => {
 		});
 
 		required('consent-widget-opt-out-button').click();
-		await vi.waitFor(() => expect(context.snapshot.value.optOut).not.toBeNull());
+		await vi.waitFor(() =>
+			expect(context.snapshot.value.optOut).not.toBeNull()
+		);
 		await vi.waitFor(() =>
 			expect(part('consent-widget-opt-out-status')).not.toBeNull()
 		);
