@@ -1,99 +1,49 @@
 <script lang="ts">
-	import type {
-		OptOutLinkVariant,
-		OptOutPayload,
-		OptOutRecord,
-		ProviderTransportFactory,
-	} from '@inth/sdk/engine';
+	import type { OptOutLinkVariant } from '@inth/sdk/engine';
 	import {
-		ConsentBanner,
 		ConsentDialog,
 		ConsentDialogLink,
+		OptOutConfirmation,
 	} from '@inth/svelte';
 
 	import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/types';
 	import {
 		storybookMode,
+		storybookOptOutConfirmationRecords,
 		storybookOptOutPolicy,
 		storybookOptOutPolicyResolution,
 	} from '../../storybook-consent-policy';
+	import type { StorybookOptOutConfirmationKind } from '../../storybook-consent-policy';
 	import { editableConsentOptions } from './storybook-consent-fixtures';
 	import StorybookConsentProvider from './StorybookConsentProvider.svelte';
 
-	type StoryVariant =
-		| 'request'
-		| 'confirmed'
-		| 'account-covered'
-		| 'signal'
-		| 'account-adopted';
-
 	let {
-		variant = 'request' as StoryVariant,
+		variant = 'request' as StorybookOptOutConfirmationKind,
 		optOutLink = 'do-not-sell' as OptOutLinkVariant,
 	}: {
-		variant?: StoryVariant;
+		variant?: StorybookOptOutConfirmationKind;
 		optOutLink?: OptOutLinkVariant;
 	} = $props();
 
-	const optOutAnsweringMode = function optOutAnsweringMode(
-		answer: Pick<OptOutRecord, 'heldBy' | 'rights'>
-	): ProviderTransportFactory {
-		const base = storybookMode([storybookOptOutPolicy]);
-		return Object.assign(
-			(context: Parameters<ProviderTransportFactory>[0]) => ({
-				...base(context),
-				optOut: (payload: OptOutPayload) =>
-					Promise.resolve({
-						ok: true,
-						optOut: {
-							heldBy: answer.heldBy,
-							method: payload.method,
-							recordedAt: payload.givenAt,
-							rights: [...answer.rights],
-						},
-						subjectId: payload.subjectId,
-					}),
-			}),
-			{ kind: 'offline' as const }
-		);
-	};
-
 	const buildOptions = function buildOptions(
-		current: StoryVariant,
+		current: StorybookOptOutConfirmationKind,
 		link: OptOutLinkVariant
 	): Partial<ConsentManagerOptions> {
-		const base: Partial<ConsentManagerOptions> = {
+		const prefetch: NonNullable<ConsentManagerOptions['prefetch']> = {
+			initialPolicyResolution: storybookOptOutPolicyResolution,
+			initialRecords: storybookOptOutConfirmationRecords(current),
+		};
+		if (current === 'signal') {
+			prefetch.initialPrivacySignals = { gpc: true };
+		}
+		return {
 			...editableConsentOptions,
 			mode: storybookMode([storybookOptOutPolicy]),
 			overrides: { country: 'US', gpc: current === 'signal', region: 'CA' },
+			prefetch,
 			presentation: { optOutLink: link },
 			reloadOnConsentRevoked: false,
 		};
-		if (current === 'confirmed') {
-			base.mode = optOutAnsweringMode({
-				heldBy: 'device',
-				rights: ['sale', 'share'],
-			});
-		} else if (current === 'account-covered') {
-			base.mode = optOutAnsweringMode({
-				heldBy: 'both',
-				rights: ['sale', 'share'],
-			});
-		} else if (current === 'account-adopted') {
-			base.prefetch = {
-				initialPolicyResolution: storybookOptOutPolicyResolution,
-				initialRecords: {
-					optOut: {
-						heldBy: 'person',
-						method: 'propagated',
-						recordedAt: Date.now() - 60_000,
-						rights: ['sale', 'share', 'targeted_ads'],
-					},
-					optOutRightsConfirmed: true,
-				},
-			};
-		}
-		return base;
 	};
 
 	const showLink = $derived(
@@ -105,8 +55,11 @@
 <StorybookConsentProvider {options}>
 	{#if showLink}
 		<ConsentDialogLink right="opt-out" />
+		<ConsentDialog disableAnimation />
 	{:else}
-		<ConsentBanner disableAnimation />
+		<OptOutConfirmation
+			disableAnimation
+			open
+		/>
 	{/if}
-	<ConsentDialog disableAnimation />
 </StorybookConsentProvider>

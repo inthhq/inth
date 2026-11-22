@@ -15,11 +15,7 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
-const clickBannerOptOut = async () => {
-	const link = await within(document.body).findByTestId(
-		'consent-banner-right-link-opt-out'
-	);
-	await userEvent.click(link);
+const expectRequestHonored = async () => {
 	const status = await within(document.body).findByTestId(
 		'opt-out-confirmation-status'
 	);
@@ -33,7 +29,7 @@ export const RequestHonored: Story = {
 		optOutLink: 'do-not-sell',
 		variant: 'request',
 	},
-	play: clickBannerOptOut,
+	play: expectRequestHonored,
 };
 
 export const RequestConfirmed: Story = {
@@ -41,7 +37,7 @@ export const RequestConfirmed: Story = {
 		optOutLink: 'do-not-sell',
 		variant: 'confirmed',
 	},
-	play: clickBannerOptOut,
+	play: expectRequestHonored,
 };
 
 export const AccountCovered: Story = {
@@ -49,7 +45,7 @@ export const AccountCovered: Story = {
 		optOutLink: 'do-not-sell',
 		variant: 'account-covered',
 	},
-	play: clickBannerOptOut,
+	play: expectRequestHonored,
 };
 
 export const SignalHonored: Story = {
@@ -81,11 +77,6 @@ export const AccountAdopted: Story = {
 			'consent-dialog-link'
 		);
 		await userEvent.click(link);
-		const status = await within(document.body).findByTestId(
-			'opt-out-confirmation-status'
-		);
-		await waitFor(() =>
-			expect(status).toHaveTextContent('Opt-out request honored')
-		);
+		await expectRequestHonored();
 	},
 };

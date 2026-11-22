@@ -1,12 +1,14 @@
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
-import { ConsentBanner, ConsentDialogLink } from '@inth/angular';
-import type { ProviderTransportFactory } from '@inth/angular';
-import { ConsentDialog } from '@inth/angular/consent-dialog';
-import type { OptOutPayload, OptOutRecord } from '@inth/sdk/engine';
+import { ConsentDialogLink } from '@inth/angular';
+import {
+	ConsentDialog,
+	OptOutConfirmation,
+} from '@inth/angular/consent-dialog';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import {
 	storybookMode,
+	storybookOptOutConfirmationRecords,
 	storybookOptOutPolicy,
 	storybookOptOutPolicyResolution,
 } from '../../storybook-consent-policy';
@@ -15,32 +17,17 @@ import {
 	editableConsentOptions,
 } from './storybook-consent-fixtures';
 
-const optOutAnsweringMode = function optOutAnsweringMode(
-	answer: Pick<OptOutRecord, 'heldBy' | 'rights'>
-): ProviderTransportFactory {
-	const base = storybookMode([storybookOptOutPolicy]);
-	return Object.assign(
-		(context: Parameters<ProviderTransportFactory>[0]) => ({
-			...base(context),
-			optOut: (payload: OptOutPayload) =>
-				Promise.resolve({
-					ok: true,
-					optOut: {
-						heldBy: answer.heldBy,
-						method: payload.method,
-						recordedAt: payload.givenAt,
-						rights: [...answer.rights],
-					},
-					subjectId: payload.subjectId,
-				}),
-		}),
-		{ kind: 'offline' as const }
+const expectRequestHonored = async () => {
+	const status = await within(document.body).findByTestId(
+		'opt-out-confirmation-status'
+	);
+	await waitFor(() =>
+		expect(status).toHaveTextContent('Opt-out request honored')
 	);
 };
 
-const bannerDialogTemplate = `
-	<inth-consent-banner [disableAnimation]="true" />
-	<inth-consent-dialog [disableAnimation]="true" />
+const openConfirmationTemplate = `
+	<inth-opt-out-confirmation [disableAnimation]="true" [open]="true" />
 `;
 
 const linkDialogTemplate = `
@@ -60,18 +47,7 @@ export default meta;
 type Story = StoryObj;
 
 export const RequestHonored: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-banner-right-link-opt-out'
-		);
-		await userEvent.click(link);
-		const status = await within(document.body).findByTestId(
-			'opt-out-confirmation-status'
-		);
-		await waitFor(() =>
-			expect(status).toHaveTextContent('Opt-out request honored')
-		);
-	},
+	play: expectRequestHonored,
 	render: () => ({
 		applicationConfig: consentApplication({
 			options: {
@@ -79,82 +55,66 @@ export const RequestHonored: Story = {
 				disableAnimation: true,
 				mode: storybookMode([storybookOptOutPolicy]),
 				overrides: { country: 'US', gpc: false, region: 'CA' },
+				prefetch: {
+					initialPolicyResolution: storybookOptOutPolicyResolution,
+					initialRecords: storybookOptOutConfirmationRecords('request'),
+				},
 				presentation: { optOutLink: 'do-not-sell' },
 				reloadOnConsentRevoked: false,
 			},
 		}),
 		moduleMetadata: {
-			imports: [ConsentBanner, ConsentDialog],
+			imports: [OptOutConfirmation],
 		},
-		template: bannerDialogTemplate,
+		template: openConfirmationTemplate,
 	}),
 };
 
 export const RequestConfirmed: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-banner-right-link-opt-out'
-		);
-		await userEvent.click(link);
-		const status = await within(document.body).findByTestId(
-			'opt-out-confirmation-status'
-		);
-		await waitFor(() =>
-			expect(status).toHaveTextContent('Opt-out request honored')
-		);
-	},
+	play: expectRequestHonored,
 	render: () => ({
 		applicationConfig: consentApplication({
 			options: {
 				...editableConsentOptions,
 				disableAnimation: true,
-				mode: optOutAnsweringMode({
-					heldBy: 'device',
-					rights: ['sale', 'share'],
-				}),
+				mode: storybookMode([storybookOptOutPolicy]),
 				overrides: { country: 'US', gpc: false, region: 'CA' },
+				prefetch: {
+					initialPolicyResolution: storybookOptOutPolicyResolution,
+					initialRecords: storybookOptOutConfirmationRecords('confirmed'),
+				},
 				presentation: { optOutLink: 'do-not-sell' },
 				reloadOnConsentRevoked: false,
 			},
 		}),
 		moduleMetadata: {
-			imports: [ConsentBanner, ConsentDialog],
+			imports: [OptOutConfirmation],
 		},
-		template: bannerDialogTemplate,
+		template: openConfirmationTemplate,
 	}),
 };
 
 export const AccountCovered: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-banner-right-link-opt-out'
-		);
-		await userEvent.click(link);
-		const status = await within(document.body).findByTestId(
-			'opt-out-confirmation-status'
-		);
-		await waitFor(() =>
-			expect(status).toHaveTextContent('Opt-out request honored')
-		);
-	},
+	play: expectRequestHonored,
 	render: () => ({
 		applicationConfig: consentApplication({
 			options: {
 				...editableConsentOptions,
 				disableAnimation: true,
-				mode: optOutAnsweringMode({
-					heldBy: 'both',
-					rights: ['sale', 'share'],
-				}),
+				mode: storybookMode([storybookOptOutPolicy]),
 				overrides: { country: 'US', gpc: false, region: 'CA' },
+				prefetch: {
+					initialPolicyResolution: storybookOptOutPolicyResolution,
+					initialRecords: storybookOptOutConfirmationRecords('account-covered'),
+				},
 				presentation: { optOutLink: 'do-not-sell' },
 				reloadOnConsentRevoked: false,
 			},
 		}),
 		moduleMetadata: {
-			imports: [ConsentBanner, ConsentDialog],
+			imports: [OptOutConfirmation],
 		},
-		template: bannerDialogTemplate,
+		template: openConfirmationTemplate,
 	}),
 };
 
@@ -178,6 +138,11 @@ export const SignalHonored: Story = {
 				disableAnimation: true,
 				mode: storybookMode([storybookOptOutPolicy]),
 				overrides: { country: 'US', gpc: true, region: 'CA' },
+				prefetch: {
+					initialPolicyResolution: storybookOptOutPolicyResolution,
+					initialPrivacySignals: { gpc: true },
+					initialRecords: storybookOptOutConfirmationRecords('signal'),
+				},
 				presentation: { optOutLink: 'do-not-sell' },
 				reloadOnConsentRevoked: false,
 			},
@@ -195,12 +160,7 @@ export const AccountAdopted: Story = {
 			'consent-dialog-link'
 		);
 		await userEvent.click(link);
-		const status = await within(document.body).findByTestId(
-			'opt-out-confirmation-status'
-		);
-		await waitFor(() =>
-			expect(status).toHaveTextContent('Opt-out request honored')
-		);
+		await expectRequestHonored();
 	},
 	render: () => ({
 		applicationConfig: consentApplication({
@@ -211,15 +171,7 @@ export const AccountAdopted: Story = {
 				overrides: { country: 'US', gpc: false, region: 'CA' },
 				prefetch: {
 					initialPolicyResolution: storybookOptOutPolicyResolution,
-					initialRecords: {
-						optOut: {
-							heldBy: 'person',
-							method: 'propagated',
-							recordedAt: Date.now() - 60_000,
-							rights: ['sale', 'share', 'targeted_ads'],
-						},
-						optOutRightsConfirmed: true,
-					},
+					initialRecords: storybookOptOutConfirmationRecords('account-adopted'),
 				},
 				presentation: { optOutLink: 'do-not-sell' },
 				reloadOnConsentRevoked: false,

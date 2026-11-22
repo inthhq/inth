@@ -9,6 +9,7 @@ import {
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import {
+	STORYBOOK_OPT_OUT_REFERENCE,
 	storybookMode,
 	storybookOptOutPolicy,
 	storybookOptOutPolicyResolution,
@@ -120,7 +121,7 @@ export const OptOutHonoredByRequest: Story = {
 					initialPolicyResolution: storybookOptOutPolicyResolution,
 					initialRecords: {
 						...storybookOptOutRecords('request'),
-						optOutReference: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+						optOutReference: STORYBOOK_OPT_OUT_REFERENCE,
 					},
 				},
 				presentation: { optOutLink: 'do-not-sell' },
@@ -145,7 +146,7 @@ export const OptOutConfirmedSaleAndShare: Story = {
 					initialPolicyResolution: storybookOptOutPolicyResolution,
 					initialRecords: {
 						...storybookOptOutRecords('request'),
-						optOutReference: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+						optOutReference: STORYBOOK_OPT_OUT_REFERENCE,
 						optOutRightsConfirmed: true,
 					},
 				},
@@ -214,7 +215,7 @@ export const OptInConfirmation: Story = {
 					initialPolicyResolution: storybookOptOutPolicyResolution,
 					initialRecords: {
 						...storybookOptOutRecords('request'),
-						optOutReference: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+						optOutReference: STORYBOOK_OPT_OUT_REFERENCE,
 					},
 				},
 				presentation: { optOutLink: 'do-not-sell' },
@@ -249,7 +250,7 @@ export const OptInConfirmationConfirmedRights: Story = {
 					initialPolicyResolution: storybookOptOutPolicyResolution,
 					initialRecords: {
 						...storybookOptOutRecords('request'),
-						optOutReference: '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d',
+						optOutReference: STORYBOOK_OPT_OUT_REFERENCE,
 						optOutRightsConfirmed: true,
 					},
 				},

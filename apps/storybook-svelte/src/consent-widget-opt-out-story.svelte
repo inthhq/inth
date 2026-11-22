@@ -3,6 +3,7 @@
 
 	import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/types';
 	import {
+		STORYBOOK_OPT_OUT_REFERENCE,
 		storybookMode,
 		storybookOptOutPolicy,
 		storybookOptOutPolicyResolution,
@@ -17,8 +18,6 @@
 		| 'confirmed'
 		| 'gpc'
 		| 'account';
-
-	const REFERENCE = '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d';
 
 	const { kind }: { kind: OptOutWidgetKind } = $props();
 
@@ -44,7 +43,7 @@
 				initialPolicyResolution: storybookOptOutPolicyResolution,
 				initialRecords: {
 					...storybookOptOutRecords('request'),
-					optOutReference: REFERENCE,
+					optOutReference: STORYBOOK_OPT_OUT_REFERENCE,
 					optOutRightsConfirmed: current === 'confirmed',
 				},
 			};
