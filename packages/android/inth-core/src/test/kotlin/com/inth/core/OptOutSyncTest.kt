@@ -2262,6 +2262,74 @@ class OptOutSyncTest {
 		assertEquals(accountOptOut, kernel.snapshot().optOut)
 	}
 
+	@Test
+	fun `a replayed save answer does not reinstate an opt-out cleared by a newer local lift`() {
+		val heldOptOut = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = NOW - 1_000,
+			heldBy = OptOutHolder.DEVICE,
+		)
+
+		// Case 1: queued lift is still pending when the older save replays and returns the old opt-out.
+		run {
+			val backend = InMemoryKeyValueStore()
+			seedOptOut(backend, heldOptOut)
+			val clock = FixedClock(NOW)
+			val transport = RecordingTransport()
+				.respondInit(optOutInit())
+				.respondSave(SaveOutcome.Unavailable("offline"))
+				.respondSave(SaveOutcome.Delivered(subjectId = SUBJECT, optOut = heldOptOut))
+				.respondLiftOptOut(LiftOptOutOutcome.Unavailable("offline"))
+				.respondLiftOptOut(LiftOptOutOutcome.Unavailable("offline"))
+			val kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+			kernel.bootstrap()
+
+			val firstSave = kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.FUNCTIONALITY to true)))
+			assertTrue(firstSave.ok)
+			assertFalse(firstSave.delivered)
+
+			assertTrue(kernel.optIn().ok)
+			assertNull(kernel.snapshot().optOut)
+
+			kernel.flushPending()
+			assertNull(
+				kernel.snapshot().optOut,
+				"replayed save answer must not reinstate an opt-out while a newer lift is queued",
+			)
+			assertTrue(kernel.isAllowed(ConsentCategory.MARKETING))
+		}
+
+		// Case 2: newer lift already delivered, then older queued save replays with a stale opt-out reply.
+		run {
+			val backend = InMemoryKeyValueStore()
+			seedOptOut(backend, heldOptOut)
+			val clock = FixedClock(NOW)
+			val transport = RecordingTransport()
+				.respondInit(optOutInit())
+				.respondSave(SaveOutcome.Unavailable("offline"))
+				.respondSave(SaveOutcome.Delivered(subjectId = SUBJECT, optOut = heldOptOut))
+				.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = null, cleared = true))
+			val kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+			kernel.bootstrap()
+
+			val firstSave = kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.FUNCTIONALITY to true)))
+			assertTrue(firstSave.ok)
+			assertFalse(firstSave.delivered)
+
+			assertTrue(kernel.optIn().ok)
+			assertNull(kernel.snapshot().optOut)
+			assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+
+			kernel.flushPending()
+			assertNull(
+				kernel.snapshot().optOut,
+				"replayed save answer must stay fenced by the act version captured when it was recorded",
+			)
+			assertTrue(kernel.isAllowed(ConsentCategory.MARKETING))
+		}
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"
