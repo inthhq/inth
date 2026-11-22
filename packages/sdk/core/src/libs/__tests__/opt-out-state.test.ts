@@ -13,6 +13,7 @@ import type { OptOutRecord } from '../../types';
 import {
 	isOptedOut,
 	resolveCategoryOptOutLock,
+	resolveOptOut,
 	resolveOptOutReceipt,
 	resolveOptOutState,
 } from '../opt-out-state';
@@ -635,5 +636,157 @@ describe('resolveOptOutReceipt', () => {
 				})
 			).source
 		).toBe('click');
+	});
+});
+
+describe('resolveOptOut', () => {
+	test('merges display state and receipt when not opted out', () => {
+		const merged = resolveOptOut(createSnapshot({}));
+		expect(merged).toEqual({
+			at: null,
+			available: true,
+			categories: ['marketing', 'measurement'],
+			decidingCategory: 'marketing',
+			honored: false,
+			lock: null,
+			optInPromptAllowedAt: null,
+			optedOut: false,
+			reference: null,
+			rights: [],
+			scope: null,
+			source: null,
+			via: null,
+		});
+		expect(merged.honored).toBe(merged.optedOut);
+	});
+
+	test('merges click opt-out with browser scope and local reference', () => {
+		const merged = resolveOptOut(
+			createSnapshot({
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW,
+					rights: ['sale', 'share', 'targeted_ads'],
+				},
+			}),
+			{
+				localAct: 'button',
+				reference: 'ref-click-1',
+				rightsConfirmed: false,
+			}
+		);
+		expect(merged).toEqual({
+			at: NOW,
+			available: true,
+			categories: ['marketing', 'measurement'],
+			decidingCategory: 'marketing',
+			honored: true,
+			lock: null,
+			optInPromptAllowedAt: NOW + OPT_OUT_REPROMPT_WAIT_MS,
+			optedOut: true,
+			reference: 'ref-click-1',
+			rights: [],
+			scope: 'browser',
+			source: 'click',
+			via: 'request',
+		});
+		expect(merged.honored).toBe(merged.optedOut);
+	});
+
+	test('merges account-adopted opt-out with account scope and no reference', () => {
+		const merged = resolveOptOut(
+			createSnapshot({
+				optOut: {
+					heldBy: 'person',
+					method: 'button',
+					recordedAt: NOW,
+					rights: ['sale', 'share'],
+				},
+			}),
+			{
+				localAct: null,
+				reference: null,
+				rightsConfirmed: true,
+			}
+		);
+		expect(merged).toEqual({
+			at: NOW,
+			available: true,
+			categories: ['marketing', 'measurement'],
+			decidingCategory: 'marketing',
+			honored: true,
+			lock: 'held-by-account',
+			optInPromptAllowedAt: NOW + OPT_OUT_REPROMPT_WAIT_MS,
+			optedOut: true,
+			reference: null,
+			rights: ['sale', 'share'],
+			scope: 'account',
+			source: 'account',
+			via: 'request',
+		});
+		expect(merged.honored).toBe(merged.optedOut);
+	});
+
+	test('merges GPC signal opt-out with signal via and gpc source', () => {
+		const merged = resolveOptOut(
+			createSnapshot({
+				gpc: true,
+				optOut: {
+					heldBy: 'device',
+					method: 'gpc',
+					recordedAt: NOW,
+					rights: ['sale', 'share'],
+				},
+			}),
+			{
+				localAct: 'gpc',
+				reference: 'ref-gpc-1',
+				rightsConfirmed: true,
+			}
+		);
+		expect(merged).toEqual({
+			at: NOW,
+			available: true,
+			categories: ['marketing', 'measurement'],
+			decidingCategory: 'marketing',
+			honored: true,
+			lock: 'gpc-active',
+			optInPromptAllowedAt: NOW + OPT_OUT_REPROMPT_WAIT_MS,
+			optedOut: true,
+			reference: 'ref-gpc-1',
+			rights: ['sale', 'share'],
+			scope: 'browser',
+			source: 'gpc',
+			via: 'signal',
+		});
+		expect(merged.honored).toBe(merged.optedOut);
+	});
+
+	test('keeps honored and optedOut equal across policy models and record states', () => {
+		const record: OptOutRecord = {
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW,
+			rights: ['sale'],
+		};
+		const cases = [
+			createSnapshot({ rule: optOutPolicy }),
+			createSnapshot({ optOut: record, rule: optOutPolicy }),
+			createSnapshot({ rule: optInRule({ categories: ['marketing'] }) }),
+			createSnapshot({
+				optOut: record,
+				rule: optInRule({ categories: ['marketing'] }),
+			}),
+			createSnapshot({ rule: noneRule({ categories: ['functionality'] }) }),
+			createSnapshot({
+				optOut: record,
+				rule: noneRule({ categories: ['functionality'] }),
+			}),
+		];
+		for (const snapshot of cases) {
+			const merged = resolveOptOut(snapshot);
+			expect(merged.honored).toBe(merged.optedOut);
+		}
 	});
 });

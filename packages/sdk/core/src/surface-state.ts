@@ -48,6 +48,7 @@ export type {
 export {
 	isOptedOut,
 	resolveCategoryOptOutLock,
+	resolveOptOut,
 	resolveOptOutReceipt,
 	resolveOptOutState,
 } from './libs/opt-out-state';
@@ -60,6 +61,7 @@ export type {
 	OptOutReceiptData,
 	OptOutReceiptScope,
 	OptOutReceiptSource,
+	OptOutState,
 	OptOutVia,
 	ResolvedOptOutState,
 } from './libs/opt-out-state';
