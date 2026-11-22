@@ -48,17 +48,23 @@ describe('ConsentDialog disableAnimation prop', () => {
 			'[data-testid="consent-dialog-overlay"]'
 		);
 		// The stylesheet animates both on `data-state` and stops them on
-		// `data-disable-animation`, as the Vue and script-tag dialogs set it.
+		// `data-disable-animation`. The portal wrapper carries the flag for
+		// the overlay so `consent-dialog-overlay` keeps React's attributes.
 		expect(positioner?.getAttribute('data-state')).toBe('open');
 		expect(positioner?.hasAttribute('data-disable-animation')).toBe(true);
 		expect(overlay?.getAttribute('data-state')).toBe('open');
-		expect(overlay?.hasAttribute('data-disable-animation')).toBe(true);
+		expect(overlay?.hasAttribute('data-disable-animation')).toBe(false);
+		expect(overlay?.closest('[data-disable-animation]')).not.toBeNull();
 	});
 
 	test('leaves the open keyframes on by default', async () => {
 		render(Fixture, { options: optionsWith(false) });
 		await waitFor(() => expect(document.querySelector(ROOT)).not.toBeNull());
 		const positioner = document.querySelector(ROOT)?.parentElement;
+		const overlay = document.querySelector(
+			'[data-testid="consent-dialog-overlay"]'
+		);
 		expect(positioner?.hasAttribute('data-disable-animation')).toBe(false);
+		expect(overlay?.closest('[data-disable-animation]')).toBeNull();
 	});
 });
