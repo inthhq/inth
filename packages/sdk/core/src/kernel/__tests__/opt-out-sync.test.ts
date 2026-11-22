@@ -2641,4 +2641,72 @@ describe('opt-out network sync and queue', () => {
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
 		kernel.dispose();
 	});
+
+	test('replaying a queued opt-out after 409 policy_snapshot_expired resends without the expired token', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const offline = vi
+			.fn<NonNullable<KernelTransport['optOut']>>()
+			.mockRejectedValue(new Error('offline'));
+		const first = kernelOn({
+			initialPolicySnapshotToken: 'expired-token',
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: { optOut: offline },
+		});
+
+		await first.commands.optOut();
+		expect(await queuedOptOuts()).toHaveLength(1);
+		const originalKey = offline.mock.calls[0]?.[0].idempotencyKey;
+		first.dispose();
+
+		const stub = stubFetch(() => {
+			const parsed = stub.calls.at(-1)?.body as {
+				policySnapshotToken?: string;
+			};
+			if (parsed.policySnapshotToken === 'expired-token') {
+				return v1Error(409, 'policy_snapshot_expired');
+			}
+			return json(200, {
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW + 2000,
+					rights: ['sale', 'share'],
+				},
+				recordId: RECORD,
+				subjectId: SUBJECT,
+			});
+		});
+		const { calls, fetch } = stub;
+		const transport = createV1HostedTransport({
+			fetch,
+			projectUrl: PROJECT_URL,
+			property: 'www.example.com',
+		});
+		const reloaded = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW,
+					rights: [],
+				},
+				subject: { subjectId: SUBJECT },
+			},
+			transport: {
+				liftOptOut: transport.liftOptOut,
+				optOut: transport.optOut,
+			},
+		});
+
+		await reloaded.commands.init();
+		await vi.waitFor(() => expect(calls).toHaveLength(2));
+		await vi.waitFor(async () => expect(await queuedOptOuts()).toEqual([]));
+
+		expect(bodyAt(calls, 0).policySnapshotToken).toBe('expired-token');
+		expect('policySnapshotToken' in bodyAt(calls, 1)).toBe(false);
+		expect(bodyAt(calls, 1).idempotencyKey).toBe(originalKey);
+		expect(reloaded.getSnapshot().optOut?.rights).toEqual(['sale', 'share']);
+		reloaded.dispose();
+	});
 });

@@ -687,6 +687,10 @@ export interface QueueWorker {
 	discard: (payload: SavePayload) => Promise<void>;
 	/** Drop one opt-out act by its idempotency key. */
 	discardOptOut: (idempotencyKey: string) => Promise<void>;
+	/** Strip an expired policy snapshot token from a queued opt-out act. */
+	clearOptOutSnapshotToken: (
+		idempotencyKey: string
+	) => Promise<PendingOptOutEntry | null>;
 	/** Remove every queued opt-out act (used when the backend answers 404). */
 	clearOptOuts: () => Promise<void>;
 	/**
@@ -711,6 +715,26 @@ const isUnsupportedStatus = function isUnsupportedStatus(
 		error !== null &&
 		(error as { status?: unknown }).status === 404
 	);
+};
+
+const isPolicySnapshotConflict = function isPolicySnapshotConflict(
+	error: unknown
+): boolean {
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		(error as { status?: unknown }).status === 409 &&
+		typeof (error as { code?: unknown }).code === 'string' &&
+		(error as { code: string }).code.startsWith('policy_snapshot_')
+	);
+};
+
+const withoutOptOutSnapshotToken = function withoutOptOutSnapshotToken(
+	entry: PendingOptOutEntry
+): PendingOptOutEntry {
+	return entry.kind === 'record'
+		? { ...entry, payload: { ...entry.payload, policySnapshotToken: null } }
+		: { ...entry, payload: { ...entry.payload, policySnapshotToken: null } };
 };
 
 const withCurrentIdentityToken = function withCurrentIdentityToken<
@@ -892,6 +916,29 @@ export const createQueueWorker = function createQueueWorker({
 			if (remaining.length !== pending.length) {
 				tx.write('optOuts', remaining);
 			}
+		});
+	};
+
+	const clearOptOutSnapshotToken = function clearOptOutSnapshotToken(
+		idempotencyKey: string
+	): Promise<PendingOptOutEntry | null> {
+		return store.transact((tx) => {
+			const pending = readPendingOptOuts(tx);
+			let updated: PendingOptOutEntry | null = null;
+			const next = pending.map((candidate) => {
+				if (
+					candidate.idempotencyKey !== idempotencyKey ||
+					!candidate.payload.policySnapshotToken
+				) {
+					return candidate;
+				}
+				updated = withoutOptOutSnapshotToken(candidate);
+				return updated;
+			});
+			if (updated !== null) {
+				tx.write('optOuts', next);
+			}
+			return updated;
 		});
 	};
 
@@ -1338,12 +1385,49 @@ export const createQueueWorker = function createQueueWorker({
 		return attempts !== null && outcome !== 'saved' && !removed;
 	};
 
+	const recoverOptOutConflict = async function recoverOptOutConflict(
+		entry: PendingOptOutEntry,
+		error: unknown,
+		moved: Map<string, string> | null,
+		retryWithoutToken: boolean
+	): Promise<{
+		next: PendingOptOutEntry;
+		moved: Map<string, string> | null;
+		retryWithoutToken: boolean;
+	} | null> {
+		if (moved && isSubjectConflict(error)) {
+			const subjectId = await reassignSubject(entry.payload.subjectId);
+			if (subjectId !== null) {
+				moved.set(entry.payload.subjectId, subjectId);
+				return {
+					moved: null,
+					next: withOptOutSubjectId(entry, subjectId),
+					retryWithoutToken,
+				};
+			}
+		}
+		if (
+			retryWithoutToken &&
+			entry.payload.policySnapshotToken &&
+			isPolicySnapshotConflict(error)
+		) {
+			const updated = await clearOptOutSnapshotToken(entry.idempotencyKey);
+			return {
+				moved,
+				next: updated ?? withoutOptOutSnapshotToken(entry),
+				retryWithoutToken: false,
+			};
+		}
+		return null;
+	};
+
 	const replayOptOutEntry = async function replayOptOutEntry(
 		transports: OptOutReplayTransports,
 		queued: PendingOptOutEntry,
 		moved: Map<string, string> | null,
 		isLast: boolean,
-		onUnsupported: () => void
+		onUnsupported: () => void,
+		retryWithoutToken = true
 	): Promise<{ kept: boolean; error: unknown; unsupported?: boolean } | null> {
 		const key = queued.idempotencyKey;
 		const isEntry = (candidate: PendingOptOutEntry) =>
@@ -1385,18 +1469,21 @@ export const createQueueWorker = function createQueueWorker({
 				return { error: undefined, kept: false, unsupported: true };
 			}
 			failure = error;
-			if (moved && isSubjectConflict(error)) {
-				const subjectId = await reassignSubject(entry.payload.subjectId);
-				if (subjectId !== null) {
-					moved.set(entry.payload.subjectId, subjectId);
-					return replayOptOutEntry(
-						transports,
-						withOptOutSubjectId(entry, subjectId),
-						null,
-						isLast,
-						onUnsupported
-					);
-				}
+			const recovery = await recoverOptOutConflict(
+				entry,
+				error,
+				moved,
+				retryWithoutToken
+			);
+			if (recovery) {
+				return replayOptOutEntry(
+					transports,
+					recovery.next,
+					recovery.moved,
+					isLast,
+					onUnsupported,
+					recovery.retryWithoutToken
+				);
 			}
 			if (isConsentSaveRejection(error)) {
 				outcome = 'rejected';
@@ -1535,6 +1622,7 @@ export const createQueueWorker = function createQueueWorker({
 	};
 
 	return {
+		clearOptOutSnapshotToken,
 		clearOptOuts,
 		discard,
 		discardOptOut,

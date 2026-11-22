@@ -223,6 +223,18 @@ const isUnsupportedStatus = function isUnsupportedStatus(
 	);
 };
 
+const isPolicySnapshotConflict = function isPolicySnapshotConflict(
+	error: unknown
+): boolean {
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		(error as { status?: unknown }).status === 409 &&
+		typeof (error as { code?: unknown }).code === 'string' &&
+		(error as { code: string }).code.startsWith('policy_snapshot_')
+	);
+};
+
 const warnSaveFailed = function warnSaveFailed(
 	outcome: keyof typeof SAVE_FAILED_WARNINGS | 'superseded',
 	error?: unknown
@@ -775,6 +787,14 @@ export const createSaveOutbox = function createSaveOutbox({
 				await discardOptOut(act.payload.idempotencyKey);
 			} else if (clearVersion === startedClear) {
 				warnOptOutFailed(await ensureOptOutQueued(), error);
+				if (
+					act.payload.policySnapshotToken &&
+					isPolicySnapshotConflict(error)
+				) {
+					await (
+						await loadWorker()
+					)?.clearOptOutSnapshotToken(act.payload.idempotencyKey);
+				}
 				retryWhenOnline();
 			}
 		}
@@ -861,6 +881,11 @@ export const createSaveOutbox = function createSaveOutbox({
 				await discardOptOut(payload.idempotencyKey);
 			} else if (clearVersion === startedClear) {
 				warnOptOutFailed(await ensureLiftQueued(), error);
+				if (payload.policySnapshotToken && isPolicySnapshotConflict(error)) {
+					await (
+						await loadWorker()
+					)?.clearOptOutSnapshotToken(payload.idempotencyKey);
+				}
 				retryWhenOnline();
 			}
 			return { ok: false };
