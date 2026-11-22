@@ -23,6 +23,7 @@ export type {
 export {
 	resolveActionLabels,
 	resolveOptInConfirmationSentence,
+	resolveOptOut,
 	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
 	resolveOptOutLink,
@@ -42,6 +43,7 @@ export type {
 	OptOutReceiptScope,
 	OptOutReceiptSource,
 	OptOutResult,
+	OptOutState,
 	OptOutVia,
 	PreferenceControl,
 	PresentationAction,

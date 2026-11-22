@@ -52,7 +52,6 @@ import {
 	useConsentSnapshot,
 	useOptInConfirmationHost,
 	useOptOut,
-	useOptOutReceipt,
 	useOptOutState,
 } from '../composables/kernel';
 import { useConsentPolicyActions } from '../composables/use-consent-policy-actions';
@@ -149,7 +148,6 @@ const kernel = useConsentKernel();
 const snapshot = useConsentSnapshot();
 const translations = useSurfaceTranslations();
 const optOutState = useOptOutState();
-const optOutReceipt = useOptOutReceipt();
 const optOut = useOptOut();
 const optInConfirmationActive = useOptInConfirmationHost();
 const optOutCopy = computed(() => resolveOptOutCopy(translations.value));
@@ -157,12 +155,12 @@ const optOutHeadingId = `inth-opt-out-heading-${uid}`;
 const optOutBlockHeading = computed(() =>
 	resolveOptOutBlockHeading(
 		translations.value,
-		optOutReceipt.value,
+		optOutState.value,
 		surface.value.optOutLink
 	)
 );
 const optOutReceiptSentence = computed(() =>
-	resolveOptOutReceiptSentence(translations.value, optOutReceipt.value)
+	resolveOptOutReceiptSentence(translations.value, optOutState.value)
 );
 const optOutStatusText = computed(() =>
 	optOutState.value.via === 'signal'

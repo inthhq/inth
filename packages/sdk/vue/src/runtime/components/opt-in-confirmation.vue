@@ -27,7 +27,7 @@ import {
 } from '../composables';
 import {
 	useOptInConfirmationOpen,
-	useOptOutReceipt,
+	useOptOutState,
 } from '../composables/kernel';
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
 import { useSurfaceTranslations } from '../composables/use-surface-translations';
@@ -56,7 +56,7 @@ const kernel = useConsentKernel();
 const config = useConsentConfig();
 const init = useConsentInit();
 const translations = useSurfaceTranslations();
-const receipt = useOptOutReceipt();
+const receipt = useOptOutState();
 const confirmationOpen = useOptInConfirmationOpen();
 
 const optOutCopy = computed(() => resolveOptOutCopy(translations.value));

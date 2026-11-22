@@ -279,7 +279,7 @@ export class OptOutConfirmationPanel {
 	/** @internal */
 	protected readonly styles = styles;
 	/** @internal */
-	protected readonly receipt = this.#consent.optOutReceipt;
+	protected readonly receipt = this.#consent.optOutState;
 	/** @internal */
 	protected readonly language = computed(
 		() => this.#consent.translations()?.language ?? 'en'

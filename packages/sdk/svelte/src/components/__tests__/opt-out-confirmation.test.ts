@@ -621,8 +621,8 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 		expect(beforeDescription?.toLowerCase()).not.toContain('account');
 		expect(beforeReference).toMatch(V1_UUID_PATTERN);
 		expect(query('opt-out-confirmation-recorded-at')).not.toBeNull();
-		expect(activeContext?.state.optOutReceipt.scope).toBe('browser');
-		expect(activeContext?.state.optOutReceipt.reference).toBe(beforeReference);
+		expect(activeContext?.state.optOutState.scope).toBe('browser');
+		expect(activeContext?.state.optOutState.reference).toBe(beforeReference);
 
 		await waitFor(() => expect(resolveAnswer).toBeDefined());
 		resolveAnswer?.({
@@ -645,7 +645,7 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 			beforeReference
 		);
 		expect(sentPayload?.idempotencyKey).toBe(beforeReference);
-		expect(activeContext?.state.optOutReceipt.scope).toBe('account');
+		expect(activeContext?.state.optOutState.scope).toBe('account');
 
 		view.unmount();
 	});
@@ -682,6 +682,96 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 		).toContain('account');
 		expect(query('opt-out-confirmation-recorded-at')).not.toBeNull();
 		expect(query('opt-out-confirmation-reference')).toBeNull();
+
+		view.unmount();
+	});
+
+	test('optOutState exposes merged display state and receipt across click and backend answer', async () => {
+		let resolveAnswer:
+			| ((result: Engine.OptOutTransportResult) => void)
+			| undefined;
+		let sentPayload: Engine.OptOutPayload | undefined;
+		const deferredOptOutMode: Engine.ProviderTransportFactory = Object.assign(
+			() => ({
+				optOut: (payload: Engine.OptOutPayload) => {
+					sentPayload = payload;
+					return new Promise<Engine.OptOutTransportResult>((resolve) => {
+						resolveAnswer = resolve;
+					});
+				},
+			}),
+			{ kind: 'offline' as const }
+		);
+
+		const { view } = renderSuite({ mode: deferredOptOutMode });
+
+		await waitFor(() =>
+			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+		);
+		expect(activeContext?.state.optOutState).toMatchObject({
+			at: null,
+			available: true,
+			honored: false,
+			lock: null,
+			optedOut: false,
+			reference: null,
+			rights: [],
+			scope: null,
+			source: null,
+			via: null,
+		});
+		expect('optOutReceipt' in (activeContext?.state ?? {})).toBe(false);
+
+		await fireEvent.click(
+			query<HTMLButtonElement>(
+				'consent-banner-right-link-opt-out'
+			) as HTMLButtonElement
+		);
+
+		await waitFor(() =>
+			expect(activeContext?.state.optOutState.optedOut).toBe(true)
+		);
+		const afterClick = activeContext?.state.optOutState;
+		expect(afterClick).toMatchObject({
+			available: true,
+			honored: true,
+			lock: null,
+			optedOut: true,
+			rights: [],
+			scope: 'browser',
+			source: 'click',
+			via: 'request',
+		});
+		expect(typeof afterClick?.at).toBe('number');
+		expect(typeof afterClick?.reference).toBe('string');
+		expect(afterClick?.reference).toMatch(V1_UUID_PATTERN);
+		const clickReference = afterClick?.reference;
+
+		await waitFor(() => expect(resolveAnswer).toBeDefined());
+		resolveAnswer?.({
+			ok: true,
+			optOut: {
+				heldBy: 'both',
+				method: 'button',
+				recordedAt: sentPayload?.givenAt ?? Date.now(),
+				rights: ['sale', 'share'],
+			},
+			subjectId: sentPayload?.subjectId,
+		});
+
+		await waitFor(() =>
+			expect(activeContext?.state.optOutState.scope).toBe('account')
+		);
+		expect(activeContext?.state.optOutState).toMatchObject({
+			honored: true,
+			lock: 'held-by-account',
+			optedOut: true,
+			reference: clickReference,
+			rights: ['sale', 'share'],
+			scope: 'account',
+			source: 'click',
+			via: 'request',
+		});
 
 		view.unmount();
 	});

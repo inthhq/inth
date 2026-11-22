@@ -30,6 +30,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 import type { Component, ComponentPublicInstance } from 'vue';
 
+import * as publicExports from '../index';
 import {
 	ConsentBanner,
 	ConsentDialogLink,
@@ -37,6 +38,7 @@ import {
 	ConsentManager,
 	OptOutConfirmation,
 	useOptOut,
+	useOptOutState,
 } from '../index';
 import { consentConfigKey } from '../runtime/composables/config';
 import type { ConsentConfig } from '../runtime/config';
@@ -881,5 +883,117 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		).toContain('account');
 		expect(query('opt-out-confirmation-recorded-at')).not.toBeNull();
 		expect(query('opt-out-confirmation-reference')).toBeNull();
+	});
+
+	test('useOptOutState reports merged display state and receipt across click and backend answer', async () => {
+		let resolveAnswer: ((result: OptOutTransportResult) => void) | undefined;
+		let sentPayload: OptOutPayload | undefined;
+		const deferredOptOutMode: ProviderTransportFactory = Object.assign(
+			() => ({
+				optOut: (payload: OptOutPayload) => {
+					sentPayload = payload;
+					return new Promise<OptOutTransportResult>((resolve) => {
+						resolveAnswer = resolve;
+					});
+				},
+			}),
+			{ kind: 'offline' as const }
+		);
+
+		let readState!: ReturnType<typeof useOptOutState>;
+		const StateProbe = defineComponent({
+			setup() {
+				readState = useOptOutState();
+				return () =>
+					h(
+						'output',
+						{ 'data-testid': 'merged-opt-out-state' },
+						JSON.stringify(readState.value)
+					);
+			},
+		});
+
+		const context = await mountTree(
+			defineComponent({
+				render: () => [
+					h(StateProbe),
+					h(ConsentBanner, { disableAnimation: true }),
+					h(ConsentManager, { disableAnimation: true }),
+				],
+			}),
+			{ mode: deferredOptOutMode }
+		);
+
+		await vi.waitFor(() =>
+			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+		);
+
+		const before = readState.value;
+		expect(before).toMatchObject({
+			at: null,
+			available: true,
+			honored: false,
+			lock: null,
+			optedOut: false,
+			reference: null,
+			rights: [],
+			scope: null,
+			source: null,
+			via: null,
+		});
+
+		// An unrelated UI change leaves the computed object reference intact.
+		context.kernel.set.activeUI('none');
+		await flushPromises();
+		expect(readState.value).toBe(before);
+		context.kernel.set.activeUI('banner');
+		await flushPromises();
+
+		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		await flushPromises();
+
+		const afterClick = readState.value;
+		expect(afterClick).toMatchObject({
+			available: true,
+			honored: true,
+			lock: null,
+			optedOut: true,
+			rights: [],
+			scope: 'browser',
+			source: 'click',
+			via: 'request',
+		});
+		expect(typeof afterClick.at).toBe('number');
+		expect(typeof afterClick.reference).toBe('string');
+		expect(afterClick.reference).toMatch(V1_UUID_PATTERN);
+		const clickReference = afterClick.reference;
+
+		await vi.waitFor(() => expect(resolveAnswer).toBeDefined());
+		resolveAnswer?.({
+			ok: true,
+			optOut: {
+				heldBy: 'both',
+				method: 'button',
+				recordedAt: sentPayload?.givenAt ?? Date.now(),
+				rights: ['sale', 'share'],
+			},
+			subjectId: sentPayload?.subjectId,
+		});
+		await flushPromises();
+
+		await vi.waitFor(() => {
+			expect(readState.value.scope).toBe('account');
+		});
+		expect(readState.value).toMatchObject({
+			honored: true,
+			lock: 'held-by-account',
+			optedOut: true,
+			reference: clickReference,
+			rights: ['sale', 'share'],
+			scope: 'account',
+			source: 'click',
+			via: 'request',
+		});
+		expect('useOptOutReceipt' in publicExports).toBe(false);
 	});
 });

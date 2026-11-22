@@ -202,7 +202,7 @@ const formatRecordedAt = function formatRecordedAt(
 									</dd>
 								</div>
 							}
-							@if (optOutReceipt().reference; as reference) {
+							@if (optOutState().reference; as reference) {
 								<div
 									[class]="
 										resolvedNoStyle() ? '' : optOutConfirmation.receiptRow || ''
@@ -508,8 +508,6 @@ export class ConsentWidgetRoot {
 	/** @internal */
 	protected readonly optOutState = this.consent.optOutState;
 	/** @internal */
-	protected readonly optOutReceipt = this.consent.optOutReceipt;
-	/** @internal */
 	protected readonly language = computed(
 		() => this.consent.translations()?.language ?? 'en'
 	);
@@ -527,22 +525,22 @@ export class ConsentWidgetRoot {
 	protected readonly optOutBlockHeading = computed(() =>
 		resolveOptOutBlockHeading(
 			this.translations(),
-			this.optOutReceipt(),
+			this.optOutState(),
 			this.consent.presentation()?.optOutLink
 		)
 	);
 	/** @internal */
 	protected readonly receiptSentence = computed(() =>
-		resolveOptOutReceiptSentence(this.translations(), this.optOutReceipt())
+		resolveOptOutReceiptSentence(this.translations(), this.optOutState())
 	);
 	/** @internal */
 	protected readonly hasReceiptDetails = computed(() => {
-		const receipt = this.optOutReceipt();
+		const receipt = this.optOutState();
 		return receipt.at !== null || receipt.reference !== null;
 	});
 	/** @internal */
 	protected readonly recordedAt = computed(() => {
-		const { at } = this.optOutReceipt();
+		const { at } = this.optOutState();
 		if (at === null) {
 			return null;
 		}

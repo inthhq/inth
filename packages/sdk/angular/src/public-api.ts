@@ -71,6 +71,7 @@ export {
 	resolveActionLabels,
 	resolveConsentPresentation,
 	resolveOptInConfirmationSentence,
+	resolveOptOut,
 	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
 	resolveOptOutLink,
@@ -84,6 +85,7 @@ export type {
 	OptOutReceipt,
 	OptOutReceiptScope,
 	OptOutReceiptSource,
+	OptOutState,
 } from '@inth/sdk/surface-state';
 
 export type {

@@ -24,7 +24,6 @@ import { Slot } from '~/components/shared/libs/slot';
 import { Box } from '~/components/shared/primitives/box';
 import type { BoxProps } from '~/components/shared/primitives/box';
 import {
-	useOptOutReceipt,
 	useOptOutState,
 	useResolvedPresentation,
 	useSetActiveUI,
@@ -151,7 +150,7 @@ const OptOutConfirmationDescription = createForwardRef<
 	BoxProps
 >(({ children, asChild, ...props }, ref) => {
 	const translations = useTranslations();
-	const receipt = useOptOutReceipt();
+	const receipt = useOptOutState();
 	const sentence = resolveOptOutReceiptSentence(translations, receipt);
 	return (
 		<Box
@@ -193,7 +192,7 @@ const OptOutConfirmationDetails = createForwardRef<
 		},
 		ref
 	) => {
-		const receipt = useOptOutReceipt();
+		const receipt = useOptOutState();
 		const translations = useTranslations();
 		const language = useTranslationLanguage();
 		const optOutCopy = resolveOptOutCopy(translations);

@@ -40,15 +40,10 @@ import {
 	showConsentSurface,
 } from '@inth/sdk/surface-actions';
 import {
-	resolveOptOutReceipt,
-	resolveOptOutState,
+	resolveOptOut,
 	resolveSurfaceTranslations,
 } from '@inth/sdk/surface-state';
-import type {
-	OptOutReceipt,
-	OptOutReceiptData,
-	ResolvedOptOutState,
-} from '@inth/sdk/surface-state';
+import type { OptOutReceiptData, OptOutState } from '@inth/sdk/surface-state';
 import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 import { getContext, setContext } from 'svelte';
@@ -177,10 +172,8 @@ export interface ConsentManagerState extends Pick<
 	hasConsentUi: boolean;
 	/** Whether Inth or an external CMP offers a preferences control. */
 	hasConsentPreferences: boolean;
-	/** Opt-out display state derived from the current snapshot. */
-	readonly optOutState: ResolvedOptOutState;
-	/** Opt-out receipt derived from the current snapshot and local receipt data. */
-	readonly optOutReceipt: OptOutReceipt;
+	/** Merged opt-out display state and receipt derived from the current snapshot and local receipt data. */
+	readonly optOutState: OptOutState;
 	legalLinks: ConsentManagerOptions['legalLinks'];
 	/**
 	 * The copy the surfaces render: the active language bundle with English
@@ -409,12 +402,9 @@ const createConsentState = function createConsentState(
 			return getSnapshotLocal().optOut;
 		},
 		get optOutState() {
-			return resolveOptOutState(getSnapshotLocal());
-		},
-		get optOutReceipt() {
 			const local =
 				options.getOptOutReceiptData?.() ?? getOptOutReceiptData(getKernel());
-			return resolveOptOutReceipt(getSnapshotLocal(), local);
+			return resolveOptOut(getSnapshotLocal(), local);
 		},
 		get privacySignals() {
 			return getSnapshotLocal().privacySignals;

@@ -7,6 +7,7 @@ export type {
 export {
 	resolveActionLabels,
 	resolveIABCopy,
+	resolveOptOut,
 	resolveOptOutCopy,
 	resolveOptOutLink,
 	resolveOptOutReceipt,
@@ -25,6 +26,7 @@ export type {
 	OptOutReceiptScope,
 	OptOutReceiptSource,
 	OptOutResult,
+	OptOutState,
 	OptOutVia,
 	PreferenceControl,
 	PresentationAction,

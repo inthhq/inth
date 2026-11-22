@@ -6,7 +6,7 @@ import styles from '@inth/sdk/ui/styles/components/opt-out-confirmation';
 import { computed } from 'vue';
 
 import { useConsentInit } from '../composables';
-import { useOptOutReceipt } from '../composables/kernel';
+import { useOptOutState } from '../composables/kernel';
 import { useSurfaceTranslations } from '../composables/use-surface-translations';
 
 withDefaults(
@@ -43,7 +43,7 @@ const formatRecordedAt = function formatRecordedAt(
 
 const init = useConsentInit();
 const translations = useSurfaceTranslations();
-const receipt = useOptOutReceipt();
+const receipt = useOptOutState();
 const optOutCopy = computed(() => resolveOptOutCopy(translations.value));
 const language = computed(() => init.value?.translations?.language);
 const recordedIso = computed(() =>

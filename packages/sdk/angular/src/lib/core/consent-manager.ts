@@ -66,16 +66,11 @@ import {
 	iabSurfaceActions,
 	pendingBootSnapshot,
 	policyNeedsIAB,
-	resolveOptOutReceipt,
-	resolveOptOutState,
+	resolveOptOut,
 	resolveSurfaceTranslations,
 	vendorsListedUnder,
 } from '@inth/sdk/surface-state';
-import type {
-	OptOutReceipt,
-	OptOutReceiptData,
-	ResolvedOptOutState,
-} from '@inth/sdk/surface-state';
+import type { OptOutReceiptData, OptOutState } from '@inth/sdk/surface-state';
 import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme } from '@inth/sdk/ui/theme';
 
@@ -354,10 +349,8 @@ export class ConsentManager {
 	readonly noticeDismissal: Signal<ConsentSnapshot['noticeDismissal']>;
 	/** The durable opt-out record, or `null`. */
 	readonly optOut: Signal<ConsentSnapshot['optOut']>;
-	/** Opt-out display state derived from the current snapshot. */
-	readonly optOutState: Signal<ResolvedOptOutState>;
-	/** Opt-out receipt derived from the current snapshot and local receipt data. */
-	readonly optOutReceipt: Signal<OptOutReceipt>;
+	/** Merged opt-out display state and receipt derived from the current snapshot and local receipt data. */
+	readonly optOutState: Signal<OptOutState>;
 	/** Whether the opt-out confirmation view is currently open. */
 	readonly optOutConfirmationOpen: Signal<boolean> =
 		this.#optOutConfirmationOpen.asReadonly();
@@ -496,13 +489,6 @@ export class ConsentManager {
 		this.promptRequirement = field('promptRequirement');
 		this.noticeDismissal = field('noticeDismissal');
 		this.optOut = field('optOut');
-		this.optOutState = computed(() => resolveOptOutState(snapshot()));
-		this.optOutReceipt = computed(() =>
-			resolveOptOutReceipt(
-				{ optOut: snapshot().optOut },
-				this.#optOutReceiptData()
-			)
-		);
 		this.privacySignals = field('privacySignals');
 		this.resolution = field('resolution');
 		this.policyRule = field('policyRule');
@@ -511,6 +497,16 @@ export class ConsentManager {
 		this.subject = field('subject');
 		this.evaluatedAt = field('evaluatedAt');
 		this.evaluationPolicy = field('evaluationPolicy');
+		this.optOutState = computed(() =>
+			resolveOptOut(
+				{
+					evaluationPolicy: this.evaluationPolicy(),
+					optOut: this.optOut(),
+					privacySignals: this.privacySignals(),
+				},
+				this.#optOutReceiptData()
+			)
+		);
 		this.policyPending = field('policyPending');
 		this.location = field('location');
 		this.overrides = field('overrides');

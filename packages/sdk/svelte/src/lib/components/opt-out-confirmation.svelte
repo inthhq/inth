@@ -74,7 +74,7 @@
 		resolveOptOutLink(translations, consent.state.presentation?.optOutLink)
 	);
 	const receiptSentence = $derived(
-		resolveOptOutReceiptSentence(translations, consent.state.optOutReceipt)
+		resolveOptOutReceiptSentence(translations, consent.state.optOutState)
 	);
 	const controls = $derived(resolvePreferenceControlLabels(translations));
 	const statusText = $derived(

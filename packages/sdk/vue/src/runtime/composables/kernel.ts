@@ -18,10 +18,7 @@ import {
 	subscribeOptOutConfirmation,
 	subscribeOptOutReceiptData,
 } from '@inth/sdk/surface-actions';
-import {
-	resolveOptOutReceipt,
-	resolveOptOutState,
-} from '@inth/sdk/surface-state';
+import { resolveOptOut } from '@inth/sdk/surface-state';
 import { computed, inject, onScopeDispose, ref, shallowRef } from 'vue';
 
 import {
@@ -67,15 +64,13 @@ export const useEffectivePermissions = () =>
 export const usePromptRequirement = () => useSnapshotField('promptRequirement');
 /** Read the stored notice acknowledgement independently of choices. */
 export const useNoticeDismissal = () => useSnapshotField('noticeDismissal');
-/** Read the opt-out display state derived from the current snapshot. */
+/** Read the merged opt-out display state and receipt derived from the current snapshot and local receipt data. */
 export const useOptOutState = () => {
-	const snapshot = useConsentSnapshot();
-	return computed(() => resolveOptOutState(snapshot.value));
-};
-/** Read the opt-out receipt derived from the current snapshot and local receipt data. */
-export const useOptOutReceipt = () => {
 	const kernel = useConsentKernel();
 	const snapshot = useConsentSnapshot();
+	const evaluationPolicy = computed(() => snapshot.value.evaluationPolicy);
+	const optOut = computed(() => snapshot.value.optOut);
+	const privacySignals = computed(() => snapshot.value.privacySignals);
 	const local = shallowRef(
 		typeof window === 'undefined'
 			? getServerOptOutReceiptData(kernel)
@@ -88,7 +83,14 @@ export const useOptOutReceipt = () => {
 		onScopeDispose(stop);
 	}
 	return computed(() =>
-		resolveOptOutReceipt({ optOut: snapshot.value.optOut }, local.value)
+		resolveOptOut(
+			{
+				evaluationPolicy: evaluationPolicy.value,
+				optOut: optOut.value,
+				privacySignals: privacySignals.value,
+			},
+			local.value
+		)
 	);
 };
 /** Read detected and active user-agent privacy signals. */
