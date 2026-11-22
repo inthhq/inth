@@ -1693,12 +1693,17 @@ class ConsentCore @InthInternalApi constructor(
 			)
 		if (settled.cleared) {
 			return mutate { mutation ->
+				var gpcBlocked = false
 				val prepared = synchronized(mutationLock) {
 					val current = state.get()
 					val fresh = optOutActVersion == plan.actVersion &&
 						recordsGeneration == plan.generation &&
 						current.subject?.owns(settled.subjectId) == true
 					if (!fresh) return@synchronized null
+					if (optOutLiftBlocker(current, evaluationPolicy) == OptInRefusalReason.GPC_ACTIVE) {
+						gpcBlocked = true
+						return@synchronized null
+					}
 					val policy = evaluationPolicy
 					val evaluated = PolicyEvaluator.evaluate(
 						snapshot = current.copy(
@@ -1728,7 +1733,7 @@ class ConsentCore @InthInternalApi constructor(
 				} ?: return@mutate OptInResult(
 					ok = false,
 					revision = state.get().revision,
-					reason = OptInRefusalReason.HELD_BY_ACCOUNT,
+					reason = if (gpcBlocked) OptInRefusalReason.GPC_ACTIVE else OptInRefusalReason.HELD_BY_ACCOUNT,
 				)
 				if (!store.writeEnvelope(prepared.second, publishBus = false)) {
 					val error = KernelError("queue-write-failed", "The opt-out lift could not be stored.")
@@ -1778,8 +1783,15 @@ class ConsentCore @InthInternalApi constructor(
 	) {
 		if (config.dryRun) return
 		val snapshot = synchronized(mutationLock) {
-			if (optOutActVersion != actVersion || recordsGeneration != generation) return
-			state.get()
+			val current = state.get()
+			if (
+				optOutActVersion != actVersion ||
+				recordsGeneration != generation ||
+				optOutLiftBlocker(current, evaluationPolicy) != OptInRefusalReason.HELD_BY_ACCOUNT
+			) {
+				return
+			}
+			current
 		}
 		val liftSubjectId = drainQueuedOptOutsBeforeAccountLift(snapshot.subject?.id ?: subjectId) ?: return
 		val payload = buildLiftOptOutPayload(snapshot, liftSubjectId, actionAt, uiSource)
@@ -3230,6 +3242,9 @@ class ConsentCore @InthInternalApi constructor(
 					recordsGeneration != generation ||
 					current.subject?.owns(subjectId) != true
 				) {
+					return@synchronized null
+				}
+				if (nextOptOut == null && optOutLiftBlocker(current, evaluationPolicy) == OptInRefusalReason.GPC_ACTIVE) {
 					return@synchronized null
 				}
 				if (current.optOut == nextOptOut) {
