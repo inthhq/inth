@@ -2577,6 +2577,51 @@ class OptOutSyncTest {
 		assertEquals(listOf("lift:$reassignedSubject", "record:$reassignedSubject"), wireOrder)
 	}
 
+	@Test
+	fun `reaffirming refusal keeps an in-flight opt-out record response eligible so BOTH stays account-held`() {
+		val backend = InMemoryKeyValueStore()
+		seedSubject(backend)
+		val clock = FixedClock(NOW)
+		val tasks = ArrayDeque<() -> Unit>()
+		val bothOptOut = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = NOW,
+			heldBy = OptOutHolder.BOTH,
+		)
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondLink(LinkOutcome.Linked(subjectId = SUBJECT))
+			.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = bothOptOut))
+			.respondSave(SaveOutcome.Delivered(subjectId = SUBJECT))
+			.respondLiftOptOut(LiftOptOutOutcome.Unavailable("offline"))
+		val kernel = testKernel(
+			store = InthStore(backend),
+			clock = clock,
+			transport = transport,
+			executor = TaskExecutor { tasks.addLast(it) },
+		)
+		kernel.bootstrap()
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+		kernel.identify(KernelUser("user_123"), identityToken = "tok_1")
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+		assertTrue(kernel.optOut().ok)
+		assertTrue(kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false))).ok)
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+		assertEquals(
+			bothOptOut,
+			kernel.snapshot().optOut,
+			"a reaffirming refusal must not reject the authoritative BOTH record from the in-flight optOut POST",
+		)
+
+		val lifted = kernel.optIn()
+		assertFalse(lifted.ok)
+		assertEquals(OptInRefusalReason.HELD_BY_ACCOUNT, lifted.reason)
+		assertEquals(bothOptOut, kernel.snapshot().optOut)
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"

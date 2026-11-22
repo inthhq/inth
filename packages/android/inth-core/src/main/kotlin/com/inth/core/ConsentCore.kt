@@ -401,6 +401,8 @@ class ConsentCore @InthInternalApi constructor(
 	 * local act is ignored.
 	 */
 	private var optOutActVersion = 0L
+	/** Bumped when a save reaffirms a held opt-out so pending account lifts stay fenced. */
+	private var optOutRefusalVersion = 0L
 	private var optOutGpcReported = false
 	/** Opt-out act version captured when a queued save was recorded in this process. */
 	private val saveActVersions = java.util.concurrent.ConcurrentHashMap<String, Long>()
@@ -489,6 +491,7 @@ class ConsentCore @InthInternalApi constructor(
 	/** Snapshot and fencing captured before sending an account-held opt-out lift. */
 	private data class AccountLiftPlan(
 		val actVersion: Long,
+		val refusalVersion: Long,
 		val generation: Long,
 		val identifyGeneration: Long,
 		val snapshot: ConsentSnapshot,
@@ -1247,6 +1250,7 @@ class ConsentCore @InthInternalApi constructor(
 
 		// The mutation gate owns this revision through the durable write and swap.
 		var actVersion: Long
+		var refusalVersion: Long
 		var generation: Long
 		var identifyGen: Long
 		synchronized(mutationLock) {
@@ -1254,11 +1258,14 @@ class ConsentCore @InthInternalApi constructor(
 				committedIab = nextIab
 				lastIabActionAt = actionAt
 			}
-			if (liftsOptOut || recordedOptOut || keepsOptOut) {
+			if (liftsOptOut || recordedOptOut) {
 				optOutActVersion += 1
+			} else if (keepsOptOut) {
+				optOutRefusalVersion += 1
 			}
 			optOutGpcReported = nextOptOutGpcReported
 			actVersion = optOutActVersion
+			refusalVersion = optOutRefusalVersion
 			generation = recordsGeneration
 			identifyGen = identifyGeneration
 			installSnapshot(published)
@@ -1313,6 +1320,7 @@ class ConsentCore @InthInternalApi constructor(
 						actionAt = actionAt,
 						uiSource = surfaceAtAction,
 						actVersion = actVersion,
+						refusalVersion = refusalVersion,
 						generation = generation,
 						expectedIdentifyGeneration = identifyGen,
 					)
@@ -1555,6 +1563,7 @@ class ConsentCore @InthInternalApi constructor(
 				val user = currentUserFor(current.subject)
 				AccountLiftPlan(
 					actVersion = optOutActVersion,
+					refusalVersion = optOutRefusalVersion,
 					generation = recordsGeneration,
 					identifyGeneration = identifyGeneration,
 					snapshot = current,
@@ -1586,6 +1595,7 @@ class ConsentCore @InthInternalApi constructor(
 						val user = currentUserFor(current.subject)
 						deferredAccountPlan = AccountLiftPlan(
 							actVersion = optOutActVersion,
+							refusalVersion = optOutRefusalVersion,
 							generation = recordsGeneration,
 							identifyGeneration = identifyGeneration,
 							snapshot = current,
@@ -1708,6 +1718,7 @@ class ConsentCore @InthInternalApi constructor(
 		val canDispatch = {
 			val refusal = accountLiftDispatchRefusal(
 				actVersion = plan.actVersion,
+				refusalVersion = plan.refusalVersion,
 				generation = plan.generation,
 				expectedIdentifyGeneration = plan.identifyGeneration,
 			)
@@ -1740,6 +1751,7 @@ class ConsentCore @InthInternalApi constructor(
 				val prepared = synchronized(mutationLock) {
 					val current = state.get()
 					val fresh = optOutActVersion == plan.actVersion &&
+						optOutRefusalVersion == plan.refusalVersion &&
 						recordsGeneration == plan.generation &&
 						identifyGeneration == plan.identifyGeneration &&
 						current.subject?.owns(settled.subjectId) == true
@@ -1826,6 +1838,7 @@ class ConsentCore @InthInternalApi constructor(
 		actionAt: Long,
 		uiSource: ActiveUI?,
 		actVersion: Long,
+		refusalVersion: Long,
 		generation: Long,
 		expectedIdentifyGeneration: Long,
 	) {
@@ -1834,6 +1847,7 @@ class ConsentCore @InthInternalApi constructor(
 			val current = state.get()
 			if (
 				optOutActVersion != actVersion ||
+				optOutRefusalVersion != refusalVersion ||
 				recordsGeneration != generation ||
 				identifyGeneration != expectedIdentifyGeneration ||
 				optOutLiftBlocker(current, evaluationPolicy) != OptInRefusalReason.HELD_BY_ACCOUNT
@@ -1846,6 +1860,7 @@ class ConsentCore @InthInternalApi constructor(
 		val canDispatch = {
 			accountLiftDispatchRefusal(
 				actVersion = actVersion,
+				refusalVersion = refusalVersion,
 				generation = generation,
 				expectedIdentifyGeneration = expectedIdentifyGeneration,
 			) == null
@@ -1866,11 +1881,13 @@ class ConsentCore @InthInternalApi constructor(
 			subjectId = settled.subjectId,
 			allowClear = true,
 			expectedIdentifyGeneration = expectedIdentifyGeneration,
+			expectedRefusalVersion = refusalVersion,
 		)
 	}
 
 	private fun accountLiftDispatchRefusal(
 		actVersion: Long,
+		refusalVersion: Long,
 		generation: Long,
 		expectedIdentifyGeneration: Long,
 	): OptInRefusalReason? = synchronized(mutationLock) {
@@ -1881,6 +1898,7 @@ class ConsentCore @InthInternalApi constructor(
 		}
 		if (
 			optOutActVersion != actVersion ||
+			optOutRefusalVersion != refusalVersion ||
 			recordsGeneration != generation ||
 			identifyGeneration != expectedIdentifyGeneration ||
 			blocker != OptInRefusalReason.HELD_BY_ACCOUNT
@@ -3367,6 +3385,7 @@ class ConsentCore @InthInternalApi constructor(
 		subjectId: String,
 		allowClear: Boolean,
 		expectedIdentifyGeneration: Long? = null,
+		expectedRefusalVersion: Long? = null,
 		completeOptOutId: String? = null,
 	): SyncedOptOutOutcome {
 		if (optOut == null && (!cleared || !allowClear)) return SyncedOptOutOutcome.SKIPPED
@@ -3381,6 +3400,7 @@ class ConsentCore @InthInternalApi constructor(
 				val current = state.get()
 				if (
 					optOutActVersion != actVersion ||
+					(expectedRefusalVersion != null && nextOptOut == null && optOutRefusalVersion != expectedRefusalVersion) ||
 					recordsGeneration != generation ||
 					(expectedIdentifyGeneration != null && identifyGeneration != expectedIdentifyGeneration) ||
 					current.subject?.owns(subjectId) != true
