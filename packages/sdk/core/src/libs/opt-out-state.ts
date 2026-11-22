@@ -263,3 +263,30 @@ export const resolveOptOutReceipt = function resolveOptOutReceipt(
 		source,
 	};
 };
+
+/** Combined opt-out display state and receipt for one browser. */
+export type OptOutState = ResolvedOptOutState & OptOutReceipt;
+
+/**
+ * Derive the combined opt-out display state and receipt from a consent
+ * snapshot and local receipt data.
+ *
+ * Calls {@link resolveOptOutState} and {@link resolveOptOutReceipt} and merges
+ * both results. `honored` and `optedOut` always agree.
+ *
+ * @param snapshot - The current consent snapshot.
+ * @param local - Optional local-only receipt data for this browser.
+ * @returns The merged opt-out state and receipt.
+ */
+export const resolveOptOut = function resolveOptOut(
+	snapshot: Pick<
+		ConsentSnapshot,
+		'evaluationPolicy' | 'optOut' | 'privacySignals'
+	>,
+	local?: Partial<OptOutReceiptData> | null
+): OptOutState {
+	return {
+		...resolveOptOutState(snapshot),
+		...resolveOptOutReceipt(snapshot, local),
+	};
+};
