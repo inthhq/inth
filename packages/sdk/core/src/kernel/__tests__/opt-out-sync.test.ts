@@ -2709,4 +2709,117 @@ describe('opt-out network sync and queue', () => {
 		expect(reloaded.getSnapshot().optOut?.rights).toEqual(['sale', 'share']);
 		reloaded.dispose();
 	});
+
+	test('a new opt-out act does not overtake an older queued act at the backend', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const delivered: ('record' | 'lift')[] = [];
+		const liftOptOut = vi
+			.fn<NonNullable<KernelTransport['liftOptOut']>>()
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockImplementation((payload) => {
+				delivered.push('lift');
+				return Promise.resolve({
+					ok: true,
+					optOut: null,
+					subjectId: payload.subjectId,
+				});
+			});
+		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>((payload) => {
+			delivered.push('record');
+			return Promise.resolve({
+				ok: true,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: payload.givenAt,
+					rights: ['sale', 'share'],
+				},
+				subjectId: payload.subjectId,
+			});
+		});
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: NOW - 1000,
+					rights: ['sale', 'share'],
+				},
+				subject: { subjectId: SUBJECT },
+			},
+			transport: { liftOptOut, optOut },
+		});
+
+		await kernel.commands.optIn();
+		expect(await queuedOptOuts()).toHaveLength(1);
+
+		await kernel.commands.optOut();
+		kernel.replaySaves();
+		await vi.waitFor(async () => expect(await queuedOptOuts()).toEqual([]));
+
+		expect(delivered).toEqual(['lift', 'record']);
+		kernel.dispose();
+	});
+
+	test('opt-out replay stops at a retained head entry instead of sending a newer act ahead of it', async () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const delivered: ('record' | 'lift')[] = [];
+		let optOutFails = true;
+		let liftFails = true;
+		const optOut = vi.fn<NonNullable<KernelTransport['optOut']>>((payload) => {
+			if (optOutFails) {
+				return Promise.reject(new Error('offline'));
+			}
+			delivered.push('record');
+			return Promise.resolve({
+				ok: true,
+				optOut: {
+					heldBy: 'device',
+					method: 'button',
+					recordedAt: payload.givenAt,
+					rights: ['sale', 'share'],
+				},
+				subjectId: payload.subjectId,
+			});
+		});
+		const liftOptOut = vi.fn<NonNullable<KernelTransport['liftOptOut']>>(
+			(payload) => {
+				if (liftFails) {
+					return Promise.reject(new Error('offline'));
+				}
+				delivered.push('lift');
+				return Promise.resolve({
+					ok: true,
+					optOut: null,
+					subjectId: payload.subjectId,
+				});
+			}
+		);
+		const kernel = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: { liftOptOut, optOut },
+		});
+
+		await kernel.commands.optOut();
+		await kernel.commands.optIn();
+		expect(await queuedOptOuts()).toHaveLength(2);
+
+		// Lift endpoint is healthy while the head opt-out still fails transiently.
+		liftFails = false;
+		const callsBeforeReplay = optOut.mock.calls.length;
+		kernel.replaySaves();
+		await vi.waitFor(() =>
+			expect(optOut).toHaveBeenCalledTimes(callsBeforeReplay + 1)
+		);
+		await flushMacrotasks();
+		expect(delivered).toEqual([]);
+		expect(await queuedOptOuts()).toHaveLength(2);
+
+		optOutFails = false;
+		kernel.replaySaves();
+		await vi.waitFor(async () => expect(await queuedOptOuts()).toEqual([]));
+		expect(delivered).toEqual(['record', 'lift']);
+		kernel.dispose();
+	});
 });
