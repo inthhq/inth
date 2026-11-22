@@ -3000,10 +3000,11 @@ class ConsentCore @InthInternalApi constructor(
 		val pending = optOutQueue.pending()
 		val index = pending.indexOfFirst { it.id == entry.id }
 		if (index < 0) return null
-		val earlier = pending.subList(0, index).filter { sameOptOutSubject(it.subjectId, entry.subjectId) }
+		val current = pending[index]
+		val earlier = pending.subList(0, index).filter { sameOptOutSubject(it.subjectId, current.subjectId) }
 		if (earlier.isEmpty()) {
 			return deliverOptOutIfOwed(
-				entry = entry,
+				entry = current,
 				fence = fence,
 				identityToken = identityToken,
 				applyAnswer = true,
@@ -3034,7 +3035,7 @@ class ConsentCore @InthInternalApi constructor(
 				is Delivery.Refused -> if (delivery.attempt == FailedAttempt.Retrying) return delivery
 			}
 		}
-		val updated = moved[entry.subjectId]?.let { entry.withSubjectId(it) } ?: entry
+		val updated = moved[current.subjectId]?.let { current.withSubjectId(it) } ?: current
 		return deliverOptOutIfOwed(
 			entry = updated,
 			fence = fence,

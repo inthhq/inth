@@ -2493,6 +2493,90 @@ class OptOutSyncTest {
 		}
 	}
 
+	@Test
+	fun `queued opt-out ordering uses the reassigned subject after a subject conflict`() {
+		val backend = InMemoryKeyValueStore()
+		val deviceOptOut = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = NOW - 5_000,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		seedOptOut(backend, deviceOptOut)
+		val clock = FixedClock(NOW)
+		val tasks = ArrayDeque<() -> Unit>()
+		val wireOrder = mutableListOf<String>()
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondLiftOptOut(
+				LiftOptOutOutcome.Rejected(
+					TransportOutcome.HttpFailure(status = 409, code = "subject_conflict"),
+				),
+			)
+			.respondLiftOptOut(
+				LiftOptOutOutcome.Rejected(
+					TransportOutcome.HttpFailure(status = 429, code = "rate_limited"),
+				),
+			)
+			.respondLiftOptOut(
+				LiftOptOutOutcome.Rejected(
+					TransportOutcome.HttpFailure(status = 429, code = "rate_limited"),
+				),
+			)
+			.respondLiftOptOut(LiftOptOutOutcome.Delivered(optOut = null, cleared = true))
+			.respondOptOut(OptOutOutcome.Delivered(optOut = deviceOptOut))
+		val recordingTransport = object : com.inth.core.transport.InthTransport by transport {
+			override fun optOut(payload: OptOutPayload, identityToken: String?): OptOutOutcome {
+				val outcome = transport.optOut(payload, identityToken)
+				if (outcome is OptOutOutcome.Delivered) {
+					wireOrder += "record:${payload.subjectId}"
+				}
+				return outcome
+			}
+
+			override fun liftOptOut(payload: LiftOptOutPayload, identityToken: String?): LiftOptOutOutcome {
+				val outcome = transport.liftOptOut(payload, identityToken)
+				if (outcome is LiftOptOutOutcome.Delivered) {
+					wireOrder += "lift:${payload.subjectId}"
+				}
+				return outcome
+			}
+		}
+		val kernel = testKernel(
+			store = InthStore(backend),
+			clock = clock,
+			transport = recordingTransport,
+			executor = TaskExecutor { tasks.addLast(it) },
+		)
+		kernel.bootstrap()
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+		assertTrue(kernel.optIn().ok)
+		assertTrue(kernel.optOut().ok)
+		assertEquals(2, tasks.size)
+
+		// First task: LIFT gets 409 subject_conflict, reassigns both queued acts to a new subject, then gets 429.
+		tasks.removeFirst()()
+		val reassignedSubject = assertNotNull(kernel.snapshot().subject?.id)
+		assertNotEquals(SUBJECT, reassignedSubject)
+		assertEquals(
+			listOf(reassignedSubject, reassignedSubject),
+			InthStore(backend).readPendingOptOuts().map { it.subjectId },
+		)
+
+		// Second task: RECORD's callback holds stale subject SUBJECT, but must still see LIFT ahead of it.
+		tasks.removeFirst()()
+		assertTrue(
+			transport.optOutRequests.isEmpty(),
+			"later RECORD must not overtake retryable LIFT after subject reassignment",
+		)
+
+		val flushed = kernel.flushPending()
+		assertEquals(2, flushed.delivered)
+		assertEquals(0, flushed.remaining)
+		assertEquals(listOf("lift:$reassignedSubject", "record:$reassignedSubject"), wireOrder)
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"
