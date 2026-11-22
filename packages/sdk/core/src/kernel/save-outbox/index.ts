@@ -70,6 +70,7 @@ import { applySyncedOptOut } from '../opt-out';
 import type { KernelRuntime } from '../runtime';
 import type {
 	EnqueueResult,
+	OptOutEnqueueOutcome,
 	OptOutEnqueueResult,
 	QueueWorker,
 	QueueWorkerOptions,
@@ -252,6 +253,67 @@ const warnOptOutFailed = function warnOptOutFailed(
 	warnInDevelopment(OPT_OUT_FAILED_WARNINGS[outcome], error);
 };
 
+const resolveRawSubject = function resolveRawSubject(
+	reassignments: unknown,
+	id: string
+): string {
+	if (!Array.isArray(reassignments) || reassignments.length === 0) {
+		return id;
+	}
+	const moves = new Map<string, string>();
+	for (const item of reassignments) {
+		if (
+			typeof item === 'object' &&
+			item !== null &&
+			typeof (item as { from?: unknown }).from === 'string' &&
+			typeof (item as { to?: unknown }).to === 'string'
+		) {
+			moves.set((item as { from: string }).from, (item as { to: string }).to);
+		}
+	}
+	let current = id;
+	for (let step = 0; step <= moves.size; step += 1) {
+		const next = moves.get(current);
+		if (next === undefined) {
+			break;
+		}
+		current = next;
+	}
+	return current;
+};
+
+const rawOptOutSubjectId = function rawOptOutSubjectId(
+	entry: unknown
+): string | undefined {
+	if (typeof entry !== 'object' || entry === null) {
+		return undefined;
+	}
+	const { payload } = entry as { payload?: unknown };
+	if (typeof payload !== 'object' || payload === null) {
+		return undefined;
+	}
+	const { subjectId } = payload as { subjectId?: unknown };
+	return typeof subjectId === 'string' ? subjectId : undefined;
+};
+
+const hasStoredOptOutForSubject = function hasStoredOptOutForSubject(
+	stored: unknown,
+	reassignments: unknown,
+	subjectId: string
+): boolean {
+	if (!Array.isArray(stored) || stored.length === 0) {
+		return false;
+	}
+	const own = resolveRawSubject(reassignments, subjectId);
+	return stored.some((entry) => {
+		const entrySubject = rawOptOutSubjectId(entry);
+		return (
+			entrySubject !== undefined &&
+			resolveRawSubject(reassignments, entrySubject) === own
+		);
+	});
+};
+
 // oxlint-disable-next-line max-lines-per-function -- Save and opt-out delivery share the store, worker and lock state.
 export const createSaveOutbox = function createSaveOutbox({
 	runtime,
@@ -301,6 +363,8 @@ export const createSaveOutbox = function createSaveOutbox({
 	// Bumped on `clear()` so pre-clear opt-out sends waiting for the macrotask
 	// do not leave after a clear.
 	let clearVersion = 0;
+	let activeOptOutDrain: Promise<boolean> | null = null;
+	let pendingOptOutDrain = false;
 
 	/** The queue module, loaded once; `undefined` when it cannot load. */
 	const loadWorker = async function loadWorker(): Promise<
@@ -355,18 +419,25 @@ export const createSaveOutbox = function createSaveOutbox({
 
 	const enqueueOptOut = function enqueueOptOut(
 		act: OptOutAct
-	): Promise<OptOutEnqueueResult> {
+	): Promise<OptOutEnqueueOutcome> {
 		if (worker) {
 			return worker.enqueueOptOut(act);
 		}
 		void loadWorker();
 		return store.transact((tx) => {
-			if (
-				!tx.write('optOuts', appendOptOut(tx.read('optOuts'), act, Date.now()))
-			) {
-				return 'unstored';
+			const existing = tx.read('optOuts');
+			const hasEarlier = hasStoredOptOutForSubject(
+				existing,
+				tx.read('reassignments'),
+				act.payload.subjectId
+			);
+			if (!tx.write('optOuts', appendOptOut(existing, act, Date.now()))) {
+				return { hasEarlier, status: 'unstored' };
 			}
-			return tx.durable === false ? 'memory' : 'queued';
+			return {
+				hasEarlier,
+				status: tx.durable === false ? 'memory' : 'queued',
+			};
 		});
 	};
 
@@ -408,6 +479,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	const markOptOutsUnsupported =
 		async function markOptOutsUnsupported(): Promise<void> {
 			optOutsUnsupported = true;
+			pendingOptOutDrain = false;
 			fillUnsupportedOptOutRights();
 			await store.transact((tx) => {
 				if (tx.read('optOuts') !== undefined) {
@@ -418,6 +490,7 @@ export const createSaveOutbox = function createSaveOutbox({
 
 	const clear = function clear(): Promise<void> {
 		clearVersion += 1;
+		pendingOptOutDrain = false;
 		saveActVersions.clear();
 		// At once, so the page can close before the lock is granted: a later
 		// page must not replay the cleared subject's saves or opt-outs. Then
@@ -426,6 +499,62 @@ export const createSaveOutbox = function createSaveOutbox({
 		return store.transact(() => {
 			store.clear();
 		});
+	};
+
+	const drainQueuedOptOuts =
+		async function drainQueuedOptOuts(): Promise<boolean> {
+			if (optOutsUnsupported) {
+				return false;
+			}
+			const loaded = await loadWorker();
+			if (!loaded) {
+				return false;
+			}
+			const run = loaded.replayOptOuts(
+				{
+					liftOptOut: transport?.liftOptOut,
+					optOut: transport?.optOut,
+				},
+				() => {
+					optOutsUnsupported = true;
+					pendingOptOutDrain = false;
+					fillUnsupportedOptOutRights();
+				}
+			);
+			activeOptOutDrain = run;
+			try {
+				return await run;
+			} finally {
+				if (activeOptOutDrain === run) {
+					activeOptOutDrain = null;
+				}
+			}
+		};
+
+	const schedulePendingOptOutDrain = function schedulePendingOptOutDrain(
+		startedClear: number
+	): void {
+		if (
+			!pendingOptOutDrain ||
+			optOutsUnsupported ||
+			clearVersion !== startedClear
+		) {
+			return;
+		}
+		pendingOptOutDrain = false;
+		void (async () => {
+			if (activeOptOutDrain) {
+				await activeOptOutDrain;
+			}
+			if (
+				!optOutsUnsupported &&
+				clearVersion === startedClear &&
+				(await hasQueued('optOuts')) &&
+				(await drainQueuedOptOuts())
+			) {
+				retryWhenOnline();
+			}
+		})();
 	};
 
 	const replay = async function replay(): Promise<void> {
@@ -452,20 +581,8 @@ export const createSaveOutbox = function createSaveOutbox({
 				leftQueued = true;
 			}
 		}
-		if (hasOptOuts && !optOutsUnsupported) {
-			const remainingOptOuts = await loaded.replayOptOuts(
-				{
-					liftOptOut: transport?.liftOptOut,
-					optOut: transport?.optOut,
-				},
-				() => {
-					optOutsUnsupported = true;
-					fillUnsupportedOptOutRights();
-				}
-			);
-			if (remainingOptOuts) {
-				leftQueued = true;
-			}
+		if (hasOptOuts && !optOutsUnsupported && (await drainQueuedOptOuts())) {
+			leftQueued = true;
 		}
 		if (leftQueued) {
 			retryWhenOnline();
@@ -667,6 +784,56 @@ export const createSaveOutbox = function createSaveOutbox({
 		}
 	};
 
+	const runTrackedOptOut = async function runTrackedOptOut<Result>(
+		idempotencyKey: string,
+		run: (markSettled: () => void) => Promise<Result>
+	): Promise<Result> {
+		const startedClear = clearVersion;
+		let settled = false;
+		try {
+			return await trackOptOutRequest(() =>
+				trackDirectOptOut(idempotencyKey, () =>
+					run(() => {
+						settled = true;
+					})
+				)
+			);
+		} finally {
+			if (settled) {
+				schedulePendingOptOutDrain(startedClear);
+			}
+		}
+	};
+
+	const drainEarlierOptOuts = async function drainEarlierOptOuts(
+		idempotencyKey: string,
+		subjectId: string
+	): Promise<boolean> {
+		const loaded = await loadWorker();
+		if (!loaded) {
+			return false;
+		}
+		if (!(await loaded.hasEarlierOptOut(idempotencyKey, subjectId))) {
+			return true;
+		}
+		await drainQueuedOptOuts();
+		if (optOutsUnsupported) {
+			return false;
+		}
+		if (directOptOutSends.size > 1) {
+			pendingOptOutDrain = true;
+		}
+		const stillEarlier = await loaded.hasEarlierOptOut(
+			idempotencyKey,
+			subjectId
+		);
+		if (stillEarlier) {
+			directOptOutSends.delete(idempotencyKey);
+			return false;
+		}
+		return true;
+	};
+
 	const sendOptOutAct = (act: OptOutAct) =>
 		act.kind === 'record'
 			? transport?.optOut?.(act.payload)
@@ -676,7 +843,9 @@ export const createSaveOutbox = function createSaveOutbox({
 	const performSendOptOut = async function performSendOptOut(
 		act: OptOutAct,
 		context: OptOutActionContext,
-		reassign: boolean
+		reassign: boolean,
+		markSettled: () => void,
+		alreadyQueued = false
 	): Promise<void> {
 		if (optOutsUnsupported) {
 			return;
@@ -686,9 +855,11 @@ export const createSaveOutbox = function createSaveOutbox({
 				? Boolean(transport?.optOut)
 				: Boolean(transport?.liftOptOut);
 		const startedClear = clearVersion;
-		let staged: OptOutEnqueueResult = 'unstored';
-		if (hasTransport) {
-			staged = await enqueueOptOut(act);
+		let staged: OptOutEnqueueResult = alreadyQueued ? 'queued' : 'unstored';
+		let hasEarlier = false;
+		if (hasTransport && !alreadyQueued) {
+			const queued = await enqueueOptOut(act);
+			({ hasEarlier, status: staged } = queued);
 			if (
 				staged === 'queued' &&
 				!optOutsUnsupported &&
@@ -704,7 +875,7 @@ export const createSaveOutbox = function createSaveOutbox({
 			if (staged === 'memory') {
 				return 'unstored';
 			}
-			staged = await enqueueOptOut(act);
+			staged = (await enqueueOptOut(act)).status;
 			if (staged === 'queued' && clearVersion === startedClear) {
 				context.onGpcReported?.();
 				return 'queued';
@@ -726,6 +897,41 @@ export const createSaveOutbox = function createSaveOutbox({
 			if (optOutsUnsupported || clearVersion !== startedClear) {
 				return;
 			}
+			if (hasEarlier) {
+				if (staged !== 'unstored') {
+					directOptOutSends.delete(act.payload.idempotencyKey);
+					if (directOptOutSends.size > 0) {
+						pendingOptOutDrain = true;
+					}
+					const remaining = await drainQueuedOptOuts();
+					if (
+						!remaining &&
+						staged === 'memory' &&
+						!optOutsUnsupported &&
+						clearVersion === startedClear
+					) {
+						context.onGpcReported?.();
+					}
+					if (
+						remaining &&
+						!optOutsUnsupported &&
+						clearVersion === startedClear
+					) {
+						retryWhenOnline();
+					}
+					return;
+				}
+				const canSend = await drainEarlierOptOuts(
+					act.payload.idempotencyKey,
+					act.payload.subjectId
+				);
+				if (!canSend || optOutsUnsupported || clearVersion !== startedClear) {
+					if (!optOutsUnsupported && clearVersion === startedClear) {
+						retryWhenOnline();
+					}
+					return;
+				}
+			}
 			const result = await sendOptOutAct(act);
 			if (!result) {
 				return;
@@ -739,6 +945,7 @@ export const createSaveOutbox = function createSaveOutbox({
 					context.onGpcReported?.();
 				}
 				await discardOptOut(act.payload.idempotencyKey);
+				markSettled();
 				const adopted = await adoptServerSubjectById(
 					result.subjectId,
 					act.payload.subjectId
@@ -774,7 +981,13 @@ export const createSaveOutbox = function createSaveOutbox({
 						act.kind === 'record'
 							? { kind: 'record', payload: { ...act.payload, subjectId } }
 							: { kind: 'lift', payload: { ...act.payload, subjectId } };
-					return performSendOptOut(reassigned, context, false);
+					return performSendOptOut(
+						reassigned,
+						context,
+						false,
+						markSettled,
+						staged !== 'unstored'
+					);
 				}
 			}
 			emit({
@@ -785,6 +998,7 @@ export const createSaveOutbox = function createSaveOutbox({
 			if (isConsentSaveRejection(error)) {
 				warnOptOutFailed('rejected', error);
 				await discardOptOut(act.payload.idempotencyKey);
+				markSettled();
 			} else if (clearVersion === startedClear) {
 				warnOptOutFailed(await ensureOptOutQueued(), error);
 				if (
@@ -804,6 +1018,7 @@ export const createSaveOutbox = function createSaveOutbox({
 	const performAccountLift = async function performAccountLift(
 		payload: LiftOptOutPayload,
 		reassign: boolean,
+		markSettled: () => void,
 		alreadyQueued = false
 	): Promise<AccountLiftOutcome> {
 		const lift = transport?.liftOptOut;
@@ -812,9 +1027,12 @@ export const createSaveOutbox = function createSaveOutbox({
 		}
 		const startedClear = clearVersion;
 		const act: OptOutAct = { kind: 'lift', payload };
-		let staged: OptOutEnqueueResult = alreadyQueued
-			? 'queued'
-			: await enqueueOptOut(act);
+		let staged: OptOutEnqueueResult = alreadyQueued ? 'queued' : 'unstored';
+		let hasEarlier = false;
+		if (!alreadyQueued) {
+			const queued = await enqueueOptOut(act);
+			({ hasEarlier, status: staged } = queued);
+		}
 		const ensureLiftQueued = async (): Promise<'queued' | 'unstored'> => {
 			if (staged === 'queued') {
 				return 'queued';
@@ -822,7 +1040,7 @@ export const createSaveOutbox = function createSaveOutbox({
 			if (staged === 'memory') {
 				return 'unstored';
 			}
-			staged = await enqueueOptOut(act);
+			staged = (await enqueueOptOut(act)).status;
 			return staged === 'queued' ? 'queued' : 'unstored';
 		};
 		if (held) {
@@ -830,6 +1048,21 @@ export const createSaveOutbox = function createSaveOutbox({
 		}
 		if (optOutsUnsupported || clearVersion !== startedClear) {
 			return { ok: false };
+		}
+		if (hasEarlier) {
+			const canSend = await drainEarlierOptOuts(
+				payload.idempotencyKey,
+				payload.subjectId
+			);
+			if (!canSend || optOutsUnsupported || clearVersion !== startedClear) {
+				if (optOutsUnsupported) {
+					return { ok: false, unsupported: true };
+				}
+				if (clearVersion === startedClear) {
+					retryWhenOnline();
+				}
+				return { ok: false };
+			}
 		}
 		try {
 			const result = await lift(payload);
@@ -845,6 +1078,7 @@ export const createSaveOutbox = function createSaveOutbox({
 				return { ok: false };
 			}
 			await discardOptOut(payload.idempotencyKey);
+			markSettled();
 			const adopted = await adoptServerSubjectById(
 				result.subjectId,
 				payload.subjectId
@@ -871,6 +1105,7 @@ export const createSaveOutbox = function createSaveOutbox({
 					return performAccountLift(
 						{ ...payload, subjectId },
 						false,
+						markSettled,
 						staged !== 'unstored'
 					);
 				}
@@ -879,6 +1114,7 @@ export const createSaveOutbox = function createSaveOutbox({
 			if (isConsentSaveRejection(error)) {
 				warnOptOutFailed('rejected', error);
 				await discardOptOut(payload.idempotencyKey);
+				markSettled();
 			} else if (clearVersion === startedClear) {
 				warnOptOutFailed(await ensureLiftQueued(), error);
 				if (payload.policySnapshotToken && isPolicySnapshotConflict(error)) {
@@ -911,10 +1147,8 @@ export const createSaveOutbox = function createSaveOutbox({
 		liftAccountOptOut: (payload) =>
 			optOutsUnsupported || !transport?.liftOptOut
 				? Promise.resolve({ ok: false })
-				: trackOptOutRequest(() =>
-						trackDirectOptOut(payload.idempotencyKey, () =>
-							performAccountLift(payload, true)
-						)
+				: runTrackedOptOut(payload.idempotencyKey, (markSettled) =>
+						performAccountLift(payload, true, markSettled)
 					),
 		onOptOutRequestsChange(listener) {
 			optOutRequestListeners.add(listener);
@@ -928,17 +1162,23 @@ export const createSaveOutbox = function createSaveOutbox({
 		sendOptOut: (payload, context) =>
 			optOutsUnsupported || (!transport?.optOut && !held)
 				? Promise.resolve()
-				: trackOptOutRequest(() =>
-						trackDirectOptOut(payload.idempotencyKey, () =>
-							performSendOptOut({ kind: 'record', payload }, context, true)
+				: runTrackedOptOut(payload.idempotencyKey, (markSettled) =>
+						performSendOptOut(
+							{ kind: 'record', payload },
+							context,
+							true,
+							markSettled
 						)
 					),
 		sendOptOutLift: (payload, context) =>
 			optOutsUnsupported || (!transport?.liftOptOut && !held)
 				? Promise.resolve()
-				: trackOptOutRequest(() =>
-						trackDirectOptOut(payload.idempotencyKey, () =>
-							performSendOptOut({ kind: 'lift', payload }, context, true)
+				: runTrackedOptOut(payload.idempotencyKey, (markSettled) =>
+						performSendOptOut(
+							{ kind: 'lift', payload },
+							context,
+							true,
+							markSettled
 						)
 					),
 	};

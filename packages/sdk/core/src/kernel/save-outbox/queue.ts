@@ -625,6 +625,7 @@ const createStoredLists = function createStoredLists(
 		readPendingOptOuts,
 		readPendingSaves,
 		readReassignments,
+		subjectOf,
 	};
 };
 
@@ -641,6 +642,12 @@ export type EnqueueResult = 'queued' | 'superseded' | 'unstored';
  * was refused.
  */
 export type OptOutEnqueueResult = 'queued' | 'memory' | 'unstored';
+
+/** Result of queueing an opt-out act, including whether an older act sits ahead of it. */
+export interface OptOutEnqueueOutcome {
+	hasEarlier: boolean;
+	status: OptOutEnqueueResult;
+}
 
 /** `retry` keeps the entry for another attempt; the others remove it. */
 type ReplayOutcome = 'saved' | 'retry' | 'rejected';
@@ -682,11 +689,16 @@ export interface QueueWorker {
 	/** Queue what `current()` still holds, read inside the transaction. */
 	enqueue: (current: () => SavePayload | null) => Promise<EnqueueResult>;
 	/** Queue one opt-out act (record or lift), without its identity token. */
-	enqueueOptOut: (act: OptOutAct) => Promise<OptOutEnqueueResult>;
+	enqueueOptOut: (act: OptOutAct) => Promise<OptOutEnqueueOutcome>;
 	/** Drop `payload` and the queued saves it superseded. */
 	discard: (payload: SavePayload) => Promise<void>;
 	/** Drop one opt-out act by its idempotency key. */
 	discardOptOut: (idempotencyKey: string) => Promise<void>;
+	/** Whether another live opt-out act for this subject is queued ahead of `idempotencyKey`. */
+	hasEarlierOptOut: (
+		idempotencyKey: string,
+		subjectId: string
+	) => Promise<boolean>;
 	/** Strip an expired policy snapshot token from a queued opt-out act. */
 	clearOptOutSnapshotToken: (
 		idempotencyKey: string
@@ -838,6 +850,7 @@ export const createQueueWorker = function createQueueWorker({
 		readPendingOptOuts,
 		readPendingSaves,
 		readReassignments,
+		subjectOf,
 	} = createStoredLists(tools, reportExpired);
 	// Subject ids this kernel replaced after the backend refused them as
 	// another tenant's, old to the claim for the new one. A live save and a
@@ -873,14 +886,23 @@ export const createQueueWorker = function createQueueWorker({
 
 	const enqueueOptOut = function enqueueOptOut(
 		act: OptOutAct
-	): Promise<OptOutEnqueueResult> {
+	): Promise<OptOutEnqueueOutcome> {
 		return store.transact((tx) => {
 			const now = Date.now();
-			const pending = appendOptOut(readPendingOptOuts(tx, now), act, now);
+			const existing = readPendingOptOuts(tx, now);
+			const subject = subjectOf(tx);
+			const own = subject(act.payload.subjectId);
+			const hasEarlier = existing.some(
+				(entry) => subject(entry.payload.subjectId) === own
+			);
+			const pending = appendOptOut(existing, act, now);
 			if (!tx.write('optOuts', normalizePendingOptOuts(pending, now))) {
-				return 'unstored';
+				return { hasEarlier, status: 'unstored' };
 			}
-			return tx.durable === false ? 'memory' : 'queued';
+			return {
+				hasEarlier,
+				status: tx.durable === false ? 'memory' : 'queued',
+			};
 		});
 	};
 
@@ -916,6 +938,28 @@ export const createQueueWorker = function createQueueWorker({
 			if (remaining.length !== pending.length) {
 				tx.write('optOuts', remaining);
 			}
+		});
+	};
+
+	const hasEarlierOptOut = function hasEarlierOptOut(
+		idempotencyKey: string,
+		subjectId: string
+	): Promise<boolean> {
+		return store.transact((tx) => {
+			const pending = readPendingOptOuts(tx);
+			const subject = subjectOf(tx);
+			const own = subject(subjectId);
+			for (const candidate of pending) {
+				if (candidate.idempotencyKey === idempotencyKey) {
+					return false;
+				}
+				if (subject(candidate.payload.subjectId) === own) {
+					return true;
+				}
+			}
+			return pending.some(
+				(candidate) => subject(candidate.payload.subjectId) === own
+			);
 		});
 	};
 
@@ -1428,7 +1472,12 @@ export const createQueueWorker = function createQueueWorker({
 		isLast: boolean,
 		onUnsupported: () => void,
 		retryWithoutToken = true
-	): Promise<{ kept: boolean; error: unknown; unsupported?: boolean } | null> {
+	): Promise<{
+		blocked?: boolean;
+		kept: boolean;
+		error: unknown;
+		unsupported?: boolean;
+	} | null> {
 		const key = queued.idempotencyKey;
 		const isEntry = (candidate: PendingOptOutEntry) =>
 			candidate.idempotencyKey === key &&
@@ -1436,8 +1485,11 @@ export const createQueueWorker = function createQueueWorker({
 		const entry = await store.transact((tx) =>
 			readPendingOptOuts(tx).find(isEntry)
 		);
-		if (!entry || isSendingOptOut(entry.idempotencyKey)) {
+		if (!entry) {
 			return null;
+		}
+		if (isSendingOptOut(entry.idempotencyKey)) {
+			return { blocked: true, error: undefined, kept: false };
 		}
 		let outcome: ReplayOutcome = 'retry';
 		let failure: unknown;
@@ -1452,7 +1504,7 @@ export const createQueueWorker = function createQueueWorker({
 				getSnapshot().user
 			);
 			if (!result) {
-				return null;
+				return { blocked: true, error: undefined, kept: false };
 			}
 			if (result.unsupported) {
 				onUnsupported();
@@ -1521,13 +1573,21 @@ export const createQueueWorker = function createQueueWorker({
 		transports: OptOutReplayTransports,
 		onUnsupported: () => void
 	): Promise<boolean> {
-		const pending = await store.transact((tx) => readPendingOptOuts(tx));
+		const { pending, resolveSubject } = await store.transact((tx) => ({
+			pending: readPendingOptOuts(tx),
+			resolveSubject: subjectOf(tx),
+		}));
 		let kept = 0;
 		let lastError: unknown;
 		const moved = new Map<string, string>();
+		const blockedSubjects = new Set<string>();
 		for (const [index, queued] of pending.entries()) {
 			const to = moved.get(queued.payload.subjectId);
 			const entry = to === undefined ? queued : withOptOutSubjectId(queued, to);
+			const subjectKey = resolveSubject(entry.payload.subjectId);
+			if (blockedSubjects.has(subjectKey)) {
+				continue;
+			}
 			// Replay queued opt-out acts one at a time in the exact order queued.
 			// oxlint-disable-next-line no-await-in-loop
 			const result = await replayOptOutEntry(
@@ -1543,6 +1603,13 @@ export const createQueueWorker = function createQueueWorker({
 			if (result?.kept) {
 				kept += 1;
 				lastError = result.error ?? lastError;
+				blockedSubjects.add(
+					resolveSubject(
+						moved.get(queued.payload.subjectId) ?? entry.payload.subjectId
+					)
+				);
+			} else if (result?.blocked) {
+				blockedSubjects.add(subjectKey);
 			}
 		}
 		if (kept > 0) {
@@ -1628,6 +1695,7 @@ export const createQueueWorker = function createQueueWorker({
 		discardOptOut,
 		enqueue,
 		enqueueOptOut,
+		hasEarlierOptOut,
 		reassignSubject,
 		replay(save) {
 			activeReplay ??= runSharedReplay(save);
