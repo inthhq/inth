@@ -2192,6 +2192,36 @@ class OptOutSyncTest {
 		assertTrue(store.readPendingOptOuts().isEmpty())
 	}
 
+	@Test
+	fun `granting save skips the post-save account opt-out lift when the save fails delivery`() {
+		val backend = InMemoryKeyValueStore()
+		val accountOptOut = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.API,
+			recordedAt = NOW - 1_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+		seedOptOut(backend, accountOptOut)
+		val clock = FixedClock(NOW)
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondLink(LinkOutcome.Linked(subjectId = SUBJECT, optOut = accountOptOut))
+			.respondSave(SaveOutcome.Rejected(TransportOutcome.HttpFailure(status = 500, code = "server_error")))
+			.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = null, cleared = true))
+		val kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+		kernel.bootstrap()
+		kernel.identify(KernelUser("user_123"), identityToken = "tok_1")
+
+		val saved = kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true)))
+		assertTrue(saved.ok)
+		assertFalse(saved.delivered)
+		assertTrue(
+			transport.liftOptOutRequests.isEmpty(),
+			"account opt-out lift must not run when the consent save did not reach the backend",
+		)
+		assertEquals(accountOptOut, kernel.snapshot().optOut)
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"
