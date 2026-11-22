@@ -1704,13 +1704,36 @@ class ConsentCore @InthInternalApi constructor(
 				revision = state.get().revision,
 				reason = OptInRefusalReason.HELD_BY_ACCOUNT,
 			)
-		val payload = buildLiftOptOutPayload(plan.snapshot, subjectId, plan.now, plan.uiSource, user = plan.user)
-		val settled = sendAccountOptOutLift(payload, plan.identityToken, allowReassign = true)
-			?: return OptInResult(
+		var gpcBlockedBeforeDispatch = false
+		val canDispatch = {
+			val refusal = accountLiftDispatchRefusal(
+				actVersion = plan.actVersion,
+				generation = plan.generation,
+				expectedIdentifyGeneration = plan.identifyGeneration,
+			)
+			if (refusal == OptInRefusalReason.GPC_ACTIVE) {
+				gpcBlockedBeforeDispatch = true
+			}
+			refusal == null
+		}
+		if (!canDispatch()) {
+			return OptInResult(
 				ok = false,
 				revision = state.get().revision,
-				reason = OptInRefusalReason.HELD_BY_ACCOUNT,
+				reason = if (gpcBlockedBeforeDispatch) OptInRefusalReason.GPC_ACTIVE else OptInRefusalReason.HELD_BY_ACCOUNT,
 			)
+		}
+		val payload = buildLiftOptOutPayload(plan.snapshot, subjectId, plan.now, plan.uiSource, user = plan.user)
+		val settled = sendAccountOptOutLift(
+			payload = payload,
+			identityToken = plan.identityToken,
+			allowReassign = true,
+			canDispatch = canDispatch,
+		) ?: return OptInResult(
+			ok = false,
+			revision = state.get().revision,
+			reason = if (gpcBlockedBeforeDispatch) OptInRefusalReason.GPC_ACTIVE else OptInRefusalReason.HELD_BY_ACCOUNT,
+		)
 		if (settled.cleared) {
 			return mutate { mutation ->
 				var gpcBlocked = false
@@ -1820,8 +1843,21 @@ class ConsentCore @InthInternalApi constructor(
 			current
 		}
 		val liftSubjectId = drainQueuedOptOutsBeforeAccountLift(snapshot.subject?.id ?: subjectId) ?: return
+		val canDispatch = {
+			accountLiftDispatchRefusal(
+				actVersion = actVersion,
+				generation = generation,
+				expectedIdentifyGeneration = expectedIdentifyGeneration,
+			) == null
+		}
+		if (!canDispatch()) return
 		val payload = buildLiftOptOutPayload(snapshot, liftSubjectId, actionAt, uiSource, user = authorizedUser)
-		val settled = sendAccountOptOutLift(payload, authorizedToken, allowReassign = true) ?: return
+		val settled = sendAccountOptOutLift(
+			payload = payload,
+			identityToken = authorizedToken,
+			allowReassign = true,
+			canDispatch = canDispatch,
+		) ?: return
 		applySyncedOptOut(
 			optOut = settled.optOut,
 			cleared = settled.cleared,
@@ -1833,6 +1869,27 @@ class ConsentCore @InthInternalApi constructor(
 		)
 	}
 
+	private fun accountLiftDispatchRefusal(
+		actVersion: Long,
+		generation: Long,
+		expectedIdentifyGeneration: Long,
+	): OptInRefusalReason? = synchronized(mutationLock) {
+		val current = state.get()
+		val blocker = optOutLiftBlocker(current, evaluationPolicy)
+		if (blocker == OptInRefusalReason.GPC_ACTIVE) {
+			return@synchronized OptInRefusalReason.GPC_ACTIVE
+		}
+		if (
+			optOutActVersion != actVersion ||
+			recordsGeneration != generation ||
+			identifyGeneration != expectedIdentifyGeneration ||
+			blocker != OptInRefusalReason.HELD_BY_ACCOUNT
+		) {
+			return@synchronized OptInRefusalReason.HELD_BY_ACCOUNT
+		}
+		null
+	}
+
 	/**
 	 * Send one account-held opt-out lift immediately without queueing on failure.
 	 * Handles `409 subject_conflict` once and adopts a canonical subject ID when named.
@@ -1841,7 +1898,9 @@ class ConsentCore @InthInternalApi constructor(
 		payload: LiftOptOutPayload,
 		identityToken: String?,
 		allowReassign: Boolean,
+		canDispatch: () -> Boolean = { true },
 	): AccountLiftSettled? {
+		if (!canDispatch()) return null
 		val outcome = try {
 			transport.liftOptOut(payload, identityToken)
 		} catch (error: Exception) {
@@ -1865,6 +1924,7 @@ class ConsentCore @InthInternalApi constructor(
 							payload.copy(subjectId = newSubjectId),
 							identityToken,
 							allowReassign = false,
+							canDispatch = canDispatch,
 						)
 					}
 				}
