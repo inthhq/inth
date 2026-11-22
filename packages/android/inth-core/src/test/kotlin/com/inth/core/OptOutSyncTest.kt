@@ -1833,6 +1833,88 @@ class OptOutSyncTest {
 		}
 	}
 
+	@Test
+	fun `deferred and in-flight account lifts stay bound to the identity that authorized them`() {
+		val optOutA = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.API,
+			recordedAt = NOW - 2_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+		val optOutB = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.TARGETED_ADS),
+			method = OptOutMethod.PROPAGATED,
+			recordedAt = NOW - 1_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+
+		// Case 1: User B signs in before User A's deferred post-save lift dispatches.
+		run {
+			val backend = InMemoryKeyValueStore()
+			seedOptOut(backend, optOutA)
+			val clock = FixedClock(NOW)
+			val tasks = ArrayDeque<() -> Unit>()
+			val transport = RecordingTransport()
+				.respondInit(optOutInit())
+				.respondLink(LinkOutcome.Linked(subjectId = SUBJECT, optOut = optOutA))
+				.respondLink(LinkOutcome.Linked(subjectId = SUBJECT, optOut = optOutB))
+				.respondSave(SaveOutcome.Delivered(subjectId = SUBJECT))
+				.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = null, cleared = true))
+			val kernel = testKernel(
+				store = InthStore(backend),
+				clock = clock,
+				transport = transport,
+				executor = TaskExecutor { tasks.addLast(it) },
+			)
+			kernel.bootstrap()
+			while (tasks.isNotEmpty()) tasks.removeFirst()()
+			kernel.identify(KernelUser("user_a"), identityToken = "tok_a")
+			while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+			// User A grants marketing, scheduling a deferred account lift.
+			assertTrue(kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true))).ok)
+			// User B signs in before A's background lift task runs.
+			kernel.identify(KernelUser("user_b"), identityToken = "tok_b")
+			while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+			assertTrue(
+				transport.liftOptOutRequests.isEmpty(),
+				"User A's deferred lift must not dispatch after User B signs in",
+			)
+			assertEquals(optOutB, kernel.snapshot().optOut)
+		}
+
+		// Case 2: User B signs in while User A's optIn() account lift is in flight.
+		run {
+			val backend = InMemoryKeyValueStore()
+			seedOptOut(backend, optOutA)
+			val clock = FixedClock(NOW)
+			lateinit var kernel: ConsentCore
+			val transport = object : com.inth.core.transport.InthTransport {
+				override fun init(context: com.inth.core.transport.InitContext): TransportOutcome = optOutInit()
+				override fun save(entry: com.inth.core.model.QueuedSave): SaveOutcome = SaveOutcome.Delivered(subjectId = SUBJECT)
+				override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): LinkOutcome =
+					LinkOutcome.Linked(subjectId = subject.id, optOut = if (user.externalId == "user_b") optOutB else optOutA)
+
+				override fun optOut(payload: OptOutPayload, identityToken: String?): OptOutOutcome =
+					OptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = optOutA)
+
+				override fun liftOptOut(payload: LiftOptOutPayload, identityToken: String?): LiftOptOutOutcome {
+					kernel.identify(KernelUser("user_b"), identityToken = "tok_b")
+					return LiftOptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = null, cleared = true)
+				}
+			}
+			kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+			kernel.bootstrap()
+			kernel.identify(KernelUser("user_a"), identityToken = "tok_a")
+
+			val lifted = kernel.optIn()
+			assertFalse(lifted.ok)
+			assertEquals(OptInRefusalReason.HELD_BY_ACCOUNT, lifted.reason)
+			assertEquals(optOutB, kernel.snapshot().optOut)
+		}
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"
