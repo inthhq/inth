@@ -2101,25 +2101,30 @@ class ConsentCore @InthInternalApi constructor(
 	fun logout() = mutate { mutation ->
 		val transition = transitionIab(null, false)
 		if (transition != null) {
-			mutation.release()
 			if (transition) {
-				identifiedUser = null
-				identifiedToken = null
+				synchronized(mutationLock) {
+					identifyGeneration += 1
+					identifiedUser = null
+					identifiedToken = null
+				}
+				mutation.release()
 				notifySnapshot()
-			}
-			else
+			} else {
+				mutation.release()
 				emitError(
 					KernelError(
 						"identity-write-failed",
 						"Logout consent reset could not be persisted",
 					)
 				)
+			}
 			return@mutate
 		}
 		var published: ConsentSnapshot
 		var subject: ConsentSubject
 		synchronized(mutationLock) {
 			val current = state.get()
+			identifyGeneration += 1
 			subject = (current.subject ?: ConsentSubject(subjectIdGenerator())).copy(externalId = null)
 			published = current.copy(subject = subject, revision = current.revision + 1)
 			identifiedUser = null
