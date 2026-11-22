@@ -275,9 +275,21 @@ data class QueuedOptOut(
 			OptOutActKind.LIFT -> liftPayload!!.user
 		}
 
+	val policySnapshotToken: String?
+		get() = when (kind) {
+			OptOutActKind.RECORD -> recordPayload!!.policySnapshotToken
+			OptOutActKind.LIFT -> liftPayload!!.policySnapshotToken
+		}
+
 	/** Copy this queued act under [newSubjectId], keeping its [idempotencyKey] unchanged. */
 	fun withSubjectId(newSubjectId: String): QueuedOptOut = when (kind) {
 		OptOutActKind.RECORD -> copy(recordPayload = recordPayload!!.copy(subjectId = newSubjectId))
 		OptOutActKind.LIFT -> copy(liftPayload = liftPayload!!.copy(subjectId = newSubjectId))
+	}
+
+	/** Copy this queued act without its expired [policySnapshotToken], keeping its [idempotencyKey] unchanged. */
+	fun withoutPolicySnapshotToken(): QueuedOptOut = when (kind) {
+		OptOutActKind.RECORD -> copy(recordPayload = recordPayload!!.copy(policySnapshotToken = null))
+		OptOutActKind.LIFT -> copy(liftPayload = liftPayload!!.copy(policySnapshotToken = null))
 	}
 }

@@ -255,6 +255,22 @@ class PendingOptOutQueue(
 		store.writePendingOptOuts(moved)
 	}
 
+	/** Strip an expired policy snapshot token from queued act [id], keeping its idempotency key. */
+	fun clearPolicySnapshotToken(id: String): QueuedOptOut? = synchronized(store) {
+		val current = store.readPendingOptOuts()
+		var updated: QueuedOptOut? = null
+		val next = current.map { entry ->
+			if (entry.id == id && entry.policySnapshotToken != null) {
+				entry.withoutPolicySnapshotToken().also { updated = it }
+			} else {
+				entry
+			}
+		}
+		if (updated == null) return@synchronized null
+		store.writePendingOptOuts(next)
+		updated
+	}
+
 	/** Empty the queue when stored consent records are cleared. */
 	fun clear() = synchronized(store) {
 		store.writePendingOptOuts(emptyList())

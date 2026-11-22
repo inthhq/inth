@@ -139,6 +139,10 @@ sealed class OptOutOutcome {
 	val isSubjectConflict: Boolean
 		get() = this is Rejected && isOptOutSubjectConflict(failure)
 
+	/** `409 policy_snapshot_*`: drop the expired policy snapshot token and resend. */
+	val isPolicySnapshotConflict: Boolean
+		get() = this is Rejected && isOptOutPolicySnapshotConflict(failure)
+
 	/**
 	 * Refused for good (`413` or `400 invalid_request`): remove from queue.
 	 *
@@ -189,6 +193,10 @@ sealed class LiftOptOutOutcome {
 	val isSubjectConflict: Boolean
 		get() = this is Rejected && isOptOutSubjectConflict(failure)
 
+	/** `409 policy_snapshot_*`: drop the expired policy snapshot token and resend. */
+	val isPolicySnapshotConflict: Boolean
+		get() = this is Rejected && isOptOutPolicySnapshotConflict(failure)
+
 	/**
 	 * Refused for good (`413` or `400 invalid_request`): remove from queue.
 	 *
@@ -201,6 +209,9 @@ sealed class LiftOptOutOutcome {
 
 internal fun isOptOutSubjectConflict(failure: TransportOutcome.HttpFailure): Boolean =
 	failure.status == 409 && failure.code == "subject_conflict"
+
+internal fun isOptOutPolicySnapshotConflict(failure: TransportOutcome.HttpFailure): Boolean =
+	failure.status == 409 && failure.code?.startsWith("policy_snapshot_") == true
 
 internal fun isOptOutPermanentRejection(failure: TransportOutcome.HttpFailure): Boolean =
 	failure.status == 413 || (failure.status == 400 && failure.code == "invalid_request")
