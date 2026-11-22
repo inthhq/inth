@@ -88,6 +88,7 @@ export type {
 	OptOutLinkVariant,
 	OptOutLock,
 	OptOutResult,
+	OptOutState,
 	OptOutTranslations,
 	OptOutVia,
 	ResolvedOptOutState,

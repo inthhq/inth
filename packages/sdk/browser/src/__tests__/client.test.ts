@@ -1,6 +1,12 @@
 import { policyRulePresets } from '@inth/sdk-core';
-import type { KernelTransport, ProviderTransportFactory } from '@inth/sdk-core';
+import type {
+	KernelTransport,
+	OptOutPayload,
+	OptOutTransportResult,
+	ProviderTransportFactory,
+} from '@inth/sdk-core';
 import {
+	V1_UUID_PATTERN,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
@@ -646,5 +652,115 @@ describe('translations', () => {
 		expect(
 			client.getSnapshot().translations?.translations.cookieBanner.title
 		).toBe('We value your privacy');
+	});
+});
+
+describe('getOptOutState', () => {
+	it('reports merged opt-out state before and after client.optOut(), updates on backend answer, and notifies consent and subscribe listeners', async () => {
+		let resolveAnswer: ((result: OptOutTransportResult) => void) | undefined;
+		let sentPayload: OptOutPayload | undefined;
+		const rule = {
+			...policyRulePresets.usPrivacyStatesOptOut(),
+			prompt: 'notice' as const,
+		};
+		const client = start({
+			consentCategories: ['functionality', 'marketing', 'measurement'],
+			mode: custom({
+				init: () =>
+					Promise.resolve({
+						location: { countryCode: 'US', regionCode: 'CA' },
+						policyResolution: writePolicyResolutionWire(
+							resolvePolicyRules({
+								countryCode: 'US',
+								regionCode: 'CA',
+								rules: [rule],
+							})
+						),
+					}),
+				optOut: (payload: OptOutPayload) => {
+					sentPayload = payload;
+					return new Promise<OptOutTransportResult>((resolve) => {
+						resolveAnswer = resolve;
+					});
+				},
+			}),
+			overrides: { country: 'US', gpc: false, region: 'CA' },
+			persistence: false,
+			reloadOnConsentRevoked: false,
+			ui: false,
+		});
+		await client.ready();
+
+		expect(client.getOptOutState()).toMatchObject({
+			at: null,
+			available: true,
+			honored: false,
+			lock: null,
+			optedOut: false,
+			reference: null,
+			rights: [],
+			scope: null,
+			source: null,
+			via: null,
+		});
+
+		const onConsent = vi.fn(() => client.getOptOutState());
+		const onSubscribe = vi.fn(() => client.getOptOutState());
+		client.on('consent', onConsent);
+		client.subscribe(onSubscribe);
+
+		const pending = client.optOut();
+
+		const afterClick = client.getOptOutState();
+		expect(afterClick).toMatchObject({
+			available: true,
+			honored: true,
+			lock: null,
+			optedOut: true,
+			rights: [],
+			scope: 'browser',
+			source: 'click',
+			via: 'request',
+		});
+		expect(typeof afterClick.at).toBe('number');
+		expect(typeof afterClick.reference).toBe('string');
+		expect(afterClick.reference).toMatch(V1_UUID_PATTERN);
+		expect(onConsent).toHaveBeenCalledTimes(1);
+		expect(onConsent.mock.results[0]?.value).toMatchObject({
+			optedOut: true,
+			reference: afterClick.reference,
+			scope: 'browser',
+			source: 'click',
+		});
+		expect(onSubscribe).toHaveBeenCalled();
+
+		await vi.waitFor(() => expect(resolveAnswer).toBeDefined());
+		resolveAnswer?.({
+			ok: true,
+			optOut: {
+				heldBy: 'both',
+				method: 'button',
+				recordedAt: sentPayload?.givenAt ?? Date.now(),
+				rights: ['sale', 'share'],
+			},
+			subjectId: sentPayload?.subjectId,
+		});
+		await pending;
+
+		expect(client.getOptOutState()).toMatchObject({
+			honored: true,
+			lock: 'held-by-account',
+			optedOut: true,
+			reference: afterClick.reference,
+			rights: ['sale', 'share'],
+			scope: 'account',
+			source: 'click',
+			via: 'request',
+		});
+		expect(onConsent).toHaveBeenCalledTimes(2);
+		expect(onConsent.mock.results[1]?.value).toMatchObject({
+			reference: afterClick.reference,
+			scope: 'account',
+		});
 	});
 });

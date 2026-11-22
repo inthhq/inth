@@ -138,6 +138,8 @@ export interface GlobalApiBase {
 	hasConsented: () => boolean;
 	/** See {@link ConsentClient.getDeclaredVendors}. */
 	getDeclaredVendors: ConsentClient['getDeclaredVendors'];
+	/** See {@link ConsentClient.getOptOutState}. */
+	getOptOutState: ConsentClient['getOptOutState'];
 	/** See {@link ConsentClient.getVendorChoice}. */
 	getVendorChoice: ConsentClient['getVendorChoice'];
 	/** See {@link ConsentClient.isVendorAllowed}. */
@@ -510,6 +512,7 @@ export const createGlobalWith = function createGlobalWith(
 			pendingListeners.clear();
 		},
 		getDeclaredVendors: () => require().getDeclaredVendors(),
+		getOptOutState: () => require().getOptOutState(),
 		getSnapshot: () => require().getSnapshot(),
 		getVendorChoice: () => require().getVendorChoice(),
 		has: (condition) => require().has(condition),
