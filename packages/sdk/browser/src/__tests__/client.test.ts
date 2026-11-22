@@ -763,4 +763,55 @@ describe('getOptOutState', () => {
 			scope: 'account',
 		});
 	});
+
+	it('fires consent when GPC changes the opt-out lock on an already-held record', async () => {
+		const rule = {
+			...policyRulePresets.usPrivacyStatesOptOut(),
+			prompt: 'notice' as const,
+		};
+		const client = start({
+			consentCategories: ['functionality', 'marketing', 'measurement'],
+			mode: custom({
+				init: () =>
+					Promise.resolve({
+						location: { countryCode: 'US', regionCode: 'CA' },
+						policyResolution: writePolicyResolutionWire(
+							resolvePolicyRules({
+								countryCode: 'US',
+								regionCode: 'CA',
+								rules: [rule],
+							})
+						),
+					}),
+			}),
+			overrides: { country: 'US', gpc: false, region: 'CA' },
+			persistence: false,
+			reloadOnConsentRevoked: false,
+			ui: false,
+		});
+		await client.ready();
+		await client.optOut();
+
+		expect(client.getOptOutState()).toMatchObject({
+			lock: null,
+			optedOut: true,
+			via: 'request',
+		});
+
+		const onConsent = vi.fn(() => client.getOptOutState());
+		client.on('consent', onConsent);
+
+		client.setOverrides({ country: 'US', gpc: true, region: 'CA' });
+
+		expect(client.getOptOutState()).toMatchObject({
+			lock: 'gpc-active',
+			optedOut: true,
+			via: 'signal',
+		});
+		expect(onConsent).toHaveBeenCalledTimes(1);
+		expect(onConsent.mock.results[0]?.value).toMatchObject({
+			lock: 'gpc-active',
+			via: 'signal',
+		});
+	});
 });
