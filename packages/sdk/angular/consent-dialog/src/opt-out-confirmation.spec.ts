@@ -712,4 +712,94 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 		expect(query('opt-out-confirmation-recorded-at')).not.toBeNull();
 		expect(query('opt-out-confirmation-reference')).toBeNull();
 	});
+
+	test('optOutState signal reports merged display state and receipt across click and backend answer', async () => {
+		let resolveAnswer: ((result: OptOutTransportResult) => void) | undefined;
+		let sentPayload: OptOutPayload | undefined;
+		const deferredOptOutMode: ProviderTransportFactory = Object.assign(
+			() => ({
+				optOut: (payload: OptOutPayload) => {
+					sentPayload = payload;
+					return new Promise<OptOutTransportResult>((resolve) => {
+						resolveAnswer = resolve;
+					});
+				},
+			}),
+			{ kind: 'offline' as const }
+		);
+
+		const { consent, fixture } = await boot(BannerDialogHost, {
+			mode: deferredOptOutMode,
+			prefetch: {
+				initialPolicyResolution: resolvePolicyRules({
+					countryCode: 'US',
+					regionCode: 'CA',
+					rules: [noticeRule()],
+				}),
+			},
+		});
+
+		await vi.waitFor(() =>
+			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+		);
+		expect(consent.optOutState()).toMatchObject({
+			at: null,
+			available: true,
+			honored: false,
+			lock: null,
+			optedOut: false,
+			reference: null,
+			rights: [],
+			scope: null,
+			source: null,
+			via: null,
+		});
+		expect('optOutReceipt' in consent).toBe(false);
+
+		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		await fixture.whenStable();
+
+		const afterClick = consent.optOutState();
+		expect(afterClick).toMatchObject({
+			available: true,
+			honored: true,
+			lock: null,
+			optedOut: true,
+			rights: [],
+			scope: 'browser',
+			source: 'click',
+			via: 'request',
+		});
+		expect(typeof afterClick.at).toBe('number');
+		expect(typeof afterClick.reference).toBe('string');
+		expect(afterClick.reference).toMatch(V1_UUID_PATTERN);
+		const clickReference = afterClick.reference;
+
+		await vi.waitFor(() => expect(resolveAnswer).toBeDefined());
+		resolveAnswer?.({
+			ok: true,
+			optOut: {
+				heldBy: 'both',
+				method: 'button',
+				recordedAt: sentPayload?.givenAt ?? Date.now(),
+				rights: ['sale', 'share'],
+			},
+			subjectId: sentPayload?.subjectId,
+		});
+
+		await vi.waitFor(async () => {
+			await fixture.whenStable();
+			expect(consent.optOutState().scope).toBe('account');
+		});
+		expect(consent.optOutState()).toMatchObject({
+			honored: true,
+			lock: 'held-by-account',
+			optedOut: true,
+			reference: clickReference,
+			rights: ['sale', 'share'],
+			scope: 'account',
+			source: 'click',
+			via: 'request',
+		});
+	});
 });

@@ -119,6 +119,7 @@ export type { ConsentManagerState, ConsentDraftState } from './context.svelte';
 export {
 	resolveActionLabels,
 	resolveConsentPresentation,
+	resolveOptOut,
 	resolveOptOutCopy,
 	resolveOptOutLink,
 	resolveOptOutReceipt,
@@ -138,6 +139,7 @@ export type {
 	OptOutReceiptScope,
 	OptOutReceiptSource,
 	OptOutResult,
+	OptOutState,
 	OptOutVia,
 	PreferenceControl,
 	PresentationAction,

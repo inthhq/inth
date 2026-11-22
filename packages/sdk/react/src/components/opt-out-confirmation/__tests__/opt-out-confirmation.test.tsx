@@ -29,7 +29,9 @@ import { ConsentDialog, OptOutConfirmation } from '~/aggregate-components';
 import { ConsentDialogLink } from '~/components/consent-preferences-link/consent-preferences-link';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentBanner } from '~/components/prompt';
-import { useOptOut } from '~/hooks';
+import * as headlessExports from '~/headless';
+import { useOptOut, useOptOutState } from '~/hooks';
+import * as rootExports from '~/index';
 import { useKernel } from '~/kernel-selector';
 import { testing } from '~/testing';
 
@@ -723,6 +725,134 @@ describe('one-step opt-out and confirmation view in React', () => {
 		).toContain('account');
 		expect(query('opt-out-confirmation-recorded-at')).not.toBeNull();
 		expect(query('opt-out-confirmation-reference')).toBeNull();
+
+		await unmount();
+	});
+
+	test('useOptOutState reports merged display state and receipt across click and backend answer and stays referentially stable', async () => {
+		let resolveAnswer: ((result: OptOutTransportResult) => void) | undefined;
+		let sentPayload: OptOutPayload | undefined;
+		const deferredOptOutMode: ProviderTransportFactory = Object.assign(
+			() => ({
+				optOut: (payload: OptOutPayload) => {
+					sentPayload = payload;
+					return new Promise<OptOutTransportResult>((resolve) => {
+						resolveAnswer = resolve;
+					});
+				},
+			}),
+			{ kind: 'offline' as const }
+		);
+
+		const seen: ReturnType<typeof useOptOutState>[] = [];
+		const StateProbe = ({ tick }: { tick: number }) => {
+			const state = useOptOutState();
+			seen.push(state);
+			return (
+				<output data-testid="merged-opt-out-state">
+					{tick}:{JSON.stringify(state)}
+				</output>
+			);
+		};
+
+		const options = {
+			consentCategories: ['functionality', 'marketing', 'measurement'] as (
+				| 'functionality'
+				| 'marketing'
+				| 'measurement'
+			)[],
+			mode: deferredOptOutMode,
+			overrides: { country: 'US', region: 'CA' },
+			persistence: false as const,
+			prefetch: policyFixture(undefined, noticeRule()),
+			reloadOnConsentRevoked: false,
+		};
+
+		const { rerender, unmount } = await render(
+			<InthProvider options={options}>
+				<KernelCapture />
+				<StateProbe tick={0} />
+				<ConsentBanner disableAnimation />
+				<ConsentDialog disableAnimation />
+			</InthProvider>
+		);
+
+		await vi.waitFor(() =>
+			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+		);
+
+		const before = seen.at(-1);
+		expect(before).toMatchObject({
+			at: null,
+			available: true,
+			honored: false,
+			lock: null,
+			optedOut: false,
+			reference: null,
+			rights: [],
+			scope: null,
+			source: null,
+			via: null,
+		});
+
+		await rerender(
+			<InthProvider options={options}>
+				<KernelCapture />
+				<StateProbe tick={1} />
+				<ConsentBanner disableAnimation />
+				<ConsentDialog disableAnimation />
+			</InthProvider>
+		);
+		expect(seen.at(-1)).toBe(before);
+
+		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+
+		await vi.waitFor(() => {
+			expect(seen.at(-1)?.optedOut).toBe(true);
+		});
+		const afterClick = seen.at(-1);
+		expect(afterClick).toMatchObject({
+			available: true,
+			honored: true,
+			lock: null,
+			optedOut: true,
+			rights: [],
+			scope: 'browser',
+			source: 'click',
+			via: 'request',
+		});
+		expect(typeof afterClick?.at).toBe('number');
+		expect(typeof afterClick?.reference).toBe('string');
+		expect(afterClick?.reference).toMatch(V1_UUID_PATTERN);
+		const clickReference = afterClick?.reference;
+
+		await vi.waitFor(() => expect(resolveAnswer).toBeDefined());
+		resolveAnswer?.({
+			ok: true,
+			optOut: {
+				heldBy: 'both',
+				method: 'button',
+				recordedAt: sentPayload?.givenAt ?? Date.now(),
+				rights: ['sale', 'share'],
+			},
+			subjectId: sentPayload?.subjectId,
+		});
+
+		await vi.waitFor(() => {
+			expect(seen.at(-1)?.scope).toBe('account');
+		});
+		expect(seen.at(-1)).toMatchObject({
+			honored: true,
+			lock: 'held-by-account',
+			optedOut: true,
+			reference: clickReference,
+			rights: ['sale', 'share'],
+			scope: 'account',
+			source: 'click',
+			via: 'request',
+		});
+		expect('useOptOutReceipt' in rootExports).toBe(false);
+		expect('useOptOutReceipt' in headlessExports).toBe(false);
 
 		await unmount();
 	});

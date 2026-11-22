@@ -46,6 +46,7 @@ export type {
 	OptOutReceiptScope,
 	OptOutReceiptSource,
 	OptOutResult,
+	OptOutState,
 	OptOutVia,
 	PolicyRule,
 	ProviderTransportContext,

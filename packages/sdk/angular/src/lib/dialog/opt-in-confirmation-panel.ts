@@ -209,7 +209,7 @@ export class OptInConfirmationPanel {
 	protected readonly sentence = computed(() =>
 		resolveOptInConfirmationSentence(
 			this.#consent.copy(),
-			this.#consent.optOutReceipt()
+			this.#consent.optOutState()
 		)
 	);
 

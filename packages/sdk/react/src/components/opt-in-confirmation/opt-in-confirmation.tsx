@@ -23,7 +23,7 @@ import { createPortal } from 'react-dom';
 import { useTranslations } from '~/component-hooks/use-translations';
 import { LocalThemeContext } from '~/context/theme-context';
 import type { ThemeContextValue } from '~/context/theme-context';
-import { useOptOutReceipt } from '~/hooks';
+import { useOptOutState } from '~/hooks';
 import { useFocusTrap } from '~/hooks/use-focus-trap';
 import { useIsHydrated } from '~/hooks/use-is-hydrated';
 import { useOptInConfirmationOpen } from '~/hooks/use-opt-out';
@@ -265,7 +265,7 @@ export const OptInConfirmation: FC<OptInConfirmationProps> = (props) => {
 	const globalTheme = useTheme();
 	const { components } = useUIConfig();
 	const translations = useTranslations();
-	const receipt = useOptOutReceipt();
+	const receipt = useOptOutState();
 	const language = useTranslationLanguage();
 	const textDirection = useTextDirection(language);
 	const confirmationOpen = useOptInConfirmationOpen();

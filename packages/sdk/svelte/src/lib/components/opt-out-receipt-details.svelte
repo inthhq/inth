@@ -39,7 +39,7 @@
 	const theme = getThemeContext();
 
 	const noStyle = $derived(Boolean(localNoStyle ?? theme.noStyle));
-	const receipt = $derived(consent.state.optOutReceipt);
+	const receipt = $derived(consent.state.optOutState);
 	const optOutCopy = $derived(resolveOptOutCopy(consent.state.copy));
 	const language = $derived(
 		consent.state.translations?.language ?? DEFAULT_LANGUAGE

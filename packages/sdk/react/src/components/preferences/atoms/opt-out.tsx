@@ -21,12 +21,7 @@ import {
 	toSaveUISource,
 	useConsentTracking,
 } from '~/context/consent-tracking-context';
-import {
-	useOptOut,
-	useOptOutReceipt,
-	useOptOutState,
-	useResolvedPresentation,
-} from '~/hooks';
+import { useOptOut, useOptOutState, useResolvedPresentation } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import { useKernel } from '~/kernel-selector';
 import { useUIConfig } from '~/ui-config-context';
@@ -54,7 +49,6 @@ export const ConsentWidgetOptOut = createForwardRef<
 	Omit<BoxProps, 'children' | 'slotKey'>
 >(({ noStyle, ...props }, ref) => {
 	const optOutState = useOptOutState();
-	const receipt = useOptOutReceipt();
 	const translations = useTranslations();
 	const presentation = useResolvedPresentation();
 	const optOut = useOptOut();
@@ -72,7 +66,7 @@ export const ConsentWidgetOptOut = createForwardRef<
 	const copy = resolveOptOutCopy(translations);
 	const heading = resolveOptOutBlockHeading(
 		translations,
-		receipt,
+		optOutState,
 		presentation?.optOutLink
 	);
 	const buttonProps = mergeSlotProps(

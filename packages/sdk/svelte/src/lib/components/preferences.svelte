@@ -61,17 +61,16 @@
 
 	const translations = $derived(consent.state.copy);
 	const optOutState = $derived(consent.state.optOutState);
-	const optOutReceipt = $derived(consent.state.optOutReceipt);
 	const optOutCopy = $derived(resolveOptOutCopy(translations));
 	const optOutBlockHeading = $derived(
 		resolveOptOutBlockHeading(
 			translations,
-			optOutReceipt,
+			optOutState,
 			consent.state.presentation?.optOutLink
 		)
 	);
 	const optOutReceiptSentence = $derived(
-		resolveOptOutReceiptSentence(translations, optOutReceipt)
+		resolveOptOutReceiptSentence(translations, optOutState)
 	);
 	const optOutHeadingId = `${widgetId}-opt-out-heading`;
 

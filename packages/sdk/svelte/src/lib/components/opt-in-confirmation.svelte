@@ -58,7 +58,7 @@
 	const textDirection = $derived(getTextDirection(language));
 	const copy = $derived(resolveOptOutCopy(translations));
 	const sentence = $derived(
-		resolveOptInConfirmationSentence(translations, consent.state.optOutReceipt)
+		resolveOptInConfirmationSentence(translations, consent.state.optOutState)
 	);
 
 	let dialogOpen = $state(false);
