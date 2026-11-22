@@ -402,6 +402,8 @@ class ConsentCore @InthInternalApi constructor(
 	 */
 	private var optOutActVersion = 0L
 	private var optOutGpcReported = false
+	/** Opt-out act version captured when a queued save was recorded in this process. */
+	private val saveActVersions = java.util.concurrent.ConcurrentHashMap<String, Long>()
 
 	/**
 	 * Monotonic counter bumped whenever stored records are reset, guarded by [mutationLock].
@@ -1281,6 +1283,7 @@ class ConsentCore @InthInternalApi constructor(
 		// atomic holds at this instant and nothing more: `null` behind a pool, and the
 		// settled answer only where the host's executor ran the send before returning.
 		val firstSend = AtomicReference<Delivery>()
+		saveActVersions[entry.id] = actVersion
 		val saveFence = OptOutAnswerFence(actVersion = actVersion, generation = generation, allowClear = false)
 		val optOutFence = optOutEntry?.let {
 			OptOutAnswerFence(
@@ -2483,6 +2486,7 @@ class ConsentCore @InthInternalApi constructor(
 		}
 		optOutQueue.clear()
 		queue.clear()
+		saveActVersions.clear()
 		store.clearConsentState()
 		storedSnapshotFound = false
 		mutation.release()
@@ -2851,7 +2855,7 @@ class ConsentCore @InthInternalApi constructor(
 	private fun deliver(entry: QueuedSave, fence: OptOutAnswerFence? = null): Delivery {
 		val activeFence = fence ?: synchronized(mutationLock) {
 			OptOutAnswerFence(
-				actVersion = optOutActVersion,
+				actVersion = saveActVersions[entry.id] ?: optOutActVersion,
 				generation = recordsGeneration,
 				allowClear = false,
 			)
@@ -2859,8 +2863,9 @@ class ConsentCore @InthInternalApi constructor(
 		return when (val outcome = transport.save(entry)) {
 			is SaveOutcome.Delivered -> {
 				if (queue.complete(entry.id)) {
+					saveActVersions.remove(entry.id)
 					val adopted = adoptCanonicalSubject(entry.payload.subjectId, outcome.subjectId)
-					if (outcome.optOut != null) {
+					if (outcome.optOut != null && optOutQueue.pending().isEmpty()) {
 						applySyncedOptOut(
 							optOut = outcome.optOut,
 							cleared = false,
@@ -2901,6 +2906,7 @@ class ConsentCore @InthInternalApi constructor(
 					// earn the same answer every time, so the entry leaves and the reason is
 					// named rather than occupying a slot until it expires.
 					queue.complete(entry.id)
+					saveActVersions.remove(entry.id)
 					refusedSave(entry, outcome).also(::emitError)
 				} else {
 					// A status the producer answered with, and not a permanent one: the entry
