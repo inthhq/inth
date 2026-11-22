@@ -3168,20 +3168,24 @@ class ConsentCore @InthInternalApi constructor(
 		// Treat a repeated 409 subject_conflict (allowReassign == false) as permanent so a
 		// backend that refuses every subject ID does not retry forever.
 		val drop = permanentRejection || (subjectConflict && !allowReassign)
-		val error = if (drop) {
-			optOutQueue.complete(entry.id)
-			KernelError(
+		if (drop) {
+			if (!optOutQueue.complete(entry.id)) {
+				val error = KernelError(
+					code = "queue-write-failed",
+					message = "Inth: the backend permanently refused a queued opt-out act for ${entry.subjectId} " +
+						"($detail), but the queue could not release it, so it stays queued",
+				).also(::emitError)
+				return Delivery.Refused(attempt = FailedAttempt.Retrying, error = error)
+			}
+			val error = KernelError(
 				code = "opt-out-rejected",
 				message = "Inth: the backend refused a queued opt-out act for ${entry.subjectId} " +
 					"($detail), so it was dropped and will not be retried",
 			).also(::emitError)
-		} else {
-			announceFailedOptOutAttempt(entry, detail, "http-status")
+			return Delivery.Refused(attempt = FailedAttempt.AlreadyGone, error = error)
 		}
-		return Delivery.Refused(
-			attempt = if (drop) FailedAttempt.AlreadyGone else FailedAttempt.Retrying,
-			error = error,
-		)
+		val error = announceFailedOptOutAttempt(entry, detail, "http-status")
+		return Delivery.Refused(attempt = FailedAttempt.Retrying, error = error)
 	}
 
 	private fun announceFailedOptOutAttempt(
