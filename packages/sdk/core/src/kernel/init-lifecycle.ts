@@ -24,7 +24,7 @@
  *   `init()` re-arms everything; `hydrate()` re-arms the timer only.
  */
 import { readPolicyResolutionWire } from '@inth/sdk-schema/types';
-import type { PolicyResolution } from '@inth/sdk-schema/types';
+import type { OptOutRecord, PolicyResolution } from '@inth/sdk-schema/types';
 import type { Translations } from '@inth/sdk-translations';
 import { deepMergeTranslations } from '@inth/sdk-translations';
 
@@ -47,7 +47,7 @@ import type {
 } from '../types';
 import type { SnapshotPatch } from './patch';
 import { validateHydrationRecords } from './record-validation';
-import { foldServerRecords } from './records';
+import { foldServerRecords, syncAdoptedServerOptOutReceipt } from './records';
 import type { KernelRuntime } from './runtime';
 import type { SaveOutbox } from './save-outbox';
 import { DEFAULT_IAB } from './snapshot';
@@ -227,7 +227,7 @@ const foldInitResponse = function foldInitResponse(
 	now: number,
 	translationOverrides?: TranslationOverrides
 ): {
-	adoptedServerOptOut: boolean;
+	incomingServerOptOut: OptOutRecord | null;
 	patch: SnapshotPatch;
 	recordIssues: RecordIssue[] | null;
 } {
@@ -349,7 +349,7 @@ const foldInitResponse = function foldInitResponse(
 	}
 
 	let recordIssues: RecordIssue[] | null = null;
-	let adoptedServerOptOut = false;
+	let incomingServerOptOut: OptOutRecord | null = null;
 	if (response.records) {
 		const validated = validateHydrationRecords(response.records, now);
 		if (validated.ok === true) {
@@ -357,11 +357,7 @@ const foldInitResponse = function foldInitResponse(
 			// local action made before init resolved is never overwritten.
 			const foldedRecords = foldServerRecords(current, validated.records, now);
 			Object.assign(patch, foldedRecords);
-			adoptedServerOptOut = Boolean(
-				validated.records.optOut &&
-				foldedRecords.optOut === validated.records.optOut &&
-				validated.records.optOut.rights.length > 0
-			);
+			incomingServerOptOut = validated.records.optOut ?? null;
 			// Adopting stored records is not the visitor's choice: a dialog they
 			// opened while init was in flight stays open until they save.
 			if (current.activeUI === 'dialog') {
@@ -377,7 +373,7 @@ const foldInitResponse = function foldInitResponse(
 		patch.subject = { ...subject, subjectId: response.subjectId };
 	}
 
-	return { adoptedServerOptOut, patch, recordIssues };
+	return { incomingServerOptOut, patch, recordIssues };
 };
 
 export interface InitLifecycleOptions {
@@ -555,27 +551,6 @@ export const createInitLifecycle = function createInitLifecycle({
 			: { error, ok: false };
 	};
 
-	const noteAdoptedServerOptOut = function noteAdoptedServerOptOut(
-		current: ConsentSnapshot,
-		adopted: boolean,
-		fromHydration = false
-	): void {
-		if (!adopted) {
-			return;
-		}
-		const existing = runtime.getOptOutReceiptData();
-		runtime.setOptOutReceiptData(
-			current.optOut === null
-				? { localAct: null, reference: null, rightsConfirmed: true }
-				: {
-						localAct: existing.localAct,
-						reference: existing.reference,
-						rightsConfirmed: true,
-					},
-			fromHydration
-		);
-	};
-
 	const runInitAttempt = async function runInitAttempt(
 		attempt: number
 	): Promise<InitResult> {
@@ -643,7 +618,12 @@ export const createInitLifecycle = function createInitLifecycle({
 					folded.recordIssues
 				);
 			}
-			noteAdoptedServerOptOut(current, folded.adoptedServerOptOut);
+			syncAdoptedServerOptOutReceipt(
+				runtime,
+				current.optOut,
+				folded.incomingServerOptOut,
+				folded.patch.optOut
+			);
 			runtime.announce(folded.patch, 'init:applied', snapshot.policyPending);
 			clearRetry();
 			const result = complete({ ok: true });
@@ -789,7 +769,13 @@ export const createInitLifecycle = function createInitLifecycle({
 			runtime.now(),
 			translationOverrides
 		);
-		noteAdoptedServerOptOut(current, folded.adoptedServerOptOut, !afterStart);
+		syncAdoptedServerOptOutReceipt(
+			runtime,
+			current.optOut,
+			folded.incomingServerOptOut,
+			folded.patch.optOut,
+			!afterStart
+		);
 		if (afterStart) {
 			runtime.announce(folded.patch, 'init:applied', current.policyPending);
 			replaySaves();
