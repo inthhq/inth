@@ -1,0 +1,1034 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inth Privacy Choices — Full Interactive UI Explorer (US Opt-Out, US Opt-In, EU/UK)</title>
+  <style>
+    :root {
+      --inth-font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      --inth-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --inth-surface: #ffffff;
+      --inth-surface-subtle: #f8fafc;
+      --inth-surface-hover: #f1f5f9;
+      --inth-border: rgba(15, 23, 42, 0.09);
+      --inth-border-strong: rgba(15, 23, 42, 0.16);
+      --inth-text: #0f172a;
+      --inth-text-muted: #526071;
+      --inth-primary: #2563eb;
+      --inth-primary-hover: color-mix(in oklch, #2563eb 88%, black);
+      --inth-focus: #334155;
+      --inth-overlay: rgba(15, 23, 42, 0.48);
+      --inth-card-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.06),
+        0 8px 24px -4px rgba(15, 23, 42, 0.12),
+        0 20px 44px -12px rgba(15, 23, 42, 0.14);
+      --inth-btn-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.12),
+        0 1px 2px rgba(15, 23, 42, 0.05);
+      --inth-radius-lg: 16px;
+      --inth-radius-md: 10px;
+      --inth-radius-sm: 6px;
+      --inth-hairline: 1px;
+      --inth-switch-off: #cbd5e1;
+      --inth-switch-on: #2563eb;
+      --proto-max-width: 832px;
+    }
+
+    @media only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi) {
+      :root { --inth-hairline: 0.5px; }
+    }
+
+    [data-theme="dark"] {
+      --inth-surface: #14161a;
+      --inth-surface-subtle: #1b1e24;
+      --inth-surface-hover: #232730;
+      --inth-border: #2a2e38;
+      --inth-border-strong: #3a404e;
+      --inth-text: #f3f5f8;
+      --inth-text-muted: #98a2b3;
+      --inth-primary: #4f83f1;
+      --inth-primary-hover: color-mix(in oklch, #4f83f1 88%, white);
+      --inth-focus: #e2e8f0;
+      --inth-overlay: rgba(0, 0, 0, 0.65);
+      --inth-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.09);
+      --inth-btn-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+      --inth-switch-off: #334155;
+      --inth-switch-on: #4f83f1;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: var(--inth-font);
+      -webkit-font-smoothing: antialiased;
+      background: #eef1f5;
+      color: var(--inth-text);
+    }
+    [data-theme="dark"] body { background: #0c0e12; }
+
+    .stage-shell {
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px 300px 84px 20px;
+    }
+    @media (max-width: 1180px) {
+      .stage-shell { padding: 20px 20px 84px; justify-content: center; }
+    }
+
+    .viewport-frame {
+      position: relative;
+      width: 100%;
+      height: calc(100dvh - 104px);
+      min-height: 540px;
+      border-radius: 12px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.06), transparent 45%),
+        var(--inth-surface-subtle);
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
+      display: flex;
+      flex-direction: column;
+    }
+    .viewport-frame[data-vp="macbook"] {
+      width: min(1160px, 100%);
+      height: 700px;
+      min-height: 0;
+      margin: 0 auto;
+    }
+    .viewport-frame[data-vp="phone"] {
+      width: 375px;
+      height: 700px;
+      min-height: 0;
+      margin: 0 auto;
+      border-radius: 28px;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.14), 0 16px 40px rgba(0, 0, 0, 0.16);
+    }
+
+    .fake-site {
+      position: absolute;
+      inset: 0;
+      padding: 28px 40px;
+      pointer-events: none;
+      user-select: none;
+      opacity: 0.45;
+    }
+    .fake-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--inth-border);
+      font-size: 13px;
+      color: var(--inth-text-muted);
+    }
+    .fake-brand { font-weight: 600; color: var(--inth-text); }
+    .fake-hero { max-width: 560px; margin-top: 48px; display: flex; flex-direction: column; gap: 12px; }
+    .fake-bar { height: 14px; border-radius: 6px; background: var(--inth-border-strong); }
+
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: var(--inth-overlay);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .viewport-frame[data-vp="phone"] .modal-backdrop { align-items: flex-start; padding: 12px; }
+
+    .fit-badge {
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      z-index: 20;
+      font-family: var(--inth-font-mono);
+      font-size: 11px;
+      padding: 5px 9px;
+      border-radius: 6px;
+      background: rgba(10, 10, 10, 0.78);
+      color: #f8fafc;
+      font-variant-numeric: tabular-nums;
+      pointer-events: none;
+    }
+    .fit-badge[data-overflow="true"] { background: rgba(185, 28, 28, 0.9); }
+
+    /* Adaptive dialog widths matching @inth/sdk-ui panel.module.css */
+    .card {
+      position: relative;
+      width: min(100%, var(--card-width, var(--proto-max-width)));
+      max-height: calc(100% - 8px);
+      overflow-y: auto;
+      background: var(--inth-surface);
+      color: var(--inth-text);
+      border-radius: var(--inth-radius-lg);
+      box-shadow: var(--inth-card-shadow);
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card.is-single-us { --card-width: min(488px, var(--proto-max-width)); }
+    .card.is-medium-us { --card-width: min(680px, var(--proto-max-width)); }
+    .card.is-eu { --card-width: min(560px, var(--proto-max-width)); }
+    .viewport-frame[data-vp="phone"] .card { padding: 18px; max-height: none; width: 100%; }
+
+    .card button, .card a { touch-action: manipulation; }
+    .card button:active:not(:disabled) { transform: scale(0.96); }
+    .card button:focus-visible, .card a:focus-visible { outline: 2px solid var(--inth-focus); outline-offset: 2px; }
+
+    .card-header { display: flex; flex-direction: column; gap: 4px; }
+    .card-title { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.3; letter-spacing: -0.015em; text-wrap: balance; }
+    .sec-head { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.35; text-wrap: balance; }
+    .sec-desc { margin: 0; font-size: 13px; line-height: 1.48; color: var(--inth-text-muted); max-width: 60ch; }
+
+    .split-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.96fr);
+      gap: 20px;
+      align-items: start;
+      padding-top: 14px;
+      border-top: var(--inth-hairline) solid var(--inth-border);
+    }
+    .split-body.is-single { grid-template-columns: 1fr; }
+    .viewport-frame[data-vp="phone"] .split-body,
+    .card[data-narrow] .split-body { grid-template-columns: 1fr; gap: 16px; }
+
+    .pane-left { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .right-block { display: flex; flex-direction: column; gap: 10px; }
+    .right-block + .right-block { padding-top: 16px; border-top: var(--inth-hairline) solid var(--inth-border); }
+    .right-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .right-status { font-size: 13px; font-weight: 500; flex-shrink: 0; }
+
+    .side-surface {
+      background: var(--inth-surface-subtle);
+      border-radius: calc(var(--inth-radius-lg) - 6px);
+      border: var(--inth-hairline) solid var(--inth-border);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 0;
+    }
+    .side-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .side-heading { margin: 0; font-size: 13px; font-weight: 600; color: var(--inth-text); }
+
+    .pane-scroll { max-height: 384px; overflow-y: auto; padding-right: 4px; }
+    .pane-scroll::-webkit-scrollbar { width: 6px; }
+    .pane-scroll::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.18); border-radius: 4px; }
+    [data-theme="dark"] .pane-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); }
+    .viewport-frame[data-vp="phone"] .pane-scroll { max-height: none; overflow: visible; padding-right: 0; }
+
+    /* Receipt rows (no "YOUR RECEIPT" title) */
+    .kv-list { margin: 0; padding: 0; display: flex; flex-direction: column; font-size: 13px; line-height: 1.45; }
+    .kv-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-block: 7px; border-bottom: var(--inth-hairline) solid var(--inth-border); }
+    .kv-row:first-child { padding-top: 0; }
+    .kv-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .kv-label { color: var(--inth-text-muted); flex-shrink: 0; font-weight: 400; }
+    .kv-val { color: var(--inth-text); font-weight: 500; text-align: end; min-width: 0; }
+    .kv-val.mono { font-family: var(--inth-font-mono); font-size: 12px; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 6px; }
+    .kv-val.tabular { font-variant-numeric: tabular-nums; }
+
+    .copy-btn {
+      position: relative; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+      border: 0; border-radius: var(--inth-radius-sm); background: transparent; color: var(--inth-text-muted); cursor: pointer;
+    }
+    .copy-btn::before { content: ""; position: absolute; inset: -10px; }
+    @media (hover: hover) and (pointer: fine) { .copy-btn:hover { color: var(--inth-text); background: var(--inth-surface-hover); } }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 7px 14px;
+      border-radius: var(--inth-radius-md); font-family: inherit; font-size: 13px; font-weight: 500; line-height: 1.25;
+      text-align: center; cursor: pointer; border: 0;
+      transition: background-color 150ms ease-out, color 150ms ease-out, box-shadow 150ms ease-out, transform 120ms ease-out;
+    }
+    .btn:disabled { cursor: not-allowed; background: var(--inth-surface-hover); color: var(--inth-text-muted); box-shadow: none; }
+    .btn-primary { background: var(--inth-primary); color: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+    @media (hover: hover) and (pointer: fine) { .btn-primary:hover:not(:disabled) { background: var(--inth-primary-hover); } }
+    .btn-stroke { background: var(--inth-surface); color: var(--inth-text); box-shadow: var(--inth-btn-shadow); }
+    @media (hover: hover) and (pointer: fine) { .btn-stroke:hover:not(:disabled) { background: var(--inth-surface-hover); } }
+    .btn-selected { background: var(--inth-surface-hover); color: var(--inth-text); box-shadow: inset 0 0 0 1px var(--inth-border-strong); cursor: default; }
+    .btn-selected:active { transform: none; }
+    .btn-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .viewport-frame[data-vp="phone"] .btn-pair { grid-template-columns: 1fr; }
+
+    .quiet-link {
+      position: relative; display: inline-flex; align-items: center; min-height: 30px; padding: 0; border: 0;
+      background: transparent; color: var(--inth-text-muted); font-family: inherit; font-size: 13px; font-weight: 400;
+      text-decoration: underline; text-underline-offset: 3px;
+      text-decoration-color: color-mix(in srgb, var(--inth-text-muted) 45%, transparent); cursor: pointer;
+    }
+    @media (hover: hover) and (pointer: fine) { .quiet-link:hover { color: var(--inth-text); } }
+
+    .prefs-disclosure-btn {
+      display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 12px;
+      border-radius: var(--inth-radius-md); border: var(--inth-hairline) solid var(--inth-border-strong);
+      background: var(--inth-surface); color: var(--inth-text); font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
+    }
+    @media (hover: hover) and (pointer: fine) { .prefs-disclosure-btn:hover { background: var(--inth-surface-hover); } }
+
+    /* =====================================================================
+       STYLE 1: c15t v3 Accordion (origin/main — bordered cards + nested vendors)
+       ===================================================================== */
+    .v3-acc-list { display: flex; flex-direction: column; gap: 8px; }
+    .v3-acc-item {
+      border-radius: var(--inth-radius-md);
+      border: var(--inth-hairline) solid var(--inth-border-strong);
+      background: var(--inth-surface);
+      overflow: hidden;
+    }
+    .v3-acc-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px;
+    }
+    .v3-acc-trigger {
+      display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; border: 0; padding: 0;
+      background: transparent; color: var(--inth-text); font-family: inherit; font-size: 13px; font-weight: 500;
+      text-align: start; cursor: pointer;
+    }
+    .v3-acc-glyph { color: var(--inth-text-muted); display: inline-flex; flex-shrink: 0; }
+    .v3-acc-body {
+      padding: 0 12px 12px; display: flex; flex-direction: column; gap: 10px;
+      font-size: 12.5px; color: var(--inth-text-muted); line-height: 1.48;
+    }
+    .v3-vendor-card {
+      border-radius: calc(var(--inth-radius-md) - 2px);
+      border: var(--inth-hairline) solid var(--inth-border);
+      background: var(--inth-surface-subtle);
+      overflow: hidden;
+    }
+    .v3-vendor-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px;
+    }
+    .v3-vendor-body {
+      padding: 0 10px 10px; display: flex; flex-direction: column; gap: 4px;
+      font-size: 12px; color: var(--inth-text-muted);
+    }
+
+    /* =====================================================================
+       STYLE 2 & 3: Inline Expandable & Drill-In
+       ===================================================================== */
+    .cat-list { display: flex; flex-direction: column; }
+    .cat-item { border-bottom: var(--inth-hairline) solid var(--inth-border); padding-block: 10px; }
+    .cat-item:first-child { padding-top: 2px; }
+    .cat-item:last-child { border-bottom: 0; padding-bottom: 2px; }
+    .cat-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .cat-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+    .cat-name { font-size: 13px; font-weight: 500; color: var(--inth-text); }
+    .cat-desc { font-size: 12px; color: var(--inth-text-muted); line-height: 1.4; }
+    .vendor-trigger {
+      display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 0; border: 0;
+      background: transparent; color: var(--inth-text-muted); font-family: inherit; font-size: 12px; font-weight: 500;
+      cursor: pointer; font-variant-numeric: tabular-nums;
+    }
+    .inline-vendors { margin-top: 10px; padding-left: 12px; border-left: 2px solid var(--inth-border-strong); display: flex; flex-direction: column; gap: 8px; }
+    .vendor-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding-block: 6px; border-bottom: var(--inth-hairline) solid var(--inth-border); }
+    .vendor-row:first-child { padding-top: 0; }
+    .vendor-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .vendor-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .vendor-name { font-size: 12.5px; font-weight: 500; color: var(--inth-text); }
+    .vendor-desc { font-size: 11.5px; color: var(--inth-text-muted); line-height: 1.4; }
+    .vendor-policy { font-size: 11.5px; color: var(--inth-text-muted); text-decoration: underline; text-underline-offset: 2px; width: fit-content; }
+    .drill-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 8px; border-bottom: var(--inth-hairline) solid var(--inth-border); }
+    .drill-back { display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 2px 6px 2px 0; background: transparent; color: var(--inth-text); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+    /* Switches */
+    .switch {
+      position: relative; width: 36px; height: 20px; border-radius: 999px; border: 0; padding: 0;
+      background: var(--inth-switch-off); cursor: pointer; flex-shrink: 0; transition: background-color 150ms ease-out;
+    }
+    .switch.is-sm { width: 32px; height: 18px; }
+    .switch::before { content: ""; position: absolute; inset: -10px -4px; }
+    .switch::after {
+      content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+      border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .switch.is-sm::after { width: 14px; height: 14px; }
+    .switch[aria-checked="true"] { background: var(--inth-switch-on); }
+    .switch[aria-checked="true"]::after { transform: translateX(16px); }
+    .switch.is-sm[aria-checked="true"]::after { transform: translateX(14px); }
+    .switch:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .card-footer {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+      padding-top: 14px; border-top: var(--inth-hairline) solid var(--inth-border);
+    }
+    .footer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-inline-start: auto; }
+
+    /* PICKER.md — VERBATIM */
+    .proto-picker {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 2147483647;
+      display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px;
+      background: rgba(10, 10, 10, 0.82); -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 8px 24px rgba(0, 0, 0, 0.24), 0 2px 6px rgba(0, 0, 0, 0.12);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; line-height: 1;
+      -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none;
+    }
+    .proto-picker-highlight { position: absolute; top: 4px; left: 0; height: 28px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); will-change: transform; }
+    .proto-picker[data-ready] .proto-picker-highlight { transition: transform 250ms cubic-bezier(0.23, 1, 0.32, 1), width 250ms cubic-bezier(0.23, 1, 0.32, 1); }
+    .proto-picker-item { position: relative; display: flex; align-items: center; height: 28px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: rgba(255, 255, 255, 0.55); font: inherit; cursor: pointer; white-space: nowrap; }
+    .proto-picker-item:hover { color: rgba(255, 255, 255, 0.85); }
+    .proto-picker-item[data-active] { color: #fff; }
+
+    /* CONTROLS.md */
+    .proto-controls {
+      position: fixed; top: 16px; right: 16px; z-index: 2147483646; width: 268px; max-height: calc(100dvh - 32px); overflow-y: auto;
+      padding: 12px; border-radius: 12px; background: rgba(10, 10, 10, 0.86); -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 8px 24px rgba(0, 0, 0, 0.24);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 12px; color: rgba(255, 255, 255, 0.88);
+      display: flex; flex-direction: column; gap: 9px; user-select: none;
+    }
+    .ctrl-row { display: flex; flex-direction: column; gap: 4px; }
+    .ctrl-head { display: flex; justify-content: space-between; align-items: center; color: rgba(255, 255, 255, 0.58); font-size: 11px; }
+    .ctrl-val { font-family: var(--inth-font-mono); color: #fff; font-variant-numeric: tabular-nums; }
+    .proto-controls input[type="range"] { width: 100%; accent-color: #fff; cursor: pointer; }
+    .ctrl-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+    .ctrl-pill { border: 0; border-radius: 6px; padding: 4px 7px; font: inherit; font-size: 11px; background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.72); cursor: pointer; }
+    .ctrl-pill[data-on] { background: rgba(255, 255, 255, 0.24); color: #fff; }
+    .ctrl-sep { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 1px 0; }
+    .ctrl-us-only[data-hidden="true"] { display: none; }
+  </style>
+</head>
+<body>
+  <div class="stage-shell">
+    <div id="vp" class="viewport-frame" data-vp="macbook">
+      <div class="fake-site" aria-hidden="true">
+        <div class="fake-nav"><span class="fake-brand">Acme International Commerce</span><span>Products · Pricing · Privacy</span></div>
+        <div class="fake-hero">
+          <div class="fake-bar" style="width: 68%; height: 26px;"></div>
+          <div class="fake-bar" style="width: 92%;"></div>
+          <div class="fake-bar" style="width: 84%;"></div>
+        </div>
+      </div>
+      <div id="stage" class="modal-backdrop"></div>
+      <div id="fit-badge" class="fit-badge"></div>
+    </div>
+  </div>
+
+  <aside class="proto-controls" aria-label="Explorer controls">
+    <div class="ctrl-row">
+      <div class="ctrl-head"><span>Regime</span></div>
+      <div class="ctrl-pills" data-group="regime">
+        <button class="ctrl-pill" data-val="us-opt-out" data-on>US Opt-Out</button>
+        <button class="ctrl-pill" data-val="us-opt-in">US Opt-In</button>
+        <button class="ctrl-pill" data-val="eu">EU / UK</button>
+      </div>
+    </div>
+
+    <div class="ctrl-row ctrl-us-only">
+      <div class="ctrl-head"><span>Opt-out rights</span></div>
+      <div class="ctrl-pills" data-group="rights">
+        <button class="ctrl-pill" data-val="all" data-on>Sale + Share + Ads</button>
+        <button class="ctrl-pill" data-val="sale-share">Sale + Share</button>
+        <button class="ctrl-pill" data-val="sale-ads">Sale + Targeted ads</button>
+      </div>
+    </div>
+
+    <div class="ctrl-row ctrl-us-only">
+      <div class="ctrl-head"><span>Sale &amp; sharing state</span></div>
+      <div class="ctrl-pills" data-group="saleState">
+        <button class="ctrl-pill" data-val="opted-out" data-on>Opted out</button>
+        <button class="ctrl-pill" data-val="not-opted-out">Not opted out</button>
+        <button class="ctrl-pill" data-val="gpc">GPC</button>
+      </div>
+    </div>
+
+    <div class="ctrl-row ctrl-us-only">
+      <div class="ctrl-head"><span>Sensitive personal info</span></div>
+      <div class="ctrl-pills" data-group="sensitiveMode">
+        <button class="ctrl-pill" data-val="unset">None (unset)</button>
+        <button class="ctrl-pill" data-val="permitted-only">Permitted-only</button>
+        <button class="ctrl-pill" data-val="beyond-permitted" data-on>Beyond permitted</button>
+      </div>
+    </div>
+
+    <div class="ctrl-row ctrl-us-only" id="sen-state-row">
+      <div class="ctrl-head"><span>Sensitive state</span></div>
+      <div class="ctrl-pills" data-group="sensitiveState">
+        <button class="ctrl-pill" data-val="limited-recorded" data-on>Limited (recorded)</button>
+        <button class="ctrl-pill" data-val="limited-default">Limited (1st visit)</button>
+        <button class="ctrl-pill" data-val="allowed">Allowed</button>
+      </div>
+    </div>
+
+    <div class="ctrl-row ctrl-us-only">
+      <div class="ctrl-head"><span>US Preferences</span></div>
+      <div class="ctrl-pills" data-group="prefsMode">
+        <button class="ctrl-pill" data-val="off">Off</button>
+        <button class="ctrl-pill" data-val="collapsed">Collapsed toggle</button>
+        <button class="ctrl-pill" data-val="expanded" data-on>Expanded (Right)</button>
+      </div>
+    </div>
+
+    <div class="ctrl-row ctrl-us-only">
+      <div class="ctrl-head"><span>Opt-in button style</span></div>
+      <div class="ctrl-pills" data-group="buttonMode">
+        <button class="ctrl-pill" data-val="pair" data-on>Always-On Pair</button>
+        <button class="ctrl-pill" data-val="single">Stroke Swap</button>
+      </div>
+    </div>
+
+    <div class="ctrl-row ctrl-us-only">
+      <div class="ctrl-head"><span>Two-step confirm</span></div>
+      <div class="ctrl-pills" data-group="confirmKind">
+        <button class="ctrl-pill" data-val="none" data-on>Closed</button>
+        <button class="ctrl-pill" data-val="sale-share">Opt back in</button>
+        <button class="ctrl-pill" data-val="limit-sensitive">Allow sensitive</button>
+      </div>
+    </div>
+
+    <div class="ctrl-sep"></div>
+
+    <div class="ctrl-row">
+      <div class="ctrl-head"><span>Privacy policy link</span></div>
+      <div class="ctrl-pills" data-group="privacyLink">
+        <button class="ctrl-pill" data-val="set" data-on>Shown</button>
+        <button class="ctrl-pill" data-val="null">Hidden (null)</button>
+      </div>
+    </div>
+
+    <div class="ctrl-row">
+      <div class="ctrl-head"><span>Dialog max-width</span><span id="width-val" class="ctrl-val">832px</span></div>
+      <input id="width-slider" type="range" min="520" max="940" step="16" value="832" />
+    </div>
+
+    <div class="ctrl-row">
+      <div class="ctrl-head"><span>Viewport</span></div>
+      <div class="ctrl-pills" data-group="vp">
+        <button class="ctrl-pill" data-val="macbook" data-on>MacBook 13"</button>
+        <button class="ctrl-pill" data-val="full">Full</button>
+        <button class="ctrl-pill" data-val="phone">Phone 375px</button>
+      </div>
+    </div>
+
+    <div class="ctrl-row">
+      <div class="ctrl-head"><span>Theme</span></div>
+      <div class="ctrl-pills" data-group="theme">
+        <button class="ctrl-pill" data-val="light" data-on>Light</button>
+        <button class="ctrl-pill" data-val="dark">Dark</button>
+      </div>
+    </div>
+  </aside>
+
+  <nav class="proto-picker" aria-label="Preferences style">
+    <span class="proto-picker-highlight" aria-hidden="true"></span>
+    <button class="proto-picker-item" data-active aria-current="true">c15t v3 Accordion (Real)</button>
+    <button class="proto-picker-item">Inline Expandable</button>
+    <button class="proto-picker-item">Drill-In Pane</button>
+  </nav>
+
+  <script>
+    const BUSINESS = 'Acme';
+    const REF_FULL = '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d';
+    const REF_SHORT = '0193e5a8…1c2d';
+    const RECORDED = 'Jan 15, 2026, 12:00 PM';
+
+    const COPY_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+    const CHECK_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+    const CHECK_SM = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+    const PLUS = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></svg>';
+    const MINUS = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>';
+    const CHEV_DOWN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+    const CHEV_UP = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>';
+    const CHEV_RIGHT = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>';
+    const CHEV_LEFT = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>';
+
+    const CATEGORIES = [
+      { id: 'necessary', name: 'Strictly Necessary', desc: 'These cookies are essential for the website to function properly and cannot be disabled.', alwaysOn: true, vendors: [] },
+      {
+        id: 'functionality', name: 'Functionality', desc: 'These cookies enable enhanced functionality and personalization of the website.',
+        vendors: [
+          { id: 'intercom', name: 'Intercom', desc: 'Live customer support chat widget.', url: '#intercom' },
+          { id: 'stripe-link', name: 'Stripe Link', desc: 'Saved checkout autofill preferences.', url: '#stripe' },
+        ],
+      },
+      {
+        id: 'experience', name: 'Experience', desc: 'These cookies help us provide a better user experience and test new features.',
+        vendors: [
+          { id: 'youtube', name: 'YouTube Embeds', desc: 'Embedded product walkthrough videos.', url: '#youtube' },
+          { id: 'mapbox', name: 'Mapbox', desc: 'Interactive store locator maps.', url: '#mapbox' },
+        ],
+      },
+      {
+        id: 'measurement', name: 'Analytics', desc: 'These cookies help us understand how visitors interact with the website and improve its performance.',
+        vendors: [
+          { id: 'ga', name: 'Google Analytics', desc: 'Aggregated page visits and traffic sources.', url: '#ga' },
+          { id: 'posthog', name: 'PostHog', desc: 'Product usage funnels and feature adoption.', url: '#posthog' },
+          { id: 'datadog', name: 'Datadog RUM', desc: 'Real user page-load and error diagnostics.', url: '#datadog' },
+        ],
+      },
+      {
+        id: 'marketing', name: 'Marketing', desc: 'Used to measure campaigns and deliver relevant ads.',
+        vendors: [
+          { id: 'meta', name: 'Meta Pixel', desc: 'Ad attribution and conversion tracking.', url: '#meta' },
+          { id: 'google-ads', name: 'Google Ads', desc: 'Campaign measurement and remarketing.', url: '#gads' },
+        ],
+      },
+    ];
+
+    const state = {
+      regime: 'us-opt-out',
+      rights: 'all',
+      saleState: 'opted-out',
+      sensitiveMode: 'beyond-permitted',
+      sensitiveState: 'limited-recorded',
+      prefsMode: 'expanded',
+      buttonMode: 'pair',
+      confirmKind: 'none',
+      privacyLink: 'set',
+      expandedCat: 'measurement',
+      expandedVendor: null,
+      drilledCat: null,
+      savedCats: { functionality: true, experience: false, measurement: true, marketing: false },
+      draftCats: { functionality: true, experience: false, measurement: true, marketing: false },
+      savedVendors: { intercom: true, 'stripe-link': true, youtube: false, mapbox: false, ga: true, posthog: true, datadog: true, meta: false, 'google-ads': false },
+      draftVendors: { intercom: true, 'stripe-link': true, youtube: false, mapbox: false, ga: true, posthog: true, datadog: true, meta: false, 'google-ads': false },
+    };
+
+    let currentVariant = 0;
+
+    function isGpc() { return state.saleState === 'gpc'; }
+    function isSaleOptedOut() { return state.saleState === 'opted-out' || state.saleState === 'gpc'; }
+    function isSensitiveAllowed() { return state.sensitiveMode === 'beyond-permitted' && state.sensitiveState === 'allowed' && !isGpc(); }
+    function isSensitiveRecordedLimit() { return state.sensitiveMode === 'beyond-permitted' && (state.sensitiveState === 'limited-recorded' || isGpc()); }
+    function hasAnyReceipt() { return isSaleOptedOut() || isSensitiveRecordedLimit(); }
+    function showPrefsRightPane() { return state.regime === 'us-opt-in' || state.prefsMode === 'expanded'; }
+    function showPrefsDisclosureTrigger() { return state.regime === 'us-opt-out' && state.prefsMode !== 'off'; }
+    function visibleCategories() { return state.regime === 'eu' ? CATEGORIES : CATEGORIES.filter((c) => c.id !== 'marketing'); }
+    function isDirty() {
+      const catDirty = Object.keys(state.draftCats).some((k) => state.draftCats[k] !== state.savedCats[k]);
+      const venDirty = Object.keys(state.draftVendors).some((k) => state.draftVendors[k] !== state.savedVendors[k]);
+      return catDirty || venDirty;
+    }
+
+    function rightsText() {
+      const parts = [];
+      if (isSaleOptedOut()) {
+        if (state.rights === 'all') parts.push('Sale, sharing and targeted advertising');
+        else if (state.rights === 'sale-share') parts.push('Sale and sharing');
+        else parts.push('Sale and targeted advertising');
+      }
+      if (isSensitiveRecordedLimit()) parts.push('Limit sensitive info');
+      return parts.join(' · ');
+    }
+
+    function vendorCountLabel(cat) {
+      const onCount = cat.vendors.filter((v) => state.draftCats[cat.id] && state.draftVendors[v.id]).length;
+      return `${onCount}/${cat.vendors.length} vendors`;
+    }
+
+    function renderPreferencesBody(styleIdx) {
+      const cats = visibleCategories();
+
+      // Style 0: exact c15t v3 accordion (origin/main bordered cards + nested vendor cards)
+      if (styleIdx === 0) {
+        return `<div class="pane-scroll"><div class="v3-acc-list">${cats.map((cat) => {
+          const lockedByGpc = state.regime !== 'eu' && isGpc() && cat.id === 'measurement';
+          const checked = cat.alwaysOn ? true : (!lockedByGpc && Boolean(state.draftCats[cat.id]));
+          const open = state.expandedCat === cat.id;
+          return `
+            <div class="v3-acc-item">
+              <div class="v3-acc-header">
+                <button type="button" class="v3-acc-trigger" data-expand-cat="${cat.id}" aria-expanded="${String(open)}">
+                  <span class="v3-acc-glyph">${open ? MINUS : PLUS}</span>
+                  <span>${cat.name}</span>
+                </button>
+                <button type="button" role="switch" aria-checked="${String(checked)}" aria-label="${cat.name}" class="switch" ${cat.alwaysOn || lockedByGpc ? 'disabled' : ''} data-toggle-cat="${cat.id}"></button>
+              </div>
+              ${open ? `
+                <div class="v3-acc-body">
+                  <div>${lockedByGpc ? "Off while your browser's Global Privacy Control signal is on." : cat.desc}</div>
+                  ${cat.vendors.length > 0 && !checked ? '<div>Turn on this category to choose vendors.</div>' : ''}
+                  ${cat.vendors.map((v) => {
+                    const vOpen = state.expandedVendor === v.id;
+                    const vOn = checked && Boolean(state.draftVendors[v.id]);
+                    return `
+                      <div class="v3-vendor-card">
+                        <div class="v3-vendor-head">
+                          <button type="button" class="v3-acc-trigger" data-expand-vendor="${v.id}" aria-expanded="${String(vOpen)}">
+                            <span class="v3-acc-glyph">${vOpen ? MINUS : PLUS}</span>
+                            <span>${v.name}</span>
+                          </button>
+                          <button type="button" role="switch" aria-checked="${String(vOn)}" aria-label="${v.name}" class="switch is-sm" ${checked ? '' : 'disabled'} data-toggle-vendor="${v.id}"></button>
+                        </div>
+                        ${vOpen ? `<div class="v3-vendor-body"><span>${v.desc}</span><a class="vendor-policy" href="${v.url}" onclick="return false">Privacy policy</a></div>` : ''}
+                      </div>`;
+                  }).join('')}
+                </div>` : ''}
+            </div>`;
+        }).join('')}</div></div>`;
+      }
+
+      // Style 2: Drill-In pane
+      if (styleIdx === 2 && state.drilledCat) {
+        const cat = cats.find((c) => c.id === state.drilledCat);
+        if (cat) {
+          const lockedByGpc = state.regime !== 'eu' && isGpc() && cat.id === 'measurement';
+          const parentOn = Boolean(state.draftCats[cat.id]) && !lockedByGpc;
+          return `
+            <div class="drill-header">
+              <button type="button" class="drill-back" data-act="drill-back">${CHEV_LEFT}<span>${cat.name}</span></button>
+              <span class="kv-label">${vendorCountLabel(cat)}</span>
+            </div>
+            <div class="pane-scroll">${cat.vendors.map((v) => `
+              <div class="vendor-row">
+                <div class="vendor-meta">
+                  <span class="vendor-name">${v.name}</span>
+                  <span class="vendor-desc">${v.desc}</span>
+                  <a class="vendor-policy" href="${v.url}" onclick="return false">Privacy policy</a>
+                </div>
+                <button type="button" role="switch" aria-checked="${String(parentOn && Boolean(state.draftVendors[v.id]))}" aria-label="${v.name}" class="switch is-sm" ${parentOn ? '' : 'disabled'} data-toggle-vendor="${v.id}"></button>
+              </div>`).join('')}</div>`;
+        }
+      }
+
+      // Style 1 (Inline Expandable) & Style 2 root
+      return `<div class="pane-scroll"><div class="cat-list">${cats.map((cat) => {
+        const lockedByGpc = state.regime !== 'eu' && isGpc() && cat.id === 'measurement';
+        const checked = cat.alwaysOn ? true : (!lockedByGpc && Boolean(state.draftCats[cat.id]));
+        const open = styleIdx === 1 && state.expandedCat === cat.id;
+        return `
+          <div class="cat-item">
+            <div class="cat-head">
+              <div class="cat-text">
+                <span class="cat-name">${cat.name}</span>
+                <span class="cat-desc">${lockedByGpc ? "Off while your browser's Global Privacy Control signal is on." : cat.desc}</span>
+                ${cat.vendors.length > 0
+                  ? (styleIdx === 1
+                    ? `<button type="button" class="vendor-trigger" data-expand-cat="${cat.id}">${vendorCountLabel(cat)} ${open ? CHEV_UP : CHEV_DOWN}</button>`
+                    : `<button type="button" class="vendor-trigger" data-drill-cat="${cat.id}">${vendorCountLabel(cat)} ${CHEV_RIGHT}</button>`)
+                  : ''}
+              </div>
+              <button type="button" role="switch" aria-checked="${String(checked)}" aria-label="${cat.name}" class="switch" ${cat.alwaysOn || lockedByGpc ? 'disabled' : ''} data-toggle-cat="${cat.id}"></button>
+            </div>
+            ${open ? `<div class="inline-vendors">${cat.vendors.map((v) => `
+              <div class="vendor-row">
+                <div class="vendor-meta">
+                  <span class="vendor-name">${v.name}</span>
+                  <span class="vendor-desc">${v.desc}</span>
+                  <a class="vendor-policy" href="${v.url}" onclick="return false">Privacy policy</a>
+                </div>
+                <button type="button" role="switch" aria-checked="${String(checked && Boolean(state.draftVendors[v.id]))}" aria-label="${v.name}" class="switch is-sm" ${checked ? '' : 'disabled'} data-toggle-vendor="${v.id}"></button>
+              </div>`).join('')}</div>` : ''}
+          </div>`;
+      }).join('')}</div></div>`;
+    }
+
+    function receiptNodeMarkup() {
+      if (!hasAnyReceipt()) return '';
+      return `
+        <aside class="side-surface" aria-label="Browser receipt">
+          <div class="kv-list">
+            <div class="kv-row"><span class="kv-label">Covers</span><span class="kv-val">This browser</span></div>
+            <div class="kv-row"><span class="kv-label">Rights</span><span class="kv-val">${rightsText()}</span></div>
+            <div class="kv-row"><span class="kv-label">Recorded</span><span class="kv-val tabular">${RECORDED}</span></div>
+            <div class="kv-row"><span class="kv-label">Reference</span><span class="kv-val mono" title="${REF_FULL}">${REF_SHORT}<button type="button" class="copy-btn" data-act="copy-ref" aria-label="Copy reference">${COPY_ICON}</button></span></div>
+          </div>
+        </aside>`;
+    }
+
+    function privacyLinkMarkup() {
+      return state.privacyLink === 'set' ? '<a class="quiet-link" href="#privacy-rights" onclick="return false">Learn more about your rights</a>' : '';
+    }
+
+    function renderDialog(styleIdx) {
+      if (state.regime === 'eu') {
+        return `
+          <section class="card is-eu" role="dialog" aria-label="Privacy Settings">
+            <header class="card-header">
+              <h2 class="card-title">Privacy Settings</h2>
+              <p class="sec-desc">Customize your privacy settings here. You can choose which optional features, analytics, and marketing you allow.</p>
+            </header>
+            ${renderPreferencesBody(styleIdx)}
+            <footer class="card-footer">
+              ${privacyLinkMarkup()}
+              <div class="footer-actions">
+                <button type="button" class="btn btn-stroke" data-act="eu-reject">Reject All</button>
+                <button type="button" class="btn btn-stroke" data-act="eu-accept">Accept All</button>
+                <button type="button" class="btn btn-primary" data-act="save-cats" ${isDirty() ? '' : 'disabled'}>Save preferences</button>
+              </div>
+            </footer>
+          </section>`;
+      }
+
+      const withPrefs = showPrefsRightPane();
+      const hasReceipt = hasAnyReceipt();
+      const hasSecondPane = withPrefs || hasReceipt;
+      let cardClass = 'card';
+      if (!hasSecondPane) cardClass = 'card is-single-us';
+      else if (!withPrefs && state.sensitiveMode === 'unset') cardClass = 'card is-medium-us';
+
+      const saleStatus = isGpc() ? 'Opt-out preference signal honored' : (isSaleOptedOut() ? 'Opted out' : (state.regime === 'us-opt-in' ? 'Off' : 'Not opted out'));
+      const saleBody = isGpc()
+        ? "Your browser sent a Global Privacy Control signal, so we've opted you out."
+        : isSaleOptedOut()
+          ? "We won't sell or share your personal information, or use it for targeted advertising, on this browser."
+          : state.regime === 'us-opt-in'
+            ? `${BUSINESS} won't sell or share your personal information unless you allow it.`
+            : `${BUSINESS} may sell or share your personal information, including for targeted advertising. You can opt out at any time.`;
+
+      const dual = !isSaleOptedOut() && state.regime === 'us-opt-out' && isSensitiveAllowed();
+      let saleAction = '';
+      if (!isSaleOptedOut()) {
+        if (state.regime === 'us-opt-out') {
+          saleAction = `<button type="button" class="btn ${dual ? 'btn-stroke' : 'btn-primary'}" data-act="opt-out-sale">Opt out of sale and sharing</button>`;
+        }
+      } else if (!isGpc()) {
+        saleAction = state.buttonMode === 'pair'
+          ? `<div class="btn-pair"><button type="button" class="btn btn-selected" aria-pressed="true">${CHECK_SM} Opted out</button><button type="button" class="btn btn-stroke" data-act="opt-in-sale">Opt back in</button></div>`
+          : `<button type="button" class="btn btn-stroke" data-act="opt-in-sale">Opt back in</button>`;
+      }
+
+      let sensitiveBlock = '';
+      if (state.sensitiveMode === 'permitted-only') {
+        sensitiveBlock = `<div class="right-block"><p class="sec-desc">${BUSINESS} only uses sensitive personal information for purposes the law allows, so there's nothing to limit.</p></div>`;
+      } else if (state.sensitiveMode === 'beyond-permitted') {
+        const senStatus = isGpc() ? 'Opt-out preference signal honored' : (isSensitiveAllowed() ? 'Allowed' : 'Limited');
+        const senBody = isSensitiveAllowed()
+          ? `${BUSINESS} uses some sensitive personal information for more than the service you asked for. You can limit this at any time.`
+          : `${BUSINESS} only uses your sensitive personal information to provide the service you asked for.`;
+        let senAction = '';
+        if (isSensitiveAllowed()) {
+          senAction = `<button type="button" class="btn ${dual ? 'btn-stroke' : 'btn-primary'}" data-act="limit-sensitive">Limit the use of my sensitive personal information</button>`;
+        } else if (!isGpc()) {
+          senAction = state.buttonMode === 'pair'
+            ? `<div class="btn-pair"><button type="button" class="btn btn-selected" aria-pressed="true">${CHECK_SM} Limited</button><button type="button" class="btn btn-stroke" data-act="allow-sensitive">Allow wider use</button></div>`
+            : `<button type="button" class="btn btn-stroke" data-act="allow-sensitive">Allow wider use</button>`;
+        }
+        sensitiveBlock = `
+          <div class="right-block">
+            ${state.confirmKind === 'limit-sensitive'
+              ? `<h3 class="sec-head">Allow wider use of your sensitive personal information?</h3>
+                 <p class="sec-desc">${BUSINESS} may use your sensitive personal information for more than the service you asked for. You can limit this again at any time.</p>
+                 <div class="btn-pair"><button type="button" class="btn btn-stroke" data-act="confirm-cancel">Keep it limited</button><button type="button" class="btn btn-stroke" data-act="confirm-ok">Allow</button></div>`
+              : `<div class="right-top"><h3 class="sec-head">Sensitive personal information</h3><span class="right-status">${senStatus}</span></div>
+                 <p class="sec-desc">${senBody}</p>
+                 <div>${senAction}</div>`}
+          </div>`;
+      }
+
+      const disclosureBtn = showPrefsDisclosureTrigger()
+        ? `<button type="button" class="prefs-disclosure-btn" data-act="toggle-prefs"><span>Preferences</span><span>${withPrefs ? CHEV_UP : CHEV_DOWN}</span></button>`
+        : '';
+
+      const receipt = receiptNodeMarkup();
+      const rightPane = withPrefs
+        ? `<aside class="side-surface" aria-label="Preferences">
+            ${styleIdx === 2 && state.drilledCat ? '' : '<div class="side-header"><h3 class="side-heading">Preferences</h3></div>'}
+            ${renderPreferencesBody(styleIdx)}
+          </aside>`
+        : receipt;
+
+      const footerButtons = state.regime === 'us-opt-in'
+        ? `${isGpc() ? '' : '<button type="button" class="btn btn-stroke" data-act="eu-reject">Reject All</button><button type="button" class="btn btn-stroke" data-act="eu-accept">Accept All</button>'}
+           <button type="button" class="btn btn-primary" data-act="save-cats" ${isDirty() ? '' : 'disabled'}>Save preferences</button>`
+        : `${withPrefs ? `<button type="button" class="btn btn-stroke" data-act="save-cats" ${isDirty() ? '' : 'disabled'}>Save preferences</button>` : ''}
+           ${hasReceipt || withPrefs ? '<button type="button" class="btn btn-primary" data-act="done">Done</button>' : ''}`;
+
+      const link = privacyLinkMarkup();
+      const footer = (link || footerButtons.trim())
+        ? `<footer class="card-footer">${link}<div class="footer-actions">${footerButtons}</div></footer>`
+        : '';
+
+      return `
+        <section class="${cardClass}" role="dialog" aria-label="Your Privacy Choices">
+          <header class="card-header"><h2 class="card-title">Your Privacy Choices</h2></header>
+          <div class="split-body${hasSecondPane ? '' : ' is-single'}">
+            <div class="pane-left">
+              <div class="right-block">
+                ${state.confirmKind === 'sale-share'
+                  ? `<h3 class="sec-head">Opt back in to sale and sharing?</h3>
+                     <p class="sec-desc">${BUSINESS} may sell or share your personal information again, including for targeted advertising. You can opt out again at any time.</p>
+                     <div class="btn-pair"><button type="button" class="btn btn-stroke" data-act="confirm-cancel">Stay opted out</button><button type="button" class="btn btn-stroke" data-act="confirm-ok">Opt back in</button></div>`
+                  : `<div class="right-top"><h3 class="sec-head">Selling and sharing your personal information</h3><span class="right-status">${saleStatus}</span></div>
+                     <p class="sec-desc">${saleBody}</p>
+                     <div>${saleAction}</div>`}
+              </div>
+              ${sensitiveBlock}
+              ${withPrefs ? receipt : ''}
+              ${disclosureBtn}
+            </div>
+            ${rightPane}
+          </div>
+          ${footer}
+        </section>`;
+    }
+
+    const variants = [
+      { name: 'c15t v3 Accordion (Real)', render: () => renderDialog(0) },
+      { name: 'Inline Expandable', render: () => renderDialog(1) },
+      { name: 'Drill-In Pane', render: () => renderDialog(2) },
+    ];
+
+    const stage = document.getElementById('stage');
+    const vp = document.getElementById('vp');
+    const fitBadge = document.getElementById('fit-badge');
+    const widthSlider = document.getElementById('width-slider');
+    const widthVal = document.getElementById('width-val');
+    const picker = document.querySelector('.proto-picker');
+    const highlight = picker.querySelector('.proto-picker-highlight');
+    const items = [...picker.querySelectorAll('.proto-picker-item')];
+
+    function syncPills() {
+      const set = (g, v) => document.querySelectorAll(`[data-group="${g}"] .ctrl-pill`).forEach((b) => b.toggleAttribute('data-on', b.dataset.val === String(v)));
+      set('regime', state.regime);
+      set('rights', state.rights);
+      set('saleState', state.saleState);
+      set('sensitiveMode', state.sensitiveMode);
+      set('sensitiveState', state.sensitiveState);
+      set('prefsMode', state.regime === 'us-opt-in' ? 'expanded' : state.prefsMode);
+      set('buttonMode', state.buttonMode);
+      set('confirmKind', state.confirmKind);
+      set('privacyLink', state.privacyLink);
+      document.querySelectorAll('.ctrl-us-only').forEach((el) => { el.dataset.hidden = String(state.regime === 'eu'); });
+      const row = document.getElementById('sen-state-row');
+      if (row && state.regime !== 'eu') row.dataset.hidden = String(state.sensitiveMode !== 'beyond-permitted');
+    }
+
+    function updateTelemetry() {
+      requestAnimationFrame(() => {
+        const card = stage.querySelector('.card');
+        if (!card) return;
+        const cardRect = card.getBoundingClientRect();
+        const vpRect = vp.getBoundingClientRect();
+        const fits = card.scrollHeight <= card.clientHeight + 1 && cardRect.height <= vpRect.height - 24;
+        card.toggleAttribute('data-narrow', cardRect.width < 640);
+        fitBadge.dataset.overflow = String(!fits);
+        fitBadge.textContent = `card ${Math.round(cardRect.width)}×${Math.round(card.scrollHeight)}px · viewport ${Math.round(vpRect.width)}×${Math.round(vpRect.height)}px · ${fits ? 'fits cleanly' : 'scrolls'}`;
+      });
+    }
+
+    function renderCurrent() {
+      syncPills();
+      stage.innerHTML = variants[currentVariant].render();
+      bindActions();
+      updateTelemetry();
+    }
+
+    function bindActions() {
+      stage.querySelectorAll('[data-toggle-cat]').forEach((sw) => sw.addEventListener('click', () => {
+        const id = sw.dataset.toggleCat;
+        state.draftCats[id] = !state.draftCats[id];
+        renderCurrent();
+      }));
+      stage.querySelectorAll('[data-toggle-vendor]').forEach((sw) => sw.addEventListener('click', () => {
+        state.draftVendors[sw.dataset.toggleVendor] = !state.draftVendors[sw.dataset.toggleVendor];
+        renderCurrent();
+      }));
+      stage.querySelectorAll('[data-expand-cat]').forEach((b) => b.addEventListener('click', () => {
+        state.expandedCat = state.expandedCat === b.dataset.expandCat ? null : b.dataset.expandCat;
+        renderCurrent();
+      }));
+      stage.querySelectorAll('[data-expand-vendor]').forEach((b) => b.addEventListener('click', () => {
+        state.expandedVendor = state.expandedVendor === b.dataset.expandVendor ? null : b.dataset.expandVendor;
+        renderCurrent();
+      }));
+      stage.querySelectorAll('[data-drill-cat]').forEach((b) => b.addEventListener('click', () => {
+        state.drilledCat = b.dataset.drillCat;
+        renderCurrent();
+      }));
+      stage.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => {
+        const act = b.dataset.act;
+        if (act === 'drill-back') state.drilledCat = null;
+        else if (act === 'toggle-prefs') state.prefsMode = state.prefsMode === 'expanded' ? 'collapsed' : 'expanded';
+        else if (act === 'opt-out-sale') { state.saleState = 'opted-out'; state.confirmKind = 'none'; }
+        else if (act === 'opt-in-sale') state.confirmKind = 'sale-share';
+        else if (act === 'limit-sensitive') { state.sensitiveState = 'limited-recorded'; state.confirmKind = 'none'; }
+        else if (act === 'allow-sensitive') {
+          if (state.sensitiveState === 'limited-recorded') state.confirmKind = 'limit-sensitive';
+          else state.sensitiveState = 'allowed';
+        }
+        else if (act === 'confirm-cancel') state.confirmKind = 'none';
+        else if (act === 'confirm-ok') {
+          if (state.confirmKind === 'sale-share') state.saleState = 'not-opted-out';
+          else if (state.confirmKind === 'limit-sensitive') state.sensitiveState = 'allowed';
+          state.confirmKind = 'none';
+        }
+        else if (act === 'save-cats') { state.savedCats = { ...state.draftCats }; state.savedVendors = { ...state.draftVendors }; }
+        else if (act === 'eu-accept') {
+          for (const k of Object.keys(state.draftCats)) state.draftCats[k] = true;
+          for (const k of Object.keys(state.draftVendors)) state.draftVendors[k] = true;
+          state.savedCats = { ...state.draftCats }; state.savedVendors = { ...state.draftVendors };
+        }
+        else if (act === 'eu-reject') {
+          for (const k of Object.keys(state.draftCats)) state.draftCats[k] = false;
+          for (const k of Object.keys(state.draftVendors)) state.draftVendors[k] = false;
+          state.savedCats = { ...state.draftCats }; state.savedVendors = { ...state.draftVendors };
+        }
+        else if (act === 'copy-ref') {
+          navigator.clipboard?.writeText(REF_FULL).catch(() => {});
+          b.innerHTML = CHECK_ICON; setTimeout(() => { b.innerHTML = COPY_ICON; }, 1500); return;
+        }
+        else if (act === 'done') state.confirmKind = 'none';
+        renderCurrent();
+      }));
+    }
+
+    function moveHighlight() {
+      const el = items[currentVariant];
+      highlight.style.width = el.offsetWidth + 'px';
+      highlight.style.transform = `translateX(${el.offsetLeft}px)`;
+    }
+
+    function setActive(i) {
+      if (i < 0 || i >= variants.length) return;
+      currentVariant = i;
+      items.forEach((el, j) => {
+        el.toggleAttribute('data-active', j === i);
+        if (j === i) el.setAttribute('aria-current', 'true');
+        else el.removeAttribute('aria-current');
+      });
+      moveHighlight();
+      renderCurrent();
+    }
+
+    items.forEach((el, i) => el.addEventListener('click', () => setActive(i)));
+    window.addEventListener('resize', () => { moveHighlight(); updateTelemetry(); });
+    widthSlider.addEventListener('input', (e) => {
+      widthVal.textContent = `${e.target.value}px`;
+      document.documentElement.style.setProperty('--proto-max-width', `${e.target.value}px`);
+      updateTelemetry();
+    });
+
+    document.querySelector('.proto-controls').addEventListener('click', (e) => {
+      const btn = e.target.closest('.ctrl-pill');
+      if (!btn) return;
+      const g = btn.parentElement.dataset.group;
+      const v = btn.dataset.val;
+      if (g === 'regime') { state.regime = v; state.confirmKind = 'none'; state.drilledCat = null; }
+      else if (g === 'rights') state.rights = v;
+      else if (g === 'saleState') { state.saleState = v; if (v !== 'opted-out') state.confirmKind = 'none'; }
+      else if (g === 'sensitiveMode') { state.sensitiveMode = v; if (v !== 'beyond-permitted') state.confirmKind = 'none'; }
+      else if (g === 'sensitiveState') { state.sensitiveState = v; if (v !== 'limited-recorded') state.confirmKind = 'none'; }
+      else if (g === 'prefsMode') { state.prefsMode = v; if (state.regime === 'us-opt-in' && v !== 'expanded') state.regime = 'us-opt-out'; }
+      else if (g === 'buttonMode') state.buttonMode = v;
+      else if (g === 'confirmKind') {
+        state.confirmKind = v;
+        if (v === 'sale-share') state.saleState = 'opted-out';
+        if (v === 'limit-sensitive') { state.sensitiveMode = 'beyond-permitted'; state.sensitiveState = 'limited-recorded'; }
+      }
+      else if (g === 'privacyLink') state.privacyLink = v;
+      else if (g === 'vp') { vp.dataset.vp = v; btn.parentElement.querySelectorAll('.ctrl-pill').forEach((b) => b.toggleAttribute('data-on', b === btn)); updateTelemetry(); return; }
+      else if (g === 'theme') { document.documentElement.dataset.theme = v; btn.parentElement.querySelectorAll('.ctrl-pill').forEach((b) => b.toggleAttribute('data-on', b === btn)); return; }
+      renderCurrent();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const num = parseInt(e.key, 10);
+      if (num >= 1 && num <= variants.length) setActive(num - 1);
+      else if (e.key === 'ArrowRight') setActive((currentVariant + 1) % variants.length);
+      else if (e.key === 'ArrowLeft') setActive((currentVariant - 1 + variants.length) % variants.length);
+    });
+
+    setActive(0);
+    requestAnimationFrame(() => requestAnimationFrame(() => picker.setAttribute('data-ready', '')));
+  </script>
+</body>
+</html>
