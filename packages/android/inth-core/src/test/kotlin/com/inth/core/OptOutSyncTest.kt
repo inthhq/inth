@@ -1962,6 +1962,128 @@ class OptOutSyncTest {
 		assertEquals(optOutB, kernel.snapshot().optOut)
 	}
 
+	@Test
+	fun `link opt-out checks identifyGeneration inside the mutation after waiting for commitGate`() {
+		val optOutA = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.API,
+			recordedAt = NOW - 2_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+		var observedInterleaving = false
+		var installedAfterUserB = false
+		for (attempt in 1..40) {
+			val backend = InMemoryKeyValueStore()
+			seedSubject(backend)
+			val clock = FixedClock(NOW)
+			val holdWrite = java.util.concurrent.CountDownLatch(1)
+			val releaseWrite = java.util.concurrent.CountDownLatch(1)
+			val allowLinkReturn = java.util.concurrent.CountDownLatch(1)
+			val linkDone = java.util.concurrent.CountDownLatch(1)
+			val pauseNextWrite = java.util.concurrent.atomic.AtomicBoolean(false)
+			val swapOnNotify = java.util.concurrent.atomic.AtomicBoolean(false)
+			val seenUserBWithoutOptOut = java.util.concurrent.atomic.AtomicBoolean(false)
+			val storeBackend = object : com.inth.core.spi.KeyValueStore by backend {
+				override fun writeDurably(key: String, value: String?): Boolean {
+					if (key == InthStoreKeys.SNAPSHOT && pauseNextWrite.compareAndSet(true, false)) {
+						holdWrite.countDown()
+						releaseWrite.await(5, java.util.concurrent.TimeUnit.SECONDS)
+					}
+					return backend.writeDurably(key, value)
+				}
+			}
+			val linkWorker = java.util.concurrent.Executors.newSingleThreadExecutor()
+			try {
+				val linkThreadRef = java.util.concurrent.atomic.AtomicReference<Thread?>()
+				val transport = object : com.inth.core.transport.InthTransport {
+					override fun init(context: com.inth.core.transport.InitContext): TransportOutcome = optOutInit()
+					override fun save(entry: com.inth.core.model.QueuedSave): SaveOutcome = SaveOutcome.Delivered(subjectId = SUBJECT)
+					override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): LinkOutcome {
+						if (user.externalId == "user_a") {
+							linkThreadRef.set(Thread.currentThread())
+							allowLinkReturn.await(5, java.util.concurrent.TimeUnit.SECONDS)
+							return LinkOutcome.Linked(subjectId = subject.id, optOut = optOutA)
+						}
+						return LinkOutcome.Linked(subjectId = subject.id, optOut = null)
+					}
+
+					override fun optOut(payload: OptOutPayload, identityToken: String?): OptOutOutcome =
+						OptOutOutcome.Delivered(subjectId = payload.subjectId)
+
+					override fun liftOptOut(payload: LiftOptOutPayload, identityToken: String?): LiftOptOutOutcome =
+						LiftOptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = null, cleared = true)
+				}
+				val deferLink = java.util.concurrent.atomic.AtomicBoolean(false)
+				val kernel = testKernel(
+					store = InthStore(storeBackend),
+					clock = clock,
+					transport = transport,
+					executor = TaskExecutor { task ->
+						if (deferLink.compareAndSet(true, false)) {
+							linkWorker.execute {
+								try {
+									task()
+								} finally {
+									linkDone.countDown()
+								}
+							}
+						} else {
+							task()
+						}
+					},
+				)
+				kernel.bootstrap()
+				kernel.onChange { snapshot ->
+					if (snapshot.subject?.externalId == "user_b" && snapshot.optOut == null) {
+						seenUserBWithoutOptOut.set(true)
+					}
+					if (swapOnNotify.compareAndSet(true, false)) {
+						// Barges into commitGate right after setOverrides releases it, before linkThread wakes.
+						kernel.identify(KernelUser("user_b"))
+					}
+				}
+
+				deferLink.set(true)
+				kernel.identify(KernelUser("user_a"), identityToken = "tok_a")
+
+				// Hold commitGate in setOverrides so user_a's link passes its pre-mutation check and parks on commitGate.
+				pauseNextWrite.set(true)
+				val blocker = Thread {
+					kernel.setOverrides(KernelOverrides(language = "fr"))
+				}
+				blocker.start()
+				assertTrue(holdWrite.await(5, java.util.concurrent.TimeUnit.SECONDS))
+
+				allowLinkReturn.countDown()
+				val deadline = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(5)
+				while (System.nanoTime() < deadline) {
+					val t = linkThreadRef.get()
+					if (t != null && t.state == Thread.State.WAITING) break
+					Thread.yield()
+				}
+
+				swapOnNotify.set(true)
+				releaseWrite.countDown()
+				blocker.join(5_000)
+				assertTrue(linkDone.await(5, java.util.concurrent.TimeUnit.SECONDS))
+
+				assertEquals("user_b", kernel.snapshot().subject?.externalId)
+				if (seenUserBWithoutOptOut.get()) {
+					observedInterleaving = true
+					if (kernel.snapshot().optOut != null) {
+						installedAfterUserB = true
+						break
+					}
+					break
+				}
+			} finally {
+				linkWorker.shutdownNow()
+			}
+		}
+		assertTrue(observedInterleaving, "test must observe user_b acquiring commitGate ahead of user_a's link")
+		assertFalse(installedAfterUserB, "user_a's link opt-out must not be installed after user_b's identify")
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"

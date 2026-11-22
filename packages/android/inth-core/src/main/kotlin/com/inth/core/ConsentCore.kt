@@ -2019,6 +2019,7 @@ class ConsentCore @InthInternalApi constructor(
 						generation = generation,
 						subjectId = effectiveSubjectId,
 						allowClear = false,
+						expectedIdentifyGeneration = attempt,
 					)
 				}
 			}
