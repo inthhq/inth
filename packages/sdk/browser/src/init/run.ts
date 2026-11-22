@@ -43,6 +43,7 @@ import {
 	isRunnableNow,
 	startPlainScripts,
 } from '@inth/sdk-core/surface-actions/plain-scripts';
+import { resolveOptOut } from '@inth/sdk-core/surface-state';
 import { prefersReducedMotion } from '@inth/sdk-ui/utils/reduced-motion';
 
 import { mergeClientOptions, readPageOptions } from '../auto-init';
@@ -1060,6 +1061,8 @@ export const runInitScript = function runInitScript(
 			listeners.clear();
 		},
 		getDeclaredVendors: () => (api ? api.getDeclaredVendors() : []),
+		getOptOutState: () =>
+			api ? api.getOptOutState() : resolveOptOut(readSnapshot()),
 		getSnapshot: () => (api ? api.getSnapshot() : readSnapshot()),
 		getVendorChoice: () =>
 			api ? api.getVendorChoice() : readSnapshot().vendorChoice,

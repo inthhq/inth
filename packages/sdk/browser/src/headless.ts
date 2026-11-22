@@ -40,6 +40,7 @@ export const init = function init(
 export {
 	resolveActionLabels,
 	resolveConsentPresentation,
+	resolveOptOut,
 	resolveOptOutCopy,
 	resolveOptOutLink,
 	resolveOptOutState,
@@ -83,6 +84,7 @@ export type {
 	OptOutLinkVariant,
 	OptOutLock,
 	OptOutResult,
+	OptOutState,
 	OptOutTranslations,
 	OptOutVia,
 	PreferenceControl,

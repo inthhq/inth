@@ -6,6 +6,7 @@ import {
 	forgetOwnedVendors,
 	IABUnavailableError,
 	isVendorAllowed,
+	resolveOptOut,
 	resolveOptOutLink,
 } from '@inth/sdk-core';
 import type {
@@ -30,11 +31,13 @@ import type {
 } from '@inth/sdk-core/runtime';
 import {
 	activateOptOutLink,
+	getOptOutReceiptData,
 	optOutConsentSurface,
 	saveConsentSurface,
 	saveConsentSurfaceWithOptInCheck,
 	saveIABConsentSurface,
 	showConsentSurface,
+	subscribeOptOutReceiptData,
 } from '@inth/sdk-core/surface-actions';
 import { hosted } from '@inth/sdk-core/transports';
 import type { Theme } from '@inth/sdk-ui/theme';
@@ -355,8 +358,35 @@ export const createConsentClientWith = function createConsentClientWith(
 	let lastActiveUI: KernelActiveUI = initial.activeUI;
 	let lastConsents = initial.effectivePermissions;
 	let lastHasConsented = initial.explicitChoice;
+	let lastOptOut = initial.optOut;
+	let lastOptOutReceiptData = getOptOutReceiptData(kernel);
 	let lastVendorChoice = initial.vendorChoice;
 	let lastVendors = initial.vendors;
+	const notifyConsentIfChanged = function notifyConsentIfChanged(
+		snapshot: ConsentSnapshot
+	): void {
+		const receiptData = getOptOutReceiptData(kernel);
+		if (
+			snapshot.effectivePermissions === lastConsents &&
+			snapshot.explicitChoice === lastHasConsented &&
+			snapshot.optOut === lastOptOut &&
+			receiptData === lastOptOutReceiptData &&
+			snapshot.vendorChoice === lastVendorChoice &&
+			snapshot.vendors === lastVendors
+		) {
+			return;
+		}
+		lastConsents = snapshot.effectivePermissions;
+		lastHasConsented = snapshot.explicitChoice;
+		lastOptOut = snapshot.optOut;
+		lastOptOutReceiptData = receiptData;
+		lastVendorChoice = snapshot.vendorChoice;
+		lastVendors = snapshot.vendors;
+		if (started && !startingRuntime) {
+			gatedScripts.scan();
+		}
+		emit('consent', snapshot);
+	};
 	const disposers: (() => void)[] = [
 		gatedScripts.dispose,
 		() => forgetOwnedVendors(kernel, gatedVendorSource),
@@ -369,27 +399,14 @@ export const createConsentClientWith = function createConsentClientWith(
 		kernel.events.on('surface:shown', ({ type: _type, ...impression }) => {
 			emit('surfaceShown', impression);
 		}),
-		// Saves and hydration can change permissions or explicit receipts;
-		// one subscription observes both paths.
+		subscribeOptOutReceiptData(kernel, () => {
+			notifyConsentIfChanged(kernel.getSnapshot());
+		}),
+		// Saves and hydration can change permissions, opt-out state or receipts;
+		// one subscription observes every path.
 		kernel.subscribe((snapshot) => {
 			reportIABUnavailable(snapshot);
-			// A vendor-only save changes neither permissions nor the category
-			// receipt, and a declaration can make a stored denial count.
-			if (
-				snapshot.effectivePermissions !== lastConsents ||
-				snapshot.explicitChoice !== lastHasConsented ||
-				snapshot.vendorChoice !== lastVendorChoice ||
-				snapshot.vendors !== lastVendors
-			) {
-				lastConsents = snapshot.effectivePermissions;
-				lastHasConsented = snapshot.explicitChoice;
-				lastVendorChoice = snapshot.vendorChoice;
-				lastVendors = snapshot.vendors;
-				if (started && !startingRuntime) {
-					gatedScripts.scan();
-				}
-				emit('consent', snapshot);
-			}
+			notifyConsentIfChanged(snapshot);
 			if (snapshot.activeUI !== lastActiveUI) {
 				lastActiveUI = snapshot.activeUI;
 				emit('ui', snapshot.activeUI);
@@ -554,6 +571,9 @@ export const createConsentClientWith = function createConsentClientWith(
 			return snapshot.model === 'iab'
 				? NO_VENDORS
 				: (snapshot.vendors?.declared ?? NO_VENDORS);
+		},
+		getOptOutState() {
+			return resolveOptOut(kernel.getSnapshot(), getOptOutReceiptData(kernel));
 		},
 		getSnapshot() {
 			return kernel.getSnapshot();

@@ -18,6 +18,7 @@ import type {
 	LegalLinks,
 	OnSurfaceShownPayload,
 	OptOutResult,
+	OptOutState,
 	PolicyRule,
 	policyRulePresets,
 	ProviderTransportFactory,
@@ -535,6 +536,11 @@ export interface ConsentClient {
 	 * Falls back to the preference centre when the active rule is not opt-out.
 	 */
 	optOut: () => Promise<OptOutResult>;
+	/**
+	 * Merged opt-out display state and receipt for the current snapshot and
+	 * local receipt data.
+	 */
+	getOptOutState: () => OptOutState;
 	/** Show the banner. */
 	showBanner: () => void;
 	/** Open the preference centre. */
