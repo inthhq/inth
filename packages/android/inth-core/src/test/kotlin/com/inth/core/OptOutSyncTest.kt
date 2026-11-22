@@ -1915,6 +1915,53 @@ class OptOutSyncTest {
 		}
 	}
 
+	@Test
+	fun `logout invalidates an in-flight link opt-out response while a later identify still applies`() {
+		val backend = InMemoryKeyValueStore()
+		seedSubject(backend)
+		val clock = FixedClock(NOW)
+		val optOutA = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.API,
+			recordedAt = NOW - 2_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+		val optOutB = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.TARGETED_ADS),
+			method = OptOutMethod.PROPAGATED,
+			recordedAt = NOW - 1_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+		lateinit var kernel: ConsentCore
+		val transport = object : com.inth.core.transport.InthTransport {
+			override fun init(context: com.inth.core.transport.InitContext): TransportOutcome = optOutInit()
+			override fun save(entry: com.inth.core.model.QueuedSave): SaveOutcome = SaveOutcome.Delivered(subjectId = SUBJECT)
+			override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): LinkOutcome =
+				if (user.externalId == "user_a") {
+					kernel.logout()
+					LinkOutcome.Linked(subjectId = subject.id, optOut = optOutA)
+				} else {
+					LinkOutcome.Linked(subjectId = subject.id, optOut = optOutB)
+				}
+
+			override fun optOut(payload: OptOutPayload, identityToken: String?): OptOutOutcome =
+				OptOutOutcome.Delivered(subjectId = payload.subjectId)
+
+			override fun liftOptOut(payload: LiftOptOutPayload, identityToken: String?): LiftOptOutOutcome =
+				LiftOptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = null, cleared = true)
+		}
+		kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+		kernel.bootstrap()
+
+		kernel.identify(KernelUser("user_a"), identityToken = "tok_a")
+		assertNull(kernel.snapshot().subject?.externalId)
+		assertNull(kernel.snapshot().optOut, "logout must invalidate user_a's in-flight link opt-out")
+
+		kernel.identify(KernelUser("user_b"), identityToken = "tok_b")
+		assertEquals("user_b", kernel.snapshot().subject?.externalId)
+		assertEquals(optOutB, kernel.snapshot().optOut)
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"
