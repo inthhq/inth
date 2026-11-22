@@ -1292,7 +1292,7 @@ class ConsentCore @InthInternalApi constructor(
 				requestDeliveryPass {
 					deliverIfOwed(entry, saveFence)?.let(firstSend::set)
 					if (optOutEntry != null && optOutFence != null) {
-						deliverOptOutIfOwed(optOutEntry, optOutFence, identityToken = identityToken)
+						deliverQueuedOptOutInOrder(optOutEntry, optOutFence, identityToken = identityToken)
 					}
 				}
 				if (liftsAccountOptOut) {
@@ -1503,7 +1503,7 @@ class ConsentCore @InthInternalApi constructor(
 		} finally {
 			background.execute {
 				requestDeliveryPass {
-					deliverOptOutIfOwed(optOutEntry!!, fence, identityToken = identityToken)
+					deliverQueuedOptOutInOrder(optOutEntry!!, fence, identityToken = identityToken)
 				}
 			}
 		}
@@ -1656,7 +1656,7 @@ class ConsentCore @InthInternalApi constructor(
 			} finally {
 				background.execute {
 					requestDeliveryPass {
-						deliverOptOutIfOwed(liftEntry!!, fence, identityToken = identityToken)
+						deliverQueuedOptOutInOrder(liftEntry!!, fence, identityToken = identityToken)
 					}
 				}
 			}
@@ -1677,7 +1677,12 @@ class ConsentCore @InthInternalApi constructor(
 				reason = OptInRefusalReason.HELD_BY_ACCOUNT,
 			)
 		}
-		val subjectId = plan.subjectId ?: resolveSubject().id
+		val subjectId = drainQueuedOptOutsBeforeAccountLift(plan.subjectId ?: resolveSubject().id)
+			?: return OptInResult(
+				ok = false,
+				revision = state.get().revision,
+				reason = OptInRefusalReason.HELD_BY_ACCOUNT,
+			)
 		val payload = buildLiftOptOutPayload(plan.snapshot, subjectId, plan.now, plan.uiSource)
 		val identityToken = currentIdentityTokenFor(payload.user)
 		val settled = sendAccountOptOutLift(payload, identityToken, allowReassign = true)
@@ -1776,7 +1781,7 @@ class ConsentCore @InthInternalApi constructor(
 			if (optOutActVersion != actVersion || recordsGeneration != generation) return
 			state.get()
 		}
-		val liftSubjectId = snapshot.subject?.id ?: subjectId
+		val liftSubjectId = drainQueuedOptOutsBeforeAccountLift(snapshot.subject?.id ?: subjectId) ?: return
 		val payload = buildLiftOptOutPayload(snapshot, liftSubjectId, actionAt, uiSource)
 		val identityToken = currentIdentityTokenFor(payload.user)
 		val settled = sendAccountOptOutLift(payload, identityToken, allowReassign = true) ?: return
@@ -2154,7 +2159,7 @@ class ConsentCore @InthInternalApi constructor(
 		if (written) {
 			gpcAct?.let { act ->
 				background.execute {
-					requestDeliveryPass { deliverOptOutIfOwed(act.entry, act.fence) }
+					requestDeliveryPass { deliverQueuedOptOutInOrder(act.entry, act.fence) }
 				}
 			}
 		}
@@ -2448,7 +2453,7 @@ class ConsentCore @InthInternalApi constructor(
 				val applied = applyInit(selection.mapped, config.detectedGpc, false, selection)
 				if (applied.changed) notifySnapshot()
 				applied.gpcOptOut?.let { act ->
-					background.execute { requestDeliveryPass { deliverOptOutIfOwed(act.entry, act.fence) } }
+					background.execute { requestDeliveryPass { deliverQueuedOptOutInOrder(act.entry, act.fence) } }
 				}
 			}
 		}
@@ -2553,7 +2558,7 @@ class ConsentCore @InthInternalApi constructor(
 			applied.error?.let(::emitError)
 			if (applied.changed) notifySnapshot()
 			applied.gpcOptOut?.let { act ->
-				background.execute { requestDeliveryPass { deliverOptOutIfOwed(act.entry, act.fence) } }
+				background.execute { requestDeliveryPass { deliverQueuedOptOutInOrder(act.entry, act.fence) } }
 			}
 			return
 		}
@@ -2582,7 +2587,7 @@ class ConsentCore @InthInternalApi constructor(
 		applied.error?.let(::emitError)
 		if (applied.changed) notifySnapshot()
 		applied.gpcOptOut?.let { act ->
-			background.execute { requestDeliveryPass { deliverOptOutIfOwed(act.entry, act.fence) } }
+			background.execute { requestDeliveryPass { deliverQueuedOptOutInOrder(act.entry, act.fence) } }
 		}
 	}
 
@@ -2867,6 +2872,109 @@ class ConsentCore @InthInternalApi constructor(
 				)
 			}
 		}
+	}
+
+	private fun sameOptOutSubject(candidateSubjectId: String, targetSubjectId: String): Boolean {
+		if (candidateSubjectId == targetSubjectId) return true
+		val currentSubject = state.get().subject ?: return false
+		return currentSubject.owns(candidateSubjectId) && currentSubject.owns(targetSubjectId)
+	}
+
+	/**
+	 * Drain every earlier queued opt-out act for the same subject before sending [entry].
+	 * When nothing earlier is queued for that subject, sends [entry] immediately.
+	 */
+	private fun deliverQueuedOptOutInOrder(
+		entry: QueuedOptOut,
+		fence: OptOutAnswerFence,
+		identityToken: String? = null,
+	): Delivery? {
+		val pending = optOutQueue.pending()
+		val index = pending.indexOfFirst { it.id == entry.id }
+		if (index < 0) return null
+		val earlier = pending.subList(0, index).filter { sameOptOutSubject(it.subjectId, entry.subjectId) }
+		if (earlier.isEmpty()) {
+			return deliverOptOutIfOwed(
+				entry = entry,
+				fence = fence,
+				identityToken = identityToken,
+				applyAnswer = true,
+				requireQueueEmpty = true,
+			)
+		}
+		val moved = LinkedHashMap<String, String>()
+		for (queued in earlier) {
+			val candidate = moved[queued.subjectId]?.let { queued.withSubjectId(it) } ?: queued
+			val (actVersion, generation) = synchronized(mutationLock) {
+				optOutActVersion to recordsGeneration
+			}
+			val earlierFence = OptOutAnswerFence(
+				actVersion = actVersion,
+				generation = generation,
+				allowClear = candidate.kind == OptOutActKind.LIFT,
+			)
+			val delivery = deliverOptOutIfOwed(
+				entry = candidate,
+				fence = earlierFence,
+				applyAnswer = false,
+				requireQueueEmpty = true,
+				moved = moved,
+			) ?: continue
+			when (delivery) {
+				Delivery.Reached -> Unit
+				is Delivery.Unreachable -> return delivery
+				is Delivery.Refused -> if (delivery.attempt == FailedAttempt.Retrying) return delivery
+			}
+		}
+		val updated = moved[entry.subjectId]?.let { entry.withSubjectId(it) } ?: entry
+		return deliverOptOutIfOwed(
+			entry = updated,
+			fence = fence,
+			identityToken = identityToken,
+			applyAnswer = true,
+			requireQueueEmpty = true,
+			moved = moved,
+		)
+	}
+
+	/**
+	 * Drain any queued opt-out acts for [subjectId] before an unqueued account lift goes out.
+	 * Returns the subject ID to send under, or `null` if an earlier act still blocks the lift.
+	 */
+	private fun drainQueuedOptOutsBeforeAccountLift(subjectId: String): String? {
+		if (optOutQueue.pending().none { sameOptOutSubject(it.subjectId, subjectId) }) {
+			return subjectId
+		}
+		var resolvedSubjectId: String? = null
+		requestDeliveryPass {
+			val pending = optOutQueue.pending().filter { sameOptOutSubject(it.subjectId, subjectId) }
+			val moved = LinkedHashMap<String, String>()
+			for (queued in pending) {
+				val candidate = moved[queued.subjectId]?.let { queued.withSubjectId(it) } ?: queued
+				val (actVersion, generation) = synchronized(mutationLock) {
+					optOutActVersion to recordsGeneration
+				}
+				val earlierFence = OptOutAnswerFence(
+					actVersion = actVersion,
+					generation = generation,
+					allowClear = candidate.kind == OptOutActKind.LIFT,
+				)
+				val delivery = deliverOptOutIfOwed(
+					entry = candidate,
+					fence = earlierFence,
+					applyAnswer = false,
+					requireQueueEmpty = true,
+					moved = moved,
+				) ?: continue
+				when (delivery) {
+					Delivery.Reached -> Unit
+					is Delivery.Unreachable -> return@requestDeliveryPass
+					is Delivery.Refused -> if (delivery.attempt == FailedAttempt.Retrying) return@requestDeliveryPass
+				}
+			}
+			resolvedSubjectId = moved[subjectId] ?: subjectId
+		}
+		return resolvedSubjectId
 	}
 
 	/**

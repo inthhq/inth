@@ -912,11 +912,9 @@ class OptOutSyncTest {
 
 		assertTrue(kernel.optIn().ok)
 		assertNull(kernel.snapshot().optOut)
-
-		val flushed = kernel.flushPending()
-		assertEquals(1, flushed.delivered)
-		assertEquals(0, flushed.remaining)
+		// optIn drains the earlier queued record before sending the lift, so both are settled.
 		assertTrue(store.readPendingOptOuts().isEmpty())
+		assertEquals(FlushResult(delivered = 0, remaining = 0), kernel.flushPending())
 
 		assertEquals(2, transport.optOutRequests.size)
 		assertEquals(
@@ -1662,6 +1660,68 @@ class OptOutSyncTest {
 		restarted.refresh()
 		while (tasks.isNotEmpty()) tasks.removeFirst()()
 		assertEquals(1, restartTransport.optOutRequests.size)
+	}
+
+	@Test
+	fun `optIn after a retryable optOut keeps FIFO order on the wire instead of overtaking the queued record`() {
+		val backend = InMemoryKeyValueStore()
+		seedSubject(backend)
+		val clock = FixedClock(NOW)
+		val order = mutableListOf<String>()
+		var recordAttempts = 0
+		val buttonAnswer = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = NOW,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		val transport = object : com.inth.core.transport.InthTransport {
+			override fun init(context: com.inth.core.transport.InitContext): TransportOutcome = optOutInit()
+			override fun save(entry: com.inth.core.model.QueuedSave): SaveOutcome = SaveOutcome.Delivered(subjectId = SUBJECT)
+			override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): LinkOutcome =
+				LinkOutcome.Linked(subjectId = subject.id)
+
+			override fun optOut(payload: OptOutPayload, identityToken: String?): OptOutOutcome {
+				recordAttempts += 1
+				order += "record#$recordAttempts"
+				return if (recordAttempts <= 2) {
+					OptOutOutcome.Rejected(TransportOutcome.HttpFailure(status = 429, code = "rate_limited"))
+				} else {
+					OptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = buttonAnswer)
+				}
+			}
+
+			override fun liftOptOut(payload: LiftOptOutPayload, identityToken: String?): LiftOptOutOutcome {
+				order += "lift"
+				return LiftOptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = null, cleared = true)
+			}
+		}
+		val store = InthStore(backend)
+		val kernel = testKernel(store = store, clock = clock, transport = transport)
+		kernel.bootstrap()
+
+		// First optOut gets a retryable 429 and remains queued.
+		assertTrue(kernel.optOut().ok)
+		assertEquals(listOf("record#1"), order)
+		assertEquals(1, store.readPendingOptOuts().size)
+
+		// User then lifts the opt-out while the earlier record still hits 429.
+		// The lift must NOT overtake the retryable record.
+		assertTrue(kernel.optIn().ok)
+		assertNull(kernel.snapshot().optOut)
+		assertEquals(listOf("record#1", "record#2"), order)
+		assertEquals(
+			listOf(OptOutActKind.RECORD, OptOutActKind.LIFT),
+			store.readPendingOptOuts().map { it.kind },
+		)
+
+		// Next flush delivers the older record first, then the lift, leaving the opt-out cleared.
+		val flushed = kernel.flushPending()
+		assertEquals(2, flushed.delivered)
+		assertEquals(0, flushed.remaining)
+		assertEquals(listOf("record#1", "record#2", "record#3", "lift"), order)
+		assertNull(kernel.snapshot().optOut)
+		assertTrue(kernel.isAllowed(ConsentCategory.MARKETING))
 	}
 
 	private companion object {
