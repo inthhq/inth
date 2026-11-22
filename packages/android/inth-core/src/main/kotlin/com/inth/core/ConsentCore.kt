@@ -3369,6 +3369,9 @@ class ConsentCore @InthInternalApi constructor(
 		WRITE_FAILED,
 	}
 
+	/** Test hook run after a caller's pre-check and immediately before [applySyncedOptOut] enters [mutate]. */
+	internal var beforeSyncedOptOutMutation: (() -> Unit)? = null
+
 	/**
 	 * Apply an authoritative backend opt-out answer when it is still current.
 	 *
@@ -3395,6 +3398,7 @@ class ConsentCore @InthInternalApi constructor(
 		} else {
 			null
 		}
+		beforeSyncedOptOutMutation?.invoke()
 		return mutate { mutation ->
 			val prepared = synchronized(mutationLock) {
 				val current = state.get()
