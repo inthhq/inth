@@ -3114,4 +3114,169 @@ describe('opt-out receipt local data', () => {
 		expect(afterAnswer.rights).toEqual(['sale', 'share']);
 		kernel.dispose();
 	});
+
+	test('init adopting a newer server opt-out over a local click clears the local reference and source', async () => {
+		const serverOptOut: OptOutRecord = {
+			heldBy: 'person',
+			method: 'button',
+			recordedAt: NOW + 1000,
+			rights: ['sale', 'share'],
+		};
+		const kernel = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: {
+				init: () =>
+					Promise.resolve({
+						policyResolution: {
+							...matchedResolution(usOptOutRule()),
+							version: 1,
+						},
+						records: { optOut: serverOptOut },
+					}),
+			},
+		});
+
+		await kernel.commands.optOut({ uiSource: 'banner' });
+		const beforeInit = resolveOptOutReceipt(
+			kernel.getSnapshot(),
+			kernel.getOptOutReceiptData()
+		);
+		expect(beforeInit.reference).toMatch(V1_UUID_PATTERN);
+		expect(beforeInit.source).toBe('click');
+
+		await kernel.commands.init();
+		expect(
+			resolveOptOutReceipt(kernel.getSnapshot(), kernel.getOptOutReceiptData())
+		).toEqual({
+			at: NOW + 1000,
+			optedOut: true,
+			reference: null,
+			rights: ['sale', 'share'],
+			scope: 'account',
+			source: 'account',
+		});
+		kernel.dispose();
+	});
+
+	test('init confirming the same held opt-out keeps the local reference and source', async () => {
+		const held: OptOutRecord = {
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW,
+			rights: ['sale', 'share'],
+		};
+		const kernel = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: held,
+				optOutLocalAct: 'button',
+				optOutReference: '0193e5a8-9b00-7d3a-9b1c-6e3f8a0b1c2d',
+				optOutRightsConfirmed: false,
+				subject: { subjectId: SUBJECT },
+			},
+			transport: {
+				init: () =>
+					Promise.resolve({
+						policyResolution: {
+							...matchedResolution(usOptOutRule()),
+							version: 1,
+						},
+						records: { optOut: held },
+					}),
+			},
+		});
+
+		await kernel.commands.init();
+		expect(
+			resolveOptOutReceipt(kernel.getSnapshot(), kernel.getOptOutReceiptData())
+		).toEqual({
+			at: NOW,
+			optedOut: true,
+			reference: '0193e5a8-9b00-7d3a-9b1c-6e3f8a0b1c2d',
+			rights: ['sale', 'share'],
+			scope: 'browser',
+			source: 'click',
+		});
+		kernel.dispose();
+	});
+
+	test('loadSubjectRecord clears local reference and source for a newer server opt-out and keeps them for the same record', async () => {
+		const newerServerOptOut: OptOutRecord = {
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW + 1000,
+			rights: ['sale', 'share'],
+		};
+		const replaced = kernelOn({
+			initialRecords: { now: NOW, subject: { subjectId: SUBJECT } },
+			transport: {
+				identify: () => Promise.resolve({ subjectId: SUBJECT }),
+				loadSubjectRecord: () => Promise.resolve({ optOut: newerServerOptOut }),
+			},
+		});
+
+		await replaced.commands.optOut({ uiSource: 'banner' });
+		expect(
+			resolveOptOutReceipt(
+				replaced.getSnapshot(),
+				replaced.getOptOutReceiptData()
+			).source
+		).toBe('click');
+
+		await replaced.commands.identify({
+			externalId: 'user_replaced',
+			identityToken: 'tok_replaced',
+		});
+		expect(
+			resolveOptOutReceipt(
+				replaced.getSnapshot(),
+				replaced.getOptOutReceiptData()
+			)
+		).toEqual({
+			at: NOW + 1000,
+			optedOut: true,
+			reference: null,
+			rights: ['sale', 'share'],
+			scope: 'account',
+			source: 'api',
+		});
+		replaced.dispose();
+
+		const sameRecord: OptOutRecord = {
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW,
+			rights: ['sale', 'share'],
+		};
+		const kept = kernelOn({
+			initialRecords: {
+				now: NOW,
+				optOut: sameRecord,
+				optOutLocalAct: 'button',
+				optOutReference: '0193e5a8-9b00-7d3a-9b1c-6e3f8a0b1c2d',
+				optOutRightsConfirmed: false,
+				subject: { subjectId: SUBJECT },
+			},
+			transport: {
+				identify: () => Promise.resolve({ subjectId: SUBJECT }),
+				loadSubjectRecord: () => Promise.resolve({ optOut: sameRecord }),
+			},
+		});
+
+		await kept.commands.identify({
+			externalId: 'user_same',
+			identityToken: 'tok_same',
+		});
+		expect(
+			resolveOptOutReceipt(kept.getSnapshot(), kept.getOptOutReceiptData())
+		).toEqual({
+			at: NOW,
+			optedOut: true,
+			reference: '0193e5a8-9b00-7d3a-9b1c-6e3f8a0b1c2d',
+			rights: ['sale', 'share'],
+			scope: 'browser',
+			source: 'click',
+		});
+		kept.dispose();
+	});
 });

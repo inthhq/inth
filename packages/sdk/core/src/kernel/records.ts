@@ -17,6 +17,8 @@
  * Clearing (`clear-records.ts`) is `hydrate()` with `null`s followed by
  * `records:cleared`, which the save outbox listens for.
  */
+import type { OptOutRecord } from '@inth/sdk-schema/types';
+
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state';
 import type {
 	ConsentSnapshot,
@@ -25,7 +27,7 @@ import type {
 	KernelTransport,
 	KernelUser,
 } from '../types';
-import { applySyncedOptOut } from './opt-out';
+import { applySyncedOptOut, sameOptOutRecord } from './opt-out';
 import type { SnapshotPatch } from './patch';
 import {
 	mergeNewestChoice,
@@ -77,6 +79,51 @@ export const foldServerRecords = function foldServerRecords(
 	}
 	return patch;
 };
+
+/**
+ * Update local opt-out receipt metadata after folding a server opt-out record.
+ * Preserves local click/GPC metadata only when the server record confirms the
+ * same held opt-out; clears it whenever a different server record is adopted.
+ */
+export const syncAdoptedServerOptOutReceipt =
+	function syncAdoptedServerOptOutReceipt(
+		runtime: KernelRuntime,
+		beforeOptOut: Readonly<OptOutRecord> | null,
+		incomingOptOut: OptOutRecord | null | undefined,
+		foldedOptOut: OptOutRecord | null | undefined,
+		fromHydration = false
+	): void {
+		if (!incomingOptOut) {
+			return;
+		}
+		const rightsConfirmed = incomingOptOut.rights.length > 0;
+		if (
+			beforeOptOut !== null &&
+			sameOptOutRecord(beforeOptOut, incomingOptOut)
+		) {
+			if (!rightsConfirmed) {
+				return;
+			}
+			const current = runtime.getOptOutReceiptData();
+			if (!current.rightsConfirmed) {
+				runtime.setOptOutReceiptData(
+					{
+						localAct: current.localAct,
+						reference: current.reference,
+						rightsConfirmed: true,
+					},
+					fromHydration
+				);
+			}
+			return;
+		}
+		if (foldedOptOut === incomingOptOut) {
+			runtime.setOptOutReceiptData(
+				{ localAct: null, reference: null, rightsConfirmed },
+				fromHydration
+			);
+		}
+	};
 
 export interface RecordsBoundaryOptions {
 	runtime: KernelRuntime;
@@ -202,22 +249,12 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		let reset = false;
 		if (fromServer) {
 			patch = foldServerRecords(before, validated.records, at);
-			if (
-				validated.records.optOut &&
-				patch.optOut === validated.records.optOut &&
-				validated.records.optOut.rights.length > 0
-			) {
-				const current = runtime.getOptOutReceiptData();
-				runtime.setOptOutReceiptData(
-					before.optOut === null
-						? { localAct: null, reference: null, rightsConfirmed: true }
-						: {
-								localAct: current.localAct,
-								reference: current.reference,
-								rightsConfirmed: true,
-							}
-				);
-			}
+			syncAdoptedServerOptOutReceipt(
+				runtime,
+				before.optOut,
+				validated.records.optOut,
+				patch.optOut
+			);
 		} else {
 			const {
 				choice,
