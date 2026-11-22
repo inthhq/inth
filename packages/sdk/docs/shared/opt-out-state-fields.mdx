@@ -1,0 +1,17 @@
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `optedOut` | `boolean` | Whether a durable opt-out record is held. |
+| `scope` | `'browser' \| 'account' \| null` | Coverage of the held opt-out, or `null` when not opted out. |
+| `source` | `'click' \| 'gpc' \| 'account' \| 'api' \| null` | How the opt-out reached this browser, or `null` when not opted out. |
+| `at` | `number \| null` | Epoch milliseconds when the opt-out was recorded, or `null`. |
+| `reference` | `string \| null` | Local idempotency reference for an opt-out this browser recorded, or `null`. |
+| `rights` | `readonly OptOutRight[]` | Refused rights confirmed by a backend answer; empty before confirmation. |
+| `available` | `boolean` | Whether the active policy rule uses the `opt-out` model. |
+| `honored` | `boolean` | Whether the opt-out is honored. Always equals `optedOut`. |
+| `via` | `'signal' \| 'request' \| null` | Whether a GPC signal or a visitor request honored the opt-out, or `null`. |
+| `lock` | `'gpc-active' \| 'held-by-account' \| null` | Why this browser cannot lift the opt-out right now, or `null`. |
+| `categories` | `OptionalConsentCategory[]` | Categories the opt-out turns off under the active rule. |
+| `decidingCategory` | `OptionalConsentCategory \| null` | Category that decides whether an opt-out is lifted, or `null`. |
+| `optInPromptAllowedAt` | `number \| null` | Earliest epoch milliseconds when an opt-in prompt is allowed, or `null`. |
+
+`scope` is `'account'` only after a backend answer says the account holds the opt-out. `reference` exists only for an opt-out this browser recorded.

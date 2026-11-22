@@ -35,7 +35,7 @@ accepted.
 | `config`, `init`, `on`, `onInit` | Immediately in queue order as the bundle loads. |
 | `subscribe` | Once the client instance exists. |
 | `acceptAll`, `rejectAll`, `save`, `dismissNotice`, `optOut`, `saveIAB`, `showBanner`, `openDialog`, `closeDialog`, `setLanguage`, `identify`, `mountUI`, `processIframes` | In queue order once the policy resolves (so a queued `openDialog` stays open instead of being overwritten by the banner). |
-| Reads and unknown methods (`getSnapshot`, `has`, `hasConsented`, `isVendorAllowed`, `ready`, `dispose`) | Skipped with a console warning. Call them inside `onInit` or after `ready()`. |
+| Reads and unknown methods (`getSnapshot`, `getOptOutState`, `has`, `hasConsented`, `isVendorAllowed`, `ready`, `dispose`) | Skipped with a console warning. Call them inside `onInit` or after `ready()`. |
 
 Errors thrown by a queued call log via `console.error` without blocking later
 queued calls.
@@ -83,11 +83,18 @@ After `inth.dispose()`, calling `inth.init()` starts a fresh client.
 | `has(category)` | `boolean` | Check whether a category or condition (`{ and: ['measurement', 'marketing'] }`) is allowed now. |
 | `hasConsented()` | `boolean` | Check whether the visitor answered the prompt. |
 | `getSnapshot()` | `ConsentSnapshot` | Full state: permissions, recorded choice, policy, prompt and active surface. |
+| `getOptOutState()` | `OptOutState` | Merged opt-out display state and receipt for the current snapshot and local receipt data. |
 | `subscribe(listener)` | unsubscribe function | Run `listener(snapshot)` on every state change. |
 | `isVendorAllowed(id)` | `boolean` | `true` when vendor is declared, its category is allowed and it is not switched off. |
 | `getDeclaredVendors()` | `Vendor[]` | Merged vendors from `vendors`, Inth, scripts, gated tags and iframes (empty under IAB). |
 | `getVendorChoice()` | vendor decision or `null` | Vendors switched off by the visitor (`denied`). |
 | `on(event, listener)` | unsubscribe function | Listen to `ready`, `consent`, `ui` or `error`. Safe before `init()`. See [events and callbacks](/docs/frameworks/html/callbacks). |
+
+### Opt-out state fields
+
+`getOptOutState()` returns an `OptOutState` object with these fields. Listen to `inth.on('consent', ...)` or `inth.subscribe(...)` to read updated opt-out state after a visitor clicks opt-out or when a backend answer arrives.
+
+<include src="../../shared/opt-out-state-fields.mdx" />
 
 ### A permission is not a recorded choice
 

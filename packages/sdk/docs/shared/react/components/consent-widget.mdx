@@ -40,7 +40,7 @@ group: reference
   - When an account holds the opt-out and GPC is off, the notice appears below `marketing` (or `measurement` when `marketing` is not in scope) to explain that the account has opted out, and the switches stay usable. Turning `marketing` back on and saving, clicking Accept All, or clicking `Opt back in…` opens a separate confirmation dialog first. Confirming asks the backend to lift the account opt-out, and a refused request leaves it in place.
   - When a device holds the opt-out and GPC is off, opting back in requires two steps under an `opt-out` policy (11 CCR §7028(a)). Turning `marketing` back on and saving, clicking Accept All, or clicking `Opt back in…` opens a separate confirmation dialog (`measurement` decides when `marketing` is not in scope). Focus starts on `Stay opted out`, both buttons have equal prominence, and Escape cancels with nothing saved. Confirming lifts the opt-out and applies the pending save. Turning `measurement` back on while `marketing` stays off keeps `measurement` allowed, skips confirmation, and leaves the opt-out in place. Saving without changing a switch keeps the opt-out in place. Under an `opt-in` policy, Accept still lifts a held opt-out in one step.
 
-  Read the same derived opt-out state and receipt in custom components with `useOptOutState()` and `useOptOutReceipt()`.
+  Read the same derived opt-out state and receipt in custom components with `useOptOutState()`.
 
   ### Vendors
 

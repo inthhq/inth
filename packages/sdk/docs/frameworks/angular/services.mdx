@@ -24,11 +24,16 @@ as `has()` and `isVendorAllowed()` read signals too, so a template or
 | `effectivePermissions()` | What each category may do now, after the policy, stored choice and privacy signals. |
 | `explicitChoice()` | The visitor's recorded choice, or `null` before one. |
 | `noticeDismissal()` | The record of a dismissed notice. A dismissal is not a grant. |
-| `optOutState()` | Derived opt-out display state: whether an opt-out is available, whether one is honored, how it was recorded and whether GPC or an account locks it. |
-| `optOutReceipt()` | Derived opt-out receipt: scope (`browser` or `account`), source, recorded time, local reference when recorded in this browser, and backend-confirmed rights. |
+| `optOutState()` | Derived opt-out display state and receipt: status, lock reason, scope, source, recorded time, local reference and backend-confirmed rights. |
 | `privacySignals()` | Global Privacy Control and other signals. |
 | `isVendorAllowed(id)` | `true` while one vendor may load. See [vendor consent](./vendor-consent). |
 | `vendorChoice()` | The vendors the visitor turned off. |
+
+### Opt-out state fields
+
+`ConsentManager.optOutState()` returns an `OptOutState` object with these fields:
+
+<include src="../../shared/opt-out-state-fields.mdx" />
 
 `has()` and `effectivePermissions()` can be `true` before the visitor
 chooses under an opt-out policy, and Global Privacy Control can turn a
