@@ -189,18 +189,80 @@ export const storybookOptOutStoredConsent: Record<string, boolean> = {
 	necessary: true,
 };
 
-/** Initial choice and opt-out records for the three opt-out widget stories. */
+/** Fixed timestamp for deterministic opt-out receipt stories. */
+export const STORYBOOK_OPT_OUT_RECORDED_AT = Date.UTC(2026, 0, 15, 12, 0, 0);
+
+/** Fixed local reference for deterministic opt-out receipt stories. */
+export const STORYBOOK_OPT_OUT_REFERENCE =
+	'0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d';
+
+/** Initial choice and opt-out records for the opt-out widget and dialog stories. */
 export const storybookOptOutRecords = (
 	kind: 'request' | 'gpc' | 'account'
-): HydrationRecords => ({
-	choice: storybookChoiceRecord(
-		storybookOptOutStoredConsent,
-		storybookOptOutPolicy
-	),
-	optOut: {
-		heldBy: kind === 'account' ? 'person' : 'device',
-		method: kind === 'gpc' ? 'gpc' : 'button',
-		recordedAt: Date.now() - 1000,
-		rights: ['sale', 'share'],
-	},
-});
+): HydrationRecords => {
+	const records: HydrationRecords = {
+		choice: storybookChoiceRecord(
+			storybookOptOutStoredConsent,
+			storybookOptOutPolicy
+		),
+		optOut: {
+			heldBy: kind === 'account' ? 'person' : 'device',
+			method: kind === 'gpc' ? 'gpc' : 'button',
+			recordedAt: STORYBOOK_OPT_OUT_RECORDED_AT,
+			rights: ['sale', 'share'],
+		},
+	};
+	if (kind === 'gpc') {
+		records.optOutGpcReported = true;
+	}
+	return records;
+};
+
+/** Variants for the five opt-out confirmation receipt stories. */
+export type StorybookOptOutConfirmationKind =
+	| 'request'
+	| 'confirmed'
+	| 'account-covered'
+	| 'signal'
+	| 'account-adopted';
+
+/** Seeded opt-out records for the opt-out confirmation receipt stories. */
+export const storybookOptOutConfirmationRecords = (
+	kind: StorybookOptOutConfirmationKind
+): HydrationRecords => {
+	if (kind === 'account-adopted') {
+		return {
+			optOut: {
+				heldBy: 'person',
+				method: 'propagated',
+				recordedAt: STORYBOOK_OPT_OUT_RECORDED_AT,
+				rights: ['sale', 'share', 'targeted_ads'],
+			},
+			optOutRightsConfirmed: true,
+		};
+	}
+	if (kind === 'signal') {
+		return {
+			optOut: {
+				heldBy: 'device',
+				method: 'gpc',
+				recordedAt: STORYBOOK_OPT_OUT_RECORDED_AT,
+				rights: ['sale', 'share'],
+			},
+			optOutGpcReported: true,
+			optOutLocalAct: 'gpc',
+			optOutReference: STORYBOOK_OPT_OUT_REFERENCE,
+		};
+	}
+	return {
+		optOut: {
+			heldBy: kind === 'account-covered' ? 'both' : 'device',
+			method: 'button',
+			recordedAt: STORYBOOK_OPT_OUT_RECORDED_AT,
+			rights: ['sale', 'share'],
+		},
+		optOutLocalAct: 'button',
+		optOutReference: STORYBOOK_OPT_OUT_REFERENCE,
+		optOutRightsConfirmed: kind === 'confirmed' || kind === 'account-covered',
+	};
+};

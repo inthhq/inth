@@ -80,12 +80,13 @@ export interface AstroStoryVariant {
 	 */
 	openOptOutConfirmation?: 'request' | 'signal';
 	/** Seeded opt-out record state applied on boot for opt-out dialog and receipt stories. */
-	optOutState?: 'request' | 'request-confirmed' | 'gpc' | 'account-adopted';
-	/** Synthetic backend opt-out answer returned when the story opts out. */
-	optOutAnswer?: {
-		heldBy: 'device' | 'both';
-		rights: ('sale' | 'share' | 'targeted_ads')[];
-	};
+	optOutState?:
+		| 'request'
+		| 'request-confirmed'
+		| 'account-covered'
+		| 'gpc'
+		| 'signal'
+		| 'account-adopted';
 	/** Include a server-rendered `<ConsentDialogLink right="opt-out" />` beside the host. */
 	withOptOutLink?: boolean;
 	/**
@@ -165,6 +166,7 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		component: 'opt-out-confirmation',
 		id: 'opt-out-confirmation--request-honored',
 		openOptOutConfirmation: 'request',
+		optOutState: 'request',
 		options: {
 			colorScheme: 'light',
 			consentCategories: CATEGORIES,
@@ -178,10 +180,7 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		component: 'opt-out-confirmation',
 		id: 'opt-out-confirmation--request-confirmed',
 		openOptOutConfirmation: 'request',
-		optOutAnswer: {
-			heldBy: 'device',
-			rights: ['sale', 'share'],
-		},
+		optOutState: 'request-confirmed',
 		options: {
 			colorScheme: 'light',
 			consentCategories: CATEGORIES,
@@ -195,10 +194,7 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		component: 'opt-out-confirmation',
 		id: 'opt-out-confirmation--account-covered',
 		openOptOutConfirmation: 'request',
-		optOutAnswer: {
-			heldBy: 'both',
-			rights: ['sale', 'share'],
-		},
+		optOutState: 'account-covered',
 		options: {
 			colorScheme: 'light',
 			consentCategories: CATEGORIES,
@@ -212,7 +208,7 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		component: 'opt-out-confirmation',
 		id: 'opt-out-confirmation--signal-honored',
 		openOptOutConfirmation: 'signal',
-		optOutState: 'gpc',
+		optOutState: 'signal',
 		options: {
 			colorScheme: 'light',
 			consentCategories: CATEGORIES,

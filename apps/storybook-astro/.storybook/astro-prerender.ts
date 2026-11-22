@@ -110,6 +110,75 @@ const storyFetch = ((input: RequestInfo | URL) =>
 			: new Response(null, { status: 204 })
 	)) as typeof fetch;
 
+const buildVariantOptions = function buildVariantOptions(
+	variant: AstroStoryVariant,
+	context: {
+		mode: { manifest: (options: { snapshot: unknown }) => unknown };
+		storyIABSnapshot: unknown;
+		storyOptOutSnapshot: unknown;
+		storySnapshot: unknown;
+		storybook: {
+			storybookIABPresentation: unknown;
+			storybookPresentation: {
+				prompt: Record<string, unknown>;
+			};
+		};
+	}
+): Record<string, unknown> {
+	const {
+		mode,
+		storyIABSnapshot,
+		storyOptOutSnapshot,
+		storySnapshot,
+		storybook,
+	} = context;
+	const presentation =
+		variant.options?.policy === 'opt-out'
+			? variant.options?.presentation
+			: {
+					...storybook.storybookPresentation,
+					...variant.options?.presentation,
+					prompt: {
+						...storybook.storybookPresentation.prompt,
+						...variant.options?.presentation?.prompt,
+					},
+				};
+	const astroOptions: Record<string, unknown> = {
+		colorScheme: variant.options?.colorScheme ?? 'light',
+		consentCategories: variant.options?.consentCategories,
+		mode: mode.manifest({
+			snapshot:
+				variant.options?.policy === 'opt-out'
+					? storyOptOutSnapshot
+					: storySnapshot,
+		}),
+		presentation,
+		projectUrl: 'https://consent.example',
+		reloadOnConsentRevoked: variant.options?.reloadOnConsentRevoked,
+		routePrefix: false,
+		ui: variant.ui ?? 'svelte',
+	};
+	if (variant.options?.iab) {
+		astroOptions.presentation = storybook.storybookIABPresentation;
+		// The server needs the list to render the banner at all, and
+		// the policy pack is what makes the runtime's model `iab`.
+		astroOptions.iab = { cmpId: 160, gvl: mockGVL };
+		astroOptions.consentCategories = ['necessary', 'marketing'];
+		astroOptions.mode = mode.manifest({ snapshot: storyIABSnapshot });
+	}
+	return astroOptions;
+};
+
+const variantHeaders = function variantHeaders(
+	variant: AstroStoryVariant
+): Headers {
+	const gpc =
+		variant.openOptOutConfirmation === 'signal' ||
+		variant.optOutState === 'gpc' ||
+		variant.optOutState === 'signal';
+	return new Headers(gpc ? { 'sec-gpc': '1' } : {});
+};
+
 const renderVariants = async function renderVariants(
 	variants: readonly AstroStoryVariant[]
 ): Promise<Record<string, PrerenderedVariant>> {
@@ -187,46 +256,18 @@ const renderVariants = async function renderVariants(
 			}
 			// oxlint-disable-next-line no-await-in-loop -- One shared container.
 			const component = await server.ssrLoadModule(path.join(astroSrc, file));
-			const astroOptions: Record<string, unknown> = {
-				colorScheme: variant.options?.colorScheme ?? 'light',
-				consentCategories: variant.options?.consentCategories,
-				mode: mode.manifest({
-					snapshot:
-						variant.options?.policy === 'opt-out'
-							? storyOptOutSnapshot
-							: storySnapshot,
-				}),
-				presentation: {
-					...storybook.storybookPresentation,
-					...variant.options?.presentation,
-					prompt: {
-						...storybook.storybookPresentation.prompt,
-						...variant.options?.presentation?.prompt,
-					},
-				},
-				projectUrl: 'https://consent.example',
-				reloadOnConsentRevoked: variant.options?.reloadOnConsentRevoked,
-				routePrefix: false,
-				ui: variant.ui ?? 'svelte',
-			};
-			if (variant.options?.iab) {
-				astroOptions.presentation = storybook.storybookIABPresentation;
-				// The server needs the list to render the banner at all, and
-				// the policy pack is what makes the runtime's model `iab`.
-				astroOptions.iab = { cmpId: 160, gvl: mockGVL };
-				astroOptions.consentCategories = ['necessary', 'marketing'];
-				astroOptions.mode = mode.manifest({ snapshot: storyIABSnapshot });
-			}
+			const astroOptions = buildVariantOptions(variant, {
+				mode,
+				storyIABSnapshot,
+				storyOptOutSnapshot,
+				storySnapshot,
+				storybook,
+			});
 			const resolved = integration.resolveOptions(astroOptions);
 			// oxlint-disable-next-line no-await-in-loop -- See above.
 			const locals = await serverModule.resolveConsentContext({
 				fetch: storyFetch,
-				headers: new Headers(
-					variant.openOptOutConfirmation === 'signal' ||
-						variant.optOutState === 'gpc'
-						? { 'sec-gpc': '1' }
-						: {}
-				),
+				headers: variantHeaders(variant),
 				options: resolved,
 			});
 			const renderPart = async (

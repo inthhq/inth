@@ -7,6 +7,7 @@ import { expect, within } from 'storybook/test';
 
 import ConsentWidget from '../../../packages/sdk/vue/src/runtime/components/preferences.vue';
 import {
+	STORYBOOK_OPT_OUT_REFERENCE,
 	storybookVendors,
 	storybookVendorStoredConsent,
 } from '../../storybook-consent-policy';
@@ -15,8 +16,6 @@ import {
 	useStorybookConsent as setupStorybookConsent,
 	useStorybookOptOutConsent as setupStorybookOptOutConsent,
 } from './storybook-consent-fixtures';
-
-const OPT_OUT_REFERENCE = '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d';
 
 const meta = {
 	component: ConsentWidget,
@@ -98,7 +97,7 @@ export const OptOutHonoredByRequest: Story = {
 					presentation: { optOutLink: 'do-not-sell' },
 				},
 				initialRecords: {
-					optOutReference: OPT_OUT_REFERENCE,
+					optOutReference: STORYBOOK_OPT_OUT_REFERENCE,
 				},
 			});
 		},
@@ -116,7 +115,7 @@ export const OptOutConfirmedSaleAndShare: Story = {
 					presentation: { optOutLink: 'do-not-sell' },
 				},
 				initialRecords: {
-					optOutReference: OPT_OUT_REFERENCE,
+					optOutReference: STORYBOOK_OPT_OUT_REFERENCE,
 					optOutRightsConfirmed: true,
 				},
 			});
@@ -141,7 +140,7 @@ export const OptOutWithOptInLink: Story = {
 					presentation: { optOutLink: 'do-not-sell' },
 				},
 				initialRecords: {
-					optOutReference: OPT_OUT_REFERENCE,
+					optOutReference: STORYBOOK_OPT_OUT_REFERENCE,
 				},
 			});
 		},
