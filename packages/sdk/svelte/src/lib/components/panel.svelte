@@ -196,17 +196,17 @@
 	lazyMount
 	unmountOnExit
 >
-	<Portal>
+	<!-- `data-disable-animation` on the portal wrapper stops the `data-state`
+	     keyframes on the overlay and positioner without putting an extra
+	     attribute on `consent-dialog-overlay`. -->
+	<Portal data-disable-animation={disableAnimation ? '' : undefined}>
 		{#if preferences.blocking}
 			<Dialog.Backdrop
 				class={overlayStyle.className || ''}
 				style={toStyleAttributeValue(overlayStyle.style)}
-				data-disable-animation={disableAnimation ? '' : undefined}
 				data-testid="consent-dialog-overlay"
 			/>
 		{/if}
-		<!-- `data-disable-animation` stops the `data-state` keyframes the
-		     stylesheet runs on the overlay and positioner. -->
 		<Dialog.Positioner
 			class={noStyle
 				? ''
