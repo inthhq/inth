@@ -2330,6 +2330,70 @@ class OptOutSyncTest {
 		}
 	}
 
+	@Test
+	fun `replaying a queued opt-out after 409 policy_snapshot_expired resends without the expired token`() {
+		val backend = InMemoryKeyValueStore()
+		seedSubject(backend)
+		val clock = FixedClock(NOW)
+		val offlineHttp = RecordingHttpClient { request ->
+			if (request.url.endsWith(InthProtocol.INIT_PATH)) {
+				HttpResponse(200, emptyMap(), optOutInitBodyJson(policySnapshotToken = "expired-token"))
+			} else {
+				throw java.io.IOException("offline")
+			}
+		}
+		val first = testKernel(
+			store = InthStore(backend),
+			clock = clock,
+			transport = HostedTransport(offlineHttp, TEST_CONFIG, clock),
+		)
+		first.bootstrap()
+		assertTrue(first.optOut().ok)
+		val originalKey = InthStore(backend).readPendingOptOuts().single().idempotencyKey
+
+		val replayHttp = RecordingHttpClient { request ->
+			when {
+				request.url.endsWith(InthProtocol.INIT_PATH) ->
+					HttpResponse(200, emptyMap(), optOutInitBodyJson(policySnapshotToken = "fresh-token"))
+
+				request.url.endsWith(InthProtocol.OPT_OUTS_PATH) -> {
+					val body = json.parseToJsonElement(requireNotNull(request.body)).jsonObject
+					if (body["policySnapshotToken"]?.jsonPrimitive?.content == "expired-token") {
+						HttpResponse(
+							409,
+							emptyMap(),
+							"""{"error":{"code":"policy_snapshot_expired","message":"expired"},"requestId":"req_1"}""",
+						)
+					} else {
+						HttpResponse(
+							200,
+							emptyMap(),
+							"""{"recordId":"$RECORD","subjectId":"$SUBJECT","optOut":{"rights":["sale","share"],"method":"button","recordedAt":${NOW + 2_000},"heldBy":"device"}}""",
+						)
+					}
+				}
+
+				else -> HttpResponse(200, emptyMap(), "{}")
+			}
+		}
+		val restarted = testKernel(
+			store = InthStore(backend),
+			clock = clock,
+			transport = HostedTransport(replayHttp, TEST_CONFIG, clock),
+		)
+		restarted.bootstrap()
+
+		val posts = replayHttp.requests.filter { it.url.endsWith(InthProtocol.OPT_OUTS_PATH) }
+		assertEquals(2, posts.size)
+		val firstBody = json.parseToJsonElement(requireNotNull(posts[0].body)).jsonObject
+		val secondBody = json.parseToJsonElement(requireNotNull(posts[1].body)).jsonObject
+		assertEquals("expired-token", firstBody["policySnapshotToken"]?.jsonPrimitive?.content)
+		assertFalse("policySnapshotToken" in secondBody, "retry must omit the expired policySnapshotToken")
+		assertEquals(originalKey, secondBody["idempotencyKey"]?.jsonPrimitive?.content)
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+		assertEquals(listOf(OptOutRight.SALE, OptOutRight.SHARE), restarted.snapshot().optOut?.rights)
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"

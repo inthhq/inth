@@ -2377,6 +2377,7 @@ class ConsentCore @InthInternalApi constructor(
 				applyAnswer = index == pendingOptOuts.lastIndex,
 				requireQueueEmpty = true,
 				moved = moved,
+				retryWithoutSnapshotToken = true,
 			) ?: continue
 			when (delivery) {
 				Delivery.Reached -> delivered += 1
@@ -3040,6 +3041,7 @@ class ConsentCore @InthInternalApi constructor(
 		requireQueueEmpty: Boolean = false,
 		moved: MutableMap<String, String>? = null,
 		allowReassign: Boolean = true,
+		retryWithoutSnapshotToken: Boolean = false,
 	): Delivery? {
 		val currentEntry = optOutQueue.pending().firstOrNull { it.id == entry.id } ?: return null
 		val token = identityToken ?: currentIdentityTokenFor(currentEntry.user)
@@ -3059,6 +3061,7 @@ class ConsentCore @InthInternalApi constructor(
 					requireQueueEmpty = requireQueueEmpty,
 					moved = moved,
 					allowReassign = allowReassign,
+					retryWithoutSnapshotToken = retryWithoutSnapshotToken,
 					delivered = outcome is OptOutOutcome.Delivered,
 					deliveredSubjectId = (outcome as? OptOutOutcome.Delivered)?.subjectId,
 					deliveredOptOut = (outcome as? OptOutOutcome.Delivered)?.optOut,
@@ -3066,6 +3069,7 @@ class ConsentCore @InthInternalApi constructor(
 					unavailableMessage = (outcome as? OptOutOutcome.Unavailable)?.message,
 					failure = (outcome as? OptOutOutcome.Rejected)?.failure,
 					subjectConflict = outcome.isSubjectConflict,
+					policySnapshotConflict = outcome.isPolicySnapshotConflict,
 					permanentRejection = outcome.isPermanentlyRejected,
 				)
 			}
@@ -3084,6 +3088,7 @@ class ConsentCore @InthInternalApi constructor(
 					requireQueueEmpty = requireQueueEmpty,
 					moved = moved,
 					allowReassign = allowReassign,
+					retryWithoutSnapshotToken = retryWithoutSnapshotToken,
 					delivered = outcome is LiftOptOutOutcome.Delivered,
 					deliveredSubjectId = (outcome as? LiftOptOutOutcome.Delivered)?.subjectId,
 					deliveredOptOut = (outcome as? LiftOptOutOutcome.Delivered)?.optOut,
@@ -3091,6 +3096,7 @@ class ConsentCore @InthInternalApi constructor(
 					unavailableMessage = (outcome as? LiftOptOutOutcome.Unavailable)?.message,
 					failure = (outcome as? LiftOptOutOutcome.Rejected)?.failure,
 					subjectConflict = outcome.isSubjectConflict,
+					policySnapshotConflict = outcome.isPolicySnapshotConflict,
 					permanentRejection = outcome.isPermanentlyRejected,
 				)
 			}
@@ -3105,6 +3111,7 @@ class ConsentCore @InthInternalApi constructor(
 		requireQueueEmpty: Boolean,
 		moved: MutableMap<String, String>?,
 		allowReassign: Boolean,
+		retryWithoutSnapshotToken: Boolean,
 		delivered: Boolean,
 		deliveredSubjectId: String?,
 		deliveredOptOut: OptOutRecord?,
@@ -3112,6 +3119,7 @@ class ConsentCore @InthInternalApi constructor(
 		unavailableMessage: String?,
 		failure: TransportOutcome.HttpFailure?,
 		subjectConflict: Boolean,
+		policySnapshotConflict: Boolean,
 		permanentRejection: Boolean,
 	): Delivery {
 		if (delivered) {
@@ -3168,6 +3176,23 @@ class ConsentCore @InthInternalApi constructor(
 					requireQueueEmpty = requireQueueEmpty,
 					moved = moved,
 					allowReassign = false,
+					retryWithoutSnapshotToken = retryWithoutSnapshotToken,
+				) ?: Delivery.Reached
+			}
+		}
+
+		if (policySnapshotConflict && entry.policySnapshotToken != null) {
+			val updated = optOutQueue.clearPolicySnapshotToken(entry.id) ?: entry.withoutPolicySnapshotToken()
+			if (retryWithoutSnapshotToken) {
+				return deliverOptOutIfOwed(
+					entry = updated,
+					fence = fence,
+					identityToken = identityToken,
+					applyAnswer = applyAnswer,
+					requireQueueEmpty = requireQueueEmpty,
+					moved = moved,
+					allowReassign = allowReassign,
+					retryWithoutSnapshotToken = false,
 				) ?: Delivery.Reached
 			}
 		}
