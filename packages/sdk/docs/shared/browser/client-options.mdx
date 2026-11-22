@@ -148,7 +148,7 @@ group: reference
   | Event | Payload | When it fires |
   | --- | --- | --- |
   | `ready` | the snapshot | The policy has resolved and the UI can render. For a returning visitor, `hasConsented()` is reliable from here. |
-  | `consent` | the snapshot | Permissions, the recorded choice or the vendor switches changed. This includes a stored choice restored at start, a save, an expiry and a GPC change. |
+  | `consent` | the snapshot | Permissions, the recorded choice, the vendor switches or the opt-out changed. This includes a stored choice restored at start, a save, an expiry, a GPC change, a one-click opt-out and a backend answer that changes what the opt-out covers. Read the opt-out with `getOptOutState()`. |
   | `ui` | `'banner'`, `'dialog'` or `'none'` | The surface Inth wants shown changed. |
   | `error` | the error | A backend call failed, or an IAB step failed. |
 
