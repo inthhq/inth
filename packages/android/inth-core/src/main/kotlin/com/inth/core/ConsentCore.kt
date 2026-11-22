@@ -1000,6 +1000,7 @@ class ConsentCore @InthInternalApi constructor(
 		var liftsOptOut = false
 		var liftsAccountOptOut = false
 		var recordedOptOut = false
+		var keepsOptOut = false
 
 		synchronized(mutationLock) {
 			val current = state.get()
@@ -1139,6 +1140,7 @@ class ConsentCore @InthInternalApi constructor(
 			val optOutBlocker = optOutLiftBlocker(current, policy)
 			liftsOptOut = grantsDecidingCategory && optOutBlocker == null
 			liftsAccountOptOut = grantsDecidingCategory && optOutBlocker == OptInRefusalReason.HELD_BY_ACCOUNT
+			keepsOptOut = current.optOut != null && confirmedDeciding == false
 			recordedOptOut =
 				current.optOut == null &&
 					policy?.model == ConsentModel.OPT_OUT &&
@@ -1250,7 +1252,7 @@ class ConsentCore @InthInternalApi constructor(
 				committedIab = nextIab
 				lastIabActionAt = actionAt
 			}
-			if (liftsOptOut || recordedOptOut) {
+			if (liftsOptOut || recordedOptOut || keepsOptOut) {
 				optOutActVersion += 1
 			}
 			optOutGpcReported = nextOptOutGpcReported
