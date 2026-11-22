@@ -1300,7 +1300,7 @@ class ConsentCore @InthInternalApi constructor(
 						deliverQueuedOptOutInOrder(optOutEntry, optOutFence, identityToken = identityToken)
 					}
 				}
-				if (liftsAccountOptOut) {
+				if (liftsAccountOptOut && firstSend.get() === Delivery.Reached) {
 					liftAccountOptOutAfterSave(
 						subjectId = payload.subjectId,
 						authorizedUser = payload.user,
