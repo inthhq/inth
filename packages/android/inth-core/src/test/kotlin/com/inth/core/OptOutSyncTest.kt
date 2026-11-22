@@ -2084,6 +2084,67 @@ class OptOutSyncTest {
 		assertFalse(installedAfterUserB, "user_a's link opt-out must not be installed after user_b's identify")
 	}
 
+	@Test
+	fun `failed write of authoritative opt-out answer keeps the queued lift pending instead of dropping the account opt-out`() {
+		val backend = InMemoryKeyValueStore()
+		val deviceOptOut = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.BUTTON,
+			recordedAt = NOW - 5_000,
+			heldBy = OptOutHolder.DEVICE,
+		)
+		val remainingAccountOptOut = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.PROPAGATED,
+			recordedAt = NOW - 2_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+		seedOptOut(backend, deviceOptOut)
+		val clock = FixedClock(NOW)
+		val refuseAuthoritativeOptOutWrite = java.util.concurrent.atomic.AtomicBoolean(false)
+		val storeBackend = object : com.inth.core.spi.KeyValueStore by backend {
+			override fun writeDurably(key: String, value: String?): Boolean {
+				if (
+					key == InthStoreKeys.SNAPSHOT &&
+					value != null &&
+					value.contains("\"heldBy\":\"person\"") &&
+					refuseAuthoritativeOptOutWrite.compareAndSet(true, false)
+				) {
+					return false
+				}
+				return backend.writeDurably(key, value)
+			}
+		}
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondLiftOptOut(LiftOptOutOutcome.Unavailable("offline"))
+			.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = remainingAccountOptOut, cleared = false))
+			.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = remainingAccountOptOut, cleared = false))
+		val store = InthStore(storeBackend)
+		val kernel = testKernel(store = store, clock = clock, transport = transport)
+		kernel.bootstrap()
+
+		// Lift offline so optOut clears locally and the lift stays queued.
+		assertTrue(kernel.optIn().ok)
+		assertNull(kernel.snapshot().optOut)
+		assertEquals(1, store.readPendingOptOuts().size)
+
+		// Replay receives a remaining account-held opt-out, but persisting that record fails once.
+		refuseAuthoritativeOptOutWrite.set(true)
+		val firstFlush = kernel.flushPending()
+		assertEquals(0, firstFlush.delivered)
+		assertEquals(1, firstFlush.remaining)
+		assertEquals(1, store.readPendingOptOuts().size, "queued lift must remain pending when storing the answer fails")
+
+		// Next flush retries and durably stores the remaining account opt-out while releasing the act.
+		val secondFlush = kernel.flushPending()
+		assertEquals(1, secondFlush.delivered)
+		assertEquals(0, secondFlush.remaining)
+		assertEquals(remainingAccountOptOut, kernel.snapshot().optOut)
+		assertEquals(remainingAccountOptOut, assertNotNull(InthStore(backend).readEnvelope()).snapshot.optOut)
+		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"
