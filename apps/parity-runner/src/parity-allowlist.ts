@@ -83,6 +83,14 @@ export const PARITY_ALLOWLIST: readonly ParityAllowEntry[] = [
 		reason:
 			"Astro's server-rendered opt-out link carries the attributes its client boot reads (`data-inth-action`, `data-inth-dialog`, `data-inth-surface`). The confirmation view matches React on DOM, accessibility, styles and geometry.",
 		slot: '*',
+		story: 'Core/Opt Out Confirmation/Account Adopted',
+	},
+	{
+		check: 'dom',
+		framework: 'astro',
+		reason:
+			"Astro's server-rendered opt-out link carries the attributes its client boot reads (`data-inth-action`, `data-inth-dialog`, `data-inth-surface`). The confirmation view matches React on DOM, accessibility, styles and geometry.",
+		slot: '*',
 		story: 'Core/Opt Out Confirmation/Signal Honored',
 	},
 	{
