@@ -436,7 +436,7 @@ export type ConsentUIMounter = (
 export interface ConsentClientEventMap {
 	/** The policy resolved and the runtime is ready to render. */
 	ready: ConsentSnapshot;
-	/** A consent value changed. */
+	/** A consent value or the opt-out changed. */
 	consent: ConsentSnapshot;
 	/** The surface the runtime wants shown changed. */
 	ui: KernelActiveUI;
