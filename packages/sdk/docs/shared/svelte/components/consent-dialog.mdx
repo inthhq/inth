@@ -84,8 +84,7 @@ not in scope) and the switches stay usable. Turning `measurement` on while
 skips confirmation. Turning `marketing` back on and saving, or clicking
 `Opt back in…`, asks for confirmation before requesting the backend to lift the
 account's opt-out, which stays in force until the backend confirms it. Read the
-same state and receipt from `getConsentManager().optOutState` and
-`getConsentManager().optOutReceipt`. The dialog closes in the same task the
+same state and receipt from `getConsentManager().optOutState`. The dialog closes in the same task the
 choice is recorded. If the policy changes while the dialog is open, the
 widget shows an alert and asks the visitor to review before saving.
 

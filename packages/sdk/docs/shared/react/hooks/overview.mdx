@@ -16,13 +16,18 @@ group: reference
   | Recorded per-category choices | `useExplicitChoice()` |
   | Whether one declared vendor may run | `useVendorAllowed(id)` |
   | Whether a prompt is required | `usePromptRequirement()` |
-  | Honored opt-out status and lock state | `useOptOutState()` |
-  | Opt-out receipt scope, confirmed rights, time, and local reference | `useOptOutReceipt()` |
+  | Opt-out status, lock state, scope, source, time, reference, and confirmed rights | `useOptOutState()` |
   | Record an opt-out in one click and confirm it (regardless of `presentation.optOutLink`) | `useOptOut()` |
   | Active policy and resolution | `usePolicyRule()`, `usePolicyResolution()` |
   | Save an explicit choice | `useSaveConsents()` |
   | Open or close a consent surface | `useSetActiveUI()` |
   | Acknowledge a notice | `useDismissNotice()` |
+
+  ### Opt-out state fields
+
+  `useOptOutState()` returns an `OptOutState` object with these fields:
+
+  <include src="../../opt-out-state-fields.mdx" />
 </section>
 
 <section id="save-guidance">

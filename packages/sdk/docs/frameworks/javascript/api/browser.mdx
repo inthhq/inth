@@ -66,6 +66,7 @@ if `<body>` is not ready). Subsequent `start()` calls are no-ops. See
 | `has(condition)` | `boolean` | Whether a category or condition (`{ or: ['measurement', 'marketing'] }`) is allowed now. |
 | `hasConsented()` | `boolean` | Whether the visitor answered the prompt. |
 | `getSnapshot()` | `ConsentSnapshot` | Full frozen state; see [snapshot reference](/docs/frameworks/javascript/api/snapshot). |
+| `getOptOutState()` | `OptOutState` | Merged opt-out display state and receipt for the current snapshot and local receipt data. |
 | `subscribe(listener)` | `() => void` | Receive each new snapshot; returns an unsubscribe function. |
 | `on(event, listener)` | `() => void` | Listen to `ready`, `consent`, `ui` or `error`. |
 | `consentCategories` | `AllConsentNames[]` | Categories displayed in canonical order (`necessary`, `functionality`, `measurement`, `experience`, `marketing`) within policy scope. |
@@ -73,6 +74,12 @@ if `<body>` is not ready). Subsequent `start()` calls are no-ops. See
 Gate code on `has()` / `effectivePermissions`; report visitor decisions from
 `hasConsented()` / `explicitChoice`. See
 [a permission is not a recorded choice](/docs/concepts/how-consent-works#a-permission-is-not-a-recorded-choice).
+
+### Opt-out state fields
+
+`getOptOutState()` returns an `OptOutState` object with these fields. Listen to `client.on('consent', ...)` or `client.subscribe(...)` to read updated opt-out state after `client.optOut()` or a backend answer.
+
+<include src="../../../shared/opt-out-state-fields.mdx" />
 
 ## Record a choice
 
@@ -153,7 +160,7 @@ config callbacks.
 TypeScript exports include `ConsentClient`, `ConsentClientOptions`,
 `ConsentUIOptions`, `ConsentBannerOptions`, `ConsentDialogOptions`,
 `ConsentTriggerOptions`, `ConsentClientEventMap`, `ConsentSnapshot`,
-`ConsentState` and `HostedConsentClientOptions` (from `@inth/sdk/hosted`).
+`ConsentState`, `OptOutState` and `HostedConsentClientOptions` (from `@inth/sdk/hosted`).
 
 ## Check it works
 

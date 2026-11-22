@@ -85,17 +85,15 @@ holds its view box and paths for a framework that builds the element itself.
 <include src="../../shared/privacy-choices-link.mdx" />
 
 `resolveOptOutCopy` returns the opt-out
-confirmation and lock-reason copy. `resolveOptOutState(snapshot)` derives what
-an opt-out confirmation or preference surface renders from a snapshot:
-`available`, `honored`, `via` (`'signal'`, `'request'` or `null`), `lock`
-(`'gpc-active'`, `'held-by-account'` or `null`), `categories`,
-`decidingCategory` and `optInPromptAllowedAt`.
-`resolveOptOutReceipt(snapshot, local)` derives the receipt fields (`optedOut`,
-`scope`, `source`, `at`, `reference` and backend-confirmed `rights`), and
+confirmation and lock-reason copy. `resolveOptOut(snapshot, local)` returns
+the combined `OptOutState` from `resolveOptOutState(snapshot)` and
+`resolveOptOutReceipt(snapshot, local)`, and
 `resolveOptOutReceiptSentence(translations, receipt)` formats the matching
 receipt sentence.
 `resolveCategoryOptOutLock(snapshot, category)` returns `'gpc-active'`,
 `'held-by-account'` or `null` for one category row.
+
+<include src="../../shared/opt-out-state-fields.mdx" />
 
 ## Build a preference form with a draft
 

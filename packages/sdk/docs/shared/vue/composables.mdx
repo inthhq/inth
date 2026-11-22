@@ -46,13 +46,18 @@ group: reference
   | `useExplicitChoice()` | Computed recorded choice, or `null` | Read what the visitor decided. |
   | `useStoredConsent()` | Computed recorded choice, or `null` | Read the same value as `useExplicitChoice()`. |
   | `useNoticeDismissal()` | Computed dismissal record, or `null` | Check whether the visitor dismissed a notice. |
-  | `useOptOutState()` | Computed opt-out display state | Check whether an opt-out is honored, how it was recorded and whether GPC or an account locks it. |
-  | `useOptOutReceipt()` | Computed opt-out receipt | Read what a held opt-out covers (this browser or the account), when it was recorded, the local reference, and confirmed rights. |
+  | `useOptOutState()` | Computed `OptOutState` | Read the opt-out status, lock state, scope, source, recorded time, local reference, and backend-confirmed rights. |
   | `usePrivacySignals()` | Computed privacy signals | Read whether Global Privacy Control was detected and applied. |
   | `useConsentRestrictions()` | Computed restrictions | Inspect why a policy or privacy signal limits a permission. |
   | `usePolicyRule()` | Computed policy rule | Read the `model`, `prompt`, `scope`, and `rights` of the matched policy. |
   | `usePolicyResolution()` | Computed resolution | Check that a policy matched. `status` is `'matched'` when one applies. |
   | `useRequestRegion()` | Computed `{ country, region }` | Read the location the policy resolved for. |
+
+  ### Opt-out state fields
+
+  `useOptOutState().value` returns an `OptOutState` object with these fields:
+
+  <include src="../opt-out-state-fields.mdx" />
 </section>
 
 <section id="act">
