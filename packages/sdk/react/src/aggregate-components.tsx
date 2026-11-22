@@ -6,6 +6,7 @@ import {
 	registerDialogChunkWarmer,
 	useIdleDialogWarming,
 } from './chunk-warming';
+import type { OptInConfirmationProps } from './components/opt-in-confirmation';
 import type {
 	OptOutConfirmationCompoundComponent,
 	OptOutConfirmationProps,
@@ -24,6 +25,8 @@ import { importDialog } from './deferred/trigger';
 import { useActiveUI } from './hooks';
 import {
 	useHasOptOutConfirmationHost,
+	useOptInConfirmationHost,
+	useOptInConfirmationOpen,
 	useOptOutConfirmationOpen,
 } from './hooks/use-opt-out';
 import { createDeferredModule } from './utils/deferred-module';
@@ -47,6 +50,10 @@ const widgetModule = createDeferredModule(
 const optOutConfirmationModule = createDeferredModule(async () => {
 	void preloadSurfaceSheets(BANNER_SHEETS);
 	return await import('./components/opt-out-confirmation');
+});
+const optInConfirmationModule = createDeferredModule(async () => {
+	void preloadSurfaceSheets(BANNER_SHEETS);
+	return await import('./components/opt-in-confirmation');
 });
 const lazyDialogExport = (name: string) =>
 	dialogModule.component(
@@ -73,11 +80,23 @@ const LazyConsentWidgetComponent = widgetModule.component(
 const LazyOptOutConfirmationComponent = optOutConfirmationModule.component(
 	(module) => module.OptOutConfirmation
 );
+const LazyOptInConfirmationComponent = optInConfirmationModule.component(
+	(module) => module.OptInConfirmation
+);
+
+const LazyOptInConfirmationHost = (props: OptInConfirmationProps) => {
+	const active = useOptInConfirmationHost();
+	if (!active) {
+		return null;
+	}
+	return <LazyOptInConfirmationComponent {...props} />;
+};
 
 const LazyConsentDialog = (props: ConsentDialogProps) => {
 	const activeUI = useActiveUI();
 	const confirmationOpen = useOptOutConfirmationOpen();
 	const hasStandaloneConfirmation = useHasOptOutConfirmationHost();
+	const optInConfirmationOpen = useOptInConfirmationOpen();
 	// A shown banner can open the dialog at any moment, whatever renders it.
 	useIdleDialogWarming(activeUI === 'banner');
 	const shouldLoadDialog =
@@ -89,6 +108,16 @@ const LazyConsentDialog = (props: ConsentDialogProps) => {
 		return (
 			<LazyOptOutConfirmationComponent
 				embedded
+				noStyle={props.noStyle}
+				disableAnimation={props.disableAnimation}
+				scrollLock={props.scrollLock}
+				trapFocus={props.trapFocus}
+			/>
+		);
+	}
+	if (optInConfirmationOpen) {
+		return (
+			<LazyOptInConfirmationHost
 				noStyle={props.noStyle}
 				disableAnimation={props.disableAnimation}
 				scrollLock={props.scrollLock}
