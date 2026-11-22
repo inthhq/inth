@@ -18,6 +18,7 @@ import type {
 	KernelOverrides,
 	KernelUser,
 	OptOutResult,
+	OptOutState,
 	SaveResult,
 	SaveInput,
 	ProviderTransportFactory,
@@ -199,6 +200,31 @@ const resolvePageAction = function resolvePageAction(
 	return href.endsWith(PREFERENCES_HASH) ? 'customize' : null;
 };
 
+const sameOptOutState = function sameOptOutState(
+	left: OptOutState,
+	right: OptOutState
+): boolean {
+	return (
+		left.at === right.at &&
+		left.available === right.available &&
+		left.decidingCategory === right.decidingCategory &&
+		left.honored === right.honored &&
+		left.lock === right.lock &&
+		left.optInPromptAllowedAt === right.optInPromptAllowedAt &&
+		left.optedOut === right.optedOut &&
+		left.reference === right.reference &&
+		left.scope === right.scope &&
+		left.source === right.source &&
+		left.via === right.via &&
+		left.categories.length === right.categories.length &&
+		left.categories.every(
+			(category, index) => category === right.categories[index]
+		) &&
+		left.rights.length === right.rights.length &&
+		left.rights.every((rightName, index) => rightName === right.rights[index])
+	);
+};
+
 /**
  * Create the page's consent client without starting it.
  *
@@ -358,19 +384,17 @@ export const createConsentClientWith = function createConsentClientWith(
 	let lastActiveUI: KernelActiveUI = initial.activeUI;
 	let lastConsents = initial.effectivePermissions;
 	let lastHasConsented = initial.explicitChoice;
-	let lastOptOut = initial.optOut;
-	let lastOptOutReceiptData = getOptOutReceiptData(kernel);
+	let lastOptOutState = resolveOptOut(initial, getOptOutReceiptData(kernel));
 	let lastVendorChoice = initial.vendorChoice;
 	let lastVendors = initial.vendors;
 	const notifyConsentIfChanged = function notifyConsentIfChanged(
 		snapshot: ConsentSnapshot
 	): void {
-		const receiptData = getOptOutReceiptData(kernel);
+		const optOutState = resolveOptOut(snapshot, getOptOutReceiptData(kernel));
 		if (
 			snapshot.effectivePermissions === lastConsents &&
 			snapshot.explicitChoice === lastHasConsented &&
-			snapshot.optOut === lastOptOut &&
-			receiptData === lastOptOutReceiptData &&
+			sameOptOutState(optOutState, lastOptOutState) &&
 			snapshot.vendorChoice === lastVendorChoice &&
 			snapshot.vendors === lastVendors
 		) {
@@ -378,8 +402,7 @@ export const createConsentClientWith = function createConsentClientWith(
 		}
 		lastConsents = snapshot.effectivePermissions;
 		lastHasConsented = snapshot.explicitChoice;
-		lastOptOut = snapshot.optOut;
-		lastOptOutReceiptData = receiptData;
+		lastOptOutState = optOutState;
 		lastVendorChoice = snapshot.vendorChoice;
 		lastVendors = snapshot.vendors;
 		if (started && !startingRuntime) {
