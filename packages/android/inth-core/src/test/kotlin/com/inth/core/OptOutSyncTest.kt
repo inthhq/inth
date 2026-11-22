@@ -1724,6 +1724,115 @@ class OptOutSyncTest {
 		assertTrue(kernel.isAllowed(ConsentCategory.MARKETING))
 	}
 
+	@Test
+	fun `GPC activating before or during an account lift blocks the lift and keeps the durable opt-out`() {
+		val accountOptOut = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.API,
+			recordedAt = NOW - 1_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+
+		// Case 1: GPC activates while optIn() account lift is in flight.
+		run {
+			val backend = InMemoryKeyValueStore()
+			seedOptOut(backend, accountOptOut)
+			val clock = FixedClock(NOW)
+			lateinit var kernel: ConsentCore
+			val transport = object : com.inth.core.transport.InthTransport {
+				override fun init(context: com.inth.core.transport.InitContext): TransportOutcome = optOutInit()
+				override fun save(entry: com.inth.core.model.QueuedSave): SaveOutcome = SaveOutcome.Delivered(subjectId = SUBJECT)
+				override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): LinkOutcome =
+					LinkOutcome.Linked(subjectId = subject.id)
+
+				override fun optOut(payload: OptOutPayload, identityToken: String?): OptOutOutcome =
+					OptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = accountOptOut)
+
+				override fun liftOptOut(payload: LiftOptOutPayload, identityToken: String?): LiftOptOutOutcome {
+					kernel.setOverrides(KernelOverrides(gpc = true))
+					return LiftOptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = null, cleared = true)
+				}
+			}
+			kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+			kernel.bootstrap()
+			kernel.identify(KernelUser("user_123"), identityToken = "tok_1")
+
+			val lifted = kernel.optIn()
+			assertFalse(lifted.ok)
+			assertEquals(OptInRefusalReason.GPC_ACTIVE, lifted.reason)
+			assertEquals(accountOptOut, kernel.snapshot().optOut)
+
+			kernel.setOverrides(KernelOverrides(gpc = false))
+			assertEquals(accountOptOut, kernel.snapshot().optOut)
+			assertFalse(kernel.isAllowed(ConsentCategory.MARKETING))
+		}
+
+		// Case 2: GPC activates after a granting save but before liftAccountOptOutAfterSave runs.
+		run {
+			val backend = InMemoryKeyValueStore()
+			seedOptOut(backend, accountOptOut)
+			val clock = FixedClock(NOW)
+			val tasks = ArrayDeque<() -> Unit>()
+			val transport = RecordingTransport()
+				.respondInit(optOutInit())
+				.respondLink(LinkOutcome.Linked(subjectId = SUBJECT))
+				.respondSave(SaveOutcome.Delivered(subjectId = SUBJECT))
+				.respondOptOut(OptOutOutcome.Delivered(subjectId = SUBJECT, optOut = accountOptOut))
+				.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = null, cleared = true))
+			val kernel = testKernel(
+				store = InthStore(backend),
+				clock = clock,
+				transport = transport,
+				executor = TaskExecutor { tasks.addLast(it) },
+			)
+			kernel.bootstrap()
+			while (tasks.isNotEmpty()) tasks.removeFirst()()
+			kernel.identify(KernelUser("user_123"), identityToken = "tok_1")
+			while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+			assertTrue(kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true))).ok)
+			kernel.setOverrides(KernelOverrides(gpc = true))
+			while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+			assertTrue(transport.liftOptOutRequests.isEmpty(), "GPC must block deferred post-save account lift")
+			kernel.setOverrides(KernelOverrides(gpc = false))
+			while (tasks.isNotEmpty()) tasks.removeFirst()()
+			assertEquals(accountOptOut, kernel.snapshot().optOut)
+		}
+
+		// Case 3: GPC activates while liftAccountOptOutAfterSave is in flight (applySyncedOptOut clear path).
+		run {
+			val backend = InMemoryKeyValueStore()
+			seedOptOut(backend, accountOptOut)
+			val clock = FixedClock(NOW)
+			lateinit var kernel: ConsentCore
+			val transport = object : com.inth.core.transport.InthTransport {
+				override fun init(context: com.inth.core.transport.InitContext): TransportOutcome = optOutInit()
+				override fun save(entry: com.inth.core.model.QueuedSave): SaveOutcome = SaveOutcome.Delivered(subjectId = SUBJECT)
+				override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): LinkOutcome =
+					LinkOutcome.Linked(subjectId = subject.id)
+
+				override fun optOut(payload: OptOutPayload, identityToken: String?): OptOutOutcome =
+					OptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = accountOptOut)
+
+				override fun liftOptOut(payload: LiftOptOutPayload, identityToken: String?): LiftOptOutOutcome {
+					kernel.setOverrides(KernelOverrides(gpc = true))
+					return LiftOptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = null, cleared = true)
+				}
+			}
+			kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+			kernel.bootstrap()
+			kernel.identify(KernelUser("user_123"), identityToken = "tok_1")
+
+			assertTrue(kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true))).ok)
+			assertEquals(accountOptOut, kernel.snapshot().optOut)
+
+			kernel.setOverrides(KernelOverrides(gpc = false))
+			assertEquals(accountOptOut, kernel.snapshot().optOut)
+			assertFalse(kernel.isAllowed(ConsentCategory.MARKETING))
+		}
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"
