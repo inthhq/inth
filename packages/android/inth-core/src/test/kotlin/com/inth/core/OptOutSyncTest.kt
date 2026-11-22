@@ -2222,6 +2222,46 @@ class OptOutSyncTest {
 		assertEquals(accountOptOut, kernel.snapshot().optOut)
 	}
 
+	@Test
+	fun `granting save does not lift an account-held opt-out after a newer refusal`() {
+		val backend = InMemoryKeyValueStore()
+		val accountOptOut = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.API,
+			recordedAt = NOW - 1_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+		seedOptOut(backend, accountOptOut)
+		val clock = FixedClock(NOW)
+		val tasks = ArrayDeque<() -> Unit>()
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondLink(LinkOutcome.Linked(subjectId = SUBJECT, optOut = accountOptOut))
+			.respondSave(SaveOutcome.Delivered(subjectId = SUBJECT))
+			.respondSave(SaveOutcome.Delivered(subjectId = SUBJECT))
+			.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = null, cleared = true))
+		val kernel = testKernel(
+			store = InthStore(backend),
+			clock = clock,
+			transport = transport,
+			executor = TaskExecutor { tasks.addLast(it) },
+		)
+		kernel.bootstrap()
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+		kernel.identify(KernelUser("user_123"), identityToken = "tok_1")
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+		assertTrue(kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true))).ok)
+		assertTrue(kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to false))).ok)
+		while (tasks.isNotEmpty()) tasks.removeFirst()()
+
+		assertTrue(
+			transport.liftOptOutRequests.isEmpty(),
+			"a newer refusal must fence an earlier granting save's account opt-out lift",
+		)
+		assertEquals(accountOptOut, kernel.snapshot().optOut)
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"
