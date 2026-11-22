@@ -2145,6 +2145,53 @@ class OptOutSyncTest {
 		assertTrue(InthStore(backend).readPendingOptOuts().isEmpty())
 	}
 
+	@Test
+	fun `permanent opt-out rejection stops replay and reports queue-write-failed when queue removal fails`() {
+		val backend = InMemoryKeyValueStore()
+		seedSubject(backend)
+		val clock = FixedClock(NOW)
+		val errors = mutableListOf<KernelError>()
+		val transport = RecordingTransport()
+			.respondInit(optOutInit())
+			.respondOptOut(OptOutOutcome.Unavailable("offline"))
+			.respondOptOut(OptOutOutcome.Unavailable("offline"))
+			.respondOptOut(OptOutOutcome.Rejected(TransportOutcome.HttpFailure(status = 413, code = "payload_too_large")))
+			.respondOptOut(OptOutOutcome.Rejected(TransportOutcome.HttpFailure(status = 413, code = "payload_too_large")))
+			.respondLiftOptOut(LiftOptOutOutcome.Delivered(subjectId = SUBJECT, optOut = null, cleared = true))
+		val store = InthStore(backend)
+		val kernel = testKernel(
+			store = store,
+			clock = clock,
+			transport = transport,
+			logger = { errors += it },
+		)
+		kernel.bootstrap()
+
+		// Queue [RECORD, LIFT] while offline.
+		assertTrue(kernel.optOut().ok)
+		assertTrue(kernel.optIn().ok)
+		assertEquals(listOf(OptOutActKind.RECORD, OptOutActKind.LIFT), store.readPendingOptOuts().map { it.kind })
+		errors.clear()
+
+		// Backend returns 413 on RECORD while storage refuses to drop the entry.
+		backend.refuseDurableWrites = true
+		val failedFlush = kernel.flushPending()
+		assertEquals(0, failedFlush.delivered)
+		assertEquals(2, failedFlush.remaining)
+		assertTrue(transport.liftOptOutRequests.isEmpty(), "replay must stop instead of sending LIFT while RECORD stays on disk")
+		assertEquals(listOf("queue-write-failed"), errors.map { it.code })
+
+		// Once storage recovers, RECORD is dropped as permanently rejected and LIFT delivers.
+		backend.refuseDurableWrites = false
+		errors.clear()
+		val recoveredFlush = kernel.flushPending()
+		assertEquals(1, recoveredFlush.delivered)
+		assertEquals(0, recoveredFlush.remaining)
+		assertEquals(1, transport.liftOptOutRequests.size)
+		assertEquals(listOf("opt-out-rejected"), errors.map { it.code })
+		assertTrue(store.readPendingOptOuts().isEmpty())
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"
