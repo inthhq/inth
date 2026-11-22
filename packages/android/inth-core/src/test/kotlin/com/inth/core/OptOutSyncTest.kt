@@ -2394,6 +2394,105 @@ class OptOutSyncTest {
 		assertEquals(listOf(OptOutRight.SALE, OptOutRight.SHARE), restarted.snapshot().optOut?.rights)
 	}
 
+	@Test
+	fun `account opt-out lift does not dispatch if GPC activates while an earlier queued opt-out act drains`() {
+		val accountOptOut = OptOutRecord(
+			rights = listOf(OptOutRight.SALE, OptOutRight.SHARE),
+			method = OptOutMethod.API,
+			recordedAt = NOW - 1_000,
+			heldBy = OptOutHolder.PERSON,
+		)
+
+		// Case 1: optIn() drains a queued act; GPC turns on while that act is in flight.
+		run {
+			val backend = InMemoryKeyValueStore()
+			seedOptOut(backend, accountOptOut)
+			val clock = FixedClock(NOW)
+			lateinit var kernel: ConsentCore
+			var optOutCalls = 0
+			var liftCalls = 0
+			val transport = object : com.inth.core.transport.InthTransport {
+				override fun init(context: com.inth.core.transport.InitContext): TransportOutcome = optOutInit()
+				override fun save(entry: com.inth.core.model.QueuedSave): SaveOutcome = SaveOutcome.Delivered(subjectId = SUBJECT)
+				override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): LinkOutcome =
+					LinkOutcome.Linked(subjectId = subject.id, optOut = accountOptOut)
+
+				override fun optOut(payload: OptOutPayload, identityToken: String?): OptOutOutcome {
+					optOutCalls += 1
+					if (optOutCalls == 1) {
+						return OptOutOutcome.Unavailable("offline")
+					}
+					if (optOutCalls == 2) {
+						kernel.setOverrides(KernelOverrides(gpc = true))
+					}
+					return OptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = accountOptOut)
+				}
+
+				override fun liftOptOut(payload: LiftOptOutPayload, identityToken: String?): LiftOptOutOutcome {
+					liftCalls += 1
+					return LiftOptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = null, cleared = true)
+				}
+			}
+			kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+			kernel.bootstrap()
+			kernel.identify(KernelUser("user_123"), identityToken = "tok_1")
+
+			// Queue a GPC opt-out act while offline, then turn GPC off so optIn() is allowed to start.
+			kernel.setOverrides(KernelOverrides(gpc = true))
+			assertEquals(1, InthStore(backend).readPendingOptOuts().size)
+			kernel.setOverrides(KernelOverrides(gpc = false))
+
+			val result = kernel.optIn()
+			assertFalse(result.ok)
+			assertEquals(OptInRefusalReason.GPC_ACTIVE, result.reason)
+			assertEquals(0, liftCalls, "optIn must not send an account lift after GPC turns on during drain")
+			assertEquals(accountOptOut, kernel.snapshot().optOut)
+		}
+
+		// Case 2: save(marketing=true) drains a queued act; GPC turns on while that act is in flight.
+		run {
+			val backend = InMemoryKeyValueStore()
+			seedOptOut(backend, accountOptOut)
+			val clock = FixedClock(NOW)
+			lateinit var kernel: ConsentCore
+			var optOutCalls = 0
+			var liftCalls = 0
+			val transport = object : com.inth.core.transport.InthTransport {
+				override fun init(context: com.inth.core.transport.InitContext): TransportOutcome = optOutInit()
+				override fun save(entry: com.inth.core.model.QueuedSave): SaveOutcome = SaveOutcome.Delivered(subjectId = SUBJECT)
+				override fun link(subject: ConsentSubject, user: KernelUser, identityToken: String): LinkOutcome =
+					LinkOutcome.Linked(subjectId = subject.id, optOut = accountOptOut)
+
+				override fun optOut(payload: OptOutPayload, identityToken: String?): OptOutOutcome {
+					optOutCalls += 1
+					if (optOutCalls == 1) {
+						return OptOutOutcome.Unavailable("offline")
+					}
+					if (optOutCalls == 2) {
+						kernel.setOverrides(KernelOverrides(gpc = true))
+					}
+					return OptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = accountOptOut)
+				}
+
+				override fun liftOptOut(payload: LiftOptOutPayload, identityToken: String?): LiftOptOutOutcome {
+					liftCalls += 1
+					return LiftOptOutOutcome.Delivered(subjectId = payload.subjectId, optOut = null, cleared = true)
+				}
+			}
+			kernel = testKernel(store = InthStore(backend), clock = clock, transport = transport)
+			kernel.bootstrap()
+			kernel.identify(KernelUser("user_123"), identityToken = "tok_1")
+
+			kernel.setOverrides(KernelOverrides(gpc = true))
+			assertEquals(1, InthStore(backend).readPendingOptOuts().size)
+			kernel.setOverrides(KernelOverrides(gpc = false))
+
+			assertTrue(kernel.save(CommitIntent.Custom(mapOf(ConsentCategory.MARKETING to true))).ok)
+			assertEquals(0, liftCalls, "post-save account lift must not dispatch after GPC turns on during drain")
+			assertEquals(accountOptOut, kernel.snapshot().optOut)
+		}
+	}
+
 	private companion object {
 		const val NOW = 1_770_000_000_000L
 		const val SUBJECT = "019c1c38-a400-7100-8000-000000000001"
