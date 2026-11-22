@@ -488,8 +488,11 @@ class ConsentCore @InthInternalApi constructor(
 	private data class AccountLiftPlan(
 		val actVersion: Long,
 		val generation: Long,
+		val identifyGeneration: Long,
 		val snapshot: ConsentSnapshot,
 		val subjectId: String?,
+		val user: KernelUser?,
+		val identityToken: String?,
 		val uiSource: ActiveUI?,
 		val now: Long,
 	)
@@ -1241,6 +1244,7 @@ class ConsentCore @InthInternalApi constructor(
 		// The mutation gate owns this revision through the durable write and swap.
 		var actVersion: Long
 		var generation: Long
+		var identifyGen: Long
 		synchronized(mutationLock) {
 			if (isIab) {
 				committedIab = nextIab
@@ -1252,6 +1256,7 @@ class ConsentCore @InthInternalApi constructor(
 			optOutGpcReported = nextOptOutGpcReported
 			actVersion = optOutActVersion
 			generation = recordsGeneration
+			identifyGen = identifyGeneration
 			installSnapshot(published)
 			acknowledgement?.let { noticeDismissal = it }
 		}
@@ -1298,10 +1303,13 @@ class ConsentCore @InthInternalApi constructor(
 				if (liftsAccountOptOut) {
 					liftAccountOptOutAfterSave(
 						subjectId = payload.subjectId,
+						authorizedUser = payload.user,
+						authorizedToken = identityToken,
 						actionAt = actionAt,
 						uiSource = surfaceAtAction,
 						actVersion = actVersion,
 						generation = generation,
+						expectedIdentifyGeneration = identifyGen,
 					)
 				}
 			}
@@ -1539,11 +1547,15 @@ class ConsentCore @InthInternalApi constructor(
 		val accountPlan = synchronized(mutationLock) {
 			val current = state.get()
 			if (optOutLiftBlocker(current, evaluationPolicy) == OptInRefusalReason.HELD_BY_ACCOUNT) {
+				val user = currentUserFor(current.subject)
 				AccountLiftPlan(
 					actVersion = optOutActVersion,
 					generation = recordsGeneration,
+					identifyGeneration = identifyGeneration,
 					snapshot = current,
 					subjectId = current.subject?.id,
+					user = user,
+					identityToken = currentIdentityTokenFor(user),
 					uiSource = current.activeUI,
 					now = now,
 				)
@@ -1566,11 +1578,15 @@ class ConsentCore @InthInternalApi constructor(
 				val policy = evaluationPolicy
 				optOutLiftBlocker(current, policy)?.let { reason ->
 					if (reason == OptInRefusalReason.HELD_BY_ACCOUNT) {
+						val user = currentUserFor(current.subject)
 						deferredAccountPlan = AccountLiftPlan(
 							actVersion = optOutActVersion,
 							generation = recordsGeneration,
+							identifyGeneration = identifyGeneration,
 							snapshot = current,
 							subjectId = current.subject?.id,
+							user = user,
+							identityToken = currentIdentityTokenFor(user),
 							uiSource = current.activeUI,
 							now = now,
 						)
@@ -1683,9 +1699,8 @@ class ConsentCore @InthInternalApi constructor(
 				revision = state.get().revision,
 				reason = OptInRefusalReason.HELD_BY_ACCOUNT,
 			)
-		val payload = buildLiftOptOutPayload(plan.snapshot, subjectId, plan.now, plan.uiSource)
-		val identityToken = currentIdentityTokenFor(payload.user)
-		val settled = sendAccountOptOutLift(payload, identityToken, allowReassign = true)
+		val payload = buildLiftOptOutPayload(plan.snapshot, subjectId, plan.now, plan.uiSource, user = plan.user)
+		val settled = sendAccountOptOutLift(payload, plan.identityToken, allowReassign = true)
 			?: return OptInResult(
 				ok = false,
 				revision = state.get().revision,
@@ -1698,6 +1713,7 @@ class ConsentCore @InthInternalApi constructor(
 					val current = state.get()
 					val fresh = optOutActVersion == plan.actVersion &&
 						recordsGeneration == plan.generation &&
+						identifyGeneration == plan.identifyGeneration &&
 						current.subject?.owns(settled.subjectId) == true
 					if (!fresh) return@synchronized null
 					if (optOutLiftBlocker(current, evaluationPolicy) == OptInRefusalReason.GPC_ACTIVE) {
@@ -1765,6 +1781,7 @@ class ConsentCore @InthInternalApi constructor(
 				generation = plan.generation,
 				subjectId = settled.subjectId,
 				allowClear = false,
+				expectedIdentifyGeneration = plan.identifyGeneration,
 			)
 		}
 		return OptInResult(
@@ -1776,10 +1793,13 @@ class ConsentCore @InthInternalApi constructor(
 
 	private fun liftAccountOptOutAfterSave(
 		subjectId: String,
+		authorizedUser: KernelUser?,
+		authorizedToken: String?,
 		actionAt: Long,
 		uiSource: ActiveUI?,
 		actVersion: Long,
 		generation: Long,
+		expectedIdentifyGeneration: Long,
 	) {
 		if (config.dryRun) return
 		val snapshot = synchronized(mutationLock) {
@@ -1787,6 +1807,7 @@ class ConsentCore @InthInternalApi constructor(
 			if (
 				optOutActVersion != actVersion ||
 				recordsGeneration != generation ||
+				identifyGeneration != expectedIdentifyGeneration ||
 				optOutLiftBlocker(current, evaluationPolicy) != OptInRefusalReason.HELD_BY_ACCOUNT
 			) {
 				return
@@ -1794,9 +1815,8 @@ class ConsentCore @InthInternalApi constructor(
 			current
 		}
 		val liftSubjectId = drainQueuedOptOutsBeforeAccountLift(snapshot.subject?.id ?: subjectId) ?: return
-		val payload = buildLiftOptOutPayload(snapshot, liftSubjectId, actionAt, uiSource)
-		val identityToken = currentIdentityTokenFor(payload.user)
-		val settled = sendAccountOptOutLift(payload, identityToken, allowReassign = true) ?: return
+		val payload = buildLiftOptOutPayload(snapshot, liftSubjectId, actionAt, uiSource, user = authorizedUser)
+		val settled = sendAccountOptOutLift(payload, authorizedToken, allowReassign = true) ?: return
 		applySyncedOptOut(
 			optOut = settled.optOut,
 			cleared = settled.cleared,
@@ -1804,6 +1824,7 @@ class ConsentCore @InthInternalApi constructor(
 			generation = generation,
 			subjectId = settled.subjectId,
 			allowClear = true,
+			expectedIdentifyGeneration = expectedIdentifyGeneration,
 		)
 	}
 
@@ -3226,6 +3247,7 @@ class ConsentCore @InthInternalApi constructor(
 		generation: Long,
 		subjectId: String,
 		allowClear: Boolean,
+		expectedIdentifyGeneration: Long? = null,
 	): Boolean {
 		if (optOut == null && (!cleared || !allowClear)) return false
 		val nextOptOut: OptOutRecord? = if (optOut != null) {
@@ -3240,6 +3262,7 @@ class ConsentCore @InthInternalApi constructor(
 				if (
 					optOutActVersion != actVersion ||
 					recordsGeneration != generation ||
+					(expectedIdentifyGeneration != null && identifyGeneration != expectedIdentifyGeneration) ||
 					current.subject?.owns(subjectId) != true
 				) {
 					return@synchronized null
@@ -3347,11 +3370,12 @@ class ConsentCore @InthInternalApi constructor(
 		subjectId: String,
 		actionAt: Long,
 		uiSource: ActiveUI?,
+		user: KernelUser? = currentUserFor(snapshot.subject),
 	): LiftOptOutPayload = LiftOptOutPayload(
 		subjectId = subjectId,
 		idempotencyKey = idempotencyKeyGenerator(),
 		givenAt = actionAt,
-		user = currentUserFor(snapshot.subject),
+		user = user,
 		uiSource = uiSource,
 		policySnapshotToken = snapshot.policySnapshotToken,
 	)
