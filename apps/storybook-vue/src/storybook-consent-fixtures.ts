@@ -226,9 +226,12 @@ export const useStorybookOptOutConsent = function useStorybookOptOutConsent(
 	if (kind === 'gpc') {
 		config.overrides = { gpc: true };
 	}
-	const now = Date.now();
 	const baseRecords =
 		kind === 'none' ? undefined : storybookOptOutRecords(kind);
+	// Read the clock after the records are built. The seeded choice is dated
+	// when it is built, and a seed dated after the kernel's clock is rejected
+	// whole, which left the story without its opt-out on some loads.
+	const now = Date.now();
 	const initialRecords =
 		baseRecords || options.initialRecords
 			? {
