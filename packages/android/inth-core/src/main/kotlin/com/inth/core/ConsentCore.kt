@@ -3107,22 +3107,13 @@ class ConsentCore @InthInternalApi constructor(
 		permanentRejection: Boolean,
 	): Delivery {
 		if (delivered) {
-			if (!optOutQueue.complete(entry.id)) {
-				val error = KernelError(
-					code = "queue-write-failed",
-					message = "Inth: the backend accepted a queued opt-out act but the queue " +
-						"could not release it, so the same act will be sent again",
-				)
-				emitError(error)
-				return Delivery.Refused(FailedAttempt.Retrying, error)
-			}
 			val adopted = adoptCanonicalSubject(entry.subjectId, deliveredSubjectId)
 			if (adopted != null) {
 				moved?.set(entry.subjectId, adopted)
 			}
 			val effectiveSubjectId = adopted ?: entry.subjectId
-			val canApply = applyAnswer && (!requireQueueEmpty || optOutQueue.pending().isEmpty())
-			if (canApply && (deliveredOptOut != null || deliveredCleared)) {
+			val canApply = applyAnswer && (!requireQueueEmpty || optOutQueue.pending().none { it.id != entry.id })
+			val applyOutcome = if (canApply && (deliveredOptOut != null || deliveredCleared)) {
 				applySyncedOptOut(
 					optOut = deliveredOptOut,
 					cleared = deliveredCleared,
@@ -3130,7 +3121,24 @@ class ConsentCore @InthInternalApi constructor(
 					generation = fence.generation,
 					subjectId = effectiveSubjectId,
 					allowClear = fence.allowClear,
+					completeOptOutId = entry.id,
 				)
+			} else {
+				SyncedOptOutOutcome.SKIPPED
+			}
+			val released = when (applyOutcome) {
+				SyncedOptOutOutcome.APPLIED -> true
+				SyncedOptOutOutcome.WRITE_FAILED -> false
+				SyncedOptOutOutcome.SKIPPED -> optOutQueue.complete(entry.id)
+			}
+			if (!released) {
+				val error = KernelError(
+					code = "queue-write-failed",
+					message = "Inth: the backend accepted a queued opt-out act but the queue " +
+						"could not release it, so the same act will be sent again",
+				)
+				emitError(error)
+				return Delivery.Refused(FailedAttempt.Retrying, error)
 			}
 			return Delivery.Reached
 		}
@@ -3239,12 +3247,19 @@ class ConsentCore @InthInternalApi constructor(
 		return assigned
 	}
 
+	private enum class SyncedOptOutOutcome {
+		APPLIED,
+		SKIPPED,
+		WRITE_FAILED,
+	}
+
 	/**
 	 * Apply an authoritative backend opt-out answer when it is still current.
 	 *
 	 * Replaces `snapshot.optOut` with the server's `rights`, `recordedAt`, `method` and
 	 * `heldBy` (or clears it to `null` when [cleared] and [allowClear] are both true),
-	 * persists the updated envelope, and notifies observers. Sends nothing.
+	 * persists the updated envelope (and optionally releases [completeOptOutId] in the same
+	 * atomic write), and notifies observers. Sends nothing.
 	 */
 	private fun applySyncedOptOut(
 		optOut: OptOutRecord?,
@@ -3254,10 +3269,11 @@ class ConsentCore @InthInternalApi constructor(
 		subjectId: String,
 		allowClear: Boolean,
 		expectedIdentifyGeneration: Long? = null,
-	): Boolean {
-		if (optOut == null && (!cleared || !allowClear)) return false
+		completeOptOutId: String? = null,
+	): SyncedOptOutOutcome {
+		if (optOut == null && (!cleared || !allowClear)) return SyncedOptOutOutcome.SKIPPED
 		val nextOptOut: OptOutRecord? = if (optOut != null) {
-			if (optOut.rights.isEmpty()) return false
+			if (optOut.rights.isEmpty()) return SyncedOptOutOutcome.SKIPPED
 			optOut.copy(rights = OptOutRight.entries.filter { it in optOut.rights })
 		} else {
 			null
@@ -3306,9 +3322,9 @@ class ConsentCore @InthInternalApi constructor(
 					lastIabActionAt = lastIabActionAt,
 				)
 				Triple(next, envelope, nextReported)
-			} ?: return@mutate false
-			if (!store.writeEnvelope(prepared.second, publishBus = false)) {
-				return@mutate false
+			} ?: return@mutate SyncedOptOutOutcome.SKIPPED
+			if (!store.writeEnvelope(prepared.second, publishBus = false, completeOptOutId = completeOptOutId)) {
+				return@mutate SyncedOptOutOutcome.WRITE_FAILED
 			}
 			store.flush()
 			synchronized(mutationLock) {
@@ -3318,7 +3334,7 @@ class ConsentCore @InthInternalApi constructor(
 			publishCurrentTcStorageBus()
 			mutation.release()
 			notifySnapshot()
-			true
+			SyncedOptOutOutcome.APPLIED
 		}
 	}
 

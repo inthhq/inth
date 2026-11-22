@@ -201,13 +201,22 @@ class InthStore(
 	fun writeEnvelope(envelope: SnapshotEnvelope): Boolean = writeEnvelope(envelope, publishBus = true)
 
 	@Synchronized
-	internal fun writeEnvelope(envelope: SnapshotEnvelope, publishBus: Boolean, dropPending: Boolean = false): Boolean {
+	internal fun writeEnvelope(
+		envelope: SnapshotEnvelope,
+		publishBus: Boolean,
+		dropPending: Boolean = false,
+		completeOptOutId: String? = null,
+	): Boolean {
 		val old = readEnvelope()
 		if (old != null && old.snapshot.revision > envelope.snapshot.revision) return false
 		// A dry-run save empties both queues in the same write as the decision.
 		val next = envelope.copy(
 			pendingSaves = if (dropPending) emptyList() else old?.pendingSaves,
-			pendingOptOuts = if (dropPending) emptyList() else old?.pendingOptOuts,
+			pendingOptOuts = when {
+				dropPending -> emptyList()
+				completeOptOutId != null -> old?.pendingOptOuts?.filterNot { it.id == completeOptOutId }
+				else -> old?.pendingOptOuts
+			},
 		)
 		return writeAtomic(next, publishBus)
 	}
