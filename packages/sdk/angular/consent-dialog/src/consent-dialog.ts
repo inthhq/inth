@@ -107,10 +107,11 @@ export const PRIVACY_CHOICES_DIALOG = new InjectionToken<
 	imports: [ConsentDialogTrigger, OptInConfirmation, OptOutConfirmation],
 	selector: 'inth-consent-dialog',
 	// Under the Privacy Choices design the dialog confirms an opt-out on its
-	// receipt, so the embedded confirmation shows only when this dialog does
-	// not open under the policy's model. The floating trigger is an entry
-	// point of its own; the classic body renders its own.
-	template: `@if (!privacyChoices() || !applies()) {
+	// receipt, so the embedded confirmation shows only when this dialog
+	// cannot show: it does not open under the policy's model, or a
+	// controlled \`open\` is false. The floating trigger is an entry point of
+	// its own; the classic body renders its own.
+	template: `@if (!privacyChoices() || !canShow()) {
 			<inth-opt-out-confirmation
 				[embedded]="true"
 				[noStyle]="noStyle()"
@@ -186,6 +187,17 @@ export class ConsentDialog {
 	 */
 	protected readonly applies = computed(() =>
 		this.models().includes(this.#consent.model())
+	);
+
+	/**
+	 * Whether the dialog can render now: it applies to the policy's model,
+	 * and a controlled `open` of `false` does not keep it hidden. Only then
+	 * can the Privacy Choices dialog take the opt-out confirmation over.
+	 *
+	 * @internal
+	 */
+	protected readonly canShow = computed(
+		() => this.applies() && this.open() !== false
 	);
 
 	/** Whether this dialog is opening, by its parent or the consent state. */
@@ -294,6 +306,7 @@ export class ConsentDialog {
 				),
 				inputBinding('noStyle', this.noStyle),
 				inputBinding('disableAnimation', this.disableAnimation),
+				inputBinding('legalLinks', this.legalLinks),
 				inputBinding('models', this.models),
 			],
 		});
@@ -430,7 +443,7 @@ export class ConsentDialog {
 			if (
 				!(
 					this.privacyChoices() &&
-					this.applies() &&
+					this.canShow() &&
 					this.#consent.optOutConfirmationOpen() &&
 					!this.#consent.ɵhasStandaloneOptOutConfirmation()
 				)

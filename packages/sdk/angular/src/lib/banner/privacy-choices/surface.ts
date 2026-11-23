@@ -249,15 +249,10 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 										/>
 										<ng-container [ngTemplateOutlet]="okTemplate" />
 									} @else {
-										@for (action of summaryActions(); track action) {
-											<ng-container
-												[ngTemplateOutlet]="summaryTemplate"
-												[ngTemplateOutletContext]="{
-													$implicit: action,
-													inBar: true,
-												}"
-											/>
-										}
+										<ng-container
+											[ngTemplateOutlet]="summaryRowTemplate"
+											[ngTemplateOutletContext]="{ inBar: true }"
+										/>
 									}
 								</div>
 							</div>
@@ -378,39 +373,10 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 									/>
 									<ng-container [ngTemplateOutlet]="okTemplate" />
 								} @else {
-									<!-- The policy's first-layer actions, in the host's order. -->
-									@for (group of summaryGroups(); track $index) {
-										@if (group.length > 1) {
-											<div
-												[attr.class]="
-													part(
-														'consentBannerFooterSubGroup',
-														surfaceStyles.actionGroup
-													).className
-												"
-												[attr.style]="part('consentBannerFooterSubGroup').style"
-												data-testid="consent-banner-footer-sub-group"
-											>
-												@for (action of group; track action) {
-													<ng-container
-														[ngTemplateOutlet]="summaryTemplate"
-														[ngTemplateOutletContext]="{
-															$implicit: action,
-															inBar: false,
-														}"
-													/>
-												}
-											</div>
-										} @else {
-											<ng-container
-												[ngTemplateOutlet]="summaryTemplate"
-												[ngTemplateOutletContext]="{
-													$implicit: group[0],
-													inBar: false,
-												}"
-											/>
-										}
-									}
+									<ng-container
+										[ngTemplateOutlet]="summaryRowTemplate"
+										[ngTemplateOutletContext]="{ inBar: false }"
+									/>
 								}
 							</div>
 						}
@@ -582,8 +548,11 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 		>
 			<div
 				[attr.class]="
-					part('consentBannerFooterSubGroup', surfaceStyles.actionGroup)
-						.className
+					part(
+						'consentBannerFooterSubGroup',
+						surfaceStyles.actionGroup,
+						presentationStyles().actionGroup
+					).className
 				"
 				[attr.style]="part('consentBannerFooterSubGroup').style"
 				data-testid="consent-banner-footer-sub-group"
@@ -597,6 +566,47 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 					[ngTemplateOutletContext]="{ $implicit: accept }"
 				/>
 			</div>
+		</ng-template>
+		<!-- The policy's first-layer actions, in the host's order and groups.
+		     Every presentation, the collapsed Banner included, keeps the
+		     groups and their consentBannerFooterSubGroup part. -->
+		<ng-template
+			#summaryRowTemplate
+			let-inBar="inBar"
+		>
+			@for (group of summaryGroups(); track $index) {
+				@if (group.length > 1) {
+					<div
+						[attr.class]="
+							part(
+								'consentBannerFooterSubGroup',
+								surfaceStyles.actionGroup,
+								presentationStyles().actionGroup
+							).className
+						"
+						[attr.style]="part('consentBannerFooterSubGroup').style"
+						data-testid="consent-banner-footer-sub-group"
+					>
+						@for (action of group; track action) {
+							<ng-container
+								[ngTemplateOutlet]="summaryTemplate"
+								[ngTemplateOutletContext]="{
+									$implicit: action,
+									inBar: inBar,
+								}"
+							/>
+						}
+					</div>
+				} @else {
+					<ng-container
+						[ngTemplateOutlet]="summaryTemplate"
+						[ngTemplateOutletContext]="{
+							$implicit: group[0],
+							inBar: inBar,
+						}"
+					/>
+				}
+			}
 		</ng-template>`,
 })
 export class PrivacyChoicesSurface {
@@ -741,10 +751,6 @@ export class PrivacyChoicesSurface {
 			(this.options().actionGroups ?? DEFAULT_ACTION_GROUPS)
 				.map((group) => group.filter(isSummaryAction))
 				.filter((group) => group.length > 0)
-	);
-	/** @internal */
-	protected readonly summaryActions = computed(() =>
-		this.summaryGroups().flat()
 	);
 	/** @internal */
 	protected readonly textDirection = computed(() =>

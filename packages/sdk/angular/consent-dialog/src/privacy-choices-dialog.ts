@@ -76,6 +76,7 @@ import styles from '@inth/sdk/ui/styles/components/privacy-choices';
 import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 
+import type { ConsentDialogLegalLinks } from './dialog-options';
 import { PrivacyChoicesLayer } from './privacy-choices-layer';
 import { PRIVACY_CHOICES_DIALOG_SHEETS } from './privacy-choices-sheets';
 import { takeReceiptFocus } from './receipt-focus';
@@ -155,6 +156,7 @@ interface ShownSheet {
 				#backdrop
 				[attr.class]="rootPart().className"
 				[attr.style]="rootPart().style"
+				[attr.data-animation]="animationOff() ? 'off' : null"
 				[attr.data-edge-style]="edgeStyle()"
 				data-design="privacy-choices"
 				[attr.data-regime]="eu() ? 'eu' : 'us'"
@@ -447,13 +449,21 @@ export class PrivacyChoicesDialog {
 	 * as for any open dialog; Close and Escape then close it through the
 	 * consent manager and emit `openChange(false)`, and `open` must turn
 	 * `false` and back to `true` to ask again. `false` hides it whatever the
-	 * consent manager shows. Unset, it follows `activeUI === 'dialog'`.
+	 * consent manager shows, and turning it `false` while the dialog shows
+	 * closes it through the consent manager, as Close does. Unset, it follows
+	 * `activeUI === 'dialog'`.
 	 */
 	readonly open = input<boolean | undefined>(undefined);
 	/** Emits `false` when a controlled dialog asks to close. */
 	readonly openChange = output<boolean>();
 	/** The policy models the dialog opens for. */
 	readonly models = input<readonly string[] | undefined>(undefined);
+	/**
+	 * Which legal link the footer may show: the Cookie Policy for the EU,
+	 * the Privacy Policy for the US. `undefined` shows it, `null` hides it,
+	 * and a list shows it only when its key is in the list.
+	 */
+	readonly legalLinks = input<ConsentDialogLegalLinks | undefined>(undefined);
 
 	/** @internal */
 	protected readonly styles = styles;
@@ -469,6 +479,13 @@ export class PrivacyChoicesDialog {
 	readonly #reducedMotion = computed(
 		() => this.disableAnimation() ?? this.#theme.disableAnimation()
 	);
+	/**
+	 * `disableAnimation`, from the input or the provider: the root carries
+	 * `data-animation="off"`, and a closing sheet leaves at once.
+	 *
+	 * @internal
+	 */
+	protected readonly animationOff = computed(() => this.#reducedMotion());
 
 	private readonly backdrop = viewChild<ElementRef<HTMLElement>>('backdrop');
 	private readonly mainLayer = viewChild('main', { read: PrivacyChoicesLayer });
@@ -561,9 +578,13 @@ export class PrivacyChoicesDialog {
 	});
 	/** @internal */
 	protected readonly legal = computed(() => {
+		const key = this.eu() ? 'cookiePolicy' : 'privacyPolicy';
+		const allowed = this.legalLinks();
 		const [legal] = resolveLegalLinkEntries(
 			this.#consent.legalLinks(),
-			[this.eu() ? 'cookiePolicy' : 'privacyPolicy'],
+			allowed === undefined
+				? [key]
+				: (allowed?.filter((entry) => entry === key) ?? []),
 			this.#consent.copy().legalLinks
 		);
 		return legal ?? null;
@@ -712,6 +733,7 @@ export class PrivacyChoicesDialog {
 			onCleanup(() => clearTimeout(timer));
 		});
 		this.#followOpenRequest();
+		this.#followControlledClose();
 		// Desktop never nests, and a viewport change drops open sheets
 		// (NEST-01, NEST-06).
 		effect(() => {
@@ -747,6 +769,32 @@ export class PrivacyChoicesDialog {
 				const kernel = this.#consent.kernel();
 				if (kernel.getSnapshot().activeUI !== 'dialog') {
 					showConsentSurface(kernel, 'dialog');
+				}
+			});
+		});
+	}
+
+	/**
+	 * A controlled `open` turning false closes a shown dialog through the
+	 * consent manager, as Close does, so an unanswered banner comes back and
+	 * no sheet stays pushed under a hidden dialog.
+	 */
+	#followControlledClose(): void {
+		let shown = false;
+		effect(() => {
+			const wasShown = shown;
+			shown = this.isOpen();
+			if (!wasShown || this.open() !== false) {
+				return;
+			}
+			untracked(() => {
+				const kernel = this.#consent.kernel();
+				if (kernel.getSnapshot().activeUI !== 'dialog') {
+					return;
+				}
+				showConsentSurface(kernel, 'none');
+				if (kernel.getSnapshot().activeUI === 'banner') {
+					focusReturningBanner();
 				}
 			});
 		});
