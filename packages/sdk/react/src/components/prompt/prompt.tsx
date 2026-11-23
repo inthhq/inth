@@ -36,6 +36,7 @@ import {
 	ConsentBannerTitle,
 } from './components';
 import { ErrorBoundary } from './error-boundary';
+import { PrivacyChoicesBanner } from './privacy-choices-banner';
 
 const LazyOptInConfirmation = createDeferredModule(
 	() => import('~/components/opt-in-confirmation')
@@ -268,6 +269,30 @@ const ConsentBannerContent: FC<ConsentBannerProps> = ({
 		scrollLock: resolvedScrollLock,
 		trapFocus: banner.trapFocus,
 	});
+
+	if (banner.design === 'privacy-choices' && banner.container) {
+		return (
+			<ErrorBoundary
+				fallback={<div>Something went wrong with the Consent Banner.</div>}
+			>
+				<PrivacyChoicesBanner
+					container={banner.container}
+					noStyle={config.noStyle}
+					disableAnimation={config.disableAnimation}
+					legalLinks={legalLinks}
+					hideBranding={hideBranding}
+					models={models}
+					uiSource={uiSource}
+					title={title}
+					description={description}
+					rejectButtonText={rejectButtonText}
+					acceptButtonText={acceptButtonText}
+					customizeButtonText={customizeButtonText}
+					dismissButtonText={dismissButtonText}
+				/>
+			</ErrorBoundary>
+		);
+	}
 
 	const { orderedActions } = banner;
 	const allowedActions = new Set(orderedActions);
