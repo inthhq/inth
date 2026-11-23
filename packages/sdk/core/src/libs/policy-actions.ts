@@ -308,9 +308,9 @@ const reportRemovedPromptOptions = function reportRemovedPromptOptions(
 		if (typeof tier !== 'object' || tier === null) {
 			continue;
 		}
-		for (const option of Object.keys(REMOVED_PROMPT_OPTIONS) as (
-			| keyof typeof REMOVED_PROMPT_OPTIONS
-		)[]) {
+		for (const option of Object.keys(
+			REMOVED_PROMPT_OPTIONS
+		) as (keyof typeof REMOVED_PROMPT_OPTIONS)[]) {
 			if ((tier as Record<string, unknown>)[option] !== undefined) {
 				found.add(option);
 			}
