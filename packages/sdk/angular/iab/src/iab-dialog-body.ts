@@ -53,7 +53,10 @@ import {
 } from '@inth/sdk/ui/utils';
 
 import { IABFeatureItem } from './iab-feature-item';
-import { ChevronRightIcon, CloseIcon, InfoIcon, LockIcon } from './iab-icons';
+import { ChevronRightIcon } from './chevron-right-icon';
+import { CloseIcon } from './close-icon';
+import { InfoIcon } from './info-icon';
+import { LockIcon } from './lock-icon';
 import { IABPurposeItem } from './iab-purpose-item';
 import type { IABPurposeChoice, IABVendorChoice } from './iab-purpose-item';
 import { IABStackItem } from './iab-stack-item';

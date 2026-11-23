@@ -36,12 +36,10 @@ import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
-import {
-	ChevronRightIcon,
-	GlobeIcon,
-	LegitimateInterestIcon,
-	LockIcon,
-} from './iab-icons';
+import { ChevronRightIcon } from './chevron-right-icon';
+import { GlobeIcon } from './globe-icon';
+import { LegitimateInterestIcon } from './legitimate-interest-icon';
+import { LockIcon } from './lock-icon';
 
 /** A vendor's choice, as the IAB rows emit it. */
 export interface IABVendorChoice {

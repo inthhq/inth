@@ -9,7 +9,7 @@ import type { ProcessedFeature } from '@inth/sdk/iab/headless';
 import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
-import { ChevronRightIcon } from './iab-icons';
+import { ChevronRightIcon } from './chevron-right-icon';
 import { PREFERENCE_ITEM } from './iab-purpose-item';
 
 /**
