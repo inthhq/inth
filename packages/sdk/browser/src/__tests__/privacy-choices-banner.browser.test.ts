@@ -5,9 +5,12 @@
  * (`prototypes/PRIVACY-CHOICES-REGRESSIONS.md`). The UI renders in its
  * shadow root, so the suite looks there as well as in the page.
  */
+import { openOptInConfirmation } from '@inth/sdk-core/surface-actions';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
+import { mountConsentUI } from '../ui/mount';
+import { rightsBundleOf } from '../ui/privacy-choices/shared';
 import {
 	$,
 	active,
@@ -281,7 +284,10 @@ describe('card bottom right', () => {
 
 	test('[BNR-16] start follows the writing direction: right-to-left puts the start card on the right', async () => {
 		document.documentElement.setAttribute('dir', 'rtl');
-		await mount({ container: { position: 'start', type: 'card' } });
+		await mount({
+			container: { position: 'start', type: 'card' },
+			language: 'he',
+		});
 		await waitForRoot();
 		finishAnimations();
 		const card = box('consent-banner-card');
@@ -698,7 +704,6 @@ describe('customization', () => {
 		stopPrivacyChoicesPages();
 		const client = await mount();
 		client.ui?.destroy();
-		const { mountConsentUI } = await import('../ui/mount');
 		const handle = mountConsentUI(client, {
 			disableAnimation: true,
 			noStyle: true,
@@ -716,5 +721,175 @@ describe('customization', () => {
 			handle.root.querySelectorAll('style[data-inth-styles]')
 		).toHaveLength(0);
 		handle.destroy();
+	});
+});
+
+describe('wave B round 1', () => {
+	test('[BNR-13] an opt-in confirmation opens under the Privacy Choices design', async () => {
+		const client = await mount({ region: 'us-opt-in' });
+		await waitForRoot();
+		const confirmed = vi.fn();
+		openOptInConfirmation(client.kernel, confirmed, null);
+		const confirm = await vi.waitFor(
+			() => must<HTMLButtonElement>('opt-in-confirmation-confirm-button'),
+			{ timeout: 4000 }
+		);
+		confirm.click();
+		await vi.waitFor(() => expect(confirmed).toHaveBeenCalledTimes(1));
+	});
+
+	test('[PERM-05][SR-05] collapsed panels carry a real inert attribute', async () => {
+		await mount();
+		await waitForRoot();
+		const panel = must('consent-banner-expand-panel');
+		expect(panel.hasAttribute('inert')).toBe(true);
+		expect(panel.inert).toBe(true);
+		must('consent-banner-customize-button').click();
+		await waitForPanel();
+		await vi.waitFor(() => expect(panel.hasAttribute('inert')).toBe(false));
+		expect(root().hasAttribute('inert')).toBe(false);
+	});
+
+	test('[BNR-15] the summary shows only the actions the policy allows, in every presentation', async () => {
+		const rule = { actions: ['accept', 'reject'] } as const;
+		await mount({ rule: { ...rule, actions: [...rule.actions] } });
+		await waitForRoot();
+		expect($('consent-banner-customize-button')).toBeNull();
+		expect($('consent-banner-reject-button')).not.toBeNull();
+		expect($('consent-banner-accept-button')).not.toBeNull();
+		stopPrivacyChoicesPages();
+		await mount({
+			container: { type: 'banner' },
+			rule: { ...rule, actions: [...rule.actions] },
+		});
+		await waitForRoot();
+		expect(root()).toHaveAttribute('data-placement', 'banner-bottom');
+		expect($('consent-banner-customize-button')).toBeNull();
+		expect($('consent-banner-reject-button')).not.toBeNull();
+	});
+
+	test('[BNR-15] the summary follows the host layout order', async () => {
+		await mount({ layout: ['customize', ['accept', 'reject']] });
+		await waitForRoot();
+		const footer = must('consent-banner-footer');
+		expect(footer.firstElementChild).toBe($('consent-banner-customize-button'));
+		const group = must('consent-banner-footer-sub-group');
+		expect(group.firstElementChild).toBe($('consent-banner-accept-button'));
+	});
+
+	test('[PERM-13] an expansion made on phone does not survive a pass through all-in-one', async () => {
+		await page.viewport(390, 800);
+		await mount({ container: { side: 'start', type: 'drawer' } });
+		await waitForRoot();
+		must('consent-banner-customize-button').click();
+		await vi.waitFor(() =>
+			expect(root()).toHaveAttribute('data-expanded', 'true')
+		);
+		await page.viewport(1280, 800);
+		await vi.waitFor(() =>
+			expect(root()).toHaveAttribute('data-flow', 'all-in-one')
+		);
+		// Esc on desktop has nothing to fold, so it is left to the page.
+		const escape = new KeyboardEvent('keydown', {
+			bubbles: true,
+			cancelable: true,
+			key: 'Escape',
+		});
+		document.dispatchEvent(escape);
+		expect(escape.defaultPrevented).toBe(false);
+		await page.viewport(390, 800);
+		await vi.waitFor(() =>
+			expect(root()).toHaveAttribute('data-flow', 'expand-in-place')
+		);
+		expect(root()).not.toHaveAttribute('data-expanded');
+		expect(must('consent-banner-expand-panel')).toHaveAttribute(
+			'data-open',
+			'false'
+		);
+	});
+
+	test('[COPY-01][SR-04] the rights bundle reads the backend-confirmed rights from the local receipt', () => {
+		const snapshot = {
+			optOut: {
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: 1,
+				rights: ['sale', 'share'],
+			},
+		} as unknown as Parameters<typeof rightsBundleOf>[0];
+		expect(
+			rightsBundleOf(snapshot, {
+				localAct: 'button',
+				reference: 'ref',
+				rightsConfirmed: true,
+			})
+		).toBe('sale-share');
+		expect(rightsBundleOf(snapshot, null)).toBe('all');
+	});
+
+	test('noStyle reaches the stock buttons', async () => {
+		const client = await mount();
+		client.ui?.destroy();
+		const handle = mountConsentUI(client, {
+			disableAnimation: true,
+			noStyle: true,
+		});
+		const button = (testId: string) =>
+			handle.root.querySelector(`[data-testid="${testId}"]`);
+		await vi.waitFor(() =>
+			expect(button('consent-banner-reject-button')).not.toBeNull()
+		);
+		for (const id of [
+			'consent-banner-reject-button',
+			'consent-banner-accept-button',
+			'consent-banner-customize-button',
+		]) {
+			expect(button(id)?.getAttribute('class') ?? '').toBe('');
+		}
+		handle.destroy();
+	});
+
+	test('the collapsed bar takes the title, description and footer slots', async () => {
+		await mount({
+			container: { type: 'banner' },
+			slots: {
+				consentBannerDescription: 'description-marker',
+				consentBannerFooter: 'footer-marker',
+				consentBannerTitle: 'title-marker',
+			},
+		});
+		await waitForRoot();
+		expect(must('consent-banner-title')).toHaveClass('title-marker');
+		expect(must('consent-banner-description')).toHaveClass(
+			'description-marker'
+		);
+		expect(must('consent-banner-footer')).toHaveClass('footer-marker');
+	});
+
+	test('the root matches the classic root: direction, surface marker, animation switch', async () => {
+		await mount({ language: 'he' });
+		await waitForRoot();
+		expect(root()).toHaveAttribute('dir', 'rtl');
+		expect(root()).toHaveAttribute('data-inth-surface', 'banner');
+		expect(root()).toHaveAttribute('data-animation', 'off');
+		expect(getComputedStyle(must('consent-banner-shell')).animationName).toBe(
+			'none'
+		);
+	});
+
+	test('the Preferences body spacing lives in the stylesheet, so noStyle drops it', async () => {
+		await mount({ container: { type: 'banner' }, region: 'us-opt-in' });
+		await waitForRoot();
+		must('consent-banner-customize-button').click();
+		const row = await vi.waitFor(() => must('consent-banner-preferences-row'), {
+			timeout: 4000,
+		});
+		const body = byId(row.getAttribute('aria-controls'))?.querySelector(
+			':scope > * > *'
+		) as HTMLElement;
+		expect(body.getAttribute('style')).toBeNull();
+		await vi.waitFor(() =>
+			expect(getComputedStyle(body).paddingTop).toBe('8px')
+		);
 	});
 });

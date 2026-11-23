@@ -117,7 +117,7 @@ export const createPrivacyChoicesPanel =
 						{ class: cx(noStyle, expandStyles.inner) },
 						el(
 							'div',
-							{ style: 'padding-top: 8px;' },
+							{ class: cx(noStyle, styles.preferencesBody) },
 							preferences.render(env, {
 								exclude: sale ? [sale] : [],
 								footer: sale

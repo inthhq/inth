@@ -21,6 +21,7 @@ import type {
 	SaleAnnouncementOutcome,
 	SaveUISource,
 } from '@inth/sdk-core';
+import { getOptOutReceiptData } from '@inth/sdk-core/surface-actions';
 import {
 	revealInScrollBody,
 	scheduleReveal,
@@ -88,7 +89,7 @@ export const createSaleRightsRow =
 			const open = state.confirmation?.right === 'sale';
 			const nudges = open ? (state.confirmation?.nudges ?? 0) : 0;
 			const { model } = snapshot.evaluationPolicy;
-			const bundle = rightsBundleOf(snapshot);
+			const bundle = rightsBundleOf(snapshot, getOptOutReceiptData(kernel));
 			const copy = resolveSaleRightCopy(t, {
 				bundle,
 				business: props.business,

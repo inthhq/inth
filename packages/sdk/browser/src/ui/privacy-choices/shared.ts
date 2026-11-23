@@ -17,6 +17,7 @@ import {
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
+	OptOutReceiptData,
 	RightsBundle,
 	SurfaceSession,
 	SurfaceSessionState,
@@ -64,14 +65,19 @@ export const surfaceBasics = function surfaceBasics(
 };
 
 /**
- * The rights bundle the sale row names (COPY-01): the confirmed rights of a
- * held opt-out, else sale, sharing and targeted ads, which every US preset
- * covers.
+ * The rights bundle the sale row names (COPY-01, SR-04): the confirmed
+ * rights of a held opt-out, else sale, sharing and targeted ads, which
+ * every US preset covers. The rights count as confirmed only through this
+ * browser's local receipt data (`getOptOutReceiptData`), so it must be
+ * passed.
  */
 export const rightsBundleOf = function rightsBundleOf(
-	snapshot: ConsentSnapshot
+	snapshot: Pick<ConsentSnapshot, 'optOut'>,
+	local: Partial<OptOutReceiptData> | null
 ): RightsBundle {
-	return resolveRightsBundle(resolveOptOutReceipt(snapshot).rights) ?? 'all';
+	return (
+		resolveRightsBundle(resolveOptOutReceipt(snapshot, local).rights) ?? 'all'
+	);
 };
 
 /**

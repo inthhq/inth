@@ -23,13 +23,17 @@ import {
 import type {
 	BannerCommitAction,
 	ConsentSnapshot,
+	PresentationAction,
 	PrivacyChoicesPromptVariant,
 	ResolvedConsentLayout,
 	ResolvedConsentPresentation,
 } from '@inth/sdk-core';
 import { createPreferenceDraft } from '@inth/sdk-core/preference-draft';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
-import { hasConsentUI } from '@inth/sdk-core/surface-actions';
+import {
+	getOptOutReceiptData,
+	hasConsentUI,
+} from '@inth/sdk-core/surface-actions';
 import {
 	afterMotion,
 	attachLiveRegion,
@@ -38,7 +42,11 @@ import {
 	attachTopLayerTrap,
 } from '@inth/sdk-ui/primitives/surface';
 import type { LiveRegion } from '@inth/sdk-ui/primitives/surface';
-import { resolveBrandingTag, tabbableElements } from '@inth/sdk-ui/utils';
+import {
+	getTextDirection,
+	resolveBrandingTag,
+	tabbableElements,
+} from '@inth/sdk-ui/utils';
 import { BRAND_MARKS } from '@inth/sdk-ui/utils/branding';
 
 import { classes as expandStyles } from '../../generated/privacy-choices/expand';
@@ -65,11 +73,21 @@ const EXIT_MS = 160;
 
 /** Where focus goes after a choice (BNR-06, ARCH-03). */
 const RETURN_TARGETS = [
-	'[data-testid="privacy-choices-link"]',
+	'[data-testid="privacy-choices-link"]:not([hidden])',
 	'[data-testid="consent-dialog-trigger"]',
 ];
 
 const CARD_LINKS = ['privacyPolicy', 'cookiePolicy'] as const;
+
+/** The first-layer actions the policy allows, in the host's order and groups. */
+export type PrivacyChoicesActionGroups =
+	readonly (readonly PresentationAction[])[];
+
+/** Every action, in the default order, when the host passes none. */
+const DEFAULT_ACTION_GROUPS: PrivacyChoicesActionGroups = [
+	['reject', 'accept'],
+	['customize'],
+];
 
 /** One presentation's stylesheets and class names. */
 export interface PresentationEntry {
@@ -85,8 +103,16 @@ export type PrivacyChoicesContainer = NonNullable<
 
 /** A mounted Privacy Choices prompt. */
 export interface PrivacyChoicesBanner {
-	/** Reconcile with a snapshot and the container resolved from it. */
-	sync: (snapshot: ConsentSnapshot, container: PrivacyChoicesContainer) => void;
+	/**
+	 * Reconcile with a snapshot, the container resolved from it and the
+	 * first-layer actions the policy allows. Absent, every action shows in
+	 * the default order.
+	 */
+	sync: (
+		snapshot: ConsentSnapshot,
+		container: PrivacyChoicesContainer,
+		actionGroups?: PrivacyChoicesActionGroups
+	) => void;
 	/** Leave at once, as when the design no longer applies. */
 	hide: () => void;
 	destroy: () => void;
@@ -190,6 +216,7 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 
 	let snapshot: ConsentSnapshot | null = null;
 	let container: PrivacyChoicesContainer | null = null;
+	let actionGroups: PrivacyChoicesActionGroups = DEFAULT_ACTION_GROUPS;
 	let phase: Phase = 'hidden';
 	let panelReady = false;
 	let panelWanted = false;
@@ -339,10 +366,22 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 		const barCollapsed = bar && !expanded;
 		const optionsOpen = allInOne || expanded;
 		const wantPanel = panelWanted || optionsOpen;
-		const bundle = rightsBundleOf(snap);
+		const bundle = rightsBundleOf(snap, getOptOutReceiptData(kernel));
 		const gpc = resolveOptOutState(snap).lock === 'gpc-active';
 		const copy = resolvePrivacyChoicesBannerCopy(t, { bundle, gpc, variant });
 		const notice = variant === 'notice';
+		// The policy's first-layer actions, in the host's order. A notice's
+		// "Your Privacy Choices" is the opt-out right, not an action, so it
+		// stays.
+		const summaryGroups = actionGroups
+			.map((group) =>
+				group.filter(
+					(action) =>
+						action === 'reject' || action === 'accept' || action === 'customize'
+				)
+			)
+			.filter((group) => group.length > 0);
+		const summaryActions = summaryGroups.flat();
 		const links =
 			options.legalLinks === undefined ? [...CARD_LINKS] : options.legalLinks;
 		const barLinks = links?.filter((key) => key === 'privacyPolicy') ?? null;
@@ -476,6 +515,19 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 				'consentBannerFooterSubGroup'
 			);
 
+		const summaryButton = (action: PresentationAction, inBar: boolean) => {
+			if (action === 'reject') {
+				return refuseButton(copy.reject);
+			}
+			if (action === 'accept') {
+				return allowButton(copy.accept);
+			}
+			return expandButton(
+				options.customizeButtonText ?? (inBar ? copy.expandBar : copy.expand),
+				inBar
+			);
+		};
+
 		let footerContent: PcChild[];
 		if (optionsOpen) {
 			footerContent = notice
@@ -493,10 +545,10 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 				okButton(),
 			];
 		} else {
-			footerContent = [
-				actionGroup(refuseButton(copy.reject), allowButton(copy.accept)),
-				expandButton(options.customizeButtonText ?? copy.expand, false),
-			];
+			footerContent = summaryGroups.map((group) => {
+				const buttons = group.map((action) => summaryButton(action, false));
+				return group.length > 1 ? actionGroup(...buttons) : buttons[0];
+			});
 		}
 
 		const tag = options.hideBranding ? null : consentTag(env, styles.tag);
@@ -531,38 +583,54 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 
 		let body: PcChild[];
 		if (barCollapsed) {
+			// The collapsed bar takes the same title, description and footer
+			// slots as the card.
 			body = [
-				el(
-					'h2',
-					{
-						class: cx(noStyle, surfaceStyles.visuallyHidden),
-						'data-testid': 'consent-banner-title',
-						id: ids.title,
-					},
-					options.title ?? copy.title
+				slot(
+					el(
+						'h2',
+						{
+							class: cx(noStyle, surfaceStyles.visuallyHidden),
+							'data-testid': 'consent-banner-title',
+							id: ids.title,
+						},
+						options.title ?? copy.title
+					),
+					'consentBannerTitle'
 				),
 				el(
 					'div',
 					{ class: cx(noStyle, styles.row) },
-					el(
-						'p',
-						{
-							class: cx(noStyle, styles.text),
-							'data-testid': 'consent-banner-description',
-						},
-						options.description ?? copy.barDescription,
-						...legal(barLinks)
+					slot(
+						el(
+							'p',
+							{
+								class: cx(noStyle, styles.text),
+								'data-testid': 'consent-banner-description',
+							},
+							options.description ?? copy.barDescription,
+							...legal(barLinks)
+						),
+						'consentBannerDescription'
 					),
-					el(
-						'div',
-						{
-							class: cx(noStyle, styles.actions),
-							'data-testid': 'consent-banner-footer',
-						},
-						notice ? null : refuseButton(copy.reject),
-						notice ? null : allowButton(copy.accept),
-						expandButton(options.customizeButtonText ?? copy.expandBar, true),
-						notice ? okButton() : null
+					slot(
+						el(
+							'div',
+							{
+								class: cx(noStyle, styles.actions),
+								'data-testid': 'consent-banner-footer',
+							},
+							...(notice
+								? [
+										expandButton(
+											options.customizeButtonText ?? copy.expandBar,
+											true
+										),
+										okButton(),
+									]
+								: summaryActions.map((action) => summaryButton(action, true)))
+						),
+						'consentBannerFooter'
 					)
 				),
 				status,
@@ -652,6 +720,7 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 				'div',
 				{
 					class: cx(noStyle, surfaceStyles.root, styles.root),
+					'data-animation': disableAnimation ? 'off' : undefined,
 					'data-blocking': layout.blocking ? 'true' : undefined,
 					'data-design': 'privacy-choices',
 					'data-edge-style': layout.edgeStyle,
@@ -661,6 +730,7 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 					'data-state': phase === 'leaving' ? 'closed' : 'open',
 					'data-testid': 'consent-banner-root',
 					'data-variant': variant,
+					dir: getTextDirection(snap.translations?.language),
 					// A prompt on its way out takes no input (PERM-05).
 					inert: phase === 'leaving',
 					[SURFACE_ROOT_ATTRIBUTE]: 'banner',
@@ -854,6 +924,16 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 		rendering = true;
 		try {
 			nextPhase(snapshot);
+			// All-in-one has nothing to fold. An expansion left from the phone
+			// Drawer would reopen when the viewport narrows again, and Escape
+			// would spend a press folding it with no Customize to focus
+			// (PERM-13).
+			if (layoutOf(container).flow === 'all-in-one') {
+				pendingExpandFocus = false;
+				if (session.getState().expanded) {
+					session.collapse();
+				}
+			}
 			if (!pageStatus.isConnected) {
 				ctx.root.append(owned(pageStatus));
 				pageRegion = attachLiveRegion(pageStatus);
@@ -911,9 +991,10 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 				removeRoot();
 			}
 		},
-		sync(next, nextContainer) {
+		sync(next, nextContainer, nextActionGroups) {
 			snapshot = next;
 			container = nextContainer;
+			actionGroups = nextActionGroups ?? DEFAULT_ACTION_GROUPS;
 			if (layoutOf(nextContainer).flow === 'all-in-one') {
 				panelWanted = true;
 				loadPanel();
