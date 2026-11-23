@@ -220,15 +220,14 @@ export const renderPrompt = function renderPrompt(
 			// The notice's rights action reads as a link (VIS-02).
 			return h(
 				'button',
-				{
+				bound(parts.rightLink, {
 					...aria,
-					class: cx(model, surface.rightLink),
 					// Held and replayed like Customize: it opens the rights in
 					// place.
 					'data-action': 'customize',
 					'data-testid': 'consent-banner-right-link-opt-out',
 					type: 'button',
-				},
+				}),
 				label
 			);
 		}
