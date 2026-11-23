@@ -1,19 +1,33 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	inject,
+	signal,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../src/__tests__/test-local';
-import { ConsentBanner } from '../../src/lib/banner/consent-banner';
+import { ConsentManager } from '../../src/lib/core/consent-manager';
 import { provideInth } from '../../src/lib/core/provide-inth';
 import { ConsentDialog } from './consent-dialog';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ConsentBanner, ConsentDialog],
+	imports: [ConsentDialog],
 	selector: 'test-dialog-focus',
-	template: `<inth-consent-banner /><inth-consent-dialog />`,
+	template: `<button
+			type="button"
+			data-testid="opener"
+			(click)="consent.setActiveUI('dialog')"
+		>
+			Your Privacy Choices
+		</button>
+		<inth-consent-dialog />`,
 })
-class Host {}
+class Host {
+	protected readonly consent = inject(ConsentManager);
+}
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,15 +76,18 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-describe('a non-blocking consent dialog', () => {
+/**
+ * The dialog always blocks the page and traps focus, whatever the
+ * provider's `scrollLock` and `trapFocus` say: these tests cover where
+ * focus goes when it opens and closes.
+ */
+describe("the consent dialog's focus", () => {
 	test('takes focus when it opens, and gives it back when it closes', async () => {
 		TestBed.configureTestingModule({
 			providers: [
 				provideInth({
 					...testOptions(),
 					disableAnimation: true,
-					scrollLock: false,
-					trapFocus: false,
 				}),
 			],
 		});
@@ -82,16 +99,10 @@ describe('a non-blocking consent dialog', () => {
 			});
 			await fixture.whenStable();
 		};
-		await vi.waitFor(async () => {
-			await settle();
-			expect(byTestId('consent-banner-customize-button')).not.toBeNull();
-		}, WAIT);
-
-		const customize = byTestId(
-			'consent-banner-customize-button'
-		) as HTMLElement;
-		customize.focus();
-		customize.click();
+		await settle();
+		const opener = byTestId('opener') as HTMLElement;
+		opener.focus();
+		opener.click();
 		await vi.waitFor(async () => {
 			await settle();
 			const root = byTestId('consent-dialog-root');
@@ -105,20 +116,16 @@ describe('a non-blocking consent dialog', () => {
 		await vi.waitFor(async () => {
 			await settle();
 			expect(byTestId('consent-dialog-root')).toBeNull();
-			expect(document.activeElement).toBe(
-				byTestId('consent-banner-customize-button')
-			);
+			expect(document.activeElement).toBe(opener);
 		}, WAIT);
 	}, 20_000);
 
-	test('a non-blocking dialog controlled through [(open)] gives focus back to its opener', async () => {
+	test('a dialog controlled through [(open)] gives focus back to its opener', async () => {
 		TestBed.configureTestingModule({
 			providers: [
 				provideInth({
 					...testOptions(),
 					disableAnimation: true,
-					scrollLock: false,
-					trapFocus: false,
 				}),
 			],
 		});
@@ -151,14 +158,12 @@ describe('a non-blocking consent dialog', () => {
 		}, WAIT);
 	}, 20_000);
 
-	test('gives focus back when the parent hands open back while the dialog is closed to the consent state', async () => {
+	test('stays open when the parent hands open back to the consent state, and gives focus back when it closes', async () => {
 		TestBed.configureTestingModule({
 			providers: [
 				provideInth({
 					...testOptions(),
 					disableAnimation: true,
-					scrollLock: false,
-					trapFocus: false,
 				}),
 			],
 		});
@@ -183,8 +188,18 @@ describe('a non-blocking consent dialog', () => {
 			).toBe(true);
 		}, WAIT);
 
-		// Control goes back to the consent state, which has no dialog open.
+		// Control goes back to the consent state, which the parent's open
+		// moved to the dialog: it stays open, and keeps focus.
 		fixture.componentInstance.open.set(undefined);
+		await settle();
+		expect(TestBed.inject(ConsentManager).activeUI()).toBe('dialog');
+		expect(
+			byTestId('consent-dialog-root')?.contains(document.activeElement)
+		).toBe(true);
+
+		document.activeElement?.dispatchEvent(
+			new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })
+		);
 		await vi.waitFor(async () => {
 			await settle();
 			expect(byTestId('consent-dialog-root')).toBeNull();
@@ -198,8 +213,6 @@ describe('a non-blocking consent dialog', () => {
 				provideInth({
 					...testOptions(),
 					disableAnimation: true,
-					scrollLock: false,
-					trapFocus: false,
 				}),
 			],
 		});

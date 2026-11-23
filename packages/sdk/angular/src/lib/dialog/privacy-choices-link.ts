@@ -10,11 +10,8 @@ import {
 	PLATFORM_ID,
 } from '@angular/core';
 import type { OptOutLinkVariant } from '@inth/sdk/surface-state';
-import {
-	resolveConsentDesign,
-	resolvePrivacyChoicesLink,
-} from '@inth/sdk/surface-state';
-import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
+import { resolvePrivacyChoicesLink } from '@inth/sdk/surface-state';
+import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import { CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
@@ -23,10 +20,9 @@ import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
 import { OptOutIcon } from '../shared/icons';
 
 /**
- * The icon's own size, 14px tall at the glyph's ratio. A Privacy Choices
- * page never loads the classic banner sheet whose `.optOutIcon` rule sizes
- * it, so the attributes keep it from filling the line; that rule, where it
- * loads, still wins.
+ * The icon's own size, 14px tall at the glyph's ratio. The legal-links
+ * sheet's `.optOutIcon` rule sizes it where that sheet loads; on a page
+ * without it, the attributes keep the icon from filling the line.
  */
 const ICON_SIZE = (() => {
 	const [, , width = 30, height = 14] = CPPA_OPT_OUT_ICON.viewBox
@@ -43,15 +39,14 @@ const ICON_SIZE = (() => {
  * Under an opt-out policy with the opt-out right it reads the title
  * resolved from `presentation.optOutLink` (or `variant`), with the
  * California Privacy Protection Agency opt-out icon beside both Privacy
- * Choices titles. Under `design: 'privacy-choices'` it is also the way back
- * into the dialog under an opt-in policy, in the US or the EU: it reads
- * "Your Privacy Choices" there, with no opt-out icon, since no opt-out
- * right is offered. The dialog returns focus to it when its opener is gone.
+ * Choices titles. It is also the way back into the dialog under an opt-in
+ * policy, in the US or the EU: it reads "Your Privacy Choices" there, with
+ * no opt-out icon, since no opt-out right is offered. The dialog returns
+ * focus to it when its opener is gone.
  *
- * Renders nothing when the active policy gives no opt-out right (on the
- * classic design), when no policy has resolved yet, or when an external
- * consent source owns consent. Content between the tags replaces the
- * label.
+ * Renders nothing when no policy has resolved yet, under IAB, or when an
+ * external consent source owns consent. Content between the tags replaces
+ * the label.
  *
  * @example
  * ```html
@@ -106,10 +101,7 @@ export class PrivacyChoicesLink {
 		return resolvePrivacyChoicesLink(
 			this.#consent.snapshot(),
 			this.#consent.copy(),
-			{
-				design: resolveConsentDesign(presentation),
-				variant: this.variant() ?? presentation?.optOutLink,
-			}
+			{ variant: this.variant() ?? presentation?.optOutLink }
 		);
 	});
 
@@ -125,7 +117,7 @@ export class PrivacyChoicesLink {
 
 	/** @internal */
 	protected readonly iconClass = computed(() =>
-		this.#theme.noStyle() ? null : (bannerStyles.optOutIcon ?? null)
+		this.#theme.noStyle() ? null : (legalLinkStyles.optOutIcon ?? null)
 	);
 
 	constructor() {

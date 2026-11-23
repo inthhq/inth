@@ -11,13 +11,10 @@ export type ConsentWidgetHarnessFilters = BaseHarnessFilters;
 const ITEM_PREFIX = 'consent-widget-accordion-item-';
 
 /**
- * Drives the preference center: `<inth-consent-widget>` on a page, and
- * the same widget inside `<inth-consent-dialog>`.
- *
- * A widget on a page renders in place, so the fixture's loader finds it.
- * The one inside the consent dialog renders into `<body>`: get it from
- * {@link ConsentDialogHarness.getWidget} or a
- * `TestbedHarnessEnvironment.documentRootLoader(fixture)`.
+ * Drives the preference center, `<inth-consent-widget>`, on a page. It
+ * renders in place, so the fixture's loader finds it. The consent dialog
+ * has no widget inside it: drive its switches with
+ * {@link ConsentDialogHarness}.
  *
  * The category switches stage a draft. `save()` records it; `acceptAll()`
  * and `rejectAll()` record a choice for every category.
@@ -32,7 +29,7 @@ const ITEM_PREFIX = 'consent-widget-accordion-item-';
  * ```
  */
 export class ConsentWidgetHarness extends ComponentHarness {
-	/** Matches the widget's root, on a page or inside the dialog. */
+	/** Matches the widget's root. */
 	static hostSelector = '[data-testid="consent-widget-root"]';
 
 	/**

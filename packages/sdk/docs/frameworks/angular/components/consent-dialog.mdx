@@ -1,143 +1,181 @@
 ---
 title: ConsentDialog
-description: Add the Inth preference dialog in Angular with inth-consent-dialog, including lazy loading, inputs and accessibility.
+description: Add the Your Privacy Choices dialog in Angular with inth-consent-dialog, open it from links or your own code, and control how it loads.
 group: frameworks
 ---
 
-Render the preference dialog where visitors manage consent categories in
-Angular using `<inth-consent-dialog>`.
+Render the "Your Privacy Choices" dialog, where visitors review and change
+their consent, with `<inth-consent-dialog>`.
 
 ## Render the dialog
 
-Import `ConsentDialog` and render `<inth-consent-dialog>` once in your root
-component next to `<inth-consent-banner>`:
+Import `ConsentDialog` from `@inth/angular/consent-dialog` and render
+`<inth-consent-dialog>` once in your root component, next to
+`<inth-consent-banner>`:
 
 <include src="../../../shared/examples/angular/app-component.mdx" />
 
-Do not wrap it in `@if`: the dialog stays closed until opened. Use
-[`<inth-provider>`](./inth-provider) to render banner and dialog in one
+Do not wrap it in `@if`: the dialog stays closed until something opens it.
+Use [`<inth-provider>`](./inth-provider) to render banner and dialog in one
 tag.
 
-## How the dialog loads
+## Open the dialog
 
-`ConsentDialog` from `@inth/angular/consent-dialog` is a lightweight host.
-The dialog body (widget and primitives) loads as a separate chunk:
+The dialog opens when `activeUI()` becomes `'dialog'`. These set it:
 
-- During browser idle time after `load` when a dialog opener is rendered
-  (banner Customize button, `inthConsentDialogLink`,
-  `<inth-consent-dialog-trigger>`, `<inth-consent-gate>` placeholder or
-  `ConsentButton` with `action="customize"`).
-- When any of those buttons is hovered or focused.
-- On open at the latest.
+- [`<inth-privacy-choices-link>`](./privacy-choices-link),
+  [`[inthConsentDialogLink]`](./consent-dialog-link) and
+  [`<inth-consent-dialog-trigger>`](./consent-dialog-trigger).
+- The opt-out link on a notice when `presentation.optOutLink` is
+  `'privacy-choices'` or `'california-privacy-choices'`.
+- The button inside an `<inth-consent-gate>` placeholder.
+- `ConsentManager.setActiveUI('dialog')` or `HeadlessConsent.openDialog()` in
+  your own code.
 
-Set `preloadDialog: 'intent'` in `provideInth()` to skip idle preloading and
-load only on hover, focus or open. Idle loading also skips on Save-Data, 2G
-and offline connections. If loading fails while opening, the previous surface
-returns (or `openChange` emits `false` for controlled dialogs) and the next
-attempt retries.
+The banner's Customize button does not open the dialog. It opens the choices
+inside the banner, so a first-time visitor never leaves the banner to choose.
+The dialog is where visitors come back later, which is why a footer link to
+it matters.
 
-Dialog CSS loads alongside the chunk as a `<style>` element stamped with the
-CSP nonce. With `styles: false`, rules come from `@inth/angular/styles.css`.
+## What the dialog contains
+
+The dialog is centred on desktop and a bottom sheet on phones. Its content
+follows the policy:
+
+- **Choice regime** (opt-in, and opt-out rules that ask for a choice): one
+  switch per category in scope, with its vendors, and Reject All, Accept All
+  and Save. Save stays disabled until a switch differs from the recorded
+  choice, so a visitor cannot save the same choice by accident.
+- **Opt-out regime** (opt-out rules with a notice): the sale-and-sharing row
+  with Protect and Allow, the receipt of the recorded choice, a Preferences
+  row for the category switches, and Done. Allowing again after an opt-out
+  asks to confirm first (11 CCR §7028(a)).
+
+On phones, Preferences and each category's vendor list open as nested sheets
+over the dialog.
+
+While Global Privacy Control is active under a policy that maps it, the
+signal-restricted categories stay off and their switches are disabled with
+the GPC note. Read the same state and receipt from
+`ConsentManager.optOutState()`.
+
+After a one-click opt-out, from a "Do Not Sell" link or
+`ConsentManager.requestOptOut()`, the dialog opens on its receipt with focus
+there. A standalone `<inth-opt-out-confirmation>` you mounted still shows
+itself instead.
 
 ## Inputs
 
 | Input | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `open` | `boolean` | follows consent state | Controlled visibility. Bind `[(open)]` so Escape and saves close it. |
+| `open` | `boolean` | follows `activeUI()` | Controlled visibility. See [control the open state](#control-the-open-state). |
 | `showTrigger` | `boolean` or `ConsentDialogTriggerOptions` | `false` | Renders a floating `<inth-consent-dialog-trigger>` with the dialog. |
-| `legalLinks` | array of `LegalLinks` keys, or `null` | all configured links | Legal links shown after the description. |
-| `hideBranding` | `boolean` | `false` | Hides the "Consent by" tag. |
+| `legalLinks` | array of `LegalLinks` keys, or `null` | shown | The footer shows the Cookie Policy under a choice regime and the Privacy Policy under an opt-out regime. `null` hides it; an array shows it only when its key is listed. |
 | `models` | `Model[]` | `['opt-in', 'opt-out', 'none']` | Policy models handled. IAB uses `<inth-iab-consent-dialog>`. |
 | `noStyle` | `boolean` | provider `noStyle` | Drops `inth` classes. |
-| `disableAnimation` | `boolean` | provider value | Disables open and close transitions. |
-| `rootClass` | `string` | none | Extra class on the dialog element. |
+| `disableAnimation` | `boolean` | provider value | Shows the backdrop, card and phone sheets without motion. |
 
-`openChange` emits `false` on Escape, after saving, accepting or rejecting,
-or if the dialog chunk fails to load.
-
-Title and description come from `consentManagerDialog` translations; see
+Copy comes from the `privacyChoices` translation section and
+`consentTypes.<category>.title` and `.description` for each category; see
 [translations](../translations). Passing `showTrigger` loads the dialog chunk
-immediately on mount; render `<inth-consent-dialog-trigger>` separately to
-avoid that eager load.
+on mount. Render `<inth-consent-dialog-trigger>` on its own to avoid that
+eager load.
 
-## What the dialog contains
+## Close the dialog
 
-The dialog displays the heading, description with legal links, and a
-[`<inth-consent-widget>`](./consent-widget) listing categories within the
-policy's scope (`necessary` is always enabled and locked). Switches edit a
-shared draft until the visitor saves, accepts or rejects (accept and reject
-record every unlocked category).
+Escape, Close and Done close the dialog without saving. If the policy still owes a
+choice, the banner returns. Clicking the backdrop does not close it, so
+unsaved switches are not lost to a stray click. Closing discards unsaved
+switches, so the next open starts from the recorded choice.
 
-Under an `opt-out` policy, the widget inside the dialog renders a
-sale-and-sharing block first, above the category list and outside any
-accordion item. Before the visitor opts out, the block shows the configured
-opt-out link title, a neutral status sentence and an **Opt out** button that
-records the opt-out in one click without touching switches or Save. Once a
-durable opt-out is held, the button disappears and the block shows the status
-line (`role="status"`), receipt sentence, recorded time and local reference.
-When the backend confirms the refused rights, the heading updates to name
-them. When Global Privacy Control (GPC) is not locking the opt-out, the block
-also shows an **Opt back in…** link. Under an `opt-in` policy, no block
-renders.
+Reject All, Accept All and Save close the dialog as soon as the browser
+records the choice. The request to Inth runs afterwards and never reopens the
+dialog: a failed request keeps the local choice, reports through `onError`
+and retries later.
 
-Under an `opt-out` policy while an opt-out is held, opting back in uses a
-two-step confirmation dialog. Clicking **Opt back in…**, clicking Accept All,
-or turning `marketing` back on and clicking Save opens a separate modal dialog
-instead of saving right away (`measurement` decides when `marketing` is not in
-scope). Focus starts on the cancel button, both buttons have equal prominence,
-and Escape cancels without saving. Confirming lifts a device opt-out, or asks
-the backend to lift an account opt-out, which stays in force until the backend
-confirms it. Turning `measurement` on while `marketing` stays off allows
-`measurement` without lifting the opt-out and skips confirmation. Under an
-`opt-in` policy, Accept still lifts a held opt-out in one step.
+The dialog always blocks the page: backdrop, scroll lock and focus trap.
 
-While GPC is active under a policy that maps it, signal-restricted switches
-and `marketing` (or `measurement` when `marketing` is not in scope) stay off
-and disabled with the GPC notice below each locked row, no **Opt back in…**
-link renders, and Save and Accept All skip locked categories. When an account
-holds the opt-out and GPC is off, the account notice appears below `marketing`
-(or `measurement` when `marketing` is not in scope) and the switches stay
-usable. Read the same state and receipt from `ConsentManager.optOutState()`.
+## Control the open state
 
-`<inth-consent-dialog>` also hosts `<inth-opt-out-confirmation>` lazily. After
-a one-click opt-out, the confirmation view shows the title, status line,
-receipt sentence (covering this browser or the account, naming rights only
-when confirmed by the backend), recorded time, local reference when this
-browser recorded it, Done and Manage preferences.
+Bind `[(open)]` when your own state should decide whether the dialog shows:
 
-If the policy changes while open, the widget alerts the visitor to review
-before saving.
-
-## Open and close the dialog
-
-Setting active UI to `'dialog'` opens it (via Customize,
-`inthConsentDialogLink`, `<inth-consent-dialog-trigger>`,
-`ConsentManager.setActiveUI('dialog')` or `HeadlessConsent.openDialog()`).
-
-Escape closes the dialog without saving; outside clicks do not close it so
-unsaved switches are not lost. Focus returns to the opener or restored banner.
-
-When controlling visibility with `open`, use two-way binding so Escape and
-saves update your state:
+{/* example: fragment */}
 
 ```html
 <inth-consent-dialog [(open)]="preferencesOpen" />
 ```
 
+`true` asks the consent manager once to show the dialog, so the banner hands
+over and phone sheets, Escape and the receipt work as for any open dialog.
+Close, Done, Escape and any choice close it through the consent manager and
+emit `openChange` with `false`. To ask again,
+`open` must turn `false` and back to `true`. `false` hides the dialog whatever
+the consent manager shows; turning it `false` while the dialog shows closes it
+as Close does, so an unanswered banner comes back.
+
+## How the dialog loads
+
+`ConsentDialog` is a small host. The dialog body is a chunk of its own,
+with its stylesheet, so it stays out of the first page load. It loads at the
+first of these:
+
+- Browser idle time after `load`, while a control that opens the dialog is
+  rendered: `<inth-privacy-choices-link>`, `[inthConsentDialogLink]`,
+  `<inth-consent-dialog-trigger>`, an `<inth-consent-gate>` placeholder or a
+  `ConsentButton` with `action="customize"`.
+- Hover or focus on any of those controls.
+- Opening the dialog.
+
+Set `preloadDialog: 'intent'` in `provideInth()` to skip idle loading and load
+only on hover, focus or open. Idle loading also skips on Save-Data, 2G and
+offline connections. If loading fails while opening, the previous surface
+returns (or `openChange` emits `false` for a controlled dialog) and the next
+open tries again.
+
+The dialog stylesheet loads with the chunk as a `<style>` element stamped
+with the CSP nonce. With `styles: false`, the rules come from
+`@inth/angular/styles.css`.
+
+The dialog never opens without a resolved policy rule, even when
+`activeUI()` is already `'dialog'`. It appears as soon as a rule resolves. A
+rule with `model: 'none'` and no rights owes no consent UI, so the dialog
+stays closed. When a `none` rule lists a right, the dialog opens as a
+settings route and closing it writes no consent record.
+
 ## Accessibility
 
-- Uses `aria-labelledby` and `aria-describedby` pointing to title and
-  description.
-- Blocking mode (default) traps focus and locks background scroll.
-- Category controls expose `role="switch"` and set `dir` from the active
+- The dialog carries `role="dialog"`, `aria-modal="true"` and
+  `aria-labelledby` pointing at its title, and sets `dir` from the active
   language.
-- Under an `opt-out` policy, the sale-and-sharing block renders as a `section`
-  labelled by its heading above the category list.
+- Opening moves focus inside the dialog. Tab and Shift+Tab wrap inside it.
+  Closing returns focus to the control that opened it, or to "Your Privacy
+  Choices" when that control is gone.
+- Each category switch uses the category title as its accessible name. The
+  `necessary` switch is disabled and always on.
+- Each nested phone sheet has its own title and close button.
+- Status messages, such as the saved cue, use a `role="status"` region.
 
 ## Style the dialog
 
-`<inth-consent-dialog>` reads `consentDialog`, `consentDialogCard`,
-`consentDialogHeader`, `consentDialogTitle`, `consentDialogDescription`,
-`consentDialogContent`, `consentDialogTag` and `consentDialogOverlay` theme
-slots. The root carries `data-testid="consent-dialog-root"` and
-`data-blocking="true"` while blocking.
+`<inth-consent-dialog>` reads these `theme.slots` keys: `consentDialog` (the
+backdrop, which is the dialog's root), `consentDialogCard`,
+`consentDialogSheet`, `consentDialogHeader`, `consentDialogTitle`,
+`consentDialogContent`, `consentDialogFooter`, `consentDialogCategoryGroup`,
+`consentDialogVendorTable`, `consentDialogRightsRow`, `consentDialogReceipt`,
+`consentDialogPreferencesRow`, `consentDialogSaveButton` and
+`consentDialogDoneButton`. See [customize](../customize).
+
+The root carries `data-testid="consent-dialog-root"`, `data-regime` (`eu` or
+`us`) and `data-layout` (`desktop` or `phone`). For your own dialog markup,
+use [`<inth-consent-widget>`](./consent-widget) or the
+[headless](../headless) state.
+
+## Verify it
+
+Test with an opt-in policy and an optional category not restricted by policy
+or GPC. Open the dialog from `<inth-privacy-choices-link>`. Confirm a centred
+card opens over a dimmed backdrop, background scroll locks, and Tab stays
+inside the card. Press Escape and confirm the dialog closes and focus returns
+to the link. Reopen it, turn on a category and click Save. Confirm the dialog
+closes and `ConsentManager.has('<category>')` returns `true`. Reload and
+reopen the dialog to confirm the switch keeps the saved choice.

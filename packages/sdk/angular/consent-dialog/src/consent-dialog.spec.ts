@@ -144,25 +144,29 @@ describe('ConsentDialog', () => {
 
 		mounted.consent.setActiveUI('dialog');
 		const root = await waitFor('consent-dialog-root');
-		expect(root?.getAttribute('role')).toBe('dialog');
-		expect(byTestId('consent-widget-root')).not.toBeNull();
+		expect(byTestId('consent-dialog-card')?.getAttribute('role')).toBe(
+			'dialog'
+		);
+		expect(byTestId('consent-dialog-category-group')).not.toBeNull();
 
 		escape(root as HTMLElement);
 		await waitFor('consent-dialog-root', false);
 		expect(mounted.consent.activeUI()).not.toBe('dialog');
 	});
 
-	test('with `open` set, Escape asks to close but the parent keeps it open', async () => {
+	test('with `open` set, it opens through the consent manager, and Escape closes it there', async () => {
 		const mounted = await mount([
 			{ component: ConsentDialog, inputs: { open: true } },
 		]);
 		const root = await waitFor('consent-dialog-root');
+		expect(mounted.consent.activeUI()).toBe('dialog');
 
 		escape(root as HTMLElement);
-		await stable();
+		await waitFor('consent-dialog-root', false);
 
-		expect(mounted.consent.activeUI()).toBe('none');
-		expect(byTestId('consent-dialog-root')).not.toBeNull();
+		// Without a choice, the banner is owed again. `open` stays `true`,
+		// and asks again only after it turns `false`.
+		expect(mounted.consent.activeUI()).toBe('banner');
 	});
 });
 

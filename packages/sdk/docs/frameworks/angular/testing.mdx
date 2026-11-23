@@ -18,8 +18,9 @@ not already installed:
 ## Write a test
 
 This test mounts the banner and dialog under `provideInth()` with `testing()`
-so no network requests fire, then drives them with `ConsentBannerHarness` and
-`ConsentDialogHarness`:
+so no network requests fire, then drives the banner with
+`ConsentBannerHarness`. Customize opens the categories inside the banner, so
+the second test saves a category without the dialog:
 
 <include src="../../shared/examples/angular/harness-banner-test.mdx" />
 
@@ -35,26 +36,27 @@ Three setup details matter:
   right after a choice.
 
 Assert on `ConsentManager` as well as the DOM. Checking `has('marketing')`
-after `acceptAll()` proves the choice was recorded.
+after `acceptAll()` proves the choice was recorded, not only that the banner
+closed.
 
-## Find surfaces that render into the body
+## Choose a loader
 
-The banner, dialog, floating trigger and both IAB surfaces portal to `<body>`
-outside your component, so query them with
-`TestbedHarnessEnvironment.documentRootLoader(fixture)`.
-
-The widget, consent gate, `inth-consent-button` buttons and `inthSwitch`
-switches stay inside your component and use
-`TestbedHarnessEnvironment.loader(fixture)`.
+The banner and dialog render where their tags sit, and the widget, consent
+gate, `inth-consent-button` buttons and `inthSwitch` switches stay inside
+your component, so `TestbedHarnessEnvironment.loader(fixture)` finds them.
+The floating trigger and both IAB surfaces portal to `<body>`, outside your
+component, and need `TestbedHarnessEnvironment.documentRootLoader(fixture)`.
+The document root loader finds every surface, so using it everywhere keeps a
+test working wherever you render each one.
 
 | Harness | Drives | Loader |
 | --- | --- | --- |
-| `ConsentBannerHarness` | `<inth-consent-banner>` and the banner in `<inth-provider>` | document root |
-| `ConsentDialogHarness` | `<inth-consent-dialog>` | document root |
+| `ConsentBannerHarness` | `<inth-consent-banner>` and the banner in `<inth-provider>` | fixture or document root |
+| `ConsentDialogHarness` | `<inth-consent-dialog>` | fixture or document root |
 | `ConsentDialogTriggerHarness` | `<inth-consent-dialog-trigger>` | document root |
 | `IABConsentBannerHarness` | `<inth-iab-consent-banner>` | document root |
 | `IABConsentDialogHarness` | `<inth-iab-consent-dialog>` | document root |
-| `ConsentWidgetHarness` | `<inth-consent-widget>` and the widget inside the dialog | fixture, or `ConsentDialogHarness.getWidget()` |
+| `ConsentWidgetHarness` | `<inth-consent-widget>` | fixture |
 | `ConsentGateHarness` | `<inth-consent-gate>` | fixture |
 | `ConsentButtonHarness` | `<button inth-consent-button>` | fixture |
 | `SwitchHarness` | `[inthSwitch]` | fixture, or a surface harness |
@@ -69,8 +71,8 @@ throw if the active policy does not expose that action.
 
 | Harness | Methods |
 | --- | --- |
-| `ConsentBannerHarness` | `getTitle()`, `getDescription()`, `getPrompt()`, `isBlocking()`, `getVariant()`, `getPosition()`, `getActions()`, `acceptAll()`, `rejectAll()`, `openPreferences()`, `dismiss()` |
-| `ConsentDialogHarness` | `getTitle()`, `getDescription()`, `isBlocking()`, `getWidget()`, `close()`, `acceptAll()`, `rejectAll()`, `save()` |
+| `ConsentBannerHarness` | `getTitle()`, `getDescription()`, `getPrompt()`, `isBlocking()`, `getPlacement()`, `isExpanded()`, `getActions()`, `acceptAll()`, `rejectAll()`, `openPreferences()`, `isCategoryEnabled(category)`, `setCategory(category, enabled)`, `save()`, `dismiss()` |
+| `ConsentDialogHarness` | `getTitle()`, `getDescription()`, `isBlocking()`, `getRegime()`, `openPreferences()`, `getCategories()`, `isCategoryEnabled(category)`, `setCategory(category, enabled)`, `close()`, `acceptAll()`, `rejectAll()`, `save()` |
 | `ConsentWidgetHarness` | `getCategories()`, `getCategoryTitle(category)`, `getCategorySwitch(category)`, `isCategoryChecked(category)`, `isCategoryDisabled(category)`, `toggleCategory(category)`, `setCategory(category, allowed)`, `getActions()`, `acceptAll()`, `rejectAll()`, `save()` |
 | `ConsentDialogTriggerHarness` | `getLabel()`, `openPreferences()` |
 | `ConsentGateHarness` | `isPlaceholderShown()`, `getPlaceholderText()`, `canOpenPreferences()`, `openPreferences()`, `getText()`, plus container loader methods |
@@ -79,10 +81,31 @@ throw if the active policy does not expose that action.
 | `IABConsentDialogHarness` | `getTitle()`, `getDescription()`, `isBlocking()`, `getSelectedTab()`, `selectTab(tab)`, `getSwitches(filters)`, `close()`, `acceptAll()`, `rejectAll()`, `save()` |
 | `SwitchHarness` | `isChecked()`, `isDisabled()`, `getLabel()`, `toggle()`, `check()`, `uncheck()`, `focus()`, `blur()`, `isFocused()` |
 
-`ConsentDialogHarness.close()` presses Escape without recording a choice.
-`setCategory()` and `toggleCategory()` edit the draft only until `save()`
-runs. `isCategoryChecked()` reads the draft, which can differ from
-`ConsentManager.has()` before saving.
+The banner and dialog harnesses follow the UI, so they differ by region:
+
+- `ConsentBannerHarness.openPreferences()` expands the choices inside the
+  banner. It does not open the dialog. Under a notice it clicks the rights
+  link. `setCategory()` opens the choices first (and Preferences under a US
+  policy), and the switch stays staged until `save()`.
+- `getPlacement()` returns the banner's `data-placement`, such as
+  `card-start` or `banner-bottom`. `getPrompt()` returns `'notice'` or
+  `'choice'`.
+- `ConsentDialogHarness.getRegime()` returns `'eu'` or `'us'`. In the EU,
+  `setCategory()` stages a switch until `save()`, Accept all or Reject all.
+  Under a US policy, `setCategory()` opens Preferences first and the change
+  applies at once; `acceptAll()`, `rejectAll()` and `save()` throw because
+  the US dialog has no such buttons. `openPreferences()` works under a US
+  policy only.
+- `ConsentDialogHarness.save()` throws while Save is disabled, which is when
+  no switch differs from the recorded choice.
+- `ConsentDialogHarness.getDescription()` returns `null` when the Global
+  Privacy Control note replaces the intro.
+- `ConsentDialogHarness.close()` presses Escape and records nothing, as Close
+  and Done do.
+
+`ConsentWidgetHarness.setCategory()` and `toggleCategory()` edit the widget's
+draft only until `save()` runs. `isCategoryChecked()` reads the draft, which
+can differ from `ConsentManager.has()` before saving.
 
 ## Filter harnesses
 

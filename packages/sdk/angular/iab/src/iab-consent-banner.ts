@@ -17,6 +17,7 @@ import {
 	SURFACE_SCOPES,
 	ɵbannerVisibility as bannerVisibility,
 	ɵBranding as Branding,
+	ɵfocusBlocking as focusBlocking,
 	ɵNoStyleScope as NoStyleScope,
 	ɵOverlay as Overlay,
 	ɵresolveNoStyle as resolveNoStyle,
@@ -27,7 +28,7 @@ import { resolveIABBannerSummary } from '@inth/sdk/iab-support';
 import { resolveIABBannerCopy } from '@inth/sdk/iab/headless';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 import {
-	resolveLegacyConsentPresentation,
+	resolveConsentPresentation,
 	resolveIABCopy,
 } from '@inth/sdk/surface-state';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
@@ -260,16 +261,20 @@ export class IABConsentBanner {
 	);
 	/** @internal */
 	protected readonly presentation = computed(() =>
-		resolveLegacyConsentPresentation({
-			override: { scrollLock: this.scrollLock(), trapFocus: this.trapFocus() },
-			policy: this.#consent.snapshot().policyRule,
-			presentation: {
-				prompt: {
-					scrollLock: this.#theme.scrollLock(),
-					trapFocus: this.#theme.trapFocus(),
-					...this.#consent.presentation()?.prompt,
-				},
+		resolveConsentPresentation({
+			override: {
+				blocking: focusBlocking(
+					'prompt',
+					this.#consent.presentation(),
+					{ scrollLock: this.scrollLock(), trapFocus: this.trapFocus() },
+					{
+						scrollLock: this.#theme.scrollLock(),
+						trapFocus: this.#theme.trapFocus(),
+					}
+				),
 			},
+			policy: this.#consent.snapshot().policyRule,
+			presentation: this.#consent.presentation(),
 			surface: 'prompt',
 		})
 	);

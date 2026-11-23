@@ -10,7 +10,7 @@ import { IABConsentBanner } from '../../../iab/src/iab-consent-banner';
 import { IABConsentDialog } from '../../../iab/src/iab-consent-dialog';
 import { iabTestOptions } from '../../../testing/src/__tests__/harness-test-bed';
 import { testOptions } from '../../__tests__/test-local';
-import { ConsentBanner } from '../banner/consent-banner';
+import { ConsentBanner } from '../prompt/prompt';
 import type { InthProviderOptions } from './options';
 import { provideInth } from './provide-inth';
 
@@ -130,9 +130,12 @@ const STOCK_CLASS = /^inth-ui-/u;
 
 /**
  * The branding wordmark inside the tag keeps its own classes under
- * `noStyle`, as React's `Branding` does, so the comparison skips it.
+ * `noStyle`, as React's `Branding` does, and so does the prompt's page
+ * status region, which React's prompt keeps visually hidden either way, so
+ * the comparison skips both.
  */
-const WORDMARK = '[data-slot="tag-content"] *';
+const WORDMARK =
+	'[data-slot="tag-content"] *,[data-testid="consent-banner-announcement"]';
 
 /** Every element that carries a stock class, by test id or tag, sorted. */
 const styledElements = (): string[] =>

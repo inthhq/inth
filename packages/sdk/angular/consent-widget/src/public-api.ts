@@ -6,4 +6,4 @@
  */
 
 export { ConsentWidget, ConsentWidgetRoot } from './consent-widget';
-export { DIALOG_SHEETS } from './dialog-sheets';
+export { WIDGET_SHEETS } from './widget-sheets';

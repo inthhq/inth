@@ -1,17 +1,20 @@
 import { APP_ID, inject, Injectable } from '@angular/core';
 
 /**
- * The id counter of one application. Each server render and each browser
- * app has its own root injector, so ids start again for each and the
- * server's ids match the browser's at hydration. An app with its own
- * `APP_ID` puts it in its ids, so two apps on one page never share one;
- * `APP_ID` is the same on the server and in the browser.
+ * The id counters of one application, one per prefix. Each server render
+ * and each browser app has its own root injector, so ids start again for
+ * each and the server's ids match the browser's at hydration. A counter
+ * per prefix keeps them matching when the browser creates a part the
+ * server never rendered, such as the dialog's body warmed before the
+ * prompt loads: it takes a number from its own prefix only. An app with
+ * its own `APP_ID` puts it in its ids, so two apps on one page never share
+ * one; `APP_ID` is the same on the server and in the browser.
  *
  * @internal
  */
 @Injectable({ providedIn: 'root' })
 export class UniqueIds {
-	#next = 0;
+	readonly #next = new Map<string, number>();
 	// Angular's default, `ng`, is left out: one app per page needs no tag.
 	readonly #app = inject(APP_ID);
 
@@ -20,10 +23,11 @@ export class UniqueIds {
 	 * @returns `prefix` with this application's next number appended.
 	 */
 	next(prefix: string): string {
-		this.#next += 1;
+		const next = (this.#next.get(prefix) ?? 0) + 1;
+		this.#next.set(prefix, next);
 		return this.#app === 'ng'
-			? `${prefix}-${this.#next}`
-			: `${prefix}-${this.#app}-${this.#next}`;
+			? `${prefix}-${next}`
+			: `${prefix}-${this.#app}-${next}`;
 	}
 }
 

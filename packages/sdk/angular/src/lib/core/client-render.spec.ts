@@ -20,7 +20,7 @@ import {
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
-import { ConsentBanner } from '../banner/consent-banner';
+import { ConsentBanner } from '../prompt/prompt';
 import { Branding } from '../shared/branding';
 import { provideInth } from './provide-inth';
 
@@ -76,7 +76,7 @@ describe('client-only first render', () => {
 		).toContain('Consent by');
 	});
 
-	test('bootstraps a page with a prefetch with its banner in the first render', async () => {
+	test('bootstraps a page with a prefetch and shows its banner once the prompt loads', async () => {
 		const appRef = await createApplication({
 			providers: [
 				provideZonelessChangeDetection(),
@@ -86,7 +86,9 @@ describe('client-only first render', () => {
 		const host = document.createElement('test-host');
 		document.body.append(host);
 		appRef.bootstrap(Host, host);
-		appRef.tick();
+		// The prompt is a chunk of its own; the application is stable once
+		// it rendered.
+		await appRef.whenStable();
 		expect(
 			document.querySelector('[data-testid="consent-banner-title"]')
 				?.textContent

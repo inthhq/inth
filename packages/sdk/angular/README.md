@@ -10,6 +10,7 @@ pnpm add @inth/angular
 
 - Works with Angular 20, 21 and 22, zoneless or with zone.js
 - `provideInth()` sets up consent once; `inject(ConsentManager)` reads it as signals anywhere
+- A consent banner as a Card, Banner or Drawer, with the choices inside it, and a "Your Privacy Choices" dialog visitors reopen from your footer
 - Server rendering with `@angular/platform-server`: the banner is in the first HTML
 - Headless directives for switches (with Angular forms), accordions, tabs, dialogs and preference items
 - `*inthIfConsent` keeps content out of the DOM until the visitor agrees
@@ -31,7 +32,7 @@ pnpm add @inth/angular
 
 1. Add `provideInth()` to your application providers with a `mode`
 2. Read consent anywhere with `inject(ConsentManager)`
-3. Render `<inth-consent-banner />` and `<inth-consent-dialog />` once in your root component, and add `inthConsentDialogLink` to a footer button
+3. Render `<inth-consent-banner />` and `<inth-consent-dialog />` once in your root component, and add `<inth-privacy-choices-link />` to your footer
 
 ```ts
 // app.config.ts

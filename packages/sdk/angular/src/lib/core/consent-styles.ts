@@ -23,7 +23,7 @@ import {
 } from '@angular/core';
 import * as button from '@inth/sdk/ui/styles/sheets/button-deferred';
 import * as consentGate from '@inth/sdk/ui/styles/sheets/consent-gate-deferred';
-import * as banner from '@inth/sdk/ui/styles/sheets/parts-deferred';
+import * as parts from '@inth/sdk/ui/styles/sheets/parts-deferred';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens-deferred';
 import * as trigger from '@inth/sdk/ui/styles/sheets/trigger-deferred';
 
@@ -40,13 +40,15 @@ export interface SurfaceStyleSheet {
 }
 
 /**
- * What the banner renders: the theme tokens, the button rules, and the
- * banner, branding, action and legal-link rules with the variables they read.
+ * What the IAB banner, the preference widget and the confirmations render
+ * first: the theme tokens, the button rules, and the branding, action and
+ * legal-link rules with the variables they read. The consent prompt and
+ * the dialog name their own sheets, in their own chunks.
  */
-export const BANNER_SHEETS: readonly SurfaceStyleSheet[] = [
+export const PARTS_SHEETS: readonly SurfaceStyleSheet[] = [
 	tokens,
 	button,
-	banner,
+	parts,
 ];
 
 /** What the dialog trigger renders. */
@@ -220,13 +222,13 @@ export const ensureSurfaceStyles = function ensureSurfaceStyles(
  *
  * @example
  * ```ts
- * export class ConsentBanner {
+ * export class ConsentGate {
  *   readonly #styles = inject(ConsentStyles);
  *   ngOnInit() {
  *     this.#styles.ensure(
- *       BANNER_SHEETS,
+ *       CONSENT_GATE_SHEETS,
  *       this.resolvedNoStyle(),
- *       SURFACE_SCOPES.banner
+ *       SURFACE_SCOPES.gate
  *     );
  *   }
  * }

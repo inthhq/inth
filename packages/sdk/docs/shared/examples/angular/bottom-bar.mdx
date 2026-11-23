@@ -11,12 +11,11 @@ import { ConsentDialog } from '@inth/angular/consent-dialog';
 	selector: 'app-consent',
 	template: `
 		<inth-consent-banner
-			variant="bar"
-			position="bottom"
+			[container]="{ type: 'banner', edge: 'bottom' }"
+			edgeStyle="flush"
 			heading="Your privacy"
 			rejectButtonText="Reject optional"
 			[layout]="[['reject', 'accept'], 'customize']"
-			primaryButton="accept"
 		/>
 		<inth-consent-dialog />
 	`,

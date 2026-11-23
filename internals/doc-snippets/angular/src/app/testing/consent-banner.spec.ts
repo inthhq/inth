@@ -4,11 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { ConsentBanner, ConsentManager, provideInth } from '@inth/angular';
 import { ConsentDialog } from '@inth/angular/consent-dialog';
 // #region docs:harness-banner-test title="src/app/consent-banner.spec.ts"
-import {
-	ConsentBannerHarness,
-	ConsentDialogHarness,
-	testing,
-} from '@inth/angular/testing';
+import { ConsentBannerHarness, testing } from '@inth/angular/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 @Component({
@@ -59,17 +55,16 @@ describe('consent banner', () => {
 		expect(await loader.getHarnessOrNull(ConsentBannerHarness)).toBeNull();
 	});
 
-	it('saves one category from the dialog', async () => {
+	it('saves one category from the banner options', async () => {
 		const fixture = TestBed.createComponent(ConsentTestHost);
 		await fixture.whenStable();
 		const loader = TestbedHarnessEnvironment.documentRootLoader(fixture);
 		const consent = TestBed.inject(ConsentManager);
 
-		await (await loader.getHarness(ConsentBannerHarness)).openPreferences();
-		const dialog = await loader.getHarness(ConsentDialogHarness);
-		const widget = await dialog.getWidget();
-		await widget.setCategory('measurement', true);
-		await dialog.save();
+		// Customize opens the categories inside the banner, not the dialog.
+		const banner = await loader.getHarness(ConsentBannerHarness);
+		await banner.setCategory('measurement', true);
+		await banner.save();
 
 		expect(consent.has('measurement')).toBe(true);
 		expect(consent.has('marketing')).toBe(false);
