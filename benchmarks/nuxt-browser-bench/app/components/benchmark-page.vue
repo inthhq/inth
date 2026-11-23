@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { useConsentActiveUI } from '#inth/composables';
+import { useConsentKernel } from '#inth/composables';
+import { showConsentSurface } from '@inth/sdk/surface-actions';
 
 defineProps<{
 	scenario:
@@ -10,10 +11,11 @@ defineProps<{
 		| 'repeat-visitor';
 }>();
 
-const activeUI = useConsentActiveUI();
+const kernel = useConsentKernel();
 
+// Opens the dialog by the kernel's name for it, as the other benches do.
 const openPreferences = function openPreferences() {
-	activeUI.value = 'manager';
+	showConsentSurface(kernel, 'dialog');
 };
 </script>
 
