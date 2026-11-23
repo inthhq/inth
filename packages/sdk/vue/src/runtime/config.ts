@@ -74,6 +74,14 @@ export interface ConsentConfig
 	presentation?: ConsentPresentation;
 	/** Scripts whose loading follows the shared consent permissions. */
 	scripts?: ConsentRuntimeOptions['scripts'];
+	/** Subject identity forwarded to the backend on `identify`. */
+	user?: ConsentRuntimeOptions['user'];
+	/**
+	 * Cross-domain consent document for `user`, from `@inth/node`
+	 * `consents.check()`. Accepts a resolved document, `null`, `undefined`, or
+	 * a `Promise`.
+	 */
+	userConsent?: ConsentRuntimeOptions['userConsent'];
 	/**
 	 * A/B experiment on prompt/preferences presentation. The assigned arm is
 	 * merged over `presentation` (read it with `useResolvedPresentation()`),

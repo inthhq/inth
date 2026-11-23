@@ -72,6 +72,7 @@ const needsEngine = function needsEngine(
 		rootNeedsEngine({ networkBlocker: options.networkBlocker, options }) ||
 		options.prefetch ||
 		options.consentSource ||
+		options.userConsent !== undefined ||
 		options.scripts?.length ||
 		options.vendors?.length ||
 		options.__resolveStreamedInit

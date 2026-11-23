@@ -347,6 +347,12 @@ export interface ConsentClientBaseOptions extends Pick<
 	experiment?: ConsentExperiment;
 	/** UI options, or `false` for headless use. */
 	ui?: ConsentUIOptions | false;
+	/**
+	 * Cross-domain consent document for `user`, from `@inth/node`
+	 * `consents.check()`. Accepts a resolved document, `null`, `undefined`, or
+	 * a `Promise`.
+	 */
+	userConsent?: ConsentRuntimeOptions['userConsent'];
 	/** Package name reported on `window.inth`. */
 	pkg?: string;
 }
@@ -595,6 +601,13 @@ export interface ConsentClient {
 	setOverrides: (overrides: KernelOverrides) => void;
 	/** Associate the consent record with an external identity. */
 	identify: (user: KernelUser) => Promise<void>;
+	/**
+	 * Apply a cross-domain `userConsent` document, `null`, or `Promise` for the
+	 * signed-in `user`. `undefined` is a no-op.
+	 */
+	syncUserConsent: (
+		value: ConsentRuntimeOptions['userConsent']
+	) => Promise<void>;
 	/**
 	 * Listen for a client event.
 	 *

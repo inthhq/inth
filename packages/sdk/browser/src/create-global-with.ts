@@ -153,6 +153,8 @@ export interface GlobalApiBase {
 	closeDialog: () => void;
 	setLanguage: (code: string) => void;
 	identify: (user: KernelUser) => Promise<void>;
+	/** See {@link ConsentClient.syncUserConsent}. */
+	syncUserConsent: ConsentClient['syncUserConsent'];
 	mountUI: (options?: ConsentUIOptions) => ConsentUIHandle;
 	/** See {@link ConsentClient.processIframes}. */
 	processIframes: () => void;
@@ -197,6 +199,7 @@ const QUEUE_ACTION_METHODS: ReadonlySet<string> = new Set([
 	'saveIAB',
 	'setLanguage',
 	'showBanner',
+	'syncUserConsent',
 ]);
 
 const queuedName = function queuedName(call: unknown): string {
@@ -601,6 +604,7 @@ export const createGlobalWith = function createGlobalWith(
 			require().showBanner();
 		},
 		subscribe: (listener) => require().subscribe(listener),
+		syncUserConsent: (value) => require().syncUserConsent(value),
 		version,
 	};
 	return api;

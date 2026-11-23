@@ -171,6 +171,7 @@ export type {
 	SaveResult,
 	TranslationsResponse,
 	Unsubscribe,
+	UserConsent,
 	Vendor,
 	VendorChoice,
 	VendorSource,

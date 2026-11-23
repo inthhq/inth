@@ -48,6 +48,7 @@ import {
 import { afterModuleLoaded } from './lazy-runtime-module';
 import { mountRuntimeGPP } from './mount-runtime-gpp';
 import { scriptRegistry } from './script-registry';
+import { createUserConsentSyncController } from './user-consent-sync';
 import {
 	stringifyRuntimeError,
 	wireRuntimeCallbacks,
@@ -187,6 +188,8 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		await kernel.commands.init();
 	};
 
+	const userConsentSync = createUserConsentSyncController(kernel);
+
 	const stop = function stop(): void {
 		started = false;
 		for (const dispose of disposers.reverse()) {
@@ -209,6 +212,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		},
 		dispose() {
 			disposed = true;
+			userConsentSync.dispose();
 			stop();
 			kernel.dispose();
 			// No blocker took the hold over, so nothing else ends it, and
@@ -224,11 +228,18 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		},
 		async identify(user) {
 			const nextUser = normalizeKernelUser(user);
+			const prevExternalId = kernel.getSnapshot().user?.externalId ?? null;
 			if (!nextUser) {
+				if (prevExternalId !== null) {
+					userConsentSync.onUserChanged(null);
+				}
 				// Signing out: no one is identified from here on, and an answer
 				// to a request the previous account started no longer applies.
 				kernel.clearIdentity();
 				return;
+			}
+			if (prevExternalId !== nextUser.externalId) {
+				userConsentSync.onUserChanged(nextUser.externalId);
 			}
 			try {
 				await kernel.commands.identify(nextUser);
@@ -304,6 +315,18 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 						? persistenceOption.storageConfig
 						: undefined) ?? options.storageConfig
 				);
+			}
+			// After hydrating both browser and stored account layers, sync the
+			// initial `userConsent` value or Promise (converting raw SSR docs
+			// with the client clock and persisting them).
+			if (enabled && !consentSource) {
+				const initialUserConsent =
+					options.userConsent === undefined
+						? options.prefetch?.initialUserConsent
+						: options.userConsent;
+				if (initialUserConsent !== undefined) {
+					userConsentSync.apply(initialUserConsent, { initialStart: true });
+				}
 			}
 			// Persistence gives a browser runtime its subject ID at startup.
 			// Without it the ID lives in memory for the page.
@@ -489,6 +512,12 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			return function unsubscribeIAB() {
 				iabListeners.delete(listener);
 			};
+		},
+		syncUserConsent(value) {
+			if (!enabled || consentSource) {
+				return;
+			}
+			userConsentSync.apply(value);
 		},
 	};
 	const releaseHold = function releaseHold(): void {

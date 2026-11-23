@@ -276,6 +276,8 @@ export const createKernel = function createKernel(
 
 	return {
 		adoptInit: lifecycle.adopt,
+		applyInitialUserConsent: (value) =>
+			records.syncUserConsent(value, { forceClientSync: true }),
 		bumpAccountSyncGeneration: runtime.bumpAccountSyncGeneration,
 		clearIdentity: records.clearIdentity,
 		commands: {

@@ -142,6 +142,7 @@ export const createDialogStandIn = function createDialogStandIn(
 		setEnabled: forward('setEnabled'),
 		setLanguage: forward('setLanguage'),
 		setOverrides: forward('setOverrides'),
+		syncUserConsent: forward('syncUserConsent'),
 		start: () => undefined,
 		get started() {
 			return true;

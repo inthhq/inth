@@ -52,6 +52,7 @@ import type {
 	InitOutput,
 	ResolveInitFromManifestInputs,
 	SessionJourney,
+	UserConsent,
 } from '@inth/sdk-schema/types';
 
 import type { KernelConfig } from '../consent-kernel.model';
@@ -179,6 +180,25 @@ export interface ResolveRequestConsentOptions {
 	 * matters here: it names the cookie the records are read from.
 	 */
 	storage?: StorageConfig;
+	/**
+	 * Signed-in user identity for server-side account consent folding. Only
+	 * `externalId` (and optional `identityProvider` / `externalIdType`) is
+	 * carried into the boot state; never put an identity token in shared HTML.
+	 */
+	user?: {
+		readonly externalId: string;
+		readonly externalIdType?: string;
+		readonly identityProvider?: string;
+	};
+	/**
+	 * Resolved `UserConsent` document from `@inth/node` `consents.check()`, or
+	 * `null` when signed out. Folded into the server boot snapshot so server
+	 * HTML, hydration, and `serverStart` scripts agree. The boot payload
+	 * carries the raw document so the client converts it with its own clock
+	 * before persisting. When omitted (`undefined`), the server reads account
+	 * cookies gated by `user.externalId`.
+	 */
+	userConsent?: UserConsent | null;
 	/** Request clock reused for record validation and hydration. */
 	now?: number;
 	/**
@@ -415,11 +435,42 @@ export const readRequestConsent = function readRequestConsent(
 		const now = options.now ?? Date.now();
 		const cookie =
 			options.request.cookie ?? readHeader(options.request.headers, 'cookie');
-		state.initialRecords = readStoredRecordsFromCookieHeader(
+		const records = readStoredRecordsFromCookieHeader(
 			cookie ?? undefined,
 			options.storage,
 			now
 		);
+		const externalId = options.user?.externalId;
+		if (externalId) {
+			const initialUser: NonNullable<RequestConsentState['initialUser']> = {
+				externalId,
+			};
+			if (options.user?.identityProvider) {
+				initialUser.identityProvider = options.user.identityProvider;
+			}
+			if (options.user?.externalIdType) {
+				initialUser.externalIdType = options.user.externalIdType;
+			}
+			state.initialUser = initialUser;
+			if (
+				records.accountLayer &&
+				records.accountLayer.externalId !== externalId
+			) {
+				delete records.accountLayer;
+			}
+			if (options.userConsent === null) {
+				state.initialUserConsent = null;
+				delete records.accountLayer;
+			} else if (
+				options.userConsent !== undefined &&
+				options.userConsent.sync?.externalId === externalId
+			) {
+				state.initialUserConsent = options.userConsent;
+			}
+		} else {
+			delete records.accountLayer;
+		}
+		state.initialRecords = records;
 		state.initialPrivacySignals = { gpc: inputs.gpc };
 		state.now = now;
 	}

@@ -523,6 +523,7 @@ export const createDeferredRuntime = function createDeferredRuntime(
 		setEnabled: forward('setEnabled'),
 		setLanguage: forward('setLanguage'),
 		setOverrides: forward('setOverrides'),
+		syncUserConsent: forward('syncUserConsent'),
 		start() {
 			if (mounted || !active) {
 				return;

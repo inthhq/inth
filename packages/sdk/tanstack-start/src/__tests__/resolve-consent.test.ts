@@ -258,4 +258,32 @@ describe('resolveConsent wiring', () => {
 			resolveConsent({ request: requestOf(), routePrefix: '/' })
 		).rejects.toThrow(message);
 	});
+
+	test('folds user and userConsent into the server boot state', async () => {
+		const userConsent = {
+			categories: { marketing: true },
+			optOut: null,
+			sync: {
+				checkedAt: 1_800_000_000_000,
+				choices: {
+					marketing: {
+						basis: { fingerprint: 'fp_1', kind: 'choice-v1' as const },
+						confirmedAt: 1_799_999_999_000,
+						value: true,
+					},
+				},
+				externalId: 'user_ts',
+				optOut: null,
+				vendors: {},
+			},
+		};
+		const state = await resolveConsent({
+			request: requestOf(),
+			snapshot: MANIFEST_FIXTURE,
+			user: { externalId: 'user_ts' },
+			userConsent,
+		});
+		expect(state.initialUser).toEqual({ externalId: 'user_ts' });
+		expect(state.initialUserConsent).toEqual(userConsent);
+	});
 });

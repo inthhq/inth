@@ -228,6 +228,12 @@ export interface InthProviderOptions
 	 */
 	storageConfig?: StorageConfig;
 	user?: User | KernelUser;
+	/**
+	 * Cross-domain consent document for `user`, from `@inth/node`
+	 * `consents.check()`. Accepts a resolved document, `null` (signed out),
+	 * `undefined` (unknown; no-op), or a `Promise`.
+	 */
+	userConsent?: ConsentProviderRuntimeOptions['userConsent'];
 	overrides?: KernelOverrides;
 	/**
 	 * Server-resolved kernel configuration, usually from a framework server

@@ -270,6 +270,7 @@ export const createConsentClientWith = function createConsentClientWith(
 		storageConfig: options.storageConfig,
 		theme: options.ui === false ? undefined : options.ui?.theme,
 		user: options.user,
+		userConsent: options.userConsent,
 		vendors: options.vendors,
 	});
 	const { kernel } = runtime;
@@ -774,6 +775,20 @@ export const createConsentClientWith = function createConsentClientWith(
 		},
 		subscribe(listener) {
 			return kernel.subscribe(listener);
+		},
+		async syncUserConsent(value) {
+			runtime.syncUserConsent(value);
+			if (
+				value !== null &&
+				value !== undefined &&
+				typeof (value as PromiseLike<unknown>).then === 'function'
+			) {
+				try {
+					await value;
+				} catch {
+					// Rejection already releases the pending hold.
+				}
+			}
 		},
 		get theme(): Theme | undefined {
 			// A headless client renders nothing, so an arm's theme has nothing

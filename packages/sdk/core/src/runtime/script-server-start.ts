@@ -61,6 +61,7 @@ import type {
 } from './consent-runtime.model';
 import { createRuntimeKernel } from './create-runtime-kernel';
 import { scriptRegistrySignatures } from './script-registry';
+import { isUserConsentPromise } from './user-consent-sync';
 
 type ServerScriptOptions = ConsentRuntimeOptions & {
 	prefetch?: RuntimePrefetch;
@@ -427,6 +428,8 @@ const serverStartCandidates = function serverStartCandidates(
 	)(options.scripts ?? []);
 	if (
 		options.scriptLoader?.serverStart === false ||
+		isUserConsentPromise(options.userConsent) ||
+		prefetch?.initialUserConsentPending === true ||
 		!scripts.some((script) => script.serverStart && script.src)
 	) {
 		return [];

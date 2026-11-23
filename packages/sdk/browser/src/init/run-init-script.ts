@@ -87,6 +87,7 @@ const ACTIONS = [
 	'closeDialog',
 	'setLanguage',
 	'identify',
+	'syncUserConsent',
 	'mountUI',
 	'processIframes',
 ] as const;
@@ -100,6 +101,7 @@ const ASYNC = new Set<string>([
 	'dismissNotice',
 	'optOut',
 	'identify',
+	'syncUserConsent',
 ]);
 
 /** `data-inth-action` values, as the engine's client routes them. */
@@ -423,7 +425,7 @@ export const runInitScript = function runInitScript(
 				pending = undefined;
 			}
 		}
-		if (!(pending && projectUrl)) {
+		if (!(pending && projectUrl) || current.userConsent !== undefined) {
 			// Nothing to show or start without the engine: load it now, as a
 			// one-file script tag would.
 			loadEngine();

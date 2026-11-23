@@ -7,7 +7,7 @@
  * lifecycle handle. Framework packages extend {@link ConsentRuntimeOptions}
  * with their own UI-only fields rather than restating the shared ones.
  */
-import type { Vendor } from '@inth/sdk-schema/types';
+import type { UserConsent, Vendor } from '@inth/sdk-schema/types';
 import type { I18nConfig } from '@inth/sdk-translations';
 
 import type {
@@ -514,6 +514,13 @@ export interface ConsentRuntimeOptions {
 	reloadOnConsentRevoked?: boolean;
 	/** Subject identity forwarded to the backend on `identify`. */
 	user?: User | KernelUser;
+	/**
+	 * Cross-domain consent document for the signed-in `user`, returned by
+	 * `@inth/node` `consents.check()`. Accepts a resolved document, `null`
+	 * (signed out; drops the account layer), `undefined` (unknown; no-op), or a
+	 * `Promise` that holds consent outcomes until it settles or times out (3 s).
+	 */
+	userConsent?: UserConsent | null | Promise<UserConsent | null>;
 	/** Decision inputs (country, region, language, GPC) forced by the host. */
 	overrides?: KernelOverrides;
 	/**
@@ -757,6 +764,13 @@ export interface ConsentRuntime {
 	 * event and the `onError` callback.
 	 */
 	identify: (user: User | KernelUser | undefined) => Promise<void>;
+	/**
+	 * Apply a cross-domain `userConsent` document, `null`, or `Promise` to the
+	 * account consent layer. `undefined` is a no-op.
+	 */
+	syncUserConsent: (
+		value: UserConsent | null | Promise<UserConsent | null> | undefined
+	) => void;
 	/**
 	 * Merge decision-input overrides into the current ones: a key you pass
 	 * replaces its value, a key set to `undefined` clears it, and a key you

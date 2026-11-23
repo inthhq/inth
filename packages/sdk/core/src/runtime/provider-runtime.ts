@@ -63,6 +63,7 @@ const LIVE_OPTION_NAMES = [
 	'scriptLoader',
 	'scripts',
 	'user',
+	'userConsent',
 	'vendors',
 ] as const satisfies readonly (keyof ConsentRuntimeUpdate)[];
 
@@ -609,6 +610,37 @@ export const createConsentProviderRuntime =
 		const runtime: ConsentRuntime = main.runtime;
 		// Records, identity, IAB, iframes and storage belong to the main
 		// runtime whatever `enabled` is; those members come from it unchanged.
+		const syncIdentityAndUserConsent = function syncIdentityAndUserConsent(
+			previous: ConsentRuntimeUpdate,
+			next: ConsentRuntimeUpdate
+		): void {
+			const prevUser = normalizeKernelUser(previous.user);
+			const nextUser = normalizeKernelUser(next.user);
+			const userChanged =
+				(prevUser?.externalId ?? null) !== (nextUser?.externalId ?? null);
+			if (userChanged) {
+				runtime.kernel.set.user(nextUser ?? null);
+			}
+			if (userChanged || next.userConsent !== previous.userConsent) {
+				runtime.syncUserConsent(next.userConsent);
+			}
+		};
+
+		const holdForNewRules = function holdForNewRules(
+			previous: ConsentRuntimeUpdate,
+			next: ConsentRuntimeUpdate
+		): NetworkHold | undefined {
+			const before = previous.networkBlocker || undefined;
+			const after = next.networkBlocker || undefined;
+			return started &&
+				enabled &&
+				after &&
+				after.enabled !== false &&
+				(after.rules !== before?.rules || before?.enabled === false)
+				? holdNetworkRequests(after.rules)
+				: undefined;
+		};
+
 		const provider: Omit<
 			ConsentProviderRuntime,
 			| 'clearRecords'
@@ -617,6 +649,7 @@ export const createConsentProviderRuntime =
 			| 'identify'
 			| 'processIframes'
 			| 'reconcileStorage'
+			| 'syncUserConsent'
 		> = {
 			get consentCategories() {
 				return active().runtime.consentCategories;
@@ -705,6 +738,10 @@ export const createConsentProviderRuntime =
 				}
 				// Mounts every module again from the new options.
 				setEnabled(current.enabled ?? true);
+				// User changes and removals drop the previous user's account layer
+				// synchronously before any lazy update chunk loads. Apply `user`
+				// before `userConsent` when both change in one update pass.
+				syncIdentityAndUserConsent(previous, current);
 				// Categories decide what is granted, so they apply now too.
 				if (
 					JSON.stringify(current.consentCategories) !==
@@ -715,17 +752,7 @@ export const createConsentProviderRuntime =
 				// New or wider network rules reach the blocker with the update
 				// module. Until then, hold what they match, as the runtime holds
 				// requests from construction until the blocker loads.
-				const before = previous.networkBlocker || undefined;
-				const after = current.networkBlocker || undefined;
-				const hold =
-					started &&
-					enabled &&
-					after &&
-					after.enabled !== false &&
-					(after.rules !== before?.rules || before?.enabled === false)
-						? holdNetworkRequests(after.rules)
-						: undefined;
-				return applyUpdate(hold);
+				return applyUpdate(holdForNewRules(previous, current));
 			},
 		};
 		return Object.setPrototypeOf(provider, runtime) as ConsentProviderRuntime;

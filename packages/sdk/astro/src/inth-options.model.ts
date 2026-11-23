@@ -466,6 +466,14 @@ export interface InthClientOptionsExtension {
 	callbacks?: ConsentRuntimeOptions['callbacks'];
 	/** External CMP owns consent decisions and preferences. */
 	consentSource?: ConsentRuntimeOptions['consentSource'];
+	/** Subject identity forwarded to the backend on `identify`. */
+	user?: ConsentRuntimeOptions['user'];
+	/**
+	 * Cross-domain consent document for `user`, from `@inth/node`
+	 * `consents.check()`. Accepts a resolved document, `null`, `undefined`, or
+	 * a `Promise`.
+	 */
+	userConsent?: ConsentRuntimeOptions['userConsent'];
 	/**
 	 * Merged over the serialized theme for slot styles and consent-action
 	 * variants. Design tokens here are not applied: the browser no longer
