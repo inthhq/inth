@@ -30,4 +30,4 @@ Changing `surface` never asks a visitor again: it is not part of the policy, cho
 
 `ConsentContainer` and the other container types are now defined in `@inth/sdk/schema`. `@inth/sdk` exports them under the same names.
 
-The stock components don't read `container` yet; of `surface`, only `blocking` reaches them. Clients built before this release refuse a policy that carries `surface`, so send a rule with `surface` only to clients on this version or later. A rule without `surface`, and the US opt-out presets, reach older clients exactly as before.
+Today's classic components don't read `container`; of `surface`, only `blocking` reaches them. Under `design: 'privacy-choices'`, the stock components do read `container`, so a policy's `container` places the Card, Banner or Drawer. A policy `container` on its own doesn't switch a site to that design. Clients built before this release refuse a policy that carries `surface`, so send a rule with `surface` only to clients on this version or later. A rule without `surface`, and the US opt-out presets, reach older clients exactly as before.
