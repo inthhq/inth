@@ -138,10 +138,12 @@ export const STORY_LOAD_TIMEOUT_MS = 30_000;
 
 /**
  * Time budget per story a test opens: navigation to network idle, fonts,
- * the settle wait and the capture. One visit takes about 1 s on a
- * developer machine; the budget leaves room for slower CI runners.
+ * the settle wait and the capture. A DOM capture takes about 1 s on a
+ * developer machine and a full-page screenshot about 3.5 s, since
+ * Playwright waits for two matching frames; the budget leaves room for
+ * slower CI runners.
  */
-export const STORY_VISIT_BUDGET_MS = 3000;
+export const STORY_VISIT_BUDGET_MS = 5000;
 
 /**
  * The timeout for a test that opens every story of `pairs` once per
