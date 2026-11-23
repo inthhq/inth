@@ -8,7 +8,7 @@ import { getCurrentInstance } from 'vue';
 import type { App, Plugin } from 'vue';
 
 import { consentConfigKey } from './runtime/composables/config';
-import { mountTokensStyle } from './runtime/theme-tokens.model';
+import { mountTokensStyle } from './runtime/mount-tokens-style';
 import {
 	createVueConsentKernelContext,
 	provideVueConsentContext,
