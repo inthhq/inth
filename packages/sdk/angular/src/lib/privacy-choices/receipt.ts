@@ -5,7 +5,6 @@
  * @packageDocumentation
  */
 
-import { isPlatformBrowser } from '@angular/common';
 import type { ElementRef } from '@angular/core';
 import {
 	afterRenderEffect,
@@ -15,18 +14,10 @@ import {
 	effect,
 	inject,
 	input,
-	linkedSignal,
-	PLATFORM_ID,
 	untracked,
 	viewChild,
 } from '@angular/core';
 import { copySurfaceReference, resolveRightsReceipt } from '@inth/sdk/engine';
-import type { ConsentKernel } from '@inth/sdk/engine';
-import {
-	getOptOutReceiptData,
-	getServerOptOutReceiptData,
-	subscribeOptOutReceiptData,
-} from '@inth/sdk/surface-actions';
 import { resolveRightsReceiptCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/privacy-choices';
 import type { AllThemeKeys } from '@inth/sdk/ui/theme';
@@ -169,7 +160,6 @@ const COPIED_MS = 1500;
 export class RightsReceipt {
 	readonly #consent = inject(ConsentManager);
 	readonly #theme = inject(ConsentTheme);
-	readonly #browser = isPlatformBrowser(inject(PLATFORM_ID));
 
 	/** Prefix for element ids in this layer (SR-05). */
 	readonly idPrefix = input.required<string>();
@@ -196,8 +186,11 @@ export class RightsReceipt {
 	protected readonly session = this.#surface.session;
 	private readonly field = viewChild<ElementRef<HTMLInputElement>>('field');
 
-	/** This browser's local opt-out receipt data: the reference it recorded. */
-	readonly #local = linkedSignal(() => this.#readLocal(this.#consent.kernel()));
+	/**
+	 * This browser's local opt-out receipt data: the reference it recorded.
+	 * The consent manager serves the server's value until hydration ends.
+	 */
+	readonly #local = this.#consent.ɵoptOutReceiptData;
 
 	/** @internal */
 	protected readonly receipt = computed(() =>
@@ -247,15 +240,6 @@ export class RightsReceipt {
 	#focusField = false;
 
 	constructor() {
-		effect((onCleanup) => {
-			const kernel = this.#consent.kernel();
-			untracked(() => this.#local.set(this.#readLocal(kernel)));
-			onCleanup(
-				subscribeOptOutReceiptData(kernel, () => {
-					this.#local.set(this.#readLocal(kernel));
-				})
-			);
-		});
 		// The check on the copy button goes after a moment.
 		effect((onCleanup) => {
 			if (this.copyStatus() !== 'copied') {
@@ -273,12 +257,6 @@ export class RightsReceipt {
 				field.select();
 			}
 		});
-	}
-
-	#readLocal(kernel: ConsentKernel) {
-		return this.#browser
-			? getOptOutReceiptData(kernel)
-			: getServerOptOutReceiptData(kernel);
 	}
 
 	/** @internal */
