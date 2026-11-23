@@ -16,7 +16,7 @@ import { createApp, createRouter, toWebHandler } from 'h3';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createConsentRoute } from '../runtime/server/create-consent-route';
-import { createServerFetch } from '../runtime/server/server-fetch';
+import { createServerFetch } from '../runtime/server/create-server-fetch';
 
 const mocks = vi.hoisted(() => ({
 	localFetch: vi.fn(),
