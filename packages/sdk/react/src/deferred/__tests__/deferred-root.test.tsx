@@ -21,6 +21,10 @@ import {
 	streamPage,
 } from '../../__tests__/streamed-ssr-harness';
 import type { StreamedPage } from '../../__tests__/streamed-ssr-harness';
+import { BannerSurface } from '../../components/prompt/banner';
+import { CardSurface } from '../../components/prompt/card';
+import { DrawerSurface } from '../../components/prompt/drawer';
+import { PromptContainersContext } from '../../components/prompt/prompt';
 import { useSaveConsents, useSnapshot } from '../../hooks';
 import { InthProvider } from '../../index';
 import { useScriptLoader } from '../../module-hooks/script-loader';
@@ -37,10 +41,6 @@ import type { DeferredCommitConfig } from '../committed';
 import type * as EngineNamespace from '../engine';
 import { ENGINE_CHUNKS_KEY } from '../engine-preload';
 import { DeferredConsentShell } from '../shell';
-import { BannerSurface } from '../../components/prompt/banner';
-import { CardSurface } from '../../components/prompt/card';
-import { DrawerSurface } from '../../components/prompt/drawer';
-import { PromptContainersContext } from '../../components/prompt/prompt';
 import { DeferredConsentBanner } from '../surfaces';
 
 const policyConfig = function policyConfig(
