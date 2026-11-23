@@ -724,12 +724,9 @@ const measureVisit = async function measureVisit(
 	};
 
 	if (scenario.opensDialog) {
-		sample.dialogOpenMs = await openDialog(
-			page,
-			scenario.visit === 'fresh'
-				? '[data-testid="consent-banner-customize-button"]'
-				: '#open-preferences'
-		);
+		// The page's Privacy settings button opens the dialog on every
+		// visit: the banner's Customize expands in place and opens none.
+		sample.dialogOpenMs = await openDialog(page, '#open-preferences');
 		await page.waitForTimeout(250);
 		sample.stylesheetsAfterDialog = (await page.evaluate(
 			benchStylesheetResourcesExpression

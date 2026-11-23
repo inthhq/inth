@@ -8,7 +8,9 @@
  * Phases follow `benchmarks/bundle-test-app/client-payload/run.ts`, each in a
  * fresh browser context:
  * - initial: until network idle after load, then until the banner shows
- * - dialog: after clicking Customize on the banner, until network idle
+ * - dialog: after clicking the page's dialog link ("Privacy settings" or
+ *   "Your Privacy Choices"), until network idle. Customize on the banner
+ *   expands in place and opens no dialog.
  * - accept: in a second context, after clicking Accept, until the banner
  *   hides, the save request answers and the network is idle
  *
@@ -41,6 +43,10 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 import { resolveBenchBackendLatencyMs } from '@inth/benchmarking/browser';
+import {
+	dialogLinkLabel,
+	dialogLinkSelector,
+} from '@inth/benchmarking/dialog-link';
 import { chromium } from 'playwright';
 import type { Browser, BrowserContext, Page, Response } from 'playwright';
 
@@ -355,6 +361,22 @@ const clickBannerButton = async function clickBannerButton(
 	return `no visible ${testId}`;
 };
 
+/** Press the page's dialog link, by test id or else by its label. */
+const clickDialogLink = async function clickDialogLink(
+	page: Page
+): Promise<string | null> {
+	const link = page
+		.locator(dialogLinkSelector)
+		.or(page.getByRole('link', { name: dialogLinkLabel }))
+		.or(page.getByRole('button', { name: dialogLinkLabel }))
+		.first();
+	if (await link.isVisible()) {
+		await link.click();
+		return null;
+	}
+	return 'no visible dialog link';
+};
+
 const assetTypeOf = function assetTypeOf(
 	resourceType: string,
 	contentType: string
@@ -470,11 +492,7 @@ const visit = async function visit(
 		outcome = { measured: false, reason: 'banner not visible' };
 	} else if (interaction === 'dialog') {
 		phase = 'dialog';
-		const missing = await clickBannerButton(
-			page,
-			'consent-banner-customize-button',
-			/customi[sz]e|preferences|settings/iu
-		);
+		const missing = await clickDialogLink(page);
 		if (missing) {
 			outcome = { measured: false, reason: missing };
 		} else {

@@ -3,6 +3,7 @@
 import {
 	ConsentBanner,
 	ConsentDialog,
+	ConsentDialogLink,
 	InthProvider,
 	hosted,
 	useActiveUI,
@@ -41,6 +42,8 @@ const DialogFirstOpenPage = () => (
 	<InthProvider options={options}>
 		<ConsentBanner />
 		<ConsentDialog />
+		{/* The first open goes through the page's link, as a visitor's does. */}
+		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 		<Controls />
 	</InthProvider>
 );

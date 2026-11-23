@@ -34,6 +34,11 @@ const rootSelector = selectors[variant];
 if (!rootSelector) {
 	throw new Error(`Unknown variant: ${variant}`);
 }
+// The banner's Customize expands in place and opens nothing; the dialog
+// opens from the page's link, or Nuxt's own Open Preferences button.
+const opener = nuxt
+	? '#open-preferences'
+	: '[data-testid="consent-dialog-link"]';
 const contentSelector =
 	variant === 'compound'
 		? '[data-testid="consent-dialog-title"]'
@@ -77,9 +82,8 @@ try {
 				'#reopen-dialog[data-hydrated="true"][data-active-ui="banner"]'
 			);
 		}
-		await page.waitForSelector(
-			'[data-testid="consent-banner-customize-button"]'
-		);
+		await page.waitForSelector('[data-testid="consent-banner-root"]');
+		await page.waitForSelector(opener);
 		await page.evaluate(() => {
 			window.__loaderAuditMounts = [];
 			window.addEventListener('loader-probe-mounted', () =>
@@ -87,13 +91,11 @@ try {
 			);
 		});
 		if (warm) {
-			await page
-				.locator('[data-testid="consent-banner-customize-button"]')
-				.hover();
+			await page.locator(opener).hover();
 			await page.waitForTimeout(200);
 		}
 		const result = await page.evaluate(
-			({ selector, content }) => {
+			({ selector, content, target }) => {
 				performance.clearResourceTimings();
 				const start = performance.now();
 				let mounted: number | undefined;
@@ -113,11 +115,9 @@ try {
 					};
 					const observer = new MutationObserver(observe);
 					observer.observe(document.body, { childList: true, subtree: true });
-					const button = document.querySelector<HTMLButtonElement>(
-						'[data-testid="consent-banner-customize-button"]'
-					);
+					const button = document.querySelector<HTMLElement>(target);
 					if (!button) {
-						throw new Error('Missing Customize button');
+						throw new Error(`Missing dialog opener: ${target}`);
 					}
 					button.click();
 					const check = () => {
@@ -150,7 +150,7 @@ try {
 					requestAnimationFrame(check);
 				});
 			},
-			{ content: contentSelector, selector: rootSelector }
+			{ content: contentSelector, selector: rootSelector, target: opener }
 		);
 		if (variant === 'external') {
 			await page.waitForTimeout(700);

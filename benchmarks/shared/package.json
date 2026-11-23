@@ -26,7 +26,8 @@
 		"./visit-definitions": "./src/visit-definitions.ts",
 		"./visit-metrics": "./src/visit-metrics.ts",
 		"./consent-gate": "./src/consent-gate.ts",
-		"./consent-gate-page": "./src/consent-gate-page.ts"
+		"./consent-gate-page": "./src/consent-gate-page.ts",
+		"./dialog-link": "./src/dialog-link.ts"
 	},
 	"scripts": {
 		"bench": "echo 'no-op'",
