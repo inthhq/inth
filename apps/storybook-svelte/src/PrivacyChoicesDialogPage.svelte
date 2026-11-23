@@ -1,14 +1,13 @@
 <script lang="ts">
-	import { getConsentManager } from '@inth/svelte';
+	import { getConsentManager, PrivacyChoicesLink } from '@inth/svelte';
 
 	import type { PrivacyChoicesRegion } from './privacy-choices-story-policies';
-	import PrivacyChoicesStoryLink from './PrivacyChoicesStoryLink.svelte';
 
 	/**
 	 * A plain page under the dialog, with the persistent page links, as
 	 * React's dialog stories render it: the site's own link to the dialog
-	 * where the stock "Your Privacy Choices" link does not render (the EU,
-	 * and US opt-in, where it needs an opt-out right the visitor can use).
+	 * in the EU and under US opt-in, and the stock "Your Privacy Choices"
+	 * link elsewhere.
 	 */
 	let { region }: { region: PrivacyChoicesRegion } = $props();
 
@@ -42,7 +41,7 @@
 			{@render settingsLink('Your Privacy Choices')}
 		{/if}
 		{#if region !== 'eu' && region !== 'us-opt-in'}
-			<PrivacyChoicesStoryLink />
+			<PrivacyChoicesLink />
 		{/if}
 	</footer>
 </main>

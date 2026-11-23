@@ -1,5 +1,5 @@
 <script lang="ts">
-	import PrivacyChoicesStoryLink from './PrivacyChoicesStoryLink.svelte';
+	import { PrivacyChoicesLink } from '@inth/svelte';
 </script>
 
 <!-- A plain page under the prompt, with the persistent "Your Privacy
@@ -16,6 +16,6 @@
 		<a href="#catalogue">Catalogue</a> · <a href="#guides">Field guides</a>
 	</p>
 	<footer style="margin-top: 48px;">
-		<PrivacyChoicesStoryLink />
+		<PrivacyChoicesLink />
 	</footer>
 </main>
