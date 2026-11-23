@@ -77,19 +77,17 @@ import {
 	loadDeferredScriptLoader,
 	setDeferredScriptStarter,
 } from './deferred-registry.model';
-import {
-	DeferredSessionContext,
-	read,
-	record,
-	recordOnce,
-} from './deferred-session-context';
-import type { DeferredSession, Recorded } from './deferred-session-context';
+import { DeferredSessionContext } from './deferred-session-context';
+import type { DeferredSession } from './deferred-session-context';
 import {
 	commitInstantly,
 	readAheadOfTap,
 	startPlainScripts,
 } from './instant-commit.model';
 import type { InstantCommitAhead } from './instant-commit.model';
+import { read } from './read';
+import { record, recordOnce } from './recorded-promise.model';
+import type { Recorded } from './recorded-promise.model';
 import {
 	acceptedPermissions,
 	isPlainScript,

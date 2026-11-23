@@ -31,7 +31,7 @@ import type { ReactNode } from 'react';
 import { useTranslations } from '~/component-hooks/use-translations';
 import { ConsentButton } from '~/components/shared/primitives/consent-button';
 import { useSnapshot } from '~/hooks';
-import { useKernel } from '~/use-kernel-selector';
+import { useKernel } from '~/use-kernel';
 import { useUIConfig } from '~/use-ui-config';
 import { inertProps } from '~/utils/inert-props';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';

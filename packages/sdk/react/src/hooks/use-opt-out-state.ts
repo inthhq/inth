@@ -9,7 +9,8 @@ import { resolveOptOut } from '@inth/sdk/surface-state';
 import type { OptOutState } from '@inth/sdk/surface-state';
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
-import { useKernel, useKernelSelector } from '../use-kernel-selector';
+import { useKernel } from '../use-kernel';
+import { useKernelSelector } from '../use-kernel-selector';
 
 /**
  * Derive the opt-out display state and receipt from the current snapshot and

@@ -13,7 +13,7 @@ import { useEffect, useRef } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
 import { useSnapshot } from '~/hooks';
-import { useKernel } from '~/use-kernel-selector';
+import { useKernel } from '~/use-kernel';
 import { useUIConfig } from '~/use-ui-config';
 import { inertProps } from '~/utils/inert-props';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';

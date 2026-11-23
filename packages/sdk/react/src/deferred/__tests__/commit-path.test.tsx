@@ -38,12 +38,16 @@ import { useScriptLoader } from '../../module-hooks/script-loader';
 import type { Script } from '../../module-hooks/script-loader';
 import { readConsentBoot } from '../boot';
 import type { ConsentBoot } from '../boot';
-import { ConsentBootData, ServerBootData } from '../consent-boot-data';
+import { ConsentBootData } from '../consent-boot-data';
 import type { DeferredCommitConfig } from '../deferred-committed.model';
 import { DeferredConsentShell } from '../deferred-consent-shell';
-import { recordOnce } from '../deferred-session-context';
 import type * as EngineNamespace from '../engine';
-import { DeferredConsentBanner, DeferredConsentDialog } from '../surfaces';
+import { recordOnce } from '../recorded-promise.model';
+import { ServerBootData } from '../server-boot-data';
+import {
+	DeferredConsentBanner,
+	DeferredConsentDialog,
+} from '../surface-with-parts';
 
 type EngineModule = typeof EngineNamespace;
 

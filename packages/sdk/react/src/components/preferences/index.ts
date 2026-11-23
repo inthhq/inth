@@ -2,6 +2,7 @@
 
 import type { FC } from 'react';
 
+import { AcceptAllButton } from './atoms/accept-all-button';
 import {
 	Accordion,
 	AccordionArrow,
@@ -13,16 +14,13 @@ import {
 	Switch,
 	VendorList,
 } from './atoms/accordion';
-import {
-	AcceptAllButton,
-	CustomizeButton,
-	RejectButton,
-	SaveButton,
-} from './atoms/button';
+import { CustomizeButton } from './atoms/customize-button';
 import { Footer, FooterSubGroup } from './atoms/footer';
 import { OptOut } from './atoms/opt-out';
 import { OptOutStatus } from './atoms/opt-out-status';
+import { RejectButton } from './atoms/reject-button';
 import { Root } from './atoms/root';
+import { SaveButton } from './atoms/save-button';
 import { ConsentWidget as ConsentWidgetComponent } from './consent-widget';
 import type { ConsentWidgetProps } from './consent-widget.model';
 import { PolicyActions } from './policy-actions';
@@ -154,13 +152,13 @@ export {
 export {
 	AcceptAllButton,
 	ConsentWidgetAcceptAllButton,
+} from './atoms/accept-all-button';
+export {
 	ConsentWidgetCustomizeButton,
-	ConsentWidgetRejectButton,
-	ConsentWidgetSaveButton,
 	CustomizeButton,
-	RejectButton,
-	SaveButton,
-} from './atoms/button';
+} from './atoms/customize-button';
+export { ConsentWidgetRejectButton, RejectButton } from './atoms/reject-button';
+export { ConsentWidgetSaveButton, SaveButton } from './atoms/save-button';
 export {
 	ConsentWidgetFooter,
 	ConsentWidgetFooterSubGroup,
