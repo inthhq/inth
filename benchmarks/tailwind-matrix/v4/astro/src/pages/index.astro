@@ -1,6 +1,7 @@
 ---
 import ConsentBanner from '@inth/astro/components/consent-banner.astro';
 import ConsentDialog from '@inth/astro/components/consent-dialog.astro';
+import ConsentDialogLink from '@inth/astro/components/consent-dialog-link.astro';
 import ConsentScript from '@inth/astro/components/consent-script.astro';
 
 import '../styles/global.css';
@@ -23,6 +24,7 @@ import '../styles/global.css';
 		>
 			Tailwind utilities are active on this page.
 		</p>
+		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 		<!-- #region docs:slot -->
 		<ConsentBanner class="p-[7px] dark:p-[11px]" />
 		<!-- #endregion docs:slot -->

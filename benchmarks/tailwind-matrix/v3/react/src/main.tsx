@@ -1,4 +1,9 @@
-import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/react';
+import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentDialogLink,
+	InthProvider,
+} from '@inth/react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -33,6 +38,7 @@ createRoot(root).render(
 			>
 				Tailwind utilities are active on this page.
 			</p>
+			<ConsentDialogLink />
 			<ConsentBanner />
 			<ConsentDialog />
 		</InthProvider>

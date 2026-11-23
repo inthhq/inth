@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/svelte';
+	import {
+		ConsentBanner,
+		ConsentDialog,
+		ConsentDialogLink,
+		InthProvider,
+	} from '@inth/svelte';
 
 	const projectUrl = 'https://your-project.inth.app';
 </script>
@@ -16,6 +21,7 @@
 	>
 		Tailwind utilities are active on this page.
 	</p>
+	<ConsentDialogLink />
 	<!-- #region docs:slot -->
 	<ConsentBanner class="!p-[7px] dark:!p-[11px]" />
 	<!-- #endregion docs:slot -->

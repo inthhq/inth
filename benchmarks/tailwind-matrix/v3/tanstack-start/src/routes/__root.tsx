@@ -1,6 +1,7 @@
 import {
 	ConsentBanner,
 	ConsentDialog,
+	ConsentDialogLink,
 	InthProvider,
 } from '@inth/tanstack-start';
 import {
@@ -36,6 +37,7 @@ const RootComponent = () => (
 				// #endregion docs:slot
 			>
 				<Outlet />
+				<ConsentDialogLink />
 				<ConsentBanner />
 				<ConsentDialog />
 			</InthProvider>

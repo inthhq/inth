@@ -1,6 +1,11 @@
 'use client';
 
-import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/nextjs';
+import {
+	ConsentBanner,
+	ConsentDialog,
+	ConsentDialogLink,
+	InthProvider,
+} from '@inth/nextjs';
 import type { ReactNode } from 'react';
 
 const projectUrl = 'https://your-project.inth.app';
@@ -22,6 +27,7 @@ export const Consent = ({ children }: { children: ReactNode }) => (
 		// #endregion docs:slot
 	>
 		{children}
+		<ConsentDialogLink />
 		<ConsentBanner />
 		<ConsentDialog />
 	</InthProvider>
