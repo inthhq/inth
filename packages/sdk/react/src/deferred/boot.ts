@@ -36,14 +36,18 @@ export interface ConsentBoot {
 /**
  * Reads the snapshots a server render left in the document.
  *
- * @param root - Where to look. Defaults to `document`.
+ * @param root - Where to look. Defaults to `document`, or none on a server.
  * @returns The snapshots, or `null` without a parseable element.
  * @internal
  */
 export const readConsentBoot = function readConsentBoot(
-	root: ParentNode = document
+	root: ParentNode | undefined = typeof document === 'undefined'
+		? undefined
+		: document
 ): ConsentBoot | null {
-	const element = root.querySelector(`script[${CONSENT_BOOT_ATTRIBUTE}]`);
+	// A render on the server, such as the static banner at build time, has
+	// no document and no boot data.
+	const element = root?.querySelector(`script[${CONSENT_BOOT_ATTRIBUTE}]`);
 	const text = element?.textContent;
 	if (!text) {
 		return null;
