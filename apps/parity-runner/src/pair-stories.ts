@@ -69,7 +69,7 @@ export const pairStories = function pairStories(
  * framework ships it.
  */
 export const NOT_YET_PORTED: Readonly<Record<string, readonly string[]>> = {
-	'Privacy Choices/': ['react'],
+	'Privacy Choices/': ['react', 'vue'],
 };
 
 /**

@@ -215,14 +215,18 @@ test('a story not yet ported is compared only where it is ported, and never miss
 		],
 		vue: [entry('vue', 'Core/Consent Banner')],
 	};
-	expect(portedFrameworks('Privacy Choices/Banner/Card')).toEqual(['react']);
+	expect(portedFrameworks('Privacy Choices/Banner/Card')).toEqual([
+		'react',
+		'vue',
+	]);
 	expect(portedFrameworks('Core/Consent Banner/Card')).toBeNull();
 	const pairs = selectComparablePairs(byFramework, {
 		frameworks: ['react', 'svelte', 'vue'],
 	});
-	// A React-only story has nothing to compare with, even when another
-	// framework happens to ship a story of the same name.
+	// A story ported to React and Vue is compared only between them, even
+	// when another framework happens to ship a story of the same name.
 	expect(pairs.map((pair) => pair.key)).toEqual(['Core/Consent Banner/Card']);
+	// A framework it is ported to is missing it; one it is not is not.
 	expect(
 		missingFrameworks(
 			{
@@ -231,5 +235,5 @@ test('a story not yet ported is compared only where it is ported, and never miss
 			},
 			['react', 'svelte', 'vue']
 		)
-	).toEqual([]);
+	).toEqual(['vue']);
 });
