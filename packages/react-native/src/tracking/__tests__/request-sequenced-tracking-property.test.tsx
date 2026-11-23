@@ -35,7 +35,7 @@ import {
 } from '../../native/presenter';
 import type { ConsentSnapshot } from '../../protocol';
 import { InthProvider } from '../../provider/inth-provider';
-import type { ConsentTrackingRequest } from '../request-sequenced-tracking';
+import type { ConsentTrackingRequest } from '../tracking-sequence.model';
 
 const URL = 'https://example.com/privacy';
 const MODES: readonly ConsentTrackingRequest[] = [

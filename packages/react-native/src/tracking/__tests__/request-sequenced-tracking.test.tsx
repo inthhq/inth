@@ -36,7 +36,7 @@ import {
 	isRepromptDue,
 	shouldRequestTracking,
 	TRACKING_REPROMPT_INTERVAL_MS,
-} from '../request-sequenced-tracking';
+} from '../tracking-sequence.model';
 
 const URL = 'https://example.com/privacy';
 
