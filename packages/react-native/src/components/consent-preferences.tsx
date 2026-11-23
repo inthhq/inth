@@ -17,7 +17,7 @@ import {
 	isConsentCategoryRowsEqual,
 	selectConsentCategoryRows,
 	useCategorySelection,
-} from './internal/categories';
+} from './internal/consent-category-rows.model';
 import { ConsentBrandingTag } from './internal/consent-branding-tag';
 import {
 	CONSENT_BUTTON_ROW_ITEM,
