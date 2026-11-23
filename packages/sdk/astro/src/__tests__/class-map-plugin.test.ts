@@ -12,9 +12,9 @@ import {
 import { testing as testingMode } from '../testing';
 
 const directory = mkdtempSync(join(tmpdir(), 'inth-class-maps-'));
-const withCSS = join(directory, 'panel.js');
-writeFileSync(withCSS, 'import "./panel.css"; export default {};');
-writeFileSync(join(directory, 'panel.node.js'), 'export default {};');
+const withCSS = join(directory, 'consent-dialog.js');
+writeFileSync(withCSS, 'import "./consent-dialog.css"; export default {};');
+writeFileSync(join(directory, 'consent-dialog.node.js'), 'export default {};');
 const lonely = join(directory, 'lonely.js');
 writeFileSync(lonely, 'export default {};');
 
@@ -41,10 +41,10 @@ const resolveWith = async function resolveWith(
 describe('class maps without CSS', () => {
 	it('points a browser class-map import at the variant with no CSS', async () => {
 		const { result } = await resolveWith(
-			'@inth/sdk/ui/styles/components/legacy-panel',
+			'@inth/sdk/ui/styles/components/consent-dialog',
 			withCSS
 		);
-		expect(result).toBe(join(directory, 'panel.node.js'));
+		expect(result).toBe(join(directory, 'consent-dialog.node.js'));
 	});
 
 	it.each([
@@ -52,7 +52,7 @@ describe('class maps without CSS', () => {
 		['a server environment', {}, 'server'],
 	])('leaves %s alone', async (_name, options, consumer) => {
 		const { resolve, result } = await resolveWith(
-			'@inth/sdk/ui/styles/components/legacy-panel',
+			'@inth/sdk/ui/styles/components/consent-dialog',
 			withCSS,
 			options,
 			consumer
@@ -78,7 +78,7 @@ describe('class maps without CSS', () => {
 			'client',
 			true
 		);
-		expect(result).toBe(join(directory, 'panel.node.js'));
+		expect(result).toBe(join(directory, 'consent-dialog.node.js'));
 	});
 
 	it.each([
