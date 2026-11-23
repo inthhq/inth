@@ -1,70 +1,13 @@
 import type { AllConsentNames } from '@inth/sdk/engine';
-import styles from '@inth/sdk/ui/styles/components/consent-gate';
 import { forwardRef as createForwardRef } from 'react';
-import type { Ref } from 'react';
 
 import { resolveConsentGateCopy } from '~/component-hooks/use-consent-gate';
 import { useTranslations } from '~/component-hooks/use-translations';
 import { useUIConfig } from '~/use-ui-config';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
-import { CONSENT_GATE_SHEETS } from '../shared/consent-gate-sheets';
-import { Box } from '../shared/primitives/box';
-import type { BoxProps } from '../shared/primitives/box';
 import { ConsentButton } from '../shared/primitives/consent-button';
 import type { ConsentButtonProps } from '../shared/primitives/consent-button.model';
-import { SurfaceStyles, useSurfaceSheetsReady } from '../shared/surface-styles';
-
-const ConsentGateRoot = createForwardRef<
-	HTMLDivElement,
-	Omit<BoxProps, 'slotKey'>
->(({ children, ...props }, ref) => {
-	// A gate the browser renders first, after a client-side navigation,
-	// waits for a deferred sheet rather than paint unstyled.
-	const sheetsReady = useSurfaceSheetsReady(CONSENT_GATE_SHEETS, props.noStyle);
-	if (!sheetsReady) {
-		return null;
-	}
-	return (
-		<>
-			<SurfaceStyles
-				sheets={CONSENT_GATE_SHEETS}
-				noStyle={props.noStyle}
-			/>
-			<Box
-				ref={ref as Ref<HTMLDivElement>}
-				baseClassName={styles.placeholder}
-				data-testid="consent-gate-placeholder"
-				slotKey="consent-gate.root"
-				{...props}
-			>
-				{children}
-			</Box>
-		</>
-	);
-});
-
-const ConsentGateTitle = createForwardRef<
-	HTMLDivElement,
-	Omit<BoxProps, 'slotKey'> & { category?: AllConsentNames }
->(({ children, category, ...props }, ref) => {
-	const translations = useTranslations();
-	const defaultTitle = category
-		? resolveConsentGateCopy(translations, category).title
-		: undefined;
-
-	return (
-		<Box
-			ref={ref as Ref<HTMLDivElement>}
-			baseClassName={styles.title}
-			data-testid="consent-gate-title"
-			slotKey="consent-gate.title"
-			{...props}
-		>
-			{children ?? defaultTitle}
-		</Box>
-	);
-});
 
 const ConsentGateButton = createForwardRef<
 	HTMLButtonElement,
@@ -101,8 +44,6 @@ const ConsentGateButton = createForwardRef<
 	);
 });
 
-ConsentGateRoot.displayName = 'ConsentGateRoot';
-ConsentGateTitle.displayName = 'ConsentGateTitle';
 ConsentGateButton.displayName = 'ConsentGateButton';
 
-export { ConsentGateButton, ConsentGateRoot, ConsentGateTitle };
+export { ConsentGateButton };

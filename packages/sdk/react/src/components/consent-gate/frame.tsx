@@ -8,7 +8,9 @@
 import { forwardRef as createForwardRef } from 'react';
 import type { ElementType } from 'react';
 
-import * as atoms from './consent-gate-button';
+import { ConsentGateButton } from './consent-gate-button';
+import { ConsentGateRoot } from './consent-gate-root';
+import { ConsentGateTitle } from './consent-gate-title';
 import { ConsentGate as ConsentGateComponent } from './consent-gate';
 import type {
 	ConsentGateCompoundComponent,
@@ -62,22 +64,22 @@ const deprecatedPart = function deprecatedPart<PartType>(
 };
 
 /** @deprecated Renamed to `ConsentGateRoot`. */
-const FrameRoot: typeof atoms.ConsentGateRoot = deprecatedPart(
-	atoms.ConsentGateRoot,
+const FrameRoot: typeof ConsentGateRoot = deprecatedPart(
+	ConsentGateRoot,
 	'FrameRoot',
 	'ConsentGate.Root'
 );
 
 /** @deprecated Renamed to `ConsentGateTitle`. */
-const FrameTitle: typeof atoms.ConsentGateTitle = deprecatedPart(
-	atoms.ConsentGateTitle,
+const FrameTitle: typeof ConsentGateTitle = deprecatedPart(
+	ConsentGateTitle,
 	'FrameTitle',
 	'ConsentGate.Title'
 );
 
 /** @deprecated Renamed to `ConsentGateButton`. */
-const FrameButton: typeof atoms.ConsentGateButton = deprecatedPart(
-	atoms.ConsentGateButton,
+const FrameButton: typeof ConsentGateButton = deprecatedPart(
+	ConsentGateButton,
 	'FrameButton',
 	'ConsentGate.Button'
 );
