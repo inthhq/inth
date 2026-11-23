@@ -761,29 +761,27 @@ const derivedPrimaryTint = function derivedPrimaryTint(
 		: themeToVars(theme, isDark)['--inth-primary-tint'];
 };
 
+const PRIMARY_TINT_SUPPORTS = '@supports (color: rgb(from red r g b / 1))';
+
 /**
- * Makes the theme's derived primary tints opaque where the browser supports
- * relative colour syntax (VIS-03). The base value stays the plain mix, which
- * a browser without that syntax still reads; wrapped unconditionally, the
- * whole declaration would be dropped there and the tint would go
- * transparent. Same selectors, later in the sheet, so this wins.
+ * Makes a derived primary tint opaque where the browser supports relative
+ * colour syntax (VIS-03), for the rule written just before it. The base
+ * value stays the plain mix, which a browser without that syntax still
+ * reads; wrapped unconditionally, the whole declaration would be dropped
+ * there and the tint would go transparent.
+ *
+ * Each mode's guarded rule sits right after that mode's own base rule, on
+ * the same selectors. Emitted any later, the light root rule would come
+ * after the system-dark media block and replace a dark tint the theme set
+ * itself. A mode whose tint the theme sets gets no guarded rule.
  */
-const buildPrimaryTintSupportsCSS = function buildPrimaryTintSupportsCSS(
-	theme: Theme,
-	colorScheme: ThemeColorScheme | undefined,
-	selectors: ThemeSelectors
+const primaryTintSupportsRule = function primaryTintSupportsRule(
+	selector: string,
+	tint: string | undefined
 ): string {
-	const light = derivedPrimaryTint(theme, false);
-	const dark = derivedPrimaryTint(theme, true);
-	const rule = (selector: string, tint: string | undefined): string =>
-		tint ? `${selector}{--inth-primary-tint: ${opaque(tint)};}` : '';
-	const rules =
-		rule(selectors.root, colorScheme === 'dark' ? dark : light) +
-		(colorScheme === 'system' && dark
-			? `@media(prefers-color-scheme:dark){${rule(selectors.root, dark)}}`
-			: '') +
-		rule(selectors.dark, dark);
-	return rules ? `\n@supports (color: rgb(from red r g b / 1)){${rules}}` : '';
+	return tint
+		? `${PRIMARY_TINT_SUPPORTS}{${selector}{--inth-primary-tint: ${opaque(tint)};}}`
+		: '';
 };
 
 const buildThemeCSS = function buildThemeCSS(
@@ -797,14 +795,14 @@ const buildThemeCSS = function buildThemeCSS(
 		(colorScheme
 			? serializeThemeVars({ colors: defaultDarkColors }, true)
 			: '') + serializeThemeVars(theme, true);
-	const tintSupports = opaqueTint
-		? buildPrimaryTintSupportsCSS(theme, colorScheme, selectors)
-		: '';
+	const lightTint = opaqueTint ? derivedPrimaryTint(theme, false) : undefined;
+	const darkTint = opaqueTint ? derivedPrimaryTint(theme, true) : undefined;
+	const rootIsDark = colorScheme === 'dark';
 	// A CSS escape keeps token values intact without letting one close the
 	// surrounding `<style>` element.
-	return `${root}{${colorScheme === 'dark' ? dark : serializeThemeVars(theme, false)}}
-${colorScheme === 'system' ? `@media(prefers-color-scheme:dark){${root}{${dark}}}` : ''}
-${selectors.dark}{${dark}}${tintSupports}
+	return `${root}{${rootIsDark ? dark : serializeThemeVars(theme, false)}}${primaryTintSupportsRule(root, rootIsDark ? darkTint : lightTint)}
+${colorScheme === 'system' ? `@media(prefers-color-scheme:dark){${root}{${dark}}${primaryTintSupportsRule(root, darkTint)}}` : ''}
+${selectors.dark}{${dark}}${primaryTintSupportsRule(selectors.dark, darkTint)}
 .inth-no-transitions,.inth-no-transitions *,.inth-no-transitions *::before,.inth-no-transitions *::after{transition: none !important;animation: none !important;}`.replace(
 		/</gu,
 		'\\3c '
@@ -888,6 +886,10 @@ export const defaultThemeReferences = {
  *
  * Put it after the default token block. It has the default selectors'
  * specificity, so a theme from {@link generateThemeCSS} still wins.
+ * One block after both modes is safe here, unlike in a generated theme:
+ * the default sheet has no `prefers-color-scheme` block, and every dark
+ * selector carries one more class than its light counterpart, so the light
+ * rule never replaces a dark tint whatever the order.
  *
  * @param options.light - Include the light rule. Leave it out where the
  * page has set its own `inth-primary-tint` at the same specificity, since
@@ -901,5 +903,5 @@ export const generatePrimaryTintSupportsCSS =
 		const lightRule = light
 			? `${DEFAULT_THEME_SELECTORS.root}{--inth-primary-tint: ${opaque(PRIMARY_TINT_REFERENCE.light)};}`
 			: '';
-		return `@supports (color: rgb(from red r g b / 1)){${lightRule}${DEFAULT_THEME_SELECTORS.dark}{--inth-primary-tint: ${opaque(PRIMARY_TINT_REFERENCE.dark)};}}`;
+		return `${PRIMARY_TINT_SUPPORTS}{${lightRule}${DEFAULT_THEME_SELECTORS.dark}{--inth-primary-tint: ${opaque(PRIMARY_TINT_REFERENCE.dark)};}}`;
 	};

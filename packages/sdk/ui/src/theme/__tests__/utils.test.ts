@@ -10,6 +10,74 @@ import {
 	themeToVars,
 } from '../utils';
 
+/**
+ * The `--inth-primary-tint` a browser with relative colour syntax would give
+ * the root element for some generated theme CSS. It reads the theme's two
+ * root selectors (`:root:root` and `:root:root.dark`), honours
+ * `prefers-color-scheme: dark` and `@supports` blocks, and lets the higher
+ * specificity win, then the later rule.
+ */
+const resolvedRootTint = function resolvedRootTint(
+	css: string,
+	{ darkClass, prefersDark }: { darkClass: boolean; prefersDark: boolean }
+): string | undefined {
+	let best: { order: number; specificity: number; value: string } | undefined;
+	let order = 0;
+	const walk = (block: string): void => {
+		let index = 0;
+		while (index < block.length) {
+			const open = block.indexOf('{', index);
+			if (open === -1) {
+				return;
+			}
+			const prelude = block.slice(index, open).trim();
+			let depth = 1;
+			let close = open + 1;
+			while (depth > 0) {
+				if (block[close] === '{') {
+					depth += 1;
+				} else if (block[close] === '}') {
+					depth -= 1;
+				}
+				close += 1;
+			}
+			const body = block.slice(open + 1, close - 1);
+			index = close;
+			if (prelude.startsWith('@media')) {
+				if (prelude.includes('prefers-color-scheme:dark') && prefersDark) {
+					walk(body);
+				}
+				continue;
+			}
+			if (prelude.startsWith('@supports')) {
+				walk(body);
+				continue;
+			}
+			// The last declaration in a rule wins.
+			const value = [
+				...body.matchAll(/--inth-primary-tint: (?<tint>[^;]+);/gu),
+			].at(-1)?.groups?.tint;
+			const selectors = prelude.split(',');
+			let specificity = 0;
+			if (selectors.includes(':root:root.dark')) {
+				specificity = darkClass ? 3 : 0;
+			} else if (selectors.includes(':root:root')) {
+				specificity = 2;
+			}
+			order += 1;
+			if (
+				value &&
+				specificity > 0 &&
+				(!best || specificity >= best.specificity)
+			) {
+				best = { order, specificity, value };
+			}
+		}
+	};
+	walk(css);
+	return best?.value;
+};
+
 describe('defaultTheme', () => {
 	test('has all required color tokens', () => {
 		expect(defaultTheme.colors.primary).toBeDefined();
@@ -434,23 +502,25 @@ describe('v6 consent tokens', () => {
 			},
 			'system'
 		);
-		const [base, supports] = css.split(
-			'@supports (color: rgb(from red r g b / 1))'
-		);
+		const supports = [
+			...css.matchAll(
+				/@supports \(color: rgb\(from red r g b \/ 1\)\)\{(?<rule>[^{}]*\{[^{}]*\})\}/gu
+			),
+		].map((match) => match.groups?.rule);
 
 		// The base value is the plain mix every browser reads.
-		expect(base).toContain(
+		expect(css).toContain(
 			'--inth-primary-tint: color-mix(in srgb, oklch(0.55 0.2 262 / 50%) 10%, var(--inth-surface));'
 		);
-		expect(supports).toContain(
-			':root:root,:host,.inth-theme-root.inth-theme-root{--inth-primary-tint: rgb(from color-mix(in srgb, oklch(0.55 0.2 262 / 50%) 10%, var(--inth-surface)) r g b / 1);}'
+		// Only the light root rule, right after the light root block. The dark
+		// tint is set as written, so nothing overrides it.
+		expect(supports).toEqual([
+			':root:root,:host,.inth-theme-root.inth-theme-root{--inth-primary-tint: rgb(from color-mix(in srgb, oklch(0.55 0.2 262 / 50%) 10%, var(--inth-surface)) r g b / 1);}',
+		]);
+		expect(css.indexOf('@supports')).toBeLessThan(
+			css.indexOf('prefers-color-scheme')
 		);
-		// The dark tint is set as written, so nothing overrides it.
-		expect(supports).not.toContain('#101020');
-		expect(supports).not.toContain('prefers-color-scheme');
-		expect(supports?.match(/\{/gu)?.length).toBe(
-			supports?.match(/\}/gu)?.length
-		);
+		expect(css).not.toContain('rgb(from #101020');
 	});
 
 	test('[VIS-03] generated theme CSS covers the dark and system tints', () => {
@@ -462,8 +532,12 @@ describe('v6 consent tokens', () => {
 			'rgb(from color-mix(in srgb, var(--brand) 18%, var(--brand-surface)) r g b / 1)';
 
 		const system = generateThemeCSS(theme, 'system');
+		// The guarded dark rule closes the media block it sits in.
 		expect(system).toContain(
-			`@media(prefers-color-scheme:dark){:root:root,:host,.inth-theme-root.inth-theme-root{--inth-primary-tint: ${darkTint};}}`
+			`}@supports (color: rgb(from red r g b / 1)){:root:root,:host,.inth-theme-root.inth-theme-root{--inth-primary-tint: ${darkTint};}}}`
+		);
+		expect(system.indexOf('@media(prefers-color-scheme:dark){')).toBeLessThan(
+			system.indexOf(`--inth-primary-tint: ${darkTint}`)
 		);
 		expect(system).toContain(
 			`.inth-dark .inth-theme-root.inth-theme-root{--inth-primary-tint: ${darkTint};}`
@@ -472,6 +546,68 @@ describe('v6 consent tokens', () => {
 		const dark = generateThemeCSS(theme, 'dark');
 		expect(dark).toContain(
 			`:root:root,:host,.inth-theme-root.inth-theme-root{--inth-primary-tint: ${darkTint};}`
+		);
+	});
+
+	describe.each([
+		{
+			dark: { primaryTint: '#112233' },
+			label: 'an explicit dark tint',
+			light: {},
+		},
+		{
+			dark: {},
+			label: 'an explicit light tint',
+			light: { primaryTint: '#eef2ff' },
+		},
+		{
+			dark: { primaryTint: '#112233' },
+			label: 'explicit light and dark tints',
+			light: { primaryTint: '#eef2ff' },
+		},
+	])('[VIS-03] generated theme CSS with $label', ({ dark, light }) => {
+		const theme: Theme = {
+			colors: { primary: '#2563eb', ...light },
+			dark,
+		};
+		// `colors` applies to both modes and `dark` overrides it, so a light
+		// tint alone is also the dark tint.
+		const explicitLight = theme.colors?.primaryTint;
+		const explicitDark = theme.dark?.primaryTint ?? explicitLight;
+		const lightTint =
+			explicitLight ??
+			`rgb(from ${themeToVars(theme)['--inth-primary-tint']} r g b / 1)`;
+		const darkTint =
+			explicitDark ??
+			`rgb(from ${themeToVars(theme, true)['--inth-primary-tint']} r g b / 1)`;
+
+		test.each([
+			['system', false, false, 'light'],
+			['system', true, false, 'dark'],
+			['system', false, true, 'dark'],
+			['system', true, true, 'dark'],
+			['light', false, false, 'light'],
+			['light', true, false, 'light'],
+			['light', false, true, 'dark'],
+			['dark', false, false, 'dark'],
+			['dark', true, false, 'dark'],
+			['dark', false, true, 'dark'],
+		] as const)(
+			'under %j (prefers dark %j, dark class %j) the root gets the %s tint',
+			(colorScheme, prefersDark, darkClass, mode) => {
+				const css = generateThemeCSS(theme, colorScheme);
+
+				expect(resolvedRootTint(css, { darkClass, prefersDark })).toBe(
+					mode === 'dark' ? darkTint : lightTint
+				);
+				// A tint the theme sets is never wrapped.
+				const explicitTints = [explicitLight, explicitDark].filter(
+					(tint): tint is string => tint !== undefined
+				);
+				for (const explicit of explicitTints) {
+					expect(css).not.toContain(`rgb(from ${explicit}`);
+				}
+			}
 		);
 	});
 
