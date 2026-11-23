@@ -1,14 +1,33 @@
 import type { Script, ScriptSource } from '../../libs/script-loader/types';
+import type { RegistryEntryVerdict, RegistrySignature } from './signature';
 
 /** Script sources by script `id`, as `scriptLoader.sources` takes them. */
 export type ScriptSources = Readonly<Record<string, ScriptSource>>;
+
+/**
+ * A source the script registry lists, with Inth's release signature.
+ * `signature` is absent when the entry has none and `null` when it is
+ * malformed.
+ */
+export interface RegistrySource extends ScriptSource {
+	signature?: RegistrySignature | null;
+}
 
 /**
  * Sources the script registry lists, by script `id`. `null` marks a script
  * the registry lists without a source it can vouch for: it does not load,
  * and never from its own URL either.
  */
-export type RegistrySources = Readonly<Record<string, ScriptSource | null>>;
+export type RegistrySources = Readonly<Record<string, RegistrySource | null>>;
+
+/**
+ * Decides a registry entry for `script` by its signature; see
+ * `createRegistryVerifier`. `script.src` is still the vendor's URL.
+ */
+export type RegistryEntryCheck = (
+	script: Script,
+	entry: RegistrySource
+) => RegistryEntryVerdict;
 
 /**
  * Where the registry's list stands, as the loader reads it:
@@ -25,13 +44,15 @@ export type ScriptRegistryState =
 export interface HeldScript {
 	script: Script;
 	/**
-	 * `waiting` until the registry's list arrives; `refused` when the list
-	 * names the script with an entry Inth cannot check: no https `src`, no
-	 * integrity hash, or attributes that are not strings or `null`;
-	 * `unparsable` when a `scriptLoader.sources` entry gives an integrity
-	 * with no hash a browser can parse, so the browser would check nothing.
+	 * `waiting` until the registry's list arrives and the entry's signature
+	 * is checked; `refused` when the list names the script with an entry
+	 * Inth cannot check: no https `src`, no integrity hash, or attributes
+	 * that are not strings or `null`; `unsigned` when the entry's release
+	 * signature is invalid, or missing where one is required; `unparsable`
+	 * when a `scriptLoader.sources` entry gives an integrity with no hash a
+	 * browser can parse, so the browser would check nothing.
 	 */
-	reason: 'refused' | 'unparsable' | 'waiting';
+	reason: 'refused' | 'unparsable' | 'unsigned' | 'waiting';
 }
 
 /** A script list with each script's source applied. */
@@ -40,6 +61,12 @@ export interface ResolvedScripts {
 	scripts: Script[];
 	/** Scripts held back, unchanged. */
 	held: HeldScript[];
+	/**
+	 * When the release signature of each script that loads from a signed
+	 * registry entry expires, as a time in milliseconds. A script must not
+	 * mount from it after that, though it resolved before.
+	 */
+	expiresAt: Map<Script, number>;
 }
 
 const SRI_STRENGTH: Readonly<Record<string, number>> = {
@@ -174,6 +201,28 @@ const applySource = (script: Script, source: ScriptSource): Script => {
 };
 
 /**
+ * Why the registry's `entry` holds `script` back, or `undefined` when it
+ * loads: from the entry, or from its own URL when there is none.
+ */
+const heldReason = (
+	script: Script,
+	entry: RegistrySource | null | undefined,
+	verify: RegistryEntryCheck | undefined
+): HeldScript['reason'] | undefined => {
+	if (entry === null) {
+		return 'refused';
+	}
+	if (!entry) {
+		return undefined;
+	}
+	const verdict = verify?.(script, entry) ?? 'load';
+	if (verdict === 'load') {
+		return undefined;
+	}
+	return verdict === 'wait' ? 'waiting' : 'unsigned';
+};
+
+/**
  * Point each script with an entry in `sources` at that entry's URL, and
  * each other script an integration built at the source the script
  * registry lists for it.
@@ -188,15 +237,22 @@ const applySource = (script: Script, source: ScriptSource): Script => {
  * the list names with `null` stays held: loading it from its own URL would
  * undo the registry's hold.
  *
+ * A registry entry applies only once `verify` lets it load. While its
+ * signature is checked the script waits, and an entry it refuses holds
+ * the script as `null` does.
+ *
  * @param sources - Replacement URLs and integrity hashes by script `id`.
  * @param registry - Reads the registry's list; omit it when the registry
  * is off.
+ * @param verify - Checks a registry entry's signature. Without it, every
+ * entry loads.
  * @returns A function that resolves a script list.
  * @internal
  */
 export const createScriptSourceResolver = function createScriptSourceResolver(
 	sources: ScriptSources | undefined,
-	registry?: () => ScriptRegistryState
+	registry?: () => ScriptRegistryState,
+	verify?: RegistryEntryCheck
 ): (scripts: readonly Script[]) => ResolvedScripts {
 	// The same script and source resolve to the same copy, so resolving the
 	// list again when the registry's list arrives does not remount a script
@@ -212,7 +268,11 @@ export const createScriptSourceResolver = function createScriptSourceResolver(
 		return copy;
 	};
 	return (scripts) => {
-		const resolved: ResolvedScripts = { held: [], scripts: [] };
+		const resolved: ResolvedScripts = {
+			expiresAt: new Map(),
+			held: [],
+			scripts: [],
+		};
 		const state = registry?.();
 		for (const script of scripts) {
 			const listed =
@@ -244,10 +304,19 @@ export const createScriptSourceResolver = function createScriptSourceResolver(
 				state.status === 'listed' && Object.hasOwn(state.sources, script.id)
 					? state.sources[script.id]
 					: undefined;
-			if (entry === null) {
-				resolved.held.push({ reason: 'refused', script });
+			const reason = heldReason(script, entry, verify);
+			if (reason) {
+				resolved.held.push({ reason, script });
+			} else if (entry) {
+				const copy = applyOnce(script, entry);
+				resolved.scripts.push(copy);
+				// A pin that does not allow the entry's hash keeps the script on
+				// its own URL, so the entry's expiry does not apply to it
+				if (entry.signature && copy !== script) {
+					resolved.expiresAt.set(copy, Date.parse(entry.signature.expiresAt));
+				}
 			} else {
-				resolved.scripts.push(entry ? applyOnce(script, entry) : script);
+				resolved.scripts.push(script);
 			}
 		}
 		return resolved;

@@ -37,6 +37,7 @@ import type {
 	getEffectiveGateState,
 	has,
 } from '../has';
+import type { RegistrySigningKeys } from './signature';
 import type { ScriptSources } from './sources';
 
 export type { Script, ScriptCallbackInfo };
@@ -143,6 +144,16 @@ export interface ScriptLoaderOptions {
 		 * reads only the list a prefetch carried, and never waits.
 		 */
 		waitForInit: boolean;
+		/**
+		 * Whether an entry with no release signature is refused like
+		 * `null`. Without it, such an entry loads on its integrity hash. An
+		 * invalid signature is refused either way, and a script waits while
+		 * its entry's signature is checked.
+		 * @default false
+		 */
+		requireSignatures?: boolean;
+		/** Whose signing keys to trust. @default 'production' */
+		signingKeys?: RegistrySigningKeys;
 	};
 	/**
 	 * When true, also dispatch debug events to the page's script debug

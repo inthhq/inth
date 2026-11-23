@@ -37,7 +37,10 @@ import {
 } from '@inth/sdk/modules/persistence';
 import type { Script } from '@inth/sdk/modules/script-loader';
 import { createWindowDebug } from '@inth/sdk/modules/window-debug';
-import type { ConsentControlOptions } from '@inth/sdk/runtime';
+import type {
+	ConsentControlOptions,
+	ConsentRuntimeOptions,
+} from '@inth/sdk/runtime';
 import {
 	claimEarlyJourney,
 	createConsentProviderRuntime,
@@ -280,12 +283,14 @@ export interface InthProviderOptions
 	/**
 	 * Load `@inth/integrations` scripts from the Inth script registry: each
 	 * script the consent manifest lists loads from the registry's URL with an
-	 * integrity hash the browser checks. Initial-only: remount the provider to change
+	 * integrity hash the browser checks. An entry with a release signature
+	 * loads once it verifies; pass `{ requireSignatures: true }` to refuse
+	 * entries without one, and `signingKeys` to pick the keys. Initial-only: remount the provider to change
 	 * it. Experimental: its name
 	 * and behaviour can change in a minor release.
 	 * @default false
 	 */
-	experimentalScriptRegistry?: boolean;
+	experimentalScriptRegistry?: ConsentRuntimeOptions['experimentalScriptRegistry'];
 	/**
 	 * Reload the page after an accept, reject or save turns off a category or
 	 * vendor that was granted, or after a `consentSource` withdraws one.

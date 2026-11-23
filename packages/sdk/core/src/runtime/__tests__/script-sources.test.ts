@@ -2,7 +2,7 @@ import {
 	createConsentManifestPolicyPack,
 	resolveInitFromManifest,
 } from '@inth/sdk-schema/types';
-import type { ConsentManifest } from '@inth/sdk-schema/types';
+import type { ConsentManifest, ScriptSourceWire } from '@inth/sdk-schema/types';
 /**
  * @vitest-environment jsdom
  *
@@ -17,6 +17,12 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { Script } from '../../libs/script-loader/types';
+import {
+	PREVIEW_KEY,
+	signRelease,
+} from '../../modules/script-loader/__tests__/signing-fixtures';
+import { createScriptSourceResolver } from '../../modules/script-loader/sources';
+import type { ScriptLoaderDebugEvent } from '../../modules/script-loader/types';
 import { manifest as browserManifest } from '../../transports/manifest-browser';
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
@@ -31,6 +37,13 @@ import type {
 	ConsentRuntimeOptions,
 	RuntimePrefetch,
 } from '../types';
+
+// oxlint-disable-next-line anti-slop/no-module-mocking -- The tests cannot sign with Inth's keys, so they trust test keys in their place; the verifier is the real one.
+vi.mock('../../modules/script-loader/signing-keys', async () => ({
+	SIGNING_KEYS: (
+		await import('../../modules/script-loader/__tests__/signing-fixtures')
+	).TEST_SIGNING_KEYS,
+}));
 
 const REGISTRY_SRC = 'https://acme.example/scripts/vendor@0123456789abcdef.js';
 const REGISTRY_INTEGRITY = 'sha384-registry';
@@ -907,7 +920,7 @@ describe('experimentalScriptRegistry', () => {
 							vendor: {
 								integrity: HASH_INTEGRITY,
 								keyId: 'inth-2027-01',
-								signature: 'base64-signature',
+								revision: 'v2',
 								src: HASH_SRC,
 							},
 						},
@@ -1454,5 +1467,377 @@ describe('experimentalScriptRegistry', () => {
 			})
 		);
 		runtime.dispose();
+	});
+
+	describe('release signatures', () => {
+		/** A prefetched list: the loader reads it as it starts. */
+		const prefetched = (vendor: ScriptSourceWire): RuntimePrefetch => ({
+			initialPolicyPending: false,
+			initialScriptRegistry: { sources: { vendor } },
+		});
+
+		const signedEntry = (
+			sign: Partial<Parameters<typeof signRelease>[0]> = {}
+		) => ({
+			integrity: HASH_INTEGRITY,
+			signature: signRelease({
+				integrity: HASH_INTEGRITY,
+				url: VENDOR_SRC,
+				...sign,
+			}),
+			src: HASH_SRC,
+		});
+
+		const debugMessages = (onDebug: ReturnType<typeof vi.fn>) =>
+			onDebug.mock.calls.map(
+				([event]) => (event as ScriptLoaderDebugEvent).message
+			);
+
+		test("inserts no tag for the registry's URL until the signature verifies, then loads it", async () => {
+			const runtime = startWith({
+				experimentalScriptRegistry: true,
+				mode,
+				prefetch: prefetched(signedEntry()),
+				scripts: [integrationScript()],
+			});
+			expect(srcs()).toEqual([]);
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor')).toMatchObject({
+					integrity: HASH_INTEGRITY,
+					src: HASH_SRC,
+				})
+			);
+			runtime.dispose();
+		});
+
+		test.each([
+			['required', { requireSignatures: true }],
+			['not required', true],
+		] as const)(
+			'with signatures %s, refuses an invalid one without the vendor fallback',
+			async (_name, experimentalScriptRegistry) => {
+				const onDebug = vi.fn();
+				const runtime = startWith({
+					experimentalScriptRegistry,
+					mode,
+					prefetch: prefetched(
+						// A release of another script, moved onto this entry.
+						signedEntry({ url: 'https://cdn.other.example/other.js' })
+					),
+					scriptLoader: { onDebug },
+					scripts: [integrationScript()],
+				});
+
+				await vi.waitFor(() =>
+					expect(debugMessages(onDebug)).toContainEqual(
+						expect.stringContaining(
+							'without a release signature Inth can verify'
+						)
+					)
+				);
+				expect(srcs()).toEqual([]);
+				runtime.dispose();
+			}
+		);
+
+		test('mounts no script whose signature expired between its check and consent', async () => {
+			const HOUR_MS = 60 * 60 * 1000;
+			const expiresAt = new Date(Date.now() + HOUR_MS).toISOString();
+			const verify = vi.spyOn(crypto.subtle, 'verify');
+			const onDebug = vi.fn();
+			const runtime = startWith({
+				experimentalScriptRegistry: { requireSignatures: true },
+				mode,
+				prefetch: prefetched(
+					signedEntry({
+						expiresAt,
+						signedAt: new Date(Date.now() - HOUR_MS).toISOString(),
+						url: `${VENDOR_SRC}?expiring`,
+					})
+				),
+				scriptLoader: { onDebug },
+				scripts: [
+					integrationScript({
+						category: 'measurement',
+						src: `${VENDOR_SRC}?expiring`,
+					}),
+				],
+			});
+			// The check settles while measurement is denied, so nothing mounts
+			await vi.waitFor(() => expect(verify).toHaveBeenCalled());
+			await new Promise((resolve) => {
+				setTimeout(resolve, 0);
+			});
+			expect(srcs()).toEqual([]);
+			verify.mockRestore();
+
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				vi.setSystemTime(new Date(expiresAt));
+				await runtime.kernel.commands.save('all');
+				await new Promise((resolve) => {
+					setTimeout(resolve, 0);
+				});
+				expect(srcs()).toEqual([]);
+				expect(debugMessages(onDebug)).toContainEqual(
+					expect.stringContaining('without a release signature Inth can verify')
+				);
+			} finally {
+				vi.useRealTimers();
+				runtime.dispose();
+			}
+		});
+
+		test('loads an entry whose signature expired when signatures are not required, and reports it', async () => {
+			const DAY_MS = 24 * 60 * 60 * 1000;
+			const onDebug = vi.fn();
+			const runtime = startWith({
+				experimentalScriptRegistry: true,
+				mode,
+				// As a manifest bundled at build time carries it weeks later
+				prefetch: prefetched(
+					signedEntry({
+						expiresAt: new Date(Date.now() - DAY_MS).toISOString(),
+						signedAt: new Date(Date.now() - 15 * DAY_MS).toISOString(),
+					})
+				),
+				scriptLoader: { onDebug },
+				scripts: [integrationScript()],
+			});
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor')).toMatchObject({
+					integrity: HASH_INTEGRITY,
+					src: HASH_SRC,
+				})
+			);
+			expect(debugMessages(onDebug)).toContainEqual(
+				expect.stringContaining('with an expired release signature')
+			);
+			runtime.dispose();
+		});
+
+		test('mounts every other script once when a signature has expired by the time consent comes', async () => {
+			const HOUR_MS = 60 * 60 * 1000;
+			const expiresAt = new Date(Date.now() + HOUR_MS).toISOString();
+			const onBeforeLoad = vi.fn();
+			const verify = vi.spyOn(crypto.subtle, 'verify');
+			const runtime = startWith({
+				experimentalScriptRegistry: { requireSignatures: true },
+				mode,
+				prefetch: prefetched(
+					signedEntry({
+						expiresAt,
+						signedAt: new Date(Date.now() - HOUR_MS).toISOString(),
+						url: `${VENDOR_SRC}?siblings`,
+					})
+				),
+				scripts: [
+					{ ...otherScript, onBeforeLoad },
+					integrationScript({
+						category: 'measurement',
+						src: `${VENDOR_SRC}?siblings`,
+					}),
+				],
+			});
+			await vi.waitFor(() => expect(verify).toHaveBeenCalled());
+			await new Promise((resolve) => {
+				setTimeout(resolve, 0);
+			});
+			verify.mockRestore();
+
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				vi.setSystemTime(new Date(expiresAt));
+				await runtime.kernel.commands.save('all');
+				await new Promise((resolve) => {
+					setTimeout(resolve, 0);
+				});
+				expect(onBeforeLoad).toHaveBeenCalledOnce();
+				expect(element('other')).not.toBeNull();
+				expect(element('vendor')).toBeNull();
+			} finally {
+				vi.useRealTimers();
+				runtime.dispose();
+			}
+		});
+
+		test('refuses an entry with no signature when signatures are required', async () => {
+			const onDebug = vi.fn();
+			const runtime = startWith({
+				experimentalScriptRegistry: { requireSignatures: true },
+				mode,
+				prefetch: prefetched({ integrity: HASH_INTEGRITY, src: HASH_SRC }),
+				scriptLoader: { onDebug },
+				scripts: [integrationScript()],
+			});
+			await new Promise((resolve) => {
+				setTimeout(resolve, 0);
+			});
+
+			expect(srcs()).toEqual([]);
+			expect(debugMessages(onDebug)).toContainEqual(
+				expect.stringContaining('without a release signature Inth can verify')
+			);
+			runtime.dispose();
+		});
+
+		test('loads an entry with no signature on its hash by default, and reports it', () => {
+			const onDebug = vi.fn();
+			const runtime = startWith({
+				experimentalScriptRegistry: true,
+				mode,
+				prefetch: prefetched({ integrity: HASH_INTEGRITY, src: HASH_SRC }),
+				scriptLoader: { onDebug },
+				scripts: [integrationScript()],
+			});
+
+			expect(fetchAttributes('vendor').src).toBe(HASH_SRC);
+			expect(onDebug).toHaveBeenCalledWith(
+				expect.objectContaining({
+					action: 'error',
+					message: expect.stringContaining('with no release signature'),
+					scope: 'step',
+					scriptId: 'vendor',
+				})
+			);
+			runtime.dispose();
+		});
+
+		test('waits on the signature of an entry that init delivers, then loads it', async () => {
+			const runtime = startWith({
+				experimentalScriptRegistry: true,
+				mode: listed({ vendor: signedEntry() }),
+				scripts: [integrationScript()],
+			});
+			expect(srcs()).toEqual([]);
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor')).toMatchObject({
+					integrity: HASH_INTEGRITY,
+					src: HASH_SRC,
+				})
+			);
+			runtime.dispose();
+		});
+
+		test('inserts nothing when disposed while the signature is checked', async () => {
+			const verify = vi.spyOn(crypto.subtle, 'verify');
+			const runtime = startWith({
+				experimentalScriptRegistry: true,
+				mode,
+				prefetch: prefetched(signedEntry()),
+				scripts: [integrationScript()],
+			});
+			runtime.dispose();
+
+			await vi.waitFor(() => expect(verify).toHaveBeenCalled());
+			expect(await verify.mock.results[0]?.value).toBe(true);
+			await new Promise((resolve) => {
+				setTimeout(resolve, 0);
+			});
+			expect(srcs()).toEqual([]);
+			verify.mockRestore();
+		});
+
+		test.each([
+			['loads it by default', true, [HASH_SRC]],
+			['refuses it when required', { requireSignatures: true }, []],
+		] as const)(
+			'reads a null signature as none: %s',
+			async (_name, experimentalScriptRegistry, expected) => {
+				const runtime = startWith({
+					experimentalScriptRegistry,
+					mode,
+					prefetch: prefetched({
+						integrity: HASH_INTEGRITY,
+						signature: null,
+						src: HASH_SRC,
+					}),
+					scripts: [integrationScript()],
+				});
+				await new Promise((resolve) => {
+					setTimeout(resolve, 0);
+				});
+
+				expect(srcs()).toEqual(expected);
+				runtime.dispose();
+			}
+		);
+
+		test('trusts the preview key only with signingKeys: preview', async () => {
+			const preview = startWith({
+				experimentalScriptRegistry: { signingKeys: 'preview' },
+				mode,
+				prefetch: prefetched(signedEntry({ key: PREVIEW_KEY })),
+				scripts: [integrationScript()],
+			});
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor').src).toBe(HASH_SRC)
+			);
+			preview.dispose();
+			document.head.innerHTML = '';
+
+			const onDebug = vi.fn();
+			const production = startWith({
+				experimentalScriptRegistry: true,
+				mode,
+				prefetch: prefetched(signedEntry({ key: PREVIEW_KEY })),
+				scriptLoader: { onDebug },
+				scripts: [integrationScript()],
+			});
+			await vi.waitFor(() =>
+				expect(debugMessages(onDebug)).toContainEqual(
+					expect.stringContaining('without a release signature Inth can verify')
+				)
+			);
+			expect(srcs()).toEqual([]);
+			production.dispose();
+		});
+	});
+});
+
+describe('the expiry a signed registry entry carries', () => {
+	const INTEGRITY_A =
+		'sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
+	const INTEGRITY_B = `sha384-${'B'.repeat(64)}`;
+	const resolve = (pin: string) => {
+		const script = vendorScript({
+			attributes: { integrity: pin },
+			integration: 'vendor',
+		});
+		const signature = signRelease({
+			integrity: INTEGRITY_A,
+			url: script.src ?? '',
+		});
+		const resolved = createScriptSourceResolver(
+			undefined,
+			() => ({
+				sources: {
+					vendor: {
+						integrity: INTEGRITY_A,
+						signature,
+						src: 'https://registry.example/scripts/vendor@aaaa.js',
+					},
+				},
+				status: 'listed',
+			}),
+			() => 'load'
+		)([script]);
+		return { expiresAt: Date.parse(signature.expiresAt), resolved, script };
+	};
+
+	test('applies to the registry copy the script loads from', () => {
+		const { resolved, script, expiresAt } = resolve(INTEGRITY_A);
+		const [copy] = resolved.scripts;
+		expect(copy).not.toBe(script);
+		expect(copy && resolved.expiresAt.get(copy)).toBe(expiresAt);
+	});
+
+	test('does not apply to a script whose pin keeps it on its own URL', () => {
+		const { resolved, script } = resolve(INTEGRITY_B);
+		expect(resolved.scripts).toEqual([script]);
+		expect(resolved.expiresAt.size).toBe(0);
 	});
 });

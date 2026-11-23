@@ -200,11 +200,13 @@ export interface InthAstroOptions {
 	/**
 	 * Load `@inth/integrations` scripts from the Inth script registry: each
 	 * script the consent manifest lists loads from the registry's URL with an
-	 * integrity hash the browser checks. Initial-only. Experimental: its name
+	 * integrity hash the browser checks. An entry with a release signature
+	 * loads once it verifies; pass `{ requireSignatures: true }` to refuse
+	 * entries without one, and `signingKeys` to pick the keys. Initial-only. Experimental: its name
 	 * and behaviour can change in a minor release.
 	 * @default false
 	 */
-	experimentalScriptRegistry?: boolean;
+	experimentalScriptRegistry?: ConsentRuntimeOptions['experimentalScriptRegistry'];
 
 	/**
 	 * Reload the page after an accept, reject or save turns off a category or
