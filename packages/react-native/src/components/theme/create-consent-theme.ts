@@ -54,15 +54,26 @@ export interface ConsentThemeColors {
 	/** Secondary text, such as a heading's supporting line. Web: `--inth-text-muted`. */
 	readonly textMuted: string;
 	/**
-	 * Accent: the outline and label of the action the surface is asking for, which
-	 * is `Customize` on a banner and `Save Settings` in a sheet, and the switch
-	 * track when on. Web: `--inth-primary`.
+	 * Accent: the outline of the action the surface is asking for, which is
+	 * `Customize` on a banner and `Save Settings` in a sheet, and the switch track
+	 * when on. Its label is {@link ConsentThemeColors.primaryText}. Web:
+	 * `--inth-primary`.
 	 *
 	 * The two decisions stay in {@link ConsentThemeColors.text} so a prompt never
 	 * leans a subject either way, and the fill is never used: every consent action
 	 * web ships is an outline. The branding tab is the one element that fills.
 	 */
 	readonly primary: string;
+	/**
+	 * Accent text on the surface: the label of the accent action. Web:
+	 * `--inth-primary-text`, which is `primary` unless a theme sets it.
+	 *
+	 * It is its own colour because the dark accent is a fill and an outline, not
+	 * a text colour: `#2F66DF` on the dark surface is only 3.6:1, so dark text
+	 * takes the web's lighter `#8AB4FF`. A theme that sets `primary` and not
+	 * this gets `primary` here, as on the web.
+	 */
+	readonly primaryText: string;
 	/**
 	 * Text on a filled {@link ConsentThemeColors.primary}, for a host that fills
 	 * one. Web: `--inth-text-on-primary`.
@@ -74,8 +85,8 @@ export interface ConsentThemeColors {
 	 *
 	 * Web asks for `color-mix(in srgb, var(--inth-primary), black 14%)`, which is
 	 * the accent at 86% against black. React Native has no colour function to run at
-	 * render, so each scheme ships the literal that mix resolves to: `#335CFF` to
-	 * `#2C4FDB`, and the dark accent `#6685FF` to `#5872DB`.
+	 * render, so each scheme ships the literal that mix resolves to: `#2563EB` to
+	 * `#2055CA`, and the dark accent `#2F66DF` to `#2858C0`.
 	 */
 	readonly primaryBorder: string;
 	/** Focus and selected outline. */
@@ -188,32 +199,34 @@ export interface ConsentThemeTypography {
  * The text roles the built-in surfaces draw, each derived from the type tokens.
  *
  * The banner and the sheet do not share a pairing, so there is a role for each:
- * a banner heading is larger than its copy (`1rem` over `0.875rem` in
- * `prompt.module.css`) and a sheet heading is smaller than its copy (`sm`
- * semibold over `base` in `panel.module.css`). One shared pair can only be
- * right about one of them.
+ * the banner card leads with `base` medium over `sm` (`.title` and
+ * `.description` in `consent-surface.module.css`), and the dialog with a
+ * larger semibold heading over a smaller intro (`.title` and `.intro` in
+ * `consent-dialog.module.css`). One shared pair can only be right about one
+ * of them.
  */
 export interface ConsentTypeRoles {
 	/** Banner heading: `base` over `normal`, medium. 16/24 by default. */
 	readonly bannerTitle: ConsentTypeStyle;
 	/**
-	 * Small copy: `sm` regular over the web's fixed `1.25rem`, kept in proportion
-	 * as `sm` moves. 14/20 by default. The banner body, and the category
-	 * description inside a sheet, which is the same `0.875rem` in
-	 * `accordion.module.css`.
+	 * Small copy: `sm` regular over `normal`. 14/21 by default. The banner body,
+	 * and the category description inside a sheet.
 	 */
 	readonly bannerBody: ConsentTypeStyle;
 	/**
-	 * Sheet title: `sm` semibold over a line height of 1, tighter than the body
-	 * under it. 14/14 by default.
+	 * Sheet title: `base` at 17/16 of its size, semibold over `tight`. 17/21.25
+	 * by default.
 	 *
-	 * `panel.module.css` sets `line-height: 1` on `.title`. Its tracking is not
-	 * here: the web writes tracking in `em`, the two sheet surfaces disagree on
-	 * it, and it belongs with the surface that draws the heading, so
-	 * `useConsentStyles` puts it on the part.
+	 * `consent-dialog.module.css` sizes `.title` at `base * 1.0625`. Its
+	 * tracking is not here: the web writes tracking in `em`, and it belongs with
+	 * the surface that draws the heading, so `useConsentStyles` puts it on the
+	 * part.
 	 */
 	readonly title: ConsentTypeStyle;
-	/** Body copy of a sheet: `base` over `normal`. 16/24 by default. */
+	/**
+	 * Body copy of a sheet: `sm` at 13/14 of its size over `normal`. 13/19.5 by
+	 * default. The dialog's `.intro`, which the web sizes at `sm * 0.9286`.
+	 */
 	readonly body: ConsentTypeStyle;
 	/** Button label: `sm` over `tight` at medium. 14/17.5 by default. */
 	readonly label: ConsentTypeStyle;
@@ -225,9 +238,9 @@ export interface ConsentTypeRoles {
 export interface ConsentThemeRadius {
 	/** 4 */
 	readonly sm: number;
-	/** Buttons and rows. 8 */
+	/** Buttons and rows. 10 */
 	readonly md: number;
-	/** Sheet and banner corners. 12 */
+	/** Sheet and banner corners. 16 */
 	readonly lg: number;
 	/** Fully rounded. 9999 */
 	readonly full: number;
@@ -421,7 +434,7 @@ const baseSpacing: ConsentThemeSpacing = {
 	xs: 4,
 };
 
-const baseRadius: ConsentThemeRadius = { full: 9999, lg: 12, md: 8, sm: 4 };
+const baseRadius: ConsentThemeRadius = { full: 9999, lg: 16, md: 10, sm: 4 };
 
 const baseTypography: ConsentThemeTypography = {
 	fontSize: { base: 16, lg: 18, sm: 14 },
@@ -441,15 +454,16 @@ const lightColors: ConsentThemeColors = {
 	border: '#E6E6E6',
 	contentText: '#5C5C5C',
 	disclosure: '#A3A3A3',
-	focus: '#335CFF',
+	focus: '#2563EB',
 	overlay: 'rgba(0, 0, 0, 0.5)',
-	primary: '#335CFF',
-	primaryBorder: '#2C4FDB',
+	primary: '#2563EB',
+	primaryBorder: '#2055CA',
+	primaryText: '#2563EB',
 	surface: '#FFFFFF',
 	surfaceHover: '#FAFAFA',
 	switchThumb: '#FFFFFF',
 	switchTrack: '#D9D9D9',
-	switchTrackActive: '#335CFF',
+	switchTrackActive: '#2563EB',
 	text: '#1A1A1A',
 	textMuted: '#666666',
 	textOnPrimary: '#FFFFFF',
@@ -459,15 +473,16 @@ const darkColors: ConsentThemeColors = {
 	border: '#333333',
 	contentText: '#999999',
 	disclosure: '#CCCCCC',
-	focus: '#6685FF',
+	focus: '#2F66DF',
 	overlay: 'rgba(0, 0, 0, 0.7)',
-	primary: '#6685FF',
-	primaryBorder: '#5872DB',
+	primary: '#2F66DF',
+	primaryBorder: '#2858C0',
+	primaryText: '#8AB4FF',
 	surface: '#121212',
 	surfaceHover: '#1A1A1A',
 	switchThumb: '#EDEDED',
 	switchTrack: '#404040',
-	switchTrackActive: '#6685FF',
+	switchTrackActive: '#2F66DF',
 	text: '#EDEDED',
 	textMuted: '#999999',
 	textOnPrimary: '#FFFFFF',
@@ -490,6 +505,18 @@ const paletteOf = function paletteOf(
 	return palette;
 };
 
+/**
+ * The accent text a palette draws: its own `primaryText`, else its `primary`,
+ * else the stock one. A theme that recolours the accent recolours its label
+ * too, the way the web's `--inth-primary-text` falls back to `--inth-primary`.
+ */
+const accentText = function accentText(
+	overrides: Partial<ConsentThemeColors>,
+	stock: ConsentThemeColors
+): string {
+	return overrides.primaryText ?? overrides.primary ?? stock.primaryText;
+};
+
 const RN_WEIGHTS = { 400: '400', 500: '500', 600: '600' } as const;
 
 /** A numeric weight as the string React Native reads, rounded to a role's set. */
@@ -504,7 +531,7 @@ const weightOf = function weightOf(weight: number): ConsentTypeStyle['weight'] {
  * The text roles the built-in surfaces draw, from the type tokens.
  *
  * Each role reads the web rule that draws it. Where the web rule is a fixed
- * value rather than a token (the banner body's `1.25rem`, the caption's 13),
+ * value rather than a token (the dialog's 17 and 13, the caption's 13),
  * the role keeps its ratio to the token it sits beside, so a host that scales
  * `sm` scales the role with it and the stock theme draws the web numbers.
  *
@@ -516,10 +543,12 @@ export const resolveConsentTypeRoles = function resolveConsentTypeRoles(
 ): ConsentTypeRoles {
 	const { fontSize, fontWeight, lineHeight } = typography;
 	const caption = (fontSize.sm * 13) / 14;
+	const dialogTitle = (fontSize.base * 17) / 16;
+	const dialogBody = (fontSize.sm * 13) / 14;
 	return {
 		bannerBody: {
 			fontSize: fontSize.sm,
-			lineHeight: (fontSize.sm * 20) / 14,
+			lineHeight: fontSize.sm * lineHeight.normal,
 			weight: weightOf(fontWeight.normal),
 		},
 		bannerTitle: {
@@ -528,8 +557,8 @@ export const resolveConsentTypeRoles = function resolveConsentTypeRoles(
 			weight: weightOf(fontWeight.medium),
 		},
 		body: {
-			fontSize: fontSize.base,
-			lineHeight: fontSize.base * lineHeight.normal,
+			fontSize: dialogBody,
+			lineHeight: dialogBody * lineHeight.normal,
 			weight: weightOf(fontWeight.normal),
 		},
 		caption: {
@@ -543,8 +572,8 @@ export const resolveConsentTypeRoles = function resolveConsentTypeRoles(
 			weight: weightOf(fontWeight.medium),
 		},
 		title: {
-			fontSize: fontSize.sm,
-			lineHeight: fontSize.sm,
+			fontSize: dialogTitle,
+			lineHeight: dialogTitle * lineHeight.tight,
 			weight: weightOf(fontWeight.semibold),
 		},
 	};
@@ -574,10 +603,15 @@ export const createConsentTheme = function createConsentTheme(
 	options: ConsentThemeOptions = {}
 ): ConsentTheme {
 	const colors = paletteOf(options.colors);
+	const dark = { ...colors, ...paletteOf(options.dark) };
 	const typography = options.typography ?? {};
 	return {
-		colors: { ...lightColors, ...colors },
-		dark: { ...darkColors, ...colors, ...paletteOf(options.dark) },
+		colors: {
+			...lightColors,
+			...colors,
+			primaryText: accentText(colors, lightColors),
+		},
+		dark: { ...darkColors, ...dark, primaryText: accentText(dark, darkColors) },
 		motion: { ...baseMotion, ...options.motion },
 		radius: { ...baseRadius, ...options.radius },
 		spacing: { ...baseSpacing, ...options.spacing },

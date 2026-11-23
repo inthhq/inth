@@ -246,19 +246,22 @@ describe('theme', () => {
 		// The values are the ones `packages/sdk/ui` ships, so the banner a subject saw
 		// in a browser and the banner they see in the app are one design. The
 		// accent is the point of the exercise: it used to be near-black.
-		expect(defaultConsentTheme.colors.primary).toBe('#335CFF');
-		expect(defaultConsentTheme.colors.switchTrackActive).toBe('#335CFF');
+		expect(defaultConsentTheme.colors.primary).toBe('#2563EB');
+		expect(defaultConsentTheme.colors.switchTrackActive).toBe('#2563EB');
 		expect(defaultConsentTheme.colors.text).toBe('#1A1A1A');
 		expect(defaultConsentTheme.colors.textMuted).toBe('#666666');
 		expect(defaultConsentTheme.colors.border).toBe('#E6E6E6');
 		expect(defaultConsentTheme.colors.surfaceHover).toBe('#FAFAFA');
-		expect(defaultConsentTheme.dark.primary).toBe('#6685FF');
+		expect(defaultConsentTheme.dark.primary).toBe('#2F66DF');
+		// The dark accent is a fill, not a text colour: its label takes the web's
+		// lighter blue.
+		expect(defaultConsentTheme.dark.primaryText).toBe('#8AB4FF');
 
 		// The branding tab is filled with the accent, so web outlines it with the
 		// accent 14% toward black. React Native has no `color-mix` to run at render,
 		// so the resolved literal is the token: 0.86 of each channel.
-		expect(defaultConsentTheme.colors.primaryBorder).toBe('#2C4FDB');
-		expect(defaultConsentTheme.dark.primaryBorder).toBe('#5872DB');
+		expect(defaultConsentTheme.colors.primaryBorder).toBe('#2055CA');
+		expect(defaultConsentTheme.dark.primaryBorder).toBe('#2858C0');
 
 		// 4 8 16 24 32, the web step scale.
 		expect(defaultConsentTheme.spacing).toEqual({
@@ -270,8 +273,8 @@ describe('theme', () => {
 		});
 		expect(defaultConsentTheme.radius).toEqual({
 			full: 9999,
-			lg: 12,
-			md: 8,
+			lg: 16,
+			md: 10,
 			sm: 4,
 		});
 		expect(defaultConsentTheme.typography).toEqual({
@@ -283,10 +286,10 @@ describe('theme', () => {
 		});
 
 		// A button label is 14 at medium on the web tight line, and the sheet
-		// pairs a 14 semibold heading, set tight at 1, over 16 regular copy.
+		// pairs a 17 semibold heading, set tight, over 13 regular copy.
 		expect(lightRoles.body).toEqual({
-			fontSize: 16,
-			lineHeight: 24,
+			fontSize: 13,
+			lineHeight: 19.5,
 			weight: '400',
 		});
 		expect(lightRoles.label).toEqual({
@@ -295,16 +298,16 @@ describe('theme', () => {
 			weight: '500',
 		});
 
-		// `.title` in `panel.module.css` is `line-height: 1` at `font-size: sm`,
-		// so the heading sits in a 14 line box.
+		// `.title` in `consent-dialog.module.css` is `base * 1.0625` over
+		// `--inth-line-height-tight`, so the heading sits in a 21.25 line box.
 		expect(lightRoles.title).toEqual({
-			fontSize: 14,
-			lineHeight: 14,
+			fontSize: 17,
+			lineHeight: 21.25,
 			weight: '600',
 		});
 
-		// The banner inverts that: `.title` is `1rem` over a `0.875rem`
-		// description, so the heading leads the copy.
+		// The banner card's `.title` is `1rem` over a `0.875rem` description,
+		// so the heading leads the copy there too.
 		expect(lightRoles.bannerTitle).toEqual({
 			fontSize: 16,
 			lineHeight: 24,
@@ -312,7 +315,7 @@ describe('theme', () => {
 		});
 		expect(lightRoles.bannerBody).toEqual({
 			fontSize: 14,
-			lineHeight: 20,
+			lineHeight: 21,
 			weight: '400',
 		});
 
@@ -326,6 +329,7 @@ describe('theme', () => {
 	test('the banner heading leads its copy and the sheet heading follows its', () => {
 		// One shared pair can only be right about one of these surfaces, which is
 		// what put a 14 heading under 16 copy on the banner in the first place.
+		// The sheet follows the web dialog: a 17 heading over a 13 intro.
 		const banner = mountSurface(<ConsentBanner />);
 
 		expect(textStyleOf(banner, 'Deine Privatsphaere')).toMatchObject({
@@ -345,13 +349,13 @@ describe('theme', () => {
 		);
 
 		expect(textStyleOf(sheet, 'Zustimmung verwalten')).toMatchObject({
-			fontSize: 14,
+			fontSize: 17,
 			fontWeight: '600',
 		});
 		expect(
 			textStyleOf(sheet, 'Waehle die Kategorien, die du erlaubst.')
 		).toMatchObject({
-			fontSize: 16,
+			fontSize: 13,
 			fontWeight: '400',
 		});
 
@@ -685,7 +689,7 @@ describe('theme', () => {
 
 		expect(resolved.titleColor).toBe('#0000AA');
 		expect(resolved.titleWeight).toBe('700');
-		expect(resolved.border).toBe(12);
+		expect(resolved.border).toBe(16);
 
 		expect(isConsentThemePart('title')).toBe(true);
 		expect(isConsentThemePart('not-a-part')).toBe(false);
@@ -774,7 +778,9 @@ describe('theme', () => {
 			lineHeight: 27,
 			weight: '600',
 		});
-		expect(roles.bannerBody.lineHeight).toBeCloseTo((16 * 20) / 14);
+		expect(roles.bannerBody.lineHeight).toBe(24);
+		expect(roles.title.fontSize).toBeCloseTo((18 * 17) / 16);
+		expect(roles.body.fontSize).toBeCloseTo((16 * 13) / 14);
 		expect(roles.label).toEqual({
 			fontSize: 16,
 			lineHeight: 20,
