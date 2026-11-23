@@ -6,12 +6,13 @@ import { TCString } from '@iabtechlabtcf/core';
 import type { TCData } from '@inth/sdk-core';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { clearStoredTCString, createCMPApi } from '../tcf/create-cmp-api';
+import { createCMPApi } from '../tcf/create-cmp-api';
 import {
 	PublisherRestrictionError,
 	sameListedRestrictions,
 	validatePublisherRestrictions,
 } from '../tcf/publisher-restrictions.model';
+import { clearStoredTCString } from '../tcf/tc-string-storage.store';
 import { decodeTCString, generateTCString } from '../tcf/tc-string.model';
 import {
 	CONFLICTING_RESTRICTIONS_TC_STRING,
