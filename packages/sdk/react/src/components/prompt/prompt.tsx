@@ -48,6 +48,7 @@ const deferredContainer = function deferredContainer<Module>(
 	 * switching later would remount the prompt.
 	 */
 	const Container = (props: PromptSurfaceOptions) => {
+		// oxlint-disable-next-line react/hook-use-state -- Read once at mount; never set.
 		const [Loaded] = useState(() => loaded);
 		if (Loaded) {
 			return (
@@ -61,15 +62,15 @@ const deferredContainer = function deferredContainer<Module>(
 	return { Container, preload: deferred.preload };
 };
 
-const card = deferredContainer(
+const cardContainer = deferredContainer(
 	() => import('./card'),
 	(module) => module.CardSurface
 );
-const banner = deferredContainer(
+const bannerContainer = deferredContainer(
 	() => import('./banner'),
 	(module) => module.BannerSurface
 );
-const drawer = deferredContainer(
+const drawerContainer = deferredContainer(
 	() => import('./drawer'),
 	(module) => module.DrawerSurface
 );
@@ -80,16 +81,21 @@ const drawer = deferredContainer(
  *
  * @internal
  */
-export const preloadContainers = async function preloadContainers(): Promise<void> {
-	await Promise.all([card.preload(), banner.preload(), drawer.preload()]);
-};
+export const preloadContainers =
+	async function preloadContainers(): Promise<void> {
+		await Promise.all([
+			cardContainer.preload(),
+			bannerContainer.preload(),
+			drawerContainer.preload(),
+		]);
+	};
 
 if (typeof window === 'undefined') {
 	void preloadContainers();
 }
-const LazyCard = card.Container;
-const LazyBanner = banner.Container;
-const LazyDrawer = drawer.Container;
+const LazyCard = cardContainer.Container;
+const LazyBanner = bannerContainer.Container;
+const LazyDrawer = drawerContainer.Container;
 
 /**
  * Starts loading the container the server rendered, read from the
@@ -98,22 +104,25 @@ const LazyDrawer = drawer.Container;
  *
  * @internal
  */
-export const preloadServerContainer = function preloadServerContainer(): Promise<void> {
-	if (typeof document === 'undefined') {
-		return Promise.resolve();
-	}
-	const placement = document
-		.querySelector<HTMLElement>('[data-testid="consent-banner-root"]')
-		?.getAttribute('data-placement');
-	if (!placement) {
-		return Promise.resolve();
-	}
-	const type = placement.split('-')[0];
-	if (type === 'banner') {
-		return banner.preload();
-	}
-	return type === 'drawer' ? drawer.preload() : card.preload();
-};
+export const preloadServerContainer =
+	function preloadServerContainer(): Promise<void> {
+		if (typeof document === 'undefined') {
+			return Promise.resolve();
+		}
+		const placement = document
+			.querySelector<HTMLElement>('[data-testid="consent-banner-root"]')
+			?.getAttribute('data-placement');
+		if (!placement) {
+			return Promise.resolve();
+		}
+		const [type] = placement.split('-');
+		if (type === 'banner') {
+			return bannerContainer.preload();
+		}
+		return type === 'drawer'
+			? drawerContainer.preload()
+			: cardContainer.preload();
+	};
 
 /** The component that renders each container type. @internal */
 export interface PromptContainers {
