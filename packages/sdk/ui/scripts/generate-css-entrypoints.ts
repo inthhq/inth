@@ -163,8 +163,7 @@ if (NON_IAB_COMPONENTS.length === 0) {
 const firstPaintNames = new Set<string>(FIRST_PAINT_COMPONENTS);
 const laterNames: string[] = Object.values(LATER_SHEETS).flat();
 const unassigned = NON_IAB_COMPONENTS.filter(
-	(c) =>
-		!(firstPaintNames.has(c) || laterNames.includes(c))
+	(c) => !(firstPaintNames.has(c) || laterNames.includes(c))
 );
 if (unassigned.length > 0) {
 	throw new Error(
