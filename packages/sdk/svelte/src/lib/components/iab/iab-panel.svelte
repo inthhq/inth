@@ -22,24 +22,24 @@
 		toStyleAttributeValue,
 	} from '@inth/sdk/ui/utils';
 
-	import { focusTrap } from '../actions/focus-trap';
-	import { portal } from '../actions/portal';
-	import { scrollLock } from '../actions/scroll-lock';
-	import { getConsentContext, getThemeContext } from '../get-consent-context.svelte';
-	import { focusBlocking } from '../focus-blocking';
-	import { IAB_DIALOG_SHEETS } from '../iab-dialog-sheets';
-	import { Tabs } from '../primitives';
-	import Branding from './branding.svelte';
+	import { focusTrap } from '../../actions/focus-trap';
+	import { portal } from '../../actions/portal';
+	import { scrollLock } from '../../actions/scroll-lock';
+	import { getConsentContext, getThemeContext } from '../../get-consent-context.svelte';
+	import { focusBlocking } from '../../focus-blocking';
+	import { IAB_DIALOG_SHEETS } from './iab-dialog-sheets';
+	import { Tabs } from '../../primitives';
+	import Branding from '../branding.svelte';
 	import IABFeatureItem from './iab-feature-item.svelte';
 	import IABPurposeItem from './iab-purpose-item.svelte';
 	import IABStackItem from './iab-stack-item.svelte';
 	import IABVendorList from './iab-vendor-list.svelte';
-	import ChevronRightIcon from './icons/chevron-right-icon.svelte';
-	import CloseIcon from './icons/close-icon.svelte';
-	import InfoIcon from './icons/info-icon.svelte';
-	import LockIcon from './icons/lock-icon.svelte';
-	import Overlay from './overlay.svelte';
-	import SurfaceStyles from './surface-styles.svelte';
+	import ChevronRightIcon from '../icons/chevron-right-icon.svelte';
+	import CloseIcon from '../icons/close-icon.svelte';
+	import InfoIcon from '../icons/info-icon.svelte';
+	import LockIcon from '../icons/lock-icon.svelte';
+	import Overlay from '../overlay.svelte';
+	import SurfaceStyles from '../surface-styles.svelte';
 
 	let {
 		open: openProp,

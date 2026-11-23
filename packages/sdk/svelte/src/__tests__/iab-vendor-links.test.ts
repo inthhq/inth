@@ -7,7 +7,7 @@ import { fireEvent, render } from '@testing-library/svelte';
 import { expect, test, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import IABVendorList from '../lib/components/iab-vendor-list.svelte';
+import IABVendorList from '../lib/components/iab/iab-vendor-list.svelte';
 
 const [vendorId, gvlVendor] = Object.entries(completeGVL.vendors)[0] ?? [];
 

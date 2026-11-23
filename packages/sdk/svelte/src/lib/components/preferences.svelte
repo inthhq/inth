@@ -30,8 +30,8 @@
 	import { WIDGET_SHEETS } from '../widget-sheets';
 	import ConsentButton from './action-button.svelte';
 	import Branding from './branding.svelte';
-	import DeferredOptInConfirmation from './deferred-opt-in-confirmation.svelte';
-	import OptOutReceiptDetails from './opt-out-receipt-details.svelte';
+	import DeferredOptInConfirmation from './confirmation/deferred-opt-in-confirmation.svelte';
+	import OptOutReceiptDetails from './confirmation/opt-out-receipt-details.svelte';
 	import PolicyActionsRenderer from './policy-actions-renderer.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
 	import VendorList from './vendor-list.svelte';

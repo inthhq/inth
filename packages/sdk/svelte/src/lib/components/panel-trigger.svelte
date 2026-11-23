@@ -42,7 +42,7 @@
 	import { portal } from '../actions/portal';
 	import { getConsentContext, getThemeContext } from '../get-consent-context.svelte';
 	import { holdIdleDialogWarming, warmDialog } from '../warm-dialog';
-	import { useOptOutConfirmationState } from '../use-opt-out-confirmation-state.svelte';
+	import { useOptOutConfirmationState } from './confirmation/use-opt-out-confirmation-state.svelte';
 	import { TRIGGER_SHEETS } from '../surface-styles';
 	import BrandMark from './icons/brand-mark.svelte';
 	import DevToolsIcon from './icons/dev-tools-icon.svelte';

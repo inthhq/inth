@@ -1,7 +1,7 @@
 import * as iabFirstPaint from '@inth/sdk/ui/styles/sheets/iab-first-paint';
 
-import { PARTS_SHEETS } from './parts-sheets';
-import type { SurfaceStyleSheet } from './surface-styles';
+import { PARTS_SHEETS } from '../../parts-sheets';
+import type { SurfaceStyleSheet } from '../../surface-styles';
 
 /**
  * What the IAB banner renders: the shared parts (tokens, button, branding,

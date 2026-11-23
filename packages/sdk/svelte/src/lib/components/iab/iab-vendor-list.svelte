@@ -23,16 +23,16 @@
 	import { tick, untrack } from 'svelte';
 	import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
-	import { PreferenceItem, Switch } from '../primitives';
-	import ChevronDownIcon from './icons/chevron-down-icon.svelte';
-	import CloseIcon from './icons/close-icon.svelte';
-	import ExternalLinkIcon from './icons/external-link-icon.svelte';
-	import GlobeIcon from './icons/globe-icon.svelte';
-	import LayersIcon from './icons/layers-icon.svelte';
-	import LegitimateInterestIcon from './icons/legitimate-interest-icon.svelte';
-	import LockIcon from './icons/lock-icon.svelte';
-	import SearchIcon from './icons/search-icon.svelte';
-	import ShareIcon from './icons/share-icon.svelte';
+	import { PreferenceItem, Switch } from '../../primitives';
+	import ChevronDownIcon from '../icons/chevron-down-icon.svelte';
+	import CloseIcon from '../icons/close-icon.svelte';
+	import ExternalLinkIcon from '../icons/external-link-icon.svelte';
+	import GlobeIcon from '../icons/globe-icon.svelte';
+	import LayersIcon from '../icons/layers-icon.svelte';
+	import LegitimateInterestIcon from '../icons/legitimate-interest-icon.svelte';
+	import LockIcon from '../icons/lock-icon.svelte';
+	import SearchIcon from '../icons/search-icon.svelte';
+	import ShareIcon from '../icons/share-icon.svelte';
 
 	const sw = switchVariants();
 

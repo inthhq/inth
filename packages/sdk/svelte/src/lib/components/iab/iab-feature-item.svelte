@@ -11,8 +11,8 @@
 	 */
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 
-	import { PreferenceItem } from '../primitives';
-	import ChevronRightIcon from './icons/chevron-right-icon.svelte';
+	import { PreferenceItem } from '../../primitives';
+	import ChevronRightIcon from '../icons/chevron-right-icon.svelte';
 
 	let {
 		feature,

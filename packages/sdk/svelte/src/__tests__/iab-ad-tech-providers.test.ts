@@ -15,7 +15,7 @@ import '@inth/sdk/iab';
 import { expect, onTestFinished, test, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import IABVendorList from '../lib/components/iab-vendor-list.svelte';
+import IABVendorList from '../lib/components/iab/iab-vendor-list.svelte';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 

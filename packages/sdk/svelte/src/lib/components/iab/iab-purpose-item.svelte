@@ -12,11 +12,11 @@
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
-	import { PreferenceItem, Switch } from '../primitives';
-	import ChevronRightIcon from './icons/chevron-right-icon.svelte';
-	import GlobeIcon from './icons/globe-icon.svelte';
-	import LegitimateInterestIcon from './icons/legitimate-interest-icon.svelte';
-	import LockIcon from './icons/lock-icon.svelte';
+	import { PreferenceItem, Switch } from '../../primitives';
+	import ChevronRightIcon from '../icons/chevron-right-icon.svelte';
+	import GlobeIcon from '../icons/globe-icon.svelte';
+	import LegitimateInterestIcon from '../icons/legitimate-interest-icon.svelte';
+	import LockIcon from '../icons/lock-icon.svelte';
 
 	// The shared switch stylesheet, keyed off `data-size`, which is what
 	// the React and Vue switches use. The primitives sheet renders the same

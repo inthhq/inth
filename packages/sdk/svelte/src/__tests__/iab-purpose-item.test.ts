@@ -9,8 +9,8 @@ import { tick } from 'svelte';
 import { describe, expect, test, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import IABPurposeItem from '../lib/components/iab-purpose-item.svelte';
-import IABStackItem from '../lib/components/iab-stack-item.svelte';
+import IABPurposeItem from '../lib/components/iab/iab-purpose-item.svelte';
+import IABStackItem from '../lib/components/iab/iab-stack-item.svelte';
 
 const purpose = (hasConsentBasis: boolean) => ({
 	description: '',

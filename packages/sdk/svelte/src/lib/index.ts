@@ -72,9 +72,9 @@ export { default as ConsentDialogTrigger } from './components/panel-trigger.svel
 export { default as InthProvider } from './components/inth-provider.svelte';
 export { default as ConsentWidget } from './components/preferences.svelte';
 export { default as ConsentGate } from './components/consent-gate.svelte';
-export { default as IABConsentBanner } from './components/iab-prompt.svelte';
-export { default as IABConsentDialog } from './components/iab-panel.svelte';
-export { default as OptOutConfirmation } from './components/deferred-opt-out-confirmation.svelte';
+export { default as IABConsentBanner } from './components/iab/iab-prompt.svelte';
+export { default as IABConsentDialog } from './components/iab/iab-panel.svelte';
+export { default as OptOutConfirmation } from './components/confirmation/deferred-opt-out-confirmation.svelte';
 export { default as PrivacyChoicesLink } from './components/privacy-choices-link.svelte';
 export {
 	getConsentKernel,

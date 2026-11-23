@@ -9,9 +9,9 @@
 	import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
-	import { PreferenceItem, Switch } from '../primitives';
+	import { PreferenceItem, Switch } from '../../primitives';
 	import IABPurposeItem from './iab-purpose-item.svelte';
-	import ChevronRightIcon from './icons/chevron-right-icon.svelte';
+	import ChevronRightIcon from '../icons/chevron-right-icon.svelte';
 
 	const sw = switchStyles;
 

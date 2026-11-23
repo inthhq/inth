@@ -21,7 +21,7 @@
 	import { untrack } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../../get-consent-context.svelte';
-	import DeferredOptInConfirmation from '../deferred-opt-in-confirmation.svelte';
+	import DeferredOptInConfirmation from '../confirmation/deferred-opt-in-confirmation.svelte';
 	import Surface from './surface.svelte';
 
 	type ConsentBannerButton = 'reject' | 'accept' | 'customize' | 'dismiss';

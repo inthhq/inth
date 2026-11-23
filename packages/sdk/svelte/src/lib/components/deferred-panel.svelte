@@ -66,9 +66,9 @@
 		holdIdleDialogWarming,
 		registerDialogWarmer,
 	} from '../warm-dialog';
-	import { useOptOutConfirmationState } from '../use-opt-out-confirmation-state.svelte';
-	import DeferredOptInConfirmation from './deferred-opt-in-confirmation.svelte';
-	import DeferredOptOutConfirmation from './deferred-opt-out-confirmation.svelte';
+	import { useOptOutConfirmationState } from './confirmation/use-opt-out-confirmation-state.svelte';
+	import DeferredOptInConfirmation from './confirmation/deferred-opt-in-confirmation.svelte';
+	import DeferredOptOutConfirmation from './confirmation/deferred-opt-out-confirmation.svelte';
 	import type {
 		ConsentDialogProps,
 		ConsentDialogTriggerProps,
