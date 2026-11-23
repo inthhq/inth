@@ -929,7 +929,7 @@ describe('design switch', () => {
 });
 
 describe('customization', () => {
-	test('theme slots style the dialog parts', async () => {
+	test('[C3] theme slots style the dialog parts, and the root is the dialog surface', async () => {
 		TestBed.resetTestingModule();
 		fixtureId += 1;
 		stubViewport(false);
@@ -950,6 +950,7 @@ describe('customization', () => {
 					presentation: { design: 'privacy-choices' },
 					theme: {
 						slots: {
+							consentDialog: 'my-dialog',
 							consentDialogDoneButton: 'my-done',
 							consentDialogFooter: 'my-footer',
 							consentDialogRightsRow: 'my-rights',
@@ -961,6 +962,11 @@ describe('customization', () => {
 		const fixture = TestBed.createComponent(DialogHost);
 		await fixture.whenStable();
 		await openDialog();
+		// The root is the dialog's surface, as the classic panel's is (C3).
+		expect(must('consent-dialog-root').getAttribute('data-inth-surface')).toBe(
+			'dialog'
+		);
+		expect(must('consent-dialog-root').className).toContain('my-dialog');
 		expect(must('consent-dialog-footer').className).toContain('my-footer');
 		expect(must('consent-dialog-done').className).toContain('my-done');
 		expect(must('consent-dialog-rights-row-sale').className).toContain(

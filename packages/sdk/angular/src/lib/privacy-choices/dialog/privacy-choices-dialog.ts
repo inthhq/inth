@@ -158,6 +158,7 @@ interface ShownSheet {
 				[attr.data-regime]="eu() ? 'eu' : 'us'"
 				[attr.data-layout]="phone() ? 'phone' : 'desktop'"
 				data-testid="consent-dialog-root"
+				data-inth-surface="dialog"
 				[attr.dir]="textDirection()"
 			>
 				<section
