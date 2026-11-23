@@ -2,7 +2,6 @@ import { defineAsyncComponent, defineComponent, h, provide } from 'vue';
 import type { Component } from 'vue';
 
 import { useConsentKernelContext } from '../composables/use-consent-kernel';
-import type { ConsentBannerView } from '../create-vue-consent-kernel-context';
 import {
 	symbolActiveUI,
 	symbolConsent,
@@ -10,6 +9,7 @@ import {
 	symbolKernelContext,
 	symbolSnapshot,
 } from '../utils/consent-symbols.model';
+import type { ConsentBannerView } from '../vue-consent-kernel-context.model';
 import { LazyConsentBanner, loadConsentBanner } from './lazy-consent-banner';
 
 /** The banner a deferred context renders, one per view. */

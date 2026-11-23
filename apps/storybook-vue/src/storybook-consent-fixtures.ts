@@ -17,7 +17,6 @@ import { enTranslations } from '../../../packages/sdk/translations/src';
 import { consentConfigKey } from '../../../packages/sdk/vue/src/runtime/composables/config';
 import type { ConsentConfig } from '../../../packages/sdk/vue/src/runtime/config';
 import { createVueConsentKernelContext } from '../../../packages/sdk/vue/src/runtime/create-vue-consent-kernel-context';
-import type { VueConsentKernelContext } from '../../../packages/sdk/vue/src/runtime/create-vue-consent-kernel-context';
 import {
 	symbolActiveUI,
 	symbolConsent,
@@ -26,6 +25,7 @@ import {
 	symbolKernelContext,
 	symbolSnapshot,
 } from '../../../packages/sdk/vue/src/runtime/utils/consent-symbols.model';
+import type { VueConsentKernelContext } from '../../../packages/sdk/vue/src/runtime/vue-consent-kernel-context.model';
 import {
 	storybookChoiceRecord,
 	storybookIABPolicy,

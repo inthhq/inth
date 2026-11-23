@@ -13,10 +13,11 @@ import type {
 	RuntimeConsentConfig as KernelConsentConfig,
 	VueConsentContextOptions,
 	VueConsentKernelContext,
-} from '../runtime/create-vue-consent-kernel-context';
+} from '../runtime/vue-consent-kernel-context.model';
 
 // oxlint-disable-next-line oxc/no-barrel-file -- A test stand-in for the kernel module.
 export * from '../runtime/create-vue-consent-kernel-context';
+export type * from '../runtime/vue-consent-kernel-context.model';
 
 /** The hosted transport fields a test config may carry. */
 interface TestTransportConfig {

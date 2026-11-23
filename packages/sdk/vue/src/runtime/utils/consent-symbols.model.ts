@@ -3,7 +3,8 @@ import type { ConsentActiveUI } from '@inth/sdk/schema/config';
 import type { InjectionKey, MaybeRefOrGetter, Ref } from 'vue';
 
 import type { ConsentConfig } from '../config';
-import type { VueConsentKernelContext, VueConsentDisplayData } from '../create-vue-consent-kernel-context';
+import type { VueConsentDisplayData } from '../display-data.model';
+import type { VueConsentKernelContext } from '../vue-consent-kernel-context.model';
 
 export const symbolInit = Symbol('inth:init') as InjectionKey<
 	Ref<VueConsentDisplayData | undefined>

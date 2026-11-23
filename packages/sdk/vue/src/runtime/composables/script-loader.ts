@@ -2,7 +2,7 @@ import type { Script } from '@inth/sdk/modules/script-loader';
 import { onScopeDispose, toValue, watch } from 'vue';
 import type { MaybeRefOrGetter } from 'vue';
 
-import type { RegisteredScripts } from '../create-vue-consent-kernel-context';
+import type { RegisteredScripts } from '../with-registered-scripts';
 import { useConsentKernelContext } from './use-consent-kernel';
 
 /** What {@link useScriptLoader} returns. */

@@ -19,10 +19,6 @@ import { inth } from '../index';
 import InthProvider from '../runtime/components/inth-provider.vue';
 import NuxtInthProvider from '../runtime/components/nuxt-inth-provider.vue';
 import { consentConfigKey } from '../runtime/composables/config';
-import type {
-	RuntimeConsentConfig,
-	VueConsentKernelContext,
-} from '../runtime/create-vue-consent-kernel-context';
 import { createVueConsentKernelContext } from '../runtime/create-vue-consent-kernel-context';
 import {
 	symbolActiveUI,
@@ -32,6 +28,10 @@ import {
 	symbolKernelContext,
 	symbolSnapshot,
 } from '../runtime/utils/consent-symbols.model';
+import type {
+	RuntimeConsentConfig,
+	VueConsentKernelContext,
+} from '../runtime/vue-consent-kernel-context.model';
 
 const initFixture: InitOutput = {
 	branding: 'inth',

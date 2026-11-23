@@ -17,10 +17,13 @@ import { clientMode, lazyHosted } from '@inth/sdk/runtime/client-mode';
 import type { DeferredCommitted } from '@inth/sdk/surface-actions/early-commit';
 
 import type { ConsentConfig } from '../config';
-import { NUXT_PROJECT_URL_ENV } from '../env-names.model';
 import { createVueConsentKernelContext } from '../create-vue-consent-kernel-context';
-import type { RuntimeConsentConfig, VueConsentKernelContext } from '../create-vue-consent-kernel-context';
+import { NUXT_PROJECT_URL_ENV } from '../env-names.model';
 import type { NuxtMode } from '../nuxt-mode';
+import type {
+	RuntimeConsentConfig,
+	VueConsentKernelContext,
+} from '../vue-consent-kernel-context.model';
 import { withClientData } from '../with-client-data';
 
 /** What the plugin read before it loaded the engine. @internal */

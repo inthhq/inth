@@ -31,7 +31,6 @@ import {
 	pickAllowedInitHeaders,
 } from './init-headers.model';
 import { isSharedNuxtRender } from './is-shared-nuxt-render';
-import type { RuntimeConsentConfig, VueConsentKernelContext } from './create-vue-consent-kernel-context';
 import {
 	readNuxtMode,
 	readNuxtRoutePrefix,
@@ -42,6 +41,10 @@ import { provideVueConsentContext } from './provide-vue-consent-context';
 import type { NuxtConsentRequest } from './resolve-nuxt-consent';
 import { TOKENS_STYLE_ID } from './tokens-style-id';
 import { consentConfigKey } from './utils/consent-symbols.model';
+import type {
+	RuntimeConsentConfig,
+	VueConsentKernelContext,
+} from './vue-consent-kernel-context.model';
 
 export { withClientData } from './with-client-data';
 

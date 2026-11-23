@@ -9,7 +9,7 @@ import type { App, Plugin } from 'vue';
 
 import { inth as plugin } from '../index';
 import type { InthVuePluginOptions as PluginOptions } from '../index';
-import type { RuntimeConsentConfig } from '../runtime/create-vue-consent-kernel-context';
+import type { RuntimeConsentConfig } from '../runtime/vue-consent-kernel-context.model';
 
 // oxlint-disable-next-line oxc/no-barrel-file -- A test stand-in for the plugin entry.
 export { generateTokensCSS } from '../index';

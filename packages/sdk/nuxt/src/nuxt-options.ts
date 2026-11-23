@@ -1,9 +1,9 @@
 import type { ConsentConfig } from '@inth/vue/runtime/config.js';
+import type { NuxtConsentModeConfig } from '@inth/vue/runtime/nuxt-mode.js';
 import type {
 	RuntimeConsentConfig,
 	UseNetworkBlockerOptions,
-} from '@inth/vue/runtime/create-vue-consent-kernel-context.js';
-import type { NuxtConsentModeConfig } from '@inth/vue/runtime/nuxt-mode.js';
+} from '@inth/vue/runtime/vue-consent-kernel-context.model.js';
 
 /** The Nuxt module's configuration under the `inth` key. */
 export interface InthNuxtConfig

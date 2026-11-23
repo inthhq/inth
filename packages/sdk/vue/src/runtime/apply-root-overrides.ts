@@ -1,6 +1,6 @@
 import type { KernelOverrides } from '@inth/sdk/engine';
 
-import type { VueConsentKernelContext } from './create-vue-consent-kernel-context';
+import type { VueConsentKernelContext } from './vue-consent-kernel-context.model';
 
 /** The `InthProvider` props that map onto kernel overrides. */
 export type RootOverrideProps = Pick<

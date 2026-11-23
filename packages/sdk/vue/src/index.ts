@@ -8,13 +8,11 @@ import { getCurrentInstance } from 'vue';
 import type { App, Plugin } from 'vue';
 
 import { consentConfigKey } from './runtime/composables/config';
-import { mountTokensStyle } from './runtime/mount-tokens-style';
-import {
-	createVueConsentKernelContext,
-	provideVueConsentContext,
-} from './runtime/create-vue-consent-kernel-context';
-import type { RuntimeConsentConfig } from './runtime/create-vue-consent-kernel-context';
+import { createVueConsentKernelContext } from './runtime/create-vue-consent-kernel-context';
 import { selectedMode } from './runtime/modes.model';
+import { mountTokensStyle } from './runtime/mount-tokens-style';
+import { provideVueConsentContext } from './runtime/provide-vue-consent-context';
+import type { RuntimeConsentConfig } from './runtime/vue-consent-kernel-context.model';
 
 export type {
 	AllConsentNames,
@@ -72,7 +70,7 @@ export type {
 export type {
 	RuntimeConsentConfig,
 	UseNetworkBlockerOptions,
-} from './runtime/create-vue-consent-kernel-context';
+} from './runtime/vue-consent-kernel-context.model';
 export {
 	manifest,
 	type BrowserManifestModeFactory,

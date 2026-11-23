@@ -9,7 +9,7 @@
  */
 import type { Script } from '@inth/sdk/modules/script-loader';
 
-import type { RuntimeConsentConfig } from './create-vue-consent-kernel-context';
+import type { RuntimeConsentConfig } from './vue-consent-kernel-context.model';
 
 /** What {@link VueConsentKernelContext.registerScripts} returns. */
 export interface RegisteredScripts {

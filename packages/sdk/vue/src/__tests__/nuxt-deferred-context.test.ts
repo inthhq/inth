@@ -28,15 +28,15 @@ import { useEventDispatcher } from '../runtime/composables/use-event-dispatcher'
 import type { EventDispatcher } from '../runtime/composables/use-event-dispatcher';
 import { createDeferredContext } from '../runtime/deferred/create-deferred-context';
 import type { DeferredEngineFactory } from '../runtime/deferred/create-deferred-context';
-import type {
-	RuntimeConsentConfig,
-	VueConsentKernelContext,
-} from '../runtime/create-vue-consent-kernel-context';
 import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
 } from '../runtime/utils/consent-symbols.model';
+import type {
+	RuntimeConsentConfig,
+	VueConsentKernelContext,
+} from '../runtime/vue-consent-kernel-context.model';
 import { createVueConsentKernelContext } from './test-kernel';
 
 const init: InitOutput = {

@@ -17,7 +17,7 @@ import type { App, ShallowRef } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
 import { useConsentKernelContext } from '../runtime/composables/use-consent-kernel';
-import type { VueConsentKernelContext } from '../runtime/create-vue-consent-kernel-context';
+import type { VueConsentKernelContext } from '../runtime/vue-consent-kernel-context.model';
 
 const pixel: Script = {
 	category: 'marketing',
