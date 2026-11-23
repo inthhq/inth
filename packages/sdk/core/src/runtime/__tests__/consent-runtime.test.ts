@@ -24,7 +24,7 @@ import {
 	isOptOutConfirmationOpen,
 	optOutConsentSurface,
 } from '../../surface-actions/opt-out';
-import { hasPendingOptOutConfirmation } from '../../surface-actions/opt-out-reload';
+import { hasPendingOptOutConfirmation } from '../../surface-actions/opt-out-reload.store';
 import { testing } from '../../testing';
 import { resolveLocalTranslations } from '../../translations';
 import type { ConsentRuntimeIABHandle } from '../consent-runtime.model';

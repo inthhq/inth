@@ -29,8 +29,10 @@ const CARD_CLASSES = `${ROOT}/browser/src/generated/ui/card.ts`;
 const STOCK_CLASSES = `${ROOT}/browser/src/generated/styles.ts`;
 const SURFACE_SESSION = `${ROOT}/core/dist/surface-session/session.js`;
 const OPT_IN_CONFIRMATIONS = `${ROOT}/core/dist/surface-actions/opt-in.js`;
+const OPT_OUT_RELOAD_MARKER = `${ROOT}/core/dist/surface-actions/opt-out-reload.store.js`;
 const RECEIPT_FOCUS = `${ROOT}/browser/src/ui/parts/receipt-focus.ts`;
 const KERNEL = `${ROOT}/core/dist/kernel/create.js`;
+const MANIFEST_CACHE_REQUESTS = `${ROOT}/core/dist/libs/manifest-cache-runtime.api.js`;
 const COPY_RESOLVER = `${ROOT}/core/dist/libs/consent-copy.js`;
 const VENDOR_DENIAL = `${ROOT}/core/dist/modules/vendor-denial.js`;
 const DRAWER_SHEET = `${ROOT}/ui/dist/styles/sheets/drawer.js`;
@@ -143,9 +145,11 @@ describe('modeBundleBoundary', () => {
 		for (const id of [
 			SURFACE_SESSION,
 			OPT_IN_CONFIRMATIONS,
+			OPT_OUT_RELOAD_MARKER,
 			RECEIPT_FOCUS,
 			PARTS_ENGINE,
 			KERNEL,
+			MANIFEST_CACHE_REQUESTS,
 			HOSTED_TRANSPORT.replace('hosted.js', 'v1/hosted.js'),
 		]) {
 			expect(() => check('choices', [id])).toThrow(

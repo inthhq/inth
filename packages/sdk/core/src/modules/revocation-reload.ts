@@ -23,11 +23,13 @@ import type { InternalKernel } from '../kernel/kernel-internals.model';
 import { vendorAxisActive } from '../libs/vendors';
 import { registerOptOutReloadHook } from '../surface-actions/opt-out';
 import {
-	clearPendingOptOutConfirmation,
 	isOptOutReloadSpent,
-	markPendingOptOutConfirmation,
 	releasePendingOptOutConfirmation,
 } from '../surface-actions/opt-out-reload';
+import {
+	clearPendingOptOutConfirmation,
+	markPendingOptOutConfirmation,
+} from '../surface-actions/opt-out-reload.store';
 import { evaluateConsent } from './has';
 
 const activeWatchers = new WeakMap<

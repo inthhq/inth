@@ -34,13 +34,13 @@ import {
 	optOutConsentSurface,
 	subscribeOptOutConfirmation,
 } from '../../surface-actions/opt-out';
+import { watchPendingOptOutConfirmation } from '../../surface-actions/opt-out-reload';
 import {
 	clearPendingOptOutConfirmation,
 	hasPendingOptOutConfirmation,
 	markPendingOptOutConfirmation,
-	watchPendingOptOutConfirmation,
-} from '../../surface-actions/opt-out-reload';
-import { pressSaleRight } from '../../surface-session/commands';
+} from '../../surface-actions/opt-out-reload.store';
+import { pressSaleRight } from '../../surface-session/surface-commands.model';
 import { watchRevocationReload } from '../revocation-reload';
 import { createScriptLoader } from '../script-loader';
 

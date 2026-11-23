@@ -9,13 +9,16 @@
 /**
  * The modules that open the stock dialog: what each adapter's `import()`
  * for it loads. React's deferred root and aggregate `ConsentDialog`
- * (`deferred/dialog`), and Vue's (`components/manager.vue`). Installed
- * packages under `node_modules/@inth/…`, and the real path
- * `packages/<name>/dist/…` from a workspace or linked install. `@inth/sdk`
- * ships the engine under `lib/core/dist/…`.
+ * (`deferred/dialog`), and Vue's: the manager the root mounts when the
+ * dialog first opens (`components/dialog/manager.vue`) and the dialog it
+ * loads, which the banner also warms on intent
+ * (`components/dialog/dialog.vue`). Installed packages under
+ * `node_modules/@inth/…`, and the real path `packages/<name>/dist/…` from a
+ * workspace or linked install. `@inth/sdk` ships the engine under
+ * `lib/core/dist/…`.
  */
 const DIALOG_ROOT =
-	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/]dialog\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]manager\.vue)$/u;
+	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]deferred[\\/]dialog\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]dialog[\\/](?:manager|dialog)\.vue)$/u;
 
 /**
  * What an accept or reject before the engine loads: React's deferred
@@ -36,10 +39,10 @@ const ENGINE_ROOT =
 /**
  * The stock banner a deferred root's engine renders, which loads with the
  * engine: React's (`components/prompt/index`) and Vue's
- * (`components/prompt.vue`). It counts as the engine's.
+ * (`components/prompt/prompt.vue`). It counts as the engine's.
  */
 const ENGINE_BANNER =
-	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]components[\\/]prompt[\\/]index\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]prompt\.vue)$/u;
+	/[\\/](?:@inth|packages(?:[\\/]sdk)?)[\\/](?:react[\\/]dist[\\/]components[\\/]prompt[\\/]index\.js|vue[\\/]dist[\\/]runtime[\\/]components[\\/]prompt[\\/]prompt\.vue)$/u;
 
 /**
  * Inth's chunks that load only when a visitor asks for them: the standalone

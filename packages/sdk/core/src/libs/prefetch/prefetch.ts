@@ -1,15 +1,11 @@
 import {
 	appendInitParams,
-	appendJourneyParams,
 	CONSENT_JOURNEY_PARAM,
 	CONSENT_JOURNEY_SCOPE_PARAM,
 	CONSENT_JOURNEY_STORED_PARAM,
 	INIT_EXPERIMENT_PARAM,
 } from '@inth/sdk-schema/types';
-import type { InitOutput } from '@inth/sdk-schema/types';
 
-import type { InitContext, KernelJourney } from '../../consent-kernel.model';
-import type { SSRInitialData } from '../../options/ssr-options.model';
 import { V1_ROUTES } from '../../transports/v1/v1-routes';
 import {
 	claimEarlyExperimentArm,
@@ -44,15 +40,15 @@ import {
 	STORED_NAMES_CHECK,
 	storedChoiceNames,
 } from '../storage-keys';
+import { createPrefetchEntry } from './prefetch.api';
+import type {
+	PrefetchConfig,
+	PrefetchEntry,
+	PrefetchPromise,
+} from './prefetch.api';
 import type { PrefetchOptions } from './prefetch.model';
 
 const WINDOW_PROMISES_KEY = PREFETCH_WINDOW_KEY;
-
-type PrefetchPromise = Promise<SSRInitialData | undefined>;
-interface PrefetchEntry {
-	promise: PrefetchPromise;
-	requestContext: NonNullable<SSRInitialData['metadata']>['requestContext'];
-}
 
 type BrowserWindow = Window & {
 	[WINDOW_PROMISES_KEY]?: Record<string, PrefetchEntry>;
@@ -69,14 +65,6 @@ const buildInitQuery = function buildInitQuery(
 ): string {
 	return appendInitParams('', buildRequestContextParams(overrides));
 };
-
-interface PrefetchConfig {
-	url: string;
-	credentials: RequestCredentials;
-	headers: Record<string, string>;
-	requestContext: NonNullable<SSRInitialData['metadata']>['requestContext'];
-	cacheKey: string;
-}
 
 const compareHeaderKeys = function compareHeaderKeys(
 	left: string,
@@ -136,27 +124,6 @@ const buildPrefetchConfig = function buildPrefetchConfig(
 	};
 };
 
-const toInitialData = function toInitialData(
-	config: Pick<PrefetchConfig, 'requestContext'>,
-	init: InitOutput | undefined,
-	journey: KernelJourney | undefined,
-	experiment: InitContext['experiment']
-): SSRInitialData | undefined {
-	if (!init) {
-		return undefined;
-	}
-
-	return {
-		gvl: init.gvl,
-		init,
-		metadata: {
-			experiment: experiment ?? null,
-			journey: journey ?? null,
-			requestContext: config.requestContext,
-		},
-	};
-};
-
 const getBrowserWindow = function getBrowserWindow():
 	| BrowserWindow
 	| undefined {
@@ -175,39 +142,6 @@ const getPromiseMap = function getPromiseMap(
 	}
 
 	return browserWindow[WINDOW_PROMISES_KEY];
-};
-
-const createPrefetchEntry = function createPrefetchEntry(
-	config: PrefetchConfig,
-	journey: KernelJourney | undefined,
-	experiment: InitContext['experiment']
-): PrefetchEntry {
-	const promise = (async () => {
-		try {
-			// The cache key stays the bare URL; only the request carries the
-			// experiment arm and journey, as the inline script does.
-			const withArm = experiment
-				? appendInitParams(config.url, { experiment })
-				: config.url;
-			const url = journey ? appendJourneyParams(withArm, journey) : withArm;
-			const response = await fetch(url, {
-				credentials: config.credentials,
-				headers: config.headers,
-				method: 'GET',
-			});
-			const init = response.ok
-				? ((await response.json()) as InitOutput)
-				: undefined;
-			return toInitialData(config, init, journey, experiment);
-		} catch {
-			return undefined;
-		}
-	})();
-
-	return {
-		promise,
-		requestContext: config.requestContext,
-	};
 };
 
 const getMatchingPrefetchEntry = function getMatchingPrefetchEntry(options: {

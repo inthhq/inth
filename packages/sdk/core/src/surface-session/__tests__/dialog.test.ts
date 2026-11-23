@@ -22,8 +22,11 @@ import {
 } from '../../libs/consent-copy';
 import { createPreferenceDraft } from '../../preference-draft';
 import { planCategorySwitch, planVendorSwitch } from '../category-switch.model';
-import { applyDialogCategories, commitDialogChoice } from '../commands';
 import { resolveRightsReceipt } from '../resolve-rights-receipt';
+import {
+	applyDialogCategories,
+	commitDialogChoice,
+} from '../surface-commands.model';
 
 const CATEGORIES = [
 	'necessary',

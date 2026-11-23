@@ -116,30 +116,40 @@ const graph: Record<
 	},
 };
 
-const importers = new Map<string, string[]>();
-const dynamicImporters = new Map<string, string[]>();
-for (const [id, { imports = [], dynamic = [] }] of Object.entries(graph)) {
-	for (const target of imports) {
-		importers.set(target, [...(importers.get(target) ?? []), id]);
+/** The Rolldown chunking context for a module graph with one entry. */
+const contextOf = function contextOf(
+	modules: typeof graph,
+	entry: string
+): Parameters<ReturnType<typeof createDialogChunkGroup>['name']>[1] {
+	const importers = new Map<string, string[]>();
+	const dynamicImporters = new Map<string, string[]>();
+	for (const [id, { imports = [], dynamic = [] }] of Object.entries(modules)) {
+		for (const target of imports) {
+			importers.set(target, [...(importers.get(target) ?? []), id]);
+		}
+		for (const target of dynamic) {
+			dynamicImporters.set(target, [
+				...(dynamicImporters.get(target) ?? []),
+				id,
+			]);
+		}
 	}
-	for (const target of dynamic) {
-		dynamicImporters.set(target, [...(dynamicImporters.get(target) ?? []), id]);
-	}
-}
-const context = {
-	getModuleInfo: (id: string) => {
-		const module = graph[id];
-		return module
-			? {
-					code: module.code,
-					dynamicImporters: dynamicImporters.get(id) ?? [],
-					importedIds: module.imports ?? [],
-					importers: importers.get(id) ?? [],
-					isEntry: id === ENTRY,
-				}
-			: null;
-	},
+	return {
+		getModuleInfo: (id: string) => {
+			const module = modules[id];
+			return module
+				? {
+						code: module.code,
+						dynamicImporters: dynamicImporters.get(id) ?? [],
+						importedIds: module.imports ?? [],
+						importers: importers.get(id) ?? [],
+						isEntry: id === entry,
+					}
+				: null;
+		},
+	};
 };
+const context = contextOf(graph, ENTRY);
 
 describe('createDialogChunkGroup', () => {
 	const group = createDialogChunkGroup();
@@ -191,6 +201,95 @@ describe('createDialogChunkGroup', () => {
 
 	test('does not pull in dependencies, which would move first-load code', () => {
 		expect(group.includeDependenciesRecursively).toBe(false);
+	});
+});
+
+/**
+ * A Vue page whose root mounts the dialog's manager when it first opens.
+ * The manager loads the dialog, which the banner also warms on intent.
+ * The same graph from an installed package and from a workspace.
+ */
+const vueGraph = function vueGraph(packages: string): typeof graph {
+	const vue = `${packages}vue/dist/runtime/`;
+	const core = `${packages}sdk/lib/core/dist/`;
+	return {
+		[ENTRY]: {
+			code: `import { LazyConsentManager, loadConsentBanner } from '@inth/vue';`,
+			imports: [`${vue}components/lazy-surfaces.js`],
+		},
+		[`${vue}components/lazy-surfaces.js`]: {
+			code: `export const LazyConsentManager = () => import('./dialog/manager.vue'); export const loadConsentBanner = () => import('./prompt/prompt.vue');`,
+			dynamic: [
+				`${vue}components/dialog/manager.vue`,
+				`${vue}components/prompt/prompt.vue`,
+			],
+		},
+		[`${vue}components/dialog/manager.vue`]: {
+			code: `import { useKernel } from '../../composables/kernel.js'; import { loadConsentDialog } from './load-consent-dialog.js';`,
+			imports: [
+				`${vue}composables/kernel.js`,
+				`${vue}components/dialog/load-consent-dialog.js`,
+			],
+		},
+		[`${vue}components/dialog/load-consent-dialog.js`]: {
+			code: `export const loadConsentDialog = () => import('./dialog.vue');`,
+			dynamic: [`${vue}components/dialog/dialog.vue`],
+		},
+		[`${vue}components/dialog/dialog.vue`]: {
+			code: `import { useKernel } from '../../composables/kernel.js'; import { evaluate, vendors } from '@inth/sdk/engine'; import '@inth/sdk/ui/styles/components/panel.module.css';`,
+			imports: [
+				`${vue}composables/kernel.js`,
+				`${core}index.js`,
+				`${packages}sdk/lib/ui/dist/styles/components/panel.module.css`,
+			],
+		},
+		// The banner: loads with the engine.
+		[`${vue}components/prompt/prompt.vue`]: {
+			code: `import { loadConsentDialog } from '../dialog/load-consent-dialog.js'; import { vendors } from '@inth/sdk/engine';`,
+			imports: [
+				`${vue}components/dialog/load-consent-dialog.js`,
+				`${core}index.js`,
+			],
+		},
+		[`${vue}composables/kernel.js`]: { code: 'export const useKernel = 1;' },
+		[`${core}index.js`]: {
+			code: `export{evaluate}from"./libs/evaluate.js";export{vendors}from"./libs/vendors.js";`,
+			imports: [`${core}libs/evaluate.js`, `${core}libs/vendors.js`],
+		},
+		[`${core}libs/evaluate.js`]: { code: 'export const evaluate = 1;' },
+		[`${core}libs/vendors.js`]: { code: 'export const vendors = 1;' },
+		[`${packages}sdk/lib/ui/dist/styles/components/panel.module.css`]: {
+			code: '',
+		},
+	};
+};
+
+describe.each([
+	['an installed package', INTH],
+	['a workspace', '/repo/packages/sdk/'],
+])("createDialogChunkGroup with Vue's dialog from %s", (_label, packages) => {
+	const modules = vueGraph(packages);
+	const vueContext = contextOf(modules, ENTRY);
+	const group = createDialogChunkGroup();
+	const named = Object.fromEntries(
+		Object.keys(modules)
+			.map((id) => [id.replace(packages, ''), group.name(id, vueContext)])
+			.filter(([, name]) => name !== null)
+	);
+
+	test("files the manager's and the dialog's code, and what the banner shares, as the dialog's", () => {
+		expect(named).toEqual({
+			'sdk/lib/core/dist/libs/evaluate.js': 'inth-dialog',
+			// The banner counts as the engine's.
+			'sdk/lib/core/dist/libs/vendors.js': 'inth-dialog-engine',
+			'sdk/lib/ui/dist/styles/components/panel.module.css':
+				'inth-dialog-styles',
+			'vue/dist/runtime/components/dialog/dialog.vue': 'inth-dialog',
+			'vue/dist/runtime/components/dialog/load-consent-dialog.js':
+				'inth-dialog-engine',
+			'vue/dist/runtime/components/dialog/manager.vue': 'inth-dialog',
+			'vue/dist/runtime/composables/kernel.js': 'inth-dialog',
+		});
 	});
 });
 
