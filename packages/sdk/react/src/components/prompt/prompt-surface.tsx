@@ -3,7 +3,7 @@
 /**
  * The consent prompt: a Card, Banner or Drawer that shows the same
  * content, copy and decisions in every container. The entry modules beside
- * this file (`card-surface.tsx`, `banner-surface.tsx`, `drawer-surface.tsx`) pass the stylesheets
+ * this file (`card-surface.tsx`, `strip.tsx`, `drawer-surface.tsx`) pass the stylesheets
  * of one container each, so a page downloads only the container it
  * renders.
  */
