@@ -230,11 +230,12 @@ describe('TanStack Start client chunks', () => {
 		// so Rolldown moves those modules into files of their own, and the
 		// preload lists in the first load name more files (474 bytes). No
 		// Privacy Choices component code reaches the first load. With the rest
-		// of the banner work, 463 bytes (22,290). The banner's early taps,
-		// which the deferred root now leaves to the Privacy Choices banner and
-		// the stock buttons replay through their own handlers: 34 bytes
-		// (22,324).
-		expect(brotli).toBeLessThanOrEqual(22_324);
+		// of the banner work, 463 bytes (22,290). The banner's early taps, which
+		// the deferred root now leaves to the Privacy Choices banner and the
+		// stock buttons replay through their own handlers: 34 bytes (22,324). The
+		// Privacy Choices dialog's parts add their keys to the same table, and
+		// its chunks lengthen the preload lists again: 278 bytes (22,602).
+		expect(brotli).toBeLessThanOrEqual(22_602);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {
