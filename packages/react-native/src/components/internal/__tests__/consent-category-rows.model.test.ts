@@ -18,7 +18,7 @@ import type {
 	AllConsentNames,
 	RestrictionReason,
 } from '../../../protocol/consent-vocabulary.model';
-import { buildConsentCategoryRows } from '../categories';
+import { buildConsentCategoryRows } from '../consent-category-rows.model';
 
 const listedKeys = function listedKeys(
 	snapshot: ConsentSnapshot

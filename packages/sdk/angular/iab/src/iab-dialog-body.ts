@@ -52,13 +52,16 @@ import {
 	toStyleAttributeValue,
 } from '@inth/sdk/ui/utils';
 
+import { ChevronRightIcon } from './chevron-right-icon';
+import { CloseIcon } from './close-icon';
 import { IABFeatureItem } from './iab-feature-item';
-import { ChevronRightIcon, CloseIcon, InfoIcon, LockIcon } from './iab-icons';
 import { IABPurposeItem } from './iab-purpose-item';
 import type { IABPurposeChoice, IABVendorChoice } from './iab-purpose-item';
 import { IABStackItem } from './iab-stack-item';
 import { IABVendorList } from './iab-vendor-list';
 import type { IABAdTechProviderChoice } from './iab-vendor-list';
+import { InfoIcon } from './info-icon';
+import { LockIcon } from './lock-icon';
 
 type IABBannerSummary = ReturnType<typeof resolveIABBannerSummary>;
 

@@ -2,14 +2,14 @@
  * The boot a server render leaves for the browser: the snapshot it rendered
  * with, so the browser hydrates against it before the consent engine loads.
  * It travels in `TransferState`, next to the server-resolved state
- * (`../server-state-gate.ts`). The writer is in `plan-server-boot.ts`, so the
- * first-load chunk carries only the key.
+ * (`../server-state-gate.ts`), under the key in `boot-state-key.ts`. The
+ * writer is in `plan-server-boot.ts`, so the first-load chunk carries only
+ * the key.
  *
  * @packageDocumentation
  * @internal
  */
 
-import { makeStateKey } from '@angular/core';
 import type { ConsentExperiment, ConsentSnapshot } from '@inth/sdk/engine';
 
 /** What the server leaves. Short keys: it travels in every page. @internal */
@@ -26,9 +26,6 @@ export interface ConsentBoot {
 	 */
 	g?: 1;
 }
-
-/** The `TransferState` key of the boot. @internal */
-export const BOOT_STATE_KEY = makeStateKey<ConsentBoot>('inth-boot');
 
 /**
  * The boot with the vendor list put back, when the server left it out.

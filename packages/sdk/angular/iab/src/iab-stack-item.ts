@@ -17,7 +17,7 @@ import type { ResolvedIABCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 
-import { ChevronRightIcon } from './iab-icons';
+import { ChevronRightIcon } from './chevron-right-icon';
 import { IABPurposeItem, PREFERENCE_ITEM, SWITCH } from './iab-purpose-item';
 import type {
 	IABPurposeChoice,

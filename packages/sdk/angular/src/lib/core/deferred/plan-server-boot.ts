@@ -24,7 +24,7 @@ import type { Translations } from '@inth/sdk/translations';
 
 import type { InthResolvedOptions } from '../inth-options';
 import { isIABConfigured } from '../lazy-create-iab';
-import type { ConsentBoot } from './restore-boot';
+import type { ConsentBoot } from './consent-boot.model';
 
 /**
  * A decision that changes on its own this soon is left to the engine,

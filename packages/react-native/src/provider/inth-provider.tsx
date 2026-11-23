@@ -43,7 +43,7 @@ import {
 import type {
 	ConsentTrackingReprompt,
 	ConsentTrackingRequest,
-} from '../tracking/request-sequenced-tracking';
+} from '../tracking/tracking-sequence.model';
 import {
 	assertPrivacyPolicyUrl,
 	configureAutoPresent,

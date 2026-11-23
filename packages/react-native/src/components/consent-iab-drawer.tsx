@@ -42,6 +42,11 @@ import {
 	CONSENT_BUTTON_ROW_ITEM,
 	ConsentButton,
 } from './internal/consent-button';
+import { ConsentIabFeatureSection } from './internal/consent-iab-feature-section';
+import { ConsentIabLockedSection } from './internal/consent-iab-locked-section';
+import { ConsentIabPurposeRow } from './internal/consent-iab-purpose-row';
+import { ConsentIabStackRow } from './internal/consent-iab-stack-row';
+import { ConsentIabVendorRow } from './internal/consent-iab-vendor-row';
 import {
 	ConsentSurface,
 	ConsentSurfaceBody,
@@ -55,13 +60,6 @@ import type {
 	ConsentIabCopyOverrides,
 } from './internal/iab-copy.model';
 import { resolveIabCopy, withTotal } from './internal/iab-copy.model';
-import {
-	ConsentIabFeatureSection,
-	ConsentIabLockedSection,
-	ConsentIabPurposeRow,
-	ConsentIabStackRow,
-	ConsentIabVendorRow,
-} from './internal/iab-rows';
 import type { ConsentPartStyles } from './theme/consent-theme-parts';
 import type { ConsentTheme } from './theme/create-consent-theme';
 import { useConsentStyles } from './theme/use-consent-styles';
