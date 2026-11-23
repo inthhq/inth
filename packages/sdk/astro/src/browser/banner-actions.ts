@@ -12,7 +12,7 @@ import type {
 	ConsentAction,
 } from '../client-types';
 import type { ConsentDialogKind } from '../ui/adapter';
-import { dialogDesignFor, preloadDialogChunks } from './dialog-loading';
+import { preloadDialogChunks } from './dialog-loading';
 import { ACTIONS_KEY, getWindow, readPageNonce } from './page-state';
 
 /** Attribute the server-rendered banner puts on its action buttons. */
@@ -114,44 +114,16 @@ export const registerDeferredClient = function registerDeferredClient(
 };
 
 /**
- * Whether each engine client's snapshot renders the Privacy Choices
- * design. The engine registers it; the first-load shell has no policy
- * logic, so it reads the page for a Privacy Choices prompt instead.
- */
-const privacyChoicesDesigns = new WeakMap<AstroConsentClient, () => boolean>();
-
-/**
- * Register how a client tells the Privacy Choices design from the classic
- * one, so warming loads only the dialog its open will mount.
- *
- * @internal
- */
-export const registerPrivacyChoicesDesign =
-	function registerPrivacyChoicesDesign(
-		client: AstroConsentClient,
-		uses: () => boolean
-	): void {
-		privacyChoicesDesigns.set(client, uses);
-	};
-
-/**
- * The preference dialog an open would mount for `client`: never the
- * classic one on a Privacy Choices page whose island has its own.
+ * The dialog an open would mount for `client`: the IAB preference centre
+ * under an IAB policy, else the preferences dialog.
  *
  * @internal
  */
 export const warmDialogTarget = function warmDialogTarget(
 	client: AstroConsentClient
-): { kind: ConsentDialogKind; design: 'classic' | 'privacy-choices' } {
-	const kind: ConsentDialogKind =
-		client.getConsent().model === 'iab' ? 'iab' : 'preferences';
-	const uses = privacyChoicesDesigns.get(client);
-	const privacyChoices = uses
-		? uses()
-		: document.querySelector('[data-design="privacy-choices"]') !== null;
+): { kind: ConsentDialogKind } {
 	return {
-		design: dialogDesignFor(client.options.ui, kind, privacyChoices),
-		kind,
+		kind: client.getConsent().model === 'iab' ? 'iab' : 'preferences',
 	};
 };
 
@@ -177,13 +149,8 @@ export const warmDialog = function warmDialog(
 	if (!warming) {
 		const attempt = (async () => {
 			try {
-				const { design, kind } = warmDialogTarget(client);
-				await preloadDialogChunks(
-					client.options.ui,
-					kind,
-					readPageNonce(),
-					design
-				);
+				const { kind } = warmDialogTarget(client);
+				await preloadDialogChunks(client.options.ui, kind, readPageNonce());
 			} catch {
 				// The open reports its own failure.
 				warming = null;

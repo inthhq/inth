@@ -723,7 +723,7 @@ describe('resolveOptions', () => {
 		// arm assigned in the browser would be recorded for a banner the
 		// visitor never saw.
 		const variants = {
-			bar: { prompt: { variant: 'bar' as const } },
+			bar: { prompt: { container: { type: 'banner' as const } } },
 		};
 		expect(() =>
 			resolveOptions({
@@ -873,10 +873,26 @@ describe('astro:config:setup', () => {
 			calls.injectScript.mock.calls.some(([stage]) => stage === 'page-ssr')
 		).toBe(false);
 		const [, boot] = calls.injectScript.mock.calls[0] as [string, string];
+		// The island links the widget's rules already, so IAB adds its own.
 		expect(boot).toContain(
-			`import iabDialogStyle from ${JSON.stringify(`${resolveOwnEntry('@inth/sdk/ui/styles/sheets/iab-dialog.css')}?url`)};`
+			`import iabDialogStyle0 from ${JSON.stringify(`${resolveOwnEntry('@inth/sdk/ui/styles/sheets/iab-dialog.css')}?url`)};`
 		);
-		expect(boot).toContain("registerDialogStyles([iabDialogStyle], 'iab');");
+		expect(boot).toContain("registerDialogStyles([iabDialogStyle0], 'iab');");
+	});
+
+	it('gives the React IAB dialog the widget rules its preferences dialog never links', async () => {
+		const { calls } = await runSetup({
+			iab: { cmpId: 160 },
+			mode: testingMode(),
+			ui: 'react',
+		});
+		const [, boot] = calls.injectScript.mock.calls[0] as [string, string];
+		expect(boot).toContain(
+			`import iabDialogStyle0 from ${JSON.stringify(`${resolveOwnEntry('@inth/sdk/ui/styles/sheets/widget.css')}?url`)};`
+		);
+		expect(boot).toContain(
+			"registerDialogStyles([iabDialogStyle0, iabDialogStyle1], 'iab');"
+		);
 	});
 
 	it.each(['react', 'svelte', 'vue'] as const)(
@@ -892,8 +908,13 @@ describe('astro:config:setup', () => {
 		}
 	);
 
+	it('registers no preferences stylesheet for React, whose dialog brings its own sheets', async () => {
+		const { calls } = await runSetup({ mode: testingMode(), ui: 'react' });
+		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
+		expect(code).not.toContain('registerDialogStyles(');
+	});
+
 	it.each([
-		['react', ['@inth/sdk/ui/styles/sheets/widget.css']],
 		['vue', ['@inth/sdk/ui/styles/sheets/widget.css']],
 		[
 			'svelte',

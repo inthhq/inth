@@ -227,9 +227,7 @@ describe('opening the React dialog', () => {
 		await vi.waitFor(
 			() =>
 				expect(
-					document.querySelector(
-						'[data-testid="consent-widget-footer-save-button"]'
-					)
+					document.querySelector('[data-testid="consent-dialog-save-button"]')
 				).not.toBeNull(),
 			ISLAND_RENDER_TIMEOUT
 		);

@@ -1,9 +1,9 @@
 /**
- * What the Privacy Choices prompt shows for a snapshot.
+ * What the consent prompt shows for a snapshot.
  *
  * The server renders this into the page, and the browser renders the same
  * model after every change, so the two cannot drift. Everything here
- * follows the React prompt (`@inth/react`'s `prompt/privacy-choices`),
+ * follows the React prompt (`@inth/react`'s `components/prompt`),
  * which is the parity baseline.
  *
  * @internal
@@ -16,7 +16,6 @@ import type {
 	ConsentSnapshot,
 	LegalLinks,
 	PresentationAction,
-	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
 import {
 	resolvePrivacyChoicesBannerCopy,
@@ -39,18 +38,44 @@ import {
 } from '@inth/sdk/ui/utils';
 import type { LegalLinkEntry } from '@inth/sdk/ui/utils';
 
-import type { PromptProps } from '../banner/prompt-model';
 import { resolveSlotBinding } from '../banner/theme-slots';
-import type { PrivacyChoicesClassNames } from './class-names';
-import { presentationOf, resolvePromptPresentation } from './design';
-import type { PrivacyChoicesPresentation } from './design';
+import type { PromptClassNames } from './class-names';
+import { containerTypeOf, resolvePromptPresentation } from './presentation';
+import type { PromptContainerType, PromptLayouts } from './presentation';
 
-/** The prompt's layouts, desktop and phone. */
-export type PrivacyChoicesContainer = NonNullable<
-	ResolvedConsentPresentation['container']
->;
+export type { PromptContainerType, PromptLayouts } from './presentation';
 
-export type { PrivacyChoicesPresentation } from './design';
+/** The `<ConsentBanner />` props that shape its markup. */
+export interface PromptProps {
+	/** Override the prompt's heading. */
+	title?: string;
+	/** Override the prompt's body copy. */
+	description?: string;
+	/** Override the reject button label. */
+	rejectButtonText?: string;
+	/** Override the accept button label. */
+	acceptButtonText?: string;
+	/** Override the notice acknowledgement label. */
+	dismissButtonText?: string;
+	/** Override the customize button label. */
+	customizeButtonText?: string;
+	/** Ship the DOM without the bundled stylesheet's class names. */
+	noStyle?: boolean;
+	/**
+	 * Skip the entry animation. Defaults to the integration's
+	 * `disableAnimation`.
+	 */
+	disableAnimation?: boolean;
+	/** Extra class on the prompt's root. */
+	class?: string;
+	/** Drop the "Consent by" tag. */
+	hideBranding?: boolean;
+	/**
+	 * Which legal links the prompt shows: the Privacy Policy and the Cookie
+	 * Policy by default. `null` shows none.
+	 */
+	legalLinks?: (keyof LegalLinks)[] | null;
+}
 
 type TranslationBundle = Partial<Translations>;
 
@@ -72,9 +97,9 @@ export interface PromptButton extends PartBinding {
 export type SummaryAction = 'reject' | 'accept' | 'customize';
 
 /** Everything the prompt markup needs, besides its live state. */
-export interface PrivacyChoicesModel {
-	container: PrivacyChoicesContainer;
-	presentation: PrivacyChoicesPresentation;
+export interface PromptModel {
+	container: PromptLayouts;
+	presentation: PromptContainerType;
 	variant: PrivacyChoicesPromptVariant;
 	copy: PrivacyChoicesBannerCopy;
 	/**
@@ -116,7 +141,7 @@ export interface PrivacyChoicesModel {
 		'reject' | 'accept' | 'customize' | 'dismiss' | 'save',
 		PromptButton
 	>;
-	classNames: PrivacyChoicesClassNames;
+	classNames: PromptClassNames;
 }
 
 /** Elements a `theme.slots` key can style. */
@@ -163,7 +188,7 @@ const join = (...names: (string | undefined)[]): string =>
 	names.filter(Boolean).join(' ');
 
 /** Site options the prompt reads. */
-export interface PrivacyChoicesOptions {
+export interface PromptOptions {
 	presentation?: ConsentPresentation;
 	experiment?: ConsentExperiment;
 	legalLinks?: LegalLinks;
@@ -207,12 +232,12 @@ export const summaryGroupsOf = function summaryGroupsOf(
 		.filter((group) => group.length > 0);
 };
 
-/** Input for {@link resolvePrivacyChoicesModel}. */
-export interface PrivacyChoicesModelInput {
+/** Input for {@link resolvePromptModel}. */
+export interface PromptModelInput {
 	snapshot: ConsentSnapshot;
 	props: PromptProps;
-	options: PrivacyChoicesOptions;
-	classNames: PrivacyChoicesClassNames;
+	options: PromptOptions;
+	classNames: PromptClassNames;
 	/** The page's host name, for the tag's `?ref=`. */
 	hostname?: string;
 	/**
@@ -224,7 +249,7 @@ export interface PrivacyChoicesModelInput {
 
 const button = function button(
 	theme: Theme | undefined,
-	classNames: PrivacyChoicesClassNames,
+	classNames: PromptClassNames,
 	noStyle: boolean,
 	action: ConsentActionKey,
 	primary: boolean,
@@ -248,19 +273,20 @@ const button = function button(
 /**
  * Resolve the prompt's container, copy, links and classes.
  *
- * @returns `null` when the snapshot keeps the classic design.
+ * @throws {Error} When the policy resolves no prompt container, which
+ * the prompt surface always does.
  */
 // oxlint-disable-next-line complexity -- One resolution per element, as React's surface reads them inline.
-export const resolvePrivacyChoicesModel = function resolvePrivacyChoicesModel(
-	input: PrivacyChoicesModelInput
-): PrivacyChoicesModel | null {
+export const resolvePromptModel = function resolvePromptModel(
+	input: PromptModelInput
+): PromptModel {
 	const { snapshot, props, options, classNames } = input;
 	const resolved = resolvePromptPresentation(snapshot, options);
-	if (resolved.design !== 'privacy-choices' || !resolved.container) {
-		return null;
-	}
 	const { container } = resolved;
-	const presentation = presentationOf(container);
+	if (!container) {
+		throw new Error('@inth/astro: the consent prompt resolved no container.');
+	}
+	const presentation = containerTypeOf(container);
 	const presentationClasses = classNames[presentation];
 	const bundle = snapshot.translations?.translations as
 		| TranslationBundle

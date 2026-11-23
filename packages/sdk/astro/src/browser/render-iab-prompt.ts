@@ -224,7 +224,6 @@ export const buildIABPrompt = function buildIABPrompt(
 			'data-position': model.position,
 			'data-testid': 'iab-consent-banner-root',
 			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
-			'data-variant': model.variant,
 			dir: model.textDirection,
 			lang: model.language,
 			style: model.styles.root,

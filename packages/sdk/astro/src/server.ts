@@ -512,12 +512,8 @@ export type {
 	BrandingModel,
 	BrandingModelInput,
 } from './banner/branding-model';
-export { iabPromptClassNames, promptClassNames } from './banner/class-names';
-export type {
-	ClassNameMap,
-	IABPromptClassNames,
-	PromptClassNames,
-} from './banner/class-names';
+export { iabPromptClassNames, joinClasses } from './banner/class-names';
+export type { ClassNameMap, IABPromptClassNames } from './banner/class-names';
 export { resolveIABPromptModel } from './banner/iab-prompt-model';
 export type {
 	IABAction,
@@ -526,25 +522,18 @@ export type {
 	IABPromptModelInput,
 	IABPromptProps,
 } from './banner/iab-prompt-model';
-export { joinClasses, resolvePromptModel } from './banner/prompt-model';
 export {
 	buildConsentBootJSON,
 	buildLocalsBootJSON,
 	canDeferEngine,
 } from './banner/deferred-boot';
-// The inline script that records banner taps before the page script runs,
-// for a banner whose engine loads after the page.
+// The inline script that records prompt taps before the page script runs,
+// for a prompt whose engine loads after the page.
 export { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 export {
 	IAB_PROMPT_SLOT_ATTRIBUTE,
 	PROMPT_SLOT_ATTRIBUTE,
 } from './banner/slot';
-export type {
-	PromptAction,
-	PromptModel,
-	PromptModelInput,
-	PromptProps,
-} from './banner/prompt-model';
 export type { KernelConfig } from '@inth/sdk/engine';
 
 /**
@@ -595,25 +584,29 @@ export const markConfigEmitted = function markConfigEmitted(
 	return true;
 };
 
-// The Privacy Choices prompt (`presentation.design: 'privacy-choices'`).
-export { privacyChoicesClassNames } from './privacy-choices/class-names';
-export type { PrivacyChoicesClassNames } from './privacy-choices/class-names';
+// The consent prompt: its model, its markup and its first-paint sheets.
+export { promptClassNames } from './prompt/class-names';
+export type { PromptClassNames } from './prompt/class-names';
 export {
-	privacyChoicesPresentation,
-	usesPrivacyChoices,
-} from './privacy-choices/design';
-export { privacyChoicesLinkIconSvg } from './privacy-choices/link-icon';
-export { resolvePrivacyChoicesModel } from './privacy-choices/model';
-export type { PrivacyChoicesModel } from './privacy-choices/model';
-export {
-	privacyChoicesFirstPaintSheets,
-	renderPrivacyChoicesHTML,
-} from './privacy-choices/server';
+	promptContainerType,
+	resolvePromptPresentation,
+} from './prompt/presentation';
+export type { PromptContainerType } from './prompt/presentation';
+export { privacyChoicesLinkIconSvg } from './parts/link-icon';
+export { resolvePromptModel } from './prompt/model';
+export type {
+	PromptModel,
+	PromptModelInput,
+	PromptProps,
+} from './prompt/model';
+export { promptFirstPaintSheets, renderPromptHTML } from './prompt/server';
 
 // The first-paint rules the components inline (see `inline-styles.ts`).
 export {
 	INLINE_IAB_STYLES_CSS,
 	INLINE_IAB_STYLES_ID,
+	INLINE_PARTS_STYLES_CSS,
+	INLINE_PARTS_STYLES_ID,
 	INLINE_STYLES_CSS,
 	INLINE_STYLES_ID,
 } from './inline-styles';

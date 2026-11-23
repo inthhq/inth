@@ -1,22 +1,22 @@
 /**
- * The Privacy Choices stylesheets a page carries, and how the browser adds
- * the ones it lacks.
+ * The stylesheets a page carries, and how the browser adds the ones it
+ * lacks.
  *
  * A page renders the theme tokens, the button rules, the shell, and the
- * sheet of the one presentation it shows (Card, Banner or Drawer), never
- * another presentation's. The options Customize opens bring `expand` and
- * `privacy-choices-dialog` with their own chunk, and the dialog brings its
- * sheets when it opens. Each sheet goes in once, as
+ * sheet of the one container it shows (Card, Banner or Drawer), never
+ * another container's. The options Customize opens bring `expand` and
+ * `dialog` with their own chunk, and the dialog brings its sheets when it
+ * opens. Each sheet goes in once, as
  * `<style data-inth-styles="<id>">`, the marker React's surfaces dedupe
  * by too.
  *
  * @internal
  */
 
-import type { PrivacyChoicesPresentation } from './design';
+import type { PromptContainerType } from '../prompt/presentation';
 
 /** A stylesheet from `@inth/sdk/ui/styles/sheets/*`. */
-export interface PrivacyChoicesSheet {
+export interface StyleSheet {
 	readonly id: string;
 	readonly css: string;
 }
@@ -25,28 +25,53 @@ export interface PrivacyChoicesSheet {
 export const SHEET_ATTRIBUTE = 'data-inth-styles';
 
 /**
- * The ids of the sheets each presentation renders with: the tokens, the
+ * The ids of the sheets each container renders with: the tokens, the
  * buttons, the shell and its own. They match the `id` each sheet module
  * exports, which a test checks, so the browser can tell whether a page
  * already carries them without downloading them.
  */
-export const PRESENTATION_SHEET_IDS = {
-	bar: ['inth-tokens', 'inth-button', 'inth-surface', 'inth-bar'],
+export const CONTAINER_SHEET_IDS = {
+	banner: ['inth-tokens', 'inth-button', 'inth-surface', 'inth-banner'],
 	card: ['inth-tokens', 'inth-button', 'inth-surface', 'inth-card'],
 	drawer: ['inth-tokens', 'inth-button', 'inth-surface', 'inth-drawer'],
-} as const satisfies Record<PrivacyChoicesPresentation, readonly string[]>;
+} as const satisfies Record<PromptContainerType, readonly string[]>;
+
+/** The id of `first-paint`, which a page that cannot know its container inlines. */
+export const FIRST_PAINT_SHEET_ID = 'inth-first-paint';
+
+/** The sheets whose rules `first-paint` already carries. */
+const IN_FIRST_PAINT: ReadonlySet<string> = new Set([
+	'inth-tokens',
+	'inth-button',
+	'inth-parts',
+	'inth-consent-gate',
+	'inth-trigger',
+	'inth-surface',
+	'inth-card',
+	'inth-banner',
+	'inth-drawer',
+]);
+
+/** Whether the document holds a sheet, itself or inside `first-paint`. */
+const holds = function holds(target: Document, id: string): boolean {
+	return (
+		target.querySelector(`style[${SHEET_ATTRIBUTE}="${id}"]`) !== null ||
+		(IN_FIRST_PAINT.has(id) &&
+			target.querySelector(
+				`style[${SHEET_ATTRIBUTE}="${FIRST_PAINT_SHEET_ID}"]`
+			) !== null)
+	);
+};
 
 /**
- * Whether the document already holds every sheet a presentation renders
+ * Whether the document already holds every sheet a container renders
  * with, as a server-rendered page does.
  */
-export const presentationSheetsPresent = function presentationSheetsPresent(
-	presentation: PrivacyChoicesPresentation,
+export const containerSheetsPresent = function containerSheetsPresent(
+	container: PromptContainerType,
 	target: Document = document
 ): boolean {
-	return PRESENTATION_SHEET_IDS[presentation].every(
-		(id) => target.querySelector(`style[${SHEET_ATTRIBUTE}="${id}"]`) !== null
-	);
+	return CONTAINER_SHEET_IDS[container].every((id) => holds(target, id));
 };
 
 /**
@@ -61,12 +86,12 @@ export const presentationSheetsPresent = function presentationSheetsPresent(
  * @param target - The document to add them to.
  */
 export const insertSheets = function insertSheets(
-	sheets: readonly PrivacyChoicesSheet[],
+	sheets: readonly StyleSheet[],
 	nonce: string | undefined,
 	target: Document = document
 ): void {
 	for (const sheet of sheets) {
-		if (target.querySelector(`style[${SHEET_ATTRIBUTE}="${sheet.id}"]`)) {
+		if (holds(target, sheet.id)) {
 			continue;
 		}
 		const style = target.createElement('style');

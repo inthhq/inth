@@ -11,7 +11,9 @@
  *
  * - the colour-scheme script, the banner reveal scripts, the early-tap
  *   script a banner whose engine loads after the page runs, the first-paint
- *   stylesheet, the theme stylesheet (one per experiment arm) and the
+ *   stylesheets (the prompt's sheets for each container, `first-paint`
+ *   for a page that cannot know its container yet, and the IAB banner's),
+ *   the theme stylesheet (one per experiment arm) and the
  *   inline `scripts` entries
  *   the loader injects depend only on the integration options, so their
  *   hashes are known at config time and handed to Astro's config here;
@@ -28,9 +30,14 @@
 import { applyExperimentTheme } from '@inth/sdk/engine';
 import { isIABConfigured } from '@inth/sdk/runtime';
 
-import { INLINE_IAB_STYLES_CSS, INLINE_STYLES_CSS } from './inline-styles';
+import {
+	INLINE_IAB_STYLES_CSS,
+	INLINE_PARTS_STYLES_CSS,
+	INLINE_STYLES_CSS,
+} from './inline-styles';
 import { hashSource } from './libs/csp-hash';
 import type { CspHashAlgorithm, CspHashSource } from './libs/csp-hash';
+import { promptFirstPaintSheets } from './prompt/server';
 import {
 	buildBannerRevealScript,
 	buildColorSchemeScript,
@@ -82,14 +89,26 @@ export const buildInlineCodeHashes = async function buildInlineCodeHashes(
 			)
 		: [];
 	const themes = [options.theme, ...armThemes];
+	const iab = options.inlineStyles && isIABConfigured(options.iab);
+	// The first-paint rules the components inline, unless the page links
+	// Inth's stylesheet instead: the prompt's sheets for whichever
+	// container the policy resolves, or `first-paint` before it does.
+	const firstPaint =
+		options.inlineStyles === false
+			? []
+			: [
+					INLINE_STYLES_CSS,
+					...(['card', 'banner', 'drawer'] as const).flatMap((container) =>
+						promptFirstPaintSheets(container).map((sheet) => sheet.css)
+					),
+				];
 	const styles = [
-		// The first-paint rules the components inline, unless the page
-		// links Inth's stylesheet instead.
-		options.inlineStyles === false ? '' : INLINE_STYLES_CSS,
-		options.inlineStyles && isIABConfigured(options.iab)
-			? INLINE_IAB_STYLES_CSS
-			: '',
-		...new Set(themes.map((theme) => buildThemeCSS(theme))),
+		...new Set([
+			...firstPaint,
+			iab ? INLINE_PARTS_STYLES_CSS : '',
+			iab ? INLINE_IAB_STYLES_CSS : '',
+			...themes.map((theme) => buildThemeCSS(theme)),
+		]),
 	].filter(Boolean);
 	return {
 		scripts: await Promise.all(

@@ -87,7 +87,10 @@ export const createOwnEntryResolver =
 		}
 	};
 
-/** The dialog and preference-widget rules, which no first paint needs. */
+/**
+ * The preference widget's rules: the opt-out confirmation, and the IAB
+ * dialog's tabs, switches and vendor list. No first paint needs them.
+ */
 const DIALOG_STYLESHEET = '@inth/sdk/ui/styles/sheets/widget.css';
 const IAB_DIALOG_STYLESHEET = '@inth/sdk/ui/styles/sheets/iab-dialog.css';
 
@@ -107,9 +110,10 @@ const UI_ADAPTERS: Record<
 		adapterExport: string;
 		surfaceModule: string;
 		/**
-		 * The stylesheets the island's dialog needs beyond the first-paint
-		 * rules the page inlines. The client links them when the dialog
-		 * opens.
+		 * The stylesheets the island's preferences dialog needs beyond the
+		 * sheets the client puts in for it. The client links them when the
+		 * dialog opens. The IAB dialog links them too, with the widget's
+		 * and its own rules.
 		 */
 		dialogStyles: string[];
 	}
@@ -118,7 +122,9 @@ const UI_ADAPTERS: Record<
 		adapterExport: 'reactDialogAdapter',
 		adapterModule: '@inth/astro/ui/react',
 		astroIntegration: '@astrojs/react',
-		dialogStyles: [DIALOG_STYLESHEET],
+		// React's dialog renders the sheets the client puts in, and hosts its
+		// confirmations with the widget's, so it links nothing more.
+		dialogStyles: [],
 		packages: ['@astrojs/react', '@inth/react', 'react', 'react-dom'],
 		surfaceModule: '@inth/astro/islands/panel-surface.tsx',
 	},
@@ -654,10 +660,18 @@ export const buildBootScript = function buildBootScript(
 		page.push(`registerDialogStyles([${names.join(', ')}]);`);
 	}
 	if (resolved.inlineStyles && isIABConfigured(resolved.iab)) {
-		page.push(
-			`import iabDialogStyle from ${JSON.stringify(`${resolveEntry(IAB_DIALOG_STYLESHEET)}?url`)};`,
-			"registerDialogStyles([iabDialogStyle], 'iab');"
-		);
+		// The IAB dialog renders the widget's tabs, switches and vendor list.
+		const iabStyles = [
+			...(dialogStyles.includes(DIALOG_STYLESHEET) ? [] : [DIALOG_STYLESHEET]),
+			IAB_DIALOG_STYLESHEET,
+		];
+		const names = iabStyles.map((_, index) => `iabDialogStyle${index}`);
+		iabStyles.forEach((specifier, index) => {
+			page.push(
+				`import ${names[index]} from ${JSON.stringify(`${resolveEntry(specifier)}?url`)};`
+			);
+		});
+		page.push(`registerDialogStyles([${names.join(', ')}], 'iab');`);
 	}
 	const loadEngine = `() => import('${ENGINE_ID}')`;
 	if (resolved.clientEntrypoint) {

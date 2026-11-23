@@ -1,6 +1,6 @@
 /**
- * The Privacy Choices prompt's markup: a Card, Banner or Drawer, the same
- * elements, attributes, test ids and ARIA as React's `PrivacyChoicesSurface`.
+ * The consent prompt's markup: a Card, Banner or Drawer, the same
+ * elements, attributes, test ids and ARIA as React's prompt surface.
  * The server renders it collapsed, on the desktop layout; the browser
  * renders every later state from the same function.
  *
@@ -12,9 +12,9 @@ import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { BRAND_MARKS } from '@inth/sdk/ui/utils';
 import type { LegalLinkEntry } from '@inth/sdk/ui/utils';
 
-import type { PrivacyChoicesModel, PromptButton, SummaryAction } from './model';
-import { h, raw } from './vnode';
-import type { VAttributes, VChild, VElement } from './vnode';
+import { h, raw } from '../parts/vnode';
+import type { VAttributes, VChild, VElement } from '../parts/vnode';
+import type { PromptModel, PromptButton, SummaryAction } from './model';
 
 /** The prompt's live state. */
 export interface PromptViewState {
@@ -40,7 +40,7 @@ export interface PromptIds {
 }
 
 /** The prompt's id prefix, the same on the server and in the browser. */
-export const PRIVACY_CHOICES_ID_PREFIX = 'inth-pc-banner';
+export const PROMPT_ID_PREFIX = 'inth-pc-banner';
 
 /** Ids for a prefix, as React builds them from `useId`. */
 export const promptIds = function promptIds(prefix: string): PromptIds {
@@ -64,7 +64,7 @@ const bound = function bound(
 
 /** A class list, or none under `noStyle`. */
 const cx = function cx(
-	model: PrivacyChoicesModel,
+	model: PromptModel,
 	...names: (string | undefined)[]
 ): string | undefined {
 	if (model.noStyle) {
@@ -100,9 +100,7 @@ const brandMark = function brandMark(
 };
 
 /** The "Consent by [INTH]" tag (BNR-11). */
-const consentTag = function consentTag(
-	model: PrivacyChoicesModel
-): VElement | null {
+const consentTag = function consentTag(model: PromptModel): VElement | null {
 	const { tag } = model;
 	if (!tag) {
 		return null;
@@ -129,7 +127,7 @@ const consentTag = function consentTag(
 
 /** The inline legal links after a description, as React's `InlineLegalLinks`. */
 const legalLinks = function legalLinks(
-	model: PrivacyChoicesModel,
+	model: PromptModel,
 	entries: readonly LegalLinkEntry[]
 ): VElement | null {
 	if (entries.length === 0) {
@@ -165,7 +163,7 @@ type ButtonAction = 'reject' | 'accept' | 'customize' | 'dismiss' | 'save';
 
 /** A stock consent button, as `ConsentButton` renders it. */
 const consentButton = function consentButton(
-	model: PrivacyChoicesModel,
+	model: PromptModel,
 	action: ButtonAction,
 	label: string,
 	attrs: VAttributes = {}
@@ -194,12 +192,12 @@ const consentButton = function consentButton(
 /**
  * The prompt's root, overlay, shell and card for one state.
  *
- * @param model - From `resolvePrivacyChoicesModel`.
+ * @param model - From `resolvePromptModel`.
  * @param state - The layout, phase, expansion and options.
  */
 // oxlint-disable-next-line complexity, max-lines-per-function -- The prompt's markup in one place, as React's surface renders it.
 export const renderPrompt = function renderPrompt(
-	model: PrivacyChoicesModel,
+	model: PromptModel,
 	state: PromptViewState
 ): VElement {
 	const { layout, ids } = state;
@@ -392,7 +390,6 @@ export const renderPrompt = function renderPrompt(
 		bound(parts.root, {
 			'data-animation': model.disableAnimation ? 'off' : undefined,
 			'data-blocking': layout.blocking ? 'true' : undefined,
-			'data-design': 'privacy-choices',
 			'data-edge-style': layout.edgeStyle,
 			'data-expanded': expanded ? 'true' : undefined,
 			'data-flow': layout.flow,
@@ -443,7 +440,7 @@ export const renderPrompt = function renderPrompt(
  * after it leaves (BNR-06). Rendered once; a controller owns it after.
  */
 export const renderPageStatus = function renderPageStatus(
-	model: Pick<PrivacyChoicesModel, 'classNames'>
+	model: Pick<PromptModel, 'classNames'>
 ): VElement {
 	return h('div', {
 		class: model.classNames.surface.visuallyHidden,

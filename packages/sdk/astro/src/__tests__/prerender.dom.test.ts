@@ -3,28 +3,30 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createPersistence } from '@inth/sdk/modules/persistence';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { iabPromptClassNames, promptClassNames } from '../banner/class-names';
+import { iabPromptClassNames } from '../banner/class-names';
 import {
 	IAB_PROMPT_SLOT_ATTRIBUTE,
 	PROMPT_SLOT_ATTRIBUTE,
 } from '../banner/slot';
-import { boot, registerIAB, setPromptRendererLoaderForTest } from '../client';
+import { boot, registerIAB } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
-import { privacyChoicesClassNames } from '../privacy-choices/class-names';
+import { promptClassNames } from '../prompt/class-names';
+import { resolvePromptModel } from '../prompt/model';
+import { renderPromptHTML } from '../prompt/server';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions } from '../types';
 import { createTestPageIAB } from './page-iab';
 import { testResolution, testRule } from './policy-fixture';
-// The client imports each banner renderer, and @inth/sdk/iab for an IAB policy,
+// The client imports the prompt, the IAB renderer, and @inth/sdk/iab for an IAB policy,
 // the first time it needs one. Vite compiles a module on its first import,
 // which can outlast a vi.waitFor on a busy machine; importing them here does
 // that while this file loads.
 import '@inth/sdk/iab';
 
+import '../browser/prompt';
 import '../browser/render-iab-prompt';
-import '../browser/render-prompt';
 
 /**
  * A prerendered page is built once and served to every visitor, so the
@@ -141,17 +143,40 @@ describe('a prerendered page', () => {
 		}
 	);
 
-	it('reveals the hidden banner for a first-time visitor', async () => {
-		document.body.innerHTML =
-			'<div data-testid="consent-banner-root" data-inth-visible="false" hidden></div>';
+	it('reveals the hidden prompt for a first-time visitor', async () => {
+		const built = await resolveConsentContext({
+			headers: new Headers(),
+			options: resolveOptions(OPTIONS),
+			prerendered: true,
+		});
+		const spot = document.createElement('div');
+		spot.hidden = true;
+		spot.setAttribute(
+			PROMPT_SLOT_ATTRIBUTE,
+			JSON.stringify({ classNames: promptClassNames, props: {} })
+		);
+		document.body.append(spot);
+		spot.insertAdjacentHTML(
+			'afterend',
+			renderPromptHTML(
+				resolvePromptModel({
+					classNames: promptClassNames,
+					options: built.options,
+					props: {},
+					snapshot: built.snapshot,
+				}),
+				true
+			)
+		);
 
 		await bootPrerendered();
 
-		const banner = document.querySelector<HTMLElement>(
-			'[data-testid="consent-banner-root"]'
-		);
-		expect(banner?.hidden).toBe(false);
-		expect(banner?.dataset.inthVisible).toBe('true');
+		await vi.waitFor(() => {
+			const banner = document.querySelector<HTMLElement>(
+				'[data-testid="consent-banner-root"]'
+			);
+			expect(banner?.hidden).toBe(false);
+		});
 	});
 });
 
@@ -181,7 +206,6 @@ describe('the spot <ConsentBanner /> leaves', () => {
 			);
 			expect(banner?.hidden).toBe(false);
 		});
-		expect(document.querySelector(`[${PROMPT_SLOT_ATTRIBUTE}]`)).toBeNull();
 		expect(
 			document.querySelector('[data-testid="consent-banner-title"]')
 				?.textContent
@@ -219,38 +243,6 @@ describe('the spot <ConsentBanner /> leaves', () => {
 			);
 			expect(banner?.hidden).toBe(false);
 		});
-		expect(document.querySelector(`[${PROMPT_SLOT_ATTRIBUTE}]`)).toBeNull();
-	});
-
-	it('retries a renderer that failed to load', async () => {
-		let loads = 0;
-		setPromptRendererLoaderForTest(async () => {
-			loads += 1;
-			if (loads === 1) {
-				throw new TypeError('Failed to fetch dynamically imported module');
-			}
-			return await import('../browser/render-prompt');
-		});
-		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-		try {
-			leaveSpot();
-			await bootPrerendered();
-
-			await vi.waitFor(
-				() => {
-					const banner = document.querySelector<HTMLElement>(
-						'[data-testid="consent-banner-root"]'
-					);
-					expect(banner?.hidden).toBe(false);
-				},
-				{ timeout: 3000 }
-			);
-			expect(loads).toBe(2);
-			expect(warn).toHaveBeenCalledOnce();
-		} finally {
-			warn.mockRestore();
-			setPromptRendererLoaderForTest();
-		}
 	});
 
 	it('stays empty for a visitor who already chose', async () => {
@@ -318,16 +310,12 @@ describe('the spot <IABConsentBanner /> leaves', () => {
 		expect(document.querySelector(`[${PROMPT_SLOT_ATTRIBUTE}]`)).not.toBeNull();
 	});
 
-	it('gets the IAB banner on a site whose other regions use the Privacy Choices design', async () => {
+	it('gets the IAB banner on a site whose other regions use a Card', async () => {
 		const standard = document.createElement('div');
 		standard.hidden = true;
 		standard.setAttribute(
 			PROMPT_SLOT_ATTRIBUTE,
-			JSON.stringify({
-				classNames: promptClassNames,
-				privacyChoices: privacyChoicesClassNames,
-				props: {},
-			})
+			JSON.stringify({ classNames: promptClassNames, props: {} })
 		);
 		const iab = document.createElement('div');
 		iab.hidden = true;
@@ -339,10 +327,7 @@ describe('the spot <IABConsentBanner /> leaves', () => {
 		client = boot(
 			resolveOptions({
 				...IAB_OPTIONS,
-				presentation: {
-					design: 'privacy-choices',
-					prompt: { container: { type: 'card' } },
-				},
+				presentation: { prompt: { container: { type: 'card' } } },
 			})
 		);
 

@@ -1,19 +1,16 @@
-import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { promptClassNames } from '../banner/class-names';
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
-import { buildPrompt } from '../browser/render-prompt';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
 import { createConsentMiddleware } from '../middleware-handler';
 import { hosted as hostedMode } from '../mode';
+import { promptClassNames } from '../prompt/class-names';
 import { buildBannerRevealScript, resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions, InthLocals } from '../types';
-import { describeTree } from './dom-tree';
 import { testRule } from './policy-fixture';
 
 let container: AstroContainer;
@@ -133,101 +130,6 @@ describe('<ConsentBanner /> on a prerendered page', () => {
 		);
 		const data = JSON.parse(spot?.getAttribute(PROMPT_SLOT_ATTRIBUTE) ?? '');
 		expect(data.props).toEqual({ title: 'Cookies?' });
-		expect(data.classNames.banner.root).toBe(promptClassNames.banner.root);
-	});
-});
-
-interface ParityCase {
-	rule?: Record<string, unknown>;
-	options?: Partial<InthAstroOptions>;
-	props?: Record<string, unknown>;
-	branding?: 'inth';
-}
-
-describe('browser-rendered banner', () => {
-	it.each<[string, ParityCase]>([
-		['an opt-in choice', {}],
-		[
-			'an opt-out notice',
-			{ rule: { model: 'opt-out', prompt: 'notice', rights: ['opt-out'] } },
-		],
-		[
-			'a blocking wall',
-			{ options: { presentation: { prompt: { variant: 'wall' } } } },
-		],
-		['a bar', { options: { presentation: { prompt: { variant: 'bar' } } } }],
-		// A default corner follows the text direction in both renderings.
-		[
-			'a right-to-left widget',
-			{
-				options: {
-					i18n: { locale: 'he' },
-					presentation: { prompt: { variant: 'widget' } },
-				},
-			},
-		],
-		['no stylesheet', { props: { noStyle: true } }],
-		['no entry animation', { props: { disableAnimation: true } }],
-		['no entry animation site-wide', { options: { disableAnimation: true } }],
-		['no branding tag', { props: { hideBranding: true } }],
-		['INTH branding', { branding: 'inth' }],
-	])('matches the server markup for %s', async (_name, parityCase) => {
-		const options: InthAstroOptions = {
-			legalLinks: {
-				cookiePolicy: { href: '/cookies', label: 'Cookies' },
-				privacyPolicy: { href: '/privacy', label: 'Privacy' },
-			},
-			mode: testingMode({
-				policy: [{ ...testRule, ...parityCase.rule } as typeof testRule],
-			}),
-			...parityCase.options,
-		};
-		const props = {
-			legalLinks: ['privacyPolicy', 'cookiePolicy'],
-			title: 'Hi',
-			...parityCase.props,
-		};
-		const resolved = await resolveConsentContext({
-			headers: new Headers(),
-			options: resolveOptions(options),
-		});
-		const inth = parityCase.branding
-			? {
-					...resolved,
-					snapshot: { ...resolved.snapshot, branding: parityCase.branding },
-				}
-			: resolved;
-		const server = new JSDOM(
-			await container.renderToString(ConsentBanner, {
-				locals: { inth },
-				props,
-				request: new Request('https://example.com/'),
-			}),
-			{ url: 'https://example.com/' }
-		).window.document;
-
-		const dom = new JSDOM('', { url: 'https://example.com/' });
-		vi.stubGlobal('document', dom.window.document);
-		vi.stubGlobal('window', dom.window);
-		try {
-			const built = buildPrompt(
-				inth.snapshot,
-				{ classNames: promptClassNames, props },
-				inth.options
-			);
-			const expected = [
-				server.querySelector('[data-testid="consent-banner-overlay"]'),
-				server.querySelector('[data-testid="consent-banner-root"]'),
-			].filter((node): node is Element => node !== null);
-			expect(expected.length).toBeGreaterThan(0);
-			expect(built.map(describeTree)).toEqual(expected.map(describeTree));
-			expect(
-				server
-					.querySelector('[data-testid="consent-banner-root"]')
-					?.getAttribute(SURFACE_ROOT_ATTRIBUTE)
-			).toBe('banner');
-		} finally {
-			vi.unstubAllGlobals();
-		}
+		expect(data.classNames.surface.root).toBe(promptClassNames.surface.root);
 	});
 });

@@ -260,19 +260,23 @@ describe('<IABConsentBanner />', () => {
 		expect(html).not.toContain('data-testid="iab-consent-banner-root"');
 	});
 
-	it('renders the host-resolved experiment arm on the root', async () => {
+	it("inlines the host-resolved experiment arm, and floats where React's IAB banner does", async () => {
 		const html = await render(
 			await buildLocals({
 				...iabOptions,
 				experiment: {
 					arm: 'bar',
-					arms: { bar: { prompt: { variant: 'bar' } } },
+					arms: { bar: { prompt: { container: { type: 'banner' } } } },
 					id: 'iab-shape',
 				},
 			})
 		);
-		expect(html).toContain('data-variant="bar"');
-		expect(html).toContain('data-position="bottom"');
+		expect(html).toContain('"initialExperiment"');
+		const root = /<div[^>]*data-testid="iab-consent-banner-root"[^>]*>/u.exec(
+			html
+		)?.[0];
+		expect(root).toContain('data-position="bottom-left"');
+		expect(root).not.toContain('data-variant=');
 	});
 
 	it('inlines the resolved config so the browser skips /v1/consent/init', async () => {

@@ -26,12 +26,11 @@ interface Props {
 	 */
 	preload?: boolean;
 	/**
-	 * Which of the integration's `legalLinks` the dialog shows after its
-	 * description, the same list `<ConsentBanner legalLinks>` takes.
-	 * `undefined` or `null` shows none. Under `design: 'privacy-choices'`
-	 * the dialog's footer has one link, the Cookie Policy for the EU and the
-	 * Privacy Policy for the US: `undefined` shows it, `null` hides it, and
-	 * a list shows it only when its key is in the list.
+	 * Which of the integration's `legalLinks` the dialog may show, the same
+	 * list `<ConsentBanner legalLinks>` takes. The dialog's footer has one
+	 * link, the Cookie Policy for the EU and the Privacy Policy for the US:
+	 * `undefined` shows it, `null` hides it, and a list shows it only when
+	 * its key is in the list.
 	 *
 	 * @example
 	 * ```astro

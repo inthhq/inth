@@ -138,7 +138,7 @@ describe('boot', () => {
 			{
 				...OPTIONS,
 				experiment: {
-					arms: { bar: { prompt: { variant: 'bar' } } },
+					arms: { bar: { prompt: { container: { type: 'banner' } } } },
 					id: 'banner-shape',
 				},
 				middleware: false,
@@ -154,7 +154,7 @@ describe('boot', () => {
 		const booted = start({
 			...OPTIONS,
 			experiment: {
-				arms: { bar: { prompt: { variant: 'bar' } } },
+				arms: { bar: { prompt: { container: { type: 'banner' } } } },
 				id: 'banner-shape',
 			},
 			middleware: false,
@@ -304,19 +304,6 @@ describe('banner actions', () => {
 		spy.mockRestore();
 	});
 
-	it('hides the banner once consent is saved', async () => {
-		renderBanner();
-		const booted = start();
-		const banner = document.querySelector<HTMLElement>(
-			'[data-testid="consent-banner-root"]'
-		);
-		await booted.acceptAll();
-		await vi.waitFor(() => {
-			expect(banner?.hidden).toBe(true);
-			expect(banner?.getAttribute('data-inth-visible')).toBe('false');
-		});
-	});
-
 	it('hides persistent controls until a policy rule is resolved', () => {
 		document.body.innerHTML = `
 			<button data-inth-surface="trigger" data-testid="consent-dialog-trigger" type="button" hidden>Privacy</button>
@@ -359,7 +346,9 @@ describe('banner actions', () => {
 		expect(trigger?.hidden).toBe(false);
 	});
 
-	it.each(['consent-banner', 'iab-consent-banner'])(
+	// The consent prompt's controller owns its own blocking
+	// (`prompt.dom.test.ts`); the engine keeps the IAB banner's.
+	it.each(['iab-consent-banner'])(
 		'locks scroll and traps focus while a blocking %s shows',
 		(name) => {
 			document.body.innerHTML = `
@@ -405,18 +394,18 @@ describe('banner actions', () => {
 		};
 
 		const markup = (hidden: boolean) => `
-			<div data-testid="consent-banner-overlay"${hidden ? ' hidden' : ''}></div>
-			<div data-testid="consent-banner-root" data-blocking="true"${hidden ? ' hidden' : ''}>
-				<div data-testid="consent-banner-card" tabindex="-1"></div>
+			<div data-testid="iab-consent-banner-overlay"${hidden ? ' hidden' : ''}></div>
+			<div data-testid="iab-consent-banner-root" data-blocking="true"${hidden ? ' hidden' : ''}>
+				<div data-testid="iab-consent-banner-card" tabindex="-1"></div>
 			</div>
 		`;
 		const root = () =>
 			document.querySelector<HTMLElement>(
-				'[data-testid="consent-banner-root"]'
+				'[data-testid="iab-consent-banner-root"]'
 			);
 		const overlay = () =>
 			document.querySelector<HTMLElement>(
-				'[data-testid="consent-banner-overlay"]'
+				'[data-testid="iab-consent-banner-overlay"]'
 			);
 		const shown = { activeUI: 'banner' } as ConsentSnapshot;
 		const hidden = { activeUI: 'none' } as ConsentSnapshot;
@@ -481,13 +470,7 @@ describe('ClientRouter navigation', () => {
 
 		expect(getConsentClient()).toBe(booted);
 		expect(booted.getConsent().effectivePermissions.marketing).toBe(true);
-		await vi.waitFor(() => {
-			expect(
-				document.querySelector<HTMLElement>(
-					'[data-testid="consent-banner-root"]'
-				)?.hidden
-			).toBe(true);
-		});
+		expect(booted.getConsent().activeUI).toBe('none');
 	});
 
 	it('gates scripts added by a navigation', async () => {

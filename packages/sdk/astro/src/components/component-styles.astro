@@ -5,9 +5,11 @@ import {
 	INLINE_IAB_STYLES_ID,
 	INLINE_STYLES_CSS,
 	INLINE_STYLES_ID,
+	INLINE_PARTS_STYLES_CSS,
+	INLINE_PARTS_STYLES_ID,
 	markStylesEmitted,
-	privacyChoicesFirstPaintSheets,
-	privacyChoicesPresentation,
+	promptContainerType,
+	promptFirstPaintSheets,
 } from '@inth/astro/server';
 
 interface Props {
@@ -37,20 +39,22 @@ const emit =
 	needed &&
 	markStylesEmitted(Astro.locals);
 const nonce = Astro.props.nonce ?? inth?.nonce;
-// A page whose banner renders the Privacy Choices design carries its
-// shell and the one presentation it shows (Card, Banner or Drawer)
-// instead of the classic banner's rules, as React's banner does.
-const presentation =
-	emit && inth
-		? privacyChoicesPresentation(inth.snapshot, inth.options)
+// A page that knows its policy carries the prompt's shell and the one
+// container it shows (Card, Banner or Drawer), as React's banner does. One
+// that does not yet, which the browser renders the prompt into later,
+// carries `first-paint`, which holds every container.
+const container =
+	emit && inth?.hasPolicy
+		? promptContainerType(inth.snapshot, inth.options)
 		: null;
-const privacyChoicesSheets = presentation
-	? privacyChoicesFirstPaintSheets(presentation)
-	: [];
+const containerSheets = container ? promptFirstPaintSheets(container) : [];
+// The IAB banner renders the shared parts (branding, actions, legal links)
+// beside its own rules, which `first-paint` already carries.
+const iab = emit && isIABConfigured(inth?.options.iab);
 ---
 
 {
-	emit && !presentation && (
+	emit && !container && (
 		<style
 			is:inline
 			data-inth-styles={INLINE_STYLES_ID}
@@ -61,7 +65,7 @@ const privacyChoicesSheets = presentation
 }
 
 {
-	privacyChoicesSheets.map((sheet) => (
+	containerSheets.map((sheet) => (
 		<style
 			is:inline
 			data-inth-styles={sheet.id}
@@ -72,7 +76,18 @@ const privacyChoicesSheets = presentation
 }
 
 {
-	emit && isIABConfigured(inth?.options.iab) && (
+	iab && container && (
+		<style
+			is:inline
+			data-inth-styles={INLINE_PARTS_STYLES_ID}
+			nonce={nonce}
+			set:html={INLINE_PARTS_STYLES_CSS}
+		/>
+	)
+}
+
+{
+	iab && (
 		<style
 			is:inline
 			data-inth-styles={INLINE_IAB_STYLES_ID}

@@ -1,8 +1,8 @@
 /**
  * Vendor-level consent through the Astro integration: the `vendors` option
- * reaches the page runtime, the dialog islands list a switch per vendor,
- * the page client reads vendor consent, and inert tags wait on their
- * vendor.
+ * reaches the page runtime, the page client reads vendor consent, and
+ * inert tags wait on their vendor. The dialog's vendor rows are React's
+ * own, tested with its dialog.
  */
 
 import type { Vendor } from '@inth/sdk/engine';
@@ -10,14 +10,10 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { activateGatedScripts } from '../browser/inline-scripts';
 import { boot } from '../client';
-import type { AstroConsentClient } from '../client';
 import type { AstroEngineClient } from '../client-types';
 import { resolveOptions } from '../integration';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions } from '../types';
-import { registerDialogAdapter, registerDialogSurface } from '../ui/adapter';
-import { reactDialogAdapter } from '../ui/react';
-import { vueDialogAdapter } from '../ui/vue';
 import { testResolution, testRule } from './policy-fixture';
 
 const VENDORS: Vendor[] = [
@@ -93,9 +89,6 @@ const start = function start(
 	return client;
 };
 
-const byTestId = (testId: string): HTMLElement | null =>
-	document.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
-
 describe('the vendors option', () => {
 	it('survives the serialized options the browser boots from', () => {
 		const resolved = resolveOptions(OPTIONS);
@@ -164,75 +157,4 @@ describe('inert tags with data-inth-vendor', () => {
 			).toBe('true')
 		);
 	});
-});
-
-const openDialog = async function openDialog(
-	ui: 'react' | 'vue'
-): Promise<AstroConsentClient> {
-	const host = document.createElement('div');
-	host.setAttribute('data-inth-dialog-host', 'preferences');
-	document.body.append(host);
-	cleanup.push(() => host.remove());
-	if (ui === 'react') {
-		registerDialogAdapter('react', () => Promise.resolve(reactDialogAdapter));
-		registerDialogSurface(
-			'react',
-			() => import('../components/islands/panel-surface')
-		);
-	} else {
-		registerDialogAdapter('vue', () => Promise.resolve(vueDialogAdapter));
-		registerDialogSurface(
-			'vue',
-			() => import('../components/islands/panel-surface.vue')
-		);
-	}
-	// The dialog waits for the browser to resolve the policy itself.
-	const client = start({ ...OPTIONS, ui }, { resolved: false });
-	await client.openDialog();
-	// The category's content, vendor list included, mounts once expanded.
-	// The first open imports the framework and the island.
-	await vi.waitFor(
-		() =>
-			expect(
-				byTestId('consent-widget-accordion-trigger-measurement')
-			).not.toBeNull(),
-		{ timeout: 10_000 }
-	);
-	byTestId('consent-widget-accordion-trigger-measurement')?.click();
-	await vi.waitFor(() =>
-		expect(byTestId('consent-widget-vendor-list-measurement')).not.toBeNull()
-	);
-	return client;
-};
-
-describe.each(['react', 'vue'] as const)('the %s dialog island', (ui) => {
-	it(
-		'lists the vendors with a switch that records a denial on Save',
-		{
-			timeout: 20_000,
-		},
-		async () => {
-			const client = await openDialog(ui);
-			const vendorSwitch = () =>
-				byTestId('consent-widget-vendor-switch-measurement-posthog');
-			expect(vendorSwitch()?.getAttribute('aria-label')).toBe('Allow PostHog');
-			// Off while the category is off in the draft.
-			expect(vendorSwitch()?.hasAttribute('disabled')).toBe(true);
-
-			byTestId('consent-widget-switch-measurement')?.click();
-			await vi.waitFor(() =>
-				expect(vendorSwitch()?.hasAttribute('disabled')).toBe(false)
-			);
-			vendorSwitch()?.click();
-			await vi.waitFor(() =>
-				expect(vendorSwitch()?.getAttribute('aria-checked')).toBe('false')
-			);
-			byTestId('consent-widget-footer-save-button')?.click();
-
-			await vi.waitFor(() =>
-				expect(client.getVendorChoice()?.denied).toEqual(['posthog'])
-			);
-			expect(client.isVendorAllowed('youtube')).toBe(true);
-		}
-	);
 });

@@ -70,7 +70,7 @@ import {
 	readDialogDisableAnimation,
 	readDialogLegalLinks,
 } from './dialog-host';
-import { loadDialog, resolveDialogDesign } from './dialog-loading';
+import { loadDialog } from './dialog-loading';
 import {
 	BANNER_OVERLAY_SELECTOR,
 	BANNER_ROOT_SELECTOR,
@@ -501,14 +501,9 @@ export const startDeferredClient = function startDeferredClient(
 		(!options.inlineStyles ||
 			Boolean(document.querySelector(FIRST_PAINT_SELECTOR)));
 
-	/** Download the dialog an open would mount, in the design it renders. */
-	const loadDesignDialog = (kind: ConsentDialogKind): Promise<unknown> =>
-		loadDialog(
-			options.ui,
-			kind,
-			nonce,
-			resolveDialogDesign(options.ui, kind, snapshot, options)
-		);
+	/** Download the dialog an open would mount. */
+	const loadOpenDialog = (kind: ConsentDialogKind): Promise<unknown> =>
+		loadDialog(options.ui, kind, nonce);
 
 	let standInModule: Promise<typeof StandInModule> | undefined;
 	const loadStandIn = (): Promise<typeof StandInModule> => {
@@ -660,11 +655,10 @@ export const startDeferredClient = function startDeferredClient(
 				await (engine as AstroEngineClient).openDialog(kind, tab);
 				return;
 			}
-			// Every dialog chunk downloads beside the engine: the one design's
-			// dialog the open will mount, never the other.
+			// Every dialog chunk downloads beside the engine.
 			void (async () => {
 				try {
-					await loadDesignDialog(kind);
+					await loadOpenDialog(kind);
 				} catch {
 					// The open reports its own failure.
 				}
@@ -683,7 +677,7 @@ export const startDeferredClient = function startDeferredClient(
 			// as soon as the engine attaches.
 			void (async () => {
 				try {
-					await loadDesignDialog('preferences');
+					await loadOpenDialog('preferences');
 				} catch {
 					// The engine's optOut reports its own failure.
 				}

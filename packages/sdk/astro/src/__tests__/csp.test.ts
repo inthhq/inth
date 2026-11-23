@@ -218,7 +218,7 @@ describe("Astro's own CSP", () => {
 		const experiment = {
 			arms: {
 				bold: { theme: { colors: { primary: 'oklch(0.5 0.25 30)' } } },
-				plain: { prompt: { variant: 'bar' as const } },
+				plain: { prompt: { container: { type: 'banner' as const } } },
 			},
 			id: 'banner-theme',
 		};
@@ -253,9 +253,10 @@ describe("Astro's own CSP", () => {
 				expect(hashes.styles).toContain(sha256(style));
 			}
 		}
-		// The first-paint rules and the host theme; the bold arm adds one
-		// stylesheet, and the plain arm keeps the host theme.
-		expect(hashes.styles).toHaveLength(3);
+		// `first-paint`, the prompt's shared sheets and one per container,
+		// and the host theme; the bold arm adds one stylesheet, and the plain
+		// arm keeps the host theme.
+		expect(hashes.styles).toHaveLength(12);
 	});
 
 	it('adds the hashes where the site turned CSP on', async () => {

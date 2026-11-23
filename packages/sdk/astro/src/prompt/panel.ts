@@ -1,9 +1,9 @@
 /**
- * The options a Privacy Choices prompt shows in place: the cookie
+ * The options the consent prompt shows in place: the cookie
  * categories in the EU, the rights row and Preferences in the US. Its own
  * chunk, loaded on Customize, or at once by a side Drawer, with the two
- * stylesheets it needs (`expand` and `privacy-choices-dialog`), as React's
- * `PrivacyChoicesPanel` loads them.
+ * stylesheets it needs (`expand` and `dialog`), as React's prompt panel
+ * loads them.
  *
  * Banner panels always use accordions, never sheets (PERM-01).
  *
@@ -50,19 +50,19 @@ import {
 	revealInScrollBody,
 	scheduleReveal,
 } from '@inth/sdk/ui/primitives/surface';
-import * as choicesSheet from '@inth/sdk/ui/styles/sheets/dialog';
+import * as dialogSheet from '@inth/sdk/ui/styles/sheets/dialog';
 import * as expandSheet from '@inth/sdk/ui/styles/sheets/expand';
 import type { Theme } from '@inth/sdk/ui/theme';
 
 import { resolveSlotBinding } from '../banner/theme-slots';
-import type { PrivacyChoicesClassNames } from './class-names';
+import { insertSheets } from '../parts/sheets';
+import { h, raw } from '../parts/vnode';
+import type { VChild, VElement } from '../parts/vnode';
+import type { PromptClassNames } from './class-names';
 import { rightsBundleOf } from './model';
-import { insertSheets } from './sheets';
-import { h, raw } from './vnode';
-import type { VChild, VElement } from './vnode';
 
-/** The options' rules: the in-place panel, then the v6 rows over it. */
-export const PANEL_SHEETS = [expandSheet, choicesSheet] as const;
+/** The options' rules: the in-place panel, then the dialog's rows over it. */
+export const PANEL_SHEETS = [expandSheet, dialogSheet] as const;
 
 /** What the prompt hands its options. */
 export interface PanelContext {
@@ -73,7 +73,7 @@ export interface PanelContext {
 	variant: PrivacyChoicesPromptVariant;
 	/** Prefix for element ids inside the panel (SR-05). */
 	idPrefix: string;
-	classNames: PrivacyChoicesClassNames;
+	classNames: PromptClassNames;
 	noStyle: boolean;
 	theme?: Theme;
 	uiSource: SaveUISource;
@@ -82,7 +82,7 @@ export interface PanelContext {
 }
 
 /** The mounted options. */
-export interface PrivacyChoicesPanel {
+export interface PromptPanel {
 	/** The options' markup for the current state. */
 	render: () => VChild;
 	/**
@@ -152,15 +152,15 @@ const isToggleClick = function isToggleClick(
  * @param context - The prompt's kernel, session, draft and classes.
  * @param styles - Where and how to insert the sheets; `null` inserts none.
  */
-export const createPrivacyChoicesPanel = function createPrivacyChoicesPanel(
+export const createPromptPanel = function createPromptPanel(
 	context: PanelContext,
 	styles: { nonce?: string } | null
-): PrivacyChoicesPanel {
+): PromptPanel {
 	if (styles) {
 		insertSheets(PANEL_SHEETS, styles.nonce);
 	}
 	const { kernel, session, draft, idPrefix } = context;
-	const { choices, expand } = context.classNames;
+	const { dialog: choices, expand } = context.classNames;
 	// The prompt updates `noStyle` and the theme (an experiment arm can
 	// change it) on the context before each render, so they are read live.
 	let { noStyle, theme } = context;
