@@ -10,10 +10,15 @@ import { defineAsyncComponent } from 'vue';
 import { useOptInConfirmationHost } from '../../composables/kernel';
 import { loadPrivacyChoicesDialog } from './load';
 
-defineProps<{
-	/** Skip the enter and exit animations. Defaults to the config's. */
-	disableAnimation?: boolean;
-}>();
+// Vue reads an absent boolean prop as `false`; `undefined` lets the
+// config's `disableAnimation` through.
+withDefaults(
+	defineProps<{
+		/** Skip the enter and exit animations. Defaults to the config's. */
+		disableAnimation?: boolean;
+	}>(),
+	{ disableAnimation: undefined }
+);
 
 const LazyPrivacyChoicesDialog = defineAsyncComponent(loadPrivacyChoicesDialog);
 const LazyOptInConfirmation = defineAsyncComponent(

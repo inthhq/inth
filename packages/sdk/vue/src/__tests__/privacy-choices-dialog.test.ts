@@ -799,3 +799,34 @@ describe('wave B round 1', () => {
 		await waitFor(() => expect(row.textContent).not.toBe(before));
 	});
 });
+
+describe('wave B round 2', () => {
+	test('[MOT-03] disableAnimation turns the dialog motion off and drops a sheet at once', async () => {
+		setPhone(true);
+		await mount({ config: { disableAnimation: false } });
+		await openDialog();
+		expect(must('consent-dialog-root').hasAttribute('data-animation')).toBe(
+			false
+		);
+		await unmountPrivacyChoices();
+
+		await mount();
+		await openDialog();
+		const root = must('consent-dialog-root');
+		expect(root.getAttribute('data-animation')).toBe('off');
+		must('consent-dialog-preferences-row').click();
+		await waitFor(() => expect($('consent-dialog-sheet')).not.toBeNull());
+		// The sheet never plays an exit: it goes without a closing state.
+		let closing = false;
+		const watcher = new MutationObserver(() => {
+			if ($('consent-dialog-sheet')?.getAttribute('data-state') === 'closed') {
+				closing = true;
+			}
+		});
+		watcher.observe(root, { attributes: true, childList: true, subtree: true });
+		must('consent-dialog-sheet-close').click();
+		await waitFor(() => expect($('consent-dialog-sheet')).toBeNull());
+		watcher.disconnect();
+		expect(closing).toBe(false);
+	});
+});

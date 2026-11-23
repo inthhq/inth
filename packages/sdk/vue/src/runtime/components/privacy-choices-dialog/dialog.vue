@@ -136,10 +136,13 @@ const { draft, state: draftState } = provideChoiceDraft();
 const phone = usePhoneLayout();
 const mounted = useMounted();
 const prefix = `inth-pcd-${useId().replace(/:/gu, '')}`;
+const disableAnimation = computed(() =>
+	Boolean(props.disableAnimation ?? config.value.disableAnimation)
+);
+// `disableAnimation` reads as reduced motion, so a closing sheet leaves at
+// once.
 const reducedMotion = computed(
-	() =>
-		Boolean(props.disableAnimation ?? config.value.disableAnimation) ||
-		prefersReducedMotion()
+	() => disableAnimation.value || prefersReducedMotion()
 );
 
 type LayerInstance = {
@@ -586,6 +589,7 @@ const intro = computed(() =>
 			v-if="open"
 			ref="backdropRef"
 			v-bind="slotAttrs(config.components?.dialog?.root, styles.backdrop)"
+			:data-animation="disableAnimation ? 'off' : undefined"
 			:data-edge-style="edgeStyle"
 			data-design="privacy-choices"
 			:data-regime="eu ? 'eu' : 'us'"

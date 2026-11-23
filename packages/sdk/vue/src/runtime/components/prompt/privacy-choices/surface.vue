@@ -498,7 +498,6 @@ const summaryGroups = computed(() =>
 		)
 		.filter((group) => group.length > 0)
 );
-const summaryActions = computed(() => summaryGroups.value.flat());
 
 /** One summary button, so every presentation renders the same three. */
 const SummaryButton = (buttonProps: {
@@ -554,6 +553,34 @@ const summaryLabel = (action: PresentationAction, inBar: boolean): string => {
 	}
 	return inBar ? copy.value.expandBar : copy.value.expand;
 };
+/** The host's group wrapper and its `banner.actionGroup` part. */
+const groupAttrs = () => ({
+	...slotAttrs(config.value.components?.banner?.actionGroup, [
+		surfaceStyles.actionGroup,
+		props.presentation.actionGroup,
+	]),
+	'data-testid': 'consent-banner-footer-sub-group',
+});
+/**
+ * The summary in the host's groups. Every presentation, the collapsed
+ * Banner included, keeps the groups and their `banner.actionGroup` part.
+ */
+const SummaryRow = (rowProps: { inBar: boolean }) =>
+	summaryGroups.value.map((group) => {
+		const buttons = group.map((action) =>
+			h(SummaryButton, {
+				action,
+				expanded: expanded.value,
+				inBar: rowProps.inBar,
+				key: action,
+				label: summaryLabel(action, rowProps.inBar),
+			})
+		);
+		return group.length > 1
+			? h('div', { ...groupAttrs(), key: group.join('-') }, buttons)
+			: buttons[0];
+	});
+SummaryRow.props = ['inBar'];
 const links = CARD_LINKS;
 const barLinks: ConsentLegalLinkKey[] = ['privacyPolicy'];
 const onPanelReady = () => {
@@ -691,16 +718,10 @@ const onPanelReady = () => {
 										{{ copy.ok }}
 									</ChoiceButton>
 								</template>
-								<template v-else>
-									<SummaryButton
-										v-for="action in summaryActions"
-										:key="action"
-										:action="action"
-										:label="summaryLabel(action, true)"
-										:expanded="expanded"
-										:in-bar="true"
-									/>
-								</template>
+								<SummaryRow
+									v-else
+									:in-bar="true"
+								/>
 							</div>
 						</div>
 						<output
@@ -828,15 +849,7 @@ const onPanelReady = () => {
 									{{ copy.ok }}
 								</ChoiceButton>
 								<template v-else>
-									<div
-										v-bind="
-											slotAttrs(
-												config.components?.banner?.actionGroup,
-												surfaceStyles.actionGroup
-											)
-										"
-										data-testid="consent-banner-footer-sub-group"
-									>
+									<div v-bind="groupAttrs()">
 										<ChoiceButton
 											consent-action="reject"
 											data-testid="consent-banner-reject-button"
@@ -887,38 +900,10 @@ const onPanelReady = () => {
 									{{ copy.ok }}
 								</ChoiceButton>
 							</template>
-							<template
-								v-for="group in summaryGroups"
+							<SummaryRow
 								v-else
-								:key="group.join('-')"
-							>
-								<div
-									v-if="group.length > 1"
-									v-bind="
-										slotAttrs(
-											config.components?.banner?.actionGroup,
-											surfaceStyles.actionGroup
-										)
-									"
-									data-testid="consent-banner-footer-sub-group"
-								>
-									<SummaryButton
-										v-for="action in group"
-										:key="action"
-										:action="action"
-										:label="summaryLabel(action, false)"
-										:expanded="expanded"
-										:in-bar="false"
-									/>
-								</div>
-								<SummaryButton
-									v-else
-									:action="group[0] as PresentationAction"
-									:label="summaryLabel(group[0] as PresentationAction, false)"
-									:expanded="expanded"
-									:in-bar="false"
-								/>
-							</template>
+								:in-bar="false"
+							/>
 						</div>
 					</template>
 				</section>

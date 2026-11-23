@@ -500,6 +500,25 @@ describe('wave B round 1', () => {
 		expect(group.firstElementChild).toBe($('consent-banner-accept-button'));
 	});
 
+	test('[BNR-15] the collapsed Banner keeps the host groups and their slot', async () => {
+		await mount({
+			config: {
+				components: { banner: { actionGroup: { class: 'group-marker' } } },
+			},
+			container: { type: 'banner' },
+			prompt: { layout: ['customize', ['accept', 'reject']] },
+		});
+		await waitForRoot();
+		expect(root().getAttribute('data-placement')).toBe('banner-bottom');
+		const footer = must('consent-banner-footer');
+		expect(footer.firstElementChild).toBe($('consent-banner-customize-button'));
+		const group = must('consent-banner-footer-sub-group');
+		expect(group.parentElement).toBe(footer);
+		expect(group.classList.contains('group-marker')).toBe(true);
+		expect(group.firstElementChild).toBe($('consent-banner-accept-button'));
+		expect(group.lastElementChild).toBe($('consent-banner-reject-button'));
+	});
+
 	test('[PERM-13] an expansion made on phone does not survive a pass through all-in-one', async () => {
 		const resize = setPhoneLive(true);
 		await mount({ container: { side: 'start', type: 'drawer' } });
