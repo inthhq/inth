@@ -126,12 +126,13 @@ const mountDialog = async function mountDialog(
 };
 
 const buttons = {
-	accept: 'consent-widget-footer-accept-all-button',
-	reject: 'consent-widget-reject-button',
-	save: 'consent-widget-footer-save-button',
+	accept: 'consent-dialog-accept-all',
+	reject: 'consent-dialog-reject-all',
 } as const;
 
-for (const action of ['accept', 'reject', 'save'] as const) {
+// The dialog's Save stays disabled until a switch changes (EU-03), so the
+// one-click actions cover the dialog's close-before-settle path.
+for (const action of ['accept', 'reject'] as const) {
 	for (const outcome of ['pending', 'rejected'] as const) {
 		test(`dialog ${action} closes before a ${outcome} save settles`, async () => {
 			const never = Promise.withResolvers<{ ok: boolean }>().promise;

@@ -158,7 +158,7 @@ describe('UI Source Tracking E2E Tests', () => {
 
 			// The dialog contains a widget with accept all button
 			const acceptButton = document.querySelector(
-				'[data-testid="consent-widget-footer-accept-all-button"]'
+				'[data-testid="consent-dialog-accept-all"]'
 			);
 			await userEvent.click(getDefined(acceptButton));
 
@@ -215,7 +215,7 @@ describe('UI Source Tracking E2E Tests', () => {
 	});
 
 	describe('Banner to Dialog flow preserves correct uiSource', () => {
-		test('should transition from banner to dialog and save from dialog', async () => {
+		test('should save from the options the banner opens in place', async () => {
 			render(
 				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
@@ -240,17 +240,15 @@ describe('UI Source Tracking E2E Tests', () => {
 
 			await vi.waitFor(
 				() => {
-					const dialog = document.querySelector(
-						'[data-testid="consent-dialog-root"]'
-					);
-					expect(dialog).toBeInTheDocument();
+					expect(
+						document.querySelector('[data-testid="consent-banner-save-button"]')
+					).toBeInTheDocument();
 				},
 				{ timeout: 3000 }
 			);
 
-			// Save from dialog - the uiSource should be 'dialog' not 'banner'
 			const saveButton = document.querySelector(
-				'[data-testid="consent-widget-footer-save-button"]'
+				'[data-testid="consent-banner-save-button"]'
 			);
 			await userEvent.click(getDefined(saveButton));
 

@@ -129,7 +129,7 @@ describe('activeUI Transitions E2E Tests', () => {
 		);
 	});
 
-	test('customize transitions banner → dialog', async () => {
+	test('customize opens the options in place, and the banner stays', async () => {
 		render(
 			<InthProvider options={defaultOptions}>
 				<ConsentBanner />
@@ -155,20 +155,22 @@ describe('activeUI Transitions E2E Tests', () => {
 		await vi.waitFor(
 			() => {
 				const dialog = document.querySelector(
-					'[data-testid="consent-dialog-root"]'
+					'[data-testid="consent-banner-save-button"]'
 				);
 				expect(dialog).toBeInTheDocument();
 			},
 			{ timeout: 3000 }
 		);
 
-		const banner = document.querySelector(
-			'[data-testid="consent-banner-root"]'
-		);
-		expect(banner).not.toBeInTheDocument();
+		expect(
+			document.querySelector('[data-testid="consent-banner-root"]')
+		).toBeInTheDocument();
+		expect(
+			document.querySelector('[data-testid="consent-dialog-root"]')
+		).toBeNull();
 	});
 
-	test('save from dialog hides all UI', async () => {
+	test('save from the options hides all UI', async () => {
 		render(
 			<InthProvider options={defaultOptions}>
 				<ConsentBanner />
@@ -193,7 +195,7 @@ describe('activeUI Transitions E2E Tests', () => {
 		await vi.waitFor(
 			() => {
 				const dialog = document.querySelector(
-					'[data-testid="consent-dialog-root"]'
+					'[data-testid="consent-banner-save-button"]'
 				);
 				expect(dialog).toBeInTheDocument();
 			},
@@ -201,7 +203,7 @@ describe('activeUI Transitions E2E Tests', () => {
 		);
 
 		const saveButton = document.querySelector(
-			'[data-testid="consent-widget-footer-save-button"]'
+			'[data-testid="consent-banner-save-button"]'
 		);
 		await userEvent.click(getDefined(saveButton));
 
@@ -421,7 +423,7 @@ describe('activeUI Transitions E2E Tests', () => {
 		}
 	);
 
-	test('full lifecycle: banner → customize → dialog → save → trigger → dialog', async () => {
+	test('full lifecycle: banner → customize → save → trigger → dialog', async () => {
 		render(
 			<InthProvider options={defaultOptions}>
 				<ConsentBanner />
@@ -448,7 +450,7 @@ describe('activeUI Transitions E2E Tests', () => {
 		await vi.waitFor(
 			() => {
 				const dialog = document.querySelector(
-					'[data-testid="consent-dialog-root"]'
+					'[data-testid="consent-banner-save-button"]'
 				);
 				expect(dialog).toBeInTheDocument();
 			},
@@ -456,16 +458,16 @@ describe('activeUI Transitions E2E Tests', () => {
 		);
 
 		const saveButton = document.querySelector(
-			'[data-testid="consent-widget-footer-save-button"]'
+			'[data-testid="consent-banner-save-button"]'
 		);
 		await userEvent.click(getDefined(saveButton));
 
 		await vi.waitFor(
 			() => {
-				const dialog = document.querySelector(
-					'[data-testid="consent-dialog-root"]'
+				const banner = document.querySelector(
+					'[data-testid="consent-banner-root"]'
 				);
-				expect(dialog).not.toBeInTheDocument();
+				expect(banner).not.toBeInTheDocument();
 			},
 			{ timeout: 3000 }
 		);

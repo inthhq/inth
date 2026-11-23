@@ -38,6 +38,7 @@ test('the split dialog and widget entries load nothing until they are needed', a
 		const { ConsentDialog } = await import('../panel');
 		await import('../preferences');
 		const { ConsentBanner } = await import('../prompt');
+		const { PrivacyChoicesLink } = await import('../privacy-choices-link');
 		const { InthProvider } = await import('../provider');
 
 		root.render(
@@ -50,11 +51,12 @@ test('the split dialog and widget entries load nothing until they are needed', a
 			>
 				<ConsentBanner disableAnimation />
 				<ConsentDialog disableAnimation />
+				<PrivacyChoicesLink />
 			</InthProvider>
 		);
-		const customize = await vi.waitFor(() => {
+		const opener = await vi.waitFor(() => {
 			const button = document.querySelector<HTMLButtonElement>(
-				'[data-testid="consent-banner-customize-button"]'
+				'[data-testid="privacy-choices-link"]'
 			);
 			expect(button).not.toBeNull();
 			return button as HTMLButtonElement;
@@ -66,7 +68,7 @@ test('the split dialog and widget entries load nothing until they are needed', a
 		expect(modules.loaded(WIDGET_MODULE)).toBe(false);
 		expect(dialog()).toBeNull();
 
-		customize.click();
+		opener.click();
 		// A cold module request can exceed Vitest's one-second default when
 		// the full browser suite is compiling modules with coverage.
 		await vi.waitFor(() => expect(dialog()).not.toBeNull(), { timeout: 5000 });

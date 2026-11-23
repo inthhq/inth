@@ -110,27 +110,27 @@ for (const source of ['scripts', 'frames', 'iframes'] as const) {
 				await vi.waitFor(() =>
 					expect(
 						document.querySelector(
-							'[data-testid="consent-widget-switch-marketing"]'
+							'[data-testid="consent-dialog-category-switch-marketing"]'
 						)
 					).not.toBeNull()
 				);
 				expect(
 					document.querySelector(
-						'[data-testid="consent-widget-switch-measurement"]'
+						'[data-testid="consent-dialog-category-switch-measurement"]'
 					)
 				).not.toBeNull();
 				expect(
 					document.querySelector(
-						'[data-testid="consent-widget-switch-functionality"]'
+						'[data-testid="consent-dialog-category-switch-functionality"]'
 					)
 				).toBeNull();
 				expect(
 					document.querySelector(
-						'[data-testid="consent-widget-switch-experience"]'
+						'[data-testid="consent-dialog-category-switch-experience"]'
 					)
 				).toBeNull();
 				const button = document.querySelector<HTMLButtonElement>(
-					'[data-testid="consent-widget-footer-accept-all-button"]'
+					'[data-testid="consent-dialog-accept-all"]'
 				);
 				expect(button).not.toBeNull();
 				button?.click();
@@ -217,12 +217,15 @@ test('a site that declares nothing shows only Strictly necessary, and any banner
 				document.querySelector('[data-testid="consent-dialog-root"]')
 			).not.toBeNull()
 		);
+		// Strictly necessary is always on, so it shows with no switch.
 		expect(
-			document.querySelectorAll('[data-testid^="consent-widget-switch-"]')
-		).toHaveLength(1);
+			document.querySelectorAll(
+				'[data-testid^="consent-dialog-category-switch-"]'
+			)
+		).toHaveLength(0);
 		expect(
-			document.querySelector('[data-testid="consent-widget-switch-necessary"]')
-		).not.toBeNull();
+			document.querySelector('[data-testid="consent-dialog-category-group"]')
+		).toHaveTextContent('Strictly Necessary');
 		kernel.set.activeUI('banner');
 		await vi.waitFor(() => expect(banner()).not.toBeNull());
 		document
@@ -250,7 +253,7 @@ test('a site that declares nothing shows only Strictly necessary, and any banner
 	}
 });
 
-test('a necessary-only dialog reopened after the acknowledgement closes on Save before the save settles', async () => {
+test('a necessary-only dialog reopened after the acknowledgement closes on Accept all before the save settles', async () => {
 	const resolution = resolvePolicyRules({
 		countryCode: 'DE',
 		regionCode: null,
@@ -296,22 +299,21 @@ test('a necessary-only dialog reopened after the acknowledgement closes on Save 
 		await vi.waitFor(() => expect(kernel).toBeDefined());
 		await kernel.commands.save('all');
 		expect(kernel.getSnapshot().promptRequirement).toEqual({ kind: 'none' });
-		// A later Save renews the acknowledgement without changing the prompt,
-		// so only the recorded acknowledgement can close the dialog early.
+		// A later choice renews the acknowledgement without changing the
+		// prompt, so only the recorded acknowledgement can close the dialog
+		// early. Save stays disabled with nothing changed (EU-03).
 		await new Promise((resolve) => {
 			setTimeout(resolve, 5);
 		});
 		kernel.set.activeUI('dialog');
 		await vi.waitFor(() =>
 			expect(
-				document.querySelector(
-					'[data-testid="consent-widget-footer-save-button"]'
-				)
+				document.querySelector('[data-testid="consent-dialog-accept-all"]')
 			).not.toBeNull()
 		);
 		document
 			.querySelector<HTMLButtonElement>(
-				'[data-testid="consent-widget-footer-save-button"]'
+				'[data-testid="consent-dialog-accept-all"]'
 			)
 			?.click();
 		expect(kernel.getSnapshot().activeUI).toBe('none');

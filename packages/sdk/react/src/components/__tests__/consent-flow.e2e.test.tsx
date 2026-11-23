@@ -12,6 +12,7 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/aggregate-components';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentWidget } from '~/components/preferences';
+import { PrivacyChoicesLink } from '~/components/privacy-choices-link';
 import { ConsentBanner } from '~/components/prompt';
 
 import { testing } from '../../testing';
@@ -376,7 +377,7 @@ describe('Consent Flow E2E Tests', () => {
 			);
 		});
 
-		test('should add aria-modal when focus trap is enabled', async () => {
+		test('should open as a modal dialog', async () => {
 			render(
 				<InthProvider options={defaultOptions}>
 					<ConsentDialog open={true} />
@@ -386,7 +387,7 @@ describe('Consent Flow E2E Tests', () => {
 			await vi.waitFor(
 				() => {
 					const dialog = document.querySelector(
-						'[data-testid="consent-dialog-root"]'
+						'[data-testid="consent-dialog-card"]'
 					);
 					expect(dialog).toBeInTheDocument();
 					expect(dialog?.getAttribute('aria-modal')).toBe('true');
@@ -395,7 +396,7 @@ describe('Consent Flow E2E Tests', () => {
 			);
 		});
 
-		test('should contain widget inside dialog', async () => {
+		test('should show the categories inside the dialog', async () => {
 			render(
 				<InthProvider options={defaultOptions}>
 					<ConsentDialog open={true} />
@@ -404,30 +405,10 @@ describe('Consent Flow E2E Tests', () => {
 
 			await vi.waitFor(
 				() => {
-					const widget = document.querySelector(
-						'[data-testid="consent-widget-root"]'
+					const group = document.querySelector(
+						'[data-testid="consent-dialog-category-group"]'
 					);
-					expect(widget).toBeInTheDocument();
-				},
-				{ timeout: 3000 }
-			);
-		});
-
-		test('should render stock dialog branding without an empty footer wrapper', async () => {
-			render(
-				<InthProvider options={defaultOptions}>
-					<ConsentDialog open={true} />
-				</InthProvider>
-			);
-
-			await vi.waitFor(
-				() => {
-					expect(
-						document.querySelector('[data-testid="consent-dialog-branding"]')
-					).toBeInTheDocument();
-					expect(
-						document.querySelector('[data-testid="consent-dialog-footer"]')
-					).not.toBeInTheDocument();
+					expect(group).toBeInTheDocument();
 				},
 				{ timeout: 3000 }
 			);
@@ -438,15 +419,14 @@ describe('Consent Flow E2E Tests', () => {
 				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
 					<ConsentDialog />
+					<PrivacyChoicesLink />
 				</InthProvider>
 			);
 
 			await vi.waitFor(
 				() => {
 					expect(
-						document.querySelector(
-							'[data-testid="consent-banner-customize-button"]'
-						)
+						document.querySelector('[data-testid="privacy-choices-link"]')
 					).toBeInTheDocument();
 				},
 				{ timeout: 3000 }
@@ -454,9 +434,7 @@ describe('Consent Flow E2E Tests', () => {
 
 			await userEvent.click(
 				getDefined(
-					document.querySelector(
-						'[data-testid="consent-banner-customize-button"]'
-					)
+					document.querySelector('[data-testid="privacy-choices-link"]')
 				)
 			);
 
@@ -505,15 +483,14 @@ describe('Consent Flow E2E Tests', () => {
 				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
 					<ConsentDialog />
+					<PrivacyChoicesLink />
 				</InthProvider>
 			);
 
 			await vi.waitFor(() => {
-				expect(query('consent-banner-customize-button')).toBeInTheDocument();
+				expect(query('privacy-choices-link')).toBeInTheDocument();
 			});
-			await userEvent.click(
-				getDefined(query('consent-banner-customize-button'))
-			);
+			await userEvent.click(getDefined(query('privacy-choices-link')));
 			await vi.waitFor(() => {
 				expect(query('consent-dialog-root')).toBeInTheDocument();
 				expect(query('consent-banner-root')).not.toBeInTheDocument();
@@ -562,7 +539,7 @@ describe('Consent Flow E2E Tests', () => {
 	});
 
 	describe('Complete Flow', () => {
-		test('should complete full consent flow: banner -> customize -> save', async () => {
+		test('should complete full consent flow: banner -> customize in place -> save', async () => {
 			render(
 				<InthProvider options={defaultOptions}>
 					<ConsentBanner />
@@ -587,21 +564,22 @@ describe('Consent Flow E2E Tests', () => {
 
 			await vi.waitFor(
 				() => {
-					const dialog = document.querySelector(
-						'[data-testid="consent-dialog-root"]'
-					);
-					expect(dialog).toBeInTheDocument();
+					expect(
+						document.querySelector(
+							'[data-testid="consent-banner-category-switch-marketing"]'
+						)
+					).toBeInTheDocument();
 				},
 				{ timeout: 3000 }
 			);
 
 			const marketingSwitch = document.querySelector(
-				'[data-testid="consent-widget-switch-marketing"]'
+				'[data-testid="consent-banner-category-switch-marketing"]'
 			);
 			await userEvent.click(getDefined(marketingSwitch));
 
 			const saveButton = document.querySelector(
-				'[data-testid="consent-widget-footer-save-button"]'
+				'[data-testid="consent-banner-save-button"]'
 			);
 			await userEvent.click(getDefined(saveButton));
 

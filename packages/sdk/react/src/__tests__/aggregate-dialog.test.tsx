@@ -54,11 +54,8 @@ test('reveals a cold aggregate dialog as soon as its module is ready', async () 
 			).not.toBeNull()
 		);
 		expect(dialog()).toBeNull();
-		const customize = document.querySelector<HTMLButtonElement>(
-			'[data-testid="consent-banner-customize-button"]'
-		);
-		// A DOM click runs the banner action without hover/focus chunk warming.
-		customize?.click();
+		// A DOM click opens the dialog without hover/focus chunk warming.
+		container.querySelector<HTMLButtonElement>('#reopen')?.click();
 		await import('../components/dialog/dialog');
 		// Allow effects and a browser paint, without waiting out Suspense's 300ms.
 		await new Promise(requestAnimationFrame);
