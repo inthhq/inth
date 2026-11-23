@@ -579,9 +579,7 @@ for (const target of selectedTargets()) {
 				).toBe('true');
 
 				// Accept all clears the vendor denial.
-				await page
-					.getByTestId('consent-widget-footer-accept-all-button')
-					.click();
+				await page.getByTestId('consent-dialog-accept-all').click();
 				await expect.poll(() => requests.posthog).toBe(1);
 				await expect.poll(() => requests.xPixel).toBe(1);
 				await openPreferences(page, hasRuntimeGlobal);
@@ -777,7 +775,7 @@ for (const target of selectedTargets()) {
 
 				await openPreferences(page, hasRuntimeGlobal);
 				expect(await cardBackground()).not.toBe('rgba(0, 0, 0, 0)');
-				await saveButton(page).click();
+				await closePreferences(page);
 				await expect.poll(() => card.isVisible()).toBe(false);
 
 				await page
