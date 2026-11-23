@@ -41,10 +41,6 @@
 		bottom: auto;
 	}
 
-	.shell {
-		width: 100%;
-	}
-
 	.card {
 		container-type: inline-size;
 	}
@@ -92,9 +88,11 @@
 	}
 
 	/* Expanded, the bar is the drawer on its edge: the head, options and
-	   footer follow the content column. */
-	.head,
-	.footer {
+	   footer follow the content column. `.root` in the selector outweighs
+	   the surface's padding, whichever sheet the page applies last (see
+	   the Card's width). */
+	.root .head,
+	.root .footer {
 		padding-inline: var(--_consent-gutter);
 	}
 
@@ -106,8 +104,8 @@
 	}
 
 	/* The tag sits 8px above a bottom bar and 8px below a top one, flush
-	   with the content column. */
-	.tag {
+	   with the content column. `.root` outweighs the surface's margin. */
+	.root .tag {
 		margin-inline-end: var(--_consent-gutter);
 	}
 

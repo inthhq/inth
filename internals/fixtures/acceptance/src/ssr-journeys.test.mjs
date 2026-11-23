@@ -186,6 +186,41 @@ const verifyFreshVisit = async function verifyFreshVisit(browser, app) {
 	console.log(`✓ ${app.label}: fresh visit renders the banner server-side`);
 };
 
+/**
+ * Nuxt inlines the server-rendered prompt's sheets, then the container's
+ * chunk links them again, one file at a time. Holding the container's
+ * sheet back makes the in-between state certain: the surface's linked
+ * copy applies after the container's inline one. The banner must hold
+ * still through it; it shifted on about one load in fifty while a
+ * container rule tied the surface's by specificity.
+ */
+const verifyLateContainerSheet = async function verifyLateContainerSheet(
+	browser,
+	app
+) {
+	const { context, page, url } = await newPage(browser, app);
+	const held = [];
+	await context.route(
+		/\/_nuxt\/(?:card|strip|drawer)\.[\w-]+\.css$/u,
+		async (route) => {
+			held.push(route.request().url());
+			await new Promise((resolve) => {
+				setTimeout(resolve, 400);
+			});
+			await route.continue();
+		}
+	);
+	await gotoSettled(page, url);
+	await page.locator(bannerSelector).first().waitFor({ state: 'visible' });
+	assert(
+		held.length > 0,
+		`${app.label}: no container sheet was requested; update the chunk name pattern`
+	);
+	const cls = await page.evaluate(() => window.__inthLayoutShiftScore ?? 0);
+	assertEqual(cls, 0, `${app.label}: layout shift score, container sheet last`);
+	console.log(`✓ ${app.label}: banner holds still while its sheets relink`);
+};
+
 const verifyOverrideHeaders = async function verifyOverrideHeaders(
 	browser,
 	app
@@ -501,6 +536,10 @@ for (const app of selected) {
 		test('global privacy control', () => verifyGpc(browser, app));
 		test('language resolution', () => verifyLanguage(browser, app));
 		test('no banner returns after consent', () => verifyNoZombie(browser, app));
+		if (app.probeName === '__inthNuxtBench') {
+			test("the server-rendered banner holds still when the container's sheet links last", () =>
+				verifyLateContainerSheet(browser, app));
+		}
 		if (app.probeName === '__inthNuxtBench') {
 			test("a returning visitor gets the banner's preloads at low priority, a new one does not", async () => {
 				const { context, page, url } = await newPage(browser, app);

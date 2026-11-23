@@ -44,7 +44,13 @@
 		);
 	}
 
-	.shell {
+	/* `.root` in the selector outweighs the surface's `.shell { width:
+	   100% }`, so the card keeps its width whichever of the two sheets the
+	   page applies last. A server render inlines both, and the browser's
+	   chunk links them again: until the card's link loads, the surface's
+	   copy comes after the card's inline one. Every container rule that sets
+	   a property the surface sets on the same part does the same. */
+	.root .shell {
 		width: var(
 			--consent-card-width,
 			min(var(--consent-banner-max-width, 440px), 100%)
@@ -105,7 +111,7 @@
 			);
 		}
 
-		.shell {
+		.root .shell {
 			width: 100%;
 		}
 

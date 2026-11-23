@@ -49,12 +49,10 @@
 		--_consent-inline-sign: -1;
 	}
 
-	.shell {
-		width: 100%;
-	}
-
-	.head,
-	.footer {
+	/* `.root` in the selector outweighs the surface's padding, whichever
+	   sheet the page applies last (see the Card's width). */
+	.root .head,
+	.root .footer {
 		padding-inline: var(--_consent-gutter);
 	}
 
