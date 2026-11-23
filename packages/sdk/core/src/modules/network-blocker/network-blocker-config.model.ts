@@ -1,6 +1,6 @@
 import type { AllConsentNames } from '../../consent/consent-types';
 import type { ConsentState } from '../../consent-kernel.model';
-import type { HasCondition } from '../has';
+import type { HasCondition } from '../../libs/has';
 
 /**
  * Represents a single domain rule for the network blocker.

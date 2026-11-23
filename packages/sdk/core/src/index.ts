@@ -193,7 +193,7 @@ export type {
 	BlockedRequestInfo,
 	NetworkBlockerConfig,
 	NetworkBlockerRule,
-} from './libs/network-blocker/network-blocker-config.model';
+} from './modules/network-blocker/network-blocker-config.model';
 export type { IframeBlockerOptions } from './modules/iframe-blocker';
 
 // -- Script loader -------------------------------------------------------------

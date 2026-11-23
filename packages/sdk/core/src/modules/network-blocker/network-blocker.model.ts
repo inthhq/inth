@@ -12,7 +12,7 @@ import type {
 	BlockedRequestInfo,
 	NetworkBlockerConfig,
 	NetworkBlockerRule,
-} from '../../libs/network-blocker/network-blocker-config.model';
+} from './network-blocker-config.model';
 import type {
 	declareOwnedVendors,
 	forgetOwnedVendors,
