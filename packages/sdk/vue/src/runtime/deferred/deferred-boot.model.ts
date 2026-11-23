@@ -12,8 +12,9 @@ import type { ConsentSnapshot } from '@inth/sdk/engine';
 
 /**
  * Key of the engine chunk in the client manifest the module adds at build
- * time (`preloadDeferredEngine` in `prefetch.ts`). A server render that
- * adds it to `ssrContext.modules` preloads the engine and its imports.
+ * time (`preloadDeferredEngine` in `prefetch/preload-deferred-engine.ts`).
+ * A server render that adds it to `ssrContext.modules` preloads the engine
+ * and its imports.
  *
  * @internal
  */

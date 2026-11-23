@@ -8,13 +8,11 @@ import { join } from 'node:path';
 
 import { describe, expect, test } from 'vitest';
 
-import {
-	breakEntryImportCycles,
-	preloadBrowserResolver,
-	preloadConsentBanner,
-	stopPrefetchingConsentChunks,
-} from '../prefetch/consent-prefetch.model';
+import { breakEntryImportCycles } from '../prefetch/break-entry-import-cycles';
 import type { ClientManifestChunk } from '../prefetch/consent-prefetch.model';
+import { preloadBrowserResolver } from '../prefetch/preload-browser-resolver';
+import { preloadConsentBanner } from '../prefetch/preload-consent-banner';
+import { stopPrefetchingConsentChunks } from '../prefetch/stop-prefetching-consent-chunks';
 
 /** The shared parts @inth/sdk installs under its `lib/`. */
 const SDK_PARTS = new Set(['core', 'iab', 'schema', 'translations', 'ui']);
