@@ -27,12 +27,10 @@ import {
 } from '@inth/sdk/surface-state';
 import {
 	afterMotion,
-	attachLiveRegion,
 	attachPageBlock,
 	attachScrollFades,
 	attachTopLayerTrap,
 } from '@inth/sdk/ui/primitives/surface';
-import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import surfaceStyles from '@inth/sdk/ui/styles/components/consent-surface';
 
@@ -46,6 +44,7 @@ import { prefersReducedMotion } from '@inth/sdk/ui/utils/reduced-motion';
 import {
 	computed,
 	h,
+	inject,
 	onBeforeUnmount,
 	onMounted,
 	ref,
@@ -79,6 +78,7 @@ import {
 	useSurfaceSession,
 } from '../parts/use-surface-session';
 import EarlyTapScript from './early-tap-script';
+import { bannerPageRegionKey } from './page-region';
 import BannerTag from './tag.vue';
 import type { ActionGroups, ContainerStyles, PromptContainer } from './types';
 
@@ -201,17 +201,10 @@ const rootRef = ref<HTMLElement | null>(null);
 const shellRef = ref<HTMLElement | null>(null);
 const cardRef = ref<HTMLElement | null>(null);
 const scrollRef = ref<HTMLElement | null>(null);
-const pageRegionRef = ref<HTMLElement | null>(null);
-let pageRegion: LiveRegion | null = null;
-onMounted(() => {
-	if (pageRegionRef.value) {
-		pageRegion = attachLiveRegion(pageRegionRef.value);
-	}
-});
-onBeforeUnmount(() => {
-	pageRegion?.();
-	pageRegion = null;
-});
+// The page's status region is the banner's (`prompt.vue`), so it is on the
+// page before this chunk arrives; its class comes with this stylesheet.
+const pageRegion = inject(bannerPageRegionKey, null);
+pageRegion?.hide(surfaceStyles.visuallyHidden);
 
 /** A choice was made here: release, announce and return focus as the prompt leaves. */
 let committed: string | null = null;
@@ -651,13 +644,6 @@ const onPanelReady = () => {
 		to="body"
 		:disabled="!mounted"
 	>
-		<!-- The page's status region outlives the prompt, so the outcome of a
-		     choice is read after the prompt leaves (BNR-06). It keeps its node. -->
-		<div
-			ref="pageRegionRef"
-			:class="surfaceStyles.visuallyHidden"
-			data-testid="consent-banner-announcement"
-		/>
 		<EarlyTapScript
 			v-if="showing"
 			:nonce="nonce"
