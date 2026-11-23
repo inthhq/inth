@@ -9,12 +9,12 @@ import {
 } from '@inth/sdk/schema/types';
 import { translations as enTranslations } from '@inth/sdk/translations/en';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
-import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
+import surfaceStyles from '@inth/sdk/ui/styles/components/consent-surface';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, expect, test, vi } from 'vitest';
 
-import ConsentBanner from '../runtime/components/prompt.vue';
+import ConsentBanner from '../runtime/components/prompt/prompt.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import type { ConsentConfig } from '../runtime/config';
 import {
@@ -158,15 +158,15 @@ test('drops the stock classes of a part whose slot sets noStyle', async () => {
 	expect(card?.hasAttribute('nostyle')).toBe(false);
 	// A slot with only `noStyle` still applies.
 	expect(part('consent-banner-title')?.classList).not.toContain(
-		bannerStyles.title
+		surfaceStyles.title
 	);
 	const footer = part('consent-banner-footer');
 	expect(footer?.classList).toContain('theme-footer');
-	expect(footer?.classList).not.toContain(bannerStyles.footer);
+	expect(footer?.classList).not.toContain(surfaceStyles.footer);
 	expect(footer?.classList).not.toContain(actionStyles.actionRoot);
 	// Parts without the flag keep their stock classes.
 	expect(part('consent-banner-header')?.classList).toContain(
-		bannerStyles.header
+		surfaceStyles.head
 	);
 });
 

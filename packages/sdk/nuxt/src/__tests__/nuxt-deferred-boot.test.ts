@@ -143,7 +143,7 @@ describe('preloadDeferredEngine', () => {
 	const ENGINE =
 		'node_modules/@inth/vue/dist/runtime/deferred/engine.js' as const;
 	const BANNER =
-		'node_modules/@inth/vue/dist/runtime/components/prompt.vue' as const;
+		'node_modules/@inth/vue/dist/runtime/components/prompt/prompt.vue' as const;
 	const manifest = (): Record<string, ClientManifestChunk> => ({
 		[BANNER]: { file: 'banner.js', isDynamicEntry: true, src: BANNER },
 		[ENGINE]: {
@@ -188,9 +188,9 @@ describe('preloadDeferredEngine', () => {
 describe('isDeferredBannerModule', () => {
 	test('matches the banner from an installed, a workspace and a source build', () => {
 		for (const id of [
-			'../node_modules/.pnpm/@inth+vue@3.3.0/node_modules/@inth/vue/dist/runtime/components/prompt.vue',
+			'../node_modules/.pnpm/@inth+vue@3.3.0/node_modules/@inth/vue/dist/runtime/components/prompt/prompt.vue',
 			// A workspace or linked install: Vite names the real path.
-			'../../../packages/sdk/vue/dist/runtime/components/prompt.vue',
+			'../../../packages/sdk/vue/dist/runtime/components/prompt/prompt.vue',
 			'/repo/packages/sdk/vue/src/runtime/components/button.vue',
 		]) {
 			expect(isDeferredBannerModule(id)).toBe(true);

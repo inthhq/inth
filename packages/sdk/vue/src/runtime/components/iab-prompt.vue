@@ -26,7 +26,10 @@ import {
 	useConsentSnapshot,
 	useHasConsentUi,
 } from '../composables/kernel';
-import { useConsentPolicyActions } from '../composables/use-consent-policy-actions';
+import {
+	useConsentPolicyActions,
+	useFocusBlocking,
+} from '../composables/use-consent-policy-actions';
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
 import { useLateEntry } from '../composables/use-late-entry';
 import { useFocusTrap } from '../primitives/use-focus-trap';
@@ -164,11 +167,13 @@ const footerAttrs = computed(() => ({
 		| undefined) ?? {}),
 }));
 
+const focusBlocking = useFocusBlocking('prompt');
 const { presentation } = useConsentPolicyActions('prompt', () => ({
+	blocking: focusBlocking.value,
 	layout: IAB_BANNER_LAYOUT,
 	primaryActions: [props.primaryButton],
 }));
-const scrollLock = computed(() => presentation.value.scrollLock);
+const scrollLock = computed(() => presentation.value.blocking);
 
 useConsentScrollLock(computed(() => Boolean(isOpen.value && scrollLock.value)));
 

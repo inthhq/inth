@@ -11,10 +11,10 @@ import type { ComponentPublicInstance } from 'vue';
 import { defineComponent, h } from 'vue';
 
 import ConsentDialogLink from '../runtime/components/consent-dialog-link.vue';
-import ConsentManager from '../runtime/components/manager.vue';
+import ConsentManager from '../runtime/components/dialog/manager.vue';
 import ConsentDialogTrigger from '../runtime/components/panel-trigger.vue';
 import ConsentWidget from '../runtime/components/preferences.vue';
-import ConsentBanner from '../runtime/components/prompt.vue';
+import ConsentBanner from '../runtime/components/prompt/prompt.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import type { ConsentConfig } from '../runtime/config';
 import {

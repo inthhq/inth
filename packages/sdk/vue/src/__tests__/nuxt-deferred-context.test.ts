@@ -1,8 +1,9 @@
 /**
  * The Nuxt plugin's deferred context (`runtime/deferred/shell.ts`): the
- * browser starts from the server's snapshot, records a banner choice in the
- * tap's own task without the consent engine, and the engine adopts that
- * record when it loads.
+ * browser starts from the server's snapshot, records a dialog save in its
+ * own task without the consent engine, and the engine adopts that record
+ * when it loads. A banner tap before the engine loads the engine, and the
+ * banner replays it once it hydrates.
  */
 import type { ConsentSnapshot, KernelEvent, Script } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
@@ -115,6 +116,14 @@ const tap = (action: string): void => {
 	document
 		.querySelector<HTMLButtonElement>(`[data-action="${action}"]`)
 		?.click();
+};
+
+/**
+ * Accept all from the stock dialog before the engine, as its save button
+ * does: a save on the provided kernel.
+ */
+const acceptInDialog = (context: VueConsentKernelContext): void => {
+	void context.kernel.commands.save('all', { uiSource: 'dialog' });
 };
 
 /** Waits for the tasks after a tap: the commit chunk runs one task later. */
@@ -257,8 +266,7 @@ test('the context reads the server snapshot without loading the engine', () => {
 	expect(loadEngine).not.toHaveBeenCalled();
 });
 
-test('an accept tapped before the engine commits in the tap’s own task', async () => {
-	renderBanner();
+test('an accept saved from the dialog before the engine commits in its own task', async () => {
 	const harness = createHarness();
 	const { context } = harness;
 	context.start();
@@ -272,7 +280,7 @@ test('an accept tapped before the engine commits in the tap’s own task', async
 	});
 	expect(document.querySelector('script[src="/m.js"]')).toBeNull();
 
-	tap('accept');
+	acceptInDialog(context);
 
 	// Same task: the refs carry the choice and the scripts are in.
 	expect(context.snapshot.value.explicitChoice).not.toBeNull();
@@ -283,8 +291,6 @@ test('an accept tapped before the engine commits in the tap’s own task', async
 	expect(context.storedConsent.value).not.toBeNull();
 	expect(document.querySelector('script[src="/m.js"]')).not.toBeNull();
 	expect(document.querySelector('script[src="/k.js"]')).not.toBeNull();
-	// The banner stays hidden by the context, not the replayable script.
-	expect(document.getElementById('inth-early-commit')).not.toBeNull();
 	expect(harness.completeCommit).not.toHaveBeenCalled();
 	expect(harness.loadEngine).not.toHaveBeenCalled();
 
@@ -297,18 +303,15 @@ test('an accept tapped before the engine commits in the tap’s own task', async
 	loader.dispose();
 });
 
-test('a Privacy Choices banner tap waits for the banner’s own handlers, and loads the engine', async () => {
+test('a banner tap waits for the banner’s own handlers, and loads the engine', async () => {
 	renderBanner();
-	document
-		.querySelector('[data-testid="consent-banner-root"]')
-		?.setAttribute('data-design', 'privacy-choices');
 	const harness = createHarness();
 	const { context } = harness;
 	context.start();
 
 	tap('accept');
 
-	// No stock commit: the hydrated banner replays it through its own plan.
+	// Nothing commits: the hydrated banner replays it through its own plan.
 	expect(context.snapshot.value.explicitChoice).toBeNull();
 	expect(document.getElementById('inth-early-commit')).toBeNull();
 	expect(harness.loadEngine).toHaveBeenCalledOnce();
@@ -327,12 +330,11 @@ test('a Privacy Choices banner tap waits for the banner’s own handlers, and lo
 });
 
 test('the engine adopts the committed record and sends the queued save once', async () => {
-	renderBanner();
 	const harness = createHarness();
 	const { context } = harness;
 	context.start();
 	const heard: KernelEvent[] = [];
-	tap('accept');
+	acceptInDialog(context);
 	const committed = context.snapshot.value.explicitChoice;
 	await settle();
 	harness.releaseEngine();
@@ -357,7 +359,6 @@ test('the engine adopts the committed record and sends the queued save once', as
 });
 
 test('a save the outbox cannot keep goes to the engine, which records it once', async () => {
-	renderBanner();
 	const onChoiceRecorded = vi.fn();
 	const onPermissionsChanged = vi.fn();
 	const harness = createHarness({
@@ -367,7 +368,7 @@ test('a save the outbox cannot keep goes to the engine, which records it once', 
 	context.start();
 	refuseOutboxWrites();
 
-	tap('accept');
+	acceptInDialog(context);
 	// Same task: the refs carry the choice.
 	expect(context.snapshot.value.effectivePermissions.marketing).toBe(true);
 	await settle();
@@ -376,7 +377,7 @@ test('a save the outbox cannot keep goes to the engine, which records it once', 
 		null
 	);
 	// The record is stored, nothing is queued, and nothing is announced:
-	// the engine records the tap.
+	// the engine records the save.
 	expect(JSON.parse(localStorage.getItem('inth') ?? 'null')).toMatchObject({
 		categories: { marketing: { value: true } },
 	});
@@ -403,34 +404,34 @@ test('a save the outbox cannot keep goes to the engine, which records it once', 
 	).toBe(true);
 });
 
-test('a tap recorded before the context started is committed when it starts', async () => {
+test('a tap recorded before the context started loads the engine when it starts', async () => {
 	renderBanner();
 	tap('reject');
 	const harness = createHarness();
 	const { context } = harness;
-	expect(context.snapshot.value.explicitChoice).toBeNull();
+	expect(harness.loadEngine).not.toHaveBeenCalled();
 	context.start();
-	expect(context.snapshot.value.explicitChoice).not.toBeNull();
-	expect(context.snapshot.value.effectivePermissions).toMatchObject({
-		marketing: false,
-		measurement: false,
-	});
+	expect(harness.loadEngine).toHaveBeenCalledOnce();
 	await settle();
-	expect(harness.completeCommit).toHaveBeenCalledOnce();
-	expect(
-		(window as unknown as Record<string, { taps?: unknown[] }>).__inthEarlyTaps
-			?.taps ?? []
-	).toEqual([]);
+	// Nothing commits before the engine: the banner replays the tap.
+	expect(context.snapshot.value.explicitChoice).toBeNull();
+	expect(harness.completeCommit).not.toHaveBeenCalled();
+	const queue = (
+		window as unknown as Record<
+			string,
+			{ taps?: unknown[]; stop?: () => void } | undefined
+		>
+	).__inthEarlyTaps;
+	expect(queue?.taps).toHaveLength(1);
+	queue?.stop?.();
 });
 
-test('Customize opens the dialog from the stand-in, and its save commits at once', async () => {
-	renderBanner();
+test('the dialog opens from the stand-in, and its save commits at once', async () => {
 	const harness = createHarness();
 	const { context } = harness;
 	context.start();
-	tap('customize');
+	context.activeUI.value = 'manager';
 	expect(context.activeUI.value).toBe('manager');
-	expect(document.getElementById('inth-early-commit')).not.toBeNull();
 	expect(harness.loadEngine).not.toHaveBeenCalled();
 
 	// The stock dialog saves through the provided kernel.
@@ -489,7 +490,6 @@ test('a language set before the engine loads is applied once it attaches', async
 });
 
 test('an event tracked before the engine loads is delivered once it attaches', async () => {
-	renderBanner();
 	const capture = vi.fn();
 	const posthog: Script = {
 		callbackOnly: true,
@@ -530,7 +530,7 @@ test('an event tracked before the engine loads is delivered once it attaches', a
 	expect(harness.loadEngine).not.toHaveBeenCalled();
 
 	// The accept commits and asks for the engine; the event follows it.
-	tap('accept');
+	acceptInDialog(context);
 	await settle();
 	harness.releaseEngine();
 	await vi.waitFor(() => expect(harness.engine()).toBeDefined());
@@ -559,7 +559,6 @@ describe('useScriptLoader before the engine', () => {
 	});
 
 	test('a gated script waits, an Accept starts it with the choice, and the engine takes it over', async () => {
-		renderBanner();
 		const harness = createHarness();
 		const { context } = harness;
 		context.start();
@@ -582,7 +581,7 @@ describe('useScriptLoader before the engine', () => {
 		expect(harness.loadEngine).not.toHaveBeenCalled();
 		expect(document.querySelector('script[src="/late.js"]')).toBeNull();
 
-		tap('accept');
+		acceptInDialog(context);
 		// Same task: the registered plain script starts with the choice,
 		// marked as started early, so a server start leaves it to its owners
 		// instead of taking it over.
@@ -604,7 +603,6 @@ describe('useScriptLoader before the engine', () => {
 	});
 
 	test('a registration disposed before the engine removes the script an Accept started', async () => {
-		renderBanner();
 		const harness = createHarness();
 		const { context } = harness;
 		context.start();
@@ -619,7 +617,7 @@ describe('useScriptLoader before the engine', () => {
 			}),
 			provide(context)
 		);
-		tap('accept');
+		acceptInDialog(context);
 		expect(document.querySelector('script[src="/route.js"]')).not.toBeNull();
 
 		// The route leaves while the engine chunk is still loading.
@@ -637,7 +635,6 @@ describe('useScriptLoader before the engine', () => {
 	});
 
 	test('a registration changed before the engine removes what the old set started, unless another owner wants it', async () => {
-		renderBanner();
 		const harness = createHarness({
 			scripts: [{ category: 'measurement', id: 'shared', src: '/shared.js' }],
 		});
@@ -662,7 +659,7 @@ describe('useScriptLoader before the engine', () => {
 			}),
 			provide(context)
 		);
-		tap('accept');
+		acceptInDialog(context);
 		expect(document.querySelectorAll('script[src="/a.js"]')).toHaveLength(1);
 		expect(document.querySelectorAll('script[src="/shared.js"]')).toHaveLength(
 			1
@@ -679,7 +676,6 @@ describe('useScriptLoader before the engine', () => {
 	});
 
 	test('a disposed script whose resource a survivor wants from another URL is removed for it', () => {
-		renderBanner();
 		const harness = createHarness();
 		const { context } = harness;
 		context.start();
@@ -735,7 +731,7 @@ describe('useScriptLoader before the engine', () => {
 			}),
 			provide(context)
 		);
-		tap('accept');
+		acceptInDialog(context);
 		const started = () =>
 			[
 				...document.querySelectorAll<HTMLScriptElement>('script[src*="/tag-"]'),

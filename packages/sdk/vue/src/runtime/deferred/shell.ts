@@ -10,12 +10,16 @@
  * banner) loads after the page's priority images, on the first input or
  * scroll, or when page code needs it.
  *
- * A banner accept or reject, or a dialog save, made before the engine is
- * recorded in the tap's own task (`planInstantCommit`): the snapshot the
- * page reads changes and the allowed plain scripts start at once. One task
- * later the commit chunk (`commit.ts`) stores the record and queues the
- * backend save; then the engine loads, starts from the record and sends
- * the save without recording it again.
+ * A tap on the banner before the engine loads it: the banner replays the
+ * tap through its own handlers once it hydrates, so nothing commits before
+ * the engine is ready.
+ *
+ * A dialog save made before the engine is recorded in the tap's own task
+ * (`planInstantCommit`): the snapshot the page reads changes and the
+ * allowed plain scripts start at once. One task later the commit chunk
+ * (`commit.ts`) stores the record and queues the backend save; then the
+ * engine loads, starts from the record and sends the save without
+ * recording it again.
  *
  * @packageDocumentation
  * @internal
@@ -96,11 +100,6 @@ export interface DeferredContextOptions {
 /** The hiding `<style>` once the context handles the tap. */
 const COMMITTED_STYLE_ID = 'inth-early-commit';
 
-const DIALOG_ROOT = '[data-testid="consent-dialog-root"]';
-
-/** Load the engine anyway this long after an early dialog opened. */
-const DIALOG_SHOWN_MS = 3000;
-
 /** Longest wait, after the engine attached, for the tapped banner to go. */
 const BANNER_LEAVE_MS = 10_000;
 
@@ -164,8 +163,6 @@ export const createDeferredContext = function createDeferredContext(
 	let committed: DeferredCommitted | undefined;
 	let commitSettled: Promise<void> = Promise.resolve();
 	let routing = false;
-	/** Records a choice on the engine that the commit chunk could not. */
-	let fallback: ((engineContext: VueConsentKernelContext) => void) | undefined;
 	/** Storage read ahead of a tap, so the tap's task reads none. */
 	let ahead: { clearEpoch: boolean; subjectId: string } | undefined;
 	const readAhead = () => {
@@ -212,8 +209,6 @@ export const createDeferredContext = function createDeferredContext(
 		}
 		handle.attach(context.kernel);
 		engineRef.value = context;
-		fallback?.(context);
-		fallback = undefined;
 		return context;
 	};
 
@@ -259,20 +254,6 @@ export const createDeferredContext = function createDeferredContext(
 
 	// -- The tapped banner's markup -----------------------------------------
 	let claimed = false;
-	/** Hides the stock banner the way the early-tap script does. */
-	const hideBanner = (): void => {
-		if (document.getElementById(EARLY_TAP_STYLE_ID)) {
-			return;
-		}
-		const style = document.createElement('style');
-		style.id = EARLY_TAP_STYLE_ID;
-		const { nonce } = options.config();
-		if (nonce) {
-			style.nonce = nonce;
-		}
-		style.textContent = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]{display:none!important}`;
-		document.head.append(style);
-	};
 	/**
 	 * Keeps the banner hidden by the context rather than by the early-tap
 	 * script, whose replay would show it again, until the state asks for
@@ -350,14 +331,12 @@ export const createDeferredContext = function createDeferredContext(
 
 	/**
 	 * Records a choice without the engine, then loads the engine. Resolves
-	 * `null` when the commit path declined it; with `replay`, the engine
-	 * then records it.
+	 * `null` when the commit path declined it.
 	 */
 	const commitChoice = (
 		choice: CompleteCommitInput['choice'],
 		actionAt: number,
-		uiSource: SaveUISource | undefined,
-		replay: boolean
+		uiSource: SaveUISource | undefined
 	): Promise<SaveResult | null> => {
 		routing = true;
 		const instant = commitInstantly(choice, actionAt);
@@ -384,14 +363,6 @@ export const createDeferredContext = function createDeferredContext(
 			if (result) {
 				({ committed } = result);
 				claimTaps(true);
-			} else if (instant && replay) {
-				// The page already reads the choice: the engine records it.
-				fallback = (engineContext) => {
-					void engineContext.kernel.commands.save(choice, {
-						actionAt,
-						uiSource,
-					});
-				};
 			}
 			routing = false;
 		})();
@@ -441,59 +412,21 @@ export const createDeferredContext = function createDeferredContext(
 		return commitChoice(
 			input as CompleteCommitInput['choice'],
 			context?.actionAt ?? Date.now(),
-			context?.uiSource,
-			false
+			context?.uiSource
 		).then((result) => result ?? onEngine());
 	};
 
-	/** A Customize tap before the engine: the dialog opens from the stand-in. */
-	const customize = (): void => {
-		hideBanner();
-		claimTaps(false);
-		handle.kernel.set.activeUI('dialog');
-		// Load the engine once the dialog is on screen: before, its chunks
-		// would share the connection with the dialog's.
-		const deadline = Date.now() + DIALOG_SHOWN_MS;
-		const check = (): void => {
-			if (document.querySelector(DIALOG_ROOT) || Date.now() > deadline) {
-				requestEngine();
-				return;
-			}
-			requestAnimationFrame(check);
-		};
-		requestAnimationFrame(check);
-	};
-
-	/** Routes the banner tap the early-tap script recorded. */
+	/**
+	 * A tap the early-tap script recorded on the server-rendered banner
+	 * loads the engine. The banner replays it through its own handlers once
+	 * it hydrates, so it commits through the banner's own plan and
+	 * Customize opens the options in place.
+	 */
 	const routeTap = (): void => {
-		const taps = earlyTapQueue()?.taps ?? [];
-		const decided = taps.filter((entry) => entry.action !== 'customize');
-		const tap = decided[decided.length - 1] ?? taps[taps.length - 1];
-		if (!tap || routing || handle.attached()) {
+		if ((earlyTapQueue()?.taps ?? []).length === 0 || routing) {
 			return;
 		}
-		// The Privacy Choices banner replays its taps through its own
-		// handlers once it hydrates, which the engine brings: its commit plan
-		// and its in-place options are not the stock banner's.
-		if (tap.design === 'privacy-choices') {
-			requestEngine();
-			return;
-		}
-		if (tap.action === 'customize') {
-			customize();
-			return;
-		}
-		if (tap.action !== 'accept' && tap.action !== 'reject') {
-			// The engine's banner replays it.
-			requestEngine();
-			return;
-		}
-		void commitChoice(
-			tap.action === 'accept' ? 'all' : 'none',
-			tap.at,
-			undefined,
-			true
-		);
+		requestEngine();
 	};
 
 	// -- The banner's hydration view ------------------------------------------

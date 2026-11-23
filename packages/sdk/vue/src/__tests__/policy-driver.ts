@@ -61,10 +61,10 @@ import type { IABHandle } from '../../../iab/src/index';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
 import ConsentDialogLink from '../runtime/components/consent-dialog-link.vue';
 import ConsentGate from '../runtime/components/consent-gate.vue';
-import ConsentManager from '../runtime/components/manager.vue';
+import ConsentManager from '../runtime/components/dialog/manager.vue';
 import OptOutConfirmation from '../runtime/components/opt-out-confirmation.vue';
 import ConsentDialogTrigger from '../runtime/components/panel-trigger.vue';
-import ConsentBanner from '../runtime/components/prompt.vue';
+import ConsentBanner from '../runtime/components/prompt/prompt.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import { useOptOutConfirmationOpen } from '../runtime/composables/kernel';
 import type { ConsentConfig } from '../runtime/config';
@@ -533,7 +533,11 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 						)
 					)
 					.map(serializeWithoutComments)
-					.join('');
+					.join('')
+					// jsdom has no `inert` property, so a client render writes
+					// the attribute as `inert="true"`; a browser reflects the
+					// property as `inert=""`, as the server writes it.
+					.replaceAll(' inert="true"', ' inert=""');
 			const serverDom = normalizeDom();
 			const serverSnapshot = kernel.getSnapshot();
 			const serverLayer = getDom(kernel).firstLayer;
@@ -604,6 +608,20 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 		}
 		await settle();
 	};
+	/** The dialog loads in a chunk of its own when it first opens. */
+	const waitForDialog = async () => {
+		if (kernel.getSnapshot().activeUI !== 'dialog') {
+			return;
+		}
+		await vi.waitFor(
+			() => {
+				if (!document.querySelector('[data-testid="consent-dialog-root"]')) {
+					throw new Error('The dialog did not mount');
+				}
+			},
+			{ interval: 50, timeout: 5000 }
+		);
+	};
 	const openPreferencesFromTrigger = async () => {
 		await click('consent-dialog-trigger');
 		if (kernel.getSnapshot().activeUI !== 'dialog') {
@@ -617,6 +635,77 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 				}
 			});
 			await click('opt-out-confirmation-preferences-link');
+		}
+		await waitForDialog();
+	};
+	// Save stays disabled until a switch changes (EU-03), and the opt-out
+	// regime has no Save: its rows and switches record as they change. Without
+	// an enabled Save, the engine saves what is shown, and Done closes.
+	const saveCurrentInDialog = async () => {
+		await vi.waitFor(
+			() => {
+				if (!document.querySelector('[data-testid="consent-dialog-root"]')) {
+					throw new Error(
+						'Required rendered control missing: consent-dialog-root'
+					);
+				}
+			},
+			{ interval: 50, timeout: 5000 }
+		);
+		const save = document.querySelector<HTMLButtonElement>(
+			'[data-testid="consent-dialog-save-button"]'
+		);
+		if (save && !save.disabled) {
+			await click('consent-dialog-save-button');
+		} else {
+			// What the switches show: each category's current permission,
+			// with a live signal's restrictions applied.
+			const snapshot = kernel.getSnapshot();
+			const shown = Object.fromEntries(
+				snapshot.policyRule.scope.map((category) => [
+					category,
+					snapshot.effectivePermissions[category] === true,
+				])
+			);
+			await kernel.commands.save(shown, { uiSource: 'dialog' });
+			document
+				.querySelector<HTMLButtonElement>(
+					'[data-testid="consent-dialog-done"], [data-testid="consent-dialog-close"]'
+				)
+				?.click();
+		}
+		await settle();
+	};
+	// The dialog offers the one-click pair under a choice model and the
+	// rights rows under a notice model, where allowing asks to confirm.
+	const chooseInDialog = async (choice: 'accept' | 'reject') => {
+		const oneClick =
+			choice === 'accept'
+				? 'consent-dialog-accept-all'
+				: 'consent-dialog-reject-all';
+		const row =
+			choice === 'accept'
+				? 'consent-dialog-right-option-sale-allow'
+				: 'consent-dialog-right-option-sale-protect';
+		await vi.waitFor(
+			() => {
+				if (
+					!document.querySelector(
+						`[data-testid="${oneClick}"], [data-testid="${row}"]`
+					)
+				) {
+					throw new Error(`Required rendered control missing: ${oneClick}`);
+				}
+			},
+			{ interval: 50, timeout: 5000 }
+		);
+		await click(
+			document.querySelector(`[data-testid="${oneClick}"]`) ? oneClick : row
+		);
+		if (
+			document.querySelector('[data-testid="consent-dialog-confirm-allow"]')
+		) {
+			await click('consent-dialog-confirm-allow');
 		}
 	};
 	return {
@@ -654,7 +743,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 						await click('consent-banner-accept-button');
 					} else {
 						await openPreferencesFromTrigger();
-						await click('consent-widget-footer-accept-all-button');
+						await chooseInDialog('accept');
 					}
 					break;
 				case 'reject':
@@ -666,7 +755,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 						await click('consent-banner-reject-button');
 					} else {
 						await openPreferencesFromTrigger();
-						await click('consent-widget-reject-button');
+						await chooseInDialog('reject');
 					}
 					break;
 				case 'save-current':
@@ -675,7 +764,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 					if (kernel.getSnapshot().activeUI !== 'dialog') {
 						await openPreferencesFromTrigger();
 					}
-					await click('consent-widget-footer-save-button');
+					await saveCurrentInDialog();
 					break;
 				case 'dismiss-notice':
 					await click('consent-banner-dismiss-button');
@@ -738,6 +827,7 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 						await openPreferencesFromTrigger();
 					} else {
 						await click('consent-dialog-link');
+						await waitForDialog();
 					}
 					break;
 				case 'reload':

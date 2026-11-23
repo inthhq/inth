@@ -15,7 +15,8 @@ import type { ClientManifestChunk } from '../prefetch';
 const SRC = '/app';
 const isConsentFile = (file: string) => file.includes('/@inth/');
 const ENGINE = 'node_modules/@inth/vue/dist/runtime/deferred/engine.js';
-const BANNER = 'node_modules/@inth/vue/dist/runtime/components/prompt.vue';
+const BANNER =
+	'node_modules/@inth/vue/dist/runtime/components/prompt/prompt.vue';
 
 /** A built manifest, before the module's edits. */
 const manifest = (): Record<string, ClientManifestChunk> => ({
@@ -141,7 +142,7 @@ describe('bannerOnlyFiles', () => {
 	);
 
 	test('finds the banner when the module is loaded from source', () => {
-		const source = 'packages/sdk/vue/src/runtime/components/prompt.vue';
+		const source = 'packages/sdk/vue/src/runtime/components/prompt/prompt.vue';
 		const fromSource = built();
 		const { [BANNER]: banner, ...rest } = fromSource;
 		const linked = { ...rest, [source]: { ...banner, src: source } };

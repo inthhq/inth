@@ -38,7 +38,7 @@ const createManifest = (): Record<string, ClientManifestChunk> => ({
 		dynamicImports: [
 			inth('core/dist/modules/script-loader/loader.js'),
 			inth('core/dist/runtime/provider-update.js'),
-			inth('vue/dist/runtime/components/manager.vue'),
+			inth('vue/dist/runtime/components/dialog/manager.vue'),
 			inth('vue/dist/runtime/components/iab-prompt.vue'),
 			inth('iab/dist/index.js'),
 			inth('core/dist/transports/manifest-browser.js'),
@@ -59,11 +59,11 @@ const createManifest = (): Record<string, ClientManifestChunk> => ({
 		prefetch: true,
 		src: inth('core/dist/runtime/provider-update.js'),
 	},
-	[inth('vue/dist/runtime/components/manager.vue')]: {
+	[inth('vue/dist/runtime/components/dialog/manager.vue')]: {
 		imports: ['_dialog-shared.js', '_vue.js', '_shared-kernel.js'],
 		isDynamicEntry: true,
 		prefetch: true,
-		src: inth('vue/dist/runtime/components/manager.vue'),
+		src: inth('vue/dist/runtime/components/dialog/manager.vue'),
 	},
 	[inth('vue/dist/runtime/components/iab-prompt.vue')]: {
 		isDynamicEntry: true,
@@ -147,7 +147,7 @@ describe('stopPrefetchingConsentChunks', () => {
 		for (const key of [
 			inth('core/dist/modules/script-loader/loader.js'),
 			inth('core/dist/runtime/provider-update.js'),
-			inth('vue/dist/runtime/components/manager.vue'),
+			inth('vue/dist/runtime/components/dialog/manager.vue'),
 			'_dialog-shared.js',
 			'dialog.css',
 		]) {
@@ -184,23 +184,23 @@ describe('stopPrefetchingConsentChunks', () => {
 
 	test('reads package names from disk by default', () => {
 		const manifest: Record<string, ClientManifestChunk> = {
-			'src/runtime/components/manager.vue': {
+			'src/runtime/components/dialog/manager.vue': {
 				isDynamicEntry: true,
 				prefetch: true,
-				src: 'runtime/components/manager.vue',
+				src: 'runtime/components/dialog/manager.vue',
 			},
 		};
 		// This package (`@inth/vue`) owns the source; Vite roots it at `src`.
 		stopPrefetchingConsentChunks(manifest, join(__dirname, '..'));
 
-		expect(manifest['src/runtime/components/manager.vue']?.prefetch).toBe(
-			false
-		);
+		expect(
+			manifest['src/runtime/components/dialog/manager.vue']?.prefetch
+		).toBe(false);
 	});
 });
 
 describe('preloadConsentBanner', () => {
-	const banner = inth('vue/dist/runtime/components/prompt.vue');
+	const banner = inth('vue/dist/runtime/components/prompt/prompt.vue');
 	const entry = 'node_modules/nuxt/dist/app/entry.js';
 	const createBannerManifest = (): Record<string, ClientManifestChunk> => ({
 		'_vue.js': {},
@@ -255,7 +255,7 @@ describe('breakEntryImportCycles', () => {
 	const cyclicManifest = (): Record<string, ClientManifestChunk> => ({
 		'_inth.js': { imports: ['_vue.js', entry] },
 		'_vue.js': {},
-		[inth('vue/dist/runtime/components/prompt.vue')]: {
+		[inth('vue/dist/runtime/components/prompt/prompt.vue')]: {
 			imports: ['_vue.js', '_inth.js', entry],
 			isDynamicEntry: true,
 		},
@@ -273,7 +273,7 @@ describe('breakEntryImportCycles', () => {
 		const manifest = cyclicManifest();
 		breakEntryImportCycles(manifest);
 		expect(
-			manifest[inth('vue/dist/runtime/components/prompt.vue')]?.imports
+			manifest[inth('vue/dist/runtime/components/prompt/prompt.vue')]?.imports
 		).toContain(entry);
 	});
 });

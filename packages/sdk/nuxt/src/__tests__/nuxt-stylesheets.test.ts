@@ -72,11 +72,11 @@ const createManifest = (): Record<string, ClientManifestChunk> => ({
 	'_dialog-shared.js': { css: ['switch.css'] },
 	'_entry-shared.js': { css: ['entry-shared.css'] },
 	'_unknown.js': { css: ['unknown.css'] },
-	'node_modules/@inth/vue/dist/runtime/components/prompt.vue': {
+	'node_modules/@inth/vue/dist/runtime/components/prompt/prompt.vue': {
 		css: ['button.css'],
 		imports: ['_banner-shared.js', '_dialog-shared.js', '_unknown.js'],
 		isDynamicEntry: true,
-		src: 'node_modules/@inth/vue/dist/runtime/components/prompt.vue',
+		src: 'node_modules/@inth/vue/dist/runtime/components/prompt/prompt.vue',
 	},
 	'node_modules/nuxt/dist/app/entry.js': {
 		imports: ['_entry-shared.js'],
@@ -127,7 +127,9 @@ describe('preloadInlinedConsentStyles', () => {
 			isConsentFile
 		);
 		const own =
-			manifest['node_modules/@inth/vue/dist/runtime/components/prompt.vue'];
+			manifest[
+				'node_modules/@inth/vue/dist/runtime/components/prompt/prompt.vue'
+			];
 
 		expect(own?.css).toEqual([]);
 		expect(own?.assets).toEqual(['button.css']);
@@ -136,7 +138,9 @@ describe('preloadInlinedConsentStyles', () => {
 	test("keeps a stylesheet in a component's own chunk that is not Inth's", () => {
 		const manifest = createManifest();
 		const own =
-			manifest['node_modules/@inth/vue/dist/runtime/components/prompt.vue'];
+			manifest[
+				'node_modules/@inth/vue/dist/runtime/components/prompt/prompt.vue'
+			];
 		if (!own) {
 			throw new Error('expected the prompt component in the manifest');
 		}

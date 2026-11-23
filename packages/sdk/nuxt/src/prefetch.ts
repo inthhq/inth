@@ -209,7 +209,7 @@ const preloadWithEntry = function preloadWithEntry(
 };
 
 /** The banner the Nuxt root loads as its own chunk (see `nuxt-inth-provider.vue`). */
-const BANNER_SOURCE = '/dist/runtime/components/prompt.vue';
+const BANNER_SOURCE = '/dist/runtime/components/prompt/prompt.vue';
 
 /**
  * Preload the banner chunk with the entry on every page.
@@ -339,7 +339,10 @@ const PAGE_COMPONENT_SOURCES = GLOBAL_COMPONENTS.flatMap(([, file]) => [
  * The stock banner's source, built (`dist`) or loaded from a linked
  * checkout (`src`), as {@link ENGINE_SOURCES} lists the engine's.
  */
-const BANNER_SOURCES = [BANNER_SOURCE, '/src/runtime/components/prompt.vue'];
+const BANNER_SOURCES = [
+	BANNER_SOURCE,
+	'/src/runtime/components/prompt/prompt.vue',
+];
 
 /**
  * Each built source path with its counterpart in a linked checkout:

@@ -16,6 +16,18 @@ const DYNAMIC_CONTEXT_SLOTS = {
 	tag: ['banner', 'dialog', 'manager', 'iab-banner', 'iab-dialog'],
 } as const;
 
+/**
+ * Slots whose element the consent UI no longer renders: the old banner's
+ * separate actions wrapper and rights group (the prompt's footer and
+ * action groups take `banner.footer` and `banner.actionGroup`), and the
+ * description the old dialog rendered inside the preference widget.
+ */
+const UNBOUND_SLOTS = [
+	'banner.actions',
+	'banner.rights',
+	'description.manager',
+] as const;
+
 const MUST_BE_REACHABLE_SLOTS = [
 	'vendor-list.root',
 	'vendor-list.control',
@@ -121,7 +133,10 @@ const extractReachableSlotPaths = function extractReachableSlotPaths() {
 
 describe('Vue theme slot contract', () => {
 	test('every declared schema slot has an exact reachable Vue binding', () => {
-		const declared = [...CONSENT_COMPONENT_SLOT_KEYS].sort();
+		const unbound: readonly string[] = UNBOUND_SLOTS;
+		const declared = [...CONSENT_COMPONENT_SLOT_KEYS]
+			.filter((slot) => !unbound.includes(slot))
+			.sort();
 		const reachable = extractReachableSlotPaths();
 
 		expect(reachable).toEqual(declared);

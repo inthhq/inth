@@ -4,14 +4,13 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import { translations as enTranslations } from '@inth/sdk/translations/en';
-import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import type { Component, ComponentPublicInstance } from 'vue';
 
-import ConsentManager from '../runtime/components/manager.vue';
-import ConsentBanner from '../runtime/components/prompt.vue';
+import ConsentManager from '../runtime/components/dialog/manager.vue';
+import ConsentBanner from '../runtime/components/prompt/prompt.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import type { ConsentConfig } from '../runtime/config';
 import {
@@ -99,77 +98,34 @@ afterEach(async () => {
 });
 
 describe('the disableAnimation prop', () => {
-	const entering = bannerStyles.bannerEntering ?? 'bannerEntering';
 	const bannerRoot = () => query('[data-testid="consent-banner-root"]');
 
 	test.each([
 		{ config: false, expected: false, prop: undefined },
+		{ config: true, expected: true, prop: undefined },
 		{ config: false, expected: true, prop: true },
 		{ config: true, expected: false, prop: false },
 	])(
-		'on ConsentBanner: $prop over config $config skips the entry: $expected',
+		'on ConsentBanner: $prop over config $config stops the motion: $expected',
 		async ({ config, expected, prop }) => {
 			await render(ConsentBanner, 'banner', config, prop);
 			await vi.waitFor(() => expect(bannerRoot()).not.toBeNull());
-			expect(bannerRoot()?.classList.contains(entering)).toBe(!expected);
+			expect(bannerRoot()?.getAttribute('data-animation') === 'off').toBe(
+				expected
+			);
 		}
 	);
-
-	/** The page first painted at 0; the clock reads `now`. */
-	const setClock = function setClock(now: number) {
-		vi.spyOn(performance, 'getEntriesByType').mockImplementation((type) =>
-			type === 'paint'
-				? [{ name: 'first-contentful-paint', startTime: 0 } as PerformanceEntry]
-				: []
-		);
-		vi.spyOn(performance, 'now').mockReturnValue(now);
-	};
-
-	test('fades in a banner that opens after the page painted', async () => {
-		setClock(50);
-		await render(ConsentBanner, null, false, undefined);
-		expect(bannerRoot()).toBeNull();
-		setClock(5000);
-		const { context } = mounted ?? {};
-		if (context) {
-			context.activeUI.value = 'banner';
-		}
-		await vi.waitFor(() => expect(bannerRoot()).not.toBeNull());
-		expect(bannerRoot()?.dataset.entry).toBe('late');
-		expect(bannerRoot()?.classList.contains(entering)).toBe(true);
-	});
-
-	test('shows a banner open at setup at once', async () => {
-		setClock(5000);
-		await render(ConsentBanner, 'banner', false, undefined);
-		await vi.waitFor(() => expect(bannerRoot()).not.toBeNull());
-		expect(bannerRoot()?.dataset.entry).toBeUndefined();
-	});
-
-	test('does not mark a late banner when animation is disabled', async () => {
-		setClock(50);
-		await render(ConsentBanner, null, false, true);
-		setClock(5000);
-		const { context } = mounted ?? {};
-		if (context) {
-			context.activeUI.value = 'banner';
-		}
-		await vi.waitFor(() => expect(bannerRoot()).not.toBeNull());
-		expect(bannerRoot()?.dataset.entry).toBeUndefined();
-	});
 
 	test.each([
 		{ config: false, expected: true, prop: true },
 		{ config: true, expected: false, prop: false },
 	])(
-		'on ConsentDialog: $prop over config $config marks the dialog: $expected',
+		'on ConsentManager: $prop over config $config stops the motion: $expected',
 		async ({ config, expected, prop }) => {
 			await render(ConsentManager, 'manager', config, prop);
-			const positioner = () => query('[data-slot="dialog-positioner"]');
-			await vi.waitFor(() => expect(positioner()).not.toBeNull());
-			expect(positioner()?.hasAttribute('data-disable-animation')).toBe(
-				expected
-			);
+			const root = () => query('[data-testid="consent-dialog-root"]');
+			await vi.waitFor(() => expect(root()).not.toBeNull());
+			expect(root()?.getAttribute('data-animation') === 'off').toBe(expected);
 		}
 	);
 });

@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, ref } from 'vue';
 import type { App, Ref } from 'vue';
 
-import ConsentBanner from '../../../vue/src/runtime/components/prompt.vue';
+import ConsentBanner from '../../../vue/src/runtime/components/prompt/prompt.vue';
 import { buildInitPrefetchTag } from '../runtime/server/init-prefetch';
 
 const nuxt = vi.hoisted(() => ({
