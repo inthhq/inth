@@ -239,8 +239,8 @@ describe('TanStack Start client chunks', () => {
 		// chunks share, lengthens their preload lists: 66 bytes (22,676). The
 		// stored opt-out record now carries the categories it withholds, so the
 		// first load's record reader validates and decodes them, and the deciding
-		// category follows the rule's GPC mapping: 98 bytes (22,774).
-		expect(brotli).toBeLessThanOrEqual(22_774);
+		// category follows the rule's GPC mapping: 114 bytes (22,790).
+		expect(brotli).toBeLessThanOrEqual(22_790);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {
