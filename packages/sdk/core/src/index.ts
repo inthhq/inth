@@ -306,12 +306,19 @@ export {
 	writePolicyResolutionWire,
 	safeFallbackPolicyRule,
 } from '@inth/sdk-schema/types';
+export { resolveConsentPresentation } from './libs/policy-actions';
 export {
-	PROMPT_VARIANT_DEFAULT_POSITION,
-	PROMPT_VARIANT_POSITIONS,
 	resolveConsentDesign,
-	resolveConsentPresentation,
-} from './libs/policy-actions';
+	resolveLegacyConsentPresentation,
+} from './libs/legacy-presentation-shim';
+export type {
+	ConsentDesign,
+	LegacyConsentPresentation,
+	LegacyPresentationFields,
+	LegacyResolvedConsentPresentation,
+	PromptPosition,
+	PromptVariant,
+} from './libs/legacy-presentation-shim';
 export { resolvePrivacyChoicesLink } from './libs/privacy-choices-link';
 export type { PrivacyChoicesLinkState } from './libs/privacy-choices-link';
 export {
@@ -423,15 +430,8 @@ export {
 	OPT_OUT_CONFIRMATION_STORAGE_KEY,
 } from './libs/storage-keys';
 export type {
-	ConsentDesign,
 	ConsentPresentation,
 	PromptPresentation,
-	PromptVariant,
-	PromptPosition,
-	FloatingPromptPosition,
-	BarPromptPosition,
-	WidgetPromptPosition,
-	WallPromptPosition,
 	PreferencesPresentation,
 	SurfacePresentation,
 	PresentationAction,

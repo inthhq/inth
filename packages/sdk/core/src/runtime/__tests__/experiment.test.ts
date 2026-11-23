@@ -27,8 +27,8 @@ const policyRules: PolicyRule[] = [
 
 const experiment: ConsentExperiment = {
 	arms: {
-		bar: { prompt: { variant: 'bar' } },
-		floating: { prompt: { variant: 'floating' } },
+		bar: { prompt: { container: { type: 'banner' } } },
+		floating: { prompt: { container: { type: 'card' } } },
 	},
 	id: 'banner-shape',
 };

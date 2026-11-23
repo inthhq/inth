@@ -1042,7 +1042,7 @@ describe('a streamed prefetch a host renders from', () => {
 				...RESOLVED_PREFETCH,
 				experiment: {
 					arm: 'bar',
-					arms: { bar: { prompt: { variant: 'bar' } } },
+					arms: { bar: { prompt: { container: { type: 'banner' } } } },
 					id: 'banner-shape',
 				},
 			})

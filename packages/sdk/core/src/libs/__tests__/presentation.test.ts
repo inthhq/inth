@@ -104,13 +104,12 @@ describe('host presentation', () => {
 	});
 	it('notice has only dedicated dismissal and stays nonblocking', () => {
 		const result = resolveConsentPresentation({
-			override: { layout: ['accept'], scrollLock: true, trapFocus: true },
+			override: { blockUntilChoice: true, layout: ['accept'] },
 			policy: notice,
 			surface: 'prompt',
 		});
 		expect(result.orderedActions).toEqual(['dismiss']);
-		expect(result.scrollLock).toBe(false);
-		expect(result.trapFocus).toBe(false);
+		expect(result.blocking).toBe(false);
 	});
 	it('notice preferences retain choice commands and persistent rights', () => {
 		const result = resolveConsentPresentation({
@@ -177,204 +176,106 @@ describe('host presentation', () => {
 
 describe('surface shape', () => {
 	it.each([undefined, false, true])(
-		'never blocks a notice wall with blocking=%s',
-		(blocking) => {
+		'never blocks a notice, even in a centred card, with blockUntilChoice=%s',
+		(blockUntilChoice) => {
 			const result = resolveConsentPresentation({
-				override: { blocking, variant: 'wall' },
+				override: {
+					blockUntilChoice,
+					container: { position: 'center', type: 'card' },
+				},
 				policy: notice,
 				surface: 'prompt',
 			});
-			expect(result.variant).toBe('floating');
+			expect(result.container?.desktop.placement).toBe('card-start');
 			expect(result.blocking).toBe(false);
-			expect(result.trapFocus).toBe(false);
-			expect(result.scrollLock).toBe(false);
-			expect(result.diagnostics).toContainEqual(
-				expect.objectContaining({ code: 'invalid-variant' })
-			);
+			expect(result.container?.desktop.blocking).toBe(false);
 		}
 	);
-	it.each(['prompt', 'preferences'] as const)(
-		'explicit non-blocking overrides legacy controls on %s',
-		(surface) => {
-			const result = resolveConsentPresentation({
-				override: { blocking: false, scrollLock: true, trapFocus: true },
-				policy: choice,
-				surface,
-			});
-			expect(result.blocking).toBe(false);
-			expect(result.trapFocus).toBe(false);
-			expect(result.scrollLock).toBe(false);
-		}
-	);
-	it('rejects unsupported preference geometry at the runtime boundary', () => {
+	it('has no container on the preferences surface', () => {
 		const result = resolveConsentPresentation({
-			override: { position: 'top', variant: 'bar' },
+			override: { container: { edge: 'top', type: 'banner' } },
 			policy: choice,
 			surface: 'preferences',
 		});
-		expect(result.variant).toBe('wall');
-		expect(result.position).toBe('center');
-		expect(result.diagnostics).toContainEqual(
-			expect.objectContaining({ code: 'invalid-variant' })
-		);
+		expect(result.container).toBeNull();
 	});
-	it('defaults a choice prompt to a floating card at bottom-left', () => {
+	it('defaults a choice prompt to an inset card in the start corner', () => {
 		const result = resolveConsentPresentation({
 			policy: choice,
 			surface: 'prompt',
 		});
-		expect(result.variant).toBe('floating');
-		expect(result.position).toBe('bottom-left');
-		expect(result.positionSource).toBe('default');
+		expect(result.container?.desktop).toMatchObject({
+			blocking: false,
+			edgeStyle: 'inset',
+			flow: 'expand-in-place',
+			placement: 'card-start',
+			type: 'card',
+		});
+		expect(result.container?.phone.placement).toBe('card-start');
 		expect(result.blocking).toBe(false);
-		expect(result.trapFocus).toBe(false);
-		expect(result.scrollLock).toBe(false);
 	});
-	it('defaults a notice prompt to a floating card that is never blocking', () => {
+	it('defaults a notice prompt to a card that never blocks', () => {
 		const result = resolveConsentPresentation({
 			policy: notice,
-			presentation: { prompt: { blocking: true } },
+			presentation: { prompt: { blockUntilChoice: true } },
 			surface: 'prompt',
 		});
-		expect(result.variant).toBe('floating');
-		expect(result.position).toBe('bottom-left');
-		expect(result.positionSource).toBe('default');
+		expect(result.container?.desktop.placement).toBe('card-start');
 		expect(result.blocking).toBe(false);
-		expect(result.trapFocus).toBe(false);
-		expect(result.scrollLock).toBe(false);
-		expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
-			'blocking-forbidden',
-		]);
+		expect(
+			result.container?.desktop.diagnostics.map((diagnostic) => diagnostic.code)
+		).toEqual(['blocking-forbidden']);
 	});
-	it('renders a notice as a bottom bar when the host asks for one', () => {
+	it('renders a notice as a bottom banner when the host asks for one', () => {
 		const result = resolveConsentPresentation({
 			policy: notice,
-			presentation: { prompt: { variant: 'bar' } },
+			presentation: { prompt: { container: { edge: 'bottom', type: 'banner' } } },
 			surface: 'prompt',
 		});
-		expect(result.variant).toBe('bar');
-		expect(result.position).toBe('bottom');
-		expect(result.positionSource).toBe('default');
+		expect(result.container?.desktop.placement).toBe('banner-bottom');
 		expect(result.blocking).toBe(false);
 		expect(result.diagnostics).toEqual([]);
 	});
-	it('forces a wall to block and to trap focus and lock scroll', () => {
+	it('makes a centred card block, whatever the host asks', () => {
 		const result = resolveConsentPresentation({
 			policy: choice,
 			presentation: {
 				prompt: {
-					blocking: false,
-					scrollLock: false,
-					trapFocus: false,
-					variant: 'wall',
+					blockUntilChoice: false,
+					container: { position: 'center', type: 'card' },
 				},
 			},
 			surface: 'prompt',
 		});
 		expect(result.blocking).toBe(true);
-		expect(result.position).toBe('center');
-		expect(result.trapFocus).toBe(true);
-		expect(result.scrollLock).toBe(true);
-		expect(result.diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
-			'blocking-required',
-		]);
+		expect(result.container?.desktop.placement).toBe('card-center');
+		expect(
+			result.container?.desktop.diagnostics.map((diagnostic) => diagnostic.code)
+		).toEqual(['blocking-required']);
 	});
-	it('blocking forces trap focus and scroll lock on a floating card', () => {
+	it('blocks a corner card when the host asks', () => {
 		const result = resolveConsentPresentation({
 			policy: choice,
-			presentation: { prompt: { blocking: true, trapFocus: false } },
+			presentation: { prompt: { blockUntilChoice: true } },
 			surface: 'prompt',
 		});
 		expect(result.blocking).toBe(true);
-		expect(result.trapFocus).toBe(true);
-		expect(result.scrollLock).toBe(true);
-		expect(result.diagnostics).toEqual([]);
+		expect(result.container?.desktop.blocking).toBe(true);
 	});
-	it('falls back to the variant default when the position does not fit', () => {
+	it('lets blockUntilChoice win over blocking in the same tier', () => {
 		const result = resolveConsentPresentation({
 			policy: choice,
-			presentation: { prompt: { position: 'top', variant: 'floating' } },
+			presentation: { prompt: { blockUntilChoice: false, blocking: true } },
 			surface: 'prompt',
 		});
-		expect(result.position).toBe('bottom-left');
-		expect(result.positionSource).toBe('default');
-		expect(result.diagnostics).toEqual([
-			{
-				actions: [],
-				code: 'invalid-position',
-				message:
-					'Position "top" is not valid for the floating variant; using "bottom-left".',
-			},
-		]);
+		expect(result.blocking).toBe(false);
 	});
-	it('marks a valid host position as host-sourced', () => {
-		const result = resolveConsentPresentation({
-			policy: choice,
-			presentation: { prompt: { position: 'top-center' } },
-			surface: 'prompt',
-		});
-		expect(result.position).toBe('top-center');
-		expect(result.positionSource).toBe('host');
-	});
-	it('accepts every widget corner and rejects edge centers', () => {
-		for (const position of [
-			'bottom-left',
-			'bottom-right',
-			'top-left',
-			'top-right',
-		] as const) {
-			const result = resolveConsentPresentation({
-				policy: notice,
-				presentation: { prompt: { position, variant: 'widget' } },
-				surface: 'prompt',
-			});
-			expect(result.position).toBe(position);
-			expect(result.positionSource).toBe('host');
-		}
-		const centered = resolveConsentPresentation({
-			policy: notice,
-			presentation: {
-				prompt: { position: 'bottom-center', variant: 'widget' },
-			},
-			surface: 'prompt',
-		});
-		expect(centered.position).toBe('bottom-right');
-		expect(centered.diagnostics[0]?.code).toBe('invalid-position');
-	});
-	it('defaults the preferences surface to a centered blocking wall', () => {
+	it('defaults the preferences surface to blocking', () => {
 		const result = resolveConsentPresentation({
 			policy: notice,
 			surface: 'preferences',
 		});
-		expect(result.variant).toBe('wall');
-		expect(result.position).toBe('center');
-		expect(result.positionSource).toBe('default');
 		expect(result.blocking).toBe(true);
-		expect(result.trapFocus).toBe(true);
-		expect(result.scrollLock).toBe(true);
-		expect(result.diagnostics).toEqual([]);
-	});
-	it('keeps the preferences dialog non-blocking when the host turns off scroll lock', () => {
-		const result = resolveConsentPresentation({
-			policy: choice,
-			presentation: { preferences: { scrollLock: false } },
-			surface: 'preferences',
-		});
-		expect(result.variant).toBe('wall');
-		expect(result.blocking).toBe(false);
-		expect(result.scrollLock).toBe(false);
-		expect(result.trapFocus).toBe(false);
-		expect(result.diagnostics).toEqual([]);
-	});
-	it('keeps the preferences dialog non-blocking when the host turns off the focus trap', () => {
-		const result = resolveConsentPresentation({
-			policy: choice,
-			presentation: { preferences: { trapFocus: false } },
-			surface: 'preferences',
-		});
-		expect(result.blocking).toBe(false);
-		expect(result.trapFocus).toBe(false);
-		expect(result.scrollLock).toBe(false);
 		expect(result.diagnostics).toEqual([]);
 	});
 	it('honors an explicit non-blocking preferences dialog without a diagnostic', () => {
@@ -383,32 +284,22 @@ describe('surface shape', () => {
 			presentation: { preferences: { blocking: false } },
 			surface: 'preferences',
 		});
-		expect(result.variant).toBe('wall');
 		expect(result.blocking).toBe(false);
 		expect(result.diagnostics).toEqual([]);
 	});
-	it('lets explicit blocking on the preferences surface force scroll lock back on', () => {
+	it('lets a local override beat host presentation for the container', () => {
 		const result = resolveConsentPresentation({
-			policy: choice,
-			presentation: { preferences: { blocking: true, scrollLock: false } },
-			surface: 'preferences',
-		});
-		expect(result.blocking).toBe(true);
-		expect(result.scrollLock).toBe(true);
-		expect(result.trapFocus).toBe(true);
-	});
-	it('lets a local override beat host presentation for shape fields', () => {
-		const result = resolveConsentPresentation({
-			override: { position: 'top', variant: 'bar' },
+			override: { container: { edge: 'top', type: 'banner' } },
 			policy: choice,
 			presentation: {
-				prompt: { blocking: true, position: 'top-right', variant: 'floating' },
+				prompt: {
+					blockUntilChoice: true,
+					container: { position: 'end', type: 'card' },
+				},
 			},
 			surface: 'prompt',
 		});
-		expect(result.variant).toBe('bar');
-		expect(result.position).toBe('top');
-		expect(result.positionSource).toBe('host');
+		expect(result.container?.desktop.placement).toBe('banner-top');
 		expect(result.blocking).toBe(true);
 		expect(result.diagnostics).toEqual([]);
 	});
@@ -430,20 +321,6 @@ it('uses generic preference copy for a non-US opt-out message profile', () => {
 	expect(presentation.rights).toContain('opt-out');
 	expect(presentation.orderedActions).toEqual(['dismiss']);
 });
-
-it.each([{ scrollLock: true }, { trapFocus: true }])(
-	'maps a legacy prompt option %j to full blocking',
-	(prompt) => {
-		const result = resolveConsentPresentation({
-			policy: choice,
-			presentation: { prompt },
-			surface: 'prompt',
-		});
-		expect(result.blocking).toBe(true);
-		expect(result.scrollLock).toBe(true);
-		expect(result.trapFocus).toBe(true);
-	}
-);
 
 it('resolves optOutLink to do-not-sell by default and passes configured variants through', () => {
 	expect(

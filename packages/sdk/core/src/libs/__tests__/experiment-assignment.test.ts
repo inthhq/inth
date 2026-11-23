@@ -43,8 +43,8 @@ const noticeRule: PolicyRule = {
 
 const experiment: ConsentExperiment = {
 	arms: {
-		bar: { prompt: { variant: 'bar' } },
-		floating: { prompt: { variant: 'floating' } },
+		bar: { prompt: { container: { type: 'banner' } } },
+		floating: { prompt: { container: { type: 'card' } } },
 	},
 	id: 'banner-shape',
 };
@@ -53,7 +53,8 @@ const experiment: ConsentExperiment = {
 const wallExperiment: ConsentExperiment = {
 	arm: 'wall',
 	arms: {
-		wall: { prompt: { variant: 'wall' } },
+		// A notice allows only dismiss, so it rejects this layout.
+		wall: { prompt: { layout: [['reject', 'accept'], 'customize'] } },
 	},
 	id: 'banner-shape',
 };

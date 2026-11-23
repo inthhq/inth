@@ -23,10 +23,11 @@ export type { HasCondition } from './libs/has';
 export { deniedVendorIds } from './modules/vendor-denial';
 export { vendorsListedUnder } from './libs/vendor-listing';
 export { IABUnavailableError, policyNeedsIAB } from './libs/iab-unavailable';
+export { resolveConsentPresentation } from './libs/policy-actions';
 export {
 	resolveConsentDesign,
-	resolveConsentPresentation,
-} from './libs/policy-actions';
+	resolveLegacyConsentPresentation,
+} from './libs/legacy-presentation-shim';
 export { resolvePrivacyChoicesLink } from './libs/privacy-choices-link';
 export type { PrivacyChoicesLinkState } from './libs/privacy-choices-link';
 export {

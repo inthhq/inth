@@ -503,8 +503,8 @@ describe('prefetch utilities', () => {
 	describe('banner experiment', () => {
 		const experiment = {
 			arms: {
-				bar: { prompt: { variant: 'bar' as const } },
-				floating: { prompt: { variant: 'floating' as const } },
+				bar: { prompt: { container: { type: 'banner' as const } } },
+				floating: { prompt: { container: { type: 'card' as const } } },
 			},
 			id: 'banner-shape',
 		};

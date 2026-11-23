@@ -26,8 +26,8 @@ const choice = normalizePolicyRule({
 
 const experiment: ConsentExperiment = {
 	arms: {
-		bar: { prompt: { variant: 'bar' } },
-		floating: { prompt: { position: 'bottom-right', variant: 'floating' } },
+		bar: { prompt: { container: { type: 'banner' } } },
+		floating: { prompt: { container: { position: 'end', type: 'card' } } },
 	},
 	id: 'banner-shape',
 };
@@ -36,8 +36,8 @@ describe('ExperimentArmName', () => {
 	it('is control plus the arms defineExperiment inferred', () => {
 		const bannerLayout = defineExperiment({
 			arms: {
-				bar: { prompt: { variant: 'bar' } },
-				wall: { prompt: { variant: 'wall' } },
+				bar: { prompt: { container: { type: 'banner' } } },
+				wall: { prompt: { container: { position: 'center', type: 'card' } } },
 			},
 			id: 'banner-layout',
 		});
@@ -165,23 +165,27 @@ describe('resolveExperimentPresentation', () => {
 	it('keeps a base value the arm leaves undefined', () => {
 		expect(
 			resolveExperimentPresentation(
-				{ prompt: { position: 'bottom-left', variant: 'floating' } },
+				{ prompt: { container: { type: 'card' }, edgeStyle: 'flush' } },
 				{
 					arms: {
-						bar: { prompt: { position: undefined, variant: 'bar' } },
+						bar: { prompt: { container: { type: 'banner' }, edgeStyle: undefined } },
 					},
 					id: 'shape',
 				},
 				{ arm: 'bar' }
 			).prompt
-		).toEqual({ position: 'bottom-left', variant: 'bar' });
+		).toEqual({ container: { type: 'banner' }, edgeStyle: 'flush' });
 	});
 
 	it('merges the arm over the base per surface, arm wins', () => {
 		const resolved = resolveExperimentPresentation(
 			{
 				preferences: { blocking: false, defaults: { marketing: true } },
-				prompt: { position: 'top-left', uiProfile: 'strict', variant: 'wall' },
+				prompt: {
+					container: { position: 'center', type: 'card' },
+					edgeStyle: 'flush',
+					uiProfile: 'strict',
+				},
 			},
 			{
 				...experiment,
@@ -189,7 +193,7 @@ describe('resolveExperimentPresentation', () => {
 					...experiment.arms,
 					floating: {
 						preferences: { defaults: { measurement: false } },
-						prompt: { position: 'bottom-right', variant: 'floating' },
+						prompt: { container: { position: 'end', type: 'card' } },
 					},
 				},
 			},
@@ -201,14 +205,14 @@ describe('resolveExperimentPresentation', () => {
 				defaults: { marketing: true, measurement: false },
 			},
 			prompt: {
-				position: 'bottom-right',
+				container: { position: 'end', type: 'card' },
+				edgeStyle: 'flush',
 				uiProfile: 'strict',
-				variant: 'floating',
 			},
 		});
 	});
 	it('returns the base for an arm that no longer exists', () => {
-		const base = { prompt: { variant: 'bar' as const } };
+		const base = { prompt: { container: { type: 'banner' as const } } };
 		expect(
 			resolveExperimentPresentation(base, experiment, { arm: 'gone' })
 		).toBe(base);

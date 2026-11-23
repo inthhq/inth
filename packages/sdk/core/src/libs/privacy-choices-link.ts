@@ -16,7 +16,6 @@ import type {
 	ResolvedOptOutLink,
 } from './consent-copy';
 import { resolveOptOutState } from './opt-out-state';
-import type { ConsentDesign } from './policy-actions';
 
 /** What a "Your Privacy Choices" link renders. */
 export interface PrivacyChoicesLinkState {
@@ -38,11 +37,10 @@ export interface PrivacyChoicesLinkState {
  * nothing.
  *
  * Under an opt-out policy with the `opt-out` right it is the opt-out link
- * the host configured (`variant`). Under `design: 'privacy-choices'` it is
- * also the way back into the dialog whenever the dialog has something to
- * show: under an opt-in policy, in the US or the EU, it reads "Your Privacy
- * Choices" with no opt-out icon, since no opt-out right is offered. The
- * classic design keeps the link to opt-out policies.
+ * the host configured (`variant`). It is also the way back into the dialog
+ * whenever the dialog has something to show: under an opt-in policy, in
+ * the US or the EU, it reads "Your Privacy Choices" with no opt-out icon,
+ * since no opt-out right is offered.
  *
  * Nothing shows before a policy resolves or while an external consent
  * source owns consent.
@@ -58,7 +56,14 @@ export const resolvePrivacyChoicesLink = function resolvePrivacyChoicesLink(
 		| 'resolution'
 	>,
 	translations: Partial<Translations> | undefined,
-	options: { design?: ConsentDesign; variant?: OptOutLinkVariant } = {}
+	options: {
+		/**
+		 * @deprecated temporary — removed in phase B. Ignored: there is one
+		 * consent UI.
+		 */
+		design?: unknown;
+		variant?: OptOutLinkVariant;
+	} = {}
 ): PrivacyChoicesLinkState | null {
 	if (
 		snapshot.resolution.status !== 'matched' ||
@@ -78,10 +83,7 @@ export const resolvePrivacyChoicesLink = function resolvePrivacyChoicesLink(
 		};
 	}
 	const { model } = snapshot.policyRule;
-	if (
-		options.design !== 'privacy-choices' ||
-		(model !== 'opt-in' && model !== 'opt-out')
-	) {
+	if (model !== 'opt-in' && model !== 'opt-out') {
 		return null;
 	}
 	return {

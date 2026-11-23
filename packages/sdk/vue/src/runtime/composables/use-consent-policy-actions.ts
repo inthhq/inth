@@ -3,7 +3,6 @@ import type {
 	PreferencesPresentation,
 	PromptPresentation,
 } from '@inth/sdk/engine';
-import { DEFAULT_BANNER_POSITION } from '@inth/sdk/schema/config';
 import { computed, toValue, watch } from 'vue';
 import type { MaybeRefOrGetter } from 'vue';
 
@@ -25,18 +24,6 @@ export const useConsentPolicyActions = function useConsentPolicyActions(
 	const policyRule = computed(() => snapshot.value.policyRule);
 	const config = useConsentConfig();
 	const hostPresentation = useResolvedPresentation();
-	/**
-	 * `bannerPosition` predates the presentation API and is merged in with
-	 * the schema defaults, so only a non-default value counts as a host
-	 * choice. It maps onto the prompt position so existing configs keep
-	 * their corner.
-	 */
-	const legacyPosition = computed(() => {
-		const value = config.value.bannerPosition;
-		return value === undefined || value === DEFAULT_BANNER_POSITION
-			? undefined
-			: value;
-	});
 	const presentation = computed(() =>
 		resolveConsentPresentation({
 			override: toValue(override),
@@ -48,7 +35,6 @@ export const useConsentPolicyActions = function useConsentPolicyActions(
 					...hostPresentation.value?.preferences,
 				},
 				prompt: {
-					position: legacyPosition.value,
 					trapFocus: config.value.trapFocus,
 					...hostPresentation.value?.prompt,
 				},

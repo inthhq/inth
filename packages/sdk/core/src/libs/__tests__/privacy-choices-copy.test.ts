@@ -14,78 +14,7 @@ import {
 	resolvePrivacyChoicesVariant,
 	resolveSaleRightCopy,
 } from '../consent-copy';
-import {
-	resolveConsentDesign,
-	resolveConsentPresentation,
-} from '../policy-actions';
-import type { ConsentPresentation } from '../policy-actions';
 import { resolvePrivacyChoicesLink } from '../privacy-choices-link';
-
-const choice = normalizePolicyRule({
-	id: 'choice',
-	match: { fallback: true },
-	model: 'opt-in',
-	prompt: 'choice',
-	scopeMode: 'permissive',
-});
-
-const resolve = (
-	presentation?: ConsentPresentation,
-	override?: Parameters<typeof resolveConsentPresentation>[0]['override'],
-	surface: 'prompt' | 'preferences' = 'prompt'
-) =>
-	resolveConsentPresentation({
-		override,
-		policy: choice,
-		presentation,
-		surface,
-	}).design;
-
-describe('design', () => {
-	it('stays classic by default, so existing sites keep today’s UI', () => {
-		expect(resolve()).toBe('classic');
-		expect(resolve({ prompt: { variant: 'bar' } })).toBe('classic');
-		expect(resolve({ prompt: { blockUntilChoice: true } })).toBe('classic');
-	});
-
-	it('is privacy-choices when the host asks for it', () => {
-		expect(resolve({ design: 'privacy-choices' })).toBe('privacy-choices');
-		expect(
-			resolve({ design: 'privacy-choices' }, undefined, 'preferences')
-		).toBe('privacy-choices');
-	});
-
-	it('opts in when the host sets a prompt container, which only v6 reads', () => {
-		expect(resolve({ prompt: { container: { type: 'drawer' } } })).toBe(
-			'privacy-choices'
-		);
-		expect(resolve(undefined, { container: { type: 'card' } })).toBe(
-			'privacy-choices'
-		);
-		expect(
-			resolve(
-				{ prompt: { container: { type: 'banner' } } },
-				undefined,
-				'preferences'
-			)
-		).toBe('privacy-choices');
-	});
-
-	it('lets an explicit classic win over a container', () => {
-		expect(
-			resolve({
-				design: 'classic',
-				prompt: { container: { type: 'drawer' } },
-			})
-		).toBe('classic');
-	});
-
-	it('ignores a malformed design value', () => {
-		expect(
-			resolve({ design: 'v6' as unknown as ConsentPresentation['design'] })
-		).toBe('classic');
-	});
-});
 
 const presetPolicy = (rule: PolicyRule | PolicyRule[]) =>
 	normalizePolicyRule(Array.isArray(rule) ? (rule[0] as PolicyRule) : rule);
@@ -337,24 +266,6 @@ describe('resolvePrivacyChoicesRegime', () => {
 	});
 });
 
-describe('resolveConsentDesign', () => {
-	it('lets an explicit design win, else a prompt container opts in', () => {
-		expect(resolveConsentDesign(undefined)).toBe('classic');
-		expect(resolveConsentDesign({ design: 'privacy-choices' })).toBe(
-			'privacy-choices'
-		);
-		expect(
-			resolveConsentDesign({ prompt: { container: { type: 'card' } } })
-		).toBe('privacy-choices');
-		expect(
-			resolveConsentDesign({
-				design: 'classic',
-				prompt: { container: { type: 'card' } },
-			})
-		).toBe('classic');
-	});
-});
-
 describe('resolvePrivacyChoicesLink', () => {
 	const snapshotFor = (rule: PolicyRule) =>
 		createConsentKernel({
@@ -363,7 +274,7 @@ describe('resolvePrivacyChoicesLink', () => {
 		}).getSnapshot();
 	const GPC_MAP = { gpc: { denyCategories: ['marketing' as const] } };
 
-	it('is the configured opt-out link under an opt-out right, in either design', () => {
+	it('is the configured opt-out link under an opt-out right', () => {
 		const snapshot = snapshotFor(
 			optOutRule({ rights: ['disclosure', 'opt-out', 'preferences'] })
 		);
@@ -374,7 +285,6 @@ describe('resolvePrivacyChoicesLink', () => {
 		});
 		expect(
 			resolvePrivacyChoicesLink(snapshot, undefined, {
-				design: 'privacy-choices',
 				variant: 'privacy-choices',
 			})
 		).toEqual({
@@ -384,12 +294,10 @@ describe('resolvePrivacyChoicesLink', () => {
 		});
 	});
 
-	it('[BNR-05] stays a way back in under US opt-in with the Privacy Choices design, with no opt-out icon', () => {
+	it('[BNR-05] stays a way back in under US opt-in, with no opt-out icon', () => {
 		const snapshot = snapshotFor(optInRule({ privacySignals: GPC_MAP }));
-		expect(resolvePrivacyChoicesLink(snapshot, undefined)).toBeNull();
 		expect(
 			resolvePrivacyChoicesLink(snapshot, undefined, {
-				design: 'privacy-choices',
 				variant: 'california-privacy-choices',
 			})
 		).toEqual({
@@ -402,16 +310,14 @@ describe('resolvePrivacyChoicesLink', () => {
 	it('shows nothing while an external source owns consent or for IAB', () => {
 		const iab = snapshotFor({ ...optInRule(), model: 'iab' } as PolicyRule);
 		expect(
-			resolvePrivacyChoicesLink(iab, undefined, { design: 'privacy-choices' })
+			resolvePrivacyChoicesLink(iab, undefined)
 		).toBeNull();
 		const external = {
 			...snapshotFor(optInRule()),
 			externalPermissions: true,
 		} as unknown as Parameters<typeof resolvePrivacyChoicesLink>[0];
 		expect(
-			resolvePrivacyChoicesLink(external, undefined, {
-				design: 'privacy-choices',
-			})
+			resolvePrivacyChoicesLink(external, undefined)
 		).toBeNull();
 	});
 });
