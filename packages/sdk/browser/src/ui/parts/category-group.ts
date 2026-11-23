@@ -1,7 +1,7 @@
 /**
  * The cookie categories as one bordered group with inline descriptions
  * (CAT-01, CAT-06), each with its vendors (CAT-09), on a preference draft.
- * Shared by the Privacy Choices banner panels and the dialog, as
+ * Shared by the banner's options and the dialog, as
  * `CategoryGroup` is in `@inth/react`.
  *
  * @packageDocumentation
@@ -30,13 +30,13 @@ import {
 	scheduleReveal,
 } from '@inth/sdk-ui/primitives/surface';
 
-import { classes as styles } from '../../generated/privacy-choices/dialog';
-import { classes as expandStyles } from '../../generated/privacy-choices/expand';
+import { classes as styles } from '../../generated/ui/dialog';
+import { classes as expandStyles } from '../../generated/ui/expand';
 import type { BrowserSlotKey } from '../slots';
 import { cx, el, icon } from './dom';
 import { applyDialogCategories } from './engine';
 import { chevron, choiceSwitch, isToggleClick } from './shared';
-import type { PcEnv } from './shared';
+import type { PartEnv } from './shared';
 
 /** Surfaces that render the category group, by their test-id prefix. */
 export type CategoryGroupSurface = 'consent-banner' | 'consent-dialog';
@@ -72,8 +72,8 @@ export interface CategoryGroupProps {
 
 /** One mounted category group: render, then run its effects. */
 export interface CategoryGroup {
-	render: (env: PcEnv, props: CategoryGroupProps) => HTMLElement;
-	after: (env: PcEnv) => void;
+	render: (env: PartEnv, props: CategoryGroupProps) => HTMLElement;
+	after: (env: PartEnv) => void;
 	dispose: () => void;
 }
 
@@ -87,7 +87,7 @@ const externalIcon = () =>
 	]);
 
 interface VendorTableParams {
-	env: PcEnv;
+	env: PartEnv;
 	category: AllConsentNames;
 	categoryTitle: string;
 	idPrefix: string;
@@ -284,7 +284,7 @@ const vendorTrigger = function vendorTrigger(params: {
 
 /** The read-only US advertising row: it follows the sale choice (LAW-05, CAT-08). */
 export const advertisingRow = function advertisingRow(
-	env: PcEnv,
+	env: PartEnv,
 	params: {
 		on: boolean;
 		idPrefix: string;
@@ -354,7 +354,7 @@ export const createCategoryGroup =
 		let lastIdPrefix = '';
 
 		const render = function render(
-			env: PcEnv,
+			env: PartEnv,
 			props: CategoryGroupProps
 		): HTMLElement {
 			const { kernel, t, session, draft, snapshot, noStyle } = env;
@@ -595,7 +595,7 @@ export const createCategoryGroup =
 			return props.slotKey ? env.ctx.slot(group, props.slotKey) : group;
 		};
 
-		const after = function after(env: PcEnv): void {
+		const after = function after(env: PartEnv): void {
 			// Bring an opened vendor table into view without scrolling its trigger
 			// out (LAY-05), unless the surface moved on (PERM-16).
 			const category = revealing;

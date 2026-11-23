@@ -1,7 +1,7 @@
 /**
  * The statutory rights row: a segmented control for selling, sharing and
  * targeted ads, the confirmation that opting back in needs, and the GPC
- * note. Shared by the Privacy Choices banner panels and the dialog, as
+ * note. Shared by the banner's options and the dialog, as
  * `SaleRightsRow` is in `@inth/react`.
  *
  * @packageDocumentation
@@ -24,18 +24,18 @@ import {
 	scheduleReveal,
 } from '@inth/sdk-ui/primitives/surface';
 
-import { classes as styles } from '../../generated/privacy-choices/dialog';
-import { classes as expandStyles } from '../../generated/privacy-choices/expand';
+import { classes as styles } from '../../generated/ui/dialog';
+import { classes as expandStyles } from '../../generated/ui/expand';
 import type { BrowserSlotKey } from '../slots';
 import { activeElementOf, cx, el } from './dom';
-import type { PcRef } from './dom';
+import type { PartRef } from './dom';
 import {
 	confirmSaleRight,
 	getOptOutReceiptData,
 	pressSaleRight,
 } from './engine';
 import { checkIcon, consentButton, rightsBundleOf } from './shared';
-import type { PcEnv } from './shared';
+import type { PartEnv } from './shared';
 
 /** Surfaces that render the rights row, by their test-id prefix. */
 export type RightsRowSurface = 'consent-banner' | 'consent-dialog';
@@ -55,9 +55,9 @@ export interface SaleRightsRowProps {
 
 /** One mounted rights row: render, then run its effects. */
 export interface SaleRightsRow {
-	render: (env: PcEnv, props: SaleRightsRowProps) => HTMLElement | null;
+	render: (env: PartEnv, props: SaleRightsRowProps) => HTMLElement | null;
 	/** Focus and reveal after the render is mounted. */
-	after: (env: PcEnv) => void;
+	after: (env: PartEnv) => void;
 	dispose: () => void;
 }
 
@@ -72,15 +72,15 @@ const OPTIONS: readonly RightOption[] = ['protect', 'allow'];
  */
 export const createSaleRightsRow =
 	function createSaleRightsRow(): SaleRightsRow {
-		const confirmRef: PcRef = { current: null };
-		const cancelRef: PcRef = { current: null };
-		const allowRef: PcRef = { current: null };
+		const confirmRef: PartRef = { current: null };
+		const cancelRef: PartRef = { current: null };
+		const allowRef: PartRef = { current: null };
 		let wasOpen = false;
 		let lastNudges = 0;
 		let cancelReveal: (() => void) | undefined;
 
 		const render = function render(
-			env: PcEnv,
+			env: PartEnv,
 			props: SaleRightsRowProps
 		): HTMLElement | null {
 			const { kernel, snapshot, t, session, state, noStyle } = env;
@@ -284,7 +284,7 @@ export const createSaleRightsRow =
 			return props.slotKey ? env.ctx.slot(row, props.slotKey) : row;
 		};
 
-		const after = function after(env: PcEnv): void {
+		const after = function after(env: PartEnv): void {
 			const { session, state } = env;
 			const open = state.confirmation?.right === 'sale';
 			const nudges = open ? (state.confirmation?.nudges ?? 0) : 0;

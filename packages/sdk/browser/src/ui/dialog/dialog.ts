@@ -1,10 +1,10 @@
 /**
- * The "Your Privacy Choices" dialog (v6): one column whose body is the
+ * The "Your Privacy Choices" dialog: one column whose body is the
  * only scroller, the statutory rights on its first view, the receipt, and
  * Preferences; in the EU, the cookie categories and a staged Save. On
  * phone, Preferences and EU vendor lists open as nested sheets, at most
  * two layers; desktop uses accordions only. Ported from `@inth/react`'s
- * `components/privacy-choices-dialog/dialog.tsx`.
+ * `components/dialog/dialog.tsx`.
  *
  * @packageDocumentation
  * @internal
@@ -14,7 +14,7 @@ import {
 	announcementText,
 	MAIN_LAYER,
 	resolveCategoryTitle,
-	resolveLegacyConsentPresentation,
+	resolveConsentPresentation,
 	resolvePreferencesRowCopy,
 	resolvePrivacyChoicesDialogCopy,
 	resolvePrivacyChoicesRegime,
@@ -41,11 +41,10 @@ import { getTextDirection } from '@inth/sdk-ui/utils';
 import { resolveLegalLinkEntries } from '@inth/sdk-ui/utils/legal-links';
 import type { LegalLinkKeys } from '@inth/sdk-ui/utils/legal-links';
 
-import { classes as styles } from '../../generated/privacy-choices/dialog';
-import { classes as expandStyles } from '../../generated/privacy-choices/expand';
+import { classes as styles } from '../../generated/ui/dialog';
+import { classes as expandStyles } from '../../generated/ui/expand';
 import type { ConsentDialogOptions } from '../../types';
-import type { Surface, SurfaceContext } from '../surface';
-import { advertisingRow, createCategoryGroup } from './category-group';
+import { advertisingRow, createCategoryGroup } from '../parts/category-group';
 import {
 	activeElementOf,
 	cx,
@@ -55,17 +54,17 @@ import {
 	icon,
 	owned,
 	patch,
-} from './dom';
-import type { PcChild, PcRef } from './dom';
+} from '../parts/dom';
+import type { PartChild, PartRef } from '../parts/dom';
 import {
 	commitDialogChoice,
 	createPreferenceDraft,
 	hasConsentUI,
 	showConsentSurface,
 	takeReceiptFocus,
-} from './engine';
-import { createRightsReceipt } from './receipt';
-import { createSaleRightsRow } from './rights-row';
+} from '../parts/engine';
+import { createRightsReceipt } from '../parts/receipt';
+import { createSaleRightsRow } from '../parts/rights-row';
 import {
 	checkIcon,
 	chevron,
@@ -73,8 +72,9 @@ import {
 	prefersReducedMotionNow,
 	surfaceBasics,
 	watchPhoneLayout,
-} from './shared';
-import type { PcEnv } from './shared';
+} from '../parts/shared';
+import type { PartEnv } from '../parts/shared';
+import type { Surface, SurfaceContext } from '../surface';
 import { OPTIONS_SHEETS } from './sheets';
 
 /** The "Saved" cue stays this long, on a timer, not an animation (MOT-03). */
@@ -105,24 +105,24 @@ const deepActiveElement = function deepActiveElement(): Element | null {
 };
 
 interface LayerParams {
-	env: PcEnv;
-	layerRef: PcRef;
-	titleRef: PcRef;
-	bodyRef: PcRef;
-	statusRef: PcRef;
+	env: PartEnv;
+	layerRef: PartRef;
+	titleRef: PartRef;
+	bodyRef: PartRef;
+	statusRef: PartRef;
 	idPrefix: string;
 	title: string;
 	intro: string | null;
 	closeLabel: string;
 	onClose: () => void;
-	footer: PcChild[];
+	footer: PartChild[];
 	nested: boolean;
 	top: boolean;
 	closing: boolean;
 	depth: number;
 	eu: boolean;
 	sheetId?: string;
-	children: PcChild[];
+	children: PartChild[];
 }
 
 /**
@@ -245,7 +245,7 @@ const layer = function layer(params: LayerParams): HTMLElement {
  * focus (FOC-06).
  */
 const doneButton = function doneButton(
-	env: PcEnv,
+	env: PartEnv,
 	params: {
 		cue: number;
 		label: string;
@@ -253,7 +253,7 @@ const doneButton = function doneButton(
 		testId: 'consent-dialog-done' | 'consent-dialog-sheet-done';
 		onClick: () => void;
 	}
-): PcChild[] {
+): PartChild[] {
 	const { noStyle } = env;
 	return [
 		el(
@@ -300,11 +300,11 @@ interface ShownSheet {
 }
 
 /**
- * The Privacy Choices dialog with its own preference draft, so the EU's
+ * The dialog with its own preference draft, so the EU's
  * switches stay staged until Save (EU-02) and the US's apply one by one.
  */
 // oxlint-disable-next-line max-lines-per-function, max-statements, complexity -- One controller owns the dialog's layers, focus and keys so they stay in step, as the React component does.
-export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
+export const createConsentDialog = function createConsentDialog(
 	ctx: SurfaceContext,
 	options: ConsentDialogOptions
 ): Surface {
@@ -320,16 +320,16 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 	// whenever it closes (EU-02).
 	const stopDraftReset = session.attachDraft(draft);
 
-	const mainRef: PcRef = { current: null };
-	const mainTitleRef: PcRef = { current: null };
-	const bodyRef: PcRef = { current: null };
-	const mainStatusRef: PcRef = { current: null };
-	const sheetRef: PcRef = { current: null };
-	const sheetTitleRef: PcRef = { current: null };
-	const sheetBodyRef: PcRef = { current: null };
-	const sheetStatusRef: PcRef = { current: null };
-	const preferencesTriggerRef: PcRef = { current: null };
-	const preferencesPanelRef: PcRef = { current: null };
+	const mainRef: PartRef = { current: null };
+	const mainTitleRef: PartRef = { current: null };
+	const bodyRef: PartRef = { current: null };
+	const mainStatusRef: PartRef = { current: null };
+	const sheetRef: PartRef = { current: null };
+	const sheetTitleRef: PartRef = { current: null };
+	const sheetBodyRef: PartRef = { current: null };
+	const sheetStatusRef: PartRef = { current: null };
+	const preferencesTriggerRef: PartRef = { current: null };
+	const preferencesPanelRef: PartRef = { current: null };
 
 	const rights = createSaleRightsRow();
 	const receipt = createRightsReceipt();
@@ -437,7 +437,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 		}
 	};
 
-	const followSheets = function followSheets(env: PcEnv): void {
+	const followSheets = function followSheets(env: PartEnv): void {
 		const topSheet = env.state.sheets[env.state.sheets.length - 1] ?? null;
 		// Nothing is left to animate under reduced motion, on desktop or in a
 		// closed dialog, so a sheet leaves at once there (NEST-06).
@@ -471,7 +471,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 	};
 
 	// oxlint-disable-next-line max-lines-per-function, complexity -- The tree mirrors the React component's.
-	const build = function build(env: PcEnv): HTMLElement {
+	const build = function build(env: PartEnv): HTMLElement {
 		const { snapshot: snap, t, phone } = env;
 		// The model and the US markers decide the body, never the prompt: an
 		// EU opt-in policy that shows no banner still gets the EU dialog.
@@ -479,7 +479,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 		// Phone sheets take the prompt's resolved phone edge style, which the
 		// policy and a Card's own rule (always inset) have already settled.
 		const edgeStyle =
-			resolveLegacyConsentPresentation({
+			resolveConsentPresentation({
 				policy: snap.policyRule,
 				presentation: ctx.client.presentation,
 				surface: 'prompt',
@@ -549,7 +549,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 		).length;
 		const preferencesCopy = resolvePreferencesRowCopy(t, preferencesCount);
 		const preferencesPanelId = `${prefix}-preferences`;
-		const preferencesRow: PcChild[] = [
+		const preferencesRow: PartChild[] = [
 			env.ctx.slot(
 				el(
 					'button',
@@ -618,7 +618,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 					),
 		];
 
-		const usBody: PcChild[] = [
+		const usBody: PartChild[] = [
 			rights.render(env, {
 				idPrefix: `${prefix}-main`,
 				onRecorded: showCue,
@@ -632,7 +632,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 			}),
 			...preferencesRow,
 		];
-		const euBody = (): PcChild[] => [
+		const euBody = (): PartChild[] => [
 			mainGroup.render(env, {
 				idPrefix: `${prefix}-main`,
 				onOpenVendors: (category, openerKey) =>
@@ -706,7 +706,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 			const vendorCategory = shownSheet.id.startsWith(VENDOR_SHEET_PREFIX)
 				? (shownSheet.id.slice(VENDOR_SHEET_PREFIX.length) as AllConsentNames)
 				: null;
-			const sheetFooter: PcChild[] = [
+			const sheetFooter: PartChild[] = [
 				el('span', { class: cx(noStyle, styles.footerNote) }, copy.sheetNote),
 				el(
 					'div',
@@ -772,15 +772,13 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 
 		// The GPC note replaces the intro, never both (LAY-04).
 		const intro = !eu && gpcLocked ? null : copy.intro;
-		// The root takes the `consentDialog` slot and part, as the classic
-		// dialog's does.
+		// The root takes the `consentDialog` slot and part.
 		return env.ctx.slot(
 			el(
 				'div',
 				{
 					class: cx(noStyle, styles.backdrop),
 					'data-animation': disableAnimation ? 'off' : undefined,
-					'data-design': 'privacy-choices',
 					'data-edge-style': edgeStyle,
 					'data-layout': phone ? 'phone' : 'desktop',
 					'data-regime': eu ? 'eu' : 'us',
@@ -814,7 +812,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 	};
 
 	/** Each layer's own status region (SR-01), silent while it closes (SR-02). */
-	const renderStatuses = function renderStatuses(env: PcEnv): void {
+	const renderStatuses = function renderStatuses(env: PartEnv): void {
 		const { state } = env;
 		const sheetOpen = Boolean(shownSheet && !shownSheet.closing);
 		const mainStatus =
@@ -849,7 +847,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 	};
 
 	// oxlint-disable-next-line max-statements, complexity -- The React component's effects, in its order.
-	const effects = function effects(env: PcEnv): void {
+	const effects = function effects(env: PartEnv): void {
 		const { state, phone } = env;
 		// Desktop never nests, and a viewport change drops open sheets
 		// (NEST-01, NEST-06).
@@ -1062,7 +1060,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 				opener = deepActiveElement();
 			}
 			const { t } = surfaceBasics(kernel, snapshot);
-			const env: PcEnv = {
+			const env: PartEnv = {
 				ctx,
 				draft,
 				kernel,

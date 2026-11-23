@@ -26,25 +26,27 @@ const TESTING_EXCLUSIONS = [
 	...COMMON_EXCLUSIONS,
 	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/transports\/(?:hosted[^/]*|mode)\.[jt]s(?:$|[?|])/u,
 ];
+const BROWSER = '(?:packages/(?:sdk/)?browser|@inth/sdk-browser)/(?:src|dist)';
+
+/** `@inth/sdk-ui`'s sheets for the prompt's containers, its options and the dialog. */
+const SURFACE_SHEETS =
+	/\/(?:packages\/(?:sdk\/)?ui|@inth\/sdk-ui)\/(?:src|dist)\/styles\/sheets\/(?:surface|card|banner|drawer|expand|dialog)\.js(?:$|[?|])/u;
+
 /**
- * The Privacy Choices design: its surfaces, class names and stylesheets.
- * Only the engine and `inth.choices.js` render it; the init script and `inth.dialog.js` render
- * the classic banner and dialog, and leave this design to the engine.
+ * The consent UI the engine loads from `inth.choices.js`: the prompt in
+ * each container, its options, the dialog, the opt-in confirmation, their
+ * class names and stylesheets. The engine keeps the banner and dialog
+ * hosts, the loader and the functions it shares with the file
+ * (`ui/prompt/prompt.ts`, `ui/dialog/index.ts`, `ui/parts/load-script.ts`,
+ * `ui/parts/engine.ts`, `ui/parts/receipt-focus.ts`).
  */
-const PRIVACY_CHOICES = [
-	/\/(?:packages\/(?:sdk\/)?browser|@inth\/sdk-browser)\/(?:src|dist)\/(?:ui|generated)\/privacy-choices(?:-design)?(?:\/|\.[jt]s(?:$|[?|]))/u,
-	/\/(?:packages\/(?:sdk\/)?ui|@inth\/sdk-ui)\/(?:src|dist)\/styles\/sheets\/(?:surface|card|bar|drawer|expand|privacy-choices-dialog)\.js(?:$|[?|])/u,
-];
-/**
- * The Privacy Choices parts the engine loads from `inth.choices.js`: its
- * surfaces, class names and stylesheets. The engine keeps the switch
- * between the designs, the loader and the functions it shares with the
- * file (`ui/privacy-choices/pc-import-script.ts`, `ui/privacy-choices/engine.ts`).
- */
-const PRIVACY_CHOICES_PARTS = [
-	/\/(?:packages\/(?:sdk\/)?browser|@inth\/sdk-browser)\/(?:src|dist)\/ui\/privacy-choices\/(?!(?:pc-import-script|engine)\.[jt]s(?:$|[?|]))/u,
-	/\/(?:packages\/(?:sdk\/)?browser|@inth\/sdk-browser)\/(?:src|dist)\/generated\/privacy-choices\//u,
-	PRIVACY_CHOICES[1] as RegExp,
+const UI_PARTS = [
+	new RegExp(
+		`/${BROWSER}/ui/(?:prompt/(?!prompt\\.)|dialog/(?!index\\.)|parts/(?!(?:load-script|engine|receipt-focus)\\.[jt]s(?:$|[?|]))|opt-in-confirmation\\.)`,
+		'u'
+	),
+	new RegExp(`/${BROWSER}/generated/ui/`, 'u'),
+	SURFACE_SHEETS,
 ];
 /**
  * What `inth.choices.js` must take from the engine rather than carry: every
@@ -58,24 +60,29 @@ const CHOICES_EXCLUSIONS = [
 	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:surface-session\/session|surface-actions\/(?:rules|opt-in|opt-out|opt-out-reload|plain-scripts)|events|libs\/vendors)\.[jt]s(?:$|[?|])/u,
 	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:modules\/(?:iab-controls|revocation-reload|vendor-allowed|persistence\/mount|script-loader\/(?:mount|diagnostics)|network-blocker\/hold)|libs\/(?:manifest-cache-runtime|script-loader\/debug))\.[jt]s(?:$|[?|])/u,
 	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:kernel|transports|runtime)\//u,
-	/\/(?:packages\/(?:sdk\/)?browser|@inth\/sdk-browser)\/(?:src|dist)\/ui\/(?:receipt-focus|opt-out-confirmation-state|privacy-choices\/engine)\.[jt]s(?:$|[?|])/u,
+	new RegExp(
+		`/${BROWSER}/ui/(?:parts/(?:receipt-focus|engine)|opt-out-confirmation-state)\\.[jt]s(?:$|[?|])`,
+		'u'
+	),
 ];
 /**
- * The files the init script runs before the engine: hosted, and without
- * the experiment controller. `libs/experiment.ts` holds its `import()`,
- * which a one-file script build keeps even when nothing calls it.
+ * The files the init script runs before the engine: hosted, without the
+ * experiment controller, and without any UI, which only the engine
+ * renders. `libs/experiment.ts` holds its `import()`, which a one-file
+ * script build keeps even when nothing calls it.
  */
 const INIT_EXCLUSIONS = [
 	...HOSTED_EXCLUSIONS,
 	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/libs\/experiment(?:-assignment|-engine)?\.[jt]s(?:$|[?|])/u,
-	...PRIVACY_CHOICES,
+	new RegExp(`/${BROWSER}/(?:ui|generated|iab)/`, 'u'),
+	/\/(?:packages\/(?:sdk\/)?ui|@inth\/sdk-ui)\/(?:src|dist)\/styles\//u,
 ];
 
 type BoundaryMode = 'choices' | 'hosted' | 'init' | 'production' | 'testing';
 
 const EXCLUSIONS: Record<BoundaryMode, RegExp[]> = {
 	choices: CHOICES_EXCLUSIONS,
-	hosted: [...HOSTED_EXCLUSIONS, ...PRIVACY_CHOICES_PARTS],
+	hosted: [...HOSTED_EXCLUSIONS, ...UI_PARTS],
 	init: INIT_EXCLUSIONS,
 	production: TESTING_ONLY,
 	testing: TESTING_EXCLUSIONS,

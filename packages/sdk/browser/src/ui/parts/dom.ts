@@ -1,5 +1,5 @@
 /**
- * The Privacy Choices surfaces' DOM helpers: an element builder whose
+ * The prompt's and the dialog's DOM helpers: an element builder whose
  * event handlers travel with the element, and a morph that patches the
  * mounted tree to match a freshly built one.
  *
@@ -14,10 +14,10 @@
  */
 
 /** A child the builder accepts. */
-export type PcChild = Node | string | number | null | undefined | false;
+export type PartChild = Node | string | number | null | undefined | false;
 
 /** Event handlers, set as `on<event>` properties so a morph can move them. */
-export type PcHandlers = Partial<
+export type PartHandlers = Partial<
 	Record<
 		'click' | 'focus' | 'keydown' | 'pointerdown' | 'pointerenter',
 		(event: Event) => void
@@ -25,16 +25,16 @@ export type PcHandlers = Partial<
 >;
 
 /** Attributes, with `on` for handlers and `ref` for the built element. */
-export type PcProps = Record<
+export type PartProps = Record<
 	string,
-	string | number | boolean | null | undefined | PcHandlers | PcRef
+	string | number | boolean | null | undefined | PartHandlers | PartRef
 > & {
-	on?: PcHandlers;
-	ref?: PcRef;
+	on?: PartHandlers;
+	ref?: PartRef;
 };
 
 /** Receives the element that ends up mounted, after the morph. */
-export interface PcRef {
+export interface PartRef {
 	current: HTMLElement | null;
 }
 
@@ -55,11 +55,11 @@ const CONTROLLER_ATTRIBUTES = new Set(['data-fade-top', 'data-fade-bottom']);
 /** Built elements that hold content a controller owns (a live region). */
 const OWNED = new WeakSet<Node>();
 /** The ref each built element asked for. */
-const REFS = new WeakMap<Node, PcRef>();
+const REFS = new WeakMap<Node, PartRef>();
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-const append = function append(element: Element, children: PcChild[]): void {
+const append = function append(element: Element, children: PartChild[]): void {
 	for (const child of children) {
 		if (child === null || child === undefined || child === false) {
 			continue;
@@ -79,8 +79,8 @@ const append = function append(element: Element, children: PcChild[]): void {
  */
 export const el = function el<TagName extends keyof HTMLElementTagNameMap>(
 	tag: TagName,
-	props: PcProps = {},
-	...children: PcChild[]
+	props: PartProps = {},
+	...children: PartChild[]
 ): HTMLElementTagNameMap[TagName] {
 	const element = document.createElement(tag);
 	for (const [name, value] of Object.entries(props)) {

@@ -28,28 +28,27 @@ const uiDist = dirname(
 );
 const outputDir = resolve(import.meta.dirname, '../src/generated');
 
-/** Component style maps the vanilla surfaces render against. */
+/**
+ * Class maps the stock sheet's surfaces render against: the shared parts,
+ * the trigger, the opt-in confirmation and the IAB surfaces' switches.
+ */
 const COMPONENTS = {
-	accordion: 'accordion',
 	actions: 'consent-actions',
-	// @deprecated temporary — removed in phase B: the classic banner and
-	// dialog class maps, whose rules no stylesheet ships any more.
-	banner: 'legacy-prompt',
 	branding: 'branding',
 	button: 'button',
-	dialog: 'legacy-panel',
 	legalLinks: 'legal-links',
-	manager: 'consent-manager',
 	optOutConfirmation: 'opt-out-confirmation',
-	preferenceItem: 'preference-item',
 	switch: 'switch',
 	trigger: 'consent-dialog-trigger',
-	vendorList: 'vendor-list',
 } as const;
 
-/** The consent UI's class maps, by generated file name. */
-const PRIVACY_CHOICES_COMPONENTS = {
-	bar: 'consent-banner',
+/**
+ * The prompt's and the dialog's class maps, by generated file name. Their
+ * rules are not in the stock sheet: each surface adds `@inth/sdk-ui`'s
+ * sheets for it when it renders.
+ */
+const SURFACE_COMPONENTS = {
+	banner: 'consent-banner',
 	card: 'consent-card',
 	dialog: 'consent-dialog',
 	drawer: 'consent-drawer',
@@ -130,78 +129,18 @@ const main = async function main(): Promise<void> {
 			rendered
 		)
 	);
-	// The init script (`inth.js`) renders only the banner before the engine
-	// loads, so it carries only the tokens and the button and banner rules:
-	// `@inth/sdk-ui`'s per-surface sheets, each an exact subset of the full
-	// sheet above. The engine swaps in the full sheet when it takes over.
-	const bannerSheets = await Promise.all(
-		['tokens', 'button', 'parts'].map(async (name) => {
-			const module = (await import(`@inth/sdk-ui/styles/sheets/${name}`)) as {
-				css: string;
-			};
-			return module.css;
-		})
-	);
-	const bannerClasses = {
-		actions: classes.actions,
-		banner: classes.banner,
-		branding: classes.branding,
-		button: classes.button,
-		legalLinks: classes.legalLinks,
-	};
-	// The banner renders only these classes, its branding only as the
-	// banner tag, and sets `data-context` only to `banner`: the branding
-	// sheet's dialog and manager rules cannot match it.
-	const bannerRendered = collectClassNames([bannerClasses]);
-	bannerRendered.delete(classes.branding.brandingTagDialog);
-	const bannerStylesheet = compactStylesheet(
-		pruneStylesheet(
-			bannerSheets.join('\n'),
-			bannerRendered,
-			(selector) => !/data-context=["']?(?:dialog|manager)/u.test(selector)
-		)
-	);
-	await writeFile(
-		join(outputDir, 'banner-styles.ts'),
-		`${banner}\n// The banner's share of styles.ts, for the init script (rslib.config.ts swaps it in).\nexport const stylesheet: string = ${JSON.stringify(bannerStylesheet)};\n\nexport const classes = ${JSON.stringify(bannerClasses, null, '\t')} as unknown as typeof import('./styles').classes;\n`
-	);
-	// What the init script's root still lacks for the dialog it opens from
-	// `inth.dialog.js` before the engine: the dialog and preference-widget
-	// rules (`@inth/sdk-ui`'s dialog sheet) and the branding and legal-link rules
-	// the banner sheet drops for the dialog. No rule repeats one of the
-	// banner sheet's, so inserted after it no override changes order.
-	const { css: dialogSheet } =
-		(await import('@inth/sdk-ui/styles/sheets/widget')) as { css: string };
-	const dialogStylesheet = compactStylesheet(
-		[
-			pruneStylesheet(
-				bannerSheets[2] ?? '',
-				rendered,
-				(selector) =>
-					/data-context=["']?(?:dialog|manager)/u.test(selector) ||
-					selector.includes(classes.branding.brandingTagDialog ?? '\0')
-			),
-			pruneStylesheet(dialogSheet, rendered),
-		].join('\n')
-	);
-	await writeFile(
-		join(outputDir, 'dialog-styles.ts'),
-		`${banner}\n// The dialog's rules the banner's share of styles.ts lacks, for inth.dialog.js.\nexport const stylesheet: string = ${JSON.stringify(dialogStylesheet)};\n`
-	);
 	await writeFile(
 		join(outputDir, 'iab-styles.ts'),
 		`${banner}\nexport const stylesheet: string = ${JSON.stringify(iabStylesheet)};\nexport const classes = ${JSON.stringify(iabClasses, null, '\t')} as const;\n`
 	);
-	// The Privacy Choices design's class maps, one module each, so a page
-	// bundles only the presentation it shows. Their rules are not in the
-	// stock sheet: each surface adds `@inth/sdk-ui`'s sheet for it
-	// (`src/ui/privacy-choices/sheets.ts`).
-	const privacyChoicesDir = join(outputDir, 'privacy-choices');
-	await mkdir(privacyChoicesDir, { recursive: true });
+	// One module per class map, so a page bundles only the container it
+	// shows.
+	const surfacesDir = join(outputDir, 'ui');
+	await mkdir(surfacesDir, { recursive: true });
 	await Promise.all(
-		Object.entries(PRIVACY_CHOICES_COMPONENTS).map(async ([file, component]) =>
+		Object.entries(SURFACE_COMPONENTS).map(async ([file, component]) =>
 			writeFile(
-				join(privacyChoicesDir, `${file}.ts`),
+				join(surfacesDir, `${file}.ts`),
 				`${banner}\nexport const classes = ${JSON.stringify(await readClassMap(component), null, '\t')} as const;\n`
 			)
 		)

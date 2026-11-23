@@ -22,11 +22,9 @@ import {
 	adoptBoot,
 	adoptedBoot,
 	releaseBoot,
-	sendInitCommit,
 	withInitPrefetch,
 } from './init/adopt';
 import { readBoot } from './init/boot';
-import { recordPendingTap } from './init/pending-tap';
 import type {
 	ConsentClient,
 	ConsentClientEventMap,
@@ -538,12 +536,6 @@ export const createGlobalWith = function createGlobalWith(
 			}
 			pendingListeners.clear();
 			created.start();
-			sendInitCommit(created.kernel);
-			// A tap on an earlier page's init-script banner that was never
-			// stored. A tap on this page's is the init script's to finish.
-			if (!adoptedBoot()?.commit) {
-				recordPendingTap(created);
-			}
 			initializingClientReady.resolve(created);
 			return created;
 		},

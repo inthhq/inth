@@ -2,6 +2,8 @@ import type {
 	AllConsentNames,
 	Callbacks,
 	ClearOnRevocationConfig,
+	ConsentContainer,
+	ConsentEdgeStyle,
 	ConsentExperiment,
 	ConsentPresentation,
 	SaveResult,
@@ -79,9 +81,37 @@ export interface ConsentBannerOptions {
 	hideBranding?: boolean;
 	/** Which legal links to render inline. `null` renders none. */
 	legalLinks?: (keyof LegalLinks)[] | null;
-	/** Dim the page and stop it scrolling while the banner is up. */
+	/**
+	 * A Card, Banner or Drawer, and where it sits. Overrides
+	 * `presentation.prompt.container` and the policy's `surface.container`.
+	 * Positions are logical: `start` and `end` follow the writing direction.
+	 * @default { type: 'card', position: 'start' }
+	 */
+	container?: ConsentContainer;
+	/**
+	 * `inset` floats a Banner or Drawer off the viewport edges; `flush`
+	 * pins it to them. A Card is always inset. Overrides
+	 * `presentation.prompt.edgeStyle`.
+	 * @default 'inset'
+	 */
+	edgeStyle?: ConsentEdgeStyle;
+	/**
+	 * Block the page until the visitor makes a choice: backdrop, scroll lock,
+	 * focus trap and no outside dismissal. Overrides
+	 * `presentation.prompt.blockUntilChoice`.
+	 * @remarks A centred Card always blocks. A notice never does, nor a
+	 * prompt under an opt-out model or a policy that forbids blocking.
+	 */
+	blockUntilChoice?: boolean;
+	/**
+	 * IAB banner only: dim the page and stop it scrolling while it is up.
+	 * `presentation.prompt.blocking` wins over it.
+	 */
 	scrollLock?: boolean;
-	/** Legacy blocking override. Prefer `presentation.prompt.blocking`. */
+	/**
+	 * IAB banner only: keep focus inside it while it is up.
+	 * `presentation.prompt.blocking` wins over it.
+	 */
 	trapFocus?: boolean;
 	/** Skip the enter and exit transitions. Defaults to the UI option. */
 	disableAnimation?: boolean;
@@ -89,7 +119,7 @@ export interface ConsentBannerOptions {
 
 /** Overrides for the preference centre dialog. */
 export interface ConsentDialogOptions {
-	/** Drop the "Consent by" tag. */
+	/** IAB dialog only: drop the "Consent by" tag. */
 	hideBranding?: boolean;
 	/** Which legal links to render inline. `null` renders none. */
 	legalLinks?: (keyof LegalLinks)[] | null;
