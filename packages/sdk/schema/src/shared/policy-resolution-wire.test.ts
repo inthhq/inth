@@ -94,6 +94,7 @@ describe('client policy reader', () => {
 				'shared/policy-contract.ts',
 				'shared/policy-resolution-wire.ts',
 				'shared/policy-rule-invariants.ts',
+				'shared/policy-surface.ts',
 			])
 		);
 	});

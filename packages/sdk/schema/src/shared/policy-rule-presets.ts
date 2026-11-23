@@ -7,6 +7,23 @@ import { policyMatchers } from './policy-runtime';
  */
 export type EuropePolicyRuleMode = 'opt-in' | 'iab';
 
+/** Options for the US opt-out presets. */
+export interface UsOptOutPresetOptions {
+	/**
+	 * First-layer interaction. `none` shows no banner; `notice` shows a
+	 * dismissible notice whose dismissal records no consent (DEF-06).
+	 * Either way the page is never blocked (BNR-13).
+	 * @default 'none'
+	 */
+	prompt?: 'none' | 'notice';
+}
+
+/**
+ * Opt-out regimes have nothing to consent to, so the prompt never blocks
+ * the page, whatever the host's presentation asks for (BNR-13).
+ */
+const US_OPT_OUT_SURFACE = { blocking: 'forbidden' } as const;
+
 const GPC_SOURCE = 'https://www.w3.org/TR/2026/WD-gpc-20260611/';
 const CCPA_SOURCE = 'https://oag.ca.gov/privacy/ccpa';
 const ICO_SOURCE =
@@ -101,8 +118,20 @@ const worldNoneRule = function worldNoneRule(): PolicyRule {
 	};
 };
 
+const NOTICE_ASSUMPTION =
+	'A dismissible notice informs at first visit; dismissing it records no consent. Disclosure, preferences and the opt-out right stay reachable after it closes.';
+
+/** The review assumption that describes the first layer of a US opt-out preset. */
+const optOutAssumption = function optOutAssumption(
+	prompt: 'none' | 'notice',
+	noPrompt: string
+): string {
+	return prompt === 'notice' ? NOTICE_ASSUMPTION : noPrompt;
+};
+
 const californiaRule = function californiaRule(
-	mode: 'opt-in' | 'opt-out'
+	mode: 'opt-in' | 'opt-out',
+	optOutPrompt: 'none' | 'notice' = 'none'
 ): PolicyRule {
 	const isOptOut = mode === 'opt-out';
 	const rule: PolicyRule = {
@@ -110,7 +139,7 @@ const californiaRule = function californiaRule(
 		match: policyMatchers.regions([{ country: 'US', region: 'CA' }]),
 		model: mode,
 		privacySignals: { gpc: { denyCategories: ['marketing', 'measurement'] } },
-		prompt: isOptOut ? 'none' : 'choice',
+		prompt: isOptOut ? optOutPrompt : 'choice',
 		proof: fullProof,
 		review: sourceReview(
 			[CCPA_SOURCE, GPC_SOURCE],
@@ -120,7 +149,10 @@ const californiaRule = function californiaRule(
 				'Mapping GPC to marketing and measurement is a conservative product default and must be checked against actual processing purposes. Not all measurement is sale or sharing.',
 				'Removing the browser signal is not a withdrawal of a recorded opt-out.',
 				isOptOut
-					? 'No first-layer prompt. Disclosure, preferences and the opt-out right stay reachable without a visible banner.'
+					? optOutAssumption(
+							optOutPrompt,
+							'No first-layer prompt. Disclosure, preferences and the opt-out right stay reachable without a visible banner.'
+						)
 					: 'Opt-in is an optional deployment choice. It does not establish a general California opt-in mandate.',
 			]
 		),
@@ -128,6 +160,7 @@ const californiaRule = function californiaRule(
 	};
 	if (isOptOut) {
 		rule.rights = ['preferences'];
+		rule.surface = { ...US_OPT_OUT_SURFACE };
 	}
 	return rule;
 };
@@ -175,9 +208,11 @@ const quebecOptInPreset = function quebecOptInPreset(): PolicyRule {
 	};
 };
 
-const californiaOptOutPreset = function californiaOptOutPreset(): PolicyRule {
+const californiaOptOutPreset = function californiaOptOutPreset(
+	options: UsOptOutPresetOptions = {}
+): PolicyRule {
 	return {
-		...californiaRule('opt-out'),
+		...californiaRule('opt-out', options.prompt),
 		legacyMaterial: structuredClone(legacyPresetMaterial.californiaOptOut),
 	};
 };
@@ -261,7 +296,8 @@ const countryOptIn = function countryOptIn(
 };
 
 const usPrivacyStatesRule = function usPrivacyStatesRule(
-	mode: 'opt-in' | 'opt-out'
+	mode: 'opt-in' | 'opt-out',
+	optOutPrompt: 'none' | 'notice' = 'none'
 ): PolicyRule {
 	const isOptOut = mode === 'opt-out';
 	return {
@@ -271,7 +307,7 @@ const usPrivacyStatesRule = function usPrivacyStatesRule(
 		),
 		model: mode,
 		privacySignals: { gpc: { denyCategories: ['marketing', 'measurement'] } },
-		prompt: isOptOut ? 'none' : 'choice',
+		prompt: isOptOut ? optOutPrompt : 'choice',
 		review: regionalReview(
 			[
 				CCPA_SOURCE,
@@ -291,7 +327,10 @@ const usPrivacyStatesRule = function usPrivacyStatesRule(
 				'Curated coverage of 21 states as of 8 September 2026, including the narrower Florida and Nevada laws. Applicability thresholds and exemptions differ; location alone does not determine applicability.',
 				'These variants cover ordinary adult, non-sensitive processing. Child protections, sensitive-data consent or prohibitions, assessments and appeal workflows need separate implementation.',
 				isOptOut
-					? 'No automatic banner. Supply timely disclosures and persistent opt-out controls; an optional notice dismissal records no consent.'
+					? optOutAssumption(
+							optOutPrompt,
+							'No automatic banner. Supply timely disclosures and persistent opt-out controls; an optional notice dismissal records no consent.'
+						)
 					: 'Optional categories stay denied until an explicit choice. Opt-in is a deployment choice, not a claim that every covered state requires it.',
 				'GPC denies marketing and measurement across the group as a conservative product mapping, not a claim that every state mandates GPC or all measurement is sale, sharing or targeted advertising.',
 				'The referenced GPC specification is a Working Draft, not a final Recommendation. Removing the signal does not withdraw a recorded opt-out.',
@@ -302,6 +341,7 @@ const usPrivacyStatesRule = function usPrivacyStatesRule(
 		validity: isOptOut
 			? { choiceDays: 365, noticeDays: 365 }
 			: { choiceDays: 365 },
+		...(isOptOut && { surface: { ...US_OPT_OUT_SURFACE } }),
 	};
 };
 
@@ -405,8 +445,12 @@ export interface PolicyRulePresets {
 	/** Switzerland: no prompt for reviewed low-risk processing with prior information and persistent opt-out. */
 	switzerlandOptOutNoPrompt: () => PolicyRule;
 
-	/** US privacy states: no automatic prompt, GPC honored, persistent opt-out controls required. */
-	usPrivacyStatesOptOut: () => PolicyRule;
+	/**
+	 * US privacy states: no automatic prompt (or a notice with
+	 * `prompt: 'notice'`), GPC honored, persistent opt-out controls required.
+	 * Never blocks the page.
+	 */
+	usPrivacyStatesOptOut: (options?: UsOptOutPresetOptions) => PolicyRule;
 	/** US privacy states: opt-in choice, GPC honored. Same state coverage as opt-out. */
 	usPrivacyStatesOptIn: () => PolicyRule;
 	/** Australia: opt-in starter for optional tracking. */
@@ -429,8 +473,12 @@ export interface PolicyRulePresets {
 	europeIab: () => PolicyRule;
 	/** California opt-in preset (US-CA). Choice prompt, GPC honored. */
 	californiaOptIn: () => PolicyRule;
-	/** California opt-out preset (US-CA). No prompt, GPC honored, rights persistent. */
-	californiaOptOut: () => PolicyRule;
+	/**
+	 * California opt-out preset (US-CA). No prompt (or a notice with
+	 * `prompt: 'notice'`), GPC honored, rights persistent. Never blocks the
+	 * page.
+	 */
+	californiaOptOut: (options?: UsOptOutPresetOptions) => PolicyRule;
 	/** Quebec opt-in preset (CA-QC). Choice prompt. */
 	quebecOptIn: () => PolicyRule;
 	/**
@@ -518,7 +566,7 @@ export const policyRulePresets: PolicyRulePresets = {
 		...californiaRule('opt-in'),
 		legacyMaterial: structuredClone(legacyPresetMaterial.californiaOptIn),
 	}),
-	californiaOptOut: () => californiaOptOutPreset(),
+	californiaOptOut: (options) => californiaOptOutPreset(options),
 	canadaOptIn: () => canadaRule('opt-in'),
 	canadaOptOut: () => canadaRule('opt-out'),
 	chinaOptIn: () =>
@@ -756,7 +804,8 @@ export const policyRulePresets: PolicyRulePresets = {
 		scopeMode: 'strict',
 	}),
 	usPrivacyStatesOptIn: () => usPrivacyStatesRule('opt-in'),
-	usPrivacyStatesOptOut: () => usPrivacyStatesRule('opt-out'),
+	usPrivacyStatesOptOut: (options) =>
+		usPrivacyStatesRule('opt-out', options?.prompt),
 	vietnamOptIn: () =>
 		countryOptIn(
 			'vietnam_opt_in',
@@ -786,6 +835,13 @@ export interface RecommendedPolicyRulesOptions {
 	 * @default false
 	 */
 	iab?: boolean;
+	/**
+	 * First layer of the California and US privacy state opt-out rules.
+	 * `none` shows no banner; `notice` shows a dismissible notice that
+	 * records no consent (DEF-06). Neither blocks the page.
+	 * @default 'none'
+	 */
+	usOptOutPrompt?: UsOptOutPresetOptions['prompt'];
 }
 
 /**
@@ -808,11 +864,12 @@ export interface RecommendedPolicyRulesOptions {
 export const recommendedPolicyRules = function recommendedPolicyRules(
 	options: RecommendedPolicyRulesOptions = {}
 ): PolicyRule[] {
-	const us = usPrivacyStatesRule('opt-out');
+	const prompt = options.usOptOutPrompt ?? 'none';
+	const us = usPrivacyStatesRule('opt-out', prompt);
 	return [
 		options.iab ? europeIabPreset() : europeOptInPreset(),
 		quebecOptInPreset(),
-		californiaOptOutPreset(),
+		californiaOptOutPreset({ prompt }),
 		{
 			...us,
 			match: policyMatchers.merge(

@@ -7,6 +7,7 @@ import {
 	STATIC_BANNER_ATTR,
 	staticBannerCopyHash,
 } from '../static-banner';
+import type { StaticBannerKey } from '../static-banner';
 import { storedChoiceNames } from '../storage-keys';
 
 const COPY = {
@@ -48,7 +49,10 @@ const stored = [...names.choice, ...names.notice];
  * Puts the static banner and its script in the page and runs the script as
  * the parser would, with `document.currentScript` set.
  */
-const mount = (prefetch: Promise<unknown> | undefined) => {
+const mount = (
+	prefetch: Promise<unknown> | undefined,
+	bannerKey: StaticBannerKey = KEY
+) => {
 	const win = window as unknown as Record<string, unknown>;
 	win[PREFETCH_WINDOW_KEY] = prefetch
 		? { 'https://consent.example.com/init|same-origin': { promise: prefetch } }
@@ -61,7 +65,7 @@ const mount = (prefetch: Promise<unknown> | undefined) => {
 	// jsdom would run a classic script on insertion, in its own window;
 	// this test runs it below, with `currentScript` set.
 	script.type = 'text/x-static-banner';
-	script.textContent = buildStaticBannerScript(KEY, stored);
+	script.textContent = buildStaticBannerScript(bannerKey, stored);
 	document.body.append(banner, script);
 	const parsing = new Proxy(document, {
 		get: (target, key) => {
@@ -162,10 +166,50 @@ describe('static banner script', () => {
 				},
 			},
 		],
+		[
+			'a policy whose surface asks for another layout',
+			{
+				policyResolution: {
+					fingerprints: {
+						policy: 'policy-fingerprint',
+						presentation: 'drawer-layout',
+					},
+					status: 'matched',
+				},
+			},
+		],
 		['other branding', { branding: 'c15t' }],
 		['vendors', { vendors: [{ id: 'x' }] }],
 	])('removes the banner when /init answers with %s', async (_, changes) => {
 		const banner = mount(Promise.resolve(answer(changes)));
+		await settle();
+		expect(banner.isConnected).toBe(false);
+	});
+
+	test('shows the banner when /init answers with its policy and layout', async () => {
+		const banner = mount(
+			Promise.resolve(
+				answer({
+					policyResolution: {
+						fingerprints: {
+							policy: 'policy-fingerprint',
+							presentation: 'drawer-layout',
+						},
+						status: 'matched',
+					},
+				})
+			),
+			{ ...KEY, presentation: 'drawer-layout' }
+		);
+		await settle();
+		expect(banner.hidden).toBe(false);
+	});
+
+	test('removes a banner rendered for a layout when /init answers without one', async () => {
+		const banner = mount(Promise.resolve(answer()), {
+			...KEY,
+			presentation: 'drawer-layout',
+		});
 		await settle();
 		expect(banner.isConnected).toBe(false);
 	});

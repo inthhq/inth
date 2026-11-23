@@ -5,63 +5,38 @@
  *
  * This is the one decision matrix every renderer uses, so React, Vue,
  * Svelte, Angular, Astro and the script-tag build show the same surface for
- * the same input. It is pure and imports nothing at runtime.
+ * the same input. It is pure.
+ *
+ * The container types are defined once, in `@inth/sdk-schema`, because a
+ * policy rule's `surface` carries them too; they are re-exported here under
+ * the same names.
  */
-import type { PolicyPrompt, PolicyRuleModel } from '@inth/sdk-schema/types';
+import {
+	CONSENT_BANNER_EDGES,
+	CONSENT_CARD_POSITIONS,
+	CONSENT_DRAWER_SIDES,
+} from '@inth/sdk-schema/types';
+import type {
+	BannerEdge,
+	CardPosition,
+	ConsentBlockingConstraint,
+	ConsentContainer,
+	ConsentContainerType,
+	ConsentEdgeStyle,
+	DrawerSide,
+	PolicyPrompt,
+	PolicyRuleModel,
+} from '@inth/sdk-schema/types';
 
-/**
- * Where a Card sits: a bottom corner or the centre. `start` and `end` are
- * logical, like CSS `inset-inline-start`: they follow the page's writing
- * direction, so on a right-to-left page `start` is the bottom-right corner.
- */
-export type CardPosition = 'start' | 'end' | 'center';
-
-/** Viewport edges a Banner may occupy. */
-export type BannerEdge = 'bottom' | 'top';
-
-/**
- * Viewport side a Drawer slides in from. `start` and `end` are the inline
- * sides and follow the page's writing direction, as a Card's corners do.
- */
-export type DrawerSide = 'bottom' | 'top' | 'start' | 'end';
-
-/**
- * The container a consent prompt renders in. All three show the same
- * content, copy and decisions; only the container changes.
- */
-export type ConsentContainer =
-	| {
-			type: 'card';
-			/** @default 'start' */
-			position?: CardPosition;
-	  }
-	| {
-			type: 'banner';
-			/** @default 'bottom' */
-			edge?: BannerEdge;
-	  }
-	| {
-			type: 'drawer';
-			/** @default 'bottom' */
-			side?: DrawerSide;
-	  };
-
-/** Container types, in the order hosts usually meet them. */
-export type ConsentContainerType = ConsentContainer['type'];
-
-/**
- * `inset` floats the surface 12px from the edges it touches with rounded
- * corners. `flush` runs it edge to edge with square corners. Banners,
- * Drawers and phone sheets use it; a Card is always inset.
- */
-export type ConsentEdgeStyle = 'inset' | 'flush';
-
-/**
- * Policy constraint on blocking the page until a choice is made.
- * `forbidden` never blocks, `required` always blocks a choice prompt, and
- * `allowed` lets the host decide.
- */
-export type ConsentBlockingConstraint = 'forbidden' | 'allowed' | 'required';
+export type {
+	BannerEdge,
+	CardPosition,
+	ConsentBlockingConstraint,
+	ConsentContainer,
+	ConsentContainerType,
+	ConsentEdgeStyle,
+	DrawerSide,
+} from '@inth/sdk-schema/types';
 
 /** Viewport class the layout is resolved for. */
 export type ConsentViewport = 'desktop' | 'phone';
@@ -149,9 +124,9 @@ export interface ResolvedConsentLayout {
 const describeValue = (value: unknown): string =>
 	typeof value === 'string' ? `"${value}"` : `a ${typeof value}`;
 
-const CARD_POSITIONS: readonly CardPosition[] = ['start', 'end', 'center'];
-const BANNER_EDGES: readonly BannerEdge[] = ['bottom', 'top'];
-const DRAWER_SIDES: readonly DrawerSide[] = ['bottom', 'top', 'start', 'end'];
+const CARD_POSITIONS: readonly CardPosition[] = CONSENT_CARD_POSITIONS;
+const BANNER_EDGES: readonly BannerEdge[] = CONSENT_BANNER_EDGES;
+const DRAWER_SIDES: readonly DrawerSide[] = CONSENT_DRAWER_SIDES;
 
 /** Default layout when the host supplies none. */
 export const DEFAULT_CONSENT_CONTAINER: Readonly<{

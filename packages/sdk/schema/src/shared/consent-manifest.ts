@@ -36,9 +36,16 @@ export interface ConsentManifestGVLReference {
 export interface ConsentManifestPolicyPack {
 	/** The authored geographic matcher. */
 	match: PolicyMatch;
-	/** Normalized behavior, without presentation or author metadata. */
+	/**
+	 * Normalized behavior, plus the rule's `surface` (layout defaults and
+	 * blocking constraint) when it sets one. No author metadata.
+	 */
 	rule: ResolvedPolicyRule;
-	/** Fingerprints precomputed by the producer. */
+	/**
+	 * Fingerprints precomputed by the producer. `presentation` hashes the
+	 * rule's `surface` and is present only when the rule has one; the
+	 * policy, choice and notice fingerprints never include it.
+	 */
 	fingerprints: PolicyFingerprints;
 }
 

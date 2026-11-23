@@ -341,7 +341,7 @@ describe('readPolicyResolutionWire', () => {
 		{
 			input: {
 				...matchedWire,
-				fingerprints: { ...matchedWire.fingerprints, presentation: 'x' },
+				fingerprints: { ...matchedWire.fingerprints, layout: 'x' },
 			},
 			label: 'unknown fingerprint field',
 		},

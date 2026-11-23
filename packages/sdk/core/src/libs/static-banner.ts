@@ -24,6 +24,13 @@ export const STATIC_BANNER_ATTR = 'data-inth-static-banner';
 export interface StaticBannerKey {
 	/** `policyResolution.fingerprints.policy` of the rendered policy. */
 	policy: string;
+	/**
+	 * `policyResolution.fingerprints.presentation` of the rendered policy:
+	 * the layout its `surface` asks for. Two packs with the same behavior
+	 * and different layouts must not share a static banner. `null` or
+	 * absent when the policy has no `surface`.
+	 */
+	presentation?: string | null;
 	/** `translations.language` the banner was rendered in. */
 	language: string;
 	/** `branding` the banner was rendered with. */
@@ -70,7 +77,7 @@ export const staticBannerCopyHash = function staticBannerCopyHash(
 /**
  * Source of the inline script that follows the static banner. It shows the
  * banner when the page's prefetched `/v1/consent/init` names the banner's policy,
- * language, branding and copy, and nothing is stored under the consent
+ * presentation, language, branding and copy, and nothing is stored under the consent
  * storage keys; otherwise it removes it. A stored choice removes it before
  * `/v1/consent/init` answers, so a returning visitor never sees it.
  *
@@ -93,7 +100,8 @@ export const buildStaticBannerScript = function buildStaticBannerScript(
 		f: key.policy,
 		k: stored,
 		l: key.language,
+		p: key.presentation ?? null,
 		x: COPY_PATHS,
 	});
-	return `(function(w,d,p){var e=d.currentScript,b=e&&e.previousElementSibling,m,k,o,H=${STORED_NAMES_CHECK};function x(){b&&b.parentNode&&b.parentNode.removeChild(b)}function s(){return H(p.k)}function h(t){var v=p.x.map(function(a){var g=t&&t[a[0]],y=g&&g[a[1]];return typeof y==='string'?y:''}).join('\\n'),n=2166136261,i;for(i=0;i<v.length;i++)n=Math.imul(n^v.charCodeAt(i),16777619)>>>0;return n}if(!b||!b.hasAttribute('${STATIC_BANNER_ATTR}'))return;if(s())return x();m=w['${PREFETCH_WINDOW_KEY}'];for(k in m)if(o){o=0;break}else o=m[k];if(!o)return x();o.promise.then(function(r){var i=r&&r.init,q=i&&i.policyResolution,t=i&&i.translations;if(b.parentNode&&q&&q.status==='matched'&&q.fingerprints&&q.fingerprints.policy===p.f&&t&&t.language===p.l&&(i.branding||null)===p.b&&!i.gvl&&!i.gvlReference&&!(i.vendors&&i.vendors.length)&&!(i.customVendors&&i.customVendors.length)&&h(t.translations)===p.c&&!s())b.hidden=false;else x()},x)})(window,document,${config})`;
+	return `(function(w,d,p){var e=d.currentScript,b=e&&e.previousElementSibling,m,k,o,H=${STORED_NAMES_CHECK};function x(){b&&b.parentNode&&b.parentNode.removeChild(b)}function s(){return H(p.k)}function h(t){var v=p.x.map(function(a){var g=t&&t[a[0]],y=g&&g[a[1]];return typeof y==='string'?y:''}).join('\\n'),n=2166136261,i;for(i=0;i<v.length;i++)n=Math.imul(n^v.charCodeAt(i),16777619)>>>0;return n}if(!b||!b.hasAttribute('${STATIC_BANNER_ATTR}'))return;if(s())return x();m=w['${PREFETCH_WINDOW_KEY}'];for(k in m)if(o){o=0;break}else o=m[k];if(!o)return x();o.promise.then(function(r){var i=r&&r.init,q=i&&i.policyResolution,t=i&&i.translations;if(b.parentNode&&q&&q.status==='matched'&&q.fingerprints&&q.fingerprints.policy===p.f&&(q.fingerprints.presentation||null)===p.p&&t&&t.language===p.l&&(i.branding||null)===p.b&&!i.gvl&&!i.gvlReference&&!(i.vendors&&i.vendors.length)&&!(i.customVendors&&i.customVendors.length)&&h(t.translations)===p.c&&!s())b.hidden=false;else x()},x)})(window,document,${config})`;
 };

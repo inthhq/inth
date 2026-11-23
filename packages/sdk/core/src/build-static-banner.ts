@@ -248,11 +248,15 @@ export const renderStaticBannerHtml = function renderStaticBannerHtml(
 			continue;
 		}
 		const markup = renderer.renderStaticBanner(init);
-		const policy = (
+		const fingerprints = (
 			init.policyResolution as
-				| { fingerprints?: { policy?: string }; policyId?: string }
+				| {
+						fingerprints?: { policy?: string; presentation?: string };
+						policyId?: string;
+				  }
 				| undefined
-		)?.fingerprints?.policy;
+		)?.fingerprints;
+		const policy = fingerprints?.policy;
 		if (!(markup && policy && init.translations?.language)) {
 			continue;
 		}
@@ -262,6 +266,7 @@ export const renderStaticBannerHtml = function renderStaticBannerHtml(
 				copy: staticBannerCopyHash(init.translations.translations),
 				language: init.translations.language,
 				policy,
+				presentation: fingerprints?.presentation ?? null,
 			},
 			storedNames(options.storageKey)
 		);

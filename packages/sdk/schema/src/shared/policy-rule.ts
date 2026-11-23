@@ -7,7 +7,10 @@ import type { LegacyMaterialCompatibility } from './legacy-material-policy';
  * first-layer interaction is required, which categories are in scope, which
  * actions and rights the interaction must offer, how long a choice or a
  * notice dismissal stays valid, and how the Global Privacy Control signal is
- * mapped. Presentation (layout, order, variants, copy) belongs to the host.
+ * mapped. Presentation (order, variants, copy) belongs to the host. The one
+ * exception is `surface`: layout defaults the host overrides, and a hard
+ * constraint on blocking the page. It is hashed only in the presentation
+ * domain, never in the policy, choice or notice fingerprints.
  *
  * `PolicyRule` is author input. `ResolvedPolicyRule` is the canonical
  * normalized form: every set is sorted and deduplicated, wildcards are
@@ -46,6 +49,24 @@ import type {
 	PolicyScopeMode,
 	PolicyValidationResult,
 } from './policy-runtime';
+import {
+	canonicalizePolicySurface,
+	collectPolicySurfaceRuleIssues,
+	collectPolicySurfaceFieldIssues,
+} from './policy-surface';
+import type { PolicySurface, ResolvedPolicySurface } from './policy-surface';
+
+export type {
+	BannerEdge,
+	CardPosition,
+	ConsentBlockingConstraint,
+	ConsentContainer,
+	ConsentContainerType,
+	ConsentEdgeStyle,
+	DrawerSide,
+	PolicySurface,
+	ResolvedPolicySurface,
+} from './policy-surface';
 
 export {
 	canonicalizePolicySet,
@@ -124,8 +145,11 @@ export interface PolicyRuleReview {
  * Author-facing policy rule. One entry in a v3 policy pack.
  *
  * @remarks
- * Presentation is deliberately absent. Configure layout and variants on the
- * host. `review` documents assumptions and is never part of any fingerprint.
+ * Presentation is the host's, apart from `surface`: layout defaults the
+ * host's own presentation overrides, plus a hard blocking constraint.
+ * `surface` is never part of the policy, choice or notice fingerprints, so
+ * changing it asks nobody again. `review` documents assumptions and is never
+ * part of any fingerprint.
  *
  * @see {@link https://c15t.com/docs/concepts/policies}
  */
@@ -181,6 +205,13 @@ export interface PolicyRule {
 		storeUserAgent?: boolean;
 		storeLanguage?: boolean;
 	};
+	/**
+	 * Layout defaults for the consent prompt (`container`, `edgeStyle`),
+	 * which the host's presentation overrides, and a hard `blocking`
+	 * constraint it cannot. Script-tag and dashboard installs, which have no
+	 * host presentation, take their layout from here.
+	 */
+	surface?: PolicySurface;
 	review?: PolicyRuleReview;
 }
 
@@ -235,6 +266,13 @@ export interface ResolvedPolicyRule {
 		storeUserAgent: boolean;
 		storeLanguage: boolean;
 	};
+	/**
+	 * Canonical layout defaults and blocking constraint. Absent when the rule
+	 * sets none, or only what it already implies, so such a rule reads as it
+	 * did before `surface` existed. Never part of the policy, choice or
+	 * notice fingerprints.
+	 */
+	surface?: ResolvedPolicySurface;
 }
 
 const RULE_KEYS = [
@@ -253,6 +291,7 @@ const RULE_KEYS = [
 	'copyRevision',
 	'i18n',
 	'proof',
+	'surface',
 	'review',
 ] as const;
 const MATCH_KEYS = [
@@ -656,6 +695,33 @@ const collectReviewErrors = function collectReviewErrors(
 	}
 };
 
+const collectSurfaceErrors = function collectSurfaceErrors(
+	check: RuleCheck
+): void {
+	const { errors, label, rule } = check;
+	const surface = own(rule, 'surface');
+	if (surface === undefined) {
+		return;
+	}
+	const fieldIssues = collectPolicySurfaceFieldIssues(surface);
+	if (fieldIssues.length > 0) {
+		errors.push(...fieldIssues.map((issue) => `Policy ${label} ${issue}.`));
+		return;
+	}
+	const model = own(rule, 'model');
+	const prompt = own(rule, 'prompt');
+	if (!isPolicyRuleModel(model) || !isPolicyPrompt(prompt)) {
+		// The model and prompt errors already explain this rule.
+		return;
+	}
+	for (const issue of collectPolicySurfaceRuleIssues(surface as PolicySurface, {
+		model,
+		prompt,
+	})) {
+		errors.push(`Policy ${label} ${issue}.`);
+	}
+};
+
 const collectMetadataErrors = function collectMetadataErrors(
 	check: RuleCheck
 ): void {
@@ -775,6 +841,7 @@ const collectRuleErrors = function collectRuleErrors(
 	collectRightsErrors(check);
 	collectValidityErrors(check);
 	collectPrivacySignalErrors(check);
+	collectSurfaceErrors(check);
 	collectMetadataErrors(check);
 	return check.errors;
 };
@@ -1063,6 +1130,10 @@ export const normalizePolicyRule = function normalizePolicyRule(
 	};
 	if (i18n) {
 		normalized.i18n = i18n;
+	}
+	const surface = canonicalizePolicySurface(rule.surface, rule);
+	if (surface) {
+		normalized.surface = surface;
 	}
 	const issues = collectResolvedPolicyRuleIssues(normalized);
 	if (issues.length > 0) {

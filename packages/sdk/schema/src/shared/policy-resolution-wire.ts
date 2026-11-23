@@ -27,6 +27,16 @@ import {
 	POLICY_PROMPT_ACTIONS,
 } from './policy-rule-invariants';
 import type { PolicyMatchedBy } from './policy-runtime';
+import {
+	CONSENT_BANNER_EDGES,
+	CONSENT_BLOCKING_CONSTRAINTS,
+	CONSENT_CARD_POSITIONS,
+	CONSENT_CONTAINER_TYPES,
+	CONSENT_DRAWER_SIDES,
+	CONSENT_EDGE_STYLES,
+	POLICY_SURFACE_KEYS,
+} from './policy-surface';
+import type { ConsentContainer, ResolvedPolicySurface } from './policy-surface';
 
 // In a module of their own, so code that only names the contract, such as
 // the `/v1/consent/init` request a page sends first, does not carry the wire reader.
@@ -213,6 +223,7 @@ const RULE_WIRE_KEYS = [
 	'copyRevision',
 	'i18n',
 	'proof',
+	'surface',
 ] as const;
 const ACTION_KEYS = ['allowed', 'required', 'equivalent'] as const;
 const VALIDITY_KEYS = ['choiceMs', 'noticeMs'] as const;
@@ -225,6 +236,7 @@ const FINGERPRINT_KEYS = [
 	'choice',
 	'notice',
 	'legacyMaterial',
+	'presentation',
 ] as const;
 
 class WireProblem extends Error {
@@ -462,6 +474,96 @@ const readI18n = function readI18n(value: unknown): ResolvedPolicyRule['i18n'] {
 	};
 };
 
+const readMember = function readMember<ValueType extends string>(
+	value: unknown,
+	field: string,
+	members: readonly ValueType[]
+): ValueType | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	if (typeof value !== 'string') {
+		throw invalid(`${field} must be a string`);
+	}
+	if (!(members as readonly string[]).includes(value)) {
+		throw unsupported(`${field} has unknown value "${value}"`);
+	}
+	return value as ValueType;
+};
+
+const readContainer = function readContainer(value: unknown): ConsentContainer {
+	const field = 'policy.surface.container';
+	if (!isPlainPolicyObject(value)) {
+		throw invalid(`${field} must be a plain object`);
+	}
+	const type = readMember(
+		own(value, 'type'),
+		`${field}.type`,
+		CONSENT_CONTAINER_TYPES
+	);
+	switch (type) {
+		case 'card': {
+			readObject(value, field, ['type', 'position']);
+			const position = readMember(
+				own(value, 'position'),
+				`${field}.position`,
+				CONSENT_CARD_POSITIONS
+			);
+			return { type, ...(position !== undefined && { position }) };
+		}
+		case 'banner': {
+			readObject(value, field, ['type', 'edge']);
+			const edge = readMember(
+				own(value, 'edge'),
+				`${field}.edge`,
+				CONSENT_BANNER_EDGES
+			);
+			return { type, ...(edge !== undefined && { edge }) };
+		}
+		case 'drawer': {
+			readObject(value, field, ['type', 'side']);
+			const side = readMember(
+				own(value, 'side'),
+				`${field}.side`,
+				CONSENT_DRAWER_SIDES
+			);
+			return { type, ...(side !== undefined && { side }) };
+		}
+		default:
+			throw invalid(`${field}.type is required`);
+	}
+};
+
+/**
+ * `policy.surface`, which a producer leaves out when the rule sets no
+ * layout. Strict like every other field: an unknown container type, edge
+ * style or blocking constraint is `unsupported-contract`.
+ */
+const readSurface = function readSurface(
+	value: unknown
+): ResolvedPolicySurface | undefined {
+	if (value === undefined) {
+		return undefined;
+	}
+	const surface = readObject(value, 'policy.surface', POLICY_SURFACE_KEYS);
+	const container = own(surface, 'container');
+	const edgeStyle = readMember(
+		own(surface, 'edgeStyle'),
+		'policy.surface.edgeStyle',
+		CONSENT_EDGE_STYLES
+	);
+	const blocking = readMember(
+		own(surface, 'blocking'),
+		'policy.surface.blocking',
+		CONSENT_BLOCKING_CONSTRAINTS
+	);
+	return {
+		...(container !== undefined && { container: readContainer(container) }),
+		...(edgeStyle !== undefined && { edgeStyle }),
+		...(blocking !== undefined && { blocking }),
+	};
+};
+
 const readResolvedPolicyRule = function readResolvedPolicyRule(
 	value: unknown
 ): ResolvedPolicyRule {
@@ -494,6 +596,10 @@ const readResolvedPolicyRule = function readResolvedPolicyRule(
 	if (i18n) {
 		rule.i18n = i18n;
 	}
+	const surface = readSurface(own(raw, 'surface'));
+	if (surface) {
+		rule.surface = surface;
+	}
 	const issues = collectResolvedPolicyRuleIssues(rule);
 	if (issues.length > 0) {
 		throw invalid(`policy: ${issues[0]}`);
@@ -516,11 +622,19 @@ const readFingerprints = function readFingerprints(
 		own(raw, 'legacyMaterial'),
 		'fingerprints.legacyMaterial'
 	);
+	const presentation = readOptionalString(
+		own(raw, 'presentation'),
+		'fingerprints.presentation'
+	);
+	if (presentation === '') {
+		throw invalid('fingerprints.presentation must be a non-empty string');
+	}
 	return {
 		choice: read('choice'),
 		notice: read('notice'),
 		policy: read('policy'),
 		...(legacyMaterial !== undefined && { legacyMaterial }),
+		...(presentation !== undefined && { presentation }),
 	};
 };
 
@@ -598,7 +712,11 @@ const readWire = function readWire(input: unknown): PolicyResolution {
  * Strict by design. A missing or malformed wire is `failed` with
  * `invalid-payload`; an unknown contract version, status, model, prompt,
  * action, right, category, or any unknown own field is `failed` with
- * `unsupported-contract`. Only own fields of plain objects are read. The
+ * `unsupported-contract`. Only own fields of plain objects are read.
+ * `policy.surface` and `fingerprints.presentation` are optional, so a
+ * resolution without them reads as it always has; readers older than them
+ * refuse a resolution that carries them, so a producer sends them only to
+ * clients that read them. The
  * matched rule must satisfy the same semantic invariants as an authored rule
  * ({@link collectResolvedPolicyRuleIssues}). Never throws; needs no valibot.
  *

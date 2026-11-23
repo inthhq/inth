@@ -19,6 +19,13 @@ import {
 	POLICY_RIGHTS,
 	POLICY_RULE_MODELS,
 } from './policy-rule-invariants';
+import {
+	CONSENT_BANNER_EDGES,
+	CONSENT_BLOCKING_CONSTRAINTS,
+	CONSENT_CARD_POSITIONS,
+	CONSENT_DRAWER_SIDES,
+	CONSENT_EDGE_STYLES,
+} from './policy-surface';
 
 export const policyRuleModelSchema = v.picklist(POLICY_RULE_MODELS);
 export const policyPromptSchema = v.picklist(POLICY_PROMPTS);
@@ -42,6 +49,35 @@ const positiveNumberSchema = v.pipe(
 	v.finite(),
 	v.gtValue(0),
 	v.maxValue(Number.MAX_SAFE_INTEGER)
+);
+
+/** A Card, Banner or Drawer container. */
+export const consentContainerSchema = v.pipe(
+	plainObjectSchema,
+	v.variant('type', [
+		v.strictObject({
+			position: v.optional(v.picklist(CONSENT_CARD_POSITIONS)),
+			type: v.literal('card'),
+		}),
+		v.strictObject({
+			edge: v.optional(v.picklist(CONSENT_BANNER_EDGES)),
+			type: v.literal('banner'),
+		}),
+		v.strictObject({
+			side: v.optional(v.picklist(CONSENT_DRAWER_SIDES)),
+			type: v.literal('drawer'),
+		}),
+	])
+);
+
+/** A resolved rule's layout defaults and blocking constraint. */
+export const policySurfaceSchema = v.pipe(
+	plainObjectSchema,
+	v.strictObject({
+		blocking: v.optional(v.picklist(CONSENT_BLOCKING_CONSTRAINTS)),
+		container: v.optional(consentContainerSchema),
+		edgeStyle: v.optional(v.picklist(CONSENT_EDGE_STYLES)),
+	})
 );
 
 export const policyActionConstraintsSchema = v.pipe(
@@ -93,6 +129,7 @@ const resolvedPolicyRuleFieldsSchema = v.pipe(
 		rights: v.array(policyRightSchema),
 		scope: v.array(policyOptionalCategorySchema),
 		scopeMode: v.picklist(['strict', 'permissive']),
+		surface: v.optional(policySurfaceSchema),
 		validity: v.pipe(
 			plainObjectSchema,
 			v.strictObject({
@@ -130,6 +167,7 @@ export const policyFingerprintsSchema = v.pipe(
 		legacyMaterial: v.optional(v.string()),
 		notice: v.pipe(v.string(), v.minLength(1)),
 		policy: v.pipe(v.string(), v.minLength(1)),
+		presentation: v.optional(v.pipe(v.string(), v.minLength(1))),
 	})
 );
 

@@ -129,7 +129,11 @@ export interface PreferencesPresentation extends SurfacePresentation {
  */
 export type ConsentDesign = 'classic' | 'privacy-choices';
 
-/** Application-owned presentation; never part of a policy fingerprint. */
+/**
+ * Application-owned presentation; never part of a policy fingerprint. It
+ * overrides the policy's `surface` layout defaults, but not its blocking
+ * constraint.
+ */
 export interface ConsentPresentation {
 	/**
 	 * The consent UI to render. Setting `prompt.container` chooses
@@ -421,9 +425,22 @@ const resolveSurfaceGeometry = function resolveSurfaceGeometry(
 
 /**
  * Resolve the prompt's Card, Banner or Drawer layout for both viewports.
- * When `container` is absent and the host set a legacy `variant` or
- * `position`, the validated legacy geometry maps onto a container. Legacy
- * `blocking`, `scrollLock` and `trapFocus` map onto `blockUntilChoice`.
+ *
+ * Precedence, highest first:
+ *
+ * 1. The policy's `surface.blocking`, a hard constraint `resolveLayout`
+ *    applies whatever the host asks for.
+ * 2. An experiment arm or component override.
+ * 3. The provider's `presentation`.
+ * 4. The policy's `surface.container` and `surface.edgeStyle`, soft
+ *    defaults for installs without host presentation.
+ * 5. The SDK default, an inset Card in the `start` corner.
+ *
+ * 2 and 3 arrive already merged in `options`. When `container` is absent
+ * and the host set a legacy `variant` or `position`, the validated legacy
+ * geometry maps onto a container, and still counts as the host's choice
+ * over the policy's. Legacy `blocking`, `scrollLock` and `trapFocus` map
+ * onto `blockUntilChoice`.
  */
 const resolvePromptContainer = function resolvePromptContainer(
 	surface: 'prompt' | 'preferences',
@@ -441,11 +458,23 @@ const resolvePromptContainer = function resolvePromptContainer(
 			: undefined;
 	// Forward a malformed `null` so the resolver reports it.
 	const container: ConsentContainer | undefined =
-		options.container === undefined ? legacy?.container : options.container;
+		options.container === undefined
+			? (legacy?.container ?? policy.surface?.container)
+			: options.container;
+	// The policy's edge style is a default for banners and drawers. A card
+	// is always inset, so on a card it stays silent instead of reporting
+	// `edge-style-ignored` for a choice the host never made.
+	const policyEdgeStyle =
+		typeof container === 'object' &&
+		container !== null &&
+		container.type !== 'card'
+			? policy.surface?.edgeStyle
+			: undefined;
 	const input = {
 		blockUntilChoice: options.blockUntilChoice ?? requestedBlocking(options),
+		blockingConstraint: policy.surface?.blocking,
 		container,
-		edgeStyle: options.edgeStyle,
+		edgeStyle: options.edgeStyle ?? policyEdgeStyle,
 		model: policy.model,
 		prompt: policy.prompt,
 	};

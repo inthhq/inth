@@ -1,0 +1,295 @@
+import { normalizePolicyRule, policyRulePresets } from '@inth/sdk-schema/types';
+import type { PolicyRule, PolicySurface } from '@inth/sdk-schema/types';
+import { describe, expect, it } from 'vitest';
+
+import type { ConsentLayoutDiagnostic } from '../consent-layout';
+import { resolveConsentPresentation } from '../policy-actions';
+import type { PromptPresentation } from '../policy-actions';
+
+const optIn = (surface?: PolicySurface) =>
+	normalizePolicyRule({
+		id: 'eu',
+		match: { isDefault: true },
+		model: 'opt-in',
+		prompt: 'choice',
+		...(surface && { surface }),
+	} satisfies PolicyRule);
+
+const SOFT = {
+	container: { edge: 'top', type: 'banner' },
+	edgeStyle: 'flush',
+} as const satisfies PolicySurface;
+
+interface Row {
+	label: string;
+	policy: ReturnType<typeof optIn>;
+	presentation?: PromptPresentation;
+	override?: PromptPresentation;
+	placement: string;
+	edgeStyle: 'inset' | 'flush';
+	blocking: boolean;
+	diagnostic?: ConsentLayoutDiagnostic['code'];
+}
+
+/**
+ * Highest first: policy blocking (hard), override (experiment arm or
+ * component prop), provider presentation, policy container and edge style
+ * (soft), SDK default.
+ */
+const ROWS: Row[] = [
+	{
+		blocking: false,
+		edgeStyle: 'inset',
+		label: 'the SDK default without policy surface or host presentation',
+		placement: 'card-start',
+		policy: optIn(),
+	},
+	{
+		blocking: false,
+		edgeStyle: 'flush',
+		label: 'the policy soft container and edge style without host presentation',
+		placement: 'banner-top',
+		policy: optIn(SOFT),
+	},
+	{
+		blocking: false,
+		edgeStyle: 'flush',
+		label: 'a host container over the policy container, keeping its edge style',
+		placement: 'drawer-end',
+		policy: optIn(SOFT),
+		presentation: { container: { side: 'end', type: 'drawer' } },
+	},
+	{
+		blocking: false,
+		edgeStyle: 'inset',
+		label: 'a host edge style over the policy edge style',
+		placement: 'banner-top',
+		policy: optIn(SOFT),
+		presentation: { edgeStyle: 'inset' },
+	},
+	{
+		blocking: false,
+		edgeStyle: 'inset',
+		label: 'a host legacy variant and position over the policy container',
+		placement: 'card-end',
+		policy: optIn(SOFT),
+		presentation: { position: 'bottom-right', variant: 'floating' },
+	},
+	{
+		blocking: false,
+		edgeStyle: 'flush',
+		label: 'a host legacy bar over the policy container',
+		placement: 'banner-bottom',
+		policy: optIn(SOFT),
+		presentation: { variant: 'bar' },
+	},
+	{
+		blocking: true,
+		edgeStyle: 'inset',
+		label: 'an override over the host presentation and the policy container',
+		override: { container: { position: 'center', type: 'card' } },
+		placement: 'card-center',
+		policy: optIn(SOFT),
+		presentation: { container: { side: 'start', type: 'drawer' } },
+	},
+	{
+		blocking: false,
+		edgeStyle: 'inset',
+		label: 'an override edge style over the host and the policy',
+		override: { edgeStyle: 'inset' },
+		placement: 'drawer-start',
+		policy: optIn(SOFT),
+		presentation: {
+			container: { side: 'start', type: 'drawer' },
+			edgeStyle: 'flush',
+		},
+	},
+	{
+		blocking: false,
+		edgeStyle: 'inset',
+		label: 'a policy flush edge style on its own card, silently inset',
+		placement: 'card-end',
+		policy: optIn({
+			container: { position: 'end', type: 'card' },
+			edgeStyle: 'flush',
+		}),
+	},
+	{
+		blocking: false,
+		diagnostic: 'edge-style-ignored',
+		edgeStyle: 'inset',
+		label: 'a host flush edge style on a card, which reports it',
+		placement: 'card-start',
+		policy: optIn(),
+		presentation: { edgeStyle: 'flush' },
+	},
+	{
+		blocking: true,
+		edgeStyle: 'inset',
+		label: 'a policy centred card, which blocks',
+		placement: 'card-center',
+		policy: optIn({ container: { position: 'center', type: 'card' } }),
+	},
+	{
+		blocking: true,
+		edgeStyle: 'inset',
+		label: 'required blocking without host presentation',
+		placement: 'card-start',
+		policy: optIn({ blocking: 'required' }),
+	},
+	{
+		blocking: true,
+		diagnostic: 'blocking-required',
+		edgeStyle: 'inset',
+		label: 'required blocking over a host that turns blocking off',
+		placement: 'card-start',
+		policy: optIn({ blocking: 'required' }),
+		presentation: { blockUntilChoice: false },
+	},
+	{
+		blocking: true,
+		diagnostic: 'blocking-required',
+		edgeStyle: 'inset',
+		label: 'required blocking over an override that turns blocking off',
+		override: { blockUntilChoice: false },
+		placement: 'banner-top',
+		policy: optIn({ ...SOFT, blocking: 'required' }),
+		presentation: { blockUntilChoice: true, edgeStyle: 'inset' },
+	},
+	{
+		blocking: false,
+		diagnostic: 'blocking-forbidden',
+		edgeStyle: 'inset',
+		label: 'forbidden blocking over a host that turns blocking on',
+		placement: 'card-start',
+		policy: optIn({ blocking: 'forbidden' }),
+		presentation: { blockUntilChoice: true },
+	},
+	{
+		blocking: false,
+		diagnostic: 'center-unavailable',
+		edgeStyle: 'inset',
+		label: 'forbidden blocking over a host centred card',
+		placement: 'card-start',
+		policy: optIn({ blocking: 'forbidden' }),
+		presentation: { container: { position: 'center', type: 'card' } },
+	},
+	{
+		blocking: false,
+		diagnostic: 'center-unavailable',
+		edgeStyle: 'inset',
+		label: 'forbidden blocking over a host legacy wall',
+		placement: 'card-start',
+		policy: optIn({ blocking: 'forbidden' }),
+		presentation: { variant: 'wall' },
+	},
+	{
+		blocking: false,
+		diagnostic: 'center-unavailable',
+		edgeStyle: 'inset',
+		label: 'forbidden blocking over an override centred card',
+		override: { container: { position: 'center', type: 'card' } },
+		placement: 'card-start',
+		policy: optIn({ blocking: 'forbidden' }),
+	},
+];
+
+describe('resolveConsentPresentation: policy surface precedence', () => {
+	it.each(ROWS)(
+		'$label',
+		({
+			blocking,
+			diagnostic,
+			edgeStyle,
+			override,
+			placement,
+			policy,
+			presentation,
+		}) => {
+			const { container } = resolveConsentPresentation({
+				override,
+				policy,
+				presentation: presentation && { prompt: presentation },
+				surface: 'prompt',
+			});
+			expect(container?.desktop).toMatchObject({
+				blocking,
+				edgeStyle,
+				placement,
+			});
+			expect(container?.desktop.diagnostics.map(({ code }) => code)).toEqual(
+				diagnostic ? [diagnostic] : []
+			);
+		}
+	);
+
+	it('applies the policy container per viewport', () => {
+		const { container } = resolveConsentPresentation({
+			policy: optIn({ container: { side: 'start', type: 'drawer' } }),
+			surface: 'prompt',
+		});
+		expect(container?.desktop).toMatchObject({
+			flow: 'all-in-one',
+			placement: 'drawer-start',
+		});
+		expect(container?.phone).toMatchObject({
+			flow: 'expand-in-place',
+			placement: 'drawer-bottom',
+		});
+	});
+
+	it('applies required blocking on both viewports', () => {
+		const { container } = resolveConsentPresentation({
+			policy: optIn({ blocking: 'required' }),
+			presentation: { prompt: { blockUntilChoice: false } },
+			surface: 'prompt',
+		});
+		expect(container?.desktop.blocking).toBe(true);
+		expect(container?.phone.blocking).toBe(true);
+	});
+
+	it('leaves preferences without a container', () => {
+		expect(
+			resolveConsentPresentation({
+				policy: optIn({ ...SOFT, blocking: 'required' }),
+				surface: 'preferences',
+			}).container
+		).toBeNull();
+	});
+
+	it.each(['none', 'notice'] as const)(
+		'[BNR-13] the US opt-out preset with prompt %s never blocks, whatever the host asks',
+		(prompt) => {
+			const policy = normalizePolicyRule(
+				policyRulePresets.usPrivacyStatesOptOut({ prompt })
+			);
+			for (const presentation of [
+				{ blockUntilChoice: true },
+				{ container: { position: 'center', type: 'card' } },
+				{ variant: 'wall' },
+			] satisfies PromptPresentation[]) {
+				const { container } = resolveConsentPresentation({
+					policy,
+					presentation: { prompt: presentation },
+					surface: 'prompt',
+				});
+				expect(container?.desktop.blocking).toBe(false);
+				expect(container?.phone.blocking).toBe(false);
+			}
+		}
+	);
+
+	it('[BNR-13] a host-built opt-in rule from the US preset keeps its blocking ban', () => {
+		const policy = normalizePolicyRule({
+			...policyRulePresets.usPrivacyStatesOptOut(),
+			model: 'opt-in',
+			prompt: 'choice',
+		});
+		const { container } = resolveConsentPresentation({
+			policy,
+			presentation: { prompt: { blockUntilChoice: true } },
+			surface: 'prompt',
+		});
+		expect(container?.desktop.blocking).toBe(false);
+	});
+});
