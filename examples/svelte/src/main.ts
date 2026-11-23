@@ -1,6 +1,6 @@
 import { mount } from 'svelte';
 
-import App from './app.svelte';
+import App from './App.svelte';
 
 import './style.css';
 
