@@ -166,13 +166,13 @@ describe('IAB browser configuration', () => {
 		).toBe(false);
 		expect(query(client, 'iab-consent-dialog-overlay')).toBeNull();
 	});
-	it('retains required actions, balanced prominence and wall blocking', async () => {
+	it('retains required actions, balanced prominence and centred-card blocking', async () => {
 		const client = await start({
 			presentation: {
 				prompt: {
 					blocking: false,
+					container: { position: 'center', type: 'card' },
 					layout: ['accept'],
-					variant: 'wall',
 				},
 			},
 			ui: { banner: { scrollLock: false, trapFocus: false } },

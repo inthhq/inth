@@ -50,15 +50,12 @@ const cdnPrefix =
 const backendPlaceholder = 'https://your-project.inth.app';
 const projectUrl = process.env.INTH_PROJECT_URL;
 
-// `inth.js` loads `inth.hosted.js`, `inth.commit.js`, `inth.records.js` and
-// `inth.dialog.js` from next to itself, and the engine `inth.choices.js`,
-// so the server carries them too.
+// `inth.js` loads `inth.hosted.js` and `inth.records.js` from next to
+// itself, and the engine `inth.choices.js`, so the server carries them too.
 const bundles: Record<string, string> = Object.fromEntries(
 	[
 		'inth.choices.js',
-		'inth.commit.js',
 		'inth.devtools.js',
-		'inth.dialog.js',
 		'inth.headless.js',
 		'inth.hosted.js',
 		'inth.iab.js',

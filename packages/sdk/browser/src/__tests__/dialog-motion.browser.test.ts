@@ -1,9 +1,9 @@
 /**
  * `disableAnimation` reaches every part of the preference dialog.
  *
- * The dialog marks its overlay, positioner and panel `data-state="open"`,
- * which the stock stylesheet animates with fade and scale keyframes unless
- * `data-disable-animation` is present.
+ * The dialog's sheet fades the backdrop and the card in with the
+ * `consent-dialog-*` keyframes, unless the root carries
+ * `data-animation="off"`.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -29,16 +29,17 @@ const openDialog = async function openDialog(
 	await client.ready();
 	client.openDialog();
 	const root = client.ui?.root;
+	// The dialog loads on demand.
 	await expect
-		.poll(() => root?.querySelector('[data-testid="consent-dialog-root"]'))
+		.poll(() => root?.querySelector('[data-testid="consent-dialog-card"]'))
 		.toBeTruthy();
-	const panel = root?.querySelector<HTMLElement>(
+	const backdrop = root?.querySelector<HTMLElement>(
 		'[data-testid="consent-dialog-root"]'
 	);
-	const overlay = root?.querySelector<HTMLElement>(
-		'[data-testid="consent-dialog-overlay"]'
+	const card = root?.querySelector<HTMLElement>(
+		'[data-testid="consent-dialog-card"]'
 	);
-	return [overlay, panel?.parentElement, panel].filter(
+	return [backdrop, card].filter(
 		(element): element is HTMLElement => element instanceof HTMLElement
 	);
 };
@@ -58,14 +59,14 @@ describe('preference dialog motion', () => {
 	it('fades the dialog in by default', async () => {
 		const parts = await openDialog(false);
 
-		expect(parts).toHaveLength(3);
+		expect(parts).toHaveLength(2);
 		expect(animationsOf(parts)).not.toEqual([]);
 	});
 
 	it('opens without animating any part when disableAnimation is set', async () => {
 		const parts = await openDialog(true);
 
-		expect(parts).toHaveLength(3);
+		expect(parts).toHaveLength(2);
 		expect(animationsOf(parts)).toEqual([]);
 	});
 });

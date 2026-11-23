@@ -1,5 +1,5 @@
 /**
- * The engine's loader for `inth.choices.js` (`ui/privacy-choices-file.ts`):
+ * The engine's loader for `inth.choices.js` (`ui/choices-file.ts`):
  * it publishes the engine's shared functions first, carries the nonce,
  * accepts only a file from its own release, and tries again after a
  * failed load. The built files run in Chromium in
@@ -11,9 +11,9 @@ import {
 	CHOICES_ENGINE_KEY,
 	CHOICES_KEY,
 	loadChoicesFile,
-} from '../ui/privacy-choices-file';
-import type { ChoicesEngine, ChoicesFile } from '../ui/privacy-choices-file';
-import * as engine from '../ui/privacy-choices/engine';
+} from '../ui/choices-file';
+import type { ChoicesEngine, ChoicesFile } from '../ui/choices-file';
+import * as engine from '../ui/parts/engine';
 
 const target = window as unknown as Record<string, unknown>;
 

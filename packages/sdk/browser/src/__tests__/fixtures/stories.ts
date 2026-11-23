@@ -1,11 +1,11 @@
 /**
- * The Privacy Choices (v6) stories of the script tag, with the same names
- * and configurations as React's `Privacy Choices/Banner` and
- * `Privacy Choices/Dialog` stories (`apps/storybook-react`). The script tag
- * has no Storybook: `privacy-choices-stories.html` renders one story per
+ * The consent banner and dialog stories of the script tag, with the same
+ * names and configurations as React's `Core/Consent Banner` and
+ * `Core/Consent Dialog` stories (`apps/storybook-react`). The script tag
+ * has no Storybook: `stories.html` renders one story per
  * `?story=` on the browser suite's dev server
- * (`/__inth-test__/privacy-choices?story=DrawerStartEU`), and
- * `privacy-choices-stories.browser.test.ts` renders each of them.
+ * (`/__inth-test__/stories?story=DrawerStartEU`), and
+ * `stories.browser.test.ts` renders each of them.
  */
 import type { ConsentContainer, ConsentEdgeStyle } from '@inth/sdk-core';
 import type { PolicyRule } from '@inth/sdk-schema/types';
@@ -80,7 +80,7 @@ const VENDORS = [
 ];
 
 /** One story: a banner on the page, or the dialog open over it. */
-export interface PrivacyChoicesStory {
+export interface ConsentStory {
 	group: 'Banner' | 'Dialog';
 	region: Region;
 	container: ConsentContainer;
@@ -96,15 +96,15 @@ export interface PrivacyChoicesStory {
 const banner = (
 	region: Region,
 	container: ConsentContainer,
-	options: Pick<PrivacyChoicesStory, 'blockUntilChoice' | 'edgeStyle'> = {}
-): PrivacyChoicesStory => ({ container, group: 'Banner', region, ...options });
+	options: Pick<ConsentStory, 'blockUntilChoice' | 'edgeStyle'> = {}
+): ConsentStory => ({ container, group: 'Banner', region, ...options });
 
 const dialog = (
 	region: Region,
-	options: Omit<PrivacyChoicesStory, 'group' | 'region' | 'container'> & {
+	options: Omit<ConsentStory, 'group' | 'region' | 'container'> & {
 		container?: ConsentContainer;
 	} = {}
-): PrivacyChoicesStory => ({
+): ConsentStory => ({
 	container: { position: 'start', type: 'card' },
 	group: 'Dialog',
 	region,
@@ -124,7 +124,7 @@ const DRAWER = (
 ): ConsentContainer => ({ side, type: 'drawer' });
 
 /** React's story names, by group. */
-export const PRIVACY_CHOICES_STORIES: Record<string, PrivacyChoicesStory> = {
+export const CONSENT_STORIES: Record<string, ConsentStory> = {
 	BannerBottomEU: banner('eu', BAR('bottom')),
 	BannerBottomUsNotice: banner('us-notice', BAR('bottom')),
 	BannerBottomUsOptIn: banner('us-opt-in', BAR('bottom')),
@@ -200,11 +200,11 @@ const demoPage = function demoPage(
 };
 
 /** Render a story on this page. */
-export const mountPrivacyChoicesStory = async function mountPrivacyChoicesStory(
+export const mountStory = async function mountStory(
 	name: string,
 	target: HTMLElement = document.body
 ): Promise<ConsentClient> {
-	const story = PRIVACY_CHOICES_STORIES[name];
+	const story = CONSENT_STORIES[name];
 	if (!story) {
 		throw new Error(`Unknown story ${name}`);
 	}
@@ -227,7 +227,6 @@ export const mountPrivacyChoicesStory = async function mountPrivacyChoicesStory(
 			},
 			policy: [POLICIES[story.region]],
 			presentation: {
-				design: 'privacy-choices',
 				prompt: {
 					blockUntilChoice: story.blockUntilChoice,
 					container: story.container,

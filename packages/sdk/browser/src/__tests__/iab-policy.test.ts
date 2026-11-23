@@ -161,7 +161,10 @@ describe('browser IAB policy and pending confirmations', () => {
 			overrides: { country: 'US', region: 'CA' },
 		});
 		client.openDialog();
-		expect(query(client, 'consent-dialog-root')).not.toBeNull();
+		// The dialog loads on demand.
+		await vi.waitFor(() =>
+			expect(query(client, 'consent-dialog-root')).not.toBeNull()
+		);
 		expect(query(client, 'iab-consent-dialog-root')).toBeNull();
 		client.setOverrides({ country: 'DE' });
 		await client.kernel.commands.init();

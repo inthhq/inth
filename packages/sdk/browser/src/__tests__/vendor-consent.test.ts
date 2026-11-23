@@ -84,6 +84,33 @@ const query = function query<ElementType extends HTMLElement = HTMLElement>(
 	return element;
 };
 
+/** Open the EU "Your Privacy Choices" dialog and wait for its categories. */
+const openDialog = async function openDialog(
+	client: ConsentClient,
+	root: ParentNode
+): Promise<void> {
+	client.openDialog();
+	await vi.waitFor(() => {
+		expect(
+			root.querySelector('[data-testid="consent-dialog-category-group"]')
+		).not.toBeNull();
+	});
+};
+
+/** Open a category's vendor table, an accordion on desktop. */
+const openVendors = async function openVendors(
+	root: ParentNode,
+	category: string
+): Promise<void> {
+	const testId = `consent-dialog-vendor-trigger-${category}`;
+	if (query(root, testId).getAttribute('aria-expanded') !== 'true') {
+		query(root, testId).click();
+	}
+	await vi.waitFor(() =>
+		expect(query(root, testId).getAttribute('aria-expanded')).toBe('true')
+	);
+};
+
 const inertScript = function inertScript(
 	category: string,
 	vendor: string | null,
@@ -115,54 +142,63 @@ describe('vendor switches in the preference centre', () => {
 	it('lists each category vendor with a switch that is off until the category is on', async () => {
 		const client = await start();
 		const { root } = client.ui as ConsentUIHandle;
-		client.openDialog();
+		await openDialog(client, root);
 
-		const list = query(root, 'consent-widget-vendor-list-measurement');
-		expect(list.getAttribute('aria-label')).toBe('Vendors (2)');
-		expect(
-			query(root, 'consent-widget-vendor-name-measurement-posthog').textContent
-		).toBe('PostHog');
+		const trigger = query(root, 'consent-dialog-vendor-trigger-measurement');
+		expect(trigger.textContent).toMatch(/\b2\b/u);
+		const table = query(root, 'consent-dialog-vendor-table-measurement');
+		expect(table.getAttribute('role')).toBe('table');
+		expect(table.textContent).toContain('PostHog');
+		expect(table.textContent).toContain('YouTube');
 		expect(
 			root.querySelector(
-				'[data-testid="consent-widget-vendor-item-measurement-x-pixel"]'
+				'[data-testid="consent-dialog-vendor-switch-measurement-x-pixel"]'
 			)
 		).toBeNull();
-		query(root, 'consent-widget-vendor-item-marketing-x-pixel');
+		query(root, 'consent-dialog-vendor-switch-marketing-x-pixel');
 
-		const posthog = query<HTMLButtonElement>(
-			root,
-			'consent-widget-vendor-switch-measurement-posthog'
+		const posthog = () =>
+			query<HTMLButtonElement>(
+				root,
+				'consent-dialog-vendor-switch-measurement-posthog'
+			);
+		expect(posthog().getAttribute('role')).toBe('switch');
+		const nameId = posthog().getAttribute('aria-labelledby');
+		expect(nameId).toBeTruthy();
+		expect(root.querySelector(`[id="${nameId ?? ''}"]`)?.textContent).toBe(
+			'PostHog'
 		);
-		expect(posthog.getAttribute('role')).toBe('switch');
-		expect(posthog.getAttribute('aria-label')).toBe('Allow PostHog');
-		expect(posthog.getAttribute('aria-checked')).toBe('true');
-		expect(posthog.disabled).toBe(true);
-		query(root, 'consent-widget-vendor-hint-measurement');
+		// Off while its category is off, and never disabled (CAT-03).
+		expect(posthog().getAttribute('aria-checked')).toBe('false');
+		expect(posthog().disabled).toBe(false);
 
-		query(root, 'consent-widget-switch-measurement').click();
-		expect(posthog.disabled).toBe(false);
-		expect(
-			root.querySelector(
-				'[data-testid="consent-widget-vendor-hint-measurement"]'
-			)
-		).toBeNull();
+		query(root, 'consent-dialog-category-switch-measurement').click();
+		await vi.waitFor(() =>
+			expect(posthog().getAttribute('aria-checked')).toBe('true')
+		);
+		// A draft is not a decision yet (EU-02).
+		expect(client.getVendorChoice()).toBeNull();
 	});
 
 	it('records a vendor turned off on Save and keeps it off when the dialog reopens', async () => {
 		const client = await start();
 		const { root } = client.ui as ConsentUIHandle;
-		client.openDialog();
-		query(root, 'consent-widget-switch-measurement').click();
-		const posthog = query(
-			root,
-			'consent-widget-vendor-switch-measurement-posthog'
+		await openDialog(client, root);
+		query(root, 'consent-dialog-category-switch-measurement').click();
+		await openVendors(root, 'measurement');
+		query(root, 'consent-dialog-vendor-switch-measurement-posthog').click();
+		await vi.waitFor(() =>
+			expect(
+				query(
+					root,
+					'consent-dialog-vendor-switch-measurement-posthog'
+				).getAttribute('aria-checked')
+			).toBe('false')
 		);
-		posthog.click();
-		expect(posthog.getAttribute('aria-checked')).toBe('false');
 		// A draft is not a decision yet.
 		expect(client.getVendorChoice()).toBeNull();
 
-		query(root, 'consent-widget-footer-save-button').click();
+		query(root, 'consent-dialog-save-button').click();
 		await vi.waitFor(() => expect(client.getSnapshot().activeUI).toBe('none'));
 		expect(client.has('measurement')).toBe(true);
 		expect(client.getVendorChoice()?.denied).toEqual(['posthog']);
@@ -170,29 +206,66 @@ describe('vendor switches in the preference centre', () => {
 		expect(client.isVendorAllowed('youtube')).toBe(true);
 		expect(client.isVendorAllowed('x-pixel')).toBe(false);
 
-		client.openDialog();
+		await openDialog(client, root);
+		expect(
+			query(root, 'consent-dialog-category-switch-measurement').getAttribute(
+				'aria-checked'
+			)
+		).toBe('true');
 		expect(
 			query(
 				root,
-				'consent-widget-vendor-switch-measurement-posthog'
+				'consent-dialog-vendor-switch-measurement-posthog'
 			).getAttribute('aria-checked')
 		).toBe('false');
+		expect(
+			query(
+				root,
+				'consent-dialog-vendor-switch-measurement-youtube'
+			).getAttribute('aria-checked')
+		).toBe('true');
 	});
 
 	it('drops an unsaved vendor toggle when the dialog closes', async () => {
 		const client = await start();
 		const { root } = client.ui as ConsentUIHandle;
-		client.openDialog();
-		query(root, 'consent-widget-switch-measurement').click();
-		query(root, 'consent-widget-vendor-switch-measurement-posthog').click();
+		await openDialog(client, root);
+		query(root, 'consent-dialog-category-switch-measurement').click();
+		await openVendors(root, 'measurement');
+		query(root, 'consent-dialog-vendor-switch-measurement-posthog').click();
+		await vi.waitFor(() =>
+			expect(
+				query(
+					root,
+					'consent-dialog-vendor-switch-measurement-posthog'
+				).getAttribute('aria-checked')
+			).toBe('false')
+		);
 		client.closeDialog();
-		client.openDialog();
+		await vi.waitFor(() =>
+			expect(
+				root.querySelector('[data-testid="consent-dialog-card"]')
+			).toBeNull()
+		);
+		expect(client.getVendorChoice()).toBeNull();
+
+		await openDialog(client, root);
+		// The category edit went with it, and turning the category on again
+		// shows every vendor on: the staged denial is gone.
 		expect(
-			query(
-				root,
-				'consent-widget-vendor-switch-measurement-posthog'
-			).getAttribute('aria-checked')
-		).toBe('true');
+			query(root, 'consent-dialog-category-switch-measurement').getAttribute(
+				'aria-checked'
+			)
+		).toBe('false');
+		query(root, 'consent-dialog-category-switch-measurement').click();
+		await vi.waitFor(() =>
+			expect(
+				query(
+					root,
+					'consent-dialog-vendor-switch-measurement-posthog'
+				).getAttribute('aria-checked')
+			).toBe('true')
+		);
 	});
 
 	it('clears a vendor denial on Accept all and Reject all', async () => {
@@ -201,28 +274,33 @@ describe('vendor switches in the preference centre', () => {
 		await client.save({ measurement: true, vendors: { posthog: false } });
 		expect(client.getVendorChoice()?.denied).toEqual(['posthog']);
 
-		client.openDialog();
-		query(root, 'consent-widget-footer-accept-all-button').click();
+		await openDialog(client, root);
+		query(root, 'consent-dialog-accept-all').click();
 		await vi.waitFor(() =>
 			expect(client.getVendorChoice()?.denied).toEqual([])
 		);
 		expect(client.isVendorAllowed('posthog')).toBe(true);
 
 		await client.save({ measurement: true, vendors: { posthog: false } });
-		client.openDialog();
+		await openDialog(client, root);
+		await openVendors(root, 'measurement');
 		// A staged vendor switch does not survive a bulk action either.
-		query(root, 'consent-widget-vendor-switch-measurement-youtube').click();
-		query(root, 'consent-widget-reject-button').click();
+		query(root, 'consent-dialog-vendor-switch-measurement-youtube').click();
+		query(root, 'consent-dialog-reject-all').click();
 		await vi.waitFor(() =>
 			expect(client.getVendorChoice()?.denied).toEqual([])
 		);
-		client.openDialog();
-		expect(
-			query(
-				root,
-				'consent-widget-vendor-switch-measurement-youtube'
-			).getAttribute('aria-checked')
-		).toBe('true');
+		await vi.waitFor(() => expect(client.getSnapshot().activeUI).toBe('none'));
+		await openDialog(client, root);
+		query(root, 'consent-dialog-category-switch-measurement').click();
+		await vi.waitFor(() =>
+			expect(
+				query(
+					root,
+					'consent-dialog-vendor-switch-measurement-youtube'
+				).getAttribute('aria-checked')
+			).toBe('true')
+		);
 	});
 
 	it('lists a disabled vendor without a switch', async () => {
@@ -230,44 +308,50 @@ describe('vendor switches in the preference centre', () => {
 			vendors: [{ ...vendors[0], disabled: true } as Vendor],
 		});
 		const { root } = client.ui as ConsentUIHandle;
-		client.openDialog();
-		query(root, 'consent-widget-vendor-item-measurement-posthog');
+		await openDialog(client, root);
+		expect(
+			query(root, 'consent-dialog-vendor-table-measurement').textContent
+		).toContain('PostHog');
 		expect(
 			root.querySelector(
-				'[data-testid="consent-widget-vendor-switch-measurement-posthog"]'
+				'[data-testid="consent-dialog-vendor-switch-measurement-posthog"]'
 			)
 		).toBeNull();
 	});
 
-	it('expands a vendor card for its description and privacy policy', async () => {
+	it('expands a vendor table for its description and privacy policy', async () => {
 		const client = await start();
 		const { root } = client.ui as ConsentUIHandle;
-		client.openDialog();
-		const trigger = query(
-			root,
-			'consent-widget-vendor-trigger-measurement-posthog'
-		);
-		const content = query(
-			root,
-			'consent-widget-vendor-content-measurement-posthog'
-		);
+		await openDialog(client, root);
+		const trigger = query(root, 'consent-dialog-vendor-trigger-measurement');
+		const panelId = trigger.getAttribute('aria-controls') ?? '';
+		const panel = () => root.querySelector<HTMLElement>(`[id="${panelId}"]`);
 		expect(trigger.getAttribute('aria-expanded')).toBe('false');
-		expect(content.hasAttribute('inert')).toBe(true);
+		expect(panel()?.hasAttribute('inert')).toBe(true);
 		trigger.click();
-		expect(trigger.getAttribute('aria-expanded')).toBe('true');
-		expect(content.getAttribute('data-state')).toBe('open');
-		expect(content.textContent).toContain('Product analytics.');
-		expect(content.querySelector('a')?.getAttribute('href')).toBe(
-			'https://posthog.com/privacy'
+		await vi.waitFor(() =>
+			expect(
+				query(root, 'consent-dialog-vendor-trigger-measurement').getAttribute(
+					'aria-expanded'
+				)
+			).toBe('true')
 		);
+		expect(panel()?.getAttribute('data-open')).toBe('true');
+		expect(panel()?.hasAttribute('inert')).toBe(false);
+		const table = query(root, 'consent-dialog-vendor-table-measurement');
+		expect(panel()?.contains(table)).toBe(true);
+		expect(table.textContent).toContain('Product analytics.');
+		const link = table.querySelector('a[href="https://posthog.com/privacy"]');
+		expect(link).not.toBeNull();
+		expect(link?.getAttribute('aria-label')).toContain('PostHog');
 	});
 
 	it('renders no vendor list for a category without vendors', async () => {
 		const client = await start({ vendors: [] });
 		const { root } = client.ui as ConsentUIHandle;
-		client.openDialog();
+		await openDialog(client, root);
 		expect(
-			root.querySelector('[data-testid^="consent-widget-vendor-list"]')
+			root.querySelector('[data-testid^="consent-dialog-vendor-"]')
 		).toBeNull();
 	});
 
@@ -298,9 +382,9 @@ describe('vendor switches in the preference centre', () => {
 			{ vendors: { posthog: !initiallyDenied } }
 		);
 		const { root } = client.ui as ConsentUIHandle;
-		client.openDialog();
+		await openDialog(client, root);
 		const selector =
-			'[data-testid="consent-widget-vendor-switch-measurement-posthog"]';
+			'[data-testid="consent-dialog-vendor-switch-measurement-posthog"]';
 		expect(root.querySelector(selector) !== null).toBe(initiallyDenied);
 
 		await client.kernel.commands.save(
@@ -308,9 +392,10 @@ describe('vendor switches in the preference centre', () => {
 			{ vendors: { posthog: initiallyDenied } }
 		);
 		expect(client.getSnapshot().activeUI).toBe('dialog');
-		const toggle = root.querySelector(selector);
-		expect(toggle !== null).toBe(!initiallyDenied);
-		expect(toggle?.getAttribute('aria-checked')).toBe(
+		await vi.waitFor(() =>
+			expect(root.querySelector(selector) !== null).toBe(!initiallyDenied)
+		);
+		expect(root.querySelector(selector)?.getAttribute('aria-checked')).toBe(
 			initiallyDenied ? undefined : 'false'
 		);
 	});

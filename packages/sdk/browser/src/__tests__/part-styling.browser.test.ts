@@ -8,7 +8,7 @@ import { css as emotionCss, flush } from '@emotion/css';
  * to win over the part's own `@layer components` styles.
  */
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { ConsentClient, ConsentUIOptions } from '../types';
 import { init } from './fixtures/factory-init';
@@ -40,13 +40,16 @@ const mountCard = async function mountCard(
 		ui: { colorScheme: 'light', disableAnimation: true, ...ui },
 	});
 	await client.ready();
-	const card = client.ui?.root.querySelector<HTMLElement>(
-		'[data-testid="consent-banner-card"]'
-	);
-	if (!card) {
-		throw new Error('The banner card did not render');
-	}
-	return card;
+	// The prompt loads on demand.
+	return vi.waitFor(() => {
+		const card = client?.ui?.root.querySelector<HTMLElement>(
+			'[data-testid="consent-banner-card"]'
+		);
+		if (!card) {
+			throw new Error('The banner card did not render');
+		}
+		return card;
+	});
 };
 
 const borderColor = (card: HTMLElement): string =>

@@ -62,15 +62,14 @@ describe('inlined stylesheet', () => {
 		);
 		expect(stylesheet).not.toContain('/*');
 		expect(iabStylesheet).not.toContain('/*');
-		// The tokens and the class-map rules the banner starts from are there.
+		// The tokens and the shared parts' rules are there.
 		expect(stylesheet).toContain('--inth-surface');
-		expect(stylesheet).toContain(`.${classes.banner.card?.split(' ')[0]}`);
+		expect(stylesheet).toContain(`.${classes.button.button?.split(' ')[0]}`);
 	});
 
 	it('is smaller than the full @inth/sdk/ui stylesheet', () => {
-		// The stylesheet split already keeps the primitive rules out of both
-		// source files, and the preference centre renders the vendor list, so
-		// pruning removes the collapsible, tabs and ConsentGate rules.
+		// The prompt and the dialog add their own sheets, so pruning leaves
+		// their rules out, with the collapsible, tabs and ConsentGate rules.
 		expect(stylesheet.length).toBeLessThan(uiMainStylesheet().length * 0.98);
 	});
 });

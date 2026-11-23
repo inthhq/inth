@@ -57,6 +57,34 @@ const startClient = async function startClient(
 	return { client, root: (client.ui as ConsentUIHandle).root };
 };
 
+const find = (root: ParentNode, testId: string): HTMLElement | null =>
+	root.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
+
+/** The focused element inside the UI's root, or on the page. */
+const focused = (root: ParentNode): Element | null =>
+	(root as ShadowRoot).activeElement ?? document.activeElement;
+
+/**
+ * The opt-out confirmation: "Your Privacy Choices" opens on the receipt
+ * that confirms the opt-out, with focus on it.
+ */
+const expectConfirmationOnReceipt = async function expectConfirmationOnReceipt(
+	client: ConsentClient,
+	root: ParentNode
+): Promise<void> {
+	await vi.waitFor(() => {
+		expect(find(root, 'consent-dialog-receipt')).not.toBeNull();
+	});
+	const receipt = find(root, 'consent-dialog-receipt') as HTMLElement;
+	expect(client.getSnapshot().activeUI).toBe('dialog');
+	expect(receipt.getAttribute('data-open')).toBe('true');
+	expect(receipt.textContent).toMatch(/opted out/iu);
+	await vi.waitFor(() => {
+		expect(focused(root)).toBe(receipt);
+	});
+	expect(find(root, 'opt-out-confirmation-root')).toBeNull();
+};
+
 afterEach(() => {
 	for (const client of clients.splice(0)) {
 		client.dispose();
@@ -109,10 +137,8 @@ describe('browser revocation reload and opt-out confirmation', () => {
 
 		link.click();
 
-		// Does not flash the confirmation view open before the reload.
-		expect(
-			first.root.querySelector('[data-testid="opt-out-confirmation-root"]')
-		).toBeNull();
+		// Does not flash the confirmation open before the reload.
+		expect(find(first.root, 'consent-dialog-root')).toBeNull();
 		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBe('1');
 
 		await vi.waitFor(() => {
@@ -122,9 +148,8 @@ describe('browser revocation reload and opt-out confirmation', () => {
 		expect(
 			onBeforeConsentRevocationReload.mock.calls[0]?.[0].preferences.marketing
 		).toBe(false);
-		expect(
-			first.root.querySelector('[data-testid="opt-out-confirmation-root"]')
-		).toBeNull();
+		expect(find(first.root, 'consent-dialog-root')).toBeNull();
+		expect(first.client.getSnapshot().activeUI).not.toBe('dialog');
 
 		// Persistence wrote the opt-out record before the reload fired.
 		await vi.waitFor(() => {
@@ -133,21 +158,15 @@ describe('browser revocation reload and opt-out confirmation', () => {
 		first.client.dispose();
 		reload.mockClear();
 
-		// Next load after reload: confirmation opens once with the honored status,
-		// records nothing again, clears the marker, and does not reload again.
+		// Next load after reload: the confirmation opens once, as Your Privacy
+		// Choices on its receipt, records nothing again, clears the marker, and
+		// does not reload again.
 		const second = await startClient();
 		const onRecorded = vi.fn();
 		second.client.kernel.events.on('opt-out:recorded', onRecorded);
 
-		await vi.waitFor(() => {
-			expect(
-				second.root.querySelector('[data-testid="opt-out-confirmation-root"]')
-			).not.toBeNull();
-		});
-		expect(
-			second.root.querySelector('[data-testid="opt-out-confirmation-status"]')
-				?.textContent
-		).toBe('Opt-out request honored');
+		await expectConfirmationOnReceipt(second.client, second.root);
+		expect(second.client.getSnapshot().optOut).not.toBeNull();
 		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBeNull();
 		expect(onRecorded).not.toHaveBeenCalled();
 		await new Promise((resolve) => {
@@ -161,20 +180,18 @@ describe('browser revocation reload and opt-out confirmation', () => {
 		await new Promise((resolve) => {
 			setTimeout(resolve, 20);
 		});
-		expect(
-			third.root.querySelector('[data-testid="opt-out-confirmation-root"]')
-		).toBeNull();
+		expect(find(third.root, 'consent-dialog-root')).toBeNull();
+		expect(third.client.getSnapshot().activeUI).not.toBe('dialog');
 	});
 
 	it('ignores a pending confirmation marker when no opt-out is held on the new document', async () => {
 		sessionStorage.setItem(OPT_OUT_CONFIRMATION_STORAGE_KEY, '1');
-		const { root } = await startClient();
+		const { client, root } = await startClient();
 		await new Promise((resolve) => {
 			setTimeout(resolve, 20);
 		});
-		expect(
-			root.querySelector('[data-testid="opt-out-confirmation-root"]')
-		).toBeNull();
+		expect(find(root, 'consent-dialog-root')).toBeNull();
+		expect(client.getSnapshot().activeUI).not.toBe('dialog');
 		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBeNull();
 	});
 
@@ -183,11 +200,7 @@ describe('browser revocation reload and opt-out confirmation', () => {
 			reloadOnConsentRevoked: false,
 		});
 		await client.optOut();
-		await vi.waitFor(() => {
-			expect(
-				root.querySelector('[data-testid="opt-out-confirmation-root"]')
-			).not.toBeNull();
-		});
+		await expectConfirmationOnReceipt(client, root);
 		expect(sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY)).toBeNull();
 		await new Promise((resolve) => {
 			setTimeout(resolve, 20);

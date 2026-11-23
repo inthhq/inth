@@ -1,12 +1,12 @@
 /**
- * The Privacy Choices (v6) "Your Privacy Choices" dialog of the script
- * tag, ported from `@inth/react`'s `privacy-choices-dialog.test.tsx`: the
+ * The "Your Privacy Choices" dialog of the script tag, ported from
+ * `@inth/react`'s dialog tests: the
  * US first view and its rights, the receipt, Preferences, vendors and row
  * clicks, the EU staged model, phone sheets, focus, Escape and
  * announcements. Each test names the invariant it guards
  * (`prototypes/PRIVACY-CHOICES-REGRESSIONS.md`).
  */
-import type { ConsentContainer, ConsentPresentation } from '@inth/sdk-core';
+import type { ConsentContainer } from '@inth/sdk-core';
 import {
 	hasPendingOptOutConfirmation,
 	markPendingOptOutConfirmation,
@@ -28,17 +28,13 @@ import {
 	must,
 	pageAction,
 	snapshotOf,
-	startPrivacyChoicesPage,
-	stopPrivacyChoicesPages,
-} from './fixtures/privacy-choices';
-import type {
-	PrivacyChoicesPageOptions,
-	Region,
-} from './fixtures/privacy-choices';
+	startConsentPage,
+	stopConsentPages,
+} from './fixtures/consent-ui';
+import type { ConsentPageOptions, Region } from './fixtures/consent-ui';
 
 const mount = ({
 	region = 'us-opt-out',
-	design = 'privacy-choices',
 	edgeStyle,
 	gpc,
 	container = { type: 'card' },
@@ -46,19 +42,17 @@ const mount = ({
 	...rest
 }: {
 	region?: Region;
-	design?: ConsentPresentation['design'] | null;
 	edgeStyle?: 'inset' | 'flush';
 	gpc?: boolean;
 	container?: ConsentContainer;
 	privacyChoicesLink?: boolean;
 } & Pick<
-	PrivacyChoicesPageOptions,
+	ConsentPageOptions,
 	'animate' | 'banner' | 'dialog' | 'language' | 'stockTrigger'
 > = {}) =>
-	startPrivacyChoicesPage({
+	startConsentPage({
 		...rest,
-		container: design === null ? null : container,
-		design,
+		container,
 		edgeStyle,
 		gpc,
 		privacyChoicesLink,
@@ -94,26 +88,14 @@ beforeEach(async () => {
 });
 
 afterEach(() => {
-	stopPrivacyChoicesPages();
+	stopConsentPages();
 	vi.restoreAllMocks();
 });
 
 describe('opening', () => {
-	test('the classic dialog stays the default', async () => {
-		await mount({ design: null });
-		await waitFor(() => expect(link()).not.toBeNull());
-		must('consent-dialog-trigger').click();
-		await waitFor(() => expect($('consent-dialog-root')).not.toBeNull());
-		expect(must('consent-dialog-root')).not.toHaveAttribute('data-design');
-	});
-
 	test('[FOC-02][FOC-03][LAY-01] opens on its title as a modal dialog over an inert page', async () => {
 		await mount();
 		await openDialog();
-		expect(must('consent-dialog-root')).toHaveAttribute(
-			'data-design',
-			'privacy-choices'
-		);
 		expect(card()).toHaveAttribute('role', 'dialog');
 		expect(card()).toHaveAttribute('aria-modal', 'true');
 		expect(card().getAttribute('aria-labelledby')).toBe(
@@ -590,7 +572,7 @@ describe('wave B round 1', () => {
 		await waitFor(() => expect(confirmed).toHaveBeenCalledTimes(1));
 	});
 
-	test('the floating trigger renders under the Privacy Choices design', async () => {
+	test('the floating trigger renders beside the dialog host', async () => {
 		await mount({ stockTrigger: true });
 		await waitFor(() =>
 			expect(all('[data-testid="consent-dialog-trigger"]')).toHaveLength(1)
@@ -598,9 +580,9 @@ describe('wave B round 1', () => {
 		expect($('consent-dialog-card')).toBeNull();
 	});
 
-	test('[RCPT-01][FOC-03] the opt-out confirmation opens the Privacy Choices dialog on its receipt', async () => {
-		// A one-click opt-out with no reload due opens the confirmation; on
-		// this design it is the dialog, focused on the receipt.
+	test('[RCPT-01][FOC-03] the opt-out confirmation opens the dialog on its receipt', async () => {
+		// A one-click opt-out with no reload due opens the confirmation: the
+		// dialog, focused on the receipt.
 		const client = await mount();
 		await client.optOut();
 		const receipt = await waitFor(() => must('consent-dialog-receipt'));
@@ -616,7 +598,7 @@ describe('wave B round 1', () => {
 		await openDialog();
 	});
 
-	test('[RIGHT-08] after a revocation reload, the Privacy Choices dialog reopens on the receipt', async () => {
+	test('[RIGHT-08] after a revocation reload, the dialog reopens on the receipt', async () => {
 		const client = await mount();
 		await openDialog();
 		must('consent-dialog-right-option-sale-protect').click();
@@ -663,17 +645,6 @@ describe('wave B round 1', () => {
 			'privacy-choices'
 		);
 		expect(choices.element.querySelector('svg')).not.toBeNull();
-		choices.destroy();
-	});
-
-	test('the classic design keeps Your Privacy Choices to opt-out policies', async () => {
-		const client = await mount({
-			design: null,
-			privacyChoicesLink: false,
-			region: 'us-opt-in',
-		});
-		const choices = createPrivacyChoicesLink(client);
-		expect(choices.element.hidden).toBe(true);
 		choices.destroy();
 	});
 
@@ -820,7 +791,7 @@ describe('wave B round 2', () => {
 		await openDialog();
 		expect(must('consent-dialog-root')).not.toHaveAttribute('data-animation');
 		expect(getComputedStyle(card()).animationName).not.toBe('none');
-		stopPrivacyChoicesPages();
+		stopConsentPages();
 
 		await mount();
 		await openDialog();
@@ -863,7 +834,7 @@ describe('wave B round 2', () => {
 
 describe('wave C round 1', () => {
 	test('[ARCH-03] the root carries the surface marker, the consentDialog slot and part', async () => {
-		await startPrivacyChoicesPage({
+		await startConsentPage({
 			privacyChoicesLink: true,
 			region: 'us-opt-out',
 			slots: { consentDialog: 'host-dialog' },
@@ -924,7 +895,7 @@ describe('wave C round 1', () => {
 		// it for a while.
 		showConsentSurface(client.kernel, 'banner');
 		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
-		stopPrivacyChoicesPages();
+		stopConsentPages();
 		const frame = vi.spyOn(window, 'requestAnimationFrame');
 		await new Promise((resolve) => {
 			setTimeout(resolve, 150);

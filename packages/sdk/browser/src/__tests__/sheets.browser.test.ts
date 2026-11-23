@@ -1,8 +1,8 @@
 /**
- * A Privacy Choices page carries only the presentation it shows (§7): a
- * Drawer site never loads or adds the Card or Bar stylesheet, and a
- * classic site loads no Privacy Choices code at all. Ported from
- * `@inth/react`'s `privacy-choices-sheets.test.tsx`.
+ * A page carries only the container it shows (§7): a Drawer site never
+ * loads or adds the Card or Banner stylesheet, and a page that owes no
+ * choice loads no prompt code at all. Ported from `@inth/react`'s sheet
+ * tests.
  *
  * Each browser test file runs in its own frame with its own module graph,
  * so the frame's resource entries list exactly the modules this file's
@@ -13,9 +13,9 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import {
 	$,
 	all,
-	startPrivacyChoicesPage,
-	stopPrivacyChoicesPages,
-} from './fixtures/privacy-choices';
+	startConsentPage,
+	stopConsentPages,
+} from './fixtures/consent-ui';
 
 // The default buffer keeps 250 entries, fewer than the suite's own modules.
 performance.setResourceTimingBufferSize(100_000);
@@ -30,27 +30,26 @@ const added = (id: string): boolean =>
 	all(`style[data-inth-styles="${id}"]`).length > 0;
 
 afterEach(() => {
-	stopPrivacyChoicesPages();
+	stopConsentPages();
 });
 
-describe('Privacy Choices stylesheets', () => {
-	test('a classic banner loads no Privacy Choices module', async () => {
-		await startPrivacyChoicesPage({
-			container: null,
-			design: null,
-			dialog: false,
+describe('surface stylesheets', () => {
+	test('a page that owes no choice loads no prompt module', async () => {
+		await startConsentPage({ dialog: false, region: 'us-opt-out' });
+		await new Promise((resolve) => {
+			setTimeout(resolve, 200);
 		});
-		await vi.waitFor(() => expect($('consent-banner-root')).not.toBeNull());
-		expect(fetched(/ui\/privacy-choices\/(?!pc-import)/u)).toEqual([]);
-		expect(fetched(/styles\/sheets\/(?:surface|card|bar|drawer)\.js/u)).toEqual(
-			[]
-		);
+		expect($('consent-banner-root')).toBeNull();
+		expect(fetched(/ui\/prompt\/(?!prompt\.)/u)).toEqual([]);
+		expect(
+			fetched(/styles\/sheets\/(?:surface|card|banner|drawer)\.js/u)
+		).toEqual([]);
 		expect(all('style[data-inth-styles]')).toHaveLength(0);
 	});
 
-	test('a Drawer never loads or adds the Card or Bar sheet', async () => {
+	test('a Drawer never loads or adds the Card or Banner sheet', async () => {
 		// No dialog, as in the React suite, so nothing warms the options.
-		await startPrivacyChoicesPage({
+		await startConsentPage({
 			container: { side: 'bottom', type: 'drawer' },
 			dialog: false,
 		});
@@ -64,14 +63,14 @@ describe('Privacy Choices stylesheets', () => {
 		expect(added('inth-surface')).toBe(true);
 		expect(added('inth-drawer')).toBe(true);
 		expect(added('inth-card')).toBe(false);
-		expect(added('inth-bar')).toBe(false);
+		expect(added('inth-banner')).toBe(false);
 		expect(fetched(/styles\/sheets\/drawer\.js/u)).not.toEqual([]);
-		expect(fetched(/styles\/sheets\/(?:card|bar)(?:-deferred)?\.js/u)).toEqual(
-			[]
-		);
-		expect(fetched(/ui\/privacy-choices\/(?:card|bar)\.ts/u)).toEqual([]);
+		expect(
+			fetched(/styles\/sheets\/(?:card|banner)(?:-deferred)?\.js/u)
+		).toEqual([]);
+		expect(fetched(/ui\/prompt\/(?:card|banner)\.ts/u)).toEqual([]);
 		// The options' code and sheets wait for Customize.
-		expect(fetched(/ui\/privacy-choices\/panel\.ts/u)).toEqual([]);
+		expect(fetched(/ui\/prompt\/panel\.ts/u)).toEqual([]);
 		expect(added('inth-expand')).toBe(false);
 	});
 });
