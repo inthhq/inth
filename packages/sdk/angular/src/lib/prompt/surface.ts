@@ -158,6 +158,8 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 				#root
 				[attr.class]="rootPart().className"
 				[attr.style]="rootPart().style"
+				[attr.data-model]="model()"
+				[attr.data-prompt]="prompt()"
 				[attr.data-placement]="layout().placement"
 				[attr.data-flow]="layout().flow"
 				[attr.data-edge-style]="layout().edgeStyle"
@@ -480,6 +482,7 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 					[attr.style]="part('consentBannerRightLink').style"
 					[attr.aria-expanded]="bool(expanded())"
 					[attr.aria-controls]="inBar ? null : ids.panel"
+					data-action="customize"
 					data-testid="consent-banner-right-link-opt-out"
 					(click)="expand()"
 					(focus)="warm()"
@@ -697,6 +700,18 @@ export class PromptSurface {
 			...this.#consent.snapshot().policyRule,
 			model: this.#consent.model(),
 		})
+	);
+	/**
+	 * The early-tap script records these with a tap, so a replay against
+	 * another model or prompt than the one the visitor saw is dropped
+	 * (`stillApplies` in core's `early-taps`).
+	 *
+	 * @internal
+	 */
+	protected readonly model = computed(() => this.#consent.model());
+	/** @internal */
+	protected readonly prompt = computed(
+		() => this.#consent.snapshot().policyRule.prompt
 	);
 	readonly #activeUI = computed(() => this.#consent.activeUI() ?? 'none');
 	readonly #wantsShow = computed(
@@ -954,6 +969,7 @@ export class PromptSurface {
 	 * this prompt's own handlers work: stop the script and replay the tap
 	 * through them once the runtime has started, so a choice commits
 	 * through this prompt's plan and Customize opens the options in place.
+	 * A choice records the time of the tap.
 	 */
 	#replayEarlyTaps(): void {
 		let stop: (() => void) | undefined;
@@ -969,11 +985,11 @@ export class PromptSurface {
 
 	#replayTap(tap: EarlyConsentTap): void {
 		if (tap.action === 'accept') {
-			this.commit('allow');
+			this.commit('allow', tap.at);
 		} else if (tap.action === 'reject') {
-			this.commit('refuse');
+			this.commit('refuse', tap.at);
 		} else if (tap.action === 'dismiss') {
-			this.acknowledge();
+			this.acknowledge(tap.at);
 		} else if (tap.action === 'customize' && !untracked(this.allInOne)) {
 			this.expand();
 		}
@@ -1126,8 +1142,9 @@ export class PromptSurface {
 	}
 
 	/** @internal */
-	protected commit(action: BannerCommitAction): void {
+	protected commit(action: BannerCommitAction, actionAt?: number): void {
 		const { plan } = commitBannerChoice(this.#consent.kernel(), action, {
+			actionAt,
 			draft: action === 'save' ? this.#draft.draft() : undefined,
 			uiSource: 'banner',
 		});
@@ -1145,10 +1162,12 @@ export class PromptSurface {
 	}
 
 	/** @internal */
-	protected acknowledge(): void {
+	protected acknowledge(actionAt?: number): void {
 		this.#committed = '';
 		this.#surface.session().commit();
-		void this.#consent.dismissNotice();
+		void this.#consent.dismissNotice(
+			actionAt === undefined ? undefined : { actionAt }
+		);
 	}
 
 	/** @internal */

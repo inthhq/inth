@@ -704,9 +704,12 @@ export class ConsentManager {
 
 	/**
 	 * Record that the visitor dismissed a notice.
+	 *
+	 * @param context - `actionAt`: when the visitor dismissed it, such as a
+	 * tap made before the app hydrated. Defaults to now.
 	 */
-	dismissNotice(): Promise<unknown> {
-		return untracked(this.#kernel).commands.dismissNotice();
+	dismissNotice(context?: { actionAt?: number }): Promise<unknown> {
+		return untracked(this.#kernel).commands.dismissNotice(context);
 	}
 
 	/**

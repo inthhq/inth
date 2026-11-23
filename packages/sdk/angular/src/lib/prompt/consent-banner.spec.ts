@@ -127,6 +127,8 @@ interface MountOptions {
 	bannerNoStyle?: boolean;
 	/** Open the dialog as soon as the page can, from a later sibling. */
 	openDialog?: boolean;
+	/** Provider-level `scrollLock` and `trapFocus`. */
+	modal?: { scrollLock?: boolean; trapFocus?: boolean };
 }
 
 let fixtureId = 0;
@@ -181,6 +183,7 @@ const mount = async function mount({
 	layout,
 	bannerNoStyle,
 	openDialog,
+	modal,
 }: MountOptions = {}) {
 	fixtureId += 1;
 	stubViewport(phone);
@@ -213,6 +216,7 @@ const mount = async function mount({
 					},
 				},
 				theme,
+				...modal,
 			}),
 		],
 	});
@@ -314,6 +318,16 @@ const expandPanel = async function expandPanel(): Promise<void> {
 		)
 	);
 };
+
+describe('provider options', () => {
+	test('[BNR-13] provider scrollLock and trapFocus never block the stock banner: blockUntilChoice does', async () => {
+		await mount({ modal: { scrollLock: true, trapFocus: true } });
+		await waitForRoot();
+		expect(root().hasAttribute('data-blocking')).toBe(false);
+		expect(pageAction().hasAttribute('inert')).toBe(false);
+		expect(must('consent-banner-shell').getAttribute('role')).toBeNull();
+	});
+});
 
 describe('card:', () => {
 	test('[BNR-15] starts collapsed, Customize expands in place and focus moves in', async () => {
@@ -1154,22 +1168,87 @@ describe('a tap before hydration', () => {
 		Reflect.deleteProperty(window, EARLY_TAPS);
 	});
 
-	/** The server's banner, tapped while only the inline script runs. */
-	const tapServerBanner = (action: string) => {
+	/**
+	 * The server's banner, tapped while only the inline script runs.
+	 *
+	 * @returns When the script recorded the tap.
+	 */
+	const tapServerBanner = (
+		action: string,
+		{ model = 'opt-in', prompt = 'choice' } = {}
+	): number => {
 		// An earlier banner claimed the queue; a fresh page has none.
 		Reflect.deleteProperty(window, EARLY_TAPS);
 		// oxlint-disable-next-line no-new-func -- The script ships as text.
 		new Function(EARLY_CONSENT_TAP_SCRIPT)();
-		document.body.innerHTML = `<div data-testid="consent-banner-root" data-model="opt-in" data-prompt="choice"><button data-action="${action}">${action}</button></div>`;
+		document.body.innerHTML = `<div data-testid="consent-banner-root" data-model="${model}" data-prompt="${prompt}"><button data-action="${action}">${action}</button></div>`;
 		document
 			.querySelector<HTMLButtonElement>(`[data-action="${action}"]`)
 			?.click();
-		const queue = (window as unknown as Record<string, { taps?: unknown[] }>)[
-			EARLY_TAPS
-		];
+		const queue = (
+			window as unknown as Record<string, { taps?: { at: number }[] }>
+		)[EARLY_TAPS];
 		expect(queue?.taps).toHaveLength(1);
 		document.body.replaceChildren();
+		return queue?.taps?.[0]?.at ?? Number.NaN;
 	};
+
+	/** Long enough that the replay's own clock differs from the tap's. */
+	const later = () =>
+		new Promise((resolve) => {
+			setTimeout(resolve, 30);
+		});
+
+	test("the root names the policy's model and prompt, and the notice's right-link replays as Customize", async () => {
+		await mount({ region: 'us-notice' });
+		await waitForRoot();
+		// The script records these with a tap, so a replay against another
+		// policy is dropped.
+		expect(root().getAttribute('data-model')).toBe('opt-out');
+		expect(root().getAttribute('data-prompt')).toBe('notice');
+		expect(
+			must('consent-banner-right-link-opt-out').getAttribute('data-action')
+		).toBe('customize');
+	});
+
+	test("a tap on the notice's right-link before hydration expands the rights in place", async () => {
+		tapServerBanner('customize', { model: 'opt-out', prompt: 'notice' });
+		const { consent } = await mount({ region: 'us-notice' });
+		await waitForRoot();
+		await vi.waitFor(
+			() => expect(root().getAttribute('data-expanded')).toBe('true'),
+			{ timeout: 4000 }
+		);
+		expect(consent.activeUI()).toBe('banner');
+		expect(consent.snapshot().optOut).toBeFalsy();
+	});
+
+	test('a choice records the time of the tap, not of the replay', async () => {
+		const tappedAt = tapServerBanner('reject');
+		await later();
+		const { consent } = await mount({ region: 'us-opt-in' });
+		await vi.waitFor(
+			() => expect(consent.snapshot().explicitChoice).toBeTruthy(),
+			{ timeout: 4000 }
+		);
+		expect(
+			consent.snapshot().explicitChoice?.categories?.marketing?.confirmedAt
+		).toBe(tappedAt);
+	});
+
+	test('an OK on the notice before hydration records the time of the tap', async () => {
+		const tappedAt = tapServerBanner('dismiss', {
+			model: 'opt-out',
+			prompt: 'notice',
+		});
+		await later();
+		const { consent } = await mount({ region: 'us-notice' });
+		await vi.waitFor(
+			() => expect(consent.snapshot().noticeDismissal).toBeTruthy(),
+			{ timeout: 4000 }
+		);
+		expect(consent.snapshot().noticeDismissal?.dismissedAt).toBe(tappedAt);
+	});
 
 	test('records the tapped accept through the prompt once it hydrates', async () => {
 		tapServerBanner('accept');

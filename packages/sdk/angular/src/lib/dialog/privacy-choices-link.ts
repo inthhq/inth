@@ -12,25 +12,11 @@ import {
 import type { OptOutLinkVariant } from '@inth/sdk/surface-state';
 import { resolvePrivacyChoicesLink } from '@inth/sdk/surface-state';
 import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
-import { CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
 import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
-import { OptOutIcon } from '../shared/icons';
-
-/**
- * The icon's own size, 14px tall at the glyph's ratio. The legal-links
- * sheet's `.optOutIcon` rule sizes it where that sheet loads; on a page
- * without it, the attributes keep the icon from filling the line.
- */
-const ICON_SIZE = (() => {
-	const [, , width = 30, height = 14] = CPPA_OPT_OUT_ICON.viewBox
-		.split(' ')
-		.map(Number);
-	const tall = 14;
-	return { height: tall, width: Math.round((tall * width) / height) };
-})();
+import { OPT_OUT_ICON_SIZE, OptOutIcon } from '../shared/icons';
 
 /**
  * The "Your Privacy Choices" footer link: an unstyled button that opens
@@ -112,7 +98,7 @@ export class PrivacyChoicesLink {
 
 	/** Unset under `noStyle`, which leaves sizing to the host. @internal */
 	protected readonly iconSize = computed(() =>
-		this.#theme.noStyle() ? null : ICON_SIZE
+		this.#theme.noStyle() ? null : OPT_OUT_ICON_SIZE
 	);
 
 	/** @internal */
