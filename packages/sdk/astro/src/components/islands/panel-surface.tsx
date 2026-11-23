@@ -36,6 +36,7 @@ const loadIABSurface = () => {
 };
 
 type PreferencesDialog = ComponentType<{
+	disableAnimation?: boolean;
 	legalLinks?: (keyof LegalLinks)[] | null;
 }>;
 
@@ -69,8 +70,10 @@ export const preloadDialog =
 	};
 
 const PreferencesDialogSurface = ({
+	disableAnimation,
 	legalLinks,
 }: {
+	disableAnimation?: boolean;
 	legalLinks?: (keyof LegalLinks)[] | null;
 }) => {
 	const [loadedComponent, setLoadedComponent] = useState(() => loadedDialog);
@@ -101,8 +104,14 @@ const PreferencesDialogSurface = ({
 	}
 	const Component = loadedComponent;
 	// Its footer shows the regime's one legal link, which `legalLinks` may
-	// hide.
-	return Component ? <Component legalLinks={legalLinks} /> : null;
+	// hide. It reads `disableAnimation` from its own prop, not the
+	// provider's, as React's `<ConsentDialog disableAnimation>` does.
+	return Component ? (
+		<Component
+			disableAnimation={disableAnimation}
+			legalLinks={legalLinks}
+		/>
+	) : null;
 };
 
 // This island only mounts in the browser. Resolve its component through state
@@ -165,7 +174,10 @@ const ConsentDialogSurface = ({
 		kind === 'iab' ? (
 			<IABDialogSurface tab={tab} />
 		) : (
-			<PreferencesDialogSurface legalLinks={legalLinks} />
+			<PreferencesDialogSurface
+				disableAnimation={options.disableAnimation}
+				legalLinks={legalLinks}
+			/>
 		);
 	return (
 		<InthProvider

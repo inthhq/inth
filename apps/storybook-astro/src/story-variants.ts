@@ -22,16 +22,12 @@ export type AstroComponentName =
 /** Which framework renders the on-demand dialog island. */
 export type AstroUIAdapter = 'svelte' | 'react' | 'vue';
 
-/** The regimes the Privacy Choices stories show, as React's do. */
-export type PrivacyChoicesRegion =
-	| 'eu'
-	| 'us-opt-in'
-	| 'us-notice'
-	| 'us-opt-out';
+/** The regimes the prompt and dialog stories show, as React's do. */
+export type StoryRegion = 'eu' | 'us-opt-in' | 'us-notice' | 'us-opt-out';
 
-/** A Privacy Choices (v6) story: the prompt over a demo page. */
-export interface PrivacyChoicesStory {
-	region: PrivacyChoicesRegion;
+/** A regime story: the prompt, or the dialog, over a demo page. */
+export interface PromptStory {
+	region: StoryRegion;
 	/** The prompt's `container`. */
 	container: Record<string, unknown>;
 	blockUntilChoice?: boolean;
@@ -82,12 +78,12 @@ export interface AstroStoryVariant {
 		};
 	};
 	/**
-	 * Which dialog adapter the story boots. Defaults to `svelte`, the
-	 * integration's own default.
+	 * Which dialog adapter the story boots. Defaults to `react`, whose
+	 * island renders React's own dialog, the parity baseline.
 	 */
 	ui?: AstroUIAdapter;
-	/** Render the Privacy Choices design over a demo page. */
-	privacyChoices?: PrivacyChoicesStory;
+	/** Render the prompt over a demo page, under one regime's rule. */
+	prompt?: PromptStory;
 	/** Put `inth-dark` on `<html>` while the story is mounted. */
 	dark?: boolean;
 	/**
@@ -132,27 +128,26 @@ const CATEGORIES = [
 	'marketing',
 ];
 
-/** A Privacy Choices banner story's variant. */
-const privacyChoicesBanner = function privacyChoicesBanner(
+/** A regime banner story's variant. */
+const bannerStory = function bannerStory(
 	id: string,
-	story: PrivacyChoicesStory
+	story: PromptStory
 ): AstroStoryVariant {
 	return {
 		component: 'consent-banner',
-		id: `privacy-choices-banner--${id}`,
+		id: `consent-banner--${id}`,
 		options: { colorScheme: 'light', consentCategories: CATEGORIES },
-		privacyChoices: story,
+		prompt: story,
 	};
 };
 
 /**
- * A Privacy Choices dialog story's variant: the dialog opens on boot,
- * unless the story walks the full flow from the banner. The React island
- * renders React's Privacy Choices dialog.
+ * A regime dialog story's variant: the dialog opens on boot, unless the
+ * story walks the full flow from the banner.
  */
-const privacyChoicesDialog = function privacyChoicesDialog(
+const dialogStory = function dialogStory(
 	id: string,
-	story: Omit<PrivacyChoicesStory, 'container' | 'dialog'> & {
+	story: Omit<PromptStory, 'container' | 'dialog'> & {
 		container?: Record<string, unknown>;
 		flow?: boolean;
 	}
@@ -160,174 +155,173 @@ const privacyChoicesDialog = function privacyChoicesDialog(
 	const { flow, ...rest } = story;
 	return {
 		component: 'consent-banner',
-		id: `privacy-choices-dialog--${id}`,
+		id: `consent-dialog--${id}`,
 		openDialog: flow ? undefined : 'preferences',
 		options: { colorScheme: 'light', consentCategories: CATEGORIES },
-		privacyChoices: {
+		prompt: {
 			container: { position: 'start', type: 'card' },
 			...rest,
 			dialog: true,
 		},
-		ui: 'react',
 	};
 };
 
-/** The Privacy Choices stories, under the names React's carry. */
-const privacyChoicesVariants: readonly AstroStoryVariant[] = [
-	privacyChoicesBanner('card-start-eu', {
+/** Every container and regime, under the names React's stories carry. */
+const regionVariants: readonly AstroStoryVariant[] = [
+	bannerStory('card-start-eu', {
 		container: { position: 'start', type: 'card' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('card-start-us-opt-in', {
+	bannerStory('card-start-us-opt-in', {
 		container: { position: 'start', type: 'card' },
 		region: 'us-opt-in',
 	}),
-	privacyChoicesBanner('card-start-us-notice', {
+	bannerStory('card-start-us-notice', {
 		container: { position: 'start', type: 'card' },
 		region: 'us-notice',
 	}),
-	privacyChoicesBanner('card-end-eu', {
+	bannerStory('card-end-eu', {
 		container: { position: 'end', type: 'card' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('card-end-us-opt-in', {
+	bannerStory('card-end-us-opt-in', {
 		container: { position: 'end', type: 'card' },
 		region: 'us-opt-in',
 	}),
-	privacyChoicesBanner('card-end-us-notice', {
+	bannerStory('card-end-us-notice', {
 		container: { position: 'end', type: 'card' },
 		region: 'us-notice',
 	}),
-	privacyChoicesBanner('card-center-eu', {
+	bannerStory('card-center-eu', {
 		container: { position: 'center', type: 'card' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('card-center-us-opt-in', {
+	bannerStory('card-center-us-opt-in', {
 		container: { position: 'center', type: 'card' },
 		region: 'us-opt-in',
 	}),
-	privacyChoicesBanner('card-center-us-notice', {
+	bannerStory('card-center-us-notice', {
 		container: { position: 'center', type: 'card' },
 		region: 'us-notice',
 	}),
-	privacyChoicesBanner('banner-bottom-eu', {
+	bannerStory('banner-bottom-eu', {
 		container: { edge: 'bottom', type: 'banner' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('banner-bottom-us-opt-in', {
+	bannerStory('banner-bottom-us-opt-in', {
 		container: { edge: 'bottom', type: 'banner' },
 		region: 'us-opt-in',
 	}),
-	privacyChoicesBanner('banner-bottom-us-notice', {
+	bannerStory('banner-bottom-us-notice', {
 		container: { edge: 'bottom', type: 'banner' },
 		region: 'us-notice',
 	}),
-	privacyChoicesBanner('banner-top-eu', {
+	bannerStory('banner-top-eu', {
 		container: { edge: 'top', type: 'banner' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('banner-top-us-opt-in', {
+	bannerStory('banner-top-us-opt-in', {
 		container: { edge: 'top', type: 'banner' },
 		region: 'us-opt-in',
 	}),
-	privacyChoicesBanner('banner-top-us-notice', {
+	bannerStory('banner-top-us-notice', {
 		container: { edge: 'top', type: 'banner' },
 		region: 'us-notice',
 	}),
-	privacyChoicesBanner('drawer-bottom-eu', {
+	bannerStory('drawer-bottom-eu', {
 		container: { side: 'bottom', type: 'drawer' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('drawer-bottom-us-opt-in', {
+	bannerStory('drawer-bottom-us-opt-in', {
 		container: { side: 'bottom', type: 'drawer' },
 		region: 'us-opt-in',
 	}),
-	privacyChoicesBanner('drawer-bottom-us-notice', {
+	bannerStory('drawer-bottom-us-notice', {
 		container: { side: 'bottom', type: 'drawer' },
 		region: 'us-notice',
 	}),
-	privacyChoicesBanner('drawer-top-eu', {
+	bannerStory('drawer-top-eu', {
 		container: { side: 'top', type: 'drawer' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('drawer-top-us-opt-in', {
+	bannerStory('drawer-top-us-opt-in', {
 		container: { side: 'top', type: 'drawer' },
 		region: 'us-opt-in',
 	}),
-	privacyChoicesBanner('drawer-top-us-notice', {
+	bannerStory('drawer-top-us-notice', {
 		container: { side: 'top', type: 'drawer' },
 		region: 'us-notice',
 	}),
-	privacyChoicesBanner('drawer-start-eu', {
+	bannerStory('drawer-start-eu', {
 		container: { side: 'start', type: 'drawer' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('drawer-start-us-opt-in', {
+	bannerStory('drawer-start-us-opt-in', {
 		container: { side: 'start', type: 'drawer' },
 		region: 'us-opt-in',
 	}),
-	privacyChoicesBanner('drawer-start-us-notice', {
+	bannerStory('drawer-start-us-notice', {
 		container: { side: 'start', type: 'drawer' },
 		region: 'us-notice',
 	}),
-	privacyChoicesBanner('drawer-end-eu', {
+	bannerStory('drawer-end-eu', {
 		container: { side: 'end', type: 'drawer' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('drawer-end-us-opt-in', {
+	bannerStory('drawer-end-us-opt-in', {
 		container: { side: 'end', type: 'drawer' },
 		region: 'us-opt-in',
 	}),
-	privacyChoicesBanner('drawer-end-us-notice', {
+	bannerStory('drawer-end-us-notice', {
 		container: { side: 'end', type: 'drawer' },
 		region: 'us-notice',
 	}),
-	privacyChoicesBanner('blocking-card', {
+	bannerStory('blocking-card', {
 		blockUntilChoice: true,
 		container: { position: 'start', type: 'card' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('blocking-banner', {
+	bannerStory('blocking-banner', {
 		blockUntilChoice: true,
 		container: { edge: 'bottom', type: 'banner' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('blocking-drawer-bottom', {
+	bannerStory('blocking-drawer-bottom', {
 		blockUntilChoice: true,
 		container: { side: 'bottom', type: 'drawer' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('blocking-drawer-start', {
+	bannerStory('blocking-drawer-start', {
 		blockUntilChoice: true,
 		container: { side: 'start', type: 'drawer' },
 		region: 'eu',
 	}),
-	privacyChoicesBanner('flush-banner-bottom', {
+	bannerStory('flush-banner-bottom', {
 		container: { edge: 'bottom', type: 'banner' },
 		edgeStyle: 'flush',
 		region: 'eu',
 	}),
-	privacyChoicesBanner('flush-drawer-bottom', {
+	bannerStory('flush-drawer-bottom', {
 		container: { side: 'bottom', type: 'drawer' },
 		edgeStyle: 'flush',
 		region: 'eu',
 	}),
-	privacyChoicesDialog('us-opt-out', { region: 'us-opt-out' }),
-	privacyChoicesDialog('us-opt-in', { region: 'us-opt-in' }),
-	privacyChoicesDialog('us-with-gpc', { gpc: true, region: 'us-opt-out' }),
-	privacyChoicesDialog('eu', { region: 'eu' }),
-	privacyChoicesDialog('phone-us-preferences-sheet', { region: 'us-opt-out' }),
-	privacyChoicesDialog('phone-eu-vendor-sheets', { region: 'eu' }),
-	privacyChoicesDialog('phone-flush-sheets', {
+	dialogStory('us-opt-out', { region: 'us-opt-out' }),
+	dialogStory('us-opt-in', { region: 'us-opt-in' }),
+	dialogStory('us-with-gpc', { gpc: true, region: 'us-opt-out' }),
+	dialogStory('eu', { region: 'eu' }),
+	dialogStory('phone-us-preferences-sheet', { region: 'us-opt-out' }),
+	dialogStory('phone-eu-vendor-sheets', { region: 'eu' }),
+	dialogStory('phone-flush-sheets', {
 		edgeStyle: 'flush',
 		region: 'us-opt-in',
 	}),
-	privacyChoicesDialog('full-flow-eu', { flow: true, region: 'eu' }),
-	privacyChoicesDialog('full-flow-us-opt-in', {
+	dialogStory('full-flow-eu', { flow: true, region: 'eu' }),
+	dialogStory('full-flow-us-opt-in', {
 		flow: true,
 		region: 'us-opt-in',
 	}),
-	privacyChoicesDialog('full-flow-us-notice', {
+	dialogStory('full-flow-us-notice', {
 		container: { edge: 'bottom', type: 'banner' },
 		flow: true,
 		region: 'us-notice',
@@ -358,14 +352,13 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		withDialog: true,
 	},
 	{
-		// React's focus story asks for the deprecated `trapFocus`, which
-		// makes its prompt blocking; Astro has only the policy's constraint.
+		// React's focus story blocks the page until a choice, as this does.
 		component: 'consent-banner',
 		id: 'consent-banner--blocking',
 		options: {
 			colorScheme: 'light',
 			consentCategories: CATEGORIES,
-			presentation: { prompt: { blocking: true } },
+			presentation: { prompt: { blockUntilChoice: true } },
 		},
 		props: { force: true },
 	},
@@ -430,6 +423,10 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			reloadOnConsentRevoked: false,
 		},
 		props: { disableAnimation: true },
+		// The Svelte island renders the standalone confirmation React's
+		// `<OptOutConfirmation />` does; React's island shows the dialog's
+		// receipt instead.
+		ui: 'svelte',
 	},
 	{
 		component: 'opt-out-confirmation',
@@ -444,6 +441,10 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			reloadOnConsentRevoked: false,
 		},
 		props: { disableAnimation: true },
+		// The Svelte island renders the standalone confirmation React's
+		// `<OptOutConfirmation />` does; React's island shows the dialog's
+		// receipt instead.
+		ui: 'svelte',
 	},
 	{
 		component: 'opt-out-confirmation',
@@ -458,6 +459,10 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			reloadOnConsentRevoked: false,
 		},
 		props: { disableAnimation: true },
+		// The Svelte island renders the standalone confirmation React's
+		// `<OptOutConfirmation />` does; React's island shows the dialog's
+		// receipt instead.
+		ui: 'svelte',
 	},
 	{
 		component: 'opt-out-confirmation',
@@ -473,6 +478,9 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		},
 		props: { disableAnimation: true },
 		withOptOutLink: true,
+		// React's story opens the dialog on its receipt here, as the React
+		// island does.
+		ui: 'react',
 	},
 	{
 		component: 'opt-out-confirmation',
@@ -488,6 +496,9 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		},
 		props: { disableAnimation: true },
 		withOptOutLink: true,
+		// React's story opens the dialog on its receipt here, as the React
+		// island does.
+		ui: 'react',
 	},
 	{
 		component: 'consent-dialog',
@@ -600,6 +611,7 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		id: 'iab-consent-dialog--overview',
 		openDialog: 'iab',
 		options: { colorScheme: 'light', iab: true },
+		ui: 'svelte',
 	},
 	{
 		component: 'iab-consent-dialog',
@@ -615,7 +627,7 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		options: { colorScheme: 'light', iab: true },
 		ui: 'vue',
 	},
-	...privacyChoicesVariants,
+	...regionVariants,
 ];
 
 /**

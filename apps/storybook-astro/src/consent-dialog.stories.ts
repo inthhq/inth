@@ -6,7 +6,7 @@ import {
 import type { Meta, StoryObj } from '@storybook/html-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
-import { renderAstroStory } from './render-astro-story';
+import { renderAstroStory, whenPromptReady } from './render-astro-story';
 
 const meta = {
 	parameters: {
@@ -29,17 +29,28 @@ export const Default: Story = {
 };
 
 /** The banner and `<ConsentDialog />`; the plays open the dialog from Customize. */
+/** Wait for the browser prompt, then run the shared play. */
+const afterPrompt =
+	(play: NonNullable<Story['play']>): NonNullable<Story['play']> =>
+	async (context) => {
+		await whenPromptReady();
+		await play(context);
+	};
+
 export const DialogContract: Story = {
-	play: dialogContract,
+	play: afterPrompt(dialogContract),
 	render: () => renderAstroStory('consent-banner--with-dialog'),
 };
 
 export const DialogEscapeCloses: Story = {
 	...DialogContract,
-	play: dialogEscapeCloses,
+	play: afterPrompt(dialogEscapeCloses),
 };
 
-export const SaveFlow: Story = { ...DialogContract, play: saveFlow };
+export const SaveFlow: Story = {
+	...DialogContract,
+	play: afterPrompt(saveFlow),
+};
 
 /**
  * The resting state unique to Astro: `<ConsentDialog />` server-renders
@@ -111,3 +122,31 @@ export const OptInConfirmationConfirmedRights: Story = {
 	render: () =>
 		renderAstroStory('consent-dialog--opt-in-confirmation-confirmed-rights'),
 };
+
+/**
+ * The dialog for each regime, under the names React's stories carry. The
+ * "full flow" stories start on the prompt; the page link opens the dialog.
+ */
+const story = (id: string, phone = false): Story => {
+	const result: Story = {
+		render: () => renderAstroStory(`consent-dialog--${id}`),
+	};
+	if (phone) {
+		result.globals = { viewport: { isRotated: false, value: 'mobile2' } };
+	}
+	return result;
+};
+
+export const UsOptOut: Story = story('us-opt-out');
+export const UsOptIn: Story = story('us-opt-in');
+export const UsWithGpc: Story = story('us-with-gpc');
+export const EU: Story = story('eu');
+export const PhoneUsPreferencesSheet: Story = story(
+	'phone-us-preferences-sheet',
+	true
+);
+export const PhoneEuVendorSheets: Story = story('phone-eu-vendor-sheets', true);
+export const PhoneFlushSheets: Story = story('phone-flush-sheets', true);
+export const FullFlowEU: Story = story('full-flow-eu');
+export const FullFlowUsOptIn: Story = story('full-flow-us-opt-in');
+export const FullFlowUsNotice: Story = story('full-flow-us-notice');

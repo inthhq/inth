@@ -20,6 +20,7 @@ import {
 } from '@inth/astro/client';
 import { createLazyIABFactory } from '@inth/sdk/runtime';
 import { mountRuntimeIAB } from '@inth/sdk/runtime/on-demand';
+import { waitFor } from 'storybook/test';
 import prerendered from 'virtual:inth-astro-prerendered';
 
 import {
@@ -32,36 +33,32 @@ import {
 	storybookOptOutRecords,
 	storybookPolicy,
 } from '../../storybook-consent-policy';
-import { privacyChoicesPolicy } from './privacy-choices-policies';
+import { regionPolicy } from './region-policies';
 import { requireStoryVariant } from './story-variants';
 import type {
 	AstroStoryVariant,
 	AstroUIAdapter,
-	PrivacyChoicesStory,
+	PromptStory,
 } from './story-variants';
 
 const DIALOG_HOST_ID = 'inth-dialog-host';
 
 const registered = new Set<string>();
 let activeStoryPolicy: 'default' | 'opt-out' = 'default';
-/** The Privacy Choices story showing, whose regime's rule the transport resolves. */
-let activePrivacyChoices: PrivacyChoicesStory | null = null;
-const privacyChoicesModes = new Map<string, ReturnType<typeof storybookMode>>();
+/** The regime story showing, whose rule the transport resolves. */
+let activePrompt: PromptStory | null = null;
+const promptModes = new Map<string, ReturnType<typeof storybookMode>>();
 
-const privacyChoicesMode = function privacyChoicesMode(
-	story: PrivacyChoicesStory
+const promptMode = function promptMode(
+	story: PromptStory
 ): ReturnType<typeof storybookMode> {
 	const key = `${story.region}:${story.dialog === true}`;
-	let mode = privacyChoicesModes.get(key);
+	let mode = promptModes.get(key);
 	if (!mode) {
 		mode = storybookMode([
-			privacyChoicesPolicy(
-				storybookPolicy,
-				story.region,
-				story.dialog === true
-			),
+			regionPolicy(storybookPolicy, story.region, story.dialog === true),
 		]);
-		privacyChoicesModes.set(key, mode);
+		promptModes.set(key, mode);
 	}
 	return mode;
 };
@@ -81,8 +78,8 @@ registerTransport(() =>
 			if (context.iabEnabled) {
 				return storyModes.iab(context);
 			}
-			if (activePrivacyChoices) {
-				return privacyChoicesMode(activePrivacyChoices)(context);
+			if (activePrompt) {
+				return promptMode(activePrompt)(context);
 			}
 			if (activeStoryPolicy === 'opt-out') {
 				return storyModes.optOut(context);
@@ -172,7 +169,7 @@ const applyOptOutStoryConfig = function applyOptOutStoryConfig(
 	config: Record<string, unknown>,
 	variant: AstroStoryVariant
 ): void {
-	if (variant.privacyChoices?.gpc) {
+	if (variant.prompt?.gpc) {
 		config.initialGpc = true;
 		config.initialPrivacySignals = { gpc: true };
 		return;
@@ -245,8 +242,8 @@ export const renderAstroStory = function renderAstroStory(
 
 	resetPage();
 	activeStoryPolicy = variant.options?.policy ?? 'default';
-	activePrivacyChoices = variant.privacyChoices ?? null;
-	registerAdapters(variant.ui ?? 'svelte');
+	activePrompt = variant.prompt ?? null;
+	registerAdapters(variant.ui ?? 'react');
 	if (variant.options?.iab) {
 		registerIAB({
 			...createLazyIABFactory(
@@ -288,10 +285,10 @@ export const renderAstroStory = function renderAstroStory(
 		if (variant.openDialog) {
 			void client.openDialog(variant.openDialog);
 		}
-		// The Privacy Choices dialog pages' own "Privacy settings" link is the
+		// The regime dialog pages' own "Privacy settings" link is the
 		// site's code, as React's story `SettingsLink` is: it opens the dialog
 		// through the client, not through a stock component's hooks.
-		if (variant.privacyChoices) {
+		if (variant.prompt) {
 			host
 				.querySelector('[data-testid="consent-dialog-trigger"]')
 				?.addEventListener('click', () => {
@@ -304,4 +301,25 @@ export const renderAstroStory = function renderAstroStory(
 	});
 
 	return host;
+};
+
+/**
+ * Wait until the browser prompt has taken over the server-rendered one,
+ * which marks the page's status region as a live region. The server's
+ * markup carries no handlers, so a play that taps the prompt waits for
+ * this first, as a visitor's tap lands once the prompt's chunk is in.
+ */
+export const whenPromptReady = async function whenPromptReady(): Promise<void> {
+	await waitFor(
+		() => {
+			if (
+				!document.querySelector(
+					'[data-testid="consent-banner-announcement"][role="status"]'
+				)
+			) {
+				throw new Error('The consent prompt has not mounted yet.');
+			}
+		},
+		{ timeout: 5000 }
+	);
 };
