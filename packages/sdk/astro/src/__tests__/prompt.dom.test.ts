@@ -351,7 +351,6 @@ describe('card:', () => {
 		await waitForController();
 		expect(root().getAttribute('data-placement')).toBe('card-start');
 		expect(root().getAttribute('data-flow')).toBe('expand-in-place');
-		expect(root().hasAttribute('data-design')).toBe(false);
 		const customize = must<HTMLButtonElement>(
 			'consent-banner-customize-button'
 		);

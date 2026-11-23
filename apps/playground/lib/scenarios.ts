@@ -706,7 +706,7 @@ const authoredScenarios: Omit<
 	{
 		country: 'FR',
 		description:
-			'Opt-in choice prompt rendered as a centered wall: a backdrop, scroll lock, and focus trap until the visitor answers. `wall` is always blocking.',
+			'Opt-in choice prompt rendered as a centred Card: a backdrop, scroll lock, and focus trap until the visitor answers. A centred Card always blocks.',
 		group: 'custom',
 		id: 'custom-eu-wall',
 		label: 'EU wall',
