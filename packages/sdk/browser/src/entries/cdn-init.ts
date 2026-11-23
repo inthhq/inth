@@ -9,6 +9,6 @@
  * `../init/run.ts`.
  */
 
-import { runInitScript } from '../init/run';
+import { runInitScript } from '../init/run-init-script';
 
 runInitScript(document.currentScript as HTMLScriptElement | null);

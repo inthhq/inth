@@ -21,7 +21,7 @@ import type { GlobalApiBase } from '../create-global-with';
 import { autoInit, createGlobal, installGlobal } from '../global';
 import { releaseBoot } from '../init/adopt-boot';
 import type { InitBoot } from '../init/read-boot';
-import { runInitScript } from '../init/run';
+import { runInitScript } from '../init/run-init-script';
 import { version } from '../version';
 
 const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/inth.js';
