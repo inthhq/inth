@@ -151,6 +151,20 @@ const assertBorderIntact = function assertBorderIntact(styles, selector) {
 	);
 };
 
+/**
+ * The dialog card has no border: it draws its edge as a spread-only
+ * box-shadow ring (`0 0 0 1px`), the first of its shadows. A card whose
+ * Inth rules were stripped or purged computes `box-shadow: none`.
+ */
+const assertRingIntact = function assertRingIntact(styles, selector) {
+	const ring = /\b0px 0px 0px (?<spread>[\d.]+)px\b/u.exec(styles.boxShadow);
+	if (Number.parseFloat(ring?.groups?.spread ?? '0') <= 0) {
+		throw new Error(
+			`${selector}: expected a box-shadow ring, received ${styles.boxShadow}`
+		);
+	}
+};
+
 const readStyles = function readStyles(locator) {
 	return locator.evaluate((element) => {
 		const styles = window.getComputedStyle(element);
@@ -338,7 +352,23 @@ const verifyDialog = async function verifyDialog(page, app) {
 		dialogStyles.backgroundColor,
 		`${app.label} v3 dialog card background`
 	);
-	assertBorderIntact(dialogStyles, `${app.label} v3 dialog card`);
+	assertRingIntact(dialogStyles, `${app.label} v3 dialog card`);
+
+	// The footer's top border and padding are real borders and padding,
+	// the properties preflight resets.
+	const footer = page.locator('[data-testid="consent-dialog-footer"]').first();
+	await footer.waitFor();
+	const footerStyles = await readStyles(footer);
+	assertBorderIntact(footerStyles, `${app.label} v3 dialog footer`);
+	if (
+		!footerStyles.padding
+			.split(' ')
+			.some((value) => Number.parseFloat(value) > 0)
+	) {
+		throw new Error(
+			`${app.label} v3 dialog footer padding was stripped by preflight`
+		);
+	}
 };
 
 const verifyWidget = async function verifyWidget(page, app) {
