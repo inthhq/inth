@@ -69,6 +69,8 @@ interface MountOptions {
 	bannerProps?: ConsentBannerProps;
 	/** The resolved language, which sets the prompt's `dir`. */
 	language?: string;
+	/** Provider-level `scrollLock` and `trapFocus`. */
+	modal?: { scrollLock?: boolean; trapFocus?: boolean };
 }
 
 /** The snapshot, for assertions on what was recorded, and the kernel. */
@@ -100,6 +102,7 @@ const mount = async function mount({
 	components,
 	bannerProps,
 	language,
+	modal,
 }: MountOptions = {}) {
 	fixture += 1;
 	const prefetch: ComponentFixtureOptions['prefetch'] = policyFixture(
@@ -134,6 +137,7 @@ const mount = async function mount({
 						edgeStyle,
 					},
 				},
+				...modal,
 			}}
 		>
 			<button type="button">Page action</button>
@@ -226,6 +230,14 @@ describe('opt-in', () => {
 		await waitForRoot();
 		expect(root()).toHaveAttribute('data-placement', 'card-start');
 		expect(root()).not.toHaveAttribute('data-design');
+	});
+
+	test('[BNR-13] provider scrollLock and trapFocus never block the stock banner: blockUntilChoice does', async () => {
+		await mount({ modal: { scrollLock: true, trapFocus: true } });
+		await waitForRoot();
+		expect(root()).not.toHaveAttribute('data-blocking');
+		expect(pageAction()).not.toHaveAttribute('inert');
+		expect(must('consent-banner-shell')).not.toHaveAttribute('role', 'dialog');
 	});
 
 	test('[BNR-13][BNR-10] US opt-out with no prompt shows nothing and never blocks', async () => {
