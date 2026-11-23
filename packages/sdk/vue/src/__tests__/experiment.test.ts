@@ -208,7 +208,9 @@ test('the presentation resolves against the experiment the kernel was created wi
 			experiment: {
 				...experiment,
 				arm: 'bar',
-				arms: { bar: { prompt: { container: { position: 'center', type: 'card' } } } },
+				arms: {
+					bar: { prompt: { container: { position: 'center', type: 'card' } } },
+				},
 			},
 		};
 		await nextTick();

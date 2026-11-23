@@ -25,7 +25,6 @@
 	--consent-dialog-animation-duration: var(--inth-duration-normal);
 	--consent-dialog-overlay-background-color: var(--inth-overlay);
 	--consent-dialog-overlay-background-color-dark: var(--inth-overlay);
-
 }
 
 /* Hairline borders for retina displays */

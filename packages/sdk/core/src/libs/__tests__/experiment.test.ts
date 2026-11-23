@@ -168,7 +168,9 @@ describe('resolveExperimentPresentation', () => {
 				{ prompt: { container: { type: 'card' }, edgeStyle: 'flush' } },
 				{
 					arms: {
-						bar: { prompt: { container: { type: 'banner' }, edgeStyle: undefined } },
+						bar: {
+							prompt: { container: { type: 'banner' }, edgeStyle: undefined },
+						},
 					},
 					id: 'shape',
 				},

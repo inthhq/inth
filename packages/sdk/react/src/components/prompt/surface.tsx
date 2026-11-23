@@ -80,10 +80,7 @@ import { createDeferredModule } from '~/utils/deferred-module';
 import { inertProps } from '~/utils/inert';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
-import {
-	SurfaceStyles,
-	useSurfaceSheetsReady,
-} from '../shared/surface-styles';
+import { SurfaceStyles, useSurfaceSheetsReady } from '../shared/surface-styles';
 import type { SurfaceStyleSheet } from '../shared/surface-styles';
 import { EarlyTapScript } from './early-tap-script';
 import { removeStaticBanner } from './static-banner-shell';

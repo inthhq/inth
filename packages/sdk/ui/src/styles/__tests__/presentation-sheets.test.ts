@@ -191,9 +191,7 @@ describe('prompt container sheets', async () => {
 	const tokens = await importSheet('tokens');
 	const button = await importSheet('button');
 	// The variables a page that imports whole stylesheets declares.
-	const declaredOnRoot = rootVariables(
-		readDist(join(DIST_DIR, 'styles.css'))
-	);
+	const declaredOnRoot = rootVariables(readDist(join(DIST_DIR, 'styles.css')));
 	const dialogSource = readFileSync(
 		join(SOURCE_DIR, 'consent-dialog.module.css'),
 		'utf8'

@@ -9,8 +9,8 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import { translations } from '@inth/sdk/translations/en';
-import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import dialogStyles from '@inth/sdk/ui/styles/components/legacy-panel';
+import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import { mount } from '@vue/test-utils';
 import { expect, test } from 'vitest';
 

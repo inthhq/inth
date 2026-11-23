@@ -177,7 +177,6 @@ const ROWS: Row[] = [
 		placement: 'card-start',
 		policy: optIn({ blocking: 'forbidden' }),
 	},
-
 ];
 
 interface TopLevelRow {
@@ -229,19 +228,19 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 		blocking: false,
 		label: 'no constraint and no host request',
 		policy: optIn(),
-			},
+	},
 	{
 		blocking: true,
 		label: 'no constraint and a host that blocks',
 		policy: optIn(),
 		presentation: { blocking: true },
-			},
+	},
 	{
 		blocking: true,
 		label: 'no constraint and a host blockUntilChoice',
 		policy: optIn(),
 		presentation: { blockUntilChoice: true },
-			},
+	},
 	{
 		blocking: true,
 		label:
@@ -249,7 +248,7 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 		override: { blocking: true },
 		policy: optIn(),
 		presentation: { blockUntilChoice: false },
-			},
+	},
 	{
 		blocking: false,
 		label:
@@ -257,33 +256,33 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 		override: { blockUntilChoice: false },
 		policy: optIn(),
 		presentation: { blocking: true },
-			},
+	},
 	{
 		blocking: true,
 		label: 'a provider request when the override says nothing about blocking',
 		override: { primaryActions: ['accept'] },
 		policy: optIn(),
 		presentation: { blockUntilChoice: true },
-			},
+	},
 	{
 		blocking: false,
 		diagnostic: 'blocking-forbidden',
 		label: 'forbidden over a host that blocks',
 		policy: optIn({ blocking: 'forbidden' }),
 		presentation: { blocking: true },
-			},
+	},
 	{
 		blocking: true,
 		label: 'required without host presentation',
 		policy: optIn({ blocking: 'required' }),
-			},
+	},
 	{
 		blocking: true,
 		diagnostic: 'blocking-required',
 		label: 'required over a host that turns blocking off',
 		policy: optIn({ blocking: 'required' }),
 		presentation: { blocking: false },
-			},
+	},
 	{
 		blocking: true,
 		diagnostic: 'blocking-required',
@@ -291,7 +290,7 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 		override: { blockUntilChoice: false },
 		policy: optIn({ blocking: 'required' }),
 		presentation: { blocking: true },
-			},
+	},
 	{
 		blocking: false,
 		diagnostic: 'blocking-forbidden',
@@ -299,8 +298,7 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 			'an opt-out choice rule, which cannot block, over a host that blocks',
 		policy: OPT_OUT_CHOICE,
 		presentation: { blocking: true },
-			},
-
+	},
 ];
 
 describe('resolveConsentPresentation: top-level blocking under the policy', () => {
@@ -406,7 +404,10 @@ describe('resolveConsentPresentation: policy surface precedence', () => {
 			for (const presentation of [
 				{ blockUntilChoice: true },
 				{ container: { position: 'center', type: 'card' } },
-				{ blockUntilChoice: true, container: { position: 'center', type: 'card' } },
+				{
+					blockUntilChoice: true,
+					container: { position: 'center', type: 'card' },
+				},
 			] satisfies PromptPresentation[]) {
 				const { container } = resolveConsentPresentation({
 					policy,

@@ -90,7 +90,10 @@ export const LATER_SHEETS = {
  *
  * @deprecated temporary — removed in phase B
  */
-export const LEGACY_SHIM_COMPONENTS = ['legacy-panel', 'legacy-prompt'] as const;
+export const LEGACY_SHIM_COMPONENTS = [
+	'legacy-panel',
+	'legacy-prompt',
+] as const;
 
 /** Prefix of the IAB TCF components, which go into `iab/styles.css`. */
 export const IAB_PREFIX = 'iab-';

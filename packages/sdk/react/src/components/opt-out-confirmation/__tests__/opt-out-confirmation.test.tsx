@@ -377,9 +377,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 			</InthProvider>
 		);
 
-		await vi.waitFor(() =>
-			expect(query('custom-opt-out')).not.toBeNull()
-		);
+		await vi.waitFor(() => expect(query('custom-opt-out')).not.toBeNull());
 		query<HTMLButtonElement>('custom-opt-out')?.click();
 
 		// Does not flash on the old document before reload.
@@ -486,9 +484,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 			</InthProvider>
 		);
 
-		await vi.waitFor(() =>
-			expect(query('custom-opt-out')).not.toBeNull()
-		);
+		await vi.waitFor(() => expect(query('custom-opt-out')).not.toBeNull());
 		query<HTMLButtonElement>('custom-opt-out')?.click();
 
 		await vi.waitFor(() =>
@@ -624,9 +620,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 			</InthProvider>
 		);
 
-		await vi.waitFor(() =>
-			expect(query('custom-opt-out')).not.toBeNull()
-		);
+		await vi.waitFor(() => expect(query('custom-opt-out')).not.toBeNull());
 
 		const before = seen.at(-1);
 		expect(before).toMatchObject({

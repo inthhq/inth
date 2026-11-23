@@ -4,12 +4,12 @@ import styles from '@inth/sdk/ui/styles/components/consent-manager';
 import { useMemo } from 'react';
 import type { FC, ReactNode } from 'react';
 
-import { WIDGET_SHEETS } from '~/components/shared/widget-sheets';
 import { Box } from '~/components/shared/primitives/box';
 import {
 	SurfaceStyles,
 	useSurfaceSheetsReady,
 } from '~/components/shared/surface-styles';
+import { WIDGET_SHEETS } from '~/components/shared/widget-sheets';
 import {
 	ConsentTrackingContext,
 	useConsentTracking,

@@ -81,9 +81,7 @@ describe('classic component variables', () => {
 	test('styles.css still reads each mapped one', () => {
 		const css = readDist(join(DIST_DIR, 'styles.css'));
 
-		expect(mapped.filter((name) => !css.includes(`var(${name}`))).toEqual(
-			[]
-		);
+		expect(mapped.filter((name) => !css.includes(`var(${name}`))).toEqual([]);
 	});
 
 	test('each mapping is tested, through each hook it names', () => {

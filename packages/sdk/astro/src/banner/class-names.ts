@@ -12,8 +12,8 @@
 import brandingStyles from '@inth/sdk/ui/styles/components/branding';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
-import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import iabBannerStyles from '@inth/sdk/ui/styles/components/iab-consent-banner';
+import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 
 /** Class names for one component, keyed by the stylesheet's own names. */

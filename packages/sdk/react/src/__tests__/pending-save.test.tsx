@@ -4,8 +4,8 @@ import { useContext, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import { useHeadlessConsentUI } from '../component-hooks/use-headless-consent-ui';
 import { ConsentDialog } from '../aggregate-components';
+import { useHeadlessConsentUI } from '../component-hooks/use-headless-consent-ui';
 import { KernelContext } from '../context';
 import { ConsentDraftProvider, useConsentDraft } from '../draft';
 import { InthProvider } from '../provider';

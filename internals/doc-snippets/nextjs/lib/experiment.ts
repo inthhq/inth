@@ -3,7 +3,9 @@ import { defineExperiment } from '@inth/nextjs/engine';
 
 /** `control` is the default banner; the `wall` arm, a centred Card, blocks the page. */
 export const bannerExperiment = defineExperiment({
-	arms: { wall: { prompt: { container: { position: 'center', type: 'card' } } } },
+	arms: {
+		wall: { prompt: { container: { position: 'center', type: 'card' } } },
+	},
 	id: 'banner-shape',
 });
 

@@ -27,10 +27,10 @@ import {
 	revealDisclosure,
 	scheduleReveal,
 } from '@inth/sdk/ui/primitives/surface';
-import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
 import '@inth/sdk/ui/styles/components/consent-expand.css';
-import styles from '@inth/sdk/ui/styles/components/consent-dialog';
+import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 
 import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import { computed, nextTick, onBeforeUnmount, ref } from 'vue';

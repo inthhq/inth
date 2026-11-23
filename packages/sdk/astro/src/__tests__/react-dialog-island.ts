@@ -9,7 +9,7 @@
  * The package does not export the chunk, so this names the file its build
  * output imports.
  */
-import '../../../react/dist/components/panel/index.js';
+import '../../../react/dist/components/dialog/index.js';
 
 /**
  * How long a test waits for the React dialog to render after it opens.

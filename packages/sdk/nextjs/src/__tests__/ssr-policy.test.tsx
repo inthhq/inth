@@ -4,6 +4,7 @@ import {
 	ConsentDialogTrigger,
 	useSnapshot,
 } from '@inth/react';
+import { preloadContainers } from '@inth/react/components/consent-banner';
 import { buildPrefetchScript, createConsentKernel } from '@inth/sdk/engine';
 import type { ConsentSnapshot, KernelConfig } from '@inth/sdk/engine';
 import { hosted } from '@inth/sdk/modes';
@@ -16,7 +17,6 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
-import { preloadContainers } from '@inth/react/components/consent-banner';
 import { InthProvider } from '../root';
 import { resolveConsent } from '../server';
 import { transportMode } from './fixtures/transport-mode';

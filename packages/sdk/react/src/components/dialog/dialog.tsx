@@ -36,8 +36,8 @@ import {
 	scheduleReveal,
 } from '@inth/sdk/ui/primitives/surface';
 import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
-import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
+import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 import {
 	useCallback,
@@ -387,10 +387,13 @@ const Layer = ({
 					</h2>
 					{intro ? (
 						<p
-							{...mergeSlotProps(getSlotProps(components, 'description.dialog'), {
-								baseClassName: styles.intro,
-								noStyle,
-							})}
+							{...mergeSlotProps(
+								getSlotProps(components, 'description.dialog'),
+								{
+									baseClassName: styles.intro,
+									noStyle,
+								}
+							)}
 							data-testid={nested ? undefined : 'consent-dialog-intro'}
 						>
 							{intro}

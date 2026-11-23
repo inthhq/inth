@@ -10,8 +10,8 @@ import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { IABConsentBanner } from '../components/iab-prompt';
 import { ConsentDialog } from '../aggregate-components';
+import { IABConsentBanner } from '../components/iab-prompt';
 import { ConsentBanner } from '../components/prompt';
 import { IABProvider } from '../iab-context';
 import { InthProvider } from '../provider';

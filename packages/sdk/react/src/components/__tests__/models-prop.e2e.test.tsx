@@ -4,13 +4,13 @@ import { render } from 'vitest-browser-react';
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
+import { ConsentDialog } from '~/aggregate-components';
 import { IABConsentDialog } from '~/components/iab-panel';
 import { IABConsentBanner } from '~/components/iab-prompt';
 import {
 	clearConsentState,
 	defaultProviderIABOptions,
 } from '~/components/iab/__tests__/e2e-setup';
-import { ConsentDialog } from '~/aggregate-components';
 import { ConsentBanner } from '~/components/prompt';
 
 import { testing } from '../../testing';

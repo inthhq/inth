@@ -51,8 +51,8 @@ import { validateStoredConsentEnvelope } from '../../../core/src/modules/persist
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
 import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
-import { ConsentGate } from '../components/consent-gate';
 import { ConsentDialog } from '../aggregate-components';
+import { ConsentGate } from '../components/consent-gate';
 import { ConsentDialogLink } from '../components/panel-link';
 import { ConsentDialogTrigger } from '../components/panel-trigger';
 import { ConsentBanner } from '../components/prompt';

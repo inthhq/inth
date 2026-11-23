@@ -240,7 +240,9 @@ describe('ConsentBanner surface variants', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		await renderBanner(buildInit(choiceRule), {
 			config: {
-				presentation: legacy({ prompt: { position: 'bottom-left', variant: 'bar' } }),
+				presentation: legacy({
+					prompt: { position: 'bottom-left', variant: 'bar' },
+				}),
 			},
 		});
 		expect(rootAttributes()).toMatchObject({

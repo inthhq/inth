@@ -216,7 +216,9 @@ export const demoExperiment = function demoExperiment(
 		return undefined;
 	}
 	const experiment: ConsentExperiment<'banner'> = {
-		arms: { banner: { prompt: { container: { edge: 'bottom', type: 'banner' } } } },
+		arms: {
+			banner: { prompt: { container: { edge: 'bottom', type: 'banner' } } },
+		},
 		id: 'banner-shape',
 	};
 	return surface.arm ? { ...experiment, arm: surface.arm } : experiment;

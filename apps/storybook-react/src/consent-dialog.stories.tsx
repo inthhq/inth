@@ -443,7 +443,6 @@ export const OptInConfirmationConfirmedRights: Story = {
 	),
 };
 
-
 export const UsOptOut: Story = dialogStory('us-opt-out');
 export const UsOptIn: Story = dialogStory('us-opt-in');
 export const UsWithGpc: Story = dialogStory('us-opt-out', { gpc: true });

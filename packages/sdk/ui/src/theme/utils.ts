@@ -111,7 +111,11 @@ export const defaultTheme: Required<Omit<Theme, 'slots'>> = {
 		primary: '#2563eb',
 		primaryHover: '#1d4ed8',
 		primaryText: '#2563eb',
-		primaryTint: tintMix('#2563eb', 'hsl(0, 0%, 100%)', PRIMARY_TINT_SHARE.light),
+		primaryTint: tintMix(
+			'#2563eb',
+			'hsl(0, 0%, 100%)',
+			PRIMARY_TINT_SHARE.light
+		),
 		surface: 'hsl(0, 0%, 100%)',
 		surfaceHover: 'hsl(0, 0%, 98%)',
 		switchThumb: 'hsl(0, 0%, 100%)',

@@ -11,10 +11,10 @@ import { resolveSaleRight } from '@inth/sdk/engine';
 import type { SaveUISource } from '@inth/sdk/engine';
 import { resolvePreferencesRowCopy } from '@inth/sdk/surface-state';
 import type { PrivacyChoicesPromptVariant } from '@inth/sdk/surface-state';
-import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
 import '@inth/sdk/ui/styles/components/consent-expand.css';
-import styles from '@inth/sdk/ui/styles/components/consent-dialog';
+import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 
 import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import { computed, onMounted, ref } from 'vue';

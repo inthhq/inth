@@ -229,7 +229,9 @@ describe('surface shape', () => {
 	it('renders a notice as a bottom banner when the host asks for one', () => {
 		const result = resolveConsentPresentation({
 			policy: notice,
-			presentation: { prompt: { container: { edge: 'bottom', type: 'banner' } } },
+			presentation: {
+				prompt: { container: { edge: 'bottom', type: 'banner' } },
+			},
 			surface: 'prompt',
 		});
 		expect(result.container?.desktop.placement).toBe('banner-bottom');

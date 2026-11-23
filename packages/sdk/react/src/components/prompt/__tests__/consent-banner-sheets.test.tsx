@@ -88,9 +88,9 @@ describe('consent banner stylesheets', () => {
 		expect(inlined('inth-card')).toBe(false);
 		expect(inlined('inth-banner')).toBe(false);
 		expect(fetched(/styles\/sheets\/drawer\.js/u)).not.toEqual([]);
-		expect(fetched(/styles\/sheets\/(?:card|banner)(?:-deferred)?\.js/u)).toEqual(
-			[]
-		);
+		expect(
+			fetched(/styles\/sheets\/(?:card|banner)(?:-deferred)?\.js/u)
+		).toEqual([]);
 		expect(fetched(/prompt\/(?:card|banner)\.tsx/u)).toEqual([]);
 		// The options' sheets wait for Customize.
 		expect(fetched(/prompt\/panel\.tsx/u)).toEqual([]);

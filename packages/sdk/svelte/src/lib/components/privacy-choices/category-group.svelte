@@ -100,8 +100,8 @@
 		revealDisclosure,
 		scheduleReveal,
 	} from '@inth/sdk/ui/primitives/surface';
-	import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
+	import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 	import type { AllThemeKeys } from '@inth/sdk/ui/theme';
 	import type { Snippet } from 'svelte';
 	import { tick } from 'svelte';

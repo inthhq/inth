@@ -23,7 +23,6 @@
 
 	/* Stacking. A blocking banner's z-index must stay above its overlay's. */
 	--consent-banner-overlay-z-index: 999997;
-
 }
 
 /* Hairline borders for retina displays */

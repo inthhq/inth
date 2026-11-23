@@ -22,10 +22,10 @@ import {
 import { resolveSaleRight } from '@inth/sdk/engine';
 import type { AllConsentNames } from '@inth/sdk/engine';
 import { resolvePreferencesRowCopy } from '@inth/sdk/surface-state';
-import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
-import * as expand from '@inth/sdk/ui/styles/sheets/expand-deferred';
+import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/dialog-deferred';
+import * as expand from '@inth/sdk/ui/styles/sheets/expand-deferred';
 
 import { ConsentManager } from '../../core/consent-manager';
 import { ConsentStyles, SURFACE_SCOPES } from '../../core/consent-styles';

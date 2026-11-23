@@ -426,8 +426,10 @@ export const runA11yConformance = function runA11yConformance(
 					customizeButton.click();
 					await waitForElement(body, TEST_IDS.consentBanner.saveButton);
 					// The banner keeps the visitor in place: no dialog opens over it.
-					api.expect(byTestId(body, TEST_IDS.consentDialog.root)).toBeNull();
-					api.expect(byTestId(body, TEST_IDS.consentBanner.root)).not.toBeNull();
+					api.expect(byTestId(body, TEST_IDS.consentDialog.root)).toBe(null);
+					api
+						.expect(byTestId(body, TEST_IDS.consentBanner.root) === null)
+						.toBe(false);
 					api.expect(driver.getStore().getState().activeUI).toBe('banner');
 				} finally {
 					await mounted.unmount();

@@ -11,7 +11,10 @@ import {
 import { useHeadlessConsentUI, useTranslations } from '@inth/react/headless';
 import { testing } from '@inth/react/testing';
 import { policyRulePresets } from '@inth/sdk/engine';
-import type { ConsentContainerType, PresentationAction } from '@inth/sdk/engine';
+import type {
+	ConsentContainerType,
+	PresentationAction,
+} from '@inth/sdk/engine';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';

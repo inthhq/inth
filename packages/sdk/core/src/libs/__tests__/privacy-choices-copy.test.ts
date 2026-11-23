@@ -309,15 +309,11 @@ describe('resolvePrivacyChoicesLink', () => {
 
 	it('shows nothing while an external source owns consent or for IAB', () => {
 		const iab = snapshotFor({ ...optInRule(), model: 'iab' } as PolicyRule);
-		expect(
-			resolvePrivacyChoicesLink(iab, undefined)
-		).toBeNull();
+		expect(resolvePrivacyChoicesLink(iab, undefined)).toBeNull();
 		const external = {
 			...snapshotFor(optInRule()),
 			externalPermissions: true,
 		} as unknown as Parameters<typeof resolvePrivacyChoicesLink>[0];
-		expect(
-			resolvePrivacyChoicesLink(external, undefined)
-		).toBeNull();
+		expect(resolvePrivacyChoicesLink(external, undefined)).toBeNull();
 	});
 });
