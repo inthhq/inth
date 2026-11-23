@@ -24,6 +24,19 @@ import { PromptContainersContext } from './components/prompt/prompt';
 import type { PromptContainers } from './components/prompt/prompt';
 import { DeferredConsentShell } from './deferred/shell';
 
+type StaticSheet = { id: string; css: string };
+
+/** `sheets` in order, each once, as plain `{ id, css }`. */
+const unique = function unique(
+	sheets: readonly StaticSheet[]
+): readonly StaticSheet[] {
+	return [
+		...new Map(
+			sheets.map((sheet) => [sheet.id, { css: sheet.css, id: sheet.id }])
+		).values(),
+	];
+};
+
 /**
  * The banner's stylesheets, in cascade order: the tokens, the buttons, the
  * prompt shell, then every container, since a manifest's regions can show
@@ -32,14 +45,33 @@ import { DeferredConsentShell } from './deferred/shell';
  *
  * @internal
  */
-export const STATIC_BANNER_SHEETS: readonly { id: string; css: string }[] = [
-	...new Map(
-		[...CARD_SHEETS, ...BANNER_SHEETS, ...DRAWER_SHEETS].map((sheet) => [
-			sheet.id,
-			{ css: sheet.css, id: sheet.id },
-		])
-	).values(),
-];
+export const STATIC_BANNER_SHEETS: readonly StaticSheet[] = unique([
+	...CARD_SHEETS,
+	...BANNER_SHEETS,
+	...DRAWER_SHEETS,
+]);
+
+const CONTAINER_SHEETS: Record<string, readonly StaticSheet[]> = {
+	banner: unique(BANNER_SHEETS),
+	card: unique(CARD_SHEETS),
+	drawer: unique(DRAWER_SHEETS),
+};
+
+/**
+ * The sheets a page with `markup` needs, in cascade order: the shared ones
+ * and those of the container the markup shows. An app banner in another
+ * container, such as on a phone, loads its own. Without markup (no static
+ * banner), every container's.
+ *
+ * @param markup - What {@link renderStaticBanner} returned, as the page holds it.
+ * @internal
+ */
+export const staticBannerSheets = function staticBannerSheets(
+	markup: string | undefined
+): readonly StaticSheet[] {
+	const type = /data-placement="(card|banner|drawer)\b/u.exec(markup ?? '')?.[1];
+	return (type && CONTAINER_SHEETS[type]) || STATIC_BANNER_SHEETS;
+};
 
 /** The containers, already loaded: a static render cannot wait for a chunk. */
 const EAGER_CONTAINERS: PromptContainers = {
@@ -62,7 +94,8 @@ const never = (): Promise<never> =>
  * @param init - A `/v1/consent/init` answer, such as one resolved from the manifest.
  * @returns The markup, or `undefined` when that answer shows no choice
  * banner: no prompt, a notice, IAB, vendors, or an answer the
- * client-rendered provider would not read itself.
+ * client-rendered provider would not read itself. A side Drawer has none
+ * either: it shows its options from the start, and they load with the app.
  * @internal
  */
 export const renderStaticBanner = function renderStaticBanner(
@@ -93,5 +126,10 @@ export const renderStaticBanner = function renderStaticBanner(
 			</PromptContainersContext.Provider>
 		</DeferredConsentShell>
 	);
-	return html.includes('data-testid="consent-banner-root"') ? html : undefined;
+	// A side Drawer's options would render empty here: they are a chunk of
+	// their own that a static render cannot wait for.
+	return html.includes('data-testid="consent-banner-root"') &&
+		!html.includes('data-flow="all-in-one"')
+		? html
+		: undefined;
 };

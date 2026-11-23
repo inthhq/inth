@@ -1369,7 +1369,11 @@ export const createConsentManifestPlugin = (
 			: undefined;
 		return injectStaticBanner(html, {
 			banner: banner?.html,
-			sheets: renderStaticBannerSheets(renderer.STATIC_BANNER_SHEETS),
+			// Only the container the banner shows, when the renderer can say.
+			sheets: renderStaticBannerSheets(
+				renderer.staticBannerSheets?.(banner?.html) ??
+					renderer.STATIC_BANNER_SHEETS
+			),
 		});
 	};
 	return {

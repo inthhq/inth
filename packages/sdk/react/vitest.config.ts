@@ -305,12 +305,33 @@ export default mergeConfig(
 					statements: 60,
 				},
 			},
-			include: [
-				'src/**/*.test.tsx',
-				'src/**/*.test.ts',
-				'src/**/*.spec.tsx',
-				'src/**/*.spec.ts',
-				'src/**/*.e2e.test.tsx',
+			projects: [
+				{
+					extends: true,
+					test: {
+						exclude: ['src/**/*.node.test.ts', '**/node_modules/**'],
+						include: [
+							'src/**/*.test.tsx',
+							'src/**/*.test.ts',
+							'src/**/*.spec.tsx',
+							'src/**/*.spec.ts',
+							'src/**/*.e2e.test.tsx',
+						],
+						name: 'browser',
+					},
+				},
+				// Code that also runs in Node, such as the static banner a
+				// `vite build` renders, runs there too.
+				{
+					extends: true,
+					test: {
+						browser: { enabled: false },
+						environment: 'node',
+						include: ['src/**/*.node.test.ts'],
+						name: 'node',
+						setupFiles: [],
+					},
+				},
 			],
 			retry: 2,
 			setupFiles: ['./src/test-setup.browser.ts'],
