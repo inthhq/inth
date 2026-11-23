@@ -23,9 +23,9 @@ import { Footer, FooterSubGroup } from './atoms/footer';
 import { OptOut } from './atoms/opt-out';
 import { OptOutStatus } from './atoms/opt-out-status';
 import { Root } from './atoms/root';
+import { PolicyActions } from './policy-actions';
 import { ConsentWidget as ConsentWidgetComponent } from './preferences';
 import type { ConsentWidgetProps } from './preferences.model';
-import { PolicyActions } from './policy-actions';
 
 export type { ConsentWidgetProps };
 

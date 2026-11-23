@@ -153,10 +153,7 @@ describe('the prompt and dialog bodies load on demand', () => {
 	test('the walk sees the modules the loaders reach', () => {
 		// Guards the test itself: following the dynamic imports finds them.
 		expect(
-			readFileSync(
-				resolve(ROOT, 'src/lib/dialog/load-panel-body.ts'),
-				'utf8'
-			)
+			readFileSync(resolve(ROOT, 'src/lib/dialog/load-panel-body.ts'), 'utf8')
 		).toContain("import('./dialog')");
 		expect(
 			readFileSync(resolve(ROOT, 'src/lib/prompt/prompt-loaders.ts'), 'utf8')

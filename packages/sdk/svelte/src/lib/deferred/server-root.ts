@@ -21,8 +21,8 @@ import type {
 	ConsentProviderRuntimeOptions,
 } from '@inth/sdk/runtime/provider';
 
-import type { InthProviderState } from '../manager-options.model';
 import { createOwnedRuntime } from '../create-owned-runtime';
+import type { InthProviderState } from '../manager-options.model';
 import { modulePreloadMarker } from '../module-preload-marker';
 import type { ProviderOptionsInput } from '../resolve-provider-options';
 import { planServerBoot } from './plan-server-boot';

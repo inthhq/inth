@@ -5,8 +5,8 @@
 	} from '@inth/sdk/events';
 
 	import Provider from '../../lib/components/inth-provider.svelte';
-	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 	import type { ConsentContextValue } from '../../lib/get-consent-context.svelte';
+	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 	import Reader from './event-dispatcher-reader.svelte';
 	import ContextReader from './policy-state-reader.svelte';
 

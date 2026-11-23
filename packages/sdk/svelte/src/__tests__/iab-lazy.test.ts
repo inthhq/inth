@@ -17,8 +17,8 @@ import { fileURLToPath } from 'node:url';
 import { mount, unmount } from 'svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { isIABConfigured } from '../lib/lazy-create-iab';
+import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { testing } from '../lib/testing';
 import ProviderOnlyFixture from './fixtures/provider-only-fixture.svelte';
 
