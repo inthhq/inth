@@ -25,7 +25,10 @@ import type {
 	KernelEvent,
 	Listener,
 	PromptSurface,
+	VendorChoice,
 } from '../consent-kernel.model';
+import { consentPending } from '../consent-pending';
+import type { ExplicitChoice } from '../consent-record/types';
 import type { ExperimentAssignment, ExperimentGate } from '../libs/experiment';
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
 import type { OptOutReceiptData } from '../libs/opt-out-state.model';
@@ -33,12 +36,22 @@ import {
 	createIdempotencyKey,
 	generateUuidV7,
 } from '../libs/subject-uuid.model';
+import { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
+import {
+	deriveEffectiveRecords,
+	freezeAccountLayer,
+} from './account-layer';
+import type {
+	AccountConsentLayer,
+	BrowserConsentRecords,
+} from './account-layer';
 import { createListenerSet } from './create-dispatcher';
 import type { Dispatcher, ListenerSet } from './create-dispatcher';
 import {
 	gpcOptOutDue,
 	gpcSignalReportDue,
 	newLocalOptOutRecord,
+	sameOptOutRecord,
 } from './kernel-opt-out.model';
 import {
 	buildNextSnapshot,
@@ -62,12 +75,22 @@ export type AnnouncedEvent = Extract<
 	}
 >['type'];
 
+/** Extra layer options passed alongside a snapshot patch. */
+export interface RuntimeCommitOptions {
+	/** Replace or clear the internal account consent layer in this commit. */
+	accountLayer?: AccountConsentLayer | null;
+	/** Suppress persistence write-back when hydrating the account layer. */
+	fromHydration?: boolean;
+	/** Keep an open preference dialog open even when derived choices changed. */
+	preserveDialog?: boolean;
+}
+
 export interface KernelRuntime {
 	getSnapshot: () => ConsentSnapshot;
 	subscribe: (listener: Listener<ConsentSnapshot>) => () => void;
 	emit: (event: KernelEvent) => void;
 	/** Merge a patch and adopt the result when it changes anything. */
-	commit: (patch: SnapshotPatch) => boolean;
+	commit: (patch: SnapshotPatch, options?: RuntimeCommitOptions) => boolean;
 	/**
 	 * Commit `patch` and emit `{ type, snapshot }` with the committed
 	 * snapshot, in one batch. The event fires when the commit changed
@@ -93,6 +116,21 @@ export interface KernelRuntime {
 	getGeneration: () => number;
 	/** Bump the records generation. Only the records boundary calls this. */
 	invalidateRecords: () => void;
+	/** Browser-made consent records kept apart from the account layer. */
+	getBrowserRecords: () => BrowserConsentRecords;
+	/** Account consent layer kept apart from browser records. */
+	getAccountLayer: () => AccountConsentLayer | null;
+	/** Monotonic fence for async `userConsent` Promises and lifts. */
+	getAccountSyncGeneration: () => number;
+	/** Bump the account sync generation and return the new counter. */
+	bumpAccountSyncGeneration: () => number;
+	/** Subscribe to account layer changes for persistence writes and deletion. */
+	onAccountLayerChange: (
+		listener: (
+			layer: AccountConsentLayer | null,
+			fromHydration: boolean
+		) => void
+	) => () => void;
 	/**
 	 * Identification generation. Bumped by every `identify()` and by
 	 * signing out (`clearIdentity()`), so a request started for one account
@@ -154,6 +192,10 @@ export interface KernelRuntime {
 
 export interface RuntimeOptions {
 	initialSnapshot: ConsentSnapshot;
+	/** Initial browser-made records, kept separate from the account layer. */
+	initialBrowserRecords?: BrowserConsentRecords;
+	/** Initial account consent layer, kept separate from browser records. */
+	initialAccountLayer?: AccountConsentLayer | null;
 	/** Initial local GPC report mark hydrated from stored records. */
 	initialOptOutGpcReported?: boolean;
 	/** Initial local opt-out receipt data hydrated from stored records. */
@@ -180,17 +222,32 @@ export const createRuntime = function createRuntime(
 		onGpcSignalReportDue,
 	} = options;
 	let snapshot = options.initialSnapshot;
+	let browserRecords: BrowserConsentRecords = options.initialBrowserRecords ?? {
+		choice: options.initialSnapshot.explicitChoice,
+		optOut: options.initialSnapshot.optOut,
+		vendorChoice: options.initialSnapshot.vendorChoice,
+	};
+	let accountLayer: AccountConsentLayer | null = freezeAccountLayer(
+		options.initialAccountLayer ?? null
+	);
+	let accountSyncGeneration = 0;
+	let accountLayerListeners:
+		| ListenerSet<{
+				layer: AccountConsentLayer | null;
+				fromHydration: boolean;
+		  }>
+		| undefined;
 	let live = false;
 	let gpcReported =
 		options.initialOptOutGpcReported === true &&
-		options.initialSnapshot.optOut !== null;
+		browserRecords.optOut !== null;
 	// Process-only latch so a failed outbox write does not retry in a loop on
 	// this page load while keeping the persisted mark unset.
 	let gpcReportAttempted = gpcReported;
 	let gpcReportEpoch = 0;
 	let gpcReportedListeners: ListenerSet<boolean> | undefined;
 	let optOutReceiptData: Readonly<OptOutReceiptData> =
-		options.initialSnapshot.optOut !== null && options.initialOptOutReceiptData
+		browserRecords.optOut !== null && options.initialOptOutReceiptData
 			? Object.freeze({ ...options.initialOptOutReceiptData })
 			: EMPTY_OPT_OUT_RECEIPT_DATA;
 	let optOutReceiptListeners:
@@ -284,21 +341,42 @@ export const createRuntime = function createRuntime(
 		}
 	};
 
+	const notifyAccountLayerChange = function notifyAccountLayerChange(
+		layer: AccountConsentLayer | null,
+		fromHydration: boolean
+	): void {
+		if (!accountLayerListeners) {
+			return;
+		}
+		dispatcher.batch(() => {
+			if (accountLayerListeners) {
+				dispatcher.deliver(accountLayerListeners, { fromHydration, layer });
+			}
+		});
+	};
+
 	const syncGpcSignalState = function syncGpcSignalState(
 		previous: ConsentSnapshot,
 		current: ConsentSnapshot,
 		actionAt: number
 	): void {
 		if (
-			current.optOut === null ||
+			browserRecords.optOut === null ||
 			(previous.privacySignals.gpc.active &&
 				!current.privacySignals.gpc.active) ||
-			(live && !current.policyPending && !current.privacySignals.gpc.active)
+			(live && !consentPending(current) && !current.privacySignals.gpc.active)
 		) {
-			setOptOutGpcReported(false, current.optOut !== null);
+			setOptOutGpcReported(false, browserRecords.optOut !== null);
 			return;
 		}
-		if (gpcSignalReportDue(current, live, gpcReported || gpcReportAttempted)) {
+		if (
+			gpcSignalReportDue(
+				current,
+				live,
+				gpcReported || gpcReportAttempted,
+				browserRecords.optOut
+			)
+		) {
 			gpcReportAttempted = true;
 			onGpcSignalReportDue?.(current, actionAt);
 		}
@@ -406,7 +484,8 @@ export const createRuntime = function createRuntime(
 		current: ConsentSnapshot,
 		adopted: ConsentSnapshot,
 		shown: PromptSurface | null,
-		recordedOptOut: Readonly<OptOutRecord> | null = null
+		recordedOptOut: Readonly<OptOutRecord> | null = null,
+		emitOptOutSynced = false
 	): void {
 		dispatcher.batch(() => {
 			if (listeners) {
@@ -440,87 +519,234 @@ export const createRuntime = function createRuntime(
 					type: 'opt-out:recorded',
 				});
 			}
+			if (emitOptOutSynced) {
+				emit({
+					optOut: adopted.optOut,
+					snapshot: adopted,
+					type: 'opt-out:synced',
+				});
+			}
 		});
+	};
+
+	const freezeBrowser = function freezeBrowser(
+		records: BrowserConsentRecords
+	): BrowserConsentRecords {
+		if (records.optOut && !Object.isFrozen(records.optOut)) {
+			Object.freeze(records.optOut.rights);
+			Object.freeze(records.optOut);
+		}
+		if (records.vendorChoice && !Object.isFrozen(records.vendorChoice)) {
+			Object.freeze(records.vendorChoice.denied);
+			Object.freeze(records.vendorChoice);
+		}
+		if (records.choice && !Object.isFrozen(records.choice)) {
+			for (const decision of Object.values(records.choice.categories)) {
+				if (decision) {
+					Object.freeze(decision.basis);
+					Object.freeze(decision);
+				}
+			}
+			Object.freeze(records.choice.categories);
+			Object.freeze(records.choice);
+		}
+		return records;
+	};
+
+	const resolveNextAccount = function resolveNextAccount(
+		nextUser: ConsentSnapshot['user'],
+		userExternalIdChanged: boolean,
+		commitOptions?: RuntimeCommitOptions
+	): AccountConsentLayer | null {
+		if (commitOptions?.accountLayer !== undefined) {
+			return freezeAccountLayer(commitOptions.accountLayer);
+		}
+		if (
+			userExternalIdChanged &&
+			accountLayer !== null &&
+			accountLayer.externalId !== nextUser?.externalId
+		) {
+			return null;
+		}
+		return accountLayer;
+	};
+
+	const resolveNextLayers = function resolveNextLayers(
+		current: ConsentSnapshot,
+		patch: SnapshotPatch,
+		commitOptions?: RuntimeCommitOptions
+	) {
+		const nextBrowser: BrowserConsentRecords = {
+			choice:
+				patch.explicitChoice === undefined
+					? browserRecords.choice
+					: patch.explicitChoice,
+			optOut:
+				patch.optOut === undefined ? browserRecords.optOut : patch.optOut,
+			vendorChoice:
+				patch.vendorChoice === undefined
+					? browserRecords.vendorChoice
+					: patch.vendorChoice,
+		};
+		const browserChanged =
+			nextBrowser.choice !== browserRecords.choice ||
+			nextBrowser.optOut !== browserRecords.optOut ||
+			nextBrowser.vendorChoice !== browserRecords.vendorChoice;
+		const nextUser = patch.user === undefined ? current.user : patch.user;
+		const userExternalIdChanged =
+			(nextUser?.externalId ?? null) !== (current.user?.externalId ?? null);
+		const nextAccount = resolveNextAccount(
+			nextUser,
+			userExternalIdChanged,
+			commitOptions
+		);
+		const nextPolicy =
+			patch.resolution !== undefined || patch.consentCategories !== undefined
+				? buildEvaluationPolicy(
+						resolveEffectivePolicy(patch.resolution ?? current.resolution),
+						patch.consentCategories === undefined
+							? current.consentCategories
+							: patch.consentCategories
+					)
+				: current.evaluationPolicy;
+		const derived = deriveEffectiveRecords(
+			nextBrowser,
+			nextAccount,
+			nextUser,
+			nextPolicy
+		);
+		const effectivePatch: SnapshotPatch = {
+			...patch,
+			explicitChoice: derived.choice as ExplicitChoice | null,
+			hasAccountLayer: derived.activeAccount !== null,
+			optOut: derived.optOut as OptOutRecord | null,
+			vendorChoice: derived.vendorChoice as VendorChoice | null,
+		};
+		if (
+			commitOptions?.preserveDialog &&
+			current.activeUI === 'dialog' &&
+			effectivePatch.activeUI === undefined
+		) {
+			effectivePatch.activeUI = 'dialog';
+		}
+		return {
+			accountChanged: nextAccount !== accountLayer,
+			browserChanged,
+			effectivePatch,
+			nextAccount,
+			nextBrowser,
+			userExternalIdChanged,
+		};
 	};
 
 	const deriveCandidate = function deriveCandidate(
 		current: ConsentSnapshot,
-		patch: SnapshotPatch
-	): { next: ConsentSnapshot; recordedGpcOptOut: boolean } {
+		rawPatch: SnapshotPatch,
+		effectivePatch: SnapshotPatch,
+		initialBrowser: BrowserConsentRecords,
+		nextAccount: AccountConsentLayer | null
+	): {
+		next: ConsentSnapshot;
+		nextBrowser: BrowserConsentRecords;
+		recordedGpcOptOut: boolean;
+		recordedBrowserOptOut: OptOutRecord | null;
+	} {
+		let nextBrowser = initialBrowser;
 		let next = gateExperiment(
 			current,
-			buildNextSnapshot(current, patch),
-			patch
+			buildNextSnapshot(current, effectivePatch),
+			effectivePatch
 		);
 		let recordedGpcOptOut = false;
+		let recordedBrowserOptOut: OptOutRecord | null = null;
 		// Record a durable GPC opt-out once the kernel is live (after stored
 		// records have been read), the policy is matched and not provisional,
 		// GPC is active, and the rule maps it to at least one category.
-		// Explicit `optOut` patches (such as hydration, clear or commands)
-		// never trigger auto-recording in the same commit.
-		if (patch.optOut === undefined && gpcOptOutDue(next, live)) {
-			const optOut = newLocalOptOutRecord(
+		// Checks browser records only so an account opt-out never suppresses
+		// this device's own GPC report.
+		if (
+			rawPatch.optOut === undefined &&
+			gpcOptOutDue(next, live, nextBrowser.optOut)
+		) {
+			const gpcOptOut = newLocalOptOutRecord(
 				next,
 				'gpc',
 				next.evaluatedAt,
 				defaultOptOutRights()
 			);
-			const gpcPatch: SnapshotPatch = { ...patch, optOut };
+			nextBrowser = { ...nextBrowser, optOut: gpcOptOut };
+			const derivedWithGpc = deriveEffectiveRecords(
+				nextBrowser,
+				nextAccount,
+				next.user,
+				next.evaluationPolicy
+			);
+			const gpcPatch: SnapshotPatch = {
+				...effectivePatch,
+				optOut: derivedWithGpc.optOut as OptOutRecord | null,
+			};
 			if (!next.subject?.subjectId) {
 				gpcPatch.subject = { ...next.subject, subjectId: generateUuidV7() };
 			}
 			next = gateExperiment(
 				current,
 				buildNextSnapshot(current, gpcPatch),
-				patch
+				effectivePatch
 			);
 			recordedGpcOptOut = true;
+			recordedBrowserOptOut = gpcOptOut;
 		}
 		if (impressionDue(next)) {
 			next = stampImpression(next);
 		}
-		return { next, recordedGpcOptOut };
+		return { next, nextBrowser, recordedBrowserOptOut, recordedGpcOptOut };
 	};
 
 	const canSkipDerivation = function canSkipDerivation(
 		current: ConsentSnapshot,
-		patch: SnapshotPatch
+		rawPatch: SnapshotPatch,
+		effectivePatch: SnapshotPatch,
+		browserChanged: boolean,
+		accountChanged: boolean,
+		nextBrowser: BrowserConsentRecords
 	): boolean {
 		return (
-			isUnchangedPatch(current, patch) &&
-			!(patch.optOut === undefined && gpcOptOutDue(current, live))
+			!browserChanged &&
+			!accountChanged &&
+			isUnchangedPatch(current, effectivePatch) &&
+			!(
+				rawPatch.optOut === undefined &&
+				gpcOptOutDue(current, live, nextBrowser.optOut)
+			)
 		);
 	};
 
-	const commit = function commit(patch: SnapshotPatch): boolean {
-		if (patch.experiment !== undefined) {
-			wantedExperiment = patch.experiment;
+	const applyLayerUpdates = function applyLayerUpdates(
+		nextBrowser: BrowserConsentRecords,
+		browserChanged: boolean,
+		nextAccount: AccountConsentLayer | null,
+		accountChanged: boolean,
+		syncGenShouldBump: boolean,
+		fromHydration: boolean
+	): void {
+		if (browserChanged) {
+			browserRecords = freezeBrowser(nextBrowser);
 		}
-		const current = snapshot;
-		let adopted: ConsentSnapshot;
-		let recordedGpcOptOut = false;
-		if (canSkipDerivation(current, patch)) {
-			if (!impressionDue(current)) {
-				return false;
-			}
-			adopted = stampCurrent(current, patch.now ?? current.evaluatedAt);
-		} else {
-			const derived = deriveCandidate(current, patch);
-			if (!snapshotChanged(current, derived.next)) {
-				return false;
-			}
-			adopted = freezeSnapshot(derived.next);
-			({ recordedGpcOptOut } = derived);
+		if (syncGenShouldBump) {
+			accountSyncGeneration += 1;
 		}
-		snapshot = adopted;
+		if (accountChanged) {
+			accountLayer = nextAccount;
+			notifyAccountLayerChange(accountLayer, fromHydration);
+		}
+	};
+
+	const nextShownSurface = function nextShownSurface(
+		current: ConsentSnapshot,
+		adopted: ConsentSnapshot,
+		patch: SnapshotPatch
+	): PromptSurface | null {
 		const surface = adopted.activeUI;
-		// A save derives `activeUI` to `none` in the same commit that clears
-		// the prompt. An adapter that keeps its preference dialog open for the
-		// save then restores `dialog` with an explicit `set.activeUI` before
-		// anything else commits; the visitor never saw it close. That restore
-		// is not a new impression. A surface the visitor reopens after the
-		// kernel hid it for real is, and so is a surface the kernel derives
-		// back into view later (an expired choice, a refresh, a re-init).
 		const restoredAfterSave =
 			hiddenBySave !== null &&
 			hiddenBySave.snapshot === current &&
@@ -532,19 +758,92 @@ export const createRuntime = function createRuntime(
 			patch.activeUI === undefined
 				? { snapshot: adopted, surface: current.activeUI }
 				: null;
-		const shown: PromptSurface | null =
-			live &&
+		return live &&
 			isPromptSurface(surface) &&
 			!restoredAfterSave &&
 			(surface !== current.activeUI || current.surfaceShownAt[surface] === null)
-				? surface
-				: null;
-		// Everything the events describe is settled before subscribers run: a
-		// listener may commit again synchronously (an adapter hiding or
-		// restoring a surface), and that nested commit must neither steal
-		// this commit's events nor see a stale `hiddenBySave`. Deliver the
-		// snapshot this commit produced, never the live cell, so later
-		// listeners still observe this transition first.
+			? surface
+			: null;
+	};
+
+	const commit = function commit(
+		patch: SnapshotPatch,
+		commitOptions?: RuntimeCommitOptions
+	): boolean {
+		if (patch.experiment !== undefined) {
+			wantedExperiment = patch.experiment;
+		}
+		const current = snapshot;
+		const fromHydration = commitOptions?.fromHydration === true;
+		const {
+			accountChanged,
+			browserChanged,
+			effectivePatch,
+			nextAccount,
+			nextBrowser: initialBrowser,
+			userExternalIdChanged,
+		} = resolveNextLayers(current, patch, commitOptions);
+		let nextBrowser = initialBrowser;
+		let adopted: ConsentSnapshot;
+		let recordedGpcOptOut = false;
+		let recordedBrowserOptOut: OptOutRecord | null = null;
+		const previousAccount = accountLayer;
+		const syncGenShouldBump =
+			userExternalIdChanged ||
+			(previousAccount !== null && nextAccount === null && !fromHydration);
+		if (
+			canSkipDerivation(
+				current,
+				patch,
+				effectivePatch,
+				browserChanged,
+				accountChanged,
+				nextBrowser
+			)
+		) {
+			if (syncGenShouldBump) {
+				accountSyncGeneration += 1;
+			}
+			if (!impressionDue(current)) {
+				return false;
+			}
+			adopted = stampCurrent(current, patch.now ?? current.evaluatedAt);
+		} else {
+			const derived = deriveCandidate(
+				current,
+				patch,
+				effectivePatch,
+				nextBrowser,
+				nextAccount
+			);
+			({ nextBrowser, recordedBrowserOptOut, recordedGpcOptOut } = derived);
+			if (!snapshotChanged(current, derived.next)) {
+				applyLayerUpdates(
+					nextBrowser,
+					browserChanged,
+					nextAccount,
+					accountChanged,
+					syncGenShouldBump,
+					fromHydration
+				);
+				return false;
+			}
+			adopted = freezeSnapshot(derived.next);
+		}
+		applyLayerUpdates(
+			nextBrowser,
+			true,
+			nextAccount,
+			accountChanged,
+			syncGenShouldBump,
+			fromHydration
+		);
+		snapshot = adopted;
+		const shown = nextShownSurface(current, adopted, patch);
+		const emitOptOutSynced =
+			userExternalIdChanged &&
+			previousAccount !== null &&
+			!sameOptOutRecord(current.optOut, adopted.optOut);
 		if (recordedGpcOptOut) {
 			optOutActVersion += 1;
 			gpcReportAttempted = true;
@@ -553,12 +852,12 @@ export const createRuntime = function createRuntime(
 				reference: createIdempotencyKey(),
 				rightsConfirmed: false,
 			});
-			publish(current, adopted, shown, adopted.optOut);
+			publish(current, adopted, shown, recordedBrowserOptOut ?? adopted.optOut);
 		} else {
-			if (adopted.optOut === null) {
+			if (browserRecords.optOut === null) {
 				setOptOutReceiptData(EMPTY_OPT_OUT_RECEIPT_DATA, true);
 			}
-			publish(current, adopted, shown, null);
+			publish(current, adopted, shown, null, emitOptOutSynced);
 			syncGpcSignalState(current, adopted, adopted.evaluatedAt);
 		}
 		if (adopted.nextDeadline !== current.nextDeadline) {
@@ -614,7 +913,7 @@ export const createRuntime = function createRuntime(
 		}
 		live = true;
 		const current = snapshot;
-		if (gpcOptOutDue(current, live)) {
+		if (gpcOptOutDue(current, live, browserRecords.optOut)) {
 			commit({ now: at });
 			return;
 		}
@@ -635,8 +934,15 @@ export const createRuntime = function createRuntime(
 	return {
 		announce,
 		batch: dispatcher.batch,
+		bumpAccountSyncGeneration: () => {
+			accountSyncGeneration += 1;
+			return accountSyncGeneration;
+		},
 		commit,
 		emit,
+		getAccountLayer: () => accountLayer,
+		getAccountSyncGeneration: () => accountSyncGeneration,
+		getBrowserRecords: () => browserRecords,
 		getGeneration: () => generation,
 		getIdentityVersion: () => identityVersion,
 		getOptOutActVersion: () => optOutActVersion,
@@ -657,6 +963,12 @@ export const createRuntime = function createRuntime(
 			return optOutActVersion;
 		},
 		now,
+		onAccountLayerChange(listener) {
+			accountLayerListeners ??= createListenerSet();
+			return accountLayerListeners.add(({ layer, fromHydration }) => {
+				listener(layer, fromHydration);
+			});
+		},
 		onOptOutGpcReportedChange(listener) {
 			gpcReportedListeners ??= createListenerSet();
 			return gpcReportedListeners.add(listener);

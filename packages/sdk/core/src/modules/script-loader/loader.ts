@@ -24,6 +24,7 @@ import { buildCallbackInfo, invokeCallback } from './script-callbacks.model';
 import {
 	buildReconcilePass,
 	hasScriptConsent,
+	isConsentPending,
 } from './script-eligibility.model';
 import type {
 	NormalizedScript,
@@ -402,6 +403,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	let lastEvaluationPolicy: unknown = null;
 	let lastVendorChoice: unknown = null;
 	let lastVendors: unknown = null;
+	let lastConsentPending: boolean | null = null;
 
 	const isConsentStateUnchanged = (snapshot: ConsentSnapshot): boolean => {
 		const effective = gateState(snapshot);
@@ -414,7 +416,8 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 			snapshot.model === lastModel &&
 			snapshot.evaluationPolicy === lastEvaluationPolicy &&
 			snapshot.vendorChoice === lastVendorChoice &&
-			snapshot.vendors === lastVendors
+			snapshot.vendors === lastVendors &&
+			isConsentPending(snapshot) === lastConsentPending
 		);
 	};
 
@@ -477,6 +480,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		lastPolicyCategories = snapshot.policyRule.scope;
 		lastScopeMode = snapshot.policyRule.scopeMode;
 		lastIab = snapshot.iab;
+		lastConsentPending = isConsentPending(snapshot);
 
 		const pass = buildReconcilePass(snapshot, tools);
 		// A script resolved while its signature was current may first mount

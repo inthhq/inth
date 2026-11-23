@@ -4,6 +4,7 @@ import type {
 	KernelConfig,
 	KernelIABState,
 	KernelOverrides,
+	KernelUser,
 	KernelVendorsState,
 	ResolvedVendor,
 	VendorSource,
@@ -242,6 +243,29 @@ export const buildSetters = function buildSetters(
 			if (inferred.size !== previousSize) {
 				updateCategories();
 			}
+		},
+		user(nextUser: KernelUser | null): void {
+			const current = getSnapshot().user;
+			if (
+				current === null &&
+				nextUser === null
+			) {
+				return;
+			}
+			if (
+				current !== null &&
+				nextUser !== null &&
+				current.externalId === nextUser.externalId &&
+				current.identityToken === nextUser.identityToken &&
+				current.identityProvider === nextUser.identityProvider &&
+				current.externalIdType === nextUser.externalIdType
+			) {
+				return;
+			}
+			commit({
+				now: runtime.now(),
+				user: nextUser ? { ...nextUser } : null,
+			});
 		},
 		vendors(
 			input: Partial<KernelVendorsState>,

@@ -14,6 +14,7 @@ import type {
 	ResolvedPolicyRule,
 	ScriptRegistryWire,
 	TranslationsResponse,
+	UserConsent,
 	Vendor,
 } from '@inth/sdk-schema/types';
 import type { Translations } from '@inth/sdk-translations';
@@ -44,6 +45,9 @@ import type {
 } from './consent-record/types';
 import type { AllConsentNames } from './consent/consent-types';
 import type { ExperimentAssignment, ExperimentGate } from './libs/experiment';
+import type {
+	AccountConsentLayer,
+} from './kernel/account-layer';
 import type { HasCondition } from './libs/has';
 import type { VendorDetails } from './libs/script-loader/script.model';
 import type { PublisherRestriction } from './options/iab-tcf-options.model';
@@ -63,6 +67,7 @@ export type {
 	PolicyScopeMode,
 	ResolvedPolicyRule,
 	TranslationsResponse,
+	UserConsent,
 	Vendor,
 };
 
@@ -378,6 +383,11 @@ export interface HydrationRecords {
 	optOutRightsConfirmed?: boolean;
 	/** Vendors the subject turned off. `null` clears the denial list. */
 	vendorChoice?: VendorChoice | null;
+	/**
+	 * Stored account consent layer, hydrated separately from browser records.
+	 * Gated by `user.externalId`. `null` clears it.
+	 */
+	accountLayer?: AccountConsentLayer | null;
 	/** Evaluation time in epoch milliseconds. Defaults to `Date.now()`. */
 	now?: number;
 }
@@ -467,6 +477,18 @@ export interface ConsentSnapshot {
 	 */
 	readonly policyPending: boolean;
 	/**
+	 * `true` while a `userConsent` Promise is pending for the current user.
+	 * While pending, optional `effectivePermissions` are `false`, `activeUI`
+	 * stays `'none'`, and gates hold consent outcomes until settlement or timeout.
+	 */
+	readonly userConsentPending: boolean;
+	/**
+	 * `true` when an active account consent layer is applied for `user`.
+	 * Present so instant-commit and deferred-boot checks always route through
+	 * the kernel when an account layer is active.
+	 */
+	readonly hasAccountLayer?: boolean;
+	/**
 	 * Epoch milliseconds of the first time each prompt surface became
 	 * visible in this kernel's lifetime, or `null` while it never has. The
 	 * event bus does not replay `surface:shown` to late subscribers; read
@@ -533,6 +555,14 @@ export interface KernelConfig {
 	initialOverrides?: KernelOverrides;
 	/** Initial identified user, if known at construction. */
 	initialUser?: KernelUser;
+	/** Initial resolved cross-domain `userConsent` document, if known at construction. */
+	initialUserConsent?: UserConsent | null;
+	/**
+	 * Marks `userConsent` as pending an in-flight Promise at construction.
+	 * Holds optional permissions at `false` and suppresses prompt surfaces until
+	 * cleared.
+	 */
+	initialUserConsentPending?: boolean;
 	/** Presentation experiment arm already assigned (a host-resolved variant). */
 	initialExperiment?: ExperimentAssignment;
 	/**
@@ -802,6 +832,8 @@ export interface LiftOptOutPayload {
 	user: Readonly<KernelUser> | null;
 	uiSource?: SaveUISource;
 	policySnapshotToken?: string | null;
+	/** Supported opt-out rights to lift, sent when lifting an account opt-out. */
+	rights?: readonly OptOutRight[];
 }
 
 /** Result returned by `transport.optOut()`. */
@@ -1147,6 +1179,8 @@ export interface ConsentKernel {
 		overrides: (input: KernelOverrides) => void;
 		language: (code: string) => void;
 		subjectId: (id: string | null) => void;
+		/** Replace or clear the identified user. Drops any previous user's account layer synchronously. */
+		user: (user: KernelUser | null) => void;
 		/** Detected user-agent privacy signals. */
 		privacySignals: (input: { gpc?: boolean }) => void;
 		/** Set the active UI surface. */
@@ -1257,6 +1291,12 @@ export interface ConsentKernel {
 		}) => Promise<OptInResult>;
 		identify: (user: KernelUser) => Promise<void>;
 	};
+
+	/**
+	 * Apply a resolved `userConsent` document from `@inth/node` `consents.check()`,
+	 * or clear the account consent layer with `null`. `undefined` is a no-op.
+	 */
+	syncUserConsent: (value: UserConsent | null | undefined) => boolean;
 
 	/**
 	 * Typed event stream for observability, devtools, analytics.

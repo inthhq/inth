@@ -15,6 +15,7 @@ import type { ConsentSnapshot, ConsentState } from '../../consent-kernel.model';
  *   Outside IAB mode a `data-vendor` the subject turned off denies the
  *   iframe even when its category passes.
  */
+import { consentPending } from '../../consent-pending';
 import type { AllConsentNames } from '../../consent/consent-types';
 import { allConsentNames } from '../../consent/consent-types';
 import { vendorAxisActive } from '../../libs/vendors';
@@ -43,6 +44,8 @@ export interface ReconcilePass {
 	declared: ReadonlySet<string>;
 	/** Vendor denials are inert in IAB mode. */
 	isIabMode: boolean;
+	/** Consent outcomes are waiting on policy or userConsent. */
+	pending: boolean;
 }
 
 /**
@@ -56,6 +59,7 @@ export const buildReconcilePass = function buildReconcilePass(
 		consents: getEffectiveGateState(snapshot).effectivePermissions,
 		declared: new Set(snapshot.vendors?.declared.map((vendor) => vendor.id)),
 		isIabMode: !vendorAxisActive(snapshot),
+		pending: consentPending(snapshot),
 		storedDenied: stored && stored.length > 0 ? new Set(stored) : null,
 		vendorDenied: deniedVendorIds(snapshot),
 	};
@@ -148,32 +152,45 @@ export const reconcileIframe = function reconcileIframe(
 		return;
 	}
 
-	let categoryAllowed = true;
-	if (category === null) {
-		// oxlint-disable-next-line no-console -- config bug the site owner must fix
-		console.warn(
-			`[inth] iframe-blocker: invalid data-category "${iframe.getAttribute(
-				'data-category'
-			)}". Must be one of: ${allConsentNames.join(', ')}. The iframe stays blocked.`
+	const isAllowed = (
+		frameCategory: AllConsentNames | null | undefined,
+		frameVendor: string | undefined
+	): boolean => {
+		if (
+			pass.pending &&
+			(frameCategory !== 'necessary' || frameVendor !== undefined)
+		) {
+			return false;
+		}
+		if (frameCategory === null) {
+			// oxlint-disable-next-line no-console -- config bug the site owner must fix
+			console.warn(
+				`[inth] iframe-blocker: invalid data-category "${iframe.getAttribute(
+					'data-category'
+				)}". Must be one of: ${allConsentNames.join(', ')}. The iframe stays blocked.`
+			);
+			return false;
+		}
+		if (frameCategory && !has(frameCategory, pass.consents)) {
+			return false;
+		}
+		// A vendor-only frame holds against every stored denial only while its
+		// slug is undeclared. Once declared, the gate's own filtered set decides,
+		// so a `disabled` declaration lifts a stale denial here as everywhere.
+		const denied =
+			frameCategory !== undefined ||
+			(frameVendor !== undefined && pass.declared.has(frameVendor))
+				? pass.vendorDenied
+				: pass.storedDenied;
+		return (
+			frameVendor === undefined ||
+			pass.isIabMode ||
+			denied === null ||
+			!denied.has(frameVendor)
 		);
-		categoryAllowed = false;
-	} else if (category) {
-		categoryAllowed = has(category, pass.consents);
-	}
-	// A vendor-only frame holds against every stored denial only while its
-	// slug is undeclared. Once declared, the gate's own filtered set decides,
-	// so a `disabled` declaration lifts a stale denial here as everywhere.
-	const denied =
-		category !== undefined ||
-		(vendor !== undefined && pass.declared.has(vendor))
-			? pass.vendorDenied
-			: pass.storedDenied;
-	const vendorAllowed =
-		vendor === undefined ||
-		pass.isIabMode ||
-		denied === null ||
-		!denied.has(vendor);
-	const allowed = categoryAllowed && vendorAllowed;
+	};
+
+	const allowed = isAllowed(category, vendor);
 	const dataSrc = iframe.getAttribute('data-src');
 
 	if (allowed) {

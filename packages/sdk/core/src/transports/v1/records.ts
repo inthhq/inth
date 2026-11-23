@@ -6,8 +6,16 @@
  * kernel and travels with the next save. There is no route for a browser to
  * read a subject, so there is no `loadSubjectRecord`.
  */
-import { appendJourneyParams, V1_UUID_PATTERN } from '@inth/sdk-schema/types';
-import type { OptOutRecord, V1ConsentRecordLink } from '@inth/sdk-schema/types';
+import {
+	appendJourneyParams,
+	OPT_OUT_RIGHTS,
+	V1_UUID_PATTERN,
+} from '@inth/sdk-schema/types';
+import type {
+	OptOutRecord,
+	OptOutRight,
+	V1ConsentRecordLink,
+} from '@inth/sdk-schema/types';
 
 import type {
 	KernelTransport,
@@ -19,7 +27,11 @@ import type {
 	SavePayload,
 	SaveResult,
 } from '../../consent-kernel.model';
-import { validateOptOutRecord } from '../../consent-record/consent-record-validation.model';
+import {
+	isPlainRecord,
+	ownValue,
+	validateOptOutRecord,
+} from '../../consent-record/consent-record-validation.model';
 import { buildDecisionAssertion } from '../decision-inputs.model';
 import type { RememberedDecisionInputs } from '../decision-inputs.model';
 import { readApiError } from './inth-api-error';
@@ -127,17 +139,55 @@ const utf8ByteLength = function utf8ByteLength(value: string): number {
 	return value.length * 3;
 };
 
-const readOptOut = function readOptOut(
+const OPT_OUT_RIGHT_SET: ReadonlySet<string> = new Set(OPT_OUT_RIGHTS);
+
+/**
+ * Parse a backend opt-out answer, ignoring unknown rights (such as
+ * `limit_sensitive`) that the SDK does not yet enforce. Returns:
+ * - `undefined` when absent or structurally invalid
+ * - `null` when structurally valid with only unsupported rights remaining
+ * - `OptOutRecord` when at least one supported right remains.
+ */
+const readOptOutWithUnsupported = function readOptOutWithUnsupported(
 	value: unknown
-): OptOutRecord | undefined {
+): OptOutRecord | null | undefined {
 	if (value === undefined || value === null) {
 		return undefined;
 	}
 	const validated = validateOptOutRecord(value);
-	// A backend answer names the applicable rights, never an empty list.
-	return validated.ok && validated.record.rights.length > 0
-		? validated.record
-		: undefined;
+	if (validated.ok) {
+		return validated.record.rights.length > 0 ? validated.record : undefined;
+	}
+	if (!isPlainRecord(value)) {
+		return undefined;
+	}
+	const rawRights = ownValue(value, 'rights');
+	if (
+		!Array.isArray(rawRights) ||
+		rawRights.length === 0 ||
+		!rawRights.every((entry) => typeof entry === 'string' && entry.length > 0)
+	) {
+		return undefined;
+	}
+	const seen = new Set<OptOutRight>();
+	for (const entry of rawRights) {
+		if (OPT_OUT_RIGHT_SET.has(entry)) {
+			seen.add(entry as OptOutRight);
+		}
+	}
+	const filtered = OPT_OUT_RIGHTS.filter((right) => seen.has(right));
+	const revalidated = validateOptOutRecord({ ...value, rights: filtered });
+	if (!revalidated.ok) {
+		return undefined;
+	}
+	return filtered.length > 0 ? revalidated.record : null;
+};
+
+const readOptOut = function readOptOut(
+	value: unknown
+): OptOutRecord | undefined {
+	const parsed = readOptOutWithUnsupported(value);
+	return parsed ?? undefined;
 };
 
 const readLink = function readLink(
@@ -268,8 +318,8 @@ const toLiftOptOutResult = function toLiftOptOutResult(
 	if (body.optOut === null) {
 		result.optOut = null;
 	} else {
-		const optOut = readOptOut(body.optOut);
-		if (optOut) {
+		const optOut = readOptOutWithUnsupported(body.optOut);
+		if (optOut !== undefined) {
 			result.optOut = optOut;
 		}
 	}

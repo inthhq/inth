@@ -78,6 +78,11 @@ export interface CategoryDecision {
 	confirmedAt: number;
 	/** Policy contract the confirmation was made under. */
 	basis: ChoiceBasis;
+	/**
+	 * Explicit expiry deadline in epoch milliseconds for synced account grants,
+	 * used instead of `confirmedAt + policy.choice.maxAgeMs`.
+	 */
+	expiresAt?: number;
 }
 
 /**

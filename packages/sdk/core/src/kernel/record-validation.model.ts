@@ -33,6 +33,8 @@ import type {
 } from '../consent-record/types';
 import type { OptOutLocalAct } from '../libs/opt-out-state.model';
 import { isValidVendorId } from '../libs/vendors';
+import { validateAccountConsentLayer } from './account-layer';
+import type { AccountConsentLayer } from './account-layer';
 
 /** Validated records with the same omit/clear semantics as the input. */
 export interface ValidatedRecords {
@@ -45,6 +47,7 @@ export interface ValidatedRecords {
 	optOutLocalAct?: OptOutLocalAct | null;
 	optOutRightsConfirmed?: boolean;
 	vendorChoice?: VendorChoice | null;
+	accountLayer?: AccountConsentLayer | null;
 }
 
 export type ValidateRecordsResult =
@@ -263,6 +266,18 @@ export const validateHydrationRecords = function validateHydrationRecords(
 						path: `vendorChoice.${issue.path}`,
 					}))
 				);
+			}
+		}
+	}
+	if (input.accountLayer !== undefined) {
+		if (input.accountLayer === null) {
+			records.accountLayer = null;
+		} else {
+			const validatedAccount = validateAccountConsentLayer(input.accountLayer);
+			if (validatedAccount === null) {
+				issues.push({ code: 'invalid-value', path: 'accountLayer' });
+			} else {
+				records.accountLayer = validatedAccount;
 			}
 		}
 	}

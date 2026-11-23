@@ -4,7 +4,7 @@ import type {
 	EvaluationPolicy,
 	OptOutCheckSnapshot,
 } from '@inth/sdk/engine';
-import { isOptedOut } from '@inth/sdk/surface-state';
+import { consentPending, isOptedOut } from '@inth/sdk/surface-state';
 
 /** The consent choices Shopify's Customer Privacy API accepts. */
 export interface ShopifyConsentPreferences {
@@ -47,6 +47,7 @@ export type ShopifyConsentSnapshot = Pick<
 		EvaluationPolicy,
 		'gpcDenyCategories' | 'scope'
 	>;
+	readonly userConsentPending?: boolean;
 };
 
 /** A kernel, or anything else with the same snapshot store shape. */
@@ -234,7 +235,7 @@ const revocation = (
 const nextStep = (
 	snapshot: ShopifyConsentSnapshot
 ): 'wait' | 'revoke' | 'shopify-defaults' | 'send' => {
-	if (snapshot.policyPending) {
+	if (consentPending(snapshot)) {
 		return 'wait';
 	}
 	const owesChoice = snapshot.promptRequirement.kind === 'choice';

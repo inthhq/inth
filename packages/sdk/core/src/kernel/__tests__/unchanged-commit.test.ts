@@ -50,7 +50,16 @@ const expectFullDerivation = function expectFullDerivation(
 		optOut: snapshot.optOut,
 		policy: snapshot.evaluationPolicy,
 	});
-	expect(snapshot.effectivePermissions).toEqual(evaluation.permissions);
+	const expectedPermissions = snapshot.userConsentPending
+		? {
+				experience: false,
+				functionality: false,
+				marketing: false,
+				measurement: false,
+				necessary: true,
+			}
+		: evaluation.permissions;
+	expect(snapshot.effectivePermissions).toEqual(expectedPermissions);
 	expect(snapshot.promptRequirement).toEqual(evaluation.promptRequirement);
 	expect(snapshot.restrictions).toEqual(evaluation.restrictions);
 	expect(snapshot.nextDeadline).toBe(evaluation.nextDeadline);
@@ -152,6 +161,22 @@ test('every snapshot input agrees with the full evaluator', async () => {
 			idempotent: false,
 			run: (k) => k.set.externalPermissions({ measurement: true }),
 		},
+		hasAccountLayer: {
+			config: { initialUser: { externalId: 'visitor' } },
+			idempotent: true,
+			run: (k) =>
+				k.syncUserConsent({
+					categories: {},
+					optOut: null,
+					sync: {
+						checkedAt: NOW,
+						choices: {},
+						externalId: 'visitor',
+						optOut: null,
+						vendors: {},
+					},
+				}),
+		},
 		hosting: initWith({ hosting: 'inth' }),
 		iab: { idempotent: true, run: (k) => k.set.iab({ enabled: true }) },
 		location: initWith({ location: { countryCode: 'DE', regionCode: null } }),
@@ -223,6 +248,10 @@ test('every snapshot input agrees with the full evaluator', async () => {
 		user: {
 			idempotent: false,
 			run: (k) => k.commands.identify({ externalId: 'visitor' }),
+		},
+		userConsentPending: {
+			idempotent: true,
+			run: (k) => k.setUserConsentPending(true),
 		},
 		vendorChoice: {
 			idempotent: false,

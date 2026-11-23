@@ -485,16 +485,18 @@ export const createSaveOutbox = function createSaveOutbox({
 	const fillUnsupportedOptOutRights =
 		function fillUnsupportedOptOutRights(): void {
 			const current = getSnapshot();
-			if (!current.optOut || current.optOut.rights.length > 0) {
+			const browserOptOut = runtime.getBrowserRecords().optOut;
+			if (!browserOptOut || browserOptOut.rights.length > 0) {
 				return;
 			}
 			applySyncedOptOut(
 				runtime,
-				{ ...current.optOut, rights: [...OPT_OUT_RIGHTS] },
+				{ ...browserOptOut, rights: [...OPT_OUT_RIGHTS] },
 				{
 					actVersion: runtime.getOptOutActVersion(),
 					allowClear: false,
 					confirmed: false,
+					externalId: current.user?.externalId ?? null,
 					generation: runtime.getGeneration(),
 					subjectId: current.subject?.subjectId ?? null,
 				}
@@ -696,6 +698,7 @@ export const createSaveOutbox = function createSaveOutbox({
 			applySyncedOptOut(runtime, result.optOut, {
 				actVersion: action.optOutActVersion,
 				allowClear: false,
+				externalId: action.snapshot.user?.externalId ?? null,
 				generation: action.generation,
 				subjectId: adopted ?? action.snapshot.subject?.subjectId ?? null,
 			});
@@ -999,6 +1002,7 @@ export const createSaveOutbox = function createSaveOutbox({
 						account: act.payload.user,
 						actVersion: context.actVersion,
 						allowClear: act.kind === 'lift',
+						externalId: act.payload.user?.externalId ?? null,
 						generation: context.generation,
 						identity: context.identity,
 						ownAct: act.kind === 'record',

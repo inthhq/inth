@@ -12,6 +12,7 @@ import type {
 	OptOutPayload,
 	SaveUISource,
 } from '../consent-kernel.model';
+import { consentPending } from '../consent-pending';
 import { validateOptOutRecord } from '../consent-record/consent-record-validation.model';
 import {
 	answersHeldOptOut,
@@ -26,6 +27,8 @@ import type { OptionalConsentCategory } from '../consent-record/types';
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
 import type { OptOutReceiptData } from '../libs/opt-out-state.model';
 import { createIdempotencyKey } from '../libs/subject-uuid.model';
+import { splitServerOptOutForAccount } from './account-layer';
+import type { AccountOptOutRecord } from './account-layer';
 import type { KernelRuntime } from './create-runtime';
 
 const inCanonicalOrder = function inCanonicalOrder(
@@ -86,7 +89,7 @@ export const gpcSignalApplicable = function gpcSignalApplicable(
 	return (
 		live &&
 		!snapshot.externalPermissions &&
-		!snapshot.policyPending &&
+		!consentPending(snapshot) &&
 		snapshot.resolution.status === 'matched' &&
 		snapshot.privacySignals.gpc.active &&
 		snapshot.evaluationPolicy.gpcDenyCategories.length > 0
@@ -95,26 +98,30 @@ export const gpcSignalApplicable = function gpcSignalApplicable(
 
 /**
  * Whether a live kernel must record a durable GPC opt-out for `snapshot`.
+ * Checks the browser record only so an account opt-out never suppresses this
+ * device's own GPC opt-out.
  */
 export const gpcOptOutDue = function gpcOptOutDue(
 	snapshot: ConsentSnapshot,
-	live: boolean
+	live: boolean,
+	browserOptOut: Readonly<OptOutRecord> | null = snapshot.optOut
 ): boolean {
-	return gpcSignalApplicable(snapshot, live) && snapshot.optOut === null;
+	return gpcSignalApplicable(snapshot, live) && browserOptOut === null;
 };
 
 /**
  * Whether a live kernel must report an active GPC signal for an opt-out record
- * already held in `snapshot`.
+ * already held in the browser layer.
  */
 export const gpcSignalReportDue = function gpcSignalReportDue(
 	snapshot: ConsentSnapshot,
 	live: boolean,
-	gpcReported: boolean
+	gpcReported: boolean,
+	browserOptOut: Readonly<OptOutRecord> | null = snapshot.optOut
 ): boolean {
 	return (
 		gpcSignalApplicable(snapshot, live) &&
-		snapshot.optOut !== null &&
+		browserOptOut !== null &&
 		!gpcReported
 	);
 };
@@ -214,15 +221,16 @@ export const buildOptOutPayload = function buildOptOutPayload(
 };
 
 /**
- * Build the transport payload for an opt-out lift, with one idempotency key
- * and no `rights` so the backend lifts every right the device holds, and
- * account-held rights too when the current user carries a verified token.
+ * Build the transport payload for an opt-out lift, with one idempotency key.
+ * Omit `rights` for device lifts so the backend lifts every right the device
+ * holds; pass supported `rights` when lifting an account-held opt-out.
  */
 export const buildLiftOptOutPayload = function buildLiftOptOutPayload(
 	snapshot: ConsentSnapshot,
 	subjectId: string,
 	actionAt: number,
-	uiSource?: SaveUISource
+	uiSource?: SaveUISource,
+	rights?: readonly OptOutRight[]
 ): LiftOptOutPayload {
 	const payload: LiftOptOutPayload = {
 		givenAt: actionAt,
@@ -233,6 +241,9 @@ export const buildLiftOptOutPayload = function buildLiftOptOutPayload(
 	};
 	if (uiSource !== undefined) {
 		payload.uiSource = uiSource;
+	}
+	if (rights && rights.length > 0) {
+		payload.rights = [...rights];
 	}
 	return payload;
 };
@@ -257,6 +268,8 @@ export interface OptOutAnswerFence {
 	 * the identified one. Leave unset for an answer about the subject alone.
 	 */
 	account?: Readonly<KernelUser> | null;
+	/** External user ID active when the request started. Drops the answer on mismatch. */
+	externalId?: string | null;
 	/** Only a lift answer may clear `snapshot.optOut` to `null`. */
 	allowClear: boolean;
 	/** Whether `incoming` came from a backend answer (`false` for the local 404 fallback). */
@@ -270,33 +283,22 @@ export interface OptOutAnswerFence {
 	ownAct?: boolean;
 }
 
-/**
- * The receipt after a backend answer. This browser's act and its reference
- * stay only while the answer is that act (`localAct`); a different act was
- * not made here, so the receipt drops them.
- */
-const nextSyncedOptOutReceipt = function nextSyncedOptOutReceipt(
-	currentOptOut: Readonly<OptOutRecord> | null,
-	nextOptOut: OptOutRecord | null,
-	currentReceipt: Readonly<OptOutReceiptData>,
-	confirmed: boolean,
-	localAct: boolean
-): OptOutReceiptData {
-	if (nextOptOut === null) {
-		return EMPTY_OPT_OUT_RECEIPT_DATA;
+const sameAccountOptOut = function sameAccountOptOut(
+	left: AccountOptOutRecord | null,
+	right: AccountOptOutRecord | null
+): boolean {
+	if (left === right) {
+		return true;
 	}
-	if (currentOptOut === null || !localAct) {
-		return {
-			localAct: null,
-			reference: null,
-			rightsConfirmed: confirmed,
-		};
+	if (!left || !right) {
+		return false;
 	}
-	return {
-		localAct: currentReceipt.localAct,
-		reference: currentReceipt.reference,
-		rightsConfirmed: currentReceipt.rightsConfirmed || confirmed,
-	};
+	return (
+		left.method === right.method &&
+		left.rawRecordedAt === right.rawRecordedAt &&
+		left.rights.length === right.rights.length &&
+		left.rights.every((rightName, index) => rightName === right.rights[index])
+	);
 };
 
 /**
@@ -391,6 +393,139 @@ const fenceHolds = function fenceHolds(
 };
 
 /**
+ * The receipt after a backend answer. This browser's act and its reference
+ * stay only while the answer is that act (`localAct`); a different act was
+ * not made here, so the receipt drops them.
+ */
+const nextSyncedOptOutReceipt = function nextSyncedOptOutReceipt(
+	currentOptOut: Readonly<OptOutRecord> | null,
+	nextOptOut: OptOutRecord | null,
+	currentReceipt: Readonly<OptOutReceiptData>,
+	confirmed: boolean,
+	localAct: boolean
+): OptOutReceiptData {
+	if (nextOptOut === null) {
+		return EMPTY_OPT_OUT_RECEIPT_DATA;
+	}
+	if (currentOptOut === null || !localAct) {
+		return {
+			localAct: null,
+			reference: null,
+			rightsConfirmed: confirmed,
+		};
+	}
+	return {
+		localAct: currentReceipt.localAct,
+		reference: currentReceipt.reference,
+		rightsConfirmed: currentReceipt.rightsConfirmed || confirmed,
+	};
+};
+
+const receiptChangedFrom = function receiptChangedFrom(
+	current: Readonly<OptOutReceiptData>,
+	next: OptOutReceiptData
+): boolean {
+	return (
+		next.localAct !== current.localAct ||
+		next.reference !== current.reference ||
+		next.rightsConfirmed !== current.rightsConfirmed
+	);
+};
+
+const applySyncedOptOutWithAccount = function applySyncedOptOutWithAccount(
+	runtime: KernelRuntime,
+	current: ConsentSnapshot,
+	next: OptOutRecord | null,
+	activeAccount: NonNullable<ReturnType<KernelRuntime['getAccountLayer']>>,
+	fence: OptOutAnswerFence
+): boolean {
+	const at = runtime.now();
+	const browserOptOut = runtime.getBrowserRecords().optOut;
+	const routed = splitServerOptOutForAccount(
+		next,
+		browserOptOut,
+		activeAccount,
+		fence.allowClear
+	);
+	const nextBrowserOptOut =
+		routed.browserOptOut !== null
+			? answerWithHeldCategories(routed.browserOptOut, browserOptOut, fence)
+			: null;
+	const accountChanged = !sameAccountOptOut(
+		activeAccount.optOut,
+		routed.accountOptOut
+	);
+	const browserChanged = !sameOptOutRecord(browserOptOut, nextBrowserOptOut);
+	const currentReceipt = runtime.getOptOutReceiptData();
+	const localAct = answersLocalAct(nextBrowserOptOut, browserOptOut, fence);
+	const nextReceipt = nextSyncedOptOutReceipt(
+		browserOptOut,
+		nextBrowserOptOut,
+		currentReceipt,
+		fence.confirmed !== false,
+		localAct
+	);
+	if (!accountChanged && !browserChanged) {
+		if (!receiptChangedFrom(currentReceipt, nextReceipt)) {
+			return false;
+		}
+		runtime.setOptOutReceiptData(nextReceipt);
+		return true;
+	}
+	const nextAccount = accountChanged
+		? {
+				...activeAccount,
+				appliedAt: Math.max(activeAccount.appliedAt, at),
+				optOut: routed.accountOptOut,
+			}
+		: activeAccount;
+	runtime.batch(() => {
+		runtime.setOptOutReceiptData(nextReceipt);
+		runtime.commit(
+			{ now: at, optOut: nextBrowserOptOut },
+			accountChanged ? { accountLayer: nextAccount } : undefined
+		);
+		const after = runtime.getSnapshot();
+		if (!sameOptOutRecord(current.optOut, after.optOut) || browserChanged) {
+			runtime.emit({
+				optOut: after.optOut,
+				snapshot: after,
+				type: 'opt-out:synced',
+			});
+		}
+	});
+	return true;
+};
+
+const isSyncedOptOutFenceCurrent = function isSyncedOptOutFenceCurrent(
+	runtime: KernelRuntime,
+	current: ConsentSnapshot,
+	fence: OptOutAnswerFence
+): boolean {
+	return (
+		fenceHolds(runtime, current, fence) &&
+		(fence.externalId === undefined ||
+			(current.user?.externalId ?? null) === fence.externalId)
+	);
+};
+
+const parseSyncedOptOutInput = function parseSyncedOptOutInput(
+	incoming: OptOutRecord | null | undefined,
+	allowClear: boolean
+): { ok: true; record: OptOutRecord | null } | { ok: false } {
+	if (incoming === undefined || (incoming === null && !allowClear)) {
+		return { ok: false };
+	}
+	if (incoming === null) {
+		return { ok: true, record: null };
+	}
+	const validated = validateOptOutRecord(incoming);
+	return validated.ok && validated.record.rights.length > 0
+		? { ok: true, record: validated.record }
+		: { ok: false };
+};
+
+/**
  * Apply the backend's authoritative opt-out answer to `runtime` when it is
  * still current. Emits `opt-out:synced` and never triggers another request or
  * emits `opt-out:recorded` / `opt-out:lifted`.
@@ -400,26 +535,31 @@ export const applySyncedOptOut = function applySyncedOptOut(
 	incoming: OptOutRecord | null | undefined,
 	fence: OptOutAnswerFence
 ): boolean {
-	if (incoming === undefined) {
+	const parsed = parseSyncedOptOutInput(incoming, fence.allowClear);
+	if (!parsed.ok) {
 		return false;
 	}
-	if (incoming === null && !fence.allowClear) {
-		return false;
-	}
-	let next: OptOutRecord | null = null;
-	if (incoming !== null) {
-		const validated = validateOptOutRecord(incoming);
-		if (!validated.ok || validated.record.rights.length === 0) {
-			return false;
-		}
-		next = validated.record;
-	}
+	let next = parsed.record;
 	const current = runtime.getSnapshot();
-	if (!fenceHolds(runtime, current, fence)) {
+	if (
+		!isSyncedOptOutFenceCurrent(runtime, current, fence) ||
+		(next === null && optOutLiftBlocker(current) === 'gpc-active')
+	) {
 		return false;
 	}
-	if (next === null && optOutLiftBlocker(current) === 'gpc-active') {
-		return false;
+	const accountLayer = runtime.getAccountLayer();
+	if (
+		accountLayer !== null &&
+		current.user !== null &&
+		accountLayer.externalId === current.user.externalId
+	) {
+		return applySyncedOptOutWithAccount(
+			runtime,
+			current,
+			next,
+			accountLayer,
+			fence
+		);
 	}
 	const localAct = answersLocalAct(next, current.optOut, fence);
 	if (next !== null) {
@@ -434,12 +574,8 @@ export const applySyncedOptOut = function applySyncedOptOut(
 		confirmed,
 		localAct
 	);
-	const receiptChanged =
-		nextReceipt.localAct !== currentReceipt.localAct ||
-		nextReceipt.reference !== currentReceipt.reference ||
-		nextReceipt.rightsConfirmed !== currentReceipt.rightsConfirmed;
 	if (sameOptOutRecord(current.optOut, next)) {
-		if (!receiptChanged) {
+		if (!receiptChangedFrom(currentReceipt, nextReceipt)) {
 			return false;
 		}
 		runtime.setOptOutReceiptData(nextReceipt);

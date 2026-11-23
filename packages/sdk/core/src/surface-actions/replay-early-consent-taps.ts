@@ -217,11 +217,11 @@ export const replayEarlyConsentTaps = (
 		if (stops.length === 0 || !options.started()) {
 			return;
 		}
-		const { policyPending, resolution } = kernel.getSnapshot();
-		if (policyPending) {
+		const snapshot = kernel.getSnapshot();
+		if (snapshot.policyPending || snapshot.userConsentPending === true) {
 			// A failed init shows no banner either way. Keep the tap for a
 			// retry that resolves the policy.
-			if (resolution.status === 'failed') {
+			if (snapshot.resolution.status === 'failed') {
 				unhide(view);
 			}
 			return;

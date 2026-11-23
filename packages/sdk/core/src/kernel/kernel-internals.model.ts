@@ -16,6 +16,10 @@ import type {
  * @internal
  */
 import type { OptOutReceiptData } from '../libs/opt-out-state.model';
+import type {
+	AccountConsentLayer,
+	BrowserConsentRecords,
+} from './account-layer';
 
 /** @internal */
 export interface InternalKernel extends ConsentKernel {
@@ -122,6 +126,30 @@ export interface InternalKernel extends ConsentKernel {
 	 * Subscribe to changes in the in-flight opt-out and lift request count.
 	 */
 	onOptOutRequestsChange: (listener: (inFlight: number) => void) => () => void;
+	/** Browser-made consent records kept apart from the account consent layer. */
+	getBrowserRecords: () => BrowserConsentRecords;
+	/** Current account consent layer, or `null` when none is held. */
+	getAccountLayer: () => AccountConsentLayer | null;
+	/**
+	 * Monotonic generation bumped on user change, logout, clear, dispose, and
+	 * successful account opt-out lift. Async `userConsent` Promises capture it
+	 * before awaiting and drop results if it moved.
+	 */
+	getAccountSyncGeneration: () => number;
+	/** Bump the account sync generation and return the new value. */
+	bumpAccountSyncGeneration: () => number;
+	/** Arm or release the `userConsentPending` hold on the kernel snapshot. */
+	setUserConsentPending: (pending: boolean) => void;
+	/**
+	 * Subscribe to changes to the account consent layer so persistence can
+	 * schedule writes or synchronously delete account storage on drop.
+	 */
+	onAccountLayerChange: (
+		listener: (
+			layer: AccountConsentLayer | null,
+			fromHydration: boolean
+		) => void
+	) => () => void;
 	readonly events: ConsentKernel['events'] & {
 		/** Announce an event the kernel did not produce itself. */
 		emit: (event: KernelEvent) => void;

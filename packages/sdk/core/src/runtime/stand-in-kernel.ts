@@ -315,6 +315,15 @@ export const createStandInKernel = function createStandInKernel(
 				listeners.delete(listener);
 			};
 		},
+		syncUserConsent(value) {
+			if (engine) {
+				return engine.syncUserConsent(value);
+			}
+			queued.push((attached) => attached.syncUserConsent(value));
+			pending.push({ args: [value], name: 'syncUserConsent' });
+			options.requestEngine();
+			return false;
+		},
 	};
 
 	const kernel = new Proxy(stub, {

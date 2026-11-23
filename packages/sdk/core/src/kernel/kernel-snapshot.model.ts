@@ -35,10 +35,28 @@ import { deriveModel } from '../policy-choice.model';
 import type { PresentedSelection } from '../policy-choice.model';
 import { applyTranslationOverrides } from '../translations';
 import {
+	deriveEffectiveRecords,
+	freezeAccountLayer,
+	normalizeUserConsent,
+} from './account-layer';
+import type {
+	AccountConsentLayer,
+	BrowserConsentRecords,
+} from './account-layer';
+import {
 	evaluateExternalPermissions,
 	normalizeExternalPermissions,
 } from './external-permissions.model';
 import { validateHydrationRecords } from './record-validation.model';
+
+/** Optional permissions held to `false` while `userConsentPending` is true. */
+export const PENDING_PERMISSIONS: Readonly<ConsentState> = Object.freeze({
+	experience: false,
+	functionality: false,
+	marketing: false,
+	measurement: false,
+	necessary: true,
+});
 
 /**
  * Default IAB slice. Used as the base when constructing the initial IAB
@@ -297,17 +315,25 @@ export const freezeSnapshot = function freezeSnapshot(
 	return Object.freeze(snapshot) as ConsentSnapshot;
 };
 
+export interface InitialKernelState {
+	readonly snapshot: ConsentSnapshot;
+	readonly browserRecords: BrowserConsentRecords;
+	readonly accountLayer: AccountConsentLayer | null;
+}
+
 /**
- * Build the initial frozen snapshot from a kernel config.
+ * Build the initial frozen snapshot and its separate browser and account
+ * record layers from a kernel config.
  *
  * Pure. Evaluates once at `config.now` (default `Date.now()`), using the
  * precomputed resolution when supplied and the safe fallback otherwise.
- * A pending policy keeps the first layer hidden until init finishes.
+ * A pending policy or pending `userConsent` keeps the first layer hidden
+ * until it settles.
  */
 // oxlint-disable-next-line complexity -- Construction reads every config field once in a fixed order.
-export const buildInitialSnapshot = function buildInitialSnapshot(
+export const buildInitialKernelState = function buildInitialKernelState(
 	config: KernelConfig
-): ConsentSnapshot {
+): InitialKernelState {
 	// One clock for validation and evaluation: an explicit config clock, else
 	// the clock the record seed was read with, else the wall clock.
 	const now = config.now ?? config.initialRecords?.now ?? Date.now();
@@ -324,16 +350,58 @@ export const buildInitialSnapshot = function buildInitialSnapshot(
 			: null;
 	const evaluationPolicy = buildEvaluationPolicy(effective, consentCategories);
 	const policyPending = config.initialPolicyPending ?? false;
+	const userConsentPending = config.initialUserConsentPending === true;
 
 	const validated = config.initialRecords
 		? validateHydrationRecords(config.initialRecords, now)
 		: null;
 	const records = validated?.ok === true ? validated.records : null;
-	const explicitChoice = records?.choice ?? null;
 	const noticeDismissal = records?.noticeDismissal ?? null;
-	const optOut = records?.optOut ?? null;
 	const subject = records?.subject ?? null;
-	const vendorChoice = records?.vendorChoice ?? null;
+	const user = config.initialUser ? { ...config.initialUser } : null;
+
+	const browserChoice = records?.choice ?? null;
+	const browserOptOut = records?.optOut ?? null;
+	const browserVendorChoice = records?.vendorChoice ?? null;
+	freezeChoice(browserChoice);
+	freezeOptOut(browserOptOut);
+	freezeVendorChoice(browserVendorChoice);
+	const browserRecords: BrowserConsentRecords = {
+		choice: browserChoice,
+		optOut: browserOptOut,
+		vendorChoice: browserVendorChoice,
+	};
+
+	let accountLayer: AccountConsentLayer | null = null;
+	if (config.initialUserConsent !== undefined) {
+		if (
+			config.initialUserConsent !== null &&
+			user !== null &&
+			config.initialUserConsent.sync?.externalId === user.externalId
+		) {
+			accountLayer = freezeAccountLayer(
+				normalizeUserConsent(config.initialUserConsent, now)
+			);
+		}
+	} else if (
+		records?.accountLayer &&
+		user !== null &&
+		records.accountLayer.externalId === user.externalId
+	) {
+		accountLayer = freezeAccountLayer(records.accountLayer);
+	}
+
+	const derivedRecords = deriveEffectiveRecords(
+		browserRecords,
+		accountLayer,
+		user,
+		evaluationPolicy
+	);
+	const {
+		choice: explicitChoice,
+		optOut,
+		vendorChoice,
+	} = derivedRecords;
 
 	const iab = buildInitialIab(
 		config.initialExternalPermissions === undefined
@@ -371,10 +439,18 @@ export const buildInitialSnapshot = function buildInitialSnapshot(
 					policy: evaluationPolicy,
 				});
 
-	const evaluation = externalPermissions
-		? evaluateExternalPermissions(externalPermissions)
-		: recordEvaluation;
-	return freezeSnapshot({
+	let evaluation: {
+		nextDeadline: number | null;
+		permissions: Readonly<ConsentState>;
+		promptRequirement: ConsentSnapshot['promptRequirement'];
+		restrictions: ConsentSnapshot['restrictions'];
+	} = recordEvaluation;
+	if (externalPermissions) {
+		evaluation = evaluateExternalPermissions(externalPermissions);
+	} else if (userConsentPending) {
+		evaluation = { ...recordEvaluation, permissions: PENDING_PERMISSIONS };
+	}
+	const draftSnapshot: ConsentSnapshot & { hasAccountLayer?: boolean } = {
 		activeUI: externalPermissions
 			? 'none'
 			: deriveActiveUI({
@@ -382,6 +458,7 @@ export const buildInitialSnapshot = function buildInitialSnapshot(
 					policyPending,
 					promptRequirement: evaluation.promptRequirement,
 					resolution,
+					userConsentPending,
 				}),
 		branding: config.initialBranding ?? DEFAULT_BRANDING,
 		consentCategories,
@@ -423,8 +500,27 @@ export const buildInitialSnapshot = function buildInitialSnapshot(
 					config.translationOverrides
 				)
 			: null,
-		user: config.initialUser ? { ...config.initialUser } : null,
+		user,
+		userConsentPending,
 		vendorChoice,
 		vendors,
-	});
+	};
+	if (derivedRecords.activeAccount !== null) {
+		draftSnapshot.hasAccountLayer = true;
+	}
+	const snapshot = freezeSnapshot(draftSnapshot);
+	return { accountLayer, browserRecords, snapshot };
+};
+
+/**
+ * Build the initial frozen snapshot from a kernel config.
+ *
+ * Pure. Evaluates once at `config.now` (default `Date.now()`), using the
+ * precomputed resolution when supplied and the safe fallback otherwise.
+ * A pending policy keeps the first layer hidden until init finishes.
+ */
+export const buildInitialSnapshot = function buildInitialSnapshot(
+	config: KernelConfig
+): ConsentSnapshot {
+	return buildInitialKernelState(config).snapshot;
 };

@@ -42,9 +42,9 @@ export const createClearOnRevocationWith = (
 	const previous = new Map<OptionalConsentCategory, boolean>();
 	const reconcile = (): void => {
 		const snapshot = kernel.getSnapshot();
-		// Provisional opt-in fallback can deny a valid hydrated choice while
-		// the actual policy is still loading. Deletion cannot be undone.
-		if (snapshot.policyPending) {
+		// Provisional opt-in fallback or a pending userConsent Promise can deny
+		// a valid choice while consent is still settling. Deletion cannot be undone.
+		if (snapshot.policyPending || snapshot.userConsentPending === true) {
 			return;
 		}
 		const { effectivePermissions } = gateState(snapshot);

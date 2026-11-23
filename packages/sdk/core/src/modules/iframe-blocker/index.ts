@@ -257,17 +257,21 @@ export const createIframeBlocker = function createIframeBlocker(
 	let lastVendorChoice: unknown = null;
 	let lastVendors: unknown = null;
 	let lastModel: unknown = null;
+	let lastConsentPending: boolean | null = null;
 	const unsubscribe = kernel.subscribe((snapshot) => {
 		if (disableAuto) {
 			return;
 		}
+		const pending =
+			snapshot.policyPending || snapshot.userConsentPending === true;
 		if (
 			snapshot.effectivePermissions === lastConsents &&
 			snapshot.policyRule.scope === lastPolicyCategories &&
 			snapshot.policyRule.scopeMode === lastScopeMode &&
 			snapshot.vendorChoice === lastVendorChoice &&
 			snapshot.vendors === lastVendors &&
-			snapshot.model === lastModel
+			snapshot.model === lastModel &&
+			pending === lastConsentPending
 		) {
 			return;
 		}
@@ -277,6 +281,7 @@ export const createIframeBlocker = function createIframeBlocker(
 		lastVendorChoice = snapshot.vendorChoice;
 		lastVendors = snapshot.vendors;
 		lastModel = snapshot.model;
+		lastConsentPending = pending;
 		processAll();
 	});
 

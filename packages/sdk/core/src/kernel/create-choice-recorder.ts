@@ -32,6 +32,7 @@ import type {
 	ConsentState,
 	KernelEvent,
 	KernelIABAuthority,
+	KernelTransport,
 	NoticeDismissResult,
 	OptInResult,
 	OptOutResult,
@@ -58,6 +59,7 @@ import { vendorAxisActive } from '../libs/vendors';
 import { toggleableVendorIds } from '../modules/vendor-denial';
 import type { PresentedSelection } from '../policy-choice.model';
 import { saveRecordsOptOut } from '../surface-actions/instant-commit';
+import { filterSupportedOptOutRights } from './account-layer';
 import type { KernelRuntime } from './create-runtime';
 import {
 	applySyncedOptOut,
@@ -239,7 +241,8 @@ const scopedBulkVendorChoice = function scopedBulkVendorChoice(
  */
 const bulkClearedVendorChoice = function bulkClearedVendorChoice(
 	snapshot: ConsentSnapshot,
-	actionAt: number
+	actionAt: number,
+	browserVendorChoice: ConsentSnapshot['vendorChoice']
 ): VendorChoice | null {
 	const current = snapshot.vendorChoice;
 	// Nothing declared and nothing denied is not a decision. A retained
@@ -251,7 +254,11 @@ const bulkClearedVendorChoice = function bulkClearedVendorChoice(
 	) {
 		return current;
 	}
-	if (current?.denied.length === 0 && current.confirmedAt >= actionAt) {
+	if (
+		browserVendorChoice !== null &&
+		current?.denied.length === 0 &&
+		current.confirmedAt >= actionAt
+	) {
 		return current;
 	}
 	return { confirmedAt: actionAt, denied: [], version: 1 };
@@ -301,7 +308,8 @@ const resolveVendorSelection = function resolveVendorSelection(
 	input: SaveInput | undefined,
 	explicit: Record<string, boolean> | undefined,
 	actionAt: number,
-	categories?: readonly AllConsentNames[]
+	categories?: readonly AllConsentNames[],
+	browserVendorChoice: ConsentSnapshot['vendorChoice'] = snapshot.vendorChoice
 ): VendorChoice | null {
 	const current = snapshot.vendorChoice;
 	if (!vendorAxisActive(snapshot)) {
@@ -317,7 +325,7 @@ const resolveVendorSelection = function resolveVendorSelection(
 		// clears the list outright. Only a narrower action lifts denials
 		// selectively.
 		if (categories === undefined || coversChoiceScope(snapshot, categories)) {
-			return bulkClearedVendorChoice(snapshot, actionAt);
+			return bulkClearedVendorChoice(snapshot, actionAt, browserVendorChoice);
 		}
 		return scopedBulkVendorChoice(
 			snapshot,
@@ -356,13 +364,14 @@ const resolveVendorSelection = function resolveVendorSelection(
  */
 const vendorChoicePayload = function vendorChoicePayload(
 	snapshot: ConsentSnapshot,
+	browserVendorChoice: ConsentSnapshot['vendorChoice'],
 	previous: ConsentSnapshot['vendorChoice']
 ): SavePayload['vendorChoice'] {
 	const declared = snapshot.vendors?.declared ?? [];
-	if (!vendorAxisActive(snapshot) || snapshot.vendorChoice === null) {
+	if (!vendorAxisActive(snapshot) || browserVendorChoice === null) {
 		return undefined;
 	}
-	const denied = new Set(snapshot.vendorChoice.denied);
+	const denied = new Set(browserVendorChoice.denied);
 	const grants: Record<string, boolean> = {};
 	for (const vendor of declared) {
 		Object.defineProperty(grants, vendor.id, {
@@ -402,7 +411,7 @@ const vendorChoicePayload = function vendorChoicePayload(
 		}
 	}
 	return {
-		confirmedAt: snapshot.vendorChoice.confirmedAt,
+		confirmedAt: browserVendorChoice.confirmedAt,
 		grants,
 		version: 1,
 	};
@@ -651,7 +660,34 @@ export interface ChoiceRecorderOptions {
 	initialDraft: PresentedSelection | null;
 	/** Rights placed on a newly created local opt-out record. */
 	defaultOptOutRights?: () => OptOutRight[];
+	/** Transport link endpoint, used to link a provisional subject before lifting an account opt-out. */
+	transport?: Pick<KernelTransport, 'identify'>;
+	/** Provisional subject id accessor from the records boundary. */
+	getProvisionalSubject?: () => string | null;
+	/** Marks a materialized subject id as recorded once linked. */
+	noteRecordedSubject?: (id: string | undefined) => void;
 }
+
+const isAccountLiftSucceeded = function isAccountLiftSucceeded(
+	answerOptOut: OptOutRecord | null | undefined,
+	liftedRights: readonly OptOutRight[]
+): boolean {
+	if (answerOptOut === null) {
+		return true;
+	}
+	if (answerOptOut === undefined) {
+		return false;
+	}
+	const remaining = filterSupportedOptOutRights(answerOptOut.rights);
+	if (remaining.length === 0) {
+		return true;
+	}
+	if (liftedRights.length === 0) {
+		return false;
+	}
+	const liftedSet = new Set<string>(liftedRights);
+	return !remaining.some((right) => liftedSet.has(right));
+};
 
 /**
  * Create the choice recorder of one kernel: `commands.save`,
@@ -663,9 +699,126 @@ export const createChoiceRecorder = function createChoiceRecorder({
 	outbox,
 	initialDraft,
 	defaultOptOutRights = () => [],
+	transport,
+	getProvisionalSubject,
+	noteRecordedSubject,
 }: ChoiceRecorderOptions) {
 	const { batch, getSnapshot, commit, emit } = runtime;
 	const draft = createBoundDraft<PresentedSelection>(getSnapshot, initialDraft);
+
+	const isAccountLiftFresh = (
+		actVersion: number,
+		generation: number,
+		externalId: string | null,
+		expectedSubjectId?: string | null
+	): boolean => {
+		const current = getSnapshot();
+		return (
+			runtime.getOptOutActVersion() === actVersion &&
+			runtime.getGeneration() === generation &&
+			(current.user?.externalId ?? null) === externalId &&
+			(expectedSubjectId === undefined ||
+				(current.subject?.subjectId ?? null) === expectedSubjectId)
+		);
+	};
+
+	const needsSubjectLinkForLift = (
+		before: ConsentSnapshot,
+		wasProvisional: boolean
+	): boolean => {
+		const existingSubjectId = before.subject?.subjectId ?? null;
+		const accountLayer = runtime.getAccountLayer();
+		const accountOptOutActive =
+			accountLayer !== null &&
+			accountLayer.optOut !== null &&
+			accountLayer.externalId === before.user?.externalId;
+		return (
+			wasProvisional ||
+			(existingSubjectId !== null &&
+				existingSubjectId === getProvisionalSubject?.()) ||
+			(existingSubjectId === null && accountOptOutActive)
+		);
+	};
+
+	const ensureLinkedSubjectForAccountLift =
+		async function ensureLinkedSubjectForAccountLift(
+			before: ConsentSnapshot,
+			wasProvisional: boolean
+		): Promise<
+			{ ok: true; subjectId: string; hadSubject: boolean } | { ok: false }
+		> {
+			const existingSubjectId = before.subject?.subjectId ?? null;
+			if (!needsSubjectLinkForLift(before, wasProvisional)) {
+				return {
+					hadSubject: existingSubjectId !== null,
+					ok: true,
+					subjectId: existingSubjectId ?? generateUuidV7(),
+				};
+			}
+			if (
+				!before.user?.externalId ||
+				!before.user.identityToken ||
+				!transport?.identify
+			) {
+				return { ok: false };
+			}
+			const candidateId = existingSubjectId ?? generateUuidV7();
+			let linked: Awaited<ReturnType<NonNullable<typeof transport.identify>>>;
+			try {
+				linked = await transport.identify({ ...before.user }, candidateId);
+			} catch {
+				return { ok: false };
+			}
+			const linkedId = linked?.subjectId ?? candidateId;
+			const current = getSnapshot();
+			if ((current.user?.externalId ?? null) !== before.user.externalId) {
+				return { ok: false };
+			}
+			commit({ subject: saveSubject(current, linkedId) });
+			noteRecordedSubject?.(linkedId);
+			return { hadSubject: true, ok: true, subjectId: linkedId };
+		};
+
+	const clearAccountOptOutOnLift = function clearAccountOptOutOnLift(
+		actionAt: number,
+		uiSource: SaveUISource | undefined,
+		emitLifted: boolean
+	): void {
+		const current = getSnapshot();
+		const activeAccount = runtime.getAccountLayer();
+		const nextAccount =
+			activeAccount !== null &&
+			current.user !== null &&
+			activeAccount.externalId === current.user.externalId
+				? { ...activeAccount, optOut: null }
+				: undefined;
+		batch(() => {
+			runtime.noteOptOutAct();
+			runtime.bumpAccountSyncGeneration();
+			commit(
+				{ now: runtime.now(), optOut: null },
+				nextAccount === undefined ? undefined : { accountLayer: nextAccount }
+			);
+			const after = getSnapshot();
+			if (emitLifted) {
+				const event: Extract<KernelEvent, { type: 'opt-out:lifted' }> = {
+					actionAt,
+					snapshot: after,
+					type: 'opt-out:lifted',
+				};
+				if (uiSource !== undefined) {
+					event.uiSource = uiSource;
+				}
+				emit(event);
+			} else {
+				emit({
+					optOut: after.optOut,
+					snapshot: after,
+					type: 'opt-out:synced',
+				});
+			}
+		});
+	};
 
 	const liftAccountOptOut = async function liftAccountOptOut(
 		before: ConsentSnapshot,
@@ -677,54 +830,41 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		// The lift is the account's that asked: identifying anyone on this
 		// subject while it is out makes its answer stale.
 		const identity = runtime.getIdentityVersion();
-		const existingSubjectId = before.subject?.subjectId ?? null;
-		const requestSubjectId = existingSubjectId ?? generateUuidV7();
+		const externalId = before.user?.externalId ?? null;
+		const linked = await ensureLinkedSubjectForAccountLift(before, false);
+		if (!linked.ok || !isAccountLiftFresh(actVersion, generation, externalId)) {
+			return { ok: false, reason: 'held-by-account' };
+		}
+		const liftedRights = filterSupportedOptOutRights(before.optOut?.rights);
 		const payload = buildLiftOptOutPayload(
-			before,
-			requestSubjectId,
+			getSnapshot(),
+			linked.subjectId,
 			actionAt,
-			uiSource
+			uiSource,
+			liftedRights
 		);
 		const outcome = await outbox.liftAccountOptOut(payload);
-		if (!outcome.ok) {
+		const expectedSubjectId = linked.hadSubject
+			? (outcome.subjectId ?? linked.subjectId)
+			: null;
+		if (
+			!outcome.ok ||
+			!isAccountLiftFresh(actVersion, generation, externalId, expectedSubjectId)
+		) {
 			return { ok: false, reason: 'held-by-account' };
 		}
-		const expectedSubjectId =
-			existingSubjectId === null
-				? null
-				: (outcome.subjectId ?? existingSubjectId);
-		const current = getSnapshot();
-		const fresh =
-			runtime.getOptOutActVersion() === actVersion &&
-			runtime.getGeneration() === generation &&
-			runtime.getIdentityVersion() === identity &&
-			(current.subject?.subjectId ?? null) === expectedSubjectId;
-		if (!fresh) {
-			return { ok: false, reason: 'held-by-account' };
-		}
-		if (outcome.optOut === null) {
-			if (optOutLiftBlocker(current) === 'gpc-active') {
+		if (isAccountLiftSucceeded(outcome.optOut, liftedRights)) {
+			if (optOutLiftBlocker(getSnapshot()) === 'gpc-active') {
 				return { ok: false, reason: 'gpc-active' };
 			}
-			batch(() => {
-				runtime.noteOptOutAct();
-				commit({ now: runtime.now(), optOut: null });
-				const event: Extract<KernelEvent, { type: 'opt-out:lifted' }> = {
-					actionAt,
-					snapshot: getSnapshot(),
-					type: 'opt-out:lifted',
-				};
-				if (uiSource !== undefined) {
-					event.uiSource = uiSource;
-				}
-				emit(event);
-			});
+			clearAccountOptOutOnLift(actionAt, uiSource, true);
 			return { ok: true, optOut: null };
 		}
 		if (outcome.optOut !== undefined) {
 			applySyncedOptOut(runtime, outcome.optOut, {
 				actVersion,
 				allowClear: false,
+				externalId,
 				generation,
 				identity,
 				subjectId: expectedSubjectId,
@@ -733,30 +873,71 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		return { ok: false, reason: 'held-by-account' };
 	};
 
+	const prepareSubjectForSaveLift = async function prepareSubjectForSaveLift(
+		wasProvisional: boolean
+	): Promise<boolean> {
+		if (!wasProvisional) {
+			return true;
+		}
+		const before = getSnapshot();
+		if (transport?.identify) {
+			return (await ensureLinkedSubjectForAccountLift(before, true)).ok;
+		}
+		return Boolean(before.user?.externalId && before.user.identityToken);
+	};
+
 	const liftAccountOptOutAfterSave = async function liftAccountOptOutAfterSave(
 		subjectId: string,
 		actionAt: number,
 		uiSource: SaveUISource,
-		fence: { optOutActVersion: number; generation: number; identity: number }
+		optOutActVersion: number,
+		generation: number,
+		externalId: string | null,
+		wasProvisional: boolean,
+		liftedRights: readonly OptOutRight[]
 	): Promise<void> {
-		const { optOutActVersion, generation, identity } = fence;
-		const liftSubjectId = getSnapshot().subject?.subjectId ?? subjectId;
+		if (
+			!(await prepareSubjectForSaveLift(wasProvisional)) ||
+			!isAccountLiftFresh(optOutActVersion, generation, externalId)
+		) {
+			return;
+		}
+		const currentBeforeLift = getSnapshot();
+		const liftSubjectId = currentBeforeLift.subject?.subjectId ?? subjectId;
 		const liftPayload = buildLiftOptOutPayload(
-			getSnapshot(),
+			currentBeforeLift,
 			liftSubjectId,
 			actionAt,
-			uiSource
+			uiSource,
+			liftedRights
 		);
 		const outcome = await outbox.liftAccountOptOut(liftPayload);
-		if (outcome.ok && outcome.optOut !== undefined) {
-			applySyncedOptOut(runtime, outcome.optOut, {
-				actVersion: optOutActVersion,
-				allowClear: true,
+		const expectedSubjectId = outcome.subjectId ?? liftSubjectId;
+		if (
+			!outcome.ok ||
+			outcome.optOut === undefined ||
+			!isAccountLiftFresh(
+				optOutActVersion,
 				generation,
-				identity,
-				subjectId: outcome.subjectId ?? liftSubjectId,
-			});
+				externalId,
+				expectedSubjectId
+			)
+		) {
+			return;
 		}
+		if (isAccountLiftSucceeded(outcome.optOut, liftedRights)) {
+			if (optOutLiftBlocker(getSnapshot()) !== 'gpc-active') {
+				clearAccountOptOutOnLift(actionAt, uiSource, false);
+			}
+			return;
+		}
+		applySyncedOptOut(runtime, outcome.optOut, {
+			actVersion: optOutActVersion,
+			allowClear: true,
+			externalId,
+			generation,
+			subjectId: expectedSubjectId,
+		});
 	};
 
 	return {
@@ -888,8 +1069,12 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				isValidSaveActionAt(context.actionAt, currentTime)
 					? context.actionAt
 					: currentTime;
+			const browserBefore = runtime.getBrowserRecords();
 			const nextOptOut = nextButtonOptOutRecord(
-				before,
+				{
+					evaluationPolicy: before.evaluationPolicy,
+					optOut: browserBefore.optOut,
+				},
 				actionAt,
 				defaultOptOutRights()
 			);
@@ -941,7 +1126,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			});
 			const payload = buildOptOutPayload(
 				after,
-				recorded,
+				nextOptOut,
 				actionAt,
 				context?.uiSource,
 				reference
@@ -1012,6 +1197,10 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			emit({ type: 'command:save:started' });
 
 			const before = getSnapshot();
+			const browserBefore = runtime.getBrowserRecords();
+			const wasProvisionalBeforeSave =
+				before.subject?.subjectId === undefined ||
+				before.subject.subjectId === getProvisionalSubject?.();
 			// Vendor denials resolve before any early return so a vendor-only
 			// toggle is recorded even when no category receipt is owed.
 			const nextVendorChoice = resolveVendorSelection(
@@ -1019,7 +1208,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				input,
 				explicitVendors,
 				actionAt,
-				context?.categories
+				context?.categories,
+				browserBefore.vendorChoice
 			);
 			const vendorsChanged = nextVendorChoice !== before.vendorChoice;
 			const owedNothing = saveUnderNoneRegime(before);
@@ -1038,7 +1228,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			if (owedNothing) {
 				// A `none` regime owes no category receipt; only vendors change.
 				recorded = {
-					choice: before.explicitChoice ?? EMPTY_CHOICE,
+					choice: browserBefore.choice ?? EMPTY_CHOICE,
 					confirmed: [],
 					ok: true,
 				};
@@ -1051,7 +1241,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				);
 				({ consentAction } = selection);
 				recorded = recordCategoryPatch(
-					before.explicitChoice,
+					browserBefore.choice,
 					selection.values,
 					{
 						actionAt,
@@ -1112,12 +1302,22 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			const liftsOptOut = grantsDecidingCategory && optOutBlocker === null;
 			const liftsAccountOptOut =
 				grantsDecidingCategory && optOutBlocker === 'held-by-account';
+			const liftedAccountRights = liftsAccountOptOut
+				? filterSupportedOptOutRights(before.optOut?.rights)
+				: [];
 			const recordedOptOut = saveRecordsOptOut(
 				before.evaluationPolicy,
 				confirmedValue,
-				before.optOut !== null
+				browserBefore.optOut !== null
 			)
-				? nextButtonOptOutRecord(before, actionAt, defaultOptOutRights())
+				? nextButtonOptOutRecord(
+						{
+							evaluationPolicy: before.evaluationPolicy,
+							optOut: browserBefore.optOut,
+						},
+						actionAt,
+						defaultOptOutRights()
+					)
 				: null;
 			if (categoriesChanged) {
 				patch.explicitChoice = recorded.choice;
@@ -1223,7 +1423,12 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				timing: decisionTiming,
 				uiSource,
 			});
-			const vendorChoice = vendorChoicePayload(after, before.vendorChoice);
+			const browserVendorAfter = runtime.getBrowserRecords().vendorChoice;
+			const vendorChoice = vendorChoicePayload(
+				after,
+				browserVendorAfter,
+				vendorsChanged ? before.vendorChoice : browserBefore.vendorChoice
+			);
 			if (vendorChoice) {
 				payload.vendorChoice = vendorChoice;
 			}
@@ -1236,7 +1441,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				void outbox.sendOptOut(
 					buildOptOutPayload(
 						after,
-						after.optOut as Readonly<OptOutRecord>,
+						recordedOptOut,
 						actionAt,
 						uiSource,
 						recordedOptOutReference
@@ -1265,11 +1470,16 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				runtime.getIdentityVersion() === identity &&
 				optOutLiftBlocker(getSnapshot()) === 'held-by-account'
 			) {
-				void liftAccountOptOutAfterSave(subjectId, actionAt, uiSource, {
-					generation,
-					identity,
+				void liftAccountOptOutAfterSave(
+					subjectId,
+					actionAt,
+					uiSource,
 					optOutActVersion,
-				});
+					generation,
+					before.user?.externalId ?? null,
+					wasProvisionalBeforeSave,
+					liftedAccountRights
+				);
 			}
 			emit({ result, type: 'command:save:completed' });
 			return result;

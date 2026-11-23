@@ -15,6 +15,11 @@ import type {
 	ScriptLoaderTools,
 } from './script-loader.model';
 
+/** Local pending predicate matching `@inth/sdk-core`'s `consentPending`. */
+export const isConsentPending = (
+	snapshot: Pick<ConsentSnapshot, 'policyPending' | 'userConsentPending'>
+): boolean => snapshot.policyPending || snapshot.userConsentPending === true;
+
 /**
  * Build the per-pass eligibility context from a snapshot. The kernel snapshot
  * already contains policy-effective consents, so modules must not re-apply
@@ -59,6 +64,9 @@ export const hasScriptConsent = function hasScriptConsent(
 	const { script } = entry;
 
 	if (entry.hasIabMeta) {
+		if (isConsentPending(pass.snapshot)) {
+			return false;
+		}
 		return pass.tools.evaluate(script, pass.snapshot);
 	}
 
@@ -68,10 +76,20 @@ export const hasScriptConsent = function hasScriptConsent(
 				`Consent category "${entry.simpleCategory}" not found in consent state`
 			);
 		}
+		if (
+			isConsentPending(pass.snapshot) &&
+			(entry.simpleCategory !== 'necessary' || entry.vendor !== null)
+		) {
+			return false;
+		}
 		return (
 			(pass.consents[entry.simpleCategory] || false) &&
 			vendorAllowed(entry, pass)
 		);
+	}
+
+	if (isConsentPending(pass.snapshot)) {
+		return false;
 	}
 
 	return (

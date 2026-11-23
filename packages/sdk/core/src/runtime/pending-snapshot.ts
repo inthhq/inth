@@ -163,6 +163,7 @@ export const pendingBootSnapshot = function pendingBootSnapshot(
 		surfaceShownAt: { banner: null, dialog: null },
 		translations: null,
 		user: null,
+		userConsentPending: false,
 		vendorChoice: null,
 		vendors: null,
 	} as ConsentSnapshot;

@@ -20,6 +20,7 @@
  */
 
 import type { ConsentSnapshot } from '../consent-kernel.model';
+import { consentPending } from '../consent-pending';
 import {
 	OPTIONAL_CONSENT_CATEGORIES,
 	optOutDecidingCategory,
@@ -76,7 +77,8 @@ export const kernelOnly = function kernelOnly(
 ): boolean {
 	return (
 		snapshot.resolution.status !== 'matched' ||
-		snapshot.policyPending ||
+		consentPending(snapshot) ||
+		snapshot.hasAccountLayer === true ||
 		Boolean(snapshot.externalPermissions) ||
 		snapshot.model === 'iab' ||
 		snapshot.evaluationPolicy.model === 'none' ||
