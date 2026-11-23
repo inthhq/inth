@@ -26,10 +26,8 @@ import { useActiveUI, useModel } from './hooks';
 import { useIsHydrated } from './hooks/use-is-hydrated';
 import { useIAB } from './iab-provider';
 import { createDeferredModule } from './utils/create-deferred-module';
-import {
-	registerDialogChunkWarmer,
-	useIdleDialogWarming,
-} from './warm-dialog-chunk';
+import { useIdleDialogWarming } from './use-idle-dialog-warming';
+import { registerDialogChunkWarmer } from './warm-dialog-chunk';
 
 type AnyComponent = ComponentType<Record<string, unknown>>;
 

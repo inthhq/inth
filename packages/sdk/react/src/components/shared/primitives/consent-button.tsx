@@ -15,7 +15,8 @@ import { useTheme } from '~/hooks/use-theme';
 import type { CSSPropertiesWithVars, CSSVariables } from '~/types/theme';
 import { useUIConfig } from '~/use-ui-config';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
-import { useIdleDialogWarming, warmDialogChunk } from '~/warm-dialog-chunk';
+import { useIdleDialogWarming } from '~/use-idle-dialog-warming';
+import { warmDialogChunk } from '~/warm-dialog-chunk';
 
 import { Slot } from '../libs/slot';
 import * as Button from '../ui/button';
