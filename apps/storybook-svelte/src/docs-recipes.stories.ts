@@ -29,7 +29,7 @@ const bottomBar = { recipe: BottomBar };
 const slim = { options: slimBar, recipe: ConsentBanner };
 const headlessBar = { recipe: HeadlessBar };
 
-/** Stock banner, `variant="bar"`. */
+/** Stock banner, `container={{ type: 'banner', edge: 'bottom' }}`. */
 export const BottomBarDesign: Story = { args: bottomBar, play: recipeRenders };
 export const BottomBarAccept: Story = { args: bottomBar, play: recipeAccepts };
 export const BottomBarReject: Story = { args: bottomBar, play: recipeRejects };

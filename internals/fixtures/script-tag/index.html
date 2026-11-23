@@ -169,7 +169,7 @@
 				const arm = experimentParams.get('arm');
 				const experiment = {
 					id: 'banner-shape',
-					arms: { wall: { prompt: { variant: 'wall' } } },
+					arms: { wall: { prompt: { container: { type: 'card', position: 'center' } } } },
 				};
 				if (arm !== null) {
 					experiment.arm = arm === 'wall' ? 'wall' : 'control';

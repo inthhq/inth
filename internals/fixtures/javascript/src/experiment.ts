@@ -27,7 +27,9 @@ const armReadout = element<HTMLElement>('#experiment-arm');
 const eventLog = element<HTMLElement>('#experiment-events');
 
 const bannerExperiment: ConsentExperiment<'wall'> = {
-	arms: { wall: { prompt: { variant: 'wall' } } },
+	arms: {
+		wall: { prompt: { container: { position: 'center', type: 'card' } } },
+	},
 	id: 'banner-shape',
 };
 // `arm` comes from your flag provider. Omit it to let Inth pick.

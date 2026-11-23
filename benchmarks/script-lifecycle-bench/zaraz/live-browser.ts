@@ -26,7 +26,7 @@ const client = createConsentClient({
 			},
 		],
 	}),
-	presentation: { prompt: { position: 'bottom-right' } },
+	presentation: { prompt: { container: { position: 'end', type: 'card' } } },
 	storageConfig: { storageKey: 'inth-zaraz-lab' },
 	ui: {
 		banner: {
