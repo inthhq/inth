@@ -1,10 +1,12 @@
 import {
 	dialogContract,
 	dialogEscapeCloses,
+	optInConfirmation,
+	optInConfirmationConfirmedRights,
+	optOutGpcLocked,
 	saveFlow,
 } from '@inth/conformance/play/consent-dialog';
 import type { Meta, StoryObj } from '@storybook/html-vite';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { renderAstroStory, whenPromptReady } from './render-astro-story';
 
@@ -28,7 +30,6 @@ export const Default: Story = {
 	render: () => renderAstroStory('consent-dialog--opened'),
 };
 
-/** The banner and `<ConsentDialog />`; the plays open the dialog from Customize. */
 /** Wait for the browser prompt, then run the shared play. */
 const afterPrompt =
 	(play: NonNullable<Story['play']>): NonNullable<Story['play']> =>
@@ -37,9 +38,13 @@ const afterPrompt =
 		await play(context);
 	};
 
+/**
+ * The banner, `<ConsentDialog />`, and the page's `<PrivacyChoicesLink />`,
+ * which the plays open the dialog from.
+ */
 export const DialogContract: Story = {
 	play: afterPrompt(dialogContract),
-	render: () => renderAstroStory('consent-banner--with-dialog'),
+	render: () => renderAstroStory('consent-banner--with-dialog-and-link'),
 };
 
 export const DialogEscapeCloses: Story = {
@@ -77,48 +82,21 @@ export const OptOutConfirmedSaleAndShare: Story = {
 		renderAstroStory('consent-dialog--opt-out-confirmed-sale-and-share'),
 };
 
-/** Opted out by an active GPC signal; no opt-in link is shown. */
+/** Opted out by an active GPC signal; Allow is unavailable while it is on. */
 export const OptOutGpcLocked: Story = {
-	play: async () => {
-		await within(document.body).findByTestId('consent-widget-opt-out-status');
-		await expect(
-			within(document.body).queryByTestId('consent-widget-opt-in-link')
-		).toBeNull();
-	},
+	play: optOutGpcLocked,
 	render: () => renderAstroStory('consent-dialog--opt-out-gpc-locked'),
 };
 
-/** Two-step opt-in confirmation dialog opened from the opt-out block. */
+/** Two-step opt-in: Allow on the sale-and-sharing row asks first. */
 export const OptInConfirmation: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-widget-opt-in-link'
-		);
-		await userEvent.click(link);
-		const dialog = await within(document.body).findByTestId(
-			'opt-in-confirmation-root'
-		);
-		await expect(dialog).toBeVisible();
-		const cancel = within(dialog).getByTestId(
-			'opt-in-confirmation-cancel-button'
-		);
-		await waitFor(() => expect(document.activeElement).toBe(cancel));
-	},
+	play: optInConfirmation,
 	render: () => renderAstroStory('consent-dialog--opt-in-confirmation'),
 };
 
 /** Two-step opt-in confirmation dialog when the backend confirmed the refused rights. */
 export const OptInConfirmationConfirmedRights: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-widget-opt-in-link'
-		);
-		await userEvent.click(link);
-		const dialog = await within(document.body).findByTestId(
-			'opt-in-confirmation-root'
-		);
-		await expect(dialog).toBeVisible();
-	},
+	play: optInConfirmationConfirmedRights,
 	render: () =>
 		renderAstroStory('consent-dialog--opt-in-confirmation-confirmed-rights'),
 };

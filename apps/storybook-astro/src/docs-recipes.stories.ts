@@ -5,7 +5,7 @@ import {
 } from '@inth/conformance/play/docs-recipes';
 import type { Meta, StoryObj } from '@storybook/html-vite';
 
-import { renderAstroStory } from './render-astro-story';
+import { renderAstroStory, whenPromptReady } from './render-astro-story';
 
 import '../../docs-recipe-page.css';
 
@@ -27,7 +27,28 @@ type Story = StoryObj<typeof meta>;
 
 const render = () => renderAstroStory('consent-banner--docs-bottom-bar');
 
+/**
+ * Wait for the browser prompt, then run the shared play. The story inserts
+ * the server-rendered markup without its inline scripts, so a tap before
+ * the client boot mounts the prompt has nothing to replay it.
+ */
+const afterPrompt =
+	(play: NonNullable<Story['play']>): NonNullable<Story['play']> =>
+	async (context) => {
+		await whenPromptReady();
+		await play(context);
+	};
+
 /** Stock prompt, `container: { type: 'banner' }`. */
-export const BottomBarDesign: Story = { play: recipeRenders, render };
-export const BottomBarAccept: Story = { play: recipeAccepts, render };
-export const BottomBarReject: Story = { play: recipeRejects, render };
+export const BottomBarDesign: Story = {
+	play: afterPrompt(recipeRenders),
+	render,
+};
+export const BottomBarAccept: Story = {
+	play: afterPrompt(recipeAccepts),
+	render,
+};
+export const BottomBarReject: Story = {
+	play: afterPrompt(recipeRejects),
+	render,
+};

@@ -28,18 +28,29 @@ export const bannerContract: PlayFunction = async () => {
 };
 
 /**
- * Clicks the customize button on the consent banner and verifies
- * the consent dialog opens.
+ * Clicks Customize and verifies the choices open inside the banner: the
+ * expand panel opens with the category switches and Save, and no dialog
+ * opens. The dialog opens only from the page's link. The story keeps its
+ * name so the parity runner still pairs it across frameworks.
  */
 export const bannerToDialogFlow: PlayFunction = async () => {
 	const body = within(document.body);
-	await userEvent.click(
-		await body.findByTestId('consent-banner-customize-button')
-	);
+	const customize = await body.findByTestId('consent-banner-customize-button');
+	expect(customize).toHaveAttribute('aria-expanded', 'false');
+	await userEvent.click(customize);
 
-	await expect(
-		await body.findByTestId('consent-dialog-root')
-	).toBeInTheDocument();
+	const panel = body.getByTestId('consent-banner-expand-panel');
+	await waitFor(() => expect(panel).toHaveAttribute('data-open', 'true'));
+	// The options fade in.
+	const save = await body.findByTestId('consent-banner-save-button');
+	const toggle = await body.findByTestId(
+		'consent-banner-category-switch-functionality'
+	);
+	await waitFor(() => {
+		expect(save).toBeVisible();
+		expect(toggle).toBeVisible();
+	});
+	expect(body.queryByTestId('consent-dialog-root')).not.toBeInTheDocument();
 };
 
 /**
@@ -60,17 +71,23 @@ export const bannerAcceptViaKeyboard: PlayFunction = async () => {
  * Verifies the banner's focus behaviour for its resolved blocking state and
  * that every action button renders a visible keyboard-focus indicator.
  *
- * A blocking banner (`data-blocking="true"` on the root) is a modal dialog
- * that receives focus on open. A non-blocking banner is a labelled region
- * that must leave focus on the page.
+ * A blocking banner (`data-blocking="true"` on the root) is a modal dialog:
+ * the shell around the card carries the dialog role, and the card receives
+ * focus on open. A non-blocking banner card is a labelled region that must
+ * leave focus on the page.
  */
 export const bannerFocusManagement: PlayFunction = async () => {
 	const body = within(document.body);
 	const root = await body.findByTestId('consent-banner-root');
 	const card = await body.findByTestId('consent-banner-card');
 	if (root.getAttribute('data-blocking') === 'true') {
-		expect(card).toHaveAttribute('role', 'dialog');
-		expect(card).toHaveAttribute('aria-modal', 'true');
+		const shell = body.getByTestId('consent-banner-shell');
+		expect(shell).toHaveAttribute('role', 'dialog');
+		expect(shell).toHaveAttribute('aria-modal', 'true');
+		expect(shell).toHaveAccessibleName(
+			(body.getByTestId('consent-banner-title').textContent ?? '').trim()
+		);
+		expect(card).not.toHaveAttribute('role');
 		await assertInitialFocus(document.body, 'consent-banner-card');
 	} else {
 		expect(card).toHaveAttribute('role', 'region');

@@ -44,24 +44,25 @@ export interface ComponentContract {
 }
 
 /**
- * Attributes a blocking banner card adds on top of the default contract.
- * A banner resolved as blocking (`wall`, or a host `blocking: true`) is a
- * modal dialog that traps focus and receives it on open. The default banner
- * is a labelled `region` that never claims `aria-modal` and never steals
- * focus from the page.
+ * Attributes a blocking banner adds on top of the default contract. A
+ * banner resolved as blocking (`blockUntilChoice`, or a centered card) is a
+ * modal dialog: the shell around the card carries the dialog role, and the
+ * card itself loses its `region` role and takes focus on open. The default
+ * banner card is a labelled `region` that never claims `aria-modal` and
+ * never steals focus from the page.
  */
-export const BLOCKING_BANNER_CARD: AriaRoleExpectation = {
+export const BLOCKING_BANNER_SHELL: AriaRoleExpectation = {
 	exactAttrs: { 'aria-modal': 'true' },
-	requiredAttrs: ['aria-label'],
+	requiredAttrs: ['aria-labelledby'],
 	role: 'dialog',
-	testId: TEST_IDS.consentBanner.card,
+	testId: TEST_IDS.consentBanner.shell,
 };
 
 export const DOM_CONTRACT: Readonly<Record<string, ComponentContract>> = {
 	consentBanner: {
 		elements: [
 			{
-				requiredAttrs: ['aria-label'],
+				requiredAttrs: ['aria-labelledby'],
 				role: 'region',
 				testId: TEST_IDS.consentBanner.card,
 			},
@@ -87,7 +88,7 @@ export const DOM_CONTRACT: Readonly<Record<string, ComponentContract>> = {
 		],
 		// No focus contract: the default banner is non-blocking and leaves
 		// focus where it is. A blocking banner takes focus on the card; see
-		// `BLOCKING_BANNER_CARD` and the a11y suite.
+		// `BLOCKING_BANNER_SHELL`.
 		key: 'consentBanner',
 		rootTestId: TEST_IDS.consentBanner.root,
 		stableElements: [
@@ -107,13 +108,20 @@ export const DOM_CONTRACT: Readonly<Record<string, ComponentContract>> = {
 
 				requiredAttrs: ['aria-labelledby'],
 				role: 'dialog',
-				testId: TEST_IDS.consentDialog.root,
+				testId: TEST_IDS.consentDialog.card,
 			},
 			{ role: 'heading', testId: TEST_IDS.consentDialog.title },
-			{ role: 'presentation', testId: TEST_IDS.consentDialog.overlay },
+			{
+				exactAttrs: { type: 'button' },
+
+				role: 'button',
+				testId: TEST_IDS.consentDialog.close,
+			},
 		],
+		// The dialog opens on its title, which takes focus without joining the
+		// tab order, and returns focus to whatever opened it.
 		focus: {
-			initialFocusTestId: TEST_IDS.consentDialog.root,
+			initialFocusTestId: TEST_IDS.consentDialog.title,
 			returnFocusTestId: TEST_IDS.consentDialog.trigger,
 			tabOrderTestIds: [],
 		},
@@ -121,8 +129,10 @@ export const DOM_CONTRACT: Readonly<Record<string, ComponentContract>> = {
 		rootTestId: TEST_IDS.consentDialog.root,
 		stableElements: [
 			TEST_IDS.consentDialog.root,
+			TEST_IDS.consentDialog.card,
 			TEST_IDS.consentDialog.title,
 			TEST_IDS.consentDialog.content,
+			TEST_IDS.consentDialog.footer,
 		],
 	},
 

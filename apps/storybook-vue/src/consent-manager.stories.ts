@@ -1,14 +1,17 @@
 import {
 	dialogContract,
 	dialogEscapeCloses,
+	optInConfirmation,
+	optInConfirmationConfirmedRights,
+	optOutGpcLocked,
 	saveFlow,
 } from '@inth/conformance/play/consent-dialog';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { onMounted } from 'vue';
 
 import type { ConsentContainer } from '../../../packages/sdk/core/src/libs/consent-layout.model';
 import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
+import PrivacyChoicesLink from '../../../packages/sdk/vue/src/runtime/components/privacy-choices-link.vue';
 import ConsentBanner from '../../../packages/sdk/vue/src/runtime/components/prompt/prompt.vue';
 import { STORYBOOK_OPT_OUT_REFERENCE } from '../../storybook-consent-policy';
 import {
@@ -44,37 +47,28 @@ export const Default: Story = {
 	}),
 };
 
+/** The banner, the dialog, and the page's "Your Privacy Choices" link that opens it. */
+const bannerAndDialog = () => ({
+	components: { ConsentBanner, ConsentManager, PrivacyChoicesLink },
+	setup() {
+		setupStorybookConsent('banner');
+	},
+	template: '<PrivacyChoicesLink /><ConsentBanner /><ConsentManager />',
+});
+
 export const DialogContract: Story = {
 	play: dialogContract,
-	render: () => ({
-		components: { ConsentBanner, ConsentManager },
-		setup() {
-			setupStorybookConsent('banner');
-		},
-		template: '<ConsentBanner /><ConsentManager />',
-	}),
+	render: bannerAndDialog,
 };
 
 export const SaveFlow: Story = {
 	play: saveFlow,
-	render: () => ({
-		components: { ConsentBanner, ConsentManager },
-		setup() {
-			setupStorybookConsent('banner');
-		},
-		template: '<ConsentBanner /><ConsentManager />',
-	}),
+	render: bannerAndDialog,
 };
 
 export const DialogEscapeCloses: Story = {
 	play: dialogEscapeCloses,
-	render: () => ({
-		components: { ConsentBanner, ConsentManager },
-		setup() {
-			setupStorybookConsent('banner');
-		},
-		template: '<ConsentBanner /><ConsentManager />',
-	}),
+	render: bannerAndDialog,
 };
 
 /** Opt-out policy before the visitor opts out. */
@@ -132,14 +126,9 @@ export const OptOutConfirmedSaleAndShare: Story = {
 	}),
 };
 
-/** Opted out by an active GPC signal; no opt-in link is shown. */
+/** Opted out by an active GPC signal; Allow is unavailable while it is on. */
 export const OptOutGpcLocked: Story = {
-	play: async () => {
-		await within(document.body).findByTestId('consent-widget-opt-out-status');
-		await expect(
-			within(document.body).queryByTestId('consent-widget-opt-in-link')
-		).toBeNull();
-	},
+	play: optOutGpcLocked,
 	render: () => ({
 		components: { ConsentManager },
 		setup() {
@@ -154,22 +143,9 @@ export const OptOutGpcLocked: Story = {
 	}),
 };
 
-/** Two-step opt-in confirmation dialog opened from the opt-out block. */
+/** Two-step opt-in: Allow on the sale-and-sharing row asks first. */
 export const OptInConfirmation: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-widget-opt-in-link'
-		);
-		await userEvent.click(link);
-		const dialog = await within(document.body).findByTestId(
-			'opt-in-confirmation-root'
-		);
-		await expect(dialog).toBeVisible();
-		const cancel = within(dialog).getByTestId(
-			'opt-in-confirmation-cancel-button'
-		);
-		await waitFor(() => expect(document.activeElement).toBe(cancel));
-	},
+	play: optInConfirmation,
 	render: () => ({
 		components: { ConsentManager },
 		setup() {
@@ -189,16 +165,7 @@ export const OptInConfirmation: Story = {
 
 /** Two-step opt-in confirmation dialog when the backend confirmed the refused rights. */
 export const OptInConfirmationConfirmedRights: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-widget-opt-in-link'
-		);
-		await userEvent.click(link);
-		const dialog = await within(document.body).findByTestId(
-			'opt-in-confirmation-root'
-		);
-		await expect(dialog).toBeVisible();
-	},
+	play: optInConfirmationConfirmedRights,
 	render: () => ({
 		components: { ConsentManager },
 		setup() {

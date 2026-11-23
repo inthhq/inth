@@ -14,10 +14,13 @@ import { ConsentDialog } from '@inth/angular/consent-dialog';
 import {
 	dialogContract,
 	dialogEscapeCloses,
+	optInConfirmation,
+	optInConfirmationConfirmedRights,
+	optOutGpcLocked,
 	saveFlow,
 } from '@inth/conformance/play/consent-dialog';
 import type { ConsentContainer, PolicyRule } from '@inth/sdk/engine';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 
 import {
 	STORYBOOK_OPT_OUT_REFERENCE,
@@ -113,11 +116,14 @@ const meta = {
 			storedConsent: args.useStoredConsent ? editableStoredConsent : undefined,
 		}),
 		moduleMetadata: {
-			imports: [ConsentBanner, ConsentDialog],
+			imports: [ConsentBanner, ConsentDialog, PrivacyChoicesLink],
 		},
 		props: args,
+		// With the banner, the page's "Your Privacy Choices" link opens the
+		// dialog.
 		template: `
 			@if (withBanner) {
+				<inth-privacy-choices-link />
 				<inth-consent-banner />
 			}
 			<inth-consent-dialog [open]="open" />
@@ -302,14 +308,9 @@ export const OptOutConfirmedSaleAndShare: Story = {
 	}),
 };
 
-/** Opted out by an active GPC signal; no opt-in link is shown. */
+/** Opted out by an active GPC signal; Allow is unavailable while it is on. */
 export const OptOutGpcLocked: Story = {
-	play: async () => {
-		await within(document.body).findByTestId('consent-widget-opt-out-status');
-		await expect(
-			within(document.body).queryByTestId('consent-widget-opt-in-link')
-		).toBeNull();
-	},
+	play: optOutGpcLocked,
 	render: () => ({
 		applicationConfig: consentApplication({
 			options: {
@@ -331,22 +332,9 @@ export const OptOutGpcLocked: Story = {
 	}),
 };
 
-/** Two-step opt-in confirmation dialog opened from the opt-out block. */
+/** Two-step opt-in: Allow on the sale-and-sharing row asks first. */
 export const OptInConfirmation: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-widget-opt-in-link'
-		);
-		await userEvent.click(link);
-		const dialog = await within(document.body).findByTestId(
-			'opt-in-confirmation-root'
-		);
-		await expect(dialog).toBeVisible();
-		const cancel = within(dialog).getByTestId(
-			'opt-in-confirmation-cancel-button'
-		);
-		await waitFor(() => expect(document.activeElement).toBe(cancel));
-	},
+	play: optInConfirmation,
 	render: () => ({
 		applicationConfig: consentApplication({
 			options: {
@@ -372,16 +360,7 @@ export const OptInConfirmation: Story = {
 
 /** Two-step opt-in confirmation dialog when the backend confirmed the refused rights. */
 export const OptInConfirmationConfirmedRights: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-widget-opt-in-link'
-		);
-		await userEvent.click(link);
-		const dialog = await within(document.body).findByTestId(
-			'opt-in-confirmation-root'
-		);
-		await expect(dialog).toBeVisible();
-	},
+	play: optInConfirmationConfirmedRights,
 	render: () => ({
 		applicationConfig: consentApplication({
 			options: {

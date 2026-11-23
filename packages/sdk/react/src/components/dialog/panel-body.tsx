@@ -468,6 +468,44 @@ const focusReturningBanner = function focusReturningBanner(): void {
 	requestAnimationFrame(attempt);
 };
 
+/** The first page control that can take focus back from the dialog. */
+const findReturnTarget = function findReturnTarget(): HTMLElement | null {
+	for (const selector of RETURN_TARGETS) {
+		const target = document.querySelector<HTMLElement>(selector);
+		if (target) {
+			return target;
+		}
+	}
+	return null;
+};
+
+/**
+ * Focus a return target once it renders again. The floating trigger hides
+ * while the dialog is open and comes back in the same commit that closes
+ * it, after the dialog has already handed focus back (FOC-03). Stops if
+ * anything else takes focus first.
+ */
+const focusReturnTargetOnceRendered =
+	function focusReturnTargetOnceRendered(): void {
+		let frames = 0;
+		const attempt = () => {
+			const active = document.activeElement;
+			if (active && active !== document.body) {
+				return;
+			}
+			const target = findReturnTarget();
+			if (target) {
+				target.focus({ preventScroll: true });
+				return;
+			}
+			frames += 1;
+			if (frames < BANNER_RETURN_FRAMES) {
+				requestAnimationFrame(attempt);
+			}
+		};
+		requestAnimationFrame(attempt);
+	};
+
 /** The sheet showing, kept while it animates out. */
 interface ShownSheet {
 	id: string;
@@ -671,19 +709,24 @@ const DialogContent = ({
 				opener.current = null;
 				// Closing without a decision brings the banner back; focus
 				// moves to it once it renders (BNR-05, FOC-03).
-				if (kernel.getSnapshot().activeUI === 'banner') {
+				const bannerReturns = kernel.getSnapshot().activeUI === 'banner';
+				if (bannerReturns) {
 					focusReturningBanner();
 				}
-				if (target instanceof HTMLElement && target.isConnected) {
+				// An opener that unmounted while the dialog was open, such as
+				// the floating trigger, left focus on the body.
+				if (
+					target instanceof HTMLElement &&
+					target.isConnected &&
+					target !== target.ownerDocument.body
+				) {
 					return target;
 				}
-				for (const selector of RETURN_TARGETS) {
-					const fallback = document.querySelector<HTMLElement>(selector);
-					if (fallback) {
-						return fallback;
-					}
+				const fallback = findReturnTarget();
+				if (!(fallback || bannerReturns)) {
+					focusReturnTargetOnceRendered();
 				}
-				return null;
+				return fallback;
 			},
 		});
 		return () => {
@@ -713,8 +756,9 @@ const DialogContent = ({
 	}, [open, sheetOpen, session]);
 
 	// Escape: the top sheet, then an open confirmation, then the dialog
-	// (FOC-04).
-	useEffect(() => {
+	// (FOC-04). Attached with the focus trap, so an Escape pressed as soon
+	// as focus lands in the dialog is not lost before passive effects run.
+	useBrowserLayoutEffect(() => {
 		if (!open) {
 			return;
 		}

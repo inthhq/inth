@@ -412,6 +412,11 @@ const renderVariants = async function renderVariants(
 				);
 				html = `${clean(link)}${html}`;
 			}
+			if (variant.withPrivacyChoicesLink) {
+				// oxlint-disable-next-line no-await-in-loop -- One shared container.
+				const link = await renderPart(PRIVACY_CHOICES_LINK_FILE, {});
+				html = `${clean(link)}${html}`;
+			}
 			if (variant.withDialog) {
 				// oxlint-disable-next-line no-await-in-loop -- One shared container.
 				const dialog = await renderPart(

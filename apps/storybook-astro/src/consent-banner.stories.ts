@@ -41,7 +41,7 @@ export const BannerFocusManagement: Story = {
 	render: () => renderAstroStory('consent-banner--blocking'),
 };
 
-/** Customize opens `<ConsentDialog />`'s island. */
+/** Customize opens the choices inside the banner; `<ConsentDialog />` stays closed. */
 export const BannerToDialogFlow: Story = {
 	play: afterPrompt(bannerToDialogFlow),
 	render: () => renderAstroStory('consent-banner--with-dialog'),
