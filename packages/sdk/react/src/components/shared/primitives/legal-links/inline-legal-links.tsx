@@ -5,7 +5,7 @@ import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 import { useContext, useSyncExternalStore } from 'react';
 
 import { KernelContext } from '~/context';
-import { useServerSnapshot } from '~/use-kernel-selector';
+import { useServerSnapshot } from '~/use-server-snapshot';
 import { useUIConfig, V3UIConfigContext } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 

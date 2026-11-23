@@ -4,7 +4,7 @@ import { renderHook } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
-import { useKernel } from '~/use-kernel-selector';
+import { useKernel } from '~/use-kernel';
 
 import { testing } from '../../testing';
 import { useVendorsListedUnder } from '../use-vendors-listed-under';

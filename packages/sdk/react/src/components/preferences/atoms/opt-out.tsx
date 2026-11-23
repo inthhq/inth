@@ -23,7 +23,7 @@ import {
 } from '~/context/consent-tracking-context';
 import { useOptOut, useOptOutState, useResolvedPresentation } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
-import { useKernel } from '~/use-kernel-selector';
+import { useKernel } from '~/use-kernel';
 import { useUIConfig } from '~/use-ui-config';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 

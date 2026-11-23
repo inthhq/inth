@@ -14,7 +14,7 @@ import * as React from 'react';
 import { useContext } from 'react';
 
 import { StreamedPrefetchContext } from '../context';
-import { useKernel } from '../use-kernel-selector';
+import { useKernel } from '../use-kernel';
 import { useUIConfig } from '../use-ui-config';
 import {
 	CONSENT_BOOT_ATTRIBUTE,

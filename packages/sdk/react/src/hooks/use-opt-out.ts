@@ -13,7 +13,7 @@ import {
 } from '@inth/sdk/surface-actions';
 import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 
-import { useKernel } from '../use-kernel-selector';
+import { useKernel } from '../use-kernel';
 
 /**
  * Trigger an opt-out in one step and open the confirmation view under an

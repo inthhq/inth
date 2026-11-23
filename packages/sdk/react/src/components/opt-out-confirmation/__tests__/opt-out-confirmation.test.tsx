@@ -28,7 +28,7 @@ import * as headlessExports from '~/headless';
 import { useOptOut, useOptOutState } from '~/hooks';
 import * as rootExports from '~/index';
 import { testing } from '~/testing';
-import { useKernel } from '~/use-kernel-selector';
+import { useKernel } from '~/use-kernel';
 
 const query = <Element extends HTMLElement>(testId: string) =>
 	document.querySelector<Element>(`[data-testid="${testId}"]`);

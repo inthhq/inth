@@ -31,7 +31,7 @@ import type * as BannerModuleNamespace from '../components/prompt/index';
 import type { ConsentBannerProps } from '../components/prompt/index';
 import { KernelContext } from '../context';
 import { useIsHydrated } from '../hooks/use-is-hydrated';
-import { useServerSnapshot } from '../use-kernel-selector';
+import { useServerSnapshot } from '../use-server-snapshot';
 import {
 	DeferredSessionContext,
 	read,
