@@ -42,8 +42,16 @@ const SIGNING_FORMAT = 'inth-script-registry-v2';
 const MAX_LIFETIME_MS = 14 * 24 * 60 * 60 * 1000;
 
 /**
+ * How far ahead of this device's clock a release may say it was signed. A
+ * clock can run slow, but a signature dated later than this would stay
+ * valid past the 14 days a withdrawal waits.
+ */
+const MAX_CLOCK_SKEW_MS = 24 * 60 * 60 * 1000;
+
+/**
  * Whether a signature's times let it be used at `now`: both parse, it has
- * not expired, and it was valid for no longer than {@link MAX_LIFETIME_MS}.
+ * not expired, it was valid for no longer than {@link MAX_LIFETIME_MS}, and
+ * it was signed no more than {@link MAX_CLOCK_SKEW_MS} after `now`.
  */
 const isCurrent = (
 	signature: Pick<RegistrySignature, 'signedAt' | 'expiresAt'>,
@@ -54,6 +62,7 @@ const isCurrent = (
 	return (
 		!(Number.isNaN(signedAt) || Number.isNaN(expiresAt)) &&
 		expiresAt > now &&
+		signedAt <= now + MAX_CLOCK_SKEW_MS &&
 		expiresAt > signedAt &&
 		expiresAt - signedAt <= MAX_LIFETIME_MS
 	);

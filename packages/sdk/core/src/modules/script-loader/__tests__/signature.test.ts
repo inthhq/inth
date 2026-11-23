@@ -117,6 +117,19 @@ describe('verifyReleaseSignature', () => {
 		}
 	});
 
+	test('accepts a release signed up to a day ahead, as a slow clock sees one signed just now', async () => {
+		expect(
+			await verifyReleaseSignature({
+				integrity: INTEGRITY,
+				signature: signed({
+					expiresAt: new Date(Date.now() + 14 * DAY_MS).toISOString(),
+					signedAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+				}),
+				url: URL_,
+			})
+		).toBe(true);
+	});
+
 	test('reads signedAt in any ISO form that names the same instant', async () => {
 		const original = signed();
 		const signature = {
@@ -188,6 +201,13 @@ describe('verifyReleaseSignature', () => {
 			signed({
 				expiresAt: new Date(Date.now() + DAY_MS).toISOString(),
 				signedAt: new Date(Date.now() + 2 * DAY_MS).toISOString(),
+			}),
+		],
+		[
+			'a release signed more than a day from now',
+			signed({
+				expiresAt: new Date(Date.now() + 15 * DAY_MS).toISOString(),
+				signedAt: new Date(Date.now() + DAY_MS + 60_000).toISOString(),
 			}),
 		],
 		['the previous format', signed({ format: 'inth-script-registry-v1' })],
