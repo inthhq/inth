@@ -9,17 +9,47 @@ interface RGBColor {
 const DEFAULT_LIGHT_CONTRAST_COLOR = '#ffffff';
 const DEFAULT_DARK_CONTRAST_COLOR = '#000000';
 
+/** How much `primary` goes into `surface` for `primaryTint`, by mode. */
+const PRIMARY_TINT_SHARE = { dark: '18%', light: '10%' } as const;
+
+/** The opaque primary tint: `primary` mixed into `surface`. */
+const primaryTint = function primaryTint(
+	primary: string,
+	surface: string,
+	isDark: boolean
+): string {
+	return `color-mix(in srgb, ${primary} ${PRIMARY_TINT_SHARE[isDark ? 'dark' : 'light']}, ${surface})`;
+};
+
+/** Caps a radius, so a nested box never rounds more than the scale allows. */
+const cappedRadius = function cappedRadius(
+	radius: string,
+	cap: string
+): string {
+	return `min(${radius}, ${cap})`;
+};
+
+const RADIUS_CONTAINER_CAP = '0.75rem';
+const RADIUS_NESTED_CAP = '0.5rem';
+
 export const defaultDarkColors: Required<ColorTokens> = {
 	border: 'hsl(0, 0%, 20%)',
 	borderHover: 'hsl(0, 0%, 25%)',
+	borderStrong: '#3a404e',
+	danger: '#f87171',
 	overlay: 'hsla(0, 0%, 0%, 0.7)',
+	overlayBlock: 'rgba(0, 0, 0, 0.72)',
+	overlayBlockSolid: 'rgba(0, 0, 0, 0.85)',
 	primary: 'hsl(228, 100%, 70%)',
 	primaryHover: 'hsl(228, 100%, 65%)',
+	primaryText: 'hsl(228, 100%, 70%)',
+	primaryTint: primaryTint('hsl(228, 100%, 70%)', 'hsl(0, 0%, 7%)', true),
 	surface: 'hsl(0, 0%, 7%)',
 	surfaceHover: 'hsl(0, 0%, 10%)',
 	switchThumb: 'hsl(0, 0%, 93%)',
 	switchTrack: 'hsl(0, 0%, 25%)',
 	switchTrackActive: 'hsl(228, 100%, 70%)',
+	switchTrackOff: '#64748b',
 	text: 'hsl(0, 0%, 93%)',
 	textMuted: 'hsl(0, 0%, 60%)',
 	textOnPrimary: 'hsl(0, 0%, 100%)',
@@ -29,14 +59,22 @@ export const defaultTheme: Required<Omit<Theme, 'slots'>> = {
 	colors: {
 		border: 'hsl(0, 0%, 90%)',
 		borderHover: 'hsl(0, 0%, 85%)',
+		borderStrong: 'rgba(15, 23, 42, 0.16)',
+		danger: '#dc2626',
 		overlay: 'hsla(0, 0%, 0%, 0.5)',
+		overlayBlock: 'rgba(15, 23, 42, 0.62)',
+		overlayBlockSolid: 'rgba(15, 23, 42, 0.78)',
 		primary: 'hsl(228, 100%, 60%)',
 		primaryHover: 'hsl(228, 100%, 55%)',
+		primaryText: 'hsl(228, 100%, 60%)',
+		primaryTint: primaryTint('hsl(228, 100%, 60%)', 'hsl(0, 0%, 100%)', false),
 		surface: 'hsl(0, 0%, 100%)',
 		surfaceHover: 'hsl(0, 0%, 98%)',
 		switchThumb: 'hsl(0, 0%, 100%)',
 		switchTrack: 'hsl(0, 0%, 85%)',
 		switchTrackActive: 'hsl(228, 100%, 60%)',
+		// 3.2:1 on white (VIS-03); `switchTrack` above is 1.4:1.
+		switchTrackOff: '#8492a6',
 		text: 'hsl(0, 0%, 10%)',
 		textMuted: 'hsl(0, 0%, 40%)',
 		textOnPrimary: 'hsl(0, 0%, 100%)',
@@ -56,13 +94,17 @@ export const defaultTheme: Required<Omit<Theme, 'slots'>> = {
 		easingInOut: 'cubic-bezier(0.645, 0.045, 0.355, 1)',
 		// ease-out-cubic: fast start, smooth end - ideal for enter/exit
 		easingOut: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
+		// A stronger ease-out (close to ease-out-quint) for the consent surfaces
+		easingOutStrong: 'cubic-bezier(0.23, 1, 0.32, 1)',
 		// Spring-like overshoot - ideal for playful animations
 		easingSpring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
 	},
 	radius: {
+		container: RADIUS_CONTAINER_CAP,
 		full: '9999px',
 		lg: '0.75rem',
 		md: '0.5rem',
+		nested: RADIUS_NESTED_CAP,
 		sm: '0.25rem',
 	},
 	shadows: {
@@ -334,7 +376,8 @@ export const getContrastColor = function getContrastColor(
 
 type ThemeCSSVariableResolver = (
 	theme: Theme,
-	colors?: ColorTokens
+	colors: ColorTokens | undefined,
+	isDark: boolean
 ) => string | undefined;
 
 const fontWeightToString = (weight?: number): string | undefined =>
@@ -349,6 +392,8 @@ const themeCSSVariableResolvers: Record<
 > = {
 	border: (_theme, colors) => colors?.border,
 	'border-hover': (_theme, colors) => colors?.borderHover,
+	'border-strong': (_theme, colors) => colors?.borderStrong,
+	danger: (_theme, colors) => colors?.danger,
 	'duration-fast': (theme) => theme.motion?.duration?.fast,
 	'duration-normal': (theme) => theme.motion?.duration?.normal,
 	'duration-slow': (theme) => theme.motion?.duration?.slow,
@@ -356,6 +401,7 @@ const themeCSSVariableResolvers: Record<
 	'easing-in': (theme) => theme.motion?.easingIn,
 	'easing-in-out': (theme) => theme.motion?.easingInOut,
 	'easing-out': (theme) => theme.motion?.easingOut,
+	'easing-out-strong': (theme) => theme.motion?.easingOutStrong,
 	'easing-spring': (theme) => theme.motion?.easingSpring,
 	'font-family': (theme) => theme.typography?.fontFamily,
 	'font-size-base': (theme) => theme.typography?.fontSize?.base,
@@ -371,11 +417,39 @@ const themeCSSVariableResolvers: Record<
 	'line-height-relaxed': (theme) => theme.typography?.lineHeight?.relaxed,
 	'line-height-tight': (theme) => theme.typography?.lineHeight?.tight,
 	overlay: (_theme, colors) => colors?.overlay,
+	'overlay-block': (_theme, colors) => colors?.overlayBlock,
+	'overlay-block-solid': (_theme, colors) => colors?.overlayBlockSolid,
 	primary: (_theme, colors) => colors?.primary,
 	'primary-hover': (_theme, colors) => colors?.primaryHover,
+	// The tokens below fall back to the ones they derive from, so a theme
+	// written before they existed still reads as one palette.
+	'primary-text': (_theme, colors) => colors?.primaryText ?? colors?.primary,
+	'primary-tint': (_theme, colors, isDark) => {
+		if (colors?.primaryTint) {
+			return colors.primaryTint;
+		}
+		if (!colors?.primary && !colors?.surface) {
+			return undefined;
+		}
+		return primaryTint(
+			colors.primary ?? 'var(--inth-primary)',
+			colors.surface ?? 'var(--inth-surface)',
+			isDark
+		);
+	},
+	'radius-container': (theme) =>
+		theme.radius?.container ??
+		(theme.radius?.lg
+			? cappedRadius(theme.radius.lg, RADIUS_CONTAINER_CAP)
+			: undefined),
 	'radius-full': (theme) => theme.radius?.full,
 	'radius-lg': (theme) => theme.radius?.lg,
 	'radius-md': (theme) => theme.radius?.md,
+	'radius-nested': (theme) =>
+		theme.radius?.nested ??
+		(theme.radius?.md
+			? cappedRadius(theme.radius.md, RADIUS_NESTED_CAP)
+			: undefined),
 	'radius-sm': (theme) => theme.radius?.sm,
 	'shadow-lg': (theme) => theme.shadows?.lg,
 	'shadow-md': (theme) => theme.shadows?.md,
@@ -391,6 +465,8 @@ const themeCSSVariableResolvers: Record<
 	'switch-track': (_theme, colors) => colors?.switchTrack,
 	'switch-track-active': (_theme, colors) =>
 		colors?.switchTrackActive ?? colors?.primary,
+	'switch-track-off': (_theme, colors) =>
+		colors?.switchTrackOff ?? colors?.switchTrack,
 	text: (_theme, colors) => colors?.text,
 	'text-muted': (_theme, colors) => colors?.textMuted,
 	'text-on-primary': (_theme, colors) =>
@@ -412,7 +488,7 @@ export const themeToVars = function themeToVars(
 		ThemeCSSVariableSuffix,
 		ThemeCSSVariableResolver,
 	][]) {
-		const value = resolve(theme, colors);
+		const value = resolve(theme, colors, isDark);
 		if (value) {
 			vars[`--inth-${key}`] = value;
 		}

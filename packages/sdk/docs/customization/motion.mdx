@@ -8,7 +8,7 @@ Adjust Inth's transition timing with motion tokens, turn animations off globally
 
 ## Customize duration and easing tokens
 
-Inth uses three durations and five easing curves. Override them in your theme's `motion` object or as `--inth-*` CSS variables:
+Inth uses three durations and six easing curves. Override them in your theme's `motion` object or as `--inth-*` CSS variables:
 
 | CSS variable | Theme key | Default | Used by |
 | --- | --- | --- | --- |
@@ -17,6 +17,7 @@ Inth uses three durations and five easing curves. Override them in your theme's 
 | `--inth-duration-slow` | `motion.duration.slow` | `200ms` | Legal links, floating trigger |
 | `--inth-easing` | `motion.easing` | `cubic-bezier(0.4, 0, 0.2, 1)` | Switches, accordions |
 | `--inth-easing-out` | `motion.easingOut` | `cubic-bezier(0.215, 0.61, 0.355, 1)` | Dialog, late banner fade in, trigger hover |
+| `--inth-easing-out-strong` | `motion.easingOutStrong` | `cubic-bezier(0.23, 1, 0.32, 1)` | Reserved for the Privacy Choices surfaces; no stock component uses it yet |
 | `--inth-easing-in` | `motion.easingIn` | `cubic-bezier(0.55, 0.055, 0.675, 0.19)` | Banner fade out |
 | `--inth-easing-in-out` | `motion.easingInOut` | `cubic-bezier(0.645, 0.045, 0.355, 1)` | Trigger corner snap |
 | `--inth-easing-spring` | `motion.easingSpring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Dialog scale in |

@@ -371,17 +371,29 @@ const DEFAULT_THEME_BANNER =
 	'/* default theme tokens (generated from defaultTheme) */';
 const DEFAULT_THEME_CSS = [
 	DEFAULT_THEME_BANNER,
-	// Only the package defaults use a primary reference, so CSS-only themes
-	// can change the switch color by setting --inth-primary.
+	// Only the package defaults use references, so a CSS-only theme that sets
+	// --inth-primary, --inth-surface or the radius scale also moves the
+	// tokens derived from them, as `themeToVars` does for a JS theme.
 	generateDefaultThemeCSS({
 		...defaultTheme,
 		colors: {
 			...defaultTheme.colors,
+			primaryText: 'var(--inth-primary)',
+			primaryTint:
+				'color-mix(in srgb, var(--inth-primary) 10%, var(--inth-surface))',
 			switchTrackActive: 'var(--inth-primary)',
 		},
 		dark: {
 			...defaultTheme.dark,
+			primaryText: 'var(--inth-primary)',
+			primaryTint:
+				'color-mix(in srgb, var(--inth-primary) 18%, var(--inth-surface))',
 			switchTrackActive: 'var(--inth-primary)',
+		},
+		radius: {
+			...defaultTheme.radius,
+			container: 'min(var(--inth-radius-lg), 0.75rem)',
+			nested: 'min(var(--inth-radius-md), 0.5rem)',
 		},
 	}),
 ].join('\n');

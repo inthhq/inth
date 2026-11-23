@@ -4,15 +4,22 @@
 | --- | --- | --- |
 | `--inth-primary` | `colors.primary` | `hsl(228, 100%, 60%)` |
 | `--inth-primary-hover` | `colors.primaryHover` | `hsl(228, 100%, 55%)` |
+| `--inth-primary-text` | `colors.primaryText` | `colors.primary` |
+| `--inth-primary-tint` | `colors.primaryTint` | `colors.primary` mixed into `colors.surface`, 10% light and 18% dark |
+| `--inth-danger` | `colors.danger` | `#dc2626` |
 | `--inth-surface` | `colors.surface` | `hsl(0, 0%, 100%)` |
 | `--inth-surface-hover` | `colors.surfaceHover` | `hsl(0, 0%, 98%)` |
 | `--inth-border` | `colors.border` | `hsl(0, 0%, 90%)` |
 | `--inth-border-hover` | `colors.borderHover` | `hsl(0, 0%, 85%)` |
+| `--inth-border-strong` | `colors.borderStrong` | `rgba(15, 23, 42, 0.16)` |
 | `--inth-text` | `colors.text` | `hsl(0, 0%, 10%)` |
 | `--inth-text-muted` | `colors.textMuted` | `hsl(0, 0%, 40%)` |
 | `--inth-text-on-primary` | `colors.textOnPrimary` | auto-derived from `colors.primary` when omitted |
 | `--inth-overlay` | `colors.overlay` | `hsla(0, 0%, 0%, 0.5)` |
+| `--inth-overlay-block` | `colors.overlayBlock` | `rgba(15, 23, 42, 0.62)` |
+| `--inth-overlay-block-solid` | `colors.overlayBlockSolid` | `rgba(15, 23, 42, 0.78)` |
 | `--inth-switch-track` | `colors.switchTrack` | `hsl(0, 0%, 85%)` |
+| `--inth-switch-track-off` | `colors.switchTrackOff` | `#8492a6`, or `colors.switchTrack` when a theme sets only that |
 | `--inth-switch-track-active` | `colors.switchTrackActive` | `colors.primary` |
 | `--inth-switch-thumb` | `colors.switchThumb` | `hsl(0, 0%, 100%)` |
 | `--inth-font-family` | `typography.fontFamily` | `system-ui, -apple-system, sans-serif` |
@@ -34,6 +41,8 @@
 | `--inth-radius-md` | `radius.md` | `0.5rem` |
 | `--inth-radius-lg` | `radius.lg` | `0.75rem` |
 | `--inth-radius-full` | `radius.full` | `9999px` |
+| `--inth-radius-container` | `radius.container` | `radius.lg`, capped at `0.75rem` |
+| `--inth-radius-nested` | `radius.nested` | `radius.md`, capped at `0.5rem` |
 | `--inth-shadow-sm` | `shadows.sm` | `0 1px 2px hsla(0, 0%, 0%, 0.05)` |
 | `--inth-shadow-md` | `shadows.md` | `0 4px 12px hsla(0, 0%, 0%, 0.08)` |
 | `--inth-shadow-lg` | `shadows.lg` | `0 8px 24px hsla(0, 0%, 0%, 0.12)` |
@@ -42,6 +51,7 @@
 | `--inth-duration-slow` | `motion.duration.slow` | `200ms` |
 | `--inth-easing` | `motion.easing` | `cubic-bezier(0.4, 0, 0.2, 1)` |
 | `--inth-easing-out` | `motion.easingOut` | `cubic-bezier(0.215, 0.61, 0.355, 1)` |
+| `--inth-easing-out-strong` | `motion.easingOutStrong` | `cubic-bezier(0.23, 1, 0.32, 1)` |
 | `--inth-easing-in` | `motion.easingIn` | `cubic-bezier(0.55, 0.055, 0.675, 0.19)` |
 | `--inth-easing-in-out` | `motion.easingInOut` | `cubic-bezier(0.645, 0.045, 0.355, 1)` |
 | `--inth-easing-spring` | `motion.easingSpring` | `cubic-bezier(0.34, 1.56, 0.64, 1)` |

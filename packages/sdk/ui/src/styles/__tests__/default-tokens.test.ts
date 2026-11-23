@@ -86,6 +86,25 @@ const readBlock = function readBlock(
 	return null;
 };
 
+/**
+ * Tokens the stylesheet writes as references rather than the literal in
+ * `defaultTheme`, so a CSS-only theme moves them with the tokens they
+ * derive from.
+ */
+const REFERENCED_LIGHT: Record<string, string> = {
+	'--inth-primary-text': 'var(--inth-primary)',
+	'--inth-primary-tint':
+		'color-mix(in srgb, var(--inth-primary) 10%, var(--inth-surface))',
+	'--inth-radius-container': 'min(var(--inth-radius-lg), 0.75rem)',
+	'--inth-radius-nested': 'min(var(--inth-radius-md), 0.5rem)',
+	'--inth-switch-track-active': 'var(--inth-primary)',
+};
+const REFERENCED_DARK: Record<string, string> = {
+	...REFERENCED_LIGHT,
+	'--inth-primary-tint':
+		'color-mix(in srgb, var(--inth-primary) 18%, var(--inth-surface))',
+};
+
 const LIGHT_SELECTOR = ':root, :host, .inth-theme-root';
 const DARK_SELECTOR = [
 	':root.dark',
@@ -106,9 +125,7 @@ describe.each(ENTRYPOINTS)('%s', (entrypoint) => {
 		for (const [name, value] of Object.entries(
 			themeToVars(defaultTheme, false)
 		)) {
-			expect(block).toContain(
-				`${name}: ${name === '--inth-switch-track-active' ? 'var(--inth-primary)' : value}`
-			);
+			expect(block).toContain(`${name}: ${REFERENCED_LIGHT[name] ?? value}`);
 		}
 	});
 
@@ -119,9 +136,7 @@ describe.each(ENTRYPOINTS)('%s', (entrypoint) => {
 		for (const [name, value] of Object.entries(
 			themeToVars(defaultTheme, true)
 		)) {
-			expect(block).toContain(
-				`${name}: ${name === '--inth-switch-track-active' ? 'var(--inth-primary)' : value}`
-			);
+			expect(block).toContain(`${name}: ${REFERENCED_DARK[name] ?? value}`);
 		}
 	});
 

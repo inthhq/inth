@@ -245,6 +245,130 @@ describe('themeToVars', () => {
 	});
 });
 
+describe('v6 consent tokens', () => {
+	test('[VIS-03] the default off-track meets 3:1 on the default surface', () => {
+		// The stock switch track keeps its old colour until the renderer
+		// moves to the new token; the new token is the one that passes.
+		expect(defaultTheme.colors.switchTrackOff).toBe('#8492a6');
+		expect(defaultTheme.dark.switchTrackOff).toBe('#64748b');
+	});
+
+	test('[VIS-07] the radius scale adds container and nested steps', () => {
+		const vars = themeToVars(defaultTheme);
+
+		expect(vars['--inth-radius-container']).toBe('0.75rem');
+		expect(vars['--inth-radius-nested']).toBe('0.5rem');
+	});
+
+	test('emits the v6 colour and motion defaults in light and dark', () => {
+		const light = themeToVars(defaultTheme);
+		const dark = themeToVars(defaultTheme, true);
+
+		expect(light['--inth-danger']).toBe('#dc2626');
+		expect(dark['--inth-danger']).toBe('#f87171');
+		expect(light['--inth-border-strong']).toBe('rgba(15, 23, 42, 0.16)');
+		expect(dark['--inth-border-strong']).toBe('#3a404e');
+		expect(light['--inth-overlay-block']).toBe('rgba(15, 23, 42, 0.62)');
+		expect(dark['--inth-overlay-block']).toBe('rgba(0, 0, 0, 0.72)');
+		expect(light['--inth-overlay-block-solid']).toBe('rgba(15, 23, 42, 0.78)');
+		expect(dark['--inth-overlay-block-solid']).toBe('rgba(0, 0, 0, 0.85)');
+		expect(light['--inth-easing-out-strong']).toBe(
+			'cubic-bezier(0.23, 1, 0.32, 1)'
+		);
+	});
+
+	test('leaves the existing defaults alone', () => {
+		const light = themeToVars(defaultTheme);
+
+		expect(light['--inth-primary']).toBe('hsl(228, 100%, 60%)');
+		expect(light['--inth-radius-lg']).toBe('0.75rem');
+		expect(light['--inth-radius-md']).toBe('0.5rem');
+		expect(light['--inth-switch-track']).toBe('hsl(0, 0%, 85%)');
+		expect(light['--inth-easing-out']).toBe(
+			'cubic-bezier(0.215, 0.61, 0.355, 1)'
+		);
+	});
+
+	test('[VIS-02] primary text follows a theme primary that sets nothing else', () => {
+		const vars = themeToVars({ colors: { primary: '#0f766e' } });
+
+		expect(vars['--inth-primary-text']).toBe('#0f766e');
+	});
+
+	test('[VIS-02] an explicit primary text wins over primary', () => {
+		const vars = themeToVars(
+			{ dark: { primary: '#2f66df', primaryText: '#8ab4ff' } },
+			true
+		);
+
+		expect(vars['--inth-primary']).toBe('#2f66df');
+		expect(vars['--inth-primary-text']).toBe('#8ab4ff');
+	});
+
+	test('the primary tint is primary mixed into the surface, 10% light and 18% dark', () => {
+		const theme: Theme = {
+			colors: { primary: '#2563eb', surface: '#ffffff' },
+			dark: { primary: '#4f83f1', surface: '#14161a' },
+		};
+
+		expect(themeToVars(theme)['--inth-primary-tint']).toBe(
+			'color-mix(in srgb, #2563eb 10%, #ffffff)'
+		);
+		expect(themeToVars(theme, true)['--inth-primary-tint']).toBe(
+			'color-mix(in srgb, #4f83f1 18%, #14161a)'
+		);
+	});
+
+	test('the primary tint reads the stylesheet surface when a theme sets only primary', () => {
+		expect(
+			themeToVars({ colors: { primary: '#0f766e' } })['--inth-primary-tint']
+		).toBe('color-mix(in srgb, #0f766e 10%, var(--inth-surface))');
+	});
+
+	test('an explicit primary tint is kept as written', () => {
+		expect(
+			themeToVars({ colors: { primary: '#000', primaryTint: '#eef' } })[
+				'--inth-primary-tint'
+			]
+		).toBe('#eef');
+	});
+
+	test('the off-track follows a theme that sets only the old switch track', () => {
+		const vars = themeToVars({ colors: { switchTrack: '#777777' } });
+
+		expect(vars['--inth-switch-track-off']).toBe('#777777');
+	});
+
+	test('container and nested radii follow the scale, capped at 12px and 8px', () => {
+		const square = themeToVars({ radius: { lg: '0px', md: '0px' } });
+		const round = themeToVars({ radius: { lg: '1rem', md: '10px' } });
+		const explicit = themeToVars({
+			radius: { container: '4px', lg: '1rem', nested: '2px' },
+		});
+
+		expect(square['--inth-radius-container']).toBe('min(0px, 0.75rem)');
+		expect(square['--inth-radius-nested']).toBe('min(0px, 0.5rem)');
+		expect(round['--inth-radius-container']).toBe('min(1rem, 0.75rem)');
+		expect(round['--inth-radius-nested']).toBe('min(10px, 0.5rem)');
+		expect(explicit['--inth-radius-container']).toBe('4px');
+		expect(explicit['--inth-radius-nested']).toBe('2px');
+	});
+
+	test('an empty theme still emits nothing', () => {
+		expect(themeToVars({})).toEqual({});
+		expect(themeToVars({}, true)).toEqual({});
+	});
+
+	test('generated theme CSS carries the derived tokens', () => {
+		const css = generateThemeCSS({ colors: { primary: '#0f766e' } });
+
+		expect(css).toContain('--inth-primary-text: #0f766e;');
+		expect(css).toContain(
+			'--inth-primary-tint: color-mix(in srgb, #0f766e 10%, var(--inth-surface));'
+		);
+	});
+});
+
 describe('getContrastColor', () => {
 	test.each([
 		['hsl(0, 100%, 50%)', '#000000'],
