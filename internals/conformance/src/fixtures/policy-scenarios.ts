@@ -314,24 +314,45 @@ const gpc = (
 			operation: { kind: 'accept' },
 		},
 		{
-			// Saving the preference draft records the restricted categories as
-			// off and acknowledges the notice without re-confirming the old grant.
+			// A notice has no Save (LAW-04), and the signal locks every switch,
+			// so Done is the visitor's control. It closes without recording
+			// anything: the old grant is not re-confirmed, and the banner comes
+			// back because the notice is still owed.
 			expect: {
-				choice: policyChoice(
-					{ marketing: false, measurement: false },
-					POLICY_NOW
-				),
-				consentCallbacks: 1,
+				...quiet,
+				choice: POLICY_RECORDS[record].expected.choice,
 				events: {
-					'choice-recorded': 1,
+					'choice-recorded': 0,
 					'notice-dismissed': 0,
 					'permissions-changed': 0,
 				},
+				firstLayer: 'notice',
+				noticeDismissal: 'absent',
+				permissions: denied,
+				preferencesOpen: false,
+				prompt: { kind: 'notice', reason: 'missing' },
+			},
+			operation: { kind: 'save-current' },
+		},
+		{
+			// The visitor acknowledges the notice from that banner. That records
+			// no choice, so the old grant stays and the signal still denies it.
+			expect: {
+				choice: POLICY_RECORDS[record].expected.choice,
+				consentCallbacks: 0,
+				consentRequests: 0,
+				events: {
+					'choice-recorded': 0,
+					'notice-dismissed': 1,
+					'permissions-changed': 0,
+				},
+				firstLayer: 'hidden',
+				gates: blockedGates,
 				noticeDismissal: 'current',
 				permissions: denied,
 				prompt: { kind: 'none' },
 			},
-			operation: { kind: 'save-current' },
+			operation: { kind: 'dismiss-notice' },
 		},
 		{
 			expect: {
