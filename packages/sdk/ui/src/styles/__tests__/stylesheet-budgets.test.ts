@@ -61,6 +61,11 @@ const EXISTING = {
  * Measured when set: `styles/privacy-choices.css` 6,927 / 7,798, its
  * Tailwind 3 twin 6,825 / 7,666, `privacy-choices-dialog` 3,579 / 4,039.
  * Raise only for rules the v6 UI needs to paint.
+ *
+ * The classic banner and dialog variables the v6 parts fall back to, with
+ * the React banner's grouped actions and underlined policy links, brought
+ * `styles/privacy-choices.css` to 7,649 / 8,629 and its Tailwind 3 twin to
+ * 7,550 / 8,495, so their budgets are 7,700 / 8,700 and 7,600 / 8,550.
  */
 const V6 = {
 	'privacy-choices-dialog': {
@@ -69,14 +74,14 @@ const V6 = {
 		sheet: 'privacy-choices-dialog',
 	},
 	'styles/privacy-choices.css': {
-		brotli: 7650,
+		brotli: 7700,
 		file: 'styles/privacy-choices.css',
-		gzip: 8600,
+		gzip: 8700,
 	},
 	'styles/privacy-choices.tw3.css': {
-		brotli: 7500,
+		brotli: 7600,
 		file: 'styles/privacy-choices.tw3.css',
-		gzip: 8450,
+		gzip: 8550,
 	},
 } as const;
 
