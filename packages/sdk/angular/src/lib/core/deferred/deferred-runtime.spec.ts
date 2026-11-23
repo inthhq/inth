@@ -372,6 +372,28 @@ describe('createDeferredRuntime', () => {
 		error.mockRestore();
 	});
 
+	test('a failed engine load shows a banner the early-tap script hid again', async () => {
+		const error = vi.spyOn(console, 'error').mockImplementation(() => {
+			/* The failed load logs. */
+		});
+		// The style the early-tap script adds when it holds a tap.
+		const hidden = document.createElement('style');
+		hidden.id = 'inth-early-tap';
+		document.head.append(hidden);
+		const runtime = createDeferredRuntime({
+			boot: { d: 1, s: snapshotFor('banner', false) },
+			loadEngine: () => Promise.reject(new Error('chunk failed')),
+			options,
+			schedule: () => () => undefined,
+		});
+		runtime.start();
+		runtime.load();
+		expect(await runtime.ready).toBeUndefined();
+		expect(document.getElementById('inth-early-tap')).toBeNull();
+		runtime.dispose();
+		error.mockRestore();
+	});
+
 	test('an engine that throws while it is built settles like a failed load', async () => {
 		const error = vi.spyOn(console, 'error').mockImplementation(() => {
 			/* The failed build logs. */

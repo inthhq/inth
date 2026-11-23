@@ -19,20 +19,43 @@ import { CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils';
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
 import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
+import { OPT_OUT_ICON_SIZE } from '../shared/icons';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
+/**
+ * The icon's class and size. It takes its own size, as
+ * `<inth-privacy-choices-link>` gives it, except under `noStyle`, which
+ * leaves sizing to the host.
+ */
+const styleOptOutIcon = function styleOptOutIcon(
+	svg: SVGSVGElement,
+	noStyle: boolean
+): void {
+	const className = noStyle ? undefined : legalLinkStyles.optOutIcon;
+	if (className) {
+		svg.setAttribute('class', className);
+	} else {
+		svg.removeAttribute('class');
+	}
+	if (noStyle) {
+		svg.removeAttribute('width');
+		svg.removeAttribute('height');
+	} else {
+		svg.setAttribute('width', String(OPT_OUT_ICON_SIZE.width));
+		svg.setAttribute('height', String(OPT_OUT_ICON_SIZE.height));
+	}
+};
+
 const createOptOutIconElement = function createOptOutIconElement(
 	doc: Document,
-	className: string | undefined
+	noStyle: boolean
 ): SVGSVGElement {
 	const svg = doc.createElementNS(SVG_NS, 'svg');
 	svg.setAttribute('aria-hidden', 'true');
 	svg.setAttribute('focusable', 'false');
 	svg.setAttribute('viewBox', CPPA_OPT_OUT_ICON.viewBox);
-	if (className) {
-		svg.setAttribute('class', className);
-	}
+	styleOptOutIcon(svg, noStyle);
 	for (const path of CPPA_OPT_OUT_ICON.paths) {
 		const node = doc.createElementNS(SVG_NS, 'path');
 		node.setAttribute('d', path.d);
@@ -125,9 +148,7 @@ export class ConsentDialogLink {
 		effect(() => {
 			const link = this.optOutLink();
 			const host = this.#element.nativeElement;
-			const iconClass = this.#theme.noStyle()
-				? undefined
-				: legalLinkStyles.optOutIcon;
+			const noStyle = this.#theme.noStyle();
 			if (!link) {
 				this.#icon?.remove();
 				this.#icon = null;
@@ -137,13 +158,11 @@ export class ConsentDialogLink {
 			}
 			const needsIcon = link.variant === 'privacy-choices';
 			if (needsIcon) {
-				if (!this.#icon) {
-					this.#icon = createOptOutIconElement(host.ownerDocument, iconClass);
-					host.prepend(this.#icon);
-				} else if (iconClass) {
-					this.#icon.setAttribute('class', iconClass);
+				if (this.#icon) {
+					styleOptOutIcon(this.#icon, noStyle);
 				} else {
-					this.#icon.removeAttribute('class');
+					this.#icon = createOptOutIconElement(host.ownerDocument, noStyle);
+					host.prepend(this.#icon);
 				}
 			} else if (this.#icon) {
 				this.#icon.remove();

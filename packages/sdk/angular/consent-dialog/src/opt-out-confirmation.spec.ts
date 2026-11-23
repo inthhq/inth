@@ -360,6 +360,28 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 		}
 	);
 
+	test.each([
+		[false, '14'],
+		[true, null],
+	] as [boolean, string | null][])(
+		'sizes the CPPA icon on the footer link as <inth-privacy-choices-link> does (noStyle=%s)',
+		async (noStyle, height) => {
+			await boot(LinkHost, {
+				noStyle,
+				presentation: { optOutLink: 'privacy-choices' },
+			});
+			const icon = await vi.waitFor(() => {
+				const svg = query('consent-dialog-link')?.querySelector('svg');
+				expect(svg).toBeTruthy();
+				return svg as SVGSVGElement;
+			});
+			// A page that loads no sheet sizing it would let it fill the line;
+			// under noStyle the host sizes it.
+			expect(icon.getAttribute('height')).toBe(height);
+			expect(icon.hasAttribute('width')).toBe(!noStyle);
+		}
+	);
+
 	test('wires the floating trigger to opt out and hides it while confirmation is open', async () => {
 		const { consent, fixture } = await boot(TriggerDialogHost, {
 			mode: testing({ policy: [policyRulePresets.usPrivacyStatesOptOut()] }),

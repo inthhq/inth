@@ -71,7 +71,10 @@ import { CloseIcon } from '../parts/icons';
 				</h2>
 				@if (intro()) {
 					<p
-						[attr.class]="cx(styles.intro)"
+						[attr.class]="
+							part('consentDialogDescription', styles.intro).className
+						"
+						[attr.style]="part('consentDialogDescription').style"
 						[attr.data-testid]="nested() ? null : 'consent-dialog-intro'"
 					>
 						{{ intro() }}

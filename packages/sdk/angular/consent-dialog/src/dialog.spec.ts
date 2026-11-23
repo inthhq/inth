@@ -901,6 +901,10 @@ describe('customization', () => {
 					theme: {
 						slots: {
 							consentDialog: 'my-dialog',
+							consentDialogDescription: {
+								className: 'my-description',
+								style: { letterSpacing: '1px' },
+							},
 							consentDialogDoneButton: 'my-done',
 							consentDialogFooter: 'my-footer',
 							consentDialogRightsRow: 'my-rights',
@@ -918,6 +922,11 @@ describe('customization', () => {
 		);
 		expect(must('consent-dialog-root').className).toContain('my-dialog');
 		expect(must('consent-dialog-footer').className).toContain('my-footer');
+		// The intro takes the description slot, as React's does.
+		const intro = must('consent-dialog-intro');
+		expect(intro.className).toContain('my-description');
+		expect(intro.className).not.toBe('my-description');
+		expect(intro.style.letterSpacing).toBe('1px');
 		expect(must('consent-dialog-done').className).toContain('my-done');
 		expect(must('consent-dialog-rights-row-sale').className).toContain(
 			'my-rights'

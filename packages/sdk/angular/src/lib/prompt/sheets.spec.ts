@@ -210,6 +210,44 @@ describe('consent prompt stylesheets', () => {
 		expect(surface).toHaveBeenCalledTimes(2);
 	});
 
+	test("the prompt renders only once its container's code is in, and holds the app unstable until then", async () => {
+		// A server render waits for the app to be stable, and hydration renders
+		// over the server's markup: the prompt must never render, or suspend,
+		// without its container.
+		let releaseCard: () => void = () => undefined;
+		const container = vi.fn<PromptLoaders['container']>(async (type) => {
+			await new Promise<void>((resolve) => {
+				releaseCard = resolve;
+			});
+			return realContainer(type);
+		});
+		const surface = vi.fn<PromptLoaders['surface']>(realSurface);
+		await mountWith(
+			{ container, surface },
+			{ prompt: { container: { type: 'card' } } },
+			{ stable: false }
+		);
+		await vi.waitFor(() => expect(container).toHaveBeenCalledWith('card'));
+		await vi.waitFor(() => expect(surface).toHaveBeenCalled());
+		let stable = false;
+		void TestBed.inject(ApplicationRef)
+			.whenStable()
+			// oxlint-disable-next-line promise/prefer-await-to-then -- Records when it settles.
+			.then(() => {
+				stable = true;
+			});
+		await new Promise((resolve) => {
+			setTimeout(resolve, 50);
+		});
+		expect(root()).toBeNull();
+		expect(stable).toBe(false);
+		releaseCard();
+		await TestBed.inject(ApplicationRef).whenStable();
+		await vi.waitFor(() => expect(root()).not.toBeNull(), { timeout: 4000 });
+		expect(root()?.getAttribute('data-placement')).toBe('card-start');
+		expect(inserted('inth-card')).toBe(true);
+	});
+
 	test('[C1] a load a newer one replaced is dropped', async () => {
 		let releaseCard: () => void = () => undefined;
 		const container = vi.fn<PromptLoaders['container']>(async (type) => {
