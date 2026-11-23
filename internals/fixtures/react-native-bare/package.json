@@ -14,7 +14,7 @@
 		"e2e:ios": "bash scripts/app-e2e.sh ios",
 		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
 		"ios": "react-native run-ios",
-		"lint": "oxlint -c ../../../oxlint.sdk.config.ts App.tsx index.js src",
+		"lint": "oxlint -c ../../../oxlint.sdk.config.ts app.tsx index.js src",
 		"pod-install": "pod install --project-directory=ios",
 		"start": "react-native start",
 		"start:reset": "react-native start --reset-cache",

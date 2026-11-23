@@ -89,7 +89,7 @@ describe('region extraction', () => {
 
 	test('reads names and title overrides from markup comments', () => {
 		const found = findRegions(
-			'examples/vue/src/App.vue',
+			'examples/vue/src/app.vue',
 			'<!-- #region docs:root title="src/App.vue" -->\n<InthProvider />\n<!-- #endregion docs:root -->'
 		);
 		expect(found).toEqual([

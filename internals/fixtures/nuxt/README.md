@@ -76,7 +76,7 @@ Replace the vendor placeholders in `app/consent-scripts.ts`:
 PostHog uses `loadMode: 'after-consent'` and `cookieless_mode: 'never'`. X Pixel waits for marketing permission. Remove
 other initializers for these vendors before reusing the example.
 
-The YouTube nocookie iframe in `app/components/VideoEmbed.vue` only mounts with
+The YouTube nocookie iframe in `app/components/video-embed.vue` only mounts with
 measurement permission and is removed on revocation. The placeholder opens
 preferences. Use the footer's Privacy settings control to reopen the dialog.
 Default theme and Branded theme buttons demonstrate CSS token overrides
@@ -94,7 +94,7 @@ build time. Run `INTH_NUXT_EXPERIMENT=1 bun run --cwd internals/fixtures/nuxt de
 open `/consent-example`: Inth picks the `control` arm (the default banner) or
 the `wall` arm, and the page shows `banner-shape · <arm> · inth` with a
 `inth_surface_shown` and `inth_choice_recorded` line for each impression and
-choice under the arm. `app/components/ExperimentReadout.vue` reads them from the
+choice under the arm. `app/components/experiment-readout.vue` reads them from the
 kernel's `surface:shown` and `choice:recorded` events and pushes the same
 events to `window.dataLayer`. Add `INTH_NUXT_EXPERIMENT_ARM=wall` to set the
 arm the way a flag provider would; any other value runs `control`. Both
@@ -112,8 +112,8 @@ https://c15t.com/docs/guides/banner-experiments.
   used when `INTH_NUXT_OUTPUT=static`. Build it with `bun run generate` and
   serve it with `bun run preview:static`.
 - `app/app.config.ts` and `app/consent-scripts.ts`: vendor scripts.
-- `nuxt.config.ts`, `app/pages/`, `app/components/ConsentDebugTools.vue` and
-  `app/components/ExperimentReadout.vue`: demo shell, region preview,
+- `nuxt.config.ts`, `app/pages/`, `app/components/consent-debug-tools.vue` and
+  `app/components/experiment-readout.vue`: demo shell, region preview,
   development DevTools and the banner experiment.
 
 `EXAMPLE_TARGET=nuxt,nuxt-static bun run --cwd internals/fixtures/acceptance test` runs both

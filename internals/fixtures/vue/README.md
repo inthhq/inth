@@ -43,16 +43,16 @@ The docs no longer publish code from this app. The Vue quickstart quotes
 - `vite.config.ts` adds the Inth Vite plugin.
 - `src/main.ts` installs `inth` with the backend URL and `scripts`.
 - `src/scripts.ts` holds the vendor configuration.
-- `src/App.vue` mounts `InthProvider` and `ConsentDialogLink`.
-- `src/VideoEmbed.vue` gates the YouTube iframe with `ConsentGate`.
+- `src/app.vue` mounts `InthProvider` and `ConsentDialogLink`.
+- `src/video-embed.vue` gates the YouTube iframe with `ConsentGate`.
 - `src/branded.ts` is `main.ts` with tokens, presentation and a slot class.
-- `src/headless.ts`, `src/HeadlessApp.vue` and `src/ConsentPrompt.vue` replace
+- `src/headless.ts`, `src/headless-app.vue` and `src/consent-prompt.vue` replace
   the stock UI with the composables.
 
 `src/entry.ts` mounts the branded setup for `?design=branded`, the headless
 setup for `/headless`, the experiment setup for `?experiment=1`, and `main.ts`
 otherwise. `src/test-backend.ts` lets the acceptance suite replace the backend
-URL through `VITE_INTH_PROJECT_URL`. `src/HomePage.vue` holds the page content
+URL through `VITE_INTH_PROJECT_URL`. `src/home-page.vue` holds the page content
 and loads DevTools in development builds.
 
 ## Banner experiment

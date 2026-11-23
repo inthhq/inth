@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Demo page content shared by every variant: design links, live status and
- * the gated video. The consent setup is in `main.ts` and `App.vue`.
+ * the gated video. The consent setup is in `main.ts` and `app.vue`.
  */
 import { useConsentSnapshot } from '@inth/vue/vue-plugin';
 
