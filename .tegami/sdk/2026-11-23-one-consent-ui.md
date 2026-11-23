@@ -100,3 +100,18 @@ The per-surface sheets are renamed: `banner` is now `parts`, `bar` is `banner`, 
 - `ConsentDialogPanel` from `@inth/svelte/dialog-panel` is the new dialog, without the trigger and confirmations `ConsentDialog` adds.
 - `getHeadlessConsent()`'s `banner` and `dialog` carry the resolved `container` instead of `variant` and `position`.
 - The banner's root no longer carries `data-prompt`, `data-model` or `data-position`; read `data-variant`, `data-placement`, `data-flow` and `data-edge-style`.
+
+**Astro**
+
+`<ConsentBanner />` always renders the consent prompt, placed by `presentation.prompt.container` or the policy's `surface.container`, and every dialog island (`ui: 'react'`, `'svelte'` or `'vue'`) renders the "Your Privacy Choices" dialog with its own stylesheets. The classic banner markup is gone.
+
+| Removed | Use instead |
+| --- | --- |
+| `presentation.prompt.variant` / `position` / `blocking` in `inth()` | `presentation.prompt.container` / `blockUntilChoice` |
+| `resolvePrivacyChoicesModel`, `privacyChoicesClassNames`, `renderPrivacyChoicesHTML`, `privacyChoicesFirstPaintSheets` from `@inth/astro/server` | `resolvePromptModel`, `promptClassNames`, `renderPromptHTML`, `promptFirstPaintSheets` |
+| `privacyChoicesPresentation`, `usesPrivacyChoices` | `promptContainerType`; every page renders the prompt |
+| The classic `resolvePromptModel`, `promptClassNames` and `PromptAction` | The prompt's model and class names above |
+| `design` on the dialog adapter's mount and preload context | Nothing: there is one dialog |
+| `data-variant` on the IAB banner root | Nothing: it floats at `data-position="bottom-left"`, as React's does |
+
+A page that knows its policy inlines the tokens, the buttons, the prompt's shell and the one container it shows. A page that does not yet, such as a prerendered page in `hosted()` or `manifest()` mode, inlines `first-paint`, which now holds every container. The prompt's opt-out icon takes the `legal-links` sheet's `optOutIcon` class.

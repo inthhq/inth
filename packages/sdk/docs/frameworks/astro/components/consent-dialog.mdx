@@ -1,6 +1,6 @@
 ---
 title: ConsentDialog
-description: Add the Inth preference dialog to an Astro site as an on-demand island with framework selection, preloading, and legal links.
+description: Add the "Your Privacy Choices" dialog to an Astro site as an on-demand island with framework selection, preloading, and legal links.
 group: frameworks
 ---
 
@@ -10,21 +10,27 @@ Render one `ConsentDialog` in the layout that wraps every page:
 
 <include src="../../../shared/examples/astro/layout.mdx" />
 
-`ConsentDialog` renders an empty host element on the server. The preference
-dialog mounts into the page the first time something opens it:
+`ConsentDialog` renders an empty host element on the server. The "Your
+Privacy Choices" dialog mounts into the page the first time something opens
+it:
 
-- The banner's **Customize** button, or a "Manage preferences" or "Do not sell
-  or share my data" button on a notice.
-- A [`ConsentDialogLink`](/docs/frameworks/astro/components/consent-dialog-link).
+- A `PrivacyChoicesLink`
+  or a [`ConsentDialogLink`](/docs/frameworks/astro/components/consent-dialog-link).
+- The opt-out link on a notice when `presentation.optOutLink` is
+  `'privacy-choices'` or `'california-privacy-choices'`.
 - A link to `#inth-preferences`, when the page loads with that hash.
 - `openDialog()` from [`@inth/astro/client`](/docs/frameworks/astro/client-api#open-and-close-dialogs).
+
+The prompt's **Customize** button does not open the dialog. It opens the
+choices inside the prompt.
 
 ## Props
 
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `preload` | `boolean` | `false` | Downloads the dialog once the browser is idle, on every page that renders it |
-| `legalLinks` | `('privacyPolicy' \| 'cookiePolicy' \| 'termsOfService')[] \| null` | None | Which links from the integration's `legalLinks` the dialog shows, the same list `ConsentBanner` takes |
+| `legalLinks` | `('privacyPolicy' \| 'cookiePolicy' \| 'termsOfService')[] \| null` | Shown | The footer shows the Cookie Policy under a choice regime and the Privacy Policy under an opt-out regime. `null` hides it; a list shows it only when its key is listed |
+| `disableAnimation` | `boolean` | The integration's `disableAnimation` | Skips the dialog's enter and exit animations |
 
 ## When the dialog downloads
 
@@ -58,58 +64,39 @@ second one for a single dialog. See
 
 ## What the dialog contains
 
-The dialog lists the categories the policy covers, each with a switch, and
-offers Accept All, Reject All and Save Settings. `necessary` is always on. The dialog
-follows the integration's `theme`, `presentation.preferences` and
+The dialog is the full consent manager: "Your Privacy Choices". It is centred
+on desktop and a bottom sheet on phones. Its content follows the policy
+regime:
+
+- **Choice regime** (opt-in, and opt-out rules that ask for a choice): one
+  switch per category in scope, with its vendors, and Reject All, Accept All
+  and Save. `necessary` is always on. Save stays disabled until a switch
+  differs from the recorded choice.
+- **Opt-out regime** (opt-out rules with a notice): the sale-and-sharing row
+  with Protect and Allow, the receipt of the recorded choice, a Preferences
+  row for the category switches, and Done. Allowing again after an opt-out
+  asks to confirm first (11 CCR §7028(a)).
+
+The dialog follows the integration's `theme`, `presentation.preferences` and
 `consentCategories`. With `vendors` declared, each category also lists its
 vendors with a switch per vendor. See
 [vendor consent](/docs/frameworks/astro/vendor-consent).
 
-To link your policies from the dialog, define them in the integration's
-`legalLinks` option and list the keys in the `legalLinks` prop:
+To hide the dialog's policy link, pass `legalLinks={null}`:
 
 {/* example: fragment */}
 
 ```astro title="src/layouts/base.astro (partial)"
-<ConsentDialog legalLinks={['privacyPolicy', 'cookiePolicy']} />
+<ConsentDialog legalLinks={null} />
 ```
 
-Inth passes the list to the Svelte, React or Vue dialog island. A key renders
-only when the integration defines it. A link without a `label` reads as the
-translated name for its type, such as "Privacy Policy" in English.
-
-Save Settings, Accept All and Reject All record a choice and close the dialog. Turning
+Reject All, Accept All and Save record a choice and close the dialog. Turning
 off a category that was allowed reloads the page, unless the integration sets
 `reloadOnConsentRevoked: false`. See
 [withdraw consent without reloading](/docs/frameworks/astro/scripts#withdraw-consent-without-reloading).
 
-### Sale-and-sharing block and two-step opt back in
-
-Under an `opt-out` policy, the dialog renders a sale-and-sharing block first,
-above the category list and outside any accordion item. Under an `opt-in` or
-other policy model, no block renders.
-
-- Before the visitor opts out, the block shows the configured opt-out link
-  title, a neutral status sentence, and an **Opt out** button. One click records
-  the opt-out through the shared action without toggling a category or clicking
-  **Save Settings**.
-- Once an opt-out is held, the button disappears and the block shows the
-  honored status line (`role="status"`), receipt sentence, recorded time, and
-  local reference when this browser created the opt-out. Once the backend
-  confirms the refused rights, the heading updates to name them. Before
-  confirmation, it keeps the configured link title.
-- When Global Privacy Control is not locking the opt-out, the block shows an
-  **Opt back in…** link. Clicking **Opt back in…**, clicking **Accept All**, or
-  turning `marketing` back on and clicking **Save Settings** (`measurement`
-  when `marketing` is not in scope) opens a separate modal confirmation dialog
-  instead of saving right away. Focus starts on **Stay opted out**, both buttons
-  have equal prominence, and pressing Escape cancels with nothing saved.
-  Confirming lifts a device opt-out or asks the backend to lift an account
-  opt-out. Turning `measurement` on while `marketing` stays off saves without
-  confirmation and keeps the opt-out held.
-- While Global Privacy Control is active under a policy that maps it, restricted
-  switches stay off and disabled, and no **Opt back in…** link renders. Under an
-  `opt-in` policy, **Accept All** still lifts a held opt-out in one step.
+While Global Privacy Control is active under a policy that maps it, the
+signal-restricted categories stay off and their switches are disabled.
 
 The dialog does not open while no policy is resolved, or under a rule that owes
 no consent interface. An `openDialog()` call made while `/v1/consent/init` is still in
@@ -117,14 +104,13 @@ flight waits for the answer.
 
 ## Stylesheets
 
-The page carries only the banner's rules. The first time a visitor reaches
-for the dialog, Inth links the dialog's stylesheet, plus the primitives
-stylesheet for the
-Svelte dialog, and waits for them to load before the dialog paints. On a
-Tailwind CSS 3 site, the dialog's rules come with `@inth/astro/styles.css` on
-every page, and Inth links only the primitives stylesheet. With
-`styles: false`, import `@inth/astro/styles.css` yourself, which holds the
-dialog's rules too, and `@inth/astro/primitives.css` for the Svelte dialog. See
+The page carries only the prompt's rules. The first time a visitor reaches
+for the dialog, Inth adds the dialog's stylesheets (the theme tokens, the
+buttons, and the dialog's own rules) and waits for them before the dialog
+paints. The Svelte and Vue islands also link the widget stylesheet, and the
+Svelte island the primitives stylesheet. With `styles: false`, import
+`@inth/astro/styles.css` yourself, which holds the dialog's rules too, and
+`@inth/astro/primitives.css` for the Svelte dialog. See
 [load the stylesheet yourself](/docs/frameworks/astro/customize#load-the-stylesheet-yourself).
 
 ## Across `ClientRouter` navigation
@@ -137,10 +123,11 @@ open. A stylesheet Inth linked for the dialog carries over to the new page too.
 ## Accessibility
 
 The dialog keeps the focus and keyboard behavior of its framework's
-`ConsentDialog`. It opens as a modal dialog, and Escape closes it. Whether it
-locks page scroll follows `presentation.preferences` in the integration
-options. Every framework renders the same markup and labels, so the dialog
-behaves the same whichever `ui` you pick.
+`ConsentDialog`. It carries `role="dialog"`, `aria-modal="true"` and
+`aria-labelledby` pointing at its title, always blocks the page, and Escape
+closes it. Opening moves focus inside the dialog, and closing returns focus
+to the element that opened it. Each category switch uses the category title
+as its accessible name.
 
 ## Next steps
 
