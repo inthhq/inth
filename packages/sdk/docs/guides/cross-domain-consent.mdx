@@ -1,0 +1,275 @@
+---
+title: Cross-domain consent
+description: Sync signed-in users' consent across domains with @inth/node consents.check() and the userConsent provider option.
+group: guides
+---
+
+Share consent choices, vendor denials, and account opt-outs for signed-in users across domains in one Inth project without a second browser read from Inth.
+
+Your server's `GET /user` endpoint reads the user's consent document with `@inth/node` and mints an identity token. Your app passes both `user` and `userConsent` to the Inth provider. Inth applies the newest decision per category and vendor, keeps account state separate from browser-made records, and persists it locally.
+
+## Fetch `userConsent` and an identity token on your server
+
+Call `inth.consents.check()` without `property` so choices from every domain in your project are included. Mint a short-lived identity token alongside it so the browser can link itself and lift account-held opt-outs.
+
+```ts title="GET /api/user"
+import { Inth } from '@inth/node';
+
+const inth = new Inth();
+
+export async function GET(request: Request) {
+	const user = await getSessionUser(request);
+	if (!user) {
+		return Response.json({ user: null, userConsent: null });
+	}
+
+	const [consentResult, tokenResult] = await Promise.all([
+		inth.consents.check({ externalId: user.id }),
+		inth.users.createIdentityToken({ externalId: user.id }),
+	]);
+
+	return Response.json({
+		user: {
+			externalId: user.id,
+			identityToken: tokenResult.error ? undefined : tokenResult.data.token,
+		},
+		userConsent: consentResult.error ? undefined : consentResult.data,
+	});
+}
+```
+
+Omit `property` on `consents.check()`. Passing `property` restricts the answer to one host name and hides decisions made on your other domains.
+
+## Pass `user` and `userConsent` to your framework
+
+Always pass `user` alongside `userConsent`. Inth ignores `userConsent` when `user` is missing or when `user.externalId` differs from `userConsent.sync.externalId`.
+
+### React
+
+Pass either the resolved `UserConsent` document or a memoized `Promise<UserConsent | null>`.
+
+```tsx title="App.tsx"
+import { InthProvider } from '@inth/react';
+import { useMemo } from 'react';
+
+export function App({ user, children }) {
+	const userConsent = useMemo(
+		() =>
+			user
+				? fetch('/api/user')
+						.then((res) => res.json())
+						.then((data) => data.userConsent ?? null)
+				: null,
+		[user?.externalId]
+	);
+
+	return (
+		<InthProvider
+			options={{
+				projectUrl: import.meta.env.VITE_INTH_PROJECT_URL,
+				user: user
+					? { externalId: user.externalId, identityToken: user.identityToken }
+					: undefined,
+				userConsent,
+			}}
+		>
+			{children}
+		</InthProvider>
+	);
+}
+```
+
+### Next.js
+
+Fold `user` and `userConsent` on the server in `resolveConsent()` so server HTML, hydration, and `serverStart` scripts match without a flash. Pass the full `user` (with `identityToken`) on the client.
+
+```tsx title="app/layout.tsx"
+import { InthProvider } from '@inth/nextjs';
+import { resolveConsent } from '@inth/nextjs/server';
+import { Inth } from '@inth/node';
+
+const inth = new Inth();
+
+export default async function RootLayout({ children }) {
+	const sessionUser = await getSessionUser();
+	const consentResult = sessionUser
+		? await inth.consents.check({ externalId: sessionUser.id })
+		: null;
+	const userConsent =
+		sessionUser === null
+			? null
+			: consentResult?.error
+				? undefined
+				: consentResult?.data;
+
+	const state = await resolveConsent({
+		user: sessionUser ? { externalId: sessionUser.id } : undefined,
+		userConsent,
+	});
+
+	return (
+		<html lang="en">
+			<body>
+				<InthProvider
+					state={state}
+					options={{
+						user: sessionUser
+							? {
+									externalId: sessionUser.id,
+									identityToken: sessionUser.inthIdentityToken,
+								}
+							: undefined,
+						userConsent,
+					}}
+				>
+					{children}
+				</InthProvider>
+			</body>
+		</html>
+	);
+}
+```
+
+On reload, if you omit `userConsent` (`undefined`) and still pass `user: { externalId }`, `resolveConsent()` reads the visitor's account cookies gated by `user.externalId`.
+
+### TanStack Start
+
+```tsx title="src/routes/__root.tsx"
+import { resolveConsent } from '@inth/tanstack-start/server';
+import { Inth } from '@inth/node';
+
+const inth = new Inth();
+
+// Inside your server loader:
+const sessionUser = await getSessionUser();
+const consentResult = sessionUser
+	? await inth.consents.check({ externalId: sessionUser.id })
+	: null;
+const userConsent =
+	sessionUser === null
+		? null
+		: consentResult?.error
+			? undefined
+			: consentResult?.data;
+
+const consentState = await resolveConsent({
+	user: sessionUser ? { externalId: sessionUser.id } : undefined,
+	userConsent,
+});
+```
+
+Pass `consentState` to `<InthProvider state={consentState} options={{ user, userConsent }}>`.
+
+### Vue and Nuxt
+
+Pass `user` and `userConsent` in the plugin options or reactive config:
+
+```ts title="main.ts"
+import { inth } from '@inth/vue';
+
+app.use(inth, {
+	projectUrl: import.meta.env.VITE_INTH_PROJECT_URL,
+	user: { externalId: user.id, identityToken },
+	userConsent,
+});
+```
+
+### Svelte
+
+```svelte title="+layout.svelte"
+<script lang="ts">
+	import { InthProvider } from '@inth/svelte';
+	let { data, children } = $props();
+</script>
+
+<InthProvider
+	projectUrl={import.meta.env.VITE_INTH_PROJECT_URL}
+	user={data.user}
+	userConsent={data.userConsent}
+>
+	{@render children()}
+</InthProvider>
+```
+
+### Angular
+
+```ts title="app.config.ts"
+import { provideInth } from '@inth/angular';
+
+export const appConfig = {
+	providers: [
+		provideInth({
+			projectUrl: 'https://your-project.inth.app',
+			user: { externalId: user.id, identityToken },
+			userConsent,
+		}),
+	],
+};
+```
+
+### Astro
+
+Pass `user` and `userConsent` from your `clientEntrypoint` extension:
+
+```ts title="src/inth.client.ts"
+import type { InthClientOptionsExtension } from '@inth/astro';
+
+export default async function (): Promise<InthClientOptionsExtension> {
+	const res = await fetch('/api/user');
+	const { user, userConsent } = await res.json();
+	return { user, userConsent };
+}
+```
+
+### Plain HTML and script tag
+
+Pass `userConsent` in `window.inth.init()` / `config`, or sync later with `window.inth.syncUserConsent()`:
+
+```html
+<script>
+	window.inth = window.inth || [];
+	fetch('/api/user')
+		.then((res) => res.json())
+		.then(({ user, userConsent }) => {
+			if (user) {
+				window.inth.push(['identify', user]);
+			}
+			window.inth.push(['syncUserConsent', userConsent]);
+		});
+</script>
+```
+
+## `undefined` vs `null`
+
+- **`undefined`** means the consent document is unknown or was not fetched on this pass. Inth makes no change to any stored account layer. On SSR, `resolveConsent()` reads the account cookies for `user.externalId`.
+- **`null`** means the user is signed out. Inth drops the account layer, deletes the account cookies and localStorage entry synchronously, and leaves browser-made choices intact.
+
+Changing `user.externalId` or removing `user` also drops the previous user's account layer and deletes its storage synchronously.
+
+## Memoize a `Promise`
+
+When you pass a `Promise<UserConsent | null>`, memoize it per user (for example with `useMemo` keyed on `user?.externalId`).
+
+- Each new user's first `Promise` holds optional permissions at `false` and pauses scripts, network requests, iframes, and clear-on-revocation until the `Promise` settles or a 3-second timeout fires.
+- Passing a new `Promise` identity for the same user starts a new generation without re-arming the hold, and older Promises that resolve late are dropped.
+- A `Promise` `userConsent` disables `serverScriptStart` for that render.
+- Resolved values are compared by content, so re-rendering with an equal object is a no-op.
+
+## Clock trade-off
+
+Inth stores raw server timestamps with a backward-only clock shift (`skew = max(0, checkedAt - localNow)`). This keeps a cached document or a server clock ahead of the browser from outranking a newer local click.
+
+If a visitor's browser clock runs ahead of the server's, synced account choices look older by that difference. Local clicks still win in that browser; this is an accepted trade-off.
+
+## Cookie budget and dropped cookie parts
+
+Account state is stored apart from browser-made records in three compact cookies plus localStorage under a shared revision:
+
+- `<key>-acct-c`: category choices with a shared basis table, raw times, and optional expiry.
+- `<key>-acct-v`: denied vendor IDs only (with raw times).
+- `<key>-acct-o`: person-held opt-out record.
+- `<key>-acct` (localStorage): full account layer, including category grants and the complete vendor map.
+
+Keeping granted vendors in localStorage keeps the cookies small even with large vendor lists. Empty parts are written explicitly so an empty list differs from a failed cookie write.
+
+If a part carries a revision that differs from the other parts, Inth treats that part as missing. If a browser drops an account cookie part, a server render runs without that part and the client corrects from localStorage after hydration, which can cause a brief banner flash.

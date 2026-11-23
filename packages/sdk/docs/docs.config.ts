@@ -129,7 +129,7 @@ export default defineDocsConfig({
 		},
 		{
 			base: 'guides',
-			pages: ['verify-consent', 'troubleshooting'],
+			pages: ['cross-domain-consent', 'verify-consent', 'troubleshooting'],
 			title: 'Verify and troubleshoot',
 		},
 		{
