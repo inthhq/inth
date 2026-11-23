@@ -46,6 +46,7 @@
 	import InlineLegalLinks from './inline-legal-links.svelte';
 	import Overlay from './overlay.svelte';
 	import PolicyActionsRenderer from './policy-actions-renderer.svelte';
+	import PrivacyChoicesBanner from './privacy-choices-banner.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
 
 	type ConsentBannerButton = 'reject' | 'accept' | 'customize' | 'dismiss';
@@ -291,6 +292,10 @@
 	const resolvedVariant = $derived(presentation.variant);
 	const isBlocking = $derived(presentation.blocking);
 	const resolvedPosition = $derived(presentation.position);
+	// The Privacy Choices design (v6) renders its own prompt.
+	const privacyChoices = $derived(
+		presentation.design === 'privacy-choices' ? presentation.container : null
+	);
 
 	$effect(() => {
 		if (
@@ -333,12 +338,29 @@
 	);
 </script>
 
-<DeferredOptInConfirmation
-	{noStyle}
-	{disableAnimation}
-/>
+{#if privacyChoices}
+	<PrivacyChoicesBanner
+		container={privacyChoices}
+		{noStyle}
+		{disableAnimation}
+		{legalLinks}
+		{hideBranding}
+		{models}
+		{title}
+		{description}
+		{rejectButtonText}
+		{acceptButtonText}
+		{customizeButtonText}
+		{dismissButtonText}
+	/>
+{:else}
+	<DeferredOptInConfirmation
+		{noStyle}
+		{disableAnimation}
+	/>
+{/if}
 
-{#if visibility.isMounted && visibility.shouldRender}
+{#if !privacyChoices && visibility.isMounted && visibility.shouldRender}
 	<div use:portal>
 		<!-- Inside the portal: the block must stay one node, or removing it
 		     would walk from where it was to where the portal moved it. -->

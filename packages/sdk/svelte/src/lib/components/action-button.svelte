@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { AllConsentNames } from '@inth/sdk/engine';
 	import buttonStyles from '@inth/sdk/ui/styles/components/button';
+	import type { AllThemeKeys } from '@inth/sdk/ui/theme';
 	import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
@@ -23,6 +24,10 @@
 		category,
 		noStyle: localNoStyle,
 		class: className,
+		themeKey,
+		baseClassName,
+		performDefaultAction = true,
+		ref = $bindable(null),
 		...restProps
 	}: Omit<HTMLButtonAttributes, 'class'> & {
 		action:
@@ -41,6 +46,21 @@
 		category?: AllConsentNames;
 		noStyle?: boolean;
 		class?: string;
+		/**
+		 * The `theme.slots` key that styles this button in place of
+		 * `buttonPrimary` or `buttonSecondary`, such as a Privacy Choices
+		 * Save button's own slot.
+		 */
+		themeKey?: AllThemeKeys;
+		/** Stock classes after the button's own, dropped under `noStyle`. */
+		baseClassName?: string;
+		/**
+		 * `false` leaves the click to `onclick`: the button records nothing
+		 * and changes no surface itself.
+		 */
+		performDefaultAction?: boolean;
+		/** The rendered button. */
+		ref?: HTMLButtonElement | null;
 	} = $props();
 
 	const consent = getConsentContext();
@@ -80,17 +100,26 @@
 			: ('buttonSecondary' as const)
 	);
 
-	const variantClasses = $derived(noStyle ? '' : buttonStyles.button);
+	const variantClasses = $derived(
+		noStyle
+			? ''
+			: [buttonStyles.button, baseClassName].filter(Boolean).join(' ')
+	);
 
 	const buttonStyle = $derived(
-		resolveStyles(defaultThemeKey, theme.theme, { className, noStyle }, noStyle)
+		resolveStyles(
+			themeKey ?? defaultThemeKey,
+			theme.theme,
+			{ className, noStyle },
+			noStyle
+		)
 	);
 
 	const handleClick = async function handleClick(
 		e: MouseEvent & { currentTarget: EventTarget & HTMLButtonElement }
 	) {
 		onclick?.(e);
-		if (e.defaultPrevented) {
+		if (e.defaultPrevented || !performDefaultAction) {
 			return;
 		}
 		const { state } = consent;
@@ -136,6 +165,7 @@
 </script>
 
 <button
+	bind:this={ref}
 	type="button"
 	class={[variantClasses, buttonStyle.className].filter(Boolean).join(' ')}
 	data-variant={noStyle ? undefined : variant}

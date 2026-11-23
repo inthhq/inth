@@ -10,13 +10,19 @@ import { SAFE_NONCE } from '@inth/sdk/server';
  * the surfaces find these elements and add no second copy.
  */
 import * as banner from '@inth/sdk/ui/styles/sheets/banner';
+import * as bar from '@inth/sdk/ui/styles/sheets/bar';
 import * as button from '@inth/sdk/ui/styles/sheets/button';
+import * as card from '@inth/sdk/ui/styles/sheets/card';
 import * as consentGate from '@inth/sdk/ui/styles/sheets/consent-gate';
 import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
+import * as drawer from '@inth/sdk/ui/styles/sheets/drawer';
+import * as expand from '@inth/sdk/ui/styles/sheets/expand';
 import * as firstPaint from '@inth/sdk/ui/styles/sheets/first-paint';
 import * as iabDialog from '@inth/sdk/ui/styles/sheets/iab-dialog';
 import * as iabFirstPaint from '@inth/sdk/ui/styles/sheets/iab-first-paint';
 import * as primitives from '@inth/sdk/ui/styles/sheets/primitives';
+import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/privacy-choices-dialog';
+import * as surface from '@inth/sdk/ui/styles/sheets/surface';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
 import * as trigger from '@inth/sdk/ui/styles/sheets/trigger';
 
@@ -25,7 +31,10 @@ import type { SurfaceStyleSheet } from '../surface-styles';
 
 /**
  * Every sheet a marker can name, in cascade order. The per-surface sheets
- * are parts of `first-paint`, which the IAB banner still names.
+ * are parts of `first-paint`, which the IAB banner still names. The
+ * Privacy Choices (v6) prompt names `surface` and its one presentation
+ * sheet; they follow the classic rules, as `styles/privacy-choices.css`
+ * follows `styles.css`.
  */
 const SHEETS: readonly SurfaceStyleSheet[] = [
 	tokens,
@@ -36,6 +45,12 @@ const SHEETS: readonly SurfaceStyleSheet[] = [
 	firstPaint,
 	dialog,
 	primitives,
+	surface,
+	card,
+	bar,
+	drawer,
+	expand,
+	privacyChoicesDialog,
 	iabFirstPaint,
 	iabDialog,
 ];
