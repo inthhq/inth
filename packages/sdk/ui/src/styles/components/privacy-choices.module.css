@@ -214,7 +214,7 @@
 	.savedCue {
 		position: absolute;
 		top: 50%;
-		right: calc(100% + 12px);
+		inset-inline-end: calc(100% + 12px);
 		display: inline-flex;
 		align-items: center;
 		gap: calc(var(--inth-space-xs) * 1.25);
@@ -294,7 +294,7 @@
 		z-index: -1;
 		top: 3px;
 		bottom: 3px;
-		left: 3px;
+		inset-inline-start: 3px;
 		width: calc(50% - 3px);
 		border-radius: calc(var(--inth-radius-md) - 3px);
 		background: var(--inth-surface);
@@ -308,6 +308,12 @@
 
 	.segmented[data-selected='1'] .segmentedThumb {
 		transform: translateX(100%);
+	}
+
+	/* The thumb starts at the inline start, the right edge in right-to-left
+	   copy, so the second option moves it the other way there. */
+	.segmented:dir(rtl)[data-selected='1'] .segmentedThumb {
+		transform: translateX(-100%);
 	}
 
 	.segmentedOption {
@@ -548,7 +554,7 @@
 
 	.receiptDetails ul {
 		margin: 0;
-		padding-left: var(--inth-space-md);
+		padding-inline-start: var(--inth-space-md);
 	}
 
 	.reference {

@@ -1,20 +1,24 @@
 /*
- * The Drawer presentation, on the bottom (default), top, left or right
+ * The Drawer presentation, on the bottom (default), top, start or end
  * edge. Its classes sit next to the `consent-surface` classes on the same
  * elements; see that sheet for the data attributes.
+ *
+ * `start` and `end` are the inline edges and follow the writing direction,
+ * like `inset-inline-start`: on a right-to-left page a `start` drawer sits
+ * on the right and slides in from there.
  *
  * The side decides the flow (the resolver sets `data-flow`):
  *
  * - Top and bottom, and every drawer on phone, expand in place: full
  *   width, content capped to the 960px column.
- * - Left and right on desktop are all-in-one: full height, the choices in
+ * - Start and end on desktop are all-in-one: full height, the choices in
  *   one scroll area (`.body`), a footer pinned to the bottom, and the tag
  *   floating over the bottom fade (`.tagSlot`).
  *
  * Hooks, read with a fallback:
  *
  *   --consent-drawer-max-width     (960px, the top and bottom column)
- *   --consent-drawer-side-width    (460px, the left and right drawer)
+ *   --consent-drawer-side-width    (460px, the start and end drawer)
  *   --consent-drawer-radius        (--inth-radius-lg when inset)
  *   --consent-drawer-shadow        (layered when inset, one-sided when flush)
  *   --consent-drawer-panel-height  (400px; 300px on phone)
@@ -29,8 +33,17 @@
 		--_consent-scroll-height: var(--consent-drawer-panel-height, 400px);
 		--_consent-enter-duration: calc(var(--inth-duration-slow) * 1.4);
 		--_consent-inset: 0px;
+		/* 1 left to right, -1 right to left: the sign of a slide toward the
+		   inline end, so the side drawers' motion mirrors with the page. */
+		--_consent-inline-sign: 1;
 		inset-inline: 0;
 		bottom: 0;
+	}
+
+	/* `:dir()` matches the direction the layer inherits: adapters put `dir`
+	   on a container, not on the layer. */
+	.root:dir(rtl) {
+		--_consent-inline-sign: -1;
 	}
 
 	.shell {
@@ -55,12 +68,13 @@
 
 	.root[data-placement='drawer-top'] .tag {
 		order: 2;
-		margin: var(--inth-space-sm) var(--_consent-gutter) 0 0;
+		margin-block: var(--inth-space-sm) 0;
+		margin-inline: 0 var(--_consent-gutter);
 	}
 
-	/* Left and right: full height, the choices showing from the start. */
-	.root[data-placement='drawer-left'],
-	.root[data-placement='drawer-right'] {
+	/* Start and end: full height, the choices showing from the start. */
+	.root[data-placement='drawer-start'],
+	.root[data-placement='drawer-end'] {
 		--_consent-gutter: var(--inth-space-lg);
 		--_consent-scroll-height: none;
 		--_consent-scroll-padding: var(--inth-space-xs) var(--inth-space-lg)
@@ -74,20 +88,18 @@
 		max-width: 100%;
 	}
 
-	.root[data-placement='drawer-left'] {
-		left: 0;
-		right: auto;
+	.root[data-placement='drawer-start'] {
+		inset-inline: 0 auto;
 	}
 
-	.root[data-placement='drawer-right'] {
-		left: auto;
-		right: 0;
+	.root[data-placement='drawer-end'] {
+		inset-inline: auto 0;
 	}
 
-	.root[data-placement='drawer-left'] .shell,
-	.root[data-placement='drawer-right'] .shell,
-	.root[data-placement='drawer-left'] .card,
-	.root[data-placement='drawer-right'] .card {
+	.root[data-placement='drawer-start'] .shell,
+	.root[data-placement='drawer-end'] .shell,
+	.root[data-placement='drawer-start'] .card,
+	.root[data-placement='drawer-end'] .card {
 		height: 100%;
 	}
 
@@ -174,17 +186,19 @@
 		);
 	}
 
-	.root[data-edge-style='flush'][data-placement='drawer-left'] {
+	.root[data-edge-style='flush'][data-placement='drawer-start'] {
 		--_consent-shadow: var(
 			--consent-drawer-shadow,
-			8px 0 24px color-mix(in srgb, var(--inth-overlay) 16%, transparent)
+			calc(8px * var(--_consent-inline-sign)) 0 24px
+				color-mix(in srgb, var(--inth-overlay) 16%, transparent)
 		);
 	}
 
-	.root[data-edge-style='flush'][data-placement='drawer-right'] {
+	.root[data-edge-style='flush'][data-placement='drawer-end'] {
 		--_consent-shadow: var(
 			--consent-drawer-shadow,
-			-8px 0 24px color-mix(in srgb, var(--inth-overlay) 16%, transparent)
+			calc(-8px * var(--_consent-inline-sign)) 0 24px
+				color-mix(in srgb, var(--inth-overlay) 16%, transparent)
 		);
 	}
 
@@ -201,12 +215,12 @@
 		border-bottom-width: 1px;
 	}
 
-	.root[data-edge-style='flush'][data-placement='drawer-left'] .card {
-		border-right-width: 1px;
+	.root[data-edge-style='flush'][data-placement='drawer-start'] .card {
+		border-inline-end-width: 1px;
 	}
 
-	.root[data-edge-style='flush'][data-placement='drawer-right'] .card {
-		border-left-width: 1px;
+	.root[data-edge-style='flush'][data-placement='drawer-end'] .card {
+		border-inline-start-width: 1px;
 	}
 
 	/* Each edge slides in from its own side and back out; inset travels the
@@ -229,20 +243,20 @@
 		animation-name: consent-drawer-to-top;
 	}
 
-	.root[data-placement='drawer-left'] .shell {
-		animation-name: consent-drawer-from-left;
+	.root[data-placement='drawer-start'] .shell {
+		animation-name: consent-drawer-from-start;
 	}
 
-	.root[data-placement='drawer-left'][data-state='closed'] .shell {
-		animation-name: consent-drawer-to-left;
+	.root[data-placement='drawer-start'][data-state='closed'] .shell {
+		animation-name: consent-drawer-to-start;
 	}
 
-	.root[data-placement='drawer-right'] .shell {
-		animation-name: consent-drawer-from-right;
+	.root[data-placement='drawer-end'] .shell {
+		animation-name: consent-drawer-from-end;
 	}
 
-	.root[data-placement='drawer-right'][data-state='closed'] .shell {
-		animation-name: consent-drawer-to-right;
+	.root[data-placement='drawer-end'][data-state='closed'] .shell {
+		animation-name: consent-drawer-to-end;
 	}
 
 	.root[data-edge-style='inset'][data-placement='drawer-bottom'] .shell {
@@ -263,22 +277,22 @@
 		animation-name: consent-drawer-to-top-inset;
 	}
 
-	.root[data-edge-style='inset'][data-placement='drawer-left'] .shell {
-		animation-name: consent-drawer-from-left-inset;
+	.root[data-edge-style='inset'][data-placement='drawer-start'] .shell {
+		animation-name: consent-drawer-from-start-inset;
 	}
 
-	.root[data-edge-style='inset'][data-placement='drawer-left'][data-state='closed']
+	.root[data-edge-style='inset'][data-placement='drawer-start'][data-state='closed']
 		.shell {
-		animation-name: consent-drawer-to-left-inset;
+		animation-name: consent-drawer-to-start-inset;
 	}
 
-	.root[data-edge-style='inset'][data-placement='drawer-right'] .shell {
-		animation-name: consent-drawer-from-right-inset;
+	.root[data-edge-style='inset'][data-placement='drawer-end'] .shell {
+		animation-name: consent-drawer-from-end-inset;
 	}
 
-	.root[data-edge-style='inset'][data-placement='drawer-right'][data-state='closed']
+	.root[data-edge-style='inset'][data-placement='drawer-end'][data-state='closed']
 		.shell {
-		animation-name: consent-drawer-to-right-inset;
+		animation-name: consent-drawer-to-end-inset;
 	}
 
 	@media (prefers-reduced-motion: reduce) {
@@ -286,21 +300,21 @@
 		.root[data-placement='drawer-bottom'][data-state='closed'] .shell,
 		.root[data-placement='drawer-top'] .shell,
 		.root[data-placement='drawer-top'][data-state='closed'] .shell,
-		.root[data-placement='drawer-left'] .shell,
-		.root[data-placement='drawer-left'][data-state='closed'] .shell,
-		.root[data-placement='drawer-right'] .shell,
-		.root[data-placement='drawer-right'][data-state='closed'] .shell,
+		.root[data-placement='drawer-start'] .shell,
+		.root[data-placement='drawer-start'][data-state='closed'] .shell,
+		.root[data-placement='drawer-end'] .shell,
+		.root[data-placement='drawer-end'][data-state='closed'] .shell,
 		.root[data-edge-style='inset'][data-placement='drawer-bottom'] .shell,
 		.root[data-edge-style='inset'][data-placement='drawer-bottom'][data-state='closed']
 			.shell,
 		.root[data-edge-style='inset'][data-placement='drawer-top'] .shell,
 		.root[data-edge-style='inset'][data-placement='drawer-top'][data-state='closed']
 			.shell,
-		.root[data-edge-style='inset'][data-placement='drawer-left'] .shell,
-		.root[data-edge-style='inset'][data-placement='drawer-left'][data-state='closed']
+		.root[data-edge-style='inset'][data-placement='drawer-start'] .shell,
+		.root[data-edge-style='inset'][data-placement='drawer-start'][data-state='closed']
 			.shell,
-		.root[data-edge-style='inset'][data-placement='drawer-right'] .shell,
-		.root[data-edge-style='inset'][data-placement='drawer-right'][data-state='closed']
+		.root[data-edge-style='inset'][data-placement='drawer-end'] .shell,
+		.root[data-edge-style='inset'][data-placement='drawer-end'][data-state='closed']
 			.shell {
 			animation: none;
 		}
@@ -364,51 +378,59 @@
 		}
 	}
 
-	@keyframes consent-drawer-from-left {
+	@keyframes consent-drawer-from-start {
 		from {
-			transform: translateX(-100%);
+			transform: translateX(calc(-100% * var(--_consent-inline-sign, 1)));
 		}
 	}
 
-	@keyframes consent-drawer-to-left {
+	@keyframes consent-drawer-to-start {
 		to {
-			transform: translateX(-100%);
+			transform: translateX(calc(-100% * var(--_consent-inline-sign, 1)));
 		}
 	}
 
-	@keyframes consent-drawer-from-left-inset {
+	@keyframes consent-drawer-from-start-inset {
 		from {
-			transform: translateX(calc(-100% - 12px));
+			transform: translateX(
+				calc((-100% - 12px) * var(--_consent-inline-sign, 1))
+			);
 		}
 	}
 
-	@keyframes consent-drawer-to-left-inset {
+	@keyframes consent-drawer-to-start-inset {
 		to {
-			transform: translateX(calc(-100% - 12px));
+			transform: translateX(
+				calc((-100% - 12px) * var(--_consent-inline-sign, 1))
+			);
 		}
 	}
 
-	@keyframes consent-drawer-from-right {
+	@keyframes consent-drawer-from-end {
 		from {
-			transform: translateX(100%);
+			transform: translateX(calc(100% * var(--_consent-inline-sign, 1)));
 		}
 	}
 
-	@keyframes consent-drawer-to-right {
+	@keyframes consent-drawer-to-end {
 		to {
-			transform: translateX(100%);
+			transform: translateX(calc(100% * var(--_consent-inline-sign, 1)));
 		}
 	}
 
-	@keyframes consent-drawer-from-right-inset {
+	@keyframes consent-drawer-from-end-inset {
 		from {
-			transform: translateX(calc(100% + 12px));
+			transform: translateX(
+				calc((100% + 12px) * var(--_consent-inline-sign, 1))
+			);
 		}
 	}
 
-	@keyframes consent-drawer-to-right-inset {
+	@keyframes consent-drawer-to-end-inset {
 		to {
-			transform: translateX(calc(100% + 12px));
+			transform: translateX(
+				calc((100% + 12px) * var(--_consent-inline-sign, 1))
+			);
 		}
 	}
 }

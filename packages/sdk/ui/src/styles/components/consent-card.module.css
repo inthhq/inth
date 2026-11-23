@@ -1,6 +1,8 @@
 /*
- * The Card presentation (the default): a floating card at the bottom left,
- * the bottom right or the centre. Its classes sit next to the
+ * The Card presentation (the default): a floating card in the bottom
+ * `start` or `end` corner, or the centre. `start` and `end` follow the
+ * writing direction, like `inset-inline-start`: on a right-to-left page the
+ * `start` card sits bottom right. Its classes sit next to the
  * `consent-surface` classes on the same elements; see that sheet for the
  * data attributes. Card ignores the edge style.
  *
@@ -37,10 +39,10 @@
 		padding-bottom: var(--inth-space-md);
 	}
 
-	/* A full-width root with the card pushed to the end. `right: 0` alone
-	   let the root overflow the left edge in narrow windows, which gave
-	   uneven margins. */
-	.root[data-placement='card-bottom-right'] {
+	/* A full-width root with the card pushed to the inline end.
+	   `inset-inline-end: 0` alone let the root overflow the start edge in
+	   narrow windows, which gave uneven margins. */
+	.root[data-placement='card-end'] {
 		inset-inline: 0;
 		align-items: flex-end;
 	}

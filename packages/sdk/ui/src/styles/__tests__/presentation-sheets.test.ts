@@ -227,6 +227,73 @@ describe('v6 presentation sheets', async () => {
 		}
 	});
 
+	test('start and end follow the writing direction, so an RTL page mirrors them', () => {
+		// Any physical side would pin a `start` Card or Drawer to the left on
+		// a right-to-left page.
+		const physical =
+			/\|(?:left|right|(?:margin|padding)-(?:left|right)|border-(?:left|right)(?:-\w+)?)\|/u;
+		for (const name of ['surface', 'card', 'drawer', 'expand'] as const) {
+			const { css } = sheets[name];
+			const sides = declarations(css).filter((entry) => physical.test(entry));
+
+			expect({ name, sides }).toEqual({ name, sides: [] });
+			expect(css).not.toMatch(
+				/card-bottom-(?:left|right)|drawer-(?:left|right)|from-(?:left|right)|to-(?:left|right)/u
+			);
+		}
+		const dialog = readFileSync(
+			join(SOURCE_DIR, 'privacy-choices.module.css'),
+			'utf8'
+		);
+		expect(
+			declarations(dialog).filter((entry) => physical.test(entry))
+		).toEqual([]);
+		expect(dialog).toMatch(
+			/\.segmented:dir\(rtl\)\[data-selected='1'\] \.segmentedThumb \{\s*transform: translateX\(-100%\);/u
+		);
+
+		const card = declarations(sheets.card.css);
+		expect(card).toContainEqual(
+			expect.stringMatching(
+				/\|[^|]*\.inth-ui-root-[\w-]+\|inset-inline-start\|0$/u
+			)
+		);
+		expect(card).toContainEqual(
+			expect.stringMatching(/\[data-placement=card-end\]\|inset-inline\|0$/u)
+		);
+
+		const drawer = declarations(sheets.drawer.css);
+		expect(drawer).toContainEqual(
+			expect.stringMatching(
+				/\[data-placement=drawer-start\]\|inset-inline\|0 auto$/u
+			)
+		);
+		expect(drawer).toContainEqual(
+			expect.stringMatching(
+				/\[data-placement=drawer-end\]\|inset-inline\|auto 0$/u
+			)
+		);
+		// The side slides read one sign, which flips under :dir(rtl), so a
+		// `start` drawer enters from the start edge in both directions.
+		expect(drawer).toContainEqual(
+			expect.stringMatching(
+				/^@layer components\|\.inth-ui-root-[\w-]+:dir\(rtl\)\|--_consent-inline-sign\|-1$/u
+			)
+		);
+		const slides = [
+			...sheets.drawer.css.matchAll(
+				/@keyframes [\w-]*consent-drawer-(?:from|to)-(?:start|end)[\w-]*\{[^}]*\{transform:(?<transform>[^}]*)\}/gu
+			),
+		].map((match) => match.groups?.transform);
+
+		expect(slides).toHaveLength(8);
+		for (const transform of slides) {
+			expect(transform).toMatch(
+				/^translateX\(calc\(.*\* var\(--_consent-inline-sign,\s*1\)\)\)$/u
+			);
+		}
+	});
+
 	test('a Card stays within the first-paint ceiling', () => {
 		const card = [tokens, button, sheets.surface, sheets.card]
 			.map((sheet) => sheet.css)

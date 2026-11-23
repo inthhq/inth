@@ -8,9 +8,10 @@
  * `consent-drawer`) whose classes sit on the same elements as these. The
  * variants are data attributes on `.root`:
  *
- *   data-placement   card-bottom-left | card-bottom-right | card-center |
+ *   data-placement   card-start | card-end | card-center |
  *                    banner-bottom | banner-top | drawer-bottom |
- *                    drawer-top | drawer-left | drawer-right
+ *                    drawer-top | drawer-start | drawer-end
+ *                    (`start` and `end` follow the writing direction)
  *   data-flow        expand-in-place | all-in-one
  *   data-edge-style  inset | flush
  *   data-blocking    'true' while the page is blocked
