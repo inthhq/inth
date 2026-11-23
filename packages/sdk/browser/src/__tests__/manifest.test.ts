@@ -8,9 +8,9 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { mountGPP } from '../gpp';
-import { createScriptTagConsentClient as createConsentClient } from '../script-tag-client';
+import { createScriptTagConsentClient as createConsentClient } from '../create-script-tag-consent-client';
 import { manifest, manifestNeedsLocation } from '../transports/manifest';
-import type { ConsentClient } from '../types';
+import type { ConsentClient } from '../consent-client.model';
 
 /** A query pair Inth adds to `/v1/consent/init`. */
 const INIT_PAIR =

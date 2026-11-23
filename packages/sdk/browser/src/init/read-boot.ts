@@ -17,7 +17,7 @@
 import type { KernelConfig, KernelOverrides } from '@inth/sdk-core';
 import type { readStoredRecords } from '@inth/sdk-core/modules/persistence';
 
-import type { GlobalApiBase, QueuedCall } from '../global-base';
+import type { GlobalApiBase, QueuedCall } from '../create-global-with';
 import { GLOBAL_NAME } from '../global-name';
 
 /** Property of the stand-in `window.inth` that holds the {@link InitBoot}. */

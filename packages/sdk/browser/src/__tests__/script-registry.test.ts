@@ -10,7 +10,7 @@ import { createConsentClient } from '../client';
 import { installGlobal } from '../global';
 import { createTestingGlobal } from '../testing-global';
 import type { TestingGlobalApi } from '../testing-global';
-import type { ConsentClient, ConsentClientOptions } from '../types';
+import type { ConsentClient, ConsentClientOptions } from '../consent-client.model';
 
 const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';
 const REGISTRY_SRC = 'https://acme.inth.app/scripts/vendor@0123456789abcdef.js';

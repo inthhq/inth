@@ -1,14 +1,14 @@
 import { hosted } from '@inth/sdk-core/transports';
 import { manifest } from '@inth/sdk-core/transports/manifest-browser';
 
-import type { CreateConsentClientContext } from './client-base';
-import { createGlobalWith } from './global-base';
-import type { GlobalApiBase } from './global-base';
-import { createScriptTagConsentClient } from './script-tag-client';
+import type { CreateConsentClientContext } from './create-consent-client-with';
+import { createGlobalWith } from './create-global-with';
+import type { GlobalApiBase } from './create-global-with';
+import { createScriptTagConsentClient } from './create-script-tag-consent-client';
 
-export { autoInit, installGlobal } from './global-base';
+export { autoInit, installGlobal } from './create-global-with';
 export { GLOBAL_NAME } from './global-name';
-export type { GlobalApiBase, QueuedCall } from './global-base';
+export type { GlobalApiBase, QueuedCall } from './create-global-with';
 
 /** The global API installed by the browser bundle with the hosted and manifest transports. */
 export interface GlobalApi extends GlobalApiBase {

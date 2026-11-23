@@ -10,7 +10,7 @@ import type {
 	ConsentClient,
 	ConsentClientOptions,
 	TestingScriptTagOptions,
-} from '../../types';
+} from '../../consent-client.model';
 
 /**
  * Turns test options into ES module options with `testing({ policy })`.

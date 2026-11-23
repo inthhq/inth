@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { activateGatedScripts } from '../gated-scripts';
+import { activateGatedScripts } from '../activate-gated-scripts';
 import { createTestingConsentClient as createConsentClient } from '../testing-global';
 
 const frames: HTMLIFrameElement[] = [];

@@ -17,11 +17,11 @@
 
 import type { DevToolsPosition, DevToolsTab } from '@inth/sdk-dev-tools';
 
-import { createBrowserDevTools } from '../devtools-mount';
-import type { BrowserDevToolsOptions } from '../devtools-mount';
+import { createBrowserDevTools } from '../create-browser-dev-tools';
+import type { BrowserDevToolsOptions } from '../create-browser-dev-tools';
 import type { GlobalApi, QueuedCall } from '../global';
 import { GLOBAL_NAME } from '../global-name';
-import type { ConsentClient } from '../types';
+import type { ConsentClient } from '../consent-client.model';
 
 const TABS: ReadonlySet<string> = new Set<DevToolsTab>([
 	'consents',

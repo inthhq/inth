@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { activateGatedScripts } from '../gated-scripts';
+import { activateGatedScripts } from '../activate-gated-scripts';
 import { createTestingConsentClient as createScriptTagConsentClient } from '../testing-global';
-import type { ConsentClient } from '../types';
+import type { ConsentClient } from '../consent-client.model';
 
 const clients: ConsentClient[] = [];
 

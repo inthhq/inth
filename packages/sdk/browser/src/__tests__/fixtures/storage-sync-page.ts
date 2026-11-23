@@ -3,7 +3,7 @@
  * persistence, plus a log of what its subscribers saw.
  */
 import { createTestingConsentClient as createConsentClient } from '../../testing-global';
-import type { ConsentClient } from '../../types';
+import type { ConsentClient } from '../../consent-client.model';
 
 /** What the test reads from each page. */
 export interface StorageSyncPage {

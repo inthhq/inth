@@ -8,7 +8,7 @@
 
 import { readStoredRecords } from '@inth/sdk-core/modules/persistence';
 
-import { readBoot } from '../init/boot';
+import { readBoot } from '../init/read-boot';
 import { version } from '../version';
 
 readBoot()?.provide({ name: 'records', readStoredRecords, version });

@@ -7,8 +7,8 @@ import type {
 	ConsentClient,
 	ConsentUIHandle,
 	ConsentUIOptions,
-} from '../types';
-import { mountConsentUI } from '../ui/mount';
+} from '../consent-client.model';
+import { mountConsentUI } from '../ui/mount-consent-ui';
 
 const clients: ConsentClient[] = [];
 

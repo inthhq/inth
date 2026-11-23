@@ -15,7 +15,7 @@ import { translations } from '@inth/sdk-translations/en';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createConsentClient as createHostedClient } from '../hosted';
-import { createHostedConsentClient } from '../hosted-client';
+import { createHostedConsentClient } from '../create-hosted-consent-client';
 import { createConsentClient, getEventDispatcher } from '../index';
 import { resolveRules } from '../policy-rules';
 import { testing } from '../testing';
@@ -26,7 +26,7 @@ import type {
 	ConsentUIOptions,
 	ScriptTagClientOptions,
 	TestingScriptTagOptions,
-} from '../types';
+} from '../consent-client.model';
 
 /** A transport factory that hands the client `transport`. */
 const custom = (

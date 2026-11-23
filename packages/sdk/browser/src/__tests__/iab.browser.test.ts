@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import type { ConsentClient } from '../types';
+import type { ConsentClient } from '../consent-client.model';
 import { initIAB as init } from './fixtures/factory-init';
 
 let client: ConsentClient | undefined;

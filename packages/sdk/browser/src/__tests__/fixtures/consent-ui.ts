@@ -18,8 +18,8 @@ import type {
 	ConsentBannerOptions,
 	ConsentClient,
 	ConsentDialogOptions,
-} from '../../types';
-import { mountConsentUI } from '../../ui/mount';
+} from '../../consent-client.model';
+import { mountConsentUI } from '../../ui/mount-consent-ui';
 
 export type Region = 'eu' | 'us-opt-in' | 'us-notice' | 'us-opt-out';
 

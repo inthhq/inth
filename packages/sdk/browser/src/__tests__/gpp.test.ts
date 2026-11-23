@@ -6,7 +6,7 @@ import { installGlobal } from '../global';
 import { mountGPP } from '../gpp';
 import { createTestingGlobal as createGlobal } from '../testing-global';
 import type { TestingGlobalApi as GlobalApi } from '../testing-global';
-import type { ConsentClient, ScriptTagClientOptions } from '../types';
+import type { ConsentClient, ScriptTagClientOptions } from '../consent-client.model';
 import { init } from './fixtures/factory-init';
 
 const testWindow = window as Window & { inth?: unknown };

@@ -12,15 +12,15 @@
 
 import type { ConsentSnapshot } from '@inth/sdk-core';
 
-import type { ConsentBannerOptions } from '../../types';
-import { resolveActions } from '../actions';
+import type { ConsentBannerOptions } from '../../consent-client.model';
+import { resolveActions } from '../render-action-footer';
 import { importPresentation } from '../parts/load';
 import type { Surface, SurfaceContext } from '../surface';
 import type {
 	PromptActionGroups,
 	PromptContainer,
 	PromptSurface,
-} from './surface';
+} from './create-prompt-surface';
 
 /** The banner options that shape the prompt's container. */
 const containerOverride = (options: ConsentBannerOptions) => ({

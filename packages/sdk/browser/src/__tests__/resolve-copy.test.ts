@@ -1,7 +1,7 @@
 import type { ConsentSnapshot } from '@inth/sdk-core';
 import { describe, expect, it } from 'vitest';
 
-import { resolveCopy } from '../ui/copy';
+import { resolveCopy } from '../ui/resolve-copy';
 
 const snapshotWith = (
 	prompt: 'choice' | 'notice',

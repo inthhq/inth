@@ -22,13 +22,13 @@ import type { DevToolsLauncherTarget } from '@inth/sdk-ui/utils/devtools-launche
 
 import { dropRejection } from '../drop-rejection';
 import { classes } from '../generated/styles';
-import type { ConsentTriggerOptions } from '../types';
+import type { ConsentTriggerOptions } from '../consent-client.model';
 import { createBrandMark } from './branding';
 import { cx, h } from './dom';
 import { isOptOutConfirmationOpen } from './opt-out-confirmation-state';
 import type { Surface, SurfaceContext } from './surface';
-import { createTriggerToolbar } from './trigger-toolbar';
-import type { TriggerToolbar } from './trigger-toolbar';
+import { createTriggerToolbar } from './create-trigger-toolbar';
+import type { TriggerToolbar } from './create-trigger-toolbar';
 
 const POSITION_CLASS: Record<CornerPosition, keyof typeof classes.trigger> = {
 	'bottom-left': 'bottomLeft',

@@ -10,7 +10,7 @@
 import { resolveRightsReceipt, resolveRightsReceiptCopy } from '@inth/sdk-core';
 
 import { classes as styles } from '../../generated/ui/dialog';
-import type { BrowserSlotKey } from '../slots';
+import type { BrowserSlotKey } from '../create-slot-applier';
 import { cx, el, icon } from './dom';
 import type { PartRef } from './dom';
 import { copySurfaceReference, getOptOutReceiptData } from './engine';

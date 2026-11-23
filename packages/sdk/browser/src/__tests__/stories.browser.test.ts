@@ -7,7 +7,7 @@ import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { page } from 'vitest/browser';
 
-import type { ConsentClient } from '../types';
+import type { ConsentClient } from '../consent-client.model';
 import { mountStory, CONSENT_STORIES } from './fixtures/stories';
 
 const clients: ConsentClient[] = [];

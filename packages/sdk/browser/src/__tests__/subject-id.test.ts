@@ -12,9 +12,9 @@ import {
 } from '@inth/sdk-schema/types';
 import { afterEach, expect, test, vi } from 'vitest';
 
-import { createScriptTagConsentClient as createConsentClient } from '../script-tag-client';
+import { createScriptTagConsentClient as createConsentClient } from '../create-script-tag-consent-client';
 import { manifest } from '../transports/manifest';
-import type { ConsentClient, ConsentSnapshot } from '../types';
+import type { ConsentClient, ConsentSnapshot } from '../consent-client.model';
 
 const clients: ConsentClient[] = [];
 

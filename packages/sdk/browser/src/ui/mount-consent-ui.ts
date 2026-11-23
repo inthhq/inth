@@ -13,7 +13,7 @@ import type {
 	ConsentClient,
 	ConsentUIHandle,
 	ConsentUIOptions,
-} from '../types';
+} from '../consent-client.model';
 import { createDialog } from './dialog';
 import { h } from './dom';
 import {
@@ -22,10 +22,10 @@ import {
 	subscribeOptOutReceiptData,
 } from './opt-out-confirmation-state';
 import { createBannerSurface } from './prompt/prompt';
-import { createStyle, createUIRoot } from './root';
-import { createSlotApplier } from './slots';
+import { createStyle, createUIRoot } from './create-ui-root';
+import { createSlotApplier } from './create-slot-applier';
 import type { Surface, SurfaceContext } from './surface';
-import { createTrigger } from './trigger';
+import { createTrigger } from './create-trigger';
 
 const resolveContainer = function resolveContainer(
 	container: ConsentUIOptions['container']

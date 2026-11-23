@@ -11,8 +11,8 @@ import type { ConsentContainer, ConsentEdgeStyle } from '@inth/sdk-core';
 import type { PolicyRule } from '@inth/sdk-schema/types';
 
 import { createTestingConsentClient } from '../../testing-global';
-import type { ConsentClient } from '../../types';
-import { mountConsentUI } from '../../ui/mount';
+import type { ConsentClient } from '../../consent-client.model';
+import { mountConsentUI } from '../../ui/mount-consent-ui';
 
 type Region = 'eu' | 'us-opt-in' | 'us-notice' | 'us-opt-out';
 

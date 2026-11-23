@@ -18,9 +18,9 @@ import {
 } from '../../../core/src/libs/page-globals';
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import { autoInit, createGlobal, installGlobal } from '../global';
-import type { GlobalApiBase } from '../global-base';
-import { releaseBoot } from '../init/adopt';
-import type { InitBoot } from '../init/boot';
+import type { GlobalApiBase } from '../create-global-with';
+import { releaseBoot } from '../init/adopt-boot';
+import type { InitBoot } from '../init/read-boot';
 import { runInitScript } from '../init/run';
 import { version } from '../version';
 

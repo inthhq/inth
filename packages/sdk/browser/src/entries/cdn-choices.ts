@@ -6,8 +6,8 @@
  * that keep per-kernel state for it to call. See `../ui/choices-file.ts`.
  */
 
-import type { ChoicesFile } from '../ui/choices-file';
-import { CHOICES_KEY } from '../ui/choices-file';
+import type { ChoicesFile } from '../ui/load-choices-file';
+import { CHOICES_KEY } from '../ui/load-choices-file';
 import * as dialog from '../ui/dialog/dialog';
 import * as optInConfirmation from '../ui/opt-in-confirmation';
 import * as card from '../ui/prompt/card';

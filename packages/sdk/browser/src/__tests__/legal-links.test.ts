@@ -2,8 +2,8 @@ import { clearGVLCache } from '@inth/sdk-iab';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import { readPageOptions } from '../auto-init';
-import type { ConsentClient, ScriptTagClientOptions } from '../types';
+import { readPageOptions } from '../script-tag-options.model';
+import type { ConsentClient, ScriptTagClientOptions } from '../consent-client.model';
 import { init, initIAB } from './fixtures/factory-init';
 
 const clients: ConsentClient[] = [];

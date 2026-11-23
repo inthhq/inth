@@ -1,7 +1,7 @@
 import type { KernelTransport, ProviderTransportFactory } from '@inth/sdk-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { readPageOptions, readScriptOptions } from '../auto-init';
+import { readPageOptions, readScriptOptions } from '../script-tag-options.model';
 import { autoInit, installGlobal } from '../global';
 import { createTestingGlobal as createGlobal } from '../testing-global';
 import type { TestingGlobalApi as GlobalApi } from '../testing-global';

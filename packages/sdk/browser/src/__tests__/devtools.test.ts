@@ -7,7 +7,7 @@ import {
 	createTestingConsentClient as createConsentClient,
 } from '../testing-global';
 import type { TestingGlobalApi as GlobalApi } from '../testing-global';
-import type { ConsentClient } from '../types';
+import type { ConsentClient } from '../consent-client.model';
 
 type TestWindow = Window & { inth?: unknown };
 

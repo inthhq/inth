@@ -22,7 +22,7 @@ import {
 	showConsentSurface,
 } from '@inth/sdk-core/surface-actions';
 
-import type { ConsentDialogOptions } from '../../types';
+import type { ConsentDialogOptions } from '../../consent-client.model';
 import {
 	importDialog,
 	importOptInConfirmation,

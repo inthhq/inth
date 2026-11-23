@@ -44,11 +44,11 @@ import { hosted } from '@inth/sdk-core/transports';
 import type { Theme } from '@inth/sdk-ui/theme';
 
 import { createBrowserRuntime } from './create-runtime';
-import { createDeferred } from './deferred';
-import type { PublishDevToolsLauncher } from './devtools-mount';
-import { createGatedScriptActivator } from './gated-scripts';
+import { createDeferred } from './create-deferred';
+import type { PublishDevToolsLauncher } from './create-browser-dev-tools';
+import { createGatedScriptActivator } from './activate-gated-scripts';
 import { hasDecided } from './has-decided';
-import { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions';
+import { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions.model';
 import type {
 	ConsentClient,
 	ConsentClientEventMap,
@@ -58,13 +58,13 @@ import type {
 	ConsentUIHandle,
 	ConsentUIMounter,
 	ConsentUIOptions,
-} from './types';
+} from './consent-client.model';
 import {
 	closeOptInConfirmation,
 	closeOptOutConfirmation,
 } from './ui/opt-out-confirmation-state';
 
-export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions';
+export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions.model';
 
 /** Values `data-inth-action` accepts. */
 export type PageAction =

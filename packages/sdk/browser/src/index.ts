@@ -21,8 +21,8 @@
 import type { WithProjectUrl } from '@inth/sdk-core/runtime';
 
 import { createConsentClient as createClient } from './client';
-import type { ConsentClient, ConsentClientOptions } from './types';
-import { mountConsentUI } from './ui/mount';
+import type { ConsentClient, ConsentClientOptions } from './consent-client.model';
+import { mountConsentUI } from './ui/mount-consent-ui';
 
 const PKG = '@inth/sdk';
 
@@ -59,7 +59,7 @@ export {
 	ACTIVATED_ATTRIBUTE,
 	activateGatedScripts,
 	CATEGORY_ATTRIBUTE,
-} from './gated-scripts';
+} from './activate-gated-scripts';
 export { manifest, manifestNeedsLocation } from './transports/manifest';
 export type {
 	BrowserManifestModeFactory,
@@ -79,13 +79,13 @@ export type {
 	ConsentUIHandle,
 	ConsentUIOptions,
 	TriggerPosition,
-} from './types';
-export { mountConsentUI } from './ui/mount';
-export { createPrivacyChoicesLink } from './ui/privacy-choices-link';
+} from './consent-client.model';
+export { mountConsentUI } from './ui/mount-consent-ui';
+export { createPrivacyChoicesLink } from './ui/create-privacy-choices-link';
 export type {
 	PrivacyChoicesLinkHandle,
 	PrivacyChoicesLinkOptions,
-} from './ui/privacy-choices-link';
+} from './ui/create-privacy-choices-link';
 export { version } from './version';
 export type {
 	ConsentSnapshot,

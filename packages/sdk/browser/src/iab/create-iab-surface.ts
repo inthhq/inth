@@ -8,15 +8,15 @@ import {
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
 import { classes } from '../generated/iab-styles';
-import type { ConsentUIOptions } from '../types';
-import { renderActionFooter, resolveActions } from '../ui/actions';
+import type { ConsentUIOptions } from '../consent-client.model';
+import { renderActionFooter, resolveActions } from '../ui/render-action-footer';
 import { renderBranding } from '../ui/branding';
-import { resolveCopy } from '../ui/copy';
+import { resolveCopy } from '../ui/resolve-copy';
 import { cx, h, markLateEntry, supportsStartingStyle } from '../ui/dom';
 import { renderLegalLinks } from '../ui/surface';
 import type { Surface, SurfaceContext } from '../ui/surface';
-import { createIABPreferences } from './preferences';
-import type { IABPreferences } from './preferences';
+import { createIABPreferences } from './create-iab-preferences';
+import type { IABPreferences } from './create-iab-preferences';
 
 /** One IAB banner/dialog lifecycle on the client's existing kernel. */
 export const createIABSurface = (

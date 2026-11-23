@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { testing } from '../testing';
-import type { ConsentClient, ScriptTagClientOptions } from '../types';
+import type { ConsentClient, ScriptTagClientOptions } from '../consent-client.model';
 import { initIAB as init, init as initOrdinary } from './fixtures/factory-init';
 
 const clients: ConsentClient[] = [];

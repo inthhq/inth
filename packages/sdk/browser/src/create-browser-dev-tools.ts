@@ -11,7 +11,7 @@ import type { DevToolsInstance, DevToolsOptions } from '@inth/sdk-dev-tools';
 import { attachDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 import type { publishDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 
-import type { ConsentClient } from './types';
+import type { ConsentClient } from './consent-client.model';
 
 /** Presentation options; the kernel and categories come from the client. */
 export type BrowserDevToolsOptions = Omit<

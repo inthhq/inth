@@ -3,8 +3,8 @@ import type { WithProjectUrl } from '@inth/sdk-core/runtime';
 import { createIAB, initializeIABStub, destroyIABStub } from '@inth/sdk-iab';
 
 import { createConsentClient as createClient } from './client';
-import { mountIABConsentUI } from './iab/mount';
-import type { ConsentClient, ConsentClientOptions } from './types';
+import { mountIABConsentUI } from './iab/mount-iab-consent-ui';
+import type { ConsentClient, ConsentClientOptions } from './consent-client.model';
 
 /**
  * Create an IAB-capable browser client without starting it.
@@ -39,11 +39,11 @@ export const init = (
 
 export { hosted } from '@inth/sdk-core/modes';
 export { manifest } from './transports/manifest';
-export { mountIABConsentUI } from './iab/mount';
+export { mountIABConsentUI } from './iab/mount-iab-consent-ui';
 export type {
 	ConsentClient,
 	ConsentClientOptions,
 	ConsentUIOptions,
-} from './types';
+} from './consent-client.model';
 export { iab } from '@inth/sdk-iab';
 export { version } from './version';

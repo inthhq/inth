@@ -12,8 +12,8 @@ import {
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { createTestingConsentClient } from '../testing-global';
-import type { ConsentClient, ConsentUIOptions } from '../types';
-import { mountConsentUI } from '../ui/mount';
+import type { ConsentClient, ConsentUIOptions } from '../consent-client.model';
+import { mountConsentUI } from '../ui/mount-consent-ui';
 
 const clients: ConsentClient[] = [];
 

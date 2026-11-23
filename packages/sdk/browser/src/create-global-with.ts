@@ -13,25 +13,25 @@ import {
 	mergeClientOptions,
 	readPageOptions,
 	readScriptOptions,
-} from './auto-init';
-import type { CreateConsentClientContext } from './client-base';
-import { createDeferred } from './deferred';
-import type { PublishDevToolsLauncher } from './devtools-mount';
+} from './script-tag-options.model';
+import type { CreateConsentClientContext } from './create-consent-client-with';
+import { createDeferred } from './create-deferred';
+import type { PublishDevToolsLauncher } from './create-browser-dev-tools';
 import { GLOBAL_NAME } from './global-name';
 import {
 	adoptBoot,
 	adoptedBoot,
 	releaseBoot,
 	withInitPrefetch,
-} from './init/adopt';
-import { readBoot } from './init/boot';
+} from './init/adopt-boot';
+import { readBoot } from './init/read-boot';
 import type {
 	ConsentClient,
 	ConsentClientEventMap,
 	ScriptTagClientOptions,
 	ConsentUIHandle,
 	ConsentUIOptions,
-} from './types';
+} from './consent-client.model';
 import { version } from './version';
 
 /** A call queued before the script loaded: `[method, ...args]`. */

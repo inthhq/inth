@@ -9,8 +9,8 @@ import type { OptOutReceiptData } from '@inth/sdk-core/surface-state';
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
 import { classes } from '../generated/styles';
-import type { ConsentDialogOptions } from '../types';
-import { resolveCopy } from './copy';
+import type { ConsentDialogOptions } from '../consent-client.model';
+import { resolveCopy } from './resolve-copy';
 import { h, readDurationMs, supportsStartingStyle } from './dom';
 import {
 	closeOptInConfirmation,

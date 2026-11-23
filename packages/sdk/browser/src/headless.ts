@@ -17,7 +17,7 @@
 import type { WithProjectUrl } from '@inth/sdk-core/runtime';
 
 import { createConsentClient as createClient } from './client';
-import type { ConsentClient, ConsentClientOptions } from './types';
+import type { ConsentClient, ConsentClientOptions } from './consent-client.model';
 
 const PKG = '@inth/sdk/headless';
 
@@ -61,7 +61,7 @@ export {
 	ACTIVATED_ATTRIBUTE,
 	activateGatedScripts,
 	CATEGORY_ATTRIBUTE,
-} from './gated-scripts';
+} from './activate-gated-scripts';
 export { manifest, manifestNeedsLocation } from './transports/manifest';
 export type {
 	BrowserManifestModeFactory,
@@ -75,7 +75,7 @@ export type {
 	ConsentModeName,
 	ScriptTagClientOptions,
 	ConsentSaveInput,
-} from './types';
+} from './consent-client.model';
 export { version } from './version';
 export type {
 	ConsentSnapshot,

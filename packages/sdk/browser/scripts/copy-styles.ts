@@ -17,7 +17,7 @@ import { join, resolve } from 'node:path';
 
 import { stylesheet as iabStylesheet } from '../src/generated/iab-styles';
 import { stylesheet } from '../src/generated/styles';
-import { adapterStyles } from '../src/iab/styles';
+import { adapterStyles } from '../src/iab/iab-adapter-styles.model';
 
 const dist = resolve(import.meta.dirname, '../dist');
 

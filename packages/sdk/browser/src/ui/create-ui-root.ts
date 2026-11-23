@@ -6,7 +6,7 @@
  * Shared by `mountConsentUI` and the init script's banner, so the engine
  * can take over the root the init script mounted.
  */
-import type { ConsentUIOptions } from '../types';
+import type { ConsentUIOptions } from '../consent-client.model';
 import { h } from './dom';
 
 const HOST_ATTRIBUTE = 'data-inth-ui';

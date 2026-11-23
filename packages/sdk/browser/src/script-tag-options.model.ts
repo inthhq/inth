@@ -11,7 +11,7 @@ import type {
 	ConsentDialogOptions,
 	ConsentModeName,
 	ConsentUIOptions,
-} from './types';
+} from './consent-client.model';
 
 /** Attribute that turns auto-init off so the page calls `inth.init()`. */
 export const MANUAL_ATTRIBUTE = 'data-manual';

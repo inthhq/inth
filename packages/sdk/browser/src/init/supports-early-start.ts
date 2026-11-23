@@ -6,7 +6,7 @@
  * @internal
  */
 
-import type { ScriptTagClientOptions } from '../types';
+import type { ScriptTagClientOptions } from '../consent-client.model';
 import { readHostedMarker } from './hosted-marker';
 
 /**

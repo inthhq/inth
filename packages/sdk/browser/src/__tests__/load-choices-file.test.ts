@@ -11,8 +11,8 @@ import {
 	CHOICES_ENGINE_KEY,
 	CHOICES_KEY,
 	loadChoicesFile,
-} from '../ui/choices-file';
-import type { ChoicesEngine, ChoicesFile } from '../ui/choices-file';
+} from '../ui/load-choices-file';
+import type { ChoicesEngine, ChoicesFile } from '../ui/load-choices-file';
 import * as engine from '../ui/parts/engine';
 
 const target = window as unknown as Record<string, unknown>;

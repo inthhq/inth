@@ -3,7 +3,7 @@ import type { MockInstance } from 'vitest';
 
 import { autoInit, createGlobal, installGlobal } from '../global';
 import type { GlobalApi } from '../global';
-import type { ConsentClientOptions } from '../types';
+import type { ConsentClientOptions } from '../consent-client.model';
 
 type TestWindow = Window & {
 	inth?: unknown;

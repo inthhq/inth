@@ -10,7 +10,7 @@ import {
 } from '@inth/sdk-iab/headless';
 import type { HeadlessIABProcessedVendor } from '@inth/sdk-iab/headless';
 
-import type { SurfaceCopy } from '../ui/copy';
+import type { SurfaceCopy } from '../ui/resolve-copy';
 import { h } from '../ui/dom';
 
 type Vendor = GlobalVendorList['vendors'][number] | NonIABVendor;

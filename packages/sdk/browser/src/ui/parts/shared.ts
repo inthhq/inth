@@ -29,7 +29,7 @@ import type { ConsentActionKey } from '@inth/sdk-ui/theme';
 
 import { classes } from '../../generated/styles';
 import { classes as dialogStyles } from '../../generated/ui/dialog';
-import type { BrowserSlotKey } from '../slots';
+import type { BrowserSlotKey } from '../create-slot-applier';
 import type { SurfaceContext } from '../surface';
 import { el, icon } from './dom';
 import type { PartChild, PartProps } from './dom';

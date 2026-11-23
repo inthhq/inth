@@ -43,8 +43,8 @@ import type { LegalLinkKeys } from '@inth/sdk-ui/utils/legal-links';
 
 import { classes as styles } from '../../generated/ui/dialog';
 import { classes as expandStyles } from '../../generated/ui/expand';
-import type { ConsentDialogOptions } from '../../types';
-import { advertisingRow, createCategoryGroup } from '../parts/category-group';
+import type { ConsentDialogOptions } from '../../consent-client.model';
+import { advertisingRow, createCategoryGroup } from '../parts/create-category-group';
 import {
 	activeElementOf,
 	cx,
@@ -63,8 +63,8 @@ import {
 	showConsentSurface,
 	takeReceiptFocus,
 } from '../parts/engine';
-import { createRightsReceipt } from '../parts/receipt';
-import { createSaleRightsRow } from '../parts/rights-row';
+import { createRightsReceipt } from '../parts/create-rights-receipt';
+import { createSaleRightsRow } from '../parts/create-sale-rights-row';
 import {
 	checkIcon,
 	chevron,
@@ -75,7 +75,7 @@ import {
 } from '../parts/shared';
 import type { PartEnv } from '../parts/shared';
 import type { Surface, SurfaceContext } from '../surface';
-import { OPTIONS_SHEETS } from './sheets';
+import { OPTIONS_SHEETS } from './options-sheets';
 
 /** The "Saved" cue stays this long, on a timer, not an animation (MOT-03). */
 const CUE_MS = 1700;

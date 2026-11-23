@@ -10,8 +10,8 @@ import type { OptOutLinkVariant, Translations } from '@inth/sdk-core';
 import { CPPA_OPT_OUT_ICON } from '@inth/sdk-ui/utils/opt-out-icon';
 
 import { classes } from '../generated/styles';
-import type { ConsentClient } from '../types';
-import { createOptOutIcon } from './opt-out-icon';
+import type { ConsentClient } from '../consent-client.model';
+import { createOptOutIcon } from './create-opt-out-icon';
 
 /** The opt-out icon's height in the link, in CSS pixels. */
 const OPT_OUT_ICON_HEIGHT = 14;

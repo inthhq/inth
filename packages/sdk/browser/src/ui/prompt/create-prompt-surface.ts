@@ -46,8 +46,8 @@ import { BRAND_MARKS } from '@inth/sdk-ui/utils/branding';
 
 import { classes as expandStyles } from '../../generated/ui/expand';
 import { classes as surfaceStyles } from '../../generated/ui/surface';
-import type { ConsentBannerOptions } from '../../types';
-import type { PartSheet } from '../dialog/sheets';
+import type { ConsentBannerOptions } from '../../consent-client.model';
+import type { PartSheet } from '../dialog/options-sheets';
 import {
 	activeElementOf,
 	cx,

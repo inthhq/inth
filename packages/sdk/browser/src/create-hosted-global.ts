@@ -1,9 +1,9 @@
 import { hosted } from '@inth/sdk-core/transports';
 
-import type { CreateConsentClientContext } from './client-base';
-import { createGlobalWith } from './global-base';
-import type { GlobalApiBase } from './global-base';
-import { createHostedConsentClient } from './hosted-client';
+import type { CreateConsentClientContext } from './create-consent-client-with';
+import { createGlobalWith } from './create-global-with';
+import type { GlobalApiBase } from './create-global-with';
+import { createHostedConsentClient } from './create-hosted-consent-client';
 
 /** The global API installed by the hosted browser bundle. */
 export interface HostedGlobalApi extends GlobalApiBase {

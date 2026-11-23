@@ -7,10 +7,10 @@
  * @internal
  */
 
-import type { ScriptTagClientOptions } from '../types';
+import type { ScriptTagClientOptions } from '../consent-client.model';
 import { version } from '../version';
-import type { InitBoot } from './boot';
-import { supportsEarlyStart } from './eligibility';
+import type { InitBoot } from './read-boot';
+import { supportsEarlyStart } from './supports-early-start';
 import { readHostedMarker } from './hosted-marker';
 
 let adopted: InitBoot | null = null;

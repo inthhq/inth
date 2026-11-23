@@ -6,8 +6,8 @@ import type * as Core from '@inth/sdk-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createTestingConsentClient as createConsentClient } from '../testing-global';
-import type { ConsentClient, ConsentUIHandle } from '../types';
-import { mountConsentUI } from '../ui/mount';
+import type { ConsentClient, ConsentUIHandle } from '../consent-client.model';
+import { mountConsentUI } from '../ui/mount-consent-ui';
 
 const reload = vi.hoisted(() => vi.fn());
 // oxlint-disable-next-line anti-slop/no-module-mocking -- jsdom cannot perform navigation on `window.location.reload`. The factory returns the real module and records the reload instead.

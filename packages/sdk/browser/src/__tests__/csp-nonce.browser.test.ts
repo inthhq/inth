@@ -8,9 +8,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 // transform them while it collects this file, outside any test's timeout.
 // Otherwise the first page load transforms the whole client and UI graph
 // inside the test, which took over ten seconds in a busy parallel run.
-import '../auto-init';
+import '../script-tag-options.model';
 import '../client';
-import '../ui/mount';
+import '../ui/mount-consent-ui';
 import type { UICSPPage } from './fixtures/ui-csp-page';
 
 const frames: HTMLIFrameElement[] = [];

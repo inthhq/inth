@@ -10,13 +10,13 @@ import {
 	createConsentClientWith,
 	factoryMode,
 	hostedMode,
-} from './client-base';
-import type { CreateConsentClientContext, ResolvedMode } from './client-base';
+} from './create-consent-client-with';
+import type { CreateConsentClientContext, ResolvedMode } from './create-consent-client-with';
 import type {
 	ConsentClient,
 	ConsentModeName,
 	ScriptTagClientOptions,
-} from './types';
+} from './consent-client.model';
 
 const defaultModeName = function defaultModeName(
 	options: ScriptTagClientOptions

@@ -3,10 +3,10 @@ import type {
 	ConsentClient,
 	ConsentUIHandle,
 	ConsentUIOptions,
-} from '../types';
-import { mountConsentUI } from '../ui/mount';
-import { adapterStyles } from './styles';
-import { createIABSurface } from './surface';
+} from '../consent-client.model';
+import { mountConsentUI } from '../ui/mount-consent-ui';
+import { adapterStyles } from './iab-adapter-styles.model';
+import { createIABSurface } from './create-iab-surface';
 
 /**
  * Mount IAB UI alongside the ordinary UI for non-IAB policy regions.

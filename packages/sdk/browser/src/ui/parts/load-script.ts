@@ -16,11 +16,11 @@
 
 import type { ConsentContainer } from '@inth/sdk-core';
 
-import { adoptedBoot } from '../../init/adopt';
+import { adoptedBoot } from '../../init/adopt-boot';
 import { partSrc } from '../../init/part-src';
 import { version } from '../../version';
-import { loadChoicesFile } from '../choices-file';
-import type { ChoicesFile } from '../choices-file';
+import { loadChoicesFile } from '../load-choices-file';
+import type { ChoicesFile } from '../load-choices-file';
 import * as engine from './engine';
 import type { PresentationModule } from './load';
 

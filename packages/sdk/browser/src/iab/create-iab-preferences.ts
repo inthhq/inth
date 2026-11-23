@@ -10,10 +10,10 @@ import type { HeadlessIABDisplayRow } from '@inth/sdk-iab/headless';
 
 import { classes } from '../generated/iab-styles';
 import { classes as shared } from '../generated/styles';
-import { resolveCopy } from '../ui/copy';
+import { resolveCopy } from '../ui/resolve-copy';
 import { h } from '../ui/dom';
 import type { SurfaceContext } from '../ui/surface';
-import { createVendorDisclosures } from './vendor-disclosures';
+import { createVendorDisclosures } from './create-vendor-disclosures';
 
 /** Preference content preserves focused controls while the IAB draft changes. */
 export interface IABPreferences {

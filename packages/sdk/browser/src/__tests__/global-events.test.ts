@@ -8,7 +8,7 @@ import {
 	createTestingConsentClient as createConsentClient,
 } from '../testing-global';
 import type { TestingGlobalApi as GlobalApi } from '../testing-global';
-import type { ConsentClient, ConsentClientOptions } from '../types';
+import type { ConsentClient, ConsentClientOptions } from '../consent-client.model';
 
 const testWindow = window as Window & { inth?: unknown };
 const clients: ConsentClient[] = [];
