@@ -184,6 +184,54 @@ const ROWS: Row[] = [
 		presentation: { variant: 'wall' },
 	},
 	{
+		blocking: true,
+		edgeStyle: 'inset',
+		label: 'an override legacy wall over a provider container',
+		override: { variant: 'wall' },
+		placement: 'card-center',
+		policy: optIn(SOFT),
+		presentation: { container: { type: 'drawer' } },
+	},
+	{
+		blocking: false,
+		edgeStyle: 'inset',
+		label: 'an override legacy position over a provider container',
+		override: { position: 'bottom-right' },
+		placement: 'card-end',
+		policy: optIn(),
+		presentation: { container: { side: 'top', type: 'drawer' } },
+	},
+	{
+		blocking: false,
+		edgeStyle: 'inset',
+		label: 'an override container over a provider legacy variant',
+		override: { container: { side: 'start', type: 'drawer' } },
+		placement: 'drawer-start',
+		policy: optIn(SOFT),
+		presentation: { edgeStyle: 'inset', variant: 'bar' },
+	},
+	{
+		blocking: false,
+		edgeStyle: 'flush',
+		label: 'a provider container over its own legacy variant',
+		placement: 'drawer-end',
+		policy: optIn(SOFT),
+		presentation: {
+			container: { side: 'end', type: 'drawer' },
+			variant: 'bar',
+		},
+	},
+	{
+		blocking: false,
+		edgeStyle: 'flush',
+		label:
+			'an override without geometry falls through to the provider legacy variant',
+		override: { primaryActions: ['accept'] },
+		placement: 'banner-bottom',
+		policy: optIn(SOFT),
+		presentation: { variant: 'bar' },
+	},
+	{
 		blocking: false,
 		diagnostic: 'center-unavailable',
 		edgeStyle: 'inset',
@@ -193,6 +241,119 @@ const ROWS: Row[] = [
 		policy: optIn({ blocking: 'forbidden' }),
 	},
 ];
+
+interface TopLevelRow {
+	label: string;
+	policy: ReturnType<typeof optIn>;
+	presentation?: PromptPresentation;
+	override?: PromptPresentation;
+	blocking: boolean;
+	diagnostic?: string;
+}
+
+/**
+ * The top-level `blocking`, `scrollLock` and `trapFocus` every shipped
+ * renderer reads. The policy's constraint wins over the host here too.
+ */
+const TOP_LEVEL_ROWS: TopLevelRow[] = [
+	{
+		blocking: false,
+		label: 'no constraint and no host request',
+		policy: optIn(),
+	},
+	{
+		blocking: true,
+		label: 'no constraint and a host that blocks',
+		policy: optIn(),
+		presentation: { blocking: true },
+	},
+	{
+		blocking: false,
+		diagnostic: 'blocking-forbidden',
+		label: 'forbidden over a host that blocks',
+		policy: optIn({ blocking: 'forbidden' }),
+		presentation: { blocking: true },
+	},
+	{
+		blocking: false,
+		diagnostic: 'blocking-forbidden',
+		label: 'forbidden over a host legacy wall',
+		policy: optIn({ blocking: 'forbidden' }),
+		presentation: { variant: 'wall' },
+	},
+	{
+		blocking: false,
+		diagnostic: 'blocking-forbidden',
+		label: 'forbidden over an override scroll lock',
+		override: { scrollLock: true },
+		policy: optIn({ blocking: 'forbidden' }),
+	},
+	{
+		blocking: true,
+		label: 'required without host presentation',
+		policy: optIn({ blocking: 'required' }),
+	},
+	{
+		blocking: true,
+		diagnostic: 'blocking-required',
+		label: 'required over a host that turns blocking off',
+		policy: optIn({ blocking: 'required' }),
+		presentation: { blocking: false },
+	},
+	{
+		blocking: true,
+		label: 'required over an override bar',
+		override: { variant: 'bar' },
+		policy: optIn({ blocking: 'required' }),
+	},
+	{
+		blocking: false,
+		diagnostic: 'blocking-forbidden',
+		label:
+			'an opt-out choice rule, which cannot block, over a host that blocks',
+		policy: normalizePolicyRule({
+			id: 'us',
+			match: { isDefault: true },
+			model: 'opt-out',
+			prompt: 'choice',
+		}),
+		presentation: { blocking: true },
+	},
+];
+
+describe('resolveConsentPresentation: top-level blocking under the policy', () => {
+	it.each(TOP_LEVEL_ROWS)(
+		'$label',
+		({ blocking, diagnostic, override, policy, presentation }) => {
+			const resolved = resolveConsentPresentation({
+				override,
+				policy,
+				presentation: presentation && { prompt: presentation },
+				surface: 'prompt',
+			});
+			expect(resolved).toMatchObject({
+				blocking,
+				scrollLock: blocking,
+				trapFocus: blocking,
+			});
+			expect(resolved.container?.desktop.blocking).toBe(blocking);
+			expect(
+				resolved.diagnostics
+					.map(({ code }) => code)
+					.filter((code) => code.startsWith('blocking-'))
+			).toEqual(diagnostic ? [diagnostic] : []);
+		}
+	);
+
+	it('leaves the preferences dialog blocking whatever the policy forbids', () => {
+		expect(
+			resolveConsentPresentation({
+				policy: optIn({ blocking: 'forbidden' }),
+				surface: 'preferences',
+			}).blocking
+		).toBe(true);
+	});
+});
 
 describe('resolveConsentPresentation: policy surface precedence', () => {
 	it.each(ROWS)(

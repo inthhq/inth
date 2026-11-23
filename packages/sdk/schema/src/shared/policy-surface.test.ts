@@ -196,15 +196,21 @@ describe('surface normalization', () => {
 		expect(normalizePolicyRule(optIn)).not.toHaveProperty('surface');
 	});
 
-	test('fills the container default and keeps soft defaults', () => {
+	test('fills the container default, keeps soft defaults, and drops the edge style beside a card', () => {
 		expect(
 			normalizePolicyRule({
 				...optIn,
 				surface: { container: { type: 'card' }, edgeStyle: 'inset' },
 			}).surface
+		).toEqual({ container: { position: 'start', type: 'card' } });
+		expect(
+			normalizePolicyRule({
+				...optIn,
+				surface: { container: { type: 'banner' }, edgeStyle: 'flush' },
+			}).surface
 		).toEqual({
-			container: { position: 'start', type: 'card' },
-			edgeStyle: 'inset',
+			container: { edge: 'bottom', type: 'banner' },
+			edgeStyle: 'flush',
 		});
 		expect(
 			normalizePolicyRule({
@@ -322,6 +328,40 @@ describe('surface fingerprints', () => {
 		expect(long.presentation).toBe(short.presentation);
 	});
 
+	test('hashes the canonical surface, so a wire-decoded rule hashes like its normalized form', () => {
+		const normalized = normalizePolicyRule({
+			...optIn,
+			surface: { container: { type: 'drawer' } },
+		});
+		const decoded = {
+			...normalized,
+			surface: { blocking: 'allowed', container: { type: 'drawer' } },
+		} as const;
+		expect(createPolicyRuleFingerprints(decoded).presentation).toBe(
+			createPolicyRuleFingerprints(normalized).presentation
+		);
+	});
+
+	test('an empty surface emits no presentation fingerprint', () => {
+		const rule = { ...normalizePolicyRule(optIn), surface: {} };
+		expect(createPolicyRuleFingerprints(rule)).not.toHaveProperty(
+			'presentation'
+		);
+	});
+
+	test('an edge style beside a card container does not change the hash', () => {
+		const card = { container: { position: 'end', type: 'card' } } as const;
+		const rule = normalizePolicyRule(optIn);
+		expect(
+			createPolicyRuleFingerprints({
+				...rule,
+				surface: { ...card, edgeStyle: 'flush' },
+			}).presentation
+		).toBe(
+			createPolicyRuleFingerprints({ ...rule, surface: card }).presentation
+		);
+	});
+
 	test('hashes surface in the presentation domain', () => {
 		const surface = { edgeStyle: 'flush' } as const;
 		expect(
@@ -375,12 +415,49 @@ describe('surface on the wire', () => {
 		).toBe(true);
 	});
 
-	test('the reader accepts a container without its default position', () => {
-		const wire = matchedWire(optIn);
+	test('the reader accepts a container without its default position, and canonicalizes it', () => {
+		const wire = matchedWire({
+			...optIn,
+			surface: { container: { type: 'card' } },
+		});
 		wire.policy.surface = { container: { type: 'card' } };
 		const read = readPolicyResolutionWire(wire);
 		assert(read.status === 'matched');
-		expect(read.policy.surface).toEqual({ container: { type: 'card' } });
+		expect(read.policy.surface).toEqual({
+			container: { position: 'start', type: 'card' },
+		});
+	});
+
+	test('every reader refuses a surface without its presentation fingerprint', () => {
+		const wire = matchedWire({
+			...optIn,
+			surface: { container: { type: 'drawer' } },
+		});
+		delete wire.fingerprints.presentation;
+		expect(readPolicyResolutionWire(wire)).toEqual({
+			policy: null,
+			reason: 'invalid-payload',
+			status: 'failed',
+		});
+		expect(v.safeParse(policyResolutionWireSchema, wire).success).toBe(false);
+	});
+
+	test('every reader takes an empty surface as no surface', () => {
+		const wire = matchedWire(optIn);
+		wire.policy.surface = {};
+		const read = readPolicyResolutionWire(wire);
+		assert(read.status === 'matched');
+		expect(read.policy).not.toHaveProperty('surface');
+		expect(read.fingerprints).not.toHaveProperty('presentation');
+		expect(v.safeParse(policyResolutionWireSchema, wire).success).toBe(true);
+	});
+
+	test('a surface the rule already implies needs no presentation fingerprint', () => {
+		const wire = matchedWire(optIn);
+		wire.policy.surface = { blocking: 'allowed' };
+		const read = readPolicyResolutionWire(wire);
+		assert(read.status === 'matched');
+		expect(read.policy).not.toHaveProperty('surface');
 	});
 
 	test.each([
@@ -514,6 +591,52 @@ describe('surface in the manifest', () => {
 		const json = JSON.parse(JSON.stringify(manifest)) as unknown;
 		expect(() => parseConsentManifest(json)).not.toThrow();
 		expect(v.safeParse(consentManifestResponseSchema, json).success).toBe(true);
+	});
+
+	test('a pack with a surface and no presentation fingerprint is invalid', () => {
+		const pack = createConsentManifestPolicyPack({
+			...optIn,
+			surface: { container: { type: 'drawer' } },
+		});
+		const { presentation: _, ...fingerprints } = pack.fingerprints;
+		const manifest = {
+			branding: 'inth',
+			policyPacks: [{ ...pack, fingerprints }],
+			revision: 'r',
+			schemaVersion: 2,
+		} as const;
+		expect(() =>
+			parseConsentManifest(JSON.parse(JSON.stringify(manifest)))
+		).toThrow();
+		expect(
+			resolvePolicyResolutionFromManifest(manifest as never, {
+				countryCode: 'DE',
+				regionCode: null,
+			})
+		).toEqual({
+			policy: null,
+			reason: 'invalid-configuration',
+			status: 'failed',
+		});
+	});
+
+	test('a pack with an empty surface resolves without one', () => {
+		const pack = createConsentManifestPolicyPack(optIn);
+		const manifest = {
+			branding: 'inth',
+			policyPacks: [{ ...pack, rule: { ...pack.rule, surface: {} } }],
+			revision: 'r',
+			schemaVersion: 2,
+		} as const;
+		expect(() =>
+			parseConsentManifest(JSON.parse(JSON.stringify(manifest)))
+		).not.toThrow();
+		const resolution = resolvePolicyResolutionFromManifest(manifest as never, {
+			countryCode: 'DE',
+			regionCode: null,
+		});
+		assert(resolution.status === 'matched');
+		expect(resolution.policy).not.toHaveProperty('surface');
 	});
 
 	test('a pack with a malformed surface is invalid configuration', () => {

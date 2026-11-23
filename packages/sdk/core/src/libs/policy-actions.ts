@@ -1,4 +1,5 @@
 /** Resolve host presentation under the active policy constraints. */
+import { canPolicyBlock } from '@inth/sdk-schema/types';
 import type {
 	PolicyConsentCategory,
 	PolicyRight,
@@ -8,7 +9,9 @@ import type {
 import type { OptOutLinkVariant } from './consent-copy';
 import { containerFromLegacyPrompt, resolveLayout } from './consent-layout';
 import type {
+	ConsentBlockingConstraint,
 	ConsentContainer,
+	ConsentLayoutDiagnostic,
 	ConsentLayoutOptions,
 	ResolvedConsentLayout,
 } from './consent-layout';
@@ -324,16 +327,35 @@ const requestedBlocking = function requestedBlocking(
 	return options.blocking ?? legacyBlocking;
 };
 
-/** Resolve focus, scrolling and backdrop as one mode. */
+/**
+ * The policy's blocking constraint on the prompt. A rule that cannot block
+ * (a notice, or the opt-out model) forbids it, which is what its canonical
+ * `surface` leaves implied.
+ */
+const policyBlockingConstraint = function policyBlockingConstraint(
+	policy: ResolvedPolicyRule
+): ConsentBlockingConstraint {
+	if (!canPolicyBlock(policy)) {
+		return 'forbidden';
+	}
+	return policy.surface?.blocking ?? 'allowed';
+};
+
+/**
+ * Resolve focus, scrolling and backdrop as one mode. On the prompt, the
+ * policy's constraint wins over the host: `forbidden` never blocks, and
+ * `required` always blocks.
+ */
 const resolveBlocking = (
 	options: SurfacePresentation,
 	variant: PromptVariant,
 	notice: boolean,
 	preferences: boolean,
+	constraint: ConsentBlockingConstraint,
 	diagnostics: PresentationDiagnostic[]
 ): boolean => {
-	let blocking =
-		requestedBlocking(options) ?? (preferences || variant === 'wall');
+	const requested = requestedBlocking(options);
+	let blocking = requested ?? (preferences || variant === 'wall');
 	if (notice && blocking) {
 		blocking = false;
 		diagnostics.push({
@@ -341,6 +363,23 @@ const resolveBlocking = (
 			code: 'blocking-forbidden',
 			message: 'A notice prompt is never blocking; blocking was disabled.',
 		});
+	} else if (!preferences && constraint === 'forbidden' && blocking) {
+		blocking = false;
+		diagnostics.push({
+			actions: [],
+			code: 'blocking-forbidden',
+			message: 'The policy forbids blocking; blocking was disabled.',
+		});
+	} else if (!preferences && constraint === 'required' && !blocking) {
+		blocking = true;
+		// Report it only when the host turned blocking off.
+		if (requested === false) {
+			diagnostics.push({
+				actions: [],
+				code: 'blocking-required',
+				message: 'The policy requires blocking; blocking was enabled.',
+			});
+		}
 	} else if (!preferences && variant === 'wall' && !blocking) {
 		blocking = true;
 		diagnostics.push({
@@ -370,6 +409,7 @@ const resolveSurfaceGeometry = function resolveSurfaceGeometry(
 	options: PromptPresentation,
 	notice: boolean,
 	preferences: boolean,
+	constraint: ConsentBlockingConstraint,
 	diagnostics: PresentationDiagnostic[]
 ): Pick<
 	ResolvedConsentPresentation,
@@ -418,9 +458,33 @@ const resolveSurfaceGeometry = function resolveSurfaceGeometry(
 		variant,
 		notice,
 		preferences,
+		constraint,
 		diagnostics
 	);
 	return { blocking, position, positionSource, variant };
+};
+
+/**
+ * The container one host tier asks for: its `container`, else its legacy
+ * `variant` or `position` mapped onto one, else nothing, so the next tier
+ * decides. The legacy mapping reads the validated geometry, which merges
+ * every tier the way the shipped renderers read it.
+ */
+const tierContainer = function tierContainer(
+	tier: PromptPresentation | undefined,
+	geometry: Pick<ResolvedConsentPresentation, 'variant' | 'position'>
+):
+	| { container: ConsentContainer; diagnostics: ConsentLayoutDiagnostic[] }
+	| undefined {
+	if (tier === undefined) {
+		return undefined;
+	}
+	if (tier.container !== undefined) {
+		return { container: tier.container, diagnostics: [] };
+	}
+	return tier.variant !== undefined || tier.position !== undefined
+		? containerFromLegacyPrompt(geometry)
+		: undefined;
 };
 
 /**
@@ -436,31 +500,37 @@ const resolveSurfaceGeometry = function resolveSurfaceGeometry(
  *    defaults for installs without host presentation.
  * 5. The SDK default, an inset Card in the `start` corner.
  *
- * 2 and 3 arrive already merged in `options`. When `container` is absent
- * and the host set a legacy `variant` or `position`, the validated legacy
- * geometry maps onto a container, and still counts as the host's choice
- * over the policy's. Legacy `blocking`, `scrollLock` and `trapFocus` map
- * onto `blockUntilChoice`.
+ * The container is decided within each tier before the next one is read:
+ * a tier's `container`, else its legacy `variant` or `position` mapped onto
+ * a container. So an override's legacy `variant` beats a provider's
+ * `container`, and a provider's legacy geometry beats the policy's
+ * container. Edge style and blocking arrive merged in `options`. Legacy
+ * `blocking`, `scrollLock` and `trapFocus` map onto `blockUntilChoice`.
  */
 const resolvePromptContainer = function resolvePromptContainer(
 	surface: 'prompt' | 'preferences',
 	options: PromptPresentation,
+	override: PromptPresentation,
+	presentation: ConsentPresentation | undefined,
 	policy: ResolvedPolicyRule,
 	geometry: Pick<ResolvedConsentPresentation, 'variant' | 'position'>
 ): ResolvedConsentPresentation['container'] {
 	if (surface === 'preferences') {
 		return null;
 	}
-	const legacy =
-		options.container === undefined &&
-		(options.variant !== undefined || options.position !== undefined)
-			? containerFromLegacyPrompt(geometry)
-			: undefined;
-	// Forward a malformed `null` so the resolver reports it.
-	const container: ConsentContainer | undefined =
-		options.container === undefined
-			? (legacy?.container ?? policy.surface?.container)
-			: options.container;
+	let host:
+		| { container: ConsentContainer; diagnostics: ConsentLayoutDiagnostic[] }
+		| undefined;
+	for (const tier of [override, presentation?.prompt]) {
+		host = tierContainer(tier, geometry);
+		if (host) {
+			break;
+		}
+	}
+	// A malformed `null` is forwarded so the resolver reports it.
+	const container: ConsentContainer | undefined = host
+		? host.container
+		: policy.surface?.container;
 	// The policy's edge style is a default for banners and drawers. A card
 	// is always inset, so on a card it stays silent instead of reporting
 	// `edge-style-ignored` for a choice the host never made.
@@ -480,7 +550,7 @@ const resolvePromptContainer = function resolvePromptContainer(
 	};
 	const desktop = resolveLayout({ ...input, viewport: 'desktop' });
 	const phone = resolveLayout({ ...input, viewport: 'phone' });
-	const legacyDiagnostics = legacy?.diagnostics ?? [];
+	const legacyDiagnostics = host?.diagnostics ?? [];
 	desktop.diagnostics.unshift(...legacyDiagnostics.map((d) => ({ ...d })));
 	phone.diagnostics.unshift(...legacyDiagnostics.map((d) => ({ ...d })));
 	return { desktop, phone };
@@ -522,13 +592,14 @@ export const resolveConsentPresentation =
 		>;
 	}): ResolvedConsentPresentation {
 		const preferences = input.surface === 'preferences';
+		const override: PromptPresentation = Object.fromEntries(
+			Object.entries(input.override ?? {}).filter(
+				([, value]) => value !== undefined
+			)
+		);
 		const options: PromptPresentation = {
 			...input.presentation?.[input.surface],
-			...Object.fromEntries(
-				Object.entries(input.override ?? {}).filter(
-					([, value]) => value !== undefined
-				)
-			),
+			...override,
 		};
 		// Prompt actions constrain the first layer; persistent preferences are a separate right.
 		const constraints = preferences
@@ -601,6 +672,7 @@ export const resolveConsentPresentation =
 			options,
 			notice,
 			preferences,
+			policyBlockingConstraint(input.policy),
 			diagnostics
 		);
 		const scrollLock = geometry.blocking;
@@ -612,6 +684,8 @@ export const resolveConsentPresentation =
 			container: resolvePromptContainer(
 				input.surface,
 				options,
+				override,
+				input.presentation,
 				input.policy,
 				geometry
 			),

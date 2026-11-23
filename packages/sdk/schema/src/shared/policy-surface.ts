@@ -285,8 +285,8 @@ const canonicalContainer = function canonicalContainer(
 /**
  * The canonical form of a well-formed `surface` for its rule, or
  * `undefined` when nothing in it is left. Fills the container's default
- * position, edge or side, and drops a blocking constraint the rule already
- * implies.
+ * position, edge or side, drops the edge style beside a card container,
+ * and drops a blocking constraint the rule already implies.
  *
  * @param surface - A `surface` that passed {@link collectPolicySurfaceFieldIssues}.
  * @param rule - The rule's model and prompt.
@@ -302,7 +302,9 @@ export const canonicalizePolicySurface = function canonicalizePolicySurface(
 	if (surface.container !== undefined) {
 		resolved.container = canonicalContainer(surface.container);
 	}
-	if (surface.edgeStyle !== undefined) {
+	// A card is always inset, so an edge style beside a card container
+	// changes nothing the visitor sees, and must not change the hash.
+	if (surface.edgeStyle !== undefined && resolved.container?.type !== 'card') {
 		resolved.edgeStyle = surface.edgeStyle;
 	}
 	const implied = canPolicyBlock(rule) ? 'allowed' : 'forbidden';
@@ -315,3 +317,24 @@ export const canonicalizePolicySurface = function canonicalizePolicySurface(
 	}
 	return Object.keys(resolved).length > 0 ? resolved : undefined;
 };
+
+/**
+ * Whether a resolved rule's `surface` lacks the presentation fingerprint
+ * that must travel with it. Caches keyed on what a visitor sees compare
+ * that fingerprint, so a pack with a layout and no fingerprint would share
+ * a cached banner with a pack that has another layout. A `surface` with
+ * nothing left in its canonical form, such as `{}`, needs none.
+ *
+ * @param rule - A rule whose `surface` passed {@link collectPolicySurfaceFieldIssues}.
+ * @param fingerprints - The fingerprints that travel with it.
+ */
+export const isPolicySurfaceUnfingerprinted =
+	function isPolicySurfaceUnfingerprinted(
+		rule: { model: string; prompt: string; surface?: PolicySurface },
+		fingerprints: { presentation?: string }
+	): boolean {
+		return (
+			fingerprints.presentation === undefined &&
+			canonicalizePolicySurface(rule.surface, rule) !== undefined
+		);
+	};

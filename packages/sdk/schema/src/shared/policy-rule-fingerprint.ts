@@ -32,6 +32,7 @@ import type {
 	ResolvedPolicyRule,
 } from './policy-rule';
 import type { PolicyScopeMode } from './policy-runtime';
+import { canonicalizePolicySurface } from './policy-surface';
 import type { ResolvedPolicySurface } from './policy-surface';
 
 export const POLICY_FINGERPRINT_VERSION = 1;
@@ -284,7 +285,8 @@ export const policySurfacePresentationInput =
 
 /**
  * Computes the policy, choice and notice fingerprints for one resolved rule,
- * plus the presentation fingerprint when the rule has a `surface`.
+ * plus the presentation fingerprint when the rule's canonical `surface`
+ * has anything in it.
  *
  * @remarks
  * Synchronous and pure. Call it once at resolution time on the producer
@@ -307,6 +309,9 @@ export const createPolicyRuleFingerprints =
 		const policy = createDeterministicFingerprintSync(
 			policyFingerprintInput(rule)
 		);
+		// Hash the canonical form, so a rule read off the wire and the same
+		// rule normalized by the producer hash alike, and `{}` hashes nothing.
+		const surface = canonicalizePolicySurface(rule.surface, rule);
 		return {
 			choice: createDeterministicFingerprintSync(
 				choicePromptFingerprintInput(rule)
@@ -315,9 +320,9 @@ export const createPolicyRuleFingerprints =
 				noticePromptFingerprintInput(rule)
 			),
 			policy,
-			...(rule.surface && {
+			...(surface && {
 				presentation: createPresentationFingerprint(
-					policySurfacePresentationInput(rule.surface)
+					policySurfacePresentationInput(surface)
 				),
 			}),
 			...(legacy && {

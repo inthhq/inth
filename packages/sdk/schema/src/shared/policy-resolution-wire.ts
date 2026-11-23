@@ -34,6 +34,8 @@ import {
 	CONSENT_CONTAINER_TYPES,
 	CONSENT_DRAWER_SIDES,
 	CONSENT_EDGE_STYLES,
+	canonicalizePolicySurface,
+	isPolicySurfaceUnfingerprinted,
 	POLICY_SURFACE_KEYS,
 } from './policy-surface';
 import type { ConsentContainer, ResolvedPolicySurface } from './policy-surface';
@@ -596,7 +598,12 @@ const readResolvedPolicyRule = function readResolvedPolicyRule(
 	if (i18n) {
 		rule.i18n = i18n;
 	}
-	const surface = readSurface(own(raw, 'surface'));
+	// Canonical, so `{}` and a surface the rule already implies read as no
+	// surface at all.
+	const surface = canonicalizePolicySurface(
+		readSurface(own(raw, 'surface')),
+		rule
+	);
 	if (surface) {
 		rule.surface = surface;
 	}
@@ -653,8 +660,14 @@ const readMatched = function readMatched(
 	if (policy.id !== policyId) {
 		throw invalid('policyId must equal policy.id');
 	}
+	const fingerprints = readFingerprints(own(input, 'fingerprints'));
+	if (isPolicySurfaceUnfingerprinted(policy, fingerprints)) {
+		throw invalid(
+			'fingerprints.presentation is required when policy.surface is set'
+		);
+	}
 	return {
-		fingerprints: readFingerprints(own(input, 'fingerprints')),
+		fingerprints,
 		matchedBy: matchedBy as PolicyMatchedBy,
 		policy,
 		policyId,
@@ -714,7 +727,9 @@ const readWire = function readWire(input: unknown): PolicyResolution {
  * action, right, category, or any unknown own field is `failed` with
  * `unsupported-contract`. Only own fields of plain objects are read.
  * `policy.surface` and `fingerprints.presentation` are optional, so a
- * resolution without them reads as it always has; readers older than them
+ * resolution without them reads as it always has, but a `surface` with
+ * anything in its canonical form needs the presentation fingerprint, and
+ * `surface: {}` reads as no surface. Readers older than them
  * refuse a resolution that carries them, so a producer sends them only to
  * clients that read them. The
  * matched rule must satisfy the same semantic invariants as an authored rule

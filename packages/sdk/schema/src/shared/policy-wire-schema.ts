@@ -25,7 +25,12 @@ import {
 	CONSENT_CARD_POSITIONS,
 	CONSENT_DRAWER_SIDES,
 	CONSENT_EDGE_STYLES,
+	isPolicySurfaceUnfingerprinted,
 } from './policy-surface';
+
+/** Issue for a rule `surface` that travels without its presentation fingerprint. */
+export const POLICY_SURFACE_FINGERPRINT_ISSUE =
+	'fingerprints.presentation is required when policy.surface is set';
 
 export const policyRuleModelSchema = v.picklist(POLICY_RULE_MODELS);
 export const policyPromptSchema = v.picklist(POLICY_PROMPTS);
@@ -225,6 +230,16 @@ export const policyResolutionWireSchema = v.pipe(
 			dataset.value.policyId !== dataset.value.policy.id
 		) {
 			addIssue({ message: 'policyId must equal policy.id' });
+		}
+		if (
+			dataset.typed &&
+			dataset.value.status === 'matched' &&
+			isPolicySurfaceUnfingerprinted(
+				dataset.value.policy,
+				dataset.value.fingerprints
+			)
+		) {
+			addIssue({ message: POLICY_SURFACE_FINGERPRINT_ISSUE });
 		}
 	})
 );

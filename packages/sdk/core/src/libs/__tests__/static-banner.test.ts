@@ -178,6 +178,16 @@ describe('static banner script', () => {
 				},
 			},
 		],
+		[
+			'a policy surface without its presentation fingerprint',
+			{
+				policyResolution: {
+					fingerprints: { policy: 'policy-fingerprint' },
+					policy: { surface: { container: { type: 'drawer' } } },
+					status: 'matched',
+				},
+			},
+		],
 		['other branding', { branding: 'c15t' }],
 		['vendors', { vendors: [{ id: 'x' }] }],
 	])('removes the banner when /init answers with %s', async (_, changes) => {
@@ -212,6 +222,22 @@ describe('static banner script', () => {
 		});
 		await settle();
 		expect(banner.isConnected).toBe(false);
+	});
+
+	test('shows the banner when /init answers with an empty surface and no layout', async () => {
+		const banner = mount(
+			Promise.resolve(
+				answer({
+					policyResolution: {
+						fingerprints: { policy: 'policy-fingerprint' },
+						policy: { surface: {} },
+						status: 'matched',
+					},
+				})
+			)
+		);
+		await settle();
+		expect(banner.hidden).toBe(false);
 	});
 
 	test('removes the banner when /init fails or the page has no prefetch', async () => {

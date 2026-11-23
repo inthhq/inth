@@ -576,7 +576,7 @@ describe('resolveConsentPresentation: container', () => {
 		]);
 	});
 
-	it('[BNR-13] a legacy wall under an opt-out model never blocks in the container', () => {
+	it('[BNR-13] a legacy wall under an opt-out model never blocks, in the container or the top-level values', () => {
 		const result = resolveConsentPresentation({
 			policy: normalizePolicyRule({
 				id: 'opt-out-choice',
@@ -587,7 +587,11 @@ describe('resolveConsentPresentation: container', () => {
 			presentation: { prompt: { variant: 'wall' } },
 			surface: 'prompt',
 		});
-		expect(result.blocking).toBe(true);
+		expect(result).toMatchObject({
+			blocking: false,
+			scrollLock: false,
+			trapFocus: false,
+		});
 		expect(result.container?.desktop).toMatchObject({
 			blocking: false,
 			placement: 'card-start',
