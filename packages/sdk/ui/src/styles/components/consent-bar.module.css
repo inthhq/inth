@@ -63,11 +63,16 @@
 		font-size: calc(var(--inth-font-size-sm) * 0.9643);
 		line-height: var(--inth-line-height-normal);
 		color: var(--_consent-muted, var(--inth-text-muted));
+		/* The stock policy links read these. */
+		--legal-links-color: var(--inth-primary-text, var(--inth-primary));
+		--legal-links-text-decoration: underline;
 	}
 
+	/* Underlined, as in the card's description (WCAG 1.4.1). */
 	.text a {
 		color: var(--inth-primary-text, var(--inth-primary));
-		text-decoration: none;
+		text-decoration: underline;
+		text-underline-offset: 2px;
 	}
 
 	.actions {
@@ -165,12 +170,6 @@
 		border-top-width: 0;
 		border-bottom-width: var(--consent-banner-border-width, 1px);
 		padding-bottom: 0;
-	}
-
-	@media (hover: hover) and (pointer: fine) {
-		.text a:hover {
-			text-decoration: underline;
-		}
 	}
 
 	/* Each edge slides in from its own side and back out; inset travels the

@@ -251,12 +251,18 @@
 		line-height: var(--inth-line-height-normal);
 		letter-spacing: -0.006em;
 		color: var(--_consent-muted, var(--inth-text-muted));
+		/* The stock policy links read these. */
+		--legal-links-color: var(--inth-primary-text, var(--inth-primary));
+		--legal-links-text-decoration: underline;
 	}
 
-	/* Blue text on a surface uses the text-on-surface blue (VIS-02). */
+	/* Blue text on a surface uses the text-on-surface blue (VIS-02). A
+	   link in running text is underlined too: its blue alone does not set
+	   it apart from the muted text around it (WCAG 1.4.1). */
 	.description a {
 		color: var(--inth-primary-text, var(--inth-primary));
-		text-decoration: none;
+		text-decoration: underline;
+		text-underline-offset: 2px;
 	}
 
 	.footer {
@@ -380,10 +386,6 @@
 	}
 
 	@media (hover: hover) and (pointer: fine) {
-		.description a:hover {
-			text-decoration: underline;
-		}
-
 		.tag:hover {
 			--_consent-tag-ring-active: inset 0 0 0 1px
 				var(--inth-primary-text, var(--inth-primary));

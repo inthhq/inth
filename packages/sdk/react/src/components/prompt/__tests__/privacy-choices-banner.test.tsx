@@ -407,6 +407,16 @@ describe('card:', () => {
 		expect($('consent-banner-legal-link-cookiePolicy')).toBeNull();
 	});
 
+	test.each(['card', 'banner'] as const)(
+		'[BNR-08] a policy link in the %s text is underlined, not told apart by colour alone',
+		async (type) => {
+			await mount({ container: { type } });
+			await waitForRoot();
+			const link = must('consent-banner-legal-link-privacyPolicy');
+			expect(getComputedStyle(link).textDecorationLine).toBe('underline');
+		}
+	);
+
 	test('[BNR-11] the "Consent by" tag sits 8px above the card, flush with its end', async () => {
 		await mount();
 		await waitForRoot();

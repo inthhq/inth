@@ -15,3 +15,4 @@ These fixes apply when you use `design: 'privacy-choices'` (or set `presentation
 - `noStyle` on `ConsentBanner` removes the styles of its buttons too. The `banner.title`, `description.banner` and `banner.footer` parts now style the slim bar as well.
 - Like the classic banner, the new banner sets `dir` from the banner's language and replaces the static banner from `index.html`. `disableAnimation` stops its entrance animations (the root gets `data-animation="off"`).
 - The space above the US Preferences categories now comes from the stylesheet (`preferencesBody`), so `noStyle` removes it.
+- The policy links in the banner text are underlined, so they stand out from the text around them by more than colour (WCAG 1.4.1). They use the text-on-surface blue.
