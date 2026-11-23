@@ -37,9 +37,9 @@ const mountFixture = function mountFixture(
 };
 
 const buttons = {
-	accept: 'consent-widget-footer-accept-all-button',
-	reject: 'consent-widget-reject-button',
-	save: 'consent-widget-footer-save-button',
+	accept: 'consent-dialog-accept-all',
+	reject: 'consent-dialog-reject-all',
+	save: 'consent-dialog-save-button',
 } as const;
 
 test.each(
@@ -85,6 +85,17 @@ test.each(
 		await vi.waitFor(() => expect(dialog()).not.toBeNull());
 		// The script loader loads on demand; let it land before the click.
 		await vi.dynamicImportSettled();
+		// Save stays disabled until the switches differ from the record
+		// (EU-03), so the save turns marketing on first.
+		if (action === 'save') {
+			document
+				.querySelector<HTMLButtonElement>(
+					'[data-testid="consent-dialog-category-switch-marketing"]'
+				)
+				?.click();
+			await tick();
+		}
+		const granted = action !== 'reject';
 		document
 			.querySelector<HTMLButtonElement>(`[data-testid="${buttons[action]}"]`)
 			?.click();
@@ -92,9 +103,9 @@ test.each(
 		expect(snapshot().activeUI).toBe('none');
 		expect(save).not.toHaveBeenCalled();
 		expect(snapshot().explicitChoice?.categories.marketing?.value).toBe(
-			action === 'accept'
+			granted
 		);
-		expect(onBeforeLoad).toHaveBeenCalledTimes(action === 'accept' ? 1 : 0);
+		expect(onBeforeLoad).toHaveBeenCalledTimes(granted ? 1 : 0);
 		await tick();
 		expect(dialog()).toBeNull();
 		await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
@@ -110,7 +121,7 @@ test.each(
 		expect(snapshot().activeUI).toBe('none');
 		expect(dialog()).toBeNull();
 		expect(snapshot().explicitChoice?.categories.marketing?.value).toBe(
-			action === 'accept'
+			granted
 		);
 	}
 );

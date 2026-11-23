@@ -1,6 +1,6 @@
 /**
- * The Privacy Choices (v6) prompt suppresses the classic banner, so a
- * failed load of its options must not leave them empty for good: the next
+ * The consent prompt loads its options on demand, so a failed load of
+ * them must not leave them empty for good: the next
  * trigger, here the prompt showing again, loads them again.
  */
 import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
@@ -10,23 +10,20 @@ import { beforeEach, expect, test, vi } from 'vitest';
 
 import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
-import Fixture from './fixtures/privacy-choices-fixture.svelte';
+import Fixture from './fixtures/consent-surfaces-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 
 const chunk = vi.hoisted(() => ({ failures: 0, loads: 0 }));
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is what happens when the options' chunk fails to load. The factory fails the first load and returns the real module after that.
-vi.mock(
-	'../lib/components/privacy-choices-prompt/panel.svelte',
-	async (importOriginal) => {
-		chunk.loads += 1;
-		if (chunk.failures > 0) {
-			chunk.failures -= 1;
-			throw new Error('Failed to fetch dynamically imported module');
-		}
-		return await importOriginal();
+vi.mock('../lib/components/prompt/panel.svelte', async (importOriginal) => {
+	chunk.loads += 1;
+	if (chunk.failures > 0) {
+		chunk.failures -= 1;
+		throw new Error('Failed to fetch dynamically imported module');
 	}
-);
+	return await importOriginal();
+});
 
 const group = () =>
 	document.querySelector('[data-testid="consent-banner-category-group"]');
@@ -47,7 +44,6 @@ test('[BNR-14] a failed options load in a side Drawer loads again when the promp
 			persistence: false,
 			prefetch: policyFixture(undefined, { id: 'pc-panel-retry' }),
 			presentation: {
-				design: 'privacy-choices',
 				prompt: { container: { side: 'start', type: 'drawer' } },
 			},
 		} as ConsentManagerOptions,

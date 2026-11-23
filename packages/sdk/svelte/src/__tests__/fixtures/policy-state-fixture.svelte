@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
+	import Dialog from '../../lib/components/deferred-panel.svelte';
 	import Provider from '../../lib/components/inth-provider.svelte';
 	import Link from '../../lib/components/panel-link.svelte';
-	import Dialog from '../../lib/components/panel.svelte';
-	import Banner from '../../lib/components/prompt.svelte';
+	import Banner from '../../lib/components/prompt/prompt.svelte';
 	import type { ConsentContextValue } from '../../lib/context.svelte';
 	import type { ConsentManagerOptions } from '../../lib/types';
 	import Reader from './policy-state-reader.svelte';

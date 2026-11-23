@@ -66,7 +66,7 @@ const classMapsReachedFrom = function classMapsReachedFrom(
 describe('banner class maps', () => {
 	test('ConsentBanner reaches no dialog or IAB class map', () => {
 		const reached = classMapsReachedFrom(
-			resolve(LIB, 'components/prompt.svelte')
+			resolve(LIB, 'components/prompt/prompt.svelte')
 		);
 
 		expect(reached).toContain('consent-banner');

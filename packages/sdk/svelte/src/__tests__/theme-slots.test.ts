@@ -17,24 +17,35 @@ const SLOT = {
 	style: { '--slot-mark': 'rgb(1, 2, 3)', backgroundColor: 'rgb(1, 2, 3)' },
 };
 
+type Surface = 'banner' | 'dialog' | 'widget';
+
+/** A part of each surface that renders once it is up. */
+const READY: Record<Surface, string> = {
+	banner: 'consent-banner-card',
+	dialog: 'consent-dialog-card',
+	widget: 'consent-widget-root',
+};
+
 const renderWithSlots = async function renderWithSlots(
-	slots: ComponentSlots
+	slots: ComponentSlots,
+	surface: Surface = 'banner'
 ): Promise<void> {
 	render(Fixture, {
 		options: {
-			legalLinks: { privacyPolicy: { href: 'https://example.test/privacy' } },
+			legalLinks: {
+				cookiePolicy: { href: 'https://example.test/cookies' },
+				privacyPolicy: { href: 'https://example.test/privacy' },
+			},
 			mode: transportMode({}),
 			persistence: false,
 			prefetch: policyFixture(),
 			theme: { slots },
 		} as ConsentManagerOptions,
+		surface,
 	});
 	await waitFor(() => {
 		expect(
-			document.querySelector('[data-testid="consent-banner-card"]')
-		).not.toBeNull();
-		expect(
-			document.querySelector('[data-testid="consent-dialog-card"]')
+			document.querySelector(`[data-testid="${READY[surface]}"]`)
 		).not.toBeNull();
 	});
 };
@@ -51,35 +62,44 @@ const part = (testId: string): HTMLElement => {
 
 describe('theme.slots in Svelte', () => {
 	test.each([
-		['consentBanner', 'consent-banner-root'],
-		['consentBannerCard', 'consent-banner-card'],
-		['consentBannerHeader', 'consent-banner-header'],
-		['consentBannerTitle', 'consent-banner-title'],
-		['consentBannerDescription', 'consent-banner-description'],
-		['consentBannerFooter', 'consent-banner-footer'],
-		['consentBannerFooterSubGroup', 'consent-banner-footer-sub-group'],
-		['consentBannerTag', 'consent-banner-branding'],
-		['consentDialog', 'consent-dialog-root'],
-		['consentDialogCard', 'consent-dialog-card'],
-		['consentDialogHeader', 'consent-dialog-header'],
-		['consentDialogTitle', 'consent-dialog-title'],
-		['consentDialogDescription', 'consent-dialog-description'],
-		['consentDialogContent', 'consent-dialog-content'],
-		['consentDialogOverlay', 'consent-dialog-overlay'],
-		['consentWidget', 'consent-widget-root'],
-		['consentWidgetFooter', 'consent-widget-footer'],
-		['consentWidgetAccordion', 'consent-widget-accordion'],
-		['toggle', 'consent-widget-switch-necessary'],
-	] as const)('%s puts its class and style on %s', async (slot, testId) => {
-		await renderWithSlots({ [slot]: SLOT });
+		['consentBanner', 'consent-banner-root', 'banner'],
+		['consentBannerCard', 'consent-banner-card', 'banner'],
+		['consentBannerHeader', 'consent-banner-header', 'banner'],
+		['consentBannerTitle', 'consent-banner-title', 'banner'],
+		['consentBannerDescription', 'consent-banner-description', 'banner'],
+		['consentBannerFooter', 'consent-banner-footer', 'banner'],
+		[
+			'consentBannerFooterSubGroup',
+			'consent-banner-footer-sub-group',
+			'banner',
+		],
+		['consentBannerTag', 'consent-banner-branding', 'banner'],
+		['consentDialog', 'consent-dialog-root', 'dialog'],
+		['consentDialogCard', 'consent-dialog-card', 'dialog'],
+		['consentDialogHeader', 'consent-dialog-header', 'dialog'],
+		['consentDialogTitle', 'consent-dialog-title', 'dialog'],
+		['consentDialogContent', 'consent-dialog-content', 'dialog'],
+		['consentDialogFooter', 'consent-dialog-footer', 'dialog'],
+		['consentWidget', 'consent-widget-root', 'widget'],
+		['consentWidgetFooter', 'consent-widget-footer', 'widget'],
+		['consentWidgetAccordion', 'consent-widget-accordion', 'widget'],
+		['toggle', 'consent-widget-switch-necessary', 'widget'],
+	] as const)(
+		'%s puts its class and style on %s',
+		async (slot, testId, surface) => {
+			await renderWithSlots({ [slot]: SLOT }, surface);
+			await waitFor(() => part(testId));
 
-		const element = part(testId);
-		expect(element.classList).toContain('brand-slot');
-		expect(element.style.getPropertyValue('background-color')).toBe(
-			'rgb(1, 2, 3)'
-		);
-		expect(element.style.getPropertyValue('--slot-mark')).toBe('rgb(1, 2, 3)');
-	});
+			const element = part(testId);
+			expect(element.classList).toContain('brand-slot');
+			expect(element.style.getPropertyValue('background-color')).toBe(
+				'rgb(1, 2, 3)'
+			);
+			expect(element.style.getPropertyValue('--slot-mark')).toBe(
+				'rgb(1, 2, 3)'
+			);
+		}
+	);
 
 	test.each([
 		['consentGate', 'consent-gate-placeholder'],
@@ -122,21 +142,24 @@ describe('theme.slots in Svelte', () => {
 	});
 
 	test('legal links keep only the stock link class', async () => {
-		await renderWithSlots({
+		const slots = {
 			consentBannerDescription: 'banner-description-slot',
 			consentDialogContent: 'dialog-content-slot',
-		});
-
-		const links = [
-			part('consent-banner-legal-link-privacyPolicy'),
-			part('consent-dialog-legal-link-privacyPolicy'),
-		];
-		for (const link of links) {
-			expect(link.classList).not.toContain('banner-description-slot');
-			expect(link.classList).not.toContain('dialog-content-slot');
-		}
+		};
+		await renderWithSlots(slots);
+		const bannerLink = part('consent-banner-legal-link-privacyPolicy');
+		expect(bannerLink.classList).not.toContain('banner-description-slot');
 		expect(part('consent-banner-description').classList).toContain(
 			'banner-description-slot'
+		);
+		document.body.innerHTML = '';
+
+		await renderWithSlots(slots, 'dialog');
+		// The EU dialog's footer shows the Cookie Policy.
+		const dialogLink = part('consent-dialog-legal-link-cookiePolicy');
+		expect(dialogLink.classList).not.toContain('dialog-content-slot');
+		expect(part('consent-dialog-content').classList).toContain(
+			'dialog-content-slot'
 		);
 	});
 });

@@ -345,7 +345,7 @@ describe('Svelte consent widget opt-out parity', () => {
 	});
 });
 
-describe('sale-and-sharing block in Svelte dialog and widget', () => {
+describe('sale-and-sharing block in the Svelte widget', () => {
 	beforeEach(() => {
 		window.localStorage.clear();
 	});
@@ -369,10 +369,10 @@ describe('sale-and-sharing block in Svelte dialog and widget', () => {
 				reloadOnConsentRevoked: false,
 			},
 			showBanner: false,
-			showDialog: true,
+			showDialog: false,
+			showWidget: true,
 		});
 
-		context.kernel.set.activeUI('dialog');
 		await waitFor(() => {
 			expect(part('consent-widget-opt-out')).not.toBeNull();
 		});
@@ -402,11 +402,9 @@ describe('sale-and-sharing block in Svelte dialog and widget', () => {
 		expect(context.kernel.getSnapshot().effectivePermissions.marketing).toBe(
 			false
 		);
-		expect(context.kernel.getSnapshot().activeUI).not.toBe('dialog');
 
-		// Reopen the dialog and confirm the block now shows the status, time and reference without an opt-out button.
+		// The block now shows the status, time and reference without an opt-out button.
 		closeOptOutConfirmation(context.kernel);
-		context.kernel.set.activeUI('dialog');
 		await waitFor(() => {
 			expect(part('consent-widget-opt-out-status')).not.toBeNull();
 		});
@@ -502,7 +500,6 @@ describe('sale-and-sharing block in Svelte dialog and widget', () => {
 			capture: (value) => {
 				activeContext = value;
 			},
-			dialogOpen: true,
 			options: {
 				consentCategories: [...CATEGORIES],
 				disableAnimation: true,
@@ -526,7 +523,8 @@ describe('sale-and-sharing block in Svelte dialog and widget', () => {
 				presentation: { optOutLink: 'privacy-choices' },
 			},
 			showBanner: false,
-			showDialog: true,
+			showDialog: false,
+			showWidget: true,
 		});
 
 		await waitFor(() => {
@@ -547,13 +545,12 @@ describe('sale-and-sharing block in Svelte dialog and widget', () => {
 		view.unmount();
 	});
 
-	test('omits the block under an opt-in policy and keeps the existing dialog structure', async () => {
+	test('omits the block under an opt-in policy and keeps the widget structure', async () => {
 		const fixture = policyFixture(undefined, OPT_IN_RULE);
 		const view = render(OptOutConfirmationFixture, {
 			capture: (value) => {
 				activeContext = value;
 			},
-			dialogOpen: true,
 			options: {
 				consentCategories: [...CATEGORIES],
 				disableAnimation: true,
@@ -562,7 +559,8 @@ describe('sale-and-sharing block in Svelte dialog and widget', () => {
 				prefetch: fixture,
 			},
 			showBanner: false,
-			showDialog: true,
+			showDialog: false,
+			showWidget: true,
 		});
 
 		await waitFor(() => {
@@ -570,8 +568,6 @@ describe('sale-and-sharing block in Svelte dialog and widget', () => {
 		});
 		expect(part('consent-widget-opt-out')).toBeNull();
 		expect(part('consent-widget-opt-out-status')).toBeNull();
-		expect(part('consent-dialog-title')).not.toBeNull();
-		expect(part('consent-dialog-description')).not.toBeNull();
 		expect(part('consent-widget-accordion-item-necessary')).not.toBeNull();
 		expect(part('consent-widget-footer')).not.toBeNull();
 

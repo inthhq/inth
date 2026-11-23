@@ -1,5 +1,5 @@
 /**
- * The Privacy Choices (v6) receipt and rights bundle read the local
+ * The prompt's and dialog's receipt and rights bundle read the local
  * opt-out receipt data. The server renders with its own value, so the
  * browser starts from that value and adopts its local data only once
  * mounted, as React's `useSyncExternalStore` does; otherwise SvelteKit

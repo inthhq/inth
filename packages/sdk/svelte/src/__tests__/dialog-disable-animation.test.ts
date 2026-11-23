@@ -1,4 +1,3 @@
-import styles from '@inth/sdk/ui/styles/components/legacy-panel';
 import { render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 
@@ -20,6 +19,7 @@ const optionsWith = (disableAnimation: boolean) =>
 describe('ConsentDialog disableAnimation prop', () => {
 	test.each([
 		{ expected: false, option: false, prop: undefined },
+		{ expected: true, option: true, prop: undefined },
 		{ expected: true, option: false, prop: true },
 		{ expected: false, option: true, prop: false },
 	])(
@@ -31,40 +31,9 @@ describe('ConsentDialog disableAnimation prop', () => {
 			});
 			await waitFor(() => expect(document.querySelector(ROOT)).not.toBeNull());
 			const root = document.querySelector(ROOT) as HTMLElement;
-			expect(root.classList.contains(styles.contentVisible as string)).toBe(
-				!expected
-			);
+			// The stylesheet stops the open and close keyframes on
+			// `data-animation="off"`.
+			expect(root.getAttribute('data-animation')).toBe(expected ? 'off' : null);
 		}
 	);
-
-	test('marks the overlay and positioner so the open keyframes do not run', async () => {
-		render(Fixture, {
-			disableAnimation: true,
-			options: optionsWith(false),
-		});
-		await waitFor(() => expect(document.querySelector(ROOT)).not.toBeNull());
-		const positioner = document.querySelector(ROOT)?.parentElement;
-		const overlay = document.querySelector(
-			'[data-testid="consent-dialog-overlay"]'
-		);
-		// The stylesheet animates both on `data-state` and stops them on
-		// `data-disable-animation`. The portal wrapper carries the flag for
-		// the overlay so `consent-dialog-overlay` keeps React's attributes.
-		expect(positioner?.getAttribute('data-state')).toBe('open');
-		expect(positioner?.hasAttribute('data-disable-animation')).toBe(true);
-		expect(overlay?.getAttribute('data-state')).toBe('open');
-		expect(overlay?.hasAttribute('data-disable-animation')).toBe(false);
-		expect(overlay?.closest('[data-disable-animation]')).not.toBeNull();
-	});
-
-	test('leaves the open keyframes on by default', async () => {
-		render(Fixture, { options: optionsWith(false) });
-		await waitFor(() => expect(document.querySelector(ROOT)).not.toBeNull());
-		const positioner = document.querySelector(ROOT)?.parentElement;
-		const overlay = document.querySelector(
-			'[data-testid="consent-dialog-overlay"]'
-		);
-		expect(positioner?.hasAttribute('data-disable-animation')).toBe(false);
-		expect(overlay?.closest('[data-disable-animation]')).toBeNull();
-	});
 });

@@ -10,7 +10,6 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import type { ConsentPresentation, KernelConfig } from '@inth/sdk/engine';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
-import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 
@@ -92,12 +91,13 @@ describe('consent banner SSR', () => {
 	test('renders in its final visible state, not the pre-animation one', () => {
 		const html = renderBanner({ initialPolicyResolution: BANNER_POLICY });
 		// Assert against the whole opening tag rather than a bare substring, so
-		// a class landing on some other element cannot pass this by accident.
-		const tag = /<div[^>]*data-testid="consent-banner-root"[^>]*>/u.exec(html);
+		// an attribute landing on some other element cannot pass this by
+		// accident.
+		const tag = rootTag(html);
 
-		expect(tag?.[0]).toBeDefined();
-		expect(tag?.[0]).toMatch(/bannerVisible/u);
-		expect(tag?.[0]).not.toMatch(/bannerHidden/u);
+		expect(tag).toBeDefined();
+		expect(tag).toMatch(/data-state="open"/u);
+		expect(tag).not.toMatch(/data-state="closed"/u);
 	});
 
 	test('names its stylesheets in <head> for inthHandle to inline', () => {
@@ -111,7 +111,7 @@ describe('consent banner SSR', () => {
 		});
 
 		expect(head).toContain(
-			'<meta name="inth-styles" content="inth-tokens inth-button inth-banner nonce=page-nonce"'
+			'<meta name="inth-styles" content="inth-tokens inth-button inth-surface inth-card nonce=page-nonce"'
 		);
 	});
 
@@ -194,87 +194,61 @@ describe('consent banner SSR', () => {
 	});
 
 	test('paints the notice rights and dismiss in the first HTML', () => {
-		const html = renderBanner({
-			initialPolicyResolution: resolvePolicyRules({
-				countryCode: null,
-				regionCode: null,
-				rules: [
-					{
-						id: 'notice',
-						match: { fallback: true },
-						model: 'opt-out',
-						prompt: 'notice',
-					},
-				],
-			}),
-		});
-		const tag = /<div[^>]*data-testid="consent-banner-root"[^>]*>/u.exec(html);
+		const html = renderBanner({ initialPolicyResolution: NOTICE_POLICY });
+		const tag = rootTag(html);
 
-		expect(tag?.[0]).toMatch(/data-prompt="notice"/u);
-		expect(tag?.[0]).toMatch(/data-model="opt-out"/u);
-		expect(html).toContain('Privacy notice');
-		expect(html).toContain('data-right="opt-out"');
-		expect(html).not.toContain('data-right="preferences"');
-		expect(html).toContain('Do Not Sell or Share My Personal Information');
-		expect(html).toContain('data-action="right"');
-		const rightTag = /<button[^>]*data-action="right"[^>]*>/u.exec(html);
-		expect(rightTag?.[0]).toContain(bannerStyles.rightLink);
-		expect(rightTag?.[0]).not.toMatch(/data-variant=/u);
+		expect(tag).toMatch(/data-variant="notice"/u);
+		expect(html).toContain('data-testid="consent-banner-right-link-opt-out"');
 		expect(html).toContain('data-action="dismiss"');
-		expect(html).toContain('>OK<');
-		expect(html).not.toContain('>Dismiss<');
-		expect(html.indexOf('data-right="opt-out"')).toBeLessThan(
+		expect(html.indexOf('consent-banner-right-link-opt-out')).toBeLessThan(
 			html.indexOf('data-action="dismiss"')
 		);
 		expect(html).not.toContain('data-action="accept"');
 	});
 
 	test('marks a choice prompt on the root', () => {
-		const html = renderBanner({ initialPolicyResolution: BANNER_POLICY });
-		const tag = /<div[^>]*data-testid="consent-banner-root"[^>]*>/u.exec(html);
+		const tag = rootTag(
+			renderBanner({ initialPolicyResolution: BANNER_POLICY })
+		);
 
-		expect(tag?.[0]).toMatch(/data-prompt="choice"/u);
-		expect(tag?.[0]).toMatch(/data-model="opt-in"/u);
-		expect(html).not.toContain('consent-banner-rights');
+		expect(tag).toMatch(/data-variant="choice"/u);
 	});
 
-	test('paints the resolved variant and position in the first HTML', () => {
+	test('paints the resolved container in the first HTML', () => {
 		const choiceTag = rootTag(
 			renderBanner({ initialPolicyResolution: BANNER_POLICY })
 		);
-		expect(choiceTag).toMatch(/data-variant="floating"/u);
-		expect(choiceTag).toMatch(/data-position="bottom-left"/u);
+		expect(choiceTag).toMatch(/data-placement="card-start"/u);
 		expect(choiceTag).not.toMatch(/data-blocking/u);
 
 		const noticeTag = rootTag(
 			renderBanner({ initialPolicyResolution: NOTICE_POLICY })
 		);
-		expect(noticeTag).toMatch(/data-variant="floating"/u);
-		expect(noticeTag).toMatch(/data-position="bottom-left"/u);
+		expect(noticeTag).toMatch(/data-placement="card-start"/u);
 		expect(noticeTag).not.toMatch(/data-blocking/u);
 
-		const barTag = rootTag(
+		const bannerTag = rootTag(
 			renderBanner(
 				{ initialPolicyResolution: NOTICE_POLICY },
-				{ prompt: { variant: 'bar' } }
+				{ prompt: { container: { edge: 'bottom', type: 'banner' } } }
 			)
 		);
-		expect(barTag).toMatch(/data-variant="bar"/u);
-		expect(barTag).toMatch(/data-position="bottom"/u);
+		expect(bannerTag).toMatch(/data-placement="banner-bottom"/u);
 	});
 
-	test('a blocking wall paints its backdrop and modal state on the server', () => {
+	test('[BNR-13] a centred Card paints its backdrop and modal state on the server', () => {
 		const html = renderBanner(
 			{ initialPolicyResolution: BANNER_POLICY },
-			{ prompt: { variant: 'wall' } }
+			{ prompt: { container: { position: 'center', type: 'card' } } }
 		);
 		const tag = rootTag(html);
 
-		expect(tag).toMatch(/data-variant="wall"/u);
-		expect(tag).toMatch(/data-position="center"/u);
+		expect(tag).toMatch(/data-placement="card-center"/u);
 		expect(tag).toMatch(/data-blocking="true"/u);
 		expect(html).toContain('data-testid="consent-banner-overlay"');
-		expect(html).toMatch(/consent-banner-card"[^>]*aria-modal="true"/u);
+		expect(html).toMatch(
+			/aria-modal="true"[^>]*data-testid="consent-banner-shell"/u
+		);
 	});
 
 	test('the provider alone renders no banner', () => {

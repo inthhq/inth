@@ -24,7 +24,7 @@ beforeEach(() => {
 
 describe('displayed consent actions', () => {
 	test.each(['all', 'necessary', 'custom'] as const)(
-		'%s transport failure keeps the recorded choice and the dialog closed',
+		'%s transport failure keeps the recorded choice and the surface closed',
 		async (action) => {
 			const captured: {
 				kernel?: ConsentKernel;
@@ -34,7 +34,7 @@ describe('displayed consent actions', () => {
 				.fn()
 				.mockRejectedValue(new Error('Transport unavailable'));
 			const result = render(ConformanceFixture, {
-				component: 'consent-dialog',
+				component: 'consent-widget',
 				onKernel: (kernel) => {
 					captured.kernel = kernel;
 				},
@@ -97,7 +97,7 @@ describe('displayed consent actions', () => {
 				manager?: ConsentManagerState;
 			} = {};
 			const result = render(ConformanceFixture, {
-				component: 'consent-dialog',
+				component: 'consent-widget',
 				onKernel: (kernel) => {
 					captured.kernel = kernel;
 				},
@@ -158,7 +158,7 @@ describe('displayed consent actions', () => {
 				manager?: ConsentManagerState;
 			} = {};
 			const result = render(ConformanceFixture, {
-				component: 'consent-dialog',
+				component: 'consent-widget',
 				onKernel: (kernel) => {
 					captured.kernel = kernel;
 				},
@@ -206,7 +206,7 @@ describe('displayed consent actions', () => {
 		}
 	);
 	test.each(['accept', 'reject', 'save'] as const)(
-		'%s button completion leaves a newly reopened dialog alone',
+		'%s button completion leaves a newly reopened surface alone',
 		async (action) => {
 			let finish = () => {
 				throw new Error('Save not started');
@@ -222,7 +222,7 @@ describe('displayed consent actions', () => {
 				manager?: ConsentManagerState;
 			} = {};
 			const result = render(ConformanceFixture, {
-				component: 'consent-dialog',
+				component: 'consent-widget',
 				onKernel: (kernel) => {
 					captured.kernel = kernel;
 				},
@@ -257,7 +257,7 @@ describe('displayed consent actions', () => {
 				await tick();
 				expect(kernel.getSnapshot().activeUI).toBe('dialog');
 				expect(manager.selectedConsents.marketing).toBe(false);
-				expect(screen.getByRole('dialog')).toBeTruthy();
+				expect(screen.getByTestId('consent-widget-root')).toBeTruthy();
 			} finally {
 				result.unmount();
 			}
@@ -616,13 +616,22 @@ test.each(['all', 'necessary', 'custom'] as const)(
 			expect(kernel.getSnapshot().activeUI).toBe('banner');
 			expect(screen.getByTestId('consent-banner-root')).toBeTruthy();
 			manager.setActiveUI('dialog');
-			await tick();
+			// Strictly necessary is always on, so it shows with no switch.
+			await vi.waitFor(() =>
+				expect(
+					document.querySelector(
+						'[data-testid="consent-dialog-category-group"]'
+					)
+				).toHaveTextContent('Strictly Necessary')
+			);
 			expect(
-				document.querySelectorAll('[data-testid^="consent-widget-switch-"]')
-			).toHaveLength(1);
-			expect(
-				screen.getByTestId('consent-widget-switch-necessary')
-			).toBeTruthy();
+				document.querySelectorAll(
+					'[data-testid^="consent-dialog-category-switch-"]'
+				)
+			).toHaveLength(0);
+			// The provider's draft backs the manager's save; the dialog keeps
+			// its own.
+			await draftReady(manager);
 			void manager.saveConsents(action);
 			// The acknowledgement is recorded in the call, so the dialog
 			// closes before the request, which never settles here.

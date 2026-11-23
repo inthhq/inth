@@ -1,7 +1,6 @@
 /**
- * The Privacy Choices (v6) design of the stock Svelte `ConsentBanner`,
- * ported from React's `privacy-choices-banner.test.tsx`, itself ported
- * from the explorer's self-test groups: `card:`, `card bottom right`,
+ * The stock Svelte `ConsentBanner`: a Card, Banner or Drawer, ported from
+ * React's `consent-banner.test.tsx`, itself ported from the explorer's self-test groups: `card:`, `card bottom right`,
  * `banner:`, `top drawer:`, `aio`, `block on + …`, `blocking:`, `fades:`
  * and `phone flush/inset bottom drawer`. Each test names the invariant it
  * guards (`prototypes/PRIVACY-CHOICES-REGRESSIONS.md`).
@@ -14,17 +13,24 @@ import type {
 	ConsentSnapshot,
 } from '@inth/sdk/engine';
 import '@testing-library/jest-dom/vitest';
+import {
+	EARLY_TAP_STYLE_ID,
+	EARLY_TAPS_WINDOW_KEY,
+} from '@inth/sdk/runtime/page-globals';
 import type { PolicyRule } from '@inth/sdk/schema/types';
-import { openOptInConfirmation } from '@inth/sdk/surface-actions';
+import {
+	EARLY_CONSENT_TAP_SCRIPT,
+	openOptInConfirmation,
+} from '@inth/sdk/surface-actions';
 import { defaultTranslationConfig } from '@inth/sdk/surface-state';
 import { mount as mountComponent, unmount } from 'svelte';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
-import { rightsBundleOf } from '../lib/components/privacy-choices/session.svelte';
+import { rightsBundleOf } from '../lib/components/parts/session.svelte';
 import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
-import Fixture from './fixtures/privacy-choices-fixture.svelte';
+import Fixture from './fixtures/consent-surfaces-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 
 type Region = 'eu' | 'us-opt-in' | 'us-notice' | 'us-opt-out';
@@ -54,14 +60,13 @@ interface MountOptions {
 	edgeStyle?: ConsentEdgeStyle;
 	blockUntilChoice?: boolean;
 	region?: Region;
-	design?: ConsentPresentation['design'] | null;
 	/** More provider options, such as `theme` or `noStyle`. */
 	extra?: Partial<ConsentManagerOptions>;
 	/** Merged over the region's policy rule. */
 	rule?: Partial<PolicyRule>;
 	/** Props for the stock `ConsentBanner`. */
 	bannerProps?: Record<string, unknown>;
-	/** The resolved language, which sets the prompt's `dir`, as on the classic root. */
+	/** The resolved language, which sets the prompt's `dir`. */
 	language?: string;
 }
 
@@ -78,14 +83,11 @@ const mount = async function mount({
 	edgeStyle,
 	blockUntilChoice,
 	region = 'eu',
-	design = 'privacy-choices',
 	extra,
 	rule,
 	bannerProps,
 	language,
 }: MountOptions = {}) {
-	// `null` leaves the design to the resolver.
-	const presentationDesign = design === null ? undefined : design;
 	fixture += 1;
 	const prefetch = policyFixture(undefined, {
 		id: `pc-${region}-${fixture}`,
@@ -111,7 +113,6 @@ const mount = async function mount({
 		persistence: false,
 		prefetch,
 		presentation: {
-			design: presentationDesign,
 			prompt: {
 				blockUntilChoice,
 				container: container ?? undefined,
@@ -184,16 +185,35 @@ afterEach(async () => {
 	}
 	document.documentElement.removeAttribute('dir');
 	(document.activeElement as HTMLElement | null)?.blur?.();
+	document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
+	const host = window as unknown as Record<
+		string,
+		{ stop?: () => void } | undefined
+	>;
+	host[EARLY_TAPS_WINDOW_KEY]?.stop?.();
+	Reflect.deleteProperty(window, EARLY_TAPS_WINDOW_KEY);
 });
 
+/**
+ * A tap on the server-rendered prompt before it hydrated: the inline
+ * script runs, the visitor taps a button of the server's markup, and that
+ * markup goes away as Svelte takes the page.
+ */
+const tapBeforeHydration = (action: string) => {
+	const server = document.createElement('div');
+	server.innerHTML = `<div data-testid="consent-banner-root"><button type="button" data-action="${action}">${action}</button></div>`;
+	document.body.append(server);
+	// oxlint-disable-next-line no-new-func -- Runs the inline script as server HTML would.
+	new Function(EARLY_CONSENT_TAP_SCRIPT)();
+	server.querySelector('button')?.click();
+	server.remove();
+};
+
 describe('opt-in', () => {
-	test('the classic design stays the default', async () => {
-		await mount({ container: null, design: null });
-		await vi.waitFor(() =>
-			expect($('consent-banner-root')).toBeInTheDocument()
-		);
-		expect(root()).not.toHaveAttribute('data-design');
-		expect(root()).toHaveAttribute('data-variant');
+	test('renders an inset Card in the start corner by default', async () => {
+		await mount({ container: null });
+		await waitForRoot();
+		expect(root()).toHaveAttribute('data-placement', 'card-start');
 	});
 
 	test('[BNR-13][BNR-10] US opt-out with no prompt shows nothing and never blocks', async () => {
@@ -864,7 +884,7 @@ describe('notice', () => {
 });
 
 describe('customization', () => {
-	test('theme slots style the Privacy Choices parts, as the components slots do in React', async () => {
+	test("theme slots style the prompt's parts, as the components slots do in React", async () => {
 		const slot = (className: string) => ({
 			className,
 			style: { outlineColor: 'rgb(1, 2, 3)' },
@@ -898,7 +918,7 @@ describe('customization', () => {
 		await vi.waitFor(() =>
 			expect($('consent-banner-root')).toBeInTheDocument()
 		);
-		expect(root()).toHaveAttribute('data-design', 'privacy-choices');
+		expect(root()).toHaveAttribute('data-placement', 'card-start');
 		expect(root()).not.toHaveAttribute('class');
 		expect(must('consent-banner-card')).not.toHaveAttribute('class');
 		expect(must('consent-banner-reject-button')).not.toHaveAttribute('class');
@@ -906,7 +926,7 @@ describe('customization', () => {
 });
 
 describe('wave B round 1', () => {
-	test('[BNR-13] an opt-in confirmation opens under the Privacy Choices design', async () => {
+	test('[BNR-13] an opt-in confirmation opens over the prompt', async () => {
 		await mount({ region: 'us-opt-in' });
 		await waitForRoot();
 		await vi.waitFor(() => expect(probe.kernel).not.toBeNull());
@@ -1086,7 +1106,7 @@ describe('wave B round 1', () => {
 		expect(must('consent-banner-footer')).toHaveClass('footer-marker');
 	});
 
-	test('the root matches the classic root: direction, surface marker, animation switch', async () => {
+	test('the root carries the direction, the surface marker and the animation switch', async () => {
 		await mount({ language: 'he' });
 		await waitForRoot();
 		expect(root()).toHaveAttribute('dir', 'rtl');
@@ -1115,7 +1135,7 @@ describe('wave B round 1', () => {
 });
 
 describe('wave C round 1', () => {
-	test("ConsentBanner's class reaches the Privacy Choices root, with and without noStyle", async () => {
+	test("ConsentBanner's class reaches the prompt root, with and without noStyle", async () => {
 		await mount({
 			bannerProps: { class: 'host-banner' },
 			extra: {
@@ -1174,7 +1194,6 @@ describe('wave C round 1', () => {
 
 	test('[COPY-01] the opt-out icon carries its own size where no banner sheet sizes it', async () => {
 		const presentation: ConsentPresentation = {
-			design: 'privacy-choices',
 			optOutLink: 'privacy-choices',
 		};
 		await mount({
@@ -1200,5 +1219,59 @@ describe('wave C round 1', () => {
 		expect(bareIcon).not.toBeNull();
 		expect(bareIcon).not.toHaveAttribute('width');
 		expect(bareIcon).not.toHaveAttribute('height');
+	});
+});
+
+describe('[BNR-06] a tap before hydration', () => {
+	test('the server markup lets the inline script hold taps on the prompt buttons', async () => {
+		await mount({ region: 'us-opt-in' });
+		await waitForRoot();
+		for (const testId of [
+			'consent-banner-reject-button',
+			'consent-banner-accept-button',
+			'consent-banner-customize-button',
+		]) {
+			expect(must(testId)).not.toHaveAttribute('data-early-tap');
+		}
+	});
+
+	test("a Reject replays through the prompt's commit", async () => {
+		tapBeforeHydration('reject');
+		await mount({ region: 'us-opt-in' });
+		await vi.waitFor(() => expect(probe.snapshot?.explicitChoice).toBeTruthy());
+		expect(probe.snapshot?.explicitChoice?.categories?.marketing?.value).toBe(
+			false
+		);
+		expect(probe.snapshot?.explicitChoice?.categories?.measurement?.value).toBe(
+			false
+		);
+		await vi.waitFor(() => expect($('consent-banner-root')).toBeNull());
+		await vi.waitFor(() =>
+			expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull()
+		);
+	});
+
+	test("an Accept replays through the prompt's commit", async () => {
+		tapBeforeHydration('accept');
+		await mount();
+		await vi.waitFor(() =>
+			expect(probe.snapshot?.explicitChoice?.categories?.marketing?.value).toBe(
+				true
+			)
+		);
+		await vi.waitFor(() => expect($('consent-banner-root')).toBeNull());
+	});
+
+	test('a Customize expands the options in place, with no dialog', async () => {
+		tapBeforeHydration('customize');
+		await mount();
+		await waitForRoot();
+		await vi.waitFor(() =>
+			expect(root()).toHaveAttribute('data-expanded', 'true')
+		);
+		await waitForPanel();
+		expect(probe.snapshot?.activeUI).toBe('banner');
+		expect(probe.snapshot?.explicitChoice).toBeFalsy();
+		expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
 	});
 });

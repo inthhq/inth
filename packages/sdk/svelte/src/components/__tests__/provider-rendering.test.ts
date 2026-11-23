@@ -61,11 +61,11 @@ describe('InthProvider Rendering Behavior', () => {
 		).not.toBeInTheDocument();
 	});
 
-	test('should render the banner overlay when scroll lock is enabled', async () => {
+	test('[BNR-13] should render the banner overlay when the prompt blocks until a choice', async () => {
 		render(BannerFixture, {
 			options: {
 				mode: testOffline(),
-				scrollLock: true,
+				presentation: { prompt: { blockUntilChoice: true } },
 			},
 		});
 

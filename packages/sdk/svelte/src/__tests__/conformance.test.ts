@@ -230,6 +230,8 @@ const driver: TestDriver = {
 
 		const app = mount(ConformanceFixture, {
 			props: {
+				// The suite asks for a blocking banner through `trapFocus`.
+				blockUntilChoice: opts.providerOptions?.trapFocus === true || undefined,
 				component: opts.component,
 				onKernel: (kernel: ConsentKernel) => {
 					mountedKernel = kernel;
@@ -252,6 +254,11 @@ const driver: TestDriver = {
 
 		if (!mountedKernel) {
 			throw new Error('Svelte driver: mount completed without kernel');
+		}
+		// The dialog opens through the consent manager, as React's driver
+		// opens it.
+		if (opts.component === 'consent-dialog') {
+			(mountedKernel as ConsentKernel).set.activeUI('dialog');
 		}
 
 		return {

@@ -9,6 +9,7 @@ import { afterEach, describe, expect, test } from 'vitest';
 import BannerFixture from '../../__tests__/fixtures/banner-fixture.svelte';
 import DialogFixture from '../../__tests__/fixtures/dialog-fixture.svelte';
 import PanelTriggerFixture from '../../__tests__/fixtures/panel-trigger-fixture.svelte';
+import WidgetFixture from '../../__tests__/fixtures/widget-fixture.svelte';
 import { testOffline } from '../../__tests__/test-offline';
 
 const part = async function part(testId: string): Promise<HTMLElement> {
@@ -65,7 +66,7 @@ describe('theme.slots', () => {
 		);
 	});
 
-	test('keeps dialog and widget slot classes when noStyle drops the stock ones', async () => {
+	test('keeps dialog slot classes when noStyle drops the stock ones', async () => {
 		render(DialogFixture, {
 			open: true,
 			options: {
@@ -77,8 +78,6 @@ describe('theme.slots', () => {
 						consentDialogContent: 'brand-dialog-content',
 						consentDialogHeader: 'brand-dialog-header',
 						consentDialogTitle: 'brand-dialog-title',
-						consentWidgetFooter: 'brand-widget-footer',
-						consentWidgetFooterSubGroup: 'brand-widget-group',
 					},
 				},
 			},
@@ -96,6 +95,24 @@ describe('theme.slots', () => {
 		expect((await part('consent-dialog-content')).className).toBe(
 			'brand-dialog-content'
 		);
+	});
+
+	test('keeps widget slot classes when noStyle drops the stock ones', async () => {
+		render(WidgetFixture, {
+			// The widget's own prop wins over the provider's `noStyle`.
+			noStyle: true,
+			options: {
+				mode: testOffline(),
+				noStyle: true,
+				theme: {
+					slots: {
+						consentWidgetFooter: 'brand-widget-footer',
+						consentWidgetFooterSubGroup: 'brand-widget-group',
+					},
+				},
+			},
+		});
+
 		expect((await part('consent-widget-footer')).className).toBe(
 			'brand-widget-footer'
 		);

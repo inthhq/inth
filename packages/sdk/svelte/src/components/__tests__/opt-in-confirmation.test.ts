@@ -69,14 +69,12 @@ const renderOptOutDialog = async function renderOptOutDialog(
 			| typeof CHOICE_OPT_OUT_RULE
 			| typeof NOTICE_OPT_OUT_RULE
 			| typeof OPT_IN_RULE;
-		standaloneWidget?: boolean;
 	} = {}
 ) {
 	const rule = params.rule ?? NOTICE_OPT_OUT_RULE;
 	const fixture = policyFixture(undefined, rule);
 	const now = fixture.now ?? Date.now();
 	const gpc = params.gpc ?? false;
-	const standalone = params.standaloneWidget ?? false;
 	let context!: ConsentContextValue;
 	const view = render(OptOutConfirmationFixture, {
 		capture: (value) => {
@@ -107,8 +105,7 @@ const renderOptOutDialog = async function renderOptOutDialog(
 			reloadOnConsentRevoked: false,
 		},
 		showBanner: true,
-		showDialog: !standalone,
-		showWidget: standalone,
+		showWidget: true,
 	});
 	await waitFor(() => {
 		expect(context.kernel.getSnapshot().optOut).not.toBeNull();
@@ -210,7 +207,7 @@ describe('never ask an opted-out visitor to opt back in automatically (Svelte)',
 				},
 			},
 			showBanner: true,
-			showDialog: true,
+			showWidget: true,
 		});
 
 		await waitFor(() => {
@@ -223,7 +220,6 @@ describe('never ask an opted-out visitor to opt back in automatically (Svelte)',
 		expect(context.kernel.getSnapshot().activeUI).toBe('none');
 		expect(part('consent-banner-root')).toBeNull();
 
-		context.kernel.set.activeUI('dialog');
 		await waitFor(() => {
 			expect(part('consent-widget-opt-out-status')).not.toBeNull();
 		});
@@ -234,9 +230,8 @@ describe('never ask an opted-out visitor to opt back in automatically (Svelte)',
 });
 
 describe('two-step opt-in confirmation (Svelte)', () => {
-	test('opt back in link requires separate confirmation, focuses cancel first, stays outside dialog content, and lifts on confirm', async () => {
+	test('opt back in link requires separate confirmation, focuses cancel first, stays outside the widget, and lifts on confirm', async () => {
 		const { context, view } = await renderOptOutDialog();
-		context.kernel.set.activeUI('dialog');
 		await waitFor(() => {
 			expect(part('consent-widget-opt-in-link')).not.toBeNull();
 		});
@@ -253,8 +248,8 @@ describe('two-step opt-in confirmation (Svelte)', () => {
 		);
 
 		const confirmationRoot = part('opt-in-confirmation-root') as HTMLElement;
-		const dialogContent = part('consent-dialog-content') as HTMLElement;
-		expect(dialogContent.contains(confirmationRoot)).toBe(false);
+		const widget = part('consent-widget-root') as HTMLElement;
+		expect(widget.contains(confirmationRoot)).toBe(false);
 		expect(confirmationRoot.getAttribute('role')).toBe('dialog');
 		expect(confirmationRoot.getAttribute('aria-modal')).toBe('true');
 
@@ -288,10 +283,9 @@ describe('two-step opt-in confirmation (Svelte)', () => {
 	});
 
 	test('opt-in confirmation description names confirmed rights once answered by the backend', async () => {
-		const { context, view } = await renderOptOutDialog({
+		const { view } = await renderOptOutDialog({
 			rightsConfirmed: true,
 		});
-		context.kernel.set.activeUI('dialog');
 		await waitFor(() => {
 			expect(part('consent-widget-opt-in-link')).not.toBeNull();
 		});
@@ -310,9 +304,8 @@ describe('two-step opt-in confirmation (Svelte)', () => {
 		view.unmount();
 	});
 
-	test('opt back in link then cancel (button and Escape) leaves opt-out held, saves nothing, and keeps dialog open', async () => {
+	test('opt back in link then cancel (button and Escape) leaves opt-out held and saves nothing', async () => {
 		const { context, view } = await renderOptOutDialog();
-		context.kernel.set.activeUI('dialog');
 		await waitFor(() => {
 			expect(part('consent-widget-opt-in-link')).not.toBeNull();
 		});
@@ -328,7 +321,6 @@ describe('two-step opt-in confirmation (Svelte)', () => {
 		});
 		expect(context.kernel.getSnapshot().optOut).not.toBeNull();
 		expect(context.kernel.getSnapshot().explicitChoice).toBeNull();
-		expect(context.kernel.getSnapshot().activeUI).toBe('dialog');
 
 		// Open again and cancel with Escape.
 		await fireEvent.click(part('consent-widget-opt-in-link') as Element);
@@ -341,14 +333,12 @@ describe('two-step opt-in confirmation (Svelte)', () => {
 		});
 		expect(context.kernel.getSnapshot().optOut).not.toBeNull();
 		expect(context.kernel.getSnapshot().explicitChoice).toBeNull();
-		expect(context.kernel.getSnapshot().activeUI).toBe('dialog');
 
 		view.unmount();
 	});
 
-	test('Accept All in the dialog defers save until confirmed, then lifts opt-out and grants categories', async () => {
+	test('Accept All in the widget defers save until confirmed, then lifts opt-out and grants categories', async () => {
 		const { context, view } = await renderOptOutDialog();
-		context.kernel.set.activeUI('dialog');
 		await waitFor(() => {
 			expect(part('consent-widget-footer-accept-all-button')).not.toBeNull();
 		});
@@ -361,7 +351,6 @@ describe('two-step opt-in confirmation (Svelte)', () => {
 		});
 		expect(context.kernel.getSnapshot().optOut).not.toBeNull();
 		expect(context.kernel.getSnapshot().explicitChoice).toBeNull();
-		expect(context.kernel.getSnapshot().activeUI).toBe('dialog');
 
 		await fireEvent.click(
 			part('opt-in-confirmation-confirm-button') as Element
@@ -378,12 +367,11 @@ describe('two-step opt-in confirmation (Svelte)', () => {
 		expect(
 			context.kernel.getSnapshot().explicitChoice?.categories.marketing?.value
 		).toBe(true);
-		expect(context.kernel.getSnapshot().activeUI).not.toBe('dialog');
 
 		view.unmount();
 	});
 
-	test('Accept All in a banner defers save until confirmed, then lifts opt-out and grants categories', async () => {
+	test('Accept All in a banner never lifts a held opt-out and asks nothing', async () => {
 		const { context, view } = await renderOptOutDialog({
 			rule: CHOICE_OPT_OUT_RULE,
 		});
@@ -393,29 +381,22 @@ describe('two-step opt-in confirmation (Svelte)', () => {
 		});
 
 		await fireEvent.click(part('consent-banner-accept-button') as Element);
+		// A banner commit keeps sale and sharing off (PERM-02); lifting the
+		// opt-out takes the dialog's or the widget's own confirmation.
 		await waitFor(() => {
-			expect(part('opt-in-confirmation-root')).not.toBeNull();
+			expect(context.kernel.getSnapshot().activeUI).toBe('none');
 		});
+		expect(part('opt-in-confirmation-root')).toBeNull();
 		expect(context.kernel.getSnapshot().optOut).not.toBeNull();
-		expect(context.kernel.getSnapshot().explicitChoice).toBeNull();
-
-		await fireEvent.click(
-			part('opt-in-confirmation-confirm-button') as Element
-		);
-		await waitFor(() => {
-			expect(context.kernel.getSnapshot().optOut).toBeNull();
-		});
 		expect(context.kernel.getSnapshot().effectivePermissions.marketing).toBe(
-			true
+			false
 		);
 
 		view.unmount();
 	});
 
 	test('turning Marketing on then Save opens confirmation and cancelling leaves opt-out held', async () => {
-		const { context, view } = await renderOptOutDialog({
-			standaloneWidget: true,
-		});
+		const { context, view } = await renderOptOutDialog();
 		const marketing = await waitFor(() => {
 			const el = part<HTMLButtonElement>('consent-widget-switch-marketing');
 			expect(el).not.toBeNull();
@@ -449,9 +430,7 @@ describe('two-step opt-in confirmation (Svelte)', () => {
 	});
 
 	test('saving without granting the deciding category completes with no confirmation', async () => {
-		const { context, view } = await renderOptOutDialog({
-			standaloneWidget: true,
-		});
+		const { context, view } = await renderOptOutDialog();
 		const measurement = await waitFor(() => {
 			const el = part<HTMLButtonElement>('consent-widget-switch-measurement');
 			expect(el).not.toBeNull();
@@ -476,8 +455,7 @@ describe('two-step opt-in confirmation (Svelte)', () => {
 	});
 
 	test('with active GPC signal there is no opt back in link', async () => {
-		const { context, view } = await renderOptOutDialog({ gpc: true });
-		context.kernel.set.activeUI('dialog');
+		const { view } = await renderOptOutDialog({ gpc: true });
 		await waitFor(() => {
 			expect(part('consent-widget-opt-out-status')).not.toBeNull();
 		});
@@ -511,7 +489,6 @@ describe('two-step opt-in confirmation (Svelte)', () => {
 			heldBy: 'person',
 			mode: refusingMode,
 		});
-		context.kernel.set.activeUI('dialog');
 
 		await waitFor(() => {
 			expect(part('consent-widget-opt-in-link')).not.toBeNull();
@@ -538,7 +515,6 @@ describe('two-step opt-in confirmation (Svelte)', () => {
 
 	test('under an opt-in policy with an opt-out held, Accept lifts in one step without confirmation', async () => {
 		const { context, view } = await renderOptOutDialog({ rule: OPT_IN_RULE });
-		context.kernel.set.activeUI('dialog');
 		await waitFor(() => {
 			expect(part('consent-widget-footer-accept-all-button')).not.toBeNull();
 		});

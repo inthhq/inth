@@ -13,7 +13,7 @@ import { testOffline } from './test-offline';
 const chunk = vi.hoisted(() => ({ failures: 0 }));
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is what happens when the dialog's chunk fails to load. The factory fails the first load and returns the real module after that.
-vi.mock('../lib/components/panel.svelte', async (importOriginal) => {
+vi.mock('../lib/components/dialog/dialog.svelte', async (importOriginal) => {
 	if (chunk.failures > 0) {
 		chunk.failures -= 1;
 		throw new Error('Failed to fetch dynamically imported module');
@@ -21,9 +21,15 @@ vi.mock('../lib/components/panel.svelte', async (importOriginal) => {
 	return await importOriginal();
 });
 
-const customizeButton = function customizeButton() {
+const dialogLink = function dialogLink() {
 	return document.querySelector<HTMLElement>(
-		'[data-testid="consent-banner-customize-button"]'
+		'[data-testid="consent-dialog-link"]'
+	);
+};
+
+const banner = function banner() {
+	return document.querySelector<HTMLElement>(
+		'[data-testid="consent-banner-root"]'
 	);
 };
 
@@ -37,26 +43,25 @@ test('a failed dialog import brings the banner back and a retry opens it', async
 	render(DeferredDialogFixture, {
 		options: { mode: testOffline(), preloadDialog: 'intent' },
 	});
-	const customize = await waitFor(() => {
-		const button = customizeButton();
+	const link = await waitFor(() => {
+		const button = dialogLink();
 		expect(button).toBeInTheDocument();
+		expect(banner()).toBeInTheDocument();
 		return button as HTMLElement;
 	});
 
-	await fireEvent.click(customize);
+	await fireEvent.click(link);
 
 	// The import fails, so the banner comes back instead of nothing.
-	const retry = await waitFor(() => {
+	await waitFor(() => {
 		expect(chunk.failures).toBe(0);
-		const button = customizeButton();
-		expect(button).toBeInTheDocument();
-		return button as HTMLElement;
+		expect(banner()).toBeInTheDocument();
 	});
 	expect(
 		document.querySelector('[data-testid="consent-dialog-card"]')
 	).toBeNull();
 
-	await fireEvent.click(retry);
+	await fireEvent.click(link);
 
 	await waitFor(() => {
 		expect(
