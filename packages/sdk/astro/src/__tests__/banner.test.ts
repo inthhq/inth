@@ -353,6 +353,21 @@ describe('<ConsentBanner /> without a resolved policy', () => {
 		expect(visible).toBeDefined();
 		expect(visible).not.toContain('hidden');
 	});
+
+	it('labels a ConsentDialogLink without children with the dialog title, as React does', async () => {
+		const locals = await buildLocals();
+		const title =
+			locals.snapshot.translations?.translations?.consentManagerDialog?.title;
+		expect(title).toBeTruthy();
+		const html = await container.renderToString(ConsentDialogLink, {
+			locals: { inth: locals },
+		});
+		const label =
+			/<button[^>]*data-testid="consent-dialog-link"[^>]*>(?<label>[^<]*)<\/button>/u.exec(
+				html
+			)?.groups?.label;
+		expect(label).toBe(title);
+	});
 });
 
 describe('<ConsentBanner /> under a none rule', () => {
