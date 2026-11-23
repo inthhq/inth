@@ -314,6 +314,23 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 	{
 		blocking: false,
 		label:
+			'a provider blocking: false over an override that only sets the deprecated scrollLock and trapFocus',
+		override: { scrollLock: true, trapFocus: true },
+		policy: optIn(),
+		presentation: { blocking: false },
+		variant: 'floating',
+	},
+	{
+		blocking: true,
+		label: 'an override scrollLock over a provider that sets nothing explicit',
+		override: { scrollLock: true },
+		policy: optIn(),
+		presentation: {},
+		variant: 'floating',
+	},
+	{
+		blocking: false,
+		label:
 			'an override blockUntilChoice that does not block over a provider that does',
 		override: { blockUntilChoice: false },
 		policy: optIn(),

@@ -331,28 +331,32 @@ const requestedBlocking = function requestedBlocking(
 };
 
 /**
- * The blocking the host asks for, decided per tier: the override first,
- * then the provider's presentation, each with its `blockUntilChoice` ahead
- * of its legacy `blocking`, `scrollLock` and `trapFocus`. A tier that says
- * nothing leaves it to the next, so a provider's `blockUntilChoice: false`
- * never beats an override's `blocking: true`.
+ * The blocking the host asks for. An explicit request (`blockUntilChoice`,
+ * then `blocking`) wins in tier order: the override first, then the
+ * provider's presentation. Only when no tier asks explicitly do the
+ * deprecated `scrollLock` and `trapFocus` decide, again override first. So
+ * a provider's `blockUntilChoice: false` never beats an override's
+ * `blocking: true`, and explicit `blocking` always beats the deprecated
+ * options, whichever tier carries them.
  */
 const requestedTierBlocking = function requestedTierBlocking(
 	override: PromptPresentation,
 	presentation: ConsentPresentation | undefined,
 	surface: 'prompt' | 'preferences'
 ): boolean | undefined {
-	const tiers: (PromptPresentation | undefined)[] = [
-		override,
-		presentation?.[surface],
-	];
+	const tiers = [override, presentation?.[surface]].filter(
+		(tier): tier is PromptPresentation => tier !== undefined
+	);
 	for (const tier of tiers) {
-		const requested =
-			tier === undefined
-				? undefined
-				: (tier.blockUntilChoice ?? requestedBlocking(tier));
-		if (requested !== undefined) {
-			return requested;
+		const explicit = tier.blockUntilChoice ?? tier.blocking;
+		if (explicit !== undefined) {
+			return explicit;
+		}
+	}
+	for (const tier of tiers) {
+		const legacy = requestedBlocking({ ...tier, blocking: undefined });
+		if (legacy !== undefined) {
+			return legacy;
 		}
 	}
 	return undefined;
