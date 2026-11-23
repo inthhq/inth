@@ -441,7 +441,11 @@ interface CategoryRow {
 						>
 						<span [attr.class]="cx(styles.vendorMeta)"
 							>{{ row.trigger.onCount
-							}}<span [attr.class]="cx(styles.chevron)"
+							}}<span
+								[attr.class]="cx(styles.chevron)"
+								[attr.data-direction]="
+									vendorMode() === 'sheet' ? 'end' : 'down'
+								"
 								><svg
 									inth-pc-chevron
 									[direction]="vendorMode() === 'sheet' ? 'end' : 'down'"

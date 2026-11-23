@@ -64,6 +64,8 @@ const COPIED_MS = 1500;
 		'[attr.inert]': 'receipt().show ? null : ""',
 		'[attr.style]': 'rootPart().style',
 		'data-testid': 'consent-dialog-receipt',
+		// Focusable from code only: the dialog opens on it after an opt-out.
+		tabindex: '-1',
 	},
 	imports: [CheckIcon, ChevronIcon, CopyIcon],
 	selector: 'div[inth-pc-receipt]',

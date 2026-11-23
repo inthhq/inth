@@ -1,61 +1,18 @@
 /**
  * Page parts the Privacy Choices stories share: a plain page under the
- * prompt with the persistent "Your Privacy Choices" link, and the offline
- * rules per region.
- *
- * Angular has no `PrivacyChoicesLink` component yet, so the page renders
- * its own: a button with the same test id and label as React's, shown
- * while the policy offers the opt-out right, that opens the dialog.
+ * prompt with the persistent "Your Privacy Choices" link
+ * (`<inth-privacy-choices-link>`), and the offline rules per region.
  */
 /* eslint-disable max-classes-per-file -- The stories' small page components belong together. */
 import {
 	ChangeDetectionStrategy,
 	Component,
-	computed,
 	effect,
 	inject,
 	input,
 } from '@angular/core';
 import { ConsentManager } from '@inth/angular';
 import type { PolicyRule } from '@inth/sdk/engine';
-import { resolveOptOutLink, resolveOptOutState } from '@inth/sdk/surface-state';
-
-/** "Your Privacy Choices", as React's `PrivacyChoicesLink` renders it. */
-@Component({
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	selector: 'storybook-privacy-choices-link',
-	template: `@if (offered()) {
-		<button
-			type="button"
-			data-testid="privacy-choices-link"
-			[attr.data-inth-rights]="rights()"
-			[attr.data-opt-out-variant]="link().variant"
-			(click)="consent.setActiveUI('dialog')"
-		>
-			{{ link().label }}
-		</button>
-	}`,
-})
-export class StorybookPrivacyChoicesLink {
-	protected readonly consent = inject(ConsentManager);
-	protected readonly offered = computed(() => {
-		const snapshot = this.consent.snapshot();
-		return (
-			snapshot.resolution.status === 'matched' &&
-			resolveOptOutState(snapshot).available &&
-			snapshot.policyRule.rights.includes('opt-out')
-		);
-	});
-	protected readonly rights = computed(() =>
-		this.consent.snapshot().policyRule.rights.join(' ')
-	);
-	protected readonly link = computed(() =>
-		resolveOptOutLink(
-			this.consent.copy(),
-			this.consent.presentation()?.optOutLink
-		)
-	);
-}
 
 /** The site's own link to the dialog, where the stock link does not render. */
 @Component({

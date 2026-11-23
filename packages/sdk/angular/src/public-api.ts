@@ -191,6 +191,9 @@ export type {
 	ConsentBannerLayout,
 } from './lib/banner';
 
+// links
+export { PrivacyChoicesLink } from './lib/dialog/privacy-choices-link';
+
 // Private (`ɵ`): building blocks the package's other entry points share.
 // An entry point imports another only by its package name, so these are
 // exported here; they are not part of the public API.

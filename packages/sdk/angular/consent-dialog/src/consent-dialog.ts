@@ -25,7 +25,9 @@ import {
 	ɵOptInConfirmation as OptInConfirmation,
 	ɵreturnFocusAfterDialog as returnFocusAfterDialog,
 } from '@inth/angular';
+import { ConsentDialogTrigger } from '@inth/angular/consent-dialog-trigger';
 import type { ActiveUI } from '@inth/sdk/engine';
+import { showConsentSurface } from '@inth/sdk/surface-actions';
 import { resolveConsentPresentation } from '@inth/sdk/surface-state';
 
 import type { ConsentDialogPanel } from './consent-dialog-panel';
@@ -37,6 +39,7 @@ import type {
 } from './dialog-options';
 import { OptOutConfirmation } from './opt-out-confirmation';
 import type { PrivacyChoicesDialog } from './privacy-choices-dialog';
+import { requestReceiptFocus } from './receipt-focus';
 
 /**
  * Loads the dialog's body, a chunk of its own. Provide another to test a
@@ -76,8 +79,12 @@ export const PRIVACY_CHOICES_DIALOG = new InjectionToken<
  * `container`) it renders the "Your Privacy Choices" dialog instead: the
  * rights on its first view, the receipt and Preferences, or the EU's
  * categories and a staged Save. That dialog loads when it opens, never
- * with the banner, and takes `open`, `noStyle`, `disableAnimation` and
- * `models`; it renders no trigger of its own.
+ * with the banner, and takes `open`, `noStyle`, `disableAnimation`,
+ * `models` and `showTrigger`. It confirms an opt-out on its receipt: the
+ * opt-out confirmation opens it there, unless a standalone
+ * `<inth-opt-out-confirmation>` is mounted or `models` leaves the policy
+ * out. A controlled `open` asks the consent manager to show it once each
+ * time it turns `true`.
  *
  * The dialog's body, with the widget and primitives it renders, is a chunk
  * of its own. It loads when the dialog opens, or earlier: in idle time
@@ -97,17 +104,38 @@ export const PRIVACY_CHOICES_DIALOG = new InjectionToken<
 	// The server renders nothing here, and the body is created in the
 	// browser: there is nothing to hydrate.
 	host: { ngSkipHydration: 'true' },
-	imports: [OptInConfirmation, OptOutConfirmation],
+	imports: [ConsentDialogTrigger, OptInConfirmation, OptOutConfirmation],
 	selector: 'inth-consent-dialog',
-	template: `@if (!privacyChoices()) {
+	// Under the Privacy Choices design the dialog confirms an opt-out on its
+	// receipt, so the embedded confirmation shows only when this dialog does
+	// not open under the policy's model. The floating trigger is an entry
+	// point of its own; the classic body renders its own.
+	template: `@if (!privacyChoices() || !applies()) {
 			<inth-opt-out-confirmation
 				[embedded]="true"
 				[noStyle]="noStyle()"
 				[disableAnimation]="disableAnimation()"
-			/><inth-opt-in-confirmation
-				[noStyle]="noStyle()"
-				[disableAnimation]="disableAnimation()"
 			/>
+		}
+		<inth-opt-in-confirmation
+			[noStyle]="noStyle()"
+			[disableAnimation]="disableAnimation()"
+		/>
+		@if (privacyChoices()) {
+			@if (triggerOptions(); as trigger) {
+				@defer (on immediate) {
+					<inth-consent-dialog-trigger
+						[defaultPosition]="trigger.defaultPosition ?? 'bottom-right'"
+						[persistPosition]="trigger.persistPosition ?? true"
+						[showWhen]="trigger.showWhen ?? 'always'"
+						[size]="trigger.size ?? 'md'"
+						[label]="trigger.label"
+						[noStyle]="trigger.noStyle ?? noStyle()"
+						[rootClass]="trigger.rootClass"
+						(triggerClick)="openFromTrigger($event)"
+					/>
+				}
+			}
 		}
 		<ng-container #body />`,
 })
@@ -153,15 +181,17 @@ export class ConsentDialog {
 	/**
 	 * Whether the policy is one this dialog renders for. Under another, such
 	 * as IAB beside an IAB dialog, an open preference dialog is not this one.
+	 *
+	 * @internal
 	 */
-	readonly #applies = computed(() =>
+	protected readonly applies = computed(() =>
 		this.models().includes(this.#consent.model())
 	);
 
 	/** Whether this dialog is opening, by its parent or the consent state. */
 	readonly #opening = computed(
 		() =>
-			this.#applies() && (this.open() ?? this.#consent.activeUI() === 'dialog')
+			this.applies() && (this.open() ?? this.#consent.activeUI() === 'dialog')
 	);
 
 	/**
@@ -188,6 +218,17 @@ export class ConsentDialog {
 				presentation: this.#consent.presentation(),
 				surface: 'prompt',
 			}).design === 'privacy-choices'
+	);
+
+	/** The floating trigger's inputs, or `null` for none. @internal */
+	protected readonly triggerOptions = computed(
+		(): ConsentDialogTriggerOptions | null => {
+			const trigger = this.showTrigger();
+			if (trigger === true) {
+				return {};
+			}
+			return trigger === false ? null : trigger;
+		}
 	);
 
 	/**
@@ -332,7 +373,7 @@ export class ConsentDialog {
 			registerDialogWarmer(() => {
 				// A warm-up for a dialog of another policy, such as the IAB
 				// one, loads nothing here.
-				if (!untracked(this.#applies)) {
+				if (!untracked(this.applies)) {
 					return;
 				}
 				// Warming loads only the design the page renders.
@@ -351,7 +392,7 @@ export class ConsentDialog {
 		effect(() => {
 			if (
 				this.needed() ||
-				(this.warmed() && this.#applies() && !this.privacyChoices())
+				(this.warmed() && this.applies() && !this.privacyChoices())
 			) {
 				untracked(() => {
 					this.#consent.preloadDraft();
@@ -380,10 +421,47 @@ export class ConsentDialog {
 			}
 		});
 
+		// The Privacy Choices design confirms an opt-out on its receipt, in
+		// the dialog: the opt-out confirmation (after a revocation reload, or
+		// from a one-click opt-out link) opens the dialog there instead. A
+		// standalone `<inth-opt-out-confirmation>` the host mounted still
+		// shows it itself.
+		effect(() => {
+			if (
+				!(
+					this.privacyChoices() &&
+					this.applies() &&
+					this.#consent.optOutConfirmationOpen() &&
+					!this.#consent.ɵhasStandaloneOptOutConfirmation()
+				)
+			) {
+				return;
+			}
+			untracked(() => {
+				const kernel = this.#consent.kernel();
+				requestReceiptFocus(kernel);
+				// Opening the dialog closes the confirmation.
+				showConsentSurface(kernel, 'dialog');
+			});
+		});
 		// Focus returns to the control that opened the dialog when it closes.
 		returnFocusAfterDialog(this.open, (previous) => {
 			this.#surfaceBeforeDialog = previous;
 		});
+	}
+
+	/**
+	 * A click on the Privacy Choices design's trigger. A parent holding
+	 * `open` at `false` opens the dialog itself; otherwise the trigger asks
+	 * the consent manager.
+	 *
+	 * @internal
+	 */
+	protected openFromTrigger(event: MouseEvent): void {
+		if (this.open() === false) {
+			event.preventDefault();
+			this.openChange.emit(true);
+		}
 	}
 
 	/**

@@ -7,7 +7,7 @@
  * the other stories, so the static build works without a backend.
  */
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
-import { ConsentBanner } from '@inth/angular';
+import { ConsentBanner, PrivacyChoicesLink } from '@inth/angular';
 import type {
 	ConsentContainer,
 	ConsentEdgeStyle,
@@ -15,11 +15,7 @@ import type {
 } from '@inth/sdk/engine';
 
 import { storybookMode, storybookPolicy } from '../../storybook-consent-policy';
-import {
-	demoPage,
-	StorybookPrivacyChoicesLink,
-	US_GPC,
-} from './privacy-choices-shared';
+import { demoPage, US_GPC } from './privacy-choices-shared';
 import {
 	consentApplication,
 	editableConsentOptions,
@@ -83,10 +79,10 @@ const privacyChoicesStory = function privacyChoicesStory(
 				},
 			}),
 			moduleMetadata: {
-				imports: [ConsentBanner, StorybookPrivacyChoicesLink],
+				imports: [ConsentBanner, PrivacyChoicesLink],
 			},
 			template: `${demoPage(
-				'<storybook-privacy-choices-link />'
+				'<inth-privacy-choices-link />'
 			)}<inth-consent-banner />`,
 		}),
 	};

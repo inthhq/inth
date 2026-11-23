@@ -8,7 +8,7 @@
  * offline, so the static build works without a backend.
  */
 import type { Meta, StoryObj } from '@analogjs/storybook-angular';
-import { ConsentBanner } from '@inth/angular';
+import { ConsentBanner, PrivacyChoicesLink } from '@inth/angular';
 import { ConsentDialog } from '@inth/angular/consent-dialog';
 import type { ConsentContainer, PolicyRule } from '@inth/sdk/engine';
 
@@ -20,7 +20,6 @@ import {
 import {
 	demoPage,
 	StorybookOpenDialog,
-	StorybookPrivacyChoicesLink,
 	StorybookSettingsLink,
 	US_GPC,
 } from './privacy-choices-shared';
@@ -72,7 +71,7 @@ const pageLinks = (region: Region): string => {
 	if (region === 'us-opt-in') {
 		return '<storybook-settings-link label="Your Privacy Choices" />';
 	}
-	return '<storybook-privacy-choices-link />';
+	return '<inth-privacy-choices-link />';
 };
 
 interface DialogStoryOptions {
@@ -128,7 +127,7 @@ const dialogStory = function dialogStory(
 					ConsentBanner,
 					ConsentDialog,
 					StorybookOpenDialog,
-					StorybookPrivacyChoicesLink,
+					PrivacyChoicesLink,
 					StorybookSettingsLink,
 				],
 			},

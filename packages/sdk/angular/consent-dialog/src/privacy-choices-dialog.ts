@@ -58,9 +58,10 @@ import { showConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	announcementText,
 	resolveCategoryTitle,
+	resolveConsentPresentation,
 	resolvePreferencesRowCopy,
 	resolvePrivacyChoicesDialogCopy,
-	resolvePrivacyChoicesVariant,
+	resolvePrivacyChoicesRegime,
 	resolveVendorTableCopy,
 } from '@inth/sdk/surface-state';
 import {
@@ -73,9 +74,11 @@ import {
 } from '@inth/sdk/ui/primitives/surface';
 import styles from '@inth/sdk/ui/styles/components/privacy-choices';
 import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
+import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 
 import { PrivacyChoicesLayer } from './privacy-choices-layer';
 import { PRIVACY_CHOICES_DIALOG_SHEETS } from './privacy-choices-sheets';
+import { takeReceiptFocus } from './receipt-focus';
 
 /** The "Saved" cue stays this long, on a timer, not an animation (MOT-03). */
 const CUE_MS = 1700;
@@ -85,6 +88,16 @@ const SHEET_EXIT_MS = 160;
 const PREFERENCES_OPENER = 'preferences';
 const PREFERENCES_SHEET = 'preferences';
 const VENDOR_SHEET_PREFIX = 'vendors:';
+/**
+ * Where focus goes when the dialog's opener is gone (FOC-03): "Your
+ * Privacy Choices", the floating trigger, then a `[inthConsentDialogLink]`.
+ */
+const RETURN_TARGETS = [
+	'[data-testid="privacy-choices-link"]',
+	'[data-testid="consent-dialog-trigger"]',
+	'[data-testid="consent-dialog-link"]',
+];
+
 /** How many frames to wait for a returning banner, which may still be loading. */
 const BANNER_RETURN_FRAMES = 60;
 
@@ -147,6 +160,7 @@ interface ShownSheet {
 				[attr.data-regime]="eu() ? 'eu' : 'us'"
 				[attr.data-layout]="phone() ? 'phone' : 'desktop'"
 				data-testid="consent-dialog-root"
+				[attr.dir]="textDirection()"
 			>
 				<section
 					inth-pc-layer
@@ -208,7 +222,9 @@ interface ShownSheet {
 									preferencesCopy().summary + ' · ' + preferencesCopy().onCount
 								}}</span></span
 							>
-							<span [attr.class]="cx(styles.chevron)"
+							<span
+								[attr.class]="cx(styles.chevron)"
+								[attr.data-direction]="phone() ? 'end' : 'down'"
 								><svg
 									inth-pc-chevron
 									[direction]="phone() ? 'end' : 'down'"
@@ -425,7 +441,14 @@ export class PrivacyChoicesDialog {
 	readonly noStyle = input<boolean | undefined>(undefined);
 	/** Skip the sheet exit. Defaults to the provider's `disableAnimation`. */
 	readonly disableAnimation = input<boolean | undefined>(undefined);
-	/** Override the open state. Defaults to `activeUI === 'dialog'`. */
+	/**
+	 * Control the open state. `true` asks the consent manager to show the
+	 * dialog, so the banner leaves and sheets, Escape and the receipt work
+	 * as for any open dialog; Close and Escape then close it through the
+	 * consent manager and emit `openChange(false)`, and `open` must turn
+	 * `false` and back to `true` to ask again. `false` hides it whatever the
+	 * consent manager shows. Unset, it follows `activeUI === 'dialog'`.
+	 */
 	readonly open = input<boolean | undefined>(undefined);
 	/** Emits `false` when a controlled dialog asks to close. */
 	readonly openChange = output<boolean>();
@@ -453,12 +476,16 @@ export class PrivacyChoicesDialog {
 		read: PrivacyChoicesLayer,
 	});
 
-	/** @internal */
-	protected readonly variant = computed(() =>
-		resolvePrivacyChoicesVariant(this.#consent.snapshot().policyRule)
+	/**
+	 * The model and the US markers decide the body, never the prompt: an EU
+	 * opt-in policy that shows no banner still gets the EU dialog.
+	 *
+	 * @internal
+	 */
+	protected readonly eu = computed(
+		() =>
+			resolvePrivacyChoicesRegime(this.#consent.snapshot().policyRule) === 'eu'
 	);
-	/** @internal */
-	protected readonly eu = computed(() => this.variant() === 'choice');
 	readonly #modelAllowed = computed(() => {
 		const models = this.models();
 		return !models || models.includes(this.#consent.model());
@@ -466,18 +493,28 @@ export class PrivacyChoicesDialog {
 	/** @internal */
 	protected readonly isOpen = computed(
 		() =>
-			(this.open() ?? this.#consent.activeUI() === 'dialog') &&
+			this.open() !== false &&
+			this.#consent.activeUI() === 'dialog' &&
 			this.#consent.hasConsentUi() &&
 			this.#modelAllowed()
 	);
+	/** @internal */
+	protected readonly textDirection = computed(() =>
+		getTextDirection(this.#consent.translations()?.language)
+	);
 	/**
-	 * Edge style applies to phone sheets too, whatever the prompt's
-	 * presentation (a Card itself ignores it).
+	 * Phone sheets take the prompt's resolved phone edge style, which the
+	 * policy and a Card's own rule (always inset) have already settled.
 	 *
 	 * @internal
 	 */
 	protected readonly edgeStyle = computed(
-		() => this.#consent.presentation()?.prompt?.edgeStyle ?? 'inset'
+		() =>
+			resolveConsentPresentation({
+				policy: this.#consent.snapshot().policyRule,
+				presentation: this.#consent.presentation(),
+				surface: 'prompt',
+			}).container?.phone.edgeStyle ?? 'inset'
 	);
 	/** @internal */
 	protected readonly copy = computed(() =>
@@ -546,28 +583,37 @@ export class PrivacyChoicesDialog {
 		const { sheets } = this.#surface.state();
 		return sheets[sheets.length - 1] ?? null;
 	});
+	/**
+	 * Nothing is left to animate under reduced motion, on desktop or in a
+	 * closed dialog, so a sheet leaves at once there (NEST-06).
+	 */
+	readonly #exitsAtOnce = computed(
+		() => this.#reducedMotion() || !this.phone() || !this.isOpen()
+	);
 	/** @internal */
 	protected readonly shownSheet = linkedSignal<
-		{ id: string } | null,
+		{ id: string | null; atOnce: boolean },
 		ShownSheet | null
 	>({
-		computation: (top, previous) => {
+		computation: ({ atOnce, id }, previous) => {
 			const shown = previous?.value ?? null;
-			if (top) {
-				return shown?.id === top.id ? shown : { closing: false, id: top.id };
+			if (id !== null) {
+				// A sheet reopened while it animates out shows again at once,
+				// and its exit timer goes with the closing state (NEST-03).
+				return shown?.id === id && !shown.closing
+					? shown
+					: { closing: false, id };
 			}
-			if (shown && !shown.closing) {
-				return untracked(this.#reducedMotion)
-					? null
-					: { ...shown, closing: true };
+			if (shown && (atOnce || !shown.closing)) {
+				return atOnce ? null : { ...shown, closing: true };
 			}
 			return shown;
 		},
 		equal: (a, b) => a?.id === b?.id && a?.closing === b?.closing,
-		source: () => {
-			const top = this.#topSheet();
-			return top ? { id: top.id } : null;
-		},
+		source: () => ({
+			atOnce: this.#exitsAtOnce(),
+			id: this.#topSheet()?.id ?? null,
+		}),
 	});
 	/** @internal */
 	protected readonly sheetOpen = computed(() => {
@@ -649,14 +695,23 @@ export class PrivacyChoicesDialog {
 			const timer = setTimeout(() => this.cue.set(0), CUE_MS);
 			onCleanup(() => clearTimeout(timer));
 		});
-		// A closing sheet animates out, then unmounts.
+		// A closing sheet animates out, then unmounts. The timer clears only
+		// the exit it was set for, never a sheet shown since.
 		effect((onCleanup) => {
-			if (!this.shownSheet()?.closing) {
+			const exiting = this.shownSheet();
+			if (!exiting?.closing) {
 				return;
 			}
-			const timer = setTimeout(() => this.shownSheet.set(null), SHEET_EXIT_MS);
+			const timer = setTimeout(
+				() =>
+					this.shownSheet.update((current) =>
+						current === exiting ? null : current
+					),
+				SHEET_EXIT_MS
+			);
 			onCleanup(() => clearTimeout(timer));
 		});
+		this.#followOpenRequest();
 		// Desktop never nests, and a viewport change drops open sheets
 		// (NEST-01, NEST-06).
 		effect(() => {
@@ -669,6 +724,32 @@ export class PrivacyChoicesDialog {
 		this.#followEscape();
 		this.#followBackdrop();
 		this.#followScroll();
+	}
+
+	/**
+	 * A controlled `open` goes through the consent manager, so the session,
+	 * sheets and Escape follow this dialog and the banner hands over to it.
+	 * It asks once each time it turns true; Close and Escape then close the
+	 * dialog as usual.
+	 */
+	#followOpenRequest(): void {
+		let requested = false;
+		effect(() => {
+			if (this.open() !== true) {
+				requested = false;
+				return;
+			}
+			if (requested || !this.#consent.hasConsentUi() || !this.#modelAllowed()) {
+				return;
+			}
+			requested = true;
+			untracked(() => {
+				const kernel = this.#consent.kernel();
+				if (kernel.getSnapshot().activeUI !== 'dialog') {
+					showConsentSurface(kernel, 'dialog');
+				}
+			});
+		});
 	}
 
 	/**
@@ -686,8 +767,18 @@ export class PrivacyChoicesDialog {
 				let opener: Element | null = document.activeElement;
 				const kernel = this.#consent.kernel();
 				const release = attachPageBlock(backdrop);
+				// Back from an opt-out (after its revocation reload, or from a
+				// one-click opt-out link), the dialog opens on the receipt that
+				// confirms it.
+				const receipt = takeReceiptFocus(kernel)
+					? main
+							.element()
+							.querySelector<HTMLElement>(
+								'[data-testid="consent-dialog-receipt"][data-open="true"]'
+							)
+					: null;
 				const untrap = attachTopLayerTrap(main.element(), {
-					initialFocus: main.heading(),
+					initialFocus: receipt ?? main.heading(),
 					returnFocus: () => {
 						const target = opener;
 						opener = null;
@@ -696,11 +787,16 @@ export class PrivacyChoicesDialog {
 						if (kernel.getSnapshot().activeUI === 'banner') {
 							focusReturningBanner();
 						}
-						return target instanceof HTMLElement && target.isConnected
-							? target
-							: document.querySelector<HTMLElement>(
-									'[data-testid="privacy-choices-link"]'
-								);
+						if (target instanceof HTMLElement && target.isConnected) {
+							return target;
+						}
+						for (const selector of RETURN_TARGETS) {
+							const fallback = document.querySelector<HTMLElement>(selector);
+							if (fallback) {
+								return fallback;
+							}
+						}
+						return null;
 					},
 				});
 				onCleanup(() => {
