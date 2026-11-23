@@ -259,7 +259,7 @@ describe('createDeferredKernel', () => {
 });
 
 describe('scheduleDeferredEngine', () => {
-	test('with a tap router: banner input routes instead of starting, page input still starts', () => {
+	test('with a tap router: a queued tap is routed, and banner input starts the engine', () => {
 		const image = document.createElement('img');
 		image.setAttribute('fetchpriority', 'high');
 		Object.defineProperty(image, 'complete', { value: false });
@@ -272,92 +272,54 @@ describe('scheduleDeferredEngine', () => {
 		const host = window as unknown as Record<string, Record<string, unknown>>;
 		const queue: Record<string, unknown> = { taps: [] };
 		host[EARLY_TAPS_WINDOW_KEY] = queue;
+		try {
+			const start = vi.fn();
+			const onTap = vi.fn();
+			const stop = scheduleDeferredEngine(start, onTap);
+			// The early-tap script calls this after it queued a click.
+			(queue[EARLY_TAP_NOTIFY_KEY] as () => void)();
+			expect(onTap).toHaveBeenLastCalledWith();
+			expect(start).not.toHaveBeenCalled();
+			// The banner replays its own taps with the engine, so a press on
+			// it wakes the engine like any other input.
+			accept.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+			expect(start).toHaveBeenCalledTimes(1);
+			stop();
+			expect(queue[EARLY_TAP_NOTIFY_KEY]).toBeUndefined();
 
-		const start = vi.fn();
-		const onTap = vi.fn();
-		const stop = scheduleDeferredEngine(start, onTap);
-		accept.dispatchEvent(new Event('focusin', { bubbles: true }));
-		accept.dispatchEvent(new Event('keydown', { bubbles: true }));
-		accept.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-		expect(start).not.toHaveBeenCalled();
-		// A press names the button, ahead of its click.
-		expect(onTap).toHaveBeenCalledWith('accept');
-		// The early-tap script calls this after it queued a click.
-		(queue[EARLY_TAP_NOTIFY_KEY] as () => void)();
-		expect(onTap).toHaveBeenLastCalledWith();
-		expect(start).not.toHaveBeenCalled();
-		document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-		expect(start).toHaveBeenCalledTimes(1);
-		stop();
-		expect(queue[EARLY_TAP_NOTIFY_KEY]).toBeUndefined();
-
-		// A tap queued before hydration is routed when scheduled.
-		queue.taps = [{ action: 'accept', at: 1 }];
-		const early = vi.fn();
-		const routed = vi.fn();
-		const stopEarly = scheduleDeferredEngine(early, routed);
-		expect(routed).toHaveBeenCalledTimes(1);
-		expect(early).not.toHaveBeenCalled();
-		stopEarly();
-		Reflect.deleteProperty(host, EARLY_TAPS_WINDOW_KEY);
-		image.remove();
-		banner.remove();
+			// A tap queued before hydration is routed when scheduled.
+			queue.taps = [{ action: 'accept', at: 1 }];
+			const early = vi.fn();
+			const routed = vi.fn();
+			const stopEarly = scheduleDeferredEngine(early, routed);
+			expect(routed).toHaveBeenCalledTimes(1);
+			expect(early).not.toHaveBeenCalled();
+			stopEarly();
+		} finally {
+			Reflect.deleteProperty(host, EARLY_TAPS_WINDOW_KEY);
+			image.remove();
+			banner.remove();
+		}
 	});
 
-	test('a press on the Privacy Choices banner starts the engine, whose banner replays the tap', () => {
-		const image = document.createElement('img');
-		image.setAttribute('fetchpriority', 'high');
-		Object.defineProperty(image, 'complete', { value: false });
-		const banner = document.createElement('div');
-		banner.dataset.testid = 'consent-banner-root';
-		banner.dataset.design = 'privacy-choices';
-		const reject = document.createElement('button');
-		reject.dataset.action = 'reject';
-		banner.append(reject);
-		document.body.append(image, banner);
-		const host = window as unknown as Record<string, Record<string, unknown>>;
-		host[EARLY_TAPS_WINDOW_KEY] = { taps: [] };
-
-		const start = vi.fn();
-		const onTap = vi.fn();
-		const stop = scheduleDeferredEngine(start, onTap);
-		reject.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-		expect(onTap).not.toHaveBeenCalled();
-		expect(start).toHaveBeenCalledTimes(1);
-		stop();
-		Reflect.deleteProperty(host, EARLY_TAPS_WINDOW_KEY);
-		image.remove();
-		banner.remove();
-	});
-
-	test('banner taps stay routed after the engine started, until stopped', () => {
+	test('queued taps stay routed after the engine started, until stopped', () => {
 		// No priority image: the engine starts as soon as it is scheduled.
-		const banner = document.createElement('div');
-		banner.dataset.testid = 'consent-banner-root';
-		const accept = document.createElement('button');
-		accept.dataset.action = 'accept';
-		banner.append(accept);
-		document.body.append(banner);
 		const host = window as unknown as Record<string, Record<string, unknown>>;
 		const queue: Record<string, unknown> = { taps: [] };
 		host[EARLY_TAPS_WINDOW_KEY] = queue;
-
-		const start = vi.fn();
-		const onTap = vi.fn();
-		const stop = scheduleDeferredEngine(start, onTap);
-		expect(start).toHaveBeenCalledTimes(1);
-		// The engine is still downloading: a tap is still the root's.
-		accept.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-		expect(onTap).toHaveBeenCalledWith('accept');
-		(queue[EARLY_TAP_NOTIFY_KEY] as () => void)();
-		expect(onTap).toHaveBeenLastCalledWith();
-		expect(start).toHaveBeenCalledTimes(1);
-		stop();
-		expect(queue[EARLY_TAP_NOTIFY_KEY]).toBeUndefined();
-		accept.dispatchEvent(new Event('pointerdown', { bubbles: true }));
-		expect(onTap).toHaveBeenCalledTimes(2);
-		Reflect.deleteProperty(host, EARLY_TAPS_WINDOW_KEY);
-		banner.remove();
+		try {
+			const start = vi.fn();
+			const onTap = vi.fn();
+			const stop = scheduleDeferredEngine(start, onTap);
+			expect(start).toHaveBeenCalledTimes(1);
+			// The engine is still downloading: a queued tap is still the root's.
+			(queue[EARLY_TAP_NOTIFY_KEY] as () => void)();
+			expect(onTap).toHaveBeenCalledTimes(1);
+			stop();
+			expect(queue[EARLY_TAP_NOTIFY_KEY]).toBeUndefined();
+		} finally {
+			Reflect.deleteProperty(host, EARLY_TAPS_WINDOW_KEY);
+		}
 	});
 
 	test('waits for a loading priority image', () => {
