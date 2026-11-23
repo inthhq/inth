@@ -43,7 +43,7 @@ The docs no longer publish code from this app. The Vue quickstart quotes
 - `vite.config.ts` adds the Inth Vite plugin.
 - `src/main.ts` installs `inth` with the backend URL and `scripts`.
 - `src/scripts.ts` holds the vendor configuration.
-- `src/app.vue` mounts `InthProvider` and `ConsentDialogLink`.
+- `src/App.vue` mounts `InthProvider` and `ConsentDialogLink`.
 - `src/video-embed.vue` gates the YouTube iframe with `ConsentGate`.
 - `src/branded.ts` is `main.ts` with tokens, presentation and a slot class.
 - `src/headless.ts`, `src/headless-app.vue` and `src/consent-prompt.vue` replace

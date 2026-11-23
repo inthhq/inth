@@ -11,7 +11,7 @@ bun install
 bun run build:libs
 ```
 
-Replace `https://your-project.inth.app` in `src/app.svelte` with your Inth
+Replace `https://your-project.inth.app` in `src/App.svelte` with your Inth
 backend URL and allow this app's origin in Inth. Replace the placeholder PostHog
 project key and X Pixel ID in `src/scripts.ts`. Then run:
 
@@ -46,7 +46,7 @@ Open `/?experiment=1` to run the banner-shape experiment: Inth picks the
 `banner-shape · <arm> · inth`. Open `/?experiment=1&arm=wall` to set the arm
 the way a flag provider would (`assignedBy: host`); any other `arm` value runs
 `control`. `src/main.ts` mounts `src/experiment-app.svelte` for these URLs, a
-copy of `app.svelte` that passes `experiment` and the `onSurfaceShown` and
+copy of `App.svelte` that passes `experiment` and the `onSurfaceShown` and
 `onChoiceRecorded` callbacks to the provider. Each impression and choice under
 the arm is listed on the page and pushed to `window.dataLayer` as
 `inth_surface_shown` and `inth_choice_recorded` with `experiment_id` and `arm`.
