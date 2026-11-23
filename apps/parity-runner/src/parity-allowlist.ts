@@ -107,6 +107,15 @@ export const PARITY_ALLOWLIST: readonly ParityAllowEntry[] = [
 		slot: '*',
 		story: 'IAB/IAB Consent Dialog/Overview',
 	},
+	// No React pair, so this compares Svelte against Vue: the Customize
+	// step opens the preference centre, whose vendor list is the same gap.
+	{
+		check: 'dom',
+		framework: 'vue',
+		reason: IAB_VENDOR_LIST_REASON,
+		slot: '*',
+		story: 'IAB/IAB Consent Banner/Customize Flow',
+	},
 ];
 
 const matches = function matches(
