@@ -31,21 +31,29 @@ const FADE_PROPERTIES = ['--inth-fade-top', '--inth-fade-bottom'] as const;
 const registered = new WeakSet<object>();
 
 /**
+ * A shadow root, recognised by shape rather than by `instanceof`: a host
+ * created in one window and adopted into another keeps the first
+ * window's prototype, so no single `ShadowRoot` constructor matches it.
+ */
+const isShadowRoot = (node: Node): boolean =>
+	node.nodeType === 11 && 'host' in node && Boolean((node as ShadowRoot).host);
+
+/**
  * Register the fade lengths at document scope for an area inside a shadow
  * root, once per document, where `@property` in the shadow tree's
  * stylesheet does not register them (Chromium). Without it the fades jump
  * instead of animating in the script-tag build.
  *
- * Both the shadow-root check and the registration use the area's own
- * window. A controller loaded in the parent page can run on an area in a
- * same-origin iframe, whose shadow roots are not instances of the parent's
- * `ShadowRoot` and whose properties the parent's `CSS` does not register.
+ * Registration uses the area's own window: a controller loaded in the
+ * parent page can run on an area in a same-origin iframe, whose properties
+ * the parent's `CSS` does not register. The shadow-root check goes by
+ * shape, since a root can carry another window's prototype.
  */
 const registerFadeProperties = function registerFadeProperties(
 	area: HTMLElement
 ): void {
 	const view = area.ownerDocument.defaultView;
-	if (!view?.ShadowRoot || !(area.getRootNode() instanceof view.ShadowRoot)) {
+	if (!view || !isShadowRoot(area.getRootNode())) {
 		return;
 	}
 	const css = view.CSS;

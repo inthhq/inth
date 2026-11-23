@@ -405,6 +405,26 @@ describe('scroll fade registration', () => {
 		frame.close();
 	});
 
+	test('[LAY-08] a shadow host made in the page and moved into an iframe registers through the iframe', () => {
+		const frame = new JSDOM('<!doctype html><body></body>').window;
+		const frameRegister = vi.fn();
+		const pageRegister = vi.fn();
+		Object.defineProperty(frame, 'CSS', {
+			configurable: true,
+			value: { registerProperty: frameRegister },
+		});
+		vi.stubGlobal('CSS', { registerProperty: pageRegister });
+		const host = document.createElement('div');
+		const element = document.createElement('div');
+		host.attachShadow({ mode: 'open' }).append(element);
+		frame.document.body.append(frame.document.adoptNode(host));
+
+		attachScrollFades(element)();
+		expect(frameRegister).toHaveBeenCalledTimes(2);
+		expect(pageRegister).not.toHaveBeenCalled();
+		frame.close();
+	});
+
 	test('[LAY-08] a browser without registerProperty is left alone', () => {
 		vi.stubGlobal('CSS', {});
 		expect(() => attachScrollFades(shadowArea())()).not.toThrow();
