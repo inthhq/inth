@@ -82,6 +82,7 @@ logic is pure and unit-tested in `monitor-issue.model.test.ts`.
 - `runner.ts` — Playwright orchestration, phase assertions, JSON report
 - `monitor-issue.model.ts` — pure report/issue helpers (unit-tested)
 - `manage-issues.ts` — GitHub issue sync used by the workflow
+- `github-issues.api.ts` — the GitHub REST requests `manage-issues.ts` makes
 
 ## Known limitations
 
