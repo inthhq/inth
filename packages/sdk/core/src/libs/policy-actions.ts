@@ -291,6 +291,7 @@ const resolvePreferencesBlocking = function resolvePreferencesBlocking(
  * @returns Ordered controls, required actions, rights and diagnostics.
  */
 export const resolveConsentPresentation =
+	// oxlint-disable-next-line complexity -- Each branch resolves one presentation field against the policy.
 	function resolveConsentPresentation(input: {
 		policy: ResolvedPolicyRule;
 		surface: 'prompt' | 'preferences';

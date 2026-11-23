@@ -69,6 +69,7 @@ export const SURFACE_SHEETS = {
  * and the side Drawer's scroll area), then `dialog` (the consent dialog,
  * which renders over `expand` and reuses its `scroll` and `group` classes).
  */
+// oxlint-disable-next-line sort-keys -- Keys are in cascade order.
 export const LATER_SHEETS = {
 	widget: [
 		'accordion',

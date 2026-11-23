@@ -2,11 +2,7 @@ import { normalizePolicyRule } from '@inth/sdk-schema/types';
 import type { PolicyPrompt, PolicyRuleModel } from '@inth/sdk-schema/types';
 import { describe, expect, it } from 'vitest';
 
-import {
-	DEFAULT_CONSENT_CONTAINER,
-	PHONE_LAYOUT_QUERY,
-	resolveLayout,
-} from '../consent-layout';
+import { PHONE_LAYOUT_QUERY, resolveLayout } from '../consent-layout';
 import type {
 	ConsentBlockingConstraint,
 	ConsentContainer,
