@@ -11,8 +11,8 @@
 
 	import { getThemeContext } from '../../context.svelte';
 	import ConsentButton from '../action-button.svelte';
-	import Icon from '../privacy-choices/icon.svelte';
-	import { cx } from '../privacy-choices/parts';
+	import Icon from '../parts/icon.svelte';
+	import { cx } from '../parts/parts';
 
 	let {
 		cue,

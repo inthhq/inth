@@ -2,7 +2,7 @@
 	import type { PolicyRight } from '@inth/sdk/schema/types';
 	import { activateOptOutLink } from '@inth/sdk/surface-actions';
 	import { resolveOptOutLink } from '@inth/sdk/surface-state';
-	import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
+	import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 	import type { Snippet } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
@@ -64,7 +64,7 @@
 		{...restProps}
 	>
 		{#if showOptOutIcon}<OptOutIcon
-				class={theme.noStyle ? '' : bannerStyles.optOutIcon || ''}
+				class={theme.noStyle ? '' : legalLinkStyles.optOutIcon || ''}
 			/>{/if}{#if children}{@render children()}{:else}{defaultLabel}{/if}
 	</ConsentButton>
 {/if}

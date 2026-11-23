@@ -11,7 +11,7 @@
 		class?: string;
 		/**
 		 * Give the SVG its own `width` and `height`, for pages that never load
-		 * the classic banner sheet that sizes it. A stylesheet still wins.
+		 * the `parts` sheet whose legal-link rules size it. A stylesheet still wins.
 		 */
 		sized?: boolean;
 	} = $props();

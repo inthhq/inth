@@ -1,12 +1,11 @@
 import { SAFE_NONCE } from '@inth/sdk/server';
-import * as bar from '@inth/sdk/ui/styles/sheets/banner';
+import * as banner from '@inth/sdk/ui/styles/sheets/banner';
 import * as button from '@inth/sdk/ui/styles/sheets/button';
 import * as card from '@inth/sdk/ui/styles/sheets/card';
 import * as consentGate from '@inth/sdk/ui/styles/sheets/consent-gate';
-import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/dialog';
+import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
 import * as drawer from '@inth/sdk/ui/styles/sheets/drawer';
 import * as expand from '@inth/sdk/ui/styles/sheets/expand';
-import * as firstPaint from '@inth/sdk/ui/styles/sheets/first-paint';
 import * as iabDialog from '@inth/sdk/ui/styles/sheets/iab-dialog';
 import * as iabFirstPaint from '@inth/sdk/ui/styles/sheets/iab-first-paint';
 /**
@@ -19,38 +18,35 @@ import * as iabFirstPaint from '@inth/sdk/ui/styles/sheets/iab-first-paint';
  * without a stylesheet `<link>` that holds the paint back. In the browser,
  * the surfaces find these elements and add no second copy.
  */
-import * as banner from '@inth/sdk/ui/styles/sheets/parts';
+import * as parts from '@inth/sdk/ui/styles/sheets/parts';
 import * as primitives from '@inth/sdk/ui/styles/sheets/primitives';
 import * as surface from '@inth/sdk/ui/styles/sheets/surface';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
 import * as trigger from '@inth/sdk/ui/styles/sheets/trigger';
-import * as dialog from '@inth/sdk/ui/styles/sheets/widget';
+import * as widget from '@inth/sdk/ui/styles/sheets/widget';
 
 import { STYLE_ATTRIBUTE, STYLES_MARKER } from '../surface-styles';
 import type { SurfaceStyleSheet } from '../surface-styles';
 
 /**
- * Every sheet a marker can name, in cascade order. The per-surface sheets
- * are parts of `first-paint`, which the IAB banner still names. The
- * Privacy Choices (v6) prompt names `surface` and its one presentation
- * sheet; they follow the classic rules, as `styles/privacy-choices.css`
- * follows `styles.css`.
+ * Every sheet a marker can name, in the order `styles.css` holds their
+ * rules: the first-paint sheets, then the ones that load later, then the
+ * IAB sheets, as `iab/styles.css` follows `styles.css`.
  */
 const SHEETS: readonly SurfaceStyleSheet[] = [
 	tokens,
 	button,
-	banner,
-	trigger,
+	parts,
 	consentGate,
-	firstPaint,
-	dialog,
-	primitives,
+	trigger,
 	surface,
 	card,
-	bar,
+	banner,
 	drawer,
+	widget,
+	primitives,
 	expand,
-	privacyChoicesDialog,
+	dialog,
 	iabFirstPaint,
 	iabDialog,
 ];

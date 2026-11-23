@@ -1,5 +1,5 @@
 /**
- * Reactive reads the Privacy Choices (v6) parts share: the kernel's
+ * Reactive reads the prompt's and dialog's parts share: the kernel's
  * surface session, the phone layout, and the rights bundle the sale row
  * names. The React port's `use-surface-session` and `use-phone-layout`.
  */
