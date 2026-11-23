@@ -537,6 +537,64 @@ describe('disableAnimation', () => {
 });
 
 describe('preferences under a held opt-out', () => {
+	const accountHeld = (extra: Partial<ComponentFixtureOptions> = {}) => {
+		const now = Date.now();
+		return mount({
+			extra: {
+				prefetch: {
+					...policyFixture(undefined, {
+						id: `pcd-account-held-${now}`,
+						...RULES['us-opt-out'],
+					}),
+					initialRecords: {
+						optOut: {
+							heldBy: 'person',
+							method: 'button',
+							recordedAt: now - 1000,
+							rights: ['sale', 'share'],
+						},
+					},
+					now,
+					...extra.prefetch,
+				},
+			},
+		});
+	};
+
+	test('an opt-out the account holds says so, not that the browser sent a signal', async () => {
+		setGpc(false);
+		await accountHeld();
+		await openDialog();
+		const row = must('consent-dialog-rights-row-sale');
+		expect(row).toHaveTextContent(
+			'Your account has opted out, and you can change this after signing in.'
+		);
+		expect(row).not.toHaveTextContent('Global Privacy Control');
+		// Signed out, only the account's owner can lift it.
+		expect(must('consent-dialog-right-option-sale-allow')).toHaveAttribute(
+			'aria-disabled',
+			'true'
+		);
+	});
+
+	test('a signed-in visitor can allow again over an opt-out the account holds', async () => {
+		setGpc(false);
+		await accountHeld({
+			prefetch: { initialUser: { externalId: 'user-1' } },
+		});
+		await openDialog();
+		const allow = must('consent-dialog-right-option-sale-allow');
+		expect(allow).not.toHaveAttribute('aria-disabled');
+		expect(must('consent-dialog-rights-row-sale')).not.toHaveTextContent(
+			'Global Privacy Control'
+		);
+		// Two steps, as for any opt back in (11 CCR §7028(a)).
+		allow.click();
+		await waitFor(() =>
+			expect($('consent-dialog-confirm')).toBeInTheDocument()
+		);
+	});
+
 	test('[PERM-02] a category switched on stays on when the opt-out lists no categories', async () => {
 		// `/v1/consent/init` sends the opt-out without its categories, so it
 		// withholds marketing and measurement until the visitor says otherwise.

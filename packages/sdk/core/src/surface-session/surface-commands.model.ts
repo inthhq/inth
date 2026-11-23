@@ -12,6 +12,8 @@
  * @packageDocumentation
  */
 
+import type { Translations } from '@inth/sdk-translations';
+
 import type {
 	ConsentKernel,
 	OptInResult,
@@ -20,6 +22,7 @@ import type {
 	SaveUISource,
 } from '../consent-kernel.model';
 import type { AllConsentNames } from '../consent/consent-types';
+import { resolveOptOutCopy } from '../libs/consent-copy';
 import { resolveOptOutState } from '../libs/opt-out-state.model';
 import type { PreferenceDraft } from '../preference-draft';
 import { markOptOutReloadIfDue } from '../surface-actions/opt-out';
@@ -317,11 +320,99 @@ export const confirmSaleRight = function confirmSaleRight(
 		return undefined;
 	}
 	const uiSource = options.uiSource ?? snapshot.activeUI;
-	if (snapshot.evaluationPolicy.model === 'opt-out' && snapshot.optOut) {
-		return kernel.commands.optIn({ uiSource });
+	// A stored refusal of the deciding category outlives a lifted opt-out
+	// and would keep the control on the refusal, so that case saves the
+	// grant: the save lifts the opt-out as it records it.
+	const refused =
+		snapshot.explicitChoice?.categories?.[right.category]?.value === false;
+	const liftIsEnough =
+		snapshot.evaluationPolicy.model === 'opt-out' && !refused;
+	const grant = () =>
+		kernel.commands.save(
+			{ [right.category as AllConsentNames]: true },
+			{ rightsControl: true, uiSource }
+		);
+	if (!snapshot.optOut) {
+		return grant();
 	}
-	return kernel.commands.save(
-		{ [right.category]: true },
-		{ rightsControl: true, uiSource }
-	);
+	if (right.lock !== 'held-by-account') {
+		return liftIsEnough ? kernel.commands.optIn({ uiSource }) : grant();
+	}
+	// The account's opt-out is the backend's to lift. A save would return
+	// before that answer, so the lift goes first and the grant is recorded
+	// only once it holds.
+	// An account is its id within a provider and an id type: two providers
+	// may issue the same id.
+	const accountOf = (user: typeof snapshot.user) =>
+		user
+			? [user.identityProvider, user.externalIdType, user.externalId].join(
+					'\u0000'
+				)
+			: null;
+	const asked = accountOf(snapshot.user);
+	const liftThenGrant = async (): Promise<OptInResult | SaveResult> => {
+		const lifted = await kernel.commands.optIn({ uiSource });
+		// The grant belongs to the account that asked. If the site
+		// identified someone else while the lift was out, it is not theirs.
+		const sameUser = accountOf(kernel.getSnapshot().user) === asked;
+		return lifted.ok && !liftIsEnough && sameUser ? grant() : lifted;
+	};
+	return liftThenGrant();
+};
+
+/** Options for {@link confirmSaleRightThen}. */
+export interface ConfirmSaleRightOptions extends RightCommandOptions {
+	/** The active language bundle, for the message a refused lift announces. */
+	translations?: Partial<Translations>;
+}
+
+/**
+ * Confirm the open sale confirmation and call `onAllowed` once the grant
+ * holds, so a surface never announces a choice that did not happen.
+ *
+ * A grant this browser records holds at once. An opt-out the visitor's
+ * account holds is the backend's to lift: `onAllowed` waits for its answer,
+ * and a refusal announces that the account still holds the opt-out.
+ *
+ * @returns Whether a confirmation was open.
+ */
+export const confirmSaleRightThen = function confirmSaleRightThen(
+	kernel: ConsentKernel,
+	options: ConfirmSaleRightOptions,
+	onAllowed: () => void
+): boolean {
+	const heldByAccount =
+		resolveSaleRight(kernel.getSnapshot()).lock === 'held-by-account';
+	const pending = confirmSaleRight(kernel, options);
+	if (!pending) {
+		return false;
+	}
+	if (!heldByAccount) {
+		onAllowed();
+		return true;
+	}
+	const session = getSurfaceSession(kernel);
+	const refused = () => {
+		session.announce(resolveOptOutCopy(options.translations).lockedByAccount);
+	};
+	// What the visitor hears follows what the control now shows, not the
+	// last request: a grant whose save is queued for a retry is still
+	// recorded on this browser. An opt-out still held is a refusal. A
+	// lifted opt-out with the control still on the refusal means the grant
+	// was skipped for a user who changed, so nothing is announced.
+	const settle = async () => {
+		try {
+			await pending;
+		} catch {
+			// Decided below, by what the snapshot holds.
+		}
+		const after = kernel.getSnapshot();
+		if (after.optOut !== null) {
+			refused();
+		} else if (resolveSaleRight(after).selected === 'allow') {
+			onAllowed();
+		}
+	};
+	void settle();
+	return true;
 };

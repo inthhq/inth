@@ -20,6 +20,7 @@ export {
 	commitBannerChoice,
 	commitDialogChoice,
 	confirmSaleRight,
+	confirmSaleRightThen,
 	copySurfaceReference,
 	getSurfaceSession,
 	pressSaleRight,

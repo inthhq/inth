@@ -7,7 +7,7 @@
  */
 
 import {
-	confirmSaleRight,
+	confirmSaleRightThen,
 	pressSaleRight,
 	resolveSaleRight,
 } from '@inth/sdk/engine';
@@ -354,9 +354,9 @@ export const SaleRightsRow = ({
 								noStyle={noStyle}
 								data-testid={testIds.confirmAllow}
 								onClick={() => {
-									if (confirmSaleRight(kernel, { uiSource })) {
-										recorded('allow');
-									}
+									confirmSaleRightThen(kernel, { translations, uiSource }, () =>
+										recorded('allow')
+									);
 								}}
 							>
 								{copy.confirmAllow}

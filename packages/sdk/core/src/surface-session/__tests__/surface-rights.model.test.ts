@@ -23,6 +23,7 @@ import {
 	commitBannerChoice,
 	commitDialogChoice,
 	confirmSaleRight,
+	confirmSaleRightThen,
 	pressSaleRight,
 } from '../surface-commands.model';
 import {
@@ -130,7 +131,7 @@ describe('resolveSaleRight', () => {
 		});
 	});
 
-	test('[GPC-03] an opt-out the account holds is locked too, but is not a signal', () => {
+	test('[GPC-03] an opt-out the account holds is locked for a visitor who is not signed in, but is not a signal', () => {
 		const kernel = kernelFor('opt-out', {
 			initialRecords: { optOut: { ...HELD, heldBy: 'person' } },
 		});
@@ -145,6 +146,226 @@ describe('resolveSaleRight', () => {
 		expect(pressSaleRight(kernel, 'allow').outcome).toBe('none');
 		expect(getSurfaceSession(kernel).getState().confirmation).toBeNull();
 	});
+
+	test('a signed-in visitor can allow again, and the backend lifts the account-held opt-out', async () => {
+		const liftOptOut = vi.fn(() => Promise.resolve({ ok: true, optOut: null }));
+		const kernel = kernelFor('opt-out', {
+			initialRecords: { optOut: { ...HELD, heldBy: 'person' } },
+			initialUser: { externalId: 'user-1' },
+			transport: {
+				liftOptOut,
+				optOut: () => Promise.resolve({ ok: true }),
+				save: () => Promise.resolve({ ok: true }),
+			},
+		});
+		expect(resolveSaleRight(kernel.getSnapshot())).toMatchObject({
+			lock: 'held-by-account',
+			locked: false,
+			selected: 'protect',
+		});
+		kernel.set.activeUI('dialog');
+		// Two steps, as for any opt back in (11 CCR §7028(a)).
+		expect(pressSaleRight(kernel, 'allow').outcome).toBe('confirm');
+		await confirmSaleRight(kernel);
+		expect(liftOptOut).toHaveBeenCalledTimes(1);
+		expect(kernel.getSnapshot().optOut).toBeNull();
+	});
+
+	const accountHeld = (
+		liftOptOut: () => Promise<{ ok: boolean; optOut?: null }>,
+		records: KernelConfig['initialRecords'] = {}
+	) =>
+		kernelFor('opt-out', {
+			initialRecords: { ...records, optOut: { ...HELD, heldBy: 'person' } },
+			initialUser: { externalId: 'user-1' },
+			transport: {
+				liftOptOut,
+				optOut: () => Promise.resolve({ ok: true }),
+				save: () => Promise.resolve({ ok: true }),
+			},
+		});
+
+	test('an account lift calls back only once the backend lifted the opt-out', async () => {
+		let answer: (value: { ok: boolean; optOut: null }) => void = () => {};
+		const liftOptOut = vi.fn(
+			() =>
+				new Promise<{ ok: boolean; optOut: null }>((resolve) => {
+					answer = resolve;
+				})
+		);
+		const kernel = accountHeld(liftOptOut);
+		kernel.set.activeUI('dialog');
+		pressSaleRight(kernel, 'allow');
+		const onAllowed = vi.fn();
+		expect(confirmSaleRightThen(kernel, {}, onAllowed)).toBe(true);
+		// Nothing is announced as allowed while the request is out.
+		await Promise.resolve();
+		expect(onAllowed).not.toHaveBeenCalled();
+		await vi.waitFor(() => expect(liftOptOut).toHaveBeenCalledTimes(1));
+		expect(onAllowed).not.toHaveBeenCalled();
+		answer({ ok: true, optOut: null });
+		await vi.waitFor(() => expect(onAllowed).toHaveBeenCalledTimes(1));
+		expect(kernel.getSnapshot().optOut).toBeNull();
+	});
+
+	test('a refused account lift says the account holds the opt-out, and never that it was allowed', async () => {
+		const kernel = accountHeld(() => Promise.resolve({ ok: false }));
+		kernel.set.activeUI('dialog');
+		pressSaleRight(kernel, 'allow');
+		const onAllowed = vi.fn();
+		confirmSaleRightThen(kernel, {}, onAllowed);
+		await vi.waitFor(() =>
+			expect(getSurfaceSession(kernel).getState().announcement?.message).toBe(
+				'Your account has opted out, and you can change this after signing in.'
+			)
+		);
+		expect(onAllowed).not.toHaveBeenCalled();
+		expect(kernel.getSnapshot().optOut).not.toBeNull();
+	});
+
+	test('a grant this browser records calls back at once', () => {
+		const kernel = kernelFor('opt-out', { initialRecords: { optOut: HELD } });
+		kernel.set.activeUI('dialog');
+		pressSaleRight(kernel, 'allow');
+		const onAllowed = vi.fn();
+		expect(confirmSaleRightThen(kernel, {}, onAllowed)).toBe(true);
+		expect(onAllowed).toHaveBeenCalledTimes(1);
+		// No confirmation is open now, so there is nothing to confirm.
+		expect(confirmSaleRightThen(kernel, {}, onAllowed)).toBe(false);
+		expect(onAllowed).toHaveBeenCalledTimes(1);
+	});
+
+	test.each(['device', 'person'] as const)(
+		'allowing over a %s-held opt-out and a stored refusal shows Allow afterwards, and says so once',
+		async (heldBy) => {
+			const kernel = kernelFor('opt-out', {
+				initialRecords: {
+					...choiceRecords({ marketing: false }),
+					optOut: { ...HELD, heldBy },
+				},
+				initialUser: { externalId: 'user-1' },
+			});
+			kernel.set.activeUI('dialog');
+			expect(pressSaleRight(kernel, 'allow').outcome).toBe('confirm');
+			const onAllowed = vi.fn();
+			confirmSaleRightThen(kernel, {}, onAllowed);
+			await vi.waitFor(() => expect(onAllowed).toHaveBeenCalledTimes(1));
+			// The grant holds when the surface hears of it, and no refusal
+			// was announced on the way.
+			expect(kernel.getSnapshot().optOut).toBeNull();
+			expect(getSurfaceSession(kernel).getState().announcement).toBeFalsy();
+			expect(resolveSaleRight(kernel.getSnapshot())).toMatchObject({
+				locked: false,
+				selected: 'allow',
+			});
+		}
+	);
+
+	test('under an opt-in policy an account lift is awaited before the grant is recorded', async () => {
+		let answer: (value: { ok: boolean; optOut: null }) => void = () => {};
+		const liftOptOut = vi.fn(
+			() =>
+				new Promise<{ ok: boolean; optOut: null }>((resolve) => {
+					answer = resolve;
+				})
+		);
+		const kernel = kernelFor('opt-in', {
+			initialRecords: { optOut: { ...HELD, heldBy: 'person' } },
+			initialUser: { externalId: 'user-1' },
+			transport: {
+				liftOptOut,
+				optOut: () => Promise.resolve({ ok: true }),
+				save: () => Promise.resolve({ ok: true }),
+			},
+		});
+		kernel.set.activeUI('dialog');
+		expect(pressSaleRight(kernel, 'allow').outcome).toBe('confirm');
+		const onAllowed = vi.fn();
+		confirmSaleRightThen(kernel, {}, onAllowed);
+		await vi.waitFor(() => expect(liftOptOut).toHaveBeenCalledTimes(1));
+		expect(onAllowed).not.toHaveBeenCalled();
+		expect(getSurfaceSession(kernel).getState().announcement).toBeFalsy();
+		answer({ ok: true, optOut: null });
+		await vi.waitFor(() => expect(onAllowed).toHaveBeenCalledTimes(1));
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(resolveSaleRight(kernel.getSnapshot()).selected).toBe('allow');
+	});
+
+	test('a lifted opt-out whose grant could not be sent yet is still announced as allowed', async () => {
+		const kernel = kernelFor('opt-out', {
+			initialRecords: {
+				...choiceRecords({ marketing: false }),
+				optOut: { ...HELD, heldBy: 'person' },
+			},
+			initialUser: { externalId: 'user-1' },
+			transport: {
+				liftOptOut: () => Promise.resolve({ ok: true, optOut: null }),
+				optOut: () => Promise.resolve({ ok: true }),
+				save: () => Promise.reject(new Error('offline')),
+			},
+		});
+		kernel.set.activeUI('dialog');
+		pressSaleRight(kernel, 'allow');
+		const onAllowed = vi.fn();
+		confirmSaleRightThen(kernel, {}, onAllowed);
+		await vi.waitFor(() => expect(onAllowed).toHaveBeenCalledTimes(1));
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(getSurfaceSession(kernel).getState().announcement).toBeFalsy();
+		expect(resolveSaleRight(kernel.getSnapshot()).selected).toBe('allow');
+	});
+
+	test.each([
+		['another id', { externalId: 'user-2' }],
+		[
+			'the same id from another provider',
+			{ externalId: 'user-1', identityProvider: 'other' },
+		],
+	] as const)(
+		'a grant is not recorded for a user with %s identified while the lift was out',
+		async (_name, next) => {
+			let answer: (value: { ok: boolean; optOut: null }) => void = () => {};
+			const liftOptOut = vi.fn(
+				() =>
+					new Promise<{ ok: boolean; optOut: null }>((resolve) => {
+						answer = resolve;
+					})
+			);
+			const save = vi.fn(() => Promise.resolve({ ok: true }));
+			const kernel = kernelFor('opt-out', {
+				initialRecords: {
+					...choiceRecords({ marketing: false }),
+					optOut: { ...HELD, heldBy: 'person' },
+				},
+				initialUser: { externalId: 'user-1' },
+				transport: {
+					liftOptOut,
+					optOut: () => Promise.resolve({ ok: true }),
+					save,
+				},
+			});
+			kernel.set.activeUI('dialog');
+			pressSaleRight(kernel, 'allow');
+			const onAllowed = vi.fn();
+			confirmSaleRightThen(kernel, {}, onAllowed);
+			await vi.waitFor(() => expect(liftOptOut).toHaveBeenCalledTimes(1));
+			const saves = save.mock.calls.length;
+			void kernel.commands.identify({ ...next });
+			answer({ ok: true, optOut: null });
+			await vi.waitFor(() => expect(kernel.getSnapshot().optOut).toBeNull());
+			await new Promise((resolve) => {
+				setTimeout(resolve, 20);
+			});
+			// No grant was saved on the new user's behalf, and the control,
+			// still on the refusal, is not announced as allowed.
+			expect(save.mock.calls.length).toBe(saves);
+			expect(
+				kernel.getSnapshot().explicitChoice?.categories?.marketing?.value
+			).toBe(false);
+			expect(resolveSaleRight(kernel.getSnapshot()).selected).toBe('protect');
+			expect(onAllowed).not.toHaveBeenCalled();
+			expect(getSurfaceSession(kernel).getState().announcement).toBeFalsy();
+		}
+	);
 
 	test('an expired grant shows the default again, and Allow asks for a new one', async () => {
 		vi.spyOn(Date, 'now').mockReturnValue(NOW);

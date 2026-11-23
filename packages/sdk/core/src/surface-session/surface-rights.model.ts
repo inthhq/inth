@@ -33,7 +33,8 @@ export type RightsSnapshot = Pick<
 	| 'optOut'
 	| 'privacySignals'
 	| 'restrictions'
->;
+> &
+	Partial<Pick<ConsentSnapshot, 'user'>>;
 
 /** Which option of a two-option rights control. The protective one comes first (RIGHT-01). */
 /**
@@ -62,12 +63,15 @@ export interface SaleRightState {
 	readonly selected: RightOption;
 	readonly source: RightSource;
 	/**
-	 * Why this browser cannot allow sale right now: a live GPC signal
-	 * (GPC-03), or an opt-out the visitor's account holds. `null` when
-	 * nothing locks it.
+	 * What holds the refusal: a live GPC signal (GPC-03), or an opt-out
+	 * the visitor's account holds. `null` when nothing does.
 	 */
 	readonly lock: OptOutLock | null;
-	/** Something locks the refusal, so "Allow" is unavailable. */
+	/**
+	 * "Allow" is unavailable: a live GPC signal, or an account's opt-out
+	 * while the visitor is not signed in. A signed-in visitor can allow,
+	 * and the backend lifts the account's opt-out.
+	 */
 	readonly locked: boolean;
 	/**
 	 * The held opt-out came from a GPC signal, live or past. A past one is a
@@ -133,7 +137,8 @@ export const resolveSaleRight = function resolveSaleRight(
 			available,
 			category,
 			lock,
-			locked: lock !== null,
+			locked:
+				lock === 'gpc-active' || (lock === 'held-by-account' && !snapshot.user),
 			selected: 'protect',
 			source: lock === 'gpc-active' ? 'gpc' : 'user',
 			viaSignal: optOut.via === 'signal' || snapshot.optOut?.method === 'gpc',

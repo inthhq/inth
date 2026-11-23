@@ -11,7 +11,7 @@
  */
 
 import {
-	confirmSaleRight,
+	confirmSaleRightThen,
 	planCategorySwitch,
 	planVendorSwitch,
 	pressSaleRight,
@@ -859,9 +859,11 @@ export const createPromptPanel = function createPromptPanel(
 			return true;
 		}
 		if (testId === 'consent-banner-confirm-allow') {
-			if (confirmSaleRight(kernel, { uiSource: context.uiSource })) {
-				recorded('allow');
-			}
+			confirmSaleRightThen(
+				kernel,
+				{ translations: bundle(), uiSource: context.uiSource },
+				() => recorded('allow')
+			);
 			return true;
 		}
 		// A pointer shortcut like a label's; the switch stays the only

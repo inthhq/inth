@@ -5,7 +5,7 @@
  * note. Shared by the prompt's in-place options and the dialog.
  */
 import {
-	confirmSaleRight,
+	confirmSaleRightThen,
 	pressSaleRight,
 	resolveSaleRight,
 } from '@inth/sdk/engine';
@@ -214,9 +214,11 @@ const press = (option: RightOption) => {
 	}
 };
 const confirmAllow = () => {
-	if (confirmSaleRight(kernel, { uiSource: props.uiSource })) {
-		recorded('allow');
-	}
+	confirmSaleRightThen(
+		kernel,
+		{ translations: translations.value, uiSource: props.uiSource },
+		() => recorded('allow')
+	);
 };
 const setAllowRef = (option: RightOption) =>
 	option === 'allow'

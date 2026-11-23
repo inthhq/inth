@@ -147,6 +147,21 @@ describe('resolveSaleRightCopy', () => {
 		).toBe('Allow selling and targeted ads');
 	});
 
+	it('names the signal only when a signal holds the refusal', () => {
+		const held = { ...base, locked: true, selected: 'protect' as const };
+		expect(
+			resolveSaleRightCopy(undefined, { ...held, source: 'gpc' }).description
+		).toMatch(/^Your browser sent a Global Privacy Control signal/u);
+		const account = resolveSaleRightCopy(undefined, {
+			...held,
+			source: 'user',
+		}).description;
+		expect(account).toBe(
+			'Your account has opted out, and you can change this after signing in.'
+		);
+		expect(account).not.toMatch(/Global Privacy Control/u);
+	});
+
 	it('[COPY-02] says "Off by default" only for an untouched default', () => {
 		const refused = { ...base, model: 'opt-in', selected: 'protect' as const };
 		expect(resolveSaleRightCopy(undefined, refused).description).toMatch(
@@ -178,7 +193,11 @@ describe('resolveSaleRightCopy', () => {
 			'This site may sell or share your personal information, including for targeted ads.'
 		);
 		expect(
-			resolveSaleRightCopy(undefined, { ...refused, locked: true }).description
+			resolveSaleRightCopy(undefined, {
+				...refused,
+				locked: true,
+				source: 'gpc',
+			}).description
 		).toMatch(/signal, so this site won't/u);
 		expect(
 			resolveSaleRightCopy(undefined, { ...refused, business: 'acme' })
