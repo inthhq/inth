@@ -20,6 +20,9 @@ const metadata = { gitDirty: safeGitDirty() };
 const workspaceRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const output = process.env.BENCH_OUTPUT ?? '/tmp/inth-dialog-results.json';
 
+// The banner's Customize expands in place; the dialog opens from the link.
+const dialogLink = '[data-testid="consent-dialog-link"]';
+
 const measure = (page: Page, selector: string) =>
 	page.evaluate((buttonSelector) => {
 		const button = document.querySelector(buttonSelector);
@@ -37,7 +40,7 @@ const measure = (page: Page, selector: string) =>
 			}
 		});
 		observer.observe(document.body, { childList: true, subtree: true });
-		// Invoke the real banner handler without pointerenter or focus preloading.
+		// Invoke the real handler without pointerenter or focus preloading.
 		button.click();
 		return new Promise<{
 			mounted: number;
@@ -105,10 +108,8 @@ try {
 	// Warm Next's compiler, but use a fresh browser context for every measured run.
 	const warmup = await browser.newPage();
 	await warmup.goto(url);
-	await warmup.waitForSelector(
-		'[data-testid="consent-banner-customize-button"]'
-	);
-	await measure(warmup, '[data-testid="consent-banner-customize-button"]');
+	await warmup.waitForSelector(dialogLink);
+	await measure(warmup, dialogLink);
 	await warmup.close();
 	for (let iteration = 0; iteration < iterations; iteration += 1) {
 		const context = await browser.newContext();
@@ -117,13 +118,8 @@ try {
 		await page.waitForSelector(
 			'#reopen-dialog[data-hydrated="true"][data-active-ui="banner"]'
 		);
-		await page.waitForSelector(
-			'[data-testid="consent-banner-customize-button"]'
-		);
-		const first = await measure(
-			page,
-			'[data-testid="consent-banner-customize-button"]'
-		);
+		await page.waitForSelector(dialogLink);
+		const first = await measure(page, dialogLink);
 		await page.keyboard.press('Escape');
 		await page.waitForSelector('[data-testid="consent-dialog-root"]', {
 			state: 'detached',

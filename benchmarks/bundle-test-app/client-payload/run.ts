@@ -49,6 +49,10 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { brotliCompressSync, gzipSync } from 'node:zlib';
 
+import {
+	dialogLinkLabel,
+	dialogLinkSelector,
+} from '@inth/benchmarking/dialog-link';
 import { chromium } from 'playwright';
 
 import {
@@ -413,7 +417,14 @@ const collectRoute = async function collectRoute(
 			.isVisible();
 		if (interaction === 'dialog') {
 			phase = 'dialog';
-			await page.getByTestId('consent-banner-customize-button').first().click();
+			// Customize expands the banner in place; the dialog opens from the
+			// page's dialog link, which every arm renders as "Privacy settings".
+			await page
+				.locator(dialogLinkSelector)
+				.or(page.getByRole('link', { name: dialogLinkLabel }))
+				.or(page.getByRole('button', { name: dialogLinkLabel }))
+				.first()
+				.click();
 			await page
 				.getByTestId('consent-dialog-card')
 				.first()
@@ -528,7 +539,7 @@ const main = async function main() {
 		arms,
 		generatedAt: new Date().toISOString(),
 		method:
-			'Assets are the /_next/static scripts and stylesheets Chromium fetched for the route, each phase in a fresh browser context (initial: until network idle after load; dialog: after clicking Customize on the banner, until network idle; accept: after clicking Accept on the banner, until the banner hides and the network is idle). Sizes are the emitted files with the sourceMappingURL comment removed; gzip and brotli use Node zlib defaults on each file. Bytes are attributed per source module from productionBrowserSourceMaps: each mapping segment owns the generated text up to the next segment. Package gzip is the package share of raw bytes times the chunk gzip size.',
+			'Assets are the /_next/static scripts and stylesheets Chromium fetched for the route, each phase in a fresh browser context (initial: until network idle after load; dialog: after clicking the page Privacy settings link, until network idle; accept: after clicking Accept on the banner, until the banner hides and the network is idle). Sizes are the emitted files with the sourceMappingURL comment removed; gzip and brotli use Node zlib defaults on each file. Bytes are attributed per source module from productionBrowserSourceMaps: each mapping segment owns the generated text up to the next segment. Package gzip is the package share of raw bytes times the chunk gzip size.',
 		repoSha: gitSha(),
 		v2Version,
 		v3Source: v3SourceLabel,

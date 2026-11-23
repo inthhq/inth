@@ -217,7 +217,7 @@ export const gateMetricGlossary = {
 		'page.lcp of the gate page minus page.lcp of the control page measured in the same iteration',
 	lcpMs: 'page.lcp of the gate page (hero image)',
 	preferencesVisibleMs:
-		'action.preferences-visible: Customize pointerdown to the first frame the preferences dialog has a footprint',
+		'action.preferences-visible: Enter on the Privacy settings link to the first frame the preferences dialog has a footprint',
 	rejectedScriptRequests:
 		'requests for a gated script on the return visit of a visitor who accepted, came back, then rejected, summed over three replays; any request reaches the vendor after a no',
 	returningLcpDeltaMs:
@@ -455,7 +455,7 @@ const visit = async function visit(
 			{ polling: 50, timeout: 45_000 }
 		);
 		const selector =
-			kind === 'accept' ? gateSelectors.accept : gateSelectors.customize;
+			kind === 'accept' ? gateSelectors.accept : gateSelectors.preferencesLink;
 		await page.evaluate(
 			({ target, action }) =>
 				(
@@ -465,10 +465,17 @@ const visit = async function visit(
 				).__inthGate.arm(target, action),
 			{ action: kind, target: selector }
 		);
-		await page
-			.locator(selector)
-			.first()
-			.click({ force: true, noWaitAfter: true, timeout: 15_000 });
+		const control = page.locator(selector).first();
+		if (kind === 'accept') {
+			await control.click({ force: true, noWaitAfter: true, timeout: 15_000 });
+		} else {
+			// The banner's Customize expands it in place and opens no dialog;
+			// the page's Privacy settings link does. On the phone viewport the
+			// banner covers that footer link, so the visitor reaches it from
+			// the keyboard, and the observer times the action from the Enter.
+			await control.focus({ timeout: 15_000 });
+			await page.keyboard.press('Enter');
+		}
 		await page.waitForFunction(
 			({ action, scripts }) => {
 				const observations = (
@@ -725,7 +732,9 @@ const measureIteration = async function measureIteration(
 		throw new Error('A load visit finished without LCP, FCP or banner timing');
 	}
 	if (!preferences.input || preferences.preferencesVisibleAt === undefined) {
-		throw new Error('Customize did not open the preferences dialog');
+		throw new Error(
+			'The Privacy settings link did not open the preferences dialog'
+		);
 	}
 	if (returning.lcp === undefined) {
 		throw new Error('A returning visit finished without LCP');
@@ -858,7 +867,7 @@ const readNumber = (names: string[], fallback: number) => {
  * Measure the consent gate for one framework and write its result to
  * `BENCH_OUTPUT_DIR`. Each iteration visits the control page, the gate page
  * to its LCP, the gate page through an Accept tap, the gate page through a
- * Customize tap, and the gate page as a returning visitor who accepted, each
+ * Privacy settings link tap, and the gate page as a returning visitor who accepted, each
  * in a fresh browser context at CookieBench's mobile profile. Once per run
  * it also counts gated script requests for a visitor who accepted, came
  * back, then rejected.

@@ -9,7 +9,8 @@
  *   banner root has a rendered footprint: some area in the viewport, no
  *   `display: none`, `visibility: hidden` or zero opacity on it or an
  *   ancestor.
- * - `input`: the trusted `pointerdown` on the armed control
+ * - `input`: the trusted `pointerdown` on the armed control, or the
+ *   trusted Enter `keydown` that activates it from the keyboard
  *   (`event.timeStamp`); every action metric is measured from it.
  * - `dismissedAt` (`action.dismissed`): the first frame after the input in
  *   which the banner has no footprint and no blocking overlay remains.
@@ -144,9 +145,10 @@ export const gateObserverScript = function gateObserverScript(
 		if (!control || !event.composedPath().includes(control)) return;
 		const input = { at: event.timeStamp, type: event.type };
 		observations.inputEvents.push(input);
-		if (event.type === 'pointerdown' && !observations.input) observations.input = input;
+		const starts = event.type === 'pointerdown' || (event.type === 'keydown' && event.key === 'Enter');
+		if (starts && !observations.input) observations.input = input;
 	};
-	for (const name of ['pointerdown', 'pointerup', 'click']) {
+	for (const name of ['pointerdown', 'pointerup', 'keydown', 'click']) {
 		document.addEventListener(name, onInput, { capture: true, passive: true });
 	}
 	const tick = () => {
