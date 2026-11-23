@@ -5,7 +5,7 @@ import "../../src/native/native-bindings.ts";
 import { parseArguments } from "../../src/arguments.ts";
 import type { OAuthResponse } from "../../src/auth-types.ts";
 import { NativeApi } from "../../src/native/native-api.ts";
-import { runC15t } from "../../src/native/native-c15t.ts";
+import { runSetup } from "../../src/native/native-c15t.ts";
 import { NativeContext } from "../../src/native/native-state.ts";
 
 const BACKEND = "https://acme-website.c15t.dev";
@@ -42,7 +42,11 @@ const reply = async (
     );
   }
   if (method === "POST" && path.startsWith("/v1/projects?")) {
-    if (!body?.includes('"consent":{"branding":"c15t"}')) {
+    const branded = [
+      '"consent":{"branding":"c15t"}',
+      '"consent":{"branding":"inth"}',
+    ];
+    if (!branded.some((entry) => body?.includes(entry))) {
       throw new Error(`Project creation needs consent.branding: ${body ?? ""}`);
     }
     return respond(`{"success":true,"data":${project("Created", "")}}`);
@@ -73,7 +77,7 @@ const controller = new AbortController();
 let exitCode = 0;
 try {
   const options = parseArguments(process.argv.slice(2));
-  await runC15t(
+  await runSetup(
     options,
     api,
     new NativeContext(process.cwd(), process.cwd()),

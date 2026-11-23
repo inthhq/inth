@@ -2,28 +2,28 @@ import { existsSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
 
-import { runFrontendCommand } from "../../vendor/c15t/frontend/index.ts";
-import type { FrontendCommandContext } from "../../vendor/c15t/frontend/index.ts";
+import { runFrontendCommand } from "../../vendor/inth-setup/frontend/index.ts";
+import type { FrontendCommandContext } from "../../vendor/inth-setup/frontend/index.ts";
 import {
   applyGeneration,
   installGenerationDependencies,
   parseGenerationWorkflowArguments,
   planGeneration,
   recoverGeneration,
-} from "../../vendor/c15t/frontend/runtime/index.ts";
+} from "../../vendor/inth-setup/frontend/runtime/index.ts";
 import type {
   ApplicationPlan,
   GenerationRuntimeOptions,
   GenerationWorkflowResult,
   PackageManager,
-} from "../../vendor/c15t/frontend/runtime/index.ts";
-import { requireNativeInstaller } from "../../vendor/c15t/frontend/runtime/install.ts";
-import type { GenerationPlan } from "../../vendor/c15t/generate/index.ts";
+} from "../../vendor/inth-setup/frontend/runtime/index.ts";
+import { requireNativeInstaller } from "../../vendor/inth-setup/frontend/runtime/install.ts";
+import type { GenerationPlan } from "../../vendor/inth-setup/generate/index.ts";
 import {
   legacySnippetInstructions,
   legacySnippets,
   mergeFile,
-} from "../../vendor/c15t/generate/merge.ts";
+} from "../../vendor/inth-setup/generate/merge.ts";
 import { adaptAstroGeneration } from "./c15t-astro.ts";
 import { runHtmlGenerationWorkflow } from "./c15t-html.ts";
 import { adaptNextGeneration, addNextConfigInstructions } from "./c15t-next.ts";

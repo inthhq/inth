@@ -1,6 +1,7 @@
 import { expect, it } from "vitest";
 
 import { createAgentSetupPlan } from "../src/native/c15t-agent.ts";
+import { createInthAgentSetupPlan } from "../vendor/inth-setup/frontend/agent/inth.ts";
 
 it("preserves existing v2 apps unless an upgrade is requested", () => {
   const { prompt } = createAgentSetupPlan({
@@ -38,4 +39,25 @@ it("points custom storage at a transport factory passed as mode", () => {
     "`ProviderTransportFactory` from `@inth/sdk/transports`"
   );
   expect(prompt).not.toContain("custom(transport)");
+});
+
+it("gives inth init an Inth prompt with the project URL and Inth docs", () => {
+  const { prompt } = createInthAgentSetupPlan({
+    framework: "next-app",
+    projectUrl: "https://Website.inth.app/",
+  });
+  expect(prompt).toContain('"projectUrl": "https://website.inth.app"');
+  expect(prompt).toContain('"framework": "next-app"');
+  expect(prompt).toContain(
+    "https://inth.com/docs/frameworks/<framework>/quickstart.md"
+  );
+  expect(prompt).toContain("https://inth.com/docs/migrate-from-c15t.md");
+  expect(prompt).not.toMatch(/https:\/\/(?:v3\.)?c15t\.com/u);
+  expect(prompt).not.toContain("backendURL");
+});
+
+it("rejects a project URL with credentials", () => {
+  expect(() =>
+    createInthAgentSetupPlan({ projectUrl: "https://user:pass@a.inth.app" })
+  ).toThrow("without embedded credentials");
 });

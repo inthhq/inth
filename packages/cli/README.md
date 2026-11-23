@@ -208,6 +208,8 @@ For automation, supply an organization API key through `INTH_TOKEN` or `--token`
 
 See [authentication and credential storage](docs/authentication.md) for OAuth scopes, token refresh, passkeys, and Keychain troubleshooting.
 
+Run `inth init` from your app directory to select or create an Inth project and set up the Inth SDK (`@inth/*` packages). It works like `inth c15t`: the picker recommends a coding agent, offers a prompt to paste into another agent, and can scaffold the framework quickstart files.
+
 Run `inth c15t` from your app directory to select a hosted consent project and set up c15t v3. The picker recommends a coding agent to adapt the integration and verify consent in a browser. If no agent is installed, it recommends a prompt to paste into your agent. Scaffolding is also available. For an agent to provision a hosted project itself, follow [the c15t setup guide](docs/c15t-setup.md).
 
 To upgrade a hosted app from c15t v2, run `inth c15t codemods --list`, then name the codemods to run. Add `--dry-run` to review the changes first. Codemods need no sign-in or Inth project, and they mark code that needs a decision with a `TODO(c15t v3)` comment.

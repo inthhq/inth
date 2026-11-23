@@ -19,7 +19,7 @@ import path from "node:path";
 
 import { z } from "zod";
 
-import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
+import { boilerplateFrameworks } from "../vendor/inth-setup/generate/index.ts";
 import { fixture } from "./native-test-support.ts";
 
 const BACKEND = "https://acme-website.c15t.dev";
@@ -155,7 +155,7 @@ const verifyExistingProject = async (
   );
   assert.equal(preview.status, 0, preview.stderr);
   const previewData = envelope.parse(JSON.parse(preview.stdout)).data;
-  assert.deepEqual(previewData.plan?.dependencies, ["@inth/nextjs@3"]);
+  assert.deepEqual(previewData.plan?.dependencies, ["@inth/nextjs@0.1"]);
   assert.deepEqual(await readdir(directory), [
     "app",
     "package.json",
@@ -250,7 +250,7 @@ const verifyScaffold = async (
     assert.deepEqual(installer.trim().split("\n"), [
       directory,
       "add",
-      "@inth/nextjs@3",
+      "@inth/nextjs@0.1",
     ]);
   }
   // An interrupted apply leaves c15t's journal directory behind.
@@ -487,19 +487,19 @@ const verifyFrameworks = async (
     const { data } = envelope.parse(JSON.parse(result.stdout));
     assert.equal(data.framework, framework);
     const dependencies = {
-      astro: ["@inth/astro@3", "@astrojs/node", "@astrojs/svelte", "svelte"],
-      "astro-static": ["@inth/astro@3", "@astrojs/svelte", "svelte"],
+      astro: ["@inth/astro@0.1", "@astrojs/node", "@astrojs/svelte", "svelte"],
+      "astro-static": ["@inth/astro@0.1", "@astrojs/svelte", "svelte"],
       html: [],
-      javascript: ["@inth/sdk@3"],
-      "next-app": ["@inth/nextjs@3"],
-      "next-pages": ["@inth/nextjs@3"],
-      nuxt: ["@inth/nuxt@3"],
-      react: ["@inth/react@3"],
-      solid: ["@inth/sdk@3"],
-      svelte: ["@inth/svelte@3"],
-      sveltekit: ["@inth/svelte@3", "@sveltejs/adapter-auto"],
-      "tanstack-start": ["@inth/tanstack-start@3"],
-      vue: ["@inth/vue@3"],
+      javascript: ["@inth/sdk@0.1"],
+      "next-app": ["@inth/nextjs@0.1"],
+      "next-pages": ["@inth/nextjs@0.1"],
+      nuxt: ["@inth/nuxt@0.1"],
+      react: ["@inth/react@0.1"],
+      solid: ["@inth/sdk@0.1"],
+      svelte: ["@inth/svelte@0.1"],
+      sveltekit: ["@inth/svelte@0.1", "@sveltejs/adapter-auto"],
+      "tanstack-start": ["@inth/tanstack-start@0.1"],
+      vue: ["@inth/vue@0.1"],
     }[framework];
     assert.deepEqual(data.plan?.dependencies, dependencies, framework);
     assert.ok(data.created?.length);
@@ -1800,6 +1800,80 @@ const verifyCodemodsWithoutAccount = async (
   ]);
 };
 
+// `inth init` runs the same flow for the Inth SDK, with Inth's prompt and
+// project branding.
+const verifyInit = (
+  binary: string,
+  test: string,
+  next: string,
+  react: string
+): void => {
+  const top = run(binary, ["--help"], next);
+  assert.equal(top.status, 0, top.stderr);
+  assert.match(top.stdout, /^ {2}init +Set up the Inth SDK in this app$/mu);
+  const help = run(binary, ["init", "--help", "--json"], next);
+  assert.equal(help.status, 0, help.stderr);
+  const [definition] = JSON.parse(help.stdout).data.commandDefinitions;
+  assert.equal(definition.command, "init");
+  const usage = run(binary, ["init", "codemods"], next);
+  assert.equal(usage.status, 1);
+  assert.match(usage.stderr, /Usage: inth init/u);
+
+  const prompt = run(
+    test,
+    [
+      "init",
+      "prompt",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--json",
+    ],
+    next
+  );
+  assert.equal(prompt.status, 0, prompt.stderr);
+  const promptData = envelope.parse(JSON.parse(prompt.stdout)).data;
+  assert.equal(promptData.project.backendUrl, BACKEND);
+  assert.match(promptData.prompt ?? "", /^Set up Inth consent management/u);
+  assert.match(
+    promptData.prompt ?? "",
+    new RegExp(`"projectUrl": "${BACKEND}"`, "u")
+  );
+  assert.match(
+    promptData.prompt ?? "",
+    /https:\/\/inth\.com\/docs\/frameworks/u
+  );
+  assert.doesNotMatch(promptData.prompt ?? "", /c15t\.com|backendURL/u);
+
+  const created = run(
+    test,
+    [
+      "init",
+      "scaffold",
+      "--name",
+      "Created",
+      "--region",
+      "eu",
+      "--organization",
+      "org_acme",
+      "--yes",
+      "--skip-install",
+      "--json",
+    ],
+    react
+  );
+  assert.equal(created.status, 0, created.stderr);
+  const { data } = envelope.parse(JSON.parse(created.stdout));
+  assert.equal(data.framework, "react");
+  assert.deepEqual(data.plan?.dependencies, ["@inth/react@0.1"]);
+  assert.deepEqual(calls(created.stderr), [
+    'POST /v1/projects?organizationId=org_acme {"consent":{"branding":"inth"},"name":"Created","region":"eu"}',
+    "GET /v1/projects/prj_created",
+    "GET /v1/projects/prj_created",
+  ]);
+};
+
 export const verifyC15t = async (binary: string): Promise<void> => {
   const parent = await realpath(
     await mkdtemp(path.join(os.tmpdir(), "inth-c15t-"))
@@ -1834,6 +1908,12 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await verifyRedactedPlans(test, parent);
     await verifyHtmlSite(test, parent);
     verifyNewProject(test, await app(parent, "dashboard", { react: "19.0.0" }));
+    verifyInit(
+      binary,
+      test,
+      next,
+      await app(parent, "storefront", { react: "19.0.0" })
+    );
     if (!windows) {
       await verifyAgents(test, next, bin);
     }

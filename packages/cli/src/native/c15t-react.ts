@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
 
-import type { GenerationPlan } from "../../vendor/c15t/generate/index.ts";
+import type { GenerationPlan } from "../../vendor/inth-setup/generate/index.ts";
 
 /** Use Vite's conventional default App export when the project contains it. */
 export const adaptReactGeneration = (

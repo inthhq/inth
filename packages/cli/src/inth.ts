@@ -15,7 +15,7 @@ import type { CliArguments } from "./arguments.ts";
 import { parseArguments } from "./arguments.ts";
 import { AuthFlow } from "./auth-flow.ts";
 import { c15tCodemodsHelp } from "./c15t-codemods.ts";
-import { c15tHelp } from "./c15t.ts";
+import { c15tHelp, initHelp } from "./c15t.ts";
 import { chatRetryDiagnostic, requireChatPerson } from "./chat.ts";
 import { CliError } from "./cli-error.ts";
 import { selectCommandConnection } from "./connection-selection.ts";
@@ -33,7 +33,7 @@ import {
   prepareDirectory,
   productionBuild,
 } from "./native/native-bindings.ts";
-import { runC15t } from "./native/native-c15t.ts";
+import { runSetup } from "./native/native-c15t.ts";
 import { nativeClock, nativeHttp } from "./native/native-http.ts";
 import { NativeKeychain } from "./native/native-keychain.ts";
 import { runMcp } from "./native/native-mcp.ts";
@@ -431,8 +431,8 @@ const runApiCommand = async (
   context: NativeContext,
   allowInteractive: boolean
 ): Promise<boolean> => {
-  if (options.command === "c15t") {
-    await runC15t(options, api, context, controller.signal, allowInteractive);
+  if (options.command === "c15t" || options.command === "init") {
+    await runSetup(options, api, context, controller.signal, allowInteractive);
     return true;
   }
   if (options.command === "org" && options.argument === "create") {
@@ -706,6 +706,15 @@ try {
           (entry) => entry.action === "codemods"
         ),
         help: c15tCodemodsHelp(),
+      })
+    );
+  } else if (options.command === "init" && options.help) {
+    printResult(
+      options.json,
+      initHelp(),
+      JSON.stringify({
+        commandDefinitions: helpCommands("init"),
+        help: initHelp(),
       })
     );
   } else if (options.command === "c15t" && options.help) {

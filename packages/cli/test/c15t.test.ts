@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { parseArguments } from "../src/arguments.ts";
 import {
   c15tHelp,
+  initHelp,
   defaultProjectName,
   detectFramework,
   detectPackageManager,
@@ -13,8 +14,8 @@ import { helpCommands, formatHelp } from "../src/help.ts";
 describe("inth c15t arguments", () => {
   it("is available without an experimental flag", () => {
     expect(parseArguments(["c15t"])).toMatchObject({
-      c15t: { action: "" },
       command: "c15t",
+      setup: { action: "" },
     });
     expect(parseArguments(["c15t", "--help", "--json"])).toMatchObject({
       command: "c15t",
@@ -58,7 +59,7 @@ describe("inth c15t arguments", () => {
       json: true,
       organization: "org_acme",
     });
-    expect(result.c15t).toEqual({
+    expect(result.setup).toEqual({
       action: "scaffold",
       dryRun: false,
       framework: "next-app",
@@ -96,6 +97,57 @@ describe("inth c15t arguments", () => {
   });
 });
 
+describe("inth init arguments", () => {
+  it("parses the same actions and options as inth c15t", () => {
+    const result = parseArguments([
+      "init",
+      "scaffold",
+      "--project",
+      "Website",
+      "--framework",
+      "react",
+      "--dry-run",
+      "--json",
+    ]);
+    expect(result).toMatchObject({ command: "init", json: true });
+    expect(result.setup).toEqual({
+      action: "scaffold",
+      dryRun: true,
+      framework: "react",
+      project: "Website",
+      resume: false,
+      skipInstall: false,
+      yes: false,
+    });
+    expect(parseArguments(["init", "--claude"]).setup).toMatchObject({
+      action: "agent",
+      agent: "claude",
+    });
+  });
+
+  it.each([
+    [["codemods"], "Usage: inth init"],
+    [["--limit", "5"], "Run inth init --help."],
+    [["--codex", "--json"], "Use inth init prompt --json"],
+  ])("rejects %j with inth init in the message", (args, message) => {
+    expect(() => parseArguments(["init", ...args])).toThrow(message);
+  });
+
+  it("is listed before c15t and describes the Inth SDK", () => {
+    const help = formatHelp();
+    expect(help.indexOf("  init")).toBeGreaterThan(-1);
+    expect(help.indexOf("  init")).toBeLessThan(help.indexOf("  c15t"));
+    const [command] = helpCommands("init");
+    expect(command).toMatchObject({
+      command: "init",
+      usage: expect.stringContaining("init [scaffold|prompt"),
+    });
+    expect(command?.effects[0]).toContain("inth branding");
+    expect(initHelp()).toContain("Inth SDK");
+    expect(initHelp()).not.toContain("codemods");
+  });
+});
+
 describe("inth c15t options before the command", () => {
   it("keeps options that precede c15t", () => {
     const result = parseArguments([
@@ -107,7 +159,7 @@ describe("inth c15t options before the command", () => {
       "--region",
       "eu",
     ]);
-    expect(result.c15t).toMatchObject({
+    expect(result.setup).toMatchObject({
       action: "scaffold",
       dryRun: true,
       name: "Site",
@@ -131,7 +183,7 @@ describe("inth c15t agents", () => {
     ["--grok", "grok"],
     ["--fx", "fx"],
   ])("%s starts the agent route", (flag, agent) => {
-    expect(parseArguments(["c15t", flag]).c15t).toMatchObject({
+    expect(parseArguments(["c15t", flag]).setup).toMatchObject({
       action: "agent",
       agent,
     });

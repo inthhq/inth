@@ -5,7 +5,7 @@ import { join } from "node:path";
 import type {
   FileMerge,
   GenerationPlan,
-} from "../../vendor/c15t/generate/index.ts";
+} from "../../vendor/inth-setup/generate/index.ts";
 import type { PackageManifest } from "../c15t.ts";
 import { withoutConfigComments } from "./c15t-config.ts";
 

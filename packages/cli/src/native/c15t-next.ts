@@ -2,11 +2,11 @@ import { existsSync, readFileSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
 
-import type { ApplicationPlan } from "../../vendor/c15t/frontend/runtime/index.ts";
+import type { ApplicationPlan } from "../../vendor/inth-setup/frontend/runtime/index.ts";
 import type {
   FileMerge,
   GenerationPlan,
-} from "../../vendor/c15t/generate/index.ts";
+} from "../../vendor/inth-setup/generate/index.ts";
 import { withoutConfigComments } from "./c15t-config.ts";
 
 const nextPageExtensions = (cwd: string, config?: string): string[] => {

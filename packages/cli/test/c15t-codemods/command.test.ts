@@ -41,13 +41,13 @@ describe("inth c15t codemods arguments", () => {
       json: true,
       nonInteractive: true,
     });
-    expect(parseArguments(["c15t", "codemods"]).c15t).toBeUndefined();
+    expect(parseArguments(["c15t", "codemods"]).setup).toBeUndefined();
   });
 
   it("reads codemods as a project name when it follows --project", () => {
     expect(
       parseArguments(["c15t", "--project", "codemods", "prompt"])
-    ).toMatchObject({ c15t: { action: "prompt", project: "codemods" } });
+    ).toMatchObject({ setup: { action: "prompt", project: "codemods" } });
   });
 
   it("rejects options codemods does not take", () => {

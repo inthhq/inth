@@ -1,6 +1,6 @@
 import { parseCodemodsArguments } from "./c15t-codemods.ts";
-import { c15tOptionTakesValue, parseC15tArguments } from "./c15t.ts";
-import type { C15tOptions } from "./c15t.ts";
+import { parseSetupArguments, setupOptionTakesValue } from "./c15t.ts";
+import type { SetupOptions } from "./c15t.ts";
 import { CliError } from "./cli-error.ts";
 import { COMMAND_METADATA, OPTION_METADATA } from "./command-metadata.ts";
 import { parseDocumentArguments } from "./document.ts";
@@ -37,7 +37,8 @@ export interface CliArguments {
   skillsArguments?: string[];
   skillsBrowse?: boolean;
   skillsSourceExplicit?: boolean;
-  c15t?: C15tOptions;
+  // Set for `inth init` and `inth c15t`; `command` says which.
+  setup?: SetupOptions;
   // Set for `inth c15t codemods`, which runs without sign-in or a project.
   c15tCodemods?: CodemodOptions;
   // Set for `inth mobile setup`, which runs without sign-in.
@@ -486,13 +487,22 @@ const parseSubcommand = (
     ]);
     return true;
   }
+  if (arg === "init") {
+    result.command = "init";
+    result.setup = parseSetupArguments(
+      result,
+      [...leadingOptions(result), ...rest],
+      "init"
+    );
+    return true;
+  }
   if (arg === "c15t") {
     result.command = "c15t";
     const args = [...leadingOptions(result), ...rest];
     // The first word that is not an option's value names the action.
     const action = args.findIndex(
       (entry, index) =>
-        !entry.startsWith("-") && !c15tOptionTakesValue(args[index - 1] ?? "")
+        !entry.startsWith("-") && !setupOptionTakesValue(args[index - 1] ?? "")
     );
     if (args[action] === "codemods") {
       result.argument = "codemods";
@@ -502,7 +512,7 @@ const parseSubcommand = (
       );
       return true;
     }
-    result.c15t = parseC15tArguments(result, args);
+    result.setup = parseSetupArguments(result, args, "c15t");
     return true;
   }
   return false;

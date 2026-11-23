@@ -1,8 +1,10 @@
-# c15t
+# Inth setup generator
 
-Source: `@c15t/cli@3.0.0`, `src/generate` and `src/frontend` (https://github.com/c15t/c15t, Apache-2.0).
+Forked from `@c15t/cli@3.0.0`, `src/generate` and `src/frontend` (https://github.com/c15t/c15t, Apache-2.0). It does not track upstream. `inth init` uses it to write apps against the `@inth/*` packages, with Inth names such as `InthProvider`, `inth.config.ts`, `inthHandle`, `/api/inth`, `inth.js` and `#inth-preferences`. `git log --follow` on a file lists the changes made since the fork, including those made while the files lived in `vendor/c15t`.
 
-The vendored files are edited locally. Generated apps use Inth names, such as `@inth/*` packages, `InthProvider`, `inth.config.ts`, `inth` (Astro and Vue), `inthHandle`, `/api/inth`, `inth.js` and `#inth-preferences`. Parts of `generate` and `frontend/agent` also behave differently from upstream. `git log -- packages/cli/vendor/c15t` lists every local change. `node scripts/vendor-c15t.ts` overwrites them, so after a refresh (change the version there and here first), reapply those commits. Scriptc compiles them statically into `inth c15t`; it does not compile the package's npm entry points.
+`inth c15t` still uses it too, until it moves back to the upstream generator.
+
+Scriptc compiles these files statically into the CLI. The code keeps upstream's tabs and formatting, so the repository's linter and formatter skip it.
 
 inth supplies the account, organization, and project state that `frontend/index.ts` expects from a host. It uses `frontend/agent/prompt.ts` for agent prompts and `frontend/runtime` to plan, write, and install generated files.
 
