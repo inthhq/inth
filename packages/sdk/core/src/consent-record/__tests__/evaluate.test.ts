@@ -1261,7 +1261,7 @@ describe('evaluateConsentRecord: durable opt-out record', () => {
 		expect(result.nextDeadline).toBe(NOW + 365 * DAY);
 	});
 
-	it('does not let a measurement grant stand when marketing is true or undecided', () => {
+	it('does not let a measurement grant stand when marketing is true, or undecided and the grant predates the opt-out', () => {
 		const staleGrant = makeChoice(
 			{ marketing: true, measurement: true },
 			NOW,
@@ -1293,6 +1293,51 @@ describe('evaluateConsentRecord: durable opt-out record', () => {
 		expect(withMarketingUndecided.restrictions.measurement).toEqual([
 			'opt-out',
 		]);
+	});
+
+	it('lets a measurement grant confirmed after a legacy opt-out stand while marketing is undecided', () => {
+		// `/v1/consent/init` sends an opt-out with no categories, so it
+		// withholds marketing and measurement, and Preferences then saves
+		// only the switched category.
+		expect(optOut.categories).toBeUndefined();
+		const later = makeChoice(
+			{ measurement: true },
+			NOW + DAY,
+			currentBasis(usOptOutPolicy)
+		);
+		const result = evaluateConsentRecord({
+			choice: later,
+			noticeDismissal: null,
+			now: NOW + DAY,
+			optOut,
+			policy: usOptOutPolicy,
+		});
+		expect(result.permissions.measurement).toBe(true);
+		expect(result.categories.measurement.source).toBe('grant');
+		expect(result.permissions.marketing).toBe(false);
+		expect(result.restrictions).toEqual({ marketing: ['opt-out'] });
+		// Grant expiry restores the opt-out restriction.
+		expect(result.nextDeadline).toBe(NOW + DAY + 365 * DAY);
+	});
+
+	it('refuses a later grant of the deciding category, and a later grant beside it, while the opt-out is held', () => {
+		const grantsBoth = evaluateConsentRecord({
+			choice: makeChoice(
+				{ marketing: true, measurement: true },
+				NOW + DAY,
+				currentBasis(usOptOutPolicy)
+			),
+			noticeDismissal: null,
+			now: NOW + DAY,
+			optOut,
+			policy: usOptOutPolicy,
+		});
+		expect(grantsBoth.permissions.marketing).toBe(false);
+		expect(grantsBoth.permissions.measurement).toBe(false);
+		expect(grantsBoth.restrictions).toEqual({
+			marketing: ['opt-out'],
+			measurement: ['opt-out'],
+		});
 	});
 
 	it('does not let an expired or policy-changed measurement grant stand', () => {
