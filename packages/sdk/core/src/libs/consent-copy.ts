@@ -475,10 +475,11 @@ const fill = function fill(
 ): string {
 	// One pass, so a value that itself contains `{rights}` (a site name, say)
 	// is never filled a second time.
-	return template.replace(
-		/\{[a-z]+\}/gu,
-		(match) => values[match.slice(1, -1)] ?? match
-	);
+	// Own keys only: `{constructor}` must not read `Object.prototype`.
+	return template.replace(/\{[a-z]+\}/gu, (match) => {
+		const key = match.slice(1, -1);
+		return (Object.hasOwn(values, key) ? values[key] : undefined) ?? match;
+	});
 };
 
 /**

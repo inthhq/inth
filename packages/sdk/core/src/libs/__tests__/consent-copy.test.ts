@@ -600,4 +600,19 @@ describe('privacy choices copy', () => {
 			"Acme won't sell or share your personal information or use it for targeted ads on this browser {other}"
 		);
 	});
+
+	it('leaves a placeholder named after an Object.prototype key as written', () => {
+		expect(
+			resolveGpcNote(
+				{ privacyChoices: { gpcNote: '{business} {constructor}' } },
+				{ bundle: 'all', business: 'Acme' }
+			)
+		).toBe('Acme {constructor}');
+		expect(
+			scopePhrase(
+				{ privacyChoices: { scopeAccount: 'for {business} {constructor}' } },
+				{ business: 'Acme', signedIn: true }
+			)
+		).toBe('for Acme {constructor}');
+	});
 });
