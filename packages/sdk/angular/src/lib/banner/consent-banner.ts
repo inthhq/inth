@@ -361,7 +361,7 @@ export class ConsentBanner {
 	readonly acceptButtonText = input<string | undefined>(undefined);
 	/** The notice's acknowledge button text. */
 	readonly dismissButtonText = input<string | undefined>(undefined);
-	/** Hide the "Secured by" attribution. */
+	/** Hide the "Consent by" attribution. */
 	readonly hideBranding = input(false);
 	/** Which of the provider's legal links follow the description. */
 	readonly legalLinks = input<LegalLinkSelection | undefined>(undefined);

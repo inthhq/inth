@@ -14,7 +14,7 @@ const COPY = {
 		acceptAll: 'Accept All',
 		customize: 'Customize',
 		rejectAll: 'Reject All',
-		securedBy: 'Secured by',
+		securedBy: 'Consent by',
 	},
 	cookieBanner: {
 		description: 'This site uses cookies.',

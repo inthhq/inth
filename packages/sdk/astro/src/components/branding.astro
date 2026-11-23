@@ -1,6 +1,6 @@
 ---
 /**
- * The "Secured by" tag.
+ * The "Consent by" tag.
  *
  * Server-rendered with the same markup, classes and `data-testid` as the
  * Svelte and React banners, so the shared stylesheet positions it
@@ -26,7 +26,7 @@ interface Props {
 	surface: BrandingSurface;
 	/** The brand the server resolved. */
 	branding: ConsentSnapshot['branding'];
-	/** "Secured by", already resolved from the translation bundle. */
+	/** "Consent by", already resolved from the translation bundle. */
 	securedBy: string;
 	/** The host to attribute the referral to. */
 	hostname?: string;

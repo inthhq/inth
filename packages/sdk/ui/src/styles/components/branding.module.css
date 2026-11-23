@@ -17,7 +17,7 @@
 	--consent-dialog-branding-icon-width: auto;
 	--consent-dialog-branding-label-size: 0.6875rem;
 
-	/* "Secured by" tag. These are read with a fallback instead of being
+	/* "Consent by" tag. These are read with a fallback instead of being
 	   declared here: a variable declared on :root resolves var(--inth-primary)
 	   once, on :root, so a primary or dark palette scoped to a banner or to
 	   .inth-theme-root would stop reaching the tag. Set any of them to

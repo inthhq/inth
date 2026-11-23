@@ -139,7 +139,7 @@ test('branding content wrappers and hidden icon metadata preserve rendered geome
 }) => {
 	const icon =
 		'<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>';
-	const content = `<span>Secured by</span>${icon}`;
+	const content = `<span>Consent by</span>${icon}`;
 	const fixture = (children: string) =>
 		`<style>a,.brandingContent{display:inline-flex;gap:6px;align-items:center}svg{width:16px;height:16px}</style><a data-testid="consent-banner-branding" href="/">${children}</a>`;
 	await page.setContent(

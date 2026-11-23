@@ -8,6 +8,7 @@ import type {
 	CompleteTranslations,
 	IABTranslations,
 	OptOutTranslations,
+	PrivacyChoicesTranslations,
 	Translations,
 	TriggerTranslations,
 	VendorListTranslations,
@@ -304,11 +305,27 @@ export const resolveOptOutCopy = function resolveOptOutCopy(
 	);
 };
 
-type StandardOptOutRights = 'all' | 'sale-and-share' | 'sale-and-targeted-ads';
+/**
+ * The three rights bundles the sale row can control: sale, sharing and
+ * targeted ads (`all`), sale and sharing (`sale-share`), or sale and
+ * targeted ads (`sale-ads`).
+ */
+export type RightsBundle = 'all' | 'sale-share' | 'sale-ads';
 
-const standardRightsFor = function standardRightsFor(
+/**
+ * The bundle a set of opt-out rights forms.
+ *
+ * @returns The bundle, or `null` for an empty set (rights not confirmed
+ * yet) and for any set that is not one of the three bundles.
+ *
+ * @example
+ * ```ts
+ * resolveRightsBundle(['sale', 'share']); // 'sale-share'
+ * ```
+ */
+export const resolveRightsBundle = function resolveRightsBundle(
 	rights: readonly OptOutRight[]
-): StandardOptOutRights | null {
+): RightsBundle | null {
 	const unique = new Set(rights);
 	if (!unique.has('sale')) {
 		return null;
@@ -319,10 +336,10 @@ const standardRightsFor = function standardRightsFor(
 		return 'all';
 	}
 	if (unique.size === 2 && hasShare) {
-		return 'sale-and-share';
+		return 'sale-share';
 	}
 	if (unique.size === 2 && hasTargetedAds) {
-		return 'sale-and-targeted-ads';
+		return 'sale-ads';
 	}
 	return null;
 };
@@ -331,14 +348,14 @@ const rightsPhraseFor = function rightsPhraseFor(
 	copy: OptOutTranslations,
 	rights: readonly OptOutRight[]
 ): string | null {
-	const combo = standardRightsFor(rights);
+	const combo = resolveRightsBundle(rights);
 	if (combo === 'all') {
 		return copy.rightsAll;
 	}
-	if (combo === 'sale-and-share') {
+	if (combo === 'sale-share') {
 		return copy.rightsSaleAndShare;
 	}
-	if (combo === 'sale-and-targeted-ads') {
+	if (combo === 'sale-ads') {
 		return copy.rightsSaleAndTargetedAds;
 	}
 	return null;
@@ -357,14 +374,14 @@ export const resolveOptOutBlockHeading = function resolveOptOutBlockHeading(
 	variant: OptOutLinkVariant = 'do-not-sell'
 ): string {
 	const copy = resolveOptOutCopy(translations);
-	const combo = standardRightsFor(receipt.rights);
+	const combo = resolveRightsBundle(receipt.rights);
 	if (combo === 'all') {
 		return copy.headingAll;
 	}
-	if (combo === 'sale-and-share') {
+	if (combo === 'sale-share') {
 		return copy.headingSaleAndShare;
 	}
-	if (combo === 'sale-and-targeted-ads') {
+	if (combo === 'sale-ads') {
 		return copy.headingSaleAndTargetedAds;
 	}
 	return resolveOptOutLink(translations, variant).label;
@@ -418,6 +435,270 @@ export const resolveOptOutReceiptSentence =
 			? copy.receiptAccount
 			: copy.receiptBrowser;
 	};
+
+/**
+ * Copy for the Privacy Choices surfaces, every key filled.
+ *
+ * @remarks
+ * Most of these strings take placeholders; read them through the builders
+ * below ({@link scopePhrase}, {@link resolveRightsPhrases},
+ * {@link resolveOptInPromptCopy} and the rest) so each sentence names the
+ * configured rights bundle (COPY-01).
+ *
+ * @param translations - The active language bundle. Missing keys use English.
+ */
+export const resolvePrivacyChoicesCopy = function resolvePrivacyChoicesCopy(
+	translations: Partial<Translations> | undefined
+): PrivacyChoicesTranslations {
+	// English always carries the section.
+	return mergeOver(
+		enTranslations.privacyChoices as PrivacyChoicesTranslations,
+		translations?.privacyChoices
+	);
+};
+
+/** Who the visitor is and which site they are on, for the sentences below. */
+export interface PrivacyChoicesSubject {
+	/**
+	 * The site's name, for `{business}`. Without one the copy says "this
+	 * site" (`businessFallback`), or drops the name where it would not read.
+	 */
+	business?: string;
+	/** Whether the visitor is signed in, so a choice also reaches the account. */
+	signedIn?: boolean;
+}
+
+/** Every `{name}` in `template` replaced by `values[name]`; unknown ones stay. */
+const fill = function fill(
+	template: string,
+	values: Readonly<Partial<Record<string, string>>>
+): string {
+	// One pass, so a value that itself contains `{rights}` (a site name, say)
+	// is never filled a second time.
+	return template.replace(
+		/\{[a-z]+\}/gu,
+		(match) => values[match.slice(1, -1)] ?? match
+	);
+};
+
+/**
+ * `{business}` for a sentence: the site's name as written, or the fallback,
+ * capitalised when it opens the sentence. A real name is never recased.
+ */
+const businessFor = function businessFor(
+	copy: PrivacyChoicesTranslations,
+	template: string,
+	business: string | undefined
+): string {
+	const name = business?.trim();
+	if (name) {
+		return name;
+	}
+	const fallback = copy.businessFallback;
+	return template.startsWith('{business}')
+		? fallback.charAt(0).toLocaleUpperCase() + fallback.slice(1)
+		: fallback;
+};
+
+/** The four phrases one rights bundle reads as. */
+export interface RightsPhrases {
+	/** What the visitor is asked to allow: "sell or share your personal information". */
+	ask: string;
+	/** What the site will not do: "won't sell or share your personal information". */
+	refuse: string;
+	/** Short form for the one-line opt-in banner: "selling or sharing your data". */
+	short: string;
+	/** The rights as a sentence subject: "Selling and sharing". */
+	title: string;
+}
+
+/**
+ * The phrases for one rights bundle, so no sentence hard-codes "selling and
+ * sharing" (COPY-01).
+ *
+ * @example
+ * ```ts
+ * resolveRightsPhrases(translations, 'sale-ads').short;
+ * // 'selling your data or using it for ads'
+ * ```
+ */
+export const resolveRightsPhrases = function resolveRightsPhrases(
+	translations: Partial<Translations> | undefined,
+	bundle: RightsBundle
+): RightsPhrases {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	if (bundle === 'sale-share') {
+		return {
+			ask: copy.askSaleAndShare,
+			refuse: copy.refuseSaleAndShare,
+			short: copy.shortSaleAndShare,
+			title: copy.titleSaleAndShare,
+		};
+	}
+	if (bundle === 'sale-ads') {
+		return {
+			ask: copy.askSaleAndTargetedAds,
+			refuse: copy.refuseSaleAndTargetedAds,
+			short: copy.shortSaleAndTargetedAds,
+			title: copy.titleSaleAndTargetedAds,
+		};
+	}
+	return {
+		ask: copy.askAll,
+		refuse: copy.refuseAll,
+		short: copy.shortAll,
+		title: copy.titleAll,
+	};
+};
+
+/**
+ * Where a rights choice applies: "on this browser", or, signed in, "on this
+ * browser or for your Acme account".
+ */
+export const scopePhrase = function scopePhrase(
+	translations: Partial<Translations> | undefined,
+	subject: PrivacyChoicesSubject = {}
+): string {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	if (!subject.signedIn) {
+		return copy.scopeBrowser;
+	}
+	const business = subject.business?.trim();
+	return business
+		? fill(copy.scopeAccount, { business })
+		: copy.scopeAccountUnnamed;
+};
+
+/** The US opt-in prompt's title, card body and one-line banner text. */
+export interface OptInPromptCopy {
+	title: string;
+	description: string;
+	barDescription: string;
+}
+
+/**
+ * The US opt-in prompt's copy for a rights bundle.
+ *
+ * @example
+ * ```ts
+ * resolveOptInPromptCopy(translations, { bundle: 'all', business: 'Acme' })
+ * 	.barDescription;
+ * // 'Acme asks before using optional cookies or selling or sharing your data for ads.'
+ * ```
+ */
+export const resolveOptInPromptCopy = function resolveOptInPromptCopy(
+	translations: Partial<Translations> | undefined,
+	input: PrivacyChoicesSubject & { bundle: RightsBundle }
+): OptInPromptCopy {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	const phrases = resolveRightsPhrases(translations, input.bundle);
+	return {
+		barDescription: fill(copy.optInBarDescription, {
+			business: businessFor(copy, copy.optInBarDescription, input.business),
+			rights: phrases.short,
+		}),
+		description: fill(copy.optInDescription, {
+			business: businessFor(copy, copy.optInDescription, input.business),
+			rights: phrases.ask,
+		}),
+		title: copy.optInTitle,
+	};
+};
+
+/**
+ * The one-line US notice banner text. While a Global Privacy Control signal
+ * is honored it drops the ads clause and says the signal is honored
+ * (GPC-08).
+ */
+export const resolveNoticeBarDescription = function resolveNoticeBarDescription(
+	translations: Partial<Translations> | undefined,
+	gpcHonored: boolean
+): string {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	return gpcHonored ? copy.noticeBarDescriptionGpc : copy.noticeBarDescription;
+};
+
+/**
+ * The note that replaces the sale row's description while a Global Privacy
+ * Control signal is on (GPC-04). It says what the site won't do and where,
+ * and never tells the visitor to turn the signal off.
+ *
+ * @example
+ * ```ts
+ * resolveGpcNote(translations, { bundle: 'sale-share', business: 'Acme' });
+ * // "Your browser sent a Global Privacy Control signal, so Acme won't sell or
+ * // share your personal information on this browser. Allow isn't available
+ * // while the signal is on."
+ * ```
+ */
+export const resolveGpcNote = function resolveGpcNote(
+	translations: Partial<Translations> | undefined,
+	input: PrivacyChoicesSubject & { bundle: RightsBundle }
+): string {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	return fill(copy.gpcNote, {
+		business: businessFor(copy, copy.gpcNote, input.business),
+		rights: resolveRightsPhrases(translations, input.bundle).refuse,
+		scope: scopePhrase(translations, input),
+	});
+};
+
+/**
+ * The announcement after Allow on a banner while the sale choice stays off,
+ * naming the rights and, under a live signal, why.
+ */
+export const resolveBannerAllowedAnnouncement =
+	function resolveBannerAllowedAnnouncement(
+		translations: Partial<Translations> | undefined,
+		input: { bundle: RightsBundle; gpc: boolean }
+	): string {
+		const copy = resolvePrivacyChoicesCopy(translations);
+		return fill(
+			input.gpc ? copy.bannerAllowedRightsOffGpc : copy.bannerAllowedRightsOff,
+			{ rights: resolveRightsPhrases(translations, input.bundle).title }
+		);
+	};
+
+/** The receipt line that says where a recorded choice applies. */
+export const resolveReceiptScope = function resolveReceiptScope(
+	translations: Partial<Translations> | undefined,
+	subject: PrivacyChoicesSubject = {}
+): string {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	if (!subject.signedIn) {
+		return copy.receiptScopeBrowser;
+	}
+	const business = subject.business?.trim();
+	return business
+		? fill(copy.receiptScopeAccount, { business })
+		: copy.receiptScopeAccountUnnamed;
+};
+
+/** The cookie-category row: its title, what it covers, and how many are on. */
+export interface PreferencesRowCopy {
+	title: string;
+	summary: string;
+	onCount: string;
+	/** Accessible name of the button that closes its sheet. */
+	close: string;
+}
+
+/**
+ * The "Preferences" row's copy (COPY-05). The row joins the parts with a
+ * separator: "Preferences · Site features and analytics · 2 on".
+ */
+export const resolvePreferencesRowCopy = function resolvePreferencesRowCopy(
+	translations: Partial<Translations> | undefined,
+	onCount: number
+): PreferencesRowCopy {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	return {
+		close: copy.preferencesClose,
+		onCount: fill(copy.preferencesOnCount, { count: String(onCount) }),
+		summary: copy.preferencesSummary,
+		title: copy.preferencesTitle,
+	};
+};
 
 /**
  * Accessible names for the floating trigger and its toolbar.

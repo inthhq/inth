@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Dismiss',
 		rejectAll: 'Reject All',
 		save: 'Save Settings',
-		securedBy: 'Secured by',
+		securedBy: 'Consent by',
 	},
 	consentGate: {
 		actionButton: 'Enable {category} consent',
@@ -208,6 +208,61 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'sale and targeted advertising',
 		statusRequest: 'Opt-out request honored',
 		statusSignal: 'Opt-out preference signal honored',
+	},
+	privacyChoices: {
+		askAll:
+			'sell or share your personal information, including for targeted ads',
+		askSaleAndShare: 'sell or share your personal information',
+		askSaleAndTargetedAds:
+			'sell your personal information or use it for targeted ads',
+		bannerAllowedRightsOff:
+			'Optional cookies allowed. {rights} stay off. You can change this in Your Privacy Choices.',
+		bannerAllowedRightsOffGpc:
+			'Optional cookies allowed. {rights} stay off because of your Global Privacy Control signal. You can change this in Your Privacy Choices.',
+		bannerRejected:
+			'Optional cookies rejected. You can change this in Your Privacy Choices.',
+		barDescription:
+			'We use cookies to improve your experience and analyze traffic.',
+		businessFallback: 'this site',
+		choicesSaved: 'Choices saved. You can change them in Your Privacy Choices.',
+		copyFailed: "Couldn't copy. Select and copy your reference:",
+		dialogIntro: 'Your choices apply right away.',
+		gpcNote:
+			"Your browser sent a Global Privacy Control signal, so {business} {rights} {scope}. Allow isn't available while the signal is on.",
+		nestedSheetNote: 'Changes apply when you save in Privacy settings.',
+		noticeBarDescription:
+			'We use cookies to run this site, measure traffic and personalize ads. You can opt out at any time.',
+		noticeBarDescriptionGpc:
+			'We use cookies to run this site and measure traffic. Your Global Privacy Control signal is honored.',
+		nudge: 'Choose one of the two buttons first.',
+		optInBarDescription:
+			'{business} asks before using optional cookies or {rights}.',
+		optInDescription:
+			'With your permission, {business} would use optional cookies for site features and analytics, and {rights}. Nothing is turned on unless you allow it.',
+		optInTitle: 'Your privacy choices',
+		panelExpanded: 'More options shown.',
+		preferencesClose: 'Close preferences',
+		preferencesOnCount: '{count} on',
+		preferencesSummary: 'Site features and analytics',
+		preferencesTitle: 'Preferences',
+		receiptScopeAccount: 'Applies to this browser and your {business} account.',
+		receiptScopeAccountUnnamed: 'Applies to this browser and your account.',
+		receiptScopeBrowser:
+			'Applies to this browser. Sign in to apply it to your account too.',
+		refuseAll:
+			"won't sell or share your personal information or use it for targeted ads",
+		refuseSaleAndShare: "won't sell or share your personal information",
+		refuseSaleAndTargetedAds:
+			"won't sell your personal information or use it for targeted ads",
+		scopeAccount: 'on this browser or for your {business} account',
+		scopeAccountUnnamed: 'on this browser or for your account',
+		scopeBrowser: 'on this browser',
+		shortAll: 'selling or sharing your data for ads',
+		shortSaleAndShare: 'selling or sharing your data',
+		shortSaleAndTargetedAds: 'selling your data or using it for ads',
+		titleAll: 'Selling, sharing and targeted ads',
+		titleSaleAndShare: 'Selling and sharing',
+		titleSaleAndTargetedAds: 'Selling and targeted ads',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Your California Privacy Choices',

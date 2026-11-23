@@ -66,7 +66,7 @@ import ConsentWidgetVendorList from './vendor-list.vue';
 
 const props = withDefaults(
 	defineProps<{
-		/** Hide the "Secured by" branding tag. Defaults to true. */
+		/** Hide the "Consent by" branding tag. Defaults to true. */
 		hideBranding?: boolean;
 		/** Drop the built-in widget styling. */
 		noStyle?: boolean;

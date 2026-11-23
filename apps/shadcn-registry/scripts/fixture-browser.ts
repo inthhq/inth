@@ -33,7 +33,7 @@ const copy = {
 	allowVendor: 'Allow X Pixel',
 	bannerTitle: 'We value your privacy',
 	// The demo backend brands its projects INTH. Self-hosted ones show Inth.
-	branding: /^Secured by\s*(?:inth|INTH)$/u,
+	branding: /^Consent by\s*(?:inth|INTH)$/u,
 	close: 'Close',
 	// The demo policy picks one, depending on where the visitor is.
 	customize: /^(?:Customize|Manage preferences)$/u,

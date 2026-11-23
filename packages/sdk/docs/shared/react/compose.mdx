@@ -139,7 +139,7 @@ group: reference
 
   The parts output the built-in class names, and the banner `Root` renders Inth's rules, so Inth's styles and `--inth-*` tokens style a composed banner the same way as the built-in one.
 
-  Slots in the provider's `options.components` target each part by key: `banner.root`, `banner.card`, `banner.header`, `banner.title`, `description.banner`, `banner.footer`, `banner.actions`, `banner.actionGroup`, `banner.rights`, and `banner.rightLink`. A class passed to a part joins its built-in and slot classes. The built-in `ConsentBanner` also renders `banner.cardShell` and the "Secured by" tag, whereas a composed banner renders neither.
+  Slots in the provider's `options.components` target each part by key: `banner.root`, `banner.card`, `banner.header`, `banner.title`, `description.banner`, `banner.footer`, `banner.actions`, `banner.actionGroup`, `banner.rights`, and `banner.rightLink`. A class passed to a part joins its built-in and slot classes. The built-in `ConsentBanner` also renders `banner.cardShell` and the "Consent by" tag, whereas a composed banner renders neither.
 
   Action buttons read the `button.primary` or `button.secondary` slot and the `theme.consentActions` entry for their `consentAction`. `noStyle` on a button drops Inth's button classes while keeping slot classes. `noStyle` on `Root` removes built-in styling from every part inside it.
 </section>

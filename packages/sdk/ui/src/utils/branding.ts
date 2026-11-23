@@ -1,5 +1,5 @@
 /**
- * The "Secured by" tag and the brand marks, resolved once for every
+ * The "Consent by" tag and the brand marks, resolved once for every
  * adapter. Each adapter renders this model as its own markup.
  */
 
@@ -183,7 +183,7 @@ const join = (...names: (string | undefined)[]): string =>
 	names.filter(Boolean).join(' ');
 
 /**
- * Resolve the "Secured by" tag for one surface.
+ * Resolve the "Consent by" tag for one surface.
  *
  * @returns The tag, or `null` when the backend sent `branding: 'none'`.
  */

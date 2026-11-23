@@ -3,7 +3,7 @@ import type { BrandMark } from '@inth/sdk/ui/utils';
 import type { SVGProps } from 'react';
 
 /**
- * A brand mark, decorative and filled with `currentColor`: on the "Secured
+ * A brand mark, decorative and filled with `currentColor`: on the "Consent
  * by" tag and on the dialog trigger.
  */
 export const BrandMarkIcon = ({

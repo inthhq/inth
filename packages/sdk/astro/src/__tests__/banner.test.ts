@@ -392,7 +392,7 @@ describe('<ConsentBanner />', () => {
 		expect(branding).toBeDefined();
 		expect(branding).toContain('data-variant="banner-tag"');
 		expect(branding).toContain('data-branding="inth"');
-		expect(html).toContain('Secured by');
+		expect(html).toContain('Consent by');
 		// It sits beside the card, not inside it, so the tag can overlap the
 		// card's top edge the way the Svelte and React banners do.
 		expect(html.indexOf('consent-banner-branding')).toBeLessThan(

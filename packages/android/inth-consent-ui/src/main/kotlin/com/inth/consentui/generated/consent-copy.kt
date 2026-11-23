@@ -108,7 +108,7 @@ data class ConsentCopy(
             customize = "Customize",
             save = "Save Settings",
             acknowledge = "OK",
-            securedBy = "Secured by",
+            securedBy = "Consent by",
             headline = "We value your privacy",
             noticeTitle = "Privacy notice",
             privacySettings = "Privacy Settings",

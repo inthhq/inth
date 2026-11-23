@@ -81,7 +81,7 @@ export type {
 /**
  * Brand palette served by `/v1/consent/init` (or chosen offline). Drives default
  * UI theme but has no effect on consent semantics. `none` hides the
- * "Secured by" tag.
+ * "Consent by" tag.
  */
 export type KernelBranding = 'c15t' | 'consent' | 'inth' | 'none';
 

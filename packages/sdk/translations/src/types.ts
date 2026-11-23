@@ -13,6 +13,11 @@ export interface CommonTranslations {
 	customize: string;
 	save: string;
 	close: string;
+	/**
+	 * Lead-in of the attribution tag, which the brand mark finishes:
+	 * "Consent by [INTH]". It names who provides the consent tool, so it must
+	 * not read as a security or privacy assurance.
+	 */
 	securedBy: string;
 	/** Acknowledges a notice prompt without recording a choice. */
 	dismiss: string;
@@ -100,6 +105,106 @@ export interface OptOutTranslations {
 	lockedByGpc: string;
 	/** Notice shown on a category held off by an account-level opt-out. */
 	lockedByAccount: string;
+}
+
+/**
+ * Copy for the Privacy Choices surfaces: the slim banner, the US opt-in and
+ * notice prompts, the "Your Privacy Choices" dialog and their screen-reader
+ * announcements.
+ *
+ * Placeholders: `{business}` is the site's name, `{rights}` a phrase for the
+ * configured rights bundle (one of the `*All`, `*SaleAndShare` and
+ * `*SaleAndTargetedAds` keys below), `{scope}` the `scope*` phrase and
+ * `{count}` a number. Read them through the builders in `@inth/sdk-core`
+ * (`resolvePrivacyChoicesCopy` and its helpers) rather than by hand, so each
+ * sentence names exactly the rights the choice controls.
+ */
+export interface PrivacyChoicesTranslations {
+	/** Stands in for `{business}` when the site has not set its name. */
+	businessFallback: string;
+	/** One-line EU banner text. */
+	barDescription: string;
+	/** Title of the US opt-in prompt. */
+	optInTitle: string;
+	/** Body of the US opt-in card. Use `{business}` and `{rights}` (an `ask*` phrase). */
+	optInDescription: string;
+	/** One-line US opt-in banner text. Use `{business}` and `{rights}` (a `short*` phrase). */
+	optInBarDescription: string;
+	/** One-line US notice banner text. */
+	noticeBarDescription: string;
+	/** One-line US notice banner text while a Global Privacy Control signal is honored. */
+	noticeBarDescriptionGpc: string;
+	/** First line of the dialog in the US. The GPC note replaces it when the signal is on. */
+	dialogIntro: string;
+	/**
+	 * Note on the sale row while a Global Privacy Control signal is on. Use
+	 * `{business}`, `{rights}` (a `refuse*` phrase) and `{scope}`. Never tell
+	 * the visitor to turn the signal off.
+	 */
+	gpcNote: string;
+	/** Scope while signed out, for `{scope}`. */
+	scopeBrowser: string;
+	/** Scope while signed in, for `{scope}`. Use `{business}`. */
+	scopeAccount: string;
+	/** Scope while signed in when the site has not set its name. */
+	scopeAccountUnnamed: string;
+	/** What the visitor is asked to allow, `sale`, `share` and `targeted_ads`. */
+	askAll: string;
+	/** What the visitor is asked to allow, `sale` and `share`. */
+	askSaleAndShare: string;
+	/** What the visitor is asked to allow, `sale` and `targeted_ads`. */
+	askSaleAndTargetedAds: string;
+	/** What the site will not do, `sale`, `share` and `targeted_ads`. Starts with the verb. */
+	refuseAll: string;
+	/** What the site will not do, `sale` and `share`. */
+	refuseSaleAndShare: string;
+	/** What the site will not do, `sale` and `targeted_ads`. */
+	refuseSaleAndTargetedAds: string;
+	/** Short form for the one-line opt-in banner, `sale`, `share` and `targeted_ads`. */
+	shortAll: string;
+	/** Short form for the one-line opt-in banner, `sale` and `share`. */
+	shortSaleAndShare: string;
+	/** Short form for the one-line opt-in banner, `sale` and `targeted_ads`. */
+	shortSaleAndTargetedAds: string;
+	/** Name of the rights as a sentence subject, `sale`, `share` and `targeted_ads`. */
+	titleAll: string;
+	/** Name of the rights as a sentence subject, `sale` and `share`. */
+	titleSaleAndShare: string;
+	/** Name of the rights as a sentence subject, `sale` and `targeted_ads`. */
+	titleSaleAndTargetedAds: string;
+	/** Announced when pressing Allow while the opt-in confirmation is open. */
+	nudge: string;
+	/** Announced when a banner's Customize expands its options in place. */
+	panelExpanded: string;
+	/** Announced after Reject all on a banner. */
+	bannerRejected: string;
+	/** Announced after Save choices on a banner. */
+	choicesSaved: string;
+	/**
+	 * Announced after Allow on a banner while the sale choice stays off.
+	 * Use `{rights}` (a `title*` phrase).
+	 */
+	bannerAllowedRightsOff: string;
+	/** As `bannerAllowedRightsOff`, while a Global Privacy Control signal keeps them off. */
+	bannerAllowedRightsOffGpc: string;
+	/** Receipt scope while signed out. */
+	receiptScopeBrowser: string;
+	/** Receipt scope while signed in. Use `{business}`. */
+	receiptScopeAccount: string;
+	/** Receipt scope while signed in when the site has not set its name. */
+	receiptScopeAccountUnnamed: string;
+	/** Note in an EU nested sheet: changes wait for Save in the dialog. */
+	nestedSheetNote: string;
+	/** Label of the fallback field shown when copying the reference fails. */
+	copyFailed: string;
+	/** Title of the cookie-category row and its sheet. */
+	preferencesTitle: string;
+	/** What the cookie-category row covers. */
+	preferencesSummary: string;
+	/** How many optional categories are on. Use `{count}`. */
+	preferencesOnCount: string;
+	/** Accessible name of the button that closes the preferences sheet. */
+	preferencesClose: string;
 }
 
 export interface LegalLinksTranslations {
@@ -354,6 +459,12 @@ export interface CompleteTranslations {
 	 * provides it and fills the gaps for every other language.
 	 */
 	trigger?: TriggerTranslations;
+	/**
+	 * Optional so custom translation objects and other languages keep
+	 * compiling; English provides it and fills the gaps for every other
+	 * language.
+	 */
+	privacyChoices?: PrivacyChoicesTranslations;
 }
 
 // Partial translations interface (used for other languages)
@@ -375,6 +486,7 @@ export interface Translations {
 	legalLinks?: Partial<LegalLinksTranslations>;
 	iab?: DeepPartial<IABTranslations>;
 	optOut?: Partial<OptOutTranslations>;
+	privacyChoices?: Partial<PrivacyChoicesTranslations>;
 	rights?: Partial<RightsTranslations>;
 	trigger?: Partial<TriggerTranslations>;
 }

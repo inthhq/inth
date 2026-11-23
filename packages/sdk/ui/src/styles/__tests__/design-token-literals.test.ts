@@ -7,7 +7,7 @@
  * the rule. A component variable whose default is a literal instead of a
  * `--inth-*` token is subtler: it can be overridden, but a `theme` never
  * reaches it, so one surface keeps Inth's defaults while the rest of the UI
- * follows the site's palette. The "Secured by" tag and the preference list's
+ * follows the site's palette. The "Consent by" tag and the preference list's
  * font both shipped that way. So does a literal fallback on a component
  * variable nothing declares, like `var(--accordion-focus-ring, hsl(...))`:
  * the fallback is what renders.

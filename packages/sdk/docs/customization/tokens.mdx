@@ -110,7 +110,7 @@ Lower these variables when a navbar, drawer, or chat widget should sit above the
 
 Keep each surface z-index above its overlay, and keep the dialog above the banner. Non-blocking banners only capture clicks on the card and branding tag, so clicks around them pass through to your page.
 
-## Style the "Secured by" tag
+## Style the "Consent by" tag
 
 Declare branding tag variables on `:root` so both the banner and the portaled dialog inherit them:
 
@@ -118,7 +118,7 @@ Declare branding tag variables on `:root` so both the banner and the portaled di
 | --- | --- | --- |
 | `--consent-branding-tag-background-color` | `var(--inth-primary)` | Tag background |
 | `--consent-branding-tag-border-color` | `--inth-primary` mixed 14% toward black | Tag border |
-| `--consent-branding-tag-text-color` | `var(--inth-text-on-primary, #fff)` | "Secured by" text and wordmark |
+| `--consent-branding-tag-text-color` | `var(--inth-text-on-primary, #fff)` | "Consent by" text and wordmark |
 | `--consent-branding-tag-mark-color` | Tag text color | Inth logo mark |
 | `--consent-branding-tag-shadow` | Inset highlight and 1px shadow | Tag shadow |
 | `--consent-branding-tag-attached-edge-width` | `0px` | Border meeting the card |

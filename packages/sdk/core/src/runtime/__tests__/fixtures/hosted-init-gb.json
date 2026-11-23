@@ -56,7 +56,7 @@
 				"dismiss": "Dismiss",
 				"rejectAll": "Reject All",
 				"save": "Save Settings",
-				"securedBy": "Secured by"
+				"securedBy": "Consent by"
 			},
 			"consentGate": {
 				"actionButton": "Enable {category} consent",
