@@ -278,4 +278,49 @@
 			background-color: var(--switch-background-color-checked);
 		}
 	}
+
+	/* Forced colours (Windows High Contrast) drop backgrounds and shadows,
+	   which is all the track and thumb are drawn with. System colours
+	   draw them instead. `!important`, because the dark, hover and
+	   disabled rules above are more specific and would put the author's
+	   colour back. The thumb is its `::before`. */
+	@media (forced-colors: active) {
+		.root:not(:global(.headless)) .track {
+			forced-color-adjust: none;
+			background-color: ButtonFace !important;
+			box-shadow: inset 0 0 0 1px ButtonText !important;
+			opacity: 1 !important;
+		}
+
+		.root:not(:global(.headless)) .thumb::before {
+			background-color: ButtonText !important;
+			mask: none;
+		}
+
+		.root:not(:global(.headless)) .thumb::after {
+			box-shadow: none !important;
+		}
+
+		.root:not(:global(.headless))[data-state='checked'] .track {
+			background-color: Highlight !important;
+			box-shadow: none !important;
+		}
+
+		.root:not(:global(.headless))[data-state='checked'] .thumb::before {
+			background-color: HighlightText !important;
+		}
+
+		.root:not(:global(.headless))[data-disabled] .track {
+			background-color: ButtonFace !important;
+			box-shadow: inset 0 0 0 1px GrayText !important;
+		}
+
+		.root:not(:global(.headless))[data-disabled] .thumb::before {
+			background-color: GrayText !important;
+		}
+
+		.root:not(:global(.headless)):focus-visible .track {
+			outline-color: Highlight !important;
+		}
+	}
 }

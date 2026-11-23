@@ -266,4 +266,49 @@
 			background-color: var(--switch-background-color-checked);
 		}
 	}
+
+	/* Forced colours (Windows High Contrast) drop backgrounds and shadows,
+	   which is all the track and thumb are drawn with. System colours
+	   draw them instead. `!important`, because the dark, hover and
+	   disabled rules above are more specific and would put the author's
+	   colour back. The thumb is its `::before`. */
+	@media (forced-colors: active) {
+		.root .track {
+			forced-color-adjust: none;
+			background-color: ButtonFace !important;
+			box-shadow: inset 0 0 0 1px ButtonText !important;
+			opacity: 1 !important;
+		}
+
+		.root .thumb::before {
+			background-color: ButtonText !important;
+			mask: none;
+		}
+
+		.root .thumb::after {
+			box-shadow: none !important;
+		}
+
+		.root[data-state='checked'] .track {
+			background-color: Highlight !important;
+			box-shadow: none !important;
+		}
+
+		.root[data-state='checked'] .thumb::before {
+			background-color: HighlightText !important;
+		}
+
+		.root[data-disabled] .track {
+			background-color: ButtonFace !important;
+			box-shadow: inset 0 0 0 1px GrayText !important;
+		}
+
+		.root[data-disabled] .thumb::before {
+			background-color: GrayText !important;
+		}
+
+		.root:focus-visible .track {
+			outline-color: Highlight !important;
+		}
+	}
 }

@@ -99,7 +99,9 @@
 	}
 
 	.button:focus-visible {
-		outline: none;
+		/* Forced colours drop the shadow ring and paint this instead. */
+		outline: 2px solid transparent;
+		outline-offset: 2px;
 		box-shadow: var(--button-shadow-primary-focus);
 	}
 
