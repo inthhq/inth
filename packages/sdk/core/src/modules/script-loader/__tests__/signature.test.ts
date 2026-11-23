@@ -24,12 +24,15 @@ const URL_ = 'https://cdn.vendor.example/vendor.js';
 const INTEGRITY =
 	'sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 const signed = (overrides: Partial<Parameters<typeof signRelease>[0]> = {}) =>
 	signRelease({ integrity: INTEGRITY, url: URL_, ...overrides });
 
 describe('verifyReleaseSignature', () => {
-	test('accepts a signature the registry made, over the bytes it signs', async () => {
+	test('accepts a signature the registry made, over the bytes it signs, until it expires', async () => {
 		const statement = releaseStatement({
+			expiresAt: REGISTRY_FIXTURE.signature.expiresAt,
 			integrity: REGISTRY_FIXTURE.integrity,
 			sha256: REGISTRY_FIXTURE.signature.sha256,
 			signedAt: REGISTRY_FIXTURE.signature.signedAt,
@@ -37,21 +40,29 @@ describe('verifyReleaseSignature', () => {
 		});
 		expect(new TextDecoder().decode(statement ?? undefined)).toBe(
 			[
-				'inth-script-registry-v1',
+				'inth-script-registry-v2',
 				'released',
 				REGISTRY_FIXTURE.url,
 				REGISTRY_FIXTURE.integrity,
 				'a'.repeat(64),
 				'2026-11-18T10:00:00.000Z',
+				'2026-12-02T10:00:00.000Z',
 			].join('\n')
 		);
-		expect(
-			await verifyReleaseSignature({
-				integrity: REGISTRY_FIXTURE.integrity,
-				signature: REGISTRY_FIXTURE.signature,
-				url: REGISTRY_FIXTURE.url,
-			})
-		).toBe(true);
+		const input = {
+			integrity: REGISTRY_FIXTURE.integrity,
+			signature: REGISTRY_FIXTURE.signature,
+			url: REGISTRY_FIXTURE.url,
+		};
+		vi.useFakeTimers({ toFake: ['Date'] });
+		try {
+			vi.setSystemTime(new Date('2026-12-02T09:59:59.999Z'));
+			expect(await verifyReleaseSignature(input)).toBe(true);
+			vi.setSystemTime(new Date('2026-12-02T10:00:00.000Z'));
+			expect(await verifyReleaseSignature(input)).toBe(false);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	test('accepts a release signature from a pinned key', async () => {
@@ -107,7 +118,11 @@ describe('verifyReleaseSignature', () => {
 	});
 
 	test('reads signedAt in any ISO form that names the same instant', async () => {
-		const signature = { ...signed(), signedAt: '2026-11-19T09:30:00Z' };
+		const original = signed();
+		const signature = {
+			...original,
+			signedAt: original.signedAt.replace('.000Z', 'Z'),
+		};
 		expect(
 			await verifyReleaseSignature({
 				integrity: INTEGRITY,
@@ -140,9 +155,42 @@ describe('verifyReleaseSignature', () => {
 		['another sha256', { ...signed(), sha256: 'c'.repeat(64) }],
 		[
 			'another signing time',
-			{ ...signed(), signedAt: '2026-11-19T09:30:00.001Z' },
+			{
+				...signed(),
+				signedAt: new Date(Date.parse(signed().signedAt) + 1).toISOString(),
+			},
+		],
+		[
+			'another expiry',
+			{
+				...signed(),
+				expiresAt: new Date(Date.parse(signed().expiresAt) - 1).toISOString(),
+			},
 		],
 		['a time that does not parse', { ...signed(), signedAt: 'yesterday' }],
+		['an expiry that does not parse', { ...signed(), expiresAt: 'soon' }],
+		[
+			'an expired signature',
+			signed({
+				expiresAt: new Date(Date.now() - 1000).toISOString(),
+				signedAt: new Date(Date.now() - DAY_MS).toISOString(),
+			}),
+		],
+		[
+			'a signature valid for longer than 14 days',
+			signed({
+				expiresAt: new Date(Date.now() + 14 * DAY_MS).toISOString(),
+				signedAt: new Date(Date.now() - 1000).toISOString(),
+			}),
+		],
+		[
+			'an expiry before the signing time',
+			signed({
+				expiresAt: new Date(Date.now() + DAY_MS).toISOString(),
+				signedAt: new Date(Date.now() + 2 * DAY_MS).toISOString(),
+			}),
+		],
+		['the previous format', signed({ format: 'inth-script-registry-v1' })],
 		['a signature that is not 64 bytes', { ...signed(), value: 'AAAA' }],
 		['a signature that is not base64', { ...signed(), value: 'not base64 !' }],
 	])('refuses %s', async (_name, signature) => {
@@ -169,6 +217,7 @@ describe('verifyReleaseSignature', () => {
 	test('refuses a line break that would move one field into the next', () => {
 		expect(
 			releaseStatement({
+				expiresAt: '2026-12-02T10:00:00.000Z',
 				integrity: `${INTEGRITY}\n${'a'.repeat(64)}`,
 				sha256: 'a'.repeat(64),
 				signedAt: '2026-11-18T10:00:00.000Z',
@@ -179,7 +228,7 @@ describe('verifyReleaseSignature', () => {
 });
 
 describe('parseRegistrySignature', () => {
-	test('reads four strings and ignores fields it does not know', () => {
+	test('reads five strings and ignores fields it does not know', () => {
 		const signature = signed();
 		expect(parseRegistrySignature({ ...signature, extra: 1 })).toEqual(
 			signature
@@ -189,6 +238,8 @@ describe('parseRegistrySignature', () => {
 	test('reads anything else as malformed', () => {
 		expect(parseRegistrySignature('signature')).toBeNull();
 		expect(parseRegistrySignature({ ...signed(), sha256: 1 })).toBeNull();
+		const { expiresAt: _expiresAt, ...withoutExpiry } = signed();
+		expect(parseRegistrySignature(withoutExpiry)).toBeNull();
 	});
 });
 
@@ -269,6 +320,44 @@ describe('createRegistryVerifier', () => {
 			const { first } = await verdicts({ integrity: INTEGRITY }, required);
 			expect(first).toBe(required ? 'refuse' : 'load');
 		});
+	});
+
+	test('refuses an entry its verdict loaded once its signature expires', async () => {
+		const url = 'https://cdn.vendor.example/expiring.js';
+		const expiresAt = new Date(Date.now() + DAY_MS).toISOString();
+		const entry = {
+			integrity: INTEGRITY,
+			signature: signed({
+				expiresAt,
+				signedAt: new Date(Date.now() - DAY_MS).toISOString(),
+				url,
+			}),
+		};
+		let done: () => void = () => undefined;
+		const settled = new Promise<void>((resolve) => {
+			done = resolve;
+		});
+		const verify = createRegistryVerifier({
+			keys: 'production',
+			onSettled: () => done(),
+			requireSignatures: false,
+		});
+		expect(verify(url, entry)).toBe('wait');
+		await settled;
+		expect(verify(url, entry)).toBe('load');
+		vi.useFakeTimers({ toFake: ['Date'] });
+		try {
+			vi.setSystemTime(new Date(expiresAt));
+			expect(verify(url, entry)).toBe('refuse');
+			expect(
+				createRegistryVerifier({
+					keys: 'production',
+					requireSignatures: false,
+				})(url, entry)
+			).toBe('refuse');
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 
 	test('checks each entry once, across verifiers', async () => {
@@ -360,15 +449,19 @@ describe('a cache that starts over', () => {
 	});
 });
 
+// The registry signs with these key ids; a change here must
+// match the keys the registry signs with
 describe('the pinned keys', () => {
-	test('pin one production and one preview key, each in its own environment', async () => {
+	test('pin an active and a standby key in each environment, and none in both', async () => {
 		const { SIGNING_KEYS } =
 			await vi.importActual<typeof SigningKeys>('../signing-keys');
 		expect([...SIGNING_KEYS.production.keys()]).toEqual([
 			'c8a6463e-b429-4962-a93c-1e81f9b9ea1a',
+			'0c87a4ce-e4b5-44bf-aa5e-4a306153ab14',
 		]);
 		expect([...SIGNING_KEYS.preview.keys()]).toEqual([
 			'3cdc334c-86f8-4164-8f54-c8144b1d7196',
+			'031a64eb-ac16-4383-9cd5-54ff358d4b0b',
 		]);
 	});
 });

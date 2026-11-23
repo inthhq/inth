@@ -28,11 +28,15 @@ export interface ScriptSourceWire {
 /**
  * The Inth script registry's `released` signature over one version.
  *
- * The signed bytes are, joined by `\n`: `inth-script-registry-v1`,
+ * The signed bytes are, joined by `\n`: `inth-script-registry-v2`,
  * `released`, the vendor URL as a parsed URL's `href` (without a fragment
- * or a trailing dot on the host), `integrity`,
- * `sha256` and `signedAt`. Inth builds them itself, so a signature over
- * another statement, URL or hash does not verify.
+ * or a trailing dot on the host), `integrity`, `sha256`, `signedAt` and
+ * `expiresAt`. Inth builds them itself, so a signature over another
+ * statement, URL, hash or time does not verify.
+ *
+ * A signature is used only before `expiresAt`, and only when it is valid
+ * for at most 14 days. The registry signs each version it still serves
+ * again before that, so one it withdraws stops verifying within 14 days.
  */
 export interface ScriptSignatureWire {
 	/** The id of the signing key; Inth trusts only keys it ships with. */
@@ -46,6 +50,8 @@ export interface ScriptSignatureWire {
 	sha256: string;
 	/** When the release was signed, ISO 8601 with milliseconds in UTC. */
 	signedAt: string;
+	/** When the signature stops being valid, ISO 8601 with milliseconds in UTC. */
+	expiresAt: string;
 }
 
 /**

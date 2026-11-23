@@ -27,10 +27,37 @@ export interface RegistrySignature {
 	sha256: string;
 	/** When the release was signed, as ISO 8601. */
 	signedAt: string;
+	/** When the signature stops being valid, as ISO 8601. */
+	expiresAt: string;
 }
 
 /** Changes when the signed fields or their order do. */
-const SIGNING_FORMAT = 'inth-script-registry-v1';
+const SIGNING_FORMAT = 'inth-script-registry-v2';
+
+/**
+ * The longest a release signature may be valid. The registry signs each
+ * version it still serves again well before this runs out, and stops for
+ * one it withdraws, so a withdrawn release stops verifying within this time.
+ */
+const MAX_LIFETIME_MS = 14 * 24 * 60 * 60 * 1000;
+
+/**
+ * Whether a signature's times let it be used at `now`: both parse, it has
+ * not expired, and it was valid for no longer than {@link MAX_LIFETIME_MS}.
+ */
+const isCurrent = (
+	signature: Pick<RegistrySignature, 'signedAt' | 'expiresAt'>,
+	now: number
+): boolean => {
+	const signedAt = Date.parse(signature.signedAt);
+	const expiresAt = Date.parse(signature.expiresAt);
+	return (
+		!(Number.isNaN(signedAt) || Number.isNaN(expiresAt)) &&
+		expiresAt > now &&
+		expiresAt > signedAt &&
+		expiresAt - signedAt <= MAX_LIFETIME_MS
+	);
+};
 
 /** P-256 signatures are `r` and `s`, 32 bytes each. */
 const SIGNATURE_LENGTH = 64;
@@ -48,7 +75,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 /**
  * A signature as an entry carries it, or `null` when it is not an object
- * of four strings. Fields Inth does not know are ignored.
+ * of five strings. Fields Inth does not know are ignored.
  *
  * @internal
  */
@@ -58,16 +85,17 @@ export const parseRegistrySignature = function parseRegistrySignature(
 	if (!isRecord(value)) {
 		return null;
 	}
-	const { keyId, sha256, signedAt, value: signature } = value;
+	const { expiresAt, keyId, sha256, signedAt, value: signature } = value;
 	if (
 		typeof keyId !== 'string' ||
 		typeof sha256 !== 'string' ||
 		typeof signedAt !== 'string' ||
+		typeof expiresAt !== 'string' ||
 		typeof signature !== 'string'
 	) {
 		return null;
 	}
-	return { keyId, sha256, signedAt, value: signature };
+	return { expiresAt, keyId, sha256, signedAt, value: signature };
 };
 
 /**
@@ -82,9 +110,11 @@ export const releaseStatement = function releaseStatement(fields: {
 	integrity: string;
 	sha256: string;
 	signedAt: string;
+	expiresAt: string;
 }): Uint8Array<ArrayBuffer> | null {
-	const time = Date.parse(fields.signedAt);
-	if (Number.isNaN(time)) {
+	const signedAt = Date.parse(fields.signedAt);
+	const expiresAt = Date.parse(fields.expiresAt);
+	if (Number.isNaN(signedAt) || Number.isNaN(expiresAt)) {
 		return null;
 	}
 	const lines = [
@@ -93,7 +123,8 @@ export const releaseStatement = function releaseStatement(fields: {
 		fields.url,
 		fields.integrity,
 		fields.sha256,
-		new Date(time).toISOString(),
+		new Date(signedAt).toISOString(),
+		new Date(expiresAt).toISOString(),
 	];
 	if (lines.some((line) => /[\r\n]/u.test(line))) {
 		return null;
@@ -145,10 +176,11 @@ const vendorHref = (src: string): string | null => {
 
 /**
  * Whether `signature` is a key's in `keys` over the `released` statement
- * for `url` and `integrity`. `url` is the URL the integration would load
- * from the vendor. False for anything malformed, an unknown key, or a
- * page with no WebCrypto, one that is not a secure context, such as plain
- * http on a host other than localhost; never throws.
+ * for `url` and `integrity`, and current: not expired, and valid for no
+ * longer than 14 days. `url` is the URL the integration would load from
+ * the vendor. False for anything malformed, an unknown key, or a page with
+ * no WebCrypto, one that is not a secure context, such as plain http on a
+ * host other than localhost; never throws.
  *
  * @internal
  */
@@ -167,6 +199,7 @@ export const verifyReleaseSignature = async function verifyReleaseSignature(
 		return false;
 	}
 	const statement = releaseStatement({
+		expiresAt: input.signature.expiresAt,
 		integrity: input.integrity,
 		sha256: input.signature.sha256,
 		signedAt: input.signature.signedAt,
@@ -174,6 +207,7 @@ export const verifyReleaseSignature = async function verifyReleaseSignature(
 	});
 	if (
 		!(publicKey && statement) ||
+		!isCurrent(input.signature, Date.now()) ||
 		signature?.length !== SIGNATURE_LENGTH ||
 		typeof crypto === 'undefined' ||
 		!crypto.subtle
@@ -216,6 +250,7 @@ const checkKey = (
 		signature.value,
 		signature.sha256,
 		signature.signedAt,
+		signature.expiresAt,
 	]);
 
 /** Checks one entry and keeps the result for every loader. */
@@ -288,6 +323,11 @@ export const createRegistryVerifier = function createRegistryVerifier(options: {
 		}
 		const href = vendorHref(url);
 		if (href === null) {
+			return 'refuse';
+		}
+		// Read the clock on every call: a verdict kept from before the
+		// signature expired must not load it after
+		if (!isCurrent(signature, Date.now())) {
 			return 'refuse';
 		}
 		const key = checkKey(options.keys, href, entry.integrity, signature);
