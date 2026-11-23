@@ -237,7 +237,9 @@ describe('an Astro build', () => {
 				[island ?? '', ...dialogChunks].flatMap(files.staticClosure)
 			);
 			expect(
-				[...reached].some((name) => files.code(name).includes('consent-dialog-done'))
+				[...reached].some((name) =>
+					files.code(name).includes('consent-dialog-done')
+				)
 			).toBe(true);
 			expect(
 				[...reached].filter((name) =>

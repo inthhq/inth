@@ -521,7 +521,7 @@ describe('the policy and the host', () => {
 		);
 	});
 
-	it('the notice\'s opt-out link takes the consentBannerRightLink slot', async () => {
+	it("the notice's opt-out link takes the consentBannerRightLink slot", async () => {
 		const document = await render(
 			await buildLocals(
 				PC,
