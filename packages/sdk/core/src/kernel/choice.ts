@@ -1062,7 +1062,8 @@ export const createChoiceRecorder = function createChoiceRecorder({
 						before,
 						actionAt,
 						context?.rightsControl === true,
-						recorded
+						recorded,
+						currentTime
 					);
 			if (!categoriesChanged && !vendorsChanged && !acknowledgement) {
 				// Nothing confirmed: no receipt, no choice event, no request, no write.

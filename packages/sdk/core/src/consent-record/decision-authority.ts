@@ -67,3 +67,23 @@ export const decisionAuthority = function decisionAuthority(
 	}
 	return { authority: 'valid', expiresAt };
 };
+
+/**
+ * Whether a stored decision still answers the choice prompt for its
+ * category at `now`, as the evaluator reads it: a refusal holds until a
+ * policy edit, a grant until it expires or a policy edit. An absent
+ * decision answers nothing.
+ *
+ * @internal
+ */
+export const decisionAnswersPrompt = function decisionAnswersPrompt(
+	decision: CategoryDecision | undefined,
+	policy: EvaluationPolicy,
+	now: number
+): boolean {
+	if (!decision) {
+		return false;
+	}
+	const { authority } = decisionAuthority(decision, policy, now);
+	return authority === 'valid' || (authority === 'expired' && !decision.value);
+};

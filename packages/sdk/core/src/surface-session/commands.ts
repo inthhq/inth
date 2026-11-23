@@ -60,7 +60,8 @@ export interface BannerCommitOutcome {
  *
  * When live GPC withholds every category the commit could record, the
  * signal already refused them, which answers the prompt, so the banner
- * closes at once. Only vendor edits in `draft` are still saved then.
+ * closes at once. Only a Save still records the vendor edits in `draft`
+ * then.
  *
  * The renderer then moves focus to "Your Privacy Choices" and announces
  * the outcome on the page; `plan.keptOff` says whether sale and sharing
@@ -82,21 +83,19 @@ export const commitBannerChoice = function commitBannerChoice(
 	const uiSource = options.uiSource ?? 'banner';
 	const { categories } = plan;
 	const { draft } = options;
-	// Vendor edits in the panel are still the visitor's to keep, even when
-	// no category is left to record.
-	const withheld =
-		categories?.length === 0 &&
+	// Vendor edits in the panel are still the visitor's to keep when no
+	// category is left to record, but only Save records the panel: Allow
+	// and Don't allow never save its switches.
+	const keepsVendorEdits =
+		plan.input === 'draft' &&
 		draft?.toSaveInput(categories)?.vendors !== undefined;
-	if (categories?.length === 0 && !withheld) {
+	if (categories?.length === 0 && !keepsVendorEdits) {
 		beginAction(kernel);
 		settleSurface(kernel);
 		getSurfaceSession(kernel).commit();
 		return { plan, result: Promise.resolve({ confirmed: [], ok: true }) };
 	}
 	const save = (): Promise<SaveResult> => {
-		if (withheld && draft) {
-			return draft.save({ categories: [], uiSource });
-		}
 		if (plan.input === 'draft') {
 			return draft
 				? draft.save({ categories, uiSource })

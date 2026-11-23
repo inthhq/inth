@@ -8,6 +8,7 @@ import { describe, expect, test, vi } from 'vitest';
 import {
 	choiceRecords,
 	DAY,
+	explicitChoice as storedChoice,
 	matchedResolution,
 	NOW,
 	optInRule,
@@ -407,6 +408,52 @@ describe('[BNR-05][RIGHT-08] a rights choice in the dialog', () => {
 		expect(kernel.getSnapshot().promptRequirement).toEqual({ kind: 'none' });
 	});
 
+	test('an expired grant leaves its category undecided, so Refuse, then Allow, then Done keeps the banner away', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(NOW);
+		const rule = optInRule({
+			categories: ['functionality', 'marketing', 'measurement'],
+			validity: { choiceDays: 1 },
+		});
+		const resolution = matchedResolution(rule);
+		const fingerprint = resolution.fingerprints.choice;
+		// Functionality was granted an hour ago and still stands; the
+		// measurement grant is two days old, past its one-day lifetime.
+		const choice = storedChoice(
+			{ functionality: true },
+			{ confirmedAt: NOW - 60 * 60 * 1000, fingerprint }
+		);
+		choice.categories.measurement = storedChoice(
+			{ measurement: true },
+			{ confirmedAt: NOW - 2 * DAY, fingerprint }
+		).categories.measurement;
+		const kernel = createConsentKernel({
+			consentCategories: CATEGORIES,
+			initialPolicyResolution: resolution,
+			initialRecords: { choice, now: NOW },
+			now: NOW,
+			transport: { save: () => Promise.resolve({ ok: true }) },
+		});
+		expect(kernel.getSnapshot().promptRequirement.kind).toBe('choice');
+		const now = vi.spyOn(Date, 'now');
+		showConsentSurface(kernel, 'dialog');
+
+		now.mockReturnValue(NOW + 1000);
+		await pressSaleRight(kernel, 'protect').result;
+		expect(kernel.getSnapshot().promptRequirement).toEqual({ kind: 'none' });
+
+		now.mockReturnValue(NOW + 1001);
+		expect(pressSaleRight(kernel, 'allow').outcome).toBe('confirm');
+		await confirmSaleRight(kernel);
+		// Every category has a stored decision, but the measurement grant no
+		// longer counts, so the grant answers the prompt with an
+		// acknowledgement from the same action.
+		expect(kernel.getSnapshot().noticeDismissal?.dismissedAt).toBe(NOW + 1001);
+
+		showConsentSurface(kernel, 'none');
+		expect(kernel.getSnapshot().activeUI).toBe('none');
+		expect(kernel.getSnapshot().promptRequirement).toEqual({ kind: 'none' });
+	});
+
 	test('the answer outlives a reload, through the stored acknowledgement', async () => {
 		const kernel = kernelFor('opt-in');
 		showConsentSurface(kernel, 'dialog');
@@ -570,9 +617,10 @@ describe('[PERM-02] banner commits respect existing state', () => {
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
 	});
 
-	test('[GPC-03] a commit with every category withheld by GPC still saves the vendor edits in the panel', async () => {
+	/** Every banner category withheld by GPC, and a vendor the panel can turn off. */
+	const fullyWithheldKernel = function fullyWithheldKernel(): ConsentKernel {
 		vi.spyOn(Date, 'now').mockReturnValue(NOW);
-		const kernel = createConsentKernel({
+		return createConsentKernel({
 			consentCategories: CATEGORIES,
 			initialPolicyResolution: matchedResolution(
 				optInRule({
@@ -599,6 +647,10 @@ describe('[PERM-02] banner commits respect existing state', () => {
 			now: NOW,
 			transport: { save: () => Promise.resolve({ ok: true }) },
 		});
+	};
+
+	test('[GPC-03] a commit with every category withheld by GPC still saves the vendor edits in the panel', async () => {
+		const kernel = fullyWithheldKernel();
 		openBanner(kernel);
 		const draft = createPreferenceDraft(kernel);
 		draft.setVendor('chat-widget', false);
@@ -610,6 +662,27 @@ describe('[PERM-02] banner commits respect existing state', () => {
 		await expect(result).resolves.toMatchObject({ ok: true });
 		expect(kernel.getSnapshot().vendorChoice?.denied).toEqual(['chat-widget']);
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
+		expect(kernel.getSnapshot().activeUI).toBe('none');
+	});
+
+	test("[GPC-03] Allow with every category withheld by GPC closes the banner without saving the panel's vendor edits", async () => {
+		const kernel = fullyWithheldKernel();
+		openBanner(kernel);
+		const draft = createPreferenceDraft(kernel);
+		draft.setVendor('chat-widget', false);
+		const save = vi.spyOn(draft, 'save');
+		const kernelSave = vi.spyOn(kernel.commands, 'save');
+
+		const { plan, result } = commitBannerChoice(kernel, 'allow', { draft });
+		expect(plan).toMatchObject({
+			categories: [],
+			input: 'all',
+			keptOff: 'gpc',
+		});
+		await expect(result).resolves.toEqual({ confirmed: [], ok: true });
+		expect(save).not.toHaveBeenCalled();
+		expect(kernelSave).not.toHaveBeenCalled();
+		expect(kernel.getSnapshot().vendorChoice).toBeNull();
 		expect(kernel.getSnapshot().activeUI).toBe('none');
 	});
 

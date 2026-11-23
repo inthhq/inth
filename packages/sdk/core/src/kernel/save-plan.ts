@@ -11,8 +11,10 @@
  * @internal
  */
 
+import { decisionAnswersPrompt } from '../consent-record/decision-authority';
 import type {
 	ConsentSubject,
+	EvaluationPolicy,
 	OptionalConsentCategory,
 } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
@@ -75,10 +77,12 @@ export const resolveSaveSelection = function resolveSaveSelection(
 
 /**
  * Whether a save decides a category in the choice scope and leaves another
- * one in it without a decision.
+ * one in it without a decision that still answers the prompt. A grant past
+ * its lifetime is stored but answers nothing, as the evaluator reads it.
  */
 const leavesScopeUndecided = function leavesScopeUndecided(
-	scope: readonly OptionalConsentCategory[],
+	policy: EvaluationPolicy,
+	now: number,
 	recorded:
 		| {
 				choice: ExplicitChoice;
@@ -86,10 +90,18 @@ const leavesScopeUndecided = function leavesScopeUndecided(
 		  }
 		| undefined
 ): boolean {
+	const scope = policy.choiceScope;
 	return (
 		recorded !== undefined &&
 		recorded.confirmed.some((category) => scope.includes(category)) &&
-		scope.some((category) => recorded.choice.categories[category] === undefined)
+		scope.some(
+			(category) =>
+				!decisionAnswersPrompt(
+					recorded.choice.categories[category],
+					policy,
+					now
+				)
+		)
 	);
 };
 
@@ -111,6 +123,8 @@ const leavesScopeUndecided = function leavesScopeUndecided(
  * and is then changed to a grant would otherwise bring the banner back.
  *
  * @param recorded - What the save records, when it records categories.
+ * @param now - When the save is evaluated, which decides whether a stored
+ * grant has expired. Defaults to `actionAt`.
  */
 export const choiceAcknowledgement = function choiceAcknowledgement(
 	snapshot: ConsentSnapshot,
@@ -119,7 +133,8 @@ export const choiceAcknowledgement = function choiceAcknowledgement(
 	recorded?: {
 		choice: ExplicitChoice;
 		confirmed: readonly OptionalConsentCategory[];
-	}
+	},
+	now = actionAt
 ): NoticeDismissal | null {
 	const policy = snapshot.evaluationPolicy;
 	if (policy.prompt !== 'choice') {
@@ -130,7 +145,7 @@ export const choiceAcknowledgement = function choiceAcknowledgement(
 		!(
 			rightsControl &&
 			(snapshot.promptRequirement.kind === 'choice' ||
-				leavesScopeUndecided(policy.choiceScope, recorded))
+				leavesScopeUndecided(policy, now, recorded))
 		)
 	) {
 		return null;
