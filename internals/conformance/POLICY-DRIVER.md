@@ -43,7 +43,11 @@ suite checks the restored choice and subject against the preceding observation.
 
 Accept, reject, notice dismissal, preferences entry and save-current use rendered
 public controls. Open the preferences UI when accept/reject is unavailable on a
-notice or absent first layer. The explicit partial `save` operation uses the
+notice or absent first layer. Save-current presses the dialog's Save when it is
+enabled, and otherwise its Done or Close, which record nothing (LAW-04); the step
+fails when none of them is enabled. Only when no prompt is owed may the driver
+first save what the switches show through the public save command, because
+closing that dialog answers nothing. The explicit partial `save` operation uses the
 public save command with exactly its own category keys, including the empty-patch
 case. Policy changes and failure cases use real transport fakes and public init;
 clear uses public persistence clear. No snapshot setters are allowed.
