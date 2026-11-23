@@ -59,16 +59,18 @@ export interface ConsentComponentSlots<T = Record<string, unknown>> {
 		header?: T;
 		title?: T;
 		footer?: T;
+		/** @deprecated The banner renders no actions wrapper, so this styles nothing. Use `footer` and `actionGroup`. */
 		actions?: T;
 		actionGroup?: T;
+		/** @deprecated The banner renders no rights group, so this styles nothing. Use `rightsRow`, or `rightLink` for a notice's opt-out link. */
 		rights?: T;
 		rightLink?: T;
 		overlay?: T;
-		/** Privacy Choices: the options Customize opens in place, and a side Drawer's scroll area. */
+		/** The options Customize opens in place, and a side Drawer's scroll area. */
 		expand?: T;
-		/** Privacy Choices: one statutory rights row and its segmented control. */
+		/** One statutory rights row and its segmented control. */
 		rightsRow?: T;
-		/** Privacy Choices: "Save choices" in an expanded panel or a side Drawer. */
+		/** "Save choices" in an expanded panel or a side Drawer. */
 		saveButton?: T;
 	};
 	dialog?: {
@@ -79,23 +81,23 @@ export interface ConsentComponentSlots<T = Record<string, unknown>> {
 		title?: T;
 		content?: T;
 		overlay?: T;
-		/** Privacy Choices: the dialog's footer: Done, or Reject all, Accept all and Save choices. */
+		/** The dialog's footer: Done, or Reject all, Accept all and Save choices. */
 		footer?: T;
-		/** Privacy Choices: one statutory rights row in the dialog. */
+		/** One statutory rights row in the dialog. */
 		rightsRow?: T;
-		/** Privacy Choices: the receipt line under the rights rows. */
+		/** The receipt line under the rights rows. */
 		receipt?: T;
-		/** Privacy Choices: the Preferences row, an accordion on desktop and a sheet on phone. */
+		/** The Preferences row, an accordion on desktop and a sheet on phone. */
 		preferencesRow?: T;
-		/** Privacy Choices: the bordered group of cookie categories. */
+		/** The bordered group of cookie categories. */
 		categoryGroup?: T;
-		/** Privacy Choices: a category's vendor table. */
+		/** A category's vendor table. */
 		vendorTable?: T;
-		/** Privacy Choices: a nested phone sheet over the dialog. */
+		/** A nested phone sheet over the dialog. */
 		sheet?: T;
-		/** Privacy Choices: Done, in the dialog and its sheets. */
+		/** Done, in the dialog and its sheets. */
 		doneButton?: T;
-		/** Privacy Choices: Save choices in the EU dialog. */
+		/** Save choices in the EU dialog. */
 		saveButton?: T;
 	};
 	manager?: {
@@ -177,10 +179,12 @@ export interface ConsentComponentSlots<T = Record<string, unknown>> {
 	description?: {
 		banner?: T;
 		dialog?: T;
+		/** @deprecated No stock surface renders it. Use `dialog` for the dialog's intro. */
 		manager?: T;
 	};
 	tag?: {
 		banner?: T;
+		/** @deprecated The consent dialog has no branding tag, so this styles nothing. */
 		dialog?: T;
 		manager?: T;
 		'iab-banner'?: T;
