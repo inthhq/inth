@@ -26,9 +26,9 @@ import { classes } from '../generated/styles';
 import { createBrandMark } from './branding';
 import { createTriggerToolbar } from './create-trigger-toolbar';
 import type { TriggerToolbar } from './create-trigger-toolbar';
-import { cx, h } from './dom';
+import { cx, h } from './h';
 import { isOptOutConfirmationOpen } from './opt-out-confirmation-state';
-import type { Surface, SurfaceContext } from './surface';
+import type { Surface, SurfaceContext } from './surface.model';
 
 const POSITION_CLASS: Record<CornerPosition, keyof typeof classes.trigger> = {
 	'bottom-left': 'bottomLeft',

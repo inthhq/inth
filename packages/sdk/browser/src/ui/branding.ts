@@ -7,7 +7,7 @@ import {
 import type { BrandingSurface, BrandMark } from '@inth/sdk-ui/utils/branding';
 
 import { classes } from '../generated/styles';
-import { h, svg } from './dom';
+import { h, svg } from './h';
 
 /** What {@link renderBranding} needs. */
 export interface BrandingParams {

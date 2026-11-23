@@ -11,11 +11,13 @@ import { resolveRightsReceipt, resolveRightsReceiptCopy } from '@inth/sdk-core';
 
 import { classes as styles } from '../../generated/ui/dialog';
 import type { BrowserSlotKey } from '../create-slot-applier';
-import { cx, el, icon } from './dom';
-import type { PartRef } from './dom';
+import { checkIcon } from './check-icon';
+import { chevron } from './chevron';
+import { cx, el, icon } from './el';
+import type { PartRef } from './el';
 import { copySurfaceReference, getOptOutReceiptData } from './engine';
-import { checkIcon, chevron, rightsBundleOf } from './shared';
-import type { PartEnv } from './shared';
+import { rightsBundleOf } from './part-env.model';
+import type { PartEnv } from './part-env.model';
 
 /** How long the copy button shows its check. */
 const COPIED_MS = 1500;

@@ -18,14 +18,14 @@ import { createSlotApplier } from './create-slot-applier';
 import { createTrigger } from './create-trigger';
 import { createStyle, createUIRoot } from './create-ui-root';
 import { createDialog } from './dialog';
-import { h } from './dom';
+import { h } from './h';
 import {
 	subscribeOptInConfirmation,
 	subscribeOptOutConfirmation,
 	subscribeOptOutReceiptData,
 } from './opt-out-confirmation-state';
 import { createBannerSurface } from './prompt/prompt';
-import type { Surface, SurfaceContext } from './surface';
+import type { Surface, SurfaceContext } from './surface.model';
 
 const resolveContainer = function resolveContainer(
 	container: ConsentUIOptions['container']

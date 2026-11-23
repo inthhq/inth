@@ -4,13 +4,11 @@ import { isLegitimateInterestAllowed } from '@inth/sdk-core/iab-support';
 import { permittedLegitimateInterestPurposes } from '@inth/sdk-schema/types';
 
 import type { RunAction } from './append-action-feedback';
-import {
-	createButton,
-	createCodeBlock,
-	createElement,
-	createSection,
-	createTextField,
-} from './create-element';
+import { createButton } from './create-button';
+import { createCodeBlock } from './create-code-block';
+import { createElement } from './create-element';
+import { createSection } from './create-section';
+import { createTextField } from './create-text-field';
 
 export interface IABPanelState {
 	search: string;

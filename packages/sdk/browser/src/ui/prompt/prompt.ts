@@ -15,7 +15,7 @@ import type { ConsentSnapshot } from '@inth/sdk-core';
 import type { ConsentBannerOptions } from '../../consent-client.model';
 import { importPresentation } from '../parts/load';
 import { resolveActions } from '../render-action-footer';
-import type { Surface, SurfaceContext } from '../surface';
+import type { Surface, SurfaceContext } from '../surface.model';
 import type {
 	PromptActionGroups,
 	PromptContainer,

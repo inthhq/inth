@@ -21,7 +21,6 @@
  * @internal
  */
 
-import { OPT_OUT_CONFIRMATION_STORAGE_KEY } from '@inth/sdk-core';
 import type { ConsentSnapshot } from '@inth/sdk-core';
 import {
 	configFromPrefetchedInit,
@@ -57,6 +56,7 @@ import {
 } from '../script-tag-options.model';
 import { version } from '../version';
 import { hostedMarker, readHostedMarker } from './hosted-marker';
+import { hasPendingOptOutConfirmation } from './init-script-session.store';
 import { partSrc } from './part-src';
 import type { InitFile } from './part-src';
 import { readPolicyCache, writePolicyCache } from './policy-cache.store';
@@ -494,15 +494,8 @@ export const runInitScript = function runInitScript(
 			setSnapshot(resolved);
 			startScripts(resolved);
 			if (resolved.activeUI !== 'banner') {
-				try {
-					if (
-						window.sessionStorage.getItem(OPT_OUT_CONFIRMATION_STORAGE_KEY) !==
-						null
-					) {
-						loadEngine();
-					}
-				} catch {
-					// Blocked sessionStorage degrades to no confirmation after reload.
+				if (hasPendingOptOutConfirmation()) {
+					loadEngine();
 				}
 				return;
 			}

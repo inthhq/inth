@@ -12,7 +12,7 @@ import * as surfaceSheet from '@inth/sdk-ui/styles/sheets/surface';
 
 import type { ConsentBannerOptions } from '../../consent-client.model';
 import { classes } from '../../generated/ui/drawer';
-import type { SurfaceContext } from '../surface';
+import type { SurfaceContext } from '../surface.model';
 import { createPromptSurface } from './create-prompt-surface';
 import type { PresentationEntry, PromptSurface } from './create-prompt-surface';
 

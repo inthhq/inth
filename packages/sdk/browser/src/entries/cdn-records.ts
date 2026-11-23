@@ -3,7 +3,7 @@
  * for a returning visitor, who has a stored consent record. It hands core's
  * record reader to the init script, which evaluates the stored choice
  * before `/v1/consent/init` answers and starts the scripts it allows. A first visit
- * never fetches it. See `../init/run.ts`.
+ * never fetches it. See `../init/run-init-script.ts`.
  */
 
 import { readStoredRecords } from '@inth/sdk-core/modules/persistence';

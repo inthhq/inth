@@ -48,32 +48,24 @@ import type { ConsentBannerOptions } from '../../consent-client.model';
 import { classes as expandStyles } from '../../generated/ui/expand';
 import { classes as surfaceStyles } from '../../generated/ui/surface';
 import type { PartSheet } from '../dialog/options-sheets';
-import {
-	activeElementOf,
-	cx,
-	el,
-	focusFirstIn,
-	owned,
-	patch,
-} from '../parts/dom';
-import type { PartChild, PartRef } from '../parts/dom';
+import { consentButton } from '../parts/consent-button';
+import { cx, el, owned } from '../parts/el';
+import type { PartChild, PartRef } from '../parts/el';
 import {
 	commitBannerChoice,
 	createPreferenceDraft,
 	getOptOutReceiptData,
 	hasConsentUI,
 } from '../parts/engine';
+import { activeElementOf, focusFirstIn } from '../parts/focus-first-in';
 import { importPanel } from '../parts/load';
-import {
-	consentButton,
-	prefersReducedMotionNow,
-	rightsBundleOf,
-	surfaceBasics,
-	watchPhoneLayout,
-} from '../parts/shared';
-import type { PartEnv } from '../parts/shared';
-import { renderLegalLinks } from '../surface';
-import type { SurfaceContext } from '../surface';
+import { patch } from '../parts/morph';
+import { rightsBundleOf, surfaceBasics } from '../parts/part-env.model';
+import type { PartEnv } from '../parts/part-env.model';
+import { prefersReducedMotionNow } from '../parts/prefers-reduced-motion-now';
+import { watchPhoneLayout } from '../parts/watch-phone-layout';
+import { renderLegalLinks } from '../render-legal-links';
+import type { SurfaceContext } from '../surface.model';
 import type { PromptPanel } from './panel';
 
 /** Exits are 160ms; the controllers add their own slack. */
