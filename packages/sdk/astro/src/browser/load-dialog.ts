@@ -53,7 +53,7 @@ const loadSheets = async function loadSheets(
 			insertPartsSheets(nonce);
 			return;
 		}
-		const { insertDialogSheets } = await import('../dialog/dialog-sheets');
+		const { insertDialogSheets } = await import('../parts/dialog-sheets');
 		insertDialogSheets(nonce);
 	} catch {
 		// An unstyled dialog beats one that never opens.

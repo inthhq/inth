@@ -12,7 +12,7 @@ import { canDeferEngine } from '../banner/deferred-boot.model';
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
 import PrivacyChoicesLink from '../components/privacy-choices-link.astro';
 import ConsentBanner from '../components/prompt.astro';
-import { DIALOG_SHEETS } from '../dialog/dialog-sheets';
+import { DIALOG_SHEETS } from '../parts/dialog-sheets';
 import { resolveOptions } from '../integration';
 import { CONTAINER_SHEET_IDS } from '../parts/insert-sheets';
 import { WIDGET_SHEETS } from '../parts/widget-sheets';
