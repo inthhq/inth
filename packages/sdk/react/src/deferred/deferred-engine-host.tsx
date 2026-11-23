@@ -28,7 +28,7 @@ import type { DeferredEngine } from './create-deferred-kernel';
 import type { DeferredCommitted } from './deferred-committed.model';
 import { loadDeferredScriptLoader } from './deferred-registry.model';
 import type { DeferredModules } from './deferred-registry.model';
-import type { Recorded } from './deferred-session-context';
+import type { Recorded } from './recorded-promise.model';
 
 const modules: DeferredModules = {
 	// The root's one import of the loader, so a commit made before the

@@ -36,7 +36,7 @@ import {
 	DeferredSessionContext,
 	read,
 	recordOnce,
-} from './deferred-session-context';
+} from './recorded-promise.model';
 import { addSurfaceWarmer } from './surface-warmers.model';
 
 type BannerModule = typeof BannerModuleNamespace;

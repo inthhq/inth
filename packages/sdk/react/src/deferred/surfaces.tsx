@@ -24,7 +24,7 @@ import {
 	DeferredSessionContext,
 	read,
 	recordOnce,
-} from './deferred-session-context';
+} from './recorded-promise.model';
 
 // oxlint-disable-next-line typescript/no-explicit-any -- Props pass through unchanged.
 type AnyComponent = ComponentType<any>;

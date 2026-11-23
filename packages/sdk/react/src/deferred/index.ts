@@ -36,8 +36,8 @@ export type {
 } from './create-deferred-kernel';
 export { learnEngineChunks } from './engine-preload.store';
 export { isRunnableNow, scriptsNeedEngine } from './runnable-script.model';
-export { record, read, recordOnce } from './deferred-session-context';
-export type { Recorded } from './deferred-session-context';
+export { record, read, recordOnce } from './recorded-promise.model';
+export type { Recorded } from './recorded-promise.model';
 export type {
 	DeferredConsentShellProps,
 	DeferredShellOptions,

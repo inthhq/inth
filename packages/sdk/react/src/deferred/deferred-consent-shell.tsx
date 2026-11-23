@@ -82,8 +82,8 @@ import {
 	read,
 	record,
 	recordOnce,
-} from './deferred-session-context';
-import type { DeferredSession, Recorded } from './deferred-session-context';
+} from './recorded-promise.model';
+import type { DeferredSession, Recorded } from './recorded-promise.model';
 import {
 	commitInstantly,
 	readAheadOfTap,

@@ -41,7 +41,7 @@ import type { ConsentBoot } from '../boot';
 import { ConsentBootData, ServerBootData } from '../consent-boot-data';
 import type { DeferredCommitConfig } from '../deferred-committed.model';
 import { DeferredConsentShell } from '../deferred-consent-shell';
-import { recordOnce } from '../deferred-session-context';
+import { recordOnce } from '../recorded-promise.model';
 import type * as EngineNamespace from '../engine';
 import { DeferredConsentBanner, DeferredConsentDialog } from '../surfaces';
 
