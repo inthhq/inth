@@ -8,7 +8,7 @@ import { getCurrentInstance } from 'vue';
 import type { App, Plugin } from 'vue';
 
 import { consentConfigKey } from './runtime/composables/config';
-import { mountTokensStyle } from './runtime/generate-tokens-css';
+import { mountTokensStyle } from './runtime/theme-tokens.model';
 import {
 	createVueConsentKernelContext,
 	provideVueConsentContext,
@@ -84,7 +84,7 @@ export { hosted, type HostedMode } from '@inth/sdk/modes';
 export {
 	generateTokensCSS,
 	type TokensCSSOptions,
-} from './runtime/generate-tokens-css';
+} from './runtime/theme-tokens.model';
 
 /**
  * The consent config the {@link inth} plugin takes, without where the

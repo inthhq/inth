@@ -220,7 +220,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 	// generator only when the config changes.
 	const tokensCSS = shallowRef<string>();
 	const renderTokens = async (): Promise<void> => {
-		const { generateTokensCSS } = await import('./generate-tokens-css');
+		const { generateTokensCSS } = await import('./theme-tokens.model');
 		const { colorScheme, theme, tokens } = config.value;
 		tokensCSS.value = generateTokensCSS(tokens, { colorScheme, theme });
 	};
