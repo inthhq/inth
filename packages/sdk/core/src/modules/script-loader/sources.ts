@@ -310,7 +310,9 @@ export const createScriptSourceResolver = function createScriptSourceResolver(
 			} else if (entry) {
 				const copy = applyOnce(script, entry);
 				resolved.scripts.push(copy);
-				if (entry.signature) {
+				// A pin that does not allow the entry's hash keeps the script on
+				// its own URL, so the entry's expiry does not apply to it
+				if (entry.signature && copy !== script) {
 					resolved.expiresAt.set(copy, Date.parse(entry.signature.expiresAt));
 				}
 			} else {

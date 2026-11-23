@@ -21,6 +21,7 @@ import {
 	PREVIEW_KEY,
 	signRelease,
 } from '../../modules/script-loader/__tests__/signing-fixtures';
+import { createScriptSourceResolver } from '../../modules/script-loader/sources';
 import type { ScriptLoaderDebugEvent } from '../../modules/script-loader/types';
 import { manifest as browserManifest } from '../../transports/manifest-browser';
 import { hosted } from '../../transports/mode';
@@ -1794,5 +1795,49 @@ describe('experimentalScriptRegistry', () => {
 			expect(srcs()).toEqual([]);
 			production.dispose();
 		});
+	});
+});
+
+describe('the expiry a signed registry entry carries', () => {
+	const INTEGRITY_A =
+		'sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC';
+	const INTEGRITY_B = `sha384-${'B'.repeat(64)}`;
+	const resolve = (pin: string) => {
+		const script = vendorScript({
+			attributes: { integrity: pin },
+			integration: 'vendor',
+		});
+		const signature = signRelease({
+			integrity: INTEGRITY_A,
+			url: script.src ?? '',
+		});
+		const resolved = createScriptSourceResolver(
+			undefined,
+			() => ({
+				sources: {
+					vendor: {
+						integrity: INTEGRITY_A,
+						signature,
+						src: 'https://registry.example/scripts/vendor@aaaa.js',
+					},
+				},
+				status: 'listed',
+			}),
+			() => 'load'
+		)([script]);
+		return { expiresAt: Date.parse(signature.expiresAt), resolved, script };
+	};
+
+	test('applies to the registry copy the script loads from', () => {
+		const { resolved, script, expiresAt } = resolve(INTEGRITY_A);
+		const [copy] = resolved.scripts;
+		expect(copy).not.toBe(script);
+		expect(copy && resolved.expiresAt.get(copy)).toBe(expiresAt);
+	});
+
+	test('does not apply to a script whose pin keeps it on its own URL', () => {
+		const { resolved, script } = resolve(INTEGRITY_B);
+		expect(resolved.scripts).toEqual([script]);
+		expect(resolved.expiresAt.size).toBe(0);
 	});
 });

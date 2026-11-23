@@ -69,15 +69,22 @@ const isCurrent = (
 };
 
 /**
- * Whether `signature` is current now: not expired, valid for no longer
- * than 14 days, and not dated more than a day ahead.
+ * Whether `signature` has run out and is otherwise well formed: its times
+ * parse, its lifetime is within the limit and it was not dated ahead, but
+ * `expiresAt` has passed. Only such a signature counts as none where
+ * signatures are not required; any other bad time is refused.
  *
  * @internal
  */
-export const isRegistrySignatureCurrent = function isRegistrySignatureCurrent(
+export const isRegistrySignatureExpired = function isRegistrySignatureExpired(
 	signature: Pick<RegistrySignature, 'signedAt' | 'expiresAt'>
 ): boolean {
-	return isCurrent(signature, Date.now());
+	const expiresAt = Date.parse(signature.expiresAt);
+	if (Number.isNaN(expiresAt) || expiresAt > Date.now()) {
+		return false;
+	}
+	// Judged as at a moment it was current: only the expiry has passed
+	return isCurrent(signature, expiresAt - 1);
 };
 
 /** P-256 signatures are `r` and `s`, 32 bytes each. */
@@ -352,11 +359,15 @@ export const createRegistryVerifier = function createRegistryVerifier(options: {
 			return 'refuse';
 		}
 		// Read the clock on every call: a verdict kept from before the
-		// signature expired must not load it after. An expired signature
-		// counts as none, so a build-time snapshot of the list keeps loading
-		// by default, and only a site that requires signatures refuses it
-		if (!isRegistrySignatureCurrent(signature)) {
+		// signature expired must not load it after. A signature that only
+		// ran out counts as none, so a build-time snapshot of the list keeps
+		// loading by default, and only a site that requires signatures
+		// refuses it. Any other bad time is refused, as a bad signature is
+		if (isRegistrySignatureExpired(signature)) {
 			return options.requireSignatures ? 'refuse' : 'load';
+		}
+		if (!isCurrent(signature, Date.now())) {
+			return 'refuse';
 		}
 		const key = checkKey(options.keys, href, entry.integrity, signature);
 		const result = decided.get(key) ?? settled.get(key);

@@ -398,6 +398,45 @@ describe('createRegistryVerifier', () => {
 		}
 	);
 
+	test.each([
+		[
+			'dated more than a day ahead',
+			() =>
+				signed({
+					expiresAt: new Date(Date.now() + 15 * DAY_MS).toISOString(),
+					signedAt: new Date(Date.now() + 2 * DAY_MS).toISOString(),
+				}),
+		],
+		[
+			'valid for longer than 14 days',
+			() =>
+				signed({
+					expiresAt: new Date(Date.now() + 14 * DAY_MS).toISOString(),
+					signedAt: new Date(Date.now() - DAY_MS).toISOString(),
+				}),
+		],
+		['with a time that does not parse', () => ({ ...signed(), signedAt: 'x' })],
+		[
+			'that ran out after a lifetime longer than 14 days',
+			() =>
+				signed({
+					expiresAt: new Date(Date.now() - DAY_MS).toISOString(),
+					signedAt: new Date(Date.now() - 20 * DAY_MS).toISOString(),
+				}),
+		],
+	])(
+		'refuses a signature %s even when signatures are not required',
+		(_name, signature) => {
+			const verify = createRegistryVerifier({
+				keys: 'production',
+				requireSignatures: false,
+			});
+			expect(
+				verify(URL_, { integrity: INTEGRITY, signature: signature() })
+			).toBe('refuse');
+		}
+	);
+
 	test('checks each entry once, across verifiers', async () => {
 		const verify = vi.spyOn(crypto.subtle, 'verify');
 		const url = 'https://cdn.vendor.example/once.js';

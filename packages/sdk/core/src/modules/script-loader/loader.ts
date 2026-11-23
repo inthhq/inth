@@ -25,7 +25,7 @@ import {
 import { readScriptRegistry } from './registry';
 import {
 	createRegistryVerifier,
-	isRegistrySignatureCurrent,
+	isRegistrySignatureExpired,
 } from './signature';
 import { createScriptSourceResolver } from './sources';
 import type {
@@ -141,7 +141,7 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		verifyEntry = (script, entry) => {
 			const verdict = verifier(script.src ?? '', entry);
 			const expired =
-				!!entry.signature && !isRegistrySignatureCurrent(entry.signature);
+				!!entry.signature && isRegistrySignatureExpired(entry.signature);
 			if (
 				verdict === 'load' &&
 				(!entry.signature || expired) &&
