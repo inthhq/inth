@@ -5,7 +5,7 @@ packages:
 
 ### Breaking: one consent UI, placed by `container`
 
-The stock banner and dialog now always render the consent UI that `design: 'privacy-choices'` used to select: the banner in a Card, a Banner or a Drawer, with Customize opening the choices inside it, and the "Your Privacy Choices" dialog. The classic banner and preference dialog are gone, and so is the `design` option. React, Next.js and TanStack Start move first; Vue, Svelte, Angular, Astro and the script tag follow in the next release.
+The stock banner and dialog now always render the consent UI that `design: 'privacy-choices'` used to select: the banner in a Card, a Banner or a Drawer, with Customize opening the choices inside it, and the "Your Privacy Choices" dialog. The classic banner and preference dialog are gone, and so is the `design` option. React, Next.js, TanStack Start, Svelte and SvelteKit move first; Vue, Angular, Astro and the script tag follow in the next release.
 
 **What to change**
 
@@ -49,3 +49,12 @@ The classic banner and dialog CSS variables still apply: each part reads its own
 **Stylesheets and bundles**
 
 The per-surface sheets are renamed: `banner` is now `parts`, `bar` is `banner`, `dialog` is `widget`, and `privacy-choices-dialog` is `dialog`. The CSS modules `consent-bar` and `privacy-choices` are now `consent-banner` and `consent-dialog`. `styles.css` is the single full stylesheet.
+
+**Svelte and SvelteKit**
+
+- `ConsentBanner` takes `container`, `edgeStyle` and `blockUntilChoice`, and drops `variant`, `position`, `blocking`, `scrollLock`, `trapFocus` and `primaryButton`. Its `models` default to `['opt-in', 'opt-out']`.
+- `ConsentDialog` drops `hideBranding` and `class`. Its `scrollLock` and `trapFocus` apply to the opt-in confirmation it hosts; the dialog itself always blocks.
+- The provider's `scrollLock` and `trapFocus` now apply to the IAB banner and dialog and to the confirmations, not to the consent banner or dialog.
+- `ConsentDialogPanel` from `@inth/svelte/dialog-panel` is the new dialog, without the trigger and confirmations `ConsentDialog` adds.
+- `getHeadlessConsent()`'s `banner` and `dialog` carry the resolved `container` instead of `variant` and `position`.
+- The banner's root no longer carries `data-prompt`, `data-model` or `data-position`; read `data-variant`, `data-placement`, `data-flow` and `data-edge-style`.

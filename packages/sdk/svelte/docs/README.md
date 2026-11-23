@@ -15,7 +15,7 @@ These docs describe the Inth SDK (`@inth/*` packages). Find your app's row in Ch
 - [Choose your setup](./concepts/choose-your-setup.md): Pick the Inth SDK setup for your web framework, rendering mode or native mobile platform.
 - [Performance](./performance.md): How Inth removes /v1/consent/init latency with build-time manifests, streams SSR consent without blocking paint, and defers UI and engine JavaScript.
 - [How consent works](./concepts/how-consent-works.md): Learn how Inth evaluates policies, stored choices, and browser privacy signals on every page load to gate scripts and save consent.
-- [Customize the interface](./customization/overview.md): Style Inth consent banners and dialogs with props, theme tokens, part classes, compound components, or headless hooks.
+- [Customize the interface](./customization/overview.md): Style Inth consent banners and dialogs with props, theme tokens, part classes, or headless hooks.
 - [Verify consent](./guides/verify-consent.md): Verify in a production build that tracking scripts wait for consent, rejections persist across reloads, preferences reopen, and GPC applies.
 - [Migrate from c15t](./migrate-from-c15t.md): Migrate a c15t or @c15t/* app to @inth/* packages, InthProvider, hooks, callbacks, and themes while keeping visitors' stored choices.
 
@@ -30,7 +30,7 @@ These docs describe the Inth SDK (`@inth/*` packages). Find your app's row in Ch
 - [Callbacks](./frameworks/svelte/callbacks.md): Run your own code in a Svelte app when a visitor records a choice or permissions change, with onChoiceRecorded, onPermissionsChanged and script callbacks.
 - [Clear on revocation](./frameworks/svelte/clear-on-revocation.md): Delete first-party cookies and Web Storage keys in a Svelte app when a consent category is revoked.
 - [Components](./frameworks/svelte/components.md): Props and behavior of every @inth/svelte component in a Svelte app, from InthProvider and ConsentBanner to ConsentGate and DevTools.
-- [ConsentBanner](./frameworks/svelte/components/consent-banner.md): Render the Inth cookie banner in a Svelte app with ConsentBanner, configuring variant, position, layout, copy, and styles.
+- [ConsentBanner](./frameworks/svelte/components/consent-banner.md): Render the Inth cookie banner in a Svelte app with ConsentBanner, choosing a Card, Banner or Drawer container, blocking, layout, copy, and styles.
 - [ConsentButton](./frameworks/svelte/components/consent-button.md): Accept, reject, save or open preferences from your own Svelte markup with ConsentButton, and what each action records.
 - [ConsentDialog](./frameworks/svelte/components/consent-dialog.md): Add the Inth preference dialog to a Svelte app with ConsentDialog, covering lazy loading, props, keyboard behavior, and slots.
 - [ConsentDialogLink](./frameworks/svelte/components/consent-dialog-link.md): Let visitors reopen Inth preferences from a Svelte footer with ConsentDialogLink, an unstyled button shown when required.
@@ -61,7 +61,7 @@ These docs describe the Inth SDK (`@inth/*` packages). Find your app's row in Ch
 - [Callbacks](./frameworks/sveltekit/callbacks.md): Run your own code in a SvelteKit app when a visitor records a choice or permissions change, with onChoiceRecorded, onPermissionsChanged and script callbacks.
 - [Clear on revocation](./frameworks/sveltekit/clear-on-revocation.md): Delete first-party cookies and Web Storage keys in a SvelteKit app when a consent category is revoked.
 - [Components](./frameworks/sveltekit/components.md): Props and behavior of every @inth/svelte component in a SvelteKit app, from InthProvider and ConsentBanner to ConsentGate and DevTools.
-- [ConsentBanner](./frameworks/sveltekit/components/consent-banner.md): Render the Inth cookie banner in SvelteKit server HTML with ConsentBanner, configuring variant, position, layout, and styles.
+- [ConsentBanner](./frameworks/sveltekit/components/consent-banner.md): Render the Inth cookie banner in SvelteKit server HTML with ConsentBanner, choosing a Card, Banner or Drawer container, blocking, layout, and styles.
 - [ConsentButton](./frameworks/sveltekit/components/consent-button.md): Accept, reject, save or open preferences from SvelteKit pages with ConsentButton, and what each action records.
 - [ConsentDialog](./frameworks/sveltekit/components/consent-dialog.md): Add the Inth preference dialog to a SvelteKit root layout with ConsentDialog, covering lazy loading, props, and theme slots.
 - [ConsentDialogLink](./frameworks/sveltekit/components/consent-dialog-link.md): Let visitors reopen Inth preferences from a SvelteKit footer with ConsentDialogLink, rendered in server HTML when required.
@@ -113,7 +113,7 @@ These docs describe the Inth SDK (`@inth/*` packages). Find your app's row in Ch
 - [Class names and CSS-in-JS](./customization/class-names.md): Style Inth consent components with CSS Modules, vanilla-extract, StyleX, Emotion, or plain classes in every supported framework.
 - [Dark mode](./customization/dark-mode.md): Configure Inth dark mode with colorScheme, theme.dark tokens, .dark class tracking, and flash-free SSR rendering.
 - [Motion and animation](./customization/motion.md): Customize Inth animation timing with motion tokens, turn animations off with disableAnimation, and animate on dialog data-state.
-- [Customize the interface](./customization/overview.md): Style Inth consent banners and dialogs with props, theme tokens, part classes, compound components, or headless hooks.
+- [Customize the interface](./customization/overview.md): Style Inth consent banners and dialogs with props, theme tokens, part classes, or headless hooks.
 - [Banner designs](./customization/recipes.md): Copy five tested Inth consent banner designs, from a single prop to headless markup, for React, Vue, Svelte, Astro, and HTML.
 - [Component parts](./customization/slots.md): Reference every Inth banner, dialog, widget, trigger, and ConsentGate part key across frameworks, plus data state attributes and noStyle.
 - [Stylesheets and CSS layers](./customization/stylesheets.md): Load Inth component styles automatically or manually, control CSS cascade layer order, defer dialog CSS, and disable default styles.
