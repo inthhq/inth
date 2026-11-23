@@ -1,11 +1,11 @@
 import type { AllConsentNames } from '../consent/consent-types';
-import type { SSRInitialData } from '../options/ssr';
+import type { SSRInitialData } from '../options/ssr-options.model';
 import type {
 	KernelConfig,
 	KernelTranslations,
 	KernelTransport,
-} from '../types';
-import type { RememberedDecisionInputs } from './decision-inputs';
+} from '../consent-kernel.model';
+import type { RememberedDecisionInputs } from './decision-inputs.model';
 import { createHostedModeFactory } from './hosted-factory';
 import { createV1HostedTransport } from './v1/hosted';
 

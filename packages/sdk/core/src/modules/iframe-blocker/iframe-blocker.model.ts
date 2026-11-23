@@ -1,7 +1,7 @@
 /**
  * Shared types for the iframe-blocker module.
  */
-import type { ConsentKernel } from '../../types';
+import type { ConsentKernel } from '../../consent-kernel.model';
 
 export interface IframeBlockerOptions {
 	kernel: ConsentKernel;

@@ -11,8 +11,8 @@
  */
 import { networkBlockerTools } from '../modules/network-blocker/tools';
 import { scriptLoaderTools } from '../modules/script-loader/tools';
-import { lazyRuntimeModule } from './lazy-module';
-import type { ConsentRuntimeModules } from './types';
+import { lazyRuntimeModule } from './lazy-runtime-module';
+import type { ConsentRuntimeModules } from './consent-runtime.model';
 
 /** One specifier for both factories, so a bundler emits one chunk. */
 const loadChunk = () => import('../modules/loader-and-blocker');

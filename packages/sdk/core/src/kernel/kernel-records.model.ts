@@ -19,24 +19,24 @@
  */
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
-import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state';
+import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
 import type {
 	ConsentSnapshot,
 	HydrationRecords,
 	HydrationResult,
 	KernelTransport,
 	KernelUser,
-} from '../types';
-import { applySyncedOptOut, sameOptOutAnswer } from './opt-out';
-import type { SnapshotPatch } from './patch';
+} from '../consent-kernel.model';
+import { applySyncedOptOut, sameOptOutAnswer } from './kernel-opt-out.model';
+import type { SnapshotPatch } from './kernel-patch.model';
 import {
 	mergeNewestChoice,
 	mergeNewestOptOut,
 	mergeNewestVendorChoice,
 	validateHydrationRecords,
-} from './record-validation';
-import type { ValidatedRecords } from './record-validation';
-import type { KernelRuntime } from './runtime';
+} from './record-validation.model';
+import type { ValidatedRecords } from './record-validation.model';
+import type { KernelRuntime } from './create-runtime';
 
 /**
  * The patch server records make: the newest receipt per category, the

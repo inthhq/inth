@@ -7,7 +7,7 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { onMounted } from 'vue';
 
-import type { ConsentContainer } from '../../../packages/sdk/core/src/libs/consent-layout';
+import type { ConsentContainer } from '../../../packages/sdk/core/src/libs/consent-layout.model';
 import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
 import ConsentBanner from '../../../packages/sdk/vue/src/runtime/components/prompt/prompt.vue';
 import { STORYBOOK_OPT_OUT_REFERENCE } from '../../storybook-consent-policy';

@@ -11,7 +11,7 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import type { InitResponse, KernelConfig } from '../../types';
+import type { InitResponse, KernelConfig } from '../../consent-kernel.model';
 import { createConsentKernel } from '../index';
 
 const LEGACY_OPT_OUT = {

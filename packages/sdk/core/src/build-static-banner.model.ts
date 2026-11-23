@@ -16,7 +16,7 @@ import {
 	buildStaticBannerScript,
 	STATIC_BANNER_ATTR,
 	staticBannerCopyHash,
-} from './libs/static-banner';
+} from './libs/static-banner.model';
 import { storedChoiceNames } from './libs/storage-keys';
 import { resolveManifestInit } from './transports/manifest-cache';
 

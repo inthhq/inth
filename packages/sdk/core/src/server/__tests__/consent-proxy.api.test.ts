@@ -6,8 +6,8 @@ import {
 	resolveConsentProxyOptions,
 	rewriteProxySetCookie,
 	stripIdentityForCleartext,
-} from '../consent-proxy';
-import type { ConsentProxyOptions } from '../consent-proxy';
+} from '../consent-proxy.api';
+import type { ConsentProxyOptions } from '../consent-proxy.api';
 
 const BACKEND = 'https://consent.example.com';
 const FORWARDING = { host: 'shop.example', proto: 'https' };

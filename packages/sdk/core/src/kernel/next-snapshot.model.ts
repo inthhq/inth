@@ -30,7 +30,7 @@ import type { AllConsentNames } from '../consent/consent-types';
 import { deriveActiveUI } from '../derive-surface';
 import type { ExperimentAssignment } from '../libs/experiment';
 import type { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
-import { deriveModel } from '../policy-choice';
+import { deriveModel } from '../policy-choice.model';
 import type {
 	ConsentSnapshot,
 	ConsentState,
@@ -44,8 +44,8 @@ import type {
 	KernelUser,
 	KernelVendorsState,
 	VendorChoice,
-} from '../types';
-import { evaluateExternalPermissions } from './external-permissions';
+} from '../consent-kernel.model';
+import { evaluateExternalPermissions } from './external-permissions.model';
 
 /**
  * Partial update applied to a snapshot. Only input fields are patchable;

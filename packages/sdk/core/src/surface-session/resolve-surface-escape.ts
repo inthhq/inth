@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import type { ActiveUI } from '../types';
+import type { ActiveUI } from '../consent-kernel.model';
 
 /** What a renderer knows when Escape is pressed. */
 export interface SurfaceEscapeInput {

@@ -4,36 +4,36 @@
  *
  * @internal
  */
-import { carryOptOutCategories } from '../../consent-record/opt-out-rules';
-import { clearKernelRecords } from '../../kernel/clear-records';
-import type { InternalKernel } from '../../kernel/internals';
+import { carryOptOutCategories } from '../../consent-record/opt-out-rules.model';
+import { clearKernelRecords } from '../../kernel/clear-records.model';
+import type { InternalKernel } from '../../kernel/kernel-internals.model';
 import {
 	readLegacySubjectId,
 	removeLegacySubjectId,
-} from '../../libs/legacy-subject-id';
+} from '../../libs/legacy-subject-id.store';
 import {
 	storageKeyFamilies,
 	resolveStorageKeys,
 } from '../../libs/storage-keys';
-import { generateUuidV7 } from '../../libs/subject-uuid';
+import { generateUuidV7 } from '../../libs/subject-uuid.model';
 import type {
 	ConsentSnapshot,
 	ConsentSubject,
 	HydrationRecords,
-} from '../../types';
-import { clearStoredRecords } from './clear';
+} from '../../consent-kernel.model';
+import { clearStoredRecords } from './persistence-clear.store';
 import {
 	choiceSinceEpoch,
 	noticeSinceEpoch,
 	optOutSinceEpoch,
 	vendorChoiceSinceEpoch,
-} from './epoch';
+} from './persistence-epoch.model';
 import {
 	hydrateFromStorage,
 	readStoredRecordsForReconcile,
 	readStoredRecordsFromCookieHeader,
-} from './hydrate';
-import type { StoredRecords } from './hydrate';
+} from './persistence-hydrate.store';
+import type { StoredRecords } from './persistence-hydrate.store';
 import {
 	isNewerDenial,
 	readLegacyClearEpoch,
@@ -44,16 +44,16 @@ import {
 	readStoredOptOutRecordFromCookieHeader,
 	readStoredVendorChoice,
 	readStoredVendorChoiceFromCookieHeader,
-} from './record-storage';
+} from './record-storage.store';
 import { persistenceTools } from './tools';
-import type { PersistenceHandle, PersistenceOptions } from './types';
+import type { PersistenceHandle, PersistenceOptions } from './persistence.model';
 import { pageWriterLoader, preloadWriter } from './writer-loader';
 import type { WriterLoader, WriterModule } from './writer-loader';
 import type {
 	PersistenceContext,
 	PersistenceWriter,
 	WriteKind,
-} from './writer/types';
+} from './writer/persistence-writer.model';
 
 // A write waits for the write code: after a failed load, try again after
 // 1, 4 and 16 seconds. Later events, focus and visibility changes try too.

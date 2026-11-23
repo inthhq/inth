@@ -6,7 +6,7 @@
  */
 import { describe, expect, test } from 'vitest';
 
-import type { Script } from '../../libs/script-loader/types';
+import type { Script } from '../../libs/script-loader/script.model';
 import {
 	isPlainScript,
 	LOADER_FIELDS,

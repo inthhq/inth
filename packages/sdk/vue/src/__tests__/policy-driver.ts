@@ -53,9 +53,9 @@ import type {
 } from '../../../../../internals/conformance/src/contract/policy-driver';
 import type { ScenarioPolicy } from '../../../../../internals/conformance/src/contract/policy-scenarios';
 import { preloadPersistenceWriter } from '../../../core/src/modules/persistence/mount';
-import { validateStoredConsentEnvelope } from '../../../core/src/modules/persistence/record-codec';
-import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
-import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs';
+import { validateStoredConsentEnvelope } from '../../../core/src/modules/persistence/record-codec.model';
+import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/record-encode.model';
+import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs.model';
 import { createIAB } from '../../../iab/src/index';
 import type { IABHandle } from '../../../iab/src/index';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';

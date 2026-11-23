@@ -27,7 +27,7 @@ import {
 	SUBJECT,
 } from '../../transports/v1/__tests__/fixtures';
 import { createConsentRuntime } from '../index';
-import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
+import type { ConsentRuntime, ConsentRuntimeOptions } from '../consent-runtime.model';
 
 const CATEGORIES = ['necessary', 'measurement', 'marketing'] as const;
 const policy: PolicyResolution = matchedResolution(optInRule());

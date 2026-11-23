@@ -9,8 +9,8 @@
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
 import type { ManifestModeInputs } from '../modes';
-import { createManifestRequestInit } from './manifest-request';
-import { readApiError } from './v1/error';
+import { createManifestRequestInit } from './manifest-request.model';
+import { readApiError } from './v1/inth-api-error';
 
 /**
  * Fetch the backend's consent manifest.

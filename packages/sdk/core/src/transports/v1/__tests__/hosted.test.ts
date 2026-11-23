@@ -8,7 +8,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { createKernel } from '../../../kernel';
 import { createMemoryOutboxStore } from '../../../kernel/save-outbox';
-import { InthApiError } from '../error';
+import { InthApiError } from '../inth-api-error';
 import { createV1HostedTransport } from '../hosted';
 import {
 	bodyAt,

@@ -19,16 +19,16 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
-import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
+import { legacySubjectIdKey } from '../../../libs/legacy-subject-id.store';
 import {
 	resolveStorageKeys,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../../libs/storage-keys';
-import { readRequestConsent } from '../../../server/request-consent';
-import type { ConsentKernel, ConsentSnapshot, SaveInput } from '../../../types';
+import { readRequestConsent } from '../../../server/request-consent.api';
+import type { ConsentKernel, ConsentSnapshot, SaveInput } from '../../../consent-kernel.model';
 import { createClearOnRevocation } from '../../clear-on-revocation';
 import { createPersistence, readStoredRecordsFromCookieHeader } from '../index';
-import type { StorageConfig } from '../types';
+import type { StorageConfig } from '../persistence.model';
 
 /** The UUID the backend answers for a c15t visitor's `sub_` ID. */
 const CANONICAL = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';

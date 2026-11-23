@@ -10,19 +10,19 @@
  * validates again and never emits a choice event.
  */
 import type { ConsentSubject } from '../../consent-record/types';
-import type { InternalKernel } from '../../kernel/internals';
-import type { HydrationRecords } from '../../types';
+import type { InternalKernel } from '../../kernel/kernel-internals.model';
+import type { HydrationRecords } from '../../consent-kernel.model';
 import {
 	noticeSinceEpoch,
 	optOutSinceEpoch,
 	vendorChoiceSinceEpoch,
-} from './epoch';
+} from './persistence-epoch.model';
 import type {
 	StoredIabMetadata,
 	StoredNoticeDismissal,
 	StoredOptOutRecord,
 	StoredVendorChoice,
-} from './record-codec';
+} from './record-codec.model';
 import {
 	consentSinceEpoch,
 	readStoredClearEpoch,
@@ -35,9 +35,9 @@ import {
 	readStoredOptOutRecordFromCookieHeader,
 	readStoredVendorChoice,
 	readStoredVendorChoiceFromCookieHeader,
-} from './record-storage';
-import type { StoredConsentSelection } from './record-storage';
-import type { StorageConfig } from './types';
+} from './record-storage.store';
+import type { StoredConsentSelection } from './record-storage.store';
+import type { StorageConfig } from './persistence.model';
 
 /** Stored records plus the IAB transport metadata the next save preserves. */
 export interface StoredRecords {

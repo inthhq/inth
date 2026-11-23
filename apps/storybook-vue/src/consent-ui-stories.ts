@@ -8,7 +8,7 @@ import { defineComponent, h } from 'vue';
 import type {
 	ConsentContainer,
 	ConsentEdgeStyle,
-} from '../../../packages/sdk/core/src/libs/consent-layout';
+} from '../../../packages/sdk/core/src/libs/consent-layout.model';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,

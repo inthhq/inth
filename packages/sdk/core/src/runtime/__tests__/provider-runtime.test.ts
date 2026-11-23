@@ -13,7 +13,7 @@ import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { createNetworkBlocker } from '../../modules/network-blocker';
 import type { NetworkHold } from '../../modules/network-blocker/hold';
 import type { ProviderTransportContext } from '../../transports/mode';
-import type { KernelTransport } from '../../types';
+import type { KernelTransport } from '../../consent-kernel.model';
 import {
 	createConsentProviderRuntime,
 	defaultRuntimeModules,
@@ -25,7 +25,7 @@ import type {
 	ConsentProviderRuntimeOptions,
 	ConsentRuntimeModules,
 	RuntimePrefetch,
-} from '../types';
+} from '../consent-runtime.model';
 
 const RESOLVED_PREFETCH: RuntimePrefetch = {
 	initialPolicyResolution: resolvePolicyRules({

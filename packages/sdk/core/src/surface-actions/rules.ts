@@ -6,7 +6,7 @@
  */
 
 import { deriveActiveUI } from '../derive-surface';
-import type { ConsentKernel, ConsentSnapshot, KernelActiveUI } from '../types';
+import type { ConsentKernel, ConsentSnapshot, KernelActiveUI } from '../consent-kernel.model';
 
 /**
  * The latest action per kernel. A newer action or navigation replaces it.

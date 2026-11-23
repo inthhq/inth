@@ -1,7 +1,7 @@
-import type { Script } from './libs/script-loader/types';
+import type { Script } from './libs/script-loader/script.model';
 import { evaluateConsent, getEffectiveGateState } from './modules/has';
-import type { ConsentRuntime } from './runtime/types';
-import type { ConsentSnapshot } from './types';
+import type { ConsentRuntime } from './runtime/consent-runtime.model';
+import type { ConsentSnapshot } from './consent-kernel.model';
 
 /** Flat event metadata accepted by the shared dispatcher. */
 export type EventProperties = Record<string, string | number | boolean>;

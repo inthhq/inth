@@ -26,15 +26,15 @@ import {
 import { hasPendingOptOutConfirmation } from '../../surface-actions/opt-out-reload';
 import { testing } from '../../testing';
 import { resolveLocalTranslations } from '../../translations';
-import type { KernelTransport } from '../../types';
+import type { KernelTransport } from '../../consent-kernel.model';
 import {
 	createConsentProviderRuntime,
 	createConsentRuntime,
 	defaultRuntimeModules,
 	lazyRuntimeModule,
 } from '../index';
-import { createRuntimeKernel, hasResolvedPrefetch } from '../runtime-kernel';
-import type { ConsentRuntimeIABHandle } from '../types';
+import { createRuntimeKernel, hasResolvedPrefetch } from '../create-runtime-kernel';
+import type { ConsentRuntimeIABHandle } from '../consent-runtime.model';
 
 const createTransport = function createTransport(
 	overrides: Partial<KernelTransport> = {}

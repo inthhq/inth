@@ -14,12 +14,12 @@ import {
 	optInRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
-import { hasStoredConsentRecord } from '../../../libs/journey';
+import { hasStoredConsentRecord } from '../../../libs/journey.store';
 import { C15T_STORAGE_KEY, STORAGE_KEY_V2 } from '../../../libs/storage-keys';
-import { readRequestConsent } from '../../../server/request-consent';
-import type { ConsentKernel } from '../../../types';
+import { readRequestConsent } from '../../../server/request-consent.api';
+import type { ConsentKernel } from '../../../consent-kernel.model';
 import { createPersistence } from '../index';
-import { readStoredConsentRecord } from '../record-storage';
+import { readStoredConsentRecord } from '../record-storage.store';
 import { clearStoredConsentRecords } from './record-writes';
 
 const SID_KEY = `${C15T_STORAGE_KEY}-sid`;

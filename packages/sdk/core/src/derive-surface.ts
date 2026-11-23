@@ -9,7 +9,7 @@
 import type { PolicyResolution } from '@inth/sdk-schema/types';
 
 import type { PromptRequirement } from './consent-record/types';
-import type { KernelActiveUI } from './types';
+import type { KernelActiveUI } from './consent-kernel.model';
 
 /**
  * Which surface the first layer should use for the remaining prompt.

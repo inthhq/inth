@@ -11,22 +11,22 @@ import {
 import type { InitOutput } from '@inth/sdk-schema/types';
 
 import { consumePrefetchedInitialData } from '../../libs/prefetch/prefetch';
-import type { SSRInitialData } from '../../options/ssr';
-import type { InitContext, KernelOverrides } from '../../types';
+import type { SSRInitialData } from '../../options/ssr-options.model';
+import type { InitContext, KernelOverrides } from '../../consent-kernel.model';
 import {
 	decisionInputsMatchOverrides,
 	gpcFromHeaders,
 	rememberDecisionInputs,
-} from '../decision-inputs';
-import type { RememberedDecisionInputs } from '../decision-inputs';
+} from '../decision-inputs.model';
+import type { RememberedDecisionInputs } from '../decision-inputs.model';
 import { mapInitOutputToInitResponse } from '../init-output';
 import type { TransportInitResponse } from '../init-output';
-import { readApiError } from './error';
+import { readApiError } from './inth-api-error';
 import { createV1InitRequest } from './init-request';
-import { trimTrailingSlash, V1_ROUTES } from './paths';
+import { trimTrailingSlash, V1_ROUTES } from './v1-routes';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
-import { resolveV1Fetch } from './routes';
+import { resolveV1Fetch } from './v1-request.api';
 
 /** Options for {@link createV1HostedTransport}. */
 export interface V1HostedTransportOptions extends V1RecordTransportOptions {

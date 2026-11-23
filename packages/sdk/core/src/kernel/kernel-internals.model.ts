@@ -8,14 +8,14 @@
  *
  * @internal
  */
-import type { OptOutReceiptData } from '../libs/opt-out-state';
+import type { OptOutReceiptData } from '../libs/opt-out-state.model';
 import type {
 	ConsentKernel,
 	HydrationRecords,
 	HydrationResult,
 	InitResponse,
 	KernelEvent,
-} from '../types';
+} from '../consent-kernel.model';
 
 /** @internal */
 export interface InternalKernel extends ConsentKernel {

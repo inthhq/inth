@@ -8,9 +8,9 @@ import {
 } from '@inth/sdk-schema/types';
 import type { InitOutput } from '@inth/sdk-schema/types';
 
-import type { SSRInitialData } from '../../options/ssr';
-import { V1_ROUTES } from '../../transports/v1/paths';
-import type { InitContext, KernelJourney } from '../../types';
+import type { SSRInitialData } from '../../options/ssr-options.model';
+import { V1_ROUTES } from '../../transports/v1/v1-routes';
+import type { InitContext, KernelJourney } from '../../consent-kernel.model';
 import {
 	claimEarlyExperimentArm,
 	experimentArmNames,
@@ -24,7 +24,7 @@ import {
 	detectJourneyOption,
 	hasStoredConsentRecord,
 	JOURNEY_WINDOW_KEY,
-} from '../journey';
+} from '../journey.store';
 import { PREFETCH_WINDOW_KEY } from '../page-globals';
 import {
 	createBrowserRequestContext,
@@ -35,7 +35,7 @@ import {
 	buildRequestContextParams,
 	buildRequestContextSentHeaders,
 	browserInitCredentials,
-} from '../request-context-headers';
+} from '../request-context-headers.model';
 import {
 	C15T_EXPERIMENT_STORAGE_KEY,
 	C15T_JOURNEY_STORAGE_KEY,
@@ -44,7 +44,7 @@ import {
 	STORED_NAMES_CHECK,
 	storedChoiceNames,
 } from '../storage-keys';
-import type { PrefetchOptions } from './types';
+import type { PrefetchOptions } from './prefetch.model';
 
 const WINDOW_PROMISES_KEY = PREFETCH_WINDOW_KEY;
 

@@ -35,15 +35,15 @@
 
 import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
 
-import { normalizeLegacyConsentRecord } from '../../consent-record/normalize';
-import type { LegacyRecordEncoding } from '../../consent-record/normalize';
-import { unionOptOutCategories } from '../../consent-record/opt-out-rules';
+import { normalizeLegacyConsentRecord } from '../../consent-record/normalize-legacy-consent-record';
+import type { LegacyRecordEncoding } from '../../consent-record/normalize-legacy-consent-record';
+import { unionOptOutCategories } from '../../consent-record/opt-out-rules.model';
 import type {
 	CategoryDecision,
 	ConsentSubject,
 	ExplicitChoice,
 } from '../../consent-record/types';
-import { isPlainRecord, ownValue } from '../../consent-record/validation';
+import { isPlainRecord, ownValue } from '../../consent-record/consent-record-validation.model';
 import {
 	expandFlatKeys,
 	getRawCookieValue,
@@ -61,7 +61,7 @@ import {
 	noticeSinceEpoch,
 	optOutSinceEpoch,
 	vendorChoiceSinceEpoch,
-} from './epoch';
+} from './persistence-epoch.model';
 import {
 	decodeClearEpoch,
 	decodeComponent,
@@ -76,7 +76,7 @@ import {
 	DIGITS_ONLY,
 	validateIabMetadata,
 	validateStoredConsentEnvelope,
-} from './record-codec';
+} from './record-codec.model';
 import type {
 	DecodeResult,
 	StorageIssue,
@@ -86,7 +86,7 @@ import type {
 	StoredOptOutCategories,
 	StoredOptOutRecord,
 	StoredVendorChoice,
-} from './record-codec';
+} from './record-codec.model';
 
 export type { LegacyRecordEncoding as StoredRecordEncoding };
 

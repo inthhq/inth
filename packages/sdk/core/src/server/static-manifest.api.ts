@@ -1,7 +1,7 @@
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
-import { readApiError } from '../transports/v1/error';
-import { V1_ROUTES } from '../transports/v1/paths';
+import { readApiError } from '../transports/v1/inth-api-error';
+import { V1_ROUTES } from '../transports/v1/v1-routes';
 
 /** Names that parse but cannot be bound with `export const`. */
 const RESERVED_EXPORT_NAMES = new Set([

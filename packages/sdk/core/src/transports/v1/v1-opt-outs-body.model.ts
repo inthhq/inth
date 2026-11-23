@@ -3,7 +3,7 @@ import type {
 	V1ConsentOptOutLiftInput,
 } from '@inth/sdk-schema/types';
 
-import type { LiftOptOutPayload, OptOutPayload } from '../../types';
+import type { LiftOptOutPayload, OptOutPayload } from '../../consent-kernel.model';
 
 /**
  * Build the request body for `POST /v1/consent/opt-outs`.

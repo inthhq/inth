@@ -19,22 +19,22 @@ import {
 	optInRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createKernel as createConsentKernel } from '../../../kernel';
-import type { InternalKernel } from '../../../kernel/internals';
+import type { InternalKernel } from '../../../kernel/kernel-internals.model';
 import { SURFACE_ROOT_ATTRIBUTE } from '../../../libs/page-globals';
 import {
 	C15T_STORAGE_KEY,
 	PENDING_SAVES_STORAGE_KEY,
 	STORAGE_KEY_V2,
 } from '../../../libs/storage-keys';
-import type { SaveResult } from '../../../types';
+import type { SaveResult } from '../../../consent-kernel.model';
 import { watchRevocationReload } from '../../revocation-reload';
 import { createScriptLoader } from '../../script-loader';
-import { readStoredRecordsForReconcile } from '../hydrate';
+import { readStoredRecordsForReconcile } from '../persistence-hydrate.store';
 import { mountPersistence as createPersistence, queuedWrites } from '../mount';
 import {
 	readStoredConsentRecord,
 	readStoredNoticeDismissal,
-} from '../record-storage';
+} from '../record-storage.store';
 import { createWriterLoader } from '../writer-loader';
 import type { WriterLoader } from '../writer-loader';
 import {

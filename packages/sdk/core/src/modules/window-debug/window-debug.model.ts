@@ -1,7 +1,7 @@
 /**
  * Shared types for the window-debug module.
  */
-import type { KernelHosting } from '../../types';
+import type { KernelHosting } from '../../consent-kernel.model';
 
 /**
  * The transport kind reported on `window.__inthDebug`. Reflects what the

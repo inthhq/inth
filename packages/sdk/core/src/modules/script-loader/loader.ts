@@ -3,13 +3,13 @@
  * nothing the first-load graph has, so it can load on demand as one chunk.
  * `index.ts` is the public entry and passes the shared implementations.
  */
-import type { ConsentSnapshot } from '../../types';
-import { isCallbackOnly } from './callback-only';
-import { buildCallbackInfo, invokeCallback } from './callbacks';
-import { createDebugEmitter } from './debug';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
+import { isCallbackOnly } from './is-callback-only';
+import { buildCallbackInfo, invokeCallback } from './script-callbacks.model';
+import { createDebugEmitter } from './create-debug-emitter';
 import { registerScriptDiagnostics } from './diagnostics';
 import type { ScriptDiagnostic, ScriptDiagnosticStatus } from './diagnostics';
-import { buildReconcilePass, hasScriptConsent } from './eligibility';
+import { buildReconcilePass, hasScriptConsent } from './script-eligibility.model';
 import {
 	flushPendingMounts,
 	mountScript,
@@ -21,18 +21,18 @@ import {
 	createElementIdResolver,
 	hasSameResource,
 	normalizeScripts,
-} from './normalize';
-import { readScriptRegistry } from './registry';
+} from './normalize-scripts';
+import { readScriptRegistry } from './script-registry.model';
 import {
 	createRegistryVerifier,
 	isRegistrySignatureExpired,
-} from './signature';
-import { createScriptSourceResolver } from './sources';
+} from './script-signature.model';
+import { createScriptSourceResolver } from './script-sources.model';
 import type {
 	HeldScript,
 	RegistryEntryCheck,
 	ScriptRegistryState,
-} from './sources';
+} from './script-sources.model';
 import type {
 	NormalizedScript,
 	PendingMount,
@@ -42,7 +42,7 @@ import type {
 	ScriptLoaderOptions,
 	ScriptLoaderDebugEvent,
 	ScriptLoaderTools,
-} from './types';
+} from './script-loader.model';
 
 const MAX_RECONCILE_PASSES = 100;
 

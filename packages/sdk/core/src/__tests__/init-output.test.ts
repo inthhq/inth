@@ -5,14 +5,14 @@
 import { enTranslations } from '@inth/sdk-translations';
 import { describe, expect, test } from 'vitest';
 
-import { buildInitialSnapshot } from '../kernel/snapshot';
+import { buildInitialSnapshot } from '../kernel/kernel-snapshot.model';
 import {
 	initOutputToKernelConfig,
 	kernelConfigToInitResponse,
 	mapInitOutputToInitResponse,
 	mergeInitResponseIntoKernelConfig,
 } from '../transports/init-output';
-import type { KernelConfig } from '../types';
+import type { KernelConfig } from '../consent-kernel.model';
 import { matchedResolution, optInRule } from './fixtures/kernel-fixtures';
 
 const POLICY = {

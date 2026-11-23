@@ -15,7 +15,7 @@ import {
 } from '@inth/sdk-schema/types';
 import type { InitOutput } from '@inth/sdk-schema/types';
 
-import type { KernelOverrides, SavePayload } from '../types';
+import type { KernelOverrides, SavePayload } from '../consent-kernel.model';
 
 export interface RememberedDecisionInputs {
 	policyId?: string | null;

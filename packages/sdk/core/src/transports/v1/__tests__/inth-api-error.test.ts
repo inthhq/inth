@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { loadStaticManifest } from '../../../server/static-manifest';
-import { InthApiError, isInthApiError, readApiError } from '../error';
+import { loadStaticManifest } from '../../../server/static-manifest.api';
+import { InthApiError, isInthApiError, readApiError } from '../inth-api-error';
 import { json } from './fixtures';
 
 describe('readApiError', () => {

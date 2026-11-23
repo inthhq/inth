@@ -10,13 +10,13 @@
  * therefore have side effects, but contains no DOM or kernel access of
  * its own.
  */
-import type { ConsentSnapshot } from '../../types';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
 import type {
 	Script,
 	ScriptCallbackInfo,
 	ScriptLoaderDebugEvent,
 	ScriptLoaderTools,
-} from './types';
+} from './script-loader.model';
 
 /**
  * Build the `ScriptCallbackInfo` payload exposed to user callbacks.

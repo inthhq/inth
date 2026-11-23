@@ -7,19 +7,19 @@
  * `KernelActiveUI`.
  */
 
-import type { InternalKernel } from '../kernel/internals';
+import type { InternalKernel } from '../kernel/kernel-internals.model';
 import type { ResolvedOptOutLink } from '../libs/consent-copy';
 import {
 	EMPTY_OPT_OUT_RECEIPT_DATA,
 	resolveOptOutState,
-} from '../libs/opt-out-state';
-import type { OptOutReceiptData } from '../libs/opt-out-state';
+} from '../libs/opt-out-state.model';
+import type { OptOutReceiptData } from '../libs/opt-out-state.model';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
 	OptOutResult,
 	SaveUISource,
-} from '../types';
+} from '../consent-kernel.model';
 import {
 	actions,
 	beginAction,

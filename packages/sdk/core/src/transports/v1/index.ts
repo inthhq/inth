@@ -10,10 +10,10 @@
  *   adapter that resolves init some other way.
  */
 
-export { InthApiError, isInthApiError } from './error';
-export type { InthApiErrorCode, InthApiErrorDetail } from './error';
-export { InthApiSaveRejectedError } from './save-rejected';
-export type { ApiFailure } from './save-rejected';
+export { InthApiError, isInthApiError } from './inth-api-error';
+export type { InthApiErrorCode, InthApiErrorDetail } from './inth-api-error';
+export { InthApiSaveRejectedError } from './inth-api-save-rejected-error';
+export type { ApiFailure } from './inth-api-save-rejected-error';
 export { createV1HostedTransport } from './hosted';
 export type { V1HostedTransport, V1HostedTransportOptions } from './hosted';
 export { createV1ManifestTransport } from './manifest';
@@ -30,5 +30,5 @@ export type {
 	V1RecordTransportOptions,
 	V1SaveResult,
 } from './records';
-export { reportV1ConsentSession } from './session-report';
-export type { V1SessionReportOptions } from './session-report';
+export { reportV1ConsentSession } from './v1-session-report.api';
+export type { V1SessionReportOptions } from './v1-session-report.api';

@@ -13,7 +13,7 @@ import {
 	NOW,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../index';
-import type { ConsentSnapshot } from '../../types';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
 import { evaluateCategoryGate } from '../category-gate';
 import { evaluateConsent, isVendorDenied } from '../has';
 

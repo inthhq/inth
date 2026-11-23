@@ -1,5 +1,5 @@
-import { createEvaluationPolicy } from '../evaluation-policy';
-import type { EvaluationPolicyInput } from '../evaluation-policy';
+import { createEvaluationPolicy } from '../evaluation-policy.model';
+import type { EvaluationPolicyInput } from '../evaluation-policy.model';
 import type {
 	CategoryDecision,
 	ChoiceBasis,

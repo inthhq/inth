@@ -8,8 +8,8 @@
 
 import { afterEach, describe, expect, test } from 'vitest';
 
-import { clearGvlCache } from '../../transports/gvl-cache';
-import { fetchServerGvl } from '../gvl-cache';
+import { clearGvlCache } from '../../transports/gvl-cache.model';
+import { fetchServerGvl } from '../server-gvl-cache.api';
 
 const GVL_URL = 'https://vendorlist.example.com/v3/vendor-list.json';
 

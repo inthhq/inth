@@ -11,17 +11,17 @@
  * Does not notify subscribers.
  */
 import { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
-import type { ConsentSnapshot } from '../types';
-import { buildNextSnapshot as buildNextSnapshotWith } from './next-snapshot';
-import type { SnapshotPatch } from './next-snapshot';
+import type { ConsentSnapshot } from '../consent-kernel.model';
+import { buildNextSnapshot as buildNextSnapshotWith } from './next-snapshot.model';
+import type { SnapshotPatch } from './next-snapshot.model';
 
 // oxlint-disable-next-line oxc/no-barrel-file -- The kernel's patch interface.
 export {
 	derivePrivacySignals,
 	isUnchangedPatch,
 	snapshotChanged,
-} from './next-snapshot';
-export type { SnapshotPatch } from './next-snapshot';
+} from './next-snapshot.model';
+export type { SnapshotPatch } from './next-snapshot.model';
 
 const policies = { buildEvaluationPolicy, resolveEffectivePolicy };
 

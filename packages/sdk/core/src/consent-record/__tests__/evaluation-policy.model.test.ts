@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createEvaluationPolicy } from '../evaluation-policy';
+import { createEvaluationPolicy } from '../evaluation-policy.model';
 import { makePolicy } from './fixtures';
 
 describe('createEvaluationPolicy', () => {

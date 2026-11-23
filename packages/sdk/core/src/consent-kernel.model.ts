@@ -41,12 +41,12 @@ import type {
 	PromptRequirement,
 	RestrictionReason,
 } from './consent-record/types';
-import type { RecordIssue } from './consent-record/validation';
+import type { RecordIssue } from './consent-record/consent-record-validation.model';
 import type { AllConsentNames } from './consent/consent-types';
 import type { ExperimentAssignment, ExperimentGate } from './libs/experiment';
 import type { HasCondition } from './libs/has';
-import type { VendorDetails } from './libs/script-loader/types';
-import type { PublisherRestriction } from './options/iab-tcf';
+import type { VendorDetails } from './libs/script-loader/script.model';
+import type { PublisherRestriction } from './options/iab-tcf-options.model';
 
 // Re-export schema types that consumers need so they don't have to
 // import from @inth/sdk/schema directly for routine work.

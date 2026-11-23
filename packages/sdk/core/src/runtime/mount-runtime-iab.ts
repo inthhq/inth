@@ -5,13 +5,13 @@
  * so a host that never configures IAB through the runtime ships none of
  * this.
  */
-import type { ConsentKernel } from '../types';
+import type { ConsentKernel } from '../consent-kernel.model';
 import type {
 	ConsentRuntimeIABFactory,
 	ConsentRuntimeIABFactoryOptions,
 	ConsentRuntimeIABHandle,
 	RuntimeIABOptions,
-} from './types';
+} from './consent-runtime.model';
 
 /** Options for {@link mountRuntimeIAB}. */
 export interface RuntimeIABMountOptions {

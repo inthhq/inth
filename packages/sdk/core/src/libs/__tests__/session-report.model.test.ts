@@ -6,12 +6,12 @@ import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createV1ManifestTransport } from '../../transports/v1/manifest';
-import { reportV1ConsentSession } from '../../transports/v1/session-report';
+import { reportV1ConsentSession } from '../../transports/v1/v1-session-report.api';
 import {
 	forwardSessionReportHeaders,
 	isSpeculativeRequest,
 	resolveSessionReportProjectUrl,
-} from '../session-report';
+} from '../session-report.model';
 
 const manifest: ConsentManifest = {
 	branding: 'inth',

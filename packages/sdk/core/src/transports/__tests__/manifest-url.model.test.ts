@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { projectUrlOfManifest } from '../manifest-url';
+import { projectUrlOfManifest } from '../manifest-url.model';
 
 describe('projectUrlOfManifest', () => {
 	test.each([

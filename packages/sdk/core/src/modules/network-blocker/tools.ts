@@ -21,7 +21,7 @@ import {
 	stashXhr,
 	XHR_REQUEST,
 } from './hold';
-import type { NetworkBlockerTools } from './types';
+import type { NetworkBlockerTools } from './network-blocker.model';
 
 /** @internal */
 export const networkBlockerTools: NetworkBlockerTools = {

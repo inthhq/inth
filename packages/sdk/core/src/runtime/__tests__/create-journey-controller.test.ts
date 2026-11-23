@@ -29,16 +29,16 @@ import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/r
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
 import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
-import type { KernelTransport } from '../../types';
+import type { KernelTransport } from '../../consent-kernel.model';
 import {
 	createConsentProviderRuntime,
 	createConsentRuntime,
 	defaultRuntimeModules,
 	streamPrefetch,
 } from '../index';
-import { createJourneyController } from '../journey';
-import type { JourneyStorage } from '../journey';
-import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
+import { createJourneyController } from '../create-journey-controller';
+import type { JourneyStorage } from '../create-journey-controller';
+import type { ConsentRuntime, ConsentRuntimeOptions } from '../consent-runtime.model';
 
 /**
  * Options a test passes over the defaults. Its mode is a transport factory,

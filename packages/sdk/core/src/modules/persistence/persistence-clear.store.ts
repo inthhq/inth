@@ -16,15 +16,15 @@ import {
 	deleteCookieInEveryScope,
 	writeCookie,
 } from '../../libs/cookie';
-import { removeLegacySubjectId } from '../../libs/legacy-subject-id';
-import { removeLocalStorageKey } from '../../libs/local-storage';
+import { removeLegacySubjectId } from '../../libs/legacy-subject-id.store';
+import { removeLocalStorageKey } from '../../libs/local-storage.store';
 import {
 	storageKeyFamilies,
 	resolveStorageKeys,
 } from '../../libs/storage-keys';
-import { EPOCH_CLOCK_TOLERANCE_MS } from './record-codec';
-import { readStoredClearEpoch } from './record-storage';
-import type { StorageConfig } from './types';
+import { EPOCH_CLOCK_TOLERANCE_MS } from './record-codec.model';
+import { readStoredClearEpoch } from './record-storage.store';
+import type { StorageConfig } from './persistence.model';
 
 /**
  * Removes, for the configured family and every legacy family it reads,

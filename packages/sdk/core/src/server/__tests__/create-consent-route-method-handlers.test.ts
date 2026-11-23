@@ -1,10 +1,10 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { createConsentRouteHandler } from '../consent-route';
+import { createConsentRouteHandler } from '../consent-route.api';
 import {
 	createConsentRouteHandlerCache,
 	createConsentRouteMethodHandlers,
-} from '../route-handlers';
+} from '../create-consent-route-method-handlers';
 
 const SITE = 'https://shop.example';
 

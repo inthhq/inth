@@ -28,10 +28,10 @@ import type {
 	EarlyConsentTap,
 	EarlyConsentTapQueue,
 } from '../libs/page-globals';
-import type { ConsentKernel, ConsentSnapshot, SaveUISource } from '../types';
+import type { ConsentKernel, ConsentSnapshot, SaveUISource } from '../consent-kernel.model';
 import { optOutConsentSurface } from './opt-out';
 import { showConsentSurface } from './rules';
-import { saveConsentSurface } from './save';
+import { saveConsentSurface } from './save-consent-surface';
 
 /** How long a closed banner may take to leave the DOM before it shows. */
 const LEAVE_TIMEOUT_MS = 3000;

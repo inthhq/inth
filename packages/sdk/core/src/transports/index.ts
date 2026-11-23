@@ -12,7 +12,7 @@ export type {
 	KernelTransport,
 	SavePayload,
 	SaveResult,
-} from '../types';
+} from '../consent-kernel.model';
 export type {
 	MapInitOutputOptions,
 	TransportInitResponse,
@@ -34,8 +34,8 @@ export type {
 	ProviderTransportKind,
 } from './mode';
 export { hosted } from './mode';
-export type { InthApiErrorCode, InthApiErrorDetail } from './v1/error';
-export { InthApiError, isInthApiError } from './v1/error';
+export type { InthApiErrorCode, InthApiErrorDetail } from './v1/inth-api-error';
+export { InthApiError, isInthApiError } from './v1/inth-api-error';
 export type { V1HostedTransport, V1HostedTransportOptions } from './v1/hosted';
 export { createV1HostedTransport } from './v1/hosted';
 export type {
@@ -44,7 +44,7 @@ export type {
 	V1SaveResult,
 } from './v1/records';
 export { createV1RecordTransport } from './v1/records';
-export { InthApiSaveRejectedError } from './v1/save-rejected';
+export { InthApiSaveRejectedError } from './v1/inth-api-save-rejected-error';
 export type {
 	OfflineKernelTransport,
 	OfflineTransportOptions,
@@ -56,9 +56,9 @@ export type { OfflineModeOptions } from './offline';
 export {
 	ConsentSaveRejectedError,
 	isConsentSaveRejection,
-} from './save-rejection';
+} from './consent-save-rejected-error';
 export {
 	deferInitGvl,
 	createGvlReferenceUrl,
 	serveGvlReference,
-} from './gvl-reference';
+} from './gvl-reference.model';

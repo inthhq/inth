@@ -37,7 +37,7 @@ import type {
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
 import * as server from '../server';
-import { stripIdentityForCleartext } from '../server/consent-proxy';
+import { stripIdentityForCleartext } from '../server/consent-proxy.api';
 import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,

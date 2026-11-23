@@ -21,25 +21,25 @@
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
 import type { ExperimentAssignment, ExperimentGate } from '../libs/experiment';
-import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state';
-import type { OptOutReceiptData } from '../libs/opt-out-state';
-import { createIdempotencyKey, generateUuidV7 } from '../libs/subject-uuid';
+import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
+import type { OptOutReceiptData } from '../libs/opt-out-state.model';
+import { createIdempotencyKey, generateUuidV7 } from '../libs/subject-uuid.model';
 import type {
 	ConsentSnapshot,
 	KernelEvent,
 	Listener,
 	PromptSurface,
-} from '../types';
-import { createListenerSet } from './dispatch';
-import type { Dispatcher, ListenerSet } from './dispatch';
+} from '../consent-kernel.model';
+import { createListenerSet } from './create-dispatcher';
+import type { Dispatcher, ListenerSet } from './create-dispatcher';
 import {
 	gpcOptOutDue,
 	gpcSignalReportDue,
 	newLocalOptOutRecord,
-} from './opt-out';
-import { buildNextSnapshot, isUnchangedPatch, snapshotChanged } from './patch';
-import type { SnapshotPatch } from './patch';
-import { freezeSnapshot, isPromptSurface } from './snapshot';
+} from './kernel-opt-out.model';
+import { buildNextSnapshot, isUnchangedPatch, snapshotChanged } from './kernel-patch.model';
+import type { SnapshotPatch } from './kernel-patch.model';
+import { freezeSnapshot, isPromptSurface } from './kernel-snapshot.model';
 
 /** Events `announce()` emits: each carries only the committed snapshot. */
 export type AnnouncedEvent = Extract<

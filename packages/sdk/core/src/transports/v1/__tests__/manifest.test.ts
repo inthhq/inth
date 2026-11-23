@@ -6,12 +6,12 @@ import { createConsentManifestPolicyPack } from '@inth/sdk-schema/types';
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { describe, expect, test } from 'vitest';
 
-import { InthApiError } from '../error';
+import { InthApiError } from '../inth-api-error';
 import { createV1ManifestTransport } from '../manifest';
 import {
 	buildV1ConsentSessionReport,
 	reportV1ConsentSession,
-} from '../session-report';
+} from '../v1-session-report.api';
 import {
 	bodyAt,
 	json,

@@ -6,8 +6,8 @@
 import { parseJourneyId, parseJourneyScope } from '@inth/sdk-schema/types';
 import type { ConsentJourneyScope } from '@inth/sdk-schema/types';
 
-import type { KernelJourney } from '../types';
-import { readCookieValueFromHeader } from './cookie/read-header';
+import type { KernelJourney } from '../consent-kernel.model';
+import { readCookieValueFromHeader } from './cookie/read-cookie-value-from-header';
 import {
 	C15T_JOURNEY_STORAGE_KEY,
 	JOURNEY_STORAGE_KEY,

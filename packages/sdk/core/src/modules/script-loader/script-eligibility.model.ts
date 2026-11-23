@@ -8,12 +8,12 @@
  * script in that reconcile.
  */
 
-import type { ConsentSnapshot } from '../../types';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
 import type {
 	NormalizedScript,
 	ReconcilePass,
 	ScriptLoaderTools,
-} from './types';
+} from './script-loader.model';
 
 /**
  * Build the per-pass eligibility context from a snapshot. The kernel snapshot

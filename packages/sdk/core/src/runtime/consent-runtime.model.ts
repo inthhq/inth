@@ -17,43 +17,43 @@ import type {
 	ExperimentArmTheme,
 	ExperimentState,
 } from '../libs/experiment';
-import type { ConsentJourneyOption, JourneyState } from '../libs/journey';
+import type { ConsentJourneyOption, JourneyState } from '../libs/journey.store';
 import type { ConsentPresentation } from '../libs/policy-actions';
-import type { ScriptSource } from '../libs/script-loader/types';
+import type { ScriptSource } from '../libs/script-loader/script.model';
 import type { HostedMode } from '../modes';
 import type {
 	ClearOnRevocationConfig,
 	ClearOnRevocationHandle,
 	ClearOnRevocationOptions,
-} from '../modules/clear-on-revocation/types';
+} from '../modules/clear-on-revocation/clear-on-revocation.model';
 import type {
 	IframeBlockerHandle,
 	IframeBlockerOptions,
-} from '../modules/iframe-blocker/types';
+} from '../modules/iframe-blocker/iframe-blocker.model';
 import type {
 	NetworkBlockerConfig,
 	NetworkBlockerHandle,
 	NetworkBlockerOptions,
 	NetworkBlockerRule,
-} from '../modules/network-blocker/types';
+} from '../modules/network-blocker/network-blocker.model';
 import type {
 	PersistenceHandle,
 	PersistenceOptions,
-} from '../modules/persistence/types';
+} from '../modules/persistence/persistence.model';
 import type { RevocationReloadOptions } from '../modules/revocation-reload';
 import type {
 	Script,
 	ScriptLoaderDebugEvent,
 	ScriptLoaderHandle,
 	ScriptLoaderOptions,
-} from '../modules/script-loader/types';
+} from '../modules/script-loader/script-loader.model';
 import type {
 	WindowDebugHandle,
 	WindowDebugOptions,
-} from '../modules/window-debug/types';
-import type { Callbacks } from '../options/callbacks';
-import type { IABConfig } from '../options/iab';
-import type { User } from '../options/user';
+} from '../modules/window-debug/window-debug.model';
+import type { Callbacks } from '../options/callback-options.model';
+import type { IABConfig } from '../options/iab-options.model';
+import type { User } from '../options/user-options.model';
 import type { ProviderTransportFactory } from '../transports/mode';
 import type { ConsentTesting } from '../transports/testing';
 import type {
@@ -65,8 +65,8 @@ import type {
 	KernelOverrides,
 	KernelUser,
 	Unsubscribe,
-} from '../types';
-import type { RuntimeIABMountOptions } from './iab-mount';
+} from '../consent-kernel.model';
+import type { RuntimeIABMountOptions } from './mount-runtime-iab';
 
 /** Script-loader tuning accepted by {@link ConsentRuntimeOptions}. */
 export interface RuntimeScriptLoaderOptions {

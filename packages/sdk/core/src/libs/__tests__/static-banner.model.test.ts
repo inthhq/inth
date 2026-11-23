@@ -9,8 +9,8 @@ import {
 	STATIC_BANNER_ATTR,
 	staticBannerCopyHash,
 	SURFACE_LAYOUT_CHECK,
-} from '../static-banner';
-import type { StaticBannerKey } from '../static-banner';
+} from '../static-banner.model';
+import type { StaticBannerKey } from '../static-banner.model';
 import { storedChoiceNames } from '../storage-keys';
 
 const COPY = {

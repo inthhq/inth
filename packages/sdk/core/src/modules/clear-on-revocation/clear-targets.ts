@@ -2,7 +2,7 @@ import type {
 	ClearOnRevocationCookie,
 	ClearOnRevocationTargets,
 	ClearOnRevocationTools,
-} from './types';
+} from './clear-on-revocation.model';
 
 const COOKIE_NAME = /^[!#$%&'*+\-.^_`|~\dA-Za-z]+$/u;
 const COOKIE_DOMAIN = /^\.?[\dA-Za-z.-]+$/u;

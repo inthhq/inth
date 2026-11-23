@@ -8,7 +8,7 @@ import {
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../index';
-import type { KernelEvent } from '../../types';
+import type { KernelEvent } from '../../consent-kernel.model';
 
 /** Save through the kernel and report what the action recorded. */
 const recordSave = async function recordSave(

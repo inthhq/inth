@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
 	createDialogChunkGroup,
 	createDialogChunkPlugin,
-} from '../build-dialog-chunk';
+} from '../build-dialog-chunk.model';
 
 const INTH = '/app/node_modules/@inth/';
 /** Where `@inth/sdk` installs its parts. */

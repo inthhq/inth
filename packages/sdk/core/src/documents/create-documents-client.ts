@@ -24,8 +24,8 @@ import type {
 	V1DocumentCurrentOutput,
 } from '@inth/sdk-schema/types';
 
-import { readApiError } from '../transports/v1/error';
-import { trimTrailingSlash, V1_ROUTES } from '../transports/v1/paths';
+import { readApiError } from '../transports/v1/inth-api-error';
+import { trimTrailingSlash, V1_ROUTES } from '../transports/v1/v1-routes';
 import {
 	currentDocumentPath,
 	isUuidV7,
@@ -33,7 +33,7 @@ import {
 	resolveV1Fetch,
 	toProperty,
 	V1_JSON_HEADERS,
-} from '../transports/v1/routes';
+} from '../transports/v1/v1-request.api';
 
 const LABEL = 'Inth documents';
 

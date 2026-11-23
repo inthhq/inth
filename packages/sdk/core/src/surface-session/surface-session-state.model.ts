@@ -11,7 +11,7 @@
  * @packageDocumentation
  */
 
-import type { ActiveUI } from '../types';
+import type { ActiveUI } from '../consent-kernel.model';
 
 /**
  * A statutory right the surface shows as a two-option control. The schema

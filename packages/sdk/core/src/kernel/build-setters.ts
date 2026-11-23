@@ -25,10 +25,10 @@ import type {
 	KernelVendorsState,
 	ResolvedVendor,
 	VendorSource,
-} from '../types';
-import { normalizeExternalPermissions } from './external-permissions';
-import type { KernelRuntime } from './runtime';
-import { copyIABAuthority, DEFAULT_IAB, DEFAULT_VENDORS } from './snapshot';
+} from '../consent-kernel.model';
+import { normalizeExternalPermissions } from './external-permissions.model';
+import type { KernelRuntime } from './create-runtime';
+import { copyIABAuthority, DEFAULT_IAB, DEFAULT_VENDORS } from './kernel-snapshot.model';
 
 /**
  * Merge an IAB patch onto the current IAB slice, returning the next

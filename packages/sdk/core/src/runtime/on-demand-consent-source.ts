@@ -2,7 +2,7 @@
  * A `consentSource` connection as an on-demand runtime module. Its own
  * file for the reason `on-demand-script-loader.ts` gives.
  */
-import type { ConsentRuntimeModules } from './types';
+import type { ConsentRuntimeModules } from './consent-runtime.model';
 
 /**
  * The `connectConsentSource` module, connected once its chunk lands.

@@ -20,13 +20,13 @@ export type {
 	RightCommandOptions,
 	RightPressResult,
 } from './commands';
-export { resolveSurfaceEscape } from './escape';
-export type { SurfaceEscapeInput, SurfaceEscapeOutcome } from './escape';
+export { resolveSurfaceEscape } from './resolve-surface-escape';
+export type { SurfaceEscapeInput, SurfaceEscapeOutcome } from './resolve-surface-escape';
 export {
 	resolveBannerCommit,
 	resolveRightPress,
 	resolveSaleRight,
-} from './rights';
+} from './surface-rights.model';
 export type {
 	BannerCommitAction,
 	BannerCommitPlan,
@@ -38,11 +38,11 @@ export type {
 	RightSource,
 	RightsSnapshot,
 	SaleRightState,
-} from './rights';
-export { planCategorySwitch, planVendorSwitch } from './categories';
-export type { CategorySwitchPlan, CategorySwitchState } from './categories';
-export { resolveRightsReceipt } from './receipt';
-export type { ReceiptSnapshot, RightsReceipt } from './receipt';
+} from './surface-rights.model';
+export { planCategorySwitch, planVendorSwitch } from './category-switch.model';
+export type { CategorySwitchPlan, CategorySwitchState } from './category-switch.model';
+export { resolveRightsReceipt } from './resolve-rights-receipt';
+export type { ReceiptSnapshot, RightsReceipt } from './resolve-rights-receipt';
 export { getSurfaceSession } from './session';
 export type {
 	SurfaceCopyFinish,
@@ -58,7 +58,7 @@ export {
 	MAX_SURFACE_LAYERS,
 	reduceSurfaceSession,
 	topLayer,
-} from './state';
+} from './surface-session-state.model';
 export type {
 	SurfaceAnnouncement,
 	SurfaceConfirmation,
@@ -68,4 +68,4 @@ export type {
 	SurfaceSessionAction,
 	SurfaceSessionState,
 	SurfaceSheet,
-} from './state';
+} from './surface-session-state.model';

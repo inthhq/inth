@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { choiceRecords, NOW } from '../../__tests__/fixtures/kernel-fixtures';
 import type { AllConsentNames } from '../../consent/consent-types';
 import { createConsentKernel } from '../../kernel';
-import type { ResolvedVendor } from '../../types';
+import type { ResolvedVendor } from '../../consent-kernel.model';
 import { vendorRenders, vendorsListedUnder } from '../vendor-listing';
 import {
 	declareOwnedVendors,

@@ -13,7 +13,7 @@ import {
 } from '../../libs/storage-keys';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { createOfflineTransport } from '../../transports/offline';
-import type { KernelEvent, KernelTransport, SavePayload } from '../../types';
+import type { KernelEvent, KernelTransport, SavePayload } from '../../consent-kernel.model';
 import { createConsentRuntime } from '../index';
 
 const policyRules: PolicyRule[] = [

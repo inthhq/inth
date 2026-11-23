@@ -5,11 +5,11 @@
  * @packageDocumentation
  */
 
-import { resolveOptOutReceipt } from '../libs/opt-out-state';
-import type { OptOutReceiptData } from '../libs/opt-out-state';
-import type { ConsentSnapshot } from '../types';
-import { resolveSaleRight } from './rights';
-import type { RightOption, RightsSnapshot } from './rights';
+import { resolveOptOutReceipt } from '../libs/opt-out-state.model';
+import type { OptOutReceiptData } from '../libs/opt-out-state.model';
+import type { ConsentSnapshot } from '../consent-kernel.model';
+import { resolveSaleRight } from './surface-rights.model';
+import type { RightOption, RightsSnapshot } from './surface-rights.model';
 
 /** Snapshot fields the receipt reads. */
 export type ReceiptSnapshot = RightsSnapshot & Pick<ConsentSnapshot, 'optOut'>;

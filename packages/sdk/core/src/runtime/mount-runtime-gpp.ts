@@ -3,12 +3,12 @@
  * the host's loader, then mount it on the kernel. The loader keeps the GPP
  * code out of every page that does not turn GPP on.
  */
-import type { ConsentKernel } from '../types';
+import type { ConsentKernel } from '../consent-kernel.model';
 import type {
 	ConsentRuntimeGPPHandle,
 	GPPModuleLoader,
 	RuntimeGPPOptions,
-} from './types';
+} from './consent-runtime.model';
 
 /** Options for {@link mountRuntimeGPP}. */
 export interface RuntimeGPPMountOptions {

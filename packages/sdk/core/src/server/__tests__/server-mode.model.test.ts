@@ -6,7 +6,7 @@ import {
 	buildSnapshotSkipReason,
 	needsBuildSnapshot,
 	resolveServerMode,
-} from '../server-mode';
+} from '../server-mode.model';
 
 const BUILT = { revision: 'built' } as unknown as ConsentManifest;
 const OWN = { revision: 'own' } as unknown as ConsentManifest;

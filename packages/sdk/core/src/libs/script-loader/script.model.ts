@@ -1,7 +1,7 @@
 import type { Vendor } from '@inth/sdk-schema/types';
 
 import type { AllConsentNames } from '../../consent/consent-types';
-import type { ConsentState } from '../../types';
+import type { ConsentState } from '../../consent-kernel.model';
 import type { HasCondition } from '../has';
 
 /**

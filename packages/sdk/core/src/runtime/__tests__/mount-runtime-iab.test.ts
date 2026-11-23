@@ -1,8 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
 
 import { createConsentKernel } from '../../kernel';
-import { mountRuntimeIAB } from '../iab-mount';
-import type { ConsentRuntimeIABFactory } from '../types';
+import { mountRuntimeIAB } from '../mount-runtime-iab';
+import type { ConsentRuntimeIABFactory } from '../consent-runtime.model';
 
 describe('mountRuntimeIAB', () => {
 	test('creates the CMP once when createIAB updates the kernel while mounting', () => {

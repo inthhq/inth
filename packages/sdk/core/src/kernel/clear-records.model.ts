@@ -1,5 +1,5 @@
 import type { ConsentSubject } from '../consent-record/types';
-import type { InternalKernel } from './internals';
+import type { InternalKernel } from './kernel-internals.model';
 
 /**
  * What a clear leaves of a subject: its ID alone, so the visitor can still

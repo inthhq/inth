@@ -1,6 +1,6 @@
 import type { InitRequestParams } from '@inth/sdk-schema/types';
 
-import type { Overrides } from '../options/overrides';
+import type { Overrides } from '../options/overrides-options.model';
 
 /**
  * Credentials mode for `GET /v1/consent/init` when the caller sets none.

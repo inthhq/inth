@@ -19,10 +19,10 @@ import {
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
-import type { Script } from '../../libs/script-loader/types';
-import { encodeStoredConsentEnvelopeJson } from '../../modules/persistence/writer/encode';
-import type { ScriptLoaderHandle } from '../../modules/script-loader/types';
-import type { ConsentKernel } from '../../types';
+import type { Script } from '../../libs/script-loader/script.model';
+import { encodeStoredConsentEnvelopeJson } from '../../modules/persistence/writer/record-encode.model';
+import type { ScriptLoaderHandle } from '../../modules/script-loader/script-loader.model';
+import type { ConsentKernel } from '../../consent-kernel.model';
 import {
 	createConsentProviderRuntime,
 	defaultRuntimeModules,
@@ -34,7 +34,7 @@ import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
 	RuntimePrefetch,
-} from '../types';
+} from '../consent-runtime.model';
 
 const pixel: Script = {
 	category: 'marketing',

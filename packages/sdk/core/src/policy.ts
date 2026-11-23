@@ -13,13 +13,13 @@ import type {
 } from '@inth/sdk-schema/types';
 import { safeFallbackPolicyInput } from '@inth/sdk-schema/types';
 
-import { createEvaluationPolicy } from './consent-record/evaluation-policy';
+import { createEvaluationPolicy } from './consent-record/evaluation-policy.model';
 import type {
 	EvaluationPolicy,
 	OptionalConsentCategory,
 } from './consent-record/types';
 import type { AllConsentNames } from './consent/consent-types';
-import { deepFreeze } from './libs/freeze-data';
+import { deepFreeze } from './libs/freeze-data.model';
 
 /** Rule plus fingerprints the evaluator runs on. */
 export interface EffectivePolicy {

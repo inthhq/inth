@@ -47,11 +47,11 @@ import {
 	validateExplicitChoice,
 	validateNoticeDismissal,
 	validateOptOutRecord,
-} from '../../consent-record/validation';
-import type { RecordIssue } from '../../consent-record/validation';
-import type { OptOutLocalAct } from '../../libs/opt-out-state';
+} from '../../consent-record/consent-record-validation.model';
+import type { RecordIssue } from '../../consent-record/consent-record-validation.model';
+import type { OptOutLocalAct } from '../../libs/opt-out-state.model';
 import { isValidVendorId } from '../../libs/vendors';
-import type { VendorChoice } from '../../types';
+import type { VendorChoice } from '../../consent-kernel.model';
 
 /** Validated IAB transport metadata carried alongside category choices. */
 export interface StoredIabMetadata {

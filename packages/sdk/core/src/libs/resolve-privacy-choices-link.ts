@@ -8,14 +8,14 @@
 import type { Translations } from '@inth/sdk-translations';
 import { translations as enTranslations } from '@inth/sdk-translations/en';
 
-import type { ConsentSnapshot } from '../types';
+import type { ConsentSnapshot } from '../consent-kernel.model';
 import { resolveOptOutLink } from './consent-copy';
 import type {
 	OptOutLinkIcon,
 	OptOutLinkVariant,
 	ResolvedOptOutLink,
 } from './consent-copy';
-import { resolveOptOutState } from './opt-out-state';
+import { resolveOptOutState } from './opt-out-state.model';
 
 /** What a "Your Privacy Choices" link renders. */
 export interface PrivacyChoicesLinkState {

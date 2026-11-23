@@ -1,4 +1,4 @@
-import type { ConsentState, KernelEvent } from '../types';
+import type { ConsentState, KernelEvent } from '../consent-kernel.model';
 
 /**
  * A generic type for callback functions that can accept an argument of type T.

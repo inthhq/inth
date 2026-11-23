@@ -8,7 +8,7 @@
  */
 import type { StorageConfig } from './cookie';
 import { deleteCookieInEveryScope, getRawCookieValue } from './cookie';
-import { localStorageOf } from './local-storage';
+import { localStorageOf } from './local-storage.store';
 import { C15T_STORAGE_KEY, STORAGE_KEY_V2 } from './storage-keys';
 
 /**

@@ -11,12 +11,12 @@ import type { I18nConfig } from '@inth/sdk-translations';
 
 import type { AllConsentNames } from '../consent/consent-types';
 import { createKernel } from '../kernel';
-import type { InternalKernel } from '../kernel/internals';
+import type { InternalKernel } from '../kernel/kernel-internals.model';
 import { hostExperiment, seedExperiment } from '../libs/experiment';
 import { extractConsentNamesFromCondition } from '../libs/has';
 import { warnInDevelopment } from '../libs/is-production';
 import { resolveVendors } from '../libs/vendors';
-import type { User } from '../options/user';
+import type { User } from '../options/user-options.model';
 import { disabledPolicyResolution } from '../policy';
 import {
 	defaultTranslationConfig,
@@ -33,9 +33,9 @@ import type {
 	KernelUser,
 	ResolvedVendor,
 	TranslationsResponse,
-} from '../types';
-import { isIABConfigured } from './iab-options';
-import type { ConsentRuntimeOptions } from './types';
+} from '../consent-kernel.model';
+import { isIABConfigured } from './is-iab-configured';
+import type { ConsentRuntimeOptions } from './consent-runtime.model';
 
 const DEFAULT_TRANSLATIONS: KernelTranslations = {
 	language: 'en',

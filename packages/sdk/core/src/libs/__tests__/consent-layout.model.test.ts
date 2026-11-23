@@ -2,14 +2,14 @@ import { normalizePolicyRule } from '@inth/sdk-schema/types';
 import type { PolicyPrompt, PolicyRuleModel } from '@inth/sdk-schema/types';
 import { describe, expect, it } from 'vitest';
 
-import { PHONE_LAYOUT_QUERY, resolveLayout } from '../consent-layout';
+import { PHONE_LAYOUT_QUERY, resolveLayout } from '../consent-layout.model';
 import type {
 	ConsentBlockingConstraint,
 	ConsentContainer,
 	ConsentEdgeStyle,
 	ConsentViewport,
 	ResolveLayoutInput,
-} from '../consent-layout';
+} from '../consent-layout.model';
 import { resolveConsentPresentation } from '../policy-actions';
 import type { PromptPresentation } from '../policy-actions';
 

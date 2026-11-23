@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { cookieDomainsOf, rootDomainOf } from '../domain-utils';
+import { cookieDomainsOf, rootDomainOf } from '../resolve-cookie-domain';
 
 describe('cookie scopes', () => {
 	test.each([

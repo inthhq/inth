@@ -4,8 +4,8 @@
  */
 import { describe, expect, test } from 'vitest';
 
-import type { SavePayload } from '../../types';
-import { withoutSuperseded } from '../save-outbox/supersession';
+import type { SavePayload } from '../../consent-kernel.model';
+import { withoutSuperseded } from '../save-outbox/supersession.model';
 
 const receipt = (value: boolean) => ({
 	basis: { fingerprint: 'choice-fp', kind: 'choice-v1' as const },

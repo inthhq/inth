@@ -18,7 +18,7 @@ import type {
 	ConsentSnapshot,
 	KernelActiveUI,
 	KernelEvent,
-} from '../types';
+} from '../consent-kernel.model';
 
 /** @internal */
 export interface StandInKernelOptions {

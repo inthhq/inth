@@ -5,13 +5,13 @@ export type {
 	OnPermissionsChangedPayload,
 	OnErrorPayload,
 	OnSurfaceShownPayload,
-} from './callbacks';
+} from './callback-options.model';
 export type {
 	AdditionalConsentConfig,
 	CMPApi,
 	CMPApiConfig,
 	IABConfig,
-} from './iab';
+} from './iab-options.model';
 export type {
 	CMPStatus,
 	DisplayStatus,
@@ -23,12 +23,12 @@ export type {
 	TCFApi,
 	TCFApiCallback,
 	TCFConsentData,
-} from './iab-tcf';
-export type { LegalLink, LegalLinks } from './legal-links';
-export type { Overrides } from './overrides';
+} from './iab-tcf-options.model';
+export type { LegalLink, LegalLinks } from './legal-links-options.model';
+export type { Overrides } from './overrides-options.model';
 export type {
 	SSRInitialData,
 	SSRInitRequestContext,
 	SSRInitRequestMetadata,
-} from './ssr';
-export type { User } from './user';
+} from './ssr-options.model';
+export type { User } from './user-options.model';

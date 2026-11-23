@@ -6,29 +6,29 @@
  *
  * @internal
  */
-import { mergeNewestChoice } from '../../kernel/record-validation';
+import { mergeNewestChoice } from '../../kernel/record-validation.model';
 import {
 	deleteCookie,
 	getRawCookieValue,
 	writeCookie,
 } from '../../libs/cookie';
-import { removeLocalStorageKey } from '../../libs/local-storage';
+import { removeLocalStorageKey } from '../../libs/local-storage.store';
 import { resolveStorageKeys } from '../../libs/storage-keys';
-import { clearStoredRecords } from './clear';
+import { clearStoredRecords } from './persistence-clear.store';
 import {
 	choiceSinceEpoch,
 	noticeSinceEpoch,
 	optOutSinceEpoch,
 	vendorChoiceSinceEpoch,
-} from './epoch';
-import { readStoredRecordsForReconcile } from './hydrate';
+} from './persistence-epoch.model';
+import { readStoredRecordsForReconcile } from './persistence-hydrate.store';
 import {
 	decodeNoticeDismissal,
 	decodeOptOutRecord,
 	decodeVendorChoice,
 	validateStoredConsentEnvelope,
-} from './record-codec';
-import type { PersistenceTools } from './writer/types';
+} from './record-codec.model';
+import type { PersistenceTools } from './writer/persistence-writer.model';
 
 /** @internal */
 export const persistenceTools: PersistenceTools = {

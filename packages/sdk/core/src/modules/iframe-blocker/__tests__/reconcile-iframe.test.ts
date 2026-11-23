@@ -9,7 +9,7 @@ import {
 	buildReconcilePass,
 	determineCategory,
 	reconcileIframe,
-} from '../reconcile';
+} from '../reconcile-iframe';
 
 beforeEach(() => {
 	document.body.innerHTML = '';

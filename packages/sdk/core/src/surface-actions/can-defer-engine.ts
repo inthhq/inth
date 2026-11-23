@@ -8,9 +8,9 @@
  * @internal
  */
 
-import type { Script } from '../libs/script-loader/types';
-import { isIABConfigured } from '../runtime/iab-options';
-import type { ConsentSnapshot } from '../types';
+import type { Script } from '../libs/script-loader/script.model';
+import { isIABConfigured } from '../runtime/is-iab-configured';
+import type { ConsentSnapshot } from '../consent-kernel.model';
 import { planInstantCommit } from './instant-commit';
 import { awaitsChoice, isRunnableNow } from './plain-scripts';
 

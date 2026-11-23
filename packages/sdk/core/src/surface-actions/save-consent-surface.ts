@@ -3,7 +3,7 @@
  */
 
 import { deriveActiveUI } from '../derive-surface';
-import type { ConsentKernel, SaveResult } from '../types';
+import type { ConsentKernel, SaveResult } from '../consent-kernel.model';
 import { actions, beginAction, isOpen } from './rules';
 
 /**

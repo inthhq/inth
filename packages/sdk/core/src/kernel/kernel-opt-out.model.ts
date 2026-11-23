@@ -9,23 +9,23 @@ import {
 	answersHeldOptOut,
 	carryOptOutCategories,
 	optOutLiftBlocker,
-} from '../consent-record/opt-out-rules';
+} from '../consent-record/opt-out-rules.model';
 import {
 	OPTIONAL_CONSENT_CATEGORIES,
 	policyOptOutCategories,
 } from '../consent-record/types';
 import type { OptionalConsentCategory } from '../consent-record/types';
-import { validateOptOutRecord } from '../consent-record/validation';
-import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state';
-import type { OptOutReceiptData } from '../libs/opt-out-state';
-import { createIdempotencyKey } from '../libs/subject-uuid';
+import { validateOptOutRecord } from '../consent-record/consent-record-validation.model';
+import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
+import type { OptOutReceiptData } from '../libs/opt-out-state.model';
+import { createIdempotencyKey } from '../libs/subject-uuid.model';
 import type {
 	ConsentSnapshot,
 	LiftOptOutPayload,
 	OptOutPayload,
 	SaveUISource,
-} from '../types';
-import type { KernelRuntime } from './runtime';
+} from '../consent-kernel.model';
+import type { KernelRuntime } from './create-runtime';
 
 const inCanonicalOrder = function inCanonicalOrder(
 	categories: readonly OptionalConsentCategory[]

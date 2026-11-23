@@ -10,7 +10,7 @@ import { createConsentKernel } from '../../kernel';
 import { createConsentRuntime } from '../../runtime';
 import type { ConsentRuntimeOptions } from '../../runtime';
 import { createOfflineTransport } from '../../transports/offline';
-import type { KernelEvent, KernelTransport } from '../../types';
+import type { KernelEvent, KernelTransport } from '../../consent-kernel.model';
 import type { ConsentExperiment, ExperimentAssignment } from '../experiment';
 import { createExperimentControllerWith } from '../experiment-assignment';
 import type { ExperimentControllerOptions } from '../experiment-assignment';

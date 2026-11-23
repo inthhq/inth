@@ -21,8 +21,8 @@ import type {
 	InitOutput,
 } from '@inth/sdk-schema/types';
 
-import { clearStaleCache, readThrough } from './stale-on-error';
-import type { StaleCache } from './stale-on-error';
+import { clearStaleCache, readThrough } from './stale-on-error.model';
+import type { StaleCache } from './stale-on-error.model';
 
 export type AdTechProviderCache = StaleCache<AdTechProvider[] | undefined>;
 

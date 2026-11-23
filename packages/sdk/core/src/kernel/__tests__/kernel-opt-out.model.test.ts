@@ -16,7 +16,7 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import type { KernelConfig } from '../../types';
+import type { KernelConfig } from '../../consent-kernel.model';
 import { createKernel as assembleKernel } from '../index';
 
 const usOptOutRule = () =>

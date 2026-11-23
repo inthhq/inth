@@ -11,8 +11,8 @@ import type { ConsentManifest, InitOutput } from '@inth/sdk-schema/types';
 import {
 	fetchCachedAdTechProviders,
 	loadManifestAdTechProviders,
-} from './ad-tech-provider-cache';
-import { fetchCachedGvl } from './gvl-cache';
+} from './ad-tech-provider-cache.model';
+import { fetchCachedGvl } from './gvl-cache.model';
 
 /**
  * Add the vendor list, and any Google Additional Consent providers the

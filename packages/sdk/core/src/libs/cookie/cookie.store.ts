@@ -7,9 +7,9 @@ import {
 	cookieDomainsOf,
 	getRootDomain,
 	resolveCookieDomain,
-} from './domain-utils';
-import { readCookieValueFromHeader } from './read-header';
-import type { StorageConfig } from './types';
+} from './resolve-cookie-domain';
+import { readCookieValueFromHeader } from './read-cookie-value-from-header';
+import type { StorageConfig } from './cookie.model';
 
 /**
  * Outcome of one attempt to store a cookie.

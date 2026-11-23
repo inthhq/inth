@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { hasGlobalPrivacyControlSignal } from '../global-privacy-control';
+import { hasGlobalPrivacyControlSignal } from '../read-global-privacy-control';
 
 describe('hasGlobalPrivacyControlSignal', () => {
 	let originalWindow: typeof window | undefined;

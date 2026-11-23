@@ -26,18 +26,18 @@ import {
 	isPlainRecord,
 	ownKeys,
 	ownValue,
-} from '../../../consent-record/validation';
+} from '../../../consent-record/consent-record-validation.model';
 import type {
 	RecordIssue,
 	ValidationResult,
-} from '../../../consent-record/validation';
-import type { OptOutLocalAct } from '../../../libs/opt-out-state';
-import { decodeComponent } from '../record-codec';
+} from '../../../consent-record/consent-record-validation.model';
+import type { OptOutLocalAct } from '../../../libs/opt-out-state.model';
+import { decodeComponent } from '../record-codec.model';
 import type {
 	DecodeResult,
 	StorageIssue,
 	StoredOptOutRecord,
-} from '../record-codec';
+} from '../record-codec.model';
 
 const FIELD_SEPARATOR = '&';
 const KEY_VALUE_SEPARATOR = '=';

@@ -9,7 +9,7 @@
 
 import { AD_TECH_PROVIDER_PURPOSES } from '@inth/sdk-schema/types';
 
-import type { KernelIABState } from '../types';
+import type { KernelIABState } from '../consent-kernel.model';
 import type { ResolvedIABCopy } from './consent-copy';
 
 type HeadlessIABStateInput = Pick<KernelIABState, 'gvl'> &

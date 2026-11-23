@@ -1,5 +1,5 @@
 import type { StorageConfig } from '../../libs/cookie';
-import type { ConsentKernel } from '../../types';
+import type { ConsentKernel } from '../../consent-kernel.model';
 
 export type { StorageConfig };
 

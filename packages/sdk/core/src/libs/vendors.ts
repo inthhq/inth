@@ -21,10 +21,10 @@ import type {
 	ConsentSnapshot,
 	ResolvedVendor,
 	VendorSource,
-} from '../types';
+} from '../consent-kernel.model';
 import type { HasCondition } from './has';
 import { extractConsentNamesFromCondition } from './has';
-import type { VendorDetails } from './script-loader/types';
+import type { VendorDetails } from './script-loader/script.model';
 
 /** A script or network rule that names the vendor it belongs to. */
 export interface VendorOwner {

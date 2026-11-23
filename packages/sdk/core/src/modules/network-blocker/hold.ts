@@ -31,7 +31,7 @@
  * Ships in first-load JavaScript, so it imports nothing at runtime and
  * matches rules with a compact copy of the logic in `url.ts`.
  */
-import type { NetworkBlockerRule } from './types';
+import type { NetworkBlockerRule } from './network-blocker.model';
 
 /**
  * Key under which a patched `XMLHttpRequest.prototype.open` stores the

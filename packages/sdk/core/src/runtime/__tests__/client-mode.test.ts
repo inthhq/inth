@@ -14,7 +14,7 @@ import { createBrowserManifestTransport } from '../../transports/manifest-browse
 import type { ProviderTransportContext } from '../../transports/mode';
 import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
 import { createV1HostedTransport } from '../../transports/v1/hosted';
-import type { InitContext, KernelTransport, SavePayload } from '../../types';
+import type { InitContext, KernelTransport, SavePayload } from '../../consent-kernel.model';
 import {
 	clientMode,
 	lazyBrowserManifest,

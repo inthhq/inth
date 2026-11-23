@@ -11,10 +11,10 @@ import {
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createKernel } from '../../kernel/index';
-import { createMemoryOutboxStore } from '../../kernel/save-outbox/store';
-import type { Script } from '../../libs/script-loader/types';
-import type { ConsentSnapshot } from '../../types';
-import { canDeferEngine } from '../defer-engine';
+import { createMemoryOutboxStore } from '../../kernel/save-outbox/save-outbox.store';
+import type { Script } from '../../libs/script-loader/script.model';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
+import { canDeferEngine } from '../can-defer-engine';
 import { awaitsChoice } from '../plain-scripts';
 
 const asking = (): ConsentSnapshot =>

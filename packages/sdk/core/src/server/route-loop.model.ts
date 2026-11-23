@@ -4,7 +4,7 @@
  * route is mounted at. Every request the route sent upstream would arrive
  * at the route again.
  */
-import { trimPathSlashes } from './shared';
+import { trimPathSlashes } from './server-adapter.model';
 
 /** Resolves a relative URL's path, `..` segments included. Never contacted. */
 const RELATIVE_BASE = 'http://inth.invalid';

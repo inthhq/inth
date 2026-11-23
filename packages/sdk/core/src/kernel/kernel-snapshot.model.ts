@@ -17,10 +17,10 @@ import type {
 	OptionalConsentCategory,
 } from '../consent-record/types';
 import { deriveActiveUI } from '../derive-surface';
-import { deepFreeze, ownScriptRegistry } from '../libs/freeze-data';
+import { deepFreeze, ownScriptRegistry } from '../libs/freeze-data.model';
 import { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
-import { deriveModel } from '../policy-choice';
-import type { PresentedSelection } from '../policy-choice';
+import { deriveModel } from '../policy-choice.model';
+import type { PresentedSelection } from '../policy-choice.model';
 import { applyTranslationOverrides } from '../translations';
 import type {
 	ConsentSnapshot,
@@ -32,13 +32,13 @@ import type {
 	VendorChoice,
 	ResolvedVendor,
 	PromptSurface,
-} from '../types';
-import { DEFAULT_BRANDING } from '../types';
+} from '../consent-kernel.model';
+import { DEFAULT_BRANDING } from '../consent-kernel.model';
 import {
 	evaluateExternalPermissions,
 	normalizeExternalPermissions,
-} from './external-permissions';
-import { validateHydrationRecords } from './record-validation';
+} from './external-permissions.model';
+import { validateHydrationRecords } from './record-validation.model';
 
 /**
  * Default IAB slice. Used as the base when constructing the initial IAB

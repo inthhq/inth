@@ -4,7 +4,7 @@
  * runtime, like `hosted-modes.ts`: a provider asks it about any mode
  * without loading that mode's transport.
  */
-import type { KernelOverrides } from '../types';
+import type { KernelOverrides } from '../consent-kernel.model';
 import type { ProviderTransportFactory } from './mode';
 
 /** What a mode tells a provider about sending its `/v1/consent/init` early. */

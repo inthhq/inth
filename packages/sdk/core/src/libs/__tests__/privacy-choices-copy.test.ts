@@ -14,7 +14,7 @@ import {
 	resolvePrivacyChoicesVariant,
 	resolveSaleRightCopy,
 } from '../consent-copy';
-import { resolvePrivacyChoicesLink } from '../privacy-choices-link';
+import { resolvePrivacyChoicesLink } from '../resolve-privacy-choices-link';
 
 const presetPolicy = (rule: PolicyRule | PolicyRule[]) =>
 	normalizePolicyRule(Array.isArray(rule) ? (rule[0] as PolicyRule) : rule);

@@ -10,8 +10,8 @@ import { scriptLoaderTools } from '../modules/script-loader/tools';
 import type {
 	ScriptLoaderHandle,
 	ScriptLoaderOptions,
-} from '../modules/script-loader/types';
-import { lazyRuntimeModule } from './lazy-module';
+} from '../modules/script-loader/script-loader.model';
+import { lazyRuntimeModule } from './lazy-runtime-module';
 
 /**
  * The `createScriptLoader` module, loaded on first use.

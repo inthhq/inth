@@ -6,8 +6,8 @@
  */
 import { afterEach, describe, expect, test } from 'vitest';
 
-import type { Script } from '../../libs/script-loader/types';
-import type { ConsentSnapshot } from '../../types';
+import type { Script } from '../../libs/script-loader/script.model';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
 import {
 	changedPlainScripts,
 	claimPlainScripts,

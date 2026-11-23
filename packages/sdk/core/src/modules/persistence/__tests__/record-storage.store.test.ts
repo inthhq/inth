@@ -10,15 +10,15 @@ import { makePolicy } from '../../../consent-record/__tests__/fixtures';
 import { evaluateConsentRecord } from '../../../consent-record/evaluate';
 import type { ChoiceBasis } from '../../../consent-record/types';
 import { setCookie } from '../../../libs/cookie';
-import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
+import { legacySubjectIdKey } from '../../../libs/legacy-subject-id.store';
 import {
 	C15T_STORAGE_KEY,
 	STORAGE_KEY,
 	STORAGE_KEY_V2,
 	resolveStorageKeys,
 } from '../../../libs/storage-keys';
-import type { StoredConsentEnvelope } from '../record-codec';
-import type { DecodedStoredConsent } from '../record-storage';
+import type { StoredConsentEnvelope } from '../record-codec.model';
+import type { DecodedStoredConsent } from '../record-storage.store';
 import {
 	readRawStoredConsentCandidates,
 	readStoredConsentRecord,
@@ -26,12 +26,12 @@ import {
 	readStoredNoticeDismissal,
 	readStoredNoticeDismissalFromCookieHeader,
 	readStoredVendorChoiceFromCookieHeader,
-} from '../record-storage';
+} from '../record-storage.store';
 import {
 	encodeNoticeDismissalCompact,
 	encodeStoredConsentEnvelopeCompact,
 	encodeVendorChoiceCompact,
-} from '../writer/encode';
+} from '../writer/record-encode.model';
 import {
 	clearStoredConsentRecords,
 	writeStoredConsentEnvelope,

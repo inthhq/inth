@@ -20,7 +20,7 @@
  *   called again, and every other listener only receives the newest value
  *   queued for it.
  */
-import type { Listener, Unsubscribe } from '../types';
+import type { Listener, Unsubscribe } from '../consent-kernel.model';
 
 /**
  * Nested deliveries one synchronous cascade may open. Far above any

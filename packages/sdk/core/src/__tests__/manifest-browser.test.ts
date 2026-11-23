@@ -19,8 +19,8 @@ import {
 	withEarlyInit,
 } from '../transports/manifest-browser';
 import { manifestNeedsLocation } from '../transports/manifest-browser-location';
-import { mayBeLocationFree } from '../transports/manifest-browser-packs';
-import type { InitContext } from '../types';
+import { mayBeLocationFree } from '../transports/manifest-browser-packs.model';
+import type { InitContext } from '../consent-kernel.model';
 
 const everywhereManifest: ConsentManifest = {
 	branding: 'inth',

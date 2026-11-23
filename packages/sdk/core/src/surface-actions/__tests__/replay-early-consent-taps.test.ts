@@ -21,14 +21,14 @@ import {
 import type { EarlyConsentTapQueue } from '../../libs/page-globals';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { createConsentRuntime } from '../../runtime/index';
-import type { ConsentRuntime } from '../../runtime/types';
+import type { ConsentRuntime } from '../../runtime/consent-runtime.model';
 import { hosted } from '../../transports/mode';
 import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
 import {
 	EARLY_CONSENT_TAP_SCRIPT,
 	EARLY_TAP_OPT_OUT,
-} from '../early-tap-script';
-import { replayEarlyConsentTaps } from '../early-taps';
+} from '../early-consent-tap-script';
+import { replayEarlyConsentTaps } from '../replay-early-consent-taps';
 import { closeOptOutConfirmation, isOptOutConfirmationOpen } from '../opt-out';
 
 let policy = matchedResolution(optInRule());

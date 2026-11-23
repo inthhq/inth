@@ -10,8 +10,8 @@ import {
 	openJourney,
 	readEarlyJourney,
 	sessionStorageOf,
-} from '../libs/journey';
-import type { ConsentJourneyOption, JourneyStorage } from '../libs/journey';
+} from '../libs/journey.store';
+import type { ConsentJourneyOption, JourneyStorage } from '../libs/journey.store';
 import {
 	C15T_JOURNEY_STORAGE_KEY,
 	JOURNEY_STORAGE_KEY,
@@ -22,9 +22,9 @@ import type {
 	KernelJourney,
 	KernelTransport,
 	SavePayload,
-} from '../types';
+} from '../consent-kernel.model';
 
-export type { JourneyStorage } from '../libs/journey';
+export type { JourneyStorage } from '../libs/journey.store';
 
 const removeTabJourney = function removeTabJourney(
 	store: JourneyStorage | null

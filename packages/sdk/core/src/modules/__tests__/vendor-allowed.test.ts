@@ -14,7 +14,7 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel, isVendorAllowed } from '../../index';
 import { isSnapshotVendorAllowed } from '../../surface-actions';
-import type { ConsentSnapshot, ResolvedVendor } from '../../types';
+import type { ConsentSnapshot, ResolvedVendor } from '../../consent-kernel.model';
 
 const vendor = (
 	id: string,

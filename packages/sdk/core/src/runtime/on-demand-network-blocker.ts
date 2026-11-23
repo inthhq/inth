@@ -6,8 +6,8 @@ import { networkBlockerTools } from '../modules/network-blocker/tools';
 import type {
 	NetworkBlockerHandle,
 	NetworkBlockerOptions,
-} from '../modules/network-blocker/types';
-import { lazyRuntimeModule } from './lazy-module';
+} from '../modules/network-blocker/network-blocker.model';
+import { lazyRuntimeModule } from './lazy-runtime-module';
 
 /**
  * The `createNetworkBlocker` module, loaded on first use.

@@ -23,13 +23,13 @@ import { isProductionBuild } from '../libs/is-production';
  * snapshot or any translation.
  */
 import { hasPrefetchedInitialData } from '../libs/prefetch/window-key';
-import { trimSlash } from '../libs/url';
+import { trimSlash } from '../libs/trim-slash';
 import type { ConsentMode, TestingModeOptions } from '../modes';
 import { testingOptionsOf } from '../modes';
-import type { SSRInitialData } from '../options/ssr';
+import type { SSRInitialData } from '../options/ssr-options.model';
 import type * as ManifestBrowserModule from '../transports/manifest-browser';
 import type { BrowserManifestOptions } from '../transports/manifest-browser';
-import { createManifestRequestInit } from '../transports/manifest-request';
+import { createManifestRequestInit } from '../transports/manifest-request.model';
 import type {
 	ProviderTransportContext,
 	ProviderTransportFactory,
@@ -38,9 +38,9 @@ import type {
 import type * as TestingTransportModule from '../transports/testing';
 import type * as HostedModule from '../transports/v1/hosted';
 import { createV1InitRequest } from '../transports/v1/init-request';
-import { V1_ROUTES } from '../transports/v1/paths';
+import { V1_ROUTES } from '../transports/v1/v1-routes';
 import { createV1RecordTransport } from '../transports/v1/records';
-import type { InitContext, KernelConfig, KernelTransport } from '../types';
+import type { InitContext, KernelConfig, KernelTransport } from '../consent-kernel.model';
 
 /** Where a client root's transport sends requests. */
 export interface ClientModeOptions {

@@ -42,14 +42,14 @@
  */
 import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 
-import { hasGlobalPrivacyControlSignal } from '../libs/global-privacy-control';
+import { hasGlobalPrivacyControlSignal } from '../libs/read-global-privacy-control';
 import { evaluateConsent } from '../modules/has';
-import type { ConsentKernel } from '../types';
+import type { ConsentKernel } from '../consent-kernel.model';
 import type {
 	ConsentRuntimeModules,
 	ConsentRuntimeOptions,
 	RuntimePrefetch,
-} from './types';
+} from './consent-runtime.model';
 
 type PreloadScriptLoader = NonNullable<
 	ConsentRuntimeModules['preloadScriptLoader']

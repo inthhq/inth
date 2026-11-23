@@ -3,8 +3,8 @@
  */
 import { describe, expect, test } from 'vitest';
 
-import { resolveSurfaceEscape } from '../escape';
-import type { SurfaceEscapeInput } from '../escape';
+import { resolveSurfaceEscape } from '../resolve-surface-escape';
+import type { SurfaceEscapeInput } from '../resolve-surface-escape';
 import {
 	announcementText,
 	initialSurfaceSession,
@@ -12,8 +12,8 @@ import {
 	MAIN_LAYER,
 	reduceSurfaceSession,
 	topLayer,
-} from '../state';
-import type { SurfaceSessionAction, SurfaceSessionState } from '../state';
+} from '../surface-session-state.model';
+import type { SurfaceSessionAction, SurfaceSessionState } from '../surface-session-state.model';
 
 const run = function run(
 	state: SurfaceSessionState,

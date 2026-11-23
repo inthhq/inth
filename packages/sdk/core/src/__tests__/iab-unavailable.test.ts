@@ -9,7 +9,7 @@ import {
 	policyNeedsIAB,
 } from '../index';
 import { createOfflineTransport } from '../transports/offline';
-import type { GlobalVendorList, KernelConfig } from '../types';
+import type { GlobalVendorList, KernelConfig } from '../consent-kernel.model';
 
 /** Only its presence matters here. */
 const GVL = {

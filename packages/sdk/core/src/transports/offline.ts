@@ -35,8 +35,8 @@ import type {
 	KernelTransport,
 	SavePayload,
 	SaveResult,
-} from '../types';
-import { DEFAULT_BRANDING } from '../types';
+} from '../consent-kernel.model';
+import { DEFAULT_BRANDING } from '../consent-kernel.model';
 import type { TransportInitResponse } from './init-output';
 import type { ProviderTransportFactory } from './mode';
 

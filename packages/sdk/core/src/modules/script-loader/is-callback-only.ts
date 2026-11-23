@@ -1,4 +1,4 @@
-import type { Script } from './types';
+import type { Script } from './script-loader.model';
 
 /**
  * Resolve whether a script can use its callbacks without an element.

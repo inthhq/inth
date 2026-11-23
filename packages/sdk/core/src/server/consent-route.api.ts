@@ -49,7 +49,7 @@ import type {
 	SessionJourney,
 } from '@inth/sdk-schema/types';
 
-import { markResponsePrivate } from '../libs/identity-headers';
+import { markResponsePrivate } from '../libs/identity-headers.model';
 import {
 	fetchCachedManifest,
 	getManifestAge,
@@ -62,52 +62,52 @@ import type {
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
-import { warnManifestFallback } from '../libs/manifest-fallback';
-import { inthProtocolHeaders } from '../libs/version-header';
+import { warnManifestFallback } from '../libs/warn-manifest-fallback';
+import { inthProtocolHeaders } from '../libs/inth-protocol-headers';
 import {
 	fetchCachedAdTechProviders,
 	loadManifestAdTechProviders,
-} from '../transports/ad-tech-provider-cache';
-import type { AdTechProviderCache } from '../transports/ad-tech-provider-cache';
+} from '../transports/ad-tech-provider-cache.model';
+import type { AdTechProviderCache } from '../transports/ad-tech-provider-cache.model';
 import {
 	deferInitGvlToRoute,
 	serveGvlReference,
-} from '../transports/gvl-reference';
+} from '../transports/gvl-reference.model';
 import { mapInitOutputToInitResponse } from '../transports/init-output';
 import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,
 } from '../transports/manifest-cache';
-import { V1_ROUTES } from '../transports/v1/paths';
-import { reportV1ConsentSession } from '../transports/v1/session-report';
+import { V1_ROUTES } from '../transports/v1/v1-routes';
+import { reportV1ConsentSession } from '../transports/v1/v1-session-report.api';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,
 	filterCookieHeader,
 	forwardConsentRequest,
 	resolveConsentProxyOptions,
 	stripIdentityForCleartext,
-} from './consent-proxy';
+} from './consent-proxy.api';
 import type {
 	ConsentProxyForwarding,
 	ConsentProxyOptions,
-} from './consent-proxy';
-import { fetchServerGvl } from './gvl-cache';
+} from './consent-proxy.api';
+import { fetchServerGvl } from './server-gvl-cache.api';
 import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
-} from './request-origin';
+} from './request-origin.model';
 import {
 	mountOf,
 	readUpstreams,
 	relativeLoop,
 	requestLoop,
-} from './route-loop';
+} from './route-loop.model';
 import {
 	IN_PROCESS_ORIGIN,
 	keepAlive,
 	toPathFetch,
 	trimPathSlashes,
-} from './shared';
+} from './server-adapter.model';
 
 /**
  * Request header a server render sets on its call to the init route: the

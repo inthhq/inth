@@ -7,8 +7,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { NOW } from '../../__tests__/fixtures/kernel-fixtures';
-import type { ConsentKernel, KernelEvent } from '../../types';
-import { MAX_DELIVERY_DEPTH, MAX_FINAL_PASS_CALLS } from '../dispatch';
+import type { ConsentKernel, KernelEvent } from '../../consent-kernel.model';
+import { MAX_DELIVERY_DEPTH, MAX_FINAL_PASS_CALLS } from '../create-dispatcher';
 import { createConsentKernel } from '../index';
 
 let reported: ReturnType<typeof vi.spyOn>;

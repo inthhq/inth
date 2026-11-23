@@ -24,7 +24,7 @@ import {
 	SERVER_START_FAILED_EVENT,
 	STARTED_KEY,
 } from '../libs/page-globals';
-import type { Script } from '../libs/script-loader/types';
+import type { Script } from '../libs/script-loader/script.model';
 import { storageFor } from '../libs/storage-for';
 import {
 	OPT_OUT_CONFIRMATION_STORAGE_KEY,
@@ -41,20 +41,20 @@ import {
 import {
 	CATEGORY_CODES,
 	SUBJECT_CODES,
-} from '../modules/persistence/writer/encode';
-import { isCallbackOnly } from '../modules/script-loader/callback-only';
-import { readScriptRegistry } from '../modules/script-loader/registry';
-import { createRegistryVerifier } from '../modules/script-loader/signature';
-import { createScriptSourceResolver } from '../modules/script-loader/sources';
+} from '../modules/persistence/writer/record-encode.model';
+import { isCallbackOnly } from '../modules/script-loader/is-callback-only';
+import { readScriptRegistry } from '../modules/script-loader/script-registry.model';
+import { createRegistryVerifier } from '../modules/script-loader/script-signature.model';
+import { createScriptSourceResolver } from '../modules/script-loader/script-sources.model';
 import {
 	portableDeclaration,
 	rootNeedsEngine,
 	scriptsNeedEngine,
 } from '../surface-actions/plain-scripts';
-import type { ConsentSnapshot } from '../types';
-import { createRuntimeKernel } from './runtime-kernel';
+import type { ConsentSnapshot } from '../consent-kernel.model';
+import { createRuntimeKernel } from './create-runtime-kernel';
 import { scriptRegistrySignatures } from './script-registry';
-import type { ConsentRuntimeOptions, RuntimePrefetch } from './types';
+import type { ConsentRuntimeOptions, RuntimePrefetch } from './consent-runtime.model';
 
 type ServerScriptOptions = ConsentRuntimeOptions & {
 	prefetch?: RuntimePrefetch;

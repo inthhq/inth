@@ -1,7 +1,7 @@
 import type {
 	ClearOnRevocationHandle,
 	ClearOnRevocationOptions,
-} from '../modules/clear-on-revocation/types';
+} from '../modules/clear-on-revocation/clear-on-revocation.model';
 /**
  * `@inth/sdk/runtime` — the framework-agnostic consent runtime.
  *
@@ -38,7 +38,7 @@ import { createIframeBlocker } from '../modules/iframe-blocker';
 import type {
 	NetworkBlockerHandle,
 	NetworkBlockerOptions,
-} from '../modules/network-blocker/types';
+} from '../modules/network-blocker/network-blocker.model';
 import { createPersistence } from '../modules/persistence';
 import { watchRevocationReload } from '../modules/revocation-reload';
 import { createScriptLoader } from '../modules/script-loader';
@@ -46,20 +46,20 @@ import { createWindowDebug } from '../modules/window-debug';
 import { hosted } from '../transports/mode';
 import { assembleConsentRuntime } from './assemble';
 import { connectConsentSource } from './controls';
-import { mountRuntimeIAB } from './iab-mount';
-import { lazyRuntimeModule } from './lazy-module';
+import { mountRuntimeIAB } from './mount-runtime-iab';
+import { lazyRuntimeModule } from './lazy-runtime-module';
 import type {
 	ConsentRuntime,
 	ConsentRuntimeModules,
 	ConsentRuntimeOptions,
 	WithProjectUrl,
-} from './types';
+} from './consent-runtime.model';
 
 export { createConsentProviderRuntime } from './provider-runtime';
-export { streamPrefetch } from './streamed-prefetch';
+export { streamPrefetch } from './stream-prefetch';
 export { connectConsentSource } from './controls';
 export type { ConsentControlOptions } from './controls';
-export { inferConsentCategories } from './runtime-kernel';
+export { inferConsentCategories } from './create-runtime-kernel';
 
 export type {
 	ExternalConsentSource,
@@ -85,21 +85,21 @@ export type {
 	StreamedPrefetch,
 	RuntimeScriptLoaderOptions,
 	WithProjectUrl,
-} from './types';
-export type { WireRuntimeCallbacksOptions } from './callbacks';
-export { wireRuntimeCallbacks } from './callbacks';
+} from './consent-runtime.model';
+export type { WireRuntimeCallbacksOptions } from './wire-runtime-callbacks';
+export { wireRuntimeCallbacks } from './wire-runtime-callbacks';
 export type {
 	IABModuleLoader,
 	IABSurfaceActions,
 	LazyIABFactory,
 } from './lazy-iab';
-export { isIABConfigured } from './iab-options';
+export { isIABConfigured } from './is-iab-configured';
 export { createLazyIABFactory, iabSurfaceActions } from './lazy-iab';
-export { lazyRuntimeModule } from './lazy-module';
-export { mountRuntimeIAB } from './iab-mount';
-export type { RuntimeIABMountOptions } from './iab-mount';
-export { mountRuntimeGPP } from './gpp-mount';
-export type { RuntimeGPPMountOptions } from './gpp-mount';
+export { lazyRuntimeModule } from './lazy-runtime-module';
+export { mountRuntimeIAB } from './mount-runtime-iab';
+export type { RuntimeIABMountOptions } from './mount-runtime-iab';
+export { mountRuntimeGPP } from './mount-runtime-gpp';
+export type { RuntimeGPPMountOptions } from './mount-runtime-gpp';
 
 const loadClearOnRevocation = function loadClearOnRevocation(
 	options: ClearOnRevocationOptions

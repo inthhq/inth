@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { normalizeRoutePrefix } from '../route-prefix';
+import { normalizeRoutePrefix } from '../normalize-route-prefix';
 
 const ROOT_ERROR =
 	"@inth/example: `routePrefix` can't be '/': a consent route at the site root would catch every page. Use a path such as '/api/inth'.";

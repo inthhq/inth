@@ -9,15 +9,15 @@
  * `ProgressEvent('error')` to match what consumers see when the
  * network actually fails — v2 parity.
  */
-import type { ConsentSnapshot } from '../../types';
-import { evaluateBlock } from './decide';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
+import { evaluateBlock } from './evaluate-block';
 import type { XHR_REQUEST, XhrStash } from './hold';
 import type {
 	BlockedRequestInfo,
 	NetworkBlockerRule,
 	NetworkBlockerTools,
-} from './types';
-import { parseUrl } from './url';
+} from './network-blocker.model';
+import { parseUrl } from './parse-url';
 
 export interface XhrPatchDeps {
 	getRules: () => NetworkBlockerRule[];

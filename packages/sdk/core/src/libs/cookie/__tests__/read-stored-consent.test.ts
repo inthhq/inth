@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { setCookie } from '..';
 import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';
-import { readStoredRecords } from '../../../modules/persistence/hydrate';
+import { readStoredRecords } from '../../../modules/persistence/persistence-hydrate.store';
 import { STORAGE_KEY, STORAGE_KEY_V2 } from '../../storage-keys';
 
 const SUBJECT_ID = 'sub_2VZxR7YmNpKq3WfLs8TgHd';

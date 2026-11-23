@@ -1,4 +1,4 @@
-import type { ConsentKernel } from '../types';
+import type { ConsentKernel } from '../consent-kernel.model';
 
 /** Operations supplied by the provider's existing IAB module. */
 export interface KernelIABControls {

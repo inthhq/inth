@@ -1,7 +1,7 @@
 import { assert, describe, expect, it } from 'vitest';
 
-import { normalizeLegacyConsentRecord } from '../normalize';
-import { validateExplicitChoice, validateNoticeDismissal } from '../validation';
+import { normalizeLegacyConsentRecord } from '../normalize-legacy-consent-record';
+import { validateExplicitChoice, validateNoticeDismissal } from '../consent-record-validation.model';
 import { DAY, NOW } from './fixtures';
 
 const SUBJECT_ID = 'sub_2VZxR7YmNpKq3WfLs8TgHd';

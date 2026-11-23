@@ -6,9 +6,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createConsentKernel } from '../../../kernel';
 import { flushPendingMounts, mountScript, unmountScript } from '../mount';
 import type { MountDeps } from '../mount';
-import { createElementIdResolver } from '../normalize';
+import { createElementIdResolver } from '../normalize-scripts';
 import { scriptLoaderTools } from '../tools';
-import type { PendingMount, Script } from '../types';
+import type { PendingMount, Script } from '../script-loader.model';
 
 const makeDeps = function makeDeps(): {
 	deps: MountDeps;

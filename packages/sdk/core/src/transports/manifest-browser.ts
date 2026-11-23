@@ -20,32 +20,32 @@ import type {
 	ResolveInitFromManifestInputs,
 } from '@inth/sdk-schema/types';
 
-import { readGlobalPrivacyControl } from '../libs/global-privacy-control';
-import { createUnreportedJourneys } from '../libs/journey';
-import { warnManifestFallback } from '../libs/manifest-fallback';
-import { trimSlash } from '../libs/url';
+import { readGlobalPrivacyControl } from '../libs/read-global-privacy-control';
+import { createUnreportedJourneys } from '../libs/journey.store';
+import { warnManifestFallback } from '../libs/warn-manifest-fallback';
+import { trimSlash } from '../libs/trim-slash';
 import type {
 	ManifestModeBaseOptions,
 	ManifestModeInputs,
 	ManifestModeSourceOptions,
 } from '../modes';
-import type { InitContext, KernelOverrides, KernelTransport } from '../types';
+import type { InitContext, KernelOverrides, KernelTransport } from '../consent-kernel.model';
 import { earlyInitModes } from './early-init-modes';
 import type { EarlyInitMode } from './early-init-modes';
 import type { TransportInitResponse } from './init-output';
 import {
 	hasLocationMatchers,
 	mayBeLocationFree,
-} from './manifest-browser-packs';
-import type * as RemoteModule from './manifest-browser-remote';
+} from './manifest-browser-packs.model';
+import type * as RemoteModule from './manifest-browser-remote.model';
 import type * as ResolveModule from './manifest-browser-resolve';
-import { projectUrlOfManifest } from './manifest-url';
+import { projectUrlOfManifest } from './manifest-url.model';
 import type {
 	ProviderTransportContext,
 	ProviderTransportFactory,
 } from './mode';
 import { createV1HostedTransport } from './v1/hosted';
-import { V1_ROUTES } from './v1/paths';
+import { V1_ROUTES } from './v1/v1-routes';
 
 /** Options for {@link manifest} and {@link createBrowserManifestTransport}. */
 export type BrowserManifestOptions = ManifestModeBaseOptions &
@@ -226,7 +226,7 @@ const createManifestSource = function createManifestSource(
 	// needs it on every page, so start loading it now.
 	let remote: Promise<typeof RemoteModule> | undefined;
 	const loadRemote = () => {
-		remote ??= import('./manifest-browser-remote');
+		remote ??= import('./manifest-browser-remote.model');
 		return remote;
 	};
 	// Start a load early; a failure surfaces when init awaits it.

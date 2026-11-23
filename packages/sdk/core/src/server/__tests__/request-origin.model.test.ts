@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
-} from '../request-origin';
+} from '../request-origin.model';
 
 const FORGED = {
 	forwarded: 'host=attacker.example;proto=https',

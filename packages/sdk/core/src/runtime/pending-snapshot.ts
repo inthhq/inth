@@ -10,9 +10,9 @@
  */
 
 import type { EvaluationPolicy } from '../consent-record/types';
-import { deepFreeze } from '../libs/freeze-data';
-import type { ConsentSnapshot, KernelConfig, KernelOverrides } from '../types';
-import { DEFAULT_BRANDING } from '../types';
+import { deepFreeze } from '../libs/freeze-data.model';
+import type { ConsentSnapshot, KernelConfig, KernelOverrides } from '../consent-kernel.model';
+import { DEFAULT_BRANDING } from '../consent-kernel.model';
 
 /** The provider options a pending snapshot depends on. @internal */
 export interface PendingSnapshotOptions {

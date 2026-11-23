@@ -27,7 +27,7 @@ import type {
 	KernelConfig,
 	ResolvedVendor,
 	SavePayload,
-} from '../../types';
+} from '../../consent-kernel.model';
 import { createPreferenceDraft } from '../index';
 
 afterEach(() => {

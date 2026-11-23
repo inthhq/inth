@@ -3,7 +3,7 @@
  * Domain and configuration utilities for cookie storage.
  */
 
-import type { StorageConfig } from './types';
+import type { StorageConfig } from './cookie.model';
 
 /**
  * The domains a cookie for `hostname` can be scoped to: the host and every

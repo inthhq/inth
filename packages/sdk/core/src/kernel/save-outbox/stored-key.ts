@@ -1,6 +1,6 @@
 /* oxlint-disable no-bitwise -- cyrb128 and the UUID bits work on 32-bit lanes. */
 
-import type { SavePayload } from '../../types';
+import type { SavePayload } from '../../consent-kernel.model';
 
 /** A save payload as read from storage: an older client may have stored no key. */
 export type StoredSavePayload = Omit<SavePayload, 'idempotencyKey'> & {

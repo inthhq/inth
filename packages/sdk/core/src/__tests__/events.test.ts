@@ -2,12 +2,12 @@ import { expect, test, vi } from 'vitest';
 
 import { createEventDispatcher, getEventDispatcher } from '../events';
 import { createConsentKernel } from '../kernel';
-import type { Script } from '../libs/script-loader/types';
+import type { Script } from '../libs/script-loader/script.model';
 import {
 	createConsentProviderRuntime,
 	defaultRuntimeModules,
 } from '../runtime';
-import type { ConsentProviderRuntimeOptions } from '../runtime/types';
+import type { ConsentProviderRuntimeOptions } from '../runtime/consent-runtime.model';
 import { transportMode } from './fixtures/transport-mode';
 
 test('delivers only configured and consented events, isolates failures, and stops immediately on revocation', () => {

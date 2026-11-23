@@ -79,19 +79,19 @@
  *   run.
  */
 import { STORAGE_KEY_V2 } from '../../libs/storage-keys';
-import type { StoredRecords as StoredRead } from './hydrate';
+import type { StoredRecords as StoredRead } from './persistence-hydrate.store';
 import { mountPersistence } from './mount';
-import type { PersistenceHandle, PersistenceOptions } from './types';
+import type { PersistenceHandle, PersistenceOptions } from './persistence.model';
 
 export type {
 	PersistenceHandle,
 	PersistenceOptions,
 	StorageConfig,
-} from './types';
+} from './persistence.model';
 export {
 	readStoredRecords,
 	readStoredRecordsFromCookieHeader,
-} from './hydrate';
+} from './persistence-hydrate.store';
 
 /**
  * Stored records as {@link readStoredRecords} returns them. A read always
@@ -113,7 +113,7 @@ export type {
 	StoredConsentEnvelope,
 	StoredOptOutRecord,
 	StoredVendorChoice,
-} from './record-codec';
+} from './record-codec.model';
 export { resolveStorageKeys } from '../../libs/storage-keys';
 export { STORED_NAMES_CHECK, storedChoiceNames } from '../../libs/storage-keys';
 

@@ -12,8 +12,8 @@
 
 import { parseForwarded } from '@inth/sdk-schema/types';
 
-import { readHeader } from '../libs/headers';
-import { trimSlash } from '../libs/url';
+import { readHeader } from '../libs/http-headers.model';
+import { trimSlash } from '../libs/trim-slash';
 
 /** Request headers as a Web `Headers` object or a Node header record. */
 export type RequestHeaderSource =

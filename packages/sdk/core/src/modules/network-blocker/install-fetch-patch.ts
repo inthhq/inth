@@ -9,14 +9,14 @@
  * Returns an uninstall function that restores `window.fetch` only if
  * no other consumer has wrapped our patched version on top.
  */
-import type { ConsentSnapshot } from '../../types';
-import { evaluateBlock } from './decide';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
+import { evaluateBlock } from './evaluate-block';
 import type {
 	BlockedRequestInfo,
 	NetworkBlockerRule,
 	NetworkBlockerTools,
-} from './types';
-import { normalizeMethod, parseUrl } from './url';
+} from './network-blocker.model';
+import { normalizeMethod, parseUrl } from './parse-url';
 
 export interface FetchPatchDeps {
 	getRules: () => NetworkBlockerRule[];

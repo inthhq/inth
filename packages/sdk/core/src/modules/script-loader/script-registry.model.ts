@@ -1,11 +1,11 @@
-import type { ConsentSnapshot } from '../../types';
-import { parseRegistrySignature } from './signature';
-import { sriHashes } from './sources';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
+import { parseRegistrySignature } from './script-signature.model';
+import { sriHashes } from './script-sources.model';
 import type {
 	RegistrySource,
 	RegistrySources,
 	ScriptRegistryState,
-} from './sources';
+} from './script-sources.model';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);

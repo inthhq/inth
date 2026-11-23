@@ -1,8 +1,8 @@
 import type { V1ErrorCode } from '@inth/sdk-schema/types';
 
-import { ConsentSaveRejectedError } from '../save-rejection';
-import { InthApiError, describeApiError, readApiErrorDetail } from './error';
-import type { InthApiErrorDetail } from './error';
+import { ConsentSaveRejectedError } from '../consent-save-rejected-error';
+import { InthApiError, describeApiError, readApiErrorDetail } from './inth-api-error';
+import type { InthApiErrorDetail } from './inth-api-error';
 
 /**
  * A consent save the backend refused for good. The kernel drops it rather

@@ -1,4 +1,4 @@
-import type { ConsentState } from '../types';
+import type { ConsentState } from '../consent-kernel.model';
 
 /** Normalize a complete external CMP decision; omitted categories fail closed. */
 export const normalizeExternalPermissions = (

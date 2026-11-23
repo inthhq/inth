@@ -17,7 +17,7 @@ import {
 import { createConsentKernel } from '../../kernel';
 import { createPreferenceDraft } from '../../preference-draft';
 import { showConsentSurface } from '../../surface-actions/rules';
-import type { ConsentKernel, KernelConfig } from '../../types';
+import type { ConsentKernel, KernelConfig } from '../../consent-kernel.model';
 import {
 	commitBannerChoice,
 	commitDialogChoice,
@@ -28,8 +28,8 @@ import {
 	resolveBannerCommit,
 	resolveRightPress,
 	resolveSaleRight,
-} from '../rights';
-import type { RightPressInput } from '../rights';
+} from '../surface-rights.model';
+import type { RightPressInput } from '../surface-rights.model';
 import { getSurfaceSession } from '../session';
 
 const CATEGORIES = [

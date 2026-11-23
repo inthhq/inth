@@ -34,10 +34,10 @@ import type { ConsentManifest, PolicyRule } from '@inth/sdk-schema/types';
 
 import type { ConsentMode, TestingMode } from '../modes';
 import { assertNotProduction } from '../transports/testing';
-import { V1_ROUTES } from '../transports/v1/paths';
-import type { ConsentRouteHandlerOptions } from './consent-route';
-import type { ResolveRequestConsentOptions } from './request-consent';
-import { DEFAULT_CONSENT_ROUTE_PREFIX } from './shared';
+import { V1_ROUTES } from '../transports/v1/v1-routes';
+import type { ConsentRouteHandlerOptions } from './consent-route.api';
+import type { ResolveRequestConsentOptions } from './request-consent.api';
+import { DEFAULT_CONSENT_ROUTE_PREFIX } from './server-adapter.model';
 
 const MODE_TYPES: ReadonlySet<string> = new Set([
 	'manifest',

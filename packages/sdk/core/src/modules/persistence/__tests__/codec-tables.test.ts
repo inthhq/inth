@@ -15,7 +15,7 @@ import {
 	OPT_OUT_METHOD_CODES as DECODED_OPT_OUT_METHOD_CODES,
 	OPT_OUT_RIGHT_CODES as DECODED_OPT_OUT_RIGHT_CODES,
 	SUBJECT_CODES as DECODED_SUBJECT_CODES,
-} from '../record-codec';
+} from '../record-codec.model';
 import {
 	CATEGORY_CODES,
 	IAB_CODES,
@@ -24,7 +24,7 @@ import {
 	OPT_OUT_METHOD_CODES,
 	OPT_OUT_RIGHT_CODES,
 	SUBJECT_CODES,
-} from '../writer/encode';
+} from '../writer/record-encode.model';
 
 describe('compact codes', () => {
 	test('the encoder and the decoder use the same codes', () => {

@@ -28,10 +28,10 @@ import {
 	determineVendor,
 	reconcileAllIframes,
 	reconcileIframeSafely,
-} from './reconcile';
-import type { IframeBlockerHandle, IframeBlockerOptions } from './types';
+} from './reconcile-iframe';
+import type { IframeBlockerHandle, IframeBlockerOptions } from './iframe-blocker.model';
 
-export type { IframeBlockerHandle, IframeBlockerOptions } from './types';
+export type { IframeBlockerHandle, IframeBlockerOptions } from './iframe-blocker.model';
 
 /**
  * Whether a node is an iframe. False for a node page script can't read:

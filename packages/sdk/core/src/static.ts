@@ -15,11 +15,11 @@ import type {
 import { resolveInitFromManifest } from '@inth/sdk-schema/types';
 import { baseTranslations } from '@inth/sdk-translations/all';
 
-import { hasGlobalPrivacyControlSignal } from './libs/global-privacy-control';
+import { hasGlobalPrivacyControlSignal } from './libs/read-global-privacy-control';
 import {
 	fetchGeoInputs,
 	readGeoInputs,
-} from './transports/manifest-browser-remote';
+} from './transports/manifest-browser-remote.model';
 
 /** The manifest shape static resolvers and generated modules use. */
 export type { ConsentManifest } from '@inth/sdk-schema/types';

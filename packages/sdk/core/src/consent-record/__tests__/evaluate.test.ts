@@ -6,9 +6,9 @@ import {
 	OPT_OUT_REPROMPT_WAIT_MS,
 	optInPromptAllowedAt,
 } from '../evaluate';
-import { normalizeLegacyConsentRecord } from '../normalize';
+import { normalizeLegacyConsentRecord } from '../normalize-legacy-consent-record';
 import type { ExplicitChoice, NoticeDismissal } from '../types';
-import { validateOptOutRecord } from '../validation';
+import { validateOptOutRecord } from '../consent-record-validation.model';
 import { currentBasis, DAY, makeChoice, makePolicy, NOW } from './fixtures';
 
 const allFalse = {

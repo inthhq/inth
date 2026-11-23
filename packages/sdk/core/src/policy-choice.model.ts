@@ -10,7 +10,7 @@ import type {
 	OptionalConsentCategory,
 } from './consent-record/types';
 import { policyDefault } from './consent/consent-types';
-import type { KernelModel } from './types';
+import type { KernelModel } from './consent-kernel.model';
 
 /**
  * Runtime model. An IAB rule only runs as `iab` when the IAB module is

@@ -1,6 +1,6 @@
 /** Forward public policy events without synthesizing choices from permissions. */
-import type { ConsentKernel, Unsubscribe } from '../types';
-import type { ConsentRuntimeOptions } from './types';
+import type { ConsentKernel, Unsubscribe } from '../consent-kernel.model';
+import type { ConsentRuntimeOptions } from './consent-runtime.model';
 
 export interface WireRuntimeCallbacksOptions {
 	kernel: ConsentKernel;

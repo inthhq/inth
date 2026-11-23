@@ -4,9 +4,9 @@
 import { describe, expect, test, vi } from 'vitest';
 
 import { createConsentKernel } from '../../../kernel';
-import { installFetchPatch } from '../patch-fetch';
+import { installFetchPatch } from '../install-fetch-patch';
 import { networkBlockerTools } from '../tools';
-import type { NetworkBlockerRule } from '../types';
+import type { NetworkBlockerRule } from '../network-blocker.model';
 
 const rule: NetworkBlockerRule = {
 	category: 'marketing',

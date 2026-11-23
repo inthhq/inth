@@ -8,11 +8,11 @@ import {
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
-import type { InternalKernel } from '../../kernel/internals';
+import type { InternalKernel } from '../../kernel/kernel-internals.model';
 import type { ProviderTransportFactory } from '../../transports/mode';
-import type { InitResponse } from '../../types';
+import type { InitResponse } from '../../consent-kernel.model';
 import { createConsentRuntime } from '../index';
-import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
+import type { ConsentRuntime, ConsentRuntimeOptions } from '../consent-runtime.model';
 
 /**
  * Options a test passes over the defaults. Its mode is a transport factory,

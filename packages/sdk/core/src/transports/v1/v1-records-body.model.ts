@@ -5,8 +5,8 @@ import type {
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type { ExplicitChoice } from '../../consent-record/types';
-import type { SavePayload } from '../../types';
-import type { DecisionAssertion } from '../decision-inputs';
+import type { SavePayload } from '../../consent-kernel.model';
+import type { DecisionAssertion } from '../decision-inputs.model';
 
 /** The body, without the decision assertion the transport adds. */
 export type V1ConsentRecordBody = Omit<

@@ -16,7 +16,7 @@ import {
 	planEarlyCommit,
 	storeEarlyCommit,
 } from '../../surface-actions/early-commit';
-import type { KernelUser, SavePayload } from '../../types';
+import type { KernelUser, SavePayload } from '../../consent-kernel.model';
 import { createKernel } from '../index';
 import {
 	createBrowserOutboxStore,

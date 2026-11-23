@@ -1,4 +1,4 @@
-import type { SavePayload } from '../../types';
+import type { SavePayload } from '../../consent-kernel.model';
 
 /**
  * A save payload as the outbox stores it: without `user.identityToken`.

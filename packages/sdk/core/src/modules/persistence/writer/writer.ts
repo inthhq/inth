@@ -19,9 +19,9 @@ import type {
 	ConsentSubject,
 	ExplicitChoice,
 } from '../../../consent-record/types';
-import type { ConsentSnapshot, HydrationRecords } from '../../../types';
-import type { StoredRecords } from '../hydrate';
-import type { StoredIabMetadata } from '../record-codec';
+import type { ConsentSnapshot, HydrationRecords } from '../../../consent-kernel.model';
+import type { StoredRecords } from '../persistence-hydrate.store';
+import type { StoredIabMetadata } from '../record-codec.model';
 import {
 	choiceToWrite,
 	fingerprintStoredRecords,
@@ -32,22 +32,22 @@ import {
 	selectReconciledRecords,
 	subjectAfterClear,
 	subjectToWrite,
-} from './reconcile';
-import type { StorageFingerprints, StoredRecordKind } from './reconcile';
-import { createWriteScheduler } from './schedule';
-import { createRecordStore } from './store';
+} from './writer-reconcile.model';
+import type { StorageFingerprints, StoredRecordKind } from './writer-reconcile.model';
+import { createWriteScheduler } from './create-write-scheduler';
+import { createRecordStore } from './persistence-writer.store';
 import type {
 	PersistenceContext,
 	PersistenceTools,
 	PersistenceWriter,
 	WriteKind,
-} from './types';
+} from './persistence-writer.model';
 import {
 	writeChoiceToStorage,
 	writeNoticeToStorage,
 	writeOptOutToStorage,
 	writeVendorChoiceToStorage,
-} from './write';
+} from './persistence-write.store';
 
 /**
  * Create the write half of one persistence handle. It writes nothing until

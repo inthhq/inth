@@ -11,14 +11,14 @@ import {
 	optInPromptAllowedAt,
 	optOutDenyCategories,
 	optOutLiftBlocker,
-} from '../consent-record/opt-out-rules';
+} from '../consent-record/opt-out-rules.model';
 import { optOutDecidingCategory } from '../consent-record/types';
 import type {
 	EvaluationPolicy,
 	OptionalConsentCategory,
 } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
-import type { ConsentSnapshot } from '../types';
+import type { ConsentSnapshot } from '../consent-kernel.model';
 
 /** How an honored opt-out was recorded or is currently enforced. */
 export type OptOutVia = 'signal' | 'request';

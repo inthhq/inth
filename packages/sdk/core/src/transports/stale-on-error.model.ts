@@ -5,7 +5,7 @@
  * for a backoff so an endpoint outage costs one fetch per backoff instead
  * of one per init.
  */
-import { boundedSet, mapFor } from '../libs/bounded-map';
+import { boundedSet, mapFor } from '../libs/bounded-map.model';
 
 /** A cached value, or a failed fetch remembered without one. */
 export interface StaleEntry<Value> {

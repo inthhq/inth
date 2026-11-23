@@ -7,7 +7,7 @@
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type { OptionalConsentCategory } from '../../consent-record/types';
 import { DENIED_CONSENTS } from '../../consent/consent-types';
-import type { ConsentSnapshot, SavePayload } from '../../types';
+import type { ConsentSnapshot, SavePayload } from '../../consent-kernel.model';
 
 /** A save waiting for a replay. */
 export interface PendingSaveEntry {

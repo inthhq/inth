@@ -13,8 +13,8 @@
 
 import { CONSENT_ONLY_PURPOSES } from '@inth/sdk-schema/types';
 
-import type { PublisherRestriction } from '../options/iab-tcf';
-import type { GlobalVendorList, KernelIABState } from '../types';
+import type { PublisherRestriction } from '../options/iab-tcf-options.model';
+import type { GlobalVendorList, KernelIABState } from '../consent-kernel.model';
 
 type Vendor = GlobalVendorList['vendors'][number];
 

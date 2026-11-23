@@ -3,11 +3,11 @@
  * acceptances. Usable with no UI.
  */
 
-export { createDocumentsClient } from './client';
+export { createDocumentsClient } from './create-documents-client';
 export type {
 	DocumentsClient,
 	DocumentsClientOptions,
 	RecordAcceptancesInput,
-} from './client';
-export { createIdempotencyKey } from '../libs/subject-uuid';
-export { InthApiError, isInthApiError } from '../transports/v1/error';
+} from './create-documents-client';
+export { createIdempotencyKey } from '../libs/subject-uuid.model';
+export { InthApiError, isInthApiError } from '../transports/v1/inth-api-error';

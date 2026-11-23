@@ -14,7 +14,7 @@ import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
 import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
 import { createConsentRuntime } from '../index';
-import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
+import type { ConsentRuntime, ConsentRuntimeOptions } from '../consent-runtime.model';
 
 /**
  * Options a test passes over the defaults. Its mode is a transport factory,

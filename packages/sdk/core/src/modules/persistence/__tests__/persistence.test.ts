@@ -16,7 +16,7 @@ import {
 	STORAGE_KEY_V2,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../../libs/storage-keys';
-import { readStoredRecordsFromCookieHeader } from '../hydrate';
+import { readStoredRecordsFromCookieHeader } from '../persistence-hydrate.store';
 import { createPersistence } from '../index';
 import type { StorageConfig } from '../index';
 import {

@@ -17,7 +17,7 @@ import type {
 	Script,
 	ScriptCallbackInfo,
 	ScriptDebugEvent,
-} from '../../libs/script-loader/types';
+} from '../../libs/script-loader/script.model';
 import type {
 	declareOwnedVendors,
 	forgetOwnedVendors,
@@ -30,15 +30,15 @@ import type {
 	ConsentSnapshot,
 	ConsentState,
 	KernelIABState,
-} from '../../types';
+} from '../../consent-kernel.model';
 import type {
 	deniedVendorIds,
 	evaluateConsent,
 	getEffectiveGateState,
 	has,
 } from '../has';
-import type { RegistrySigningKeys } from './signature';
-import type { ScriptSources } from './sources';
+import type { RegistrySigningKeys } from './script-signature.model';
+import type { ScriptSources } from './script-sources.model';
 
 export type { Script, ScriptCallbackInfo };
 

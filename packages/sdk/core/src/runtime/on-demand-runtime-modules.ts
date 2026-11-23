@@ -40,7 +40,7 @@
 import { clearOnRevocationOnDemand } from './on-demand-clear-on-revocation';
 import { connectConsentSourceOnDemand } from './on-demand-consent-source';
 import { loaderAndBlockerOnDemand } from './on-demand-loader-and-blocker';
-import type { ConsentRuntimeModules } from './types';
+import type { ConsentRuntimeModules } from './consent-runtime.model';
 
 /**
  * The module factories {@link onDemandRuntimeModules} names. Spread them

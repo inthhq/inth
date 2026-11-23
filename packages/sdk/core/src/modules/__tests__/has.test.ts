@@ -15,7 +15,7 @@ import type {
 	ConsentSnapshot,
 	KernelIABAuthority,
 	KernelIABState,
-} from '../../types';
+} from '../../consent-kernel.model';
 import { evaluateConsent, has, hasIABConsent } from '../has';
 import type { IABConsentInputs } from '../has';
 

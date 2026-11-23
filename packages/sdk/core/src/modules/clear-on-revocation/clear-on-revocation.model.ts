@@ -1,7 +1,7 @@
 import type { OptionalConsentCategory } from '../../consent-record/types';
-import type { cookieDomainsOf } from '../../libs/cookie/domain-utils';
-import type { StorageConfig } from '../../libs/cookie/types';
-import type { ConsentKernel } from '../../types';
+import type { cookieDomainsOf } from '../../libs/cookie/resolve-cookie-domain';
+import type { StorageConfig } from '../../libs/cookie/cookie.model';
+import type { ConsentKernel } from '../../consent-kernel.model';
 import type { getEffectiveGateState } from '../has';
 
 /** A cookie name or nonempty prefix ending in `*`, with optional scope. */

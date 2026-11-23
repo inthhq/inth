@@ -1,6 +1,6 @@
-import type { Overrides } from '../../options/overrides';
+import type { Overrides } from '../../options/overrides-options.model';
 import type { ConsentExperiment } from '../experiment';
-import type { ConsentJourneyOption } from '../journey';
+import type { ConsentJourneyOption } from '../journey.store';
 
 export interface PrefetchOptions {
 	/**

@@ -12,7 +12,7 @@ import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
-} from '../types';
+} from '../consent-runtime.model';
 
 const loads = { count: 0, failures: 0 };
 

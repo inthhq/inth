@@ -9,7 +9,7 @@ import {
 	CORE_SURFACE_CONFIG_MODULES,
 	coreModuleFile,
 	coreModulePattern,
-} from '../chunk-modules';
+} from '../core-chunk-modules';
 
 const SRC = join(import.meta.dirname, '..');
 

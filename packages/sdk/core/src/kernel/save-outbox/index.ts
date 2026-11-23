@@ -57,7 +57,7 @@ import { warnInDevelopment } from '../../libs/is-production';
 import {
 	isConsentSaveRejection,
 	isSubjectConflict,
-} from '../../transports/save-rejection';
+} from '../../transports/consent-save-rejected-error';
 import type {
 	ConsentSnapshot,
 	KernelTransport,
@@ -65,9 +65,9 @@ import type {
 	OptOutPayload,
 	SavePayload,
 	SaveResult,
-} from '../../types';
-import { applySyncedOptOut } from '../opt-out';
-import type { KernelRuntime } from '../runtime';
+} from '../../consent-kernel.model';
+import { applySyncedOptOut } from '../kernel-opt-out.model';
+import type { KernelRuntime } from '../create-runtime';
 import type {
 	EnqueueResult,
 	OptOutEnqueueOutcome,
@@ -76,13 +76,13 @@ import type {
 	QueueWorkerOptions,
 } from './queue';
 import { queueTools } from './queue-tools';
-import { appendOptOut, appendSave } from './store';
-import type { OptOutAct, SaveOutboxStore } from './store';
+import { appendOptOut, appendSave } from './save-outbox.store';
+import type { OptOutAct, SaveOutboxStore } from './save-outbox.store';
 import {
 	liveSupersession,
 	withoutSuperseded,
 	withSubjectId,
-} from './supersession';
+} from './supersession.model';
 
 export type {
 	OptOutAct,
@@ -90,8 +90,8 @@ export type {
 	OutboxTransaction,
 	PendingOptOutEntry,
 	SaveOutboxStore,
-} from './store';
-export { createBrowserOutboxStore, createMemoryOutboxStore } from './store';
+} from './save-outbox.store';
+export { createBrowserOutboxStore, createMemoryOutboxStore } from './save-outbox.store';
 
 /** One recorded action, as `commands.save()` hands it to the outbox. */
 export interface RecordedAction {

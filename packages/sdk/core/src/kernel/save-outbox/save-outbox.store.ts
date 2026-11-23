@@ -15,7 +15,7 @@
  *   without localStorage.
  */
 
-import { getRawCookieValue } from '../../libs/cookie/operations';
+import { getRawCookieValue } from '../../libs/cookie/cookie.store';
 import {
 	C15T_PENDING_SAVES_STORAGE_KEY,
 	C15T_STORAGE_KEY,
@@ -25,14 +25,14 @@ import {
 	resolveStorageKeys,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../libs/storage-keys';
-import { decodeClearEpoch } from '../../modules/persistence/record-codec';
+import { decodeClearEpoch } from '../../modules/persistence/record-codec.model';
 import type {
 	LiftOptOutPayload,
 	OptOutPayload,
 	SavePayload,
-} from '../../types';
-import { toStoredPayload, withoutStoredTokens } from './stored-payload';
-import type { PendingSaveEntry } from './supersession';
+} from '../../consent-kernel.model';
+import { toStoredPayload, withoutStoredTokens } from './stored-payload.model';
+import type { PendingSaveEntry } from './supersession.model';
 
 /**
  * The Web Lock every browser outbox transaction holds: c15t's, so c15t and

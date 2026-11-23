@@ -13,13 +13,13 @@ import {
 	decodeStoredConsentEnvelopeCompact,
 	isCompactStoredConsentEnvelope,
 	validateStoredConsentEnvelope,
-} from '../record-codec';
-import type { StoredConsentEnvelope } from '../record-codec';
+} from '../record-codec.model';
+import type { StoredConsentEnvelope } from '../record-codec.model';
 import {
 	encodeNoticeDismissal,
 	encodeStoredConsentEnvelopeCompact,
 	encodeStoredConsentEnvelopeJson,
-} from '../writer/encode';
+} from '../writer/record-encode.model';
 
 const NOW = 1_800_000_000_000;
 const DAY = 86_400_000;

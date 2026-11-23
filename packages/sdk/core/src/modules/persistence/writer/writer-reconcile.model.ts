@@ -46,9 +46,9 @@ import type {
 	ConsentSnapshot,
 	HydrationRecords,
 	VendorChoice,
-} from '../../../types';
-import type { StoredRecords } from '../hydrate';
-import type { PersistenceTools } from './types';
+} from '../../../consent-kernel.model';
+import type { StoredRecords } from '../persistence-hydrate.store';
+import type { PersistenceTools } from './persistence-writer.model';
 
 /** The first-load rules reconciliation applies. */
 type Rules = Pick<

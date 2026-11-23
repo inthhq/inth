@@ -3,8 +3,8 @@
  * an IAB policy.
  */
 
-import type { ConsentKernel, SaveResult } from '../types';
-import { saveIABConsentSurface } from './iab-save';
+import type { ConsentKernel, SaveResult } from '../consent-kernel.model';
+import { saveIABConsentSurface } from './save-iab-consent-surface';
 import { saveConsentSurfaceWithOptInCheck } from './opt-in';
 
 /** The CMP handle calls a blanket action needs. */

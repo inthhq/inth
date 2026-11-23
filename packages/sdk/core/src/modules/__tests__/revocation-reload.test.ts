@@ -14,7 +14,7 @@ import {
 	createConsentKernel,
 	createKernel as createInternalKernel,
 } from '../../kernel';
-import type { InternalKernel } from '../../kernel/internals';
+import type { InternalKernel } from '../../kernel/kernel-internals.model';
 import { createMemoryOutboxStore } from '../../kernel/save-outbox';
 import type { SaveOutboxStore } from '../../kernel/save-outbox';
 import { OPT_OUT_CONFIRMATION_STORAGE_KEY } from '../../libs/storage-keys';
@@ -40,7 +40,7 @@ import type {
 	LiftOptOutTransportResult,
 	OptOutTransportResult,
 	SaveResult,
-} from '../../types';
+} from '../../consent-kernel.model';
 import { watchRevocationReload } from '../revocation-reload';
 import { createScriptLoader } from '../script-loader';
 

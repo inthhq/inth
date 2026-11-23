@@ -10,10 +10,10 @@ import {
 	buildReconcilePass,
 	hasScriptConsent,
 	isEligible,
-} from '../eligibility';
-import { normalizeScripts } from '../normalize';
+} from '../script-eligibility.model';
+import { normalizeScripts } from '../normalize-scripts';
 import { scriptLoaderTools } from '../tools';
-import type { Script } from '../types';
+import type { Script } from '../script-loader.model';
 
 const snapshotForKernel = function snapshotForKernel(
 	opts: Parameters<typeof createConsentKernel>[0]

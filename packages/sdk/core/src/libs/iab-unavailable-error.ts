@@ -8,7 +8,7 @@
  * Adapters throw {@link IABUnavailableError} instead, from the server
  * render and the browser alike, since both read the same snapshot.
  */
-import type { ConsentSnapshot } from '../types';
+import type { ConsentSnapshot } from '../consent-kernel.model';
 
 /** The `code` on every {@link IABUnavailableError}. */
 export const IAB_UNAVAILABLE_ERROR_CODE = 'INTH_IAB_UNAVAILABLE';

@@ -11,7 +11,7 @@
 import type { GlobalVendorList } from '@inth/sdk-schema/types';
 
 import type { ManifestFetch } from '../libs/manifest-cache-runtime';
-import { fetchCachedGvl } from '../transports/gvl-cache';
+import { fetchCachedGvl } from '../transports/gvl-cache.model';
 
 /**
  * How long a server waits for the Global Vendor List before the request is

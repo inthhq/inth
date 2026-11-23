@@ -19,9 +19,9 @@ import type {
 	InitResponse,
 	KernelConfig,
 	KernelTransport,
-} from '../types';
+} from '../consent-kernel.model';
 import type { StreamedInitOptions } from './streamed-init';
-import type { ConsentProviderRuntimeOptions, RuntimePrefetch } from './types';
+import type { ConsentProviderRuntimeOptions, RuntimePrefetch } from './consent-runtime.model';
 
 /**
  * `resolveStreamedInit` from `@inth/sdk/runtime/streamed-init`, or a

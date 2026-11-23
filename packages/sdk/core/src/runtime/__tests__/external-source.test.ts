@@ -10,7 +10,7 @@ import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { createConsentKernel } from '../../kernel';
 import { evaluateConsent } from '../../modules/has';
 import { createOfflineTransport } from '../../transports/offline';
-import type { ConsentState } from '../../types';
+import type { ConsentState } from '../../consent-kernel.model';
 import { createConsentRuntime } from '../index';
 
 test('external decisions change gates without creating receipts, persistence or a second banner', async () => {

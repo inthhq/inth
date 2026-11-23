@@ -27,7 +27,7 @@ import type {
 	WindowDebugMode,
 	WindowDebugModeInput,
 	WindowDebugOptions,
-} from './types';
+} from './window-debug.model';
 
 export type {
 	InthWindowDebug,
@@ -35,7 +35,7 @@ export type {
 	WindowDebugMode,
 	WindowDebugModeInput,
 	WindowDebugOptions,
-} from './types';
+} from './window-debug.model';
 
 /**
  * Resolves the {@link WindowDebugMode} to report for a provider-style

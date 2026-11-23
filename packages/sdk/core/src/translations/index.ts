@@ -7,7 +7,7 @@ import {
 	migrateLegacyTranslationKeys,
 } from '@inth/sdk-translations';
 
-import type { KernelTranslations } from '../types';
+import type { KernelTranslations } from '../consent-kernel.model';
 
 export { defaultTranslationConfig } from './defaults';
 

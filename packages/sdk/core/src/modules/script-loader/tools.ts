@@ -24,7 +24,7 @@ import {
 	getEffectiveGateState,
 	has,
 } from '../has';
-import type { ScriptLoaderTools } from './types';
+import type { ScriptLoaderTools } from './script-loader.model';
 
 /** @internal */
 export const scriptLoaderTools: ScriptLoaderTools = {

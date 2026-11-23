@@ -6,10 +6,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { NOW } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
 import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
-import { readStoredConsentRecord } from '../record-storage';
+import { readStoredConsentRecord } from '../record-storage.store';
 import { persistenceTools } from '../tools';
-import { createRecordStore } from '../writer/store';
-import { buildStoredEnvelope, writeChoiceToStorage } from '../writer/write';
+import { createRecordStore } from '../writer/persistence-writer.store';
+import { buildStoredEnvelope, writeChoiceToStorage } from '../writer/persistence-write.store';
 import { clearStoredConsentRecords } from './record-writes';
 
 const store = createRecordStore(persistenceTools);

@@ -16,18 +16,18 @@ import { STORAGE_KEY_V2, resolveStorageKeys } from '../../../libs/storage-keys';
 import {
 	readStoredRecords,
 	readStoredRecordsFromCookieHeader,
-} from '../hydrate';
+} from '../persistence-hydrate.store';
 import {
 	decodeVendorChoice,
 	decodeVendorChoiceCompact,
 	validateStoredConsentEnvelope,
-} from '../record-codec';
-import { readStoredVendorChoice } from '../record-storage';
+} from '../record-codec.model';
+import { readStoredVendorChoice } from '../record-storage.store';
 import {
 	encodeStoredConsentEnvelopeCompact,
 	encodeVendorChoice,
 	encodeVendorChoiceCompact,
-} from '../writer/encode';
+} from '../writer/record-encode.model';
 import {
 	clearStoredConsentRecords,
 	writeStoredVendorChoice,

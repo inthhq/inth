@@ -10,7 +10,7 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../kernel';
 import { connectConsentSource } from '../../runtime/controls';
-import type { ExternalConsentSource } from '../../runtime/types';
+import type { ExternalConsentSource } from '../../runtime/consent-runtime.model';
 import { isOptOutConfirmationOpen, optOutConsentSurface } from '../opt-out';
 
 const cleanups: (() => void)[] = [];

@@ -27,8 +27,8 @@ import {
 	isPlainRecord,
 	ownKeys,
 	ownValue,
-} from './validation';
-import type { RecordIssue } from './validation';
+} from './consent-record-validation.model';
+import type { RecordIssue } from './consent-record-validation.model';
 
 /** How the raw record was encoded before parsing. */
 export type LegacyRecordEncoding = 'json' | 'compact';

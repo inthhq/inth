@@ -5,8 +5,8 @@ import {
 	parseRegistrySignature,
 	releaseStatement,
 	verifyReleaseSignature,
-} from '../signature';
-import type { SignedRegistryEntry } from '../signature';
+} from '../script-signature.model';
+import type { SignedRegistryEntry } from '../script-signature.model';
 import type * as SigningKeys from '../signing-keys';
 import {
 	REGISTRY_FIXTURE,

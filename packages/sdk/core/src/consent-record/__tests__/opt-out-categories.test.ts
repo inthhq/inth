@@ -11,14 +11,14 @@ import {
 	carryOptOutCategories,
 	optOutDenyCategories,
 	unionOptOutCategories,
-} from '../opt-out-rules';
+} from '../opt-out-rules.model';
 import {
 	LEGACY_OPT_OUT_CATEGORIES,
 	optOutDecidingCategory,
 	policyOptOutCategories,
 } from '../types';
 import type { OptionalConsentCategory } from '../types';
-import { validateOptOutRecord } from '../validation';
+import { validateOptOutRecord } from '../consent-record-validation.model';
 import { makePolicy, NOW } from './fixtures';
 
 const ALL_OPTIONAL: readonly OptionalConsentCategory[] = [

@@ -19,9 +19,9 @@ import { optOutDecidingCategory } from '../consent-record/types';
 import type { OptionalConsentCategory } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { resolvePrivacyChoicesRegime } from '../libs/consent-copy';
-import { resolveOptOutState } from '../libs/opt-out-state';
-import type { OptOutLock } from '../libs/opt-out-state';
-import type { ConsentSnapshot } from '../types';
+import { resolveOptOutState } from '../libs/opt-out-state.model';
+import type { OptOutLock } from '../libs/opt-out-state.model';
+import type { ConsentSnapshot } from '../consent-kernel.model';
 
 /** Snapshot fields the rights decisions read. */
 export type RightsSnapshot = Pick<

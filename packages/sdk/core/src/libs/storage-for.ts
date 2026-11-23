@@ -1,4 +1,4 @@
-import type { ConsentRuntimeOptions } from '../runtime/types';
+import type { ConsentRuntimeOptions } from '../runtime/consent-runtime.model';
 
 /**
  * The storage `persistence` resolves to, from one option set. Its own

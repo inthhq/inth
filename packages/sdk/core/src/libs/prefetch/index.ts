@@ -19,5 +19,5 @@ export {
 	insertPrefetchScript,
 	PREFETCH_SCRIPT_ID,
 	prefetchScriptOffset,
-} from './placement';
-export type { PrefetchOptions } from './types';
+} from './prefetch-placement.model';
+export type { PrefetchOptions } from './prefetch.model';

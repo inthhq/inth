@@ -169,7 +169,7 @@ describe('writeCookie reporting', () => {
 	});
 
 	it('reports a verified write and keeps setCookie silent on success', async () => {
-		const { writeCookie } = await import('../operations');
+		const { writeCookie } = await import('../cookie.store');
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
 		expect(writeCookie('inth', 'c.necessary:1')).toEqual({
@@ -182,7 +182,7 @@ describe('writeCookie reporting', () => {
 	});
 
 	it('reports a thrown assignment and setCookie warns instead of throwing', async () => {
-		const { writeCookie } = await import('../operations');
+		const { writeCookie } = await import('../cookie.store');
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		const descriptor = Object.getOwnPropertyDescriptor(document, 'cookie');
 		Object.defineProperty(document, 'cookie', {

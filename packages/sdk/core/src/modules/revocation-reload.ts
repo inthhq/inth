@@ -1,4 +1,4 @@
-import type { InternalKernel } from '../kernel/internals';
+import type { InternalKernel } from '../kernel/kernel-internals.model';
 import { vendorAxisActive } from '../libs/vendors';
 import { registerOptOutReloadHook } from '../surface-actions/opt-out';
 import {
@@ -27,7 +27,7 @@ import type {
 	ConsentSnapshot,
 	ConsentState,
 	Unsubscribe,
-} from '../types';
+} from '../consent-kernel.model';
 import { evaluateConsent } from './has';
 
 const activeWatchers = new WeakMap<

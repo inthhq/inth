@@ -27,16 +27,16 @@ import {
 } from '@inth/sdk-schema/types';
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
-import { EMPTY_CHOICE, recordCategoryPatch } from '../consent-record/record';
+import { EMPTY_CHOICE, recordCategoryPatch } from '../consent-record/consent-record.model';
 import { optOutDecidingCategory } from '../consent-record/types';
 import type { OptionalConsentCategory } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { extractConsentNamesFromCondition, has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
-import { createIdempotencyKey, generateUuidV7 } from '../libs/subject-uuid';
+import { createIdempotencyKey, generateUuidV7 } from '../libs/subject-uuid.model';
 import { vendorAxisActive } from '../libs/vendors';
 import { toggleableVendorIds } from '../modules/vendor-denial';
-import type { PresentedSelection } from '../policy-choice';
+import type { PresentedSelection } from '../policy-choice.model';
 import { saveRecordsOptOut } from '../surface-actions/instant-commit';
 import type {
 	ConsentSnapshot,
@@ -51,16 +51,16 @@ import type {
 	SaveResult,
 	SaveUISource,
 	VendorChoice,
-} from '../types';
+} from '../consent-kernel.model';
 import {
 	applySyncedOptOut,
 	buildLiftOptOutPayload,
 	buildOptOutPayload,
 	nextButtonOptOutRecord,
 	optOutLiftBlocker,
-} from './opt-out';
-import type { SnapshotPatch } from './patch';
-import type { KernelRuntime } from './runtime';
+} from './kernel-opt-out.model';
+import type { SnapshotPatch } from './kernel-patch.model';
+import type { KernelRuntime } from './create-runtime';
 import type { SaveOutbox } from './save-outbox';
 import {
 	applyNoticeAcknowledgement,
@@ -70,8 +70,8 @@ import {
 	resolveSaveSelection,
 	saveAttribution,
 	saveSubject,
-} from './save-plan';
-import { buildDraft, copyIABAuthority } from './snapshot';
+} from './save-plan.model';
+import { buildDraft, copyIABAuthority } from './kernel-snapshot.model';
 
 /**
  * Separate the vendor grants an object input carries from its categories.

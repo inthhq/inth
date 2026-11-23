@@ -1,4 +1,4 @@
-import type { InternalKernel } from '../../../kernel/internals';
+import type { InternalKernel } from '../../../kernel/kernel-internals.model';
 /**
  * The interface between persistence's first-load part (`../index.ts`) and
  * its write code, which loads on demand.
@@ -6,25 +6,25 @@ import type { InternalKernel } from '../../../kernel/internals';
  * Type-only: the writer imports nothing the first load has. What it calls
  * there arrives as {@link PersistenceTools}.
  */
-import type { mergeNewestChoice } from '../../../kernel/record-validation';
+import type { mergeNewestChoice } from '../../../kernel/record-validation.model';
 import type { deleteCookie, writeCookie } from '../../../libs/cookie';
-import type { removeLocalStorageKey } from '../../../libs/local-storage';
+import type { removeLocalStorageKey } from '../../../libs/local-storage.store';
 import type { ResolvedStorageKeys } from '../../../libs/storage-keys';
-import type { clearStoredRecords } from '../clear';
+import type { clearStoredRecords } from '../persistence-clear.store';
 import type {
 	choiceSinceEpoch,
 	noticeSinceEpoch,
 	optOutSinceEpoch,
 	vendorChoiceSinceEpoch,
-} from '../epoch';
-import type { StoredRecords } from '../hydrate';
+} from '../persistence-epoch.model';
+import type { StoredRecords } from '../persistence-hydrate.store';
 import type {
 	decodeNoticeDismissal,
 	decodeOptOutRecord,
 	decodeVendorChoice,
 	validateStoredConsentEnvelope,
-} from '../record-codec';
-import type { StorageConfig } from '../types';
+} from '../record-codec.model';
+import type { StorageConfig } from '../persistence.model';
 
 /**
  * First-load functions the write code calls: the storage reads and record

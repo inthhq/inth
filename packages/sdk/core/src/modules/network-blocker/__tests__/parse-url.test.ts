@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 
 import { ruleMatches } from '../hold';
-import type { NetworkBlockerRule } from '../types';
-import { normalizeMethod, parseUrl } from '../url';
+import type { NetworkBlockerRule } from '../network-blocker.model';
+import { normalizeMethod, parseUrl } from '../parse-url';
 
 const rule: NetworkBlockerRule = {
 	category: 'marketing',

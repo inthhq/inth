@@ -6,7 +6,7 @@ import {
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
-import type { ConsentContainer } from '../../../packages/sdk/core/src/libs/consent-layout';
+import type { ConsentContainer } from '../../../packages/sdk/core/src/libs/consent-layout.model';
 import ConsentDialogOptOutStory from './consent-dialog-opt-out-story.svelte';
 import type { StoryRegion as Region } from './consent-story-policies';
 import ConsentDialogRegionStory from './ConsentDialogRegionStory.svelte';

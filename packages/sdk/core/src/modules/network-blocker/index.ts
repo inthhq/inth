@@ -7,7 +7,7 @@ import { createNetworkBlockerWith } from './blocker';
  * block ones whose consent condition isn't satisfied. See `blocker.ts`.
  */
 import { networkBlockerTools } from './tools';
-import type { NetworkBlockerHandle, NetworkBlockerOptions } from './types';
+import type { NetworkBlockerHandle, NetworkBlockerOptions } from './network-blocker.model';
 
 export type {
 	BlockDecision,
@@ -16,7 +16,7 @@ export type {
 	NetworkBlockerHandle,
 	NetworkBlockerOptions,
 	NetworkBlockerRule,
-} from './types';
+} from './network-blocker.model';
 
 /**
  * Create a network blocker.

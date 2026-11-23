@@ -9,8 +9,8 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import {
 	clearAdTechProviderCache,
 	fetchCachedAdTechProviders,
-} from '../transports/ad-tech-provider-cache';
-import type { AdTechProviderCache } from '../transports/ad-tech-provider-cache';
+} from '../transports/ad-tech-provider-cache.model';
+import type { AdTechProviderCache } from '../transports/ad-tech-provider-cache.model';
 
 const META = { id: 89, name: 'Meta', policyUrl: 'https://meta.example/p' };
 const reference = { providers: [89], url: 'https://lists.example/ac' };

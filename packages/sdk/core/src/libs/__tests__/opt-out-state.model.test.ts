@@ -9,14 +9,14 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { OPT_OUT_REPROMPT_WAIT_MS } from '../../consent-record';
 import { createConsentKernel } from '../../kernel';
-import type { OptOutRecord } from '../../types';
+import type { OptOutRecord } from '../../consent-kernel.model';
 import {
 	isOptedOut,
 	resolveCategoryOptOutLock,
 	resolveOptOut,
 	resolveOptOutReceipt,
 	resolveOptOutState,
-} from '../opt-out-state';
+} from '../opt-out-state.model';
 
 const optOutPolicy = optOutRule({
 	categories: ['functionality', 'marketing', 'measurement'],

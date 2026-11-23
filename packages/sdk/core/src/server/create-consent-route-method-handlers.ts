@@ -3,13 +3,13 @@
  * that maps the framework's request to the consent route handler, and a
  * cache for adapters that read the route's options per request.
  */
-import type { ConsentProxyOptions } from './consent-proxy';
-import { createConsentRouteHandler } from './consent-route';
+import type { ConsentProxyOptions } from './consent-proxy.api';
+import { createConsentRouteHandler } from './consent-route.api';
 import type {
 	ConsentRouteHandler,
 	ConsentRouteHandlerOptions,
 	ConsentRouteName,
-} from './consent-route';
+} from './consent-route.api';
 
 /** A consent route's handlers: `GET`, which serves `manifest` and `init`. */
 export interface ConsentRouteMethodHandlers<Handler> {

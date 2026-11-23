@@ -24,7 +24,7 @@ import { createScriptLoaderWith } from './loader';
  *   loaders (or already in the DOM) are left alone.
  */
 import { scriptLoaderTools } from './tools';
-import type { ScriptLoaderHandle, ScriptLoaderOptions } from './types';
+import type { ScriptLoaderHandle, ScriptLoaderOptions } from './script-loader.model';
 
 export {
 	getScriptDiagnostics,
@@ -38,7 +38,7 @@ export type {
 	ScriptLoaderDebugEvent,
 	ScriptLoaderHandle,
 	ScriptLoaderOptions,
-} from './types';
+} from './script-loader.model';
 
 /**
  * Create a script loader: mounts each script whose consent condition

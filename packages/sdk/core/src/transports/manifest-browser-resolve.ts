@@ -48,7 +48,7 @@ const loadLanguage = async function loadLanguage(
 	language: OtherLanguage
 ): Promise<Translations | undefined> {
 	try {
-		const { loadLanguageCopy } = await import('./manifest-browser-languages');
+		const { loadLanguageCopy } = await import('./manifest-browser-languages.model');
 		const copy = await loadLanguageCopy(language);
 		if (copy) {
 			loadedLanguages.set(language, copy);
@@ -119,7 +119,7 @@ export const resolveLocally = async function resolveLocally(
 	const output = await resolveWithLanguage(manifest, inputs);
 	if (manifest.iab?.enabled === true) {
 		// IAB is opt-in, so the vendor list code loads on demand.
-		const { attachVendorList } = await import('./manifest-browser-iab');
+		const { attachVendorList } = await import('./manifest-browser-iab.model');
 		await attachVendorList(output, manifest, fetchImpl);
 	}
 	// Local resolution always produces the v3 wire; the manifest's own

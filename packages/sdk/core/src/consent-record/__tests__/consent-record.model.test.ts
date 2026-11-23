@@ -1,7 +1,7 @@
 import { assert, describe, expect, it } from 'vitest';
 
 import { evaluateConsentRecord } from '../evaluate';
-import { recordCategoryPatch } from '../record';
+import { recordCategoryPatch } from '../consent-record.model';
 import type { ExplicitChoice } from '../types';
 import { currentBasis, DAY, makeChoice, makePolicy, NOW } from './fixtures';
 

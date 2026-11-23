@@ -4,9 +4,9 @@ import {
 	createElementIdResolver,
 	generateRandomId,
 	normalizeScripts,
-} from '../normalize';
+} from '../normalize-scripts';
 import { scriptLoaderTools } from '../tools';
-import type { Script } from '../types';
+import type { Script } from '../script-loader.model';
 
 const baseScript: Script = {
 	category: 'marketing',

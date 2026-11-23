@@ -8,10 +8,10 @@ import {
 	forbidsReuse,
 	parseCacheDirectiveSeconds,
 	readUpstreamAge,
-} from '../libs/cache-directive';
-import { failedResponseError } from '../libs/failed-response';
-import { clearStaleCache, readThrough } from './stale-on-error';
-import type { StaleCache, StaleEntry } from './stale-on-error';
+} from '../libs/cache-directive.model';
+import { failedResponseError } from '../libs/failed-response-error';
+import { clearStaleCache, readThrough } from './stale-on-error.model';
+import type { StaleCache, StaleEntry } from './stale-on-error.model';
 
 export type CachedGvl = StaleEntry<GlobalVendorList | null>;
 

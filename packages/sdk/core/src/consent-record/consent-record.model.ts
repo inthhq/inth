@@ -24,8 +24,8 @@ import {
 	isOptionalConsentCategory,
 	isPlainRecord,
 	ownKeys,
-} from './validation';
-import type { RecordIssue } from './validation';
+} from './consent-record-validation.model';
+import type { RecordIssue } from './consent-record-validation.model';
 
 export interface RecordPatchOptions {
 	policy: EvaluationPolicy;

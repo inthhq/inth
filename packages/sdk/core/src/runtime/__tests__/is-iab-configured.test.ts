@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { isIABConfigured } from '../iab-options';
+import { isIABConfigured } from '../is-iab-configured';
 
 describe('isIABConfigured', () => {
 	test('an absent option is no CMP', () => {

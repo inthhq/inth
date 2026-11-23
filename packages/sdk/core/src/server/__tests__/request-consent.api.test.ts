@@ -22,14 +22,14 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { clearManifestCache } from '../../libs/manifest-cache-runtime';
 import type { ManifestFetch } from '../../libs/manifest-cache-runtime';
-import { clearGvlCache } from '../../transports/gvl-cache';
-import { CONSENT_ROUTE_TIMEOUT_HEADER } from '../consent-route';
+import { clearGvlCache } from '../../transports/gvl-cache.model';
+import { CONSENT_ROUTE_TIMEOUT_HEADER } from '../consent-route.api';
 import {
 	fetchRequestInit,
 	readRequestConsent,
 	resolveRequestConsent,
-} from '../request-consent';
-import type { ResolveRequestConsentOptions } from '../request-consent';
+} from '../request-consent.api';
+import type { ResolveRequestConsentOptions } from '../request-consent.api';
 
 const BACKEND = 'https://consent.example.com';
 const APP = 'https://app.example.com';

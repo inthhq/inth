@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { createEventBus } from '../events';
+import { createEventBus } from '../create-event-bus';
 
 describe('createEventBus', () => {
 	test('routes events to listeners by type', () => {

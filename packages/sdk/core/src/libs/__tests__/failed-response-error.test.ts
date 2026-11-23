@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { failedResponseError } from '../failed-response';
+import { failedResponseError } from '../failed-response-error';
 
 const PREFIX = 'inth: GVL';
 

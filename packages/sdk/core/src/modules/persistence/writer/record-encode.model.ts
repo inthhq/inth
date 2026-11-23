@@ -23,14 +23,14 @@ import type {
 	ConsentSubject,
 	ExplicitChoice,
 } from '../../../consent-record/types';
-import type { OptOutLocalAct } from '../../../libs/opt-out-state';
+import type { OptOutLocalAct } from '../../../libs/opt-out-state.model';
 import type {
 	StoredConsentEnvelope,
 	StoredIabMetadata,
 	StoredNoticeDismissal,
 	StoredOptOutRecord,
 	StoredVendorChoice,
-} from '../record-codec';
+} from '../record-codec.model';
 
 const FIELD_SEPARATOR = '&';
 const KEY_VALUE_SEPARATOR = '=';

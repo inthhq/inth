@@ -11,7 +11,7 @@ import {
 	V1_UUID_V7_PATTERN,
 } from '@inth/sdk-schema/types';
 
-import { V1_ROUTES } from './paths';
+import { V1_ROUTES } from './v1-routes';
 
 /**
  * Whether `id` has the layout of a `/v1` subject ID. The timestamp is not

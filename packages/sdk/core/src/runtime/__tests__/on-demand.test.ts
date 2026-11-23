@@ -18,13 +18,13 @@ import { createIframeBlocker } from '../../modules/iframe-blocker';
 import { createPersistence } from '../../modules/persistence';
 import { watchRevocationReload } from '../../modules/revocation-reload';
 import { createWindowDebug } from '../../modules/window-debug';
-import { onDemandRuntimeModules } from '../on-demand-modules';
+import { onDemandRuntimeModules } from '../on-demand-runtime-modules';
 import { createConsentProviderRuntime } from '../provider-runtime';
-import { createConsentRuntimeWith } from '../runtime-with-modules';
+import { createConsentRuntimeWith } from '../create-consent-runtime-with';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
-} from '../types';
+} from '../consent-runtime.model';
 
 const RESOLVED_PREFETCH = {
 	initialPolicyResolution: resolvePolicyRules({

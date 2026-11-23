@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { corsPreflightReasons } from '../../../__tests__/fixtures/cors-safelist';
 import { createV1HostedTransport } from '../../../transports/v1/hosted';
-import type { KernelJourney } from '../../../types';
+import type { KernelJourney } from '../../../consent-kernel.model';
 import { buildPrefetchScript, primePrefetchedInitialData } from '../prefetch';
 
 const legacyPolicy = { id: 'legacy', model: 'opt-in', ui: { mode: 'banner' } };

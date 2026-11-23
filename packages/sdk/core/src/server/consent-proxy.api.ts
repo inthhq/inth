@@ -26,8 +26,8 @@ import {
 	isCleartextRemoteURL,
 	markResponsePrivate,
 	PUBLIC_REQUEST_HEADERS,
-} from '../libs/identity-headers';
-import { trimPathSlashes } from './shared';
+} from '../libs/identity-headers.model';
+import { trimPathSlashes } from './server-adapter.model';
 
 /** Paths the proxy forwards when no extra `paths` are configured. */
 const CONSENT_PROXY_DEFAULT_PATHS: readonly string[] = [

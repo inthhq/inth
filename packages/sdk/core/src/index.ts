@@ -69,29 +69,29 @@ export type {
 	WindowDebugOptions,
 } from './modules/window-debug';
 export { createWindowDebug } from './modules/window-debug';
-export type { RememberedDecisionInputs } from './transports/decision-inputs';
-export { decisionInputsMatchOverrides } from './transports/decision-inputs';
+export type { RememberedDecisionInputs } from './transports/decision-inputs.model';
+export { decisionInputsMatchOverrides } from './transports/decision-inputs.model';
 export type {
 	CachedGvl,
 	FetchCachedGvlOptions,
 	GvlCache,
-} from './transports/gvl-cache';
-export { clearGvlCache, fetchCachedGvl } from './transports/gvl-cache';
+} from './transports/gvl-cache.model';
+export { clearGvlCache, fetchCachedGvl } from './transports/gvl-cache.model';
 export type {
 	InthApiErrorCode,
 	InthApiErrorDetail,
-} from './transports/v1/error';
-export { InthApiError, isInthApiError } from './transports/v1/error';
+} from './transports/v1/inth-api-error';
+export { InthApiError, isInthApiError } from './transports/v1/inth-api-error';
 export type {
 	V1HostedTransport,
 	V1HostedTransportOptions,
 } from './transports/v1/hosted';
 export { createV1HostedTransport } from './transports/v1/hosted';
-export { InthApiSaveRejectedError } from './transports/v1/save-rejected';
+export { InthApiSaveRejectedError } from './transports/v1/inth-api-save-rejected-error';
 export {
 	ConsentSaveRejectedError,
 	isConsentSaveRejection,
-} from './transports/save-rejection';
+} from './transports/consent-save-rejected-error';
 export {
 	initOutputToKernelConfig,
 	mapInitOutputToInitResponse,
@@ -173,7 +173,7 @@ export type {
 	Vendor,
 	VendorChoice,
 	VendorSource,
-} from './types';
+} from './consent-kernel.model';
 
 // -- Consent categories --------------------------------------------------------
 export type { AllConsentNames, ConsentType } from './consent/consent-types';
@@ -193,7 +193,7 @@ export type {
 	BlockedRequestInfo,
 	NetworkBlockerConfig,
 	NetworkBlockerRule,
-} from './libs/network-blocker/types';
+} from './libs/network-blocker/network-blocker-config.model';
 export type { IframeBlockerOptions } from './modules/iframe-blocker';
 
 // -- Script loader -------------------------------------------------------------
@@ -211,7 +211,7 @@ export type {
 	ScriptSource,
 	ScriptUpdateResult,
 	VendorDetails,
-} from './libs/script-loader/types';
+} from './libs/script-loader/script.model';
 export {
 	emitScriptDebugEvent,
 	subscribeToScriptDebugEvents,
@@ -247,7 +247,7 @@ export type {
 	TCFConsentData,
 	User,
 } from './options';
-export type { ActiveUI, Model } from './types';
+export type { ActiveUI, Model } from './consent-kernel.model';
 
 // -- Prefetch ------------------------------------------------------------------
 export type { PrefetchOptions } from './libs/prefetch';
@@ -307,14 +307,14 @@ export {
 	safeFallbackPolicyRule,
 } from '@inth/sdk-schema/types';
 export { resolveConsentPresentation } from './libs/policy-actions';
-export { resolvePrivacyChoicesLink } from './libs/privacy-choices-link';
-export type { PrivacyChoicesLinkState } from './libs/privacy-choices-link';
+export { resolvePrivacyChoicesLink } from './libs/resolve-privacy-choices-link';
+export type { PrivacyChoicesLinkState } from './libs/resolve-privacy-choices-link';
 export {
 	DEFAULT_CONSENT_CONTAINER,
 	PHONE_LAYOUT_MAX_WIDTH,
 	PHONE_LAYOUT_QUERY,
 	resolveLayout,
-} from './libs/consent-layout';
+} from './libs/consent-layout.model';
 export type {
 	BannerEdge,
 	CardPosition,
@@ -330,7 +330,7 @@ export type {
 	DrawerSide,
 	ResolvedConsentLayout,
 	ResolveLayoutInput,
-} from './libs/consent-layout';
+} from './libs/consent-layout.model';
 export {
 	announcementText,
 	applyDialogCategories,
@@ -412,7 +412,7 @@ export type {
 	ServerExperiment,
 	StartExperimentOptions,
 } from './libs/experiment';
-export type { ConsentJourneyOption, JourneyState } from './libs/journey';
+export type { ConsentJourneyOption, JourneyState } from './libs/journey.store';
 export {
 	EXPERIMENT_STORAGE_KEY,
 	JOURNEY_STORAGE_KEY,
@@ -489,7 +489,7 @@ export {
 	resolveOptOut,
 	resolveOptOutReceipt,
 	resolveOptOutState,
-} from './libs/opt-out-state';
+} from './libs/opt-out-state.model';
 export type {
 	CategoryOptOutLockSnapshot,
 	OptOutCheckSnapshot,
@@ -502,7 +502,7 @@ export type {
 	OptOutState,
 	OptOutVia,
 	ResolvedOptOutState,
-} from './libs/opt-out-state';
+} from './libs/opt-out-state.model';
 
 export {
 	deniedVendorIds,
@@ -521,12 +521,12 @@ export {
 export type { ResolveVendorsInput, VendorOwner } from './libs/vendors';
 export { declareOwnedVendors, forgetOwnedVendors } from './libs/vendors';
 export { vendorsListedUnder } from './libs/vendor-listing';
-export { deferInitGvl } from './transports/gvl-reference';
+export { deferInitGvl } from './transports/gvl-reference.model';
 export {
 	IAB_UNAVAILABLE_ERROR_CODE,
 	IABUnavailableError,
 	policyNeedsIAB,
-} from './libs/iab-unavailable';
+} from './libs/iab-unavailable-error';
 export type {
 	WebViewConsentSource,
 	WebViewConsentState,

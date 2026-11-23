@@ -13,7 +13,7 @@ import {
 	buildInitialIab,
 	buildInitialSnapshot,
 	DEFAULT_IAB,
-} from '../snapshot';
+} from '../kernel-snapshot.model';
 
 describe('buildDraft', () => {
 	test('keeps own boolean optional categories only', () => {

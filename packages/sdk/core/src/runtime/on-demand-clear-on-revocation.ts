@@ -6,8 +6,8 @@ import { clearOnRevocationTools } from '../modules/clear-on-revocation/tools';
 import type {
 	ClearOnRevocationHandle,
 	ClearOnRevocationOptions,
-} from '../modules/clear-on-revocation/types';
-import { lazyRuntimeModule } from './lazy-module';
+} from '../modules/clear-on-revocation/clear-on-revocation.model';
+import { lazyRuntimeModule } from './lazy-runtime-module';
 
 /**
  * The `createClearOnRevocation` module, loaded on first use.

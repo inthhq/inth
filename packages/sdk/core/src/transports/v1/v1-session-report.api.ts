@@ -15,15 +15,15 @@ import type {
 	V1ConsentSessionReport,
 } from '@inth/sdk-schema/types';
 
-import { readHeader } from '../../libs/headers';
+import { readHeader } from '../../libs/http-headers.model';
 import {
 	forwardSessionReportHeaders,
 	isSpeculativeRequest,
 	resolveSessionReportProjectUrl,
-} from '../../libs/session-report';
-import type { SessionReportHeaders } from '../../libs/session-report';
-import { V1_ROUTES } from './paths';
-import { toProperty } from './routes';
+} from '../../libs/session-report.model';
+import type { SessionReportHeaders } from '../../libs/session-report.model';
+import { V1_ROUTES } from './v1-routes';
+import { toProperty } from './v1-request.api';
 
 /** How long a report may take before it is abandoned. */
 const REPORT_TIMEOUT_MS = 3000;

@@ -3,7 +3,7 @@ import { clearOnRevocationTools } from './tools';
 import type {
 	ClearOnRevocationHandle,
 	ClearOnRevocationOptions,
-} from './types';
+} from './clear-on-revocation.model';
 
 export type {
 	ClearOnRevocationConfig,
@@ -11,7 +11,7 @@ export type {
 	ClearOnRevocationHandle,
 	ClearOnRevocationOptions,
 	ClearOnRevocationTargets,
-} from './types';
+} from './clear-on-revocation.model';
 
 /**
  * Remove configured browser data for denied optional consent categories.

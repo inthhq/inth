@@ -14,20 +14,20 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { displayedCategories } from '../../consent/consent-types';
 import { createKernel } from '../../kernel/index';
-import { createMemoryOutboxStore } from '../../kernel/save-outbox/store';
+import { createMemoryOutboxStore } from '../../kernel/save-outbox/save-outbox.store';
 import { EARLY_TAPS_WINDOW_KEY } from '../../libs/page-globals';
 import type { EarlyConsentTapQueue } from '../../libs/page-globals';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
-import { readStoredRecords } from '../../modules/persistence/hydrate';
+import { readStoredRecords } from '../../modules/persistence/persistence-hydrate.store';
 import { createStandInKernel } from '../../runtime/stand-in-kernel';
-import type { KernelConfig, KernelEvent, SavePayload } from '../../types';
+import type { KernelConfig, KernelEvent, SavePayload } from '../../consent-kernel.model';
 import {
 	completeCommit,
 	hasStoredClearEpoch,
 	planEarlyCommit,
 	storeEarlyCommit,
 } from '../early-commit';
-import { EARLY_CONSENT_TAP_SCRIPT } from '../early-tap-script';
+import { EARLY_CONSENT_TAP_SCRIPT } from '../early-consent-tap-script';
 
 const TAP_AT = NOW + 4000;
 const CLOCK = NOW + 5000;

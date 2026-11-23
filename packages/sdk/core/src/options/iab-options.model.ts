@@ -1,5 +1,5 @@
-import type { GlobalVendorList, NonIABVendor } from '../types';
-import type { PublisherRestriction, TCFConsentData } from './iab-tcf';
+import type { GlobalVendorList, NonIABVendor } from '../consent-kernel.model';
+import type { PublisherRestriction, TCFConsentData } from './iab-tcf-options.model';
 
 /**
  * Google Additional Consent (ACv2) configuration.

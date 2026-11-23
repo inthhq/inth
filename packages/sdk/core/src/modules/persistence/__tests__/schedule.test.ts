@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { createWriteScheduler } from '../writer/schedule';
+import { createWriteScheduler } from '../writer/create-write-scheduler';
 
 const flushScheduledWrite = function flushScheduledWrite(): Promise<void> {
 	return new Promise((resolve) => {

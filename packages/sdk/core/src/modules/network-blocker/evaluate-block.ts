@@ -7,12 +7,12 @@
  * Walks the rules in order and returns on the first match whose
  * consent condition is denied.
  */
-import type { ConsentSnapshot } from '../../types';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
 import type {
 	BlockDecision,
 	NetworkBlockerRule,
 	NetworkBlockerTools,
-} from './types';
+} from './network-blocker.model';
 
 /**
  * Evaluate a request against the rules list. Returns the first matching

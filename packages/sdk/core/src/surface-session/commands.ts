@@ -13,29 +13,29 @@
  */
 
 import type { AllConsentNames } from '../consent/consent-types';
-import { resolveOptOutState } from '../libs/opt-out-state';
+import { resolveOptOutState } from '../libs/opt-out-state.model';
 import type { PreferenceDraft } from '../preference-draft';
 import { markOptOutReloadIfDue } from '../surface-actions/opt-out';
 import { beginAction } from '../surface-actions/rules';
-import { saveConsentSurface, settleSurface } from '../surface-actions/save';
+import { saveConsentSurface, settleSurface } from '../surface-actions/save-consent-surface';
 import type {
 	ConsentKernel,
 	OptInResult,
 	OptOutResult,
 	SaveResult,
 	SaveUISource,
-} from '../types';
+} from '../consent-kernel.model';
 import {
 	resolveBannerCommit,
 	resolveRightPress,
 	resolveSaleRight,
-} from './rights';
+} from './surface-rights.model';
 import type {
 	BannerCommitAction,
 	BannerCommitPlan,
 	RightOption,
 	RightPressOutcome,
-} from './rights';
+} from './surface-rights.model';
 import { getSurfaceSession } from './session';
 import type { SurfaceCopyFinish, SurfaceCopyOptions } from './session';
 

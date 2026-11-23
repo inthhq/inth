@@ -5,7 +5,7 @@ import {
 	noticeRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { createPersistence } from '../../modules/persistence';
-import type { KernelConfig } from '../../types';
+import type { KernelConfig } from '../../consent-kernel.model';
 import { createConsentKernel } from '../index';
 
 const disposers: (() => void)[] = [];

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { insertPrefetchScript, prefetchScriptOffset } from '../placement';
+import { insertPrefetchScript, prefetchScriptOffset } from '../prefetch-placement.model';
 
 describe('prefetch script placement', () => {
 	test.each([

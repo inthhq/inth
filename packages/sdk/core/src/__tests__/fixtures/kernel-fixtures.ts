@@ -20,7 +20,7 @@ import type {
 	ExplicitChoice,
 	OptionalConsentCategory,
 } from '../../consent-record/types';
-import type { HydrationRecords } from '../../types';
+import type { HydrationRecords } from '../../consent-kernel.model';
 
 export const NOW = 1_800_000_000_000;
 export const DAY = 86_400_000;

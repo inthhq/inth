@@ -18,8 +18,8 @@ import type {
 	StoredNoticeDismissal,
 	StoredOptOutRecord,
 	StoredVendorChoice,
-} from '../record-codec';
-import type { StorageConfig } from '../types';
+} from '../record-codec.model';
+import type { StorageConfig } from '../persistence.model';
 import {
 	encodeNoticeDismissal,
 	encodeNoticeDismissalCompact,
@@ -31,8 +31,8 @@ import {
 	encodeStoredConsentEnvelopeJson,
 	encodeVendorChoice,
 	encodeVendorChoiceCompact,
-} from './encode';
-import type { RecordStoreTools } from './types';
+} from './record-encode.model';
+import type { RecordStoreTools } from './persistence-writer.model';
 
 export interface WriteStoredConsentOptions {
 	/** Current time. Rejects envelopes carrying future timestamps. */

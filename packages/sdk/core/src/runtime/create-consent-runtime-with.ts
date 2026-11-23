@@ -13,7 +13,7 @@ import type {
 	ConsentRuntime,
 	ConsentRuntimeModules,
 	ConsentRuntimeOptions,
-} from './types';
+} from './consent-runtime.model';
 
 /**
  * Creates a consent runtime that mounts the given module factories.

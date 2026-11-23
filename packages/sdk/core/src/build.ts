@@ -5,8 +5,8 @@ import { dirname, join, resolve } from 'node:path';
 
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
-import { createDialogChunkPlugin } from './build-dialog-chunk';
-import type { DialogChunkPlugin } from './build-dialog-chunk';
+import { createDialogChunkPlugin } from './build-dialog-chunk.model';
+import type { DialogChunkPlugin } from './build-dialog-chunk.model';
 import {
 	clientBannerPath,
 	deferredSheetSpecifier,
@@ -15,31 +15,31 @@ import {
 	loadStaticBannerRenderer,
 	renderStaticBannerHtml,
 	renderStaticBannerSheets,
-} from './build-static-banner';
-import type { StaticBannerChunk } from './build-static-banner';
+} from './build-static-banner.model';
+import type { StaticBannerChunk } from './build-static-banner.model';
 import {
 	PREFETCH_SCRIPT_ID,
 	prefetchScriptOffset,
-} from './libs/prefetch/placement';
+} from './libs/prefetch/prefetch-placement.model';
 import { buildPrefetchScript } from './libs/prefetch/prefetch';
-import type { PrefetchOptions } from './libs/prefetch/types';
+import type { PrefetchOptions } from './libs/prefetch/prefetch.model';
 import type { ConsentMode } from './modes';
-import { buildSnapshotSkipReason } from './server/server-mode';
-import { loadStaticManifest } from './server/static-manifest';
+import { buildSnapshotSkipReason } from './server/server-mode.model';
+import { loadStaticManifest } from './server/static-manifest.api';
 import { manifestNeedsLocation } from './transports/manifest-browser-location';
-import { V1_ROUTES } from './transports/v1/paths';
+import { V1_ROUTES } from './transports/v1/v1-routes';
 
 export type { ConsentManifest } from '@inth/sdk-schema/types';
-export { createDialogChunkPlugin } from './build-dialog-chunk';
+export { createDialogChunkPlugin } from './build-dialog-chunk.model';
 export {
 	CORE_CHUNK_MODULES,
 	CORE_FIRST_LOAD_MODULES,
 	CORE_SURFACE_CONFIG_MODULES,
 	coreModuleFile,
 	coreModulePattern,
-} from './chunk-modules';
-export { DEFERRED_SHEET_SPECIFIERS } from './build-static-banner';
-export type { DialogChunkPlugin } from './build-dialog-chunk';
+} from './core-chunk-modules';
+export { DEFERRED_SHEET_SPECIFIERS } from './build-static-banner.model';
+export type { DialogChunkPlugin } from './build-dialog-chunk.model';
 
 const resolveBuildManifestUrl = (
 	options: {

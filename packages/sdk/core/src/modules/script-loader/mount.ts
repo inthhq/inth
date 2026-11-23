@@ -17,16 +17,16 @@ import type {
 	STARTED_KEY,
 	StartedElement,
 } from '../../libs/page-globals';
-import type { ConsentSnapshot } from '../../types';
-import { isCallbackOnly } from './callback-only';
-import { buildCallbackInfo, hasAnyCallback, invokeCallback } from './callbacks';
-import type { ElementIdResolver } from './normalize';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
+import { isCallbackOnly } from './is-callback-only';
+import { buildCallbackInfo, hasAnyCallback, invokeCallback } from './script-callbacks.model';
+import type { ElementIdResolver } from './normalize-scripts';
 import type {
 	PendingMount,
 	Script,
 	ScriptLoaderDebugEvent,
 	ScriptLoaderTools,
-} from './types';
+} from './script-loader.model';
 
 /**
  * Dependencies shared by the mount/unmount/flush helpers. The factory

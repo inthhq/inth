@@ -9,7 +9,7 @@ import type { Meta, StoryObj } from '@storybook/svelte-vite';
 import type {
 	ConsentContainer,
 	ConsentEdgeStyle,
-} from '../../../packages/sdk/core/src/libs/consent-layout';
+} from '../../../packages/sdk/core/src/libs/consent-layout.model';
 import type { StoryRegion } from './consent-story-policies';
 import ConsentBannerContainerStory from './ConsentBannerContainerStory.svelte';
 import ConsentBannerStory from './ConsentBannerStory.svelte';

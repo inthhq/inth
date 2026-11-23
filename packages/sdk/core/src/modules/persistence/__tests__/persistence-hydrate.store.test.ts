@@ -11,17 +11,17 @@ import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';
 import { createKernel as createConsentKernel } from '../../../kernel';
 import { setCookie } from '../../../libs/cookie';
 import { C15T_STORAGE_KEY, STORAGE_KEY_V2 } from '../../../libs/storage-keys';
-import type { HydrationRecords } from '../../../types';
+import type { HydrationRecords } from '../../../consent-kernel.model';
 import {
 	hydrateFromStorage,
 	readStoredRecords,
 	readStoredRecordsFromCookieHeader,
-} from '../hydrate';
+} from '../persistence-hydrate.store';
 import {
 	encodeNoticeDismissalCompact,
 	encodeStoredConsentEnvelopeCompact,
 	encodeVendorChoiceCompact,
-} from '../writer/encode';
+} from '../writer/record-encode.model';
 import {
 	clearStoredConsentRecords,
 	writeStoredConsentEnvelope,

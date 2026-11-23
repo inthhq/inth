@@ -19,7 +19,7 @@ export {
 	introducedLegitimateInterest,
 	type IntroducedLegitimateInterest,
 	isLegitimateInterestAllowed,
-} from './libs/effective-vendor-list';
+} from './libs/effective-vendor-list.model';
 export {
 	IAB_BANNER_MAX_DISPLAY_ITEMS,
 	resolveIABBannerCopy,

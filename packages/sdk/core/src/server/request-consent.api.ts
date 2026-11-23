@@ -54,13 +54,13 @@ import type {
 	SessionJourney,
 } from '@inth/sdk-schema/types';
 
-import type { StorageConfig } from '../libs/cookie/types';
+import type { StorageConfig } from '../libs/cookie/cookie.model';
 import { experimentArmRef } from '../libs/experiment';
 import type { ExperimentState, ServerExperiment } from '../libs/experiment';
-import { readHeader, toHeaders } from '../libs/headers';
-import { isCleartextRemoteURL } from '../libs/identity-headers';
-import { createJourneyId } from '../libs/journey';
-import type { ConsentJourneyOption, JourneyState } from '../libs/journey';
+import { readHeader, toHeaders } from '../libs/http-headers.model';
+import { isCleartextRemoteURL } from '../libs/identity-headers.model';
+import { createJourneyId } from '../libs/journey.store';
+import type { ConsentJourneyOption, JourneyState } from '../libs/journey.store';
 import {
 	DEFAULT_RESOLVE_TIMEOUT_MS,
 	fetchCachedManifest,
@@ -71,45 +71,45 @@ import type {
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
-import { warnManifestFallback } from '../libs/manifest-fallback';
-import { resolveSessionReportProjectUrl } from '../libs/session-report';
-import { trimSlash } from '../libs/url';
-import { inthProtocolHeaders } from '../libs/version-header';
-import { readStoredRecordsFromCookieHeader } from '../modules/persistence/hydrate';
-import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache';
-import { deferInitGvl, deferInitGvlToRoute } from '../transports/gvl-reference';
+import { warnManifestFallback } from '../libs/warn-manifest-fallback';
+import { resolveSessionReportProjectUrl } from '../libs/session-report.model';
+import { trimSlash } from '../libs/trim-slash';
+import { inthProtocolHeaders } from '../libs/inth-protocol-headers';
+import { readStoredRecordsFromCookieHeader } from '../modules/persistence/persistence-hydrate.store';
+import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache.model';
+import { deferInitGvl, deferInitGvlToRoute } from '../transports/gvl-reference.model';
 import {
 	mapInitOutputToInitResponse,
 	mergeInitResponseIntoKernelConfig,
 } from '../transports/init-output';
 import { createOfflineTransport } from '../transports/offline';
 import type { OfflineTransportOptions } from '../transports/offline';
-import { readApiError } from '../transports/v1/error';
-import { V1_ROUTES } from '../transports/v1/paths';
-import type { KernelConfig } from '../types';
+import { readApiError } from '../transports/v1/inth-api-error';
+import { V1_ROUTES } from '../transports/v1/v1-routes';
+import type { KernelConfig } from '../consent-kernel.model';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,
 	filterCookieHeader,
 	stripIdentityForCleartext,
-} from './consent-proxy';
+} from './consent-proxy.api';
 import {
 	CONSENT_ROUTE_TIMEOUT_HEADER,
 	resolveConsentInit,
-} from './consent-route';
-import type { ConsentRouteFetchGvl } from './consent-route';
-import { fetchServerGvl } from './gvl-cache';
+} from './consent-route.api';
+import type { ConsentRouteFetchGvl } from './consent-route.api';
+import { fetchServerGvl } from './server-gvl-cache.api';
 import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
-} from './request-origin';
-import type { RequestHeaderSource } from './request-origin';
+} from './request-origin.model';
+import type { RequestHeaderSource } from './request-origin.model';
 import {
 	DEFAULT_CONSENT_ROUTE_PREFIX,
 	IN_PROCESS_ORIGIN,
 	keepAlive,
 	toPathFetch,
 	writeConsentInputHeaders,
-} from './shared';
+} from './server-adapter.model';
 
 /**
  * Marks a hosted request a render sends to its own origin. If a page answers

@@ -14,7 +14,7 @@ import type { AllConsentNames } from '../consent/consent-types';
 import { has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
 import { vendorAxisActive } from '../libs/vendors';
-import type { ConsentSnapshot } from '../types';
+import type { ConsentSnapshot } from '../consent-kernel.model';
 import { isVendorDenied } from './vendor-denial';
 
 export { deniedVendorIds, isVendorDenied } from './vendor-denial';

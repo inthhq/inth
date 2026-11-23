@@ -23,7 +23,7 @@ import type {
 	KernelConfig,
 	KernelIABState,
 	KernelOverrides,
-} from '../types';
+} from '../consent-kernel.model';
 
 type RichInitOutput = InitOutput &
 	Partial<Pick<InitResponse, 'resolvedOverrides' | 'subjectId'>>;

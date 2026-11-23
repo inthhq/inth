@@ -9,17 +9,17 @@
  * receipt.
  */
 
-import type { OptOutReceiptData } from '../../../libs/opt-out-state';
-import type { ConsentSnapshot } from '../../../types';
+import type { OptOutReceiptData } from '../../../libs/opt-out-state.model';
+import type { ConsentSnapshot } from '../../../consent-kernel.model';
 import type {
 	StoredConsentEnvelope,
 	StoredIabMetadata,
 	StoredNoticeDismissal,
 	StoredOptOutRecord,
 	StoredVendorChoice,
-} from '../record-codec';
-import type { StorageConfig } from '../types';
-import type { RecordStore } from './store';
+} from '../record-codec.model';
+import type { StorageConfig } from '../persistence.model';
+import type { RecordStore } from './persistence-writer.store';
 
 /** Envelope a snapshot's explicit choice serializes to, or `null`. */
 export const buildStoredEnvelope = function buildStoredEnvelope(

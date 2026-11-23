@@ -23,10 +23,10 @@ import {
 	optInPromptAllowedAt,
 	OPT_OUT_REPROMPT_WAIT_MS,
 } from '../../consent-record';
-import { resolveOptOutReceipt } from '../../libs/opt-out-state';
+import { resolveOptOutReceipt } from '../../libs/opt-out-state.model';
 import { PENDING_OPT_OUTS_STORAGE_KEY } from '../../libs/storage-keys';
 import { createPersistence } from '../../modules/persistence';
-import { readStoredOptOutRecord } from '../../modules/persistence/record-storage';
+import { readStoredOptOutRecord } from '../../modules/persistence/record-storage.store';
 import {
 	bodyAt,
 	json,
@@ -46,10 +46,10 @@ import type {
 	OptOutTransportResult,
 	SavePayload,
 	SaveResult,
-} from '../../types';
-import { clearKernelRecords } from '../clear-records';
+} from '../../consent-kernel.model';
+import { clearKernelRecords } from '../clear-records.model';
 import { createKernel } from '../index';
-import type { InternalKernel } from '../internals';
+import type { InternalKernel } from '../kernel-internals.model';
 import {
 	createBrowserOutboxStore,
 	createMemoryOutboxStore,

@@ -13,7 +13,7 @@ import {
 	EARLY_TAPS_WINDOW_KEY,
 	SERVER_START_FAILED_EVENT,
 } from '../../../../core/src/libs/page-globals';
-import { EARLY_CONSENT_TAP_SCRIPT } from '../../../../core/src/surface-actions/early-tap-script';
+import { EARLY_CONSENT_TAP_SCRIPT } from '../../../../core/src/surface-actions/early-consent-tap-script';
 import {
 	DISPLAY_ONLY_OPTIONS,
 	liveRootKey,

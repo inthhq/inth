@@ -11,9 +11,9 @@ import {
 	buildRequestContextParams,
 	buildRequestContextSentHeaders,
 	DEFAULT_INIT_CREDENTIALS,
-} from '../../libs/request-context-headers';
-import type { InitContext } from '../../types';
-import { trimTrailingSlash, V1_ROUTES } from './paths';
+} from '../../libs/request-context-headers.model';
+import type { InitContext } from '../../consent-kernel.model';
+import { trimTrailingSlash, V1_ROUTES } from './v1-routes';
 
 export interface V1InitRequest {
 	url: string;

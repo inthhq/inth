@@ -7,8 +7,8 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import { buildNextSnapshot, snapshotChanged } from '../patch';
-import { buildInitialSnapshot } from '../snapshot';
+import { buildNextSnapshot, snapshotChanged } from '../kernel-patch.model';
+import { buildInitialSnapshot } from '../kernel-snapshot.model';
 
 describe('buildNextSnapshot', () => {
 	test('increments revision by exactly 1', () => {

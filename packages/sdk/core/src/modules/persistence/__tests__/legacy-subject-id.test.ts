@@ -18,10 +18,10 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
 import type { StorageConfig } from '../../../libs/cookie';
-import type { KernelTransport } from '../../../types';
+import type { KernelTransport } from '../../../consent-kernel.model';
 import { createPersistence } from '../index';
 import { mountPersistence, queuedWrites } from '../mount';
-import { readStoredConsentRecord } from '../record-storage';
+import { readStoredConsentRecord } from '../record-storage.store';
 import { createWriterLoader } from '../writer-loader';
 import {
 	clearStoredConsentRecords,

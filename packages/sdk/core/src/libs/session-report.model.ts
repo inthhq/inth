@@ -12,8 +12,8 @@ import {
 	isSpeculativeRequest as isSpeculativeHeaders,
 } from '@inth/sdk-schema/types';
 
-import { readHeader, toHeaders } from './headers';
-import { trimSlash } from './url';
+import { readHeader, toHeaders } from './http-headers.model';
+import { trimSlash } from './trim-slash';
 
 /** Headers as any server runtime hands them over. */
 export type SessionReportHeaders =

@@ -12,12 +12,12 @@ import type {
 	BlockedRequestInfo,
 	NetworkBlockerConfig,
 	NetworkBlockerRule,
-} from '../../libs/network-blocker/types';
+} from '../../libs/network-blocker/network-blocker-config.model';
 import type {
 	declareOwnedVendors,
 	forgetOwnedVendors,
 } from '../../libs/vendors';
-import type { ConsentKernel } from '../../types';
+import type { ConsentKernel } from '../../consent-kernel.model';
 import type { evaluateConsent } from '../has';
 import type {
 	blockedResponse,

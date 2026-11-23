@@ -28,9 +28,9 @@ import type { OptOutRecord, PolicyResolution } from '@inth/sdk-schema/types';
 import type { Translations } from '@inth/sdk-translations';
 import { deepMergeTranslations } from '@inth/sdk-translations';
 
-import type { RecordIssue } from '../consent-record/validation';
-import { ownScriptRegistry } from '../libs/freeze-data';
-import { hasGlobalPrivacyControlSignal } from '../libs/global-privacy-control';
+import type { RecordIssue } from '../consent-record/consent-record-validation.model';
+import { ownScriptRegistry } from '../libs/freeze-data.model';
+import { hasGlobalPrivacyControlSignal } from '../libs/read-global-privacy-control';
 import { isProductionBuild } from '../libs/is-production';
 import { resolveVendors, withoutManifestVendors } from '../libs/vendors';
 import { applyTranslationOverrides } from '../translations';
@@ -44,13 +44,13 @@ import type {
 	KernelIABState,
 	KernelTransport,
 	KernelTranslations,
-} from '../types';
-import type { SnapshotPatch } from './patch';
-import { validateHydrationRecords } from './record-validation';
-import { foldServerRecords, syncAdoptedServerOptOutReceipt } from './records';
-import type { KernelRuntime } from './runtime';
+} from '../consent-kernel.model';
+import type { SnapshotPatch } from './kernel-patch.model';
+import { validateHydrationRecords } from './record-validation.model';
+import { foldServerRecords, syncAdoptedServerOptOutReceipt } from './kernel-records.model';
+import type { KernelRuntime } from './create-runtime';
 import type { SaveOutbox } from './save-outbox';
-import { DEFAULT_IAB } from './snapshot';
+import { DEFAULT_IAB } from './kernel-snapshot.model';
 
 const DEFAULT_MAX_ATTEMPTS = 5;
 const DEFAULT_BASE_DELAY_MS = 1000;

@@ -17,7 +17,7 @@
 import type { AllConsentNames } from '../../consent/consent-types';
 import { allConsentNames } from '../../consent/consent-types';
 import { vendorAxisActive } from '../../libs/vendors';
-import type { ConsentSnapshot, ConsentState } from '../../types';
+import type { ConsentSnapshot, ConsentState } from '../../consent-kernel.model';
 import { getEffectiveGateState, has } from '../has';
 import { deniedVendorIds } from '../vendor-denial';
 

@@ -10,9 +10,9 @@
 import { IAB_STORAGE_KEYS } from '@inth/sdk-schema/types';
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
-import { cookieDomainsOf } from '../../libs/cookie/domain-utils';
-import type { StorageConfig } from '../../libs/cookie/types';
-import { legacySubjectIdKey } from '../../libs/legacy-subject-id';
+import { cookieDomainsOf } from '../../libs/cookie/resolve-cookie-domain';
+import type { StorageConfig } from '../../libs/cookie/cookie.model';
+import { legacySubjectIdKey } from '../../libs/legacy-subject-id.store';
 import {
 	C15T_EXPERIMENT_STORAGE_KEY,
 	C15T_JOURNEY_STORAGE_KEY,
@@ -27,7 +27,7 @@ import {
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../libs/storage-keys';
 import { getEffectiveGateState } from '../has';
-import type { ClearOnRevocationTools } from './types';
+import type { ClearOnRevocationTools } from './clear-on-revocation.model';
 
 /**
  * Every name Inth stores under for `config`, the legacy families and the

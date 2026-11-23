@@ -18,8 +18,8 @@
 import type { HasCondition } from '../libs/has';
 import { STARTED_KEY, startedElements } from '../libs/page-globals';
 import type { StartedElement } from '../libs/page-globals';
-import type { Script } from '../libs/script-loader/types';
-import type { ConsentSnapshot } from '../types';
+import type { Script } from '../libs/script-loader/script.model';
+import type { ConsentSnapshot } from '../consent-kernel.model';
 
 export { evaluateCategoryGate } from '../modules/category-gate';
 

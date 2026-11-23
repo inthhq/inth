@@ -19,9 +19,9 @@ import type {
 } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
 import type { ExperimentAssignment } from '../libs/experiment';
-import { createIdempotencyKey } from '../libs/subject-uuid';
-import { presentedSelection, scopeSelection } from '../policy-choice';
-import type { PresentedSelection } from '../policy-choice';
+import { createIdempotencyKey } from '../libs/subject-uuid.model';
+import { presentedSelection, scopeSelection } from '../policy-choice.model';
+import type { PresentedSelection } from '../policy-choice.model';
 import type {
 	ConsentSnapshot,
 	ExplicitChoice,
@@ -29,8 +29,8 @@ import type {
 	SaveInput,
 	SavePayload,
 	SaveUISource,
-} from '../types';
-import type { SnapshotPatch } from './next-snapshot';
+} from '../consent-kernel.model';
+import type { SnapshotPatch } from './next-snapshot.model';
 
 /**
  * Values one save input confirms. Object input is passed through untouched

@@ -17,7 +17,7 @@
 export type {
 	ConsentProxyForwarding,
 	ConsentProxyOptions,
-} from './consent-proxy';
+} from './consent-proxy.api';
 export type {
 	ConsentInitReport,
 	ConsentRouteFetchGvl,
@@ -25,13 +25,13 @@ export type {
 	ConsentRouteHandlerOptions,
 	ConsentRouteName,
 	ConsentRouteRequestContext,
-} from './consent-route';
+} from './consent-route.api';
 export {
 	CONSENT_ROUTE_TIMEOUT_HEADER,
 	createConsentRouteHandler,
 	readRequestForwarding,
 	readWaitUntil,
-} from './consent-route';
+} from './consent-route.api';
 export type {
 	ConsentRequestFacts,
 	FetchRequestInitOptions,
@@ -40,16 +40,16 @@ export type {
 	RequestConsentState,
 	RequestInitAnswer,
 	ResolveRequestConsentOptions,
-} from './request-consent';
+} from './request-consent.api';
 export {
 	fetchRequestInit,
 	readRequestConsent,
 	resolveRenderBudgetMs,
 	resolveRequestConsent,
-} from './request-consent';
-export type { FetchCachedGvlOptions } from './gvl-cache';
-export { fetchServerGvl } from './gvl-cache';
-export { clearGvlCache } from '../transports/gvl-cache';
+} from './request-consent.api';
+export type { FetchCachedGvlOptions } from './server-gvl-cache.api';
+export { fetchServerGvl } from './server-gvl-cache.api';
+export { clearGvlCache } from '../transports/gvl-cache.model';
 export type {
 	CachedManifestResponse,
 	FetchCachedManifestOptions,
@@ -77,24 +77,24 @@ export type {
 	ConsentProxyRouteMethodHandlers,
 	ConsentRouteMethodHandlers,
 	ConsentRouteMethodHandlersFor,
-} from './route-handlers';
+} from './create-consent-route-method-handlers';
 export {
 	createConsentRouteHandlerCache,
 	createConsentRouteMethodHandlers,
-} from './route-handlers';
-export { normalizeRoutePrefix } from './route-prefix';
+} from './create-consent-route-method-handlers';
+export { normalizeRoutePrefix } from './normalize-route-prefix';
 export type {
 	ServerMode,
 	ServerModeInput,
 	ServerModeOptions,
-} from './server-mode';
+} from './server-mode.model';
 export {
 	buildSnapshotSkipReason,
 	needsBuildSnapshot,
 	readModeData,
 	resolveServerMode,
-} from './server-mode';
-export type { ConsentInputHeaderTarget } from './shared';
+} from './server-mode.model';
+export type { ConsentInputHeaderTarget } from './server-adapter.model';
 export {
 	DEFAULT_CONSENT_ROUTE_PREFIX,
 	IN_PROCESS_ORIGIN,
@@ -102,26 +102,26 @@ export {
 	SAFE_NONCE,
 	trimPathSlashes,
 	writeConsentInputHeaders,
-} from './shared';
+} from './server-adapter.model';
 export {
 	createStaticManifestEntry,
 	createStaticManifestModule,
 	loadStaticManifest,
-} from './static-manifest';
+} from './static-manifest.api';
 export type {
 	StaticManifestEntry,
 	StaticManifestModuleOptions,
-} from './static-manifest';
+} from './static-manifest.api';
 export type {
 	RequestHeaderSource,
 	ResolveRequestOriginOptions,
-} from './request-origin';
+} from './request-origin.model';
 export {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
-} from './request-origin';
+} from './request-origin.model';
 export {
 	canDeferEngine,
 	engineNeededNow,
-} from '../surface-actions/defer-engine';
-export type { DeferEngineOptions } from '../surface-actions/defer-engine';
+} from '../surface-actions/can-defer-engine';
+export type { DeferEngineOptions } from '../surface-actions/can-defer-engine';
