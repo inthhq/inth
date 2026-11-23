@@ -16,7 +16,7 @@ import { useIdleDialogWarming, warmDialogChunk } from '~/warm-dialog-chunk';
 import type {
 	CornerPosition,
 	TriggerSize,
-} from '../consent-dialog-trigger.model';
+} from '../panel-trigger.model';
 import { useTriggerContext } from './trigger-root';
 
 const cornerClassMap = {

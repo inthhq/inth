@@ -56,7 +56,7 @@ test('reveals a cold aggregate dialog as soon as its module is ready', async () 
 		expect(dialog()).toBeNull();
 		// A DOM click opens the dialog without hover/focus chunk warming.
 		container.querySelector<HTMLButtonElement>('#reopen')?.click();
-		await import('../components/dialog/consent-dialog-body');
+		await import('../components/dialog/panel-body');
 		// Allow effects and a browser paint, without waiting out Suspense's 300ms.
 		await new Promise(requestAnimationFrame);
 		await new Promise(requestAnimationFrame);

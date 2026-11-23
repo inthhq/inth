@@ -3,7 +3,7 @@
 
 	import ConsentDialog from '../../lib/components/deferred-panel.svelte';
 	import InthProvider from '../../lib/components/inth-provider.svelte';
-	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
+	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 
 	let {
 		options,

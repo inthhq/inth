@@ -10,7 +10,7 @@ import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
-import type { TriggerIcon as TriggerIconType } from '../consent-dialog-trigger.model';
+import type { TriggerIcon as TriggerIconType } from '../panel-trigger.model';
 import { FingerprintIcon, SettingsIcon } from './trigger-icons';
 import { useTriggerContext } from './trigger-root';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import InthProvider from '../../lib/components/inth-provider.svelte';
-	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
+	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 	import ContextReader from './context-reader.svelte';
 
 	let { options }: { options: ConsentManagerOptions } = $props();

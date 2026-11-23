@@ -12,7 +12,7 @@ import {
 } from './atoms/accordion';
 import { ConsentWidgetOptOut } from './atoms/opt-out';
 import { ConsentWidgetRoot } from './atoms/root';
-import type { ConsentWidgetProps } from './consent-widget.model';
+import type { ConsentWidgetProps } from './preferences.model';
 import { ConsentWidgetPolicyActions } from './policy-actions';
 
 export const ConsentWidget = ({

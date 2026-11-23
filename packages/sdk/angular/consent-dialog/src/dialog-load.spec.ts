@@ -8,7 +8,7 @@ import { ConsentManager } from '../../src/lib/core/consent-manager';
 import { provideInth } from '../../src/lib/core/provide-inth';
 import { warmDialog } from '../../src/lib/core/warm-dialog';
 import { ConsentDialogBody } from '../../src/lib/dialog/dialog';
-import { ConsentBanner } from '../../src/lib/prompt/consent-banner';
+import { ConsentBanner } from '../../src/lib/prompt/prompt';
 import { CONSENT_DIALOG_BODY, ConsentDialog } from './consent-dialog';
 
 @Component({

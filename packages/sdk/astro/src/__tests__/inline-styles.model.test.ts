@@ -4,7 +4,7 @@ import iabDialogClasses from '@inth/sdk/ui/styles/components/iab-consent-dialog'
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import ConsentDialogLink from '../components/consent-dialog-link.astro';
+import ConsentDialogLink from '../components/panel-link.astro';
 import ConsentScript from '../components/consent-script.astro';
 import IABConsentDialog from '../components/iab-panel.astro';
 import IABConsentBanner from '../components/iab-prompt.astro';

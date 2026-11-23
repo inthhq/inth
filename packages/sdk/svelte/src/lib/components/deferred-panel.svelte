@@ -72,7 +72,7 @@
 	import type {
 		ConsentDialogProps,
 		ConsentDialogTriggerProps,
-	} from './dialog/consent-dialog-props.model';
+	} from './dialog/panel-props.model';
 	import { requestReceiptFocus } from './parts/receipt-focus.model';
 
 	const props: ConsentDialogProps = $props();

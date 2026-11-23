@@ -55,7 +55,7 @@ export type {
 	ConsentRequestOptions,
 	ConsentState,
 } from './kit-locals.model';
-export type { InthProviderState } from '../consent-manager-options.model';
+export type { InthProviderState } from '../manager-options.model';
 
 export type {
 	ConsentMode,

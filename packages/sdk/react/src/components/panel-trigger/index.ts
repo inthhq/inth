@@ -12,8 +12,8 @@ export {
 	TriggerText,
 	type TriggerTextProps,
 	useTriggerContext,
-} from './consent-dialog-trigger';
-export { ConsentDialogTriggerToolbar } from './consent-dialog-trigger-toolbar';
+} from './panel-trigger';
+export { ConsentDialogTriggerToolbar } from './panel-trigger-toolbar';
 export type {
 	ConsentDialogTriggerProps,
 	ConsentDialogTriggerToolbarAction,
@@ -23,7 +23,7 @@ export type {
 	TriggerIcon as TriggerIconType,
 	TriggerOrientation,
 	TriggerSize,
-} from './consent-dialog-trigger.model';
+} from './panel-trigger.model';
 export {
 	type UseDraggableOptions,
 	type UseDraggableReturn,

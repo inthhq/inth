@@ -2,13 +2,13 @@
 	import type { ConsentKernel, ConsentPresentation } from '@inth/sdk/engine';
 	import { untrack } from 'svelte';
 
-	import ConsentDialogLink from '../../lib/components/consent-dialog-link.svelte';
+	import ConsentDialogLink from '../../lib/components/panel-link.svelte';
 	import ConsentGate from '../../lib/components/consent-gate.svelte';
 	import ConsentDialog from '../../lib/components/deferred-panel.svelte';
 	import Provider from '../../lib/components/inth-provider.svelte';
 	import ConsentDialogTrigger from '../../lib/components/panel-trigger.svelte';
 	import ConsentBanner from '../../lib/components/prompt/prompt.svelte';
-	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
+	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 	import Capture from './conformance-kernel-capture.svelte';
 
 	let {

@@ -11,7 +11,7 @@ import type {
 	ConsentDialogTriggerToolbarAction,
 	ConsentDialogTriggerToolbarPreferences,
 	ConsentDialogTriggerToolbarProps,
-} from './consent-dialog-trigger.model';
+} from './panel-trigger.model';
 
 const EMPTY_ACTIONS: readonly ConsentDialogTriggerToolbarAction[] = [];
 const DEFAULT_PREFERENCES: ConsentDialogTriggerToolbarPreferences = {};

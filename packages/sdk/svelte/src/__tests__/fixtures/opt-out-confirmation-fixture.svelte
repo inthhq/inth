@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
+	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 	import type { ConsentContextValue } from '../../lib/get-consent-context.svelte';
 	import {
 		ConsentBanner,

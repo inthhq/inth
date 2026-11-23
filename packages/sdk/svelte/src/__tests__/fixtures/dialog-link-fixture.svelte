@@ -1,8 +1,8 @@
 <script lang="ts">
-	import ConsentDialogLink from '../../lib/components/consent-dialog-link.svelte';
+	import ConsentDialogLink from '../../lib/components/panel-link.svelte';
 	import ConsentDialog from '../../lib/components/deferred-panel.svelte';
 	import InthProvider from '../../lib/components/inth-provider.svelte';
-	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
+	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 
 	let {
 		options,

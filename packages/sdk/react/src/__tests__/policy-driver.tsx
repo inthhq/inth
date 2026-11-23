@@ -52,7 +52,7 @@ import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persi
 import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs.model';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
 import { ConsentDialog } from '../aggregate-components';
-import { ConsentDialogLink } from '../components/consent-dialog-link';
+import { ConsentDialogLink } from '../components/panel-link';
 import { ConsentGate } from '../components/consent-gate';
 import { ConsentDialogTrigger } from '../components/panel-trigger';
 import { ConsentBanner } from '../components/prompt';

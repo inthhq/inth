@@ -9,7 +9,7 @@ import { ConsentManager } from '../../src/lib/core/consent-manager';
 import type { InthProviderOptions } from '../../src/lib/core/inth-options';
 import { provideInth } from '../../src/lib/core/provide-inth';
 import { warmDialog } from '../../src/lib/core/warm-dialog';
-import { ConsentBanner } from '../../src/lib/prompt/consent-banner';
+import { ConsentBanner } from '../../src/lib/prompt/prompt';
 import { iabTestOptions } from '../../testing/src/__tests__/harness-test-bed';
 import { IABConsentBanner } from './iab-consent-banner';
 import {

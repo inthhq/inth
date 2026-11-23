@@ -8,7 +8,7 @@ import { render, waitFor } from '@testing-library/svelte';
 import { writable } from 'svelte/store';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
+import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { testing } from '../lib/testing';
 import Fixture from './fixtures/consent-surfaces-fixture.svelte';
 import { policyFixture } from './policy-fixture';

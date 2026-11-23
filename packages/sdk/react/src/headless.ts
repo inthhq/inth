@@ -54,7 +54,7 @@ export {
 	type UseConsentDialogTriggerOptions,
 	type UseConsentDialogTriggerResult,
 	useConsentDialogTrigger,
-} from './component-hooks/use-consent-dialog-trigger';
+} from './component-hooks/use-panel-trigger';
 export {
 	type HeadlessConsentBannerAction,
 	type HeadlessConsentBannerState,

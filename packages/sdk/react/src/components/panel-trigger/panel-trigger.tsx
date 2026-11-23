@@ -21,7 +21,7 @@ import type { TriggerTextProps } from './atoms/trigger-text';
 import type {
 	ConsentDialogTriggerProps,
 	ConsentDialogTriggerToolbarAction,
-} from './consent-dialog-trigger.model';
+} from './panel-trigger.model';
 import {
 	getTriggerToolbar,
 	loadTriggerToolbar,

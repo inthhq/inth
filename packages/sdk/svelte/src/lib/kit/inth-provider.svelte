@@ -46,7 +46,7 @@
 	import type {
 		ConsentManagerOptions,
 		InthProviderState,
-	} from '../consent-manager-options.model';
+	} from '../manager-options.model';
 	import { createDeferredRuntime } from '../deferred/create-deferred-runtime';
 	import type { EngineFactory } from '../deferred/create-deferred-runtime';
 	import { readConsentBoot } from '../deferred/read-consent-boot';

@@ -27,7 +27,7 @@ import type {
 	ProcessedPurpose,
 	ProcessedVendor,
 	VendorId,
-} from '../iab-consent-dialog.model';
+} from '../iab-panel.model';
 import { useIABTranslations } from '../use-iab-translations';
 import {
 	AdTechProviderSection,

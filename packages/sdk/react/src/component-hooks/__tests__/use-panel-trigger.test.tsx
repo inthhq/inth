@@ -8,7 +8,7 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { KernelContext } from '~/context';
 
 import { testing } from '../../testing';
-import { useConsentDialogTrigger } from '../use-consent-dialog-trigger';
+import { useConsentDialogTrigger } from '../use-panel-trigger';
 
 interface WrapperOptions {
 	activeUI: Exclude<KernelActiveUI, null | undefined>;

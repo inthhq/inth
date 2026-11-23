@@ -65,4 +65,4 @@ export {
 	processGVLForDialog,
 	resolveIABBannerSummary,
 } from '@inth/sdk/iab/headless';
-export type { ConsentManagerOptions } from './consent-manager-options.model';
+export type { ConsentManagerOptions } from './manager-options.model';

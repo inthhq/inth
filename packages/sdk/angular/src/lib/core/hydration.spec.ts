@@ -26,7 +26,7 @@ import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
-import { ConsentBanner } from '../prompt/consent-banner';
+import { ConsentBanner } from '../prompt/prompt';
 import { PROMPT_LOADERS } from '../prompt/prompt-loaders';
 import type { ContainerModule } from '../prompt/prompt-loaders';
 import { ConsentManager } from './consent-manager';

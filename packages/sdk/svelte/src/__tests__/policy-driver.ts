@@ -53,7 +53,7 @@ import { validateStoredConsentEnvelope } from '../../../core/src/modules/persist
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/record-encode.model';
 import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs.model';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
-import type { InthProviderCallbacks } from '../lib/consent-manager-options.model';
+import type { InthProviderCallbacks } from '../lib/manager-options.model';
 import PolicyFixture from './fixtures/policy-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 import { renderSsr } from './server-render';

@@ -12,14 +12,14 @@ import * as Button from '~/components/shared/ui/button';
 import { useComponentConfig } from '~/hooks/use-component-config';
 import { useFocusBlocking } from '~/hooks/use-focus-blocking';
 import { useHeadlessIABConsentUI } from '~/hooks/use-headless-iab-consent-ui';
-import { useIABConsentManager } from '~/hooks/use-iab-consent-manager';
+import { useIABConsentManager } from '~/hooks/use-iab-manager';
 import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 import { warmDialogChunk } from '~/warm-dialog-chunk';
 
 import { useIABTranslations } from '../iab-panel/use-iab-translations';
-import { IABConsentBannerCard } from './atoms/iab-consent-banner-card';
-import { IABConsentBannerRoot } from './atoms/iab-consent-banner-root';
+import { IABConsentBannerCard } from './atoms/iab-prompt-card';
+import { IABConsentBannerRoot } from './atoms/iab-prompt-root';
 
 /**
  * Props for the IABConsentBanner component.
