@@ -1,6 +1,20 @@
 import { defineDocsConfig } from 'leadtype';
+import { defineComponentFlattener } from 'leadtype/markdown';
+
+/**
+ * `<ProjectUrlHint>` wraps a sentence that only matters while a code sample
+ * shows the `https://your-project.inth.app` placeholder, such as "Replace
+ * `https://your-project.inth.app` with your Inth project URL". A docs site
+ * can hide it once the samples show the reader's own project URL. Markdown
+ * output has no reader, so the sentence stays as written.
+ */
+const projectUrlHint = defineComponentFlattener({
+	name: 'ProjectUrlHint',
+	toMarkdown: ({ node }) => node.children,
+});
 
 export default defineDocsConfig({
+	flatteners: [projectUrlHint],
 	groups: [
 		{
 			slug: 'frameworks',
