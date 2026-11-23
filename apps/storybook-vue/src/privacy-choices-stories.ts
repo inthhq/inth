@@ -3,10 +3,6 @@
  * regime (§2), a plain page under the surfaces, and the provider config.
  */
 import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
-import { resolveOptOutLink, resolveOptOutState } from '@inth/sdk/surface-state';
-import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
-
-import '@inth/sdk/ui/styles/components/consent-banner.css';
 import { defineComponent, h } from 'vue';
 
 import type {
@@ -17,11 +13,8 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '../../../packages/sdk/schema/src/types';
-import OptOutIcon from '../../../packages/sdk/vue/src/runtime/components/opt-out-icon.vue';
+import PrivacyChoicesLink from '../../../packages/sdk/vue/src/runtime/components/privacy-choices-link.vue';
 import { useConsentActiveUI } from '../../../packages/sdk/vue/src/runtime/composables/activeUI';
-import { useResolvedPresentation } from '../../../packages/sdk/vue/src/runtime/composables/experiment';
-import { useConsentSnapshot } from '../../../packages/sdk/vue/src/runtime/composables/kernel';
-import { useSurfaceTranslations } from '../../../packages/sdk/vue/src/runtime/composables/use-surface-translations';
 import type { ConsentConfig } from '../../../packages/sdk/vue/src/runtime/config';
 import {
 	storybookPolicy,
@@ -65,10 +58,25 @@ const POLICIES: Record<Region, PolicyRule> = {
 	},
 };
 
+/**
+ * The banner stories' US opt-in rule keeps the default rights, as React's
+ * banner stories do; the dialog stories give it the opt-out right.
+ */
+const BANNER_US_OPT_IN: PolicyRule = {
+	...storybookPolicy,
+	id: 'storybook-privacy-choices-us-opt-in',
+	privacySignals: US_GPC,
+};
+
 /** The init a region's story resolves offline. */
 export const privacyChoicesInit = function privacyChoicesInit(
-	region: Region
+	region: Region,
+	surface: 'banner' | 'dialog' = 'dialog'
 ): InitOutput {
+	const rule =
+		surface === 'banner' && region === 'us-opt-in'
+			? BANNER_US_OPT_IN
+			: POLICIES[region];
 	const location =
 		region === 'eu'
 			? { countryCode: 'DE', regionCode: null }
@@ -77,7 +85,7 @@ export const privacyChoicesInit = function privacyChoicesInit(
 		...storybookInit,
 		location,
 		policyResolution: writePolicyResolutionWire(
-			resolvePolicyRules({ ...location, rules: [POLICIES[region]] })
+			resolvePolicyRules({ ...location, rules: [rule] })
 		),
 	};
 };
@@ -125,55 +133,6 @@ const intro = () => [
 	),
 ];
 
-/**
- * The persistent "Your Privacy Choices" link, as React's
- * `PrivacyChoicesLink` renders it: an unstyled button with the opt-out
- * icon, shown only under a policy with an opt-out right. Vue has no such
- * component yet, so the stories carry their own.
- */
-export const PrivacyChoicesLink = defineComponent({
-	name: 'StoryPrivacyChoicesLink',
-	setup() {
-		const activeUI = useConsentActiveUI();
-		const snapshot = useConsentSnapshot();
-		const translations = useSurfaceTranslations();
-		const presentation = useResolvedPresentation();
-		return function render() {
-			const current = snapshot.value;
-			if (
-				current.resolution.status !== 'matched' ||
-				current.externalPermissions ||
-				!resolveOptOutState(current).available ||
-				!current.policyRule.rights.includes('opt-out')
-			) {
-				return null;
-			}
-			const link = resolveOptOutLink(
-				translations.value,
-				presentation.value?.optOutLink
-			);
-			return h(
-				'button',
-				{
-					'data-inth-rights': current.policyRule.rights.join(' '),
-					'data-opt-out-variant': link.variant,
-					'data-testid': 'privacy-choices-link',
-					onClick: () => {
-						activeUI.value = 'manager';
-					},
-					type: 'button',
-				},
-				[
-					link.variant === 'privacy-choices'
-						? h(OptOutIcon, { class: bannerStyles.optOutIcon })
-						: null,
-					link.label,
-				]
-			);
-		};
-	},
-});
-
 /** The site's own link to the dialog, where the stock link does not render. */
 const SettingsLink = defineComponent({
 	name: 'StorySettingsLink',
@@ -204,7 +163,10 @@ const SettingsLink = defineComponent({
 	},
 });
 
-/** A plain page under the banner, with the persistent "Your Privacy Choices" link. */
+/**
+ * A plain page under the banner, with the stock "Your Privacy Choices"
+ * link, as React's stories render it.
+ */
 export const BannerDemoPage = defineComponent({
 	name: 'PrivacyChoicesBannerDemoPage',
 	setup() {

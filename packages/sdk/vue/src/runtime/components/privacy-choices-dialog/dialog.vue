@@ -632,7 +632,6 @@ const intro = computed(() =>
 			ref="backdropRef"
 			v-bind="rootAttrs"
 			:[SURFACE_ROOT_ATTRIBUTE]="'dialog'"
-			data-scrim
 			:data-animation="disableAnimation ? 'off' : undefined"
 			:data-edge-style="edgeStyle"
 			data-design="privacy-choices"
@@ -641,12 +640,6 @@ const intro = computed(() =>
 			data-testid="consent-dialog-root"
 			:dir="textDirection"
 		>
-			<!-- The dimming, which the theme's dialog overlay slot styles. -->
-			<div
-				v-bind="slotAttrs(config.components?.dialog?.overlay, styles.scrim)"
-				aria-hidden="true"
-				data-testid="consent-dialog-overlay"
-			/>
 			<Layer
 				ref="mainRef"
 				:id-prefix="`${prefix}-main`"

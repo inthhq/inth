@@ -110,13 +110,12 @@ describe('[C2] Your Privacy Choices', () => {
 });
 
 describe('[C3] the dialog root', () => {
-	test('is a dialog surface that the consentDialog and consentDialogOverlay slots style', async () => {
+	test('is a dialog surface that the consentDialog slot styles', async () => {
 		await mount({
 			config: {
 				theme: {
 					slots: {
 						consentDialog: 'theme-dialog',
-						consentDialogOverlay: 'theme-overlay',
 					},
 				},
 			},
@@ -128,10 +127,6 @@ describe('[C3] the dialog root', () => {
 		expect(root.classList.contains('theme-dialog')).toBe(true);
 		// The stock backdrop stays beside the slot's class.
 		expect(root.classList.length).toBeGreaterThan(1);
-		const overlay = must('consent-dialog-overlay');
-		expect(overlay.parentElement).toBe(root);
-		expect(overlay.classList.contains('theme-overlay')).toBe(true);
-		expect(overlay.getAttribute('aria-hidden')).toBe('true');
 	});
 
 	test('a noStyle consentDialog slot drops the stock backdrop', async () => {

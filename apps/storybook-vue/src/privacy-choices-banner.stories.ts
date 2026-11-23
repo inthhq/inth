@@ -46,7 +46,7 @@ const privacyChoicesStory = function privacyChoicesStory(
 				setupStorybookConsent(
 					'banner',
 					privacyChoicesConfig(container, options),
-					privacyChoicesInit(region)
+					privacyChoicesInit(region, 'banner')
 				);
 			},
 			template: '<BannerDemoPage /><ConsentBanner /><ConsentManager />',
