@@ -168,6 +168,8 @@
 	// `open` stays true (a design change, for one), and a fresh latch there
 	// would reopen a dialog the visitor dismissed.
 	let openRequested = false;
+	/** Whether the dialog showing is the one `open` asked for (below). */
+	let claimed = false;
 	const modelAllowed = $derived(
 		!props.models || props.models.includes(consent.state.model)
 	);
@@ -185,10 +187,34 @@
 			return;
 		}
 		openRequested = true;
+		claimed = true;
 		const { kernel } = consent;
 		untrack(() => {
 			if (kernel.getSnapshot().activeUI !== 'dialog') {
 				showConsentSurface(kernel, 'dialog');
+			}
+		});
+	});
+
+	// A controlled `open` turning false closes the dialog it asked for.
+	// Once the dialog renders, it does that itself. Before that, while its chunk still loads, `open` turning
+	// false closes it here through the consent manager, as Close does, so
+	// an unanswered banner comes back and the dialog that arrives later
+	// stays closed. A dialog the consent manager opened while `open` was
+	// already false stays its own.
+	$effect.pre(() => {
+		if (props.open !== false) {
+			return;
+		}
+		const wasClaimed = claimed;
+		claimed = false;
+		if (!wasClaimed) {
+			return;
+		}
+		const { kernel } = consent;
+		untrack(() => {
+			if (!PrivacyChoicesDialog && kernel.getSnapshot().activeUI === 'dialog') {
+				showConsentSurface(kernel, 'none');
 			}
 		});
 	});

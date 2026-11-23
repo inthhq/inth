@@ -37,3 +37,4 @@ Dialog:
 - A vendor table opened just before the dialog closes no longer schedules a scroll after the dialog is gone.
 - `PrivacyChoicesLink` gives the opt-out icon its own size (14px tall), so the icon does not show at full SVG size on pages that do not load the classic banner styles. `noStyle` leaves it unsized.
 - `legalLinks` on `ConsentDialog` now applies to the Privacy Choices dialog's footer link (the Cookie Policy in the EU, the Privacy Policy in the US): `null` hides it, and a list shows it only when its key is in the list.
+- Setting `open` on `ConsentDialog` to `false` while the dialog is still loading its code now closes it, as Close does, so an unanswered banner comes back. Before, the dialog opened anyway once its code arrived, or the banner stayed away.
