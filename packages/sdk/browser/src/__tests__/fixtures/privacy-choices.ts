@@ -13,7 +13,7 @@ import type {
 import type { PolicyRule } from '@inth/sdk-schema/types';
 
 import { createTestingConsentClient } from '../../testing-global';
-import type { ConsentClient } from '../../types';
+import type { ConsentClient, ConsentDialogOptions } from '../../types';
 import { mountConsentUI } from '../../ui/mount';
 
 export type Region = 'eu' | 'us-opt-in' | 'us-notice' | 'us-opt-out';
@@ -79,8 +79,11 @@ export interface PrivacyChoicesPageOptions {
 	vendors?: boolean;
 	/** Overrides the region's rule, as the dialog suite's GPC rule does. */
 	rule?: Partial<PolicyRule>;
-	/** `false` mounts no dialog, so nothing warms its chunks. */
-	dialog?: false;
+	/**
+	 * `false` mounts no dialog, so nothing warms its chunks; an object
+	 * passes the dialog's options.
+	 */
+	dialog?: false | ConsentDialogOptions;
 	/** `false` mounts no banner. */
 	banner?: false;
 	/** Mount the stock floating trigger. */

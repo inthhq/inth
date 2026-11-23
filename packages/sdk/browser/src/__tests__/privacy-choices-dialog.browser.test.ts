@@ -16,6 +16,7 @@ import {
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
+import type { ConsentDialogOptions } from '../types';
 import { mountConsentUI } from '../ui/mount';
 import { createPrivacyChoicesLink } from '../ui/privacy-choices-link';
 import {
@@ -51,7 +52,7 @@ const mount = ({
 	privacyChoicesLink?: boolean;
 } & Pick<
 	PrivacyChoicesPageOptions,
-	'animate' | 'banner' | 'language' | 'stockTrigger'
+	'animate' | 'banner' | 'dialog' | 'language' | 'stockTrigger'
 > = {}) =>
 	startPrivacyChoicesPage({
 		...rest,
@@ -809,4 +810,52 @@ describe('wave B round 1', () => {
 		toggle.click();
 		await waitFor(() => expect(row.textContent).not.toBe(before));
 	});
+});
+
+describe('wave B round 2', () => {
+	test('[MOT-03] disableAnimation turns the dialog motion off and drops a sheet at once', async () => {
+		await page.viewport(390, 800);
+		await mount({ animate: true });
+		await openDialog();
+		expect(must('consent-dialog-root')).not.toHaveAttribute('data-animation');
+		expect(getComputedStyle(card()).animationName).not.toBe('none');
+		stopPrivacyChoicesPages();
+
+		await mount();
+		await openDialog();
+		const root = must('consent-dialog-root');
+		expect(root).toHaveAttribute('data-animation', 'off');
+		expect(getComputedStyle(root).animationName).toBe('none');
+		expect(getComputedStyle(card()).animationName).toBe('none');
+		expect(getComputedStyle(card()).transitionDuration).toBe('0s');
+		must('consent-dialog-preferences-row').click();
+		const sheet = await waitFor(() => must('consent-dialog-sheet'));
+		expect(getComputedStyle(sheet).animationName).toBe('none');
+		// The sheet never plays an exit: it goes without a closing state.
+		let closing = false;
+		const watcher = new MutationObserver(() => {
+			if ($('consent-dialog-sheet')?.getAttribute('data-state') === 'closed') {
+				closing = true;
+			}
+		});
+		watcher.observe(root, { attributes: true, childList: true, subtree: true });
+		must('consent-dialog-sheet-close').click();
+		await waitFor(() => expect($('consent-dialog-sheet')).toBeNull());
+		watcher.disconnect();
+		expect(closing).toBe(false);
+	});
+
+	test.each<[ConsentDialogOptions['legalLinks'], boolean]>([
+		[undefined, true],
+		[null, false],
+		[['cookiePolicy'], false],
+		[['privacyPolicy'], true],
+	])(
+		'legalLinks=%j on the dialog: null hides the footer link, a list allows it (shown: %s)',
+		async (legalLinks, shown) => {
+			await mount({ dialog: { legalLinks } });
+			await openDialog();
+			expect($('consent-dialog-legal-link-privacyPolicy') !== null).toBe(shown);
+		}
+	);
 });

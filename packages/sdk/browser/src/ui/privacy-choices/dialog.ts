@@ -45,6 +45,7 @@ import {
 import type { LiveRegion } from '@inth/sdk-ui/primitives/surface';
 import { getTextDirection } from '@inth/sdk-ui/utils';
 import { resolveLegalLinkEntries } from '@inth/sdk-ui/utils/legal-links';
+import type { LegalLinkKeys } from '@inth/sdk-ui/utils/legal-links';
 
 import { classes as styles } from '../../generated/privacy-choices/dialog';
 import { classes as expandStyles } from '../../generated/privacy-choices/expand';
@@ -478,10 +479,17 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 			commitDialogChoice(kernel, action, { draft, uiSource: 'dialog' });
 		};
 
+		// The footer shows the regime's one link: the Cookie Policy for the
+		// EU, the Privacy Policy for the US. `legalLinks` omitted shows it,
+		// `null` hides it, and a list shows it only when its key is listed.
 		const legalKey = eu ? 'cookiePolicy' : 'privacyPolicy';
+		const legalKeys: LegalLinkKeys =
+			options.legalLinks === undefined
+				? [legalKey]
+				: (options.legalLinks?.filter((key) => key === legalKey) ?? []);
 		const [legal] = resolveLegalLinkEntries(
 			ctx.legalLinks,
-			[legalKey],
+			legalKeys,
 			t.legalLinks ?? {}
 		);
 		const legalLink = legal
@@ -755,6 +763,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 			'div',
 			{
 				class: cx(noStyle, styles.backdrop),
+				'data-animation': disableAnimation ? 'off' : undefined,
 				'data-design': 'privacy-choices',
 				'data-edge-style': edgeStyle,
 				'data-layout': phone ? 'phone' : 'desktop',

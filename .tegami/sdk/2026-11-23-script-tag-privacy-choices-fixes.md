@@ -10,7 +10,7 @@ These changes apply when you set `presentation.design: 'privacy-choices'`. They 
 **Banner**
 
 - An opt-in confirmation now opens and can be confirmed. Before, a pending opt-in could hang.
-- The first layer shows only the actions your policy allows (reject, accept, customize), in the order and groups of `presentation.prompt.layout`. This applies to the Card, the Drawer and the collapsed bar. A notice still shows its opt-out link and OK.
+- The first layer shows only the actions your policy allows (reject, accept, customize), in the order and groups of `presentation.prompt.layout`. This applies to the Card, the Drawer and the collapsed bar. Its groups, such as `['customize', ['accept', 'reject']]`, keep their wrapper and the `consentBannerFooterSubGroup` slot in the collapsed bar too. A notice still shows its opt-out link and OK.
 - The collapsed bar now takes the `consentBannerTitle`, `consentBannerDescription` and `consentBannerFooter` slots, like the card.
 - The root sets `dir` from the banner's language, and `disableAnimation` sets `data-animation="off"` on it.
 - When a side Drawer becomes all-in-one, an expansion opened on a phone is folded, so it does not open again when the viewport narrows.
@@ -25,6 +25,8 @@ These changes apply when you set `presentation.design: 'privacy-choices'`. They 
 - Chevrons that point to a sheet mirror in right-to-left languages, and the dialog root sets `dir` from its language.
 - When the element that opened the dialog is gone, focus returns to the "Your Privacy Choices" link, then to the floating trigger.
 - With the trigger on, a Privacy Choices page no longer downloads the classic preference centre.
+- `ui.dialog.disableAnimation` (or `ui.disableAnimation`) now stops the dialog's motion: the backdrop, the card and phone sheets show at once, and the root gets `data-animation="off"`.
+- `ui.dialog.legalLinks` now applies to the dialog's footer link (the Cookie Policy in the EU, the Privacy Policy in the US): `null` hides it, and a list shows it only when its key is in the list.
 
 **New: `createPrivacyChoicesLink`**
 
