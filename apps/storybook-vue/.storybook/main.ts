@@ -76,11 +76,21 @@ const config: StorybookConfig = {
 					},
 					{
 						find: /^@inth\/vue\/runtime\/components\/consent-banner\.vue$/u,
-						replacement: vuePackage('runtime', 'components', 'prompt', 'prompt.vue'),
+						replacement: vuePackage(
+							'runtime',
+							'components',
+							'prompt',
+							'prompt.vue'
+						),
 					},
 					{
 						find: /^@inth\/vue\/runtime\/components\/consent-manager\.vue$/u,
-						replacement: vuePackage('runtime', 'components', 'dialog', 'manager.vue'),
+						replacement: vuePackage(
+							'runtime',
+							'components',
+							'dialog',
+							'manager.vue'
+						),
 					},
 					// @inth/sdk/ui — resolve all subpath imports to source
 					{
