@@ -92,10 +92,8 @@
 	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 	import { untrack } from 'svelte';
 
-	import {
-		getConsentContext,
-		getThemeContext,
-	} from '../../get-consent-context.svelte';
+	import { getConsentContext } from '../../get-consent-context.svelte';
+	import { getThemeContext } from '../../get-theme-context';
 	import ConsentButton from '../action-button.svelte';
 	import AdvertisingRow from '../parts/advertising-row.svelte';
 	import CategoryGroup from '../parts/category-group.svelte';

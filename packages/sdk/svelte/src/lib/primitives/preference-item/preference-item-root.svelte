@@ -9,7 +9,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	import { getThemeContext } from '../../get-consent-context.svelte';
+	import { getThemeContext } from '../../get-theme-context';
 	import { setPreferenceItemContext } from './get-preference-item-context';
 
 	const componentId = $props.id();

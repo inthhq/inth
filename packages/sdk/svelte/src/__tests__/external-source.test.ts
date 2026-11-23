@@ -2,7 +2,7 @@ import type { ConsentState } from '@inth/sdk/engine';
 import { render, fireEvent } from '@testing-library/svelte';
 import { expect, test, vi } from 'vitest';
 
-import type { ConsentContextValue } from '../lib/get-consent-context.svelte';
+import type { ConsentContextValue } from '../lib/consent-context.model';
 import { testing } from '../lib/testing';
 import Fixture from './fixtures/policy-state-fixture.svelte';
 

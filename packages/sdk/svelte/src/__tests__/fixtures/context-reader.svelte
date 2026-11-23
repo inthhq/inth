@@ -1,8 +1,6 @@
 <script lang="ts">
-	import {
-		getConsentContext,
-		getThemeContext,
-	} from '../../lib/get-consent-context.svelte';
+	import { getConsentContext } from '../../lib/get-consent-context.svelte';
+	import { getThemeContext } from '../../lib/get-theme-context';
 
 	const consent = getConsentContext();
 	const theme = getThemeContext();

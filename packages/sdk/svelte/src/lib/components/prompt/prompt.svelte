@@ -20,10 +20,8 @@
 	} from '@inth/sdk/engine';
 	import { untrack } from 'svelte';
 
-	import {
-		getConsentContext,
-		getThemeContext,
-	} from '../../get-consent-context.svelte';
+	import { getConsentContext } from '../../get-consent-context.svelte';
+	import { getThemeContext } from '../../get-theme-context';
 	import DeferredOptInConfirmation from '../confirmation/deferred-opt-in-confirmation.svelte';
 	import Surface from './surface.svelte';
 

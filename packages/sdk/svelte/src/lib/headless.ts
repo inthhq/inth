@@ -39,15 +39,17 @@ export { focusTrap } from './actions/focus-trap';
 export { portal } from './actions/portal';
 export { scrollLock } from './actions/scroll-lock';
 export { default as InlineLegalLinks } from './components/inline-legal-links.svelte';
+export type {
+	HeadlessConsentSurfaceState,
+	SvelteIABState,
+} from './consent-context.model';
 export {
 	getConsentKernel,
 	getConsentManager,
 	getHeadlessConsent,
 	getIAB,
 	getSnapshot,
-	type HeadlessConsentSurfaceState,
-	type SvelteIABState,
-} from './get-consent-context.svelte';
+} from './get-headless-consent';
 export {
 	getEventDispatcher,
 	type EventDispatcher,

@@ -11,7 +11,7 @@
 	import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 	import type { Snippet } from 'svelte';
 
-	import { getThemeContext } from '../../get-consent-context.svelte';
+	import { getThemeContext } from '../../get-theme-context';
 	import Icon from '../parts/icon.svelte';
 	import { cx, part } from '../parts/surface-parts.model';
 
