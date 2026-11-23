@@ -81,7 +81,8 @@ import type {
 	EngineFactory,
 } from './deferred/create-deferred-runtime';
 import type * as EngineModule from './deferred/create-engine';
-import { BOOT_STATE_KEY, restoreBoot } from './deferred/consent-boot.model';
+import { BOOT_STATE_KEY } from './deferred/boot-state-key';
+import { restoreBoot } from './deferred/consent-boot.model';
 import type { ConsentBoot } from './deferred/consent-boot.model';
 import { INTH_OPTIONS, runtimeOptionsFor } from './inth-options';
 import type { InthResolvedOptions, InthSharedOptions } from './inth-options';

@@ -3,8 +3,8 @@
  * engine has loaded.
  *
  * `provideInthServer()` and the server render put the banner, its
- * first-paint styles and the boot (`restore-boot.ts`) in the HTML. The browser's
- * first-load chunk holds only this: a runtime over a stand-in kernel
+ * first-paint styles and the boot (`consent-boot.model.ts`) in the HTML.
+ * The browser's first-load chunk holds only this: a runtime over a stand-in kernel
  * (`stand-in.ts`) that reads the snapshot the server rendered with, so the
  * page hydrates and every component reads the server's state. The engine
  * (`create-engine.ts`) loads after the page's priority images, on the first input
