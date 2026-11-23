@@ -170,15 +170,6 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	const refusedIds = new Set<string>();
 	/** When each script resolved from a signed registry entry stops being valid. */
 	const signatureExpiry = new WeakMap<Script, number>();
-	/** Whether `script` is not mounted yet and its signature has expired. */
-	const signatureExpiredBeforeMount = (script: Script): boolean => {
-		const expiresAt = signatureExpiry.get(script);
-		return (
-			expiresAt !== undefined &&
-			!loadedElements.has(script.id) &&
-			!(Date.now() < expiresAt)
-		);
-	};
 	/** Resolve a list and keep what it holds back; returns what mounts. */
 	const resolveSources = (scripts: readonly Script[]): Script[] => {
 		const resolved = withSources(scripts);
@@ -213,6 +204,15 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	);
 
 	const loadedElements = new Map<string, HTMLScriptElement | null>();
+	/** Whether `script` is not mounted yet and its signature has expired. */
+	const signatureExpiredBeforeMount = (script: Script): boolean => {
+		const expiresAt = signatureExpiry.get(script);
+		return (
+			expiresAt !== undefined &&
+			!loadedElements.has(script.id) &&
+			!(Date.now() < expiresAt)
+		);
+	};
 	const retainedElements = new Map<string, HTMLScriptElement>();
 	const ownedScriptIds = new Set<string>();
 	const elementIds = createElementIdResolver();
