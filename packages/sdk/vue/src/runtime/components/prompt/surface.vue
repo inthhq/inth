@@ -444,8 +444,9 @@ const copy = computed(() =>
 	})
 );
 
-const commit = (action: BannerCommitAction) => {
+const commit = (action: BannerCommitAction, actionAt?: number) => {
 	const { plan } = commitBannerChoice(kernel, action, {
+		actionAt,
 		draft: action === 'save' ? draft : undefined,
 		uiSource: 'banner',
 	});
@@ -460,10 +461,12 @@ const commit = (action: BannerCommitAction) => {
 	}
 	committed = message;
 };
-const acknowledge = () => {
+const acknowledge = (actionAt?: number) => {
 	committed = '';
 	session.commit();
-	void kernel.commands.dismissNotice();
+	void kernel.commands.dismissNotice(
+		actionAt === undefined ? undefined : { actionAt }
+	);
 };
 /** Start a chunk early. A failed load shows when the part renders. */
 const preload = async (load: () => Promise<unknown>) => {
@@ -490,17 +493,17 @@ const warm = () => {
 // inline script (`EarlyTapScript`). From here the prompt's own handlers
 // work: stop the script and replay the tap through them once the runtime
 // has started, so it commits through this prompt's plan and Customize
-// opens the options in place. The runtime is read when asked: under the
-// deferred context it attaches later.
+// opens the options in place. A choice records the time of the tap. The
+// runtime is read when asked: under the deferred context it attaches later.
 const kernelContext = useConsentKernelContext();
 const nonce = computed(() => (config.value as RuntimeConsentConfig).nonce);
 const replayTap = (tap: EarlyConsentTap) => {
 	if (tap.action === 'accept') {
-		commit('allow');
+		commit('allow', tap.at);
 	} else if (tap.action === 'reject') {
-		commit('refuse');
+		commit('refuse', tap.at);
 	} else if (tap.action === 'dismiss') {
-		acknowledge();
+		acknowledge(tap.at);
 	} else if (tap.action === 'customize' && !allInOne.value) {
 		expand();
 	}
@@ -668,6 +671,8 @@ const onPanelReady = () => {
 					presentation.root,
 				])
 			"
+			:data-model="model"
+			:data-prompt="snapshot.policyRule.prompt"
 			:data-placement="layout.placement"
 			:data-flow="layout.flow"
 			:data-edge-style="layout.edgeStyle"
@@ -765,6 +770,7 @@ const onPanelReady = () => {
 											)
 										"
 										:aria-expanded="expanded"
+										data-action="customize"
 										data-testid="consent-banner-right-link-opt-out"
 										@click="expand"
 										@focus="warm"
@@ -777,7 +783,7 @@ const onPanelReady = () => {
 										is-primary
 										early-tap
 										data-testid="consent-banner-dismiss-button"
-										@click="acknowledge"
+										@click="acknowledge()"
 									>
 										{{ copy.ok }}
 									</ChoiceButton>
@@ -911,7 +917,7 @@ const onPanelReady = () => {
 									is-primary
 									early-tap
 									data-testid="consent-banner-dismiss-button"
-									@click="acknowledge"
+									@click="acknowledge()"
 								>
 									{{ copy.ok }}
 								</ChoiceButton>
@@ -958,6 +964,7 @@ const onPanelReady = () => {
 									"
 									:aria-expanded="expanded"
 									:aria-controls="ids.panel"
+									data-action="customize"
 									data-testid="consent-banner-right-link-opt-out"
 									@click="expand"
 									@focus="warm"
@@ -970,7 +977,7 @@ const onPanelReady = () => {
 									is-primary
 									early-tap
 									data-testid="consent-banner-dismiss-button"
-									@click="acknowledge"
+									@click="acknowledge()"
 								>
 									{{ copy.ok }}
 								</ChoiceButton>

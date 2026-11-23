@@ -246,6 +246,33 @@ describe('Nuxt hydration of the consent banner', () => {
 	);
 });
 
+describe('[BNR-13] a container whose chunk arrives after hydration started', () => {
+	test('hydrates over the server node, which it keeps, and names the policy on the root', async () => {
+		const config = configFor({ type: 'card' });
+		const { html, snapshot } = await renderOnServer(config);
+		// The early-tap script reads these from the server's HTML.
+		expect(html).toContain('data-model="opt-in"');
+		expect(html).toContain('data-prompt="choice"');
+		const { engine, problems, releaseEngine } = hydrate(html, snapshot, config);
+		const serverRoot = $('consent-banner-root');
+		expect(serverRoot).not.toBeNull();
+		releaseEngine();
+		await vi.waitFor(() => expect(engine()).toBeDefined(), { timeout: 4000 });
+		// The container chunk is in once its buttons answer: Customize
+		// expands the options in the node the server rendered.
+		await vi.waitFor(
+			() => {
+				$('consent-banner-customize-button')?.click();
+				expect(serverRoot?.getAttribute('data-expanded')).toBe('true');
+			},
+			{ timeout: 4000 }
+		);
+		expect($('consent-banner-root')).toBe(serverRoot);
+		expect(serverRoot?.isConnected).toBe(true);
+		expect(problems.filter((line) => /hydrat/iu.test(line))).toEqual([]);
+	});
+});
+
 describe('[BNR-06] a tap before hydration', () => {
 	test('is replayed through the banner handlers once it hydrates', async () => {
 		const config = configFor({ type: 'card' });
