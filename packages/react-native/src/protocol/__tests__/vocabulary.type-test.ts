@@ -122,7 +122,11 @@ expectTypeOf<LocationResponse>().toEqualTypeOf<KernelLocationResponse>();
 expectTypeOf<OptOutRight>().toEqualTypeOf<KernelOptOutRight>();
 expectTypeOf<OptOutMethod>().toEqualTypeOf<KernelOptOutMethod>();
 expectTypeOf<OptOutHolder>().toEqualTypeOf<KernelOptOutHolder>();
-expectTypeOf<OptOutRecord>().toEqualTypeOf<KernelOptOutRecord>();
+// `categories` is the browser's own note of what its opt-out withholds; the
+// backend neither sends nor stores it, so a native snapshot never carries it.
+expectTypeOf<OptOutRecord>().toEqualTypeOf<
+	Omit<KernelOptOutRecord, 'categories'>
+>();
 
 // Mobile adds retry copy; the rest of the transported bundle matches the kernel.
 expectTypeOf<Omit<KernelTranslations, 'translations'>>().toEqualTypeOf<
