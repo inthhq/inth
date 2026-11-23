@@ -10,7 +10,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, test } from 'vitest';
-import { defineAsyncComponent } from 'vue';
 
 import {
 	privacyChoicesPresentations,
@@ -45,14 +44,10 @@ const staticComponentsOf = (file: string) =>
 const recordingPresentations = function recordingPresentations(
 	requested: Set<string>
 ): PrivacyChoicesPresentations {
-	const record = (name: keyof PrivacyChoicesPresentations) =>
-		defineAsyncComponent({
-			loader: () => {
-				requested.add(name);
-				return Promise.resolve(privacyChoicesPresentations[name]);
-			},
-			suspensible: false,
-		});
+	const record = (name: keyof PrivacyChoicesPresentations) => () => {
+		requested.add(name);
+		return privacyChoicesPresentations[name]();
+	};
 	return {
 		bar: record('bar'),
 		card: record('card'),

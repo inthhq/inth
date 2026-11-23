@@ -1,12 +1,16 @@
 // Keep lazy module filenames neutral: Vite derives chunk URLs from them.
-import { defineAsyncComponent } from 'vue';
 import type { Component, InjectionKey } from 'vue';
 
-/** The Privacy Choices prompt component for each presentation. */
+/** Loads one presentation's component, with its stylesheet. */
+export type PrivacyChoicesPresentationLoader = () => Promise<
+	Component | { default: Component }
+>;
+
+/** The Privacy Choices prompt loader for each presentation. */
 export interface PrivacyChoicesPresentations {
-	bar: Component;
-	card: Component;
-	drawer: Component;
+	bar: PrivacyChoicesPresentationLoader;
+	card: PrivacyChoicesPresentationLoader;
+	drawer: PrivacyChoicesPresentationLoader;
 }
 
 /**
@@ -17,23 +21,14 @@ export interface PrivacyChoicesPresentations {
  * @internal
  */
 export const privacyChoicesPresentations: PrivacyChoicesPresentations = {
-	bar: defineAsyncComponent({
-		loader: () => import('./bar.vue'),
-		suspensible: false,
-	}),
-	card: defineAsyncComponent({
-		loader: () => import('./card.vue'),
-		suspensible: false,
-	}),
-	drawer: defineAsyncComponent({
-		loader: () => import('./drawer.vue'),
-		suspensible: false,
-	}),
+	bar: () => import('./bar.vue'),
+	card: () => import('./card.vue'),
+	drawer: () => import('./drawer.vue'),
 };
 
 /**
  * Replaces {@link privacyChoicesPresentations} below the provider, so a
- * test can see which presentation the banner asks for.
+ * test can see which presentation the banner asks for, or fail its load.
  *
  * @internal
  */

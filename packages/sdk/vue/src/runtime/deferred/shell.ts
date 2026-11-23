@@ -472,6 +472,13 @@ export const createDeferredContext = function createDeferredContext(
 		if (!tap || routing || handle.attached()) {
 			return;
 		}
+		// The Privacy Choices banner replays its taps through its own
+		// handlers once it hydrates, which the engine brings: its commit plan
+		// and its in-place options are not the stock banner's.
+		if (tap.design === 'privacy-choices') {
+			requestEngine();
+			return;
+		}
 		if (tap.action === 'customize') {
 			customize();
 			return;
@@ -495,6 +502,13 @@ export const createDeferredContext = function createDeferredContext(
 	// then the live one. A choice made before then otherwise makes its
 	// first render differ from the HTML.
 	const released = ref(false);
+	let hydrated = false;
+	let holds = 0;
+	const release = () => {
+		if (hydrated && holds === 0) {
+			released.value = true;
+		}
+	};
 	const viewSnapshot = computed(() =>
 		released.value ? snapshot.value : options.snapshot
 	);
@@ -643,8 +657,23 @@ export const createDeferredContext = function createDeferredContext(
 	const bannerView: ConsentBannerView = {
 		activeUI: viewActiveUI,
 		context: viewContext,
+		hold: () => {
+			if (released.value) {
+				return () => undefined;
+			}
+			holds += 1;
+			let held = true;
+			return () => {
+				if (held) {
+					held = false;
+					holds -= 1;
+					release();
+				}
+			};
+		},
 		hydrated: () => {
-			released.value = true;
+			hydrated = true;
+			release();
 		},
 		init: viewInit,
 		ready: handle.ready,

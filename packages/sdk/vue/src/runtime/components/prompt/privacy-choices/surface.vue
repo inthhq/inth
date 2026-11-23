@@ -16,7 +16,9 @@ import type {
 	ResolvedConsentLayout,
 } from '@inth/sdk/engine';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
+import type { EarlyConsentTap } from '@inth/sdk/runtime/page-globals';
 import type { ConsentLegalLinkKey } from '@inth/sdk/schema/config';
+import { replayEarlyConsentTaps } from '@inth/sdk/surface-actions';
 import {
 	announcementText,
 	resolveBannerAllowedAnnouncement,
@@ -43,7 +45,6 @@ import {
 import { prefersReducedMotion } from '@inth/sdk/ui/utils/reduced-motion';
 import {
 	computed,
-	defineAsyncComponent,
 	h,
 	onBeforeUnmount,
 	onMounted,
@@ -57,16 +58,21 @@ import { useConsentConfig } from '../../../composables/config';
 import { useConsentInit } from '../../../composables/init';
 import {
 	useConsentKernel,
+	useConsentKernelContext,
 	useConsentSnapshot,
 	useHasConsentUi,
 } from '../../../composables/kernel';
 import { useMounted } from '../../../composables/use-mounted';
 import { useSurfaceTranslations } from '../../../composables/use-surface-translations';
+import type { RuntimeConsentConfig } from '../../../kernel';
 import { slotAttrs } from '../../../utils/slot-attrs';
+import EarlyTapScript from '../../early-tap-script';
 import { loadPrivacyChoicesDialog } from '../../privacy-choices-dialog/load';
 import ChoiceButton from '../../privacy-choices/choice-button.vue';
 import { provideChoiceDraft } from '../../privacy-choices/draft';
+import { useHydrationHold } from '../../privacy-choices/hydration-hold';
 import InlineLegalLinks from '../../privacy-choices/inline-legal-links.vue';
+import { useRetryableComponent } from '../../privacy-choices/retryable-component';
 import { usePhoneLayout } from '../../privacy-choices/use-phone-layout';
 import {
 	rightsBundleOf,
@@ -82,7 +88,6 @@ import type {
 
 /** The options, loaded when Customize first opens them, or at once in a side Drawer. */
 const loadPanel = () => import('./panel.vue');
-const LazyPanel = defineAsyncComponent(loadPanel);
 
 /** Exits are 160ms; the controllers add their own slack. */
 const EXIT_MS = 160;
@@ -224,6 +229,13 @@ const blocking = computed(
 const optionsOpen = computed(() => allInOne.value || expanded.value);
 const panelWanted = ref(allInOne.value);
 const wantPanel = computed(() => panelWanted.value || optionsOpen.value);
+// Options the server rendered (all-in-one) hydrate once their chunk
+// arrives; the deferred banner keeps the server's snapshot until then.
+const releasePanelHydration =
+	showing.value && wantPanel.value ? useHydrationHold() : () => undefined;
+// A failed chunk loads again on the next Customize or snapshot.
+const panel = useRetryableComponent(loadPanel, releasePanelHydration);
+watch(snapshot, () => panel.retry());
 
 // All-in-one has nothing to fold. An expansion left from the phone Drawer
 // would reopen when the viewport narrows again, and Escape would spend a
@@ -451,17 +463,54 @@ const acknowledge = () => {
 	session.commit();
 	void kernel.commands.dismissNotice();
 };
+/** Start a chunk early. A failed load shows when the part renders. */
+const preload = async (load: () => Promise<unknown>) => {
+	try {
+		await load();
+	} catch {
+		// The part's own load retries and reports it.
+	}
+};
 const expand = () => {
-	void loadPanel();
+	panel.retry();
+	void preload(loadPanel);
 	panelWanted.value = true;
 	pendingPanelFocus = true;
 	session.expand();
 	session.announce(copy.value.expanded);
 };
 const warm = () => {
-	void loadPanel();
-	void loadPrivacyChoicesDialog();
+	void preload(loadPanel);
+	void preload(loadPrivacyChoicesDialog);
 };
+
+// A tap on the server-rendered prompt before it hydrated is held by the
+// inline script (`EarlyTapScript`). From here the prompt's own handlers
+// work: stop the script and replay the tap through them once the runtime
+// has started, so it commits through this design's plan and Customize
+// opens the options in place. The runtime is read when asked: under the
+// deferred context it attaches later.
+const kernelContext = useConsentKernelContext();
+const nonce = computed(() => (config.value as RuntimeConsentConfig).nonce);
+const replayTap = (tap: EarlyConsentTap) => {
+	if (tap.action === 'accept') {
+		commit('allow');
+	} else if (tap.action === 'reject') {
+		commit('refuse');
+	} else if (tap.action === 'dismiss') {
+		acknowledge();
+	} else if (tap.action === 'customize' && !allInOne.value) {
+		expand();
+	}
+};
+let stopEarlyTaps: (() => void) | undefined;
+onMounted(() => {
+	stopEarlyTaps = replayEarlyConsentTaps(kernel, {
+		act: replayTap,
+		started: () => kernelContext.runtime?.started ?? false,
+	});
+});
+onBeforeUnmount(() => stopEarlyTaps?.());
 
 // The "Consent by [INTH]" tag (BNR-11, §5). The hostname is read after
 // mount, so server-rendered and hydrated HTML match.
@@ -512,6 +561,7 @@ const SummaryButton = (buttonProps: {
 			{
 				consentAction: 'reject',
 				'data-testid': 'consent-banner-reject-button',
+				earlyTap: true,
 				onClick: () => commit('refuse'),
 			},
 			() => buttonProps.label
@@ -523,6 +573,7 @@ const SummaryButton = (buttonProps: {
 			{
 				consentAction: 'accept',
 				'data-testid': 'consent-banner-accept-button',
+				earlyTap: true,
 				onClick: () => commit('allow'),
 			},
 			() => buttonProps.label
@@ -535,6 +586,7 @@ const SummaryButton = (buttonProps: {
 			'aria-expanded': buttonProps.expanded,
 			consentAction: 'customize',
 			'data-testid': 'consent-banner-customize-button',
+			earlyTap: true,
 			isPrimary: true,
 			onClick: expand,
 			onFocus: warm,
@@ -585,6 +637,7 @@ const links = CARD_LINKS;
 const barLinks: ConsentLegalLinkKey[] = ['privacyPolicy'];
 const onPanelReady = () => {
 	panelReady.value = true;
+	releasePanelHydration();
 };
 </script>
 
@@ -599,6 +652,10 @@ const onPanelReady = () => {
 			ref="pageRegionRef"
 			:class="surfaceStyles.visuallyHidden"
 			data-testid="consent-banner-announcement"
+		/>
+		<EarlyTapScript
+			v-if="showing"
+			:nonce="nonce"
 		/>
 		<div
 			v-if="showing"
@@ -712,6 +769,7 @@ const onPanelReady = () => {
 									<ChoiceButton
 										consent-action="dismiss"
 										is-primary
+										early-tap
 										data-testid="consent-banner-dismiss-button"
 										@click="acknowledge"
 									>
@@ -778,8 +836,9 @@ const onPanelReady = () => {
 								:class="expandStyles.scroll"
 								data-testid="consent-banner-body"
 							>
-								<LazyPanel
-									v-if="wantPanel"
+								<component
+									:is="panel.component.value"
+									v-if="wantPanel && !panel.failed.value"
 									:variant="variant"
 									:id-prefix="ids.prefix"
 									ui-source="banner"
@@ -812,8 +871,9 @@ const onPanelReady = () => {
 									:class="expandStyles.scroll"
 									data-testid="consent-banner-body"
 								>
-									<LazyPanel
-										v-if="wantPanel"
+									<component
+										:is="panel.component.value"
+										v-if="wantPanel && !panel.failed.value"
 										:variant="variant"
 										:id-prefix="ids.prefix"
 										ui-source="banner"
@@ -843,6 +903,7 @@ const onPanelReady = () => {
 									v-if="notice"
 									consent-action="dismiss"
 									is-primary
+									early-tap
 									data-testid="consent-banner-dismiss-button"
 									@click="acknowledge"
 								>
@@ -852,6 +913,7 @@ const onPanelReady = () => {
 									<div v-bind="groupAttrs()">
 										<ChoiceButton
 											consent-action="reject"
+											early-tap
 											data-testid="consent-banner-reject-button"
 											@click="commit('refuse')"
 										>
@@ -859,6 +921,7 @@ const onPanelReady = () => {
 										</ChoiceButton>
 										<ChoiceButton
 											consent-action="accept"
+											early-tap
 											data-testid="consent-banner-accept-button"
 											@click="commit('allow')"
 										>
@@ -894,6 +957,7 @@ const onPanelReady = () => {
 								<ChoiceButton
 									consent-action="dismiss"
 									is-primary
+									early-tap
 									data-testid="consent-banner-dismiss-button"
 									@click="acknowledge"
 								>

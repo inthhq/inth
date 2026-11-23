@@ -101,20 +101,9 @@ const LazyOptInConfirmation = defineAsyncComponent(
 
 const transitionStyles = bannerStyles as Record<string, string>;
 
-// A tap on the server-rendered banner before this component hydrated is
-// held by the inline script. From here the banner's own handlers work: stop
-// the script and record the tap once the runtime has started. The runtime
-// is read when asked: under the deferred context it attaches later.
 const context = useConsentKernelContext();
 // The plugin provides the runtime config, which carries the CSP nonce.
 const nonce = computed(() => (config.value as RuntimeConsentConfig).nonce);
-let stopEarlyTaps: (() => void) | undefined;
-onMounted(() => {
-	stopEarlyTaps = replayEarlyConsentTaps(kernel, {
-		started: () => context.runtime?.started ?? false,
-	});
-});
-onBeforeUnmount(() => stopEarlyTaps?.());
 
 const {
 	presentation: surface,
@@ -146,6 +135,22 @@ const privacyChoicesContainer = computed(() =>
 		? (surface.value.container ?? null)
 		: null
 );
+
+// A tap on the server-rendered banner before this component hydrated is
+// held by the inline script. From here the banner's own handlers work: stop
+// the script and record the tap once the runtime has started. The runtime
+// is read when asked: under the deferred context it attaches later.
+let stopEarlyTaps: (() => void) | undefined;
+onMounted(() => {
+	// The Privacy Choices prompt replays its own taps once it mounts.
+	if (privacyChoicesContainer.value) {
+		return;
+	}
+	stopEarlyTaps = replayEarlyConsentTaps(kernel, {
+		started: () => context.runtime?.started ?? false,
+	});
+});
+onBeforeUnmount(() => stopEarlyTaps?.());
 
 const hasConsentUi = useHasConsentUi();
 const isOpen = computed(() => {

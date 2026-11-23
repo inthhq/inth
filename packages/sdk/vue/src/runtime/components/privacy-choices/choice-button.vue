@@ -32,11 +32,18 @@ const props = withDefaults(
 		/** A class the surface adds beside the stock button class. */
 		baseClass?: string;
 		disabled?: boolean;
+		/**
+		 * The click is the banner's own handler for `consentAction`, which
+		 * replays a tap the pre-hydration script held. Off, the script leaves
+		 * the button alone.
+		 */
+		earlyTap?: boolean;
 	}>(),
 	{
 		baseClass: undefined,
 		consentAction: undefined,
 		disabled: false,
+		earlyTap: false,
 		isPrimary: false,
 		mode: undefined,
 		part: undefined,
@@ -71,11 +78,13 @@ const attributes = computed(() => {
 	return slotAttrs(part, [buttonStyles.button, props.baseClass]);
 });
 /**
- * Every Privacy Choices button handles its own click, so the
- * pre-hydration script must never replay a tap on one.
+ * The pre-hydration script replays a tap from `data-action` alone, so a
+ * button whose click the banner does not replay opts out.
  */
 const earlyTapOptOut = computed(() =>
-	props.consentAction && EARLY_TAP_ACTIONS.has(props.consentAction)
+	!props.earlyTap &&
+	props.consentAction &&
+	EARLY_TAP_ACTIONS.has(props.consentAction)
 		? { [EARLY_TAP_OPT_OUT]: 'off' }
 		: undefined
 );

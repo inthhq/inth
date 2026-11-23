@@ -25,6 +25,7 @@ import {
 
 import '@inth/sdk/ui/styles/components/consent-banner.css';
 import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import { CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils/opt-out-icon';
 import { computed } from 'vue';
 
 import { useConsentActiveUI, useConsentSnapshot } from '../composables';
@@ -52,6 +53,19 @@ const link = computed(() =>
 	})
 );
 
+/**
+ * The icon's own size, 14px tall at the glyph's proportions, for a page
+ * where the banner's `optOutIcon` rule is not applied, such as one whose
+ * banner is the Privacy Choices design. The rule, when present, wins.
+ */
+const ICON_HEIGHT = 14;
+const [, , boxWidth = ICON_HEIGHT, boxHeight = ICON_HEIGHT] =
+	CPPA_OPT_OUT_ICON.viewBox.split(' ').map(Number);
+const iconSize = {
+	height: ICON_HEIGHT,
+	width: Math.round((ICON_HEIGHT * boxWidth) / boxHeight),
+};
+
 const onClick = function onClick() {
 	activeUI.value = 'manager';
 };
@@ -70,6 +84,7 @@ const onClick = function onClick() {
 	>
 		<OptOutIcon
 			v-if="link.icon"
+			v-bind="iconSize"
 			:class="bannerStyles.optOutIcon"
 		/>
 		<slot>{{ link.label }}</slot>

@@ -33,7 +33,7 @@ import '@inth/sdk/ui/styles/components/consent-expand.css';
 import styles from '@inth/sdk/ui/styles/components/privacy-choices';
 
 import '@inth/sdk/ui/styles/components/privacy-choices.css';
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref } from 'vue';
 
 import { useConsentKernel, useConsentSnapshot } from '../../composables/kernel';
 import { useSurfaceTranslations } from '../../composables/use-surface-translations';
@@ -248,6 +248,14 @@ const onRowClick = (event: MouseEvent, name: AllConsentNames) => {
 };
 
 let cancelReveal: (() => void) | undefined;
+let unmounted = false;
+// A reveal still waiting for its frames scrolls nothing once the group is
+// gone (LAY-05).
+onBeforeUnmount(() => {
+	unmounted = true;
+	cancelReveal?.();
+	cancelReveal = undefined;
+});
 const onTrigger = async (name: AllConsentNames) => {
 	if (props.vendors === 'sheet') {
 		emit('open-vendors', name, vendorOpenerKey(name));
@@ -262,6 +270,9 @@ const onTrigger = async (name: AllConsentNames) => {
 	// (LAY-05), unless the surface moved on (PERM-16).
 	await nextTick();
 	cancelReveal?.();
+	if (unmounted) {
+		return;
+	}
 	const { token } = session.getState();
 	cancelReveal = scheduleReveal(
 		() => {

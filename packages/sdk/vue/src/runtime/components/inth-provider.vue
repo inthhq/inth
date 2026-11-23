@@ -21,6 +21,7 @@ import {
 	LazyIabConsentBanner,
 	LazyIabConsentDialog,
 	LazyOptOutConfirmation,
+	OptInConfirmationHost,
 	prefetchConsentManager,
 	prefetchIabConsentDialog,
 	useWarmableDialogDesign,
@@ -107,6 +108,10 @@ watch(
 				v-if="activeUI === 'banner' || (privacyChoices && bannerShown)"
 			/>
 			<ConsentDialogHost v-if="activeUI === 'manager'" />
+			<!-- The banner and the dialog each host the opt-in confirmation.
+			     Under the Privacy Choices design, with neither on the page, the
+			     root hosts it. -->
+			<OptInConfirmationHost v-else-if="privacyChoices && !bannerShown" />
 		</template>
 		<LazyOptOutConfirmation
 			v-if="

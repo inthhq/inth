@@ -11,7 +11,7 @@ import {
 } from '@inth/sdk/surface-actions';
 import { resolveRightsBundle } from '@inth/sdk/surface-state';
 import type { OptOutReceiptData, RightsBundle } from '@inth/sdk/surface-state';
-import { onScopeDispose, shallowRef } from 'vue';
+import { onMounted, onScopeDispose, shallowRef } from 'vue';
 import type { ShallowRef } from 'vue';
 
 import { useConsentKernel } from '../../composables/kernel';
@@ -44,24 +44,26 @@ export const useSurfaceSession = function useSurfaceSession(): {
  * This browser's local opt-out receipt data, which says whether a backend
  * answer confirmed the held record's rights.
  *
+ * It starts from the server's copy, which the server rendered with, so
+ * hydration matches the HTML, and reads the browser's own once mounted, as
+ * React's `useSyncExternalStore` does. A browser render that hydrates
+ * nothing switches before it paints.
+ *
  * @internal
  */
 export const useOptOutReceiptData = function useOptOutReceiptData(): ShallowRef<
 	Readonly<OptOutReceiptData>
 > {
 	const kernel = useConsentKernel();
-	const local = shallowRef(
-		typeof window === 'undefined'
-			? getServerOptOutReceiptData(kernel)
-			: getOptOutReceiptData(kernel)
-	);
-	if (typeof window !== 'undefined') {
-		onScopeDispose(
-			subscribeOptOutReceiptData(kernel, () => {
-				local.value = getOptOutReceiptData(kernel);
-			})
-		);
-	}
+	const local = shallowRef(getServerOptOutReceiptData(kernel));
+	let stop: (() => void) | undefined;
+	onMounted(() => {
+		local.value = getOptOutReceiptData(kernel);
+		stop = subscribeOptOutReceiptData(kernel, () => {
+			local.value = getOptOutReceiptData(kernel);
+		});
+	});
+	onScopeDispose(() => stop?.());
 	return local;
 };
 

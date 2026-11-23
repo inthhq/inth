@@ -4,21 +4,20 @@
  * reference to copy (RCPT-*, CLIP-*, GPC-06).
  */
 import { copySurfaceReference, resolveRightsReceipt } from '@inth/sdk/engine';
-import {
-	getOptOutReceiptData,
-	getServerOptOutReceiptData,
-	subscribeOptOutReceiptData,
-} from '@inth/sdk/surface-actions';
 import { resolveRightsReceiptCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/privacy-choices';
 
 import '@inth/sdk/ui/styles/components/privacy-choices.css';
-import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 import { useConsentKernel, useConsentSnapshot } from '../../composables/kernel';
 import { useSurfaceTranslations } from '../../composables/use-surface-translations';
 import { slotAttrs } from '../../utils/slot-attrs';
-import { rightsBundleOf, useSurfaceSession } from './use-surface-session';
+import {
+	rightsBundleOf,
+	useOptOutReceiptData,
+	useSurfaceSession,
+} from './use-surface-session';
 
 /** How long the copy button shows its check. */
 const COPIED_MS = 1500;
@@ -55,18 +54,7 @@ const translations = useSurfaceTranslations();
 const { session, state } = useSurfaceSession();
 
 /** This browser's local opt-out receipt data: the reference it recorded. */
-const local = shallowRef(
-	typeof window === 'undefined'
-		? getServerOptOutReceiptData(kernel)
-		: getOptOutReceiptData(kernel)
-);
-if (typeof window !== 'undefined') {
-	onScopeDispose(
-		subscribeOptOutReceiptData(kernel, () => {
-			local.value = getOptOutReceiptData(kernel);
-		})
-	);
-}
+const local = useOptOutReceiptData();
 
 const field = ref<HTMLInputElement | null>(null);
 const receipt = computed(() =>
@@ -98,6 +86,8 @@ watch(status, (value, _previous, onCleanup) => {
 	onCleanup(() => clearTimeout(timer));
 });
 
+let fieldFrame = 0;
+onBeforeUnmount(() => cancelAnimationFrame(fieldFrame));
 const copyReference = async () => {
 	const { reference } = receipt.value;
 	if (!reference) {
@@ -113,7 +103,8 @@ const copyReference = async () => {
 	session.announce(failed ? copy.value.copyFailed : copy.value.copied);
 	if (failed) {
 		// The field renders with the failure; focus it once it has.
-		requestAnimationFrame(() => {
+		cancelAnimationFrame(fieldFrame);
+		fieldFrame = requestAnimationFrame(() => {
 			field.value?.focus({ preventScroll: true });
 			field.value?.select();
 		});

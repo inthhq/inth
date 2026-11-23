@@ -18,7 +18,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { vi } from 'vitest';
 import { defineComponent, h } from 'vue';
-import type { ComponentPublicInstance, VNodeChild } from 'vue';
+import type { Component, ComponentPublicInstance, VNodeChild } from 'vue';
 
 import InthProvider from '../runtime/components/inth-provider.vue';
 import PrivacyChoicesLink from '../runtime/components/privacy-choices-link.vue';
@@ -153,6 +153,8 @@ export interface MountOptions {
 	link?: 'stub' | 'stock';
 	/** More page content, after the page controls. */
 	page?: () => VNodeChild;
+	/** Mounted in place of `InthProvider`, with the same provides. */
+	root?: Component;
 }
 
 let mounted: {
@@ -207,6 +209,7 @@ export const mountPrivacyChoices = async function mountPrivacyChoices({
 	prompt,
 	link = 'stub',
 	page,
+	root = InthProvider,
 }: MountOptions = {}): Promise<VueConsentKernelContext> {
 	const config = {
 		consentCategories: [...CATEGORIES],
@@ -240,7 +243,7 @@ export const mountPrivacyChoices = async function mountPrivacyChoices({
 	if (context.snapshot.value.policyRule.prompt !== 'none') {
 		context.activeUI.value = 'banner';
 	}
-	const wrapper = mount(InthProvider, {
+	const wrapper = mount(root, {
 		attachTo: document.body,
 		global: {
 			provide: {

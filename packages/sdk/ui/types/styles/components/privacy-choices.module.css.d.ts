@@ -53,6 +53,7 @@ declare const styles: {
   readonly "rightDescription": string;
   readonly "rightTitle": string;
   readonly "savedCue": string;
+  readonly "scrim": string;
   readonly "segmented": string;
   readonly "segmentedCheck": string;
   readonly "segmentedOption": string;

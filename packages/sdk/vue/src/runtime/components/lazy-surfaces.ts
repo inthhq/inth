@@ -25,7 +25,10 @@ import {
 } from 'vue';
 import type { Component } from 'vue';
 
-import { useConsentKernelContext } from '../composables/kernel';
+import {
+	useConsentKernelContext,
+	useOptInConfirmationHost,
+} from '../composables/kernel';
 import type { ConsentBannerView } from '../kernel';
 import {
 	symbolActiveUI,
@@ -106,6 +109,22 @@ export const LazyOptOutConfirmation = defineAsyncComponent(
 export const LazyOptInConfirmation = defineAsyncComponent(
 	() => import('./opt-in-confirmation.vue')
 );
+/**
+ * Hosts the opt-in confirmation for `InthProvider` when no banner or
+ * dialog on the page does, such as for a returning visitor who opts in
+ * from a widget or a consent gate. It claims the host while mounted.
+ *
+ * @internal
+ */
+export const OptInConfirmationHost = defineComponent({
+	name: 'OptInConfirmationHost',
+	setup() {
+		const active = useOptInConfirmationHost();
+		return function render() {
+			return active.value ? h(LazyOptInConfirmation) : null;
+		};
+	},
+});
 export const LazyIabConsentBanner = defineAsyncComponent(
 	() => import('./iab-prompt.vue')
 );

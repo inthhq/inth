@@ -20,6 +20,7 @@ import type {
 	BannerCommitAction,
 	SaveUISource,
 } from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	announcementText,
@@ -45,6 +46,7 @@ import { getTextDirection, resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 import { prefersReducedMotion } from '@inth/sdk/ui/utils/reduced-motion';
 import {
 	computed,
+	mergeProps,
 	onBeforeUnmount,
 	onMounted,
 	ref,
@@ -294,8 +296,12 @@ watch([phone, () => state.value.sheets.length], ([isPhone, count]) => {
 	}
 });
 
+/** The frame a returning banner waits on, cancelled on unmount. */
+let bannerFrame = 0;
+onBeforeUnmount(() => cancelAnimationFrame(bannerFrame));
 /** Focus the banner card once it renders again. */
 const focusReturningBanner = () => {
+	cancelAnimationFrame(bannerFrame);
 	let frames = 0;
 	const attempt = () => {
 		const card = document.querySelector<HTMLElement>(
@@ -307,11 +313,29 @@ const focusReturningBanner = () => {
 		}
 		frames += 1;
 		if (frames < BANNER_RETURN_FRAMES) {
-			requestAnimationFrame(attempt);
+			bannerFrame = requestAnimationFrame(attempt);
 		}
 	};
-	requestAnimationFrame(attempt);
+	bannerFrame = requestAnimationFrame(attempt);
 };
+
+// A controlled `open` turning false closes a shown dialog through the
+// consent manager, as Close does, so an unanswered banner comes back, with
+// focus, and no sheet stays pushed under a hidden dialog.
+watch(open, (isOpen, wasOpen) => {
+	if (
+		isOpen ||
+		!wasOpen ||
+		props.open !== false ||
+		kernel.getSnapshot().activeUI !== 'dialog'
+	) {
+		return;
+	}
+	showConsentSurface(kernel, 'none');
+	if (kernel.getSnapshot().activeUI === 'banner') {
+		focusReturningBanner();
+	}
+});
 
 // Open: the page is inert, focus moves to the title and is trapped in the
 // top layer, and returns to the opener on close (FOC-01..03).
@@ -320,7 +344,9 @@ watch(
 	(_value, _previous, onCleanup) => {
 		const backdrop = backdropRef.value;
 		const main = mainRef.value?.element;
-		if (!(open.value && backdrop && main)) {
+		// Not before the teleport has moved the dialog: the receipt request
+		// would be spent on the node it leaves (FOC-01).
+		if (!(open.value && mounted.value && backdrop && main)) {
 			return;
 		}
 		opener = document.activeElement;
@@ -533,6 +559,22 @@ const preferencesCopy = computed(() =>
 );
 const preferencesPanelId = `${prefix}-preferences`;
 
+/**
+ * The root is the backdrop and the dialog's surface: `dialog.root` and
+ * the `consentDialog` slot (`dialog.container`) both style it, and either
+ * one's `noStyle` drops the stock backdrop class.
+ */
+const rootAttrs = computed(() => {
+	type Part = { noStyle?: unknown } | undefined;
+	const root = config.value.components?.dialog?.root as Part;
+	const container = config.value.components?.dialog?.container as Part;
+	const noStyle = root?.noStyle === true || container?.noStyle === true;
+	return mergeProps(
+		slotAttrs(root, noStyle ? undefined : styles.backdrop),
+		slotAttrs(container)
+	);
+});
+
 // The phone sheet on top: Preferences in the US, a category's vendors in
 // the EU. Its ids carry their own prefix (SR-05).
 const sheetPrefix = `${prefix}-sheet`;
@@ -588,7 +630,9 @@ const intro = computed(() =>
 		<div
 			v-if="open"
 			ref="backdropRef"
-			v-bind="slotAttrs(config.components?.dialog?.root, styles.backdrop)"
+			v-bind="rootAttrs"
+			:[SURFACE_ROOT_ATTRIBUTE]="'dialog'"
+			data-scrim
 			:data-animation="disableAnimation ? 'off' : undefined"
 			:data-edge-style="edgeStyle"
 			data-design="privacy-choices"
@@ -597,6 +641,12 @@ const intro = computed(() =>
 			data-testid="consent-dialog-root"
 			:dir="textDirection"
 		>
+			<!-- The dimming, which the theme's dialog overlay slot styles. -->
+			<div
+				v-bind="slotAttrs(config.components?.dialog?.overlay, styles.scrim)"
+				aria-hidden="true"
+				data-testid="consent-dialog-overlay"
+			/>
 			<Layer
 				ref="mainRef"
 				:id-prefix="`${prefix}-main`"
