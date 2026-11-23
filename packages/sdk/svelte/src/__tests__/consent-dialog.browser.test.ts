@@ -1045,6 +1045,25 @@ describe('wave C round 1', () => {
 		expect(root).toHaveClass('host-dialog-root');
 	});
 
+	test('the intro takes the consentDialogDescription slot, as description.dialog does in React', async () => {
+		await mount({
+			extra: {
+				theme: {
+					slots: {
+						consentDialogDescription: {
+							className: 'slot-intro',
+							style: { outlineColor: 'rgb(1, 2, 3)' },
+						},
+					},
+				},
+			} as Partial<ConsentManagerOptions>,
+		});
+		await openDialog();
+		const intro = must('consent-dialog-intro');
+		expect(intro).toHaveClass('slot-intro');
+		expect(intro.style.outlineColor).toBe('rgb(1, 2, 3)');
+	});
+
 	test('[LAY-05] a vendor reveal scheduled as the dialog unmounts never runs', async () => {
 		await mount({ region: 'eu' });
 		await openDialog();

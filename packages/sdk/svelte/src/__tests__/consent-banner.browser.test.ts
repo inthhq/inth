@@ -209,11 +209,27 @@ const tapBeforeHydration = (action: string) => {
 	server.remove();
 };
 
+/** When the inline script recorded the first held tap. */
+const tapTime = (): number | undefined =>
+	(
+		window as unknown as Record<string, { taps?: { at: number }[] } | undefined>
+	)[EARLY_TAPS_WINDOW_KEY]?.taps?.[0]?.at;
+
 describe('opt-in', () => {
 	test('renders an inset Card in the start corner by default', async () => {
 		await mount({ container: null });
 		await waitForRoot();
 		expect(root()).toHaveAttribute('data-placement', 'card-start');
+	});
+
+	test('[BNR-13] provider scrollLock and trapFocus never block the stock banner: blockUntilChoice does', async () => {
+		await mount({
+			extra: { scrollLock: true, trapFocus: true },
+		});
+		await waitForRoot();
+		expect(root()).not.toHaveAttribute('data-blocking');
+		expect(pageAction()).not.toHaveAttribute('inert');
+		expect(must('consent-banner-shell')).not.toHaveAttribute('role', 'dialog');
 	});
 
 	test('[BNR-13][BNR-10] US opt-out with no prompt shows nothing and never blocks', async () => {
@@ -913,6 +929,26 @@ describe('customization', () => {
 		expect(must('consent-banner-save-button')).toHaveClass('slot-save');
 	});
 
+	test("the notice's right-link takes the consentBannerRightLink slot", async () => {
+		await mount({
+			extra: {
+				theme: {
+					slots: {
+						consentBannerRightLink: {
+							className: 'slot-right-link',
+							style: { outlineColor: 'rgb(1, 2, 3)' },
+						},
+					},
+				},
+			},
+			region: 'us-notice',
+		});
+		await waitForRoot();
+		const link = must('consent-banner-right-link-opt-out');
+		expect(link).toHaveClass('slot-right-link');
+		expect(link.style.outlineColor).toBe('rgb(1, 2, 3)');
+	});
+
 	test('noStyle drops the stock classes and keeps the test ids and data attributes', async () => {
 		await mount({ extra: { noStyle: true } });
 		await vi.waitFor(() =>
@@ -1260,6 +1296,57 @@ describe('[BNR-06] a tap before hydration', () => {
 			)
 		);
 		await vi.waitFor(() => expect($('consent-banner-root')).toBeNull());
+	});
+
+	test("the root names the policy's model and prompt, and the notice's right-link replays as Customize", async () => {
+		await mount({ region: 'us-notice' });
+		await waitForRoot();
+		// The script records these with a tap, so a replay against another
+		// policy is dropped.
+		expect(root()).toHaveAttribute('data-model', 'opt-out');
+		expect(root()).toHaveAttribute('data-prompt', 'notice');
+		expect(must('consent-banner-right-link-opt-out')).toHaveAttribute(
+			'data-action',
+			'customize'
+		);
+	});
+
+	test("a tap on the notice's right-link before hydration expands the rights in place", async () => {
+		tapBeforeHydration('customize');
+		await mount({ region: 'us-notice' });
+		await waitForRoot();
+		await vi.waitFor(() =>
+			expect(root()).toHaveAttribute('data-expanded', 'true')
+		);
+		expect(probe.snapshot?.activeUI).toBe('banner');
+		expect(probe.snapshot?.optOut).toBeFalsy();
+	});
+
+	test('a choice records the time of the tap, not of the replay', async () => {
+		tapBeforeHydration('reject');
+		const tappedAt = tapTime();
+		expect(tappedAt).toBeTypeOf('number');
+		await new Promise((resolve) => {
+			setTimeout(resolve, 30);
+		});
+		await mount({ region: 'us-opt-in' });
+		await vi.waitFor(() => expect(probe.snapshot?.explicitChoice).toBeTruthy());
+		expect(
+			probe.snapshot?.explicitChoice?.categories?.marketing?.confirmedAt
+		).toBe(tappedAt);
+	});
+
+	test('an OK on the notice before hydration records the time of the tap', async () => {
+		tapBeforeHydration('dismiss');
+		const tappedAt = tapTime();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 30);
+		});
+		await mount({ region: 'us-notice' });
+		await vi.waitFor(() =>
+			expect(probe.snapshot?.noticeDismissal).toBeTruthy()
+		);
+		expect(probe.snapshot?.noticeDismissal?.dismissedAt).toBe(tappedAt);
 	});
 
 	test('a Customize expands the options in place, with no dialog', async () => {

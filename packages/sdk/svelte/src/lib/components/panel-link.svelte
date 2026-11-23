@@ -65,6 +65,7 @@
 	>
 		{#if showOptOutIcon}<OptOutIcon
 				class={theme.noStyle ? '' : legalLinkStyles.optOutIcon || ''}
+				sized={!theme.noStyle}
 			/>{/if}{#if children}{@render children()}{:else}{defaultLabel}{/if}
 	</ConsentButton>
 {/if}

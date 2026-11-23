@@ -34,6 +34,7 @@ import type {
 	SaveUISource,
 } from '@inth/sdk/engine';
 import type { ConsentRuntimeIABHandle } from '@inth/sdk/runtime';
+import { EARLY_TAP_STYLE_ID } from '@inth/sdk/runtime/page-globals';
 import type {
 	ConsentProviderRuntime,
 	ConsentRuntimeUpdate,
@@ -261,6 +262,11 @@ export const createDeferredRuntime = function createDeferredRuntime(
 				// Half built: nothing more to undo.
 			}
 			loading = undefined;
+			// A banner the early-tap script hid for a tap the engine was to
+			// replay shows again, or it stays hidden for good.
+			if (typeof document !== 'undefined') {
+				document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
+			}
 			handle.fail(error);
 			return undefined;
 		}
