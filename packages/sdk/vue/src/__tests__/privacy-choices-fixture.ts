@@ -5,7 +5,6 @@
 import type {
 	ConsentContainer,
 	ConsentEdgeStyle,
-	ConsentPresentation,
 	PromptPresentation,
 } from '@inth/sdk/engine';
 import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
@@ -203,7 +202,7 @@ export const mountPrivacyChoices = async function mountPrivacyChoices({
 	edgeStyle,
 	blockUntilChoice,
 	region = 'eu',
-	design = 'privacy-choices',
+	design: _design = 'privacy-choices',
 	config: extra,
 	vendors = false,
 	provide: extraProvide,

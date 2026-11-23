@@ -4,10 +4,6 @@ import type {
 	LegacyConsentPresentation,
 	LegacyPromptPresentation as PromptPresentation,
 } from '@inth/sdk/engine';
-
-/** The classic geometry, as the config type no longer takes it. */
-const legacy = (presentation: LegacyConsentPresentation) =>
-	presentation as ConsentPresentation;
 import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
@@ -32,6 +28,10 @@ import {
 } from '../runtime/utils/symbols';
 import { createVueConsentKernelContext } from './test-kernel';
 import type { VueConsentKernelContext } from './test-kernel';
+
+/** The classic geometry, as the config type no longer takes it. */
+const legacy = (presentation: LegacyConsentPresentation) =>
+	presentation as ConsentPresentation;
 
 const noticeRule: PolicyRule = {
 	categories: ['measurement', 'marketing'],

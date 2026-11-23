@@ -19,7 +19,6 @@ import { TestBed } from '@angular/core/testing';
 import type {
 	ConsentContainer,
 	ConsentEdgeStyle,
-	ConsentPresentation,
 	PolicyRule,
 } from '@inth/sdk/engine';
 import { openOptInConfirmation } from '@inth/sdk/surface-actions';
@@ -172,7 +171,7 @@ const mount = async function mount({
 	edgeStyle,
 	blockUntilChoice,
 	region = 'eu',
-	design = 'privacy-choices',
+	design: _design = 'privacy-choices',
 	phone = false,
 	theme,
 	noStyle,

@@ -30,7 +30,7 @@ describe('legacy presentation shim', () => {
 	});
 
 	it.each([
-		[{ variant: 'bar', position: 'top' }, 'banner-top', 'bar', 'top'],
+		[{ position: 'top', variant: 'bar' }, 'banner-top', 'bar', 'top'],
 		[{ variant: 'wall' }, 'card-center', 'wall', 'center'],
 		[{ variant: 'widget' }, 'card-end', 'floating', 'bottom-right'],
 		[{ position: 'bottom-right' }, 'card-end', 'floating', 'bottom-right'],

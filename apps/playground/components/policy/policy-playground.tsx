@@ -1026,7 +1026,7 @@ const RuntimeInspector = ({
 							: `${banner.container?.desktop.placement ?? 'none'} · phone ${banner.container?.phone.placement ?? 'none'}${banner.blocking ? ' · blocking' : ' · non-blocking'}`}
 					</p>
 					<p className="text-muted-foreground text-xs leading-5">
-						The container comes from the host, then the rule's surface. The
+						The container comes from the host, then the surface of the rule. The
 						resolver fills what both leave out and moves what the viewport
 						cannot show.
 					</p>
