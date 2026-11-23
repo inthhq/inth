@@ -25,7 +25,6 @@ export const THEME_SLOT_COMPONENT_KEYS = {
 	consentBannerHeader: 'banner.header',
 	consentBannerOverlay: 'banner.overlay',
 	consentBannerRightLink: 'banner.rightLink',
-	consentBannerRights: 'banner.rights',
 	consentBannerRightsRow: 'banner.rightsRow',
 	consentBannerSaveButton: 'banner.saveButton',
 	consentBannerTag: 'tag.banner',

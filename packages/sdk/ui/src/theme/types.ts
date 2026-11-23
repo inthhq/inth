@@ -408,10 +408,8 @@ export type SlotStyle = string | ClassNameStyle;
  *
  * Every adapter reads these: the script tag, Svelte and Astro directly, and
  * React and Vue through the same parts of their `components` option. The
- * dialog footer has no slot: the stock dialog's footer is the widget's
- * (`consentWidgetFooter`). The `consentGate` slots style the stock
- * `ConsentGate` placeholder in React, Vue and Svelte, the adapters that
- * render one.
+ * `consentGate` slots style the stock `ConsentGate` placeholder in React,
+ * Vue and Svelte, the adapters that render one.
  * @public
  */
 export interface ComponentSlots {
@@ -429,19 +427,17 @@ export interface ComponentSlots {
 	consentBannerFooter?: SlotStyle;
 	/** Nested button group inside the banner footer. */
 	consentBannerFooterSubGroup?: SlotStyle;
-	/** Group of persistent-right links (opt-out, preferences) in the banner footer. */
-	consentBannerRights?: SlotStyle;
-	/** One persistent-right link inside the banner rights group. */
+	/** The notice's opt-out link, which opens the rights row in the banner. */
 	consentBannerRightLink?: SlotStyle;
 	/** Branding tag rendered above the consent banner card. */
 	consentBannerTag?: SlotStyle;
 	/** Backdrop overlay rendered behind the banner when enabled. */
 	consentBannerOverlay?: SlotStyle;
-	/** Privacy Choices: the options Customize opens in place, and a side Drawer's scroll area. */
+	/** The options Customize opens in place, and a side Drawer's scroll area. */
 	consentBannerExpand?: SlotStyle;
-	/** Privacy Choices: one statutory rights row and its segmented control. */
+	/** One statutory rights row and its segmented control. */
 	consentBannerRightsRow?: SlotStyle;
-	/** Privacy Choices: "Save choices" in an expanded panel or a side Drawer. */
+	/** "Save choices" in an expanded panel or a side Drawer. */
 	consentBannerSaveButton?: SlotStyle;
 
 	/** Root wrapper for the consent dialog modal. */
@@ -454,29 +450,29 @@ export interface ComponentSlots {
 	consentDialogTitle?: SlotStyle;
 	/** Dialog description text element. */
 	consentDialogDescription?: SlotStyle;
-	/** Dialog content region (typically holds ConsentWidget). */
+	/** The dialog's scrolling body: the rights rows, receipt and Preferences. */
 	consentDialogContent?: SlotStyle;
-	/** Branding tag rendered below the stock consent dialog card. */
+	/** Styles nothing: the consent dialog has no branding tag. */
 	consentDialogTag?: SlotStyle;
 	/** Backdrop overlay rendered behind the dialog. */
 	consentDialogOverlay?: SlotStyle;
-	/** Privacy Choices: the dialog's footer: Done, or Reject all, Accept all and Save choices. */
+	/** The dialog's footer: Done, or Reject all, Accept all and Save choices. */
 	consentDialogFooter?: SlotStyle;
-	/** Privacy Choices: one statutory rights row in the dialog. */
+	/** One statutory rights row in the dialog. */
 	consentDialogRightsRow?: SlotStyle;
-	/** Privacy Choices: the receipt line under the rights rows. */
+	/** The receipt line under the rights rows. */
 	consentDialogReceipt?: SlotStyle;
-	/** Privacy Choices: the Preferences row, an accordion on desktop and a sheet on phone. */
+	/** The Preferences row, an accordion on desktop and a sheet on phone. */
 	consentDialogPreferencesRow?: SlotStyle;
-	/** Privacy Choices: the bordered group of cookie categories. */
+	/** The bordered group of cookie categories. */
 	consentDialogCategoryGroup?: SlotStyle;
-	/** Privacy Choices: a category's vendor table. */
+	/** A category's vendor table. */
 	consentDialogVendorTable?: SlotStyle;
-	/** Privacy Choices: a nested phone sheet over the dialog. */
+	/** A nested phone sheet over the dialog. */
 	consentDialogSheet?: SlotStyle;
-	/** Privacy Choices: Done, in the dialog and its sheets. */
+	/** Done, in the dialog and its sheets. */
 	consentDialogDoneButton?: SlotStyle;
-	/** Privacy Choices: Save choices in the EU dialog. */
+	/** Save choices in the EU dialog. */
 	consentDialogSaveButton?: SlotStyle;
 
 	/** Root wrapper for the opt-out confirmation view. */

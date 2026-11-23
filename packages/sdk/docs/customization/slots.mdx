@@ -19,7 +19,7 @@ Frameworks use nested `components` keys or flat `theme.slots` keys. Keys do not 
 | Svelte, SvelteKit | `theme.slots` on `InthProvider` | String or `className` |
 | HTML, JavaScript | `ui.theme.slots` | String or `className` |
 
-React and Vue also map `theme.slots` onto `components`, combining classes and merging inline styles with `components` winning per property. Vue and Nuxt bind objects via `v-bind`, so use `class` instead of `className`. Svelte stock components and Astro's `ConsentBanner`, `IABConsentBanner`, and `ConsentDialogTrigger` also accept a root `class` prop.
+React and Vue also map `theme.slots` onto `components`, combining classes and merging inline styles with `components` winning per property. Vue and Nuxt bind objects via `v-bind`, so use `class` instead of `className`. Svelte stock components other than `ConsentDialog`, and Astro's `ConsentBanner`, `IABConsentBanner`, and `ConsentDialogTrigger`, also accept a root `class` prop.
 
 {/* example: fragment */}
 
@@ -37,40 +37,49 @@ See [Class names and CSS-in-JS](/docs/customization/class-names) and [Tailwind C
 
 ## Banner parts
 
+The banner renders in a Card, a Banner or a Drawer, as `container` sets. Every container uses the same parts.
+
 | Part | `components` | `theme.slots` | `data-testid` |
 | --- | --- | --- | --- |
 | Positioning root | `banner.root` | `consentBanner` | `consent-banner-root` |
-| Card shell | `banner.cardShell` | None | |
+| Backdrop, when blocking | `banner.overlay` | `consentBannerOverlay` | `consent-banner-overlay` |
+| Shell around the tag and card | `banner.cardShell` | None | `consent-banner-shell` |
 | Visible card | `banner.card` | `consentBannerCard` | `consent-banner-card` |
-| Header | `banner.header` | `consentBannerHeader` | |
-| Title | `banner.title` | `consentBannerTitle` | |
-| Description | `description.banner` | `consentBannerDescription` | |
-| Footer | `banner.footer` | `consentBannerFooter` | |
-| Actions wrapper | `banner.actions` | None | |
-| Action group | `banner.actionGroup` | `consentBannerFooterSubGroup` | |
-| Rights group | `banner.rights` | `consentBannerRights` | |
-| Right link | `banner.rightLink` | `consentBannerRightLink` | |
-| Backdrop | `banner.overlay` | `consentBannerOverlay` | |
+| Header | `banner.header` | `consentBannerHeader` | `consent-banner-header` |
+| Title | `banner.title` | `consentBannerTitle` | `consent-banner-title` |
+| Description | `description.banner` | `consentBannerDescription` | `consent-banner-description` |
+| Options Customize opens, and a side Drawer's scroll area | `banner.expand` | `consentBannerExpand` | `consent-banner-expand-panel` |
+| Rights row (sale and sharing) | `banner.rightsRow` | `consentBannerRightsRow` | `consent-banner-rights-row-sale` |
+| Save choices | `banner.saveButton` | `consentBannerSaveButton` | `consent-banner-save-button` |
+| Footer | `banner.footer` | `consentBannerFooter` | `consent-banner-footer` |
+| Action group | `banner.actionGroup` | `consentBannerFooterSubGroup` | `consent-banner-footer-sub-group` |
+| Notice opt-out link | `banner.rightLink` | `consentBannerRightLink` | `consent-banner-right-link-opt-out` |
 | Branding tag | `tag.banner` | `consentBannerTag` | `consent-banner-branding` |
 | Buttons | `button.primary`, `button.secondary` | `buttonPrimary`, `buttonSecondary` | |
 
-Button parts apply across banner and dialog. The script tag banner omits the rights group.
+Button parts apply across the banner and the dialog. `consentBannerRightLink` applies in React, Vue and Angular. The notice's opt-out link opens the rights row inside the banner.
 
-## Preference dialog parts
+## Consent dialog parts
 
 | Part | `components` | `theme.slots` | `data-testid` |
 | --- | --- | --- | --- |
-| Positioner | `dialog.root` | None | |
-| Container | `dialog.container` | `consentDialog` | `consent-dialog-root` |
-| Card | `dialog.card` | `consentDialogCard` | |
-| Header | `dialog.header` | `consentDialogHeader` | |
-| Title | `dialog.title` | `consentDialogTitle` | |
-| Description | `description.dialog` | `consentDialogDescription` | |
-| Content | `dialog.content` | `consentDialogContent` | |
-| Backdrop | `dialog.overlay` | `consentDialogOverlay` | |
-| Branding tag | `tag.dialog` | `consentDialogTag` | |
+| Backdrop and root | `dialog.root`, `dialog.container`, `dialog.overlay` | `consentDialog`, `consentDialogOverlay` | `consent-dialog-root` |
+| Card | `dialog.card` | `consentDialogCard` | `consent-dialog-card` |
+| Phone sheet over the card | `dialog.sheet` | `consentDialogSheet` | `consent-dialog-sheet` |
+| Header | `dialog.header` | `consentDialogHeader` | `consent-dialog-header` |
+| Title | `dialog.title` | `consentDialogTitle` | `consent-dialog-title` |
+| Intro | `description.dialog` | `consentDialogDescription` | `consent-dialog-intro` |
+| Scrolling body | `dialog.content` | `consentDialogContent` | `consent-dialog-content` |
+| Rights row (sale and sharing) | `dialog.rightsRow` | `consentDialogRightsRow` | `consent-dialog-rights-row-sale` |
+| Receipt | `dialog.receipt` | `consentDialogReceipt` | `consent-dialog-receipt` |
+| Preferences row | `dialog.preferencesRow` | `consentDialogPreferencesRow` | `consent-dialog-preferences-row` |
+| Category group | `dialog.categoryGroup` | `consentDialogCategoryGroup` | `consent-dialog-category-group` |
+| Vendor table | `dialog.vendorTable` | `consentDialogVendorTable` | `consent-dialog-vendor-table-<category>` |
+| Footer | `dialog.footer` | `consentDialogFooter` | `consent-dialog-footer` |
+| Done | `dialog.doneButton` | `consentDialogDoneButton` | `consent-dialog-done` |
+| Save choices | `dialog.saveButton` | `consentDialogSaveButton` | `consent-dialog-save-button` |
 
-Style the dialog footer with `consentWidgetFooter`; there is no `consentDialogFooter` slot.
+The backdrop is the dialog's root, so `dialog.root`, `dialog.container` and `dialog.overlay` all style the same element. The Preferences row is an accordion on desktop and opens a sheet on phones. `consentDialogDescription` does not apply in Svelte or Angular. The dialog has no branding tag, so `tag.dialog` and `consentDialogTag` style nothing.
 
 ## Preference widget parts
 
@@ -85,7 +94,7 @@ Style the dialog footer with `consentWidgetFooter`; there is no `consentDialogFo
 | Accordion item | `accordion-item.root`, `accordion-item.trigger`, `accordion-item.content` | None |
 | Category switch | `switch.root`, `switch.track`, `switch.thumb` | `toggle` |
 | Vendor list | `vendor-list.root`, `vendor-list.trigger`, `vendor-list.content`, `vendor-list.item`, `vendor-list.header`, `vendor-list.name`, `vendor-list.description`, `vendor-list.link`, `vendor-list.control` | None |
-| Branding tag | `tag.manager` in React, `tag.dialog` in Vue | `consentWidgetTag` |
+| Branding tag | `tag.manager` | `consentWidgetTag` |
 
 ## Floating trigger parts
 
@@ -131,16 +140,16 @@ In the script tag and `init()`, every `theme.slots` key is exposed via `part`:
 
 | Element | Attributes |
 | --- | --- |
-| Banner root | `data-prompt`, `data-model`, `data-variant`, `data-position`, `data-blocking` |
+| Banner root | `data-variant` with `choice`, `us-consent` or `notice`; `data-placement`, such as `card-start`, `banner-bottom` or `drawer-end`; `data-flow` with `expand-in-place` or `all-in-one`; `data-edge-style` with `inset` or `flush`; `data-blocking`; `data-expanded`; `data-state` with `open` or `closed`; `data-animation="off"` |
 | Action buttons | `data-action` with `accept`, `reject`, `customize`, `dismiss`, or `save`; `data-variant`; `data-mode` |
-| Footer, groups | `data-direction`, `data-fill`, `data-split` |
-| Right links | `data-action="right"`, `data-right` |
-| Dialog | `data-state` with `open` or `closed`, see [motion](/docs/customization/motion#animate-your-own-rules-on-dialog-state) |
+| Rights row options | `data-right-option` |
+| Dialog root | `data-regime` with `eu` or `us`; `data-layout` with `desktop` or `phone`; `data-edge-style`; `data-animation="off"` |
+| Dialog card | `data-state` with `open` or `closed`, see [motion](/docs/customization/motion#animate-your-own-rules-on-dialog-state); `data-nested` on a phone sheet |
 | Switch | `data-state`, `data-disabled` |
 
-The script tag banner root exposes only `data-variant`, `data-position`, and `data-blocking`, and its right links use `data-action="customize"`. Notice prompts render `data-action="dismiss"`.
+`data-placement` names the container and where it sits, so one selector covers every Card or every Drawer: `[data-placement^='drawer-']`. Notice banners render `data-action="dismiss"`.
 
-The banner card does not inherit root attributes. In Tailwind, add `group` to `banner.root` and style children with `group-data-[variant=bar]:rounded-none`.
+The banner card does not inherit root attributes. In Tailwind, add `group` to `banner.root` and style children with `group-data-[placement=banner-bottom]:rounded-none`.
 
 ## Do not target generated class names
 
@@ -158,4 +167,4 @@ Stock CSS Module classes end in a build hash like `inth-ui-card-lgjVq` that chan
 | HTML, JavaScript | `ui.noStyle`, which also drops the bundled stylesheet |
 | Vue, Nuxt | `noStyle` prop on `ConsentWidget`, `PreferenceItemRoot`, `PreferenceItemContent` |
 
-Per-slot `{ noStyle: true }` in `theme.slots` works in Svelte, Astro's banner, and the script tag; React and Vue ignore it. Use compound components or the headless API to change markup.
+Per-slot `{ noStyle: true }` in `theme.slots` works in every framework and drops that part's stock classes. To change markup, build your own UI on the headless API.
