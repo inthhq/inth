@@ -21,7 +21,6 @@ const stubPhone = function stubPhone(): void {
 const serverPrompt = function serverPrompt(): void {
 	const root = document.createElement('div');
 	root.dataset.testid = 'consent-banner-root';
-	root.dataset.design = 'privacy-choices';
 	document.body.append(root);
 };
 

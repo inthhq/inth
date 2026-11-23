@@ -10,7 +10,7 @@ import {
 	deniedVendorIds,
 	evaluateConsent,
 	CONSENT_CATEGORIES,
-	resolveLegacyConsentPresentation,
+	resolveConsentPresentation,
 	subscribeIABControls,
 } from '@inth/sdk-core';
 
@@ -724,12 +724,12 @@ function renderPolicy(
 	);
 	resolved.append(
 		createCodeBlock(document, {
-			preferences: resolveLegacyConsentPresentation({
+			preferences: resolveConsentPresentation({
 				policy: snapshot.policyRule,
 				presentation,
 				surface: 'preferences',
 			}),
-			prompt: resolveLegacyConsentPresentation({
+			prompt: resolveConsentPresentation({
 				policy: snapshot.policyRule,
 				presentation,
 				surface: 'prompt',

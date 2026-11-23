@@ -132,12 +132,6 @@ export interface EarlyConsentTap {
 	model: string | null;
 	/** The banner root's `data-prompt` when it was tapped. */
 	prompt: string | null;
-	/**
-	 * The banner root's `data-design` when it was tapped: `privacy-choices`
-	 * for the Privacy Choices banner, whose own handlers replay the tap.
-	 * Absent from a script older than the field.
-	 */
-	design?: string | null;
 }
 
 /** What the early-tap script leaves on `window`. @internal */

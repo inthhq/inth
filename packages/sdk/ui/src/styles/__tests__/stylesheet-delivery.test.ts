@@ -32,7 +32,6 @@ import {
 	FIRST_PAINT_COMPONENTS,
 	IAB_PREFIX,
 	LATER_SHEETS,
-	LEGACY_SHIM_COMPONENTS,
 } from '../../../scripts/stylesheet-parts';
 
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
@@ -111,13 +110,6 @@ const ruleKeys = function ruleKeys(css: string): Set<string> {
 };
 
 const COMPONENT_STYLESHEETS = listFiles(COMPONENTS_DIR, '.css');
-/** Every component except the legacy class-map shims, which ship no rule. */
-const SHIPPED_STYLESHEETS = COMPONENT_STYLESHEETS.filter(
-	(file) =>
-		!(LEGACY_SHIM_COMPONENTS as readonly string[]).includes(
-			file.replace(/\.css$/u, '')
-		)
-);
 
 describe('class maps carry no CSS', () => {
 	const classMaps = [
@@ -199,7 +191,7 @@ const TARGETS = {
 } as const;
 
 describe('each component rule lands in the stylesheet for its surface', () => {
-	for (const file of SHIPPED_STYLESHEETS) {
+	for (const file of COMPONENT_STYLESHEETS) {
 		const group = groupOf(file);
 		const target = TARGETS[group];
 
@@ -228,7 +220,7 @@ describe('each component rule lands in the stylesheet for its surface', () => {
 	}
 });
 
-describe('styles.css holds no primitive, IAB or legacy rule', () => {
+describe('styles.css holds no primitive or IAB rule', () => {
 	/** Hashed class names of a class map in `dist/styles/<dir>/<name>.js`. */
 	const classNamesOf = function classNamesOf(path: string): string[] {
 		return [...readDist(path).matchAll(/inth-ui-[\w-]+/gu)].map(
@@ -242,10 +234,9 @@ describe('styles.css holds no primitive, IAB or legacy rule', () => {
 		...listFiles(PRIMITIVES_DIR, '.module.js').map(
 			(file) => `primitives/${file}`
 		),
-		...COMPONENT_STYLESHEETS.filter(
-			(file) =>
-				file.startsWith(IAB_PREFIX) || !SHIPPED_STYLESHEETS.includes(file)
-		).map((file) => `components/${file.replace(/\.css$/u, '.js')}`),
+		...COMPONENT_STYLESHEETS.filter((file) => file.startsWith(IAB_PREFIX)).map(
+			(file) => `components/${file.replace(/\.css$/u, '.js')}`
+		),
 	];
 
 	for (const classMap of deferred) {
