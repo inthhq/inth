@@ -22,15 +22,13 @@
 <script lang="ts">
 	import type { LegalLinks } from '@inth/sdk/engine';
 	import type { ConsentRuntime } from '@inth/sdk/runtime';
-	// The dialog itself, not the root's `ConsentDialog`, which would import
-	// it only once the dialog shows: this island is already loaded on
-	// demand, so the dialog arrives in the island's own download. The
-	// provider renders the runtime it is handed and carries no code to
-	// create one, so the island downloads none of the consent engine.
-	import {
-		ConsentDialogPanel,
-		ConsentRuntimeProvider,
-	} from '@inth/svelte/dialog-panel';
+	// `ConsentDialog`, not the bare dialog panel: it hosts the opt-in
+	// confirmation and opens the dialog on its receipt for an opt-out, which
+	// the panel alone does not. The provider renders the runtime it is
+	// handed and carries no code to create one, so the island downloads none
+	// of the consent engine.
+	import { ConsentDialog, OptOutConfirmation } from '@inth/svelte';
+	import { ConsentRuntimeProvider } from '@inth/svelte/dialog-panel';
 	import type { Component } from 'svelte';
 
 	// The injected stylesheet covers the banner and the dialog. The Svelte
@@ -52,6 +50,13 @@
 		/** Which legal links the preferences dialog shows. */
 		legalLinks?: (keyof LegalLinks)[] | null;
 	} = $props();
+
+	// A page with `<OptOutConfirmation />` asks for the standalone
+	// confirmation, as React's `<OptOutConfirmation />` shows it. Mounting
+	// Svelte's claims the confirmation, so the dialog does not adopt it.
+	const standaloneOptOut =
+		typeof document !== 'undefined' &&
+		document.querySelector('[data-inth-opt-out-confirmation-host]') !== null;
 
 	// The TCF surface is the larger half of this island and only an IAB site
 	// ever opens it, so it arrives on its own chunk.
@@ -77,6 +82,9 @@
 			<IABDialog {tab} />
 		{/if}
 	{:else}
-		<ConsentDialogPanel {legalLinks} />
+		{#if standaloneOptOut}
+			<OptOutConfirmation />
+		{/if}
+		<ConsentDialog {legalLinks} />
 	{/if}
 </ConsentRuntimeProvider>
