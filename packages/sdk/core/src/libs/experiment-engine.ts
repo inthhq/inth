@@ -81,7 +81,11 @@ export const collectExperimentDiagnostics =
 						policy,
 						presentation,
 						surface,
-					}).diagnostics
+					}).diagnostics.filter(
+						// A removed option does nothing, so it changes nothing an
+						// arm shows; the prompt warns about it on its own.
+						(diagnostic) => diagnostic.code !== 'removed-option'
+					)
 			);
 			if (found.length > 0) {
 				diagnostics[name] = found;
