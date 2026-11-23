@@ -123,8 +123,8 @@ const createSurfaceSession = function createSurfaceSession(
 	const drafts = new Set<PreferenceDraft>();
 	let key = keyOf(kernel);
 
-	/** Tell drafts and listeners what changed between `previous` and now. */
-	const announceChange = function announceChange(
+	/** Discard attached drafts' edits when the dialog closes (EU-02). */
+	const resetDrafts = function resetDrafts(
 		previous: SurfaceSessionState
 	): void {
 		if (previous.surface === 'dialog' && state.surface !== 'dialog') {
@@ -132,6 +132,9 @@ const createSurfaceSession = function createSurfaceSession(
 				draft.reset();
 			}
 		}
+	};
+
+	const notify = function notify(): void {
 		for (const listener of [...listeners]) {
 			listener();
 		}
@@ -141,16 +144,19 @@ const createSurfaceSession = function createSurfaceSession(
 		const previous = state;
 		state = reduceSurfaceSession(previous, action);
 		if (state !== previous) {
-			announceChange(previous);
+			resetDrafts(previous);
+			notify();
 		}
 	};
 
 	/**
 	 * Catch up with the kernel, so a read never shows a surface it left. The
 	 * store's own kernel listener normally gets there first; this covers a
-	 * read from a listener the kernel called before it. A read must not
-	 * notify synchronously (React calls `getSnapshot` while rendering), so
-	 * listeners hear about it in a microtask.
+	 * read from a listener the kernel called before it. Drafts reset at
+	 * once: a close followed by a synchronous reopen must still discard
+	 * the edits (EU-02). A read must not notify its own listeners
+	 * synchronously (React calls `getSnapshot` while rendering), so they
+	 * hear about it in a microtask.
 	 */
 	const sync = function sync(): void {
 		const surface = activeOf(kernel);
@@ -159,9 +165,8 @@ const createSurfaceSession = function createSurfaceSession(
 		}
 		const previous = state;
 		state = reduceSurfaceSession(previous, { surface, type: 'surface' });
-		queueMicrotask(() => {
-			announceChange(previous);
-		});
+		resetDrafts(previous);
+		queueMicrotask(notify);
 	};
 
 	/** Follow the kernel from its own notification, which may notify at once. */
@@ -242,9 +247,15 @@ const createSurfaceSession = function createSurfaceSession(
 				return { applied: false, reveal: false };
 			}
 			dispatch({ attempt, ok, type: 'finish-copy' });
+			// The receipt shows only while Details is open, no sheet covers
+			// it and, in a banner, the panel holding it is expanded. Hidden,
+			// the failure waits for it to reopen (CLIP-03).
 			return {
 				applied: true,
-				reveal: state.receiptOpen && state.sheets.length === 0,
+				reveal:
+					state.receiptOpen &&
+					state.sheets.length === 0 &&
+					(state.surface !== 'banner' || state.expanded),
 			};
 		},
 		getState() {

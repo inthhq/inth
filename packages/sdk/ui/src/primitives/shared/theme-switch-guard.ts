@@ -30,21 +30,49 @@ const nextFrame = (view: Window | null, run: () => void): (() => void) => {
 	return () => clearTimeout(timer);
 };
 
+interface Hold {
+	cancel: () => void;
+}
+
+/**
+ * The hold in force per root and attribute. Overlapping switches share one
+ * hold, so an earlier switch's frames never remove the attribute a later
+ * one still needs.
+ */
+const holds = new WeakMap<HTMLElement, Map<string, Hold>>();
+
 /** Holds `attribute` on `root` until two frames after the latest call. */
 const holdFor = function holdFor(
 	root: HTMLElement,
 	attribute: string
 ): () => void {
+	let byAttribute = holds.get(root);
+	if (!byAttribute) {
+		byAttribute = new Map();
+		holds.set(root, byAttribute);
+	}
+	const active = byAttribute;
+	// A newer switch restarts the two frames from now.
+	active.get(attribute)?.cancel();
 	root.setAttribute(attribute, '');
 	const view = root.ownerDocument.defaultView;
-	let cancel = nextFrame(view, () => {
-		cancel = nextFrame(view, () => {
+	const hold: Hold = { cancel: () => undefined };
+	const end = function end(): void {
+		if (active.get(attribute) === hold) {
+			active.delete(attribute);
 			root.removeAttribute(attribute);
-		});
+		}
+	};
+	hold.cancel = nextFrame(view, () => {
+		hold.cancel = nextFrame(view, end);
 	});
+	active.set(attribute, hold);
 	return () => {
-		cancel();
-		root.removeAttribute(attribute);
+		// A later switch owns the attribute now; leave it to that one.
+		if (active.get(attribute) === hold) {
+			hold.cancel();
+			end();
+		}
 	};
 };
 
@@ -70,12 +98,50 @@ export const switchThemeWithoutTransitions =
 		return release;
 	};
 
+/** Classes that select a theme on the root. */
+const THEME_CLASSES = ['dark', 'inth-dark', 'light'] as const;
+
+const themeClasses = (value: string | null): string =>
+	THEME_CLASSES.filter((name) =>
+		(value ?? '').split(/\s+/u).includes(name)
+	).join(' ');
+
+/**
+ * Whether a batch of attribute mutations changed the theme. For `class`
+ * only the theme classes count, so a host toggling an unrelated class on
+ * `<html>` (a scroll lock, a route marker) never turns transitions off.
+ * The first record per attribute holds the value before the batch.
+ */
+const themeChanged = function themeChanged(
+	root: HTMLElement,
+	records: readonly MutationRecord[]
+): boolean {
+	const seen = new Set<string>();
+	for (const record of records) {
+		const name = record.attributeName;
+		if (name === null || seen.has(name)) {
+			continue;
+		}
+		seen.add(name);
+		const now = root.getAttribute(name);
+		if (
+			name === 'class'
+				? themeClasses(record.oldValue) !== themeClasses(now)
+				: record.oldValue !== now
+		) {
+			return true;
+		}
+	}
+	return false;
+};
+
 /**
  * Guard every theme change on `root` that someone else makes, such as the
- * SDK's own `inth-dark` class or a host's `.dark`: when its `class` or
- * `data-theme` changes, hold the attribute for two frames. A
- * `MutationObserver` runs before the next style recalculation, so the
- * first frame of the new theme already has transitions off.
+ * SDK's own `inth-dark` class or a host's `.dark`: when a theme class
+ * (`dark`, `inth-dark`, `light`), `data-theme` or `data-color-scheme`
+ * changes, hold the attribute for two frames. A `MutationObserver` runs
+ * before the next style recalculation, so the first frame of the new theme
+ * already has transitions off.
  *
  * @returns Stops watching.
  */
@@ -88,9 +154,10 @@ export const attachThemeSwitchGuard = function attachThemeSwitchGuard(
 		return () => undefined;
 	}
 	let release: (() => void) | null = null;
-	const observer = new MutationObserver(() => {
-		release?.();
-		release = holdFor(root, attribute);
+	const observer = new MutationObserver((records) => {
+		if (themeChanged(root, records)) {
+			release = holdFor(root, attribute);
+		}
 	});
 	observer.observe(root, {
 		attributeFilter: options.attributeFilter ?? [
@@ -98,6 +165,7 @@ export const attachThemeSwitchGuard = function attachThemeSwitchGuard(
 			'data-theme',
 			'data-color-scheme',
 		],
+		attributeOldValue: true,
 		attributes: true,
 	});
 	return () => {

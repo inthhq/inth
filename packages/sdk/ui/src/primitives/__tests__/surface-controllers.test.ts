@@ -453,6 +453,56 @@ describe('theme switch guard', () => {
 		stop();
 		expect(root.hasAttribute(THEME_SWITCHING_ATTRIBUTE)).toBe(false);
 	});
+
+	test('[VIS-06] an earlier switch never ends a later one’s hold', () => {
+		const root = document.createElement('div');
+		const frames: FrameRequestCallback[] = [];
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation((run) => {
+			frames.push(run);
+			return frames.length;
+		});
+		vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+			frames[id - 1] = () => undefined;
+		});
+		const releaseFirst = switchThemeWithoutTransitions(() => undefined, {
+			root,
+		});
+		frames[0]?.(0);
+		// The second switch lands between the first one's two frames.
+		switchThemeWithoutTransitions(() => undefined, { root });
+		frames[1]?.(16);
+		expect(root.hasAttribute(THEME_SWITCHING_ATTRIBUTE)).toBe(true);
+		releaseFirst();
+		expect(root.hasAttribute(THEME_SWITCHING_ATTRIBUTE)).toBe(true);
+		frames[2]?.(16);
+		expect(root.hasAttribute(THEME_SWITCHING_ATTRIBUTE)).toBe(true);
+		frames[3]?.(32);
+		expect(root.hasAttribute(THEME_SWITCHING_ATTRIBUTE)).toBe(false);
+	});
+
+	test('[VIS-06] only a theme change on the root is guarded', async () => {
+		const root = document.createElement('div');
+		root.className = 'page';
+		root.setAttribute('data-theme', 'light');
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 1);
+		vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(
+			() => undefined
+		);
+		const stop = attachThemeSwitchGuard({ root });
+		root.classList.add('scroll-locked');
+		// Rewriting the same theme is not a change.
+		root.setAttribute('data-theme', 'light');
+		await Promise.resolve();
+		expect(root.hasAttribute(THEME_SWITCHING_ATTRIBUTE)).toBe(false);
+		root.classList.add('dark');
+		await Promise.resolve();
+		expect(root.hasAttribute(THEME_SWITCHING_ATTRIBUTE)).toBe(true);
+		stop();
+		root.classList.remove('scroll-locked');
+		root.setAttribute('data-theme', 'dark');
+		await Promise.resolve();
+		expect(root.hasAttribute(THEME_SWITCHING_ATTRIBUTE)).toBe(false);
+	});
 });
 
 describe('reduced motion', () => {

@@ -66,6 +66,7 @@ import {
 	applyNoticeAcknowledgement,
 	buildSavePayload,
 	choiceAcknowledgement,
+	keepRightsSurface,
 	resolveSaveSelection,
 	saveAttribution,
 	saveSubject,
@@ -857,6 +858,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 		async optOut(context?: {
 			uiSource?: SaveUISource;
 			actionAt?: number;
+			rightsControl?: boolean;
 		}): Promise<OptOutResult> {
 			const before = getSnapshot();
 			if (before.externalPermissions) {
@@ -897,6 +899,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				subject,
 			};
 			applyNoticeAcknowledgement(patch, before, actionAt);
+			keepRightsSurface(patch, before, context?.rightsControl);
 			const { actVersion, after, generation, recorded } = batch(() => {
 				const nextActVersion = runtime.noteOptOutAct();
 				runtime.setOptOutReceiptData({
@@ -954,6 +957,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				categories?: readonly AllConsentNames[];
 				vendors?: Record<string, boolean>;
 				uiSource?: SaveUISource;
+				rightsControl?: boolean;
 			}
 		): Promise<SaveResult> {
 			if (getSnapshot().externalPermissions) {
@@ -1054,7 +1058,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 			// it, and sends a receipt for strictly necessary alone.
 			const acknowledgement = owedNothing
 				? null
-				: choiceAcknowledgement(before, actionAt);
+				: choiceAcknowledgement(
+						before,
+						actionAt,
+						context?.rightsControl === true
+					);
 			if (!categoriesChanged && !vendorsChanged && !acknowledgement) {
 				// Nothing confirmed: no receipt, no choice event, no request, no write.
 				const result: SaveResult = {
@@ -1114,6 +1122,7 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				patch.noticeDismissal = acknowledgement;
 			}
 			applyNoticeAcknowledgement(patch, before, actionAt);
+			keepRightsSurface(patch, before, context?.rightsControl);
 			applySaveAuthority(patch, before, context?.iabAuthority);
 			const recordedOptOutReference =
 				recordedOptOut === null ? undefined : createIdempotencyKey();

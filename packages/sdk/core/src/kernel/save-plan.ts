@@ -80,20 +80,37 @@ export const resolveSaveSelection = function resolveSaveSelection(
  * reconciliation and the deadline timer carry it like a notice dismissal,
  * and the evaluator never mistakes it for one. A stored acknowledgement at
  * least as new is kept.
+ *
+ * A save from a rights control (`rightsControl`) records one too while the
+ * choice prompt is owed: recording a statutory right answers the prompt
+ * (BNR-05, RIGHT-08), and the categories it did not record keep their
+ * defaults instead of being granted or refused on the visitor's behalf.
  */
 export const choiceAcknowledgement = function choiceAcknowledgement(
 	snapshot: ConsentSnapshot,
-	actionAt: number
+	actionAt: number,
+	rightsControl = false
 ): NoticeDismissal | null {
 	const policy = snapshot.evaluationPolicy;
-	if (policy.prompt !== 'choice' || policy.choiceScope.length > 0) {
+	if (policy.prompt !== 'choice') {
+		return null;
+	}
+	if (
+		policy.choiceScope.length > 0 &&
+		!(rightsControl && snapshot.promptRequirement.kind === 'choice')
+	) {
 		return null;
 	}
 	const current = snapshot.noticeDismissal;
+	// A rights control's acknowledgement answers the prompt only beside the
+	// decision made in the same action, so it always takes that action's
+	// time.
 	if (
 		current &&
 		current.fingerprint === policy.choice.fingerprint &&
-		current.dismissedAt >= actionAt
+		(rightsControl && policy.choiceScope.length > 0
+			? current.dismissedAt === actionAt
+			: current.dismissedAt >= actionAt)
 	) {
 		return current;
 	}
@@ -129,6 +146,25 @@ export const applyNoticeAcknowledgement = function applyNoticeAcknowledgement(
 		fingerprint: before.evaluationPolicy.notice.fingerprint,
 		version: 1,
 	};
+};
+
+/**
+ * Keep the open surface across a rights control's action. The kernel closes
+ * an open surface when a choice answers its prompt; a rights control
+ * records one right and the visitor carries on in the same surface, which
+ * closes when they finish (BNR-05).
+ */
+export const keepRightsSurface = function keepRightsSurface(
+	patch: SnapshotPatch,
+	before: ConsentSnapshot,
+	rightsControl: boolean | undefined
+): void {
+	if (
+		rightsControl === true &&
+		(before.activeUI === 'banner' || before.activeUI === 'dialog')
+	) {
+		patch.activeUI = before.activeUI;
+	}
 };
 
 /** Subject written by a save: the stored identifiers plus the current user's. */

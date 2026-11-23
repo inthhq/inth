@@ -13,7 +13,8 @@
  */
 
 import type { PreferenceDraft } from '../preference-draft';
-import { saveConsentSurface } from '../surface-actions/save';
+import { beginAction } from '../surface-actions/rules';
+import { saveConsentSurface, settleSurface } from '../surface-actions/save';
 import type {
 	ConsentKernel,
 	OptInResult,
@@ -57,6 +58,10 @@ export interface BannerCommitOutcome {
  * banner: the save closes it as any surface save does, and the session
  * drops its expanded panel, confirmation, copy state and announcement.
  *
+ * When live GPC withholds every category the commit could record, there
+ * is nothing to save: the signal already refused them, which answers the
+ * prompt, so the banner closes at once.
+ *
  * The renderer then moves focus to "Your Privacy Choices" and announces
  * the outcome on the page; `plan.keptOff` says whether sale and sharing
  * stayed off and why.
@@ -66,9 +71,22 @@ export const commitBannerChoice = function commitBannerChoice(
 	action: BannerCommitAction,
 	options: BannerCommitOptions = {}
 ): BannerCommitOutcome {
-	const plan = resolveBannerCommit(kernel.getSnapshot(), action);
+	const snapshot = kernel.getSnapshot();
+	const { category } = resolveSaleRight(snapshot);
+	const plan = resolveBannerCommit(snapshot, action, {
+		sale:
+			action === 'save' && options.draft && category !== null
+				? options.draft.getState().values[category]
+				: undefined,
+	});
 	const uiSource = options.uiSource ?? 'banner';
 	const { categories } = plan;
+	if (categories?.length === 0) {
+		beginAction(kernel);
+		settleSurface(kernel);
+		getSurfaceSession(kernel).commit();
+		return { plan, result: Promise.resolve({ confirmed: [], ok: true }) };
+	}
 	const save = (): Promise<SaveResult> => {
 		if (plan.input === 'draft') {
 			return options.draft
@@ -106,6 +124,10 @@ export interface RightCommandOptions {
  * records nothing (LAW-02); pressing "Allow" again while it is open nudges
  * (RIGHT-04). The renderer plays the nudge and announces the outcome; the
  * session already holds the confirmation and the nudge count.
+ *
+ * A recorded right keeps the surface open and answers the first-layer
+ * prompt without deciding any other category, so closing the dialog
+ * afterwards never brings the banner back (BNR-05, RIGHT-08).
  */
 export const pressSaleRight = function pressSaleRight(
 	kernel: ConsentKernel,
@@ -126,8 +148,15 @@ export const pressSaleRight = function pressSaleRight(
 		right,
 	});
 	const uiSource = options.uiSource ?? snapshot.activeUI;
+	// A rights control records one right and the visitor carries on: the
+	// surface stays open, and the right answers the first-layer prompt.
 	const record = (value: boolean) =>
-		kernel.commands.save({ [category]: value }, { uiSource });
+		kernel.commands.save(
+			{ [category]: value },
+			{ rightsControl: true, uiSource }
+		);
+	const optOut = () =>
+		kernel.commands.optOut({ rightsControl: true, uiSource });
 	switch (outcome) {
 		case 'apply-protect': {
 			session.closeConfirmation();
@@ -135,7 +164,7 @@ export const pressSaleRight = function pressSaleRight(
 				outcome,
 				result:
 					snapshot.evaluationPolicy.model === 'opt-out'
-						? kernel.commands.optOut({ uiSource })
+						? optOut()
 						: record(false),
 			};
 		}
@@ -149,7 +178,7 @@ export const pressSaleRight = function pressSaleRight(
 				result:
 					right.selected === 'protect' &&
 					snapshot.evaluationPolicy.model === 'opt-out'
-						? kernel.commands.optOut({ uiSource })
+						? optOut()
 						: record(right.selected === 'allow'),
 			};
 		}
@@ -195,7 +224,10 @@ export const confirmSaleRight = function confirmSaleRight(
 	if (snapshot.evaluationPolicy.model === 'opt-out' && snapshot.optOut) {
 		return kernel.commands.optIn({ uiSource });
 	}
-	return kernel.commands.save({ [right.category]: true }, { uiSource });
+	return kernel.commands.save(
+		{ [right.category]: true },
+		{ rightsControl: true, uiSource }
+	);
 };
 
 /**

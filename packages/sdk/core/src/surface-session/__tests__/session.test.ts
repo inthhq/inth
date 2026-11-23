@@ -160,6 +160,27 @@ describe('[PERM-16] the session follows the kernel', () => {
 		expect(session.getState().copy.status).toBe('failed');
 	});
 
+	test('[CLIP-03] a failure after the banner panel folded keeps the fallback but neither moves focus nor speaks', async () => {
+		const kernel = kernelFor();
+		kernel.set.activeUI('banner');
+		const session = getSurfaceSession(kernel);
+		session.expand();
+		session.toggleReceipt(true);
+		let reject: (error: Error) => void = () => undefined;
+		const pending = copySurfaceReference(
+			kernel,
+			'ref',
+			() =>
+				new Promise<void>((_resolve, _reject) => {
+					reject = _reject;
+				})
+		);
+		session.collapse();
+		reject(new Error('denied'));
+		await expect(pending).resolves.toEqual({ applied: true, reveal: false });
+		expect(session.getState().copy.status).toBe('failed');
+	});
+
 	test('[CLIP-01] no clipboard is a visible failure', async () => {
 		const kernel = kernelFor();
 		showConsentSurface(kernel, 'dialog');
@@ -253,6 +274,24 @@ describe('EU draft', () => {
 		showConsentSurface(kernel, 'none');
 		expect(draft.getState().isDirty).toBe(false);
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
+		detach();
+	});
+
+	test('[EU-02] a close caught up by a read, then a synchronous reopen, still discards the draft', () => {
+		const kernel = kernelFor();
+		// Subscribed before the session, so its read catches the session up
+		// before the session's own kernel listener runs.
+		kernel.subscribe(() => {
+			getSurfaceSession(kernel).getState();
+		});
+		showConsentSurface(kernel, 'dialog');
+		const draft = createPreferenceDraft(kernel);
+		const detach = getSurfaceSession(kernel).attachDraft(draft);
+		draft.set('marketing', true);
+		showConsentSurface(kernel, 'none');
+		expect(kernel.getSnapshot().activeUI).not.toBe('dialog');
+		showConsentSurface(kernel, 'dialog');
+		expect(draft.getState().isDirty).toBe(false);
 		detach();
 	});
 });

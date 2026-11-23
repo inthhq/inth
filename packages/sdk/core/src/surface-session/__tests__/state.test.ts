@@ -155,6 +155,20 @@ describe('phone sheets', () => {
 		).toBe(one);
 	});
 
+	test('[SR-02] pushing a sheet closes the confirmation the main card had open', () => {
+		const confirming = reduceSurfaceSession(dialog(), {
+			right: 'sale',
+			type: 'open-confirmation',
+		});
+		const covered = reduceSurfaceSession(confirming, {
+			id: 'cookies',
+			type: 'push-sheet',
+		});
+		expect(covered.confirmation).toBeNull();
+		const back = reduceSurfaceSession(covered, { type: 'pop-sheet' });
+		expect(back.confirmation).toBeNull();
+	});
+
 	test('[NEST-06] leaving the dialog drops open sheets', () => {
 		const one = reduceSurfaceSession(dialog(), {
 			id: 'cookies',

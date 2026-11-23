@@ -14,16 +14,19 @@
  * @packageDocumentation
  */
 
+import { decisionAuthority } from '../consent-record/decision-authority';
 import { optOutDecidingCategory } from '../consent-record/types';
 import type { OptionalConsentCategory } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
 import { resolveOptOutState } from '../libs/opt-out-state';
+import type { OptOutLock } from '../libs/opt-out-state';
 import type { ConsentSnapshot } from '../types';
 
 /** Snapshot fields the rights decisions read. */
 export type RightsSnapshot = Pick<
 	ConsentSnapshot,
 	| 'effectivePermissions'
+	| 'evaluatedAt'
 	| 'evaluationPolicy'
 	| 'explicitChoice'
 	| 'optOut'
@@ -49,7 +52,13 @@ export interface SaleRightState {
 	readonly category: OptionalConsentCategory | null;
 	readonly selected: RightOption;
 	readonly source: RightSource;
-	/** A live GPC signal holds the opt-out; "Allow" is unavailable (GPC-03). */
+	/**
+	 * Why this browser cannot allow sale right now: a live GPC signal
+	 * (GPC-03), or an opt-out the visitor's account holds. `null` when
+	 * nothing locks it.
+	 */
+	readonly lock: OptOutLock | null;
+	/** Something locks the refusal, so "Allow" is unavailable. */
 	readonly locked: boolean;
 	/**
 	 * The held opt-out came from a GPC signal, live or past. A past one is a
@@ -64,12 +73,42 @@ const hasGpcRestriction = (
 ): boolean => snapshot.restrictions[category]?.includes('gpc') === true;
 
 /**
+ * The visitor's recorded value for `category`, when it still decides what
+ * runs. A refusal is durable and never ages. A grant counts only while it
+ * is valid under the current policy and the kernel permits the category:
+ * an expired grant no longer runs anything, so the control shows the
+ * regime's default again.
+ */
+const recordedValue = function recordedValue(
+	snapshot: RightsSnapshot,
+	category: OptionalConsentCategory
+): boolean | undefined {
+	const decision = snapshot.explicitChoice?.categories?.[category];
+	if (!decision) {
+		return undefined;
+	}
+	if (!decision.value) {
+		return false;
+	}
+	const { authority } = decisionAuthority(
+		decision,
+		snapshot.evaluationPolicy,
+		snapshot.evaluatedAt
+	);
+	return authority === 'valid' &&
+		snapshot.effectivePermissions[category] === true
+		? true
+		: undefined;
+};
+
+/**
  * Read what the sale control shows from a snapshot.
  *
- * Under an opt-out policy a held opt-out record is the visitor's refusal,
- * locked while a live GPC signal maintains it. Elsewhere the deciding
- * category's recorded choice is the visitor's, and without one the regime's
- * default shows.
+ * A held opt-out record is the visitor's refusal under an opt-out policy,
+ * and under any policy while something locks it: a live GPC signal, or the
+ * visitor's account. Elsewhere the deciding category's recorded choice is
+ * the visitor's while it still decides what runs, and otherwise the
+ * regime's default shows.
  */
 export const resolveSaleRight = function resolveSaleRight(
 	snapshot: RightsSnapshot
@@ -79,14 +118,15 @@ export const resolveSaleRight = function resolveSaleRight(
 		category !== null &&
 		snapshot.evaluationPolicy.choiceScope.includes(category);
 	const optOut = resolveOptOutState(snapshot);
-	if (optOut.available && optOut.honored) {
-		const locked = optOut.lock === 'gpc-active';
+	if (optOut.honored && (optOut.available || optOut.lock !== null)) {
+		const { lock } = optOut;
 		return {
 			available,
 			category,
-			locked,
+			lock,
+			locked: lock !== null,
 			selected: 'protect',
-			source: locked ? 'gpc' : 'user',
+			source: lock === 'gpc-active' ? 'gpc' : 'user',
 			viaSignal: optOut.via === 'signal' || snapshot.optOut?.method === 'gpc',
 		};
 	}
@@ -94,6 +134,7 @@ export const resolveSaleRight = function resolveSaleRight(
 		return {
 			available,
 			category,
+			lock: null,
 			locked: false,
 			selected: 'protect',
 			source: 'default',
@@ -104,17 +145,19 @@ export const resolveSaleRight = function resolveSaleRight(
 		return {
 			available,
 			category,
+			lock: 'gpc-active',
 			locked: true,
 			selected: 'protect',
 			source: 'gpc',
 			viaSignal: true,
 		};
 	}
-	const recorded = snapshot.explicitChoice?.categories?.[category]?.value;
-	if (typeof recorded === 'boolean') {
+	const recorded = recordedValue(snapshot, category);
+	if (recorded !== undefined) {
 		return {
 			available,
 			category,
+			lock: null,
 			locked: false,
 			selected: recorded ? 'allow' : 'protect',
 			source: 'user',
@@ -124,6 +167,7 @@ export const resolveSaleRight = function resolveSaleRight(
 	return {
 		available,
 		category,
+		lock: null,
 		locked: false,
 		selected:
 			snapshot.effectivePermissions[category] === true ? 'allow' : 'protect',
@@ -221,6 +265,92 @@ export interface BannerCommitPlan {
 	readonly rightChanged: boolean;
 }
 
+/** What the expanded panel's switches show, for a `'save'`. */
+export interface BannerCommitDraft {
+	/**
+	 * The value the draft shows for sale's deciding category. Omitted, the
+	 * save is taken to leave sale as it shows.
+	 */
+	readonly sale?: boolean;
+}
+
+const saleOption = (value: boolean): RightOption =>
+	value ? 'allow' : 'protect';
+
+/** Why a non-refusing commit leaves sale off, or `null` when it decides sale. */
+const keptOffFor = function keptOffFor(
+	sale: SaleRightState
+): BannerKeptOff | null {
+	if (!sale.available || sale.selected !== 'protect') {
+		return null;
+	}
+	if (sale.lock === 'gpc-active') {
+		return 'gpc';
+	}
+	return sale.locked || sale.source === 'user' ? 'opt-out' : null;
+};
+
+/**
+ * The categories a non-refusing commit may record, or `undefined` for the
+ * whole choice scope.
+ *
+ * A save that grants the deciding category would lift a held opt-out
+ * (11 CCR §7028(a) needs the two-step path for that), so it leaves out
+ * every category the opt-out holds off. A live GPC signal holds its
+ * categories off whatever is saved; recording a grant for them would
+ * misstate the choice.
+ */
+const commitCategories = function commitCategories(
+	snapshot: RightsSnapshot,
+	sale: SaleRightState,
+	keptOff: BannerKeptOff | null
+): AllConsentNames[] | undefined {
+	const scope = snapshot.evaluationPolicy.choiceScope;
+	const withheld = new Set<AllConsentNames>(
+		scope.filter((category) => hasGpcRestriction(snapshot, category))
+	);
+	if (keptOff !== null && sale.category !== null) {
+		withheld.add(sale.category);
+		const held = resolveOptOutState(snapshot);
+		if (held.honored) {
+			for (const category of held.categories) {
+				withheld.add(category);
+			}
+		}
+	}
+	return withheld.size > 0
+		? scope.filter((category) => !withheld.has(category))
+		: undefined;
+};
+
+/**
+ * Whether a commit changes the sale right (RCPT-02): its value, or who
+ * made it, when a default or a past signal's refusal becomes the visitor's
+ * own. A locked right never changes here.
+ */
+const rightChangedBy = function rightChangedBy(
+	sale: SaleRightState,
+	action: BannerCommitAction,
+	keptOff: BannerKeptOff | null,
+	draft: BannerCommitDraft
+): boolean {
+	if (!sale.available || sale.locked) {
+		return false;
+	}
+	if (action === 'refuse') {
+		return (
+			sale.selected !== 'protect' || sale.source === 'default' || sale.viaSignal
+		);
+	}
+	if (keptOff !== null) {
+		return false;
+	}
+	if (action === 'allow') {
+		return sale.selected !== 'allow' || sale.source === 'default';
+	}
+	return draft.sale !== undefined && saleOption(draft.sale) !== sale.selected;
+};
+
 /**
  * Decide what a banner commit records (§3.6, PERM-02):
  *
@@ -232,59 +362,31 @@ export interface BannerCommitPlan {
  *   confirmation in Your Privacy Choices (LAW-02).
  * - Save records the visitor's switches, with the same protection: it
  *   never lifts a held opt-out.
+ *
+ * The receipt's time moves when the commit changes sale's value or makes a
+ * default or a past signal's refusal the visitor's own (RCPT-02); a Save
+ * compares the draft's sale value with what shows, so a cookie-only Save
+ * keeps the date.
  */
 export const resolveBannerCommit = function resolveBannerCommit(
 	snapshot: RightsSnapshot,
-	action: BannerCommitAction
+	action: BannerCommitAction,
+	draft: BannerCommitDraft = {}
 ): BannerCommitPlan {
 	const sale = resolveSaleRight(snapshot);
-	const scope = snapshot.evaluationPolicy.choiceScope;
 	if (action === 'refuse') {
 		return {
 			categories: undefined,
 			input: 'none',
 			keptOff: null,
-			rightChanged:
-				sale.available && !sale.locked && sale.selected !== 'protect',
+			rightChanged: rightChangedBy(sale, action, null, draft),
 		};
 	}
-	let keptOff: BannerKeptOff | null = null;
-	if (sale.available && sale.selected === 'protect') {
-		if (sale.locked) {
-			keptOff = 'gpc';
-		} else if (sale.source === 'user') {
-			keptOff = 'opt-out';
-		}
-	}
-	// A save that grants the deciding category would lift a held opt-out
-	// (11 CCR §7028(a) needs the two-step path for that), so leave out
-	// every category the opt-out holds off. A live GPC signal holds its
-	// categories off whatever is saved; recording a grant for them would
-	// misstate the choice.
-	const held = resolveOptOutState(snapshot);
-	const withheld = new Set<AllConsentNames>(
-		scope.filter((category) => hasGpcRestriction(snapshot, category))
-	);
-	if (keptOff !== null && sale.category !== null) {
-		withheld.add(sale.category);
-		if (held.honored) {
-			for (const category of held.categories) {
-				withheld.add(category);
-			}
-		}
-	}
-	const categories =
-		withheld.size > 0
-			? scope.filter((category) => !withheld.has(category))
-			: undefined;
+	const keptOff = keptOffFor(sale);
 	return {
-		categories,
+		categories: commitCategories(snapshot, sale, keptOff),
 		input: action === 'allow' ? 'all' : 'draft',
 		keptOff,
-		rightChanged:
-			keptOff === null &&
-			sale.available &&
-			(sale.selected !== 'allow' || sale.source === 'default') &&
-			(action === 'allow' || sale.source === 'default'),
+		rightChanged: rightChangedBy(sale, action, keptOff, draft),
 	};
 };

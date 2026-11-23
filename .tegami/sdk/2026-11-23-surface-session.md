@@ -9,12 +9,12 @@ packages:
 
 New rights helpers record choices through the existing consent commands:
 
-- `pressSaleRight()` opts out in one action. Opting back in opens a confirmation first, and `confirmSaleRight()` applies it.
-- `commitBannerChoice()` handles banner Allow, Don't allow and Save. Allow never overrides a live Global Privacy Control signal or a recorded opt-out. A refusal always applies in one action. The receipt date moves only when the sale right actually changes.
+- `pressSaleRight()` opts out in one action. Opting back in opens a confirmation first, and `confirmSaleRight()` applies it. The dialog stays open after either, and the choice answers the banner without deciding any other category, so closing the dialog does not bring the banner back. "Allow" is unavailable while a Global Privacy Control signal or the visitor's account holds the opt-out, and an expired grant shows as the default again.
+- `commitBannerChoice()` handles banner Allow, Don't allow and Save. Allow never overrides a live Global Privacy Control signal or a recorded opt-out. A refusal always applies in one action. The receipt date moves only when the sale right actually changes; a Save that only changes cookies keeps it. When the signal already refuses everything the banner asks about, the banner closes at once.
 - `copySurfaceReference()` reports "copied" only after the clipboard write succeeds, and ignores a result that arrives after the dialog closed.
 
 The preference draft now reports `hasEffectiveChanges`. It counts a vendor only while its category is on, so an EU "Save choices" button can stay disabled after a change that would have no effect.
 
-`@inth/sdk/ui/primitives/surface` adds framework-free DOM controllers that also work inside a shadow root: a focus trap for the top layer, a page block (`inert` plus scroll lock), per-layer status regions, scroll-edge fades, scroll reveal through the scroll body only, a guard against clicks right after a backdrop tap, a guard that turns off transitions while the theme switches, and a timer-based end for motion when the visitor prefers reduced motion.
+`@inth/sdk/ui/primitives/surface` adds framework-free DOM controllers that also work inside a shadow root: a focus trap for the top layer, a page block (`inert` plus scroll lock), per-layer status regions, scroll-edge fades, scroll reveal through the scroll body only, a guard against clicks right after a backdrop tap, a guard that turns off transitions while the theme switches (only for a real theme change, and safe across overlapping switches), and a timer-based end for motion when the visitor prefers reduced motion.
 
 The stock components don't use these yet, so nothing on the page changes.

@@ -275,8 +275,9 @@ export const reduceSurfaceSession = function reduceSurfaceSession(
 			) {
 				return state;
 			}
-			// A new layer starts silent, and the confirmation stays with the
-			// layer below (SR-02).
+			// A new layer starts silent (SR-02), and an open confirmation
+			// closes: the layer below is covered, so its question can no
+			// longer be answered or cancelled where it was asked.
 			return {
 				...state,
 				announcement: null,
