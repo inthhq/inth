@@ -50,7 +50,17 @@ const run = (command: string, args: string[], cwd: string): boolean => {
 const git = (args: string[]): string =>
   spawnSync("git", args, { cwd: repository, encoding: "utf-8" }).stdout;
 
-if (git(["status", "--porcelain", "--", "examples"]).trim()) {
+// List untracked files whatever status.showUntrackedFiles says, because the
+// cleanup below deletes untracked files in each example.
+if (
+  git([
+    "status",
+    "--porcelain",
+    "--untracked-files=all",
+    "--",
+    "examples",
+  ]).trim()
+) {
   throw new Error("examples/ has local changes. Commit or remove them first.");
 }
 
@@ -76,7 +86,7 @@ for (const [framework, example] of EXAMPLES) {
       (framework === "solid" || run("pnpm", ["run", "build"], directory)) &&
       run("pnpm", ["run", "check-types"], directory);
     console.log(
-      `${passed ? "ok  " : "FAIL"} ${framework} (examples/${example})`
+      `${passed ? "ok  " : "FAIL"} ${framework} (examples/${example}${framework === "solid" ? ", engine module only" : ""})`
     );
     if (!passed) {
       failed.push(framework);

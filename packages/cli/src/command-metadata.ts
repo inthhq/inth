@@ -1008,7 +1008,7 @@ export const COMMAND_METADATA: CommandMetadata[] = [
   setupCommand(
     "init",
     "Set up the Inth SDK in this app",
-    "Scaffold writes framework quickstart files and installs the @inth packages for this CLI's release line. Existing files are preserved; conflicting generated files stop setup.",
+    "Scaffold writes framework quickstart files and installs the latest @inth release. Existing files are preserved; conflicting generated files stop setup.",
     INIT_USAGE
   ),
   setupCommand(

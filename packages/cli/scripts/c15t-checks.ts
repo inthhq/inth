@@ -1817,21 +1817,18 @@ const verifyExistingViteApp = async (
     path.join(directory, "src", "App.tsx"),
     "export default function App() { return null; }\n"
   );
-  const result = run(
-    test,
-    [
-      "init",
-      "scaffold",
-      "--project",
-      "Website",
-      "--organization",
-      "org_acme",
-      "--skip-install",
-      "--yes",
-      "--json",
-    ],
-    directory
-  );
+  const args = [
+    "init",
+    "scaffold",
+    "--project",
+    "Website",
+    "--organization",
+    "org_acme",
+    "--skip-install",
+    "--yes",
+    "--json",
+  ];
+  const result = run(test, args, directory);
   assert.equal(result.status, 0, result.stderr);
   const { data } = envelope.parse(JSON.parse(result.stdout));
   assert.deepEqual(data.created?.toSorted(), [".env", "src/consent.tsx"]);
@@ -1845,14 +1842,42 @@ const verifyExistingViteApp = async (
   );
   const entries = await readdir(directory);
   assert.ok(!entries.includes("vite.config.ts"));
+  const quickstart = new Map<string, string>();
   for (const file of ["src/main.tsx", "vite.config.js"]) {
-    assert.ok(
-      data.plan?.instructions.some((instruction) =>
-        instruction.startsWith(`Update ${file}:`)
-      ),
-      file
+    const instruction = data.plan?.instructions.find((line) =>
+      line.startsWith(`Update ${file}:`)
+    );
+    assert.ok(instruction, file);
+    quickstart.set(
+      file,
+      `${instruction.split("The quickstart's version:\n")[1]}\n`
     );
   }
+
+  // A JavaScript app whose entry and config already match the quickstart
+  // gets no TypeScript copies beside them.
+  const javascript = await app(parent, "vite-react-js", { react: "19.2.0" });
+  await mkdir(path.join(javascript, "src"));
+  await writeFile(
+    path.join(javascript, "src", "App.jsx"),
+    "export default function App() { return null; }\n"
+  );
+  await writeFile(
+    path.join(javascript, "src", "main.jsx"),
+    quickstart.get("src/main.tsx") ?? ""
+  );
+  await writeFile(
+    path.join(javascript, "vite.config.js"),
+    quickstart.get("vite.config.js") ?? ""
+  );
+  const matching = run(test, [...args], javascript);
+  assert.equal(matching.status, 0, matching.stderr);
+  const matched = envelope.parse(JSON.parse(matching.stdout)).data;
+  assert.deepEqual(matched.created?.toSorted(), [".env", "src/consent.tsx"]);
+  assert.ok(
+    !matched.plan?.instructions.some((line) => line.startsWith("Update ")),
+    JSON.stringify(matched.plan?.instructions)
+  );
 };
 
 // `inth init` runs the same flow for the Inth SDK, with Inth's prompt and

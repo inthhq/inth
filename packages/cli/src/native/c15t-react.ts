@@ -32,12 +32,7 @@ const keepExisting = (
   const existing = candidates.find((candidate) =>
     existsSync(join(cwd, candidate))
   );
-  // A file an earlier scaffold wrote is already set up.
-  if (
-    generated === undefined ||
-    !existing ||
-    readFileSync(join(cwd, existing), "utf-8") === generated
-  ) {
+  if (generated === undefined || !existing) {
     return;
   }
   generation.files = {
@@ -52,6 +47,10 @@ const keepExisting = (
     ),
     [existing]: { type: "keep" },
   };
+  // A file that already matches the quickstart needs no changes.
+  if (readFileSync(join(cwd, existing), "utf-8") === generated) {
+    return;
+  }
   generation.instructions = [
     ...generation.instructions.filter(
       (instruction) => !instruction.startsWith(`${name} renders`)
