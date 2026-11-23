@@ -5,7 +5,7 @@ import {
 } from '@inth/sdk/engine';
 import { V1_UUID_PATTERN } from '@inth/sdk/schema/types';
 import { closeOptOutConfirmation } from '@inth/sdk/surface-actions';
-import { fireEvent, render, waitFor } from '@testing-library/svelte';
+import { configure, fireEvent, render, waitFor } from '@testing-library/svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import OptOutConfirmationFixture from '../../__tests__/fixtures/opt-out-confirmation-fixture.svelte';
@@ -24,6 +24,11 @@ vi.mock('@inth/sdk/engine', async (importOriginal) => {
 			actual.watchRevocationReload({ ...options, reload }),
 	};
 });
+
+// The preference dialog and the confirmation view each load their code as
+// a chunk of their own on first use, which a busy run can take more than the
+// default second to compile and import. Every wait here allows for that.
+configure({ asyncUtilTimeout: 5000 });
 
 const query = <Element extends HTMLElement>(testId: string) =>
 	document.querySelector<Element>(`[data-testid="${testId}"]`);
