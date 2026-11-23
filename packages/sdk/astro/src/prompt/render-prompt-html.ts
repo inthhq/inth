@@ -15,8 +15,8 @@ import * as tokensSheet from '@inth/sdk/ui/styles/sheets/tokens';
 import * as triggerSheet from '@inth/sdk/ui/styles/sheets/trigger';
 
 import type { StyleSheet } from '../parts/insert-sheets';
-import { toHTML } from '../parts/patch-element';
-import type { VElement } from '../parts/patch-element';
+import { toHTML } from '../parts/vnode.model';
+import type { VElement } from '../parts/vnode.model';
 import type { PromptContainerType, PromptModel } from './prompt.model';
 import {
 	PROMPT_ID_PREFIX,
