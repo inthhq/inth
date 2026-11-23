@@ -1,3 +1,5 @@
+<section id="source">
+
 ## Choose an offline policy source
 
 Saved consent choices already survive restarts offline. The native engine restores its protected record before returning from installation and keeps optional SDKs off whenever authority is unresolved or invalid.
@@ -24,6 +26,45 @@ With an in-code policy, the device evaluates rules locally and never calls `/v1/
 Define rules using Inth's `PolicyRule` fields (`id`, `match`, `model`, `prompt`, `categories`, `scopeMode`, `preselectedCategories`, `actions`, `validity`, `privacySignals`, `copyRevision`). The device matches rules in backend order (`region`, `country`, `regionFallbacks`, `fallback`, `isDefault`) and still sends consent records to `projectUrl`.
 
 Inth validates submitted records against your project's live policy and rejects mismatches with HTTP `422` (`decision-mismatch`). Keep in-code rules identical to your dashboard policy, or prefer a bundled manifest for production. Because an in-code policy never calls `/v1/consent/init` to learn location, always include a `match.fallback` or `match.isDefault` rule.
+
+</section>
+
+<section id="policy-code-swift">
+
+```swift title="Swift"
+let policy = try ConsentPolicy(rules: [
+    PolicyRule(id: "germany", match: PolicyMatch(countries: ["DE"]), model: .optIn, prompt: .choice),
+    PolicyRule(id: "everywhere_else", match: PolicyMatch(fallback: true, isDefault: true),
+               model: .optIn, prompt: .choice),
+])
+let core = try InthApple.install(InthAppleConfiguration(
+    backendURL: "https://your-project.inth.app",
+    policy: policy
+))
+```
+
+The native core also loads JSON (`{"rules": [...]}`) via `ConsentPolicy(json:)`.
+
+</section>
+
+<section id="policy-code-android">
+
+```kotlin title="Kotlin"
+val policy = ConsentPolicy(listOf(
+    PolicyRule("germany", PolicyMatch(countries = listOf("DE")), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
+    PolicyRule("everywhere_else", PolicyMatch(fallback = true, isDefault = true), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
+))
+InthAndroid.install(
+    context,
+    NativeConfig(backendUrl = "https://your-project.inth.app", policy = policy),
+)
+```
+
+The native core also loads JSON (`{"rules": [...]}`) via `ConsentPolicy.fromJson`.
+
+</section>
+
+<section id="policy-code-react-native">
 
 ```ts title="app.config.ts"
 export default {
@@ -55,38 +96,49 @@ export default {
 };
 ```
 
-```swift title="Swift"
-let policy = try ConsentPolicy(rules: [
-    PolicyRule(id: "germany", match: PolicyMatch(countries: ["DE"]), model: .optIn, prompt: .choice),
-    PolicyRule(id: "everywhere_else", match: PolicyMatch(fallback: true, isDefault: true),
-               model: .optIn, prompt: .choice),
-])
-let core = try InthApple.install(InthAppleConfiguration(
-    backendURL: "https://your-project.inth.app",
-    policy: policy
-))
-```
+Expo writes the rules as a JSON file (`{"rules": [...]}`) and registers `com.inth.policy.rules` (`Info.plist`) and `com.inth.POLICY_RULES` (`AndroidManifest.xml`).
 
-```kotlin title="Kotlin"
-val policy = ConsentPolicy(listOf(
-    PolicyRule("germany", PolicyMatch(countries = listOf("DE")), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
-    PolicyRule("everywhere_else", PolicyMatch(fallback = true, isDefault = true), ConsentModel.OPT_IN, PolicyPrompt.CHOICE),
-))
-InthAndroid.install(
-    context,
-    NativeConfig(backendUrl = "https://your-project.inth.app", policy = policy),
-)
-```
+</section>
 
-Both native cores also load JSON (`{"rules": [...]}`) via `ConsentPolicy(json:)` in Swift and `ConsentPolicy.fromJson` in Kotlin. Expo writes that file and registers `com.inth.policy.rules` (`Info.plist`) and `com.inth.POLICY_RULES` (`AndroidManifest.xml`).
+<section id="policy-validation">
 
 Validation rules match the backend: partial `categories` require `scopeMode`, `actions` must include `accept` and `reject`, at most one rule sets `fallback` and one sets `isDefault`, `'*'` is valid only in `categories`, and unknown fields fail validation. Invalid rules at launch keep optional categories off and emit `policy-invalid` until a valid build ships. Bump `copyRevision` to re-prompt returning users when wording changes; `validity.choiceDays` and `validity.noticeDays` control choice and notice expiry separately.
 
+</section>
+
+<section id="policy-limits-native">
+
+In-code policies do not support `iab` (which requires the Global Vendor List) and cannot be combined with `bundledPolicy`.
+
+</section>
+
+<section id="policy-limits-react-native">
+
 In-code policies do not support `iab` (which requires the Global Vendor List) and cannot be combined with `policyResource`, `bundleManifest`, or `bundledPolicy`.
+
+</section>
+
+<section id="bundle">
 
 ## Bundle the manifest at build time
 
 Fetch the latest manifest during each build so releases ship with current rules. When Inth is unreachable, release builds fail and debug builds warn and continue without a bundled copy (unless `allowStaleManifest` reuses the last valid copy for air-gapped CI). Invalid manifests fail every build.
+
+</section>
+
+<section id="bundle-swift">
+
+Run [`c15t mobile-manifest`](/docs/frameworks/swift/mobile-manifest) in your native build pipeline:
+
+</section>
+
+<section id="bundle-android">
+
+Run [`c15t mobile-manifest`](/docs/frameworks/android/mobile-manifest) in your native build pipeline:
+
+</section>
+
+<section id="bundle-react-native">
 
 In Expo, add `@c15t/cli` to `devDependencies` and configure `bundleManifest`:
 
@@ -106,7 +158,11 @@ export default {
 
 Prebuild runs `c15t mobile-manifest` and embeds the output in both native projects. Any build configuration whose name does not contain `debug` is treated as `release` (override with `INTH_MANIFEST_BUILD=debug`). Top-level `vendors` narrows the bundled GVL.
 
-Without Expo, run [`c15t mobile-manifest`](/docs/cli/commands/mobile-manifest) in your native build pipeline:
+Without Expo, run [`c15t mobile-manifest`](/docs/frameworks/react-native/mobile-manifest) in your native build pipeline:
+
+</section>
+
+<section id="bundle-xcode">
 
 ```sh title="Xcode Run Script phase, after Copy Bundle Resources"
 case "$CONFIGURATION" in
@@ -117,6 +173,12 @@ npx @c15t/cli mobile-manifest --backend-url https://your-project.inth.app \
   --out "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/inth-policy.json" \
   --build "$BUILD"
 ```
+
+On iOS, write straight into the built app bundle (and list the output path in Output Files if user script sandboxing is enabled) so debug builds that skip fetching do not copy an old file.
+
+</section>
+
+<section id="bundle-gradle">
 
 ```groovy title="android/app/build.gradle"
 abstract class InthManifestTask extends DefaultTask {
@@ -148,18 +210,39 @@ androidComponents {
 }
 ```
 
-On iOS, write straight into the built app bundle (and list the output path in Output Files if user script sandboxing is enabled) so debug builds that skip fetching do not copy an old file.
+</section>
+
+<section id="bundle-export">
 
 Manifest export requires a conservative opt-in or IAB fallback rule with no preselected optional categories. For scoped IAB apps, pass `--vendors` with comma-separated vendor IDs. Export also includes custom (non-IAB) vendors and fails if two custom vendors share an ID. Pass `--dry-run` on debug builds pointing at staging or loopback hosts. Repository maintainers re-export example app fixtures with `bunx tsx scripts/export-mobile-policy.ts`, which takes an explicit `--expires-at`.
 
 ## Include the resource in the app
 
+</section>
+
+<section id="resource-swift">
+
+Add the resource to the app target's Copy Bundle Resources, load it with `BundledPolicyResource`, and pass it as `bundledPolicy`.
+
+</section>
+
+<section id="resource-android">
+
+Put the resource at `app/src/main/assets/inth-policy.json`, then pass its JSON as `NativeConfig.bundledPolicy` or set `com.inth.POLICY_RESOURCE`.
+
+</section>
+
+<section id="resource-react-native">
+
 | Platform | Resource location | Configuration |
 | --- | --- | --- |
-| Swift | App target Copy Bundle Resources | Load `BundledPolicyResource` and pass as `bundledPolicy` |
 | Bare RN (iOS) | App target Copy Bundle Resources | Set `com.inth.policy.resource` in `Info.plist` |
-| Kotlin or bare RN (Android) | `app/src/main/assets/inth-policy.json` | Pass JSON as `NativeConfig.bundledPolicy` or set `com.inth.POLICY_RESOURCE` |
+| Bare RN (Android) | `app/src/main/assets/inth-policy.json` | Set `com.inth.POLICY_RESOURCE` |
 | Expo | Beside `app.config.ts` or custom path | Set `policyResource` in the plugin config and rebuild |
+
+</section>
+
+<section id="expiry">
 
 Use the same project URL at export and launch. The JSON is a public artifact; never store secrets in it.
 
@@ -167,27 +250,91 @@ Use the same project URL at export and launch. The JSON is a public artifact; ne
 
 An expired bundled manifest still prompts and records choices offline while emitting `policyStale`. Optional categories stay denied until the user chooses, and the next live `/v1/consent/init` replaces the stale manifest.
 
+</section>
+
+<section id="expiry-swift">
+
+Observe `CoreEvent.policyStale(authority)` on `eventStream`, or read the current state from `ConsentCore.isPolicyStale`.
+
+</section>
+
+<section id="expiry-android">
+
+Observe `ConsentCore.onPolicyStale { authority -> }`, or read the current state from `ConsentCore.isPolicyStale`.
+
+</section>
+
+<section id="expiry-react-native">
+
+If your app owns native installation, read it from the native core:
+
 | Platform | Event | Current state |
 | --- | --- | --- |
 | Swift | `CoreEvent.policyStale(authority)` on `eventStream` | `ConsentCore.isPolicyStale` |
 | Kotlin | `ConsentCore.onPolicyStale { authority -> }` | `ConsentCore.isPolicyStale` |
 
+</section>
+
+<section id="rejection">
+
 Manifests bound to a different project URL or issued in the future are rejected, leaving optional SDKs off. IAB disclosures expire separately from their original GVL or provider-list source date (default 7 days); an expired list cannot authorize new IAB grants.
 
-Rejection and withdrawal always work offline. Verify local commit success before dismissing settings. On reconnect, queued records never overwrite a newer withdrawal with an earlier grant. See [identity and reset](/docs/guides/mobile-identity).
+Rejection and withdrawal always work offline. Verify local commit success before dismissing settings. On reconnect, queued records never overwrite a newer withdrawal with an earlier grant.
+
+</section>
+
+<section id="identity-swift">
+
+See [Identity and reset](/docs/frameworks/swift/identity).
+
+</section>
+
+<section id="identity-android">
+
+See [Identity and reset](/docs/frameworks/android/identity).
+
+</section>
+
+<section id="identity-react-native">
+
+See [Identity and reset](/docs/frameworks/react-native/identity).
+
+</section>
+
+<section id="dry-run">
 
 ## Run without sending records
 
 Enable `dryRun` in development and CI to test prompts, storage, gates, and signals without queueing or sending records to Inth. Identity calls update local state only, and any prior queued records are dropped on the first dry-run save. The app still fetches `/v1/consent/init` unless paired with a bundled manifest or in-code policy.
 
-| Platform | How to enable |
+</section>
+
+<section id="dry-run-swift">
+
+Pass `InthAppleConfiguration(backendURL:dryRun:)` inside `#if DEBUG`. Release builds reject `dryRun` with `dryRunInReleaseBuild`.
+
+</section>
+
+<section id="dry-run-android">
+
+Pass `NativeConfig(backendUrl = ..., dryRun = true)` or set `com.inth.DRY_RUN` metadata. Release builds reject `dryRun` (`IllegalStateException` in Kotlin, and deny-all from metadata).
+
+</section>
+
+<section id="dry-run-react-native">
+
+| Setup | How to enable |
 | --- | --- |
 | Expo | `dryRun: true` in the config plugin |
 | Bare RN | `com.inth.dryRun` (`true`) in `Info.plist`, `com.inth.DRY_RUN` in Android metadata |
-| Swift | `InthAppleConfiguration(backendURL:dryRun:)` inside `#if DEBUG` |
-| Kotlin | `NativeConfig(backendUrl = ..., dryRun = true)` or `com.inth.DRY_RUN` metadata |
 
-Release builds reject `dryRun` (`dryRunInReleaseBuild` in Swift, `IllegalStateException` in Kotlin, and deny-all from metadata hooks). In debug builds, `dryRun` accepts any `https` URL or `http` on `localhost`, `127.0.0.1`, or `[::1]`.
+Release builds reject `dryRun` (deny-all from the metadata hooks).
+
+</section>
+
+<section id="check">
+
+In debug builds, `dryRun` accepts any `https` URL or `http` on `localhost`, `127.0.0.1`, or `[::1]`.
 
 ## Check that it works
 
@@ -197,4 +344,12 @@ Release builds reject `dryRun` (`dryRunInReleaseBuild` in Swift, `IllegalStateEx
 4. Repeat with an expired bundle and confirm the prompt appears, optional SDKs stay off, and `policyStale` fires.
 5. Repeat with a bundle exported for another project URL and confirm no prompt appears and optional SDKs stay off.
 
-Because bundled manifests live inside the native binary, rebuild and ship a new binary after updating them; JavaScript OTA updates do not replace native resources.
+Because bundled manifests live inside the native binary, rebuild and ship a new binary after updating them.
+
+</section>
+
+<section id="check-react-native">
+
+JavaScript OTA updates do not replace native resources.
+
+</section>

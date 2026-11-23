@@ -1,6 +1,28 @@
+<section id="what-swift">
+
+## What GPP does on a device
+
+With GPP enabled, the native engine builds an IAB Global Privacy Platform string for the visitor's current state, exposes it as `snapshot.gppString`, and writes standard `IABGPP_*` keys to `UserDefaults` alongside `IABTCF_*`. Ad SDKs such as Google Mobile Ads and Prebid Mobile read `IABGPP_HDR_GppString` and `IABGPP_GppSID`.
+
+</section>
+
+<section id="what-android">
+
+## What GPP does on a device
+
+With GPP enabled, the native engine builds an IAB Global Privacy Platform string for the visitor's current state, exposes it as `snapshot.gppString`, and writes standard `IABGPP_*` keys to default `SharedPreferences` alongside `IABTCF_*`. Ad SDKs such as Google Mobile Ads and Prebid Mobile read `IABGPP_HDR_GppString` and `IABGPP_GppSID`.
+
+</section>
+
+<section id="what-react-native">
+
 ## What GPP does on a device
 
 With GPP enabled, the native engine builds an IAB Global Privacy Platform string for the visitor's current state, exposes it as `snapshot.gppString`, and writes standard `IABGPP_*` keys to `UserDefaults` on iOS and default `SharedPreferences` on Android alongside `IABTCF_*`. Ad SDKs such as Google Mobile Ads and Prebid Mobile read `IABGPP_HDR_GppString` and `IABGPP_GppSID`.
+
+</section>
+
+<section id="sections">
 
 The device encodes two sections:
 
@@ -11,7 +33,34 @@ GPP stays off until you enable it. Enabling a US section declares that your app 
 
 ## Turn GPP on
 
-Enable GPP for your platform with the default options:
+</section>
+
+<section id="turn-on-swift">
+
+Enable GPP with the default options by passing `GPPOptions()` to `InthAppleConfiguration(gpp:)`:
+
+```swift
+let configuration = InthAppleConfiguration(
+    backendURL: "https://your-project.inth.app",
+    gpp: GPPOptions()
+)
+```
+
+</section>
+
+<section id="turn-on-android">
+
+Enable GPP with the default options by passing `GppOptions()` in `NativeConfig`:
+
+```kotlin
+NativeConfig(backendUrl = "https://your-project.inth.app", gpp = GppOptions())
+```
+
+</section>
+
+<section id="turn-on-react-native">
+
+Enable GPP with the default options:
 
 **Expo.** Add `gpp: true` to the plugin config and rebuild:
 
@@ -21,26 +70,48 @@ Enable GPP for your platform with the default options:
 
 **Bare React Native.** Add Boolean `com.inth.gpp` (`true`) to `Info.plist`, and `<meta-data android:name="com.inth.GPP" android:value="true" />` inside `<application>` in `AndroidManifest.xml`.
 
-**Swift.** Pass `GPPOptions()` to `InthAppleConfiguration(gpp:)`:
+</section>
 
-```swift
-let configuration = InthAppleConfiguration(
-    backendURL: "https://your-project.inth.app",
-    gpp: GPPOptions()
-)
-```
-
-**Kotlin.** Pass `GppOptions()` in `NativeConfig`:
-
-```kotlin
-NativeConfig(backendUrl = "https://your-project.inth.app", gpp = GppOptions())
-```
+<section id="project-url">
 
 <ProjectUrlHint>
   Replace `https://your-project.inth.app` with your Inth project URL.
 </ProjectUrlHint>
 
 ## GPP options
+
+</section>
+
+<section id="options-swift">
+
+| Option | Default |
+| --- | --- |
+| `mspaMode` | unset |
+| `optOutCategories` | `marketing` |
+| `tcf` | `true` |
+
+- **`mspaMode`.** Accepts `opt-out-option` or `service-provider`. Set it only if you signed the IAB Multi-State Privacy Agreement; the transaction is then reported as covered. In `service-provider` mode, opt-outs and notices are reported as not applicable.
+- **`optOutCategories`.** Lists categories whose refusal signals opt-out of sale, sharing, and targeted advertising (defaults to `marketing`). Pass an empty list so no category triggers opt-out. `necessary` is always granted and never drives opt-outs.
+- **`tcf: false`.** Omits the TCF EU section under an `iab` policy.
+
+</section>
+
+<section id="options-android">
+
+| Option | Default | Android metadata |
+| --- | --- | --- |
+| Turn GPP on | off | `com.inth.GPP` |
+| `mspaMode` | unset | `com.inth.GPP_MSPA_MODE` |
+| `optOutCategories` | `marketing` | `com.inth.GPP_OPT_OUT_CATEGORIES` (comma-separated) |
+| `tcf` | `true` | `com.inth.GPP_TCF` |
+
+- **`mspaMode`.** Accepts `opt-out-option` or `service-provider`. Set it only if you signed the IAB Multi-State Privacy Agreement; the transaction is then reported as covered. In `service-provider` mode, opt-outs and notices are reported as not applicable. Metadata ignores unrecognized values.
+- **`optOutCategories`.** Lists categories whose refusal signals opt-out of sale, sharing, and targeted advertising (defaults to `marketing`). Pass an empty list (`none` in metadata) so no category triggers opt-out. `necessary` is always granted and never drives opt-outs.
+- **`tcf: false`.** Omits the TCF EU section under an `iab` policy.
+
+</section>
+
+<section id="options-react-native">
 
 | Option | Default | Expo field | iOS `Info.plist` key | Android metadata |
 | --- | --- | --- | --- | --- |
@@ -52,6 +123,10 @@ NativeConfig(backendUrl = "https://your-project.inth.app", gpp = GppOptions())
 - **`mspaMode`.** Accepts `opt-out-option` or `service-provider`. Set it only if you signed the IAB Multi-State Privacy Agreement; the transaction is then reported as covered. In `service-provider` mode, opt-outs and notices are reported as not applicable. Expo prebuild fails on any other value; native keys ignore unrecognized values.
 - **`optOutCategories`.** Lists categories whose refusal signals opt-out of sale, sharing, and targeted advertising (defaults to `marketing`). Pass an empty list (`[]` in Expo, `<array/>` in `Info.plist`, or `none` on Android) so no category triggers opt-out. `necessary` is always granted and never drives opt-outs.
 - **`tcf: false`.** Omits the TCF EU section under an `iab` policy.
+
+</section>
+
+<section id="policy">
 
 ## How the policy selects a section
 
@@ -93,8 +168,24 @@ IAB defines no per-field keys for US National. Read `IABGPP_7_String` or decode 
 
 ## Verify the signal
 
-Read the string with `useGPPString()` in `@inth/react-native` or `snapshot().gppString` in Swift and Kotlin. Both return `null` when GPP is off or no section applies.
+</section>
+
+<section id="read-native">
+
+Read the string with `snapshot().gppString`. It returns `null` when GPP is off or no section applies.
+
+</section>
+
+<section id="read-react-native">
+
+Read the string with `useGPPString()` from `@inth/react-native`. It returns `null` when GPP is off or no section applies.
+
+</section>
+
+<section id="verify">
 
 For a US visitor under an `opt-out` rule with no refusals, the string is `DBABLA~CVQqAAAAAACA.QA` and `IABGPP_GppSID` is `"7"`. After refusing `marketing`, it updates to `DBABLA~CVQVAAAAAACA.QA` (`SaleOptOut` changes from `2` to `1`).
 
 GPP communicates user choices to ad SDKs; it does not block SDK execution on its own. Continue gating SDKs with native consent gates.
+
+</section>

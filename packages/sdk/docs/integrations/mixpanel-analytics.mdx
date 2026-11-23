@@ -64,7 +64,7 @@ The bundled Mixpanel helper in `InthApple`, `inth-android`, and `@inth/react-nat
 
 ### Before you start
 
-Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart with `measurement` in your native configuration and Inth policy. Use the same installed engine for consent UI and analytics helpers. See [mobile availability](/docs/guides/mobile-status).
+Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart with `measurement` in your native configuration and Inth policy. Use the same installed engine for consent UI and analytics helpers. See mobile availability for [Swift](/docs/frameworks/swift/availability), [Android](/docs/frameworks/android/availability), or [React Native](/docs/frameworks/react-native/availability).
 
 Install Mixpanel for [Swift](https://mixpanel.github.io/mixpanel-swift/), [Android](https://mixpanel.github.io/mixpanel-android/), or [React Native](https://github.com/mixpanel/mixpanel-react-native). Start opted out and disable automatic tracking before optional collection can begin. Because persisted state can override startup defaults on later launches, defer vendor initialization behind a [native startup gate](/docs/frameworks/react-native/native-behaviour) for strict startup control. A JavaScript connection cannot stop collection that started natively, and Expo requires a development or release build rather than Expo Go.
 
@@ -140,4 +140,4 @@ For teardown, call Swift `stop()`, Kotlin `close()`, or `await mixpanelConsent.d
 
 Test pending permission and refusal before any optional event call, then grant, send an intentional event, and withdraw. Check relaunch after both grant and refusal. Run a vendor reset, call `sync()`, and inspect identity, `$opt_in` events, and queued versus newly accepted traffic.
 
-Checked against Mixpanel Swift `7.0.0`, Android `8.11.1`, and RN `4.0.0`. Unit tests prove native authority and command ordering rather than delivery, native queue completion, or device startup traffic. Complete [mobile verification](/docs/guides/mobile-verify) on real vendor builds.
+Checked against Mixpanel Swift `7.0.0`, Android `8.11.1`, and RN `4.0.0`. Unit tests prove native authority and command ordering rather than delivery, native queue completion, or device startup traffic. Complete mobile verification for [Swift](/docs/frameworks/swift/verify), [Android](/docs/frameworks/android/verify), or [React Native](/docs/frameworks/react-native/verify) on real vendor builds.

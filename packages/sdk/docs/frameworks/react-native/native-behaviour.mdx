@@ -41,6 +41,6 @@ On Android, treat storage read or write errors as closed consent gates, keep fai
 
 ## Keep collection and delivery separate
 
-Every native commit writes locally before attempting network delivery, replaying queued saves on launch, foreground, and reconnect. A network failure after withdrawal must never re-enable collection. See [Commands and outcomes](/docs/frameworks/react-native/usage) and [Mobile offline consent](/docs/guides/mobile-offline).
+Every native commit writes locally before attempting network delivery, replaying queued saves on launch, foreground, and reconnect. A network failure after withdrawal must never re-enable collection. See [Commands and outcomes](/docs/frameworks/react-native/usage) and [Mobile offline consent](/docs/frameworks/react-native/offline).
 
-For ad SDKs, combine category checks with native IAB vendor, purpose, Additional Consent, and ATT gates; see [Mobile IAB and ads](/docs/guides/mobile-iab).
+For ad SDKs, combine category checks with native IAB vendor, purpose, Additional Consent, and ATT gates; see [Mobile IAB and ads](/docs/frameworks/react-native/iab).

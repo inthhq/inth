@@ -50,7 +50,7 @@ bun examples/native/consent-demo/ios/generate-project.ts /tmp/inth-consent-demo
 open /tmp/inth-consent-demo/InthConsentDemo.xcodeproj
 ```
 
-Run `InthConsentDemo` (SwiftUI) or `InthUIKitDemo` (UIKit) with simulator signing enabled. In Debug, choose a local Category, Notice, or IAB fixture, or enter your hosted project URL, privacy policy URL, and CMP settings ([Mobile IAB and ads](/docs/guides/mobile-iab)).
+Run `InthConsentDemo` (SwiftUI) or `InthUIKitDemo` (UIKit) with simulator signing enabled. In Debug, choose a local Category, Notice, or IAB fixture, or enter your hosted project URL, privacy policy URL, and CMP settings ([Mobile IAB and ads](/docs/frameworks/react-native/iab)).
 
 ## Run the Android demo
 
@@ -90,4 +90,4 @@ In the native demo's local IAB fixture:
 4. Save a granular choice and inspect the native authority readout.
 5. Accept all, reopen **Privacy settings**, then reject all and restart to verify the refusal persists.
 
-Additional Consent providers require TCF consent for purposes 1, 3, and 4. Use hosted review mode with live disclosures and follow [Verify mobile consent](/docs/guides/mobile-verify) before release.
+Additional Consent providers require TCF consent for purposes 1, 3, and 4. Use hosted review mode with live disclosures and follow [Verify mobile consent](/docs/frameworks/react-native/verify) before release.

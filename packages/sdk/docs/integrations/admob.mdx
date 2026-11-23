@@ -21,11 +21,11 @@ Google Mobile Ads reads `gad_has_consent_for_cookies` and `gad_rdp` from default
 
 ### EEA, UK, and Switzerland
 
-In these regions, Google serves personalized or non-personalized ads only when the request includes a TC string from a [Google-certified CMP](https://developers.google.com/admob/android/privacy/ad-serving-modes). Otherwise it serves limited ads at most. Under an IAB policy, Inth's native core writes the `IABTCF_` keys Google reads. See [mobile IAB and ads](/docs/guides/mobile-iab).
+In these regions, Google serves personalized or non-personalized ads only when the request includes a TC string from a [Google-certified CMP](https://developers.google.com/admob/android/privacy/ad-serving-modes). Otherwise it serves limited ads at most. Under an IAB policy, Inth's native core writes the `IABTCF_` keys Google reads. See mobile IAB and ads for [Swift](/docs/frameworks/swift/iab), [Android](/docs/frameworks/android/iab), or [React Native](/docs/frameworks/react-native/iab).
 
 ## Before you start
 
-Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add `marketing` to your Inth policy and native config. See [mobile availability](/docs/guides/mobile-status). Install Google Mobile Ads using Google's [iOS](https://developers.google.com/admob/ios/quick-start), [Android](https://developers.google.com/admob/android/quick-start), or [React Native](https://docs.page/invertase/react-native-google-mobile-ads) guide.
+Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add `marketing` to your Inth policy and native config. See mobile availability for [Swift](/docs/frameworks/swift/availability), [Android](/docs/frameworks/android/availability), or [React Native](/docs/frameworks/react-native/availability). Install Google Mobile Ads using Google's [iOS](https://developers.google.com/admob/ios/quick-start), [Android](https://developers.google.com/admob/android/quick-start), or [React Native](https://docs.page/invertase/react-native-google-mobile-ads) guide.
 
 Connect the helper before requesting the first ad. The helper does not request App Tracking Transparency.
 
@@ -152,4 +152,4 @@ Call `syncAfterReset()` on Swift, `sync()` on Android, or `await consent.sync()`
 3. Withdraw `marketing`. Confirm the denied settings return.
 4. Toggle `measurement` only. Confirm nothing changes.
 
-Inspect live requests with Google's [Ad Inspector](https://developers.google.com/admob/android/ad-inspector) or a proxy. Checked against `react-native-google-mobile-ads` `17.4.0`, Android `play-services-ads-api` `25.5.0`, and iOS Google Mobile Ads `13` docs. Complete [mobile verification](/docs/guides/mobile-verify) on real devices.
+Inspect live requests with Google's [Ad Inspector](https://developers.google.com/admob/android/ad-inspector) or a proxy. Checked against `react-native-google-mobile-ads` `17.4.0`, Android `play-services-ads-api` `25.5.0`, and iOS Google Mobile Ads `13` docs. Complete mobile verification for [Swift](/docs/frameworks/swift/verify), [Android](/docs/frameworks/android/verify), or [React Native](/docs/frameworks/react-native/verify) on real devices.

@@ -76,8 +76,8 @@ See [Configure the plugin](/docs/frameworks/react-native/expo#configure-the-plug
 | `iab` | Optional IAB TCF CMP identity and publisher settings ([details](#turn-on-iab-tcf)). |
 | `gpp` | Optional IAB GPP string and `IABGPP_*` keys ([IAB GPP](/docs/frameworks/react-native/gpp)). |
 | `policyResource` | Build-exported policy JSON path relative to the Expo project. |
-| `bundleManifest` | Fetch and embed the manifest at prebuild with `c15t mobile-manifest` ([offline guide](/docs/guides/mobile-offline#bundle-the-manifest-at-build-time)). |
-| `policy` | In-code `PolicyRule` list resolved on-device without `/v1/consent/init` (cannot mix with `policyResource`, `bundleManifest`, or `iab`; see [define the policy in code](/docs/guides/mobile-offline#define-the-policy-in-code)). |
+| `bundleManifest` | Fetch and embed the manifest at prebuild with `c15t mobile-manifest` ([offline guide](/docs/frameworks/react-native/offline#bundle-the-manifest-at-build-time)). |
+| `policy` | In-code `PolicyRule` list resolved on-device without `/v1/consent/init` (cannot mix with `policyResource`, `bundleManifest`, or `iab`; see [define the policy in code](/docs/frameworks/react-native/offline#define-the-policy-in-code)). |
 | `androidMavenRepository` | Build-time Maven URL and credential env var names (pass names, never secret values). |
 | `autoBootstrap` | Install natively on launch (default `true`; set `false` for app-owned installation). |
 | `forceGPC` | GPC signal override for staging or test builds. |
@@ -130,7 +130,7 @@ Configure `iab` in Expo or the matching native keys in bare React Native so star
 | `publisherCountryCode` | `com.inth.iab.publisherCountryCode` | `com.inth.IAB_PUBLISHER_COUNTRY_CODE` | Required. Two-letter ISO code (such as `DE`). |
 | `consentScreen` | `com.inth.iab.consentScreen` (integer) | `com.inth.IAB_CONSENT_SCREEN` | Optional. `0` to `63` (default `1`). |
 
-Expo fails prebuild on missing or out-of-range values. In bare builds, incomplete or invalid keys log an error and start the engine without IAB (`iab-unavailable` on IAB saves). Configure an IAB policy in your Inth project and rebuild after editing these keys. For publisher restrictions or custom purposes, install the engine natively; see [Mobile IAB and ads](/docs/guides/mobile-iab).
+Expo fails prebuild on missing or out-of-range values. In bare builds, incomplete or invalid keys log an error and start the engine without IAB (`iab-unavailable` on IAB saves). Configure an IAB policy in your Inth project and rebuild after editing these keys. For publisher restrictions or custom purposes, install the engine natively; see [Mobile IAB and ads](/docs/frameworks/react-native/iab).
 
 ## Preview a regional policy
 
@@ -138,8 +138,8 @@ Call the setter from `useSetOverrides()` with `country`, `region`, `language`, o
 
 ## Add a policy for offline startup
 
-Embed a build-time manifest via `bundleManifest` or `policyResource` (or matching native metadata) so fresh offline installs can prompt and queue choices until reconnect. See [Mobile offline consent](/docs/guides/mobile-offline).
+Embed a build-time manifest via `bundleManifest` or `policyResource` (or matching native metadata) so fresh offline installs can prompt and queue choices until reconnect. See [Mobile offline consent](/docs/frameworks/react-native/offline).
 
 ## Let your app install the engine
 
-Set `autoBootstrap: false` in brownfield apps or apps owning native initialization. Call `InthApple.install` (iOS) or `InthAndroid.install` (Android) once before React Native and optional SDKs start, then attach the RN adapter. See [Native startup and SDK gates](/docs/frameworks/react-native/native-behaviour) and [Mobile IAB and ads](/docs/guides/mobile-iab).
+Set `autoBootstrap: false` in brownfield apps or apps owning native initialization. Call `InthApple.install` (iOS) or `InthAndroid.install` (Android) once before React Native and optional SDKs start, then attach the RN adapter. See [Native startup and SDK gates](/docs/frameworks/react-native/native-behaviour) and [Mobile IAB and ads](/docs/frameworks/react-native/iab).

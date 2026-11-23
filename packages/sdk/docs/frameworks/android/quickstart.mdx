@@ -11,7 +11,7 @@ Add a native consent prompt and Privacy settings entry to a Kotlin Android app w
 - Android API 24+, compile SDK 36+, JDK 17, Jetpack Compose, and Material 3.
 - An [Inth project](https://inth.com) with regional policies, `measurement` category, and its HTTPS project URL (`https://your-project.inth.app`).
 - Your app's HTTPS privacy policy URL.
-- Private prerelease Maven access for `com.inth` (`3.0.0-alpha.1`); see [mobile availability](/docs/guides/mobile-status).
+- Private prerelease Maven access for `com.inth` (`3.0.0-alpha.1`); see [mobile availability](/docs/frameworks/android/availability).
 
 ## Add the dependencies
 
@@ -86,7 +86,7 @@ Launch against an opt-in policy:
 4. Disable Analytics, save, and relaunch: collection stays off.
 5. Reject offline, then reconnect: refusal persists and delivers on reconnect.
 
-Offline first launches require an [offline policy](/docs/guides/mobile-offline).
+Offline first launches require an [offline policy](/docs/frameworks/android/offline).
 
 ## Next steps
 
@@ -94,5 +94,5 @@ Offline first launches require an [offline policy](/docs/guides/mobile-offline).
 - [Configuration](/docs/frameworks/android/configuration): set URLs, `dryRun`, manifest startup, and identity.
 - [Customize](/docs/frameworks/android/customize): theme branding, colors, typography, layout, and copy.
 - [Build your own UI](/docs/frameworks/android/headless): build custom Compose screens and gates.
-- [Mobile IAB and ads](/docs/guides/mobile-iab): configure TCF, Additional Consent, and ad gates.
-- [Verify mobile consent](/docs/guides/mobile-verify): run the release checklist.
+- [Mobile IAB and ads](/docs/frameworks/android/iab): configure TCF, Additional Consent, and ad gates.
+- [Verify mobile consent](/docs/frameworks/android/verify): run the release checklist.

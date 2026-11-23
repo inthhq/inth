@@ -212,7 +212,7 @@ Bundled mobile helpers ship in `InthApple`, `inth-android`, and `@inth/react-nat
 | Branch | Bundled helper for attribution level and DMA; deep links keep working | [Branch](/docs/integrations/branch) |
 | Singular | Bundled helper starting on first grant, then stop, resume, and data-sharing limits | [Singular](/docs/integrations/singular) |
 | Other analytics SDKs | App-owned wiring with native subscriptions or React hooks | [Native startup gates](/docs/frameworks/react-native/native-behaviour) |
-| IAB-aware ad SDKs | Native TCF and Additional Consent signals plus vendor/purpose gates | [Mobile IAB](/docs/guides/mobile-iab) |
+| IAB-aware ad SDKs | Native TCF and Additional Consent signals plus vendor/purpose gates | Mobile IAB for [Swift](/docs/frameworks/swift/iab), [Android](/docs/frameworks/android/iab), or [React Native](/docs/frameworks/react-native/iab) |
 | Web pixels and tags | Browser-only helpers; use the vendor's mobile SDK instead | [Custom integrations](/docs/integrations/building-integrations) |
 
 ### Mobile integration rules
@@ -222,4 +222,4 @@ Bundled mobile helpers ship in `InthApple`, `inth-android`, and `@inth/react-nat
 - **Guard native startup.** Firebase and PostHog persist earlier grants across launches. For zero pre-consent traffic, defer SDK init behind a [native startup gate](/docs/frameworks/react-native/native-behaviour). React hooks cannot block an SDK that already started natively.
 - **Wire routers and ads natively.** Segment and RudderStack need per-destination consent mappings through native gates, not web helpers. IAB signals, ATT, and notification permissions stay separate from category consent.
 - **Handle failures explicitly.** React Native requires `onError` and `await ready`; Kotlin requires a non-throwing error handler; Swift callbacks are synchronous and non-throwing. Call vendor APIs directly in callbacks so updates stay ordered, and retry failed disable calls.
-- **Verify on a real build.** Check fresh install, saved grant, refusal, withdrawal, and reset with [mobile verification](/docs/guides/mobile-verify).
+- **Verify on a real build.** Check fresh install, saved grant, refusal, withdrawal, and reset with mobile verification for [Swift](/docs/frameworks/swift/verify), [Android](/docs/frameworks/android/verify), or [React Native](/docs/frameworks/react-native/verify).

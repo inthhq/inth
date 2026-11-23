@@ -156,7 +156,7 @@ With `loadMode: 'after-consent'`, allow `measurement` and confirm `array.js` loa
 The bundled mobile helper keeps your configured PostHog client in sync with Inth's `measurement` category: opting in when granted and opting out while pending, denied, or closed.
 
 **Prerequisites**
-- Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart. Mobile packages are in private prerelease; see [mobile availability](/docs/guides/mobile-status).
+- Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart. Mobile packages are in private prerelease; see mobile availability for [Swift](/docs/frameworks/swift/availability), [Android](/docs/frameworks/android/availability), or [React Native](/docs/frameworks/react-native/availability).
 - Install PostHog using its [iOS](https://posthog.com/docs/libraries/ios), [Android](https://posthog.com/docs/libraries/android), or [React Native](https://posthog.com/docs/libraries/react-native) guide.
 - Keep session replay, surveys, error capture, and lifecycle autocapture disabled initially until scoped separately.
 
@@ -263,7 +263,7 @@ Connect the same `posthog` instance using [Connect React Native or Expo](#connec
 
 After calling PostHog's reset API, call `syncAfterReset()` in Swift, `sync()` in Kotlin, or `await posthogConsent.sync()` in React Native to reapply current permission without recording a new choice. For final teardown, call `stop()`, `close()`, or `disconnect()`. Opt-out does not delete historical or already-queued events.
 
-Verify on a real build using [mobile verification](/docs/guides/mobile-verify):
+Verify on a real build using mobile verification for [Swift](/docs/frameworks/swift/verify), [Android](/docs/frameworks/android/verify), or [React Native](/docs/frameworks/react-native/verify):
 
 1. Launch with no saved choice and confirm capture stays opted out while pending and after Reject all.
 2. Grant `measurement`, confirm opt-in, and capture a test event.

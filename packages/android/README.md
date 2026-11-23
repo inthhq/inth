@@ -17,11 +17,11 @@ matching versioned Maven artifacts from the maintainer.
   native SDK gates and revision-checked saves.
 - [Customize](../sdk/docs/frameworks/android/customize.mdx): native theme, app
   identity, provider attribution and copy.
-- [Mobile IAB](../sdk/docs/guides/mobile-iab.mdx): purpose/vendor authority,
+- [Mobile IAB](../sdk/docs/frameworks/android/iab.mdx): purpose/vendor authority,
   Additional Consent and advertising integrations.
-- [Offline policy](../sdk/docs/guides/mobile-offline.mdx): first-install prompts,
+- [Offline policy](../sdk/docs/frameworks/android/offline.mdx): first-install prompts,
   expiry and queued delivery.
-- [Verify mobile consent](../sdk/docs/guides/mobile-verify.mdx): app acceptance.
+- [Verify mobile consent](../sdk/docs/frameworks/android/verify.mdx): app acceptance.
 
 ## Modules
 

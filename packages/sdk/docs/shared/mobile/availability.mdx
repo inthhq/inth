@@ -1,0 +1,149 @@
+<section id="intro">
+
+Inth ships native Swift and Kotlin SDKs, a React Native adapter, and an Expo config plugin. The mobile SDKs are currently available as private prereleases; use the matching artifacts supplied by the maintainer until public registry packages ship.
+
+</section>
+
+<section id="choose-swift">
+
+## Choose your app
+
+| App type | Start here | What you add |
+| --- | --- | --- |
+| SwiftUI | [Swift quickstart](/docs/frameworks/swift/quickstart) | SwiftPM core, Apple services, and optional SwiftUI screens |
+| UIKit | [UIKit setup](/docs/frameworks/swift/uikit) | The same Swift products with a UIKit host |
+
+Swift apps can use the core and platform services without the stock UI. Kotlin apps use the Android SDK, and React Native and Expo apps use `@inth/react-native`; each has its own section of these docs.
+
+</section>
+
+<section id="choose-android">
+
+## Choose your app
+
+| App type | Start here | What you add |
+| --- | --- | --- |
+| Kotlin with Compose | [Android quickstart](/docs/frameworks/android/quickstart) | Core and Android artifacts, plus optional Compose screens |
+
+Kotlin apps can use the core and platform services without the stock UI. Swift apps use the Swift SDK, and React Native and Expo apps use `@inth/react-native`; each has its own section of these docs.
+
+</section>
+
+<section id="choose-react-native">
+
+## Choose your app
+
+| App type | Start here | What you add |
+| --- | --- | --- |
+| React Native | [React Native quickstart](/docs/frameworks/react-native/quickstart) | `@inth/react-native` and its matching native artifacts |
+| Expo | [Expo setup](/docs/frameworks/react-native/expo) | `@inth/react-native` and config plugin in a custom native build |
+
+React Native apps can render custom prompt, preference, and IAB screens with hooks and the draft API, and exclude the stock native presenter from the build. Native Swift and Kotlin apps use the Swift and Android SDKs; each has its own section of these docs.
+
+</section>
+
+<section id="artifacts-swift">
+
+## Obtain the matching artifacts
+
+Use a source checkout with the root `Package.swift`. The package is named `inth` and exports `InthCore`, `InthApple`, and `InthConsentUI`. Private Git dependencies use standard repository authentication, or add the checkout locally in Xcode.
+
+</section>
+
+<section id="artifacts-android">
+
+## Obtain the matching artifacts
+
+Use a versioned Maven repository containing `com.inth:inth-core`, `com.inth:inth-android`, and (for stock screens) `com.inth:inth-consent-ui`. Keep all three artifacts on the same native version.
+
+</section>
+
+<section id="artifacts-react-native">
+
+## Obtain the matching artifacts
+
+Install the supplied `@inth/react-native` tarball. Its iOS pod bundles the Swift sources and its Android bridge resolves the pinned native version. Keep the adapter's pinned native version even when it differs from the npm version.
+
+</section>
+
+<section id="hosted-projects">
+
+Every Inth mobile SDK connects exclusively to Inth hosted projects. It takes your project URL from the Inth dashboard, such as `https://your-project.inth.app`, and refuses any other host.
+
+</section>
+
+<section id="registry-swift">
+
+Do not substitute a similarly named public package while tagged SwiftPM instructions are pending.
+
+</section>
+
+<section id="registry-android">
+
+Do not substitute a similarly named public package while Maven Central instructions are pending.
+
+</section>
+
+<section id="registry-react-native">
+
+Do not substitute a similarly named public package while public npm and Maven Central instructions are pending.
+
+</section>
+
+<section id="scope">
+
+## First release scope
+
+The first release includes native category consent, notice acknowledgement, IAB TCF choices, Google Additional Consent v2, protected platform storage, SDK gates, bundled policy manifests and in-code policies for offline first launches, queued delivery on reconnect, and a `dryRun` switch for development and CI.
+
+</section>
+
+<section id="scope-swift">
+
+The stock consent screens are SwiftUI presenters. To set up IAB TCF, read [IAB and ads](/docs/frameworks/swift/iab).
+
+</section>
+
+<section id="scope-android">
+
+The stock consent screens are Compose presenters. To set up IAB TCF, read [IAB and ads](/docs/frameworks/android/iab).
+
+</section>
+
+<section id="scope-react-native">
+
+The stock native consent screens are SwiftUI and Compose presenters.
+
+The React Native adapter exposes category commands, hooks, and native presenter sessions. The Expo plugin and bare React Native metadata configure category startup plus IAB CMP identity and publisher country during native builds.
+
+React Native apps can render custom banners, category preferences, and IAB screens with `ConsentPrompt`, the draft API, and the IAB hooks; see [Build your own UI](/docs/frameworks/react-native/headless). You can exclude the stock native screens with `nativeUI: false` in the Expo plugin or `inth.nativeUI=false` in a bare app ([Build without the stock native screens](/docs/frameworks/react-native/headless#build-without-the-stock-native-screens)). Apps that need IAB publisher restrictions or custom purposes still use app-owned native installation.
+
+Read the [IAB guide](/docs/frameworks/react-native/iab) for both setups. Always build vendor decisions with the IAB hooks or stock presenter, never from the category API. Custom IAB screens support configurations without publisher restrictions or Additional Consent providers; use the stock screens if you need either.
+
+</section>
+
+<section id="certification">
+
+## Certification and production rollout
+
+Inth's CMP ID is 490. Existing registration covers web; mobile IAB validation and Google App certification are separate work and are not established by a working demo.
+
+</section>
+
+<section id="certification-swift">
+
+Complete the [mobile verification checklist](/docs/frameworks/swift/verify) with your actual app, Inth project, vendor SDKs, and release binaries before rolling out to production.
+
+</section>
+
+<section id="certification-android">
+
+Complete the [mobile verification checklist](/docs/frameworks/android/verify) with your actual app, Inth project, vendor SDKs, and release binaries before rolling out to production.
+
+</section>
+
+<section id="certification-react-native">
+
+Complete the [mobile verification checklist](/docs/frameworks/react-native/verify) with your actual app, Inth project, vendor SDKs, and release binaries before rolling out to production.
+
+</section>

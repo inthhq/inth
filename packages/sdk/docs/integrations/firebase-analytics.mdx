@@ -12,9 +12,9 @@ Your app installs Firebase separately. For web apps, use [Google Tag](/docs/inte
 
 ## Before you start
 
-Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add `measurement`, plus `marketing` if you run Google ads, to your Inth policy and native config. See [mobile availability](/docs/guides/mobile-status).
+Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add `measurement`, plus `marketing` if you run Google ads, to your Inth policy and native config. See mobile availability for [Swift](/docs/frameworks/swift/availability), [Android](/docs/frameworks/android/availability), or [React Native](/docs/frameworks/react-native/availability).
 
-Install Firebase using the [Apple](https://firebase.google.com/docs/ios/setup), [Android](https://firebase.google.com/docs/android/setup), or [React Native Firebase](https://rnfirebase.io/analytics/usage) setup guides first. This helper updates Firebase Consent Mode only, not IAB, Google Mobile Ads, or ATT; see [mobile IAB and ads](/docs/guides/mobile-iab).
+Install Firebase using the [Apple](https://firebase.google.com/docs/ios/setup), [Android](https://firebase.google.com/docs/android/setup), or [React Native Firebase](https://rnfirebase.io/analytics/usage) setup guides first. This helper updates Firebase Consent Mode only, not IAB, Google Mobile Ads, or ATT; see mobile IAB and ads for [Swift](/docs/frameworks/swift/iab), [Android](/docs/frameworks/android/iab), or [React Native](/docs/frameworks/react-native/iab).
 
 ## Control native startup first
 
@@ -220,4 +220,4 @@ Test an opt-in policy with Firebase debug tools:
 5. Relaunch after grant and refusal, verifying native startup before JavaScript.
 6. Reset Firebase settings, call `sync()`, and verify permission reapplies without a new record.
 
-Type-checked against React Native Firebase `27.1.0`. Complete [mobile verification](/docs/guides/mobile-verify) on real devices.
+Type-checked against React Native Firebase `27.1.0`. Complete mobile verification for [Swift](/docs/frameworks/swift/verify), [Android](/docs/frameworks/android/verify), or [React Native](/docs/frameworks/react-native/verify) on real devices.

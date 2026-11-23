@@ -1,10 +1,16 @@
----
-title: Troubleshoot native consent
-description: Fix missing native consent screens, Keychain storage errors, Gradle artifact resolution, failed saves, and IAB setup issues on iOS and Android.
-group: guides
----
+<section id="intro-swift">
 
-Diagnose native installation, policy, protected storage, presenter, and IAB issues in Swift and Kotlin apps. Keep optional collection disabled while consent is unavailable.
+Diagnose native installation, policy, protected storage, presenter, and IAB issues in Swift apps. Keep optional collection disabled while consent is unavailable.
+
+</section>
+
+<section id="intro-android">
+
+Diagnose native installation, policy, artifact resolution, presenter, and IAB issues in Android apps. Keep optional collection disabled while consent is unavailable.
+
+</section>
+
+<section id="screen">
 
 ## Consent screen never appears
 
@@ -14,7 +20,11 @@ Diagnose native installation, policy, protected storage, presenter, and IAB issu
 
 **Confirm.** Reset consent or test on a fresh install in an opt-in region and verify the prompt presents.
 
-## `protectedStorageUnavailable` on Swift installation
+</section>
+
+<section id="storage-swift">
+
+## `protectedStorageUnavailable` on installation
 
 **Cause.** The Apple installer probes Keychain before installing the core. Protected data is not yet available (for example before first unlock or while backgrounded), or an unsigned simulator build cannot access Keychain.
 
@@ -22,13 +32,21 @@ Diagnose native installation, policy, protected storage, presenter, and IAB issu
 
 **Confirm.** Launch on a signed simulator or device and confirm `InthApple.install` succeeds without throwing.
 
+</section>
+
+<section id="gradle-android">
+
 ## Gradle cannot resolve `com.inth` artifacts
 
-**Cause.** The Maven repository was declared inside `pluginManagement.repositories` instead of dependency repositories, artifact versions do not match across `inth-core`, `inth-android`, and `inth-consent-ui`, or a remote build worker (such as EAS) cannot reach a local repository on your machine.
+**Cause.** The Maven repository was declared inside `pluginManagement.repositories` instead of dependency repositories, artifact versions do not match across `inth-core`, `inth-android`, and `inth-consent-ui`, or a remote build worker cannot reach a local repository on your machine.
 
 **Fix.** Add the versioned Maven repository to dependency repositories, align all three artifacts on one native version, and pass repository URL and credentials via build environment variables reachable from CI and build workers. Never commit credentials or place them in app resources.
 
 **Confirm.** Run a clean Gradle sync and release build.
+
+</section>
+
+<section id="save">
 
 ## Save fails or preferences stay open
 
@@ -47,7 +65,21 @@ A network failure after a durable local save is a delivery issue, not a save fai
 
 ## Ad SDK starts before consent
 
-**Cause.** The vendor SDK starts automatically through an Android manifest initializer, an iOS app-delegate hook, a build plugin, or an auto-collection flag before Inth installs.
+</section>
+
+<section id="ad-sdk-swift">
+
+**Cause.** The vendor SDK starts automatically through an app-delegate hook, a build plugin, or an auto-collection flag before Inth installs.
+
+</section>
+
+<section id="ad-sdk-android">
+
+**Cause.** The vendor SDK starts automatically through an Android manifest initializer, a build plugin, or an auto-collection flag before Inth installs.
+
+</section>
+
+<section id="ad-sdk">
 
 **Fix.** Disable optional auto-start in the vendor SDK, install Inth before initializing vendors, and retain a native gate subscription so later withdrawals reconfigure or stop collection.
 
@@ -57,6 +89,20 @@ A network failure after a durable local save is a delivery issue, not a save fai
 
 **Cause.** The matched policy is not an IAB policy, or native CMP and publisher configuration was not installed before creating the first engine. Category scope and vendor filtering alone do not enable IAB.
 
-**Fix.** Configure an IAB policy in Inth and install native CMP settings before startup; see [mobile IAB setup](/docs/guides/mobile-iab).
+</section>
 
-**Confirm.** Save an IAB choice and rerun the relevant checks in [Verify mobile consent](/docs/guides/mobile-verify).
+<section id="iab-swift">
+
+**Fix.** Configure an IAB policy in Inth and install native CMP settings before startup; see [IAB and ads](/docs/frameworks/swift/iab).
+
+**Confirm.** Save an IAB choice and rerun the relevant checks in [Verify consent](/docs/frameworks/swift/verify).
+
+</section>
+
+<section id="iab-android">
+
+**Fix.** Configure an IAB policy in Inth and install native CMP settings before startup; see [IAB and ads](/docs/frameworks/android/iab).
+
+**Confirm.** Save an IAB choice and rerun the relevant checks in [Verify consent](/docs/frameworks/android/verify).
+
+</section>

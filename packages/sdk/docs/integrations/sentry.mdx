@@ -135,7 +135,7 @@ See [verify consent](/docs/guides/verify-consent).
 
 The bundled Sentry Replay helper in `InthApple`, `inth-android`, and `@inth/react-native/integrations` starts manual Session Replay when its category, `measurement` by default, is allowed and stops it when pending or denied. Your app installs Sentry and owns crash reporting, profiling, and user data.
 
-Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add your replay category to your native config and Inth policy. See [mobile availability](/docs/guides/mobile-status). Checked versions are Sentry Cocoa `9.32.0`, Android `8.62.0`, and React Native `8.33.0`. Android Replay requires API 26+, while Inth supports API 24+. Set session and error replay sample rates to `0` before initializing Sentry, including native init before JavaScript, and keep default masking until tested.
+Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add your replay category to your native config and Inth policy. See mobile availability for [Swift](/docs/frameworks/swift/availability), [Android](/docs/frameworks/android/availability), or [React Native](/docs/frameworks/react-native/availability). Checked versions are Sentry Cocoa `9.32.0`, Android `8.62.0`, and React Native `8.33.0`. Android Replay requires API 26+, while Inth supports API 24+. Set session and error replay sample rates to `0` before initializing Sentry, including native init before JavaScript, and keep default masking until tested.
 
 ### Connect Swift
 
@@ -198,4 +198,4 @@ await replayConsent.ready;
 
 Call `syncAfterReset()` on Swift, `sync()` on Android, or `await replayConsent.sync()` on React Native after a vendor reset or new Sentry session. Call `stop()`, `close()`, or `disconnect()` only for final teardown. Stopping can still send a final segment and does not flush, delete historical recordings, or change crash reporting.
 
-With both sample rates at `0`, verify pending and rejected launches buffer nothing, grant starts capture, withdrawal stops new capture, and masking works on sensitive screens. Complete [mobile verification](/docs/guides/mobile-verify).
+With both sample rates at `0`, verify pending and rejected launches buffer nothing, grant starts capture, withdrawal stops new capture, and masking works on sensitive screens. Complete mobile verification for [Swift](/docs/frameworks/swift/verify), [Android](/docs/frameworks/android/verify), or [React Native](/docs/frameworks/react-native/verify).

@@ -1,3 +1,5 @@
+<section id="journey">
+
 Run these checks on your release app binary connected to your Inth project. Inspect native logs and real network traffic rather than relying on the prompt UI alone.
 
 ## Check the first consent journey
@@ -13,28 +15,84 @@ Test in a region whose policy requires optional consent using a fresh install or
 | Enable measurement and save | Measurement gate opens and the SDK initializes once. |
 | Disable measurement and save | The vendor's stop or reconfiguration API runs and optional collection stops. |
 
-In React Native and Expo, repeat startup with JavaScript delayed to confirm native auto-initializers do not start optional collection before JS loads. Run the sequence on both development and release binaries.
+</section>
+
+<section id="journey-react-native">
+
+Repeat startup with JavaScript delayed to confirm native auto-initializers do not start optional collection before JS loads. Run the sequence on both development and release binaries.
+
+</section>
+
+<section id="failures">
 
 ## Check failures and recovery
 
 1. Launch a fresh install offline without a bundled policy. Confirm the app stays usable and optional gates remain closed.
-2. Repeat with a valid [bundled policy](/docs/guides/mobile-offline). Confirm the first prompt appears offline.
+2. Repeat with a valid bundled policy. Confirm the first prompt appears offline.
 3. Reject offline, terminate the app, and relaunch offline. Confirm the refusal persists.
 4. Reconnect and verify the queued record reaches your Inth project with a matching receipt.
 5. Make protected storage unavailable. Confirm saving fails visibly, the draft stays open, and no confirmation appears, then recover storage and retry.
 6. Expire or corrupt bundled policy and disclosure data. Confirm new grants stay blocked while withdrawal still works.
 
-Test account linking and reset with [identity and reset](/docs/guides/mobile-identity). On iOS, verify protected-data availability and ATT against the real OS permission alert.
+</section>
+
+<section id="failures-swift">
+
+To bundle a policy, see [Offline consent](/docs/frameworks/swift/offline). Test account linking and reset with [Identity and reset](/docs/frameworks/swift/identity). Verify protected-data availability and ATT against the real OS permission alert.
 
 ## Check IAB integrations
 
-For apps using [IAB](/docs/guides/mobile-iab), compare purpose, vendor, legitimate-interest, special-feature, and Additional Consent selections against decoded TC Strings and typed platform storage across granular saves, accept-all, reject-all, withdrawal, publisher restrictions, expiry, and restarts.
+For apps using [IAB](/docs/frameworks/swift/iab), compare purpose, vendor, legitimate-interest, special-feature, and Additional Consent selections against decoded TC Strings and typed platform storage across granular saves, accept-all, reject-all, withdrawal, publisher restrictions, expiry, and restarts.
+
+</section>
+
+<section id="failures-android">
+
+To bundle a policy, see [Offline consent](/docs/frameworks/android/offline). Test account linking and reset with [Identity and reset](/docs/frameworks/android/identity).
+
+## Check IAB integrations
+
+For apps using [IAB](/docs/frameworks/android/iab), compare purpose, vendor, legitimate-interest, special-feature, and Additional Consent selections against decoded TC Strings and typed platform storage across granular saves, accept-all, reject-all, withdrawal, publisher restrictions, expiry, and restarts.
+
+</section>
+
+<section id="failures-react-native">
+
+To bundle a policy, see [Offline consent](/docs/frameworks/react-native/offline). Test account linking and reset with [Identity and reset](/docs/frameworks/react-native/identity). On iOS, verify protected-data availability and ATT against the real OS permission alert.
+
+## Check IAB integrations
+
+For apps using [IAB](/docs/frameworks/react-native/iab), compare purpose, vendor, legitimate-interest, special-feature, and Additional Consent selections against decoded TC Strings and typed platform storage across granular saves, accept-all, reject-all, withdrawal, publisher restrictions, expiry, and restarts.
+
+</section>
+
+<section id="iab">
 
 Verify your exact ad and mediation SDK versions actually read the signals and change network behavior; a valid TC String alone does not confirm SDK compliance.
 
 ## Check accessibility and layout
 
+</section>
+
+<section id="accessibility-swift">
+
+Walk through the first layer, preferences, partner details, error states, and withdrawal path with VoiceOver. Confirm focus enters the presentation and returns to the opening control on dismissal.
+
+</section>
+
+<section id="accessibility-android">
+
+Walk through the first layer, preferences, partner details, error states, and withdrawal path with TalkBack. Confirm focus enters the presentation and returns to the opening control on dismissal.
+
+</section>
+
+<section id="accessibility-react-native">
+
 Walk through the first layer, preferences, partner details, error states, and withdrawal path with VoiceOver on iOS and TalkBack on Android. Confirm focus enters the presentation and returns to the opening control on dismissal.
+
+</section>
+
+<section id="record">
 
 Test at the largest dynamic type setting, in dark mode, in every supported reading direction, and across compact, wide, and foldable windows. Confirm Accept and Reject receive equal prominence and every control stays readable and reachable.
 
@@ -42,4 +100,22 @@ Test at the largest dynamic type setting, in dark mode, in every supported readi
 
 Log the app and SDK versions, git commit, binary hash, signing identity, Inth policy version, device model, and OS version alongside your results. Keep simulator, physical-device, and cloud-build results separate, and verify clean installs across your minimum and current supported OS versions.
 
-See [mobile availability](/docs/guides/mobile-status) for certification requirements and release scope.
+</section>
+
+<section id="availability-swift">
+
+See [Availability](/docs/frameworks/swift/availability) for certification requirements and release scope.
+
+</section>
+
+<section id="availability-android">
+
+See [Availability](/docs/frameworks/android/availability) for certification requirements and release scope.
+
+</section>
+
+<section id="availability-react-native">
+
+See [Availability](/docs/frameworks/react-native/availability) for certification requirements and release scope.
+
+</section>

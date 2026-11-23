@@ -22,7 +22,7 @@ const frameworkEntryPoints = [
 	['frameworks/swift/quickstart.md', 'SwiftUI quickstart'],
 	['frameworks/swift/uikit.md', 'UIKit setup'],
 	['frameworks/android/quickstart.md', 'Android quickstart'],
-	['guides/mobile-status.md', 'Mobile availability'],
+	['frameworks/react-native/availability.md', 'Mobile availability'],
 ] as const;
 
 /** Add setup links that survive each package's filtered documentation bundle. */

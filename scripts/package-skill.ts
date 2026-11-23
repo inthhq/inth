@@ -77,8 +77,12 @@ export const renderPackageSkill = function renderPackageSkill(
 			['frameworks/swift/quickstart.md', 'SwiftUI quickstart'],
 			['frameworks/swift/uikit.md', 'UIKit setup'],
 			['frameworks/android/quickstart.md', 'Android quickstart'],
-			['guides/mobile-iab.md', 'Native IAB setup'],
-			['guides/mobile-status.md', 'Mobile availability and release scope'],
+			['frameworks/swift/iab.md', 'Swift IAB setup'],
+			['frameworks/android/iab.md', 'Android IAB setup'],
+			[
+				'frameworks/react-native/availability.md',
+				'Mobile availability and release scope',
+			],
 		]
 			.map(([file, label]) => link(bundledFiles, file ?? '', label ?? ''))
 			.filter(Boolean);
