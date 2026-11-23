@@ -57,7 +57,7 @@ test('the dialog chunk carries no embedded widget', async () => {
 	await vi.waitFor(
 		() =>
 			expect(
-				moduleRequested('/src/components/dialog/consent-dialog-body.tsx')
+				moduleRequested('/src/components/dialog/panel-body.tsx')
 			).toBe(true),
 		{ timeout: 5000 }
 	);

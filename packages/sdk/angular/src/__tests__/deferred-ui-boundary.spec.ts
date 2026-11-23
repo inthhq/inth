@@ -154,7 +154,7 @@ describe('the prompt and dialog bodies load on demand', () => {
 		// Guards the test itself: following the dynamic imports finds them.
 		expect(
 			readFileSync(
-				resolve(ROOT, 'src/lib/dialog/load-consent-dialog-body.ts'),
+				resolve(ROOT, 'src/lib/dialog/load-panel-body.ts'),
 				'utf8'
 			)
 		).toContain("import('./dialog')");

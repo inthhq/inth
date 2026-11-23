@@ -15,7 +15,7 @@ import { policyFixture } from './policy-fixture';
 // Imported once request recording is running.
 const { IABConsentBanner, IABConsentDialog } = await import('~/iab');
 
-const IAB_DIALOG_MODULE = '/src/components/iab-panel/iab-consent-dialog.tsx';
+const IAB_DIALOG_MODULE = '/src/components/iab-panel/iab-panel.tsx';
 const dialogModuleLoaded = () => moduleRequested(IAB_DIALOG_MODULE);
 
 const iabOptions = (
