@@ -49,3 +49,11 @@ The classic banner and dialog CSS variables still apply: each part reads its own
 **Stylesheets and bundles**
 
 The per-surface sheets are renamed: `banner` is now `parts`, `bar` is `banner`, `dialog` is `widget`, and `privacy-choices-dialog` is `dialog`. The CSS modules `consent-bar` and `privacy-choices` are now `consent-banner` and `consent-dialog`. `styles.css` is the single full stylesheet.
+
+**Script tag and `@inth/sdk`**
+
+- `ui.banner` takes `container`, `edgeStyle` and `blockUntilChoice`, which win over `presentation.prompt`. `ui.banner.scrollLock` and `ui.banner.trapFocus` now apply to the IAB banner only; use `blockUntilChoice` for the stock banner. `ui.dialog.hideBranding` applies to the IAB dialog only.
+- `inth.js` no longer renders a banner of its own or records a choice before the engine. When a banner is due it loads `inth.hosted.js` at once and starts fetching `inth.choices.js` beside it; a choice made before the engine (a page action, or `inth.acceptAll()`) waits for the engine, which records it. `inth.js` is about 17 KB smaller gzipped (35.7 KB to 18.9 KB).
+- `inth.dialog.js` and `inth.commit.js` are gone, with `data-dialog-src` and `data-commit-src`. `inth.choices.js` carries the banner in each container, its options and the dialog; `inth.hosted.js` loads it the first time the page shows one of them, so a returning visitor who sees no banner never downloads it. `inth.hosted.js` no longer carries the classic preference centre and is about 18 KB smaller gzipped (134.9 KB to 117.1 KB). If you host the files yourself, serve `inth.hosted.js`, `inth.records.js` and `inth.choices.js` next to `inth.js`, or set `data-hosted-src`, `data-records-src` and `data-choices-src`.
+- `@inth/sdk/styles.css`, for `shadow: false` with `styles: false`, now holds the banner's and the dialog's rules too.
+- The IAB banner stays in its bottom-left corner; `presentation.prompt.variant` and `position` no longer move it.

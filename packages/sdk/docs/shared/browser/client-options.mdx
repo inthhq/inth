@@ -55,7 +55,7 @@ group: reference
   | Option | Type | Default | What it does |
   | --- | --- | --- | --- |
   | `ui` | UI options or `false` | stock UI on | Theme tokens, CSS, surfaces and mounting. `false` starts the client with no UI. See [UI options](#ui-options). |
-  | `presentation` | `{ prompt?, preferences?, optOutLink? }` | floating banner, bottom left, `'do-not-sell'` | Banner shape, position, button layout, blocking and opt-out link form (`'do-not-sell'`, `'privacy-choices'` or `'california-privacy-choices'`), within what the policy allows. With `'do-not-sell'`, clicking an opt-out link records an opt-out in one click. Both `'privacy-choices'` and `'california-privacy-choices'` always render with the California Privacy Protection Agency opt-out icon and open the preference dialog without recording an opt-out. Programmatic `client.optOut()` still opts out in one step whatever `optOutLink` is set to. |
+  | `presentation` | `{ prompt?, preferences?, optOutLink? }` | a Card in the `start` corner, `'do-not-sell'` | The banner's container, edge style and button layout, blocking, and the opt-out link form (`'do-not-sell'`, `'privacy-choices'` or `'california-privacy-choices'`), within what the policy allows. With `'do-not-sell'`, clicking an opt-out link records an opt-out in one click. Both `'privacy-choices'` and `'california-privacy-choices'` always render with the California Privacy Protection Agency opt-out icon and open the preference dialog without recording an opt-out. Programmatic `client.optOut()` still opts out in one step whatever `optOutLink` is set to. |
   | `i18n` | `{ locale?, messages }` | English | The language to start in, and messages per language that override the bundled, Inth or manifest copy key by key for that language. |
   | `legalLinks` | `{ privacyPolicy?, cookiePolicy?, termsOfService? }` | none | Each link is `{ href, label?, target?, rel? }`. The banner and dialog show only the links their `legalLinks` option lists. |
 
@@ -96,12 +96,36 @@ group: reference
   | `rejectButtonText` | `string` | "Reject All" | Label of the reject button. |
   | `customizeButtonText` | `string` | "Customize" | Label of the button that opens the dialog. |
   | `legalLinks` | list of `privacyPolicy`, `cookiePolicy`, `termsOfService`, or `null` | none | Which configured legal links to show after the description. `null` or `[]` shows none. |
+  | `container` | `{ type: 'card', position }`, `{ type: 'banner', edge }` or `{ type: 'drawer', side }` | `presentation.prompt.container`, then the policy's | The Card, Banner or Drawer, and where it sits. See [containers](#containers). |
+  | `edgeStyle` | `'inset'` or `'flush'` | `'inset'` | `inset` floats a Banner or Drawer 12px off the viewport edges with rounded corners. `flush` runs it edge to edge. A Card is always inset. |
+  | `blockUntilChoice` | `boolean` | `false` | Block the page until the visitor chooses: backdrop, scroll lock, focus trap, and no outside dismissal. A centred Card always blocks. |
   | `hideBranding` | `boolean` | `false` | Hide the "Consent by" tag. The IAB banner always keeps it. |
-  | `scrollLock` | `boolean` | from `presentation` | Deprecated. Use `presentation.prompt.blocking`. |
-  | `trapFocus` | `boolean` | from `presentation` | Deprecated. Use `presentation.prompt.blocking`. |
+  | `scrollLock`, `trapFocus` | `boolean` | from `presentation` | IAB banner only. Block the page while it is up. `presentation.prompt.blocking` wins over both. |
 
   The dismiss button of a notice always uses the translated
   `common.acknowledge` label. Change it through `i18n`.
+</section>
+
+<section id="containers">
+  ## Containers
+
+  The policy decides which actions appear. The container decides where the banner sits. All three containers show the same copy and the same choices.
+
+  | Container | Positions | Default | Shape |
+  | --- | --- | --- | --- |
+  | `{ type: 'card', position }` | `start`, `end`, `center` | `start` | A floating card in a bottom corner, or centred over a backdrop. |
+  | `{ type: 'banner', edge }` | `bottom`, `top` | `bottom` | A full-width banner along one edge. |
+  | `{ type: 'drawer', side }` | `bottom`, `top`, `start`, `end` | `bottom` | A panel that slides in from one side and shows every choice at once on desktop. |
+
+  `start` and `end` are logical, like CSS `inset-inline-start`. On a right-to-left page, `start` is the bottom-right corner. Customize opens the choices inside the same container. On phones, a `start` or `end` Drawer becomes a bottom Drawer.
+
+  Set a container in three places. The first one that is set wins:
+
+  1. `ui.banner.container`.
+  2. `presentation.prompt.container`.
+  3. The policy rule's `surface.container`, set in the dashboard.
+
+  `edgeStyle` and `blockUntilChoice` follow the same order. `blockUntilChoice` dims the page, locks scroll and keeps focus inside the banner until the visitor chooses. A centred Card always blocks. A notice never blocks, and neither does a banner under an opt-out model; where blocking is not possible, a centred Card moves to the `start` corner. The policy's `surface.blocking` is a hard rule: `forbidden` never blocks, and `required` always blocks a choice prompt.
 </section>
 
 <section id="dialog">
@@ -111,8 +135,8 @@ group: reference
 
   | Option | Type | Default | What it does |
   | --- | --- | --- | --- |
-  | `legalLinks` | list of `privacyPolicy`, `cookiePolicy`, `termsOfService`, or `null` | none | Which configured legal links to show after the description. |
-  | `hideBranding` | `boolean` | `false` | Hide the "Consent by" tag at the bottom of the dialog. |
+  | `legalLinks` | list of `privacyPolicy`, `cookiePolicy`, `termsOfService`, or `null` | the regime's link | The dialog's footer shows one link: the Cookie Policy in the EU, the Privacy Policy in the US. A list shows it only when the list names it; `null` hides it. |
+  | `hideBranding` | `boolean` | `false` | IAB dialog only. Hide the "Consent by" tag at the bottom of the dialog. |
 
   The dialog's title, description, category names and button labels come
   from translations. Change them through `i18n`.

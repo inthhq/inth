@@ -70,7 +70,7 @@ to serve `dist/inth.css` as an external stylesheet.
 
 ## Change the banner's shape and position
 
-Configure `presentation.prompt`:
+Set a container under `presentation.prompt`, or `ui.banner` for the stock banner only:
 
 {/* example: fragment */}
 
@@ -78,17 +78,14 @@ Configure `presentation.prompt`:
 <script>
   window.inth = window.inth || [];
   inth.push(['config', {
-    presentation: { prompt: { variant: 'bar', position: 'bottom' } },
+    presentation: {
+      prompt: { container: { type: 'banner', edge: 'bottom' }, edgeStyle: 'flush' },
+    },
   }]);
 </script>
 ```
 
-| `variant` | Positions |
-| --- | --- |
-| `floating` (default) | `bottom-left` (default), `bottom-right`, `top-left`, `top-right`, `bottom-center`, `top-center` |
-| `bar` | `bottom` (default), `top` |
-| `widget` | `bottom-right` (default), `bottom-left`, `top-left`, `top-right` |
-| `wall` | `center` |
+<import src="../../shared/browser/client-options.mdx#containers" />
 
 See [banner layout](/docs/frameworks/html/components/banner#change-the-layout)
 for button grouping. Where presentation conflicts with policy rules, the

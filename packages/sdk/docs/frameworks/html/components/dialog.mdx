@@ -4,20 +4,25 @@ description: Configure the stock Inth preference dialog on plain HTML sites, inc
 group: frameworks
 ---
 
-The preference dialog rendered by `inth.js` lets visitors review and toggle
-individual consent categories and vendors without extra markup.
+The preference dialog, "Your Privacy Choices", is the full consent manager.
+`inth.hosted.js` renders it from `inth.choices.js` without extra markup. It is
+centred on desktop and a bottom sheet on phones.
 
 ## What the dialog shows
 
 The dialog stays closed until opened by:
 
-- the banner's **Customize** button;
 - a [`data-inth-action="customize"` button](/docs/frameworks/html/components/action-buttons);
 - a [link to `#inth-preferences`](/docs/frameworks/html/components/preferences-link);
+- a "Your Privacy Choices" link from `createPrivacyChoicesLink`, or the
+  banner's opt-out link when `presentation.optOutLink` is `'privacy-choices'`
+  or `'california-privacy-choices'`;
 - the [floating trigger](/docs/frameworks/html/components/trigger);
 - `inth.openDialog()` in JavaScript.
 
-Opening the dialog records nothing and changes no permissions.
+The banner's **Customize** button does not open the dialog. It opens the
+choices inside the banner. Opening the dialog records nothing and changes no
+permissions.
 
 ## Which categories it lists
 
@@ -46,66 +51,32 @@ needs a category not present in page tags:
 See [consent categories](/docs/concepts/consent-categories) and
 [vendor consent](/docs/frameworks/html/vendor-consent).
 
-## What the switches start at
+## What it asks
 
-Each switch initializes in this precedence order:
+The dialog's content follows the policy regime:
 
-1. unsaved changes toggled while this dialog is open;
-2. off when an active durable opt-out or Global Privacy Control (GPC) signal restricts that category, even when a stored choice granted it;
-3. the visitor's recorded choice;
-4. `presentation.preferences.defaults`, if configured;
-5. on under opt-out or preselected policy categories, otherwise off.
+- **Choice regime** (opt-in, and opt-out rules that ask for a choice): one
+  switch per category in scope, with its vendors, and **Reject all**,
+  **Accept all** and **Save**. Save stays disabled until a switch differs from
+  the recorded choice. Closing without saving discards unsaved switches.
+- **Opt-out regime** (opt-out rules with a notice): the sale-and-sharing row
+  with **Protect** and **Allow**, the receipt of the recorded choice, a
+  **Preferences** row for the category switches, and **Done**. A switch there
+  applies at once. Allowing again after an opt-out asks to confirm first
+  (11 CCR §7028(a)); a choice that grants every category, such as a page's
+  `data-inth-action="accept"`, opens the same confirmation as a separate modal
+  dialog. **Accept** never lifts a held opt-out.
 
-Closing without saving discards unsaved switch changes.
+An opt-out made from a one-click opt-out link, or confirmed after the reload
+an opt-out triggers, opens the dialog on its receipt.
 
-## Sale-and-sharing opt-out block and locked switches
+While Global Privacy Control is active under a policy that maps it, the
+signal-restricted categories stay off, their switches are disabled with the GPC
+note, and **Allow** is unavailable. When an account holds the opt-out, lifting
+it asks the backend, and a refused request leaves it in place.
 
-Under an `opt-out` policy, the dialog renders a sale-and-sharing block first,
-above the category list and outside any accordion item. Under any other policy
-model, no block renders.
-
-- Before the visitor opts out, the block displays the configured opt-out link
-  title (`presentation.optOutLink`), a neutral status sentence, and an **Opt
-  out** button. One click records the opt-out through the same shared action as
-  the opt-out link, without touching category switches or **Save Settings**.
-- Once a durable opt-out is held, the button is removed and the block shows the
-  status line (`role="status"`): "Opt-out request honored" for a visitor
-  request, or "Opt-out preference signal honored" when Global Privacy Control
-  recorded or enforces it. Below the status line, it renders the receipt
-  sentence, recorded time, and local reference. When the backend confirms the
-  refused rights, the heading updates to name them (`sale` and `share`, `sale`
-  and `targeted_ads`, or all three); before confirmation, it keeps the
-  configured link title. When GPC is not locking the opt-out, an **Opt back
-  in…** link appears below the receipt.
-- While the browser's GPC signal is active under a policy that maps it, the
-  signal-restricted switches and `marketing` (or `measurement` when `marketing`
-  is not in scope) stay off and disabled, and no **Opt back in…** link appears.
-  A notice below each locked row explains why and is linked to the switch with
-  `aria-describedby`. **Save Settings** and **Accept All** do not present or
-  grant locked categories.
-- When an account holds the opt-out and GPC is off, the notice appears below
-  `marketing` (or `measurement` when `marketing` is not in scope) to explain
-  that the account has opted out, and the switches remain usable. Turning
-  `marketing` back on and saving, clicking **Accept All**, or clicking **Opt
-  back in…** opens a separate confirmation dialog first. Confirming asks the
-  backend to lift the account opt-out, and a refused request leaves it in place.
-- When the opt-out is device-held and GPC is off, opting back in uses a
-  two-step confirmation dialog under an `opt-out` policy (11 CCR §7028(a)).
-  Turning `marketing` back on and saving, clicking **Accept All**, or clicking
-  **Opt back in…** opens a separate modal dialog instead of saving right away
-  (`measurement` decides when `marketing` is not in scope). Focus starts on
-  **Stay opted out**, both buttons have equal prominence, and Escape cancels
-  with nothing saved. Confirming lifts the opt-out and applies the pending
-  save. Turning `measurement` back on while `marketing` stays off keeps
-  `measurement` allowed, skips confirmation, and leaves the opt-out in place.
-  Saving without changing a switch keeps the opt-out in place. Under an
-  `opt-in` policy, **Accept All** still lifts a held opt-out in one step.
-
-## Buttons
-
-The dialog displays Reject All, Accept All and Save Settings. All three are
-policy-required and close both the dialog and any underlying banner. Layout
-options live under `presentation.preferences`.
+The dialog's copy comes from the `privacyChoices` translation section and
+`consentTypes.<category>.title` and `.description` for each category.
 
 ## Options
 
@@ -116,13 +87,17 @@ rendering your own dialog with [headless](/docs/frameworks/html/headless).
 
 ## Keyboard and screen readers
 
-- Renders as `role="dialog"` with `aria-labelledby` and `aria-describedby`.
-- Blocking by default (focus trap and scroll lock); disable with
-  `presentation.preferences.blocking: false`.
-- Escape closes without saving and restores the banner if a choice is still
-  due. Clicking the backdrop does not close it.
-- Each category header expands its description and pairs with a
-  `role="switch"` control (`necessary` is disabled).
+- Renders as `role="dialog"` with `aria-modal="true"` and `aria-labelledby`
+  pointing at its title. It always blocks the page: backdrop, scroll lock and
+  focus trap.
+- Escape and **Close** close it without saving and restore the banner if a
+  choice is still due. Clicking the backdrop does not close it. Focus returns
+  to the element that opened it, else to a "Your Privacy Choices" link, else
+  to the trigger.
+- Each category switch is a `role="switch"` named by its category title. The
+  `necessary` switch is disabled and always on.
+- On phones, the Preferences row and each category's vendor list open as a
+  nested sheet with its own title and close button.
 - Sets `lang` and `dir` from the resolved language.
 
 ## Style it
@@ -133,32 +108,23 @@ Shared theme tokens apply automatically (see
 
 | `data-testid` | Element |
 | --- | --- |
-| `consent-dialog-root` | Dialog element. |
-| `consent-dialog-card`, `consent-dialog-header`, `consent-dialog-content` | Card and inner sections. |
-| `consent-dialog-title`, `consent-dialog-description` | Heading and description. |
-| `consent-widget-opt-out` | Sale-and-sharing opt-out block (`consentWidgetOptOut` slot / `::part`). |
-| `consent-widget-opt-out-heading`, `consent-widget-opt-out-description` | Opt-out block heading and status or receipt sentence. |
-| `consent-widget-opt-out-button` | Direct one-click opt-out button before opting out. |
-| `consent-widget-opt-out-status` | Honored opt-out status line (`role="status"`). |
-| `consent-widget-opt-out-receipt`, `consent-widget-opt-out-recorded-at`, `consent-widget-opt-out-reference` | Receipt list, recorded time, and local reference while opted out. |
-| `consent-widget-opt-in-link` | "Opt back in…" link shown below the receipt while opted out and not locked by GPC. |
-| `opt-in-confirmation-root`, `opt-in-confirmation-card`, `opt-in-confirmation-title`, `opt-in-confirmation-description` | Separate modal confirmation dialog for two-step opt-in under an `opt-out` policy. |
+| `consent-dialog-root` | Backdrop and root, carrying `data-regime` (`eu` or `us`) and `data-layout` (`desktop` or `phone`). |
+| `consent-dialog-card`, `consent-dialog-header`, `consent-dialog-content`, `consent-dialog-footer` | Card and its sections. |
+| `consent-dialog-title`, `consent-dialog-intro`, `consent-dialog-close` | Heading, introduction and close button. |
+| `consent-dialog-right-option-sale-protect`, `consent-dialog-right-option-sale-allow` | The sale-and-sharing choice. |
+| `consent-dialog-receipt`, `consent-dialog-receipt-toggle`, `consent-dialog-receipt-details` | The receipt of the recorded choice. |
+| `consent-dialog-preferences-row`, `consent-dialog-preferences-panel` | The Preferences row and its categories. |
+| `consent-dialog-category-switch-<category>` | Category switch. |
+| `consent-dialog-reject-all`, `consent-dialog-accept-all`, `consent-dialog-save-button`, `consent-dialog-done` | Action buttons. |
+| `consent-dialog-sheet`, `consent-dialog-sheet-close` | A nested sheet on phones. |
+| `opt-in-confirmation-root`, `opt-in-confirmation-card`, `opt-in-confirmation-title`, `opt-in-confirmation-description` | Separate modal confirmation dialog for opting back in under an `opt-out` policy. |
 | `opt-in-confirmation-cancel-button`, `opt-in-confirmation-confirm-button` | Equal-prominence cancel ("Stay opted out") and confirm ("Opt back in") buttons. |
-| `consent-widget-accordion-item-<category>` | Category row (for example, `measurement`). |
-| `consent-widget-switch-<category>` | Category switch. |
-| `consent-widget-restriction-<category>` | GPC or account lock notice below a restricted category row. |
-| `consent-widget-vendor-list-<category>` | Category vendor list. |
-| `consent-widget-vendor-switch-<category>-<vendor>` | Individual vendor switch. |
-| `consent-widget-footer` | Button row. |
-| `consent-widget-footer-accept-all-button`, `consent-widget-reject-button`, `consent-widget-footer-save-button` | Action buttons. |
-| `consent-dialog-branding` | "Consent by" tag. |
-| `consent-dialog-overlay` | Backdrop. |
 
 ## Check it works
 
-1. Click a **Privacy settings** link. The dialog opens with focus on its
-   first control.
-2. Enable **Analytics** (`measurement`) only and click **Save Settings**.
+1. Use an opt-in policy. Click a **Privacy settings** link. A centred card
+   opens over a dimmed backdrop, with focus on its title.
+2. Turn on **Analytics** (`measurement`) only and click **Save**.
    Measurement vendors load while marketing stays blocked.
 3. Reopen the dialog and confirm **Analytics** is on and **Marketing** is
    off.

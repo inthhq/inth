@@ -112,7 +112,7 @@ These strings override text in every language. For localized copy, see
 
 ## Change the layout
 
-Configure shape, position and button layout under `presentation.prompt`:
+Configure the container and the button layout under `presentation.prompt`:
 
 {/* example: fragment */}
 
@@ -121,29 +121,25 @@ Configure shape, position and button layout under `presentation.prompt`:
   window.inth = window.inth || [];
   inth.push(['config', {
     presentation: {
-      prompt: { variant: 'bar', position: 'bottom', direction: 'row' },
+      prompt: {
+        container: { type: 'card', position: 'end' },
+        layout: [['reject', 'accept'], 'customize'],
+      },
     },
   }]);
 </script>
 ```
 
-| `variant` | Positions |
-| --- | --- |
-| `floating` (default) | `bottom-left` (default), `bottom-right`, `top-left`, `top-right`, `bottom-center`, `top-center` |
-| `bar` | `bottom` (default), `top` |
-| `widget` | `bottom-right` (default), `bottom-left`, `top-left`, `top-right` |
-| `wall` | `center` |
+<import src="../../../shared/browser/client-options.mdx#containers" />
 
 | `presentation.prompt` option | What it does |
 | --- | --- |
+| `container` | The Card, Banner or Drawer, and where it sits. |
+| `edgeStyle` | `'inset'` (default) or `'flush'` for a Banner or Drawer. |
+| `blockUntilChoice` | Dims the page, locks scroll and traps focus until the visitor chooses. |
 | `layout` | Button order; nested arrays group buttons together. |
 | `primaryActions` | Actions rendered with primary button styling. |
-| `direction` | `'row'` (default) or `'column'`. |
 | `uiProfile` | `'compact'` (default) sizes to label width; `'balanced'` and `'strict'` stretch and stack groups. |
-| `blocking` | Dims the page, locks scroll and traps focus. |
-
-Notices never block and cannot use `wall`; `wall` always blocks. Invalid
-positions fall back to the variant default.
 
 ## Show legal links
 
@@ -180,14 +176,15 @@ Use theme tokens for global styling (see
 
 | `data-testid` | Element |
 | --- | --- |
-| `consent-banner-root` | Positioned wrapper carrying `data-variant`, `data-position` and `data-blocking`. |
-| `consent-banner-card` | Card or bar container. |
+| `consent-banner-root` | Positioned wrapper carrying `data-placement` (such as `card-start` or `banner-bottom`), `data-flow`, `data-variant` (`choice`, `us-consent` or `notice`), `data-edge-style`, `data-blocking`, `data-expanded` and `data-state`. |
+| `consent-banner-card` | The Card, Banner or Drawer. |
 | `consent-banner-title`, `consent-banner-description` | Heading and body text. |
 | `consent-banner-legal-link-privacyPolicy` (and other link keys) | Legal links. |
 | `consent-banner-footer` | Button row. |
 | `consent-banner-accept-button`, `consent-banner-reject-button`, `consent-banner-customize-button`, `consent-banner-dismiss-button` | Action buttons. |
 | `consent-banner-branding` | "Consent by" tag. |
 | `consent-banner-overlay` | Backdrop for blocking banners. |
+| `consent-banner-body` | The choices Customize opens in place. |
 
 ## Turn the banner off
 
