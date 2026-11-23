@@ -12,8 +12,10 @@
  * ```
  */
 import { applyExperimentAssignment, resolveOptOutLink } from '@inth/sdk/engine';
-import { cppaOptOutIconSvg } from '@inth/sdk/ui/utils/opt-out-icon';
-import { promptClassNames } from '@inth/astro/server';
+import {
+	privacyChoicesLinkIconSvg,
+	promptClassNames,
+} from '@inth/astro/server';
 import ComponentStyles from './component-styles.astro';
 
 interface Props {
@@ -62,6 +64,8 @@ const optOutLink = isOptOut
 	: null;
 const showOptOutIcon = optOutLink?.variant === 'privacy-choices';
 // The `legal-links` sheet's `.optOutIcon` rule sizes it, as React's link.
+// A page that loads no such sheet still gets a 14px icon, as on
+// `<PrivacyChoicesLink />`, unless the host asked for no styling.
 const optOutIconClass = noStyle
 	? undefined
 	: promptClassNames.legalLinks.optOutIcon;
@@ -82,7 +86,7 @@ const policyRights = inth ? inth.snapshot.policyRule.rights.join(' ') : undefine
 	hidden={hasConsentUi ? undefined : true}
 	href={as === 'a' ? '#inth-preferences' : undefined}
 	type={as === 'button' ? 'button' : undefined}
->{showOptOutIcon && <Fragment set:html={cppaOptOutIconSvg(optOutIconClass)} />}<slot>{optOutLink ? optOutLink.label : ''}</slot></Tag>
+>{showOptOutIcon && <Fragment set:html={privacyChoicesLinkIconSvg(optOutIconClass, !noStyle)} />}<slot>{optOutLink ? optOutLink.label : ''}</slot></Tag>
 
 <script>
 	import { attachBannerActions } from '@inth/astro/client';
