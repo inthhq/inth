@@ -267,9 +267,12 @@ const SurfaceContent = ({
 	const layout: ResolvedConsentLayout = phone
 		? container.phone
 		: container.desktop;
-	const variant: PrivacyChoicesPromptVariant = resolvePrivacyChoicesVariant(
-		snapshot.policyRule
-	);
+	// The effective model: an `iab` rule whose vendor list is unavailable
+	// falls back to the standard opt-in prompt.
+	const variant: PrivacyChoicesPromptVariant = resolvePrivacyChoicesVariant({
+		...snapshot.policyRule,
+		model,
+	});
 	const activeUI = snapshot.activeUI ?? 'none';
 	const wantsShow =
 		sheetsReady &&
