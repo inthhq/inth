@@ -797,3 +797,28 @@ test('a command waiting for an engine that fails to load rejects, and the next o
 	expect(harness.loadEngine).toHaveBeenCalledTimes(2);
 	logged.mockRestore();
 });
+
+test('[BNR-06] a banner the early-tap script hid shows again when the engine fails to load', async () => {
+	const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+	renderBanner();
+	const harness = createHarness();
+	harness.loadEngine.mockRejectedValueOnce(
+		new Error('The engine chunk failed.')
+	);
+	harness.context.start();
+
+	tap('accept');
+	// The script hides the banner until the engine replays the tap.
+	expect(document.getElementById('inth-early-tap')).not.toBeNull();
+	harness.releaseEngine();
+
+	// No engine will replay it: the banner shows again.
+	await vi.waitFor(() =>
+		expect(document.getElementById('inth-early-tap')).toBeNull()
+	);
+	expect(logged).toHaveBeenCalled();
+	(
+		window as unknown as Record<string, { stop?: () => void } | undefined>
+	).__inthEarlyTaps?.stop?.();
+	logged.mockRestore();
+});

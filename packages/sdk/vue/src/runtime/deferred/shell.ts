@@ -233,6 +233,11 @@ export const createDeferredContext = function createDeferredContext(
 				}
 				engine = undefined;
 				loading = undefined;
+				// A banner the early-tap script hid for a tap the engine was to
+				// replay shows again, or it stays hidden for good.
+				if (typeof document !== 'undefined') {
+					document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
+				}
 				handle.fail(error);
 				return undefined;
 			}
