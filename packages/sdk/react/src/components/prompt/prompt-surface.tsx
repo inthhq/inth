@@ -47,7 +47,7 @@ import {
 } from 'react';
 import type { ReactNode, RefObject } from 'react';
 
-import { registerDialogChunkWarmer, warmDialogChunk } from '~/chunk-warming';
+import { registerDialogChunkWarmer, warmDialogChunk } from '~/warm-dialog-chunk';
 import { useTranslations } from '~/component-hooks/use-translations';
 import { usePhoneLayout } from '~/components/parts/use-phone-layout';
 import {
@@ -55,10 +55,10 @@ import {
 	useOptOutReceiptData,
 	useSurfaceSession,
 } from '~/components/parts/use-surface-session';
-import { ConsentButton } from '~/components/shared/primitives/button';
-import { InlineLegalLinks } from '~/components/shared/primitives/legal-links';
-import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links';
-import { BrandMarkIcon } from '~/components/shared/ui/logo';
+import { ConsentButton } from '~/components/shared/primitives/consent-button';
+import { InlineLegalLinks } from '~/components/shared/primitives/legal-links/inline-legal-links';
+import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links/inline-legal-links';
+import { BrandMarkIcon } from '~/components/shared/ui/brand-mark-icon';
 import { toSaveUISource } from '~/context/consent-tracking-context';
 import { LocalThemeContext } from '~/context/theme-context';
 import { ConsentDraftProvider, useConsentDraftStore } from '~/draft';
@@ -74,10 +74,10 @@ import { useBrowserLayoutEffect } from '~/hooks/use-browser-layout-effect';
 import { useIsHydrated } from '~/hooks/use-is-hydrated';
 import { useReducedMotion } from '~/hooks/use-reduced-motion';
 import { useTextDirection } from '~/hooks/use-text-direction';
-import { useKernel } from '~/kernel-selector';
-import { useUIConfig } from '~/ui-config-context';
-import { createDeferredModule } from '~/utils/deferred-module';
-import { inertProps } from '~/utils/inert';
+import { useKernel } from '~/use-kernel-selector';
+import { useUIConfig } from '~/use-ui-config';
+import { createDeferredModule } from '~/utils/create-deferred-module';
+import { inertProps } from '~/utils/inert-props';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { SurfaceStyles, useSurfaceSheetsReady } from '../shared/surface-styles';
@@ -89,7 +89,7 @@ import { removeStaticBanner } from './static-banner-shell';
  * The options, loaded when Customize first opens them, or at once in a
  * side Drawer, which shows them from the start.
  */
-const panelModule = createDeferredModule(() => import('./panel'));
+const panelModule = createDeferredModule(() => import('./prompt-options-panel'));
 const LazyPanel = panelModule.component((module) => module.PromptOptionsPanel);
 
 /** Exits are 160ms; the controllers add their own slack. */

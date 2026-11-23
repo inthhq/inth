@@ -17,7 +17,7 @@ import type {
 } from '@inth/sdk/modules/iframe-blocker';
 import { useEffect, useRef, useState } from 'react';
 
-import { useRequiredKernel } from './shared';
+import { useRequiredKernel } from './use-required-kernel';
 
 const loadIframeBlockerModule = () =>
 	import('@inth/sdk/modules/iframe-blocker');

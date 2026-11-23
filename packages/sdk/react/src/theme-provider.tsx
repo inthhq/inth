@@ -4,8 +4,8 @@ import type { ReactNode } from 'react';
 
 import { GlobalThemeContext } from './context/theme-context';
 import type { ThemeContextValue } from './context/theme-context';
-import { V3UIConfigContext } from './ui-config-context';
-import type { V3UIConfigValue } from './ui-config-context';
+import { V3UIConfigContext } from './use-ui-config';
+import type { V3UIConfigValue } from './use-ui-config';
 
 interface V3ThemeProviderProps {
 	themeConfig: ThemeContextValue;

@@ -2,8 +2,8 @@ import { forwardRef as createForwardRef } from 'react';
 import type { Ref } from 'react';
 
 import { useConsentLabels } from '~/component-hooks/use-consent-labels';
-import { ConsentButton } from '~/components/shared/primitives/button';
-import type { ConsentButtonProps } from '~/components/shared/primitives/button.types';
+import { ConsentButton } from '~/components/shared/primitives/consent-button';
+import type { ConsentButtonProps } from '~/components/shared/primitives/consent-button.model';
 
 /**
  * Button to accept all available cookies.

@@ -21,8 +21,8 @@ import type { HTMLAttributes, ReactNode } from 'react';
 
 import { useControllableState } from '~/components/shared/libs/use-controllable-state';
 import { useTheme } from '~/hooks/use-theme';
-import { useUIConfig } from '~/ui-config-context';
-import { inertProps } from '~/utils/inert';
+import { useUIConfig } from '~/use-ui-config';
+import { inertProps } from '~/utils/inert-props';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 export type PreferenceItemVariantsProps = Record<never, never>;

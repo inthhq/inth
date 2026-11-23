@@ -46,7 +46,7 @@ import {
 	useKernel,
 	useKernelSelector,
 	useServerSnapshot,
-} from './kernel-selector';
+} from './use-kernel-selector';
 
 /**
  * Full snapshot accessor. Escape hatch for consumers that genuinely need

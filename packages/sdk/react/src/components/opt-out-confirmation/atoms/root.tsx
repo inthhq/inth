@@ -25,10 +25,10 @@ import { useScrollLock } from '~/hooks/use-scroll-lock';
 import { useTextDirection } from '~/hooks/use-text-direction';
 import { useTheme } from '~/hooks/use-theme';
 import { useTranslationLanguage } from '~/hooks/use-translation-language';
-import { useKernel } from '~/kernel-selector';
+import { useKernel } from '~/use-kernel-selector';
 import type { CSSPropertiesWithVars } from '~/types/theme';
-import { useUIConfig } from '~/ui-config-context';
-import { cnExt as cn } from '~/utils/cn';
+import { useUIConfig } from '~/use-ui-config';
+import { cnExt as cn } from '~/utils/cn-ext';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 import {

@@ -19,7 +19,7 @@
 import { afterPriorityImages } from '@inth/sdk/runtime/page-globals';
 import { useEffect } from 'react';
 
-import { useUIConfig } from './ui-config-context';
+import { useUIConfig } from './use-ui-config';
 
 type Warmer = () => void;
 

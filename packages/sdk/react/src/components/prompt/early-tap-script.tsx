@@ -20,8 +20,8 @@ import {
 } from '~/context/consent-tracking-context';
 import { useCommittedRef } from '~/hooks/use-committed-ref';
 import { useIsHydrated } from '~/hooks/use-is-hydrated';
-import { useKernel } from '~/kernel-selector';
-import { useUIConfig } from '~/ui-config-context';
+import { useKernel } from '~/use-kernel-selector';
+import { useUIConfig } from '~/use-ui-config';
 
 /** A layout effect in the browser; nothing to run on the server. */
 const useBrowserLayoutEffect =

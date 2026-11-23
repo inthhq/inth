@@ -2,7 +2,7 @@ import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { ConsentDialog } from '~/aggregate-components';
-import { warmDialogChunk } from '~/chunk-warming';
+import { warmDialogChunk } from '~/warm-dialog-chunk';
 import { ConsentBanner } from '~/components/prompt';
 
 import { ComponentFixtureProvider } from './component-fixture-provider';

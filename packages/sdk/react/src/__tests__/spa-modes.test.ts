@@ -12,7 +12,7 @@ import { describe, expect, test } from 'vitest';
 import { withBuildDefaults } from '../../../core/src/transports/manifest-browser';
 import { manifest } from '../modes';
 import { testing } from '../testing';
-import { selectedMode } from '../transports/select-mode';
+import { selectedMode } from '../transports/selected-mode';
 
 const built: ConsentManifest = {
 	branding: 'inth',

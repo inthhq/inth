@@ -4,7 +4,7 @@ import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import type { ReactNode } from 'react';
 
 import { useTheme } from '~/hooks/use-theme';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 export interface TriggerTextProps {

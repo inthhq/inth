@@ -21,7 +21,7 @@ import { useHasConsentUI } from '~/hooks';
 import { useOptInConfirmationHost } from '~/hooks/use-opt-out';
 import { useTextDirection } from '~/hooks/use-text-direction';
 import { useTranslationLanguage } from '~/hooks/use-translation-language';
-import { createDeferredModule } from '~/utils/deferred-module';
+import { createDeferredModule } from '~/utils/create-deferred-module';
 
 const LazyOptInConfirmation = createDeferredModule(
 	() => import('~/components/opt-in-confirmation')

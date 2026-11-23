@@ -15,7 +15,7 @@ import {
 	useSnapshot,
 } from '../hooks';
 import { useOptOutConfirmationOpen } from '../hooks/use-opt-out';
-import { useKernel } from '../kernel-selector';
+import { useKernel } from '../use-kernel-selector';
 import { useTranslations } from './use-translations';
 
 /**

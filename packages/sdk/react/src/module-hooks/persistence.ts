@@ -7,8 +7,8 @@ import type {
 } from '@inth/sdk/modules/persistence';
 import { useEffect, useRef, useState } from 'react';
 
-import { deferredModules } from '../deferred/registry';
-import { useRequiredKernel } from './shared';
+import { deferredModules } from '../deferred/deferred-registry.model';
+import { useRequiredKernel } from './use-required-kernel';
 
 export type UsePersistenceOptions = Omit<PersistenceOptions, 'kernel'>;
 

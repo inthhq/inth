@@ -40,12 +40,12 @@ import { useTranslations } from '~/component-hooks/use-translations';
 import { useConsentDraftSlice, useConsentDraftStore } from '~/draft';
 import { useVendorChoice } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
-import { useKernel, useKernelSelector } from '~/kernel-selector';
-import { useUIConfig } from '~/ui-config-context';
-import { inertProps } from '~/utils/inert';
+import { useKernel, useKernelSelector } from '~/use-kernel-selector';
+import { useUIConfig } from '~/use-ui-config';
+import { inertProps } from '~/utils/inert-props';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
-import { ChoiceSwitch } from './switch';
+import { ChoiceSwitch } from './choice-switch';
 import { useSurfaceSession } from './use-surface-session';
 
 /** Surfaces that render the category group, by their test-id prefix. */

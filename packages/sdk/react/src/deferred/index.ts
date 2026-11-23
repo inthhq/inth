@@ -9,9 +9,9 @@
 
 // oxlint-disable-next-line oxc/no-barrel-file -- The subpath's public interface.
 export { DeferredConsentBanner, DeferredConsentDialog } from './surfaces';
-export { DeferredOptOutConfirmation } from './opt-out-confirmation';
+export { DeferredOptOutConfirmation } from './deferred-opt-out-confirmation';
 export type { ConsentBoot, RootEngineInputs } from './boot';
-export type { DeferredCommitConfig, DeferredCommitted } from './committed';
+export type { DeferredCommitConfig, DeferredCommitted } from './deferred-committed.model';
 export {
 	awaitsChoice,
 	canDeferEngineAfterChoice,
@@ -26,11 +26,11 @@ export {
 	engineNeededAtLoad,
 	startsScriptsWithoutEngine,
 	useConsentBootPlan,
-} from './boot-plan';
-export type { DeferredEngine, DeferredKernelHandle } from './deferred-kernel';
-export { learnEngineChunks } from './engine-preload';
-export { isRunnableNow, scriptsNeedEngine } from './runnable';
-export { record, read, recordOnce } from './session';
-export type { Recorded } from './session';
-export type { DeferredConsentShellProps, DeferredShellOptions } from './shell';
-export { DeferredConsentShell } from './shell';
+} from './use-consent-boot-plan';
+export type { DeferredEngine, DeferredKernelHandle } from './create-deferred-kernel';
+export { learnEngineChunks } from './engine-preload.store';
+export { isRunnableNow, scriptsNeedEngine } from './runnable-script.model';
+export { record, read, recordOnce } from './deferred-session-context';
+export type { Recorded } from './deferred-session-context';
+export type { DeferredConsentShellProps, DeferredShellOptions } from './deferred-consent-shell';
+export { DeferredConsentShell } from './deferred-consent-shell';

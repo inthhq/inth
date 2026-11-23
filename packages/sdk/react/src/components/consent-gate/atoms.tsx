@@ -5,14 +5,14 @@ import type { Ref } from 'react';
 
 import { resolveConsentGateCopy } from '~/component-hooks/use-consent-gate';
 import { useTranslations } from '~/component-hooks/use-translations';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { CONSENT_GATE_SHEETS } from '../shared/consent-gate-sheets';
 import { Box } from '../shared/primitives/box';
 import type { BoxProps } from '../shared/primitives/box';
-import { ConsentButton } from '../shared/primitives/button';
-import type { ConsentButtonProps } from '../shared/primitives/button.types';
+import { ConsentButton } from '../shared/primitives/consent-button';
+import type { ConsentButtonProps } from '../shared/primitives/consent-button.model';
 import { SurfaceStyles, useSurfaceSheetsReady } from '../shared/surface-styles';
 
 const ConsentGateRoot = createForwardRef<

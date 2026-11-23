@@ -4,4 +4,4 @@
  * (esbuild) does not treat every module the index names as part of an app
  * that imports one hook: only the groups it uses are live.
  */
-export { useEventDispatcher } from '../event-dispatcher';
+export { useEventDispatcher } from '../use-event-dispatcher';

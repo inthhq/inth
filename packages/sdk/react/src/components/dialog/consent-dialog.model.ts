@@ -1,7 +1,7 @@
 import type * as CoreTypes from '@inth/sdk/engine';
 
 import type { ConsentDialogTriggerProps } from '~/components/panel-trigger';
-import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links';
+import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links/inline-legal-links';
 
 /**
  * Props for `<ConsentDialog />`, the consent dialog ("Your Privacy

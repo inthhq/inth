@@ -9,7 +9,7 @@
 import * as React from 'react';
 import { createContext } from 'react';
 
-import type { DeferredKernelHandle } from './deferred-kernel';
+import type { DeferredKernelHandle } from './create-deferred-kernel';
 
 /** A promise that keeps its result where a render can read it. @internal */
 export type Recorded<Value> = Promise<Value> & {

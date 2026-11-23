@@ -9,7 +9,7 @@ import type { ConsentStateFixture } from '~/__tests__/consent-state-fixture';
 import { policyFixture } from '~/__tests__/policy-fixture';
 
 import { testing } from '../../../../testing';
-import { BrandingTag } from '../branding';
+import { BrandingTag } from '../branding-tag';
 
 type ConsentManagerState = ConsentStateFixture;
 

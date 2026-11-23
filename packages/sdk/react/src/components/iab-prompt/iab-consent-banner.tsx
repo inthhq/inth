@@ -6,20 +6,20 @@ import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import type { FC } from 'react';
 
-import { warmDialogChunk } from '~/chunk-warming';
+import { warmDialogChunk } from '~/warm-dialog-chunk';
 import { Box } from '~/components/shared/primitives/box';
-import { BrandingTag } from '~/components/shared/ui/branding';
+import { BrandingTag } from '~/components/shared/ui/branding-tag';
 import * as Button from '~/components/shared/ui/button';
 import { useComponentConfig } from '~/hooks/use-component-config';
 import { useFocusBlocking } from '~/hooks/use-focus-blocking';
 import { useHeadlessIABConsentUI } from '~/hooks/use-headless-iab-consent-ui';
-import { useIABConsentManager } from '~/hooks/use-iab-manager';
-import { useUIConfig } from '~/ui-config-context';
+import { useIABConsentManager } from '~/hooks/use-iab-consent-manager';
+import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { useIABTranslations } from '../iab-panel/use-iab-translations';
-import { IABConsentBannerCard } from './atoms/card';
-import { IABConsentBannerRoot } from './atoms/root';
+import { IABConsentBannerCard } from './atoms/iab-consent-banner-card';
+import { IABConsentBannerRoot } from './atoms/iab-consent-banner-root';
 
 /**
  * Props for the IABConsentBanner component.

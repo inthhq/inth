@@ -1,6 +1,6 @@
 import type { UIOptions } from '@inth/sdk/ui/theme';
 
-import type { ReactComponentSlots } from './slots';
+import type { ReactComponentSlots } from './react-slots.model';
 
 /**
  * React-specific UI configuration options.

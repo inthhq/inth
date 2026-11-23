@@ -12,10 +12,10 @@ import {
 	StableV3UIConfigProvider,
 } from '~/__tests__/stable-context-providers';
 import { AdTechProviderSection } from '~/components/iab-panel/atoms/ad-tech-provider-section';
-import { IABConsentBannerFooter } from '~/components/iab-prompt/atoms/footer';
-import { IABConsentBannerHeader } from '~/components/iab-prompt/atoms/header';
+import { IABConsentBannerFooter } from '~/components/iab-prompt/atoms/iab-consent-banner-footer';
+import { IABConsentBannerHeader } from '~/components/iab-prompt/atoms/iab-consent-banner-header';
 import { ConsentDialogTriggerToolbar } from '~/components/panel-trigger';
-import { TriggerButton } from '~/components/panel-trigger/atoms/button';
+import { TriggerButton } from '~/components/panel-trigger/atoms/trigger-button';
 import { ConsentWidgetAccordion } from '~/components/preferences/atoms/accordion';
 import * as Switch from '~/components/shared/ui/switch';
 

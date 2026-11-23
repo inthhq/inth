@@ -5,7 +5,7 @@ import type { ConsentActionKey } from '@inth/sdk/ui/theme';
 import { forwardRef as createForwardRef, useCallback } from 'react';
 import type { FocusEvent, MouseEvent, PointerEvent } from 'react';
 
-import { useIdleDialogWarming, warmDialogChunk } from '~/chunk-warming';
+import { useIdleDialogWarming, warmDialogChunk } from '~/warm-dialog-chunk';
 import {
 	toSaveUISource,
 	useConsentTracking,
@@ -14,13 +14,13 @@ import { useConsentSaveAction } from '~/draft-context';
 import { useSetActiveUI, useDismissNotice } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import type { CSSPropertiesWithVars, CSSVariables } from '~/types/theme';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { Slot } from '../libs/slot';
 import * as Button from '../ui/button';
 import type { ButtonVariantsProps } from '../ui/button/button';
-import type { ConsentButtonElement, ConsentButtonProps } from './button.types';
+import type { ConsentButtonElement, ConsentButtonProps } from './consent-button.model';
 
 const NON_DOM_PROPS = [
 	'primary',

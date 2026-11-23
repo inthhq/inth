@@ -20,7 +20,7 @@ import type { ComponentType } from 'react';
 import {
 	registerDialogChunkWarmer,
 	useIdleDialogWarming,
-} from './chunk-warming';
+} from './warm-dialog-chunk';
 import type {
 	IABConsentDialogCompoundComponent,
 	IABConsentDialogProps,
@@ -28,8 +28,8 @@ import type {
 import type { ConsentDialogTriggerProps } from './components/panel-trigger';
 import { useActiveUI, useModel } from './hooks';
 import { useIsHydrated } from './hooks/use-is-hydrated';
-import { useIAB } from './iab-context';
-import { createDeferredModule } from './utils/deferred-module';
+import { useIAB } from './iab-provider';
+import { createDeferredModule } from './utils/create-deferred-module';
 
 type AnyComponent = ComponentType<Record<string, unknown>>;
 

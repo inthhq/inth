@@ -6,7 +6,7 @@ import type { ComponentType, ReactNode } from 'react';
 
 import type { HeadlessConsentSurfaceState } from '~/component-hooks/use-headless-consent-ui';
 import type { CSSPropertiesWithVars, CSSVariables } from '~/types/theme';
-import { cnExt as cn } from '~/utils/cn';
+import { cnExt as cn } from '~/utils/cn-ext';
 
 export interface PolicyActionRenderProps<TAction extends string> {
 	key: string;

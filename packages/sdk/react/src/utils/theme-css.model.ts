@@ -5,7 +5,7 @@ import {
 	themeToVars as baseThemeToVars,
 } from '@inth/sdk/ui/theme';
 
-import type { Theme } from '../types/theme/style-types';
+import type { Theme } from '../types/theme/theme-style.model';
 
 /**
  * Default design tokens for the v2 theme system.

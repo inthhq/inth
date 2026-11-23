@@ -6,7 +6,7 @@ import { ConsentDialog } from '~/aggregate-components';
 import {
 	registerDialogChunkWarmer,
 	resetDialogChunkWarmingForTests,
-} from '~/chunk-warming';
+} from '~/warm-dialog-chunk';
 import { ConsentDialogLink } from '~/components/panel-link';
 import { ConsentBanner } from '~/components/prompt';
 import { InthProvider } from '~/provider';

@@ -7,7 +7,7 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import {
 	registerDialogChunkWarmer,
 	resetDialogChunkWarmingForTests,
-} from '~/chunk-warming';
+} from '~/warm-dialog-chunk';
 import { ConsentDialogLink } from '~/components/panel-link';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentBanner } from '~/components/prompt';

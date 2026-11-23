@@ -9,9 +9,9 @@ import {
 } from '@inth/sdk/engine';
 import { useMemo } from 'react';
 
-import { useKernelSelector } from '../kernel-selector';
+import { useKernelSelector } from '../use-kernel-selector';
 import type { Theme } from '../types/theme';
-import { useUIConfig } from '../ui-config-context';
+import { useUIConfig } from '../use-ui-config';
 
 /** The assigned experiment arm; `useExperiment` without the import cycle. */
 const useAssignment = () =>

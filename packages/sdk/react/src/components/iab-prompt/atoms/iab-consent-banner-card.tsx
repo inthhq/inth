@@ -6,7 +6,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 
 import { useFocusTrap } from '~/hooks/use-focus-trap';
 import { useTheme } from '~/hooks/use-theme';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 interface IABConsentBannerCardProps extends HTMLAttributes<HTMLDivElement> {

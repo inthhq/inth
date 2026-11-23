@@ -28,7 +28,7 @@ import { PrivacyChoicesLink } from '~/components/privacy-choices-link';
 import { ConsentBanner } from '~/components/prompt';
 import { useSetActiveUI, useSnapshot } from '~/hooks';
 import { useOptOut } from '~/hooks/use-opt-out';
-import { useKernel } from '~/kernel-selector';
+import { useKernel } from '~/use-kernel-selector';
 
 import { testing } from '../../../testing';
 

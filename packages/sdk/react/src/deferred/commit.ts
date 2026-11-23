@@ -19,14 +19,14 @@ import { completeCommit } from '@inth/sdk/surface-actions/early-commit';
 import type { CompleteCommitInput } from '@inth/sdk/surface-actions/early-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 
-import type { DeferredCommitConfig, DeferredCommitted } from './committed';
-import type { DeferredKernelHandle } from './deferred-kernel';
-import { startPlainScripts } from './instant';
+import type { DeferredCommitConfig, DeferredCommitted } from './deferred-committed.model';
+import type { DeferredKernelHandle } from './create-deferred-kernel';
+import { startPlainScripts } from './instant-commit.model';
 import {
 	claimDeferredScripts,
 	deferredScripts,
 	loadDeferredScriptLoader,
-} from './registry';
+} from './deferred-registry.model';
 
 /** @internal */
 export interface CommitTapInput {

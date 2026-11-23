@@ -21,13 +21,13 @@ import {
 	requestDeferredEngine,
 	startDeferredScripts,
 	startsDeferredScripts,
-} from '../deferred/registry';
+} from '../deferred/deferred-registry.model';
 import {
 	isPlainScript,
 	isRunnableNow,
 	observesConsent,
-} from '../deferred/runnable';
-import { useRequiredKernel } from './shared';
+} from '../deferred/runnable-script.model';
+import { useRequiredKernel } from './use-required-kernel';
 
 /**
  * Under a deferred root, a script that may run now would otherwise wait

@@ -23,11 +23,11 @@ import {
 	AdvertisingRow,
 	CategoryGroup,
 } from '~/components/parts/category-group';
-import { SaleRightsRow } from '~/components/parts/rights-row';
+import { SaleRightsRow } from '~/components/parts/sale-rights-row';
 import { useConsentDraftSlice, useConsentDraftStore } from '~/draft';
 import { useSnapshot } from '~/hooks';
 import { useBrowserLayoutEffect } from '~/hooks/use-browser-layout-effect';
-import { inertProps } from '~/utils/inert';
+import { inertProps } from '~/utils/inert-props';
 
 import { SurfaceStyles } from '../shared/surface-styles';
 import type { SurfaceStyleSheet } from '../shared/surface-styles';

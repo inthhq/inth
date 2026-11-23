@@ -8,7 +8,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 import * as Button from '~/components/shared/ui/button';
 import { useHeadlessIABConsentUI } from '~/hooks/use-headless-iab-consent-ui';
 import { useTheme } from '~/hooks/use-theme';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { useGVLData } from '../hooks/use-gvl-data';

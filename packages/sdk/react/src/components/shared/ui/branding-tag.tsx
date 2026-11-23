@@ -6,10 +6,10 @@ import { useTranslations } from '~/component-hooks/use-translations';
 import { useBranding } from '~/hooks';
 import { useIsHydrated } from '~/hooks/use-is-hydrated';
 import { useTheme } from '~/hooks/use-theme';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
-import { BrandMarkIcon } from './logo';
+import { BrandMarkIcon } from './brand-mark-icon';
 
 interface BrandingTagProps {
 	/** The surface the tag sits on. */

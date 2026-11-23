@@ -6,7 +6,7 @@ import { Suspense, useContext, useEffect, useLayoutEffect } from 'react';
 import type { ReactNode } from 'react';
 
 import { HydrationSnapshotContext, StreamedPrefetchContext } from '~/context';
-import { useKernel } from '~/kernel-selector';
+import { useKernel } from '~/use-kernel-selector';
 
 /** A layout effect in the browser; nothing to run on the server. */
 const useBrowserLayoutEffect =

@@ -6,7 +6,7 @@ import { createContext, useContext, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
-import { useConsentDialogTrigger } from '~/component-hooks/use-panel-trigger';
+import { useConsentDialogTrigger } from '~/component-hooks/use-consent-dialog-trigger';
 import { useBranding } from '~/hooks';
 import { useIsHydrated } from '~/hooks/use-is-hydrated';
 
@@ -16,7 +16,7 @@ import {
 } from '../../shared/surface-styles';
 import type { SurfaceStyleSheet } from '../../shared/surface-styles';
 import { TRIGGER_SHEETS } from '../../shared/trigger-sheets';
-import type { CornerPosition } from '../types';
+import type { CornerPosition } from '../consent-dialog-trigger.model';
 import { useDraggable } from '../use-draggable';
 import type { UseDraggableReturn } from '../use-draggable';
 

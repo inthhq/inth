@@ -10,22 +10,22 @@ import type { ComponentType } from 'react';
 import {
 	registerDialogChunkWarmer,
 	useIdleDialogWarming,
-} from './chunk-warming';
-import type { ConsentDialogProps } from './components/dialog/types';
+} from './warm-dialog-chunk';
+import type { ConsentDialogProps } from './components/dialog/consent-dialog.model';
 import type { OptInConfirmationProps } from './components/opt-in-confirmation';
 import type {
 	OptOutConfirmationCompoundComponent,
 	OptOutConfirmationProps,
 } from './components/opt-out-confirmation';
 import type { ConsentDialogTriggerProps } from './components/panel-trigger';
-import { requestReceiptFocus } from './components/parts/receipt-focus';
+import { requestReceiptFocus } from './components/parts/receipt-focus.model';
 import type {
 	ConsentWidgetCompoundComponent,
 	ConsentWidgetProps,
 } from './components/preferences';
 import { PARTS_SHEETS } from './components/shared/parts-sheets';
 import { preloadSurfaceSheets } from './components/shared/surface-styles';
-import { importDialog } from './deferred/trigger';
+import { importDialog } from './deferred/schedule-deferred-engine';
 import { useActiveUI, useModel } from './hooks';
 import { useIABPolicyGuard } from './hooks/use-iab-policy-guard';
 import {
@@ -34,8 +34,8 @@ import {
 	useOptInConfirmationOpen,
 	useOptOutConfirmationOpen,
 } from './hooks/use-opt-out';
-import { useKernel } from './kernel-selector';
-import { createDeferredModule } from './utils/deferred-module';
+import { useKernel } from './use-kernel-selector';
+import { createDeferredModule } from './utils/create-deferred-module';
 
 type AnyComponent = ComponentType<Record<string, unknown>>;
 

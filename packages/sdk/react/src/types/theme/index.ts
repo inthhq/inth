@@ -1,1 +1,1 @@
-export * from './style-types';
+export * from './theme-style.model';

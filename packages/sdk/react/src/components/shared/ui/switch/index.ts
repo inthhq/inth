@@ -5,4 +5,4 @@ export type {
 	SwitchRootCSSVariables,
 	SwitchThumbCSSVariables,
 	SwitchTrackCSSVariables,
-} from './switch.types';
+} from './switch.model';

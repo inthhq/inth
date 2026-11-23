@@ -4,7 +4,7 @@ import { page } from 'vitest/browser';
 
 import { SupportChat } from '../../../../../examples/showcase-gated-embeds/components/support-chat';
 import { useVendorAllowed } from '../hooks';
-import { useKernel } from '../kernel-selector';
+import { useKernel } from '../use-kernel-selector';
 import { testing } from '../testing';
 import { ComponentFixtureProvider } from './component-fixture-provider';
 import { policyFixture } from './policy-fixture';

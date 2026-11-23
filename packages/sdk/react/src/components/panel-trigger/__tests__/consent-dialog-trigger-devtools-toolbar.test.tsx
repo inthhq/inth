@@ -4,7 +4,7 @@ import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';
 import { ConsentDevTools } from '~/devtools';
-import { useDevToolsLauncherAvailable } from '~/devtools-launcher';
+import { useDevToolsLauncherAvailable } from '~/use-dev-tools-launcher';
 
 import { testing } from '../../../testing';
 import { ConsentDialogTrigger } from '../index';

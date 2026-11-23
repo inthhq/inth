@@ -7,7 +7,7 @@ import type { HTMLAttributes } from 'react';
 import { Slot } from '~/components/shared/libs/slot';
 import { useTheme } from '~/hooks/use-theme';
 import type { ExtendThemeKeys } from '~/types/theme';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 /**

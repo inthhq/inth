@@ -4,8 +4,8 @@ import type { ReactNode } from 'react';
 import { useContext, useEffect, useId } from 'react';
 
 import { KernelContext } from '../context';
-import { IABProvider } from '../iab-context';
-import type { IABProviderProps } from '../iab-context';
+import { IABProvider } from '../iab-provider';
+import type { IABProviderProps } from '../iab-provider';
 import { InthProvider } from '../provider';
 import type { InthProviderOptions } from '../provider';
 import { policyFixture } from './policy-fixture';

@@ -13,7 +13,7 @@ import { render } from 'vitest-browser-react';
 import { ConsentDialog } from '../aggregate-components';
 import { IABConsentBanner } from '../components/iab-prompt';
 import { ConsentBanner } from '../components/prompt';
-import { IABProvider } from '../iab-context';
+import { IABProvider } from '../iab-provider';
 import { InthProvider } from '../provider';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';

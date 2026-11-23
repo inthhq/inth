@@ -5,7 +5,7 @@ import type { HeadlessIABDialogData } from '@inth/sdk/iab/headless';
 import { useMemo } from 'react';
 
 import { useTranslations } from '~/hooks';
-import { useIAB } from '~/iab-context';
+import { useIAB } from '~/iab-provider';
 
 /**
  * Processed GVL data for the IAB Consent Dialog.

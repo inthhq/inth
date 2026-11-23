@@ -1,7 +1,7 @@
 import { generateThemeCSS as uiGenerateThemeCSS } from '@inth/sdk/ui/theme';
 import { describe, expect, test } from 'vitest';
 
-import { generateThemeCSS } from '../theme-utils';
+import { generateThemeCSS } from '../theme-css.model';
 
 const theme = { dark: { primary: '#40e0d0' } };
 

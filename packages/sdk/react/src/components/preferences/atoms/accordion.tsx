@@ -18,14 +18,14 @@ import type { ComponentPropsWithoutRef, ReactNode, Ref } from 'react';
 import { useTranslations } from '~/component-hooks/use-translations';
 import { Box } from '~/components/shared/primitives/box';
 import type { BoxProps } from '~/components/shared/primitives/box';
-import { LucideIcon } from '~/components/shared/ui/icon';
+import { LucideIcon } from '~/components/shared/ui/lucide-icon';
 import * as PreferenceItem from '~/components/shared/ui/preference-item';
 import * as RadixSwitch from '~/components/shared/ui/switch';
 import { useConsentDraftSlice, useConsentDraftStore } from '~/draft';
 import { useSnapshot } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 
-import { ConsentWidgetVendorList } from './vendor-list';
+import { ConsentWidgetVendorList } from './consent-widget-vendor-list';
 
 interface ConsentWidgetAccordionContextValue {
 	noStyle?: boolean;

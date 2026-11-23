@@ -24,8 +24,8 @@ import { OptOut } from './atoms/opt-out';
 import { OptOutStatus } from './atoms/opt-out-status';
 import { Root } from './atoms/root';
 import { PolicyActions } from './policy-actions';
-import { ConsentWidget as ConsentWidgetComponent } from './preferences';
-import type { ConsentWidgetProps } from './types';
+import { ConsentWidget as ConsentWidgetComponent } from './consent-widget';
+import type { ConsentWidgetProps } from './consent-widget.model';
 
 export type { ConsentWidgetProps };
 

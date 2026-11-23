@@ -30,8 +30,8 @@ import {
 } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import { useTranslationLanguage } from '~/hooks/use-translation-language';
-import { useKernel } from '~/kernel-selector';
-import { useUIConfig } from '~/ui-config-context';
+import { useKernel } from '~/use-kernel-selector';
+import { useUIConfig } from '~/use-ui-config';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 const PREFERENCES_HASH = '#inth-preferences';

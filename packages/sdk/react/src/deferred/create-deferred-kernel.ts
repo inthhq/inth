@@ -27,8 +27,8 @@ import { createStandInKernel } from '@inth/sdk/runtime/stand-in-kernel';
 import type { StandInKernelHandle } from '@inth/sdk/runtime/stand-in-kernel';
 
 import type { ProviderServices } from '../context';
-import { markDeferredKernel } from './registry';
-import type { DeferredModules } from './registry';
+import { markDeferredKernel } from './deferred-registry.model';
+import type { DeferredModules } from './deferred-registry.model';
 
 /** What the loaded engine hands the stand-in. @internal */
 export interface DeferredEngine {

@@ -4,7 +4,7 @@ import { renderToString } from 'react-dom/server';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { V3UIConfigContext } from '~/ui-config-context';
+import { V3UIConfigContext } from '~/use-ui-config';
 
 import { SurfaceStyles, useSurfaceSheetsReady } from '../surface-styles';
 import type { SurfaceStyleSheet } from '../surface-styles';

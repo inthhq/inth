@@ -6,7 +6,7 @@ import { render } from 'vitest-browser-react';
 import { ConsentDialogLink } from '../components/consent-preferences-link';
 import { KernelContext } from '../context';
 import { useHasConsentUI, useSetActiveUI } from '../hooks';
-import { IABProvider, useIAB } from '../iab-context';
+import { IABProvider, useIAB } from '../iab-provider';
 import { InthProvider } from '../provider';
 import { transportMode } from './fixtures/transport-mode';
 

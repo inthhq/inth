@@ -5,13 +5,13 @@ import { resolveBrandMark } from '@inth/sdk/ui/utils';
 import { isValidElement } from 'react';
 import type { ReactNode } from 'react';
 
-import { BrandMarkIcon } from '~/components/shared/ui/logo';
+import { BrandMarkIcon } from '~/components/shared/ui/brand-mark-icon';
 import { useTheme } from '~/hooks/use-theme';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
-import type { TriggerIcon as TriggerIconType } from '../types';
-import { useTriggerContext } from './root';
+import type { TriggerIcon as TriggerIconType } from '../consent-dialog-trigger.model';
+import { useTriggerContext } from './trigger-root';
 import { FingerprintIcon, SettingsIcon } from './trigger-icons';
 
 export interface TriggerIconProps {

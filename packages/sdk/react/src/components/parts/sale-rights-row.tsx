@@ -29,11 +29,11 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
-import { ConsentButton } from '~/components/shared/primitives/button';
+import { ConsentButton } from '~/components/shared/primitives/consent-button';
 import { useSnapshot } from '~/hooks';
-import { useKernel } from '~/kernel-selector';
-import { useUIConfig } from '~/ui-config-context';
-import { inertProps } from '~/utils/inert';
+import { useKernel } from '~/use-kernel-selector';
+import { useUIConfig } from '~/use-ui-config';
+import { inertProps } from '~/utils/inert-props';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 import {

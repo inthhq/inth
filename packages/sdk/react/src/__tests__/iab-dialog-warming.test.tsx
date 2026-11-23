@@ -8,10 +8,10 @@ import { ConsentDialog } from '~/aggregate-components';
 import {
 	registerDialogChunkWarmer,
 	resetDialogChunkWarmingForTests,
-} from '~/chunk-warming';
+} from '~/warm-dialog-chunk';
 import { ConsentBanner } from '~/components/prompt';
 import { IABConsentBanner, IABConsentDialog } from '~/iab';
-import { resetIABDialogWarmingForTests } from '~/iab-dialog-deferred';
+import { resetIABDialogWarmingForTests } from '~/iab-consent-dialog';
 
 import { ComponentFixtureProvider } from './component-fixture-provider';
 import type { ComponentFixtureOptions } from './component-fixture-provider';

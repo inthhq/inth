@@ -4,7 +4,7 @@ import { resolveIABDialogDisplayModel } from '@inth/sdk/iab/headless';
 import type { HeadlessIABDialogDisplayModel } from '@inth/sdk/iab/headless';
 import { useMemo } from 'react';
 
-import { useIAB } from '~/iab-context';
+import { useIAB } from '~/iab-provider';
 
 /**
  * The rows the IAB preference centre renders.

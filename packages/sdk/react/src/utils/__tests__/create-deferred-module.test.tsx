@@ -4,7 +4,7 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import { renderToReadableStream } from 'react-dom/server';
 import { expect, test, vi } from 'vitest';
 
-import { createDeferredModule } from '../deferred-module';
+import { createDeferredModule } from '../create-deferred-module';
 
 const frame = () => new Promise(requestAnimationFrame);
 const Content = ({ label }: { label: string }) => {

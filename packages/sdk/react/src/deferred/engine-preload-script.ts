@@ -8,7 +8,7 @@
 
 import { PAGE_RENDER_KEY } from '@inth/sdk/runtime/page-globals';
 
-import { ENGINE_CHUNKS_KEY } from './engine-preload';
+import { ENGINE_CHUNKS_KEY } from './engine-preload.store';
 
 /**
  * The inline script the server leaves for a visitor the engine must serve

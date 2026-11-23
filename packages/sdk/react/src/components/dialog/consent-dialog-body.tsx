@@ -54,17 +54,17 @@ import {
 	AdvertisingRow,
 	CategoryGroup,
 } from '~/components/parts/category-group';
-import { RightsReceipt } from '~/components/parts/receipt';
-import { takeReceiptFocus } from '~/components/parts/receipt-focus';
-import { SaleRightsRow } from '~/components/parts/rights-row';
+import { RightsReceipt } from '~/components/parts/rights-receipt';
+import { takeReceiptFocus } from '~/components/parts/receipt-focus.model';
+import { SaleRightsRow } from '~/components/parts/sale-rights-row';
 import { usePhoneLayout } from '~/components/parts/use-phone-layout';
 import { useSurfaceSession } from '~/components/parts/use-surface-session';
-import { ConsentButton } from '~/components/shared/primitives/button';
+import { ConsentButton } from '~/components/shared/primitives/consent-button';
 import {
 	useLegalLinksConfig,
 	useLegalLinkTranslations,
-} from '~/components/shared/primitives/legal-links';
-import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links';
+} from '~/components/shared/primitives/legal-links/inline-legal-links';
+import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links/inline-legal-links';
 import { toSaveUISource } from '~/context/consent-tracking-context';
 import { LocalThemeContext } from '~/context/theme-context';
 import {
@@ -83,14 +83,14 @@ import { useBrowserLayoutEffect } from '~/hooks/use-browser-layout-effect';
 import { useReducedMotion } from '~/hooks/use-reduced-motion';
 import { useResolvedPresentation } from '~/hooks/use-resolved-presentation';
 import { useTextDirection } from '~/hooks/use-text-direction';
-import { useKernel } from '~/kernel-selector';
-import type { ReactSlotProps } from '~/types/slots';
-import { useUIConfig } from '~/ui-config-context';
-import { inertProps } from '~/utils/inert';
+import { useKernel } from '~/use-kernel-selector';
+import type { ReactSlotProps } from '~/types/react-slots.model';
+import { useUIConfig } from '~/use-ui-config';
+import { inertProps } from '~/utils/inert-props';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { SurfaceStyles, useSurfaceSheetsReady } from '../shared/surface-styles';
-import { DIALOG_SHEETS } from './sheets';
+import { DIALOG_SHEETS } from './dialog-sheets';
 
 /** A `components` part, with the `noStyle` a `theme.slots` entry adds. */
 type SlotWithNoStyle = (ReactSlotProps & { noStyle?: boolean }) | undefined;

@@ -16,7 +16,7 @@ import { IABConsentDialog } from '../components/iab-panel';
 import { IABConsentBanner } from '../components/iab-prompt';
 import { KernelContext } from '../context';
 import { useHeadlessIABConsentUI } from '../hooks/use-headless-iab-consent-ui';
-import { IABProvider, useIAB } from '../iab-context';
+import { IABProvider, useIAB } from '../iab-provider';
 import { ComponentFixtureProvider } from './component-fixture-provider';
 import type { ComponentFixtureOptions } from './component-fixture-provider';
 import { transportMode } from './fixtures/transport-mode';

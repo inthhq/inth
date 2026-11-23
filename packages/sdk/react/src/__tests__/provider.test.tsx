@@ -9,7 +9,7 @@ import { ConsentBanner } from '../components/prompt';
 import { KernelContext } from '../context';
 import { InthProvider } from '../provider';
 import { testing } from '../testing';
-import { useUIConfig } from '../ui-config-context';
+import { useUIConfig } from '../use-ui-config';
 import { offlineMode, transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 

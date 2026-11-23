@@ -13,7 +13,7 @@ import { StrictMode, Suspense } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { UNCOMMITTED_HOLD_MS } from '../module-hooks/network-hold';
+import { UNCOMMITTED_HOLD_MS } from '../module-hooks/use-early-network-hold';
 import { InthProvider } from '../provider';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';

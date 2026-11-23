@@ -16,9 +16,9 @@ import {
 } from 'react';
 import type { ButtonHTMLAttributes, ElementType, HTMLAttributes } from 'react';
 
-import type { PolymorphicComponentProps } from '~/components/shared/libs/polymorphic';
+import type { PolymorphicComponentProps } from '~/components/shared/libs/polymorphic.model';
 import { useControllableState } from '~/components/shared/libs/use-controllable-state';
-import { LucideIcon } from '~/components/shared/ui/icon';
+import { LucideIcon } from '~/components/shared/ui/lucide-icon';
 import { useTheme } from '~/hooks/use-theme';
 import type { ThemeValue } from '~/types/theme';
 

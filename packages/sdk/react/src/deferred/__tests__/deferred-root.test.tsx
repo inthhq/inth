@@ -21,10 +21,10 @@ import {
 	streamPage,
 } from '../../__tests__/streamed-ssr-harness';
 import type { StreamedPage } from '../../__tests__/streamed-ssr-harness';
-import { CardSurface } from '../../components/prompt/card';
-import { DrawerSurface } from '../../components/prompt/drawer';
+import { CardSurface } from '../../components/prompt/card-surface';
+import { DrawerSurface } from '../../components/prompt/drawer-surface';
 import { PromptContainersContext } from '../../components/prompt/prompt';
-import { BannerSurface } from '../../components/prompt/strip';
+import { BannerSurface } from '../../components/prompt/banner-surface';
 import { useSaveConsents, useSnapshot } from '../../hooks';
 import { InthProvider } from '../../index';
 import { useScriptLoader } from '../../module-hooks/script-loader';
@@ -35,12 +35,12 @@ import {
 	readConsentBoot,
 } from '../boot';
 import type { ConsentBoot } from '../boot';
-import { ConsentBootData, ServerBootData } from '../boot-data';
-import { engineNeededAtLoad } from '../boot-plan';
-import type { DeferredCommitConfig } from '../committed';
+import { ConsentBootData, ServerBootData } from '../consent-boot-data';
+import { engineNeededAtLoad } from '../use-consent-boot-plan';
+import type { DeferredCommitConfig } from '../deferred-committed.model';
 import type * as EngineNamespace from '../engine';
-import { ENGINE_CHUNKS_KEY } from '../engine-preload';
-import { DeferredConsentShell } from '../shell';
+import { ENGINE_CHUNKS_KEY } from '../engine-preload.store';
+import { DeferredConsentShell } from '../deferred-consent-shell';
 import { DeferredConsentBanner } from '../surfaces';
 
 const policyConfig = function policyConfig(

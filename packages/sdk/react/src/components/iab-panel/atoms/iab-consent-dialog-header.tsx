@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
 import { useSetActiveUI } from '~/hooks';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { useIABTranslations } from '../use-iab-translations';

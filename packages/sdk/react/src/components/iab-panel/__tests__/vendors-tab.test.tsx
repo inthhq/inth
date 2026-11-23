@@ -12,7 +12,7 @@ import { KernelContext } from '~/context';
 
 import { testing } from '../../../testing';
 import { StackItem } from '../atoms/stack-item';
-import { IABConsentDialog } from '../iab-panel';
+import { IABConsentDialog } from '../iab-consent-dialog';
 
 const getDefined = <Value,>(
 	value: Value,

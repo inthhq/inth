@@ -10,7 +10,7 @@
  * @packageDocumentation
  */
 
-import type { TriggerToolbar } from './atoms/toolbar';
+import type { TriggerToolbar } from './atoms/trigger-toolbar';
 
 /** The toolbar view the trigger renders while DevTools is mounted. */
 export type TriggerToolbarComponent = typeof TriggerToolbar;
@@ -53,7 +53,7 @@ export const loadTriggerToolbar =
 		}
 		pending ??= (async () => {
 			try {
-				const module = await import('./atoms/toolbar');
+				const module = await import('./atoms/trigger-toolbar');
 				loaded ??= module.TriggerToolbar;
 				return loaded;
 			} catch (error) {

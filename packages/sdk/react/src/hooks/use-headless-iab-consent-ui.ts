@@ -9,8 +9,8 @@ import type {
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 import { useCallback, useMemo } from 'react';
 
-import { useKernel } from '../kernel-selector';
-import { useIABConsentManager } from './use-iab-manager';
+import { useKernel } from '../use-kernel-selector';
+import { useIABConsentManager } from './use-iab-consent-manager';
 
 export type {
 	HeadlessIABBannerAction,

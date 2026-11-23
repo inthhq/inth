@@ -2,7 +2,7 @@
 
 import * as atoms from './atoms';
 import { ConsentGate as ConsentGateComponent } from './consent-gate';
-import type { ConsentGateCompoundComponent } from './types';
+import type { ConsentGateCompoundComponent } from './consent-gate.model';
 
 /**
  * Renders its children only while a consent category is allowed
@@ -29,7 +29,7 @@ const ConsentGate = Object.assign(ConsentGateComponent, {
 }) as ConsentGateCompoundComponent;
 
 export { ConsentGateButton, ConsentGateRoot, ConsentGateTitle } from './atoms';
-export type { ConsentGateCompoundComponent, ConsentGateProps } from './types';
+export type { ConsentGateCompoundComponent, ConsentGateProps } from './consent-gate.model';
 export { ConsentGate };
 export type { FrameCompoundComponent, FrameProps } from './frame';
 export { Frame, FrameButton, FrameRoot, FrameTitle } from './frame';

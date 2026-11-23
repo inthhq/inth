@@ -20,11 +20,11 @@ import {
 	rootNeedsEngine,
 	watchStoredChoice,
 } from '../boot';
-import { createDeferredKernel } from '../deferred-kernel';
-import type { DeferredEngine } from '../deferred-kernel';
-import { deferredModules, deferredScriptsReady } from '../registry';
-import { scriptsNeedEngine } from '../runnable';
-import { scheduleDeferredEngine } from '../trigger';
+import { createDeferredKernel } from '../create-deferred-kernel';
+import type { DeferredEngine } from '../create-deferred-kernel';
+import { deferredModules, deferredScriptsReady } from '../deferred-registry.model';
+import { scriptsNeedEngine } from '../runnable-script.model';
+import { scheduleDeferredEngine } from '../schedule-deferred-engine';
 import { OPTIONS } from './live-key-fields.type-test';
 
 const snapshot = (activeUI: string, revision = 0) =>

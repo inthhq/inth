@@ -11,16 +11,16 @@ import { Suspense, createContext, useContext, useState } from 'react';
 import type { ComponentType, FC, ReactNode } from 'react';
 
 import { useHeadlessConsentUI } from '~/component-hooks/use-headless-consent-ui';
-import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links';
+import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links/inline-legal-links';
 import { useActiveUI } from '~/hooks';
 import { useComponentConfig } from '~/hooks/use-component-config';
 import { useIABPolicyGuard } from '~/hooks/use-iab-policy-guard';
 import { useOptInConfirmationHost } from '~/hooks/use-opt-out';
-import { createDeferredModule } from '~/utils/deferred-module';
+import { createDeferredModule } from '~/utils/create-deferred-module';
 
-import { StreamedConsentSurface } from '../shared/streamed-surface';
+import { StreamedConsentSurface } from '../shared/streamed-consent-surface';
 import { ErrorBoundary } from './error-boundary';
-import type { PromptSurfaceOptions } from './surface';
+import type { PromptSurfaceOptions } from './prompt-surface';
 
 const LazyOptInConfirmation = createDeferredModule(
 	() => import('~/components/opt-in-confirmation')
@@ -103,15 +103,15 @@ export const deferredContainer = function deferredContainer<Module>(
 // Keep lazy module filenames neutral: bundlers name chunks after them, and
 // content blockers drop files named like a consent banner.
 const cardContainer = deferredContainer(
-	() => import('./card'),
+	() => import('./card-surface'),
 	(module) => module.CardSurface
 );
 const bannerContainer = deferredContainer(
-	() => import('./strip'),
+	() => import('./banner-surface'),
 	(module) => module.BannerSurface
 );
 const drawerContainer = deferredContainer(
-	() => import('./drawer'),
+	() => import('./drawer-surface'),
 	(module) => module.DrawerSurface
 );
 /**

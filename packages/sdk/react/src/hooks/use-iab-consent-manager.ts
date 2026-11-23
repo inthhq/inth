@@ -9,8 +9,8 @@ import {
 	useModel,
 	useSetActiveUI,
 	useTranslations,
-} from '../hooks';
-import { useIAB } from '../iab-context';
+} from './';
+import { useIAB } from '../iab-provider';
 
 export const useIABConsentManager = function useIABConsentManager(
 	overrides?: ConsentPresentation

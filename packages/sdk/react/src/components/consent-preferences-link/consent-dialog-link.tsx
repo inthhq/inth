@@ -12,8 +12,8 @@ import {
 import type { MouseEvent, ReactElement, ReactNode, Ref } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
-import { ConsentButton } from '~/components/shared/primitives/button';
-import type { ConsentButtonProps } from '~/components/shared/primitives/button.types';
+import { ConsentButton } from '~/components/shared/primitives/consent-button';
+import type { ConsentButtonProps } from '~/components/shared/primitives/consent-button.model';
 import { OptOutIcon } from '~/components/shared/ui/opt-out-icon';
 import {
 	useHasConsentPreferences,
@@ -21,7 +21,7 @@ import {
 	useResolvedPresentation,
 } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
-import { useKernel } from '~/kernel-selector';
+import { useKernel } from '~/use-kernel-selector';
 
 /**
  * Inline trigger for opening the consent dialog or exercising the opt-out

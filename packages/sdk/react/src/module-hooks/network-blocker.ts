@@ -7,8 +7,8 @@ import type {
 } from '@inth/sdk/modules/network-blocker';
 import { useEffect, useRef, useState } from 'react';
 
-import { useEarlyNetworkHold } from './network-hold';
-import { useRequiredKernel } from './shared';
+import { useEarlyNetworkHold } from './use-early-network-hold';
+import { useRequiredKernel } from './use-required-kernel';
 
 const loadNetworkBlockerModule = () =>
 	import('@inth/sdk/modules/network-blocker');

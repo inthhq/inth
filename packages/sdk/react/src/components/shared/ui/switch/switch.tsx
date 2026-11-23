@@ -10,7 +10,7 @@ import type { ButtonHTMLAttributes, KeyboardEvent } from 'react';
 import { useControllableState } from '~/components/shared/libs/use-controllable-state';
 import { useTheme } from '~/hooks/use-theme';
 import type { ThemeValue } from '~/types/theme';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 export type SwitchSize = 'medium' | 'small';

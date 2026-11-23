@@ -73,14 +73,14 @@ import {
 	useSyncExternalStore,
 } from 'react';
 
-import type { DialogPreload } from './chunk-warming';
+import type { DialogPreload } from './warm-dialog-chunk';
 import {
 	KernelContext,
 	ProviderServicesContext,
 	StreamedPrefetchContext,
 } from './context';
 import type { ProviderServices } from './context';
-import { ExternalIABProvider } from './external-iab-context';
+import { ExternalIABProvider } from './external-iab-provider';
 import { useColorScheme } from './hooks/use-color-scheme';
 import { useIsHydrated } from './hooks/use-is-hydrated';
 import type {
@@ -90,12 +90,12 @@ import type {
 } from './module-hooks';
 import { createIframeBlockerOnDemand } from './module-hooks/iframe-blocker';
 import type { UseIframeBlockerOptions } from './module-hooks/iframe-blocker';
-import { UNCOMMITTED_HOLD_MS } from './module-hooks/network-hold';
+import { UNCOMMITTED_HOLD_MS } from './module-hooks/use-early-network-hold';
 import { V3ThemeProvider } from './theme-provider';
-import { selectedMode } from './transports/select-mode';
-import type { ReactUIOptions } from './types/manager';
-import type { ReactComponentSlots } from './types/slots';
-import type { V3UIConfigValue } from './ui-config-context';
+import { selectedMode } from './transports/selected-mode';
+import type { ReactUIOptions } from './types/react-ui-options.model';
+import type { ReactComponentSlots } from './types/react-slots.model';
+import type { V3UIConfigValue } from './use-ui-config';
 
 /** Replaced by the app's bundler; see the development warnings below. */
 declare const process: { env: { NODE_ENV?: string } };

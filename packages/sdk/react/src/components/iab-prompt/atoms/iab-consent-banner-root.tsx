@@ -10,11 +10,11 @@ import { ConsentTrackingContext } from '~/context/consent-tracking-context';
 import { LocalThemeContext } from '~/context/theme-context';
 import { useActiveUI, useModel, useTranslations } from '~/hooks';
 import { useFocusBlocking } from '~/hooks/use-focus-blocking';
-import { useIABConsentManager } from '~/hooks/use-iab-manager';
+import { useIABConsentManager } from '~/hooks/use-iab-consent-manager';
 import { useLateEntry } from '~/hooks/use-late-entry';
 import { useTextDirection } from '~/hooks/use-text-direction';
 import type { CSSPropertiesWithVars } from '~/types/theme';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { IAB_FIRST_PAINT_SHEETS } from '../../shared/iab-first-paint-sheets';
@@ -22,7 +22,7 @@ import {
 	SurfaceStyles,
 	useSurfaceSheetsReady,
 } from '../../shared/surface-styles';
-import { IABConsentBannerOverlay } from './overlay';
+import { IABConsentBannerOverlay } from './iab-consent-banner-overlay';
 
 const DEFAULT_MODELS: CoreTypes.Model[] = ['iab'];
 

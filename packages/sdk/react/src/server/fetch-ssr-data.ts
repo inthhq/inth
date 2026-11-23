@@ -2,7 +2,7 @@ import type { SSRInitialData } from '@inth/sdk/engine';
 import { SPECULATION_HEADERS } from '@inth/sdk/schema/types';
 import { fetchRequestInit, resolveRequestProjectUrl } from '@inth/sdk/server';
 
-import type { FetchSSRDataOptions } from './types';
+import type { FetchSSRDataOptions } from './fetch-ssr-data.model';
 
 /** What the request told the backend, from the headers `/v1/consent/init` was sent. */
 const buildRequestContext = function buildRequestContext(

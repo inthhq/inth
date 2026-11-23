@@ -11,9 +11,9 @@ import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
-import { ExternalIABProvider } from '../external-iab-context';
-import { useIAB } from '../iab-context';
-import type { ReactIABState } from '../iab-context';
+import { ExternalIABProvider } from '../external-iab-provider';
+import { useIAB } from '../iab-provider';
+import type { ReactIABState } from '../iab-provider';
 import { InthProvider } from '../provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';

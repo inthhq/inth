@@ -14,7 +14,7 @@ import { transportMode } from '~/__tests__/fixtures/transport-mode';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/aggregate-components';
 import { PrivacyChoicesLink } from '~/components/privacy-choices-link';
-import { useKernel } from '~/kernel-selector';
+import { useKernel } from '~/use-kernel-selector';
 import { InthProvider as RawInthProvider } from '~/provider';
 import { testing } from '~/testing';
 

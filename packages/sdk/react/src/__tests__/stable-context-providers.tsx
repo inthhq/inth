@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
 
-import { TriggerContext } from '~/components/panel-trigger/atoms/root';
-import type { TriggerContextValue } from '~/components/panel-trigger/atoms/root';
+import { TriggerContext } from '~/components/panel-trigger/atoms/trigger-root';
+import type { TriggerContextValue } from '~/components/panel-trigger/atoms/trigger-root';
 import { GlobalThemeContext, LocalThemeContext } from '~/context/theme-context';
 import type { ThemeContextValue } from '~/context/theme-context';
-import { V3UIConfigContext } from '~/ui-config-context';
-import type { V3UIConfigValue } from '~/ui-config-context';
+import { V3UIConfigContext } from '~/use-ui-config';
+import type { V3UIConfigValue } from '~/use-ui-config';
 
 export const StableGlobalThemeProvider = ({
 	children,

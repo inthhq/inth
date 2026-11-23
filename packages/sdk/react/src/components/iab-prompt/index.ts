@@ -5,16 +5,16 @@ import type { FC } from 'react';
 import {
 	IABConsentBannerButtonGroup,
 	IABConsentBannerFooterSpacer,
-} from './atoms/button-group';
-import { IABConsentBannerCard } from './atoms/card';
-import { IABConsentBannerDescription } from './atoms/description';
-import { IABConsentBannerFooter } from './atoms/footer';
-import { IABConsentBannerHeader } from './atoms/header';
-import { IABConsentBannerOverlay } from './atoms/overlay';
-import { IABConsentBannerRoot } from './atoms/root';
-import { IABConsentBannerTitle } from './atoms/title';
-import { IABConsentBanner as IABConsentBannerComponent } from './iab-prompt';
-import type { IABConsentBannerProps } from './iab-prompt';
+} from './atoms/iab-consent-banner-button-group';
+import { IABConsentBannerCard } from './atoms/iab-consent-banner-card';
+import { IABConsentBannerDescription } from './atoms/iab-consent-banner-description';
+import { IABConsentBannerFooter } from './atoms/iab-consent-banner-footer';
+import { IABConsentBannerHeader } from './atoms/iab-consent-banner-header';
+import { IABConsentBannerOverlay } from './atoms/iab-consent-banner-overlay';
+import { IABConsentBannerRoot } from './atoms/iab-consent-banner-root';
+import { IABConsentBannerTitle } from './atoms/iab-consent-banner-title';
+import { IABConsentBanner as IABConsentBannerComponent } from './iab-consent-banner';
+import type { IABConsentBannerProps } from './iab-consent-banner';
 
 export interface IABConsentBannerCompoundComponent extends FC<IABConsentBannerProps> {
 	Root: typeof IABConsentBannerRoot;
@@ -78,12 +78,12 @@ export default IABConsentBanner;
 export {
 	IABConsentBannerButtonGroup,
 	IABConsentBannerFooterSpacer,
-} from './atoms/button-group';
-export { IABConsentBannerCard } from './atoms/card';
-export { IABConsentBannerDescription } from './atoms/description';
-export { IABConsentBannerFooter } from './atoms/footer';
-export { IABConsentBannerHeader } from './atoms/header';
-export { IABConsentBannerOverlay } from './atoms/overlay';
-export { IABConsentBannerRoot } from './atoms/root';
-export { IABConsentBannerTitle } from './atoms/title';
+} from './atoms/iab-consent-banner-button-group';
+export { IABConsentBannerCard } from './atoms/iab-consent-banner-card';
+export { IABConsentBannerDescription } from './atoms/iab-consent-banner-description';
+export { IABConsentBannerFooter } from './atoms/iab-consent-banner-footer';
+export { IABConsentBannerHeader } from './atoms/iab-consent-banner-header';
+export { IABConsentBannerOverlay } from './atoms/iab-consent-banner-overlay';
+export { IABConsentBannerRoot } from './atoms/iab-consent-banner-root';
+export { IABConsentBannerTitle } from './atoms/iab-consent-banner-title';
 export { IABConsentBanner, type IABConsentBannerProps };

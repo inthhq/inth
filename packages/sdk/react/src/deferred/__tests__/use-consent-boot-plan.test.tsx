@@ -8,7 +8,7 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 
-import { useConsentBootPlan } from '../boot-plan';
+import { useConsentBootPlan } from '../use-consent-boot-plan';
 
 const cleanups: (() => void)[] = [];
 

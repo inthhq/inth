@@ -7,7 +7,7 @@ import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__
 import { policyFixture } from '~/__tests__/policy-fixture';
 
 import { testing } from '../../../testing';
-import { IABConsentDialog } from '../iab-panel';
+import { IABConsentDialog } from '../iab-consent-dialog';
 
 const getDefined = <Value,>(
 	value: Value,

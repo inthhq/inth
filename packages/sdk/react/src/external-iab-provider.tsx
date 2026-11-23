@@ -26,8 +26,8 @@ import {
 } from 'react';
 import type { ReactNode } from 'react';
 
-import { IABContext } from './context/iab-context-value';
-import type { IABContextValue } from './context/iab-context-value';
+import { IABContext } from './context/iab-context';
+import type { IABContextValue } from './context/iab-context';
 import { useCommittedRef } from './hooks/use-committed-ref';
 
 /** Props for {@link ExternalIABProvider}. */

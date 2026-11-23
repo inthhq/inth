@@ -53,7 +53,7 @@ import {
 import { useColorScheme } from '../hooks/use-color-scheme';
 import type { InthProviderOptions } from '../provider';
 import { V3ThemeProvider } from '../theme-provider';
-import type { V3UIConfigValue } from '../ui-config-context';
+import type { V3UIConfigValue } from '../use-ui-config';
 import {
 	endPageRender,
 	pageRender,
@@ -63,23 +63,23 @@ import {
 import type { ConsentBoot } from './boot';
 import type * as CommitModule from './commit';
 import type { CommitTapInput, CommitTapResult } from './commit';
-import type { DeferredCommitConfig, DeferredCommitted } from './committed';
-import { createDeferredKernel } from './deferred-kernel';
+import type { DeferredCommitConfig, DeferredCommitted } from './deferred-committed.model';
+import { createDeferredKernel } from './create-deferred-kernel';
 import type {
 	DeferredKernelHandle,
 	DeferredKernelOptions,
-} from './deferred-kernel';
-import { commitInstantly, readAheadOfTap, startPlainScripts } from './instant';
-import type { InstantCommitAhead } from './instant';
+} from './create-deferred-kernel';
+import { commitInstantly, readAheadOfTap, startPlainScripts } from './instant-commit.model';
+import type { InstantCommitAhead } from './instant-commit.model';
 import {
 	deferredScripts,
 	loadDeferredScriptLoader,
 	setDeferredScriptStarter,
-} from './registry';
-import { acceptedPermissions, isPlainScript, isRunnableNow } from './runnable';
-import { DeferredSessionContext, read, record, recordOnce } from './session';
-import type { DeferredSession, Recorded } from './session';
-import { importDialog, scheduleDeferredEngine } from './trigger';
+} from './deferred-registry.model';
+import { acceptedPermissions, isPlainScript, isRunnableNow } from './runnable-script.model';
+import { DeferredSessionContext, read, record, recordOnce } from './deferred-session-context';
+import type { DeferredSession, Recorded } from './deferred-session-context';
+import { importDialog, scheduleDeferredEngine } from './schedule-deferred-engine';
 
 /** The provider options the shell itself reads. @internal */
 export type DeferredShellOptions = Pick<

@@ -17,7 +17,7 @@ import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
 
 import { useControllableState } from '~/components/shared/libs/use-controllable-state';
 import { useTheme } from '~/hooks/use-theme';
-import { inertProps } from '~/utils/inert';
+import { inertProps } from '~/utils/inert-props';
 
 export const collapsibleVariants = () => ({
 	content: (options?: { class?: string }) =>

@@ -11,7 +11,7 @@ import {
 import { expect, test } from 'vitest';
 
 import { transportMode } from '../../../__tests__/fixtures/transport-mode';
-import { readRecorded } from '../streamed-surface';
+import { readRecorded } from '../streamed-consent-surface';
 
 test('throws the pending promise, then returns the recorded result', async () => {
 	const stream = Promise.withResolvers<{ now: number }>();
