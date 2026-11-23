@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 
-import '@inth/sdk/ui/styles/components/consent-banner.css';
-import dialogStyles from '@inth/sdk/ui/styles/components/consent-dialog';
+import '@inth/sdk/ui/styles/components/legacy-prompt.css';
+import dialogStyles from '@inth/sdk/ui/styles/components/legacy-panel';
 
-import '@inth/sdk/ui/styles/components/consent-dialog.css';
+import '@inth/sdk/ui/styles/components/legacy-panel.css';
 import { computed } from 'vue';
 
 import DescriptionContent from './description-content.vue';

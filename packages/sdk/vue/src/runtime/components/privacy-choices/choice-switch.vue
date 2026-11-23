@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
-import '@inth/sdk/ui/styles/components/privacy-choices.css';
+import '@inth/sdk/ui/styles/components/consent-dialog.css';
 
 /**
  * A Privacy Choices switch: a `role="switch"` button the row names with

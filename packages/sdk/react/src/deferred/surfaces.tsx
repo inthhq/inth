@@ -9,9 +9,6 @@
  * inline script records taps and hides it. Under a provider that is not
  * deferred, a surface loads its code at once.
  *
- * Compound parts (`ConsentBanner.Root`, `ConsentDialog.Card`, ...) work
- * the same way, each in a Suspense boundary of its own.
- *
  * @packageDocumentation
  * @internal
  */
@@ -20,9 +17,9 @@ import type { ComponentType, ReactNode } from 'react';
 import { Suspense, createElement, useContext } from 'react';
 
 import type * as DialogModuleNamespace from '../aggregate-components';
-import type { ConsentDialogCompoundComponent } from '../components/panel';
+import type { ConsentDialogProps } from '../components/dialog/types';
 import type * as BannerModuleNamespace from '../components/prompt/index';
-import type { ConsentBannerCompoundComponent } from '../components/prompt/index';
+import type { ConsentBannerProps } from '../components/prompt/index';
 import { DeferredSessionContext, read, recordOnce } from './session';
 
 // oxlint-disable-next-line typescript/no-explicit-any -- Props pass through unchanged.
@@ -123,24 +120,8 @@ export const DeferredConsentBanner = surfaceWithParts(
 	'ConsentBanner',
 	(): Promise<BannerModule> => import('../components/prompt/index'),
 	(module) => module.ConsentBanner,
-	[
-		'Root',
-		'Card',
-		'Header',
-		'Title',
-		'Description',
-		'PolicyActions',
-		'Footer',
-		'FooterSubGroup',
-		'RejectButton',
-		'CustomizeButton',
-		'AcceptButton',
-		'DismissButton',
-		'Rights',
-		'RightLink',
-		'Overlay',
-	]
-) as ConsentBannerCompoundComponent;
+	[]
+) as ComponentType<ConsentBannerProps>;
 
 type DialogModule = typeof DialogModuleNamespace;
 
@@ -154,20 +135,5 @@ export const DeferredConsentDialog = surfaceWithParts(
 	'ConsentDialog',
 	(): Promise<DialogModule> => import('../aggregate-components'),
 	(module) => module.ConsentDialog,
-	[
-		'Card',
-		'Header',
-		'HeaderTitle',
-		'HeaderDescription',
-		'Content',
-		'Footer',
-		'ConsentCustomizationCard',
-		'ConsentDialogFooter',
-		'ConsentDialogHeader',
-		'ConsentDialogHeaderTitle',
-		'ConsentDialogHeaderDescription',
-		'ConsentDialogContent',
-		'Overlay',
-		'Root',
-	]
-) as ConsentDialogCompoundComponent;
+	[]
+) as ComponentType<ConsentDialogProps>;

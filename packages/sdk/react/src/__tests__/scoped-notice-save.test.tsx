@@ -4,7 +4,7 @@ import { useContext, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { test, expect, vi } from 'vitest';
 
-import { ConsentDialog } from '../components/panel';
+import { ConsentDialog } from '../aggregate-components';
 import { KernelContext } from '../context';
 import { InthProvider } from '../provider';
 

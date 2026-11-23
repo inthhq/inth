@@ -12,6 +12,7 @@ import { BrandingTag } from '~/components/shared/ui/branding';
 import * as Button from '~/components/shared/ui/button';
 import { useComponentConfig } from '~/hooks/use-component-config';
 import { useHeadlessIABConsentUI } from '~/hooks/use-headless-iab-consent-ui';
+import { useFocusBlocking } from '~/hooks/use-focus-blocking';
 import { useIABConsentManager } from '~/hooks/use-iab-manager';
 import { useUIConfig } from '~/ui-config-context';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
@@ -118,9 +119,8 @@ export const IABConsentBanner: FC<IABConsentBannerProps> = ({
 		openVendorsDialog,
 		performBannerAction,
 	} = useHeadlessIABConsentUI();
-	const { policyBanner } = useIABConsentManager({
-		prompt: { scrollLock: localScrollLock, trapFocus: localTrapFocus },
-	});
+	const blocking = useFocusBlocking('prompt', localScrollLock, localTrapFocus);
+	const { policyBanner } = useIABConsentManager({ prompt: { blocking } });
 	const { components } = useUIConfig();
 	const resolvedScrollLock = policyBanner.blocking;
 

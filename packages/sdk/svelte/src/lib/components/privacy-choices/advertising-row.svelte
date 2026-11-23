@@ -1,7 +1,7 @@
 <script lang="ts">
 	/** The read-only US advertising row: it follows the sale choice (LAW-05, CAT-08). */
 	import { resolveAdvertisingRowCopy } from '@inth/sdk/surface-state';
-	import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
 	import { getConsentContext } from '../../context.svelte';
 	import { cx } from './parts';

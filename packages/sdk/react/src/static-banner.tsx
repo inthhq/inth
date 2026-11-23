@@ -16,18 +16,37 @@
 import { snapshotFromPrefetchedInit } from '@inth/sdk/runtime/deferred-snapshot';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-import { ConsentBanner } from './components/prompt';
-import { BANNER_SHEETS } from './components/shared/first-paint-sheets';
+import { BANNER_SHEETS, BannerSurface } from './components/prompt/banner';
+import { CARD_SHEETS, CardSurface } from './components/prompt/card';
+import { DRAWER_SHEETS, DrawerSurface } from './components/prompt/drawer';
+import { ConsentBanner } from './components/prompt/index';
+import { PromptContainersContext } from './components/prompt/prompt';
+import type { PromptContainers } from './components/prompt/prompt';
 import { DeferredConsentShell } from './deferred/shell';
 
 /**
- * The banner's stylesheets, in cascade order. The page holds them in
- * `<style data-href>` elements, which the app's banner adopts.
+ * The banner's stylesheets, in cascade order: the tokens, the buttons, the
+ * prompt shell, then every container, since a manifest's regions can show
+ * different ones. The page holds them in `<style data-href>` elements,
+ * which the app's banner adopts.
  *
  * @internal
  */
-export const STATIC_BANNER_SHEETS: readonly { id: string; css: string }[] =
-	BANNER_SHEETS.map(({ css, id }) => ({ css, id }));
+export const STATIC_BANNER_SHEETS: readonly { id: string; css: string }[] = [
+	...new Map(
+		[...CARD_SHEETS, ...BANNER_SHEETS, ...DRAWER_SHEETS].map((sheet) => [
+			sheet.id,
+			{ css: sheet.css, id: sheet.id },
+		])
+	).values(),
+];
+
+/** The containers, already loaded: a static render cannot wait for a chunk. */
+const EAGER_CONTAINERS: PromptContainers = {
+	banner: BannerSurface,
+	card: CardSurface,
+	drawer: DrawerSurface,
+};
 
 const never = (): Promise<never> =>
 	new Promise(() => {
@@ -69,7 +88,9 @@ export const renderStaticBanner = function renderStaticBanner(
 			renderEngine={() => null}
 			slotAfterMount
 		>
-			<ConsentBanner />
+			<PromptContainersContext.Provider value={EAGER_CONTAINERS}>
+				<ConsentBanner />
+			</PromptContainersContext.Provider>
 		</DeferredConsentShell>
 	);
 	return html.includes('data-testid="consent-banner-root"') ? html : undefined;

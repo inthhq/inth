@@ -38,7 +38,7 @@ import { showConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	announcementText,
 	resolveCategoryTitle,
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 	resolvePreferencesRowCopy,
 	resolvePrivacyChoicesDialogCopy,
 	resolvePrivacyChoicesRegime,
@@ -52,7 +52,7 @@ import {
 	revealDisclosure,
 	scheduleReveal,
 } from '@inth/sdk/ui/primitives/surface';
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 
@@ -524,7 +524,7 @@ export class PrivacyChoicesDialog {
 	 */
 	protected readonly edgeStyle = computed(
 		() =>
-			resolveConsentPresentation({
+			resolveLegacyConsentPresentation({
 				policy: this.#consent.snapshot().policyRule,
 				presentation: this.#consent.presentation(),
 				surface: 'prompt',

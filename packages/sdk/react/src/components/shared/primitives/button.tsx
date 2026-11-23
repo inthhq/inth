@@ -161,6 +161,13 @@ export const ConsentButton = createForwardRef<
 			 * action. Off, such a button opts out of the script.
 			 */
 			earlyTap?: boolean;
+			/**
+			 * Runs on focus and pointer entry, after the caller's or the
+			 * `components.button.*` slot's handler, so the stock surface can
+			 * warm its next chunk without replacing them.
+			 * @internal
+			 */
+			onWarm?: () => void;
 		}
 >(
 	(
@@ -184,6 +191,7 @@ export const ConsentButton = createForwardRef<
 			closeConsentDialog = false,
 			performDefaultAction = true,
 			earlyTap = false,
+			onWarm,
 			category,
 			...props
 		},
@@ -308,20 +316,22 @@ export const ConsentButton = createForwardRef<
 		const buttonFocus = useCallback(
 			(event: FocusEvent<HTMLButtonElement>) => {
 				onFocus?.(event);
+				onWarm?.();
 				if (opensDialog) {
 					warmDialogChunk();
 				}
 			},
-			[onFocus, opensDialog]
+			[onFocus, onWarm, opensDialog]
 		);
 		const buttonPointerEnter = useCallback(
 			(event: PointerEvent<HTMLButtonElement>) => {
 				onPointerEnter?.(event);
+				onWarm?.();
 				if (opensDialog) {
 					warmDialogChunk();
 				}
 			},
-			[onPointerEnter, opensDialog]
+			[onPointerEnter, onWarm, opensDialog]
 		);
 
 		const Comp = asChild ? Slot : 'button';

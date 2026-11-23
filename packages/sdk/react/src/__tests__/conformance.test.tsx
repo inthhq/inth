@@ -26,7 +26,7 @@ import type { Root } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, test } from 'vitest';
 
-import { ConsentDialog } from '~/components/panel';
+import { ConsentDialog } from '~/aggregate-components';
 import { ConsentWidget } from '~/components/preferences';
 import { KernelContext } from '~/context';
 import { IABProvider, IABConsentBanner, IABConsentDialog } from '~/iab';

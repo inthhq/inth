@@ -1,4 +1,4 @@
-import { resolveConsentPresentation } from '@inth/sdk/engine';
+import { resolveLegacyConsentPresentation } from '@inth/sdk/engine';
 import type {
 	PreferencesPresentation,
 	PromptPresentation,
@@ -25,7 +25,7 @@ export const useConsentPolicyActions = function useConsentPolicyActions(
 	const config = useConsentConfig();
 	const hostPresentation = useResolvedPresentation();
 	const presentation = computed(() =>
-		resolveConsentPresentation({
+		resolveLegacyConsentPresentation({
 			override: toValue(override),
 			policy: policyRule.value,
 			presentation: {

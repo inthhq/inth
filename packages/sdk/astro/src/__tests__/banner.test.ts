@@ -1,4 +1,4 @@
-import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';

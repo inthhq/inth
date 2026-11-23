@@ -11,7 +11,7 @@ import { useContext, useEffect } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentDialog } from '../components/panel';
+import { ConsentDialog } from '../aggregate-components';
 import { ConsentDialogTrigger } from '../components/panel-trigger';
 import { ConsentBanner } from '../components/prompt';
 import { KernelContext } from '../context';

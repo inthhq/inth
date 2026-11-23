@@ -55,19 +55,14 @@ const SURFACES = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]`;
  * already tapped one before hydration, or
  * `ENGINE_TIMEOUT_MS` passed.
  *
- * With `onTap`, a banner tap is the root's to route: input inside the
- * stock banner no longer loads the engine, and `onTap` runs for a tap the
- * banner's inline script recorded, before or after hydration. The root
- * then records an accept or reject without the engine (`commit.ts`) and
- * loads the engine after. Routing lasts until the returned cleanup runs,
- * not only until `start`: a tap while the engine downloads is still the
- * root's, which hands it to the engine once that renders.
- *
- * A pointer going down on a banner button calls `onTap` with the button's
- * `data-action`, ahead of its click.
+ * With `onTap`, `onTap` runs for a tap the banner's inline script
+ * recorded, before or after hydration. Input on the banner wakes the
+ * engine like any other, and the engine's banner replays the tap through
+ * its own handlers. Routing lasts until the returned cleanup runs, not
+ * only until `start`.
  *
  * @param start - Loads the engine.
- * @param onTap - Routes a recorded banner tap, or a press on a button.
+ * @param onTap - Routes a recorded banner tap.
  * @param renderId - The render whose failed server start loads the engine
  * at once. Defaults to the one the document's boot data names.
  * @returns Removes the listeners.
@@ -75,7 +70,7 @@ const SURFACES = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]`;
  */
 export const scheduleDeferredEngine = function scheduleDeferredEngine(
 	start: () => void,
-	onTap?: (pressed?: string) => void,
+	onTap?: () => void,
 	renderId?: string
 ): () => void {
 	/** Wake-ups, removed once `start` ran. */
@@ -110,49 +105,12 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 		into.push(() => target.removeEventListener(type, handler, capture));
 	};
 
-	/**
-	 * Input the root routes itself: on the stock banner. The Privacy
-	 * Choices banner's taps wake the engine, whose banner replays them
-	 * through its own handlers.
-	 */
-	const routed = (event: Event): boolean => {
-		const root = onTap
-			? (event.target as Element | null)?.closest?.(EARLY_TAP_ROOT)
-			: null;
-		return Boolean(
-			root && root.getAttribute('data-design') !== 'privacy-choices'
-		);
-	};
 	const queue = earlyTapQueue();
-	if (onTap) {
-		if (queue?.taps) {
-			queue[EARLY_TAP_NOTIFY_KEY] = () => onTap();
-			routes.push(() => {
-				Reflect.deleteProperty(queue, EARLY_TAP_NOTIFY_KEY);
-			});
-		}
-		listen(
-			window,
-			'pointerdown',
-			(event) => {
-				if (!routed(event)) {
-					return;
-				}
-				const button = (event.target as Element).closest('[data-action]');
-				let action = button?.getAttribute('data-action');
-				if (action === 'right') {
-					action =
-						button?.getAttribute('data-right') === 'opt-out'
-							? 'opt-out'
-							: 'customize';
-				}
-				if (action) {
-					onTap(action);
-				}
-			},
-			true,
-			routes
-		);
+	if (onTap && queue?.taps) {
+		queue[EARLY_TAP_NOTIFY_KEY] = () => onTap();
+		routes.push(() => {
+			Reflect.deleteProperty(queue, EARLY_TAP_NOTIFY_KEY);
+		});
 	}
 	// A tap queued before hydration, or a scroll that already ended the
 	// browser's search for a larger paint.
@@ -170,22 +128,17 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 		fire();
 		return dispose;
 	}
-	const wake = (event: Event): void => {
-		if (!routed(event)) {
-			fire();
-		}
-	};
 	for (const type of PAGE_WAKE_EVENTS) {
 		// Capture on window: scroll does not bubble, and an element that
 		// scrolls dispatches it there on the way down.
-		listen(window, type, wake, true);
+		listen(window, type, fire, true);
 	}
 	listen(
 		document,
 		'focusin',
 		(event) => {
 			const target = event.target as Element | null;
-			if (target?.closest?.(SURFACES) && !routed(event)) {
+			if (target?.closest?.(SURFACES)) {
 				fire();
 			}
 		},

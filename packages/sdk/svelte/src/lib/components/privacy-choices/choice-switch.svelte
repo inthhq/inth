@@ -5,7 +5,7 @@
 	 * `disabled` for a vendor (CAT-03); a category that cannot change shows
 	 * "Always on" instead of a switch.
 	 */
-	import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
 	let {
 		checked,

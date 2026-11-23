@@ -53,35 +53,3 @@ test('renders the stock banner, and its accept records the choice, under the eng
 		cleanup();
 	}
 });
-
-test('compound parts render through the same chunk', async () => {
-	const { cleanup, root } = mount();
-	try {
-		root.render(
-			<EngineProvider
-				options={{
-					mode: testing(),
-					persistence: false,
-					prefetch: policyFixture(),
-				}}
-			>
-				<ConsentBanner.Root disableAnimation>
-					<ConsentBanner.Card>
-						<ConsentBanner.Footer>
-							<ConsentBanner.AcceptButton>Fine</ConsentBanner.AcceptButton>
-						</ConsentBanner.Footer>
-					</ConsentBanner.Card>
-				</ConsentBanner.Root>
-			</EngineProvider>
-		);
-		await vi.waitFor(() =>
-			expect(
-				[...document.querySelectorAll('button')].some(
-					(button) => button.textContent === 'Fine'
-				)
-			).toBe(true)
-		);
-	} finally {
-		cleanup();
-	}
-});

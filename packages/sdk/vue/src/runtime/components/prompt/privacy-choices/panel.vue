@@ -14,9 +14,9 @@ import type { PrivacyChoicesPromptVariant } from '@inth/sdk/surface-state';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 
 import '@inth/sdk/ui/styles/components/consent-expand.css';
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
-import '@inth/sdk/ui/styles/components/privacy-choices.css';
+import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import { computed, onMounted, ref } from 'vue';
 
 import { useConsentConfig } from '../../../composables/config';

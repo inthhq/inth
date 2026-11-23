@@ -9,6 +9,7 @@ import type { CSSProperties, FC, HTMLAttributes, ReactNode } from 'react';
 import { ConsentTrackingContext } from '~/context/consent-tracking-context';
 import { LocalThemeContext } from '~/context/theme-context';
 import { useActiveUI, useModel, useTranslations } from '~/hooks';
+import { useFocusBlocking } from '~/hooks/use-focus-blocking';
 import { useIABConsentManager } from '~/hooks/use-iab-manager';
 import { useLateEntry } from '~/hooks/use-late-entry';
 import { useTextDirection } from '~/hooks/use-text-direction';
@@ -133,8 +134,9 @@ const IABConsentBannerRoot: FC<IABConsentBannerRootProps> = ({
 	uiSource,
 	...props
 }) => {
+	const blocking = useFocusBlocking('prompt', scrollLock, trapFocus);
 	const { policyBanner } = useIABConsentManager({
-		prompt: { scrollLock, trapFocus },
+		prompt: { blocking },
 	});
 	const resolvedScrollLock = policyBanner.blocking;
 	const contextValue = useMemo(

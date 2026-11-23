@@ -51,7 +51,7 @@ import {
 	scheduleReveal,
 } from '@inth/sdk/ui/primitives/surface';
 import * as expandSheet from '@inth/sdk/ui/styles/sheets/expand';
-import * as choicesSheet from '@inth/sdk/ui/styles/sheets/privacy-choices-dialog';
+import * as choicesSheet from '@inth/sdk/ui/styles/sheets/dialog';
 import type { Theme } from '@inth/sdk/ui/theme';
 
 import { resolveSlotBinding } from '../banner/theme-slots';

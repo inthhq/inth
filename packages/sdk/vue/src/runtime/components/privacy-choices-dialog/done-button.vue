@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
-import '@inth/sdk/ui/styles/components/privacy-choices.css';
+import '@inth/sdk/ui/styles/components/consent-dialog.css';
 
 import { useConsentConfig } from '../../composables/config';
 import ChoiceButton from '../privacy-choices/choice-button.vue';

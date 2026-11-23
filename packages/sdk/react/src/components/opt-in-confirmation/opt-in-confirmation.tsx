@@ -36,7 +36,7 @@ import { useUIConfig } from '~/ui-config-context';
 import { cnExt as cn } from '~/utils/cn';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
-import { DIALOG_SHEETS } from '../shared/dialog-sheets';
+import { WIDGET_SHEETS } from '../shared/widget-sheets';
 import { SurfaceStyles, useSurfaceSheetsReady } from '../shared/surface-styles';
 
 /** Props for the two-step opt-in confirmation dialog. */
@@ -273,7 +273,7 @@ export const OptInConfirmation: FC<OptInConfirmationProps> = (props) => {
 	const { disableAnimation, noStyle, scrollLock, trapFocus } =
 		resolveOptInOptions(props, globalTheme);
 
-	const sheetsReady = useSurfaceSheetsReady(DIALOG_SHEETS, noStyle);
+	const sheetsReady = useSurfaceSheetsReady(WIDGET_SHEETS, noStyle);
 	const isMounted = useIsHydrated();
 	const isOpen = sheetsReady && confirmationOpen;
 
@@ -335,7 +335,7 @@ export const OptInConfirmation: FC<OptInConfirmationProps> = (props) => {
 	return createPortal(
 		<LocalThemeContext.Provider value={contextValue}>
 			<SurfaceStyles
-				sheets={DIALOG_SHEETS}
+				sheets={WIDGET_SHEETS}
 				noStyle={noStyle}
 			/>
 			<div

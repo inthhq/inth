@@ -8,7 +8,7 @@
  * and a page rendered only in the browser loads each text once.
  */
 import type { ResolvedConsentLayout } from '@inth/sdk/engine';
-import * as bar from '@inth/sdk/ui/styles/sheets/bar-deferred';
+import * as bar from '@inth/sdk/ui/styles/sheets/banner-deferred';
 import * as button from '@inth/sdk/ui/styles/sheets/button-deferred';
 import * as card from '@inth/sdk/ui/styles/sheets/card-deferred';
 import * as drawer from '@inth/sdk/ui/styles/sheets/drawer-deferred';

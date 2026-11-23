@@ -5,7 +5,7 @@ import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';
-import { ConsentDialog } from '~/components/panel';
+import { ConsentDialog } from '~/aggregate-components';
 
 import { testing } from '../../../testing';
 import { ConsentDialogTrigger, ConsentDialogTriggerToolbar } from '../index';

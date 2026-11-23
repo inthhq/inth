@@ -95,7 +95,6 @@ describe('[C2] Your Privacy Choices', () => {
 		await mount({
 			config: {
 				presentation: {
-					design: 'privacy-choices',
 					optOutLink: 'privacy-choices',
 					prompt: { container: { type: 'card' } },
 				},

@@ -11,20 +11,16 @@ import {
 import { useHeadlessConsentUI, useTranslations } from '@inth/react/headless';
 import { testing } from '@inth/react/testing';
 import { policyRulePresets } from '@inth/sdk/engine';
-import type {
-	PresentationAction,
-	PromptPosition,
-	PromptVariant,
-} from '@inth/sdk/engine';
+import type { ConsentContainerType, PresentationAction } from '@inth/sdk/engine';
 import type { PolicyRule } from '@inth/sdk/schema/types';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import * as React from 'react';
 
 import {
 	applySurfaceParams,
+	CONTAINER_TYPES,
 	parseSurfaceParams,
-	PROMPT_VARIANTS,
-	setSurfaceVariant,
+	setSurfaceContainer,
 	surfacePositionOptions,
 	withSurface,
 } from '../../lib/prompt-surface';
@@ -53,9 +49,8 @@ interface Snapshot {
 	direction: string;
 	uiProfile?: string;
 	shouldFillActions: boolean;
-	variant: string;
-	position: string;
-	positionSource: string;
+	/** The resolved Card, Banner or Drawer placement; `none` in preferences. */
+	placement: string;
 	blocking: boolean;
 }
 
@@ -103,13 +98,11 @@ const buildSurfaceSnapshot = function buildSurfaceSnapshot(
 		direction: surface.direction,
 		isVisible: surface.isVisible,
 		orderedActions: surface.orderedActions,
-		position: surface.position,
-		positionSource: surface.positionSource,
+		placement: surface.placement,
 		preferenceControls: surface.preferenceControls,
 		primaryActions: surface.primaryActions,
 		shouldFillActions: surface.shouldFillActions,
 		uiProfile: surface.uiProfile,
-		variant: surface.variant,
 	};
 };
 
@@ -144,182 +137,162 @@ const CustomDialogAction = ({
 	);
 };
 
-const DemoSurface = ({ variant }: { variant: DemoVariant }) => {
-	const [openItem, setOpenItem] = React.useState('');
-	const { openDialog, performBannerAction } = useHeadlessConsentUI();
+/** A banner drawn from the resolved actions, for the custom tabs. */
+const HeadlessBanner = ({ variant }: { variant: DemoVariant }) => {
+	const { banner, openDialog, performBannerAction } = useHeadlessConsentUI();
 	const { common } = useTranslations();
-
+	if (!banner.isVisible) {
+		return null;
+	}
 	return (
-		<>
-			<ConsentBanner.Root>
-				<ConsentBanner.Card>
-					<ConsentBanner.Header>
-						<ConsentBanner.Title />
-						<ConsentBanner.Description
-							legalLinks={['privacyPolicy', 'termsOfService']}
-						/>
-					</ConsentBanner.Header>
-					{variant === 'default' && <ConsentBanner.PolicyActions />}
-					{variant === 'stock' && (
-						<ConsentBanner.PolicyActions
-							renderAction={(action, props) => {
-								const { key, ...buttonProps } = props;
-								const className = props.isPrimary
-									? 'ring-2 ring-emerald-400/60 ring-offset-2'
-									: 'opacity-90';
-
-								switch (action) {
-									case 'accept':
-										return (
-											<ConsentBanner.AcceptButton
-												key={key}
-												{...buttonProps}
-												className={className}
-											/>
-										);
-									case 'reject':
-										return (
-											<ConsentBanner.RejectButton
-												key={key}
-												{...buttonProps}
-												className={className}
-											/>
-										);
-									case 'customize':
-										return (
-											<ConsentBanner.CustomizeButton
-												key={key}
-												{...buttonProps}
-												className={className}
-											/>
-										);
-									case 'dismiss':
-										return (
-											<Button
-												key={key}
-												className={className}
-												onClick={() => performBannerAction('dismiss')}
-											>
-												{common.acknowledge ?? common.dismiss}
-											</Button>
-										);
-									default:
-										return null;
-								}
-							}}
-						/>
-					)}
-					{variant === 'custom' && (
-						<ConsentBanner.PolicyActions
-							renderAction={(action, props) => (
-								<Button
-									key={props.key}
-									type="button"
-									variant={props.isPrimary ? 'default' : 'outline'}
-									className="justify-center"
-									style={props.style}
-									onClick={() => {
-										if (action === 'customize') {
-											openDialog();
-											return;
-										}
-
-										void performBannerAction(action);
-									}}
-								>
-									{actionLabel(action, {
-										accept: common.acceptAll,
-										customize: common.customize,
-										dismiss: common.acknowledge ?? common.dismiss,
-										reject: common.rejectAll,
-										save: common.save,
-									})}
-								</Button>
-							)}
-						/>
-					)}
-				</ConsentBanner.Card>
-			</ConsentBanner.Root>
-
-			<ConsentDialog.Root>
-				<ConsentDialog.Card>
-					<ConsentDialog.Header>
-						<ConsentDialog.HeaderTitle />
-						<ConsentDialog.HeaderDescription />
-					</ConsentDialog.Header>
-					<ConsentDialog.Content>
-						<ConsentWidget.Root>
-							<ConsentWidget.Accordion
-								type="single"
-								value={openItem}
-								onValueChange={(value) => {
-									setOpenItem(
-										Array.isArray(value) ? (value[0] ?? '') : (value ?? '')
-									);
-								}}
-							>
-								<ConsentWidget.AccordionItems />
-							</ConsentWidget.Accordion>
-							{variant === 'default' && <ConsentWidget.PolicyActions />}
-							{variant === 'stock' && (
-								<ConsentWidget.PolicyActions
-									renderAction={(action, props) => {
-										const { key, ...buttonProps } = props;
-										const className = props.isPrimary
-											? 'ring-2 ring-sky-400/60 ring-offset-2'
-											: 'opacity-90';
-
-										switch (action) {
-											case 'accept':
-												return (
-													<ConsentWidget.AcceptAllButton
-														key={key}
-														{...buttonProps}
-														className={className}
-													/>
-												);
-											case 'reject':
-												return (
-													<ConsentWidget.RejectButton
-														key={key}
-														{...buttonProps}
-														className={className}
-													/>
-												);
-											case 'save':
-												return (
-													<ConsentWidget.SaveButton
-														key={key}
-														{...buttonProps}
-														className={className}
-													/>
-												);
-											default:
-												return null;
-										}
-									}}
-								/>
-							)}
-							{variant === 'custom' && (
-								<ConsentWidget.PolicyActions
-									renderAction={(action, props) => (
-										<CustomDialogAction
-											key={props.key}
-											action={action}
-											isPrimary={props.isPrimary}
-											style={props.style}
-										/>
-									)}
-								/>
-							)}
-						</ConsentWidget.Root>
-					</ConsentDialog.Content>
-					<ConsentDialog.Footer />
-				</ConsentDialog.Card>
-			</ConsentDialog.Root>
-		</>
+		<Card
+			className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-xl"
+			data-testid="policy-demo-headless-banner"
+		>
+			<CardHeader>
+				<CardTitle>We value your privacy</CardTitle>
+			</CardHeader>
+			<CardContent className="flex flex-wrap gap-2">
+				{banner.actionGroups.flat().map((action) => (
+					<Button
+						key={action}
+						type="button"
+						variant={
+							banner.primaryActions.includes(action) ? 'default' : 'outline'
+						}
+						className={
+							variant === 'stock' && banner.primaryActions.includes(action)
+								? 'ring-2 ring-emerald-400/60 ring-offset-2'
+								: undefined
+						}
+						onClick={() => {
+							if (action === 'customize') {
+								openDialog();
+								return;
+							}
+							void performBannerAction(action);
+						}}
+					>
+						{actionLabel(action, {
+							accept: common.acceptAll,
+							customize: common.customize,
+							dismiss: common.acknowledge ?? common.dismiss,
+							reject: common.rejectAll,
+							save: common.save,
+						})}
+					</Button>
+				))}
+			</CardContent>
+		</Card>
 	);
 };
+
+/** The preference widget's compound parts, shown while the dialog is open. */
+const HeadlessPreferences = ({ variant }: { variant: DemoVariant }) => {
+	const [openItem, setOpenItem] = React.useState('');
+	const { dialog, closeUI } = useHeadlessConsentUI();
+	if (!dialog.isVisible) {
+		return null;
+	}
+	return (
+		<div
+			className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4"
+			data-testid="policy-demo-headless-preferences"
+		>
+			<Card className="w-full max-w-lg">
+				<CardHeader className="flex flex-row items-center justify-between">
+					<CardTitle>Preferences</CardTitle>
+					<Button
+						type="button"
+						variant="outline"
+						onClick={closeUI}
+					>
+						Close
+					</Button>
+				</CardHeader>
+				<CardContent>
+					<ConsentWidget.Root>
+						<ConsentWidget.Accordion
+							type="single"
+							value={openItem}
+							onValueChange={(value) => {
+								setOpenItem(
+									Array.isArray(value) ? (value[0] ?? '') : (value ?? '')
+								);
+							}}
+						>
+							<ConsentWidget.AccordionItems />
+						</ConsentWidget.Accordion>
+						{variant === 'stock' && (
+							<ConsentWidget.PolicyActions
+								renderAction={(action, props) => {
+									const { key, ...buttonProps } = props;
+									const className = props.isPrimary
+										? 'ring-2 ring-sky-400/60 ring-offset-2'
+										: 'opacity-90';
+
+									switch (action) {
+										case 'accept':
+											return (
+												<ConsentWidget.AcceptAllButton
+													key={key}
+													{...buttonProps}
+													className={className}
+												/>
+											);
+										case 'reject':
+											return (
+												<ConsentWidget.RejectButton
+													key={key}
+													{...buttonProps}
+													className={className}
+												/>
+											);
+										case 'save':
+											return (
+												<ConsentWidget.SaveButton
+													key={key}
+													{...buttonProps}
+													className={className}
+												/>
+											);
+										default:
+											return null;
+									}
+								}}
+							/>
+						)}
+						{variant === 'custom' && (
+							<ConsentWidget.PolicyActions
+								renderAction={(action, props) => (
+									<CustomDialogAction
+										key={props.key}
+										action={action}
+										isPrimary={props.isPrimary}
+										style={props.style}
+									/>
+								)}
+							/>
+						)}
+					</ConsentWidget.Root>
+				</CardContent>
+			</Card>
+		</div>
+	);
+};
+
+const DemoSurface = ({ variant }: { variant: DemoVariant }) =>
+	variant === 'default' ? (
+		<>
+			<ConsentBanner legalLinks={['privacyPolicy', 'termsOfService']} />
+			<ConsentDialog />
+		</>
+	) : (
+		<>
+			<HeadlessBanner variant={variant} />
+			<HeadlessPreferences variant={variant} />
+		</>
+	);
 
 const SurfaceControls = ({
 	surface,
@@ -328,31 +301,31 @@ const SurfaceControls = ({
 	surface: SurfaceParams;
 	onChange: (next: SurfaceParams) => void;
 }) => {
-	const positions = surfacePositionOptions(surface.variant);
+	const positions = surfacePositionOptions(surface.container);
 	return (
 		<div className="flex flex-wrap items-end gap-3">
 			<label className="flex flex-col gap-1 text-xs">
-				Variant
+				Container
 				<select
-					data-testid="policy-demo-variant"
-					value={surface.variant}
+					data-testid="policy-demo-container"
+					value={surface.container}
 					onChange={(event) =>
 						onChange(
-							setSurfaceVariant(
+							setSurfaceContainer(
 								surface,
-								event.target.value as PromptVariant | ''
+								event.target.value as ConsentContainerType | ''
 							)
 						)
 					}
 					className="h-9 rounded-md border border-slate-300 bg-white px-3 font-mono text-xs dark:border-slate-700 dark:bg-slate-950"
 				>
 					<option value="">auto</option>
-					{PROMPT_VARIANTS.map((variant) => (
+					{CONTAINER_TYPES.map((type) => (
 						<option
-							key={variant}
-							value={variant}
+							key={type}
+							value={type}
 						>
-							{variant}
+							{type}
 						</option>
 					))}
 				</select>
@@ -362,12 +335,9 @@ const SurfaceControls = ({
 				<select
 					data-testid="policy-demo-position"
 					value={surface.position}
-					disabled={!surface.variant}
+					disabled={!surface.container}
 					onChange={(event) =>
-						onChange({
-							...surface,
-							position: event.target.value as PromptPosition | '',
-						})
+						onChange({ ...surface, position: event.target.value })
 					}
 					className="h-9 rounded-md border border-slate-300 bg-white px-3 font-mono text-xs disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950"
 				>
@@ -423,13 +393,11 @@ const PolicyActionsDemoContent = ({
 				direction: banner.direction,
 				isVisible: banner.isVisible,
 				orderedActions: banner.orderedActions,
-				position: banner.position,
-				positionSource: banner.positionSource,
+				placement: banner.container?.desktop.placement ?? 'none',
 				preferenceControls: banner.preferenceControls,
 				primaryActions: banner.primaryActions,
 				shouldFillActions: banner.shouldFillActions,
 				uiProfile: banner.uiProfile,
-				variant: banner.variant,
 			}),
 		[banner]
 	);
@@ -443,13 +411,11 @@ const PolicyActionsDemoContent = ({
 				direction: dialog.direction,
 				isVisible: dialog.isVisible,
 				orderedActions: dialog.orderedActions,
-				position: dialog.position,
-				positionSource: dialog.positionSource,
+				placement: dialog.container?.desktop.placement ?? 'none',
 				preferenceControls: dialog.preferenceControls,
 				primaryActions: dialog.primaryActions,
 				shouldFillActions: dialog.shouldFillActions,
 				uiProfile: dialog.uiProfile,
-				variant: dialog.variant,
 			}),
 		[dialog]
 	);
@@ -562,12 +528,10 @@ const PolicyActionsDemoContent = ({
 								<p
 									className="font-mono text-xs"
 									data-testid="policy-demo-surface"
-									data-variant={banner.variant}
-									data-position={banner.position}
-									data-position-source={banner.positionSource}
+									data-placement={bannerSnapshot.placement}
 									data-blocking={banner.blocking ? 'true' : 'false'}
 								>
-									{banner.variant} · {banner.position} ({banner.positionSource})
+									{bannerSnapshot.placement}
 									{banner.blocking ? ' · blocking' : ' · non-blocking'}
 								</p>
 							</div>
@@ -709,7 +673,7 @@ export const PolicyActionsDemo = () => {
 	const country = searchParams.get('country')?.toUpperCase() ?? 'DE';
 	const region = searchParams.get('region')?.toUpperCase() ?? undefined;
 	const surface = parseSurfaceParams(searchParams);
-	const providerKey = `${country}:${region ?? 'none'}:${surface.variant}:${surface.position}:${surface.blocking}`;
+	const providerKey = `${country}:${region ?? 'none'}:${surface.container}:${surface.position}:${surface.blocking}`;
 	const presentation = withSurface(
 		getScenarioById(
 			country === 'ES' ? 'custom-es-split-stack' : 'custom-de-strict'

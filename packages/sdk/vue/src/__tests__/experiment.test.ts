@@ -33,8 +33,8 @@ const resolution: PolicyResolution = {
 
 const experiment: ConsentExperiment = {
 	arms: {
-		bar: { prompt: { variant: 'bar' } },
-		floating: { prompt: { variant: 'floating' } },
+		bar: { prompt: { container: { type: 'banner' } } },
+		floating: { prompt: { container: { type: 'card' } } },
 	},
 	id: 'banner-shape',
 };
@@ -203,16 +203,16 @@ test('the presentation resolves against the experiment the kernel was created wi
 	app.provide(consentConfigKey, config);
 	app.mount(document.createElement('div'));
 	try {
-		expect(presentation.value?.prompt?.variant).toBe('bar');
+		expect(presentation.value?.prompt?.container).toEqual({ type: 'banner' });
 		config.value = {
 			experiment: {
 				...experiment,
 				arm: 'bar',
-				arms: { bar: { prompt: { variant: 'wall' } } },
+				arms: { bar: { prompt: { container: { position: 'center', type: 'card' } } } },
 			},
 		};
 		await nextTick();
-		expect(presentation.value?.prompt?.variant).toBe('bar');
+		expect(presentation.value?.prompt?.container).toEqual({ type: 'banner' });
 	} finally {
 		app.unmount();
 		context.dispose();

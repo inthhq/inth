@@ -1,11 +1,12 @@
 import {
 	actionAppearanceFromTheme,
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 } from '@inth/sdk-core';
 import type {
 	ConsentSnapshot,
-	ConsentPresentation,
-	PromptPresentation,
+	LegacyConsentPresentation as ConsentPresentation,
+	LegacyPromptPresentation as PromptPresentation,
+	LegacyResolvedConsentPresentation,
 	PresentationAction,
 	ResolvedConsentPresentation,
 } from '@inth/sdk-core';
@@ -23,8 +24,8 @@ export const resolveActions = function resolveActions(
 	presentation?: ConsentPresentation,
 	override?: PromptPresentation,
 	theme?: Theme
-): ResolvedConsentPresentation {
-	return resolveConsentPresentation({
+): LegacyResolvedConsentPresentation {
+	return resolveLegacyConsentPresentation({
 		actionAppearance: actionAppearanceFromTheme(theme),
 		override,
 		policy: snapshot.policyRule,

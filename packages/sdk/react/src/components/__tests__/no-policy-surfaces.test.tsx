@@ -6,7 +6,7 @@ import { render } from 'vitest-browser-react';
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialogLink } from '~/components/consent-preferences-link/consent-preferences-link';
-import { ConsentDialog } from '~/components/panel';
+import { ConsentDialog } from '~/aggregate-components';
 import {
 	ConsentDialogTrigger,
 	ConsentDialogTriggerToolbar,

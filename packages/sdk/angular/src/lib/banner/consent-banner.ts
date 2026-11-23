@@ -21,12 +21,12 @@ import {
 } from '@inth/sdk/surface-actions';
 import {
 	resolveActionLabels,
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 	resolveOptOutLink,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
 } from '@inth/sdk/surface-state';
-import styles from '@inth/sdk/ui/styles/components/consent-banner';
+import styles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 import {
 	resolveLegalLinkEntries,
@@ -460,7 +460,7 @@ export class ConsentBanner {
 	protected readonly presentation = computed(() => {
 		const primary = this.primaryButton();
 		const presentation = this.consent.presentation();
-		return resolveConsentPresentation({
+		return resolveLegacyConsentPresentation({
 			actionAppearance: actionAppearanceFromTheme(this.#theme.theme()),
 			override: {
 				blocking: this.blocking(),

@@ -1,46 +1,64 @@
 'use client';
 
-import type * as CoreTypes from '@inth/sdk/engine';
 import type {
-	PromptPosition,
-	PromptVariant,
-	SurfacePresentation,
+	ConsentContainer,
+	ConsentEdgeStyle,
+	PresentationAction,
 } from '@inth/sdk/engine';
-import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
-import styles from '@inth/sdk/ui/styles/components/consent-banner';
-import { Fragment } from 'react';
-import type { FC, ReactNode } from 'react';
+import type * as CoreTypes from '@inth/sdk/engine';
+import { createContext, useContext, useState } from 'react';
+import type { ComponentType, FC, ReactNode } from 'react';
 
 import { useHeadlessConsentUI } from '~/component-hooks/use-headless-consent-ui';
-import { Box } from '~/components/shared/primitives/box';
 import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links';
-import { BrandingTag } from '~/components/shared/ui/branding';
+import { useActiveUI } from '~/hooks';
 import { useComponentConfig } from '~/hooks/use-component-config';
 import { useIABPolicyGuard } from '~/hooks/use-iab-policy-guard';
 import { useOptInConfirmationHost } from '~/hooks/use-opt-out';
 import { createDeferredModule } from '~/utils/deferred-module';
 
 import { StreamedConsentSurface } from '../shared/streamed-surface';
-import { ConsentBannerRoot } from './atoms/root';
-import {
-	ConsentBannerAcceptButton,
-	ConsentBannerCard,
-	ConsentBannerCustomizeButton,
-	ConsentBannerDescription,
-	ConsentBannerDismissButton,
-	ConsentBannerFooter,
-	ConsentBannerFooterSubGroup,
-	ConsentBannerHeader,
-	ConsentBannerRejectButton,
-	ConsentBannerRights,
-	ConsentBannerTitle,
-} from './components';
 import { ErrorBoundary } from './error-boundary';
-import { PrivacyChoicesBanner } from './privacy-choices-banner';
+import type { PromptSurfaceOptions } from './surface';
 
 const LazyOptInConfirmation = createDeferredModule(
 	() => import('~/components/opt-in-confirmation')
 ).component((module) => module.OptInConfirmation);
+
+/*
+ * One chunk per container, each with its own stylesheet, so a page
+ * downloads only the container it shows. A page that never owes a choice
+ * downloads none of them.
+ */
+const LazyCard = createDeferredModule(() => import('./card')).component(
+	(module) => module.CardSurface
+);
+const LazyBanner = createDeferredModule(() => import('./banner')).component(
+	(module) => module.BannerSurface
+);
+const LazyDrawer = createDeferredModule(() => import('./drawer')).component(
+	(module) => module.DrawerSurface
+);
+
+/** The component that renders each container type. @internal */
+export interface PromptContainers {
+	card: ComponentType<PromptSurfaceOptions>;
+	banner: ComponentType<PromptSurfaceOptions>;
+	drawer: ComponentType<PromptSurfaceOptions>;
+}
+
+/**
+ * The containers the banner renders. Lazy by default; a render that cannot
+ * wait for a chunk, such as the static banner rendered at build time,
+ * provides them already loaded.
+ *
+ * @internal
+ */
+export const PromptContainersContext = createContext<PromptContainers>({
+	banner: LazyBanner,
+	card: LazyCard,
+	drawer: LazyDrawer,
+});
 
 /**
  * Identifiers for the available buttons in the consent banner.
@@ -96,7 +114,7 @@ export interface ConsentBannerProps {
 
 	/**
 	 * Content to display on the customize button
-	 * @remarks Opens detailed consent preferences
+	 * @remarks Opens the options in place
 	 * @default undefined
 	 */
 	customizeButtonText?: ReactNode;
@@ -115,18 +133,6 @@ export interface ConsentBannerProps {
 	dismissButtonText?: ReactNode;
 
 	/**
-	 * Legacy setting for a blocking banner.
-	 * @deprecated Use `blocking` to control focus, scroll and backdrop together.
-	 */
-	scrollLock?: boolean;
-
-	/**
-	 * When true, the consent banner will trap focus
-	 * @deprecated Use `blocking` to control focus, scroll and backdrop together.
-	 */
-	trapFocus?: boolean;
-
-	/**
 	 * When true, disables the entrance/exit animations
 	 * @default false
 	 */
@@ -141,54 +147,28 @@ export interface ConsentBannerProps {
 	 *
 	 * @defaultValue undefined
 	 *
-	 * @example
-	 * ```tsx
-	 * // Show all links
-	 * <ConsentBanner legalLinks={undefined} />
-	 *
-	 * // Show no links
-	 * <ConsentBanner legalLinks={null} />
-	 *
-	 * // Show only privacy policy
-	 * <ConsentBanner legalLinks={['privacyPolicy']} />
-	 * ```
-	 *
 	 * @remarks
 	 * You must set the legal links in the InthProvider options.
 	 */
 	legalLinks?: InlineLegalLinksProps['links'];
 
 	/**
-	 * When true, hides the branding tag on the banner.
+	 * When true, hides the attribution tag on the banner.
 	 * @default false
 	 */
 	hideBranding?: boolean;
 
 	/**
-	 * Defines the layout of buttons in the footer.
-	 * Allows reordering and grouping of buttons.
+	 * Defines the order and grouping of the buttons. Actions the policy
+	 * does not allow are dropped, and required ones restored.
 	 *
 	 * @defaultValue [['reject', 'accept'], 'customize']
 	 */
 	layout?: ConsentBannerLayout;
 
 	/**
-	 * Defines how footer button groups flow.
-	 *
-	 * @defaultValue 'row'
-	 */
-	direction?: SurfacePresentation['direction'];
-
-	/**
-	 * Specifies which button(s) should be highlighted as the primary action.
-	 *
-	 * @defaultValue 'customize'
-	 */
-	primaryButton?: ConsentBannerButton | ConsentBannerButton[];
-
-	/**
 	 * Which consent models this banner responds to.
-	 * @default ['opt-in']
+	 * @default ['opt-in', 'opt-out']
 	 */
 	models?: CoreTypes.Model[];
 
@@ -199,33 +179,57 @@ export interface ConsentBannerProps {
 	uiSource?: string;
 
 	/**
-	 * Shape of the prompt: `floating` card, full-width `bar`, compact
-	 * `widget`, or centered `wall`. Overrides `presentation.prompt.variant`.
-	 * @remarks Every prompt defaults to `floating`. Notices cannot use `wall`.
+	 * A Card, Banner or Drawer, and where it sits. Overrides
+	 * `presentation.prompt.container` and the policy's `surface.container`.
+	 * Positions are logical: `start` and `end` follow the writing direction.
+	 * @default { type: 'card', position: 'start' }
 	 */
-	variant?: PromptVariant;
+	container?: ConsentContainer;
 
 	/**
-	 * Placement of the prompt. Overrides `presentation.prompt.position`.
-	 * @remarks Must be valid for the resolved variant; otherwise the variant
-	 * default is used and a development diagnostic is logged. Right-to-left
-	 * text does not move the prompt.
+	 * `inset` floats a Banner or Drawer off the viewport edges; `flush`
+	 * pins it to them. A Card is always inset. Overrides
+	 * `presentation.prompt.edgeStyle`.
+	 * @default 'inset'
 	 */
-	position?: PromptPosition;
+	edgeStyle?: ConsentEdgeStyle;
 
 	/**
-	 * Backdrop, scroll lock, focus trap and no outside dismissal, as one
-	 * value. Overrides `presentation.prompt.blocking`.
-	 * @remarks `wall` is always blocking; a notice never is.
+	 * Block the page until the visitor makes a choice: backdrop, scroll lock,
+	 * focus trap and no outside dismissal. Overrides
+	 * `presentation.prompt.blockUntilChoice`.
+	 * @remarks A centred Card always blocks. A notice never does, nor a
+	 * prompt under an opt-out model or a policy that forbids blocking.
 	 */
-	blocking?: boolean;
+	blockUntilChoice?: boolean;
 }
+
+type ContainerOptions = PromptSurfaceOptions & {
+	actionGroups: readonly (readonly PresentationAction[])[];
+};
+
+/**
+ * Loads the prompt for the resolved container once a choice is owed, and
+ * keeps it mounted after, so its exit, the page announcement and the focus
+ * return outlive the prompt.
+ */
+const PromptContainer = (props: ContainerOptions) => {
+	const containers = useContext(PromptContainersContext);
+	const activeUI = useActiveUI();
+	const [owed, setOwed] = useState(activeUI === 'banner');
+	if (activeUI === 'banner' && !owed) {
+		setOwed(true);
+	}
+	if (!owed) {
+		return null;
+	}
+	const Container = containers[props.container.desktop.type];
+	return <Container {...props} />;
+};
 
 const ConsentBannerContent: FC<ConsentBannerProps> = ({
 	noStyle: localNoStyle,
 	disableAnimation: localDisableAnimation,
-	scrollLock: localScrollLock,
-	trapFocus: localTrapFocus,
 	title,
 	description,
 	rejectButtonText,
@@ -235,58 +239,38 @@ const ConsentBannerContent: FC<ConsentBannerProps> = ({
 	legalLinks,
 	hideBranding = false,
 	layout,
-	direction,
-	primaryButton,
 	models,
 	uiSource,
-	variant,
-	position,
-	blocking,
+	container,
+	edgeStyle,
+	blockUntilChoice,
 }) => {
 	// Outside the banner's own error boundary, which would swallow it.
 	useIABPolicyGuard();
 	const optInConfirmationActive = useOptInConfirmationHost();
-	const primaryActions =
-		typeof primaryButton === 'string' ? [primaryButton] : primaryButton;
 	const { banner } = useHeadlessConsentUI({
-		prompt: {
-			blocking,
-			direction,
-			layout,
-			position,
-			primaryActions,
-			scrollLock: localScrollLock,
-			trapFocus: localTrapFocus,
-			variant,
-		},
+		prompt: { blockUntilChoice, container, edgeStyle, layout },
 	});
-
-	const resolvedScrollLock = banner.scrollLock;
-
 	const config = useComponentConfig({
 		disableAnimation: localDisableAnimation,
 		noStyle: localNoStyle,
-		scrollLock: resolvedScrollLock,
-		trapFocus: banner.trapFocus,
 	});
-
-	// Either design hosts the opt-in confirmation: this banner claimed the
-	// host above, so no other surface renders it.
+	// The banner hosts the opt-in confirmation: it claimed the host above, so
+	// no other surface renders it.
 	const optInConfirmation = optInConfirmationActive ? (
 		<LazyOptInConfirmation
 			disableAnimation={config.disableAnimation}
 			noStyle={config.noStyle}
 		/>
 	) : null;
-
-	if (banner.design === 'privacy-choices' && banner.container) {
-		return (
-			<>
-				{optInConfirmation}
+	return (
+		<>
+			{optInConfirmation}
+			{banner.container ? (
 				<ErrorBoundary
 					fallback={<div>Something went wrong with the Consent Banner.</div>}
 				>
-					<PrivacyChoicesBanner
+					<PromptContainer
 						container={banner.container}
 						actionGroups={banner.actionGroups}
 						noStyle={config.noStyle}
@@ -303,163 +287,17 @@ const ConsentBannerContent: FC<ConsentBannerProps> = ({
 						dismissButtonText={dismissButtonText}
 					/>
 				</ErrorBoundary>
-			</>
-		);
-	}
-
-	const { orderedActions } = banner;
-	const allowedActions = new Set(orderedActions);
-	const resolvedLayout = banner.actionGroups;
-	const resolvedDirection = banner.direction;
-	const { shouldFillActions } = banner;
-
-	const renderButton = (type: ConsentBannerButton, className?: string) => {
-		if (!allowedActions.has(type)) {
-			return null;
-		}
-
-		const isPrimary = banner.primaryActions.includes(type);
-
-		switch (type) {
-			case 'reject':
-				return (
-					<ConsentBannerRejectButton
-						consentAction="reject"
-						isPrimary={isPrimary}
-						className={className}
-						data-action="reject"
-						data-testid="consent-banner-reject-button"
-					>
-						{rejectButtonText}
-					</ConsentBannerRejectButton>
-				);
-			case 'accept':
-				return (
-					<ConsentBannerAcceptButton
-						consentAction="accept"
-						isPrimary={isPrimary}
-						className={className}
-						data-action="accept"
-						data-testid="consent-banner-accept-button"
-					>
-						{acceptButtonText}
-					</ConsentBannerAcceptButton>
-				);
-			case 'customize':
-				return (
-					<ConsentBannerCustomizeButton
-						consentAction="customize"
-						isPrimary={isPrimary}
-						className={className}
-						data-action="customize"
-						data-testid="consent-banner-customize-button"
-					>
-						{customizeButtonText}
-					</ConsentBannerCustomizeButton>
-				);
-			case 'dismiss':
-				return (
-					<ConsentBannerDismissButton
-						consentAction="dismiss"
-						isPrimary={isPrimary}
-						className={className}
-						data-action="dismiss"
-						data-testid="consent-banner-dismiss-button"
-					>
-						{dismissButtonText}
-					</ConsentBannerDismissButton>
-				);
-			case 'save':
-				return null;
-			default: {
-				const _exhaustive: never = type;
-				throw new Error(`Unhandled consent banner button type: ${_exhaustive}`);
-			}
-		}
-	};
-
-	return (
-		<>
-			{optInConfirmation}
-			<ErrorBoundary
-				fallback={<div>Something went wrong with the Consent Banner.</div>}
-			>
-				<ConsentBannerRoot
-					{...config}
-					models={models}
-					uiSource={uiSource}
-					variant={variant}
-					position={position}
-					blocking={blocking}
-				>
-					<Box
-						baseClassName={styles.cardShell}
-						slotKey="banner.cardShell"
-					>
-						<BrandingTag
-							surface="banner"
-							hideBranding={hideBranding}
-						/>
-						<ConsentBannerCard>
-							<ConsentBannerHeader>
-								<ConsentBannerTitle>{title}</ConsentBannerTitle>
-								<ConsentBannerDescription legalLinks={legalLinks}>
-									{description}
-								</ConsentBannerDescription>
-							</ConsentBannerHeader>
-							<ConsentBannerFooter
-								className={actionStyles.actionRoot}
-								data-direction={resolvedDirection}
-								data-fill={shouldFillActions ? true : undefined}
-								data-split={
-									resolvedLayout.length > 1 && !shouldFillActions
-										? true
-										: undefined
-								}
-							>
-								<ConsentBannerRights rights={banner.preferenceControls} />
-								{resolvedLayout.map((item, index) => {
-									if (Array.isArray(item)) {
-										const filteredItems = item.filter((subItem) =>
-											allowedActions.has(subItem)
-										);
-										if (filteredItems.length === 0) {
-											return null;
-										}
-										const groupKey = item.join('-');
-										return (
-											<ConsentBannerFooterSubGroup
-												key={groupKey ? `group-${groupKey}` : `group-${index}`}
-												className={actionStyles.actionGroup}
-												data-direction={resolvedDirection}
-												data-fill={shouldFillActions ? true : undefined}
-											>
-												{filteredItems.map((subItem) => (
-													<Fragment key={subItem}>
-														{renderButton(subItem)}
-													</Fragment>
-												))}
-											</ConsentBannerFooterSubGroup>
-										);
-									}
-									if (!allowedActions.has(item)) {
-										return null;
-									}
-									return <Fragment key={item}>{renderButton(item)}</Fragment>;
-								})}
-							</ConsentBannerFooter>
-						</ConsentBannerCard>
-					</Box>
-				</ConsentBannerRoot>
-			</ErrorBoundary>
+			) : null}
 		</>
 	);
 };
 
 /**
- * The stock banner. It reads the policy to choose its buttons, so all of
- * it renders where the server can stream it: see
- * `StreamedConsentSurface`.
+ * The stock consent banner: a Card, Banner or Drawer. It reads the policy
+ * to choose its buttons, so all of it renders where the server can stream
+ * it: see `StreamedConsentSurface`.
+ *
+ * @public
  */
 export const ConsentBanner: FC<ConsentBannerProps> = (props) => (
 	<StreamedConsentSurface>

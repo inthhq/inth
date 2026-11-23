@@ -1,11 +1,8 @@
 'use client';
 
 import type { OptOutLinkVariant } from '@inth/sdk/surface-state';
-import {
-	resolveConsentDesign,
-	resolvePrivacyChoicesLink,
-} from '@inth/sdk/surface-state';
-import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import { resolvePrivacyChoicesLink } from '@inth/sdk/surface-state';
+import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import {
 	createElement,
 	forwardRef as createForwardRef,
@@ -29,14 +26,12 @@ import { useTheme } from '~/hooks/use-theme';
  * "Do Not Sell or Share My Personal Information" title. Activating the link
  * always opens the preference dialog and never records an opt-out on its own.
  *
- * Under `design: 'privacy-choices'` it is also the way back into the
- * dialog under an opt-in policy, in the US or the EU: it reads "Your
- * Privacy Choices" there, with no opt-out icon, since no opt-out right is
- * offered.
+ * It is also the way back into the dialog under an opt-in policy, in the
+ * US or the EU: it reads "Your Privacy Choices" there, with no opt-out
+ * icon, since no opt-out right is offered.
  *
- * Renders nothing when the active policy gives no opt-out right (on the
- * classic design), when no policy has resolved yet, or when an external
- * consent source owns consent.
+ * Renders nothing when no policy has resolved yet, under IAB, or when an
+ * external consent source owns consent.
  */
 export interface PrivacyChoicesLinkProps extends Omit<
 	ConsentButtonProps,
@@ -64,7 +59,6 @@ export const PrivacyChoicesLink = createForwardRef<
 	const { noStyle: themeNoStyle } = useTheme();
 
 	const optOutLink = resolvePrivacyChoicesLink(snapshot, translations, {
-		design: resolveConsentDesign(presentation),
 		variant: variant ?? presentation?.optOutLink,
 	});
 
@@ -74,7 +68,7 @@ export const PrivacyChoicesLink = createForwardRef<
 
 	const icon = optOutLink.icon ? (
 		<OptOutIcon
-			className={themeNoStyle ? undefined : bannerStyles.optOutIcon}
+			className={themeNoStyle ? undefined : legalLinkStyles.optOutIcon}
 			sized={!themeNoStyle}
 		/>
 	) : null;

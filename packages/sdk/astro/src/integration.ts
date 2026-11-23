@@ -88,7 +88,7 @@ export const createOwnEntryResolver =
 	};
 
 /** The dialog and preference-widget rules, which no first paint needs. */
-const DIALOG_STYLESHEET = '@inth/sdk/ui/styles/sheets/dialog.css';
+const DIALOG_STYLESHEET = '@inth/sdk/ui/styles/sheets/widget.css';
 const IAB_DIALOG_STYLESHEET = '@inth/sdk/ui/styles/sheets/iab-dialog.css';
 
 /**

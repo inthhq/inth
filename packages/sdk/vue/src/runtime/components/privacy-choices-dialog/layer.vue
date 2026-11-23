@@ -4,9 +4,9 @@ import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 
 import '@inth/sdk/ui/styles/components/consent-expand.css';
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
-import '@inth/sdk/ui/styles/components/privacy-choices.css';
+import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { StyleValue } from 'vue';
 

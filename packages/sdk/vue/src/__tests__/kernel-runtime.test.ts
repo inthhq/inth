@@ -776,7 +776,7 @@ test('the experiment callbacks carry the arm on the impression and the choice', 
 		callbacks: { onChoiceRecorded: recorded, onSurfaceShown: shown },
 		customFetch: fetchMock as unknown as typeof fetch,
 		experiment: {
-			arms: { bar: { prompt: { variant: 'bar' } } },
+			arms: { bar: { prompt: { container: { type: 'banner' } } } },
 			id: 'banner-shape',
 			split: { bar: 1 },
 		},

@@ -22,7 +22,7 @@ import { policyFixture } from './policy-fixture';
 // A loaded module stays loaded, so the test that loads the IAB dialog runs
 // last.
 const IAB_DIALOG_MODULE = '/src/components/iab-panel/iab-panel.tsx';
-const DIALOG_MODULE = '/src/components/panel/panel.tsx';
+const DIALOG_MODULE = '/src/components/dialog/dialog.tsx';
 
 const options = (model: 'iab' | 'opt-in'): ComponentFixtureOptions => ({
 	disableAnimation: true,

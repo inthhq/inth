@@ -2,7 +2,7 @@
 	import type { AllConsentNames, SaveUISource } from '@inth/sdk/engine';
 	import {
 		actionAppearanceFromTheme,
-		resolveConsentPresentation,
+		resolveLegacyConsentPresentation,
 	} from '@inth/sdk/engine';
 	import { createPreferenceDraft } from '@inth/sdk/preference-draft';
 	import { optInConsentSurface } from '@inth/sdk/surface-actions';
@@ -209,7 +209,7 @@
 	);
 
 	const presentation = $derived(
-		resolveConsentPresentation({
+		resolveLegacyConsentPresentation({
 			actionAppearance: actionAppearanceFromTheme(theme.theme),
 			policy: consent.snapshot.policyRule,
 			presentation: consent.state.presentation,

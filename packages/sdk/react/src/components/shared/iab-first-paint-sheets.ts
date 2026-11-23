@@ -1,6 +1,6 @@
 import * as iabFirstPaint from '@inth/sdk/ui/styles/sheets/iab-first-paint';
 
-import { BANNER_SHEETS } from './first-paint-sheets';
+import { PARTS_SHEETS } from './parts-sheets';
 import type { SurfaceStyleSheet } from './surface-styles';
 
 /**
@@ -14,6 +14,6 @@ import type { SurfaceStyleSheet } from './surface-styles';
  * @internal
  */
 export const IAB_FIRST_PAINT_SHEETS: readonly SurfaceStyleSheet[] = [
-	...BANNER_SHEETS,
+	...PARTS_SHEETS,
 	iabFirstPaint,
 ];

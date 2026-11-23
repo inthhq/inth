@@ -1,4 +1,4 @@
-import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
+import * as widget from '@inth/sdk/ui/styles/sheets/widget';
 import * as iabDialog from '@inth/sdk/ui/styles/sheets/iab-dialog';
 
 import { IAB_FIRST_PAINT_SHEETS } from './iab-first-paint-sheets';
@@ -7,6 +7,6 @@ import type { SurfaceStyleSheet } from './surface-styles';
 /** Styles for a standalone IAB dialog, loaded with its code. @internal */
 export const IAB_DIALOG_SHEETS: readonly SurfaceStyleSheet[] = [
 	...IAB_FIRST_PAINT_SHEETS,
-	dialog,
+	widget,
 	iabDialog,
 ];

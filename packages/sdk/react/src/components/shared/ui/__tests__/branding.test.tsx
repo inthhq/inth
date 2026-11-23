@@ -7,7 +7,6 @@ import { render } from 'vitest-browser-react';
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import type { ConsentStateFixture } from '~/__tests__/consent-state-fixture';
 import { policyFixture } from '~/__tests__/policy-fixture';
-import { ConsentDialogFooter } from '~/components/panel/atoms/card';
 
 import { testing } from '../../../../testing';
 import { BrandingTag } from '../branding';
@@ -186,19 +185,6 @@ describe('BrandingTag', () => {
 			expect(link).not.toHaveAttribute('dir');
 			expect(link).toHaveTextContent('מאובטח על ידי');
 			expect(link?.querySelector('[dir="ltr"]')).toBeInTheDocument();
-		});
-	});
-
-	test('uses the dialog tag variant in the default dialog footer', async () => {
-		await renderWithConsentState(<ConsentDialogFooter hideBranding={false} />, {
-			branding: 'inth',
-		});
-
-		await vi.waitFor(() => {
-			const link = tagLink('consent-dialog-branding');
-			expect(link).toBeInTheDocument();
-			expect(link).toHaveAttribute('data-branding', 'inth');
-			expect(link).toHaveAttribute('data-variant', 'dialog-tag');
 		});
 	});
 

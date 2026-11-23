@@ -11,6 +11,7 @@ import { createPortal } from 'react-dom';
 import { ConsentTrackingContext } from '~/context/consent-tracking-context';
 import { LocalThemeContext } from '~/context/theme-context';
 import { useSetActiveUI } from '~/hooks';
+import { useFocusBlocking } from '~/hooks/use-focus-blocking';
 import { useIABConsentManager } from '~/hooks/use-iab-manager';
 import { useIsHydrated } from '~/hooks/use-is-hydrated';
 import { useScrollLock } from '~/hooks/use-scroll-lock';
@@ -75,7 +76,11 @@ const IABConsentDialogRoot: FC<IABConsentDialogRootProps> = ({
 		iab: iabState,
 		policyDialog,
 		model,
-	} = useIABConsentManager({ preferences: { scrollLock, trapFocus } });
+	} = useIABConsentManager({
+		preferences: {
+			blocking: useFocusBlocking('preferences', scrollLock, trapFocus),
+		},
+	});
 	const setActiveUI = useSetActiveUI();
 	const { components } = useUIConfig();
 	const textDirection = useTextDirection(language);

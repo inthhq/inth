@@ -11,9 +11,9 @@
  * @internal
  */
 
-import * as banner from '@inth/sdk/ui/styles/sheets/banner';
+import * as banner from '@inth/sdk/ui/styles/sheets/parts';
 import * as button from '@inth/sdk/ui/styles/sheets/button';
-import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
+import * as dialog from '@inth/sdk/ui/styles/sheets/widget';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
 
 import { insertSheets } from './sheets';

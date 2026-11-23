@@ -5,7 +5,7 @@ import {
 	input,
 	output,
 } from '@angular/core';
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
 import { resolveNoStyle } from '../core/no-style';
 

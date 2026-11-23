@@ -30,9 +30,9 @@ import {
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 
 import '@inth/sdk/ui/styles/components/consent-expand.css';
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
-import '@inth/sdk/ui/styles/components/privacy-choices.css';
+import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import { computed, nextTick, onBeforeUnmount, ref } from 'vue';
 
 import { useConsentKernel, useConsentSnapshot } from '../../composables/kernel';

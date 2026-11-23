@@ -181,7 +181,8 @@ const mount = async function mount({
 	optOutLink,
 }: {
 	region?: Region;
-	design?: ConsentPresentation['design'] | null;
+	/** @deprecated temporary — removed in phase B. Ignored: one consent UI. */
+	design?: string | null;
 	edgeStyle?: 'inset' | 'flush';
 	phone?: boolean;
 	container?: ConsentContainer;
@@ -216,7 +217,6 @@ const mount = async function mount({
 					design === null
 						? undefined
 						: {
-								design,
 								optOutLink,
 								prompt: { container, edgeStyle },
 							},
@@ -833,7 +833,7 @@ describe('loading', () => {
 						},
 					]),
 					persistence: false,
-					presentation: { design: 'privacy-choices' },
+					presentation: {},
 				}),
 				{ provide: CONSENT_DIALOG_PANEL, useValue: classic },
 				{ provide: PRIVACY_CHOICES_DIALOG, useValue: privacyChoices },
@@ -876,7 +876,6 @@ describe('controlled open while the dialog loads', () => {
 					]),
 					persistence: false,
 					presentation: {
-						design: 'privacy-choices',
 						prompt: { container: { type: 'card' } },
 					},
 				}),
@@ -924,19 +923,19 @@ describe('design switch', () => {
 		await closeDialog(consent);
 
 		await consent.updateOptions({
-			presentation: { design: 'privacy-choices' },
+			presentation: {},
 		});
 		await openDialog();
 		expect(roots()).toEqual(['privacy-choices']);
 		await closeDialog(consent);
 
-		await consent.updateOptions({ presentation: { design: 'classic' } });
+		await consent.updateOptions({ presentation: {} });
 		link().click();
 		await waitFor(() => expect(roots()).toEqual([null]));
 		await closeDialog(consent);
 
 		await consent.updateOptions({
-			presentation: { design: 'privacy-choices' },
+			presentation: {},
 		});
 		await openDialog();
 		expect(roots()).toEqual(['privacy-choices']);
@@ -976,7 +975,7 @@ describe('design switch', () => {
 		link().click();
 		await waitFor(() => expect(classic).toHaveBeenCalledTimes(1));
 		await consent.updateOptions({
-			presentation: { design: 'privacy-choices' },
+			presentation: {},
 		});
 		await waitFor(() => expect(roots()).toEqual(['privacy-choices']));
 		releaseClassic();
@@ -1004,7 +1003,7 @@ describe('customization', () => {
 						} as PolicyRule,
 					]),
 					persistence: false,
-					presentation: { design: 'privacy-choices' },
+					presentation: {},
 					theme: {
 						slots: {
 							consentDialog: 'my-dialog',

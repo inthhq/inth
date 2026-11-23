@@ -28,9 +28,9 @@ import {
 	Dialog,
 	DialogPositioner,
 } from '@inth/angular/primitives';
-import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import { resolveLegacyConsentPresentation } from '@inth/sdk/surface-state';
 import { isDialogDismissKey } from '@inth/sdk/ui/primitives';
-import styles from '@inth/sdk/ui/styles/components/consent-dialog';
+import styles from '@inth/sdk/ui/styles/components/legacy-panel';
 import type { ClassNameStyle } from '@inth/sdk/ui/theme';
 import {
 	getTextDirection,
@@ -263,7 +263,7 @@ export class ConsentDialogPanel {
 	/** @internal */
 	protected readonly preferences = computed(() => {
 		const presentation = this.#consent.presentation();
-		return resolveConsentPresentation({
+		return resolveLegacyConsentPresentation({
 			policy: this.#consent.snapshot().policyRule,
 			presentation: {
 				...presentation,

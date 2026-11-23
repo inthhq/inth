@@ -27,7 +27,7 @@ import { resolveIABBannerSummary } from '@inth/sdk/iab-support';
 import { resolveIABBannerCopy } from '@inth/sdk/iab/headless';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 import {
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 	resolveIABCopy,
 } from '@inth/sdk/surface-state';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
@@ -260,7 +260,7 @@ export class IABConsentBanner {
 	);
 	/** @internal */
 	protected readonly presentation = computed(() =>
-		resolveConsentPresentation({
+		resolveLegacyConsentPresentation({
 			override: { scrollLock: this.scrollLock(), trapFocus: this.trapFocus() },
 			policy: this.#consent.snapshot().policyRule,
 			presentation: {

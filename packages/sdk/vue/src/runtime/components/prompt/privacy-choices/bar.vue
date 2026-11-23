@@ -4,9 +4,9 @@
  * `consent-bar` stylesheet, so a page that shows another presentation
  * never downloads it.
  */
-import presentation from '@inth/sdk/ui/styles/components/consent-bar';
+import presentation from '@inth/sdk/ui/styles/components/consent-banner';
 
-import '@inth/sdk/ui/styles/components/consent-bar.css';
+import '@inth/sdk/ui/styles/components/consent-banner.css';
 
 import PrivacyChoicesSurface from './surface.vue';
 import type { ActionGroups, PrivacyChoicesContainer } from './types';

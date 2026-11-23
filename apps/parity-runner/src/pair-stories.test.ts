@@ -5,7 +5,6 @@ import {
 	missingFrameworks,
 	missingRequiredStories,
 	pairStories,
-	portedFrameworks,
 	selectComparablePairs,
 	STORY_VISIT_BUDGET_MS,
 	storyKey,
@@ -199,72 +198,30 @@ test('storyVisitTimeout grows with every story the test opens', () => {
 	expect(storyVisitTimeout([pair('react', 'svelte')], 120_000)).toBe(120_000);
 });
 
-test('a Privacy Choices story pairs React with Angular and every other port', () => {
+test('a container story pairs every framework that ships it, and the rest are missing it', () => {
 	const entry = (framework: string, title: string): StoryEntry => ({
-		id: `components-${framework}-x--card`,
-		name: 'Card',
+		id: `components-${framework}-x--card-start-eu`,
+		name: 'Card Start EU',
 		title: `COMPONENTS - ${framework.toUpperCase()}/${title}`,
 	});
+	const frameworks = ['react', 'svelte', 'vue'];
 	const pairs = selectComparablePairs(
 		{
-			angular: [entry('angular', 'Privacy Choices/Banner')],
-			react: [entry('react', 'Privacy Choices/Banner')],
-			solid: [entry('solid', 'Privacy Choices/Banner')],
-			vue: [entry('vue', 'Privacy Choices/Banner')],
+			react: [entry('react', 'Core/Consent Banner')],
+			svelte: [entry('svelte', 'Core/Consent Banner')],
+			vue: [],
 		},
-		{ frameworks: ['react', 'vue', 'angular', 'solid'] }
+		{ frameworks }
 	);
-	expect(pairs.map((pair) => Object.keys(pair.entries).sort())).toEqual([
-		['angular', 'react', 'vue'],
-	]);
-});
-
-test('a story not yet ported is compared only where it is ported, and never missing elsewhere', () => {
-	const entry = (framework: string, title: string): StoryEntry => ({
-		id: `components-${framework}-x--card`,
-		name: 'Card',
-		title: `COMPONENTS - ${framework.toUpperCase()}/${title}`,
-	});
-	// Solid stands in for a framework the port has not reached.
-	const byFramework = {
-		react: [
-			entry('react', 'Privacy Choices/Banner'),
-			entry('react', 'Core/Consent Banner'),
-		],
-		solid: [
-			entry('solid', 'Privacy Choices/Banner'),
-			entry('solid', 'Core/Consent Banner'),
-		],
-		svelte: [
-			entry('svelte', 'Privacy Choices/Banner'),
-			entry('svelte', 'Core/Consent Banner'),
-		],
-		vue: [entry('vue', 'Core/Consent Banner')],
-	};
-	expect(portedFrameworks('Privacy Choices/Banner/Card')).toEqual([
-		'react',
-		'angular',
-		'astro',
-		'svelte',
-		'vue',
-	]);
-	expect(portedFrameworks('Core/Consent Banner/Card')).toBeNull();
-	const frameworks = ['react', 'solid', 'svelte', 'vue'];
-	const pairs = selectComparablePairs(byFramework, { frameworks });
-	// A ported story pairs only the frameworks it is ported to, even when
-	// another framework happens to ship a story of the same name.
 	expect(
 		pairs.map((pair) => [pair.key, Object.keys(pair.entries).sort()])
-	).toEqual([
-		['Core/Consent Banner/Card', ['react', 'solid', 'svelte', 'vue']],
-		['Privacy Choices/Banner/Card', ['react', 'svelte']],
-	]);
-	// A framework it is ported to is missing it; one it is not is not.
+	).toEqual([['Core/Consent Banner/Card Start EU', ['react', 'svelte']]]);
+	expect(pairs[0]?.missing).toEqual(['vue']);
 	expect(
 		missingFrameworks(
 			{
-				entries: { react: entry('react', 'Privacy Choices/Banner') },
-				key: 'Privacy Choices/Banner/Card',
+				entries: { react: entry('react', 'Core/Consent Banner') },
+				key: 'Core/Consent Banner/Card Start EU',
 			},
 			frameworks
 		)

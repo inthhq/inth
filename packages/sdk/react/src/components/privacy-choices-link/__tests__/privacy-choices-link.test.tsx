@@ -122,7 +122,7 @@ describe('PrivacyChoicesLink', () => {
 		await view.unmount();
 	});
 
-	test('renders nothing under an opt-in rule', async () => {
+	test('[BNR-05] reopens the dialog under an opt-in rule, with no opt-out icon', async () => {
 		const view = await render(
 			<InthProvider
 				options={{
@@ -141,7 +141,12 @@ describe('PrivacyChoicesLink', () => {
 		await vi.waitFor(() =>
 			expect(activeKernel?.getSnapshot().resolution.status).toBe('matched')
 		);
-		expect(query('privacy-choices-link')).toBeNull();
+		await vi.waitFor(() =>
+			expect(query('privacy-choices-link')).toHaveTextContent(
+				'Your Privacy Choices'
+			)
+		);
+		expect(query('privacy-choices-link')?.querySelector('svg')).toBeNull();
 
 		await view.unmount();
 	});

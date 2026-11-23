@@ -7,7 +7,7 @@
 	} from '@inth/sdk/engine';
 	import {
 		actionAppearanceFromTheme,
-		resolveConsentPresentation,
+		resolveLegacyConsentPresentation,
 	} from '@inth/sdk/engine';
 	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import {
@@ -21,7 +21,7 @@
 		resolvePreferenceControlLabels,
 		resolvePromptCopy,
 	} from '@inth/sdk/surface-state';
-	import styles from '@inth/sdk/ui/styles/components/consent-banner';
+	import styles from '@inth/sdk/ui/styles/components/legacy-prompt';
 	import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 	import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
@@ -257,7 +257,7 @@
 		return Array.isArray(primaryButton) ? primaryButton : [primaryButton];
 	});
 	const presentation = $derived(
-		resolveConsentPresentation({
+		resolveLegacyConsentPresentation({
 			actionAppearance: actionAppearanceFromTheme(theme.theme),
 			override: {
 				blocking,

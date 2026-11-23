@@ -31,7 +31,7 @@ import { useUIConfig } from '~/ui-config-context';
 import { cnExt as cn } from '~/utils/cn';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
-import { DIALOG_SHEETS } from '../../shared/dialog-sheets';
+import { WIDGET_SHEETS } from '../../shared/widget-sheets';
 import {
 	SurfaceStyles,
 	useSurfaceSheetsReady,
@@ -237,7 +237,7 @@ export const OptOutConfirmationRoot: FC<OptOutConfirmationRootProps> = ({
 			globalTheme
 		);
 
-	const sheetsReady = useSurfaceSheetsReady(DIALOG_SHEETS, noStyle);
+	const sheetsReady = useSurfaceSheetsReady(WIDGET_SHEETS, noStyle);
 	const isMounted = useIsHydrated();
 
 	useEffect(() => {
@@ -325,7 +325,7 @@ export const OptOutConfirmationRoot: FC<OptOutConfirmationRootProps> = ({
 			{isOpen && (
 				<>
 					<SurfaceStyles
-						sheets={DIALOG_SHEETS}
+						sheets={WIDGET_SHEETS}
 						noStyle={noStyle}
 					/>
 					{renderedOverlay}

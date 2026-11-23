@@ -23,8 +23,8 @@ import {
 	resolvePrivacyChoicesLink,
 } from '@inth/sdk/surface-state';
 
-import '@inth/sdk/ui/styles/components/consent-banner.css';
-import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import '@inth/sdk/ui/styles/components/legacy-prompt.css';
+import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import { CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils/opt-out-icon';
 import { computed } from 'vue';
 

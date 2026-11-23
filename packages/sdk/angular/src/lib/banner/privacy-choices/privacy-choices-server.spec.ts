@@ -64,7 +64,6 @@ const render = (container: ConsentContainer, blockUntilChoice = false) =>
 								},
 							},
 							presentation: {
-								design: 'privacy-choices',
 								prompt: { blockUntilChoice, container },
 							},
 						}),

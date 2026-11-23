@@ -17,8 +17,8 @@ import {
 	resolvePromptCopy,
 } from '@inth/sdk/surface-state';
 
-import '@inth/sdk/ui/styles/components/consent-banner.css';
-import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import '@inth/sdk/ui/styles/components/legacy-prompt.css';
+import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import { getTextDirection } from '@inth/sdk/ui/utils';
 import {
 	computed,

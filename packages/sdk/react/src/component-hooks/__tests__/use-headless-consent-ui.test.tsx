@@ -57,15 +57,15 @@ describe('useHeadlessConsentUI', () => {
 				banner: {
 					direction: 'row',
 					layout: [['reject', 'accept']],
+					blocking: true,
 					primaryActions: ['accept'],
-					scrollLock: true,
 					uiProfile: 'balanced',
 				},
 				dialog: {
+					blocking: false,
 					direction: 'row',
 					layout: ['save', ['reject', 'accept']],
 					primaryActions: ['save'],
-					scrollLock: false,
 					uiProfile: 'strict',
 				},
 				mode: 'banner',
@@ -84,7 +84,7 @@ describe('useHeadlessConsentUI', () => {
 		expect(result.current.banner.orderedActions).toEqual(['reject', 'accept']);
 		expect(result.current.banner.primaryActions).toEqual(['accept']);
 		expect(result.current.banner.actionGroups).toEqual([['reject', 'accept']]);
-		expect(result.current.banner.scrollLock).toBe(true);
+		expect(result.current.banner.blocking).toBe(true);
 		expect(result.current.banner.diagnostics).toEqual(
 			expect.arrayContaining([
 				expect.objectContaining({ code: 'equivalent-prominence-overridden' }),
@@ -106,7 +106,7 @@ describe('useHeadlessConsentUI', () => {
 			['save'],
 			['reject', 'accept'],
 		]);
-		expect(result.current.dialog.scrollLock).toBe(false);
+		expect(result.current.dialog.blocking).toBe(false);
 		expect(result.current.dialog.shouldFillActions).toBe(true);
 		expect(result.current.dialog.isVisible).toBe(false);
 	});

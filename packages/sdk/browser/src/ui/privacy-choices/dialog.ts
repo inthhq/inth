@@ -14,7 +14,7 @@ import {
 	announcementText,
 	MAIN_LAYER,
 	resolveCategoryTitle,
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 	resolvePreferencesRowCopy,
 	resolvePrivacyChoicesDialogCopy,
 	resolvePrivacyChoicesRegime,
@@ -479,7 +479,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 		// Phone sheets take the prompt's resolved phone edge style, which the
 		// policy and a Card's own rule (always inset) have already settled.
 		const edgeStyle =
-			resolveConsentPresentation({
+			resolveLegacyConsentPresentation({
 				policy: snap.policyRule,
 				presentation: ctx.client.presentation,
 				surface: 'prompt',

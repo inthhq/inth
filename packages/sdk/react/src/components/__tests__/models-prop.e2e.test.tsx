@@ -10,7 +10,7 @@ import {
 	clearConsentState,
 	defaultProviderIABOptions,
 } from '~/components/iab/__tests__/e2e-setup';
-import { ConsentDialog } from '~/components/panel';
+import { ConsentDialog } from '~/aggregate-components';
 import { ConsentBanner } from '~/components/prompt';
 
 import { testing } from '../../testing';

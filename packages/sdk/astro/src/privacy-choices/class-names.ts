@@ -10,13 +10,13 @@
  */
 
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
-import barStyles from '@inth/sdk/ui/styles/components/consent-bar';
+import barStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import cardStyles from '@inth/sdk/ui/styles/components/consent-card';
 import drawerStyles from '@inth/sdk/ui/styles/components/consent-drawer';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import surfaceStyles from '@inth/sdk/ui/styles/components/consent-surface';
 import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
-import choicesStyles from '@inth/sdk/ui/styles/components/privacy-choices';
+import choicesStyles from '@inth/sdk/ui/styles/components/consent-dialog';
 
 import type { ClassNameMap } from '../banner/class-names';
 

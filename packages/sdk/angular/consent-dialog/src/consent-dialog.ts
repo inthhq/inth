@@ -31,7 +31,7 @@ import type { ɵPrivacyChoicesDialog as PrivacyChoicesDialog } from '@inth/angul
 import { ConsentDialogTrigger } from '@inth/angular/consent-dialog-trigger';
 import type { ActiveUI } from '@inth/sdk/engine';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
-import { resolveConsentPresentation } from '@inth/sdk/surface-state';
+import { resolveLegacyConsentPresentation } from '@inth/sdk/surface-state';
 
 import type { ConsentDialogPanel } from './consent-dialog-panel';
 import { DEFAULT_DIALOG_MODELS } from './dialog-options';
@@ -225,7 +225,7 @@ export class ConsentDialog {
 	 */
 	protected readonly privacyChoices = computed(
 		() =>
-			resolveConsentPresentation({
+			resolveLegacyConsentPresentation({
 				policy: this.#consent.snapshot().policyRule,
 				presentation: this.#consent.presentation(),
 				surface: 'prompt',

@@ -9,7 +9,7 @@ import {
 } from '~/__tests__/component-fixture-provider';
 import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
-import { ConsentDialog } from '~/components/panel';
+import { ConsentDialog } from '~/aggregate-components';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentWidget } from '~/components/preferences';
 import { ConsentBanner } from '~/components/prompt';

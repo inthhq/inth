@@ -1,6 +1,4 @@
 import accordionStyles from '@inth/sdk/ui/styles/components/accordion';
-import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
-import dialogStyles from '@inth/sdk/ui/styles/components/consent-dialog';
 import triggerStyles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import iabBannerStyles from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import iabDialogStyles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
@@ -18,9 +16,7 @@ import { IABConsentBannerFooter } from '~/components/iab-prompt/atoms/footer';
 import { IABConsentBannerHeader } from '~/components/iab-prompt/atoms/header';
 import { ConsentDialogTriggerToolbar } from '~/components/panel-trigger';
 import { TriggerButton } from '~/components/panel-trigger/atoms/button';
-import { ConsentDialogHeaderTitle } from '~/components/panel/atoms/card';
 import { ConsentWidgetAccordion } from '~/components/preferences/atoms/accordion';
-import { ConsentBannerTitle } from '~/components/prompt/components';
 import * as Switch from '~/components/shared/ui/switch';
 
 import { testing } from '../../testing';
@@ -187,7 +183,7 @@ describe('Theme regressions', () => {
 		});
 	});
 
-	test('provider noStyle strips v3 surface base classes', async () => {
+	test('provider noStyle strips the widget, IAB, trigger and switch base classes', async () => {
 		await render(
 			<InthProvider
 				options={{
@@ -195,11 +191,6 @@ describe('Theme regressions', () => {
 					noStyle: true,
 				}}
 			>
-				<ConsentBannerTitle data-testid="nostyle-banner-title">
-					Banner title
-				</ConsentBannerTitle>
-				{/* ConsentDialogHeaderTitle pins its own data-testid after props */}
-				<ConsentDialogHeaderTitle>Dialog title</ConsentDialogHeaderTitle>
 				<ConsentWidgetAccordion data-testid="nostyle-accordion">
 					<div>Accordion content</div>
 				</ConsentWidgetAccordion>
@@ -226,12 +217,6 @@ describe('Theme regressions', () => {
 		);
 
 		await vi.waitFor(() => {
-			const bannerTitle = document.querySelector(
-				'[data-testid="nostyle-banner-title"]'
-			);
-			const dialogTitle = document.querySelector(
-				'[data-testid="consent-dialog-title"]'
-			);
 			const accordion = document.querySelector(
 				'[data-testid="nostyle-accordion"]'
 			);
@@ -249,8 +234,6 @@ describe('Theme regressions', () => {
 				'[data-slot="switch-thumb"]'
 			);
 
-			expect(bannerTitle?.className).not.toContain(bannerStyles.title);
-			expect(dialogTitle?.className).not.toContain(dialogStyles.title);
 			expect(accordion?.className).not.toContain(accordionStyles.list);
 			expect(iabBannerFooter?.className).not.toContain(iabBannerStyles.footer);
 			expect(trigger?.className).not.toContain(triggerStyles.trigger);

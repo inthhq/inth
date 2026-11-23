@@ -3,8 +3,8 @@ import type { PresentationAction } from '@inth/sdk/engine';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { saveConsentSurface } from '@inth/sdk/surface-actions';
 
-import '@inth/sdk/ui/styles/components/consent-dialog.css';
-import dialogStyles from '@inth/sdk/ui/styles/components/consent-dialog';
+import '@inth/sdk/ui/styles/components/legacy-panel.css';
+import dialogStyles from '@inth/sdk/ui/styles/components/legacy-panel';
 import { getTextDirection } from '@inth/sdk/ui/utils';
 import {
 	computed,
