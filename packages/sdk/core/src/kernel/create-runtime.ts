@@ -85,6 +85,8 @@ export interface RuntimeCommitOptions {
 	fromHydration?: boolean;
 	/** Keep an open preference dialog open even when derived choices changed. */
 	preserveDialog?: boolean;
+	/** Suppress the automatic account-drop `opt-out:synced` when the caller emits it. */
+	suppressAccountDropOptOutSynced?: boolean;
 	/** Declared vendor IDs covered by the browser vendor decision. */
 	vendorDeclared?: readonly string[] | null;
 }
@@ -874,11 +876,13 @@ export const createRuntime = function createRuntime(
 		userExternalIdChanged: boolean,
 		previousAccount: AccountConsentLayer | null,
 		current: ConsentSnapshot,
-		adopted: ConsentSnapshot
+		adopted: ConsentSnapshot,
+		suppressAccountDrop = false
 	): boolean {
 		return (
 			droppedLegacy ||
-			(userExternalIdChanged &&
+			(!suppressAccountDrop &&
+				userExternalIdChanged &&
 				previousAccount !== null &&
 				!sameOptOutRecord(current.optOut, adopted.optOut))
 		);
@@ -980,7 +984,8 @@ export const createRuntime = function createRuntime(
 				userExternalIdChanged,
 				previousAccount,
 				current,
-				adopted
+				adopted,
+				commitOptions?.suppressAccountDropOptOutSynced === true
 			)
 		);
 		return true;

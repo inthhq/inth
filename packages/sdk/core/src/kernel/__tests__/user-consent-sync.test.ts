@@ -9,6 +9,7 @@ import type { OptOutRecord, UserConsent } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
+	iabRule,
 	matchedResolution,
 	NOW,
 	optInRule,
@@ -2510,6 +2511,307 @@ describe('kernel regressions (set 3)', () => {
 				'targeted_ads',
 			]);
 			expect(kernel.getOptOutReceiptData().rightsConfirmed).toBe(true);
+		} finally {
+			kernel.dispose();
+		}
+	});
+});
+
+describe('kernel regressions (set 4)', () => {
+	test('setUserWithPending for the same active user routes through adoption rule and lift floor (never rolls back lift or newer doc)', async () => {
+		const resolution = matchedResolution(optOutRule({ prompt: 'none' }));
+		const fp = resolution.fingerprints.choice;
+		const preLiftDoc = makeUserConsent({
+			checkedAt: NOW,
+			choices: {
+				marketing: {
+					basis: { fingerprint: fp, kind: 'choice-v1' },
+					confirmedAt: NOW - 2000,
+					value: false,
+				},
+			},
+			externalId: 'user_a',
+			optOut: {
+				method: 'button',
+				recordedAt: NOW - 5000,
+				rights: ['sale'],
+			},
+		});
+
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialRecords: { now: NOW, subject: { subjectId: 'sub_a' } },
+				initialUser: { externalId: 'user_a', identityToken: 'tok_a' },
+				initialUserConsent: preLiftDoc,
+				now: NOW,
+				transport: {
+					identify: (_u, subjectId) =>
+						Promise.resolve({ subjectId: subjectId ?? 'sub_a' }),
+					liftOptOut: () => Promise.resolve({ ok: true, optOut: null }),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			await kernel.commands.identify({
+				externalId: 'user_a',
+				identityToken: 'tok_a',
+			});
+			expect(await kernel.commands.optIn()).toEqual({ ok: true, optOut: null });
+			expect(kernel.getAccountLayer()?.optOut).toBeNull();
+
+			// Same user arrives again (e.g. token refresh / client hydration) with the cached pre-lift doc -> MUST keep the lift!
+			kernel.setUserWithPending(
+				{ externalId: 'user_a', identityToken: 'tok_a_2' },
+				{ userConsent: structuredClone(preLiftDoc) }
+			);
+			expect(kernel.getAccountLayer()?.optOut).toBeNull();
+			expect(kernel.getSnapshot().optOut).toBeNull();
+
+			// Now sync a newer document (checkedAt: NOW + 5000, marketing: true), then re-pass the older doc via setUserWithPending -> MUST NOT roll back!
+			kernel.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW + 5000,
+					choices: {
+						marketing: {
+							basis: { fingerprint: fp, kind: 'choice-v1' },
+							confirmedAt: NOW + 4000,
+							value: true,
+						},
+					},
+					externalId: 'user_a',
+				})
+			);
+			expect(kernel.getAccountLayer()?.checkedAt).toBe(NOW + 5000);
+			kernel.setUserWithPending(
+				{ externalId: 'user_a', identityToken: 'tok_a_3' },
+				{ userConsent: structuredClone(preLiftDoc) }
+			);
+			expect(kernel.getAccountLayer()?.checkedAt).toBe(NOW + 5000);
+			expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	test('a marketing-only bulk save keeps a declared measurement vendor denial', async () => {
+		const resolution = matchedResolution(optInRule());
+		const save = vi.fn((payload: SavePayload) =>
+			Promise.resolve({ ok: true, subjectId: payload.subjectId })
+		);
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'marketing',
+							id: 'marketing-vendor',
+							presentable: true,
+							source: 'config',
+						},
+						{
+							category: 'measurement',
+							id: 'measurement-vendor',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now: NOW,
+				transport: { save },
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		kernel.syncUserConsent(
+			makeUserConsent({
+				choices: {
+					measurement: {
+						basis: {
+							fingerprint: resolution.fingerprints.choice,
+							kind: 'choice-v1',
+						},
+						confirmedAt: NOW - 3000,
+						value: true,
+					},
+				},
+				externalId: 'a',
+				vendors: {
+					'measurement-vendor': { confirmedAt: NOW - 3000, value: false },
+				},
+			})
+		);
+		try {
+			expect(isVendorAllowed(kernel.getSnapshot(), 'measurement-vendor')).toBe(
+				false
+			);
+			const result = await kernel.commands.save('all', {
+				categories: ['marketing'],
+			});
+			expect(result.ok).toBe(true);
+			expect({
+				allowed: isVendorAllowed(kernel.getSnapshot(), 'measurement-vendor'),
+				postedGrant:
+					save.mock.calls[0]?.[0].vendorChoice?.grants?.[
+						'measurement-vendor'
+					] === true,
+			}).toEqual({ allowed: false, postedGrant: false });
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	test('an IAB category save leaves account-only vendors out of browser records', async () => {
+		const resolution = matchedResolution(iabRule());
+		const save = vi.fn((payload: SavePayload) =>
+			Promise.resolve({ ok: true, subjectId: payload.subjectId })
+		);
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialIab: { enabled: true },
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'marketing',
+							id: 'marketing-vendor',
+							presentable: true,
+							source: 'config',
+						},
+						{
+							category: 'measurement',
+							id: 'measurement-vendor',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now: NOW,
+				transport: { save },
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		kernel.syncUserConsent(
+			makeUserConsent({
+				choices: {
+					measurement: {
+						basis: {
+							fingerprint: resolution.fingerprints.choice,
+							kind: 'choice-v1',
+						},
+						confirmedAt: NOW - 3000,
+						value: true,
+					},
+				},
+				externalId: 'a',
+				vendors: {
+					'measurement-vendor': { confirmedAt: NOW - 3000, value: false },
+				},
+			})
+		);
+		try {
+			expect(kernel.getSnapshot().evaluationPolicy.model).toBe('iab');
+			expect(kernel.getSnapshot().vendorChoice?.denied).toEqual([
+				'measurement-vendor',
+			]);
+			expect(kernel.getBrowserRecords().vendorChoice).toBeNull();
+			const result = await kernel.commands.save({ marketing: false });
+			expect(result.ok).toBe(true);
+			expect(save).toHaveBeenCalled();
+			expect(kernel.getBrowserRecords().vendorChoice).toBeNull();
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	test('a partial lift with a both answer never imports device rights into the account layer', async () => {
+		const user = { externalId: 'a', identityToken: 'token-a' };
+		const resolution = matchedResolution(optOutRule());
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialRecords: { now: NOW, subject: { subjectId: 'sub_a' } },
+				initialUser: user,
+				now: NOW,
+				transport: {
+					identify: (_user, id) =>
+						Promise.resolve({ subjectId: id ?? 'sub_a' }),
+					liftOptOut: () =>
+						Promise.resolve({
+							ok: true,
+							optOut: {
+								heldBy: 'both',
+								method: 'button',
+								recordedAt: NOW - 3000,
+								rights: ['share', 'targeted_ads'],
+							},
+						}),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			await kernel.commands.identify(user);
+			kernel.syncUserConsent(
+				makeUserConsent({
+					externalId: 'a',
+					optOut: {
+						method: 'button',
+						recordedAt: NOW - 5000,
+						rights: ['sale'],
+					},
+				})
+			);
+			expect(await kernel.commands.optIn()).toEqual({
+				ok: false,
+				reason: 'held-by-account',
+			});
+			expect(kernel.getAccountLayer()?.optOut?.rights).toEqual(['sale']);
+		} finally {
+			kernel.dispose();
+		}
+	});
+
+	test('atomic user switch emits opt-out:synced exactly once when effective opt-out changes', () => {
+		const resolution = matchedResolution(optOutRule({ prompt: 'none' }));
+		const kernel = createKernel({
+			consentCategories: ['marketing'],
+			initialPolicyResolution: resolution,
+			initialUser: { externalId: 'user_a' },
+			initialUserConsent: makeUserConsent({
+				externalId: 'user_a',
+				optOut: {
+					method: 'button',
+					recordedAt: NOW - 5000,
+					rights: ['sale'],
+				},
+			}),
+			now: NOW,
+		});
+		const syncedEvents: (OptOutRecord | null)[] = [];
+		kernel.events.on('opt-out:synced', (event) => {
+			syncedEvents.push(event.optOut ? { ...event.optOut } : null);
+		});
+		try {
+			kernel.setUserWithPending(
+				{ externalId: 'user_b' },
+				{
+					userConsent: makeUserConsent({
+						externalId: 'user_b',
+						optOut: null,
+					}),
+				}
+			);
+			expect(syncedEvents).toEqual([null]);
 		} finally {
 			kernel.dispose();
 		}

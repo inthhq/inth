@@ -766,6 +766,8 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			const nextUser = user ? { ...user } : null;
 			const resolvedOptions =
 				typeof options === 'boolean' ? { pending: options } : options;
+			const sameUser =
+				(before.user?.externalId ?? null) === (nextUser?.externalId ?? null);
 			const patch: SnapshotPatch = { now: at, user: nextUser };
 			let commitOptions: RuntimeCommitOptions | undefined;
 
@@ -775,6 +777,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 					accountLayer: null,
 					forceAccountNotify: true,
 					preserveDialog: true,
+					suppressAccountDropOptOutSynced: true,
 				};
 			} else if (resolvedOptions?.userConsent !== undefined) {
 				patch.userConsentPending = false;
@@ -784,11 +787,37 @@ export const createRecordsBoundary = function createRecordsBoundary({
 					nextUser !== null &&
 					incoming.externalId === nextUser.externalId
 				) {
-					commitOptions = {
-						accountLayer: incoming,
-						accountLayerSource: 'incoming',
-						preserveDialog: true,
-					};
+					if (sameUser) {
+						const currentAccount = runtime.getAccountLayer();
+						if (
+							shouldAdoptAccountLayer({
+								current: currentAccount,
+								currentSource: runtime.getAccountLayerSource(),
+								incoming,
+								incomingSource: 'incoming',
+								userExternalId: nextUser.externalId,
+							})
+						) {
+							commitOptions = {
+								accountLayer: applyLiftFloorToIncoming(
+									currentAccount,
+									incoming
+								),
+								accountLayerSource: 'incoming',
+								preserveDialog: true,
+								suppressAccountDropOptOutSynced: true,
+							};
+						}
+					} else {
+						commitOptions = {
+							accountLayer: incoming,
+							accountLayerSource: 'incoming',
+							preserveDialog: true,
+							suppressAccountDropOptOutSynced: true,
+						};
+					}
+				} else {
+					commitOptions = { suppressAccountDropOptOutSynced: true };
 				}
 			} else if (resolvedOptions?.pending !== undefined) {
 				patch.userConsentPending = resolvedOptions.pending;

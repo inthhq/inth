@@ -46,7 +46,6 @@ export const engineNeededNow = function engineNeededNow(
 	options: DeferEngineOptions
 ): boolean {
 	return Boolean(
-		snapshot.policyPending ||
 		snapshot.userConsentPending === true ||
 		snapshot.hasAccountLayer ||
 		options.userConsent !== undefined ||
