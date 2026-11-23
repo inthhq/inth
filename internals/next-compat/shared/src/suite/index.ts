@@ -587,7 +587,12 @@ export const defineCompatSuite = function defineCompatSuite({
 			});
 			await page.goto(`${baseURL}${scenario.path}`, { waitUntil: 'load' });
 			await waitForInit(page);
-			await page.click('[data-testid="consent-banner-customize-button"]');
+			// Customize expands the banner in place; the page's dialog link
+			// opens the dialog. Focus and Enter, so the banner covering the
+			// footer cannot intercept a click.
+			const dialogLink = page.locator('[data-testid="consent-dialog-link"]');
+			await dialogLink.focus();
+			await dialogLink.press('Enter');
 			const card = page.locator('[data-testid="consent-dialog-card"]');
 			await card.waitFor({ state: 'visible', timeout: 30_000 });
 
