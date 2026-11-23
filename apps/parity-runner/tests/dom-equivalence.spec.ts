@@ -72,6 +72,69 @@ test('Angular selector markers normalize only on an Angular page and only when e
 	}
 });
 
+test('Angular counted ids match generated ids only on an Angular page', async ({
+	page,
+}) => {
+	const group = (prefix: string) =>
+		`<div data-testid="consent-banner-category-group"><span id="${prefix}-category-necessary">Strictly Necessary</span><button aria-labelledby="${prefix}-category-necessary" role="switch" type="button"></button></div>`;
+	const angularRoot = '<app-root ng-version="22.2.5"></app-root>';
+	await page.setContent(group('inth-pc-_r_1_'));
+	const react = await captureDomSnapshot(page, 'body');
+
+	await page.setContent(`${angularRoot}${group('inth-pc-3')}`);
+	expect(await captureDomSnapshot(page, 'body')).toBe(react);
+
+	// Outside Angular a number is part of the id.
+	await page.setContent(group('inth-pc-3'));
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+	// The parts around the count still compare.
+	await page.setContent(`${angularRoot}${group('inth-pcd-3')}`);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+	await page.setContent(
+		`${angularRoot}${group('inth-pc-3').replace('category-necessary"', 'category-other"')}`
+	);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+});
+
+test('a captured root inert through an Angular host matches one inert itself', async ({
+	page,
+}) => {
+	const region =
+		'<div aria-live="polite" data-testid="consent-banner-announcement" role="status"></div>';
+	const angularRoot = '<app-root ng-version="22.2.5"></app-root>';
+	await page.setContent(
+		region.replace('role="status"', 'inert="" role="status"')
+	);
+	const react = await captureDomSnapshot(page, 'body');
+
+	await page.setContent(
+		`${angularRoot}<inth-consent-banner inert=""><inth-pc-surface>${region}</inth-pc-surface></inth-consent-banner>`
+	);
+	expect(await captureDomSnapshot(page, 'body')).toBe(react);
+
+	// Not inert at all, an ordinary element holding it, or outside Angular:
+	// still a difference.
+	for (const content of [
+		`${angularRoot}<inth-consent-banner>${region}</inth-consent-banner>`,
+		`${angularRoot}<main inert="">${region}</main>`,
+		`<inth-consent-banner inert="">${region}</inth-consent-banner>`,
+	]) {
+		// oxlint-disable-next-line no-await-in-loop -- Each replacement uses the same page.
+		await page.setContent(content);
+		// oxlint-disable-next-line no-await-in-loop -- Compare before replacing the fixture again.
+		expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+	}
+	// Inside a surface, an element's own inertness is compared as it is.
+	await page.setContent(
+		`${angularRoot}<div data-testid="consent-banner-root"><inth-x inert="">${region.replace('data-testid="consent-banner-announcement" ', '')}</inth-x></div>`
+	);
+	const nested = await captureDomSnapshot(page, 'body');
+	await page.setContent(
+		`${angularRoot}<div data-testid="consent-banner-root"><inth-x inert="">${region.replace('data-testid="consent-banner-announcement" ', '').replace('role="status"', 'inert="" role="status"')}</inth-x></div>`
+	);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(nested);
+});
+
 test('native headings and explicit heading roles agree while wrong levels fail', async ({
 	page,
 }) => {

@@ -37,6 +37,12 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		// and the surrounding structure is the part worth comparing.
 		const AUTO_ID_SEGMENT =
 			/-(?:_r_[0-9a-z]+_|r[0-9a-z]+|c[0-9]+|v(?:-[0-9]+)+)-/gu;
+		// Angular has no `useId`: @inth/angular counts ids per application and
+		// appends the count to the part's `inth-` prefix, `inth-pc-3-category-
+		// necessary` where React writes `inth-pc-_r_1_-category-necessary`.
+		// Only the count is generated; the rest of the id still compares.
+		const ANGULAR_ID = /^(?<prefix>inth-[a-z]+(?:-[a-z]+)*)-[0-9]+(?=-|$)/u;
+		const angularPage = document.querySelector('[ng-version]') !== null;
 		const STRIP = new Set([
 			'data-reactroot',
 			'data-reactid',
@@ -150,7 +156,13 @@ export const captureDomSnapshot = function captureDomSnapshot(
 				if (AUTO_ID.test(value)) {
 					return '__AUTO__';
 				}
-				return value
+				const counted = angularPage
+					? value
+							.split(/\s+/u)
+							.map((id) => id.replace(ANGULAR_ID, '$<prefix>-__AUTO__'))
+							.join(' ')
+					: value;
+				return counted
 					.replace(AUTO_ID_SEGMENT, '-__AUTO__-')
 					.replace(AUTO_ID_SUFFIX, '-__AUTO__');
 			}
@@ -330,7 +342,6 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		// adapter renders an attribute named that way (theirs are
 		// `data-inth-*`), so the rule applies only on an Angular page and only
 		// to empty values.
-		const angularPage = document.querySelector('[ng-version]') !== null;
 		const angularSelectorMarker = (attribute: Attr): boolean =>
 			angularPage &&
 			attribute.value === '' &&
@@ -340,6 +351,27 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			element.tagName.toLowerCase() === 'svg' &&
 			Boolean(element.closest('[aria-hidden="true"]')) &&
 			attribute.name === 'aria-labelledby';
+
+		// A modal surface makes the page around it inert by setting `inert` on
+		// each sibling along its path to <body> (page-block.ts). Above a
+		// captured root, that path runs through each adapter's own wrappers.
+		// React's announcement region is a sibling on the dialog's path, so it
+		// gets the attribute; Angular's sits inside the `<inth-consent-banner>`
+		// host, which gets it instead. The region is inert either way. Only a
+		// captured root's host ancestors count: inside a surface every element
+		// is compared, and an ordinary page element holding `inert` stays a
+		// difference.
+		const inertThroughAngularHost = (element: Element): boolean => {
+			if (
+				!angularPage ||
+				element.hasAttribute('inert') ||
+				element.parentElement?.closest('[data-testid]')
+			) {
+				return false;
+			}
+			const holder = element.parentElement?.closest('[inert]');
+			return Boolean(holder?.tagName.includes('-'));
+		};
 
 		const needsSwitchSize = (element: Element): boolean =>
 			element.getAttribute('role') === 'switch' &&
@@ -459,6 +491,9 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			}
 			if (needsSwitchSize(element)) {
 				attrs.push('data-size="small"');
+			}
+			if (inertThroughAngularHost(element)) {
+				attrs.push('inert=""');
 			}
 			attrs.push(...triggerEvidence(element));
 			if (element instanceof SVGElement) {
