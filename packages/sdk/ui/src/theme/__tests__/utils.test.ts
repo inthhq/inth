@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import type { Theme } from '../types';
 import {
 	defaultTheme,
+	defaultThemeReferences,
 	generateDefaultThemeCSS,
 	generatePrimaryTintSupportsCSS,
 	generateThemeCSS,
@@ -146,6 +147,24 @@ describe('themeToVars', () => {
 		const vars = themeToVars(theme);
 		expect(vars['--inth-switch-track']).toBe('#123456');
 		expect(vars['--inth-switch-track-active']).toBe('#654321');
+	});
+
+	test('the on-track follows a custom primary, in a JS theme and in the stock sheet', () => {
+		expect(
+			themeToVars({ colors: { primary: '#ff0000' } })['--inth-switch-track-active']
+		).toBe('#ff0000');
+		expect(
+			themeToVars({ dark: { primary: '#00ff00' } }, true)[
+				'--inth-switch-track-active'
+			]
+		).toBe('#00ff00');
+		// The stock tokens reference the primary, so a CSS-only theme moves it.
+		expect(defaultThemeReferences.colors.switchTrackActive).toBe(
+			'var(--inth-primary)'
+		);
+		expect(defaultThemeReferences.dark.switchTrackActive).toBe(
+			'var(--inth-primary)'
+		);
 	});
 
 	test('converts typography tokens to CSS variables', () => {
