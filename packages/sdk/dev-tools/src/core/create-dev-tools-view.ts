@@ -14,9 +14,9 @@ import {
 	subscribeIABControls,
 } from '@inth/sdk-core';
 
-import type { RunAction } from './action-runner';
-import { appendActionFeedback } from './action-runner';
-import type { DevToolsActions } from './devtools';
+import type { RunAction } from './append-action-feedback';
+import { appendActionFeedback } from './append-action-feedback';
+import type { DevToolsActions } from './create-dev-tools';
 import {
 	createButton,
 	createCodeBlock,
@@ -25,17 +25,17 @@ import {
 	createStat,
 	createState,
 	createTextField,
-} from './elements';
-import { renderIABPanel } from './iab-panel';
-import type { IABPanelState } from './iab-panel';
-import { createLogo } from './logo';
-import { readSelection } from './selection';
+} from './create-element';
+import { renderIABPanel } from './render-iab-panel';
+import type { IABPanelState } from './render-iab-panel';
+import { createLogo } from './create-logo';
+import { readSelection } from './read-selection';
 import type {
 	DevToolsPosition,
 	DevToolsState,
 	DevToolsTab,
 	StateManager,
-} from './state-manager';
+} from './create-state-manager';
 
 import devToolsStyles from '../styles/dev-tools.css?raw';
 

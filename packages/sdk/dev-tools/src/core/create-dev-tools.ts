@@ -14,17 +14,17 @@ import {
 	subscribeScriptDiagnostics,
 } from '@inth/sdk-core/modules/script-loader';
 
-import { KERNEL_EVENT_TYPES, kernelEventToDevToolsEvent } from './events';
-import { readSelection } from './selection';
-import { createStateManager } from './state-manager';
+import { KERNEL_EVENT_TYPES, kernelEventToDevToolsEvent } from './kernel-events.model';
+import { readSelection } from './read-selection';
+import { createStateManager } from './create-state-manager';
 import type {
 	DevToolsDock,
 	DevToolsPosition,
 	DevToolsState,
 	DevToolsStateListener,
 	DevToolsTab,
-} from './state-manager';
-import { createDevToolsView } from './view';
+} from './create-state-manager';
+import { createDevToolsView } from './create-dev-tools-view';
 
 /** Options for a kernel-bound DevTools instance. */
 export interface DevToolsOptions {

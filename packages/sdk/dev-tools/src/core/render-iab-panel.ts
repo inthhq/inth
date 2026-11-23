@@ -3,14 +3,14 @@ import type { ConsentKernel, KernelIABControls } from '@inth/sdk-core';
 import { isLegitimateInterestAllowed } from '@inth/sdk-core/iab-support';
 import { permittedLegitimateInterestPurposes } from '@inth/sdk-schema/types';
 
-import type { RunAction } from './action-runner';
+import type { RunAction } from './append-action-feedback';
 import {
 	createButton,
 	createCodeBlock,
 	createElement,
 	createSection,
 	createTextField,
-} from './elements';
+} from './create-element';
 
 export interface IABPanelState {
 	search: string;

@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
 	KERNEL_EVENT_TYPES,
 	kernelEventToDevToolsEvent,
-} from '../../core/events';
+} from '../../core/kernel-events.model';
 import { createDevTools } from '../../index';
 
 describe('kernel event mapping', () => {

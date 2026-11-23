@@ -1,7 +1,7 @@
 import { createConsentKernel } from '@inth/sdk-core';
 import { expect, it } from 'vitest';
 
-import { readSelection } from '../../core/selection';
+import { readSelection } from '../../core/read-selection';
 import { policyResolution } from '../helpers/kernel';
 
 it("shows a category on under a 'none' policy, as the evaluator allows it", () => {

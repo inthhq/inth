@@ -1,4 +1,4 @@
-import { serializeDiagnostic } from './serialization';
+import { serializeDiagnostic } from './serialize-diagnostic';
 
 // oxlint-disable-next-line func-style -- Hoisted DOM helpers keep render functions readable.
 export function createElement<K extends keyof HTMLElementTagNameMap>(
