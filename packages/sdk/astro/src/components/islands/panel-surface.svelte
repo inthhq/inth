@@ -14,9 +14,21 @@
 	lang="ts"
 	module
 >
+	// The dialog's body, which `ConsentDialog` imports on demand. Importing
+	// it here as well puts it in this island's download, so the island and
+	// the body arrive in one wave instead of the body waiting for the island
+	// to run. `ConsentDialog`'s own import then finds it loaded.
+	import { ConsentDialogPanel } from '@inth/svelte/dialog-panel';
+
 	// Svelte's own `mount` and `unmount`, so the adapter mounts this island
 	// with the island's download and fetches no separate chunk for them.
 	export { mount, unmount } from 'svelte';
+
+	/**
+	 * The dialog's body, already in. The client asks for it once the island
+	 * loads, as it does React's.
+	 */
+	export const preloadDialog = () => ConsentDialogPanel;
 </script>
 
 <script lang="ts">
@@ -30,10 +42,6 @@
 	import { ConsentDialog, OptOutConfirmation } from '@inth/svelte';
 	import { ConsentRuntimeProvider } from '@inth/svelte/dialog-panel';
 	import type { Component } from 'svelte';
-
-	// The injected stylesheet covers the banner and the dialog. The Svelte
-	// primitives the dialog renders need these rules too.
-	import '@inth/sdk/ui/styles/primitives.css';
 
 	let {
 		options,

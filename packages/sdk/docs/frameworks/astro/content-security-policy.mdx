@@ -12,7 +12,7 @@ A Content Security Policy for an Astro site using Inth must allow these resource
 | --- | --- | --- |
 | The color-scheme script | Inline, in `<head>`, with `colorScheme` `'system'` or `'dark'` | `script-src` |
 | The banner reveal script | Inline, after a banner on a prerendered page | `script-src` |
-| The early-tap script | Inline, before a server-rendered banner whose consent engine loads after the page | `script-src` |
+| The early-tap script | Inline, before a server-rendered banner, to hold a tap until the banner's code loads | `script-src` |
 | `<style data-inth-styles="inth-first-paint">`, the banner's rules | Inline, in `<head>` from `ConsentScript`, or from the banner on a layout without it, unless `styles: false` or the site uses Tailwind CSS 3. On a page where the server shows no banner, the browser adds the same element with the page's nonce when the dialog opens | `style-src` |
 | `<style data-inth-styles="inth-iab-first-paint">`, the IAB banner's rules | Inline alongside the base rules when IAB is configured | `style-src` |
 | `<style id="inth-theme">` | Inline, when the integration sets `theme` | `style-src` |

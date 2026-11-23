@@ -211,7 +211,7 @@ describe('the first-load shell', () => {
 		const { client: shell, loadEngine } = startShell();
 
 		document
-			.querySelector('[data-inth-action="reject"]')
+			.querySelector(EARLY_TAP_ROOT)
 			?.dispatchEvent(new Event('pointerdown', { bubbles: true }));
 		await settle();
 		expect(loadEngine).not.toHaveBeenCalled();
@@ -280,27 +280,64 @@ describe('the first-load shell', () => {
 		expect(getConsentClient()?.getConsent().explicitChoice).not.toBeNull();
 	});
 
-	it('replays a tap the early-tap script held before the shell ran', async () => {
+	it("loads the engine at once on a press on one of the prompt's buttons, whose click the early-tap script holds", async () => {
+		renderPage();
+		const { client: shell, loadEngine } = startShell();
+
+		document
+			.querySelector('[data-action="reject"]')
+			?.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+		await shell.ready;
+		expect(loadEngine).toHaveBeenCalledOnce();
+	});
+
+	it('leaves a tap the early-tap script held to the prompt, and loads the engine for it', async () => {
 		renderPage();
 		const stop = vi.fn();
-		(window as unknown as Record<string, unknown>)[EARLY_TAPS_WINDOW_KEY] = {
+		const queue: Record<string, unknown> = {
 			stop,
-			taps: [
-				{ action: 'customize', at: Date.now() - 20 },
-				{ action: 'reject', at: Date.now() - 10 },
-			],
+			taps: [{ action: 'reject', at: Date.now() - 10 }],
+		};
+		(window as unknown as Record<string, unknown>)[EARLY_TAPS_WINDOW_KEY] =
+			queue;
+		const style = document.createElement('style');
+		style.id = EARLY_TAP_STYLE_ID;
+		document.head.append(style);
+
+		const { client: shell, loadEngine } = startShell();
+		// The shell records nothing itself: the prompt the engine mounts
+		// replays the tap through its own handlers.
+		expect(stop).not.toHaveBeenCalled();
+		expect(shell.getConsent().explicitChoice).toBeNull();
+		// The script tells the shell about the next tap too.
+		expect(typeof queue.n).toBe('function');
+		await shell.ready;
+		expect(loadEngine).toHaveBeenCalledOnce();
+		await settle();
+		// This page has no prompt spot, so no prompt mounts to replay it:
+		// the engine lets the tap go and shows the banner again.
+		expect(stop).toHaveBeenCalledOnce();
+		expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
+	});
+
+	it('shows a banner an early tap hid again when the engine fails to load', async () => {
+		renderPage();
+		(window as unknown as Record<string, unknown>)[EARLY_TAPS_WINDOW_KEY] = {
+			stop: vi.fn(),
+			taps: [{ action: 'accept', at: Date.now() - 10 }],
 		};
 		const style = document.createElement('style');
 		style.id = EARLY_TAP_STYLE_ID;
 		document.head.append(style);
 
-		const { client: shell } = startShell();
-		expect(stop).toHaveBeenCalledOnce();
-		expect(shell.getConsent().explicitChoice).not.toBeNull();
-		expect(shell.getConsent().effectivePermissions.marketing).toBe(false);
-		await shell.ready;
+		const loadEngine = vi.fn(() => Promise.reject(new Error('chunk failed')));
+		startShell(loadEngine as unknown as () => Promise<EngineModule>);
 		await settle();
+		expect(loadEngine).toHaveBeenCalled();
 		expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
+		expect((document.querySelector(EARLY_TAP_ROOT) as HTMLElement).hidden).toBe(
+			false
+		);
 	});
 
 	it('a save the outbox cannot keep goes to the engine, which records it once', async () => {

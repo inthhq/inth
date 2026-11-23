@@ -873,11 +873,14 @@ describe('astro:config:setup', () => {
 			calls.injectScript.mock.calls.some(([stage]) => stage === 'page-ssr')
 		).toBe(false);
 		const [, boot] = calls.injectScript.mock.calls[0] as [string, string];
-		// The island links the widget's rules already, so IAB adds its own.
+		// The preferences dialog links nothing, so IAB links the widget's
+		// rules with its own.
 		expect(boot).toContain(
-			`import iabDialogStyle0 from ${JSON.stringify(`${resolveOwnEntry('@inth/sdk/ui/styles/sheets/iab-dialog.css')}?url`)};`
+			`import iabDialogStyle1 from ${JSON.stringify(`${resolveOwnEntry('@inth/sdk/ui/styles/sheets/iab-dialog.css')}?url`)};`
 		);
-		expect(boot).toContain("registerDialogStyles([iabDialogStyle0], 'iab');");
+		expect(boot).toContain(
+			"registerDialogStyles([iabDialogStyle0, iabDialogStyle1], 'iab');"
+		);
 	});
 
 	it('gives the React IAB dialog the widget rules its preferences dialog never links', async () => {
@@ -908,34 +911,18 @@ describe('astro:config:setup', () => {
 		}
 	);
 
-	it('registers no preferences stylesheet for React, whose dialog brings its own sheets', async () => {
-		const { calls } = await runSetup({ mode: testingMode(), ui: 'react' });
-		const [, code] = calls.injectScript.mock.calls[0] as [string, string];
-		expect(code).not.toContain('registerDialogStyles(');
-	});
-
-	it.each([
-		['vue', ['@inth/sdk/ui/styles/sheets/widget.css']],
-		[
-			'svelte',
-			[
-				'@inth/sdk/ui/styles/sheets/widget.css',
-				'@inth/sdk/ui/styles/primitives.css',
-			],
-		],
-	] as const)(
-		'registers the %s dialog stylesheets for the client to link',
-		async (ui, stylesheets) => {
+	it.each(['react', 'svelte', 'vue'] as const)(
+		'registers no preferences stylesheet for the %s dialog, which renders with the sheets the client puts in',
+		async (ui) => {
+			// The dialog renders with tokens, button, expand and dialog, which
+			// the client puts in, and each confirmation it hosts brings or gets
+			// the widget's sheets. Neither the widget's stylesheet nor the
+			// primitives' is linked for it.
 			const { calls } = await runSetup({ mode: testingMode(), ui });
 			const [, code] = calls.injectScript.mock.calls[0] as [string, string];
-
-			stylesheets.forEach((stylesheet, index) => {
-				expect(code).toContain(
-					`import dialogStyle${index} from ${JSON.stringify(`${resolveOwnEntry(stylesheet)}?url`)};`
-				);
-			});
-			const names = stylesheets.map((_, index) => `dialogStyle${index}`);
-			expect(code).toContain(`registerDialogStyles([${names.join(', ')}]);`);
+			expect(code).not.toContain('registerDialogStyles(');
+			expect(code).not.toContain('widget.css');
+			expect(code).not.toContain('primitives.css');
 		}
 	);
 
@@ -969,7 +956,7 @@ describe('astro:config:setup', () => {
 				`import ${specifier('@inth/astro/styles.css')};`
 			);
 			expect(boot).not.toContain('sheets/dialog.css');
-			expect(boot).toContain('primitives.css');
+			expect(boot).not.toContain('primitives.css');
 		});
 
 		it('inlines on Tailwind CSS 4', async () => {

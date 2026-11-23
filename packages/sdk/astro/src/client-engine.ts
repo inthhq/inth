@@ -45,6 +45,7 @@ import type {
 } from '@inth/sdk/runtime';
 import { createConsentRuntimeWith } from '@inth/sdk/runtime/on-demand';
 import { clearOnRevocationOnDemand } from '@inth/sdk/runtime/on-demand-factories';
+import { earlyTapQueue } from '@inth/sdk/runtime/page-globals';
 import type { ConsentRuntimeModules } from '@inth/sdk/runtime/provider';
 import {
 	activateOptOutLink,
@@ -102,6 +103,7 @@ import type * as PromptModule from './browser/prompt';
 import type { PromptController } from './browser/prompt';
 import type * as IABPromptRenderer from './browser/render-iab-prompt';
 import type { EarlyDialog, EngineHandoff } from './browser/shell';
+import { takeEarlyTaps, unhideEarlyTap } from './browser/trigger';
 import type {
 	AstroConsentClient,
 	AstroConsentSaveInput,
@@ -1332,6 +1334,9 @@ const ensurePrompt = function ensurePrompt(
 			// stood down. Mount on the page as it is now.
 			ensurePrompt(client, client.getConsent());
 		} catch (error) {
+			// A tap the early-tap script held hid the prompt; show it again
+			// while the next snapshot retries the download.
+			unhideEarlyTap();
 			console.warn('@inth/astro: the consent banner failed to load.', error);
 		} finally {
 			if (!mounted && promptLoading === load) {
@@ -1341,9 +1346,35 @@ const ensurePrompt = function ensurePrompt(
 	})();
 };
 
+/**
+ * Let go of the taps the prompt's early-tap script holds when no prompt
+ * will replay them: the policy resolved, and the consent prompt does not
+ * show for it (another model, a stored choice, IAB) or the page has no
+ * spot for it. The script stops, and
+ * a prompt it hid shows again. A prompt that mounted claimed the taps
+ * first, and this does nothing.
+ */
+const releaseEarlyTaps = function releaseEarlyTaps(
+	snapshot: ConsentSnapshot
+): void {
+	if (
+		!earlyTapQueue()?.stop ||
+		prompt ||
+		promptLoading ||
+		snapshot.policyPending ||
+		(promptShows(snapshot) &&
+			document.querySelector(`[${PROMPT_SLOT_ATTRIBUTE}]`) !== null)
+	) {
+		return;
+	}
+	takeEarlyTaps();
+	unhideEarlyTap();
+};
+
 const attach = function attach(client: AstroConsentClient): void {
 	const snapshot = client.getConsent();
 	ensurePrompt(client, snapshot);
+	releaseEarlyTaps(snapshot);
 	ensureIABPromptRendered(client, snapshot);
 	syncBannerVisibility(snapshot);
 	syncSurfaceVisibility(snapshot);
@@ -1409,6 +1440,7 @@ export const boot = function boot(
 			return;
 		}
 		ensurePrompt(client, snapshot);
+		releaseEarlyTaps(snapshot);
 		ensureIABPromptRendered(client, snapshot);
 		syncBannerVisibility(snapshot);
 		syncSurfaceVisibility(snapshot);

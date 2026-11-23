@@ -49,9 +49,12 @@ const PAGE_WAKE_EVENTS = ['pointerdown', 'keydown', 'scroll'] as const;
  * or key or scrolls anywhere on the page outside the banner, focuses the
  * banner's overlay, or `ENGINE_TIMEOUT_MS` passed.
  *
- * Input inside the banner is the shell's to route: it does not load the
- * engine, and a pointer going down on one of the banner's action buttons
- * calls `onPress` with the button's `data-inth-action`, ahead of its click.
+ * Input inside the banner is the shell's to route. A pointer going down on
+ * one of the prompt's buttons (`data-action`) loads the engine at once:
+ * the early-tap script holds the click that follows, and the prompt the
+ * engine mounts replays it. One going down on a control with a
+ * `data-inth-action` calls `onPress` with it, ahead of its click. Other
+ * input inside the banner does not load the engine.
  *
  * @param start - Loads the engine.
  * @param onPress - Sees presses on the banner's buttons.
@@ -98,6 +101,10 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 			return;
 		}
 		if (event.type === 'pointerdown') {
+			if (target.closest('[data-action]')) {
+				fire();
+				return;
+			}
 			const action = target
 				.closest('[data-inth-action]')
 				?.getAttribute('data-inth-action');

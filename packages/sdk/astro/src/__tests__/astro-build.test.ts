@@ -119,6 +119,56 @@ const buildReachableCSS = async function buildReachableCSS(
 	};
 };
 
+/**
+ * The page's scripts, the files they load with `import()`, and each file's
+ * static imports.
+ */
+const lazyChunks = async function lazyChunks(outDir: string): Promise<{
+	names: string[];
+	lazy: string[];
+	code: (name: string) => string;
+	staticClosure: (name: string) => string[];
+}> {
+	const dir = join(outDir, '_astro');
+	const names = (await readdir(dir)).filter((name) => name.endsWith('.js'));
+	const sources = new Map(
+		await Promise.all(
+			names.map(
+				async (name) => [name, await readFile(join(dir, name), 'utf8')] as const
+			)
+		)
+	);
+	const code = (name: string): string => sources.get(name) ?? '';
+	const lazy = new Set<string>();
+	for (const source of sources.values()) {
+		for (const match of source.matchAll(
+			/import\(\s*[`'"]\.\/(?<file>[^`'"]+\.js)[`'"]\s*\)/gu
+		)) {
+			lazy.add(match.groups?.file ?? '');
+		}
+	}
+	const staticImports = (name: string): string[] =>
+		[
+			...code(name).matchAll(
+				/(?:from|import)\s*["']\.\/(?<file>[^"']+\.js)["']/gu
+			),
+		]
+			.map((match) => match.groups?.file ?? '')
+			.filter((file) => sources.has(file));
+	const staticClosure = (name: string): string[] => {
+		const seen = new Set<string>();
+		const pending = [name];
+		for (let next = pending.pop(); next; next = pending.pop()) {
+			if (!seen.has(next)) {
+				seen.add(next);
+				pending.push(...staticImports(next));
+			}
+		}
+		return [...seen];
+	};
+	return { code, lazy: [...lazy].sort(), names, staticClosure };
+};
+
 describe('an Astro build', () => {
 	// The dialog renders these class names; without rules for them it opens
 	// as unstyled text at the bottom of the page. Its sheets are modules the
@@ -135,18 +185,54 @@ describe('an Astro build', () => {
 		}
 	}, 60_000);
 
-	it('gives the Svelte dialog its stylesheets', async () => {
+	it('gives the Svelte dialog its stylesheets, and links none it does not render', async () => {
 		const { css, scripts } = await buildReachableCSS('svelte');
 		for (const selector of dialogSelectors) {
 			expect(scripts).toContain(selector);
 		}
-		// The Svelte island links the widget's rules and the primitive class
-		// maps it renders.
-		expect(css).toContain(`.${managerClasses.manager}`);
+		// The dialog renders with the sheets the client puts in. The widget's
+		// rules come with the confirmations that render them, and the
+		// primitive class maps only with the IAB panel, so the page links
+		// neither stylesheet for the preferences dialog.
+		expect(css).not.toContain(`.${managerClasses.manager}`);
 		const [itemClass] = preferenceItemVariants().root().split(' ');
 		expect(itemClass).toBeTruthy();
-		expect(css).toContain(`.${itemClass}`);
+		expect(css).not.toContain(`.${itemClass}`);
 	}, 60_000);
+
+	it('loads the Svelte dialog body with its island, in one wave', async () => {
+		const outDir = await buildFixture('svelte');
+		const files = await lazyChunks(outDir);
+		const island = files.names.find((name) =>
+			name.startsWith('panel-surface.')
+		);
+		const body = files.names.find((name) =>
+			files.code(name).includes('consent-dialog-done')
+		);
+		expect(island).toBeDefined();
+		expect(body).toBeDefined();
+		// The body sits in the island's own download: the island's chunk or
+		// a chunk it imports statically, which loads beside it.
+		expect(files.staticClosure(island ?? '')).toContain(body);
+	}, 60_000);
+
+	it.each(['react', 'svelte'] as const)(
+		'names no chunk a %s page loads on demand like a consent banner',
+		async (ui) => {
+			// Vite names a lazy chunk after the module it imports, and content
+			// blockers drop files named like a consent banner: the prompt's
+			// containers and sheets, its options and the dialog load on demand.
+			const outDir = await buildFixture(ui);
+			const { lazy } = await lazyChunks(outDir);
+			expect(lazy).toEqual(
+				expect.arrayContaining([expect.stringMatching(/^card\./u)])
+			);
+			expect(
+				lazy.filter((name) => /banner|consent|cookie|privacy|gdpr/iu.test(name))
+			).toEqual([]);
+		},
+		60_000
+	);
 
 	it.each(['react', 'svelte'] as const)(
 		'puts IAB banner CSS in the server HTML and defers both panel sheets for %s',

@@ -27,9 +27,11 @@ import type {
 } from '@inth/sdk/engine';
 import { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import type { PreferenceDraft } from '@inth/sdk/preference-draft';
+import type { EarlyConsentTap } from '@inth/sdk/runtime/page-globals';
 import {
 	getOptOutReceiptData,
 	hasConsentUI,
+	replayEarlyConsentTaps,
 	subscribeOptOutReceiptData,
 } from '@inth/sdk/surface-actions';
 import {
@@ -112,10 +114,14 @@ export interface PromptController {
 	dispose: () => void;
 }
 
-/** The sheets of one container, each a chunk of its own. */
+/**
+ * The sheets of one container, each a chunk of its own. The Banner's loads
+ * through `./strip-sheet`, so its chunk has a name content blockers leave
+ * alone.
+ */
 const CONTAINER_SHEETS: Record<PromptContainerType, () => Promise<StyleSheet>> =
 	{
-		banner: () => import('@inth/sdk/ui/styles/sheets/banner'),
+		banner: () => import('./strip-sheet'),
 		card: () => import('@inth/sdk/ui/styles/sheets/card'),
 		drawer: () => import('@inth/sdk/ui/styles/sheets/drawer'),
 	};
@@ -759,6 +765,33 @@ export const mountPrompt = function mountPrompt(
 
 	render();
 
+	// A tap on the server-rendered prompt before this chunk mounted it is
+	// held by the inline early-tap script. From here the prompt's own
+	// handlers work: stop the script and replay the tap through them, so a
+	// choice commits through the prompt's plan and Customize opens the
+	// options in place. The engine started the runtime before it mounted
+	// the prompt; the replay still waits for the policy.
+	const replayTap = (tap: EarlyConsentTap): void => {
+		if (tap.action === 'accept') {
+			commit('allow');
+		} else if (tap.action === 'reject') {
+			commit('refuse');
+		} else if (tap.action === 'dismiss') {
+			acknowledge();
+		} else if (lastModel) {
+			const layout = phone
+				? lastModel.container.phone
+				: lastModel.container.desktop;
+			if (layout.flow !== 'all-in-one') {
+				expand();
+			}
+		}
+	};
+	const stopEarlyTaps = replayEarlyConsentTaps(kernel, {
+		act: replayTap,
+		started: () => true,
+	});
+
 	return {
 		dispose() {
 			if (disposed) {
@@ -773,6 +806,7 @@ export const mountPrompt = function mountPrompt(
 				}
 			}
 			cancelAnimationFrame(cancelPanelFocus);
+			stopEarlyTaps();
 			unsubscribeKernel();
 			unsubscribeSession();
 			unsubscribeDraft();
