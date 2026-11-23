@@ -1442,3 +1442,304 @@ describe('runtime regressions (set 3)', () => {
 		}
 	});
 });
+
+describe('runtime regressions (set 4)', () => {
+	const runtimeFixture = (rule = optInRule()) => {
+		const resolution = matchedResolution(rule);
+		const base = {
+			consentCategories: ['marketing'] as const,
+			mode: testing({ policy: [rule] }),
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				now: NOW,
+			},
+		};
+		const documentFor = (externalId: string, value: boolean) =>
+			makeUserConsent({
+				choices: {
+					marketing: {
+						basis: {
+							fingerprint: resolution.fingerprints.choice,
+							kind: 'choice-v1',
+						},
+						confirmedAt: NOW - 1000,
+						value,
+					},
+				},
+				externalId,
+			});
+		return { base, documentFor, resolution };
+	};
+
+	test('streamed adoption never starts marketing before applying the paired denial', async () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const { base, documentFor } = runtimeFixture(rule);
+		const pending = Promise.withResolvers<RuntimePrefetch>();
+		const start = vi.fn();
+		const runtime = createConsentProviderRuntime(
+			{
+				...base,
+				prefetch: pending.promise,
+				scripts: [
+					{
+						category: 'marketing',
+						id: 'marketing',
+						onBeforeLoad: start,
+						src: 'https://example.test/marketing.js',
+					},
+				],
+				user: { externalId: 'a' },
+			},
+			{
+				...defaultRuntimeModules,
+				streamPrefetch: streamPrefetchWith(resolveStreamedInit),
+			}
+		);
+		try {
+			runtime.start();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+			expect(start).not.toHaveBeenCalled();
+			const config: RuntimePrefetch = {
+				...base.prefetch,
+				initialUser: { externalId: 'a' },
+				initialUserConsent: documentFor('a', false),
+			};
+			pending.resolve(config);
+			runtime.streamed?.adopt(config);
+			await flushMicrotasks();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+			expect(start).not.toHaveBeenCalled();
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('updating from absent user option to SSR-active user A with cached pre-lift or older doc keeps lift and newer synced doc', async () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const resolution = matchedResolution(rule);
+		const fp = resolution.fingerprints.choice;
+		const preLiftDoc = makeUserConsent({
+			checkedAt: NOW,
+			choices: {
+				marketing: {
+					basis: { fingerprint: fp, kind: 'choice-v1' },
+					confirmedAt: NOW - 2000,
+					value: false,
+				},
+			},
+			externalId: 'user_a',
+			optOut: {
+				method: 'button',
+				recordedAt: NOW - 5000,
+				rights: ['sale'],
+			},
+		});
+		const base = {
+			consentCategories: ['marketing'] as const,
+			mode: Object.assign(
+				() => ({
+					identify: (_u: unknown, id: string | null) =>
+						Promise.resolve({ subjectId: id ?? 'sub_a' }),
+					liftOptOut: () => Promise.resolve({ ok: true, optOut: null }),
+				}),
+				{ kind: 'offline' as const }
+			),
+			persistence: false as const,
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				initialRecords: { now: NOW, subject: { subjectId: 'sub_a' } },
+				initialUser: { externalId: 'user_a' },
+				initialUserConsent: preLiftDoc,
+				now: NOW,
+			},
+		};
+		// Client starts with user: undefined (SSR seeded initialUser: user_a).
+		const runtime = createConsentProviderRuntime(base, defaultRuntimeModules);
+		try {
+			runtime.start();
+			// First, link and lift via kernel (simulating an identified session).
+			await runtime.identify({
+				externalId: 'user_a',
+				identityToken: 'tok_a',
+			});
+			expect(await runtime.kernel.commands.optIn()).toEqual({
+				ok: true,
+				optOut: null,
+			});
+			expect(runtime.kernel.getSnapshot().optOut).toBeNull();
+
+			// Client props now pass user A + token and cached pre-lift doc: MUST keep the lift!
+			void runtime.update({
+				...base,
+				user: { externalId: 'user_a', identityToken: 'tok_a' },
+				userConsent: structuredClone(preLiftDoc),
+			});
+			expect(runtime.kernel.getSnapshot().optOut).toBeNull();
+
+			// Sync a newer document, then pass the older doc again via update -> MUST NOT roll back!
+			runtime.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW + 5000,
+					choices: {
+						marketing: {
+							basis: { fingerprint: fp, kind: 'choice-v1' },
+							confirmedAt: NOW + 4000,
+							value: true,
+						},
+					},
+					externalId: 'user_a',
+				})
+			);
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				true
+			);
+			void runtime.update({
+				...base,
+				user: { externalId: 'user_a', identityToken: 'tok_a_2' },
+				userConsent: structuredClone(preLiftDoc),
+			});
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				true
+			);
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('re-enabling with a resolved new-user denial never starts scripts under prior account', async () => {
+		const { base, documentFor } = runtimeFixture();
+		const start = vi.fn();
+		const options = {
+			...base,
+			scripts: [],
+			user: { externalId: 'a' },
+			userConsent: documentFor('a', true),
+		};
+		const runtime = createConsentProviderRuntime(
+			{ ...options, enabled: false },
+			defaultRuntimeModules
+		);
+		try {
+			runtime.start();
+			await flushMicrotasks();
+			start.mockClear();
+			await runtime.update({
+				...options,
+				enabled: true,
+				scripts: [
+					{
+						category: 'marketing',
+						id: 'marketing',
+						onBeforeLoad: start,
+						src: 'https://example.test/marketing.js',
+					},
+				],
+				user: { externalId: 'b' },
+				userConsent: documentFor('b', false),
+			});
+			expect(start).not.toHaveBeenCalled();
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('a cleared eager value is not reapplied at start', () => {
+		const { base, documentFor } = runtimeFixture();
+		const runtime = createConsentProviderRuntime(
+			{
+				...base,
+				user: { externalId: 'a' },
+				userConsent: documentFor('a', true),
+			},
+			defaultRuntimeModules
+		);
+		try {
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				true
+			);
+			runtime.clearRecords();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+			runtime.start();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('a cleared memoized Promise that already settled is not replayed at start', async () => {
+		const { base, documentFor } = runtimeFixture();
+		const pending = Promise.withResolvers<UserConsent>();
+		const runtime = createConsentProviderRuntime(
+			{
+				...base,
+				user: { externalId: 'a' },
+			},
+			defaultRuntimeModules
+		);
+		try {
+			void runtime.update({
+				...base,
+				user: { externalId: 'a' },
+				userConsent: pending.promise,
+			});
+			pending.resolve(documentFor('a', true));
+			await flushMicrotasks();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				true
+			);
+			runtime.clearRecords();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+			runtime.start();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('a signed-out null fences an older SSR stream with a user only in its payload', async () => {
+		const { base, documentFor } = runtimeFixture();
+		const pending = Promise.withResolvers<RuntimePrefetch>();
+		const runtime = createConsentProviderRuntime(
+			{
+				...base,
+				prefetch: pending.promise,
+			},
+			{
+				...defaultRuntimeModules,
+				streamPrefetch: streamPrefetchWith(resolveStreamedInit),
+			}
+		);
+		try {
+			runtime.start();
+			await runtime.update({
+				...base,
+				prefetch: pending.promise,
+				userConsent: null,
+			});
+			expect(runtime.kernel.getSnapshot().user).toBeNull();
+			pending.resolve({
+				...base.prefetch,
+				initialUser: { externalId: 'a' },
+				initialUserConsent: documentFor('a', true),
+			});
+			await flushMicrotasks();
+			expect(runtime.kernel.getSnapshot().user).toBeNull();
+		} finally {
+			runtime.dispose();
+		}
+	});
+});

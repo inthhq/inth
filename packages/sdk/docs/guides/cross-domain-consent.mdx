@@ -94,9 +94,12 @@ const inth = new Inth();
 
 export default async function RootLayout({ children }) {
 	const sessionUser = await getSessionUser();
-	const consentResult = sessionUser
-		? await inth.consents.check({ externalId: sessionUser.id })
-		: null;
+	const [consentResult, tokenResult] = sessionUser
+		? await Promise.all([
+				inth.consents.check({ externalId: sessionUser.id }),
+				inth.users.createIdentityToken({ externalId: sessionUser.id }),
+			])
+		: [null, null];
 	const userConsent =
 		sessionUser === null
 			? null
@@ -118,7 +121,9 @@ export default async function RootLayout({ children }) {
 						user: sessionUser
 							? {
 									externalId: sessionUser.id,
-									identityToken: sessionUser.inthIdentityToken,
+									identityToken: tokenResult?.error
+										? undefined
+										: tokenResult?.data.token,
 								}
 							: undefined,
 						userConsent,

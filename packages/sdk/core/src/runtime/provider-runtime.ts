@@ -423,14 +423,14 @@ export const createConsentProviderRuntime =
 			if (!hasUser && !hasConsent) {
 				return;
 			}
-			if (
+			const shouldSetUser =
 				hasUser &&
 				current.user === undefined &&
-				main.runtime.kernel.getSnapshot().user === null
-			) {
-				main.setUser(normalizeKernelUser(config.initialUser) ?? null);
-			}
+				main.runtime.kernel.getSnapshot().user === null;
 			if (!started) {
+				if (shouldSetUser) {
+					main.setUser(normalizeKernelUser(config.initialUser) ?? null);
+				}
 				// Keep the streamed raw document until `start()` mounts persistence
 				// so it is applied and persisted once the runtime actually starts.
 				pendingStreamedUserConsent = config;
@@ -438,7 +438,12 @@ export const createConsentProviderRuntime =
 			}
 			streamedUserConsentAdopted = true;
 			pendingStreamedUserConsent = undefined;
-			if (hasConsent && current.userConsent === undefined) {
+			const applyConsent = hasConsent && current.userConsent === undefined;
+			if (shouldSetUser) {
+				main.setUser(normalizeKernelUser(config.initialUser) ?? null, {
+					userConsent: applyConsent ? config.initialUserConsent : undefined,
+				});
+			} else if (applyConsent) {
 				main.runtime.syncUserConsent(config.initialUserConsent);
 			}
 		};
@@ -528,11 +533,14 @@ export const createConsentProviderRuntime =
 							main.adoptJourney(
 								config.journey === null ? null : config.journey?.id
 							);
+							// Apply streamed user/account consent while `policyPending` is
+							// still true so clearing `policyPending` in `adoptInit` never
+							// publishes a permissive opt-out state before the paired denial.
+							adoptStreamedUserConsent(config);
 							(main.runtime.kernel as InternalKernel).adoptInit(
 								response,
 								started
 							);
-							adoptStreamedUserConsent(config);
 						},
 						settled: settle(
 							initial.prefetch as PromiseLike<RuntimePrefetch | undefined>
@@ -683,8 +691,14 @@ export const createConsentProviderRuntime =
 		): void {
 			const prevUser = normalizeKernelUser(previous.user);
 			const nextUser = normalizeKernelUser(next.user);
-			const userChanged =
-				(prevUser?.externalId ?? null) !== (nextUser?.externalId ?? null);
+			const kernelUser = main.runtime.kernel.getSnapshot().user;
+			const prevExternalId =
+				prevUser?.externalId ?? kernelUser?.externalId ?? null;
+			const nextExternalId = nextUser?.externalId ?? null;
+			const userChanged = prevExternalId !== nextExternalId;
+			if (next.userConsent === null) {
+				fenceStreamedUserConsent();
+			}
 			if (userChanged) {
 				fenceStreamedUserConsent();
 				if (isUserConsentPromise(next.userConsent)) {
@@ -696,6 +710,14 @@ export const createConsentProviderRuntime =
 					main.setUser(nextUser ?? null, { userConsent: next.userConsent });
 				}
 				return;
+			}
+			if (
+				nextUser !== undefined &&
+				(prevUser === undefined ||
+					nextUser.identityToken !== prevUser.identityToken ||
+					nextUser.identityProvider !== prevUser.identityProvider)
+			) {
+				main.setUser(nextUser);
 			}
 			if (next.userConsent !== previous.userConsent) {
 				runtime.syncUserConsent(next.userConsent);
@@ -817,12 +839,12 @@ export const createConsentProviderRuntime =
 						overridesChanged = true;
 					}
 				}
+				// Apply user and `userConsent` updates BEFORE re-enabling mounts
+				// modules (script loader, blockers), so re-enabling with a new user's
+				// denial never runs scripts under the prior account's permissions.
+				syncIdentityAndUserConsent(previous, current);
 				// Mounts every module again from the new options.
 				setEnabled(current.enabled ?? true);
-				// User changes and removals drop the previous user's account layer
-				// synchronously before any lazy update chunk loads. Apply `user`
-				// before `userConsent` when both change in one update pass.
-				syncIdentityAndUserConsent(previous, current);
 				// Categories decide what is granted, so they apply now too.
 				if (
 					JSON.stringify(current.consentCategories) !==

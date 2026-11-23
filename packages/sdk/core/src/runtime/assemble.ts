@@ -204,6 +204,13 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 	};
 
 	const userConsentSync = createUserConsentSyncController(kernel);
+	let clearedBeforeStart = false;
+	const stopRecordsClearedWatch = kernel.events.on('records:cleared', () => {
+		if (!started) {
+			clearedBeforeStart = true;
+		}
+		userConsentSync.onRecordsCleared();
+	});
 
 	const stop = function stop(): void {
 		started = false;
@@ -227,6 +234,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		},
 		dispose() {
 			disposed = true;
+			stopRecordsClearedWatch();
 			userConsentSync.dispose();
 			stop();
 			kernel.dispose();
@@ -333,8 +341,9 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			}
 			// After hydrating both browser and stored account layers, sync the
 			// initial `userConsent` value or Promise (converting raw SSR docs
-			// with the client clock and persisting them).
-			if (enabled && !consentSource) {
+			// with the client clock and persisting them), unless records were
+			// cleared before `start()`.
+			if (enabled && !consentSource && !clearedBeforeStart) {
 				const initialUserConsent =
 					options.userConsent === undefined
 						? options.prefetch?.initialUserConsent
@@ -343,6 +352,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 					userConsentSync.apply(initialUserConsent, { initialStart: true });
 				}
 			}
+			clearedBeforeStart = false;
 			// Persistence gives a browser runtime its subject ID at startup.
 			// Without it the ID lives in memory for the page.
 			const { externalPermissions, subject } = kernel.getSnapshot();

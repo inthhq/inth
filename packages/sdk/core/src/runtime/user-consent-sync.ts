@@ -43,6 +43,8 @@ export interface UserConsentSyncController {
 		externalId: string | null,
 		options?: { readonly preservePending?: boolean }
 	) => void;
+	/** Fence any in-flight or settled Promise when records are cleared. */
+	onRecordsCleared: () => void;
 	/** Cancel timers and fence any in-flight Promise on runtime disposal. */
 	dispose: () => void;
 }
@@ -197,6 +199,13 @@ export const createUserConsentSyncController =
 			dispose() {
 				disposed = true;
 				lastPromise = null;
+				lastResolved = null;
+				activePromiseGeneration += 1;
+				clearHold();
+			},
+
+			onRecordsCleared() {
+				holdArmedForExternalId = null;
 				lastResolved = null;
 				activePromiseGeneration += 1;
 				clearHold();
