@@ -8,10 +8,11 @@
  */
 
 import type { ResolvedConsentLayout } from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { BRAND_MARKS } from '@inth/sdk/ui/utils';
 import type { LegalLinkEntry } from '@inth/sdk/ui/utils';
 
-import type { PrivacyChoicesModel, PromptButton } from './model';
+import type { PrivacyChoicesModel, PromptButton, SummaryAction } from './model';
 import { h, raw } from './vnode';
 import type { VAttributes, VChild, VElement } from './vnode';
 
@@ -243,6 +244,17 @@ export const renderPrompt = function renderPrompt(
 			}),
 			...children
 		);
+	// The policy's first-layer actions, in the host's order (React's
+	// `summaryButton`). A notice's opt-out link and OK are not among them.
+	const summaryButton = (action: SummaryAction, inBar: boolean): VElement => {
+		if (action === 'reject') {
+			return consentButton(model, 'reject', labels.reject);
+		}
+		if (action === 'accept') {
+			return consentButton(model, 'accept', labels.accept);
+		}
+		return expandButton(inBar ? labels.expandBar : labels.expand, inBar);
+	};
 
 	let footer: VChild;
 	if (optionsOpen) {
@@ -258,13 +270,10 @@ export const renderPrompt = function renderPrompt(
 	} else if (notice) {
 		footer = [expandButton(labels.expand, false), okButton];
 	} else {
-		footer = [
-			actionGroup(
-				consentButton(model, 'reject', labels.reject),
-				consentButton(model, 'accept', labels.accept)
-			),
-			expandButton(labels.expand, false),
-		];
+		footer = model.summaryGroups.map((group) => {
+			const buttons = group.map((action) => summaryButton(action, false));
+			return group.length > 1 ? actionGroup(...buttons) : buttons[0];
+		});
 	}
 
 	const tag = consentTag(model);
@@ -292,11 +301,10 @@ export const renderPrompt = function renderPrompt(
 		body = [
 			h(
 				'h2',
-				{
-					class: cx(model, surface.visuallyHidden),
+				bound(parts.barTitle, {
 					'data-testid': 'consent-banner-title',
 					id: ids.title,
-				},
+				}),
 				labels.title
 			),
 			h(
@@ -304,23 +312,22 @@ export const renderPrompt = function renderPrompt(
 				{ class: cx(model, presentation.row) },
 				h(
 					'p',
-					{
-						class: cx(model, presentation.text),
+					bound(parts.barText, {
 						'data-testid': 'consent-banner-description',
-					},
+					}),
 					labels.barDescription,
 					legalLinks(model, model.barLinks)
 				),
 				h(
 					'div',
-					{
-						class: cx(model, presentation.actions),
+					bound(parts.barActions, {
 						'data-testid': 'consent-banner-footer',
-					},
-					notice ? null : consentButton(model, 'reject', labels.reject),
-					notice ? null : consentButton(model, 'accept', labels.accept),
-					expandButton(labels.expandBar, true),
-					notice ? okButton : null
+					}),
+					notice
+						? [expandButton(labels.expandBar, true), okButton]
+						: model.summaryGroups
+								.flat()
+								.map((action) => summaryButton(action, true))
 				)
 			),
 			status,
@@ -380,6 +387,7 @@ export const renderPrompt = function renderPrompt(
 	return h(
 		'div',
 		bound(parts.root, {
+			'data-animation': model.disableAnimation ? 'off' : undefined,
 			'data-blocking': layout.blocking ? 'true' : undefined,
 			'data-design': 'privacy-choices',
 			'data-edge-style': layout.edgeStyle,
@@ -389,7 +397,10 @@ export const renderPrompt = function renderPrompt(
 			'data-state': state.phase === 'leaving' ? 'closed' : 'open',
 			'data-testid': 'consent-banner-root',
 			'data-variant': model.variant,
+			dir: model.textDirection,
+			// A prompt on its way out takes no input (PERM-05).
 			inert: flag(state.phase === 'leaving'),
+			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
 		}),
 		layout.blocking
 			? h(

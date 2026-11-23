@@ -16,14 +16,23 @@ import type { ConsentDialogAdapter, ConsentDialogKind } from '../ui/adapter';
 import { loadDialogStyles } from './dialog-styles';
 
 /**
- * Start the island's import. A surface that is not registered, or fails to
- * load, is left to the adapter's `mount()`, which reports it.
+ * Start the island's import, and the one preference dialog it will
+ * render when the island loads its dialogs on demand (React's does). A
+ * surface that is not registered, or fails to load, is left to the
+ * adapter's `mount()`, which reports it.
  */
 const startSurface = async function startSurface(
-	ui: InthUIAdapterName
+	ui: InthUIAdapterName,
+	kind: ConsentDialogKind,
+	design: 'classic' | 'privacy-choices'
 ): Promise<void> {
 	try {
-		await requireDialogSurface(ui)();
+		const surface = (await requireDialogSurface(ui)()) as {
+			preloadDialog?: (design: 'classic' | 'privacy-choices') => unknown;
+		};
+		if (kind !== 'iab') {
+			await surface.preloadDialog?.(design);
+		}
 	} catch {
 		// `mount()` imports it again and reports the failure.
 	}
@@ -86,7 +95,7 @@ export const loadDialog = async function loadDialog(
 	nonce: string | undefined,
 	design: 'classic' | 'privacy-choices' = 'classic'
 ): Promise<ConsentDialogAdapter> {
-	const surface = startSurface(ui);
+	const surface = startSurface(ui, kind, design);
 	const [adapter] = await Promise.all([
 		loadDialogAdapter(ui),
 		design === 'privacy-choices'
@@ -104,8 +113,9 @@ export const loadDialog = async function loadDialog(
 export const preloadDialogChunks = async function preloadDialogChunks(
 	ui: InthUIAdapterName,
 	kind: ConsentDialogKind,
-	nonce: string | undefined
+	nonce: string | undefined,
+	design: 'classic' | 'privacy-choices' = 'classic'
 ): Promise<void> {
-	const adapter = await loadDialog(ui, kind, nonce);
-	await adapter.preload?.();
+	const adapter = await loadDialog(ui, kind, nonce, design);
+	await adapter.preload?.({ design, kind });
 };

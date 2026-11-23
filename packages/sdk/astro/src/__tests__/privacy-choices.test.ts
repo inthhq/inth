@@ -11,11 +11,20 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { canDeferEngine } from '../banner/deferred-boot';
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
 import { dialogDesignFor } from '../browser/dialog-loading';
+import PrivacyChoicesLink from '../components/privacy-choices-link.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
 import { privacyChoicesClassNames } from '../privacy-choices/class-names';
+import { CONFIRMATION_SHEETS } from '../privacy-choices/confirmation-sheets';
 import { PRIVACY_CHOICES_DIALOG_SHEETS } from '../privacy-choices/dialog-sheets';
-import { privacyChoicesFirstPaintSheets } from '../privacy-choices/server';
+import {
+	resolvePrivacyChoicesModel,
+	rightsBundleOf,
+} from '../privacy-choices/model';
+import {
+	privacyChoicesFirstPaintSheets,
+	renderPrivacyChoicesHTML,
+} from '../privacy-choices/server';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions, InthLocals } from '../types';
@@ -389,5 +398,236 @@ describe('the dialog', () => {
 		// Svelte and Vue keep their classic dialog until their ports land.
 		expect(dialogDesignFor('svelte', 'preferences', true)).toBe('classic');
 		expect(dialogDesignFor('vue', 'preferences', true)).toBe('classic');
+	});
+});
+
+describe('the policy and the host (wave B round 1)', () => {
+	it('[BNR-15] the summary shows only the actions the policy allows, in every presentation', async () => {
+		const rule = { actions: ['accept', 'reject'] } as Partial<typeof testRule>;
+		for (const layout of [{ type: 'card' }, { type: 'banner' }] as const) {
+			// oxlint-disable-next-line no-await-in-loop -- One presentation at a time.
+			const document = await render(
+				// oxlint-disable-next-line no-await-in-loop -- As above.
+				await buildLocals(
+					{ design: 'privacy-choices', prompt: { container: layout } },
+					rule
+				)
+			);
+			expect($(document, 'consent-banner-customize-button')).toBeNull();
+			expect($(document, 'consent-banner-reject-button')).not.toBeNull();
+			expect($(document, 'consent-banner-accept-button')).not.toBeNull();
+		}
+	});
+
+	it('[BNR-15] the summary follows the host layout order', async () => {
+		const document = await render(
+			await buildLocals({
+				design: 'privacy-choices',
+				prompt: {
+					container: { type: 'card' },
+					layout: ['customize', ['accept', 'reject']],
+				},
+			})
+		);
+		const footer = $(document, 'consent-banner-footer');
+		expect(footer?.firstElementChild?.getAttribute('data-testid')).toBe(
+			'consent-banner-customize-button'
+		);
+		const group = $(document, 'consent-banner-footer-sub-group');
+		expect(group?.firstElementChild?.getAttribute('data-testid')).toBe(
+			'consent-banner-accept-button'
+		);
+	});
+
+	it('[BNR-01] a notice keeps its opt-out link and OK whatever the actions', async () => {
+		const document = await render(
+			await buildLocals(
+				{
+					design: 'privacy-choices',
+					prompt: { container: { type: 'banner' } },
+				},
+				{
+					model: 'opt-out',
+					prompt: 'notice',
+					rights: ['disclosure', 'preferences', 'opt-out'],
+				}
+			)
+		);
+		const footer = $(document, 'consent-banner-footer');
+		expect(
+			[...(footer?.children ?? [])].map((child) =>
+				child.getAttribute('data-testid')
+			)
+		).toEqual([
+			'consent-banner-right-link-opt-out',
+			'consent-banner-dismiss-button',
+		]);
+	});
+
+	it('[COPY-01][SR-04] the rights bundle reads the backend-confirmed rights from the local receipt', () => {
+		const snapshot = {
+			optOut: {
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: 1,
+				rights: ['sale', 'share'],
+			},
+		} as unknown as Parameters<typeof rightsBundleOf>[0];
+		expect(
+			rightsBundleOf(snapshot, {
+				localAct: 'button',
+				reference: 'ref',
+				rightsConfirmed: true,
+			})
+		).toBe('sale-share');
+		expect(rightsBundleOf(snapshot, null)).toBe('all');
+	});
+
+	it('a local noStyle reaches the stock buttons', async () => {
+		const document = await render(await buildLocals(PC), { noStyle: true });
+		for (const id of [
+			'consent-banner-reject-button',
+			'consent-banner-accept-button',
+			'consent-banner-customize-button',
+		]) {
+			expect($(document, id)?.getAttribute('class') ?? '').toBe('');
+		}
+	});
+
+	it('the collapsed bar merges the title, description and footer slots', async () => {
+		const document = await render(
+			await buildLocals(
+				{
+					design: 'privacy-choices',
+					prompt: { container: { type: 'banner' } },
+				},
+				{},
+				{
+					theme: {
+						slots: {
+							consentBannerDescription: 'description-marker',
+							consentBannerFooter: 'footer-marker',
+							consentBannerTitle: 'title-marker',
+						},
+					},
+				}
+			)
+		);
+		expect($(document, 'consent-banner-title')?.classList).toContain(
+			'title-marker'
+		);
+		// The heading stays visually hidden under the slot.
+		expect($(document, 'consent-banner-title')?.classList).toContain(
+			privacyChoicesClassNames.surface.visuallyHidden
+		);
+		expect($(document, 'consent-banner-description')?.classList).toContain(
+			'description-marker'
+		);
+		expect($(document, 'consent-banner-footer')?.classList).toContain(
+			'footer-marker'
+		);
+	});
+
+	it('the root matches the classic root: direction, surface marker, animation switch', async () => {
+		const locals = await buildLocals(PC, {}, { disableAnimation: true });
+		const model = resolvePrivacyChoicesModel({
+			classNames: privacyChoicesClassNames,
+			options: locals.options,
+			props: {},
+			snapshot: {
+				...locals.snapshot,
+				translations: {
+					language: 'he',
+					translations: locals.snapshot.translations?.translations ?? {},
+				},
+			} as typeof locals.snapshot,
+		});
+		if (!model) {
+			throw new Error('Expected the Privacy Choices model');
+		}
+		const { document } = new JSDOM(renderPrivacyChoicesHTML(model, false))
+			.window;
+		const root = $(document, 'consent-banner-root');
+		expect(root?.getAttribute('dir')).toBe('rtl');
+		expect(root?.getAttribute('data-inth-surface')).toBe('banner');
+		expect(root?.getAttribute('data-animation')).toBe('off');
+		const ltr = await render(await buildLocals(PC));
+		expect($(ltr, 'consent-banner-root')?.getAttribute('dir')).toBe('ltr');
+		expect($(ltr, 'consent-banner-root')?.hasAttribute('data-animation')).toBe(
+			false
+		);
+	});
+
+	it('[PERM-05][SR-05] the collapsed panel carries a real inert attribute', async () => {
+		const document = await render(await buildLocals(PC));
+		expect(
+			$(document, 'consent-banner-expand-panel')?.hasAttribute('inert')
+		).toBe(true);
+		expect($(document, 'consent-banner-root')?.hasAttribute('inert')).toBe(
+			false
+		);
+	});
+
+	it('[BNR-13] the opt-in confirmation brings the classic dialog sheets React gives it', () => {
+		expect(CONFIRMATION_SHEETS.map((sheet) => sheet.id)).toEqual([
+			'inth-tokens',
+			'inth-button',
+			'inth-banner',
+			'inth-dialog',
+		]);
+	});
+});
+
+describe('<PrivacyChoicesLink />', () => {
+	const renderLink = async function renderLink(
+		locals: InthLocals,
+		props: Record<string, unknown> = {}
+	): Promise<Element | null> {
+		const html = await container.renderToString(PrivacyChoicesLink, {
+			locals: { inth: locals },
+			props,
+		});
+		return new JSDOM(html).window.document.querySelector(
+			'[data-inth-privacy-choices-link]'
+		);
+	};
+	const US_OPT_IN = {
+		privacySignals: { gpc: { denyCategories: ['marketing'] } },
+	};
+	const US_OPT_OUT = {
+		model: 'opt-out',
+		prompt: 'notice',
+		rights: ['disclosure', 'preferences', 'opt-out'],
+	} as Partial<typeof testRule>;
+
+	it('[BNR-05] stays a way back in under US opt-in, without the opt-out icon', async () => {
+		const link = await renderLink(await buildLocals(PC, US_OPT_IN));
+		expect(link?.getAttribute('data-testid')).toBe('privacy-choices-link');
+		expect(link?.hasAttribute('hidden')).toBe(false);
+		expect(link?.textContent).toBe('Your Privacy Choices');
+		expect(link?.querySelector('svg')).toBeNull();
+		expect(link?.hasAttribute('data-opt-out-variant')).toBe(false);
+		expect(link?.getAttribute('data-inth-action')).toBe('customize');
+	});
+
+	it('[BNR-05] the EU gets the same way back in', async () => {
+		const link = await renderLink(await buildLocals(PC));
+		expect(link?.hasAttribute('hidden')).toBe(false);
+		expect(link?.textContent).toBe('Your Privacy Choices');
+	});
+
+	it('the classic design keeps Your Privacy Choices to opt-out policies', async () => {
+		const optIn = await renderLink(await buildLocals(undefined, US_OPT_IN));
+		expect(optIn?.hasAttribute('hidden')).toBe(true);
+		expect(optIn?.hasAttribute('data-testid')).toBe(false);
+		const optOut = await renderLink(await buildLocals(undefined, US_OPT_OUT), {
+			variant: 'privacy-choices',
+		});
+		expect(optOut?.hasAttribute('hidden')).toBe(false);
+		expect(optOut?.getAttribute('data-opt-out-variant')).toBe(
+			'privacy-choices'
+		);
+		// The CCPA icon marks the opt-out right, as React draws it.
+		expect(optOut?.querySelector('svg')).not.toBeNull();
 	});
 });

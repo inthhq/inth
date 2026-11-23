@@ -8,6 +8,7 @@
  * 	ConsentDialog,
  * 	ConsentDialogLink,
  * 	ConsentScript,
+ * 	PrivacyChoicesLink,
  * } from '@inth/astro/components';
  * ---
  * ```
@@ -27,3 +28,4 @@ export { default as ConsentScript } from './consent-script.astro';
 export { default as IABConsentBanner } from './iab-prompt.astro';
 export { default as IABConsentDialog } from './iab-panel.astro';
 export { default as OptOutConfirmation } from './opt-out-confirmation.astro';
+export { default as PrivacyChoicesLink } from './privacy-choices-link.astro';

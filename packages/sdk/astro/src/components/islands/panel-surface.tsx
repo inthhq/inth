@@ -17,7 +17,6 @@
  */
 
 import { ConsentDraftProvider, InthProvider } from '@inth/react';
-import { ConsentDialog } from '@inth/react/components/consent-dialog';
 import type { LegalLinks } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { useEffect, useState } from 'react';
@@ -41,24 +40,63 @@ const loadIABSurface = () => {
 	return iabSurfacePromise;
 };
 
-// React's stock dialog, which renders its Privacy Choices dialog when the
-// design opts in. Only a Privacy Choices site loads it, on its own chunk;
-// the classic dialog below stays the one every other site mounts.
-type StockDialog = ComponentType<Record<string, never>>;
-let loadedPrivacyChoicesDialog: StockDialog | undefined;
-let privacyChoicesDialogPromise: Promise<StockDialog> | undefined;
-const loadPrivacyChoicesDialog = () => {
-	privacyChoicesDialogPromise ??= (async () => {
-		const module = await import('@inth/react/consent-dialog');
-		loadedPrivacyChoicesDialog = module.ConsentDialog as StockDialog;
-		return loadedPrivacyChoicesDialog;
+/** The preference dialog an island renders. */
+export type DialogDesign = 'classic' | 'privacy-choices';
+
+type PreferencesDialog = ComponentType<{
+	legalLinks?: (keyof LegalLinks)[] | null;
+}>;
+
+// Each design's dialog arrives on its own chunk, so a Privacy Choices page
+// never downloads the classic dialog and a classic page never downloads
+// the Privacy Choices one. React's stock `ConsentDialog` renders its
+// Privacy Choices dialog when the design opts in, and hosts the opt-in
+// confirmation and the opt-out receipt there.
+const DIALOG_MODULES: Record<DialogDesign, () => Promise<PreferencesDialog>> = {
+	classic: async () =>
+		(await import('@inth/react/components/consent-dialog'))
+			.ConsentDialog as PreferencesDialog,
+	'privacy-choices': async () =>
+		(await import('@inth/react/consent-dialog'))
+			.ConsentDialog as PreferencesDialog,
+};
+const loadedDialogs: Partial<Record<DialogDesign, PreferencesDialog>> = {};
+const dialogPromises: Partial<
+	Record<DialogDesign, Promise<PreferencesDialog>>
+> = {};
+
+/**
+ * Download one design's dialog. The adapter awaits it before it mounts,
+ * so the island renders the dialog on its first commit; a failed download
+ * is forgotten, so the next open tries again.
+ *
+ * @internal
+ */
+export const preloadDialog = function preloadDialog(
+	design: DialogDesign
+): Promise<PreferencesDialog> {
+	dialogPromises[design] ??= (async () => {
+		try {
+			const loaded = await DIALOG_MODULES[design]();
+			loadedDialogs[design] = loaded;
+			return loaded;
+		} catch (error) {
+			dialogPromises[design] = undefined;
+			throw error;
+		}
 	})();
-	return privacyChoicesDialogPromise;
+	return dialogPromises[design];
 };
 
-const PrivacyChoicesDialogSurface = () => {
+const PreferencesDialogSurface = ({
+	design,
+	legalLinks,
+}: {
+	design: DialogDesign;
+	legalLinks?: (keyof LegalLinks)[] | null;
+}) => {
 	const [loadedComponent, setLoadedComponent] = useState(
-		() => loadedPrivacyChoicesDialog
+		() => loadedDialogs[design]
 	);
 	const [failure, setFailure] = useState<{ error: unknown }>();
 	useEffect(() => {
@@ -68,7 +106,7 @@ const PrivacyChoicesDialogSurface = () => {
 		let active = true;
 		void (async () => {
 			try {
-				const loaded = await loadPrivacyChoicesDialog();
+				const loaded = await preloadDialog(design);
 				if (active) {
 					setLoadedComponent(() => loaded);
 				}
@@ -81,12 +119,22 @@ const PrivacyChoicesDialogSurface = () => {
 		return () => {
 			active = false;
 		};
-	}, [loadedComponent]);
+	}, [design, loadedComponent]);
 	if (failure) {
 		throw failure.error;
 	}
 	const Component = loadedComponent;
-	return Component ? <Component /> : null;
+	if (!Component) {
+		return null;
+	}
+	// React's Privacy Choices dialog stages its own draft.
+	return design === 'privacy-choices' ? (
+		<Component />
+	) : (
+		<ConsentDraftProvider>
+			<Component legalLinks={legalLinks} />
+		</ConsentDraftProvider>
+	);
 };
 
 // This island only mounts in the browser. Resolve its component through state
@@ -140,7 +188,7 @@ export interface ConsentDialogSurfaceProps {
 	 * `'privacy-choices'` renders React's Privacy Choices dialog, as the
 	 * stock `ConsentDialog` does under that design.
 	 */
-	design?: 'classic' | 'privacy-choices';
+	design?: DialogDesign;
 }
 
 const ConsentDialogSurface = ({
@@ -151,18 +199,15 @@ const ConsentDialogSurface = ({
 	legalLinks,
 	design = 'classic',
 }: ConsentDialogSurfaceProps) => {
-	let surface;
-	if (kind === 'iab') {
-		surface = <IABDialogSurface tab={tab} />;
-	} else if (design === 'privacy-choices') {
-		surface = <PrivacyChoicesDialogSurface />;
-	} else {
-		surface = (
-			<ConsentDraftProvider>
-				<ConsentDialog legalLinks={legalLinks} />
-			</ConsentDraftProvider>
+	const surface =
+		kind === 'iab' ? (
+			<IABDialogSurface tab={tab} />
+		) : (
+			<PreferencesDialogSurface
+				design={design}
+				legalLinks={legalLinks}
+			/>
 		);
-	}
 	return (
 		<InthProvider
 			runtime={runtime}

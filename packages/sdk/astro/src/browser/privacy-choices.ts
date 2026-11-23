@@ -25,7 +25,11 @@ import type {
 } from '@inth/sdk/engine';
 import { createPreferenceDraft } from '@inth/sdk/preference-draft';
 import type { PreferenceDraft } from '@inth/sdk/preference-draft';
-import { hasConsentUI } from '@inth/sdk/surface-actions';
+import {
+	getOptOutReceiptData,
+	hasConsentUI,
+	subscribeOptOutReceiptData,
+} from '@inth/sdk/surface-actions';
 import {
 	announcementText,
 	resolveBannerAllowedAnnouncement,
@@ -556,6 +560,7 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 			hostname: window.location.hostname,
 			options,
 			props,
+			receiptData: getOptOutReceiptData(kernel),
 			snapshot,
 		});
 		lastModel = model;
@@ -571,6 +576,15 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 		if (allInOne && !panelWanted) {
 			panelWanted = true;
 			warmPanel();
+		}
+		// All-in-one has nothing to fold. An expansion left from the phone
+		// Drawer would reopen when the viewport narrows again, and Escape
+		// would spend a press folding it with no Customize to focus (PERM-13).
+		if (allInOne) {
+			pendingExpandFocus = false;
+			if (session.getState().expanded) {
+				session.collapse();
+			}
 		}
 		const activeUI = snapshot.activeUI ?? 'none';
 		const wantsShow =
@@ -705,6 +719,8 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 	const unsubscribeKernel = kernel.subscribe(invalidate);
 	const unsubscribeSession = session.subscribe(invalidate);
 	const unsubscribeDraft = draft.subscribe(invalidate);
+	// The rights bundle reads the local receipt data (COPY-01, SR-04).
+	const unsubscribeReceipt = subscribeOptOutReceiptData(kernel, invalidate);
 
 	// The options load with Customize; warm them at idle while the prompt
 	// shows.
@@ -730,6 +746,7 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 			unsubscribeKernel();
 			unsubscribeSession();
 			unsubscribeDraft();
+			unsubscribeReceipt();
 			document.removeEventListener('keydown', onKeyDown);
 			media?.removeEventListener('change', onMedia);
 			removeRoot();

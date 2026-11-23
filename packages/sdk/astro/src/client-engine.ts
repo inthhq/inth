@@ -75,6 +75,7 @@ import {
 import {
 	attachBannerActions,
 	registerOptOutLinkHandler,
+	registerPrivacyChoicesDesign,
 	resetDialogWarming,
 	warmDialog,
 } from './browser/banner-actions';
@@ -100,6 +101,7 @@ import {
 	readPageNonce,
 } from './browser/page-state';
 import type { PrivacyChoicesController } from './browser/privacy-choices';
+import { syncPrivacyChoicesLinks } from './browser/privacy-choices-link';
 import type * as PromptRenderer from './browser/render-prompt';
 import type { EarlyDialog, EngineHandoff } from './browser/shell';
 import type {
@@ -633,6 +635,23 @@ const ensureFirstPaintStyles = async function ensureFirstPaintStyles(
 	document.head.append(style);
 };
 
+/**
+ * Put in the opt-in confirmation's sheets on a Privacy Choices page, from
+ * their own chunk. The confirmation keeps its classic design there, and
+ * the page carries none of the classic rules.
+ */
+const loadConfirmationSheets = async function loadConfirmationSheets(
+	nonce: string | undefined
+): Promise<void> {
+	try {
+		const { insertConfirmationSheets } =
+			await import('./privacy-choices/confirmation-sheets');
+		insertConfirmationSheets(nonce);
+	} catch {
+		// An unstyled confirmation beats a pending opt-in that never shows.
+	}
+};
+
 /** The page's Privacy Choices prompt, once its chunk has mounted it. */
 let privacyChoices: PrivacyChoicesController | null = null;
 let privacyChoicesLoading: Promise<void> | null = null;
@@ -732,6 +751,22 @@ const createClient = function createClient(
 		return true;
 	};
 
+	/** The preference dialog this page's island renders. */
+	const preferencesDesign = (): 'classic' | 'privacy-choices' =>
+		dialogDesignFor(
+			options.ui,
+			'preferences',
+			usesPrivacyChoices(runtime.kernel.getSnapshot(), options)
+		);
+
+	// React's Privacy Choices dialog hosts the opt-in confirmation, which
+	// keeps its classic design and needs its own sheets.
+	const confirmationSheets = (): Promise<void> | undefined =>
+		preferencesDesign() === 'privacy-choices' &&
+		isOptInConfirmationOpen(runtime.kernel)
+			? loadConfirmationSheets(pageNonce)
+			: undefined;
+
 	const ensureDialogMounted = async (
 		kind: ConsentDialogKind,
 		tab?: 'purposes' | 'vendors'
@@ -770,7 +805,7 @@ const createClient = function createClient(
 				const [adapter] = await Promise.all([
 					loadDialog(options.ui, kind, pageNonce, design),
 					design === 'privacy-choices'
-						? undefined
+						? confirmationSheets()
 						: ensureFirstPaintStyles(options, pageNonce),
 				]);
 				if (disposed) {
@@ -836,6 +871,8 @@ const createClient = function createClient(
 				!extension.consentSource &&
 				isOptInConfirmationOpen(runtime.kernel)
 			) {
+				// A dialog already mounted renders the confirmation at once.
+				void confirmationSheets();
 				void ensureDialogMounted('preferences');
 			}
 		}
@@ -978,6 +1015,10 @@ const createClient = function createClient(
 		value: (dispatcherOptions: RuntimeEventDispatcherOptions) =>
 			getRuntimeEventDispatcher(runtime, dispatcherOptions),
 	});
+
+	registerPrivacyChoicesDesign(client, () =>
+		usesPrivacyChoices(runtime.kernel.getSnapshot(), options)
+	);
 
 	registerOptOutLinkHandler(client, async (opener) => {
 		const resolvedOpener = opener ?? readFocusedElement();
@@ -1327,6 +1368,7 @@ const attach = function attach(client: AstroConsentClient): void {
 	ensurePromptRendered(client, snapshot);
 	syncBannerVisibility(snapshot);
 	syncSurfaceVisibility(snapshot);
+	syncPrivacyChoicesLinks(snapshot, client.options);
 	activateGatedScripts(snapshot, document, pageNonce);
 };
 
@@ -1391,6 +1433,7 @@ export const boot = function boot(
 		ensurePromptRendered(client, snapshot);
 		syncBannerVisibility(snapshot);
 		syncSurfaceVisibility(snapshot);
+		syncPrivacyChoicesLinks(snapshot, options);
 		activateGatedScripts(snapshot, document, pageNonce);
 	});
 

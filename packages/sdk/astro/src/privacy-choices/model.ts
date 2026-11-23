@@ -15,6 +15,7 @@ import type {
 	ConsentPresentation,
 	ConsentSnapshot,
 	LegalLinks,
+	PresentationAction,
 	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
 import {
@@ -23,6 +24,7 @@ import {
 	resolveRightsBundle,
 } from '@inth/sdk/surface-state';
 import type {
+	OptOutReceiptData,
 	PrivacyChoicesBannerCopy,
 	PrivacyChoicesPromptVariant,
 	RightsBundle,
@@ -31,6 +33,7 @@ import type { Translations } from '@inth/sdk/translations';
 import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 import type { AllThemeKeys, ConsentActionKey, Theme } from '@inth/sdk/ui/theme';
 import {
+	getTextDirection,
 	resolveBrandingTag,
 	resolveLegalLinkEntries,
 } from '@inth/sdk/ui/utils';
@@ -65,12 +68,23 @@ export interface PromptButton extends PartBinding {
 	mode: string | undefined;
 }
 
+/** A first-layer action the collapsed prompt can show. */
+export type SummaryAction = 'reject' | 'accept' | 'customize';
+
 /** Everything the prompt markup needs, besides its live state. */
 export interface PrivacyChoicesModel {
 	container: PrivacyChoicesContainer;
 	presentation: PrivacyChoicesPresentation;
 	variant: PrivacyChoicesPromptVariant;
 	copy: PrivacyChoicesBannerCopy;
+	/**
+	 * The policy's first-layer actions, in the host's order and groups,
+	 * for the collapsed prompt. A notice's opt-out link and OK are not
+	 * among them.
+	 */
+	summaryGroups: SummaryAction[][];
+	/** `dir` for the root, from the banner's language. */
+	textDirection: 'ltr' | 'rtl';
 	/** The props' overrides, else the copy. */
 	labels: {
 		title: string;
@@ -108,6 +122,9 @@ export interface PrivacyChoicesModel {
 /** Elements a `theme.slots` key can style. */
 export type PartName =
 	| 'actionGroup'
+	| 'barActions'
+	| 'barText'
+	| 'barTitle'
 	| 'card'
 	| 'description'
 	| 'expand'
@@ -121,6 +138,11 @@ export type PartName =
 /** The `theme.slots` key each element answers to, as `THEME_SLOT_COMPONENT_KEYS` maps them. */
 const PART_SLOTS: Partial<Record<PartName, AllThemeKeys>> = {
 	actionGroup: 'consentBannerFooterSubGroup',
+	// The collapsed bar's heading, text and buttons answer to the same keys
+	// as the card's, as React's bar reads them.
+	barActions: 'consentBannerFooter',
+	barText: 'consentBannerDescription',
+	barTitle: 'consentBannerTitle',
 	card: 'consentBannerCard',
 	description: 'consentBannerDescription',
 	expand: 'consentBannerExpand',
@@ -146,13 +168,39 @@ export interface PrivacyChoicesOptions {
 }
 
 /**
- * The rights bundle the sale row names (COPY-01): the confirmed rights of
- * a held opt-out, else every right.
+ * The rights bundle the sale row names (COPY-01, SR-04): the confirmed
+ * rights of a held opt-out, else every right. The rights count as
+ * confirmed only through this browser's local receipt data, so it must be
+ * passed; the server has none.
  */
 export const rightsBundleOf = function rightsBundleOf(
-	snapshot: ConsentSnapshot
+	snapshot: Pick<ConsentSnapshot, 'optOut'>,
+	local: Partial<OptOutReceiptData> | null
 ): RightsBundle {
-	return resolveRightsBundle(resolveOptOutReceipt(snapshot).rights) ?? 'all';
+	return (
+		resolveRightsBundle(resolveOptOutReceipt(snapshot, local).rights) ?? 'all'
+	);
+};
+
+/** Every action shows in this order when the policy names none. */
+const DEFAULT_ACTION_GROUPS: readonly (readonly PresentationAction[])[] = [
+	['reject', 'accept'],
+	['customize'],
+];
+
+const isSummaryAction = (action: PresentationAction): action is SummaryAction =>
+	action === 'reject' || action === 'accept' || action === 'customize';
+
+/**
+ * The policy's first-layer actions the collapsed prompt shows, in the
+ * host's groups, as React's surface filters them.
+ */
+export const summaryGroupsOf = function summaryGroupsOf(
+	actionGroups: readonly (readonly PresentationAction[])[] | undefined
+): SummaryAction[][] {
+	return (actionGroups ?? DEFAULT_ACTION_GROUPS)
+		.map((group) => group.filter(isSummaryAction))
+		.filter((group) => group.length > 0);
 };
 
 /** Input for {@link resolvePrivacyChoicesModel}. */
@@ -163,6 +211,11 @@ export interface PrivacyChoicesModelInput {
 	classNames: PrivacyChoicesClassNames;
 	/** The page's host name, for the tag's `?ref=`. */
 	hostname?: string;
+	/**
+	 * This browser's local opt-out receipt data, which confirms a held
+	 * record's rights (SR-04). The server passes none.
+	 */
+	receiptData?: Partial<OptOutReceiptData> | null;
 }
 
 const button = function button(
@@ -209,7 +262,7 @@ export const resolvePrivacyChoicesModel = function resolvePrivacyChoicesModel(
 		| TranslationBundle
 		| undefined;
 	const variant = resolvePrivacyChoicesVariant(snapshot.policyRule);
-	const rights = rightsBundleOf(snapshot);
+	const rights = rightsBundleOf(snapshot, input.receiptData ?? null);
 	const gpc = resolveOptOutState(snapshot).lock === 'gpc-active';
 	const copy = resolvePrivacyChoicesBannerCopy(bundle, {
 		bundle: rights,
@@ -221,6 +274,9 @@ export const resolvePrivacyChoicesModel = function resolvePrivacyChoicesModel(
 	const { surface } = classNames;
 	const stock: Record<PartName, string> = {
 		actionGroup: join(surface.actionGroup),
+		barActions: join(presentationClasses.actions),
+		barText: join(presentationClasses.text),
+		barTitle: join(surface.visuallyHidden),
 		card: join(surface.card, presentationClasses.card),
 		description: join(surface.description),
 		expand:
@@ -323,6 +379,7 @@ export const resolvePrivacyChoicesModel = function resolvePrivacyChoicesModel(
 		noStyle,
 		parts,
 		presentation,
+		summaryGroups: summaryGroupsOf(resolved.actionGroups),
 		tag: branding
 			? {
 					binding: {
@@ -334,6 +391,7 @@ export const resolvePrivacyChoicesModel = function resolvePrivacyChoicesModel(
 					securedBy,
 				}
 			: null,
+		textDirection: getTextDirection(snapshot.translations?.language),
 		variant,
 	};
 };

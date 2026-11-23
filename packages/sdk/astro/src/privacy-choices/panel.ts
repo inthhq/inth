@@ -28,6 +28,7 @@ import type {
 	SurfaceSession,
 } from '@inth/sdk/engine';
 import type { PreferenceDraft } from '@inth/sdk/preference-draft';
+import { getOptOutReceiptData } from '@inth/sdk/surface-actions';
 import {
 	consentTypes,
 	resolveAdvertisingRowCopy,
@@ -180,7 +181,8 @@ export const createPrivacyChoicesPanel = function createPrivacyChoicesPanel(
 		vendorsListedUnder(kernel.getSnapshot(), category);
 	const granted = (vendor: ResolvedVendor): boolean =>
 		draft.getState().vendors[vendor.id] ?? true;
-	const rightsBundle = () => rightsBundleOf(kernel.getSnapshot());
+	const rightsBundle = () =>
+		rightsBundleOf(kernel.getSnapshot(), getOptOutReceiptData(kernel));
 
 	const rightIds = {
 		cancel: `${idPrefix}-sale-confirm-cancel`,
@@ -620,7 +622,11 @@ export const createPrivacyChoicesPanel = function createPrivacyChoicesPanel(
 									triggerCopy.onCount,
 									h(
 										'span',
-										{ class: cls(choices.chevron) },
+										{
+											class: cls(choices.chevron),
+											// Banner panels open accordions downwards (PERM-01).
+											'data-direction': 'down',
+										},
 										icon(14, '2', CHEVRON_DOWN)
 									)
 								)
@@ -698,7 +704,7 @@ export const createPrivacyChoicesPanel = function createPrivacyChoicesPanel(
 					{ class: cls(expand.inner) },
 					h(
 						'div',
-						{ style: 'padding-top: 8px;' },
+						{ class: cls(choices.preferencesBody) },
 						renderCategories(
 							sale ? [sale] : [],
 							sale ? renderAdvertising(right.selected === 'allow') : null

@@ -13,12 +13,19 @@ import type {
 	ConsentPresentation,
 } from '@inth/sdk/engine';
 import type { PolicyRule } from '@inth/sdk/schema/types';
+import { openOptInConfirmation } from '@inth/sdk/surface-actions';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
 import { loadPresentationSheets } from '../browser/privacy-choices';
-import { boot, registerDialogAdapter, registerDialogStyles } from '../client';
+import {
+	boot,
+	preloadDialog,
+	registerDialogAdapter,
+	registerDialogStyles,
+} from '../client';
 import type { AstroConsentClient } from '../client';
+import * as reactPanelSurface from '../components/islands/panel-surface';
 import { resolveOptions } from '../integration';
 import { privacyChoicesClassNames } from '../privacy-choices/class-names';
 import { resolvePrivacyChoicesModel } from '../privacy-choices/model';
@@ -26,7 +33,10 @@ import { renderPrivacyChoicesHTML } from '../privacy-choices/server';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions } from '../types';
+import { registerDialogSurface } from '../ui/adapter';
+import { reactDialogAdapter } from '../ui/react';
 import { testRule } from './policy-fixture';
+import { ISLAND_RENDER_TIMEOUT } from './react-dialog-island';
 // The options load on demand; compiling them while this file loads keeps
 // the first test inside its waits. The controller is imported above.
 import '../privacy-choices/panel';
@@ -63,6 +73,13 @@ interface MountOptions {
 	design?: ConsentPresentation['design'] | null;
 	/** Leave the prompt for the browser to render into the spot. */
 	ssr?: boolean;
+	/**
+	 * Put a `<PrivacyChoicesLink />` on the page, as the server renders it
+	 * before it knows the policy: hidden, with no label.
+	 */
+	link?: boolean;
+	/** Merged over the integration options. */
+	extra?: Partial<InthAstroOptions>;
 }
 
 const globals = window as unknown as Record<string, unknown>;
@@ -85,8 +102,10 @@ const optionsFor = function optionsFor({
 	region = 'eu',
 	design = 'privacy-choices',
 	ui,
+	extra,
 }: MountOptions): InthAstroOptions {
 	return {
+		...extra,
 		consentCategories: [
 			'necessary',
 			'functionality',
@@ -139,6 +158,9 @@ const mount = async function mount(input: MountOptions = {}) {
 	});
 	document.body.innerHTML = [
 		'<button type="button">Page action</button>',
+		input.link
+			? '<button type="button" data-inth-action="customize" data-inth-dialog="preferences" data-inth-default-label="" data-inth-privacy-choices-link="" hidden></button>'
+			: '',
 		'<button type="button" data-testid="consent-dialog-trigger">Your Privacy Choices</button>',
 		'<div data-inth-test-spot></div>',
 	].join('');
@@ -788,5 +810,211 @@ describe('the dialog', () => {
 		link.dispatchEvent(new Event('load'));
 		await opening;
 		expect(mounted).toEqual([{ design: 'classic', kind: 'preferences' }]);
+	});
+});
+
+/** Swap `matchMedia` for one whose phone query a test can flip. */
+const phoneViewport = function phoneViewport(initial: boolean) {
+	const listeners = new Set<() => void>();
+	let phone = initial;
+	const original = window.matchMedia;
+	window.matchMedia = ((query: string) => ({
+		addEventListener: (_: string, listener: () => void) => {
+			if (query.includes('max-width')) {
+				listeners.add(listener);
+			}
+		},
+		matches: query.includes('max-width') ? phone : false,
+		media: query,
+		removeEventListener: (_: string, listener: () => void) =>
+			listeners.delete(listener),
+	})) as unknown as typeof window.matchMedia;
+	return {
+		restore: () => {
+			window.matchMedia = original;
+		},
+		set: (value: boolean) => {
+			phone = value;
+			for (const listener of listeners) {
+				listener();
+			}
+		},
+	};
+};
+
+describe('wave B round 1', () => {
+	it('[PERM-13] an expansion made on phone does not survive a pass through all-in-one', async () => {
+		const viewport = phoneViewport(true);
+		try {
+			await mount({ container: { side: 'start', type: 'drawer' } });
+			await waitForController();
+			must('consent-banner-customize-button').click();
+			await vi.waitFor(() =>
+				expect(root().getAttribute('data-expanded')).toBe('true')
+			);
+			viewport.set(false);
+			await vi.waitFor(() =>
+				expect(root().getAttribute('data-flow')).toBe('all-in-one')
+			);
+			// Esc on desktop has nothing to fold, so it is left to the page.
+			const press = new KeyboardEvent('keydown', {
+				bubbles: true,
+				cancelable: true,
+				key: 'Escape',
+			});
+			document.dispatchEvent(press);
+			expect(press.defaultPrevented).toBe(false);
+			viewport.set(true);
+			await vi.waitFor(() =>
+				expect(root().getAttribute('data-flow')).toBe('expand-in-place')
+			);
+			expect(root().hasAttribute('data-expanded')).toBe(false);
+			expect(
+				must('consent-banner-expand-panel').getAttribute('data-open')
+			).toBe('false');
+		} finally {
+			viewport.restore();
+		}
+	});
+
+	it('[PERM-05][SR-05] a folded panel carries a real inert attribute, dropped when it opens', async () => {
+		await mount();
+		await waitForController();
+		const panel = must('consent-banner-expand-panel');
+		expect(panel.hasAttribute('inert')).toBe(true);
+		must('consent-banner-customize-button').click();
+		await waitForPanel();
+		await vi.waitFor(() => expect(panel.hasAttribute('inert')).toBe(false));
+		expect(root().hasAttribute('inert')).toBe(false);
+	});
+
+	it('the Preferences body spacing lives in the stylesheet, so noStyle drops it', async () => {
+		await mount({ container: { type: 'banner' }, region: 'us-opt-in' });
+		await waitForController();
+		must('consent-banner-customize-button').click();
+		const row = await vi.waitFor(() => must('consent-banner-preferences-row'), {
+			timeout: 4000,
+		});
+		const panel = document.getElementById(
+			row.getAttribute('aria-controls') ?? ''
+		) as HTMLElement;
+		const body = panel.querySelector(':scope > * > *') as HTMLElement;
+		expect(body.getAttribute('style')).toBeNull();
+		expect(body.className).toBe(
+			privacyChoicesClassNames.choices.preferencesBody
+		);
+		// The folded Preferences and the closed confirmation are inert.
+		expect(panel.hasAttribute('inert')).toBe(true);
+		expect(must('consent-banner-confirm').closest('[inert]')).not.toBeNull();
+	});
+
+	it('[BNR-05][BNR-06] Your Privacy Choices shows once the policy resolves, and takes focus after a choice', async () => {
+		await mount({ link: true, region: 'us-opt-in' });
+		await waitForController();
+		const link = await vi.waitFor(() => must('privacy-choices-link'));
+		expect(link.hidden).toBe(false);
+		expect(link.textContent).toBe('Your Privacy Choices');
+		expect(link.querySelector('svg')).toBeNull();
+		expect(link.hasAttribute('data-opt-out-variant')).toBe(false);
+		must('consent-banner-accept-button').click();
+		await vi.waitFor(() => expect(document.activeElement).toBe(link));
+	});
+
+	it('the classic design hides Your Privacy Choices under an opt-in policy', async () => {
+		await mount({
+			container: null,
+			design: null,
+			link: true,
+			region: 'us-opt-in',
+		});
+		await vi.waitFor(() =>
+			expect(
+				document.querySelector(
+					'[data-testid="consent-banner-root"], [data-inth-privacy-choices-link]'
+				)
+			).not.toBeNull()
+		);
+		const link = document.querySelector<HTMLElement>(
+			'[data-inth-privacy-choices-link]'
+		);
+		expect(link?.hidden).toBe(true);
+		expect(link?.hasAttribute('data-testid')).toBe(false);
+	});
+});
+
+describe('the React island (wave B round 1)', () => {
+	beforeEach(() => {
+		registerDialogAdapter('react', () => Promise.resolve(reactDialogAdapter));
+		registerDialogSurface('react', () => Promise.resolve(reactPanelSurface));
+	});
+
+	afterEach(() => {
+		document.getElementById('inth-dialog-host')?.remove();
+	});
+
+	it('[BNR-13] the dialog hosts an opt-in confirmation under the Privacy Choices design', async () => {
+		const booted = await mount({ region: 'us-opt-in', ui: 'react' });
+		await waitForController();
+		const confirmed = vi.fn();
+		openOptInConfirmation(booted.runtime.kernel, confirmed, null);
+		const confirm = await vi.waitFor(
+			() => must<HTMLButtonElement>('opt-in-confirmation-confirm-button'),
+			ISLAND_RENDER_TIMEOUT
+		);
+		// The confirmation keeps its classic design, so its sheets come too.
+		const ids = [...document.querySelectorAll('style[data-inth-styles]')].map(
+			(style) => style.getAttribute('data-inth-styles')
+		);
+		expect(ids).toEqual(expect.arrayContaining(['inth-banner', 'inth-dialog']));
+		confirm.click();
+		await vi.waitFor(() => expect(confirmed).toHaveBeenCalledTimes(1));
+	});
+
+	it('[RCPT-01][FOC-03] the opt-out confirmation opens the Privacy Choices dialog on its receipt', async () => {
+		const booted = await mount({
+			// The confirmation opens in place; the reload case is core's.
+			extra: { reloadOnConsentRevoked: false },
+			region: 'us-notice',
+			ui: 'react',
+		});
+		await waitForController();
+		await booted.optOut();
+		const receipt = await vi.waitFor(
+			() => must('consent-dialog-receipt'),
+			ISLAND_RENDER_TIMEOUT
+		);
+		expect(receipt.getAttribute('tabindex')).toBe('-1');
+		await vi.waitFor(
+			() => expect(document.activeElement).toBe(receipt),
+			ISLAND_RENDER_TIMEOUT
+		);
+		expect(booted.getConsent().activeUI).toBe('dialog');
+	});
+
+	it('warming on a Privacy Choices page loads that dialog and never the classic one', async () => {
+		const preload = vi.fn(() => Promise.resolve());
+		registerDialogAdapter('react', () =>
+			Promise.resolve({ ...reactDialogAdapter, preload })
+		);
+		registerDialogStyles(['/classic-dialog.css']);
+		try {
+			await mount({ ui: 'react' });
+			await waitForController();
+			await preloadDialog();
+			expect(preload).toHaveBeenCalledWith({
+				design: 'privacy-choices',
+				kind: 'preferences',
+			});
+			expect(
+				document.head.querySelector('link[href="/classic-dialog.css"]')
+			).toBeNull();
+			expect(
+				document.head.querySelector(
+					'style[data-inth-styles="inth-privacy-choices-dialog"]'
+				)
+			).not.toBeNull();
+		} finally {
+			registerDialogStyles([]);
+		}
 	});
 });

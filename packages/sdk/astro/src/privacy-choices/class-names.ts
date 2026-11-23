@@ -77,6 +77,7 @@ export const privacyChoicesClassNames: PrivacyChoicesClassNames = {
 		'navRowLabel',
 		'navRowMeta',
 		'note',
+		'preferencesBody',
 		'right',
 		'rightDescription',
 		'rightTitle',

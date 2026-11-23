@@ -1,0 +1,95 @@
+---
+/**
+ * `<PrivacyChoicesLink>`: the persistent "Your Privacy Choices" link for
+ * the footer, the same link React's `PrivacyChoicesLink` renders.
+ *
+ * Under an opt-out policy with the opt-out right it is the opt-out link
+ * your `presentation.optOutLink` names, with the CPPA opt-out icon beside
+ * the Privacy Choices titles. Under `design: 'privacy-choices'` it is
+ * also the way back into the dialog under an opt-in policy, in the US or
+ * the EU: it reads "Your Privacy Choices" there, with no icon. Activating
+ * it opens the preference dialog and never records an opt-out on its own.
+ * Once a choice is made, the banner moves focus here.
+ *
+ * Hidden while it has nothing to open: before a policy resolves, under a
+ * policy with no opt-out right on the classic design, or while an
+ * external consent source owns consent.
+ *
+ * ```astro
+ * <PrivacyChoicesLink />
+ * <PrivacyChoicesLink variant="do-not-sell" />
+ * ```
+ */
+import { applyExperimentAssignment } from '@inth/sdk/engine';
+import {
+	resolveConsentDesign,
+	resolvePrivacyChoicesLink,
+} from '@inth/sdk/surface-state';
+import type { OptOutLinkVariant } from '@inth/sdk/surface-state';
+import type { Translations } from '@inth/sdk/translations';
+import { cppaOptOutIconSvg } from '@inth/sdk/ui/utils/opt-out-icon';
+import { promptClassNames } from '@inth/astro/server';
+import ComponentStyles from './component-styles.astro';
+
+interface Props {
+	/**
+	 * Override `presentation.optOutLink` for this link: `'privacy-choices'`,
+	 * `'california-privacy-choices'`, or `'do-not-sell'`.
+	 */
+	variant?: OptOutLinkVariant;
+	/** Extra class names. */
+	class?: string;
+	/** Render an `<a href="#">` instead of a `<button>`. */
+	as?: 'button' | 'a';
+	/** Leave the opt-out icon without the bundled stylesheet's class. */
+	noStyle?: boolean;
+}
+
+const { variant, class: className, as = 'button', noStyle = false } = Astro.props;
+const Tag = as;
+const { inth } = Astro.locals;
+const presentation = inth
+	? applyExperimentAssignment(
+			inth.options.presentation,
+			inth.options.experiment,
+			inth.snapshot.experiment
+		)
+	: undefined;
+const state = inth
+	? resolvePrivacyChoicesLink(
+			inth.snapshot,
+			inth.snapshot.translations?.translations as
+				| Partial<Translations>
+				| undefined,
+			{
+				design: resolveConsentDesign(presentation),
+				variant: variant ?? presentation?.optOutLink,
+			}
+		)
+	: null;
+const iconClass = noStyle ? undefined : promptClassNames.banner.optOutIcon;
+const hasSlot = Astro.slots.has('default');
+---
+
+<ComponentStyles />
+
+<Tag
+	class={className}
+	data-inth-action="customize"
+	data-inth-default-label={hasSlot ? undefined : ''}
+	data-inth-dialog="preferences"
+	data-inth-icon-class={iconClass}
+	data-inth-privacy-choices-link={variant ?? ''}
+	data-inth-rights={inth ? inth.snapshot.policyRule.rights.join(' ') : undefined}
+	data-opt-out-variant={state && state.variant !== 'choices' ? state.variant : undefined}
+	data-testid={state ? 'privacy-choices-link' : undefined}
+	hidden={state ? undefined : true}
+	href={as === 'a' ? '#inth-preferences' : undefined}
+	type={as === 'button' ? 'button' : undefined}
+>{state?.icon && <Fragment set:html={cppaOptOutIconSvg(iconClass)} />}<slot>{state ? state.label : ''}</slot></Tag>
+
+<script>
+	import { attachBannerActions } from '@inth/astro/client';
+
+	attachBannerActions();
+</script>
