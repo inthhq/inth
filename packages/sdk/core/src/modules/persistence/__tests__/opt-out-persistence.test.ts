@@ -7,6 +7,7 @@
  * localStorage, writes on record, removal on lift and clear, clear-epoch
  * voiding, subject identity preservation, and reload durability.
  */
+import { policyRulePresets } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -445,6 +446,7 @@ describe('opt-out persistence lifecycle', () => {
 		const secondPersistence = createPersistence({ kernel: reloaded });
 
 		expect(reloaded.getSnapshot().optOut).toEqual({
+			categories: ['measurement', 'marketing'],
 			heldBy: 'device',
 			method: 'button',
 			recordedAt: NOW,
@@ -1121,5 +1123,154 @@ describe('opt-out persistence lifecycle', () => {
 		expect(cookieOnly.records.optOutReference).toBeUndefined();
 		expect(cookieOnly.records.optOutLocalAct).toBe('button');
 		expect(cookieOnly.records.optOutRightsConfirmed).toBe(true);
+	});
+});
+
+describe('opt-out categories (DEF-09)', () => {
+	const withCategories = (
+		categories: StoredOptOutRecord['categories']
+	): StoredOptOutRecord => ({
+		categories,
+		heldBy: 'device',
+		method: 'gpc',
+		recordedAt: NOW - 1,
+		rights: ['sale', 'share', 'targeted_ads'],
+		version: 1,
+	});
+
+	it('round-trips the withheld categories through JSON and the compact cookie', () => {
+		for (const categories of [
+			['marketing'],
+			['measurement', 'marketing'],
+			[],
+		] as const) {
+			const record = withCategories([...categories]);
+			const compact = encodeOptOutRecordCompact(record);
+			expect(decodeOptOutRecordCompact(compact, NOW)).toEqual({
+				ok: true,
+				record,
+			});
+			expect(
+				decodeOptOutRecord(JSON.parse(encodeOptOutRecord(record)), NOW)
+			).toEqual({ ok: true, record });
+		}
+		expect(encodeOptOutRecordCompact(withCategories(['marketing']))).toBe(
+			`v=1&r=sa|sh|ta&m=g&t=${NOW - 1}&h=d&k=mk`
+		);
+		// An empty list is kept apart from a missing one: it withholds nothing
+		// of its own, where a missing one is a record from before the field.
+		expect(encodeOptOutRecordCompact(withCategories([]))).toBe(
+			`v=1&r=sa|sh|ta&m=g&t=${NOW - 1}&h=d&k=`
+		);
+	});
+
+	it('canonicalizes category order and rejects unknown or repeated categories', () => {
+		expect(
+			decodeOptOutRecordCompact(`v=1&r=sa&m=b&t=${NOW - 1}&h=d&k=mk|me`, NOW)
+		).toMatchObject({
+			ok: true,
+			record: { categories: ['measurement', 'marketing'] },
+		});
+		for (const categories of [
+			['necessary'],
+			['marketing', 'marketing'],
+			'marketing',
+		]) {
+			expect(
+				decodeOptOutRecord(
+					{
+						categories,
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW - 1,
+						rights: ['sale'],
+						version: 1,
+					},
+					NOW
+				).ok
+			).toBe(false);
+		}
+		expect(
+			decodeOptOutRecordCompact(`v=1&r=sa&m=b&t=${NOW - 1}&h=d&k=zz`, NOW).ok
+		).toBe(false);
+	});
+
+	it('[GPC-05] a record stored before categories existed keeps denying marketing and measurement after the preset narrows', async () => {
+		// Written by an SDK that predates the field: no `categories`, in both
+		// the cookie and localStorage.
+		writeStoredOptOutRecord(
+			{
+				heldBy: 'device',
+				method: 'gpc',
+				recordedAt: NOW - DAY,
+				rights: ['sale', 'share', 'targeted_ads'],
+				version: 1,
+			},
+			undefined,
+			NOW
+		);
+		const keys = resolveStorageKeys(undefined);
+		expect(document.cookie).not.toContain('k=');
+		expect(window.localStorage.getItem(keys.optOut)).not.toContain(
+			'categories'
+		);
+
+		const kernel = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialPolicyResolution: matchedResolution(
+				policyRulePresets.californiaOptOut()
+			),
+			now: NOW,
+		});
+		const persistence = createPersistence({ kernel });
+		await kernel.commands.init();
+		await flushWrites();
+
+		const snapshot = kernel.getSnapshot();
+		expect(snapshot.optOut).not.toHaveProperty('categories');
+		expect(snapshot.restrictions).toEqual({
+			marketing: ['opt-out'],
+			measurement: ['opt-out'],
+		});
+		// Nothing rewrites the old record with the narrower mapping.
+		const stored = readStoredOptOutRecord(undefined, NOW);
+		expect(stored).toMatchObject({
+			ok: true,
+			record: { method: 'gpc', recordedAt: NOW - DAY },
+		});
+		expect(stored).not.toHaveProperty('record.categories');
+		persistence.dispose();
+		kernel.dispose();
+	});
+
+	it('[GPC-01] a new GPC opt-out under the US preset stores marketing only and spares measurement on reload', async () => {
+		const resolution = () =>
+			matchedResolution(policyRulePresets.californiaOptOut());
+		const first = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialPolicyResolution: resolution(),
+			initialPrivacySignals: { gpc: true },
+			now: NOW,
+		});
+		const firstPersistence = createPersistence({ kernel: first });
+		await first.commands.init();
+		await flushWrites();
+		expect(document.cookie).toContain('k=mk');
+		firstPersistence.dispose();
+		first.dispose();
+
+		const reloaded = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialPolicyResolution: resolution(),
+			now: NOW + 1000,
+		});
+		const secondPersistence = createPersistence({ kernel: reloaded });
+		expect(reloaded.getSnapshot().optOut?.categories).toEqual(['marketing']);
+		expect(reloaded.getSnapshot().restrictions).toEqual({
+			marketing: ['opt-out'],
+		});
+		expect(reloaded.getSnapshot().effectivePermissions.measurement).toBe(true);
+		secondPersistence.dispose();
+		reloaded.dispose();
 	});
 });

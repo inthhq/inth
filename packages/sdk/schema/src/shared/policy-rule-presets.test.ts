@@ -87,7 +87,7 @@ describe('policyRulePresets', () => {
 		const rule = normalizePolicyRule(policyRulePresets.californiaOptOut());
 		expect(rule).toMatchObject({
 			model: 'opt-out',
-			privacySignals: { gpc: { denyCategories: ['marketing', 'measurement'] } },
+			privacySignals: { gpc: { denyCategories: ['marketing'] } },
 			prompt: 'none',
 			rights: ['disclosure', 'opt-out', 'preferences'],
 		});
@@ -171,7 +171,7 @@ describe('policyRulePresets', () => {
 			policy: {
 				model: 'opt-out',
 				privacySignals: {
-					gpc: { denyCategories: ['marketing', 'measurement'] },
+					gpc: { denyCategories: ['marketing'] },
 				},
 				prompt: 'none',
 				rights: expect.arrayContaining(['preferences', 'opt-out']),
@@ -192,7 +192,7 @@ describe('policyRulePresets', () => {
 			policy: {
 				model: 'opt-out',
 				privacySignals: {
-					gpc: { denyCategories: ['marketing', 'measurement'] },
+					gpc: { denyCategories: ['marketing'] },
 				},
 				prompt: 'none',
 				proof: {
@@ -285,8 +285,6 @@ describe('policyRulePresets', () => {
 	test.each([
 		'europeOptIn',
 		'europeIab',
-		'californiaOptIn',
-		'californiaOptOut',
 		'quebecOptIn',
 		'worldOptOutNoPrompt',
 	] as const)(
@@ -375,7 +373,7 @@ describe('regional starter coverage', () => {
 				actions: { required: [] },
 				model: 'opt-out',
 				privacySignals: {
-					gpc: { denyCategories: ['marketing', 'measurement'] },
+					gpc: { denyCategories: ['marketing'] },
 				},
 				prompt: 'none',
 				rights: ['disclosure', 'opt-out', 'preferences'],
@@ -499,7 +497,7 @@ describe('regional starter coverage', () => {
 		expect(
 			policyRulePresets.usPrivacyStatesOptOut().privacySignals?.gpc
 				?.denyCategories
-		).toEqual(['marketing', 'measurement']);
+		).toEqual(['marketing']);
 		const country = policyRulePresets.singaporeOptIn();
 		country.review?.assumptions?.push('Local amendment');
 		expect(
@@ -699,4 +697,66 @@ describe('US opt-out first layer', () => {
 			);
 		}
 	});
+});
+
+describe('US presets: GPC covers sale, sharing and targeted ads only (DEF-09)', () => {
+	const usPresets = [
+		['californiaOptIn', () => policyRulePresets.californiaOptIn()],
+		['californiaOptOut', () => policyRulePresets.californiaOptOut()],
+		[
+			'californiaOptOut notice',
+			() => policyRulePresets.californiaOptOut({ prompt: 'notice' }),
+		],
+		['usPrivacyStatesOptIn', () => policyRulePresets.usPrivacyStatesOptIn()],
+		['usPrivacyStatesOptOut', () => policyRulePresets.usPrivacyStatesOptOut()],
+		[
+			'usPrivacyStatesOptOut notice',
+			() => policyRulePresets.usPrivacyStatesOptOut({ prompt: 'notice' }),
+		],
+	] as const;
+
+	test.each(usPresets)(
+		'[GPC-01] %s maps GPC to marketing and leaves measurement alone',
+		(_name, preset) => {
+			const rule = normalizePolicyRule(preset());
+			expect(rule.privacySignals.gpc.denyCategories).toEqual(['marketing']);
+			expect(rule.scope).toContain('measurement');
+		}
+	);
+
+	test.each(usPresets)(
+		'[GPC-01] narrowing %s changes its policy, choice and notice fingerprints',
+		(_name, preset) => {
+			const rule = preset();
+			const before = createPolicyRuleFingerprints(
+				normalizePolicyRule({
+					...rule,
+					privacySignals: {
+						gpc: { denyCategories: ['marketing', 'measurement'] },
+					},
+				})
+			);
+			const after = createPolicyRuleFingerprints(normalizePolicyRule(rule));
+			expect(after.policy).not.toBe(before.policy);
+			expect(after.choice).not.toBe(before.choice);
+			expect(after.notice).not.toBe(before.notice);
+		}
+	);
+
+	test.each(['californiaOptIn', 'californiaOptOut'] as const)(
+		'[GPC-01] %s no longer honors v2 receipts, so their visitors are asked again',
+		(name) => {
+			const rule = policyRulePresets[name]();
+			const fingerprints = createPolicyRuleFingerprints(
+				normalizePolicyRule(rule),
+				rule.legacyMaterial
+			);
+			// The frozen v2 material was produced when GPC also denied
+			// measurement; behavior differs now, so the legacy fingerprint is a
+			// policy-changed marker rather than a grandfathered match.
+			expect(fingerprints.legacyMaterial).toBe(
+				`policy-changed:${fingerprints.policy}`
+			);
+		}
+	);
 });

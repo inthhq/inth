@@ -1,7 +1,7 @@
 /**
  * Pure opt-out timing and liftability helpers shared across the evaluator,
- * kernel and surface state. Kept separate from `./opt-out.ts` so first-load
- * callers of `optOutDenyCategories` (instant-commit) do not pull these in.
+ * kernel and surface state. Kept out of `./types.ts` so first-load callers
+ * of `optOutDecidingCategory` (instant-commit) do not pull these in.
  *
  * @internal
  */
@@ -9,8 +9,45 @@
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
 import type { AllConsentNames } from '../consent/consent-types';
-import { optOutDecidingCategory } from './types';
-import type { EvaluationPolicy } from './types';
+import {
+	LEGACY_OPT_OUT_CATEGORIES,
+	optOutDecidingCategory,
+	policyOptOutCategories,
+} from './types';
+import type { EvaluationPolicy, OptionalConsentCategory } from './types';
+
+/**
+ * Optional categories a held opt-out switches off under `policy`, in
+ * decision order: what the policy maps today plus what the record was made
+ * with, filtered to `policy.scope`. A record without its own list was made
+ * before the mapping was configurable and withholds
+ * {@link LEGACY_OPT_OUT_CATEGORIES}. Taking the union means a policy that
+ * narrows its mapping never silently lifts a right a visitor already holds.
+ *
+ * Without `optOut`, returns the policy's part alone.
+ */
+export const optOutDenyCategories = function optOutDenyCategories(
+	policy: Pick<EvaluationPolicy, 'gpcDenyCategories' | 'scope'>,
+	optOut?: {
+		readonly categories?: readonly OptionalConsentCategory[];
+	} | null
+): OptionalConsentCategory[] {
+	if (!optOut) {
+		return policyOptOutCategories(policy);
+	}
+	const mapped =
+		policy.gpcDenyCategories.length > 0
+			? policy.gpcDenyCategories
+			: LEGACY_OPT_OUT_CATEGORIES;
+	// Never empty, so the policy fallback cannot replace the union.
+	return policyOptOutCategories({
+		gpcDenyCategories: [
+			...mapped,
+			...(optOut.categories ?? LEGACY_OPT_OUT_CATEGORIES),
+		],
+		scope: policy.scope,
+	});
+};
 
 /**
  * Minimum wait before asking a visitor who opted out to opt back in.

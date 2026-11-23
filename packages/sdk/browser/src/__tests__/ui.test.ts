@@ -1219,7 +1219,8 @@ describe('mountConsentUI', () => {
 			const snapshot = client.getSnapshot();
 			expect(snapshot.optOut?.method).toBe('button');
 			expect(snapshot.effectivePermissions.marketing).toBe(false);
-			expect(snapshot.effectivePermissions.measurement).toBe(false);
+			// [GPC-01] The US presets' opt-out covers sale and sharing only.
+			expect(snapshot.effectivePermissions.measurement).toBe(true);
 			expect(snapshot.effectivePermissions.functionality).toBe(true);
 			expect(
 				root.querySelector('[data-testid="consent-dialog-root"]')
@@ -1608,6 +1609,17 @@ describe('mountConsentUI', () => {
 
 	describe('honored opt-out and locked toggles in preferences', () => {
 		const usOptOut = [policyRulePresets.usPrivacyStatesOptOut()];
+		// The stock US presets map GPC to marketing only (GPC-01). These tests
+		// cover an opt-out that withholds more than one category, so they use
+		// a rule that still maps measurement.
+		const broadUsOptOut = [
+			{
+				...policyRulePresets.usPrivacyStatesOptOut(),
+				privacySignals: {
+					gpc: { denyCategories: ['marketing', 'measurement'] },
+				},
+			},
+		];
 
 		it('shows the honored status, shows a stored grant off while opted out, preserves it on untouched save, and lifts on opt-in save', async () => {
 			const { client, root } = await mount(
@@ -1615,7 +1627,7 @@ describe('mountConsentUI', () => {
 				{
 					consentCategories: ['functionality', 'marketing', 'measurement'],
 					overrides: { country: 'US', region: 'CA' },
-					policy: usOptOut,
+					policy: broadUsOptOut,
 					reloadOnConsentRevoked: false,
 				}
 			);
@@ -1706,13 +1718,44 @@ describe('mountConsentUI', () => {
 			expect(client.getSnapshot().effectivePermissions.marketing).toBe(true);
 		});
 
-		it('locks opted-out categories under active GPC and blocks pointer, keyboard, save and accept-all', async () => {
+		it('[GPC-01] leaves measurement unlocked under active GPC with the stock US mapping', async () => {
 			const { client, root } = await mount(
 				{},
 				{
 					consentCategories: ['functionality', 'marketing', 'measurement'],
 					overrides: { country: 'US', gpc: true, region: 'CA' },
 					policy: usOptOut,
+				}
+			);
+			expect(client.getSnapshot().optOut?.method).toBe('gpc');
+			expect(client.getSnapshot().effectivePermissions.measurement).toBe(true);
+
+			client.openDialog();
+			await vi.waitFor(() => {
+				expect(query(root, 'consent-dialog-root')).not.toBeNull();
+			});
+			expect(
+				query<HTMLButtonElement>(root, 'consent-widget-switch-marketing')
+					.disabled
+			).toBe(true);
+			expect(
+				query<HTMLButtonElement>(root, 'consent-widget-switch-measurement')
+					.disabled
+			).toBe(false);
+			expect(
+				root.querySelector(
+					'[data-testid="consent-widget-restriction-measurement"]'
+				)
+			).toBeNull();
+		});
+
+		it('locks opted-out categories under active GPC and blocks pointer, keyboard, save and accept-all', async () => {
+			const { client, root } = await mount(
+				{},
+				{
+					consentCategories: ['functionality', 'marketing', 'measurement'],
+					overrides: { country: 'US', gpc: true, region: 'CA' },
+					policy: broadUsOptOut,
 				}
 			);
 			expect(client.getSnapshot().optOut?.method).toBe('gpc');

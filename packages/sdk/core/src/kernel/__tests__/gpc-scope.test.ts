@@ -1,0 +1,275 @@
+/**
+ * What a GPC signal and a durable opt-out withhold (DEF-09).
+ *
+ * GPC is a sale and sharing opt-out signal and says nothing about analytics,
+ * so the US presets map it to `marketing` only (GPC-01). The policy's mapping
+ * decides what any new opt-out withholds; a held opt-out keeps what it was
+ * recorded with, so neither a policy change nor this change lifts a right a
+ * visitor already holds (GPC-05).
+ */
+import type { OptOutRecord, PolicyRule } from '@inth/sdk-schema/types';
+import { policyRulePresets } from '@inth/sdk-schema/types';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
+import {
+	matchedResolution,
+	NOW,
+	optOutRule,
+} from '../../__tests__/fixtures/kernel-fixtures';
+import type { KernelConfig } from '../../types';
+import { createKernel as assembleKernel } from '../index';
+
+const createKernel = function createKernel(
+	rule: PolicyRule,
+	overrides: KernelConfig = {}
+) {
+	return assembleKernel({
+		initialLocation: { countryCode: 'US', regionCode: 'CA' },
+		initialPolicyResolution: matchedResolution(rule, 'region'),
+		now: NOW,
+		...overrides,
+	});
+};
+
+const permissions = function permissions(
+	kernel: ReturnType<typeof createKernel>
+) {
+	const { marketing, measurement } = kernel.getSnapshot().effectivePermissions;
+	return { marketing, measurement };
+};
+
+/** An opt-out stored before records carried their categories. */
+const legacyRecord: OptOutRecord = {
+	heldBy: 'device',
+	method: 'gpc',
+	recordedAt: NOW - 1000,
+	rights: ['sale', 'share', 'targeted_ads'],
+};
+
+beforeEach(() => {
+	vi.useFakeTimers();
+	vi.setSystemTime(NOW);
+});
+
+afterEach(() => {
+	vi.useRealTimers();
+	vi.restoreAllMocks();
+});
+
+describe('the US preset default', () => {
+	test.each([
+		['californiaOptOut', () => policyRulePresets.californiaOptOut()],
+		['usPrivacyStatesOptOut', () => policyRulePresets.usPrivacyStatesOptOut()],
+	] as const)(
+		'[GPC-01] under %s, GPC opts out of marketing and measurement stays granted',
+		async (_name, preset) => {
+			const kernel = createKernel(preset(), {
+				initialPrivacySignals: { gpc: true },
+			});
+			await kernel.commands.init();
+
+			const snapshot = kernel.getSnapshot();
+			expect(snapshot.optOut).toMatchObject({
+				categories: ['marketing'],
+				method: 'gpc',
+			});
+			expect(permissions(kernel)).toEqual({
+				marketing: false,
+				measurement: true,
+			});
+			expect(snapshot.restrictions.marketing).toEqual(['gpc', 'opt-out']);
+			expect(snapshot.restrictions.measurement).toBeUndefined();
+			kernel.dispose();
+		}
+	);
+
+	test('[GPC-01] a visitor opt-out under the US preset withholds marketing only', async () => {
+		const kernel = createKernel(policyRulePresets.californiaOptOut());
+		await kernel.commands.init();
+		await kernel.commands.optOut();
+
+		expect(kernel.getSnapshot().optOut).toMatchObject({
+			categories: ['marketing'],
+			method: 'button',
+		});
+		expect(permissions(kernel)).toEqual({
+			marketing: false,
+			measurement: true,
+		});
+		kernel.dispose();
+	});
+
+	test('[GPC-05] a GPC opt-out persists after the signal goes away, still sparing measurement', async () => {
+		const kernel = createKernel(policyRulePresets.californiaOptOut(), {
+			initialPrivacySignals: { gpc: true },
+		});
+		await kernel.commands.init();
+		const recorded = kernel.getSnapshot().optOut;
+		expect(recorded).not.toBeNull();
+
+		kernel.set.privacySignals({ gpc: false });
+
+		const snapshot = kernel.getSnapshot();
+		expect(snapshot.optOut).toBe(recorded);
+		expect(snapshot.restrictions.marketing).toEqual(['opt-out']);
+		expect(permissions(kernel)).toEqual({
+			marketing: false,
+			measurement: true,
+		});
+		kernel.dispose();
+	});
+});
+
+describe('records made before the mapping was configurable', () => {
+	test('[GPC-05] an old record keeps denying marketing and measurement under the narrowed preset', async () => {
+		const kernel = createKernel(policyRulePresets.californiaOptOut(), {
+			initialRecords: { now: NOW, optOut: legacyRecord },
+		});
+		await kernel.commands.init();
+
+		const snapshot = kernel.getSnapshot();
+		expect(snapshot.optOut).toEqual(legacyRecord);
+		expect(permissions(kernel)).toEqual({
+			marketing: false,
+			measurement: false,
+		});
+		expect(snapshot.restrictions.measurement).toEqual(['opt-out']);
+		kernel.dispose();
+	});
+
+	test('[GPC-05] an old record stays held for both while GPC is still on', async () => {
+		const kernel = createKernel(policyRulePresets.californiaOptOut(), {
+			initialPrivacySignals: { gpc: true },
+			initialRecords: { now: NOW, optOut: legacyRecord },
+		});
+		await kernel.commands.init();
+
+		const snapshot = kernel.getSnapshot();
+		// GPC itself no longer reaches measurement; the held record does.
+		expect(snapshot.restrictions.marketing).toEqual(['gpc', 'opt-out']);
+		expect(snapshot.restrictions.measurement).toEqual(['opt-out']);
+		expect(snapshot.optOut).toEqual(legacyRecord);
+		kernel.dispose();
+	});
+});
+
+describe('a policy that narrows its mapping', () => {
+	test('[GPC-05] never lifts a category a held record was made with', async () => {
+		const broad = optOutRule({
+			privacySignals: { gpc: { denyCategories: ['marketing', 'measurement'] } },
+			prompt: 'none',
+		});
+		const first = createKernel(broad, {
+			initialPrivacySignals: { gpc: true },
+		});
+		await first.commands.init();
+		const held = first.getSnapshot().optOut;
+		expect(held).toMatchObject({
+			categories: ['measurement', 'marketing'],
+		});
+		first.dispose();
+		expect.assert(held);
+
+		// The next visit runs under a narrowed rule, with the signal gone.
+		const narrowed = optOutRule({
+			privacySignals: { gpc: { denyCategories: ['marketing'] } },
+			prompt: 'none',
+		});
+		const second = createKernel(narrowed, {
+			initialRecords: { now: NOW, optOut: held },
+		});
+		await second.commands.init();
+		expect(permissions(second)).toEqual({
+			marketing: false,
+			measurement: false,
+		});
+		second.dispose();
+	});
+
+	test('a policy that widens its mapping applies to a record already held', async () => {
+		const kernel = createKernel(
+			optOutRule({
+				privacySignals: {
+					gpc: { denyCategories: ['experience', 'marketing'] },
+				},
+				prompt: 'none',
+			}),
+			{
+				initialRecords: {
+					now: NOW,
+					optOut: { ...legacyRecord, categories: ['marketing'] },
+				},
+			}
+		);
+		await kernel.commands.init();
+		expect(kernel.getSnapshot().effectivePermissions).toMatchObject({
+			experience: false,
+			marketing: false,
+			measurement: true,
+		});
+		kernel.dispose();
+	});
+});
+
+describe('a custom mapping', () => {
+	test('[GPC-01] a rule that still maps measurement is honored for GPC and the record', async () => {
+		const kernel = createKernel(
+			optOutRule({
+				privacySignals: {
+					gpc: { denyCategories: ['marketing', 'measurement'] },
+				},
+				prompt: 'none',
+			}),
+			{ initialPrivacySignals: { gpc: true } }
+		);
+		await kernel.commands.init();
+
+		const snapshot = kernel.getSnapshot();
+		expect(snapshot.optOut?.categories).toEqual(['measurement', 'marketing']);
+		expect(snapshot.restrictions.measurement).toEqual(['gpc', 'opt-out']);
+		expect(permissions(kernel)).toEqual({
+			marketing: false,
+			measurement: false,
+		});
+		kernel.dispose();
+	});
+
+	test('a measurement-only mapping makes measurement the deciding category', async () => {
+		const kernel = createKernel(
+			optOutRule({
+				privacySignals: { gpc: { denyCategories: ['measurement'] } },
+			})
+		);
+		await kernel.commands.init();
+		// Refusing marketing records nothing: it is not what an opt-out covers.
+		await kernel.commands.save({ marketing: false });
+		expect(kernel.getSnapshot().optOut).toBeNull();
+
+		await kernel.commands.save({ measurement: false });
+		expect(kernel.getSnapshot().optOut).toMatchObject({
+			categories: ['measurement'],
+			method: 'button',
+		});
+		expect(kernel.getSnapshot().effectivePermissions.measurement).toBe(false);
+
+		// Granting the deciding category lifts the opt-out.
+		await kernel.commands.save({ measurement: true });
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		kernel.dispose();
+	});
+
+	test('a rule that maps no GPC categories still withholds marketing and measurement on opt-out', async () => {
+		const kernel = createKernel(optOutRule({ prompt: 'none' }));
+		await kernel.commands.init();
+		await kernel.commands.optOut();
+		expect(kernel.getSnapshot().optOut?.categories).toEqual([
+			'measurement',
+			'marketing',
+		]);
+		expect(permissions(kernel)).toEqual({
+			marketing: false,
+			measurement: false,
+		});
+		kernel.dispose();
+	});
+});

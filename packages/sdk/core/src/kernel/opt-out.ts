@@ -6,6 +6,11 @@
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
 import { optOutLiftBlocker } from '../consent-record/opt-out-rules';
+import {
+	OPTIONAL_CONSENT_CATEGORIES,
+	policyOptOutCategories,
+} from '../consent-record/types';
+import type { OptionalConsentCategory } from '../consent-record/types';
 import { validateOptOutRecord } from '../consent-record/validation';
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state';
 import type { OptOutReceiptData } from '../libs/opt-out-state';
@@ -18,24 +23,49 @@ import type {
 } from '../types';
 import type { KernelRuntime } from './runtime';
 
+const inCanonicalOrder = function inCanonicalOrder(
+	categories: readonly OptionalConsentCategory[]
+): OptionalConsentCategory[] {
+	return OPTIONAL_CONSENT_CATEGORIES.filter((category) =>
+		categories.includes(category)
+	);
+};
+
+/**
+ * A new browser-made opt-out record. It carries the categories the current
+ * policy withholds, so a later policy that narrows its mapping cannot lift
+ * them.
+ */
+export const newLocalOptOutRecord = function newLocalOptOutRecord(
+	snapshot: Pick<ConsentSnapshot, 'evaluationPolicy'>,
+	method: 'button' | 'gpc',
+	recordedAt: number,
+	rights: readonly OptOutRight[] = []
+): OptOutRecord {
+	return {
+		categories: inCanonicalOrder(
+			policyOptOutCategories(snapshot.evaluationPolicy)
+		),
+		heldBy: 'device',
+		method,
+		recordedAt,
+		rights: [...rights],
+	};
+};
+
 /**
  * Next durable opt-out record for a visitor-initiated opt-out at `actionAt`,
  * or `null` when an opt-out record already exists.
  */
 export const nextButtonOptOutRecord = function nextButtonOptOutRecord(
-	snapshot: Pick<ConsentSnapshot, 'optOut'>,
+	snapshot: Pick<ConsentSnapshot, 'evaluationPolicy' | 'optOut'>,
 	actionAt: number,
 	rights: readonly OptOutRight[] = []
 ): OptOutRecord | null {
 	if (snapshot.optOut !== null) {
 		return null;
 	}
-	return {
-		heldBy: 'device',
-		method: 'button',
-		recordedAt: actionAt,
-		rights: [...rights],
-	};
+	return newLocalOptOutRecord(snapshot, 'button', actionAt, rights);
 };
 
 export { optOutLiftBlocker };
@@ -84,6 +114,16 @@ export const gpcSignalReportDue = function gpcSignalReportDue(
 	);
 };
 
+const sameList = function sameList(
+	left: readonly string[],
+	right: readonly string[]
+): boolean {
+	return (
+		left.length === right.length &&
+		left.every((entry, index) => entry === right[index])
+	);
+};
+
 /** Structural equality for two durable opt-out records. */
 export const sameOptOutRecord = function sameOptOutRecord(
 	left: Readonly<OptOutRecord> | null,
@@ -99,9 +139,27 @@ export const sameOptOutRecord = function sameOptOutRecord(
 		left.heldBy === right.heldBy &&
 		left.method === right.method &&
 		left.recordedAt === right.recordedAt &&
-		left.rights.length === right.rights.length &&
-		left.rights.every((rightName, index) => rightName === right.rights[index])
+		sameList(left.rights, right.rights) &&
+		(left.categories === undefined
+			? right.categories === undefined
+			: right.categories !== undefined &&
+				sameList(left.categories, right.categories))
 	);
+};
+
+/**
+ * The backend never carries `categories`, so an answer to the act this
+ * browser recorded keeps the categories the browser fixed when it recorded
+ * it. Without this the answer would fall back to the legacy mapping.
+ */
+const keepLocalCategories = function keepLocalCategories(
+	next: OptOutRecord,
+	current: Readonly<OptOutRecord> | null
+): OptOutRecord {
+	if (next.categories !== undefined || current?.categories === undefined) {
+		return next;
+	}
+	return { ...next, categories: [...current.categories] };
 };
 
 /**
@@ -240,6 +298,9 @@ export const applySyncedOptOut = function applySyncedOptOut(
 	}
 	if (next === null && optOutLiftBlocker(current) === 'gpc-active') {
 		return false;
+	}
+	if (next !== null) {
+		next = keepLocalCategories(next, current.optOut);
 	}
 	const confirmed = fence.confirmed !== false;
 	const currentReceipt = runtime.getOptOutReceiptData();

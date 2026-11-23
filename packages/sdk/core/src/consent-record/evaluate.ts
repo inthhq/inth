@@ -17,12 +17,9 @@ import { decisionAuthority, isBasisCompatible } from './decision-authority';
 import {
 	OPT_OUT_REPROMPT_WAIT_MS,
 	optInPromptAllowedAt,
-} from './opt-out-rules';
-import {
-	OPTIONAL_CONSENT_CATEGORIES,
-	optOutDecidingCategory,
 	optOutDenyCategories,
-} from './types';
+} from './opt-out-rules';
+import { OPTIONAL_CONSENT_CATEGORIES, optOutDecidingCategory } from './types';
 import type {
 	CategoryDecision,
 	CategoryEvaluation,
@@ -81,7 +78,10 @@ const collectRestrictions = function collectRestrictions(
 	if (input.gpc === true && input.policy.gpcDenyCategories.includes(category)) {
 		restrictions.push('gpc');
 	}
-	if (input.optOut && optOutDenyCategories(input.policy).includes(category)) {
+	if (
+		input.optOut &&
+		optOutDenyCategories(input.policy, input.optOut).includes(category)
+	) {
 		const deciding = optOutDecidingCategory(input.policy);
 		const explicitGrantStands =
 			deciding !== null &&
@@ -412,7 +412,9 @@ const deriveNextDeadline = function deriveNextDeadline(
 		policy.prompt === 'choice' &&
 		promptRequirement.kind === 'none' &&
 		!hasChoiceRefusal(policy, categories);
-	const optOutDenied = input.optOut ? optOutDenyCategories(policy) : [];
+	const optOutDenied = input.optOut
+		? optOutDenyCategories(policy, input.optOut)
+		: [];
 	for (const category of policy.scope) {
 		const evaluation = categories[category];
 		const decision = input.choice?.categories[category];

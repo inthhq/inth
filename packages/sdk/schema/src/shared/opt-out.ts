@@ -4,6 +4,8 @@
  * @packageDocumentation
  */
 
+import type { PolicyOptionalCategory } from './policy-rule';
+
 /** Opt-out rights in canonical order. */
 export const OPT_OUT_RIGHTS = ['sale', 'share', 'targeted_ads'] as const;
 
@@ -42,4 +44,17 @@ export interface OptOutRecord {
 	recordedAt: number;
 	/** Whether the device, the person's account, or both hold this opt-out. */
 	heldBy: OptOutHolder;
+	/**
+	 * Optional categories this opt-out withholds, fixed from the policy when
+	 * the browser recorded it, in canonical category order (`functionality`,
+	 * `experience`, `measurement`, `marketing`). A record keeps
+	 * them when the policy later narrows its mapping, so a held right is
+	 * never lifted by a configuration change.
+	 *
+	 * Browser-only: the backend neither sends nor stores it. A record without
+	 * it (one stored before the field existed, or an account-held record the
+	 * backend sent) withholds `marketing` and `measurement`, which is what
+	 * every opt-out withheld before the mapping became configurable.
+	 */
+	categories?: PolicyOptionalCategory[];
 }

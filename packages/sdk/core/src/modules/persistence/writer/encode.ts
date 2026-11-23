@@ -359,6 +359,12 @@ export const encodeOptOutRecord = function encodeOptOutRecord(
 		rights,
 		version: 1,
 	};
+	if (record.categories) {
+		const withheld = new Set(record.categories);
+		encoded.categories = CATEGORY_CODES.filter(([category]) =>
+			withheld.has(category)
+		).map(([category]) => category);
+	}
 	if (record.subject && Object.keys(record.subject).length > 0) {
 		encoded.subject = { ...record.subject };
 	}
@@ -379,7 +385,9 @@ export const encodeOptOutRecord = function encodeOptOutRecord(
 
 /**
  * Compact durable opt-out for the `<key>-opt-out` cookie:
- * `v=1&r=<sa|sh|ta...>&m=<b|g|a|p>&t=<recordedAt>&h=<d|p|b>`, followed by
+ * `v=1&r=<sa|sh|ta...>&m=<b|g|a|p>&t=<recordedAt>&h=<d|p|b>`, then
+ * `k=<fn|ex|me|mk...>` for the withheld categories when the record carries
+ * them (an empty `k=` is a real empty list), followed by
  * the subject fields (`sid`, `eid`, `idp`), `g=1` when the browser has
  * already reported its GPC signal, `a=<b|g>` for the local act, and `c=1`
  * when rights were confirmed by the backend. `reference` stays in
@@ -398,8 +406,19 @@ export const encodeOptOutRecordCompact = function encodeOptOutRecordCompact(
 		field('m', OPT_OUT_METHOD_TO_CODE[record.method]),
 		field('t', record.recordedAt),
 		field('h', OPT_OUT_HOLDER_TO_CODE[record.heldBy]),
-		...subjectFields(record.subject),
 	];
+	if (record.categories) {
+		const withheld = new Set(record.categories);
+		fields.push(
+			field(
+				'k',
+				CATEGORY_CODES.filter(([category]) => withheld.has(category))
+					.map(([, code]) => code)
+					.join(LIST_SEPARATOR)
+			)
+		);
+	}
+	fields.push(...subjectFields(record.subject));
 	if (record.gpcReported) {
 		fields.push(field('g', 1));
 	}

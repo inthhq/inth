@@ -185,7 +185,15 @@ export interface PolicyRule {
 	/** Explicit privacy-signal handling. Omit to ignore the signal. */
 	privacySignals?: {
 		gpc?: {
-			/** Categories an active GPC signal denies. A non-empty list also records a durable opt-out when GPC is active. Inside scope, no `necessary`. */
+			/**
+			 * Categories an active GPC signal denies. Inside scope, no
+			 * `necessary`. A non-empty list also records a durable opt-out when
+			 * GPC is active, and sets what every opt-out under this rule
+			 * withholds, whether GPC or the visitor recorded it. GPC is a sale
+			 * and sharing opt-out, so list the categories that sell or share
+			 * data (usually `marketing`), not analytics. Without a list, an
+			 * opt-out withholds `marketing` and `measurement`.
+			 */
 			denyCategories: string[];
 		};
 	};
@@ -251,7 +259,11 @@ export interface ResolvedPolicyRule {
 	};
 	privacySignals: {
 		gpc: {
-			/** Sorted. Categories an active GPC signal denies. Empty means GPC is ignored. */
+			/**
+			 * Sorted. Categories an active GPC signal denies, and that any
+			 * opt-out under this rule withholds. Empty means GPC is ignored and
+			 * an opt-out withholds `marketing` and `measurement`.
+			 */
 			denyCategories: PolicyOptionalCategory[];
 		};
 	};

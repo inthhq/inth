@@ -959,6 +959,7 @@ const OPT_OUT_STORED_KEYS = [
 	'method',
 	'recordedAt',
 	'heldBy',
+	'categories',
 	'subject',
 	'gpcReported',
 	'reference',
@@ -1047,6 +1048,7 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 	const meta = readOptionalOptOutMeta(input, issues);
 	const inner = validateOptOutRecord(
 		{
+			categories: ownValue(input, 'categories'),
 			heldBy: ownValue(input, 'heldBy'),
 			method: ownValue(input, 'method'),
 			recordedAt: ownValue(input, 'recordedAt'),
@@ -1082,7 +1084,7 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 	return { ok: true, record };
 };
 
-const COMPACT_OPT_OUT_CORE_KEYS = new Set(['r', 'm', 't', 'h']);
+const COMPACT_OPT_OUT_CORE_KEYS = new Set(['r', 'm', 't', 'h', 'k']);
 
 const checkCompactOptOutField = function checkCompactOptOutField(
 	key: string,
@@ -1136,6 +1138,7 @@ export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 						.map((code) => CODE_TO_OPT_OUT_RIGHT.get(code))
 				: [];
 	}
+	const rawCategories = fields.get('k');
 	const rawMethod = fields.get('m');
 	const rawHolder = fields.get('h');
 	const rawLocalAct = fields.get('a');
@@ -1152,6 +1155,14 @@ export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 		rights,
 		version: 1,
 	};
+	if (rawCategories !== undefined) {
+		candidate.categories =
+			rawCategories.length > 0
+				? rawCategories
+						.split(LIST_SEPARATOR)
+						.map((code) => CODE_TO_CATEGORY.get(code))
+				: [];
+	}
 	if (Object.keys(subject).length > 0) {
 		candidate.subject = subject;
 	}

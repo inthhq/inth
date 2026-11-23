@@ -97,7 +97,12 @@ const webSections = function webSections(
 	}
 	const snapshot = {
 		effectivePermissions: { necessary: true, ...input.effectivePermissions },
-		evaluationPolicy: { scope: OPTIONAL_CONSENT_CATEGORIES },
+		// The fixtures model no GPC mapping, so marketing decides the opt-out,
+		// as on the native resolvers.
+		evaluationPolicy: {
+			gpcDenyCategories: [],
+			scope: OPTIONAL_CONSENT_CATEGORIES,
+		},
 		location: { countryCode: input.location, regionCode: null },
 		optOut: null,
 		overrides: input.overrideCountry ? { country: input.overrideCountry } : {},

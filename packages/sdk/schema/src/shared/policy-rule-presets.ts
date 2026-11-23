@@ -138,7 +138,7 @@ const californiaRule = function californiaRule(
 		id: isOptOut ? 'california_opt_out' : 'california_opt_in',
 		match: policyMatchers.regions([{ country: 'US', region: 'CA' }]),
 		model: mode,
-		privacySignals: { gpc: { denyCategories: ['marketing', 'measurement'] } },
+		privacySignals: { gpc: { denyCategories: ['marketing'] } },
 		prompt: isOptOut ? optOutPrompt : 'choice',
 		proof: fullProof,
 		review: sourceReview(
@@ -146,7 +146,7 @@ const californiaRule = function californiaRule(
 			[
 				'The referenced GPC specification is the W3C Working Draft of 11 June 2026, not a final Recommendation.',
 				'A user-enabled GPC signal is honored as an opt-out of sale and sharing; it never creates consent.',
-				'Mapping GPC to marketing and measurement is a conservative product default and must be checked against actual processing purposes. Not all measurement is sale or sharing.',
+				'GPC maps to marketing only: it is a sale and sharing opt-out and says nothing about analytics. Add measurement to the mapping only where the measurement vendors sell or share data. The same mapping decides what a visitor-initiated opt-out withholds.',
 				'Removing the browser signal is not a withdrawal of a recorded opt-out.',
 				isOptOut
 					? optOutAssumption(
@@ -306,7 +306,7 @@ const usPrivacyStatesRule = function usPrivacyStatesRule(
 			US_PRIVACY_STATES.map((region) => ({ country: 'US', region }))
 		),
 		model: mode,
-		privacySignals: { gpc: { denyCategories: ['marketing', 'measurement'] } },
+		privacySignals: { gpc: { denyCategories: ['marketing'] } },
 		prompt: isOptOut ? optOutPrompt : 'choice',
 		review: regionalReview(
 			[
@@ -332,7 +332,7 @@ const usPrivacyStatesRule = function usPrivacyStatesRule(
 							'No automatic banner. Supply timely disclosures and persistent opt-out controls; an optional notice dismissal records no consent.'
 						)
 					: 'Optional categories stay denied until an explicit choice. Opt-in is a deployment choice, not a claim that every covered state requires it.',
-				'GPC denies marketing and measurement across the group as a conservative product mapping, not a claim that every state mandates GPC or all measurement is sale, sharing or targeted advertising.',
+				'GPC denies marketing across the group, as a sale, sharing and targeted-advertising opt-out; it leaves analytics on. This is a product mapping, not a claim that every state mandates GPC. Add measurement only where the measurement vendors sell or share data.',
 				'The referenced GPC specification is a Working Draft, not a final Recommendation. Removing the signal does not withdraw a recorded opt-out.',
 				'Maryland collection minimization and sensitive-data/minor prohibitions require separate processing controls. Connecticut prohibits sale and targeted advertising using minors data from 1 July 2026. Consent cannot waive these limits.',
 				'Louisiana and Oklahoma start 1 January 2027, Alabama 1 May 2027 and Vermont 1 January 2028. These future laws are excluded from the current group. Sector laws also apply outside it.',
