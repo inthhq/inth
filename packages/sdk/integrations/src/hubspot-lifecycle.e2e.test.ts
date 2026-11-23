@@ -5,7 +5,6 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { isolateHubSpotPage } from './__tests__/hubspot-page';
 import {
 	clearAllScripts,
 	ALL_DENIED,
@@ -16,6 +15,7 @@ import {
 	registerVendorContractCleanup,
 	updateScripts,
 } from './__tests__/e2e-test-utils';
+import { isolateHubSpotPage } from './__tests__/hubspot-page';
 import { hubspot } from './vendors/analytics/hubspot';
 
 const allConsents = {

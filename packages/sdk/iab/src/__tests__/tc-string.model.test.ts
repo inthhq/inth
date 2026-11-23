@@ -8,8 +8,8 @@ import { resolvePolicyRules } from '@inth/sdk-schema/types';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createIAB } from '../index';
-import { createCMPApi } from '../tcf/create-cmp-api';
 import { CMP_VERSION_NUMBER } from '../tcf/cmp-defaults.model';
+import { createCMPApi } from '../tcf/create-cmp-api';
 import { decodeTCString, generateTCString } from '../tcf/tc-string.model';
 import { MINIMAL_TC_STRING } from './fixtures/tc-strings';
 import {

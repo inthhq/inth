@@ -4,12 +4,12 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { isArgumentsPayload, toArgs } from '../../__tests__/e2e-test-utils';
 import {
 	createCallbackInfo,
 	expectSkippedScript,
 	grantedServerStart,
 } from '../../__tests__/helpers';
-import { isArgumentsPayload, toArgs } from '../../__tests__/e2e-test-utils';
 import { zendeskWidget } from './zendesk';
 
 const allowedConsents = {

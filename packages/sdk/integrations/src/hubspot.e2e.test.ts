@@ -3,7 +3,6 @@
  */
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { isolateHubSpotPage } from './__tests__/hubspot-page';
 import {
 	ALL_DENIED,
 	grantedMarketingConsents,
@@ -12,6 +11,7 @@ import {
 	updateScripts,
 	registerVendorContractCleanup,
 } from './__tests__/e2e-test-utils';
+import { isolateHubSpotPage } from './__tests__/hubspot-page';
 import { hubspot } from './vendors/analytics/hubspot';
 
 describe('HubSpot core loader consent contract', () => {
