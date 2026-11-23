@@ -157,6 +157,11 @@
 			"import": "./dist/runtime/components/consent-dialog-link.vue",
 			"default": "./dist/runtime/components/consent-dialog-link.vue"
 		},
+		"./runtime/components/privacy-choices-link.vue": {
+			"types": "./dist/runtime/components/privacy-choices-link.d.vue.ts",
+			"import": "./dist/runtime/components/privacy-choices-link.vue",
+			"default": "./dist/runtime/components/privacy-choices-link.vue"
+		},
 		"./runtime/components/consent-button.vue": {
 			"types": "./dist/runtime/components/button.d.vue.ts",
 			"import": "./dist/runtime/components/button.vue",

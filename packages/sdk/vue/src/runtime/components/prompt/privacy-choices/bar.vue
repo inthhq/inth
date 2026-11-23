@@ -9,10 +9,11 @@ import presentation from '@inth/sdk/ui/styles/components/consent-bar';
 import '@inth/sdk/ui/styles/components/consent-bar.css';
 
 import PrivacyChoicesSurface from './surface.vue';
-import type { PrivacyChoicesContainer } from './types';
+import type { ActionGroups, PrivacyChoicesContainer } from './types';
 
 defineProps<{
 	container: PrivacyChoicesContainer;
+	actionGroups?: ActionGroups;
 	disableAnimation?: boolean;
 }>();
 </script>
@@ -20,6 +21,7 @@ defineProps<{
 <template>
 	<PrivacyChoicesSurface
 		:container="container"
+		:action-groups="actionGroups"
 		:presentation="presentation"
 		:disable-animation="disableAnimation"
 	/>

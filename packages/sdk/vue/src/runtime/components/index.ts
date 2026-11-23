@@ -15,6 +15,7 @@ export { default as ConsentGate } from './consent-gate.vue';
 export { default as ConsentLink } from './link.vue';
 export { default as ConsentManager } from './manager.vue';
 export { default as InthProvider } from './inth-provider.vue';
+export { default as PrivacyChoicesLink } from './privacy-choices-link.vue';
 export { default as ConsentSwitch } from './switch.vue';
 export { default as ConsentTag } from './tag.vue';
 export { default as ConsentWidget } from './preferences.vue';

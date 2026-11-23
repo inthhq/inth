@@ -48,6 +48,7 @@ import {
 } from './lazy-surfaces';
 import { consentWidgetManagerKey } from './preferences-manager-context';
 import ConsentWidget from './preferences.vue';
+import { useAdoptOptOutConfirmation } from './privacy-choices/receipt-focus';
 import { usePrivacyChoicesDesign } from './privacy-choices/use-design';
 import ConsentTag from './tag.vue';
 
@@ -81,6 +82,16 @@ const { presentation: surface } = useConsentPolicyActions('preferences');
  * applies its stylesheets, which include the banner's in-place panel rules.
  */
 const privacyChoices = usePrivacyChoicesDesign();
+// Under a root, the root does this; on its own, this dialog opens on the
+// receipt to confirm an opt-out.
+useAdoptOptOutConfirmation(
+	kernel,
+	() =>
+		privacyChoices.value &&
+		!confirmationHostedByProvider &&
+		confirmationOpen.value &&
+		!hasStandaloneConfirmation.value
+);
 let actionSequence = 0;
 const draftState = useConsentDraft();
 const { isDirty, isStale, reset: resetDraft, save: saveDraft } = draftState;
@@ -197,6 +208,11 @@ provide(consentWidgetManagerKey, { draft: draftState, onAction });
 
 <template>
 	<template v-if="privacyChoices">
+		<!-- Either design hosts the opt-in confirmation while it is mounted. -->
+		<LazyOptInConfirmation
+			v-if="optInConfirmationActive"
+			:disable-animation="props.disableAnimation"
+		/>
 		<!-- Loads on open, never with the banner (PERM-05: the banner leaves
 		     at once when it opens). -->
 		<LazyPrivacyChoicesDialog

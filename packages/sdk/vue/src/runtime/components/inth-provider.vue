@@ -8,6 +8,7 @@ import {
 } from '../composables';
 import { useConsentConfig } from '../composables/config';
 import {
+	useConsentKernel,
 	useHasOptOutConfirmationHost,
 	useOptOutConfirmationOpen,
 } from '../composables/kernel';
@@ -22,7 +23,9 @@ import {
 	LazyOptOutConfirmation,
 	prefetchConsentManager,
 	prefetchIabConsentDialog,
+	useWarmableDialogDesign,
 } from './lazy-surfaces';
+import { useAdoptOptOutConfirmation } from './privacy-choices/receipt-focus';
 import { usePrivacyChoicesDesign } from './privacy-choices/use-design';
 import ConsentBanner from './prompt.vue';
 
@@ -50,6 +53,20 @@ const mounted = useMounted();
 // page announcement and the focus return outlive the prompt (BNR-06). The
 // classic banner still mounts only while it shows.
 const privacyChoices = usePrivacyChoicesDesign();
+useWarmableDialogDesign(() =>
+	privacyChoices.value ? 'privacy-choices' : 'classic'
+);
+const isIab = () => Boolean(init.value?.gvl || init.value?.gvlReference);
+// The Privacy Choices design confirms an opt-out on its receipt, in the
+// dialog, unless a standalone `OptOutConfirmation` shows it.
+useAdoptOptOutConfirmation(
+	useConsentKernel(),
+	() =>
+		privacyChoices.value &&
+		!isIab() &&
+		confirmationOpen.value &&
+		!hasStandaloneConfirmation.value
+);
 const bannerShown = ref(activeUI.value === 'banner');
 watch(activeUI, (ui) => {
 	if (ui === 'banner') {
@@ -94,6 +111,7 @@ watch(
 		<LazyOptOutConfirmation
 			v-if="
 				!(init?.gvl || init?.gvlReference) &&
+				!privacyChoices &&
 				confirmationOpen &&
 				!hasStandaloneConfirmation
 			"

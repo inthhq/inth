@@ -12,20 +12,21 @@
 import { computed, inject, ref, watch } from 'vue';
 
 import { useConsentSnapshot } from '../../composables/kernel';
-import { setDialogWarmDesign } from '../lazy-surfaces';
 import {
 	privacyChoicesPresentations,
 	privacyChoicesPresentationsKey,
 } from './privacy-choices/presentations';
-import type { PrivacyChoicesContainer } from './privacy-choices/types';
+import type {
+	ActionGroups,
+	PrivacyChoicesContainer,
+} from './privacy-choices/types';
 
 const props = defineProps<{
 	container: PrivacyChoicesContainer;
+	/** The policy's first-layer actions, in the host's order. */
+	actionGroups?: ActionGroups;
 	disableAnimation?: boolean;
 }>();
-
-// Idle warming then skips the classic dialog, which this page never shows.
-setDialogWarmDesign('privacy-choices');
 
 const snapshot = useConsentSnapshot();
 const owed = ref(snapshot.value.activeUI === 'banner');
@@ -60,6 +61,7 @@ const presentation = computed(() => {
 		:is="presentation"
 		v-if="owed"
 		:container="container"
+		:action-groups="actionGroups"
 		:disable-animation="disableAnimation"
 	/>
 </template>

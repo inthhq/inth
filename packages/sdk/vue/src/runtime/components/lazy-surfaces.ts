@@ -15,7 +15,14 @@
  * tax was ~345-530ms; the weight was parse/hydration
  * of surfaces most visitors never see.
  */
-import { defineAsyncComponent, defineComponent, h, provide, watch } from 'vue';
+import {
+	defineAsyncComponent,
+	defineComponent,
+	h,
+	onScopeDispose,
+	provide,
+	watch,
+} from 'vue';
 import type { Component } from 'vue';
 
 import { useConsentKernelContext } from '../composables/kernel';
@@ -43,21 +50,55 @@ export const LazyPrivacyChoicesDialog = defineAsyncComponent(
 );
 
 /**
- * The design the mounted surfaces render, so idle warming loads only that
- * design's dialog.
+ * The Privacy Choices dialog with the opt-in confirmation it hosts, for the
+ * stock root.
  */
-let warmDesign: 'classic' | 'privacy-choices' = 'classic';
+const LazyPrivacyChoicesDialogHost = defineAsyncComponent(
+	() => import('./privacy-choices-dialog/host.vue')
+);
+
+type DialogDesign = 'classic' | 'privacy-choices';
 
 /**
- * Record the design the page renders, so {@link prefetchConsentManager}
- * warms only the classic dialog.
+ * Mounted dialog hosts by the design each renders, so idle warming loads
+ * only the dialogs a page can open: never the classic chunk and its sheets
+ * for a Privacy Choices page, whatever the banner did before.
+ */
+const mountedDesigns: Record<DialogDesign, number> = {
+	classic: 0,
+	'privacy-choices': 0,
+};
+
+/**
+ * Count the design this root's dialog renders while it is mounted, so
+ * {@link prefetchConsentManager} warms only the dialogs on the page.
  *
  * @internal
  */
-export const setDialogWarmDesign = function setDialogWarmDesign(
-	design: 'classic' | 'privacy-choices'
+export const useWarmableDialogDesign = function useWarmableDialogDesign(
+	design: () => DialogDesign
 ): void {
-	warmDesign = design;
+	if (typeof window === 'undefined') {
+		return;
+	}
+	let current: DialogDesign | null = null;
+	watch(
+		design,
+		(value) => {
+			if (current) {
+				mountedDesigns[current] -= 1;
+			}
+			current = value;
+			mountedDesigns[value] += 1;
+		},
+		{ immediate: true }
+	);
+	onScopeDispose(() => {
+		if (current) {
+			mountedDesigns[current] -= 1;
+			current = null;
+		}
+	});
 };
 export const LazyOptOutConfirmation = defineAsyncComponent(
 	() => import('./opt-out-confirmation.vue')
@@ -209,9 +250,7 @@ export const prefetchSurfaceAfterLoad = function prefetchSurfaceAfterLoad(
  * from the banner's buttons.
  */
 const loadConsentManager = () =>
-	warmDesign === 'privacy-choices'
-		? Promise.resolve()
-		: import('./manager.vue');
+	mountedDesigns.classic > 0 ? import('./manager.vue') : Promise.resolve();
 const loadIabConsentDialog = () => import('./iab-panel.vue');
 
 export const prefetchConsentManager = () =>
@@ -233,12 +272,9 @@ export const ConsentDialogHost = defineComponent({
 	name: 'ConsentDialogHost',
 	setup() {
 		const privacyChoices = usePrivacyChoicesDesign();
-		watch(
-			privacyChoices,
-			(value) => setDialogWarmDesign(value ? 'privacy-choices' : 'classic'),
-			{ immediate: true }
-		);
 		return () =>
-			h(privacyChoices.value ? LazyPrivacyChoicesDialog : LazyConsentManager);
+			h(
+				privacyChoices.value ? LazyPrivacyChoicesDialogHost : LazyConsentManager
+			);
 	},
 });

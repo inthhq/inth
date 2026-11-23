@@ -32,7 +32,11 @@ import { useConsentKernel, useConsentSnapshot } from '../../composables/kernel';
 import { useSurfaceTranslations } from '../../composables/use-surface-translations';
 import { slotAttrs } from '../../utils/slot-attrs';
 import ChoiceButton from './choice-button.vue';
-import { rightsBundleOf, useSurfaceSession } from './use-surface-session';
+import {
+	rightsBundleOf,
+	useOptOutReceiptData,
+	useSurfaceSession,
+} from './use-surface-session';
 
 /**
  * The row's test ids on each surface, spelled out so each one matches
@@ -156,7 +160,10 @@ watch(
 	{ flush: 'post' }
 );
 
-const bundle = computed(() => rightsBundleOf(snapshot.value));
+const receiptData = useOptOutReceiptData();
+const bundle = computed(() =>
+	rightsBundleOf(snapshot.value, receiptData.value)
+);
 const model = computed(() => snapshot.value.evaluationPolicy.model);
 const copy = computed(() =>
 	resolveSaleRightCopy(translations.value, {

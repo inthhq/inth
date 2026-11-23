@@ -358,7 +358,9 @@ const keepElement =
 					>
 					<span :class="styles.vendorMeta"
 						>{{ row.trigger.onCount
-						}}<span :class="styles.chevron"
+						}}<span
+							:class="styles.chevron"
+							:data-direction="vendors === 'sheet' ? 'end' : 'down'"
 							><svg
 								width="14"
 								height="14"

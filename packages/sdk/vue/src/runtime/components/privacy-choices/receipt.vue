@@ -74,7 +74,7 @@ const receipt = computed(() =>
 );
 const copy = computed(() =>
 	resolveRightsReceiptCopy(translations.value, {
-		bundle: rightsBundleOf(snapshot.value),
+		bundle: rightsBundleOf(snapshot.value, local.value),
 		business: props.business,
 		receipt: receipt.value,
 	})
@@ -128,6 +128,7 @@ const copyReference = async () => {
 		:inert="!receipt.show || undefined"
 		:data-receipt-kind="receipt.show ? receipt.kind : undefined"
 		data-testid="consent-dialog-receipt"
+		tabindex="-1"
 	>
 		<div :class="styles.disclosureInner">
 			<div :class="styles.receipt">

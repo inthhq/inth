@@ -5,14 +5,18 @@
  * (`prototypes/PRIVACY-CHOICES-REGRESSIONS.md`). Geometry checks stay in
  * React's browser tests and the parity runner: jsdom lays nothing out.
  */
+import type { PolicyRule } from '@inth/sdk/schema/types';
+import { openOptInConfirmation } from '@inth/sdk/surface-actions';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import { rightsBundleOf } from '../runtime/components/privacy-choices/use-surface-session';
 import {
 	$,
 	mountPrivacyChoices as mount,
 	must,
 	pageAction,
 	setPhone,
+	setPhoneLive,
 	settle,
 	unmountPrivacyChoices,
 	waitFor,
@@ -440,5 +444,157 @@ describe('customization', () => {
 		await waitForPanel();
 		await waitFor(() => expect($('consent-banner-save-button')).not.toBeNull());
 		expect(must('consent-banner-save-button').className).toMatch(/my-save/u);
+	});
+});
+
+describe('wave B round 1', () => {
+	test('[BNR-13] an opt-in confirmation opens under the Privacy Choices design', async () => {
+		const context = await mount({ region: 'us-opt-in' });
+		await waitForRoot();
+		const confirmed = vi.fn();
+		openOptInConfirmation(context.kernel, confirmed, null);
+		const confirm = await (async () => {
+			await waitFor(() =>
+				expect($('opt-in-confirmation-confirm-button')).not.toBeNull()
+			);
+			return must<HTMLButtonElement>('opt-in-confirmation-confirm-button');
+		})();
+		confirm.click();
+		await waitFor(() => expect(confirmed).toHaveBeenCalledTimes(1));
+	});
+
+	test('[PERM-05][SR-05] collapsed panels carry a real inert attribute', async () => {
+		await mount();
+		await waitForRoot();
+		const panel = must('consent-banner-expand-panel');
+		// A real attribute: jsdom has no `inert` property, so Vue writes the
+		// attribute; a browser reflects the property onto it.
+		expect(panel.hasAttribute('inert')).toBe(true);
+		must('consent-banner-customize-button').click();
+		await waitForPanel();
+		await waitFor(() => expect(panel.hasAttribute('inert')).toBe(false));
+		expect(root().hasAttribute('inert')).toBe(false);
+	});
+
+	test('[BNR-15] the summary shows only the actions the policy allows, in every presentation', async () => {
+		const actions = { actions: ['accept', 'reject'] } as Partial<PolicyRule>;
+		await mount({ rule: actions });
+		await waitForRoot();
+		expect($('consent-banner-customize-button')).toBeNull();
+		expect($('consent-banner-reject-button')).not.toBeNull();
+		expect($('consent-banner-accept-button')).not.toBeNull();
+		await unmountPrivacyChoices();
+		await mount({ container: { type: 'banner' }, rule: actions });
+		await waitForRoot();
+		expect(root().getAttribute('data-placement')).toBe('banner-bottom');
+		expect($('consent-banner-customize-button')).toBeNull();
+		expect($('consent-banner-reject-button')).not.toBeNull();
+	});
+
+	test('[BNR-15] the summary follows the host layout order', async () => {
+		await mount({ prompt: { layout: ['customize', ['accept', 'reject']] } });
+		await waitForRoot();
+		const footer = must('consent-banner-footer');
+		expect(footer.firstElementChild).toBe($('consent-banner-customize-button'));
+		const group = must('consent-banner-footer-sub-group');
+		expect(group.firstElementChild).toBe($('consent-banner-accept-button'));
+	});
+
+	test('[PERM-13] an expansion made on phone does not survive a pass through all-in-one', async () => {
+		const resize = setPhoneLive(true);
+		await mount({ container: { side: 'start', type: 'drawer' } });
+		await waitForRoot();
+		await waitFor(() =>
+			expect(root().getAttribute('data-flow')).toBe('expand-in-place')
+		);
+		must('consent-banner-customize-button').click();
+		await waitFor(() =>
+			expect(root().getAttribute('data-expanded')).toBe('true')
+		);
+		resize(false);
+		await waitFor(() =>
+			expect(root().getAttribute('data-flow')).toBe('all-in-one')
+		);
+		await settle(1);
+		// Esc on desktop has nothing to fold, so it is left to the page.
+		const press = new KeyboardEvent('keydown', {
+			bubbles: true,
+			cancelable: true,
+			key: 'Escape',
+		});
+		document.dispatchEvent(press);
+		expect(press.defaultPrevented).toBe(false);
+		resize(true);
+		await waitFor(() =>
+			expect(root().getAttribute('data-flow')).toBe('expand-in-place')
+		);
+		expect(root().hasAttribute('data-expanded')).toBe(false);
+		expect(must('consent-banner-expand-panel').getAttribute('data-open')).toBe(
+			'false'
+		);
+	});
+
+	test('[COPY-01][SR-04] the rights bundle reads the backend-confirmed rights from the local receipt', () => {
+		const snapshot = {
+			optOut: {
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: 1,
+				rights: ['sale', 'share'],
+			},
+		} as unknown as Parameters<typeof rightsBundleOf>[0];
+		expect(
+			rightsBundleOf(snapshot, {
+				localAct: 'button',
+				reference: 'ref',
+				rightsConfirmed: true,
+			})
+		).toBe('sale-share');
+		expect(rightsBundleOf(snapshot, null)).toBe('all');
+	});
+
+	test('the collapsed bar merges the title, description and footer slots', async () => {
+		await mount({
+			config: {
+				components: {
+					banner: {
+						footer: { class: 'footer-marker' },
+						title: { class: 'title-marker' },
+					},
+					description: { banner: { class: 'description-marker' } },
+				},
+			},
+			container: { type: 'banner' },
+		});
+		await waitForRoot();
+		expect(must('consent-banner-title').classList).toContain('title-marker');
+		expect(must('consent-banner-description').classList).toContain(
+			'description-marker'
+		);
+		expect(must('consent-banner-footer').classList).toContain('footer-marker');
+	});
+
+	test('the root matches the classic root: direction, surface marker, animation switch', async () => {
+		await mount({ language: 'he' });
+		await waitForRoot();
+		expect(root().getAttribute('dir')).toBe('rtl');
+		expect(root().getAttribute('data-inth-surface')).toBe('banner');
+		expect(root().getAttribute('data-animation')).toBe('off');
+	});
+
+	test('the Preferences body spacing lives in the stylesheet, so noStyle drops it', async () => {
+		await mount({ container: { type: 'banner' }, region: 'us-opt-in' });
+		await waitForRoot();
+		must('consent-banner-customize-button').click();
+		await waitFor(() =>
+			expect($('consent-banner-preferences-row')).not.toBeNull()
+		);
+		const row = must('consent-banner-preferences-row');
+		const panel = document.getElementById(
+			row.getAttribute('aria-controls') ?? ''
+		);
+		const body = panel?.querySelector(':scope > * > *') as HTMLElement;
+		expect(body.getAttribute('style')).toBeNull();
+		expect(body.className).not.toBe('');
 	});
 });

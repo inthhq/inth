@@ -12,8 +12,10 @@
 import { commitBannerChoice, resolveOptOutState } from '@inth/sdk/engine';
 import type {
 	BannerCommitAction,
+	PresentationAction,
 	ResolvedConsentLayout,
 } from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import type { ConsentLegalLinkKey } from '@inth/sdk/schema/config';
 import {
 	announcementText,
@@ -33,11 +35,16 @@ import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import surfaceStyles from '@inth/sdk/ui/styles/components/consent-surface';
 
 import '@inth/sdk/ui/styles/components/consent-surface.css';
-import { resolveBrandingTag, tabbableElements } from '@inth/sdk/ui/utils';
+import {
+	getTextDirection,
+	resolveBrandingTag,
+	tabbableElements,
+} from '@inth/sdk/ui/utils';
 import { prefersReducedMotion } from '@inth/sdk/ui/utils/reduced-motion';
 import {
 	computed,
 	defineAsyncComponent,
+	h,
 	onBeforeUnmount,
 	onMounted,
 	ref,
@@ -63,10 +70,15 @@ import InlineLegalLinks from '../../privacy-choices/inline-legal-links.vue';
 import { usePhoneLayout } from '../../privacy-choices/use-phone-layout';
 import {
 	rightsBundleOf,
+	useOptOutReceiptData,
 	useSurfaceSession,
 } from '../../privacy-choices/use-surface-session';
 import BannerTag from './tag.vue';
-import type { PresentationStyles, PrivacyChoicesContainer } from './types';
+import type {
+	ActionGroups,
+	PresentationStyles,
+	PrivacyChoicesContainer,
+} from './types';
 
 /** The options, loaded when Customize first opens them, or at once in a side Drawer. */
 const loadPanel = () => import('./panel.vue');
@@ -75,6 +87,13 @@ const LazyPanel = defineAsyncComponent(loadPanel);
 /** Exits are 160ms; the controllers add their own slack. */
 const EXIT_MS = 160;
 const DEFAULT_MODELS = ['opt-in', 'opt-out'];
+const DEFAULT_ACTION_GROUPS: ActionGroups = [
+	['reject', 'accept'],
+	['customize'],
+];
+/** The customize control: Customize, or a notice's rights link. */
+const EXPAND_CONTROL =
+	'[data-testid="consent-banner-customize-button"], [data-testid="consent-banner-right-link-opt-out"]';
 const CARD_LINKS: ConsentLegalLinkKey[] = ['privacyPolicy', 'cookiePolicy'];
 /**
  * Where focus goes after a choice (BNR-06, ARCH-03): React's targets, then
@@ -89,6 +108,11 @@ const RETURN_TARGETS = [
 
 const props = defineProps<{
 	container: PrivacyChoicesContainer;
+	/**
+	 * The first-layer actions the policy allows, in the host's order and
+	 * groups. Absent, every action shows in the default order.
+	 */
+	actionGroups?: ActionGroups;
 	/** Class names of this presentation's sheet. */
 	presentation: PresentationStyles;
 	/** Skip the exit. Defaults to the config's. */
@@ -103,7 +127,11 @@ const config = useConsentConfig();
 const init = useConsentInit();
 const hasConsentUi = useHasConsentUi();
 const translations = useSurfaceTranslations();
+const textDirection = computed(() =>
+	getTextDirection(init.value?.translations?.language)
+);
 const { session, state } = useSurfaceSession();
+const receiptData = useOptOutReceiptData();
 const { draft } = provideChoiceDraft();
 const phone = usePhoneLayout();
 const mounted = useMounted();
@@ -166,9 +194,6 @@ const rootRef = ref<HTMLElement | null>(null);
 const shellRef = ref<HTMLElement | null>(null);
 const cardRef = ref<HTMLElement | null>(null);
 const scrollRef = ref<HTMLElement | null>(null);
-const expandButtonRef = ref<
-	HTMLElement | { element: HTMLElement | null } | null
->(null);
 const pageRegionRef = ref<HTMLElement | null>(null);
 let pageRegion: LiveRegion | null = null;
 onMounted(() => {
@@ -199,6 +224,23 @@ const blocking = computed(
 const optionsOpen = computed(() => allInOne.value || expanded.value);
 const panelWanted = ref(allInOne.value);
 const wantPanel = computed(() => panelWanted.value || optionsOpen.value);
+
+// All-in-one has nothing to fold. An expansion left from the phone Drawer
+// would reopen when the viewport narrows again, and Escape would spend a
+// press folding it with no Customize to focus (PERM-13).
+watch(
+	[allInOne, () => state.value.expanded],
+	([isAllInOne, isExpanded]) => {
+		if (!isAllInOne) {
+			return;
+		}
+		pendingExpandFocus = false;
+		if (isExpanded) {
+			session.collapse();
+		}
+	},
+	{ immediate: true }
+);
 
 watch(
 	phase,
@@ -317,11 +359,6 @@ watch(
 // never loads in idle time: the folded panel keeps its unstyled box until
 // the visitor reaches for the options, as React's does.
 
-const elementOf = (
-	value: HTMLElement | { element: HTMLElement | null } | null
-): HTMLElement | null =>
-	value instanceof HTMLElement ? value : (value?.element ?? null);
-
 // The first control of the options takes focus once they render.
 watch(
 	[expanded, panelReady],
@@ -358,7 +395,9 @@ watch(
 	(value) => {
 		if (!value && pendingExpandFocus) {
 			pendingExpandFocus = false;
-			elementOf(expandButtonRef.value)?.focus({ preventScroll: true });
+			rootRef.value
+				?.querySelector<HTMLElement>(EXPAND_CONTROL)
+				?.focus({ preventScroll: true });
 		}
 	},
 	{ flush: 'post' }
@@ -377,7 +416,9 @@ watch(
 	{ flush: 'post' }
 );
 
-const bundle = computed(() => rightsBundleOf(snapshot.value));
+const bundle = computed(() =>
+	rightsBundleOf(snapshot.value, receiptData.value)
+);
 const gpc = computed(
 	() => resolveOptOutState(snapshot.value).lock === 'gpc-active'
 );
@@ -444,6 +485,75 @@ const tag = computed(() =>
 );
 
 const notice = computed(() => variant.value === 'notice');
+// The policy's first-layer actions, in the host's order (BNR-15). A
+// notice's "Your Privacy Choices" is the opt-out right, not an action, so
+// it stays.
+const summaryGroups = computed(() =>
+	(props.actionGroups ?? DEFAULT_ACTION_GROUPS)
+		.map((group) =>
+			group.filter(
+				(action) =>
+					action === 'reject' || action === 'accept' || action === 'customize'
+			)
+		)
+		.filter((group) => group.length > 0)
+);
+const summaryActions = computed(() => summaryGroups.value.flat());
+
+/** One summary button, so every presentation renders the same three. */
+const SummaryButton = (buttonProps: {
+	action: PresentationAction;
+	label: string;
+	expanded: boolean;
+	inBar: boolean;
+}) => {
+	if (buttonProps.action === 'reject') {
+		return h(
+			ChoiceButton,
+			{
+				consentAction: 'reject',
+				'data-testid': 'consent-banner-reject-button',
+				onClick: () => commit('refuse'),
+			},
+			() => buttonProps.label
+		);
+	}
+	if (buttonProps.action === 'accept') {
+		return h(
+			ChoiceButton,
+			{
+				consentAction: 'accept',
+				'data-testid': 'consent-banner-accept-button',
+				onClick: () => commit('allow'),
+			},
+			() => buttonProps.label
+		);
+	}
+	return h(
+		ChoiceButton,
+		{
+			'aria-controls': buttonProps.inBar ? undefined : ids.panel,
+			'aria-expanded': buttonProps.expanded,
+			consentAction: 'customize',
+			'data-testid': 'consent-banner-customize-button',
+			isPrimary: true,
+			onClick: expand,
+			onFocus: warm,
+			onPointerenter: warm,
+		},
+		() => buttonProps.label
+	);
+};
+SummaryButton.props = ['action', 'label', 'expanded', 'inBar'];
+const summaryLabel = (action: PresentationAction, inBar: boolean): string => {
+	if (action === 'reject') {
+		return copy.value.reject;
+	}
+	if (action === 'accept') {
+		return copy.value.accept;
+	}
+	return inBar ? copy.value.expandBar : copy.value.expand;
+};
 const links = CARD_LINKS;
 const barLinks: ConsentLegalLinkKey[] = ['privacyPolicy'];
 const onPanelReady = () => {
@@ -480,7 +590,10 @@ const onPanelReady = () => {
 			:data-state="phase === 'leaving' ? 'closed' : 'open'"
 			:data-variant="variant"
 			data-design="privacy-choices"
+			:data-animation="disableAnimation ? 'off' : undefined"
 			data-testid="consent-banner-root"
+			:[SURFACE_ROOT_ATTRIBUTE]="'banner'"
+			:dir="textDirection"
 			:inert="phase === 'leaving' || undefined"
 		>
 			<div
@@ -524,7 +637,12 @@ const onPanelReady = () => {
 				>
 					<template v-if="barCollapsed">
 						<h2
-							:class="surfaceStyles.visuallyHidden"
+							v-bind="
+								slotAttrs(
+									config.components?.banner?.title,
+									surfaceStyles.visuallyHidden
+								)
+							"
 							:id="ids.title"
 							data-testid="consent-banner-title"
 						>
@@ -532,67 +650,57 @@ const onPanelReady = () => {
 						</h2>
 						<div :class="presentation.row">
 							<p
-								:class="presentation.text"
+								v-bind="
+									slotAttrs(
+										config.components?.description?.banner,
+										presentation.text
+									)
+								"
 								data-testid="consent-banner-description"
 							>
 								{{ copy.barDescription }}<InlineLegalLinks :links="barLinks" />
 							</p>
 							<div
-								:class="presentation.actions"
+								v-bind="
+									slotAttrs(
+										config.components?.banner?.footer,
+										presentation.actions
+									)
+								"
 								data-testid="consent-banner-footer"
 							>
-								<template v-if="!notice">
-									<ChoiceButton
-										consent-action="reject"
-										data-testid="consent-banner-reject-button"
-										@click="commit('refuse')"
+								<template v-if="notice">
+									<!-- The collapsed bar has no panel to point at (PERM-09). -->
+									<button
+										type="button"
+										:class="surfaceStyles.rightLink"
+										:aria-expanded="expanded"
+										data-testid="consent-banner-right-link-opt-out"
+										@click="expand"
+										@focus="warm"
+										@pointerenter="warm"
 									>
-										{{ copy.reject }}
-									</ChoiceButton>
+										{{ copy.expandBar }}
+									</button>
 									<ChoiceButton
-										consent-action="accept"
-										data-testid="consent-banner-accept-button"
-										@click="commit('allow')"
+										consent-action="dismiss"
+										is-primary
+										data-testid="consent-banner-dismiss-button"
+										@click="acknowledge"
 									>
-										{{ copy.accept }}
+										{{ copy.ok }}
 									</ChoiceButton>
 								</template>
-								<!-- The collapsed bar has no panel to point at (PERM-09). -->
-								<button
-									v-if="notice"
-									ref="expandButtonRef"
-									type="button"
-									:class="surfaceStyles.rightLink"
-									:aria-expanded="expanded"
-									data-testid="consent-banner-right-link-opt-out"
-									@click="expand"
-									@focus="warm"
-									@pointerenter="warm"
-								>
-									{{ copy.expandBar }}
-								</button>
-								<ChoiceButton
-									v-else
-									ref="expandButtonRef"
-									consent-action="customize"
-									is-primary
-									:aria-expanded="expanded"
-									data-testid="consent-banner-customize-button"
-									@click="expand"
-									@focus="warm"
-									@pointerenter="warm"
-								>
-									{{ copy.expandBar }}
-								</ChoiceButton>
-								<ChoiceButton
-									v-if="notice"
-									consent-action="dismiss"
-									is-primary
-									data-testid="consent-banner-dismiss-button"
-									@click="acknowledge"
-								>
-									{{ copy.ok }}
-								</ChoiceButton>
+								<template v-else>
+									<SummaryButton
+										v-for="action in summaryActions"
+										:key="action"
+										:action="action"
+										:label="summaryLabel(action, true)"
+										:expanded="expanded"
+										:in-bar="true"
+									/>
+								</template>
 							</div>
 						</div>
 						<output
@@ -759,7 +867,6 @@ const onPanelReady = () => {
 								<!-- The notice's rights action reads as a link, in the
 								     text-on-surface blue in both palettes (VIS-02). -->
 								<button
-									ref="expandButtonRef"
 									type="button"
 									:class="surfaceStyles.rightLink"
 									:aria-expanded="expanded"
@@ -780,8 +887,13 @@ const onPanelReady = () => {
 									{{ copy.ok }}
 								</ChoiceButton>
 							</template>
-							<template v-else>
+							<template
+								v-for="group in summaryGroups"
+								v-else
+								:key="group.join('-')"
+							>
 								<div
+									v-if="group.length > 1"
 									v-bind="
 										slotAttrs(
 											config.components?.banner?.actionGroup,
@@ -790,34 +902,22 @@ const onPanelReady = () => {
 									"
 									data-testid="consent-banner-footer-sub-group"
 								>
-									<ChoiceButton
-										consent-action="reject"
-										data-testid="consent-banner-reject-button"
-										@click="commit('refuse')"
-									>
-										{{ copy.reject }}
-									</ChoiceButton>
-									<ChoiceButton
-										consent-action="accept"
-										data-testid="consent-banner-accept-button"
-										@click="commit('allow')"
-									>
-										{{ copy.accept }}
-									</ChoiceButton>
+									<SummaryButton
+										v-for="action in group"
+										:key="action"
+										:action="action"
+										:label="summaryLabel(action, false)"
+										:expanded="expanded"
+										:in-bar="false"
+									/>
 								</div>
-								<ChoiceButton
-									ref="expandButtonRef"
-									consent-action="customize"
-									is-primary
-									:aria-expanded="expanded"
-									:aria-controls="ids.panel"
-									data-testid="consent-banner-customize-button"
-									@click="expand"
-									@focus="warm"
-									@pointerenter="warm"
-								>
-									{{ copy.expand }}
-								</ChoiceButton>
+								<SummaryButton
+									v-else
+									:action="group[0] as PresentationAction"
+									:label="summaryLabel(group[0] as PresentationAction, false)"
+									:expanded="expanded"
+									:in-bar="false"
+								/>
 							</template>
 						</div>
 					</template>

@@ -6,6 +6,7 @@ import type {
 	ConsentContainer,
 	ConsentEdgeStyle,
 	ConsentPresentation,
+	PromptPresentation,
 } from '@inth/sdk/engine';
 import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import {
@@ -17,9 +18,10 @@ import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { vi } from 'vitest';
 import { defineComponent, h } from 'vue';
-import type { ComponentPublicInstance } from 'vue';
+import type { ComponentPublicInstance, VNodeChild } from 'vue';
 
 import InthProvider from '../runtime/components/inth-provider.vue';
+import PrivacyChoicesLink from '../runtime/components/privacy-choices-link.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import type { ConsentConfig } from '../runtime/config';
 import {
@@ -87,7 +89,11 @@ const CATEGORIES = [
 ] as const;
 
 let fixture = 0;
-const buildInit = function buildInit(region: Region): InitOutput {
+const buildInit = function buildInit(
+	region: Region,
+	extraRule: Partial<PolicyRule> = {},
+	language = 'en'
+): InitOutput {
 	fixture += 1;
 	const rule = {
 		categories: CATEGORIES.filter((name) => name !== 'necessary'),
@@ -97,6 +103,7 @@ const buildInit = function buildInit(region: Region): InitOutput {
 		prompt: 'choice',
 		scopeMode: 'permissive',
 		...RULES[region],
+		...extraRule,
 	} as PolicyRule;
 	return {
 		branding: 'inth',
@@ -104,7 +111,7 @@ const buildInit = function buildInit(region: Region): InitOutput {
 		policyResolution: writePolicyResolutionWire(
 			resolvePolicyRules({ countryCode: null, regionCode: null, rules: [rule] })
 		),
-		translations: { language: 'en', translations: enTranslations },
+		translations: { language, translations: enTranslations },
 	} as InitOutput;
 };
 
@@ -133,6 +140,19 @@ export interface MountOptions {
 	vendors?: boolean;
 	/** Extra values to provide to the surfaces. */
 	provide?: Record<symbol, unknown>;
+	/** Merged over the region's policy rule. */
+	rule?: Partial<PolicyRule>;
+	/** The resolved language, which sets the surfaces' `dir`. */
+	language?: string;
+	/** Merged into `presentation.prompt`. */
+	prompt?: Partial<PromptPresentation>;
+	/**
+	 * `'stub'` puts a plain button with the "Your Privacy Choices" test id
+	 * on the page, `'stock'` the stock `PrivacyChoicesLink`.
+	 */
+	link?: 'stub' | 'stock';
+	/** More page content, after the page controls. */
+	page?: () => VNodeChild;
 }
 
 let mounted: {
@@ -142,22 +162,29 @@ let mounted: {
 
 /** Page controls around the stock surfaces. */
 const Page = defineComponent({
-	setup() {
+	props: {
+		link: { default: 'stub', type: String },
+		page: { default: undefined, type: Function },
+	},
+	setup(props) {
 		return () => [
 			h('button', { type: 'button' }, 'Page action'),
-			h(
-				'button',
-				{
-					'data-testid': 'privacy-choices-link',
-					onClick: () => {
-						if (mounted) {
-							mounted.context.activeUI.value = 'manager';
-						}
-					},
-					type: 'button',
-				},
-				'Your Privacy Choices'
-			),
+			props.link === 'stock'
+				? h(PrivacyChoicesLink)
+				: h(
+						'button',
+						{
+							'data-testid': 'privacy-choices-link',
+							onClick: () => {
+								if (mounted) {
+									mounted.context.activeUI.value = 'manager';
+								}
+							},
+							type: 'button',
+						},
+						'Your Privacy Choices'
+					),
+			(props.page as (() => VNodeChild) | undefined)?.(),
 		];
 	},
 });
@@ -175,6 +202,11 @@ export const mountPrivacyChoices = async function mountPrivacyChoices({
 	config: extra,
 	vendors = false,
 	provide: extraProvide,
+	rule,
+	language,
+	prompt,
+	link = 'stub',
+	page,
 }: MountOptions = {}): Promise<VueConsentKernelContext> {
 	const config = {
 		consentCategories: [...CATEGORIES],
@@ -194,6 +226,7 @@ export const mountPrivacyChoices = async function mountPrivacyChoices({
 				blockUntilChoice,
 				container: container ?? undefined,
 				edgeStyle,
+				...prompt,
 			},
 		},
 		projectUrl: 'https://consent.example',
@@ -202,7 +235,7 @@ export const mountPrivacyChoices = async function mountPrivacyChoices({
 	} as ConsentConfig;
 	const context = createVueConsentKernelContext({
 		config,
-		prefetch: buildInit(region),
+		prefetch: buildInit(region, rule, language),
 	});
 	if (context.snapshot.value.policyRule.prompt !== 'none') {
 		context.activeUI.value = 'banner';
@@ -221,7 +254,7 @@ export const mountPrivacyChoices = async function mountPrivacyChoices({
 				...extraProvide,
 			},
 		},
-		slots: { default: () => h(Page) },
+		slots: { default: () => h(Page, { link, page }) },
 	});
 	mounted = { context, wrapper };
 	await settle();
@@ -280,4 +313,45 @@ export const setPhone = function setPhone(phone: boolean): void {
 			removeListener: () => undefined,
 		}))
 	);
+};
+
+/**
+ * Make `matchMedia` report the phone layout, and return a switch that
+ * moves between phone and desktop as a viewport resize does.
+ */
+export const setPhoneLive = function setPhoneLive(
+	phone: boolean
+): (next: boolean) => void {
+	let current = phone;
+	const listeners = new Set<() => void>();
+	vi.stubGlobal(
+		'matchMedia',
+		vi.fn((query: string) => {
+			const phoneQuery = query.includes('max-width');
+			return {
+				addEventListener: (_type: string, listener: () => void) => {
+					if (phoneQuery) {
+						listeners.add(listener);
+					}
+				},
+				addListener: () => undefined,
+				dispatchEvent: () => false,
+				get matches() {
+					return current && phoneQuery;
+				},
+				media: query,
+				onchange: null,
+				removeEventListener: (_type: string, listener: () => void) => {
+					listeners.delete(listener);
+				},
+				removeListener: () => undefined,
+			};
+		})
+	);
+	return (next: boolean) => {
+		current = next;
+		for (const listener of listeners) {
+			listener();
+		}
+	};
 };

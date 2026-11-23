@@ -132,7 +132,7 @@ const preferencesId = computed(() => `${props.idPrefix}-preferences`);
 				:inert="!preferencesOpen || undefined"
 			>
 				<div :class="expandStyles.inner">
-					<div style="padding-top: 8px">
+					<div :class="styles.preferencesBody">
 						<CategoryGroup
 							:id-prefix="idPrefix"
 							test-id-prefix="consent-banner"

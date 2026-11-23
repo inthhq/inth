@@ -5,8 +5,16 @@
  * (`prototypes/PRIVACY-CHOICES-REGRESSIONS.md`). Geometry checks stay in
  * React's browser tests and the parity runner: jsdom lays nothing out.
  */
+import {
+	hasPendingOptOutConfirmation,
+	markPendingOptOutConfirmation,
+	openOptInConfirmation,
+	watchPendingOptOutConfirmation,
+} from '@inth/sdk/surface-actions';
 import { afterEach, describe, expect, test, vi } from 'vitest';
+import { defineComponent, h } from 'vue';
 
+import { useOptOut } from '../runtime/composables/kernel';
 import type { MountOptions } from './privacy-choices-fixture';
 import {
 	$,
@@ -14,6 +22,7 @@ import {
 	must,
 	pageAction,
 	setPhone,
+	setPhoneLive,
 	settle,
 	unmountPrivacyChoices,
 	waitFor,
@@ -29,6 +38,31 @@ const mount = async (options: MountOptions = {}) => {
 	return context;
 };
 const snapshot = () => context?.snapshot.value;
+const kernel = () => {
+	if (!context) {
+		throw new Error('No kernel yet');
+	}
+	return context.kernel;
+};
+
+/** A page control that opts out in one click, as a "Do Not Sell" link does. */
+const OptOutNow = defineComponent({
+	setup() {
+		const optOut = useOptOut();
+		return () =>
+			h(
+				'button',
+				{
+					'data-testid': 'one-click-opt-out',
+					onClick: () => {
+						void optOut();
+					},
+					type: 'button',
+				},
+				'Do Not Sell'
+			);
+	},
+});
 
 const link = () => must<HTMLButtonElement>('privacy-choices-link');
 const card = () => must('consent-dialog-card');
@@ -512,7 +546,10 @@ describe('phone sheets', () => {
 
 	test('[NEST-01][COPY-05][NEST-08] US Preferences opens a sheet; its Done closes only it', async () => {
 		setPhone(true);
-		await mount({ edgeStyle: 'flush' });
+		await mount({
+			container: { edge: 'bottom', type: 'banner' },
+			edgeStyle: 'flush',
+		});
 		await openDialog();
 		expect(must('consent-dialog-root').getAttribute('data-edge-style')).toBe(
 			'flush'
@@ -553,5 +590,212 @@ describe('customization', () => {
 		expect(must('consent-dialog-rights-row-sale').className).toMatch(
 			/my-rights/u
 		);
+	});
+});
+
+describe('wave B round 1', () => {
+	test('[BNR-13] the dialog hosts an opt-in confirmation when no banner does', async () => {
+		await mount();
+		await openDialog();
+		const confirmed = vi.fn();
+		openOptInConfirmation(kernel(), confirmed, null);
+		await waitFor(() =>
+			expect($('opt-in-confirmation-confirm-button')).not.toBeNull()
+		);
+		must<HTMLButtonElement>('opt-in-confirmation-confirm-button').click();
+		await waitFor(() => expect(confirmed).toHaveBeenCalledTimes(1));
+	});
+
+	test('showTrigger renders the floating trigger under the Privacy Choices design', async () => {
+		await mount({ config: { showTrigger: true } });
+		await waitFor(() => expect($('consent-dialog-trigger')).not.toBeNull());
+		expect($('consent-dialog-card')).toBeNull();
+	});
+
+	test('[RCPT-01][FOC-03] the opt-out confirmation opens the Privacy Choices dialog on its receipt', async () => {
+		// A one-click opt-out with no reload due opens the confirmation; on
+		// this design it is the dialog, focused on the receipt.
+		await mount({
+			config: { reloadOnConsentRevoked: false },
+			page: () => h(OptOutNow),
+		});
+		const button = must<HTMLButtonElement>('one-click-opt-out');
+		button.focus();
+		button.click();
+		await waitFor(() =>
+			expect(
+				$('consent-dialog-receipt')?.getAttribute('data-open') ?? null
+			).toBe('true')
+		);
+		const receipt = must('consent-dialog-receipt');
+		await waitFor(() => expect(document.activeElement).toBe(receipt));
+		expect(receipt.getAttribute('tabindex')).toBe('-1');
+		expect(receipt.textContent).toMatch(/opted out/iu);
+		expect($('opt-out-confirmation-card')).toBeNull();
+		expect(snapshot()?.optOut).not.toBeNull();
+		// A later open starts on the title again.
+		must('consent-dialog-close').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await openDialog();
+	});
+
+	test('[RIGHT-08] after a revocation reload, the Privacy Choices dialog reopens on the receipt', async () => {
+		await mount();
+		await openDialog();
+		must('consent-dialog-right-option-sale-protect').click();
+		await waitFor(() => expect(snapshot()?.optOut).not.toBeNull());
+		must('consent-dialog-close').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		// What the next document does when the opt-out reloaded the page:
+		// the marker opens the confirmation once, which is this dialog.
+		markPendingOptOutConfirmation();
+		const stop = watchPendingOptOutConfirmation(kernel());
+		await waitFor(() => expect($('consent-dialog-card')).not.toBeNull());
+		const receipt = must('consent-dialog-receipt');
+		await waitFor(() => expect(document.activeElement).toBe(receipt));
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+		expect($('opt-out-confirmation-card')).toBeNull();
+		stop();
+	});
+
+	test('[BNR-05] Your Privacy Choices stays a way back in under US opt-in, without the opt-out icon', async () => {
+		await mount({ link: 'stock', region: 'us-opt-in' });
+		const choices = link();
+		expect(choices.textContent?.trim()).toBe('Your Privacy Choices');
+		expect(choices.querySelector('svg')).toBeNull();
+		expect(choices.hasAttribute('data-opt-out-variant')).toBe(false);
+		await openDialog();
+		must('consent-dialog-close').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await waitFor(() => expect(document.activeElement).toBe(link()));
+	});
+
+	test('[BNR-05] Your Privacy Choices stays the opt-out link under an opt-out policy', async () => {
+		await mount({ link: 'stock' });
+		expect(link().getAttribute('data-opt-out-variant')).not.toBeNull();
+	});
+
+	test('the classic design keeps Your Privacy Choices to opt-out policies', async () => {
+		await mount({
+			container: null,
+			design: null,
+			link: 'stock',
+			region: 'us-opt-in',
+		});
+		expect($('privacy-choices-link')).toBeNull();
+	});
+
+	test('[FOC-03] with the opener gone, focus returns to Your Privacy Choices', async () => {
+		const current = await mount({ link: 'stock' });
+		pageAction().focus();
+		current.activeUI.value = 'manager';
+		await waitFor(() => expect($('consent-dialog-title')).not.toBeNull());
+		pageAction().remove();
+		must('consent-dialog-close').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await waitFor(() => expect(document.activeElement).toBe(link()));
+	});
+
+	test('[NEST-03] only the top layer is exposed: covered and folded parts carry a real inert', async () => {
+		const resize = setPhoneLive(true);
+		await mount();
+		await openDialog();
+		// The receipt is folded until there is something to show.
+		expect(must('consent-dialog-receipt').hasAttribute('inert')).toBe(true);
+		must('consent-dialog-preferences-row').click();
+		await waitFor(() => expect($('consent-dialog-sheet')).not.toBeNull());
+		expect(card().hasAttribute('inert')).toBe(true);
+		expect(must('consent-dialog-sheet').hasAttribute('inert')).toBe(false);
+		resize(false);
+		await waitFor(() => expect($('consent-dialog-sheet')).toBeNull());
+		expect(card().hasAttribute('inert')).toBe(false);
+		expect(must('consent-dialog-preferences-panel').hasAttribute('inert')).toBe(
+			true
+		);
+	});
+
+	test('[NEST-03][NEST-06] a sheet reopened during its exit stays open', async () => {
+		const resize = setPhoneLive(true);
+		await mount({ config: { disableAnimation: false } });
+		await openDialog();
+		const row = must('consent-dialog-preferences-row');
+		row.click();
+		await waitFor(() => expect($('consent-dialog-sheet')).not.toBeNull());
+		must('consent-dialog-sheet-close').click();
+		await waitFor(() =>
+			expect(must('consent-dialog-sheet').getAttribute('data-state')).toBe(
+				'closed'
+			)
+		);
+		row.click();
+		await waitFor(() =>
+			expect(must('consent-dialog-sheet').getAttribute('data-state')).toBe(
+				'open'
+			)
+		);
+		// Past the old exit timer, the reopened sheet is still there.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 300);
+		});
+		expect(must('consent-dialog-sheet').getAttribute('data-state')).toBe(
+			'open'
+		);
+		expect(must('consent-dialog-sheet').hasAttribute('inert')).toBe(false);
+		// A move to desktop clears a closing sheet at once.
+		must('consent-dialog-sheet-close').click();
+		await waitFor(() =>
+			expect(must('consent-dialog-sheet').getAttribute('data-state')).toBe(
+				'closed'
+			)
+		);
+		resize(false);
+		await settle(1);
+		expect($('consent-dialog-sheet')).toBeNull();
+	});
+
+	test('[NEST-01] phone sheets take the resolved phone edge style: a Card is always inset', async () => {
+		setPhone(true);
+		await mount({ edgeStyle: 'flush' });
+		await openDialog();
+		expect(must('consent-dialog-root').getAttribute('data-edge-style')).toBe(
+			'inset'
+		);
+	});
+
+	test('[CAT-09] sheet chevrons point to the reading direction; accordion chevrons point down', async () => {
+		await mount({ region: 'eu' });
+		await openDialog();
+		const vendor = must('consent-dialog-vendor-trigger-measurement');
+		expect(
+			vendor.querySelector('[data-direction]')?.getAttribute('data-direction')
+		).toBe('down');
+		expect(
+			must('consent-dialog-root').querySelector('[data-direction="end"]')
+		).toBeNull();
+	});
+
+	test('[CAT-09] the phone Preferences chevron points the reading direction', async () => {
+		setPhone(true);
+		await mount({ language: 'he' });
+		await openDialog();
+		expect(must('consent-dialog-root').getAttribute('dir')).toBe('rtl');
+		expect(
+			must('consent-dialog-preferences-row').querySelector(
+				'[data-direction="end"]'
+			)
+		).not.toBeNull();
+	});
+
+	test('[COPY-05] the Preferences count follows the draft as it changes', async () => {
+		await mount();
+		await openDialog();
+		const row = must('consent-dialog-preferences-row');
+		const before = row.textContent;
+		row.click();
+		await waitFor(() =>
+			expect($('consent-dialog-category-switch-measurement')).not.toBeNull()
+		);
+		must('consent-dialog-category-switch-measurement').click();
+		await waitFor(() => expect(row.textContent).not.toBe(before));
 	});
 });

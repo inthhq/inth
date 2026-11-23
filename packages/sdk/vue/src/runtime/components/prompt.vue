@@ -248,10 +248,13 @@ const onAction = function onAction(action: PresentationAction) {
 	<PrivacyChoicesBanner
 		v-if="privacyChoicesContainer"
 		:container="privacyChoicesContainer"
+		:action-groups="actionGroups"
 		:disable-animation="props.disableAnimation"
 	/>
+	<!-- Either design hosts the opt-in confirmation: this banner claimed the
+	     host, so no other surface renders it. -->
 	<LazyOptInConfirmation
-		v-if="!privacyChoicesContainer && optInConfirmationActive"
+		v-if="optInConfirmationActive"
 		:disable-animation="props.disableAnimation"
 	/>
 	<Teleport
