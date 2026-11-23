@@ -4,6 +4,9 @@ import type { Preview } from '@storybook/html-vite';
 // carries the default theme tokens, so nothing has to inject a theme at
 // runtime — which is the whole point of a server-rendered banner.
 import '@inth/astro/styles.css';
+// What a `styles: false` site with the Svelte dialog imports too: the
+// Svelte IAB dialog renders its rows with the primitives class maps.
+import '@inth/astro/primitives.css';
 import '@inth/sdk/ui/iab/styles.css';
 
 const storybookCanvasStyleId = 'inth-storybook-canvas';

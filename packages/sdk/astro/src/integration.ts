@@ -93,6 +93,12 @@ export const createOwnEntryResolver =
  */
 const WIDGET_STYLESHEET = '@inth/sdk/ui/styles/sheets/widget.css';
 const IAB_DIALOG_STYLESHEET = '@inth/sdk/ui/styles/sheets/iab-dialog.css';
+/**
+ * The `@inth/sdk/ui/styles/primitives` class maps' rules. Svelte's IAB
+ * dialog renders its purposes, features and vendors with them, and neither
+ * `styles.css` nor the IAB sheets carry them.
+ */
+const PRIMITIVES_STYLESHEET = '@inth/sdk/ui/styles/primitives.css';
 
 /**
  * What each `ui` adapter needs from the app, keyed by adapter name.
@@ -634,10 +640,20 @@ export const buildBootScript = function buildBootScript(
 	//
 	// `?url` makes each stylesheet an emitted file and the import a string,
 	// so none of its rules reach the page until the client links it. Pages
-	// that link `styles.css` already have the IAB dialog's rules.
-	if (resolved.inlineStyles && isIABConfigured(resolved.iab)) {
+	// that link `styles.css` already have the IAB dialog's own rules, but
+	// not the primitives' that Svelte's IAB dialog renders.
+	const iabStyles = [
 		// The IAB dialog renders the widget's tabs, switches and vendor list.
-		const iabStyles = [WIDGET_STYLESHEET, IAB_DIALOG_STYLESHEET];
+		...(resolved.inlineStyles
+			? [WIDGET_STYLESHEET, IAB_DIALOG_STYLESHEET]
+			: []),
+		...(ui === 'svelte' ? [PRIMITIVES_STYLESHEET] : []),
+	];
+	if (
+		resolved.styles !== false &&
+		isIABConfigured(resolved.iab) &&
+		iabStyles.length > 0
+	) {
 		const names = iabStyles.map((_, index) => `iabDialogStyle${index}`);
 		iabStyles.forEach((specifier, index) => {
 			page.push(
