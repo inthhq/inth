@@ -6,6 +6,12 @@ import type {
 } from '@inth/sdk-schema/types';
 
 import type { OptOutLinkVariant } from './consent-copy';
+import { containerFromLegacyPrompt, resolveLayout } from './consent-layout';
+import type {
+	ConsentContainer,
+	ConsentLayoutOptions,
+	ResolvedConsentLayout,
+} from './consent-layout';
 
 /** Semantic control roles, independent of their visual variant. */
 export type PresentationAction =
@@ -96,9 +102,11 @@ export interface SurfacePresentation {
 }
 
 /** Presentation of the first interaction required by a policy. */
-export interface PromptPresentation extends SurfacePresentation {
+export interface PromptPresentation
+	extends SurfacePresentation, ConsentLayoutOptions {
 	/**
 	 * Shape of the prompt. Defaults to `floating`. A notice cannot use `wall`.
+	 * Ignored by the resolved `container` when `container` is set.
 	 */
 	variant?: PromptVariant;
 	/**
@@ -177,6 +185,16 @@ export interface ResolvedConsentPresentation {
 	positionSource: 'host' | 'default';
 	/** Backdrop, scroll lock, focus trap and no outside dismissal, resolved. */
 	blocking: boolean;
+	/**
+	 * Card, Banner or Drawer layout for the prompt, resolved for desktop and
+	 * for phone (see `PHONE_LAYOUT_QUERY`). Built from `container`, or from
+	 * the legacy `variant` and `position` when `container` is absent. `null`
+	 * on the preferences surface.
+	 */
+	container: {
+		desktop: ResolvedConsentLayout;
+		phone: ResolvedConsentLayout;
+	} | null;
 }
 
 /**
@@ -367,6 +385,41 @@ const resolveSurfaceGeometry = function resolveSurfaceGeometry(
 };
 
 /**
+ * Resolve the prompt's Card, Banner or Drawer layout for both viewports.
+ * Legacy `variant`, `position` and `blocking` map onto the new options
+ * when `container` and `blockUntilChoice` are absent.
+ */
+const resolvePromptContainer = function resolvePromptContainer(
+	surface: 'prompt' | 'preferences',
+	options: PromptPresentation,
+	policy: ResolvedPolicyRule
+): ResolvedConsentPresentation['container'] {
+	if (surface === 'preferences') {
+		return null;
+	}
+	let container: ConsentContainer | undefined = options.container;
+	const legacy =
+		container === undefined &&
+		(options.variant !== undefined || options.position !== undefined)
+			? containerFromLegacyPrompt({
+					position: options.position,
+					variant: options.variant,
+				})
+			: undefined;
+	container ??= legacy?.container;
+	const input = {
+		blockUntilChoice: options.blockUntilChoice ?? options.blocking,
+		container,
+		edgeStyle: options.edgeStyle,
+		model: policy.model,
+		prompt: policy.prompt,
+	};
+	const desktop = resolveLayout({ ...input, viewport: 'desktop' });
+	desktop.diagnostics.unshift(...(legacy?.diagnostics ?? []));
+	return { desktop, phone: resolveLayout({ ...input, viewport: 'phone' }) };
+};
+
+/**
  * Resolve host presentation without changing policy behavior.
  * @param input - Active policy, target surface, host options and local overrides.
  * @returns Ordered controls, required actions, rights and diagnostics.
@@ -470,6 +523,7 @@ export const resolveConsentPresentation =
 			...geometry,
 			actionGroups,
 			allowedActions,
+			container: resolvePromptContainer(input.surface, options, input.policy),
 			diagnostics,
 			direction,
 			equivalentActions,

@@ -311,6 +311,30 @@ export {
 	resolveConsentPresentation,
 } from './libs/policy-actions';
 export {
+	containerFromLegacyPrompt,
+	DEFAULT_CONSENT_CONTAINER,
+	PHONE_LAYOUT_MAX_WIDTH,
+	PHONE_LAYOUT_QUERY,
+	resolveLayout,
+} from './libs/consent-layout';
+export type {
+	BannerEdge,
+	CardPosition,
+	ConsentBlockingConstraint,
+	ConsentContainer,
+	ConsentContainerType,
+	ConsentEdgeStyle,
+	ConsentFlow,
+	ConsentLayoutDiagnostic,
+	ConsentLayoutOptions,
+	ConsentPlacement,
+	ConsentViewport,
+	DrawerSide,
+	LegacyPromptPresentation,
+	ResolvedConsentLayout,
+	ResolveLayoutInput,
+} from './libs/consent-layout';
+export {
 	defineExperiment,
 	hostExperiment,
 	seedExperiment,

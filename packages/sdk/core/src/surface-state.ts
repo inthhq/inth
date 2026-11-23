@@ -25,6 +25,11 @@ export { vendorsListedUnder } from './libs/vendor-listing';
 export { IABUnavailableError, policyNeedsIAB } from './libs/iab-unavailable';
 export { resolveConsentPresentation } from './libs/policy-actions';
 export {
+	PHONE_LAYOUT_MAX_WIDTH,
+	PHONE_LAYOUT_QUERY,
+	resolveLayout,
+} from './libs/consent-layout';
+export {
 	resolveActionLabels,
 	resolveCategoryTitle,
 	resolveIABCopy,
