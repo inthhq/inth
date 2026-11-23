@@ -83,22 +83,20 @@ so Tailwind 3 does not drop rules or reset buttons. Set
 
 ## Change the banner's layout
 
-Configure shape, position and button arrangement under `presentation.prompt`:
+Set the container and the button arrangement under `presentation.prompt`:
 
 {/* example: fragment */}
 
 ```ts
 presentation: {
-  prompt: { variant: 'bar', position: 'bottom', uiProfile: 'balanced' },
+  prompt: {
+    container: { type: 'banner', edge: 'bottom' },
+    uiProfile: 'balanced',
+  },
 },
 ```
 
-| `variant` | Positions |
-| --- | --- |
-| `floating` (default) | `bottom-left` (default), `bottom-right`, `top-left`, `top-right`, `bottom-center`, `top-center` |
-| `bar` | `bottom` (default), `top` |
-| `widget` | `bottom-right` (default), `bottom-left`, `top-left`, `top-right` |
-| `wall` | `center` |
+<import src="../../shared/browser/client-options.mdx#containers" />
 
 `layout`, `primaryActions`, `direction`, `uiProfile` and `blocking` also work
 on `presentation.preferences` (plus `defaults` for initial switch states).
