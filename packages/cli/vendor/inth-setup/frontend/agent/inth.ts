@@ -1,6 +1,7 @@
 import { readBackendURL } from '../../generate/backend-url.ts';
 import { c15tDistTag } from '../../generate/release.ts';
 import { isBoilerplateFramework } from '../../generate/types.ts';
+import type { BoilerplateFramework } from '../../generate/types.ts';
 import type { AgentSetupPlan } from './prompt.ts';
 
 /** Docs site for the `@inth` packages. Links add `/docs/...`. */
@@ -12,6 +13,28 @@ export interface InthAgentSetupOptions {
 	projectUrl: string;
 	framework?: string;
 }
+
+/**
+ * The docs folder for each generator target. The docs have one Next.js and
+ * one Astro guide, and Solid has no package, so it follows plain JavaScript.
+ */
+const DOCS_FRAMEWORKS: Record<BoilerplateFramework, string> = {
+	astro: 'astro',
+	'astro-static': 'astro',
+	html: 'html',
+	javascript: 'javascript',
+	'next-app': 'next',
+	'next-pages': 'next',
+	nuxt: 'nuxt',
+	react: 'react',
+	solid: 'javascript',
+	svelte: 'svelte',
+	sveltekit: 'sveltekit',
+	'tanstack-start': 'tanstack-start',
+	vue: 'vue',
+};
+
+const DOCS_FOLDERS = [...new Set(Object.values(DOCS_FRAMEWORKS))].join(', ');
 
 /**
  * Exact-version lookups per package manager. Package managers do not share
@@ -66,7 +89,7 @@ Show the inventory as a short checklist and continue. Ask the questions from the
 
 ## 2. Install Inth
 
-Install only the packages the framework's quickstart installs (\`${origin}/docs/frameworks/<framework>/quickstart.md\`), and skip \`@inth/integrations\` when no vendor helper is used. Each framework installs its own package, such as \`@inth/nextjs\` or \`@inth/svelte\`, and a plain HTML site that loads Inth with a script tag installs nothing. Resolve the exact version of each \`@inth/*\` package from the \`${distTag}\` dist-tag first. Use the command for the project's package manager; \`npm view\` also works anywhere npm is installed:
+Install only the packages the framework's quickstart installs (the \`quickstart\` setup input, or \`${origin}/docs/frameworks/<framework>/quickstart.md\` with <framework> one of ${DOCS_FOLDERS}), and skip \`@inth/integrations\` when no vendor helper is used. Each framework installs its own package, such as \`@inth/nextjs\` or \`@inth/svelte\`, and a plain HTML site that loads Inth with a script tag installs nothing. Resolve the exact version of each \`@inth/*\` package from the \`${distTag}\` dist-tag first. Use the command for the project's package manager; \`npm view\` also works anywhere npm is installed:
 
 ${versionLookup(distTag)}
 
@@ -163,9 +186,12 @@ export const createInthAgentSetupPlan = (
 	if (options.framework && !isBoilerplateFramework(options.framework)) {
 		throw new Error(`Unknown framework: ${options.framework}`);
 	}
+	const quickstart = options.framework
+		? `${INTH_DOCS_ORIGIN}/docs/frameworks/${DOCS_FRAMEWORKS[options.framework as BoilerplateFramework]}/quickstart.md`
+		: undefined;
 	// Select named fields so host authentication state cannot enter the prompt.
 	const configuration = JSON.stringify(
-		{ framework: options.framework, projectUrl },
+		{ framework: options.framework, projectUrl, quickstart },
 		null,
 		2
 	);

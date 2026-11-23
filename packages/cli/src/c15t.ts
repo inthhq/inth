@@ -236,6 +236,17 @@ const setScaffoldFlag = (setup: SetupOptions, arg: string): boolean => {
   return true;
 };
 
+// The scaffold-only flags choose scaffold, so a dry run never starts an
+// agent from the picker.
+const impliedScaffold = (setup: SetupOptions): void => {
+  if (
+    !setup.action &&
+    (setup.dryRun || setup.yes || setup.skipInstall || setup.resume)
+  ) {
+    setup.action = "scaffold";
+  }
+};
+
 // Parses everything after `c15t` or `init`, including the shared flags the
 // main parser would otherwise consume.
 export const parseSetupArguments = (
@@ -283,6 +294,7 @@ export const parseSetupArguments = (
       throw new CliError("usage_error", setupUsage(command));
     }
   }
+  impliedScaffold(setup);
   validate(setup);
   if (setup.action === "agent" && result.json) {
     throw new CliError(

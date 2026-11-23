@@ -125,6 +125,14 @@ describe("inth init arguments", () => {
     });
   });
 
+  it.each([["--dry-run"], ["--yes"], ["--skip-install"], ["--resume"]])(
+    "takes %s without an action as scaffold",
+    (flag) => {
+      expect(parseArguments(["init", flag]).setup?.action).toBe("scaffold");
+      expect(parseArguments(["c15t", flag]).setup?.action).toBe("scaffold");
+    }
+  );
+
   it.each([
     [["codemods"], "Usage: inth init"],
     [["--limit", "5"], "Run inth init --help."],

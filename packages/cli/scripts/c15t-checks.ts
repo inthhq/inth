@@ -1901,6 +1901,26 @@ const verifyInit = (
   );
   assert.doesNotMatch(promptData.prompt ?? "", /c15t\.com|backendURL/u);
 
+  // A dry run without an action previews the scaffold; it starts no agent.
+  const preview = run(
+    test,
+    [
+      "init",
+      "--dry-run",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--json",
+    ],
+    react
+  );
+  assert.equal(preview.status, 0, preview.stderr);
+  assert.equal(
+    envelope.parse(JSON.parse(preview.stdout)).data.action,
+    "scaffold"
+  );
+
   const created = run(
     test,
     [

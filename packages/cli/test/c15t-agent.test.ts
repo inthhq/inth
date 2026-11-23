@@ -56,6 +56,21 @@ it("gives inth init an Inth prompt with the project URL and Inth docs", () => {
   expect(prompt).not.toContain("backendURL");
 });
 
+it.each([
+  ["next-pages", "next"],
+  ["astro-static", "astro"],
+  ["solid", "javascript"],
+  ["sveltekit", "sveltekit"],
+])("links the %s quickstart in the %s docs", (framework, folder) => {
+  const { prompt } = createInthAgentSetupPlan({
+    framework,
+    projectUrl: "https://website.inth.app",
+  });
+  expect(prompt).toContain(
+    `"quickstart": "https://inth.com/docs/frameworks/${folder}/quickstart.md"`
+  );
+});
+
 it("rejects a project URL with credentials", () => {
   expect(() =>
     createInthAgentSetupPlan({ projectUrl: "https://user:pass@a.inth.app" })
