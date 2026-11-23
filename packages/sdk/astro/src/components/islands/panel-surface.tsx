@@ -11,10 +11,20 @@
  * borrows it and leaves `start()`/`dispose()` to the owner.
  */
 
-import { InthProvider } from '@inth/react';
+import { InthProvider, OptOutConfirmation } from '@inth/react';
 import type { LegalLinks } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
-import { useEffect, useState } from 'react';
+import {
+	hasOptOutConfirmationHost,
+	subscribeOptOutConfirmation,
+} from '@inth/sdk/surface-actions';
+import {
+	useCallback,
+	useEffect,
+	useMemo,
+	useState,
+	useSyncExternalStore,
+} from 'react';
 import type { ComponentType } from 'react';
 
 import type { DialogPresentationOptions } from '../../ui/provider-props';
@@ -170,14 +180,41 @@ const ConsentDialogSurface = ({
 	tab,
 	legalLinks,
 }: ConsentDialogSurfaceProps) => {
+	// A page with `<OptOutConfirmation />` asks for the standalone
+	// confirmation, as React's `<OptOutConfirmation />` shows it. Mounting
+	// React's claims the confirmation, so the dialog does not adopt it and
+	// open on its receipt instead.
+	const standaloneOptOut = useMemo(
+		() =>
+			document.querySelector('[data-inth-opt-out-confirmation-host]') !== null,
+		[]
+	);
+	// The confirmation claims the host in an effect. A dialog rendered in the
+	// same commit has already read the host as unclaimed and adopts the
+	// confirmation in its own effect, so it waits for the claim.
+	const subscribeHost = useCallback(
+		(listener: () => void) =>
+			subscribeOptOutConfirmation(runtime.kernel, listener),
+		[runtime.kernel]
+	);
+	const hostClaimed = useSyncExternalStore(subscribeHost, () =>
+		hasOptOutConfirmationHost(runtime.kernel)
+	);
 	const surface =
 		kind === 'iab' ? (
 			<IABDialogSurface tab={tab} />
 		) : (
-			<PreferencesDialogSurface
-				disableAnimation={options.disableAnimation}
-				legalLinks={legalLinks}
-			/>
+			<>
+				{standaloneOptOut ? (
+					<OptOutConfirmation disableAnimation={options.disableAnimation} />
+				) : null}
+				{!standaloneOptOut || hostClaimed ? (
+					<PreferencesDialogSurface
+						disableAnimation={options.disableAnimation}
+						legalLinks={legalLinks}
+					/>
+				) : null}
+			</>
 		);
 	return (
 		<InthProvider
