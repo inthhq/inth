@@ -1,14 +1,14 @@
 /**
- * The browser half of the Privacy Choices prompt (v6).
+ * The browser half of the consent prompt.
  *
  * Its own chunk, loaded by the engine when the page's `<ConsentBanner />`
- * spot carries the Privacy Choices class names and the snapshot resolves
- * to that design. It adopts the prompt the server rendered, or renders it
+ * spot is on the page and the snapshot shows the prompt. It adopts the
+ * prompt the server rendered, or renders it
  * into the spot when the server could not know the policy, and owns it
  * from there: the phone layout, Customize and the options it opens in
  * place (a chunk of their own), the commit, the page announcement and the
  * focus return, blocking, and Escape. It mirrors React's
- * `PrivacyChoicesSurface` step for step; React is the parity baseline.
+ * prompt surface step for step; React is the parity baseline.
  *
  * @internal
  */
@@ -47,30 +47,27 @@ import {
 import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
 import { tabbableElements } from '@inth/sdk/ui/utils';
 
-import type { PromptProps } from '../banner/prompt-model';
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
-import type { PrivacyChoicesClassNames } from '../privacy-choices/class-names';
-import { resolvePrivacyChoicesModel } from '../privacy-choices/model';
+import { containerSheetsPresent, insertSheets } from '../parts/sheets';
+import type { StyleSheet } from '../parts/sheets';
+import { patchElement } from '../parts/vnode';
+import type { VElement } from '../parts/vnode';
+import type { PromptClassNames } from '../prompt/class-names';
+import { resolvePromptModel } from '../prompt/model';
 import type {
-	PrivacyChoicesModel,
-	PrivacyChoicesOptions,
-	PrivacyChoicesPresentation,
-} from '../privacy-choices/model';
-import type * as PanelModule from '../privacy-choices/panel';
-import type { PrivacyChoicesPanel } from '../privacy-choices/panel';
+	PromptContainerType,
+	PromptModel,
+	PromptOptions,
+	PromptProps,
+} from '../prompt/model';
+import type * as PanelModule from '../prompt/panel';
+import type { PromptPanel } from '../prompt/panel';
 import {
-	insertSheets,
-	presentationSheetsPresent,
-} from '../privacy-choices/sheets';
-import type { PrivacyChoicesSheet } from '../privacy-choices/sheets';
-import {
-	PRIVACY_CHOICES_ID_PREFIX,
+	PROMPT_ID_PREFIX,
 	promptIds,
 	renderPageStatus,
 	renderPrompt,
-} from '../privacy-choices/view';
-import { patchElement } from '../privacy-choices/vnode';
-import type { VElement } from '../privacy-choices/vnode';
+} from '../prompt/view';
 
 /** Exits are 160ms; the controllers add their own slack. */
 const EXIT_MS = 160;
@@ -85,61 +82,58 @@ const RETURN_TARGETS = [
 const MODELS = ['opt-in', 'opt-out'];
 
 /** Marks the prompt the server rendered. */
-export const PRIVACY_CHOICES_ROOT_SELECTOR =
-	'[data-testid="consent-banner-root"][data-design="privacy-choices"]';
+export const PROMPT_ROOT_SELECTOR = '[data-testid="consent-banner-root"]';
 
 const PAGE_STATUS_SELECTOR = '[data-testid="consent-banner-announcement"]';
 
-/** What the spot carries for the Privacy Choices prompt. */
-export interface PrivacyChoicesSpotData {
+/** What the spot carries for the prompt. */
+export interface PromptSpotData {
 	props: PromptProps;
-	privacyChoices: PrivacyChoicesClassNames;
+	classNames: PromptClassNames;
 }
 
 /** What the prompt needs from the page's engine. */
-export interface PrivacyChoicesHost {
+export interface PromptHost {
 	kernel: ConsentKernel;
-	options: PrivacyChoicesOptions & {
+	options: PromptOptions & {
 		inlineStyles?: boolean;
-		presentation?: PrivacyChoicesOptions['presentation'];
+		presentation?: PromptOptions['presentation'];
 	};
 	/** The page's CSP nonce, for the `<style>` elements it adds. */
 	nonce?: string;
-	/** Warm the dialog's chunks on intent, as the classic Customize does. */
+	/** Warm the dialog's chunks on intent. */
 	warmDialog?: () => void;
 }
 
 /** A mounted prompt. */
-export interface PrivacyChoicesController {
+export interface PromptController {
 	/** The spot it renders beside. */
 	readonly spot: HTMLElement;
 	dispose: () => void;
 }
 
-/** The sheets of one presentation, each a chunk of its own. */
-const PRESENTATION_SHEETS: Record<
-	PrivacyChoicesPresentation,
-	() => Promise<PrivacyChoicesSheet>
-> = {
-	bar: () => import('@inth/sdk/ui/styles/sheets/banner'),
-	card: () => import('@inth/sdk/ui/styles/sheets/card'),
-	drawer: () => import('@inth/sdk/ui/styles/sheets/drawer'),
-};
+/** The sheets of one container, each a chunk of its own. */
+const CONTAINER_SHEETS: Record<PromptContainerType, () => Promise<StyleSheet>> =
+	{
+		banner: () => import('@inth/sdk/ui/styles/sheets/banner'),
+		card: () => import('@inth/sdk/ui/styles/sheets/card'),
+		drawer: () => import('@inth/sdk/ui/styles/sheets/drawer'),
+	};
 
 /**
- * Load the sheets a presentation renders, in cascade order: the tokens,
- * the buttons, the shell, then that presentation's rules and no other's.
+ * Load the sheets a container renders, in cascade order: the tokens, the
+ * buttons, the shell, then that container's rules and no other's.
  *
  * @internal
  */
-export const loadPresentationSheets = async function loadPresentationSheets(
-	presentation: PrivacyChoicesPresentation
-): Promise<PrivacyChoicesSheet[]> {
+export const loadContainerSheets = async function loadContainerSheets(
+	presentation: PromptContainerType
+): Promise<StyleSheet[]> {
 	return await Promise.all([
 		import('@inth/sdk/ui/styles/sheets/tokens'),
 		import('@inth/sdk/ui/styles/sheets/button'),
 		import('@inth/sdk/ui/styles/sheets/surface'),
-		PRESENTATION_SHEETS[presentation](),
+		CONTAINER_SHEETS[presentation](),
 	]);
 };
 
@@ -148,8 +142,7 @@ export const loadPresentationSheets = async function loadPresentationSheets(
  *
  * @internal
  */
-let loadPanel = (): Promise<typeof PanelModule> =>
-	import('../privacy-choices/panel');
+let loadPanel = (): Promise<typeof PanelModule> => import('../prompt/panel');
 
 /**
  * Tests only.
@@ -159,20 +152,20 @@ let loadPanel = (): Promise<typeof PanelModule> =>
 export const setPanelLoaderForTest = function setPanelLoaderForTest(
 	loader?: () => Promise<typeof PanelModule>
 ): void {
-	loadPanel = loader ?? (() => import('../privacy-choices/panel'));
+	loadPanel = loader ?? (() => import('../prompt/panel'));
 };
 
-/** Read the spot's JSON, or `null` without the Privacy Choices class names. */
-export const readPrivacyChoicesSpot = function readPrivacyChoicesSpot(
+/** Read the spot's JSON, or `null` without the prompt's class names. */
+export const readPromptSpot = function readPromptSpot(
 	spot: Element
-): PrivacyChoicesSpotData | null {
+): PromptSpotData | null {
 	try {
 		const parsed = JSON.parse(spot.getAttribute(PROMPT_SLOT_ATTRIBUTE) ?? '');
-		if (!parsed?.privacyChoices) {
+		if (!parsed?.classNames) {
 			return null;
 		}
 		return {
-			privacyChoices: parsed.privacyChoices as PrivacyChoicesClassNames,
+			classNames: parsed.classNames as PromptClassNames,
 			props: (parsed.props ?? {}) as PromptProps,
 		};
 	} catch {
@@ -208,28 +201,28 @@ type Phase = 'hidden' | 'shown' | 'leaving';
  *
  * @param spot - The element `<ConsentBanner />` left, with its JSON.
  * @param host - The page's kernel and options.
- * @returns The controller, or `null` when the spot carries no Privacy
- * Choices class names.
+ * @returns The controller, or `null` when the spot carries no class
+ * names.
  */
 // oxlint-disable-next-line max-lines-per-function, max-statements -- One controller owns the prompt's lifecycle, focus and keys so they stay in step, as React's surface does.
-export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
+export const mountPrompt = function mountPrompt(
 	spot: HTMLElement,
-	host: PrivacyChoicesHost
-): PrivacyChoicesController | null {
-	const data = readPrivacyChoicesSpot(spot);
+	host: PromptHost
+): PromptController | null {
+	const data = readPromptSpot(spot);
 	if (!data) {
 		return null;
 	}
 	const { kernel, options } = host;
-	const { props, privacyChoices: classNames } = data;
+	const { props, classNames } = data;
 	const session: SurfaceSession = getSurfaceSession(kernel);
 	const draft: PreferenceDraft = createPreferenceDraft(kernel, {
 		defaults: options.presentation?.preferences?.defaults,
 	});
 	const injectStyles = options.inlineStyles !== false && props.noStyle !== true;
-	const ids = promptIds(PRIVACY_CHOICES_ID_PREFIX);
+	const ids = promptIds(PROMPT_ID_PREFIX);
 
-	let root = document.querySelector<HTMLElement>(PRIVACY_CHOICES_ROOT_SELECTOR);
+	let root = document.querySelector<HTMLElement>(PROMPT_ROOT_SELECTOR);
 	// The page's status region outlives the prompt, so a choice is read
 	// after the prompt leaves (BNR-06). Like React's, it exists from the
 	// first time a prompt is owed: a page that never owes one has none.
@@ -249,15 +242,15 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 	// A prompt waits for its presentation's sheets, as React's surface
 	// waits for its deferred sheets. A server-rendered prompt usually
 	// arrived with them, but a deferred or swapped-in one may not have.
-	const sheetsReady = new Set<PrivacyChoicesPresentation>();
-	let sheetsLoading: PrivacyChoicesPresentation | null = null;
+	const sheetsReady = new Set<PromptContainerType>();
+	let sheetsLoading: PromptContainerType | null = null;
 	let phase: Phase = root && !root.hidden ? 'shown' : 'hidden';
 	let disposed = false;
 	let phone = matches(PHONE_LAYOUT_QUERY);
 	let panelWanted = false;
 	let panelModule: typeof PanelModule | null = null;
 	let panelLoading: Promise<typeof PanelModule> | null = null;
-	let panel: PrivacyChoicesPanel | null = null;
+	let panel: PromptPanel | null = null;
 	let panelContext: PanelModule.PanelContext | null = null;
 	/** A choice was made here: release, announce and return focus as the prompt leaves. */
 	let committed: string | null = null;
@@ -270,7 +263,7 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 	let cancelPanelFocus = 0;
 	let scheduled = false;
 	let listenersOn: HTMLElement | null = null;
-	let lastModel: PrivacyChoicesModel | null = null;
+	let lastModel: PromptModel | null = null;
 	let idle: number | null = null;
 
 	/** The host theme with the visitor's experiment arm over it, as the server renders it. */
@@ -336,7 +329,7 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 				: window.setTimeout(warmPanel, 2000);
 	};
 
-	const ensurePanel = (model: PrivacyChoicesModel): void => {
+	const ensurePanel = (model: PromptModel): void => {
 		if (panel || !panelModule || !panelWanted) {
 			return;
 		}
@@ -352,18 +345,18 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 			uiSource: 'banner',
 			variant: model.variant,
 		};
-		panel = panelModule.createPrivacyChoicesPanel(
+		panel = panelModule.createPromptPanel(
 			panelContext,
 			injectStyles ? { nonce: host.nonce } : null
 		);
 	};
 
 	/** Whether the presentation's sheets are in; starts loading them if not. */
-	const ensureSheets = (presentation: PrivacyChoicesPresentation): boolean => {
+	const ensureSheets = (presentation: PromptContainerType): boolean => {
 		if (!injectStyles || sheetsReady.has(presentation)) {
 			return true;
 		}
-		if (presentationSheetsPresent(presentation)) {
+		if (containerSheetsPresent(presentation)) {
 			sheetsReady.add(presentation);
 			return true;
 		}
@@ -373,7 +366,7 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 		sheetsLoading = presentation;
 		void (async () => {
 			try {
-				insertSheets(await loadPresentationSheets(presentation), host.nonce);
+				insertSheets(await loadContainerSheets(presentation), host.nonce);
 			} catch {
 				// An unstyled consent prompt beats a hidden one.
 			}
@@ -593,7 +586,7 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 		const snapshot = kernel.getSnapshot();
 		// The arm's theme overrides ride on the host theme, as on the server.
 		const theme = themeFor(snapshot);
-		const model = resolvePrivacyChoicesModel({
+		const model = resolvePromptModel({
 			classNames,
 			hostname: window.location.hostname,
 			options: { ...options, theme },
@@ -602,12 +595,6 @@ export const mountPrivacyChoicesBanner = function mountPrivacyChoicesBanner(
 			snapshot,
 		});
 		lastModel = model;
-		if (!model) {
-			// The policy moved to the classic design; the classic banner owns it.
-			removeRoot();
-			phase = 'hidden';
-			return;
-		}
 		const activeUI = snapshot.activeUI ?? 'none';
 		const owed =
 			hasConsentUI(snapshot) &&

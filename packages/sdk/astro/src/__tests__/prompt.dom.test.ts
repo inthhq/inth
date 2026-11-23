@@ -1,6 +1,6 @@
 /**
- * The Privacy Choices (v6) prompt in the browser, ported from React's
- * `privacy-choices-banner.test.tsx`: the page boots on the prompt the
+ * The consent prompt in the browser, ported from React's prompt tests:
+ * the page boots on the prompt the
  * server rendered, as a real page does, and the browser controller takes
  * it over. Each test names the invariant it guards
  * (`prototypes/PRIVACY-CHOICES-REGRESSIONS.md`). Layout measurements stay
@@ -10,7 +10,6 @@
 import type {
 	ConsentContainer,
 	ConsentEdgeStyle,
-	ConsentPresentation,
 	LegalLinks,
 } from '@inth/sdk/engine';
 import { getSurfaceSession } from '@inth/sdk/engine';
@@ -19,8 +18,8 @@ import { openOptInConfirmation } from '@inth/sdk/surface-actions';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
-import * as privacyChoicesPrompt from '../browser/privacy-choices';
-import { loadPresentationSheets } from '../browser/privacy-choices';
+import * as promptChunk from '../browser/prompt';
+import { loadContainerSheets } from '../browser/prompt';
 import {
 	boot,
 	preloadDialog,
@@ -28,12 +27,12 @@ import {
 	registerDialogStyles,
 } from '../client';
 import type { AstroConsentClient } from '../client';
-import { setPrivacyChoicesLoaderForTest } from '../client-engine';
+import { setPromptLoaderForTest } from '../client-engine';
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import { resolveOptions } from '../integration';
-import { privacyChoicesClassNames } from '../privacy-choices/class-names';
-import { resolvePrivacyChoicesModel } from '../privacy-choices/model';
-import { renderPrivacyChoicesHTML } from '../privacy-choices/server';
+import { promptClassNames } from '../prompt/class-names';
+import { resolvePromptModel } from '../prompt/model';
+import { renderPromptHTML } from '../prompt/server';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions } from '../types';
@@ -43,7 +42,7 @@ import { testRule } from './policy-fixture';
 import { ISLAND_RENDER_TIMEOUT } from './react-dialog-island';
 // The options load on demand; compiling them while this file loads keeps
 // the first test inside its waits. The controller is imported above.
-import '../privacy-choices/panel';
+import '../prompt/panel';
 
 type Region = 'eu' | 'us-opt-in' | 'us-notice' | 'us-opt-out';
 
@@ -74,7 +73,6 @@ interface MountOptions {
 	edgeStyle?: ConsentEdgeStyle;
 	blockUntilChoice?: boolean;
 	region?: Region;
-	design?: ConsentPresentation['design'] | null;
 	/** Leave the prompt for the browser to render into the spot. */
 	ssr?: boolean;
 	/**
@@ -108,7 +106,6 @@ const optionsFor = function optionsFor({
 	edgeStyle,
 	blockUntilChoice,
 	region = 'eu',
-	design = 'privacy-choices',
 	ui,
 	extra,
 }: MountOptions): InthAstroOptions {
@@ -138,7 +135,6 @@ const optionsFor = function optionsFor({
 			],
 		}),
 		presentation: {
-			design: design === null ? undefined : design,
 			prompt: {
 				blockUntilChoice,
 				container: container ?? undefined,
@@ -158,8 +154,8 @@ const mount = async function mount(input: MountOptions = {}) {
 		options: resolved,
 	});
 	globals.__inthAstroConfig = JSON.parse(JSON.stringify(locals.config));
-	const model = resolvePrivacyChoicesModel({
-		classNames: privacyChoicesClassNames,
+	const model = resolvePromptModel({
+		classNames: promptClassNames,
 		options: resolved,
 		props: {},
 		snapshot: locals.snapshot,
@@ -177,10 +173,10 @@ const mount = async function mount(input: MountOptions = {}) {
 	spot.hidden = true;
 	spot.setAttribute(
 		PROMPT_SLOT_ATTRIBUTE,
-		JSON.stringify({ privacyChoices: privacyChoicesClassNames, props: {} })
+		JSON.stringify({ classNames: promptClassNames, props: {} })
 	);
 	if (model && input.ssr !== false && locals.shouldShowBanner) {
-		spot.insertAdjacentHTML('afterend', renderPrivacyChoicesHTML(model, false));
+		spot.insertAdjacentHTML('afterend', renderPromptHTML(model, false));
 	}
 	client = boot(resolved);
 	return client;
@@ -235,19 +231,13 @@ beforeEach(() => {
 afterEach(() => {
 	client?.dispose();
 	client = null;
-	setPrivacyChoicesLoaderForTest();
+	setPromptLoaderForTest();
 	document.head
 		.querySelectorAll('style[data-inth-styles]')
 		.forEach((style) => style.remove());
 });
 
-describe('opt-in', () => {
-	it('the classic design stays the default', async () => {
-		await mount({ container: null, design: null });
-		expect($('consent-banner-root')).toBeNull();
-		expect($('consent-banner-announcement')).toBeNull();
-	});
-
+describe('no prompt', () => {
 	it('[BNR-13][BNR-10] US opt-out with no prompt shows nothing and never blocks', async () => {
 		await mount({ blockUntilChoice: true, region: 'us-opt-out' });
 		await new Promise((resolve) => {
@@ -266,7 +256,7 @@ describe('card:', () => {
 		await waitForController();
 		expect(root().getAttribute('data-placement')).toBe('card-start');
 		expect(root().getAttribute('data-flow')).toBe('expand-in-place');
-		expect(root().getAttribute('data-design')).toBe('privacy-choices');
+		expect(root().hasAttribute('data-design')).toBe(false);
 		const customize = must<HTMLButtonElement>(
 			'consent-banner-customize-button'
 		);
@@ -482,7 +472,7 @@ describe('banner:', () => {
 		expect(customize.hasAttribute('aria-controls')).toBe(false);
 		expect(customize.getAttribute('aria-expanded')).toBe('false');
 		expect(must('consent-banner-title').className).toBe(
-			privacyChoicesClassNames.surface.visuallyHidden
+			promptClassNames.surface.visuallyHidden
 		);
 	});
 
@@ -715,15 +705,13 @@ describe('a page the server could not render the prompt for', () => {
 			])
 		);
 		expect(ids).not.toContain('inth-card');
-		expect(ids).not.toContain('inth-bar');
+		expect(ids).not.toContain('inth-banner');
 	});
 });
 
 describe('stylesheets', () => {
-	it('a Drawer loads its own sheet and never the card or bar sheet', async () => {
-		const ids = (await loadPresentationSheets('drawer')).map(
-			(sheet) => sheet.id
-		);
+	it('a Drawer loads its own sheet and never the card or banner sheet', async () => {
+		const ids = (await loadContainerSheets('drawer')).map((sheet) => sheet.id);
 		expect(ids).toEqual([
 			'inth-tokens',
 			'inth-button',
@@ -732,7 +720,7 @@ describe('stylesheets', () => {
 		]);
 	});
 
-	it('the options bring the expand and Privacy Choices sheets with them', async () => {
+	it('the options bring the expand and dialog sheets with them', async () => {
 		await mount();
 		await waitForController();
 		must('consent-banner-customize-button').click();
@@ -740,19 +728,17 @@ describe('stylesheets', () => {
 		const ids = [...document.querySelectorAll('style[data-inth-styles]')].map(
 			(style) => style.getAttribute('data-inth-styles')
 		);
-		expect(ids).toEqual(
-			expect.arrayContaining(['inth-expand', 'inth-privacy-choices-dialog'])
-		);
+		expect(ids).toEqual(expect.arrayContaining(['inth-expand', 'inth-dialog']));
 	});
 });
 
 describe('the dialog', () => {
-	const mounted: { design?: string; kind?: string }[] = [];
+	const mounted: { kind?: string }[] = [];
 	const stubAdapter = (name: 'react' | 'svelte') => {
 		registerDialogAdapter(name, () =>
 			Promise.resolve({
 				mount: (context) => {
-					mounted.push({ design: context.design, kind: context.kind });
+					mounted.push({ kind: context.kind });
 					return Promise.resolve({
 						close: () => undefined,
 						destroy: () => undefined,
@@ -765,7 +751,6 @@ describe('the dialog', () => {
 
 	beforeEach(() => {
 		mounted.length = 0;
-		registerDialogStyles(['/classic-dialog.css']);
 	});
 
 	afterEach(() => {
@@ -777,14 +762,12 @@ describe('the dialog', () => {
 		}
 	});
 
-	it("opens React's Privacy Choices dialog, with its own sheets and no classic one", async () => {
+	it("opens React's dialog with its own sheets", async () => {
 		stubAdapter('react');
 		const booted = await mount({ ui: 'react' });
 		await waitForController();
 		await booted.openDialog();
-		expect(mounted).toEqual([
-			{ design: 'privacy-choices', kind: 'preferences' },
-		]);
+		expect(mounted).toEqual([{ kind: 'preferences' }]);
 		const ids = [...document.querySelectorAll('style[data-inth-styles]')].map(
 			(style) => style.getAttribute('data-inth-styles')
 		);
@@ -793,32 +776,33 @@ describe('the dialog', () => {
 				'inth-tokens',
 				'inth-button',
 				'inth-expand',
-				'inth-privacy-choices-dialog',
+				'inth-dialog',
 			])
 		);
-		expect(
-			document.head.querySelector('link[href="/classic-dialog.css"]')
-		).toBeNull();
 		// [PERM-05] The prompt leaves at once when the dialog opens.
 		await vi.waitFor(() => expect($('consent-banner-root')).toBeNull());
 	});
 
-	it('keeps the classic dialog on an island without the Privacy Choices one', async () => {
+	it('links the stylesheets an island registered beside the dialog sheets', async () => {
+		registerDialogStyles(['/island-dialog.css']);
 		stubAdapter('svelte');
 		const booted = await mount({ ui: 'svelte' });
 		await waitForController();
 		const opening = booted.openDialog();
-		// The classic stylesheet link never loads in jsdom; let it settle.
+		// A stylesheet link never loads in jsdom; let it settle.
 		const link = await vi.waitFor(() => {
 			const found = document.head.querySelector<HTMLLinkElement>(
-				'link[href="/classic-dialog.css"]'
+				'link[href="/island-dialog.css"]'
 			);
 			expect(found).not.toBeNull();
 			return found as HTMLLinkElement;
 		});
 		link.dispatchEvent(new Event('load'));
 		await opening;
-		expect(mounted).toEqual([{ design: 'classic', kind: 'preferences' }]);
+		expect(mounted).toEqual([{ kind: 'preferences' }]);
+		expect(
+			document.head.querySelector('style[data-inth-styles="inth-dialog"]')
+		).not.toBeNull();
 	});
 });
 
@@ -851,7 +835,7 @@ const phoneViewport = function phoneViewport(initial: boolean) {
 	};
 };
 
-describe('wave B round 1', () => {
+describe('the layout, the panel and the link', () => {
 	it('[PERM-13] an expansion made on phone does not survive a pass through all-in-one', async () => {
 		const viewport = phoneViewport(true);
 		try {
@@ -909,9 +893,7 @@ describe('wave B round 1', () => {
 		) as HTMLElement;
 		const body = panel.querySelector(':scope > * > *') as HTMLElement;
 		expect(body.getAttribute('style')).toBeNull();
-		expect(body.className).toBe(
-			privacyChoicesClassNames.choices.preferencesBody
-		);
+		expect(body.className).toBe(promptClassNames.dialog.preferencesBody);
 		// The folded Preferences and the closed confirmation are inert.
 		expect(panel.hasAttribute('inert')).toBe(true);
 		expect(must('consent-banner-confirm').closest('[inert]')).not.toBeNull();
@@ -928,30 +910,9 @@ describe('wave B round 1', () => {
 		must('consent-banner-accept-button').click();
 		await vi.waitFor(() => expect(document.activeElement).toBe(link));
 	});
-
-	it('the classic design hides Your Privacy Choices under an opt-in policy', async () => {
-		await mount({
-			container: null,
-			design: null,
-			link: true,
-			region: 'us-opt-in',
-		});
-		await vi.waitFor(() =>
-			expect(
-				document.querySelector(
-					'[data-testid="consent-banner-root"], [data-inth-privacy-choices-link]'
-				)
-			).not.toBeNull()
-		);
-		const link = document.querySelector<HTMLElement>(
-			'[data-inth-privacy-choices-link]'
-		);
-		expect(link?.hidden).toBe(true);
-		expect(link?.hasAttribute('data-testid')).toBe(false);
-	});
 });
 
-describe('the React island (wave B round 1)', () => {
+describe('the React island', () => {
 	beforeEach(() => {
 		registerDialogAdapter('react', () => Promise.resolve(reactDialogAdapter));
 		registerDialogSurface('react', () => Promise.resolve(reactPanelSurface));
@@ -961,7 +922,7 @@ describe('the React island (wave B round 1)', () => {
 		document.getElementById('inth-dialog-host')?.remove();
 	});
 
-	it('[BNR-13] the dialog hosts an opt-in confirmation under the Privacy Choices design', async () => {
+	it('[BNR-13] the dialog hosts an opt-in confirmation', async () => {
 		const booted = await mount({ region: 'us-opt-in', ui: 'react' });
 		await waitForController();
 		const confirmed = vi.fn();
@@ -970,16 +931,16 @@ describe('the React island (wave B round 1)', () => {
 			() => must<HTMLButtonElement>('opt-in-confirmation-confirm-button'),
 			ISLAND_RENDER_TIMEOUT
 		);
-		// The confirmation keeps its classic design, so its sheets come too.
+		// The confirmation renders with the widget's rules, so its sheets come too.
 		const ids = [...document.querySelectorAll('style[data-inth-styles]')].map(
 			(style) => style.getAttribute('data-inth-styles')
 		);
-		expect(ids).toEqual(expect.arrayContaining(['inth-banner', 'inth-dialog']));
+		expect(ids).toEqual(expect.arrayContaining(['inth-parts', 'inth-widget']));
 		confirm.click();
 		await vi.waitFor(() => expect(confirmed).toHaveBeenCalledTimes(1));
 	});
 
-	it('[RCPT-01][FOC-03] the opt-out confirmation opens the Privacy Choices dialog on its receipt', async () => {
+	it('[RCPT-01][FOC-03] the opt-out confirmation opens the dialog on its receipt', async () => {
 		const booted = await mount({
 			// The confirmation opens in place; the reload case is core's.
 			extra: { reloadOnConsentRevoked: false },
@@ -1000,35 +961,22 @@ describe('the React island (wave B round 1)', () => {
 		expect(booted.getConsent().activeUI).toBe('dialog');
 	});
 
-	it('warming on a Privacy Choices page loads that dialog and never the classic one', async () => {
+	it('warming loads the dialog and its sheets', async () => {
 		const preload = vi.fn(() => Promise.resolve());
 		registerDialogAdapter('react', () =>
 			Promise.resolve({ ...reactDialogAdapter, preload })
 		);
-		registerDialogStyles(['/classic-dialog.css']);
-		try {
-			await mount({ ui: 'react' });
-			await waitForController();
-			await preloadDialog();
-			expect(preload).toHaveBeenCalledWith({
-				design: 'privacy-choices',
-				kind: 'preferences',
-			});
-			expect(
-				document.head.querySelector('link[href="/classic-dialog.css"]')
-			).toBeNull();
-			expect(
-				document.head.querySelector(
-					'style[data-inth-styles="inth-privacy-choices-dialog"]'
-				)
-			).not.toBeNull();
-		} finally {
-			registerDialogStyles([]);
-		}
+		await mount({ ui: 'react' });
+		await waitForController();
+		await preloadDialog();
+		expect(preload).toHaveBeenCalledWith({ kind: 'preferences' });
+		expect(
+			document.head.querySelector('style[data-inth-styles="inth-dialog"]')
+		).not.toBeNull();
 	});
 });
 
-describe('the React island (wave B round 2)', () => {
+describe('the React island and legal links', () => {
 	beforeEach(() => {
 		registerDialogAdapter('react', () => Promise.resolve(reactDialogAdapter));
 		registerDialogSurface('react', () => Promise.resolve(reactPanelSurface));
@@ -1044,7 +992,7 @@ describe('the React island (wave B round 2)', () => {
 		[['cookiePolicy'], false],
 		[['privacyPolicy'], true],
 	])(
-		'legalLinks=%j on <ConsentDialog /> reaches the Privacy Choices dialog (shown: %s)',
+		'legalLinks=%j on <ConsentDialog /> reaches the dialog (shown: %s)',
 		async (legalLinks, shown) => {
 			const booted = await mount({ region: 'us-notice', ui: 'react' });
 			// The host `<ConsentDialog legalLinks>` renders: no list leaves the
@@ -1076,7 +1024,7 @@ const heldPrompt = function heldPrompt() {
 		if (await held) {
 			throw new Error('chunk failed');
 		}
-		return privacyChoicesPrompt;
+		return promptChunk;
 	});
 	return {
 		fail: () => settle(true),
@@ -1085,15 +1033,15 @@ const heldPrompt = function heldPrompt() {
 	};
 };
 
-describe('wave C round 1', () => {
+describe('the prompt chunk', () => {
 	it('[C1] a prompt chunk that failed to load is fetched again on the next sync', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 		let calls = 0;
-		setPrivacyChoicesLoaderForTest(() => {
+		setPromptLoaderForTest(() => {
 			calls += 1;
 			return calls === 1
 				? Promise.reject(new Error('chunk failed'))
-				: Promise.resolve(privacyChoicesPrompt);
+				: Promise.resolve(promptChunk);
 		});
 		try {
 			await mount();
@@ -1115,17 +1063,17 @@ describe('wave C round 1', () => {
 		const held = new Promise<void>((resolve) => {
 			release = resolve;
 		});
-		const staleMount = vi.fn(privacyChoicesPrompt.mountPrivacyChoicesBanner);
+		const staleMount = vi.fn(promptChunk.mountPrompt);
 		const staleLoad = vi.fn(async () => {
 			await held;
-			return { ...privacyChoicesPrompt, mountPrivacyChoicesBanner: staleMount };
+			return { ...promptChunk, mountPrompt: staleMount };
 		});
-		setPrivacyChoicesLoaderForTest(staleLoad);
+		setPromptLoaderForTest(staleLoad);
 		const stale = await mount();
 		await vi.waitFor(() => expect(staleLoad).toHaveBeenCalled());
 		stale.dispose();
 		// The next client boots on the same page while the old load hangs.
-		setPrivacyChoicesLoaderForTest();
+		setPromptLoaderForTest();
 		client = boot(resolveOptions(optionsFor({})));
 		await waitForController();
 		release();
@@ -1137,7 +1085,7 @@ describe('wave C round 1', () => {
 
 	it('mounts on the swapped-in page when a ClientRouter swap lands while the chunk loads', async () => {
 		const held = heldPrompt();
-		setPrivacyChoicesLoaderForTest(held.load);
+		setPromptLoaderForTest(held.load);
 		await mount();
 		await vi.waitFor(() => expect(held.load).toHaveBeenCalled());
 		// The swap replaces the spot and the prompt with the next page's.
@@ -1151,8 +1099,8 @@ describe('wave C round 1', () => {
 	});
 
 	it('a visitor the prompt is not shown to never downloads it', async () => {
-		const load = vi.fn(() => Promise.resolve(privacyChoicesPrompt));
-		setPrivacyChoicesLoaderForTest(load);
+		const load = vi.fn(() => Promise.resolve(promptChunk));
+		setPromptLoaderForTest(load);
 		await mount({ region: 'us-opt-out' });
 		await new Promise((resolve) => {
 			setTimeout(resolve, 20);
@@ -1210,8 +1158,8 @@ describe('wave C round 1', () => {
 			removeEventListener: (_: string, listener: () => void) =>
 				listeners.delete(listener),
 		})) as unknown as typeof window.matchMedia;
-		const expandClass = privacyChoicesClassNames.expand.panel as string;
-		const bodyClass = privacyChoicesClassNames.drawer.body as string;
+		const expandClass = promptClassNames.expand.panel as string;
+		const bodyClass = promptClassNames.drawer.body as string;
 		try {
 			await mount({ container: { side: 'start', type: 'drawer' } });
 			await waitForController();
@@ -1265,14 +1213,15 @@ describe('wave C round 1', () => {
 	});
 });
 
-describe('wave C round 1, the island and the options', () => {
-	it('the classic dialog ships with the island, so its open waits on no second download', async () => {
+describe('the island and the options', () => {
+	it('the dialog downloads once, and a loaded one opens with no second download', async () => {
+		await reactPanelSurface.preloadDialog();
 		const pending = Symbol('pending');
-		const first = await Promise.race([
-			reactPanelSurface.preloadDialog('classic'),
+		const again = await Promise.race([
+			reactPanelSurface.preloadDialog(),
 			Promise.resolve(pending),
 		]);
-		expect(first).not.toBe(pending);
+		expect(again).not.toBe(pending);
 	});
 
 	it('[C5] closing the prompt cancels a vendor table reveal still pending', async () => {

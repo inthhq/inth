@@ -8,7 +8,7 @@
 
 import {
 	defaultTranslationConfig,
-	resolveLegacyConsentPresentation,
+	resolveConsentPresentation,
 	resolveIABBannerCopy,
 	resolveIABBannerSummary,
 	resolveIABCopy,
@@ -23,8 +23,11 @@ import type { AllThemeKeys, Theme } from '@inth/sdk/ui/theme';
 import { getTextDirection } from '@inth/sdk/ui/utils';
 
 import type { IABPromptClassNames } from './class-names';
-import { joinClasses } from './prompt-model';
+import { joinClasses } from './class-names';
 import { resolveSlotBinding } from './theme-slots';
+
+/** Where the IAB banner floats, as React's renders it. */
+const IAB_POSITION = 'bottom-left';
 
 /** An action on the IAB banner. */
 export type IABAction = 'reject' | 'accept' | 'customize';
@@ -49,7 +52,11 @@ export interface IABPromptProps {
 	class?: string;
 	/** Drop the "Consent by" tag. */
 	hideBranding?: boolean;
-	/** Paint the backdrop that goes with the banner's `aria-modal`. */
+	/**
+	 * Block the page while the banner shows: a backdrop, scroll lock and
+	 * focus trap. An explicit `presentation.prompt.blocking` (or
+	 * `blockUntilChoice`) wins over it, as on React's IAB banner.
+	 */
 	scrollLock?: boolean;
 }
 
@@ -91,9 +98,8 @@ export interface IABPromptModel {
 	blocking: boolean;
 	textDirection: 'ltr' | 'rtl';
 	language: string | undefined;
+	/** The root's `data-position`: always the floating corner, as React's. */
 	position: string;
-	/** The resolved banner shape, the arm's when an experiment runs. */
-	variant: string;
 	copy: {
 		title: string;
 		descriptionBefore: string;
@@ -288,8 +294,13 @@ export const resolveIABPromptModel = function resolveIABPromptModel(
 ): IABPromptModel {
 	const { snapshot, props } = input;
 	const models = props.models ?? ['iab'];
-	const presentation = resolveLegacyConsentPresentation({
-		override: { scrollLock: props.scrollLock },
+	const prompt = input.presentation?.prompt;
+	const explicit = prompt?.blockUntilChoice ?? prompt?.blocking;
+	const presentation = resolveConsentPresentation({
+		override:
+			explicit === undefined && props.scrollLock !== undefined
+				? { blocking: props.scrollLock }
+				: undefined,
 		policy: snapshot.policyRule,
 		presentation: input.presentation,
 		surface: 'prompt',
@@ -299,7 +310,6 @@ export const resolveIABPromptModel = function resolveIABPromptModel(
 	);
 	const translations = resolveBannerTranslations(snapshot);
 	const textDirection = getTextDirection(snapshot.translations?.language);
-	const { position } = presentation;
 	const classesAndStyles = resolveIABClasses(
 		input.classNames,
 		props,
@@ -324,9 +334,8 @@ export const resolveIABPromptModel = function resolveIABPromptModel(
 		customizeButton: button('customize'),
 		displayItems: [...summary.displayItems],
 		language: snapshot.translations?.language,
-		position,
+		position: IAB_POSITION,
 		textDirection,
-		variant: presentation.variant,
 		vendorListReady: summary.isReady,
 	};
 };

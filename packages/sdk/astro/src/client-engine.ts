@@ -75,7 +75,6 @@ import {
 import {
 	attachBannerActions,
 	registerOptOutLinkHandler,
-	registerPrivacyChoicesDesign,
 	resetDialogWarming,
 	warmDialog,
 } from './browser/banner-actions';
@@ -86,12 +85,10 @@ import {
 	readDialogDisableAnimation,
 	readDialogLegalLinks,
 } from './browser/dialog-host';
-import { dialogDesignFor, loadDialog } from './browser/dialog-loading';
+import { loadDialog } from './browser/dialog-loading';
 import { keepDialogStylesOnSwap } from './browser/dialog-styles';
 import { activateGatedScripts } from './browser/inline-scripts';
 import {
-	BANNER_OVERLAY_SELECTOR,
-	BANNER_ROOT_SELECTOR,
 	COLOR_SCHEME_KEY,
 	CONFIG_KEY,
 	GLOBAL_KEY,
@@ -100,10 +97,10 @@ import {
 	nonceOf,
 	readPageNonce,
 } from './browser/page-state';
-import type * as PrivacyChoicesPrompt from './browser/privacy-choices';
-import type { PrivacyChoicesController } from './browser/privacy-choices';
 import { syncPrivacyChoicesLinks } from './browser/privacy-choices-link';
-import type * as PromptRenderer from './browser/render-prompt';
+import type * as PromptModule from './browser/prompt';
+import type { PromptController } from './browser/prompt';
+import type * as IABPromptRenderer from './browser/render-iab-prompt';
 import type { EarlyDialog, EngineHandoff } from './browser/shell';
 import type {
 	AstroConsentClient,
@@ -111,7 +108,6 @@ import type {
 	AstroEngineClient,
 } from './client-types';
 import { assertIABAvailable, isIABUnavailable } from './libs/iab-unavailable';
-import { usesPrivacyChoices } from './privacy-choices/design';
 import type { ResolveTransport } from './transport';
 import type { InthClientOptionsExtension, InthResolvedOptions } from './types';
 import type { ConsentDialogHandle, ConsentDialogKind } from './ui/adapter';
@@ -184,8 +180,8 @@ const NONCE_BEARING_SELECTOR = [
 	'script[data-inth-boot]',
 	'script[data-inth-inline]',
 	`style#${THEME_STYLE_ELEMENT_ID}`,
-	// Every Inth sheet: the classic first-paint ones and the Privacy
-	// Choices tokens, shell and presentation the server inlines.
+	// Every Inth sheet the server inlines: `first-paint`, or the tokens,
+	// shell and container the prompt renders with.
 	'style[data-inth-styles]',
 	'script[data-inth-category]',
 ].join(', ');
@@ -337,23 +333,19 @@ export const syncSurfaceVisibility = function syncSurfaceVisibility(
 	}
 };
 
-/** The Privacy Choices prompt, which its own controller shows and hides. */
-const PRIVACY_CHOICES_SELECTOR = '[data-design="privacy-choices"]';
+/** The IAB banner's root. The consent prompt's controller owns its own. */
+const IAB_BANNER_ROOT_SELECTOR = '[data-testid="iab-consent-banner-root"]';
 
-/** The first classic banner root, standard or IAB. */
-const classicBannerRoot = function classicBannerRoot(): HTMLElement | null {
-	for (const root of document.querySelectorAll<HTMLElement>(
-		BANNER_ROOT_SELECTOR
-	)) {
-		if (!root.matches(PRIVACY_CHOICES_SELECTOR)) {
-			return root;
-		}
-	}
-	return null;
-};
+/** The overlay a blocking IAB banner renders. */
+const IAB_BANNER_OVERLAY_SELECTOR =
+	'[data-testid="iab-consent-banner-overlay"]';
+
+/** The server- or browser-rendered IAB banner, if the page has one. */
+const iabBannerRoot = (): HTMLElement | null =>
+	document.querySelector<HTMLElement>(IAB_BANNER_ROOT_SELECTOR);
 
 /**
- * Show or hide the server-rendered banner to match the kernel.
+ * Show or hide the IAB banner to match the kernel.
  *
  * The server already decided the initial state, so this only has to keep
  * the DOM honest afterwards — after a save, or after a ClientRouter
@@ -366,7 +358,7 @@ const classicBannerRoot = function classicBannerRoot(): HTMLElement | null {
 export const syncBannerVisibility = function syncBannerVisibility(
 	snapshot: ConsentSnapshot
 ): void {
-	const banner = classicBannerRoot();
+	const banner = iabBannerRoot();
 	if (!banner) {
 		releaseBlocking?.();
 		return;
@@ -391,11 +383,8 @@ export const syncBannerVisibility = function syncBannerVisibility(
 
 	const blocking = shouldShow && banner.dataset.blocking === 'true';
 	for (const overlay of document.querySelectorAll<HTMLElement>(
-		BANNER_OVERLAY_SELECTOR
+		IAB_BANNER_OVERLAY_SELECTOR
 	)) {
-		if (overlay.closest(PRIVACY_CHOICES_SELECTOR)) {
-			continue;
-		}
 		if (blocking) {
 			reveal(overlay);
 		}
@@ -410,7 +399,7 @@ export const syncBannerVisibility = function syncBannerVisibility(
 	}
 	const card =
 		banner.querySelector<HTMLElement>(
-			'[data-testid="consent-banner-card"], [data-testid="iab-consent-banner-card"]'
+			'[data-testid="iab-consent-banner-card"]'
 		) ?? banner;
 	const unlockScroll = setupScrollLock();
 	const releaseFocus = setupFocusTrap(card);
@@ -595,76 +584,33 @@ const engineConfig = function engineConfig(
 	return inlined.now === undefined ? { ...inlined, now: Date.now() } : inlined;
 };
 
-/** Marks the first-paint `<style>` the components inline. */
-const FIRST_PAINT_SELECTOR = 'style[data-inth-styles="inth-first-paint"]';
-
-/** The tokens and buttons a Privacy Choices page inlines instead. */
-const hasPrivacyChoicesFirstPaint = (): boolean =>
-	document.querySelector('style[data-inth-styles="inth-tokens"]') !== null &&
-	document.querySelector('style[data-inth-styles="inth-button"]') !== null;
-
 /**
- * Add the first-paint rules a page left out. The server inlines them only
- * where the banner may show, so on a returning visitor's page the dialog,
- * which builds on their tokens and button rules, brings them along.
- *
- * @param nonce - The page's CSP nonce.
+ * Put in the opt-in confirmation's sheets, from their own chunk. The
+ * dialog hosts the confirmation, which renders with the widget's rules,
+ * and the page carries none of them.
  */
-const ensureFirstPaintStyles = async function ensureFirstPaintStyles(
-	options: InthResolvedOptions,
-	nonce: string | undefined
-): Promise<void> {
-	if (
-		!options.inlineStyles ||
-		document.querySelector(FIRST_PAINT_SELECTOR) ||
-		// A Privacy Choices page inlined the tokens and the buttons, which
-		// is what a classic dialog builds on.
-		hasPrivacyChoicesFirstPaint()
-	) {
-		return;
-	}
-	const { INLINE_STYLES_CSS, INLINE_STYLES_ID } =
-		await import('./browser/first-paint-styles');
-	if (document.querySelector(FIRST_PAINT_SELECTOR)) {
-		return;
-	}
-	const style = document.createElement('style');
-	style.setAttribute('data-inth-styles', INLINE_STYLES_ID);
-	if (nonce) {
-		style.nonce = nonce;
-	}
-	style.textContent = INLINE_STYLES_CSS;
-	document.head.append(style);
-};
-
-/**
- * Put in the opt-in confirmation's sheets on a Privacy Choices page, from
- * their own chunk. The confirmation keeps its classic design there, and
- * the page carries none of the classic rules.
- */
-const loadConfirmationSheets = async function loadConfirmationSheets(
+const loadWidgetSheets = async function loadWidgetSheets(
 	nonce: string | undefined
 ): Promise<void> {
 	try {
-		const { insertConfirmationSheets } =
-			await import('./privacy-choices/confirmation-sheets');
-		insertConfirmationSheets(nonce);
+		const { insertWidgetSheets } = await import('./parts/widget-sheets');
+		insertWidgetSheets(nonce);
 	} catch {
 		// An unstyled confirmation beats a pending opt-in that never shows.
 	}
 };
 
-/** The page's Privacy Choices prompt, once its chunk has mounted it. */
-let privacyChoices: PrivacyChoicesController | null = null;
+/** The page's consent prompt, once its chunk has mounted it. */
+let prompt: PromptController | null = null;
 /** The prompt chunk's download in flight, and the client it is for. */
-let privacyChoicesLoading: { client: AstroConsentClient } | null = null;
+let promptLoading: { client: AstroConsentClient } | null = null;
 
-/** Remove the Privacy Choices prompt with the client that mounted it. */
-const disposePrivacyChoices = function disposePrivacyChoices(): void {
-	privacyChoices?.dispose();
-	privacyChoices = null;
+/** Remove the consent prompt with the client that mounted it. */
+const disposePrompt = function disposePrompt(): void {
+	prompt?.dispose();
+	prompt = null;
 	// A download still in flight mounts nothing now.
-	privacyChoicesLoading = null;
+	promptLoading = null;
 };
 
 const createClient = function createClient(
@@ -756,20 +702,11 @@ const createClient = function createClient(
 		return true;
 	};
 
-	/** The preference dialog this page's island renders. */
-	const preferencesDesign = (): 'classic' | 'privacy-choices' =>
-		dialogDesignFor(
-			options.ui,
-			'preferences',
-			usesPrivacyChoices(runtime.kernel.getSnapshot(), options)
-		);
-
-	// React's Privacy Choices dialog hosts the opt-in confirmation, which
-	// keeps its classic design and needs its own sheets.
+	// The dialog hosts the opt-in confirmation, which renders with the
+	// widget's sheets.
 	const confirmationSheets = (): Promise<void> | undefined =>
-		preferencesDesign() === 'privacy-choices' &&
 		isOptInConfirmationOpen(runtime.kernel)
-			? loadConfirmationSheets(pageNonce)
+			? loadWidgetSheets(pageNonce)
 			: undefined;
 
 	const ensureDialogMounted = async (
@@ -799,19 +736,11 @@ const createClient = function createClient(
 			opening = (async () => {
 				// The island and the stylesheets load beside the adapter, and
 				// the mount waits for them so the dialog never paints without
-				// its rules.
-				// The Privacy Choices dialog brings its own sheets, tokens and
-				// buttons included, and no classic one.
-				const design = dialogDesignFor(
-					options.ui,
-					kind,
-					usesPrivacyChoices(runtime.kernel.getSnapshot(), options)
-				);
+				// its rules. The dialog brings its own sheets, tokens and
+				// buttons included.
 				const [adapter] = await Promise.all([
-					loadDialog(options.ui, kind, pageNonce, design),
-					design === 'privacy-choices'
-						? confirmationSheets()
-						: ensureFirstPaintStyles(options, pageNonce),
+					loadDialog(options.ui, kind, pageNonce),
+					kind === 'preferences' ? confirmationSheets() : undefined,
 				]);
 				if (disposed) {
 					return;
@@ -826,7 +755,6 @@ const createClient = function createClient(
 				}
 				const target = ensureDialogHost();
 				const handle = await adapter.mount({
-					design,
 					kind,
 					legalLinks:
 						kind === 'preferences' ? readDialogLegalLinks() : undefined,
@@ -912,7 +840,7 @@ const createClient = function createClient(
 			disposed = true;
 			resetDialogWarming();
 			detachPageSwapListeners();
-			disposePrivacyChoices();
+			disposePrompt();
 			releaseBlocking?.();
 			unsubscribeOptOutConfirmation();
 			unsubscribeOptInConfirmation();
@@ -1021,10 +949,6 @@ const createClient = function createClient(
 			getRuntimeEventDispatcher(runtime, dispatcherOptions),
 	});
 
-	registerPrivacyChoicesDesign(client, () =>
-		usesPrivacyChoices(runtime.kernel.getSnapshot(), options)
-	);
-
 	registerOptOutLinkHandler(client, async (opener) => {
 		const resolvedOpener = opener ?? readFocusedElement();
 		if (disposed) {
@@ -1113,7 +1037,7 @@ const currentClient = function currentClient(): AstroConsentClient | null {
 	return getWindow()?.[GLOBAL_KEY] ?? null;
 };
 
-/** A banner render in flight, and the client and page it started for. */
+/** An IAB banner render in flight, and the client and page it started for. */
 interface PendingPromptRender {
 	client: AstroConsentClient;
 	body: HTMLElement;
@@ -1121,35 +1045,33 @@ interface PendingPromptRender {
 
 let promptRender: PendingPromptRender | null = null;
 
-type PromptRendererModule = typeof PromptRenderer;
+type PromptRendererModule = typeof IABPromptRenderer;
 
 const loadDefaultPromptRenderer = (): Promise<PromptRendererModule> =>
-	import('./browser/render-prompt');
+	import('./browser/render-iab-prompt');
 
 let loadPromptRenderer = loadDefaultPromptRenderer;
 
 /**
- * Replaces how the banner renderer chunk is loaded, so a test can make it
- * fail. Call with no argument to restore the real one.
+ * Replaces how the IAB banner renderer chunk is loaded, so a test can make
+ * it fail. Call with no argument to restore the real one.
  *
  * Tests only.
  *
  * @internal
  */
-export const setPromptRendererLoaderForTest =
-	function setPromptRendererLoaderForTest(
+export const setIABPromptRendererLoaderForTest =
+	function setIABPromptRendererLoaderForTest(
 		loader?: () => Promise<PromptRendererModule>
 	): void {
 		loadPromptRenderer = loader ?? loadDefaultPromptRenderer;
 	};
 
-/** How often a client tries to load the banner renderer before giving up. */
+/** How often a client tries to load the IAB banner renderer before giving up. */
 const MAX_PROMPT_LOAD_ATTEMPTS = 3;
 
 /** Failed renderer loads per client, for the retry back-off. */
 const promptLoadFailures = new WeakMap<AstroConsentClient, number>();
-
-const SPOT_SELECTOR = `[${PROMPT_SLOT_ATTRIBUTE}], [${IAB_PROMPT_SLOT_ATTRIBUTE}]`;
 
 /**
  * Whether the IAB banner's spot answers the snapshot.
@@ -1170,68 +1092,50 @@ const iabSpotAnswers = function iabSpotAnswers(
 };
 
 /**
- * Whether the Privacy Choices prompt answers the snapshot. A site can
- * serve the IAB banner in one region and the Privacy Choices design in
- * another, and the design resolves for every policy, so an answering IAB
- * spot comes first.
+ * Whether the consent prompt answers the snapshot. A site can serve the
+ * IAB banner in one region and the consent prompt in another, and the
+ * prompt resolves for every policy, so an answering IAB spot comes first.
  */
-const privacyChoicesAnswers = function privacyChoicesAnswers(
-	snapshot: ConsentSnapshot,
-	options: InthResolvedOptions
-): boolean {
-	return !iabSpotAnswers(snapshot) && usesPrivacyChoices(snapshot, options);
-};
+const promptAnswers = (snapshot: ConsentSnapshot): boolean =>
+	!iabSpotAnswers(snapshot);
 
-/**
- * Whether the banner is still owed and nothing has rendered one yet. A
- * Privacy Choices root does not count: that prompt answers other policies.
- */
-const owesBanner = function owesBanner(client: AstroConsentClient): boolean {
+/** Whether the IAB banner is still owed and nothing has rendered one yet. */
+const owesIABBanner = function owesIABBanner(
+	client: AstroConsentClient
+): boolean {
 	return (
 		currentClient() === client &&
 		client.getConsent().activeUI === 'banner' &&
-		!privacyChoicesAnswers(client.getConsent(), client.options) &&
-		classicBannerRoot() === null
+		iabBannerRoot() === null
 	);
 };
 
 /**
- * Load the renderer for whichever spot answers the snapshot, and render.
+ * Load the IAB renderer and render into the IAB banner's spot.
  *
  * @returns `false` when the answer changed while the renderer loaded, so
  * the caller should choose again.
  */
-const renderIntoAnsweringSpot = async function renderIntoAnsweringSpot(
+const renderIntoIABSpot = async function renderIntoIABSpot(
 	client: AstroConsentClient
 ): Promise<boolean> {
-	if (iabSpotAnswers(client.getConsent())) {
-		const { renderIABPromptIntoSlot } =
-			await import('./browser/render-iab-prompt');
-		if (!iabSpotAnswers(client.getConsent())) {
-			return false;
-		}
-		if (owesBanner(client)) {
-			renderIABPromptIntoSlot(client.getConsent(), client.options);
-		}
+	if (!iabSpotAnswers(client.getConsent())) {
 		return true;
 	}
-	if (!document.querySelector(`[${PROMPT_SLOT_ATTRIBUTE}]`)) {
-		return true;
-	}
-	const { renderPromptIntoSlot } = await loadPromptRenderer();
-	if (iabSpotAnswers(client.getConsent())) {
+	const { renderIABPromptIntoSlot } = await loadPromptRenderer();
+	if (!iabSpotAnswers(client.getConsent())) {
 		return false;
 	}
-	if (owesBanner(client)) {
-		renderPromptIntoSlot(client.getConsent(), client.options);
+	if (owesIABBanner(client)) {
+		renderIABPromptIntoSlot(client.getConsent(), client.options);
 	}
 	return true;
 };
 
 /**
- * Fill whichever spot answers the current policy. An IAB policy goes to the
- * IAB banner's spot, and waits there until the vendor list arrives rather
- * than falling back to the standard banner; the next snapshot retries.
+ * Fill the IAB banner's spot when it answers the current policy. An IAB
+ * policy waits there until the vendor list arrives rather than falling
+ * back to the consent prompt; the next snapshot retries.
  *
  * @returns `false` when a renderer chunk failed to load.
  */
@@ -1241,8 +1145,8 @@ const renderPrompt = async function renderPrompt(
 	try {
 		// A policy refresh during the import can change the answer; choose once
 		// more. A second change in one render is left to the next snapshot.
-		if (!(await renderIntoAnsweringSpot(client))) {
-			await renderIntoAnsweringSpot(client);
+		if (!(await renderIntoIABSpot(client))) {
+			await renderIntoIABSpot(client);
 		}
 		if (currentClient() === client) {
 			syncBannerVisibility(client.getConsent());
@@ -1280,15 +1184,17 @@ const runPromptRender = async function runPromptRender(
 };
 
 /**
- * Render a banner in the browser when the page owes one it does not have.
+ * Render the IAB banner in the browser when the page owes one it does not
+ * have.
  *
- * `<ConsentBanner />` and `<IABConsentBanner />` leave a marked spot
- * wherever the server could not know the policy — a prerendered page in
- * hosted or manifest mode, or a server render whose init failed — and the
- * IAB banner also when there was no vendor list yet. Each renderer is its
- * own chunk, so a page that never needs one never downloads it.
+ * `<IABConsentBanner />` leaves a marked spot wherever the server could not
+ * know the policy — a prerendered page in hosted or manifest mode, or a
+ * server render whose init failed — and also when there was no vendor list
+ * yet. The renderer is its own chunk, so a page that never needs it never
+ * downloads it. The consent prompt renders into its own spot (see
+ * {@link ensurePrompt}).
  */
-const ensurePromptRendered = function ensurePromptRendered(
+const ensureIABPromptRendered = function ensureIABPromptRendered(
 	client: AstroConsentClient,
 	snapshot: ConsentSnapshot
 ): void {
@@ -1297,10 +1203,8 @@ const ensurePromptRendered = function ensurePromptRendered(
 	if (
 		promptRender?.client === client ||
 		snapshot.activeUI !== 'banner' ||
-		// The Privacy Choices prompt renders into the same spot itself.
-		privacyChoicesAnswers(snapshot, client.options) ||
-		classicBannerRoot() ||
-		!document.querySelector(SPOT_SELECTOR)
+		!iabSpotAnswers(snapshot) ||
+		iabBannerRoot()
 	) {
 		return;
 	}
@@ -1309,7 +1213,7 @@ const ensurePromptRendered = function ensurePromptRendered(
 	void (async () => {
 		const next = await runPromptRender(pending);
 		if (next === 'again') {
-			ensurePromptRendered(client, client.getConsent());
+			ensureIABPromptRendered(client, client.getConsent());
 			return;
 		}
 		if (next !== 'later') {
@@ -1323,7 +1227,7 @@ const ensurePromptRendered = function ensurePromptRendered(
 			setTimeout(
 				() => {
 					if (currentClient() === client) {
-						ensurePromptRendered(client, client.getConsent());
+						ensureIABPromptRendered(client, client.getConsent());
 					}
 				},
 				1000 * 2 ** (failures - 1)
@@ -1332,98 +1236,88 @@ const ensurePromptRendered = function ensurePromptRendered(
 	})();
 };
 
-type PrivacyChoicesModule = typeof PrivacyChoicesPrompt;
+type PromptChunk = typeof PromptModule;
 
-const loadDefaultPrivacyChoices = (): Promise<PrivacyChoicesModule> =>
-	import('./browser/privacy-choices');
+const loadDefaultPrompt = (): Promise<PromptChunk> =>
+	import('./browser/prompt');
 
-let loadPrivacyChoices = loadDefaultPrivacyChoices;
+let loadPrompt = loadDefaultPrompt;
 
 /**
- * Replaces how the Privacy Choices prompt chunk is loaded, so a test can
- * hold it or make it fail. Call with no argument to restore the real one.
+ * Replaces how the consent prompt's chunk is loaded, so a test can hold it
+ * or make it fail. Call with no argument to restore the real one.
  *
  * Tests only.
  *
  * @internal
  */
-export const setPrivacyChoicesLoaderForTest =
-	function setPrivacyChoicesLoaderForTest(
-		loader?: () => Promise<PrivacyChoicesModule>
-	): void {
-		loadPrivacyChoices = loader ?? loadDefaultPrivacyChoices;
-	};
+export const setPromptLoaderForTest = function setPromptLoaderForTest(
+	loader?: () => Promise<PromptChunk>
+): void {
+	loadPrompt = loader ?? loadDefaultPrompt;
+};
 
-/** The models the stock Privacy Choices prompt answers. */
-const PRIVACY_CHOICES_MODELS: readonly string[] = ['opt-in', 'opt-out'];
+/** The models the stock consent prompt answers. */
+const PROMPT_MODELS: readonly string[] = ['opt-in', 'opt-out'];
 
 /**
- * Whether the Privacy Choices prompt shows for this snapshot. A visitor
- * who is not shown it, such as one with a stored choice, never downloads
- * it.
+ * Whether the consent prompt shows for this snapshot. A visitor who is not
+ * shown it, such as one with a stored choice, never downloads it.
  */
-const privacyChoicesShows = function privacyChoicesShows(
-	snapshot: ConsentSnapshot,
-	options: InthResolvedOptions
-): boolean {
+const promptShows = function promptShows(snapshot: ConsentSnapshot): boolean {
 	return (
 		snapshot.activeUI === 'banner' &&
 		hasConsentUI(snapshot) &&
-		PRIVACY_CHOICES_MODELS.includes(snapshot.model ?? 'opt-in') &&
-		privacyChoicesAnswers(snapshot, options)
+		PROMPT_MODELS.includes(snapshot.model ?? 'opt-in') &&
+		promptAnswers(snapshot)
 	);
 };
 
 /**
- * Mount the Privacy Choices prompt when the banner's spot carries its
- * class names and the snapshot shows that design. The prompt is a chunk
- * of its own, so a page on the classic design, or a visitor the prompt is
- * not shown to, never downloads it, and it subscribes to the kernel from
- * then on. A `ClientRouter` swap replaces the spot, and the prompt moves
- * to the new one.
+ * Mount the consent prompt when the page has `<ConsentBanner />`'s spot
+ * and the snapshot shows the prompt. The prompt is a chunk of its own, so
+ * a visitor it is not shown to never downloads it, and it subscribes to
+ * the kernel from then on. A `ClientRouter` swap replaces the spot, and the
+ * prompt moves to the new one.
  *
- * Without the prompt the visitor has no way to choose (the classic banner
- * stands down for this design), so a failed download is forgotten and the
- * next snapshot tries again. A load a newer one replaced, for a client
- * that was disposed, is ignored.
+ * Without the prompt the visitor has no way to choose, so a failed
+ * download is forgotten and the next snapshot tries again. A load a newer
+ * one replaced, for a client that was disposed, is ignored.
  */
-const ensurePrivacyChoices = function ensurePrivacyChoices(
+const ensurePrompt = function ensurePrompt(
 	client: AstroConsentClient,
 	snapshot: ConsentSnapshot
 ): void {
-	if (privacyChoices && !privacyChoices.spot.isConnected) {
-		privacyChoices.dispose();
-		privacyChoices = null;
+	if (prompt && !prompt.spot.isConnected) {
+		prompt.dispose();
+		prompt = null;
 	}
 	const { runtime } = client;
-	if (privacyChoices || privacyChoicesLoading?.client === client || !runtime) {
+	if (prompt || promptLoading?.client === client || !runtime) {
 		return;
 	}
 	const spot = document.querySelector<HTMLElement>(
 		`[${PROMPT_SLOT_ATTRIBUTE}]`
 	);
-	if (
-		!spot?.getAttribute(PROMPT_SLOT_ATTRIBUTE)?.includes('"privacyChoices"') ||
-		!privacyChoicesShows(snapshot, client.options)
-	) {
+	if (!spot || !promptShows(snapshot)) {
 		return;
 	}
 	const load = { client };
-	privacyChoicesLoading = load;
+	promptLoading = load;
 	void (async () => {
 		let mounted = false;
 		try {
-			const { mountPrivacyChoicesBanner } = await loadPrivacyChoices();
-			if (privacyChoicesLoading !== load) {
+			const { mountPrompt } = await loadPrompt();
+			if (promptLoading !== load) {
 				return;
 			}
-			privacyChoicesLoading = null;
+			promptLoading = null;
 			mounted = true;
 			if (currentClient() !== client) {
 				return;
 			}
 			if (spot.isConnected) {
-				privacyChoices = mountPrivacyChoicesBanner(spot, {
+				prompt = mountPrompt(spot, {
 					kernel: runtime.kernel,
 					nonce: pageNonce,
 					options: client.options,
@@ -1436,12 +1330,12 @@ const ensurePrivacyChoices = function ensurePrivacyChoices(
 			// A ClientRouter swap replaced the spot while the chunk loaded,
 			// and the new page's own attach found this load in flight and
 			// stood down. Mount on the page as it is now.
-			ensurePrivacyChoices(client, client.getConsent());
+			ensurePrompt(client, client.getConsent());
 		} catch (error) {
 			console.warn('@inth/astro: the consent banner failed to load.', error);
 		} finally {
-			if (!mounted && privacyChoicesLoading === load) {
-				privacyChoicesLoading = null;
+			if (!mounted && promptLoading === load) {
+				promptLoading = null;
 			}
 		}
 	})();
@@ -1449,8 +1343,8 @@ const ensurePrivacyChoices = function ensurePrivacyChoices(
 
 const attach = function attach(client: AstroConsentClient): void {
 	const snapshot = client.getConsent();
-	ensurePrivacyChoices(client, snapshot);
-	ensurePromptRendered(client, snapshot);
+	ensurePrompt(client, snapshot);
+	ensureIABPromptRendered(client, snapshot);
 	syncBannerVisibility(snapshot);
 	syncSurfaceVisibility(snapshot);
 	syncPrivacyChoicesLinks(snapshot, client.options);
@@ -1514,8 +1408,8 @@ export const boot = function boot(
 			}
 			return;
 		}
-		ensurePrivacyChoices(client, snapshot);
-		ensurePromptRendered(client, snapshot);
+		ensurePrompt(client, snapshot);
+		ensureIABPromptRendered(client, snapshot);
 		syncBannerVisibility(snapshot);
 		syncSurfaceVisibility(snapshot);
 		syncPrivacyChoicesLinks(snapshot, options);

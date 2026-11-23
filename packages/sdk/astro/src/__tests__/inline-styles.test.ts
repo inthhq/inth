@@ -39,7 +39,10 @@ const buildLocals = async function buildLocals(
 	});
 };
 
-const INLINED = /<style[^>]*data-inth-styles="inth-first-paint"[^>]*>/gu;
+// The prompt's first sheet: a page that knows its policy inlines the
+// tokens, the buttons, the shell and the one container it shows.
+const INLINED = /<style[^>]*data-inth-styles="inth-tokens"[^>]*>/gu;
+const FIRST_PAINT = /<style[^>]*data-inth-styles="inth-first-paint"[^>]*>/gu;
 const INLINED_IAB =
 	/<style[^>]*data-inth-styles="inth-iab-first-paint"[^>]*>/gu;
 
@@ -70,14 +73,25 @@ describe('inlined first-paint styles', () => {
 		});
 
 		expect(head.match(INLINED)).toHaveLength(1);
-		expect(head).toContain(INLINE_STYLES_CSS);
+		expect(head).toContain('data-inth-styles="inth-card"');
+		expect(head).not.toContain('data-inth-styles="inth-banner"');
+		expect(head.match(FIRST_PAINT)).toBeNull();
 		// The browser hides the banner with `hidden`; the rule lets it win
 		// over the banner's own `display`.
 		expect(head).toMatch(/\[hidden\][^{]*\{display:none!important\}/u);
 		expect(head).toMatch(
-			/<style[^>]*data-inth-styles="inth-first-paint"[^>]*nonce="page-nonce"/u
+			/<style[^>]*data-inth-styles="inth-tokens"[^>]*nonce="page-nonce"/u
 		);
 		expect(banner.match(INLINED)).toBeNull();
+	});
+
+	it('inlines `first-paint`, which holds every container, before the policy resolves', async () => {
+		const locals = { inth: { ...(await buildLocals()), hasPolicy: false } };
+		const head = await container.renderToString(ConsentScript, { locals });
+
+		expect(head.match(FIRST_PAINT)).toHaveLength(1);
+		expect(head).toContain(INLINE_STYLES_CSS);
+		expect(head.match(INLINED)).toBeNull();
 	});
 
 	it('a banner without <ConsentScript /> inlines them before its markup', async () => {
@@ -138,6 +152,7 @@ describe('inlined first-paint styles', () => {
 			props: { kind: 'iab' },
 		});
 		expect(html.match(INLINED)).toHaveLength(1);
+		expect(html).toContain('data-inth-styles="inth-parts"');
 		expect(html.match(INLINED_IAB)).toHaveLength(1);
 	});
 

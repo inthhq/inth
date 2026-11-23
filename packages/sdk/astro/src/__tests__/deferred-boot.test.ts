@@ -33,7 +33,10 @@ const buildLocals = async function buildLocals(
 
 const BOOT =
 	/<script[^>]*type="application\/json"[^>]*data-inth-boot[^>]*>(?<json>[^<]*)<\/script>/u;
-const FIRST_PAINT = /<style[^>]*data-inth-styles="inth-first-paint"/u;
+// The prompt's first-paint rules: its tokens, shell and container once the
+// server knows the policy, else `first-paint`.
+const FIRST_PAINT =
+	/<style[^>]*data-inth-styles="inth-(?:first-paint|tokens)"/u;
 
 const bootOf = function bootOf(html: string): { d: boolean; s: unknown } {
 	const match = html.match(BOOT);
@@ -42,13 +45,13 @@ const bootOf = function bootOf(html: string): { d: boolean; s: unknown } {
 };
 
 describe('canDeferEngine', () => {
-	it('lets an opt-in choice banner wait for the engine', async () => {
+	it('loads the engine at once while the consent prompt shows, whose options and commits run on it', async () => {
 		const { options, snapshot } = await buildLocals();
-		expect(canDeferEngine(snapshot, options, false)).toBe(true);
+		expect(snapshot.activeUI).toBe('banner');
+		expect(canDeferEngine(snapshot, options)).toBe(false);
 	});
 
 	it.each([
-		['a blocking banner', {}, true],
 		[
 			'a script that may run before any choice',
 			{
@@ -56,15 +59,13 @@ describe('canDeferEngine', () => {
 					{ alwaysLoad: true, category: 'measurement', id: 'a', src: '/a.js' },
 				],
 			},
-			false,
 		],
-		['GPP', { gpp: true }, false],
+		['GPP', { gpp: true }],
 		[
 			'declared vendors',
 			{
 				vendors: [{ category: 'measurement', id: 'youtube', name: 'YouTube' }],
 			},
-			false,
 		],
 		[
 			'a script that names a vendor',
@@ -73,7 +74,6 @@ describe('canDeferEngine', () => {
 					{ category: 'measurement', id: 'a', src: '/a.js', vendor: 'acme' },
 				],
 			},
-			false,
 		],
 		[
 			'a network blocker',
@@ -82,18 +82,14 @@ describe('canDeferEngine', () => {
 					rules: [{ category: 'measurement', domain: 'example.com' }],
 				},
 			},
-			false,
 		],
-		['IAB', { iab: { cmpId: 160 } }, false],
-	] as const)(
-		'loads the engine at once for %s',
-		async (_label, options, blocking) => {
-			const { options: resolved, snapshot } = await buildLocals(
-				options as Partial<InthAstroOptions>
-			);
-			expect(canDeferEngine(snapshot, resolved, blocking)).toBe(false);
-		}
-	);
+		['IAB', { iab: { cmpId: 160 } }],
+	] as const)('loads the engine at once for %s', async (_label, options) => {
+		const { options: resolved, snapshot } = await buildLocals(
+			options as Partial<InthAstroOptions>
+		);
+		expect(canDeferEngine(snapshot, resolved)).toBe(false);
+	});
 
 	it('loads the engine at once once something optional is granted', async () => {
 		const { options, snapshot } = await buildLocals();
@@ -106,32 +102,29 @@ describe('canDeferEngine', () => {
 						measurement: true,
 					},
 				},
-				options,
-				false
+				options
 			)
 		).toBe(false);
-		expect(
-			canDeferEngine({ ...snapshot, activeUI: 'none' }, options, false)
-		).toBe(false);
+		expect(canDeferEngine({ ...snapshot, activeUI: 'none' }, options)).toBe(
+			false
+		);
 	});
 });
 
 describe('<ConsentBanner /> boot data', () => {
-	it('leaves the snapshot and the early-tap script ahead of the banner', async () => {
+	it('leaves the snapshot ahead of the prompt, which loads the engine at once', async () => {
 		const locals = await buildLocals();
 		const html = await container.renderToString(ConsentBanner, {
 			locals: { inth: { ...locals, nonce: 'n0' } },
 		});
 		const boot = bootOf(html);
-		expect(boot.d).toBe(true);
+		expect(boot.d).toBe(false);
 		expect(boot.s).toEqual(JSON.parse(JSON.stringify(locals.snapshot)));
-		expect(html).toContain(CONSENT_BOOT_ATTRIBUTE);
-		const early = html.indexOf(EARLY_CONSENT_TAP_SCRIPT);
-		expect(early).toBeGreaterThan(-1);
+		expect(html.indexOf(CONSENT_BOOT_ATTRIBUTE)).toBeGreaterThan(-1);
 		expect(html.indexOf('data-testid="consent-banner-root"')).toBeGreaterThan(
-			early
+			html.indexOf(CONSENT_BOOT_ATTRIBUTE)
 		);
-		expect(html).toMatch(/<script[^>]*nonce="n0"[^>]*>\(function\(w,d,k\)/u);
+		expect(html).not.toContain(EARLY_CONSENT_TAP_SCRIPT);
 	});
 
 	it('marks a banner the engine must serve at once, without the early-tap script', async () => {

@@ -109,7 +109,7 @@ describe('consent middleware', () => {
 	it('resolves the experiment arm per request', async () => {
 		const options: InthAstroOptions = {
 			experiment: {
-				arms: { bar: { prompt: { variant: 'bar' } } },
+				arms: { bar: { prompt: { container: { type: 'banner' } } } },
 				id: 'banner-shape',
 			},
 			middleware: false,

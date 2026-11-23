@@ -10,18 +10,11 @@ import type { ConsentSnapshot, KernelConfig } from '@inth/sdk/engine';
 import { canDeferEngine as canDeferCoreEngine } from '@inth/sdk/server';
 
 import { declaresVendor } from '../browser/deferred-scripts';
-import { usesPrivacyChoices } from '../privacy-choices/design';
 import type { InthLocals, InthResolvedOptions } from '../types';
 
 type DeferOptions = Pick<
 	InthResolvedOptions,
-	| 'experiment'
-	| 'gpp'
-	| 'iab'
-	| 'networkBlocker'
-	| 'presentation'
-	| 'scripts'
-	| 'vendors'
+	'experiment' | 'gpp' | 'iab' | 'networkBlocker' | 'scripts' | 'vendors'
 >;
 
 /** Whether the site declares vendors, whose decisions only the kernel records. */
@@ -38,15 +31,17 @@ const declaresVendors = function declaresVendors(
 
 /**
  * Whether the browser may answer this visitor from the server's snapshot
- * and load the engine after the page: the banner asks for a choice, an
- * accept and a reject are both something the first-load shell can record
- * on its own (`planInstantCommit`), nothing optional is granted yet, the
- * banner does not block the page (its focus trap is the engine's), and no
- * option needs the engine at once (IAB, an experiment, GPP, the network
- * blocker, declared vendors, or a configured script that may run now). The
- * browser adds what only it knows, such as the `clientEntrypoint` options.
- * The Privacy Choices prompt never waits: its options, rights rows and
- * commits run on the kernel's surface session, which only the engine has.
+ * and load the engine after the page: nothing optional is granted yet, no
+ * consent prompt shows, and no option needs the engine at once (IAB, an
+ * experiment, GPP, the network blocker, declared vendors, or a configured
+ * script that may run now). The browser adds what only it knows, such as
+ * the `clientEntrypoint` options.
+ *
+ * The consent prompt never waits: its options, rights rows and commits run
+ * on the kernel's surface session, which only the engine has. The core
+ * check already asks for a visitor the prompt asks to choose, so today the
+ * engine loads at once wherever a page could defer it; the shell keeps its
+ * deferred path for a prompt that can run without the engine.
  *
  * Vendors are checked on the options and the config as well as the
  * snapshot: the server's snapshot leaves out the vendors `inth()` declares,
@@ -54,21 +49,18 @@ const declaresVendors = function declaresVendors(
  * every declared vendor, which only the kernel records.
  *
  * @param snapshot - The snapshot the server rendered with.
- * @param blocking - Whether the banner renders as a blocking dialog.
  * @param now - The clock. Defaults to `Date.now()`.
  * @internal
  */
 export const canDeferEngine = function canDeferEngine(
 	snapshot: ConsentSnapshot,
 	options: DeferOptions,
-	blocking: boolean,
 	now: number = Date.now(),
 	config: Pick<KernelConfig, 'initialVendors'> = {}
 ): boolean {
 	return (
-		!blocking &&
+		snapshot.activeUI !== 'banner' &&
 		!declaresVendors(options, config) &&
-		!usesPrivacyChoices(snapshot, options) &&
 		// Astro's server starts no script: every script waits for the engine.
 		canDeferCoreEngine(
 			snapshot,
@@ -98,9 +90,9 @@ export const buildConsentBootJSON = function buildConsentBootJSON(
 /**
  * The boot data block for a request, rendered beside the config on every
  * page so the page script has a client to offer before the engine loads.
- * The engine may wait only where the server rendered a visible choice
- * banner (see {@link canDeferEngine}); a prerendered page's snapshot is the
- * one a first-time visitor gets, so it never waits.
+ * The engine may wait only where the server says so (see
+ * {@link canDeferEngine}); a prerendered page's snapshot is the one a
+ * first-time visitor gets, so it never waits.
  *
  * @param locals - `Astro.locals.inth`.
  * @returns JSON safe to place inside a `<script>` element.
@@ -115,12 +107,6 @@ export const buildLocalsBootJSON = function buildLocalsBootJSON(
 	const defer =
 		!locals.prerendered &&
 		locals.shouldShowBanner &&
-		canDeferEngine(
-			locals.snapshot,
-			locals.options,
-			false,
-			Date.now(),
-			locals.config
-		);
+		canDeferEngine(locals.snapshot, locals.options, Date.now(), locals.config);
 	return buildConsentBootJSON(locals.snapshot, defer);
 };

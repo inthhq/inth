@@ -5,15 +5,14 @@
  *
  * Under an opt-out policy with the opt-out right it is the opt-out link
  * your `presentation.optOutLink` names, with the CPPA opt-out icon beside
- * the Privacy Choices titles. Under `design: 'privacy-choices'` it is
- * also the way back into the dialog under an opt-in policy, in the US or
- * the EU: it reads "Your Privacy Choices" there, with no icon. Activating
- * it opens the preference dialog and never records an opt-out on its own.
- * Once a choice is made, the banner moves focus here.
+ * the Privacy Choices titles. It is also the way back into the dialog
+ * under an opt-in policy, in the US or the EU: it reads "Your Privacy
+ * Choices" there, with no icon. Activating it opens the preference dialog
+ * and never records an opt-out on its own. Once a choice is made, the
+ * prompt moves focus here.
  *
- * Hidden while it has nothing to open: before a policy resolves, under a
- * policy with no opt-out right on the classic design, or while an
- * external consent source owns consent.
+ * Hidden while it has nothing to open: before a policy resolves, or while
+ * an external consent source owns consent.
  *
  * ```astro
  * <PrivacyChoicesLink />
@@ -21,10 +20,7 @@
  * ```
  */
 import { applyExperimentAssignment } from '@inth/sdk/engine';
-import {
-	resolveConsentDesign,
-	resolvePrivacyChoicesLink,
-} from '@inth/sdk/surface-state';
+import { resolvePrivacyChoicesLink } from '@inth/sdk/surface-state';
 import type { OptOutLinkVariant } from '@inth/sdk/surface-state';
 import type { Translations } from '@inth/sdk/translations';
 import {
@@ -63,13 +59,11 @@ const state = inth
 			inth.snapshot.translations?.translations as
 				| Partial<Translations>
 				| undefined,
-			{
-				design: resolveConsentDesign(presentation),
-				variant: variant ?? presentation?.optOutLink,
-			}
+			{ variant: variant ?? presentation?.optOutLink }
 		)
 	: null;
-const iconClass = noStyle ? undefined : promptClassNames.banner.optOutIcon;
+// The `legal-links` sheet's `.optOutIcon` rule sizes it, as React's link.
+const iconClass = noStyle ? undefined : promptClassNames.legalLinks.optOutIcon;
 const hasSlot = Astro.slots.has('default');
 ---
 

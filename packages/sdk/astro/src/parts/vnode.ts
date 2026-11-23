@@ -1,5 +1,5 @@
 /**
- * One description of the Privacy Choices markup for both renderings.
+ * One description of the consent prompt's markup for both renderings.
  *
  * The server writes it as HTML into the page, and the browser patches the
  * live DOM to match it after every change. Patching keeps each node that

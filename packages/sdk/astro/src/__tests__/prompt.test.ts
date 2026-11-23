@@ -1,7 +1,7 @@
 /**
- * The Privacy Choices (v6) prompt as the server renders it: the design
- * opts in the way React's does, the collapsed desktop prompt carries
- * React's markup, and a page inlines only the presentation it shows.
+ * The consent prompt as the server renders it: the collapsed desktop
+ * prompt carries React's markup, and a page inlines only the container it
+ * shows.
  */
 
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
@@ -10,22 +10,15 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import { canDeferEngine } from '../banner/deferred-boot';
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
-import { dialogDesignFor } from '../browser/dialog-loading';
 import PrivacyChoicesLink from '../components/privacy-choices-link.astro';
 import ConsentBanner from '../components/prompt.astro';
+import { DIALOG_SHEETS } from '../dialog/sheets';
 import { resolveOptions } from '../integration';
-import { privacyChoicesClassNames } from '../privacy-choices/class-names';
-import { CONFIRMATION_SHEETS } from '../privacy-choices/confirmation-sheets';
-import { PRIVACY_CHOICES_DIALOG_SHEETS } from '../privacy-choices/dialog-sheets';
-import {
-	resolvePrivacyChoicesModel,
-	rightsBundleOf,
-} from '../privacy-choices/model';
-import {
-	privacyChoicesFirstPaintSheets,
-	renderPrivacyChoicesHTML,
-} from '../privacy-choices/server';
-import { PRESENTATION_SHEET_IDS } from '../privacy-choices/sheets';
+import { CONTAINER_SHEET_IDS } from '../parts/sheets';
+import { WIDGET_SHEETS } from '../parts/widget-sheets';
+import { promptClassNames } from '../prompt/class-names';
+import { resolvePromptModel, rightsBundleOf } from '../prompt/model';
+import { promptFirstPaintSheets, renderPromptHTML } from '../prompt/server';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions, InthLocals } from '../types';
@@ -70,31 +63,21 @@ const render = async function render(
 };
 
 const PC: Presentation = {
-	design: 'privacy-choices',
 	prompt: { container: { type: 'card' } },
 };
 
 const $ = (document: Document, testId: string) =>
 	document.querySelector(`[data-testid="${testId}"]`);
 
-describe('<ConsentBanner /> design', () => {
-	it('keeps the classic banner by default', async () => {
+describe('<ConsentBanner />', () => {
+	it('renders the consent prompt in a Card by default', async () => {
 		const document = await render(await buildLocals(undefined));
 		const root = $(document, 'consent-banner-root');
-		expect(root).not.toBeNull();
 		expect(root?.hasAttribute('data-design')).toBe(false);
-		expect($(document, 'consent-banner-announcement')).toBeNull();
-	});
-
-	it('renders the Privacy Choices prompt when the design opts in', async () => {
-		const document = await render(await buildLocals(PC));
-		const root = $(document, 'consent-banner-root');
-		expect(root?.getAttribute('data-design')).toBe('privacy-choices');
 		expect(root?.getAttribute('data-placement')).toBe('card-start');
 		expect(root?.getAttribute('data-flow')).toBe('expand-in-place');
 		expect(root?.getAttribute('data-variant')).toBe('choice');
 		expect(root?.getAttribute('data-state')).toBe('open');
-		// Only one banner: the classic one is not rendered beside it.
 		expect(
 			document.querySelectorAll('[data-testid="consent-banner-root"]')
 		).toHaveLength(1);
@@ -102,25 +85,15 @@ describe('<ConsentBanner /> design', () => {
 		expect($(document, 'consent-banner-announcement')).not.toBeNull();
 	});
 
-	it('a prompt container alone chooses the Privacy Choices design', async () => {
+	it('renders the container the policy surface names', async () => {
 		const document = await render(
-			await buildLocals({ prompt: { container: { type: 'card' } } })
+			await buildLocals(undefined, {
+				surface: { container: { edge: 'top', type: 'banner' } },
+			} as Partial<typeof testRule>)
 		);
 		expect(
-			$(document, 'consent-banner-root')?.getAttribute('data-design')
-		).toBe('privacy-choices');
-	});
-
-	it('an explicit classic design wins over a container', async () => {
-		const document = await render(
-			await buildLocals({
-				design: 'classic',
-				prompt: { container: { type: 'card' } },
-			})
-		);
-		expect(
-			$(document, 'consent-banner-root')?.hasAttribute('data-design')
-		).toBe(false);
+			$(document, 'consent-banner-root')?.getAttribute('data-placement')
+		).toBe('banner-top');
 	});
 });
 
@@ -148,7 +121,7 @@ describe('the server-rendered prompt', () => {
 		expect(reject?.getAttribute('data-action')).toBe('reject');
 		expect(reject?.getAttribute('data-size')).toBe('small');
 		expect(reject?.getAttribute('data-early-tap')).toBe('off');
-		// No classic delegated action: the controller owns the clicks.
+		// No delegated action: the controller owns the clicks.
 		expect(reject?.hasAttribute('data-inth-action')).toBe(false);
 		expect(
 			$(document, 'consent-banner-customize-button')?.getAttribute(
@@ -176,7 +149,6 @@ describe('the server-rendered prompt', () => {
 	it('[BNR-18] the bar hides its heading and links only the privacy policy', async () => {
 		const document = await render(
 			await buildLocals({
-				design: 'privacy-choices',
 				prompt: { container: { edge: 'bottom', type: 'banner' } },
 			})
 		);
@@ -184,7 +156,7 @@ describe('the server-rendered prompt', () => {
 			$(document, 'consent-banner-root')?.getAttribute('data-placement')
 		).toBe('banner-bottom');
 		expect($(document, 'consent-banner-title')?.getAttribute('class')).toBe(
-			privacyChoicesClassNames.surface.visuallyHidden
+			promptClassNames.surface.visuallyHidden
 		);
 		expect($(document, 'consent-banner-header')).toBeNull();
 		expect($(document, 'consent-banner-legal-link-cookiePolicy')).toBeNull();
@@ -198,7 +170,6 @@ describe('the server-rendered prompt', () => {
 	it('[BNR-14] a side drawer renders all-in-one, with its tag in the body', async () => {
 		const document = await render(
 			await buildLocals({
-				design: 'privacy-choices',
 				prompt: { container: { side: 'start', type: 'drawer' } },
 			})
 		);
@@ -217,7 +188,6 @@ describe('the server-rendered prompt', () => {
 	it('[BNR-13][PERM-08] a blocking prompt has a scrim and a dialog shell', async () => {
 		const document = await render(
 			await buildLocals({
-				design: 'privacy-choices',
 				prompt: { blockUntilChoice: true, container: { type: 'card' } },
 			})
 		);
@@ -282,7 +252,7 @@ describe('the server-rendered prompt', () => {
 		const footer = $(document, 'consent-banner-footer');
 		expect(footer?.getAttribute('class')).toContain('site-footer');
 		expect(footer?.getAttribute('class')).toContain(
-			privacyChoicesClassNames.surface.footer
+			promptClassNames.surface.footer
 		);
 	});
 
@@ -290,9 +260,7 @@ describe('the server-rendered prompt', () => {
 		const document = await render(await buildLocals(PC));
 		const spot = document.querySelector(`[${PROMPT_SLOT_ATTRIBUTE}]`);
 		const data = JSON.parse(spot?.getAttribute(PROMPT_SLOT_ATTRIBUTE) ?? '{}');
-		expect(data.privacyChoices.surface.root).toBe(
-			privacyChoicesClassNames.surface.root
-		);
+		expect(data.classNames.surface.root).toBe(promptClassNames.surface.root);
 		expect((spot as HTMLElement | null)?.hidden).toBe(true);
 	});
 
@@ -309,22 +277,17 @@ describe('the server-rendered prompt', () => {
 });
 
 describe('the engine', () => {
-	it('loads at once for the Privacy Choices prompt', async () => {
-		const categories: Partial<InthAstroOptions> = {
-			consentCategories: ['necessary', 'measurement', 'marketing'],
-		};
-		const classic = await buildLocals(undefined, {}, categories);
-		const v6 = await buildLocals(PC, {}, categories);
-		const defers = (locals: InthLocals) =>
-			canDeferEngine(
-				locals.snapshot,
-				locals.options,
-				false,
-				Date.now(),
-				locals.config
-			);
-		expect(defers(classic)).toBe(true);
-		expect(defers(v6)).toBe(false);
+	it('loads at once for the consent prompt', async () => {
+		const locals = await buildLocals(
+			PC,
+			{},
+			{
+				consentCategories: ['necessary', 'measurement', 'marketing'],
+			}
+		);
+		expect(
+			canDeferEngine(locals.snapshot, locals.options, Date.now(), locals.config)
+		).toBe(false);
 	});
 });
 
@@ -338,15 +301,15 @@ describe('stylesheets', () => {
 		);
 	};
 
-	it('a Drawer page inlines the drawer sheet and never the card or bar sheet', async () => {
+	it('a Drawer page inlines the drawer sheet and never the card or banner sheet', async () => {
 		const ids = await inlined({
-			design: 'privacy-choices',
 			prompt: { container: { side: 'bottom', type: 'drawer' } },
 		});
 		expect(ids).toContain('inth-drawer');
 		expect(ids).not.toContain('inth-card');
-		expect(ids).not.toContain('inth-bar');
-		// The classic first-paint sheet stays off a Privacy Choices page.
+		expect(ids).not.toContain('inth-banner');
+		// `first-paint` carries every container; a page that knows its
+		// container never inlines it.
 		expect(ids).not.toContain('inth-first-paint');
 		// The options' sheets wait for Customize.
 		expect(ids).not.toContain('inth-expand');
@@ -356,63 +319,39 @@ describe('stylesheets', () => {
 		const ids = await inlined(PC);
 		expect(ids).toContain('inth-card');
 		expect(ids).not.toContain('inth-drawer');
-		expect(ids).not.toContain('inth-bar');
+		expect(ids).not.toContain('inth-banner');
 	});
 
-	it('a classic page keeps its first-paint sheet', async () => {
-		const ids = await inlined(undefined as unknown as Presentation);
-		expect(ids).toContain('inth-first-paint');
-		expect(ids).not.toContain('inth-surface');
-	});
-
-	it('orders the first-paint sheets tokens, buttons, trigger, gate, shell, presentation', () => {
-		expect(
-			privacyChoicesFirstPaintSheets('bar').map((sheet) => sheet.id)
-		).toEqual([
+	it('orders the first-paint sheets tokens, buttons, trigger, gate, shell, container', () => {
+		expect(promptFirstPaintSheets('banner').map((sheet) => sheet.id)).toEqual([
 			'inth-tokens',
 			'inth-button',
 			'inth-trigger',
 			'inth-consent-gate',
 			'inth-surface',
-			'inth-bar',
+			'inth-banner',
 			'inth-astro-hidden-banner',
 		]);
 	});
 
-	it('the dialog brings the tokens, buttons, expand and its own sheet, and no classic one', () => {
-		expect(PRIVACY_CHOICES_DIALOG_SHEETS.map((sheet) => sheet.id)).toEqual([
+	it('the dialog brings the tokens, buttons, expand and its own sheet', () => {
+		expect(DIALOG_SHEETS.map((sheet) => sheet.id)).toEqual([
 			'inth-tokens',
 			'inth-button',
 			'inth-expand',
-			'inth-privacy-choices-dialog',
+			'inth-dialog',
 		]);
 	});
 });
 
-describe('the dialog', () => {
-	it('renders the Privacy Choices dialog only from an island that has it', () => {
-		expect(dialogDesignFor('react', 'preferences', true)).toBe(
-			'privacy-choices'
-		);
-		expect(dialogDesignFor('react', 'iab', true)).toBe('classic');
-		expect(dialogDesignFor('react', 'preferences', false)).toBe('classic');
-		// Svelte and Vue keep their classic dialog until their ports land.
-		expect(dialogDesignFor('svelte', 'preferences', true)).toBe('classic');
-		expect(dialogDesignFor('vue', 'preferences', true)).toBe('classic');
-	});
-});
-
-describe('the policy and the host (wave B round 1)', () => {
+describe('the policy and the host', () => {
 	it('[BNR-15] the summary shows only the actions the policy allows, in every presentation', async () => {
 		const rule = { actions: ['accept', 'reject'] } as Partial<typeof testRule>;
 		for (const layout of [{ type: 'card' }, { type: 'banner' }] as const) {
 			// oxlint-disable-next-line no-await-in-loop -- One presentation at a time.
 			const document = await render(
 				// oxlint-disable-next-line no-await-in-loop -- As above.
-				await buildLocals(
-					{ design: 'privacy-choices', prompt: { container: layout } },
-					rule
-				)
+				await buildLocals({ prompt: { container: layout } }, rule)
 			);
 			expect($(document, 'consent-banner-customize-button')).toBeNull();
 			expect($(document, 'consent-banner-reject-button')).not.toBeNull();
@@ -423,7 +362,6 @@ describe('the policy and the host (wave B round 1)', () => {
 	it('[BNR-15] the summary follows the host layout order', async () => {
 		const document = await render(
 			await buildLocals({
-				design: 'privacy-choices',
 				prompt: {
 					container: { type: 'card' },
 					layout: ['customize', ['accept', 'reject']],
@@ -444,7 +382,6 @@ describe('the policy and the host (wave B round 1)', () => {
 		const document = await render(
 			await buildLocals(
 				{
-					design: 'privacy-choices',
 					prompt: {
 						container: { type: 'banner' },
 						layout: ['customize', ['accept', 'reject']],
@@ -466,8 +403,8 @@ describe('the policy and the host (wave B round 1)', () => {
 		const classes = group?.getAttribute('class') ?? '';
 		expect(classes).toContain('group-marker');
 		// The bar sizes grouped buttons through its own group class.
-		expect(classes).toContain(privacyChoicesClassNames.bar.actionGroup);
-		expect(classes).toContain(privacyChoicesClassNames.surface.actionGroup);
+		expect(classes).toContain(promptClassNames.banner.actionGroup);
+		expect(classes).toContain(promptClassNames.surface.actionGroup);
 		expect(group?.firstElementChild?.getAttribute('data-testid')).toBe(
 			'consent-banner-accept-button'
 		);
@@ -480,7 +417,6 @@ describe('the policy and the host (wave B round 1)', () => {
 		const document = await render(
 			await buildLocals(
 				{
-					design: 'privacy-choices',
 					prompt: { container: { type: 'banner' } },
 				},
 				{
@@ -535,7 +471,6 @@ describe('the policy and the host (wave B round 1)', () => {
 		const document = await render(
 			await buildLocals(
 				{
-					design: 'privacy-choices',
 					prompt: { container: { type: 'banner' } },
 				},
 				{},
@@ -555,7 +490,7 @@ describe('the policy and the host (wave B round 1)', () => {
 		);
 		// The heading stays visually hidden under the slot.
 		expect($(document, 'consent-banner-title')?.classList).toContain(
-			privacyChoicesClassNames.surface.visuallyHidden
+			promptClassNames.surface.visuallyHidden
 		);
 		expect($(document, 'consent-banner-description')?.classList).toContain(
 			'description-marker'
@@ -565,10 +500,10 @@ describe('the policy and the host (wave B round 1)', () => {
 		);
 	});
 
-	it('the root matches the classic root: direction, surface marker, animation switch', async () => {
+	it('the root carries the direction, the surface marker and the animation switch', async () => {
 		const locals = await buildLocals(PC, {}, { disableAnimation: true });
-		const model = resolvePrivacyChoicesModel({
-			classNames: privacyChoicesClassNames,
+		const model = resolvePromptModel({
+			classNames: promptClassNames,
 			options: locals.options,
 			props: {},
 			snapshot: {
@@ -579,11 +514,7 @@ describe('the policy and the host (wave B round 1)', () => {
 				},
 			} as typeof locals.snapshot,
 		});
-		if (!model) {
-			throw new Error('Expected the Privacy Choices model');
-		}
-		const { document } = new JSDOM(renderPrivacyChoicesHTML(model, false))
-			.window;
+		const { document } = new JSDOM(renderPromptHTML(model, false)).window;
 		const root = $(document, 'consent-banner-root');
 		expect(root?.getAttribute('dir')).toBe('rtl');
 		expect(root?.getAttribute('data-inth-surface')).toBe('banner');
@@ -605,12 +536,12 @@ describe('the policy and the host (wave B round 1)', () => {
 		);
 	});
 
-	it('[BNR-13] the opt-in confirmation brings the classic dialog sheets React gives it', () => {
-		expect(CONFIRMATION_SHEETS.map((sheet) => sheet.id)).toEqual([
+	it('[BNR-13] the opt-in confirmation brings the widget sheets React gives it', () => {
+		expect(WIDGET_SHEETS.map((sheet) => sheet.id)).toEqual([
 			'inth-tokens',
 			'inth-button',
-			'inth-banner',
-			'inth-dialog',
+			'inth-parts',
+			'inth-widget',
 		]);
 	});
 });
@@ -653,10 +584,7 @@ describe('<PrivacyChoicesLink />', () => {
 		expect(link?.textContent).toBe('Your Privacy Choices');
 	});
 
-	it('the classic design keeps Your Privacy Choices to opt-out policies', async () => {
-		const optIn = await renderLink(await buildLocals(undefined, US_OPT_IN));
-		expect(optIn?.hasAttribute('hidden')).toBe(true);
-		expect(optIn?.hasAttribute('data-testid')).toBe(false);
+	it('names the opt-out right with the CCPA icon under an opt-out policy', async () => {
 		const optOut = await renderLink(await buildLocals(undefined, US_OPT_OUT), {
 			variant: 'privacy-choices',
 		});
@@ -668,7 +596,7 @@ describe('<PrivacyChoicesLink />', () => {
 		expect(optOut?.querySelector('svg')).not.toBeNull();
 	});
 
-	it('[C2] sizes the opt-out icon on its own, since the classic sheet that sized it never loads', async () => {
+	it('[C2] sizes the opt-out icon on its own, since the prompt never loads the legal-links sheet that sizes it', async () => {
 		const locals = await buildLocals(PC, US_OPT_OUT);
 		const styled = await renderLink(locals, { variant: 'privacy-choices' });
 		const icon = styled?.querySelector('svg');
@@ -683,7 +611,7 @@ describe('<PrivacyChoicesLink />', () => {
 	});
 });
 
-describe('wave C round 1', () => {
+describe('legal links and sheet ids', () => {
 	it('the banner legal links drop their class with noStyle', async () => {
 		const document = await render(await buildLocals(PC), { noStyle: true });
 		const link = $(document, 'consent-banner-legal-link-privacyPolicy');
@@ -691,14 +619,13 @@ describe('wave C round 1', () => {
 		expect(link?.hasAttribute('class')).toBe(false);
 	});
 
-	it.each(['bar', 'card', 'drawer'] as const)(
+	it.each(['banner', 'card', 'drawer'] as const)(
 		'the %s sheet ids the browser looks for match the sheets it loads',
-		async (presentation) => {
-			const { loadPresentationSheets } =
-				await import('../browser/privacy-choices');
-			const sheets = await loadPresentationSheets(presentation);
+		async (type) => {
+			const { loadContainerSheets } = await import('../browser/prompt');
+			const sheets = await loadContainerSheets(type);
 			expect(sheets.map((sheet) => sheet.id)).toEqual(
-				PRESENTATION_SHEET_IDS[presentation]
+				CONTAINER_SHEET_IDS[type]
 			);
 		}
 	);

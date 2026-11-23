@@ -92,30 +92,28 @@ describe('the react dialog adapter', () => {
 		await handle.destroy();
 	});
 
-	it.each(['privacy-choices', 'classic', undefined] as const)(
-		'hands the island the dialog design (%s)',
-		async (design) => {
-			let seen: { design?: string } = {};
-			const recordProps = function recordProps(props: {
-				design: string;
-			}): null {
-				seen = props;
-				return null;
-			};
-			registerDialogSurface('react', () =>
-				Promise.resolve({ default: recordProps })
-			);
-			const handle = await reactDialogAdapter.mount({
-				design,
-				kind: 'preferences',
-				options: OPTIONS,
-				runtime: createRuntime(),
-				target: createHost(),
-			});
-			await vi.waitFor(() => expect(seen.design).toBe(design ?? 'classic'));
-			await handle.destroy();
-		}
-	);
+	it('hands the island the legal links and no design', async () => {
+		let seen: Record<string, unknown> = {};
+		const recordProps = function recordProps(
+			props: Record<string, unknown>
+		): null {
+			seen = props;
+			return null;
+		};
+		registerDialogSurface('react', () =>
+			Promise.resolve({ default: recordProps })
+		);
+		const handle = await reactDialogAdapter.mount({
+			kind: 'preferences',
+			legalLinks: ['privacyPolicy'],
+			options: OPTIONS,
+			runtime: createRuntime(),
+			target: createHost(),
+		});
+		await vi.waitFor(() => expect(seen.legalLinks).toEqual(['privacyPolicy']));
+		expect(seen).not.toHaveProperty('design');
+		await handle.destroy();
+	});
 
 	it('closes through the kernel rather than the DOM', async () => {
 		registerDialogSurface('react', () => Promise.resolve(reactSurface));

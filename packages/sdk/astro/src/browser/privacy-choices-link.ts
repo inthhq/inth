@@ -10,14 +10,11 @@
 
 import { applyExperimentAssignment } from '@inth/sdk/engine';
 import type { ConsentSnapshot } from '@inth/sdk/engine';
-import {
-	resolveConsentDesign,
-	resolvePrivacyChoicesLink,
-} from '@inth/sdk/surface-state';
+import { resolvePrivacyChoicesLink } from '@inth/sdk/surface-state';
 import type { OptOutLinkVariant } from '@inth/sdk/surface-state';
 import type { Translations } from '@inth/sdk/translations';
 
-import { privacyChoicesLinkIconSvg } from '../privacy-choices/link-icon';
+import { privacyChoicesLinkIconSvg } from '../parts/link-icon';
 import type { InthResolvedOptions } from '../types';
 
 /** Marks a stock link; the value is its `variant` prop, or empty. */
@@ -36,7 +33,7 @@ const hasIcon = (link: HTMLElement): boolean =>
 	link.querySelector(ICON_SELECTOR) !== null;
 
 /**
- * Show, hide and label the page's stock Privacy Choices links.
+ * Show, hide and label the page's stock "Your Privacy Choices" links.
  *
  * @param snapshot - The current consent snapshot.
  * @param options - The integration's `presentation` and `experiment`.
@@ -63,7 +60,6 @@ export const syncPrivacyChoicesLinks = function syncPrivacyChoicesLinks(
 		const variant = (link.getAttribute(PRIVACY_CHOICES_LINK_ATTRIBUTE) ||
 			undefined) as OptOutLinkVariant | undefined;
 		const state = resolvePrivacyChoicesLink(snapshot, translations, {
-			design: resolveConsentDesign(presentation),
 			variant: variant ?? presentation?.optOutLink,
 		});
 		link.hidden = state === null;

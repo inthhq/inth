@@ -15,7 +15,6 @@ import type { EngineModule } from '../browser/shell';
 import {
 	getConsentClient,
 	getEventDispatcher,
-	registerDialogStyles,
 	registerRuntimeModules,
 } from '../client';
 import type { AstroConsentClient } from '../client';
@@ -519,7 +518,9 @@ describe('the first-load shell', () => {
 			engine.closeDialog();
 			expect(island.close).toHaveBeenCalledOnce();
 			expect(root.hidden).toBe(true);
-			expect(banner.hidden).toBe(false);
+			// The engine's prompt controller shows the prompt again, from the
+			// spot a real page carries; this page has none.
+			expect(engine.getConsent().activeUI).toBe('banner');
 		});
 
 		it('closes back to the banner without the engine', async () => {
@@ -570,43 +571,30 @@ describe('the first-load shell', () => {
 		});
 	});
 
-	it('an early Your Privacy Choices click downloads the Privacy Choices dialog, never the classic one', async () => {
+	it('an early Your Privacy Choices click downloads the dialog and its sheets', async () => {
 		renderPage();
 		const { loadEngine } = heldEngine();
-		registerDialogStyles(['/classic-dialog.css']);
 		registerDialogAdapter('react', () =>
 			Promise.resolve({
 				mount: vi.fn(),
 				name: 'react' as const,
 			})
 		);
-		try {
-			const { client: shell } = startShell(
-				loadEngine,
-				{},
-				{
-					...OPTIONS,
-					presentation: {
-						design: 'privacy-choices',
-						prompt: { container: { type: 'card' } },
-					},
-					ui: 'react',
-				}
-			);
-			void shell.openDialog();
-			await vi.waitFor(() =>
-				expect(
-					document.head.querySelector(
-						'style[data-inth-styles="inth-privacy-choices-dialog"]'
-					)
-				).not.toBeNull()
-			);
+		const { client: shell } = startShell(
+			loadEngine,
+			{},
+			{
+				...OPTIONS,
+				presentation: { prompt: { container: { type: 'card' } } },
+				ui: 'react',
+			}
+		);
+		void shell.openDialog();
+		await vi.waitFor(() =>
 			expect(
-				document.head.querySelector('link[href="/classic-dialog.css"]')
-			).toBeNull();
-		} finally {
-			registerDialogStyles([]);
-		}
+				document.head.querySelector('style[data-inth-styles="inth-dialog"]')
+			).not.toBeNull()
+		);
 	});
 
 	it('sends events made before the engine once it has loaded', async () => {
