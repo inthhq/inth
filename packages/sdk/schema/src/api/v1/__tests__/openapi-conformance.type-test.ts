@@ -8,6 +8,7 @@ import type {
 import type { components, operations } from '../generated/types';
 import type { v1ErrorBodySchema } from '../v1-common.model';
 import type {
+	v1ConsentCheckOutputSchema,
 	v1ConsentInitOutputSchema,
 	v1ConsentInitQuerySchema,
 	v1ConsentManifestQuerySchema,
@@ -92,6 +93,11 @@ type RegistryField<T extends { scriptRegistry?: unknown }> = {
 type DocumentRegistry = components['schemas']['ScriptRegistry'];
 
 type Found =
+	| WireDiff<
+			Out<typeof v1ConsentCheckOutputSchema>,
+			Ok<'getV1ConsentCheck'>,
+			'consent check answer'
+	  >
 	| WireDiff<
 			Out<typeof v1ConsentInitQuerySchema>,
 			Query<'getV1ConsentInit'>,

@@ -6,5 +6,6 @@
  */
 
 export * from './api';
+export type { UserConsent } from './api/v1';
 export * from './domain';
 export * from './shared';

@@ -253,9 +253,63 @@ const checkAnswer = v.object({
 	documents: ownRecord(checkSchema),
 });
 
+const epochMs = v.pipe(
+	v.number(),
+	v.integer(),
+	v.minValue(0),
+	v.maxValue(MAX_EPOCH_MS)
+);
+
+const consentSyncBasis = v.variant('kind', [
+	v.object({
+		fingerprint: v.pipe(v.string(), v.minLength(1)),
+		kind: v.literal('choice-v1'),
+	}),
+	v.object({
+		kind: v.literal('legacy-v2'),
+		materialFingerprint: v.optional(v.pipe(v.string(), v.minLength(1))),
+	}),
+]);
+
 const consentAnswer = v.object({
 	/** Each category the user answered, and whether they grant it now */
 	categories: ownRecord(v.boolean()),
+	/** Effective opt-out state across the person and their linked devices */
+	optOut: v.nullable(
+		v.object({
+			advertising: v.boolean(),
+			limitSensitive: v.boolean(),
+			recordedAt: epochMs,
+			rights: v.array(v.string()),
+			sale: v.boolean(),
+		})
+	),
+	/** Cross-domain sync snapshot for the browser provider */
+	sync: v.object({
+		checkedAt: epochMs,
+		choices: ownRecord(
+			v.object({
+				basis: consentSyncBasis,
+				confirmedAt: epochMs,
+				expiresAt: v.optional(epochMs),
+				value: v.boolean(),
+			})
+		),
+		externalId: v.string(),
+		optOut: v.nullable(
+			v.object({
+				method: v.string(),
+				recordedAt: epochMs,
+				rights: v.array(v.string()),
+			})
+		),
+		vendors: ownRecord(
+			v.object({
+				confirmedAt: epochMs,
+				value: v.boolean(),
+			})
+		),
+	}),
 });
 
 const linkAnswer = v.object({
@@ -868,12 +922,20 @@ export type InthConsent = Readonly<
 	Partial<Record<InthConsentCategory, boolean>>
 >;
 
+/**
+ * Full consent check document returned by `consents.check()`, including
+ * effective `categories`, effective `optOut`, and the `sync` snapshot passed to
+ * a browser provider as `userConsent`
+ */
+export type UserConsent = Schemas['ConsentCheckResponse'];
+
 export interface CheckConsentParams {
 	/** Your id for the user */
 	readonly externalId: string;
 	/**
 	 * A site's host name, or an app's application or bundle id, to count only
-	 * the answers given there. Leave it out to count every property
+	 * the answers given there. Leave it out to count every property, including
+	 * when passing the result as `userConsent` for cross-domain sync
 	 */
 	readonly property?: string;
 }
@@ -888,16 +950,18 @@ class Consents {
 	/**
 	 * What a user consents to now, across every device linked to them. Per
 	 * category the answer they confirmed last stands, so a refusal on their
-	 * phone takes back a grant made earlier on their laptop
+	 * phone takes back a grant made earlier on their laptop. Omit `property`
+	 * when passing the returned document to a browser provider as `userConsent`
+	 * for cross-domain sync
 	 *
 	 * @example
 	 * const { data, error } = await inth.consents.check({ externalId: user.id });
-	 * if (!error && data.marketing === true) sendNewsletter();
+	 * if (!error && data.categories.marketing === true) sendNewsletter();
 	 */
 	async check(
 		params: CheckConsentParams,
 		options?: InthRequestOptions
-	): Promise<InthResult<InthConsent>> {
+	): Promise<InthResult<UserConsent>> {
 		const unusable = uncarried({
 			externalId: params.externalId,
 			property: params.property,
@@ -909,7 +973,7 @@ class Consents {
 		if (params.property !== undefined) {
 			query.set('property', params.property);
 		}
-		const answer = await this.#send(
+		return await this.#send(
 			reader(consentAnswer),
 			{
 				method: 'GET',
@@ -917,7 +981,6 @@ class Consents {
 			},
 			options
 		);
-		return answer.error ? answer : ok(answer.data.categories);
 	}
 }
 
