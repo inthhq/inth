@@ -1,6 +1,9 @@
 /**
  * The consent prompt as a Banner. Only this module names the `banner`
  * stylesheet, so a page that shows another container never downloads it.
+ * The file is named `strip`, not `banner`: it loads on demand, its chunk
+ * is named after it, and content blockers drop files named like a consent
+ * banner.
  *
  * @packageDocumentation
  */

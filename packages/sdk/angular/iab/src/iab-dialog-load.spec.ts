@@ -16,7 +16,7 @@ import {
 	IAB_CONSENT_DIALOG_BODY,
 	IABConsentDialog,
 } from './iab-consent-dialog';
-import { IABConsentDialogBody } from './iab-consent-dialog-body';
+import { IABConsentDialogBody } from './iab-dialog-body';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

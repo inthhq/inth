@@ -54,6 +54,8 @@ interface FirstLoad {
 	engineModules: string[];
 	/** Files opening the dialog fetches that the first load did not. */
 	dialogFiles: string[];
+	/** The chunks the package's own `import()` calls load. */
+	lazyFiles: string[];
 }
 
 /**
@@ -148,6 +150,14 @@ const routeFirstLoad = async function routeFirstLoad(
 			: [],
 		engineModules: engineChunk ? modulesOf(closure(engineChunk.fileName)) : [],
 		files: [...firstLoad].sort(),
+		lazyFiles: [...chunks.values()]
+			.filter(
+				(chunk) =>
+					chunk.isDynamicEntry &&
+					!chunk.facadeModuleId?.startsWith('\0fixture:')
+			)
+			.map((chunk) => chunk.fileName)
+			.sort(),
 		modules: modulesOf(firstLoad),
 	};
 };
@@ -271,6 +281,20 @@ describe('TanStack Start client chunks', () => {
 			grouped.dialogFiles.length,
 			`${plain.dialogFiles.length} files before:\n${grouped.dialogFiles.join('\n')}`
 		).toBeLessThan(plain.dialogFiles.length);
+	}, 60_000);
+
+	test('names no lazy chunk like a consent banner, which content blockers drop', async () => {
+		// Vite names a lazy chunk after the module it imports: the prompt's
+		// containers, its in-place options, the dialog and the engine load
+		// on demand.
+		const { lazyFiles } = await routeFirstLoad('provider-route');
+		expect(lazyFiles.length).toBeGreaterThan(5);
+		expect(lazyFiles.some((file) => file.includes('/strip-'))).toBe(true);
+		expect(
+			lazyFiles.filter((file) =>
+				/banner|consent|cookie|privacy|gdpr/iu.test(file)
+			)
+		).toEqual([]);
 	}, 60_000);
 
 	test('a provider route leaves that code to load on demand', async () => {
