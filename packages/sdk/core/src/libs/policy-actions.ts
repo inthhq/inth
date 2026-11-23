@@ -97,9 +97,11 @@ export interface SurfacePresentation {
 	trapFocus?: boolean;
 	/**
 	 * Controls backdrop, scroll lock and focus trapping together. Explicit
-	 * `blocking` takes precedence over the deprecated scroll/focus options.
-	 * Notices never block. Choice walls always block. Preferences default to
-	 * blocking; other prompts default to non-blocking.
+	 * `blocking` takes precedence over the deprecated scroll/focus options,
+	 * and `blockUntilChoice` over all three. Notices never block. Choice
+	 * walls always block; where the policy forbids blocking, a wall becomes
+	 * floating. Preferences default to blocking; other prompts default to
+	 * non-blocking.
 	 */
 	blocking?: boolean;
 }
@@ -219,9 +221,10 @@ export interface ResolvedConsentPresentation {
 	 * on the preferences surface.
 	 *
 	 * Renderers that read `container` take its `blocking`, not the top-level
-	 * `blocking`. The two can differ: under an opt-out model a legacy `wall`
-	 * still sets the top-level value, while the container falls back to a
-	 * card at `start` that never blocks (BNR-13).
+	 * `blocking`. Both read the same blocking request and the same policy
+	 * constraint, so they agree on it. Where the policy forbids blocking, as
+	 * under an opt-out model, a legacy `wall` resolves to `floating` and
+	 * maps to a `start` card, and neither blocks (BNR-13).
 	 */
 	container: {
 		desktop: ResolvedConsentLayout;
@@ -328,6 +331,34 @@ const requestedBlocking = function requestedBlocking(
 };
 
 /**
+ * The blocking the host asks for, decided per tier: the override first,
+ * then the provider's presentation, each with its `blockUntilChoice` ahead
+ * of its legacy `blocking`, `scrollLock` and `trapFocus`. A tier that says
+ * nothing leaves it to the next, so a provider's `blockUntilChoice: false`
+ * never beats an override's `blocking: true`.
+ */
+const requestedTierBlocking = function requestedTierBlocking(
+	override: PromptPresentation,
+	presentation: ConsentPresentation | undefined,
+	surface: 'prompt' | 'preferences'
+): boolean | undefined {
+	const tiers: (PromptPresentation | undefined)[] = [
+		override,
+		presentation?.[surface],
+	];
+	for (const tier of tiers) {
+		const requested =
+			tier === undefined
+				? undefined
+				: (tier.blockUntilChoice ?? requestedBlocking(tier));
+		if (requested !== undefined) {
+			return requested;
+		}
+	}
+	return undefined;
+};
+
+/**
  * The policy's blocking constraint on the prompt. A rule that cannot block
  * (a notice, or the opt-out model) forbids it, which is what its canonical
  * `surface` leaves implied.
@@ -347,14 +378,13 @@ const policyBlockingConstraint = function policyBlockingConstraint(
  * `required` always blocks.
  */
 const resolveBlocking = (
-	options: SurfacePresentation,
+	requested: boolean | undefined,
 	variant: PromptVariant,
 	notice: boolean,
 	preferences: boolean,
 	constraint: ConsentBlockingConstraint,
 	diagnostics: PresentationDiagnostic[]
 ): boolean => {
-	const requested = requestedBlocking(options);
 	let blocking = requested ?? (preferences || variant === 'wall');
 	if (notice && blocking) {
 		blocking = false;
@@ -401,12 +431,15 @@ const isValidPromptPosition = function isValidPromptPosition(
 };
 
 /**
- * Resolve the surface geometry. Variant comes first, position is validated
- * against it, and blocking is forced by the prompt kind or, on the prompt
- * surface, by the variant.
+ * Resolve the surface geometry. The policy's hard constraint comes first:
+ * where it forbids blocking, a `wall` becomes `floating`, so no renderer
+ * draws a wall that does not block. Then the variant, then the position,
+ * validated against it, then blocking, forced by the prompt kind or, on
+ * the prompt surface, by the constraint and the variant.
  */
 const resolveSurfaceGeometry = function resolveSurfaceGeometry(
 	options: PromptPresentation,
+	requested: boolean | undefined,
 	notice: boolean,
 	preferences: boolean,
 	constraint: ConsentBlockingConstraint,
@@ -425,6 +458,14 @@ const resolveSurfaceGeometry = function resolveSurfaceGeometry(
 			actions: [],
 			code: 'invalid-variant',
 			message: 'A notice cannot use a blocking wall; using floating.',
+		});
+	} else if (!preferences && constraint === 'forbidden' && variant === 'wall') {
+		variant = 'floating';
+		diagnostics.push({
+			actions: [],
+			code: 'blocking-forbidden',
+			message:
+				'The policy forbids blocking, and a wall always blocks; using floating.',
 		});
 	}
 	if (
@@ -454,7 +495,7 @@ const resolveSurfaceGeometry = function resolveSurfaceGeometry(
 		}
 	}
 	const blocking = resolveBlocking(
-		options,
+		requested,
 		variant,
 		notice,
 		preferences,
@@ -504,12 +545,15 @@ const tierContainer = function tierContainer(
  * a tier's `container`, else its legacy `variant` or `position` mapped onto
  * a container. So an override's legacy `variant` beats a provider's
  * `container`, and a provider's legacy geometry beats the policy's
- * container. Edge style and blocking arrive merged in `options`. Legacy
- * `blocking`, `scrollLock` and `trapFocus` map onto `blockUntilChoice`.
+ * container. Edge style arrives merged in `options`; the blocking request
+ * arrives decided per tier, the same value the top-level `blocking` reads.
+ * Legacy `blocking`, `scrollLock` and `trapFocus` map onto
+ * `blockUntilChoice`.
  */
 const resolvePromptContainer = function resolvePromptContainer(
 	surface: 'prompt' | 'preferences',
 	options: PromptPresentation,
+	requested: boolean | undefined,
 	override: PromptPresentation,
 	presentation: ConsentPresentation | undefined,
 	policy: ResolvedPolicyRule,
@@ -541,7 +585,7 @@ const resolvePromptContainer = function resolvePromptContainer(
 			? policy.surface?.edgeStyle
 			: undefined;
 	const input = {
-		blockUntilChoice: options.blockUntilChoice ?? requestedBlocking(options),
+		blockUntilChoice: requested,
 		blockingConstraint: policy.surface?.blocking,
 		container,
 		edgeStyle: options.edgeStyle ?? policyEdgeStyle,
@@ -668,8 +712,16 @@ export const resolveConsentPresentation =
 		// `compact` sizes buttons to their labels so the default split layout
 		// reads as one row; `balanced` and `strict` fill and stack instead.
 		const uiProfile = options.uiProfile ?? 'compact';
+		// One blocking request for both the top-level `blocking` and the
+		// container, so the two agree on what the host asked for.
+		const requested = requestedTierBlocking(
+			override,
+			input.presentation,
+			input.surface
+		);
 		const geometry = resolveSurfaceGeometry(
 			options,
+			requested,
 			notice,
 			preferences,
 			policyBlockingConstraint(input.policy),
@@ -684,6 +736,7 @@ export const resolveConsentPresentation =
 			container: resolvePromptContainer(
 				input.surface,
 				options,
+				requested,
 				override,
 				input.presentation,
 				input.policy,
