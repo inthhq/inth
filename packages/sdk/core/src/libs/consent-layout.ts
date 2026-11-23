@@ -138,6 +138,10 @@ export interface ResolvedConsentLayout {
 	diagnostics: ConsentLayoutDiagnostic[];
 }
 
+/** Quote a value for a diagnostic without calling into a hostile object. */
+const describeValue = (value: unknown): string =>
+	typeof value === 'string' ? `"${value}"` : `a ${typeof value}`;
+
 const CARD_POSITIONS: readonly CardPosition[] = [
 	'bottom-left',
 	'bottom-right',
@@ -181,7 +185,7 @@ const normalizeContainer = function normalizeContainer(
 			}
 			diagnostics.push({
 				code: 'invalid-container',
-				message: `Card position "${String(position)}" is not valid; using "bottom-left".`,
+				message: `Card position ${describeValue(position)} is not valid; using "bottom-left".`,
 			});
 			return DEFAULT_CONSENT_CONTAINER;
 		}
@@ -192,7 +196,7 @@ const normalizeContainer = function normalizeContainer(
 			}
 			diagnostics.push({
 				code: 'invalid-container',
-				message: `Banner edge "${String(edge)}" is not valid; using "bottom".`,
+				message: `Banner edge ${describeValue(edge)} is not valid; using "bottom".`,
 			});
 			return { edge: 'bottom', type: 'banner' };
 		}
@@ -203,14 +207,14 @@ const normalizeContainer = function normalizeContainer(
 			}
 			diagnostics.push({
 				code: 'invalid-container',
-				message: `Drawer side "${String(side)}" is not valid; using "bottom".`,
+				message: `Drawer side ${describeValue(side)} is not valid; using "bottom".`,
 			});
 			return { side: 'bottom', type: 'drawer' };
 		}
 		default: {
 			diagnostics.push({
 				code: 'invalid-container',
-				message: `Container type "${String((container as { type?: unknown }).type)}" is not valid; using a bottom-left card.`,
+				message: `Container type ${describeValue((container as { type?: unknown }).type)} is not valid; using a bottom-left card.`,
 			});
 			return DEFAULT_CONSENT_CONTAINER;
 		}
@@ -313,10 +317,7 @@ const resolveEdgeStyle = function resolveEdgeStyle(
 	) {
 		diagnostics.push({
 			code: 'invalid-edge-style',
-			message:
-				typeof requested === 'string'
-					? `Edge style "${requested}" is not valid; using "inset".`
-					: 'The edge style is not valid; using "inset".',
+			message: `Edge style ${describeValue(requested)} is not valid; using "inset".`,
 		});
 		return 'inset';
 	}

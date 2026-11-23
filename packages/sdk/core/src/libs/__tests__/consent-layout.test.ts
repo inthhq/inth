@@ -336,6 +336,21 @@ describe('resolveLayout: named rules', () => {
 		]);
 	});
 
+	it.each([
+		{ position: { toString: null }, type: 'card' },
+		{ edge: { toString: null }, type: 'banner' },
+		{ side: { toString: null }, type: 'drawer' },
+		{ type: { toString: null } },
+	])(
+		'reports a container value that cannot be printed without throwing',
+		(container) => {
+			const result = resolveLayout({ ...EU, container: container as never });
+			expect(result.diagnostics.map((d) => d.code)).toEqual([
+				'invalid-container',
+			]);
+		}
+	);
+
 	it('uses a 640px phone breakpoint', () => {
 		expect(PHONE_LAYOUT_QUERY).toBe('(max-width: 640px)');
 	});
