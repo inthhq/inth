@@ -177,6 +177,8 @@ const mount = async function mount({
 	container = { type: 'card' },
 	language,
 	host,
+	noStyle,
+	optOutLink,
 }: {
 	region?: Region;
 	design?: ConsentPresentation['design'] | null;
@@ -186,6 +188,9 @@ const mount = async function mount({
 	/** The visitor's language, which sets the dialog's `dir`. */
 	language?: string;
 	host?: Partial<HostConfig>;
+	/** The provider's `noStyle`. */
+	noStyle?: boolean;
+	optOutLink?: ConsentPresentation['optOutLink'];
 } = {}) {
 	fixtureId += 1;
 	stubViewport(phone);
@@ -205,12 +210,14 @@ const mount = async function mount({
 						...RULES[region],
 					} as PolicyRule,
 				]),
+				noStyle,
 				persistence: false,
 				presentation:
 					design === null
 						? undefined
 						: {
 								design,
+								optOutLink,
 								prompt: { container, edgeStyle },
 							},
 				vendors: VENDORS,
@@ -1038,6 +1045,33 @@ describe('council fixes', () => {
 		const choices = await waitFor(() => must('privacy-choices-link'));
 		expect(choices.getAttribute('data-opt-out-variant')).not.toBeNull();
 		expect(choices.getAttribute('data-inth-rights')).toContain('opt-out');
+	});
+
+	test('[C2] the opt-out icon sizes itself from its glyph, with no banner sheet on the page', async () => {
+		await mount({ host: { stockLink: true }, optOutLink: 'privacy-choices' });
+		const icon = await waitFor(() => {
+			const svg = must('privacy-choices-link').querySelector('svg');
+			expect(svg).not.toBeNull();
+			return svg as SVGSVGElement;
+		});
+		expect(icon.getAttribute('height')).toBe('14');
+		expect(icon.getAttribute('width')).toBe('30');
+		expect(icon.getAttribute('viewBox')).toBe('0 0 30 14');
+	});
+
+	test('[C2] noStyle leaves the opt-out icon unsized', async () => {
+		await mount({
+			host: { stockLink: true },
+			noStyle: true,
+			optOutLink: 'privacy-choices',
+		});
+		const icon = await waitFor(() => {
+			const svg = must('privacy-choices-link').querySelector('svg');
+			expect(svg).not.toBeNull();
+			return svg as SVGSVGElement;
+		});
+		expect(icon.hasAttribute('height')).toBe(false);
+		expect(icon.hasAttribute('width')).toBe(false);
 	});
 
 	test('the classic design keeps Your Privacy Choices to opt-out policies', async () => {

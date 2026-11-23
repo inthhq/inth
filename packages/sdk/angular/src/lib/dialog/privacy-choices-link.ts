@@ -15,11 +15,26 @@ import {
 	resolvePrivacyChoicesLink,
 } from '@inth/sdk/surface-state';
 import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import { CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
 import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
 import { OptOutIcon } from '../shared/icons';
+
+/**
+ * The icon's own size, 14px tall at the glyph's ratio. A Privacy Choices
+ * page never loads the classic banner sheet whose `.optOutIcon` rule sizes
+ * it, so the attributes keep it from filling the line; that rule, where it
+ * loads, still wins.
+ */
+const ICON_SIZE = (() => {
+	const [, , width = 30, height = 14] = CPPA_OPT_OUT_ICON.viewBox
+		.split(' ')
+		.map(Number);
+	const tall = 14;
+	return { height: tall, width: Math.round((tall * width) / height) };
+})();
 
 /**
  * The "Your Privacy Choices" footer link: an unstyled button that opens
@@ -65,6 +80,8 @@ import { OptOutIcon } from '../shared/icons';
 				<svg
 					inth-opt-out-icon
 					[attr.class]="iconClass()"
+					[attr.width]="iconSize()?.width ?? null"
+					[attr.height]="iconSize()?.height ?? null"
 				></svg>
 			}
 			<ng-content>{{ link.label }}</ng-content>
@@ -99,6 +116,11 @@ export class PrivacyChoicesLink {
 	/** @internal */
 	protected readonly rights = computed(() =>
 		this.#consent.snapshot().policyRule.rights.join(' ')
+	);
+
+	/** Unset under `noStyle`, which leaves sizing to the host. @internal */
+	protected readonly iconSize = computed(() =>
+		this.#theme.noStyle() ? null : ICON_SIZE
 	);
 
 	/** @internal */
