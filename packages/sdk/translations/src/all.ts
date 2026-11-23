@@ -1,4 +1,4 @@
-import { registerStockTranslations } from './stock';
+import { registerStockTranslations } from './stock-translations.model';
 import { baseTranslations } from './translations';
 
 // Loading every language makes each one's built-in copy known, so app

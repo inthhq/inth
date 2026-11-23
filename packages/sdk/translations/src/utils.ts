@@ -4,7 +4,7 @@ import type {
 	TranslationConfig,
 	TranslationInputConfig,
 	Translations,
-} from './types';
+} from './translations.model';
 
 type TranslationSection =
 	| 'common'

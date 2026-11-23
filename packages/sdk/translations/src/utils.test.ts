@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { baseTranslations as bundledTranslations } from './translations';
-import type { I18nConfig, TranslationConfig, Translations } from './types';
+import type { I18nConfig, TranslationConfig, Translations } from './translations.model';
 import {
 	deepMergeTranslations,
 	detectBrowserLanguage,

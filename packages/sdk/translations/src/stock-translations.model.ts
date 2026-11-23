@@ -1,5 +1,5 @@
 import { translations as enTranslations } from './translations/en';
-import type { Translations } from './types';
+import type { Translations } from './translations.model';
 
 /**
  * Keyed on a global symbol so every copy of this module, including one
