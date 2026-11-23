@@ -11,6 +11,7 @@ import type { OptOutRecord } from '@inth/sdk-schema/types';
 import type { AllConsentNames } from '../consent/consent-types';
 import {
 	LEGACY_OPT_OUT_CATEGORIES,
+	OPTIONAL_CONSENT_CATEGORIES,
 	optOutDecidingCategory,
 	policyOptOutCategories,
 } from './types';
@@ -47,6 +48,91 @@ export const optOutDenyCategories = function optOutDenyCategories(
 		],
 		scope: policy.scope,
 	});
+};
+
+/**
+ * Joins the categories two copies of a held opt-out withhold, in canonical
+ * category order. A missing list is a record stored before opt-outs kept
+ * their own, and stands for {@link LEGACY_OPT_OUT_CATEGORIES}: a copy is
+ * never read as withholding less than that. Returns `undefined` (legacy)
+ * when the join adds nothing to the legacy list, so a legacy record stays
+ * legacy.
+ */
+export const unionOptOutCategories = function unionOptOutCategories(
+	left: readonly OptionalConsentCategory[] | undefined,
+	right: readonly OptionalConsentCategory[] | undefined
+): OptionalConsentCategory[] | undefined {
+	if (left === undefined && right === undefined) {
+		return undefined;
+	}
+	const joined = new Set<OptionalConsentCategory>([
+		...(left ?? LEGACY_OPT_OUT_CATEGORIES),
+		...(right ?? LEGACY_OPT_OUT_CATEGORIES),
+	]);
+	if (
+		(left === undefined || right === undefined) &&
+		[...joined].every((category) =>
+			(LEGACY_OPT_OUT_CATEGORIES as readonly string[]).includes(category)
+		)
+	) {
+		return undefined;
+	}
+	return OPTIONAL_CONSENT_CATEGORIES.filter((category) => joined.has(category));
+};
+
+/**
+ * Whether `answer`, an opt-out record the backend sent, describes the act
+ * `held` records: the same time and method, or a record the backend says
+ * this device alone holds. The backend never carries `categories`, so such
+ * an answer takes the held record's list; any other answer is a separate
+ * opt-out and joins it.
+ */
+export const answersHeldOptOut = function answersHeldOptOut(
+	answer: Pick<OptOutRecord, 'heldBy' | 'method' | 'recordedAt'>,
+	held: Pick<OptOutRecord, 'method' | 'recordedAt'>
+): boolean {
+	return (
+		answer.heldBy === 'device' ||
+		(answer.recordedAt === held.recordedAt && answer.method === held.method)
+	);
+};
+
+/**
+ * `kept` with the categories both copies of a held opt-out withhold, where
+ * `other` is the copy that lost. When the two describe the same act
+ * (`sameAct`, see {@link answersHeldOptOut}) and one has no list, it is the
+ * backend's copy, which never carries one, so the other's list stands.
+ * Otherwise the lists join with {@link unionOptOutCategories}: no copy
+ * makes the browser withhold less than another did.
+ */
+export const carryOptOutCategories = function carryOptOutCategories(
+	kept: OptOutRecord,
+	other: Readonly<OptOutRecord> | null | undefined,
+	sameAct: boolean
+): OptOutRecord {
+	if (!other || kept === other) {
+		return kept;
+	}
+	const categories =
+		sameAct && (kept.categories === undefined || other.categories === undefined)
+			? (kept.categories ?? other.categories)
+			: unionOptOutCategories(kept.categories, other.categories);
+	if (
+		categories === kept.categories ||
+		(categories !== undefined &&
+			kept.categories !== undefined &&
+			categories.length === kept.categories.length &&
+			categories.every(
+				(category, index) => category === kept.categories?.[index]
+			))
+	) {
+		return kept;
+	}
+	if (categories === undefined) {
+		const { categories: _dropped, ...legacy } = kept;
+		return legacy;
+	}
+	return { ...kept, categories: [...categories] };
 };
 
 /**

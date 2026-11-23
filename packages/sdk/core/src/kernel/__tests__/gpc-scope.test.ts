@@ -273,3 +273,140 @@ describe('a custom mapping', () => {
 		kernel.dispose();
 	});
 });
+
+describe('backend copies of a held opt-out', () => {
+	const narrow = () =>
+		optOutRule({
+			privacySignals: { gpc: { denyCategories: ['marketing'] } },
+			prompt: 'none',
+		});
+	const local: OptOutRecord = {
+		categories: ['experience', 'marketing'],
+		heldBy: 'device',
+		method: 'button',
+		recordedAt: NOW - 1000,
+		rights: ['sale'],
+	};
+	/** A kernel holding `held` locally whose init answer carries `server`. */
+	const withServerRecord = (held: OptOutRecord, server: OptOutRecord) =>
+		createKernel(narrow(), {
+			initialRecords: { now: NOW, optOut: held },
+			transport: {
+				init: () =>
+					Promise.resolve({
+						policyResolution: {
+							...matchedResolution(narrow(), 'region'),
+							version: 1,
+						},
+						records: { optOut: server },
+					}),
+			},
+		});
+	const permissionsWithExperience = (
+		kernel: ReturnType<typeof createKernel>
+	) => {
+		const { experience, marketing, measurement } =
+			kernel.getSnapshot().effectivePermissions;
+		return { experience, marketing, measurement };
+	};
+
+	test('[GPC-05] a newer server record of another act never lifts a category the local opt-out held', async () => {
+		const kernel = withServerRecord(local, {
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW - 10,
+			rights: ['sale', 'share'],
+		});
+		await kernel.commands.init();
+		// The account's record is legacy, so it adds measurement; nothing
+		// the browser held is lost.
+		expect(kernel.getSnapshot().optOut).toMatchObject({
+			categories: ['experience', 'measurement', 'marketing'],
+			heldBy: 'person',
+			recordedAt: NOW - 10,
+		});
+		expect(permissionsWithExperience(kernel)).toEqual({
+			experience: false,
+			marketing: false,
+			measurement: false,
+		});
+		kernel.dispose();
+	});
+
+	test('[GPC-05] the server copy of the same act keeps the local categories as they are', async () => {
+		const { categories: _categories, ...answer } = local;
+		const kernel = withServerRecord(local, { ...answer, heldBy: 'both' });
+		await kernel.commands.init();
+		expect(kernel.getSnapshot().optOut?.categories).toEqual([
+			'experience',
+			'marketing',
+		]);
+		expect(permissionsWithExperience(kernel)).toEqual({
+			experience: false,
+			marketing: false,
+			measurement: true,
+		});
+		kernel.dispose();
+	});
+
+	test('[GPC-05] an older server record joins the categories of the newer local opt-out it loses to', async () => {
+		const kernel = withServerRecord(
+			{ ...local, categories: ['marketing'] },
+			{
+				heldBy: 'person',
+				method: 'api',
+				recordedAt: NOW - 5000,
+				rights: ['sale'],
+			}
+		);
+		await kernel.commands.init();
+		const held = kernel.getSnapshot().optOut;
+		expect(held).toMatchObject({ method: 'button', recordedAt: NOW - 1000 });
+		// Joined with a legacy record, which withholds measurement too.
+		expect(held).not.toHaveProperty('categories');
+		expect(permissionsWithExperience(kernel).measurement).toBe(false);
+		kernel.dispose();
+	});
+
+	test.each([
+		[
+			'an account-held record does not take the local list',
+			{ heldBy: 'person', method: 'api' } as const,
+			{ categories: undefined, measurement: false },
+		],
+		[
+			'a record this device alone holds takes the local list',
+			{ heldBy: 'device', method: 'api' } as const,
+			{ categories: ['marketing'], measurement: true },
+		],
+	])('[GPC-05] identify(): %s', async (_label, answer, expected) => {
+		const kernel = createKernel(narrow(), {
+			initialRecords: {
+				now: NOW,
+				optOut: { ...local, categories: ['marketing'] },
+				subject: { subjectId: 'sub_gpc_scope' },
+			},
+			transport: {
+				identify: () =>
+					Promise.resolve({
+						optOut: {
+							...answer,
+							recordedAt: NOW - 10,
+							rights: ['sale', 'share'],
+						},
+						subjectId: 'sub_gpc_scope',
+					}),
+			},
+		});
+		await kernel.commands.init();
+		await kernel.commands.identify({
+			externalId: 'user_1',
+			identityToken: 'tok_1',
+		});
+		const held = kernel.getSnapshot().optOut;
+		expect(held).toMatchObject({ recordedAt: NOW - 10 });
+		expect(held?.categories).toEqual(expected.categories);
+		expect(permissions(kernel).measurement).toBe(expected.measurement);
+		kernel.dispose();
+	});
+});

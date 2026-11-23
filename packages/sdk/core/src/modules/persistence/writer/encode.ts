@@ -13,6 +13,7 @@
 import type {
 	OptOutHolder,
 	OptOutMethod,
+	OptOutRecord,
 	OptOutRight,
 } from '@inth/sdk-schema/types';
 
@@ -344,7 +345,12 @@ export const encodeVendorChoiceCompact = function encodeVendorChoiceCompact(
 // Durable opt-out record
 // ---------------------------------------------------------------------------
 
-/** Serializes a stored opt-out record to JSON with canonical right order. */
+/**
+ * Serializes a stored opt-out record to JSON with canonical right order.
+ * `categories` is left out: SDKs before it reject the record over a field
+ * they do not know, so it goes to its own key
+ * ({@link encodeOptOutCategoriesCompact}).
+ */
 export const encodeOptOutRecord = function encodeOptOutRecord(
 	record: StoredOptOutRecord
 ): string {
@@ -359,12 +365,6 @@ export const encodeOptOutRecord = function encodeOptOutRecord(
 		rights,
 		version: 1,
 	};
-	if (record.categories) {
-		const withheld = new Set(record.categories);
-		encoded.categories = CATEGORY_CODES.filter(([category]) =>
-			withheld.has(category)
-		).map(([category]) => category);
-	}
 	if (record.subject && Object.keys(record.subject).length > 0) {
 		encoded.subject = { ...record.subject };
 	}
@@ -385,9 +385,7 @@ export const encodeOptOutRecord = function encodeOptOutRecord(
 
 /**
  * Compact durable opt-out for the `<key>-opt-out` cookie:
- * `v=1&r=<sa|sh|ta...>&m=<b|g|a|p>&t=<recordedAt>&h=<d|p|b>`, then
- * `k=<fn|ex|me|mk...>` for the withheld categories when the record carries
- * them (an empty `k=` is a real empty list), followed by
+ * `v=1&r=<sa|sh|ta...>&m=<b|g|a|p>&t=<recordedAt>&h=<d|p|b>`, followed by
  * the subject fields (`sid`, `eid`, `idp`), `g=1` when the browser has
  * already reported its GPC signal, `a=<b|g>` for the local act, and `c=1`
  * when rights were confirmed by the backend. `reference` stays in
@@ -406,19 +404,8 @@ export const encodeOptOutRecordCompact = function encodeOptOutRecordCompact(
 		field('m', OPT_OUT_METHOD_TO_CODE[record.method]),
 		field('t', record.recordedAt),
 		field('h', OPT_OUT_HOLDER_TO_CODE[record.heldBy]),
+		...subjectFields(record.subject),
 	];
-	if (record.categories) {
-		const withheld = new Set(record.categories);
-		fields.push(
-			field(
-				'k',
-				CATEGORY_CODES.filter(([category]) => withheld.has(category))
-					.map(([, code]) => code)
-					.join(LIST_SEPARATOR)
-			)
-		);
-	}
-	fields.push(...subjectFields(record.subject));
 	if (record.gpcReported) {
 		fields.push(field('g', 1));
 	}
@@ -430,3 +417,30 @@ export const encodeOptOutRecordCompact = function encodeOptOutRecordCompact(
 	}
 	return fields.join(FIELD_SEPARATOR);
 };
+
+/**
+ * The `<key>-opt-out-categories` companion, the same text in the cookie and
+ * in localStorage: `v=1&t=<recordedAt>&m=<b|g|a|p>&k=<fn|ex|me|mk...>`,
+ * or `null` for a record without its own list (a legacy one). The time and
+ * method bind it to the record's act.
+ */
+export const encodeOptOutCategoriesCompact =
+	function encodeOptOutCategoriesCompact(
+		record: Pick<OptOutRecord, 'categories' | 'method' | 'recordedAt'>
+	): string | null {
+		if (record.categories === undefined) {
+			return null;
+		}
+		const withheld = new Set(record.categories);
+		return [
+			field('v', 1),
+			field('t', record.recordedAt),
+			field('m', OPT_OUT_METHOD_TO_CODE[record.method]),
+			field(
+				'k',
+				CATEGORY_CODES.filter(([category]) => withheld.has(category))
+					.map(([, code]) => code)
+					.join(LIST_SEPARATOR)
+			),
+		].join(FIELD_SEPARATOR);
+	};

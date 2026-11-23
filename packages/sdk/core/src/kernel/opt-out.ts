@@ -5,7 +5,11 @@
  */
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
-import { optOutLiftBlocker } from '../consent-record/opt-out-rules';
+import {
+	answersHeldOptOut,
+	carryOptOutCategories,
+	optOutLiftBlocker,
+} from '../consent-record/opt-out-rules';
 import {
 	OPTIONAL_CONSENT_CATEGORIES,
 	policyOptOutCategories,
@@ -148,21 +152,6 @@ export const sameOptOutRecord = function sameOptOutRecord(
 };
 
 /**
- * The backend never carries `categories`, so an answer to the act this
- * browser recorded keeps the categories the browser fixed when it recorded
- * it. Without this the answer would fall back to the legacy mapping.
- */
-const keepLocalCategories = function keepLocalCategories(
-	next: OptOutRecord,
-	current: Readonly<OptOutRecord> | null
-): OptOutRecord {
-	if (next.categories !== undefined || current?.categories === undefined) {
-		return next;
-	}
-	return { ...next, categories: [...current.categories] };
-};
-
-/**
  * Build the transport payload for a local opt-out act (`button` or `gpc`),
  * with one idempotency key and the snapshot's context. Omits `rights` so
  * the backend derives the applicable rights from the visitor's location.
@@ -239,6 +228,13 @@ export interface OptOutAnswerFence {
 	allowClear: boolean;
 	/** Whether `incoming` came from a backend answer (`false` for the local 404 fallback). */
 	confirmed?: boolean;
+	/**
+	 * `incoming` answers the opt-out act this browser recorded, so it takes
+	 * the categories the browser fixed for that act. Leave unset for any
+	 * other answer (a save, `identify`, a refused lift): its record joins
+	 * the held categories unless it names the same act.
+	 */
+	ownAct?: boolean;
 }
 
 const nextSyncedOptOutReceipt = function nextSyncedOptOutReceipt(
@@ -262,6 +258,23 @@ const nextSyncedOptOutReceipt = function nextSyncedOptOutReceipt(
 		reference: currentReceipt.reference,
 		rightsConfirmed: currentReceipt.rightsConfirmed || confirmed,
 	};
+};
+
+/**
+ * The backend never carries `categories`. An answer to this browser's own
+ * act keeps the list the browser fixed when it recorded it; any other
+ * record, such as one an account holds, joins it.
+ */
+const answerWithHeldCategories = function answerWithHeldCategories(
+	answer: OptOutRecord,
+	held: Readonly<OptOutRecord> | null,
+	fence: Pick<OptOutAnswerFence, 'ownAct'>
+): OptOutRecord {
+	return carryOptOutCategories(
+		answer,
+		held,
+		fence.ownAct === true || (held !== null && answersHeldOptOut(answer, held))
+	);
 };
 
 /**
@@ -300,7 +313,7 @@ export const applySyncedOptOut = function applySyncedOptOut(
 		return false;
 	}
 	if (next !== null) {
-		next = keepLocalCategories(next, current.optOut);
+		next = answerWithHeldCategories(next, current.optOut, fence);
 	}
 	const confirmed = fence.confirmed !== false;
 	const currentReceipt = runtime.getOptOutReceiptData();

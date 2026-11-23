@@ -4,6 +4,7 @@
  *
  * @internal
  */
+import { carryOptOutCategories } from '../../consent-record/opt-out-rules';
 import { clearKernelRecords } from '../../kernel/clear-records';
 import type { InternalKernel } from '../../kernel/internals';
 import {
@@ -108,7 +109,10 @@ const sameSubject = function sameSubject(
 	);
 };
 
-/** Whether two opt-out records carry the same fields and rights. */
+/**
+ * Whether two opt-out records carry the same fields and rights. Their
+ * withheld categories are compared apart, by `patchSeededOptOut`.
+ */
 const sameOptOut = function sameOptOut(
 	left: NonNullable<ConsentSnapshot['optOut']>,
 	right: NonNullable<ConsentSnapshot['optOut']>
@@ -766,6 +770,13 @@ export const mountPersistence = function mountPersistence(
 			records.optOut &&
 			sameOptOut(keptOptOut, records.optOut)
 		) {
+			// The seed came from the cookies alone; localStorage can hold the
+			// act's categories when the cookie companion was dropped. The kept
+			// record withholds what either copy does.
+			const held = carryOptOutCategories(keptOptOut, records.optOut, false);
+			if (held !== keptOptOut) {
+				patch.optOut = held;
+			}
 			mergeSeededOptOutMeta(records, patch);
 		}
 	};

@@ -2,10 +2,15 @@
  * Which categories an opt-out withholds (DEF-09): the policy's GPC mapping
  * for a new opt-out, joined with what a held record was made with.
  */
+import type { OptOutRecord } from '@inth/sdk-schema/types';
 import { describe, expect, it } from 'vitest';
 
 import { evaluateConsentRecord } from '../evaluate';
-import { optOutDenyCategories } from '../opt-out-rules';
+import {
+	carryOptOutCategories,
+	optOutDenyCategories,
+	unionOptOutCategories,
+} from '../opt-out-rules';
 import {
 	LEGACY_OPT_OUT_CATEGORIES,
 	optOutDecidingCategory,
@@ -137,5 +142,43 @@ describe('evaluateConsentRecord with a held opt-out', () => {
 			marketing: false,
 			measurement: false,
 		});
+	});
+});
+
+describe('joining copies of a held opt-out (GPC-05)', () => {
+	it('reads a missing list as legacy and never as withholding nothing', () => {
+		expect(unionOptOutCategories(undefined, undefined)).toBeUndefined();
+		expect(unionOptOutCategories(['marketing'], undefined)).toBeUndefined();
+		expect(unionOptOutCategories([], undefined)).toBeUndefined();
+		expect(unionOptOutCategories(['experience'], undefined)).toEqual([
+			'experience',
+			'measurement',
+			'marketing',
+		]);
+		expect(unionOptOutCategories(['marketing'], ['experience'])).toEqual([
+			'experience',
+			'marketing',
+		]);
+		expect(unionOptOutCategories([], [])).toEqual([]);
+	});
+
+	const act: OptOutRecord = {
+		heldBy: 'device',
+		method: 'button',
+		recordedAt: NOW,
+		rights: ['sale'],
+	};
+
+	it('takes the defined list for the same act, and joins otherwise', () => {
+		const held: OptOutRecord = { ...act, categories: ['marketing'] };
+		const answer: OptOutRecord = { ...act, heldBy: 'both', rights: [] };
+		expect(carryOptOutCategories(answer, held, true).categories).toEqual([
+			'marketing',
+		]);
+		expect(carryOptOutCategories(held, answer, true)).toBe(held);
+		expect(carryOptOutCategories(answer, held, false)).not.toHaveProperty(
+			'categories'
+		);
+		expect(carryOptOutCategories(held, null, false)).toBe(held);
 	});
 });

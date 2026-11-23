@@ -82,6 +82,12 @@ export interface StorageKeyFamily {
 	noticeCookieMiss: string;
 	/** Durable opt-out record (separate from the v3 consent envelope). */
 	optOut: string;
+	/**
+	 * The categories an opt-out withholds, bound to its time and method.
+	 * Kept out of the opt-out record because SDKs before it reject any
+	 * field they do not know and would drop the whole opt-out.
+	 */
+	optOutCategories: string;
 	vendors: string;
 	/** Time of the last clear. Survives the clear it records. */
 	epoch: string;
@@ -121,6 +127,7 @@ const familyOf = function familyOf(consent: string): StorageKeyFamily {
 		noticeCookieMiss: `${consent}-notice-cookie-miss`,
 		noticeSubject: `${consent}-notice-subject`,
 		optOut: `${consent}-opt-out`,
+		optOutCategories: `${consent}-opt-out-categories`,
 		privacy: `${consent}-privacy`,
 		vendors: `${consent}-vendors`,
 	};

@@ -31,6 +31,7 @@ import {
 } from '../hydrate';
 import { createPersistence } from '../index';
 import {
+	decodeOptOutCategoriesCompact,
 	decodeOptOutRecord,
 	decodeOptOutRecordCompact,
 	validateStoredConsentEnvelope,
@@ -42,6 +43,10 @@ import {
 	encodeOptOutRecordCompact,
 	encodeStoredConsentEnvelopeCompact,
 } from '../writer/encode';
+import {
+	legacyDecodeOptOutRecord,
+	legacyDecodeOptOutRecordCompact,
+} from './legacy-opt-out-codec';
 import {
 	clearStoredConsentRecords,
 	writeStoredClearEpoch,
@@ -1138,61 +1143,243 @@ describe('opt-out categories (DEF-09)', () => {
 		version: 1,
 	});
 
-	it('round-trips the withheld categories through JSON and the compact cookie', () => {
-		for (const categories of [
-			['marketing'],
-			['measurement', 'marketing'],
-			[],
+	const companionOf = (key: string): string | null => {
+		const cookie = document.cookie
+			.split(/;\s*/u)
+			.find((entry) => entry.startsWith(`${key}=`));
+		return cookie === undefined
+			? null
+			: decodeURIComponent(cookie.slice(key.length + 1));
+	};
+
+	it('[GPC-05] stores the withheld categories beside the record, which keeps its old form', () => {
+		const keys = resolveStorageKeys(undefined);
+		for (const [categories, code] of [
+			[['marketing'], 'mk'],
+			[['measurement', 'marketing'], 'me|mk'],
+			// An empty list is kept apart from a missing one: it withholds
+			// nothing of its own, where a missing one is a legacy record.
+			[[], ''],
 		] as const) {
+			clearAll();
 			const record = withCategories([...categories]);
-			const compact = encodeOptOutRecordCompact(record);
-			expect(decodeOptOutRecordCompact(compact, NOW)).toEqual({
+			expect(writeStoredOptOutRecord(record, undefined, NOW).ok).toBe(true);
+
+			const companion = `v=1&t=${NOW - 1}&m=g&k=${code}`;
+			expect(companionOf(keys.optOutCategories)).toBe(companion);
+			expect(window.localStorage.getItem(keys.optOutCategories)).toBe(
+				companion
+			);
+			expect(companionOf(keys.optOut)).toBe(
+				`v=1&r=sa|sh|ta&m=g&t=${NOW - 1}&h=d`
+			);
+			expect(window.localStorage.getItem(keys.optOut)).not.toContain(
+				'categories'
+			);
+			expect(readStoredOptOutRecord(undefined, NOW)).toEqual({
 				ok: true,
 				record,
 			});
 			expect(
-				decodeOptOutRecord(JSON.parse(encodeOptOutRecord(record)), NOW)
-			).toEqual({ ok: true, record });
+				readStoredRecordsFromCookieHeader(document.cookie, undefined, NOW)
+					.optOut
+			).toMatchObject({ categories: [...categories] });
 		}
-		expect(encodeOptOutRecordCompact(withCategories(['marketing']))).toBe(
-			`v=1&r=sa|sh|ta&m=g&t=${NOW - 1}&h=d&k=mk`
-		);
-		// An empty list is kept apart from a missing one: it withholds nothing
-		// of its own, where a missing one is a record from before the field.
-		expect(encodeOptOutRecordCompact(withCategories([]))).toBe(
-			`v=1&r=sa|sh|ta&m=g&t=${NOW - 1}&h=d&k=`
-		);
+
+		// A legacy record has no companion; writing one removes a stale one.
+		const { categories: _categories, ...legacy } = withCategories([]);
+		expect(writeStoredOptOutRecord(legacy, undefined, NOW).ok).toBe(true);
+		expect(companionOf(keys.optOutCategories)).toBeNull();
+		expect(window.localStorage.getItem(keys.optOutCategories)).toBeNull();
+		expect(readStoredOptOutRecord(undefined, NOW)).toEqual({
+			ok: true,
+			record: legacy,
+		});
 	});
 
-	it('canonicalizes category order and rejects unknown or repeated categories', () => {
-		expect(
-			decodeOptOutRecordCompact(`v=1&r=sa&m=b&t=${NOW - 1}&h=d&k=mk|me`, NOW)
-		).toMatchObject({
+	it('[GPC-05] an SDK from before stored categories still reads the opt-out this one stores', async () => {
+		const keys = resolveStorageKeys(undefined);
+		const record = {
+			...withCategories(['experience', 'marketing']),
+			gpcReported: true,
+			subject: { subjectId: 'sub_rollback' },
+		};
+		expect(writeStoredOptOutRecord(record, undefined, NOW).ok).toBe(true);
+		const { categories: _categories, ...withoutCategories } = record;
+		const cookie = companionOf(keys.optOut);
+		const local = window.localStorage.getItem(keys.optOut);
+		expect.assert(cookie !== null && local !== null);
+		expect(legacyDecodeOptOutRecordCompact(cookie, NOW)).toEqual({
 			ok: true,
-			record: { categories: ['measurement', 'marketing'] },
+			record: withoutCategories,
 		});
-		for (const categories of [
-			['necessary'],
-			['marketing', 'marketing'],
-			'marketing',
-		]) {
-			expect(
-				decodeOptOutRecord(
-					{
-						categories,
-						heldBy: 'device',
-						method: 'button',
-						recordedAt: NOW - 1,
-						rights: ['sale'],
-						version: 1,
-					},
-					NOW
-				).ok
-			).toBe(false);
-		}
+		expect(legacyDecodeOptOutRecord(JSON.parse(local), NOW)).toEqual({
+			ok: true,
+			record: withoutCategories,
+		});
+		// What the record itself carrying the list would have done to it.
+		expect(legacyDecodeOptOutRecordCompact(`${cookie}&k=ex|mk`, NOW).ok).toBe(
+			false
+		);
 		expect(
-			decodeOptOutRecordCompact(`v=1&r=sa&m=b&t=${NOW - 1}&h=d&k=zz`, NOW).ok
+			legacyDecodeOptOutRecord(
+				{ ...JSON.parse(local), categories: ['experience', 'marketing'] },
+				NOW
+			).ok
 		).toBe(false);
+
+		// The same holds for what a kernel stores on its own GPC opt-out.
+		clearAll();
+		const kernel = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialPolicyResolution: matchedResolution(
+				policyRulePresets.californiaOptOut()
+			),
+			initialPrivacySignals: { gpc: true },
+			now: NOW,
+		});
+		const persistence = createPersistence({ kernel });
+		await kernel.commands.init();
+		await flushWrites();
+		const stored = [
+			legacyDecodeOptOutRecordCompact(companionOf(keys.optOut) ?? '', NOW),
+			legacyDecodeOptOutRecord(
+				JSON.parse(window.localStorage.getItem(keys.optOut) ?? 'null'),
+				NOW
+			),
+		];
+		for (const read of stored) {
+			expect(read).toMatchObject({
+				ok: true,
+				record: { method: 'gpc', recordedAt: NOW },
+			});
+		}
+		persistence.dispose();
+		kernel.dispose();
+	});
+
+	it('[GPC-05] a record an older SDK rewrites keeps its categories only while it is the same act', () => {
+		const keys = resolveStorageKeys(undefined);
+		expect(
+			writeStoredOptOutRecord(withCategories(['marketing']), undefined, NOW).ok
+		).toBe(true);
+		// An older SDK rewrites the record in its own form and leaves the
+		// companion alone: the act is the same, so its list still applies.
+		const answered = encodeOptOutRecordCompact({
+			heldBy: 'both',
+			method: 'gpc',
+			recordedAt: NOW - 1,
+			rights: ['sale', 'share'],
+			version: 1,
+		});
+		document.cookie = `${keys.optOut}=${encodeURIComponent(answered)}; path=/`;
+		window.localStorage.removeItem(keys.optOut);
+		expect(readStoredOptOutRecord(undefined, NOW)).toMatchObject({
+			ok: true,
+			record: { categories: ['marketing'], heldBy: 'both' },
+		});
+
+		// A later act it records is legacy, whatever the companion says.
+		const later = encodeOptOutRecordCompact({
+			heldBy: 'device',
+			method: 'button',
+			recordedAt: NOW,
+			rights: [],
+			version: 1,
+		});
+		document.cookie = `${keys.optOut}=${encodeURIComponent(later)}; path=/`;
+		const read = readStoredOptOutRecord(undefined, NOW);
+		expect(read).toMatchObject({ ok: true, record: { recordedAt: NOW } });
+		expect(read).not.toHaveProperty('record.categories');
+	});
+
+	it.each([
+		['missing list', `v=1&t=${NOW - 1}&m=g`],
+		['unknown category code', `v=1&t=${NOW - 1}&m=g&k=zz`],
+		['repeated category', `v=1&t=${NOW - 1}&m=g&k=mk|mk`],
+		['unknown field', `v=1&t=${NOW - 1}&m=g&k=mk&r=sa`],
+		['unknown method', `v=1&t=${NOW - 1}&m=x&k=mk`],
+		['missing time', 'v=1&m=g&k=mk'],
+		['unknown version', `v=2&t=${NOW - 1}&m=g&k=mk`],
+	])('rejects a malformed categories companion: %s', (_label, text) => {
+		expect(decodeOptOutCategoriesCompact(text).ok).toBe(false);
+	});
+
+	it('canonicalizes the companion category order', () => {
+		expect(
+			decodeOptOutCategoriesCompact(`v=1&t=${NOW - 1}&m=b&k=mk|me`)
+		).toEqual({
+			ok: true,
+			record: {
+				categories: ['measurement', 'marketing'],
+				method: 'button',
+				recordedAt: NOW - 1,
+			},
+		});
+	});
+
+	it('[GPC-05] equal-time copies withhold what either does, reading a copy without a list as legacy', () => {
+		const keys = resolveStorageKeys(undefined);
+		// The cookie holds a GPC act with its list; localStorage holds a
+		// button act from the same millisecond with none.
+		document.cookie = `${keys.optOut}=${encodeURIComponent(
+			encodeOptOutRecordCompact(withCategories(['experience', 'marketing']))
+		)}; path=/`;
+		document.cookie = `${keys.optOutCategories}=${encodeURIComponent(
+			`v=1&t=${NOW - 1}&m=g&k=ex|mk`
+		)}; path=/`;
+		window.localStorage.setItem(
+			keys.optOut,
+			encodeOptOutRecord({
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: NOW - 1,
+				rights: ['sale'],
+				version: 1,
+			})
+		);
+		expect(readStoredOptOutRecord(undefined, NOW)).toMatchObject({
+			ok: true,
+			record: {
+				categories: ['experience', 'measurement', 'marketing'],
+				rights: ['sale', 'share', 'targeted_ads'],
+			},
+		});
+	});
+
+	it('[GPC-05] a seed from the cookies takes the categories only localStorage holds for the same act', async () => {
+		const keys = resolveStorageKeys(undefined);
+		const record = withCategories(['marketing']);
+		expect(writeStoredOptOutRecord(record, undefined, NOW).ok).toBe(true);
+		// localStorage holds a wider list for the act than the cookie does.
+		window.localStorage.setItem(
+			keys.optOutCategories,
+			`v=1&t=${NOW - 1}&m=g&k=ex|mk`
+		);
+		const seeded = readStoredRecordsFromCookieHeader(
+			document.cookie,
+			undefined,
+			NOW
+		).optOut;
+		expect(seeded?.categories).toEqual(['marketing']);
+		const kernel = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialPolicyResolution: matchedResolution(
+				policyRulePresets.californiaOptOut()
+			),
+			initialRecords: { now: NOW, optOut: seeded ?? null },
+			now: NOW,
+		});
+		const persistence = createPersistence({ kernel, skipHydration: true });
+		await kernel.commands.init();
+		await flushWrites();
+		expect(kernel.getSnapshot().optOut?.categories).toEqual([
+			'experience',
+			'marketing',
+		]);
+		expect(kernel.getSnapshot().effectivePermissions.experience).toBe(false);
+		persistence.dispose();
+		kernel.dispose();
 	});
 
 	it('[GPC-05] a record stored before categories existed keeps denying marketing and measurement after the preset narrows', async () => {
@@ -1210,10 +1397,8 @@ describe('opt-out categories (DEF-09)', () => {
 			NOW
 		);
 		const keys = resolveStorageKeys(undefined);
-		expect(document.cookie).not.toContain('k=');
-		expect(window.localStorage.getItem(keys.optOut)).not.toContain(
-			'categories'
-		);
+		expect(document.cookie).not.toContain(keys.optOutCategories);
+		expect(window.localStorage.getItem(keys.optOutCategories)).toBeNull();
 
 		const kernel = createConsentKernel({
 			initialLocation: { countryCode: 'US', regionCode: 'CA' },
@@ -1255,7 +1440,9 @@ describe('opt-out categories (DEF-09)', () => {
 		const firstPersistence = createPersistence({ kernel: first });
 		await first.commands.init();
 		await flushWrites();
-		expect(document.cookie).toContain('k=mk');
+		expect(document.cookie).toContain(
+			`${resolveStorageKeys(undefined).optOutCategories}=`
+		);
 		firstPersistence.dispose();
 		first.dispose();
 
