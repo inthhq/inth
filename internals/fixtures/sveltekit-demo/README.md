@@ -55,8 +55,8 @@ this app. The shared page content is in `src/lib/consent-example`.
 
 Create an [Inth](https://inth.com) project, configure an opt-in policy covering
 `measurement` and `marketing`, and allow this app's origin. Replace each
-`https://your-project.inth.app` under `src/routes` with your project's backend
-URL. The acceptance suite overrides it with `PUBLIC_INTH_PROJECT_URL` through
+`https://your-project.inth.app` under `src/routes` and in `src/hooks.server.ts`
+with your project's backend URL. The acceptance suite overrides it with `PUBLIC_INTH_PROJECT_URL` through
 `src/lib/test-backend.ts`. Then run from the repository root:
 
 ```sh
@@ -88,8 +88,9 @@ provider would; any other `arm` value runs `control`. The route has its own
 layout, whose provider's `onSurfaceShown` and `onChoiceRecorded` callbacks
 list each impression and choice under the arm and push them to
 `window.dataLayer` as `inth_surface_shown` and `inth_choice_recorded`.
-See https://c15t.com/docs/guides/banner-experiments.
+See `packages/sdk/docs/guides/banner-experiments.mdx`.
 
 The showcase at `/` and its routes live in `src/routes/(showcase)` with their
-own provider and the `/api/showcase` endpoint. Benchmarks under `/bench` render
+own provider; `src/hooks.server.ts` resolves their policy on this server with
+no backend. Benchmarks under `/bench` render
 without a provider.

@@ -1,7 +1,7 @@
 import type {
 	ConsentDialogTriggerProps,
 	ConsentDialogTriggerToolbarProps,
-} from '../consent-dialog-trigger.model';
+} from '../panel-trigger.model';
 
 export const triggerProps = {
 	icon: 'fingerprint',

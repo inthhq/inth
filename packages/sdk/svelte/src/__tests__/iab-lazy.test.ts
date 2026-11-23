@@ -17,8 +17,8 @@ import { fileURLToPath } from 'node:url';
 import { mount, unmount } from 'svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import { isIABConfigured } from '../lib/lazy-create-iab';
+import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { testing } from '../lib/testing';
 import ProviderOnlyFixture from './fixtures/provider-only-fixture.svelte';
 
@@ -66,7 +66,7 @@ describe('lazy IAB loading', () => {
 	test.each([
 		'components/inth-provider.svelte',
 		'consent-context.model.ts',
-		'consent-manager-options.model.ts',
+		'manager-options.model.ts',
 		'get-consent-context.svelte.ts',
 		'get-headless-consent.ts',
 		'get-theme-context.ts',

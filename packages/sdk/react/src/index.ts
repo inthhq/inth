@@ -79,7 +79,7 @@ export type {
 	ConsentBannerProps,
 } from './components/prompt';
 // -- UI components ----------------------------------------------------------
-export type { ConsentDialogProps } from './components/dialog/consent-dialog.model';
+export type { ConsentDialogProps } from './components/dialog/panel.model';
 export type {
 	OptOutConfirmationCompoundComponent,
 	OptOutConfirmationDoneButtonProps,
@@ -88,7 +88,7 @@ export type {
 	OptOutConfirmationProps,
 	OptOutConfirmationRootProps,
 } from './components/opt-out-confirmation';
-export type { ConsentDialogLinkProps } from './components/consent-dialog-link';
+export type { ConsentDialogLinkProps } from './components/panel-link';
 export type { PrivacyChoicesLinkProps } from './components/privacy-choices-link';
 export type {
 	ConsentDialogTriggerProps,

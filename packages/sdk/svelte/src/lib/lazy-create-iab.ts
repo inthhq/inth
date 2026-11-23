@@ -17,7 +17,7 @@
 import { createLazyIABFactory } from '@inth/sdk/runtime';
 import type { GPPModuleLoader } from '@inth/sdk/runtime';
 
-import type { ProviderIABOptions } from './consent-manager-options.model';
+import type { ProviderIABOptions } from './manager-options.model';
 
 const factory = createLazyIABFactory(() => import('@inth/sdk/iab'));
 

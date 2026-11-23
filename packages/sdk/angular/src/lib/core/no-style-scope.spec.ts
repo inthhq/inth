@@ -10,7 +10,7 @@ import { IABConsentBanner } from '../../../iab/src/iab-consent-banner';
 import { IABConsentDialog } from '../../../iab/src/iab-consent-dialog';
 import { iabTestOptions } from '../../../testing/src/__tests__/harness-test-bed';
 import { testOptions } from '../../__tests__/test-local';
-import { ConsentBanner } from '../prompt/consent-banner';
+import { ConsentBanner } from '../prompt/prompt';
 import type { InthProviderOptions } from './inth-options';
 import { provideInth } from './provide-inth';
 

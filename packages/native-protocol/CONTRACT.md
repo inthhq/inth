@@ -38,7 +38,7 @@ own:
                     asks for a choice instead of coming up deny-all. What that
                     evaluation answers, and where it still differs from the web
                     kernel, is the three paragraphs below plus
-                    `docs/internal/evaluator-parity.md`.
+                    `packages/sdk/docs/internal/evaluator-parity.md`.
     TC string       explicit native CMP/publisher configuration and complete IAB
                     choices feed the existing native codecs. Choices, TC bytes,
                     consent version and exact pending HTTP body commit together
@@ -55,7 +55,7 @@ own:
                     @inth/sdk-translations through the generated IABCopy /
                     IabCopy tables, and category-mode copy through the
                     generated ConsentCopy table, in the policy's language
-                    (`bun run generate:native-iab-copy`).
+                    (`bun scripts/generate-native-iab-copy.ts`).
     Consent Mode    Google Consent Mode v2 maps categories to signals
                     exactly as the web does. The mapping lives in
                     packages/sdk/integrations/src/vendors/_shared/google-consent.ts;
@@ -75,10 +75,10 @@ own:
                     (usnat, MSPA version 2) and TCF EU (the committed TC String,
                     unchanged). See "IAB GPP" at the end of this document.
 
-`docs/internal/native-iab-commits.mdx` defines the native commit, migration,
+`packages/sdk/docs/internal/native-iab-commits.mdx` defines the native commit, migration,
 withdrawal and delivery contract, including the storage adapter requirements.
 
-`docs/internal/tcf-mobile.md` records the sources behind all of that, including
+`packages/sdk/docs/internal/tcf-mobile.md` records the sources behind all of that, including
 the Keychain-versus-shared-defaults trade-off the bus forces.
 
 An IAB rule is evaluated by copying the web kernel rather than by inventing a
@@ -87,7 +87,7 @@ core could quietly grant more than the web does. An in-scope category is denied
 until a current explicit choice grants it: `defaultPermission` in
 `packages/sdk/core/src/consent-record/evaluate.ts` permits an in-scope category only
 for `model === 'opt-out' || model === 'none'`, so `iab` and `opt-in` answer the
-same way, and `docs/internal/evaluator-parity.md` measured that identity cell by
+same way, and `packages/sdk/docs/internal/evaluator-parity.md` measured that identity cell by
 cell. `necessary` is granted and is not the rule's to take: the web evaluator
 seeds `permissions` with `necessary: true` and never revisits it, and its GPC
 check refuses a mapping that names `necessary`. The prompt is `choice` and
@@ -114,7 +114,7 @@ there: permissive allows, strict refuses. Both kernels instead answer the model
 default, so today an IAB rule with a permissive scope withholds the categories it
 never named. This lane changed neither that branch's answer nor `opt-in`'s, and
 an `iab` case added to it inherits exactly what `opt-in` already did; divergence 1
-in `docs/internal/evaluator-parity.md` owns the fix, and it flips both models in
+in `packages/sdk/docs/internal/evaluator-parity.md` owns the fix, and it flips both models in
 both kernels on one measured fixture rather than carving an exception for IAB.
 
 With native IAB configuration, an IAB policy reports `model: "iab"` and saves
@@ -788,7 +788,7 @@ it puts them in a query only while the id count is small enough to travel safely
 Above that cap the whole document is fetched and narrowed before it is served, so a
 publisher who scoped wide pays more bytes and never a wider disclosure. The same rule
 lives twice on web, in `packages/sdk/iab` when it fetches for itself and in
-`packages/backend` when it serves `/init`. The mobile helpers must return exactly what
+the hosted Inth backend when it serves `/init`. The mobile helpers must return exactly what
 `narrowGVLToVendors` returns for the same document and the same ids. That equal answer
 is owed by a fixture whose expected value came from the web function itself.
 
@@ -839,7 +839,7 @@ slot, so refusing an envelope never costs a device its identity. What each write
 - Swift stores plain JSON under `StoredEnvelope`: `version` (this build reads `1` and
   nothing else), `storedAt` in epoch milliseconds, `snapshot`, `noticeDismissal`, and
   `policyResolution`, plus the IAB authority and `pendingSaves` fields that
-  `docs/internal/native-iab-commits.mdx` defines.
+  `packages/sdk/docs/internal/native-iab-commits.mdx` defines.
 - Kotlin stores a `SnapshotEnvelope` in the encrypted blob: `snapshot`,
   `evaluationPolicy`, and `noticeDismissal`, plus `gvl` and the same IAB authority and
   `pendingSaves` fields. It carries no format version of its own
@@ -934,7 +934,7 @@ actions for the same subject ID, external ID and property. Other owners' frozen
 withdrawals remain owed. Identity changes and reset
 persist an empty consent record while retaining frozen withdrawals and an action
 time watermark. Their failure semantics and migration rules are defined in
-`docs/internal/native-iab-commits.mdx`.
+`packages/sdk/docs/internal/native-iab-commits.mdx`.
 
 Order is what makes the assertion honest. The queue write lands before the
 snapshot moves, and no branch answers committed without a durable entry behind
@@ -1627,14 +1627,13 @@ checkable:
   `removeListeners(Double)` and `removeListeners(double)` are two different overrides to a
   Kotlin subclass and both compile, and a renamed selector surfaces as an unrecognized
   selector on a user's JavaScript thread rather than a compile error.
-- CI runs both on a plain Linux runner, in `Mobile SDK (android-js)`: the Node check as
-  part of the package suite, the Gradle command as a step that fails when generation
-  wrote no file or when the spec class reached the AAR.
+- CI runs the Node checks on a plain Linux runner, as part of the package suite in the
+  `React Native` job of `.github/workflows/ci.yml`. No CI step runs the `codegen` Gradle
+  command.
 
 The generated class stays `compileOnly` in every mode, because two copies of it in one app
 is a duplicate-class failure. Codegen mode changes what the spec module compiles, never
-what any published artifact carries, and the CI assertion against `classes.jar` is what
-keeps that from being a hope.
+what any published artifact carries. No CI step unzips `classes.jar` to check it.
 
 Safe-area insets
 ----------------
@@ -1896,7 +1895,7 @@ Apple sources in the same compiled module:
 - Do not also link `InthCore` or `InthApple` separately in that RN process. Host
   installation imports `InthReactNative` and uses the types compiled into that
   module, so RN attaches to the same core and Keychain owner. See
-  `docs/internal/apple-installation.md` for the source-consumer distinction.
+  `packages/sdk/docs/internal/apple-installation.md` for the source-consumer distinction.
   `InthCore.podspec` remains a local core-only spec, not a published dependency.
   The app must declare iOS 16.4, which is above RN 0.87's own 15.1 floor.
 - `packages/react-native/package.json` needs
@@ -2290,7 +2289,7 @@ Rule 4 says the native cores must produce what `@inth/sdk-core` produces. Where 
 TS evaluator has a rule the kernels have never been run against, that gap is now
 written down with its measurement: the web answer table and the three kernel
 divergences it found live in
-[`docs/internal/evaluator-parity.md`](../sdk/docs/internal/evaluator-parity.md).
+[`packages/sdk/docs/internal/evaluator-parity.md`](../sdk/docs/internal/evaluator-parity.md).
 Read it before changing either `PolicyEvaluator`, or the evaluation scenarios in
 `packages/react-native/scripts/generate-protocol-fixtures.ts`. Permissions and
 `restrictions` are bridge and storage surface: a kernel may not change them to
@@ -2327,7 +2326,7 @@ recovery finish replay before refreshing policy, including a delivery pass alrea
 in progress. These callbacks schedule work without blocking their caller.
 Custom IAB saves require the revision the draft opened on. TCF 2.4
 standardTexts, including the Features explanation, survive narrowing and storage.
-See docs/internal/native-iab-commits.mdx for refresh and retry behavior.
+See packages/sdk/docs/internal/native-iab-commits.mdx for refresh and retry behavior.
 Native Additional Consent v2 uses the backend's scoped official ATP disclosures,
 not GVL vendor IDs. A complete native draft carries ATP selections; purposes 1,
 3 and 4 gate every positive ATP signal. The generated addtlConsent, TCF authority
@@ -2386,7 +2385,7 @@ synchronous preferences transaction. Mirror rejection removes owned values and
 can be repaired from the core without reading vendor storage as authority.
 Numbered publisher restriction keys are owned and cleared. Reset removes consent
 rows while configured CMP detection remains. See the spec-linked key/type table
-and reader ordering limits in docs/internal/native-iab-commits.mdx. The real ad SDK
+and reader ordering limits in packages/sdk/docs/internal/native-iab-commits.mdx. The real ad SDK
 reference, device latency and power-loss behavior remain separate evidence gates.
 
 ## Build policy fallback
@@ -2456,7 +2455,7 @@ The iOS bridge reads `com.inth.policy.resource` from Info.plist. Android reads
 ## IAB GPP
 
 Both cores encode the IAB Global Privacy Platform string with the same rules as
-`@c15t/iab/gpp` on the web. `GppEncoder.kt` and `GPPEncoder.swift` port
+`@inth/sdk/iab/gpp` on the web. `GppEncoder.kt` and `GPPEncoder.swift` port
 `packages/sdk/iab/src/gpp/gpp-encoder.model.ts`; `GppResolver.kt` and `GPPResolver.swift` port
 `resolveUSSectionDefinition` and `resolveUSSectionValues` from
 `packages/sdk/iab/src/gpp/us-section.model.ts`, restricted to the two sections a device
@@ -2532,7 +2531,7 @@ gets a read-only copy, and nothing it does is recorded as a native choice.
 ### Scripts
 
 `packages/native-protocol/webview/` holds the two scripts every platform injects, byte
-for byte. `bun run generate:webview-consent-scripts` copies them into
+for byte. `bun scripts/generate-webview-consent-scripts.ts` copies them into
 `WebViewConsentScripts` (Swift and Kotlin) and `scripts.generated.ts` (React
 Native); `scripts/generate-webview-consent-scripts.test.ts` fails on drift. Each
 file is one parenthesized function expression, called with JSON arguments.

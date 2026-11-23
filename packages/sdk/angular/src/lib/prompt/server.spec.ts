@@ -24,7 +24,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
 import { provideInth } from '../core/provide-inth';
-import { ConsentBanner } from './consent-banner';
+import { ConsentBanner } from './prompt';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

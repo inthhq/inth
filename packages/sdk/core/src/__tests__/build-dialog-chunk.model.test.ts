@@ -225,13 +225,13 @@ const vueGraph = function vueGraph(packages: string): typeof graph {
 			],
 		},
 		[`${vue}components/dialog/manager.vue`]: {
-			code: `import { useKernel } from '../../composables/kernel.js'; import { loadConsentDialog } from './load-consent-dialog.js';`,
+			code: `import { useKernel } from '../../composables/kernel.js'; import { loadConsentDialog } from './load-panel.js';`,
 			imports: [
 				`${vue}composables/kernel.js`,
-				`${vue}components/dialog/load-consent-dialog.js`,
+				`${vue}components/dialog/load-panel.js`,
 			],
 		},
-		[`${vue}components/dialog/load-consent-dialog.js`]: {
+		[`${vue}components/dialog/load-panel.js`]: {
 			code: `export const loadConsentDialog = () => import('./dialog.vue');`,
 			dynamic: [`${vue}components/dialog/dialog.vue`],
 		},
@@ -245,9 +245,9 @@ const vueGraph = function vueGraph(packages: string): typeof graph {
 		},
 		// The banner: loads with the engine.
 		[`${vue}components/prompt/prompt.vue`]: {
-			code: `import { loadConsentDialog } from '../dialog/load-consent-dialog.js'; import { vendors } from '@inth/sdk/engine';`,
+			code: `import { loadConsentDialog } from '../dialog/load-panel.js'; import { vendors } from '@inth/sdk/engine';`,
 			imports: [
-				`${vue}components/dialog/load-consent-dialog.js`,
+				`${vue}components/dialog/load-panel.js`,
 				`${core}index.js`,
 			],
 		},
@@ -285,7 +285,7 @@ describe.each([
 			'sdk/lib/ui/dist/styles/components/panel.module.css':
 				'inth-dialog-styles',
 			'vue/dist/runtime/components/dialog/dialog.vue': 'inth-dialog',
-			'vue/dist/runtime/components/dialog/load-consent-dialog.js':
+			'vue/dist/runtime/components/dialog/load-panel.js':
 				'inth-dialog-engine',
 			'vue/dist/runtime/components/dialog/manager.vue': 'inth-dialog',
 			'vue/dist/runtime/composables/kernel.js': 'inth-dialog',

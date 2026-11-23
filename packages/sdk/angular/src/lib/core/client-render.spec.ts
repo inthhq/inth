@@ -20,7 +20,7 @@ import {
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
-import { ConsentBanner } from '../prompt/consent-banner';
+import { ConsentBanner } from '../prompt/prompt';
 import { Branding } from '../shared/branding';
 import { provideInth } from './provide-inth';
 

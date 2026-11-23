@@ -14,10 +14,7 @@ import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 import { warmDialogChunk } from '~/warm-dialog-chunk';
 
-import type {
-	CornerPosition,
-	TriggerSize,
-} from '../consent-dialog-trigger.model';
+import type { CornerPosition, TriggerSize } from '../panel-trigger.model';
 import { useTriggerContext } from './trigger-root';
 
 const cornerClassMap = {

@@ -3,21 +3,21 @@
 import type { FC } from 'react';
 
 import { FeatureItem } from './atoms/feature-item';
-import { IABConsentDialogCard } from './atoms/iab-consent-dialog-card';
-import { IABConsentDialogContent } from './atoms/iab-consent-dialog-content';
-import { IABConsentDialogFooter } from './atoms/iab-consent-dialog-footer';
-import { IABConsentDialogHeader } from './atoms/iab-consent-dialog-header';
-import { IABConsentDialogOverlay } from './atoms/iab-consent-dialog-overlay';
-import { IABConsentDialogRoot } from './atoms/iab-consent-dialog-root';
+import { IABConsentDialogCard } from './atoms/iab-panel-card';
+import { IABConsentDialogContent } from './atoms/iab-panel-content';
+import { IABConsentDialogFooter } from './atoms/iab-panel-footer';
+import { IABConsentDialogHeader } from './atoms/iab-panel-header';
+import { IABConsentDialogOverlay } from './atoms/iab-panel-overlay';
+import { IABConsentDialogRoot } from './atoms/iab-panel-root';
 import {
 	IABConsentDialogTabButton,
 	IABConsentDialogTabs,
-} from './atoms/iab-consent-dialog-tabs';
+} from './atoms/iab-panel-tabs';
 import { PurposeItem } from './atoms/purpose-item';
 import { StackItem } from './atoms/stack-item';
 import { VendorList } from './atoms/vendor-list';
-import { IABConsentDialog as IABConsentDialogComponent } from './iab-consent-dialog';
-import type { IABConsentDialogProps } from './iab-consent-dialog';
+import { IABConsentDialog as IABConsentDialogComponent } from './iab-panel';
+import type { IABConsentDialogProps } from './iab-panel';
 
 export interface IABConsentDialogCompoundComponent extends FC<IABConsentDialogProps> {
 	Root: typeof IABConsentDialogRoot;
@@ -80,19 +80,19 @@ const IABConsentDialog = Object.assign(IABConsentDialogComponent, {
 
 export default IABConsentDialog;
 
-export { IABConsentDialogCard } from './atoms/iab-consent-dialog-card';
-export { IABConsentDialogContent } from './atoms/iab-consent-dialog-content';
+export { IABConsentDialogCard } from './atoms/iab-panel-card';
+export { IABConsentDialogContent } from './atoms/iab-panel-content';
 export { FeatureItem, type FeatureItemProps } from './atoms/feature-item';
-export { IABConsentDialogFooter } from './atoms/iab-consent-dialog-footer';
-export { IABConsentDialogHeader } from './atoms/iab-consent-dialog-header';
-export { IABConsentDialogOverlay } from './atoms/iab-consent-dialog-overlay';
+export { IABConsentDialogFooter } from './atoms/iab-panel-footer';
+export { IABConsentDialogHeader } from './atoms/iab-panel-header';
+export { IABConsentDialogOverlay } from './atoms/iab-panel-overlay';
 export { PurposeItem } from './atoms/purpose-item';
-export { IABConsentDialogRoot } from './atoms/iab-consent-dialog-root';
+export { IABConsentDialogRoot } from './atoms/iab-panel-root';
 export { StackItem } from './atoms/stack-item';
 export {
 	IABConsentDialogTabButton,
 	IABConsentDialogTabs,
-} from './atoms/iab-consent-dialog-tabs';
+} from './atoms/iab-panel-tabs';
 export { VendorList } from './atoms/vendor-list';
 export {
 	type IABDisplayModel,
@@ -104,5 +104,5 @@ export type {
 	ProcessedSpecialFeature,
 	ProcessedStack,
 	ProcessedVendor,
-} from './iab-consent-dialog.model';
+} from './iab-panel.model';
 export { IABConsentDialog, type IABConsentDialogProps };

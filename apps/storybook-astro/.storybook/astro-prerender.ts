@@ -81,7 +81,7 @@ const extractConfig = function extractConfig(html: string): unknown {
 const COMPONENT_FILES: Record<string, string> = {
 	'consent-banner': 'components/prompt.astro',
 	'consent-dialog': 'components/panel.astro',
-	'consent-dialog-trigger': 'components/consent-dialog-link.astro',
+	'consent-dialog-trigger': 'components/panel-link.astro',
 	'iab-consent-banner': 'components/iab-prompt.astro',
 	'iab-consent-dialog': 'components/iab-panel.astro',
 	'opt-out-confirmation': 'components/opt-out-confirmation.astro',

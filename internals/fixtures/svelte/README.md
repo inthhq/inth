@@ -7,12 +7,12 @@ to compare the same consent flow with different styling.
 From the repository root, install and build workspace packages first:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+bun turbo run build --filter='./packages/sdk/*'
 ```
 
-Replace `https://your-project.inth.app` in `src/App.svelte` with your Inth
-backend URL and allow this app's origin in Inth. Replace the placeholder PostHog
+Replace `https://your-project.inth.app` in `src/App.svelte` and
+`src/experiment-app.svelte` with your Inth backend URL and allow this app's origin in Inth. Replace the placeholder PostHog
 project key and X Pixel ID in `src/scripts.ts`. Then run:
 
 ```sh
@@ -50,4 +50,4 @@ copy of `App.svelte` that passes `experiment` and the `onSurfaceShown` and
 `onChoiceRecorded` callbacks to the provider. Each impression and choice under
 the arm is listed on the page and pushed to `window.dataLayer` as
 `inth_surface_shown` and `inth_choice_recorded` with `experiment_id` and `arm`.
-See https://c15t.com/docs/guides/banner-experiments.
+See `packages/sdk/docs/guides/banner-experiments.mdx`.

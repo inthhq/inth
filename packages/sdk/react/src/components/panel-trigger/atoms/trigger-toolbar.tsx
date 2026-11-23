@@ -27,7 +27,7 @@ import type {
 	CornerPosition,
 	TriggerOrientation,
 	TriggerSize,
-} from '../consent-dialog-trigger.model';
+} from '../panel-trigger.model';
 import { DevToolsIcon } from './dev-tools-icon';
 import { TriggerIcon } from './trigger-icon';
 import { useTriggerContext } from './trigger-root';

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ConsentDialog } from '@inth/svelte';
 
-	import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/consent-manager-options.model';
+	import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/manager-options.model';
 	import {
 		STORYBOOK_OPT_OUT_REFERENCE,
 		storybookMode,

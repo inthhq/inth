@@ -148,9 +148,9 @@
 			"default": "./dist/preferences.js"
 		},
 		"./consent-dialog-link": {
-			"types": "./dist-types/consent-dialog-link.d.ts",
-			"import": "./dist/consent-dialog-link.js",
-			"default": "./dist/consent-dialog-link.js"
+			"types": "./dist-types/panel-link.d.ts",
+			"import": "./dist/panel-link.js",
+			"default": "./dist/panel-link.js"
 		},
 		"./privacy-choices-link": {
 			"types": "./dist-types/privacy-choices-link.d.ts",
@@ -227,9 +227,9 @@
 			"default": "./dist/components/panel-trigger/index.js"
 		},
 		"./components/consent-dialog-link": {
-			"types": "./dist-types/components/consent-dialog-link/index.d.ts",
-			"import": "./dist/components/consent-dialog-link/index.js",
-			"default": "./dist/components/consent-dialog-link/index.js"
+			"types": "./dist-types/components/panel-link/index.d.ts",
+			"import": "./dist/components/panel-link/index.js",
+			"default": "./dist/components/panel-link/index.js"
 		},
 		"./components/privacy-choices-link": {
 			"types": "./dist-types/components/privacy-choices-link/index.d.ts",

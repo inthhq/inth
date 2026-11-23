@@ -29,7 +29,7 @@ export {
 	type IABConsentBannerProps,
 } from './components/iab-prompt';
 export type { IABConsentDialogProps } from './components/iab-panel';
-export { IABConsentDialog } from './iab-consent-dialog';
+export { IABConsentDialog } from './iab-panel';
 export {
 	type HeadlessIABBannerAction,
 	type HeadlessIABBannerState,

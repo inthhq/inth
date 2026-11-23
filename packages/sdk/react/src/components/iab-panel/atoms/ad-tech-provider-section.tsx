@@ -9,7 +9,7 @@ import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
-import type { VendorId } from '../iab-consent-dialog.model';
+import type { VendorId } from '../iab-panel.model';
 import { useIABTranslations } from '../use-iab-translations';
 
 /**

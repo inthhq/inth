@@ -9,8 +9,8 @@ import type { ConsentContainer, ConsentPresentation } from '@inth/sdk/engine';
 import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 
-import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import { injectSurfaceStyles } from '../lib/kit/inject-surface-styles';
+import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { testing } from '../lib/testing';
 import BannerFixture from './fixtures/banner-fixture.svelte';
 import { policyFixture } from './policy-fixture';

@@ -1,15 +1,15 @@
 # Inth benchmarks
 
-This directory contains the internal benchmark platform for `inth`, `@inth/react`, and `@inth/nextjs`.
+This directory contains the internal benchmark platform for `@inth/sdk`, `@inth/react`, and `@inth/nextjs`.
 
 ## Performance suites
 
 - `core-benchmarks`
   Measures framework-agnostic runtime work such as store creation, `has()`, cookie round-trips, init, repeat-visitor init, and script updates.
 - `micro`
-  Runs diagnostic mitata microbenchmarks with `bun run bench:micro`. These are excluded from routine CI because the public-operation runtime suite already covers the release gates.
+  Runs diagnostic mitata microbenchmarks with `bun run sdk:bench:micro` from the repository root. They are not part of any comparison profile, because the public-operation runtime suite already covers the release gates.
 - `bundle-test-app`
-  Builds a dedicated Next app and records route-level client script size plus publish tarball sizes for `inth`, `@inth/react`, and `@inth/nextjs`.
+  Builds a dedicated Next app and records route-level client script size plus publish tarball sizes for `@inth/sdk-core`, `@inth/react`, and `@inth/nextjs`.
 - `react-browser-bench`
   Runs Playwright against a React-flavoured benchmark app with local deterministic API routes, plus `saved-consent-accept` and `saved-consent-reject` visits.
 - `nextjs-browser-bench`
@@ -37,13 +37,13 @@ This directory contains the internal benchmark platform for `inth`, `@inth/react
 - `bundle-test-app/client-payload`
   Builds one Next.js consumer with no consent library, v2, and several v3 setups, installed from npm or packed tarballs, and attributes initial, dialog-open and first-accept JS/CSS to packages and modules through production source maps. Run by hand; see `benchmarks/reports/client-payload-2026-09-25/`.
 - `examples-payload`
-  Builds and starts every starter in `examples/` against a fixture backend (`/v1/consent/manifest`, `/v1/consent/init`, `/v1/consent/records`, `/inth.js`), with all four `*_INTH_PROJECT_URL` variables pointed at it and `*.inth.app` routed to it. Records first-load JS, CSS and HTML bytes, the extra JS that opening the dialog and accepting load, emitted client JS, banner time, init/manifest/cross-origin requests, and the gzip bytes of first-load assets that carry a boundary marker (snapshot, manifest resolver, offline policy, non-English copy, IAB, devtools). `--root <checkout>` measures another worktree's own examples, so base and head never share example code: `bunx tsx benchmarks/examples-payload/run.ts --root ../inth-base --out .benchmarks/base/examples-payload`. The `examples` profile runs it for both revisions.
+  Builds and starts every starter in `examples/` against a fixture backend (`/v1/consent/manifest`, `/v1/consent/init`, `/v1/consent/records`, `/inth.js`), with all four `*_INTH_PROJECT_URL` variables pointed at it and `*.inth.app` routed to it. Records first-load JS, CSS and HTML bytes, the extra JS that opening the dialog and accepting load, emitted client JS, banner time, init/manifest/cross-origin requests, and the gzip bytes of first-load assets that carry a boundary marker (snapshot, manifest resolver, offline policy, non-English copy, IAB, devtools). `--root <checkout>` measures another worktree's own examples, so base and head never share example code: `bunx tsx benchmarks/examples-payload/run.ts --root ../inth-base --out .benchmarks/base/examples-payload`. The `examples` profile runs it for both revisions. It first runs `bun run build:libs` in each checkout, a root script this repository no longer has, so the profile fails until `scripts/benchmark-run.ts` is updated.
 - `bundle-test-app` (`bench:entries`, `ordinary-react` entry)
   Builds a synthetic esbuild entry for the ordinary non-IAB React path and reports `iabInputBytes`, `devtoolsInputBytes`, and `allLocalesInputBytes` from the metafile so the import boundary is measured, not assumed.
 - `shared`
   Shared schema, fixtures, budgets, expected-result registry, comparison logic, and report formatting.
 - `manifest-cache-bench`
-  Benchmarks `fetchCachedManifest` (`@inth/sdk/transports/manifest-cache`) against an in-process simulated Vercel CDN fronting an Inth `/manifest` origin: cold bursts, steady-state `s-maxage` expiry, stale-while-revalidate serving with the origin down, and edge-unreachable timeouts. Not wired into CI or `turbo.json`; run by hand with `bun run --cwd benchmarks/manifest-cache-bench bench`. See its README.
+  Benchmarks `fetchCachedManifest` (`@inth/sdk/server`) against an in-process simulated Vercel CDN fronting an Inth `/manifest` origin: cold bursts, steady-state `s-maxage` expiry, stale-while-revalidate serving with the origin down, and edge-unreachable timeouts. Not wired into CI or `turbo.json`; run by hand with `bun run --cwd benchmarks/manifest-cache-bench bench`. See its README.
 
 ### Consent tax
 
@@ -65,13 +65,13 @@ did it.
 - `no-tw-test`
   Plain CSS compatibility harness.
 
-## CI comparisons
+## Base and head comparisons
 
 ```sh
-BENCHMARK_BASE_REF=origin/canary bun scripts/benchmark-run.ts bundle
-BENCHMARK_BASE_REF=origin/canary bun scripts/benchmark-run.ts quick
-BENCHMARK_BASE_REF=origin/canary bun scripts/benchmark-run.ts full
-BENCHMARK_BASE_REF=origin/canary bun scripts/benchmark-run.ts examples
+BENCHMARK_BASE_REF=origin/main bun scripts/benchmark-run.ts bundle
+BENCHMARK_BASE_REF=origin/main bun scripts/benchmark-run.ts quick
+BENCHMARK_BASE_REF=origin/main bun scripts/benchmark-run.ts full
+BENCHMARK_BASE_REF=origin/main bun scripts/benchmark-run.ts examples
 ```
 
 The runner creates an isolated checkout at the exact base revision and installs
@@ -83,18 +83,20 @@ dependency absent from the base manifest fails before measurement. `.ci-reports/
 records both SHAs and the fixture overlay; base, head and comparison evidence
 sit alongside it. A failed measurement cannot reuse a previous report.
 
-CI runs one benchmark package per runner, except `@inth/core-benchmarks`:
-each policy fixture takes about 30 seconds a pass, so `scripts/benchmark-plan.ts`
-splits the package across three runners. That makes four parallel jobs for
-`quick` and ten for `full`. A planning job resolves both revisions to commit IDs before
-starting the matrix. Each runner measures base and head with `--concurrency=1`,
+No workflow in `.github/workflows` runs these comparisons today; run them by
+hand. `scripts/benchmark-plan.ts` still prints the job matrix a workflow would
+use (`bun scripts/benchmark-plan.ts quick`): one benchmark package per runner,
+except `@inth/core-benchmarks`: each policy fixture takes about 30 seconds a
+pass, so the plan splits the package across three runners. That makes four
+parallel jobs for `quick` and ten for `full`. The runner resolves both
+revisions to commit IDs before measuring. Each run measures base and head with `--concurrency=1`,
 so timing loops do not compete for CPU. Runtime modes split the iterations into
 four rounds that alternate base-head, head-base, base-head, head-base, then pool
 each scenario's samples across rounds before comparing. A runner that slows down or
 speeds up mid-job then shifts both arms instead of whichever arm ran second;
 measuring all of base and then all of head failed the gate on docs-only pushes.
-`bundle` sizes do not drift and run once. Local commands still
-run the whole profile sequentially unless `BENCHMARK_PACKAGE` selects one
+`bundle` sizes do not drift and run once. A run measures the whole profile
+sequentially unless `BENCHMARK_PACKAGE` (or `--package`) selects one
 package, for example:
 
 ```sh
@@ -109,12 +111,12 @@ them. The last core-benchmarks shard skips the fixtures listed before it, so a
 new policy fixture runs there by default.
 
 Unknown packages, shards and packages outside the selected profile fail before
-any measurement. Each job enforces every expected result and budget in its
-share and uploads `runtime-benchmarks-<id>` with pooled base and head results,
-each round's raw results under `rounds/`, the comparison and provenance files.
+any measurement. Each run enforces every expected result and budget in its
+share and writes pooled base and head results, each round's raw results under
+`rounds/`, the comparison and provenance files to `.ci-reports/<mode>/`.
 The matrix `id` is the shard id, or the package name with `@inth/` removed,
-for example `runtime-benchmarks-react-browser-bench` for
-`@inth/react-browser-bench`. A failed job does not cancel the remaining matrix jobs.
+for example `react-browser-bench` for `@inth/react-browser-bench`; gate
+entries add a `gate-` prefix.
 Rounds split browser and script-lifecycle iterations, so pooled sample counts
 meet or exceed a single pass because each round rounds its count up. Core
 microbenchmarks run their full 5,000 iterations every round, and warmups repeat every round. Budget thresholds are unchanged. Browser benches
@@ -164,13 +166,8 @@ Comparison reports retain the measured sizes and name any applied allowance.
 after three warmups. Engine operations use 5,000 samples after 1,000 warmups per
 round in both profiles. `full` uses 32 pooled browser samples, eight per round,
 and adds React, Next, Nuxt, SvelteKit, Astro and TanStack Start browser scenarios.
-PRs run the quick
-comparison when runtime benchmark consumers are affected. Full comparisons run
-separately on `canary` pushes, nightly, and manually through
-`benchmark-regression.yml`. They also remain part of full validation and manual
-CI runs. Release checks skip runtime comparisons so publishing does not wait
-for them. Nightly scheduling requires the workflow on the default branch.
-Results and failures appear in Actions summaries and artifacts, without PR comments. Script-lifecycle
+No workflow runs either profile, on pull requests or on a schedule. When
+`GITHUB_STEP_SUMMARY` is set, the runner appends the comparison table to it. Script-lifecycle
 durations use the browser clock from action start through confirmed completion;
 Playwright click transport and polling time are excluded. The three tiny
 empty-kernel percentage budgets also require more than 1µs of growth before
@@ -271,7 +268,7 @@ in front of the two servers. `consentGateBudgets()` in `shared/src/budgets.ts`
 holds the budgets and their rationale. All of them fail the gate:
 
 - relative budgets on every metric, `absolute-or-percent-lte`, evaluated
-  with the 99% confidence bound described under the CI comparisons. A
+  with the 99% confidence bound described under the base and head comparisons. A
   metric fails only when its median grows past both the absolute band and
   the percentage, and the lower bound on that growth confirms it;
 - `returningLcpDeltaMs` within the first-visit LCP band, and
@@ -320,9 +317,9 @@ eager page had already loaded:
 | Script tag | 69 ms | 403 ms | 430 ms |
 
 React (386 ms against 424 ms) and SvelteKit (about 460 ms against 447 ms)
-need no entry. Remove these entries once `perf-release` is on canary. The
-check relies on the perf-release merge commit reaching canary as an
-ancestor, so merge it rather than squash it.
+need no entry. The perf-release commit these entries wait for (`7cff17a0b`)
+is not in this repository's history, so `git merge-base` cannot tell and the
+entries never apply here: every target gets the normal band.
 
 The bands come from three base-vs-base runs of the whole gate (perf-release
 `cc9745eb2` on both arms, 12 iterations per arm, on an M1 Pro shared with
@@ -339,20 +336,19 @@ of any target in any run:
 | `preferencesVisibleMs` | 14 ms (3%) | 60 ms and 5% |
 
 Measuring one target takes 280 to 380 s on that machine (React, whose
-banner renders after hydration, is the slowest). A CI job adds the base
+banner renders after hydration, is the slowest). A full run adds the base
 checkout's install and builds on top of that.
 
 Run it locally before pushing. The command measures base and head in two
-alternating rounds, 12 iterations per arm, and prints the table CI writes
-to its step summary:
+alternating rounds, 12 iterations per arm, and prints the comparison table:
 
 ```sh
-bun run bench:gate                          # head vs origin/canary, every target
-bun run bench:gate --base origin/canary --package @inth/nuxt-browser-bench
+bun run --cwd scripts bench:gate --base origin/main     # every target
+bun run --cwd scripts bench:gate --base origin/main --package @inth/nuxt-browser-bench
 ```
 
-`--base` defaults to `origin/canary` for the gate (`BENCHMARK_BASE_REF`
-also works). `--package` takes the hosting bench's name. One target takes
+`--base` defaults to `origin/canary` for the gate, a branch this repository
+does not have, so pass `--base` (`BENCHMARK_BASE_REF` also works). `--package` takes the hosting bench's name. One target takes
 about 4 to 7 minutes on an idle machine. Throttled timings are only as
 quiet as the machine, so close other heavy work before you trust a local
 failure.
@@ -362,9 +358,8 @@ To measure one bench's gate without a comparison, run
 setting the number of iterations. To add a target, give its bench gate and
 control routes built from `@inth/benchmarking/consent-gate-page`, plus a
 `scripts/run-gate.ts` that calls `runConsentGate`. Then add the target to
-`consentGateTargets` (budgets), `consentGatePackages` (expected results),
-`gateTargetPackages` (`scripts/benchmark-plan.ts`) and the selection in
-`scripts/ci-plan.ts`.
+`consentGateTargets` (budgets), `consentGatePackages` (expected results)
+and `gateTargetPackages` (`scripts/benchmark-plan.ts`).
 
 Until the base branch has the new target's bench, the base revision cannot
 measure it: the fixture overlay leaves a bench the base lacks out of the base
@@ -385,13 +380,13 @@ Benchmark tasks write machine-readable JSON to:
 - `.benchmarks/nightly/**`
 - `.benchmarks/compare/**`
 
-`bun run bench:compare` compares base vs head artifacts and emits:
+`bun run --cwd scripts bench:compare` compares base vs head artifacts and emits:
 
 - `.benchmarks/compare/comparison.json`
 - `.benchmarks/compare/comparison.md`
 - `.benchmarks/compare/summary.json` with exact coverage counts
 
-`bun run bench:frameworks` pairs the browser-runtime results of every framework directory under `.benchmarks/current/browser-runtime/` by scenario name and emits:
+`bun run --cwd scripts bench:frameworks` pairs the browser-runtime results of every framework directory under `.benchmarks/current/browser-runtime/` by scenario name and emits:
 
 - `.benchmarks/compare/frameworks.json`
 - `.benchmarks/compare/frameworks.md`
@@ -422,7 +417,7 @@ Environment:
 
 ### Base arms
 
-`coreRuntimeV3Budgets` are v3-over-v2 improvement thresholds (0% / -50% / -50%) documented in `BASELINE.md`. They carry `baseArm: 'v2'` and are evaluated only against artifacts supplied through `BENCHMARK_ARM_BASE_DIRS`; the v2 runner named kernel construction `createConsentManagerStore`, which the budget records as `baseArmMetric`. Comparing these budgets against a v3 base as if it were v2 would either fail spuriously or pass against an implicit zero, so without v2 artifacts an enforced run fails with `unevaluated-arm` for each of them. Same-key regression ceilings (`coreRuntimeBudgets`, `coreRuntimeCoverageBudgets`) always run against the real base. Genuine v2 artifacts are produced by running the v2-era `core-benchmarks` runner on a pre-promotion checkout (for example `de8dbdf868`).
+`coreRuntimeV3Budgets` are v3-over-v2 improvement thresholds (0% / -50% / -50%) documented in `BASELINE.md`. They carry `baseArm: 'v2'` and are evaluated only against artifacts supplied through `BENCHMARK_ARM_BASE_DIRS`; the v2 runner named kernel construction `createConsentManagerStore`, which the budget records as `baseArmMetric`. Comparing these budgets against a v3 base as if it were v2 would either fail spuriously or pass against an implicit zero, so without v2 artifacts an enforced run fails with `unevaluated-arm` for each of them. Same-key regression ceilings (`coreRuntimeBudgets`, `coreRuntimeCoverageBudgets`) always run against the real base. Genuine v2 artifacts are produced by running the v2-era `core-benchmarks` runner on a pre-promotion checkout.
 
 ### Budget kinds
 
@@ -432,14 +427,12 @@ Environment:
 
 The `#1025` budgets in `shared/src/budgets.ts` say whether each threshold was measured from the pre-change base capture or declared as an allowance.
 
-## Important React v2/v3 Benchmarks
+## Important React Benchmarks
 
-See [`V3.md`](./V3.md) for the current React v3 benchmark notes, reference results, and interpretation.
-
-Use the combined React benchmark runner when comparing the important v2 and v3 browser paths during the React v3 migration:
+Use the combined React benchmark runner to measure the two important React browser paths together:
 
 ```bash
-bun run bench:important-react -- --iterations 10
+bun run --cwd scripts bench:important-react -- --iterations 10
 ```
 
 This runs the following benchmark suites in parallel:
@@ -452,7 +445,7 @@ This runs the following benchmark suites in parallel:
 Useful flags:
 
 ```bash
-bun run bench:important-react -- -i 10 --warmup 1 --script-counts 5,10,25,50
+bun run --cwd scripts bench:important-react -- -i 10 --warmup 1 --script-counts 5,10,25,50
 ```
 
 - `-i, --iterations <n>` sets measured samples per metric.
@@ -461,8 +454,8 @@ bun run bench:important-react -- -i 10 --warmup 1 --script-counts 5,10,25,50
 
 The combined runner prefixes child process output with `[banner]` and `[scripts]`, exits nonzero if either benchmark fails, and writes the same JSON artifacts as the individual package scripts:
 
-- `.benchmarks/current/banner-visibility/react-v2-v3-banner-visibility.json`
-- `.benchmarks/current/script-count/react-v2-v3-script-count.json`
+- `.benchmarks/current/banner-visibility/react-banner-visibility.json`
+- `.benchmarks/current/script-count/react-script-count.json`
 
 Run the individual suites directly when iterating on one benchmark:
 

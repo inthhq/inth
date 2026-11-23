@@ -12,7 +12,7 @@ import { ConsentTrackingContext } from '~/context/consent-tracking-context';
 import { LocalThemeContext } from '~/context/theme-context';
 import { useSetActiveUI } from '~/hooks';
 import { useFocusBlocking } from '~/hooks/use-focus-blocking';
-import { useIABConsentManager } from '~/hooks/use-iab-consent-manager';
+import { useIABConsentManager } from '~/hooks/use-iab-manager';
 import { useIsHydrated } from '~/hooks/use-is-hydrated';
 import { useScrollLock } from '~/hooks/use-scroll-lock';
 import { useTextDirection } from '~/hooks/use-text-direction';
@@ -26,7 +26,7 @@ import {
 	useSurfaceSheetsReady,
 } from '../../shared/surface-styles';
 import { useExitTransition } from '../use-exit-transition';
-import { IABConsentDialogOverlay } from './iab-consent-dialog-overlay';
+import { IABConsentDialogOverlay } from './iab-panel-overlay';
 
 const DEFAULT_MODELS: CoreTypes.Model[] = ['iab'];
 

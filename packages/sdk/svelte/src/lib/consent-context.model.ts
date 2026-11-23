@@ -23,7 +23,7 @@ import type { OptOutReceiptData, OptOutState } from '@inth/sdk/surface-state';
 import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 
-import type { ConsentManagerOptions } from './consent-manager-options.model';
+import type { ConsentManagerOptions } from './manager-options.model';
 import type { DialogPreload } from './warm-dialog';
 
 export type SaveType = 'all' | 'custom' | 'necessary';

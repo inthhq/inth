@@ -1,5 +1,5 @@
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
+import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 

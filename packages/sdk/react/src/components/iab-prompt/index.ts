@@ -5,16 +5,16 @@ import type { FC } from 'react';
 import {
 	IABConsentBannerButtonGroup,
 	IABConsentBannerFooterSpacer,
-} from './atoms/iab-consent-banner-button-group';
-import { IABConsentBannerCard } from './atoms/iab-consent-banner-card';
-import { IABConsentBannerDescription } from './atoms/iab-consent-banner-description';
-import { IABConsentBannerFooter } from './atoms/iab-consent-banner-footer';
-import { IABConsentBannerHeader } from './atoms/iab-consent-banner-header';
-import { IABConsentBannerOverlay } from './atoms/iab-consent-banner-overlay';
-import { IABConsentBannerRoot } from './atoms/iab-consent-banner-root';
-import { IABConsentBannerTitle } from './atoms/iab-consent-banner-title';
-import { IABConsentBanner as IABConsentBannerComponent } from './iab-consent-banner';
-import type { IABConsentBannerProps } from './iab-consent-banner';
+} from './atoms/iab-prompt-button-group';
+import { IABConsentBannerCard } from './atoms/iab-prompt-card';
+import { IABConsentBannerDescription } from './atoms/iab-prompt-description';
+import { IABConsentBannerFooter } from './atoms/iab-prompt-footer';
+import { IABConsentBannerHeader } from './atoms/iab-prompt-header';
+import { IABConsentBannerOverlay } from './atoms/iab-prompt-overlay';
+import { IABConsentBannerRoot } from './atoms/iab-prompt-root';
+import { IABConsentBannerTitle } from './atoms/iab-prompt-title';
+import { IABConsentBanner as IABConsentBannerComponent } from './iab-prompt';
+import type { IABConsentBannerProps } from './iab-prompt';
 
 export interface IABConsentBannerCompoundComponent extends FC<IABConsentBannerProps> {
 	Root: typeof IABConsentBannerRoot;
@@ -78,12 +78,12 @@ export default IABConsentBanner;
 export {
 	IABConsentBannerButtonGroup,
 	IABConsentBannerFooterSpacer,
-} from './atoms/iab-consent-banner-button-group';
-export { IABConsentBannerCard } from './atoms/iab-consent-banner-card';
-export { IABConsentBannerDescription } from './atoms/iab-consent-banner-description';
-export { IABConsentBannerFooter } from './atoms/iab-consent-banner-footer';
-export { IABConsentBannerHeader } from './atoms/iab-consent-banner-header';
-export { IABConsentBannerOverlay } from './atoms/iab-consent-banner-overlay';
-export { IABConsentBannerRoot } from './atoms/iab-consent-banner-root';
-export { IABConsentBannerTitle } from './atoms/iab-consent-banner-title';
+} from './atoms/iab-prompt-button-group';
+export { IABConsentBannerCard } from './atoms/iab-prompt-card';
+export { IABConsentBannerDescription } from './atoms/iab-prompt-description';
+export { IABConsentBannerFooter } from './atoms/iab-prompt-footer';
+export { IABConsentBannerHeader } from './atoms/iab-prompt-header';
+export { IABConsentBannerOverlay } from './atoms/iab-prompt-overlay';
+export { IABConsentBannerRoot } from './atoms/iab-prompt-root';
+export { IABConsentBannerTitle } from './atoms/iab-prompt-title';
 export { IABConsentBanner, type IABConsentBannerProps };

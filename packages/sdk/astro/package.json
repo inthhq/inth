@@ -141,7 +141,7 @@
 		"./components/consent-script.astro": "./src/components/consent-script.astro",
 		"./components/consent-banner-deferred.astro": "./src/components/prompt-deferred.astro",
 		"./components/consent-banner.astro": "./src/components/prompt.astro",
-		"./components/consent-dialog-link.astro": "./src/components/consent-dialog-link.astro",
+		"./components/consent-dialog-link.astro": "./src/components/panel-link.astro",
 		"./components/consent-dialog.astro": "./src/components/panel.astro",
 		"./components/iab-consent-banner.astro": "./src/components/iab-prompt.astro",
 		"./components/iab-consent-dialog.astro": "./src/components/iab-panel.astro",

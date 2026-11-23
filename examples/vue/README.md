@@ -18,8 +18,8 @@ host.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/vue dev
 ```
 
@@ -33,5 +33,5 @@ Vite writes the backend URL into the bundle, so rebuild after changing it.
 
 Replace `phc_your_project_key` in `src/main.ts` with your PostHog project key.
 
-The [Vue quickstart](https://c15t.com/docs/frameworks/vue/quickstart) walks
+The [Vue quickstart](https://inth.com/docs/frameworks/vue/quickstart) walks
 through each file.

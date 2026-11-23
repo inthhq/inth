@@ -2,8 +2,8 @@
 	import type { ConsentProviderRuntime } from '@inth/sdk/runtime/provider';
 	import { untrack } from 'svelte';
 
-	import type { ConsentManagerOptions } from '../consent-manager-options.model';
 	import { createOwnedRuntime } from '../create-owned-runtime';
+	import type { ConsentManagerOptions } from '../manager-options.model';
 	import { modulePreloadMarker } from '../module-preload-marker';
 	import {
 		resolveProviderOptions,

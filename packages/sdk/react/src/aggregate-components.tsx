@@ -7,7 +7,7 @@ import {
 import { useEffect } from 'react';
 import type { ComponentType } from 'react';
 
-import type { ConsentDialogProps } from './components/dialog/consent-dialog.model';
+import type { ConsentDialogProps } from './components/dialog/panel.model';
 import type { OptInConfirmationProps } from './components/opt-in-confirmation';
 import type {
 	OptOutConfirmationCompoundComponent,

@@ -25,7 +25,7 @@ import { useConsentDraftSlice, useConsentDraftStore } from '~/draft';
 import { useSnapshot } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 
-import { ConsentWidgetVendorList } from './consent-widget-vendor-list';
+import { ConsentWidgetVendorList } from './preferences-vendor-list';
 
 interface ConsentWidgetAccordionContextValue {
 	noStyle?: boolean;

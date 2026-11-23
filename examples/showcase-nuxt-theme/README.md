@@ -36,8 +36,8 @@ The rest is the shop: the product page, header, footer and
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/showcase-nuxt-theme dev
 ```
 
@@ -49,7 +49,7 @@ app's origin to its trusted origins.
 
 ## Docs
 
-- [Customize](https://c15t.com/docs/frameworks/nuxt/customize)
-- [Component parts](https://c15t.com/docs/customization/slots)
-- [Theme tokens](https://c15t.com/docs/customization/tokens)
-- [Dark mode](https://c15t.com/docs/customization/dark-mode)
+- [Customize](https://inth.com/docs/frameworks/nuxt/customize)
+- [Component parts](https://inth.com/docs/customization/slots)
+- [Theme tokens](https://inth.com/docs/customization/tokens)
+- [Dark mode](https://inth.com/docs/customization/dark-mode)

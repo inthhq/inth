@@ -124,3 +124,6 @@ __screenshots__/
 
 # Scratch copies from packages/cli/scripts/scaffold-build-checks.ts.
 /examples/.scaffold-check-*/
+
+# Rsdoctor reports (WITH_RSDOCTOR=1 builds)
+.rsdoctor/

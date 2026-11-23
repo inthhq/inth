@@ -1,6 +1,6 @@
 # Mobile benchmarks
 
-`bun run bench:mobile` measures the budgets in [`packages/native-protocol/CONTRACT.md`](../../packages/native-protocol/CONTRACT.md)
+`bun run --cwd benchmarks/mobile bench` measures the budgets in [`packages/native-protocol/CONTRACT.md`](../../packages/native-protocol/CONTRACT.md)
 against the Swift core, the Kotlin core, and the JavaScript boundary of
 `@inth/react-native`, prints one table, and stores the run.
 
@@ -13,8 +13,8 @@ disappearing from a README.
 ## Running
 
 ```bash
-bun run bench:mobile              # measure, print the table, store results/latest.json
-bun run bench:mobile --check      # same, plus exit non-zero on a missed budget
+bun run --cwd benchmarks/mobile bench         # measure, print the table, store results/latest.json
+bun run --cwd benchmarks/mobile bench:ci      # same with --check: exit non-zero on a missed budget
 bun run --cwd benchmarks/mobile bench:quick   # short sampling, for iterating
 bun turbo run test --filter=@inth/mobile-bench  # the vitest suite
 ```
@@ -25,21 +25,20 @@ without breaking a report run.
 
 ## The seven axes
 
-Every row below is produced by `bench:ci`, which CI runs on both mobile legs:
-`android-js` (Ubuntu) and `ios-toolchain` (macOS with Xcode). The CI column says
-whether a missing number fails the job. A row outside `MOBILE_EXPECTED_ROWS` in
-[`scripts/ci-mobile-bench-report.ts`](../../scripts/ci-mobile-bench-report.ts) runs
-and prints every number it can, and does not fail when it cannot.
+Every row below is produced by `bench` and `bench:ci`. No CI job runs either: the
+`React Native` job in `.github/workflows/ci.yml` runs only this package's
+`check-types` and vitest suite. Swift rows need a machine with Xcode, and Kotlin rows
+need a JDK.
 
-| # | Axis | Rows that measure it | In CI |
-| --- | --- | --- | --- |
-| 1 | Cold-start overhead | `cold_start_js_to_first_consent_ms` (fresh process: entry evaluation plus the first handshake), `cold_start_overhead_ms` and `bootstrap_to_snapshot_cold_ms` (read path in a warm process), `native_bootstrap_to_snapshot_cold_ms`, `kotlin_bootstrap_to_snapshot_cold_ms` | JS rows: measured on both legs, required on the Android+JS leg. Swift row: iOS leg, required. Kotlin row: Android leg, budget-gated and reported, not required, because it medians over forked JVMs and reads the runner's load |
-| 2 | Cached consent available | `cached_consent_available_ms` (envelope read off disk to a readable answer), `js_hydrate_envelope_ms` (decode alone), `native_hydrate_envelope_ms`, `kotlin_hydrate_envelope_ms` | JS rows: measured on both legs, required on the Android+JS leg. Native rows: their own leg, required |
-| 3 | Consent UI interactive | `consent_ui_mount_to_interactive_ms`, `consent_ui_remount_to_interactive_ms`, `consent_ui_open_to_interactive_ms` | Measured on both legs, required on the Android+JS leg. Mounted under `react-test-renderer`, so this is the React half of interactivity and it is required as that |
-| 4 | Consent action latency | `consent_ui_action_to_commit_ms` (tap on the rendered control to the intent reaching the module), `commit_ack_no_network_ms`, `native_commit_ack_no_network_ms`, `native_commit_ack_disk_ms`, `kotlin_commit_ack_no_network_ms` | JS and Kotlin rows: required on the Android+JS leg. Swift rows: iOS leg, required. The UI row is measured on both legs and required on the Android+JS one |
-| 5 | React rerenders | `rerenders_per_consent_change`, `rerenders_per_unchanged_event` | Both legs, required |
-| 6 | Idle CPU and memory | `idle_cpu_percent`, `idle_rss_growth_bytes`, `idle_heap_growth_bytes` | Runs on both legs and is budget-gated, deliberately not required: a shared runner's quiet window is not quiet |
-| 7 | Bundle-size impact | `js_shipped_bytes`, `js_shipped_gzip_bytes` (this package's tarball), `js_closure_bytes`, `js_closure_gzip_bytes`, `js_closure_modules` (everything an app carries because Inth is installed), `ios_binary_bytes`, `android_binary_bytes` | JS and Android: both legs, required. iOS binary: iOS leg, required. The `js_closure_*` rows are size rows, so both legs require them: each leg builds the package, and a byte count reads the same on either machine. `ios_binding_bytes`: never measured, see below |
+| # | Axis | Rows that measure it |
+| --- | --- | --- |
+| 1 | Cold-start overhead | `cold_start_js_to_first_consent_ms` (fresh process: entry evaluation plus the first handshake), `cold_start_overhead_ms` and `bootstrap_to_snapshot_cold_ms` (read path in a warm process), `native_bootstrap_to_snapshot_cold_ms`, `kotlin_bootstrap_to_snapshot_cold_ms` |
+| 2 | Cached consent available | `cached_consent_available_ms` (envelope read off disk to a readable answer), `js_hydrate_envelope_ms` (decode alone), `native_hydrate_envelope_ms`, `kotlin_hydrate_envelope_ms` |
+| 3 | Consent UI interactive | `consent_ui_mount_to_interactive_ms`, `consent_ui_remount_to_interactive_ms`, `consent_ui_open_to_interactive_ms` |
+| 4 | Consent action latency | `consent_ui_action_to_commit_ms` (tap on the rendered control to the intent reaching the module), `commit_ack_no_network_ms`, `native_commit_ack_no_network_ms`, `native_commit_ack_disk_ms`, `kotlin_commit_ack_no_network_ms` |
+| 5 | React rerenders | `rerenders_per_consent_change`, `rerenders_per_unchanged_event` |
+| 6 | Idle CPU and memory | `idle_cpu_percent`, `idle_rss_growth_bytes`, `idle_heap_growth_bytes` |
+| 7 | Bundle-size impact | `js_shipped_bytes`, `js_shipped_gzip_bytes` (this package's tarball), `js_closure_bytes`, `js_closure_gzip_bytes`, `js_closure_modules` (everything an app carries because Inth is installed), `ios_binary_bytes`, `android_binary_bytes` |
 
 The run writes these mappings into its own notes, so a table printed from
 `results/latest.json` says which rows of which axis went unmeasured on that machine.
@@ -162,9 +161,10 @@ The settle phase keeps module load and cold JIT out of the idle number.
 These are gaps in the harness, not rows that went quiet. None of them can be closed
 from inside `benchmarks/mobile`.
 
-- **An app launch on a simulator or a device.** Nothing in CI starts an app: the
-  browser/device job builds the example and never launches it. Closing this needs a
-  job that installs and cold-starts the example app, on a device profile, and reads
+- **An app launch on a simulator or a device.** No row here comes from an app launch.
+  `.github/workflows/android-emulator.yml` launches the fixture apps for consent
+  journeys, but times nothing. Closing this needs a job that installs and
+  cold-starts the example app, on a device profile, and reads
   the time from process start to the first consent answer. Until then no number here
   certifies the contract's 10 ms cold-start figure, which is a device-profile promise;
   the JavaScript row beside it is a module-loader number on a dev machine.

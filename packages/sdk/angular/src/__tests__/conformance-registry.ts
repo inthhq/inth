@@ -18,7 +18,7 @@ import { ConsentWidget } from '@inth/angular/consent-widget';
 import { IABConsentBanner, IABConsentDialog } from '@inth/angular/iab';
 import type { MountableComponent } from '@inth/conformance';
 
-import { ConsentBanner } from '../lib/prompt/consent-banner';
+import { ConsentBanner } from '../lib/prompt/prompt';
 import { PolicyGateProbe } from './policy-gate-probe';
 
 /** One component the fixture renders, with its inputs. */

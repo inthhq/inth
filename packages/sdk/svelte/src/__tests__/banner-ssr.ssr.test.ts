@@ -14,7 +14,7 @@ import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 
 import InthProvider from '../lib/components/inth-provider.svelte';
-import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
+import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { testing } from '../lib/testing';
 import BannerFixture from './fixtures/banner-fixture.svelte';
 

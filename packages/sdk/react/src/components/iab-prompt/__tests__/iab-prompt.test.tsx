@@ -6,7 +6,7 @@ import type { ComponentFixtureOptions as InthProviderOptions } from '~/__tests__
 import { policyFixture } from '~/__tests__/policy-fixture';
 
 import { testing } from '../../../testing';
-import { IABConsentBanner } from '../iab-consent-banner';
+import { IABConsentBanner } from '../iab-prompt';
 
 const localStorageMock = (() => {
 	let store: Record<string, string> = {};

@@ -4,8 +4,5 @@
  * @packageDocumentation
  */
 
-export { ConsentBanner } from './consent-banner';
-export type {
-	ConsentBannerButton,
-	ConsentBannerLayout,
-} from './consent-banner';
+export { ConsentBanner } from './prompt';
+export type { ConsentBannerButton, ConsentBannerLayout } from './prompt';

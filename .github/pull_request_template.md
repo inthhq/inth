@@ -21,5 +21,5 @@ Fixes #
 
 - [ ] Tests added or updated for changed behavior
 - [ ] Docs updated
-- [ ] A `.tegami/*.md` release note for changes to a published package
+- [ ] A release note for changes to a published package: `.tegami/*.md` for the CLI, `.tegami/sdk/*.md` for the web SDK
 - [ ] Screenshots for UI changes

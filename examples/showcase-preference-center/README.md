@@ -7,9 +7,9 @@ whether each category is on right now and when the visitor last saved. Save
 and "Reject all optional" record the choice.
 
 First-time visitors still get the stock banner in Northwind's colors. Its
-Customize button opens the privacy page, and so does the footer's "Privacy
-settings" link. PostHog waits for Analytics and Meta Pixel waits for
-Marketing.
+Customize button opens the options in place, and the footer's "Privacy
+settings" link opens the privacy page. PostHog waits for Analytics and Meta
+Pixel waits for Marketing.
 
 ## Files to read
 
@@ -17,8 +17,8 @@ Marketing.
   supplies the draft, `useConsentDraft()` drives the switches,
   `useExplicitChoice()` gives the save time, and `ConsentWidget.SaveButton`
   and `ConsentWidget.RejectButton` record the choice.
-- `components/cookie-banner.tsx` is the stock banner built from its parts so
-  Customize can open the page instead of the dialog.
+- `components/cookie-banner.tsx` is the stock banner. It steps aside on the
+  privacy page, which asks the same question in full.
 - `components/consent.tsx` sets up `InthProvider` with the scripts, vendors,
   category copy and theme from `lib/`.
 
@@ -27,8 +27,8 @@ Marketing.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/showcase-preference-center dev
 ```
 
@@ -39,6 +39,5 @@ manifest and sends each choice there. Use your own PostHog and Meta Pixel IDs in
 
 ## Docs
 
-- [ConsentWidget](https://c15t.com/docs/frameworks/next/components/consent-widget)
-- [Compose your own banner](https://c15t.com/docs/frameworks/next/compose)
-- [Vendor consent](https://c15t.com/docs/frameworks/next/vendor-consent)
+- [ConsentWidget](https://inth.com/docs/frameworks/next/components/consent-widget)
+- [Vendor consent](https://inth.com/docs/frameworks/next/vendor-consent)

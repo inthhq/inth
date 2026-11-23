@@ -17,7 +17,7 @@ import type { ComponentType, ReactNode } from 'react';
 import { Suspense, createElement, useContext } from 'react';
 
 import type * as DialogModuleNamespace from '../aggregate-components';
-import type { ConsentDialogProps } from '../components/dialog/consent-dialog.model';
+import type { ConsentDialogProps } from '../components/dialog/panel.model';
 import type * as BannerModuleNamespace from '../components/prompt/index';
 import type { ConsentBannerProps } from '../components/prompt/index';
 import { DeferredSessionContext } from './deferred-session-context';

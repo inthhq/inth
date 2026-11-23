@@ -137,11 +137,11 @@ publications. No signing material is read from the checkout. This preparation
 does not authorize running those tasks or establish that credentials,
 permissions, package visibility or signatures have been validated.
 
-For public Maven Central releases, use the separate
-[native Tegami flow](mobile-releases.md). `INTH_MAVEN_CENTRAL=true` signs the
+Public Maven Central releases belong to the separate, still disabled
+[Android release line](mobile-releases.md). `INTH_MAVEN_CENTRAL=true` signs the
 local staging publications and selects public SCM metadata; it does not upload
-them. The release verifier checks the signed bundle before Central upload and
-retains the deployment ID for retries. The private GitHub pilot remains a
+them. `scripts/publish-maven.ts` checks the signed bundle before Central upload
+and keeps the deployment ID for retries. The private GitHub pilot remains a
 separate opt-in target.
 
 ## Repeat isolated resolution and R8

@@ -34,16 +34,16 @@ rates per arm.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/showcase-experiment dev
 ```
 
 Open <http://localhost:3115> and the browser console. You'll see lines like:
 
 ```text
-[analytics] consent_banner_shown { arm: 'bar', assigned_by: 'c15t', experiment_id: 'banner-layout', surface: 'banner' }
-[analytics] consent_choice_made { arm: 'bar', assigned_by: 'c15t', consent_action: 'all', experiment_id: 'banner-layout', surface: 'banner', time_to_decision_ms: 2140 }
+[analytics] consent_banner_shown { arm: 'bar', assigned_by: 'inth', experiment_id: 'banner-layout', surface: 'banner' }
+[analytics] consent_choice_made { arm: 'bar', assigned_by: 'inth', consent_action: 'all', experiment_id: 'banner-layout', surface: 'banner', time_to_decision_ms: 2140 }
 ```
 
 Set `NEXT_PUBLIC_INTH_PROJECT_URL` in `.env.local` to your Inth project URL,
@@ -71,5 +71,5 @@ That also clears your consent, so the banner comes back.
 
 ## Learn more
 
-- [Banner experiments](https://c15t.com/docs/guides/banner-experiments)
-- [Choose your setup](https://c15t.com/docs/concepts/choose-your-setup)
+- [Banner experiments](https://inth.com/docs/guides/banner-experiments)
+- [Choose your setup](https://inth.com/docs/concepts/choose-your-setup)

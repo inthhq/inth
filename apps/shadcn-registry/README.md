@@ -48,8 +48,8 @@ depend on.
 ## Writing items
 
 - Write in shadcn's style: 2-space indent, double quotes, no semicolons,
-  function declarations. Oxfmt skips `registry/`, and `oxlint.config.ts` has
-  an override for it.
+  function declarations. Oxfmt skips `registry/`, and `oxlint.sdk.config.ts`
+  has an override for it.
 - Import Inth only from `@inth/react` and `@inth/react/headless`. Any other
   Inth entry point fails the build, because the other frameworks have no
   twin for it.
@@ -98,7 +98,8 @@ each framework's built `@inth` package and the `@inth` packages it depends on, a
 projects install those tarballs the way they would install a release. The
 TanStack Start fixtures also replace `src/routes/__root.tsx` with the root
 route the install notes describe. Projects live in
-`/tmp/inth-shadcn-fixtures` and are reused between runs. Pass `--fresh` to
+`<tmp>/inth-shadcn-fixtures`, where `<tmp>` is the system temp directory
+(`os.tmpdir()`), and are reused between runs. Pass `--fresh` to
 scaffold them again, or narrow the run:
 
 ```bash
@@ -121,7 +122,7 @@ bun run fixtures --browser
 ```
 
 Each fixture writes its command output to
-`/tmp/inth-shadcn-fixtures/<framework>-<base>.log`. A failed browser step
+`<tmp>/inth-shadcn-fixtures/<framework>-<base>.log`. A failed browser step
 saves a screenshot next to it.
 
 ## Refreshing the vendored components
@@ -129,7 +130,7 @@ saves a screenshot next to it.
 The vendored files are shadcn's own components, as `shadcn init` installs
 them. To refresh them after a shadcn release, run `bun run fixtures --fresh`
 and copy `components/ui` and `lib/utils.ts` from each
-`/tmp/inth-shadcn-fixtures/react-<base>/src` into `vendor/<base>`.
+`<tmp>/inth-shadcn-fixtures/react-<base>/src` into `vendor/<base>`.
 
 ## Deploying
 

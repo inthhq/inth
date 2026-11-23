@@ -43,13 +43,13 @@
 	import { createServerRoot } from '#server-root';
 
 	import ProviderView from '../components/provider-view.svelte';
-	import type {
-		ConsentManagerOptions,
-		InthProviderState,
-	} from '../consent-manager-options.model';
 	import { createDeferredRuntime } from '../deferred/create-deferred-runtime';
 	import type { EngineFactory } from '../deferred/create-deferred-runtime';
 	import { readConsentBoot } from '../deferred/read-consent-boot';
+	import type {
+		ConsentManagerOptions,
+		InthProviderState,
+	} from '../manager-options.model';
 	import { modulePreloadMarker } from '../module-preload-marker';
 	import {
 		resolveProviderOptions,

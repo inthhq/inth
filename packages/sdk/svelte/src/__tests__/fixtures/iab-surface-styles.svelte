@@ -4,7 +4,7 @@
 	import IABConsentDialog from '../../lib/components/iab/iab-panel.svelte';
 	import IABConsentBanner from '../../lib/components/iab/iab-prompt.svelte';
 	import InthProvider from '../../lib/components/inth-provider.svelte';
-	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
+	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 	import ConformanceKernelCapture from './conformance-kernel-capture.svelte';
 
 	let {

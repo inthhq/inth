@@ -1,7 +1,7 @@
 import { render } from '@testing-library/svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
+import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import Fixture from './fixtures/banner-dialog-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';

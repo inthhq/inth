@@ -214,7 +214,7 @@ export type { LegalLinkSelection as ɵLegalLinkSelection } from './lib/shared';
 // Private (`ɵ`): how the consent dialog reaches its body. The body stays
 // out of this entry's eager code: it loads only through this loader, so a
 // page loads it only when the dialog opens or warms.
-export { loadConsentDialogBody as ɵloadConsentDialogBody } from './lib/dialog/load-consent-dialog-body';
+export { loadConsentDialogBody as ɵloadConsentDialogBody } from './lib/dialog/load-panel-body';
 export type { ConsentDialogBody as ɵConsentDialogBody } from './lib/dialog/dialog';
 export { requestReceiptFocus as ɵrequestReceiptFocus } from './lib/parts/request-receipt-focus';
 

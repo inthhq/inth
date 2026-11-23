@@ -19,7 +19,7 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { mockGVL } from '~/components/iab/__tests__/fixtures/mock-consent-state';
 
 import { testing } from '../../../testing';
-import { IABConsentDialog } from '../iab-consent-dialog';
+import { IABConsentDialog } from '../iab-panel';
 
 const FALLBACK_TEXT =
 	'These means of processing can be used solely in pursuit of one or several purposes for which you are given a choice in this notice.';

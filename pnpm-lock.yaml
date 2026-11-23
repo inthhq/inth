@@ -27,6 +27,9 @@ importers:
       '@oxlint/plugins':
         specifier: 1.81.0
         version: 1.81.0
+      '@rsdoctor/agent-cli':
+        specifier: 0.1.2
+        version: 0.1.2
       leadtype:
         specifier: 0.4.3
         version: 0.4.3(@modelcontextprotocol/sdk@1.29.0(supports-color@10.2.2)(zod@4.6.6))(ai@6.0.25(zod@4.6.6))(jiti@2.7.0)(react@19.3.0)(svelte@5.57.1)(typescript@7.0.2)(vue@3.5.43(typescript@7.0.2))
@@ -5404,7 +5407,7 @@ importers:
         version: 4.1.10(@vitest/browser@4.1.10)(vitest@4.1.10)
       baseline-browser-mapping:
         specifier: latest
-        version: 2.11.37
+        version: 2.11.39
       decode-named-character-reference:
         specifier: 1.3.0
         version: 1.3.0
@@ -14238,6 +14241,11 @@ packages:
       '@rsbuild/core':
         optional: true
 
+  '@rsdoctor/agent-cli@0.1.2':
+    resolution: {integrity: sha512-xjFWWtQodShNTdLCo13LoeYtnJ5nhTQ9mb7fkggrNGuY7HkAy4xFsHKqq3lHydTMvpX9+nR6g2uer+S105K0fw==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    hasBin: true
+
   '@rsdoctor/client@1.5.17':
     resolution: {integrity: sha512-3EqJtkfBfKd4hcr2+KxvwqpTyTxm11Ti//c/0BGvcr+RnH+U7XVkrpxVZNvTPDA9RTSIqMNJCUh4/89KRSZPQQ==}
 
@@ -17698,6 +17706,11 @@ packages:
 
   baseline-browser-mapping@2.11.37:
     resolution: {integrity: sha512-QYph+vfurmaxhNwi9FprfmtkT5cx2Keg8FzZ0vnjO8ukscIybVyZGMFwdllKGlTI6qyU8ck43OM9UXh+IFJihQ==}
+    engines: {node: '>=6.0.0'}
+    hasBin: true
+
+  baseline-browser-mapping@2.11.39:
+    resolution: {integrity: sha512-Q9buOYhr2ggrEZpImICecZTJHCCd8yXkRUokFlUEQ8uiD6oP82F4W4jWnhOHZYV+wlvrC51V7Wy0ULyWjil5Wg==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
@@ -27828,18 +27841,22 @@ packages:
   yuku-ast@0.19.0:
     resolution: {integrity: sha512-PyCsiScaelhxBGzL8dyeJkLqvRZycoh78R31Vrt/WqYrm0hMFoKwIw/X7Dx5mBKLWAMlV9I9HEyBOHnj2gZVyw==}
     engines: {node: '>=14.18.0'}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-codegen@0.19.0:
     resolution: {integrity: sha512-uymAKHjDuaP4BEpkXC/BSLz4DUEF5oArZ5AuD3888nb2miChjWSgpPdojEJxm3pjpXkgUaCRJQyNAbnMN33wHg==}
     engines: {node: '>=14.18.0'}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-core@0.19.0:
     resolution: {integrity: sha512-kYK9e1XdfirNhkipzW0wmMcSWcVF/CWnuugodfVYRCUwvoBefweL9HzB96OiKEhsx78V5WbUxbJqlizMX869Qg==}
     engines: {node: '>=14.18.0'}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-parser@0.19.0:
     resolution: {integrity: sha512-XrBh9ZiQK5mJVRxZBAvD6LwRyAYrK3MFtH3+onyuxFL5hFD44EC3QOmIC1FjTj6H2MMwq46/NAI+NZxLZPZgxg==}
     engines: {node: '>=14.18.0'}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   zen-observable@0.10.0:
     resolution: {integrity: sha512-iI3lT0iojZhKwT5DaFy2Ce42n3yFcLdFyOh01G7H0flMY60P8MJuVFEoJoNwXlmAyQ45GrjL6AcZmmlv8A5rbw==}
@@ -40026,6 +40043,8 @@ snapshots:
     transitivePeerDependencies:
       - webpack-hot-middleware
 
+  '@rsdoctor/agent-cli@0.1.2': {}
+
   '@rsdoctor/client@1.5.17': {}
 
   '@rsdoctor/core@1.5.17(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@rsbuild/core@1.7.5)(@rspack/core@2.1.6(@swc/helpers@0.5.23))(supports-color@10.2.2)(webpack@5.112.2(@swc/core@1.15.21(@swc/helpers@0.5.23))(clean-css@5.3.3)(cssnano@9.3.2(postcss@8.5.16))(csso@5.0.5)(esbuild@0.28.2)(html-minifier-terser@6.1.0)(lightningcss@1.33.0)(postcss@8.5.16)(sharp@0.35.4(@types/node@25.5.0))(svgo@4.1.0))':
@@ -45810,6 +45829,8 @@ snapshots:
   base64id@2.0.0: {}
 
   baseline-browser-mapping@2.11.37: {}
+
+  baseline-browser-mapping@2.11.39: {}
 
   batch@0.6.1: {}
 

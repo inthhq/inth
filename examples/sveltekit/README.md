@@ -27,8 +27,8 @@ To do that through the app's own origin, add
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/sveltekit dev
 ```
 
@@ -43,4 +43,4 @@ Rebuild after you change the policy, translations or vendors in your project,
 or the backend URL. Replace `phc_your_project_key` in `src/routes/+layout.svelte` with
 your PostHog project key.
 
-Docs: [SvelteKit quickstart](https://c15t.com/docs/frameworks/sveltekit/quickstart)
+Docs: [SvelteKit quickstart](https://inth.com/docs/frameworks/sveltekit/quickstart)

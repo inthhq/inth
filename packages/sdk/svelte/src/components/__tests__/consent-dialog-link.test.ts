@@ -11,7 +11,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import DialogLinkFixture from '../../__tests__/fixtures/dialog-link-fixture.svelte';
 import { policyFixture } from '../../__tests__/policy-fixture';
 import { testOffline } from '../../__tests__/test-offline';
-import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
+import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 
 const getDefined = <Value>(
 	value: Value,

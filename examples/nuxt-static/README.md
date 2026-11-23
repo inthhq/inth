@@ -16,8 +16,8 @@ visitor allows measurement.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/nuxt-static dev
 ```
 
@@ -34,4 +34,4 @@ your PostHog project key.
 The browser does not know the visitor's location, so every visitor gets the
 policy your project uses when the location is unknown.
 
-See [build a single-page app with ssr: false](https://c15t.com/docs/frameworks/nuxt/rendering#build-a-single-page-app-with-ssr-false).
+See [build a single-page app with ssr: false](https://inth.com/docs/frameworks/nuxt/rendering#build-a-single-page-app-with-ssr-false).

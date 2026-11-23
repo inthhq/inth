@@ -10,4 +10,4 @@
  */
 
 export { ConsentDialog } from './aggregate-components';
-export type { ConsentDialogProps } from './components/dialog/consent-dialog.model';
+export type { ConsentDialogProps } from './components/dialog/panel.model';

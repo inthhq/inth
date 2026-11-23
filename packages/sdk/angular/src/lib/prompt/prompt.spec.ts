@@ -34,8 +34,8 @@ import { ALL_CATEGORIES, testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from '../core/consent-manager';
 import { provideInth } from '../core/provide-inth';
 import { rightsBundleOf } from '../parts/inject-surface-session';
-import { ConsentBanner } from './consent-banner';
-import type { ConsentBannerLayout } from './consent-banner';
+import { ConsentBanner } from './prompt';
+import type { ConsentBannerLayout } from './prompt';
 
 type Region = 'eu' | 'us-opt-in' | 'us-notice' | 'us-opt-out';
 
