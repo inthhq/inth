@@ -72,6 +72,12 @@ export interface ConsentComponentSlots<T = Record<string, unknown>> {
 		rights?: T;
 		rightLink?: T;
 		overlay?: T;
+		/** Privacy Choices: the options Customize opens in place, and a side Drawer's scroll area. */
+		expand?: T;
+		/** Privacy Choices: one statutory rights row and its segmented control. */
+		rightsRow?: T;
+		/** Privacy Choices: "Save choices" in an expanded panel or a side Drawer. */
+		saveButton?: T;
 	};
 	dialog?: {
 		root?: T;
@@ -81,6 +87,24 @@ export interface ConsentComponentSlots<T = Record<string, unknown>> {
 		title?: T;
 		content?: T;
 		overlay?: T;
+		/** Privacy Choices: the dialog's footer: Done, or Reject all, Accept all and Save choices. */
+		footer?: T;
+		/** Privacy Choices: one statutory rights row in the dialog. */
+		rightsRow?: T;
+		/** Privacy Choices: the receipt line under the rights rows. */
+		receipt?: T;
+		/** Privacy Choices: the Preferences row, an accordion on desktop and a sheet on phone. */
+		preferencesRow?: T;
+		/** Privacy Choices: the bordered group of cookie categories. */
+		categoryGroup?: T;
+		/** Privacy Choices: a category's vendor table. */
+		vendorTable?: T;
+		/** Privacy Choices: a nested phone sheet over the dialog. */
+		sheet?: T;
+		/** Privacy Choices: Done, in the dialog and its sheets. */
+		doneButton?: T;
+		/** Privacy Choices: Save choices in the EU dialog. */
+		saveButton?: T;
 	};
 	manager?: {
 		root?: T;
@@ -277,12 +301,15 @@ export const CONSENT_COMPONENT_SLOT_KEY_MAP = {
 		actions: true,
 		card: true,
 		cardShell: true,
+		expand: true,
 		footer: true,
 		header: true,
 		overlay: true,
 		rightLink: true,
 		rights: true,
+		rightsRow: true,
 		root: true,
+		saveButton: true,
 		title: true,
 	},
 	button: {
@@ -301,12 +328,21 @@ export const CONSENT_COMPONENT_SLOT_KEY_MAP = {
 	},
 	dialog: {
 		card: true,
+		categoryGroup: true,
 		container: true,
 		content: true,
+		doneButton: true,
+		footer: true,
 		header: true,
 		overlay: true,
+		preferencesRow: true,
+		receipt: true,
+		rightsRow: true,
 		root: true,
+		saveButton: true,
+		sheet: true,
 		title: true,
+		vendorTable: true,
 	},
 	'iab-banner': {
 		actionGroup: true,
@@ -506,15 +542,22 @@ export interface ConsentConfig<T = Record<string, unknown>> {
 		Record<
 			| 'inth-primary'
 			| 'inth-primary-hover'
+			| 'inth-primary-text'
+			| 'inth-primary-tint'
+			| 'inth-danger'
 			| 'inth-surface'
 			| 'inth-surface-hover'
 			| 'inth-border'
 			| 'inth-border-hover'
+			| 'inth-border-strong'
 			| 'inth-text'
 			| 'inth-text-muted'
 			| 'inth-text-on-primary'
 			| 'inth-overlay'
+			| 'inth-overlay-block'
+			| 'inth-overlay-block-solid'
 			| 'inth-switch-track'
+			| 'inth-switch-track-off'
 			| 'inth-switch-track-active'
 			| 'inth-switch-thumb'
 			| 'inth-font-family'
@@ -536,6 +579,8 @@ export interface ConsentConfig<T = Record<string, unknown>> {
 			| 'inth-radius-md'
 			| 'inth-radius-lg'
 			| 'inth-radius-full'
+			| 'inth-radius-container'
+			| 'inth-radius-nested'
 			| 'inth-shadow-sm'
 			| 'inth-shadow-md'
 			| 'inth-shadow-lg'
@@ -544,6 +589,7 @@ export interface ConsentConfig<T = Record<string, unknown>> {
 			| 'inth-duration-slow'
 			| 'inth-easing'
 			| 'inth-easing-out'
+			| 'inth-easing-out-strong'
 			| 'inth-easing-in'
 			| 'inth-easing-in-out'
 			| 'inth-easing-spring',

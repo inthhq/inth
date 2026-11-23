@@ -478,6 +478,7 @@ describe('raw candidate reading', () => {
 			noticeCookieMiss: 'custom-key-notice-cookie-miss',
 			noticeSubject: 'custom-key-notice-subject',
 			optOut: 'custom-key-opt-out',
+			optOutCategories: 'custom-key-opt-out-categories',
 			privacy: 'custom-key-privacy',
 			vendors: 'custom-key-vendors',
 		});

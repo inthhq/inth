@@ -28,7 +28,7 @@ before the dialog renders. With `styles={false}`, it comes from your imported
 | `open` | `boolean` | follows the consent state | Controls visibility yourself. While `open` is `true`, the dialog stays open, even after Escape. |
 | `showTrigger` | `boolean` or trigger props | `false` | Renders a floating `ConsentDialogTrigger` with the dialog. Pass an object for `defaultPosition`, `persistPosition`, `showWhen`, `size`, `ariaLabel`, `noStyle` and `class`. |
 | `legalLinks` | array of `LegalLinks` keys, or `null` | every configured link | Which of the provider's `legalLinks` to show after the description. |
-| `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag. |
+| `hideBranding` | `boolean` | `false` | Hides the "Consent by" tag. |
 | `models` | `Model[]` | `['opt-in', 'opt-out', 'iab', 'none']` | Policy models the dialog opens for. `none` is included so a policy with no prompt but a right to change preferences still opens it. |
 | `noStyle` | `boolean` | provider's `noStyle` | Drops Inth's classes. |
 | `class` | `string` | none | Extra class on the dialog content. |

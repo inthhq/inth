@@ -193,17 +193,17 @@ class ScreenAccessibilityTest {
         val provider = mutableStateOf<ConsentTheme.Branding>(ConsentTheme.Branding.C15t)
         compose.setContent {
             CompositionLocalProvider(LocalConsentTheme provides ConsentTheme(branding = provider.value)) {
-                ProviderBranding("Secured by")
+                ProviderBranding("Consent by")
             }
         }
         for (branding in listOf(ConsentTheme.Branding.C15t, ConsentTheme.Branding.Inth,
             ConsentTheme.Branding.Custom("Example", android.R.drawable.ic_dialog_info))) {
             compose.runOnIdle { provider.value = branding }
-            compose.onNodeWithTag("inth.first-layer.branding").assertContentDescriptionEquals("Secured by ${branding.name}")
+            compose.onNodeWithTag("inth.first-layer.branding").assertContentDescriptionEquals("Consent by ${branding.name}")
             compose.onNodeWithTag("inth.first-layer.branding.logo", useUnmergedTree = true).assertIsDisplayed()
         }
         compose.runOnIdle { provider.value = ConsentTheme.Branding.Custom("Example") }
-        compose.onNodeWithTag("inth.first-layer.branding").assertContentDescriptionEquals("Secured by Example")
+        compose.onNodeWithTag("inth.first-layer.branding").assertContentDescriptionEquals("Consent by Example")
         compose.onNodeWithTag("inth.first-layer.branding.logo", useUnmergedTree = true).assertDoesNotExist()
     }
 
@@ -212,11 +212,11 @@ class ScreenAccessibilityTest {
         val provider = mutableStateOf<ConsentTheme.Branding>(ConsentTheme.Branding.Inth)
         compose.setContent {
             CompositionLocalProvider(LocalConsentTheme provides ConsentTheme(branding = provider.value)) {
-                ProviderBranding("Secured by")
+                ProviderBranding("Consent by")
             }
         }
         fun logo() = compose.onNodeWithTag("inth.first-layer.branding.logo", useUnmergedTree = true).fetchSemanticsNode().size
-        compose.onNodeWithTag("inth.first-layer.branding").assertContentDescriptionEquals("Secured by Inth")
+        compose.onNodeWithTag("inth.first-layer.branding").assertContentDescriptionEquals("Consent by Inth")
         assertTrue("wordmark was ${logo()}", logo().width > 2 * logo().height)
         compose.runOnIdle { provider.value = ConsentTheme.Branding.C15t }
         assertEquals(logo().width, logo().height)

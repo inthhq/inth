@@ -60,6 +60,32 @@ export const pairStories = function pairStories(
 };
 
 /**
+ * Stories a port has reached only some frameworks with, keyed by story-key
+ * prefix, with the frameworks that ship them. The Privacy Choices design
+ * lands in React first and in the other adapters in later changes; until a
+ * framework renders it, its gap is expected. Parity compares such a story
+ * only between the frameworks listed, and never reports the others missing.
+ * Add a framework here when its port lands; drop the entry once every
+ * framework ships it.
+ */
+export const NOT_YET_PORTED: Readonly<Record<string, readonly string[]>> = {
+	'Privacy Choices/': ['react', 'angular', 'astro', 'svelte', 'vue'],
+};
+
+/**
+ * The frameworks a story has been ported to, or `null` when every
+ * framework is expected to ship it.
+ */
+export const portedFrameworks = function portedFrameworks(
+	key: string
+): readonly string[] | null {
+	const prefix = Object.keys(NOT_YET_PORTED).find((candidate) =>
+		key.startsWith(candidate)
+	);
+	return prefix === undefined ? null : (NOT_YET_PORTED[prefix] ?? null);
+};
+
+/**
  * Frameworks that were compared and that a pair is missing.
  *
  * A pair with fewer entries than the run enables is not automatically
@@ -72,7 +98,29 @@ export const missingFrameworks = function missingFrameworks(
 	pair: PairedStory,
 	frameworks: readonly string[]
 ): string[] {
-	return frameworks.filter((framework) => !pair.entries[framework]);
+	const ported = portedFrameworks(pair.key);
+	return frameworks.filter(
+		(framework) =>
+			!pair.entries[framework] && (!ported || ported.includes(framework))
+	);
+};
+
+/** `pair` without the entries of frameworks its story is not ported to. */
+const withPortedEntries = function withPortedEntries(
+	pair: PairedStory
+): PairedStory {
+	const ported = portedFrameworks(pair.key);
+	if (!ported) {
+		return pair;
+	}
+	return {
+		entries: Object.fromEntries(
+			Object.entries(pair.entries).filter(([framework]) =>
+				ported.includes(framework)
+			)
+		),
+		key: pair.key,
+	};
 };
 
 /**
@@ -124,6 +172,7 @@ export const selectComparablePairs = function selectComparablePairs(
 		...(options.excludeKeyPrefixes ?? []),
 	];
 	return pairStories(entriesByFramework)
+		.map(withPortedEntries)
 		.filter((pair) => Object.keys(pair.entries).length >= 2)
 		.filter((pair) => !options.baseline || pair.entries[options.baseline])
 		.filter((pair) => !excluded.some((prefix) => pair.key.startsWith(prefix)))
@@ -160,4 +209,32 @@ export const storyVisitTimeout = function storyVisitTimeout(
 		0
 	);
 	return Math.max(floorMs, visits * STORY_VISIT_BUDGET_MS);
+};
+
+/**
+ * The required stories each adapter in `adapters` does not ship.
+ *
+ * Read from every story an index lists, not from the compared pairs: a pair
+ * needs two frameworks, so a run of React against an adapter that never
+ * ships a story (Astro has no Consent Widget or Consent Gate component)
+ * would drop the pair and report React as the one missing it.
+ *
+ * @param entriesByFramework - Each enabled framework's index.
+ * @param required - Story keys every listed adapter must ship.
+ * @param adapters - The enabled frameworks held to `required`.
+ * @returns `key: framework, …` for each required story an adapter lacks.
+ */
+export const missingRequiredStories = function missingRequiredStories(
+	entriesByFramework: Readonly<Record<string, readonly StoryEntry[]>>,
+	required: readonly string[],
+	adapters: readonly string[]
+): string[] {
+	const shipped = new Map(
+		pairStories(entriesByFramework).map((pair) => [pair.key, pair.entries])
+	);
+	return required.flatMap((key) => {
+		const entries = shipped.get(key) ?? {};
+		const missing = adapters.filter((framework) => !entries[framework]);
+		return missing.length > 0 ? [`${key}: ${missing.join(', ')}`] : [];
+	});
 };

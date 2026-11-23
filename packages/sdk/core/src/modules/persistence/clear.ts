@@ -55,6 +55,7 @@ export const clearStoredConsentRecords = function clearStoredConsentRecords(
 			family.notice,
 			family.noticeSubject,
 			family.optOut,
+			family.optOutCategories,
 			family.privacy,
 			family.vendors,
 		];

@@ -15,7 +15,7 @@ group: reference
   | `showTrigger` | `boolean \| ConsentDialogTriggerProps` | `false` | Renders a floating `ConsentDialogTrigger` next to the dialog. Pass an object to configure the trigger. |
   | `models` | `Model[]` | `['opt-in', 'opt-out', 'none']` | Policy models the dialog handles. Under an unlisted model such as `iab`, it stays closed. |
   | `legalLinks` | `(keyof LegalLinks)[] \| null` | none | Selects which links from provider `options.legalLinks` render after the description. Omitting the prop renders none; `null` hides them. |
-  | `hideBranding` | `boolean` | `false` | Hides the "Secured by" tag in the card. |
+  | `hideBranding` | `boolean` | `false` | Hides the "Consent by" tag in the card. |
   | `uiSource` | `string` | `'dialog'` | Source identifier recorded with saves made from this dialog. |
   | `scrollLock`, `trapFocus` | `boolean` | from `blocking` | Deprecated. Setting either to `false` makes the dialog non-blocking unless the provider sets `presentation.preferences.blocking`, which wins. Prefer the provider option. |
   | `disableAnimation` | `boolean` | `false` | Skips enter and exit animations for the backdrop and card. |

@@ -9,12 +9,10 @@ import type { OptOutRight } from '@inth/sdk-schema/types';
 
 import {
 	optInPromptAllowedAt,
+	optOutDenyCategories,
 	optOutLiftBlocker,
 } from '../consent-record/opt-out-rules';
-import {
-	optOutDecidingCategory,
-	optOutDenyCategories,
-} from '../consent-record/types';
+import { optOutDecidingCategory } from '../consent-record/types';
 import type {
 	EvaluationPolicy,
 	OptionalConsentCategory,
@@ -61,7 +59,10 @@ export const resolveOptOutState = function resolveOptOutState(
 	>
 ): ResolvedOptOutState {
 	const available = snapshot.evaluationPolicy.model === 'opt-out';
-	const categories = optOutDenyCategories(snapshot.evaluationPolicy);
+	const categories = optOutDenyCategories(
+		snapshot.evaluationPolicy,
+		snapshot.optOut
+	);
 	const decidingCategory = optOutDecidingCategory(snapshot.evaluationPolicy);
 	const { optOut } = snapshot;
 	if (!optOut) {
@@ -126,7 +127,10 @@ export const resolveCategoryOptOutLock = function resolveCategoryOptOutLock(
 /** Snapshot fields read by {@link isOptedOut}. */
 export interface OptOutCheckSnapshot {
 	readonly effectivePermissions: ConsentSnapshot['effectivePermissions'];
-	readonly evaluationPolicy: Pick<EvaluationPolicy, 'scope'>;
+	readonly evaluationPolicy: Pick<
+		EvaluationPolicy,
+		'gpcDenyCategories' | 'scope'
+	>;
 	readonly optOut: ConsentSnapshot['optOut'];
 }
 

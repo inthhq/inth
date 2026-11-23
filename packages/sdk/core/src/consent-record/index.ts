@@ -16,10 +16,14 @@ export {
 	OPT_OUT_REPROMPT_WAIT_MS,
 	optInPromptAllowedAt,
 } from './evaluate';
-export { saveWouldLiftOptOut } from './opt-out-rules';
+export { optOutDenyCategories, saveWouldLiftOptOut } from './opt-out-rules';
 export type { SaveOptOutLiftSnapshot } from './opt-out-rules';
 export type { ConsentEvaluationInput } from './evaluate';
-export { optOutDecidingCategory, optOutDenyCategories } from './types';
+export {
+	LEGACY_OPT_OUT_CATEGORIES,
+	optOutDecidingCategory,
+	policyOptOutCategories,
+} from './types';
 export {
 	canonicalizeCategories,
 	createEvaluationPolicy,

@@ -66,7 +66,7 @@ describe('createOfflineTransport: basic behavior', () => {
 			policy: {
 				model: 'opt-out',
 				privacySignals: {
-					gpc: { denyCategories: ['marketing', 'measurement'] },
+					gpc: { denyCategories: ['marketing'] },
 				},
 				prompt: 'none',
 				rights: ['disclosure', 'opt-out', 'preferences'],

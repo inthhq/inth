@@ -595,6 +595,21 @@ export const markConfigEmitted = function markConfigEmitted(
 	return true;
 };
 
+// The Privacy Choices prompt (`presentation.design: 'privacy-choices'`).
+export { privacyChoicesClassNames } from './privacy-choices/class-names';
+export type { PrivacyChoicesClassNames } from './privacy-choices/class-names';
+export {
+	privacyChoicesPresentation,
+	usesPrivacyChoices,
+} from './privacy-choices/design';
+export { privacyChoicesLinkIconSvg } from './privacy-choices/link-icon';
+export { resolvePrivacyChoicesModel } from './privacy-choices/model';
+export type { PrivacyChoicesModel } from './privacy-choices/model';
+export {
+	privacyChoicesFirstPaintSheets,
+	renderPrivacyChoicesHTML,
+} from './privacy-choices/server';
+
 // The first-paint rules the components inline (see `inline-styles.ts`).
 export {
 	INLINE_IAB_STYLES_CSS,

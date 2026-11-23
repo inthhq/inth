@@ -54,6 +54,7 @@ import ConsentActions from './actions.vue';
 import DescriptionContent from './description-content.vue';
 import EarlyTapScript from './early-tap-script';
 import OptOutIcon from './opt-out-icon.vue';
+import PrivacyChoicesBanner from './prompt/privacy-choices-banner.vue';
 import ConsentTag from './tag.vue';
 
 /**
@@ -100,20 +101,9 @@ const LazyOptInConfirmation = defineAsyncComponent(
 
 const transitionStyles = bannerStyles as Record<string, string>;
 
-// A tap on the server-rendered banner before this component hydrated is
-// held by the inline script. From here the banner's own handlers work: stop
-// the script and record the tap once the runtime has started. The runtime
-// is read when asked: under the deferred context it attaches later.
 const context = useConsentKernelContext();
 // The plugin provides the runtime config, which carries the CSP nonce.
 const nonce = computed(() => (config.value as RuntimeConsentConfig).nonce);
-let stopEarlyTaps: (() => void) | undefined;
-onMounted(() => {
-	stopEarlyTaps = replayEarlyConsentTaps(kernel, {
-		started: () => context.runtime?.started ?? false,
-	});
-});
-onBeforeUnmount(() => stopEarlyTaps?.());
 
 const {
 	presentation: surface,
@@ -134,9 +124,37 @@ const {
 const translations = useSurfaceTranslations();
 const promptKind = computed(() => snapshot.value.policyRule.prompt);
 
+/**
+ * The Privacy Choices design (`design: 'privacy-choices'`) renders its own
+ * prompt, which loads with the resolved container's stylesheet. The
+ * classic banner below then stays closed, so its scroll lock and focus
+ * trap never apply.
+ */
+const privacyChoicesContainer = computed(() =>
+	surface.value.design === 'privacy-choices'
+		? (surface.value.container ?? null)
+		: null
+);
+
+// A tap on the server-rendered banner before this component hydrated is
+// held by the inline script. From here the banner's own handlers work: stop
+// the script and record the tap once the runtime has started. The runtime
+// is read when asked: under the deferred context it attaches later.
+let stopEarlyTaps: (() => void) | undefined;
+onMounted(() => {
+	// The Privacy Choices prompt replays its own taps once it mounts.
+	if (privacyChoicesContainer.value) {
+		return;
+	}
+	stopEarlyTaps = replayEarlyConsentTaps(kernel, {
+		started: () => context.runtime?.started ?? false,
+	});
+});
+onBeforeUnmount(() => stopEarlyTaps?.());
+
 const hasConsentUi = useHasConsentUi();
 const isOpen = computed(() => {
-	if (!hasConsentUi.value) {
+	if (!hasConsentUi.value || privacyChoicesContainer.value) {
 		return false;
 	}
 	const { model } = snapshot.value.policyRule;
@@ -232,11 +250,20 @@ const onAction = function onAction(action: PresentationAction) {
 </script>
 
 <template>
+	<PrivacyChoicesBanner
+		v-if="privacyChoicesContainer"
+		:container="privacyChoicesContainer"
+		:action-groups="actionGroups"
+		:disable-animation="props.disableAnimation"
+	/>
+	<!-- Either design hosts the opt-in confirmation: this banner claimed the
+	     host, so no other surface renders it. -->
 	<LazyOptInConfirmation
 		v-if="optInConfirmationActive"
 		:disable-animation="props.disableAnimation"
 	/>
 	<Teleport
+		v-if="!privacyChoicesContainer"
 		to="body"
 		:disabled="!mounted"
 	>

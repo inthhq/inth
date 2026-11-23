@@ -30,6 +30,7 @@ import type {
 	RuntimeEventDispatcherOptions,
 } from '@inth/sdk/events';
 
+import { warmDialogTarget } from './browser/banner-actions';
 import { preloadDialogChunks } from './browser/dialog-loading';
 import { GLOBAL_KEY, getWindow, readPageNonce } from './browser/page-state';
 import type { AstroConsentClient } from './client-types';
@@ -170,11 +171,8 @@ export const preloadDialog = async function preloadDialog(): Promise<void> {
 		return;
 	}
 	try {
-		await preloadDialogChunks(
-			client.options.ui,
-			client.getConsent().model === 'iab' ? 'iab' : 'preferences',
-			readPageNonce()
-		);
+		const { design, kind } = warmDialogTarget(client);
+		await preloadDialogChunks(client.options.ui, kind, readPageNonce(), design);
 	} catch {
 		// The open reports its own failure.
 	}

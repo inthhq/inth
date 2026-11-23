@@ -1,6 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import {
 	afterNextRender,
+	ApplicationRef,
 	computed,
 	CSP_NONCE,
 	DestroyRef,
@@ -262,6 +263,13 @@ export class ConsentManager {
 	#unsubscribeOptOutReceiptData: () => void = noop;
 	readonly #optOutConfirmationOpen = signal(false);
 	readonly #hasStandaloneOptOutConfirmation = signal(false);
+	/**
+	 * Whether the receipt data is this browser's local data. Until the
+	 * application is stable, which is after hydration, it is the server's
+	 * value, so a server-rendered receipt or rights bundle hydrates as the
+	 * server rendered it; the server never switches.
+	 */
+	#receiptDataLive = false;
 	readonly #optOutReceiptData = signal<Readonly<OptOutReceiptData>>({
 		localAct: null,
 		reference: null,
@@ -361,6 +369,14 @@ export class ConsentManager {
 	 */
 	readonly ɵhasStandaloneOptOutConfirmation: Signal<boolean> =
 		this.#hasStandaloneOptOutConfirmation.asReadonly();
+	/**
+	 * This browser's local opt-out receipt data, which says whether a
+	 * backend answer confirmed the held record's rights.
+	 *
+	 * @internal
+	 */
+	readonly ɵoptOutReceiptData: Signal<Readonly<OptOutReceiptData>> =
+		this.#optOutReceiptData.asReadonly();
 	/** GPC and other privacy signals. */
 	readonly privacySignals: Signal<ConsentSnapshot['privacySignals']>;
 	/** How the policy was resolved. */
@@ -391,6 +407,27 @@ export class ConsentManager {
 	constructor() {
 		const destroyRef = inject(DestroyRef);
 		const errorHandler = inject(ErrorHandler);
+		if (this.#browser) {
+			// The first render is the one that hydrates; parts it loads, such
+			// as a lazy prompt, hold the application unstable until they are in.
+			let destroyed = false;
+			destroyRef.onDestroy(() => {
+				destroyed = true;
+			});
+			const appRef = inject(ApplicationRef);
+			afterNextRender(() => {
+				// oxlint-disable-next-line promise/prefer-await-to-then -- Fire and forget from a render hook.
+				void appRef.whenStable().then(() => {
+					if (destroyed) {
+						return;
+					}
+					this.#receiptDataLive = true;
+					this.#optOutReceiptData.set(
+						getOptOutReceiptData(untracked(this.#kernel))
+					);
+				});
+			});
+		}
 		const { runtime: external, ...given } = inject(INTH_OPTIONS);
 		// What `provideInthServer()` resolved for this request: set on the
 		// server before the render, read back in the browser, so both start
@@ -955,7 +992,7 @@ export class ConsentManager {
 			syncConfirmation
 		);
 		const readReceiptData = () =>
-			this.#browser
+			this.#receiptDataLive
 				? getOptOutReceiptData(kernel)
 				: getServerOptOutReceiptData(kernel);
 		this.#optOutReceiptData.set(readReceiptData());

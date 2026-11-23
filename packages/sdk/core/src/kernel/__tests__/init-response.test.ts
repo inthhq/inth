@@ -219,13 +219,13 @@ describe('init folds translations', () => {
 				initialTranslations: {
 					language: 'en',
 					translations: {
-						common: { acceptAll: 'Accept', securedBy: 'Secured by' },
+						common: { acceptAll: 'Accept', securedBy: 'Consent by' },
 					} as never,
 				},
 			}
 		);
 		expect(snapshot.translations?.translations).toMatchObject({
-			common: { acceptAll: 'Yes', securedBy: 'Secured by' },
+			common: { acceptAll: 'Yes', securedBy: 'Consent by' },
 		});
 	});
 
@@ -258,7 +258,7 @@ describe('init folds translations', () => {
 			{
 				initialTranslations: {
 					language: 'en',
-					translations: { common: { securedBy: 'Secured by' } } as never,
+					translations: { common: { securedBy: 'Consent by' } } as never,
 				},
 			}
 		);

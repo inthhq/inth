@@ -1307,6 +1307,9 @@ describe('a CSP nonce on the page', () => {
 			'<style id="inth-theme" nonce="next-n0nce"></style>',
 			'<style data-inth-styles="inth-first-paint" nonce="next-n0nce"></style>',
 			'<style data-inth-styles="inth-iab-first-paint" nonce="next-n0nce"></style>',
+			// The Privacy Choices tokens and presentation the server inlines.
+			'<style data-inth-styles="inth-tokens" nonce="next-n0nce"></style>',
+			'<style data-inth-styles="inth-card" nonce="next-n0nce"></style>',
 			'<script nonce="unrelated">0</script>',
 			// Not Inth's, so not Inth's to hand the live nonce to.
 			'<script id="foreign" nonce="next-n0nce">0</script>',

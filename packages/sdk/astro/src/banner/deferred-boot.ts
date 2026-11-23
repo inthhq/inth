@@ -10,11 +10,18 @@ import type { ConsentSnapshot, KernelConfig } from '@inth/sdk/engine';
 import { canDeferEngine as canDeferCoreEngine } from '@inth/sdk/server';
 
 import { declaresVendor } from '../browser/deferred-scripts';
+import { usesPrivacyChoices } from '../privacy-choices/design';
 import type { InthLocals, InthResolvedOptions } from '../types';
 
 type DeferOptions = Pick<
 	InthResolvedOptions,
-	'experiment' | 'gpp' | 'iab' | 'networkBlocker' | 'scripts' | 'vendors'
+	| 'experiment'
+	| 'gpp'
+	| 'iab'
+	| 'networkBlocker'
+	| 'presentation'
+	| 'scripts'
+	| 'vendors'
 >;
 
 /** Whether the site declares vendors, whose decisions only the kernel records. */
@@ -38,6 +45,8 @@ const declaresVendors = function declaresVendors(
  * option needs the engine at once (IAB, an experiment, GPP, the network
  * blocker, declared vendors, or a configured script that may run now). The
  * browser adds what only it knows, such as the `clientEntrypoint` options.
+ * The Privacy Choices prompt never waits: its options, rights rows and
+ * commits run on the kernel's surface session, which only the engine has.
  *
  * Vendors are checked on the options and the config as well as the
  * snapshot: the server's snapshot leaves out the vendors `inth()` declares,
@@ -59,6 +68,7 @@ export const canDeferEngine = function canDeferEngine(
 	return (
 		!blocking &&
 		!declaresVendors(options, config) &&
+		!usesPrivacyChoices(snapshot, options) &&
 		// Astro's server starts no script: every script waits for the engine.
 		canDeferCoreEngine(
 			snapshot,

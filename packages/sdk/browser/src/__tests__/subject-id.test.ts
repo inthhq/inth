@@ -189,7 +189,8 @@ test('activity kept before any save is deleted under the same ID when the visito
 test.each([
 	{
 		allowed: {},
-		blocked: ['marketing', 'measurement'] as const,
+		// [GPC-01] GPC opts out of sale and sharing, not analytics.
+		blocked: ['marketing'] as const,
 		manifest: optOutManifest,
 		name: 'a GPC signal',
 		restricted: { gpc: true },

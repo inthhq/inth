@@ -351,6 +351,7 @@ describe('isOptedOut', () => {
 					necessary: true,
 				},
 				evaluationPolicy: {
+					gpcDenyCategories: [],
 					scope: ['functionality', 'marketing', 'measurement'],
 				},
 				optOut: heldRecord,

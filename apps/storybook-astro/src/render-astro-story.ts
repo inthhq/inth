@@ -32,13 +32,39 @@ import {
 	storybookOptOutRecords,
 	storybookPolicy,
 } from '../../storybook-consent-policy';
+import { privacyChoicesPolicy } from './privacy-choices-policies';
 import { requireStoryVariant } from './story-variants';
-import type { AstroStoryVariant, AstroUIAdapter } from './story-variants';
+import type {
+	AstroStoryVariant,
+	AstroUIAdapter,
+	PrivacyChoicesStory,
+} from './story-variants';
 
 const DIALOG_HOST_ID = 'inth-dialog-host';
 
 const registered = new Set<string>();
 let activeStoryPolicy: 'default' | 'opt-out' = 'default';
+/** The Privacy Choices story showing, whose regime's rule the transport resolves. */
+let activePrivacyChoices: PrivacyChoicesStory | null = null;
+const privacyChoicesModes = new Map<string, ReturnType<typeof storybookMode>>();
+
+const privacyChoicesMode = function privacyChoicesMode(
+	story: PrivacyChoicesStory
+): ReturnType<typeof storybookMode> {
+	const key = `${story.region}:${story.dialog === true}`;
+	let mode = privacyChoicesModes.get(key);
+	if (!mode) {
+		mode = storybookMode([
+			privacyChoicesPolicy(
+				storybookPolicy,
+				story.region,
+				story.dialog === true
+			),
+		]);
+		privacyChoicesModes.set(key, mode);
+	}
+	return mode;
+};
 
 // Every story resolves its policy in the browser when it inits again, such as
 // when its dialog opens: the IAB rule when the story turns IAB on, else the
@@ -54,6 +80,9 @@ registerTransport(() =>
 		(context: Parameters<typeof storyModes.default>[0]) => {
 			if (context.iabEnabled) {
 				return storyModes.iab(context);
+			}
+			if (activePrivacyChoices) {
+				return privacyChoicesMode(activePrivacyChoices)(context);
 			}
 			if (activeStoryPolicy === 'opt-out') {
 				return storyModes.optOut(context);
@@ -143,6 +172,11 @@ const applyOptOutStoryConfig = function applyOptOutStoryConfig(
 	config: Record<string, unknown>,
 	variant: AstroStoryVariant
 ): void {
+	if (variant.privacyChoices?.gpc) {
+		config.initialGpc = true;
+		config.initialPrivacySignals = { gpc: true };
+		return;
+	}
 	if (variant.options?.policy === 'opt-out' || variant.openOptOutConfirmation) {
 		config.initialPolicyResolution ??= storybookOptOutPolicyResolution;
 	}
@@ -211,6 +245,7 @@ export const renderAstroStory = function renderAstroStory(
 
 	resetPage();
 	activeStoryPolicy = variant.options?.policy ?? 'default';
+	activePrivacyChoices = variant.privacyChoices ?? null;
 	registerAdapters(variant.ui ?? 'svelte');
 	if (variant.options?.iab) {
 		registerIAB({
@@ -252,6 +287,16 @@ export const renderAstroStory = function renderAstroStory(
 		const client = boot(options as Parameters<typeof boot>[0], extension);
 		if (variant.openDialog) {
 			void client.openDialog(variant.openDialog);
+		}
+		// The Privacy Choices dialog pages' own "Privacy settings" link is the
+		// site's code, as React's story `SettingsLink` is: it opens the dialog
+		// through the client, not through a stock component's hooks.
+		if (variant.privacyChoices) {
+			host
+				.querySelector('[data-testid="consent-dialog-trigger"]')
+				?.addEventListener('click', () => {
+					void client.openDialog('preferences');
+				});
 		}
 		if (variant.openOptOutConfirmation) {
 			void client.optOut();

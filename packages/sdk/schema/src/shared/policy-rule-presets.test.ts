@@ -87,7 +87,7 @@ describe('policyRulePresets', () => {
 		const rule = normalizePolicyRule(policyRulePresets.californiaOptOut());
 		expect(rule).toMatchObject({
 			model: 'opt-out',
-			privacySignals: { gpc: { denyCategories: ['marketing', 'measurement'] } },
+			privacySignals: { gpc: { denyCategories: ['marketing'] } },
 			prompt: 'none',
 			rights: ['disclosure', 'opt-out', 'preferences'],
 		});
@@ -171,7 +171,7 @@ describe('policyRulePresets', () => {
 			policy: {
 				model: 'opt-out',
 				privacySignals: {
-					gpc: { denyCategories: ['marketing', 'measurement'] },
+					gpc: { denyCategories: ['marketing'] },
 				},
 				prompt: 'none',
 				rights: expect.arrayContaining(['preferences', 'opt-out']),
@@ -192,7 +192,7 @@ describe('policyRulePresets', () => {
 			policy: {
 				model: 'opt-out',
 				privacySignals: {
-					gpc: { denyCategories: ['marketing', 'measurement'] },
+					gpc: { denyCategories: ['marketing'] },
 				},
 				prompt: 'none',
 				proof: {
@@ -285,8 +285,6 @@ describe('policyRulePresets', () => {
 	test.each([
 		'europeOptIn',
 		'europeIab',
-		'californiaOptIn',
-		'californiaOptOut',
 		'quebecOptIn',
 		'worldOptOutNoPrompt',
 	] as const)(
@@ -375,7 +373,7 @@ describe('regional starter coverage', () => {
 				actions: { required: [] },
 				model: 'opt-out',
 				privacySignals: {
-					gpc: { denyCategories: ['marketing', 'measurement'] },
+					gpc: { denyCategories: ['marketing'] },
 				},
 				prompt: 'none',
 				rights: ['disclosure', 'opt-out', 'preferences'],
@@ -499,7 +497,7 @@ describe('regional starter coverage', () => {
 		expect(
 			policyRulePresets.usPrivacyStatesOptOut().privacySignals?.gpc
 				?.denyCategories
-		).toEqual(['marketing', 'measurement']);
+		).toEqual(['marketing']);
 		const country = policyRulePresets.singaporeOptIn();
 		country.review?.assumptions?.push('Local amendment');
 		expect(
@@ -593,6 +591,172 @@ describe('reviewed opt-out and statistics profiles', () => {
 				scope: ['measurement'],
 				scopeMode: 'strict',
 			});
+		}
+	);
+});
+
+describe('US opt-out first layer', () => {
+	const usOptOutPresets = [
+		'californiaOptOut',
+		'usPrivacyStatesOptOut',
+	] as const;
+
+	test.each(usOptOutPresets)(
+		'[BNR-13] %s forbids blocking the page',
+		(name) => {
+			const rule = policyRulePresets[name]();
+			expect(rule.surface).toEqual({ blocking: 'forbidden' });
+			// The opt-out model can never block, so the canonical rule carries
+			// no surface and reads as it did before `surface` existed.
+			const normalized = normalizePolicyRule(rule);
+			expect(normalized).not.toHaveProperty('surface');
+			const { surface: _surface, ...withoutSurface } = rule;
+			expect(createPolicyRuleFingerprints(normalized)).toEqual(
+				createPolicyRuleFingerprints(normalizePolicyRule(withoutSurface))
+			);
+		}
+	);
+
+	test('[BNR-13] the blocking ban survives a host turning the preset into a choice', () => {
+		const rule = normalizePolicyRule({
+			...policyRulePresets.usPrivacyStatesOptOut(),
+			model: 'opt-in',
+			prompt: 'choice',
+		});
+		expect(rule.surface).toEqual({ blocking: 'forbidden' });
+	});
+
+	test('[BNR-13] every US opt-out rule in the recommended pack forbids blocking', () => {
+		for (const usOptOutPrompt of [undefined, 'none', 'notice'] as const) {
+			const rules = recommendedPolicyRules({ usOptOutPrompt });
+			const optOut = rules.filter((rule) => rule.model === 'opt-out');
+			expect(optOut.map((rule) => rule.id)).toEqual([
+				'california_opt_out',
+				'us_privacy_states_opt_out',
+			]);
+			for (const rule of optOut) {
+				expect(rule.surface).toEqual({ blocking: 'forbidden' });
+			}
+		}
+	});
+
+	test.each(usOptOutPresets)(
+		'[DEF-06] %s shows no banner by default and a notice on request',
+		(name) => {
+			expect(policyRulePresets[name]().prompt).toBe('none');
+			expect(policyRulePresets[name]({ prompt: 'none' }).prompt).toBe('none');
+			const notice = normalizePolicyRule(
+				policyRulePresets[name]({ prompt: 'notice' })
+			);
+			expect(notice).toMatchObject({
+				actions: { allowed: ['dismiss'], required: ['dismiss'] },
+				model: 'opt-out',
+				prompt: 'notice',
+			});
+			expect(notice.privacySignals).toEqual(
+				normalizePolicyRule(policyRulePresets[name]()).privacySignals
+			);
+			expect(notice).not.toHaveProperty('surface');
+		}
+	);
+
+	test('[DEF-06] recommendedPolicyRules switches both US opt-out rules to a notice', () => {
+		const prompts = (rules: ReturnType<typeof recommendedPolicyRules>) =>
+			Object.fromEntries(rules.map((rule) => [rule.id, rule.prompt]));
+		expect(prompts(recommendedPolicyRules())).toEqual(
+			prompts(recommendedPolicyRules({ usOptOutPrompt: 'none' }))
+		);
+		const notice = recommendedPolicyRules({ usOptOutPrompt: 'notice' });
+		expect(prompts(notice)).toEqual({
+			...prompts(recommendedPolicyRules()),
+			california_opt_out: 'notice',
+			us_privacy_states_opt_out: 'notice',
+		});
+		expect(inspectPolicyRules(notice).errors).toEqual([]);
+		const california = resolvePolicyRules({
+			countryCode: 'US',
+			regionCode: 'CA',
+			rules: notice,
+		});
+		expect(california).toMatchObject({
+			policy: { prompt: 'notice' },
+			policyId: 'california_opt_out',
+			status: 'matched',
+		});
+	});
+
+	test('[DEF-06] the notice variant keeps the review honest about its first layer', () => {
+		for (const name of usOptOutPresets) {
+			const assumptions =
+				policyRulePresets[name]({ prompt: 'notice' }).review?.assumptions ?? [];
+			expect(assumptions.join('\n')).toContain(
+				'dismissing it records no consent'
+			);
+			expect(assumptions.join('\n')).not.toMatch(
+				/No first-layer prompt|No automatic banner/u
+			);
+		}
+	});
+});
+
+describe('US presets: GPC covers sale, sharing and targeted ads only (DEF-09)', () => {
+	const usPresets = [
+		['californiaOptIn', () => policyRulePresets.californiaOptIn()],
+		['californiaOptOut', () => policyRulePresets.californiaOptOut()],
+		[
+			'californiaOptOut notice',
+			() => policyRulePresets.californiaOptOut({ prompt: 'notice' }),
+		],
+		['usPrivacyStatesOptIn', () => policyRulePresets.usPrivacyStatesOptIn()],
+		['usPrivacyStatesOptOut', () => policyRulePresets.usPrivacyStatesOptOut()],
+		[
+			'usPrivacyStatesOptOut notice',
+			() => policyRulePresets.usPrivacyStatesOptOut({ prompt: 'notice' }),
+		],
+	] as const;
+
+	test.each(usPresets)(
+		'[GPC-01] %s maps GPC to marketing and leaves measurement alone',
+		(_name, preset) => {
+			const rule = normalizePolicyRule(preset());
+			expect(rule.privacySignals.gpc.denyCategories).toEqual(['marketing']);
+			expect(rule.scope).toContain('measurement');
+		}
+	);
+
+	test.each(usPresets)(
+		'[GPC-01] narrowing %s changes its policy, choice and notice fingerprints',
+		(_name, preset) => {
+			const rule = preset();
+			const before = createPolicyRuleFingerprints(
+				normalizePolicyRule({
+					...rule,
+					privacySignals: {
+						gpc: { denyCategories: ['marketing', 'measurement'] },
+					},
+				})
+			);
+			const after = createPolicyRuleFingerprints(normalizePolicyRule(rule));
+			expect(after.policy).not.toBe(before.policy);
+			expect(after.choice).not.toBe(before.choice);
+			expect(after.notice).not.toBe(before.notice);
+		}
+	);
+
+	test.each(['californiaOptIn', 'californiaOptOut'] as const)(
+		'[GPC-01] %s no longer honors v2 receipts, so their visitors are asked again',
+		(name) => {
+			const rule = policyRulePresets[name]();
+			const fingerprints = createPolicyRuleFingerprints(
+				normalizePolicyRule(rule),
+				rule.legacyMaterial
+			);
+			// The frozen v2 material was produced when GPC also denied
+			// measurement; behavior differs now, so the legacy fingerprint is a
+			// policy-changed marker rather than a grandfathered match.
+			expect(fingerprints.legacyMaterial).toBe(
+				`policy-changed:${fingerprints.policy}`
+			);
 		}
 	);
 });

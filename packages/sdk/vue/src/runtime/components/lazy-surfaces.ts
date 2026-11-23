@@ -15,10 +15,20 @@
  * tax was ~345-530ms; the weight was parse/hydration
  * of surfaces most visitors never see.
  */
-import { defineAsyncComponent, defineComponent, h, provide } from 'vue';
+import {
+	defineAsyncComponent,
+	defineComponent,
+	h,
+	onScopeDispose,
+	provide,
+	watch,
+} from 'vue';
 import type { Component } from 'vue';
 
-import { useConsentKernelContext } from '../composables/kernel';
+import {
+	useConsentKernelContext,
+	useOptInConfirmationHost,
+} from '../composables/kernel';
 import type { ConsentBannerView } from '../kernel';
 import {
 	symbolActiveUI,
@@ -27,16 +37,94 @@ import {
 	symbolKernelContext,
 	symbolSnapshot,
 } from '../utils/symbols';
+import { loadPrivacyChoicesDialog } from './privacy-choices-dialog/load';
+import { usePrivacyChoicesDesign } from './privacy-choices/use-design';
 
 export const LazyConsentManager = defineAsyncComponent(
 	() => import('./manager.vue')
 );
+/**
+ * The Privacy Choices dialog (`design: 'privacy-choices'`), in a chunk of
+ * its own with its stylesheets. A page on the classic design never loads
+ * it.
+ */
+export const LazyPrivacyChoicesDialog = defineAsyncComponent(
+	loadPrivacyChoicesDialog
+);
+
+/**
+ * The Privacy Choices dialog with the opt-in confirmation it hosts, for the
+ * stock root.
+ */
+const LazyPrivacyChoicesDialogHost = defineAsyncComponent(
+	() => import('./privacy-choices-dialog/host.vue')
+);
+
+type DialogDesign = 'classic' | 'privacy-choices';
+
+/**
+ * Mounted dialog hosts by the design each renders, so idle warming loads
+ * only the dialogs a page can open: never the classic chunk and its sheets
+ * for a Privacy Choices page, whatever the banner did before.
+ */
+const mountedDesigns: Record<DialogDesign, number> = {
+	classic: 0,
+	'privacy-choices': 0,
+};
+
+/**
+ * Count the design this root's dialog renders while it is mounted, so
+ * {@link prefetchConsentManager} warms only the dialogs on the page.
+ *
+ * @internal
+ */
+export const useWarmableDialogDesign = function useWarmableDialogDesign(
+	design: () => DialogDesign
+): void {
+	if (typeof window === 'undefined') {
+		return;
+	}
+	let current: DialogDesign | null = null;
+	watch(
+		design,
+		(value) => {
+			if (current) {
+				mountedDesigns[current] -= 1;
+			}
+			current = value;
+			mountedDesigns[value] += 1;
+		},
+		{ immediate: true }
+	);
+	onScopeDispose(() => {
+		if (current) {
+			mountedDesigns[current] -= 1;
+			current = null;
+		}
+	});
+};
 export const LazyOptOutConfirmation = defineAsyncComponent(
 	() => import('./opt-out-confirmation.vue')
 );
 export const LazyOptInConfirmation = defineAsyncComponent(
 	() => import('./opt-in-confirmation.vue')
 );
+/**
+ * Hosts the opt-in confirmation for `InthProvider` when no banner or
+ * dialog on the page does, such as for a returning visitor who opts in
+ * from a widget or a consent gate. It claims the host while mounted.
+ *
+ * @internal
+ */
+export const OptInConfirmationHost = defineComponent({
+	name: 'OptInConfirmationHost',
+	setup() {
+		const active = useOptInConfirmationHost();
+		return function render() {
+			return active.value ? h(LazyOptInConfirmation) : null;
+		};
+	},
+});
 export const LazyIabConsentBanner = defineAsyncComponent(
 	() => import('./iab-prompt.vue')
 );
@@ -173,7 +261,15 @@ export const prefetchSurfaceAfterLoad = function prefetchSurfaceAfterLoad(
 	}
 };
 
-const loadConsentManager = () => import('./manager.vue');
+/**
+ * The classic dialog warms in idle time. The Privacy Choices dialog does
+ * not: importing its chunk applies its stylesheets, which include the
+ * banner's in-place panel rules, and React's banner shows its folded panel
+ * unstyled until the visitor reaches for it. It warms on intent instead,
+ * from the banner's buttons.
+ */
+const loadConsentManager = () =>
+	mountedDesigns.classic > 0 ? import('./manager.vue') : Promise.resolve();
 const loadIabConsentDialog = () => import('./iab-panel.vue');
 
 export const prefetchConsentManager = () =>
@@ -183,3 +279,21 @@ export const prefetchIabConsentDialog = () =>
 
 export const warmConsentManager = () => undefined;
 export const warmIabConsentDialog = () => undefined;
+
+/**
+ * The stock dialog for `InthProvider`: the Privacy Choices dialog when the
+ * design opts in, else the classic `ConsentManager`. Each loads in its own
+ * chunk, so a page downloads only the dialog it shows.
+ *
+ * @internal
+ */
+export const ConsentDialogHost = defineComponent({
+	name: 'ConsentDialogHost',
+	setup() {
+		const privacyChoices = usePrivacyChoicesDesign();
+		return () =>
+			h(
+				privacyChoices.value ? LazyPrivacyChoicesDialogHost : LazyConsentManager
+			);
+	},
+});

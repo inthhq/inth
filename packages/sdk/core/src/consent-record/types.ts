@@ -144,7 +144,11 @@ export interface EvaluationPolicy {
 	 * no comparison is possible and legacy decisions are grandfathered.
 	 */
 	legacyMaterialFingerprint: string | null;
-	/** Categories an active GPC signal denies. Empty means GPC is ignored. */
+	/**
+	 * Categories an active GPC signal denies, and the categories a new
+	 * opt-out withholds (see `policyOptOutCategories`). Empty means GPC is
+	 * ignored.
+	 */
 	gpcDenyCategories: readonly OptionalConsentCategory[];
 }
 
@@ -195,28 +199,49 @@ export interface ConsentEvaluation {
 }
 
 /**
- * Optional categories that a durable opt-out record switches off under
- * `policy`: `marketing` and `measurement`, filtered to `policy.scope`.
- *
- * This is the single place that defines the set, so a later policy-rule
- * field can replace it without touching callers. It lives beside the
- * category vocabulary because a framework root's first load already holds
- * this file: a module of its own would be one more file to fetch.
+ * What every opt-out withheld before the policy decided it. A record stored
+ * without its own `categories` was made under this mapping and keeps it; a
+ * rule that maps no GPC categories still uses it.
  */
-export const optOutDenyCategories = function optOutDenyCategories(
-	policy: Pick<EvaluationPolicy, 'scope'>
+export const LEGACY_OPT_OUT_CATEGORIES = [
+	'marketing',
+	'measurement',
+] as const satisfies readonly OptionalConsentCategory[];
+
+/**
+ * Optional categories a new opt-out withholds under `policy`, filtered to
+ * `policy.scope`: the rule's GPC mapping (GPC is a sale and sharing opt-out,
+ * and so is the visitor's own), or {@link LEGACY_OPT_OUT_CATEGORIES} when
+ * the rule maps none. A browser records this list on the opt-out it makes.
+ *
+ * Returned in decision order, the reverse of the category order: the first
+ * one is the category whose grant lifts the opt-out (`marketing`, then
+ * `measurement`, ...).
+ *
+ * It lives beside the category vocabulary because a framework root's first
+ * load already holds this file: a module of its own would be one more file
+ * to fetch. Keep it small for the same reason.
+ */
+export const policyOptOutCategories = function policyOptOutCategories(
+	policy: Pick<EvaluationPolicy, 'gpcDenyCategories' | 'scope'>
 ): OptionalConsentCategory[] {
-	return (['marketing', 'measurement'] as const).filter((category) =>
-		policy.scope.includes(category)
-	);
+	const mapped: readonly OptionalConsentCategory[] =
+		policy.gpcDenyCategories.length > 0
+			? policy.gpcDenyCategories
+			: LEGACY_OPT_OUT_CATEGORIES;
+	return OPTIONAL_CONSENT_CATEGORIES.filter(
+		(category) => mapped.includes(category) && policy.scope.includes(category)
+	).reverse();
 };
 
 /**
- * The category that decides an opt-out under `policy`: `marketing` when in
- * scope, else `measurement` when in scope, else `null`.
+ * The category that decides an opt-out under `policy`: the first of
+ * {@link policyOptOutCategories} (`marketing` for every stock mapping), or
+ * `null` when the policy withholds nothing in scope. Granting it lifts the
+ * opt-out; denying it keeps the opt-out.
  */
 export const optOutDecidingCategory = function optOutDecidingCategory(
-	policy: Pick<EvaluationPolicy, 'scope'>
+	policy: Pick<EvaluationPolicy, 'gpcDenyCategories' | 'scope'>
 ): OptionalConsentCategory | null {
-	return optOutDenyCategories(policy)[0] ?? null;
+	return policyOptOutCategories(policy)[0] ?? null;
 };

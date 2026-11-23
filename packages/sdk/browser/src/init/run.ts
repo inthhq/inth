@@ -20,7 +20,10 @@
  * @internal
  */
 
-import { OPT_OUT_CONFIRMATION_STORAGE_KEY } from '@inth/sdk-core';
+import {
+	OPT_OUT_CONFIRMATION_STORAGE_KEY,
+	resolveConsentPresentation,
+} from '@inth/sdk-core';
 import type { ConsentSnapshot, KernelEvent, SaveResult } from '@inth/sdk-core';
 import {
 	configFromPrefetchedInit,
@@ -187,6 +190,22 @@ const supportsEarlyBanner = function supportsEarlyBanner(
 		)
 	);
 };
+
+/**
+ * Whether the stock banner renders the Privacy Choices design, which only
+ * the engine renders: the init script then shows no banner of its own.
+ *
+ * @internal
+ */
+export const usesPrivacyChoicesDesign = (
+	options: ScriptTagClientOptions,
+	resolved: ConsentSnapshot
+): boolean =>
+	resolveConsentPresentation({
+		policy: resolved.policyRule,
+		presentation: options.presentation,
+		surface: 'prompt',
+	}).design === 'privacy-choices';
 
 /**
  * Run the init script for `script`: install the stand-in `window.inth`,
@@ -899,6 +918,7 @@ export const runInitScript = function runInitScript(
 			if (
 				pendingTap ||
 				!supportsEarlyBanner(current) ||
+				usesPrivacyChoicesDesign(current, resolved) ||
 				!hasBannerCopy(resolved)
 			) {
 				loadEngine();

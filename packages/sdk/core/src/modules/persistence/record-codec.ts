@@ -959,6 +959,7 @@ const OPT_OUT_STORED_KEYS = [
 	'method',
 	'recordedAt',
 	'heldBy',
+	'categories',
 	'subject',
 	'gpcReported',
 	'reference',
@@ -1047,6 +1048,7 @@ export const decodeOptOutRecord = function decodeOptOutRecord(
 	const meta = readOptionalOptOutMeta(input, issues);
 	const inner = validateOptOutRecord(
 		{
+			categories: ownValue(input, 'categories'),
 			heldBy: ownValue(input, 'heldBy'),
 			method: ownValue(input, 'method'),
 			recordedAt: ownValue(input, 'recordedAt'),
@@ -1166,6 +1168,82 @@ export const decodeOptOutRecordCompact = function decodeOptOutRecordCompact(
 	}
 	return decodeOptOutRecord(candidate, now);
 };
+
+/**
+ * The categories a stored opt-out withholds, kept beside the record under
+ * `<key>-opt-out-categories` because SDKs before them reject any field
+ * they do not know in the record and would drop the whole opt-out. It
+ * names the act it belongs to by time and method, and counts only beside
+ * a record of that act.
+ */
+export interface StoredOptOutCategories {
+	recordedAt: number;
+	method: OptOutMethod;
+	categories: OptionalConsentCategory[];
+}
+
+export const COMPACT_OPT_OUT_CATEGORIES_PREFIX = 'v=1';
+
+/**
+ * Decodes `v=1&t=<recordedAt>&m=<b|g|a|p>&k=<fn|ex|me|mk...>`, the same
+ * text in the cookie and in localStorage. An empty `k=` is a real empty
+ * list. Unknown, missing or repeated fields reject the whole value.
+ */
+export const decodeOptOutCategoriesCompact =
+	function decodeOptOutCategoriesCompact(
+		rawValue: string
+	): DecodeResult<StoredOptOutCategories> {
+		const issues: StorageIssue[] = [];
+		const fields = parseCompactFields(
+			rawValue,
+			COMPACT_OPT_OUT_CATEGORIES_PREFIX,
+			issues
+		);
+		if (!fields) {
+			return { issues, ok: false };
+		}
+		for (const key of fields.keys()) {
+			if (key !== 't' && key !== 'm' && key !== 'k') {
+				issues.push({ code: 'unknown-key', path: key });
+			}
+		}
+		const rawCategories = fields.get('k');
+		const rawMethod = fields.get('m');
+		// A missing list fails validation; an empty `k=` is an empty list.
+		let categories: unknown = null;
+		if (rawCategories !== undefined) {
+			categories =
+				rawCategories.length > 0
+					? rawCategories
+							.split(LIST_SEPARATOR)
+							.map((code) => CODE_TO_CATEGORY.get(code))
+					: [];
+		}
+		const inner = validateOptOutRecord({
+			categories,
+			heldBy: 'device',
+			method:
+				rawMethod === undefined
+					? undefined
+					: CODE_TO_OPT_OUT_METHOD.get(rawMethod),
+			recordedAt: parseCompactInteger(fields.get('t')),
+			rights: [],
+		});
+		if (inner.ok === false) {
+			issues.push(...inner.issues);
+		}
+		if (issues.length > 0 || inner.ok === false) {
+			return { issues, ok: false };
+		}
+		return {
+			ok: true,
+			record: {
+				categories: inner.record.categories ?? [],
+				method: inner.record.method,
+				recordedAt: inner.record.recordedAt,
+			},
+		};
+	};
 
 // ---------------------------------------------------------------------------
 // Clear epoch (cookie and localStorage)

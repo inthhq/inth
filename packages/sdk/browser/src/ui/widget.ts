@@ -54,7 +54,7 @@ export interface Widget {
 
 /** Options for {@link createWidget}. */
 export interface WidgetOptions {
-	/** Drop the "Secured by" tag. Defaults to `true`. */
+	/** Drop the "Consent by" tag. Defaults to `true`. */
 	hideBranding?: boolean;
 }
 

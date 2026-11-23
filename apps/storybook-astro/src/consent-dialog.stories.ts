@@ -1,3 +1,8 @@
+import {
+	dialogContract,
+	dialogEscapeCloses,
+	saveFlow,
+} from '@inth/conformance/play/consent-dialog';
 import type { Meta, StoryObj } from '@storybook/html-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
@@ -22,6 +27,19 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
 	render: () => renderAstroStory('consent-dialog--opened'),
 };
+
+/** The banner and `<ConsentDialog />`; the plays open the dialog from Customize. */
+export const DialogContract: Story = {
+	play: dialogContract,
+	render: () => renderAstroStory('consent-banner--with-dialog'),
+};
+
+export const DialogEscapeCloses: Story = {
+	...DialogContract,
+	play: dialogEscapeCloses,
+};
+
+export const SaveFlow: Story = { ...DialogContract, play: saveFlow };
 
 /**
  * The resting state unique to Astro: `<ConsentDialog />` server-renders

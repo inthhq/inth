@@ -54,7 +54,7 @@ export interface PromptProps {
 	disableAnimation?: boolean;
 	/** Extra class on the banner root. */
 	class?: string;
-	/** Drop the "Secured by" tag. */
+	/** Drop the "Consent by" tag. */
 	hideBranding?: boolean;
 	/** Which legal links to render inline. `null` renders none. */
 	legalLinks?: (keyof LegalLinks)[] | null;

@@ -56,7 +56,7 @@ export interface IABConsentBannerProps {
 	primaryButton?: 'reject' | 'accept' | 'customize';
 
 	/**
-	 * Hides the "Secured by" tag.
+	 * Hides the "Consent by" tag.
 	 * @default false
 	 */
 	hideBranding?: boolean;

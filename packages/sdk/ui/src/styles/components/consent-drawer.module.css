@@ -1,0 +1,439 @@
+/*
+ * The Drawer presentation, on the bottom (default), top, start or end
+ * edge. Its classes sit next to the `consent-surface` classes on the same
+ * elements; see that sheet for the data attributes.
+ *
+ * `start` and `end` are the inline edges and follow the writing direction,
+ * like `inset-inline-start`: on a right-to-left page a `start` drawer sits
+ * on the right and slides in from there.
+ *
+ * The side decides the flow (the resolver sets `data-flow`):
+ *
+ * - Top and bottom, and every drawer on phone, expand in place: full
+ *   width, content capped to the 960px column.
+ * - Start and end on desktop are all-in-one: full height, the choices in
+ *   one scroll area (`.body`), a footer pinned to the bottom, and the tag
+ *   floating over the bottom fade (`.tagSlot`).
+ *
+ * Hooks, read with a fallback:
+ *
+ *   --consent-drawer-max-width     (960px, the top and bottom column)
+ *   --consent-drawer-side-width    (460px, the start and end drawer)
+ *   --consent-drawer-radius        (--inth-radius-lg when inset)
+ *   --consent-drawer-shadow        (layered when inset, one-sided when flush)
+ *   --consent-drawer-panel-height  (400px; 300px on phone)
+ *
+ * The flush edge's hairline follows the classic
+ * `--consent-banner-border-width`, as the card's border does.
+ */
+
+@layer components {
+	.root {
+		--_consent-gutter: max(
+			var(--inth-space-lg),
+			calc(50% - var(--consent-drawer-max-width, 960px) / 2)
+		);
+		--_consent-scroll-height: var(--consent-drawer-panel-height, 400px);
+		--_consent-enter-duration: calc(var(--inth-duration-slow) * 1.4);
+		--_consent-inset: 0px;
+		/* 1 left to right, -1 right to left: the sign of a slide toward the
+		   inline end, so the side drawers' motion mirrors with the page. */
+		--_consent-inline-sign: 1;
+		inset-inline: 0;
+		bottom: 0;
+	}
+
+	/* `:dir()` matches the direction the layer inherits: adapters put `dir`
+	   on a container, not on the layer. */
+	.root:dir(rtl) {
+		--_consent-inline-sign: -1;
+	}
+
+	.shell {
+		width: 100%;
+	}
+
+	.head,
+	.footer {
+		padding-inline: var(--_consent-gutter);
+	}
+
+	/* The tag sits 8px above a bottom drawer, flush with the column. */
+	.root[data-placement='drawer-bottom'] .tag {
+		margin-inline-end: var(--_consent-gutter);
+	}
+
+	/* Top mirrors bottom: it slides down and the tag hangs 8px below. */
+	.root[data-placement='drawer-top'] {
+		top: 0;
+		bottom: auto;
+	}
+
+	.root[data-placement='drawer-top'] .tag {
+		order: 2;
+		margin-block: var(--inth-space-sm) 0;
+		margin-inline: 0 var(--_consent-gutter);
+	}
+
+	/* Start and end: full height, the choices showing from the start. */
+	.root[data-placement='drawer-start'],
+	.root[data-placement='drawer-end'] {
+		--_consent-gutter: var(--inth-space-lg);
+		--_consent-scroll-height: none;
+		--_consent-scroll-padding: var(--inth-space-xs) var(--inth-space-lg)
+			calc(var(--inth-space-md) * 3.75);
+		--_consent-fade-end: 64px;
+		top: 0;
+		bottom: 0;
+		width: calc(
+			var(--consent-drawer-side-width, 460px) + 2 * var(--_consent-inset)
+		);
+		max-width: 100%;
+	}
+
+	.root[data-placement='drawer-start'] {
+		inset-inline: 0 auto;
+	}
+
+	.root[data-placement='drawer-end'] {
+		inset-inline: auto 0;
+	}
+
+	.root[data-placement='drawer-start'] .shell,
+	.root[data-placement='drawer-end'] .shell,
+	.root[data-placement='drawer-start'] .card,
+	.root[data-placement='drawer-end'] .card {
+		height: 100%;
+	}
+
+	.root[data-flow='all-in-one'] .head {
+		flex: none;
+		padding-top: var(--inth-space-xl);
+		padding-bottom: calc(var(--inth-space-sm) * 1.5);
+	}
+
+	.root[data-flow='all-in-one'] .footer {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	/* The choices scroll down to the footer divider. The bottom padding
+	   lets the last row scroll clear of the tag. */
+	.body {
+		position: relative;
+		display: flex;
+		flex: 1 1 auto;
+		flex-direction: column;
+		min-height: 0;
+	}
+
+	/* The tag floats over the bottom fade, centred, 14px above the divider.
+	   Only the tag takes clicks. */
+	.tagSlot {
+		position: absolute;
+		inset-inline: 0;
+		bottom: 14px;
+		z-index: 1;
+		display: flex;
+		justify-content: center;
+		pointer-events: none;
+	}
+
+	.tagSlot .tag {
+		align-self: auto;
+		margin: 0;
+		pointer-events: auto;
+	}
+
+	/* Inset (the default): 12px from every edge it touches, all corners
+	   rounded, a layered shadow; the slide travels the extra 12px. */
+	.root[data-edge-style='inset'] {
+		--_consent-inset: 12px;
+		--_consent-radius: var(--consent-drawer-radius, var(--inth-radius-lg));
+		--_consent-shadow: var(
+			--consent-drawer-shadow,
+			0 1px 2px color-mix(in srgb, var(--inth-overlay) 12%, transparent),
+			0 8px 24px -6px color-mix(in srgb, var(--inth-overlay) 28%, transparent),
+			0 24px 48px -16px color-mix(in srgb, var(--inth-overlay) 36%, transparent)
+		);
+		padding: calc(var(--inth-space-sm) * 1.5);
+	}
+
+	.root[data-edge-style='inset'][data-placement='drawer-bottom'] {
+		padding: 0 calc(var(--inth-space-sm) * 1.5)
+			calc(var(--inth-space-sm) * 1.5 + env(safe-area-inset-bottom, 0px));
+	}
+
+	.root[data-edge-style='inset'][data-placement='drawer-top'] {
+		padding: calc(var(--inth-space-sm) * 1.5) calc(var(--inth-space-sm) * 1.5) 0;
+	}
+
+	/* Flush: square on every corner, edge to edge, a hairline only on the
+	   side facing the page. */
+	.root[data-edge-style='flush'] {
+		--_consent-radius: 0;
+		padding: 0;
+	}
+
+	.root[data-edge-style='flush'][data-placement='drawer-bottom'] {
+		--_consent-shadow: var(
+			--consent-drawer-shadow,
+			0 -8px 24px color-mix(in srgb, var(--inth-overlay) 20%, transparent)
+		);
+	}
+
+	.root[data-edge-style='flush'][data-placement='drawer-top'] {
+		--_consent-shadow: var(
+			--consent-drawer-shadow,
+			0 8px 24px color-mix(in srgb, var(--inth-overlay) 20%, transparent)
+		);
+	}
+
+	.root[data-edge-style='flush'][data-placement='drawer-start'] {
+		--_consent-shadow: var(
+			--consent-drawer-shadow,
+			calc(8px * var(--_consent-inline-sign)) 0 24px
+				color-mix(in srgb, var(--inth-overlay) 16%, transparent)
+		);
+	}
+
+	.root[data-edge-style='flush'][data-placement='drawer-end'] {
+		--_consent-shadow: var(
+			--consent-drawer-shadow,
+			calc(-8px * var(--_consent-inline-sign)) 0 24px
+				color-mix(in srgb, var(--inth-overlay) 16%, transparent)
+		);
+	}
+
+	.root[data-edge-style='flush'] .card {
+		border-width: 0;
+	}
+
+	.root[data-edge-style='flush'][data-placement='drawer-bottom'] .card {
+		border-top-width: var(--consent-banner-border-width, 1px);
+		padding-bottom: env(safe-area-inset-bottom, 0px);
+	}
+
+	.root[data-edge-style='flush'][data-placement='drawer-top'] .card {
+		border-bottom-width: var(--consent-banner-border-width, 1px);
+	}
+
+	.root[data-edge-style='flush'][data-placement='drawer-start'] .card {
+		border-inline-end-width: var(--consent-banner-border-width, 1px);
+	}
+
+	.root[data-edge-style='flush'][data-placement='drawer-end'] .card {
+		border-inline-start-width: var(--consent-banner-border-width, 1px);
+	}
+
+	/* Each edge slides in from its own side and back out; inset travels the
+	   extra 12px so the layer fully leaves the screen. Exits sit one
+	   attribute heavier than entrances. */
+
+	.root[data-placement='drawer-bottom'] .shell {
+		animation-name: consent-drawer-up;
+	}
+
+	.root[data-placement='drawer-bottom'][data-state='closed'] .shell {
+		animation-name: consent-drawer-down;
+	}
+
+	.root[data-placement='drawer-top'] .shell {
+		animation-name: consent-drawer-from-top;
+	}
+
+	.root[data-placement='drawer-top'][data-state='closed'] .shell {
+		animation-name: consent-drawer-to-top;
+	}
+
+	.root[data-placement='drawer-start'] .shell {
+		animation-name: consent-drawer-from-start;
+	}
+
+	.root[data-placement='drawer-start'][data-state='closed'] .shell {
+		animation-name: consent-drawer-to-start;
+	}
+
+	.root[data-placement='drawer-end'] .shell {
+		animation-name: consent-drawer-from-end;
+	}
+
+	.root[data-placement='drawer-end'][data-state='closed'] .shell {
+		animation-name: consent-drawer-to-end;
+	}
+
+	.root[data-edge-style='inset'][data-placement='drawer-bottom'] .shell {
+		animation-name: consent-drawer-up-inset;
+	}
+
+	.root[data-edge-style='inset'][data-placement='drawer-bottom'][data-state='closed']
+		.shell {
+		animation-name: consent-drawer-down-inset;
+	}
+
+	.root[data-edge-style='inset'][data-placement='drawer-top'] .shell {
+		animation-name: consent-drawer-from-top-inset;
+	}
+
+	.root[data-edge-style='inset'][data-placement='drawer-top'][data-state='closed']
+		.shell {
+		animation-name: consent-drawer-to-top-inset;
+	}
+
+	.root[data-edge-style='inset'][data-placement='drawer-start'] .shell {
+		animation-name: consent-drawer-from-start-inset;
+	}
+
+	.root[data-edge-style='inset'][data-placement='drawer-start'][data-state='closed']
+		.shell {
+		animation-name: consent-drawer-to-start-inset;
+	}
+
+	.root[data-edge-style='inset'][data-placement='drawer-end'] .shell {
+		animation-name: consent-drawer-from-end-inset;
+	}
+
+	.root[data-edge-style='inset'][data-placement='drawer-end'][data-state='closed']
+		.shell {
+		animation-name: consent-drawer-to-end-inset;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.root[data-placement='drawer-bottom'] .shell,
+		.root[data-placement='drawer-bottom'][data-state='closed'] .shell,
+		.root[data-placement='drawer-top'] .shell,
+		.root[data-placement='drawer-top'][data-state='closed'] .shell,
+		.root[data-placement='drawer-start'] .shell,
+		.root[data-placement='drawer-start'][data-state='closed'] .shell,
+		.root[data-placement='drawer-end'] .shell,
+		.root[data-placement='drawer-end'][data-state='closed'] .shell,
+		.root[data-edge-style='inset'][data-placement='drawer-bottom'] .shell,
+		.root[data-edge-style='inset'][data-placement='drawer-bottom'][data-state='closed']
+			.shell,
+		.root[data-edge-style='inset'][data-placement='drawer-top'] .shell,
+		.root[data-edge-style='inset'][data-placement='drawer-top'][data-state='closed']
+			.shell,
+		.root[data-edge-style='inset'][data-placement='drawer-start'] .shell,
+		.root[data-edge-style='inset'][data-placement='drawer-start'][data-state='closed']
+			.shell,
+		.root[data-edge-style='inset'][data-placement='drawer-end'] .shell,
+		.root[data-edge-style='inset'][data-placement='drawer-end'][data-state='closed']
+			.shell {
+			animation: none;
+		}
+	}
+
+	/* Phone: 16px column insets. The drawer's own padding stays: it never
+	   takes the card's 16px phone inset, which made the flush drawer float
+	   with clipped corners. */
+	@media (max-width: 640px) {
+		.root {
+			--_consent-gutter: var(--inth-space-md);
+			--_consent-scroll-height: var(--consent-drawer-panel-height, 300px);
+		}
+	}
+
+	@keyframes consent-drawer-up {
+		from {
+			transform: translateY(100%);
+		}
+	}
+
+	@keyframes consent-drawer-down {
+		to {
+			transform: translateY(100%);
+		}
+	}
+
+	@keyframes consent-drawer-up-inset {
+		from {
+			transform: translateY(calc(100% + 12px));
+		}
+	}
+
+	@keyframes consent-drawer-down-inset {
+		to {
+			transform: translateY(calc(100% + 12px));
+		}
+	}
+
+	@keyframes consent-drawer-from-top {
+		from {
+			transform: translateY(-100%);
+		}
+	}
+
+	@keyframes consent-drawer-to-top {
+		to {
+			transform: translateY(-100%);
+		}
+	}
+
+	@keyframes consent-drawer-from-top-inset {
+		from {
+			transform: translateY(calc(-100% - 12px));
+		}
+	}
+
+	@keyframes consent-drawer-to-top-inset {
+		to {
+			transform: translateY(calc(-100% - 12px));
+		}
+	}
+
+	@keyframes consent-drawer-from-start {
+		from {
+			transform: translateX(calc(-100% * var(--_consent-inline-sign, 1)));
+		}
+	}
+
+	@keyframes consent-drawer-to-start {
+		to {
+			transform: translateX(calc(-100% * var(--_consent-inline-sign, 1)));
+		}
+	}
+
+	@keyframes consent-drawer-from-start-inset {
+		from {
+			transform: translateX(
+				calc((-100% - 12px) * var(--_consent-inline-sign, 1))
+			);
+		}
+	}
+
+	@keyframes consent-drawer-to-start-inset {
+		to {
+			transform: translateX(
+				calc((-100% - 12px) * var(--_consent-inline-sign, 1))
+			);
+		}
+	}
+
+	@keyframes consent-drawer-from-end {
+		from {
+			transform: translateX(calc(100% * var(--_consent-inline-sign, 1)));
+		}
+	}
+
+	@keyframes consent-drawer-to-end {
+		to {
+			transform: translateX(calc(100% * var(--_consent-inline-sign, 1)));
+		}
+	}
+
+	@keyframes consent-drawer-from-end-inset {
+		from {
+			transform: translateX(
+				calc((100% + 12px) * var(--_consent-inline-sign, 1))
+			);
+		}
+	}
+
+	@keyframes consent-drawer-to-end-inset {
+		to {
+			transform: translateX(
+				calc((100% + 12px) * var(--_consent-inline-sign, 1))
+			);
+		}
+	}
+}

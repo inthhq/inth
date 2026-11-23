@@ -16,7 +16,11 @@ import { join } from 'node:path';
 
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { defaultTheme, themeToVars } from '../../theme/utils';
+import {
+	defaultTheme,
+	generatePrimaryTintSupportsCSS,
+	themeToVars,
+} from '../../theme/utils';
 
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
 
@@ -86,6 +90,25 @@ const readBlock = function readBlock(
 	return null;
 };
 
+/**
+ * Tokens the stylesheet writes as references rather than the literal in
+ * `defaultTheme`, so a CSS-only theme moves them with the tokens they
+ * derive from.
+ */
+const REFERENCED_LIGHT: Record<string, string> = {
+	'--inth-primary-text': 'var(--inth-primary)',
+	'--inth-primary-tint':
+		'color-mix(in srgb, var(--inth-primary) 10%, var(--inth-surface))',
+	'--inth-radius-container': 'min(var(--inth-radius-lg), 0.75rem)',
+	'--inth-radius-nested': 'min(var(--inth-radius-md), 0.5rem)',
+	'--inth-switch-track-active': 'var(--inth-primary)',
+};
+const REFERENCED_DARK: Record<string, string> = {
+	...REFERENCED_LIGHT,
+	'--inth-primary-tint':
+		'color-mix(in srgb, var(--inth-primary) 18%, var(--inth-surface))',
+};
+
 const LIGHT_SELECTOR = ':root, :host, .inth-theme-root';
 const DARK_SELECTOR = [
 	':root.dark',
@@ -106,9 +129,7 @@ describe.each(ENTRYPOINTS)('%s', (entrypoint) => {
 		for (const [name, value] of Object.entries(
 			themeToVars(defaultTheme, false)
 		)) {
-			expect(block).toContain(
-				`${name}: ${name === '--inth-switch-track-active' ? 'var(--inth-primary)' : value}`
-			);
+			expect(block).toContain(`${name}: ${REFERENCED_LIGHT[name] ?? value}`);
 		}
 	});
 
@@ -119,10 +140,14 @@ describe.each(ENTRYPOINTS)('%s', (entrypoint) => {
 		for (const [name, value] of Object.entries(
 			themeToVars(defaultTheme, true)
 		)) {
-			expect(block).toContain(
-				`${name}: ${name === '--inth-switch-track-active' ? 'var(--inth-primary)' : value}`
-			);
+			expect(block).toContain(`${name}: ${REFERENCED_DARK[name] ?? value}`);
 		}
+	});
+
+	test('[VIS-03] makes the referenced primary tint opaque where it can', () => {
+		// `color-mix` keeps a translucent `--inth-primary`'s alpha; the base
+		// declarations above stay for browsers without relative colour syntax.
+		expect(css).toContain(generatePrimaryTintSupportsCSS());
 	});
 
 	test('scopes every :root block to :host too, for shadow-root hosts', () => {
@@ -174,7 +199,8 @@ describe('surface font variables', () => {
 	 * `typography.fontFamily` reaches the page as `--inth-font-family`. A
 	 * surface whose own font variable hardcodes a stack instead ignores the
 	 * theme: the preference list did, so its category rows kept the system
-	 * font under a themed dialog title.
+	 * font under a themed dialog title. A variable the v6 sheets also read
+	 * is not declared at all; its default is the fallback where it is read.
 	 */
 	const fontVariables = [
 		readEntrypoint('styles.css'),
@@ -183,6 +209,9 @@ describe('surface font variables', () => {
 		[
 			...css.matchAll(
 				/(?<name>--(?:iab-)?(?:consent|cd)-[a-z-]*font-family)\s*:\s*(?<value>[^;}]+)/gu
+			),
+			...css.matchAll(
+				/var\(\s*(?<name>--(?:iab-)?(?:consent|cd)-[a-z-]*font-family)\s*,\s*(?<value>[^()]*(?:\([^()]*\))?)\s*\)/gu
 			),
 		].map((match) => [match.groups?.name, match.groups?.value?.trim()])
 	);

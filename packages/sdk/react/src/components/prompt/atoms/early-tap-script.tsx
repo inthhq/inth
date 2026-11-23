@@ -1,5 +1,6 @@
 'use client';
 
+import type { EarlyConsentTap } from '@inth/sdk/runtime/page-globals';
 import {
 	EARLY_CONSENT_TAP_SCRIPT,
 	replayEarlyConsentTaps,
@@ -40,9 +41,17 @@ const useBrowserLayoutEffect =
  * renders in the browser has its handlers at once, and a script it inserts
  * would never run, so there it renders nothing.
  *
+ * @param props.act - Replays the tap through the banner's own handler for
+ * its action, in place of the stock surface actions. The Privacy Choices
+ * prompt passes it: its choices commit through its own plan, and Customize
+ * opens its options in place.
  * @internal
  */
-export const EarlyTapScript = () => {
+export const EarlyTapScript = ({
+	act,
+}: {
+	act?: (tap: EarlyConsentTap) => void;
+} = {}) => {
 	const { nonce } = useUIConfig();
 	const hydrated = useIsHydrated();
 	// Decided by the first render: hydration keeps the server's script.
@@ -52,6 +61,9 @@ export const EarlyTapScript = () => {
 	// The banner root's source, which its buttons record once hydrated.
 	const uiSource = toSaveUISource(useConsentTracking().uiSource);
 	const services = useCommittedRef(useContext(ProviderServicesContext));
+	// The latest handler, read when the tap replays.
+	const actRef = useCommittedRef(act);
+	const replays = act !== undefined;
 	const script = useRef<HTMLScriptElement>(null);
 	// The script ran in the window of the document it was parsed into,
 	// which is not this bundle's `window` when the tree renders into a frame.
@@ -62,12 +74,17 @@ export const EarlyTapScript = () => {
 	useEffect(
 		() =>
 			replayEarlyConsentTaps(kernel, {
+				act: replays
+					? (tap) => {
+							actRef.current?.(tap);
+						}
+					: undefined,
 				categories: () => services.current?.getConsentCategories(),
 				started: () => services.current?.isStarted() ?? true,
 				uiSource,
 				view: view.current,
 			}),
-		[kernel, services, uiSource]
+		[kernel, services, uiSource, replays, actRef]
 	);
 	if (!serverRendered) {
 		return null;

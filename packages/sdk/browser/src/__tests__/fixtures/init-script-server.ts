@@ -10,8 +10,11 @@
  * - `/__inth-init__/page?<query>`: a page whose `inth.js` tag uses the
  *   query: `manual`, `head` (tag in `<head>`), `hosted-delay`,
  *   `hosted-fail` (that many 404s for `inth.hosted.js`), `commit`,
- *   `records` and `dialog` (a delay for that file in ms, `fail` for a 404,
- *   or for `dialog`, `stale` for a file from another release),
+ *   `records`, `dialog` and `choices` (a delay for that file in ms, `fail`
+ *   for a 404, `fail-once` for a 404 then the file, or for `dialog`,
+ *   `stale` for a file from another release),
+ *   `pc` (a `window.inth` queue that sets `presentation.design:
+ *   'privacy-choices'` with a Card),
  *   `queue` (a `window.inth` queue before the tag that records `ready`) and
  *   `hero` (a `fetchpriority="high"` image held back that many ms, so the
  *   engine waits for it).
@@ -83,12 +86,18 @@ let hostedRequests = 0;
 let failsSincePage = 0;
 
 const page = (query: URLSearchParams): string => {
-	const queue = query.has('queue')
-		? `<script>window.__heard = []; window.inth = [['on', 'ready', function () { window.__heard.push('queued ready'); }]];</script>`
-		: '';
+	const queue = `${
+		query.has('queue')
+			? `<script>window.__heard = []; window.inth = [['on', 'ready', function () { window.__heard.push('queued ready'); }]];</script>`
+			: ''
+	}${
+		query.has('pc')
+			? `<script>window.inth = window.inth || []; window.inth.push(['config', { presentation: { design: 'privacy-choices', prompt: { container: { type: 'card' } } } }]);</script>`
+			: ''
+	}`;
 	// `commit` and `records`: a delay in ms, or `fail` for a 404. Without
 	// either, `inth.js` finds the file next to itself.
-	const part = (name: 'commit' | 'records' | 'dialog'): string => {
+	const part = (name: 'commit' | 'records' | 'dialog' | 'choices'): string => {
 		const value = query.get(name);
 		if (value === null) {
 			return '';
@@ -96,12 +105,14 @@ const page = (query: URLSearchParams): string => {
 		let src = `/__inth-dist__/inth.${name}.js?delay=${Number(value)}`;
 		if (value === 'fail') {
 			src = '/__inth-init__/missing.js';
+		} else if (value === 'fail-once') {
+			src = `/__inth-dist__/inth.${name}.js?fail=1`;
 		} else if (value === 'stale') {
 			src = '/__inth-init__/stale-dialog.js';
 		}
 		return ` data-${name}-src="${src}"`;
 	};
-	const tag = `${queue}<script src="/__inth-dist__/inth.js" data-project-url="/__inth-init__/backend" data-hosted-src="/__inth-dist__/inth.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}${query.has('hosted-fail') ? `&amp;fail=${Number(query.get('hosted-fail'))}` : ''}"${part('commit')}${part('records')}${part('dialog')}${query.has('manual') ? ' data-manual' : ''}></script>`;
+	const tag = `${queue}<script src="/__inth-dist__/inth.js" data-project-url="/__inth-init__/backend" data-hosted-src="/__inth-dist__/inth.hosted.js?delay=${Number(query.get('hosted-delay') ?? 0)}${query.has('hosted-fail') ? `&amp;fail=${Number(query.get('hosted-fail'))}` : ''}"${part('commit')}${part('records')}${part('dialog')}${part('choices')}${query.has('manual') ? ' data-manual' : ''}></script>`;
 	const head = query.has('head') ? tag : '';
 	const body = query.has('head') ? '' : tag;
 	return `<!doctype html><html><head><meta charset="utf-8">${head}</head><body>

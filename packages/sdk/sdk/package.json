@@ -36,6 +36,7 @@
 	"type": "module",
 	"sideEffects": [
 		"**/*.css",
+		"./lib/browser/dist/inth.choices.js",
 		"./lib/browser/dist/inth.commit.js",
 		"./lib/browser/dist/inth.devtools.js",
 		"./lib/browser/dist/inth.dialog.js",
@@ -83,6 +84,7 @@
 		"./inth.commit.js": "./lib/browser/dist/inth.commit.js",
 		"./inth.records.js": "./lib/browser/dist/inth.records.js",
 		"./inth.dialog.js": "./lib/browser/dist/inth.dialog.js",
+		"./inth.choices.js": "./lib/browser/dist/inth.choices.js",
 		"./inth.testing.js": "./lib/browser/dist/inth.testing.js",
 		"./inth.headless.js": "./lib/browser/dist/inth.headless.js",
 		"./inth.devtools.js": "./lib/browser/dist/inth.devtools.js",
@@ -670,6 +672,8 @@
 			"default": "./lib/ui/dist/styles/dialog.js"
 		},
 		"./ui/styles/primitives.css": "./lib/ui/dist/styles/primitives.css",
+		"./ui/styles/privacy-choices.css": "./lib/ui/dist/styles/privacy-choices.css",
+		"./ui/styles/privacy-choices.tw3.css": "./lib/ui/dist/styles/privacy-choices.tw3.css",
 		"./ui/styles/sheets/*.css": "./lib/ui/dist/styles/sheets/*.css",
 		"./ui/styles/sheets/*": {
 			"types": "./lib/ui/dist-types/styles/sheets/*.d.ts",

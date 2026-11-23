@@ -17,7 +17,7 @@ interface BrandingTagProps {
 	hideBranding?: boolean;
 }
 
-/** The "Secured by" tag on a stock surface. */
+/** The "Consent by" tag on a stock surface. */
 export const BrandingTag = ({ surface, hideBranding }: BrandingTagProps) => {
 	const branding = useBranding();
 	const { components } = useUIConfig();

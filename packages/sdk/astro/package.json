@@ -146,6 +146,7 @@
 		"./components/iab-consent-banner.astro": "./src/components/iab-prompt.astro",
 		"./components/iab-consent-dialog.astro": "./src/components/iab-panel.astro",
 		"./components/opt-out-confirmation.astro": "./src/components/opt-out-confirmation.astro",
+		"./components/privacy-choices-link.astro": "./src/components/privacy-choices-link.astro",
 		"./components/islands/consent-dialog-surface.svelte": "./src/components/islands/panel-surface.svelte",
 		"./islands/consent-dialog-surface.svelte": "./src/components/islands/panel-surface.svelte",
 		"./components/islands/consent-dialog-surface.tsx": "./src/components/islands/panel-surface.tsx",

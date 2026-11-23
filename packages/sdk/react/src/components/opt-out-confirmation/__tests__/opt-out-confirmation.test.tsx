@@ -118,7 +118,8 @@ describe('one-step opt-out and confirmation view in React', () => {
 		const snapshot = activeKernel?.getSnapshot();
 		expect(snapshot?.optOut?.method).toBe('button');
 		expect(snapshot?.effectivePermissions.marketing).toBe(false);
-		expect(snapshot?.effectivePermissions.measurement).toBe(false);
+		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
+		expect(snapshot?.effectivePermissions.measurement).toBe(true);
 		expect(snapshot?.effectivePermissions.functionality).toBe(true);
 		expect(query('consent-dialog-root')).toBeNull();
 
@@ -507,8 +508,9 @@ describe('one-step opt-out and confirmation view in React', () => {
 		expect(activeKernel?.getSnapshot().effectivePermissions.marketing).toBe(
 			false
 		);
+		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
 		expect(activeKernel?.getSnapshot().effectivePermissions.measurement).toBe(
-			false
+			true
 		);
 		await vi.waitFor(() =>
 			expect(query('opt-out-confirmation-root')).not.toBeNull()

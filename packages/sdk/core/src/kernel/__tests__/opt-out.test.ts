@@ -62,6 +62,7 @@ describe('commands.optOut()', () => {
 			changed: true,
 			ok: true,
 			optOut: {
+				categories: ['measurement', 'marketing'],
 				heldBy: 'device',
 				method: 'button',
 				recordedAt: NOW,
@@ -70,6 +71,7 @@ describe('commands.optOut()', () => {
 		});
 		const snap = kernel.getSnapshot();
 		expect(snap.optOut).toEqual({
+			categories: ['measurement', 'marketing'],
 			heldBy: 'device',
 			method: 'button',
 			recordedAt: NOW,
@@ -147,6 +149,7 @@ describe('commands.optOut()', () => {
 			changed: true,
 			ok: true,
 			optOut: {
+				categories: ['measurement', 'marketing'],
 				heldBy: 'device',
 				method: 'button',
 				recordedAt: NOW,
@@ -180,6 +183,7 @@ describe('commands.optOut()', () => {
 
 		expect(result.ok).toBe(true);
 		expect(kernel.getSnapshot().optOut).toEqual({
+			categories: [],
 			heldBy: 'device',
 			method: 'button',
 			recordedAt: NOW,
@@ -520,6 +524,7 @@ describe('commands.save() interaction with opt-out', () => {
 		expect(order).toEqual(['choice:recorded', 'opt-out:recorded']);
 		const snap = kernel.getSnapshot();
 		expect(snap.optOut).toEqual({
+			categories: ['measurement', 'marketing'],
 			heldBy: 'device',
 			method: 'button',
 			recordedAt: NOW,
@@ -547,6 +552,7 @@ describe('commands.save() interaction with opt-out', () => {
 		);
 
 		expect(kernel.getSnapshot().optOut).toEqual({
+			categories: ['measurement', 'marketing'],
 			heldBy: 'device',
 			method: 'button',
 			recordedAt: NOW,
@@ -571,6 +577,7 @@ describe('commands.save() interaction with opt-out', () => {
 			await kernel.commands.save(input, { uiSource: 'widget' });
 
 			expect(kernel.getSnapshot().optOut).toEqual({
+				categories: ['measurement', 'marketing'],
 				heldBy: 'device',
 				method: 'button',
 				recordedAt: NOW,
@@ -599,6 +606,7 @@ describe('commands.save() interaction with opt-out', () => {
 		vi.setSystemTime(NOW + 2000);
 		await kernel.commands.save({ marketing: false });
 		expect(kernel.getSnapshot().optOut).toEqual({
+			categories: ['measurement', 'marketing'],
 			heldBy: 'device',
 			method: 'button',
 			recordedAt: NOW + 2000,
@@ -661,6 +669,7 @@ describe('commands.save() interaction with opt-out', () => {
 
 		await kernel.commands.save({ measurement: false });
 		expect(kernel.getSnapshot().optOut).toEqual({
+			categories: ['measurement'],
 			heldBy: 'device',
 			method: 'button',
 			recordedAt: NOW,
@@ -844,6 +853,7 @@ describe('live GPC opt-out recording', () => {
 		expect(recorded).toHaveBeenCalledTimes(1);
 		const first = kernel.getSnapshot().optOut;
 		expect(first).toEqual({
+			categories: ['measurement', 'marketing'],
 			heldBy: 'device',
 			method: 'gpc',
 			recordedAt: NOW,
@@ -893,6 +903,7 @@ describe('live GPC opt-out recording', () => {
 		await initPromise;
 		expect(pending.getSnapshot().policyPending).toBe(false);
 		expect(pending.getSnapshot().optOut).toEqual({
+			categories: ['measurement', 'marketing'],
 			heldBy: 'device',
 			method: 'gpc',
 			recordedAt: NOW,
@@ -932,6 +943,7 @@ describe('live GPC opt-out recording', () => {
 		bySignal.events.on('opt-out:recorded', recorded);
 		bySignal.set.privacySignals({ gpc: true });
 		expect(bySignal.getSnapshot().optOut).toEqual({
+			categories: ['measurement', 'marketing'],
 			heldBy: 'device',
 			method: 'gpc',
 			recordedAt: NOW,

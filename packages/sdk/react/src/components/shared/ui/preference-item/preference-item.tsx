@@ -22,6 +22,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 import { useControllableState } from '~/components/shared/libs/use-controllable-state';
 import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/ui-config-context';
+import { inertProps } from '~/utils/inert';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 export type PreferenceItemVariantsProps = Record<never, never>;
@@ -405,7 +406,7 @@ const PreferenceItemContent = createForwardRef<
 				data-slot={PREFERENCE_ITEM_SLOTS.content}
 				data-state={getPreferenceItemState(open)}
 				id={contentId}
-				inert={!open}
+				{...inertProps(!open)}
 			>
 				<div
 					{...viewportProps}

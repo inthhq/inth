@@ -49,7 +49,7 @@ const MAX_DATE_MS = 8_640_000_000_000_000;
  * @internal
  */
 export const saveRecordsOptOut = function saveRecordsOptOut(
-	policy: Pick<EvaluationPolicy, 'model' | 'scope'>,
+	policy: Pick<EvaluationPolicy, 'gpcDenyCategories' | 'model' | 'scope'>,
 	confirmed: (category: OptionalConsentCategory) => boolean | undefined,
 	hasOptOut = false
 ): boolean {

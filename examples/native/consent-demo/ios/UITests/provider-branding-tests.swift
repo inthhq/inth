@@ -57,7 +57,7 @@ extension ConsentJourneyTests {
         XCTAssertTrue(mark.waitForExistence(timeout: 5))
         try checkRenderedAttributionCount(1, name: name)
         XCTAssertEqual(app.descendants(matching: .any).matching(identifier: "inth.first-layer.branding").count, 1)
-        XCTAssertEqual(mark.label, "Secured by \(provider)")
+        XCTAssertEqual(mark.label, "Consent by \(provider)")
         XCTAssertNotEqual(mark.elementType, .button)
         XCTAssertTrue(app.windows.firstMatch.frame.contains(mark.frame))
         let beside = mark.frame.minX >= customize.frame.maxX || mark.frame.maxX <= customize.frame.minX

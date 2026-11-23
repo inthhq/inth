@@ -1,5 +1,5 @@
 import { policyRulePresets } from '@inth/sdk-core';
-import type { ConsentSnapshot } from '@inth/sdk-core';
+import type { ConsentPresentation, ConsentSnapshot } from '@inth/sdk-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createTestingConsentClient as createConsentClient } from '../testing-global';
@@ -12,6 +12,7 @@ import type { SurfaceContext } from '../ui/surface';
 const clients: ConsentClient[] = [];
 
 afterEach(() => {
+	vi.unstubAllGlobals();
 	for (const client of clients.splice(0)) {
 		client.dispose();
 	}
@@ -19,7 +20,9 @@ afterEach(() => {
 	document.body.replaceChildren();
 });
 
-const setup = async function setup(): Promise<{
+const setup = async function setup(
+	presentation?: ConsentPresentation
+): Promise<{
 	client: ConsentClient;
 	ctx: SurfaceContext;
 	root: HTMLElement;
@@ -34,6 +37,7 @@ const setup = async function setup(): Promise<{
 					match: { isDefault: true },
 				},
 			],
+			presentation,
 			ui: false,
 		},
 		{ pkg: '@inth/sdk/test' }
@@ -59,6 +63,42 @@ const setup = async function setup(): Promise<{
 
 const dialogRoot = (root: HTMLElement) =>
 	root.querySelector('[data-testid="consent-dialog-root"]');
+
+describe('warming', () => {
+	/** Idle callbacks, counted: warming the classic dialog asks for one. */
+	const watchIdle = () => {
+		const idle = vi.fn(() => 0);
+		vi.stubGlobal('requestIdleCallback', idle);
+		return idle;
+	};
+
+	it('the trigger warms the classic dialog on the classic design', async () => {
+		const { client, ctx } = await setup();
+		const idle = watchIdle();
+		const surface = createDialog(ctx, {}, true);
+		surface.sync(client.getSnapshot());
+		// Warming waits for the page's load.
+		window.dispatchEvent(new Event('load'));
+		expect(idle).toHaveBeenCalled();
+		surface.destroy();
+	});
+
+	it('a Privacy Choices page never downloads the classic dialog', async () => {
+		const { client, ctx } = await setup({
+			design: 'privacy-choices',
+			prompt: { container: { type: 'card' } },
+		});
+		// Open, so the Privacy Choices dialog loads at once rather than
+		// warming in idle time.
+		client.openDialog();
+		const idle = watchIdle();
+		const surface = createDialog(ctx, {}, true);
+		surface.sync(client.getSnapshot());
+		window.dispatchEvent(new Event('load'));
+		expect(idle).not.toHaveBeenCalled();
+		surface.destroy();
+	});
+});
 
 describe('on-demand preference centre', () => {
 	it('loads when the dialog opens and renders the newest snapshot', async () => {

@@ -30,6 +30,12 @@ export interface SurfaceContext {
 	acceptFromBanner?: () => Promise<SaveResult>;
 	/** Handles an opt-out link click according to its resolved link variant. */
 	onOptOutLink?: (variant: ResolvedOptOutLink['variant']) => void;
+	/**
+	 * Add `@inth/sdk-ui` sheets the stock stylesheet leaves out, once each,
+	 * after it. The Privacy Choices surfaces add their presentation's rules
+	 * this way. Does nothing when the mount ships no stock styles.
+	 */
+	addSheets?: (sheets: readonly { id: string; css: string }[]) => void;
 }
 
 /** A mounted surface. */

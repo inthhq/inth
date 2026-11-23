@@ -4,10 +4,79 @@ import type { Theme } from '../types';
 import {
 	defaultTheme,
 	generateDefaultThemeCSS,
+	generatePrimaryTintSupportsCSS,
 	generateThemeCSS,
 	getContrastColor,
 	themeToVars,
 } from '../utils';
+
+/**
+ * The `--inth-primary-tint` a browser with relative colour syntax would give
+ * the root element for some generated theme CSS. It reads the theme's two
+ * root selectors (`:root:root` and `:root:root.dark`), honours
+ * `prefers-color-scheme: dark` and `@supports` blocks, and lets the higher
+ * specificity win, then the later rule.
+ */
+const resolvedRootTint = function resolvedRootTint(
+	css: string,
+	{ darkClass, prefersDark }: { darkClass: boolean; prefersDark: boolean }
+): string | undefined {
+	let best: { order: number; specificity: number; value: string } | undefined;
+	let order = 0;
+	const walk = (block: string): void => {
+		let index = 0;
+		while (index < block.length) {
+			const open = block.indexOf('{', index);
+			if (open === -1) {
+				return;
+			}
+			const prelude = block.slice(index, open).trim();
+			let depth = 1;
+			let close = open + 1;
+			while (depth > 0) {
+				if (block[close] === '{') {
+					depth += 1;
+				} else if (block[close] === '}') {
+					depth -= 1;
+				}
+				close += 1;
+			}
+			const body = block.slice(open + 1, close - 1);
+			index = close;
+			if (prelude.startsWith('@media')) {
+				if (prelude.includes('prefers-color-scheme:dark') && prefersDark) {
+					walk(body);
+				}
+				continue;
+			}
+			if (prelude.startsWith('@supports')) {
+				walk(body);
+				continue;
+			}
+			// The last declaration in a rule wins.
+			const value = [
+				...body.matchAll(/--inth-primary-tint: (?<tint>[^;]+);/gu),
+			].at(-1)?.groups?.tint;
+			const selectors = prelude.split(',');
+			let specificity = 0;
+			if (selectors.includes(':root:root.dark')) {
+				specificity = darkClass ? 3 : 0;
+			} else if (selectors.includes(':root:root')) {
+				specificity = 2;
+			}
+			order += 1;
+			if (
+				value &&
+				specificity > 0 &&
+				(!best || specificity >= best.specificity)
+			) {
+				best = { order, specificity, value };
+			}
+		}
+	};
+	walk(css);
+	return best?.value;
+};
 
 describe('defaultTheme', () => {
 	test('has all required color tokens', () => {
@@ -242,6 +311,375 @@ describe('themeToVars', () => {
 		});
 
 		expect(vars['--inth-text-on-primary']).toBe('#112233');
+	});
+});
+
+describe('v6 consent tokens', () => {
+	test('[VIS-03] the default off-track meets 3:1 on the default surface', () => {
+		// The stock switch track keeps its old colour until the renderer
+		// moves to the new token; the new token is the one that passes.
+		expect(defaultTheme.colors.switchTrackOff).toBe('#8492a6');
+		expect(defaultTheme.dark.switchTrackOff).toBe('#64748b');
+	});
+
+	test('[VIS-07] the radius scale adds container and nested steps', () => {
+		const vars = themeToVars(defaultTheme);
+
+		expect(vars['--inth-radius-container']).toBe('0.75rem');
+		expect(vars['--inth-radius-nested']).toBe('0.5rem');
+	});
+
+	test('emits the v6 colour and motion defaults in light and dark', () => {
+		const light = themeToVars(defaultTheme);
+		const dark = themeToVars(defaultTheme, true);
+
+		expect(light['--inth-danger']).toBe('#dc2626');
+		expect(dark['--inth-danger']).toBe('#f87171');
+		expect(light['--inth-border-strong']).toBe('rgba(15, 23, 42, 0.16)');
+		expect(dark['--inth-border-strong']).toBe('#3a404e');
+		expect(light['--inth-overlay-block']).toBe('rgba(15, 23, 42, 0.62)');
+		expect(dark['--inth-overlay-block']).toBe('rgba(0, 0, 0, 0.72)');
+		expect(light['--inth-overlay-block-solid']).toBe('rgba(15, 23, 42, 0.78)');
+		expect(dark['--inth-overlay-block-solid']).toBe('rgba(0, 0, 0, 0.85)');
+		expect(light['--inth-easing-out-strong']).toBe(
+			'cubic-bezier(0.23, 1, 0.32, 1)'
+		);
+	});
+
+	test('leaves the existing defaults alone', () => {
+		const light = themeToVars(defaultTheme);
+
+		expect(light['--inth-primary']).toBe('hsl(228, 100%, 60%)');
+		expect(light['--inth-radius-lg']).toBe('0.75rem');
+		expect(light['--inth-radius-md']).toBe('0.5rem');
+		expect(light['--inth-switch-track']).toBe('hsl(0, 0%, 85%)');
+		expect(light['--inth-easing-out']).toBe(
+			'cubic-bezier(0.215, 0.61, 0.355, 1)'
+		);
+	});
+
+	test('[VIS-02] primary text follows a theme primary that sets nothing else', () => {
+		const vars = themeToVars({ colors: { primary: '#0f766e' } });
+
+		expect(vars['--inth-primary-text']).toBe('#0f766e');
+	});
+
+	test('[VIS-02] an explicit primary text wins over primary', () => {
+		const vars = themeToVars(
+			{ dark: { primary: '#2f66df', primaryText: '#8ab4ff' } },
+			true
+		);
+
+		expect(vars['--inth-primary']).toBe('#2f66df');
+		expect(vars['--inth-primary-text']).toBe('#8ab4ff');
+	});
+
+	test('the primary tint is primary mixed into the surface, 10% light and 18% dark', () => {
+		const theme: Theme = {
+			colors: { primary: '#2563eb', surface: '#ffffff' },
+			dark: { primary: '#4f83f1', surface: '#14161a' },
+		};
+
+		expect(themeToVars(theme)['--inth-primary-tint']).toBe(
+			'color-mix(in srgb, #2563eb 10%, #ffffff)'
+		);
+		expect(themeToVars(theme, true)['--inth-primary-tint']).toBe(
+			'color-mix(in srgb, #4f83f1 18%, #14161a)'
+		);
+	});
+
+	test('the primary tint reads the stylesheet surface when a theme sets only primary', () => {
+		expect(
+			themeToVars({ colors: { primary: '#0f766e' } })['--inth-primary-tint']
+		).toBe('color-mix(in srgb, #0f766e 10%, var(--inth-surface))');
+	});
+
+	test('an explicit primary tint is kept as written', () => {
+		expect(
+			themeToVars({ colors: { primary: '#000', primaryTint: '#eef' } })[
+				'--inth-primary-tint'
+			]
+		).toBe('#eef');
+	});
+
+	test('[VIS-03] a theme that sets only the old switch track keeps the 3:1 off-track', () => {
+		// `switchTrack` is about 1.4:1 on the surface, so it is no fallback.
+		const theme: Theme = {
+			colors: { switchTrack: '#e5e5e5' },
+			dark: { switchTrack: '#333333' },
+		};
+
+		expect(themeToVars(theme)['--inth-switch-track-off']).toBe('#8492a6');
+		expect(themeToVars(theme, true)['--inth-switch-track-off']).toBe('#64748b');
+		expect(themeToVars(theme)['--inth-switch-track']).toBe('#e5e5e5');
+	});
+
+	test('[VIS-03] an explicit off-track is kept as written', () => {
+		expect(
+			themeToVars({ colors: { switchTrack: '#eee', switchTrackOff: '#555' } })[
+				'--inth-switch-track-off'
+			]
+		).toBe('#555');
+	});
+
+	test('[VIS-03] the primary tint is opaque when primary has alpha', () => {
+		// `color-mix` keeps the alpha: 10% of a 50% primary over an opaque
+		// surface is 95% opaque. Folding the alpha into the share gives the
+		// colour the relative-colour form gives, at full opacity.
+		const theme: Theme = {
+			colors: { primary: 'rgb(37 99 235 / 50%)', surface: '#ffffff' },
+			dark: { primary: '#2563eb80', surface: '#14161a' },
+		};
+
+		// 10% at alpha 0.5 weighs 5 against the surface's 90: 5 / 95.
+		expect(themeToVars(theme)['--inth-primary-tint']).toBe(
+			'color-mix(in srgb, rgb(37 99 235) 5.2632%, #ffffff)'
+		);
+		// 18% at alpha 128/255 weighs 9.035 against 82: 9.035 / 91.035.
+		expect(themeToVars(theme, true)['--inth-primary-tint']).toBe(
+			'color-mix(in srgb, rgb(37 99 235) 9.925%, #14161a)'
+		);
+	});
+
+	test.each([
+		['rgba(37, 99, 235, 0.5)', 'rgb(37 99 235) 5.2632%'],
+		['hsl(220 83% 53% / 0.5)', 'rgb(36 102 235) 5.2632%'],
+		['hsla(220, 83%, 53%, .5)', 'rgb(36 102 235) 5.2632%'],
+		['#2563eb00', 'rgb(37 99 235) 0%'],
+		['oklch(0.55 0.2 262 / 50%)', 'oklch(0.55 0.2 262) 5.2632%'],
+		['color(srgb 0.1 0.4 0.9 / .5)', 'color(srgb 0.1 0.4 0.9) 5.2632%'],
+		['lab(50 20 -60 / 0.5)', 'lab(50 20 -60) 5.2632%'],
+	])('[VIS-03] reads the alpha of %s', (primary, mixed) => {
+		expect(
+			themeToVars({ colors: { primary, surface: '#fff' } })[
+				'--inth-primary-tint'
+			]
+		).toBe(`color-mix(in srgb, ${mixed}, #fff)`);
+	});
+
+	test.each([
+		['oklch(0.55 0.2 262 / 50%)', 'var(--inth-surface)'],
+		['var(--brand)', '#ffffff'],
+		['rebeccapurple', 'rgba(255, 255, 255, 0.8)'],
+		['rgb(37 99 235 / 50%)', 'white'],
+		['rgb(from red r g b / 50%)', '#ffffff'],
+		['rgb(37 99 235 / calc(1 / 2))', '#ffffff'],
+	])(
+		'[VIS-03] the primary tint is the plain mix when the alpha of %s or %s is unknown',
+		(primary, surface) => {
+			// Relative colour syntax here would make a browser without it drop
+			// the whole value, and the tint would go transparent; the
+			// `@supports` block in the generated CSS makes it opaque instead.
+			expect(
+				themeToVars({ colors: { primary, surface } })['--inth-primary-tint']
+			).toBe(`color-mix(in srgb, ${primary} 10%, ${surface})`);
+		}
+	);
+
+	test('[VIS-03] the primary tint is opaque over a translucent surface', () => {
+		// 10 against 90 at alpha 0.8, which is 72: 10 / 82.
+		expect(
+			themeToVars({
+				colors: { primary: '#2563eb', surface: 'rgba(255, 255, 255, 0.8)' },
+			})['--inth-primary-tint']
+		).toBe('color-mix(in srgb, #2563eb 12.1951%, rgb(255 255 255))');
+		// 10 at alpha 0.5 is 5, against 90 at alpha 0.5, which is 45: 5 / 50.
+		expect(
+			themeToVars({
+				colors: {
+					primary: 'oklch(0.55 0.2 262 / 50%)',
+					surface: 'color(srgb 1 1 1 / .5)',
+				},
+			})['--inth-primary-tint']
+		).toBe('color-mix(in srgb, oklch(0.55 0.2 262) 10%, color(srgb 1 1 1))');
+	});
+
+	test('[VIS-03] generated theme CSS makes a derived tint opaque behind @supports', () => {
+		const css = generateThemeCSS(
+			{
+				colors: { primary: 'oklch(0.55 0.2 262 / 50%)' },
+				dark: { primary: 'var(--brand-dark)', primaryTint: '#101020' },
+			},
+			'system'
+		);
+		const supports = [
+			...css.matchAll(
+				/@supports \(color: rgb\(from red r g b \/ 1\)\)\{(?<rule>[^{}]*\{[^{}]*\})\}/gu
+			),
+		].map((match) => match.groups?.rule);
+
+		// The base value is the plain mix every browser reads.
+		expect(css).toContain(
+			'--inth-primary-tint: color-mix(in srgb, oklch(0.55 0.2 262 / 50%) 10%, var(--inth-surface));'
+		);
+		// Only the light root rule, right after the light root block. The dark
+		// tint is set as written, so nothing overrides it.
+		expect(supports).toEqual([
+			':root:root,:host,.inth-theme-root.inth-theme-root{--inth-primary-tint: rgb(from color-mix(in srgb, oklch(0.55 0.2 262 / 50%) 10%, var(--inth-surface)) r g b / 1);}',
+		]);
+		expect(css.indexOf('@supports')).toBeLessThan(
+			css.indexOf('prefers-color-scheme')
+		);
+		expect(css).not.toContain('rgb(from #101020');
+	});
+
+	test('[VIS-03] generated theme CSS covers the dark and system tints', () => {
+		const theme: Theme = {
+			colors: { primary: 'var(--brand)' },
+			dark: { surface: 'var(--brand-surface)' },
+		};
+		const darkTint =
+			'rgb(from color-mix(in srgb, var(--brand) 18%, var(--brand-surface)) r g b / 1)';
+
+		const system = generateThemeCSS(theme, 'system');
+		// The guarded dark rule closes the media block it sits in.
+		expect(system).toContain(
+			`}@supports (color: rgb(from red r g b / 1)){:root:root,:host,.inth-theme-root.inth-theme-root{--inth-primary-tint: ${darkTint};}}}`
+		);
+		expect(system.indexOf('@media(prefers-color-scheme:dark){')).toBeLessThan(
+			system.indexOf(`--inth-primary-tint: ${darkTint}`)
+		);
+		expect(system).toContain(
+			`.inth-dark .inth-theme-root.inth-theme-root{--inth-primary-tint: ${darkTint};}`
+		);
+
+		const dark = generateThemeCSS(theme, 'dark');
+		expect(dark).toContain(
+			`:root:root,:host,.inth-theme-root.inth-theme-root{--inth-primary-tint: ${darkTint};}`
+		);
+	});
+
+	describe.each([
+		{
+			dark: { primaryTint: '#112233' },
+			label: 'an explicit dark tint',
+			light: {},
+		},
+		{
+			dark: {},
+			label: 'an explicit light tint',
+			light: { primaryTint: '#eef2ff' },
+		},
+		{
+			dark: { primaryTint: '#112233' },
+			label: 'explicit light and dark tints',
+			light: { primaryTint: '#eef2ff' },
+		},
+	])('[VIS-03] generated theme CSS with $label', ({ dark, light }) => {
+		const theme: Theme = {
+			colors: { primary: '#2563eb', ...light },
+			dark,
+		};
+		// `colors` applies to both modes and `dark` overrides it, so a light
+		// tint alone is also the dark tint.
+		const explicitLight = theme.colors?.primaryTint;
+		const explicitDark = theme.dark?.primaryTint ?? explicitLight;
+		const lightTint =
+			explicitLight ??
+			`rgb(from ${themeToVars(theme)['--inth-primary-tint']} r g b / 1)`;
+		const darkTint =
+			explicitDark ??
+			`rgb(from ${themeToVars(theme, true)['--inth-primary-tint']} r g b / 1)`;
+
+		test.each([
+			['system', false, false, 'light'],
+			['system', true, false, 'dark'],
+			['system', false, true, 'dark'],
+			['system', true, true, 'dark'],
+			['light', false, false, 'light'],
+			['light', true, false, 'light'],
+			['light', false, true, 'dark'],
+			['dark', false, false, 'dark'],
+			['dark', true, false, 'dark'],
+			['dark', false, true, 'dark'],
+		] as const)(
+			'under %j (prefers dark %j, dark class %j) the root gets the %s tint',
+			(colorScheme, prefersDark, darkClass, mode) => {
+				const css = generateThemeCSS(theme, colorScheme);
+
+				expect(resolvedRootTint(css, { darkClass, prefersDark })).toBe(
+					mode === 'dark' ? darkTint : lightTint
+				);
+				// A tint the theme sets is never wrapped.
+				const explicitTints = [explicitLight, explicitDark].filter(
+					(tint): tint is string => tint !== undefined
+				);
+				for (const explicit of explicitTints) {
+					expect(css).not.toContain(`rgb(from ${explicit}`);
+				}
+			}
+		);
+	});
+
+	test('[VIS-03] generated theme CSS adds no @supports block without a derived tint', () => {
+		expect(generateThemeCSS({ radius: { lg: '4px' } })).not.toContain(
+			'@supports'
+		);
+		expect(
+			generateThemeCSS({ colors: { primary: '#000', primaryTint: '#eef' } })
+		).not.toContain('@supports');
+	});
+
+	test('[VIS-03] the stylesheet tint is opaque where relative colour syntax works', () => {
+		const css = generatePrimaryTintSupportsCSS();
+
+		expect(css).toMatch(/^@supports \(color: rgb\(from red r g b \/ 1\)\)\{/u);
+		expect(css).toContain(
+			':root,:host,.inth-theme-root{--inth-primary-tint: rgb(from color-mix(in srgb, var(--inth-primary) 10%, var(--inth-surface)) r g b / 1);}'
+		);
+		expect(css).toContain(
+			'.inth-dark .inth-theme-root{--inth-primary-tint: rgb(from color-mix(in srgb, var(--inth-primary) 18%, var(--inth-surface)) r g b / 1);}'
+		);
+		expect(generatePrimaryTintSupportsCSS({ light: false })).not.toContain(
+			':root,:host,.inth-theme-root{'
+		);
+	});
+
+	test('container and nested radii follow the scale, capped at 12px and 8px', () => {
+		const square = themeToVars({ radius: { lg: '0px', md: '0px' } });
+		const round = themeToVars({ radius: { lg: '1rem', md: '10px' } });
+		const explicit = themeToVars({
+			radius: { container: '4px', lg: '1rem', nested: '2px' },
+		});
+
+		expect(square['--inth-radius-container']).toBe('min(0px, 0.75rem)');
+		expect(square['--inth-radius-nested']).toBe('min(0px, 0.5rem)');
+		expect(round['--inth-radius-container']).toBe('min(1rem, 0.75rem)');
+		expect(round['--inth-radius-nested']).toBe('min(10px, 0.5rem)');
+		expect(explicit['--inth-radius-container']).toBe('4px');
+		expect(explicit['--inth-radius-nested']).toBe('2px');
+	});
+
+	test.each(['0', '-0', '0.0', '.0', ' 0 '])(
+		'[VIS-07] a square theme with radius %j gets a valid capped radius',
+		(zero) => {
+			// `min(0, 0.75rem)` mixes a number and a length, which drops the
+			// whole declaration.
+			const vars = themeToVars({ radius: { lg: zero, md: zero } });
+
+			expect(vars['--inth-radius-container']).toBe('min(0px, 0.75rem)');
+			expect(vars['--inth-radius-nested']).toBe('min(0px, 0.5rem)');
+		}
+	);
+
+	test('[VIS-07] a radius that only starts with 0 keeps its unit', () => {
+		expect(
+			themeToVars({ radius: { lg: '0.5rem' } })['--inth-radius-container']
+		).toBe('min(0.5rem, 0.75rem)');
+	});
+
+	test('an empty theme still emits nothing', () => {
+		expect(themeToVars({})).toEqual({});
+		expect(themeToVars({}, true)).toEqual({});
+	});
+
+	test('generated theme CSS carries the derived tokens', () => {
+		const css = generateThemeCSS({ colors: { primary: '#0f766e' } });
+
+		expect(css).toContain('--inth-primary-text: #0f766e;');
+		expect(css).toContain(
+			'--inth-primary-tint: color-mix(in srgb, #0f766e 10%, var(--inth-surface));'
+		);
 	});
 });
 

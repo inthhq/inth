@@ -64,6 +64,8 @@ import type {
 	ConsentBannerButton,
 } from './banner-templates';
 import { bannerVisibility } from './banner-visibility';
+import { PrivacyChoicesBanner } from './privacy-choices-banner';
+import type { PrivacyChoicesBannerOptions } from './privacy-choices/presentation';
 
 /** Action groups for the banner footer: one id, or ids grouped together. */
 export type ConsentBannerLayout = (
@@ -89,6 +91,27 @@ const primaryActions = function primaryActions(
 		return undefined;
 	}
 	return Array.isArray(primary) ? primary : [primary];
+};
+
+/**
+ * Whether two Privacy Choices option sets render the same, so the prompt
+ * keeps its inputs while the banner's presentation recomputes.
+ */
+const samePrivacyChoicesOptions = function samePrivacyChoicesOptions(
+	a: PrivacyChoicesBannerOptions | null,
+	b: PrivacyChoicesBannerOptions | null
+): boolean {
+	if (a === null || b === null) {
+		return a === b;
+	}
+	return (
+		(Object.keys(a) as (keyof PrivacyChoicesBannerOptions)[]).every(
+			(key) =>
+				key === 'container' || key === 'actionGroups' || a[key] === b[key]
+		) &&
+		JSON.stringify(a.container) === JSON.stringify(b.container) &&
+		JSON.stringify(a.actionGroups) === JSON.stringify(b.actionGroups)
+	);
 };
 
 /**
@@ -127,16 +150,22 @@ const primaryActions = function primaryActions(
 		Overlay,
 		PolicyActions,
 		Portal,
+		PrivacyChoicesBanner,
 		ScrollLock,
 	],
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
 	selector: 'inth-consent-banner',
+	// Either design hosts the opt-in confirmation: the confirmation claims
+	// the host here, so no other surface renders it.
 	template: `<inth-opt-in-confirmation
 			[noStyle]="resolvedNoStyle()"
 			[disableAnimation]="resolvedDisableAnimation()"
 		/>
-		@if (visibility.shouldRender()) {
+		@if (privacyChoices(); as options) {
+			<inth-pc-banner [options]="options" />
+		}
+		@if (!privacyChoices() && visibility.shouldRender()) {
 			<div inthPortal>
 				@if (presentation().scrollLock) {
 					<div
@@ -361,7 +390,7 @@ export class ConsentBanner {
 	readonly acceptButtonText = input<string | undefined>(undefined);
 	/** The notice's acknowledge button text. */
 	readonly dismissButtonText = input<string | undefined>(undefined);
-	/** Hide the "Secured by" attribution. */
+	/** Hide the "Consent by" attribution. */
 	readonly hideBranding = input(false);
 	/** Which of the provider's legal links follow the description. */
 	readonly legalLinks = input<LegalLinkSelection | undefined>(undefined);
@@ -454,6 +483,42 @@ export class ConsentBanner {
 			surface: 'prompt',
 		});
 	});
+
+	/**
+	 * The Privacy Choices prompt's options when the design opts in
+	 * (`design: 'privacy-choices'`), else `null` for today's banner. The
+	 * custom title, description and action templates belong to today's
+	 * banner; the text inputs apply to both.
+	 *
+	 * @internal
+	 */
+	protected readonly privacyChoices = computed(
+		(): PrivacyChoicesBannerOptions | null => {
+			const presentation = this.presentation();
+			if (
+				presentation.design !== 'privacy-choices' ||
+				!presentation.container
+			) {
+				return null;
+			}
+			return {
+				acceptButtonText: this.acceptButtonText(),
+				actionGroups: presentation.actionGroups,
+				container: presentation.container,
+				customizeButtonText: this.customizeButtonText(),
+				description: this.description(),
+				disableAnimation: this.resolvedDisableAnimation(),
+				dismissButtonText: this.dismissButtonText(),
+				heading: this.heading(),
+				hideBranding: this.hideBranding(),
+				legalLinks: this.legalLinks(),
+				models: this.models(),
+				noStyle: this.resolvedNoStyle(),
+				rejectButtonText: this.rejectButtonText(),
+			};
+		},
+		{ equal: samePrivacyChoicesOptions }
+	);
 
 	/** @internal */
 	protected readonly promptKind = computed(
@@ -566,6 +631,10 @@ export class ConsentBanner {
 	constructor() {
 		// Before the first paint, and again when `noStyle` turns off.
 		effect(() => {
+			// The Privacy Choices prompt adds its presentation's sheets itself.
+			if (this.privacyChoices()) {
+				return;
+			}
 			this.#styles.ensure(
 				BANNER_SHEETS,
 				this.resolvedNoStyle(),

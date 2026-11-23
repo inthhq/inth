@@ -5,11 +5,10 @@ import { createMaterialPolicyFingerprintSync } from './policy-fingerprint';
 import { resolvePolicyRules } from './policy-resolution';
 import { policyRulePresets } from './policy-rule-presets';
 
+// The California presets are not here: narrowing their GPC mapping to
+// marketing (DEF-09) changed their behavior, so their v2 receipts now report
+// `policy-changed` (see `policy-rule-presets.test.ts`).
 const originalHashes = {
-	californiaOptIn:
-		'853108c1a016f8684fa542a54b59930fdbe7b933a9c67607717f2d12f645bb4f',
-	californiaOptOut:
-		'071ca579036f43b53790c7d934ece26b9535eb394ef101f4e18c547acc7b82da',
 	europeIab: 'e86078b4e8a0972035eda14a9b1b3afa592ddb12e8a40a42bb1b332091c6dff5',
 	europeOptIn:
 		'7d6f3c71d9c6c6dae0730bd6cfec93f79dbdee423f854ae0efd43e974b657230',

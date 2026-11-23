@@ -6,8 +6,12 @@ import { deriveActiveUI } from '../derive-surface';
 import type { ConsentKernel, SaveResult } from '../types';
 import { actions, beginAction, isOpen } from './rules';
 
-/** Leave the surface for the one the kernel derives for this snapshot. */
-const settleSurface = (kernel: ConsentKernel): void => {
+/**
+ * Leave the surface for the one the kernel derives for this snapshot.
+ *
+ * @internal
+ */
+export const settleSurface = (kernel: ConsentKernel): void => {
 	const snapshot = kernel.getSnapshot();
 	const next = deriveActiveUI(snapshot);
 	// A save that cleared the prompt already derived this in its commit.

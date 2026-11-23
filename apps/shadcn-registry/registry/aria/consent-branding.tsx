@@ -65,7 +65,7 @@ export function ConsentBrandingMark(props: React.ComponentProps<"svg">) {
 }
 
 /**
- * The "Secured by" tag, linking to inth.com, or to c15t.com for `c15t`
+ * The "Consent by" tag, linking to inth.com, or to c15t.com for `c15t`
  * branding. The banner and dialog attach it to an edge of their card. It
  * renders nothing for `none`.
  */

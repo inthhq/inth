@@ -211,7 +211,7 @@ slots (`consentBannerTitle`, `consentBannerDescription`, `buttonPrimary`,
 `buttonSecondary`) with `color`, `backgroundColor`, `borderRadius` and
 `fontSize`, a brand name and
 mark, the headline and introduction copy, and the provider name and logo in the
-"Secured by" tag. The tag shows the bundled Inth wordmark by default, centred under the actions. Decision labels, category copy and every partner disclosure stay native
+"Consent by" tag. The tag shows the bundled Inth wordmark by default, centred under the actions. Decision labels, category copy and every partner disclosure stay native
 and are not themeable: the theme cannot make Accept louder than Reject, hide a
 decision, or change what a choice means.
 
@@ -297,7 +297,7 @@ it never keeps an unrelated c15t or Inth logo. A custom name takes precedence
 over a built-in provider in the same configuration. Unknown provider values
 preserve the existing theme. `showsBranding = false`, or the existing Boolean
 binary key, hides the whole tag. Its logo is decorative, and accessibility reads
-one label, such as "Secured by Inth". The tag does not change any consent decision.
+one label, such as "Consent by Inth". The tag does not change any consent decision.
 
 React Native hosts get the same screens through the installed native presenters,
 so a bare app sets `ConsentTheme.current` in its `AppDelegate` or `Application`,

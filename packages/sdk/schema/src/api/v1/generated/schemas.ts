@@ -468,6 +468,18 @@ export const consentInitResponseSchema = /* @__PURE__ */ jsonObject(
 									'Invalid length: Expected >=1 characters'
 								)
 							),
+							presentation: v.optional(
+								v.pipe(
+									v.string(),
+									v.check(
+										(value: string) => characters(value) >= 1,
+										'Invalid length: Expected >=1 characters'
+									),
+									v.description(
+										"The rule's surface, hashed in the presentation domain. Present only when policy.surface is."
+									)
+								)
+							),
 						})
 					),
 					matchedBy: v.picklist(['region', 'country', 'default', 'fallback']),
@@ -549,6 +561,80 @@ export const consentInitResponseSchema = /* @__PURE__ */ jsonObject(
 								])
 							),
 							scopeMode: v.picklist(['strict', 'permissive']),
+							surface: v.optional(
+								v.pipe(
+									/* @__PURE__ */ jsonObject(
+										v.strictObject({
+											blocking: v.optional(
+												v.pipe(
+													v.picklist(['forbidden', 'allowed', 'required']),
+													v.description(
+														'Hard constraint on blocking the page until a choice. required needs a choice prompt outside the opt-out model.'
+													)
+												)
+											),
+											container: v.optional(
+												v.pipe(
+													/* @__PURE__ */ jsonVariant(
+														v.variant('type', [
+															v.strictObject({
+																position: v.optional(
+																	v.pipe(
+																		v.picklist(['start', 'end', 'center']),
+																		v.description(
+																			'Defaults to start. start and end follow the page’s writing direction: on a right-to-left page start is the bottom-right corner.'
+																		)
+																	)
+																),
+																type: v.literal('card'),
+															}),
+															v.strictObject({
+																edge: v.optional(
+																	v.pipe(
+																		v.picklist(['bottom', 'top']),
+																		v.description('Defaults to bottom.')
+																	)
+																),
+																type: v.literal('banner'),
+															}),
+															v.strictObject({
+																side: v.optional(
+																	v.pipe(
+																		v.picklist([
+																			'bottom',
+																			'top',
+																			'start',
+																			'end',
+																		]),
+																		v.description(
+																			'Defaults to bottom. start and end are the inline sides and follow the page’s writing direction.'
+																		)
+																	)
+																),
+																type: v.literal('drawer'),
+															}),
+														])
+													),
+													v.description(
+														"Container the prompt uses when the host's presentation picks none."
+													)
+												)
+											),
+											edgeStyle: v.optional(
+												v.pipe(
+													v.picklist(['inset', 'flush']),
+													v.description(
+														"Edge style when the host's presentation picks none."
+													)
+												)
+											),
+										})
+									),
+									v.description(
+										'Layout defaults and blocking constraint. Absent when the rule sets none. Never part of the policy, choice or notice fingerprints.'
+									)
+								)
+							),
 							validity: /* @__PURE__ */ jsonObject(
 								v.strictObject({
 									choiceMs: v.pipe(
@@ -863,6 +949,18 @@ export const consentManifestResponseSchema = v.pipe(
 											'Invalid length: Expected >=1 characters'
 										)
 									),
+									presentation: v.optional(
+										v.pipe(
+											v.string(),
+											v.check(
+												(value: string) => characters(value) >= 1,
+												'Invalid length: Expected >=1 characters'
+											),
+											v.description(
+												"The rule's surface, hashed in the presentation domain. Present only when policy.surface is."
+											)
+										)
+									),
 								})
 							),
 							match: /* @__PURE__ */ jsonObject(
@@ -970,6 +1068,80 @@ export const consentManifestResponseSchema = v.pipe(
 										])
 									),
 									scopeMode: v.picklist(['strict', 'permissive']),
+									surface: v.optional(
+										v.pipe(
+											/* @__PURE__ */ jsonObject(
+												v.strictObject({
+													blocking: v.optional(
+														v.pipe(
+															v.picklist(['forbidden', 'allowed', 'required']),
+															v.description(
+																'Hard constraint on blocking the page until a choice. required needs a choice prompt outside the opt-out model.'
+															)
+														)
+													),
+													container: v.optional(
+														v.pipe(
+															/* @__PURE__ */ jsonVariant(
+																v.variant('type', [
+																	v.strictObject({
+																		position: v.optional(
+																			v.pipe(
+																				v.picklist(['start', 'end', 'center']),
+																				v.description(
+																					'Defaults to start. start and end follow the page’s writing direction: on a right-to-left page start is the bottom-right corner.'
+																				)
+																			)
+																		),
+																		type: v.literal('card'),
+																	}),
+																	v.strictObject({
+																		edge: v.optional(
+																			v.pipe(
+																				v.picklist(['bottom', 'top']),
+																				v.description('Defaults to bottom.')
+																			)
+																		),
+																		type: v.literal('banner'),
+																	}),
+																	v.strictObject({
+																		side: v.optional(
+																			v.pipe(
+																				v.picklist([
+																					'bottom',
+																					'top',
+																					'start',
+																					'end',
+																				]),
+																				v.description(
+																					'Defaults to bottom. start and end are the inline sides and follow the page’s writing direction.'
+																				)
+																			)
+																		),
+																		type: v.literal('drawer'),
+																	}),
+																])
+															),
+															v.description(
+																"Container the prompt uses when the host's presentation picks none."
+															)
+														)
+													),
+													edgeStyle: v.optional(
+														v.pipe(
+															v.picklist(['inset', 'flush']),
+															v.description(
+																"Edge style when the host's presentation picks none."
+															)
+														)
+													),
+												})
+											),
+											v.description(
+												'Layout defaults and blocking constraint. Absent when the rule sets none. Never part of the policy, choice or notice fingerprints.'
+											)
+										)
+									),
 									validity: /* @__PURE__ */ jsonObject(
 										v.strictObject({
 											choiceMs: v.pipe(

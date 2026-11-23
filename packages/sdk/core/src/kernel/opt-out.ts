@@ -5,7 +5,16 @@
  */
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
-import { optOutLiftBlocker } from '../consent-record/opt-out-rules';
+import {
+	answersHeldOptOut,
+	carryOptOutCategories,
+	optOutLiftBlocker,
+} from '../consent-record/opt-out-rules';
+import {
+	OPTIONAL_CONSENT_CATEGORIES,
+	policyOptOutCategories,
+} from '../consent-record/types';
+import type { OptionalConsentCategory } from '../consent-record/types';
 import { validateOptOutRecord } from '../consent-record/validation';
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state';
 import type { OptOutReceiptData } from '../libs/opt-out-state';
@@ -18,24 +27,49 @@ import type {
 } from '../types';
 import type { KernelRuntime } from './runtime';
 
+const inCanonicalOrder = function inCanonicalOrder(
+	categories: readonly OptionalConsentCategory[]
+): OptionalConsentCategory[] {
+	return OPTIONAL_CONSENT_CATEGORIES.filter((category) =>
+		categories.includes(category)
+	);
+};
+
+/**
+ * A new browser-made opt-out record. It carries the categories the current
+ * policy withholds, so a later policy that narrows its mapping cannot lift
+ * them.
+ */
+export const newLocalOptOutRecord = function newLocalOptOutRecord(
+	snapshot: Pick<ConsentSnapshot, 'evaluationPolicy'>,
+	method: 'button' | 'gpc',
+	recordedAt: number,
+	rights: readonly OptOutRight[] = []
+): OptOutRecord {
+	return {
+		categories: inCanonicalOrder(
+			policyOptOutCategories(snapshot.evaluationPolicy)
+		),
+		heldBy: 'device',
+		method,
+		recordedAt,
+		rights: [...rights],
+	};
+};
+
 /**
  * Next durable opt-out record for a visitor-initiated opt-out at `actionAt`,
  * or `null` when an opt-out record already exists.
  */
 export const nextButtonOptOutRecord = function nextButtonOptOutRecord(
-	snapshot: Pick<ConsentSnapshot, 'optOut'>,
+	snapshot: Pick<ConsentSnapshot, 'evaluationPolicy' | 'optOut'>,
 	actionAt: number,
 	rights: readonly OptOutRight[] = []
 ): OptOutRecord | null {
 	if (snapshot.optOut !== null) {
 		return null;
 	}
-	return {
-		heldBy: 'device',
-		method: 'button',
-		recordedAt: actionAt,
-		rights: [...rights],
-	};
+	return newLocalOptOutRecord(snapshot, 'button', actionAt, rights);
 };
 
 export { optOutLiftBlocker };
@@ -84,6 +118,39 @@ export const gpcSignalReportDue = function gpcSignalReportDue(
 	);
 };
 
+const sameList = function sameList(
+	left: readonly string[],
+	right: readonly string[]
+): boolean {
+	return (
+		left.length === right.length &&
+		left.every((entry, index) => entry === right[index])
+	);
+};
+
+/**
+ * Whether two durable opt-out records agree on everything the backend
+ * sends. `categories` is left out because the backend never carries it, so
+ * its copy of a held record still matches the browser's.
+ */
+export const sameOptOutAnswer = function sameOptOutAnswer(
+	left: Readonly<OptOutRecord> | null | undefined,
+	right: Readonly<OptOutRecord> | null | undefined
+): boolean {
+	if (left === right) {
+		return true;
+	}
+	if (!left || !right) {
+		return false;
+	}
+	return (
+		left.heldBy === right.heldBy &&
+		left.method === right.method &&
+		left.recordedAt === right.recordedAt &&
+		sameList(left.rights, right.rights)
+	);
+};
+
 /** Structural equality for two durable opt-out records. */
 export const sameOptOutRecord = function sameOptOutRecord(
 	left: Readonly<OptOutRecord> | null,
@@ -96,11 +163,11 @@ export const sameOptOutRecord = function sameOptOutRecord(
 		return false;
 	}
 	return (
-		left.heldBy === right.heldBy &&
-		left.method === right.method &&
-		left.recordedAt === right.recordedAt &&
-		left.rights.length === right.rights.length &&
-		left.rights.every((rightName, index) => rightName === right.rights[index])
+		sameOptOutAnswer(left, right) &&
+		(left.categories === undefined
+			? right.categories === undefined
+			: right.categories !== undefined &&
+				sameList(left.categories, right.categories))
 	);
 };
 
@@ -181,18 +248,31 @@ export interface OptOutAnswerFence {
 	allowClear: boolean;
 	/** Whether `incoming` came from a backend answer (`false` for the local 404 fallback). */
 	confirmed?: boolean;
+	/**
+	 * `incoming` answers the opt-out act this browser recorded, so it takes
+	 * the categories the browser fixed for that act. Leave unset for any
+	 * other answer (a save, `identify`, a refused lift): its record joins
+	 * the held categories unless it names the same act.
+	 */
+	ownAct?: boolean;
 }
 
+/**
+ * The receipt after a backend answer. This browser's act and its reference
+ * stay only while the answer is that act (`localAct`); a different act was
+ * not made here, so the receipt drops them.
+ */
 const nextSyncedOptOutReceipt = function nextSyncedOptOutReceipt(
 	currentOptOut: Readonly<OptOutRecord> | null,
 	nextOptOut: OptOutRecord | null,
 	currentReceipt: Readonly<OptOutReceiptData>,
-	confirmed: boolean
+	confirmed: boolean,
+	localAct: boolean
 ): OptOutReceiptData {
 	if (nextOptOut === null) {
 		return EMPTY_OPT_OUT_RECEIPT_DATA;
 	}
-	if (currentOptOut === null) {
+	if (currentOptOut === null || !localAct) {
 		return {
 			localAct: null,
 			reference: null,
@@ -204,6 +284,44 @@ const nextSyncedOptOutReceipt = function nextSyncedOptOutReceipt(
 		reference: currentReceipt.reference,
 		rightsConfirmed: currentReceipt.rightsConfirmed || confirmed,
 	};
+};
+
+/**
+ * The backend never carries `categories`. An answer to this browser's own
+ * act keeps the list the browser fixed when it recorded it; so does an
+ * answer saying this device alone holds the opt-out, since that is the act
+ * this browser holds. Any other record, such as one an account holds,
+ * joins it.
+ */
+const answerWithHeldCategories = function answerWithHeldCategories(
+	answer: OptOutRecord,
+	held: Readonly<OptOutRecord> | null,
+	fence: Pick<OptOutAnswerFence, 'ownAct'>
+): OptOutRecord {
+	return carryOptOutCategories(
+		answer,
+		held,
+		fence.ownAct === true ||
+			(held !== null &&
+				(answer.heldBy === 'device' || answersHeldOptOut(answer, held)))
+	);
+};
+
+/**
+ * Whether a backend answer is the act this browser recorded, so its receipt
+ * (the local act and its reference) still describes it: the answer to this
+ * browser's own request, or a record with the same time and method. A
+ * different act, such as a newer one an account holds, was not made here.
+ */
+const answersLocalAct = function answersLocalAct(
+	answer: OptOutRecord | null,
+	held: Readonly<OptOutRecord> | null,
+	fence: Pick<OptOutAnswerFence, 'ownAct'>
+): boolean {
+	if (answer === null || held === null) {
+		return false;
+	}
+	return fence.ownAct === true || answersHeldOptOut(answer, held);
 };
 
 /**
@@ -241,13 +359,18 @@ export const applySyncedOptOut = function applySyncedOptOut(
 	if (next === null && optOutLiftBlocker(current) === 'gpc-active') {
 		return false;
 	}
+	const localAct = answersLocalAct(next, current.optOut, fence);
+	if (next !== null) {
+		next = answerWithHeldCategories(next, current.optOut, fence);
+	}
 	const confirmed = fence.confirmed !== false;
 	const currentReceipt = runtime.getOptOutReceiptData();
 	const nextReceipt = nextSyncedOptOutReceipt(
 		current.optOut,
 		next,
 		currentReceipt,
-		confirmed
+		confirmed,
+		localAct
 	);
 	const receiptChanged =
 		nextReceipt.localAct !== currentReceipt.localAct ||

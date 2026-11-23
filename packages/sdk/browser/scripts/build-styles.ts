@@ -45,6 +45,16 @@ const COMPONENTS = {
 	vendorList: 'vendor-list',
 } as const;
 
+/** The Privacy Choices design's class maps, by generated file name. */
+const PRIVACY_CHOICES_COMPONENTS = {
+	bar: 'consent-bar',
+	card: 'consent-card',
+	dialog: 'privacy-choices',
+	drawer: 'consent-drawer',
+	expand: 'consent-expand',
+	surface: 'consent-surface',
+} as const;
+
 const readClassMap = async function readClassMap(
 	component: string
 ): Promise<Record<string, string>> {
@@ -179,6 +189,20 @@ const main = async function main(): Promise<void> {
 	await writeFile(
 		join(outputDir, 'iab-styles.ts'),
 		`${banner}\nexport const stylesheet: string = ${JSON.stringify(iabStylesheet)};\nexport const classes = ${JSON.stringify(iabClasses, null, '\t')} as const;\n`
+	);
+	// The Privacy Choices design's class maps, one module each, so a page
+	// bundles only the presentation it shows. Their rules are not in the
+	// stock sheet: each surface adds `@inth/sdk-ui`'s sheet for it
+	// (`src/ui/privacy-choices/sheets.ts`).
+	const privacyChoicesDir = join(outputDir, 'privacy-choices');
+	await mkdir(privacyChoicesDir, { recursive: true });
+	await Promise.all(
+		Object.entries(PRIVACY_CHOICES_COMPONENTS).map(async ([file, component]) =>
+			writeFile(
+				join(privacyChoicesDir, `${file}.ts`),
+				`${banner}\nexport const classes = ${JSON.stringify(await readClassMap(component), null, '\t')} as const;\n`
+			)
+		)
 	);
 };
 

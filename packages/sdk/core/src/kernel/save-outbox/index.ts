@@ -956,6 +956,7 @@ export const createSaveOutbox = function createSaveOutbox({
 						actVersion: context.actVersion,
 						allowClear: act.kind === 'lift',
 						generation: context.generation,
+						ownAct: act.kind === 'record',
 						subjectId: adopted ?? act.payload.subjectId,
 					});
 				}

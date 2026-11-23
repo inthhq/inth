@@ -105,7 +105,7 @@ it('measures the real cookie projections and hydrates without writes', async () 
 	kernel.dispose();
 });
 
-it('adds one cookie for a durable opt-out and hydrates it without writes', async () => {
+it('adds two cookies for a durable opt-out and hydrates it without writes', async () => {
 	vi.useFakeTimers();
 	const resolution = resolvePolicyRules({
 		countryCode: 'US',
@@ -126,6 +126,8 @@ it('adds one cookie for a durable opt-out and hydrates it without writes', async
 		'inth-notice',
 		'inth-notice-subject',
 		'inth-opt-out',
+		// The categories live beside the record so older SDKs still read it.
+		'inth-opt-out-categories',
 	]);
 	const optOutCookie = cookies.find((cookie) =>
 		cookie.startsWith('inth-opt-out=')

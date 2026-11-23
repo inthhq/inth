@@ -140,7 +140,8 @@ export const v1ErrorBodySchema = jsonObject(
 	})
 );
 
-export type V1EffectiveOptOut = OptOutRecord;
+/** The backend's opt-out record. `categories` is browser-only and never on the wire. */
+export type V1EffectiveOptOut = Omit<OptOutRecord, 'categories'>;
 export type V1ErrorBody = v.InferOutput<typeof v1ErrorBodySchema>;
 export type V1ValidationDetails = v.InferOutput<
 	typeof v1ValidationDetailsSchema

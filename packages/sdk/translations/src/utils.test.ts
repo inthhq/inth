@@ -14,6 +14,36 @@ import {
 	toTranslationConfig,
 } from './utils';
 
+describe('bundled privacyChoices translations', () => {
+	const english = bundledTranslations.en.privacyChoices;
+
+	it('English defines every key', () => {
+		expect(english).toBeDefined();
+		for (const value of Object.values(english ?? {})) {
+			expect(value.trim()).not.toBe('');
+		}
+	});
+
+	it('[COPY-01] the bundle-dependent sentences take placeholders', () => {
+		expect(english?.optInDescription).toContain('{rights}');
+		expect(english?.optInBarDescription).toContain('{rights}');
+		expect(english?.gpcNote).toContain('{rights}');
+		expect(english?.gpcNote).toContain('{scope}');
+		expect(english?.bannerAllowedRightsOff).toContain('{rights}');
+		expect(english?.bannerAllowedRightsOffGpc).toContain('{rights}');
+	});
+
+	it('[GPC-04] never tells the visitor to turn the signal off', () => {
+		for (const value of Object.values(english ?? {})) {
+			expect(value).not.toMatch(/turn off the signal|turn the signal off/iu);
+		}
+	});
+
+	it('the attribution lead-in reads "Consent by"', () => {
+		expect(bundledTranslations.en.common.securedBy).toBe('Consent by');
+	});
+});
+
 describe('bundled consentGate translations', () => {
 	it.each(Object.entries(bundledTranslations))(
 		'%s defines loading and error copy',
@@ -395,6 +425,17 @@ describe('deepMergeTranslations', () => {
 		expect(result.trigger).toEqual({
 			label: 'Base label',
 			toolbarLabel: 'Custom toolbar',
+		});
+	});
+
+	it('merges the privacyChoices section', () => {
+		const result = deepMergeTranslations(
+			{ ...baseTranslations, privacyChoices: { nudge: 'Base nudge' } },
+			{ privacyChoices: { dialogIntro: 'Custom intro' } }
+		);
+		expect(result.privacyChoices).toEqual({
+			dialogIntro: 'Custom intro',
+			nudge: 'Base nudge',
 		});
 	});
 

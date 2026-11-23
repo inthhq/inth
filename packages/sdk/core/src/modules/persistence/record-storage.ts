@@ -37,6 +37,7 @@ import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
 
 import { normalizeLegacyConsentRecord } from '../../consent-record/normalize';
 import type { LegacyRecordEncoding } from '../../consent-record/normalize';
+import { unionOptOutCategories } from '../../consent-record/opt-out-rules';
 import type {
 	CategoryDecision,
 	ConsentSubject,
@@ -66,6 +67,7 @@ import {
 	decodeComponent,
 	decodeNoticeDismissal,
 	decodeNoticeDismissalCompact,
+	decodeOptOutCategoriesCompact,
 	decodeOptOutRecord,
 	decodeOptOutRecordCompact,
 	decodeStoredConsentEnvelopeCompact,
@@ -81,6 +83,7 @@ import type {
 	StoredConsentEnvelope,
 	StoredIabMetadata,
 	StoredNoticeDismissal,
+	StoredOptOutCategories,
 	StoredOptOutRecord,
 	StoredVendorChoice,
 } from './record-codec';
@@ -1205,10 +1208,49 @@ const optOutSince = function optOutSince(
 };
 
 /**
+ * `read` with the categories its act withholds, from every
+ * `<key>-opt-out-categories` companion that names the same time and method.
+ * A record no companion names keeps its own list, or none (legacy).
+ */
+const optOutWithCategories = function optOutWithCategories(
+	read: DecodeResult<StoredOptOutRecord> | null,
+	companions: readonly (DecodeResult<StoredOptOutCategories> | null)[]
+): DecodeResult<StoredOptOutRecord> | null {
+	if (!read?.ok) {
+		return read;
+	}
+	let { categories } = read.record;
+	for (const companion of companions) {
+		if (
+			companion?.ok &&
+			companion.record.recordedAt === read.record.recordedAt &&
+			companion.record.method === read.record.method
+		) {
+			// Both lists are this act's own, so neither stands for legacy.
+			categories =
+				categories === undefined
+					? companion.record.categories
+					: unionOptOutCategories(categories, companion.record.categories);
+		}
+	}
+	return categories === read.record.categories
+		? read
+		: { ok: true, record: { ...read.record, categories } };
+};
+
+const readOptOutCategories = function readOptOutCategories(
+	raw: string | null | undefined
+): DecodeResult<StoredOptOutCategories> | null {
+	return readCompactCookie(raw, decodeOptOutCategoriesCompact);
+};
+
+/**
  * Reads the durable opt-out record from cookie and localStorage. When both
- * projections are valid, the newer one wins; on equal times, rights are
- * unioned in canonical order so a dropped cookie write never loses an
- * opt-out right. Each copy is cut to the clear epoch first.
+ * projections are valid, the newer one's act wins; on equal times, rights
+ * are unioned in canonical order so a dropped cookie write never loses an
+ * opt-out right. Withheld categories are always unioned, so a newer copy
+ * never lifts a category an older one withholds. Each copy is cut to the
+ * clear epoch first.
  */
 export const readStoredOptOutRecord = function readStoredOptOutRecord(
 	config: StorageConfig | undefined,
@@ -1221,36 +1263,64 @@ export const readStoredOptOutRecord = function readStoredOptOutRecord(
 		(family) => readEpochOf(family, now),
 		(keys, legacyEpoch) => {
 			const familyEpoch = Math.max(epoch, legacyEpoch);
-			const fromCookie = optOutSince(
-				readCompactCookie(
-					getRawCookieValue(keys.optOut, onUnavailable),
-					(text) => decodeOptOutRecordCompact(text, now)
+			const companions = [
+				readOptOutCategories(
+					getRawCookieValue(keys.optOutCategories, onUnavailable)
 				),
-				familyEpoch
+				readOptOutCategories(
+					readLocalStorageText(keys.optOutCategories, onUnavailable)
+				),
+			];
+			const fromCookie = optOutWithCategories(
+				optOutSince(
+					readCompactCookie(
+						getRawCookieValue(keys.optOut, onUnavailable),
+						(text) => decodeOptOutRecordCompact(text, now)
+					),
+					familyEpoch
+				),
+				companions
 			);
-			const fromLocal = optOutSince(
-				readLocalJson(
-					keys.optOut,
-					(value) => decodeOptOutRecord(value, now),
-					onUnavailable
+			const fromLocal = optOutWithCategories(
+				optOutSince(
+					readLocalJson(
+						keys.optOut,
+						(value) => decodeOptOutRecord(value, now),
+						onUnavailable
+					),
+					familyEpoch
 				),
-				familyEpoch
+				companions
 			);
 			if (fromCookie?.ok && fromLocal?.ok) {
-				if (fromLocal.record.recordedAt < fromCookie.record.recordedAt) {
-					return fromCookie;
+				const cookieAt = fromCookie.record.recordedAt;
+				const localAt = fromLocal.record.recordedAt;
+				let { rights } = fromLocal.record;
+				if (localAt < cookieAt) {
+					({ rights } = fromCookie.record);
+				} else if (localAt === cookieAt) {
+					const mergedRights = new Set([
+						...fromCookie.record.rights,
+						...fromLocal.record.rights,
+					]);
+					rights = OPT_OUT_RIGHTS.filter((right) => mergedRights.has(right));
 				}
-				if (fromLocal.record.recordedAt > fromCookie.record.recordedAt) {
-					return fromLocal;
-				}
-				const mergedRights = new Set([
-					...fromCookie.record.rights,
-					...fromLocal.record.rights,
-				]);
-				const rights = OPT_OUT_RIGHTS.filter((right) =>
-					mergedRights.has(right)
+				// The newer copy's act wins, but neither copy lifts a category
+				// the other withholds. A copy without a list is a legacy
+				// record, which withholds marketing and measurement, never
+				// nothing.
+				const newer = localAt < cookieAt ? fromCookie : fromLocal;
+				const categories = unionOptOutCategories(
+					fromCookie.record.categories,
+					fromLocal.record.categories
 				);
-				return { ok: true, record: { ...fromLocal.record, rights } };
+				const record: StoredOptOutRecord = { ...newer.record, rights };
+				if (categories === undefined) {
+					delete record.categories;
+				} else {
+					record.categories = categories;
+				}
+				return { ok: true, record };
 			}
 			if (fromCookie?.ok) {
 				return fromCookie;
@@ -1270,12 +1340,19 @@ export const readStoredOptOutRecordFromCookieHeader =
 			config,
 			(family) => readEpochOfFromCookieHeader(cookieHeader, family, now),
 			(keys, legacyEpoch) =>
-				optOutSince(
-					readCompactCookie(
-						readCookieValueFromHeader(cookieHeader, keys.optOut),
-						(text) => decodeOptOutRecordCompact(text, now)
+				optOutWithCategories(
+					optOutSince(
+						readCompactCookie(
+							readCookieValueFromHeader(cookieHeader, keys.optOut),
+							(text) => decodeOptOutRecordCompact(text, now)
+						),
+						legacyEpoch
 					),
-					legacyEpoch
+					[
+						readOptOutCategories(
+							readCookieValueFromHeader(cookieHeader, keys.optOutCategories)
+						),
+					]
 				)
 		);
 	};

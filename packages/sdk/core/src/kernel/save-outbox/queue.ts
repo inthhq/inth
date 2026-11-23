@@ -1562,6 +1562,7 @@ export const createQueueWorker = function createQueueWorker({
 					actVersion,
 					allowClear: entry.kind === 'lift',
 					generation,
+					ownAct: entry.kind === 'record',
 					subjectId: adopted ?? subjectId,
 				});
 			}

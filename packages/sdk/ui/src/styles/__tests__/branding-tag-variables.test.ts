@@ -1,5 +1,5 @@
 /**
- * The "Secured by" tag reads its colours, border, shadow and the edge it
+ * The "Consent by" tag reads its colours, border, shadow and the edge it
  * shares with the card from `--consent-branding-tag-*` variables. Without
  * them a host that wants the tag to match its card has to out-rank four
  * descendant rules that each hardcode `--inth-text-on-primary`.
@@ -173,7 +173,7 @@ const resolve = function resolve(
 	);
 };
 
-describe('the "Secured by" tag', () => {
+describe('the "Consent by" tag', () => {
 	test('found its class names', () => {
 		expect(cls('brandingTag')).toMatch(/^inth-ui-brandingTag-/u);
 	});

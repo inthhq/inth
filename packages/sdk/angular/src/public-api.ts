@@ -191,6 +191,9 @@ export type {
 	ConsentBannerLayout,
 } from './lib/banner';
 
+// links
+export { PrivacyChoicesLink } from './lib/dialog/privacy-choices-link';
+
 // Private (`ɵ`): building blocks the package's other entry points share.
 // An entry point imports another only by its package name, so these are
 // exported here; they are not part of the public API.
@@ -217,6 +220,13 @@ export {
 	shouldShowBranding as ɵshouldShowBranding,
 } from './lib/shared';
 export type { LegalLinkSelection as ɵLegalLinkSelection } from './lib/shared';
+// Private (`ɵ`): how the consent dialog reaches the Privacy Choices (v6)
+// dialog. The v6 parts stay out of this entry's eager code: they load only
+// through this loader and the stock banner's, so a classic page downloads
+// none of them.
+export { loadPrivacyChoicesDialog as ɵloadPrivacyChoicesDialog } from './lib/dialog/privacy-choices-dialog-loader';
+export type { PrivacyChoicesDialog as ɵPrivacyChoicesDialog } from './lib/privacy-choices/dialog/privacy-choices-dialog';
+export { requestReceiptFocus as ɵrequestReceiptFocus } from './lib/privacy-choices/receipt-focus';
 
 // Engine types the guides use; the helpers are in the `engine` entry.
 export type {

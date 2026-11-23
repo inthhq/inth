@@ -1,0 +1,340 @@
+/*
+ * The Banner presentation: a slim one-line bar on the bottom or top edge.
+ * Customize expands it into the drawer on the same edge (full head, the
+ * options and the Save footer). Its classes sit next to the
+ * `consent-surface` classes on the same elements; see that sheet for the
+ * data attributes.
+ *
+ * Collapsed, the bar is `.row`: `.text` (one sentence and one link) and
+ * `.actions`, whose buttons may sit in the host's `.actionGroup`s. It
+ * stacks by its own width, not by device, through a
+ * container query on `.card`, so a narrow desktop window stacks too.
+ *
+ * Hooks, read with a fallback:
+ *
+ *   --consent-bar-max-width     (960px, the content column)
+ *   --consent-bar-radius        (--inth-radius-lg when inset)
+ *   --consent-bar-shadow        (layered when inset)
+ *   --consent-bar-panel-height  (400px; 300px on phone)
+ *
+ * The shadow falls back to the classic `--consent-banner-shadow`, which
+ * the classic bar wore too, and the sentence to the classic description
+ * colour.
+ */
+
+@layer components {
+	.root {
+		--_consent-gutter: max(
+			var(--inth-space-lg),
+			calc(50% - var(--consent-bar-max-width, 960px) / 2)
+		);
+		--_consent-scroll-height: var(--consent-bar-panel-height, 400px);
+		--_consent-enter-duration: calc(var(--inth-duration-slow) * 1.4);
+		--_consent-bar-travel: 8px;
+		inset-inline: 0;
+		bottom: 0;
+	}
+
+	.root[data-placement='banner-top'] {
+		--_consent-bar-travel: -8px;
+		top: 0;
+		bottom: auto;
+	}
+
+	.shell {
+		width: 100%;
+	}
+
+	.card {
+		container-type: inline-size;
+	}
+
+	.row {
+		display: flex;
+		align-items: center;
+		gap: var(--inth-space-md);
+		padding: calc(var(--inth-space-xs) * 2.5) var(--_consent-gutter);
+	}
+
+	.text {
+		flex: 1 1 auto;
+		min-width: 0;
+		margin: 0;
+		font-size: calc(var(--inth-font-size-sm) * 0.9643);
+		line-height: var(--inth-line-height-normal);
+		color: var(--_consent-muted, var(--inth-text-muted));
+		/* The stock policy links read these. */
+		--legal-links-color: var(--inth-primary-text, var(--inth-primary));
+		--legal-links-text-decoration: underline;
+	}
+
+	/* Underlined, as in the card's description (WCAG 1.4.1). */
+	.text a {
+		color: var(--inth-primary-text, var(--inth-primary));
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+
+	.actions {
+		display: flex;
+		flex: none;
+		align-items: center;
+		gap: var(--inth-space-sm);
+	}
+
+	/* Buttons sit in the row or in a group; the group is not a button.
+	   The row in the selector outweighs the stock button's size rule, so
+	   the bar's padding holds whichever sheet a page loads last. */
+	.root .row .actions > :not(.actionGroup),
+	.root .row .actions > .actionGroup > * {
+		min-height: 32px;
+		padding: calc(var(--inth-space-xs) * 1.25) calc(var(--inth-space-sm) * 1.5);
+	}
+
+	/* Expanded, the bar is the drawer on its edge: the head, options and
+	   footer follow the content column. */
+	.head,
+	.footer {
+		padding-inline: var(--_consent-gutter);
+	}
+
+	/* The grow plays on the card, not the shell, so folding back stops it
+	   without replaying the shell's entrance. */
+	.root[data-expanded='true'] .card {
+		animation: consent-bar-grow calc(var(--inth-duration-slow) * 1.1)
+			var(--_consent-ease);
+	}
+
+	/* The tag sits 8px above a bottom bar and 8px below a top one, flush
+	   with the content column. */
+	.tag {
+		margin-inline-end: var(--_consent-gutter);
+	}
+
+	.root[data-placement='banner-top'] .tag {
+		order: 2;
+		margin-top: var(--inth-space-sm);
+		margin-bottom: 0;
+	}
+
+	/* Inset (the default): a rounded bar 12px from the edges. */
+	.root[data-edge-style='inset'] {
+		--_consent-radius: var(--consent-bar-radius, var(--inth-radius-lg));
+		--_consent-shadow: var(
+			--consent-bar-shadow,
+			var(
+				--_consent-classic-shadow,
+				0 1px 2px color-mix(in srgb, var(--inth-overlay) 12%, transparent),
+				0 8px 24px -6px color-mix(in srgb, var(--inth-overlay) 28%, transparent),
+				0 24px 48px -16px
+					color-mix(in srgb, var(--inth-overlay) 36%, transparent)
+			)
+		);
+		padding: 0 calc(var(--inth-space-sm) * 1.5)
+			calc(var(--inth-space-sm) * 1.5 + env(safe-area-inset-bottom, 0px));
+	}
+
+	.root[data-edge-style='inset'][data-placement='banner-top'] {
+		padding: calc(var(--inth-space-sm) * 1.5) calc(var(--inth-space-sm) * 1.5) 0;
+	}
+
+	/* Flush: square and edge to edge, with no border on the screen side. */
+	.root[data-edge-style='flush'] {
+		--_consent-radius: 0;
+		--_consent-shadow: var(
+			--consent-bar-shadow,
+			var(
+				--_consent-classic-shadow,
+				0 -8px 24px color-mix(in srgb, var(--inth-overlay) 20%, transparent)
+			)
+		);
+	}
+
+	.root[data-edge-style='flush'][data-placement='banner-top'] {
+		--_consent-shadow: var(
+			--consent-bar-shadow,
+			var(
+				--_consent-classic-shadow,
+				0 8px 24px color-mix(in srgb, var(--inth-overlay) 20%, transparent)
+			)
+		);
+	}
+
+	/* The card's own bottom padding keeps its surface under the home
+	   indicator. */
+	.root[data-edge-style='flush'] .card {
+		border-inline-width: 0;
+		border-bottom-width: 0;
+		padding-bottom: env(safe-area-inset-bottom, 0px);
+	}
+
+	.root[data-edge-style='flush'][data-placement='banner-top'] .card {
+		border-top-width: 0;
+		border-bottom-width: var(--consent-banner-border-width, 1px);
+		padding-bottom: 0;
+	}
+
+	/* Each edge slides in from its own side and back out; inset travels the
+	   extra 12px so the layer fully leaves the screen. Exits sit one
+	   attribute heavier than entrances. */
+
+	.root[data-placement='banner-bottom'] .shell {
+		animation-name: consent-bar-up;
+	}
+
+	.root[data-placement='banner-bottom'][data-state='closed'] .shell {
+		animation-name: consent-bar-down;
+	}
+
+	.root[data-placement='banner-top'] .shell {
+		animation-name: consent-bar-from-top;
+	}
+
+	.root[data-placement='banner-top'][data-state='closed'] .shell {
+		animation-name: consent-bar-to-top;
+	}
+
+	.root[data-edge-style='inset'][data-placement='banner-bottom'] .shell {
+		animation-name: consent-bar-up-inset;
+	}
+
+	.root[data-edge-style='inset'][data-placement='banner-bottom'][data-state='closed']
+		.shell {
+		animation-name: consent-bar-down-inset;
+	}
+
+	.root[data-edge-style='inset'][data-placement='banner-top'] .shell {
+		animation-name: consent-bar-from-top-inset;
+	}
+
+	.root[data-edge-style='inset'][data-placement='banner-top'][data-state='closed']
+		.shell {
+		animation-name: consent-bar-to-top-inset;
+	}
+
+	/* Stacked, the text sits on top and the actions share the width; the
+	   content column inset stays, so the tag still lines up (PERM-10). */
+	@container (max-width: 720px) {
+		.row {
+			flex-direction: column;
+			align-items: stretch;
+			gap: calc(var(--inth-space-xs) * 2.5);
+			padding-block: calc(var(--inth-space-sm) * 1.5);
+		}
+
+		/* Every button takes an equal track, grouped or not. A group keeps
+		   its own box, so its slot's background, border and padding still
+		   show: it spans one track per button and lays them out on the
+		   row's tracks (subgrid), so with no padding its buttons match the
+		   ungrouped ones. A track still grows to fit its label. */
+		.actions {
+			display: grid;
+			grid-auto-columns: 1fr;
+			grid-auto-flow: column;
+		}
+
+		.root .actions > .actionGroup {
+			display: grid;
+			grid-column: span 2;
+			grid-template-columns: subgrid;
+		}
+
+		.root .actions > .actionGroup:has(> :nth-child(3)) {
+			grid-column: span 3;
+		}
+
+		.root .actions > .actionGroup:has(> :nth-child(4)) {
+			grid-column: span 4;
+		}
+
+		.root .actions > :not(.actionGroup),
+		.root .actions > .actionGroup > * {
+			min-height: 40px;
+		}
+	}
+
+	@media (pointer: coarse) {
+		.root .actions > :not(.actionGroup),
+		.root .actions > .actionGroup > * {
+			min-height: 44px;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.root {
+			--_consent-gutter: var(--inth-space-md);
+			--_consent-scroll-height: var(--consent-bar-panel-height, 300px);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.root[data-placement='banner-bottom'] .shell,
+		.root[data-placement='banner-bottom'][data-state='closed'] .shell,
+		.root[data-placement='banner-top'] .shell,
+		.root[data-placement='banner-top'][data-state='closed'] .shell,
+		.root[data-edge-style='inset'][data-placement='banner-bottom'] .shell,
+		.root[data-edge-style='inset'][data-placement='banner-bottom'][data-state='closed']
+			.shell,
+		.root[data-edge-style='inset'][data-placement='banner-top'] .shell,
+		.root[data-edge-style='inset'][data-placement='banner-top'][data-state='closed']
+			.shell,
+		.root[data-expanded='true'] .card {
+			animation: none;
+		}
+	}
+
+	@keyframes consent-bar-up {
+		from {
+			transform: translateY(100%);
+		}
+	}
+
+	@keyframes consent-bar-down {
+		to {
+			transform: translateY(100%);
+		}
+	}
+
+	@keyframes consent-bar-up-inset {
+		from {
+			transform: translateY(calc(100% + 12px));
+		}
+	}
+
+	@keyframes consent-bar-down-inset {
+		to {
+			transform: translateY(calc(100% + 12px));
+		}
+	}
+
+	@keyframes consent-bar-from-top {
+		from {
+			transform: translateY(-100%);
+		}
+	}
+
+	@keyframes consent-bar-to-top {
+		to {
+			transform: translateY(-100%);
+		}
+	}
+
+	@keyframes consent-bar-from-top-inset {
+		from {
+			transform: translateY(calc(-100% - 12px));
+		}
+	}
+
+	@keyframes consent-bar-to-top-inset {
+		to {
+			transform: translateY(calc(-100% - 12px));
+		}
+	}
+
+	@keyframes consent-bar-grow {
+		from {
+			opacity: 0.6;
+			transform: translateY(var(--_consent-bar-travel, 8px));
+		}
+	}
+}

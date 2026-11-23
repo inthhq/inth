@@ -98,6 +98,28 @@ const activeReloadHook = function activeReloadHook(
 	return undefined;
 };
 
+/**
+ * Carry a surface's opt-out across the revocation reload it causes: when a
+ * reload is due for the move from `before` to `after`, write the
+ * post-reload marker, so the next document opens the opt-out confirmation
+ * once. A Privacy Choices surface shows that as its dialog with the
+ * receipt. The reload itself is not delayed.
+ *
+ * `optOutConsentSurface` does this for its own one-click opt-out; a
+ * surface that records the opt-out through `kernel.commands.optOut` calls
+ * this after the command.
+ *
+ * @returns Whether the marker was written.
+ * @internal
+ */
+export const markOptOutReloadIfDue = function markOptOutReloadIfDue(
+	kernel: ConsentKernel,
+	before: ConsentSnapshot,
+	after: ConsentSnapshot
+): boolean {
+	return activeReloadHook(kernel, before, after)?.markPending() ?? false;
+};
+
 const entries = new WeakMap<ConfirmationKey, ConfirmationEntry>();
 
 const entryFor = function entryFor(key: ConfirmationKey): ConfirmationEntry {

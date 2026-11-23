@@ -42,6 +42,7 @@ import {
 	policyDefault,
 } from '../consent/consent-types';
 import type { AllConsentNames } from '../consent/consent-types';
+import { has } from '../libs/has';
 import { resolveCategoryOptOutLock } from '../libs/opt-out-state';
 import { listedVendors } from '../libs/vendor-listing';
 import { vendorAxisActive } from '../libs/vendors';
@@ -82,6 +83,14 @@ export interface PreferenceDraftState {
 	readonly vendors: Readonly<Grants>;
 	/** Whether any staged value differs from the record. */
 	readonly isDirty: boolean;
+	/**
+	 * Whether what would actually run differs from the record: a category
+	 * that changed, or a vendor whose grant changed while its category is
+	 * on. A vendor edit under a category that is off changes nothing that
+	 * runs, so it does not count. An EU "Save choices" button enables on
+	 * this, not on {@link isDirty}.
+	 */
+	readonly hasEffectiveChanges: boolean;
 	/** Whether the policy or the vendor rows changed under a staged edit. */
 	readonly isStale: boolean;
 }
@@ -281,6 +290,39 @@ const recordedVendors = function recordedVendors(
 	return [grants, toggleableVendorIds(snapshot)];
 };
 
+/**
+ * Whether `values` and `vendors` would run anything different from
+ * `savedValues` and `savedVendors`. A vendor counts only while its category
+ * is on, on either side, so toggling one under an off category is not a
+ * change.
+ */
+const effectiveChange = function effectiveChange(
+	snapshot: ConsentSnapshot,
+	displayed: readonly AllConsentNames[],
+	current: { values: ConsentState; vendors: Grants },
+	saved: { values: ConsentState; vendors: Grants },
+	toggleable: ReadonlySet<string>
+): boolean {
+	if (
+		displayed.some(
+			(category) => current.values[category] !== saved.values[category]
+		)
+	) {
+		return true;
+	}
+	// A vendor's category is a consent condition, as the gate reads it.
+	const runs = (
+		side: { values: ConsentState; vendors: Grants },
+		vendor: { category: Parameters<typeof has>[0]; id: string }
+	) =>
+		side.vendors[vendor.id] === true &&
+		has(vendor.category, { ...side.values, necessary: true });
+	return (snapshot.vendors?.declared ?? []).some(
+		(vendor) =>
+			toggleable.has(vendor.id) && runs(current, vendor) !== runs(saved, vendor)
+	);
+};
+
 /** `value` over `base` for every staged key `include` accepts. */
 const overlay = function overlay<KeyType extends string>(
 	base: Readonly<Record<KeyType, boolean>>,
@@ -391,14 +433,31 @@ export const createPreferenceDraft = function createPreferenceDraft(
 		);
 		const vendors = overlay(seeded, stagedVendors, (id) => toggleable.has(id));
 		const isStale = isDirty && seen !== review;
+		const hasEffectiveChanges =
+			isDirty &&
+			effectiveChange(
+				snapshot,
+				displayedCategories,
+				{ values, vendors },
+				{ values: baseline, vendors: seeded },
+				toggleable
+			);
 		if (!previous) {
-			return { displayedCategories, isDirty, isStale, values, vendors };
+			return {
+				displayedCategories,
+				hasEffectiveChanges,
+				isDirty,
+				isStale,
+				values,
+				vendors,
+			};
 		}
 		return keep(previous, {
 			displayedCategories: keep(
 				previous.displayedCategories,
 				displayedCategories
 			),
+			hasEffectiveChanges,
 			isDirty,
 			isStale,
 			values: keep(previous.values, values),

@@ -73,7 +73,7 @@ describe('client-only first render', () => {
 		const root = firstRender();
 		expect(
 			root.querySelector('[data-testid="consent-dialog-branding"]')?.textContent
-		).toContain('Secured by');
+		).toContain('Consent by');
 	});
 
 	test('bootstraps a page with a prefetch with its banner in the first render', async () => {

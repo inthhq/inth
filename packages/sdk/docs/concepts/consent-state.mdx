@@ -91,6 +91,7 @@ Inth writes consent records to both a cookie for SSR and `localStorage`.
 | Denials win | On same-millisecond conflicts, denial wins. If a cookie write fails, such as exceeding cookie size limits, while `localStorage` succeeds, newer local denials layer onto the cookie while newer local grants do not. `<storageKey>-cookie-miss` tracks dropped cookie writes until the next cookie write or clear. |
 | Storage full | If `localStorage` rejects a write that the cookie accepts, the stale `localStorage` copy is removed. |
 | Notice records | Stored in v1 format in `<key>-notice`, with subject bound in `<key>-notice-subject` by matching timestamp and fingerprint. Rewritten on subject ID changes and protected from wildcard cleanup. |
+| Opt-out categories | The categories an opt-out switches off are stored in `<key>-opt-out-categories`, bound to the opt-out in `<key>-opt-out` by matching time and method, so SDKs that predate the list still read the opt-out. Copies from the same millisecond switch off what either does; a record without a list switches off `marketing` and `measurement`. |
 | Vendor denials | A `localStorage` vendor copy at least as new as the cookie adds denials without lifting cookie denials. With `crossSubdomain`, a vendor-only visitor keeps the local subject ID until a later vendor save updates the shared cookie. |
 
 ### Clearing records and clear epochs

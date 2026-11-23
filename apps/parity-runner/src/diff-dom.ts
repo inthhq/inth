@@ -37,12 +37,27 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		// and the surrounding structure is the part worth comparing.
 		const AUTO_ID_SEGMENT =
 			/-(?:_r_[0-9a-z]+_|r[0-9a-z]+|c[0-9]+|v(?:-[0-9]+)+)-/gu;
+		// Angular has no `useId`: @inth/angular counts ids per application and
+		// appends the count to the part's `inth-` prefix, `inth-pc-3-category-
+		// necessary` where React writes `inth-pc-_r_1_-category-necessary`.
+		// Only the count is generated; the rest of the id still compares.
+		// DevTools ids are not Angular's: their number is the DevTools' own
+		// instance count, the same in every adapter, which the DevTools
+		// comparison normalizes itself.
+		const ANGULAR_ID =
+			/^(?<prefix>inth-(?!dev-tools-)[a-z]+(?:-[a-z]+)*)-[0-9]+(?=-|$)/u;
+		const angularPage = document.querySelector('[ng-version]') !== null;
 		const STRIP = new Set([
 			'data-reactroot',
 			'data-reactid',
 			'data-parity-surface',
 			'data-svelte-h',
 			'data-v-app',
+			// Whether the pre-hydration script may hold a tap on a button
+			// depends on whether the adapter replays it through its own
+			// handlers, which each adapter adds on its own schedule. The
+			// button the visitor sees is the same.
+			'data-early-tap',
 		]);
 
 		const isProviderArtifact = function isProviderArtifact(
@@ -108,6 +123,20 @@ export const captureDomSnapshot = function captureDomSnapshot(
 				.join(';');
 		};
 
+		// An Astro page: one carrying the config its server render emits, as
+		// a `<script data-inth-config>` or (in the Storybook, which strips the
+		// script) the `window` global that script sets.
+		const astroPage =
+			'__inthAstroConfig' in window ||
+			document.querySelector('script[data-inth-config]') !== null;
+		// Astro's Privacy Choices prompt prefixes its element ids with a fixed
+		// `inth-pc-banner`: the server and the browser render the same ids,
+		// and a page has one prompt. React builds the same ids from `useId`
+		// (`inth-pc-_r_1_-category-…`), which the generated-token rules below
+		// already reduce to `__AUTO__`. On an Astro page the fixed prefix is
+		// that token; the rest of the id stays compared.
+		const ASTRO_PROMPT_ID = /^inth-pc-banner(?=-)/u;
+
 		const normAttr = function normAttr(
 			element: Element,
 			name: string,
@@ -145,7 +174,21 @@ export const captureDomSnapshot = function captureDomSnapshot(
 				if (AUTO_ID.test(value)) {
 					return '__AUTO__';
 				}
-				return value
+				// Each adapter's own id scheme, only on its own page.
+				const normalizeId = (id: string): string => {
+					if (angularPage) {
+						return id.replace(ANGULAR_ID, '$<prefix>-__AUTO__');
+					}
+					if (astroPage) {
+						return id.replace(ASTRO_PROMPT_ID, 'inth-pc-__AUTO__');
+					}
+					return id;
+				};
+				const ids =
+					angularPage || astroPage
+						? value.split(/\s+/u).map(normalizeId).join(' ')
+						: value;
+				return ids
 					.replace(AUTO_ID_SEGMENT, '-__AUTO__-')
 					.replace(AUTO_ID_SUFFIX, '-__AUTO__');
 			}
@@ -325,16 +368,53 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		// adapter renders an attribute named that way (theirs are
 		// `data-inth-*`), so the rule applies only on an Angular page and only
 		// to empty values.
-		const angularPage = document.querySelector('[ng-version]') !== null;
 		const angularSelectorMarker = (attribute: Attr): boolean =>
 			angularPage &&
 			attribute.value === '' &&
 			/^inth[a-z0-9-]*$/u.test(attribute.name);
 
+		// Astro's components are server-rendered markup with no framework
+		// JavaScript of their own: each control carries the hooks the page's
+		// one client boot reads (`data-inth-action` and `data-inth-dialog` for
+		// what a click does, `data-inth-visible` for the banner's state, the
+		// `<PrivacyChoicesLink>` label and icon hooks). Other adapters keep the
+		// same facts in component state. The rule applies only on an Astro
+		// page, and only to these names, which no other adapter renders.
+		// `data-inth-surface` is not one: every adapter marks its surfaces
+		// with it. The controls' roles, names, behaviour and every other
+		// attribute stay compared.
+		const ASTRO_BOOT_HOOKS = new Set([
+			'data-inth-action',
+			'data-inth-default-label',
+			'data-inth-dialog',
+			'data-inth-icon-class',
+			'data-inth-privacy-choices-link',
+			'data-inth-visible',
+		]);
+		const astroBootHook = (attribute: Attr): boolean =>
+			astroPage && ASTRO_BOOT_HOOKS.has(attribute.name);
+
 		const hiddenSvgMetadata = (element: Element, attribute: Attr): boolean =>
 			element.tagName.toLowerCase() === 'svg' &&
 			Boolean(element.closest('[aria-hidden="true"]')) &&
 			attribute.name === 'aria-labelledby';
+
+		// A modal surface makes the page around it inert by setting `inert` on
+		// each sibling along its path to <body> (page-block.ts). Above a
+		// captured root, that path runs through each adapter's own wrappers,
+		// which this snapshot already treats as framework-specific: React's
+		// announcement region is a sibling on the dialog's path and carries
+		// the attribute itself, Angular's sits inside the
+		// `<inth-consent-banner>` host, which gets it instead, and Astro's
+		// portalled roots inherit it from a wrapper. So a tagged root records
+		// whether it is inert at all, on every page, and the baseline and each
+		// adapter compare the same fact. Inside a root, `inert` stays as
+		// written.
+		const taggedRoot = (element: Element): boolean =>
+			element.hasAttribute('data-testid') &&
+			!element.parentElement?.closest('[data-testid]');
+		const rootInert = (element: Element): boolean =>
+			taggedRoot(element) && element.closest('[inert]') !== null;
 
 		const needsSwitchSize = (element: Element): boolean =>
 			element.getAttribute('role') === 'switch' &&
@@ -397,6 +477,8 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		): boolean =>
 			STRIP.has(attribute.name) ||
 			angularSelectorMarker(attribute) ||
+			astroBootHook(attribute) ||
+			(attribute.name === 'inert' && taggedRoot(element)) ||
 			// The flag that pairs with the end marker above. It changes
 			// nothing once the marker is in the DOM.
 			(attribute.name === 'data-inth-streamed' &&
@@ -454,6 +536,9 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			}
 			if (needsSwitchSize(element)) {
 				attrs.push('data-size="small"');
+			}
+			if (rootInert(element)) {
+				attrs.push('inert=""');
 			}
 			attrs.push(...triggerEvidence(element));
 			if (element instanceof SVGElement) {

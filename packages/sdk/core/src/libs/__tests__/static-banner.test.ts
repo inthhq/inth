@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { canonicalizePolicySurface } from '@inth/sdk-schema/types';
+import type { PolicySurface } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { PREFETCH_WINDOW_KEY } from '../page-globals';
@@ -6,7 +8,9 @@ import {
 	buildStaticBannerScript,
 	STATIC_BANNER_ATTR,
 	staticBannerCopyHash,
+	SURFACE_LAYOUT_CHECK,
 } from '../static-banner';
+import type { StaticBannerKey } from '../static-banner';
 import { storedChoiceNames } from '../storage-keys';
 
 const COPY = {
@@ -14,7 +18,7 @@ const COPY = {
 		acceptAll: 'Accept All',
 		customize: 'Customize',
 		rejectAll: 'Reject All',
-		securedBy: 'Secured by',
+		securedBy: 'Consent by',
 	},
 	cookieBanner: {
 		description: 'This site uses cookies.',
@@ -48,7 +52,10 @@ const stored = [...names.choice, ...names.notice];
  * Puts the static banner and its script in the page and runs the script as
  * the parser would, with `document.currentScript` set.
  */
-const mount = (prefetch: Promise<unknown> | undefined) => {
+const mount = (
+	prefetch: Promise<unknown> | undefined,
+	bannerKey: StaticBannerKey = KEY
+) => {
 	const win = window as unknown as Record<string, unknown>;
 	win[PREFETCH_WINDOW_KEY] = prefetch
 		? { 'https://consent.example.com/init|same-origin': { promise: prefetch } }
@@ -61,7 +68,7 @@ const mount = (prefetch: Promise<unknown> | undefined) => {
 	// jsdom would run a classic script on insertion, in its own window;
 	// this test runs it below, with `currentScript` set.
 	script.type = 'text/x-static-banner';
-	script.textContent = buildStaticBannerScript(KEY, stored);
+	script.textContent = buildStaticBannerScript(bannerKey, stored);
 	document.body.append(banner, script);
 	const parsing = new Proxy(document, {
 		get: (target, key) => {
@@ -162,10 +169,119 @@ describe('static banner script', () => {
 				},
 			},
 		],
+		[
+			'a policy whose surface asks for another layout',
+			{
+				policyResolution: {
+					fingerprints: {
+						policy: 'policy-fingerprint',
+						presentation: 'drawer-layout',
+					},
+					status: 'matched',
+				},
+			},
+		],
+		[
+			'a policy surface without its presentation fingerprint',
+			{
+				policyResolution: {
+					fingerprints: { policy: 'policy-fingerprint' },
+					policy: { surface: { container: { type: 'drawer' } } },
+					status: 'matched',
+				},
+			},
+		],
 		['other branding', { branding: 'c15t' }],
 		['vendors', { vendors: [{ id: 'x' }] }],
 	])('removes the banner when /init answers with %s', async (_, changes) => {
 		const banner = mount(Promise.resolve(answer(changes)));
+		await settle();
+		expect(banner.isConnected).toBe(false);
+	});
+
+	test('shows the banner when /init answers with its policy and layout', async () => {
+		const banner = mount(
+			Promise.resolve(
+				answer({
+					policyResolution: {
+						fingerprints: {
+							policy: 'policy-fingerprint',
+							presentation: 'drawer-layout',
+						},
+						status: 'matched',
+					},
+				})
+			),
+			{ ...KEY, presentation: 'drawer-layout' }
+		);
+		await settle();
+		expect(banner.hidden).toBe(false);
+	});
+
+	test('removes a banner rendered for a layout when /init answers without one', async () => {
+		const banner = mount(Promise.resolve(answer()), {
+			...KEY,
+			presentation: 'drawer-layout',
+		});
+		await settle();
+		expect(banner.isConnected).toBe(false);
+	});
+
+	test('shows the banner when /init answers with an empty surface and no layout', async () => {
+		const banner = mount(
+			Promise.resolve(
+				answer({
+					policyResolution: {
+						fingerprints: { policy: 'policy-fingerprint' },
+						policy: { surface: {} },
+						status: 'matched',
+					},
+				})
+			)
+		);
+		await settle();
+		expect(banner.hidden).toBe(false);
+	});
+
+	test.each([
+		['opt-out', 'choice', { blocking: 'forbidden' }],
+		['opt-in', 'choice', { blocking: 'allowed' }],
+		['opt-in', 'notice', { blocking: 'forbidden' }],
+	] as const)(
+		'shows the banner when an %s %s policy has only the implied surface %j',
+		async (model, prompt, surface) => {
+			const banner = mount(
+				Promise.resolve(
+					answer({
+						policyResolution: {
+							fingerprints: { policy: 'policy-fingerprint' },
+							policy: { model, prompt, surface },
+							status: 'matched',
+						},
+					})
+				)
+			);
+			await settle();
+			expect(banner.hidden).toBe(false);
+		}
+	);
+
+	test('removes the banner when a policy asks for blocking it does not imply, without a layout fingerprint', async () => {
+		const banner = mount(
+			Promise.resolve(
+				answer({
+					policyResolution: {
+						fingerprints: { policy: 'policy-fingerprint' },
+						policy: {
+							model: 'opt-in',
+							prompt: 'choice',
+							surface: { blocking: 'required' },
+						},
+						status: 'matched',
+					},
+				})
+			)
+		);
 		await settle();
 		expect(banner.isConnected).toBe(false);
 	});
@@ -189,5 +305,42 @@ describe('static banner script', () => {
 		);
 		await settle();
 		expect(banner.isConnected).toBe(false);
+	});
+});
+
+describe('SURFACE_LAYOUT_CHECK', () => {
+	// oxlint-disable-next-line no-new-func -- Evaluates the inline source.
+	const check = new Function(`return ${SURFACE_LAYOUT_CHECK}`)() as (
+		policy: unknown
+	) => boolean;
+	const rules = [
+		{ model: 'opt-in', prompt: 'choice' },
+		{ model: 'opt-out', prompt: 'choice' },
+		{ model: 'opt-in', prompt: 'notice' },
+		{ model: 'opt-out', prompt: 'none' },
+	] as const;
+	const surfaces: PolicySurface[] = [
+		{},
+		{ blocking: 'allowed' },
+		{ blocking: 'forbidden' },
+		{ blocking: 'required' },
+		{ edgeStyle: 'flush' },
+		{ container: { type: 'card' } },
+		{ container: { position: 'end', type: 'card' }, edgeStyle: 'flush' },
+		{ blocking: 'forbidden', container: { edge: 'top', type: 'banner' } },
+		{ container: { side: 'start', type: 'drawer' }, edgeStyle: 'inset' },
+	];
+
+	test.each(
+		rules.flatMap((rule) => surfaces.map((surface) => [rule, surface] as const))
+	)('matches the canonical surface for %j with %j', (rule, surface) => {
+		expect(check({ ...rule, surface })).toBe(
+			canonicalizePolicySurface(surface, rule) !== undefined
+		);
+	});
+
+	test('a policy without a surface asks for no layout', () => {
+		expect(check(undefined)).toBe(false);
+		expect(check({ model: 'opt-in', prompt: 'choice' })).toBe(false);
 	});
 });

@@ -92,6 +92,31 @@ describe('the react dialog adapter', () => {
 		await handle.destroy();
 	});
 
+	it.each(['privacy-choices', 'classic', undefined] as const)(
+		'hands the island the dialog design (%s)',
+		async (design) => {
+			let seen: { design?: string } = {};
+			const recordProps = function recordProps(props: {
+				design: string;
+			}): null {
+				seen = props;
+				return null;
+			};
+			registerDialogSurface('react', () =>
+				Promise.resolve({ default: recordProps })
+			);
+			const handle = await reactDialogAdapter.mount({
+				design,
+				kind: 'preferences',
+				options: OPTIONS,
+				runtime: createRuntime(),
+				target: createHost(),
+			});
+			await vi.waitFor(() => expect(seen.design).toBe(design ?? 'classic'));
+			await handle.destroy();
+		}
+	);
+
 	it('closes through the kernel rather than the DOM', async () => {
 		registerDialogSurface('react', () => Promise.resolve(reactSurface));
 		const runtime = createRuntime();

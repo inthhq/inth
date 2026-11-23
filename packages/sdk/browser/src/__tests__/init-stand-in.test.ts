@@ -424,7 +424,8 @@ describe('early opt-out tap before the engine loads', () => {
 		});
 		const { client } = api;
 		expect(client?.getSnapshot().effectivePermissions.marketing).toBe(false);
-		expect(client?.getSnapshot().effectivePermissions.measurement).toBe(false);
+		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
+		expect(client?.getSnapshot().effectivePermissions.measurement).toBe(true);
 		await vi.waitFor(() => {
 			expect(
 				client?.ui?.root.querySelector(

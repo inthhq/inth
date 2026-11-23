@@ -49,10 +49,10 @@ export const readSpot = function readSpot(
 };
 
 /**
- * Build the "Secured by" tag `branding.astro` renders.
+ * Build the "Consent by" tag `branding.astro` renders.
  *
  * @param input - The snapshot's brand and the banner's options.
- * @param securedBy - "Secured by", already translated.
+ * @param securedBy - "Consent by", already translated.
  * @returns The tag, or `null` when branding is hidden.
  */
 export const renderBrandingTag = function renderBrandingTag(

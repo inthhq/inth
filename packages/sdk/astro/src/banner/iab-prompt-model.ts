@@ -47,7 +47,7 @@ export interface IABPromptProps {
 	disableAnimation?: boolean;
 	/** Extra class on the banner root. */
 	class?: string;
-	/** Drop the "Secured by" tag. */
+	/** Drop the "Consent by" tag. */
 	hideBranding?: boolean;
 	/** Paint the backdrop that goes with the banner's `aria-modal`. */
 	scrollLock?: boolean;

@@ -399,6 +399,8 @@ export interface components {
 							legacyMaterial?: string;
 							notice: string;
 							policy: string;
+							/** @description The rule's surface, hashed in the presentation domain. Present only when policy.surface is. */
+							presentation?: string;
 						};
 						/** @enum {string} */
 						matchedBy: 'region' | 'country' | 'default' | 'fallback';
@@ -448,6 +450,48 @@ export interface components {
 							)[];
 							/** @enum {string} */
 							scopeMode: 'strict' | 'permissive';
+							/** @description Layout defaults and blocking constraint. Absent when the rule sets none. Never part of the policy, choice or notice fingerprints. */
+							surface?: {
+								/**
+								 * @description Hard constraint on blocking the page until a choice. required needs a choice prompt outside the opt-out model.
+								 * @enum {string}
+								 */
+								blocking?: 'forbidden' | 'allowed' | 'required';
+								/** @description Container the prompt uses when the host's presentation picks none. */
+								container?:
+									| {
+											/**
+											 * @description Defaults to start. start and end follow the page’s writing direction: on a right-to-left page start is the bottom-right corner.
+											 * @enum {string}
+											 */
+											position?: 'start' | 'end' | 'center';
+											/** @constant */
+											type: 'card';
+									  }
+									| {
+											/**
+											 * @description Defaults to bottom.
+											 * @enum {string}
+											 */
+											edge?: 'bottom' | 'top';
+											/** @constant */
+											type: 'banner';
+									  }
+									| {
+											/**
+											 * @description Defaults to bottom. start and end are the inline sides and follow the page’s writing direction.
+											 * @enum {string}
+											 */
+											side?: 'bottom' | 'top' | 'start' | 'end';
+											/** @constant */
+											type: 'drawer';
+									  };
+								/**
+								 * @description Edge style when the host's presentation picks none.
+								 * @enum {string}
+								 */
+								edgeStyle?: 'inset' | 'flush';
+							};
 							validity: {
 								choiceMs: number;
 								noticeMs: number;
@@ -593,6 +637,8 @@ export interface components {
 					legacyMaterial?: string;
 					notice: string;
 					policy: string;
+					/** @description The rule's surface, hashed in the presentation domain. Present only when policy.surface is. */
+					presentation?: string;
 				};
 				match: {
 					countries?: string[];
@@ -651,6 +697,48 @@ export interface components {
 					)[];
 					/** @enum {string} */
 					scopeMode: 'strict' | 'permissive';
+					/** @description Layout defaults and blocking constraint. Absent when the rule sets none. Never part of the policy, choice or notice fingerprints. */
+					surface?: {
+						/**
+						 * @description Hard constraint on blocking the page until a choice. required needs a choice prompt outside the opt-out model.
+						 * @enum {string}
+						 */
+						blocking?: 'forbidden' | 'allowed' | 'required';
+						/** @description Container the prompt uses when the host's presentation picks none. */
+						container?:
+							| {
+									/**
+									 * @description Defaults to start. start and end follow the page’s writing direction: on a right-to-left page start is the bottom-right corner.
+									 * @enum {string}
+									 */
+									position?: 'start' | 'end' | 'center';
+									/** @constant */
+									type: 'card';
+							  }
+							| {
+									/**
+									 * @description Defaults to bottom.
+									 * @enum {string}
+									 */
+									edge?: 'bottom' | 'top';
+									/** @constant */
+									type: 'banner';
+							  }
+							| {
+									/**
+									 * @description Defaults to bottom. start and end are the inline sides and follow the page’s writing direction.
+									 * @enum {string}
+									 */
+									side?: 'bottom' | 'top' | 'start' | 'end';
+									/** @constant */
+									type: 'drawer';
+							  };
+						/**
+						 * @description Edge style when the host's presentation picks none.
+						 * @enum {string}
+						 */
+						edgeStyle?: 'inset' | 'flush';
+					};
 					validity: {
 						choiceMs: number;
 						noticeMs: number;

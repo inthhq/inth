@@ -346,6 +346,7 @@ describe('persistence: clear', () => {
 			`${STORAGE_KEY_V2}-notice`,
 			`${STORAGE_KEY_V2}-notice-subject`,
 			`${STORAGE_KEY_V2}-opt-out`,
+			`${STORAGE_KEY_V2}-opt-out-categories`,
 		]);
 
 		handle.clear();

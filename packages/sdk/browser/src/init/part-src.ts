@@ -8,10 +8,11 @@
 import { version } from '../version';
 
 /** A file the init script or the engine loads next to `inth.js`. */
-export type InitFile = 'hosted' | 'commit' | 'records' | 'dialog';
+export type InitFile = 'hosted' | 'commit' | 'records' | 'dialog' | 'choices';
 
 /** The globals the backend's `/inth.js` sets to each file's URL. */
 const BACKEND_SRC_GLOBALS: Record<InitFile, string> = {
+	choices: '__inthChoicesSrc',
 	commit: '__inthCommitSrc',
 	dialog: '__inthDialogSrc',
 	hosted: '__inthHostedSrc',

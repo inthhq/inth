@@ -42,6 +42,12 @@ export interface ConsentDialogContext {
 	 * Ignored by the IAB dialog.
 	 */
 	legalLinks?: (keyof LegalLinks)[] | null;
+	/**
+	 * `'privacy-choices'` when the design opts in and the island renders
+	 * its framework's Privacy Choices dialog; the React island does. Unset
+	 * or `'classic'` renders the classic dialog.
+	 */
+	design?: 'classic' | 'privacy-choices';
 }
 
 /**
@@ -92,6 +98,12 @@ export const requireDialogSurface = function requireDialogSurface(
 	return load;
 };
 
+/** The dialog a warm-up is for. */
+export interface ConsentDialogPreloadContext {
+	kind?: ConsentDialogKind;
+	design?: 'classic' | 'privacy-choices';
+}
+
 /** A mounted dialog surface. */
 export interface ConsentDialogHandle {
 	/** Hide the dialog without destroying the surface. */
@@ -115,8 +127,11 @@ export interface ConsentDialogAdapter {
 	/**
 	 * Warm the surface's chunks without mounting anything, so the first
 	 * open does not wait on a download.
+	 *
+	 * @param context - The dialog the open will mount, when known, so an
+	 * island warms only that design's dialog.
 	 */
-	preload?: () => Promise<void>;
+	preload?: (context?: ConsentDialogPreloadContext) => Promise<void>;
 }
 
 const registry = new Map<

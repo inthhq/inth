@@ -46,7 +46,10 @@ import {
 	EARLY_CONSENT_TAP_SCRIPT,
 	markConfigEmitted,
 	PROMPT_SLOT_ATTRIBUTE,
+	privacyChoicesClassNames,
 	promptClassNames,
+	renderPrivacyChoicesHTML,
+	resolvePrivacyChoicesModel,
 	resolvePromptModel,
 } from '@inth/astro/server';
 import type { PromptProps } from '@inth/astro/server';
@@ -126,6 +129,25 @@ const model = resolvePromptModel({
 	snapshot,
 	theme,
 });
+// The Privacy Choices design (`presentation.design: 'privacy-choices'`, or
+// a prompt `container`), resolved as React's banner resolves it. It
+// renders the same prompt React renders, collapsed, on the desktop
+// layout; the browser takes it over from the spot below.
+const privacyChoices = inth.hasPolicy
+	? resolvePrivacyChoicesModel({
+			classNames: privacyChoicesClassNames,
+			hostname: Astro.url.hostname,
+			options: {
+				disableAnimation: inth.options.disableAnimation,
+				experiment: inth.options.experiment,
+				legalLinks: inth.options.legalLinks,
+				presentation: inth.options.presentation,
+				theme,
+			},
+			props,
+			snapshot,
+		})
+	: null;
 // Records a tap that lands before the page script runs, for a banner whose
 // engine may load after the page. A server island is inserted after the
 // page script ran, and the script would then hold the banner's clicks with
@@ -207,12 +229,15 @@ const earlyTaps =
 	 * init failed. The browser renders it into this spot from the same
 	 * model, with the same props and class names.
 	 */
-	!inth.hasPolicy && (
+	(!inth.hasPolicy || privacyChoices) && (
 		<div
 			hidden
 			{...{
 				[PROMPT_SLOT_ATTRIBUTE]: JSON.stringify({
 					classNames: promptClassNames,
+					// The Privacy Choices prompt reads its own class names from
+					// here, whether the server rendered it or the browser will.
+					privacyChoices: privacyChoicesClassNames,
 					props,
 				}),
 			}}
@@ -221,7 +246,13 @@ const earlyTaps =
 }
 
 {
-	shouldRender && model.blocking && (
+	shouldRender && privacyChoices && (
+		<Fragment set:html={renderPrivacyChoicesHTML(privacyChoices, hidden)} />
+	)
+}
+
+{
+	shouldRender && !privacyChoices && model.blocking && (
 		<div
 			aria-hidden="true"
 			class={model.classes.overlay}
@@ -233,7 +264,7 @@ const earlyTaps =
 }
 
 {
-	shouldRender && (
+	shouldRender && !privacyChoices && (
 		<div
 			class={model.classes.root}
 			style={model.styles.root}

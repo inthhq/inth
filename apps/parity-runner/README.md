@@ -1,6 +1,6 @@
 # Cross-framework parity
 
-The runner requires all 16 core stories in each configured React, Svelte, Vue, and Angular Storybook. A missing story or unavailable index fails discovery. Solid is excluded because it supplies primitives, not the core adapter contract.
+The runner requires every core story in each configured React, Svelte, Vue, and Angular Storybook, and the subset Astro ships in the Astro Storybook (`ASTRO_CORE_STORIES` in `tests/parity.spec.ts`: Astro has no Consent Widget or Consent Gate component, and its dialog trigger and link differ from React's by design). Coverage is read from every indexed story, so a run of React against Astro alone still finds the React stories Astro lacks. A missing story or unavailable index fails discovery. Solid is excluded because it supplies primitives, not the core adapter contract.
 
 Capture starts after story rendering and interaction play finish. It includes tagged UI roots portaled into the document body, their complete descendant trees, the accessibility tree, computed styles, dialog evidence, and per-framework screenshots. JSON attachments retain each framework's capture for review.
 
@@ -16,6 +16,8 @@ The DOM comparison recognizes these specific implementation equivalents:
 - Fixed trigger positions can use classes or inline coordinates when their actual bounds agree. Computed position and stacking order remain checked.
 - Small switch variant classes can match the corresponding size attribute. Checked/disabled state remains in the DOM, and computed styles include the switch track and thumb.
 - On an Angular page (one with an `[ng-version]` root), empty attributes named `inth…` are the attribute selectors Angular writes into the DOM: dash-case for components, such as `inth-consent-button=""`, and lowercased camelCase for directives, such as `inthconsentdialoglink=""`. They carry no state. The same attribute outside Angular, or with a value, remains compared.
+- On an Astro page (one carrying the `data-inth-config` script or the `__inthAstroConfig` global it sets), the hooks Astro's client boot reads from its server-rendered markup are ignored by name: `data-inth-action`, `data-inth-dialog`, `data-inth-visible`, `data-inth-default-label`, `data-inth-icon-class` and `data-inth-privacy-choices-link`. Its Privacy Choices prompt's fixed id prefix `inth-pc-banner` counts as the generated token React's `useId` puts in the same ids. Off an Astro page, or for any other attribute, the markup remains compared.
+- A tagged root records whether it is inert, not whether it carries `inert` itself: a modal surface makes the siblings on its path to `<body>` inert, so which element carries it depends on where the framework portals the surface. Inside a root, `inert` remains compared as written.
 
 Browser regressions cover incorrect dialog semantics, focus, visibility and geometry; wrong heading levels and ID references; changed SVG shape and position; substantive wrappers; and changed switch state or thumb styling. These rules do not permit blanket removal of attributes, classes, or descendants to make a failing story pass.
 

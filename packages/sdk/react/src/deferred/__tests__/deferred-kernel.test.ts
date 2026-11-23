@@ -304,6 +304,32 @@ describe('scheduleDeferredEngine', () => {
 		banner.remove();
 	});
 
+	test('a press on the Privacy Choices banner starts the engine, whose banner replays the tap', () => {
+		const image = document.createElement('img');
+		image.setAttribute('fetchpriority', 'high');
+		Object.defineProperty(image, 'complete', { value: false });
+		const banner = document.createElement('div');
+		banner.dataset.testid = 'consent-banner-root';
+		banner.dataset.design = 'privacy-choices';
+		const reject = document.createElement('button');
+		reject.dataset.action = 'reject';
+		banner.append(reject);
+		document.body.append(image, banner);
+		const host = window as unknown as Record<string, Record<string, unknown>>;
+		host[EARLY_TAPS_WINDOW_KEY] = { taps: [] };
+
+		const start = vi.fn();
+		const onTap = vi.fn();
+		const stop = scheduleDeferredEngine(start, onTap);
+		reject.dispatchEvent(new Event('pointerdown', { bubbles: true }));
+		expect(onTap).not.toHaveBeenCalled();
+		expect(start).toHaveBeenCalledTimes(1);
+		stop();
+		Reflect.deleteProperty(host, EARLY_TAPS_WINDOW_KEY);
+		image.remove();
+		banner.remove();
+	});
+
 	test('banner taps stay routed after the engine started, until stopped', () => {
 		// No priority image: the engine starts as soon as it is scheduled.
 		const banner = document.createElement('div');

@@ -11,6 +11,7 @@ import {
 import { boot, registerIAB, setPromptRendererLoaderForTest } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
+import { privacyChoicesClassNames } from '../privacy-choices/class-names';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions } from '../types';
@@ -315,6 +316,45 @@ describe('the spot <IABConsentBanner /> leaves', () => {
 			document.querySelector('[data-testid="consent-banner-root"]')
 		).toBeNull();
 		expect(document.querySelector(`[${PROMPT_SLOT_ATTRIBUTE}]`)).not.toBeNull();
+	});
+
+	it('gets the IAB banner on a site whose other regions use the Privacy Choices design', async () => {
+		const standard = document.createElement('div');
+		standard.hidden = true;
+		standard.setAttribute(
+			PROMPT_SLOT_ATTRIBUTE,
+			JSON.stringify({
+				classNames: promptClassNames,
+				privacyChoices: privacyChoicesClassNames,
+				props: {},
+			})
+		);
+		const iab = document.createElement('div');
+		iab.hidden = true;
+		iab.setAttribute(
+			IAB_PROMPT_SLOT_ATTRIBUTE,
+			JSON.stringify({ classNames: iabPromptClassNames, props: {} })
+		);
+		document.body.append(standard, iab);
+		client = boot(
+			resolveOptions({
+				...IAB_OPTIONS,
+				presentation: {
+					design: 'privacy-choices',
+					prompt: { container: { type: 'card' } },
+				},
+			})
+		);
+
+		await vi.waitFor(() => {
+			const banner = document.querySelector<HTMLElement>(
+				'[data-testid="iab-consent-banner-root"]'
+			);
+			expect(banner?.hidden).toBe(false);
+		});
+		expect(
+			document.querySelector('[data-testid="consent-banner-root"]')
+		).toBeNull();
 	});
 
 	it('keeps rendering after an IAB-only page had nothing to render', async () => {

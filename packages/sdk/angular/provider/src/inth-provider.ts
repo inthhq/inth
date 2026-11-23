@@ -48,7 +48,7 @@ export class InthProvider {
 	readonly noStyle = input<boolean | undefined>(undefined);
 	/** Skip enter and exit motion. Defaults to `provideInth()`'s setting. */
 	readonly disableAnimation = input<boolean | undefined>(undefined);
-	/** Hide the "Secured by" attribution on both surfaces. */
+	/** Hide the "Consent by" attribution on both surfaces. */
 	readonly hideBranding = input(false);
 	/** Which of the legal links from `provideInth()` both surfaces show. */
 	readonly legalLinks = input<LegalLinkSelection | undefined>(undefined);

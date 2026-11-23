@@ -110,7 +110,7 @@ through it in Chromium. The run accepts, rejects and saves through the
 banner, dialog, sheet, trigger, widget and gate, and checks that the choice
 survives a reload. It checks that the vendor's switch stays disabled while
 Marketing is off, turns it off once Marketing is on, and checks where the
-"Secured by" links on the banner, dialog and sheet point. For Next.js and
+"Consent by" links on the banner, dialog and sheet point. For Next.js and
 TanStack Start it also checks that the server HTML has the banner on a
 first visit and not after a choice. The projects talk to the demo backend,
 so `--browser` needs network access. Install Chromium once first:

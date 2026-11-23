@@ -167,6 +167,29 @@ export default mergeConfig(
 			{
 				configureServer(server) {
 					server.middlewares.use((request, response, next) => {
+						// `?story=` names one of `privacy-choices-stories.ts`.
+						if (
+							request.url?.split('?')[0] !== '/__inth-test__/privacy-choices'
+						) {
+							next();
+							return;
+						}
+						response.setHeader('Content-Type', 'text/html');
+						response.end(
+							readFileSync(
+								resolve(
+									__dirname,
+									'src/__tests__/fixtures/privacy-choices-stories.html'
+								)
+							)
+						);
+					});
+				},
+				name: 'privacy-choices-stories-fixture',
+			},
+			{
+				configureServer(server) {
+					server.middlewares.use((request, response, next) => {
 						if (request.url !== '/__inth-test__/storage-sync') {
 							next();
 							return;
@@ -315,7 +338,7 @@ export default mergeConfig(
 				// surface the ESM build ships, imported by another specifier.
 				{
 					find: /^\.\/dialog-surface$/u,
-					replacement: resolve(__dirname, './src/ui/dialog.ts'),
+					replacement: resolve(__dirname, './src/ui/dialog-static.ts'),
 				},
 				// Also as in the script-tag builds: the write code is loaded from
 				// the start, so a save is stored in the macrotask after it, not

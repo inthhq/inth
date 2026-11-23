@@ -48,40 +48,59 @@ export interface ParityAllowEntry {
 const IAB_VENDOR_LIST_REASON =
 	"The IAB preference centre's vendor list. Every other IAB check is clean — geometry, pixel and a11y pass with no allowance on either surface, and the banner passes all five — so what is left is the markup inside the collapsed vendor rows, which the DOM snapshot compares byte for byte even while it is closed. Two known differences remain. React sizes several icons with inline `style` where Svelte and Vue use the `legitimateInterestIcon` class, and React's vendor purpose headings carry the `role` and `focusable` attributes its icons elsewhere do not; converging them is a `packages/sdk/react` icon pass, not an adapter fix. And Vue's `iab-vendor-list.vue` is a much thinner component than React's — flat rows with no expandable detail, no legitimate-interest or custom-vendor sections — so roughly 600 lines of it have no counterpart to compare. Porting it is its own change.";
 
+/**
+ * Astro's server-rendered banner root carries the `lang` its server render
+ * resolved for the page; React's leaves the language to the document.
+ */
+const ASTRO_LANG_REASON =
+	"Astro's server-rendered banner root carries the `lang` the server resolved for the request. React's banner leaves the language to the document. Nothing else in the story differs.";
+
+/** The classic Astro banner hides its root after a choice instead of unmounting it. */
+const ASTRO_HIDDEN_BANNER_REASON =
+	'The classic Astro banner is server-rendered markup, and its client hides the root (`hidden`, `data-inth-visible="false"`) when Customize opens the dialog, where React unmounts the banner. The hidden banner\'s elements, and the `lang` its root carries, are what differ; the dialog matches React on DOM, accessibility and styles. The shared `bannerAcceptViaKeyboard` play fails on the same behaviour, so Astro does not ship that story yet.';
+
 export const PARITY_ALLOWLIST: readonly ParityAllowEntry[] = [
 	// ---------------------------------------------------------------------
-	// Astro. Its banner is server-rendered and progressively enhanced, so the
-	// markup carries the hooks the client boot looks for.
+	// Astro. Its banner is server-rendered and progressively enhanced. The
+	// hooks its client boot reads (`data-inth-action`, `data-inth-visible`
+	// and the like) are normalised in `diff-dom.ts`; what is left below is
+	// the server render's own output and the classic banner's lifecycle.
 	// ---------------------------------------------------------------------
-	{
+	...[
+		'Core/Consent Banner/Default',
+		'Core/Consent Banner/Opt Out Link',
+		'Core/Consent Banner/Privacy Choices Link',
+		'Core/Consent Banner/Banner Contract',
+		'Core/Consent Banner/Banner Focus Management',
+		'Core/Consent Dialog/Dialog Escape Closes',
+	].map((story): ParityAllowEntry => ({
 		check: 'dom',
 		framework: 'astro',
-		reason:
-			"Astro's server-rendered banner carries the attributes its client boot reads — `data-inth-visible` on the root, `data-inth-action` on each button — and the `lang` the server resolved. Nothing else renders them because nothing else needs them.",
+		reason: ASTRO_LANG_REASON,
 		slot: '*',
-		story: 'Core/Consent Banner/Default',
-	},
+		story,
+	})),
+	// The classic Astro banner hides its server-rendered root once Customize
+	// opens the dialog, where React unmounts it, so the banner's hidden
+	// elements are still there to compare.
+	...[
+		'Core/Consent Banner/Banner To Dialog Flow',
+		'Core/Consent Dialog/Dialog Contract',
+		'Core/Consent Dialog/Save Flow',
+	].flatMap((story): ParityAllowEntry[] =>
+		(['dom', 'css'] as const).map((check) => ({
+			check,
+			framework: 'astro',
+			reason: ASTRO_HIDDEN_BANNER_REASON,
+			slot: '*',
+			story,
+		}))
+	),
 	{
 		check: 'dom',
 		framework: 'astro',
 		reason:
-			"Astro's server-rendered banner carries the attributes its client boot reads (`data-inth-visible` on the root, `data-inth-action` on each button) and the `lang` the server resolved, the same way `Core/Consent Banner/Default` does. The opt-out link itself matches React.",
-		slot: '*',
-		story: 'Core/Consent Banner/Opt Out Link',
-	},
-	{
-		check: 'dom',
-		framework: 'astro',
-		reason:
-			"Astro's server-rendered banner carries the attributes its client boot reads (`data-inth-visible` on the root, `data-inth-action` on each button) and the `lang` the server resolved, the same way `Core/Consent Banner/Default` does. The Privacy Choices link and its icon match React.",
-		slot: '*',
-		story: 'Core/Consent Banner/Privacy Choices Link',
-	},
-	{
-		check: 'dom',
-		framework: 'astro',
-		reason:
-			"Astro's server-rendered opt-out link carries the attributes its client boot reads (`data-inth-action`, `data-inth-dialog`, `data-inth-surface`). The confirmation view matches React on DOM, accessibility, styles and geometry.",
+			'Astro\'s server-rendered opt-out link marks itself `data-inth-surface="trigger"`, which React\'s `ConsentDialogLink` does not. The confirmation view matches React on DOM, accessibility, styles and geometry.',
 		slot: '*',
 		story: 'Core/Opt Out Confirmation/Account Adopted',
 	},
@@ -89,7 +108,7 @@ export const PARITY_ALLOWLIST: readonly ParityAllowEntry[] = [
 		check: 'dom',
 		framework: 'astro',
 		reason:
-			"Astro's server-rendered opt-out link carries the attributes its client boot reads (`data-inth-action`, `data-inth-dialog`, `data-inth-surface`). The confirmation view matches React on DOM, accessibility, styles and geometry.",
+			'Astro\'s server-rendered opt-out link marks itself `data-inth-surface="trigger"`, which React\'s `ConsentDialogLink` does not. The confirmation view matches React on DOM, accessibility, styles and geometry.',
 		slot: '*',
 		story: 'Core/Opt Out Confirmation/Signal Honored',
 	},
@@ -97,7 +116,7 @@ export const PARITY_ALLOWLIST: readonly ParityAllowEntry[] = [
 		check: 'dom',
 		framework: 'astro',
 		reason:
-			"Astro's server-rendered IAB banner carries the attributes its client boot reads — `data-inth-visible` on the root — and the `lang` the server resolved, the same way the core banner does. Nothing else renders them because nothing else needs them.",
+			'Astro\'s server-rendered IAB banner carries the `lang` the server resolved, as the core banner does. It also still differs from React\'s on markup the eye and the accessibility tree do not reach: its root carries `data-blocking="true"` and `data-variant="floating"`, and its partners link the `data-inth-tab` hook its client boot reads.',
 		slot: '*',
 		story: 'IAB/IAB Consent Banner/Default',
 	},

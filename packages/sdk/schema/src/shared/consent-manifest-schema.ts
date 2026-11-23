@@ -11,8 +11,10 @@ import type {
 import { hostingSchema } from './hosting';
 import { nonIABVendorSchema } from './non-iab-vendor';
 import { isPlainPolicyObject } from './policy-rule-invariants';
+import { isPolicySurfaceUnfingerprinted } from './policy-surface';
 import {
 	plainObjectSchema,
+	POLICY_SURFACE_FINGERPRINT_ISSUE,
 	policyFingerprintsSchema,
 	resolvedPolicyRuleSchema,
 } from './policy-wire-schema';
@@ -61,7 +63,7 @@ const messageProfilesSchema = v.record(
 	})
 );
 
-const policyPackSchema = v.strictObject({
+const policyPackFieldsSchema = v.strictObject({
 	fingerprints: policyFingerprintsSchema,
 	match: v.pipe(
 		plainObjectSchema,
@@ -77,6 +79,23 @@ const policyPackSchema = v.strictObject({
 	),
 	rule: resolvedPolicyRuleSchema,
 });
+
+// A pack with a layout and no presentation fingerprint would share a
+// cached banner with a pack that has another layout.
+const policyPackSchema = v.pipe(
+	policyPackFieldsSchema,
+	v.rawCheck(({ dataset, addIssue }) => {
+		if (
+			dataset.typed &&
+			isPolicySurfaceUnfingerprinted(
+				dataset.value.rule,
+				dataset.value.fingerprints
+			)
+		) {
+			addIssue({ message: POLICY_SURFACE_FINGERPRINT_ISSUE });
+		}
+	})
+);
 
 const manifestSchema: v.GenericSchema<unknown, ConsentManifest> = v.looseObject(
 	{
