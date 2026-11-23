@@ -127,12 +127,14 @@ interface Hydrated {
  * Hydrate the server's HTML in the browser under the deferred context,
  * whose engine waits for `releaseEngine`. `beforeBundles` runs on the
  * server's HTML first, as the page's inline scripts and early taps do.
+ * `card` replaces the Card container's chunk.
  */
 const hydrate = (
 	html: string,
 	snapshot: ConsentSnapshot,
 	config: RuntimeConsentConfig,
-	beforeBundles?: () => void
+	beforeBundles?: () => void,
+	card?: PromptContainerLoader
 ): Hydrated => {
 	let release: () => void = () => undefined;
 	const released = new Promise<void>((resolve) => {
@@ -175,7 +177,7 @@ const hydrate = (
 		};
 	app.provide(promptContainersKey, {
 		banner: late(promptContainers.banner),
-		card: late(promptContainers.card),
+		card: card ?? late(promptContainers.card),
 		drawer: late(promptContainers.drawer),
 	});
 	const container = document.createElement('div');
@@ -192,6 +194,10 @@ const $ = (testId: string) =>
 	document.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
 
 afterEach(() => {
+	// An early-tap script no prompt took over still listens on the page.
+	(
+		window as unknown as { __inthEarlyTaps?: { stop?: () => void } }
+	).__inthEarlyTaps?.stop?.();
 	for (const app of apps.splice(0)) {
 		app.unmount();
 	}
@@ -201,6 +207,12 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 	vi.restoreAllMocks();
 	localStorage.clear();
+	for (const cookie of document.cookie.split(';')) {
+		const name = cookie.split('=')[0]?.trim();
+		if (name) {
+			document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+		}
+	}
 	Reflect.deleteProperty(window, '__inthEarlyTaps');
 	Reflect.deleteProperty(window, '__inthStarted');
 	document.head.innerHTML = '';
@@ -308,5 +320,124 @@ describe('[BNR-06] a tap before hydration', () => {
 			expect($('consent-banner-announcement')?.textContent).not.toBe('')
 		);
 		expect(problems.filter((line) => /hydrat/iu.test(line))).toEqual([]);
+	});
+});
+
+describe('[C1] a container chunk that fails while the server prompt hydrates', () => {
+	/** A Card chunk that fails until `online` turns true. */
+	const flakyCard = () => {
+		const chunk = { attempts: 0, online: false };
+		const load: PromptContainerLoader = async () => {
+			chunk.attempts += 1;
+			await new Promise((resolve) => {
+				setTimeout(resolve, 50);
+			});
+			if (!chunk.online) {
+				throw new Error('Failed to fetch dynamically imported module');
+			}
+			return promptContainers.card();
+		};
+		return { chunk, load };
+	};
+
+	/** Run the server's early-tap script, as the page does before bundles. */
+	const runEarlyTapScript = () => {
+		const script = document.querySelector('script');
+		// oxlint-disable-next-line no-new-func -- Runs the inline script's text as the page would.
+		new Function(script?.textContent ?? '')();
+	};
+
+	const roots = () =>
+		document.querySelectorAll('[data-testid="consent-banner-root"]');
+
+	test('[BNR-13] shows the tapped prompt again, and a later tap loads the container and commits', async () => {
+		const config = configFor({ type: 'card' });
+		const { html, snapshot } = await renderOnServer(config);
+		const { chunk, load } = flakyCard();
+		const { engine, releaseEngine } = hydrate(
+			html,
+			snapshot,
+			config,
+			() => {
+				runEarlyTapScript();
+				$('consent-banner-accept-button')?.click();
+				expect(document.getElementById('inth-early-tap')).not.toBeNull();
+			},
+			load
+		);
+		const serverRoot = $('consent-banner-root');
+		releaseEngine();
+		await vi.waitFor(() => expect(engine()).toBeDefined(), { timeout: 4000 });
+		// The chunk failed: the prompt the tap hid shows again, the server's
+		// node in place, and the tap is still held.
+		await vi.waitFor(
+			() => expect(document.getElementById('inth-early-tap')).toBeNull(),
+			{ timeout: 4000 }
+		);
+		expect(chunk.attempts).toBeGreaterThan(0);
+		expect(roots()).toHaveLength(1);
+		expect(serverRoot?.isConnected).toBe(true);
+		expect(engine()?.kernel.getSnapshot().explicitChoice).toBeNull();
+		await new Promise((resolve) => {
+			setTimeout(resolve, 200);
+		});
+		const failed = chunk.attempts;
+		// No snapshot comes; the visitor taps Accept again.
+		chunk.online = true;
+		serverRoot
+			?.querySelector<HTMLElement>(
+				'[data-testid="consent-banner-accept-button"]'
+			)
+			?.click();
+		await vi.waitFor(
+			() => {
+				expect(engine()?.kernel.getSnapshot().explicitChoice).not.toBeNull();
+			},
+			{ timeout: 4000 }
+		);
+		expect(chunk.attempts).toBe(failed + 1);
+		expect(engine()?.kernel.getSnapshot().activeUI).not.toBe('banner');
+		// The container that loaded replaced the server's prompt.
+		expect(serverRoot?.isConnected).toBe(false);
+	});
+
+	test('a container that loads after it failed replaces the server prompt', async () => {
+		const config = configFor({ type: 'card' });
+		const { html, snapshot } = await renderOnServer(config);
+		const { chunk, load } = flakyCard();
+		const { engine, releaseEngine } = hydrate(
+			html,
+			snapshot,
+			config,
+			undefined,
+			load
+		);
+		const serverRoot = $('consent-banner-root');
+		releaseEngine();
+		await vi.waitFor(() => expect(engine()).toBeDefined(), { timeout: 4000 });
+		await vi.waitFor(() => expect(chunk.attempts).toBeGreaterThan(0), {
+			timeout: 4000,
+		});
+		await new Promise((resolve) => {
+			setTimeout(resolve, 200);
+		});
+		// The next time the banner is owed, the container loads again.
+		chunk.online = true;
+		engine()?.kernel.set.activeUI('none');
+		await new Promise((resolve) => {
+			setTimeout(resolve, 20);
+		});
+		engine()?.kernel.set.activeUI('banner');
+		await vi.waitFor(
+			() => {
+				$('consent-banner-customize-button')?.click();
+				expect($('consent-banner-root')?.getAttribute('data-expanded')).toBe(
+					'true'
+				);
+			},
+			{ timeout: 4000 }
+		);
+		expect(roots()).toHaveLength(1);
+		expect(serverRoot?.isConnected).toBe(false);
 	});
 });
