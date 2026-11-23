@@ -10,6 +10,7 @@ import {
 	isOptInConfirmationOpen,
 	isOptOutConfirmationOpen,
 } from './opt-out-confirmation-state';
+import { withPrivacyChoicesDialog } from './privacy-choices-design';
 import type { Surface, SurfaceContext } from './surface';
 
 // Safari has no requestIdleCallback; a short delay after load stands in.
@@ -73,7 +74,7 @@ const warmWhenIdle = function warmWhenIdle(): void {
  * @param warmOnMount - Truthy when something else on screen opens the
  * dialog (the trigger options), so the chunk warms without a banner.
  */
-export const createDialog = function createDialog(
+const createClassicDialog = function createClassicDialog(
 	ctx: SurfaceContext,
 	options: ConsentDialogOptions,
 	warmOnMount?: unknown
@@ -143,3 +144,21 @@ export const createDialog = function createDialog(
 		},
 	};
 };
+
+/**
+ * The stock dialog: the preference centre above, or the Privacy Choices
+ * dialog when the design opts in, each loaded on demand.
+ *
+ * @param warmOnMount - Truthy when something else on screen opens the
+ * dialog (the trigger options), so the chunk warms without a banner.
+ */
+export const createDialog = (
+	ctx: SurfaceContext,
+	options: ConsentDialogOptions,
+	warmOnMount?: unknown
+): Surface =>
+	withPrivacyChoicesDialog(
+		ctx,
+		options,
+		createClassicDialog(ctx, options, warmOnMount)
+	);

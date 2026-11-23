@@ -78,7 +78,7 @@ const PRODUCTION_BUNDLES = new Set(['inth.headless', 'inth.iab', 'inth.gpp']);
  * (`ui/dialog-surface.ts`). A script tag has nowhere to load a chunk from:
  * `inth.hosted.js` loads `inth.dialog.js` instead
  * (`ui/dialog-import-script.ts`), and the other script-tag builds use the
- * dialog module directly.
+ * dialog modules directly (`ui/dialog-static.ts`).
  */
 const dialogModule = (name: string) =>
 	name === 'inth.hosted'
@@ -88,7 +88,7 @@ const dialogModule = (name: string) =>
 			)
 		: new rspack.NormalModuleReplacementPlugin(
 				/^\.\/dialog-surface$/u,
-				'./dialog'
+				'./dialog-static'
 			);
 
 const scriptTagLib = function scriptTagLib(name: string, entry: string) {
@@ -129,6 +129,13 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 						'./create-runtime-static'
 					),
 					dialogModule(name),
+					// The Privacy Choices parts likewise: each presentation, the
+					// in-place options and the dialog are chunks in the ESM build
+					// (`ui/privacy-choices/pc-import.ts`), and in the file here.
+					new rspack.NormalModuleReplacementPlugin(
+						/^\.\/pc-import$/u,
+						'./pc-import-static'
+					),
 					// `inth.dialog.js` locks scrolling and traps focus with the
 					// functions of the bundle that loaded it (`ui/locks-shared.ts`).
 					...(name === 'inth.dialog'

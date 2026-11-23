@@ -15,6 +15,10 @@ const POLICY_PACK = `${ROOT}/schema/dist/shared/policy-rule-presets.js`;
 const HOSTED_TRANSPORT = `${ROOT}/core/dist/transports/hosted.js`;
 const EXPERIMENT_CONTROLLER = `${ROOT}/core/dist/libs/experiment-assignment.js`;
 const EXPERIMENT_LOADER = `${ROOT}/core/src/libs/experiment.ts`;
+const PRIVACY_CHOICES_SURFACE = `${ROOT}/browser/src/ui/privacy-choices/surface.ts`;
+const PRIVACY_CHOICES_SWITCH = `${ROOT}/browser/src/ui/privacy-choices-design.ts`;
+const DRAWER_SHEET = `${ROOT}/ui/dist/styles/sheets/drawer.js`;
+const BANNER_SHEET = `${ROOT}/ui/dist/styles/sheets/banner.js`;
 
 /** Runs the plugin over one chunk holding `modules`. */
 const check = function check(
@@ -74,6 +78,22 @@ describe('modeBundleBoundary', () => {
 		expect(() => check('init', [HOSTED_TRANSPORT])).not.toThrow();
 		expect(() =>
 			check('hosted', [EXPERIMENT_CONTROLLER, EXPERIMENT_LOADER])
+		).not.toThrow();
+	});
+
+	it('keeps the Privacy Choices design out of inth.js and inth.dialog.js, not the engine', () => {
+		for (const id of [
+			PRIVACY_CHOICES_SURFACE,
+			PRIVACY_CHOICES_SWITCH,
+			DRAWER_SHEET,
+		]) {
+			expect(() => check('init', [id])).toThrow(
+				/Unexpected implementation in init/u
+			);
+		}
+		expect(() => check('init', [BANNER_SHEET])).not.toThrow();
+		expect(() =>
+			check('hosted', [PRIVACY_CHOICES_SURFACE, PRIVACY_CHOICES_SWITCH])
 		).not.toThrow();
 	});
 });

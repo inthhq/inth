@@ -27,6 +27,15 @@ const TESTING_EXCLUSIONS = [
 	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/transports\/(?:hosted[^/]*|mode)\.[jt]s(?:$|[?|])/u,
 ];
 /**
+ * The Privacy Choices design: its surfaces, class names and stylesheets.
+ * Only the engine renders it; the init script and `inth.dialog.js` render
+ * the classic banner and dialog, and leave this design to the engine.
+ */
+const PRIVACY_CHOICES = [
+	/\/(?:packages\/(?:sdk\/)?browser|@inth\/sdk-browser)\/(?:src|dist)\/(?:ui|generated)\/privacy-choices(?:-design)?(?:\/|\.[jt]s(?:$|[?|]))/u,
+	/\/(?:packages\/(?:sdk\/)?ui|@inth\/sdk-ui)\/(?:src|dist)\/styles\/sheets\/(?:surface|card|bar|drawer|expand|privacy-choices-dialog)\.js(?:$|[?|])/u,
+];
+/**
  * The files the init script runs before the engine: hosted, and without
  * the experiment controller. `libs/experiment.ts` holds its `import()`,
  * which a one-file script build keeps even when nothing calls it.
@@ -34,6 +43,7 @@ const TESTING_EXCLUSIONS = [
 const INIT_EXCLUSIONS = [
 	...HOSTED_EXCLUSIONS,
 	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/libs\/experiment(?:-assignment|-engine)?\.[jt]s(?:$|[?|])/u,
+	...PRIVACY_CHOICES,
 ];
 
 type BoundaryMode = 'hosted' | 'init' | 'production' | 'testing';
