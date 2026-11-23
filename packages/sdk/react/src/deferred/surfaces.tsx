@@ -118,7 +118,13 @@ type BannerModule = typeof BannerModuleNamespace;
  */
 export const DeferredConsentBanner = surfaceWithParts(
 	'ConsentBanner',
-	(): Promise<BannerModule> => import('../components/prompt/index'),
+	async (): Promise<BannerModule> => {
+		const module = await import('../components/prompt/index');
+		// The container the server rendered loads with the banner, so
+		// hydration keeps the server's markup without a second wait.
+		await module.preloadServerContainer();
+		return module;
+	},
 	(module) => module.ConsentBanner,
 	[]
 ) as ComponentType<ConsentBannerProps>;

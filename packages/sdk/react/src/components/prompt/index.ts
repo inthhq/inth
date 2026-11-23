@@ -13,5 +13,6 @@ export {
 	type ConsentBannerButton,
 	type ConsentBannerLayout,
 	type ConsentBannerProps,
+	preloadServerContainer,
 } from './prompt';
 export { useBannerCopy } from './use-banner-copy';

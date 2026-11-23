@@ -6,7 +6,7 @@ import type {
 	PresentationAction,
 } from '@inth/sdk/engine';
 import type * as CoreTypes from '@inth/sdk/engine';
-import { createContext, useContext, useState } from 'react';
+import { Suspense, createContext, useContext, useState } from 'react';
 import type { ComponentType, FC, ReactNode } from 'react';
 
 import { useHeadlessConsentUI } from '~/component-hooks/use-headless-consent-ui';
@@ -30,15 +30,90 @@ const LazyOptInConfirmation = createDeferredModule(
  * downloads only the container it shows. A page that never owes a choice
  * downloads none of them.
  */
-const LazyCard = createDeferredModule(() => import('./card')).component(
+const deferredContainer = function deferredContainer<Module>(
+	importModule: () => Promise<Module>,
+	pick: (module: Module) => ComponentType<PromptSurfaceOptions>
+) {
+	let loaded: ComponentType<PromptSurfaceOptions> | undefined;
+	const deferred = createDeferredModule(async () => {
+		const module = await importModule();
+		loaded = pick(module);
+		return module;
+	});
+	const Lazy = deferred.component(pick);
+	/**
+	 * Renders the container at once when its chunk is already in, such as
+	 * a server-rendered banner whose chunk was preloaded before hydration,
+	 * so hydration never suspends on it. The choice is made once per mount:
+	 * switching later would remount the prompt.
+	 */
+	const Container = (props: PromptSurfaceOptions) => {
+		const [Loaded] = useState(() => loaded);
+		if (Loaded) {
+			return (
+				<Suspense fallback={null}>
+					<Loaded {...props} />
+				</Suspense>
+			);
+		}
+		return <Lazy {...props} />;
+	};
+	return { Container, preload: deferred.preload };
+};
+
+const card = deferredContainer(
+	() => import('./card'),
 	(module) => module.CardSurface
 );
-const LazyBanner = createDeferredModule(() => import('./banner')).component(
+const banner = deferredContainer(
+	() => import('./banner'),
 	(module) => module.BannerSurface
 );
-const LazyDrawer = createDeferredModule(() => import('./drawer')).component(
+const drawer = deferredContainer(
+	() => import('./drawer'),
 	(module) => module.DrawerSurface
 );
+/**
+ * Loads every container. The server runs it at module evaluation, so a
+ * render finds its container in and never streams the prompt in a later
+ * chunk.
+ *
+ * @internal
+ */
+export const preloadContainers = async function preloadContainers(): Promise<void> {
+	await Promise.all([card.preload(), banner.preload(), drawer.preload()]);
+};
+
+if (typeof window === 'undefined') {
+	void preloadContainers();
+}
+const LazyCard = card.Container;
+const LazyBanner = banner.Container;
+const LazyDrawer = drawer.Container;
+
+/**
+ * Starts loading the container the server rendered, read from the
+ * banner's `data-placement`, so the prompt hydrates without waiting for
+ * its chunk.
+ *
+ * @internal
+ */
+export const preloadServerContainer = function preloadServerContainer(): Promise<void> {
+	if (typeof document === 'undefined') {
+		return Promise.resolve();
+	}
+	const placement = document
+		.querySelector<HTMLElement>('[data-testid="consent-banner-root"]')
+		?.getAttribute('data-placement');
+	if (!placement) {
+		return Promise.resolve();
+	}
+	const type = placement.split('-')[0];
+	if (type === 'banner') {
+		return banner.preload();
+	}
+	return type === 'drawer' ? drawer.preload() : card.preload();
+};
 
 /** The component that renders each container type. @internal */
 export interface PromptContainers {
