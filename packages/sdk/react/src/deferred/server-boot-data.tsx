@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * Server side of {@link ConsentBoot}: renders the snapshots into the HTML.
+ * Server side of {@link ConsentBoot}: renders the snapshots into the HTML
+ * (`ServerBootData`, which `ConsentBootData` renders on the server).
  * Loaded with the engine, never in the first-load chunk.
  *
  * @packageDocumentation
@@ -207,50 +208,6 @@ export const ServerBootData = ({
 			preload={preload}
 			storedChoice={storedChoice}
 			storedChoiceCheck={storedChoiceCheck}
-		/>
-	);
-};
-
-/**
- * The snapshots a deferred root reads before its engine loads. Render it
- * inside the provider, in a Suspense boundary: with a streamed state it
- * waits for the state. In the browser it keeps the server's element.
- *
- * @internal
- */
-export const ConsentBootData = (props: ConsentBootDataProps) => {
-	if (typeof document !== 'undefined') {
-		return (
-			<>
-				{props.storedChoice ? (
-					<script
-						// oxlint-disable-next-line react/no-danger -- Empty: keeps the server's script.
-						dangerouslySetInnerHTML={{ __html: '' }}
-						suppressHydrationWarning
-					/>
-				) : null}
-				<script
-					{...{ [CONSENT_BOOT_ATTRIBUTE]: '' }}
-					// oxlint-disable-next-line react/no-danger -- Empty: keeps the server's element.
-					dangerouslySetInnerHTML={{ __html: '' }}
-					suppressHydrationWarning
-					type="application/json"
-				/>
-				<script
-					// oxlint-disable-next-line react/no-danger -- Empty: keeps the server's script.
-					dangerouslySetInnerHTML={{ __html: '' }}
-					suppressHydrationWarning
-				/>
-			</>
-		);
-	}
-	return (
-		<ServerBootData
-			chunks={props.chunks}
-			preload={props.preload}
-			renderId={props.renderId}
-			storedChoice={props.storedChoice}
-			storedChoiceCheck={props.storedChoiceCheck}
 		/>
 	);
 };

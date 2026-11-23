@@ -35,7 +35,8 @@ import {
 	readConsentBoot,
 } from '../boot';
 import type { ConsentBoot } from '../boot';
-import { ConsentBootData, ServerBootData } from '../server-boot-data';
+import { ConsentBootData } from '../consent-boot-data';
+import { ServerBootData } from '../server-boot-data';
 import type { DeferredCommitConfig } from '../deferred-committed.model';
 import { DeferredConsentShell } from '../deferred-consent-shell';
 import type * as EngineNamespace from '../engine';
