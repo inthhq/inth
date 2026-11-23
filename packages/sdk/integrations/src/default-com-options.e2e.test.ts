@@ -13,7 +13,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import type * as DefaultCom from './vendors/analytics/default-com';
 
 let helpers: typeof DefaultCom;

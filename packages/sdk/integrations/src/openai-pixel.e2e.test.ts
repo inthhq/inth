@@ -14,7 +14,7 @@ import {
 	registerVendorContractCleanup,
 	toArgs,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { openaiPixel } from './vendors/ads-and-pixels/openai-pixel';
 
 const pixelId = 'FZfHJsmuTCvv8LyoCnzMuh';

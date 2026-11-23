@@ -7,7 +7,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import type { LuckyOrangeApi } from './vendors/analytics/lucky-orange';
 import { luckyOrange } from './vendors/analytics/lucky-orange';
 

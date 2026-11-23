@@ -14,7 +14,7 @@ import {
 	registerVendorContractCleanup,
 	toArgs,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { adrollPixel } from './vendors/ads-and-pixels/adroll';
 
 const account = { advertiserId: 'inth-advertiser', pixelId: 'inth-pixel' };

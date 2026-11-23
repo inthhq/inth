@@ -22,7 +22,7 @@ export default defineConfig({
 	},
 	source: {
 		entry: {
-			'**': [...standardSourceEntries, '!./src/e2e-test-utils.ts'],
+			'**': standardSourceEntries,
 		},
 		exclude: standardExcludePatterns,
 	},

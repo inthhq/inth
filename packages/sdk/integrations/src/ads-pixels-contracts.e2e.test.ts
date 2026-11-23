@@ -9,7 +9,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { pinterestTag } from './vendors/ads-and-pixels/pinterest-tag';
 import { redditPixel } from './vendors/ads-and-pixels/reddit-pixel';
 import { snapchatPixel } from './vendors/ads-and-pixels/snapchat-pixel';

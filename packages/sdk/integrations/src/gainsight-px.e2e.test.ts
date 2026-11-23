@@ -13,7 +13,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { gainsightPx } from './vendors/analytics/gainsight-px';
 import type { GainsightPxOptions } from './vendors/analytics/gainsight-px';
 

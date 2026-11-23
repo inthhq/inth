@@ -9,7 +9,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { ahrefsAnalytics } from './vendors/analytics/ahrefs-analytics';
 import { cloudflareWebAnalytics } from './vendors/analytics/cloudflare-web-analytics';
 import { fathomAnalytics } from './vendors/analytics/fathom-analytics';

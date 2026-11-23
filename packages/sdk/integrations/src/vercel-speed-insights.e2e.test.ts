@@ -10,7 +10,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { vercelSpeedInsights } from './vendors/analytics/vercel-speed-insights';
 import type { VercelSpeedInsightsBeforeSend } from './vendors/analytics/vercel-speed-insights';
 

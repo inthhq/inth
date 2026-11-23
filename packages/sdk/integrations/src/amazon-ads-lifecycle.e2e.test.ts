@@ -4,7 +4,7 @@ import type { Script } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ALL_DENIED, grantedMarketingConsents } from './e2e-test-utils';
+import { ALL_DENIED, grantedMarketingConsents } from './__tests__/e2e-test-utils';
 import { amazonAdsTag } from './vendors/ads-and-pixels/amazon-ads';
 import type {
 	AmazonAdsConsent,

@@ -11,7 +11,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { hubspot } from './vendors/analytics/hubspot';
 
 describe('HubSpot core loader consent contract', () => {

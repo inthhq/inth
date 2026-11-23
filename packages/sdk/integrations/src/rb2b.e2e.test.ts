@@ -12,7 +12,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { rb2b } from './vendors/analytics/rb2b';
 
 describe('RB2B core loader consent contract', () => {

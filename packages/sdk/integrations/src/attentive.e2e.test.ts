@@ -7,7 +7,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { attentiveTag } from './vendors/email-and-sms/attentive';
 
 const GLOBALS = ['attentive', 'attentiveOptions'];

@@ -14,7 +14,7 @@ import {
 	isArgumentsPayload,
 	toArgs,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { zendeskWidget } from './vendors/functional/zendesk';
 
 const functionalityConsents = { ...ALL_DENIED, functionality: true };

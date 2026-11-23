@@ -11,7 +11,7 @@ import * as sentry11 from 'sentry-browser-v11';
 import * as sentry11Min from 'sentry-browser-v11-min';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ALL_DENIED, grantedMeasurementConsents } from './e2e-test-utils';
+import { ALL_DENIED, grantedMeasurementConsents } from './__tests__/e2e-test-utils';
 import { sentry } from './vendors/analytics/sentry';
 import type {
 	SentryClient,

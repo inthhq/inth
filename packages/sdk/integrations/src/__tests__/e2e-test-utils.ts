@@ -9,7 +9,7 @@ import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import type { ScriptLoaderHandle } from '@inth/sdk/modules/script-loader';
 import { afterEach, vi } from 'vitest';
 
-import { ALL_DENIED } from './engine/vendor-consent.model';
+import { ALL_DENIED } from '../engine/vendor-consent.model';
 
 export interface GoogleTagDataState {
 	ics: {

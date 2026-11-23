@@ -13,7 +13,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { wisepops } from './vendors/functional/wisepops';
 
 const LOADER_SRC = 'https://wisepops.net/loader.js?v=3&h=inthfake';

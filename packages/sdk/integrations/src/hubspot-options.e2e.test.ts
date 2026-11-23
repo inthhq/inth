@@ -7,7 +7,7 @@ import {
 	grantedMarketingConsents,
 	loadScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { hubspot } from './vendors/analytics/hubspot';
 import type { HubSpotOptions } from './vendors/analytics/hubspot';
 

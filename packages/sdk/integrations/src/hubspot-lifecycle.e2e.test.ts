@@ -15,7 +15,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { hubspot } from './vendors/analytics/hubspot';
 
 const allConsents = {

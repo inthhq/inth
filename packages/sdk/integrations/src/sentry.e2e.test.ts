@@ -7,7 +7,7 @@ import { testing } from '@inth/sdk/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { scripts as sentryExampleScripts } from '../../../../internals/doc-snippets/javascript/src/sentry';
-import { ALL_DENIED, grantedMeasurementConsents } from './e2e-test-utils';
+import { ALL_DENIED, grantedMeasurementConsents } from './__tests__/e2e-test-utils';
 import { sentry, sentryManifest } from './vendors/analytics/sentry';
 import type {
 	SentryClient,

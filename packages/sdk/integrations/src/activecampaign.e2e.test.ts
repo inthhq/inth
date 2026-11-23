@@ -8,7 +8,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import type { activeCampaignTracking as ActiveCampaignTracking } from './vendors/email-and-sms/activecampaign';
 
 let activeCampaignTracking: typeof ActiveCampaignTracking;
