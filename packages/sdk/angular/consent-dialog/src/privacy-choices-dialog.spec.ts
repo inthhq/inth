@@ -558,6 +558,35 @@ describe('vendors:', () => {
 		);
 	};
 
+	test('[LAY-05] opening a vendor table brings it into view once it starts to open', async () => {
+		const trigger = await openAnalytics();
+		// jsdom has no layout to scroll; the reveal looks the table up when
+		// it runs, so that lookup shows it ran.
+		const lookup = vi.spyOn(document, 'getElementById');
+		trigger.click();
+		await waitFor(() =>
+			expect(trigger.getAttribute('aria-expanded')).toBe('true')
+		);
+		const panelId = trigger.getAttribute('aria-controls');
+		expect(panelId).toBeTruthy();
+		await waitFor(() => expect(lookup).toHaveBeenCalledWith(panelId));
+	});
+
+	test('[LAY-05] a vendor reveal still due is cancelled when the dialog goes', async () => {
+		const trigger = await openAnalytics();
+		const scheduled = vi.spyOn(globalThis, 'setTimeout');
+		const cleared = vi.spyOn(globalThis, 'clearTimeout');
+		trigger.click();
+		await waitFor(() =>
+			expect(trigger.getAttribute('aria-expanded')).toBe('true')
+		);
+		const index = scheduled.mock.calls.findIndex(([, delay]) => delay === 230);
+		expect(index).not.toBe(-1);
+		const timer = scheduled.mock.results[index]?.value as unknown;
+		TestBed.resetTestingModule();
+		expect(cleared.mock.calls.map(([id]) => id)).toContain(timer);
+	});
+
 	test('[CAT-05][CAT-09][CAT-07] the trigger names itself from its text and opens a boxed table', async () => {
 		const trigger = await openAnalytics();
 		expect(text(trigger)).toMatch(/^View 2 vendors for Analytics/u);

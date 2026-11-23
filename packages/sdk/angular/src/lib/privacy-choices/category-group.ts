@@ -12,6 +12,7 @@ import {
 	ChangeDetectionStrategy,
 	Component,
 	computed,
+	DestroyRef,
 	ElementRef,
 	inject,
 	input,
@@ -545,6 +546,7 @@ export class CategoryGroup {
 	readonly #openVendors = signal<Partial<Record<AllConsentNames, boolean>>>({});
 	/** The category whose table just opened, to reveal once it renders. */
 	readonly #revealing = signal<AllConsentNames | null>(null);
+	#cancelReveal: (() => void) | undefined;
 
 	/** @internal */
 	protected readonly testIds = computed(
@@ -614,19 +616,24 @@ export class CategoryGroup {
 
 	constructor() {
 		// Bring an opened vendor table into view without scrolling its trigger
-		// out (LAY-05), unless the surface moved on (PERM-16).
-		afterRenderEffect((onCleanup) => {
+		// out (LAY-05), unless the surface moved on (PERM-16). The reveal is
+		// kept in a field, not tied to the effect: clearing `#revealing` runs
+		// the effect again, and its cleanup would cancel the reveal it just
+		// scheduled. A newer reveal or the group's end cancels it.
+		afterRenderEffect(() => {
 			const category = this.#revealing();
 			if (!category) {
 				return;
 			}
 			untracked(() => {
 				this.#revealing.set(null);
+				this.#cancelReveal?.();
 				const session = this.#surface.session();
 				const { token } = session.getState();
 				const host = this.#host.nativeElement;
-				const cancel = scheduleReveal(
+				this.#cancelReveal = scheduleReveal(
 					() => {
+						this.#cancelReveal = undefined;
 						const trigger = host.querySelector<HTMLElement>(
 							`[data-opener="${vendorOpenerKey(category)}"]`
 						);
@@ -639,8 +646,11 @@ export class CategoryGroup {
 					},
 					{ isCurrent: () => session.isCurrent(token) }
 				);
-				onCleanup(cancel);
 			});
+		});
+		inject(DestroyRef).onDestroy(() => {
+			this.#cancelReveal?.();
+			this.#cancelReveal = undefined;
 		});
 	}
 
