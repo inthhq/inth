@@ -162,6 +162,11 @@ const loadPairedStories = async function loadPairedStories(): Promise<
 	return paired.filter((pair) => Object.keys(pair.entries).length >= 2);
 };
 
+/** Rounds {@link settleSurfaces} waits before giving up on a story. */
+const SETTLE_ROUNDS = 10;
+/** Time after each idle callback for a chunk it requested to mount. */
+const SETTLE_ROUND_MS = 150;
+
 const openStory = async function openStory(
 	page: Page,
 	baseUrl: string,
@@ -196,6 +201,43 @@ const openStory = async function openStory(
 		page.locator('body'),
 		`${storyId}: story render or play failed`
 	).not.toHaveClass(/sb-show-errordisplay/u);
+	await settleSurfaces(page, storyId);
+};
+
+/**
+ * Wait until the page's surfaces stop changing. A framework may fetch a
+ * surface's chunk only once the page is idle: Vue loads the prompt
+ * container, which holds the banner's status region, after a story has
+ * already opened the dialog. That can land after `networkidle`, so a
+ * capture taken then raced it ("Phone Eu Vendor Sheets" against Vue).
+ * Each round lets the page go idle and fetch what it scheduled, and the
+ * capture proceeds once two rounds read the same accessibility tree.
+ */
+const settleSurfaces = async function settleSurfaces(
+	page: Page,
+	storyId: string
+): Promise<void> {
+	let previous: string | undefined;
+	for (let round = 0; round < SETTLE_ROUNDS; round += 1) {
+		// oxlint-disable-next-line no-await-in-loop -- Each round waits on the page going idle again.
+		await page.evaluate(
+			() =>
+				new Promise<void>((resolve) => {
+					requestIdleCallback(() => resolve(), { timeout: 1000 });
+				})
+		);
+		// oxlint-disable-next-line no-await-in-loop -- Give a chunk requested at idle time to arrive and mount.
+		await page.waitForTimeout(SETTLE_ROUND_MS);
+		// oxlint-disable-next-line no-await-in-loop -- Compare against the previous round.
+		const current = await captureA11yTree(page, 'body');
+		if (current === previous) {
+			return;
+		}
+		previous = current;
+	}
+	throw new Error(
+		`${storyId}: surfaces kept changing for ${SETTLE_ROUNDS} rounds`
+	);
 };
 
 /**
