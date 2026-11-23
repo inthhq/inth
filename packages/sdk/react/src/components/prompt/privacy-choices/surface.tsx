@@ -8,11 +8,7 @@
  * the presentation it renders.
  */
 
-import {
-	commitBannerChoice,
-	PHONE_LAYOUT_QUERY,
-	resolveOptOutState,
-} from '@inth/sdk/engine';
+import { commitBannerChoice, resolveOptOutState } from '@inth/sdk/engine';
 import type {
 	BannerCommitAction,
 	PresentationAction,
@@ -48,12 +44,12 @@ import {
 	useMemo,
 	useRef,
 	useState,
-	useSyncExternalStore,
 } from 'react';
 import type { ReactNode, RefObject } from 'react';
 
 import { registerDialogChunkWarmer, warmDialogChunk } from '~/chunk-warming';
 import { useTranslations } from '~/component-hooks/use-translations';
+import { usePhoneLayout } from '~/components/privacy-choices/use-phone-layout';
 import {
 	rightsBundleOf,
 	useOptOutReceiptData,
@@ -148,26 +144,6 @@ const RETURN_TARGETS = [
 	'[data-testid="privacy-choices-link"]',
 	'[data-testid="consent-dialog-trigger"]',
 ];
-
-const subscribePhone = (listener: () => void) => {
-	if (typeof window === 'undefined' || !window.matchMedia) {
-		return () => undefined;
-	}
-	const query = window.matchMedia(PHONE_LAYOUT_QUERY);
-	query.addEventListener('change', listener);
-	return () => query.removeEventListener('change', listener);
-};
-const readPhone = () =>
-	typeof window !== 'undefined' &&
-	typeof window.matchMedia === 'function' &&
-	window.matchMedia(PHONE_LAYOUT_QUERY).matches;
-
-/**
- * Whether the phone layout applies. The server renders desktop; the
- * browser switches after hydration, keeping every node (ARCH-01).
- */
-const usePhoneLayout = (): boolean =>
-	useSyncExternalStore(subscribePhone, readPhone, () => false);
 
 const cx = (noStyle: boolean | undefined, ...names: (string | undefined)[]) =>
 	noStyle ? undefined : names.filter(Boolean).join(' ') || undefined;

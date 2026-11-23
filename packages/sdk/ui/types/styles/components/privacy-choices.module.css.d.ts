@@ -1,6 +1,7 @@
 declare const styles: {
   readonly "backdrop": string;
   readonly "bleed": string;
+  readonly "body": string;
   readonly "card": string;
   readonly "category": string;
   readonly "categoryDescription": string;
@@ -15,6 +16,9 @@ declare const styles: {
   readonly "confirmDescription": string;
   readonly "confirmTitle": string;
   readonly "copyButton": string;
+  readonly "cueSlot": string;
+  readonly "disclosure": string;
+  readonly "disclosureInner": string;
   readonly "done": string;
   readonly "doneCheck": string;
   readonly "footer": string;
@@ -27,6 +31,7 @@ declare const styles: {
   readonly "navRowMeta": string;
   readonly "note": string;
   readonly "preferencesBody": string;
+  readonly "preferencesPanel": string;
   readonly "privacyChoicesCardIn": string;
   readonly "privacyChoicesChildIn": string;
   readonly "privacyChoicesChildOut": string;
@@ -36,10 +41,12 @@ declare const styles: {
   readonly "privacyChoicesShake": string;
   readonly "privacyChoicesSheetIn": string;
   readonly "privacyChoicesSheetOut": string;
+  readonly "quietLink": string;
   readonly "receipt": string;
   readonly "receiptDetails": string;
   readonly "receiptLead": string;
   readonly "receiptLine": string;
+  readonly "receiptMuted": string;
   readonly "reference": string;
   readonly "referenceField": string;
   readonly "right": string;
@@ -61,6 +68,7 @@ declare const styles: {
   readonly "vendorRow": string;
   readonly "vendorTable": string;
   readonly "vendorTrigger": string;
+  readonly "visuallyHidden": string;
 };
 export = styles;
 

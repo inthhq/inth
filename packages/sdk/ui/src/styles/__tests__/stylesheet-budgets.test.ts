@@ -66,11 +66,15 @@ const EXISTING = {
  * the React banner's grouped actions and underlined policy links, brought
  * `styles/privacy-choices.css` to 7,649 / 8,629 and its Tailwind 3 twin to
  * 7,550 / 8,495, so their budgets are 7,700 / 8,700 and 7,600 / 8,550.
+ *
+ * `privacy-choices-dialog` was raised to 4,155 / 4,664 when it took over
+ * the switch, category row and disclosure rules, so neither the v6 dialog
+ * nor a banner panel loads the classic `dialog` sheet (about 7.5 KB gzip).
  */
 const V6 = {
 	'privacy-choices-dialog': {
-		brotli: 3950,
-		gzip: 4450,
+		brotli: 4500,
+		gzip: 5050,
 		sheet: 'privacy-choices-dialog',
 	},
 	'styles/privacy-choices.css': {

@@ -1,11 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
 import type { ComponentType } from 'react';
 
 import {
 	registerDialogChunkWarmer,
 	useIdleDialogWarming,
 } from './chunk-warming';
+import { useHeadlessConsentUI } from './component-hooks/use-headless-consent-ui';
 import type { OptInConfirmationProps } from './components/opt-in-confirmation';
 import type {
 	OptOutConfirmationCompoundComponent,
@@ -68,8 +70,30 @@ const lazyOptOutConfirmationExport = (name: string) =>
 		(module) => (module as Record<string, unknown>)[name] as AnyComponent
 	);
 
+/**
+ * The v6 "Your Privacy Choices" dialog (`design: 'privacy-choices'`), in a
+ * chunk of its own with its stylesheet, loaded when it opens and warmed
+ * like the classic dialog. A page on the classic design never loads it.
+ */
+const privacyChoicesDialogModule = createDeferredModule(
+	() => import('./components/privacy-choices-dialog')
+);
+const LazyPrivacyChoicesDialog = privacyChoicesDialogModule.component(
+	(module) => module.PrivacyChoicesDialog
+);
+
+/**
+ * The design the mounted `ConsentDialog` renders, so warming loads only
+ * that design's dialog.
+ */
+let warmDesign: 'classic' | 'privacy-choices' = 'classic';
+
 registerDialogChunkWarmer(() => {
-	void dialogModule.preload();
+	if (warmDesign === 'privacy-choices') {
+		void privacyChoicesDialogModule.preload();
+	} else {
+		void dialogModule.preload();
+	}
 });
 const LazyConsentDialogComponent = dialogModule.component(
 	(module) => module.ConsentDialog
@@ -97,8 +121,29 @@ const LazyConsentDialog = (props: ConsentDialogProps) => {
 	const confirmationOpen = useOptOutConfirmationOpen();
 	const hasStandaloneConfirmation = useHasOptOutConfirmationHost();
 	const optInConfirmationOpen = useOptInConfirmationOpen();
+	const { banner } = useHeadlessConsentUI();
+	const privacyChoices = banner.design === 'privacy-choices';
+	useEffect(() => {
+		warmDesign = privacyChoices ? 'privacy-choices' : 'classic';
+	}, [privacyChoices]);
 	// A shown banner can open the dialog at any moment, whatever renders it.
 	useIdleDialogWarming(activeUI === 'banner');
+	if (privacyChoices) {
+		// The v6 dialog loads on open, never with the banner (PERM-05: the
+		// banner leaves at once when it opens).
+		if (props.open === true || activeUI === 'dialog') {
+			return (
+				<LazyPrivacyChoicesDialog
+					open={props.open}
+					noStyle={props.noStyle}
+					disableAnimation={props.disableAnimation}
+					models={props.models}
+					uiSource={props.uiSource}
+				/>
+			);
+		}
+		return null;
+	}
 	const shouldLoadDialog =
 		props.open === true || activeUI === 'dialog' || Boolean(props.showTrigger);
 	if (shouldLoadDialog) {

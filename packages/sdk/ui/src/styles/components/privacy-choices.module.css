@@ -297,6 +297,29 @@
 			var(--_dialog-stroke, var(--inth-border));
 	}
 
+	/* The body is the only scroller (LAY-01); the card sizes it. */
+	.body {
+		flex: 1 1 auto;
+	}
+
+	.preferencesPanel {
+		padding-top: var(--inth-space-sm);
+	}
+
+	/* The privacy link in the footer, only when configured (DEF-01). */
+	.quietLink {
+		font-size: calc(var(--inth-font-size-sm) * 0.8929);
+		color: var(--inth-text-muted);
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+
+	/* Keeps Done's place, and so its node and focus, while the cue comes
+	   and goes (FOC-06). */
+	.cueSlot {
+		display: contents;
+	}
+
 	.footerNote {
 		font-size: var(
 			--consent-dialog-footer-font-size,
@@ -590,6 +613,10 @@
 		color: var(--inth-text-muted);
 	}
 
+	.receiptMuted {
+		color: var(--inth-text-muted);
+	}
+
 	.receiptLead {
 		display: inline-flex;
 		align-items: center;
@@ -739,6 +766,49 @@
 	/* The categories under an open Preferences row, set off from the row. */
 	.preferencesBody {
 		padding-top: var(--inth-space-sm);
+	}
+
+	/* A disclosure that keeps its node and animates its height through
+	   `grid-template-rows: 0fr -> 1fr` (RCPT-03, MOT-02): the receipt, its
+	   Details, the Preferences panel and the vendor tables. */
+	.disclosure {
+		display: grid;
+		grid-template-rows: 0fr;
+		transition: grid-template-rows var(--inth-duration-slow)
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
+	}
+
+	.disclosure[data-open='true'] {
+		grid-template-rows: 1fr;
+	}
+
+	.disclosureInner {
+		min-height: 0;
+		overflow: hidden;
+		opacity: 0;
+		visibility: hidden;
+		transition:
+			opacity calc(var(--inth-duration-slow) * 0.6) var(--inth-easing-out),
+			visibility var(--inth-duration-slow) linear;
+	}
+
+	.disclosure[data-open='true'] > .disclosureInner {
+		opacity: 1;
+		visibility: visible;
+		transition: opacity calc(var(--inth-duration-slow) * 0.6)
+			var(--inth-easing-out) calc(var(--inth-duration-slow) * 0.3);
+	}
+
+	.visuallyHidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 
 	/* One category in the bordered group (CAT-01, CAT-06): its name is the
@@ -1033,6 +1103,10 @@
 		.vendorLink:hover {
 			color: var(--inth-primary-text, var(--inth-primary));
 		}
+
+		.quietLink:hover {
+			color: var(--inth-text);
+		}
 	}
 
 	/* Phone: nested sheets from the bottom, at most two layers (NEST-02).
@@ -1267,7 +1341,10 @@
 		.navRow,
 		.vendorTrigger,
 		.switch,
-		.switch::after {
+		.switch::after,
+		.disclosure,
+		.disclosureInner,
+		.disclosure[data-open='true'] > .disclosureInner {
 			transition: none;
 			animation: none;
 		}

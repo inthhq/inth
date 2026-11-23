@@ -11,14 +11,14 @@ import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 const noopSubscribe = () => () => undefined;
 
-const useLegalLinksConfig = function useLegalLinksConfig():
+export const useLegalLinksConfig = function useLegalLinksConfig():
 	| LegalLinksType
 	| undefined {
 	const v3Config = useContext(V3UIConfigContext);
 	return v3Config.legalLinks;
 };
 
-const useLegalLinkTranslations = function useLegalLinkTranslations():
+export const useLegalLinkTranslations = function useLegalLinkTranslations():
 	| Partial<LegalLinksTranslations>
 	| undefined {
 	const kernel = useContext(KernelContext);

@@ -15,8 +15,14 @@ import type { RightOption, SaveUISource } from '@inth/sdk/engine';
 import type { ConsentComponentSlotKey } from '@inth/sdk/schema/config';
 import {
 	resolvePrivacyChoicesCopy,
+	resolveSaleAnnouncement,
 	resolveSaleRightCopy,
 } from '@inth/sdk/surface-state';
+import type { SaleAnnouncementOutcome } from '@inth/sdk/surface-state';
+import {
+	revealInScrollBody,
+	scheduleReveal,
+} from '@inth/sdk/ui/primitives/surface';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import styles from '@inth/sdk/ui/styles/components/privacy-choices';
 import { useEffect, useRef } from 'react';
@@ -37,7 +43,7 @@ import {
 } from './use-surface-session';
 
 /** Surfaces that render the rights row, by their test-id prefix. */
-export type RightsRowSurface = 'consent-banner';
+export type RightsRowSurface = 'consent-banner' | 'consent-dialog';
 
 /**
  * The row's test ids on each surface, spelled out so each one matches
@@ -51,6 +57,14 @@ const ROW_TEST_IDS = {
 		confirmCancel: 'consent-banner-confirm-cancel',
 		protect: 'consent-banner-right-option-sale-protect',
 		row: 'consent-banner-rights-row-sale',
+	},
+	'consent-dialog': {
+		allow: 'consent-dialog-right-option-sale-allow',
+		confirm: 'consent-dialog-confirm',
+		confirmAllow: 'consent-dialog-confirm-allow',
+		confirmCancel: 'consent-dialog-confirm-cancel',
+		protect: 'consent-dialog-right-option-sale-protect',
+		row: 'consent-dialog-rights-row-sale',
 	},
 } as const satisfies Record<RightsRowSurface, Record<string, string>>;
 
@@ -71,6 +85,8 @@ export interface SaleRightsRowProps {
 	/** The `components` part that styles the row. */
 	slotKey?: ConsentComponentSlotKey;
 	noStyle?: boolean;
+	/** Called after the row recorded a choice, for the dialog's "Saved" cue. */
+	onRecorded?: () => void;
 }
 
 const OPTIONS: readonly RightOption[] = ['protect', 'allow'];
@@ -111,6 +127,7 @@ export const SaleRightsRow = ({
 	uiSource,
 	slotKey,
 	noStyle,
+	onRecorded,
 }: SaleRightsRowProps) => {
 	const kernel = useKernel();
 	const snapshot = useSnapshot();
@@ -130,8 +147,21 @@ export const SaleRightsRow = ({
 	// invoking Allow when it closes from inside it.
 	useEffect(() => {
 		const confirm = confirmRef.current;
+		let cancelReveal: (() => void) | undefined;
 		if (open && !wasOpen.current) {
 			cancelRef.current?.focus({ preventScroll: true });
+			// Bring the question into view in the scroll body only, once it
+			// has started to open, unless the surface moved on (RIGHT-07,
+			// LAY-05, PERM-16).
+			const { token } = session.getState();
+			cancelReveal = scheduleReveal(
+				() => {
+					if (confirm) {
+						revealInScrollBody(confirm);
+					}
+				},
+				{ isCurrent: () => session.isCurrent(token) }
+			);
 		} else if (
 			!open &&
 			wasOpen.current &&
@@ -142,7 +172,8 @@ export const SaleRightsRow = ({
 			allowRef.current?.focus({ preventScroll: true });
 		}
 		wasOpen.current = open;
-	}, [open]);
+		return cancelReveal;
+	}, [open, session]);
 
 	// Replay the shake on every nudge; the red ring stays until it closes.
 	useEffect(() => {
@@ -179,10 +210,24 @@ export const SaleRightsRow = ({
 		panel: `${idPrefix}-sale-confirm`,
 		title: `${idPrefix}-sale-title`,
 	};
+	const bundle = rightsBundleOf(snapshot, receiptData);
+	/** Say what was recorded, ending in "Saved." (LAW-04). */
+	const recorded = (outcome: SaleAnnouncementOutcome) => {
+		session.announce(
+			resolveSaleAnnouncement(translations, { bundle, model, outcome })
+		);
+		onRecorded?.();
+	};
 	const press = (option: RightOption) => {
 		const { outcome } = pressSaleRight(kernel, option, { uiSource });
 		if (outcome === 'nudge') {
 			session.announce(nudge);
+		} else if (outcome === 'apply-protect') {
+			recorded('protect');
+		} else if (outcome === 'apply-allow') {
+			recorded('allow');
+		} else if (outcome === 'record-default') {
+			recorded('recorded');
 		}
 	};
 	const rowProps = mergeSlotProps(getSlotProps(components, slotKey), {
@@ -309,7 +354,9 @@ export const SaleRightsRow = ({
 								noStyle={noStyle}
 								data-testid={testIds.confirmAllow}
 								onClick={() => {
-									void confirmSaleRight(kernel, { uiSource });
+									if (confirmSaleRight(kernel, { uiSource })) {
+										recorded('allow');
+									}
 								}}
 							>
 								{copy.confirmAllow}

@@ -19,7 +19,10 @@ import { useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
-import { CategoryGroup } from '~/components/privacy-choices/category-group';
+import {
+	AdvertisingRow,
+	CategoryGroup,
+} from '~/components/privacy-choices/category-group';
 import { SaleRightsRow } from '~/components/privacy-choices/rights-row';
 import { useConsentDraftSlice, useConsentDraftStore } from '~/draft';
 import { useSnapshot } from '~/hooks';
@@ -84,7 +87,9 @@ const UsPreferences = ({
 	const translations = useTranslations();
 	const snapshot = useSnapshot();
 	const draft = useConsentDraftStore();
-	const sale = resolveSaleRight(snapshot).category;
+	const right = resolveSaleRight(snapshot);
+	const sale = right.available ? right.category : null;
+	const saleOn = right.selected === 'allow';
 	const onCount = useConsentDraftSlice(
 		draft,
 		(state) =>
@@ -127,6 +132,15 @@ const UsPreferences = ({
 							idPrefix={idPrefix}
 							testIdPrefix="consent-banner"
 							exclude={sale ? [sale] : []}
+							footer={
+								sale ? (
+									<AdvertisingRow
+										on={saleOn}
+										idPrefix={idPrefix}
+										noStyle={noStyle}
+									/>
+								) : null
+							}
 							noStyle={noStyle}
 						/>
 					</div>
