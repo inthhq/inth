@@ -488,6 +488,11 @@ export interface ConsentConfig<T = Record<string, unknown>> {
 		regionCode?: string | null;
 	};
 	disableAnimation?: boolean;
+	/**
+	 * Traps focus in the IAB banner and dialog and in the opt-out and
+	 * opt-in confirmations. The stock banner traps focus only when it blocks
+	 * (`blockUntilChoice`); the stock dialog always does.
+	 */
 	trapFocus?: boolean;
 	/** Provider-level legal link URLs (labels come from init translations). */
 	legalLinks?: ConsentLegalLinks;

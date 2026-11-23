@@ -35,15 +35,21 @@ export interface ThemeContextValue {
 	noStyle?: boolean;
 
 	/**
-	 * Locks the scroll when true & hides the overlay when disabled
-	 * @remarks Useful for preventing scroll when a modal is open
+	 * Locks page scroll while a modal surface other than the stock banner
+	 * and dialog is open: the IAB banner and dialog, and the opt-out and
+	 * opt-in confirmations (standalone, or hosted by the dialog). The stock
+	 * banner blocks only with `presentation.prompt.blockUntilChoice` (or a
+	 * policy that requires it); the stock dialog always blocks.
 	 * @default false
 	 */
 	scrollLock?: boolean;
 
 	/**
-	 * Traps keyboard focus within a dialog when true
-	 * @remarks Enhances accessibility for modal dialogs
+	 * Traps focus in a modal surface other than the stock banner and
+	 * dialog: the IAB banner and dialog, and the opt-out and opt-in
+	 * confirmations (standalone, or hosted by the dialog). The stock banner
+	 * traps focus only when it blocks (`blockUntilChoice`); the stock dialog
+	 * always does.
 	 * @default true
 	 */
 	trapFocus?: boolean;
