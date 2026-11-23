@@ -88,7 +88,7 @@ export type {
 	OptOutConfirmationProps,
 	OptOutConfirmationRootProps,
 } from './components/opt-out-confirmation';
-export type { ConsentDialogLinkProps } from './components/panel-link';
+export type { ConsentDialogLinkProps } from './components/consent-dialog-link';
 export type { PrivacyChoicesLinkProps } from './components/privacy-choices-link';
 export type {
 	ConsentDialogTriggerProps,

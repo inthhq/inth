@@ -53,7 +53,7 @@ import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs.mod
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
 import { ConsentDialog } from '../aggregate-components';
 import { ConsentGate } from '../components/consent-gate';
-import { ConsentDialogLink } from '../components/panel-link';
+import { ConsentDialogLink } from '../components/consent-dialog-link';
 import { ConsentDialogTrigger } from '../components/panel-trigger';
 import { ConsentBanner } from '../components/prompt';
 import { KernelContext } from '../context';

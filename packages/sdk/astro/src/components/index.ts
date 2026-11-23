@@ -23,7 +23,7 @@
 
 export { default as ConsentBanner } from './prompt.astro';
 export { default as ConsentDialog } from './panel.astro';
-export { default as ConsentDialogLink } from './panel-link.astro';
+export { default as ConsentDialogLink } from './consent-dialog-link.astro';
 export { default as ConsentScript } from './consent-script.astro';
 export { default as IABConsentBanner } from './iab-prompt.astro';
 export { default as IABConsentDialog } from './iab-panel.astro';

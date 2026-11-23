@@ -3,4 +3,4 @@
 export {
 	ConsentDialogLink,
 	type ConsentDialogLinkProps,
-} from '../consent-preferences-link/consent-dialog-link';
+} from './consent-dialog-link';

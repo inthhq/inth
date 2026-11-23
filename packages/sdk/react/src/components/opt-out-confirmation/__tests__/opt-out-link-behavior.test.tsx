@@ -9,7 +9,7 @@ import { render } from 'vitest-browser-react';
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog, OptOutConfirmation } from '~/aggregate-components';
-import { ConsentDialogLink } from '~/components/consent-preferences-link/consent-dialog-link';
+import { ConsentDialogLink } from '~/components/consent-dialog-link/consent-dialog-link';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentBanner } from '~/components/prompt';
 import { useOptOut } from '~/hooks';

@@ -3,7 +3,7 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import ConsentDialogLink from '../components/panel-link.astro';
+import ConsentDialogLink from '../components/consent-dialog-link.astro';
 import ConsentDialog from '../components/panel.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';

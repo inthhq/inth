@@ -7,7 +7,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import ConsentScript from '../components/consent-script.astro';
 import IABConsentDialog from '../components/iab-panel.astro';
 import IABConsentBanner from '../components/iab-prompt.astro';
-import ConsentDialogLink from '../components/panel-link.astro';
+import ConsentDialogLink from '../components/consent-dialog-link.astro';
 import ConsentBanner from '../components/prompt.astro';
 import {
 	INLINE_IAB_STYLES_CSS,

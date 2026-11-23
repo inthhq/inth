@@ -3,7 +3,7 @@ import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
 import { ConsentDialog } from '~/aggregate-components';
-import { ConsentDialogLink } from '~/components/panel-link';
+import { ConsentDialogLink } from '~/components/consent-dialog-link';
 import { ConsentBanner } from '~/components/prompt';
 import { InthProvider } from '~/provider';
 import type { InthProviderOptions } from '~/provider';

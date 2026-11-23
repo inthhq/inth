@@ -4,4 +4,4 @@
  * (esbuild) does not treat every module the index names as part of an app
  * that imports one hook: only the groups it uses are live.
  */
-export { ConsentDialogLink } from '../components/panel-link';
+export { ConsentDialogLink } from '../components/consent-dialog-link';

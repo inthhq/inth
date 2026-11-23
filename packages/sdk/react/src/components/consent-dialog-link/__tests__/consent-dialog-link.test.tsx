@@ -6,7 +6,7 @@ import { userEvent } from 'vitest/browser';
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog } from '~/aggregate-components';
-import { ConsentDialogLink } from '~/components/panel-link';
+import { ConsentDialogLink } from '~/components/consent-dialog-link';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 
 import { testing } from '../../../testing';
