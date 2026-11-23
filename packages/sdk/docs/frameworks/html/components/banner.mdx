@@ -38,11 +38,15 @@ policy-required button and preserves equal prominence rules.
 
 ## Choose the opt-out link title
 
-Under a policy that carries the `opt-out` right, the banner renders an opt-out
-button whose action follows the resolved `presentation.optOutLink` title.
+Under a policy that carries the `opt-out` right, a notice renders an opt-out
+link, "Do not sell or share my data". It opens the sale-and-sharing rights row
+inside the banner, where the visitor can opt out. It never records an opt-out
+on its own and does not open the dialog.
 
-With the default `'do-not-sell'` ("Do Not Sell or Share My Personal
-Information"), clicking the button under an opt-out policy records a durable
+`presentation.optOutLink` (or `data-opt-out-link` on the script tag) sets the
+title and action of the other opt-out controls: the floating trigger and
+`data-inth-action="opt-out"` elements. With the
+default `'do-not-sell'`, clicking one under an opt-out policy records a durable
 opt-out in one step and switches off `marketing` and `measurement` in scope.
 When that turns off a category that was running and `reloadOnConsentRevoked` is
 enabled, Inth waits for the opt-out request, reloads the page, and opens the
@@ -51,15 +55,8 @@ confirmation view opens immediately. It shows the link title, a status line
 (`role="status"`), a receipt naming the covered scope and backend-confirmed
 rights, the recorded time, a selectable local reference when this browser
 created the opt-out, a **Done** button and a **Manage preferences** link.
-
-With `presentation.optOutLink` (or `data-opt-out-link` on the script tag) set
-to `'privacy-choices'` or `'california-privacy-choices'`, the button shows the
-California Privacy Protection Agency opt-out icon and opens the preference
-dialog without recording an opt-out. The same rule applies to the floating
-trigger and `data-inth-action="opt-out"` elements. Programmatic calls to
-`inth.optOut()` (`client.optOut()`) still opt out in one step whatever
-`presentation.optOutLink` is set to. Under a non-opt-out policy, the button
-opens the preference dialog.
+Programmatic calls to `inth.optOut()` (`client.optOut()`) also opt out in one
+step. Under a non-opt-out policy, these links open the preference dialog.
 
 | `presentation.optOutLink` | Title | Icon | Click under opt-out policy |
 | --- | --- | --- | --- |

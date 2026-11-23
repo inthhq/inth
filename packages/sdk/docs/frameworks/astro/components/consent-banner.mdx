@@ -81,26 +81,11 @@ produces the same actions on every framework:
   (by default "Do not sell or share my data"). **OK** records that the
   visitor saw the notice. It records no consent and changes no permission.
 
-Under an opt-out rule, the prompt's opt-out link follows the resolved
-`presentation.optOutLink` title in the integration options. With the default
-`'do-not-sell'` ("Do Not Sell or Share My Personal Information"), activating
-the link records the opt-out in one click and switches off `marketing` and
-`measurement` in scope at once. One exception: a `measurement` grant the
-visitor gave explicitly stands while `marketing` holds an explicit refusal, so
-do not rely on the opt-out alone to stop measurement code. When that turns off a
-category that was running and `reloadOnConsentRevoked` is enabled, Inth waits
-for the opt-out request, reloads the page, and opens the opt-out confirmation
-view (`OptOutConfirmation`) once on the new page; otherwise it opens
-immediately. The confirmation view shows a receipt with the honored status line,
-the covered scope (this browser, or this browser and the account, naming refused
-rights once the backend confirms them), the recorded time, a selectable local
-reference when this browser created the opt-out, a **Done** button, and a
-**Manage preferences** link. With `'privacy-choices'` or
-`'california-privacy-choices'`, the link renders with the California Privacy
-Protection Agency opt-out icon and opens the preference dialog without recording
-an opt-out. Programmatic calls to `client.optOut()` still opt out in one step
-whatever `presentation.optOutLink` is set to. Under any other model, or for the
-`preferences` right, the link opens the preference dialog.
+Under an opt-out rule, the prompt's opt-out link opens the sale-and-sharing
+rights row inside the prompt, where the visitor can opt out. The link never
+records an opt-out on its own and does not open the dialog. Programmatic calls
+to `client.optOut()` still opt out in one step and open the opt-out
+confirmation view (`OptOutConfirmation`) with its receipt.
 
 Under an opt-out rule while an opt-out is held, clicking **Accept All** on a
 choice banner opens the separate two-step opt-in confirmation dialog instead of

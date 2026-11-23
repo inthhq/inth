@@ -19,7 +19,7 @@ group: reference
   | `edgeStyle` | `'inset' \| 'flush'` | `'inset'` | `inset` floats a Banner or Drawer 12px off the viewport edges with rounded corners. `flush` runs it edge to edge. A Card is always inset. |
   | `blockUntilChoice` | `boolean` | `false` | Blocks the page until the visitor chooses: backdrop, scroll lock, focus trap, and no outside dismissal. A centred Card always blocks. |
   | `layout` | `ConsentBannerLayout` | policy default | Orders and groups actions. Restores any required action the layout omits. |
-  | `legalLinks` | `(keyof LegalLinks)[] \| null` | none | Lists which configured legal links render inline. |
+  | `legalLinks` | `(keyof LegalLinks)[] \| null` | `['privacyPolicy', 'cookiePolicy']` | Lists which configured legal links render inline. A Banner shows only `privacyPolicy`. `null` hides them. |
   | `models` | `Model[]` | `['opt-in', 'opt-out']` | Consent models this banner responds to. |
   | `hideBranding` | `boolean` | `false` | Hides the "Consent by" tag. |
   | `disableAnimation` | `boolean` | `false` | Skips enter and exit animations. |

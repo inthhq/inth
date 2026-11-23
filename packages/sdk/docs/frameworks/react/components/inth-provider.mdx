@@ -40,7 +40,7 @@ Keep `InthProvider` mounted across route navigation. It reads `mode`, `prefetch`
 | `legalLinks` | Privacy policy and other legal links rendered in the banner and dialog |
 | `theme` | `consentActions` and slot styles. Put CSS tokens in `ConsentTheme`; see [Customize](/docs/frameworks/react/customize) |
 | `components` | Slot attributes per component part |
-| `presentation` | Banner and dialog variant, position, and blocking |
+| `presentation` | The banner's `container`, `edgeStyle`, `blockUntilChoice` and action layout, under `presentation.prompt` |
 | `experiment` | A/B test of `presentation`, read once on mount. See [Banner experiments](/docs/guides/banner-experiments) |
 | `journey` | Random ID linking `/v1/consent/init` to the save that follows. See [Data fetching](/docs/concepts/data-fetching#link-an-init-to-the-save-that-follows) |
 | `colorScheme` | `'light'`, `'dark'`, `'system'`, or `null` to leave the `inth-dark` class untouched |

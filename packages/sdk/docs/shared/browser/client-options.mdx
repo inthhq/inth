@@ -100,7 +100,7 @@ group: reference
   | `edgeStyle` | `'inset'` or `'flush'` | `'inset'` | `inset` floats a Banner or Drawer 12px off the viewport edges with rounded corners. `flush` runs it edge to edge. A Card is always inset. |
   | `blockUntilChoice` | `boolean` | `false` | Block the page until the visitor chooses: backdrop, scroll lock, focus trap, and no outside dismissal. A centred Card always blocks. |
   | `hideBranding` | `boolean` | `false` | Hide the "Consent by" tag. The IAB banner always keeps it. |
-  | `scrollLock`, `trapFocus` | `boolean` | from `presentation` | IAB banner only. Block the page while it is up. `presentation.prompt.blocking` wins over both. |
+  | `scrollLock`, `trapFocus` | `boolean` | from `presentation` | IAB banner only. Block the page while it is up. `presentation.prompt.blockUntilChoice` wins over both. |
 
   The dismiss button of a notice always uses the translated
   `common.acknowledge` label. Change it through `i18n`.
