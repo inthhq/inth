@@ -15,7 +15,7 @@ import type {
 import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/manager.vue';
 import ConsentBanner from '../../../packages/sdk/vue/src/runtime/components/prompt.vue';
 import {
-	DemoPage,
+	BannerDemoPage,
 	privacyChoicesConfig,
 	privacyChoicesInit,
 } from './privacy-choices-stories';
@@ -41,17 +41,15 @@ const privacyChoicesStory = function privacyChoicesStory(
 ): Story {
 	return {
 		render: () => ({
-			components: { ConsentBanner, ConsentManager, DemoPage },
+			components: { BannerDemoPage, ConsentBanner, ConsentManager },
 			setup() {
 				setupStorybookConsent(
 					'banner',
 					privacyChoicesConfig(container, options),
 					privacyChoicesInit(region)
 				);
-				return { region };
 			},
-			template:
-				'<DemoPage :region="region" /><ConsentBanner /><ConsentManager />',
+			template: '<BannerDemoPage /><ConsentBanner /><ConsentManager />',
 		}),
 	};
 };

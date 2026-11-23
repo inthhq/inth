@@ -8,12 +8,13 @@
  * static build works without a backend.
  */
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
+import { onMounted } from 'vue';
 
 import type { ConsentContainer } from '../../../packages/sdk/core/src/libs/consent-layout';
 import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/manager.vue';
 import ConsentBanner from '../../../packages/sdk/vue/src/runtime/components/prompt.vue';
 import {
-	DemoPage,
+	DialogDemoPage,
 	privacyChoicesConfig,
 	privacyChoicesInit,
 } from './privacy-choices-stories';
@@ -47,10 +48,10 @@ const dialogStory = function dialogStory(
 ): Story {
 	const story: Story = {
 		render: () => ({
-			components: { ConsentBanner, ConsentManager, DemoPage },
+			components: { ConsentBanner, ConsentManager, DialogDemoPage },
 			setup() {
 				const context = setupStorybookConsent(
-					options.flow ? 'banner' : 'manager',
+					'banner',
 					privacyChoicesConfig(
 						options.container ?? { position: 'start', type: 'card' },
 						{ edgeStyle: options.edgeStyle, vendors: true }
@@ -60,16 +61,19 @@ const dialogStory = function dialogStory(
 				if (options.gpc) {
 					context.kernel.set.privacySignals({ gpc: true });
 				}
-				if (
-					options.flow &&
-					context.snapshot.value.promptRequirement === 'none'
-				) {
+				if (context.snapshot.value.policyRule.prompt === 'none') {
 					context.activeUI.value = null;
+				}
+				// Open the dialog once the page renders, as the page link would.
+				if (!options.flow) {
+					onMounted(() => {
+						context.activeUI.value = 'manager';
+					});
 				}
 				return { region };
 			},
 			template:
-				'<DemoPage :region="region" /><ConsentBanner /><ConsentManager />',
+				'<DialogDemoPage :region="region" /><ConsentBanner /><ConsentManager />',
 		}),
 	};
 	if (options.phone) {
