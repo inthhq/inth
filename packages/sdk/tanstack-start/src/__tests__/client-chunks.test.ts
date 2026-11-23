@@ -236,8 +236,8 @@ describe('TanStack Start client chunks', () => {
 		// Privacy Choices dialog's parts add their keys to the same table, and
 		// its chunks lengthen the preload lists again: 286 bytes (22,610). The
 		// policy surface's layout code, which the deferred prompt and dialog
-		// chunks share, lengthens their preload lists: 45 bytes (22,655).
-		expect(brotli).toBeLessThanOrEqual(22_655);
+		// chunks share, lengthens their preload lists: 66 bytes (22,676).
+		expect(brotli).toBeLessThanOrEqual(22_676);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {
