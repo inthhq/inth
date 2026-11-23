@@ -122,7 +122,7 @@ export interface ConsentExperiment<Arm extends string = string> {
  * ```ts
  * const bannerShape = defineExperiment({
  *   id: 'banner-shape',
- *   arms: { wall: { prompt: { variant: 'wall' } } },
+ *   arms: { wall: { prompt: { container: { type: 'card', position: 'center' } } } },
  * });
  *
  * // With a flag: experiment: { ...bannerShape, arm: flagValue }
@@ -146,7 +146,7 @@ export const defineExperiment = function defineExperiment<Arm extends string>(
  * ```ts
  * const bannerShape = defineExperiment({
  *   id: 'banner-shape',
- *   arms: { wall: { prompt: { variant: 'wall' } } },
+ *   arms: { wall: { prompt: { container: { type: 'card', position: 'center' } } } },
  * });
  *
  * type BannerShapeArm = ExperimentArmName<typeof bannerShape>;

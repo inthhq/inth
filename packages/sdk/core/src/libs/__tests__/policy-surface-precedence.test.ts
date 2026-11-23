@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ConsentLayoutDiagnostic } from '../consent-layout';
 import { resolveConsentPresentation } from '../policy-actions';
-import type { PromptPresentation, PromptVariant } from '../policy-actions';
+import type { PromptPresentation } from '../policy-actions';
 
 const optIn = (surface?: PolicySurface) =>
 	normalizePolicyRule({
@@ -66,22 +66,6 @@ const ROWS: Row[] = [
 		placement: 'banner-top',
 		policy: optIn(SOFT),
 		presentation: { edgeStyle: 'inset' },
-	},
-	{
-		blocking: false,
-		edgeStyle: 'inset',
-		label: 'a host legacy variant and position over the policy container',
-		placement: 'card-end',
-		policy: optIn(SOFT),
-		presentation: { position: 'bottom-right', variant: 'floating' },
-	},
-	{
-		blocking: false,
-		edgeStyle: 'flush',
-		label: 'a host legacy bar over the policy container',
-		placement: 'banner-bottom',
-		policy: optIn(SOFT),
-		presentation: { variant: 'bar' },
 	},
 	{
 		blocking: true,
@@ -175,61 +159,14 @@ const ROWS: Row[] = [
 		presentation: { container: { position: 'center', type: 'card' } },
 	},
 	{
-		// The wall is already a floating card when the container reads it.
-		blocking: false,
-		edgeStyle: 'inset',
-		label: 'forbidden blocking over a host legacy wall',
-		placement: 'card-start',
-		policy: optIn({ blocking: 'forbidden' }),
-		presentation: { variant: 'wall' },
-	},
-	{
-		blocking: true,
-		edgeStyle: 'inset',
-		label: 'an override legacy wall over a provider container',
-		override: { variant: 'wall' },
-		placement: 'card-center',
-		policy: optIn(SOFT),
-		presentation: { container: { type: 'drawer' } },
-	},
-	{
-		blocking: false,
-		edgeStyle: 'inset',
-		label: 'an override legacy position over a provider container',
-		override: { position: 'bottom-right' },
-		placement: 'card-end',
-		policy: optIn(),
-		presentation: { container: { side: 'top', type: 'drawer' } },
-	},
-	{
-		blocking: false,
-		edgeStyle: 'inset',
-		label: 'an override container over a provider legacy variant',
-		override: { container: { side: 'start', type: 'drawer' } },
-		placement: 'drawer-start',
-		policy: optIn(SOFT),
-		presentation: { edgeStyle: 'inset', variant: 'bar' },
-	},
-	{
 		blocking: false,
 		edgeStyle: 'flush',
-		label: 'a provider container over its own legacy variant',
+		label: 'a provider container over the policy container',
 		placement: 'drawer-end',
 		policy: optIn(SOFT),
 		presentation: {
 			container: { side: 'end', type: 'drawer' },
-			variant: 'bar',
 		},
-	},
-	{
-		blocking: false,
-		edgeStyle: 'flush',
-		label:
-			'an override without geometry falls through to the provider legacy variant',
-		override: { primaryActions: ['accept'] },
-		placement: 'banner-bottom',
-		policy: optIn(SOFT),
-		presentation: { variant: 'bar' },
 	},
 	{
 		blocking: false,
@@ -240,6 +177,7 @@ const ROWS: Row[] = [
 		placement: 'card-start',
 		policy: optIn({ blocking: 'forbidden' }),
 	},
+
 ];
 
 interface TopLevelRow {
@@ -247,7 +185,6 @@ interface TopLevelRow {
 	policy: ReturnType<typeof optIn>;
 	presentation?: PromptPresentation;
 	override?: PromptPresentation;
-	variant: PromptVariant;
 	blocking: boolean;
 	diagnostic?: string;
 }
@@ -260,48 +197,51 @@ const OPT_OUT_CHOICE = normalizePolicyRule({
 });
 
 /**
- * The top-level `variant`, `blocking`, `scrollLock` and `trapFocus` every
- * shipped renderer reads. The policy's constraint comes first, then the
- * variant's defaults, so a wall the policy cannot block becomes floating.
- * The blocking request is decided per tier, override first, and the
- * container reads the same one, so the two always agree.
+ * The top-level `blocking` the IAB banner reads. The policy's constraint
+ * comes first. The blocking request is decided per tier, override first,
+ * and the top-level value is the container's, so the two always agree.
  */
 const TOP_LEVEL_ROWS: TopLevelRow[] = [
+	{
+		blocking: true,
+		label: 'no constraint and a host centred card',
+		policy: optIn(),
+		presentation: { container: { position: 'center', type: 'card' } },
+	},
+	{
+		blocking: true,
+		diagnostic: 'blocking-required',
+		label: 'no constraint and a centred card the host turns blocking off for',
+		policy: optIn(),
+		presentation: {
+			blockUntilChoice: false,
+			container: { position: 'center', type: 'card' },
+		},
+	},
+	{
+		// The centred card moves to the corner first (`center-unavailable`).
+		blocking: false,
+		label: '[BNR-13] an opt-out choice rule over a host centred card',
+		policy: OPT_OUT_CHOICE,
+		presentation: { container: { position: 'center', type: 'card' } },
+	},
 	{
 		blocking: false,
 		label: 'no constraint and no host request',
 		policy: optIn(),
-		variant: 'floating',
-	},
+			},
 	{
 		blocking: true,
 		label: 'no constraint and a host that blocks',
 		policy: optIn(),
 		presentation: { blocking: true },
-		variant: 'floating',
-	},
+			},
 	{
 		blocking: true,
 		label: 'no constraint and a host blockUntilChoice',
 		policy: optIn(),
 		presentation: { blockUntilChoice: true },
-		variant: 'floating',
-	},
-	{
-		blocking: true,
-		label: 'no constraint and a host legacy wall',
-		policy: optIn(),
-		presentation: { variant: 'wall' },
-		variant: 'wall',
-	},
-	{
-		blocking: true,
-		diagnostic: 'blocking-required',
-		label: 'no constraint and a wall the host turns blocking off for',
-		policy: optIn(),
-		presentation: { blocking: false, variant: 'wall' },
-		variant: 'wall',
-	},
+			},
 	{
 		blocking: true,
 		label:
@@ -309,25 +249,7 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 		override: { blocking: true },
 		policy: optIn(),
 		presentation: { blockUntilChoice: false },
-		variant: 'floating',
-	},
-	{
-		blocking: false,
-		label:
-			'a provider blocking: false over an override that only sets the deprecated scrollLock and trapFocus',
-		override: { scrollLock: true, trapFocus: true },
-		policy: optIn(),
-		presentation: { blocking: false },
-		variant: 'floating',
-	},
-	{
-		blocking: true,
-		label: 'an override scrollLock over a provider that sets nothing explicit',
-		override: { scrollLock: true },
-		policy: optIn(),
-		presentation: {},
-		variant: 'floating',
-	},
+			},
 	{
 		blocking: false,
 		label:
@@ -335,79 +257,33 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 		override: { blockUntilChoice: false },
 		policy: optIn(),
 		presentation: { blocking: true },
-		variant: 'floating',
-	},
-	{
-		blocking: true,
-		label: 'an override scroll lock over a provider that turns focus off',
-		override: { trapFocus: true },
-		policy: optIn(),
-		presentation: { scrollLock: false },
-		variant: 'floating',
-	},
+			},
 	{
 		blocking: true,
 		label: 'a provider request when the override says nothing about blocking',
 		override: { primaryActions: ['accept'] },
 		policy: optIn(),
 		presentation: { blockUntilChoice: true },
-		variant: 'floating',
-	},
+			},
 	{
 		blocking: false,
 		diagnostic: 'blocking-forbidden',
 		label: 'forbidden over a host that blocks',
 		policy: optIn({ blocking: 'forbidden' }),
 		presentation: { blocking: true },
-		variant: 'floating',
-	},
-	{
-		blocking: false,
-		diagnostic: 'blocking-forbidden',
-		label: 'forbidden over a host legacy wall, which becomes floating',
-		policy: optIn({ blocking: 'forbidden' }),
-		presentation: { variant: 'wall' },
-		variant: 'floating',
-	},
-	{
-		blocking: false,
-		diagnostic: 'blocking-forbidden',
-		label: 'forbidden over a host wall that does not block, never an open wall',
-		policy: optIn({ blocking: 'forbidden' }),
-		presentation: { blocking: false, variant: 'wall' },
-		variant: 'floating',
-	},
-	{
-		blocking: false,
-		diagnostic: 'blocking-forbidden',
-		label: 'forbidden over an override wall',
-		override: { variant: 'wall' },
-		policy: optIn({ blocking: 'forbidden' }),
-		presentation: { variant: 'bar' },
-		variant: 'floating',
-	},
-	{
-		blocking: false,
-		diagnostic: 'blocking-forbidden',
-		label: 'forbidden over an override scroll lock',
-		override: { scrollLock: true },
-		policy: optIn({ blocking: 'forbidden' }),
-		variant: 'floating',
-	},
+			},
 	{
 		blocking: true,
 		label: 'required without host presentation',
 		policy: optIn({ blocking: 'required' }),
-		variant: 'floating',
-	},
+			},
 	{
 		blocking: true,
 		diagnostic: 'blocking-required',
 		label: 'required over a host that turns blocking off',
 		policy: optIn({ blocking: 'required' }),
 		presentation: { blocking: false },
-		variant: 'floating',
-	},
+			},
 	{
 		blocking: true,
 		diagnostic: 'blocking-required',
@@ -415,15 +291,7 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 		override: { blockUntilChoice: false },
 		policy: optIn({ blocking: 'required' }),
 		presentation: { blocking: true },
-		variant: 'floating',
-	},
-	{
-		blocking: true,
-		label: 'required over an override bar',
-		override: { variant: 'bar' },
-		policy: optIn({ blocking: 'required' }),
-		variant: 'bar',
-	},
+			},
 	{
 		blocking: false,
 		diagnostic: 'blocking-forbidden',
@@ -431,48 +299,25 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 			'an opt-out choice rule, which cannot block, over a host that blocks',
 		policy: OPT_OUT_CHOICE,
 		presentation: { blocking: true },
-		variant: 'floating',
-	},
-	{
-		blocking: false,
-		diagnostic: 'blocking-forbidden',
-		label: '[BNR-13] an opt-out choice rule over a host legacy wall',
-		policy: OPT_OUT_CHOICE,
-		presentation: { variant: 'wall' },
-		variant: 'floating',
-	},
-	{
-		blocking: false,
-		diagnostic: 'blocking-forbidden',
-		label:
-			'[BNR-13] an opt-out choice rule over a host wall that does not block',
-		policy: OPT_OUT_CHOICE,
-		presentation: { blocking: false, variant: 'wall' },
-		variant: 'floating',
-	},
+			},
+
 ];
 
 describe('resolveConsentPresentation: top-level blocking under the policy', () => {
 	it.each(TOP_LEVEL_ROWS)(
 		'$label',
-		({ blocking, diagnostic, override, policy, presentation, variant }) => {
+		({ blocking, diagnostic, override, policy, presentation }) => {
 			const resolved = resolveConsentPresentation({
 				override,
 				policy,
 				presentation: presentation && { prompt: presentation },
 				surface: 'prompt',
 			});
-			expect(resolved).toMatchObject({
-				blocking,
-				scrollLock: blocking,
-				trapFocus: blocking,
-				variant,
-			});
-			// The container reads the same request, so it agrees.
+			expect(resolved.blocking).toBe(blocking);
 			expect(resolved.container?.desktop.blocking).toBe(blocking);
 			expect(resolved.container?.phone.blocking).toBe(blocking);
 			expect(
-				resolved.diagnostics
+				resolved.container?.desktop.diagnostics
 					.map(({ code }) => code)
 					.filter((code) => code.startsWith('blocking-'))
 			).toEqual(diagnostic ? [diagnostic] : []);
@@ -533,25 +378,6 @@ describe('resolveConsentPresentation: policy surface precedence', () => {
 		});
 	});
 
-	// Until the default flips, only the host's own `container` or `design`
-	// selects Privacy Choices; a policy surface shapes the layout of whichever
-	// design the host renders.
-	it('keeps the classic design when only the policy sets a container', () => {
-		expect(
-			resolveConsentPresentation({
-				policy: optIn({ container: { side: 'start', type: 'drawer' } }),
-				surface: 'prompt',
-			}).design
-		).toBe('classic');
-		expect(
-			resolveConsentPresentation({
-				policy: optIn({ container: { type: 'banner' } }),
-				presentation: { design: 'privacy-choices' },
-				surface: 'prompt',
-			}).design
-		).toBe('privacy-choices');
-	});
-
 	it('applies required blocking on both viewports', () => {
 		const { container } = resolveConsentPresentation({
 			policy: optIn({ blocking: 'required' }),
@@ -580,7 +406,7 @@ describe('resolveConsentPresentation: policy surface precedence', () => {
 			for (const presentation of [
 				{ blockUntilChoice: true },
 				{ container: { position: 'center', type: 'card' } },
-				{ variant: 'wall' },
+				{ blockUntilChoice: true, container: { position: 'center', type: 'card' } },
 			] satisfies PromptPresentation[]) {
 				const { container } = resolveConsentPresentation({
 					policy,

@@ -119,7 +119,7 @@ export const describeRejectedArms = function describeRejectedArms(
  * Resolve every arm under `policy` and collect presentation diagnostics.
  *
  * An arm that trips a diagnostic (a forbidden action, unequal prominence for
- * equivalent actions, an invalid variant or position) is a misconfiguration
+ * equivalent actions) is a misconfiguration
  * unless the host set `acknowledgeDiagnostics`. The host owns that review;
  * Inth records the acknowledgement with the arm. The runtime does not call
  * this: it runs the base presentation instead of an arm the visitor's policy

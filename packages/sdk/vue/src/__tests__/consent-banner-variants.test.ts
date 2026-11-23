@@ -270,14 +270,5 @@ describe('ConsentBanner surface variants', () => {
 			'true'
 		);
 	});
-
-	test('the legacy bannerPosition config maps onto the prompt position', async () => {
-		await renderBanner(buildInit(choiceRule, 'he'), {
-			config: { bannerPosition: 'top-right' },
-		});
-		expect(rootAttributes()).toMatchObject({
-			position: 'top-right',
-			variant: 'floating',
-		});
 	});
 });

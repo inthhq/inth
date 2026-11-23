@@ -105,8 +105,7 @@ export interface ConsentLayoutDiagnostic {
 		| 'blocking-forbidden'
 		| 'blocking-required'
 		| 'edge-style-ignored'
-		| 'invalid-edge-style'
-		| 'legacy-presentation';
+		| 'invalid-edge-style';
 	message: string;
 }
 
@@ -375,68 +374,4 @@ export const resolveLayout = function resolveLayout(
 		...toPlacement(container),
 		type: container.type,
 	};
-};
-
-/**
- * Legacy prompt geometry, accepted until every renderer uses
- * {@link ConsentContainer}.
- * @internal
- */
-export interface LegacyPromptPresentation {
-	variant?: 'floating' | 'bar' | 'widget' | 'wall';
-	position?: string;
-}
-
-/**
- * Map a legacy `variant` and `position` onto a {@link ConsentContainer}.
- *
- * - `floating` and `widget` become a Card in the bottom corner on the same
- *   side: a `-right` position becomes `end`, anything else `start`. Top and
- *   centre-edge positions have no Card equivalent and are reported. Legacy
- *   positions are physical and `start`/`end` are logical, so on a
- *   right-to-left page the mapped Card mirrors to the other corner.
- * - `bar` becomes a Banner on the same edge.
- * - `wall` becomes a centred Card, which blocks.
- *
- * Pass a position already validated for its variant. Kept only until every
- * renderer reads `container`.
- * @internal
- */
-export const containerFromLegacyPrompt = function containerFromLegacyPrompt(
-	legacy: LegacyPromptPresentation
-): { container: ConsentContainer; diagnostics: ConsentLayoutDiagnostic[] } {
-	const diagnostics: ConsentLayoutDiagnostic[] = [];
-	const { position, variant = 'floating' } = legacy;
-	switch (variant) {
-		case 'bar':
-			return {
-				container: {
-					edge: position === 'top' ? 'top' : 'bottom',
-					type: 'banner',
-				},
-				diagnostics,
-			};
-		case 'wall':
-			return { container: { position: 'center', type: 'card' }, diagnostics };
-		default: {
-			if (position === undefined) {
-				return {
-					container: {
-						position: variant === 'widget' ? 'end' : 'start',
-						type: 'card',
-					},
-					diagnostics,
-				};
-			}
-			// Keep the prompt on the same side of the screen.
-			const corner = position.endsWith('-right') ? 'end' : 'start';
-			if (position !== 'bottom-left' && position !== 'bottom-right') {
-				diagnostics.push({
-					code: 'legacy-presentation',
-					message: `The ${variant} position "${position}" has no card equivalent; using "${corner}".`,
-				});
-			}
-			return { container: { position: corner, type: 'card' }, diagnostics };
-		}
-	}
 };

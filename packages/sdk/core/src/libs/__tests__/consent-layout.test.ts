@@ -3,7 +3,6 @@ import type { PolicyPrompt, PolicyRuleModel } from '@inth/sdk-schema/types';
 import { describe, expect, it } from 'vitest';
 
 import {
-	containerFromLegacyPrompt,
 	DEFAULT_CONSENT_CONTAINER,
 	PHONE_LAYOUT_QUERY,
 	resolveLayout,
@@ -377,61 +376,6 @@ describe('logical sides', () => {
 	);
 });
 
-describe('containerFromLegacyPrompt', () => {
-	it.each([
-		[{}, { position: 'start', type: 'card' }],
-		[{ variant: 'floating' }, { position: 'start', type: 'card' }],
-		[
-			{ position: 'bottom-right', variant: 'floating' },
-			{ position: 'end', type: 'card' },
-		],
-		[{ variant: 'widget' }, { position: 'end', type: 'card' }],
-		[
-			{ position: 'bottom-left', variant: 'widget' },
-			{ position: 'start', type: 'card' },
-		],
-		[{ variant: 'bar' }, { edge: 'bottom', type: 'banner' }],
-		[
-			{ position: 'top', variant: 'bar' },
-			{ edge: 'top', type: 'banner' },
-		],
-		[{ variant: 'wall' }, { position: 'center', type: 'card' }],
-	] as const)('maps %j to %j', (legacy, container) => {
-		const result = containerFromLegacyPrompt(legacy);
-		expect(result.container).toEqual(container);
-		expect(result.diagnostics).toEqual([]);
-	});
-
-	it.each([
-		['top-left', 'start'],
-		['top-right', 'end'],
-		['top-center', 'start'],
-		['bottom-center', 'start'],
-	])(
-		'maps a floating %s card to %s, on the same side, and reports it',
-		(position, corner) => {
-			const result = containerFromLegacyPrompt({
-				position,
-				variant: 'floating',
-			});
-			expect(result.container).toEqual({ position: corner, type: 'card' });
-			expect(result.diagnostics.map((d) => d.code)).toEqual([
-				'legacy-presentation',
-			]);
-		}
-	);
-
-	it('returns a fresh container, never the shared default', () => {
-		const first = containerFromLegacyPrompt({
-			position: 'top-left',
-			variant: 'widget',
-		});
-		(first.container as { position: string }).position = 'center';
-		expect(resolveLayout(EU).placement).toBe('card-start');
-		expect(Object.isFrozen(DEFAULT_CONSENT_CONTAINER)).toBe(true);
-	});
-});
-
 describe('resolveConsentPresentation: container', () => {
 	const choice = normalizePolicyRule({
 		id: 'choice',
@@ -480,30 +424,7 @@ describe('resolveConsentPresentation: container', () => {
 		});
 	});
 
-	it('maps the legacy variant when no container is set', () => {
-		const { container, variant } = resolveConsentPresentation({
-			policy: choice,
-			presentation: { prompt: { position: 'top', variant: 'bar' } },
-			surface: 'prompt',
-		});
-		expect(variant).toBe('bar');
-		expect(container?.desktop.placement).toBe('banner-top');
-	});
-
-	it('maps a legacy wall to a blocking centred card', () => {
-		const result = resolveConsentPresentation({
-			policy: choice,
-			presentation: { prompt: { variant: 'wall' } },
-			surface: 'prompt',
-		});
-		expect(result.blocking).toBe(true);
-		expect(result.container?.desktop).toMatchObject({
-			blocking: true,
-			placement: 'card-center',
-		});
-	});
-
-	it('maps legacy blocking onto blockUntilChoice', () => {
+	it('reads blocking as blockUntilChoice on the prompt', () => {
 		const { container } = resolveConsentPresentation({
 			policy: choice,
 			presentation: { prompt: { blocking: true } },
@@ -512,59 +433,10 @@ describe('resolveConsentPresentation: container', () => {
 		expect(container?.desktop.blocking).toBe(true);
 	});
 
-	it.each([{ scrollLock: true }, { trapFocus: true }])(
-		'maps legacy %j onto blockUntilChoice',
-		(prompt) => {
-			const result = resolveConsentPresentation({
-				policy: choice,
-				presentation: { prompt },
-				surface: 'prompt',
-			});
-			expect(result.blocking).toBe(true);
-			expect(result.container?.desktop.blocking).toBe(true);
-			expect(result.container?.phone.blocking).toBe(true);
-		}
-	);
-
-	it('a legacy scrollLock: false keeps the prompt from blocking', () => {
-		const result = resolveConsentPresentation({
-			policy: choice,
-			presentation: { prompt: { scrollLock: false, trapFocus: true } },
-			surface: 'prompt',
-		});
-		expect(result.blocking).toBe(false);
-		expect(result.container?.desktop.blocking).toBe(false);
-	});
-
-	it('maps an invalid legacy position to the same corner as the legacy geometry', () => {
-		const result = resolveConsentPresentation({
-			policy: choice,
-			presentation: { prompt: { position: 'center', variant: 'widget' } },
-			surface: 'prompt',
-		});
-		expect(result.position).toBe('bottom-right');
-		expect(result.container?.desktop.placement).toBe('card-end');
-	});
-
-	it('copies legacy diagnostics to both viewports', () => {
-		const { container } = resolveConsentPresentation({
-			policy: choice,
-			presentation: { prompt: { position: 'top-right', variant: 'floating' } },
-			surface: 'prompt',
-		});
-		expect(container?.desktop.placement).toBe('card-end');
-		expect(container?.desktop.diagnostics.map((d) => d.code)).toEqual([
-			'legacy-presentation',
-		]);
-		expect(container?.phone.diagnostics.map((d) => d.code)).toEqual([
-			'legacy-presentation',
-		]);
-	});
-
 	it('reports a null container on both viewports', () => {
 		const { container } = resolveConsentPresentation({
 			policy: choice,
-			presentation: { prompt: { container: null as never, variant: 'bar' } },
+			presentation: { prompt: { container: null as never } },
 			surface: 'prompt',
 		});
 		expect(container?.desktop.placement).toBe('card-start');
@@ -576,7 +448,7 @@ describe('resolveConsentPresentation: container', () => {
 		]);
 	});
 
-	it('[BNR-13] a legacy wall under an opt-out model never blocks, in the container or the top-level values', () => {
+	it('[BNR-13] a centred card under an opt-out model never blocks, in the container or the top-level value', () => {
 		const result = resolveConsentPresentation({
 			policy: normalizePolicyRule({
 				id: 'opt-out-choice',
@@ -584,14 +456,12 @@ describe('resolveConsentPresentation: container', () => {
 				model: 'opt-out',
 				prompt: 'choice',
 			}),
-			presentation: { prompt: { variant: 'wall' } },
+			presentation: {
+				prompt: { container: { position: 'center', type: 'card' } },
+			},
 			surface: 'prompt',
 		});
-		expect(result).toMatchObject({
-			blocking: false,
-			scrollLock: false,
-			trapFocus: false,
-		});
+		expect(result.blocking).toBe(false);
 		expect(result.container?.desktop).toMatchObject({
 			blocking: false,
 			placement: 'card-start',
@@ -608,10 +478,15 @@ describe('resolveConsentPresentation: container', () => {
 		expect(container?.desktop.placement).toBe('banner-bottom');
 	});
 
-	it('[BNR-13] never blocks a notice, even for a legacy wall', () => {
+	it('[BNR-13] never blocks a notice, even for a centred card', () => {
 		const { container } = resolveConsentPresentation({
 			policy: notice,
-			presentation: { prompt: { blockUntilChoice: true, variant: 'wall' } },
+			presentation: {
+				prompt: {
+					blockUntilChoice: true,
+					container: { position: 'center', type: 'card' },
+				},
+			},
 			surface: 'prompt',
 		});
 		expect(container?.desktop).toMatchObject({

@@ -771,7 +771,7 @@ describe('initPrefetch', () => {
 					// A browser's init never sends cookies; `omit` passes through.
 					credentials: 'omit',
 					experiment: {
-						arms: { wall: { prompt: { variant: 'wall' } } },
+						arms: { wall: { prompt: { container: { position: 'center', type: 'card' } } } },
 						id: 'banner-shape',
 						split: { control: 60, wall: 40 },
 					},
@@ -790,7 +790,7 @@ describe('initPrefetch', () => {
 		expect(html).toContain('"arms":["control","wall"]');
 		expect(html).toContain('"weights":[60,40]');
 		// Only the arm names reach the page, not what each arm changes.
-		expect(html).not.toContain('"variant":"wall"');
+		expect(html).not.toContain('"position":"center"');
 	});
 
 	test("carries Vite's html.cspNonce", async () => {
