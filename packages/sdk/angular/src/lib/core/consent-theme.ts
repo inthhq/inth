@@ -50,11 +50,22 @@ export class ConsentTheme {
 		() =>
 			this.#consent.options().disableAnimation ?? this.#prefersReducedMotion()
 	);
-	/** Lock page scrolling while a blocking surface is open. */
+	/**
+	 * Lock page scrolling while a modal surface other than the stock banner
+	 * and dialog is open: the IAB banner and dialog, and the opt-out and
+	 * opt-in confirmations. The stock banner blocks only with
+	 * `presentation.prompt.blockUntilChoice` (or a policy that requires it);
+	 * the stock dialog always blocks.
+	 */
 	readonly scrollLock: Signal<boolean | undefined> = computed(
 		() => this.#consent.options().scrollLock
 	);
-	/** Trap focus in an open surface. */
+	/**
+	 * Trap focus in a modal surface other than the stock banner and dialog:
+	 * the IAB banner and dialog, and the opt-out and opt-in confirmations.
+	 * The stock banner traps focus only when it blocks (`blockUntilChoice`);
+	 * the stock dialog always does.
+	 */
 	readonly trapFocus: Signal<boolean | undefined> = computed(
 		() => this.#consent.options().trapFocus
 	);
