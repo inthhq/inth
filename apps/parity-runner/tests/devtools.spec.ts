@@ -3,6 +3,7 @@ import { diffComputedStyleMap } from '@inth/conformance';
 import { expect, test } from '@playwright/test';
 
 import { captureComputedStyleMap } from '../src/diff-computed-style';
+import { NO_DEVTOOLS, pickDevToolsStories } from '../src/devtools-stories';
 import { captureDomSnapshot } from '../src/diff-dom';
 import type { StoryEntry } from '../src/pair-stories';
 import { comparePng } from '../src/pixel-diff';
@@ -40,34 +41,35 @@ const rootSelector = '[data-inth-dev-tools]';
  */
 const PIXEL_BUDGET = { maxRatio: 0, threshold: 2 };
 
-const isDevToolsStory = (story: StoryEntry) =>
-	story.title.endsWith('/Core/DevTools') && story.name === 'Default';
-
 /**
- * Each enabled framework's DevTools story, React's first. A framework
- * whose Storybook has none, such as Astro, which ships no DevTools
- * component, is left out rather than failed, so a run that pairs it with
- * React alone has nothing to compare and skips.
+ * Each enabled framework's DevTools story, React's first. A framework in
+ * `NO_DEVTOOLS`, such as Astro, which ships no DevTools component, is left
+ * out, so a run that pairs it with React alone has nothing to compare and
+ * skips. Any other framework without the story fails the run.
  */
 const devToolsStories = async function devToolsStories(): Promise<{
 	compared: { framework: string; id: string; url: string }[];
 	skipped: string[];
 }> {
-	const compared: { framework: string; id: string; url: string }[] = [];
-	const skipped: string[] = [];
+	const indexes: { framework: string; stories: StoryEntry[] }[] = [];
 	for (const framework of frameworks) {
 		const url = urls[framework];
 		if (!url) {
 			throw new Error(`Missing ${framework} URL`);
 		}
-		const entry = (await loadStorybookIndex(url)).find(isDevToolsStory);
-		if (entry) {
-			compared.push({ framework, id: entry.id, url });
-		} else {
-			skipped.push(framework);
-		}
+		indexes.push({
+			framework,
+			stories: NO_DEVTOOLS.has(framework) ? [] : await loadStorybookIndex(url),
+		});
 	}
-	return { compared, skipped };
+	const { compared, skipped } = pickDevToolsStories(indexes);
+	return {
+		compared: compared.map((story) => ({
+			...story,
+			url: urls[story.framework] as string,
+		})),
+		skipped,
+	};
 };
 
 // All framework renders are captured in the same Chromium run. This avoids
@@ -82,7 +84,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
 			const { compared, skipped } = await devToolsStories();
 			for (const framework of skipped) {
 				testInfo.annotations.push({
-					description: `${framework} has no Core/DevTools story`,
+					description: `${framework} ships no DevTools component`,
 					type: 'skip',
 				});
 			}
