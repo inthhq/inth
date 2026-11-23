@@ -18,13 +18,13 @@ import type { ConsentKernel, KernelConfig } from '../../consent-kernel.model';
 import { createConsentKernel } from '../../kernel';
 import { createPreferenceDraft } from '../../preference-draft';
 import { showConsentSurface } from '../../surface-actions/rules';
+import { getSurfaceSession } from '../session';
 import {
 	commitBannerChoice,
 	commitDialogChoice,
 	confirmSaleRight,
 	pressSaleRight,
 } from '../surface-commands.model';
-import { getSurfaceSession } from '../session';
 import {
 	resolveBannerCommit,
 	resolveRightPress,
