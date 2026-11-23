@@ -201,8 +201,8 @@ export {
 	setIABPromptRendererLoaderForTest,
 	syncBannerVisibility,
 	syncSurfaceVisibility,
-} from './client-engine';
-export type { PageIAB } from './client-engine';
+} from './boot-client-engine';
+export type { PageIAB } from './boot-client-engine';
 export type { ConsentRuntime } from '@inth/sdk/runtime';
 export type {
 	EventDispatcher,

@@ -31,7 +31,7 @@ import {
 	registerDialogStyles,
 } from '../client';
 import type { AstroConsentClient } from '../client';
-import { setPromptLoaderForTest } from '../client-engine';
+import { setPromptLoaderForTest } from '../boot-client-engine';
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import { resolveOptions } from '../integration';
 import type { InthAstroOptions } from '../inth-options.model';

@@ -19,7 +19,7 @@ import {
 	registerRuntimeModules,
 } from '../client';
 import type { AstroConsentClient } from '../client';
-import { boot, EVENTS_KEY } from '../client-engine';
+import { boot, EVENTS_KEY } from '../boot-client-engine';
 import { resolveOptions } from '../integration';
 import type { InthAstroOptions } from '../inth-options.model';
 import { hosted as hostedMode } from '../mode';
