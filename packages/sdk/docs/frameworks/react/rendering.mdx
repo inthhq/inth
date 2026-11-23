@@ -88,6 +88,35 @@ Keep these limits in mind:
 
 Inth does not ship a framework-neutral helper for server-rendered banners. While `InthProvider` accepts a server-resolved `prefetch` payload, building it manually from cookies, headers, and a cached manifest ties your app to internal shapes. If the banner must appear in the first server HTML, use `@inth/nextjs` or `@inth/tanstack-start`.
 
+## Custom server rendering
+
+`@inth/nextjs` and `@inth/tanstack-start` load the banner's code for you. If you call React's server renderer yourself, the banner's container (Card, Banner or Drawer) is a separate chunk, so load it at both ends:
+
+- **On the server**, await `preloadContainers()` before `renderToString`. A synchronous render cannot wait for a chunk, so without it the first render after a cold start has no banner. Streaming renderers (`renderToPipeableStream`, `renderToReadableStream`) send the banner in a later chunk of the same response, but awaiting first still avoids that delay.
+- **In the browser**, await `preloadServerContainer()` before `hydrateRoot`. It loads only the container the server HTML shows. Without it, the banner waits for its chunk while it hydrates, and React can replace the server's banner with a client render.
+
+{/* example: fragment */}
+
+```tsx title="server.tsx"
+import { preloadContainers } from '@inth/react/components/consent-banner';
+import { renderToString } from 'react-dom/server';
+
+await preloadContainers();
+const html = renderToString(<App />);
+```
+
+{/* example: fragment */}
+
+```tsx title="client.tsx"
+import { preloadServerContainer } from '@inth/react/components/consent-banner';
+import { hydrateRoot } from 'react-dom/client';
+
+await preloadServerContainer();
+hydrateRoot(document.getElementById('root')!, <App />);
+```
+
+Both settle even when a chunk fails to load, so they never block the render; the banner then loads its chunk again itself.
+
 ## Static and prerendered pages
 
 Prerendered HTML is shared across all visitors, so it cannot contain one visitor's consent state. Use the quickstart setup: `/v1/consent/init` and `/v1/consent/records` go directly to your Inth project URL, so static hosts need no server routes. Add your site's origin to your Inth project's trusted origins.
