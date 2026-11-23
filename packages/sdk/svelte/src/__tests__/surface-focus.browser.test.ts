@@ -1,6 +1,6 @@
 import { firstTabbable } from '@inth/sdk/ui/utils';
 import { mount, unmount } from 'svelte';
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest';
 
 import { ensureSurfaceStyles } from '../lib/surface-styles';
 import Fixture from './fixtures/pending-sheets-fixture.svelte';
@@ -65,7 +65,7 @@ const element = function element(testId: string) {
 	});
 };
 
-afterEach(async () => {
+const cleanUp = async function cleanUp() {
 	if (mounted) {
 		await unmount(mounted);
 		mounted = undefined;
@@ -76,7 +76,37 @@ afterEach(async () => {
 		sheet.remove();
 	}
 	(document.activeElement as HTMLElement | null)?.blur();
-});
+};
+
+afterEach(cleanUp);
+
+// The dialog and each surface sheet are chunks the dev server compiles on
+// first request. On a busy runner that alone can outlast a test's wait, so
+// mount each surface once first and let every chunk land: the tests then
+// time the held sheet only, against chunks already loaded.
+/** Mount a surface, wait for its card and every sheet it loads, unmount. */
+const warmUp = async function warmUp(
+	surface: 'banner' | 'dialog',
+	card: string
+): Promise<void> {
+	mountSurface(surface);
+	await vi.waitFor(
+		() => {
+			expect(document.querySelector(`[data-testid="${card}"]`)).not.toBeNull();
+			expect(
+				document.head.querySelector('style[data-inth-pending]')
+			).toBeNull();
+		},
+		{ interval: 20, timeout: 30_000 }
+	);
+	await cleanUp();
+};
+
+beforeAll(async () => {
+	// One at a time, so neither surface's focus trap has a rival.
+	await warmUp('banner', 'consent-banner-card');
+	await warmUp('dialog', 'consent-dialog-card');
+}, 60_000);
 
 describe('focus while a surface sheet loads', () => {
 	test('a blocking banner takes focus before its sheet lands, and keeps it after', async () => {
