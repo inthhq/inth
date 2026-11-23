@@ -122,8 +122,22 @@ export interface PreferencesPresentation extends SurfacePresentation {
 	defaults?: Partial<Record<PolicyConsentCategory, boolean>>;
 }
 
+/**
+ * Which consent UI the stock components render. `classic` is today's
+ * banner and dialog. `privacy-choices` is the v6 surface: Card, Banner or
+ * Drawer, with the options expanding in place.
+ */
+export type ConsentDesign = 'classic' | 'privacy-choices';
+
 /** Application-owned presentation; never part of a policy fingerprint. */
 export interface ConsentPresentation {
+	/**
+	 * The consent UI to render. Setting `prompt.container` chooses
+	 * `privacy-choices` too, since only that design reads it; an explicit
+	 * value always wins.
+	 * @default 'classic'
+	 */
+	design?: ConsentDesign;
 	prompt?: PromptPresentation;
 	preferences?: PreferencesPresentation;
 	/**
@@ -168,6 +182,12 @@ export interface ResolvedConsentPresentation {
 	preferenceControls: Exclude<PolicyRight, 'disclosure'>[];
 	/** Resolved opt-out link form. Defaults to `'do-not-sell'`. */
 	optOutLink: OptOutLinkVariant;
+	/**
+	 * The consent UI the stock components render: the host's `design`, else
+	 * `privacy-choices` when the host set a prompt `container`, else
+	 * `classic`.
+	 */
+	design: ConsentDesign;
 	direction: 'row' | 'column';
 	uiProfile: 'balanced' | 'compact' | 'strict';
 	scrollLock: boolean;
@@ -438,6 +458,25 @@ const resolvePromptContainer = function resolvePromptContainer(
 };
 
 /**
+ * The consent UI to render. An explicit `design` wins. Otherwise a prompt
+ * `container` from the host, in `presentation` or in a component override,
+ * opts in to `privacy-choices`, since only that design reads it.
+ */
+const resolveDesign = function resolveDesign(
+	presentation: ConsentPresentation | undefined,
+	override: PromptPresentation | PreferencesPresentation | undefined
+): ConsentDesign {
+	const requested = presentation?.design;
+	if (requested === 'classic' || requested === 'privacy-choices') {
+		return requested;
+	}
+	const container =
+		(override as PromptPresentation | undefined)?.container ??
+		presentation?.prompt?.container;
+	return container === undefined ? 'classic' : 'privacy-choices';
+};
+
+/**
  * Resolve host presentation without changing policy behavior.
  * @param input - Active policy, target surface, host options and local overrides.
  * @returns Ordered controls, required actions, rights and diagnostics.
@@ -547,6 +586,7 @@ export const resolveConsentPresentation =
 				input.policy,
 				geometry
 			),
+			design: resolveDesign(input.presentation, input.override),
 			diagnostics,
 			direction,
 			equivalentActions,

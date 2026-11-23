@@ -702,6 +702,254 @@ export const resolvePreferencesRowCopy = function resolvePreferencesRowCopy(
 };
 
 /**
+ * First-layer content of the Privacy Choices prompt (§2):
+ *
+ * - `'choice'`: the cookie choice, Reject All · Accept All · Customize.
+ * - `'us-consent'`: a US opt-in request in US terms, Don't allow · Allow ·
+ *   Choose (BNR-09).
+ * - `'notice'`: the US opt-out notice, "Do not sell or share my data" · OK.
+ * - `'none'`: nothing shows.
+ */
+export type PrivacyChoicesPromptVariant =
+	| 'choice'
+	| 'us-consent'
+	| 'notice'
+	| 'none';
+
+/**
+ * The Privacy Choices prompt's first layer for the active policy.
+ *
+ * An opt-in choice asks in US terms when the policy carries a US marker:
+ * the `opt-out` right, or Global Privacy Control handling, which only the
+ * US presets set. IAB rules render their own banner, so they show nothing
+ * here.
+ */
+export const resolvePrivacyChoicesVariant =
+	function resolvePrivacyChoicesVariant(policy: {
+		model: string;
+		prompt: PolicyPrompt;
+		rights: readonly PolicyRight[];
+		privacySignals?: { gpc?: { denyCategories?: readonly string[] } };
+	}): PrivacyChoicesPromptVariant {
+		if (
+			policy.prompt === 'none' ||
+			policy.model === 'none' ||
+			policy.model === 'iab'
+		) {
+			return 'none';
+		}
+		if (policy.prompt === 'notice') {
+			return 'notice';
+		}
+		const usMarker =
+			policy.rights.includes('opt-out') ||
+			(policy.privacySignals?.gpc?.denyCategories?.length ?? 0) > 0;
+		return policy.model === 'opt-in' && usMarker ? 'us-consent' : 'choice';
+	};
+
+/** Every label and sentence a Privacy Choices banner renders. */
+export interface PrivacyChoicesBannerCopy {
+	/** Card and drawer title; the slim bar's visually hidden heading. */
+	title: string;
+	/** Card and drawer body. Legal links follow it. */
+	description: string;
+	/** The slim bar's one sentence. */
+	barDescription: string;
+	/** Refuse on the collapsed prompt: "Reject All" or "Don't allow". */
+	reject: string;
+	/** Grant on the collapsed prompt: "Accept All" or "Allow". */
+	accept: string;
+	/** Refuse in an expanded panel or a side drawer. */
+	rejectExpanded: string;
+	/** Grant in an expanded panel or a side drawer. */
+	acceptExpanded: string;
+	/** Customize on the card and drawer. */
+	expand: string;
+	/** Customize on the slim bar, shorter so the bar stays on one line. */
+	expandBar: string;
+	save: string;
+	/** The notice's acknowledgement. */
+	ok: string;
+	/** Announced when Customize opens the options. */
+	expanded: string;
+	/** Announced after a refusal. */
+	rejected: string;
+	/** Announced after Accept, Allow or Save. */
+	saved: string;
+}
+
+/**
+ * The Privacy Choices banner copy for one variant and rights bundle
+ * (BNR-09, COPY-01). The US opt-in prompt never borrows the GDPR wording.
+ */
+export const resolvePrivacyChoicesBannerCopy =
+	function resolvePrivacyChoicesBannerCopy(
+		translations: Partial<Translations> | undefined,
+		input: PrivacyChoicesSubject & {
+			variant: PrivacyChoicesPromptVariant;
+			bundle: RightsBundle;
+			/** A Global Privacy Control signal is honored (GPC-08). */
+			gpc?: boolean;
+		}
+	): PrivacyChoicesBannerCopy {
+		const copy = resolvePrivacyChoicesCopy(translations);
+		const common = mergeOver(
+			enTranslations.common as CompleteTranslations['common'],
+			translations?.common
+		);
+		const banner = mergeOver(
+			enTranslations.cookieBanner as CompleteTranslations['cookieBanner'],
+			translations?.cookieBanner
+		);
+		const shared = {
+			expanded: copy.panelExpanded,
+			ok: common.acknowledge,
+			rejected: copy.bannerRejected,
+			save: copy.saveChoices,
+			saved: copy.choicesSaved,
+		};
+		if (input.variant === 'us-consent') {
+			const optIn = resolveOptInPromptCopy(translations, input);
+			return {
+				...shared,
+				accept: copy.allow,
+				acceptExpanded: copy.allow,
+				barDescription: optIn.barDescription,
+				description: optIn.description,
+				expand: copy.chooseWhatToAllow,
+				expandBar: copy.choose,
+				reject: copy.dontAllow,
+				rejectExpanded: copy.dontAllow,
+				title: optIn.title,
+			};
+		}
+		if (input.variant === 'notice') {
+			return {
+				...shared,
+				accept: common.acknowledge,
+				acceptExpanded: common.acknowledge,
+				barDescription: resolveNoticeBarDescription(
+					translations,
+					input.gpc === true
+				),
+				description: input.gpc
+					? `${banner.noticeDescription} ${copy.noticeGpcHonored}`
+					: banner.noticeDescription,
+				expand: copy.noticeRightsAction,
+				expandBar: copy.noticeRightsAction,
+				reject: copy.noticeRightsAction,
+				rejectExpanded: copy.noticeRightsAction,
+				title: banner.noticeTitle,
+			};
+		}
+		return {
+			...shared,
+			accept: common.acceptAll,
+			acceptExpanded: copy.acceptAll,
+			barDescription: copy.barDescription,
+			description: banner.description,
+			expand: common.customize,
+			expandBar: common.customize,
+			reject: common.rejectAll,
+			rejectExpanded: copy.rejectAll,
+			title: banner.title,
+		};
+	};
+
+/** Every label and sentence the sale rights row renders. */
+export interface SaleRightCopy {
+	/** The row's heading: "Selling, sharing and targeted ads". */
+	title: string;
+	/** The row's description, or the GPC note while the signal is on (GPC-04). */
+	description: string;
+	/** Accessible name of the segmented control, the statutory phrase (SR-04). */
+	groupLabel: string;
+	/** The protective option, which comes first (RIGHT-01). */
+	protect: string;
+	allow: string;
+	confirmTitle: string;
+	confirmDescription: string;
+	/** The confirmation's cancel, which keeps the refusal. */
+	confirmCancel: string;
+	/** The confirmation's grant. */
+	confirmAllow: string;
+}
+
+/**
+ * The sale row's copy for a rights bundle and the row's state, every
+ * sentence built from the bundle (COPY-01). "Off by default" shows only
+ * while the refusal is an untouched default (COPY-02).
+ */
+export const resolveSaleRightCopy = function resolveSaleRightCopy(
+	translations: Partial<Translations> | undefined,
+	input: PrivacyChoicesSubject & {
+		bundle: RightsBundle;
+		/** `'opt-in'` asks "Don't allow | Allow"; anything else "Opt out | Allow". */
+		model: string;
+		selected: 'protect' | 'allow';
+		source: 'default' | 'user' | 'gpc';
+		/** A live Global Privacy Control signal holds the refusal. */
+		locked: boolean;
+		/** The `optOut` link title, the statutory phrase for an opt-out row. */
+		optOutLinkLabel?: string;
+	}
+): SaleRightCopy {
+	const copy = resolvePrivacyChoicesCopy(translations);
+	const rights = mergeOver(
+		enTranslations.rights as CompleteTranslations['rights'],
+		translations?.rights
+	);
+	const phrases = resolveRightsPhrases(translations, input.bundle);
+	const optIn = input.model === 'opt-in';
+	const lower = phrases.title.toLocaleLowerCase();
+	const sentence = (template: string, values: Record<string, string>) =>
+		fill(template, {
+			...values,
+			business: businessFor(copy, template, input.business),
+		});
+	let description: string;
+	if (input.locked) {
+		description = resolveGpcNote(translations, input);
+	} else if (input.selected === 'allow') {
+		description = sentence(copy.saleAllowed, { rights: phrases.ask });
+	} else if (input.source === 'default') {
+		description = sentence(copy.saleOffByDefault, { rights: phrases.refuse });
+	} else {
+		description = sentence(copy.saleRefused, {
+			rights: phrases.refuse,
+			scope: scopePhrase(translations, input),
+		});
+	}
+	let groupLabel: string;
+	if (optIn) {
+		groupLabel = fill(copy.saleGroupOptIn, { rights: lower });
+	} else if (input.bundle === 'sale-ads') {
+		groupLabel = copy.saleGroupSaleAndTargetedAds;
+	} else {
+		groupLabel = input.optOutLinkLabel ?? rights.optOut;
+	}
+	return {
+		allow: copy.allow,
+		confirmAllow: copy.allow,
+		confirmCancel: optIn ? copy.dontAllow : copy.confirmKeepOptedOut,
+		confirmDescription: sentence(
+			optIn ? copy.confirmDescriptionOptIn : copy.confirmDescriptionOptOut,
+			{ rights: phrases.ask }
+		),
+		confirmTitle: fill(
+			optIn ? copy.confirmTitleOptIn : copy.confirmTitleOptOut,
+			{
+				rights: lower,
+			}
+		),
+		description,
+		groupLabel,
+		protect: optIn ? copy.dontAllow : copy.optOutOption,
+		title: phrases.title,
+	};
+};
+
+/**
  * Accessible names for the floating trigger and its toolbar.
  *
  * @param translations - The active language bundle. Missing keys use English.

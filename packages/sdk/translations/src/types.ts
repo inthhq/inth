@@ -205,6 +205,54 @@ export interface PrivacyChoicesTranslations {
 	preferencesOnCount: string;
 	/** Accessible name of the button that closes the preferences sheet. */
 	preferencesClose: string;
+	/** "Allow" on a US opt-in banner, and the permissive option of a rights row. */
+	allow: string;
+	/** "Don't allow" on a US opt-in banner, and the protective option of an opt-in rights row. */
+	dontAllow: string;
+	/** The protective option of an opt-out rights row. */
+	optOutOption: string;
+	/** Expands the one-line US opt-in banner. */
+	choose: string;
+	/** Expands the US opt-in card and drawer. */
+	chooseWhatToAllow: string;
+	/** Expands the US notice to its rights rows. */
+	noticeRightsAction: string;
+	/** Refuses every optional category in an expanded panel or a side drawer. */
+	rejectAll: string;
+	/** Grants every optional category in an expanded panel or a side drawer. */
+	acceptAll: string;
+	/** Records the switches in an expanded panel or a side drawer. */
+	saveChoices: string;
+	/** Added to the US notice while a Global Privacy Control signal is honored. */
+	noticeGpcHonored: string;
+	/** Sale row description while allowed. Use `{business}` and `{rights}` (an `ask*` phrase). */
+	saleAllowed: string;
+	/**
+	 * Sale row description after the visitor refused. Use `{business}`,
+	 * `{rights}` (a `refuse*` phrase) and `{scope}`.
+	 */
+	saleRefused: string;
+	/**
+	 * Sale row description while the refusal is only the opt-in default.
+	 * Use `{business}` and `{rights}` (a `refuse*` phrase).
+	 */
+	saleOffByDefault: string;
+	/** Accessible name of an opt-in sale control. Use `{rights}` (a `title*` phrase, lower case). */
+	saleGroupOptIn: string;
+	/** Accessible name of an opt-out sale control for the sale and targeted ads bundle. */
+	saleGroupSaleAndTargetedAds: string;
+	/** Confirmation title before granting under opt-in. Use `{rights}` (lower case). */
+	confirmTitleOptIn: string;
+	/** Confirmation title before lifting an opt-out. Use `{rights}` (lower case). */
+	confirmTitleOptOut: string;
+	/** Confirmation body under opt-in. Use `{business}` and `{rights}` (an `ask*` phrase). */
+	confirmDescriptionOptIn: string;
+	/** Confirmation body before lifting an opt-out. Use `{business}` and `{rights}` (an `ask*` phrase). */
+	confirmDescriptionOptOut: string;
+	/** The confirmation's cancel button before lifting an opt-out. */
+	confirmKeepOptedOut: string;
+	/** Read-only row that says advertising follows the sale choice (LAW-05). */
+	advertisingFollowsSale: string;
 }
 
 export interface LegalLinksTranslations {

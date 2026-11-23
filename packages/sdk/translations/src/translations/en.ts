@@ -210,6 +210,9 @@ export const translations: CompleteTranslations = {
 		statusSignal: 'Opt-out preference signal honored',
 	},
 	privacyChoices: {
+		acceptAll: 'Accept all',
+		advertisingFollowsSale: 'Advertising follows your choice above.',
+		allow: 'Allow',
 		askAll:
 			'sell or share your personal information, including for targeted ads',
 		askSaleAndShare: 'sell or share your personal information',
@@ -225,8 +228,18 @@ export const translations: CompleteTranslations = {
 			'We use cookies to improve your experience and analyze traffic.',
 		businessFallback: 'this site',
 		choicesSaved: 'Choices saved. You can change them in Your Privacy Choices.',
+		choose: 'Choose',
+		chooseWhatToAllow: 'Choose what to allow',
+		confirmDescriptionOptIn:
+			'{business} may {rights}. You can change this at any time.',
+		confirmDescriptionOptOut:
+			'{business} may {rights}. You can opt out again at any time.',
+		confirmKeepOptedOut: 'Keep opted out',
+		confirmTitleOptIn: 'Allow {rights}?',
+		confirmTitleOptOut: 'Allow {rights} again?',
 		copyFailed: "Couldn't copy. Select and copy your reference:",
 		dialogIntro: 'Your choices apply right away.',
+		dontAllow: "Don't allow",
 		gpcNote:
 			"Your browser sent a Global Privacy Control signal, so {business} {rights} {scope}. Allow isn't available while the signal is on.",
 		nestedSheetNote: 'Changes apply when you save in Privacy settings.',
@@ -234,12 +247,16 @@ export const translations: CompleteTranslations = {
 			'We use cookies to run this site, measure traffic and personalize ads. You can opt out at any time.',
 		noticeBarDescriptionGpc:
 			'We use cookies to run this site and measure traffic. Your Global Privacy Control signal is honored.',
+		noticeGpcHonored:
+			"Your browser's Global Privacy Control signal is being honored.",
+		noticeRightsAction: 'Do not sell or share my data',
 		nudge: 'Choose one of the two buttons first.',
 		optInBarDescription:
 			'{business} asks before using optional cookies or {rights}.',
 		optInDescription:
 			'With your permission, {business} would use optional cookies for site features and analytics, and {rights}. Nothing is turned on unless you allow it.',
 		optInTitle: 'Your privacy choices',
+		optOutOption: 'Opt out',
 		panelExpanded: 'More options shown.',
 		preferencesClose: 'Close preferences',
 		preferencesOnCount: '{count} on',
@@ -254,6 +271,15 @@ export const translations: CompleteTranslations = {
 		refuseSaleAndShare: "won't sell or share your personal information",
 		refuseSaleAndTargetedAds:
 			"won't sell your personal information or use it for targeted ads",
+		rejectAll: 'Reject all',
+		saleAllowed: '{business} may {rights}.',
+		saleGroupOptIn: 'Allow {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Opt out of the sale of my personal data and targeted advertising',
+		saleOffByDefault:
+			'Off by default. {business} {rights} unless you allow it.',
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Save choices',
 		scopeAccount: 'on this browser or for your {business} account',
 		scopeAccountUnnamed: 'on this browser or for your account',
 		scopeBrowser: 'on this browser',

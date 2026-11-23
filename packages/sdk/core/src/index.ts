@@ -410,6 +410,7 @@ export {
 	OPT_OUT_CONFIRMATION_STORAGE_KEY,
 } from './libs/storage-keys';
 export type {
+	ConsentDesign,
 	ConsentPresentation,
 	PromptPresentation,
 	PromptVariant,
@@ -439,11 +440,14 @@ export {
 	resolveOptOutReceiptSentence,
 	resolvePreferenceControlLabels,
 	resolvePreferencesRowCopy,
+	resolvePrivacyChoicesBannerCopy,
 	resolvePrivacyChoicesCopy,
+	resolvePrivacyChoicesVariant,
 	resolvePromptCopy,
 	resolveReceiptScope,
 	resolveRightsBundle,
 	resolveRightsPhrases,
+	resolveSaleRightCopy,
 	resolveSurfaceTranslations,
 	resolveTriggerLabels,
 	resolveVendorListCopy,
@@ -454,6 +458,8 @@ export type {
 	OptOutLinkIcon,
 	OptOutLinkVariant,
 	PreferencesRowCopy,
+	PrivacyChoicesBannerCopy,
+	PrivacyChoicesPromptVariant,
 	PrivacyChoicesSubject,
 	PreferenceControl,
 	PromptCopy,
@@ -461,6 +467,7 @@ export type {
 	ResolvedOptOutLink,
 	RightsBundle,
 	RightsPhrases,
+	SaleRightCopy,
 } from './libs/consent-copy';
 export {
 	isOptedOut,
