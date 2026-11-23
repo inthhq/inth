@@ -148,7 +148,7 @@ describe('IAB browser configuration', () => {
 		const client = await start({
 			presentation: {
 				preferences: { blocking: false },
-				prompt: { blocking: false },
+				prompt: { blockUntilChoice: false },
 			},
 			ui: { banner: { scrollLock: true, trapFocus: true } },
 		});
@@ -170,7 +170,7 @@ describe('IAB browser configuration', () => {
 		const client = await start({
 			presentation: {
 				prompt: {
-					blocking: false,
+					blockUntilChoice: false,
 					container: { position: 'center', type: 'card' },
 					layout: ['accept'],
 				},

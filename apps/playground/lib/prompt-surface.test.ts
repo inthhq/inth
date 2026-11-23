@@ -83,7 +83,7 @@ describe('prompt surface params', () => {
 		expect(forced?.arms.banner).toEqual({
 			prompt: { container: { edge: 'bottom', type: 'banner' } },
 		});
-		expect(forced?.arms.banner?.prompt?.blocking).toBeUndefined();
+		expect(forced?.arms.banner?.prompt?.blockUntilChoice).toBeUndefined();
 	});
 
 	it('drops unknown containers and positions the container does not accept', () => {

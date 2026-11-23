@@ -130,7 +130,7 @@ export const runIabUiConformance = function runIabUiConformance(
 								disableAnimation: true,
 								presentation: {
 									preferences: { blocking },
-									prompt: { blocking },
+									prompt: { blockUntilChoice: blocking },
 								},
 								trapFocus: !blocking,
 							},

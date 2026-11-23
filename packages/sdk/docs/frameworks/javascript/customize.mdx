@@ -98,8 +98,10 @@ presentation: {
 
 <import src="../../shared/browser/client-options.mdx#containers" />
 
-`layout`, `primaryActions`, `direction`, `uiProfile` and `blocking` also work
-on `presentation.preferences` (plus `defaults` for initial switch states).
+`layout`, `primaryActions`, `direction` and `uiProfile` also work on
+`presentation.preferences`, plus `defaults` for initial switch states and
+`blocking` for the IAB dialog. On the prompt, `blockUntilChoice` is the one
+blocking option.
 Policy requirements always win over conflicting layout options.
 
 ## Change the banner text

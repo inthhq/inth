@@ -177,7 +177,7 @@ export const seedStorybookChoice = (
 export const storybookIABPresentation: ConsentPresentation = {
 	...storybookPresentation,
 	preferences: { ...storybookPresentation.preferences, blocking: true },
-	prompt: { ...storybookPresentation.prompt, blocking: true },
+	prompt: { ...storybookPresentation.prompt, blockUntilChoice: true },
 };
 
 /** Stored grants under an opt-out policy; opted-out categories still show off. */

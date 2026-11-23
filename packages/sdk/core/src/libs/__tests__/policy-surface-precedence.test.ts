@@ -231,12 +231,6 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 	},
 	{
 		blocking: true,
-		label: 'no constraint and a host that blocks',
-		policy: optIn(),
-		presentation: { blocking: true },
-	},
-	{
-		blocking: true,
 		label: 'no constraint and a host blockUntilChoice',
 		policy: optIn(),
 		presentation: { blockUntilChoice: true },
@@ -245,7 +239,7 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 		blocking: true,
 		label:
 			'an override that blocks over a provider blockUntilChoice that does not',
-		override: { blocking: true },
+		override: { blockUntilChoice: true },
 		policy: optIn(),
 		presentation: { blockUntilChoice: false },
 	},
@@ -255,7 +249,7 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 			'an override blockUntilChoice that does not block over a provider that does',
 		override: { blockUntilChoice: false },
 		policy: optIn(),
-		presentation: { blocking: true },
+		presentation: { blockUntilChoice: true },
 	},
 	{
 		blocking: true,
@@ -269,7 +263,7 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 		diagnostic: 'blocking-forbidden',
 		label: 'forbidden over a host that blocks',
 		policy: optIn({ blocking: 'forbidden' }),
-		presentation: { blocking: true },
+		presentation: { blockUntilChoice: true },
 	},
 	{
 		blocking: true,
@@ -281,7 +275,7 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 		diagnostic: 'blocking-required',
 		label: 'required over a host that turns blocking off',
 		policy: optIn({ blocking: 'required' }),
-		presentation: { blocking: false },
+		presentation: { blockUntilChoice: false },
 	},
 	{
 		blocking: true,
@@ -289,7 +283,7 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 		label: 'required over an override blockUntilChoice that turns it off',
 		override: { blockUntilChoice: false },
 		policy: optIn({ blocking: 'required' }),
-		presentation: { blocking: true },
+		presentation: { blockUntilChoice: true },
 	},
 	{
 		blocking: false,
@@ -297,7 +291,7 @@ const TOP_LEVEL_ROWS: TopLevelRow[] = [
 		label:
 			'an opt-out choice rule, which cannot block, over a host that blocks',
 		policy: OPT_OUT_CHOICE,
-		presentation: { blocking: true },
+		presentation: { blockUntilChoice: true },
 	},
 ];
 

@@ -17,10 +17,10 @@ const fromFocusOptions = (
 
 /**
  * The blocking the IAB banner and dialog ask for through their
- * `scrollLock` and `trapFocus` props, or the provider's, as the
- * presentation's `blocking`. Explicit `blocking` (or `blockUntilChoice`) in
- * the presentation wins over both, as it does over the deprecated options
- * in any tier; then the component's own props, then the provider's.
+ * `scrollLock` and `trapFocus` props, or the provider's. The banner passes
+ * it on as `blockUntilChoice`, the dialog as `blocking`. An explicit
+ * `presentation.prompt.blockUntilChoice` or `presentation.preferences.blocking`
+ * wins over both; then the component's own props, then the provider's.
  *
  * @internal
  */
@@ -30,10 +30,11 @@ export const useFocusBlocking = function useFocusBlocking(
 	trapFocus: boolean | undefined
 ): boolean | undefined {
 	const theme = useContext(GlobalThemeContext);
-	const presentation = useResolvedPresentation()?.[surface];
+	const presentation = useResolvedPresentation();
 	const explicit =
-		(presentation as { blockUntilChoice?: boolean } | undefined)
-			?.blockUntilChoice ?? presentation?.blocking;
+		surface === 'prompt'
+			? presentation?.prompt?.blockUntilChoice
+			: presentation?.preferences?.blocking;
 	if (explicit !== undefined) {
 		return undefined;
 	}

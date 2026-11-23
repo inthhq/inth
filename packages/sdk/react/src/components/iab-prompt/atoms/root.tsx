@@ -136,7 +136,7 @@ const IABConsentBannerRoot: FC<IABConsentBannerRootProps> = ({
 }) => {
 	const blocking = useFocusBlocking('prompt', scrollLock, trapFocus);
 	const { policyBanner } = useIABConsentManager({
-		prompt: { blocking },
+		prompt: { blockUntilChoice: blocking },
 	});
 	const resolvedScrollLock = policyBanner.blocking;
 	const contextValue = useMemo(

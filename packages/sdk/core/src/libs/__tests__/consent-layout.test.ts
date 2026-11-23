@@ -11,6 +11,7 @@ import type {
 	ResolveLayoutInput,
 } from '../consent-layout';
 import { resolveConsentPresentation } from '../policy-actions';
+import type { PromptPresentation } from '../policy-actions';
 
 const EU = { model: 'opt-in', prompt: 'choice' } as const;
 const US_OPT_OUT_NONE = { model: 'opt-out', prompt: 'none' } as const;
@@ -420,13 +421,21 @@ describe('resolveConsentPresentation: container', () => {
 		});
 	});
 
-	it('reads blocking as blockUntilChoice on the prompt', () => {
+	it('reads blockUntilChoice, not a removed `blocking`, on the prompt', () => {
+		const stray = { blocking: true } as PromptPresentation;
 		const { container } = resolveConsentPresentation({
 			policy: choice,
-			presentation: { prompt: { blocking: true } },
+			presentation: { prompt: stray },
 			surface: 'prompt',
 		});
-		expect(container?.desktop.blocking).toBe(true);
+		expect(container?.desktop.blocking).toBe(false);
+		expect(
+			resolveConsentPresentation({
+				policy: choice,
+				presentation: { prompt: { blockUntilChoice: true } },
+				surface: 'prompt',
+			}).container?.desktop.blocking
+		).toBe(true);
 	});
 
 	it('reports a null container on both viewports', () => {
