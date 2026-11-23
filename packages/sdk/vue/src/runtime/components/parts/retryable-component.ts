@@ -1,4 +1,12 @@
-import { defineAsyncComponent, defineComponent, ref, shallowRef } from 'vue';
+import {
+	defineAsyncComponent,
+	defineComponent,
+	ErrorCodes,
+	getCurrentInstance,
+	handleError,
+	ref,
+	shallowRef,
+} from 'vue';
 import type { Component, Ref, ShallowRef } from 'vue';
 
 /** What a chunk's dynamic import resolves to. */
@@ -14,11 +22,7 @@ export interface RetryableComponent {
 	retry: () => void;
 }
 
-/**
- * Shown in place of a component whose chunk failed. Having one keeps Vue
- * from rethrowing the load error in development, where it would surface as
- * an unhandled rejection; the failure is still reported to the app.
- */
+/** Rendered before the first load, and in place of a failed one. */
 const Nothing = defineComponent({
 	name: 'InthFailedChunk',
 	render: () => null,
@@ -34,6 +38,11 @@ const Nothing = defineComponent({
  * {@link RetryableComponent.retry}. Each retry renders a new wrapper, so a
  * load that a newer one replaced changes nothing.
  *
+ * A failed load is reported to the app as Vue reports one, and its wrapper
+ * never settles. Rejecting it would be an unhandled rejection when the
+ * wrapper was hydrating server HTML, whose hydration waits on the load
+ * without a handler; the retry renders a new wrapper anyway.
+ *
  * @param loader - The chunk's import.
  * @param onFailed - Called once for each failed load that is still the newest.
  * @internal
@@ -44,16 +53,17 @@ export const useRetryableComponent = function useRetryableComponent(
 ): RetryableComponent {
 	const failed = ref(false);
 	const component = shallowRef<Component>(Nothing);
+	const instance = getCurrentInstance();
 	const create = (): Component => {
 		const wrapper: Component = defineAsyncComponent({
 			errorComponent: Nothing,
 			loader,
-			onError: (_error, _retry, fail) => {
+			onError: (error) => {
+				handleError(error, instance, ErrorCodes.ASYNC_COMPONENT_LOADER, false);
 				if (component.value === wrapper) {
 					failed.value = true;
 					onFailed?.();
 				}
-				fail();
 			},
 			suspensible: false,
 		});
