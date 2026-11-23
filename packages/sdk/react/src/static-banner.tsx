@@ -24,7 +24,10 @@ import { PromptContainersContext } from './components/prompt/prompt';
 import type { PromptContainers } from './components/prompt/prompt';
 import { DeferredConsentShell } from './deferred/shell';
 
-type StaticSheet = { id: string; css: string };
+interface StaticSheet {
+	id: string;
+	css: string;
+}
 
 /** `sheets` in order, each once, as plain `{ id, css }`. */
 const unique = function unique(
@@ -69,7 +72,9 @@ const CONTAINER_SHEETS: Record<string, readonly StaticSheet[]> = {
 export const staticBannerSheets = function staticBannerSheets(
 	markup: string | undefined
 ): readonly StaticSheet[] {
-	const type = /data-placement="(card|banner|drawer)\b/u.exec(markup ?? '')?.[1];
+	// `data-placement` reads `<type>-<position>`, such as `card-start`.
+	const placement = markup?.split('data-placement="')[1] ?? '';
+	const type = placement.slice(0, placement.search(/[-"]/u));
 	return (type && CONTAINER_SHEETS[type]) || STATIC_BANNER_SHEETS;
 };
 
