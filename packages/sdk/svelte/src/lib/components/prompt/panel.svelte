@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * The options a Privacy Choices prompt shows in place (BNR-14, BNR-15):
+	 * The options the consent prompt shows in place (BNR-14, BNR-15):
 	 *
 	 * - EU: the cookie categories, staged on the prompt's draft until a
 	 *   Save, Accept or Reject.
@@ -10,8 +10,8 @@
 	 *
 	 * Banner panels always use accordions, never sheets (PERM-01). Loaded on
 	 * Customize, or at once by a side Drawer, with the stylesheets and the
-	 * draft module they need. The v6 sheet carries its own switch and
-	 * category rows, so the classic dialog sheet stays off the page.
+	 * draft module they need. The dialog sheet carries the switch and
+	 * category rows.
 	 */
 	import { resolveSaleRight } from '@inth/sdk/engine';
 	import type { SaveUISource } from '@inth/sdk/engine';
@@ -20,25 +20,22 @@
 	import type { PrivacyChoicesPromptVariant } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 	import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
-	import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/dialog';
+	import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
 	import * as expand from '@inth/sdk/ui/styles/sheets/expand';
 	import { onMount } from 'svelte';
 
 	import { getConsentContext } from '../../context.svelte';
 	import type { SurfaceStyleSheet } from '../../surface-styles';
-	import AdvertisingRow from '../privacy-choices/advertising-row.svelte';
-	import CategoryGroup from '../privacy-choices/category-group.svelte';
-	import { getSurfaceDraft } from '../privacy-choices/draft.svelte';
-	import Icon from '../privacy-choices/icon.svelte';
-	import { cx } from '../privacy-choices/parts';
-	import SaleRightsRow from '../privacy-choices/rights-row.svelte';
+	import AdvertisingRow from '../parts/advertising-row.svelte';
+	import CategoryGroup from '../parts/category-group.svelte';
+	import { getSurfaceDraft } from '../parts/draft.svelte';
+	import Icon from '../parts/icon.svelte';
+	import { cx } from '../parts/parts';
+	import SaleRightsRow from '../parts/rights-row.svelte';
 	import SurfaceStyles from '../surface-styles.svelte';
 
-	/** The options' rules: the in-place panel, then the v6 rows over it. */
-	const PANEL_SHEETS: readonly SurfaceStyleSheet[] = [
-		expand,
-		privacyChoicesDialog,
-	];
+	/** The options' rules: the in-place panel, then the dialog's rows over it. */
+	const PANEL_SHEETS: readonly SurfaceStyleSheet[] = [expand, dialog];
 
 	let {
 		variant,

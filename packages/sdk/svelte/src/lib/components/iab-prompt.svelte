@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {
 		resolveIABBannerSummary,
-		resolveLegacyConsentPresentation,
+		resolveConsentPresentation,
 	} from '@inth/sdk/engine';
 	import type { Model } from '@inth/sdk/engine';
 	import { resolveIABBannerCopy } from '@inth/sdk/iab/headless';
@@ -21,6 +21,7 @@
 	import { portal } from '../actions/portal';
 	import { scrollLock } from '../actions/scroll-lock';
 	import { getConsentContext, getThemeContext } from '../context.svelte';
+	import { focusBlocking } from '../focus-blocking';
 	import { IAB_FIRST_PAINT_SHEETS } from '../iab-first-paint-sheets';
 	import { useBannerVisibility } from '../use-banner-visibility.svelte';
 	import Branding from './branding.svelte';
@@ -55,16 +56,17 @@
 		localDisableAnimation ?? theme.disableAnimation ?? false
 	);
 	const presentation = $derived(
-		resolveLegacyConsentPresentation({
-			override: { scrollLock: localScrollLock, trapFocus: localTrapFocus },
-			policy: consent.snapshot.policyRule,
-			presentation: {
-				prompt: {
-					scrollLock: theme.scrollLock,
-					trapFocus: theme.trapFocus,
-					...consent.state.presentation?.prompt,
-				},
+		resolveConsentPresentation({
+			override: {
+				blocking: focusBlocking(
+					'prompt',
+					consent.state.presentation,
+					{ scrollLock: localScrollLock, trapFocus: localTrapFocus },
+					theme
+				),
 			},
+			policy: consent.snapshot.policyRule,
+			presentation: consent.state.presentation,
 			surface: 'prompt',
 		})
 	);

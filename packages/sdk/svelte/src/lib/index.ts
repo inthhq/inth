@@ -64,7 +64,7 @@ export type {
 export { focusTrap } from './actions/focus-trap';
 export { portal } from './actions/portal';
 export { scrollLock } from './actions/scroll-lock';
-export { default as ConsentBanner } from './components/prompt.svelte';
+export { default as ConsentBanner } from './components/prompt/prompt.svelte';
 export { default as ConsentButton } from './components/action-button.svelte';
 export { default as ConsentDialog } from './components/deferred-panel.svelte';
 export { default as ConsentDialogLink } from './components/panel-link.svelte';

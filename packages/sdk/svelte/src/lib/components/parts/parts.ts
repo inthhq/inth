@@ -1,5 +1,5 @@
 /**
- * Class and style attributes for the Privacy Choices (v6) parts.
+ * Class and style attributes for the consent prompt's and dialog's parts.
  *
  * React styles each part through its `components` slot (`banner.card`);
  * Svelte reads the same part from `theme.slots` (`consentBannerCard`),

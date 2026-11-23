@@ -10,14 +10,14 @@ import * as consentGate from '@inth/sdk/ui/styles/sheets/consent-gate-deferred';
  * `inthHandle` writes them into the HTML, so no stylesheet `<link>` holds
  * back the first paint and the banner is styled before hydration.
  *
- * Each surface names only the sheets it renders: the banner the tokens,
- * button and banner rules, the trigger the tokens and its own, the
- * ConsentGate the tokens, button and its own. They are the deferred form:
+ * Each surface names only the sheets it renders: the prompt the tokens,
+ * button and shell rules and its one container's (`components/prompt/
+ * sheets.ts`), the trigger the tokens and its own, the ConsentGate the
+ * tokens, button and its own. They are the deferred form:
  * an id and a `load()`, without the text. On a server-rendered page the
  * surfaces find the copy `inthHandle` wrote and download nothing; a page
  * rendered only in the browser loads each text once.
  */
-import * as banner from '@inth/sdk/ui/styles/sheets/parts-deferred';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens-deferred';
 import * as trigger from '@inth/sdk/ui/styles/sheets/trigger-deferred';
 
@@ -33,17 +33,6 @@ export interface SurfaceStyleSheet {
 	 */
 	readonly load?: () => Promise<string>;
 }
-
-/**
- * What the banner renders: the theme tokens, the button rules, and the
- * banner, branding, action and legal-link rules with the variables they
- * read. A server-rendered banner puts only these in the HTML.
- */
-export const BANNER_SHEETS: readonly SurfaceStyleSheet[] = [
-	tokens,
-	button,
-	banner,
-];
 
 /** What the dialog trigger renders. */
 export const TRIGGER_SHEETS: readonly SurfaceStyleSheet[] = [tokens, trigger];

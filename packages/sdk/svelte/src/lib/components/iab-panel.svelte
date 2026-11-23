@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {
-		resolveLegacyConsentPresentation,
+		resolveConsentPresentation,
 		resolveIABBannerSummary,
 	} from '@inth/sdk/engine';
 	import type { Model } from '@inth/sdk/engine';
@@ -26,6 +26,7 @@
 	import { portal } from '../actions/portal';
 	import { scrollLock } from '../actions/scroll-lock';
 	import { getConsentContext, getThemeContext } from '../context.svelte';
+	import { focusBlocking } from '../focus-blocking';
 	import { IAB_DIALOG_SHEETS } from '../iab-dialog-sheets';
 	import { Tabs } from '../primitives';
 	import Branding from './branding.svelte';
@@ -113,15 +114,17 @@
 	);
 
 	const preferences = $derived(
-		resolveLegacyConsentPresentation({
-			policy: consent.snapshot.policyRule,
-			presentation: {
-				preferences: {
-					scrollLock: theme.scrollLock,
-					trapFocus: theme.trapFocus,
-					...consent.state.presentation?.preferences,
-				},
+		resolveConsentPresentation({
+			override: {
+				blocking: focusBlocking(
+					'preferences',
+					consent.state.presentation,
+					{},
+					theme
+				),
 			},
+			policy: consent.snapshot.policyRule,
+			presentation: consent.state.presentation,
 			surface: 'preferences',
 		})
 	);

@@ -10,21 +10,16 @@
 	 * Activating it always opens the preference dialog and never records an
 	 * opt-out on its own.
 	 *
-	 * Under `design: 'privacy-choices'` it is also the way back into the
-	 * dialog under an opt-in policy, in the US or the EU: it reads "Your
-	 * Privacy Choices" there, with no opt-out icon, since no opt-out right is
-	 * offered.
+	 * It is also the way back into the dialog under an opt-in policy, in the
+	 * US or the EU: it reads "Your Privacy Choices" there, with no opt-out
+	 * icon, since no opt-out right is offered.
 	 *
-	 * Renders nothing when the active policy gives no opt-out right (on the
-	 * classic design), when no policy has resolved yet, or when an external
+	 * Renders nothing when no policy has resolved yet, or when an external
 	 * consent source owns consent.
 	 */
 	import type { OptOutLinkVariant } from '@inth/sdk/surface-state';
-	import {
-		resolveConsentDesign,
-		resolvePrivacyChoicesLink,
-	} from '@inth/sdk/surface-state';
-	import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
+	import { resolvePrivacyChoicesLink } from '@inth/sdk/surface-state';
+	import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 	import type { Snippet } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
@@ -60,7 +55,6 @@
 
 	const optOutLink = $derived(
 		resolvePrivacyChoicesLink(consent.snapshot, consent.state.copy, {
-			design: resolveConsentDesign(consent.state.presentation),
 			variant: variant ?? consent.state.presentation?.optOutLink,
 		})
 	);
@@ -78,7 +72,7 @@
 		{...restProps}
 	>
 		{#if optOutLink.icon}<OptOutIcon
-				class={theme.noStyle ? '' : bannerStyles.optOutIcon || ''}
+				class={theme.noStyle ? '' : legalLinkStyles.optOutIcon || ''}
 				sized={!theme.noStyle}
 			/>{/if}{#if children}{@render children()}{:else}{optOutLink.label}{/if}
 	</ConsentButton>

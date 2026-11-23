@@ -46,7 +46,7 @@
 
 <script lang="ts">
 	/**
-	 * The "Your Privacy Choices" dialog (v6): one column whose body is the
+	 * The "Your Privacy Choices" dialog: one column whose body is the
 	 * only scroller, the statutory rights on its first view, the receipt,
 	 * and Preferences; in the EU, the cookie categories and a staged Save.
 	 * On phone, Preferences and EU vendor lists open as nested sheets, at
@@ -58,7 +58,7 @@
 	import {
 		commitDialogChoice,
 		MAIN_LAYER,
-		resolveLegacyConsentPresentation,
+		resolveConsentPresentation,
 		resolveSaleRight,
 	} from '@inth/sdk/engine';
 	import type {
@@ -94,27 +94,27 @@
 
 	import { getConsentContext, getThemeContext } from '../../context.svelte';
 	import ConsentButton from '../action-button.svelte';
-	import AdvertisingRow from '../privacy-choices/advertising-row.svelte';
-	import CategoryGroup from '../privacy-choices/category-group.svelte';
-	import { createSurfaceDraft } from '../privacy-choices/draft.svelte';
-	import Icon from '../privacy-choices/icon.svelte';
-	import { cx, part } from '../privacy-choices/parts';
-	import { takeReceiptFocus } from '../privacy-choices/receipt-focus';
-	import RightsReceipt from '../privacy-choices/receipt.svelte';
-	import SaleRightsRow from '../privacy-choices/rights-row.svelte';
+	import AdvertisingRow from '../parts/advertising-row.svelte';
+	import CategoryGroup from '../parts/category-group.svelte';
+	import { createSurfaceDraft } from '../parts/draft.svelte';
+	import Icon from '../parts/icon.svelte';
+	import { cx, part } from '../parts/parts';
+	import { takeReceiptFocus } from '../parts/receipt-focus';
+	import RightsReceipt from '../parts/receipt.svelte';
+	import SaleRightsRow from '../parts/rights-row.svelte';
 	import {
 		usePhoneLayout,
 		useReducedMotion,
 		useSurfaceSession,
-	} from '../privacy-choices/session.svelte';
+	} from '../parts/session.svelte';
 	import SurfaceStyles from '../surface-styles.svelte';
 	import DoneButton from './done-button.svelte';
 	import Layer from './layer.svelte';
-	import { PRIVACY_CHOICES_DIALOG_SHEETS } from './sheets';
+	import { DIALOG_SHEETS } from './sheets';
 
 	let {
 		noStyle: localNoStyle,
-		disableAnimation = false,
+		disableAnimation: localDisableAnimation,
 		open: openProp,
 		models,
 		legalLinks: allowedLegalLinks,
@@ -153,8 +153,9 @@
 	const saveSource = 'dialog';
 
 	const noStyle = $derived(localNoStyle ?? theme.noStyle ?? false);
+	// The component's own setting wins over the provider's.
 	const animationOff = $derived(
-		disableAnimation || theme.disableAnimation === true
+		localDisableAnimation ?? theme.disableAnimation ?? false
 	);
 	// Sheets leave at once under the system setting too, as in React.
 	const reducedMotion = $derived(animationOff || systemMotion.reduced);
@@ -204,7 +205,7 @@
 	// Phone sheets take the prompt's resolved phone edge style, which the
 	// policy and a Card's own rule (always inset) have already settled.
 	const edgeStyle = $derived(
-		resolveLegacyConsentPresentation({
+		resolveConsentPresentation({
 			policy: snapshot.policyRule,
 			presentation: consent.state.presentation,
 			surface: 'prompt',
@@ -495,8 +496,7 @@
 	const preferencesRowPart = $derived(
 		part('consentDialogPreferencesRow', theme.theme, styles.navRow, noStyle)
 	);
-	// The dialog root takes the `consentDialog` slot, as the classic
-	// dialog's root does.
+	// The dialog root takes the `consentDialog` slot.
 	const backdropPart = $derived(
 		part('consentDialog', theme.theme, styles.backdrop, noStyle)
 	);
@@ -729,7 +729,7 @@
 
 {#if open}
 	<SurfaceStyles
-		sheets={PRIVACY_CHOICES_DIALOG_SHEETS}
+		sheets={DIALOG_SHEETS}
 		{noStyle}
 	/>
 	<div
@@ -738,7 +738,6 @@
 		style={backdropPart.style}
 		data-animation={animationOff ? 'off' : undefined}
 		data-edge-style={edgeStyle}
-		data-design="privacy-choices"
 		data-regime={eu ? 'eu' : 'us'}
 		data-layout={phone ? 'phone' : 'desktop'}
 		data-testid="consent-dialog-root"

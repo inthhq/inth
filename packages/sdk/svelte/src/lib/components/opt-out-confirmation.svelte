@@ -23,9 +23,9 @@
 	import { findFocusRestoreEquivalent } from '@inth/sdk/ui/utils/dom';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
-	import { DIALOG_SHEETS } from '../dialog-sheets';
 	import { useOptOutConfirmationState } from '../opt-out-confirmation-state.svelte';
 	import { Dialog, Portal } from '../primitives';
+	import { WIDGET_SHEETS } from '../widget-sheets';
 	import OptOutReceiptDetails from './opt-out-receipt-details.svelte';
 	import SurfaceStyles from './surface-styles.svelte';
 
@@ -261,7 +261,7 @@
 	);
 </script>
 
-<SurfaceStyles sheets={DIALOG_SHEETS} />
+<SurfaceStyles sheets={WIDGET_SHEETS} />
 
 <Dialog.Root
 	bind:open={dialogOpen}

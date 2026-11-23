@@ -13,6 +13,10 @@ export interface ConsentDialogTriggerProps {
 }
 
 export interface ConsentDialogProps {
+	/**
+	 * Control whether the dialog is open. Left unset, the consent manager
+	 * opens and closes it.
+	 */
 	open?: boolean;
 	noStyle?: boolean;
 	/**
@@ -20,9 +24,17 @@ export interface ConsentDialogProps {
 	 * `disableAnimation`, which follows `prefers-reduced-motion`.
 	 */
 	disableAnimation?: boolean;
-	hideBranding?: boolean;
+	/**
+	 * Lock page scroll behind the opt-in confirmation this dialog hosts.
+	 * Defaults to the provider's `scrollLock`, else on.
+	 */
+	scrollLock?: boolean;
+	/**
+	 * Trap focus in the opt-in confirmation this dialog hosts. Defaults to
+	 * the provider's `trapFocus`, else on.
+	 */
+	trapFocus?: boolean;
 	legalLinks?: (keyof LegalLinks)[] | null;
 	showTrigger?: boolean | ConsentDialogTriggerProps;
 	models?: Model[];
-	class?: string;
 }
