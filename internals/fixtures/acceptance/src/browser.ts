@@ -203,6 +203,24 @@ export const openPreferences = async function openPreferences(
 	await expect.poll(() => saveButton(page).isVisible()).toBe(true);
 };
 
+/**
+ * Leaves the preference dialog without changing anything. The stock dialog
+ * keeps Save disabled until a switch moves (EU-01), so Escape closes it
+ * there. A custom dialog on the headless runtime may keep Save enabled;
+ * saving it unchanged records the same choice.
+ */
+export const closePreferences = async function closePreferences(
+	page: Page
+): Promise<void> {
+	const save = saveButton(page);
+	if (await save.isEnabled()) {
+		await save.click();
+	} else {
+		await page.keyboard.press('Escape');
+	}
+	await expect.poll(() => save.isVisible()).toBe(false);
+};
+
 export const categoryControl = (page: Page, category: string) => {
 	const name = new RegExp(category, 'iu');
 	return page
