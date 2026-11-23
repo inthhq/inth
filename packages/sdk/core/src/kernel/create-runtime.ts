@@ -547,6 +547,9 @@ export const createRuntime = function createRuntime(
 	): BrowserConsentRecords {
 		if (records.optOut && !Object.isFrozen(records.optOut)) {
 			Object.freeze(records.optOut.rights);
+			if (records.optOut.categories) {
+				Object.freeze(records.optOut.categories);
+			}
 			Object.freeze(records.optOut);
 		}
 		if (records.vendorChoice && !Object.isFrozen(records.vendorChoice)) {

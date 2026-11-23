@@ -514,9 +514,9 @@ const applySyncedOptOutWithAccount = function applySyncedOptOutWithAccount(
 	const at = runtime.now();
 	const localAct = answersLocalAct(next, effectiveBrowserOptOut, fence);
 	const nextBrowserOptOut =
-		next !== null
-			? answerWithHeldCategories(next, effectiveBrowserOptOut, fence)
-			: null;
+		next === null
+			? null
+			: answerWithHeldCategories(next, effectiveBrowserOptOut, fence);
 	const browserChanged = !sameOptOutRecord(
 		effectiveBrowserOptOut,
 		nextBrowserOptOut

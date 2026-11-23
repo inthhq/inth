@@ -17,6 +17,7 @@ import type {
 } from '@inth/sdk-schema/types';
 
 import { isChoiceBasisCompatible } from '../consent-record/evaluate';
+import { unionOptOutCategories } from '../consent-record/opt-out-rules';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
 import type {
 	CategoryDecision,
@@ -870,12 +871,21 @@ const deriveEffectiveOptOut = function deriveEffectiveOptOut(
 		deviceOptOut.recordedAt >= accountRecordedAt
 			? deviceOptOut.method
 			: accountOptOut.method;
-	return {
-		heldBy: 'both',
-		method,
-		recordedAt,
-		rights,
-	};
+	const categories = unionOptOutCategories(deviceOptOut.categories, undefined);
+	return categories === undefined
+		? {
+				heldBy: 'both',
+				method,
+				recordedAt,
+				rights,
+			}
+		: {
+				categories,
+				heldBy: 'both',
+				method,
+				recordedAt,
+				rights,
+			};
 };
 
 const sameEffectiveChoice = function sameEffectiveChoice(
@@ -935,12 +945,23 @@ const sameEffectiveOptOut = function sameEffectiveOptOut(
 	if (!left || !right) {
 		return false;
 	}
+	const sameCategories =
+		left.categories === undefined
+			? right.categories === undefined
+			: right.categories !== undefined &&
+				left.categories.length === right.categories.length &&
+				left.categories.every(
+					(category, index) => category === right.categories?.[index]
+				);
 	return (
 		left.heldBy === right.heldBy &&
 		left.method === right.method &&
 		left.recordedAt === right.recordedAt &&
 		left.rights.length === right.rights.length &&
-		left.rights.every((rightName, index) => rightName === right.rights[index])
+		left.rights.every(
+			(rightName, index) => rightName === right.rights[index]
+		) &&
+		sameCategories
 	);
 };
 

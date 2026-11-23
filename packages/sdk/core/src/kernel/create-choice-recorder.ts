@@ -27,6 +27,10 @@ import {
 } from '@inth/sdk-schema/types';
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
+import {
+	answersHeldOptOut,
+	carryOptOutCategories,
+} from '../consent-record/opt-out-rules.model';
 import type {
 	ConsentSnapshot,
 	ConsentState,
@@ -905,6 +909,24 @@ const isAccountLiftSucceeded = function isAccountLiftSucceeded(
 	return !remaining.some((right) => requestedSet.has(right));
 };
 
+const adoptDeviceLiftAnswer = function adoptDeviceLiftAnswer(
+	answerOptOut: OptOutRecord,
+	remaining: readonly OptOutRight[],
+	browserOptOut: Readonly<OptOutRecord> | null
+): OptOutRecord {
+	const deviceAnswer: OptOutRecord = {
+		heldBy: 'device',
+		method: answerOptOut.method,
+		recordedAt: answerOptOut.recordedAt,
+		rights: [...remaining],
+	};
+	return carryOptOutCategories(
+		deviceAnswer,
+		browserOptOut,
+		browserOptOut !== null && answersHeldOptOut(deviceAnswer, browserOptOut)
+	);
+};
+
 /**
  * Create the choice recorder of one kernel: `commands.save`,
  * `commands.dismissNotice` and `set.draft`.
@@ -1139,12 +1161,11 @@ export const createChoiceRecorder = function createChoiceRecorder({
 				answerOptOut.heldBy === 'device' &&
 				remaining.length > 0
 			) {
-				browserOptOutPatch = {
-					heldBy: 'device',
-					method: answerOptOut.method,
-					recordedAt: answerOptOut.recordedAt,
-					rights: remaining,
-				};
+				browserOptOutPatch = adoptDeviceLiftAnswer(
+					answerOptOut,
+					remaining,
+					browserOptOut
+				);
 				adoptDeviceReceipt = true;
 			}
 		} else {

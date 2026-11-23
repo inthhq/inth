@@ -4393,4 +4393,50 @@ describe('e2e findings: remote lift drops stale linked device opt-out & both ans
 			kWithAccountExtra.dispose();
 		}
 	});
+
+	test('preserves browser opt-out extra categories when combined with an account opt-out', () => {
+		const rule = optOutRule({ prompt: 'choice' });
+		const resolution = matchedResolution(rule);
+		const user = { externalId: 'user_extra_cats' };
+		const kernel = createKernel(
+			{
+				consentCategories: ['experience', 'measurement', 'marketing'],
+				initialPolicyResolution: resolution,
+				initialRecords: {
+					now: NOW,
+					optOut: {
+						categories: ['experience', 'marketing'],
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW - 2000,
+						rights: ['sale'],
+					},
+				},
+				initialUser: user,
+				now: NOW,
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		try {
+			kernel.syncUserConsent(
+				makeUserConsent({
+					checkedAt: NOW - 1000,
+					externalId: user.externalId,
+					optOut: {
+						method: 'button',
+						recordedAt: NOW - 3000,
+						rights: ['share'],
+					},
+				})
+			);
+			expect(kernel.getSnapshot().optOut).toMatchObject({
+				categories: ['experience', 'measurement', 'marketing'],
+				heldBy: 'both',
+				rights: ['sale', 'share'],
+			});
+			expect(kernel.getSnapshot().effectivePermissions.experience).toBe(false);
+		} finally {
+			kernel.dispose();
+		}
+	});
 });

@@ -4,13 +4,13 @@
  * @packageDocumentation
  */
 
-import { consentPending } from '@inth/sdk-core';
 import type {
 	AllConsentNames,
 	ConsentKernel,
 	ConsentSnapshot,
 } from '@inth/sdk-core';
 import type { ConsentRuntimeGPPFactoryOptions } from '@inth/sdk-core/runtime';
+import { consentPending } from '@inth/sdk-core/surface-state';
 
 import { isValidCmpId, MAX_CMP_ID } from '../tcf/cmp-id.model';
 import { createGPPCmpApi } from './create-gpp-cmp-api';

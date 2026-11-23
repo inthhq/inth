@@ -3,7 +3,6 @@ import type {
 	ConsentSubject,
 	HydrationRecords,
 } from '../../consent-kernel.model';
-import { shouldAdoptAccountLayer } from '../../kernel/account-layer';
 /**
  * Persistence's first-load half: hydration, event wiring and lifecycle.
  * `index.ts` is the public entry; see it for the invariants.
