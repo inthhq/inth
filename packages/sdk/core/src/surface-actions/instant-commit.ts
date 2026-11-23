@@ -32,12 +32,10 @@ import type {
 	OptionalConsentCategory,
 	RestrictionReason,
 } from '../consent-record/types';
-import { readCookieValueFromHeader } from '../libs/cookie/read-cookie-value-from-header';
-import { resolveStorageKeys } from '../libs/storage-keys';
 import { generateUuidV7 } from '../libs/subject-uuid.model';
-import type { StorageConfig } from '../modules/persistence/persistence.model';
 
 export { generateUuidV7 } from '../libs/subject-uuid.model';
+export { hasStoredClearEpoch } from './instant-commit.store';
 
 /** Latest valid epoch milliseconds, as the record validator reads them. */
 const MAX_DATE_MS = 8_640_000_000_000_000;
@@ -87,32 +85,6 @@ export const kernelOnly = function kernelOnly(
 		(snapshot.vendors?.declared.length ?? 0) > 0 ||
 		(snapshot.vendorChoice?.denied.length ?? 0) > 0
 	);
-};
-
-/**
- * Whether storage holds a clear epoch. A record written after a clear
- * carries it, which only persistence reads; the kernel records those.
- *
- * @param storageConfig - The runtime's storage configuration.
- * @returns `true` when a clear was stored.
- * @internal
- */
-export const hasStoredClearEpoch = function hasStoredClearEpoch(
-	storageConfig?: StorageConfig
-): boolean {
-	const key = resolveStorageKeys(storageConfig).epoch;
-	try {
-		if ((window.localStorage?.getItem(key) ?? null) !== null) {
-			return true;
-		}
-	} catch {
-		// Blocked storage: the cookie still tells.
-	}
-	try {
-		return readCookieValueFromHeader(document.cookie, key) !== undefined;
-	} catch {
-		return false;
-	}
 };
 
 /** @internal */

@@ -41,6 +41,7 @@ export const CORE_FIRST_LOAD_MODULES = [
 	'modules/vendor-allowed',
 	'modules/vendor-denial',
 	'surface-actions/instant-commit',
+	'surface-actions/instant-commit.store',
 	'translations/defaults',
 ] as const;
 
