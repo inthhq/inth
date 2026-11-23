@@ -11,7 +11,7 @@ import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
-import { useGVLData } from '../hooks/use-gvl-data';
+import { useGVLData } from '../use-gvl-data';
 import { useIABTranslations } from '../use-iab-translations';
 
 interface IABConsentDialogFooterProps extends HTMLAttributes<HTMLDivElement> {

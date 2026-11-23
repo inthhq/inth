@@ -91,8 +91,8 @@ export { VendorList } from './atoms/vendor-list';
 export {
 	type IABDisplayModel,
 	useIABDisplayModel,
-} from './hooks/use-iab-display-model';
-export { type GVLData, useGVLData } from './hooks/use-gvl-data';
+} from './use-iab-display-model';
+export { type GVLData, useGVLData } from './use-gvl-data';
 export type {
 	ProcessedPurpose,
 	ProcessedSpecialFeature,

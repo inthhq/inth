@@ -6,7 +6,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 
 import * as Tabs from '~/components/shared/ui/tabs';
 
-import { useIABDisplayModel } from '../hooks/use-iab-display-model';
+import { useIABDisplayModel } from '../use-iab-display-model';
 import { useIABTranslations } from '../use-iab-translations';
 
 interface IABConsentDialogTabsProps extends Omit<

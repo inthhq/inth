@@ -42,7 +42,7 @@ import { IABConsentDialogOverlay } from './atoms/iab-consent-dialog-overlay';
 import { PurposeItem } from './atoms/purpose-item';
 import { StackItem } from './atoms/stack-item';
 import { VendorList } from './atoms/vendor-list';
-import { useIABDisplayModel } from './hooks/use-iab-display-model';
+import { useIABDisplayModel } from './use-iab-display-model';
 import type { VendorId } from './iab-consent-dialog.model';
 import { useExitTransition } from './use-exit-transition';
 import { useIABTranslations } from './use-iab-translations';
