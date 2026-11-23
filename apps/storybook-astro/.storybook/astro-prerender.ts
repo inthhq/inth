@@ -110,10 +110,48 @@ const storyFetch = ((input: RequestInfo | URL) =>
 			: new Response(null, { status: 204 })
 	)) as typeof fetch;
 
+/**
+ * The options of a Privacy Choices story, as React's stories configure
+ * their provider: the design, the prompt's container, the page's legal
+ * links and, for the dialog, the stories' vendors.
+ */
+const privacyChoicesOptions = function privacyChoicesOptions(
+	variant: AstroStoryVariant,
+	story: NonNullable<AstroStoryVariant['privacyChoices']>,
+	context: {
+		mode: { manifest: (options: { snapshot: unknown }) => unknown };
+		snapshot: unknown;
+		vendors: unknown;
+	}
+): Record<string, unknown> {
+	return {
+		colorScheme: 'light',
+		consentCategories: variant.options?.consentCategories,
+		legalLinks: {
+			cookiePolicy: { href: '#cookies' },
+			privacyPolicy: { href: '#privacy' },
+		},
+		mode: context.mode.manifest({ snapshot: context.snapshot }),
+		presentation: {
+			design: 'privacy-choices',
+			prompt: {
+				blockUntilChoice: story.blockUntilChoice,
+				container: story.container,
+				edgeStyle: story.edgeStyle,
+			},
+		},
+		projectUrl: 'https://consent.example',
+		routePrefix: false,
+		ui: variant.ui ?? 'svelte',
+		vendors: story.dialog ? context.vendors : undefined,
+	};
+};
+
 const buildVariantOptions = function buildVariantOptions(
 	variant: AstroStoryVariant,
 	context: {
 		mode: { manifest: (options: { snapshot: unknown }) => unknown };
+		privacyChoicesSnapshot?: unknown;
 		storyIABSnapshot: unknown;
 		storyOptOutSnapshot: unknown;
 		storySnapshot: unknown;
@@ -122,6 +160,7 @@ const buildVariantOptions = function buildVariantOptions(
 			storybookPresentation: {
 				prompt: Record<string, unknown>;
 			};
+			storybookVendors: unknown;
 		};
 	}
 ): Record<string, unknown> {
@@ -132,6 +171,13 @@ const buildVariantOptions = function buildVariantOptions(
 		storySnapshot,
 		storybook,
 	} = context;
+	if (variant.privacyChoices) {
+		return privacyChoicesOptions(variant, variant.privacyChoices, {
+			mode,
+			snapshot: context.privacyChoicesSnapshot,
+			vendors: storybook.storybookVendors,
+		});
+	}
 	const presentation =
 		variant.options?.policy === 'opt-out'
 			? variant.options?.presentation
@@ -173,10 +219,63 @@ const variantHeaders = function variantHeaders(
 	variant: AstroStoryVariant
 ): Headers {
 	const gpc =
+		variant.privacyChoices?.gpc === true ||
 		variant.openOptOutConfirmation === 'signal' ||
 		variant.optOutState === 'gpc' ||
 		variant.optOutState === 'signal';
 	return new Headers(gpc ? { 'sec-gpc': '1' } : {});
+};
+
+/**
+ * The page under a Privacy Choices story, as React's stories render it: a
+ * heading, two paragraphs and the persistent page links, then the prompt
+ * and, for the dialog stories, `<ConsentDialog />`. The EU and US opt-in
+ * pages link the dialog themselves; the others carry
+ * `<ConsentDialogLink right="opt-out" />`.
+ */
+const privacyChoicesPage = async function privacyChoicesPage(
+	story: NonNullable<AstroStoryVariant['privacyChoices']>,
+	prompt: string,
+	renderPart: (
+		file: string,
+		props: Record<string, unknown>,
+		slots?: Record<string, string>
+	) => Promise<string>,
+	clean: (html: string) => string
+): Promise<string> {
+	const settings: Partial<Record<string, string>> = story.dialog
+		? { eu: 'Privacy settings', 'us-opt-in': 'Your Privacy Choices' }
+		: {};
+	const label = settings[story.region];
+	const ownLink = story.region === 'eu' || story.region === 'us-opt-in';
+	const links = [
+		label
+			? `<button type="button" data-testid="consent-dialog-trigger" data-inth-action="customize" style="background:none;border:0;color:inherit;cursor:pointer;font:inherit;padding:0;text-decoration:underline">${label}</button>`
+			: '',
+		ownLink && story.dialog
+			? ''
+			: clean(
+					await renderPart(
+						COMPONENT_FILES['consent-dialog-trigger'] as string,
+						{
+							right: 'opt-out',
+						}
+					)
+				),
+	].join('');
+	const dialog = story.dialog
+		? clean(await renderPart(COMPONENT_FILES['consent-dialog'] as string, {}))
+		: '';
+	return [
+		'<main style="font-family:system-ui,sans-serif;line-height:1.6;margin:0 auto;max-width:720px;min-height:160vh;padding:48px 24px">',
+		'<h1>Acme Outdoor</h1>',
+		'<p>Tents, packs and stoves for every season. Browse the catalogue, read the field guides, or find a store near you.</p>',
+		'<p><a href="#catalogue">Catalogue</a> · <a href="#guides">Field guides</a></p>',
+		`<footer style="display:flex;gap:24px;margin-top:48px">${links}</footer>`,
+		'</main>',
+		prompt,
+		dialog,
+	].join('');
 };
 
 const renderVariants = async function renderVariants(
@@ -214,7 +313,7 @@ const renderVariants = async function renderVariants(
 			server: { hmr: false, middlewareMode: true },
 		});
 
-		const [serverModule, integration, mode, storybook, schema] =
+		const [serverModule, integration, mode, storybook, schema, policies] =
 			await Promise.all([
 				server.ssrLoadModule(path.join(astroSrc, 'server.ts')),
 				server.ssrLoadModule(path.join(astroSrc, 'integration.ts')),
@@ -224,6 +323,9 @@ const renderVariants = async function renderVariants(
 				),
 				server.ssrLoadModule(
 					path.resolve(astroSrc, '../../schema/src/types.ts')
+				),
+				server.ssrLoadModule(
+					path.resolve(storybookDir, '../src/privacy-choices-policies.ts')
 				),
 			]);
 		// The stories' policy as a manifest the server resolves: a static
@@ -256,8 +358,20 @@ const renderVariants = async function renderVariants(
 			}
 			// oxlint-disable-next-line no-await-in-loop -- One shared container.
 			const component = await server.ssrLoadModule(path.join(astroSrc, file));
+			const story = variant.privacyChoices;
+			const privacyChoicesSnapshot = story
+				? // oxlint-disable-next-line no-await-in-loop -- One rule per story.
+					await snapshotOf([
+						policies.privacyChoicesPolicy(
+							storybook.storybookPolicy,
+							story.region,
+							story.dialog === true
+						),
+					])
+				: undefined;
 			const astroOptions = buildVariantOptions(variant, {
 				mode,
+				privacyChoicesSnapshot,
 				storyIABSnapshot,
 				storyOptOutSnapshot,
 				storySnapshot,
@@ -316,6 +430,10 @@ const renderVariants = async function renderVariants(
 					preferencesControl: clean(trigger),
 					recipe: `${html}${clean(dialog)}`,
 				});
+			}
+			if (story) {
+				// oxlint-disable-next-line no-await-in-loop -- See above.
+				html = await privacyChoicesPage(story, html, renderPart, clean);
 			}
 			out[variant.id] = {
 				config: extractConfig(raw),

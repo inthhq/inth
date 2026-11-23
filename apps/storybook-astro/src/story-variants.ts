@@ -22,6 +22,26 @@ export type AstroComponentName =
 /** Which framework renders the on-demand dialog island. */
 export type AstroUIAdapter = 'svelte' | 'react' | 'vue';
 
+/** The regimes the Privacy Choices stories show, as React's do. */
+export type PrivacyChoicesRegion =
+	| 'eu'
+	| 'us-opt-in'
+	| 'us-notice'
+	| 'us-opt-out';
+
+/** A Privacy Choices (v6) story: the prompt over a demo page. */
+export interface PrivacyChoicesStory {
+	region: PrivacyChoicesRegion;
+	/** The prompt's `container`. */
+	container: Record<string, unknown>;
+	blockUntilChoice?: boolean;
+	edgeStyle?: 'inset' | 'flush';
+	/** A dialog story: the page carries `<ConsentDialog />` and the dialog's vendors. */
+	dialog?: boolean;
+	/** A Global Privacy Control signal is on. */
+	gpc?: boolean;
+}
+
 /** A single prerendered variant. */
 export interface AstroStoryVariant {
 	/** Stable key. Also the virtual-module record key. */
@@ -66,6 +86,8 @@ export interface AstroStoryVariant {
 	 * integration's own default.
 	 */
 	ui?: AstroUIAdapter;
+	/** Render the Privacy Choices design over a demo page. */
+	privacyChoices?: PrivacyChoicesStory;
 	/** Put `inth-dark` on `<html>` while the story is mounted. */
 	dark?: boolean;
 	/**
@@ -103,6 +125,208 @@ const CATEGORIES = [
 	'measurement',
 	'experience',
 	'marketing',
+];
+
+/** A Privacy Choices banner story's variant. */
+const privacyChoicesBanner = function privacyChoicesBanner(
+	id: string,
+	story: PrivacyChoicesStory
+): AstroStoryVariant {
+	return {
+		component: 'consent-banner',
+		id: `privacy-choices-banner--${id}`,
+		options: { colorScheme: 'light', consentCategories: CATEGORIES },
+		privacyChoices: story,
+	};
+};
+
+/**
+ * A Privacy Choices dialog story's variant: the dialog opens on boot,
+ * unless the story walks the full flow from the banner. The React island
+ * renders React's Privacy Choices dialog.
+ */
+const privacyChoicesDialog = function privacyChoicesDialog(
+	id: string,
+	story: Omit<PrivacyChoicesStory, 'container' | 'dialog'> & {
+		container?: Record<string, unknown>;
+		flow?: boolean;
+	}
+): AstroStoryVariant {
+	const { flow, ...rest } = story;
+	return {
+		component: 'consent-banner',
+		id: `privacy-choices-dialog--${id}`,
+		openDialog: flow ? undefined : 'preferences',
+		options: { colorScheme: 'light', consentCategories: CATEGORIES },
+		privacyChoices: {
+			container: { position: 'start', type: 'card' },
+			...rest,
+			dialog: true,
+		},
+		ui: 'react',
+	};
+};
+
+/** The Privacy Choices stories, under the names React's carry. */
+const privacyChoicesVariants: readonly AstroStoryVariant[] = [
+	privacyChoicesBanner('card-start-eu', {
+		container: { position: 'start', type: 'card' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('card-start-us-opt-in', {
+		container: { position: 'start', type: 'card' },
+		region: 'us-opt-in',
+	}),
+	privacyChoicesBanner('card-start-us-notice', {
+		container: { position: 'start', type: 'card' },
+		region: 'us-notice',
+	}),
+	privacyChoicesBanner('card-end-eu', {
+		container: { position: 'end', type: 'card' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('card-end-us-opt-in', {
+		container: { position: 'end', type: 'card' },
+		region: 'us-opt-in',
+	}),
+	privacyChoicesBanner('card-end-us-notice', {
+		container: { position: 'end', type: 'card' },
+		region: 'us-notice',
+	}),
+	privacyChoicesBanner('card-center-eu', {
+		container: { position: 'center', type: 'card' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('card-center-us-opt-in', {
+		container: { position: 'center', type: 'card' },
+		region: 'us-opt-in',
+	}),
+	privacyChoicesBanner('card-center-us-notice', {
+		container: { position: 'center', type: 'card' },
+		region: 'us-notice',
+	}),
+	privacyChoicesBanner('banner-bottom-eu', {
+		container: { edge: 'bottom', type: 'banner' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('banner-bottom-us-opt-in', {
+		container: { edge: 'bottom', type: 'banner' },
+		region: 'us-opt-in',
+	}),
+	privacyChoicesBanner('banner-bottom-us-notice', {
+		container: { edge: 'bottom', type: 'banner' },
+		region: 'us-notice',
+	}),
+	privacyChoicesBanner('banner-top-eu', {
+		container: { edge: 'top', type: 'banner' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('banner-top-us-opt-in', {
+		container: { edge: 'top', type: 'banner' },
+		region: 'us-opt-in',
+	}),
+	privacyChoicesBanner('banner-top-us-notice', {
+		container: { edge: 'top', type: 'banner' },
+		region: 'us-notice',
+	}),
+	privacyChoicesBanner('drawer-bottom-eu', {
+		container: { side: 'bottom', type: 'drawer' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('drawer-bottom-us-opt-in', {
+		container: { side: 'bottom', type: 'drawer' },
+		region: 'us-opt-in',
+	}),
+	privacyChoicesBanner('drawer-bottom-us-notice', {
+		container: { side: 'bottom', type: 'drawer' },
+		region: 'us-notice',
+	}),
+	privacyChoicesBanner('drawer-top-eu', {
+		container: { side: 'top', type: 'drawer' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('drawer-top-us-opt-in', {
+		container: { side: 'top', type: 'drawer' },
+		region: 'us-opt-in',
+	}),
+	privacyChoicesBanner('drawer-top-us-notice', {
+		container: { side: 'top', type: 'drawer' },
+		region: 'us-notice',
+	}),
+	privacyChoicesBanner('drawer-start-eu', {
+		container: { side: 'start', type: 'drawer' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('drawer-start-us-opt-in', {
+		container: { side: 'start', type: 'drawer' },
+		region: 'us-opt-in',
+	}),
+	privacyChoicesBanner('drawer-start-us-notice', {
+		container: { side: 'start', type: 'drawer' },
+		region: 'us-notice',
+	}),
+	privacyChoicesBanner('drawer-end-eu', {
+		container: { side: 'end', type: 'drawer' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('drawer-end-us-opt-in', {
+		container: { side: 'end', type: 'drawer' },
+		region: 'us-opt-in',
+	}),
+	privacyChoicesBanner('drawer-end-us-notice', {
+		container: { side: 'end', type: 'drawer' },
+		region: 'us-notice',
+	}),
+	privacyChoicesBanner('blocking-card', {
+		blockUntilChoice: true,
+		container: { position: 'start', type: 'card' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('blocking-banner', {
+		blockUntilChoice: true,
+		container: { edge: 'bottom', type: 'banner' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('blocking-drawer-bottom', {
+		blockUntilChoice: true,
+		container: { side: 'bottom', type: 'drawer' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('blocking-drawer-start', {
+		blockUntilChoice: true,
+		container: { side: 'start', type: 'drawer' },
+		region: 'eu',
+	}),
+	privacyChoicesBanner('flush-banner-bottom', {
+		container: { edge: 'bottom', type: 'banner' },
+		edgeStyle: 'flush',
+		region: 'eu',
+	}),
+	privacyChoicesBanner('flush-drawer-bottom', {
+		container: { side: 'bottom', type: 'drawer' },
+		edgeStyle: 'flush',
+		region: 'eu',
+	}),
+	privacyChoicesDialog('us-opt-out', { region: 'us-opt-out' }),
+	privacyChoicesDialog('us-opt-in', { region: 'us-opt-in' }),
+	privacyChoicesDialog('us-with-gpc', { gpc: true, region: 'us-opt-out' }),
+	privacyChoicesDialog('eu', { region: 'eu' }),
+	privacyChoicesDialog('phone-us-preferences-sheet', { region: 'us-opt-out' }),
+	privacyChoicesDialog('phone-eu-vendor-sheets', { region: 'eu' }),
+	privacyChoicesDialog('phone-flush-sheets', {
+		edgeStyle: 'flush',
+		region: 'us-opt-in',
+	}),
+	privacyChoicesDialog('full-flow-eu', { flow: true, region: 'eu' }),
+	privacyChoicesDialog('full-flow-us-opt-in', {
+		flow: true,
+		region: 'us-opt-in',
+	}),
+	privacyChoicesDialog('full-flow-us-notice', {
+		container: { edge: 'bottom', type: 'banner' },
+		flow: true,
+		region: 'us-notice',
+	}),
 ];
 
 /**
@@ -360,6 +584,7 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		options: { colorScheme: 'light', iab: true },
 		ui: 'vue',
 	},
+	...privacyChoicesVariants,
 ];
 
 /**

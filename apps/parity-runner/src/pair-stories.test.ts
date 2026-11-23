@@ -243,6 +243,7 @@ test('a story not yet ported is compared only where it is ported, and never miss
 	expect(portedFrameworks('Privacy Choices/Banner/Card')).toEqual([
 		'react',
 		'angular',
+		'astro',
 		'svelte',
 		'vue',
 	]);
