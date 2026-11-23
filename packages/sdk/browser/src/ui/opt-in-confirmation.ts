@@ -10,7 +10,8 @@ import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
 import type { ConsentDialogOptions } from '../consent-client.model';
 import { classes } from '../generated/styles';
-import { h, readDurationMs, supportsStartingStyle } from './h';
+import { h } from './h';
+import { readDurationMs, supportsStartingStyle } from './mark-late-entry';
 import {
 	closeOptInConfirmation,
 	confirmOptInConfirmation,
