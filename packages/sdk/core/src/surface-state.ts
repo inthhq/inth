@@ -85,6 +85,27 @@ export type {
 	OptOutVia,
 	ResolvedOptOutState,
 } from './libs/opt-out-state';
+export { resolveSurfaceEscape } from './surface-session/escape';
+export type {
+	SurfaceEscapeInput,
+	SurfaceEscapeOutcome,
+} from './surface-session/escape';
+export { resolveSaleRight } from './surface-session/rights';
+export type {
+	RightOption,
+	RightSource,
+	RightsSnapshot,
+	SaleRightState,
+} from './surface-session/rights';
+export {
+	announcementText,
+	MAIN_LAYER,
+	MAX_SURFACE_LAYERS,
+} from './surface-session/state';
+export type {
+	SurfaceAnnouncement,
+	SurfaceSessionState,
+} from './surface-session/state';
 export {
 	applyExperimentAssignment,
 	applyExperimentTheme,
