@@ -14,6 +14,4 @@ The rules are the same in every framework:
 - `start` and `end` Drawers show every choice at once on desktop. On phones (`PHONE_LAYOUT_QUERY`, 640px and narrower) they become a bottom Drawer.
 - A Card is always inset.
 
-`resolveConsentPresentation()` now returns `container.desktop` and `container.phone` for the prompt. When `container` isn't set, it maps the existing `variant` and `position`: `floating` and `widget` become a Card in the bottom corner on the same side (a `-right` position becomes `end`, anything else `start`; on a right-to-left page the Card therefore sits in the mirrored corner), `bar` becomes a Banner on the same edge, and `wall` becomes a centred Card. `blocking`, and the older `scrollLock` and `trapFocus`, map to `blockUntilChoice`.
-
-The stock components don't read the new fields yet, so nothing on the page changes.
+`resolveConsentPresentation()` returns `container.desktop` and `container.phone` for the prompt. When `container` isn't set, the prompt is a Card in the `start` corner.
