@@ -47,8 +47,8 @@ import {
 	readCookieValueFromHeader,
 } from '../../libs/cookie';
 import type { StorageConfig } from '../../libs/cookie';
-import { resolveStorageKeys } from '../../libs/storage-keys';
 import { isValidVendorId } from '../../libs/vendors';
+import { resolveAccountStorageKeys } from './account-keys';
 import { CATEGORY_CODES, decodeComponent, DIGITS_ONLY } from './record-codec';
 
 const FIELD_SEPARATOR = '&';
@@ -806,7 +806,7 @@ export const readStoredAccountLayerDetailed =
 	function readStoredAccountLayerDetailed(
 		config: StorageConfig | undefined
 	): AccountLayerReadResult {
-		const keys = resolveStorageKeys(config);
+		const keys = resolveAccountStorageKeys(config);
 		let degraded = false;
 		const markDegraded = () => {
 			degraded = true;
@@ -861,7 +861,7 @@ export const readStoredAccountLayerFromCookieHeader =
 		cookieHeader: string | undefined,
 		config: StorageConfig | undefined
 	): AccountConsentLayer | null {
-		const keys = resolveStorageKeys(config);
+		const keys = resolveAccountStorageKeys(config);
 		return assembleAccountParts([
 			decodeAccountChoicesCookie(
 				readCookieValueFromHeader(cookieHeader, keys.accountChoices)

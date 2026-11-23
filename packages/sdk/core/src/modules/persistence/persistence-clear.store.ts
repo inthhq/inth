@@ -22,6 +22,7 @@ import {
 	storageKeyFamilies,
 	resolveStorageKeys,
 } from '../../libs/storage-keys';
+import { resolveAccountStorageKeys } from './account-keys';
 import type { StorageConfig } from './persistence.model';
 import { EPOCH_CLOCK_TOLERANCE_MS } from './record-codec.model';
 import { readStoredClearEpoch } from './record-storage.store';
@@ -54,7 +55,7 @@ export const clearStoredAccountLayer = function clearStoredAccountLayer(
 	if (typeof document === 'undefined') {
 		return;
 	}
-	const keys = resolveStorageKeys(config);
+	const keys = resolveAccountStorageKeys(config);
 	for (const key of [
 		keys.accountChoices,
 		keys.accountVendors,

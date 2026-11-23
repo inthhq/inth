@@ -9,7 +9,6 @@
  */
 
 import type { ConsentSnapshot } from '../consent-kernel.model';
-import { consentPending } from '../consent-pending';
 import type { Script } from '../libs/script-loader/script.model';
 import { isIABConfigured } from '../runtime/is-iab-configured';
 import { planInstantCommit } from './instant-commit';
@@ -47,7 +46,8 @@ export const engineNeededNow = function engineNeededNow(
 	options: DeferEngineOptions
 ): boolean {
 	return Boolean(
-		consentPending(snapshot) ||
+		snapshot.policyPending ||
+		snapshot.userConsentPending === true ||
 		snapshot.hasAccountLayer ||
 		options.userConsent !== undefined ||
 		snapshot.model === 'iab' ||

@@ -238,27 +238,27 @@ export const createRecordStore = function createRecordStore(
 		) {
 			return false;
 		}
-		const keys = tools.keys(config);
+		const consentKey = tools.keys(config).consent;
 		const rev = tools.createAccountRevision(now);
 		const encodeChoices = tools.encodeAccountChoicesCookie;
 		const encodeVendors = tools.encodeAccountVendorsCookie;
 		const encodeOptOut = tools.encodeAccountOptOutCookie;
 		const localWritten = writeLocalStorageText(
-			keys.accountState,
+			`${consentKey}-acct`,
 			tools.encodeAccountLocalJson(layer, rev)
 		);
 		const choicesWritten = writeCookieText(
-			keys.accountChoices,
+			`${consentKey}-acct-c`,
 			cookieText(() => encodeChoices(layer, rev)),
 			config
 		);
 		const vendorsWritten = writeCookieText(
-			keys.accountVendors,
+			`${consentKey}-acct-v`,
 			cookieText(() => encodeVendors(layer, rev)),
 			config
 		);
 		const optOutWritten = writeCookieText(
-			keys.accountOptOut,
+			`${consentKey}-acct-o`,
 			cookieText(() => encodeOptOut(layer, rev)),
 			config
 		);

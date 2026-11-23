@@ -21,7 +21,7 @@ import { primeInitRequest } from '../libs/prefetch/prefetch';
 import type { PrefetchOptions } from '../libs/prefetch/prefetch.model';
 import { hasGlobalPrivacyControlSignal } from '../libs/read-global-privacy-control';
 import { DEFAULT_INIT_CREDENTIALS } from '../libs/request-context-headers.model';
-import { resolveStorageKeys } from '../libs/storage-keys';
+import { resolveAccountStorageKeys } from '../modules/persistence/account-keys';
 import type { SSRInitialData } from '../options/ssr-options.model';
 import { readHostedMode } from '../transports/hosted-modes.model';
 import type { ProviderTransportFactory } from '../transports/mode';
@@ -200,7 +200,9 @@ export const startPrefetchedInit = function startPrefetchedInit(
 const hasStoredAccountRecord = function hasStoredAccountRecord(
 	storageKey?: string
 ): boolean {
-	const keys = resolveStorageKeys(storageKey ? { storageKey } : undefined);
+	const keys = resolveAccountStorageKeys(
+		storageKey ? { storageKey } : undefined
+	);
 	try {
 		if (
 			typeof window !== 'undefined' &&

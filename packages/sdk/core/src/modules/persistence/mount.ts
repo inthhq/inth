@@ -21,6 +21,7 @@ import {
 	resolveStorageKeys,
 } from '../../libs/storage-keys';
 import { generateUuidV7 } from '../../libs/subject-uuid.model';
+import { accountStorageKeysFor } from './account-keys';
 import {
 	clearStoredAccountLayer,
 	clearStoredRecords,
@@ -1294,7 +1295,7 @@ export const mountPersistence = function mountPersistence(
 					family.vendors,
 					family.epoch,
 				]),
-				keys.accountState,
+				accountStorageKeysFor(keys.consent).accountState,
 				// Another page called `localStorage.clear()`.
 				null,
 			]);

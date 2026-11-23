@@ -16,10 +16,7 @@ import {
 	optOutRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createKernel } from '../../../kernel';
-import {
-	resolveStorageKeys,
-	storedChoiceNames,
-} from '../../../libs/storage-keys';
+import { storedChoiceNames } from '../../../libs/storage-keys';
 import { hasStoredConsent } from '../../../runtime/deferred-boot';
 import { serverScriptStart } from '../../../runtime/script-server-start';
 import { testing } from '../../../testing';
@@ -30,6 +27,7 @@ import {
 	readStoredAccountLayer,
 	readStoredAccountLayerFromCookieHeader,
 } from '../account-codec';
+import { resolveAccountStorageKeys } from '../account-keys';
 import {
 	readStoredRecords,
 	readStoredRecordsFromCookieHeader,
@@ -89,7 +87,7 @@ describe('account layer split cookies and localStorage persistence', () => {
 	test('large vendor map stays within cookie limits: denied IDs in cookie, full map in localStorage', async () => {
 		const resolution = matchedResolution(optInRule());
 		const fp = resolution.fingerprints.choice;
-		const keys = resolveStorageKeys();
+		const keys = resolveAccountStorageKeys();
 
 		const vendors: UserConsent['sync']['vendors'] = {};
 		for (let i = 0; i < 200; i += 1) {
@@ -170,7 +168,7 @@ describe('account layer split cookies and localStorage persistence', () => {
 	});
 
 	test('a part with a mismatched revision is treated as missing', () => {
-		const keys = resolveStorageKeys();
+		const keys = resolveAccountStorageKeys();
 		const layer = {
 			appliedAt: NOW,
 			checkedAt: NOW,
@@ -211,7 +209,7 @@ describe('account layer split cookies and localStorage persistence', () => {
 	test('logout deletes account cookies and localStorage synchronously and cancels queued lazy-writer write', async () => {
 		const resolution = matchedResolution(optInRule());
 		const fp = resolution.fingerprints.choice;
-		const keys = resolveStorageKeys();
+		const keys = resolveAccountStorageKeys();
 
 		// First persist A's account layer with a normal persistence handle.
 		const first = createKernel({
@@ -328,7 +326,7 @@ describe('account layer split cookies and localStorage persistence', () => {
 
 	test('hasStoredConsent sees account keys while storedChoiceNames omits them', async () => {
 		const resolution = matchedResolution(optInRule());
-		const keys = resolveStorageKeys();
+		const keys = resolveAccountStorageKeys();
 		expect(storedChoiceNames().choice).not.toContain(keys.accountChoices);
 		expect(storedChoiceNames().choice).not.toContain(keys.accountState);
 		expect(hasStoredConsent()).toBe(false);
@@ -404,7 +402,7 @@ describe('persistence regressions (set 1)', () => {
 	test('cross-tab reconcile ignores degraded/partial/equal-checkedAt reads and stale tab does not overwrite newer storage', async () => {
 		const resolution = matchedResolution(optInRule());
 		const fp = resolution.fingerprints.choice;
-		const keys = resolveStorageKeys();
+		const keys = resolveAccountStorageKeys();
 
 		const tab1 = createKernel({
 			initialPolicyResolution: resolution,
@@ -599,7 +597,7 @@ describe('persistence regressions (set 1)', () => {
 
 	test('denying ~150 vendors stays within cookie budget with explicit overflow marker, and browser recovers full list from localStorage', async () => {
 		const resolution = matchedResolution(optInRule());
-		const keys = resolveStorageKeys();
+		const keys = resolveAccountStorageKeys();
 
 		const vendors: UserConsent['sync']['vendors'] = {};
 		for (let i = 0; i < 150; i += 1) {
@@ -650,7 +648,7 @@ describe('persistence regressions (set 1)', () => {
 		const rule = optOutRule({ prompt: 'none' });
 		const resolution = matchedResolution(rule);
 		const fp = resolution.fingerprints.choice;
-		const keys = resolveStorageKeys();
+		const keys = resolveAccountStorageKeys();
 		const TEN_MIN = 10 * 60 * 1000;
 
 		const runInline = (code: string | undefined): number => {

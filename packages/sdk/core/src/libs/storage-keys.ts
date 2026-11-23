@@ -101,14 +101,6 @@ export interface StorageKeyFamily {
 	 * reads it now; `clear()` removes it.
 	 */
 	privacy: string;
-	/** Account consent layer: compact category choices cookie. */
-	accountChoices: string;
-	/** Account consent layer: compact denied vendor IDs cookie. */
-	accountVendors: string;
-	/** Account consent layer: compact person-held opt-out cookie. */
-	accountOptOut: string;
-	/** Account consent layer: full localStorage JSON (grants + full vendor map). */
-	accountState: string;
 }
 
 /** The storage keys one configuration resolves to. */
@@ -128,10 +120,6 @@ export interface ResolvedStorageKeys extends StorageKeyFamily {
 
 const familyOf = function familyOf(consent: string): StorageKeyFamily {
 	return {
-		accountChoices: `${consent}-acct-c`,
-		accountOptOut: `${consent}-acct-o`,
-		accountState: `${consent}-acct`,
-		accountVendors: `${consent}-acct-v`,
 		consent,
 		cookieMiss: `${consent}-cookie-miss`,
 		epoch: `${consent}-epoch`,
