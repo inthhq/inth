@@ -13,7 +13,7 @@ createApp(App)
 			banner: { card: { class: 'brand-consent-card' } },
 		},
 		presentation: {
-			prompt: { position: 'bottom', variant: 'bar' },
+			prompt: { container: { edge: 'bottom', type: 'banner' } },
 		},
 		scripts,
 		tokens: {

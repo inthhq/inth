@@ -7,11 +7,9 @@ import ConsentManager from '@inth/vue/runtime/components/consent-manager.vue';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import type { Component } from 'vue';
 
-import ConsentBanner from '../../../packages/sdk/vue/src/runtime/components/prompt/prompt.vue';
 import RecipePage from './docs-recipe-page.vue';
 import BottomBar from './docs-recipes/bottom-bar.vue';
 import HeadlessBar from './docs-recipes/cookie-bar.vue';
-import { slimBar } from './docs-recipes/slim-bar';
 import { useStorybookConsent } from './storybook-consent-fixtures';
 
 /**
@@ -41,10 +39,9 @@ const recipe =
 	});
 
 const bottomBar = recipe(BottomBar);
-const slim = recipe(ConsentBanner, slimBar);
 const headlessBar = recipe(HeadlessBar);
 
-/** Stock banner, `variant="bar"`. */
+/** Stock banner, `container: { type: 'banner', edge: 'bottom' }`. */
 export const BottomBarDesign: Story = {
 	play: recipeRenders,
 	render: bottomBar,
@@ -57,11 +54,6 @@ export const BottomBarReject: Story = {
 	play: recipeRejects,
 	render: bottomBar,
 };
-
-/** Stock banner on one row through `components` slot classes. */
-export const SlimBarDesign: Story = { play: recipeRenders, render: slim };
-export const SlimBarAccept: Story = { play: recipeAccepts, render: slim };
-export const SlimBarReject: Story = { play: recipeRejects, render: slim };
 
 /** Own markup on the composables, stock dialog for preferences. */
 export const HeadlessBarDesign: Story = {
