@@ -1,7 +1,8 @@
 /**
  * What a framework root's engine side shares on the server: loading the
- * server start module, reading streamed state under React 18 and 19, and
- * one render id and start plan per render.
+ * server start module, recording streamed state for React 18 and 19 to
+ * read (`read` in `server-render.ts`), and one render id and start plan
+ * per render.
  *
  * @packageDocumentation
  * @internal
@@ -9,7 +10,6 @@
 
 import { newRenderId } from '@inth/sdk/runtime/page-globals';
 import type * as ScriptServerStart from '@inth/sdk/runtime/script-server-start';
-import * as React from 'react';
 
 import type { InthProviderOptions } from '../provider';
 
@@ -117,28 +117,6 @@ export const settledState = function settledState<State>(
 		settledStates.set(state, settled);
 	}
 	return settled;
-};
-
-/** React 19's `use`, absent from React 18. */
-const { use } = React as {
-	use?: <Value>(value: Promise<Value>) => Value;
-};
-
-/**
- * `use` where React has it. React 18 suspends on a thrown promise and
- * reads its recorded result on the retry.
- *
- * @internal
- */
-export const read = function read<Value>(promise: Recorded<Value>): Value {
-	if (use) {
-		// oxlint-disable-next-line react-hooks/rules-of-hooks -- `read` is `use` with a React 18 fallback, so it keeps `use`'s rules: render only, conditions allowed.
-		return use(promise);
-	}
-	if (promise.status === 'fulfilled') {
-		return promise.value as Value;
-	}
-	throw promise;
 };
 
 /**

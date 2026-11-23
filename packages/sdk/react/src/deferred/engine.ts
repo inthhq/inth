@@ -13,12 +13,15 @@ export type { DeferredEngineHostProps } from './deferred-engine-host';
 export { DeferredEngineHost } from './deferred-engine-host';
 export {
 	importScriptServerStart,
-	read,
 	renderFor,
 	renderPlan,
 	settledState,
 } from './server-render.model';
-export type { Recorded, ScriptServerStartModule } from './server-render.model';
+export { read } from './server-render';
+export type {
+	Recorded,
+	ScriptServerStartModule,
+} from './server-render.model';
 // The stock surfaces load with the engine, in one chunk group: imported
 // apart, each group would carry its own copy of the modules they share.
 export { ConsentDialog, OptOutConfirmation } from '../aggregate-components';
