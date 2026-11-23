@@ -900,7 +900,7 @@ describe('notice', () => {
 });
 
 describe('customization', () => {
-	test('theme slots style the prompt parts, and every button opts out of the early-tap replay', async () => {
+	test('[BNR-06] theme slots style the prompt parts, and the early-tap script holds taps on every button, as in React', async () => {
 		await mount({
 			theme: {
 				slots: {
@@ -915,8 +915,8 @@ describe('customization', () => {
 		);
 		for (const id of ['reject', 'accept', 'customize']) {
 			expect(
-				must(`consent-banner-${id}-button`).getAttribute('data-early-tap')
-			).toBe('off');
+				must(`consent-banner-${id}-button`).hasAttribute('data-early-tap')
+			).toBe(false);
 		}
 		await expandPanel();
 		expect(must('consent-banner-save-button').className).toContain('my-save');

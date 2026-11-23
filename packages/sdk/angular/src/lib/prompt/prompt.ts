@@ -1,3 +1,4 @@
+import { isPlatformBrowser } from '@angular/common';
 import {
 	ChangeDetectionStrategy,
 	Component,
@@ -8,6 +9,7 @@ import {
 	inputBinding,
 	isDevMode,
 	PendingTasks,
+	PLATFORM_ID,
 	signal,
 	untracked,
 	viewChild,
@@ -20,6 +22,7 @@ import type {
 	Model,
 } from '@inth/sdk/engine';
 import { actionAppearanceFromTheme } from '@inth/sdk/engine';
+import { EARLY_TAP_STYLE_ID } from '@inth/sdk/runtime/page-globals';
 import { resolveConsentPresentation } from '@inth/sdk/surface-state';
 
 import { ConsentManager } from '../core/consent-manager';
@@ -111,6 +114,7 @@ export class ConsentBanner {
 	readonly #theme = inject(ConsentTheme);
 	readonly #loaders = inject(PROMPT_LOADERS);
 	readonly #pendingTasks = inject(PendingTasks);
+	readonly #browser = isPlatformBrowser(inject(PLATFORM_ID));
 
 	/** Drop the stock classes. Defaults to the provider's `noStyle`. */
 	readonly noStyle = input<boolean | undefined>(undefined);
@@ -262,12 +266,14 @@ export class ConsentBanner {
 			untracked(() => follow(kernel.getSnapshot().activeUI));
 			onCleanup(kernel.subscribe((snapshot) => follow(snapshot.activeUI)));
 		});
-		// A failed load must not be the end: the next sync (new options) or
-		// the next time the prompt is owed again tries once more.
+		// A failed load must not be the end: the next snapshot while the
+		// prompt is owed (the engine starting, new options) or the next time
+		// it is owed again tries once more.
 		effect(() => {
 			const outlet = this.outlet();
 			const type = this.#type();
 			const options = this.options();
+			this.#consent.snapshot();
 			const owedNow = this.#consent.activeUI() === 'banner';
 			if (this.#owed() && outlet && type && options) {
 				untracked(() => {
@@ -314,6 +320,12 @@ export class ConsentBanner {
 			// the newer one alone.
 			if (generation === this.#generation) {
 				this.#loading = null;
+				// A tap the early-tap script held hid the server's banner. Show
+				// what is left of it, and the retry that renders it again
+				// replays the tap, or the banner stays hidden for good.
+				if (this.#browser) {
+					document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
+				}
 			}
 		} finally {
 			done();
