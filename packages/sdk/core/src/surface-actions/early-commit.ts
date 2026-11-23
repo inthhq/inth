@@ -66,14 +66,14 @@ import type { Callbacks } from '../options/callback-options.model';
 import type { ConsentRuntimeOptions } from '../runtime/consent-runtime.model';
 import type { StandInKernelHandle } from '../runtime/stand-in-kernel';
 import {
+	hasStoredClearEpoch,
 	kernelOnly,
 	pendingIsInert,
 	saveRecordsOptOut,
 } from './instant-commit';
 import type { InstantCommit } from './instant-commit';
-import { hasStoredClearEpoch } from './instant-commit.store';
 
-export { hasStoredClearEpoch } from './instant-commit.store';
+export { hasStoredClearEpoch } from './instant-commit';
 
 /**
  * A choice changes neither the resolution nor the consent categories, so
