@@ -11,7 +11,6 @@ export {
 	commitBannerChoice,
 	commitDialogChoice,
 	confirmSaleRight,
-	copySurfaceReference,
 	pressSaleRight,
 } from './surface-commands.model';
 export type {
@@ -20,6 +19,7 @@ export type {
 	RightCommandOptions,
 	RightPressResult,
 } from './surface-commands.model';
+export { copySurfaceReference } from './copy-surface-reference';
 export { resolveSurfaceEscape } from './resolve-surface-escape';
 export type {
 	SurfaceEscapeInput,

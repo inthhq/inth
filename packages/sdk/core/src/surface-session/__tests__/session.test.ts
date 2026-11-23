@@ -13,7 +13,7 @@ import type { ConsentKernel, ResolvedVendor } from '../../consent-kernel.model';
 import { createConsentKernel } from '../../kernel';
 import { createPreferenceDraft } from '../../preference-draft';
 import { showConsentSurface } from '../../surface-actions/rules';
-import { copySurfaceReference } from '../surface-commands.model';
+import { copySurfaceReference } from '../copy-surface-reference';
 import { getSurfaceSession } from '../session';
 
 const vendor = (id: string, category: ResolvedVendor['category']) =>
