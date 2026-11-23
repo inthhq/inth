@@ -1,11 +1,12 @@
 /**
  * Guards the per-surface sheets React renders: `tokens`, then `button`,
- * `banner`, `trigger` and `consent-gate` (see `SURFACE_SHEETS`), and the
- * `dialog` sheet that follows them.
+ * `parts`, `surface`, `card`, `banner`, `drawer`, `trigger` and
+ * `consent-gate` (see `SURFACE_SHEETS`), and the later sheets (`widget`,
+ * `expand`, `dialog`) that follow them.
  *
- * A server-rendered banner puts `tokens`, `button` and `banner` in every
- * HTML response, ahead of the page's own content, so they must hold what
- * the banner needs to paint and nothing else:
+ * A server-rendered Card puts `tokens`, `button`, `surface` and `card` in
+ * every HTML response, ahead of the page's own content, so they must hold
+ * what the prompt needs to paint and nothing else:
  *
  * - Each is an exact subset of `first-paint`: the same rules, selectors,
  *   values and order. Splitting may drop, never change.
@@ -32,12 +33,12 @@ const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
 const SHEETS_DIR = join(DIST_DIR, 'styles', 'sheets');
 
 /**
- * Brotli 11 and gzip 9 bytes of `tokens` + `button` + `banner`, the inline
- * CSS of a fresh visit. At 5,472 / 6,175 when set; `first-paint` is 7,778 /
- * 8,872. Raise only for rules the banner needs to paint.
+ * Brotli 11 and gzip 9 bytes of `tokens` + `button` + `surface` + `card`,
+ * the inline CSS of a fresh visit with the default Card. See
+ * `presentation-sheets.test.ts` for its measured size.
  */
-const BANNER_BROTLI_CEILING = 5700;
-const BANNER_GZIP_CEILING = 6450;
+const CARD_BROTLI_CEILING = 4350;
+const CARD_GZIP_CEILING = 4900;
 
 interface Sheet {
 	id: string;
@@ -157,7 +158,10 @@ const gzip = (text: string): number => gzipSync(text, { level: 9 }).length;
 describe('per-surface sheets', async () => {
 	const firstPaint = await importSheet('first-paint');
 	const tokens = await importSheet('tokens');
-	const dialog = await importSheet('dialog');
+	const later = await Promise.all(
+		['widget', 'expand', 'dialog'].map(importSheet)
+	);
+	const widget = later[0] as Sheet;
 	const surfaceNames = Object.keys(SURFACE_SHEETS);
 	const surfaces = Object.fromEntries(
 		await Promise.all(
@@ -224,15 +228,27 @@ describe('per-surface sheets', async () => {
 	test('every variable a sheet reads is declared in it or in tokens', () => {
 		const fromTokens = declaredVariables(tokens.css);
 
-		for (const sheet of [...Object.values(surfaces), dialog]) {
+		// A container renders over the prompt shell, so it may read what
+		// `surface` declares; `presentation-sheets.test.ts` guards those.
+		const fromSurface = declaredVariables(surfaces.surface?.css ?? '');
+		const containers = new Set(
+			['card', 'banner', 'drawer'].map((name) => surfaces[name])
+		);
+		for (const sheet of [...Object.values(surfaces), ...later]) {
 			const declared = new Set([
 				...fromTokens,
+				...(containers.has(sheet) ? fromSurface : []),
 				...declaredVariables(sheet.css),
 			]);
 			const missing = [...readVariables(sheet.css)].filter(
 				// Undeclared hooks such as `var(--x, fallback)` are left to
-				// css-var-references.test.ts.
-				(name) => declaredInStyles.has(name) && !declared.has(name)
+				// css-var-references.test.ts, and the prompt's private
+				// `--_consent-*` variables, which the shell and its container
+				// set for each other, to presentation-sheets.test.ts.
+				(name) =>
+					declaredInStyles.has(name) &&
+					!declared.has(name) &&
+					!name.startsWith('--_consent-')
 			);
 
 			expect({ id: sheet.id, missing }).toEqual({ id: sheet.id, missing: [] });
@@ -244,7 +260,7 @@ describe('per-surface sheets', async () => {
 			(block) => /@keyframes\s+(?<name>[\w-]+)/u.exec(block)?.groups?.name ?? ''
 		);
 
-		for (const sheet of [...Object.values(surfaces), dialog]) {
+		for (const sheet of [...Object.values(surfaces), ...later]) {
 			const own = keyframes(sheet.css).map(
 				(block) =>
 					/@keyframes\s+(?<name>[\w-]+)/u.exec(block)?.groups?.name ?? ''
@@ -263,22 +279,22 @@ describe('per-surface sheets', async () => {
 
 	test('the IAB sheets read nothing only first-paint declares', async () => {
 		// `@inth/react` renders the IAB banner over `tokens`, `button` and
-		// `banner`, and the IAB dialog over those and `dialog`, not over
-		// `first-paint`: carrying it next to the banner's sheets shipped every
-		// first-paint rule twice. So an IAB rule may read theme tokens, the
-		// banner's or the dialog's variables and the IAB variables, never a
-		// variable only `first-paint` declares.
+		// `parts`, and the IAB dialog over those and `widget`, not over
+		// `first-paint`: carrying it next to those sheets shipped every
+		// first-paint rule twice. So an IAB rule may read theme tokens, those
+		// sheets' variables and the IAB variables, never a variable only
+		// `first-paint` declares.
 		const iabFirstPaint = await importSheet('iab-first-paint');
 		const iabDialog = await importSheet('iab-dialog');
 		const declaredInIabStyles = declaredVariables(
 			readFileSync(join(DIST_DIR, 'iab', 'styles.css'), 'utf8')
 		);
-		const bannerSheets = [tokens, surfaces.button, surfaces.banner].filter(
+		const bannerSheets = [tokens, surfaces.button, surfaces.parts].filter(
 			(sheet): sheet is Sheet => sheet !== undefined
 		);
 		const cases: [Sheet, Sheet[]][] = [
 			[iabFirstPaint, [...bannerSheets, iabFirstPaint]],
-			[iabDialog, [...bannerSheets, iabFirstPaint, dialog, iabDialog]],
+			[iabDialog, [...bannerSheets, iabFirstPaint, widget, iabDialog]],
 		];
 
 		for (const [sheet, under] of cases) {
@@ -295,8 +311,8 @@ describe('per-surface sheets', async () => {
 		}
 	});
 
-	test('the banner sheets hold no trigger, ConsentGate or dialog variable', () => {
-		const banner = [tokens, surfaces.button, surfaces.banner]
+	test("a Card's sheets hold no trigger, ConsentGate or widget variable", () => {
+		const banner = [tokens, surfaces.button, surfaces.surface, surfaces.card]
 			.map((sheet) => sheet?.css ?? '')
 			.join('\n');
 
@@ -306,12 +322,12 @@ describe('per-surface sheets', async () => {
 	});
 
 	test('the inline CSS of a fresh visit stays under its byte budget', () => {
-		const banner = [tokens, surfaces.button, surfaces.banner]
+		const banner = [tokens, surfaces.button, surfaces.surface, surfaces.card]
 			.map((sheet) => sheet?.css ?? '')
 			.join('');
 
-		expect(brotli(banner)).toBeLessThanOrEqual(BANNER_BROTLI_CEILING);
-		expect(gzip(banner)).toBeLessThanOrEqual(BANNER_GZIP_CEILING);
+		expect(brotli(banner)).toBeLessThanOrEqual(CARD_BROTLI_CEILING);
+		expect(gzip(banner)).toBeLessThanOrEqual(CARD_GZIP_CEILING);
 		expect(brotli(banner)).toBeLessThan(brotli(firstPaint.css));
 	});
 });

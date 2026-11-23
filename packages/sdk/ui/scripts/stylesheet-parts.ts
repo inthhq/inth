@@ -1,27 +1,25 @@
 /**
  * Where each component's rules sit. Names are the flat files in
- * `dist/styles/components` (`prompt` is the consent banner, `panel` the
- * consent dialog, `manager` the preference widget, `consent-gate` the
- * ConsentGate placeholder).
+ * `dist/styles/components`: `consent-surface` is the prompt shell,
+ * `consent-card`, `consent-banner` and `consent-drawer` its containers,
+ * `consent-expand` the options Customize opens in place, `consent-dialog`
+ * the consent dialog, `manager` the preference widget and `consent-gate`
+ * the ConsentGate placeholder.
  *
- * `styles.css` holds the first-paint rules, then the dialog rules. The order
- * matters where a dialog rule and a first-paint rule match the same element
- * with the same specificity: the dialog rule wins, as it did while it
- * shipped in a stylesheet that loaded later.
- *
- * The v6 Privacy Choices rules (`PRESENTATION_SHEETS` and
- * `PRIVACY_CHOICES_DIALOG_COMPONENTS`) stay out of `styles.css`, so an app
- * that imports it doesn't pay for UI it doesn't render yet. They ship in
- * `styles/privacy-choices.css` and in sheets of their own.
+ * `styles.css` holds the first-paint rules, then the rules of the sheets
+ * that load later, in `LATER_SHEETS` order. The order matters where two
+ * rules match the same element with the same specificity: the later one
+ * wins, as it does when its sheet is inserted later.
  *
  * `generate-css-entrypoints.ts` fails the build when a component is in
  * none of the lists, so a new component needs a deliberate choice.
  */
 
 /**
- * Surfaces a first paint can show: the banner, the dialog trigger and the
- * ConsentGate placeholder, plus the pieces they render (buttons, actions,
- * branding, legal links).
+ * Surfaces a first paint can show: the consent prompt in each container,
+ * the dialog trigger and the ConsentGate placeholder, plus the pieces they
+ * render (buttons, actions, branding, legal links), in cascade order. The
+ * prompt shell comes before its containers, which override it.
  */
 export const FIRST_PAINT_COMPONENTS = [
 	'branding',
@@ -30,7 +28,10 @@ export const FIRST_PAINT_COMPONENTS = [
 	'consent-gate',
 	'legal-links',
 	'panel-trigger',
-	'prompt',
+	'consent-surface',
+	'consent-card',
+	'consent-banner',
+	'consent-drawer',
 ] as const;
 
 /**
@@ -38,17 +39,23 @@ export const FIRST_PAINT_COMPONENTS = [
  * `styles/sheets/<name>.js` each. Every first-paint component sits in
  * exactly one sheet, so no rule reaches the page twice: a repeated rule
  * would re-apply after rules that override it whenever its sheet is
- * inserted later. The button has a sheet of its own because the banner, the
- * ConsentGate and the dialog all render it. The trigger renders none of the
- * others (its logo is a bare SVG).
+ * inserted later. The button has a sheet of its own because the prompt, the
+ * ConsentGate and the dialog all render it. `parts` holds the branding,
+ * action-row and legal-link rules the IAB banner, the preference widget and
+ * the links render. A page that renders a Card carries `tokens`, `button`,
+ * `surface` and `card`, and no Banner or Drawer rule.
  *
  * Each sheet carries the component variables its rules read. The theme
  * tokens ride in the `tokens` sheet, which every surface renders first.
  */
 export const SURFACE_SHEETS = {
-	banner: ['branding', 'consent-actions', 'legal-links', 'prompt'],
+	banner: ['consent-banner'],
 	button: ['button'],
+	card: ['consent-card'],
 	'consent-gate': ['consent-gate'],
+	drawer: ['consent-drawer'],
+	parts: ['branding', 'consent-actions', 'legal-links'],
+	surface: ['consent-surface'],
 	trigger: ['panel-trigger'],
 } as const satisfies Record<
 	string,
@@ -56,59 +63,34 @@ export const SURFACE_SHEETS = {
 >;
 
 /**
- * The v6 consent prompt, split by presentation, one
- * `styles/sheets/<name>.js` each: `surface` is the shell every
- * presentation renders, `card`, `bar` and `drawer` hold one presentation
- * each, and `expand` the options Customize opens in place (and the side
- * Drawer's scroll area). A page that renders a Card carries `tokens`,
- * `button`, `surface` and `card`, and no Banner or Drawer rule.
- *
- * Their rules open `styles/privacy-choices.css`; `styles.css` and
- * `first-paint` don't carry them.
+ * Sheets that load after the first paint, in the order `styles.css` holds
+ * their rules: `widget` (the preference widget and the standalone opt-out
+ * and opt-in confirmations), `expand` (the options Customize opens in place,
+ * and the side Drawer's scroll area), then `dialog` (the consent dialog,
+ * which renders over `expand` and reuses its `scroll` and `group` classes).
  */
-export const PRESENTATION_SHEETS = {
-	bar: ['consent-bar'],
-	card: ['consent-card'],
-	drawer: ['consent-drawer'],
+export const LATER_SHEETS = {
+	widget: [
+		'accordion',
+		'collapsible',
+		'manager',
+		'opt-out-confirmation',
+		'preference-item',
+		'switch',
+		'tabs',
+		'vendor-list',
+	],
 	expand: ['consent-expand'],
-	surface: ['consent-surface'],
+	dialog: ['consent-dialog'],
 } as const satisfies Record<string, readonly string[]>;
 
-/** Every component in `PRESENTATION_SHEETS`, in `styles/privacy-choices.css` order. */
-export const PRESENTATION_COMPONENTS = [
-	'consent-surface',
-	'consent-card',
-	'consent-bar',
-	'consent-drawer',
-	'consent-expand',
-] as const satisfies readonly (typeof PRESENTATION_SHEETS)[keyof typeof PRESENTATION_SHEETS][number][];
-
 /**
- * Rendered only inside the consent dialog or the preference widget. Their
- * rules follow the first-paint rules in `styles.css`.
+ * Class maps kept only so the adapters that have not moved to the current
+ * consent UI keep compiling. Their rules ship in no stylesheet.
+ *
+ * @deprecated temporary — removed in phase B
  */
-export const DIALOG_COMPONENTS = [
-	'accordion',
-	'collapsible',
-	'manager',
-	'opt-out-confirmation',
-	'panel',
-	'preference-item',
-	'switch',
-	'tabs',
-	'vendor-list',
-] as const;
-
-/**
- * The v6 "Your Privacy Choices" dialog body, in the
- * `styles/sheets/privacy-choices-dialog.js` sheet and after the
- * presentation rules in `styles/privacy-choices.css`. It renders over the
- * `expand` sheet, whose `scroll` and `group` classes it reuses.
- */
-export const PRIVACY_CHOICES_DIALOG_COMPONENTS = ['privacy-choices'] as const;
-
-/** The sheet that holds `PRIVACY_CHOICES_DIALOG_COMPONENTS`. */
-export const PRIVACY_CHOICES_DIALOG_SHEET = 'privacy-choices-dialog';
+export const LEGACY_SHIM_COMPONENTS = ['legacy-panel', 'legacy-prompt'] as const;
 
 /** Prefix of the IAB TCF components, which go into `iab/styles.css`. */
 export const IAB_PREFIX = 'iab-';

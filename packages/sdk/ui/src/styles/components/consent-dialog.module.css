@@ -1,5 +1,5 @@
 /*
- * The "Your Privacy Choices" dialog (v6): one column with a fixed header
+ * The consent dialog ("Your Privacy Choices"): one column with a fixed header
  * and footer and a body that is the only scroller (LAY-01), the rights
  * rows as segmented controls, the inline confirmation and its nudge, the
  * receipt line, the vendor table, and the nested phone sheets.
@@ -29,7 +29,7 @@
  *   --consent-dialog-radius      (--inth-radius-lg)
  *
  * A site styled through the classic dialog's variables keeps that styling:
- * each part reads the classic variable after its v6 hook and before the
+ * each part reads the classic variable after its own hook and before the
  * token. `--consent-dialog-max-width` and `-card-radius` stand behind the
  * width and radius hooks. The font, the title and intro type, the card
  * padding and gap, the footer gap, padding and font size, the border width
@@ -65,7 +65,7 @@
 		);
 		color: var(--inth-text);
 		-webkit-font-smoothing: antialiased;
-		animation: privacy-choices-fade-in var(--_dialog-motion);
+		animation: consent-dialog-fade-in var(--_dialog-motion);
 	}
 
 	/* The classic `-dark` twins, under every selector the dark tokens
@@ -142,7 +142,7 @@
 		transform-origin: 50% 0;
 		transform: translateY(calc(var(--_depth) * -32px))
 			scale(calc(1 - var(--_depth) * 0.05));
-		animation: privacy-choices-card-in var(--_dialog-motion);
+		animation: consent-dialog-card-in var(--_dialog-motion);
 		transition: transform calc(var(--inth-duration-slow) * 1.3)
 			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
@@ -187,13 +187,13 @@
 		width: min(100%, 480px);
 		max-height: min(600px, calc(100% - 40px));
 		translate: 0 12px;
-		animation: privacy-choices-child-in calc(var(--inth-duration-slow) * 1.3)
+		animation: consent-dialog-child-in calc(var(--inth-duration-slow) * 1.3)
 			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
 	.card[data-state='closed'] {
 		pointer-events: none;
-		animation: privacy-choices-child-out calc(var(--inth-duration-slow) * 0.8)
+		animation: consent-dialog-child-out calc(var(--inth-duration-slow) * 0.8)
 			var(--inth-easing-in) forwards;
 	}
 
@@ -351,7 +351,7 @@
 		pointer-events: none;
 		font-size: calc(var(--inth-font-size-sm) * 0.8929);
 		color: var(--inth-text-muted);
-		animation: privacy-choices-cue calc(var(--inth-duration-slow) * 8)
+		animation: consent-dialog-cue calc(var(--inth-duration-slow) * 8)
 			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1)) forwards;
 	}
 
@@ -508,7 +508,7 @@
 	}
 
 	.segmentedOption[aria-pressed='true'] .segmentedCheck path {
-		animation: privacy-choices-draw calc(var(--inth-duration-slow) * 1.3)
+		animation: consent-dialog-draw calc(var(--inth-duration-slow) * 1.3)
 			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1))
 			calc(var(--inth-duration-slow) * 0.3) forwards;
 	}
@@ -571,7 +571,7 @@
 			var(--inth-surface-hover)
 		);
 		box-shadow: inset 0 0 0 1.5px var(--inth-danger, #dc2626);
-		animation: privacy-choices-shake calc(var(--inth-duration-slow) * 1.8)
+		animation: consent-dialog-shake calc(var(--inth-duration-slow) * 1.8)
 			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
@@ -1145,7 +1145,7 @@
 			transform-origin: 50% 100%;
 			transform: translateY(calc(var(--_depth) * -10px))
 				scale(calc(1 - var(--_depth) * 0.05));
-			animation-name: privacy-choices-sheet-in;
+			animation-name: consent-dialog-sheet-in;
 		}
 
 		.card[data-regime='eu'] {
@@ -1164,7 +1164,7 @@
 			width: 100%;
 			max-height: calc(100% - 72px);
 			translate: none;
-			animation-name: privacy-choices-sheet-in;
+			animation-name: consent-dialog-sheet-in;
 		}
 
 		.backdrop[data-edge-style='inset'] .card[data-nested='true'] {
@@ -1172,7 +1172,7 @@
 		}
 
 		.card[data-state='closed'] {
-			animation-name: privacy-choices-sheet-out;
+			animation-name: consent-dialog-sheet-out;
 		}
 
 		.header {
@@ -1261,54 +1261,54 @@
 		animation: none !important;
 	}
 
-	@keyframes privacy-choices-fade-in {
+	@keyframes consent-dialog-fade-in {
 		from {
 			opacity: 0;
 		}
 	}
 
-	@keyframes privacy-choices-card-in {
+	@keyframes consent-dialog-card-in {
 		from {
 			opacity: 0;
 			transform: translateY(6px) scale(0.98);
 		}
 	}
 
-	@keyframes privacy-choices-child-in {
+	@keyframes consent-dialog-child-in {
 		from {
 			opacity: 0;
 			transform: translateY(14px) scale(0.96);
 		}
 	}
 
-	@keyframes privacy-choices-child-out {
+	@keyframes consent-dialog-child-out {
 		to {
 			opacity: 0;
 			transform: translateY(10px) scale(0.97);
 		}
 	}
 
-	@keyframes privacy-choices-sheet-in {
+	@keyframes consent-dialog-sheet-in {
 		from {
 			opacity: 0;
 			transform: translateY(24px);
 		}
 	}
 
-	@keyframes privacy-choices-sheet-out {
+	@keyframes consent-dialog-sheet-out {
 		to {
 			opacity: 0;
 			transform: translateY(40px);
 		}
 	}
 
-	@keyframes privacy-choices-draw {
+	@keyframes consent-dialog-draw {
 		to {
 			stroke-dashoffset: 0;
 		}
 	}
 
-	@keyframes privacy-choices-shake {
+	@keyframes consent-dialog-shake {
 		0%,
 		100% {
 			transform: none;
@@ -1323,7 +1323,7 @@
 		}
 	}
 
-	@keyframes privacy-choices-cue {
+	@keyframes consent-dialog-cue {
 		0% {
 			opacity: 0;
 			transform: translateY(3px);

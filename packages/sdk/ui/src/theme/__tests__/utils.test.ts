@@ -314,10 +314,8 @@ describe('themeToVars', () => {
 	});
 });
 
-describe('v6 consent tokens', () => {
+describe('consent UI tokens', () => {
 	test('[VIS-03] the default off-track meets 3:1 on the default surface', () => {
-		// The stock switch track keeps its old colour until the renderer
-		// moves to the new token; the new token is the one that passes.
 		expect(defaultTheme.colors.switchTrackOff).toBe('#8492a6');
 		expect(defaultTheme.dark.switchTrackOff).toBe('#64748b');
 	});
@@ -329,7 +327,7 @@ describe('v6 consent tokens', () => {
 		expect(vars['--inth-radius-nested']).toBe('0.5rem');
 	});
 
-	test('emits the v6 colour and motion defaults in light and dark', () => {
+	test('emits the colour and motion defaults in light and dark', () => {
 		const light = themeToVars(defaultTheme);
 		const dark = themeToVars(defaultTheme, true);
 
@@ -346,12 +344,15 @@ describe('v6 consent tokens', () => {
 		);
 	});
 
-	test('leaves the existing defaults alone', () => {
+	test('[VIS-07] [VIS-01] [VIS-02] uses the consent UI defaults', () => {
 		const light = themeToVars(defaultTheme);
+		const dark = themeToVars(defaultTheme, true);
 
-		expect(light['--inth-primary']).toBe('hsl(228, 100%, 60%)');
-		expect(light['--inth-radius-lg']).toBe('0.75rem');
-		expect(light['--inth-radius-md']).toBe('0.5rem');
+		expect(light['--inth-primary']).toBe('#2563eb');
+		expect(dark['--inth-primary']).toBe('#2f66df');
+		expect(dark['--inth-primary-text']).toBe('#8ab4ff');
+		expect(light['--inth-radius-lg']).toBe('1rem');
+		expect(light['--inth-radius-md']).toBe('0.625rem');
 		expect(light['--inth-switch-track']).toBe('hsl(0, 0%, 85%)');
 		expect(light['--inth-easing-out']).toBe(
 			'cubic-bezier(0.215, 0.61, 0.355, 1)'

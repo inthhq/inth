@@ -1,3 +1,10 @@
+/*
+ * @deprecated temporary — removed in phase B.
+ *
+ * The old consent banner stylesheet, kept only so the adapters that
+ * have not moved to the current consent UI keep compiling against its class
+ * map. No stylesheet ships its rules.
+ */
 @import url('./animations/enter-exit.css');
 
 :root {
@@ -17,18 +24,6 @@
 	/* Stacking. A blocking banner's z-index must stay above its overlay's. */
 	--consent-banner-overlay-z-index: 999997;
 
-	/* The rest of the banner's variables are read with their default as a
-	   fallback instead of being declared here, because the v6 Privacy
-	   Choices sheets read them too: a value declared on :root would replace
-	   every v6 default whenever styles.css is on the page, and would resolve
-	   its tokens once, on :root, where a palette scoped to .inth-theme-root
-	   never reaches. Set any of them on an ancestor to restyle both. The
-	   header and footer share one inset (--consent-banner-padding), so the
-	   text and the buttons start on the same edge; a banner that mounts
-	   after the page has painted fades in on the entry pair
-	   (--consent-banner-entry-duration, --consent-banner-entry-timing) and
-	   hiding fades out over --consent-banner-animation-duration on
-	   --consent-banner-animation-timing. */
 }
 
 /* Hairline borders for retina displays */

@@ -44,7 +44,10 @@ const sourceFiles = function sourceFiles(dir: string): string[] {
 			return entry.name === '__tests__' ? [] : sourceFiles(path);
 		}
 
-		return entry.name.endsWith('.css') ? [path] : [];
+		// The legacy class-map shims ship in no stylesheet.
+		return entry.name.endsWith('.css') && !entry.name.startsWith('legacy-')
+			? [path]
+			: [];
 	});
 };
 

@@ -153,16 +153,21 @@ const resolveExport = function resolveExport(
 const BUNDLER_CONDITIONS = ['import'] as const;
 const NODE_CONDITIONS = ['node', 'import'] as const;
 
+/** Public component names whose flat file in `dist` has another name. */
+const FLAT_NAMES: Record<string, string> = {
+	'consent-dialog-trigger': 'panel-trigger',
+	'consent-manager': 'manager',
+	'iab-consent-banner': 'iab-prompt',
+	'iab-consent-dialog': 'iab-panel',
+};
+
 /**
  * Every component style ships as a flat triple under dist/styles/components:
  * `<name>.js` (class map), `<name>.css` (plain CSS), `<name>.d.ts`.
  */
 describe('package exports: @inth/sdk-ui/styles/components/<name> triple', () => {
 	for (const name of COMPONENT_STYLE_MODULES) {
-		const filename = name
-			.replace('consent-banner', 'prompt')
-			.replace('consent-dialog', 'panel')
-			.replace('consent-manager', 'manager');
+		const filename = FLAT_NAMES[name] ?? name;
 		test(`@inth/sdk-ui/styles/components/${name} → dist JS class map`, () => {
 			const resolvedPath = resolveExport(
 				`./styles/components/${name}`,
@@ -241,10 +246,7 @@ describe('package exports: deprecated frame stylesheet aliases', () => {
  */
 describe('package exports: node condition serves class maps without CSS imports', () => {
 	for (const name of COMPONENT_STYLE_MODULES) {
-		const filename = name
-			.replace('consent-banner', 'prompt')
-			.replace('consent-dialog', 'panel')
-			.replace('consent-manager', 'manager');
+		const filename = FLAT_NAMES[name] ?? name;
 		test(`@inth/sdk-ui/styles/components/${name} → ${name}.node.js`, () => {
 			for (const subpath of [
 				`./styles/components/${name}`,
@@ -376,8 +378,6 @@ describe('package exports: aggregated stylesheets', () => {
 		'styles.tw3.css',
 		'iab/styles.css',
 		'iab/styles.tw3.css',
-		'styles/privacy-choices.css',
-		'styles/privacy-choices.tw3.css',
 	]) {
 		test(`@inth/sdk-ui/${entry} aggregates component rules`, () => {
 			const resolvedPath = resolvePath(`@inth/sdk-ui/${entry}`);

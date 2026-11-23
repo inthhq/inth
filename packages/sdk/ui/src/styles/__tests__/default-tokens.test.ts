@@ -105,6 +105,8 @@ const REFERENCED_LIGHT: Record<string, string> = {
 };
 const REFERENCED_DARK: Record<string, string> = {
 	...REFERENCED_LIGHT,
+	// Not a reference: blue text needs its own colour on a dark card (VIS-02).
+	'--inth-primary-text': '#8ab4ff',
 	'--inth-primary-tint':
 		'color-mix(in srgb, var(--inth-primary) 18%, var(--inth-surface))',
 };
@@ -199,7 +201,7 @@ describe('surface font variables', () => {
 	 * `typography.fontFamily` reaches the page as `--inth-font-family`. A
 	 * surface whose own font variable hardcodes a stack instead ignores the
 	 * theme: the preference list did, so its category rows kept the system
-	 * font under a themed dialog title. A variable the v6 sheets also read
+	 * font under a themed dialog title. A variable several sheets read
 	 * is not declared at all; its default is the fallback where it is read.
 	 */
 	const fontVariables = [

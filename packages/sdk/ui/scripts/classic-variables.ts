@@ -1,17 +1,17 @@
 /**
- * The classic banner and dialog variables (`prompt.module.css`,
- * `panel.module.css`) and where the v6 Privacy Choices sheets read them.
+ * The classic banner and dialog variables, from the stylesheets the consent
+ * UI replaced, and where the current sheets read them.
  *
- * A site that styled the classic UI through these variables keeps that
- * styling when it moves to v6: each v6 part reads its own hook first, then
+ * A site that styled the old banner and dialog through these variables
+ * keeps that styling: each part reads its own hook first, then
  * the classic variable, then the token. The docs table in
  * `docs/customization/tokens.mdx` and the computed-style test
  * (`classic-variables.browser.test.ts`) are both checked against this list,
- * so a variable added to a classic sheet has to be mapped or listed as
+ * so every classic variable has to be mapped or listed as
  * unmapped here.
  */
 
-/** A v6 rendering the test builds, with the data attributes it carries. */
+/** A rendering the test builds, with the data attributes it carries. */
 export type ClassicProbeSurface =
 	| 'bar'
 	| 'bar-flush-top'
@@ -20,7 +20,7 @@ export type ClassicProbeSurface =
 	| 'dialog'
 	| 'drawer-flush-end';
 
-/** One v6 part whose computed style the classic variable must change. */
+/** One part whose computed style the classic variable must change. */
 export interface ClassicProbe {
 	surface: ClassicProbeSurface;
 	/** The part's class name in its sheet's class map. */
@@ -29,7 +29,7 @@ export interface ClassicProbe {
 	property: string;
 	/** What the test sets the classic variable to. */
 	value: string;
-	/** The v6 hook that must win over the classic variable on this part. */
+	/** The hook that must win over the classic variable on this part. */
 	hook?: string;
 	dark?: true;
 	/** Phone width, below `PHONE_LAYOUT_QUERY`. */
@@ -40,11 +40,11 @@ export interface ClassicProbe {
 
 export interface ClassicMapping {
 	classic: string;
-	/** The classic default, which the classic sheet now reads as a fallback. */
+	/** The classic default, which the current sheets read as a fallback. */
 	defaultValue: string;
-	/** The v6 hooks that win over it, or `[]` when the part reads it directly. */
+	/** The hooks that win over it, or `[]` when the part reads it directly. */
 	hooks: readonly string[];
-	/** The v6 parts it styles, as the docs table words them. */
+	/** The parts it styles, as the docs table words them. */
 	parts: string;
 	probes: readonly ClassicProbe[];
 }
@@ -730,7 +730,7 @@ export const CLASSIC_DIALOG_VARIABLES: readonly ClassicMapping[] = [
 		defaultValue:
 			'calc(100dvh - 2 * var(--consent-dialog-card-padding-mobile))',
 		hooks: [],
-		parts: 'Dialog: the card height cap (v6 reads it under the same name)',
+		parts: 'Dialog: the card height cap (read under the same name)',
 		probes: [
 			{
 				part: 'card',
@@ -744,7 +744,7 @@ export const CLASSIC_DIALOG_VARIABLES: readonly ClassicMapping[] = [
 		classic: '--consent-dialog-z-index',
 		defaultValue: '999999',
 		hooks: [],
-		parts: 'Dialog: the layer stacking (v6 reads it under the same name)',
+		parts: 'Dialog: the layer stacking (read under the same name)',
 		probes: [
 			{ part: 'backdrop', property: 'z-index', surface: 'dialog', value: '43' },
 		],
@@ -814,30 +814,30 @@ export const CLASSIC_VARIABLES: readonly ClassicMapping[] = [
 	...CLASSIC_DIALOG_VARIABLES,
 ];
 
-/** Classic variables v6 doesn't read, and why. */
+/** Classic variables the consent UI doesn't read, and why. */
 export const CLASSIC_UNMAPPED: readonly ClassicUnmapped[] = [
 	{
 		classic: '--consent-banner-animation-duration',
 		reason:
-			'Adapters read its computed value to time the exit, so it keeps its default on `:root`, where v6 would take that default too. The v6 exit keeps its own duration.',
+			'The prompt exit keeps its own duration. Adapters that still time an exit read it and fall back to `--inth-duration-fast`.',
 	},
 	{
 		classic: '--consent-banner-border-radius-sm',
 		reason:
-			'Rounds the focus ring of the classic footer rights links. The v6 prompt has no rights links; they live in the dialog.',
+			'Rounded the focus ring of the old footer rights links. The prompt has no rights links; they live in the dialog.',
 	},
 	{
 		classic: '--consent-banner-branding-tag-offset',
-		reason: 'Declared but read by no rule, classic or v6.',
+		reason: 'Read by no rule.',
 	},
 	{
 		classic: '--consent-banner-border-width-hairline',
-		reason: 'Declared but read by no rule, classic or v6.',
+		reason: 'Read by no rule.',
 	},
 	{
 		classic: '--consent-banner-overlay-z-index',
 		reason:
-			'The v6 scrim sits inside the layer, under the card, so it has no stacking order of its own. `--consent-banner-z-index` moves both.',
+			'The scrim sits inside the layer, under the card, so it has no stacking order of its own. `--consent-banner-z-index` moves both.',
 	},
 	{
 		classic: '--consent-banner-space-y-reverse',
@@ -846,68 +846,68 @@ export const CLASSIC_UNMAPPED: readonly ClassicUnmapped[] = [
 	},
 	{
 		classic: '--consent-banner-tab-size',
-		reason: 'v6 sets no tab size; the prompt holds no preformatted text.',
+		reason: 'The prompt sets no tab size; it holds no preformatted text.',
 	},
 	{
 		classic: '--consent-banner-widget-max-width',
-		reason: 'Sizes the classic `widget` chip, which has no v6 presentation.',
+		reason: 'Sized the old `widget` chip, which has no container.',
 	},
 	{
 		classic: '--consent-dialog-animation-duration',
 		reason:
-			'Adapters read its computed value to time the exit, so it keeps its default on `:root`, where v6 would take that default too. The v6 dialog keeps its own duration.',
+			'The dialog keeps its own duration. Adapters that still time an exit read it and fall back to `--inth-duration-normal`.',
 	},
 	{
 		classic: '--consent-dialog-border-width-hairline',
-		reason: 'Declared but read by no rule, classic or v6.',
+		reason: 'Read by no rule.',
 	},
 	{
 		classic: '--consent-dialog-content-gap',
 		reason:
-			'Spaces the classic dialog body sections. The v6 rights rows are divided by borders and padding instead.',
+			'Spaced the old dialog body sections. The rights rows are divided by borders and padding instead.',
 	},
 	{
 		classic: '--consent-dialog-header-gap',
 		reason:
-			'Spaces the classic header stack. The v6 header sets the title beside the close button; `--consent-dialog-card-gap` spaces the title and intro.',
+			'Spaced the old header stack. The header sets the title beside the close button; `--consent-dialog-card-gap` spaces the title and intro.',
 	},
 	{
 		classic: '--consent-dialog-height',
-		reason: 'Sizes the classic sidebar dialog, which has no v6 counterpart.',
+		reason: 'Sized the old sidebar dialog, which has no counterpart.',
 	},
 	{
 		classic: '--consent-dialog-link-text-color',
 		reason:
-			'Colours the classic overlay, which holds no text. v6 has no counterpart.',
+			'Coloured the old overlay, which held no text. Nothing replaces it.',
 	},
 	{
 		classic: '--consent-dialog-link-text-color-dark',
 		reason:
-			'Colours the classic overlay, which holds no text. v6 has no counterpart.',
+			'Coloured the old overlay, which held no text. Nothing replaces it.',
 	},
 	{
 		classic: '--consent-dialog-overlay-background-color',
 		reason:
-			'The Vue adapter reads its computed value on `:root` to tell whether `styles.css` is on the page, so it keeps its default there, where v6 would take that default too. The v6 backdrop keeps `--inth-overlay`.',
+			'The backdrop reads `--inth-overlay`.',
 	},
 	{
 		classic: '--consent-dialog-overlay-background-color-dark',
 		reason:
-			'Kept on `:root` beside `--consent-dialog-overlay-background-color`, so the pair stays together.',
+			'The backdrop reads `--inth-overlay`.',
 	},
 	{
 		classic: '--consent-dialog-overlay-z-index',
 		reason:
-			'The v6 backdrop is the overlay, so `--consent-dialog-z-index` orders both.',
+			'The backdrop is the overlay, so `--consent-dialog-z-index` orders both.',
 	},
 	{
 		classic: '--consent-manager-text-muted-color',
 		reason:
-			'The classic banner sheet reads it for a description inside the preference widget (`ConsentManager`), which has no v6 counterpart.',
+			'The preference widget declares and reads it for its own descriptions; the prompt and the dialog do not.',
 	},
 	{
 		classic: '--consent-manager-text-muted-color-dark',
 		reason:
-			'The classic banner sheet reads it for a description inside the preference widget (`ConsentManager`), which has no v6 counterpart.',
+			'The preference widget declares and reads it for its own descriptions; the prompt and the dialog do not.',
 	},
 ];

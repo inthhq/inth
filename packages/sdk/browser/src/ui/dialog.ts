@@ -291,7 +291,8 @@ export const createDialog = function createDialog(
 		const duration = readDurationMs(
 			positioner,
 			'--consent-dialog-animation-duration',
-			DEFAULT_DURATION_MS
+			DEFAULT_DURATION_MS,
+			'--inth-duration-normal'
 		);
 		setVisible(false);
 		closeTimer = setTimeout(removeNow, duration);

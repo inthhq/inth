@@ -96,7 +96,7 @@ const entryMotion = function entryMotion(source: string): string[] {
 };
 
 describe('banner entry', () => {
-	test.each(['prompt.module.css', 'iab-prompt.module.css'])(
+	test.each(['iab-prompt.module.css'])(
 		'%s never moves the banner in, and only fades a late one',
 		(file) => {
 			const source = readFileSync(join(COMPONENTS_DIR, file), 'utf8');
@@ -104,7 +104,7 @@ describe('banner entry', () => {
 		}
 	);
 
-	test.each(['prompt.module.css', 'iab-prompt.module.css'])(
+	test.each(['iab-prompt.module.css'])(
 		'%s fades in a banner marked late',
 		(file) => {
 			const source = readFileSync(join(COMPONENTS_DIR, file), 'utf8');

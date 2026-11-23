@@ -182,9 +182,9 @@ export interface SpacingTokens {
 export interface RadiusTokens {
 	/** @default '0.25rem' (4px) */
 	sm?: string;
-	/** @default '0.5rem' (8px) */
+	/** @default '0.625rem' (10px) */
 	md?: string;
-	/** @default '0.75rem' (12px) */
+	/** @default '1rem' (16px) */
 	lg?: string;
 	/** @default '9999px' */
 	full?: string;
@@ -284,11 +284,11 @@ export interface ConsentActionStyle {
  * @public
  */
 export interface ThemeCSSVariables {
-	/** `colors.primary` (default: `hsl(228, 100%, 60%)`) */
+	/** `colors.primary` (default: `#2563eb`) */
 	'--inth-primary'?: string;
-	/** `colors.primaryHover` (default: `hsl(228, 100%, 55%)`) */
+	/** `colors.primaryHover` (default: `#1d4ed8`) */
 	'--inth-primary-hover'?: string;
-	/** `colors.primaryText` (default: `colors.primary`) */
+	/** `colors.primaryText` (default: `colors.primary`; `#8ab4ff` in dark mode) */
 	'--inth-primary-text'?: string;
 	/** `colors.primaryTint` (default: `colors.primary` mixed into `colors.surface`, 10% light and 18% dark, always opaque) */
 	'--inth-primary-tint'?: string;
@@ -359,9 +359,9 @@ export interface ThemeCSSVariables {
 
 	/** `radius.sm` (default: `0.25rem`) */
 	'--inth-radius-sm'?: string;
-	/** `radius.md` (default: `0.5rem`) */
+	/** `radius.md` (default: `0.625rem`) */
 	'--inth-radius-md'?: string;
-	/** `radius.lg` (default: `0.75rem`) */
+	/** `radius.lg` (default: `1rem`) */
 	'--inth-radius-lg'?: string;
 	/** `radius.full` (default: `9999px`) */
 	'--inth-radius-full'?: string;

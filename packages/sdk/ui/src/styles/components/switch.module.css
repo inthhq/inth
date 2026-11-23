@@ -12,8 +12,9 @@
 			var(--switch-width) - var(--switch-thumb-size) - 2 * var(--switch-padding)
 		);
 
-		--switch-background-color: var(--inth-switch-track);
-		--switch-background-color-dark: var(--inth-switch-track);
+		/* The off track needs 3:1 against the surface (VIS-03). */
+		--switch-background-color: var(--inth-switch-track-off);
+		--switch-background-color-dark: var(--inth-switch-track-off);
 		--switch-background-color-hover: var(--inth-surface-hover);
 		--switch-background-color-hover-dark: var(--inth-surface-hover);
 		--switch-background-color-checked: var(--inth-switch-track-active);

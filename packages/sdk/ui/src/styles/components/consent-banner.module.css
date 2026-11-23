@@ -101,7 +101,7 @@
 	/* The grow plays on the card, not the shell, so folding back stops it
 	   without replaying the shell's entrance. */
 	.root[data-expanded='true'] .card {
-		animation: consent-bar-grow calc(var(--inth-duration-slow) * 1.1)
+		animation: consent-banner-grow calc(var(--inth-duration-slow) * 1.1)
 			var(--_consent-ease);
 	}
 
@@ -179,37 +179,37 @@
 	   attribute heavier than entrances. */
 
 	.root[data-placement='banner-bottom'] .shell {
-		animation-name: consent-bar-up;
+		animation-name: consent-banner-up;
 	}
 
 	.root[data-placement='banner-bottom'][data-state='closed'] .shell {
-		animation-name: consent-bar-down;
+		animation-name: consent-banner-down;
 	}
 
 	.root[data-placement='banner-top'] .shell {
-		animation-name: consent-bar-from-top;
+		animation-name: consent-banner-from-top;
 	}
 
 	.root[data-placement='banner-top'][data-state='closed'] .shell {
-		animation-name: consent-bar-to-top;
+		animation-name: consent-banner-to-top;
 	}
 
 	.root[data-edge-style='inset'][data-placement='banner-bottom'] .shell {
-		animation-name: consent-bar-up-inset;
+		animation-name: consent-banner-up-inset;
 	}
 
 	.root[data-edge-style='inset'][data-placement='banner-bottom'][data-state='closed']
 		.shell {
-		animation-name: consent-bar-down-inset;
+		animation-name: consent-banner-down-inset;
 	}
 
 	.root[data-edge-style='inset'][data-placement='banner-top'] .shell {
-		animation-name: consent-bar-from-top-inset;
+		animation-name: consent-banner-from-top-inset;
 	}
 
 	.root[data-edge-style='inset'][data-placement='banner-top'][data-state='closed']
 		.shell {
-		animation-name: consent-bar-to-top-inset;
+		animation-name: consent-banner-to-top-inset;
 	}
 
 	/* Stacked, the text sits on top and the actions share the width; the
@@ -283,55 +283,55 @@
 		}
 	}
 
-	@keyframes consent-bar-up {
+	@keyframes consent-banner-up {
 		from {
 			transform: translateY(100%);
 		}
 	}
 
-	@keyframes consent-bar-down {
+	@keyframes consent-banner-down {
 		to {
 			transform: translateY(100%);
 		}
 	}
 
-	@keyframes consent-bar-up-inset {
+	@keyframes consent-banner-up-inset {
 		from {
 			transform: translateY(calc(100% + 12px));
 		}
 	}
 
-	@keyframes consent-bar-down-inset {
+	@keyframes consent-banner-down-inset {
 		to {
 			transform: translateY(calc(100% + 12px));
 		}
 	}
 
-	@keyframes consent-bar-from-top {
+	@keyframes consent-banner-from-top {
 		from {
 			transform: translateY(-100%);
 		}
 	}
 
-	@keyframes consent-bar-to-top {
+	@keyframes consent-banner-to-top {
 		to {
 			transform: translateY(-100%);
 		}
 	}
 
-	@keyframes consent-bar-from-top-inset {
+	@keyframes consent-banner-from-top-inset {
 		from {
 			transform: translateY(calc(-100% - 12px));
 		}
 	}
 
-	@keyframes consent-bar-to-top-inset {
+	@keyframes consent-banner-to-top-inset {
 		to {
 			transform: translateY(calc(-100% - 12px));
 		}
 	}
 
-	@keyframes consent-bar-grow {
+	@keyframes consent-banner-grow {
 		from {
 			opacity: 0.6;
 			transform: translateY(var(--_consent-bar-travel, 8px));

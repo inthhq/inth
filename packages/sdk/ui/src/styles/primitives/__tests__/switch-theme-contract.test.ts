@@ -20,7 +20,7 @@ describe('switch theme contract', () => {
 		expect(switchCss).toContain('box-sizing: border-box;');
 		expect(switchCss).toContain('padding: 0;');
 		expect(switchCss).toContain(
-			'--switch-background-color: var(--inth-switch-track);'
+			'--switch-background-color: var(--inth-switch-track-off);'
 		);
 		expect(switchCss).toContain(
 			'--switch-background-color-checked: var(--inth-switch-track-active);'
