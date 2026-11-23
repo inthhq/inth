@@ -21,10 +21,12 @@ export default defineNuxtConfig({
 		},
 		dialogLegalLinks: ['privacyPolicy'],
 		legalLinks: { privacyPolicy: { href: '/privacy' } },
-		// A wall: the banner sits in the middle of the page and blocks it
-		// until the visitor chooses. A notice can't block, so where the
-		// policy only shows a notice, Inth uses the floating card instead.
-		presentation: { prompt: { position: 'center', variant: 'wall' } },
+		// A centred Card: the banner sits in the middle of the page and
+		// blocks it until the visitor chooses. A notice can't block, so where
+		// the policy only shows a notice, Inth uses a Card in the corner.
+		presentation: {
+			prompt: { container: { position: 'center', type: 'card' } },
+		},
 		// Northwind's colors and corners, in light and dark.
 		theme: {
 			colors: {

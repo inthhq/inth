@@ -36,7 +36,13 @@ const experimentArm = process.env.INTH_NUXT_EXPERIMENT_ARM;
 const experiment: ModuleOptions['experiment'] =
 	process.env.INTH_NUXT_EXPERIMENT === '1'
 		? {
-				arms: { wall: { prompt: { variant: 'wall' as const } } },
+				arms: {
+					wall: {
+						prompt: {
+							container: { position: 'center' as const, type: 'card' as const },
+						},
+					},
+				},
 				id: 'banner-shape',
 				...(experimentArm !== undefined && {
 					arm: experimentArm === 'wall' ? 'wall' : 'control',
