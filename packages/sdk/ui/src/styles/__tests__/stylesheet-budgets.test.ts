@@ -70,6 +70,9 @@ const EXISTING = {
  * `privacy-choices-dialog` was raised to 4,155 / 4,664 when it took over
  * the switch, category row and disclosure rules, so neither the v6 dialog
  * nor a banner panel loads the classic `dialog` sheet (about 7.5 KB gzip).
+ *
+ * The Tailwind 3 twin measured 8,454 gzip once the stacked Banner's action
+ * group became a real grid box, so its gzip budget is 8,500.
  */
 const V6 = {
 	'privacy-choices-dialog': {
