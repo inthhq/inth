@@ -3,8 +3,8 @@
 	import { ConsentBanner } from '@inth/svelte';
 
 	import { storybookMode } from '../../storybook-consent-policy';
-	import { BANNER_POLICIES } from './consent-story-policies';
 	import ConsentBannerDemoPage from './consent-banner-demo-page.svelte';
+	import { BANNER_POLICIES } from './consent-story-policies';
 	import { editableConsentOptions } from './storybook-consent-fixtures';
 	import StorybookConsentProvider from './storybook-consent-provider.svelte';
 

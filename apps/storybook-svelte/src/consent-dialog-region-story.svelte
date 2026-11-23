@@ -6,9 +6,9 @@
 		storybookMode,
 		storybookVendors,
 	} from '../../storybook-consent-policy';
+	import ConsentDialogDemoPage from './consent-dialog-demo-page.svelte';
 	import { DIALOG_POLICIES } from './consent-story-policies';
 	import type { StoryRegion } from './consent-story-policies';
-	import ConsentDialogDemoPage from './consent-dialog-demo-page.svelte';
 	import OpenDialogOnMount from './open-dialog-on-mount.svelte';
 	import { editableConsentOptions } from './storybook-consent-fixtures';
 	import StorybookConsentProvider from './storybook-consent-provider.svelte';
