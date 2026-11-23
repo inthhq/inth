@@ -16,6 +16,7 @@ import {
 	resolveExperimentPresentation,
 	resolveExperimentTheme,
 } from '../experiment-presentation';
+import type { PromptPresentation } from '../policy-actions';
 
 const choice = normalizePolicyRule({
 	id: 'choice',
@@ -252,6 +253,15 @@ describe('validateExperiment', () => {
 				presentation: { prompt: { primaryActions: ['accept'] } },
 			})
 		).toThrow(/"bar".*\n.*"floating"|"bar"/u);
+	});
+	it('does not reject arms for a removed prompt option, which only warns', () => {
+		expect(
+			validateExperiment(experiment, choice, {
+				presentation: {
+					prompt: { variant: 'banner' } as unknown as PromptPresentation,
+				},
+			})
+		).toEqual({});
 	});
 	it('rejects an unusable split when inth would pick the arm', () => {
 		const zero = { ...experiment, split: { bar: 0, floating: 0 } };

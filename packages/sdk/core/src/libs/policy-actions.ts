@@ -77,7 +77,8 @@ export interface PresentationDiagnostic {
 	code:
 		| 'forbidden-action'
 		| 'required-action-restored'
-		| 'equivalent-prominence-overridden';
+		| 'equivalent-prominence-overridden'
+		| 'removed-option';
 	actions: PresentationAction[];
 	message: string;
 }
@@ -288,6 +289,43 @@ const resolvePreferencesBlocking = function resolvePreferencesBlocking(
 };
 
 /**
+ * Prompt options this version removed, with what replaces each. A site
+ * upgrading with one left in place gets a development warning instead of
+ * an option that silently does nothing.
+ */
+const REMOVED_PROMPT_OPTIONS = {
+	blocking: 'blockUntilChoice',
+	position: 'container',
+	variant: 'container',
+} as const;
+
+const reportRemovedPromptOptions = function reportRemovedPromptOptions(
+	tiers: readonly unknown[],
+	diagnostics: PresentationDiagnostic[]
+): void {
+	const found = new Set<keyof typeof REMOVED_PROMPT_OPTIONS>();
+	for (const tier of tiers) {
+		if (typeof tier !== 'object' || tier === null) {
+			continue;
+		}
+		for (const option of Object.keys(REMOVED_PROMPT_OPTIONS) as (
+			| keyof typeof REMOVED_PROMPT_OPTIONS
+		)[]) {
+			if ((tier as Record<string, unknown>)[option] !== undefined) {
+				found.add(option);
+			}
+		}
+	}
+	for (const option of found) {
+		diagnostics.push({
+			actions: [],
+			code: 'removed-option',
+			message: `presentation.prompt.${option} was removed and does nothing; use ${REMOVED_PROMPT_OPTIONS[option]} instead.`,
+		});
+	}
+};
+
+/**
  * Resolve host presentation without changing policy behavior.
  * @param input - Active policy, target surface, host options and local overrides.
  * @returns Ordered controls, required actions, rights and diagnostics.
@@ -332,6 +370,12 @@ export const resolveConsentPresentation =
 		const equivalentActions: PresentationAction[][] =
 			constraints.equivalent.map((group) => [...group]);
 		const diagnostics: PresentationDiagnostic[] = [];
+		if (!preferences) {
+			reportRemovedPromptOptions(
+				[input.presentation?.prompt, input.override],
+				diagnostics
+			);
+		}
 		const actionGroups = resolveRequiredGroups(
 			allowedActions,
 			requiredActions,
