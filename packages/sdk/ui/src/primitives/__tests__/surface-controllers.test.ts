@@ -2,6 +2,7 @@
  * The shared surface DOM controllers, in jsdom. jsdom has no layout, so
  * geometry is checked through the pure reveal maths and stubbed rects.
  */
+import { JSDOM } from 'jsdom';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import {
@@ -374,6 +375,34 @@ describe('scroll fade registration', () => {
 
 		attachScrollFades(element)();
 		expect(registerProperty).not.toHaveBeenCalled();
+	});
+
+	test('[LAY-08] an area in a same-origin iframe registers through that frame’s window', () => {
+		const frame = new JSDOM('<!doctype html><body></body>').window;
+		const frameRegister = vi.fn();
+		const pageRegister = vi.fn();
+		Object.defineProperty(frame, 'CSS', {
+			configurable: true,
+			value: { registerProperty: frameRegister },
+		});
+		vi.stubGlobal('CSS', { registerProperty: pageRegister });
+		const frameArea = () => {
+			const host = frame.document.createElement('div');
+			frame.document.body.append(host);
+			const element = frame.document.createElement('div');
+			host.attachShadow({ mode: 'open' }).append(element);
+			return element;
+		};
+
+		attachScrollFades(frameArea())();
+		attachScrollFades(frameArea())();
+		expect(frameRegister).toHaveBeenCalledTimes(2);
+		expect(pageRegister).not.toHaveBeenCalled();
+
+		// The page's own window is a separate namespace, registered once too.
+		attachScrollFades(shadowArea())();
+		expect(pageRegister).toHaveBeenCalledTimes(2);
+		frame.close();
 	});
 
 	test('[LAY-08] a browser without registerProperty is left alone', () => {

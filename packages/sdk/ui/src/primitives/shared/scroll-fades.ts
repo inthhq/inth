@@ -27,7 +27,7 @@ const SLACK = 1;
 /** The fade lengths, as the stylesheet's `@property` rules declare them. */
 const FADE_PROPERTIES = ['--inth-fade-top', '--inth-fade-bottom'] as const;
 
-/** The `CSS` namespaces the fade properties were registered through. */
+/** The `CSS` namespaces, one per window, the fade properties were registered through. */
 const registered = new WeakSet<object>();
 
 /**
@@ -35,17 +35,20 @@ const registered = new WeakSet<object>();
  * root, once per document, where `@property` in the shadow tree's
  * stylesheet does not register them (Chromium). Without it the fades jump
  * instead of animating in the script-tag build.
+ *
+ * Both the shadow-root check and the registration use the area's own
+ * window. A controller loaded in the parent page can run on an area in a
+ * same-origin iframe, whose shadow roots are not instances of the parent's
+ * `ShadowRoot` and whose properties the parent's `CSS` does not register.
  */
 const registerFadeProperties = function registerFadeProperties(
 	area: HTMLElement
 ): void {
-	if (
-		typeof ShadowRoot === 'undefined' ||
-		!(area.getRootNode() instanceof ShadowRoot)
-	) {
+	const view = area.ownerDocument.defaultView;
+	if (!view?.ShadowRoot || !(area.getRootNode() instanceof view.ShadowRoot)) {
 		return;
 	}
-	const css = area.ownerDocument.defaultView?.CSS ?? globalThis.CSS;
+	const css = view.CSS;
 	if (!css || !('registerProperty' in css) || registered.has(css)) {
 		return;
 	}
