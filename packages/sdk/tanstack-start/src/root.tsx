@@ -13,8 +13,9 @@
  *   snapshots. Hook actions ask for the engine and run when it attaches.
  * - When the visitor still has to choose and nothing optional is granted,
  *   nothing the engine does can show before a tap, so it loads after the
- *   page's priority images, or at the first input or scroll. A banner
- *   accept or reject before then is recorded in the tap's own task.
+ *   page's priority images, or at the first input or scroll. A tap on
+ *   the banner before then is held, and the banner replays it once the
+ *   engine attaches, so nothing is recorded before the engine loads.
  *   Otherwise the engine loads at once.
  * - A root the shell cannot stand in for (an experiment option, a network
  *   blocker, `enabled: false`, IAB, or shared HTML with no boot data, such
@@ -204,7 +205,7 @@ const ClientRoot = (props: InthProviderProps) => {
  * call Inth's hooks render from the server's consent state until then, and
  * their actions run once it has loaded. For a visitor the banner asks to
  * choose, it loads after the page's priority images, or at the first input
- * or scroll; a banner accept or reject before then is recorded at once.
+ * or scroll; a banner tap before then is replayed once it has loaded.
  *
  * @example
  * ```tsx

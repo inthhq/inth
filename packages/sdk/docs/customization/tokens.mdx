@@ -52,7 +52,7 @@ React, Svelte, and Angular providers read only `consentActions` and slot styles 
 }
 ```
 
-Scoped rules like `[data-prompt] { --inth-primary: #2f6f4e; }` set the variable on the banner element directly and override `:root:root` inside it.
+Scoped rules like `[data-testid='consent-banner-root'] { --inth-primary: #2f6f4e; }` set the variable on the banner element directly and override `:root:root` inside it.
 
 ## Token reference
 
@@ -213,7 +213,18 @@ Inth does not read these classic variables:
 
 ## Style the "Consent by" tag
 
-Declare branding tag variables on `:root` so both the banner and the portaled dialog inherit them:
+The banner's tag is a quiet neutral credit above the card. It reads its own variables, which Inth leaves undeclared:
+
+| Variable | Default | Target |
+| --- | --- | --- |
+| `--consent-tag-background` | `var(--inth-surface)` | Tag background |
+| `--consent-tag-text-color` | `var(--inth-text-muted)` | "Consent by" text |
+| `--consent-tag-border-color` | `var(--inth-border-strong)` | Tag border |
+| `--consent-tag-radius` | `var(--inth-radius-nested)` | Tag corners |
+
+The consent dialog has no tag. The `--consent-branding-tag-*` variables below style the tags on `ConsentWidget` and the IAB TCF banner and dialog, and no longer reach the banner's tag. Move banner tag styling to the `--consent-tag-*` names above.
+
+Declare branding tag variables on `:root` so the widget and the portaled IAB dialog inherit them:
 
 | Variable | Default | Target |
 | --- | --- | --- |

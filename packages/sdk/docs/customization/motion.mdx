@@ -61,17 +61,17 @@ Inth stops animations on banners, dialogs, triggers, switches, tabs, and accordi
 
 ## Animate your own rules on dialog state
 
-The preference dialog sets `data-state="open"` or `data-state="closed"` for custom transitions:
+The consent dialog's card, and each sheet it opens on phones, sets `data-state="open"` and switches to `data-state="closed"` while it leaves. Every framework renders the same attribute on `[data-testid="consent-dialog-card"]` and `[data-testid="consent-dialog-sheet"]`:
 
-| Framework | Elements with `data-state` |
-| --- | --- |
-| HTML, JavaScript | Dialog overlay, positioner, and content |
-| Svelte, SvelteKit | Dialog backdrop, positioner, and content |
-| Vue, Nuxt | Dialog content and overlay. Unmounts on close, so only `open` appears |
-| Angular | Dialog primitives: overlay, content, trigger, and close |
-| React, Next.js, TanStack Start | `Dialog` primitive trigger, overlay, content, and close parts, not `ConsentDialog` |
+{/* example: fragment */}
 
-Banners do not set `data-state`. Use `data-prompt`, `data-variant`, and other attributes from [component parts](/docs/customization/slots).
+```css
+[data-testid='consent-dialog-card'][data-state='closed'] {
+  opacity: 0;
+}
+```
+
+The banner root sets `data-state` the same way while it leaves. Combine it with `data-placement`, `data-variant`, and the other attributes from [component parts](/docs/customization/slots).
 
 ## Pause transitions during theme switches
 

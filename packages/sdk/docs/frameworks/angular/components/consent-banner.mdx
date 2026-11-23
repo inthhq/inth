@@ -143,16 +143,11 @@ opt-out is held, Accept opens the two-step opt-in confirmation before saving.
 
 ## The opt-out link and "Your Privacy Choices"
 
-When the policy grants the `opt-out` right, a notice shows an opt-out link
-whose action follows `presentation.optOutLink` in `provideInth()`. With the
-default `'do-not-sell'` ("Do Not Sell or Share My Personal Information"), the
-link records the opt-out in one click and shows the receipt (reloading first
-when that turns off a running category and `reloadOnConsentRevoked` is
-enabled). With `'privacy-choices'` or `'california-privacy-choices'`, the link
-carries the California Privacy Protection Agency opt-out icon and opens
-`<inth-consent-dialog>` without recording an opt-out.
-`ConsentManager.requestOptOut()` still opts out in one step whatever
-`presentation.optOutLink` says.
+When the policy grants the `opt-out` right, a notice shows an opt-out link,
+"Do not sell or share my data". It opens the sale-and-sharing rights row
+inside the banner, where the visitor can opt out. The link never records an
+opt-out on its own and does not open the dialog.
+`ConsentManager.requestOptOut()` still opts out in one step.
 
 <include src="../../../shared/privacy-choices-link.mdx" />
 
