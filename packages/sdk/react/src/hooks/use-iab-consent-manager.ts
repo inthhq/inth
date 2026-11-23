@@ -9,7 +9,7 @@ import {
 	useModel,
 	useSetActiveUI,
 	useTranslations,
-} from './';
+} from '../hooks';
 import { useIAB } from '../iab-provider';
 
 export const useIABConsentManager = function useIABConsentManager(
