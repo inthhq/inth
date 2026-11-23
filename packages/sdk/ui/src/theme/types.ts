@@ -74,7 +74,8 @@ export interface ColorTokens {
 	 * Opaque primary tint for hover backgrounds, such as the attribution tag.
 	 * When omitted, `primary` is mixed into `surface`: 10% in light mode and
 	 * 18% in dark mode. It stays opaque so it never shows through over the
-	 * blocking overlay.
+	 * blocking overlay: a translucent `primary` counts for less in the mix,
+	 * and the mix itself drops the alpha.
 	 */
 	primaryTint?: string;
 	/** Error and warning colour, such as the ring on a nudged confirmation. */
@@ -108,7 +109,8 @@ export interface ColorTokens {
 	switchTrack?: string;
 	/**
 	 * Off-state toggle track with at least 3:1 contrast against `surface`
-	 * (WCAG 1.4.11). Follows `switchTrack` when a theme sets only that.
+	 * (WCAG 1.4.11). It never follows `switchTrack`, which is too faint for
+	 * that: a theme that sets only `switchTrack` gets the default here.
 	 */
 	switchTrackOff?: string;
 	/** Toggle track color (on state). Follows `primary` when omitted. */
@@ -288,7 +290,7 @@ export interface ThemeCSSVariables {
 	'--inth-primary-hover'?: string;
 	/** `colors.primaryText` (default: `colors.primary`) */
 	'--inth-primary-text'?: string;
-	/** `colors.primaryTint` (default: `colors.primary` mixed into `colors.surface`, 10% light and 18% dark) */
+	/** `colors.primaryTint` (default: `colors.primary` mixed into `colors.surface`, 10% light and 18% dark, always opaque) */
 	'--inth-primary-tint'?: string;
 	/** `colors.danger` (default: `#dc2626`) */
 	'--inth-danger'?: string;
@@ -316,7 +318,7 @@ export interface ThemeCSSVariables {
 	'--inth-overlay-block-solid'?: string;
 	/** `colors.switchTrack` (default: `hsl(0, 0%, 85%)`) */
 	'--inth-switch-track'?: string;
-	/** `colors.switchTrackOff` (default: `#8492a6`, or `colors.switchTrack` when a theme sets only that) */
+	/** `colors.switchTrackOff` (default: `#8492a6`, also when a theme sets only `colors.switchTrack`) */
 	'--inth-switch-track-off'?: string;
 	/** `colors.switchTrackActive` (default: `colors.primary`) */
 	'--inth-switch-track-active'?: string;

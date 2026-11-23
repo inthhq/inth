@@ -4,6 +4,7 @@ import type { Theme } from '../types';
 import {
 	defaultTheme,
 	generateDefaultThemeCSS,
+	generatePrimaryTintSupportsCSS,
 	generateThemeCSS,
 	getContrastColor,
 	themeToVars,
@@ -333,10 +334,90 @@ describe('v6 consent tokens', () => {
 		).toBe('#eef');
 	});
 
-	test('the off-track follows a theme that sets only the old switch track', () => {
-		const vars = themeToVars({ colors: { switchTrack: '#777777' } });
+	test('[VIS-03] a theme that sets only the old switch track keeps the 3:1 off-track', () => {
+		// `switchTrack` is about 1.4:1 on the surface, so it is no fallback.
+		const theme: Theme = {
+			colors: { switchTrack: '#e5e5e5' },
+			dark: { switchTrack: '#333333' },
+		};
 
-		expect(vars['--inth-switch-track-off']).toBe('#777777');
+		expect(themeToVars(theme)['--inth-switch-track-off']).toBe('#8492a6');
+		expect(themeToVars(theme, true)['--inth-switch-track-off']).toBe('#64748b');
+		expect(themeToVars(theme)['--inth-switch-track']).toBe('#e5e5e5');
+	});
+
+	test('[VIS-03] an explicit off-track is kept as written', () => {
+		expect(
+			themeToVars({ colors: { switchTrack: '#eee', switchTrackOff: '#555' } })[
+				'--inth-switch-track-off'
+			]
+		).toBe('#555');
+	});
+
+	test('[VIS-03] the primary tint is opaque when primary has alpha', () => {
+		// `color-mix` keeps the alpha: 10% of a 50% primary over an opaque
+		// surface is 95% opaque. Folding the alpha into the share gives the
+		// colour the relative-colour form gives, at full opacity.
+		const theme: Theme = {
+			colors: { primary: 'rgb(37 99 235 / 50%)' },
+			dark: { primary: '#2563eb80', surface: '#14161a' },
+		};
+
+		// 10% at alpha 0.5 weighs 5 against the surface's 90: 5 / 95.
+		expect(themeToVars(theme)['--inth-primary-tint']).toBe(
+			'color-mix(in srgb, rgb(37 99 235) 5.2632%, var(--inth-surface))'
+		);
+		// 18% at alpha 128/255 weighs 9.035 against 82: 9.035 / 91.035.
+		expect(themeToVars(theme, true)['--inth-primary-tint']).toBe(
+			'color-mix(in srgb, rgb(37 99 235) 9.925%, #14161a)'
+		);
+	});
+
+	test.each([
+		['rgba(37, 99, 235, 0.5)', 'rgb(37 99 235) 5.2632%'],
+		['hsl(220 83% 53% / 0.5)', 'rgb(36 102 235) 5.2632%'],
+		['#2563eb00', 'rgb(37 99 235) 0%'],
+	])('[VIS-03] reads the alpha of %s', (primary, mixed) => {
+		expect(
+			themeToVars({ colors: { primary, surface: '#fff' } })[
+				'--inth-primary-tint'
+			]
+		).toBe(`color-mix(in srgb, ${mixed}, #fff)`);
+	});
+
+	test('[VIS-03] the primary tint drops the alpha of a colour it cannot read', () => {
+		expect(
+			themeToVars({ colors: { primary: 'oklch(0.55 0.2 262 / 50%)' } })[
+				'--inth-primary-tint'
+			]
+		).toBe(
+			'rgb(from color-mix(in srgb, oklch(0.55 0.2 262 / 50%) 10%, var(--inth-surface)) r g b / 1)'
+		);
+	});
+
+	test('[VIS-03] the primary tint is opaque over a translucent surface', () => {
+		expect(
+			themeToVars({
+				colors: { primary: '#2563eb', surface: 'rgba(255, 255, 255, 0.8)' },
+			})['--inth-primary-tint']
+		).toBe(
+			'rgb(from color-mix(in srgb, #2563eb 10%, rgba(255, 255, 255, 0.8)) r g b / 1)'
+		);
+	});
+
+	test('[VIS-03] the stylesheet tint is opaque where relative colour syntax works', () => {
+		const css = generatePrimaryTintSupportsCSS();
+
+		expect(css).toMatch(/^@supports \(color: rgb\(from red r g b \/ 1\)\)\{/u);
+		expect(css).toContain(
+			':root,:host,.inth-theme-root{--inth-primary-tint: rgb(from color-mix(in srgb, var(--inth-primary) 10%, var(--inth-surface)) r g b / 1);}'
+		);
+		expect(css).toContain(
+			'.inth-dark .inth-theme-root{--inth-primary-tint: rgb(from color-mix(in srgb, var(--inth-primary) 18%, var(--inth-surface)) r g b / 1);}'
+		);
+		expect(generatePrimaryTintSupportsCSS({ light: false })).not.toContain(
+			':root,:host,.inth-theme-root{'
+		);
 	});
 
 	test('container and nested radii follow the scale, capped at 12px and 8px', () => {
@@ -352,6 +433,24 @@ describe('v6 consent tokens', () => {
 		expect(round['--inth-radius-nested']).toBe('min(10px, 0.5rem)');
 		expect(explicit['--inth-radius-container']).toBe('4px');
 		expect(explicit['--inth-radius-nested']).toBe('2px');
+	});
+
+	test.each(['0', '-0', '0.0', '.0', ' 0 '])(
+		'[VIS-07] a square theme with radius %j gets a valid capped radius',
+		(zero) => {
+			// `min(0, 0.75rem)` mixes a number and a length, which drops the
+			// whole declaration.
+			const vars = themeToVars({ radius: { lg: zero, md: zero } });
+
+			expect(vars['--inth-radius-container']).toBe('min(0px, 0.75rem)');
+			expect(vars['--inth-radius-nested']).toBe('min(0px, 0.5rem)');
+		}
+	);
+
+	test('[VIS-07] a radius that only starts with 0 keeps its unit', () => {
+		expect(
+			themeToVars({ radius: { lg: '0.5rem' } })['--inth-radius-container']
+		).toBe('min(0.5rem, 0.75rem)');
 	});
 
 	test('an empty theme still emits nothing', () => {

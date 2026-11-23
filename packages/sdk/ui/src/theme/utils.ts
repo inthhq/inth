@@ -10,23 +10,65 @@ const DEFAULT_LIGHT_CONTRAST_COLOR = '#ffffff';
 const DEFAULT_DARK_CONTRAST_COLOR = '#000000';
 
 /** How much `primary` goes into `surface` for `primaryTint`, by mode. */
-const PRIMARY_TINT_SHARE = { dark: '18%', light: '10%' } as const;
+const PRIMARY_TINT_SHARE = { dark: 18, light: 10 } as const;
 
-/** The opaque primary tint: `primary` mixed into `surface`. */
-const primaryTint = function primaryTint(
+/**
+ * Relative colour syntax with the alpha set to 1, which makes any colour
+ * opaque. `color-mix` keeps the alpha of what it mixes, so without this a
+ * translucent `primary` or `surface` gives a translucent tint. The `/ 1` is
+ * needed: an omitted alpha keeps the origin colour's.
+ */
+const opaque = function opaque(color: string): string {
+	return `rgb(from ${color} r g b / 1)`;
+};
+
+/** `primary` mixed into `surface`, as `color-mix` writes it. */
+const tintMix = function tintMix(
 	primary: string,
 	surface: string,
-	isDark: boolean
+	share: number
 ): string {
-	return `color-mix(in srgb, ${primary} ${PRIMARY_TINT_SHARE[isDark ? 'dark' : 'light']}, ${surface})`;
+	return `color-mix(in srgb, ${primary} ${share}%, ${surface})`;
 };
+
+/** A share written without float noise: `5.263157894736842` becomes `5.2632`. */
+const formatShare = function formatShare(share: number): string {
+	return String(Math.round(share * 10_000) / 10_000);
+};
+
+/**
+ * The tint the package stylesheet derives from `var(--inth-primary)` and
+ * `var(--inth-surface)`, by mode, so a CSS-only theme moves it too. The
+ * plain mix is the base value; {@link generatePrimaryTintSupportsCSS} makes
+ * it opaque where relative colour syntax is supported.
+ *
+ * @internal
+ */
+export const PRIMARY_TINT_REFERENCE = {
+	dark: tintMix(
+		'var(--inth-primary)',
+		'var(--inth-surface)',
+		PRIMARY_TINT_SHARE.dark
+	),
+	light: tintMix(
+		'var(--inth-primary)',
+		'var(--inth-surface)',
+		PRIMARY_TINT_SHARE.light
+	),
+} as const;
+
+/** A unitless zero, which `min()` reads as a number and not a length. */
+const UNITLESS_ZERO = /^[+-]?(?:0+\.?0*|\.0+)$/u;
 
 /** Caps a radius, so a nested box never rounds more than the scale allows. */
 const cappedRadius = function cappedRadius(
 	radius: string,
 	cap: string
 ): string {
-	return `min(${radius}, ${cap})`;
+	// `min(0, 0.75rem)` mixes a number and a length, which makes the whole
+	// declaration invalid, so a square theme's `'0'` needs a unit here.
+	const length = UNITLESS_ZERO.test(radius.trim()) ? '0px' : radius;
+	return `min(${length}, ${cap})`;
 };
 
 const RADIUS_CONTAINER_CAP = '0.75rem';
@@ -43,7 +85,11 @@ export const defaultDarkColors: Required<ColorTokens> = {
 	primary: 'hsl(228, 100%, 70%)',
 	primaryHover: 'hsl(228, 100%, 65%)',
 	primaryText: 'hsl(228, 100%, 70%)',
-	primaryTint: primaryTint('hsl(228, 100%, 70%)', 'hsl(0, 0%, 7%)', true),
+	primaryTint: tintMix(
+		'hsl(228, 100%, 70%)',
+		'hsl(0, 0%, 7%)',
+		PRIMARY_TINT_SHARE.dark
+	),
 	surface: 'hsl(0, 0%, 7%)',
 	surfaceHover: 'hsl(0, 0%, 10%)',
 	switchThumb: 'hsl(0, 0%, 93%)',
@@ -67,7 +113,11 @@ export const defaultTheme: Required<Omit<Theme, 'slots'>> = {
 		primary: 'hsl(228, 100%, 60%)',
 		primaryHover: 'hsl(228, 100%, 55%)',
 		primaryText: 'hsl(228, 100%, 60%)',
-		primaryTint: primaryTint('hsl(228, 100%, 60%)', 'hsl(0, 0%, 100%)', false),
+		primaryTint: tintMix(
+			'hsl(228, 100%, 60%)',
+			'hsl(0, 0%, 100%)',
+			PRIMARY_TINT_SHARE.light
+		),
 		surface: 'hsl(0, 0%, 100%)',
 		surfaceHover: 'hsl(0, 0%, 98%)',
 		switchThumb: 'hsl(0, 0%, 100%)',
@@ -309,6 +359,82 @@ const parseColor = function parseColor(value: string): RGBColor | null {
 	return parseHexColor(value) ?? parseRGBColor(value) ?? parseHSLColor(value);
 };
 
+/**
+ * The alpha of a colour {@link parseColor} reads: `#rgba`, `#rrggbbaa`, a
+ * fourth comma channel, or the part after `/`. `null` when it is unreadable.
+ */
+const parseAlpha = function parseAlpha(value: string): number | null {
+	const trimmed = value.trim();
+	const hex = trimmed.match(/^#(?<digits>[\da-f]+)$/iu)?.groups?.digits;
+	if (hex !== undefined) {
+		if (hex.length === 4) {
+			return Number.parseInt(`${hex[3]}${hex[3]}`, 16) / 255;
+		}
+		return hex.length === 8 ? Number.parseInt(hex.slice(6), 16) / 255 : 1;
+	}
+	const body = trimmed.match(/^(?:rgba?|hsla?)\((?<body>.+)\)$/iu)?.groups
+		?.body;
+	if (body === undefined) {
+		return null;
+	}
+	// `rgb(r g b / a)` or `rgba(r, g, b, a)`; neither form means opaque.
+	const [, slashAlpha] = body.split('/');
+	const [, , , commaAlpha] = body.split(',');
+	const alpha = slashAlpha ?? commaAlpha;
+	if (alpha === undefined) {
+		return 1;
+	}
+	const percent = parsePercentage(alpha);
+	if (percent !== null) {
+		return percent;
+	}
+	const parsed = Number.parseFloat(alpha);
+	return Number.isFinite(parsed) ? clamp(parsed) : null;
+};
+
+const parseColorWithAlpha = function parseColorWithAlpha(
+	value: string
+): (RGBColor & { alpha: number }) | null {
+	const color = parseColor(value);
+	const alpha = color ? parseAlpha(value) : null;
+	return color && alpha !== null ? { ...color, alpha } : null;
+};
+
+/**
+ * The opaque primary tint: `primary` mixed into `surface`, with the alpha
+ * of the mix dropped (§5, VIS-03).
+ *
+ * The tint sits over the blocking overlay, so it must never let the page
+ * show through. When `primary` is a colour this file can read, the alpha
+ * is folded into the share instead, which gives the same colour as the
+ * relative-colour form without needing a browser that supports it; that
+ * also covers the common theme that sets only `primary` and leaves
+ * `surface` to the stylesheet. Anything else uses the relative-colour form.
+ */
+const primaryTint = function primaryTint(
+	primary: string,
+	surface: string,
+	isDark: boolean
+): string {
+	const share = PRIMARY_TINT_SHARE[isDark ? 'dark' : 'light'];
+	const primaryColor = parseColorWithAlpha(primary);
+	const surfaceColor = parseColorWithAlpha(surface);
+	if (!primaryColor || (surfaceColor && surfaceColor.alpha < 1)) {
+		return opaque(tintMix(primary, surface, share));
+	}
+	if (primaryColor.alpha >= 1) {
+		return tintMix(primary, surface, share);
+	}
+	// `color-mix` premultiplies: a primary at alpha `a` weighs `share * a`
+	// against the surface's `100 - share`, and dropping the alpha
+	// renormalises that pair.
+	const weight = share * primaryColor.alpha;
+	const { b, g, r } = primaryColor;
+	return `color-mix(in srgb, rgb(${r} ${g} ${b}) ${formatShare(
+		(weight / (weight + 100 - share)) * 100
+	)}%, ${surface})`;
+};
+
 const srgbToLinear = function srgbToLinear(channel: number): number {
 	const normalizedChannel = channel / 255;
 	return normalizedChannel <= 0.04045
@@ -465,8 +591,15 @@ const themeCSSVariableResolvers: Record<
 	'switch-track': (_theme, colors) => colors?.switchTrack,
 	'switch-track-active': (_theme, colors) =>
 		colors?.switchTrackActive ?? colors?.primary,
-	'switch-track-off': (_theme, colors) =>
-		colors?.switchTrackOff ?? colors?.switchTrack,
+	// Not `switchTrack`: the old track is about 1.4:1 on the surface, and the
+	// off-track has to reach 3:1 (VIS-03). A theme that restyles only the old
+	// track gets the stock off-track, written out so the theme's own block
+	// carries it next to the track it set.
+	'switch-track-off': (_theme, colors, isDark) =>
+		colors?.switchTrackOff ??
+		(colors?.switchTrack
+			? (isDark ? defaultDarkColors : defaultTheme.colors).switchTrackOff
+			: undefined),
 	text: (_theme, colors) => colors?.text,
 	'text-muted': (_theme, colors) => colors?.textMuted,
 	'text-on-primary': (_theme, colors) =>
@@ -590,3 +723,54 @@ export const generateDefaultThemeCSS = function generateDefaultThemeCSS(
 ): string {
 	return buildThemeCSS(theme, undefined, DEFAULT_THEME_SELECTORS);
 };
+
+/**
+ * The derived tokens as `var()` references, the way `styles.css` writes
+ * them, so a CSS-only theme that sets `--inth-primary`, `--inth-surface` or
+ * the radius scale also moves the tokens derived from them, as
+ * {@link themeToVars} does for a JS theme. Every stylesheet that carries the
+ * stock palette uses these, so the palettes cannot drift apart.
+ *
+ * @internal
+ */
+export const defaultThemeReferences = {
+	colors: {
+		primaryText: 'var(--inth-primary)',
+		primaryTint: PRIMARY_TINT_REFERENCE.light,
+		switchTrackActive: 'var(--inth-primary)',
+	},
+	dark: {
+		primaryText: 'var(--inth-primary)',
+		primaryTint: PRIMARY_TINT_REFERENCE.dark,
+		switchTrackActive: 'var(--inth-primary)',
+	},
+	radius: {
+		container: `min(var(--inth-radius-lg), ${RADIUS_CONTAINER_CAP})`,
+		nested: `min(var(--inth-radius-md), ${RADIUS_NESTED_CAP})`,
+	},
+} as const satisfies Theme;
+
+/**
+ * Makes the stock primary tint opaque where the browser supports relative
+ * colour syntax (VIS-03). `color-mix` keeps the alpha, so a translucent
+ * `--inth-primary` would otherwise give a translucent tint. Browsers without
+ * support keep the plain mix from {@link PRIMARY_TINT_REFERENCE}, which is
+ * opaque for every opaque primary.
+ *
+ * Put it after the default token block. It has the default selectors'
+ * specificity, so a theme from {@link generateThemeCSS} still wins.
+ *
+ * @param options.light - Include the light rule. Leave it out where the
+ * page has set its own `inth-primary-tint` at the same specificity, since
+ * this rule comes later and would replace it.
+ * @internal
+ */
+export const generatePrimaryTintSupportsCSS =
+	function generatePrimaryTintSupportsCSS({
+		light = true,
+	}: { light?: boolean } = {}): string {
+		const lightRule = light
+			? `${DEFAULT_THEME_SELECTORS.root}{--inth-primary-tint: ${opaque(PRIMARY_TINT_REFERENCE.light)};}`
+			: '';
+		return `@supports (color: rgb(from red r g b / 1)){${lightRule}${DEFAULT_THEME_SELECTORS.dark}{--inth-primary-tint: ${opaque(PRIMARY_TINT_REFERENCE.dark)};}}`;
+	};

@@ -16,7 +16,11 @@ import { join } from 'node:path';
 
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { defaultTheme, themeToVars } from '../../theme/utils';
+import {
+	defaultTheme,
+	generatePrimaryTintSupportsCSS,
+	themeToVars,
+} from '../../theme/utils';
 
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
 
@@ -138,6 +142,12 @@ describe.each(ENTRYPOINTS)('%s', (entrypoint) => {
 		)) {
 			expect(block).toContain(`${name}: ${REFERENCED_DARK[name] ?? value}`);
 		}
+	});
+
+	test('[VIS-03] makes the referenced primary tint opaque where it can', () => {
+		// `color-mix` keeps a translucent `--inth-primary`'s alpha; the base
+		// declarations above stay for browsers without relative colour syntax.
+		expect(css).toContain(generatePrimaryTintSupportsCSS());
 	});
 
 	test('scopes every :root block to :host too, for shadow-root hosts', () => {

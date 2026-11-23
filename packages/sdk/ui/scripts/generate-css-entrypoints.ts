@@ -57,7 +57,12 @@ import { dirname, join } from 'node:path';
 import { parse } from 'postcss';
 import type { AtRule, Rule } from 'postcss';
 
-import { defaultTheme, generateDefaultThemeCSS } from '../src/theme/utils';
+import {
+	defaultTheme,
+	defaultThemeReferences,
+	generateDefaultThemeCSS,
+	generatePrimaryTintSupportsCSS,
+} from '../src/theme/utils';
 import {
 	DIALOG_COMPONENTS,
 	FIRST_PAINT_COMPONENTS,
@@ -376,26 +381,11 @@ const DEFAULT_THEME_CSS = [
 	// tokens derived from them, as `themeToVars` does for a JS theme.
 	generateDefaultThemeCSS({
 		...defaultTheme,
-		colors: {
-			...defaultTheme.colors,
-			primaryText: 'var(--inth-primary)',
-			primaryTint:
-				'color-mix(in srgb, var(--inth-primary) 10%, var(--inth-surface))',
-			switchTrackActive: 'var(--inth-primary)',
-		},
-		dark: {
-			...defaultTheme.dark,
-			primaryText: 'var(--inth-primary)',
-			primaryTint:
-				'color-mix(in srgb, var(--inth-primary) 18%, var(--inth-surface))',
-			switchTrackActive: 'var(--inth-primary)',
-		},
-		radius: {
-			...defaultTheme.radius,
-			container: 'min(var(--inth-radius-lg), 0.75rem)',
-			nested: 'min(var(--inth-radius-md), 0.5rem)',
-		},
+		colors: { ...defaultTheme.colors, ...defaultThemeReferences.colors },
+		dark: { ...defaultTheme.dark, ...defaultThemeReferences.dark },
+		radius: { ...defaultTheme.radius, ...defaultThemeReferences.radius },
 	}),
+	generatePrimaryTintSupportsCSS(),
 ].join('\n');
 
 /**

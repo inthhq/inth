@@ -12,13 +12,13 @@ New theme tokens. They are all optional. When your theme leaves one out, it foll
 | CSS variable | Theme key | When your theme leaves it out |
 | --- | --- | --- |
 | `--inth-primary-text` | `colors.primaryText` | Follows `colors.primary` |
-| `--inth-primary-tint` | `colors.primaryTint` | `colors.primary` mixed into `colors.surface`: 10% in light mode, 18% in dark mode |
+| `--inth-primary-tint` | `colors.primaryTint` | `colors.primary` mixed into `colors.surface`: 10% in light mode, 18% in dark mode. Always opaque, even when `colors.primary` has alpha |
 | `--inth-danger` | `colors.danger` | `#dc2626` (dark mode: `#f87171`) |
 | `--inth-border-strong` | `colors.borderStrong` | `rgba(15, 23, 42, 0.16)` (dark mode: `#3a404e`) |
 | `--inth-overlay-block` | `colors.overlayBlock` | `rgba(15, 23, 42, 0.62)` (dark mode: `rgba(0, 0, 0, 0.72)`) |
 | `--inth-overlay-block-solid` | `colors.overlayBlockSolid` | `rgba(15, 23, 42, 0.78)` (dark mode: `rgba(0, 0, 0, 0.85)`) |
-| `--inth-switch-track-off` | `colors.switchTrackOff` | `#8492a6` (dark mode: `#64748b`), or your `colors.switchTrack` if you set only that |
-| `--inth-radius-container` | `radius.container` | `radius.lg`, but no more than 12px |
+| `--inth-switch-track-off` | `colors.switchTrackOff` | `#8492a6` (dark mode: `#64748b`), also when you set only `colors.switchTrack`, which is too faint for an off state |
+| `--inth-radius-container` | `radius.container` | `radius.lg`, but no more than 12px. A square theme's `'0'` works |
 | `--inth-radius-nested` | `radius.nested` | `radius.md`, but no more than 8px |
 | `--inth-easing-out-strong` | `motion.easingOutStrong` | `cubic-bezier(0.23, 1, 0.32, 1)` |
 
