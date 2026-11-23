@@ -1249,6 +1249,43 @@ describe('wave C round 1', () => {
 		expect(getComputedStyle(root).position).toBe('fixed');
 	});
 
+	test('every switch takes the toggle slot, in the dialog and in a vendor table', async () => {
+		await mount({
+			extra: { theme: { slots: { toggle: 'host-switch' } } },
+			region: 'eu',
+		});
+		await openDialog();
+		(
+			await waitFor(() => must('consent-dialog-vendor-trigger-measurement'))
+		).click();
+		await waitFor(() => must('consent-dialog-vendor-table-measurement'));
+		const switches = [
+			...card().querySelectorAll<HTMLElement>('[role="switch"]'),
+		];
+		expect(switches.length).toBeGreaterThan(4);
+		for (const control of switches) {
+			expect(control).toHaveClass('host-switch');
+			// The stock switch stays beside the slot's class.
+			expect(getComputedStyle(control).borderRadius).not.toBe('0px');
+		}
+	});
+
+	test('a noStyle toggle slot drops the stock switch', async () => {
+		await mount({
+			extra: {
+				theme: {
+					slots: { toggle: { className: 'host-switch', noStyle: true } },
+				},
+			},
+			region: 'eu',
+		});
+		await openDialog();
+		const control = await waitFor(() =>
+			must('consent-dialog-category-switch-measurement')
+		);
+		expect(control.className.trim()).toBe('host-switch');
+	});
+
 	test('a noStyle consentDialog slot drops the stock backdrop', async () => {
 		await mount({
 			extra: {
