@@ -36,10 +36,10 @@
 	"type": "module",
 	"sideEffects": [
 		"**/*.css",
+		"./lib/browser/dist/inth.choices.js",
 		"./lib/browser/dist/inth.commit.js",
 		"./lib/browser/dist/inth.devtools.js",
 		"./lib/browser/dist/inth.dialog.js",
-		"./lib/browser/dist/inth.choices.js",
 		"./lib/browser/dist/inth.gpp.js",
 		"./lib/browser/dist/inth.headless.js",
 		"./lib/browser/dist/inth.hosted.js",
