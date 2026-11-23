@@ -359,6 +359,7 @@ export type {
 	BannerCommitOptions,
 	BannerCommitOutcome,
 	BannerCommitPlan,
+	BannerCommitSnapshot,
 	BannerKeptOff,
 	CategorySwitchPlan,
 	CategorySwitchState,

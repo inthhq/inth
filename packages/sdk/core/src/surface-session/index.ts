@@ -30,6 +30,7 @@ export {
 export type {
 	BannerCommitAction,
 	BannerCommitPlan,
+	BannerCommitSnapshot,
 	BannerKeptOff,
 	RightOption,
 	RightPressInput,

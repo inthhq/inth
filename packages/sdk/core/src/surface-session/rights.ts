@@ -18,6 +18,7 @@ import { decisionAuthority } from '../consent-record/decision-authority';
 import { optOutDecidingCategory } from '../consent-record/types';
 import type { OptionalConsentCategory } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
+import { resolvePrivacyChoicesRegime } from '../libs/consent-copy';
 import { resolveOptOutState } from '../libs/opt-out-state';
 import type { OptOutLock } from '../libs/opt-out-state';
 import type { ConsentSnapshot } from '../types';
@@ -35,6 +36,14 @@ export type RightsSnapshot = Pick<
 >;
 
 /** Which option of a two-option rights control. The protective one comes first (RIGHT-01). */
+/**
+ * What {@link resolveBannerCommit} reads: the rights, and the policy rule
+ * that says whether a recorded refusal is an opt-out (US) or a cookie
+ * choice (EU).
+ */
+export type BannerCommitSnapshot = RightsSnapshot &
+	Pick<ConsentSnapshot, 'policyRule'>;
+
 export type RightOption = 'protect' | 'allow';
 
 /**
@@ -277,8 +286,16 @@ export interface BannerCommitDraft {
 const saleOption = (value: boolean): RightOption =>
 	value ? 'allow' : 'protect';
 
-/** Why a non-refusing commit leaves sale off, or `null` when it decides sale. */
+/**
+ * Why a non-refusing commit leaves sale off, or `null` when it decides sale.
+ *
+ * Under the EU regime a category the visitor refused is a cookie choice,
+ * not an opt-out of sale: the dialog's Save records what is switched on
+ * and Accept all grants it (BNR-14, EU-01). Only a held opt-out or a live
+ * GPC lock keeps it off there.
+ */
 const keptOffFor = function keptOffFor(
+	snapshot: BannerCommitSnapshot,
 	sale: SaleRightState
 ): BannerKeptOff | null {
 	if (!sale.available || sale.selected !== 'protect') {
@@ -287,7 +304,16 @@ const keptOffFor = function keptOffFor(
 	if (sale.lock === 'gpc-active') {
 		return 'gpc';
 	}
-	return sale.locked || sale.source === 'user' ? 'opt-out' : null;
+	if (sale.locked) {
+		return 'opt-out';
+	}
+	if (sale.source !== 'user') {
+		return null;
+	}
+	return resolvePrivacyChoicesRegime(snapshot.policyRule) === 'eu' &&
+		!resolveOptOutState(snapshot).honored
+		? null
+		: 'opt-out';
 };
 
 /**
@@ -369,7 +395,7 @@ const rightChangedBy = function rightChangedBy(
  * keeps the date.
  */
 export const resolveBannerCommit = function resolveBannerCommit(
-	snapshot: RightsSnapshot,
+	snapshot: BannerCommitSnapshot,
 	action: BannerCommitAction,
 	draft: BannerCommitDraft = {}
 ): BannerCommitPlan {
@@ -382,7 +408,7 @@ export const resolveBannerCommit = function resolveBannerCommit(
 			rightChanged: rightChangedBy(sale, action, null, draft),
 		};
 	}
-	const keptOff = keptOffFor(sale);
+	const keptOff = keptOffFor(snapshot, sale);
 	return {
 		categories: commitCategories(snapshot, sale, keptOff),
 		input: action === 'allow' ? 'all' : 'draft',
