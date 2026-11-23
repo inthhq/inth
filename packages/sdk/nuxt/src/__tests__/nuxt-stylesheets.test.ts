@@ -13,8 +13,8 @@ import type { ClientManifestChunk } from '../prefetch';
 import {
 	collectStyleSources,
 	preloadInlinedConsentStyles,
-} from '../stylesheets';
-import type { StyleSourceIndex } from '../stylesheets';
+} from '../collect-style-sources';
+import type { StyleSourceIndex } from '../collect-style-sources';
 
 const ui = (file: string) =>
 	`/repo/node_modules/@inth/sdk/lib/ui/dist/styles/components/${file}`;

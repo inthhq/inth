@@ -60,8 +60,8 @@ import type { BuiltOptions } from './runtime/server/build-options.model';
 import {
 	collectStyleSources,
 	preloadInlinedConsentStyles,
-} from './stylesheets';
-import type { StyleSourceIndex } from './stylesheets';
+} from './collect-style-sources';
+import type { StyleSourceIndex } from './collect-style-sources';
 
 export {
 	hosted,
