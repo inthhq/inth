@@ -1,5 +1,5 @@
 import { POLICY_CHOICE } from '@inth/conformance/fixtures/policy-scenarios';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 
 import { createPolicySession } from './policy-driver';
 
@@ -23,7 +23,10 @@ it('reports hidden ancestors in actual server and client prompt evidence', async
 		expect(evidence.ssr?.client.firstLayer).toBe('hidden');
 		expect(evidence.dom.actions.every((action) => !action.visible)).toBe(true);
 		document.body.style.opacity = opacity;
-		expect((await session.observe()).dom.firstLayer).toBe('choice');
+		// The banner's entrance animation starts from transparent.
+		await vi.waitFor(async () => {
+			expect((await session.observe()).dom.firstLayer).toBe('choice');
+		});
 		await session.execute({ kind: 'accept' });
 		const after = await session.observe();
 		expect(after.snapshot.promptRequirement.kind).toBe('none');

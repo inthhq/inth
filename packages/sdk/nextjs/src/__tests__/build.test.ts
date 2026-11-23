@@ -161,7 +161,10 @@ describe('Next.js build-time manifest', () => {
 			'first-paint',
 			'tokens',
 			'button',
+			'surface',
+			'card',
 			'banner',
+			'drawer',
 			'trigger',
 			'consent-gate',
 		];
