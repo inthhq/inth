@@ -40,10 +40,12 @@
     "sdk:compat:styles:build": "turbo run build --filter=@inth/css-layer-preview --filter=@inth/tw3-css-test --filter=@inth/tw4-css-test --filter=@inth/no-tw-css-test --filter=@inth/tailwind-matrix-v3 --filter=@inth/tailwind-matrix-v4",
     "sdk:lint:repo": "pnpm --dir scripts run lint:repo",
     "sdk:pack": "node tools/ci/sdk-pack.ts",
+    "sdk:rsdoctor": "WITH_RSDOCTOR=1 turbo run build --filter='./packages/sdk/*' --force",
     "tegami:sdk": "node tools/ci/sdk-release.ts"
   },
   "devDependencies": {
     "@oxlint/plugins": "1.81.0",
+    "@rsdoctor/agent-cli": "0.1.2",
     "leadtype": "0.4.3",
     "oxfmt": "0.66.0",
     "oxlint": "1.81.0",

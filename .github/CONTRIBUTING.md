@@ -44,6 +44,17 @@ pnpm sdk:test
 pnpm sdk:test:scripts # repository tooling
 ```
 
+To see what a change does to the bundles, build with Rsdoctor. Each Rslib build writes a report to `packages/sdk/<package>/.rsdoctor/<build>/rsdoctor-data.json`: `esm` for a package's module build, `esm0`… for core's self-contained entries, and `iife0`… for the browser script tags, in the order `packages/sdk/browser/rslib.config.ts` lists them. The reports stay out of `dist/`, so they never ship.
+
+```sh
+pnpm sdk:rsdoctor
+pnpm exec rsdoctor-agent assets list --data-file packages/sdk/browser/.rsdoctor/iife1/rsdoctor-data.json
+pnpm exec rsdoctor-agent bundle optimize --data-file packages/sdk/core/.rsdoctor/esm0/rsdoctor-data.json
+pnpm exec rsdoctor-agent assets diff --data-file <new report> --baseline <old report> --current <new report>
+```
+
+`pnpm exec rsdoctor-agent list` lists every query: chunks, modules and the import chain that pulled one in, packages and duplicates, tree-shaking bailouts, and build time per loader.
+
 Mobile SDKs:
 
 ```sh
