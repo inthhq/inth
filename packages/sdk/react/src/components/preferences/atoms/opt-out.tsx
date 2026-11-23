@@ -11,10 +11,8 @@ import { forwardRef as createForwardRef, useId } from 'react';
 import type { Ref } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
-import {
-	OptOutConfirmationDescription,
-	OptOutConfirmationDetails,
-} from '~/components/opt-out-confirmation/atoms/opt-out-confirmation-details';
+import { OptOutConfirmationDescription } from '~/components/opt-out-confirmation/atoms/opt-out-confirmation-description';
+import { OptOutConfirmationDetails } from '~/components/opt-out-confirmation/atoms/opt-out-confirmation-details';
 import { Box } from '~/components/shared/primitives/box';
 import type { BoxProps } from '~/components/shared/primitives/box';
 import {
