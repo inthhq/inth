@@ -635,8 +635,18 @@ const SummaryRow = (rowProps: { inBar: boolean }) =>
 			: buttons[0];
 	});
 SummaryRow.props = ['inBar'];
-const links = CARD_LINKS;
-const barLinks: ConsentLegalLinkKey[] = ['privacyPolicy'];
+/**
+ * `bannerLegalLinks` picks the policy links, as React's `legalLinks` prop
+ * does: unset shows the stock pair, and an empty list shows none. The
+ * config's defaults fill a `null`, so it reads as unset. The collapsed
+ * Banner keeps to the privacy policy, so its text stays on one line.
+ */
+const links = computed<readonly ConsentLegalLinkKey[]>(
+	() => config.value.bannerLegalLinks ?? CARD_LINKS
+);
+const barLinks = computed(() =>
+	links.value.filter((key) => key === 'privacyPolicy')
+);
 const onPanelReady = () => {
 	panelReady.value = true;
 	releasePanelHydration();

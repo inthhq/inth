@@ -1,14 +1,4 @@
 <script setup lang="ts">
-/**
- * The consent dialog ("Your Privacy Choices"): one column whose body is the
- * only scroller, the statutory rights on its first view, the receipt, and
- * Preferences; in the EU, the cookie categories and a staged Save. On
- * phone, Preferences and EU vendor lists open as nested sheets, at most
- * two layers; desktop uses accordions only.
- *
- * It loads on open, with its stylesheets: the theme's buttons, the scroll
- * area and group it shares with the banner panels, then its own rules.
- */
 import {
 	commitDialogChoice,
 	MAIN_LAYER,
@@ -20,6 +10,17 @@ import type {
 	SaveUISource,
 } from '@inth/sdk/engine';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
+/**
+ * The consent dialog ("Your Privacy Choices"): one column whose body is the
+ * only scroller, the statutory rights on its first view, the receipt, and
+ * Preferences; in the EU, the cookie categories and a staged Save. On
+ * phone, Preferences and EU vendor lists open as nested sheets, at most
+ * two layers; desktop uses accordions only.
+ *
+ * It loads on open, with its stylesheets: the theme's buttons, the scroll
+ * area and group it shares with the banner panels, then its own rules.
+ */
+import type { ConsentLegalLinkKey } from '@inth/sdk/schema/config';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	announcementText,
@@ -539,11 +540,19 @@ const onPreferencesRow = () => {
 	}
 };
 
+/**
+ * The footer's policy link. `dialogLegalLinks` can leave it out, as
+ * React's `legalLinks` prop does: unset shows it, and a list without it
+ * (an empty one too) shows none. The config's defaults fill a `null`, so
+ * it reads as unset.
+ */
 const legal = computed(() => {
-	const key = eu.value ? 'cookiePolicy' : 'privacyPolicy';
+	const key: ConsentLegalLinkKey = eu.value ? 'cookiePolicy' : 'privacyPolicy';
+	const chosen = config.value.dialogLegalLinks;
+	const keys = chosen ? chosen.filter((link) => link === key) : [key];
 	return resolveLegalLinkEntries(
 		config.value.legalLinks,
-		[key],
+		keys,
 		translations.value.legalLinks
 	)[0];
 });

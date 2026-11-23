@@ -500,7 +500,12 @@ export interface ConsentConfig<T = Record<string, unknown>> {
 	trapFocus?: boolean;
 	/** Provider-level legal link URLs (labels come from init translations). */
 	legalLinks?: ConsentLegalLinks;
-	/** Which legal links render per surface (`undefined` = none). */
+	/**
+	 * Which legal links each surface renders. Unset shows the surface's
+	 * stock links, and a list shows only the links it names, so an empty
+	 * list shows none. `null` reads as unset, because the config's
+	 * defaults fill it.
+	 */
 	bannerLegalLinks?: ConsentLegalLinkKey[] | null;
 	dialogLegalLinks?: ConsentLegalLinkKey[] | null;
 	hideBranding?: boolean;

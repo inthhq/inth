@@ -42,10 +42,12 @@ export const vueDialogAdapter: ConsentDialogAdapter = {
 			tab: context.tab,
 		});
 		// The Vue dialog reads its link list from the plugin config rather
-		// than a prop, as `dialogLegalLinks` does in a Nuxt or Vue app.
+		// than a prop, as `dialogLegalLinks` does in a Nuxt or Vue app. The
+		// config's defaults fill a `null`, so "no link" goes in as an empty
+		// list.
 		app.use(inth, {
 			...options,
-			dialogLegalLinks: context.legalLinks,
+			dialogLegalLinks: context.legalLinks === null ? [] : context.legalLinks,
 			runtime,
 		} as never);
 		app.mount(context.target);

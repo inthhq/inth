@@ -89,7 +89,8 @@ factory rather than the plugin:
 | `tokens` | Default theme | CSS variables written to `<style id="inth-css-vars">` in `document.head`. See [customize](/docs/frameworks/vue/customize#set-theme-tokens). |
 | `presentation` | Policy defaults | The banner's `container`, `edgeStyle`, `blockUntilChoice` and action layout, under `presentation.prompt`. |
 | `components` | Unset | Vue attributes such as `class` and `style` for named component parts. |
-| `legalLinks`, `bannerLegalLinks`, `dialogLegalLinks` | None shown | Links to your privacy policy and which surfaces display them. |
+| `legalLinks` | None shown | Links to your privacy and cookie policies. |
+| `bannerLegalLinks`, `dialogLegalLinks` | Each surface's stock links | Which `legalLinks` the banner and the dialog show. A list shows only the links it names, so `[]` shows none. |
 | `hideBranding`, `bannerHideBranding`, `dialogHideBranding`, `iabBannerHideBranding`, `iabDialogHideBranding` | `false` | Hides the "Consent by" tag. |
 | `showTrigger` and `trigger*` | `false` | Configures the floating trigger. See [ConsentDialogTrigger](/docs/frameworks/vue/components/consent-dialog-trigger). |
 | `disableAnimation` | `false` | Turns off banner and dialog transitions. |
