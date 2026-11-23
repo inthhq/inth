@@ -490,13 +490,17 @@ const createSession = function createSession<EngineModule>(
 			// hid shows again; the next one asks for a new attempt. A banner
 			// the early-tap script hid for a tap the engine was to replay
 			// shows again too, or it stays hidden for good.
-			// oxlint-disable-next-line promise/prefer-await-to-then -- Settles the waiting commands.
-			engineLoad.catch((error: unknown) => {
-				if (typeof document !== 'undefined') {
-					document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
+			const load = engineLoad;
+			void (async () => {
+				try {
+					await load;
+				} catch (error) {
+					if (typeof document !== 'undefined') {
+						document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
+					}
+					handle.fail(error);
 				}
-				handle.fail(error);
-			});
+			})();
 		}
 		return engineLoad;
 	};
