@@ -148,13 +148,6 @@ export const PARITY_ALLOWLIST: readonly ParityAllowEntry[] = [
 		slot: '*',
 		story: 'IAB/IAB Consent Dialog/Overview',
 	},
-	{
-		check: 'dom',
-		framework: 'vue',
-		reason: IAB_VENDOR_LIST_REASON,
-		slot: '*',
-		story: 'IAB/IAB Consent Banner/Customize Flow',
-	},
 ];
 
 const matches = function matches(
