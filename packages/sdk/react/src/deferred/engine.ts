@@ -26,7 +26,7 @@ export type {
 // apart, each group would carry its own copy of the modules they share.
 export { ConsentDialog, OptOutConfirmation } from '../aggregate-components';
 // The banner waits for the container the server rendered before it
-// hydrates (`surfaces.tsx`).
+// hydrates (`surface-with-parts.tsx`).
 export {
 	ConsentBanner,
 	preloadServerContainer,
