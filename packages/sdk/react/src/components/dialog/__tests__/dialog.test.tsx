@@ -495,6 +495,56 @@ describe('preferences', () => {
 	});
 });
 
+describe('preferences under a held opt-out', () => {
+	test('[PERM-02] a category switched on stays on when the opt-out lists no categories', async () => {
+		// `/v1/consent/init` sends the opt-out without its categories, so it
+		// withholds marketing and measurement until the visitor says otherwise.
+		const now = Date.now();
+		await mount({
+			extra: {
+				prefetch: {
+					...policyFixture(undefined, {
+						id: 'pcd-legacy-opt-out',
+						...RULES['us-opt-out'],
+					}),
+					initialRecords: {
+						optOut: {
+							heldBy: 'device',
+							method: 'button',
+							recordedAt: now - 1000,
+							rights: ['sale', 'share'],
+						},
+					},
+					now,
+				},
+			},
+		});
+		await openDialog();
+		must('consent-dialog-preferences-row').click();
+		const sw = await waitFor(() =>
+			must<HTMLButtonElement>('consent-dialog-category-switch-measurement')
+		);
+		expect(sw).toHaveAttribute('aria-checked', 'false');
+		expect(probe.snapshot?.effectivePermissions.measurement).toBe(false);
+
+		sw.click();
+		await waitFor(() =>
+			expect(probe.snapshot?.effectivePermissions.measurement).toBe(true)
+		);
+		expect(status()).toMatch(/Saved/u);
+		// It stays on: core holds the grant rather than the opt-out.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 100);
+		});
+		expect(
+			must('consent-dialog-category-switch-measurement')
+		).toHaveAttribute('aria-checked', 'true');
+		expect(probe.snapshot?.effectivePermissions.measurement).toBe(true);
+		expect(probe.snapshot?.optOut).toBeTruthy();
+		expect(probe.snapshot?.effectivePermissions.marketing).toBe(false);
+	});
+});
+
 describe('vendors:', () => {
 	const openAnalytics = async () => {
 		await mount({ region: 'eu' });

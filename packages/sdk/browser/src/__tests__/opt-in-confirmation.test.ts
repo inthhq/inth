@@ -495,13 +495,10 @@ describe('two-step opt-in confirmation (script-tag)', () => {
 		expect(client.getSnapshot().effectivePermissions.marketing).toBe(false);
 	});
 
-	// Known core bug, outside this package: the dialog's Preferences save
-	// only the switched category (`applyDialogCategories`), and an opt-out
-	// record that lists no categories, as `/v1/consent/init` sends one, holds
-	// that category off unless the same choice also refuses Marketing
-	// (`explicitGrantStands` in core's `consent-record/evaluate.ts`). The
-	// switch saves, then reads off again. Flip to `it` once core is fixed.
-	it.fails('saving without granting the deciding category completes with no confirmation', async () => {
+	// The dialog's Preferences save only the switched category, and the
+	// opt-out, as `/v1/consent/init` sends it, lists no categories: a grant
+	// confirmed after the opt-out stands beside it.
+	it('saving without granting the deciding category completes with no confirmation', async () => {
 		const { client, root } = await mountOptedOut();
 		await openDialog(client, root);
 		query(root, 'consent-dialog-preferences-row').click();
