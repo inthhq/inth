@@ -57,7 +57,7 @@ import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 
 import type { ProviderOptionsInput } from '../resolve-provider-options';
-import type { RootBoot } from './read-consent-boot';
+import type { RootBoot } from './consent-boot.model';
 import {
 	DIALOG_ROOT,
 	scheduleDeferredEngine,
