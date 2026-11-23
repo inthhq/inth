@@ -43,6 +43,11 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			'data-parity-surface',
 			'data-svelte-h',
 			'data-v-app',
+			// Whether the pre-hydration script may hold a tap on a button
+			// depends on whether the adapter replays it through its own
+			// handlers, which each adapter adds on its own schedule. The
+			// button the visitor sees is the same.
+			'data-early-tap',
 		]);
 
 		const isProviderArtifact = function isProviderArtifact(
