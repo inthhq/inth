@@ -6,7 +6,9 @@
  *
  * - Inth's component styles survive Tailwind's preflight: the banner card
  *   keeps its background and border, the header, footer and buttons keep
- *   their padding, and the lazily loaded dialog is styled too. On Tailwind 3
+ *   their padding, and the lazily loaded dialog is styled too: its card
+ *   keeps its background and the box-shadow ring it draws instead of a
+ *   border, and its footer keeps its top border and padding. On Tailwind 3
  *   this also proves the Inth rules were not purged.
  * - A utility passed to an Inth part wins over Inth's own rule for the same
  *   property: a bare utility on Tailwind 4, an important one (`!p-[7px]`)
@@ -16,7 +18,10 @@
  *   utility and, where the fixture says Inth follows it, Inth's dark tokens.
  *   The script tag's shadow root follows its own `colorScheme` option.
  *   This is checked on the early frame below and again once settled.
- * - Opening the dialog loads its stylesheet, which is styled too.
+ * - Opening the dialog from the page's dialog link (`ConsentDialogLink`,
+ *   or the script tag's `#inth-preferences` link) loads its stylesheet,
+ *   which is styled too. The banner's Customize button expands the
+ *   choices in place and does not open the dialog.
  * - The banner the page paints before the consent engine loads passes the
  *   same checks. Every script is held from navigation on and released one
  *   at a time, in request order, only until the banner card is visible, so
@@ -126,6 +131,7 @@ interface Styles {
 	borderTopColor: string;
 	borderTopStyle: string;
 	borderTopWidth: string;
+	boxShadow: string;
 	color: string;
 	padding: string;
 }
@@ -138,6 +144,7 @@ const readStyles = function readStyles(locator: Locator): Promise<Styles> {
 			borderTopColor: styles.borderTopColor,
 			borderTopStyle: styles.borderTopStyle,
 			borderTopWidth: styles.borderTopWidth,
+			boxShadow: styles.boxShadow,
 			color: styles.color,
 			padding: styles.padding,
 		};
@@ -151,6 +158,15 @@ const hasBorder = (styles: Styles) =>
 	styles.borderTopStyle !== 'none' &&
 	Number.parseFloat(styles.borderTopWidth) > 0 &&
 	!TRANSPARENT.has(styles.borderTopColor);
+
+/**
+ * The dialog card draws its edge as a spread-only box-shadow ring
+ * (`0 0 0 1px`) instead of a border. The ring is the first shadow.
+ */
+const hasRing = (styles: Styles) => {
+	const ring = /\b0px 0px 0px (?<spread>[\d.]+)px\b/u.exec(styles.boxShadow);
+	return Number.parseFloat(ring?.groups?.spread ?? '0') > 0;
+};
 
 const byTestId = (page: Page, id: string) =>
 	page.locator(`[data-testid="${id}"]`).first();
@@ -324,16 +340,29 @@ const checkPage = async function checkPage(
 
 	await checkDark(page, options, expect);
 
-	await byTestId(page, 'consent-banner-customize-button').click();
+	// Customize expands the banner in place; the page's dialog link opens
+	// the dialog.
 	const dialogCard = byTestId(page, 'consent-dialog-card');
 	try {
+		await byTestId(page, 'consent-dialog-link').click({ timeout: 15_000 });
 		await dialogCard.waitFor({ timeout: 15_000 });
-		const dialog = await readStyles(dialogCard);
+		const [dialog, footer] = await Promise.all([
+			readStyles(dialogCard),
+			readStyles(byTestId(page, 'consent-dialog-footer')),
+		]);
 		expect(
 			!TRANSPARENT.has(dialog.backgroundColor),
 			`dialog card lost its background (${dialog.backgroundColor})`
 		);
-		expect(hasBorder(dialog), 'dialog card lost its border');
+		expect(
+			hasRing(dialog),
+			`dialog card lost its ring (box-shadow ${dialog.boxShadow})`
+		);
+		expect(
+			hasBorder(footer),
+			`dialog footer lost its top border (${footer.borderTopStyle} ${footer.borderTopWidth} ${footer.borderTopColor})`
+		);
+		expect(hasPadding(footer), 'dialog footer lost its padding');
 	} catch (error) {
 		problems.push(`dialog did not open: ${String(error).split('\n')[0]}`);
 	}
