@@ -9,12 +9,10 @@
  */
 import { describe, expect, test } from 'vitest';
 
+import { collectStyleSources } from '../collect-style-sources';
 import type { ClientManifestChunk } from '../prefetch';
-import {
-	collectStyleSources,
-	preloadInlinedConsentStyles,
-} from '../collect-style-sources';
-import type { StyleSourceIndex } from '../collect-style-sources';
+import { preloadInlinedConsentStyles } from '../preload-inlined-consent-styles';
+import type { StyleSourceIndex } from '../style-sources.model';
 
 const ui = (file: string) =>
 	`/repo/node_modules/@inth/sdk/lib/ui/dist/styles/components/${file}`;
