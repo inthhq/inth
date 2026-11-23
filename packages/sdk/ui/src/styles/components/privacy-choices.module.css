@@ -741,6 +741,131 @@
 		padding-top: var(--inth-space-sm);
 	}
 
+	/* One category in the bordered group (CAT-01, CAT-06): its name is the
+	   row's label, its one-sentence description sits inline below it,
+	   muted and smaller, and the switch sits at the end. The group draws
+	   the dividers; the vendor trigger and table follow in the segment. */
+	.category {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.categoryRow {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--inth-space-md);
+	}
+
+	.category:has(> .vendorTrigger) > .categoryRow {
+		padding-bottom: calc(var(--inth-space-xs) * 1.5);
+	}
+
+	.categoryText {
+		display: flex;
+		flex-direction: column;
+		gap: calc(var(--inth-space-xs) * 0.5);
+		min-width: 0;
+	}
+
+	.categoryName {
+		margin: 0;
+		font-size: calc(var(--inth-font-size-sm) * 0.9643);
+		font-weight: var(--inth-font-weight-medium);
+		line-height: var(--inth-line-height-tight);
+		color: var(--inth-text);
+	}
+
+	.categoryDescription {
+		margin: 0;
+		font-size: calc(var(--inth-font-size-sm) * 0.8929);
+		line-height: var(--inth-line-height-normal);
+		color: var(--inth-text-muted);
+	}
+
+	/* "Always on" and the advertising row's On / Off, in place of a switch. */
+	.categoryState {
+		flex-shrink: 0;
+		padding-top: 1px;
+		font-size: calc(var(--inth-font-size-sm) * 0.8571);
+		font-weight: var(--inth-font-weight-medium);
+		color: var(--inth-text-muted);
+		text-align: end;
+	}
+
+	/* A switch is role="switch" on a button, named by its row (SR-06). Its
+	   off track keeps 3:1 against the surface (VIS-03). */
+	.switch {
+		position: relative;
+		flex-shrink: 0;
+		width: 36px;
+		height: 20px;
+		margin-top: 1px;
+		padding: 0;
+		border: 0;
+		border-radius: var(--inth-radius-full, 999px);
+		background: var(--inth-switch-track-off, var(--inth-switch-track));
+		cursor: pointer;
+		transition: background-color calc(var(--inth-duration-slow) * 0.6)
+			var(--inth-easing-out);
+	}
+
+	.switch::before {
+		content: '';
+		position: absolute;
+		inset: -12px -6px;
+	}
+
+	.switch::after {
+		content: '';
+		position: absolute;
+		top: 2px;
+		inset-inline-start: 2px;
+		width: 16px;
+		height: 16px;
+		border-radius: var(--inth-radius-full, 999px);
+		background: var(--inth-switch-thumb, #fff);
+		box-shadow: 0 1px 2px
+			color-mix(in srgb, var(--inth-overlay) 40%, transparent);
+		transition: translate var(--inth-duration-slow)
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
+	}
+
+	.switch[aria-checked='true'] {
+		background: var(--inth-switch-track-active, var(--inth-primary));
+	}
+
+	.switch[aria-checked='true']::after {
+		translate: 16px 0;
+	}
+
+	.switch:dir(rtl)[aria-checked='true']::after {
+		translate: -16px 0;
+	}
+
+	.switch[data-size='small'] {
+		width: 32px;
+		height: 18px;
+	}
+
+	.switch[data-size='small']::after {
+		width: 14px;
+		height: 14px;
+	}
+
+	.switch[data-size='small'][aria-checked='true']::after {
+		translate: 14px 0;
+	}
+
+	.switch[data-size='small']:dir(rtl)[aria-checked='true']::after {
+		translate: -14px 0;
+	}
+
+	.switch:focus-visible {
+		outline: 2px solid var(--inth-text);
+		outline-offset: 2px;
+	}
+
 	/* "View N vendors": a 32px row in the category's segment with no
 	   divider and a 40px hit area. Ghost at rest, the stroke look on hover
 	   and focus, and no press scale: it opens something (CAT-09). */
@@ -865,13 +990,14 @@
 
 	/* A click on a row's name or description toggles its switch; the
 	   switch stays the only focus target (CAT-10). */
-	.card [data-row-toggle] {
+	.categoryRow[data-row-toggle],
+	.vendorRow[data-row-toggle] {
 		cursor: pointer;
 	}
 
-	.card [data-row-toggle] .vendorName,
-	.card [data-row-toggle] .vendorPurpose,
-	.card [data-row-toggle] [data-row-text] {
+	.vendorRow[data-row-toggle] .vendorName,
+	.vendorRow[data-row-toggle] .vendorPurpose,
+	.categoryRow[data-row-toggle] .categoryText {
 		-webkit-user-select: none;
 		user-select: none;
 	}
@@ -1139,7 +1265,9 @@
 		.confirm[data-nudged='true'],
 		.chevron,
 		.navRow,
-		.vendorTrigger {
+		.vendorTrigger,
+		.switch,
+		.switch::after {
 			transition: none;
 			animation: none;
 		}

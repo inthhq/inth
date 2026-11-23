@@ -220,6 +220,32 @@ describe('resolveSaleRightCopy', () => {
 		);
 	});
 
+	it('capitalises the business fallback wherever it opens a sentence', () => {
+		const refused = {
+			...base,
+			business: undefined,
+			model: 'opt-in',
+			selected: 'protect' as const,
+		};
+		expect(resolveSaleRightCopy(undefined, refused).description).toBe(
+			"Off by default. This site won't sell or share your personal information or use it for targeted ads unless you allow it."
+		);
+		// Mid-sentence it stays lower case, and a real name is never recased.
+		expect(
+			resolveSaleRightCopy(undefined, { ...refused, selected: 'allow' })
+				.description
+		).toBe(
+			'This site may sell or share your personal information, including for targeted ads.'
+		);
+		expect(
+			resolveSaleRightCopy(undefined, { ...refused, locked: true }).description
+		).toMatch(/signal, so this site won't/u);
+		expect(
+			resolveSaleRightCopy(undefined, { ...refused, business: 'acme' })
+				.description
+		).toMatch(/^Off by default\. acme won't/u);
+	});
+
 	it('[GPC-04] replaces the description with the GPC note while locked', () => {
 		const copy = resolveSaleRightCopy(undefined, {
 			...base,

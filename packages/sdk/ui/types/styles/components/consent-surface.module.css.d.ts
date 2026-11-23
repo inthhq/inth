@@ -8,6 +8,7 @@ declare const styles: {
   readonly "description": string;
   readonly "footer": string;
   readonly "head": string;
+  readonly "rightLink": string;
   readonly "root": string;
   readonly "scrim": string;
   readonly "shell": string;

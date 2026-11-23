@@ -610,32 +610,48 @@ const SurfaceContent = ({
 	const links = legalLinks === undefined ? CARD_LINKS : legalLinks;
 	const barLinks = links?.filter((key) => key === 'privacyPolicy') ?? null;
 
-	const expandButton = (label: ReactNode, inBar: boolean) => (
-		<ConsentButton
-			key="customize"
-			ref={expandRef}
-			action="custom-consent"
-			performDefaultAction={false}
-			consentAction="customize"
-			earlyTap
-			isPrimary={!notice}
-			variant={notice ? 'neutral' : undefined}
-			mode={notice ? 'ghost' : undefined}
-			aria-expanded={expanded}
-			// The collapsed bar has no panel to point at (PERM-09).
-			aria-controls={inBar ? undefined : ids.panel}
-			data-testid={
-				notice
-					? 'consent-banner-right-link-opt-out'
-					: 'consent-banner-customize-button'
-			}
-			onClick={expand}
-			onFocus={warm}
-			onPointerEnter={warm}
-		>
-			{label}
-		</ConsentButton>
-	);
+	const expandButton = (label: ReactNode, inBar: boolean) =>
+		notice ? (
+			// The notice's rights action reads as a link, in the
+			// text-on-surface blue in both palettes (VIS-02).
+			<button
+				key="customize"
+				ref={expandRef}
+				type="button"
+				className={cx(noStyle, surfaceStyles.rightLink)}
+				// The pre-hydration script holds a tap on it, which expands
+				// the rights in place once the prompt hydrates.
+				data-action="customize"
+				aria-expanded={expanded}
+				// The collapsed bar has no panel to point at (PERM-09).
+				aria-controls={inBar ? undefined : ids.panel}
+				data-testid="consent-banner-right-link-opt-out"
+				onClick={expand}
+				onFocus={warm}
+				onPointerEnter={warm}
+			>
+				{label}
+			</button>
+		) : (
+			<ConsentButton
+				key="customize"
+				ref={expandRef}
+				action="custom-consent"
+				performDefaultAction={false}
+				consentAction="customize"
+				earlyTap
+				isPrimary
+				aria-expanded={expanded}
+				// The collapsed bar has no panel to point at (PERM-09).
+				aria-controls={inBar ? undefined : ids.panel}
+				data-testid="consent-banner-customize-button"
+				onClick={expand}
+				onFocus={warm}
+				onPointerEnter={warm}
+			>
+				{label}
+			</ConsentButton>
+		);
 	const refuseButton = (label: ReactNode) => (
 		<ConsentButton
 			key="reject"

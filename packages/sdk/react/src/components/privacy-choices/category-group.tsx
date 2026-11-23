@@ -7,15 +7,20 @@
  */
 
 import type { AllConsentNames } from '@inth/sdk/engine';
-import { consentTypes, resolveCategoryTitle } from '@inth/sdk/surface-state';
+import {
+	consentTypes,
+	resolveCategoryTitle,
+	resolvePrivacyChoicesCopy,
+} from '@inth/sdk/surface-state';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
+import styles from '@inth/sdk/ui/styles/components/privacy-choices';
 import type { MouseEvent, ReactNode } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
-import * as PreferenceItem from '~/components/shared/ui/preference-item';
-import * as Switch from '~/components/shared/ui/switch';
 import { useConsentDraftSlice, useConsentDraftStore } from '~/draft';
 import { useTheme } from '~/hooks/use-theme';
+
+import { ChoiceSwitch } from './switch';
 
 /** Surfaces that render the category group, by their test-id prefix. */
 export type CategoryGroupSurface = 'consent-banner';
@@ -52,6 +57,9 @@ export interface CategoryGroupProps {
 }
 
 const NO_CATEGORIES: readonly AllConsentNames[] = [];
+
+const cx = (noStyle: boolean | undefined, ...names: (string | undefined)[]) =>
+	noStyle ? undefined : names.filter(Boolean).join(' ') || undefined;
 
 /**
  * Whether a click on a row's text should toggle its switch (CAT-10): not
@@ -93,6 +101,7 @@ export const CategoryGroup = ({
 	const { noStyle: themeNoStyle } = useTheme();
 	const noStyle = localNoStyle ?? themeNoStyle;
 	const rows = displayed.filter((name) => !exclude.includes(name));
+	const { alwaysOn } = resolvePrivacyChoicesCopy(translations);
 
 	return (
 		<div
@@ -113,47 +122,49 @@ export const CategoryGroup = ({
 					}
 				};
 				return (
-					<PreferenceItem.Root
+					<div
 						key={name}
-						noStyle={noStyle}
+						className={cx(noStyle, styles.category)}
 						data-category={name}
 					>
-						<PreferenceItem.Header
-							noStyle={noStyle}
+						{/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- A pointer shortcut like a label's; the switch stays the only keyboard and focus target (CAT-10). */}
+						<div
+							className={cx(noStyle, styles.categoryRow)}
+							data-row-toggle={required ? undefined : ''}
 							onClick={toggle}
-							style={required ? undefined : { cursor: 'pointer' }}
 						>
-							<PreferenceItem.Title
-								noStyle={noStyle}
-								id={nameId}
-							>
-								{resolveCategoryTitle(translations, name)}
-							</PreferenceItem.Title>
-							{description ? (
-								<p
-									id={descriptionId}
-									style={{ margin: 0 }}
+							<div className={cx(noStyle, styles.categoryText)}>
+								<span
+									className={cx(noStyle, styles.categoryName)}
+									id={nameId}
 								>
-									{description}
-								</p>
-							) : null}
-						</PreferenceItem.Header>
-						<PreferenceItem.Control noStyle={noStyle}>
-							<Switch.Root
-								checked={checked}
-								disabled={required}
-								noStyle={noStyle}
-								aria-labelledby={nameId}
-								aria-describedby={description ? descriptionId : undefined}
-								data-testid={GROUP_TEST_IDS[testIdPrefix].switchPrefix + name}
-								onCheckedChange={(next) => {
-									if (!required) {
-										draft.set(name, next);
-									}
-								}}
-							/>
-						</PreferenceItem.Control>
-					</PreferenceItem.Root>
+									{resolveCategoryTitle(translations, name)}
+								</span>
+								{description ? (
+									<span
+										className={cx(noStyle, styles.categoryDescription)}
+										id={descriptionId}
+									>
+										{description}
+									</span>
+								) : null}
+							</div>
+							{required ? (
+								<span className={cx(noStyle, styles.categoryState)}>
+									{alwaysOn}
+								</span>
+							) : (
+								<ChoiceSwitch
+									checked={checked}
+									noStyle={noStyle}
+									aria-labelledby={nameId}
+									aria-describedby={description ? descriptionId : undefined}
+									data-testid={GROUP_TEST_IDS[testIdPrefix].switchPrefix + name}
+									onCheckedChange={(next) => draft.set(name, next)}
+								/>
+							)}
+						</div>
+					</div>
 				);
 			})}
 			{footer}

@@ -13,7 +13,6 @@ import { resolvePreferencesRowCopy } from '@inth/sdk/surface-state';
 import type { PrivacyChoicesPromptVariant } from '@inth/sdk/surface-state';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import styles from '@inth/sdk/ui/styles/components/privacy-choices';
-import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
 import * as expand from '@inth/sdk/ui/styles/sheets/expand';
 import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/privacy-choices-dialog';
 import { useState } from 'react';
@@ -31,11 +30,11 @@ import { SurfaceStyles } from '../../shared/surface-styles';
 import type { SurfaceStyleSheet } from '../../shared/surface-styles';
 
 /**
- * The options' rules: the switch and preference-row rules from the dialog
- * sheet, the in-place panel, then the v6 rights rows over it.
+ * The options' rules: the in-place panel, then the v6 rows over it. The
+ * v6 sheet carries its own switch and category rows, so the classic
+ * dialog sheet stays off the page.
  */
 export const PANEL_SHEETS: readonly SurfaceStyleSheet[] = [
-	dialog,
 	expand,
 	privacyChoicesDialog,
 ];

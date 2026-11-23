@@ -253,6 +253,8 @@ export interface PrivacyChoicesTranslations {
 	confirmKeepOptedOut: string;
 	/** Read-only row that says advertising follows the sale choice (LAW-05). */
 	advertisingFollowsSale: string;
+	/** In place of a switch for a category that is always on. */
+	alwaysOn: string;
 }
 
 export interface LegalLinksTranslations {

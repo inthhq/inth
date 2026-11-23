@@ -380,6 +380,36 @@ describe('card:', () => {
 		expect(description).toBeVisible();
 	});
 
+	test('[CAT-01][CAT-06] the name labels the row, the description is muted and smaller', async () => {
+		await mount();
+		await waitForRoot();
+		must('consent-banner-customize-button').click();
+		await waitForPanel();
+		const sw = await vi.waitFor(() =>
+			must('consent-banner-category-switch-measurement')
+		);
+		const label = document.getElementById(
+			sw.getAttribute('aria-labelledby') ?? ''
+		) as HTMLElement;
+		const description = document.getElementById(
+			sw.getAttribute('aria-describedby') ?? ''
+		) as HTMLElement;
+		await vi.waitFor(() =>
+			expect(
+				Number.parseFloat(getComputedStyle(description).fontSize)
+			).toBeLessThan(Number.parseFloat(getComputedStyle(label).fontSize))
+		);
+		expect(label.tagName).not.toMatch(/^H\d$/u);
+		expect(getComputedStyle(description).color).not.toBe(
+			getComputedStyle(label).color
+		);
+		// One bordered group, with a divider between rows.
+		const group = must('consent-banner-category-group');
+		expect(getComputedStyle(group).borderTopWidth).toBe('1px');
+		const rows = [...group.children] as HTMLElement[];
+		expect(getComputedStyle(rows[1] as HTMLElement).borderTopWidth).toBe('1px');
+	});
+
 	test('[BNR-06] a choice announces on the page and focuses Your Privacy Choices', async () => {
 		await mount();
 		await waitForRoot();
@@ -851,6 +881,29 @@ describe('notice', () => {
 		);
 		// [PERM-11] The expanded notice's footer holds OK alone.
 		expect(must('consent-banner-footer').children).toHaveLength(1);
+	});
+
+	test('[VIS-02] "Do not sell or share my data" reads as a link in the text blue, light and dark', async () => {
+		await mount({ region: 'us-notice' });
+		await waitForRoot();
+		const link = must('consent-banner-right-link-opt-out');
+		const blue = document.createElement('span');
+		blue.style.color = 'var(--inth-primary-text)';
+		link.after(blue);
+		const check = () => {
+			const style = getComputedStyle(link);
+			expect(style.backgroundColor).toBe('rgba(0, 0, 0, 0)');
+			expect(style.color).toBe(getComputedStyle(blue).color);
+			expect(style.textDecorationLine).toBe('underline');
+		};
+		await vi.waitFor(check);
+		document.documentElement.classList.add('dark');
+		try {
+			await vi.waitFor(check);
+		} finally {
+			document.documentElement.classList.remove('dark');
+			blue.remove();
+		}
 	});
 
 	test('OK records no consent and ends the prompt', async () => {

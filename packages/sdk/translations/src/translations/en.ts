@@ -213,6 +213,7 @@ export const translations: CompleteTranslations = {
 		acceptAll: 'Accept all',
 		advertisingFollowsSale: 'Advertising follows your choice above.',
 		allow: 'Allow',
+		alwaysOn: 'Always on',
 		askAll:
 			'sell or share your personal information, including for targeted ads',
 		askSaleAndShare: 'sell or share your personal information',

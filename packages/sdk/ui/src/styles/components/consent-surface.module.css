@@ -294,6 +294,34 @@
 		gap: var(--inth-space-sm);
 	}
 
+	/* "Do not sell or share my data" on the notice: a link-style action,
+	   never a filled button, in the text-on-surface blue (VIS-02). */
+	.rightLink {
+		position: relative;
+		padding: var(--inth-space-xs) 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-size: var(--inth-font-size-sm);
+		color: var(--inth-primary-text, var(--inth-primary));
+		text-align: start;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+
+	.rightLink::before {
+		content: '';
+		position: absolute;
+		inset: -8px -4px;
+	}
+
+	.rightLink:focus-visible {
+		outline: 2px solid var(--inth-text);
+		outline-offset: 2px;
+		border-radius: var(--inth-radius-sm);
+	}
+
 	.visuallyHidden {
 		position: absolute;
 		width: 1px;

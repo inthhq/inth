@@ -483,8 +483,16 @@ const fill = function fill(
 };
 
 /**
+ * Whether text that ends in `before` is at the start of a sentence: nothing
+ * yet, or a full stop, question or exclamation mark and a space.
+ */
+const opensSentence = (before: string): boolean =>
+	before.trim() === '' || /[.!?]\s+$/u.test(before);
+
+/**
  * `{business}` for a sentence: the site's name as written, or the fallback,
- * capitalised when it opens the sentence. A real name is never recased.
+ * capitalised wherever it opens a sentence ("Off by default. This site
+ * won't…"). A real name is never recased.
  */
 const businessFor = function businessFor(
 	copy: PrivacyChoicesTranslations,
@@ -496,7 +504,8 @@ const businessFor = function businessFor(
 		return name;
 	}
 	const fallback = copy.businessFallback;
-	return template.startsWith('{business}')
+	const at = template.indexOf('{business}');
+	return at !== -1 && opensSentence(template.slice(0, at))
 		? fallback.charAt(0).toLocaleUpperCase() + fallback.slice(1)
 		: fallback;
 };

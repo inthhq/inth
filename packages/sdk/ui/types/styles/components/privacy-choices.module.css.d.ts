@@ -2,6 +2,12 @@ declare const styles: {
   readonly "backdrop": string;
   readonly "bleed": string;
   readonly "card": string;
+  readonly "category": string;
+  readonly "categoryDescription": string;
+  readonly "categoryName": string;
+  readonly "categoryRow": string;
+  readonly "categoryState": string;
+  readonly "categoryText": string;
   readonly "chevron": string;
   readonly "close": string;
   readonly "confirm": string;
@@ -44,6 +50,7 @@ declare const styles: {
   readonly "segmentedCheck": string;
   readonly "segmentedOption": string;
   readonly "segmentedThumb": string;
+  readonly "switch": string;
   readonly "textButton": string;
   readonly "title": string;
   readonly "vendorHead": string;
