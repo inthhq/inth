@@ -496,7 +496,7 @@ const PolicyActionsDemoContent = ({
 							<p className="text-xs text-slate-600 dark:text-slate-300">
 								`variant`, `position` and `blocking=1` in the URL layer over the
 								scenario presentation. A notice defaults to a bottom bar, a
-								choice to a floating card; a wall always blocks.
+								choice to a floating card; a centred Card always blocks.
 							</p>
 							<SurfaceControls
 								surface={surface}

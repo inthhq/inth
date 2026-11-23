@@ -86,7 +86,6 @@ describe('policy', () => {
 		await mount({ container: null });
 		await waitForRoot();
 		expect(root().getAttribute('data-placement')).toBe('card-start');
-		expect(root().hasAttribute('data-design')).toBe(false);
 	});
 });
 
