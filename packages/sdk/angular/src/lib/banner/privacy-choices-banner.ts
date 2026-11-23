@@ -53,7 +53,10 @@ export class PrivacyChoicesBanner {
 	readonly #owed = signal(false);
 	/** The presentation the prompt loaded with; a later container keeps it. */
 	readonly #type = computed(() => this.options().container.desktop.type);
+	/** The presentation loading or loaded, or `null` after a failed load. */
 	#loading: string | null = null;
+	/** Counts loads, so a load a newer one replaced is dropped. */
+	#generation = 0;
 	#surface: ComponentRef<PrivacyChoicesSurfaceType> | undefined;
 
 	constructor() {
@@ -62,12 +65,17 @@ export class PrivacyChoicesBanner {
 				this.#owed.set(true);
 			}
 		});
+		// The classic banner stays off the page under this design, so a
+		// failed load must not be the end: the next sync (new options) or
+		// the next time the prompt is owed again tries once more.
 		effect(() => {
 			const outlet = this.outlet();
 			const type = this.#type();
+			this.options();
+			const owedNow = this.#consent.activeUI() === 'banner';
 			if (this.#owed() && outlet) {
 				untracked(() => {
-					void this.#load(outlet, type);
+					void this.#load(outlet, type, owedNow);
 				});
 			}
 		});
@@ -75,19 +83,26 @@ export class PrivacyChoicesBanner {
 
 	async #load(
 		outlet: ViewContainerRef,
-		type: PrivacyChoicesBannerOptions['container']['desktop']['type']
+		type: PrivacyChoicesBannerOptions['container']['desktop']['type'],
+		owedNow: boolean
 	): Promise<void> {
 		if (this.#loading === type) {
 			return;
 		}
+		// A retry after a failure waits for a trigger that owes the prompt.
+		if (this.#loading === null && this.#generation > 0 && !owedNow) {
+			return;
+		}
 		this.#loading = type;
+		this.#generation += 1;
+		const generation = this.#generation;
 		const done = this.#pendingTasks.add();
 		try {
 			const [surface, presentation] = await Promise.all([
 				this.#loaders.surface(),
 				this.#loaders.presentation(type),
 			]);
-			if (this.#loading !== type) {
+			if (generation !== this.#generation) {
 				return;
 			}
 			this.#surface?.destroy();
@@ -99,8 +114,11 @@ export class PrivacyChoicesBanner {
 				],
 			});
 		} catch {
-			// The next owed prompt, or a new container, tries again.
-			this.#loading = null;
+			// Only the newest load decides: a replaced one that failed leaves
+			// the newer one alone.
+			if (generation === this.#generation) {
+				this.#loading = null;
+			}
 		} finally {
 			done();
 		}
