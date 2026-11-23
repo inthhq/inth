@@ -56,7 +56,7 @@ import {
 	clearStoredTCString,
 	createCMPApi,
 	syncStoredAdditionalConsent,
-} from './tcf/cmp-api';
+} from './tcf/create-cmp-api';
 import { CMP_VERSION_NUMBER } from './tcf/cmp-defaults.model';
 import {
 	assertValidCmpId,

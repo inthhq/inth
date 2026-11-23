@@ -6,7 +6,7 @@ import { TCString } from '@iabtechlabtcf/core';
 import type { TCData } from '@inth/sdk-core';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { clearStoredTCString, createCMPApi } from '../tcf/cmp-api';
+import { clearStoredTCString, createCMPApi } from '../tcf/create-cmp-api';
 import {
 	PublisherRestrictionError,
 	sameListedRestrictions,

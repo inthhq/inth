@@ -2,7 +2,7 @@
 import type { PingData } from '@inth/sdk-core';
 import { afterEach, expect, test, vi } from 'vitest';
 
-import { createCMPApi } from '../tcf/cmp-api';
+import { createCMPApi } from '../tcf/create-cmp-api';
 import { CMP_VERSION_NUMBER } from '../tcf/cmp-defaults.model';
 import { destroyIABStub, initializeIABStub } from '../tcf/initialize-iab-stub';
 import { generateTCString } from '../tcf/tc-string.model';
