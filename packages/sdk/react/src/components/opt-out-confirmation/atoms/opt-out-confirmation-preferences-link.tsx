@@ -1,23 +1,16 @@
 'use client';
 
-import {
-resolvePreferenceControlLabels
-} from '@inth/sdk/surface-state';
+import { resolvePreferenceControlLabels } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/opt-out-confirmation';
 import { forwardRef as createForwardRef } from 'react';
-import type {
-AnchorHTMLAttributes,MouseEvent,
-ReactNode
-} from 'react';
+import type { AnchorHTMLAttributes, MouseEvent, ReactNode } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
 import { Slot } from '~/components/shared/libs/slot';
-import {
-useSetActiveUI
-} from '~/hooks';
+import { useSetActiveUI } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/use-ui-config';
-import { getSlotProps,mergeSlotProps } from '~/utils/merge-slot-props';
+import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 const PREFERENCES_HASH = '#inth-preferences';
 
@@ -74,4 +67,7 @@ const OptOutConfirmationPreferencesLink = createForwardRef<
 OptOutConfirmationPreferencesLink.displayName =
 	'OptOutConfirmationPreferencesLink';
 
-export { OptOutConfirmationPreferencesLink as PreferencesLink, OptOutConfirmationPreferencesLink };
+export {
+	OptOutConfirmationPreferencesLink as PreferencesLink,
+	OptOutConfirmationPreferencesLink,
+};

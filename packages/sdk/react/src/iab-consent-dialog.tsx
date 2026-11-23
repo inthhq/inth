@@ -25,8 +25,8 @@ import type { ConsentDialogTriggerProps } from './components/panel-trigger';
 import { useActiveUI, useModel } from './hooks';
 import { useIsHydrated } from './hooks/use-is-hydrated';
 import { useIAB } from './iab-provider';
-import { createDeferredModule } from './utils/create-deferred-module';
 import { useIdleDialogWarming } from './use-idle-dialog-warming';
+import { createDeferredModule } from './utils/create-deferred-module';
 import { registerDialogChunkWarmer } from './warm-dialog-chunk';
 
 type AnyComponent = ComponentType<Record<string, unknown>>;

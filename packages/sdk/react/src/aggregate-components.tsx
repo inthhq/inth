@@ -30,9 +30,9 @@ import {
 	useOptInConfirmationOpen,
 	useOptOutConfirmationOpen,
 } from './hooks/use-opt-out';
+import { useIdleDialogWarming } from './use-idle-dialog-warming';
 import { useKernel } from './use-kernel';
 import { createDeferredModule } from './utils/create-deferred-module';
-import { useIdleDialogWarming } from './use-idle-dialog-warming';
 import { registerDialogChunkWarmer } from './warm-dialog-chunk';
 
 type AnyComponent = ComponentType<Record<string, unknown>>;

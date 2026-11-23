@@ -1,20 +1,14 @@
 'use client';
 
-import {
-resolveOptOutReceiptSentence
-} from '@inth/sdk/surface-state';
+import { resolveOptOutReceiptSentence } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/opt-out-confirmation';
-import { forwardRef as createForwardRef,isValidElement } from 'react';
-import type {
-Ref
-} from 'react';
+import { forwardRef as createForwardRef, isValidElement } from 'react';
+import type { Ref } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
 import { Box } from '~/components/shared/primitives/box';
 import type { BoxProps } from '~/components/shared/primitives/box';
-import {
-useOptOutState
-} from '~/hooks';
+import { useOptOutState } from '~/hooks';
 
 const OptOutConfirmationDescription = createForwardRef<
 	HTMLParagraphElement,
@@ -43,4 +37,7 @@ const OptOutConfirmationDescription = createForwardRef<
 });
 OptOutConfirmationDescription.displayName = 'OptOutConfirmationDescription';
 
-export { OptOutConfirmationDescription as Description, OptOutConfirmationDescription };
+export {
+	OptOutConfirmationDescription as Description,
+	OptOutConfirmationDescription,
+};

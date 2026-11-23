@@ -8,7 +8,10 @@
  */
 
 // oxlint-disable-next-line oxc/no-barrel-file -- The subpath's public interface.
-export { DeferredConsentBanner, DeferredConsentDialog } from './surface-with-parts';
+export {
+	DeferredConsentBanner,
+	DeferredConsentDialog,
+} from './surface-with-parts';
 export { DeferredOptOutConfirmation } from './deferred-opt-out-confirmation';
 export type { ConsentBoot, RootEngineInputs } from './boot';
 export type {
@@ -36,10 +39,7 @@ export type {
 } from './create-deferred-kernel';
 export { learnEngineChunks } from './engine-preload.store';
 export { isRunnableNow, scriptsNeedEngine } from './runnable-script.model';
-export {
-	record,
-	recordOnce,
-} from './recorded-promise.model';
+export { record, recordOnce } from './recorded-promise.model';
 export { read } from './read';
 export type { Recorded } from './recorded-promise.model';
 export type {

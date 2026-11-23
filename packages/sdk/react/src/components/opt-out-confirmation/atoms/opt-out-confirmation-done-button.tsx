@@ -1,21 +1,17 @@
 'use client';
 
 import { closeOptOutConfirmation } from '@inth/sdk/surface-actions';
-import {
-resolveOptOutCopy
-} from '@inth/sdk/surface-state';
+import { resolveOptOutCopy } from '@inth/sdk/surface-state';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import { forwardRef as createForwardRef } from 'react';
-import type {
-ButtonHTMLAttributes,MouseEvent
-} from 'react';
+import type { ButtonHTMLAttributes, MouseEvent } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
 import { Slot } from '~/components/shared/libs/slot';
 import { useTheme } from '~/hooks/use-theme';
 import { useKernel } from '~/use-kernel';
 import { useUIConfig } from '~/use-ui-config';
-import { getSlotProps,mergeSlotProps } from '~/utils/merge-slot-props';
+import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 export interface OptOutConfirmationDoneButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 	asChild?: boolean;
@@ -78,4 +74,7 @@ const OptOutConfirmationDoneButton = createForwardRef<
 );
 OptOutConfirmationDoneButton.displayName = 'OptOutConfirmationDoneButton';
 
-export { OptOutConfirmationDoneButton as DoneButton, OptOutConfirmationDoneButton };
+export {
+	OptOutConfirmationDoneButton as DoneButton,
+	OptOutConfirmationDoneButton,
+};

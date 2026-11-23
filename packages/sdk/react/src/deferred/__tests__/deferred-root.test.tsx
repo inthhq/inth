@@ -36,11 +36,11 @@ import {
 } from '../boot';
 import type { ConsentBoot } from '../boot';
 import { ConsentBootData } from '../consent-boot-data';
-import { ServerBootData } from '../server-boot-data';
 import type { DeferredCommitConfig } from '../deferred-committed.model';
 import { DeferredConsentShell } from '../deferred-consent-shell';
 import type * as EngineNamespace from '../engine';
 import { ENGINE_CHUNKS_KEY } from '../engine-preload.store';
+import { ServerBootData } from '../server-boot-data';
 import { DeferredConsentBanner } from '../surface-with-parts';
 import { engineNeededAtLoad } from '../use-consent-boot-plan';
 

@@ -2,9 +2,7 @@
 
 import styles from '@inth/sdk/ui/styles/components/opt-out-confirmation';
 import { forwardRef as createForwardRef } from 'react';
-import type {
-Ref
-} from 'react';
+import type { Ref } from 'react';
 
 import { Box } from '~/components/shared/primitives/box';
 import type { BoxProps } from '~/components/shared/primitives/box';

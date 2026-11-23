@@ -1,18 +1,12 @@
 'use client';
 
-import {
-resolveOptOutCopy
-} from '@inth/sdk/surface-state';
+import { resolveOptOutCopy } from '@inth/sdk/surface-state';
 import styles from '@inth/sdk/ui/styles/components/opt-out-confirmation';
 import { forwardRef as createForwardRef } from 'react';
-import type {
-HTMLAttributes
-} from 'react';
+import type { HTMLAttributes } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
-import {
-useOptOutState
-} from '~/hooks';
+import { useOptOutState } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import { useTranslationLanguage } from '~/hooks/use-translation-language';
 

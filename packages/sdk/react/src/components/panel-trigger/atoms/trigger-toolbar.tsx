@@ -28,8 +28,8 @@ import type {
 	TriggerOrientation,
 	TriggerSize,
 } from '../consent-dialog-trigger.model';
-import { TriggerIcon } from './trigger-icon';
 import { DevToolsIcon } from './dev-tools-icon';
+import { TriggerIcon } from './trigger-icon';
 import { useTriggerContext } from './trigger-root';
 
 const cornerClassMap = {

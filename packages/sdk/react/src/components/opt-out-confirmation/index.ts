@@ -2,7 +2,6 @@
 
 import type { FC } from 'react';
 
-import { OptOutConfirmationOverlay, Overlay } from './atoms/overlay';
 import {
 	Card,
 	OptOutConfirmationCard,
@@ -39,6 +38,7 @@ import {
 	OptOutConfirmationTitle,
 	Title,
 } from './atoms/opt-out-confirmation-title';
+import { OptOutConfirmationOverlay, Overlay } from './atoms/overlay';
 import { OptOutConfirmationRoot, Root } from './atoms/root';
 import { OptOutConfirmation as OptOutConfirmationComponent } from './opt-out-confirmation';
 import type { OptOutConfirmationProps } from './opt-out-confirmation';

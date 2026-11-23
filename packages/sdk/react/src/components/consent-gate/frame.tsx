@@ -8,10 +8,10 @@
 import { forwardRef as createForwardRef } from 'react';
 import type { ElementType } from 'react';
 
+import { ConsentGate as ConsentGateComponent } from './consent-gate';
 import { ConsentGateButton } from './consent-gate-button';
 import { ConsentGateRoot } from './consent-gate-root';
 import { ConsentGateTitle } from './consent-gate-title';
-import { ConsentGate as ConsentGateComponent } from './consent-gate';
 import type {
 	ConsentGateCompoundComponent,
 	ConsentGateProps,

@@ -13,9 +13,9 @@ import { useConsentSaveAction } from '~/draft-context';
 import { useSetActiveUI, useDismissNotice } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import type { CSSPropertiesWithVars, CSSVariables } from '~/types/theme';
+import { useIdleDialogWarming } from '~/use-idle-dialog-warming';
 import { useUIConfig } from '~/use-ui-config';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
-import { useIdleDialogWarming } from '~/use-idle-dialog-warming';
 import { warmDialogChunk } from '~/warm-dialog-chunk';
 
 import { Slot } from '../libs/slot';
