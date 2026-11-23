@@ -1,11 +1,11 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { buildQueuePixelInstall } from '../_shared/install-builders';
-import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { resolveManifest } from '../../resolve-manifest';
+import { vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
+import { buildQueuePixelInstall } from '../_shared/build-queue-pixel-install';
+import { readId, skipMissingId } from '../_shared/required-id.model';
+import { resolveScriptUrl } from '../_shared/script-url.model';
 
 export interface FbqContent {
 	id: string | number;

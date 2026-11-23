@@ -1,4 +1,4 @@
-import type { VendorManifest } from '../../types';
+import type { VendorManifest } from '../../vendor-manifest.model';
 
 /**
  * Optional tracking call inserted between the vendor init call and script load.

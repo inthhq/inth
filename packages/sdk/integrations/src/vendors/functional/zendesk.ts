@@ -1,14 +1,14 @@
 import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { runtimeTimestampValue, vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import { resolveManifest } from '../../resolve-manifest';
+import { runtimeTimestampValue, vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
 import { permitted } from '../_shared/permitted';
-import { readId, skipMissingId } from '../_shared/required-id';
+import { readId, skipMissingId } from '../_shared/required-id.model';
 import {
 	createScriptReuse,
 	getScriptRegistrations,
-} from '../_shared/reuse-script';
+} from '../_shared/create-script-reuse';
 
 interface ZendeskWidgetApi {
 	(...args: unknown[]): void;

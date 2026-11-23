@@ -11,9 +11,9 @@
  *   GITHUB_TOKEN=... GITHUB_REPOSITORY=owner/repo \
  *     bun live-vendors/manage-issues.ts --report live-vendors-report.json
  */
-import { MONITOR_ISSUE_TITLE_PREFIX, planMonitorIssueActions } from './report';
-import type { ExistingMonitorIssue } from './report';
-import type { LiveVendorReport } from './types';
+import { MONITOR_ISSUE_TITLE_PREFIX, planMonitorIssueActions } from './monitor-issue.model';
+import type { ExistingMonitorIssue } from './monitor-issue.model';
+import type { LiveVendorReport } from './live-vendor-probe.model';
 
 const GITHUB_REQUEST_TIMEOUT_MS = 30_000;
 

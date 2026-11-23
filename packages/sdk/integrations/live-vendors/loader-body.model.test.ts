@@ -5,8 +5,8 @@ import {
 	captureBrowserLoaderBody,
 	captureStreamLoaderBody,
 	MAX_LOADER_BODY_BYTES,
-} from './loader-body';
-import { digestBody } from './probe-policy';
+} from './loader-body.model';
+import { digestBody } from './probe-policy.model';
 
 describe('captureBrowserLoaderBody', () => {
 	it.each([

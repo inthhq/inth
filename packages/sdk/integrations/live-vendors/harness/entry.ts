@@ -11,12 +11,12 @@ import type { ConsentState } from '@inth/sdk/engine';
 import { createScriptLoader } from '@inth/sdk/modules/script-loader';
 import type { ScriptLoaderHandle } from '@inth/sdk/modules/script-loader';
 
-import { ALL_DENIED } from '../../src/engine/vendor-consent';
+import { ALL_DENIED } from '../../src/engine/vendor-consent.model';
 import type {
 	LiveProbeCheckResult,
 	LiveProbeLoadOutcome,
 	LiveVendorProbeHarness,
-} from '../types';
+} from '../live-vendor-probe.model';
 import { getLiveVendorProbeConfig, liveVendorProbeConfigs } from '../vendors';
 
 declare global {

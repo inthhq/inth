@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { assertsRuntime, digestBody } from './probe-policy';
+import { assertsRuntime, digestBody } from './probe-policy.model';
 import { liveVendorProbeConfigs } from './vendors';
 
 const ok = () => ({ detail: 'stub', ok: true });

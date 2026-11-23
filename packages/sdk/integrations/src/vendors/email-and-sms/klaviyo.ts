@@ -1,10 +1,10 @@
 import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { readId, skipMissingId, skipScript } from '../_shared/required-id';
-import { httpsScriptUrl } from '../_shared/script-url';
+import { resolveManifest } from '../../resolve-manifest';
+import { vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
+import { readId, skipMissingId, skipScript } from '../_shared/required-id.model';
+import { httpsScriptUrl } from '../_shared/script-url.model';
 
 declare global {
 	interface Window {

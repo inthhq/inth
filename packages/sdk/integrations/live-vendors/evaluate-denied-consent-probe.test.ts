@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { evaluateDeniedConsentProbe } from './denied-consent';
-import type { DeniedConsentProbeConfig, LiveStorageSnapshot } from './types';
+import { evaluateDeniedConsentProbe } from './evaluate-denied-consent-probe';
+import type { DeniedConsentProbeConfig, LiveStorageSnapshot } from './live-vendor-probe.model';
 
 const config: DeniedConsentProbeConfig = {
 	collectUrlSubstrings: ['api-js.mixpanel.com', 'api.mixpanel.com'],

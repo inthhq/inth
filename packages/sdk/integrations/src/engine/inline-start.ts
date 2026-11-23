@@ -11,8 +11,8 @@
  */
 import type { ScriptServerStart } from '@inth/sdk/engine';
 
-import { RUNTIME_VALUE_KIND } from '../types';
-import type { ManifestStep } from '../types';
+import { RUNTIME_VALUE_KIND } from '../vendor-manifest.model';
+import type { ManifestStep } from '../vendor-manifest.model';
 
 /** JSON safe inside a `<script>` element. */
 const inlineJSON = function inlineJSON(value: unknown): string {

@@ -5,7 +5,7 @@
  */
 import { createHash } from 'node:crypto';
 
-import type { LiveVendorProbeConfig } from './types';
+import type { LiveVendorProbeConfig } from './live-vendor-probe.model';
 
 /**
  * Decides whether a probe attempt must assert that the vendor runtime started.

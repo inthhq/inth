@@ -6,7 +6,7 @@ import {
 	stripLeadingSlashes,
 	stripTrailingSlashes,
 	trimToUndefined,
-} from './script-url';
+} from './script-url.model';
 
 describe('vendor script URL helpers', () => {
 	describe('trimToUndefined', () => {

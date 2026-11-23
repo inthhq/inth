@@ -8,8 +8,8 @@ import {
 	planMonitorIssueActions,
 	signatureFromIssueBody,
 	vendorFromMonitorIssueTitle,
-} from './report';
-import type { LiveVendorReport, LiveVendorResult } from './types';
+} from './monitor-issue.model';
+import type { LiveVendorReport, LiveVendorResult } from './live-vendor-probe.model';
 
 const makeResult = function makeResult(
 	overrides: Partial<LiveVendorResult>

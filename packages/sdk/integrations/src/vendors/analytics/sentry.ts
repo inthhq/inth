@@ -7,22 +7,22 @@ import type {
 import { has } from '@inth/sdk/engine';
 
 import { isRecord } from '../../engine/runtime';
-import { ALL_DENIED } from '../../engine/vendor-consent';
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import { ALL_DENIED } from '../../engine/vendor-consent.model';
+import { resolveManifest } from '../../resolve-manifest';
+import { vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
 import { permitted } from '../_shared/permitted';
 import {
 	waitForReplayIdle,
 	waitForReplayLoad,
 	waitForReplayPaint,
 } from '../_shared/replay-scheduler';
-import { readId, skipMissingId } from '../_shared/required-id';
+import { readId, skipMissingId } from '../_shared/required-id.model';
 import {
 	createScriptReuse,
 	getScriptRegistrations,
-} from '../_shared/reuse-script';
-import { trimToUndefined } from '../_shared/script-url';
+} from '../_shared/create-script-reuse';
+import { trimToUndefined } from '../_shared/script-url.model';
 
 /** Recording mode that Sentry Replay reports while it records. */
 export type SentryReplayRecordingMode = 'session' | 'buffer';

@@ -2,7 +2,7 @@ import type {
 	DeniedConsentProbeConfig,
 	LiveProbeCheckResult,
 	LiveStorageSnapshot,
-} from './types';
+} from './live-vendor-probe.model';
 
 /**
  * Evaluates the denied-consent egress assertion for an `alwaysLoad` vendor.

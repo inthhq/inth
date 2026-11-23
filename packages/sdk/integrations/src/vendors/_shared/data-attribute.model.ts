@@ -1,4 +1,4 @@
-import { trimToUndefined } from './script-url';
+import { trimToUndefined } from './script-url.model';
 
 /**
  * Converts an optional boolean into a script `data-*` attribute value.

@@ -1,14 +1,14 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { readId, skipMissingId } from '../_shared/required-id';
+import { resolveManifest } from '../../resolve-manifest';
+import { vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
+import { readId, skipMissingId } from '../_shared/required-id.model';
 import {
 	createScriptReuse,
 	getScriptRegistrations,
-} from '../_shared/reuse-script';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+} from '../_shared/create-script-reuse';
+import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url.model';
 
 /** FullStory v2 dispatcher arguments, including Async completion callbacks. */
 export type FullStoryCall = [

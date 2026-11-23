@@ -22,13 +22,13 @@ import { chromium } from 'playwright';
 import type { Browser, Response } from 'playwright';
 
 import { getBuiltInScriptIntegrationByVendor } from '../src/registry';
-import { evaluateDeniedConsentProbe } from './denied-consent';
+import { evaluateDeniedConsentProbe } from './evaluate-denied-consent-probe';
 import {
 	captureBrowserLoaderBody,
 	captureStreamLoaderBody,
-} from './loader-body';
-import { assertsRuntime, digestBody } from './probe-policy';
-import { failedPhases } from './report';
+} from './loader-body.model';
+import { assertsRuntime, digestBody } from './probe-policy.model';
+import { failedPhases } from './monitor-issue.model';
 import type {
 	LiveProbeCheckResult,
 	LiveProbeLoadOutcome,
@@ -37,7 +37,7 @@ import type {
 	LiveVendorProbeHarness,
 	LiveVendorReport,
 	LiveVendorResult,
-} from './types';
+} from './live-vendor-probe.model';
 import { liveVendorProbeConfigs } from './vendors';
 
 const MAX_ATTEMPTS = 2;

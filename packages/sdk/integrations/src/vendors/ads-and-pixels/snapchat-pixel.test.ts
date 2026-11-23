@@ -7,7 +7,7 @@ import {
 	runOnBeforeLoad,
 	setupScriptHelperTest,
 } from '../../__tests__/helpers';
-import { resolveManifest } from '../../resolve';
+import { resolveManifest } from '../../resolve-manifest';
 import {
 	snapchatPixel,
 	snapchatPixelEvent,

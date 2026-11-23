@@ -3,9 +3,9 @@ import type { Script } from '@inth/sdk/engine';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createCallbackInfo } from '../__tests__/helpers';
-import { resolveManifest } from '../resolve';
-import { vendorManifestContract } from '../types';
-import type { DefineQueueMethodsStep, VendorManifest } from '../types';
+import { resolveManifest } from '../resolve-manifest';
+import { vendorManifestContract } from '../vendor-manifest.model';
+import type { DefineQueueMethodsStep, VendorManifest } from '../vendor-manifest.model';
 
 interface QueueClient {
 	q: unknown[][];

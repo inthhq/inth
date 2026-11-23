@@ -1,11 +1,11 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract, runtimeTimestampValue } from '../../types';
-import type { VendorManifest } from '../../types';
-import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
-import { withActiveCampaignRuntime } from './activecampaign-runtime';
+import { resolveManifest } from '../../resolve-manifest';
+import { vendorManifestContract, runtimeTimestampValue } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
+import { readId, skipMissingId } from '../_shared/required-id.model';
+import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url.model';
+import { withActiveCampaignRuntime } from './with-active-campaign-runtime';
 
 declare global {
 	interface Window {

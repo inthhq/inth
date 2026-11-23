@@ -1,14 +1,14 @@
 import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { runtimeTimestampValue, vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import { resolveManifest } from '../../resolve-manifest';
+import { runtimeTimestampValue, vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
 import {
 	GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
 	GTAG_BOOTSTRAP,
 	withOptionalConsentMapping,
 } from '../_shared/google-consent';
-import { readId, skipMissingId } from '../_shared/required-id';
+import { readId, skipMissingId } from '../_shared/required-id.model';
 
 /**
  * Google Tag Manager vendor manifest. `dataLayer` and `gtag` name the

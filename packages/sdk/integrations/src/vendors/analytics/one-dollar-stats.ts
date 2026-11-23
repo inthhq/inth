@@ -1,8 +1,8 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import { resolveManifest } from '../../resolve-manifest';
+import { vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
 
 /** The classic script from OneDollarStats' installation instructions. */
 export const ONE_DOLLAR_STATS_SCRIPT_SRC =

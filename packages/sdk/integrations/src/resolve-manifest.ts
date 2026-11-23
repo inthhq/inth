@@ -1,8 +1,8 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { compileManifest } from './engine/compile';
+import { compileManifest } from './engine/compile-manifest';
 import { resolvedManifestToScript } from './engine/runtime';
-import type { ResolvedManifest, VendorManifest } from './types';
+import type { ResolvedManifest, VendorManifest } from './vendor-manifest.model';
 
 const manifestCache = new WeakMap<
 	VendorManifest,

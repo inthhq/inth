@@ -8,10 +8,10 @@ import type {
 
 import { inlineStepsStart } from '#inline-start';
 
-import { RUNTIME_VALUE_KIND } from '../types';
-import type { ManifestStep, ResolvedManifest, RuntimeValue } from '../types';
-import { mapConsentState } from './consent-mapping';
-import { signalConsents } from './vendor-consent';
+import { RUNTIME_VALUE_KIND } from '../vendor-manifest.model';
+import type { ManifestStep, ResolvedManifest, RuntimeValue } from '../vendor-manifest.model';
+import { mapConsentState } from './map-consent-state';
+import { signalConsents } from './vendor-consent.model';
 
 type ManifestLifecycleCallback = Exclude<ScriptLifecycleCallback, 'onError'>;
 

@@ -1,4 +1,4 @@
-import type { ManifestStep } from '../../types';
+import type { ManifestStep } from '../../vendor-manifest.model';
 
 /**
  * The gtag.js snippet: a `{{dataLayer}}` queue and a `{{gtag}}` function

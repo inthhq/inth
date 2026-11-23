@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildQueuePixelInstall } from './install-builders';
+import { buildQueuePixelInstall } from './build-queue-pixel-install';
 
 describe('vendor install builders', () => {
 	it('builds an init call followed by a script load', () => {

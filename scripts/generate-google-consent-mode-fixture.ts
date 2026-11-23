@@ -20,7 +20,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { mapConsentState } from '../packages/sdk/integrations/src/engine/consent-mapping';
+import { mapConsentState } from '../packages/sdk/integrations/src/engine/map-consent-state';
 import {
 	GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,
 	GOOGLE_CONSENT_TYPES,

@@ -1,6 +1,6 @@
 import type { Script } from '@inth/sdk/engine';
 
-import type { VendorManifest } from '../../types';
+import type { VendorManifest } from '../../vendor-manifest.model';
 
 /**
  * What a helper knows about the script it would have returned: its consent

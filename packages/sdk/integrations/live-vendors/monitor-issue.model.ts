@@ -2,7 +2,7 @@ import type {
 	LiveProbePhase,
 	LiveVendorReport,
 	LiveVendorResult,
-} from './types';
+} from './live-vendor-probe.model';
 
 /**
  * Title prefix used to dedupe monitor issues on GitHub.

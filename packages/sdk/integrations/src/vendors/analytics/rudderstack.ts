@@ -1,14 +1,14 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { readId, skipMissingId, skipScript } from '../_shared/required-id';
+import { resolveManifest } from '../../resolve-manifest';
+import { vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
+import { readId, skipMissingId, skipScript } from '../_shared/required-id.model';
 import {
 	httpsScriptUrl,
 	isHttpsUrl,
 	resolveScriptUrl,
-} from '../_shared/script-url';
+} from '../_shared/script-url.model';
 
 const DEFAULT_RUDDERSTACK_SCRIPT_URL =
 	'https://cdn.rudderlabs.com/v3/modern/rsa.min.js';
