@@ -24,7 +24,7 @@ import { render } from 'vitest-browser-react';
 // while the file loads.
 import '@inth/sdk/modules/clear-on-revocation';
 
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 

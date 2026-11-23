@@ -14,8 +14,8 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
-import { InthProvider } from '../root';
-import type { InthProviderProps } from '../root';
+import { InthProvider } from '../inth-provider';
+import type { InthProviderProps } from '../inth-provider';
 import { resolveConsent } from '../server';
 import { manifestOf } from './manifest-fixture';
 

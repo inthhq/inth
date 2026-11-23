@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest';
 import packageJson from '../../package.json';
 import * as entry from '../index';
 import * as reactEntry from '../react';
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 
 describe('the InthProvider each @inth/tanstack-start entry exports', () => {
 	test("the main entry exports this package's root, not React's", () => {

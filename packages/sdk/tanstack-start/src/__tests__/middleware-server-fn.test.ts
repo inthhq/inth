@@ -17,7 +17,7 @@ import { expect, test } from 'vitest';
 import { optInRule } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
 import { consentRequestMiddleware } from '../middleware';
 import type { ConsentRequestContext } from '../middleware';
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 import { createConsentStateHandler } from '../server';
 import type { ConsentState } from '../server';
 import { manifestOf } from './manifest-fixture';

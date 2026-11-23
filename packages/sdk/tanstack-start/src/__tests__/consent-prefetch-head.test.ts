@@ -9,7 +9,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import {
 	consentPrefetchHead,
 	readPrefetchedInitialData,
-} from '../libs/prefetch-head';
+} from '../libs/consent-prefetch-head';
 
 const ORIGIN = 'https://app.example.com';
 

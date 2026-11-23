@@ -12,7 +12,7 @@ import { useActiveUI, useModel } from '@inth/react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 import type { ConsentState } from '../server';
 import { policyFixture } from './policy-fixture';
 

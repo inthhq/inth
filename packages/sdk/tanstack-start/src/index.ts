@@ -75,7 +75,7 @@ export {
 	DeferredConsentDialog as ConsentDialog,
 	DeferredOptOutConfirmation as OptOutConfirmation,
 } from '@inth/react/deferred';
-export { consentPrefetchHead } from './libs/prefetch-head';
-export type { InthProviderOptions, InthProviderProps } from './root';
-export { InthProvider } from './root';
-export type { ConsentPrefetchHead, ConsentPrefetchHeadOptions } from './types';
+export { consentPrefetchHead } from './libs/consent-prefetch-head';
+export type { InthProviderOptions, InthProviderProps } from './inth-provider';
+export { InthProvider } from './inth-provider';
+export type { ConsentPrefetchHead, ConsentPrefetchHeadOptions } from './consent-prefetch-head.model';

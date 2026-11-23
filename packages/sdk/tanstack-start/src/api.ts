@@ -48,11 +48,11 @@ import type {
 	ManifestCache,
 } from '@inth/sdk/server';
 
-import { handledRequestFor } from './libs/handled-request';
+import { handledRequestFor } from './libs/handled-request-for';
 import {
 	readConsentInputs,
 	rememberConsentRouteRequest,
-} from './libs/request-inputs';
+} from './libs/consent-request-inputs.model';
 
 export type { ConsentProxyOptions } from '@inth/sdk/server';
 

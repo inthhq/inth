@@ -7,7 +7,7 @@ import { createManifestCache } from '@inth/sdk/server';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createConsentRoute } from '../api';
-import { rememberConsentInputs } from '../libs/request-inputs';
+import { rememberConsentInputs } from '../libs/consent-request-inputs.model';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
 const BACKEND = 'https://consent.example.com';

@@ -50,9 +50,9 @@ import { resolveStreamedInit } from '@inth/sdk/runtime/streamed-init';
 import { Suspense, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { readPrefetchedInitialData } from './libs/prefetch-head';
-import { isPending, startsFromHTML } from './root-options';
-import type { InthProviderProps } from './root-options';
+import { readPrefetchedInitialData } from './libs/consent-prefetch-head';
+import { isPending, startsFromHTML } from './inth-provider-options.model';
+import type { InthProviderProps } from './inth-provider-options.model';
 import type { ConsentState } from './server';
 
 // The stock surfaces a deferred root renders come from this chunk, so

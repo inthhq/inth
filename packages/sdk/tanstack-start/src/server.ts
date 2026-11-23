@@ -78,12 +78,12 @@ import {
 } from '@inth/sdk/server';
 import type { ManifestCache } from '@inth/sdk/server';
 
-import { handledRequestFor } from './libs/handled-request';
-import { isPrerendering } from './libs/prerendering';
+import { handledRequestFor } from './libs/handled-request-for';
+import { isPrerendering } from './libs/is-prerendering';
 import {
 	readConsentInputs,
 	rememberVisitorRender,
-} from './libs/request-inputs';
+} from './libs/consent-request-inputs.model';
 
 type Awaitable<Value> = Promise<Value> | Value;
 
@@ -470,7 +470,7 @@ export const mergeInitIntoConsentState = function mergeInitIntoConsentState(
 
 // -- Route wiring ------------------------------------------------------------
 
-export { consentLoaderOptions } from './libs/loader-options';
+export { consentLoaderOptions } from './libs/consent-loader-options';
 
 /**
  * Builds the handler for the consent state server function.

@@ -5,7 +5,7 @@ import {
 	PREFETCH_SCRIPT_ID,
 } from '@inth/sdk/engine';
 
-import type { ConsentPrefetchHead, ConsentPrefetchHeadOptions } from '../types';
+import type { ConsentPrefetchHead, ConsentPrefetchHeadOptions } from '../consent-prefetch-head.model';
 
 /**
  * Base URL the head prefetch script keyed its request on: the route prefix

@@ -1,6 +1,6 @@
 import { expectTypeOf } from 'vitest';
 
-import type { InthProviderProps } from '../root';
+import type { InthProviderProps } from '../inth-provider';
 import type { ConsentState } from '../server';
 
 // An awaited root loader hands over the state; a streamed one hands over the
