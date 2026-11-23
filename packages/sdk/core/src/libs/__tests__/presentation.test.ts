@@ -289,6 +289,52 @@ describe('surface shape', () => {
 			}).blocking
 		).toBe(false);
 	});
+	it('warns about the removed prompt options, naming what replaces each', () => {
+		const prompt = {
+			blocking: true,
+			position: 'bottom-left',
+			variant: 'banner',
+		} as unknown as PromptPresentation;
+		const result = resolveConsentPresentation({
+			override: { variant: 'card' } as unknown as PromptPresentation,
+			policy: choice,
+			presentation: { prompt },
+			surface: 'prompt',
+		});
+		expect(
+			result.diagnostics.filter(
+				(diagnostic) => diagnostic.code === 'removed-option'
+			)
+		).toEqual([
+			{
+				actions: [],
+				code: 'removed-option',
+				message:
+					'presentation.prompt.blocking was removed and does nothing; use blockUntilChoice instead.',
+			},
+			{
+				actions: [],
+				code: 'removed-option',
+				message:
+					'presentation.prompt.position was removed and does nothing; use container instead.',
+			},
+			{
+				actions: [],
+				code: 'removed-option',
+				message:
+					'presentation.prompt.variant was removed and does nothing; use container instead.',
+			},
+		]);
+	});
+	it('does not warn about blocking on the preferences surface, where it is current', () => {
+		const result = resolveConsentPresentation({
+			override: { blocking: false },
+			policy: choice,
+			presentation: { preferences: { blocking: false } },
+			surface: 'preferences',
+		});
+		expect(result.diagnostics).toEqual([]);
+	});
 	it('defaults the preferences surface to blocking', () => {
 		const result = resolveConsentPresentation({
 			policy: notice,
