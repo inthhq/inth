@@ -244,26 +244,24 @@ export const setCategory = async function setCategory(
 
 /** One vendor's switch under a category in the preference dialog. */
 export const vendorSwitch = (page: Page, category: string, vendor: string) =>
-	page.getByTestId(`consent-widget-vendor-switch-${category}-${vendor}`);
+	page.getByTestId(`consent-dialog-vendor-switch-${category}-${vendor}`);
 
 /**
- * Open one category's row in the preference dialog, where its vendor
- * switches sit.
+ * Open one category's vendor table in the preference dialog, where its
+ * vendor switches sit.
  */
 export const expandCategory = async function expandCategory(
 	page: Page,
 	category: string
 ): Promise<void> {
-	const trigger = page.getByTestId(
-		`consent-widget-accordion-trigger-${category}`
-	);
+	const trigger = page.getByTestId(`consent-dialog-vendor-trigger-${category}`);
 	await expect.poll(() => trigger.isVisible()).toBe(true);
 	if ((await trigger.getAttribute('aria-expanded')) !== 'true') {
 		await trigger.click();
 	}
 	await expect
 		.poll(() =>
-			page.getByTestId(`consent-widget-vendor-list-${category}`).isVisible()
+			page.getByTestId(`consent-dialog-vendor-table-${category}`).isVisible()
 		)
 		.toBe(true);
 };
