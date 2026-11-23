@@ -86,13 +86,13 @@ import {
 	readDialogLegalLinks,
 } from './ensure-dialog-host';
 import { loadDialog } from './load-dialog';
+import { getWindow } from './get-window';
 import {
 	BANNER_OVERLAY_SELECTOR,
 	BANNER_ROOT_SELECTOR,
 	GLOBAL_KEY,
-	getWindow,
-	readPageNonce,
-} from './read-page-nonce';
+} from './page-state.model';
+import { readPageNonce } from './read-page-nonce';
 import {
 	scheduleDeferredEngine,
 	unhideEarlyTap,

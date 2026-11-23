@@ -13,7 +13,9 @@ import type {
 } from '../astro-consent-client.model';
 import type { ConsentDialogKind } from '../ui/register-dialog-adapter';
 import { preloadDialogChunks } from './load-dialog';
-import { ACTIONS_KEY, getWindow, readPageNonce } from './read-page-nonce';
+import { getWindow } from './get-window';
+import { ACTIONS_KEY } from './page-state.model';
+import { readPageNonce } from './read-page-nonce';
 
 /** Attribute the server-rendered banner puts on its action buttons. */
 export const ACTION_ATTRIBUTE = 'data-inth-action';

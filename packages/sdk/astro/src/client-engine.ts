@@ -95,12 +95,14 @@ import { loadDialog } from './browser/load-dialog';
 import { keepDialogStylesOnSwap } from './browser/load-dialog-styles';
 import type * as PromptModule from './browser/mount-prompt';
 import type { PromptController } from './browser/mount-prompt';
+import { getWindow } from './browser/get-window';
 import {
 	COLOR_SCHEME_KEY,
 	CONFIG_KEY,
 	GLOBAL_KEY,
+} from './browser/page-state.model';
+import {
 	configScripts,
-	getWindow,
 	nonceOf,
 	readPageNonce,
 } from './browser/read-page-nonce';

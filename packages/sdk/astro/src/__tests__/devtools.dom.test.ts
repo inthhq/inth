@@ -3,7 +3,7 @@ import { createConsentRuntime } from '@inth/sdk/runtime';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { GLOBAL_KEY } from '../browser/read-page-nonce';
+import { GLOBAL_KEY } from '../browser/page-state.model';
 import { createDevTools, mountDevTools } from '../devtools';
 
 const page = window as unknown as Record<string, unknown>;
