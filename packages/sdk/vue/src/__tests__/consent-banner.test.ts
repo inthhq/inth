@@ -5,8 +5,12 @@
  * (`prototypes/PRIVACY-CHOICES-REGRESSIONS.md`). Geometry checks stay in
  * React's browser tests and the parity runner: jsdom lays nothing out.
  */
+import { EARLY_TAPS_WINDOW_KEY } from '@inth/sdk/runtime/page-globals';
 import type { PolicyRule } from '@inth/sdk/schema/types';
-import { openOptInConfirmation } from '@inth/sdk/surface-actions';
+import {
+	EARLY_CONSENT_TAP_SCRIPT,
+	openOptInConfirmation,
+} from '@inth/sdk/surface-actions';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { rightsBundleOf } from '../runtime/components/parts/use-surface-session';
@@ -40,7 +44,35 @@ afterEach(async () => {
 	await unmountConsentUI();
 	vi.unstubAllGlobals();
 	vi.restoreAllMocks();
+	Reflect.deleteProperty(window, EARLY_TAPS_WINDOW_KEY);
+	document.head.innerHTML = '';
+	localStorage.clear();
 });
+
+/**
+ * A tap on server HTML before the banner hydrated, as the inline script
+ * records it. The stand-in root names no model or prompt, so the tap
+ * applies to whatever the banner resolves to.
+ */
+const tapBeforeHydration = (action: string): number | undefined => {
+	const server = document.createElement('div');
+	server.innerHTML = `<div data-testid="consent-banner-root"><button type="button" data-action="${action}">${action}</button></div>`;
+	document.body.append(server);
+	// oxlint-disable-next-line no-new-func -- Runs the inline script as server HTML would.
+	new Function(EARLY_CONSENT_TAP_SCRIPT)();
+	server.querySelector('button')?.click();
+	server.remove();
+	const host = window as unknown as Record<
+		string,
+		{ taps?: { at: number }[] } | undefined
+	>;
+	return host[EARLY_TAPS_WINDOW_KEY]?.taps?.[0]?.at;
+};
+
+const later = () =>
+	new Promise((resolve) => {
+		setTimeout(resolve, 30);
+	});
 
 describe('policy', () => {
 	test('[BNR-13][BNR-10] US opt-out with no prompt shows nothing and never blocks', async () => {
@@ -417,6 +449,67 @@ describe('notice', () => {
 		must('consent-banner-dismiss-button').click();
 		await waitFor(() => expect($('consent-banner-root')).toBeNull());
 		expect(context.snapshot.value.explicitChoice).toBeFalsy();
+	});
+});
+
+describe('[BNR-06] a tap before hydration', () => {
+	test("the root names the policy's model and prompt, and the notice's right-link replays as Customize", async () => {
+		await mount({ region: 'us-notice' });
+		await waitForRoot();
+		// The script records these with a tap, so a replay against another
+		// policy is dropped.
+		expect(root().getAttribute('data-model')).toBe('opt-out');
+		expect(root().getAttribute('data-prompt')).toBe('notice');
+		expect(
+			must('consent-banner-right-link-opt-out').getAttribute('data-action')
+		).toBe('customize');
+	});
+
+	test("the collapsed bar's right-link replays as Customize too", async () => {
+		await mount({ container: { type: 'banner' }, region: 'us-notice' });
+		await waitForRoot();
+		expect(
+			must('consent-banner-right-link-opt-out').getAttribute('data-action')
+		).toBe('customize');
+	});
+
+	test("a tap on the notice's right-link before hydration expands the rights in place", async () => {
+		tapBeforeHydration('customize');
+		const context = await mount({ region: 'us-notice' });
+		// The replay waits for the runtime to start.
+		context.start();
+		await waitForRoot();
+		await waitFor(() =>
+			expect(root().getAttribute('data-expanded')).toBe('true')
+		);
+		expect(context.snapshot.value.activeUI).toBe('banner');
+		expect(context.snapshot.value.optOut).toBeFalsy();
+	});
+
+	test('a choice records the time of the tap, not of the replay', async () => {
+		const tappedAt = tapBeforeHydration('reject');
+		expect(tappedAt).toBeTypeOf('number');
+		await later();
+		const context = await mount({ region: 'us-opt-in' });
+		context.start();
+		await waitFor(() =>
+			expect(context.snapshot.value.explicitChoice).toBeTruthy()
+		);
+		expect(
+			context.snapshot.value.explicitChoice?.categories?.marketing?.confirmedAt
+		).toBe(tappedAt);
+	});
+
+	test('an OK on the notice before hydration records the time of the tap', async () => {
+		const tappedAt = tapBeforeHydration('dismiss');
+		expect(tappedAt).toBeTypeOf('number');
+		await later();
+		const context = await mount({ region: 'us-notice' });
+		context.start();
+		await waitFor(() =>
+			expect(context.snapshot.value.noticeDismissal).toBeTruthy()
+		);
+		expect(context.snapshot.value.noticeDismissal?.dismissedAt).toBe(tappedAt);
 	});
 });
 
