@@ -13,7 +13,6 @@
  */
 
 import {
-	commitBannerChoice,
 	announcementText,
 	resolveBannerAllowedAnnouncement,
 	resolveOptOutState,
@@ -28,12 +27,7 @@ import type {
 	ResolvedConsentLayout,
 	ResolvedConsentPresentation,
 } from '@inth/sdk-core';
-import { createPreferenceDraft } from '@inth/sdk-core/preference-draft';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
-import {
-	getOptOutReceiptData,
-	hasConsentUI,
-} from '@inth/sdk-core/surface-actions';
 import {
 	afterMotion,
 	attachLiveRegion,
@@ -56,6 +50,12 @@ import { renderLegalLinks } from '../surface';
 import type { SurfaceContext } from '../surface';
 import { activeElementOf, cx, el, focusFirstIn, owned, patch } from './dom';
 import type { PcChild, PcRef } from './dom';
+import {
+	commitBannerChoice,
+	createPreferenceDraft,
+	getOptOutReceiptData,
+	hasConsentUI,
+} from './engine';
 import type { PrivacyChoicesPanel } from './panel';
 import { importPanel } from './pc-import';
 import {

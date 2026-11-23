@@ -12,7 +12,6 @@
 
 import {
 	announcementText,
-	commitDialogChoice,
 	MAIN_LAYER,
 	resolveCategoryTitle,
 	resolveConsentPresentation,
@@ -27,12 +26,7 @@ import type {
 	BannerCommitAction,
 	ConsentSnapshot,
 } from '@inth/sdk-core';
-import { createPreferenceDraft } from '@inth/sdk-core/preference-draft';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
-import {
-	hasConsentUI,
-	showConsentSurface,
-} from '@inth/sdk-core/surface-actions';
 import {
 	attachBackdropGuard,
 	attachLiveRegion,
@@ -50,7 +44,6 @@ import type { LegalLinkKeys } from '@inth/sdk-ui/utils/legal-links';
 import { classes as styles } from '../../generated/privacy-choices/dialog';
 import { classes as expandStyles } from '../../generated/privacy-choices/expand';
 import type { ConsentDialogOptions } from '../../types';
-import { takeReceiptFocus } from '../receipt-focus';
 import type { Surface, SurfaceContext } from '../surface';
 import { advertisingRow, createCategoryGroup } from './category-group';
 import {
@@ -64,6 +57,13 @@ import {
 	patch,
 } from './dom';
 import type { PcChild, PcRef } from './dom';
+import {
+	commitDialogChoice,
+	createPreferenceDraft,
+	hasConsentUI,
+	showConsentSurface,
+	takeReceiptFocus,
+} from './engine';
 import { createRightsReceipt } from './receipt';
 import { createSaleRightsRow } from './rights-row';
 import {

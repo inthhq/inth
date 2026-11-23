@@ -858,3 +858,85 @@ describe('inth.dialog.js', () => {
 		});
 	}
 });
+
+describe('inth.choices.js', () => {
+	const requested = (win: PageWindow, file: string): string[] =>
+		win.performance
+			.getEntriesByType('resource')
+			.map((entry) => entry.name)
+			.filter((name) => name.includes(file));
+
+	const dialogOf = (win: PageWindow): HTMLElement | null =>
+		win.document
+			.querySelector('[data-inth-ui]')
+			?.shadowRoot?.querySelector<HTMLElement>(
+				'[data-testid="consent-dialog-root"]'
+			) ?? null;
+
+	it('is never fetched on the classic design', async () => {
+		const win = await open({});
+		await expect.poll(() => win.inth.client, { timeout: 4000 }).not.toBeNull();
+		await expect.poll(() => bannerOf(win)).not.toBeNull();
+		win.inth.openDialog();
+		await expect.poll(() => dialogOf(win), { timeout: 4000 }).not.toBeNull();
+		expect(dialogOf(win)).not.toHaveAttribute('data-design');
+		expect(requested(win, 'inth.choices.js')).toEqual([]);
+	});
+
+	it('carries the Privacy Choices banner and dialog for the engine, at its version', async () => {
+		const win = await open({ pc: true });
+		await expect
+			.poll(() => bannerOf(win)?.getAttribute('data-design'), {
+				timeout: 4000,
+			})
+			.toBe('privacy-choices');
+		const [src] = requested(win, 'inth.choices.js');
+		expect(src).toMatch(/\/__inth-dist__\/inth\.choices\.js\?v=/u);
+		// The prompt and the engine share one session: Customize expands in
+		// place, and the dialog the engine opens is the same file's.
+		bannerOf(win)
+			?.querySelector<HTMLButtonElement>(
+				'[data-testid="consent-banner-customize-button"]'
+			)
+			?.click();
+		await expect
+			.poll(
+				() => win.inth.client && bannerOf(win)?.getAttribute('data-expanded')
+			)
+			.toBe('true');
+		win.inth.openDialog();
+		await expect
+			.poll(() => dialogOf(win)?.getAttribute('data-design'), {
+				timeout: 4000,
+			})
+			.toBe('privacy-choices');
+		expect(requested(win, 'inth.choices.js')).toHaveLength(1);
+	});
+
+	it('keeps the classic banner up while the file fails to load', async () => {
+		const win = await open({ choices: 'fail', pc: true });
+		await expect.poll(() => win.inth.client, { timeout: 4000 }).not.toBeNull();
+		await expect
+			.poll(() => requested(win, 'missing.js').length, { timeout: 4000 })
+			.toBeGreaterThan(0);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 300);
+		});
+		// The init script's classic banner stays: the visitor is never left
+		// without a prompt.
+		expect(bannerOf(win)).not.toBeNull();
+		expect(bannerOf(win)).not.toHaveAttribute('data-design');
+	});
+
+	it('tries the file again after a failed load', async () => {
+		const win = await open({ choices: 'fail-once', pc: true });
+		await expect.poll(() => win.inth.client, { timeout: 4000 }).not.toBeNull();
+		win.inth.openDialog();
+		await expect
+			.poll(() => dialogOf(win)?.getAttribute('data-design'), {
+				timeout: 4000,
+			})
+			.toBe('privacy-choices');
+		expect(requested(win, 'inth.choices.js').length).toBeGreaterThan(1);
+	});
+});

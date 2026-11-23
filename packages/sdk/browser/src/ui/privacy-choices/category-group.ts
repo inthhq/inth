@@ -9,7 +9,6 @@
  */
 
 import {
-	applyDialogCategories,
 	consentTypes,
 	planCategorySwitch,
 	planVendorSwitch,
@@ -35,6 +34,7 @@ import { classes as styles } from '../../generated/privacy-choices/dialog';
 import { classes as expandStyles } from '../../generated/privacy-choices/expand';
 import type { BrowserSlotKey } from '../slots';
 import { cx, el, icon } from './dom';
+import { applyDialogCategories } from './engine';
 import { chevron, choiceSwitch, isToggleClick } from './shared';
 import type { PcEnv } from './shared';
 

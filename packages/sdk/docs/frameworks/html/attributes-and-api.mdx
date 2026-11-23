@@ -30,6 +30,7 @@ manifest). Load files not served per project, such as `inth.devtools.js` or
 | `inth.js` | Default hosted tag. Small loader that starts `/v1/consent/init`, shows the stock banner and loads `inth.hosted.js`. Requires a project URL. |
 | `inth.hosted.js` | Full consent engine and remaining stock UI (such as the trigger). Loaded automatically by `inth.js`. |
 | `inth.dialog.js` | Preference dialog and vendor list. Loaded automatically on Customize or first open. |
+| `inth.choices.js` | The Privacy Choices design (`presentation.design: 'privacy-choices'`): its banner, options and dialog. Loaded automatically by `inth.hosted.js` when that design applies; a site on the classic design never loads it. |
 | `inth.commit.js` | Persists an Accept or Reject click made on the initial banner. Loaded automatically by `inth.js`. |
 | `inth.records.js` | Reads stored consent for returning visitors to start permitted scripts immediately. Loaded automatically by `inth.js`. |
 | `inth.testing.js` | Test pages only. Stock UI with `testing()` and built-in policy presets, with no network requests. |

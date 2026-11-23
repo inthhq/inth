@@ -2,8 +2,10 @@
 /**
  * The build check that keeps `testing()` out of the production script
  * files (`inth.js`, `inth.hosted.js`, `inth.headless.js`, `inth.iab.js`)
- * and lets `inth.testing.js` carry it, and keeps the experiment controller
- * out of the files the init script runs before the engine.
+ * and lets `inth.testing.js` carry it, keeps the experiment controller
+ * out of the files the init script runs before the engine, keeps the
+ * Privacy Choices parts out of the engine, and keeps per-kernel state out
+ * of `inth.choices.js`.
  */
 import { describe, expect, it } from 'vitest';
 
@@ -17,6 +19,17 @@ const EXPERIMENT_CONTROLLER = `${ROOT}/core/dist/libs/experiment-assignment.js`;
 const EXPERIMENT_LOADER = `${ROOT}/core/src/libs/experiment.ts`;
 const PRIVACY_CHOICES_SURFACE = `${ROOT}/browser/src/ui/privacy-choices/surface.ts`;
 const PRIVACY_CHOICES_SWITCH = `${ROOT}/browser/src/ui/privacy-choices-design.ts`;
+const PRIVACY_CHOICES_LOADER = `${ROOT}/browser/src/ui/privacy-choices/pc-import-script.ts`;
+const PRIVACY_CHOICES_ENGINE = `${ROOT}/browser/src/ui/privacy-choices/engine.ts`;
+const PRIVACY_CHOICES_FILE = `${ROOT}/browser/src/ui/privacy-choices-file.ts`;
+const PRIVACY_CHOICES_DIALOG = `${ROOT}/browser/dist/ui/privacy-choices/dialog.js`;
+const PRIVACY_CHOICES_CLASSES = `${ROOT}/browser/src/generated/privacy-choices/card.ts`;
+const SURFACE_SESSION = `${ROOT}/core/dist/surface-session/session.js`;
+const OPT_IN_CONFIRMATIONS = `${ROOT}/core/dist/surface-actions/opt-in.js`;
+const RECEIPT_FOCUS = `${ROOT}/browser/src/ui/receipt-focus.ts`;
+const KERNEL = `${ROOT}/core/dist/kernel/create.js`;
+const COPY_RESOLVER = `${ROOT}/core/dist/libs/consent-copy.js`;
+const VENDOR_DENIAL = `${ROOT}/core/dist/modules/vendor-denial.js`;
 const DRAWER_SHEET = `${ROOT}/ui/dist/styles/sheets/drawer.js`;
 const BANNER_SHEET = `${ROOT}/ui/dist/styles/sheets/banner.js`;
 
@@ -92,8 +105,52 @@ describe('modeBundleBoundary', () => {
 			);
 		}
 		expect(() => check('init', [BANNER_SHEET])).not.toThrow();
+	});
+
+	it('keeps the Privacy Choices parts out of inth.hosted.js, which loads them from inth.choices.js', () => {
+		for (const id of [
+			PRIVACY_CHOICES_SURFACE,
+			PRIVACY_CHOICES_DIALOG,
+			PRIVACY_CHOICES_CLASSES,
+			DRAWER_SHEET,
+		]) {
+			expect(() => check('hosted', [id])).toThrow(
+				/Unexpected implementation in hosted/u
+			);
+		}
 		expect(() =>
-			check('hosted', [PRIVACY_CHOICES_SURFACE, PRIVACY_CHOICES_SWITCH])
+			check('hosted', [
+				PRIVACY_CHOICES_SWITCH,
+				PRIVACY_CHOICES_LOADER,
+				PRIVACY_CHOICES_ENGINE,
+				PRIVACY_CHOICES_FILE,
+				BANNER_SHEET,
+			])
+		).not.toThrow();
+	});
+
+	it('keeps per-kernel state out of inth.choices.js, which takes it from the engine', () => {
+		for (const id of [
+			SURFACE_SESSION,
+			OPT_IN_CONFIRMATIONS,
+			RECEIPT_FOCUS,
+			PRIVACY_CHOICES_ENGINE,
+			KERNEL,
+			HOSTED_TRANSPORT.replace('hosted.js', 'v1/hosted.js'),
+		]) {
+			expect(() => check('choices', [id])).toThrow(
+				/Unexpected implementation in choices/u
+			);
+		}
+		// Its own parts and the stateless resolvers it may carry.
+		expect(() =>
+			check('choices', [
+				PRIVACY_CHOICES_SURFACE,
+				PRIVACY_CHOICES_DIALOG,
+				DRAWER_SHEET,
+				COPY_RESOLVER,
+				VENDOR_DENIAL,
+			])
 		).not.toThrow();
 	});
 });

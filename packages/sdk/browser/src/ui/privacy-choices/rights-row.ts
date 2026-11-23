@@ -9,8 +9,6 @@
  */
 
 import {
-	confirmSaleRight,
-	pressSaleRight,
 	resolvePrivacyChoicesCopy,
 	resolveSaleAnnouncement,
 	resolveSaleRight,
@@ -21,7 +19,6 @@ import type {
 	SaleAnnouncementOutcome,
 	SaveUISource,
 } from '@inth/sdk-core';
-import { getOptOutReceiptData } from '@inth/sdk-core/surface-actions';
 import {
 	revealInScrollBody,
 	scheduleReveal,
@@ -32,6 +29,11 @@ import { classes as expandStyles } from '../../generated/privacy-choices/expand'
 import type { BrowserSlotKey } from '../slots';
 import { activeElementOf, cx, el } from './dom';
 import type { PcRef } from './dom';
+import {
+	confirmSaleRight,
+	getOptOutReceiptData,
+	pressSaleRight,
+} from './engine';
 import { checkIcon, consentButton, rightsBundleOf } from './shared';
 import type { PcEnv } from './shared';
 

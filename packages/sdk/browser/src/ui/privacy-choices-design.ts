@@ -109,6 +109,8 @@ export const createBannerSurface = function createBannerSurface(
 	} | null = null;
 	let owed = false;
 	let classicShown = true;
+	/** The last load failed: the classic banner stands in until one lands. */
+	let failed = false;
 	let destroyed = false;
 
 	const load = function load(type: string): void {
@@ -124,6 +126,11 @@ export const createBannerSurface = function createBannerSurface(
 					return;
 				}
 				loadingType = null;
+				failed = false;
+				if (classicShown) {
+					classicShown = false;
+					classic.destroy();
+				}
 				prompt?.destroy();
 				prompt = module.createSurface(ctx, options);
 				promptType = type;
@@ -132,12 +139,18 @@ export const createBannerSurface = function createBannerSurface(
 				}
 			},
 			(error: unknown) => {
-				// The classic banner has left, so the visitor has no prompt
-				// until this loads: the next sync tries again.
-				if (ticket === loads) {
-					loadingType = null;
-				}
 				reportLoadError(error);
+				if (destroyed || ticket !== loads) {
+					return;
+				}
+				// No visitor is left without a prompt: the classic banner
+				// stands in, and the next sync tries the load again.
+				loadingType = null;
+				failed = true;
+				classicShown = true;
+				if (latest) {
+					classic.sync(latest.snapshot);
+				}
 			}
 		);
 	};
@@ -160,7 +173,9 @@ export const createBannerSurface = function createBannerSurface(
 				return;
 			}
 			const { actionGroups, container } = resolved;
-			if (classicShown) {
+			if (failed) {
+				classic.sync(snapshot);
+			} else if (classicShown) {
 				// The classic banner, the init script's included, leaves at
 				// once. It stays ready for a later switch back to the classic
 				// design, as by an experiment.

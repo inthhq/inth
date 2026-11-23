@@ -8,7 +8,6 @@
  */
 
 import {
-	getSurfaceSession,
 	PHONE_LAYOUT_QUERY,
 	resolveOptOutReceipt,
 	resolveRightsBundle,
@@ -34,6 +33,7 @@ import type { BrowserSlotKey } from '../slots';
 import type { SurfaceContext } from '../surface';
 import { el, icon } from './dom';
 import type { PcChild, PcProps } from './dom';
+import { getSurfaceSession } from './engine';
 
 /** What a Privacy Choices part renders against, refreshed on every render. */
 export interface PcEnv {

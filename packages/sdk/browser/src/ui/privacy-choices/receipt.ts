@@ -7,17 +7,13 @@
  * @internal
  */
 
-import {
-	copySurfaceReference,
-	resolveRightsReceipt,
-	resolveRightsReceiptCopy,
-} from '@inth/sdk-core';
-import { getOptOutReceiptData } from '@inth/sdk-core/surface-actions';
+import { resolveRightsReceipt, resolveRightsReceiptCopy } from '@inth/sdk-core';
 
 import { classes as styles } from '../../generated/privacy-choices/dialog';
 import type { BrowserSlotKey } from '../slots';
 import { cx, el, icon } from './dom';
 import type { PcRef } from './dom';
+import { copySurfaceReference, getOptOutReceiptData } from './engine';
 import { checkIcon, chevron, rightsBundleOf } from './shared';
 import type { PcEnv } from './shared';
 

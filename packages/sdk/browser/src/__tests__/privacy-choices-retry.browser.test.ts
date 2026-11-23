@@ -1,8 +1,9 @@
 /**
  * A Privacy Choices part that fails to load is tried again (C1). The
  * classic banner leaves as soon as the design applies, so a prompt chunk
- * that never loads would leave the visitor with no consent UI. Its own
- * file, since it mocks the loader for every page it starts.
+ * that never loads must not leave the visitor with no consent UI: the
+ * classic banner stands in meanwhile. Its own file, since it mocks the
+ * loader for every page it starts.
  */
 import { showConsentSurface } from '@inth/sdk-core/surface-actions';
 import { afterEach, describe, expect, test, vi } from 'vitest';
@@ -10,6 +11,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import type * as loader from '../ui/privacy-choices/pc-import';
 import {
 	$,
+	all,
 	startPrivacyChoicesPage,
 	stopPrivacyChoicesPages,
 } from './fixtures/privacy-choices';
@@ -53,7 +55,7 @@ afterEach(() => {
 });
 
 describe('a failed Privacy Choices load', () => {
-	test('the prompt loads on the next sync after its first load fails', async () => {
+	test('the classic banner stands in for a prompt that failed to load, until the next sync loads it', async () => {
 		const error = vi
 			.spyOn(console, 'error')
 			.mockImplementation(() => undefined);
@@ -61,7 +63,8 @@ describe('a failed Privacy Choices load', () => {
 		const client = await startPrivacyChoicesPage({ dialog: false });
 		await vi.waitFor(() => expect(error).toHaveBeenCalled());
 		await settle();
-		expect($('consent-banner-root')).toBeNull();
+		expect($('consent-banner-root')).not.toBeNull();
+		expect($('consent-banner-root')).not.toHaveAttribute('data-design');
 		// Any later sync tries again.
 		showConsentSurface(client.kernel, 'none');
 		showConsentSurface(client.kernel, 'banner');
@@ -73,6 +76,7 @@ describe('a failed Privacy Choices load', () => {
 				),
 			{ timeout: 4000 }
 		);
+		expect(all('[data-testid="consent-banner-root"]')).toHaveLength(1);
 	});
 
 	test('the dialog opens on the next open after its first load fails', async () => {
