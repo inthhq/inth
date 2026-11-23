@@ -289,11 +289,10 @@ describe('an Astro build', () => {
 			expect(deferredCSS).toContain(`.${iabPanelClasses.card}`);
 			expect(deferredCSS).toContain(`.${managerClasses.manager}`);
 			// Svelte's IAB dialog renders its rows with the primitives class
-			// maps; without their rules a collapsed row shows open.
+			// maps; without their rules a collapsed row shows open. React's
+			// renders the widget's, so it links none.
 			const [itemClass] = preferenceItemVariants().root().split(' ');
-			if (ui === 'svelte') {
-				expect(deferredCSS).toContain(`.${itemClass}`);
-			}
+			expect(deferredCSS.includes(`.${itemClass}`)).toBe(ui === 'svelte');
 		},
 		60_000
 	);
