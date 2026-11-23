@@ -255,9 +255,12 @@ test('Accept hides the banner at once, and the engine applies it', async () => {
 	await expect
 		.element(screen.getByTestId('probe'))
 		.toHaveAttribute('data-marketing', 'true');
-	expect(
-		document.querySelector('[data-testid="consent-banner-root"]')
-	).toBeNull();
+	// Gone once its exit has played.
+	await vi.waitFor(() =>
+		expect(
+			document.querySelector('[data-testid="consent-banner-root"]')
+		).toBeNull()
+	);
 	await vi.waitFor(() => expect(stored()).toBe(true), { timeout: 5000 });
 	// The engine took the same prefetched answer: no `/v1/consent/init` of its own.
 	expect(initRequests()).toEqual([]);

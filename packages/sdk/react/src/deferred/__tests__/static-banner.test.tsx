@@ -191,7 +191,13 @@ test('the client banner takes the static banner’s place: one banner, same mark
 	const [client] = roots;
 	// The markup the build rendered is the markup the client rendered,
 	// apart from the branding link's `ref`, which names the page's host.
-	expect(client?.outerHTML.replace(/\?ref=[^"]*/u, '')).toBe(staticRoot);
+	// The ids `useId` gives the prompt's parts differ between the build's
+	// render and the client's; nothing else does.
+	const ids = (html: string | undefined) =>
+		html?.replaceAll(/inth-pc-[^-"]+/gu, 'inth-pc-ID');
+	expect(ids(client?.outerHTML.replace(/\?ref=[^"]*/u, ''))).toBe(
+		ids(staticRoot)
+	);
 	expect(client?.getAttribute('data-entry')).toBeNull();
 	expect(frames.every((count) => count === 1)).toBe(true);
 	// The page's sheets were adopted, not rendered a second time.
