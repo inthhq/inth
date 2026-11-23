@@ -54,7 +54,7 @@ describe('activeUI Transitions E2E Tests', () => {
 		});
 	});
 
-	test('customize transitions banner → dialog', async () => {
+	test('customize opens the options in place, and the banner stays', async () => {
 		render(BannerDialogFixture, { options: defaultOptions });
 
 		await waitFor(() => {
@@ -70,22 +70,20 @@ describe('activeUI Transitions E2E Tests', () => {
 		await fireEvent.click(customizeButton);
 
 		await waitFor(() => {
-			const dialog = document.querySelector(
-				'[data-testid="consent-dialog-root"]'
-			);
-			expect(dialog).toBeInTheDocument();
+			expect(
+				document.querySelector('[data-testid="consent-banner-save-button"]')
+			).toBeInTheDocument();
 		});
 
-		// Banner should be gone (waits for exit animation to complete)
-		await waitFor(() => {
-			const banner = document.querySelector(
-				'[data-testid="consent-banner-root"]'
-			);
-			expect(banner).not.toBeInTheDocument();
-		});
+		expect(
+			document.querySelector('[data-testid="consent-banner-root"]')
+		).toBeInTheDocument();
+		expect(
+			document.querySelector('[data-testid="consent-dialog-root"]')
+		).toBeNull();
 	});
 
-	test('save from dialog hides all UI', async () => {
+	test('save from the options hides all UI', async () => {
 		render(BannerDialogFixture, { options: defaultOptions });
 
 		await waitFor(() => {
@@ -100,16 +98,13 @@ describe('activeUI Transitions E2E Tests', () => {
 		await fireEvent.click(customizeButton);
 
 		await waitFor(() => {
-			const dialog = document.querySelector(
-				'[data-testid="consent-dialog-root"]'
-			);
-			expect(dialog).toBeInTheDocument();
+			expect(
+				document.querySelector('[data-testid="consent-banner-save-button"]')
+			).toBeInTheDocument();
 		});
 
 		const saveButton = getDefined(
-			document.querySelector(
-				'[data-testid="consent-widget-footer-save-button"]'
-			)
+			document.querySelector('[data-testid="consent-banner-save-button"]')
 		);
 		await fireEvent.click(saveButton);
 
@@ -195,7 +190,7 @@ describe('activeUI Transitions E2E Tests', () => {
 		});
 	});
 
-	test('full lifecycle: banner → customize → dialog → save → trigger → dialog', async () => {
+	test('full lifecycle: banner → customize → save → trigger → dialog', async () => {
 		render(FullFlowFixture, { options: defaultOptions, showWhen: 'always' });
 
 		await waitFor(() => {
@@ -211,24 +206,21 @@ describe('activeUI Transitions E2E Tests', () => {
 		await fireEvent.click(customizeButton);
 
 		await waitFor(() => {
-			const dialog = document.querySelector(
-				'[data-testid="consent-dialog-root"]'
-			);
-			expect(dialog).toBeInTheDocument();
+			expect(
+				document.querySelector('[data-testid="consent-banner-save-button"]')
+			).toBeInTheDocument();
 		});
 
 		const saveButton = getDefined(
-			document.querySelector(
-				'[data-testid="consent-widget-footer-save-button"]'
-			)
+			document.querySelector('[data-testid="consent-banner-save-button"]')
 		);
 		await fireEvent.click(saveButton);
 
 		await waitFor(() => {
-			const dialog = document.querySelector(
-				'[data-testid="consent-dialog-root"]'
+			const banner = document.querySelector(
+				'[data-testid="consent-banner-root"]'
 			);
-			expect(dialog).not.toBeInTheDocument();
+			expect(banner).not.toBeInTheDocument();
 		});
 
 		await waitFor(() => {

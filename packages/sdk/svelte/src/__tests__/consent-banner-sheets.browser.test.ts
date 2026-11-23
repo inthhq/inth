@@ -1,7 +1,7 @@
 /**
- * A Privacy Choices page carries only the presentation it shows (§7): a
- * Drawer site never downloads or inlines the Card or Bar stylesheet, and a
- * classic site downloads no Privacy Choices sheet at all.
+ * A page carries only the container its prompt shows (§7): a Drawer site
+ * never downloads or inlines the Card or Banner stylesheet, and a Card
+ * site inlines no other container's sheet.
  *
  * Each browser test file runs in its own frame with its own module graph,
  * so the frame's resource entries list exactly the modules this file's
@@ -12,7 +12,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
-import Fixture from './fixtures/privacy-choices-fixture.svelte';
+import Fixture from './fixtures/consent-surfaces-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 
 // The default buffer keeps 250 entries, fewer than the suite's own modules.
@@ -43,35 +43,22 @@ afterEach(async () => {
 		await unmount(mounted);
 		mounted = undefined;
 	}
+	// Each test starts from a page that holds no sheet.
+	for (const sheet of document.head.querySelectorAll(
+		'style[data-inth-styles]'
+	)) {
+		sheet.remove();
+	}
 });
 
-describe('Privacy Choices stylesheets', () => {
-	test('a classic banner loads no Privacy Choices sheet', async () => {
-		render({
-			mode: testing(),
-			persistence: false,
-			prefetch: policyFixture(undefined, { id: 'pc-sheets-classic' }),
-		} as ConsentManagerOptions);
-		await vi.waitFor(() =>
-			expect(
-				document.querySelector('[data-testid="consent-banner-root"]')
-			).not.toBeNull()
-		);
-		expect(
-			fetched(/styles\/sheets\/(?:surface|card|bar|drawer|expand)\.js/u)
-		).toEqual([]);
-		expect(fetched(/privacy-choices-prompt\/panel\.svelte/u)).toEqual([]);
-		expect(inlined('inth-surface')).toBe(false);
-	});
-
-	test('a Drawer never fetches or inlines the Card or Bar sheet', async () => {
+describe('consent prompt stylesheets', () => {
+	test('a Drawer never fetches or inlines the Card or Banner sheet', async () => {
 		render({
 			consentCategories: ['necessary', 'measurement', 'marketing'],
 			mode: testing(),
 			persistence: false,
 			prefetch: policyFixture(undefined, { id: 'pc-sheets-drawer' }),
 			presentation: {
-				design: 'privacy-choices',
 				prompt: { container: { side: 'bottom', type: 'drawer' } },
 			},
 		} as ConsentManagerOptions);
@@ -87,11 +74,37 @@ describe('Privacy Choices stylesheets', () => {
 		expect(inlined('inth-surface')).toBe(true);
 		expect(inlined('inth-drawer')).toBe(true);
 		expect(inlined('inth-card')).toBe(false);
-		expect(inlined('inth-bar')).toBe(false);
+		expect(inlined('inth-banner')).toBe(false);
 		expect(fetched(/styles\/sheets\/drawer\.js/u)).not.toEqual([]);
-		expect(fetched(/styles\/sheets\/(?:card|bar)\.js/u)).toEqual([]);
+		expect(fetched(/styles\/sheets\/(?:card|banner)\.js/u)).toEqual([]);
 		// The options' sheets and code wait for Customize.
-		expect(fetched(/privacy-choices-prompt\/panel\.svelte/u)).toEqual([]);
+		expect(fetched(/components\/prompt\/panel\.svelte/u)).toEqual([]);
 		expect(inlined('inth-expand')).toBe(false);
+	});
+
+	test('a Card inlines no other container sheet and fetches no shared parts', async () => {
+		render({
+			mode: testing(),
+			persistence: false,
+			prefetch: policyFixture(undefined, { id: 'pc-sheets-card' }),
+		} as ConsentManagerOptions);
+		await vi.waitFor(
+			() => {
+				expect(
+					document.querySelector('[data-placement="card-start"]')
+				).not.toBeNull();
+				expect(document.querySelector('style[data-inth-pending]')).toBeNull();
+			},
+			{ timeout: 4000 }
+		);
+		expect(inlined('inth-surface')).toBe(true);
+		expect(inlined('inth-card')).toBe(true);
+		expect(inlined('inth-banner')).toBe(false);
+		expect(inlined('inth-drawer')).toBe(false);
+		expect(inlined('inth-parts')).toBe(false);
+		// The Drawer test before it fetched the Drawer sheet in this frame.
+		expect(fetched(/styles\/sheets\/(?:banner|expand|parts)\.js/u)).toEqual([]);
+		// The options' sheets and code wait for Customize.
+		expect(fetched(/components\/prompt\/panel\.svelte/u)).toEqual([]);
 	});
 });

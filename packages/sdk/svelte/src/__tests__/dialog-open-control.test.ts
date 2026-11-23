@@ -17,23 +17,6 @@ const options = {
 	prefetch: policyFixture(),
 } as ConsentManagerOptions;
 
-/** Records whether `node` leaves the document at any point. */
-const watchRemoval = (node: Element) => {
-	let removed = false;
-	const observer = new MutationObserver(() => {
-		if (!node.isConnected) {
-			removed = true;
-		}
-	});
-	observer.observe(document.body, { childList: true, subtree: true });
-	return {
-		stop: () => {
-			observer.disconnect();
-			return removed || !node.isConnected;
-		},
-	};
-};
-
 const settle = async () => {
 	await tick();
 	await new Promise((resolve) => {
@@ -43,20 +26,23 @@ const settle = async () => {
 };
 
 describe('ConsentDialog open prop', () => {
-	test('a dialog held open by `open` stays mounted when Escape is pressed', async () => {
-		render(Fixture, { open: true, options });
+	test('Escape closes a dialog `open` asked for, and it stays closed until `open` asks again', async () => {
+		const result = render(Fixture, { open: true, options });
 		await waitFor(() => expect(query(ROOT)).not.toBeNull());
-		const root = query(ROOT) as HTMLElement;
-		const watcher = watchRemoval(root);
 
-		await fireEvent.keyDown(root, { key: 'Escape' });
+		await fireEvent.keyDown(query(ROOT) as HTMLElement, { key: 'Escape' });
 		await settle();
 
-		expect(watcher.stop()).toBe(false);
-		expect(query(ROOT)).toBe(root);
-		expect(root.getAttribute('data-state')).toBe('open');
-		// Escape still asks the consent manager to close, as in React.
-		expect(query('[data-testid="active-ui"]')?.textContent).toBe('none');
+		// Escape closes it through the consent manager, as Close does.
+		await waitFor(() => expect(query(ROOT)).toBeNull());
+		expect(query('[data-testid="active-ui"]')?.textContent).not.toBe('dialog');
+
+		await result.rerender({ open: false, options });
+		await settle();
+		expect(query(ROOT)).toBeNull();
+		await result.rerender({ open: true, options });
+
+		await waitFor(() => expect(query(ROOT)).not.toBeNull());
 	});
 
 	test('a dialog held open by `open` closes when `open` turns false', async () => {

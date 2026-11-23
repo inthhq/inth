@@ -86,14 +86,16 @@ describe('ConsentDialog first load', () => {
 	// banner, a dialog and a dialog link are what must stay clear.
 	test.each([
 		'components/deferred-panel.svelte',
-		'components/prompt.svelte',
+		'components/prompt/prompt.svelte',
 		'components/panel-link.svelte',
 		'components/panel-trigger.svelte',
 		'components/inth-provider.svelte',
 	])('%s does not statically reach the dialog', (entry) => {
 		const reachable = reachableFrom(resolve(LIB, entry));
 
-		expect(reachable).not.toContain(resolve(LIB, 'components/panel.svelte'));
+		expect(reachable).not.toContain(
+			resolve(LIB, 'components/dialog/dialog.svelte')
+		);
 		expect(reachable).not.toContain(
 			resolve(LIB, 'components/preferences.svelte')
 		);
@@ -109,53 +111,23 @@ describe('deferred ConsentDialog', () => {
 		resetDialogWarmingForTests();
 	});
 
-	test('opens from the banner Customize button', async () => {
+	test('returns focus to the banner once a dialog opened from the page closes', async () => {
 		render(DeferredDialogFixture, {
 			options: { mode: testOffline(), preloadDialog: 'intent' },
 		});
-		const customize = await waitFor(() => {
+		const link = await waitFor(() => {
 			const button = document.querySelector(
-				'[data-testid="consent-banner-customize-button"]'
+				'[data-testid="consent-dialog-link"]'
 			);
 			expect(button).toBeInTheDocument();
-			return button as HTMLElement;
-		});
-		expect(
-			document.querySelector('[data-testid="consent-dialog-card"]')
-		).toBeNull();
-
-		await fireEvent.click(customize);
-
-		await waitFor(() => {
 			expect(
-				document.querySelector('[data-testid="consent-dialog-card"]')
+				document.querySelector('[data-testid="consent-banner-root"]')
 			).toBeInTheDocument();
-		});
-	});
-
-	test('returns focus to the Customize button once the dialog closes', async () => {
-		render(DeferredDialogFixture, {
-			options: { mode: testOffline(), preloadDialog: 'intent' },
-		});
-		const customize = await waitFor(() => {
-			const button = document.querySelector(
-				'[data-testid="consent-banner-customize-button"]'
-			);
-			expect(button).toBeInTheDocument();
 			return button as HTMLElement;
 		});
-		customize.focus();
-		// The dialog's focus trap remembers the last element a `focusin`
-		// reached while its code was loaded. On a page the dialog loads on
-		// first use, the Customize button was focused before that, so the
-		// trap has nothing to return to; a stray `focusin` stands in for
-		// that here, without moving focus.
-		const stray = document.createElement('div');
-		document.body.append(stray);
-		stray.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
-		expect(document.activeElement).toBe(customize);
+		link.focus();
 
-		await fireEvent.click(customize);
+		await fireEvent.click(link);
 		const dialog = await waitFor(() => {
 			const root = document.querySelector(
 				'[data-testid="consent-dialog-root"]'
@@ -163,22 +135,24 @@ describe('deferred ConsentDialog', () => {
 			expect(root).toBeInTheDocument();
 			return root as HTMLElement;
 		});
-		// The banner is gone with the dialog open, and with it the opener.
-		expect(customize.isConnected).toBe(false);
+		// The banner leaves at once while the dialog is open (PERM-05).
+		expect(
+			document.querySelector('[data-testid="consent-banner-root"]')
+		).toBeNull();
 
 		await fireEvent.keyDown(dialog, { key: 'Escape' });
 
+		// No choice was made, so the banner is owed again and takes focus.
 		await waitFor(() => {
 			expect(
 				document.querySelector('[data-testid="consent-dialog-root"]')
 			).toBeNull();
-			const again = document.querySelector(
-				'[data-testid="consent-banner-customize-button"]'
+			const card = document.querySelector(
+				'[data-testid="consent-banner-card"]'
 			);
-			expect(again).toBeInTheDocument();
-			expect(document.activeElement).toBe(again);
+			expect(card).toBeInTheDocument();
+			expect(document.activeElement).toBe(card);
 		});
-		stray.remove();
 	});
 
 	test('loads at once to render its own trigger', async () => {

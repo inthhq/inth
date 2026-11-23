@@ -3,15 +3,8 @@ import {
 	OPT_OUT_CONFIRMATION_STORAGE_KEY,
 	policyRulePresets,
 } from '@inth/sdk/engine';
-import {
-	EARLY_TAP_STYLE_ID,
-	EARLY_TAPS_WINDOW_KEY,
-} from '@inth/sdk/runtime/page-globals';
 import { V1_UUID_PATTERN } from '@inth/sdk/schema/types';
-import {
-	EARLY_CONSENT_TAP_SCRIPT,
-	closeOptOutConfirmation,
-} from '@inth/sdk/surface-actions';
+import { closeOptOutConfirmation } from '@inth/sdk/surface-actions';
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
@@ -67,6 +60,10 @@ const renderSuite = (
 			activeContext = context;
 		},
 		options: merged,
+		// The dialog confirms an opt-out on its own receipt; these tests read
+		// the standalone confirmation, as the host mounts it.
+		showBanner: false,
+		showStandaloneConfirmation: true,
 		...props,
 	});
 	return { view };
@@ -77,13 +74,6 @@ afterEach(() => {
 		closeOptOutConfirmation(activeContext.kernel);
 		activeContext = null;
 	}
-	document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
-	const host = window as unknown as Record<
-		string,
-		{ stop?: () => void } | undefined
-	>;
-	host[EARLY_TAPS_WINDOW_KEY]?.stop?.();
-	Reflect.deleteProperty(window, EARLY_TAPS_WINDOW_KEY);
 	reload.mockClear();
 	localStorage.clear();
 	for (const entry of document.cookie.split(';')) {
@@ -96,64 +86,6 @@ afterEach(() => {
 });
 
 describe('one-step opt-out and confirmation view in Svelte', () => {
-	test('opts out in one click from the banner link and opens confirmation with one button', async () => {
-		const { view } = renderSuite();
-
-		await waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
-		const optOutLink = query<HTMLButtonElement>(
-			'consent-banner-right-link-opt-out'
-		) as HTMLButtonElement;
-		expect(optOutLink.textContent?.trim()).toBe(
-			'Do Not Sell or Share My Personal Information'
-		);
-		expect(optOutLink.querySelector('svg')).toBeNull();
-
-		await fireEvent.click(optOutLink);
-
-		const snapshot = (
-			activeContext as ConsentContextValue
-		).kernel.getSnapshot();
-		expect(snapshot.optOut?.method).toBe('button');
-		expect(snapshot.effectivePermissions.marketing).toBe(false);
-		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
-		expect(snapshot.effectivePermissions.measurement).toBe(true);
-		expect(snapshot.effectivePermissions.functionality).toBe(true);
-		expect(query('consent-dialog-root')).toBeNull();
-
-		await waitFor(() =>
-			expect(query('opt-out-confirmation-root')).not.toBeNull()
-		);
-		const root = query('opt-out-confirmation-root') as HTMLElement;
-		const title = query('opt-out-confirmation-title') as HTMLElement;
-		expect(title.textContent?.trim()).toBe(
-			'Do Not Sell or Share My Personal Information'
-		);
-		const status = query('opt-out-confirmation-status') as HTMLElement;
-		expect(status.getAttribute('role')).toBe('status');
-		expect(status.textContent?.trim()).toBe('Opt-out request honored');
-		const recordedAt = query<HTMLTimeElement>(
-			'opt-out-confirmation-recorded-at'
-		) as HTMLTimeElement;
-		expect(recordedAt).not.toBeNull();
-		expect(recordedAt.getAttribute('datetime')).toBeTruthy();
-		expect(recordedAt.textContent?.trim()).not.toBe('');
-		const reference = query('opt-out-confirmation-reference') as HTMLElement;
-		expect(reference).not.toBeNull();
-		expect(reference.textContent?.trim()).toMatch(V1_UUID_PATTERN);
-		expect(root.querySelectorAll('input, textarea, select')).toHaveLength(0);
-		const buttons = [...root.querySelectorAll('button')];
-		expect(buttons).toHaveLength(1);
-		expect(buttons[0]?.textContent?.trim()).toBe('Done');
-		const preferencesLink = query(
-			'opt-out-confirmation-preferences-link'
-		) as HTMLElement;
-		expect(preferencesLink.textContent?.trim()).toBe('Manage preferences');
-
-		view.unmount();
-	});
-
 	test('Done closes and restores focus, Escape closes, preferences link opens dialog, and re-opening records nothing new', async () => {
 		const { view } = renderSuite(
 			{
@@ -270,39 +202,6 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 		view.unmount();
 	});
 
-	test.each([
-		['do-not-sell', 'Do Not Sell or Share My Personal Information', false],
-		['privacy-choices', 'Your Privacy Choices', true],
-		['california-privacy-choices', 'Your California Privacy Choices', true],
-	] as [Engine.OptOutLinkVariant, string, boolean][])(
-		'renders optOutLink=%s with exact title and icon=%s',
-		async (optOutLink, expectedTitle, expectIcon) => {
-			const { view } = renderSuite(
-				{ presentation: { optOutLink } },
-				{ showBanner: true, showDialog: false, showLink: true }
-			);
-
-			await waitFor(() =>
-				expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-			);
-			const bannerLink = query('consent-banner-right-link-opt-out');
-			const dialogLink = query('consent-dialog-link');
-
-			expect(bannerLink?.textContent?.trim()).toBe(expectedTitle);
-			expect(dialogLink?.textContent?.trim()).toBe(expectedTitle);
-			expect(
-				Boolean(bannerLink?.querySelector('svg[aria-hidden="true"]'))
-			).toBe(expectIcon);
-			expect(
-				Boolean(dialogLink?.querySelector('svg[aria-hidden="true"]'))
-			).toBe(expectIcon);
-			expect(Boolean(bannerLink?.querySelector('svg'))).toBe(expectIcon);
-			expect(Boolean(dialogLink?.querySelector('svg'))).toBe(expectIcon);
-
-			view.unmount();
-		}
-	);
-
 	test('wires the floating trigger to opt out and hides it while confirmation is open', async () => {
 		const { view } = renderSuite(
 			{
@@ -405,37 +304,6 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 		view.unmount();
 	});
 
-	test('replays an early tap on the opt-out link as a durable opt-out', async () => {
-		const container = document.createElement('div');
-		container.innerHTML =
-			'<div data-testid="consent-banner-root" data-model="opt-out" data-prompt="notice"><button type="button" data-action="right" data-right="opt-out">Do Not Sell or Share My Personal Information</button></div>';
-		document.body.append(container);
-		// oxlint-disable-next-line no-new-func -- Runs the inline script as server HTML would.
-		new Function(EARLY_CONSENT_TAP_SCRIPT)();
-		container
-			.querySelector<HTMLButtonElement>('[data-right="opt-out"]')
-			?.click();
-		container.remove();
-
-		const { view } = renderSuite();
-
-		await waitFor(() =>
-			expect(activeContext?.kernel.getSnapshot().optOut?.method).toBe('button')
-		);
-		expect(
-			activeContext?.kernel.getSnapshot().effectivePermissions.marketing
-		).toBe(false);
-		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
-		expect(
-			activeContext?.kernel.getSnapshot().effectivePermissions.measurement
-		).toBe(true);
-		await waitFor(() =>
-			expect(query('opt-out-confirmation-root')).not.toBeNull()
-		);
-
-		view.unmount();
-	});
-
 	test('defers confirmation across a revocation reload, shows it once on the next load, and not on the load after that', async () => {
 		const onBeforeReload = vi.fn();
 		const first = renderSuite({
@@ -444,14 +312,8 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 			reloadOnConsentRevoked: true,
 		});
 
-		await waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
-		await fireEvent.click(
-			query<HTMLButtonElement>(
-				'consent-banner-right-link-opt-out'
-			) as HTMLButtonElement
-		);
+		await waitFor(() => expect(activeContext).not.toBeNull());
+		void activeContext?.state.requestOptOut();
 
 		// Does not flash on the old document before reload.
 		expect(query('opt-out-confirmation-root')).toBeNull();
@@ -514,33 +376,18 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 	});
 
 	test.each(['privacy-choices', 'california-privacy-choices'] as const)(
-		'opens the dialog and records nothing from banner link, footer link and trigger when optOutLink=%s',
+		'opens the dialog and records nothing from the footer link and trigger when optOutLink=%s',
 		async (optOutLink) => {
 			const { view } = renderSuite(
 				{ presentation: { optOutLink } },
 				{
-					showBanner: true,
 					showDialog: true,
 					showLink: true,
 					showTrigger: true,
 				}
 			);
 
-			await waitFor(() =>
-				expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-			);
-			await fireEvent.click(
-				query<HTMLButtonElement>(
-					'consent-banner-right-link-opt-out'
-				) as HTMLButtonElement
-			);
-			await waitFor(() => expect(query('consent-dialog-root')).not.toBeNull());
-			expect(activeContext?.kernel.getSnapshot().optOut).toBeNull();
-			expect(query('opt-out-confirmation-root')).toBeNull();
-
-			activeContext?.kernel.set.activeUI('none');
-			await waitFor(() => expect(query('consent-dialog-root')).toBeNull());
-
+			await waitFor(() => expect(query('consent-dialog-link')).not.toBeNull());
 			await fireEvent.click(
 				query<HTMLButtonElement>('consent-dialog-link') as HTMLButtonElement
 			);
@@ -601,14 +448,8 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 
 		const { view } = renderSuite({ mode: deferredOptOutMode });
 
-		await waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
-		await fireEvent.click(
-			query<HTMLButtonElement>(
-				'consent-banner-right-link-opt-out'
-			) as HTMLButtonElement
-		);
+		await waitFor(() => expect(activeContext).not.toBeNull());
+		void activeContext?.state.requestOptOut();
 
 		await waitFor(() =>
 			expect(query('opt-out-confirmation-root')).not.toBeNull()
@@ -707,9 +548,7 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 
 		const { view } = renderSuite({ mode: deferredOptOutMode });
 
-		await waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
+		await waitFor(() => expect(activeContext).not.toBeNull());
 		expect(activeContext?.state.optOutState).toMatchObject({
 			at: null,
 			available: true,
@@ -724,11 +563,7 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 		});
 		expect('optOutReceipt' in (activeContext?.state ?? {})).toBe(false);
 
-		await fireEvent.click(
-			query<HTMLButtonElement>(
-				'consent-banner-right-link-opt-out'
-			) as HTMLButtonElement
-		);
+		void activeContext?.state.requestOptOut();
 
 		await waitFor(() =>
 			expect(activeContext?.state.optOutState.optedOut).toBe(true)

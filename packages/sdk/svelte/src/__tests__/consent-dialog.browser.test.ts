@@ -1,7 +1,6 @@
 /**
- * The Privacy Choices (v6) "Your Privacy Choices" dialog of the stock
- * Svelte `ConsentDialog`, ported from React's
- * `privacy-choices-dialog.test.tsx`, itself ported from the explorer's
+ * The "Your Privacy Choices" dialog of the stock Svelte `ConsentDialog`,
+ * ported from React's `dialog.test.tsx`, itself ported from the explorer's
  * self-test groups about the dialog: the US first view and its rights, the
  * receipt, Preferences, vendors and row clicks, the EU staged model, phone
  * sheets, focus, Escape and announcements. Each test names the invariant
@@ -29,10 +28,10 @@ import type { Readable } from 'svelte/store';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
-import type { ConsentDialogProps } from '../lib/components/panel-props';
+import type { ConsentDialogProps } from '../lib/components/dialog/types';
 import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
-import Fixture from './fixtures/privacy-choices-fixture.svelte';
+import Fixture from './fixtures/consent-surfaces-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 
 type Region = 'eu' | 'us-opt-in' | 'us-opt-out';
@@ -92,7 +91,6 @@ let mounted: Record<string, unknown> | undefined;
 let fixture = 0;
 const mount = async function mount({
 	region = 'us-opt-out',
-	design = 'privacy-choices',
 	edgeStyle,
 	container = { type: 'card' },
 	dialogProps = { disableAnimation: true },
@@ -104,7 +102,6 @@ const mount = async function mount({
 	extra,
 }: {
 	region?: Region;
-	design?: ConsentPresentation['design'] | null;
 	edgeStyle?: 'inset' | 'flush';
 	container?: ConsentContainer;
 	dialogProps?: ConsentDialogProps;
@@ -116,7 +113,7 @@ const mount = async function mount({
 	banner?: boolean;
 	/** A controlled `open` the test can change. */
 	open?: Readable<boolean>;
-	/** A presentation the test can change, over the one `design` sets. */
+	/** A presentation the test can change, over the mounted one. */
 	presentation?: Readable<ConsentPresentation | undefined>;
 	/** More provider options, such as `theme`. */
 	extra?: Partial<ConsentManagerOptions>;
@@ -144,13 +141,7 @@ const mount = async function mount({
 		mode: testing(),
 		persistence: false,
 		prefetch,
-		presentation:
-			design === null
-				? undefined
-				: {
-						design,
-						prompt: { container, edgeStyle },
-					},
+		presentation: { prompt: { container, edgeStyle } },
 		vendors: VENDORS,
 		...extra,
 	} as ConsentManagerOptions;
@@ -237,21 +228,9 @@ afterEach(async () => {
 });
 
 describe('opening', () => {
-	test('the classic dialog stays the default', async () => {
-		await mount({ design: null });
-		await waitFor(() => expect(link()).toBeInTheDocument());
-		link().click();
-		await waitFor(() => expect($('consent-dialog-root')).toBeInTheDocument());
-		expect(must('consent-dialog-root')).not.toHaveAttribute('data-design');
-	});
-
 	test('[FOC-02][FOC-03][LAY-01] opens on its title as a modal dialog over an inert page', async () => {
 		await mount();
 		await openDialog();
-		expect(must('consent-dialog-root')).toHaveAttribute(
-			'data-design',
-			'privacy-choices'
-		);
 		expect(card()).toHaveAttribute('role', 'dialog');
 		expect(card()).toHaveAttribute('aria-modal', 'true');
 		expect(card().getAttribute('aria-labelledby')).toBe(
@@ -731,7 +710,7 @@ describe('wave B round 1', () => {
 		await waitFor(() => expect(confirmed).toHaveBeenCalledTimes(1));
 	});
 
-	test('showTrigger renders the floating trigger under the Privacy Choices design', async () => {
+	test('showTrigger renders the floating trigger', async () => {
 		await mount({ dialogProps: { disableAnimation: true, showTrigger: true } });
 		await waitFor(() =>
 			expect(
@@ -742,9 +721,9 @@ describe('wave B round 1', () => {
 		expect($('consent-dialog-card')).toBeNull();
 	});
 
-	test('[RCPT-01][FOC-03] the opt-out confirmation opens the Privacy Choices dialog on its receipt', async () => {
-		// A one-click opt-out with no reload due opens the confirmation; on
-		// this design it is the dialog, focused on the receipt. A revocation
+	test('[RCPT-01][FOC-03] the opt-out confirmation opens the dialog on its receipt', async () => {
+		// A one-click opt-out with no reload due opens the confirmation,
+		// which is the dialog, focused on the receipt. A revocation
 		// reload's marker opens the same confirmation on the next document.
 		await mount({ oneClickOptOut: true });
 		const button = await waitFor(() => must('one-click-opt-out'));
@@ -762,7 +741,7 @@ describe('wave B round 1', () => {
 		await openDialog();
 	});
 
-	test('[RIGHT-08] after a revocation reload, the Privacy Choices dialog reopens on the receipt', async () => {
+	test('[RIGHT-08] after a revocation reload, the dialog reopens on the receipt', async () => {
 		await mount();
 		await openDialog();
 		must('consent-dialog-right-option-sale-protect').click();
@@ -789,12 +768,6 @@ describe('wave B round 1', () => {
 		await openDialog();
 		must('consent-dialog-close').click();
 		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
-	});
-
-	test('the classic design keeps Your Privacy Choices to opt-out policies', async () => {
-		await mount({ design: null, region: 'us-opt-in' });
-		await waitFor(() => expect(probe.snapshot).not.toBeNull());
-		expect($('privacy-choices-link')).toBeNull();
 	});
 
 	test('[NEST-03] only the top layer is exposed: covered and folded parts carry a real inert', async () => {
@@ -1040,47 +1013,12 @@ describe('wave B round 2', () => {
 });
 
 describe('wave C round 1', () => {
-	const PRIVACY_CHOICES: ConsentPresentation = {
-		design: 'privacy-choices',
-		prompt: { container: { type: 'card' } },
-	};
-
-	test('[PERM-01] a design change to Privacy Choices while the dialog is open loads its dialog', async () => {
-		const presentation = writable<ConsentPresentation | undefined>(undefined);
-		// No idle warming, which would load the dialog anyway.
-		await mount({
-			extra: { preloadDialog: 'intent' } as Partial<ConsentManagerOptions>,
-			presentation,
-			region: 'eu',
-		});
-		link().click();
-		await waitFor(() => expect($('consent-dialog-root')).toBeInTheDocument());
-		expect(must('consent-dialog-root')).not.toHaveAttribute('data-design');
-		presentation.set(PRIVACY_CHOICES);
-		await waitFor(() =>
-			expect(must('consent-dialog-root')).toHaveAttribute(
-				'data-design',
-				'privacy-choices'
-			)
-		);
-		expect(probe.snapshot?.activeUI).toBe('dialog');
-	});
-
-	test('[PERM-01] a dismissed controlled dialog stays closed when it mounts again, and opens when open turns true again', async () => {
+	test('[PERM-01] a dismissed controlled dialog stays closed while open stays true, and opens when open turns true again', async () => {
 		const open = writable(true);
-		const presentation = writable<ConsentPresentation | undefined>(
-			PRIVACY_CHOICES
-		);
-		await mount({ open, presentation, region: 'eu' });
+		await mount({ open, region: 'eu' });
 		await waitFor(() => expect($('consent-dialog-card')).toBeInTheDocument());
 		await userEvent.keyboard('{Escape}');
 		await waitFor(() => expect(probe.snapshot?.activeUI).toBe('banner'));
-		// The dialog unmounts and mounts again while `open` stays true.
-		presentation.set({ ...PRIVACY_CHOICES, design: 'classic' });
-		await new Promise((resolve) => {
-			setTimeout(resolve, 0);
-		});
-		presentation.set(PRIVACY_CHOICES);
 		await new Promise((resolve) => {
 			setTimeout(resolve, 200);
 		});

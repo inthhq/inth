@@ -1,5 +1,5 @@
 /**
- * The Privacy Choices dialog under a controlled `open` while its chunk is
+ * The consent dialog under a controlled `open` while its chunk is
  * still loading. The chunk's import waits on a gate this file opens, so the
  * consent manager shows the dialog before it can render.
  */
@@ -10,7 +10,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { testing } from '../lib/testing';
 import type { ConsentManagerOptions } from '../lib/types';
-import Fixture from './fixtures/privacy-choices-fixture.svelte';
+import Fixture from './fixtures/consent-surfaces-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 
 const gate = vi.hoisted(() => {
@@ -22,13 +22,10 @@ const gate = vi.hoisted(() => {
 });
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is what happens while the dialog's chunk loads. The factory returns the real module once this file opens the gate.
-vi.mock(
-	'../lib/components/privacy-choices-dialog/dialog.svelte',
-	async (importOriginal) => {
-		await gate.loaded;
-		return await importOriginal();
-	}
-);
+vi.mock('../lib/components/dialog/dialog.svelte', async (importOriginal) => {
+	await gate.loaded;
+	return await importOriginal();
+});
 
 const $ = (testId: string) =>
 	document.querySelector<HTMLElement>(`[data-testid="${testId}"]`);
@@ -52,7 +49,6 @@ test('[PERM-01] a controlled open turning false before the dialog loads closes i
 			persistence: false,
 			prefetch: policyFixture(undefined, { id: 'pcd-pending-chunk' }),
 			presentation: {
-				design: 'privacy-choices',
 				prompt: { container: { type: 'card' } },
 			},
 		} as ConsentManagerOptions,

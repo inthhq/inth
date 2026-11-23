@@ -5,7 +5,7 @@
 	import { getConsentContext } from '../../lib/context.svelte';
 
 	/**
-	 * The page under a Privacy Choices surface: a plain page action, the
+	 * The page under the consent prompt and dialog: a plain page action, the
 	 * stock "Your Privacy Choices" link, the site's own link to the dialog,
 	 * and a probe that hands the snapshot and the kernel to the test.
 	 */

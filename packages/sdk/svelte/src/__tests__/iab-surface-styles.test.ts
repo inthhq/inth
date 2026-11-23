@@ -15,11 +15,17 @@ const sheets = () =>
 		),
 	].map((element) => element.dataset.inthStyles);
 
-const ALL_SHEETS = [
-	'inth-first-paint',
-	'inth-dialog',
-	'inth-primitives',
+const FIRST_PAINT_SHEETS = [
+	'inth-tokens',
+	'inth-button',
+	'inth-parts',
 	'inth-iab-first-paint',
+];
+
+const ALL_SHEETS = [
+	...FIRST_PAINT_SHEETS,
+	'inth-widget',
+	'inth-primitives',
 	'inth-iab-dialog',
 ];
 
@@ -45,7 +51,7 @@ describe('automatic IAB styles', () => {
 				document.querySelector('[data-testid="iab-consent-banner-card"]')
 			).not.toBeNull()
 		);
-		expect(sheets()).toEqual(['inth-first-paint', 'inth-iab-first-paint']);
+		expect(sheets()).toEqual(FIRST_PAINT_SHEETS);
 		const followingContent = document.querySelector(
 			'[data-testid="iab-style-following-content"]'
 		);

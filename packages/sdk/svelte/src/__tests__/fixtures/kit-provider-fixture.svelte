@@ -3,7 +3,7 @@
 	import type { Script } from '@inth/sdk/modules/script-loader';
 
 	import ConsentDialog from '../../lib/components/deferred-panel.svelte';
-	import ConsentBanner from '../../lib/components/prompt.svelte';
+	import ConsentBanner from '../../lib/components/prompt/prompt.svelte';
 	import InthProvider from '../../lib/kit/inth-provider.svelte';
 	import { transportMode } from './transport-mode';
 

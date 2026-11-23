@@ -12,7 +12,7 @@ describe('@inth/svelte/dialog-panel', () => {
 		});
 		// The same module the deferred wrapper imports, so a bundle that has
 		// both keeps one copy of the dialog.
-		const panel = await import('../lib/components/panel.svelte');
+		const panel = await import('../lib/components/dialog/dialog.svelte');
 		expect(entry.ConsentDialogPanel).toBe(panel.default);
 	});
 });

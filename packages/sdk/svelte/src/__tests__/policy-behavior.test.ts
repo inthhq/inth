@@ -80,12 +80,13 @@ describe('policy records and Svelte controls', () => {
 		await fireEvent.click(
 			required(document.querySelector('[data-testid="consent-dialog-link"]'))
 		);
-		await waitFor(() =>
-			expect(
-				document.querySelector(
-					'[data-testid="consent-widget-footer-save-button"]'
-				)
-			).not.toBeNull()
+		// The dialog's code loads when it first opens.
+		await waitFor(
+			() =>
+				expect(
+					document.querySelector('[data-testid="consent-dialog-root"]')
+				).not.toBeNull(),
+			{ timeout: 5000 }
 		);
 	});
 	test('draft seeds GPC-restricted grants off and records only displayed optional keys', async () => {
@@ -308,7 +309,7 @@ describe('policy records and Svelte controls', () => {
 					?.getAttribute('data-mode')
 			).toBe('ghost');
 			expect(warn).toHaveBeenCalledWith(
-				'Host presentation gives equivalent actions different prominence.'
+				'inth presentation: Host presentation gives equivalent actions different prominence.'
 			);
 			view.unmount();
 		} finally {

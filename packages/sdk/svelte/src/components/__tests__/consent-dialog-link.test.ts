@@ -94,12 +94,6 @@ describe('ConsentDialogLink', () => {
 				'[data-testid="consent-dialog-root"]'
 			);
 			expect(dialog).toBeInTheDocument();
-			expect(
-				document.querySelector('[data-testid="consent-dialog-branding"]')
-			).toHaveAttribute(
-				'href',
-				`https://inth.com?ref=${window.location.hostname}`
-			);
 		});
 	});
 });
