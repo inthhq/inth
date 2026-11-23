@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import { validateExplicitChoice } from '../consent-record-validation.model';
+import { recordCategoryPatch } from '../consent-record.model';
 import { evaluateConsentRecord } from '../evaluate';
-import { normalizeLegacyConsentRecord } from '../normalize';
-import { recordCategoryPatch } from '../record';
-import { validateExplicitChoice } from '../validation';
+import { normalizeLegacyConsentRecord } from '../normalize-legacy-consent-record';
 import { currentBasis, makeChoice, makePolicy, NOW } from './fixtures';
 
 const policy = makePolicy({

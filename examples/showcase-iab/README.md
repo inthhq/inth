@@ -43,8 +43,8 @@ are drawn with CSS and nothing contacts an ad network.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/showcase-iab dev
 ```
 
@@ -65,5 +65,5 @@ a demonstration CMP ID. A real site changes two things in
   registered at [register.consensu.org/CMP](https://register.consensu.org/CMP).
   Every TC string names the CMP that wrote it.
 
-Docs: [IAB TCF in Next.js](https://c15t.com/docs/frameworks/next/iab) and
-[IAB GPP in Next.js](https://c15t.com/docs/frameworks/next/gpp).
+Docs: [IAB TCF in Next.js](https://inth.com/docs/frameworks/next/iab) and
+[IAB GPP in Next.js](https://inth.com/docs/frameworks/next/gpp).

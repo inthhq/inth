@@ -6,8 +6,8 @@ import {
 } from '@inth/sdk/ui/primitives';
 import { computed } from 'vue';
 
-import { usePreferenceItemContext } from './context';
-import { preferenceItemVariants } from './variants';
+import { preferenceItemVariants } from './preference-item-variants';
+import { usePreferenceItemContext } from './use-preference-item-context';
 
 const props = withDefaults(defineProps<{ class?: string }>(), {
 	class: undefined,

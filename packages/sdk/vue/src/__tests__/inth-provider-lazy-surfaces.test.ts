@@ -26,7 +26,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 import type { RuntimeConsentConfig } from './test-kernel';
 import { createVueConsentKernelContext } from './test-kernel';
 import { inth } from './test-plugin';

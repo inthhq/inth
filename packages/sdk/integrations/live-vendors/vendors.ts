@@ -94,7 +94,10 @@ import { optimizelyWeb } from '../src/vendors/functional/optimizely';
 import { wisepops } from '../src/vendors/functional/wisepops';
 import { zendeskWidget } from '../src/vendors/functional/zendesk';
 import { googleTagManager } from '../src/vendors/tag-managers/google-tag-manager';
-import type { LiveProbeCheckResult, LiveVendorProbeConfig } from './types';
+import type {
+	LiveProbeCheckResult,
+	LiveVendorProbeConfig,
+} from './live-vendor-probe.model';
 
 interface OpenAIPixelRuntime extends OpenAIPixelFunction {
 	loaded?: boolean;

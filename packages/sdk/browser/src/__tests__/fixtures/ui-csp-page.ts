@@ -1,12 +1,12 @@
+import type { ConsentClient } from '../../consent-client.model';
 /**
  * A page whose CSP allows styles only by nonce. It reads its options from a
  * nonced script tag the way `inth.js` does, then mounts the stock UI.
  * `?nonce=off` drops the nonce so the test can see the policy block it.
  */
-import { readScriptOptions } from '../../auto-init';
+import { readScriptOptions } from '../../script-tag-options.model';
 import { createTestingConsentClient as createConsentClient } from '../../testing-global';
-import type { ConsentClient } from '../../types';
-import { mountConsentUI } from '../../ui/mount';
+import { mountConsentUI } from '../../ui/mount-consent-ui';
 
 /** What the test reads from the page. */
 export interface UICSPPage {

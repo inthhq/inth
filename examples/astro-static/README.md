@@ -16,8 +16,8 @@ visitor allows measurement.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/astro-static dev
 ```
 
@@ -31,5 +31,5 @@ Replace `phc_your_project_key` in `src/inth.client.ts` with your PostHog
 project key.
 
 For server-rendered pages, see [`examples/astro`](../astro). The
-[Astro rendering guide](https://c15t.com/docs/frameworks/astro/rendering)
+[Astro rendering guide](https://inth.com/docs/frameworks/astro/rendering)
 compares the two.

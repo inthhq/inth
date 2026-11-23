@@ -1,2 +1,2 @@
-export * from '../shared/data-state';
-export * from '../shared/switch';
+export * from '../data-state.model';
+export * from './switch.model';

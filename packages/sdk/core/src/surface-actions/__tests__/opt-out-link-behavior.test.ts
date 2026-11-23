@@ -13,13 +13,13 @@ import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
 } from '../../libs/page-globals';
-import { EARLY_CONSENT_TAP_SCRIPT } from '../early-tap-script';
-import { replayEarlyConsentTaps } from '../early-taps';
+import { EARLY_CONSENT_TAP_SCRIPT } from '../early-consent-tap-script';
 import {
 	activateOptOutLink,
 	closeOptOutConfirmation,
 	isOptOutConfirmationOpen,
 } from '../opt-out';
+import { replayEarlyConsentTaps } from '../replay-early-consent-taps';
 
 const cleanups: (() => void)[] = [];
 

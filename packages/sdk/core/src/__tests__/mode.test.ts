@@ -9,7 +9,7 @@ import { describe, expect, test, vi } from 'vitest';
 import type { SavePayload } from '../index';
 import * as modes from '../modes';
 import type { ManifestModeOptions } from '../modes';
-import { readHostedMode } from '../transports/hosted-modes';
+import { readHostedMode } from '../transports/hosted-modes.model';
 import { hosted } from '../transports/mode';
 import type { ProviderTransportContext } from '../transports/mode';
 import { recordAnswer } from '../transports/v1/__tests__/fixtures';

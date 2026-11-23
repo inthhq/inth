@@ -4,7 +4,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	import { getPreferenceItemContext } from './context';
+	import { getPreferenceItemContext } from './get-preference-item-context';
 
 	const context = getPreferenceItemContext();
 	const variants = preferenceItemVariants();

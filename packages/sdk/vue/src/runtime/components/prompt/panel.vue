@@ -19,12 +19,12 @@ import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import { computed, onMounted, ref } from 'vue';
 
 import { useConsentConfig } from '../../composables/config';
-import { useConsentSnapshot } from '../../composables/kernel';
+import { useConsentSnapshot } from '../../composables/use-consent-kernel';
 import { useSurfaceTranslations } from '../../composables/use-surface-translations';
 import AdvertisingRow from '../parts/advertising-row.vue';
 import CategoryGroup from '../parts/category-group.vue';
-import { useChoiceDraft } from '../parts/draft';
 import SaleRightsRow from '../parts/rights-row.vue';
+import { useChoiceDraft } from '../parts/use-choice-draft';
 
 /**
  * The options for the prompt's variant (BNR-14, BNR-15):

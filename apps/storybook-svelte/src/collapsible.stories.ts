@@ -5,7 +5,7 @@ import {
 import { enTranslations } from '@inth/sdk/translations';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
-import CollapsibleDemo from './CollapsibleDemo.svelte';
+import CollapsibleDemo from './collapsible-demo.svelte';
 
 const { consentTypes } = enTranslations;
 

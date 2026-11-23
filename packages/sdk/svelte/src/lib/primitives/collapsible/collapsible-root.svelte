@@ -7,7 +7,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	import { setCollapsibleRootContext } from './context';
+	import { setCollapsibleRootContext } from './get-collapsible-root-context';
 
 	const componentId = $props.id();
 

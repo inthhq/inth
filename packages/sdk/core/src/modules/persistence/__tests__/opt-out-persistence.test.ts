@@ -19,31 +19,31 @@ import {
 	optOutRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
-import type { InternalKernel } from '../../../kernel/internals';
+import type { InternalKernel } from '../../../kernel/kernel-internals.model';
 import {
 	PENDING_OPT_OUTS_STORAGE_KEY,
 	STORAGE_KEY_V2,
 	resolveStorageKeys,
 } from '../../../libs/storage-keys';
-import { readRequestConsent } from '../../../server/request-consent';
+import { readRequestConsent } from '../../../server/request-consent.api';
+import { createPersistence } from '../index';
 import {
 	readStoredRecords,
 	readStoredRecordsFromCookieHeader,
-} from '../hydrate';
-import { createPersistence } from '../index';
+} from '../persistence-hydrate.store';
 import {
 	decodeOptOutCategoriesCompact,
 	decodeOptOutRecord,
 	decodeOptOutRecordCompact,
 	validateStoredConsentEnvelope,
-} from '../record-codec';
-import type { StoredOptOutRecord } from '../record-codec';
-import { readStoredOptOutRecord } from '../record-storage';
+} from '../record-codec.model';
+import type { StoredOptOutRecord } from '../record-codec.model';
+import { readStoredOptOutRecord } from '../record-storage.store';
 import {
 	encodeOptOutRecord,
 	encodeOptOutRecordCompact,
 	encodeStoredConsentEnvelopeCompact,
-} from '../writer/encode';
+} from '../writer/record-encode.model';
 import {
 	legacyDecodeOptOutRecord,
 	legacyDecodeOptOutRecordCompact,

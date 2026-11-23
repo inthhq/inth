@@ -12,7 +12,7 @@ import Foundation
 /// vendor's consent and the ATT answer do.
 ///
 /// The purpose half is the web derivation, not a second one: `CONSENT_TO_IAB_PURPOSE_MAP.marketing`
-/// and `iabPurposesToInthConsents` in `packages/sdk/iab/src/tcf/purpose-mapping.ts`, with the purposes
+/// and `iabPurposesToInthConsents` in `packages/sdk/iab/src/tcf/purpose-mapping.model.ts`, with the purposes
 /// some vendor processes on consent deciding, as `consentBasisPurposes` in
 /// `packages/sdk/iab/src/index.ts` passes them: registered vendors, custom (non-IAB) vendors and listed
 /// ad tech providers (``IABPurposeCategories``). `packages/native-protocol/att/iab-marketing.json` runs the

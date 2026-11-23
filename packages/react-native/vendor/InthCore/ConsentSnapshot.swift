@@ -325,7 +325,7 @@ public struct CoreErrorInfo: Sendable, Codable, Equatable, Error {
 
 /// The IAB half of a snapshot: everything this build learned from `/init` about IAB.
 ///
-/// The key names are `KernelIABState`'s, from `packages/sdk/core/src/types.ts`, because
+/// The key names are `KernelIABState`'s, from `packages/sdk/core/src/consent-kernel.model.ts`, because
 /// the React Native boundary hands JavaScript a JSON string and a renamed key shows up
 /// as `undefined` on a device rather than as a type error. Only `gvl` is carried:
 /// `authority`, `tcString`, the per-vendor vectors and `cmpId` are IAB runtime state this

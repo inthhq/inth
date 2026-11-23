@@ -15,7 +15,7 @@ import Foundation
 /// confused with `not-determined`, which means the subject has not been asked yet and
 /// still has to be.
 ///
-/// Raw values are the wire values `src/protocol/tracking.ts` declares, so Swift, Kotlin,
+/// Raw values are the wire values `src/protocol/tracking-protocol.model.ts` declares, so Swift, Kotlin,
 /// and JavaScript name one set of arms.
 public enum InthTrackingAuthorization: String, CaseIterable, Sendable {
     /// Apple said yes, or the platform asks nothing and consent decided alone.

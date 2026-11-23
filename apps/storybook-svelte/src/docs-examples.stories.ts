@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/svelte-vite';
 import { expect, spyOn, userEvent, waitFor, within } from 'storybook/test';
 import type { PlayFunction } from 'storybook/types';
 
+import DocsExampleStory from './docs-example-story.svelte';
 import ConsentActions from './docs-examples/consent-actions.svelte';
 import { callbacks } from './docs-examples/consent-callbacks';
 import ConsentEvents from './docs-examples/consent-events.svelte';
@@ -14,7 +15,6 @@ import { networkBlocker } from './docs-examples/network-blocker';
 import OwnPreferences from './docs-examples/own-preferences.svelte';
 import PrivacyControls from './docs-examples/privacy-controls.svelte';
 import PrivacySettingsPage from './docs-examples/privacy-settings-page.svelte';
-import DocsExampleStory from './DocsExampleStory.svelte';
 
 /**
  * The component and getter examples the Svelte and SvelteKit docs publish.

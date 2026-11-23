@@ -1,7 +1,7 @@
 /**
  * Wiring of the injected route onto the core consent route handler. The
  * route behaviour itself is pinned once, in
- * `packages/sdk/core/src/server/__tests__/consent-route.test.ts`.
+ * `packages/sdk/core/src/server/__tests__/consent-route.api.test.ts`.
  */
 import {
 	buildConsentManifestFromConfig,
@@ -12,13 +12,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions } from '../inth-options.model';
 import { manifest as manifestMode } from '../mode';
 import {
 	createConsentRouteHandlers,
 	resolveConsentContext,
 	waitUntilFromLocals,
 } from '../server';
-import type { InthAstroOptions } from '../types';
 
 const MANIFEST = await buildConsentManifestFromConfig({
 	branding: 'inth',

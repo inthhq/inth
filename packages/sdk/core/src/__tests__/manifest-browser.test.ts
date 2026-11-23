@@ -11,6 +11,7 @@ import { baseTranslations } from '@inth/sdk-translations/all';
 import { translations as germanCopy } from '@inth/sdk-translations/de';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import type { InitContext } from '../consent-kernel.model';
 import type { ConsentMode } from '../modes';
 import { earlyInitModes } from '../transports/early-init-modes';
 import {
@@ -19,8 +20,7 @@ import {
 	withEarlyInit,
 } from '../transports/manifest-browser';
 import { manifestNeedsLocation } from '../transports/manifest-browser-location';
-import { mayBeLocationFree } from '../transports/manifest-browser-packs';
-import type { InitContext } from '../types';
+import { mayBeLocationFree } from '../transports/manifest-browser-packs.model';
 
 const everywhereManifest: ConsentManifest = {
 	branding: 'inth',

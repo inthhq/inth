@@ -9,7 +9,7 @@ import type { TemplateRef } from '@angular/core';
 import type { SurfacePresentation } from '@inth/sdk/engine';
 import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
 
-import { resolveNoStyle } from '../core/no-style';
+import { resolveNoStyle } from '../core/no-style-scope';
 
 /** The context each action template renders with. */
 export interface PolicyActionContext {

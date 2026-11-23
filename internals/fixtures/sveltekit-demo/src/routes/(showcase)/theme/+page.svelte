@@ -3,12 +3,12 @@
 	import type { Theme } from '@inth/svelte';
 	import { testing } from '@inth/svelte/testing';
 
-	import ForceBannerShow from '#lib/components/ForceBannerShow.svelte';
+	import ForceBannerShow from '#lib/components/force-banner-show.svelte';
 	import {
 		minimalTheme,
 		darkTheme,
 	} from '#lib/consent-manager/theme-presets.js';
-	import ThemeTokens from '#lib/consent-manager/ThemeTokens.svelte';
+	import ThemeTokens from '#lib/consent-manager/theme-tokens.svelte';
 
 	type ButtonName = 'accept' | 'reject' | 'customize';
 	type LayoutConfig = (ButtonName | ButtonName[])[];

@@ -1,4 +1,4 @@
-import { useKernelSelector } from '../kernel-selector';
+import { useKernelSelector } from '../use-kernel-selector';
 
 /**
  * `defaultTranslationConfig.defaultLanguage`, without importing the

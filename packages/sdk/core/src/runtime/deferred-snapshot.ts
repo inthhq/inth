@@ -16,16 +16,16 @@
 import { readPolicyResolutionWire } from '@inth/sdk-schema/types';
 import type { InitOutput, PolicyResolutionWire } from '@inth/sdk-schema/types';
 
-import { buildInitialSnapshot } from '../kernel/snapshot';
-import type { SSRInitialData } from '../options/ssr';
 import type {
 	ConsentSnapshot,
 	HydrationRecords,
 	KernelConfig,
 	KernelOverrides,
-} from '../types';
+} from '../consent-kernel.model';
+import { buildInitialSnapshot } from '../kernel/kernel-snapshot.model';
+import type { SSRInitialData } from '../options/ssr-options.model';
 
-export type { SSRInitialData } from '../options/ssr';
+export type { SSRInitialData } from '../options/ssr-options.model';
 // The light half, which a first-load chunk takes on its own.
 export {
 	findPrefetchedInit,

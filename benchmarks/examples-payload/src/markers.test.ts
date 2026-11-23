@@ -98,12 +98,17 @@ describe('the browser manifest resolver', () => {
 		expect(findBoundaries(resolver, markers)).toContain('resolverBytes');
 	});
 
-	it('is what manifest() loads on demand, not its first-load module', () => {
+	it('is what manifest() loads on demand, not its first-load modules', () => {
 		expect(built('core/dist/transports/manifest-browser-resolve.js')).toMatch(
 			/\bresolveInitFromManifest\b/u
 		);
-		expect(
-			findBoundaries(built('core/dist/transports/manifest-browser.js'), markers)
-		).not.toContain('resolverBytes');
+		for (const file of [
+			'core/dist/transports/manifest-browser.js',
+			'core/dist/transports/manifest-browser.api.js',
+		]) {
+			expect(findBoundaries(built(file), markers)).not.toContain(
+				'resolverBytes'
+			);
+		}
 	});
 });

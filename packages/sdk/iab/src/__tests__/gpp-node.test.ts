@@ -13,8 +13,8 @@ import {
 import { describe, expect, test } from 'vitest';
 
 import { createGPP } from '../gpp';
-import { encodeGPPString } from '../gpp/encoder';
-import { parseTCFEUSection } from '../gpp/tcf-section';
+import { encodeGPPString } from '../gpp/gpp-encoder.model';
+import { parseTCFEUSection } from '../gpp/parse-tcf-eu-section';
 import { completeGVL } from './fixtures/gvl-sample';
 import { PURPOSE_PROHIBITED_TC_STRING } from './fixtures/publisher-restrictions';
 

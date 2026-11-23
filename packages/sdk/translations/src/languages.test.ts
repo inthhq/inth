@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import i18n from '../i18n.json';
 import manifest from '../package.json';
-import { getStockTranslations } from './stock';
+import { getStockTranslations } from './stock-translations.model';
 import { baseTranslations } from './translations';
 
 const languages = Object.keys(baseTranslations).filter(

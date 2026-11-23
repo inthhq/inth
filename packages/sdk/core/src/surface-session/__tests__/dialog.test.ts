@@ -11,6 +11,7 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type { ConsentKernel, KernelConfig } from '../../consent-kernel.model';
 import { createConsentKernel } from '../../kernel';
 import {
 	resolvePrivacyChoicesDialogCopy,
@@ -20,10 +21,12 @@ import {
 	resolveVendorTableCopy,
 } from '../../libs/consent-copy';
 import { createPreferenceDraft } from '../../preference-draft';
-import type { ConsentKernel, KernelConfig } from '../../types';
-import { planCategorySwitch, planVendorSwitch } from '../categories';
-import { applyDialogCategories, commitDialogChoice } from '../commands';
-import { resolveRightsReceipt } from '../receipt';
+import { planCategorySwitch, planVendorSwitch } from '../category-switch.model';
+import { resolveRightsReceipt } from '../resolve-rights-receipt';
+import {
+	applyDialogCategories,
+	commitDialogChoice,
+} from '../surface-commands.model';
 
 const CATEGORIES = [
 	'necessary',

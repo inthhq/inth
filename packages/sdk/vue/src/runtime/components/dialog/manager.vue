@@ -16,10 +16,10 @@ import {
 	useHasOptOutConfirmationHost,
 	useOptInConfirmationHost,
 	useOptOutConfirmationOpen,
-} from '../../composables/kernel';
-import { symbolConfirmationHosted } from '../../utils/symbols';
-import { useAdoptOptOutConfirmation } from '../parts/receipt-focus';
-import { loadConsentDialog } from './load';
+} from '../../composables/use-consent-kernel';
+import { symbolConfirmationHosted } from '../../utils/consent-symbols.model';
+import { useAdoptOptOutConfirmation } from '../parts/use-adopt-opt-out-confirmation';
+import { loadConsentDialog } from './load-panel';
 
 // Vue reads an absent boolean prop as `false`; `undefined` lets the
 // config's `disableAnimation` through.

@@ -8,7 +8,7 @@ import {
 } from '../../consent-dialog/src/consent-dialog';
 import { testOptions } from '../../src/__tests__/test-local';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
-import type { InthProviderOptions } from '../../src/lib/core/options';
+import type { InthProviderOptions } from '../../src/lib/core/inth-options';
 import { provideInth } from '../../src/lib/core/provide-inth';
 import { ConsentBanner } from '../../src/lib/prompt/prompt';
 import { iabTestOptions } from '../../testing/src/__tests__/harness-test-bed';

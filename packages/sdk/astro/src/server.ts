@@ -49,8 +49,8 @@ import { baseTranslations } from '@inth/sdk/translations/all';
 import { generateThemeCSS } from '@inth/sdk/ui/theme';
 import type { Theme } from '@inth/sdk/ui/theme';
 
-import { assertIABAvailable } from './libs/iab-unavailable';
-import type { InthLocals, InthResolvedOptions } from './types';
+import type { InthLocals, InthResolvedOptions } from './inth-options.model';
+import { assertIABAvailable } from './libs/iab-unavailable.model';
 
 /** Input for {@link resolveConsentContext}. */
 export interface ResolveConsentContextOptions {
@@ -507,33 +507,39 @@ export const buildBannerRevealScript = function buildBannerRevealScript(
 };
 
 export { buildPrefetchScript } from '@inth/sdk/engine';
-export { resolveBrandingModel } from './banner/branding-model';
+export { resolveBrandingModel } from './banner/branding.model';
 export type {
 	BrandingModel,
 	BrandingModelInput,
-} from './banner/branding-model';
-export { iabPromptClassNames, joinClasses } from './banner/class-names';
-export type { ClassNameMap, IABPromptClassNames } from './banner/class-names';
-export { resolveIABPromptModel } from './banner/iab-prompt-model';
+} from './banner/branding.model';
+export {
+	iabPromptClassNames,
+	joinClasses,
+} from './banner/banner-class-names.model';
+export type {
+	ClassNameMap,
+	IABPromptClassNames,
+} from './banner/banner-class-names.model';
+export { resolveIABPromptModel } from './banner/iab-prompt.model';
 export type {
 	IABAction,
 	IABPromptButton,
 	IABPromptModel,
 	IABPromptModelInput,
 	IABPromptProps,
-} from './banner/iab-prompt-model';
+} from './banner/iab-prompt.model';
 export {
 	buildConsentBootJSON,
 	buildLocalsBootJSON,
 	canDeferEngine,
-} from './banner/deferred-boot';
+} from './banner/deferred-boot.model';
 // The inline script that records prompt taps before the page script runs,
 // for a prompt whose engine loads after the page.
 export { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 export {
 	IAB_PROMPT_SLOT_ATTRIBUTE,
 	PROMPT_SLOT_ATTRIBUTE,
-} from './banner/slot';
+} from './banner/prompt-slot.model';
 export type { KernelConfig } from '@inth/sdk/engine';
 
 /**
@@ -585,23 +591,26 @@ export const markConfigEmitted = function markConfigEmitted(
 };
 
 // The consent prompt: its model, its markup and its first-paint sheets.
-export { promptClassNames } from './prompt/class-names';
-export type { PromptClassNames } from './prompt/class-names';
+export { promptClassNames } from './prompt/prompt-class-names';
+export type { PromptClassNames } from './prompt/prompt-class-names';
 export {
 	promptContainerType,
 	resolvePromptPresentation,
-} from './prompt/presentation';
-export type { PromptContainerType } from './prompt/presentation';
-export { privacyChoicesLinkIconSvg } from './parts/link-icon';
-export { resolvePromptModel } from './prompt/model';
+} from './prompt/prompt-presentation.model';
+export type { PromptContainerType } from './prompt/prompt-presentation.model';
+export { privacyChoicesLinkIconSvg } from './parts/privacy-choices-link-icon.model';
+export { resolvePromptModel } from './prompt/prompt.model';
 export type {
 	PromptModel,
 	PromptModelInput,
 	PromptProps,
-} from './prompt/model';
-export { promptFirstPaintSheets, renderPromptHTML } from './prompt/server';
+} from './prompt/prompt.model';
+export {
+	promptFirstPaintSheets,
+	renderPromptHTML,
+} from './prompt/render-prompt-html';
 
-// The first-paint rules the components inline (see `inline-styles.ts`).
+// The first-paint rules the components inline (see `inline-styles.model.ts`).
 export {
 	INLINE_IAB_STYLES_CSS,
 	INLINE_IAB_STYLES_ID,
@@ -609,7 +618,7 @@ export {
 	INLINE_PARTS_STYLES_ID,
 	INLINE_STYLES_CSS,
 	INLINE_STYLES_ID,
-} from './inline-styles';
+} from './inline-styles.model';
 
 // The handlers behind the injected route, for a site that sets
 // `routePrefix: false` and mounts them itself. The browser does not call
@@ -619,8 +628,8 @@ export {
 export {
 	createConsentRouteHandlers,
 	waitUntilFromLocals,
-} from './api/handlers';
+} from './api/create-consent-route-handlers';
 export type {
 	ConsentRouteHandlerOptions,
 	RequestLifetime,
-} from './api/handlers';
+} from './api/create-consent-route-handlers';

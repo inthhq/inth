@@ -5,7 +5,7 @@ import path from 'node:path';
 import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { MODULE_PRELOAD_PLACEHOLDERS } from '../kit/module-preload';
+import { MODULE_PRELOAD_PLACEHOLDERS } from '../kit/module-preload.model';
 import { consentManifest, resolveChunkHrefs } from '../vite';
 
 /** The module-preload plugin `consentManifest()` includes. */
@@ -32,7 +32,7 @@ const CLIENT_BUNDLE = {
 	]),
 	'_app/immutable/chunks/e.js': chunk('_app/immutable/chunks/e.js', [
 		'/app/node_modules/@inth/svelte/dist/deferred/engine.js',
-		'/app/node_modules/@inth/svelte/dist/owned-runtime.js',
+		'/app/node_modules/@inth/svelte/dist/create-owned-runtime.js',
 	]),
 	'_app/immutable/entry/app.js': chunk(
 		'_app/immutable/entry/app.js',
@@ -399,7 +399,7 @@ describe('consentManifest first-load chunk', () => {
 			'/app/node_modules/@inth/sdk/lib/core/dist/libs/vendors.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/libs/experiment.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/libs/experiment-storage.js',
-			'/app/node_modules/@inth/sdk/lib/core/dist/libs/cookie/operations.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/libs/cookie/cookie.store.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/modules/has.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/consent-record/evaluate.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/translations/index.js',

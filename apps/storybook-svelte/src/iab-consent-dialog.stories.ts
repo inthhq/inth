@@ -1,7 +1,7 @@
 import { tabAndExpansionFlow } from '@inth/conformance/play/iab-consent-dialog';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
-import IABConsentDialogStory from './IABConsentDialogStory.svelte';
+import IABConsentDialogStory from './iab-consent-dialog-story.svelte';
 
 const meta = {
 	component: IABConsentDialogStory,

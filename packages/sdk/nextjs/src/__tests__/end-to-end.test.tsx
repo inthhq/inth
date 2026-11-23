@@ -10,7 +10,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { defineConsentConfig } from '../config';
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 import { testing } from '../testing';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 import { policyFixture } from './policy-fixture';

@@ -5,7 +5,7 @@ import { vendorsListedUnder } from '@inth/sdk/engine';
 import { useMemo } from 'react';
 
 import { useVendorChoice } from '~/hooks';
-import { useKernelSelector } from '~/kernel-selector';
+import { useKernelSelector } from '~/use-kernel-selector';
 
 /**
  * The vendors the stock preference center lists under one category, for a

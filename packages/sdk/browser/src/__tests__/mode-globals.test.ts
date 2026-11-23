@@ -9,12 +9,12 @@ import {
 import { translations } from '@inth/sdk-translations/en';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type { ConsentClientOptions } from '../consent-client.model';
+import { autoInit, installGlobal } from '../create-global-with';
+import type { GlobalApiBase } from '../create-global-with';
+import { createHostedGlobal } from '../create-hosted-global';
 import { createGlobal } from '../global';
-import { autoInit, installGlobal } from '../global-base';
-import type { GlobalApiBase } from '../global-base';
-import { createHostedGlobal } from '../hosted-global';
 import { createTestingGlobal } from '../testing-global';
-import type { ConsentClientOptions } from '../types';
 
 /** A query pair Inth adds to `/v1/consent/init`. */
 const INIT_PAIR =

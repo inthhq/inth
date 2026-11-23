@@ -1,13 +1,13 @@
 import { describe, expect, test } from 'vitest';
 
 import { compareCanonical } from './canonical-order';
-import { normalizePolicyRule } from './policy-rule';
 import {
 	choicePromptFingerprintInput,
 	noticePromptFingerprintInput,
 	policyFingerprintInput,
-} from './policy-rule-fingerprint';
-import { policyRulePresets } from './policy-rule-presets';
+} from './policy/policy-rule-fingerprint.model';
+import { policyRulePresets } from './policy/policy-rule-presets';
+import { normalizePolicyRule } from './policy/policy-rule.model';
 
 const PRINTABLE = Array.from({ length: 0x7f - 0x20 }, (_, index) =>
 	String.fromCharCode(0x20 + index)

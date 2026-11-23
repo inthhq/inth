@@ -603,7 +603,7 @@ final class InthTrackingGateTests: XCTestCase {
         // The wire spellings are written out here rather than read back off the enum, so a
         // renamed raw value fails against a string. `not-determined` is the one a
         // hand-written reader gets wrong: the JavaScript side compares against the
-        // kebab-case spelling `src/protocol/tracking.ts` declares.
+        // kebab-case spelling `src/protocol/tracking-protocol.model.ts` declares.
         let expected: [(InthTrackingAuthorization, String)] = [
             (.authorized, "authorized"),
             (.denied, "denied"),

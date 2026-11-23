@@ -6,4 +6,4 @@ export {
 	legalDocumentCurrentInputSchema,
 	legalDocumentCurrentOutputSchema,
 	legalDocumentCurrentParamsSchema,
-} from './current';
+} from './legal-document-current.model';

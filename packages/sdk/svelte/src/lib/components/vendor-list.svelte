@@ -12,7 +12,7 @@
 	import switchStyles from '@inth/sdk/ui/styles/components/switch';
 	import vendorListStyles from '@inth/sdk/ui/styles/components/vendor-list';
 
-	import { getConsentContext } from '../context.svelte';
+	import { getConsentContext } from '../get-consent-context.svelte';
 	import { PreferenceItem, Switch } from '../primitives';
 
 	let {

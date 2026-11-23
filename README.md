@@ -48,7 +48,7 @@ The workspace uses Node.js 24 and the pnpm version declared in [`package.json`](
 pnpm install
 ```
 
-Check the package's development instructions for any additional build tools. Run workspace checks with `pnpm check`.
+Check the package's development instructions for any additional build tools. Run the CLI checks with `pnpm check`, and the SDK checks with the `sdk:*` scripts above.
 
 Maintainers can find release instructions in [publishing with Tegami](.tegami/README.md).
 

@@ -8,7 +8,7 @@ import { buildVitePlugins, resolveOptions } from '../integration';
 import {
 	createClassMapPlugin,
 	EMPTY_STYLESHEET_ID,
-} from '../libs/class-map-plugin';
+} from '../libs/create-class-map-plugin';
 import { testing as testingMode } from '../testing';
 
 const directory = mkdtempSync(join(tmpdir(), 'inth-class-maps-'));

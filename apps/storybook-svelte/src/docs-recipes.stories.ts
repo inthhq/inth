@@ -6,10 +6,10 @@ import {
 import { ConsentBanner } from '@inth/svelte';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
+import DocsRecipeStory from './docs-recipe-story.svelte';
 import BottomBar from './docs-recipes/bottom-bar.svelte';
 import HeadlessBar from './docs-recipes/cookie-bar.svelte';
 import { slimBar } from './docs-recipes/slim-bar';
-import DocsRecipeStory from './DocsRecipeStory.svelte';
 
 /**
  * The designs on the docs' "Banner designs" page. Each story renders one

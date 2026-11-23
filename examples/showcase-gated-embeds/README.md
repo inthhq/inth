@@ -39,8 +39,8 @@ matches what each embed does in your policy.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/showcase-gated-embeds dev
 ```
 
@@ -60,8 +60,8 @@ NEXT_PUBLIC_CRISP_WEBSITE_ID=your-website-id bun run --cwd examples/showcase-gat
 
 ## Docs
 
-- [Embeds in Next.js](https://c15t.com/docs/frameworks/next/embeds)
-- [ConsentGate](https://c15t.com/docs/frameworks/next/components/consent-gate)
-- [YouTube](https://c15t.com/docs/integrations/youtube),
-  [Google Maps](https://c15t.com/docs/integrations/google-maps) and
-  [Crisp](https://c15t.com/docs/integrations/crisp)
+- [Embeds in Next.js](https://inth.com/docs/frameworks/next/embeds)
+- [ConsentGate](https://inth.com/docs/frameworks/next/components/consent-gate)
+- [YouTube](https://inth.com/docs/integrations/youtube),
+  [Google Maps](https://inth.com/docs/integrations/google-maps) and
+  [Crisp](https://inth.com/docs/integrations/crisp)

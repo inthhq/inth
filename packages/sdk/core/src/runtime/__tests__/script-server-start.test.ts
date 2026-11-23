@@ -17,22 +17,25 @@ import {
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { SERVER_START_FAILED_EVENT } from '../../libs/page-globals';
-import type { Script } from '../../libs/script-loader/types';
+import type { Script } from '../../libs/script-loader/script.model';
 import { STORAGE_KEY } from '../../libs/storage-keys';
-import { validateStoredConsentEnvelope } from '../../modules/persistence/record-codec';
+import { validateStoredConsentEnvelope } from '../../modules/persistence/record-codec.model';
 import {
 	encodeStoredConsentEnvelopeCompact,
 	encodeStoredConsentEnvelopeJson,
 	encodeVendorChoice,
-} from '../../modules/persistence/writer/encode';
+} from '../../modules/persistence/writer/record-encode.model';
 import { signRelease } from '../../modules/script-loader/__tests__/signing-fixtures';
 import { releaseServerStartedScripts } from '../../surface-actions/plain-scripts';
+import type {
+	ConsentRuntimeOptions,
+	RuntimePrefetch,
+} from '../consent-runtime.model';
 import {
 	serverScriptStart,
 	serverScriptStartPlan,
 	storedChoiceCheckScript,
 } from '../script-server-start';
-import type { ConsentRuntimeOptions, RuntimePrefetch } from '../types';
 
 type StartedWindow = Window & {
 	__inthRender?: {

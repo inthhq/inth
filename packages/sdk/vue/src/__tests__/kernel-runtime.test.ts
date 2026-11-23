@@ -18,7 +18,7 @@ import { renderToString } from 'vue/server-renderer';
 
 import InthProvider from '../runtime/components/inth-provider.vue';
 import { consentConfigKey } from '../runtime/composables/config';
-import { useHasConsent as getConsentedCategories } from '../runtime/composables/consent';
+import { useHasConsent as getConsentedCategories } from '../runtime/composables/use-consent';
 import type { ConsentConfig } from '../runtime/config';
 import {
 	symbolActiveUI,
@@ -27,7 +27,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 import { createVueConsentKernelContext } from './test-kernel';
 import type {
 	RuntimeConsentConfig,
@@ -907,7 +907,8 @@ test('with `iab` set, mounts the shared CMP for a prefetched IAB reference and e
 		await context.iab?.whenReady?.();
 		context.iab?.acceptAll();
 		await context.iab?.save();
-		const { decodeTCString } = await import('../../../iab/src/tcf/tc-string');
+		const { decodeTCString } =
+			await import('../../../iab/src/tcf/tc-string.model');
 		const tcString = context.snapshot.value.iab?.authority?.tcString;
 		expect(tcString).toBeTruthy();
 		if (!tcString) {
@@ -1172,7 +1173,8 @@ describe('IAB is opt-in', () => {
 test('IAB publisher restrictions configured in Vue reach the CMP and its TC string', async () => {
 	const { completeGVL } =
 		await import('../../../iab/src/__tests__/fixtures/gvl-sample');
-	const { decodeTCString } = await import('../../../iab/src/tcf/tc-string');
+	const { decodeTCString } =
+		await import('../../../iab/src/tcf/tc-string.model');
 	// Vendor 755 must use legitimate interest for purpose 7.
 	const publisherRestrictions = [
 		{ purposeId: 7, restrictionType: 2 as const, vendorIds: [755] },

@@ -1,19 +1,20 @@
 # InthReactNative (iOS)
 
 The iOS half of `@inth/react-native`: a Codegen TurboModule in Swift over the pure
-Swift consent core at [`packages/swift`](../swift). New Architecture
-only. Shared native SwiftUI presentation remains future work; see the maintained
-private support contract in `docs/internal/mobile-support.md`.
+Swift consent core at [`packages/swift`](../../swift). New Architecture
+only. `ReactNative/InthConsentHost.swift` presents the stock SwiftUI screens from
+`InthConsentUI`. See the maintained private support contract in
+`packages/sdk/docs/internal/mobile-support.md`.
 
 ## Layout
 
 | Path | Module | Contents |
 | --- | --- | --- |
-| `InthReactNative/Bridge/` | none of React | wire encoders, the change pump, `Info.plist` configuration, the module handler, the two lifecycle observers below, and the tracking gate. Compiles and tests with no Pods installed. |
+| `InthReactNative/Bridge/` | none of React | wire encoders, the change pump, `Info.plist` configuration, the module handler, and the start and install calls that hand the core to `InthApple`, which owns the two lifecycle observers below and the tracking gate. Compiles and tests with no Pods installed. |
 | `InthReactNative/ReactNative/` | React + `ReactCodegen` | the TurboModule: the Swift implementation, and the ObjC++ category carrying the Codegen conformance, the JavaScript name, and the `getTurboModule:` provider. Also the constructor that starts the core before React Native initializes. |
 | `InthReactNative/Resources/Privacy.xcprivacy` | resource | privacy manifest, shipped in the pod resource bundle and the SPM resource bundle. |
-| `Tests/InthReactNativeTests/` | test | 78 tests over the wire layer, the module handler, the lifecycle legs, and the tracking gate. |
-| `InthReactNative.xcodeproj` | generated | iOS-slice build of the wire layer against the core, for CI without an example app. |
+| `Tests/InthReactNativeTests/` | test | tests over the wire layer, the module handler, the lifecycle legs, and the tracking gate. |
+| `InthReactNative.xcodeproj` | generated | iOS-slice build of the wire layer against the core, without an example app. No CI job builds it. |
 | `support/gen-xcodeproj.rb` | tooling | regenerates that project. |
 
 The bridge attaches to the already-bootstrapped core through `Inth.install(_:)`. It
@@ -59,7 +60,7 @@ node ../android/codegen/generate-spec.mjs --platform ios --output /tmp/inth-spec
 That writes the generated `InthSpec/InthSpec.h` protocol and the `RCTModuleProviders` glue
 straight from `codegenConfig`, so the header the hand-written category is held to is
 readable on any machine holding Node and this package's `react-native` devDependency, Linux
-included. That is where CI runs it, in the `Mobile SDK (android-js)` job. The expectations
+included. That is where CI runs it, in the `React Native` job of `.github/workflows/ci.yml`. The expectations
 themselves live in `src/specs/__tests__/spec-contract.ts`, shared with the Android check, so
 both platforms are graded against one reading of the TypeScript.
 
@@ -84,8 +85,8 @@ holding only a constructor is neither. An app that owns its own setup sets
 `packages/native-protocol/CONTRACT.md` names three moments when a stored answer can have gone stale with
 nothing asking about it. The core sees only the first, inside `bootstrap`. The other two
 need a hook on the process, which a consent kernel is not allowed to hold, so
-`InthReactNativeBootstrap` arms them as soon as a core is in place, whichever call put it
-there.
+`InthApple` arms them as soon as a core is in place, whichever `InthReactNativeBootstrap`
+call put it there.
 
 | Leg | Trigger | What runs |
 | --- | --- | --- |
@@ -158,7 +159,7 @@ platform :ios, '16.4' # above RN 0.87's own floor
 Host Swift code in a CocoaPods RN app imports `InthReactNative` and installs through
 the `InthApple` types compiled into that module. Do not add a separate `InthCore`
 pod or SwiftPM product: it creates another installation singleton and Keychain
-owner. See `docs/internal/apple-installation.md` and its CocoaPods host example.
+owner. See `packages/sdk/docs/internal/apple-installation.md` and its CocoaPods host example.
 
 The workspace SPM manifest keeps core and Apple services as separate products from
 the same local source package. Only the CocoaPods path compiles the generated

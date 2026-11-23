@@ -4,7 +4,7 @@ package com.inth.reactnative
  * The arms a native core may report about platform tracking, spelled the way the wire
  * spells them.
  *
- * Raw values are the values `TrackingAuthorization` in `src/protocol/tracking.ts`
+ * Raw values are the values `TrackingAuthorization` in `src/protocol/tracking-protocol.model.ts`
  * declares, so Swift, Kotlin, and JavaScript name one set and a host that reads the
  * bridge sees the same strings whichever core answered.
  *

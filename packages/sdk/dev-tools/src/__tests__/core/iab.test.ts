@@ -13,7 +13,7 @@ import {
 	minimalGVL,
 } from '../../../../iab/src/__tests__/fixtures/gvl-sample';
 import { createMockGVL } from '../../../../iab/src/__tests__/test-setup';
-import { decodeTCString } from '../../../../iab/src/tcf/tc-string';
+import { decodeTCString } from '../../../../iab/src/tcf/tc-string.model';
 import { createDevTools } from '../../index';
 import type { DevToolsInstance } from '../../index';
 import { policyResolution } from '../helpers/kernel';

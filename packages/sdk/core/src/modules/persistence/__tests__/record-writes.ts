@@ -3,15 +3,15 @@
  * persistence binds them, the encoders, and the first-load clear.
  */
 import { persistenceTools } from '../tools';
-import { createRecordStore } from '../writer/store';
+import { createRecordStore } from '../writer/persistence-writer.store';
 
-export * from '../writer/encode';
+export * from '../writer/record-encode.model';
 
 export {
 	clearStoredConsentRecords,
 	encodeClearEpoch,
 	writeStoredClearEpoch,
-} from '../clear';
+} from '../persistence-clear.store';
 
 export const {
 	clearStoredOptOutRecord,

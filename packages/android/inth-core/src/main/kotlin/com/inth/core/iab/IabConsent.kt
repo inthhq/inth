@@ -174,7 +174,7 @@ internal object IabAuthority {
 		if (previous != null) require(previous.consentVersion in 1 until Int.MAX_VALUE)
 		// `createdAt` keeps the first decision's time for the record. It never reaches the string:
 		// TCF requires Created and LastUpdated to hold the same day, and the web build sets both to
-		// the confirmation day (`packages/sdk/iab/src/tcf/tc-string.ts`).
+		// the confirmation day (`packages/sdk/iab/src/tcf/tc-string.model.ts`).
 		val createdAt = previous?.createdAt ?: actionAt
 		require(createdAt >= 0 && actionAt >= createdAt)
 		val restrictions =

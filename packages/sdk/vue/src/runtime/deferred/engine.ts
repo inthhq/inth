@@ -1,7 +1,7 @@
 /**
  * The Nuxt plugin's consent engine: the runtime the app renders once it
  * has loaded. The plugin loads it at once for a visitor it cannot defer,
- * and otherwise when `deferred/shell.ts` asks for it, with the stock
+ * and otherwise when `deferred/create-deferred-context.ts` asks for it, with the stock
  * banner's chunk in parallel.
  *
  * @packageDocumentation
@@ -16,12 +16,15 @@ import { readStoredRecordsFromCookieHeader } from '@inth/sdk/modules/persistence
 import { clientMode, lazyHosted } from '@inth/sdk/runtime/client-mode';
 import type { DeferredCommitted } from '@inth/sdk/surface-actions/early-commit';
 
-import { withClientData } from '../client-data';
 import type { ConsentConfig } from '../config';
-import { NUXT_PROJECT_URL_ENV } from '../env-names';
-import { createVueConsentKernelContext } from '../kernel';
-import type { RuntimeConsentConfig, VueConsentKernelContext } from '../kernel';
+import { createVueConsentKernelContext } from '../create-vue-consent-kernel-context';
+import { NUXT_PROJECT_URL_ENV } from '../env-names.model';
 import type { NuxtMode } from '../nuxt-mode';
+import type {
+	RuntimeConsentConfig,
+	VueConsentKernelContext,
+} from '../vue-consent-kernel-context.model';
+import { withClientData } from '../with-client-data';
 
 /** What the plugin read before it loaded the engine. @internal */
 export interface NuxtEngineInput {

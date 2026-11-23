@@ -7,7 +7,7 @@ import { hosted, manifest } from '@inth/sdk/modes';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { defineConsentConfig } from '../config';
-import { resolveConsentSource } from '../consent-source';
+import { resolveConsentSource } from '../resolve-consent-source';
 import { testing } from '../testing';
 
 afterEach(() => {

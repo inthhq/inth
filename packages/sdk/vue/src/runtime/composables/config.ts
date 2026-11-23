@@ -21,9 +21,9 @@ import {
 	consentConfigKey,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../utils/symbols';
+} from '../utils/consent-symbols.model';
 
-export { consentConfigKey } from '../utils/symbols';
+export { consentConfigKey } from '../utils/consent-symbols.model';
 
 // One page-wide listener. The value stays `false` until a component
 // mounts, so hydration renders what the server rendered.

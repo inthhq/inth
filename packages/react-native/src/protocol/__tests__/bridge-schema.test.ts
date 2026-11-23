@@ -17,16 +17,16 @@ import {
 	createFakeNativeModule,
 	FAKE_BOOTSTRAP,
 } from '../../__tests__/helpers/fake-native';
-import { createConsentClient } from '../../native/client';
-import { getNativeInthEvents } from '../../native/module';
+import { createConsentClient } from '../../native/create-consent-client';
+import { getNativeInthEvents } from '../../native/get-native-inth';
 import {
 	BRIDGE_PAYLOADS,
 	describeBridgePayloadDrift,
 	normalizeBridgeField,
 	renderBridgeSchema,
 } from '../bridge-schema';
-import { parseTrackingAnsweredAt } from '../tracking';
-import { withAdditiveSnapshotDefaults } from '../wire-shape';
+import { withAdditiveSnapshotDefaults } from '../snapshot-wire-shape.model';
+import { parseTrackingAnsweredAt } from '../tracking-protocol.model';
 
 const PROTOCOL_DIR = resolve(
 	dirname(fileURLToPath(import.meta.url)),

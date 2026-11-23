@@ -56,9 +56,7 @@ bash packages/swift/Examples/custom-consent/capture-screenshots.sh /tmp/inth-con
 
 It writes 12 files named
 `ios-<stock|custom>-<prompt|preferences|iab>-<light|dark>.png` and fails if one
-is missing. The `ios-custom-consent` job in
-`.github/workflows/mobile-app-e2e.yml` runs it and uploads the files as the
-`custom-consent-ios-screenshots` artifact.
+is missing. No CI job runs it.
 
 ## IAB TCF
 

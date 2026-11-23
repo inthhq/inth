@@ -5,8 +5,8 @@ import {
 import { enTranslations } from '@inth/sdk/translations';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
-import AccordionSingleDemo from './AccordionSingleDemo.svelte';
-import AccordionWithIntroDemo from './AccordionWithIntroDemo.svelte';
+import AccordionSingleDemo from './accordion-single-demo.svelte';
+import AccordionWithIntroDemo from './accordion-with-intro-demo.svelte';
 
 const { consentTypes, consentManagerDialog } = enTranslations;
 

@@ -9,13 +9,13 @@ import {
 	NOW,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import { createConsentKernel } from '../../kernel';
-import { hasGlobalPrivacyControlSignal } from '../../libs/global-privacy-control';
 import type {
 	ConsentKernel,
 	GlobalVendorList,
 	KernelIABAuthority,
-} from '../../types';
+} from '../../consent-kernel.model';
+import { createConsentKernel } from '../../kernel';
+import { hasGlobalPrivacyControlSignal } from '../../libs/read-global-privacy-control';
 import { evaluateConsent } from '../has';
 import { createIframeBlocker } from '../iframe-blocker';
 import { createNetworkBlocker } from '../network-blocker';

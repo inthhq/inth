@@ -2774,7 +2774,7 @@ class ConsentCore @InthInternalApi constructor(
 			// through this line on the launch that served it, and on the read that hydrated it.
 			if (mapped.adTechProvidersInvalid) additionalConsentList = null
 			else mapped.adTechProviders?.let { additionalConsentList = AdditionalConsentList(it, if (bundle == null) clock.nowMillis() else bundle.atpFetchedAt ?: -1) }
-			// An unreadable list is none. An absent one keeps the list held, as `init-lifecycle.ts` does
+			// An unreadable list is none. An absent one keeps the list held, as `create-init-lifecycle.ts` does
 			// on the web, except in a live answer for a matched IAB policy: the backend sends the key
 			// whenever it declares custom vendors there, so leaving it out means it declares none. A
 			// bundle from an older CLI has no key and keeps the list. A grant for a vendor no longer
@@ -4052,7 +4052,7 @@ class ConsentCore @InthInternalApi constructor(
 
 	/**
 	 * Whether this live core sees an active GPC signal under a matched, non-provisional
-	 * rule that maps it. Port of `gpcSignalApplicable` in `packages/sdk/core/src/kernel/opt-out.ts`.
+	 * rule that maps it. Port of `gpcSignalApplicable` in `packages/sdk/core/src/kernel/kernel-opt-out.model.ts`.
 	 */
 	private fun gpcSignalApplicable(
 		snapshot: ConsentSnapshot,
@@ -4067,7 +4067,7 @@ class ConsentCore @InthInternalApi constructor(
 	/**
 	 * Whether this live core must record a durable GPC opt-out for [snapshot] under [policy].
 	 *
-	 * Port of `gpcOptOutDue` in `packages/sdk/core/src/kernel/opt-out.ts`: fires once when a
+	 * Port of `gpcOptOutDue` in `packages/sdk/core/src/kernel/kernel-opt-out.model.ts`: fires once when a
 	 * matched, non-provisional rule maps GPC, GPC is active, and no record is held yet.
 	 */
 	private fun gpcOptOutDue(
@@ -4077,7 +4077,7 @@ class ConsentCore @InthInternalApi constructor(
 
 	/**
 	 * Whether this live core must report an active GPC signal for an opt-out record already held
-	 * on the device. Port of `gpcSignalReportDue` in `packages/sdk/core/src/kernel/opt-out.ts`.
+	 * on the device. Port of `gpcSignalReportDue` in `packages/sdk/core/src/kernel/kernel-opt-out.model.ts`.
 	 */
 	private fun gpcSignalReportDue(
 		snapshot: ConsentSnapshot,
@@ -4169,7 +4169,7 @@ class ConsentCore @InthInternalApi constructor(
 	/**
 	 * Reason the held opt-out cannot be lifted locally, or `null` when it can.
 	 *
-	 * Port of `optOutLiftBlocker` in `packages/sdk/core/src/consent-record/opt-out-rules.ts`.
+	 * Port of `optOutLiftBlocker` in `packages/sdk/core/src/consent-record/opt-out-rules.model.ts`.
 	 */
 	private fun optOutLiftBlocker(
 		snapshot: ConsentSnapshot,

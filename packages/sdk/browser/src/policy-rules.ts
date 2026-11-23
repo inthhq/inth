@@ -1,7 +1,7 @@
 import { policyRulePresets } from '@inth/sdk-core';
 import type { PolicyRule } from '@inth/sdk-core';
 
-import type { TestingScriptTagOptions } from './types';
+import type { TestingScriptTagOptions } from './consent-client.model';
 
 /**
  * Turn preset names into policy rules.

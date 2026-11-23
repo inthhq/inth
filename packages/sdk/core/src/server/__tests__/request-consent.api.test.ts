@@ -1,0 +1,1354 @@
+/**
+ * Contract suite for the server-side consent resolution every adapter uses.
+ *
+ * Next.js, TanStack Start, SvelteKit, Astro and Nuxt each used to resolve a
+ * request's consent state with their own copy of this logic, and the copies
+ * drifted: how GPC was read, what was forwarded to the backend, whether the
+ * render could fetch its own routes, how the budget treated bad values, and
+ * whether a shared render carried one visitor's state. Each test pins one
+ * rule for all of them; the adapters only test their wiring.
+ */
+import type {
+	ConsentManifest,
+	GlobalVendorList,
+	InitOutput,
+} from '@inth/sdk-schema/types';
+import {
+	createConsentManifestPolicyPack,
+	resolvePolicyRules,
+	writePolicyResolutionWire,
+} from '@inth/sdk-schema/types';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
+import { clearManifestCache } from '../../libs/manifest-cache-runtime';
+import type { ManifestFetch } from '../../libs/manifest-cache-runtime';
+import { clearGvlCache } from '../../transports/gvl-cache.model';
+import { CONSENT_ROUTE_TIMEOUT_HEADER } from '../consent-route.api';
+import {
+	fetchRequestInit,
+	readRequestConsent,
+	resolveRequestConsent,
+} from '../request-consent.api';
+import type { ResolveRequestConsentOptions } from '../request-consent.api';
+
+const BACKEND = 'https://consent.example.com';
+const APP = 'https://app.example.com';
+const GVL_URL = 'https://gvl.example/vendor-list.json';
+const NOW = 1_780_000_000_000;
+/** The URL a render fetched, without the consent journey it adds as a query. */
+const target = (input: unknown): string => String(input).split('?')[0] ?? '';
+const CONSENTED = `inth=c.necessary:1,c.marketing:1,i.t:${NOW - 1000}`;
+const DISMISSED = `inth-notice=v=1&t=${NOW - 1000}&f=${'a'.repeat(64)}`;
+
+const MANIFEST = {
+	branding: 'inth',
+	policyPacks: [
+		createConsentManifestPolicyPack({
+			categories: ['measurement', 'marketing'],
+			id: 'eu-opt-in',
+			match: { countries: ['DE'] },
+			model: 'opt-in',
+			prompt: 'choice',
+			scopeMode: 'strict',
+			validity: { choiceDays: 365 },
+		}),
+		createConsentManifestPolicyPack({
+			categories: [],
+			id: 'notice-default',
+			match: { isDefault: true },
+			model: 'opt-out',
+			prompt: 'none',
+			scopeMode: 'permissive',
+			validity: { choiceDays: 30 },
+		}),
+	],
+	revision: 'manifest-revision',
+	schemaVersion: 2,
+} as unknown as ConsentManifest;
+
+const IAB_MANIFEST = {
+	...MANIFEST,
+	cmpId: 28,
+	iab: { enabled: true, gvl: { url: GVL_URL } },
+	policyPacks: [
+		createConsentManifestPolicyPack({
+			id: 'iab',
+			match: { fallback: true },
+			model: 'iab',
+			prompt: 'choice',
+		}),
+	],
+} as unknown as ConsentManifest;
+
+const GVL = {
+	purposes: { '1': { id: 1, name: 'Store and/or access information' } },
+	vendorListVersion: 42,
+	vendors: { '1': { id: 1, name: 'Vendor', purposes: [1] } },
+} as unknown as GlobalVendorList;
+
+const INIT: InitOutput = {
+	branding: 'inth',
+	location: { countryCode: 'DE', regionCode: null },
+	policyResolution: writePolicyResolutionWire(
+		resolvePolicyRules({
+			countryCode: 'DE',
+			regionCode: null,
+			rules: [
+				{
+					categories: ['measurement'],
+					id: 'policy_gdpr',
+					match: { isDefault: true },
+					model: 'opt-in',
+					prompt: 'choice',
+					scopeMode: 'strict',
+				},
+			],
+		})
+	),
+	translations: { language: 'de', translations: {} },
+} as unknown as InitOutput;
+
+const json = function json(
+	body: unknown,
+	headers: Record<string, string> = {}
+): Response {
+	return new Response(JSON.stringify(body), {
+		headers: {
+			'content-type': 'application/json',
+			'x-inth-policy-contract': '1',
+			...headers,
+		},
+	});
+};
+
+type FetchMock = ReturnType<typeof vi.fn<typeof globalThis.fetch>>;
+
+/** Serves `/v1/consent/init`, the manifest, the vendor list and session reports. */
+const upstream = function upstream(
+	manifest: ConsentManifest = MANIFEST,
+	init: unknown = INIT
+): FetchMock {
+	return vi.fn<typeof globalThis.fetch>((input) => {
+		const url = String(input instanceof Request ? input.url : input);
+		if (url.startsWith(GVL_URL)) {
+			return Promise.resolve(json(GVL));
+		}
+		if (url.endsWith('/sessions')) {
+			return Promise.resolve(new Response(null, { status: 202 }));
+		}
+		if (url.includes('/v1/consent/init')) {
+			return Promise.resolve(
+				json(typeof init === 'function' ? (init as () => unknown)() : init)
+			);
+		}
+		return Promise.resolve(
+			json(manifest, { 'cache-control': 'public, s-maxage=120' })
+		);
+	});
+};
+
+const callsTo = (fetch: FetchMock, fragment: string) =>
+	fetch.mock.calls.filter(([input]) => String(input).includes(fragment));
+
+const sentHeaders = (fetch: FetchMock, fragment: string): Headers =>
+	new Headers(callsTo(fetch, fragment)[0]?.[1]?.headers);
+
+const render = (
+	options: Partial<ResolveRequestConsentOptions> & {
+		headers?: Record<string, string>;
+	} = {}
+) => {
+	const { headers, ...rest } = options;
+	return resolveRequestConsent({
+		adapter: '@c15t/test',
+		now: NOW,
+		request: { headers: new Headers(headers), url: `${APP}/` },
+		...rest,
+	});
+};
+
+beforeEach(() => {
+	clearManifestCache();
+	clearGvlCache();
+});
+
+afterEach(() => {
+	vi.useRealTimers();
+	vi.unstubAllGlobals();
+});
+
+describe('request read', () => {
+	test('reads stored records from the consent cookie under the storage key', () => {
+		const { state } = readRequestConsent({
+			adapter: '@c15t/test',
+			now: NOW,
+			request: {
+				headers: new Headers({
+					cookie: `other=1; ${CONSENTED.replace('inth=', 'custom=')}`,
+				}),
+			},
+			storage: { storageKey: 'custom' },
+		});
+		expect(state.initialRecords?.choice).toBeDefined();
+		expect(state.now).toBe(NOW);
+	});
+
+	test('a cookie the framework read apart from the headers wins', () => {
+		const { state } = readRequestConsent({
+			adapter: '@c15t/test',
+			now: NOW,
+			request: { cookie: CONSENTED, headers: new Headers() },
+		});
+		expect(state.initialRecords?.choice).toBeDefined();
+	});
+
+	// Header names are case-insensitive, and some runtimes keep the casing
+	// the client sent.
+	test.each(['Cookie', 'COOKIE'])(
+		'a Node header record with a %s header reads the stored records',
+		(name) => {
+			const headers = {
+				[name]: `c15t-sid=sub_other; ${CONSENTED},i.sid:sub_recorded`,
+			};
+			const { state } = readRequestConsent({
+				adapter: '@c15t/test',
+				now: NOW,
+				request: { headers },
+			});
+			expect(state.initialRecords?.choice).not.toBeNull();
+			expect(state.initialRecords?.subject?.subjectId).toBe('sub_recorded');
+		}
+	);
+
+	test('GPC comes from the shared extractor: x-inth-gpc first, absent stays undefined', () => {
+		const read = (headers: Record<string, string>) =>
+			readRequestConsent({
+				adapter: '@c15t/test',
+				request: { headers: new Headers(headers) },
+			}).state.initialPrivacySignals;
+		expect(read({ 'sec-gpc': '1' })).toEqual({ gpc: true });
+		expect(read({ 'sec-gpc': '1', 'x-inth-gpc': '0' })).toEqual({
+			gpc: false,
+		});
+		// SvelteKit used to read raw `sec-gpc` and turn an absent signal into
+		// `false`, which a browser runtime then treated as a decision.
+		expect(read({})).toEqual({ gpc: undefined });
+	});
+
+	test('explicit overrides beat the headers and a middleware read', () => {
+		const fromHeaders = readRequestConsent({
+			adapter: '@c15t/test',
+			overrides: { country: 'FR' },
+			request: {
+				headers: new Headers({
+					'accept-language': 'de-DE',
+					'cf-ipcountry': 'DE',
+				}),
+			},
+		});
+		expect(fromHeaders.state.initialOverrides).toEqual({
+			country: 'FR',
+			language: 'de',
+		});
+		const fromMiddleware = readRequestConsent({
+			adapter: '@c15t/test',
+			overrides: { language: 'fr' },
+			request: {
+				headers: new Headers({ 'cf-ipcountry': 'US' }),
+				inputs: { country: 'DE', language: 'de', region: 'BE' },
+			},
+		});
+		expect(fromMiddleware.inputs).toEqual({
+			country: 'DE',
+			language: 'fr',
+			region: 'BE',
+		});
+	});
+
+	test('without a mode it returns the request-only state and fetches nothing', async () => {
+		const fetch = upstream();
+		const state = await render({ fetch, headers: { cookie: CONSENTED } });
+		expect(fetch).not.toHaveBeenCalled();
+		expect(state.initialPolicyResolution).toBeUndefined();
+		expect(state.initialRecords?.choice).toBeDefined();
+	});
+});
+
+describe('target resolution', () => {
+	test('a relative backend resolves against the request URL, never a forged forwarded host', async () => {
+		const fetch = upstream();
+		await render({
+			fetch,
+			headers: { 'x-forwarded-host': 'evil.example' },
+			projectUrl: '/consent',
+		});
+		expect(target(fetch.mock.calls[0]?.[0])).toBe(
+			`${APP}/consent/v1/consent/init`
+		);
+	});
+
+	test('forwarded headers decide the origin only when trusted', async () => {
+		const fetch = upstream();
+		await render({
+			fetch,
+			headers: { 'x-forwarded-host': 'edge.example' },
+			projectUrl: '/consent',
+			trustForwardedHeaders: true,
+		});
+		expect(target(fetch.mock.calls[0]?.[0])).toBe(
+			'https://edge.example/consent/v1/consent/init'
+		);
+	});
+
+	test('an unresolvable URL returns the request-only state and reports why', async () => {
+		const fetch = upstream();
+		const onError = vi.fn();
+		const state = await resolveRequestConsent({
+			adapter: '@c15t/test',
+			fetch,
+			onError,
+			projectUrl: '/consent',
+			request: { headers: new Headers() },
+		});
+		expect(fetch).not.toHaveBeenCalled();
+		expect(state.initialPolicyResolution).toBeUndefined();
+		expect(onError).toHaveBeenCalledTimes(1);
+		expect(onError.mock.calls[0]?.[1]).toBe('/consent/v1/consent/init');
+	});
+
+	describe('self-route guard', () => {
+		test.each([
+			['hosted', { projectUrl: '/api/inth' }],
+			['manifest', { manifestUrl: '/api/inth/v1/consent/manifest' }],
+			['an absolute same-origin URL', { projectUrl: `${APP}/api/inth` }],
+		])('never fetches the app’s own consent route (%s)', async (_, source) => {
+			const fetch = upstream();
+			const onError = vi.fn();
+			const state = await render({ fetch, onError, ...source });
+			expect(fetch).not.toHaveBeenCalled();
+			expect(state.initialPolicyResolution).toBeUndefined();
+			expect(String(onError.mock.calls[0]?.[0])).toContain('own consent route');
+		});
+
+		test('honours the routes the adapter declares, segment by segment', async () => {
+			const fetch = upstream();
+			await render({
+				fetch,
+				ownRoutes: ['/api/consent'],
+				projectUrl: '/api/consent',
+			});
+			expect(fetch).not.toHaveBeenCalled();
+			await render({
+				fetch,
+				ownRoutes: ['/api/consent'],
+				projectUrl: '/api/consentx',
+			});
+			expect(target(fetch.mock.calls[0]?.[0])).toBe(
+				`${APP}/api/consentx/v1/consent/init`
+			);
+		});
+
+		test('a same-origin backend outside the consent routes is fetched', async () => {
+			const fetch = upstream();
+			await render({ fetch, projectUrl: '/api/self-host' });
+			expect(fetch).toHaveBeenCalledTimes(1);
+		});
+
+		test('an adapter with no own routes fetches a same-origin /api/inth backend', async () => {
+			const fetch = upstream();
+			const state = await render({
+				fetch,
+				ownRoutes: [],
+				projectUrl: '/api/inth',
+			});
+			expect(target(fetch.mock.calls[0]?.[0])).toBe(
+				`${APP}/api/inth/v1/consent/init`
+			);
+			expect(state.initialPolicyResolution?.status).toBe('matched');
+		});
+
+		test('a render reached by its own origin’s render request stops there', async () => {
+			const fetch = upstream();
+			await render({ fetch, projectUrl: '/api/self-host' });
+			const marked = Object.fromEntries(sentHeaders(fetch, '/v1/consent/init'));
+			// A page answered that request (an unmounted backend prefix) and its
+			// render resolves again with the headers it received.
+			const onError = vi.fn();
+			const nested = await render({
+				fetch,
+				headers: marked,
+				onError,
+				projectUrl: '/api/self-host',
+			});
+			expect(fetch).toHaveBeenCalledTimes(1);
+			expect(nested.initialPolicyResolution).toBeUndefined();
+			expect(onError.mock.calls[0]?.[1]).toBe(
+				`${APP}/api/self-host/v1/consent/init`
+			);
+			// A backend on another origin is still asked.
+			await render({ fetch, headers: marked, projectUrl: BACKEND });
+			expect(callsTo(fetch, BACKEND)).toHaveLength(1);
+		});
+
+		test('only same-origin requests carry the render marker', async () => {
+			const fetch = upstream();
+			await render({ fetch, projectUrl: BACKEND });
+			await render({ fetch, projectUrl: '/api/self-host' });
+			const remote = new Headers(fetch.mock.calls[0]?.[1]?.headers);
+			const own = new Headers(fetch.mock.calls[1]?.[1]?.headers);
+			const added = [...own.keys()].filter((name) => !remote.has(name));
+			expect(added).toHaveLength(1);
+		});
+
+		test('an in-process fetch reaches the own init route with the budget header', async () => {
+			const fetch = upstream();
+			const localFetch = vi.fn<ManifestFetch>(() =>
+				Promise.resolve(json(INIT))
+			);
+			const state = await render({
+				fetch,
+				headers: { cookie: CONSENTED },
+				initUrl: '/api/inth/v1/consent/init',
+				localFetch,
+			});
+			expect(fetch).not.toHaveBeenCalled();
+			expect(target(localFetch.mock.calls[0]?.[0])).toBe(
+				'/api/inth/v1/consent/init'
+			);
+			const headers = new Headers(localFetch.mock.calls[0]?.[1]?.headers);
+			expect(headers.get(CONSENT_ROUTE_TIMEOUT_HEADER)).toMatch(/^\d+$/u);
+			// The app's own route reads no cookie, so none is sent.
+			expect(headers.has('cookie')).toBe(false);
+			expect(state.initialPolicyResolution?.status).toBe('matched');
+		});
+
+		test('an absolute URL on the request origin also goes in-process', async () => {
+			const fetch = upstream();
+			const localFetch = vi.fn<ManifestFetch>(() =>
+				Promise.resolve(json(INIT))
+			);
+			await render({
+				fetch,
+				localFetch,
+				projectUrl: `${APP}/api/bench-consent`,
+			});
+			expect(fetch).not.toHaveBeenCalled();
+			expect(target(localFetch.mock.calls[0]?.[0])).toBe(
+				'/api/bench-consent/v1/consent/init'
+			);
+		});
+	});
+});
+
+describe('modes', () => {
+	test('manifest mode resolves locally and reads the manifest once across renders', async () => {
+		const fetch = upstream();
+		const first = await render({
+			fetch,
+			headers: { 'cf-ipcountry': 'DE' },
+			mode: 'manifest',
+			projectUrl: BACKEND,
+		});
+		const second = await render({
+			fetch,
+			headers: { 'cf-ipcountry': 'US' },
+			mode: 'manifest',
+			projectUrl: BACKEND,
+		});
+		expect(callsTo(fetch, '/v1/consent/manifest')).toHaveLength(1);
+		expect(callsTo(fetch, '/v1/consent/init')).toHaveLength(0);
+		expect(first.initialPolicyResolution?.status).toBe('matched');
+		expect(
+			first.initialPolicyResolution?.status === 'matched' &&
+				first.initialPolicyResolution.policyId
+		).toContain('eu-opt-in');
+		expect(
+			second.initialPolicyResolution?.status === 'matched' &&
+				second.initialPolicyResolution.policyId
+		).toContain('notice-default');
+	});
+
+	test('manifest mode answers from the backend /init, with a warning, when the manifest is unavailable', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const answers = upstream(MANIFEST, INIT);
+		const fetch = vi.fn<typeof globalThis.fetch>((input, init) =>
+			target(input).endsWith('/v1/consent/manifest')
+				? Promise.resolve(new Response('missing', { status: 404 }))
+				: answers(input, init)
+		);
+		const onError = vi.fn();
+		const state = await render({
+			fetch,
+			mode: 'manifest',
+			onError,
+			projectUrl: `${BACKEND}/fallback`,
+		});
+		expect(callsTo(fetch, '/v1/consent/manifest')).toHaveLength(1);
+		expect(callsTo(fetch, '/v1/consent/init')).toHaveLength(1);
+		expect(state.initialPolicyResolution?.status).toBe('matched');
+		expect(onError).not.toHaveBeenCalled();
+		expect(warn).toHaveBeenCalledWith(
+			expect.stringContaining(
+				`could not read the consent manifest from ${BACKEND}/fallback/v1/consent/manifest`
+			)
+		);
+		warn.mockRestore();
+	});
+
+	test('manifest mode keeps a misconfigured source an error instead of asking /v1/consent/init', async () => {
+		const fetch = upstream();
+		const onError = vi.fn();
+		const state = await render({ fetch, mode: 'manifest', onError });
+		expect(fetch).not.toHaveBeenCalled();
+		expect(state.initialPolicyResolution).toBeUndefined();
+		expect(onError).toHaveBeenCalledWith(
+			expect.objectContaining({
+				message: expect.stringContaining('pass projectUrl or manifestUrl'),
+			}),
+			undefined
+		);
+	});
+
+	test('an inline manifest needs no network', async () => {
+		const fetch = upstream();
+		const state = await render({ fetch, manifest: MANIFEST });
+		expect(fetch).not.toHaveBeenCalled();
+		expect(state.initialPolicyResolution?.status).toBe('matched');
+	});
+
+	test('hosted mode folds the backend /init into the request-only state', async () => {
+		const fetch = upstream(MANIFEST, { ...INIT, subjectId: 'sub_1' });
+		const state = await render({
+			fetch,
+			headers: { cookie: CONSENTED },
+			projectUrl: BACKEND,
+		});
+		expect(state.initialPolicyResolution?.status).toBe('matched');
+		expect(state.initialRecords?.choice).toBeDefined();
+		expect(state.initialRecords?.subject?.subjectId).toBe('sub_1');
+		expect(state.initialLocation?.countryCode).toBe('DE');
+	});
+
+	test('a hosted producer that declares no contract and sends no wire fails closed', async () => {
+		const legacy = { ...INIT, policyResolution: undefined };
+		const fetch = vi.fn<typeof globalThis.fetch>(() =>
+			Promise.resolve(new Response(JSON.stringify(legacy)))
+		);
+		const state = await render({ fetch, projectUrl: BACKEND });
+		expect(state.initialPolicyResolution?.status).toBe('failed');
+	});
+
+	test('offline mode resolves bundled rules without the network', async () => {
+		const fetch = upstream();
+		vi.stubGlobal('fetch', fetch);
+		const state = await render({
+			headers: { 'cf-ipcountry': 'DE' },
+			offline: {},
+		});
+		expect(fetch).not.toHaveBeenCalled();
+		expect(state.initialPolicyResolution?.status).toBe('matched');
+	});
+});
+
+describe('forwarding', () => {
+	const visitor = {
+		'accept-language': 'de-DE,de;q=0.9',
+		authorization: 'Bearer site-session',
+		cookie: `session=secret; ${CONSENTED}`,
+		'sec-gpc': '1',
+		'user-agent': 'Visitor/1.0',
+		'x-forwarded-for': '203.0.113.7',
+		'x-forwarded-host': 'evil.example',
+		'x-tenant': 'acme',
+		'x-vercel-ip-country': 'DE',
+		'x-vercel-ip-country-region': 'BE',
+	};
+
+	test('hosted init gets the inputs and user agent, never a cookie or a version', async () => {
+		const fetch = upstream();
+		await render({ fetch, headers: visitor, projectUrl: BACKEND });
+		const headers = sentHeaders(fetch, '/v1/consent/init');
+		expect(Object.fromEntries(headers)).toMatchObject({
+			'accept-language': 'de',
+			'sec-gpc': '1',
+			'user-agent': 'Visitor/1.0',
+			'x-inth-country': 'DE',
+			'x-inth-region': 'BE',
+		});
+		// `/v1` reads no cookie, and the path is the version.
+		expect(headers.has('cookie')).toBe(false);
+		expect(headers.has('x-inth-version')).toBe(false);
+		expect(headers.has('x-inth-policy-contract')).toBe(false);
+		expect(headers.has('authorization')).toBe(false);
+		expect(headers.has('x-forwarded-for')).toBe(false);
+		expect(headers.has('x-forwarded-host')).toBe(false);
+		expect(headers.has('x-tenant')).toBe(false);
+	});
+
+	test('named headers travel; cookies and hop-chain headers cannot be named', async () => {
+		const fetch = upstream();
+		await render({
+			fetch,
+			forwardHeaders: ['X-Tenant', 'cookie', 'x-forwarded-host'],
+			headers: visitor,
+			projectUrl: BACKEND,
+		});
+		const headers = sentHeaders(fetch, '/v1/consent/init');
+		expect(headers.get('x-tenant')).toBe('acme');
+		expect(headers.has('cookie')).toBe(false);
+		expect(headers.has('x-forwarded-host')).toBe(false);
+	});
+
+	test('the visitor IP travels only under trusted forwarding headers', async () => {
+		const fetch = upstream();
+		await render({
+			fetch,
+			headers: visitor,
+			projectUrl: BACKEND,
+			trustForwardedHeaders: true,
+		});
+		expect(sentHeaders(fetch, '/v1/consent/init').get('x-forwarded-for')).toBe(
+			'203.0.113.7'
+		);
+	});
+
+	test('nothing identifying crosses cleartext to a remote host', async () => {
+		const fetch = upstream();
+		await render({
+			fetch,
+			forwardHeaders: ['x-tenant'],
+			headers: visitor,
+			projectUrl: 'http://consent.internal',
+			trustForwardedHeaders: true,
+		});
+		const headers = sentHeaders(fetch, '/v1/consent/init');
+		expect(headers.has('cookie')).toBe(false);
+		expect(headers.has('x-tenant')).toBe(false);
+		expect(headers.has('x-forwarded-for')).toBe(false);
+		expect(headers.get('x-inth-country')).toBe('DE');
+	});
+
+	test('a loopback backend counts as local', async () => {
+		const fetch = upstream();
+		await render({
+			fetch,
+			forwardHeaders: ['x-tenant'],
+			headers: visitor,
+			projectUrl: 'http://localhost:8787',
+		});
+		expect(sentHeaders(fetch, '/v1/consent/init').get('x-tenant')).toBe('acme');
+	});
+
+	test('the manifest request carries nothing about the visitor by default', async () => {
+		const fetch = upstream();
+		await render({
+			fetch,
+			headers: visitor,
+			mode: 'manifest',
+			projectUrl: BACKEND,
+		});
+		const headers = sentHeaders(fetch, '/v1/consent/manifest');
+		expect(headers.has('cookie')).toBe(false);
+		expect(headers.has('user-agent')).toBe(false);
+		expect(headers.has('authorization')).toBe(false);
+	});
+
+	test('the manifest request carries named headers and scoped cookies, not over cleartext', async () => {
+		const fetch = upstream();
+		await render({
+			cookieNames: ['session'],
+			fetch,
+			forwardHeaders: ['x-tenant'],
+			headers: visitor,
+			mode: 'manifest',
+			projectUrl: BACKEND,
+		});
+		const headers = sentHeaders(fetch, '/v1/consent/manifest');
+		expect(headers.get('cookie')).toBe('session=secret');
+		expect(headers.get('x-tenant')).toBe('acme');
+
+		const cleartext = upstream();
+		await render({
+			cookieNames: ['session'],
+			fetch: cleartext,
+			forwardHeaders: ['x-tenant'],
+			headers: visitor,
+			mode: 'manifest',
+			projectUrl: 'http://consent.internal',
+		});
+		const plain = sentHeaders(cleartext, '/v1/consent/manifest');
+		expect(plain.has('cookie')).toBe(false);
+		expect(plain.has('x-tenant')).toBe(false);
+	});
+
+	test('configured consent headers reach the hosted /init; others do not', async () => {
+		const fetch = upstream();
+		await render({
+			fetch,
+			initHeaders: { 'X-INTH-Country': 'FR', 'x-private': 'no' },
+			projectUrl: BACKEND,
+		});
+		const headers = sentHeaders(fetch, '/v1/consent/init');
+		expect(headers.get('x-inth-country')).toBe('FR');
+		expect(headers.has('x-private')).toBe(false);
+	});
+});
+
+describe('vendor list deferral', () => {
+	test('manifest mode defers the list to the public URL, or the gvl route', async () => {
+		vi.stubGlobal('fetch', upstream(IAB_MANIFEST));
+		const toList = await render({
+			mode: 'manifest',
+			projectUrl: BACKEND,
+		});
+		expect(toList.initialIab?.gvl).toBeNull();
+		expect(toList.initialIab?.gvlReference?.url).toBe(GVL_URL);
+
+		const toRoute = await render({
+			gvlRoute: '/api/inth/v1/consent/init',
+			mode: 'manifest',
+			projectUrl: BACKEND,
+		});
+		expect(toRoute.initialIab?.gvlReference?.url).toMatch(
+			/^\/api\/inth\/v1\/consent\/init\?inth-gvl=42/u
+		);
+	});
+
+	test('manifest mode resolves Google Additional Consent providers into state', async () => {
+		const acURL = 'https://lists.example/ac-render';
+		const base = upstream({
+			...IAB_MANIFEST,
+			iab: {
+				...IAB_MANIFEST.iab,
+				additionalConsent: { providers: [89], url: acURL },
+			},
+		} as unknown as ConsentManifest);
+		const fetch = vi.fn<typeof globalThis.fetch>((input, init) =>
+			String(input).startsWith(acURL)
+				? Promise.resolve(
+						json({
+							providers: {
+								'89': {
+									id: 89,
+									name: 'Meta',
+									policyUrl: 'https://meta.example/privacy',
+								},
+							},
+						})
+					)
+				: base(input, init)
+		);
+		const state = await render({
+			fetch,
+			mode: 'manifest',
+			projectUrl: BACKEND,
+		});
+		expect(state.initialIab?.adTechProviders).toEqual([
+			{ id: 89, name: 'Meta', policyUrl: 'https://meta.example/privacy' },
+		]);
+	});
+
+	test('manifest mode resolves a relative provider endpoint against the request', async () => {
+		const base = upstream({
+			...IAB_MANIFEST,
+			iab: {
+				...IAB_MANIFEST.iab,
+				additionalConsent: { providers: [89], url: '/api/ac-render' },
+			},
+		} as unknown as ConsentManifest);
+		const fetch = vi.fn<typeof globalThis.fetch>((input, init) =>
+			String(input).includes('/api/ac-render')
+				? Promise.resolve(
+						json({
+							providers: {
+								'89': {
+									id: 89,
+									name: 'Meta',
+									policyUrl: 'https://meta.example/privacy',
+								},
+							},
+						})
+					)
+				: base(input, init)
+		);
+		const state = await render({
+			fetch,
+			mode: 'manifest',
+			projectUrl: BACKEND,
+		});
+		expect(state.initialIab?.adTechProviders?.map(({ id }) => id)).toEqual([
+			89,
+		]);
+		expect(fetch.mock.calls.map(([input]) => String(input))).toContain(
+			`${APP}/api/ac-render?providerIds=89`
+		);
+	});
+
+	test('a caller fetch keeps the list inline', async () => {
+		const state = await render({
+			fetch: upstream(IAB_MANIFEST),
+			mode: 'manifest',
+			projectUrl: BACKEND,
+		});
+		expect(state.initialIab?.gvl?.vendorListVersion).toBe(42);
+	});
+
+	test('hosted mode defers the list to the same init, for a returning visitor too', async () => {
+		const iabInit = {
+			...INIT,
+			cmpId: 28,
+			gvl: GVL,
+			policyResolution: writePolicyResolutionWire(
+				resolvePolicyRules({
+					countryCode: 'DE',
+					regionCode: null,
+					rules: [
+						{
+							id: 'iab',
+							match: { isDefault: true },
+							model: 'iab',
+							prompt: 'choice',
+						},
+					],
+				})
+			),
+		};
+		vi.stubGlobal('fetch', upstream(MANIFEST, iabInit));
+		const anonymous = await render({ projectUrl: BACKEND });
+		expect(anonymous.initialIab?.gvlReference?.url).toBe(
+			`${BACKEND}/v1/consent/init`
+		);
+		// No cookie travels, so the browser can ask the same init for it.
+		const returning = await render({
+			headers: { cookie: CONSENTED },
+			projectUrl: BACKEND,
+		});
+		expect(returning.initialIab?.gvlReference?.url).toBe(
+			`${BACKEND}/v1/consent/init`
+		);
+	});
+});
+
+describe('budget', () => {
+	const hanging = () =>
+		vi.fn<typeof globalThis.fetch>(
+			(_, init) =>
+				new Promise<Response>((_resolve, reject) => {
+					init?.signal?.addEventListener('abort', () =>
+						reject(new Error('aborted'))
+					);
+				})
+		);
+
+	test.each([
+		['the default', undefined],
+		['NaN', Number.NaN],
+		['a negative value', -5],
+	])('%s budget is 500 ms', async (_, timeoutMs) => {
+		vi.useFakeTimers();
+		const fetch = hanging();
+		const pending = render({ fetch, projectUrl: BACKEND, timeoutMs });
+		await vi.advanceTimersByTimeAsync(499);
+		let settled = false;
+		void pending.then(() => {
+			settled = true;
+		});
+		await vi.advanceTimersByTimeAsync(0);
+		expect(settled).toBe(false);
+		await vi.advanceTimersByTimeAsync(1);
+		const state = await pending;
+		expect(state.initialPolicyResolution).toBeUndefined();
+	});
+
+	test.each([
+		['false', false as const],
+		['Infinity', Number.POSITIVE_INFINITY],
+	])('timeoutMs %s waits for the upstream', async (_, timeoutMs) => {
+		vi.useFakeTimers();
+		const fetch = vi.fn<typeof globalThis.fetch>(
+			() =>
+				new Promise<Response>((resolve) => {
+					setTimeout(() => resolve(json(INIT)), 2000);
+				})
+		);
+		const pending = render({ fetch, projectUrl: BACKEND, timeoutMs });
+		await vi.advanceTimersByTimeAsync(2000);
+		expect((await pending).initialPolicyResolution?.status).toBe('matched');
+	});
+
+	test('a manifest that misses the budget keeps filling and serves the next render', async () => {
+		vi.useFakeTimers();
+		const waitUntil = vi.fn();
+		const fetch = vi.fn<typeof globalThis.fetch>(
+			() =>
+				new Promise<Response>((resolve) => {
+					setTimeout(
+						() =>
+							resolve(
+								json(MANIFEST, { 'cache-control': 'public, s-maxage=120' })
+							),
+						800
+					);
+				})
+		);
+		const options = {
+			fetch,
+			mode: 'manifest' as const,
+			projectUrl: BACKEND,
+			waitUntil,
+		};
+		const first = render(options);
+		await vi.advanceTimersByTimeAsync(500);
+		expect((await first).initialPolicyResolution).toBeUndefined();
+		expect(waitUntil).toHaveBeenCalled();
+		await vi.advanceTimersByTimeAsync(300);
+		const second = await render(options);
+		// One manifest request; the second render's session report is the
+		// only other call.
+		expect(
+			fetch.mock.calls.filter(([input]) =>
+				String(input).endsWith('/v1/consent/manifest')
+			)
+		).toHaveLength(1);
+		expect(second.initialPolicyResolution?.status).toBe('matched');
+	});
+
+	test('a render that gave up sends no session report', async () => {
+		vi.useFakeTimers();
+		const fetch = vi.fn<typeof globalThis.fetch>((input) => {
+			const url = String(input);
+			if (url.startsWith(GVL_URL)) {
+				return new Promise<Response>((resolve) => {
+					setTimeout(() => resolve(json(GVL)), 800);
+				});
+			}
+			if (url.endsWith('/sessions')) {
+				return Promise.resolve(new Response(null, { status: 202 }));
+			}
+			return Promise.resolve(json(IAB_MANIFEST));
+		});
+		const pending = render({
+			fetch,
+			mode: 'manifest',
+			projectUrl: BACKEND,
+			waitUntil: () => undefined,
+		});
+		await vi.advanceTimersByTimeAsync(500);
+		expect((await pending).initialPolicyResolution).toBeUndefined();
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(callsTo(fetch, '/sessions')).toHaveLength(0);
+	});
+});
+
+describe('experiment', () => {
+	const experiment = {
+		arm: 'b',
+		arms: [{ id: 'a' }, { id: 'b' }],
+		id: 'banner-test',
+	} as unknown as NonNullable<ResolveRequestConsentOptions['experiment']>;
+
+	test('an undecided visitor’s arm goes with hosted /init; the state carries the experiment', async () => {
+		const fetch = upstream();
+		const state = await render({ experiment, fetch, projectUrl: BACKEND });
+		expect(
+			sentHeaders(fetch, '/v1/consent/init').get('x-inth-experiment')
+		).toBe('banner-test=b');
+		expect(state.experiment).toBe(experiment);
+	});
+
+	test('a visitor who already chose is not counted, but keeps the experiment', async () => {
+		const fetch = upstream();
+		const state = await render({
+			experiment,
+			fetch,
+			headers: { cookie: CONSENTED },
+			projectUrl: BACKEND,
+		});
+		expect(
+			sentHeaders(fetch, '/v1/consent/init').has('x-inth-experiment')
+		).toBe(false);
+		expect(state.experiment).toBe(experiment);
+	});
+
+	test('manifest mode reports the arm; a failed upstream still carries the experiment', async () => {
+		const fetch = upstream();
+		await render({
+			experiment,
+			fetch,
+			mode: 'manifest',
+			projectUrl: BACKEND,
+		});
+		await vi.waitFor(() => expect(callsTo(fetch, '/sessions')).toHaveLength(1));
+		const body = JSON.parse(String(callsTo(fetch, '/sessions')[0]?.[1]?.body));
+		expect(body.experiment).toEqual({ arm: 'b', id: 'banner-test' });
+
+		const failing = vi.fn<typeof globalThis.fetch>(() =>
+			Promise.reject(new Error('down'))
+		);
+		const state = await render({
+			experiment,
+			fetch: failing,
+			projectUrl: BACKEND,
+		});
+		expect(state.experiment).toBe(experiment);
+	});
+});
+
+describe('session reports', () => {
+	test('manifest mode reports to an absolute backend, detached', async () => {
+		const fetch = upstream();
+		const waitUntil = vi.fn();
+		await render({
+			fetch,
+			headers: { 'user-agent': 'Visitor/1.0' },
+			mode: 'manifest',
+			projectUrl: BACKEND,
+			waitUntil,
+		});
+		await vi.waitFor(() => expect(callsTo(fetch, '/sessions')).toHaveLength(1));
+		expect(waitUntil).toHaveBeenCalled();
+	});
+
+	test('a relative backend and hosted mode send none', async () => {
+		const fetch = upstream();
+		await render({
+			fetch,
+			mode: 'manifest',
+			projectUrl: '/api/self-host',
+		});
+		await render({ fetch, projectUrl: BACKEND });
+		await new Promise((resolve) => {
+			setTimeout(resolve, 0);
+		});
+		expect(callsTo(fetch, '/sessions')).toHaveLength(0);
+	});
+});
+
+describe('consent journey', () => {
+	const UUID = /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/u;
+
+	test('hosted mode sends the journey on /init and hands its id to the browser', async () => {
+		const fetch = upstream();
+		const state = await render({
+			fetch,
+			headers: { cookie: CONSENTED },
+			projectUrl: BACKEND,
+		});
+		expect(state.journey?.id).toMatch(UUID);
+		const sent = new URL(String(callsTo(fetch, '/v1/consent/init')[0]?.[0]));
+		expect(Object.fromEntries(sent.searchParams)).toEqual({
+			journey: state.journey?.id,
+			journeyScope: 'page',
+			stored: '1',
+		});
+	});
+
+	test('a stored notice dismissal is a stored answer', async () => {
+		const fetch = upstream();
+		const state = await render({
+			fetch,
+			headers: { cookie: DISMISSED },
+			projectUrl: BACKEND,
+		});
+		// The cookie decoded into a dismissal the browser will hydrate.
+		expect(state.initialRecords?.noticeDismissal).toBeTruthy();
+		expect(state.initialRecords?.choice).toBeFalsy();
+		const sent = new URL(String(callsTo(fetch, '/v1/consent/init')[0]?.[0]));
+		expect(sent.searchParams.get('stored')).toBe('1');
+	});
+
+	test('the vendor list reference the browser follows carries no journey', async () => {
+		// The browser fetches the deferred list from this `/v1/consent/init`; with the
+		// journey on it, the backend would count the visit twice.
+		const fetch = upstream(MANIFEST, {
+			...(INIT as object),
+			cmpId: 28,
+			gvl: GVL,
+			policyResolution: writePolicyResolutionWire(
+				resolvePolicyRules({
+					countryCode: 'DE',
+					regionCode: null,
+					rules: [
+						{
+							id: 'iab',
+							match: { isDefault: true },
+							model: 'iab',
+							prompt: 'choice',
+						},
+					],
+				})
+			),
+		});
+		vi.stubGlobal('fetch', fetch);
+		const state = await render({ projectUrl: BACKEND });
+		expect(String(callsTo(fetch, '/v1/consent/init')[0]?.[0])).toContain(
+			`journey=${state.journey?.id}`
+		);
+		expect(state.initialIab?.gvlReference?.url).toBe(
+			`${BACKEND}/v1/consent/init`
+		);
+	});
+
+	test('a network /init names the page origin so the backend report gets a domain', async () => {
+		const fetch = upstream();
+		await render({ fetch, projectUrl: BACKEND });
+		expect(sentHeaders(fetch, '/v1/consent/init').get('origin')).toBe(APP);
+	});
+
+	test('an Origin the request already sets is kept', async () => {
+		const fetch = upstream();
+		await render({
+			fetch,
+			forwardHeaders: ['origin'],
+			headers: { origin: 'https://shop.example.net' },
+			projectUrl: BACKEND,
+		});
+		expect(sentHeaders(fetch, '/v1/consent/init').get('origin')).toBe(
+			'https://shop.example.net'
+		);
+	});
+
+	test('an in-process init route gets no Origin added', async () => {
+		const localFetch = upstream();
+		await render({
+			initUrl: '/api/inth/v1/consent/init',
+			localFetch: localFetch as unknown as ManifestFetch,
+			mode: 'hosted',
+		});
+		expect(callsTo(localFetch, '/v1/consent/init')).toHaveLength(1);
+		expect(sentHeaders(localFetch, '/v1/consent/init').has('origin')).toBe(
+			false
+		);
+	});
+
+	test('manifest mode reports the journey with the site domain', async () => {
+		const fetch = upstream();
+		// Germany matches the opt-in policy, so the prompt is owed.
+		const state = await render({
+			fetch,
+			headers: { 'cf-ipcountry': 'DE' },
+			journey: 'tab',
+			mode: 'manifest',
+			projectUrl: BACKEND,
+		});
+		await vi.waitFor(() => expect(callsTo(fetch, '/sessions')).toHaveLength(1));
+		const body = JSON.parse(String(callsTo(fetch, '/sessions')[0]?.[1]?.body));
+		expect(body.journey).toEqual({
+			id: state.journey?.id,
+			prompt: 'due',
+			property: 'app.example.com',
+			// A server-rendered page is a page journey, even under 'tab'.
+			scope: 'page',
+			storedChoice: false,
+		});
+	});
+
+	test('a failed upstream still hands the journey to the browser', async () => {
+		const failing = vi.fn<typeof globalThis.fetch>(() =>
+			Promise.reject(new Error('down'))
+		);
+		const state = await render({ fetch: failing, projectUrl: BACKEND });
+		expect(state.initialPolicyResolution).toBeUndefined();
+		expect(state.journey?.id).toMatch(UUID);
+	});
+
+	test.each([
+		['journey: false', { journey: false }, {}],
+		['a prefetch', {}, { 'sec-purpose': 'prefetch' }],
+		[
+			'a manifest render with no absolute backend to report to',
+			{ mode: 'manifest', projectUrl: '/api/self-host' },
+			{},
+		],
+	] as const)(
+		'%s starts none and tells the browser to send none',
+		async (_label, options, headers) => {
+			const fetch = upstream();
+			const state = await render({
+				fetch,
+				headers,
+				projectUrl: BACKEND,
+				...options,
+			});
+			expect(state.journey).toBeNull();
+			for (const [input] of fetch.mock.calls) {
+				expect(String(input)).not.toContain('journey');
+			}
+		}
+	);
+
+	test('a shared render leaves the journey to the browser', async () => {
+		const fetch = upstream();
+		const state = await render({ fetch, projectUrl: BACKEND, shared: true });
+		expect(state).not.toHaveProperty('journey');
+	});
+
+	test('a tab journey goes on the hosted /init as a page journey', async () => {
+		const fetch = upstream();
+		await render({ fetch, journey: 'tab', projectUrl: BACKEND });
+		const sent = new URL(String(callsTo(fetch, '/v1/consent/init')[0]?.[0]));
+		expect(sent.searchParams.get('journeyScope')).toBe('page');
+	});
+
+	test('offline mode starts none', async () => {
+		const state = await render({ offline: {} });
+		expect(state.journey).toBeUndefined();
+	});
+});
+
+describe('shared renders', () => {
+	const visitor = {
+		'accept-language': 'de-DE',
+		cookie: CONSENTED,
+		'sec-gpc': '1',
+		'x-vercel-ip-country': 'DE',
+	};
+
+	test('carry no visitor state and skip the hosted and manifest prefetch', async () => {
+		const fetch = upstream();
+		const states = await Promise.all(
+			(['hosted', 'manifest'] as const).map((mode) =>
+				render({
+					experiment: {
+						arm: 'a',
+						arms: [{ id: 'a' }],
+						id: 'x',
+					} as unknown as NonNullable<
+						ResolveRequestConsentOptions['experiment']
+					>,
+					fetch,
+					headers: visitor,
+					mode,
+					projectUrl: BACKEND,
+					shared: true,
+				})
+			)
+		);
+		expect(states).toEqual([{}, {}]);
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	test('keep the site’s configured overrides and still resolve offline', async () => {
+		const state = await render({
+			headers: visitor,
+			offline: {},
+			overrides: { language: 'fr' },
+			shared: true,
+		});
+		expect(state.initialRecords).toBeUndefined();
+		expect(state.now).toBeUndefined();
+		expect(state.initialPrivacySignals).toBeUndefined();
+		expect(state.initialOverrides?.language).toBe('fr');
+		expect(state.initialOverrides?.country).toBeUndefined();
+		expect(state.initialPolicyResolution?.status).toBe('matched');
+	});
+});
+
+describe('fetchRequestInit', () => {
+	const ask = (
+		options: Partial<ResolveRequestConsentOptions> & {
+			headers?: Record<string, string>;
+		} = {}
+	) => {
+		const { headers, ...rest } = options;
+		return fetchRequestInit({
+			adapter: '@c15t/test',
+			now: NOW,
+			request: { headers: new Headers(headers), url: `${APP}/` },
+			...rest,
+		});
+	};
+
+	test('returns the hosted answer as received, vendor list included', async () => {
+		const withGvl = { ...INIT, gvl: GVL } as unknown as InitOutput;
+		const fetch = upstream(MANIFEST, withGvl);
+		const answer = await ask({
+			fetch,
+			headers: { 'cf-ipcountry': 'DE', 'user-agent': 'UA' },
+			journey: false,
+			projectUrl: BACKEND,
+		});
+		expect(answer?.init).toEqual(withGvl);
+		expect(answer?.url).toBe(`${BACKEND}/v1/consent/init`);
+		expect(answer?.requestHeaders).toMatchObject({
+			'user-agent': 'UA',
+			'x-inth-country': 'DE',
+		});
+		expect(answer?.responseHeaders.get('content-type')).toContain('json');
+		expect(callsTo(fetch, '/v1/consent/manifest')).toHaveLength(0);
+	});
+
+	test("sends the visitor's full Accept-Language unless an override sets the language", async () => {
+		const headers = { 'accept-language': 'es,fr;q=0.9' };
+		const relayed = upstream();
+		await ask({ fetch: relayed, headers, projectUrl: BACKEND });
+		expect(
+			sentHeaders(relayed, '/v1/consent/init').get('accept-language')
+		).toBe('es,fr;q=0.9');
+		const overridden = upstream();
+		await ask({
+			fetch: overridden,
+			headers,
+			overrides: { language: 'de' },
+			projectUrl: BACKEND,
+		});
+		expect(
+			sentHeaders(overridden, '/v1/consent/init').get('accept-language')
+		).toBe('de');
+	});
+
+	test('returns undefined and tells onError when the request fails', async () => {
+		const onError = vi.fn();
+		const answer = await ask({
+			fetch: vi.fn<typeof globalThis.fetch>(() =>
+				Promise.resolve(new Response('nope', { status: 500 }))
+			),
+			onError,
+			projectUrl: BACKEND,
+		});
+		expect(answer).toBeUndefined();
+		expect(onError).toHaveBeenCalledWith(
+			expect.any(Error),
+			`${BACKEND}/v1/consent/init`
+		);
+	});
+
+	test('reports the /v1 refusal code, message and request ID', async () => {
+		const onError = vi.fn();
+		await ask({
+			fetch: vi.fn<typeof globalThis.fetch>(() =>
+				Promise.resolve(
+					Response.json(
+						{
+							error: {
+								code: 'forbidden',
+								message: 'This origin is not trusted.',
+							},
+							requestId: 'req_123',
+						},
+						{ status: 403 }
+					)
+				)
+			),
+			onError,
+			projectUrl: BACKEND,
+		});
+		const [error] = onError.mock.calls[0] ?? [];
+		expect(String(error)).toContain(
+			'/v1/consent/init responded 403: This origin is not trusted. (forbidden, request req_123)'
+		);
+		expect((error as Error).cause).toMatchObject({
+			code: 'forbidden',
+			requestId: 'req_123',
+			status: 403,
+		});
+	});
+
+	test('a shared render asks nothing', async () => {
+		const fetch = upstream();
+		expect(await ask({ fetch, projectUrl: BACKEND, shared: true })).toBe(
+			undefined
+		);
+		expect(fetch).not.toHaveBeenCalled();
+	});
+});

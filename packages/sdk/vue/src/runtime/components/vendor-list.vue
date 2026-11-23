@@ -15,7 +15,7 @@ import { computed, ref, useId } from 'vue';
 
 import { useConsentConfig } from '../composables';
 import { useSurfaceTranslations } from '../composables/use-surface-translations';
-import { preferenceItemVariants } from '../primitives/preference-item/variants';
+import { preferenceItemVariants } from '../primitives/preference-item/preference-item-variants';
 import { switchVariants } from '../primitives/switch-variants';
 import { slotAttrs } from '../utils/slot-attrs';
 

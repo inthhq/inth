@@ -7,12 +7,12 @@ to compare the same consent flow with different styling.
 From the repository root, install and build workspace packages first:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+bun turbo run build --filter='./packages/sdk/*'
 ```
 
-Replace `https://your-project.inth.app` in `src/App.svelte` with your Inth
-backend URL and allow this app's origin in Inth. Replace the placeholder PostHog
+Replace `https://your-project.inth.app` in `src/App.svelte` and
+`src/experiment-app.svelte` with your Inth backend URL and allow this app's origin in Inth. Replace the placeholder PostHog
 project key and X Pixel ID in `src/scripts.ts`. Then run:
 
 ```sh
@@ -36,7 +36,7 @@ EXAMPLE_TARGET=svelte bun run --cwd internals/fixtures/acceptance test
 This is a test app. The docs quote `examples/svelte` and
 `internals/doc-snippets/svelte` instead. The acceptance suite overrides the
 backend URL with `VITE_INTH_PROJECT_URL` through `src/test-backend.ts`.
-`src/ExamplePage.svelte` and `src/main.ts` hold the demo content, DevTools and
+`src/example-page.svelte` and `src/main.ts` hold the demo content, DevTools and
 the Branded switch, which loads `src/consent-theme.css`.
 
 ## Banner experiment
@@ -45,9 +45,9 @@ Open `/?experiment=1` to run the banner-shape experiment: Inth picks the
 `control` arm (the default banner) or the `wall` arm, and the page shows
 `banner-shape · <arm> · inth`. Open `/?experiment=1&arm=wall` to set the arm
 the way a flag provider would (`assignedBy: host`); any other `arm` value runs
-`control`. `src/main.ts` mounts `src/ExperimentApp.svelte` for these URLs, a
+`control`. `src/main.ts` mounts `src/experiment-app.svelte` for these URLs, a
 copy of `App.svelte` that passes `experiment` and the `onSurfaceShown` and
 `onChoiceRecorded` callbacks to the provider. Each impression and choice under
 the arm is listed on the page and pushed to `window.dataLayer` as
 `inth_surface_shown` and `inth_choice_recorded` with `experiment_id` and `arm`.
-See https://c15t.com/docs/guides/banner-experiments.
+See `packages/sdk/docs/guides/banner-experiments.mdx`.

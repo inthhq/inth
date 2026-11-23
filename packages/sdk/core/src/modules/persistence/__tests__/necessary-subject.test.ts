@@ -7,18 +7,21 @@ import {
 	noticeRule,
 	optInRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
+import type {
+	HydrationRecords,
+	KernelVendorsState,
+} from '../../../consent-kernel.model';
 import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
-import { legacySubjectIdKey } from '../../../libs/legacy-subject-id';
+import { legacySubjectIdKey } from '../../../libs/legacy-subject-id.store';
 import { resolveStorageKeys } from '../../../libs/storage-keys';
-import { readRequestConsent } from '../../../server/request-consent';
-import type { HydrationRecords, KernelVendorsState } from '../../../types';
+import { readRequestConsent } from '../../../server/request-consent.api';
 import { createClearOnRevocation } from '../../clear-on-revocation';
 import { createPersistence, readStoredRecordsFromCookieHeader } from '../index';
 import {
 	readStoredNoticeDismissal,
 	readStoredVendorChoice,
-} from '../record-storage';
+} from '../record-storage.store';
 import {
 	clearStoredConsentRecords,
 	encodeNoticeDismissal,

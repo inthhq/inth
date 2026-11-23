@@ -5,14 +5,14 @@ import type { FC } from 'react';
 import {
 	IABConsentBannerButtonGroup,
 	IABConsentBannerFooterSpacer,
-} from './atoms/button-group';
-import { IABConsentBannerCard } from './atoms/card';
-import { IABConsentBannerDescription } from './atoms/description';
-import { IABConsentBannerFooter } from './atoms/footer';
-import { IABConsentBannerHeader } from './atoms/header';
-import { IABConsentBannerOverlay } from './atoms/overlay';
-import { IABConsentBannerRoot } from './atoms/root';
-import { IABConsentBannerTitle } from './atoms/title';
+} from './atoms/iab-prompt-button-group';
+import { IABConsentBannerCard } from './atoms/iab-prompt-card';
+import { IABConsentBannerDescription } from './atoms/iab-prompt-description';
+import { IABConsentBannerFooter } from './atoms/iab-prompt-footer';
+import { IABConsentBannerHeader } from './atoms/iab-prompt-header';
+import { IABConsentBannerOverlay } from './atoms/iab-prompt-overlay';
+import { IABConsentBannerRoot } from './atoms/iab-prompt-root';
+import { IABConsentBannerTitle } from './atoms/iab-prompt-title';
 import { IABConsentBanner as IABConsentBannerComponent } from './iab-prompt';
 import type { IABConsentBannerProps } from './iab-prompt';
 
@@ -78,12 +78,12 @@ export default IABConsentBanner;
 export {
 	IABConsentBannerButtonGroup,
 	IABConsentBannerFooterSpacer,
-} from './atoms/button-group';
-export { IABConsentBannerCard } from './atoms/card';
-export { IABConsentBannerDescription } from './atoms/description';
-export { IABConsentBannerFooter } from './atoms/footer';
-export { IABConsentBannerHeader } from './atoms/header';
-export { IABConsentBannerOverlay } from './atoms/overlay';
-export { IABConsentBannerRoot } from './atoms/root';
-export { IABConsentBannerTitle } from './atoms/title';
+} from './atoms/iab-prompt-button-group';
+export { IABConsentBannerCard } from './atoms/iab-prompt-card';
+export { IABConsentBannerDescription } from './atoms/iab-prompt-description';
+export { IABConsentBannerFooter } from './atoms/iab-prompt-footer';
+export { IABConsentBannerHeader } from './atoms/iab-prompt-header';
+export { IABConsentBannerOverlay } from './atoms/iab-prompt-overlay';
+export { IABConsentBannerRoot } from './atoms/iab-prompt-root';
+export { IABConsentBannerTitle } from './atoms/iab-prompt-title';
 export { IABConsentBanner, type IABConsentBannerProps };

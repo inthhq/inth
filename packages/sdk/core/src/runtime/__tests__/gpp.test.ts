@@ -7,10 +7,13 @@
 import { describe, expect, test, vi } from 'vitest';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
+import type { KernelTransport } from '../../consent-kernel.model';
 import type { ProviderTransportFactory } from '../../transports/mode';
-import type { KernelTransport } from '../../types';
+import type {
+	ConsentRuntimeGPPFactory,
+	ConsentRuntimeOptions,
+} from '../consent-runtime.model';
 import { createConsentRuntime } from '../index';
-import type { ConsentRuntimeGPPFactory, ConsentRuntimeOptions } from '../types';
 
 /**
  * Options a test passes over the defaults. Its mode is a transport factory,

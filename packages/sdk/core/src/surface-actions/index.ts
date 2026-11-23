@@ -32,15 +32,15 @@
  */
 
 // oxlint-disable-next-line oxc/no-barrel-file -- The subpath's public interface; each module stays separately placeable.
-export { saveConsentBlanket } from './blanket';
+export { saveConsentBlanket } from './save-consent-blanket';
 export { EARLY_TAP_ROOT } from '../libs/page-globals';
 export {
 	EARLY_CONSENT_TAP_SCRIPT,
 	EARLY_TAP_OPT_OUT,
-} from './early-tap-script';
-export { replayEarlyConsentTaps } from './early-taps';
-export type { ConsentSurfaceIAB } from './blanket';
-export { saveIABConsentSurface } from './iab-save';
+} from './early-consent-tap-script';
+export { replayEarlyConsentTaps } from './replay-early-consent-taps';
+export type { ConsentSurfaceIAB } from './save-consent-blanket';
+export { saveIABConsentSurface } from './save-iab-consent-surface';
 export {
 	claimOptInConfirmationHost,
 	closeOptInConfirmation,
@@ -74,17 +74,17 @@ export {
 	subscribeOptOutReceiptData,
 	takeOptOutConfirmationOpener,
 } from './opt-out';
+export { watchPendingOptOutConfirmation } from './opt-out-reload';
 export {
 	clearPendingOptOutConfirmation,
 	hasPendingOptOutConfirmation,
 	markPendingOptOutConfirmation,
-	watchPendingOptOutConfirmation,
-} from './opt-out-reload';
+} from './opt-out-reload.store';
 export type { OptOutSurfaceContext } from './opt-out';
 export {
 	hasConsentPreferences,
 	hasConsentUI,
 	showConsentSurface,
 } from './rules';
-export { saveConsentSurface } from './save';
+export { saveConsentSurface } from './save-consent-surface';
 export { isSnapshotVendorAllowed } from '../modules/vendor-allowed';

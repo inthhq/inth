@@ -61,19 +61,17 @@
 	import { showConsentSurface } from '@inth/sdk/surface-actions';
 	import { onMount, untrack } from 'svelte';
 
-	import { getConsentContext, getThemeContext } from '../context.svelte';
-	import {
-		holdIdleDialogWarming,
-		registerDialogWarmer,
-	} from '../dialog-warming';
-	import { useOptOutConfirmationState } from '../opt-out-confirmation-state.svelte';
-	import DeferredOptInConfirmation from './deferred-opt-in-confirmation.svelte';
-	import DeferredOptOutConfirmation from './deferred-opt-out-confirmation.svelte';
+	import { getConsentContext } from '../get-consent-context.svelte';
+	import { getThemeContext } from '../get-theme-context';
+	import { holdIdleDialogWarming, registerDialogWarmer } from '../warm-dialog';
+	import DeferredOptInConfirmation from './confirmation/deferred-opt-in-confirmation.svelte';
+	import DeferredOptOutConfirmation from './confirmation/deferred-opt-out-confirmation.svelte';
+	import { useOptOutConfirmationState } from './confirmation/use-opt-out-confirmation-state.svelte';
 	import type {
 		ConsentDialogProps,
 		ConsentDialogTriggerProps,
-	} from './dialog/types';
-	import { requestReceiptFocus } from './parts/receipt-focus';
+	} from './dialog/panel-props.model';
+	import { requestReceiptFocus } from './parts/receipt-focus.model';
 
 	const props: ConsentDialogProps = $props();
 

@@ -9,9 +9,9 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, nextTick, shallowRef } from 'vue';
 
 import { consentConfigKey } from '../runtime/composables/config';
-import { useConsentDraft } from '../runtime/composables/draft';
-import { useResolvedPresentation } from '../runtime/composables/experiment';
-import { symbolKernelContext } from '../runtime/utils/symbols';
+import { useConsentDraft } from '../runtime/composables/use-consent-draft';
+import { useResolvedPresentation } from '../runtime/composables/use-experiment';
+import { symbolKernelContext } from '../runtime/utils/consent-symbols.model';
 import { createVueConsentKernelContext } from './test-kernel';
 import type { RuntimeConsentConfig } from './test-kernel';
 

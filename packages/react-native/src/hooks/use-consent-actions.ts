@@ -11,8 +11,8 @@ import type {
 	NativeOverridesInput,
 	TrackingAuthorization,
 } from '../protocol';
-import type { OptionalConsentCategory } from '../protocol/vocabulary';
-import { useConsentClient } from '../provider/consent-context';
+import type { OptionalConsentCategory } from '../protocol/consent-vocabulary.model';
+import { useConsentClient } from '../provider/consent-client-context';
 
 /**
  * The commands a consent surface can take that `@inth/react` has no hook for.

@@ -1,10 +1,14 @@
 import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
-import { compileManifest } from '../../engine/compile';
+import { compileManifest } from '../../engine/compile-manifest';
 import { resolvedManifestToScript } from '../../engine/runtime';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { readId, skipMissingId, skipScript } from '../_shared/required-id';
+import { vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
+import {
+	readId,
+	skipMissingId,
+	skipScript,
+} from '../_shared/required-id.model';
 
 /** Product data required by Insider's product page push. */
 export interface InsiderProduct {

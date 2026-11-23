@@ -23,28 +23,28 @@ import type {
 import { baseTranslations } from '@inth/sdk-translations/all';
 import type { BaseTranslations } from '@inth/sdk-translations/all';
 
-import { createUnreportedJourneys } from '../../libs/journey';
-import type { SessionReportHeaders } from '../../libs/session-report';
-import type { InitContext, KernelOverrides } from '../../types';
+import type { InitContext, KernelOverrides } from '../../consent-kernel.model';
+import { createUnreportedJourneys } from '../../libs/journey.store';
+import type { SessionReportHeaders } from '../../libs/session-report.model';
 import {
 	fetchCachedAdTechProviders,
 	loadManifestAdTechProviders,
-} from '../ad-tech-provider-cache';
-import { rememberDecisionInputs } from '../decision-inputs';
-import type { RememberedDecisionInputs } from '../decision-inputs';
-import { fetchCachedGvl } from '../gvl-cache';
+} from '../ad-tech-provider-cache.model';
+import { rememberDecisionInputs } from '../decision-inputs.model';
+import type { RememberedDecisionInputs } from '../decision-inputs.model';
+import { fetchCachedGvl } from '../gvl-cache.model';
 import { mapInitOutputToInitResponse } from '../init-output';
 import type { TransportInitResponse } from '../init-output';
-import { readApiError } from './error';
-import { trimTrailingSlash, V1_ROUTES } from './paths';
+import { readApiError } from './inth-api-error';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
-import { resolveProperty, resolveV1Fetch } from './routes';
+import { resolveProperty, resolveV1Fetch } from './v1-request.api';
+import { trimTrailingSlash, V1_ROUTES } from './v1-routes';
 import {
 	reportV1ConsentSession,
 	sendsV1ConsentSessionReport,
-} from './session-report';
-import type { V1SessionReportOptions } from './session-report';
+} from './v1-session-report.api';
+import type { V1SessionReportOptions } from './v1-session-report.api';
 
 /** Session reporting for a server-side manifest transport. */
 export interface V1ManifestReportOptions {

@@ -2,7 +2,7 @@ import { insertPrefetchScript } from '@inth/sdk/engine';
 import type { RuntimeConsentConfig } from '@inth/vue/nuxt';
 /**
  * Nitro plugin: writes the `/v1/consent/init` script into the HTML shell of every
- * `ssr: false` page (see `./init-prefetch`). The module registers it unless
+ * `ssr: false` page (see `./build-init-prefetch-tag`). The module registers it unless
  * its `initPrefetch` option is `false`.
  *
  * `app.config.ts` comes from `#@inth/sdk/server-app-config`, a Nitro virtual the
@@ -19,8 +19,8 @@ import {
 
 import { useServerAppConfig } from '#@inth/sdk/server-app-config';
 
-import { buildInitPrefetchTag } from './init-prefetch';
-import type { InitPrefetchRouteRule } from './init-prefetch';
+import { buildInitPrefetchTag } from './build-init-prefetch-tag';
+import type { InitPrefetchRouteRule } from './build-init-prefetch-tag';
 
 export default defineNitroPlugin((nitroApp) => {
 	nitroApp.hooks.hook('render:html', (html, { event, streaming }) => {

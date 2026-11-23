@@ -16,8 +16,8 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
-import { ANALYTICS_JS_QUEUE_METHODS } from './vendors/_shared/analytics-js';
+} from './__tests__/e2e-test-utils';
+import { ANALYTICS_JS_QUEUE_METHODS } from './vendors/_shared/analytics-js.model';
 import { customerIo } from './vendors/email-and-sms/customer-io';
 
 const GLOBALS = ['cioanalytics'];

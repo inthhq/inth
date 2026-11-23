@@ -16,7 +16,7 @@ import {
 	registerDialogWarmer,
 	resetDialogWarmingForTests,
 	warmDialog,
-} from '../lib/dialog-warming';
+} from '../lib/warm-dialog';
 import DeferredDialogFixture from './fixtures/deferred-dialog-fixture.svelte';
 import DeferredDialogTriggerFixture from './fixtures/deferred-dialog-trigger-fixture.svelte';
 import PanelTriggerFixture from './fixtures/panel-trigger-fixture.svelte';

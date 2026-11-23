@@ -11,8 +11,8 @@ import { renderToReadableStream } from 'react-dom/server';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { optOutRule } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
-import { InthProvider } from '../root';
-import type { InthProviderProps } from '../root';
+import { InthProvider } from '../inth-provider';
+import type { InthProviderProps } from '../inth-provider';
 import { resolveConsent } from '../server';
 import { manifestOf } from './manifest-fixture';
 
@@ -175,7 +175,7 @@ const importRootWithoutUse = async (): Promise<typeof InthProvider> => {
 		const react18 = { ...actual, use: undefined };
 		return { ...react18, default: react18 };
 	});
-	return (await import('../root')).InthProvider;
+	return (await import('../inth-provider')).InthProvider;
 };
 
 test('starts the scripts from a streamed state on React 18, which has no `use`', async () => {
@@ -357,7 +357,7 @@ test('a render whose start module loads late names the start script’s render i
 		return importOriginal();
 	});
 	try {
-		const { InthProvider: FreshRoot } = await import('../root');
+		const { InthProvider: FreshRoot } = await import('../inth-provider');
 		const stream = await renderToReadableStream(
 			createElement(
 				FreshRoot,

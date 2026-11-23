@@ -20,9 +20,9 @@ import type {
 	ResolvedVendor,
 	SavePayload,
 	KernelTransport,
-} from '../../types';
+} from '../../consent-kernel.model';
 import { createKernel as assembleKernel } from '../index';
-import { validateVendorChoice } from '../record-validation';
+import { validateVendorChoice } from '../record-validation.model';
 import { createMemoryOutboxStore } from '../save-outbox';
 import type { SaveOutboxStore } from '../save-outbox';
 

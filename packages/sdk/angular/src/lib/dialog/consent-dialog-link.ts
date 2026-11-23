@@ -18,8 +18,8 @@ import { CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
-import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
-import { OPT_OUT_ICON_SIZE } from '../shared/icons';
+import { holdIdleDialogWarming, warmDialog } from '../core/warm-dialog';
+import { OPT_OUT_ICON_SIZE } from '../shared/opt-out-icon';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 

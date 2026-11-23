@@ -21,7 +21,7 @@ import kotlin.test.assertNull
 
 /**
  * Pure opt-out display state and per-category lock helpers, mirroring
- * `packages/sdk/core/src/libs/__tests__/opt-out-state.test.ts`.
+ * `packages/sdk/core/src/libs/__tests__/opt-out-state.model.test.ts`.
  */
 class OptOutStateTest {
 	private fun optOutInit(

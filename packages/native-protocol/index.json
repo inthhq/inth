@@ -667,76 +667,76 @@
 			"sha256": "f8bf31e6c98daaa78791a3eb14d67e34c295f63309feaf301ad6d0d1362c8d1f"
 		},
 		{
-			"bytes": 51429,
+			"bytes": 51449,
 			"file": "vendor-list-scope-32-vendors.json",
 			"id": "vendor-list-scope-32-vendors",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "3e12e9588b8e5d5280c417db26bbe62e0297cee73ace67eade38e9105032207c"
+			"sha256": "a65d727bf19f97a1aa8f78e0964dfa82c4e5a9c104e1a1ad96bfc2b12b149ab0"
 		},
 		{
-			"bytes": 64505,
+			"bytes": 64525,
 			"file": "vendor-list-scope-empty.json",
 			"id": "vendor-list-scope-empty",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "4e8aee604db65f0537e45544d57f50c4de0d8c0febf6cd184c3baa69e0dd8fa0"
+			"sha256": "03795e37a306dc92d8e26cc143d546f916744d20854d42c6923fcd481a3005e4"
 		},
 		{
-			"bytes": 64515,
+			"bytes": 64535,
 			"file": "vendor-list-scope-absent.json",
 			"id": "vendor-list-scope-absent",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "be8fd6a9cf642749e414d21ff34d6ed269c65534e48a5fca67bdcdd629186311"
+			"sha256": "996c4318775f8dfe9498106b50dff726f9a9bd70bbd0deb5455e97494994e663"
 		},
 		{
-			"bytes": 32222,
+			"bytes": 32242,
 			"file": "vendor-list-scope-unknown-id.json",
 			"id": "vendor-list-scope-unknown-id",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "5f266a3e172ea0d550318917de707b491af0d6b0eb67e5737fe66a0ff6ea98b7"
+			"sha256": "7ac83d665c5b33fb7a87d3a245ca2c26abc92f5fb5d5c484df8466c5cffc8c05"
 		},
 		{
-			"bytes": 69386,
+			"bytes": 69406,
 			"file": "vendor-list-scope-wider-than-list.json",
 			"id": "vendor-list-scope-wider-than-list",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "3b34cb6bc9972140a53199f12f61f3e18193434c8af4119656e280bc365e6377"
+			"sha256": "e16f25cd73786de8bd7e08b4c4f7f9cfeadded84e814e094ee6fe6ecdc90e559"
 		},
 		{
-			"bytes": 66480,
+			"bytes": 66500,
 			"file": "vendor-list-scope-above-query-cap.json",
 			"id": "vendor-list-scope-above-query-cap",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "6ab6f7350ed20e190050370132f5ed65cd4860854545fd8df51c4cdf25be783f"
+			"sha256": "ddc5ec556397922cad875995e4c761e7747a4192a67b7e1089ae4991f6fd69c5"
 		},
 		{
-			"bytes": 32353,
+			"bytes": 32373,
 			"file": "vendor-list-scope-key-not-body-id.json",
 			"id": "vendor-list-scope-key-not-body-id",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "37394373e0bbb18ccf9c278c55cda752552273f7643dd730a74f2ebe2bf2a36f"
+			"sha256": "87219b21498e662d4fa50d994af8854acd1f664347223d43b41e3a85e2bf20dc"
 		},
 		{
-			"bytes": 35100,
+			"bytes": 35120,
 			"file": "vendor-list-scope-siblings-preserved.json",
 			"id": "vendor-list-scope-siblings-preserved",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "304265a3f45b4d749b48c578d637b8dcea83648f26288321b235bfb26c1f9c0b"
+			"sha256": "038f6a4e21dfee3d42c8fb0e1a4a1dd5fba47f7bc429733d59e1f1b90482a148"
 		},
 		{
-			"bytes": 32971,
+			"bytes": 32991,
 			"file": "vendor-list-scope-versions-preserved.json",
 			"id": "vendor-list-scope-versions-preserved",
 			"kind": "vendor-list-scope",
 			"protocolVersion": 1,
-			"sha256": "b2a23e59fdcaa5ecca09d492d48608c1e500c8b09f510ae01653272e39a172e8"
+			"sha256": "4b2ca4c5882cf4f89d688dce395b07bec1f226663910b6cc5ae444ec6d9e2996"
 		}
 	],
 	"generatedBy": "packages/react-native/scripts/generate-protocol-fixtures.ts",

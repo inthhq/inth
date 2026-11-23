@@ -21,7 +21,7 @@
  * }
  * ```
  */
-import type { InthLocals } from './types';
+import type { InthLocals } from './kit-locals.model';
 
 declare global {
 	namespace App {

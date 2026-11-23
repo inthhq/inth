@@ -22,15 +22,18 @@ export { has } from './libs/has';
 export type { HasCondition } from './libs/has';
 export { deniedVendorIds } from './modules/vendor-denial';
 export { vendorsListedUnder } from './libs/vendor-listing';
-export { IABUnavailableError, policyNeedsIAB } from './libs/iab-unavailable';
+export {
+	IABUnavailableError,
+	policyNeedsIAB,
+} from './libs/iab-unavailable-error';
 export { resolveConsentPresentation } from './libs/policy-actions';
-export { resolvePrivacyChoicesLink } from './libs/privacy-choices-link';
-export type { PrivacyChoicesLinkState } from './libs/privacy-choices-link';
+export { resolvePrivacyChoicesLink } from './libs/resolve-privacy-choices-link';
+export type { PrivacyChoicesLinkState } from './libs/resolve-privacy-choices-link';
 export {
 	PHONE_LAYOUT_MAX_WIDTH,
 	PHONE_LAYOUT_QUERY,
 	resolveLayout,
-} from './libs/consent-layout';
+} from './libs/consent-layout.model';
 export {
 	resolveActionLabels,
 	resolveBannerAllowedAnnouncement,
@@ -91,7 +94,7 @@ export {
 	resolveOptOut,
 	resolveOptOutReceipt,
 	resolveOptOutState,
-} from './libs/opt-out-state';
+} from './libs/opt-out-state.model';
 export type {
 	CategoryOptOutLockSnapshot,
 	OptOutCheckSnapshot,
@@ -104,43 +107,43 @@ export type {
 	OptOutState,
 	OptOutVia,
 	ResolvedOptOutState,
-} from './libs/opt-out-state';
-export { resolveSurfaceEscape } from './surface-session/escape';
+} from './libs/opt-out-state.model';
+export { resolveSurfaceEscape } from './surface-session/resolve-surface-escape';
 export type {
 	SurfaceEscapeInput,
 	SurfaceEscapeOutcome,
-} from './surface-session/escape';
+} from './surface-session/resolve-surface-escape';
 export {
 	planCategorySwitch,
 	planVendorSwitch,
-} from './surface-session/categories';
+} from './surface-session/category-switch.model';
 export type {
 	CategorySwitchPlan,
 	CategorySwitchState,
-} from './surface-session/categories';
-export { resolveRightsReceipt } from './surface-session/receipt';
-export type { RightsReceipt } from './surface-session/receipt';
-export { resolveSaleRight } from './surface-session/rights';
+} from './surface-session/category-switch.model';
+export { resolveRightsReceipt } from './surface-session/resolve-rights-receipt';
+export type { RightsReceipt } from './surface-session/resolve-rights-receipt';
+export { resolveSaleRight } from './surface-session/surface-rights.model';
 export type {
 	RightOption,
 	RightSource,
 	RightsSnapshot,
 	SaleRightState,
-} from './surface-session/rights';
+} from './surface-session/surface-rights.model';
 export {
 	announcementText,
 	MAIN_LAYER,
 	MAX_SURFACE_LAYERS,
-} from './surface-session/state';
+} from './surface-session/surface-session-state.model';
 export type {
 	SurfaceAnnouncement,
 	SurfaceSessionState,
-} from './surface-session/state';
+} from './surface-session/surface-session-state.model';
 export {
 	applyExperimentAssignment,
 	applyExperimentTheme,
 } from './libs/experiment-presentation';
-export { hasGlobalPrivacyControlSignal } from './libs/global-privacy-control';
+export { hasGlobalPrivacyControlSignal } from './libs/read-global-privacy-control';
 export { defaultTranslationConfig } from './translations/defaults';
 export { createLazyIABFactory, iabSurfaceActions } from './runtime/lazy-iab';
 export type { IABSurfaceActions } from './runtime/lazy-iab';

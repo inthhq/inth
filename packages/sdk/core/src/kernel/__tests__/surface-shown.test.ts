@@ -7,7 +7,7 @@ import {
 	noticeRule,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import type { KernelEvent, SavePayload } from '../../types';
+import type { KernelEvent, SavePayload } from '../../consent-kernel.model';
 import { createKernel as createConsentKernel } from '../index';
 
 type SurfaceShown = Extract<KernelEvent, { type: 'surface:shown' }>;

@@ -21,8 +21,8 @@ import { describe, expect, it } from 'vitest';
 import {
 	loadScripts,
 	registerVendorContractCleanup,
-} from '../src/e2e-test-utils';
-import type { LiveVendorProbeConfig } from './types';
+} from '../src/__tests__/e2e-test-utils';
+import type { LiveVendorProbeConfig } from './live-vendor-probe.model';
 import { liveVendorProbeConfigs } from './vendors';
 
 /** Grants every category — the stub a fully consenting visitor would see. */

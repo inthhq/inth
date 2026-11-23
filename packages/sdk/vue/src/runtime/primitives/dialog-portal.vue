@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { inject } from 'vue';
 
-import { dialogContextKey } from './keys';
+import { dialogContextKey } from './primitive-keys.model';
 
 const dialog = inject(dialogContextKey);
 </script>

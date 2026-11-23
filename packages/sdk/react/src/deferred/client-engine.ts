@@ -10,4 +10,4 @@
 
 // oxlint-disable-next-line oxc/no-barrel-file -- The engine chunk's interface.
 export { InthProvider } from '../provider';
-export { DeferredEngineHost } from './engine-host';
+export { DeferredEngineHost } from './deferred-engine-host';

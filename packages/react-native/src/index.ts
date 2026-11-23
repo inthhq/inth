@@ -162,7 +162,7 @@ export {
 	isAdditionalInformationPause,
 	MAX_TRACKING_REQUEST_TURNS,
 	mayAskPlatformAgain,
-} from './lib/tracking-journey';
+} from './tracking/tracking-journey.model';
 export {
 	denyAllSnapshot,
 	INVALID_NATIVE_SNAPSHOT_CODE,
@@ -170,7 +170,7 @@ export {
 export {
 	isPlatformTrackingSatisfied,
 	isTrackingPermitted,
-} from './lib/tracking';
+} from './tracking/tracking-permission.model';
 export {
 	categoryDecision,
 	isCategoryAllowed,
@@ -180,8 +180,11 @@ export {
 	isStatusPromptOwed,
 	selectConsentStatus,
 	shallowEqual,
-} from './lib/selectors';
-export type { ConsentDecision, ConsentStatus } from './lib/selectors';
+} from './lib/consent-selectors.model';
+export type {
+	ConsentDecision,
+	ConsentStatus,
+} from './lib/consent-selectors.model';
 export {
 	InthProtocolMismatchError,
 	createConsentClient,

@@ -6,6 +6,11 @@ import type { PolicyRule } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
+import type {
+	KernelEvent,
+	KernelTransport,
+	SavePayload,
+} from '../../consent-kernel.model';
 import type { ConsentExperiment } from '../../libs/experiment';
 import {
 	C15T_EXPERIMENT_STORAGE_KEY,
@@ -13,7 +18,6 @@ import {
 } from '../../libs/storage-keys';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { createOfflineTransport } from '../../transports/offline';
-import type { KernelEvent, KernelTransport, SavePayload } from '../../types';
 import { createConsentRuntime } from '../index';
 
 const policyRules: PolicyRule[] = [

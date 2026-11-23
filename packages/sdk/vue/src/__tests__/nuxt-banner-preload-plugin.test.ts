@@ -8,7 +8,7 @@ import { describe, expect, test } from 'vitest';
 import {
 	QUIET_BANNER_CONTEXT_KEY,
 	quietBannerHead,
-} from '../runtime/server/banner-preload-priority';
+} from '../runtime/server/banner-preload-priority.model';
 
 const LINK =
 	'<link rel="modulepreload" as="script" crossorigin href="/_nuxt/Prompt.js">';

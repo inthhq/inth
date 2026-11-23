@@ -10,12 +10,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ChoiceBasis } from '../../../consent-record/types';
 import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
-import { readStoredRecords } from '../hydrate';
-import type { StoredConsentEnvelope } from '../record-codec';
+import { readStoredRecords } from '../persistence-hydrate.store';
+import type { StoredConsentEnvelope } from '../record-codec.model';
 import {
 	readStoredNoticeDismissal,
 	readStoredVendorChoice,
-} from '../record-storage';
+} from '../record-storage.store';
 import {
 	encodeNoticeDismissal,
 	encodeNoticeDismissalCompact,
@@ -23,7 +23,7 @@ import {
 	encodeStoredConsentEnvelopeJson,
 	encodeVendorChoice,
 	encodeVendorChoiceCompact,
-} from '../writer/encode';
+} from '../writer/record-encode.model';
 import {
 	writeStoredClearEpoch,
 	writeStoredConsentEnvelope,

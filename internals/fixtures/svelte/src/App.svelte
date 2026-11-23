@@ -7,7 +7,7 @@
 		hosted,
 	} from '@inth/svelte';
 
-	import ExamplePage from './ExamplePage.svelte';
+	import ExamplePage from './example-page.svelte';
 	import { scripts } from './scripts';
 	import { testBackend } from './test-backend';
 

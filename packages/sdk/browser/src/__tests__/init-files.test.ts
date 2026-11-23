@@ -5,7 +5,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { runInitScript } from '../init/run';
+import { runInitScript } from '../init/run-init-script';
 import { version } from '../version';
 
 const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/inth.js';

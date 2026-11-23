@@ -22,20 +22,20 @@
  * @packageDocumentation
  */
 
-import { COMMIT_FAILURE_REASONS } from './commit';
-import { POLICY_RESOLUTION_FAILURES } from './snapshot';
-import {
-	TRACKING_AUTHORIZATION_STATUSES,
-	TRACKING_PRESENTATIONS,
-	TRACKING_REQUEST_STAGES,
-} from './tracking';
+import { COMMIT_FAILURE_REASONS } from './commit-payload.model';
+import { POLICY_RESOLUTION_FAILURES } from './consent-snapshot.model';
 import {
 	ACTIVE_SURFACES,
 	NATIVE_MODELS,
 	OPT_OUT_HOLDERS,
 	OPT_OUT_METHODS,
 	PROMPT_REASONS,
-} from './vocabulary';
+} from './consent-vocabulary.model';
+import {
+	TRACKING_AUTHORIZATION_STATUSES,
+	TRACKING_PRESENTATIONS,
+	TRACKING_REQUEST_STAGES,
+} from './tracking-protocol.model';
 
 /** JSON value kinds a field can hold. */
 export type BridgeValueKind =
@@ -181,7 +181,7 @@ export const BRIDGE_PAYLOADS = {
 					nullable: true,
 				},
 				// Older binaries leave out `customVendors` and `disclosure`;
-				// `ADDITIVE_IAB_DEFAULTS` in `wire-shape.ts` fills them before a snapshot
+				// `ADDITIVE_IAB_DEFAULTS` in `snapshot-wire-shape.model.ts` fills them before a snapshot
 				// is read or graded.
 				customVendors: 'array',
 				disclosure: {

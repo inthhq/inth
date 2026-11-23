@@ -1,14 +1,18 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { readId, skipMissingId } from '../_shared/required-id';
+import { resolveManifest } from '../../resolve-manifest';
+import { vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
 import {
 	createScriptReuse,
 	getScriptRegistrations,
-} from '../_shared/reuse-script';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+} from '../_shared/create-script-reuse';
+import {
+	readPageFetch,
+	routePageFetchThrough,
+} from '../_shared/fullstory-fetch.api';
+import { readId, skipMissingId } from '../_shared/required-id.model';
+import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url.model';
 
 /** FullStory v2 dispatcher arguments, including Async completion callbacks. */
 export type FullStoryCall = [
@@ -61,7 +65,7 @@ const rejectQueue = (api: FullStoryApi, error: Error): void => {
 const createApi = (): FullStoryApi => {
 	const metadata: Pick<FullStoryApi, 'q' | '_api' | '_v' | '_w'> = {
 		_v: '2.1.0',
-		_w: { XMLHttpRequest: window.XMLHttpRequest, fetch: window.fetch },
+		_w: { XMLHttpRequest: window.XMLHttpRequest, fetch: readPageFetch() },
 		q: [],
 	};
 	// oxlint-disable-next-line no-use-before-define -- The callable and its SDK metadata share one identity.
@@ -102,18 +106,7 @@ const createApi = (): FullStoryApi => {
 		}
 		return dispatch(command);
 	}
-	if (window.fetch) {
-		window.fetch = Object.assign(function instrumentedFetch(
-			this: Window,
-			...args: Parameters<typeof fetch>
-		): Promise<Response> {
-			const original = api._w?.fetch;
-			if (!original) {
-				throw new Error('fullStory: saved fetch is unavailable');
-			}
-			return original.apply(this, args);
-		}, window.fetch);
-	}
+	routePageFetchThrough(() => api._w?.fetch);
 	return api;
 };
 

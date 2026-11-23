@@ -23,15 +23,18 @@ export type {
 	InitOutput,
 	LocationResponse,
 	TranslationsResponse,
-} from './api/init';
+} from './api/init-output.model';
 export type {
 	LegalDocumentCurrentInput,
 	LegalDocumentCurrentOutput,
 	LegalDocumentCurrentParams,
 } from './api/legal-document';
 export type { StatusOutput } from './api/meta';
-export { CONSENT_MODELS } from './api/session';
-export type { ConsentSessionReport, ConsentSessionSource } from './api/session';
+export { CONSENT_MODELS } from './api/consent-session.model';
+export type {
+	ConsentSessionReport,
+	ConsentSessionSource,
+} from './api/consent-session.model';
 export type {
 	ConsentItem,
 	GetSubjectInput,
@@ -98,7 +101,7 @@ export {
 	V1_REQUEST_ID_HEADER,
 	V1_UUID_PATTERN,
 	V1_UUID_V7_PATTERN,
-} from './api/v1/constants';
+} from './api/v1/v1-constants.model';
 export type {
 	AuditLog,
 	Consent,
@@ -115,7 +118,7 @@ export type {
 export {
 	isLegalDocumentType,
 	LEGAL_DOCUMENT_TYPE_PREFIXES,
-} from './shared/legal-document-types';
+} from './shared/legal-document-type.model';
 export type * from './shared';
 export {
 	AD_TECH_PROVIDER_FETCH_TIMEOUT_MS,

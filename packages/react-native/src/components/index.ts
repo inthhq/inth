@@ -38,7 +38,7 @@ export type {
 	ConsentIabSelection,
 	ConsentIabTab,
 	ConsentIabVendorId,
-} from './iab-display-model';
+} from './iab-display.model';
 export { ConsentPreferences } from './consent-preferences';
 export type { ConsentPreferencesProps } from './consent-preferences';
 export {

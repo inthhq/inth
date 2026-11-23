@@ -9,7 +9,7 @@ bun run --cwd internals/fixtures/script-tag dev
 
 ## The quickstart page
 
-http://localhost:4173/consent-example is the setup from the [HTML quickstart](https://c15t.com/docs/frameworks/html/quickstart): one tag connected to Inth, PostHog and X Pixel as inert scripts, a YouTube iframe gated on measurement, and a Privacy settings link. `/consent-example/branded` adds the published theme block, and `/consent-example/headless` swaps the tag for `inth.headless.js` and adds the published bottom bar from the [design gallery](https://c15t.com/docs/customization/recipes). `serve.ts` reads both from the `#region docs:` markers in `internals/doc-snippets/html`, so these routes test the snippets readers copy.
+http://localhost:4173/consent-example is the setup from the HTML quickstart (`packages/sdk/docs/frameworks/html/quickstart.mdx`): one tag connected to Inth, PostHog and X Pixel as inert scripts, a YouTube iframe gated on measurement, and a Privacy settings link. `/consent-example/branded` adds the published theme block, and `/consent-example/headless` swaps the tag for `inth.headless.js` and adds the published bottom bar from the design gallery (`packages/sdk/docs/customization/recipes.mdx`). `serve.ts` reads both from the `#region docs:` markers in `internals/doc-snippets/html`, so these routes test the snippets readers copy.
 
 The page's tag loads `inth.js` from a `https://your-project.inth.app` placeholder, exactly as readers copy it. `serve.ts` swaps it for the local build with `INTH_PROJECT_URL` as the backend, so start it with your Inth URL and add `http://localhost:4173` to the project's trusted origins:
 
@@ -25,7 +25,7 @@ EXAMPLE_TARGET=html bun run --cwd internals/fixtures/acceptance test
 
 ## The playground
 
-Open http://localhost:4173 for a playground that needs no backend: the page runs in offline mode with three built-in policy rules covering European opt-in, US privacy-state opt-out, and no prompt elsewhere and starts as a German visitor. The DevTools panel opens on its Location tab: change the country, run init, and watch the banner follow the policy.
+Open http://localhost:4173 for a playground that needs no backend: the page loads `inth.testing.js`, which runs with no backend, with three built-in policy presets covering European opt-in, US privacy-state opt-out, and no prompt elsewhere and starts as a German visitor. The DevTools panel opens on its Location tab: change the country, run init, and watch the banner follow the policy.
 
 The page exercises everything a real site gates on consent, all served locally so it works offline and every request shows in the page's log:
 
@@ -37,7 +37,7 @@ The page exercises everything a real site gates on consent, all served locally s
 
 A second page, http://localhost:4173/custom, loads `inth.headless.js` instead and renders its own consent card with the site's HTML and CSS, the way zed.dev/docs ships its banner on Inth: `data-inth-action` buttons for accept and reject, one `ui` listener to show, hide and switch the card into configure mode, and `inth.save()` behind the Save button.
 
-Open http://localhost:4173/?experiment=1 to run a banner-shape experiment from a queued `config` call: Inth picks the `control` arm (the default banner) or the `wall` arm, the page shows it, and the `onSurfaceShown` and `onChoiceRecorded` callbacks log every impression and choice under the arm. Add `&arm=wall` to set the arm the way a flag provider would; any other `arm` value runs `control`. See https://c15t.com/docs/guides/banner-experiments.
+Open http://localhost:4173/?experiment=1 to run a banner-shape experiment from a queued `config` call: Inth picks the `control` arm (the default banner) or the `wall` arm, the page shows it, and the `onSurfaceShown` and `onChoiceRecorded` callbacks log every impression and choice under the arm. Add `&arm=wall` to set the arm the way a flag provider would; any other `arm` value runs `control`. See `packages/sdk/docs/guides/banner-experiments.mdx`.
 
 `index.html` shows the three ways to configure the tag: `data-*` attributes, and `config` and `on` calls queued on `window.inth` before the script loads.
 

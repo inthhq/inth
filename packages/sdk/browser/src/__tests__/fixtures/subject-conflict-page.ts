@@ -11,9 +11,9 @@
 import { ConsentSaveRejectedError } from '@inth/sdk-core';
 import type { ProviderTransportFactory, SavePayload } from '@inth/sdk-core';
 
-import { createScriptTagConsentClient as createConsentClient } from '../../script-tag-client';
+import type { ConsentClient } from '../../consent-client.model';
+import { createScriptTagConsentClient as createConsentClient } from '../../create-script-tag-consent-client';
 import { testing } from '../../testing';
-import type { ConsentClient } from '../../types';
 
 /** Subject ids the fake backend refuses, as a JSON array. */
 export const TAKEN_SUBJECTS_KEY = 'inth-test-taken-subjects';

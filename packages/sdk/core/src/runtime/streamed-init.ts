@@ -1,3 +1,11 @@
+import type {
+	ConsentKernel,
+	InitContext,
+	InitResponse,
+	KernelConfig,
+	KernelOverrides,
+	KernelTransport,
+} from '../consent-kernel.model';
 /**
  * The first `init()` of a runtime whose `prefetch` was a promise.
  *
@@ -20,18 +28,10 @@
  * - A rejected promise is logged outside production and the transport's
  *   init runs as though there were no prefetch.
  */
-import type { InternalKernel } from '../kernel/internals';
+import type { InternalKernel } from '../kernel/kernel-internals.model';
 import { isProductionBuild } from '../libs/is-production';
 import type { kernelConfigToInitResponse } from '../transports/init-output';
-import type {
-	ConsentKernel,
-	InitContext,
-	InitResponse,
-	KernelConfig,
-	KernelOverrides,
-	KernelTransport,
-} from '../types';
-import type { RuntimePrefetch } from './types';
+import type { RuntimePrefetch } from './consent-runtime.model';
 
 const hasKeys = function hasKeys(value: KernelOverrides): boolean {
 	return Object.keys(value).length > 0;

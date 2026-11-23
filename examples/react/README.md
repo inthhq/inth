@@ -6,10 +6,11 @@ only after the visitor allows measurement. The browser asks your Inth
 project's `/init` for each visitor's policy, and the backend picks it from the
 visitor's location.
 
-- `vite.config.ts` adds `consentManifest`, which hands the backend URL to
-  the app through `@inth/react/generated`.
-- `src/consent.tsx` mounts `InthProvider` in `hosted()` mode, with
-  PostHog, the banner and the dialog.
+- `vite.config.ts` adds `consentManifest`, which adds an inline script to
+  `index.html` that starts the `/init` request while the app's JavaScript
+  downloads.
+- `src/consent.tsx` mounts `InthProvider` with the backend URL from
+  `VITE_INTH_PROJECT_URL`, PostHog, the banner, the dialog and the link.
 - `src/main.tsx` wraps the app in `Consent`.
 
 ## Run it
@@ -17,8 +18,8 @@ visitor's location.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/react dev
 ```
 
@@ -33,5 +34,5 @@ Vite writes the backend URL into the bundle, so rebuild after changing it.
 Replace `phc_your_project_key` in `src/consent.tsx` with your PostHog project
 key.
 
-The [React quickstart](https://c15t.com/docs/frameworks/react/quickstart)
+The [React quickstart](https://inth.com/docs/frameworks/react/quickstart)
 walks through each file.

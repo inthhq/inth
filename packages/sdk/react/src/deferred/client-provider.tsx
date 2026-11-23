@@ -4,7 +4,7 @@
  * `InthProvider` for client-rendered apps, whose consent engine loads
  * after the page's priority images when the visitor still has to choose.
  *
- * The page renders at once, under a stand-in kernel (`deferred-kernel.ts`).
+ * The page renders at once, under a stand-in kernel (`create-deferred-kernel.ts`).
  * The `/v1/consent/init` request, from the inline prefetch that `consentManifest()` or
  * `buildPrefetchScript()` put in the HTML or else started by the provider
  * as it first renders, carries the policy and the copy, so once it
@@ -50,12 +50,13 @@ import type {
 } from '../provider';
 import { awaitsChoice, rootNeedsEngine } from './boot';
 import type * as ClientEngine from './client-engine';
-import type { DeferredCommitConfig } from './committed';
-import type { DeferredKernelHandle } from './deferred-kernel';
-import { read, recordOnce } from './session';
-import { DeferredConsentShell } from './shell';
-import { warmSurfaces } from './surface-warmers';
-import { scheduleDeferredEngine } from './trigger';
+import type { DeferredKernelHandle } from './create-deferred-kernel';
+import type { DeferredCommitConfig } from './deferred-committed.model';
+import { DeferredConsentShell } from './deferred-consent-shell';
+import { read } from './read';
+import { recordOnce } from './recorded-promise.model';
+import { scheduleDeferredEngine } from './schedule-deferred-engine';
+import { warmSurfaces } from './surface-warmers.model';
 
 type EngineModule = typeof ClientEngine;
 

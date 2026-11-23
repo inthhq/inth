@@ -7,10 +7,10 @@ import type { FC } from 'react';
 
 import * as PreferenceItem from '~/components/shared/ui/preference-item';
 import { useTheme } from '~/hooks/use-theme';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
-import type { ProcessedFeature } from '../types';
+import type { ProcessedFeature } from '../iab-panel.model';
 import { useIABTranslations } from '../use-iab-translations';
 
 /** Props for {@link FeatureItem}. */

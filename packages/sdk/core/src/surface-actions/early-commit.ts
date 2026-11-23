@@ -5,7 +5,7 @@
  * When the visitor's first input is a tap on the banner, waiting for the
  * whole kernel would hold their choice back by its download. This records
  * the tap from the snapshot the page rendered with, with the kernel's own
- * save code (`kernel/save-plan.ts`, `buildNextSnapshot`):
+ * save code (`kernel/save-plan.model.ts`, `buildNextSnapshot`):
  *
  * - {@link planEarlyCommit} builds what `commands.save('all' | 'none')`
  *   would commit: the next snapshot, the records, the events and the
@@ -19,41 +19,6 @@
  * @internal
  */
 
-import { recordCategoryPatch } from '../consent-record/record';
-import type { OptionalConsentCategory } from '../consent-record/types';
-import { buildNextSnapshot } from '../kernel/next-snapshot';
-import type { PolicyResolvers, SnapshotPatch } from '../kernel/next-snapshot';
-import {
-	createBrowserOutboxStore,
-	enqueueSave,
-} from '../kernel/save-outbox/store';
-import type { SaveOutboxStore } from '../kernel/save-outbox/store';
-import {
-	applyNoticeAcknowledgement,
-	buildSavePayload,
-	choiceAcknowledgement,
-	resolveSaveSelection,
-	saveAttribution,
-	saveSubject,
-} from '../kernel/save-plan';
-import { deleteCookie, getRawCookieValue, writeCookie } from '../libs/cookie';
-import { removeLocalStorageKey } from '../libs/local-storage';
-import { storageFor } from '../libs/storage-for';
-import { resolveStorageKeys } from '../libs/storage-keys';
-import { generateUuidV7 } from '../libs/subject-uuid';
-import {
-	decodeNoticeDismissal,
-	decodeOptOutRecord,
-	decodeVendorChoice,
-	validateStoredConsentEnvelope,
-} from '../modules/persistence/record-codec';
-import type { StorageConfig } from '../modules/persistence/types';
-import { createRecordStore } from '../modules/persistence/writer/store';
-import type { RecordStoreTools } from '../modules/persistence/writer/types';
-import { buildStoredEnvelope } from '../modules/persistence/writer/write';
-import type { Callbacks } from '../options/callbacks';
-import type { StandInKernelHandle } from '../runtime/stand-in-kernel';
-import type { ConsentRuntimeOptions } from '../runtime/types';
 import type {
 	ConsentSnapshot,
 	HydrationRecords,
@@ -61,7 +26,45 @@ import type {
 	SaveResult,
 	SavePayload,
 	SaveUISource,
-} from '../types';
+} from '../consent-kernel.model';
+import { recordCategoryPatch } from '../consent-record/consent-record.model';
+import type { OptionalConsentCategory } from '../consent-record/types';
+import { buildNextSnapshot } from '../kernel/next-snapshot.model';
+import type {
+	PolicyResolvers,
+	SnapshotPatch,
+} from '../kernel/next-snapshot.model';
+import {
+	createBrowserOutboxStore,
+	enqueueSave,
+} from '../kernel/save-outbox/save-outbox.store';
+import type { SaveOutboxStore } from '../kernel/save-outbox/save-outbox.store';
+import {
+	applyNoticeAcknowledgement,
+	buildSavePayload,
+	choiceAcknowledgement,
+	resolveSaveSelection,
+	saveAttribution,
+	saveSubject,
+} from '../kernel/save-plan.model';
+import { deleteCookie, getRawCookieValue, writeCookie } from '../libs/cookie';
+import { removeLocalStorageKey } from '../libs/local-storage.store';
+import { storageFor } from '../libs/storage-for';
+import { resolveStorageKeys } from '../libs/storage-keys';
+import { generateUuidV7 } from '../libs/subject-uuid.model';
+import type { StorageConfig } from '../modules/persistence/persistence.model';
+import {
+	decodeNoticeDismissal,
+	decodeOptOutRecord,
+	decodeVendorChoice,
+	validateStoredConsentEnvelope,
+} from '../modules/persistence/record-codec.model';
+import { buildStoredEnvelope } from '../modules/persistence/writer/persistence-write.store';
+import type { RecordStoreTools } from '../modules/persistence/writer/persistence-writer.model';
+import { createRecordStore } from '../modules/persistence/writer/persistence-writer.store';
+import type { Callbacks } from '../options/callback-options.model';
+import type { ConsentRuntimeOptions } from '../runtime/consent-runtime.model';
+import type { StandInKernelHandle } from '../runtime/stand-in-kernel';
 import {
 	hasStoredClearEpoch,
 	kernelOnly,

@@ -15,7 +15,7 @@ import type { PolicyRule } from '@inth/sdk/schema/types';
 import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
+import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/record-encode.model';
 import { defineConsentConfig } from '../config';
 import { resolveConsent as baseResolveConsent } from '../server';
 import { MANIFEST_FIXTURE } from './manifest-fixture';

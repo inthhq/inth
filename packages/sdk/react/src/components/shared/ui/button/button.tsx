@@ -2,7 +2,7 @@ import styles from '@inth/sdk/ui/styles/components/button';
 import { forwardRef as createForwardRef, useId } from 'react';
 import type { ButtonHTMLAttributes, ElementType, ReactElement } from 'react';
 
-import type { PolymorphicComponentProps } from '../../libs/polymorphic';
+import type { PolymorphicComponentProps } from '../../libs/polymorphic.model';
 import { recursiveCloneChildren } from '../../libs/recursive-clone-children';
 import { Slot } from '../../libs/slot';
 

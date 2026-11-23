@@ -13,8 +13,8 @@ import { afterEach, describe, expect, test } from 'vitest';
 import {
 	promptContainers,
 	promptContainersKey,
-} from '../runtime/components/prompt/containers';
-import type { PromptContainers } from '../runtime/components/prompt/containers';
+} from '../runtime/components/prompt/prompt-containers';
+import type { PromptContainers } from '../runtime/components/prompt/prompt-containers';
 import {
 	$,
 	mountConsentUI,

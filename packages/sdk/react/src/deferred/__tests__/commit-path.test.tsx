@@ -1,7 +1,7 @@
 /**
  * A choice before a deferred root's engine has loaded: a page's accept or
  * reject through the stand-in's commands is committed in its own task
- * (`instant.ts`), completed by the commit path (`commit.ts`) without the
+ * (`instant-commit.model.ts`), completed by the commit path (`commit.ts`) without the
  * engine, which loads afterwards and takes over without saving again. The
  * stock banner leaves its own taps to the engine, which replays them. Each test
  * streams a real server render into an iframe and hydrates it. React runs
@@ -38,12 +38,16 @@ import { useScriptLoader } from '../../module-hooks/script-loader';
 import type { Script } from '../../module-hooks/script-loader';
 import { readConsentBoot } from '../boot';
 import type { ConsentBoot } from '../boot';
-import { ConsentBootData, ServerBootData } from '../boot-data';
-import type { DeferredCommitConfig } from '../committed';
+import { ConsentBootData } from '../consent-boot-data';
+import type { DeferredCommitConfig } from '../deferred-committed.model';
+import { DeferredConsentShell } from '../deferred-consent-shell';
 import type * as EngineNamespace from '../engine';
-import { recordOnce } from '../session';
-import { DeferredConsentShell } from '../shell';
-import { DeferredConsentBanner, DeferredConsentDialog } from '../surfaces';
+import { recordOnce } from '../recorded-promise.model';
+import { ServerBootData } from '../server-boot-data';
+import {
+	DeferredConsentBanner,
+	DeferredConsentDialog,
+} from '../surface-with-parts';
 
 type EngineModule = typeof EngineNamespace;
 

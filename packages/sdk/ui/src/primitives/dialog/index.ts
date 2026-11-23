@@ -1,2 +1,3 @@
-export * from '../shared/data-state';
-export * from '../shared/dialog';
+export * from '../data-state.model';
+export * from './dialog.model';
+export * from './on-dialog-dismiss';

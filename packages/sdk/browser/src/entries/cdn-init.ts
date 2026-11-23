@@ -6,9 +6,9 @@
  * answer, records an accept or reject tapped before the engine, and starts
  * the scripts a choice allows. It then loads `inth.hosted.js`, the engine
  * and the rest of the UI, which takes all of that over. See
- * `../init/run.ts`.
+ * `../init/run-init-script.ts`.
  */
 
-import { runInitScript } from '../init/run';
+import { runInitScript } from '../init/run-init-script';
 
 runInitScript(document.currentScript as HTMLScriptElement | null);

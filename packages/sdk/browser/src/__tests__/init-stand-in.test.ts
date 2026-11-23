@@ -17,11 +17,11 @@ import {
 	PREFETCH_WINDOW_KEY,
 } from '../../../core/src/libs/page-globals';
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
+import type { GlobalApiBase } from '../create-global-with';
 import { autoInit, createGlobal, installGlobal } from '../global';
-import type { GlobalApiBase } from '../global-base';
-import { releaseBoot } from '../init/adopt';
-import type { InitBoot } from '../init/boot';
-import { runInitScript } from '../init/run';
+import { releaseBoot } from '../init/adopt-boot';
+import type { InitBoot } from '../init/read-boot';
+import { runInitScript } from '../init/run-init-script';
 import { version } from '../version';
 
 const OWN_SRC = 'https://cdn.example/npm/@inth/sdk/lib/browser/dist/inth.js';

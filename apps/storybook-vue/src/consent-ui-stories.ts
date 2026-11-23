@@ -8,13 +8,13 @@ import { defineComponent, h } from 'vue';
 import type {
 	ConsentContainer,
 	ConsentEdgeStyle,
-} from '../../../packages/sdk/core/src/libs/consent-layout';
+} from '../../../packages/sdk/core/src/libs/consent-layout.model';
 import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '../../../packages/sdk/schema/src/types';
 import PrivacyChoicesLink from '../../../packages/sdk/vue/src/runtime/components/privacy-choices-link.vue';
-import { useConsentActiveUI } from '../../../packages/sdk/vue/src/runtime/composables/activeUI';
+import { useConsentActiveUI } from '../../../packages/sdk/vue/src/runtime/composables/use-consent-active-ui';
 import type { ConsentConfig } from '../../../packages/sdk/vue/src/runtime/config';
 import {
 	storybookPolicy,

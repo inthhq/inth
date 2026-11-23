@@ -8,7 +8,7 @@ import { render } from '@testing-library/svelte';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import InthProvider from '../lib/components/inth-provider.svelte';
-import type { ConsentManagerOptions } from '../lib/types';
+import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { transportMode } from './fixtures/transport-mode';
 
 const VENDOR_SRC = 'https://cdn.vendor.example/vendor.js';

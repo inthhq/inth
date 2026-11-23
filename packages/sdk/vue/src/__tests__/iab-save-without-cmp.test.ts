@@ -13,12 +13,12 @@ import { minimalGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import {
 	createDefaultIabSelection,
 	useConsentIabSave,
-} from '../runtime/composables/iabSelection';
+} from '../runtime/composables/use-consent-iab-selection';
 import {
 	symbolInit,
 	symbolKernel,
 	symbolKernelContext,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 import { createVueConsentKernelContext } from './test-kernel';
 
 test('a selection saved with no CMP handle records nothing', async () => {

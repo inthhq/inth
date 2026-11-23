@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-import { iabPurposesToInthConsents } from '../packages/sdk/iab/src/tcf/purpose-mapping';
+import { iabPurposesToInthConsents } from '../packages/sdk/iab/src/tcf/purpose-mapping.model';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 

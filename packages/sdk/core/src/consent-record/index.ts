@@ -16,8 +16,11 @@ export {
 	OPT_OUT_REPROMPT_WAIT_MS,
 	optInPromptAllowedAt,
 } from './evaluate';
-export { optOutDenyCategories, saveWouldLiftOptOut } from './opt-out-rules';
-export type { SaveOptOutLiftSnapshot } from './opt-out-rules';
+export {
+	optOutDenyCategories,
+	saveWouldLiftOptOut,
+} from './opt-out-rules.model';
+export type { SaveOptOutLiftSnapshot } from './opt-out-rules.model';
 export type { ConsentEvaluationInput } from './evaluate';
 export {
 	LEGACY_OPT_OUT_CATEGORIES,
@@ -27,16 +30,19 @@ export {
 export {
 	canonicalizeCategories,
 	createEvaluationPolicy,
-} from './evaluation-policy';
-export type { EvaluationPolicyInput } from './evaluation-policy';
-export { normalizeLegacyConsentRecord } from './normalize';
+} from './evaluation-policy.model';
+export type { EvaluationPolicyInput } from './evaluation-policy.model';
+export { normalizeLegacyConsentRecord } from './normalize-legacy-consent-record';
 export type {
 	LegacyRecordEncoding,
 	NormalizeLegacyOptions,
 	NormalizeLegacyResult,
-} from './normalize';
-export { recordCategoryPatch } from './record';
-export type { RecordPatchOptions, RecordPatchResult } from './record';
+} from './normalize-legacy-consent-record';
+export { recordCategoryPatch } from './consent-record.model';
+export type {
+	RecordPatchOptions,
+	RecordPatchResult,
+} from './consent-record.model';
 export { CONSENT_CATEGORIES, OPTIONAL_CONSENT_CATEGORIES } from './types';
 export type {
 	CategoryDecision,
@@ -70,5 +76,8 @@ export {
 	validateExplicitChoice,
 	validateNoticeDismissal,
 	validateOptOutRecord,
-} from './validation';
-export type { RecordIssue, ValidationResult } from './validation';
+} from './consent-record-validation.model';
+export type {
+	RecordIssue,
+	ValidationResult,
+} from './consent-record-validation.model';

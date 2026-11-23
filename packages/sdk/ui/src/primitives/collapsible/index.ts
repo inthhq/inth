@@ -1,2 +1,2 @@
-export * from '../shared/collapsible';
-export * from '../shared/data-state';
+export * from './collapsible.model';
+export * from '../data-state.model';

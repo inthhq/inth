@@ -15,8 +15,8 @@ import containerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import '@inth/sdk/ui/styles/components/consent-surface.css';
 import '@inth/sdk/ui/styles/components/consent-banner.css';
 
+import type { ActionGroups, PromptContainer } from './prompt.model';
 import PromptSurface from './surface.vue';
-import type { ActionGroups, PromptContainer } from './types';
 
 defineProps<{
 	container: PromptContainer;

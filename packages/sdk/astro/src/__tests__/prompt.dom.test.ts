@@ -21,9 +21,10 @@ import {
 	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
 } from '../../../core/src/libs/page-globals';
-import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
-import * as promptChunk from '../browser/prompt';
-import { loadContainerSheets } from '../browser/prompt';
+import { PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
+import { setPromptLoaderForTest } from '../boot-client-engine';
+import * as promptChunk from '../browser/mount-prompt';
+import { loadContainerSheets } from '../browser/mount-prompt';
 import {
 	boot,
 	preloadDialog,
@@ -31,22 +32,21 @@ import {
 	registerDialogStyles,
 } from '../client';
 import type { AstroConsentClient } from '../client';
-import { setPromptLoaderForTest } from '../client-engine';
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import { resolveOptions } from '../integration';
-import { promptClassNames } from '../prompt/class-names';
-import { resolvePromptModel } from '../prompt/model';
-import { renderPromptHTML } from '../prompt/server';
+import type { InthAstroOptions } from '../inth-options.model';
+import { promptClassNames } from '../prompt/prompt-class-names';
+import { resolvePromptModel } from '../prompt/prompt.model';
+import { renderPromptHTML } from '../prompt/render-prompt-html';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions } from '../types';
-import { registerDialogSurface } from '../ui/adapter';
 import { reactDialogAdapter } from '../ui/react';
+import { registerDialogSurface } from '../ui/register-dialog-adapter';
 import { testRule } from './policy-fixture';
 import { ISLAND_RENDER_TIMEOUT } from './react-dialog-island';
 // The options load on demand; compiling them while this file loads keeps
 // the first test inside its waits. The controller is imported above.
-import '../prompt/panel';
+import '../prompt/create-prompt-panel';
 
 type Region = 'eu' | 'us-opt-in' | 'us-notice' | 'us-opt-out';
 

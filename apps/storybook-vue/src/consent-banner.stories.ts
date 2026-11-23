@@ -9,7 +9,7 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import type {
 	ConsentContainer,
 	ConsentEdgeStyle,
-} from '../../../packages/sdk/core/src/libs/consent-layout';
+} from '../../../packages/sdk/core/src/libs/consent-layout.model';
 import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
 import ConsentBanner from '../../../packages/sdk/vue/src/runtime/components/prompt/prompt.vue';
 import {

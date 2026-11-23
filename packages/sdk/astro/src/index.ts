@@ -21,8 +21,8 @@
  */
 
 export { inth, inth as default, resolveOptions } from './integration';
-export { createConsentMiddleware } from './middleware-handler';
-export type { ConsentMiddlewareOptions } from './middleware-handler';
+export { createConsentMiddleware } from './create-consent-middleware';
+export type { ConsentMiddlewareOptions } from './create-consent-middleware';
 export { hosted, manifest } from './mode';
 export type {
 	ConsentMode,
@@ -41,15 +41,18 @@ export type {
 	InthMiddlewareOptions,
 	InthResolvedOptions,
 	InthUIAdapterName,
-} from './types';
+} from './inth-options.model';
 export type {
 	ConsentDialogAdapter,
 	ConsentDialogContext,
 	ConsentDialogHandle,
 	ConsentDialogKind,
 	ConsentDialogSurfaceLoader,
-} from './ui/adapter';
-export { registerDialogAdapter, registerDialogSurface } from './ui/adapter';
+} from './ui/register-dialog-adapter';
+export {
+	registerDialogAdapter,
+	registerDialogSurface,
+} from './ui/register-dialog-adapter';
 export type { ConsentRuntime, ConsentRuntimeOptions } from '@inth/sdk/runtime';
 
 // Re-exported so an app can stay inside `@inth/astro` for the common types.

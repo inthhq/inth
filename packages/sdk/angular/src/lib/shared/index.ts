@@ -13,7 +13,8 @@ export type {
 	ConsentButtonSize,
 	ConsentButtonVariant,
 } from './consent-button';
-export { BrandMarkIcon, OptOutIcon } from './icons';
+export { BrandMarkIcon } from './brand-mark-icon';
+export { OptOutIcon } from './opt-out-icon';
 export { InlineLegalLinks } from './inline-legal-links';
 export type { LegalLinkSelection } from './inline-legal-links';
 export { PolicyActions } from './policy-actions';

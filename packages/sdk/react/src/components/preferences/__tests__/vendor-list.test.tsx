@@ -17,7 +17,7 @@ import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentWidget } from '~/components/preferences';
 import { useConsent, useVendorAllowed, useVendorChoice } from '~/hooks';
-import { useKernel } from '~/kernel-selector';
+import { useKernel } from '~/use-kernel';
 
 import { testing } from '../../../testing';
 

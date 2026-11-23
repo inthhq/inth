@@ -9,10 +9,10 @@
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 	import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 
-	import { getThemeContext } from '../../context.svelte';
+	import { getThemeContext } from '../../get-theme-context';
 	import ConsentButton from '../action-button.svelte';
 	import Icon from '../parts/icon.svelte';
-	import { cx } from '../parts/parts';
+	import { cx } from '../parts/surface-parts.model';
 
 	let {
 		cue,

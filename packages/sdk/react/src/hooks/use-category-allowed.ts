@@ -1,7 +1,7 @@
 import type { AllConsentNames } from '@inth/sdk/engine';
 import { evaluateConsent } from '@inth/sdk/engine';
 
-import { useGateSelector } from '../kernel-selector';
+import { useGateSelector } from '../use-gate-selector';
 
 /**
  * Whether content gated on one category may render, with the kernel's gate

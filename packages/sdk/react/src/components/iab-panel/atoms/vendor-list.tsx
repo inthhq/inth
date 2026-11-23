@@ -20,10 +20,14 @@ import * as PreferenceItem from '~/components/shared/ui/preference-item';
 import * as Switch from '~/components/shared/ui/switch';
 import { useTranslations as useKernelTranslations } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
-import type { ProcessedPurpose, ProcessedVendor, VendorId } from '../types';
+import type {
+	ProcessedPurpose,
+	ProcessedVendor,
+	VendorId,
+} from '../iab-panel.model';
 import { useIABTranslations } from '../use-iab-translations';
 import {
 	AdTechProviderSection,

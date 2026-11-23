@@ -15,9 +15,9 @@ import { render } from 'vitest-browser-react';
 import { policyFixture } from '../../__tests__/policy-fixture';
 import { KernelContext } from '../../context';
 import { useScriptLoader } from '../../module-hooks/script-loader';
-import { createDeferredKernel } from '../deferred-kernel';
-import { setDeferredScriptStarter } from '../registry';
-import { isRunnableNow, scriptsNeedEngine } from '../runnable';
+import { createDeferredKernel } from '../create-deferred-kernel';
+import { setDeferredScriptStarter } from '../deferred-registry.model';
+import { isRunnableNow, scriptsNeedEngine } from '../runnable-script.model';
 
 /**
  * Leaves what a server render with id `id` leaves in the test's document:

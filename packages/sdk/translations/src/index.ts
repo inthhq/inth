@@ -1,5 +1,9 @@
 export type { BaseTranslations } from './translations';
 export { translations as enTranslations } from './translations/en';
-export * from './types';
-export * from './utils';
-export { getStockTranslations, registerStockTranslations } from './stock';
+export * from './translations.model';
+export * from './translation-config.model';
+export * from './detect-browser-language';
+export {
+	getStockTranslations,
+	registerStockTranslations,
+} from './stock-translations.model';

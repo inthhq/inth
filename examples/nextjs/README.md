@@ -22,8 +22,8 @@ after the visitor allows measurement.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/nextjs dev
 ```
 
@@ -38,5 +38,5 @@ its backend URL, and add the app's origin to its trusted origins. Rebuild after
 you change the policy, translations or vendors in your project. Replace
 `phc_your_project_key` in `inth.config.ts` with your PostHog project key.
 
-The [Next.js quickstart](https://c15t.com/docs/frameworks/next/quickstart)
+The [Next.js quickstart](https://inth.com/docs/frameworks/next/quickstart)
 walks through these files.

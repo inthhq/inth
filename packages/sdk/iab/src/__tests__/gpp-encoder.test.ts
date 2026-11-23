@@ -6,10 +6,10 @@
 import { GppModel } from '@iabgpp/cmpapi';
 import { describe, expect, test } from 'vitest';
 
-import { encodeGPPString, encodeUSSection } from '../gpp/encoder';
-import type { GPPFieldValues } from '../gpp/encoder';
-import { US_SECTIONS } from '../gpp/sections';
-import type { USSectionDefinition } from '../gpp/sections';
+import { encodeGPPString, encodeUSSection } from '../gpp/gpp-encoder.model';
+import type { GPPFieldValues } from '../gpp/gpp-encoder.model';
+import { US_SECTIONS } from '../gpp/gpp-sections.model';
+import type { USSectionDefinition } from '../gpp/gpp-sections.model';
 
 /**
  * Distinct in-range values for every field, so a field read from the wrong

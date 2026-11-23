@@ -5,11 +5,11 @@
 
 import { CONSENT_ONLY_PURPOSES } from '@inth/sdk-schema/types';
 
+import type { ConsentSnapshot } from '../consent-kernel.model';
 import type { AllConsentNames } from '../consent/consent-types';
 import { extractConsentNamesFromCondition, has } from '../libs/has';
 import type { HasCondition } from '../libs/has';
-import type { PublisherRestriction } from '../options/iab-tcf';
-import type { ConsentSnapshot } from '../types';
+import type { PublisherRestriction } from '../options/iab-tcf-options.model';
 import {
 	deniedVendorIds,
 	evaluateCategoryGate,

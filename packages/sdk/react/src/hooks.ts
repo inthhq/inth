@@ -42,11 +42,9 @@ import {
 import { useCallback, useContext, useSyncExternalStore } from 'react';
 
 import { ProviderServicesContext } from './context';
-import {
-	useKernel,
-	useKernelSelector,
-	useServerSnapshot,
-} from './kernel-selector';
+import { useKernel } from './use-kernel';
+import { useKernelSelector } from './use-kernel-selector';
+import { useServerSnapshot } from './use-server-snapshot';
 
 /**
  * Full snapshot accessor. Escape hatch for consumers that genuinely need

@@ -20,8 +20,8 @@ reopens the dialog.
 From the repository root:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/tanstack-start dev
 ```
 
@@ -37,8 +37,9 @@ Rebuild after you change the policy, translations or vendors in your project.
 Replace `phc_your_project_key` in `src/routes/__root.tsx` with your PostHog
 project key.
 
-`bun run build` then `bun run start` serves the production build.
+`bun run --cwd examples/tanstack-start build` then
+`bun run --cwd examples/tanstack-start start` serves the production build.
 
-The [TanStack Start quickstart](https://c15t.com/docs/frameworks/tanstack-start/quickstart)
-walks through each file. [Rendering](https://c15t.com/docs/frameworks/tanstack-start/rendering)
+The [TanStack Start quickstart](https://inth.com/docs/frameworks/tanstack-start/quickstart)
+walks through each file. [Rendering](https://inth.com/docs/frameworks/tanstack-start/rendering)
 covers streaming, a same-origin consent route and static hosting.

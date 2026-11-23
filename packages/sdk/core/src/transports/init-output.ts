@@ -17,13 +17,13 @@ import type {
 	PolicyResolutionWire,
 } from '@inth/sdk-schema/types';
 
-import { resolveVendors, withoutManifestVendors } from '../libs/vendors';
 import type {
 	InitResponse,
 	KernelConfig,
 	KernelIABState,
 	KernelOverrides,
-} from '../types';
+} from '../consent-kernel.model';
+import { resolveVendors, withoutManifestVendors } from '../libs/vendors';
 
 type RichInitOutput = InitOutput &
 	Partial<Pick<InitResponse, 'resolvedOverrides' | 'subjectId'>>;

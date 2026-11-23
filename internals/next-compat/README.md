@@ -1,6 +1,6 @@
 # Next.js compatibility matrix
 
-Real Next.js apps that build and smoke-test `@inth/nextjs` in every combination we support. Main CI runs the six stable cells in one compatibility group; `.github/workflows/next-compat.yml` additionally runs the Next 16 cells against `next@canary` nightly as an advisory check.
+Real Next.js apps that build and smoke-test `@inth/nextjs` in every combination we support. CI runs every cell affected by a change in the `compat` browser group (`tools/ci/browser-groups.ts`, run by `scripts/ci-browser.ts`).
 
 ## Cells
 
@@ -45,7 +45,7 @@ The Cache Components cell also starts `next dev` in `tests/dev-prerender.test.ts
 ## Running locally
 
 ```bash
-bun install
+pnpm install
 bun turbo run test:compat --filter=@inth/next-compat-16-app        # one cell, builds deps first
 bun turbo run test:compat --filter='./internals/next-compat/*'    # every cell
 bun run --cwd internals/next-compat/next-16-app test:compat       # skip turbo; builds the app if .next is missing
@@ -56,14 +56,14 @@ The global setup (`shared/src/suite/global-setup.ts`) runs the cell's `build` sc
 
 A cell can opt out of that flow with a `compat.config.ts` exporting `{ mode: 'static-export' }` (`shared/src/suite/cell-config.ts`). The setup then starts the backend stub on its own port first, runs the build with `NEXT_PUBLIC_COMPAT_BACKEND_URL` set to the stub's absolute URL, and serves `out/` from a small static file server (`shared/src/suite/static-server.ts`) on a second port. Because the stub URL is baked into the export, the setup records it in `.next/compat-static-export.json` and only reuses an existing `out/` when it gets the same port back; otherwise it rebuilds. `bun run build` on its own fails in that cell by design: the manifest step needs the stub URL, so run `test:compat`.
 
-Chromium is needed once: `bunx playwright@<root devDependency version> install chromium chromium-headless-shell`.
+Chromium is needed once: `bunx playwright@<the cells' playwright devDependency version> install chromium chromium-headless-shell`.
 
 ## Adding a cell
 
 1. Copy the closest existing cell directory and rename the package to `@inth/next-compat-<cell>`.
-2. Pin `next` (and `react`, `react-dom` if they must differ) in its `package.json`, run `bun install`.
+2. Pin `next` (and `react`, `react-dom` if they must differ) in its `package.json`, run `pnpm install`.
 3. Adjust routes and the scenario table in `tests/compat.test.ts`. A cell without a server (`output: 'export'`) also needs the `compat.config.ts` and build step described under "Running locally"; `next-16-static-export` is the model.
-4. Add the cell to the table above. Main CI discovers its `test:compat` script from the workspace graph. Add it to `.github/workflows/next-compat.yml` only if it also needs the advisory nightly Next canary probe.
+4. Add the cell to the table above. CI discovers its `test:compat` script from the workspace graph.
 
 Keep route files thin: everything shared belongs in `shared/` so a failing cell points at the framework combination, not at fixture drift.
 
@@ -87,10 +87,10 @@ These are the patterns that have to hold for users, so the fixtures use them ver
 
 ## How the cells install the packages
 
-Cells depend on `@inth/nextjs` through the workspace so Turbo orders the package builds first, but they do not consume the workspace links. Each cell's `build` script first runs `shared/scripts/pack.ts`, which runs `bun pm pack` on the whole `@inth/nextjs` dependency closure, extracts the tarballs as real directories under the cell's own `node_modules/@inth/*` and links the packages' third-party dependencies beside them. It also copies `shared/src` into the cell as `.compat-shared/src`, which the cell's tsconfig `paths` map `@inth/next-compat-shared/*` to. Next compiles that copy as the cell's own code, so no cell needs `transpilePackages`, and its imports resolve from the same tree as the app's. Then `next build` runs.
+Cells depend on `@inth/nextjs` through the workspace so Turbo orders the package builds first, but they do not consume the workspace links. Each cell's `build` script first runs `shared/scripts/pack.ts`, which runs `pnpm pack` on the whole `@inth/nextjs` dependency closure, extracts the tarballs as real directories under the cell's own `node_modules/@inth/*` and links the packages' third-party dependencies beside them. It also copies `shared/src` into the cell as `.compat-shared/src`, which the cell's tsconfig `paths` map `@inth/next-compat-shared/*` to. Next compiles that copy as the cell's own code, so no cell needs `transpilePackages`, and its imports resolve from the same tree as the app's. Then `next build` runs.
 
 That is the shape an npm install has, and it matters three times over: both bundlers decide "installed dependency or first-party code" by the real path (first-party code gets React Server Components checks in webpack, and the Pages Router treats CSS differently in each case), the Pages Router `require`s installed packages at runtime so their `next` peer must resolve to the cell's own copy, and the cells end up consuming exactly what `files` and `exports` publish.
 
-`bun install` restores the workspace links; the next cell build replaces them again. The pack step also drops the cell's `.next/cache`: webpack's persistent cache treats `node_modules` as immutable unless a package version changes, so a re-packed package would otherwise be served stale. The suite's global setup runs the cell's `build` script when `.next/BUILD_ID` is missing, so a plain `vitest run` in a cell does the same.
+`pnpm install` restores the workspace links; the next cell build replaces them again. The pack step also drops the cell's `.next/cache`: webpack's persistent cache treats `node_modules` as immutable unless a package version changes, so a re-packed package would otherwise be served stale. The suite's global setup runs the cell's `build` script when `.next/BUILD_ID` is missing, so a plain `vitest run` in a cell does the same.
 
 The pack step exports `installPackedPackages({ targetDir, roots })` for other fixtures that must run against published artifacts. `internals/consent-observers` uses it to install the closure of its `@inth` dependencies before its tests.

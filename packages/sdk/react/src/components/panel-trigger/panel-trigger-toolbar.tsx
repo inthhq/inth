@@ -5,13 +5,13 @@ import type { ReactNode } from 'react';
 
 import { useHasConsentPreferences, usePromptRequirement } from '~/hooks';
 
-import { TriggerRoot } from './atoms/root';
-import { TriggerToolbar } from './atoms/toolbar';
+import { TriggerRoot } from './atoms/trigger-root';
+import { TriggerToolbar } from './atoms/trigger-toolbar';
 import type {
 	ConsentDialogTriggerToolbarAction,
 	ConsentDialogTriggerToolbarPreferences,
 	ConsentDialogTriggerToolbarProps,
-} from './types';
+} from './panel-trigger.model';
 
 const EMPTY_ACTIONS: readonly ConsentDialogTriggerToolbarAction[] = [];
 const DEFAULT_PREFERENCES: ConsentDialogTriggerToolbarPreferences = {};

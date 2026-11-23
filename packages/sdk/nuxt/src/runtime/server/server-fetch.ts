@@ -1,10 +1,5 @@
-import type { ManifestFetch } from '@inth/sdk/server';
+import { useNitroApp as getNitroApp } from 'nitropack/runtime';
 
-interface NitroAppWithLocalFetch {
-	localFetch: ManifestFetch;
-}
+import { createServerFetch } from './create-server-fetch';
 
-export const createServerFetch =
-	(useNitroApp: () => NitroAppWithLocalFetch): ManifestFetch =>
-	(input, init) =>
-		useNitroApp().localFetch(input, init);
+export const serverFetch = createServerFetch(() => getNitroApp());

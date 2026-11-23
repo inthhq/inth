@@ -23,11 +23,11 @@
 import type { DevToolsInstance } from '@inth/sdk-dev-tools';
 import { publishDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 
-import { createBrowserDevTools } from './devtools-mount';
-import type { BrowserDevToolsOptions } from './devtools-mount';
-import type { ConsentClient } from './types';
+import type { ConsentClient } from './consent-client.model';
+import { createBrowserDevTools } from './create-browser-dev-tools';
+import type { BrowserDevToolsOptions } from './create-browser-dev-tools';
 
-export type { BrowserDevToolsOptions } from './devtools-mount';
+export type { BrowserDevToolsOptions } from './create-browser-dev-tools';
 
 /**
  * Mount the DevTools panel against a client.

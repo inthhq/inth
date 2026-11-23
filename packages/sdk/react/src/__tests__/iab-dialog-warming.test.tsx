@@ -5,13 +5,13 @@ import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
 import { ConsentDialog } from '~/aggregate-components';
+import { ConsentBanner } from '~/components/prompt';
+import { IABConsentBanner, IABConsentDialog } from '~/iab';
+import { resetIABDialogWarmingForTests } from '~/iab-panel';
 import {
 	registerDialogChunkWarmer,
 	resetDialogChunkWarmingForTests,
-} from '~/chunk-warming';
-import { ConsentBanner } from '~/components/prompt';
-import { IABConsentBanner, IABConsentDialog } from '~/iab';
-import { resetIABDialogWarmingForTests } from '~/iab-dialog-deferred';
+} from '~/warm-dialog-chunk';
 
 import { ComponentFixtureProvider } from './component-fixture-provider';
 import type { ComponentFixtureOptions } from './component-fixture-provider';
@@ -22,7 +22,7 @@ import { policyFixture } from './policy-fixture';
 // A loaded module stays loaded, so the test that loads the IAB dialog runs
 // last.
 const IAB_DIALOG_MODULE = '/src/components/iab-panel/iab-panel.tsx';
-const DIALOG_MODULE = '/src/components/dialog/dialog.tsx';
+const DIALOG_MODULE = '/src/components/dialog/panel-body.tsx';
 
 const options = (model: 'iab' | 'opt-in'): ComponentFixtureOptions => ({
 	disableAnimation: true,

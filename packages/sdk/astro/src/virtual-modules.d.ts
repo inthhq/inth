@@ -9,7 +9,7 @@
  */
 
 declare module 'virtual:inth/options' {
-	import type { InthResolvedOptions } from './types';
+	import type { InthResolvedOptions } from './inth-options.model';
 
 	const options: InthResolvedOptions;
 	export default options;

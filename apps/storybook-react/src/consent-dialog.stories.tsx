@@ -10,7 +10,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useEffect } from 'react';
 import { expect, waitFor, within } from 'storybook/test';
 
-import type { ConsentContainer } from '../../../packages/sdk/core/src/libs/consent-layout';
+import type { ConsentContainer } from '../../../packages/sdk/core/src/libs/consent-layout.model';
 import {
 	useHasConsentUI,
 	useSetActiveUI,

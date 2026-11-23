@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { InthPluginError } from '../errors';
+import { InthPluginError } from '../inth-plugin-error';
 import { resolveParams } from '../params';
 import type { InthIabPluginProps } from '../params';
 

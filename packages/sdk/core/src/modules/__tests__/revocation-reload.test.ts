@@ -10,11 +10,18 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type {
+	KernelConfig,
+	KernelVendorsState,
+	LiftOptOutTransportResult,
+	OptOutTransportResult,
+	SaveResult,
+} from '../../consent-kernel.model';
 import {
 	createConsentKernel,
 	createKernel as createInternalKernel,
 } from '../../kernel';
-import type { InternalKernel } from '../../kernel/internals';
+import type { InternalKernel } from '../../kernel/kernel-internals.model';
 import { createMemoryOutboxStore } from '../../kernel/save-outbox';
 import type { SaveOutboxStore } from '../../kernel/save-outbox';
 import { OPT_OUT_CONFIRMATION_STORAGE_KEY } from '../../libs/storage-keys';
@@ -27,20 +34,13 @@ import {
 	optOutConsentSurface,
 	subscribeOptOutConfirmation,
 } from '../../surface-actions/opt-out';
+import { watchPendingOptOutConfirmation } from '../../surface-actions/opt-out-reload';
 import {
 	clearPendingOptOutConfirmation,
 	hasPendingOptOutConfirmation,
 	markPendingOptOutConfirmation,
-	watchPendingOptOutConfirmation,
-} from '../../surface-actions/opt-out-reload';
-import { pressSaleRight } from '../../surface-session/commands';
-import type {
-	KernelConfig,
-	KernelVendorsState,
-	LiftOptOutTransportResult,
-	OptOutTransportResult,
-	SaveResult,
-} from '../../types';
+} from '../../surface-actions/opt-out-reload.store';
+import { pressSaleRight } from '../../surface-session/surface-commands.model';
 import { watchRevocationReload } from '../revocation-reload';
 import { createScriptLoader } from '../script-loader';
 

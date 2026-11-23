@@ -7,12 +7,16 @@
  */
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
+import type {
+	KernelConfig,
+	SavePayload,
+	SaveResult,
+} from '../../consent-kernel.model';
 import { ConsentSaveRejectedError, createConsentKernel } from '../../index';
-import type { KernelConfig, SavePayload, SaveResult } from '../../types';
-import { clearKernelRecords } from '../clear-records';
+import { clearKernelRecords } from '../clear-records.model';
 import { createKernel } from '../index';
 import { createBrowserOutboxStore } from '../save-outbox';
-import type { BrowserOutboxEnvironment } from '../save-outbox/store';
+import type { BrowserOutboxEnvironment } from '../save-outbox/save-outbox.store';
 import { withStoredIdempotencyKey } from '../save-outbox/stored-key';
 
 // The stored format is part of the interface: spelled out, not imported.

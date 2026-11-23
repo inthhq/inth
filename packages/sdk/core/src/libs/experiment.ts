@@ -16,7 +16,7 @@
  * validation live in `experiment-assignment` and `experiment-engine`,
  * loaded on demand.
  */
-import type { ConsentKernel, ConsentSnapshot } from '../types';
+import type { ConsentKernel, ConsentSnapshot } from '../consent-kernel.model';
 import type { StorageConfig } from './cookie';
 import { CONTROL_ARM } from './experiment-presentation';
 import {

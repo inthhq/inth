@@ -7,7 +7,7 @@
  */
 import type { ScriptServerStart } from '@inth/sdk/engine';
 
-import type { ManifestStep } from '../types';
+import type { ManifestStep } from '../vendor-manifest.model';
 
 export const inlineStepsStart = function inlineStepsStart(
 	_steps: ManifestStep[]

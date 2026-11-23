@@ -5,7 +5,7 @@ import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
  * Wiring of the Nitro consent route onto the core consent route handler:
  * one catch-all at `${routePrefix}/**`, h3 to Web `Request` and back,
  * runtime config, Nitro's in-process fetch, and the preset's `waitUntil`. The route behaviour itself is pinned once,
- * in `packages/sdk/core/src/server/__tests__/consent-route.test.ts`.
+ * in `packages/sdk/core/src/server/__tests__/consent-route.api.test.ts`.
  */
 import {
 	clearManifestCache,
@@ -15,8 +15,8 @@ import { readNuxtRoutePrefix } from '@inth/vue/nuxt';
 import { createApp, createRouter, toWebHandler } from 'h3';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { createConsentRoute } from '../runtime/server/route-factories';
-import { createServerFetch } from '../runtime/server/server-fetch';
+import { createConsentRoute } from '../runtime/server/create-consent-route';
+import { createServerFetch } from '../runtime/server/create-server-fetch';
 
 const mocks = vi.hoisted(() => ({
 	localFetch: vi.fn(),

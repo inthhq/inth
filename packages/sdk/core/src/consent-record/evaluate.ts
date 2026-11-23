@@ -18,7 +18,7 @@ import {
 	OPT_OUT_REPROMPT_WAIT_MS,
 	optInPromptAllowedAt,
 	optOutDenyCategories,
-} from './opt-out-rules';
+} from './opt-out-rules.model';
 import { OPTIONAL_CONSENT_CATEGORIES, optOutDecidingCategory } from './types';
 import type {
 	CategoryDecision,

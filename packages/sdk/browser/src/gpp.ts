@@ -19,7 +19,7 @@ import type { RuntimeGPPOptions } from '@inth/sdk-core/runtime';
 import { createGPP } from '@inth/sdk-iab/gpp';
 import type { GPPHandle } from '@inth/sdk-iab/gpp';
 
-import type { ConsentClient } from './types';
+import type { ConsentClient } from './consent-client.model';
 
 /**
  * Install `window.__gpp` against a client and keep its GPP string in step

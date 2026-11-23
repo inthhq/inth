@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import * as server from '../server/gvl-cache';
-import * as transport from '../transports/gvl-cache';
+import * as server from '../server/server-gvl-cache.api';
+import * as transport from '../transports/gvl-cache.model';
 
 const url = 'https://gvl.test/list';
 const response = (headers: Record<string, string>, status = 200) =>

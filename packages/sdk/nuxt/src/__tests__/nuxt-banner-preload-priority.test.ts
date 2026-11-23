@@ -7,10 +7,11 @@
  */
 import { describe, expect, test } from 'vitest';
 
-import { lowerBannerPreloads } from '../../../vue/src/runtime/server/banner-preload-priority';
+import { lowerBannerPreloads } from '../../../vue/src/runtime/server/banner-preload-priority.model';
 import { GLOBAL_COMPONENTS } from '../global-components';
-import { bannerOnlyFiles, preloadDeferredEngine } from '../prefetch';
-import type { ClientManifestChunk } from '../prefetch';
+import { bannerOnlyFiles } from '../prefetch/banner-only-files';
+import type { ClientManifestChunk } from '../prefetch/consent-prefetch.model';
+import { preloadDeferredEngine } from '../prefetch/preload-deferred-engine';
 
 const SRC = '/app';
 const isConsentFile = (file: string) => file.includes('/@inth/');

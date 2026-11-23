@@ -7,7 +7,7 @@
  *
  * @internal
  */
-import type { InternalKernel } from '../../kernel/internals';
+import type { InternalKernel } from '../../kernel/kernel-internals.model';
 import { SURFACE_ROOT_ATTRIBUTE } from '../../libs/page-globals';
 import type { createPersistenceWriter } from './writer/writer';
 

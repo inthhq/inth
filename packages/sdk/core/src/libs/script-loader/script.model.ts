@@ -1,0 +1,588 @@
+import type { Vendor } from '@inth/sdk-schema/types';
+
+import type { ConsentState } from '../../consent-kernel.model';
+import type { AllConsentNames } from '../../consent/consent-types';
+import type { HasCondition } from '../has';
+
+/**
+ * What a script knows about the vendor its `vendor` slug names: enough for a
+ * preference surface to list the vendor without a `vendors` declaration.
+ * A vendor declared in `vendors` or by the backend replaces these details
+ * as a whole.
+ *
+ * @public
+ */
+export type VendorDetails = Pick<Vendor, 'name' | 'privacyPolicyUrl'> &
+	Partial<Pick<Vendor, 'description' | 'homepageUrl' | 'legalName'>>;
+
+/**
+ * Information passed to script callbacks
+ *
+ * @public
+ */
+export interface ScriptCallbackInfo {
+	/**
+	 * Stable identity of the loader registration, including consent remounts.
+	 * Non-enumerable so callback serialization contains only script data.
+	 * @internal
+	 */
+	readonly registration?: symbol;
+	/**
+	 * Read this registration's current whole-script gate, effective categories
+	 * and vendor permission, including changes awaiting callback delivery.
+	 * During disposal, retains declaration context while reading current consent.
+	 * After disposal, returns the last state evaluated for that registration.
+	 * Non-enumerable; lifecycle event fields retain their original meaning.
+	 * @returns Current permission info for this script registration.
+	 * @internal
+	 */
+	readonly getCurrentConsent?: () => ScriptCallbackInfo;
+
+	/**
+	 * A configuration with the same ID will register after this disposal.
+	 * Read current permission separately; replacement can include real withdrawal.
+	 * Non-enumerable and only supplied to the outgoing disposal callback.
+	 * @internal
+	 */
+	readonly replacing?: boolean;
+
+	/**
+	 * Run after the queued replacement has reconciled, or disposal aborts it.
+	 * Only present on an outgoing replacement's disposal info. Non-enumerable.
+	 * @param effect - Synchronous work that must wait for incoming membership.
+	 * @internal
+	 */
+	readonly afterReplacement?: (effect: () => void) => void;
+
+	/**
+	 * Report that a file a callback-only script inserted itself failed to
+	 * load, such as a copy that failed its integrity check. Runs this
+	 * registration's `onError` with `error`. Does nothing once the
+	 * registration is gone. Non-enumerable.
+	 * @param error - Why the file failed.
+	 * @internal
+	 */
+	readonly reportLoadError?: (error: Error) => void;
+
+	/** The original script ID */
+	id: string;
+
+	/** The actual DOM element ID used (anonymized if enabled) */
+	elementId: string;
+
+	hasConsent: boolean;
+
+	consents: ConsentState;
+
+	/**
+	 * Vendor-level consent for the script's `vendor` slug, when set. Absent
+	 * in IAB mode and for scripts without a vendor. `granted` is `false`
+	 * while the subject has the vendor turned off, even when the category
+	 * is granted.
+	 */
+	vendor?: { id: string; granted: boolean };
+
+	/**
+	 * The script element (for load/error callbacks)
+	 * Will be undefined for callback-only scripts
+	 */
+	element?: HTMLScriptElement;
+
+	/**
+	 * Where a script with a `src` loads its file from, after
+	 * `scriptLoader.sources` or the script registry replaced its URL, with
+	 * the `integrity` and `crossorigin` the element needs. A callback that
+	 * sets or checks a loader's URL itself reads it here, not from a URL it
+	 * captured, so the replacement reaches the browser.
+	 */
+	source?: { src: string; integrity?: string; crossorigin?: string };
+
+	/** Error information (for error callbacks) */
+	error?: Error;
+
+	/**
+	 * `true` in `onBeforeLoad` when the page's HTML already ran the script's
+	 * `serverStart` code and inserted the element. The callback should only
+	 * record state: the setup it would run has run.
+	 * @internal
+	 */
+	startedOnServer?: true;
+}
+
+/**
+ * Inline JavaScript that starts a script from the HTML, before hydration.
+ * @internal
+ */
+export interface ScriptServerStart {
+	/**
+	 * Setup the script needs before its element runs, such as a queue stub
+	 * and its consent default. Runs inside a `try` block of its own.
+	 */
+	code: string;
+	/**
+	 * Code shared by several scripts, emitted once ahead of every `code`.
+	 * Scripts that pass the same string share one copy.
+	 */
+	prelude?: string;
+}
+
+/**
+ * Represents a script to be loaded based on consent conditions.
+ *
+ * Scripts can be one of three types:
+ * 1. Standard scripts - These load an external JavaScript file via a script tag
+ * 2. Text-based scripts - These contain inline JavaScript code that gets executed directly
+ * 3. Callback-only scripts - These don't add a script tag to the DOM but still execute callbacks
+ *    based on consent state changes (useful for controlling existing libraries)
+ *
+ * @public
+ */
+export interface Script {
+	/** Unique identifier for the script */
+	id: string;
+
+	/**
+	 * Validate before initial registration or configuration replacement.
+	 * Throw to reject the batch before existing registrations are changed.
+	 * Must not mutate script or SDK state. Lifecycle callback errors are isolated;
+	 * the loader does not catch validation errors.
+	 * @param resolved - The script as the loader mounts it, with the URL and
+	 * integrity `scriptLoader.sources` or the registry gave it.
+	 * @internal
+	 */
+	validate?: (resolved: Script) => void;
+
+	/**
+	 * Stable identity of the DOM resource, separate from the logical script ID.
+	 * Set this when separate loaders can select different resources for the same
+	 * integration. Matching keys share an element; different keys mount separately.
+	 * @default id
+	 */
+	resourceKey?: string;
+
+	/** URL of the script to load */
+	src?: string;
+
+	/** Inline JavaScript code to execute */
+	textContent?: string;
+
+	/** Consent category or condition required to load this script */
+	category: HasCondition<AllConsentNames>;
+
+	/**
+	 * Whether this is a callback-only script that doesn't need to load an external resource.
+	 * When true, no script tag will be added to the DOM, only callbacks will be executed.
+	 * A zero-argument predicate checks the current runtime before each new mount,
+	 * when reading diagnostics, and when selecting scripts for server startup.
+	 * Keep it free of side effects and safe to call on the server. It may run
+	 * more than once and does not change an already mounted registration.
+	 * Keep the function reference stable across script updates. A new function
+	 * counts as a resource change and remounts the registration.
+	 *
+	 * This is useful for:
+	 * - Managing consent for libraries already loaded on the page
+	 * - Enabling/disabling tracking features based on consent changes
+	 * - Running custom code when consent status changes without loading external scripts
+	 *
+	 * Example use cases:
+	 * - Enabling/disabling Posthog tracking
+	 * - Configuring Google Analytics consent mode
+	 * - Managing cookie consent for embedded content
+	 *
+	 * @default false
+	 */
+	callbackOnly?: boolean | (() => boolean);
+
+	/**
+	 * Keep the element after consent is revoked. `true` also keeps pending
+	 * downloads; `'loaded'` keeps only elements whose load event completed.
+	 * @default false
+	 */
+	persistAfterConsentRevoked?: boolean | 'loaded';
+
+	/**
+	 * Whether the script should always load regardless of consent state.
+	 *
+	 * This is useful for scripts like Google Tag Manager or PostHog that manage
+	 * their own consent state internally. The script will load immediately and
+	 * never be unloaded based on consent changes.
+	 *
+	 * Note: When using this option, you are responsible for ensuring the script
+	 * itself respects user consent preferences through its own consent management.
+	 *
+	 * @default false
+	 *
+	 * @example
+	 * ```ts
+	 * const gtmScript: Script = {
+	 *   id: 'google-tag-manager',
+	 *   src: 'https://www.googletagmanager.com/gtm.js?id=GTM-XXXX',
+	 *   category: 'measurement', // Category is still required but won't gate loading
+	 *   alwaysLoad: true, // GTM will always load and manage its own consent
+	 * };
+	 * ```
+	 */
+	alwaysLoad?: boolean;
+
+	/** Priority hint for browser resource loading */
+	fetchPriority?: 'high' | 'low' | 'auto';
+
+	/**
+	 * Lets a server render that already resolved consent run the script's
+	 * setup and insert its element from the HTML, for a visitor whose stored
+	 * consent lets it run. It doesn't run while the policy asks the visitor
+	 * to choose, so the banner gets the main thread. The loader then adopts
+	 * a started element and calls `onBeforeLoad` with `startedOnServer`.
+	 * Return `undefined` when the setup can't run as inline code; the loader
+	 * then starts the script.
+	 * `script` is the script being started, which may be a copy of the one
+	 * that defined `serverStart` with other callbacks.
+	 * @internal
+	 */
+	serverStart?: (
+		info: Pick<ScriptCallbackInfo, 'consents' | 'hasConsent' | 'id' | 'vendor'>,
+		script: Script
+	) => ScriptServerStart | undefined;
+
+	/** Additional attributes to add to the script element */
+	attributes?: Record<string, string>;
+
+	/** Whether to use async loading */
+	async?: boolean;
+
+	/** Whether to defer script loading */
+	defer?: boolean;
+
+	/** Content Security Policy nonce */
+	nonce?: string;
+
+	/**
+	 * Whether to use an anonymized ID for the script element, this helps ensure the script is not blocked by ad blockers
+	 * @default true
+	 */
+	anonymizeId?: boolean;
+
+	/**
+	 * Where to inject the script element in the DOM.
+	 * - `'head'`: Scripts are appended to `<head>` (default)
+	 * - `'body'`: Scripts are appended to `<body>`
+	 *
+	 * Use `'body'` for scripts that:
+	 * - Need to manipulate DOM elements that don't exist until body loads
+	 * - Should load after page content for performance reasons
+	 * - Are required by third-party services to be in the body
+	 *
+	 * Use `'head'` (default) for scripts that:
+	 * - Need to track early page events (analytics)
+	 * - Should be available before page render
+	 * - Most tracking/analytics scripts
+	 *
+	 * @default 'head'
+	 *
+	 * @example
+	 * ```ts
+	 * const script: Script = {
+	 *   id: 'my-script',
+	 *   src: 'https://example.com/script.js',
+	 *   category: 'analytics',
+	 *   target: 'body', // Load in body instead of head
+	 * };
+	 * ```
+	 */
+	target?: 'head' | 'body';
+
+	/**
+	 * Callback executed before a loading attempt. Can repeat with updated consent
+	 * and a new element if a callback invalidates the attempt before loading.
+	 */
+	onBeforeLoad?: (info: ScriptCallbackInfo) => void;
+
+	/**
+	 * Callback executed when the script loads successfully
+	 */
+	onLoad?: (info: ScriptCallbackInfo) => void;
+
+	/**
+	 * Callback executed if the script fails to load
+	 */
+	onError?: (info: ScriptCallbackInfo) => void;
+
+	/**
+	 * Notify `onConsentChange` before the script loads, including initial denial.
+	 * Useful when several loaders coordinate a shared SDK. This does not load
+	 * the resource without consent. Notifications run only in the browser.
+	 * @default false
+	 */
+	observeConsentBeforeLoad?: boolean;
+
+	/**
+	 * Callback executed whenever the consent store is changed.
+	 * This callback applies to loaded scripts unless `observeConsentBeforeLoad`
+	 * is enabled, which also reports initial and subsequent denial before loading.
+	 *
+	 * @example
+	 * ```ts
+	 * const script: Script = {
+	 *   id: 'analytics',
+	 *   src: 'https://analytics.example.com/script.js',
+	 *   category: 'analytics',
+	 *   onConsentChange: ({ consents }) => {
+	 *     // React to consent changes
+	 *     if (consents.analytics) {
+	 *       console.log('Analytics consent granted');
+	 *     }
+	 *   }
+	 * };
+	 * ```
+	 */
+	onConsentChange?: (info: ScriptCallbackInfo) => void;
+
+	/**
+	 * Release listeners and other resources when this configuration is removed,
+	 * replaced by a different resource or disposal callback, or its loader is
+	 * disposed. Recreating a DOM script config with the same resource and callback
+	 * preserves its lifecycle. Callback-only scripts with this hook retain an
+	 * object-owned lifecycle. Use a new callback when replacement needs cleanup.
+	 * Called even if the script never loaded.
+	 * Consent revocation alone does not call this hook. It does not revoke vendor
+	 * consent or undo code that has already executed. Must be safe to call before
+	 * onLoad, including during server rendering.
+	 */
+	onDispose?: (info: ScriptCallbackInfo) => void;
+
+	/**
+	 * Keep an inserted element when this configuration is removed or disposed.
+	 * Lifecycle listeners are released; a later registration can reuse the tag
+	 * and receive its load or error completion. Use only when the SDK must stay
+	 * installed for the rest of the page. This does not stop vendor tracking.
+	 * Consent withdrawal still follows `persistAfterConsentRevoked`.
+	 * @default false
+	 */
+	persistAfterDispose?: boolean;
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// IAB TCF Properties
+	// ─────────────────────────────────────────────────────────────────────────
+
+	/**
+	 * Vendor slug for vendor-level consent outside IAB.
+	 *
+	 * Declare the vendor in the runtime's `vendors` option (or on the
+	 * backend) so the preference surface can list it. The script loads when
+	 * `category` is satisfied and the subject has not turned this vendor
+	 * off. Inert in IAB mode, where `vendorId` and the TC string decide.
+	 * The kernel checks a denial only for a declared vendor; a slug no
+	 * declaration names leaves the script gated on `category` alone.
+	 *
+	 * @example
+	 * ```ts
+	 * const script: Script = {
+	 *   id: 'meta-pixel',
+	 *   src: 'https://connect.facebook.net/en_US/fbevents.js',
+	 *   category: 'marketing',
+	 *   vendor: 'meta-pixel',
+	 * };
+	 * ```
+	 */
+	vendor?: string;
+
+	/**
+	 * Name, privacy policy and other details of the vendor `vendor` names, so
+	 * the preference surface lists it with its own switch. Ignored without
+	 * `vendor`. A declaration in `vendors` or from the backend wins over
+	 * these. Every `@inth/integrations` helper sets them.
+	 *
+	 * @example
+	 * ```ts
+	 * const script: Script = {
+	 *   id: 'meta-pixel',
+	 *   src: 'https://connect.facebook.net/en_US/fbevents.js',
+	 *   category: 'marketing',
+	 *   vendor: 'meta-pixel',
+	 *   vendorDetails: {
+	 *     name: 'Meta Pixel',
+	 *     privacyPolicyUrl: 'https://www.facebook.com/privacy/policy/',
+	 *   },
+	 * };
+	 * ```
+	 */
+	vendorDetails?: VendorDetails;
+
+	/**
+	 * The `@inth/integrations` integration that built this script, by its
+	 * vendor slug. Every helper in that package sets it. With
+	 * `experimentalScriptRegistry`, a script that has it and a `src`
+	 * loads from the source the backend's script registry lists for its
+	 * `id`, and from its own URL when the registry lists none.
+	 */
+	integration?: string;
+
+	/**
+	 * IAB TCF vendor ID - links script to a registered vendor.
+	 *
+	 * Only evaluated in IAB mode, where the script loads when this vendor has
+	 * consent in the TC string. Outside IAB mode a script carrying any IAB
+	 * field is denied; use `vendor` for vendor-level consent there.
+	 *
+	 * @example
+	 * ```ts
+	 * const script: Script = {
+	 *   id: 'google-analytics',
+	 *   src: 'https://www.googletagmanager.com/gtag/js',
+	 *   category: 'measurement',
+	 *   vendorId: 755, // Google Advertising Products
+	 * };
+	 * ```
+	 */
+	vendorId?: number | string;
+
+	/**
+	 * IAB TCF purpose IDs this script requires consent for.
+	 *
+	 * When in IAB mode and no vendorId is set, the script will only load
+	 * if ALL specified purposes have consent.
+	 *
+	 * @example
+	 * ```ts
+	 * const script: Script = {
+	 *   id: 'ad-script',
+	 *   src: 'https://ads.example.com/script.js',
+	 *   category: 'marketing',
+	 *   iabPurposes: [2, 3, 4], // Advertising purposes
+	 * };
+	 * ```
+	 */
+	iabPurposes?: number[];
+
+	/**
+	 * IAB TCF legitimate interest purpose IDs.
+	 *
+	 * These purposes can operate under legitimate interest instead of consent.
+	 * The script loads if all iabPurposes have consent OR all iabLegIntPurposes
+	 * have legitimate interest established.
+	 *
+	 * @example
+	 * ```ts
+	 * const script: Script = {
+	 *   id: 'analytics',
+	 *   src: 'https://analytics.example.com/script.js',
+	 *   category: 'measurement',
+	 *   iabPurposes: [7], // Measure ad performance (consent)
+	 *   iabLegIntPurposes: [9, 10], // Stats & development (legit interest)
+	 * };
+	 * ```
+	 */
+	iabLegIntPurposes?: number[];
+
+	/**
+	 * IAB TCF special feature IDs this script requires.
+	 *
+	 * Special features require explicit opt-in:
+	 * - 1: Use precise geolocation data
+	 * - 2: Identify devices based on information actively requested
+	 *
+	 * @example
+	 * ```ts
+	 * const script: Script = {
+	 *   id: 'location-tracker',
+	 *   src: 'https://geo.example.com/tracker.js',
+	 *   category: 'measurement',
+	 *   iabSpecialFeatures: [1], // Requires precise geolocation
+	 * };
+	 * ```
+	 */
+	iabSpecialFeatures?: number[];
+}
+
+/**
+ * A URL to load a script from in place of its own `src`, such as a vetted
+ * copy of a vendor script on another host. The script keeps its id,
+ * consent condition, attributes and callbacks, so an integration's setup
+ * still runs.
+ *
+ * @public
+ */
+export interface ScriptSource {
+	/** URL to load instead of the script's `src`. */
+	src: string;
+	/**
+	 * Subresource Integrity hash of the file at `src`, such as
+	 * `sha384-…`. The browser refuses the script when the bytes differ.
+	 * Setting it also sets `crossorigin="anonymous"`, which a cross-origin
+	 * integrity check needs. A script that declares its own `integrity`
+	 * keeps it: it loads from `src` only when this hash is one its own lists,
+	 * or this is unset, and otherwise keeps its own URL.
+	 */
+	integrity?: string;
+	/**
+	 * `data-*` attributes for the script's tag when it loads from `src`, for
+	 * a file that reads its own tag, such as Plausible's `data-api`. A string
+	 * is set unless the script already sets that attribute, so a site's own
+	 * endpoint stays. `null` removes the attribute. Names that do not start
+	 * with `data-` are ignored. None apply when the script keeps its own URL.
+	 */
+	attributes?: Readonly<Record<string, string | null>>;
+}
+
+/**
+ * Result of updating scripts
+ *
+ * @public
+ */
+export interface ScriptUpdateResult {
+	/** Array of script IDs that were loaded */
+	loaded: string[];
+
+	/** Array of script IDs that were unloaded */
+	unloaded: string[];
+}
+
+export type ScriptDebugSource = 'script-loader' | 'manifest-runtime';
+
+export type ScriptDebugScope = 'lifecycle' | 'phase' | 'step';
+
+export type ScriptLifecycleCallback =
+	| 'onBeforeLoad'
+	| 'onLoad'
+	| 'onConsentChange'
+	| 'onDispose'
+	| 'onError';
+
+export type ScriptDebugAction =
+	| 'skipped'
+	| 'already_loaded'
+	| 'callback_start'
+	| 'callback_complete'
+	| 'callback_error'
+	| 'callback_invoked'
+	| 'element_appended'
+	| 'error'
+	| 'loaded'
+	| 'load_completed'
+	| 'load_listener_attached'
+	| 'error_listener_attached'
+	| 'unloaded'
+	| 'phase_start'
+	| 'phase_complete'
+	| 'step_executed'
+	| 'step_error';
+
+export interface ScriptDebugEvent {
+	source: ScriptDebugSource;
+	scope: ScriptDebugScope;
+	action: ScriptDebugAction;
+	message: string;
+	scriptId: string;
+	elementId?: string;
+	hasConsent?: boolean;
+	callback?: ScriptLifecycleCallback;
+	phase?: string;
+	stepType?: string;
+	stepIndex?: number;
+	data?: Record<string, unknown>;
+	timestamp: number;
+}
+
+export type ScriptDebugEventInput = Omit<ScriptDebugEvent, 'timestamp'>;
+
+export type ScriptDebugListener = (event: ScriptDebugEvent) => void;

@@ -6,8 +6,8 @@
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isUuidV7 } from '../../transports/v1/routes';
-import type { SavePayload } from '../../types';
+import type { SavePayload } from '../../consent-kernel.model';
+import { isUuidV7 } from '../../transports/v1/v1-request.api';
 import { createKernel } from '../index';
 import { createMemoryOutboxStore } from '../save-outbox';
 import type { SaveOutboxStore } from '../save-outbox';

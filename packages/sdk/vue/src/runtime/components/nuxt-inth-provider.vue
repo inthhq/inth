@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, inject, onMounted, provide, ref, toValue, watch } from 'vue';
 
+import { applyRootOverrides } from '../apply-root-overrides';
 import {
 	useConsentActiveUI,
 	useConsentInit,
@@ -10,19 +11,19 @@ import {
 	useConsentKernel,
 	useHasOptOutConfirmationHost,
 	useOptOutConfirmationOpen,
-} from '../composables/kernel';
+} from '../composables/use-consent-kernel';
 import { useMounted } from '../composables/use-mounted';
-import { applyRootOverrides } from '../root-overrides';
-import { consentConfigKey, symbolConfirmationHosted } from '../utils/symbols';
 import {
-	ConsentBannerHost as ConsentBanner,
-	LazyConsentDialogTrigger,
-	LazyIabConsentBanner,
-	LazyIabConsentDialog,
-	LazyConsentManager,
-	prefetchIabConsentDialog,
-} from './lazy-surfaces';
-import { useAdoptOptOutConfirmation } from './parts/receipt-focus';
+	consentConfigKey,
+	symbolConfirmationHosted,
+} from '../utils/consent-symbols.model';
+import { LazyIabConsentDialog } from './lazy-iab-panel';
+import { LazyIabConsentBanner } from './lazy-iab-prompt';
+import { LazyConsentManager } from './lazy-manager';
+import { LazyConsentDialogTrigger } from './lazy-panel-trigger';
+import { useAdoptOptOutConfirmation } from './parts/use-adopt-opt-out-confirmation';
+import { prefetchIabConsentDialog } from './prefetch-iab-panel';
+import { ConsentBannerHost as ConsentBanner } from './prompt-host';
 
 // The default slot renders after the surfaces, so a root that wraps the
 // app the way a React provider does keeps the app.

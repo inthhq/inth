@@ -3,13 +3,13 @@
 	import { untrack } from 'svelte';
 
 	import ConsentDialog from '../../lib/components/deferred-panel.svelte';
-	import IabConsentDialog from '../../lib/components/iab-panel.svelte';
-	import IabConsentBanner from '../../lib/components/iab-prompt.svelte';
+	import IabConsentDialog from '../../lib/components/iab/iab-panel.svelte';
+	import IabConsentBanner from '../../lib/components/iab/iab-prompt.svelte';
 	import InthProvider from '../../lib/components/inth-provider.svelte';
 	import ConsentWidget from '../../lib/components/preferences.svelte';
 	import ConsentBanner from '../../lib/components/prompt/prompt.svelte';
-	import type { ConsentManagerState } from '../../lib/context.svelte';
-	import type { ConsentManagerOptions } from '../../lib/types';
+	import type { ConsentManagerState } from '../../lib/consent-context.model';
+	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 	import ConformanceKernelCapture from './conformance-kernel-capture.svelte';
 
 	type MountableComponent =

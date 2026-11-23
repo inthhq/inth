@@ -13,9 +13,9 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import ConsentScript from '../components/consent-script.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { inth, resolveOptions } from '../integration';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { buildColorSchemeScript, resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../types';
 import { testRule } from './policy-fixture';
 
 let container: AstroContainer;
@@ -150,7 +150,7 @@ describe('buildColorSchemeScript', () => {
 
 describe('<ConsentScript />', () => {
 	// The inlined first-paint stylesheet styles `.inth-dark` too; these
-	// tests read the scripts (`inline-styles.test.ts` covers the styles).
+	// tests read the scripts (`inline-styles.model.test.ts` covers the styles).
 	const render = async function render(locals: InthLocals): Promise<string> {
 		const html = await container.renderToString(ConsentScript, {
 			locals: { inth: locals },

@@ -16,18 +16,18 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type {
+	ConsentKernel,
+	KernelConfig,
+	ResolvedVendor,
+	SavePayload,
+} from '../../consent-kernel.model';
 import { createConsentKernel } from '../../kernel';
 import { vendorsListedUnder } from '../../libs/vendor-listing';
 import {
 	confirmOptInConfirmation,
 	isOptInConfirmationOpen,
 } from '../../surface-actions/opt-in';
-import type {
-	ConsentKernel,
-	KernelConfig,
-	ResolvedVendor,
-	SavePayload,
-} from '../../types';
 import { createPreferenceDraft } from '../index';
 
 afterEach(() => {

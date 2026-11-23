@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../src/__tests__/test-local';
-import type { InthProviderOptions } from '../../src/lib/core/options';
+import type { InthProviderOptions } from '../../src/lib/core/inth-options';
 import { provideInth } from '../../src/lib/core/provide-inth';
 import { iabTestOptions } from '../../testing/src/__tests__/harness-test-bed';
 import { IABConsentDialog } from './iab-consent-dialog';

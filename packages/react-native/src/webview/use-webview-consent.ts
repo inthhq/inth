@@ -6,13 +6,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useConsentSelector } from '../hooks/use-consent-selector';
 import type { ConsentSnapshot } from '../protocol';
-import { useConsentClient } from '../provider/consent-context';
+import { useConsentClient } from '../provider/consent-client-context';
+import { DOCUMENT_START_SCRIPT, UPDATE_SCRIPT } from './scripts.generated';
 import {
 	normalizeWebViewOrigins,
 	originOfUrl,
 	preferencesRequest,
-} from './payload';
-import { DOCUMENT_START_SCRIPT, UPDATE_SCRIPT } from './scripts.generated';
+} from './webview-payload.model';
 
 /** The part of a `react-native-webview` instance the hook drives. */
 export interface WebViewConsentTarget {

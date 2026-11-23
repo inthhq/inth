@@ -17,10 +17,14 @@ import {
 	NOW,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type {
+	ConsentSnapshot,
+	InitResponse,
+	KernelConfig,
+} from '../../consent-kernel.model';
 import { evaluateConsentRecord } from '../../consent-record/evaluate';
-import type { ConsentSnapshot, InitResponse, KernelConfig } from '../../types';
-import type { InternalKernel } from '../internals';
-import type { SnapshotPatch } from '../patch';
+import type { InternalKernel } from '../kernel-internals.model';
+import type { SnapshotPatch } from '../kernel-patch.model';
 
 beforeEach(() => {
 	vi.spyOn(Date, 'now').mockReturnValue(NOW);

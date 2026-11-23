@@ -10,22 +10,22 @@
  */
 import { CONSENT_MODELS } from '@inth/sdk-schema/types';
 
-import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import {
 	isPlainRecord,
 	validateExplicitChoice,
-} from '../../consent-record/validation';
+} from '../../consent-record/consent-record-validation.model';
+import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import { warnInDevelopment } from '../../libs/is-production';
-import { generateUuidV7 } from '../../libs/subject-uuid';
+import { generateUuidV7 } from '../../libs/subject-uuid.model';
 import {
 	isConsentSaveRejection,
 	isSubjectConflict,
-} from '../../transports/save-rejection';
-import { applySyncedOptOut } from '../opt-out';
+} from '../../transports/consent-save-rejected-error';
+import { applySyncedOptOut } from '../kernel-opt-out.model';
 import type { QueueTools } from './queue';
-import { appendOptOut, appendSave } from './store';
-import { toStoredPayload } from './stored-payload';
-import { withoutSuperseded, withSubjectId } from './supersession';
+import { appendOptOut, appendSave } from './save-outbox.store';
+import { toStoredPayload } from './stored-payload.model';
+import { withoutSuperseded, withSubjectId } from './supersession.model';
 
 /** @internal */
 export const queueTools: QueueTools = {

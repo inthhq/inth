@@ -3,7 +3,7 @@ import type {
 	ScriptDebugEvent,
 	ScriptDebugEventInput,
 	ScriptDebugListener,
-} from './types';
+} from './script.model';
 
 let fallbackListeners: Set<ScriptDebugListener> | null = null;
 

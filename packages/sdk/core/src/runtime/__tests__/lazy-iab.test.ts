@@ -4,8 +4,8 @@
  */
 import { describe, expect, test, vi } from 'vitest';
 
+import type { ConsentRuntimeIABHandle } from '../consent-runtime.model';
 import { createLazyIABFactory } from '../lazy-iab';
-import type { ConsentRuntimeIABHandle } from '../types';
 
 const createHandle = function createHandle(): ConsentRuntimeIABHandle {
 	return {

@@ -11,8 +11,8 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import OptOutConfirmationFixture from '../../__tests__/fixtures/opt-out-confirmation-fixture.svelte';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { policyFixture } from '../../__tests__/policy-fixture';
-import type { ConsentContextValue } from '../../lib/context.svelte';
-import type { ConsentManagerOptions } from '../../lib/types';
+import type { ConsentContextValue } from '../../lib/consent-context.model';
+import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 
 const reload = vi.hoisted(() => vi.fn());
 // oxlint-disable-next-line anti-slop/no-module-mocking -- jsdom cannot perform navigation on `window.location.reload`. The factory returns the real module and records the reload instead.

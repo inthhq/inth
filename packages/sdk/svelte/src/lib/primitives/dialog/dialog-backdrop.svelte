@@ -2,7 +2,7 @@
 	import { getDialogState } from '@inth/sdk/ui/primitives';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	import { getDialogRootContext } from './context';
+	import { getDialogRootContext } from './get-dialog-root-context';
 
 	const dialog = getDialogRootContext();
 

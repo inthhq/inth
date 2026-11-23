@@ -27,7 +27,7 @@ import {
 } from 'react';
 import type { ComponentType } from 'react';
 
-import type { DialogPresentationOptions } from '../../ui/provider-props';
+import type { DialogPresentationOptions } from '../../ui/build-provider-props';
 import type { IABDialogSurfaceProps } from './iab-dialog-surface';
 
 // The TCF surface is the larger half of this island and only an IAB site

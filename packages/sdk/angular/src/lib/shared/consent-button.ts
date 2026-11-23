@@ -14,9 +14,9 @@ import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
-import { holdIdleDialogWarming, warmDialog } from '../core/dialog-warming';
-import { resolveNoStyle } from '../core/no-style';
-import { SURFACE_CLOSED } from '../core/surface-close';
+import { resolveNoStyle } from '../core/no-style-scope';
+import { SURFACE_CLOSED } from '../core/surface-closed';
+import { holdIdleDialogWarming, warmDialog } from '../core/warm-dialog';
 
 /**
  * What a {@link ConsentButton} does when clicked.

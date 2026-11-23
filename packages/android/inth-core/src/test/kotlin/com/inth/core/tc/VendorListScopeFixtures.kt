@@ -57,7 +57,7 @@ internal data class VendorListScopeFixture(
  *
  * The vectors lane owns that directory and publishes through its `index.json`; this build reads
  * it and writes nothing to it. The oracle behind these files is `narrowGVLToVendors` in
- * `packages/sdk/iab/src/tcf/fetch-gvl.ts`, called by the generator rather than restated, so an
+ * `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts`, called by the generator rather than restated, so an
  * expectation here is the browser build's answer and not Kotlin's opinion about it.
  *
  * [load] enumerates through the index rather than globbing, and proves the bytes are the ones

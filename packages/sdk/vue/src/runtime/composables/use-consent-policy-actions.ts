@@ -7,8 +7,8 @@ import { computed, toValue, watch } from 'vue';
 import type { ComputedRef, MaybeRefOrGetter } from 'vue';
 
 import { useConsentConfig } from './config';
-import { useResolvedPresentation } from './experiment';
-import { useConsentSnapshot } from './kernel';
+import { useConsentSnapshot } from './use-consent-kernel';
+import { useResolvedPresentation } from './use-experiment';
 
 /** Resolve the shared policy constraints and application presentation. */
 export const useConsentPolicyActions = function useConsentPolicyActions(

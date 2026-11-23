@@ -2,7 +2,7 @@ import { dialogFocusManagement } from '@inth/conformance/play/consent-dialog';
 import { triggerOpensDialog } from '@inth/conformance/play/consent-dialog-trigger';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
-import ConsentDialogTriggerStory from './ConsentDialogTriggerStory.svelte';
+import ConsentDialogTriggerStory from './consent-dialog-trigger-story.svelte';
 
 const meta = {
 	component: ConsentDialogTriggerStory,

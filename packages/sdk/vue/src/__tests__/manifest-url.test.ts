@@ -12,7 +12,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { createApp, defineComponent, h, inject } from 'vue';
 
 import { inth, manifest } from '../index';
-import { symbolKernel } from '../runtime/utils/symbols';
+import { symbolKernel } from '../runtime/utils/consent-symbols.model';
 import { setGenerated } from './generated';
 
 const manifestWithPolicy = (id: string): ConsentManifest => ({

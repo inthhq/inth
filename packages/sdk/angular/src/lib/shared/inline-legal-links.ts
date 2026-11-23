@@ -10,7 +10,7 @@ import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
-import { resolveNoStyle } from '../core/no-style';
+import { resolveNoStyle } from '../core/no-style-scope';
 
 /** Which legal links a surface shows. `null` or unset shows none. */
 export type LegalLinkSelection = readonly (keyof LegalLinks)[] | null;

@@ -18,16 +18,21 @@ import {
 } from '../hooks/use-consent-actions';
 import { useConsentSelector } from '../hooks/use-consent-selector';
 import { useConsentStatus } from '../hooks/use-consent-status';
-import { isStatusPromptOwed } from '../lib/selectors';
-import { claimPrompt } from '../native/without-native-ui';
+import { isStatusPromptOwed } from '../lib/consent-selectors.model';
+import { claimPrompt } from '../native/watch-without-native-ui';
 import type { ConsentSnapshot } from '../protocol';
-import { useConsentClient } from '../provider/consent-context';
+import { useConsentClient } from '../provider/consent-client-context';
 import { ConsentDialog } from './consent-dialog';
-import { ConsentBrandingTag } from './internal/branding-tag';
+import { ConsentBrandingTag } from './internal/consent-branding-tag';
 import {
 	CONSENT_BUTTON_ROW_ITEM,
 	ConsentButton,
 } from './internal/consent-button';
+import {
+	isConsentCopyEqual,
+	selectConsentCopy,
+} from './internal/consent-copy.model';
+import type { ConsentCopy } from './internal/consent-copy.model';
 import {
 	ConsentSurface,
 	ConsentSurfaceBody,
@@ -36,8 +41,6 @@ import {
 	ConsentSurfaceTitle,
 	useConsentSurfaceFrame,
 } from './internal/consent-surface';
-import { isConsentCopyEqual, selectConsentCopy } from './internal/copy';
-import type { ConsentCopy } from './internal/copy';
 import { useAnnounceOnOpen } from './internal/use-announce-on-open';
 import type { ConsentPartStyles } from './theme/consent-theme-parts';
 import type { ConsentTheme } from './theme/create-consent-theme';

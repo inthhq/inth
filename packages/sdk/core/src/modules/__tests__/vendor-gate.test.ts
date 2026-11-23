@@ -12,8 +12,8 @@ import {
 	matchedResolution,
 	NOW,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
 import { createConsentKernel } from '../../index';
-import type { ConsentSnapshot } from '../../types';
 import { evaluateCategoryGate } from '../category-gate';
 import { evaluateConsent, isVendorDenied } from '../has';
 

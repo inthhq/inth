@@ -24,11 +24,11 @@
  * @packageDocumentation
  */
 
-export { createTestConsentClient } from './test-consent-client';
+export { createTestConsentClient } from './create-test-consent-client';
 export type {
 	CreateTestConsentClientOptions,
 	TestConsentClient,
 	TestConsentPrompt,
 	TestConsentSession,
 	TestConsentState,
-} from './test-consent-client';
+} from './create-test-consent-client';

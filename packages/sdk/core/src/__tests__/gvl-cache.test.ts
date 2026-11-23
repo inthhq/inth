@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { clearGvlCache, fetchCachedGvl } from '../transports/gvl-cache';
+import { clearGvlCache, fetchCachedGvl } from '../transports/gvl-cache.model';
 
 const list = function list(version: number) {
 	return { vendorListVersion: version } as unknown as Record<string, unknown>;

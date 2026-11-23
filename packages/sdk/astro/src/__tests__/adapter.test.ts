@@ -6,8 +6,8 @@ import {
 	registerDialogSurface,
 	requireDialogSurface,
 	resetDialogRegistriesForTest,
-} from '../ui/adapter';
-import type { ConsentDialogAdapter } from '../ui/adapter';
+} from '../ui/register-dialog-adapter';
+import type { ConsentDialogAdapter } from '../ui/register-dialog-adapter';
 
 beforeEach(() => {
 	resetDialogRegistriesForTest();

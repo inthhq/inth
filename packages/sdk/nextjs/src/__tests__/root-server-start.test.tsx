@@ -14,8 +14,8 @@ import {
 	optInRule,
 } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
 import { deferConsent } from '../defer';
-import { InthProvider } from '../root';
-import type { InthProviderProps } from '../root';
+import { InthProvider } from '../inth-provider';
+import type { InthProviderProps } from '../inth-provider';
 import { transportMode } from './fixtures/transport-mode';
 
 const pixel: Script = {
@@ -145,7 +145,7 @@ test('renders the empty script the browser hydrates when the start module fails 
 		throw new Error('chunk missing');
 	});
 	try {
-		const { InthProvider: FreshRoot } = await import('../root');
+		const { InthProvider: FreshRoot } = await import('../inth-provider');
 		const onError = vi.fn();
 		const stream = await renderToReadableStream(
 			<FreshRoot
@@ -186,7 +186,7 @@ test('a render whose start module loads late names the start script’s render i
 		return importOriginal();
 	});
 	try {
-		const { InthProvider: FreshRoot } = await import('../root');
+		const { InthProvider: FreshRoot } = await import('../inth-provider');
 		const stream = await renderToReadableStream(
 			<FreshRoot
 				options={{ mode: transportMode({ init: () => Promise.resolve({}) }) }}
@@ -231,7 +231,7 @@ const importRootWithoutUse = async (): Promise<typeof InthProvider> => {
 		const react18 = { ...actual, use: undefined };
 		return { ...react18, default: react18 };
 	});
-	return (await import('../root')).InthProvider;
+	return (await import('../inth-provider')).InthProvider;
 };
 
 test('renders the server start on React 18, which has no `use`', async () => {

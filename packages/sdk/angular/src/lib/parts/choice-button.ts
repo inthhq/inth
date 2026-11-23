@@ -10,9 +10,9 @@ import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 import type { AllThemeKeys, ConsentActionKey } from '@inth/sdk/ui/theme';
 
 import { ConsentTheme } from '../core/consent-theme';
-import { resolveNoStyle } from '../core/no-style';
+import { resolveNoStyle } from '../core/no-style-scope';
 import type { ConsentButtonMode, ConsentButtonVariant } from '../shared';
-import { slotPart } from './class-names';
+import { slotPart } from './part-class-names.model';
 
 /**
  * Actions the server-rendered banner's early-tap script would replay

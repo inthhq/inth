@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { AndroidConfig, XML } from 'expo/config-plugins';
 import { describe, expect, it } from 'vitest';
 
-import { applyAndroidManifest } from '../android';
+import { applyAndroidManifest } from '../apply-android-manifest';
 import { resolveParams } from '../params';
 import {
 	FIXTURE_DIR,
@@ -322,7 +322,7 @@ describe('withInth standard install', () => {
 	});
 
 	it('leaves gradle SDK levels to the host', async () => {
-		// The floor is checked after prebuild (android-sdk-floor.test.ts), never
+		// The floor is checked after prebuild (with-android-sdk-floor.test.ts), never
 		// rewritten: a level below it was set on purpose and fails loudly.
 		const config = applyToFixture(STANDARD_PROPS);
 		const files = [

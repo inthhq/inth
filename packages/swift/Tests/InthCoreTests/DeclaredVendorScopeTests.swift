@@ -15,7 +15,7 @@ import XCTest
 ///
 /// The vectors are the shared `packages/native-protocol/vendor-list-scope-*` fixtures this core already claims
 /// in ``VendorListScopeTests``, graded here through the kernel rather than against the helper
-/// directly. Their oracle is `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts`, called by
+/// directly. Their oracle is `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts`, called by
 /// the generator, so what a scoped device ends up holding is the browser build's answer and not
 /// Swift's opinion about it. Kotlin runs the same axes against the same files in
 /// `DeclaredVendorScopeTest`.
@@ -51,7 +51,7 @@ final class DeclaredVendorScopeTests: XCTestCase {
     ///
     /// The list the vector serves carries 54 vendors and the declaration names 32, and the answer has
     /// to be the 32 the web returned on `snapshot.iab.gvl` -- the key
-    /// `packages/react-native/src/protocol/snapshot.ts` declares and a dialog draws its partner rows
+    /// `packages/react-native/src/protocol/consent-snapshot.model.ts` declares and a dialog draws its partner rows
     /// out of -- and on ``ConsentCore/globalVendorList()``, which is one value read two ways. A prune
     /// that landed only on the accessor would pass one half of that pair and fail the other.
     func testAWideServedListAndADeclaredScopeGiveANarrowSnapshot() async throws {

@@ -8,20 +8,23 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { canDeferEngine } from '../banner/deferred-boot';
-import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
+import { canDeferEngine } from '../banner/deferred-boot.model';
+import { PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
 import PrivacyChoicesLink from '../components/privacy-choices-link.astro';
 import ConsentBanner from '../components/prompt.astro';
-import { DIALOG_SHEETS } from '../dialog/sheets';
 import { resolveOptions } from '../integration';
-import { CONTAINER_SHEET_IDS } from '../parts/sheets';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
+import { DIALOG_SHEETS } from '../parts/dialog-sheets';
+import { CONTAINER_SHEET_IDS } from '../parts/insert-sheets';
 import { WIDGET_SHEETS } from '../parts/widget-sheets';
-import { promptClassNames } from '../prompt/class-names';
-import { resolvePromptModel, rightsBundleOf } from '../prompt/model';
-import { promptFirstPaintSheets, renderPromptHTML } from '../prompt/server';
+import { promptClassNames } from '../prompt/prompt-class-names';
+import { resolvePromptModel, rightsBundleOf } from '../prompt/prompt.model';
+import {
+	promptFirstPaintSheets,
+	renderPromptHTML,
+} from '../prompt/render-prompt-html';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../types';
 import { testRule } from './policy-fixture';
 
 let container: AstroContainer;
@@ -672,7 +675,7 @@ describe('legal links and sheet ids', () => {
 	it.each(['banner', 'card', 'drawer'] as const)(
 		'the %s sheet ids the browser looks for match the sheets it loads',
 		async (type) => {
-			const { loadContainerSheets } = await import('../browser/prompt');
+			const { loadContainerSheets } = await import('../browser/mount-prompt');
 			const sheets = await loadContainerSheets(type);
 			expect(sheets.map((sheet) => sheet.id)).toEqual(
 				CONTAINER_SHEET_IDS[type]

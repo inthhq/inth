@@ -6,7 +6,7 @@
  * the built values back before Nuxt renders or the consent route answers,
  * so the browser (through the payload) runs what the build made. Other mode
  * fields, such as `NUXT_PUBLIC_INTH_MODE_MANIFEST_URL`, still apply. See
- * `./build-options`.
+ * `./build-options.model`.
  */
 import { defineNitroPlugin, useRuntimeConfig } from 'nitropack/runtime';
 
@@ -16,8 +16,8 @@ import {
 	buildOptionVariable,
 	createBuildOptionsGuard,
 	readBuiltOption,
-} from './build-options';
-import type { BuiltOptionsRuntimeConfig } from './build-options';
+} from './build-options.model';
+import type { BuiltOptionsRuntimeConfig } from './build-options.model';
 
 export default defineNitroPlugin((nitroApp) => {
 	// Every request, not once at startup: Cloudflare and similar platforms

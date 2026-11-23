@@ -10,11 +10,11 @@
  * @internal
  */
 
-import { createBrowserOutboxStore } from '../kernel/save-outbox/store';
-import type { SaveOutboxStore } from '../kernel/save-outbox/store';
+import { createBrowserOutboxStore } from '../kernel/save-outbox/save-outbox.store';
+import type { SaveOutboxStore } from '../kernel/save-outbox/save-outbox.store';
 import { storageFor } from '../libs/storage-for';
-import { clearStoredRecords } from '../modules/persistence/clear';
-import type { ConsentRuntimeOptions } from '../runtime/types';
+import { clearStoredRecords } from '../modules/persistence/persistence-clear.store';
+import type { ConsentRuntimeOptions } from '../runtime/consent-runtime.model';
 
 /**
  * Clears stored records as a runtime's `clearRecords()` does, for a host

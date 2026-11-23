@@ -19,6 +19,7 @@
  * @internal
  */
 
+import type { ConsentSnapshot } from '../consent-kernel.model';
 import {
 	OPTIONAL_CONSENT_CATEGORIES,
 	optOutDecidingCategory,
@@ -31,13 +32,12 @@ import type {
 	OptionalConsentCategory,
 	RestrictionReason,
 } from '../consent-record/types';
-import { readCookieValueFromHeader } from '../libs/cookie/read-header';
+import { readCookieValueFromHeader } from '../libs/cookie/read-cookie-value-from-header';
 import { resolveStorageKeys } from '../libs/storage-keys';
-import { generateUuidV7 } from '../libs/subject-uuid';
-import type { StorageConfig } from '../modules/persistence/types';
-import type { ConsentSnapshot } from '../types';
+import { generateUuidV7 } from '../libs/subject-uuid.model';
+import type { StorageConfig } from '../modules/persistence/persistence.model';
 
-export { generateUuidV7 } from '../libs/subject-uuid';
+export { generateUuidV7 } from '../libs/subject-uuid.model';
 
 /** Latest valid epoch milliseconds, as the record validator reads them. */
 const MAX_DATE_MS = 8_640_000_000_000_000;

@@ -3,9 +3,9 @@ import { join } from 'node:path';
 import { AndroidConfig } from 'expo/config-plugins';
 import { expect, it } from 'vitest';
 
-import { applyAndroidManifest } from '../android';
+import { applyAndroidManifest } from '../apply-android-manifest';
+import { applyInfoPlist } from '../apply-info-plist';
 import { ANDROID_IAB_META_KEYS, IOS_IAB_PLIST_KEYS } from '../constants';
-import { applyInfoPlist } from '../ios';
 import { resolveParams } from '../params';
 import { FIXTURE_DIR } from './helpers';
 

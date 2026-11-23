@@ -29,14 +29,14 @@ import {
 } from '@inth/sdk/server';
 import type { AstroIntegration } from 'astro';
 
-import { absoluteManifestUrl } from './libs/absolute-manifest-url';
-import { createClassMapPlugin } from './libs/class-map-plugin';
 import type {
 	InthAstroOptions,
 	InthMiddlewareOptions,
 	InthResolvedOptions,
 	InthUIAdapterName,
-} from './types';
+} from './inth-options.model';
+import { absoluteManifestUrl } from './libs/absolute-manifest-url';
+import { createClassMapPlugin } from './libs/create-class-map-plugin';
 
 const VIRTUAL_ID = 'virtual:inth/options';
 const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ID}`;
@@ -605,7 +605,7 @@ export interface BootScripts {
  * runtime, its transport, persistence and the runtime modules) is
  * `virtual:inth/engine`, behind `import()`.
  *
- * The adapter and island specifiers are written here, not in `adapter.ts`
+ * The adapter and island specifiers are written here, not in `register-dialog-adapter.ts`
  * or the `.astro` components, because this is the one place that knows
  * `ui` before the app's bundler runs. A static reference to all three
  * would make a Svelte-only site's build resolve `@inth/react` and `vue`.
@@ -1026,7 +1026,7 @@ export const inth = function inth(
 				// can name the `clientEntrypoint` scripts the policy lacks.
 				// Loaded here so the package root, which browser code may
 				// import, does not pull in the server renderers.
-				const { buildAstroCsp } = await import('./csp');
+				const { buildAstroCsp } = await import('./build-astro-csp');
 				const csp = await buildAstroCsp(config, site);
 				const serialized = csp?.browser ? { ...site, csp: csp.browser } : site;
 				const bootScripts = buildBootScript(

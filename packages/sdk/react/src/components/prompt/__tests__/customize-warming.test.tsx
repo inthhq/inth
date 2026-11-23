@@ -4,13 +4,13 @@ import { userEvent } from 'vitest/browser';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
-import {
-	registerDialogChunkWarmer,
-	resetDialogChunkWarmingForTests,
-} from '~/chunk-warming';
 import { ConsentDialogLink } from '~/components/panel-link';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentBanner } from '~/components/prompt';
+import {
+	registerDialogChunkWarmer,
+	resetDialogChunkWarmingForTests,
+} from '~/warm-dialog-chunk';
 
 import { testing } from '../../../testing';
 

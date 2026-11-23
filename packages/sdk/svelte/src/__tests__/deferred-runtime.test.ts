@@ -1,5 +1,5 @@
 /**
- * The deferred runtime's commit path (`lib/deferred/runtime.ts`) when the
+ * The deferred runtime's commit path (`lib/deferred/create-deferred-runtime.ts`) when the
  * commit chunk cannot finish a choice the stand-in already shows: the
  * engine records it, once, and announces it once.
  */
@@ -13,13 +13,13 @@ import { afterEach, expect, test, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
-import type { RootBoot } from '../lib/deferred/boot';
+import { createOwnedRuntime } from '../lib/create-owned-runtime';
+import type { RootBoot } from '../lib/deferred/consent-boot.model';
+import { createDeferredRuntime } from '../lib/deferred/create-deferred-runtime';
+import type { EngineFactory } from '../lib/deferred/create-deferred-runtime';
 import { createRootEngine } from '../lib/deferred/engine';
-import { createDeferredRuntime } from '../lib/deferred/runtime';
-import type { EngineFactory } from '../lib/deferred/runtime';
-import { createOwnedRuntime } from '../lib/owned-runtime';
-import { runtimeOptionsFor } from '../lib/provider-options';
-import type { ProviderOptionsInput } from '../lib/provider-options';
+import { runtimeOptionsFor } from '../lib/resolve-provider-options';
+import type { ProviderOptionsInput } from '../lib/resolve-provider-options';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 

@@ -3,16 +3,16 @@ export {
 	brandingSchema,
 	brandingValues,
 	DEFAULT_BRANDING,
-} from './branding';
-export { parseConsentManifest } from './consent-manifest-schema';
-export { type Hosting, hostingSchema, hostingValues } from './hosting';
+} from './branding.model';
+export { parseConsentManifest } from './parse-consent-manifest';
+export { type Hosting, hostingSchema, hostingValues } from './hosting.model';
 export {
 	type ScriptRegistryWire,
 	type ScriptSignatureWire,
 	type ScriptSourceWire,
 	type ScriptSourcesWire,
 	scriptRegistrySchema,
-} from './script-sources';
+} from './script-sources.model';
 export {
 	buildConsentManifestFromConfig,
 	type ConsentManifest,
@@ -55,7 +55,7 @@ export {
 	type SessionExperiment,
 	type SessionJourney,
 	type SessionReportInputs,
-} from './session-report';
+} from './session-report.model';
 export {
 	appendInitParams,
 	applyInitParamsToHeaders,
@@ -65,15 +65,15 @@ export {
 	INIT_PARAM_HEADERS,
 	INIT_REGION_PARAM,
 	type InitRequestParams,
-} from './init-request-params';
-export { DEFAULT_GVL_ENDPOINT } from './constants';
+} from './init-request-params.model';
+export { DEFAULT_GVL_ENDPOINT } from './schema-constants.model';
 export {
 	buildConsentId,
 	type ConsentSubmissionIdentity,
 	type EntityKind,
 	generateDeterministicId,
 	generateEntityId,
-} from './entity-id';
+} from './entity-id.model';
 export {
 	CONSENT_REQUEST_HEADER_NAMES,
 	COUNTRY_HEADERS,
@@ -118,24 +118,28 @@ export {
 	adTechProviderSchema,
 	normalizeAdTechProviderIds,
 	parseAdTechProviderList,
-} from './ad-tech-provider';
+} from './ad-tech-provider.model';
 export { IAB_STORAGE_KEYS } from './iab-storage-keys';
 export {
 	CONSENT_ONLY_PURPOSES,
 	permittedLegitimateInterestPurposes,
-} from './tcf-purposes';
-export { getIpAddress, type IpAddressConfig, maskIpAddress } from './client-ip';
+} from './tcf-purposes.model';
+export {
+	getIpAddress,
+	type IpAddressConfig,
+	maskIpAddress,
+} from './client-ip.model';
 export {
 	type ForwardedElement,
 	forwardedNodeAddress,
 	parseForwarded,
-} from './forwarded';
+} from './forwarded-header.model';
 export {
 	type NonIABVendor,
 	type NonIABVendorConsent,
 	nonIABVendorConsentSchema,
 	nonIABVendorSchema,
-} from './non-iab-vendor';
+} from './non-iab-vendor.model';
 export {
 	OPT_OUT_HOLDERS,
 	OPT_OUT_METHODS,
@@ -144,14 +148,14 @@ export {
 	type OptOutMethod,
 	type OptOutRecord,
 	type OptOutRight,
-} from './opt-out';
+} from './opt-out.model';
 export {
 	type Vendor,
 	type VendorCategoryCondition,
 	vendorCategoryConditionSchema,
 	vendorIdSchema,
 	vendorSchema,
-} from './vendor';
+} from './vendor.model';
 export {
 	createDeterministicFingerprint,
 	createDeterministicFingerprintSync,
@@ -159,13 +163,13 @@ export {
 	createMaterialPolicyFingerprintSync,
 	hashSha256Hex,
 	stableStringify,
-} from './policy-fingerprint';
+} from './policy/policy-fingerprint.model';
 export {
 	matchPolicyRules,
 	type PolicyMatchEntry,
 	type PolicyMatchOutcome,
 	resolvePolicyRules,
-} from './policy-resolution';
+} from './policy/policy-resolution.model';
 export {
 	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_VERSION,
@@ -203,7 +207,7 @@ export {
 	POLICY_RIGHTS,
 	POLICY_RULE_MODELS,
 	requiredPolicyRights,
-} from './policy-rule-invariants';
+} from './policy/policy-rule-invariants';
 export { compareCanonical } from './canonical-order';
 export {
 	DEFAULT_CHOICE_VALIDITY_DAYS,
@@ -222,7 +226,7 @@ export {
 	type PolicyRuleReview,
 	type ResolvedPolicyRule,
 	validatePolicyRules,
-} from './policy-rule';
+} from './policy/policy-rule.model';
 export {
 	CHOICE_PROMPT_FINGERPRINT_VERSION,
 	type ChoicePromptFingerprintInput,
@@ -240,7 +244,7 @@ export {
 	PRESENTATION_FINGERPRINT_VERSION,
 	type PresentationFingerprintInput,
 	policySurfacePresentationInput,
-} from './policy-rule-fingerprint';
+} from './policy/policy-rule-fingerprint.model';
 export {
 	type BannerEdge,
 	type CardPosition,
@@ -262,7 +266,7 @@ export {
 	POLICY_SURFACE_KEYS,
 	type PolicySurface,
 	type ResolvedPolicySurface,
-} from './policy-surface';
+} from './policy/policy-surface';
 export {
 	type EuropePolicyRuleMode,
 	type PolicyRulePresets,
@@ -270,7 +274,7 @@ export {
 	type RecommendedPolicyRulesOptions,
 	recommendedPolicyRules,
 	type UsOptOutPresetOptions,
-} from './policy-rule-presets';
+} from './policy/policy-rule-presets';
 export {
 	consentContainerSchema,
 	policyActionConstraintsSchema,
@@ -285,7 +289,7 @@ export {
 	policyRuleModelSchema,
 	policySurfaceSchema,
 	resolvedPolicyRuleSchema,
-} from './policy-wire-schema';
+} from './policy/policy-wire-schema.model';
 export { BASE_LANGUAGES } from './base-languages';
 export {
 	type PolicyI18nMessageProfileLike,
@@ -293,7 +297,7 @@ export {
 	type PolicyI18nValidationResult,
 	primaryLanguage,
 	validatePolicyI18nConfig,
-} from './policy-i18n-validation';
+} from './policy/policy-i18n-validation.model';
 export {
 	EEA_COUNTRY_CODES,
 	EU_COUNTRY_CODES,
@@ -305,18 +309,18 @@ export {
 	type PolicyValidationResult,
 	policyMatchers,
 	UK_COUNTRY_CODES,
-} from './policy-runtime';
-export { dedupeDefinedValues } from './policy-utils';
+} from './policy/policy-runtime.model';
+export { dedupeDefinedValues } from './policy/dedupe-defined-values';
 export {
 	getTranslationsData,
 	type I18nMessageProfile,
 	type I18nMessageProfiles,
 	type I18nOptions,
 	type LoggerLike,
-} from './translations-runtime';
+} from './get-translations-data';
 
 export type {
 	LegacyMaterialCompatibility,
 	LegacyMaterialPolicyInput,
 	LegacyMaterialSurfaceInput,
-} from './legacy-material-policy';
+} from './policy/legacy-material-policy.model';

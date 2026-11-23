@@ -6,7 +6,7 @@
 import type { Handle } from '@sveltejs/kit/hooks';
 import { sequence } from '@sveltejs/kit/hooks';
 
-import { inthHandle } from '../src/lib/kit/handle';
+import { inthHandle } from '../src/lib/kit/inth-handle';
 
 export const handle: Handle = inthHandle();
 export const composed: Handle = sequence(inthHandle(), handle);

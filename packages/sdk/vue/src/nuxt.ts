@@ -9,12 +9,12 @@
 export {
 	DEVTOOLS_ICON_ROUTE,
 	DEVTOOLS_PAGE_ROUTE,
-} from './runtime/devtools/constants';
+} from './runtime/devtools/devtools.model';
 export {
 	NUXT_PROJECT_URL_ENV,
 	NUXT_SERVER_PROJECT_URL_ENV,
-} from './runtime/env-names';
-export type { RuntimeConsentConfig } from './runtime/kernel';
+} from './runtime/env-names.model';
+export type { RuntimeConsentConfig } from './runtime/vue-consent-kernel-context.model';
 export { readNuxtMode, readNuxtRoutePrefix } from './runtime/nuxt-mode';
 export type {
 	NuxtConsentModeConfig,

@@ -7,8 +7,8 @@ import {
 	NOW,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type { InitResponse } from '../../consent-kernel.model';
 import { createPersistence } from '../../modules/persistence';
-import type { InitResponse } from '../../types';
 import { createConsentKernel } from '../index';
 
 const pendingResponse = function pendingResponse() {

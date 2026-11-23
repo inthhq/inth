@@ -20,9 +20,9 @@ import { createEvent } from '../lib/kit/__tests__/event';
 import {
 	createServerStartInjector,
 	loadServerScriptStart,
-} from '../lib/kit/server-script-start';
+} from '../lib/kit/load-server-script-start';
+import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { testing } from '../lib/testing';
-import type { ConsentManagerOptions } from '../lib/types';
 
 const pixel: Script = {
 	category: 'marketing',

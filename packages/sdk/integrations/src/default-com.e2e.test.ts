@@ -9,7 +9,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { defaultComPixel } from './vendors/analytics/default-com';
 
 describe('Default core loader consent contract', () => {

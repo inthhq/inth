@@ -1,10 +1,10 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { ManifestStep, VendorManifest } from '../../types';
-import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl } from '../_shared/script-url';
+import { resolveManifest } from '../../resolve-manifest';
+import { vendorManifestContract } from '../../vendor-manifest.model';
+import type { ManifestStep, VendorManifest } from '../../vendor-manifest.model';
+import { readId, skipMissingId } from '../_shared/required-id.model';
+import { resolveScriptUrl } from '../_shared/script-url.model';
 
 /** LiveConnect's plain object event queue. */
 export interface LiveIntentEvent extends Record<string, unknown> {

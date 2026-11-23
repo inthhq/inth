@@ -23,8 +23,8 @@ import {
 import type { ServerMode } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
-import type { InthProviderState } from '../types';
-import type { InthLocals, ConsentRequestOptions } from './types';
+import type { InthProviderState } from '../manager-options.model';
+import type { InthLocals, ConsentRequestOptions } from './kit-locals.model';
 
 /** Options for {@link loadConsent}, when you call it from your own `load`. */
 export interface LoadConsentOptions extends ConsentRequestOptions {

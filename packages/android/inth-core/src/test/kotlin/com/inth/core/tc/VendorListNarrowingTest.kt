@@ -17,12 +17,12 @@ import kotlin.test.assertTrue
 
 /**
  * The vendor scope applied to a served list, graded against `narrowGVLToVendors` in
- * `packages/sdk/iab/src/tcf/fetch-gvl.ts` and `narrowToVendorIds` in `packages/backend/src/http/gvl.ts`.
+ * `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts` and `narrowToVendorIds` in `packages/backend/src/http/gvl.ts`.
  *
  * Both web filters are two lines of pruning and one deliberate restraint: `vendors` is pruned and
  * everything else on the document comes back as it was served. The restraint is the part a port loses,
  * because thinning the purposes nobody references looks like the same tidy gesture and quietly changes
- * what a dialog says -- `processPurposes` in `packages/sdk/iab/src/headless/dialog-data.ts` walks the
+ * what a dialog says -- `processPurposes` in `packages/sdk/iab/src/headless/dialog-data.model.ts` walks the
  * served `purposes` record, and it does not ask the vendor scope's permission. So it is graded by
  * equality against the unnarrowed list, and not by a count of what looks left over.
  *

@@ -8,8 +8,8 @@ different styling, or **Headless** for consent UI built on `HeadlessConsent`.
 From the repository root, install and build workspace packages first:
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+bun turbo run build --filter='./packages/sdk/*'
 ```
 
 Set `INTH_PROJECT_URL` to your Inth backend URL, or replace the placeholder in
@@ -60,4 +60,4 @@ the way a flag provider would (`assignedBy: host`); any other `arm` value runs
 options for these URLs. Each impression and choice under the arm is listed on
 the page and pushed to `window.dataLayer` as `inth_surface_shown` and
 `inth_choice_recorded` with `experiment_id` and `arm`.
-See https://c15t.com/docs/guides/banner-experiments.
+See `packages/sdk/docs/guides/banner-experiments.mdx`.

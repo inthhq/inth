@@ -11,7 +11,7 @@ import {
 	V1_MAX_ACCEPTANCES,
 	V1_PROPERTY_MAX_LENGTH,
 	V1_PROPERTY_PATTERN,
-} from '../constants';
+} from '../v1-constants.model';
 
 interface Node {
 	items?: Node;

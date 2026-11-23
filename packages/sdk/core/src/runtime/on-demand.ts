@@ -23,8 +23,8 @@
 // Star exports, so a bundle that never reads a module leaves it, and the
 // tools it imports, out.
 // oxlint-disable-next-line oxc/no-barrel-file -- The entry: three small modules.
-export * from './on-demand-modules';
+export * from './on-demand-runtime-modules';
 // oxlint-disable-next-line oxc/no-barrel-file -- The entry.
-export * from './runtime-with-modules';
+export * from './create-consent-runtime-with';
 // oxlint-disable-next-line oxc/no-barrel-file -- The entry.
-export * from './iab-mount';
+export * from './mount-runtime-iab';

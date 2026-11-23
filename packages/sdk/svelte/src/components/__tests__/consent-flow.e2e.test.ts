@@ -14,7 +14,7 @@ import BannerFixture from '../../__tests__/fixtures/banner-fixture.svelte';
 import DialogFixture from '../../__tests__/fixtures/dialog-fixture.svelte';
 import WidgetFixture from '../../__tests__/fixtures/widget-fixture.svelte';
 import { testOffline } from '../../__tests__/test-offline';
-import type { ConsentManagerOptions } from '../../lib/types';
+import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 
 const getDefined = <Value>(
 	value: Value,

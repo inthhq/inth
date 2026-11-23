@@ -1,7 +1,7 @@
 import type { AllConsentNames, ConsentState, Script } from '@inth/sdk/engine';
 import { POLICY_CONSENT_CATEGORIES } from '@inth/sdk/schema/types';
 
-import { signalConsents } from '../../engine/vendor-consent';
+import { signalConsents } from '../../engine/vendor-consent.model';
 
 /** The Zaraz Consent API methods used by the bridge. */
 export interface ZarazConsentApi {

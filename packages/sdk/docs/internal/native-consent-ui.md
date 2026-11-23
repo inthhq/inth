@@ -446,8 +446,8 @@ failed runs. Set `INTH_APP_E2E_PORT` to a free host port and
 3000 only on the device the runner creates. This proves controlled local
 protocol delivery, not hosted receipt acceptance.
 
-Full validation calls the separate mobile app workflow. It does not participate
-in publishing. Local app evidence does not establish physical-device,
+CI runs the Android journey in `.github/workflows/android-emulator.yml`. No CI
+job runs the iOS journey. Neither takes part in publishing. Local app evidence does not establish physical-device,
 minimum-OS, screen-reader, RTL, localization or TCF certification coverage.
 Packed Expo runtime acceptance and host-specific gaps must be recorded in the
 integration handoff alongside exact refs and captures.

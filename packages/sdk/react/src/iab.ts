@@ -29,7 +29,7 @@ export {
 	type IABConsentBannerProps,
 } from './components/iab-prompt';
 export type { IABConsentDialogProps } from './components/iab-panel';
-export { IABConsentDialog } from './iab-dialog-deferred';
+export { IABConsentDialog } from './iab-panel';
 export {
 	type HeadlessIABBannerAction,
 	type HeadlessIABBannerState,
@@ -40,5 +40,5 @@ export {
 	useHeadlessIABConsentUI,
 } from './hooks/use-headless-iab-consent-ui';
 
-export { IABProvider } from './iab-context';
-export type { IABProviderProps } from './iab-context';
+export { IABProvider } from './iab-provider';
+export type { IABProviderProps } from './iab-provider';

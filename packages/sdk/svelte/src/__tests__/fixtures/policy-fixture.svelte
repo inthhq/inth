@@ -8,7 +8,7 @@
 	import ConsentDialogLink from '../../lib/components/panel-link.svelte';
 	import ConsentDialogTrigger from '../../lib/components/panel-trigger.svelte';
 	import ConsentBanner from '../../lib/components/prompt/prompt.svelte';
-	import type { ConsentManagerOptions } from '../../lib/types';
+	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 	import Capture from './conformance-kernel-capture.svelte';
 
 	let {

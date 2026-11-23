@@ -10,7 +10,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { liveIntentTag } from './vendors/ads-and-pixels/liveintent';
 
 describe('LiveIntent core loader consent contract', () => {

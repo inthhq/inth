@@ -4,7 +4,7 @@ import { expect, test } from 'vitest';
 import { ref } from 'vue';
 
 import IabFeatureItem from '../runtime/components/iab-feature-item.vue';
-import { symbolInit } from '../runtime/utils/symbols';
+import { symbolInit } from '../runtime/utils/consent-symbols.model';
 
 test('feature disclosure chevrons stay out of the accessibility tree', async () => {
 	const wrapper = mount(IabFeatureItem, {

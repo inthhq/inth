@@ -14,7 +14,7 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 import type { ConsentState } from '../server';
 import { policyFixture } from './policy-fixture';
 

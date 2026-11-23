@@ -1,1 +1,1 @@
-export { type StatusOutput, statusOutputSchema } from './status';
+export { type StatusOutput, statusOutputSchema } from './meta-status.model';

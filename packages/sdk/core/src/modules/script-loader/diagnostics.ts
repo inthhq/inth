@@ -1,5 +1,5 @@
-import type { ConsentKernel } from '../../types';
-import type { Script, ScriptLoaderDebugEvent } from './types';
+import type { ConsentKernel } from '../../consent-kernel.model';
+import type { Script, ScriptLoaderDebugEvent } from './script-loader.model';
 
 /** Current loader state, distinct from merely finding a script element. */
 export type ScriptDiagnosticStatus =

@@ -75,18 +75,19 @@ import type { OptOutReceiptData, OptOutState } from '@inth/sdk/surface-state';
 import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme } from '@inth/sdk/ui/theme';
 
-import { BOOT_STATE_KEY, restoreBoot } from './deferred/boot';
-import type { ConsentBoot } from './deferred/boot';
-import { createDeferredRuntime } from './deferred/deferred-runtime';
+import { BOOT_STATE_KEY } from './deferred/boot-state-key';
+import { restoreBoot } from './deferred/consent-boot.model';
+import type { ConsentBoot } from './deferred/consent-boot.model';
+import { createDeferredRuntime } from './deferred/create-deferred-runtime';
 import type {
 	DeferredRuntime,
 	EngineFactory,
-} from './deferred/deferred-runtime';
-import type * as EngineModule from './deferred/engine';
-import { isIABConfigured } from './iab-loader';
-import { INTH_OPTIONS, runtimeOptionsFor } from './options';
-import type { InthResolvedOptions, InthSharedOptions } from './options';
-import { SERVER_STATE_KEY, SERVER_STATE_GATE } from './server-state';
+} from './deferred/create-deferred-runtime';
+import type * as EngineModule from './deferred/create-engine';
+import { INTH_OPTIONS, runtimeOptionsFor } from './inth-options';
+import type { InthResolvedOptions, InthSharedOptions } from './inth-options';
+import { isIABConfigured } from './lazy-create-iab';
+import { SERVER_STATE_KEY, SERVER_STATE_GATE } from './server-state-gate';
 
 /**
  * Loads the consent engine's chunk. Provide another to test a failed load.
@@ -96,7 +97,7 @@ import { SERVER_STATE_KEY, SERVER_STATE_GATE } from './server-state';
 export const CONSENT_ENGINE_MODULE = new InjectionToken<
 	() => Promise<typeof EngineModule>
 >('INTH_CONSENT_ENGINE_MODULE', {
-	factory: () => () => import('./deferred/engine'),
+	factory: () => () => import('./deferred/create-engine'),
 });
 
 /** How long after a failed draft import its readers try again, doubling. */
@@ -218,7 +219,7 @@ const noop = () => {
  * (storage, `/v1/consent/init`, script loading, IAB) only in the browser, after the
  * first render, so hydration sees the state the server rendered with; for
  * a visitor the server's state lets wait, after the page's priority
- * images (`deferred/trigger.ts`).
+ * images (`deferred/schedule-deferred-engine.ts`).
  *
  * @example
  * ```ts
@@ -932,7 +933,7 @@ export class ConsentManager {
 			if (!runtime) {
 				return;
 			}
-			const { planServerBoot } = await import('./deferred/boot-server');
+			const { planServerBoot } = await import('./deferred/plan-server-boot');
 			// The options the engine started from, with the request's state.
 			transferState.set(
 				BOOT_STATE_KEY,

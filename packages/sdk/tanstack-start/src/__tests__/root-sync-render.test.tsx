@@ -13,7 +13,7 @@ import {
 	NOW,
 	optInRule,
 } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 import { transportMode } from './fixtures/transport-mode';
 
 // The engine starts loading the server start's module as it is imported, and

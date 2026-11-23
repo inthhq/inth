@@ -1,6 +1,3 @@
 'use client';
 
-export {
-	ConsentDialogLink,
-	type ConsentDialogLinkProps,
-} from '../consent-preferences-link/consent-preferences-link';
+export { ConsentDialogLink, type ConsentDialogLinkProps } from './panel-link';

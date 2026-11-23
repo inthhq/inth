@@ -6,11 +6,11 @@ import { bootClient } from '../../src/__tests__/conformance-app';
 import type { ClientApp } from '../../src/__tests__/conformance-app';
 import type { ConformanceEntry } from '../../src/__tests__/conformance-registry';
 import { settle, testOptions } from '../../src/__tests__/test-local';
+import type { InthProviderOptions } from '../../src/lib/core/inth-options';
 import {
 	resetDialogWarmingForTests,
 	warmDialog,
-} from '../../src/lib/core/dialog-warming';
-import type { InthProviderOptions } from '../../src/lib/core/options';
+} from '../../src/lib/core/warm-dialog';
 import { ConsentDialog } from './consent-dialog';
 
 let app: ClientApp | undefined;

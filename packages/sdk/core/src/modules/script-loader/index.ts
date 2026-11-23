@@ -1,4 +1,8 @@
 import { createScriptLoaderWith } from './loader';
+import type {
+	ScriptLoaderHandle,
+	ScriptLoaderOptions,
+} from './script-loader.model';
 /**
  * `@inth/sdk/modules/script-loader`
  *
@@ -24,7 +28,6 @@ import { createScriptLoaderWith } from './loader';
  *   loaders (or already in the DOM) are left alone.
  */
 import { scriptLoaderTools } from './tools';
-import type { ScriptLoaderHandle, ScriptLoaderOptions } from './types';
 
 export {
 	getScriptDiagnostics,
@@ -38,7 +41,7 @@ export type {
 	ScriptLoaderDebugEvent,
 	ScriptLoaderHandle,
 	ScriptLoaderOptions,
-} from './types';
+} from './script-loader.model';
 
 /**
  * Create a script loader: mounts each script whose consent condition

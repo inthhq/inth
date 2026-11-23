@@ -3,7 +3,7 @@ import { css as iabFirstPaintCSS } from '@inth/sdk/ui/styles/sheets/iab-first-pa
 import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 
-import { injectSurfaceStyles } from '../lib/kit/surface-styles';
+import { injectSurfaceStyles } from '../lib/kit/inject-surface-styles';
 import Fixture from './fixtures/iab-surface-styles.svelte';
 import { iabStyleOptions } from './iab-style-options';
 

@@ -1,7 +1,7 @@
 # HTML (script tag)
 
 The smallest Inth setup for a site without a build step: one script tag loads
-`@inth/sdk` from jsDelivr with the stock consent banner and dialog,
+`inth.js` from your Inth project with the stock consent banner and dialog,
 PostHog waits for measurement consent as an inert `text/plain` tag, and a
 "Privacy settings" link reopens the dialog.
 
@@ -15,7 +15,7 @@ PostHog waits for measurement consent as an inert `text/plain` tag, and a
 From the repository root:
 
 ```sh
-bun install
+pnpm install
 bun run --cwd examples/html dev
 ```
 
@@ -23,5 +23,5 @@ Replace `https://your-project.inth.app` in `index.html` with your project's
 backend URL, add `http://localhost:4173` to the project's trusted origins, and
 replace `phc_your_project_key` in `posthog.js` with your PostHog project key.
 
-The [HTML quickstart](https://c15t.com/docs/frameworks/html/quickstart) walks
+The [HTML quickstart](https://inth.com/docs/frameworks/html/quickstart) walks
 through each part.

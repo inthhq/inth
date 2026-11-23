@@ -26,11 +26,11 @@ import type {
 	RefCallback,
 } from 'react';
 
-import { TriggerToolbar } from './components/panel-trigger/atoms/toolbar';
-import { registerTriggerToolbar } from './components/panel-trigger/toolbar-loader';
+import { TriggerToolbar } from './components/panel-trigger/atoms/trigger-toolbar';
+import { registerTriggerToolbar } from './components/panel-trigger/trigger-toolbar-loader.model';
 import { KernelContext, ProviderServicesContext } from './context';
-import { attachDevToolsLauncher } from './devtools-launcher';
 import { useIsHydrated } from './hooks/use-is-hydrated';
+import { attachDevToolsLauncher } from './use-dev-tools-launcher';
 
 /** Props for the kernel-bound React DevTools adapter. */
 export interface ConsentDevToolsProps extends Omit<

@@ -6,7 +6,7 @@
 import { fireEvent, render, waitFor } from '@testing-library/svelte';
 import { beforeEach, expect, test, vi } from 'vitest';
 
-import { resetDialogWarmingForTests } from '../lib/dialog-warming';
+import { resetDialogWarmingForTests } from '../lib/warm-dialog';
 import DeferredDialogFixture from './fixtures/deferred-dialog-fixture.svelte';
 import { testOffline } from './test-offline';
 

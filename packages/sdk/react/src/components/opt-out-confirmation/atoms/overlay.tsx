@@ -7,8 +7,8 @@ import type { FC, PropsWithChildren } from 'react';
 import { useOptOutConfirmationOpen } from '~/hooks/use-opt-out';
 import { useTheme } from '~/hooks/use-theme';
 import type { ThemeValue } from '~/types/theme';
-import { useUIConfig } from '~/ui-config-context';
-import { cnExt as cn } from '~/utils/cn';
+import { useUIConfig } from '~/use-ui-config';
+import { cnExt as cn } from '~/utils/cn-ext';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 export type OptOutConfirmationOverlayProps = PropsWithChildren<{

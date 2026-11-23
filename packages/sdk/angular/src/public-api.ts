@@ -10,13 +10,13 @@
 
 // core
 export { provideInth } from './lib/core/provide-inth';
-export { INTH_OPTIONS } from './lib/core/options';
+export { INTH_OPTIONS } from './lib/core/inth-options';
 // Private (`ɵ`): the TransferState key `@inth/angular/ssr` writes.
 export {
 	SERVER_STATE_KEY as ɵINTH_SERVER_STATE,
 	SERVER_STATE_GATE as ɵINTH_SERVER_STATE_GATE,
 	ServerStateGate as ɵServerStateGate,
-} from './lib/core/server-state';
+} from './lib/core/server-state-gate';
 export type {
 	InthCallbacks,
 	InthOptions,
@@ -28,7 +28,7 @@ export type {
 	PersistenceOptions,
 	ProviderIABOptions,
 	ScriptLoaderOptions,
-} from './lib/core/options';
+} from './lib/core/inth-options';
 export { ConsentManager } from './lib/core/consent-manager';
 export type {
 	AngularIABState,
@@ -49,16 +49,16 @@ export {
 	TRIGGER_SHEETS,
 } from './lib/core/consent-styles';
 export type { SurfaceStyleSheet } from './lib/core/consent-styles';
-export { whenIABReady } from './lib/core/iab-loader';
+export { whenIABReady } from './lib/core/lazy-create-iab';
 export {
 	holdIdleDialogWarming,
 	registerDialogWarmer,
 	warmDialog,
-} from './lib/core/dialog-warming';
+} from './lib/core/warm-dialog';
 // Private (`ɵ`): the idle boundary the IAB dialog's prefetch waits for.
-export { whenPageIdle as ɵwhenPageIdle } from './lib/core/dialog-warming';
-export type { DialogPreload } from './lib/core/dialog-warming';
-export { manifest } from './lib/core/modes';
+export { whenPageIdle as ɵwhenPageIdle } from './lib/core/warm-dialog';
+export type { DialogPreload } from './lib/core/warm-dialog';
+export { manifest } from './lib/core/provide-mode-transports';
 export { hosted, type HostedMode } from '@inth/sdk/modes';
 export type { ConsentTesting } from '@inth/sdk/testing';
 export { defaultTranslationConfig } from '@inth/sdk/surface-state';
@@ -195,14 +195,14 @@ export {
 	focusInitially as ɵfocusInitially,
 	InitialFocus as ɵInitialFocus,
 	returnFocusAfterDialog as ɵreturnFocusAfterDialog,
-} from './lib/overlay/dialog-focus';
-export { SURFACE_CLOSED as ɵSURFACE_CLOSED } from './lib/core/surface-close';
+} from './lib/overlay/initial-focus';
+export { SURFACE_CLOSED as ɵSURFACE_CLOSED } from './lib/core/surface-closed';
 export { focusBlocking as ɵfocusBlocking } from './lib/core/focus-blocking';
 export { uniqueId as ɵuniqueId } from './lib/core/unique-id';
 export {
 	NoStyleScope as ɵNoStyleScope,
 	resolveNoStyle as ɵresolveNoStyle,
-} from './lib/core/no-style';
+} from './lib/core/no-style-scope';
 export {
 	BrandMarkIcon as ɵBrandMarkIcon,
 	Branding as ɵBranding,
@@ -214,9 +214,9 @@ export type { LegalLinkSelection as ɵLegalLinkSelection } from './lib/shared';
 // Private (`ɵ`): how the consent dialog reaches its body. The body stays
 // out of this entry's eager code: it loads only through this loader, so a
 // page loads it only when the dialog opens or warms.
-export { loadConsentDialogBody as ɵloadConsentDialogBody } from './lib/dialog/dialog-loader';
+export { loadConsentDialogBody as ɵloadConsentDialogBody } from './lib/dialog/load-panel-body';
 export type { ConsentDialogBody as ɵConsentDialogBody } from './lib/dialog/dialog';
-export { requestReceiptFocus as ɵrequestReceiptFocus } from './lib/parts/receipt-focus';
+export { requestReceiptFocus as ɵrequestReceiptFocus } from './lib/parts/request-receipt-focus';
 
 // Engine types the guides use; the helpers are in the `engine` entry.
 export type {

@@ -19,8 +19,8 @@ import {
 	setupScriptHelperTest,
 } from '../__tests__/helpers';
 import { helperParityCases } from '../__tests__/integration-cases';
-import { resolveManifest } from '../resolve';
-import { vendorManifestContract } from '../types';
+import { resolveManifest } from '../resolve-manifest';
+import { vendorManifestContract } from '../vendor-manifest.model';
 import { metaPixel } from '../vendors/ads-and-pixels/meta-pixel';
 import { gainsightPx } from '../vendors/analytics/gainsight-px';
 import { gtag } from '../vendors/analytics/google-tag';

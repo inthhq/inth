@@ -72,25 +72,27 @@ export { default as ConsentDialogTrigger } from './components/panel-trigger.svel
 export { default as InthProvider } from './components/inth-provider.svelte';
 export { default as ConsentWidget } from './components/preferences.svelte';
 export { default as ConsentGate } from './components/consent-gate.svelte';
-export { default as IABConsentBanner } from './components/iab-prompt.svelte';
-export { default as IABConsentDialog } from './components/iab-panel.svelte';
-export { default as OptOutConfirmation } from './components/deferred-opt-out-confirmation.svelte';
+export { default as IABConsentBanner } from './components/iab/iab-prompt.svelte';
+export { default as IABConsentDialog } from './components/iab/iab-panel.svelte';
+export { default as OptOutConfirmation } from './components/confirmation/deferred-opt-out-confirmation.svelte';
 export { default as PrivacyChoicesLink } from './components/privacy-choices-link.svelte';
+export type {
+	HeadlessConsentSurfaceState,
+	SvelteIABState,
+} from './consent-context.model';
 export {
 	getConsentKernel,
 	getConsentManager,
 	getHeadlessConsent,
 	getIAB,
 	getSnapshot,
-	type HeadlessConsentSurfaceState,
-	type SvelteIABState,
-} from './context.svelte';
+} from './get-headless-consent';
 export {
 	getEventDispatcher,
 	type EventDispatcher,
 	type EventProperties,
 	type GetEventDispatcherOptions,
-} from './event-dispatcher';
+} from './get-event-dispatcher';
 export {
 	Accordion,
 	Collapsible,
@@ -108,15 +110,18 @@ export type {
 	UseNetworkBlockerOptions,
 	UsePersistenceOptions,
 	UseScriptLoaderOptions,
-} from './types';
-export type { DialogPreload } from './dialog-warming';
+} from './manager-options.model';
+export type { DialogPreload } from './warm-dialog';
 export type { ConsentTesting } from '@inth/sdk/testing';
 export type { ManifestModeOptions } from './transports/manifest';
 export { manifest } from './transports/manifest';
 export { hosted, type HostedMode } from '@inth/sdk/modes';
 export type { BrowserManifestModeFactory } from '@inth/sdk/transports/manifest-browser';
 
-export type { ConsentManagerState, ConsentDraftState } from './context.svelte';
+export type {
+	ConsentManagerState,
+	ConsentDraftState,
+} from './consent-context.model';
 export {
 	resolveActionLabels,
 	resolveConsentPresentation,

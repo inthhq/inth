@@ -13,9 +13,9 @@ import { beforeAll, describe, expect, it } from 'vitest';
 
 import IABConsentBanner from '../components/iab-prompt.astro';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../types';
 
 let container: AstroContainer;
 

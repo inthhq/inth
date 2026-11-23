@@ -7,23 +7,26 @@ import type { ComponentProps, FC, ReactNode } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
 import { useTriggerLabels } from '~/component-hooks/use-trigger-labels';
-import { useDevToolsLauncherAvailable } from '~/devtools-launcher';
 import { useResolvedPresentation, useSnapshot } from '~/hooks';
+import { useDevToolsLauncherAvailable } from '~/use-dev-tools-launcher';
 
-import { TriggerButton } from './atoms/button';
-import type { TriggerButtonProps } from './atoms/button';
-import { TriggerIcon } from './atoms/icon';
-import type { TriggerIconProps } from './atoms/icon';
-import { TriggerRoot, useTriggerContext } from './atoms/root';
-import type { TriggerRootProps } from './atoms/root';
-import { TriggerText } from './atoms/text';
-import type { TriggerTextProps } from './atoms/text';
-import { getTriggerToolbar, loadTriggerToolbar } from './toolbar-loader';
-import type { TriggerToolbarComponent } from './toolbar-loader';
+import { TriggerButton } from './atoms/trigger-button';
+import type { TriggerButtonProps } from './atoms/trigger-button';
+import { TriggerIcon } from './atoms/trigger-icon';
+import type { TriggerIconProps } from './atoms/trigger-icon';
+import { TriggerRoot, useTriggerContext } from './atoms/trigger-root';
+import type { TriggerRootProps } from './atoms/trigger-root';
+import { TriggerText } from './atoms/trigger-text';
+import type { TriggerTextProps } from './atoms/trigger-text';
 import type {
 	ConsentDialogTriggerProps,
 	ConsentDialogTriggerToolbarAction,
-} from './types';
+} from './panel-trigger.model';
+import {
+	getTriggerToolbar,
+	loadTriggerToolbar,
+} from './trigger-toolbar-loader.model';
+import type { TriggerToolbarComponent } from './trigger-toolbar-loader.model';
 
 const EMPTY_ACTIONS: readonly ConsentDialogTriggerToolbarAction[] = [];
 

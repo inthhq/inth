@@ -2,7 +2,7 @@ import type { ConsentSnapshot } from '@inth/sdk/engine';
 import { pendingBootSnapshot } from '@inth/sdk/surface-state';
 import { describe, expect, test, vi } from 'vitest';
 
-import { createDeferredRuntime } from './deferred-runtime';
+import { createDeferredRuntime } from './create-deferred-runtime';
 
 // Its own file: the commit module must not have loaded in an earlier test.
 let loads = 0;

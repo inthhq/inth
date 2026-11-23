@@ -1,15 +1,15 @@
-import type { ResolvedBundleManifest } from './bundle-manifest';
 import {
 	CONSENT_CATEGORY_IDS,
 	LOCALE_TAG_PATTERN,
 	SK_AD_NETWORK_IDENTIFIER_PATTERN,
 } from './constants';
 import type { ConsentCategoryId } from './constants';
-import { InthPluginError } from './errors';
-import { resolveAndroidMavenRepository } from './maven';
-import type { InthAndroidMavenRepository } from './maven';
+import type { ResolvedBundleManifest } from './fetch-bundled-manifest';
+import { InthPluginError } from './inth-plugin-error';
 import { normalizeProjectUrl, ProjectUrlError } from './project-url';
-import type { InthThemePluginProps } from './theme';
+import { resolveAndroidMavenRepository } from './resolve-android-maven-repository';
+import type { InthAndroidMavenRepository } from './resolve-android-maven-repository';
+import type { InthThemePluginProps } from './with-inth-theme';
 
 /**
  * One locale's Markdown prompt copy, ready to write into a string table.

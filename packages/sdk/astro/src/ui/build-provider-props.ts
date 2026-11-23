@@ -1,0 +1,94 @@
+/**
+ * Props for the Svelte dialog island.
+ *
+ * The page runtime owns the kernel and every side-effecting module, so the
+ * provider is handed it through `runtime` and neither starts nor disposes
+ * it. Everything else it gets here is presentation: categories, legal links
+ * and theme tokens the banner and dialog both read.
+ */
+
+import { applyExperimentTheme } from '@inth/sdk/engine';
+import type { ConsentRuntime } from '@inth/sdk/runtime';
+
+import type { InthResolvedOptions } from '../inth-options.model';
+
+/**
+ * The slice of the integration options a dialog island renders with.
+ *
+ * Named so every framework surface can state the same shape instead of
+ * widening to `Record<string, unknown>` and casting it back.
+ */
+export interface DialogPresentationOptions {
+	/**
+	 * Always `null`: the island's provider must leave `inth-dark` alone.
+	 *
+	 * The page's client boot owns the class on `<html>`, or the site does
+	 * with `colorScheme: 'none'`. A provider given no scheme falls back to
+	 * mirroring a `.dark` class and watching `<html>` while it is mounted,
+	 * so opening a dialog on a page without `.dark` would turn it light.
+	 */
+	colorScheme: null;
+	consentCategories?: InthResolvedOptions['consentCategories'];
+	/**
+	 * `<ConsentDialog disableAnimation>`, else the integration option.
+	 * Unset, the island's provider follows `prefers-reduced-motion`.
+	 */
+	disableAnimation?: boolean;
+	/**
+	 * The configured experiment. The island reads the assigned arm from the
+	 * runtime snapshot and merges that arm over `presentation`; `theme`
+	 * below already carries the arm's theme overrides.
+	 */
+	experiment?: InthResolvedOptions['experiment'];
+	legalLinks?: InthResolvedOptions['legalLinks'];
+	presentation?: InthResolvedOptions['presentation'];
+	/**
+	 * Always `false`: the page inlines the first-paint rules and the client
+	 * links the dialog's before the island mounts, so the island's own
+	 * surfaces add no stylesheet of their own.
+	 */
+	styles: false;
+	/**
+	 * Tokens and `theme.slots`. Every island's provider applies the slots
+	 * itself: Svelte reads them directly, React and Vue through their
+	 * `components` parts.
+	 */
+	theme?: InthResolvedOptions['theme'];
+}
+
+/** Props handed to `InthProvider` by the Svelte dialog surface. */
+export interface DialogProviderProps {
+	/** The page-level runtime. The provider borrows it, it does not own it. */
+	runtime: ConsentRuntime;
+	/** Presentation options forwarded to the provider. */
+	options: DialogPresentationOptions;
+}
+
+/**
+ * Build the provider props for a dialog island.
+ *
+ * @param runtime - The page runtime that owns the kernel.
+ */
+export const buildProviderProps = function buildProviderProps(
+	runtime: ConsentRuntime,
+	options: InthResolvedOptions
+): DialogProviderProps {
+	// The arm's theme overrides ride on the host theme. The island mounts
+	// after `start()`, so the assignment is already known.
+	const theme = applyExperimentTheme(
+		options.theme,
+		options.experiment,
+		runtime.kernel.getSnapshot().experiment
+	);
+	const presentationOptions: DialogPresentationOptions = {
+		colorScheme: null,
+		consentCategories: options.consentCategories,
+		disableAnimation: options.disableAnimation,
+		experiment: options.experiment,
+		legalLinks: options.legalLinks,
+		presentation: options.presentation,
+		styles: false,
+		theme,
+	};
+	return { options: presentationOptions, runtime };
+};

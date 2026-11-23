@@ -54,33 +54,37 @@ import {
 } from 'vue';
 
 import { useConsentConfig } from '../../composables/config';
-import { useConsentInit } from '../../composables/init';
+import { useConsentInit } from '../../composables/use-consent-init';
 import {
 	useConsentKernel,
 	useConsentKernelContext,
 	useConsentSnapshot,
 	useHasConsentUi,
-} from '../../composables/kernel';
+} from '../../composables/use-consent-kernel';
 import { useMounted } from '../../composables/use-mounted';
 import { useSurfaceTranslations } from '../../composables/use-surface-translations';
-import type { RuntimeConsentConfig } from '../../kernel';
 import { slotAttrs } from '../../utils/slot-attrs';
-import { loadConsentDialog } from '../dialog/load';
+import type { RuntimeConsentConfig } from '../../vue-consent-kernel-context.model';
+import { loadConsentDialog } from '../dialog/load-panel';
 import ChoiceButton from '../parts/choice-button.vue';
-import { provideChoiceDraft } from '../parts/draft';
-import { useHydrationHold } from '../parts/hydration-hold';
 import InlineLegalLinks from '../parts/inline-legal-links.vue';
-import { useRetryableComponent } from '../parts/retryable-component';
+import { provideChoiceDraft } from '../parts/use-choice-draft';
+import { useHydrationHold } from '../parts/use-hydration-hold';
 import { usePhoneLayout } from '../parts/use-phone-layout';
+import { useRetryableComponent } from '../parts/use-retryable-component';
 import {
 	rightsBundleOf,
 	useOptOutReceiptData,
 	useSurfaceSession,
 } from '../parts/use-surface-session';
+import { bannerPageRegionKey } from './banner-page-region-key';
 import EarlyTapScript from './early-tap-script';
-import { bannerPageRegionKey } from './page-region';
+import type {
+	ActionGroups,
+	ContainerStyles,
+	PromptContainer,
+} from './prompt.model';
 import BannerTag from './tag.vue';
-import type { ActionGroups, ContainerStyles, PromptContainer } from './types';
 
 /** The options, loaded when Customize first opens them, or at once in a side Drawer. */
 const loadPanel = () => import('./panel.vue');

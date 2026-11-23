@@ -9,7 +9,7 @@ import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { createManifestCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { rememberConsentInputs } from '../libs/request-inputs';
+import { rememberConsentInputs } from '../consent-request/consent-request-inputs.model';
 import { createConsentStateHandler, resolveConsent } from '../server';
 import { loadStaticManifest } from '../static';
 import { MANIFEST_FIXTURE } from './manifest-fixture';

@@ -11,7 +11,7 @@
  * runner branches on the data rather than on the fixture id:
  *
  * - `parity` -- a model built from exactly the fields `@inth/sdk-iab` populates
- *   (`packages/sdk/iab/src/tcf/tc-string.ts`), with its defaults. A native encoder must
+ *   (`packages/sdk/iab/src/tcf/tc-string.model.ts`), with its defaults. A native encoder must
  *   reproduce these byte for byte AND read them back. Byte equality here is the whole
  *   point: two encoders that agree on the input but disagree on one bit produce
  *   strings that vendors read as different consent.
@@ -408,7 +408,7 @@ const DAY_MS = 86_400_000;
 
 /**
  * Inth truncates the confirmation time to a UTC day before it reaches the model
- * (`packages/sdk/iab/src/tcf/tc-string.ts`, `confirmedDay`). A parity vector that used
+ * (`packages/sdk/iab/src/tcf/tc-string.model.ts`, `confirmedDay`). A parity vector that used
  * the raw clock would therefore pin a string Inth can never produce, and both native
  * cores would faithfully implement a timestamp no Inth install ever writes.
  */
@@ -906,7 +906,7 @@ const POPULATION_NOTES: Record<TcStringPopulation, string> = {
  * Where the two populations stop being a label and become a checked claim.
  *
  * A parity vector is only worth having if it really is a string Inth can produce, so
- * every field outside the set `packages/sdk/iab/src/tcf/tc-string.ts` touches has to sit
+ * every field outside the set `packages/sdk/iab/src/tcf/tc-string.model.ts` touches has to sit
  * at Inth's default. Marking a decode-coverage case as `parity` fails the build here
  * rather than quietly handing both native cores a byte string no Inth install emits
  * and a parity failure neither of them can fix.

@@ -1,0 +1,22 @@
+/**
+ * The standard banner's first-paint rules, on their own so the engine can
+ * load them for a page that left them out (see `ensureFirstPaintStyles`
+ * in `../boot-client-engine`) without the IAB rules.
+ *
+ * `@inth/sdk/ui`'s first-paint sheet, plus the rule from `styles.css` that lets
+ * the `hidden` attribute hide the banner: the browser runtime shows and
+ * hides the banner with that attribute, and the banner's own `display`
+ * would otherwise beat the user-agent rule for `[hidden]`.
+ *
+ * @internal
+ */
+import { css as firstPaintCSS } from '@inth/sdk/ui/styles/sheets/first-paint';
+
+/** Marks the inlined `<style>`, as the React and Svelte surfaces do. */
+export const INLINE_STYLES_ID = 'inth-first-paint';
+
+const HIDDEN_BANNER_CSS =
+	'[data-testid=consent-banner-root][hidden],[data-testid=consent-banner-overlay][hidden],[data-testid=iab-consent-banner-root][hidden],[data-testid=iab-consent-banner-overlay][hidden]{display:none!important}';
+
+/** The text of the inlined `<style>`. */
+export const INLINE_STYLES_CSS = `${firstPaintCSS}\n${HIDDEN_BANNER_CSS}`;

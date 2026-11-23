@@ -13,7 +13,7 @@ pnpm add @inth/vue
 - Composables for a fully custom design
 - Analytics, ads, and pixels follow each visitor's choice through @inth/integrations: Google Tag Manager, Google Consent Mode v2, GA4, Meta Pixel, PostHog, and more
 - IAB TCF 2.4 banner and dialog components
-- Translations for 53 languages through @inth/vue/translations
+- Translations for 53 languages through `@inth/vue/translations/<language>`, or all of them through `@inth/vue/translations/all`
 
 ## Prerequisites
 

@@ -1,3 +1,4 @@
+import type { ConsentSnapshot } from '../consent-kernel.model';
 /**
  * The runtime a framework provider renders: a consent runtime whose
  * options follow the component's props.
@@ -20,25 +21,14 @@
  * whose options changed without touching the others.
  */
 import type { AllConsentNames } from '../consent/consent-types';
-import type { InternalKernel } from '../kernel/internals';
+import type { InternalKernel } from '../kernel/kernel-internals.model';
 import { extractConsentNamesFromCondition } from '../libs/has';
 import { isProductionBuild, warnInDevelopment } from '../libs/is-production';
 import { declareOwnedVendors, resolveVendors } from '../libs/vendors';
 import { holdNetworkRequests, NOT_HELD } from '../modules/network-blocker/hold';
 import type { NetworkHold } from '../modules/network-blocker/hold';
 import { kernelConfigToInitResponse } from '../transports/init-output';
-import type { ConsentSnapshot } from '../types';
 import { assembleConsentRuntime } from './assemble';
-import { afterModuleLoaded } from './lazy-module';
-import type * as ProviderUpdateModule from './provider-update';
-import type { ProviderUpdateHost } from './provider-update';
-import {
-	createRuntimeKernel,
-	hasResolvedPrefetch,
-	normalizeKernelUser,
-	requireTransportFactory,
-} from './runtime-kernel';
-import { scriptRegistry } from './script-registry';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
@@ -48,7 +38,17 @@ import type {
 	ConsentRuntimeUpdate,
 	RuntimePrefetch,
 	StreamedPrefetch,
-} from './types';
+} from './consent-runtime.model';
+import {
+	createRuntimeKernel,
+	hasResolvedPrefetch,
+	normalizeKernelUser,
+	requireTransportFactory,
+} from './create-runtime-kernel';
+import { afterModuleLoaded } from './lazy-runtime-module';
+import type * as ProviderUpdateModule from './provider-update';
+import type { ProviderUpdateHost } from './provider-update';
+import { scriptRegistry } from './script-registry';
 
 type Callbacks = NonNullable<ConsentRuntimeUpdate['callbacks']>;
 

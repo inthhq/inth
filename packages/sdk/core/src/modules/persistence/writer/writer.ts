@@ -1,3 +1,7 @@
+import type {
+	ConsentSnapshot,
+	HydrationRecords,
+} from '../../../consent-kernel.model';
 /**
  * Persistence's write half: storing records after kernel events and
  * reconciling with other runtimes. Loaded on demand by `../index.ts`, which
@@ -10,7 +14,7 @@
  * chunks of their own.
  *
  * The ordering rules (per-category merge, ties, subjects, the clear epoch)
- * are in `reconcile.ts`; the write-before-send timing in `schedule.ts`.
+ * are in `writer-reconcile.model.ts`; the write-before-send timing in `create-write-scheduler.ts`.
  *
  * @internal
  */
@@ -19,9 +23,22 @@ import type {
 	ConsentSubject,
 	ExplicitChoice,
 } from '../../../consent-record/types';
-import type { ConsentSnapshot, HydrationRecords } from '../../../types';
-import type { StoredRecords } from '../hydrate';
-import type { StoredIabMetadata } from '../record-codec';
+import type { StoredRecords } from '../persistence-hydrate.store';
+import type { StoredIabMetadata } from '../record-codec.model';
+import { createWriteScheduler } from './create-write-scheduler';
+import {
+	writeChoiceToStorage,
+	writeNoticeToStorage,
+	writeOptOutToStorage,
+	writeVendorChoiceToStorage,
+} from './persistence-write.store';
+import type {
+	PersistenceContext,
+	PersistenceTools,
+	PersistenceWriter,
+	WriteKind,
+} from './persistence-writer.model';
+import { createRecordStore } from './persistence-writer.store';
 import {
 	choiceToWrite,
 	fingerprintStoredRecords,
@@ -32,22 +49,11 @@ import {
 	selectReconciledRecords,
 	subjectAfterClear,
 	subjectToWrite,
-} from './reconcile';
-import type { StorageFingerprints, StoredRecordKind } from './reconcile';
-import { createWriteScheduler } from './schedule';
-import { createRecordStore } from './store';
+} from './writer-reconcile.model';
 import type {
-	PersistenceContext,
-	PersistenceTools,
-	PersistenceWriter,
-	WriteKind,
-} from './types';
-import {
-	writeChoiceToStorage,
-	writeNoticeToStorage,
-	writeOptOutToStorage,
-	writeVendorChoiceToStorage,
-} from './write';
+	StorageFingerprints,
+	StoredRecordKind,
+} from './writer-reconcile.model';
 
 /**
  * Create the write half of one persistence handle. It writes nothing until

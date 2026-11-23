@@ -16,7 +16,7 @@ import {
 import { describe, expect, test } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
-import { CARD_CONTAINER } from '../prompt/card';
+import { CARD_CONTAINER } from '../prompt/card-container';
 import { ConsentBanner } from '../prompt/prompt';
 import { ConsentManager } from './consent-manager';
 import { STYLE_ATTRIBUTE } from './consent-styles';

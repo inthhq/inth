@@ -1,8 +1,8 @@
 import { IABUnavailableError, policyNeedsIAB } from '@inth/sdk/engine';
 import { useContext } from 'react';
 
-import { IABContext } from '~/context/iab-context-value';
-import { useKernelSelector } from '~/kernel-selector';
+import { IABContext } from '~/context/iab-context';
+import { useKernelSelector } from '~/use-kernel-selector';
 
 /**
  * Marks that `@inth/react/iab` has loaded. A registry symbol, so a copy of

@@ -39,21 +39,23 @@ export { focusTrap } from './actions/focus-trap';
 export { portal } from './actions/portal';
 export { scrollLock } from './actions/scroll-lock';
 export { default as InlineLegalLinks } from './components/inline-legal-links.svelte';
+export type {
+	HeadlessConsentSurfaceState,
+	SvelteIABState,
+} from './consent-context.model';
 export {
 	getConsentKernel,
 	getConsentManager,
 	getHeadlessConsent,
 	getIAB,
 	getSnapshot,
-	type HeadlessConsentSurfaceState,
-	type SvelteIABState,
-} from './context.svelte';
+} from './get-headless-consent';
 export {
 	getEventDispatcher,
 	type EventDispatcher,
 	type EventProperties,
 	type GetEventDispatcherOptions,
-} from './event-dispatcher';
+} from './get-event-dispatcher';
 export {
 	type HeadlessIABVendorId,
 	type ProcessedFeature,
@@ -65,4 +67,4 @@ export {
 	processGVLForDialog,
 	resolveIABBannerSummary,
 } from '@inth/sdk/iab/headless';
-export type { ConsentManagerOptions } from './types';
+export type { ConsentManagerOptions } from './manager-options.model';

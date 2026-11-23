@@ -27,19 +27,19 @@
  * } from '@inth/sdk-core/runtime/provider';
  * ```
  */
-export { claimEarlyJourney } from '../libs/journey';
+export { claimEarlyJourney } from '../libs/journey.store';
 // The English defaults and the revocation reload a provider passes its
 // runtime, so a provider that loads its engine on demand never imports the
 // root entry, which first-load code may reach too.
 export { watchRevocationReload } from '../modules/revocation-reload';
 export { defaultTranslationConfig } from '../translations';
-export { lazyRuntimeModule } from './lazy-module';
+export { lazyRuntimeModule } from './lazy-runtime-module';
 export { createConsentProviderRuntime } from './provider-runtime';
-export { lazyStreamPrefetch, streamPrefetchWith } from './stream-mode';
-export { readHostedMode } from '../transports/hosted-modes';
+export { lazyStreamPrefetch, streamPrefetchWith } from './create-streamed-mode';
+export { readHostedMode } from '../transports/hosted-modes.model';
 export { earlyInitModes } from '../transports/early-init-modes';
 export type { EarlyInitMode } from '../transports/early-init-modes';
-export type { ResolveStreamedInit } from './stream-mode';
+export type { ResolveStreamedInit } from './create-streamed-mode';
 export type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
@@ -49,4 +49,4 @@ export type {
 	RuntimePrefetch,
 	StreamedPrefetch,
 	WithProjectUrl,
-} from './types';
+} from './consent-runtime.model';

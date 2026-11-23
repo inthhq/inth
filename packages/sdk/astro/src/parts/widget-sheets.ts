@@ -15,8 +15,8 @@ import * as parts from '@inth/sdk/ui/styles/sheets/parts';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
 import * as widget from '@inth/sdk/ui/styles/sheets/widget';
 
-import { insertSheets } from './sheets';
-import type { StyleSheet } from './sheets';
+import { insertSheets } from './insert-sheets';
+import type { StyleSheet } from './insert-sheets';
 
 /** React's `WIDGET_SHEETS`, in cascade order. */
 export const WIDGET_SHEETS: readonly StyleSheet[] = [

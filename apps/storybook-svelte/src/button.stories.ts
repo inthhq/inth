@@ -1,9 +1,9 @@
 import { buttonRenders } from '@inth/conformance/play/button';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
-import ButtonAllModesDemo from './ButtonAllModesDemo.svelte';
-import ButtonDemo from './ButtonDemo.svelte';
-import ButtonWithIconDemo from './ButtonWithIconDemo.svelte';
+import ButtonAllModesDemo from './button-all-modes-demo.svelte';
+import ButtonDemo from './button-demo.svelte';
+import ButtonWithIconDemo from './button-with-icon-demo.svelte';
 
 const meta = {
 	component: ButtonDemo,

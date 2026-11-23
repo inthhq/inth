@@ -15,13 +15,19 @@ import { OPTIONAL_CONSENT_CATEGORIES } from '@inth/sdk-core';
 import { readPolicyResolutionWire } from '@inth/sdk-schema/types';
 import { describe, expect, test } from 'vitest';
 
-import { encodeGPPString, encodeUSSection } from '../gpp/encoder';
-import type { EncodedGPPSection, GPPFieldValues } from '../gpp/encoder';
-import { TCF_EU_SECTION_ID, US_NATIONAL_SECTION } from '../gpp/sections';
+import { encodeGPPString, encodeUSSection } from '../gpp/gpp-encoder.model';
+import type {
+	EncodedGPPSection,
+	GPPFieldValues,
+} from '../gpp/gpp-encoder.model';
+import {
+	TCF_EU_SECTION_ID,
+	US_NATIONAL_SECTION,
+} from '../gpp/gpp-sections.model';
 import {
 	resolveUSSectionDefinition,
 	resolveUSSectionValues,
-} from '../gpp/us-section';
+} from '../gpp/us-section.model';
 
 const PROTOCOL = resolve(import.meta.dirname, '../../../../native-protocol');
 

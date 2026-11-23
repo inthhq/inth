@@ -1,0 +1,332 @@
+<script lang="ts">
+	import {
+		resolveIABBannerSummary,
+		resolveConsentPresentation,
+	} from '@inth/sdk/engine';
+	import type { Model } from '@inth/sdk/engine';
+	import { resolveIABBannerCopy } from '@inth/sdk/iab/headless';
+	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
+	import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
+	import { resolveIABCopy } from '@inth/sdk/surface-state';
+	import buttonStyles from '@inth/sdk/ui/styles/components/button';
+	import actionStyles from '@inth/sdk/ui/styles/components/consent-actions';
+	import styles from '@inth/sdk/ui/styles/components/iab-consent-banner';
+	import {
+		getTextDirection,
+		resolveStyles,
+		toStyleAttributeValue,
+	} from '@inth/sdk/ui/utils';
+
+	import { focusTrap } from '../../actions/focus-trap';
+	import { portal } from '../../actions/portal';
+	import { scrollLock } from '../../actions/scroll-lock';
+	import { focusBlocking } from '../../focus-blocking';
+	import { getConsentContext } from '../../get-consent-context.svelte';
+	import { getThemeContext } from '../../get-theme-context';
+	import { useBannerVisibility } from '../../use-banner-visibility.svelte';
+	import Branding from '../branding.svelte';
+	import Overlay from '../overlay.svelte';
+	import SurfaceStyles from '../surface-styles.svelte';
+	import { IAB_FIRST_PAINT_SHEETS } from './iab-first-paint-sheets';
+
+	let {
+		noStyle: localNoStyle,
+		disableAnimation: localDisableAnimation,
+		scrollLock: localScrollLock,
+		trapFocus: localTrapFocus,
+		hideBranding = false,
+		primaryButton = 'customize' as 'reject' | 'accept' | 'customize',
+		models = ['iab'] as Model[],
+		class: className,
+	}: {
+		noStyle?: boolean;
+		disableAnimation?: boolean;
+		scrollLock?: boolean;
+		trapFocus?: boolean;
+		hideBranding?: boolean;
+		primaryButton?: 'reject' | 'accept' | 'customize';
+		models?: Model[];
+		class?: string;
+	} = $props();
+
+	const consent = getConsentContext();
+	const theme = getThemeContext();
+
+	const noStyle = $derived(localNoStyle ?? theme.noStyle ?? false);
+	const disableAnimation = $derived(
+		localDisableAnimation ?? theme.disableAnimation ?? false
+	);
+	const presentation = $derived(
+		resolveConsentPresentation({
+			override: {
+				blockUntilChoice: focusBlocking(
+					'prompt',
+					consent.state.presentation,
+					{ scrollLock: localScrollLock, trapFocus: localTrapFocus },
+					theme
+				),
+			},
+			policy: consent.snapshot.policyRule,
+			presentation: consent.state.presentation,
+			surface: 'prompt',
+		})
+	);
+	const shouldTrapFocus = $derived(presentation.blocking);
+	const shouldScrollLock = $derived(presentation.blocking);
+
+	const iabState = $derived(consent.state.iab);
+
+	const iabT = $derived(resolveIABCopy(consent.state.copy));
+	const textDirection = $derived(
+		getTextDirection(consent.state.translations?.language)
+	);
+
+	const shouldShowBanner = $derived(
+		consent.state.hasConsentUi &&
+			consent.state.activeUI === 'banner' &&
+			models.includes(consent.state.model) &&
+			iabState?.config.enabled === true
+	);
+
+	const visibility = useBannerVisibility(
+		() => shouldShowBanner,
+		() => disableAnimation
+	);
+
+	const summary = $derived(resolveIABBannerSummary(iabState));
+	const displayItems = $derived({
+		displayed: summary.displayItems,
+		isReady: summary.isReady,
+		remainingCount: summary.remainingCount,
+	});
+
+	const handleSave = async function handleSave() {
+		if (!iabState) {
+			return;
+		}
+		const state = iabState;
+		await saveIABConsentSurface(consent.kernel, () => state.save());
+	};
+
+	const handleAcceptAll = function handleAcceptAll() {
+		iabState?.acceptAll();
+		return handleSave();
+	};
+
+	const handleRejectAll = function handleRejectAll() {
+		iabState?.rejectAll();
+		return handleSave();
+	};
+
+	const handleCustomize = function handleCustomize() {
+		iabState?.setPreferenceCenterTab('purposes');
+		consent.state.setActiveUI('dialog');
+	};
+
+	const handleViewVendors = function handleViewVendors() {
+		iabState?.setPreferenceCenterTab('vendors');
+		consent.state.setActiveUI('dialog');
+	};
+
+	const isPrimary = function isPrimary(
+		button: 'reject' | 'accept' | 'customize'
+	): boolean {
+		return button === primaryButton;
+	};
+
+	/**
+	 * The shared button stylesheet keys its variants off `data-*`, the way
+	 * every other consent button in the repo does. Emitting the same
+	 * attributes keeps the IAB banner's controls identical to React's.
+	 */
+	const actionButtonAttrs = function actionButtonAttrs(
+		button: 'reject' | 'accept' | 'customize'
+	) {
+		const primary = isPrimary(button);
+		return {
+			'data-mode': primary && button !== 'reject' ? 'filled' : 'stroke',
+			'data-size': 'small',
+			'data-variant': primary ? 'primary' : 'neutral',
+		} as const;
+	};
+
+	const rootStyle = $derived(
+		resolveStyles(
+			'iabConsentBanner',
+			theme.theme,
+			{
+				baseClassName: styles.root,
+				className,
+				noStyle,
+			},
+			noStyle
+		)
+	);
+
+	const cardStyle = $derived(
+		resolveStyles(
+			'iabConsentBannerCard',
+			theme.theme,
+			{ baseClassName: styles.card, noStyle },
+			noStyle
+		)
+	);
+
+	const headerStyle = $derived(
+		resolveStyles(
+			'iabConsentBannerHeader',
+			theme.theme,
+			{ baseClassName: styles.header, noStyle },
+			noStyle
+		)
+	);
+
+	const footerStyle = $derived(
+		resolveStyles(
+			'iabConsentBannerFooter',
+			theme.theme,
+			{ baseClassName: [styles.footer, actionStyles.actionRoot], noStyle },
+			noStyle
+		)
+	);
+
+	const finalClassName = $derived(
+		noStyle
+			? rootStyle.className || ''
+			: `${rootStyle.className || ''} ${visibility.isVisible ? `${styles.bannerVisible}${disableAnimation ? '' : ` ${styles.bannerEntering}`}` : styles.bannerHidden}`
+	);
+
+	const bannerCopy = $derived(resolveIABBannerCopy(iabT, summary));
+	const scopeNotice = $derived(iabT.banner.scopeServiceSpecific);
+</script>
+
+{#if visibility.isMounted && visibility.shouldRender && displayItems.isReady}
+	<div use:portal>
+		<SurfaceStyles
+			sheets={IAB_FIRST_PAINT_SHEETS}
+			{noStyle}
+		/>
+		{#if shouldScrollLock}
+			<Overlay
+				{styles}
+				entering={!disableAnimation}
+				lateEntry={visibility.lateEntry && !disableAnimation}
+				variant="iab-banner"
+				visible={visibility.isVisible}
+			/>
+		{/if}
+		<div
+			bind:this={visibility.bannerEl}
+			class={finalClassName}
+			style={toStyleAttributeValue(rootStyle.style)}
+			dir={textDirection}
+			data-position="bottom-left"
+			data-entry={visibility.lateEntry && !disableAnimation
+				? 'late'
+				: undefined}
+			data-testid="iab-consent-banner-root"
+			{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
+			tabindex="-1"
+			use:scrollLock={shouldScrollLock}
+		>
+			<div class={noStyle ? '' : styles.cardShell || ''}>
+				<Branding
+					{hideBranding}
+					{noStyle}
+					surface="iab-banner"
+				/>
+				<div
+					class={cardStyle.className || ''}
+					style={toStyleAttributeValue(cardStyle.style)}
+					data-testid="iab-consent-banner-card"
+					role={shouldTrapFocus ? 'dialog' : 'region'}
+					aria-modal={shouldTrapFocus ? 'true' : undefined}
+					aria-label={iabT.banner.title}
+					use:focusTrap={shouldTrapFocus}
+				>
+					<div
+						class={headerStyle.className || ''}
+						style={toStyleAttributeValue(headerStyle.style)}
+						data-testid="iab-consent-banner-header"
+					>
+						<h2 class={noStyle ? '' : styles.title}>{iabT.banner.title}</h2>
+						<p class={noStyle ? '' : styles.description}>
+							{bannerCopy.descriptionBefore}
+							<button
+								type="button"
+								class={noStyle ? '' : styles.partnersLink}
+								data-testid="iab-consent-banner-partners-link"
+								onclick={handleViewVendors}
+							>
+								{bannerCopy.partnersLink}
+							</button>{bannerCopy.descriptionAfter}
+						</p>
+						<ul class={noStyle ? '' : styles.purposeList}>
+							{#each displayItems.displayed as name (name)}
+								<li>{name}</li>
+							{/each}
+							{#if bannerCopy.andMore}
+								<li class={noStyle ? '' : styles.purposeMore}>
+									{bannerCopy.andMore}
+								</li>
+							{/if}
+						</ul>
+						<p class={noStyle ? '' : styles.legitimateInterestNotice}>
+							{iabT.banner.legitimateInterestNotice}
+							{scopeNotice}
+						</p>
+					</div>
+
+					<div
+						class={footerStyle.className || ''}
+						style={toStyleAttributeValue(footerStyle.style)}
+						data-testid="iab-consent-banner-footer"
+						data-direction="row"
+						data-split="true"
+					>
+						<div
+							class={noStyle ? '' : actionStyles.actionGroup}
+							data-direction="row"
+						>
+							<button
+								type="button"
+								class={noStyle ? '' : buttonStyles.button}
+								{...actionButtonAttrs('reject')}
+								onclick={handleRejectAll}
+								data-action="reject"
+								data-testid="iab-consent-banner-reject-button"
+							>
+								{iabT.common.rejectAll}
+							</button>
+							<button
+								type="button"
+								class={noStyle ? '' : buttonStyles.button}
+								{...actionButtonAttrs('accept')}
+								onclick={handleAcceptAll}
+								data-action="accept"
+								data-testid="iab-consent-banner-accept-button"
+							>
+								{iabT.common.acceptAll}
+							</button>
+						</div>
+						<div
+							class={noStyle ? '' : actionStyles.actionGroup}
+							data-direction="row"
+						>
+							<button
+								type="button"
+								class={noStyle ? '' : buttonStyles.button}
+								{...actionButtonAttrs('customize')}
+								onclick={handleCustomize}
+								data-action="customize"
+								data-testid="iab-consent-banner-customize-button"
+							>
+								{iabT.common.customize}
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}

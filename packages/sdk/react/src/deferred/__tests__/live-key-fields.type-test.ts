@@ -1,7 +1,7 @@
 /**
  * Every `InthProviderOptions` field, sorted for `liveRootKey`. This file
  * is type-checked (`check-types`), so a new option fails until someone
- * classifies it; `deferred-kernel.test.ts` checks the key follows the list.
+ * classifies it; `create-deferred-kernel.test.ts` checks the key follows the list.
  */
 import type { InthProviderOptions } from '../../provider';
 

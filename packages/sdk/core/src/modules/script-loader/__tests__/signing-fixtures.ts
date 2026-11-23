@@ -11,7 +11,7 @@
 import { generateKeyPairSync, sign } from 'node:crypto';
 import type { KeyObject } from 'node:crypto';
 
-import type { RegistrySignature } from '../signature';
+import type { RegistrySignature } from '../script-signature.model';
 
 const keyPair = () => {
 	const { privateKey, publicKey } = generateKeyPairSync('ec', {

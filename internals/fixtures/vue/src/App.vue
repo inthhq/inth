@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ConsentDialogLink, InthProvider } from '@inth/vue/vue-plugin';
 
-import HomePage from './HomePage.vue';
+import HomePage from './home-page.vue';
 </script>
 
 <template>

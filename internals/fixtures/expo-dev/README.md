@@ -43,13 +43,13 @@ need the built client to open it.
 
 The default backend is the public Inth demo, `https://example-inth.inth.app/`.
 Use your Inth project URL for your app. The plugin embeds `inth-policy.json` before
-JavaScript starts; the demo resource expires on 5 November 2026. Regenerate it
+JavaScript starts; the demo resource expires on 5 February 2027. Regenerate it
 before prebuild when changing the endpoint or renewing its authority.
 See [mobile policy resources](../../../packages/native-protocol/docs/mobile-policy-resources.md).
 No hosted save has been verified against the public demo.
 
 ```sh
-bun install                      # from the repository root
+pnpm install                     # from the repository root
 cp .env.example .env
 ```
 
@@ -96,8 +96,8 @@ from the same backend's manifest.
 them back from `app.config.ts`, and the plugin is idempotent.
 
 The autolinked `InthReactNative` pod compiles the generated Swift core and Apple
-services. Do not add a separate `InthCore` pod to this app. The checkout-only
-`INTH_LOCAL_PODS` flag now controls Android source substitution only.
+services. Do not add a separate `InthCore` pod to this app. `eas.json` and the E2E
+runner still set `INTH_LOCAL_PODS`, but nothing reads it now.
 
 For Android, `app.config.ts` explicitly passes `androidMavenRepository` to the
 shipped plugin. The fixture selects `https://maven.pkg.github.com/inthhq/inth`
@@ -187,30 +187,27 @@ Things that differ from the bare fixture:
 
 ## Native build status
 
-Verified here: `bun run check-types` is clean, `expo export --platform all` writes
-2.2 MB Hermes bundles for iOS and Android, `expo prebuild --clean --no-install` exits 0
-with the `com.inth.*` keys and the startup initializer in place, and `pod install` inside
-the generated `ios/` prints
+CI covers this fixture in these places:
 
-```console
-Pod installation complete! There are 96 dependencies from the Podfile and 95 total pods installed.
-```
+- The `React Native` job in `.github/workflows/ci.yml` runs this fixture's `check-types`.
+- `.github/workflows/android-emulator.yml` builds a Release APK of this fixture, and of
+  the `expo-55` and `expo-57` cells, with `scripts/vendor-e2e.sh android`, then runs the
+  vendor journey on an emulator.
 
-with `InthCore` and `InthReactNative` both at 3.0.0-alpha.1, so the plugin's Podfile line,
-the podspec, and the `Inth` TurboModule codegen all hold. `pod install` and `xcodebuild`
-need `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer` on this machine, because
-`xcode-select` points at Command Line Tools.
-
-Nobody has launched a simulator or an emulator from this fixture, and no Gradle build has
-run, so the checklist below is entirely open.
+No CI job builds or launches this fixture on iOS, and nothing runs the checklist below.
+Where `xcode-select` points at Command Line Tools, `pod install` and `xcodebuild` need
+`DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 
 Android autolinking here runs `expo-modules-autolinking`, not `@react-native-community/cli`,
-which is what `expoAutolinking.rnConfigCommand` in the generated Podfile wires. So this app
+which is what `expoAutolinking.rnConfigCommand` in the generated `settings.gradle` wires. So this app
 never asked the question the bare app used to fail on, and it stays that way: the community
 autolinking branch (`EXPO_USE_COMMUNITY_AUTOLINKING=1`) needs `@react-native-community/cli`,
 which this fixture does not depend on. The bare app is where the community CLI's answer about
-this package gets exercised, on CI, by `bun run check:react-native-autolink`; see
-[internals/fixtures/react-native-bare](../react-native-bare#native-build-status).
+this package gets exercised; see
+[internals/fixtures/react-native-bare](../react-native-bare#historical-native-build-status).
+The CI `React Native` job runs `bun scripts/react-native-autolink.ts`, which asks both
+linkers: the community CLI from the bare app, and `expo-modules-autolinking` for Android
+from this app, from the checkout and from the packed tarball.
 
 ## Fake core
 
@@ -232,10 +229,10 @@ is the default; `EXPO_PUBLIC_INTH_FAKE_NATIVE=true` forces the fake.
 **Do these in a build with the bundle inside the binary**, not against the dev server.
 With `bun run ios`, the JavaScript comes from Metro over the network, so airplane mode
 kills the app instead of the backend and every offline result you collect is meaningless.
-Use `bun run ios:release`, or `eas build --profile production`.
+Use `bun run ios:release`, or `eas build --profile preview`.
 
 On Android a release variant needs a signing config this example does not ship, so use
-`eas build --profile production --platform android`, or run the fake core's cold-start
+`eas build --profile preview --platform android`, or run the fake core's cold-start
 simulation for the JavaScript half.
 
 Cached snapshot before any network:

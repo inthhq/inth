@@ -120,12 +120,12 @@ import type {
 	SavePayload,
 } from '@inth/sdk/engine';
 
-import type { CommitIntent } from '../src/protocol/commit';
-import { DEFAULT_NATIVE_LANGUAGE } from '../src/protocol/overrides';
+import type { CommitIntent } from '../src/protocol/commit-payload.model';
+import { DEFAULT_NATIVE_LANGUAGE } from '../src/protocol/native-overrides.model';
 import {
 	isProtocolVersionSupported,
 	PROTOCOL_VERSION,
-} from '../src/protocol/version';
+} from '../src/protocol/protocol-version.model';
 import {
 	buildSubjectPostBody,
 	isValidSubjectId,
@@ -277,7 +277,7 @@ const DAY_MS = 86_400_000;
  * One country each, so no pack ever holds two matching rules, and a 30-day
  * validity so `ageChoice` can take a receipt past its life. A rule cannot say a
  * zero-length validity (`validity.choiceDays` is finite and greater than zero in
- * `packages/sdk/schema/src/shared/policy-rule.ts`), which is why the expiry axis
+ * `packages/sdk/schema/src/shared/policy/policy-rule.model.ts`), which is why the expiry axis
  * ages the record rather than the policy.
  */
 const narrowRule = function narrowRule(
@@ -3242,7 +3242,7 @@ const assertProtocolVersions = function assertProtocolVersions(
 	}
 	if (!isProtocolVersionSupported(PROTOCOL_VERSION)) {
 		throw new Error(
-			`PROTOCOL_VERSION (${String(PROTOCOL_VERSION)}) is outside the range @inth/react-native supports, so no native core could accept a fixture built against it. Widen the supported range in src/protocol/version.ts first.`
+			`PROTOCOL_VERSION (${String(PROTOCOL_VERSION)}) is outside the range @inth/react-native supports, so no native core could accept a fixture built against it. Widen the supported range in src/protocol/protocol-version.model.ts first.`
 		);
 	}
 

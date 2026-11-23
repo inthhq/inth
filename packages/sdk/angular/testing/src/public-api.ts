@@ -32,5 +32,5 @@ export type {
 } from './iab-consent-dialog-harness';
 export { SwitchHarness } from './switch-harness';
 export type { SwitchHarnessFilters } from './switch-harness';
-export { testing } from './testing-mode';
-export type { ConsentTesting, TestingModeOptions } from './testing-mode';
+export { testing } from './testing';
+export type { ConsentTesting, TestingModeOptions } from './testing';

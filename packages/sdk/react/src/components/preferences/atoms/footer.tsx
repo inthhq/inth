@@ -4,7 +4,7 @@ import { forwardRef as createForwardRef } from 'react';
 import type { Ref } from 'react';
 
 import { useTheme } from '~/hooks/use-theme';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { Box } from '../../shared/primitives/box';

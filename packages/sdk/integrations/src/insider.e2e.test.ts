@@ -15,7 +15,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { insiderTag } from './vendors/email-and-sms/insider';
 import type { InsiderPageType } from './vendors/email-and-sms/insider';
 

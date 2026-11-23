@@ -9,8 +9,8 @@
  * @internal
  */
 
-import type { KernelTransport } from '../types';
-import { hostedFactories } from './hosted-modes';
+import type { KernelTransport } from '../consent-kernel.model';
+import { hostedFactories } from './hosted-modes.model';
 import type { HostedModeFactory, HostedModeOptions } from './mode';
 import type { V1HostedTransportOptions } from './v1/hosted';
 

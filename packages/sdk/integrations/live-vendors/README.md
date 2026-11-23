@@ -71,17 +71,18 @@ run: one deduped issue per failing vendor (titled
 `[vendor-script-monitor] <vendor> live script contract failed`), a follow-up
 comment while it keeps failing, and an automatic close once the vendor passes
 again. Focused runs only touch the vendors they probed. The dedupe/planning
-logic is pure and unit-tested in `report.test.ts`.
+logic is pure and unit-tested in `monitor-issue.model.test.ts`.
 
 ## Files
 
-- `types.ts` — probe config, harness protocol, and report types
+- `live-vendor-probe.model.ts` — probe config, harness protocol, and report types
 - `vendors.ts` — per-vendor probe configs (shared by runner and harness)
 - `harness/entry.ts` — browser-side harness bundled by `Bun.build`, drives
   the production `inth` script loader inside the probed page
 - `runner.ts` — Playwright orchestration, phase assertions, JSON report
-- `report.ts` — pure report/issue helpers (unit-tested)
+- `monitor-issue.model.ts` — pure report/issue helpers (unit-tested)
 - `manage-issues.ts` — GitHub issue sync used by the workflow
+- `github-issues.api.ts` — the GitHub REST requests `manage-issues.ts` makes
 
 ## Known limitations
 
@@ -98,9 +99,8 @@ logic is pure and unit-tested in `report.test.ts`.
   baked into the package scripts) because Bun otherwise applies the package
   tsconfig's `inth → dist-types` path mapping at runtime.
 - That tsconfig maps `~/*` to `../../core/src/*`. `stub-contract.test.ts`
-  reaches `src/e2e-test-utils.ts`, which imports the core script loader by
-  relative path, so core's own `~/*` sources join this project's type program.
-  The package tsconfig sidesteps this by excluding `e2e-test-utils.ts`
-  outright; excluding it here would leave the meta-test untyped instead. Keep
+  reaches `src/__tests__/e2e-test-utils.ts`, which imports the core script
+  loader, so core's own `~/*` sources can join this project's type program.
+  Excluding the helper here would leave the meta-test untyped. Keep
   the mapping narrow — Bun reads these paths at runtime too, so adding a
   `inth` entry here would point the runner at `.d.ts` files.

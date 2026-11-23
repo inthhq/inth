@@ -1,2 +1,2 @@
-export * from '../shared/accordion';
-export * from '../shared/data-state';
+export * from './accordion.model';
+export * from '../data-state.model';

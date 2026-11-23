@@ -35,20 +35,6 @@
  */
 import { compareCanonical } from '@inth/sdk-schema/canonical-order';
 
-import { saveWouldLiftOptOut } from '../consent-record/opt-out-rules';
-import {
-	DENIED_CONSENTS,
-	displayedCategories as listDisplayed,
-	policyDefault,
-} from '../consent/consent-types';
-import type { AllConsentNames } from '../consent/consent-types';
-import { has } from '../libs/has';
-import { resolveCategoryOptOutLock } from '../libs/opt-out-state';
-import { listedVendors } from '../libs/vendor-listing';
-import { vendorAxisActive } from '../libs/vendors';
-import { deniedVendorIds, toggleableVendorIds } from '../modules/vendor-denial';
-import { openOptInConfirmation } from '../surface-actions/opt-in';
-import { saveConsentSurface } from '../surface-actions/save';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -56,7 +42,21 @@ import type {
 	SaveResult,
 	SaveUISource,
 	Unsubscribe,
-} from '../types';
+} from '../consent-kernel.model';
+import { saveWouldLiftOptOut } from '../consent-record/opt-out-rules.model';
+import {
+	DENIED_CONSENTS,
+	displayedCategories as listDisplayed,
+	policyDefault,
+} from '../consent/consent-types';
+import type { AllConsentNames } from '../consent/consent-types';
+import { has } from '../libs/has';
+import { resolveCategoryOptOutLock } from '../libs/opt-out-state.model';
+import { listedVendors } from '../libs/vendor-listing';
+import { vendorAxisActive } from '../libs/vendors';
+import { deniedVendorIds, toggleableVendorIds } from '../modules/vendor-denial';
+import { openOptInConfirmation } from '../surface-actions/opt-in';
+import { saveConsentSurface } from '../surface-actions/save-consent-surface';
 
 /** Granted flag per vendor id. */
 type Grants = Record<string, boolean>;

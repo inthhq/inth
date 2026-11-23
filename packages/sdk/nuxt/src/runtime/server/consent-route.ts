@@ -2,8 +2,8 @@ import { useRuntimeConfig } from 'nitropack/runtime';
 
 import manifest from '#inth/manifest-snapshot';
 
-import { serverFetch } from './local-fetch';
-import { createConsentRoute } from './route-factories';
+import { createConsentRoute } from './create-consent-route';
+import { serverFetch } from './server-fetch';
 
 export default createConsentRoute({
 	fetch: serverFetch,

@@ -1,3 +1,8 @@
+import type {
+	ConsentClient,
+	ConsentClientOptions,
+	TestingScriptTagOptions,
+} from '../../consent-client.model';
 /**
  * `init()` from the ES module entries with `testing()`, for tests that
  * describe their policy with rules or preset names and need no backend.
@@ -6,11 +11,6 @@ import { init as initIABEntry } from '../../iab';
 import { init as initEntry } from '../../index';
 import { resolveRules } from '../../policy-rules';
 import { testing } from '../../testing';
-import type {
-	ConsentClient,
-	ConsentClientOptions,
-	TestingScriptTagOptions,
-} from '../../types';
 
 /**
  * Turns test options into ES module options with `testing({ policy })`.

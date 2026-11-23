@@ -10,7 +10,7 @@ export {
 	getSubjectOutputSchema,
 	getSubjectParamsSchema,
 	getSubjectQuerySchema,
-} from './get';
+} from './get-subject.model';
 
 export {
 	type ListSubjectsOutput,
@@ -20,7 +20,7 @@ export {
 	listSubjectsQuerySchema,
 	type SubjectItem,
 	subjectItemSchema,
-} from './list';
+} from './list-subjects.model';
 
 export {
 	type PatchSubjectFullInput,
@@ -32,7 +32,7 @@ export {
 	patchSubjectInputSchema,
 	patchSubjectOutputSchema,
 	patchSubjectParamsSchema,
-} from './patch';
+} from './patch-subject.model';
 
 export {
 	type SubjectCategoryReceiptWire,
@@ -42,12 +42,12 @@ export {
 	subjectChoiceBasisWireSchema,
 	subjectChoiceWireSchema,
 	wireTimestampSchema,
-} from './choice-wire';
+} from './subject-choice-wire.model';
 
 export {
 	type VendorChoiceWire,
 	vendorChoiceWireSchema,
-} from './vendor-choice-wire';
+} from './vendor-choice-wire.model';
 
 export {
 	type PostSubjectInput,
@@ -59,4 +59,4 @@ export {
 	subjectIdSchema,
 	subjectOtherConsentInputSchema,
 	subjectPolicyBasedInputSchema,
-} from './post';
+} from './post-subject.model';

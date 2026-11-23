@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 import type { AccordionRootProps } from '~/components/shared/ui/accordion';
-import { BrandingTag } from '~/components/shared/ui/branding';
+import { BrandingTag } from '~/components/shared/ui/branding-tag';
 import { useTheme } from '~/hooks/use-theme';
 
 import {
@@ -13,7 +13,7 @@ import {
 import { ConsentWidgetOptOut } from './atoms/opt-out';
 import { ConsentWidgetRoot } from './atoms/root';
 import { ConsentWidgetPolicyActions } from './policy-actions';
-import type { ConsentWidgetProps } from './types';
+import type { ConsentWidgetProps } from './preferences.model';
 
 export const ConsentWidget = ({
 	hideBranding,

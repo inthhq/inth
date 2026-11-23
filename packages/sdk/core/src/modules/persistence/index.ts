@@ -37,7 +37,7 @@
  * - A recorded choice is stored before its save request leaves: writes
  *   are scheduled from the commit's listeners and run in the next macrotask,
  *   which the save outbox waits out before it sends (see
- *   `writer/schedule.ts`). Until the write code has loaded, the listener
+ *   `writer/create-write-scheduler.ts`). Until the write code has loaded, the listener
  *   holds the request with `kernel.holdSaves()` instead, and the write runs
  *   as soon as the code lands, before the hold is released.
  * - A write is never taken as stored before it is. When the write code
@@ -68,7 +68,7 @@
  *   was just cleared. Its `records:cleared` event makes the kernel drop its
  *   queued saves.
  * - Writes and `reconcile()` follow the ordering rules in
- *   `writer/reconcile.ts`: choices merge per category, a notice or vendor
+ *   `writer/writer-reconcile.model.ts`: choices merge per category, a notice or vendor
  *   write never replaces a newer stored record, a subject-only rewrite
  *   never recreates a cleared one, and reconciliation lands queued writes
  *   before it reads.
@@ -79,19 +79,22 @@
  *   run.
  */
 import { STORAGE_KEY_V2 } from '../../libs/storage-keys';
-import type { StoredRecords as StoredRead } from './hydrate';
 import { mountPersistence } from './mount';
-import type { PersistenceHandle, PersistenceOptions } from './types';
+import type { StoredRecords as StoredRead } from './persistence-hydrate.store';
+import type {
+	PersistenceHandle,
+	PersistenceOptions,
+} from './persistence.model';
 
 export type {
 	PersistenceHandle,
 	PersistenceOptions,
 	StorageConfig,
-} from './types';
+} from './persistence.model';
 export {
 	readStoredRecords,
 	readStoredRecordsFromCookieHeader,
-} from './hydrate';
+} from './persistence-hydrate.store';
 
 /**
  * Stored records as {@link readStoredRecords} returns them. A read always
@@ -113,7 +116,7 @@ export type {
 	StoredConsentEnvelope,
 	StoredOptOutRecord,
 	StoredVendorChoice,
-} from './record-codec';
+} from './record-codec.model';
 export { resolveStorageKeys } from '../../libs/storage-keys';
 export { STORED_NAMES_CHECK, storedChoiceNames } from '../../libs/storage-keys';
 

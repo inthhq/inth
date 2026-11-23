@@ -10,11 +10,13 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
 import {
-	consentPackageDirs,
-	groupConsentChunks,
 	nuxtConsentChunkGroup,
 	nuxtConsentConfigChunkGroup,
-} from '../chunk-group';
+} from '../consent-chunk-group.model';
+import {
+	consentPackageDirs,
+	groupConsentChunks,
+} from '../group-consent-chunks';
 
 describe('nuxtConsentChunkGroup', () => {
 	const workspace = '/repo/packages/sdk/core';
@@ -54,7 +56,7 @@ describe('nuxtConsentConfigChunkGroup', () => {
 	});
 
 	test.each([
-		'/app/node_modules/@inth/vue/dist/runtime/composables/consent.js',
+		'/app/node_modules/@inth/vue/dist/runtime/composables/use-consent.js',
 		'/app/src/composables/config.js',
 		'/other/packages/sdk/schema/dist/config/defaults.js',
 	])('leaves %s alone', (id) => {

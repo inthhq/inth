@@ -4,7 +4,7 @@
  */
 import { afterEach, expect, test, vi } from 'vitest';
 
-import { resolveNuxtConsent } from '../runtime/server-consent';
+import { resolveNuxtConsent } from '../runtime/resolve-nuxt-consent';
 
 const backend = () =>
 	vi.fn((_input: RequestInfo | URL, _init?: RequestInit) =>

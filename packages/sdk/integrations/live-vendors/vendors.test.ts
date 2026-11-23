@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { builtInScriptIntegrations } from '../src/registry';
-import { assertsRuntime } from './probe-policy';
-import type { LiveVendorProbeConfig } from './types';
+import type { LiveVendorProbeConfig } from './live-vendor-probe.model';
+import { assertsRuntime } from './probe-policy.model';
 import { liveVendorProbeConfigs } from './vendors';
 
 const configsForVendor = function configsForVendor(

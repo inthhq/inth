@@ -1,0 +1,142 @@
+/**
+ * Script lifecycle callback dispatch.
+ *
+ * Builds the `ScriptCallbackInfo` payload, decides whether any callback
+ * is wired (so callers can skip allocating the info object on the hot
+ * path), and invokes a single named callback while routing successes /
+ * errors through the debug emitter.
+ *
+ * Pure-ish: `invokeCallback` calls user-supplied functions and may
+ * therefore have side effects, but contains no DOM or kernel access of
+ * its own.
+ */
+import type { ConsentSnapshot } from '../../consent-kernel.model';
+import type {
+	Script,
+	ScriptCallbackInfo,
+	ScriptLoaderDebugEvent,
+	ScriptLoaderTools,
+} from './script-loader.model';
+
+/**
+ * Build the `ScriptCallbackInfo` payload exposed to user callbacks.
+ * The loader supplies the element ID and optional current-consent reader.
+ */
+export const buildCallbackInfo = function buildCallbackInfo(
+	tools: Pick<
+		ScriptLoaderTools,
+		| 'deniedVendors'
+		| 'gateState'
+		| 'getConsentReader'
+		| 'getLoadErrorReporter'
+		| 'isReplacing'
+		| 'registration'
+		| 'vendorAxisActive'
+	>,
+	script: Script,
+	snapshot: ConsentSnapshot,
+	hasConsent: boolean,
+	elementId: string,
+	element?: HTMLScriptElement,
+	error?: Error
+): ScriptCallbackInfo {
+	const info: ScriptCallbackInfo = {
+		consents: tools.gateState(snapshot).effectivePermissions,
+		element,
+		elementId,
+		error,
+		hasConsent,
+		id: script.id,
+	};
+	if (tools.registration) {
+		Object.defineProperty(info, 'registration', { value: tools.registration });
+	}
+	const getCurrentConsent = tools.getConsentReader?.(script);
+	if (getCurrentConsent) {
+		Object.defineProperty(info, 'getCurrentConsent', {
+			value: getCurrentConsent,
+		});
+	}
+	const reportLoadError = tools.getLoadErrorReporter?.(script);
+	if (reportLoadError) {
+		Object.defineProperty(info, 'reportLoadError', { value: reportLoadError });
+	}
+	if (tools.isReplacing?.(script)) {
+		Object.defineProperty(info, 'replacing', { value: true });
+	}
+	if (script.src) {
+		const { crossorigin, integrity } = script.attributes ?? {};
+		info.source = { src: script.src };
+		if (integrity) {
+			info.source.integrity = integrity;
+		}
+		if (crossorigin) {
+			info.source.crossorigin = crossorigin;
+		}
+	}
+	if (script.vendor && tools.vendorAxisActive(snapshot)) {
+		info.vendor = {
+			granted: !tools.deniedVendors(snapshot)?.has(script.vendor),
+			id: script.vendor,
+		};
+	}
+	return info;
+};
+
+/**
+ * True if at least one of the four lifecycle callbacks is wired on the
+ * script. Used as a hot-path guard so we skip allocating the
+ * `ScriptCallbackInfo` payload when nothing would consume it.
+ */
+export const hasAnyCallback = function hasAnyCallback(script: Script): boolean {
+	return (
+		typeof script.onBeforeLoad === 'function' ||
+		typeof script.onLoad === 'function' ||
+		typeof script.onError === 'function' ||
+		typeof script.onConsentChange === 'function'
+	);
+};
+
+/**
+ * Invoke a single named callback on `script`, routing success /
+ * thrown-error into the debug emitter. No-op when the callback is
+ * not a function. User errors are swallowed so a buggy callback
+ * cannot break the reconcile loop.
+ */
+export const invokeCallback = function invokeCallback(
+	script: Script,
+	key: NonNullable<ScriptLoaderDebugEvent['callback']>,
+	info: ScriptCallbackInfo,
+	emit: (event: ScriptLoaderDebugEvent) => void,
+	fn: ((info: ScriptCallbackInfo) => void) | undefined = script[key]
+): void {
+	if (typeof fn !== 'function') {
+		return;
+	}
+	try {
+		fn(info);
+		emit({
+			action: 'callback_invoked',
+			callback: key,
+			elementId: info.elementId,
+			hasConsent: info.hasConsent,
+			message: `Invoked ${String(key)}`,
+			scope: 'step',
+			scriptId: script.id,
+			source: 'script-loader',
+			timestamp: Date.now(),
+		});
+	} catch (err) {
+		emit({
+			action: 'callback_error',
+			callback: key,
+			data: { error: err instanceof Error ? err.message : String(err) },
+			elementId: info.elementId,
+			message: `Callback ${String(key)} threw`,
+			scope: 'step',
+			scriptId: script.id,
+			source: 'script-loader',
+			timestamp: Date.now(),
+		});
+	}
+};

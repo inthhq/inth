@@ -4,9 +4,9 @@
 
 import { useCallback } from 'react';
 
-import { isCategoryAllowed } from '../lib/selectors';
+import { isCategoryAllowed } from '../lib/consent-selectors.model';
 import type { ConsentSnapshot } from '../protocol';
-import type { AllConsentNames } from '../protocol/vocabulary';
+import type { AllConsentNames } from '../protocol/consent-vocabulary.model';
 import { useConsentSelector } from './use-consent-selector';
 
 /**

@@ -3,7 +3,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	import { getAccordionItemContext } from './context';
+	import { getAccordionItemContext } from './get-accordion-root-context';
 
 	const item = getAccordionItemContext();
 

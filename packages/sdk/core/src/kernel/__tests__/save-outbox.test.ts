@@ -16,18 +16,18 @@ import {
 	matchedResolution,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import { ConsentSaveRejectedError, isConsentSaveRejection } from '../../index';
-import { buildDecisionAssertion } from '../../transports/decision-inputs';
-import { RECORD, SUBJECT } from '../../transports/v1/__tests__/fixtures';
-import { createV1HostedTransport } from '../../transports/v1/hosted';
 import type {
 	KernelConfig,
 	KernelTransport,
 	SavePayload,
 	SaveResult,
-} from '../../types';
+} from '../../consent-kernel.model';
+import { ConsentSaveRejectedError, isConsentSaveRejection } from '../../index';
+import { buildDecisionAssertion } from '../../transports/decision-inputs.model';
+import { RECORD, SUBJECT } from '../../transports/v1/__tests__/fixtures';
+import { createV1HostedTransport } from '../../transports/v1/hosted';
 import { createKernel } from '../index';
-import type { InternalKernel } from '../internals';
+import type { InternalKernel } from '../kernel-internals.model';
 import {
 	createBrowserOutboxStore,
 	createMemoryOutboxStore,

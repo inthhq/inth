@@ -9,7 +9,7 @@ import { defineComponent, h, nextTick, ref } from 'vue';
 
 import NuxtInthProvider from '../runtime/components/nuxt-inth-provider.vue';
 import { consentConfigKey } from '../runtime/composables/config';
-import { useConsentLanguage } from '../runtime/composables/language';
+import { useConsentLanguage } from '../runtime/composables/use-consent-language';
 import type { ConsentConfig } from '../runtime/config';
 import {
 	symbolActiveUI,
@@ -18,7 +18,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 import { createVueConsentKernelContext } from './test-kernel';
 import type { VueConsentKernelContext } from './test-kernel';
 

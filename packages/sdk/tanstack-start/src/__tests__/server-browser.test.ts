@@ -36,9 +36,9 @@ describe('the browser build of the server entry', () => {
 
 	test('imports nothing but the loader options, which import nothing', () => {
 		expect(valueImports('server-browser.ts')).toEqual([
-			'./libs/loader-options',
+			'./consent-loader-options',
 		]);
-		expect(valueImports('libs/loader-options.ts')).toEqual([]);
+		expect(valueImports('consent-loader-options.ts')).toEqual([]);
 	});
 
 	test('exports the same values as the server entry', () => {

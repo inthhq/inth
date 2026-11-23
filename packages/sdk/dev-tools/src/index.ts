@@ -9,11 +9,11 @@ export {
 	type DevToolsActions,
 	type DevToolsInstance,
 	type DevToolsOptions,
-} from './core/devtools';
+} from './core/create-dev-tools';
 export type {
 	DevToolsDock,
 	DevToolsEvent,
 	DevToolsPosition,
 	DevToolsState,
 	DevToolsTab,
-} from './core/state-manager';
+} from './core/create-state-manager';

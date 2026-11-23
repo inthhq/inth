@@ -9,7 +9,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { clarity } from './vendors/analytics/microsoft-clarity';
 
 type ClarityStub = ((...args: unknown[]) => void) & {

@@ -9,8 +9,8 @@ import { IAB_UNAVAILABLE_ERROR_CODE } from '@inth/sdk/engine';
 import { describe, expect, it, vi } from 'vitest';
 
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions } from '../inth-options.model';
 import { resolveConsentContext } from '../server';
-import type { InthAstroOptions } from '../types';
 import { iabInitResponse, SITE_WITHOUT_IAB } from './iab-policy-fixture';
 import { testWire } from './policy-fixture';
 

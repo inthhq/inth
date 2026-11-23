@@ -12,7 +12,7 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { vi } from 'vitest';
 
-import type { NativeInthTurboModule } from '../../native/module';
+import type { NativeInthTurboModule } from '../../native/get-native-inth';
 import type { NativeAutoPresentSettings } from '../../native/presenter';
 import { NATIVE_INTH_MODULE_NAME } from '../../protocol';
 import type { ConsentSnapshot, TrackingAuthorization } from '../../protocol';
@@ -20,8 +20,8 @@ import {
 	buildFakeSnapshot,
 	createFakeNativeInth,
 	FAKE_BOOTSTRAP,
-} from '../../testing/fake-native-inth';
-import type { FakeTrackingReply } from '../../testing/fake-native-inth';
+} from '../../testing/create-fake-native-inth';
+import type { FakeTrackingReply } from '../../testing/create-fake-native-inth';
 import { emitNativeEvent, setNativeModule } from './react-native-stub';
 
 // React only permits `act` when the environment says a test drives it.

@@ -5,20 +5,20 @@
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 import { describe, expect, it } from 'vitest';
 
+import { validateOptOutRecord } from '../consent-record-validation.model';
 import { evaluateConsentRecord } from '../evaluate';
 import {
 	answersHeldOptOut,
 	carryOptOutCategories,
 	optOutDenyCategories,
 	unionOptOutCategories,
-} from '../opt-out-rules';
+} from '../opt-out-rules.model';
 import {
 	LEGACY_OPT_OUT_CATEGORIES,
 	optOutDecidingCategory,
 	policyOptOutCategories,
 } from '../types';
 import type { OptionalConsentCategory } from '../types';
-import { validateOptOutRecord } from '../validation';
 import { makePolicy, NOW } from './fixtures';
 
 const ALL_OPTIONAL: readonly OptionalConsentCategory[] = [

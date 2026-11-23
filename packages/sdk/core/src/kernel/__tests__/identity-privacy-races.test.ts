@@ -4,8 +4,8 @@ import {
 	matchedResolution,
 	noticeRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type { KernelConfig } from '../../consent-kernel.model';
 import { createPersistence } from '../../modules/persistence';
-import type { KernelConfig } from '../../types';
 import { createConsentKernel } from '../index';
 
 const disposers: (() => void)[] = [];

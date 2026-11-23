@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { baseTranslations } from './translations';
-import type { IABAppTranslations } from './types';
+import type { IABAppTranslations } from './translations.model';
 
 const placeholders = (value: string | undefined) =>
 	// `{name}` or an ICU plural `{name, plural, ...}`, which native copy evaluates.

@@ -10,8 +10,11 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { boot } from '../client';
 import { resolveOptions } from '../integration';
 import { testing as testingMode } from '../testing';
-import { registerDialogAdapter, registerDialogSurface } from '../ui/adapter';
 import { reactDialogAdapter } from '../ui/react';
+import {
+	registerDialogAdapter,
+	registerDialogSurface,
+} from '../ui/register-dialog-adapter';
 import { vueDialogAdapter } from '../ui/vue';
 import { testRule } from './policy-fixture';
 

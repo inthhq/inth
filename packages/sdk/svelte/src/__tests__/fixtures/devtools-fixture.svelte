@@ -18,14 +18,14 @@
 		shadow,
 	}: {
 		categories?: import('@inth/sdk/engine').AllConsentNames[];
-		clearRecords?: import('../../lib/devtools-options').ConsentDevToolsProps['clearRecords'];
-		getPresentation?: import('../../lib/devtools-options').ConsentDevToolsProps['getPresentation'];
+		clearRecords?: import('../../lib/devtools-options.model').ConsentDevToolsProps['clearRecords'];
+		getPresentation?: import('../../lib/devtools-options.model').ConsentDevToolsProps['getPresentation'];
 		presentation?: import('@inth/sdk/engine').ConsentPresentation;
 		storageKey?: string;
-		getConsentCategories?: import('../../lib/devtools-options').ConsentDevToolsProps['getConsentCategories'];
+		getConsentCategories?: import('../../lib/devtools-options.model').ConsentDevToolsProps['getConsentCategories'];
 		multiple?: boolean;
 		policyCategories?: import('@inth/sdk/engine').AllConsentNames[];
-		position?: import('../../lib/devtools-options').ConsentDevToolsProps['position'];
+		position?: import('../../lib/devtools-options.model').ConsentDevToolsProps['position'];
 		shadow?: boolean;
 	} = $props();
 	const resolution = $derived.by(() => {

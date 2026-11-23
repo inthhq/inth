@@ -211,7 +211,7 @@ enum IABAuthority {
         if let previous { try require(previous.consentVersion > 0 && previous.consentVersion < Int.max) }
         // `createdAt` keeps the first decision's time for the record. It never reaches the
         // string: TCF requires Created and LastUpdated to hold the same day, and the web build
-        // sets both to the confirmation day (`packages/sdk/iab/src/tcf/tc-string.ts`).
+        // sets both to the confirmation day (`packages/sdk/iab/src/tcf/tc-string.model.ts`).
         let createdAt = previous?.createdAt ?? actionAt
         try require(createdAt >= 0 && actionAt >= createdAt)
         let actionDay = Date(timeIntervalSince1970: Double(actionAt / 86_400_000 * 86_400))

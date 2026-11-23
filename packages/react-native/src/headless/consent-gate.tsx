@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import { useConsent } from '../hooks/use-consent';
 import type { ConsentActions } from '../hooks/use-consent-actions';
 import { useConsentActions } from '../hooks/use-consent-actions';
-import type { AllConsentNames } from '../protocol/vocabulary';
+import type { AllConsentNames } from '../protocol/consent-vocabulary.model';
 
 /**
  * What the gate hands its children.

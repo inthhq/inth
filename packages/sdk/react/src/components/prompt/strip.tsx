@@ -15,8 +15,8 @@ import * as surface from '@inth/sdk/ui/styles/sheets/surface';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
 
 import type { SurfaceStyleSheet } from '../shared/surface-styles';
-import { PromptSurface } from './surface';
-import type { PromptSurfaceOptions } from './surface';
+import { PromptSurface } from './prompt-surface';
+import type { PromptSurfaceOptions } from './prompt-surface';
 
 /** Tokens, buttons, the shell, then the Banner rules, in cascade order. */
 export const BANNER_SHEETS: readonly SurfaceStyleSheet[] = [

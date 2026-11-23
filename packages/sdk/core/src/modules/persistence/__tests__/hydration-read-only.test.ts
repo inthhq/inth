@@ -21,7 +21,7 @@ import {
 	STORAGE_KEY_V2,
 } from '../../../libs/storage-keys';
 import { createPersistence } from '../index';
-import { readStoredConsentRecord } from '../record-storage';
+import { readStoredConsentRecord } from '../record-storage.store';
 import { clearStoredConsentRecords } from './record-writes';
 
 const DAY = 86_400_000;

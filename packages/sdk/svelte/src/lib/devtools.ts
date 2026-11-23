@@ -19,4 +19,4 @@ export type {
 	InthDevToolsProps,
 	ConsentDevToolsProps,
 	DevToolsProps,
-} from './devtools-options';
+} from './devtools-options.model';

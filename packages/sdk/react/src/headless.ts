@@ -72,7 +72,7 @@ export { useBannerCopy } from './components/prompt/use-banner-copy';
 export {
 	StreamedConsentSurface,
 	type StreamedConsentSurfaceProps,
-} from './components/shared/streamed-surface';
+} from './components/shared/streamed-consent-surface';
 export { useColorScheme } from './hooks/use-color-scheme';
 export { useFocusTrap } from './hooks/use-focus-trap';
 export { useIABPolicyGuard } from './hooks/use-iab-policy-guard';
@@ -80,4 +80,4 @@ export { useOptOut } from './hooks/use-opt-out';
 export { useOptOutState } from './hooks/use-opt-out-state';
 export { useScrollLock } from './hooks/use-scroll-lock';
 // IAB headless hook lives on the `@inth/react/iab` subpath.
-export type { ReactUIOptions } from './types/manager';
+export type { ReactUIOptions } from './types/react-ui-options.model';

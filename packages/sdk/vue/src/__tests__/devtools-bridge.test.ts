@@ -1,9 +1,9 @@
 import { createConsentKernel } from '@inth/sdk/engine';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { registerDevToolsBridge } from '../runtime/devtools/bridge';
-import { DEVTOOLS_BRIDGE_KEY } from '../runtime/devtools/constants';
-import { renderDevToolsPage } from '../runtime/devtools/page';
+import { DEVTOOLS_BRIDGE_KEY } from '../runtime/devtools/devtools.model';
+import { registerDevToolsBridge } from '../runtime/devtools/register-devtools-bridge';
+import { renderDevToolsPage } from '../runtime/devtools/render-devtools-page';
 
 const cleanups: (() => void)[] = [];
 

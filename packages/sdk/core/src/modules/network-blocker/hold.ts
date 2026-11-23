@@ -29,9 +29,9 @@
  * blocked request, until a blocker that does load takes the hold over.
  *
  * Ships in first-load JavaScript, so it imports nothing at runtime and
- * matches rules with a compact copy of the logic in `url.ts`.
+ * matches rules with a compact copy of the logic in `parse-url.ts`.
  */
-import type { NetworkBlockerRule } from './types';
+import type { NetworkBlockerRule } from './network-blocker.model';
 
 /**
  * Key under which a patched `XMLHttpRequest.prototype.open` stores the

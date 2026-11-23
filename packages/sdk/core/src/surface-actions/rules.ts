@@ -5,8 +5,12 @@
  * them with the lazily loaded dialog that calls them.
  */
 
+import type {
+	ConsentKernel,
+	ConsentSnapshot,
+	KernelActiveUI,
+} from '../consent-kernel.model';
 import { deriveActiveUI } from '../derive-surface';
-import type { ConsentKernel, ConsentSnapshot, KernelActiveUI } from '../types';
 
 /**
  * The latest action per kernel. A newer action or navigation replaces it.

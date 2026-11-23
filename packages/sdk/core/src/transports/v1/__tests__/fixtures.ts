@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 
-import type { SavePayload } from '../../../types';
+import type { SavePayload } from '../../../consent-kernel.model';
 
 export const PROJECT_URL = 'https://your-project.inth.app';
 export const SUBJECT = '0193e5a8-6f00-7c3a-8a1b-5d2e7f9a0b1c';

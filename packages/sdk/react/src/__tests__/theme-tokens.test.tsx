@@ -19,7 +19,7 @@ const rawSources = import.meta.glob(
 		'!../**/*.test.*',
 		'!../consent-theme.tsx',
 		// The public `@inth/react/utils` helpers, for server or build-time use.
-		'!../utils/theme-utils.ts',
+		'!../utils/theme-css.model.ts',
 	],
 	{ eager: true, import: 'default', query: '?raw' }
 ) as Record<string, string>;

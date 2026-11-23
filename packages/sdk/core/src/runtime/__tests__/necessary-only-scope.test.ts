@@ -18,8 +18,11 @@ import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/r
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
 import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
+import type {
+	ConsentRuntime,
+	ConsentRuntimeOptions,
+} from '../consent-runtime.model';
 import { createConsentRuntime } from '../index';
-import type { ConsentRuntime, ConsentRuntimeOptions } from '../types';
 
 /**
  * Options a test passes over the defaults. Its mode is a transport factory,

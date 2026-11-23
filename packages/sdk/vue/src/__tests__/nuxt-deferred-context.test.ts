@@ -1,5 +1,5 @@
 /**
- * The Nuxt plugin's deferred context (`runtime/deferred/shell.ts`): the
+ * The Nuxt plugin's deferred context (`runtime/deferred/create-deferred-context.ts`): the
  * browser starts from the server's snapshot, records a dialog save in its
  * own task without the consent engine, and the engine adopts that record
  * when it loads. A banner tap before the engine loads the engine, and the
@@ -22,21 +22,21 @@ import type { MockInstance } from 'vitest';
 import { defineComponent, h, nextTick, ref } from 'vue';
 
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
-import { useEventDispatcher } from '../runtime/composables/event-dispatcher';
-import type { EventDispatcher } from '../runtime/composables/event-dispatcher';
-import { useConsentLanguage } from '../runtime/composables/language';
 import { useScriptLoader } from '../runtime/composables/script-loader';
-import { createDeferredContext } from '../runtime/deferred/shell';
-import type { DeferredEngineFactory } from '../runtime/deferred/shell';
-import type {
-	RuntimeConsentConfig,
-	VueConsentKernelContext,
-} from '../runtime/kernel';
+import { useConsentLanguage } from '../runtime/composables/use-consent-language';
+import { useEventDispatcher } from '../runtime/composables/use-event-dispatcher';
+import type { EventDispatcher } from '../runtime/composables/use-event-dispatcher';
+import { createDeferredContext } from '../runtime/deferred/create-deferred-context';
+import type { DeferredEngineFactory } from '../runtime/deferred/create-deferred-context';
 import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
+import type {
+	RuntimeConsentConfig,
+	VueConsentKernelContext,
+} from '../runtime/vue-consent-kernel-context.model';
 import { createVueConsentKernelContext } from './test-kernel';
 
 const init: InitOutput = {

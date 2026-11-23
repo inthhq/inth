@@ -35,19 +35,19 @@
 
 // oxlint-disable-next-line oxc/no-barrel-file -- Preserve declaration order, interface shape, and public compatibility.
 export * from '@inth/react';
-// Their code loads with the deferred root's engine; see `./root`.
+// Their code loads with the deferred root's engine; see `./inth-provider`.
 export {
 	DeferredConsentBanner as ConsentBanner,
 	DeferredConsentDialog as ConsentDialog,
 	DeferredOptOutConfirmation as OptOutConfirmation,
 } from '@inth/react/deferred';
-export type { InthProviderProps } from './root';
-export { InthProvider } from './root';
+export type { InthProviderProps } from './inth-provider';
+export { InthProvider } from './inth-provider';
 export type {
 	ConsentClientOptions,
 	ConsentState,
 	InthProviderOptions,
-} from './types';
+} from './consent-client-options.model';
 export type { ConsentConfig } from './config';
 export { defineConsentConfig } from './config';
 // The data factories, in place of `@inth/react`'s transports.

@@ -7,7 +7,7 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import { saveWouldLiftOptOut } from '../../consent-record/opt-out-rules';
+import { saveWouldLiftOptOut } from '../../consent-record/opt-out-rules.model';
 import { createConsentKernel } from '../../index';
 import type { ConsentKernel, KernelConfig } from '../../index';
 import { createPreferenceDraft } from '../../preference-draft/index';

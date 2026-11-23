@@ -7,7 +7,7 @@
  * would silently move the contract for Swift and Kotlin, because both read these
  * files as truth. A device may hold a vendor list there; what the fixtures pin is
  * that the generator has never put one in, and the shape of a body is graded by
- * name in `gvl.test.ts`.
+ * name in `global-vendor-list.model.test.ts`.
  */
 
 import { createHash } from 'node:crypto';
@@ -19,6 +19,7 @@ import { decisionInputsMatchOverrides } from '@inth/sdk/engine';
 import type { RememberedDecisionInputs } from '@inth/sdk/engine';
 import { describe, expect, test } from 'vitest';
 
+import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-vocabulary.model';
 import type {
 	CommitFailureReason,
 	NativeOverrides,
@@ -35,7 +36,6 @@ import {
 	NATIVE_EVENT_NAMES,
 	PROTOCOL_VERSION,
 } from '../index';
-import { OPTIONAL_CONSENT_CATEGORIES } from '../vocabulary';
 
 const FIXTURE_DIR = resolve(
 	dirname(fileURLToPath(import.meta.url)),

@@ -24,14 +24,14 @@
 	import * as expand from '@inth/sdk/ui/styles/sheets/expand';
 	import { onMount } from 'svelte';
 
-	import { getConsentContext } from '../../context.svelte';
+	import { getConsentContext } from '../../get-consent-context.svelte';
 	import type { SurfaceStyleSheet } from '../../surface-styles';
 	import AdvertisingRow from '../parts/advertising-row.svelte';
 	import CategoryGroup from '../parts/category-group.svelte';
-	import { getSurfaceDraft } from '../parts/draft.svelte';
+	import { getSurfaceDraft } from '../parts/create-surface-draft.svelte';
 	import Icon from '../parts/icon.svelte';
-	import { cx } from '../parts/parts';
 	import SaleRightsRow from '../parts/rights-row.svelte';
+	import { cx } from '../parts/surface-parts.model';
 	import SurfaceStyles from '../surface-styles.svelte';
 
 	/** The options' rules: the in-place panel, then the dialog's rows over it. */

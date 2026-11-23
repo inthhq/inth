@@ -28,8 +28,12 @@ import type {
 	NodeApiRequestLike,
 	NodeApiResponseLike,
 	NodeRequestLike,
-} from './node-bridge';
-import { toWebHeaders, toWebRequest, writeWebResponse } from './node-bridge';
+} from './node-bridge.model';
+import {
+	toWebHeaders,
+	toWebRequest,
+	writeWebResponse,
+} from './node-bridge.model';
 import type {
 	ConsentState,
 	KernelConfig,
@@ -43,7 +47,7 @@ export type {
 	NodeApiResponseLike,
 	NodeIncomingHeaders,
 	NodeRequestLike,
-} from './node-bridge';
+} from './node-bridge.model';
 export type {
 	ConsentConfig,
 	ConsentState,

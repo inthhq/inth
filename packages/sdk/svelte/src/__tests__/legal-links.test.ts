@@ -1,7 +1,7 @@
 import { render, waitFor } from '@testing-library/svelte';
 import { expect, test } from 'vitest';
 
-import type { ConsentManagerOptions } from '../lib/types';
+import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import Fixture from './fixtures/legal-links-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';

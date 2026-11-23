@@ -1,7 +1,7 @@
 // A publisher's vendor scope, applied to a list that arrived whole.
 //
 // Two web functions do this job, and both are the oracle here: `narrowGVLToVendors` in
-// `packages/sdk/iab/src/tcf/fetch-gvl.ts`, and `narrowToVendorIds` in
+// `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts`, and `narrowToVendorIds` in
 // `packages/backend/src/http/gvl.ts`. Both exist because the scope cannot always travel
 // with the document. The GVL endpoint applies `vendorIds` as a filter, which is what keeps
 // a scoped publisher off the full list, but the filter only travels so far: the backend

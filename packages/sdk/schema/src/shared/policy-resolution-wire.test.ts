@@ -13,8 +13,8 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-import { resolvePolicyRules } from './policy-resolution';
 import { readPolicyResolutionWire } from './policy-resolution-wire';
+import { resolvePolicyRules } from './policy/policy-resolution.model';
 
 const SHARED_DIR = dirname(fileURLToPath(import.meta.url));
 const SOURCE_DIR = join(SHARED_DIR, '..');
@@ -91,10 +91,10 @@ describe('client policy reader', () => {
 		expect(staticGraph(join(SHARED_DIR, 'policy-resolution-wire.ts'))).toEqual(
 			new Set([
 				'shared/canonical-order.ts',
-				'shared/policy-contract.ts',
+				'shared/policy/policy-contract.ts',
 				'shared/policy-resolution-wire.ts',
-				'shared/policy-rule-invariants.ts',
-				'shared/policy-surface.ts',
+				'shared/policy/policy-rule-invariants.ts',
+				'shared/policy/policy-surface.ts',
 			])
 		);
 	});

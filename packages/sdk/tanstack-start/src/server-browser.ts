@@ -23,7 +23,7 @@ import type {
 	resolveConsent as resolveConsentOnServer,
 } from './server';
 
-export { consentLoaderOptions } from './libs/loader-options';
+export { consentLoaderOptions } from './consent-loader-options';
 
 const serverOnly = function serverOnly(name: string): Error {
 	return new Error(

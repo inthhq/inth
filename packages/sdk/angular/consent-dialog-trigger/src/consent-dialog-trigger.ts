@@ -67,7 +67,7 @@ import type {
 	DevToolsLauncherTarget,
 } from '@inth/sdk/ui/utils/devtools-launcher';
 
-import { DevToolsIcon } from './trigger-icons';
+import { DevToolsIcon } from './dev-tools-icon';
 
 /** The corner the trigger sits in. */
 export type ConsentDialogTriggerPosition = CornerPosition;

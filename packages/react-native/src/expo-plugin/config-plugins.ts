@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 
 import type * as ConfigPluginsModule from 'expo/config-plugins';
 
-import { InthPluginError } from './errors';
+import { InthPluginError } from './inth-plugin-error';
 
 type ConfigPlugins = typeof ConfigPluginsModule;
 

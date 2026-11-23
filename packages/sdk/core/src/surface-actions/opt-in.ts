@@ -12,21 +12,21 @@
  * restoration, and avoids duplicate hosts without changing `KernelActiveUI`.
  */
 
-import {
-	optOutLiftBlocker,
-	saveWouldLiftOptOut,
-} from '../consent-record/opt-out-rules';
-import type { AllConsentNames } from '../consent/consent-types';
 import type {
 	ConsentKernel,
 	OptInResult,
 	SaveInput,
 	SaveResult,
 	SaveUISource,
-} from '../types';
+} from '../consent-kernel.model';
+import {
+	optOutLiftBlocker,
+	saveWouldLiftOptOut,
+} from '../consent-record/opt-out-rules.model';
+import type { AllConsentNames } from '../consent/consent-types';
 import { readFocusedElement } from './opt-out';
 import { onSurfaceNavigation } from './rules';
-import { saveConsentSurface } from './save';
+import { saveConsentSurface } from './save-consent-surface';
 
 /** Deferred opt-in or lifting save executed when the visitor confirms. */
 export type OptInPendingAction = () => Promise<unknown> | unknown;

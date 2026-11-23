@@ -7,8 +7,8 @@ import XCTest
 ///
 /// The web side is the oracle for every expectation here: `buildInitResponse` in
 /// `packages/backend/src/http/init.ts` decides when the field is there at all,
-/// `packages/sdk/iab/src/tcf/fetch-gvl.ts` decides when a document is a list worth keeping,
-/// and `packages/sdk/iab/src/headless/dialog-data.ts` is what a list has to be readable
+/// `packages/sdk/iab/src/tcf/fetch-gvl.api.ts` decides when a document is a list worth keeping,
+/// and `packages/sdk/iab/src/headless/dialog-data.model.ts` is what a list has to be readable
 /// as once the app has it. Nothing here tests a permission: a vendor list carries
 /// metadata, and the interesting failures are a dialog that lost its rows and a stored
 /// envelope that came back short.

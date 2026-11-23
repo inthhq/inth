@@ -13,14 +13,14 @@ import { describe, expect, test, vi } from 'vitest';
 import {
 	isConsentSaveRejection,
 	isSubjectConflict,
-} from '../../save-rejection';
-import { InthApiError, isInthApiError } from '../error';
+} from '../../consent-save-rejected-error';
+import { InthApiError, isInthApiError } from '../inth-api-error';
+import { InthApiSaveRejectedError } from '../inth-api-save-rejected-error';
+import { createV1RecordTransport } from '../records';
 import {
 	buildV1ConsentOptOutBody,
 	buildV1ConsentOptOutLiftBody,
-} from '../opt-outs-body';
-import { createV1RecordTransport } from '../records';
-import { InthApiSaveRejectedError } from '../save-rejected';
+} from '../v1-opt-outs-body.model';
 import {
 	ACTION_AT,
 	bodyAt,

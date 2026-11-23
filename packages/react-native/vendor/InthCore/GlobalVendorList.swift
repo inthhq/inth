@@ -2,7 +2,7 @@
 //
 // Three consumers want this document and they want different amounts of it. The
 // consent dialog reads names, descriptions and retention off it
-// (`packages/sdk/iab/src/headless/dialog-data.ts`), the TC String encoder reads four
+// (`packages/sdk/iab/src/headless/dialog-data.model.ts`), the TC String encoder reads four
 // purpose lists plus the withdrawal date from each vendor
 // (`TcStringEncoder.prunedVendorSignals`), and the store has to keep the whole thing
 // so a relaunch renders the same dialog with no network. This is the one copy all
@@ -165,7 +165,7 @@ public struct GVLVendor: Sendable, Codable, Equatable {
     public let deviceStorageDisclosureUrl: String?
     public let urls: [GVLVendorUrl]
     /// Ids into ``GlobalVendorList/dataCategories`` that this vendor collects. GVL v3 names the
-    /// field `dataDeclaration` on the wire, as `packages/sdk/iab/src/headless/types.ts` reads it.
+    /// field `dataDeclaration` on the wire, as `packages/sdk/iab/src/headless/headless-iab.model.ts` reads it.
     public let dataCategories: [Int]?
     public let dataRetention: GVLVendorDataRetention?
     /// The date this vendor was withdrawn from the list, or nil while it is active.
@@ -238,7 +238,7 @@ public struct GVLVendor: Sendable, Codable, Equatable {
 /// The IAB Global Vendor List as `/init` serves it.
 ///
 /// The document is a value: nothing here fetches, caches, or nudges a language file,
-/// which is `packages/sdk/iab/src/tcf/fetch-gvl.ts`'s job on the web and the backend's
+/// which is `packages/sdk/iab/src/tcf/fetch-gvl.api.ts`'s job on the web and the backend's
 /// job here (`resolveGvl`), and is the reason a mobile core can hold a whole list in
 /// a snapshot without owning a network call.
 ///
@@ -315,7 +315,7 @@ public struct GlobalVendorList: Sendable, Codable, Equatable {
 extension GlobalVendorList {
     /// Read `/init`'s `gvl`, or `nil` when the core has to read the field as absent.
     ///
-    /// The gate is `packages/sdk/iab/src/tcf/fetch-gvl.ts`, which accepts a list only when
+    /// The gate is `packages/sdk/iab/src/tcf/fetch-gvl.api.ts`, which accepts a list only when
     /// `vendorListVersion`, `purposes` and `vendors` are there and `tcfPolicyVersion`
     /// is a safe integer of at least 1, and otherwise throws the document away. Two
     /// deliberate differences from reading that line in JavaScript:
@@ -356,7 +356,7 @@ extension GlobalVendorList {
     }
 
     /// Read past the gate, which has already checked every entry's types. An absent
-    /// field still reads as its empty value, as `dialog-data.ts` reads it
+    /// field still reads as its empty value, as `dialog-data.model.ts` reads it
     /// (`vendor.purposes || []`): every field may be absent, none may be the wrong type.
     private static func read(fields: [String: JSONValue]) -> GlobalVendorList {
         var list = GlobalVendorList(
@@ -596,7 +596,7 @@ extension TcVendorList {
     ///
     /// `language` is the reference's, not the document's. A GVL JSON file carries no
     /// language: `new GVL(json)` in `@iabtechlabtcf/core` sets `lang_` to `DEFAULT_LANGUAGE`
-    /// and only `changeLanguage(_:)` moves it off EN, and `packages/sdk/iab/src/tcf/tc-string.ts`
+    /// and only `changeLanguage(_:)` moves it off EN, and `packages/sdk/iab/src/tcf/tc-string.model.ts`
     /// does the former, so a web string written against a French list says `FR` only because
     /// someone called `changeLanguage`. This build has no language-switch step to model, so
     /// it takes the same default, and nothing here invents one from the request's Accept-Language.

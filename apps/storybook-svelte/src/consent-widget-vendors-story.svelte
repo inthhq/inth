@@ -6,7 +6,7 @@
 		storybookVendorStoredConsent,
 	} from '../../storybook-consent-policy';
 	import { editableConsentOptions } from './storybook-consent-fixtures';
-	import StorybookConsentProvider from './StorybookConsentProvider.svelte';
+	import StorybookConsentProvider from './storybook-consent-provider.svelte';
 </script>
 
 <StorybookConsentProvider

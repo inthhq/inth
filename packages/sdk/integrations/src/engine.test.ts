@@ -7,16 +7,16 @@ import {
 	deniedConsentState,
 	grantedMeasurementConsentState,
 } from './__tests__/helpers';
-import * as compileEngine from './engine/compile';
-import { compileManifest } from './engine/compile';
+import * as compileEngine from './engine/compile-manifest';
+import { compileManifest } from './engine/compile-manifest';
 import { resolvedManifestToScript } from './engine/runtime';
-import { resolveManifest } from './resolve';
+import { resolveManifest } from './resolve-manifest';
 import {
 	VENDOR_MANIFEST_KIND,
 	VENDOR_MANIFEST_SCHEMA_VERSION,
 	vendorManifestContract,
-} from './types';
-import type { VendorManifest } from './types';
+} from './vendor-manifest.model';
+import type { VendorManifest } from './vendor-manifest.model';
 
 type TestGlobal = typeof globalThis & Record<string, unknown>;
 

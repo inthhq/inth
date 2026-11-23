@@ -8,7 +8,7 @@
  * @packageDocumentation
  */
 
-import type { ConsentSnapshot } from '../types';
+import type { ConsentSnapshot } from '../consent-kernel.model';
 
 /**
  * The vendor ids a choice may toggle: declared and not `disabled`.

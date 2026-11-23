@@ -5,7 +5,7 @@ import {
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 import { expect, waitFor, within } from 'storybook/test';
 
-import OptOutConfirmationStory from './OptOutConfirmationStory.svelte';
+import OptOutConfirmationStory from './opt-out-confirmation-story.svelte';
 
 const meta = {
 	component: OptOutConfirmationStory,

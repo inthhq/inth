@@ -1,0 +1,300 @@
+/**
+ * The browser-rendered IAB TCF banner.
+ *
+ * Loaded only when a page owes an IAB banner the server did not render: a
+ * prerendered page in hosted or manifest mode, or a render that had no
+ * vendor list yet. It builds the markup `iab-prompt.astro` would have
+ * produced, from the same model, into the spot `<IABConsentBanner />`
+ * marked. The spot carries the stylesheet class names, so this chunk
+ * imports no stylesheet of its own.
+ */
+
+import {
+	applyExperimentAssignment,
+	applyExperimentTheme,
+} from '@inth/sdk/engine';
+import type {
+	ConsentExperiment,
+	ConsentPresentation,
+	ConsentSnapshot,
+} from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
+import type { Theme } from '@inth/sdk/ui/theme';
+
+import type { IABPromptClassNames } from '../banner/banner-class-names.model';
+import { resolveIABPromptModel } from '../banner/iab-prompt.model';
+import type {
+	IABPromptButton,
+	IABPromptModel,
+	IABPromptProps,
+} from '../banner/iab-prompt.model';
+import { IAB_PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
+import { createElement } from './create-element';
+import { readSpot } from './read-spot';
+import { renderBrandingTag } from './render-branding-tag';
+
+/**
+ * Hide a freshly built banner until `syncBannerVisibility` decides, the
+ * same as a prerendered server banner, with its overlay in front of it.
+ *
+ * @param overlay - The backdrop, for blocking banners.
+ * @returns The nodes to insert, in document order.
+ */
+const hiddenBanner = function hiddenBanner(
+	root: HTMLElement,
+	overlay: HTMLElement | null
+): HTMLElement[] {
+	root.hidden = true;
+	root.setAttribute('data-inth-visible', 'false');
+	if (!overlay) {
+		return [root];
+	}
+	overlay.hidden = true;
+	return [overlay, root];
+};
+
+/** Site options the IAB banner reads. */
+export interface RenderIABPromptOptions {
+	/** The integration's `experiment`, whose assigned arm is merged in. */
+	experiment?: ConsentExperiment;
+	presentation?: ConsentPresentation;
+	/** The integration's `theme`, for `slots`. */
+	theme?: Theme;
+	/** The integration's `disableAnimation`. */
+	disableAnimation?: boolean;
+}
+
+/** What `<IABConsentBanner />` leaves in its spot. */
+export interface IABPromptSlotData {
+	props: IABPromptProps;
+	classNames: IABPromptClassNames;
+}
+
+const EMPTY_CLASS_NAMES: IABPromptClassNames = {
+	actions: {},
+	branding: {},
+	button: {},
+	iabBanner: {},
+};
+
+const readSlot = function readSlot(slot: HTMLElement): IABPromptSlotData {
+	const parsed = readSpot(
+		slot,
+		IAB_PROMPT_SLOT_ATTRIBUTE
+	) as Partial<IABPromptSlotData> | null;
+	return {
+		classNames: { ...EMPTY_CLASS_NAMES, ...parsed?.classNames },
+		props: parsed?.props ?? {},
+	};
+};
+
+const renderButton = function renderButton(
+	model: IABPromptModel,
+	props: IABPromptProps,
+	button: IABPromptButton,
+	extra: Record<string, string> = {}
+): HTMLElement {
+	return createElement(
+		'button',
+		{
+			class: button.className,
+			'data-action': button.action,
+			'data-inth-action': button.action,
+			...extra,
+			'data-mode': button.mode,
+			'data-size': props.noStyle ? undefined : 'small',
+			'data-testid': `iab-consent-banner-${button.action}-button`,
+			'data-variant': button.variant,
+			style: button.style,
+			type: 'button',
+		},
+		[button.label]
+	);
+};
+
+const renderHeader = function renderHeader(model: IABPromptModel): HTMLElement {
+	const items: HTMLElement[] = model.displayItems.map((name) =>
+		createElement('li', {}, [name])
+	);
+	if (model.copy.andMore) {
+		items.push(
+			createElement('li', { class: model.classes.purposeMore }, [
+				model.copy.andMore,
+			])
+		);
+	}
+	return createElement(
+		'div',
+		{
+			class: model.classes.header,
+			'data-testid': 'iab-consent-banner-header',
+			style: model.styles.header,
+		},
+		[
+			createElement('h2', { class: model.classes.title }, [model.copy.title]),
+			createElement('p', { class: model.classes.description }, [
+				model.copy.descriptionBefore,
+				createElement(
+					'button',
+					{
+						class: model.classes.partnersLink,
+						'data-inth-action': 'customize',
+						'data-inth-dialog': 'iab',
+						'data-inth-tab': 'vendors',
+						'data-testid': 'iab-consent-banner-partners-link',
+						type: 'button',
+					},
+					[model.copy.partnersLink]
+				),
+				model.copy.descriptionAfter,
+			]),
+			createElement('ul', { class: model.classes.purposeList }, items),
+			createElement('p', { class: model.classes.notice }, [model.copy.notice]),
+		]
+	);
+};
+
+/**
+ * Build the IAB banner for a snapshot, without inserting it.
+ *
+ * @param snapshot - A snapshot with a policy and a vendor list.
+ * @param slot - The props and class names `<IABConsentBanner />` left.
+ * @param options - The site options the banner reads.
+ * @returns The overlay (blocking banners only) followed by the banner root,
+ * or nothing when this banner does not answer the policy.
+ */
+export const buildIABPrompt = function buildIABPrompt(
+	snapshot: ConsentSnapshot,
+	slot: IABPromptSlotData,
+	options: RenderIABPromptOptions
+): HTMLElement[] {
+	const { props } = slot;
+	// The assigned arm rides on the host presentation and theme, as in
+	// `iab-prompt.astro`.
+	const theme = applyExperimentTheme(
+		options.theme,
+		options.experiment,
+		snapshot.experiment
+	);
+	const model = resolveIABPromptModel({
+		classNames: slot.classNames,
+		disableAnimation: options.disableAnimation,
+		presentation: applyExperimentAssignment(
+			options.presentation,
+			options.experiment,
+			snapshot.experiment
+		),
+		props,
+		snapshot,
+		theme,
+	});
+	if (!model.canRender) {
+		return [];
+	}
+	const footer = createElement(
+		'div',
+		{
+			class: model.classes.footer,
+			'data-direction': 'row',
+			'data-split': 'true',
+			'data-testid': 'iab-consent-banner-footer',
+			style: model.styles.footer,
+		},
+		[
+			createElement(
+				'div',
+				{ class: model.classes.actionGroup, 'data-direction': 'row' },
+				model.choiceButtons.map((button) => renderButton(model, props, button))
+			),
+			createElement(
+				'div',
+				{ class: model.classes.actionGroup, 'data-direction': 'row' },
+				[
+					renderButton(model, props, model.customizeButton, {
+						'data-inth-dialog': 'iab',
+					}),
+				]
+			),
+		]
+	);
+	const card = createElement(
+		'div',
+		{
+			'aria-label': model.copy.title,
+			'aria-modal': model.blocking ? 'true' : undefined,
+			class: model.classes.card,
+			'data-testid': 'iab-consent-banner-card',
+			role: model.blocking ? 'dialog' : 'region',
+			style: model.styles.card,
+		},
+		[renderHeader(model), footer]
+	);
+	const branding = renderBrandingTag(
+		{
+			branding: snapshot.branding,
+			hide: props.hideBranding,
+			noStyle: props.noStyle,
+			styles: slot.classNames.branding,
+			surface: 'iab-banner',
+			theme,
+		},
+		model.copy.securedBy
+	);
+	const root = createElement(
+		'div',
+		{
+			class: model.classes.root,
+			'data-blocking': model.blocking ? 'true' : undefined,
+			'data-position': model.position,
+			'data-testid': 'iab-consent-banner-root',
+			[SURFACE_ROOT_ATTRIBUTE]: 'banner',
+			dir: model.textDirection,
+			lang: model.language,
+			style: model.styles.root,
+			tabindex: '-1',
+		},
+		[
+			createElement(
+				'div',
+				{ class: model.classes.cardShell },
+				branding ? [branding, card] : [card]
+			),
+		]
+	);
+	return hiddenBanner(
+		root,
+		model.blocking
+			? createElement('div', {
+					'aria-hidden': 'true',
+					class: model.classes.overlay,
+					'data-testid': 'iab-consent-banner-overlay',
+					style: model.styles.overlay,
+				})
+			: null
+	);
+};
+
+/**
+ * Render the IAB banner into the spot `<IABConsentBanner />` left for it.
+ *
+ * @param options - The site options the banner reads.
+ * @returns `true` when a banner was inserted. `false` when there is no
+ * spot, or the snapshot's policy or vendor list does not call for one yet.
+ */
+export const renderIABPromptIntoSlot = function renderIABPromptIntoSlot(
+	snapshot: ConsentSnapshot,
+	options: RenderIABPromptOptions
+): boolean {
+	const slot = document.querySelector<HTMLElement>(
+		`[${IAB_PROMPT_SLOT_ATTRIBUTE}]`
+	);
+	if (!slot) {
+		return false;
+	}
+	const nodes = buildIABPrompt(snapshot, readSlot(slot), options);
+	if (nodes.length === 0) {
+		return false;
+	}
+	slot.replaceWith(...nodes);
+	return true;
+};

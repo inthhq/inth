@@ -8,10 +8,15 @@ import type {
 
 import { inlineStepsStart } from '#inline-start';
 
-import { RUNTIME_VALUE_KIND } from '../types';
-import type { ManifestStep, ResolvedManifest, RuntimeValue } from '../types';
-import { mapConsentState } from './consent-mapping';
-import { signalConsents } from './vendor-consent';
+import { RUNTIME_VALUE_KIND } from '../vendor-manifest.model';
+import type {
+	ManifestStep,
+	ResolvedManifest,
+	RuntimeValue,
+} from '../vendor-manifest.model';
+import { isRecord } from './is-record.model';
+import { mapConsentState } from './map-consent-state';
+import { signalConsents } from './vendor-consent.model';
 
 type ManifestLifecycleCallback = Exclude<ScriptLifecycleCallback, 'onError'>;
 
@@ -69,12 +74,6 @@ const cloneStepValue = function cloneStepValue(value: unknown): unknown {
 	}
 
 	return value;
-};
-
-export const isRecord = function isRecord(
-	value: unknown
-): value is Record<string, unknown> {
-	return value !== null && typeof value === 'object' && !Array.isArray(value);
 };
 
 const getPathTarget = function getPathTarget(

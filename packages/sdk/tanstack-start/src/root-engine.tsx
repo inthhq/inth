@@ -14,7 +14,7 @@ import type { ScriptServerStartModule } from '@inth/react/deferred/engine';
 import { InthProvider as ReactProvider } from '@inth/react/provider';
 import type { InthProviderOptions as ReactProviderOptions } from '@inth/react/provider';
 /**
- * The engine side of `InthProvider`, loaded on demand by `./root`.
+ * The engine side of `InthProvider`, loaded on demand by `./inth-provider`.
  *
  * `EagerRoot` is the whole root: the React provider around the page,
  * then the boot data and the scripts the server starts. The server always
@@ -50,9 +50,9 @@ import { resolveStreamedInit } from '@inth/sdk/runtime/streamed-init';
 import { Suspense, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import { readPrefetchedInitialData } from './libs/prefetch-head';
-import { isPending, startsFromHTML } from './root-options';
-import type { InthProviderProps } from './root-options';
+import { readPrefetchedInitialData } from './consent-prefetch-head';
+import { isPending, startsFromHTML } from './inth-provider-options.model';
+import type { InthProviderProps } from './inth-provider-options.model';
 import type { ConsentState } from './server';
 
 // The stock surfaces a deferred root renders come from this chunk, so
@@ -235,7 +235,7 @@ if (typeof document === 'undefined') {
 /**
  * The boot data a deferred root reads, with the stored-choice check
  * (`storedChoiceCheckScript`). Core leaves the check out for a root that
- * needs the engine at once, by the rule `./root` applies in the browser (a
+ * needs the engine at once, by the rule `./inth-provider` applies in the browser (a
  * network blocker, an experiment, `enabled: false`, a script the root
  * cannot start), so the browser starts the engine's download as its chunk
  * runs. Never suspends on the start module: a synchronous first render in
@@ -345,7 +345,7 @@ const AfterPage = ({
 	serverStart: boolean;
 }) => (
 	<>
-		{/* No engine preload: see `loadEngine` in `./root`. */}
+		{/* No engine preload: see `loadEngine` in `./inth-provider`. */}
 		{bootData ? (
 			<CheckedBootData
 				options={options}

@@ -22,9 +22,9 @@ import { offlineMode } from '../../__tests__/fixtures/transport-mode';
 import { ALL_CATEGORIES, testLocal } from '../../__tests__/test-local';
 import { ConsentManager } from '../core/consent-manager';
 import { provideInth } from '../core/provide-inth';
-import { PROMPT_LOADERS } from './containers';
-import type { PromptLoaders } from './containers';
 import { ConsentBanner } from './prompt';
+import { PROMPT_LOADERS } from './prompt-loaders';
+import type { PromptLoaders } from './prompt-loaders';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -42,13 +42,13 @@ const realContainer: PromptLoaders['container'] = async (type) => {
 		case 'banner':
 			return (await import('./strip')).BANNER_CONTAINER;
 		case 'drawer':
-			return (await import('./drawer')).DRAWER_CONTAINER;
+			return (await import('./drawer-container')).DRAWER_CONTAINER;
 		default:
-			return (await import('./card')).CARD_CONTAINER;
+			return (await import('./card-container')).CARD_CONTAINER;
 	}
 };
 const realSurface: PromptLoaders['surface'] = async () =>
-	(await import('./surface')).PromptSurface;
+	(await import('./prompt-surface')).PromptSurface;
 
 const root = () =>
 	document.querySelector<HTMLElement>('[data-testid="consent-banner-root"]');
@@ -87,14 +87,14 @@ const mount = async function mount(presentation?: ConsentPresentation) {
 					case 'banner':
 						return (await import('./strip')).BANNER_CONTAINER;
 					case 'drawer':
-						return (await import('./drawer')).DRAWER_CONTAINER;
+						return (await import('./drawer-container')).DRAWER_CONTAINER;
 					default:
-						return (await import('./card')).CARD_CONTAINER;
+						return (await import('./card-container')).CARD_CONTAINER;
 				}
 			}
 		),
 		surface: vi.fn<PromptLoaders['surface']>(
-			async () => (await import('./surface')).PromptSurface
+			async () => (await import('./prompt-surface')).PromptSurface
 		),
 	};
 	TestBed.configureTestingModule({

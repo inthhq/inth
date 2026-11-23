@@ -28,7 +28,7 @@ import {
 import {
 	useOptInConfirmationOpen,
 	useOptOutState,
-} from '../composables/kernel';
+} from '../composables/use-consent-kernel';
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
 import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import {

@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import type { ConsentManagerState } from '../lib/context.svelte';
+import type { ConsentManagerState } from '../lib/consent-context.model';
 import { draftReady } from './draft-ready';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';

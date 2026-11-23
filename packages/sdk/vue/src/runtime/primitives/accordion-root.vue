@@ -6,7 +6,7 @@
  */
 import { provide, ref } from 'vue';
 
-import { accordionContextKey } from './keys';
+import { accordionContextKey } from './primitive-keys.model';
 
 withDefaults(
 	defineProps<{

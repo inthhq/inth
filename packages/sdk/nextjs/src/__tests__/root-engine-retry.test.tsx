@@ -10,8 +10,8 @@ import { createRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
 import { expect, test, vi } from 'vitest';
 
-import type * as RootModule from '../root';
-import type { ConsentState } from '../types';
+import type { ConsentState } from '../consent-client-options.model';
+import type * as RootModule from '../inth-provider';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 
@@ -28,7 +28,7 @@ test('a deferred root loads its engine a second after one failed import', async 
 	).IS_REACT_ACT_ENVIRONMENT = true;
 	// A query makes Vite evaluate the module again, with its own engine
 	// loader.
-	const fresh = '../root?engine-retry';
+	const fresh = '../inth-provider?engine-retry';
 	const { InthProvider, engineChunk } = (await import(
 		// oxlint-disable-next-line no-inline-comments -- Vite reads it here.
 		/* @vite-ignore */ fresh

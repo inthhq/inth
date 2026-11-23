@@ -3,12 +3,12 @@
  * the in-place options, the "Your Privacy Choices" dialog and the opt-in
  * confirmation it hosts). The engine (`inth.hosted.js`) fetches it the
  * first time the page needs one of them, after publishing the functions
- * that keep per-kernel state for it to call. See `../ui/choices-file.ts`.
+ * that keep per-kernel state for it to call. See `../ui/load-choices-file.ts`.
  */
 
-import type { ChoicesFile } from '../ui/choices-file';
-import { CHOICES_KEY } from '../ui/choices-file';
 import * as dialog from '../ui/dialog/dialog';
+import type { ChoicesFile } from '../ui/load-choices-file';
+import { CHOICES_KEY } from '../ui/load-choices-file';
 import * as optInConfirmation from '../ui/opt-in-confirmation';
 import * as card from '../ui/prompt/card';
 import * as drawer from '../ui/prompt/drawer';

@@ -9,7 +9,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { NOW } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
 import { createPersistence } from '../index';
-import { readStoredConsentRecord } from '../record-storage';
+import { readStoredConsentRecord } from '../record-storage.store';
 import { clearStoredConsentRecords } from './record-writes';
 
 beforeEach(() => {

@@ -2,6 +2,7 @@ import { resolvePolicyRules } from '@inth/sdk-schema/types';
 import type { PolicyRule } from '@inth/sdk-schema/types';
 import { describe, expect, it } from 'vitest';
 
+import type { GlobalVendorList, KernelConfig } from '../consent-kernel.model';
 import {
 	createConsentKernel,
 	IAB_UNAVAILABLE_ERROR_CODE,
@@ -9,7 +10,6 @@ import {
 	policyNeedsIAB,
 } from '../index';
 import { createOfflineTransport } from '../transports/offline';
-import type { GlobalVendorList, KernelConfig } from '../types';
 
 /** Only its presence matters here. */
 const GVL = {

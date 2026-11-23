@@ -15,7 +15,7 @@
  * bundle nothing.
  *
  * Web is the one exception, and it is a platform, not a loophole. A web build
- * has no native core, so the `.web` twins (`native/client.web.ts` and the
+ * has no native core, so the `.web` twins (`native/create-consent-client.web.ts` and the
  * files under `web/`) run the browser engine from `@inth/sdk/engine`. Metro picks a
  * `.web` file on web only, so the rule holds for every file an iOS or Android
  * bundle can read, and the twins may reach `@inth/sdk/engine` and nothing else.
@@ -98,10 +98,10 @@ test('the shipped source is large enough for this guard to mean anything', () =>
 	// A guard that walks nothing passes, which is the worst kind of green.
 	expect(nativeSources.length).toBeGreaterThan(20);
 	expect(webSources.map((file) => relative(SRC, file)).sort()).toEqual([
-		'native/client.web.ts',
+		'native/create-consent-client.web.ts',
 		'native/presenter.web.ts',
-		'web/consent-client.web.ts',
-		'web/expo-extra.web.ts',
+		'web/create-web-consent-client.web.ts',
+		'web/web-options-from-manifest.web.ts',
 	]);
 });
 
@@ -172,7 +172,7 @@ test('the web twins reach the browser engine and no other web package', () => {
 	// The guard reads the file that runs the engine.
 	expect(
 		moduleReferences(
-			readFileSync(join(SRC, 'web/consent-client.web.ts'), 'utf8')
+			readFileSync(join(SRC, 'web/create-web-consent-client.web.ts'), 'utf8')
 		).some(isWebEngineModule)
 	).toBe(true);
 });
@@ -196,7 +196,10 @@ test('no file an iOS or Android bundle reads names a web twin', () => {
 
 test('each platform twin exports what its native module exports', async () => {
 	const pairs = [
-		[await import('../native/client'), await import('../native/client.web')],
+		[
+			await import('../native/create-consent-client'),
+			await import('../native/create-consent-client.web'),
+		],
 		[
 			await import('../native/presenter'),
 			await import('../native/presenter.web'),

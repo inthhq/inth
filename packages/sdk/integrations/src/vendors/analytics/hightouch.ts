@@ -1,11 +1,11 @@
 import type { Script } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { ANALYTICS_JS_QUEUE_METHODS } from '../_shared/analytics-js';
-import { readId, skipMissingId } from '../_shared/required-id';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveManifest } from '../../resolve-manifest';
+import { vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
+import { ANALYTICS_JS_QUEUE_METHODS } from '../_shared/analytics-js.model';
+import { readId, skipMissingId } from '../_shared/required-id.model';
+import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url.model';
 
 const DEFAULT_HIGHTOUCH_SCRIPT_URL =
 	'https://cdn.hightouch-events.com/browser/release/v1-latest/events.min.js';

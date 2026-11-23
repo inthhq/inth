@@ -1,8 +1,8 @@
 import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { describe, expect, it } from 'vitest';
 
-import { iabPromptClassNames } from '../banner/class-names';
-import { buildIABPrompt } from '../browser/render-iab-prompt';
+import { iabPromptClassNames } from '../banner/banner-class-names.model';
+import { buildIABPrompt } from '../browser/render-iab-prompt-into-slot';
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';

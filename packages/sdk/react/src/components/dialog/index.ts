@@ -7,4 +7,4 @@
 
 // oxlint-disable-next-line oxc/no-barrel-file -- The public component entry.
 export { ConsentDialog } from '../../aggregate-components';
-export type { ConsentDialogProps } from './types';
+export type { ConsentDialogProps } from './panel.model';

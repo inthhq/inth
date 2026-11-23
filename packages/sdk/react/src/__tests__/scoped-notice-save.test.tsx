@@ -10,7 +10,7 @@ import { InthProvider } from '../provider';
 
 // The dialog under a US notice shows the rights rows and Done, not the
 // one-click pair, and its Save stays disabled until a switch changes
-// (EU-03); `dialog.test.tsx` covers both. The scenario stays in the type so
+// (EU-03); `panel-body.test.tsx` covers both. The scenario stays in the type so
 // the shared assertions below read the same.
 for (const scenario of ['scoped', 'necessary-only'] as (
 	| 'notice'

@@ -186,7 +186,7 @@ These decisions set what most visitors end up with, because most visitors accept
 
 ## BNR: the banner and its link to the dialog
 
-- **BNR-01. The banner follows the SDK policy preset for the visitor's region** (`packages/sdk/schema/src/shared/policy-rule-presets.ts`):
+- **BNR-01. The banner follows the SDK policy preset for the visitor's region** (`packages/sdk/schema/src/shared/policy/policy-rule-presets.ts`):
 
   | Region | Preset | First layer |
   | --- | --- | --- |

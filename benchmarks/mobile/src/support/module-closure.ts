@@ -253,7 +253,7 @@ export const resolveWorkspaceEntry = function resolveWorkspaceEntry(
 /**
  * Suffixes Metro tries, in order, for an extensionless relative import on iOS
  * and Android. The output names every other import with its extension; a
- * platform-split module, such as `native/client` beside its `.web.js`
+ * platform-split module, such as `native/create-consent-client` beside its `.web.js`
  * twin, is the exception, because platform extensions only apply to a
  * specifier without one. The `.web.js` file is never tried: a device bundle
  * does not read it.

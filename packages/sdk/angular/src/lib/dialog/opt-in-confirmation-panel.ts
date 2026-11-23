@@ -37,9 +37,9 @@ import { ConsentManager } from '../core/consent-manager';
 import { ConsentStyles, SURFACE_SCOPES } from '../core/consent-styles';
 import type { SurfaceStyleSheet } from '../core/consent-styles';
 import { ConsentTheme } from '../core/consent-theme';
-import { NoStyleScope, resolveNoStyle } from '../core/no-style';
-import { InitialFocus } from '../overlay/dialog-focus';
+import { NoStyleScope, resolveNoStyle } from '../core/no-style-scope';
 import { FocusTrap } from '../overlay/focus-trap';
+import { InitialFocus } from '../overlay/initial-focus';
 import { Portal } from '../overlay/portal';
 import { ScrollLock } from '../overlay/scroll-lock';
 

@@ -1,3 +1,4 @@
+import type { KernelUser } from '../consent-kernel.model';
 /**
  * The part of a provider runtime's `update()` that follows options after
  * mount: identity, configured categories, vendors and the modules whose
@@ -18,11 +19,11 @@ import type { declareOwnedVendors, resolveVendors } from '../libs/vendors';
 import type {
 	ClearOnRevocationHandle,
 	ClearOnRevocationOptions,
-} from '../modules/clear-on-revocation/types';
+} from '../modules/clear-on-revocation/clear-on-revocation.model';
 import type {
 	IframeBlockerHandle,
 	IframeBlockerOptions,
-} from '../modules/iframe-blocker/types';
+} from '../modules/iframe-blocker/iframe-blocker.model';
 import type {
 	holdNetworkRequests,
 	NetworkHold,
@@ -30,21 +31,20 @@ import type {
 import type {
 	NetworkBlockerHandle,
 	NetworkBlockerOptions,
-} from '../modules/network-blocker/types';
+} from '../modules/network-blocker/network-blocker.model';
 import type {
 	ScriptLoaderHandle,
 	ScriptLoaderOptions,
-} from '../modules/script-loader/types';
-import type { KernelUser } from '../types';
-import type { afterModuleLoaded } from './lazy-module';
-import type { LiveOption, ModuleSlot } from './provider-runtime';
-import type { normalizeKernelUser } from './runtime-kernel';
-import type { scriptRegistry } from './script-registry';
+} from '../modules/script-loader/script-loader.model';
 import type {
 	ConsentProviderRuntimeOptions,
 	ConsentRuntime,
 	ConsentRuntimeUpdate,
-} from './types';
+} from './consent-runtime.model';
+import type { normalizeKernelUser } from './create-runtime-kernel';
+import type { afterModuleLoaded } from './lazy-runtime-module';
+import type { LiveOption, ModuleSlot } from './provider-runtime';
+import type { scriptRegistry } from './script-registry';
 
 /** One of the provider's runtimes and its module slots. */
 export interface BuiltProviderRuntime {

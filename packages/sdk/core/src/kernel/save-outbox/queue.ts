@@ -22,18 +22,6 @@
 
 import type { CONSENT_MODELS, OptOutRecord } from '@inth/sdk-schema/types';
 
-import type { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
-import type {
-	isPlainRecord,
-	validateExplicitChoice,
-} from '../../consent-record/validation';
-import { isExperimentAssignment } from '../../libs/experiment-record';
-import type { warnInDevelopment } from '../../libs/is-production';
-import type { generateUuidV7 } from '../../libs/subject-uuid';
-import type {
-	isConsentSaveRejection,
-	isSubjectConflict,
-} from '../../transports/save-rejection';
 import type {
 	ConsentSubject,
 	KernelTransport,
@@ -41,9 +29,21 @@ import type {
 	LiftOptOutPayload,
 	OptOutPayload,
 	SavePayload,
-} from '../../types';
-import type { applySyncedOptOut } from '../opt-out';
-import type { KernelRuntime } from '../runtime';
+} from '../../consent-kernel.model';
+import type {
+	isPlainRecord,
+	validateExplicitChoice,
+} from '../../consent-record/consent-record-validation.model';
+import type { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
+import { isExperimentAssignment } from '../../libs/experiment-record';
+import type { warnInDevelopment } from '../../libs/is-production';
+import type { generateUuidV7 } from '../../libs/subject-uuid.model';
+import type {
+	isConsentSaveRejection,
+	isSubjectConflict,
+} from '../../transports/consent-save-rejected-error';
+import type { KernelRuntime } from '../create-runtime';
+import type { applySyncedOptOut } from '../kernel-opt-out.model';
 import type {
 	appendOptOut,
 	appendSave,
@@ -51,16 +51,16 @@ import type {
 	OutboxTransaction,
 	PendingOptOutEntry,
 	SaveOutboxStore,
-} from './store';
+} from './save-outbox.store';
 import { withStoredIdempotencyKey } from './stored-key';
 import type { StoredSavePayload } from './stored-key';
-import type { toStoredPayload } from './stored-payload';
+import type { toStoredPayload } from './stored-payload.model';
 import type {
 	PendingSaveEntry,
 	Supersession,
 	withoutSuperseded,
 	withSubjectId,
-} from './supersession';
+} from './supersession.model';
 
 /**
  * The first-load functions the queue calls. The outbox passes them in

@@ -21,7 +21,7 @@ enum class PolicyPrompt(val wireName: String) {
 
 /**
  * A persistent right the matched rule keeps reachable: `PolicyRight` in
- * `packages/sdk/schema/src/shared/policy-rule.ts`.
+ * `packages/sdk/schema/src/shared/policy/policy-rule.model.ts`.
  */
 @Serializable
 enum class PolicyRight(val wireName: String) {
@@ -41,7 +41,7 @@ enum class PolicyRight(val wireName: String) {
 
 		/**
 		 * The rights every rule of [model] carries: `requiredPolicyRights` in
-		 * `packages/sdk/schema/src/shared/policy-rule-invariants.ts`. A `none` rule owes nothing.
+		 * `packages/sdk/schema/src/shared/policy/policy-rule-invariants.ts`. A `none` rule owes nothing.
 		 */
 		fun requiredFor(model: ConsentModel): List<PolicyRight> = when (model) {
 			ConsentModel.NONE -> emptyList()

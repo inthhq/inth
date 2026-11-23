@@ -6,12 +6,12 @@ import type {
 } from '@inth/sdk-schema/types';
 
 import type { OptOutLinkVariant } from './consent-copy';
-import { resolveLayout } from './consent-layout';
+import { resolveLayout } from './consent-layout.model';
 import type {
 	ConsentContainer,
 	ConsentLayoutOptions,
 	ResolvedConsentLayout,
-} from './consent-layout';
+} from './consent-layout.model';
 
 /** Semantic control roles, independent of their visual variant. */
 export type PresentationAction =

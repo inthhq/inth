@@ -1,9 +1,9 @@
 import { afterEach, expect, it, vi } from 'vitest';
 
+import type { ConsentClientOptions } from '../consent-client.model';
 import { installGlobal } from '../global';
 import { createTestingGlobal as createGlobal } from '../testing-global';
 import type { TestingGlobalApi as GlobalApi } from '../testing-global';
-import type { ConsentClientOptions } from '../types';
 
 const testWindow = window as Window & { inth?: unknown };
 let api: GlobalApi | undefined;

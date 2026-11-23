@@ -8,13 +8,17 @@ import type { ConsentManifest } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { optInRule } from '../../__tests__/fixtures/kernel-fixtures';
+import type {
+	InitContext,
+	KernelTransport,
+	SavePayload,
+} from '../../consent-kernel.model';
 import { primePrefetchedInitialData } from '../../libs/prefetch/prefetch';
 import { hosted, manifest } from '../../modes';
 import { createBrowserManifestTransport } from '../../transports/manifest-browser';
 import type { ProviderTransportContext } from '../../transports/mode';
 import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
 import { createV1HostedTransport } from '../../transports/v1/hosted';
-import type { InitContext, KernelTransport, SavePayload } from '../../types';
 import {
 	clientMode,
 	lazyBrowserManifest,

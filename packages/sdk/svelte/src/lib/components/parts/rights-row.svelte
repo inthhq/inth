@@ -62,15 +62,14 @@
 	import type { AllThemeKeys } from '@inth/sdk/ui/theme';
 	import { untrack } from 'svelte';
 
-	import { getConsentContext, getThemeContext } from '../../context.svelte';
+	import { getConsentContext } from '../../get-consent-context.svelte';
+	import { getThemeContext } from '../../get-theme-context';
 	import ConsentButton from '../action-button.svelte';
 	import Icon from './icon.svelte';
-	import { cx, part } from './parts';
-	import {
-		rightsBundleOf,
-		useOptOutReceiptData,
-		useSurfaceSession,
-	} from './session.svelte';
+	import { rightsBundleOf } from './rights-bundle.model';
+	import { cx, part } from './surface-parts.model';
+	import { useOptOutReceiptData } from './use-opt-out-receipt-data.svelte';
+	import { useSurfaceSession } from './use-surface-session.svelte';
 
 	let {
 		idPrefix,

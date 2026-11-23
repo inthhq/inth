@@ -13,8 +13,8 @@ import type { InitOutput } from '@inth/sdk-schema/types';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { createIAB } from '../index';
-import { clearGVLCache, setMockGVL } from '../tcf/fetch-gvl';
-import { decodeTCString } from '../tcf/tc-string';
+import { clearGVLCache, setMockGVL } from '../tcf/fetch-gvl.api';
+import { decodeTCString } from '../tcf/tc-string.model';
 import { completeGVL } from './fixtures/gvl-sample';
 
 const policy = normalizePolicyRule({

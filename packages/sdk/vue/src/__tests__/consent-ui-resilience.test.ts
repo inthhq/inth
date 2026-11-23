@@ -15,8 +15,8 @@ import { useOptOutReceiptData } from '../runtime/components/parts/use-surface-se
 import {
 	promptContainers,
 	promptContainersKey,
-} from '../runtime/components/prompt/containers';
-import { useConsentKernel } from '../runtime/composables/kernel';
+} from '../runtime/components/prompt/prompt-containers';
+import { useConsentKernel } from '../runtime/composables/use-consent-kernel';
 import type { MountOptions } from './consent-ui-fixture';
 import {
 	$,

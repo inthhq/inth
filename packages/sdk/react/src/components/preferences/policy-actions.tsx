@@ -6,17 +6,15 @@ import { useHeadlessConsentUI } from '~/component-hooks/use-headless-consent-ui'
 import type { HeadlessConsentDialogAction } from '~/component-hooks/use-headless-consent-ui';
 import { useConsentDraft } from '~/draft';
 
-import { PolicyActionsRenderer } from '../shared/policy-actions';
-import type { PolicyActionRenderProps } from '../shared/policy-actions';
-import {
-	ConsentWidgetAcceptAllButton,
-	ConsentWidgetRejectButton,
-	ConsentWidgetSaveButton,
-} from './atoms/button';
+import { PolicyActionsRenderer } from '../shared/policy-actions-renderer';
+import type { PolicyActionRenderProps } from '../shared/policy-actions-renderer';
+import { ConsentWidgetAcceptAllButton } from './atoms/accept-all-button';
 import {
 	ConsentWidgetFooter,
 	ConsentWidgetFooterSubGroup,
 } from './atoms/footer';
+import { ConsentWidgetRejectButton } from './atoms/reject-button';
+import { ConsentWidgetSaveButton } from './atoms/save-button';
 
 export type ConsentWidgetPolicyActionRenderProps =
 	PolicyActionRenderProps<HeadlessConsentDialogAction>;

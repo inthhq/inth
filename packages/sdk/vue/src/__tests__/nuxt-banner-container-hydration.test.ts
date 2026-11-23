@@ -1,6 +1,6 @@
 /**
  * The consent banner rendered by the server and hydrated under the Nuxt
- * plugin's deferred context (`runtime/deferred/shell.ts`): its container,
+ * plugin's deferred context (`runtime/deferred/create-deferred-context.ts`): its container,
  * and an all-in-one Drawer's options, arrive in chunks
  * of their own after the banner hydrated, and must still hydrate against
  * the snapshot the server rendered; and a tap on the server's HTML before
@@ -18,17 +18,13 @@ import { createSSRApp, defineComponent, h } from 'vue';
 import type { App } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
-import { ConsentBannerHost } from '../runtime/components/lazy-surfaces';
+import { ConsentBannerHost } from '../runtime/components/prompt-host';
 import {
 	promptContainers,
 	promptContainersKey,
-} from '../runtime/components/prompt/containers';
-import type { PromptContainerLoader } from '../runtime/components/prompt/containers';
-import { createDeferredContext } from '../runtime/deferred/shell';
-import type {
-	RuntimeConsentConfig,
-	VueConsentKernelContext,
-} from '../runtime/kernel';
+} from '../runtime/components/prompt/prompt-containers';
+import type { PromptContainerLoader } from '../runtime/components/prompt/prompt-containers';
+import { createDeferredContext } from '../runtime/deferred/create-deferred-context';
 import {
 	consentConfigKey,
 	symbolActiveUI,
@@ -37,7 +33,11 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
+import type {
+	RuntimeConsentConfig,
+	VueConsentKernelContext,
+} from '../runtime/vue-consent-kernel-context.model';
 import { createVueConsentKernelContext } from './test-kernel';
 
 const init: InitOutput = {

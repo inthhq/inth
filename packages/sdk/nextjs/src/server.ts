@@ -17,9 +17,9 @@ import { resolveRequestConsent } from '@inth/sdk/server';
 import * as React from 'react';
 
 import { createManifestFetchInit } from './api';
-import type { ConsentSourceOptions } from './consent-source';
-import { resolveConsentSource } from './consent-source';
-import type { ConsentState } from './types';
+import type { ConsentState } from './consent-client-options.model';
+import type { ConsentSourceOptions } from './resolve-consent-source';
+import { resolveConsentSource } from './resolve-consent-source';
 
 type Awaitable<Value> = Promise<Value> | Value;
 
@@ -132,7 +132,7 @@ export interface ConsentRequestOptions {
  * Type alias re-exported so consumers can stay within `@inth/nextjs`.
  */
 export type { KernelConfig } from '@inth/sdk/engine';
-export type { ConsentState } from './types';
+export type { ConsentState } from './consent-client-options.model';
 export type { ConsentConfig } from './config';
 export { defineConsentConfig } from './config';
 

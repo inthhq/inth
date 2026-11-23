@@ -6,23 +6,24 @@ import type {
 } from '@inth/sdk/engine';
 import { has } from '@inth/sdk/engine';
 
-import { isRecord } from '../../engine/runtime';
-import { ALL_DENIED } from '../../engine/vendor-consent';
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
+import { isRecord } from '../../engine/is-record.model';
+import { ALL_DENIED } from '../../engine/vendor-consent.model';
+import { resolveManifest } from '../../resolve-manifest';
+import { vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
+import {
+	createScriptReuse,
+	getScriptRegistrations,
+} from '../_shared/create-script-reuse';
 import { permitted } from '../_shared/permitted';
 import {
 	waitForReplayIdle,
 	waitForReplayLoad,
 	waitForReplayPaint,
 } from '../_shared/replay-scheduler';
-import { readId, skipMissingId } from '../_shared/required-id';
-import {
-	createScriptReuse,
-	getScriptRegistrations,
-} from '../_shared/reuse-script';
-import { trimToUndefined } from '../_shared/script-url';
+import { readId, skipMissingId } from '../_shared/required-id.model';
+import { trimToUndefined } from '../_shared/script-url.model';
+import { forgetReplaySession } from '../_shared/sentry-replay-session.store';
 
 /** Recording mode that Sentry Replay reports while it records. */
 export type SentryReplayRecordingMode = 'session' | 'buffer';
@@ -355,8 +356,6 @@ interface GateOptions {
 const scriptId = 'sentry';
 const replayName = 'Replay';
 const tracingName = 'BrowserTracing';
-/** sessionStorage key where Sentry Replay keeps its session. */
-const replaySessionKey = 'sentryReplaySession';
 const defaultCategory: AllConsentNames = 'measurement';
 const errorsCategory: AllConsentNames = 'measurement';
 /** Retry until a late-initialized SDK client appears or the adapter is removed. */
@@ -417,18 +416,6 @@ const isReplay = (value: unknown): value is SentryReplay =>
 const findReplay = (client: SentryClient): SentryReplay | undefined => {
 	const integration = client.getIntegrationByName(replayName);
 	return isReplay(integration) ? integration : undefined;
-};
-
-/**
- * Remove the Replay session id. Sentry clears it when it stops a recording,
- * but keeps it for a session it did not sample.
- */
-const forgetReplaySession = (): void => {
-	try {
-		globalThis.sessionStorage?.removeItem(replaySessionKey);
-	} catch {
-		// Storage can be blocked; Sentry then keeps no session either.
-	}
 };
 
 /** Disable collection through SDK settings while its permission is denied. */

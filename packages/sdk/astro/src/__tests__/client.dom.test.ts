@@ -4,7 +4,7 @@ import type { ConsentSnapshot } from '@inth/sdk/engine';
 import { onDemandRuntimeModules } from '@inth/sdk/runtime/on-demand';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { resetDialogStylesForTest } from '../browser/dialog-styles';
+import { resetDialogStylesForTest } from '../browser/load-dialog-styles';
 import {
 	attachBannerActions,
 	boot,
@@ -20,11 +20,11 @@ import {
 } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions, InthIABOptions } from '../inth-options.model';
 import { buildConfigScript } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthIABOptions } from '../types';
-import { registerDialogAdapter } from '../ui/adapter';
-import type { ConsentDialogHandle } from '../ui/adapter';
+import { registerDialogAdapter } from '../ui/register-dialog-adapter';
+import type { ConsentDialogHandle } from '../ui/register-dialog-adapter';
 import { createTestPageIAB } from './page-iab';
 import { testResolution, testRule } from './policy-fixture';
 

@@ -164,7 +164,7 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			.map((file) => file.slice(0, -'.web.js'.length))
 			.filter((base) => existsSync(`${base}.js`));
 		expect(twins.map((base) => posix.relative(installed, base)).sort()).toEqual(
-			['dist/native/client', 'dist/native/presenter']
+			['dist/native/create-consent-client', 'dist/native/presenter']
 		);
 		const pinned = artifacts
 			.filter((path) => path.endsWith('.js'))
@@ -192,7 +192,7 @@ test('packed runtime, declarations and consumer stay independent of web consent 
 			}
 			visited.add(path);
 			expect(path).not.toContain('expo-plugin');
-			// Node resolves `./client` to `client.js`, as Metro does for
+			// Node resolves `./create-consent-client` to `create-consent-client.js`, as Metro does for
 			// iOS and Android, so a native bundle never reads a `.web` file.
 			expect(isWebOnlyFile(path), path).toBe(false);
 			for (const specifier of moduleReferences(readFileSync(path, 'utf8'))) {

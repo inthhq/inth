@@ -64,7 +64,7 @@ public struct CoreConfig: @unchecked Sendable {
     ///
     /// `nil` and `[]` are the same answer: no scope declared, so every served list is
     /// kept as it arrived. Both web narrows read an empty array that way --
-    /// `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts` hands the document
+    /// `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts` hands the document
     /// back, and `gvlRequestUrl` in `packages/backend/src/http/gvl.ts` does not put the
     /// scope on the request line at all -- and a core that read `[]` as "show nobody"
     /// would leave a publisher who never scoped anything with an empty drawer under a
@@ -2436,7 +2436,7 @@ public final class ConsentCore: @unchecked Sendable {
                 additionalConsentList = AdditionalConsentList(providers: providers, fetchedAt: bundle == nil ? nowMs : bundle?.atpFetchedAt ?? -1)
             }
             // An unreadable list is none. An absent one keeps the list held, as
-            // `init-lifecycle.ts` does on the web, except in a live answer for a matched IAB
+            // `create-init-lifecycle.ts` does on the web, except in a live answer for a matched IAB
             // policy: the backend sends the key whenever it declares custom vendors there, so
             // leaving it out means it declares none. A bundle from an older CLI has no key and
             // keeps the list. A grant for a vendor no longer listed goes with it.

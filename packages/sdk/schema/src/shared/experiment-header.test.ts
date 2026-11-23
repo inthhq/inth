@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	formatExperimentHeader,
 	parseExperimentHeader,
-} from './session-report';
+} from './session-report.model';
 
 describe('experiment header', () => {
 	it('round-trips an id and arm, encoding separators', () => {

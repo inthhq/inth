@@ -30,16 +30,16 @@
  *   to the kernel. The snapshot reference is swapped on every kernel
  *   subscribe tick.
  */
-import type { ConsentSnapshot } from '../../types';
-import { installFetchPatch } from './patch-fetch';
-import { installXhrPatch } from './patch-xhr';
+import type { ConsentSnapshot } from '../../consent-kernel.model';
+import { installFetchPatch } from './install-fetch-patch';
+import { installXhrPatch } from './install-xhr-patch';
 import type {
 	BlockedRequestInfo,
 	NetworkBlockerHandle,
 	NetworkBlockerOptions,
 	NetworkBlockerRule,
 	NetworkBlockerTools,
-} from './types';
+} from './network-blocker.model';
 
 /**
  * Create a network blocker from the tools it calls.

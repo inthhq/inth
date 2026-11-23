@@ -2,7 +2,7 @@
  * The mobile mirror of the IAB display model, checked against the web model that
  * mirror claims to copy.
  *
- * `ConsentIabDisplayModel` in `../iab-display-model` is a hand-written mirror of
+ * `ConsentIabDisplayModel` in `../iab-display.model` is a hand-written mirror of
  * `HeadlessIABDialogDisplayModel`. A mirror is only worth having if something
  * holds it in place, because the failure this package is exposed to is quiet: the
  * web resolver gains a field, reorders a tab, or widens a test-id scheme, and a

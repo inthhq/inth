@@ -19,13 +19,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { hosted as hostedMode } from '../mode';
 import { testing as testingMode } from '../testing';
-import { lazyTransport, testingTransport } from '../transport';
+import { lazyTransport, testingTransport } from '../transport-resolvers.model';
 import { testRule } from './policy-fixture';
 
 const testingModule = vi.hoisted(() => ({ loads: 0 }));
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is whether the client evaluates this module at all. The factory only counts loads and returns the real module.
-vi.mock('../testing-transport', async (importOriginal) => {
+vi.mock('../create-testing-mode', async (importOriginal) => {
 	testingModule.loads += 1;
 	return await importOriginal();
 });
@@ -101,10 +101,10 @@ describe('browser client graph', () => {
 		// The client re-exports every transport, and the boot script imports
 		// the one its mode runs, so a bundler drops the others. Everything
 		// else the client imports ships with every page.
-		const transport = resolve(SRC, 'transport.ts');
+		const transport = resolve(SRC, 'transport-resolvers.model.ts');
 		const { edges, files } = walk(resolve(SRC, 'client.ts'), [transport]);
 
-		expect(files.has(resolve(SRC, 'testing-transport.ts'))).toBe(false);
+		expect(files.has(resolve(SRC, 'create-testing-mode.ts'))).toBe(false);
 		const offenders = edges.filter(
 			(edge) =>
 				!edge.specifier.startsWith('.') &&
@@ -114,8 +114,8 @@ describe('browser client graph', () => {
 	});
 
 	it('loads testing mode only with import()', () => {
-		const { files } = walk(resolve(SRC, 'transport.ts'));
-		expect(files.has(resolve(SRC, 'testing-transport.ts'))).toBe(false);
+		const { files } = walk(resolve(SRC, 'transport-resolvers.model.ts'));
+		expect(files.has(resolve(SRC, 'create-testing-mode.ts'))).toBe(false);
 	});
 });
 

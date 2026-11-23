@@ -30,8 +30,8 @@ import { PrivacyChoicesLink } from '~/components/privacy-choices-link';
 import { ConsentBanner } from '~/components/prompt';
 import type { ConsentBannerProps } from '~/components/prompt';
 import { useSnapshot } from '~/hooks';
-import { useKernel } from '~/kernel-selector';
-import { inertProps } from '~/utils/inert';
+import { useKernel } from '~/use-kernel';
+import { inertProps } from '~/utils/inert-props';
 
 import { testing } from '../../../testing';
 

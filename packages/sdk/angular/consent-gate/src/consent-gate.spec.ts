@@ -14,7 +14,7 @@ import { ConsentManager } from '../../src/lib/core/consent-manager';
 import type {
 	InthOptions,
 	InthProviderOptions,
-} from '../../src/lib/core/options';
+} from '../../src/lib/core/inth-options';
 import { provideInth } from '../../src/lib/core/provide-inth';
 import {
 	ConsentGate,

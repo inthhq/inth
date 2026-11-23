@@ -43,16 +43,16 @@ import {
 import { vi } from 'vitest';
 
 import { preloadPersistenceWriter } from '../../../core/src/modules/persistence/mount';
-import { validateStoredConsentEnvelope } from '../../../core/src/modules/persistence/record-codec';
-import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
-import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs';
+import { validateStoredConsentEnvelope } from '../../../core/src/modules/persistence/record-codec.model';
+import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/record-encode.model';
+import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs.model';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
-import { resetDialogWarmingForTests } from '../lib/core/dialog-warming';
 import type {
 	InthCallbacks,
 	InthOptions,
 	InthProviderOptions,
-} from '../lib/core/options';
+} from '../lib/core/inth-options';
+import { resetDialogWarmingForTests } from '../lib/core/warm-dialog';
 import { bootClient, renderServer } from './conformance-app';
 import type { ClientApp, FixtureContent } from './conformance-app';
 import { POLICY_SURFACES } from './conformance-registry';

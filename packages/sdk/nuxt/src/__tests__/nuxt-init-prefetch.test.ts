@@ -15,7 +15,7 @@ import { createApp, defineComponent, h, ref } from 'vue';
 import type { App, Ref } from 'vue';
 
 import ConsentBanner from '../../../vue/src/runtime/components/prompt/prompt.vue';
-import { buildInitPrefetchTag } from '../runtime/server/init-prefetch';
+import { buildInitPrefetchTag } from '../runtime/server/build-init-prefetch-tag';
 
 const nuxt = vi.hoisted(() => ({
 	appConfig: {} as Record<string, unknown>,

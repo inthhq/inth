@@ -14,7 +14,7 @@ import * as button from '@inth/sdk/ui/styles/sheets/button-deferred';
 import * as surface from '@inth/sdk/ui/styles/sheets/surface-deferred';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens-deferred';
 
-import type { ContainerModule } from './containers';
+import type { ContainerModule } from './prompt-loaders';
 
 /** Tokens, buttons, the shell, then the Banner rules, in cascade order. */
 export const BANNER_CONTAINER: ContainerModule = {

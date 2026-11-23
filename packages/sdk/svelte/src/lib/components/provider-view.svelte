@@ -4,7 +4,7 @@
 	handed. `InthProvider` from `@inth/svelte` hands it the engine it creates
 	(or the one it was given); the one from `@inth/svelte/kit` hands it the
 	server's engine, and in the browser the deferred runtime that stands in
-	for the engine until it loads (`../deferred/runtime.ts`). Both render through this component, so
+	for the engine until it loads (`../deferred/create-deferred-runtime.ts`). Both render through this component, so
 	the browser hydrates the server's markup whichever one it got.
 
 	@internal
@@ -46,12 +46,16 @@
 	import type { Snippet } from 'svelte';
 	import { onDestroy, onMount, untrack } from 'svelte';
 
-	import { setConsentContext, setThemeContext } from '../context.svelte';
-	import type { ConsentDraftState, SvelteIABState } from '../context.svelte';
-	import { isIABConfigured } from '../iab-loader';
-	import { runtimeOptionsFor } from '../provider-options';
-	import type { ProviderOptionsInput } from '../provider-options';
-	import { startOnServer } from '../server-script-start';
+	import type {
+		ConsentDraftState,
+		SvelteIABState,
+	} from '../consent-context.model';
+	import { setConsentContext } from '../get-consent-context.svelte';
+	import { setThemeContext } from '../get-theme-context';
+	import { isIABConfigured } from '../lazy-create-iab';
+	import { startOnServer } from '../register-server-script-start';
+	import { runtimeOptionsFor } from '../resolve-provider-options';
+	import type { ProviderOptionsInput } from '../resolve-provider-options';
 
 	interface ProviderViewProps {
 		children?: Snippet;

@@ -21,8 +21,8 @@ import {
 	streamPage,
 } from '../../__tests__/streamed-ssr-harness';
 import type { StreamedPage } from '../../__tests__/streamed-ssr-harness';
-import { CardSurface } from '../../components/prompt/card';
-import { DrawerSurface } from '../../components/prompt/drawer';
+import { CardSurface } from '../../components/prompt/card-surface';
+import { DrawerSurface } from '../../components/prompt/drawer-surface';
 import { PromptContainersContext } from '../../components/prompt/prompt';
 import { BannerSurface } from '../../components/prompt/strip';
 import { useSaveConsents, useSnapshot } from '../../hooks';
@@ -35,13 +35,14 @@ import {
 	readConsentBoot,
 } from '../boot';
 import type { ConsentBoot } from '../boot';
-import { ConsentBootData, ServerBootData } from '../boot-data';
-import { engineNeededAtLoad } from '../boot-plan';
-import type { DeferredCommitConfig } from '../committed';
+import { ConsentBootData } from '../consent-boot-data';
+import type { DeferredCommitConfig } from '../deferred-committed.model';
+import { DeferredConsentShell } from '../deferred-consent-shell';
 import type * as EngineNamespace from '../engine';
-import { ENGINE_CHUNKS_KEY } from '../engine-preload';
-import { DeferredConsentShell } from '../shell';
-import { DeferredConsentBanner } from '../surfaces';
+import { ENGINE_CHUNKS_KEY } from '../engine-preload.store';
+import { ServerBootData } from '../server-boot-data';
+import { DeferredConsentBanner } from '../surface-with-parts';
+import { engineNeededAtLoad } from '../use-consent-boot-plan';
 
 const policyConfig = function policyConfig(
 	rule: Partial<PolicyRule> = {},

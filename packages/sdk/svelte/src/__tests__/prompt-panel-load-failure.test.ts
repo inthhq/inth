@@ -8,8 +8,8 @@ import { showConsentSurface } from '@inth/sdk/surface-actions';
 import { render, waitFor } from '@testing-library/svelte';
 import { beforeEach, expect, test, vi } from 'vitest';
 
+import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { testing } from '../lib/testing';
-import type { ConsentManagerOptions } from '../lib/types';
 import Fixture from './fixtures/consent-surfaces-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 

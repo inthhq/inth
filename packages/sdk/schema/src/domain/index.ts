@@ -1,6 +1,6 @@
-export { type AuditLog, auditLogSchema } from './audit-log';
+export { type AuditLog, auditLogSchema } from './audit-log.model';
 
-export { type Consent, consentSchema } from './consent';
+export { type Consent, consentSchema } from './consent.model';
 
 export {
 	type ConsentPolicy,
@@ -14,13 +14,16 @@ export {
 	legalDocumentPolicyTypeSchema,
 	type PolicyType,
 	policyTypeSchema,
-} from './consent-policy';
+} from './consent-policy.model';
 
-export { type ConsentPurpose, consentPurposeSchema } from './consent-purpose';
+export {
+	type ConsentPurpose,
+	consentPurposeSchema,
+} from './consent-purpose.model';
 
-export { type Domain, domainSchema } from './domain';
+export { type Domain, domainSchema } from './domain.model';
 export {
 	type RuntimePolicyDecision,
 	runtimePolicyDecisionSchema,
-} from './runtime-policy-decision';
-export { type Subject, subjectSchema } from './subject';
+} from './runtime-policy-decision.model';
+export { type Subject, subjectSchema } from './subject.model';

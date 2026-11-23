@@ -5,7 +5,7 @@
 	} from '@inth/sdk/events';
 	import { untrack } from 'svelte';
 
-	import { getEventDispatcher } from '../../lib/event-dispatcher';
+	import { getEventDispatcher } from '../../lib/get-event-dispatcher';
 
 	let {
 		options,

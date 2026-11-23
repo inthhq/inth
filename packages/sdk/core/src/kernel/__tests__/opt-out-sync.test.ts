@@ -19,14 +19,24 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type {
+	KernelConfig,
+	KernelTransport,
+	LiftOptOutPayload,
+	LiftOptOutTransportResult,
+	OptOutPayload,
+	OptOutTransportResult,
+	SavePayload,
+	SaveResult,
+} from '../../consent-kernel.model';
 import {
 	optInPromptAllowedAt,
 	OPT_OUT_REPROMPT_WAIT_MS,
 } from '../../consent-record';
-import { resolveOptOutReceipt } from '../../libs/opt-out-state';
+import { resolveOptOutReceipt } from '../../libs/opt-out-state.model';
 import { PENDING_OPT_OUTS_STORAGE_KEY } from '../../libs/storage-keys';
 import { createPersistence } from '../../modules/persistence';
-import { readStoredOptOutRecord } from '../../modules/persistence/record-storage';
+import { readStoredOptOutRecord } from '../../modules/persistence/record-storage.store';
 import {
 	bodyAt,
 	json,
@@ -37,19 +47,9 @@ import {
 	v1Error,
 } from '../../transports/v1/__tests__/fixtures';
 import { createV1HostedTransport } from '../../transports/v1/hosted';
-import type {
-	KernelConfig,
-	KernelTransport,
-	LiftOptOutPayload,
-	LiftOptOutTransportResult,
-	OptOutPayload,
-	OptOutTransportResult,
-	SavePayload,
-	SaveResult,
-} from '../../types';
-import { clearKernelRecords } from '../clear-records';
+import { clearKernelRecords } from '../clear-records.model';
 import { createKernel } from '../index';
-import type { InternalKernel } from '../internals';
+import type { InternalKernel } from '../kernel-internals.model';
 import {
 	createBrowserOutboxStore,
 	createMemoryOutboxStore,

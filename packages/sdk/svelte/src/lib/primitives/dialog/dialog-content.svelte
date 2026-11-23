@@ -6,7 +6,7 @@
 
 	import { focusTrap } from '../../actions/focus-trap';
 	import { scrollLock } from '../../actions/scroll-lock';
-	import { getDialogRootContext } from './context';
+	import { getDialogRootContext } from './get-dialog-root-context';
 
 	const dialog = getDialogRootContext();
 

@@ -21,7 +21,7 @@ import kotlinx.serialization.json.contentOrNull
 /**
  * Reads `/init`'s `gvl` key, and hands the same document back out for a bridge.
  *
- * The acceptance rules are `packages/sdk/iab/src/tcf/fetch-gvl.ts`'s, field for field. That is the
+ * The acceptance rules are `packages/sdk/iab/src/tcf/fetch-gvl.api.ts`'s, field for field. That is the
  * client half of the web, and the half that decides whether a device ends up holding a list at all:
  * the backend embeds `gvl` only when the matched policy's model is `iab`
  * (`packages/backend/src/http/init.ts`), and the client then refuses the list unless
@@ -52,7 +52,7 @@ object GlobalVendorListJson {
 	 *
 	 * `encodeDefaults = false` is a shape decision and not tidiness. The web document leaves its
 	 * `v.optional(...)` fields out and its readers cope with the absence -- `vendor.purposes || []`
-	 * in `dialog-data.ts` -- so a body that wrote `"purposes": []` for every vendor that never
+	 * in `dialog-data.model.ts` -- so a body that wrote `"purposes": []` for every vendor that never
 	 * declared purposes would be asserting something about that vendor the list never said. Under
 	 * this format a null optional key is not written at all, and `gvlSpecificationVersion` and
 	 * `lastUpdated`, which the acceptance rules above do not require, come back only if the served
@@ -66,7 +66,7 @@ object GlobalVendorListJson {
 	 *
 	 * The other thing that does not survive is a record shaped so this model cannot name it, and there
 	 * the answer is the whole list rather than one key -- where `fetchGVL` keeps a list whose display
-	 * half is unreadable and lets `dialog-data.ts` render whatever falls out. That tightening is
+	 * half is unreadable and lets `dialog-data.model.ts` render whatever falls out. That tightening is
 	 * unreachable on the path this SDK is fed: `packages/backend/src/http/gvl.ts` parses the upstream
 	 * document against `globalVendorListSchema` before embedding it, so the backend cannot embed a
 	 * `stacks` that turned out to be a string. Reading such a document partly is the alternative, and

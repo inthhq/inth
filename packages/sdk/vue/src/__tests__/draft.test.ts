@@ -15,8 +15,8 @@ import { afterEach, expect, test } from 'vitest';
 import { createApp, defineComponent, h, nextTick } from 'vue';
 
 import { consentConfigKey } from '../runtime/composables/config';
-import { useConsentDraft } from '../runtime/composables/draft';
-import { symbolKernelContext } from '../runtime/utils/symbols';
+import { useConsentDraft } from '../runtime/composables/use-consent-draft';
+import { symbolKernelContext } from '../runtime/utils/consent-symbols.model';
 import { createVueConsentKernelContext } from './test-kernel';
 
 const policy = normalizePolicyRule({

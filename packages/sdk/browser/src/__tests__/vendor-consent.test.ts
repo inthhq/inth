@@ -2,13 +2,13 @@ import { policyRulePresets } from '@inth/sdk-core';
 import type { Vendor } from '@inth/sdk-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { activateGatedScripts } from '../gated-scripts';
+import { activateGatedScripts } from '../activate-gated-scripts';
+import type { ConsentClient, ConsentUIHandle } from '../consent-client.model';
 import {
 	createTestingGlobal as createGlobal,
 	createTestingConsentClient as createConsentClient,
 } from '../testing-global';
-import type { ConsentClient, ConsentUIHandle } from '../types';
-import { mountConsentUI } from '../ui/mount';
+import { mountConsentUI } from '../ui/mount-consent-ui';
 
 const vendors: Vendor[] = [
 	{

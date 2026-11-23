@@ -1,6 +1,6 @@
 # Competitive mobile CMP benchmark
 
-These commands build a no-SDK control and five stock consent integrations in separate Expo consumers. They measure signed Android APK bytes and unsigned iOS `.app` regular-file bytes. Runtime is a separate Android cached-denial profile. The existing `bench:mobile` commands still measure the c15t contract and do not run this study.
+These commands build a no-SDK control and five stock consent integrations in separate Expo consumers. They measure signed Android APK bytes and unsigned iOS `.app` regular-file bytes. Runtime is a separate Android cached-denial profile. The package's `bench` commands measure the budgets in `packages/native-protocol/CONTRACT.md` and do not run this study.
 
 The [2026-10-30 snapshot](snapshots/2026-10-30.json) contains all 18 app measurements, artifact hashes, source and toolchain pins, runtime attempts and limitations. The frozen c15t producer was clean commit `256e903bfa542c15126e017c10fdfea70f421521`. This repository checkout is only the benchmark runner. It never supplies SDK code to a measured app.
 

@@ -1,0 +1,47 @@
+import type { KernelOverrides } from '@inth/sdk/engine';
+
+import type { VueConsentKernelContext } from './vue-consent-kernel-context.model';
+
+/** The `InthProvider` props that map onto kernel overrides. */
+export type RootOverrideProps = Pick<
+	KernelOverrides,
+	'country' | 'language' | 'region'
+>;
+
+const ROOT_OVERRIDE_KEYS = ['country', 'language', 'region'] as const;
+
+/**
+ * Apply `InthProvider`'s `country`, `language` and `region` props to the
+ * runtime's overrides, and ask for the policy again only when that changes
+ * what the kernel would ask for.
+ *
+ * A prop equal to the current override, such as a language the server
+ * prefetched, changes nothing. A changed prop is stored straight away; the
+ * browser asks for it once the runtime runs, and a runtime that has not
+ * started yet asks in its first init instead of adopting a prefetch made
+ * for other inputs. A prop removed since the last call clears its override.
+ *
+ * @internal
+ */
+export const applyRootOverrides = function applyRootOverrides(
+	context: VueConsentKernelContext,
+	next: RootOverrideProps,
+	previous?: RootOverrideProps
+): void {
+	const current = context.kernel.getSnapshot().overrides;
+	const changes: RootOverrideProps = {};
+	let changed = false;
+	for (const key of ROOT_OVERRIDE_KEYS) {
+		const value = next[key];
+		if (value === undefined && previous?.[key] === undefined) {
+			continue;
+		}
+		if (current[key] !== value) {
+			changes[key] = value;
+			changed = true;
+		}
+	}
+	if (changed) {
+		context.setOverrides(changes);
+	}
+};

@@ -3,7 +3,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	import { getCollapsibleRootContext } from './context';
+	import { getCollapsibleRootContext } from './get-collapsible-root-context';
 
 	const root = getCollapsibleRootContext();
 

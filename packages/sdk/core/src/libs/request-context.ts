@@ -1,7 +1,7 @@
-import type { Overrides } from '../options/overrides';
-import type { SSRInitRequestContext } from '../options/ssr';
-import { hasGlobalPrivacyControlSignal } from './global-privacy-control';
-import { browserInitCredentials } from './request-context-headers';
+import type { Overrides } from '../options/overrides-options.model';
+import type { SSRInitRequestContext } from '../options/ssr-options.model';
+import { hasGlobalPrivacyControlSignal } from './read-global-privacy-control';
+import { browserInitCredentials } from './request-context-headers.model';
 
 const ABSOLUTE_URL_REGEX = /^https?:\/\//u;
 

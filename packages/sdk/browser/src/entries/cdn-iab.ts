@@ -3,7 +3,7 @@ import { createIAB, initializeIABStub, destroyIABStub } from '@inth/sdk-iab';
 import { publishDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 
 import { autoInit, createGlobal, installGlobal } from '../global';
-import { mountIABConsentUI } from '../iab/mount';
+import { mountIABConsentUI } from '../iab/mount-iab-consent-ui';
 
 const api = installGlobal(
 	createGlobal({

@@ -7,7 +7,7 @@ import {
 	grantedMeasurementConsentState,
 	setupScriptHelperTest,
 } from '../../__tests__/helpers';
-import { resolveManifest } from '../../resolve';
+import { resolveManifest } from '../../resolve-manifest';
 import { databuddy, databuddyManifest } from './databuddy';
 
 /** The `databuddy.js` hash of release 2026-10-30.1, checked against cdn.databuddy.cc. */

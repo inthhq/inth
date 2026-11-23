@@ -9,8 +9,8 @@
  * consent authority while the page runs inside the app. The contract is
  * "WebView consent" in `packages/native-protocol/CONTRACT.md`.
  */
-import type { ConsentState, Unsubscribe } from '../types';
-import type { ExternalConsentSource } from './types';
+import type { ConsentState, Unsubscribe } from '../consent-kernel.model';
+import type { ExternalConsentSource } from './consent-runtime.model';
 
 /**
  * The globals the native document-start script defines, newest first. App

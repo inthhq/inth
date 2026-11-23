@@ -18,10 +18,10 @@ import {
 import type { PropType, WatchSource } from 'vue';
 
 import { useConsentConfig } from './runtime/composables/config';
-import { useResolvedPresentation } from './runtime/composables/experiment';
-import { useConsentKernel } from './runtime/composables/kernel';
-import { readDisplayedCategories } from './runtime/devtools/services';
-import { symbolKernelContext } from './runtime/utils/symbols';
+import { useConsentKernel } from './runtime/composables/use-consent-kernel';
+import { useResolvedPresentation } from './runtime/composables/use-experiment';
+import { readDisplayedCategories } from './runtime/devtools/read-displayed-categories';
+import { symbolKernelContext } from './runtime/utils/consent-symbols.model';
 
 /** Props for the kernel-bound Vue DevTools adapter. */
 export type ConsentDevToolsProps = Omit<

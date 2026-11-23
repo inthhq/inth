@@ -16,27 +16,27 @@ import {
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
-import type { Script } from '../../libs/script-loader/types';
+import type { Script } from '../../libs/script-loader/script.model';
 import {
 	PREVIEW_KEY,
 	signRelease,
 } from '../../modules/script-loader/__tests__/signing-fixtures';
-import { createScriptSourceResolver } from '../../modules/script-loader/sources';
-import type { ScriptLoaderDebugEvent } from '../../modules/script-loader/types';
+import type { ScriptLoaderDebugEvent } from '../../modules/script-loader/script-loader.model';
+import { createScriptSourceResolver } from '../../modules/script-loader/script-sources.model';
 import { manifest as browserManifest } from '../../transports/manifest-browser';
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
+import type {
+	ConsentProviderRuntimeOptions,
+	ConsentRuntimeOptions,
+	RuntimePrefetch,
+} from '../consent-runtime.model';
 import {
 	createConsentProviderRuntime,
 	createConsentRuntime,
 	defaultRuntimeModules,
 	streamPrefetch,
 } from '../index';
-import type {
-	ConsentProviderRuntimeOptions,
-	ConsentRuntimeOptions,
-	RuntimePrefetch,
-} from '../types';
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The tests cannot sign with Inth's keys, so they trust test keys in their place; the verifier is the real one.
 vi.mock('../../modules/script-loader/signing-keys', async () => ({

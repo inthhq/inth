@@ -155,7 +155,7 @@ outside Angular's reactivity.
 | `ConsentTheme` | Provider `theme`, `noStyle`, `disableAnimation`, `scrollLock`, `trapFocus`, `colorScheme`, `legalLinks`, `preloadDialog`, `styles` and `nonce` as signals. |
 | `injectEventDispatcher()` | Send analytics events to the provider's scripts. See [scripts](./scripts#send-your-own-analytics-events). |
 | `resolvePromptCopy`, `resolveActionLabels`, `resolvePreferenceControlLabels` | Banner copy and button labels in the active language. |
-| `getIABTranslations` | IAB copy with English fallbacks, for a custom IAB banner. |
+| `resolveIABCopy` | IAB copy with English fallbacks, for a custom IAB banner. Import it from `@inth/angular/iab`. |
 | `createConsentRuntime` | A runtime you own, for [sharing one](./provide-inth#share-one-runtime). |
 
 ## Verify the state you read

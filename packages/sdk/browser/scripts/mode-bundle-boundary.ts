@@ -14,13 +14,13 @@ const COMMON_EXCLUSIONS = [
 const TESTING_ONLY = [
 	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:transports\/(?:offline|testing)|testing)\.[jt]s(?:$|[?|])/u,
 	/\/(?:packages\/(?:sdk\/)?browser|@inth\/sdk-browser)\/(?:src|dist)\/(?:policy-rules|testing-global)\.[jt]s(?:$|[?|])/u,
-	/\/(?:packages\/(?:sdk\/)?schema|@inth\/sdk-schema)\/(?:src|dist)\/shared\/policy-rule-presets\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?schema|@inth\/sdk-schema)\/(?:src|dist)\/shared\/policy\/policy-rule-presets\.[jt]s(?:$|[?|])/u,
 ];
 const HOSTED_EXCLUSIONS = [
 	...COMMON_EXCLUSIONS,
 	...TESTING_ONLY,
 	/\/(?:packages\/(?:sdk\/)?browser|@inth\/sdk-browser)\/(?:src|dist)\/policy-rules\.[jt]s(?:$|[?|])/u,
-	/\/(?:packages\/(?:sdk\/)?schema|@inth\/sdk-schema)\/(?:src|dist)\/shared\/(?:policy-rule-presets|policy-resolution|policy-rule|policy-rule-fingerprint)\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?schema|@inth\/sdk-schema)\/(?:src|dist)\/shared\/policy\/(?:policy-rule-presets|policy-resolution\.model|policy-rule\.model|policy-rule-fingerprint\.model)\.[jt]s(?:$|[?|])/u,
 ];
 const TESTING_EXCLUSIONS = [
 	...COMMON_EXCLUSIONS,
@@ -57,8 +57,8 @@ const UI_PARTS = [
  */
 const CHOICES_EXCLUSIONS = [
 	...HOSTED_EXCLUSIONS,
-	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:surface-session\/session|surface-actions\/(?:rules|opt-in|opt-out|opt-out-reload|plain-scripts)|events|libs\/vendors)\.[jt]s(?:$|[?|])/u,
-	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:modules\/(?:iab-controls|revocation-reload|vendor-allowed|persistence\/mount|script-loader\/(?:mount|diagnostics)|network-blocker\/hold)|libs\/(?:manifest-cache-runtime|script-loader\/debug))\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:surface-session\/session|surface-actions\/(?:rules|opt-in|opt-out|opt-out-reload(?:\.store)?|plain-scripts)|events|libs\/vendors)\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:modules\/(?:iab-controls|revocation-reload|vendor-allowed|persistence\/mount|script-loader\/(?:mount|diagnostics)|network-blocker\/hold)|libs\/(?:manifest-cache-runtime(?:\.api)?|script-loader\/debug))\.[jt]s(?:$|[?|])/u,
 	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:kernel|transports|runtime)\//u,
 	new RegExp(
 		`/${BROWSER}/ui/(?:parts/(?:receipt-focus|engine)|opt-out-confirmation-state)\\.[jt]s(?:$|[?|])`,

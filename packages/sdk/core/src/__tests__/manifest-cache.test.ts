@@ -16,7 +16,6 @@ import {
 	clearManifestCache,
 	createManifestCache,
 	createManifestRequestUrl,
-	fetchCachedManifest,
 	getManifestAge,
 	getManifestSMaxAge,
 	getManifestStaleWhileRevalidate,
@@ -36,8 +35,9 @@ import type {
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
+import { fetchCachedManifest } from '../libs/manifest-cache-runtime.api';
 import * as server from '../server';
-import { stripIdentityForCleartext } from '../server/consent-proxy';
+import { stripIdentityForCleartext } from '../server/consent-proxy.api';
 import {
 	getResolverInputsFromHeaders,
 	resolveManifestInit,

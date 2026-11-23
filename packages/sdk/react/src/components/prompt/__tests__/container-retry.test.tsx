@@ -10,7 +10,7 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { deferredContainer } from '../prompt';
-import type { PromptSurfaceOptions } from '../surface';
+import type { PromptSurfaceOptions } from '../prompt-surface';
 
 const RETRY_MS = 20;
 

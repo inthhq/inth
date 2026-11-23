@@ -3,9 +3,12 @@
  */
 import type { WithProjectUrl } from '@inth/sdk-core/runtime';
 
-import { createHostedConsentClient } from './hosted-client';
-import type { ConsentClient, HostedConsentClientOptions } from './types';
-import { mountConsentUI } from './ui/mount';
+import type {
+	ConsentClient,
+	HostedConsentClientOptions,
+} from './consent-client.model';
+import { createHostedConsentClient } from './create-hosted-consent-client';
+import { mountConsentUI } from './ui/mount-consent-ui';
 
 /**
  * Create a hosted client without starting it.
@@ -35,13 +38,16 @@ export const init = function init(
 	return client;
 };
 
-export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './client-base';
-export type { PageAction } from './client-base';
+export {
+	ACTION_ATTRIBUTE,
+	PREFERENCES_HASH,
+} from './create-consent-client-with';
+export type { PageAction } from './create-consent-client-with';
 export {
 	ACTIVATED_ATTRIBUTE,
 	activateGatedScripts,
 	CATEGORY_ATTRIBUTE,
-} from './gated-scripts';
+} from './activate-gated-scripts';
 export { hosted } from '@inth/sdk-core/modes';
 export type { HostedMode } from '@inth/sdk-core/modes';
 export type {
@@ -55,8 +61,8 @@ export type {
 	ConsentUIHandle,
 	ConsentUIOptions,
 	TriggerPosition,
-} from './types';
-export { mountConsentUI } from './ui/mount';
+} from './consent-client.model';
+export { mountConsentUI } from './ui/mount-consent-ui';
 export { getEventDispatcher } from '@inth/sdk-core/events';
 export type {
 	EventDispatcher,

@@ -1,8 +1,8 @@
 import { keyboardNavigation, tabSwitching } from '@inth/conformance/play/tabs';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
-import TabsControlledDemo from './TabsControlledDemo.svelte';
-import TabsDemo from './TabsDemo.svelte';
+import TabsControlledDemo from './tabs-controlled-demo.svelte';
+import TabsDemo from './tabs-demo.svelte';
 
 const meta = {
 	component: TabsDemo,

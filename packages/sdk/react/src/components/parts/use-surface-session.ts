@@ -15,7 +15,7 @@ import { resolveRightsBundle } from '@inth/sdk/surface-state';
 import type { OptOutReceiptData, RightsBundle } from '@inth/sdk/surface-state';
 import { useCallback, useSyncExternalStore } from 'react';
 
-import { useKernel } from '~/kernel-selector';
+import { useKernel } from '~/use-kernel';
 
 /**
  * The kernel's surface session and its current state. Every Privacy

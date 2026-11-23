@@ -5,7 +5,7 @@ import {
 	NOW,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
-import { evaluateBlock } from '../decide';
+import { evaluateBlock } from '../evaluate-block';
 import { createNetworkBlocker } from '../index';
 import { networkBlockerTools } from '../tools';
 

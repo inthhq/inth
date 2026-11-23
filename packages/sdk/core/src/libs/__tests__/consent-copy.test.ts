@@ -26,7 +26,7 @@ import {
 	resolveTriggerLabels,
 	scopePhrase,
 } from '../consent-copy';
-import { resolveOptOutReceipt } from '../opt-out-state';
+import { resolveOptOutReceipt } from '../opt-out-state.model';
 
 describe('consent copy', () => {
 	it('reads the notice copy on a notice prompt', () => {

@@ -10,10 +10,10 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
-import { InthProvider } from '../root';
+import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/record-encode.model';
+import type { ConsentState } from '../consent-client-options.model';
+import { InthProvider } from '../inth-provider';
 import { testing } from '../testing';
-import type { ConsentState } from '../types';
 import { policyFixture } from './policy-fixture';
 
 /** These tests are not about the backend; testing() needs none. */

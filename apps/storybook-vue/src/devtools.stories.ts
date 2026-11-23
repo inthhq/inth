@@ -12,7 +12,7 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { onUnmounted } from 'vue';
 
 import { DevTools } from '../../../packages/sdk/vue/src/devtools';
-import { createVueConsentKernelContext } from '../../../packages/sdk/vue/src/runtime/kernel';
+import { createVueConsentKernelContext } from '../../../packages/sdk/vue/src/runtime/create-vue-consent-kernel-context';
 import {
 	provideStorybookConsentContext,
 	storybookConsentConfig,

@@ -1,6 +1,6 @@
 /**
  * The SvelteKit `InthProvider`'s consent engine in the browser: the runtime it
- * renders once loaded. The deferred runtime (`runtime.ts`) loads this chunk
+ * renders once loaded. The deferred runtime (`create-deferred-runtime.ts`) loads this chunk
  * after the page for a visitor who still has to choose, and at once for every
  * other visitor, whose server render preloads it.
  *
@@ -17,8 +17,8 @@ import type {
 } from '@inth/sdk/runtime/provider';
 import type { DeferredCommitted } from '@inth/sdk/surface-actions/early-commit';
 
-import { createOwnedRuntime } from '../owned-runtime';
-import type { InthProviderState } from '../types';
+import { createOwnedRuntime } from '../create-owned-runtime';
+import type { InthProviderState } from '../manager-options.model';
 
 export { preloadSavePath } from '@inth/sdk/runtime/save-preload';
 

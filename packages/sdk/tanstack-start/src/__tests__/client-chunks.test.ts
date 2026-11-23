@@ -251,8 +251,10 @@ describe('TanStack Start client chunks', () => {
 		// first load's record reader validates and decodes them, and the deciding
 		// category follows the rule's GPC mapping: 114 bytes (22,790). With one
 		// consent UI, the classic prompt and dialog are gone and the banner
-		// replays its own early taps: 1,006 fewer (21,730 measured).
-		expect(brotli).toBeLessThanOrEqual(21_800);
+		// replays its own early taps: 1,006 fewer (21,730 measured). Files
+		// named after what they export give the lazy chunks longer names,
+		// which the preload lists carry: 87 bytes (21,817 measured).
+		expect(brotli).toBeLessThanOrEqual(21_890);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {

@@ -2,7 +2,7 @@
 	import { BROWSER } from 'esm-env';
 	import { untrack } from 'svelte';
 
-	import { getThemeContext } from '../context.svelte';
+	import { getThemeContext } from '../get-theme-context';
 	import {
 		ensureSurfaceStyles,
 		STYLES_MARKER,

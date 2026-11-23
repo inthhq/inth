@@ -13,9 +13,9 @@
 
 import { publishDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 
-import { autoInit, installGlobal } from '../global-base';
-import { createHostedGlobal } from '../hosted-global';
-import { mountConsentUI } from '../ui/mount';
+import { autoInit, installGlobal } from '../create-global-with';
+import { createHostedGlobal } from '../create-hosted-global';
+import { mountConsentUI } from '../ui/mount-consent-ui';
 
 const api = installGlobal(
 	createHostedGlobal({

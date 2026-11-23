@@ -9,12 +9,12 @@ import { render } from 'vitest-browser-react';
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog, OptOutConfirmation } from '~/aggregate-components';
-import { ConsentDialogLink } from '~/components/consent-preferences-link/consent-preferences-link';
+import { ConsentDialogLink } from '~/components/panel-link/panel-link';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentBanner } from '~/components/prompt';
 import { useOptOut } from '~/hooks';
-import { useKernel } from '~/kernel-selector';
 import { testing } from '~/testing';
+import { useKernel } from '~/use-kernel';
 
 const query = <Element extends HTMLElement>(testId: string) =>
 	document.querySelector<Element>(`[data-testid="${testId}"]`);

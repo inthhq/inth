@@ -21,11 +21,11 @@ import type {
 	ConsentProviderRuntimeOptions,
 } from '@inth/sdk/runtime/provider';
 
-import { modulePreloadMarker } from '../module-preload';
-import { createOwnedRuntime } from '../owned-runtime';
-import type { ProviderOptionsInput } from '../provider-options';
-import type { InthProviderState } from '../types';
-import { planServerBoot } from './boot-server';
+import { createOwnedRuntime } from '../create-owned-runtime';
+import type { InthProviderState } from '../manager-options.model';
+import { modulePreloadMarker } from '../module-preload-marker';
+import type { ProviderOptionsInput } from '../resolve-provider-options';
+import { planServerBoot } from './plan-server-boot';
 
 /** What a server render of `InthProvider` renders with. @internal */
 export interface ServerRoot {

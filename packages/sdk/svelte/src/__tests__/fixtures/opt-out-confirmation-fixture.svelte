@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ConsentContextValue } from '../../lib/context.svelte';
+	import type { ConsentContextValue } from '../../lib/consent-context.model';
 	import {
 		ConsentBanner,
 		ConsentDialog,
@@ -9,7 +9,7 @@
 		InthProvider,
 		OptOutConfirmation,
 	} from '../../lib/index';
-	import type { ConsentManagerOptions } from '../../lib/types';
+	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 	import Reader from './policy-state-reader.svelte';
 
 	let {

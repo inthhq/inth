@@ -13,7 +13,7 @@ import type { ConsentJourneyOption } from '@inth/sdk/engine';
 import type { ConsentMode } from '@inth/sdk/modes';
 import { normalizeRoutePrefix, resolveServerMode } from '@inth/sdk/server';
 
-import type { ConsentClientOptions } from './types';
+import type { ConsentClientOptions } from './consent-client-options.model';
 
 /**
  * Next.js replaces each exact `process.env.NEXT_PUBLIC_*` expression with

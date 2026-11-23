@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
+import type { ConsentClientOptions } from '../consent-client.model';
 import { autoInit, createGlobal, installGlobal } from '../global';
 import type { GlobalApi } from '../global';
-import type { ConsentClientOptions } from '../types';
 
 type TestWindow = Window & {
 	inth?: unknown;

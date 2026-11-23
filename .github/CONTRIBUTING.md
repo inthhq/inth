@@ -44,6 +44,17 @@ pnpm sdk:test
 pnpm sdk:test:scripts # repository tooling
 ```
 
+To see what a change does to the bundles, build with Rsdoctor. Each Rslib build writes a report to `packages/sdk/<package>/.rsdoctor/<build>/rsdoctor-data.json`: `esm` for a package's module build, `esm0`… for core's self-contained entries, and `iife0`… for the browser script tags, in the order `packages/sdk/browser/rslib.config.ts` lists them. The reports stay out of `dist/`, so they never ship.
+
+```sh
+pnpm sdk:rsdoctor
+pnpm exec rsdoctor-agent assets list --data-file packages/sdk/browser/.rsdoctor/iife1/rsdoctor-data.json
+pnpm exec rsdoctor-agent bundle optimize --data-file packages/sdk/core/.rsdoctor/esm0/rsdoctor-data.json
+pnpm exec rsdoctor-agent assets diff --data-file <new report> --baseline <old report> --current <new report>
+```
+
+`pnpm exec rsdoctor-agent list` lists every query: chunks, modules and the import chain that pulled one in, packages and duplicates, tree-shaking bailouts, and build time per loader.
+
 Mobile SDKs:
 
 ```sh
@@ -66,7 +77,7 @@ A maintainer reviews every pull request. Changes under `.github/` need review fr
 
 ## Release notes
 
-Add a `.tegami/*.md` note for a change to a published package. Today that means the CLI only; the SDK packages publish once they carry Inth names. Use explicit bumps and a heading:
+Add a `.tegami/*.md` note for a change to the CLI. Use explicit bumps and a heading:
 
 ```md
 ---
@@ -78,6 +89,8 @@ packages:
 
 The prompt no longer hangs when the terminal has no TTY.
 ```
+
+A change to the web SDK packages takes a note in `.tegami/sdk/` instead, with `"group:sdk"` as the package. Run `pnpm tegami:sdk` to write one; [Publishing the SDK](../.tegami/sdk/README.md) shows the format.
 
 See [publishing with Tegami](../.tegami/README.md) for how versions and releases work. Each product has its own release workflow; see [CI.md](CI.md#releases).
 

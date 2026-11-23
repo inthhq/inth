@@ -5,7 +5,7 @@ import {
 import { enTranslations } from '@inth/sdk/translations';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
 
-import PreferenceItemDemo from './PreferenceItemDemo.svelte';
+import PreferenceItemDemo from './preference-item-demo.svelte';
 
 const { consentTypes } = enTranslations;
 

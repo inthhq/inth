@@ -2,11 +2,14 @@ import { policyRulePresets } from '@inth/sdk-core';
 import type { GPPPingData } from '@inth/sdk-iab/gpp';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type {
+	ConsentClient,
+	ScriptTagClientOptions,
+} from '../consent-client.model';
 import { installGlobal } from '../global';
 import { mountGPP } from '../gpp';
 import { createTestingGlobal as createGlobal } from '../testing-global';
 import type { TestingGlobalApi as GlobalApi } from '../testing-global';
-import type { ConsentClient, ScriptTagClientOptions } from '../types';
 import { init } from './fixtures/factory-init';
 
 const testWindow = window as Window & { inth?: unknown };

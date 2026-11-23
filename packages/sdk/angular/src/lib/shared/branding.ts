@@ -18,8 +18,8 @@ import type { BrandingSurface } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
-import { resolveNoStyle } from '../core/no-style';
-import { BrandMarkIcon } from './icons';
+import { resolveNoStyle } from '../core/no-style-scope';
+import { BrandMarkIcon } from './brand-mark-icon';
 
 /**
  * Whether a surface renders its attribution. Wrap the

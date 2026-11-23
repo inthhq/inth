@@ -1,12 +1,3 @@
-import type { InternalKernel } from '../kernel/internals';
-import { vendorAxisActive } from '../libs/vendors';
-import { registerOptOutReloadHook } from '../surface-actions/opt-out';
-import {
-	clearPendingOptOutConfirmation,
-	isOptOutReloadSpent,
-	markPendingOptOutConfirmation,
-	releasePendingOptOutConfirmation,
-} from '../surface-actions/opt-out-reload';
 /**
  * Reload the page after a visitor revokes a permission.
  *
@@ -27,7 +18,18 @@ import type {
 	ConsentSnapshot,
 	ConsentState,
 	Unsubscribe,
-} from '../types';
+} from '../consent-kernel.model';
+import type { InternalKernel } from '../kernel/kernel-internals.model';
+import { vendorAxisActive } from '../libs/vendors';
+import { registerOptOutReloadHook } from '../surface-actions/opt-out';
+import {
+	isOptOutReloadSpent,
+	releasePendingOptOutConfirmation,
+} from '../surface-actions/opt-out-reload';
+import {
+	clearPendingOptOutConfirmation,
+	markPendingOptOutConfirmation,
+} from '../surface-actions/opt-out-reload.store';
 import { evaluateConsent } from './has';
 
 const activeWatchers = new WeakMap<

@@ -3,8 +3,8 @@
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import type { SavePayload } from '../../consent-kernel.model';
 import { createOfflineTransport } from '../../transports/offline';
-import type { SavePayload } from '../../types';
 import { NO_RECORDS_WARNING } from '../no-records-warning';
 
 const savePayload = { subjectId: 'sub_local' } as unknown as SavePayload;

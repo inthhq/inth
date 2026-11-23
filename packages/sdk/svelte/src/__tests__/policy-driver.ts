@@ -49,11 +49,11 @@ import {
 import { vi } from 'vitest';
 
 import { preloadPersistenceWriter } from '../../../core/src/modules/persistence/mount';
-import { validateStoredConsentEnvelope } from '../../../core/src/modules/persistence/record-codec';
-import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
-import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs';
+import { validateStoredConsentEnvelope } from '../../../core/src/modules/persistence/record-codec.model';
+import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/record-encode.model';
+import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs.model';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
-import type { InthProviderCallbacks } from '../lib/types';
+import type { InthProviderCallbacks } from '../lib/manager-options.model';
 import PolicyFixture from './fixtures/policy-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 import { renderSsr } from './server-render';

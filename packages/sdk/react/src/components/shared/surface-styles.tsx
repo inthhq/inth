@@ -3,7 +3,7 @@
 import { useContext, useEffect, useSyncExternalStore, version } from 'react';
 
 import { GlobalThemeContext } from '~/context/theme-context';
-import { useUIConfig } from '~/ui-config-context';
+import { useUIConfig } from '~/use-ui-config';
 
 /** A stylesheet from `@inth/sdk/ui/styles/sheets/*`. */
 export interface SurfaceStyleSheet {

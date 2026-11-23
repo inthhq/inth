@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createConsentKernel } from '../../kernel/index';
 import { PREFETCH_WINDOW_KEY } from '../../libs/page-globals';
-import type { SSRInitialData } from '../../options/ssr';
+import type { SSRInitialData } from '../../options/ssr-options.model';
 import { mapInitOutputToInitResponse } from '../../transports/init-output';
 import { hosted } from '../../transports/mode';
 import {

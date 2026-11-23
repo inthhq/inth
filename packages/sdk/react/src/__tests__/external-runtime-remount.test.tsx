@@ -34,7 +34,7 @@ test('retains an external-runtime child and its draft after the IAB bridge loads
 			throw new Error('Missing draft input');
 		}
 		input.value = 'edited';
-		await import('../external-iab-context');
+		await import('../external-iab-provider');
 		// Include the delayed commit that used to replace the fallback children.
 		await new Promise((resolve) => {
 			setTimeout(resolve, 350);

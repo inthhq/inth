@@ -50,7 +50,7 @@ public struct GPPSignal: Sendable, Equatable {
 }
 
 /// Decides which GPP sections apply and fills them: `resolveUSSectionDefinition` and
-/// `resolveUSSectionValues` in `packages/sdk/iab/src/gpp/us-section.ts`, restricted to the
+/// `resolveUSSectionValues` in `packages/sdk/iab/src/gpp/us-section.model.ts`, restricted to the
 /// sections a device encodes (US National and TCF EU). Mirrors `GppResolver.kt`.
 ///
 /// The policy decides first. Nothing applies until a matched policy is resolved and the

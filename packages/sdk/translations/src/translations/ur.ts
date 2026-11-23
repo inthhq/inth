@@ -1,4 +1,4 @@
-import type { CompleteTranslations } from '../types';
+import type { CompleteTranslations } from '../translations.model';
 
 export const translations: CompleteTranslations = {
 	common: {

@@ -6,7 +6,7 @@
  */
 import { deleteCookie, getRawCookieValue, setCookie } from './cookie';
 import type { StorageConfig } from './cookie';
-import { localStorageOf } from './local-storage';
+import { localStorageOf } from './local-storage.store';
 import {
 	C15T_EXPERIMENT_STORAGE_KEY,
 	EXPERIMENT_STORAGE_KEY,

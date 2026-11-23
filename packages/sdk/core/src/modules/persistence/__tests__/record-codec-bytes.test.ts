@@ -18,14 +18,14 @@ import { encodeV2Cookie } from '../../../__tests__/fixtures/v2-cookie';
 import type { ChoiceBasis } from '../../../consent-record/types';
 import { getRawCookieValue, setCookie } from '../../../libs/cookie';
 import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
-import { encodeClearEpoch } from '../clear';
-import type { StoredConsentEnvelope } from '../record-codec';
+import { encodeClearEpoch } from '../persistence-clear.store';
+import type { StoredConsentEnvelope } from '../record-codec.model';
 import {
 	encodeNoticeDismissal,
 	encodeNoticeDismissalCompact,
 	encodeStoredConsentEnvelopeCompact,
 	encodeStoredConsentEnvelopeJson,
-} from '../writer/encode';
+} from '../writer/record-encode.model';
 import {
 	clearStoredConsentRecords,
 	writeStoredClearEpoch,

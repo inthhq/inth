@@ -79,6 +79,7 @@ describe('hosted record transport graph', () => {
 		expect(files).not.toContain('transports/init-output.ts');
 		expect(files).not.toContain('libs/request-context.ts');
 		expect(files).not.toContain('libs/prefetch/prefetch.ts');
+		expect(files).not.toContain('libs/prefetch/prefetch.api.ts');
 		expect(packageImports).not.toContain(
 			'@inth/sdk/schema/types#extractConsentRequestInputs'
 		);

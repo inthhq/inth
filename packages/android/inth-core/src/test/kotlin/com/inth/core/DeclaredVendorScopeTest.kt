@@ -34,7 +34,7 @@ import kotlin.test.assertTrue
  * The vectors are the shared `packages/native-protocol/vendor-list-scope-*` fixtures this core already claims
  * in [com.inth.core.tc.VendorListScopeFixturesTest], graded here through the kernel rather than
  * against the helper directly. Their oracle is `narrowGVLToVendors` in
- * `packages/sdk/iab/src/tcf/fetch-gvl.ts`, called by the generator, so what a scoped device ends up
+ * `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts`, called by the generator, so what a scoped device ends up
  * holding is the browser build's answer and not Kotlin's opinion about it.
  *
  * Two axes are deliberately absent here, because they belong to the file that grades the prune and
@@ -57,7 +57,7 @@ class DeclaredVendorScopeTest {
 	 *
 	 * The list the fixture serves carries 54 vendors and the declaration names 32, and the answer has
 	 * to be the 32 the web returned on the field the dialog draws from (`snapshot.iab.gvl`, which
-	 * `packages/react-native/src/protocol/snapshot.ts` declares and `core-swift` already fills) and on
+	 * `packages/react-native/src/protocol/consent-snapshot.model.ts` declares and `core-swift` already fills) and on
 	 * the accessor a host's own Kotlin reads, which is one value read two ways -- so a prune on the
 	 * fold would show up here rather than hiding behind a helper that passes.
 	 *

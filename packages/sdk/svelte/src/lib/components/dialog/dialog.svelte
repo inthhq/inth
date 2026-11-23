@@ -92,25 +92,24 @@
 	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 	import { untrack } from 'svelte';
 
-	import { getConsentContext, getThemeContext } from '../../context.svelte';
+	import { getConsentContext } from '../../get-consent-context.svelte';
+	import { getThemeContext } from '../../get-theme-context';
 	import ConsentButton from '../action-button.svelte';
 	import AdvertisingRow from '../parts/advertising-row.svelte';
 	import CategoryGroup from '../parts/category-group.svelte';
-	import { createSurfaceDraft } from '../parts/draft.svelte';
+	import { createSurfaceDraft } from '../parts/create-surface-draft.svelte';
 	import Icon from '../parts/icon.svelte';
-	import { cx, foldSlots, part } from '../parts/parts';
-	import { takeReceiptFocus } from '../parts/receipt-focus';
+	import { takeReceiptFocus } from '../parts/receipt-focus.model';
 	import RightsReceipt from '../parts/receipt.svelte';
 	import SaleRightsRow from '../parts/rights-row.svelte';
-	import {
-		usePhoneLayout,
-		useReducedMotion,
-		useSurfaceSession,
-	} from '../parts/session.svelte';
+	import { cx, foldSlots, part } from '../parts/surface-parts.model';
+	import { usePhoneLayout } from '../parts/use-phone-layout.svelte';
+	import { useReducedMotion } from '../parts/use-reduced-motion.svelte';
+	import { useSurfaceSession } from '../parts/use-surface-session.svelte';
 	import SurfaceStyles from '../surface-styles.svelte';
+	import { DIALOG_SHEETS } from './dialog-sheets';
 	import DoneButton from './done-button.svelte';
 	import Layer from './layer.svelte';
-	import { DIALOG_SHEETS } from './sheets';
 
 	let {
 		noStyle: localNoStyle,

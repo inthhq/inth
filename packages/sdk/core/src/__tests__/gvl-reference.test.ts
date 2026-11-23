@@ -6,7 +6,7 @@ import {
 	createGvlReferenceUrl,
 	deferInitGvl,
 	serveGvlReference,
-} from '../transports/gvl-reference';
+} from '../transports/gvl-reference.model';
 
 const gvl = {
 	purposes: {},

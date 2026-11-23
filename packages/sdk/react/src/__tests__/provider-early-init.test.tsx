@@ -28,7 +28,7 @@ import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
 import { useSnapshot } from '../index';
-import { UNCOMMITTED_HOLD_MS } from '../module-hooks/network-hold';
+import { UNCOMMITTED_HOLD_MS } from '../module-hooks/use-early-network-hold';
 import { InthProvider } from '../provider';
 import { policyFixture } from './policy-fixture';
 

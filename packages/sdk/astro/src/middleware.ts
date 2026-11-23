@@ -9,9 +9,9 @@
 import type { MiddlewareHandler } from 'astro';
 import options from 'virtual:inth/options';
 
-import { createConsentMiddleware } from './middleware-handler';
-import type { ConsentMiddlewareOptions } from './middleware-handler';
-import type { InthLocals } from './types';
+import { createConsentMiddleware } from './create-consent-middleware';
+import type { ConsentMiddlewareOptions } from './create-consent-middleware';
+import type { InthLocals } from './inth-options.model';
 
 declare global {
 	// oxlint-disable-next-line typescript/no-namespace -- Astro's documented `App.Locals` augmentation point is a namespace.
@@ -49,5 +49,5 @@ export const consentMiddleware = function consentMiddleware(
 	return createConsentMiddleware(options, middlewareOptions);
 };
 
-export { createConsentMiddleware } from './middleware-handler';
-export type { ConsentMiddlewareOptions } from './middleware-handler';
+export { createConsentMiddleware } from './create-consent-middleware';
+export type { ConsentMiddlewareOptions } from './create-consent-middleware';

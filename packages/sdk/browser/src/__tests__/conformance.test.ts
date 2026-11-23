@@ -13,7 +13,7 @@ import type { SuiteApi } from '@inth/conformance/suite';
 import type { ConsentPresentation, GlobalVendorList } from '@inth/sdk-core';
 import { afterEach, describe, expect, test } from 'vitest';
 
-import type { ConsentClient } from '../types';
+import type { ConsentClient } from '../consent-client.model';
 import { init, initIAB } from './fixtures/factory-init';
 
 const clients = new Set<ConsentClient>();

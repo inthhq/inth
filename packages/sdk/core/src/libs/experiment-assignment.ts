@@ -10,7 +10,7 @@
  * prompted, and nothing is written for a host arm: the host decides that
  * one again on every visit.
  */
-import type { ConsentSnapshot } from '../types';
+import type { ConsentSnapshot } from '../consent-kernel.model';
 import type {
 	ExperimentAssignment,
 	ExperimentGate,

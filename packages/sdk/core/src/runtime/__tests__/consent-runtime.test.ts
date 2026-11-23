@@ -13,6 +13,7 @@ import {
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
+import type { KernelTransport } from '../../consent-kernel.model';
 import { createIframeBlocker } from '../../modules/iframe-blocker';
 import { createNetworkBlocker } from '../../modules/network-blocker';
 import { holdNetworkRequests } from '../../modules/network-blocker/hold';
@@ -23,18 +24,20 @@ import {
 	isOptOutConfirmationOpen,
 	optOutConsentSurface,
 } from '../../surface-actions/opt-out';
-import { hasPendingOptOutConfirmation } from '../../surface-actions/opt-out-reload';
+import { hasPendingOptOutConfirmation } from '../../surface-actions/opt-out-reload.store';
 import { testing } from '../../testing';
 import { resolveLocalTranslations } from '../../translations';
-import type { KernelTransport } from '../../types';
+import type { ConsentRuntimeIABHandle } from '../consent-runtime.model';
+import {
+	createRuntimeKernel,
+	hasResolvedPrefetch,
+} from '../create-runtime-kernel';
 import {
 	createConsentProviderRuntime,
 	createConsentRuntime,
 	defaultRuntimeModules,
 	lazyRuntimeModule,
 } from '../index';
-import { createRuntimeKernel, hasResolvedPrefetch } from '../runtime-kernel';
-import type { ConsentRuntimeIABHandle } from '../types';
 
 const createTransport = function createTransport(
 	overrides: Partial<KernelTransport> = {}

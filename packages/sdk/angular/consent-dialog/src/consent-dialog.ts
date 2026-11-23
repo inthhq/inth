@@ -32,12 +32,12 @@ import { ConsentDialogTrigger } from '@inth/angular/consent-dialog-trigger';
 import type { ActiveUI } from '@inth/sdk/engine';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
 
-import { DEFAULT_DIALOG_MODELS } from './dialog-options';
+import { DEFAULT_DIALOG_MODELS } from './consent-dialog-options.model';
 import type {
 	ConsentDialogLegalLinks,
 	ConsentDialogModels,
 	ConsentDialogTriggerOptions,
-} from './dialog-options';
+} from './consent-dialog-options.model';
 import { OptOutConfirmation } from './opt-out-confirmation';
 
 /**

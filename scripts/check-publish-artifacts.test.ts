@@ -764,8 +764,9 @@ describe('packages that must stay clear of the consent kernel', () => {
 
 	it('lets only a .web module import the kernel', () => {
 		const packageDir = kernelFreeFixture('web-twin', {
-			'dist/native/client.js': "export * from '../protocol/vocabulary';\n",
-			'dist/native/client.web.js':
+			'dist/native/create-consent-client.js':
+				"export * from '../protocol/consent-vocabulary.model';\n",
+			'dist/native/create-consent-client.web.js':
 				"import { createConsentRuntime } from '@inth/sdk/runtime';\nexport const run = createConsentRuntime;\n",
 			'dist/web/engine.js':
 				"import { createConsentRuntime } from '@inth/sdk/runtime';\nexport const run = createConsentRuntime;\n",
@@ -773,8 +774,8 @@ describe('packages that must stay clear of the consent kernel', () => {
 
 		expect(
 			scan(packageDir, [
-				'dist/native/client.js',
-				'dist/native/client.web.js',
+				'dist/native/create-consent-client.js',
+				'dist/native/create-consent-client.web.js',
 				'dist/web/engine.js',
 			]).map(({ path }) => path)
 		).toStrictEqual(['dist/web/engine.js']);
@@ -798,7 +799,7 @@ describe('packages that must stay clear of the consent kernel', () => {
 	it('reds a declaration that re-exports the kernel', () => {
 		const packageDir = kernelFreeFixture('declarations', {
 			'dist-types/index.d.ts':
-				"export type { ConsentState } from '@inth/sdk/engine';\nexport type { ConsentSnapshot } from './protocol/snapshot';\n",
+				"export type { ConsentState } from '@inth/sdk/engine';\nexport type { ConsentSnapshot } from './protocol/consent-snapshot.model';\n",
 			'dist/index.js': 'export const x = 1;\n',
 		});
 
@@ -814,12 +815,12 @@ describe('packages that must stay clear of the consent kernel', () => {
 	// cleaner. Only reaching for the package is drift.
 	it('leaves prose about the kernel alone', () => {
 		const packageDir = kernelFreeFixture('prose', {
-			'dist-types/protocol/vocabulary.d.ts':
+			'dist-types/protocol/consent-vocabulary.model.d.ts':
 				"/**\n * Mirrors `CONSENT_CATEGORIES` in `@inth/sdk/engine`.\n *\n * @example\n * ```ts\n * // import { CONSENT_CATEGORIES } from '@inth/sdk/consent-categories';\n * ```\n */\nexport declare const CONSENT_CATEGORIES: readonly string[];\n",
 		});
 
 		expect(
-			scan(packageDir, ['dist-types/protocol/vocabulary.d.ts'])
+			scan(packageDir, ['dist-types/protocol/consent-vocabulary.model.d.ts'])
 		).toStrictEqual([]);
 	});
 
@@ -864,8 +865,8 @@ describe('packages that must stay clear of the consent kernel', () => {
 	it('says nothing about a clean build', () => {
 		const packageDir = kernelFreeFixture('clean', {
 			'dist-types/index.d.ts':
-				"export type { ConsentSnapshot } from './protocol/snapshot';\n",
-			'dist/index.js': "export * from './protocol/vocabulary';\n",
+				"export type { ConsentSnapshot } from './protocol/consent-snapshot.model';\n",
+			'dist/index.js': "export * from './protocol/consent-vocabulary.model';\n",
 		});
 
 		expect(

@@ -5,8 +5,8 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { decodeNoticeDismissalCompact } from '../record-codec';
-import { encodeNoticeDismissalCompact } from '../writer/encode';
+import { decodeNoticeDismissalCompact } from '../record-codec.model';
+import { encodeNoticeDismissalCompact } from '../writer/record-encode.model';
 
 const NOW = 1_800_000_000_000;
 

@@ -17,14 +17,14 @@
  * islands, scripts or frameworks read it.
  */
 
+import { buildProviderProps } from './build-provider-props';
+import { closeDialogSurface } from './close-dialog-surface';
 import type {
 	ConsentDialogAdapter,
 	ConsentDialogContext,
 	ConsentDialogHandle,
-} from './adapter';
-import { requireDialogSurface } from './adapter';
-import { closeDialogSurface } from './close-dialog';
-import { buildProviderProps } from './provider-props';
+} from './register-dialog-adapter';
+import { requireDialogSurface } from './register-dialog-adapter';
 
 /** Svelte's runtime, loaded on demand like the island. */
 const loadSvelte = () => import('svelte');

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ConsentWidget } from '@inth/svelte';
 
-	import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/types';
+	import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/manager-options.model';
 	import {
 		STORYBOOK_OPT_OUT_REFERENCE,
 		storybookMode,
@@ -10,7 +10,7 @@
 		storybookOptOutRecords,
 	} from '../../storybook-consent-policy';
 	import { editableConsentOptions } from './storybook-consent-fixtures';
-	import StorybookConsentProvider from './StorybookConsentProvider.svelte';
+	import StorybookConsentProvider from './storybook-consent-provider.svelte';
 
 	type OptOutWidgetKind =
 		| 'not-opted-out'

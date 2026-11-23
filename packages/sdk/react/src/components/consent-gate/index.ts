@@ -1,8 +1,10 @@
 'use client';
 
-import * as atoms from './atoms';
 import { ConsentGate as ConsentGateComponent } from './consent-gate';
-import type { ConsentGateCompoundComponent } from './types';
+import { ConsentGateButton } from './consent-gate-button';
+import { ConsentGateRoot } from './consent-gate-root';
+import { ConsentGateTitle } from './consent-gate-title';
+import type { ConsentGateCompoundComponent } from './consent-gate.model';
 
 /**
  * Renders its children only while a consent category is allowed
@@ -23,13 +25,16 @@ import type { ConsentGateCompoundComponent } from './types';
  * @see {@link AllConsentNames} for consent categories
  */
 const ConsentGate = Object.assign(ConsentGateComponent, {
-	Button: atoms.ConsentGateButton,
-	Root: atoms.ConsentGateRoot,
-	Title: atoms.ConsentGateTitle,
+	Button: ConsentGateButton,
+	Root: ConsentGateRoot,
+	Title: ConsentGateTitle,
 }) as ConsentGateCompoundComponent;
 
-export { ConsentGateButton, ConsentGateRoot, ConsentGateTitle } from './atoms';
-export type { ConsentGateCompoundComponent, ConsentGateProps } from './types';
+export { ConsentGateButton, ConsentGateRoot, ConsentGateTitle };
+export type {
+	ConsentGateCompoundComponent,
+	ConsentGateProps,
+} from './consent-gate.model';
 export { ConsentGate };
 export type { FrameCompoundComponent, FrameProps } from './frame';
 export { Frame, FrameButton, FrameRoot, FrameTitle } from './frame';

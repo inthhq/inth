@@ -1,3 +1,4 @@
+import type { ConsentSnapshot, ResolvedVendor } from '../consent-kernel.model';
 /**
  * Which declared vendors a preference surface lists.
  *
@@ -8,7 +9,6 @@
  */
 import type { AllConsentNames } from '../consent/consent-types';
 import { deniedVendorIds } from '../modules/vendor-denial';
-import type { ConsentSnapshot, ResolvedVendor } from '../types';
 import type { HasCondition } from './has';
 import { extractConsentNamesFromCondition } from './has';
 

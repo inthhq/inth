@@ -14,7 +14,7 @@ import { computed } from 'vue';
 import { useSurfaceTranslations } from '../../composables/use-surface-translations';
 import { slotAttrs } from '../../utils/slot-attrs';
 import ChoiceSwitch from './choice-switch.vue';
-import { isToggleClick } from './toggle-click';
+import { isToggleClick } from './toggle-click.model';
 
 /**
  * A category's vendors as a boxed table (CAT-09): one 40px line each, the

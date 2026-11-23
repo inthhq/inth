@@ -7,7 +7,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	import { setSwitchRootContext } from './context';
+	import { setSwitchRootContext } from './get-switch-root-context';
 
 	let {
 		children,

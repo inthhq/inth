@@ -30,7 +30,7 @@
 import type {
 	ConsentRuntimeIABFactory,
 	ConsentRuntimeIABHandle,
-} from './types';
+} from './consent-runtime.model';
 
 /**
  * Resolves the `createIAB` export.

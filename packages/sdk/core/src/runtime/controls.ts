@@ -1,7 +1,14 @@
+import type {
+	ConsentKernel,
+	ConsentState,
+	Unsubscribe,
+} from '../consent-kernel.model';
 /** Shared controls for adapters that own their kernel lifecycle. */
-import type { InternalKernel } from '../kernel/internals';
-import type { ConsentKernel, ConsentState, Unsubscribe } from '../types';
-import type { ConsentRuntimeOptions, ExternalConsentSource } from './types';
+import type { InternalKernel } from '../kernel/kernel-internals.model';
+import type {
+	ConsentRuntimeOptions,
+	ExternalConsentSource,
+} from './consent-runtime.model';
 
 /** Options shared by every framework provider. Configure these before mounting. */
 export type ConsentControlOptions = Pick<

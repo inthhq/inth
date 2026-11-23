@@ -19,7 +19,7 @@ import type { Component } from 'vue';
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { createIAB } from '../../../iab/src/index';
 import type { IABHandle } from '../../../iab/src/index';
-import { decodeTCString } from '../../../iab/src/tcf/tc-string';
+import { decodeTCString } from '../../../iab/src/tcf/tc-string.model';
 import IabPanel from '../runtime/components/iab-panel.vue';
 import IabPrompt from '../runtime/components/iab-prompt.vue';
 import { consentConfigKey } from '../runtime/composables/config';
@@ -31,7 +31,7 @@ import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
-} from '../runtime/utils/symbols';
+} from '../runtime/utils/consent-symbols.model';
 import { createVueConsentKernelContext } from './test-kernel';
 
 const CMP_ID = 28;

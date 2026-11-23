@@ -17,9 +17,9 @@ import { fileURLToPath } from 'node:url';
 import { mount, unmount } from 'svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { isIABConfigured } from '../lib/iab-loader';
+import { isIABConfigured } from '../lib/lazy-create-iab';
+import type { ConsentManagerOptions } from '../lib/manager-options.model';
 import { testing } from '../lib/testing';
-import type { ConsentManagerOptions } from '../lib/types';
 import ProviderOnlyFixture from './fixtures/provider-only-fixture.svelte';
 
 interface WindowWithTCF extends Window {
@@ -65,10 +65,13 @@ afterEach(() => {
 describe('lazy IAB loading', () => {
 	test.each([
 		'components/inth-provider.svelte',
-		'context.svelte.ts',
-		'iab-loader.ts',
+		'consent-context.model.ts',
+		'manager-options.model.ts',
+		'get-consent-context.svelte.ts',
+		'get-headless-consent.ts',
+		'get-theme-context.ts',
 		'index.ts',
-		'types.ts',
+		'lazy-create-iab.ts',
 	])('%s has no value import of `@inth/sdk/iab`', (file) => {
 		const text = source(file);
 		const imports = text.match(

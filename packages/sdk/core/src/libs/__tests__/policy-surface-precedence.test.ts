@@ -2,7 +2,7 @@ import { normalizePolicyRule, policyRulePresets } from '@inth/sdk-schema/types';
 import type { PolicyRule, PolicySurface } from '@inth/sdk-schema/types';
 import { describe, expect, it } from 'vitest';
 
-import type { ConsentLayoutDiagnostic } from '../consent-layout';
+import type { ConsentLayoutDiagnostic } from '../consent-layout.model';
 import { resolveConsentPresentation } from '../policy-actions';
 import type { PromptPresentation } from '../policy-actions';
 

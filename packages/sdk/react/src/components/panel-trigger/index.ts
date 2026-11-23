@@ -23,7 +23,7 @@ export type {
 	TriggerIcon as TriggerIconType,
 	TriggerOrientation,
 	TriggerSize,
-} from './types';
+} from './panel-trigger.model';
 export {
 	type UseDraggableOptions,
 	type UseDraggableReturn,

@@ -12,7 +12,7 @@ import * as consentGate from '@inth/sdk/ui/styles/sheets/consent-gate-deferred';
  *
  * Each surface names only the sheets it renders: the prompt the tokens,
  * button and shell rules and its one container's (`components/prompt/
- * sheets.ts`), the trigger the tokens and its own, the ConsentGate the
+ * prompt-sheets.model.ts`), the trigger the tokens and its own, the ConsentGate the
  * tokens, button and its own. They are the deferred form:
  * an id and a `load()`, without the text. On a server-rendered page the
  * surfaces find the copy `inthHandle` wrote and download nothing; a page

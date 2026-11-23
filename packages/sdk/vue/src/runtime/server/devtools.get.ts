@@ -1,7 +1,10 @@
 import { defineEventHandler, setResponseHeader } from 'h3';
 
-import { DEVTOOLS_ICON_ROUTE } from '../devtools/constants';
-import { DEVTOOLS_ICON_SVG, renderDevToolsPage } from '../devtools/page';
+import { DEVTOOLS_ICON_ROUTE } from '../devtools/devtools.model';
+import {
+	DEVTOOLS_ICON_SVG,
+	renderDevToolsPage,
+} from '../devtools/render-devtools-page';
 
 /** Serves the Inth Nuxt DevTools tab page and its icon. Development only. */
 export default defineEventHandler((event) => {

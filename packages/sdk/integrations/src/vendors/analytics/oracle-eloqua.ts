@@ -1,11 +1,11 @@
 import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 
-import { resolveManifest } from '../../resolve';
-import { vendorManifestContract } from '../../types';
-import type { VendorManifest } from '../../types';
-import { readId, skipMissingId } from '../_shared/required-id';
-import { createScriptReuse } from '../_shared/reuse-script';
-import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url';
+import { resolveManifest } from '../../resolve-manifest';
+import { vendorManifestContract } from '../../vendor-manifest.model';
+import type { VendorManifest } from '../../vendor-manifest.model';
+import { createScriptReuse } from '../_shared/create-script-reuse';
+import { readId, skipMissingId } from '../_shared/required-id.model';
+import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url.model';
 
 declare global {
 	interface Window {

@@ -30,4 +30,4 @@ export type {
 	FetchSSRDataOptions,
 	FetchSSRDataOptionsBase,
 	FetchSSRDataResult,
-} from './types';
+} from './fetch-ssr-data.model';

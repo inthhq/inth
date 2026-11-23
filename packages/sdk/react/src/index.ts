@@ -79,7 +79,7 @@ export type {
 	ConsentBannerProps,
 } from './components/prompt';
 // -- UI components ----------------------------------------------------------
-export type { ConsentDialogProps } from './components/dialog/types';
+export type { ConsentDialogProps } from './components/dialog/panel.model';
 export type {
 	OptOutConfirmationCompoundComponent,
 	OptOutConfirmationDoneButtonProps,
@@ -111,7 +111,7 @@ export type {
 	EventDispatcher,
 	EventProperties,
 	UseEventDispatcherOptions,
-} from './event-dispatcher';
+} from './use-event-dispatcher';
 export type {
 	UseIframeBlockerOptions,
 	UseNetworkBlockerOptions,
@@ -129,7 +129,7 @@ export type {
 } from './provider';
 export type { ConsentThemeProps } from './consent-theme';
 export type { Theme } from './types/theme';
-export type { ReactUIOptions } from './types/manager';
+export type { ReactUIOptions } from './types/react-ui-options.model';
 
 export type {
 	BannerEdge,
@@ -145,9 +145,9 @@ export type {
 	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
 
-// Values, one group per file; see `index-parts/core.ts` for why.
+// Values, one group per file; see `index-parts/create-consent-kernel.ts` for why.
 // oxlint-disable oxc/no-barrel-file -- The package entry; star exports keep unused groups out of esbuild's first chunk.
-export * from './index-parts/core';
+export * from './index-parts/create-consent-kernel';
 export * from './index-parts/presets';
 export * from './index-parts/consent-dialog';
 export * from './index-parts/consent-banner';
@@ -156,10 +156,10 @@ export * from './index-parts/privacy-choices-link';
 export * from './index-parts/consent-dialog-trigger';
 export * from './index-parts/consent-gate';
 export * from './index-parts/frame';
-export * from './index-parts/draft';
-export * from './index-parts/event-dispatcher';
-export * from './index-parts/translations';
+export * from './index-parts/consent-draft-provider';
+export * from './index-parts/use-event-dispatcher';
+export * from './index-parts/use-translations';
 export * from './index-parts/module-hooks';
-export * from './index-parts/provider';
+export * from './index-parts/inth-provider';
 export * from './index-parts/theme';
 export * from './index-parts/hooks';

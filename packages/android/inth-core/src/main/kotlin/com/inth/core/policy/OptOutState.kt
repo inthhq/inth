@@ -29,7 +29,7 @@ enum class OptOutLock(val wireName: String) {
 /**
  * Headless opt-out display state derived from a [ConsentSnapshot] and its active [EvaluationPolicy].
  *
- * Port of `ResolvedOptOutState` in `packages/sdk/core/src/libs/opt-out-state.ts`.
+ * Port of `ResolvedOptOutState` in `packages/sdk/core/src/libs/opt-out-state.model.ts`.
  */
 data class ResolvedOptOutState(
 	/** The active rule offers the opt-out (its model is `opt-out`). */
@@ -51,7 +51,7 @@ data class ResolvedOptOutState(
 /**
  * Derive what an opt-out confirmation or preference surface shows from [snapshot] and [policy].
  *
- * Port of `resolveOptOutState` in `packages/sdk/core/src/libs/opt-out-state.ts`.
+ * Port of `resolveOptOutState` in `packages/sdk/core/src/libs/opt-out-state.model.ts`.
  */
 fun resolveOptOutState(
 	snapshot: ConsentSnapshot,
@@ -91,7 +91,7 @@ fun resolveOptOutState(
  * Answer why one category's preference switch is locked or annotated for an opt-out
  * or privacy signal, or `null` when it is neither.
  *
- * Port of `resolveCategoryOptOutLock` in `packages/sdk/core/src/libs/opt-out-state.ts`:
+ * Port of `resolveCategoryOptOutLock` in `packages/sdk/core/src/libs/opt-out-state.model.ts`:
  * - [OptOutLock.GPC_ACTIVE] when the category carries a live `gpc` restriction, or when
  *   the opt-out lock is [OptOutLock.GPC_ACTIVE] and the category is the deciding one.
  * - [OptOutLock.HELD_BY_ACCOUNT] when the opt-out lock is [OptOutLock.HELD_BY_ACCOUNT]
@@ -139,7 +139,7 @@ private fun optOutLock(
 /**
  * Answer whether the visitor is opted out of sale, sharing and targeted advertising right now.
  *
- * Port of `isOptedOut` in `packages/sdk/core/src/libs/opt-out-state.ts`: returns `true` when
+ * Port of `isOptedOut` in `packages/sdk/core/src/libs/opt-out-state.model.ts`: returns `true` when
  * a durable opt-out record is held. Otherwise, when [categories] is non-null, returns `true`
  * when any listed category is not permitted in `effectivePermissions`. When [categories] is
  * `null`, checks [PolicyEvaluator.optOutDecidingCategory] for [policy] (returns `false` when

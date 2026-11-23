@@ -9,7 +9,7 @@ import {
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createKernel as createConsentKernel } from '../../../kernel';
 import { createIframeBlocker } from '../index';
-import { buildReconcilePass, reconcileIframe } from '../reconcile';
+import { buildReconcilePass, reconcileIframe } from '../reconcile-iframe';
 
 beforeEach(() => {
 	document.body.innerHTML = '';

@@ -5,21 +5,21 @@
  * a frozen snapshot, a snapshot-listener set, and a typed event bus.
  * It is organised by concept:
  *
- * - `init-lifecycle.ts` — start, `init()` attempts, retry and fencing, the
+ * - `create-init-lifecycle.ts` — start, `init()` attempts, retry and fencing, the
  *                         `/v1/consent/init` fold, the deadline timer, and the one
  *                         visibility and one online listener.
- * - `choice.ts`         — `save()`, `optOut()`, `optIn()`, `dismissNotice()`
+ * - `create-choice-recorder.ts`         — `save()`, `optOut()`, `optIn()`, `dismissNotice()`
  *                         and drafts; hands each recorded action and opt-out
  *                         act to the save outbox.
- * - `records.ts`        — the records boundary: validation, `hydrate()`,
+ * - `kernel-records.model.ts`        — the records boundary: validation, `hydrate()`,
  *                         server-record merge, `identify()`, subject id.
  * - `save-outbox/`      — sending recorded choices and opt-out acts, the
  *                         replay queues and their storage seam.
- * - `setters.ts`        — the remaining `kernel.set.*` inputs.
+ * - `build-setters.ts`        — the remaining `kernel.set.*` inputs.
  *
- * They all write through `runtime.ts`, the snapshot cell, which derives
- * through `patch.ts` and `snapshot.ts` and delivers through `dispatch.ts`
- * and `events.ts`.
+ * They all write through `create-runtime.ts`, the snapshot cell, which derives
+ * through `kernel-patch.model.ts` and `kernel-snapshot.model.ts` and delivers through `create-dispatcher.ts`
+ * and `create-event-bus.ts`.
  *
  * Invariants:
  * - `createConsentKernel()` has zero side effects. No window writes, no
@@ -47,27 +47,27 @@
 import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
 import type { OptOutRight } from '@inth/sdk-schema/types';
 
-import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state';
-import type { OptOutReceiptData } from '../libs/opt-out-state';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
 	KernelConfig,
 	SaveUISource,
-} from '../types';
-import { createChoiceRecorder } from './choice';
-import { createDispatcher } from './dispatch';
-import { createEventBus } from './events';
-import { createInitLifecycle } from './init-lifecycle';
-import type { InternalKernel } from './internals';
-import { buildOptOutPayload } from './opt-out';
-import { createRecordsBoundary } from './records';
-import { createRuntime } from './runtime';
+} from '../consent-kernel.model';
+import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
+import type { OptOutReceiptData } from '../libs/opt-out-state.model';
+import { buildSetters } from './build-setters';
+import { createChoiceRecorder } from './create-choice-recorder';
+import { createDispatcher } from './create-dispatcher';
+import { createEventBus } from './create-event-bus';
+import { createInitLifecycle } from './create-init-lifecycle';
+import { createRuntime } from './create-runtime';
+import type { InternalKernel } from './kernel-internals.model';
+import { buildOptOutPayload } from './kernel-opt-out.model';
+import { createRecordsBoundary } from './kernel-records.model';
+import { buildDraft, buildInitialSnapshot } from './kernel-snapshot.model';
 import { createBrowserOutboxStore, createSaveOutbox } from './save-outbox';
 import type { SaveOutboxOptions } from './save-outbox';
-import type { SaveOutboxStore } from './save-outbox/store';
-import { buildSetters } from './setters';
-import { buildDraft, buildInitialSnapshot } from './snapshot';
+import type { SaveOutboxStore } from './save-outbox/save-outbox.store';
 
 /**
  * Seams a kernel is assembled with.

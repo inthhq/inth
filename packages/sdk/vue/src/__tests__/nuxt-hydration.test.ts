@@ -25,8 +25,8 @@ import type { App, ShallowRef } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
 import ConsentBanner from '../runtime/components/prompt/prompt.vue';
-import { useConsentKernelContext } from '../runtime/composables/kernel';
-import type { VueConsentKernelContext } from '../runtime/kernel';
+import { useConsentKernelContext } from '../runtime/composables/use-consent-kernel';
+import type { VueConsentKernelContext } from '../runtime/vue-consent-kernel-context.model';
 
 const nuxt = vi.hoisted(() => ({
 	consentSource: undefined as ExternalConsentSource | undefined,

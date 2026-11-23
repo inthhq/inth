@@ -6,8 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as ClientModule from '../client';
 import type { AstroConsentClient, PageIAB } from '../client';
 import type * as IntegrationModule from '../integration';
+import type { InthAstroOptions } from '../inth-options.model';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions } from '../types';
 import { createTestPageIAB } from './page-iab';
 import { testResolution, testRule } from './policy-fixture';
 
@@ -28,7 +28,7 @@ const loadClient = async function loadClient(): Promise<{
 }> {
 	vi.resetModules();
 	const clientModule: typeof ClientModule = await import('../client');
-	const { testingTransport } = await import('../transport');
+	const { testingTransport } = await import('../transport-resolvers.model');
 	clientModule.registerTransport(testingTransport);
 	const { resolveOptions }: typeof IntegrationModule =
 		await import('../integration');

@@ -1,8 +1,8 @@
+import type { KernelTransport } from '../../consent-kernel.model';
 import type {
 	ProviderTransportFactory,
 	ProviderTransportKind,
 } from '../../transports/mode';
-import type { KernelTransport } from '../../types';
 
 /**
  * A transport factory that hands the runtime `transport`, for tests that

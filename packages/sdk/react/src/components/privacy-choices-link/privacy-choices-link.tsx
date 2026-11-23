@@ -11,8 +11,8 @@ import {
 import type { ReactElement, ReactNode, Ref } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
-import { ConsentButton } from '~/components/shared/primitives/button';
-import type { ConsentButtonProps } from '~/components/shared/primitives/button.types';
+import { ConsentButton } from '~/components/shared/primitives/consent-button';
+import type { ConsentButtonProps } from '~/components/shared/primitives/consent-button.model';
 import { OptOutIcon } from '~/components/shared/ui/opt-out-icon';
 import { useResolvedPresentation, useSnapshot } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';

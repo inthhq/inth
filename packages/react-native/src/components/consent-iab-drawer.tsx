@@ -37,11 +37,16 @@ import type {
 	ConsentIabProcessedVendor,
 	ConsentIabSelection,
 	ConsentIabTab,
-} from './iab-display-model';
+} from './iab-display.model';
 import {
 	CONSENT_BUTTON_ROW_ITEM,
 	ConsentButton,
 } from './internal/consent-button';
+import { ConsentIabFeatureSection } from './internal/consent-iab-feature-section';
+import { ConsentIabLockedSection } from './internal/consent-iab-locked-section';
+import { ConsentIabPurposeRow } from './internal/consent-iab-purpose-row';
+import { ConsentIabStackRow } from './internal/consent-iab-stack-row';
+import { ConsentIabVendorRow } from './internal/consent-iab-vendor-row';
 import {
 	ConsentSurface,
 	ConsentSurfaceBody,
@@ -53,15 +58,8 @@ import {
 import type {
 	ConsentIabCopy,
 	ConsentIabCopyOverrides,
-} from './internal/iab-copy';
-import { resolveIabCopy, withTotal } from './internal/iab-copy';
-import {
-	ConsentIabFeatureSection,
-	ConsentIabLockedSection,
-	ConsentIabPurposeRow,
-	ConsentIabStackRow,
-	ConsentIabVendorRow,
-} from './internal/iab-rows';
+} from './internal/iab-copy.model';
+import { resolveIabCopy, withTotal } from './internal/iab-copy.model';
 import type { ConsentPartStyles } from './theme/consent-theme-parts';
 import type { ConsentTheme } from './theme/create-consent-theme';
 import { useConsentStyles } from './theme/use-consent-styles';
@@ -142,14 +140,14 @@ export type ConsentIabInitialSelection = Partial<ConsentIabSelection>;
 /**
  * The strings the disclosure renders, and the shape that writes over them.
  *
- * Published from here rather than from `internal/iab-copy`, which is where they
+ * Published from here rather than from `internal/iab-copy.model`, which is where they
  * are resolved: `copy` is a prop a host sets, so the type has to be reachable
  * without naming a module the package calls private.
  */
 export type {
 	ConsentIabCopy,
 	ConsentIabCopyOverrides,
-} from './internal/iab-copy';
+} from './internal/iab-copy.model';
 
 /**
  * The complete set of decisions the disclosure can express, seeded from what the

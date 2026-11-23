@@ -15,10 +15,10 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { KernelContext } from '../context';
-import { IABContext } from '../context/iab-context-value';
-import type { IABContextValue } from '../context/iab-context-value';
-import { IABProvider, useIAB } from '../iab-context';
-import type { ReactIABState } from '../iab-context';
+import { IABContext } from '../context/iab-context';
+import type { IABContextValue } from '../context/iab-context';
+import { IABProvider, useIAB } from '../iab-provider';
+import type { ReactIABState } from '../iab-provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 

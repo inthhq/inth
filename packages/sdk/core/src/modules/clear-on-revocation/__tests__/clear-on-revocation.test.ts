@@ -10,7 +10,7 @@ import {
 	optOutRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createKernel as createConsentKernel } from '../../../kernel';
-import type { InternalKernel } from '../../../kernel/internals';
+import type { InternalKernel } from '../../../kernel/kernel-internals.model';
 import {
 	C15T_EXPERIMENT_STORAGE_KEY,
 	C15T_PENDING_SAVES_STORAGE_KEY,
@@ -21,8 +21,8 @@ import {
 	STORAGE_KEY_V2,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../../libs/storage-keys';
+import type { ClearOnRevocationConfig } from '../clear-on-revocation.model';
 import { createClearOnRevocation } from '../index';
-import type { ClearOnRevocationConfig } from '../types';
 
 const disposals: (() => void)[] = [];
 const attach = (

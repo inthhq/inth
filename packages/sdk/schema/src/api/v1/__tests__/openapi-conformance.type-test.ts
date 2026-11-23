@@ -4,8 +4,9 @@ import type { ConsentManifest } from '../../../shared/consent-manifest';
 import type {
 	ScriptRegistryWire,
 	ScriptSourcesWire,
-} from '../../../shared/script-sources';
-import type { v1ErrorBodySchema } from '../common';
+} from '../../../shared/script-sources.model';
+import type { components, operations } from '../generated/types';
+import type { v1ErrorBodySchema } from '../v1-common.model';
 import type {
 	v1ConsentInitOutputSchema,
 	v1ConsentInitQuerySchema,
@@ -14,8 +15,8 @@ import type {
 	v1ConsentRecordOutputSchema,
 	v1ConsentRecordQuerySchema,
 	v1ConsentSessionReportSchema,
-} from '../consent';
-import type { V1ErrorCode } from '../constants';
+} from '../v1-consent.model';
+import type { V1ErrorCode } from '../v1-constants.model';
 import type {
 	v1DocumentAcceptancesInputSchema,
 	v1DocumentAcceptancesOutputSchema,
@@ -25,15 +26,14 @@ import type {
 	v1DocumentParamsSchema,
 	v1DocumentPublishInputSchema,
 	v1DocumentPublishOutputSchema,
-} from '../documents';
-import type { components, operations } from '../generated/types';
+} from '../v1-documents.model';
 import type {
 	v1SubjectIdentityTokenInputSchema,
 	v1SubjectIdentityTokenOutputSchema,
 	v1SubjectLinkInputSchema,
 	v1SubjectLinkOutputSchema,
 	v1SubjectLinkParamsSchema,
-} from '../subjects';
+} from '../v1-subjects.model';
 import type { ExpectNone, WireDiff } from './wire-diff';
 
 /*

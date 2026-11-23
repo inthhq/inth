@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest';
 import { createConsentKernel } from '..';
 import { NOW } from '../../__tests__/fixtures/kernel-fixtures';
 import { evaluateConsentRecord } from '../../consent-record/evaluate';
-import { buildInitialSnapshot, freezeSnapshot } from '../snapshot';
+import { buildInitialSnapshot, freezeSnapshot } from '../kernel-snapshot.model';
 
 const expectFrozenData = (value: unknown): void => {
 	if (value === null || typeof value !== 'object') {

@@ -20,7 +20,7 @@ import {
 	withChoice,
 	withCustomVendorChoice,
 	withLegitimateInterest,
-} from '../draft/iab-choices';
+} from '../draft/iab-choices.model';
 import type {
 	CommitResult,
 	ConsentSnapshot,

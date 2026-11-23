@@ -13,7 +13,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { dynamicYield } from './vendors/functional/dynamic-yield';
 
 const grantedConsents = { ...ALL_DENIED, experience: true };

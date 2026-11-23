@@ -9,11 +9,11 @@ import {
 	NOW,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type { ConsentKernel, ResolvedVendor } from '../../consent-kernel.model';
 import { createConsentKernel } from '../../kernel';
 import { createPreferenceDraft } from '../../preference-draft';
 import { showConsentSurface } from '../../surface-actions/rules';
-import type { ConsentKernel, ResolvedVendor } from '../../types';
-import { copySurfaceReference } from '../commands';
+import { copySurfaceReference } from '../copy-surface-reference';
 import { getSurfaceSession } from '../session';
 
 const vendor = (id: string, category: ResolvedVendor['category']) =>

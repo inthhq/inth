@@ -5,98 +5,45 @@ import { dirname, join, resolve } from 'node:path';
 
 import type { ConsentManifest } from '@inth/sdk-schema/types';
 
-import { createDialogChunkPlugin } from './build-dialog-chunk';
-import type { DialogChunkPlugin } from './build-dialog-chunk';
+import { createDialogChunkPlugin } from './build-dialog-chunk.model';
+import type { DialogChunkPlugin } from './build-dialog-chunk.model';
 import {
 	clientBannerPath,
 	deferredSheetSpecifier,
 	findPageBanner,
 	injectStaticBanner,
-	loadStaticBannerRenderer,
 	renderStaticBannerHtml,
 	renderStaticBannerSheets,
-} from './build-static-banner';
-import type { StaticBannerChunk } from './build-static-banner';
+} from './build-static-banner.model';
+import type { StaticBannerChunk } from './build-static-banner.model';
+import {
+	BUILD_MANIFEST_TIMEOUT_MS,
+	loadBuildManifestWithTimeout,
+	resolveBuildManifestUrl,
+} from './build.api';
+import { buildPrefetchScript } from './libs/prefetch/prefetch';
 import {
 	PREFETCH_SCRIPT_ID,
 	prefetchScriptOffset,
-} from './libs/prefetch/placement';
-import { buildPrefetchScript } from './libs/prefetch/prefetch';
-import type { PrefetchOptions } from './libs/prefetch/types';
+} from './libs/prefetch/prefetch-placement.model';
+import type { PrefetchOptions } from './libs/prefetch/prefetch.model';
+import { loadStaticBannerRenderer } from './load-static-banner-renderer';
 import type { ConsentMode } from './modes';
-import { buildSnapshotSkipReason } from './server/server-mode';
-import { loadStaticManifest } from './server/static-manifest';
+import { buildSnapshotSkipReason } from './server/server-mode.model';
 import { manifestNeedsLocation } from './transports/manifest-browser-location';
-import { V1_ROUTES } from './transports/v1/paths';
 
 export type { ConsentManifest } from '@inth/sdk-schema/types';
-export { createDialogChunkPlugin } from './build-dialog-chunk';
+export { createDialogChunkPlugin } from './build-dialog-chunk.model';
+export { loadBuildManifest } from './build.api';
 export {
 	CORE_CHUNK_MODULES,
 	CORE_FIRST_LOAD_MODULES,
 	CORE_SURFACE_CONFIG_MODULES,
 	coreModuleFile,
 	coreModulePattern,
-} from './chunk-modules';
-export { DEFERRED_SHEET_SPECIFIERS } from './build-static-banner';
-export type { DialogChunkPlugin } from './build-dialog-chunk';
-
-const resolveBuildManifestUrl = (
-	options: {
-		projectUrl?: string;
-		manifestUrl?: string;
-	},
-	label: string
-): string => {
-	const source = options.manifestUrl ?? options.projectUrl;
-	let url: URL;
-	try {
-		url = new URL(source ?? '');
-	} catch {
-		throw new Error(
-			`${label}: build-time manifests require an absolute upstream URL.`
-		);
-	}
-	if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-		throw new Error(
-			`${label}: build-time manifests require an http(s) upstream URL.`
-		);
-	}
-	if (options.manifestUrl === undefined) {
-		url.pathname = `${url.pathname.replace(/\/+$/u, '')}${V1_ROUTES.manifest}`;
-	}
-	return url.href;
-};
-
-/**
- * Loads a snapshot from an absolute upstream URL during framework setup.
- * @param options - Manifest URL, or backend URL whose `/v1/consent/manifest` is read.
- * @param label - Framework name for errors.
- * @throws {Error} When the source is relative, missing or cannot be fetched.
- * @internal
- */
-export const loadBuildManifest = (
-	options: {
-		projectUrl?: string;
-		manifestUrl?: string;
-		fetch?: typeof globalThis.fetch;
-	},
-	label: string
-): Promise<ConsentManifest> =>
-	loadStaticManifest(
-		{
-			fetch: options.fetch,
-			manifestUrl: resolveBuildManifestUrl(options, label),
-		},
-		label
-	);
-
-/**
- * Longest a build or dev server waits for the manifest, in milliseconds.
- * A backend that never answers then counts as a failed fetch instead of
- * holding the command.
- */
-const BUILD_MANIFEST_TIMEOUT_MS = 10_000;
+} from './core-chunk-modules';
+export { DEFERRED_SHEET_SPECIFIERS } from './build-static-banner.model';
+export type { DialogChunkPlugin } from './build-dialog-chunk.model';
 
 /**
  * Whether a build can fetch the manifest: the upstream URL is absolute
@@ -522,22 +469,9 @@ export const loadManifestForBuild = async (
 		);
 		return undefined;
 	}
-	const fetchImpl = source.fetch ?? globalThis.fetch?.bind(globalThis);
 	const url = resolveBuildManifestUrl(source, label);
 	try {
-		return await loadBuildManifest(
-			{
-				...source,
-				fetch:
-					fetchImpl &&
-					((input, init) =>
-						fetchImpl(input, {
-							...init,
-							signal: AbortSignal.timeout(BUILD_MANIFEST_TIMEOUT_MS),
-						})),
-			},
-			label
-		);
+		return await loadBuildManifestWithTimeout(source, label);
 	} catch (error) {
 		reportFetchFailure(policy, { explicit, mode }, url, error);
 		return undefined;

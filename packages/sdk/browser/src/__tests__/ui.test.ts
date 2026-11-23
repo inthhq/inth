@@ -1,14 +1,14 @@
 import { policyRulePresets } from '@inth/sdk-core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { classes } from '../generated/styles';
-import { createTestingConsentClient as createConsentClient } from '../testing-global';
 import type {
 	ConsentClient,
 	ConsentUIHandle,
 	ConsentUIOptions,
-} from '../types';
-import { mountConsentUI } from '../ui/mount';
+} from '../consent-client.model';
+import { classes } from '../generated/styles';
+import { createTestingConsentClient as createConsentClient } from '../testing-global';
+import { mountConsentUI } from '../ui/mount-consent-ui';
 
 const clients: ConsentClient[] = [];
 

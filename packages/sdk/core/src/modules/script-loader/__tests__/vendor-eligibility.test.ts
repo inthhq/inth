@@ -7,12 +7,15 @@ import {
 	NOW,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
-import { buildCallbackInfo } from '../callbacks';
-import { buildReconcilePass, hasScriptConsent } from '../eligibility';
 import { createScriptLoader } from '../index';
-import { normalizeScripts } from '../normalize';
+import { normalizeScripts } from '../normalize-scripts';
+import { buildCallbackInfo } from '../script-callbacks.model';
+import {
+	buildReconcilePass,
+	hasScriptConsent,
+} from '../script-eligibility.model';
+import type { Script } from '../script-loader.model';
 import { scriptLoaderTools } from '../tools';
-import type { Script } from '../types';
 
 /** The slugs these tests deny, declared so the gate honors the denial. */
 const declaredVendors = (ids: readonly string[]) => ({

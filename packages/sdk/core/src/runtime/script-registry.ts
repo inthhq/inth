@@ -1,5 +1,5 @@
-import type { ScriptLoaderOptions } from '../modules/script-loader/types';
-import type { ConsentRuntimeOptions } from './types';
+import type { ScriptLoaderOptions } from '../modules/script-loader/script-loader.model';
+import type { ConsentRuntimeOptions } from './consent-runtime.model';
 
 /**
  * The signature settings `experimentalScriptRegistry` asks for, or

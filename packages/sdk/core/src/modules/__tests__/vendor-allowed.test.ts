@@ -12,9 +12,12 @@ import {
 	matchedResolution,
 	NOW,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type {
+	ConsentSnapshot,
+	ResolvedVendor,
+} from '../../consent-kernel.model';
 import { createConsentKernel, isVendorAllowed } from '../../index';
 import { isSnapshotVendorAllowed } from '../../surface-actions';
-import type { ConsentSnapshot, ResolvedVendor } from '../../types';
 
 const vendor = (
 	id: string,

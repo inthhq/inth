@@ -5,8 +5,10 @@ import { forwardRef as createForwardRef } from 'react';
 
 import { useConsentGate } from '~/component-hooks/use-consent-gate';
 
-import { ConsentGateButton, ConsentGateRoot, ConsentGateTitle } from './atoms';
-import type { ConsentGateProps } from './types';
+import { ConsentGateButton } from './consent-gate-button';
+import { ConsentGateRoot } from './consent-gate-root';
+import { ConsentGateTitle } from './consent-gate-title';
+import type { ConsentGateProps } from './consent-gate.model';
 
 const DefaultPlaceholder = ({
 	category,

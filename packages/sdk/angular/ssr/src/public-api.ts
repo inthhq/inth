@@ -13,7 +13,7 @@
  *
  * @packageDocumentation
  */
-export { createConsentRoute } from './consent-route';
+export { createConsentRoute } from './consent-route.api';
 export type {
 	ConsentProxyOptions,
 	ConsentRoute,
@@ -21,6 +21,6 @@ export type {
 	NodeMiddleware,
 	NodeRequest,
 	NodeResponse,
-} from './consent-route';
+} from './consent-route.api';
 export { provideInthServer } from './provide-inth-server';
 export type { InthServerOptions } from './provide-inth-server';

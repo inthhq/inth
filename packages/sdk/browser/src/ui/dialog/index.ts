@@ -22,14 +22,14 @@ import {
 	showConsentSurface,
 } from '@inth/sdk-core/surface-actions';
 
-import type { ConsentDialogOptions } from '../../types';
+import type { ConsentDialogOptions } from '../../consent-client.model';
 import {
 	importDialog,
 	importOptInConfirmation,
 	importPanel,
 } from '../parts/load';
 import { requestReceiptFocus } from '../parts/receipt-focus';
-import type { Surface, SurfaceContext } from '../surface';
+import type { Surface, SurfaceContext } from '../surface.model';
 
 // Safari has no requestIdleCallback; a short delay stands in.
 const IDLE_FALLBACK_DELAY_MS = 200;

@@ -20,8 +20,8 @@ import { useMemo } from 'react';
 import { Platform, StatusBar } from 'react-native';
 
 import { MIN_TAP_TARGET } from '../components/theme/consent-theme-parts';
-import { useConsentSafeAreaInsets } from '../provider/safe-area-context';
-import type { ConsentSafeAreaInsets } from '../provider/safe-area-context';
+import { useConsentSafeAreaInsets } from '../provider/consent-safe-area-context';
+import type { ConsentSafeAreaInsets } from '../provider/consent-safe-area-context';
 
 /**
  * Bottom band reserved when the host measured nothing.

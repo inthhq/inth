@@ -10,7 +10,7 @@ import { css as emotionCss, flush } from '@emotion/css';
 import { clearBrowserConsentStorage } from '@inth/conformance/suite';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { ConsentClient, ConsentUIOptions } from '../types';
+import type { ConsentClient, ConsentUIOptions } from '../consent-client.model';
 import { init } from './fixtures/factory-init';
 
 /** A colour the stock card never uses. */

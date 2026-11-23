@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 
-import { ADDITIONAL_CONSENT_V2_PATTERN } from '../ad-tech-provider';
+import { ADDITIONAL_CONSENT_V2_PATTERN } from '../ad-tech-provider.model';
 
 const fixtureSchema = v.object({
 	cases: v.array(v.object({ expected: v.string(), id: v.string() })),

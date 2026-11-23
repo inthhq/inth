@@ -29,8 +29,8 @@ the visitor has answered the banner.
 ## Run
 
 ```sh
-bun install
-bun run build:libs
+pnpm install
+pnpm sdk:build
 bun run --cwd examples/shopify-nextjs dev
 ```
 
@@ -45,4 +45,4 @@ doesn't record analytics for it. Use a real shop to see events in Shopify.
 The example connects to the public demo Inth project. Set
 `NEXT_PUBLIC_INTH_PROJECT_URL` in `.env.local` to use your own.
 
-See the [Shopify guide](https://c15t.com/docs/integrations/shopify).
+See the [Shopify guide](https://inth.com/docs/integrations/shopify).

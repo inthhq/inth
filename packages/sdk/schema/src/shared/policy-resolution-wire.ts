@@ -5,18 +5,12 @@
  * pack itself. This module carries the outcome types, the contract version,
  * the safe fallback, and `readPolicyResolutionWire`, and depends only on the
  * resolved-rule invariants. Resolving and hashing a pack live in
- * `policy-resolution.ts`, which a client bundle then never needs.
+ * `policy/policy-resolution.model.ts`, which a client bundle then never needs.
  */
 
 import { compareCanonical } from './canonical-order';
-import { POLICY_CONTRACT_VERSION } from './policy-contract';
-import type {
-	PolicyOptionalCategory,
-	PolicyPromptAction,
-	PolicyRight,
-	ResolvedPolicyRule,
-} from './policy-rule';
-import type { PolicyFingerprints } from './policy-rule-fingerprint';
+import { POLICY_CONTRACT_VERSION } from './policy/policy-contract';
+import type { PolicyFingerprints } from './policy/policy-rule-fingerprint.model';
 import {
 	collectResolvedPolicyRuleIssues,
 	isPlainPolicyObject,
@@ -25,8 +19,14 @@ import {
 	isPolicyRight,
 	isPolicyRuleModel,
 	POLICY_PROMPT_ACTIONS,
-} from './policy-rule-invariants';
-import type { PolicyMatchedBy } from './policy-runtime';
+} from './policy/policy-rule-invariants';
+import type {
+	PolicyOptionalCategory,
+	PolicyPromptAction,
+	PolicyRight,
+	ResolvedPolicyRule,
+} from './policy/policy-rule.model';
+import type { PolicyMatchedBy } from './policy/policy-runtime.model';
 import {
 	CONSENT_BANNER_EDGES,
 	CONSENT_BLOCKING_CONSTRAINTS,
@@ -37,15 +37,18 @@ import {
 	canonicalizePolicySurface,
 	isPolicySurfaceUnfingerprinted,
 	POLICY_SURFACE_KEYS,
-} from './policy-surface';
-import type { ConsentContainer, ResolvedPolicySurface } from './policy-surface';
+} from './policy/policy-surface';
+import type {
+	ConsentContainer,
+	ResolvedPolicySurface,
+} from './policy/policy-surface';
 
 // In a module of their own, so code that only names the contract, such as
 // the `/v1/consent/init` request a page sends first, does not carry the wire reader.
 export {
 	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_VERSION,
-} from './policy-contract';
+} from './policy/policy-contract';
 
 /** Why a resolution failed. */
 export type PolicyResolutionFailure =

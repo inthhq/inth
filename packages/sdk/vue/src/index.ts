@@ -8,13 +8,11 @@ import { getCurrentInstance } from 'vue';
 import type { App, Plugin } from 'vue';
 
 import { consentConfigKey } from './runtime/composables/config';
-import {
-	createVueConsentKernelContext,
-	provideVueConsentContext,
-} from './runtime/kernel';
-import type { RuntimeConsentConfig } from './runtime/kernel';
-import { selectedMode } from './runtime/modes';
-import { mountTokensStyle } from './runtime/theme-tokens';
+import { createVueConsentKernelContext } from './runtime/create-vue-consent-kernel-context';
+import { selectedMode } from './runtime/modes.model';
+import { mountTokensStyle } from './runtime/mount-tokens-style';
+import { provideVueConsentContext } from './runtime/provide-vue-consent-context';
+import type { RuntimeConsentConfig } from './runtime/vue-consent-kernel-context.model';
 
 export type {
 	AllConsentNames,
@@ -72,19 +70,19 @@ export type {
 export type {
 	RuntimeConsentConfig,
 	UseNetworkBlockerOptions,
-} from './runtime/kernel';
+} from './runtime/vue-consent-kernel-context.model';
 export {
 	manifest,
 	type BrowserManifestModeFactory,
 	type HostedModeFactory,
 	type ProviderTransportFactory,
-} from './runtime/modes';
+} from './runtime/modes.model';
 export type { ConsentTesting } from '@inth/sdk/testing';
 export { hosted, type HostedMode } from '@inth/sdk/modes';
 export {
 	generateTokensCSS,
 	type TokensCSSOptions,
-} from './runtime/theme-tokens';
+} from './runtime/theme-tokens.model';
 
 /**
  * The consent config the {@link inth} plugin takes, without where the

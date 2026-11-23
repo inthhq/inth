@@ -1,13 +1,13 @@
 /**
  * Wiring of `@inth/tanstack-start/api` onto the core consent route handler.
  * The route behaviour itself is pinned once, in
- * `packages/sdk/core/src/server/__tests__/consent-route.test.ts`.
+ * `packages/sdk/core/src/server/__tests__/consent-route.api.test.ts`.
  */
 import { createManifestCache } from '@inth/sdk/server';
 import { describe, expect, test, vi } from 'vitest';
 
 import { createConsentRoute } from '../api';
-import { rememberConsentInputs } from '../libs/request-inputs';
+import { rememberConsentInputs } from '../consent-request/consent-request-inputs.model';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 
 const BACKEND = 'https://consent.example.com';
