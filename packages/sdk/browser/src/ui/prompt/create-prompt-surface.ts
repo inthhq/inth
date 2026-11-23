@@ -48,14 +48,7 @@ import type { ConsentBannerOptions } from '../../consent-client.model';
 import { classes as expandStyles } from '../../generated/ui/expand';
 import { classes as surfaceStyles } from '../../generated/ui/surface';
 import type { PartSheet } from '../dialog/options-sheets';
-import {
-	activeElementOf,
-	cx,
-	el,
-	focusFirstIn,
-	owned,
-	patch,
-} from '../parts/el';
+import { cx, el, owned } from '../parts/el';
 import type { PartChild, PartRef } from '../parts/el';
 import {
 	commitBannerChoice,
@@ -63,7 +56,9 @@ import {
 	getOptOutReceiptData,
 	hasConsentUI,
 } from '../parts/engine';
+import { activeElementOf, focusFirstIn } from '../parts/focus-first-in';
 import { importPanel } from '../parts/load';
+import { patch } from '../parts/morph';
 import {
 	consentButton,
 	prefersReducedMotionNow,

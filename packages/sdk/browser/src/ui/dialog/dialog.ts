@@ -50,16 +50,7 @@ import {
 } from '../parts/create-category-group';
 import { createRightsReceipt } from '../parts/create-rights-receipt';
 import { createSaleRightsRow } from '../parts/create-sale-rights-row';
-import {
-	activeElementOf,
-	cx,
-	el,
-	findInPage,
-	focusFirstIn,
-	icon,
-	owned,
-	patch,
-} from '../parts/el';
+import { cx, el, icon, owned } from '../parts/el';
 import type { PartChild, PartRef } from '../parts/el';
 import {
 	commitDialogChoice,
@@ -68,6 +59,12 @@ import {
 	showConsentSurface,
 	takeReceiptFocus,
 } from '../parts/engine';
+import {
+	activeElementOf,
+	findInPage,
+	focusFirstIn,
+} from '../parts/focus-first-in';
+import { patch } from '../parts/morph';
 import {
 	checkIcon,
 	chevron,
