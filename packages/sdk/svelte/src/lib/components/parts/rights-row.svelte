@@ -344,7 +344,9 @@
 					</p>
 					<div class={cx(noStyle, styles.confirmActions)}>
 						<ConsentButton
-							bind:ref={cancelEl}
+							onref={(element) => {
+								cancelEl = element;
+							}}
 							action="custom-consent"
 							performDefaultAction={false}
 							variant="neutral"
