@@ -21,10 +21,8 @@
 	import { portal } from '../../actions/portal';
 	import { scrollLock } from '../../actions/scroll-lock';
 	import { focusBlocking } from '../../focus-blocking';
-	import {
-		getConsentContext,
-		getThemeContext,
-	} from '../../get-consent-context.svelte';
+	import { getConsentContext } from '../../get-consent-context.svelte';
+	import { getThemeContext } from '../../get-theme-context';
 	import { useBannerVisibility } from '../../use-banner-visibility.svelte';
 	import Branding from '../branding.svelte';
 	import Overlay from '../overlay.svelte';

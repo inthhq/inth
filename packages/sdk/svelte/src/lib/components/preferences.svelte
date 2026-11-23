@@ -25,10 +25,8 @@
 		toStyleAttributeValue,
 	} from '@inth/sdk/ui/utils';
 
-	import {
-		getConsentContext,
-		getThemeContext,
-	} from '../get-consent-context.svelte';
+	import { getConsentContext } from '../get-consent-context.svelte';
+	import { getThemeContext } from '../get-theme-context';
 	import { PreferenceItem, Switch } from '../primitives';
 	import { WIDGET_SHEETS } from '../widget-sheets';
 	import ConsentButton from './action-button.svelte';

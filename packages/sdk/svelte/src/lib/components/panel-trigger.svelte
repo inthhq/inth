@@ -40,10 +40,8 @@
 	import { onMount, untrack } from 'svelte';
 
 	import { portal } from '../actions/portal';
-	import {
-		getConsentContext,
-		getThemeContext,
-	} from '../get-consent-context.svelte';
+	import { getConsentContext } from '../get-consent-context.svelte';
+	import { getThemeContext } from '../get-theme-context';
 	import { TRIGGER_SHEETS } from '../surface-styles';
 	import { holdIdleDialogWarming, warmDialog } from '../warm-dialog';
 	import { useOptOutConfirmationState } from './confirmation/use-opt-out-confirmation-state.svelte';

@@ -9,28 +9,14 @@
  * know what the client build names a chunk. `consentManifest()` from
  * `@inth/svelte/vite`, next to the `sveltekit()` plugin, closes that gap:
  * once the client build has written its chunks, it replaces the placeholders
- * below in the server output with each chunk's URL. Without the plugin (or
- * in `vite dev`) the placeholders stay, and no link is added.
+ * (`module-preload.model.ts`) in the server output with each chunk's URL.
+ * Without the plugin (or in `vite dev`) the placeholders stay, and no link
+ * is added.
  */
 import { SAFE_NONCE } from '@inth/sdk/server';
 
-/**
- * The on-demand chunks a page can preload: the one that holds the script
- * loader and the network blocker, and `InthProvider`'s consent engine.
- */
-export type PreloadChunkName = 'engine' | 'loader-and-blocker';
-
-/**
- * Each chunk's URL, written into the server build by `consentManifest()`.
- *
- * @internal
- */
-export const MODULE_PRELOAD_PLACEHOLDERS: Readonly<
-	Record<PreloadChunkName, string>
-> = {
-	engine: '__INTH_MODULEPRELOAD_ENGINE__',
-	'loader-and-blocker': '__INTH_MODULEPRELOAD_LOADER_AND_BLOCKER__',
-};
+import { MODULE_PRELOAD_PLACEHOLDERS } from './module-preload.model';
+import type { PreloadChunkName } from './module-preload.model';
 
 /** Read through a function so no bundler folds the placeholder checks. */
 const chunkHrefs = (): Readonly<Record<PreloadChunkName, string>> =>

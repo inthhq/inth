@@ -6,81 +6,12 @@
  * @internal
  */
 
-import type {
-	AstroConsentClient,
-	AstroEngineClient,
-	ConsentAction,
-} from '../astro-consent-client.model';
-import type { ConsentDialogKind } from '../ui/register-dialog-adapter';
-import { preloadDialogChunks } from './load-dialog';
-import { ACTIONS_KEY, getWindow, readPageNonce } from './page-state';
-
-/** Attribute the server-rendered banner puts on its action buttons. */
-export const ACTION_ATTRIBUTE = 'data-inth-action';
-
-/** Attribute selecting which dialog a `customize` action opens. */
-export const DIALOG_ATTRIBUTE = 'data-inth-dialog';
-
-/**
- * Attribute selecting which tab the IAB preference centre opens on.
- *
- * The IAB banner's "N partners" link is a `customize` action that should
- * land on the vendors tab rather than purposes, the way the React, Svelte
- * and Vue banners do.
- */
-export const DIALOG_TAB_ATTRIBUTE = 'data-inth-tab';
-
-/** A banner action and what it opens. @internal */
-export interface ResolvedAction {
-	action: ConsentAction;
-	dialog: ConsentDialogKind;
-	element: HTMLElement | null;
-	tab?: 'purposes' | 'vendors';
-}
-
-/**
- * The action a click or press on `target` asks for.
- *
- * @returns The action, or `null` when the target is not an action control.
- * @internal
- */
-export const resolveAction = function resolveAction(
-	target: EventTarget | null
-): ResolvedAction | null {
-	if (!(target instanceof Element)) {
-		return null;
-	}
-	const element = target.closest(`[${ACTION_ATTRIBUTE}]`);
-	const action = element?.getAttribute(ACTION_ATTRIBUTE);
-	if (
-		action !== 'accept' &&
-		action !== 'reject' &&
-		action !== 'customize' &&
-		action !== 'opt-out' &&
-		action !== 'dismiss' &&
-		action !== 'close'
-	) {
-		return null;
-	}
-	const dialog = element?.getAttribute(DIALOG_ATTRIBUTE);
-	const tab = element?.getAttribute(DIALOG_TAB_ATTRIBUTE);
-	return {
-		action,
-		dialog: dialog === 'iab' ? 'iab' : 'preferences',
-		element: element instanceof HTMLElement ? element : null,
-		tab: tab === 'vendors' || tab === 'purposes' ? tab : undefined,
-	};
-};
-
-/** What the first-load shell's client adds to the listener. @internal */
-export interface DeferredClientHooks {
-	/** Called on dialog intent: starts the engine with the dialog. */
-	warm: () => void;
-	/** Loads the engine and resolves with its client. */
-	engine: () => Promise<AstroEngineClient>;
-}
-
-const deferredHooks = new WeakMap<AstroConsentClient, DeferredClientHooks>();
+import type { AstroConsentClient } from '../astro-consent-client.model';
+import { resolveAction } from './banner-actions.model';
+import { getWindow } from './get-window';
+import { ACTIONS_KEY } from './page-state.model';
+import { readDeferredClientHooks } from './register-deferred-client';
+import { warmDialog } from './warm-dialog';
 
 type OptOutLinkHandler = (opener: HTMLElement | null) => Promise<void>;
 
@@ -98,67 +29,6 @@ export const registerOptOutLinkHandler = function registerOptOutLinkHandler(
 	handler: OptOutLinkHandler
 ): void {
 	optOutLinkHandlers.set(client, handler);
-};
-
-/**
- * Register what the listener does for the first-load shell's client, which
- * has no runtime until its engine loads.
- *
- * @internal
- */
-export const registerDeferredClient = function registerDeferredClient(
-	client: AstroConsentClient,
-	hooks: DeferredClientHooks
-): void {
-	deferredHooks.set(client, hooks);
-};
-
-/**
- * The dialog an open would mount for `client`: the IAB preference centre
- * under an IAB policy, else the preferences dialog.
- *
- * @internal
- */
-export const warmDialogTarget = function warmDialogTarget(
-	client: AstroConsentClient
-): { kind: ConsentDialogKind } {
-	return {
-		kind: client.getConsent().model === 'iab' ? 'iab' : 'preferences',
-	};
-};
-
-/** A dialog warm-up in flight or done, so repeated hovers cost nothing. */
-let warming: Promise<void> | null = null;
-
-/** Forget the warm-up, so the next intent downloads again. @internal */
-export const resetDialogWarming = function resetDialogWarming(): void {
-	warming = null;
-};
-
-/**
- * Download the dialog for `client` without mounting it. A failed download
- * is forgotten, so the next hover, focus or open tries again.
- *
- * @returns Resolves once the download settles.
- * @internal
- */
-export const warmDialog = function warmDialog(
-	client: AstroConsentClient
-): Promise<void> {
-	deferredHooks.get(client)?.warm();
-	if (!warming) {
-		const attempt = (async () => {
-			try {
-				const { kind } = warmDialogTarget(client);
-				await preloadDialogChunks(client.options.ui, kind, readPageNonce());
-			} catch {
-				// The open reports its own failure.
-				warming = null;
-			}
-		})();
-		warming = attempt;
-	}
-	return warming;
 };
 
 /**
@@ -216,7 +86,7 @@ export const attachBannerActions = function attachBannerActions(): void {
 		}
 		event.preventDefault();
 		if (resolved.action === 'dismiss') {
-			const hooks = deferredHooks.get(client);
+			const hooks = readDeferredClientHooks(client);
 			if (hooks) {
 				void (async () => {
 					const engine = await hooks.engine();
@@ -242,7 +112,7 @@ export const attachBannerActions = function attachBannerActions(): void {
 				void handler(resolved.element);
 				return;
 			}
-			const hooks = deferredHooks.get(client);
+			const hooks = readDeferredClientHooks(client);
 			if (hooks) {
 				void (async () => {
 					const engine = await hooks.engine();

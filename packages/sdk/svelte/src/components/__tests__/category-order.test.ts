@@ -10,7 +10,7 @@ import { expect, test } from 'vitest';
 import WidgetFixture from '../../__tests__/fixtures/widget-fixture.svelte';
 import { policyFixture } from '../../__tests__/policy-fixture';
 import { testOffline } from '../../__tests__/test-offline';
-import type { ConsentContextValue } from '../../lib/get-consent-context.svelte';
+import type { ConsentContextValue } from '../../lib/consent-context.model';
 
 const ITEM_PREFIX = 'consent-widget-accordion-item-';
 

@@ -1,6 +1,6 @@
 import { expect, vi } from 'vitest';
 
-import type { ConsentManagerState } from '../lib/get-consent-context.svelte';
+import type { ConsentManagerState } from '../lib/consent-context.model';
 
 /**
  * Wait until the provider's preference draft has loaded. Headless reads

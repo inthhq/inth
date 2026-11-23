@@ -61,10 +61,8 @@
 	import { showConsentSurface } from '@inth/sdk/surface-actions';
 	import { onMount, untrack } from 'svelte';
 
-	import {
-		getConsentContext,
-		getThemeContext,
-	} from '../get-consent-context.svelte';
+	import { getConsentContext } from '../get-consent-context.svelte';
+	import { getThemeContext } from '../get-theme-context';
 	import { holdIdleDialogWarming, registerDialogWarmer } from '../warm-dialog';
 	import DeferredOptInConfirmation from './confirmation/deferred-opt-in-confirmation.svelte';
 	import DeferredOptOutConfirmation from './confirmation/deferred-opt-out-confirmation.svelte';

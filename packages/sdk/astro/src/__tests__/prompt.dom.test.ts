@@ -22,6 +22,7 @@ import {
 	EARLY_TAPS_WINDOW_KEY,
 } from '../../../core/src/libs/page-globals';
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
+import { setPromptLoaderForTest } from '../boot-client-engine';
 import * as promptChunk from '../browser/mount-prompt';
 import { loadContainerSheets } from '../browser/mount-prompt';
 import {
@@ -31,7 +32,6 @@ import {
 	registerDialogStyles,
 } from '../client';
 import type { AstroConsentClient } from '../client';
-import { setPromptLoaderForTest } from '../client-engine';
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import { resolveOptions } from '../integration';
 import type { InthAstroOptions } from '../inth-options.model';

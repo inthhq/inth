@@ -23,7 +23,6 @@ import {
 	applyExperimentAssignment,
 	isVendorAllowed,
 	resolveOptOutLink,
-	watchRevocationReload,
 } from '@inth/sdk/engine';
 import type {
 	ConsentKernel,
@@ -34,19 +33,13 @@ import type {
 } from '@inth/sdk/engine';
 import { getEventDispatcher as getRuntimeEventDispatcher } from '@inth/sdk/events';
 import type { RuntimeEventDispatcherOptions } from '@inth/sdk/events';
-import { createIframeBlocker } from '@inth/sdk/modules/iframe-blocker';
-import { createPersistence } from '@inth/sdk/modules/persistence';
-import { createWindowDebug } from '@inth/sdk/modules/window-debug';
 import { isIABConfigured } from '@inth/sdk/runtime';
 import type {
-	ConsentRuntimeIABFactory,
 	ConsentRuntimeOptions,
 	RuntimeIABOptions,
 } from '@inth/sdk/runtime';
 import { createConsentRuntimeWith } from '@inth/sdk/runtime/on-demand';
-import { clearOnRevocationOnDemand } from '@inth/sdk/runtime/on-demand-factories';
 import { earlyTapQueue } from '@inth/sdk/runtime/page-globals';
-import type { ConsentRuntimeModules } from '@inth/sdk/runtime/provider';
 import {
 	activateOptOutLink,
 	closeOptInConfirmation,
@@ -82,8 +75,6 @@ import { activateGatedScripts } from './browser/activate-gated-scripts';
 import {
 	attachBannerActions,
 	registerOptOutLinkHandler,
-	resetDialogWarming,
-	warmDialog,
 } from './browser/attach-banner-actions';
 import type { DeferredCommitted } from './browser/complete-commit';
 import {
@@ -91,6 +82,7 @@ import {
 	readDialogDisableAnimation,
 	readDialogLegalLinks,
 } from './browser/ensure-dialog-host';
+import { getWindow } from './browser/get-window';
 import { loadDialog } from './browser/load-dialog';
 import { keepDialogStylesOnSwap } from './browser/load-dialog-styles';
 import type * as PromptModule from './browser/mount-prompt';
@@ -99,11 +91,12 @@ import {
 	COLOR_SCHEME_KEY,
 	CONFIG_KEY,
 	GLOBAL_KEY,
+} from './browser/page-state.model';
+import {
 	configScripts,
-	getWindow,
 	nonceOf,
 	readPageNonce,
-} from './browser/page-state';
+} from './browser/read-page-nonce';
 import type * as IABPromptRenderer from './browser/render-iab-prompt-into-slot';
 import { reportUnhashedScripts } from './browser/report-unhashed-scripts';
 import {
@@ -115,6 +108,7 @@ import type {
 	EngineHandoff,
 } from './browser/start-deferred-client';
 import { syncPrivacyChoicesLinks } from './browser/sync-privacy-choices-links';
+import { resetDialogWarming, warmDialog } from './browser/warm-dialog';
 import type {
 	InthClientOptionsExtension,
 	InthResolvedOptions,
@@ -123,7 +117,12 @@ import {
 	assertIABAvailable,
 	isIABUnavailable,
 } from './libs/iab-unavailable.model';
-import type { ResolveTransport } from './transport-resolvers.model';
+import { registeredIAB } from './register-iab';
+import {
+	notRegistered,
+	registeredRuntimeModules,
+} from './register-runtime-modules';
+import { registeredTransport } from './register-transport';
 import type {
 	ConsentDialogHandle,
 	ConsentDialogKind,
@@ -429,119 +428,6 @@ export const syncBannerVisibility = function syncBannerVisibility(
 
 const NO_VENDORS: readonly ResolvedVendor[] = [];
 
-/**
- * Stands in for a module the engine module did not register.
- *
- * The integration's engine module registers the script loader, the network
- * blocker and the `consentSource` connection whenever the site can
- * configure them, so this only runs under `boot()` without the
- * integration, which then fails loudly instead of dropping the option. A
- * fallback `import()` of these modules here would keep a site's
- * statically imported script loader in a chunk of its own.
- *
- * @param option - The option that needs the module.
- * @throws {Error} Always.
- */
-const notRegistered = function notRegistered(option: string): never {
-	throw new Error(
-		`@inth/astro: \`${option}\` needs the module the integration's engine module registers.`
-	);
-};
-
-/**
- * The runtime modules the page mounts. Data clearing loads on demand;
- * persistence and the iframe blocker load with the engine. The engine
- * module (`virtual:inth/engine`) registers the script loader, the network blocker and a `consentSource`
- * connection for a site that can configure them, and the IAB mount
- * through {@link registerIAB} for a site that sets `iab`.
- */
-let pageRuntimeModules: ConsentRuntimeModules = {
-	connectConsentSource: () => notRegistered('consentSource'),
-	createClearOnRevocation: clearOnRevocationOnDemand,
-	createIframeBlocker,
-	createNetworkBlocker: ({ hold }) => {
-		// Nothing will decide the held requests: fail them closed.
-		hold?.block();
-		return notRegistered('networkBlocker');
-	},
-	createPersistence,
-	createScriptLoader: () => notRegistered('scripts'),
-	createWindowDebug,
-	watchRevocationReload,
-};
-
-/**
- * What a page needs to run the IAB CMP: a lazy `createIAB` (from
- * `createLazyIABFactory`), its readiness signal, and the runtime mount.
- *
- * @internal
- */
-export interface PageIAB {
-	/** The `createIAB` the runtime calls synchronously. */
-	create: ConsentRuntimeIABFactory;
-	/** Resolves once every pending `@inth/sdk/iab` load has settled. */
-	whenReady: () => Promise<void>;
-	/** `mountRuntimeIAB` from `@inth/sdk/runtime`. */
-	mount: NonNullable<ConsentRuntimeModules['mountIAB']>;
-}
-
-/** Set by the engine module of a site that sets `iab`; `null` everywhere else. */
-let pageIAB: PageIAB | null = null;
-
-/**
- * Wire the IAB CMP into the page runtime.
- *
- * The integration's engine module calls this only when the site sets `iab`,
- * so a site without IAB ships neither the mount nor the lazy factory, and
- * never fetches `@inth/sdk/iab`. Call before {@link boot}.
- *
- * @param iab - The lazy factory and the mount.
- * @internal
- */
-export const registerIAB = function registerIAB(iab: PageIAB): void {
-	pageIAB = iab;
-};
-
-/** Set by the engine module; see {@link registerTransport}. */
-let pageTransport: ResolveTransport | null = null;
-
-/**
- * Pick how the page turns the serialized mode into a transport.
- *
- * The engine module registers the variant that fits the site, so the page
- * ships only that one: a site that renders on demand loads the init path
- * when a page inits again, and a site with no adapter, whose every page
- * inits in the browser, ships the hosted transport with the page. Call
- * before {@link boot}.
- *
- * @param resolve - Turns the resolved options into a transport factory.
- * @internal
- */
-export const registerTransport = function registerTransport(
-	resolve: ResolveTransport
-): void {
-	pageTransport = resolve;
-};
-
-/**
- * Mount these module factories.
- *
- * The integration's engine module imports the script loader statically
- * when the site configures `scripts` (or a `clientEntrypoint` that may add
- * some), and the network blocker when it configures rules, so those ship
- * with the engine instead of one round trip after it. A `clientEntrypoint`
- * that may add blocker rules gets the on-demand blocker. Call before
- * {@link boot}.
- *
- * @param modules - The module factories to mount.
- * @internal
- */
-export const registerRuntimeModules = function registerRuntimeModules(
-	modules: Partial<ConsentRuntimeModules>
-): void {
-	pageRuntimeModules = { ...pageRuntimeModules, ...modules };
-};
-
 type Permissions = DeferredCommitted['permissions'];
 
 const samePermissions = (left: Permissions, right: Permissions): boolean =>
@@ -650,7 +536,7 @@ const createClient = function createClient(
 
 	// Only a site that sets `iab` gets the IAB wiring from its engine module.
 	const iab = isIABConfigured(options.iab)
-		? (pageIAB ?? notRegistered('iab'))
+		? (registeredIAB() ?? notRegistered('iab'))
 		: null;
 
 	// The server already resolved translations into `prefetch`, which the
@@ -678,7 +564,7 @@ const createClient = function createClient(
 					: (options.iab as RuntimeIABOptions | undefined),
 			// Called only when `gpp` is set, so other sites never fetch the chunk.
 			loadGPP: () => import('@inth/sdk/iab/gpp'),
-			mode: (pageTransport ?? notRegistered('mode'))(options),
+			mode: (registeredTransport() ?? notRegistered('mode'))(options),
 			networkBlocker: extension.networkBlocker ?? options.networkBlocker,
 			nonce: pageNonce,
 			pkg: '@inth/astro',
@@ -690,7 +576,9 @@ const createClient = function createClient(
 			theme: options.theme,
 			vendors: options.vendors,
 		},
-		iab ? { ...pageRuntimeModules, mountIAB: iab.mount } : pageRuntimeModules
+		iab
+			? { ...registeredRuntimeModules(), mountIAB: iab.mount }
+			: registeredRuntimeModules()
 	);
 
 	let dialog: ConsentDialogHandle | null = null;

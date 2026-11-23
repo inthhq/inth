@@ -7,10 +7,8 @@
 	import { onMount } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 
-	import {
-		getConsentContext,
-		getThemeContext,
-	} from '../get-consent-context.svelte';
+	import { getConsentContext } from '../get-consent-context.svelte';
+	import { getThemeContext } from '../get-theme-context';
 	import { holdIdleDialogWarming, warmDialog } from '../warm-dialog';
 
 	let {

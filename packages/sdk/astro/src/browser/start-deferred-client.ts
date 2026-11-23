@@ -71,12 +71,9 @@ import type {
 	ConsentDialogHandle,
 	ConsentDialogKind,
 } from '../ui/register-dialog-adapter';
-import {
-	attachBannerActions,
-	registerDeferredClient,
-	warmDialog,
-} from './attach-banner-actions';
+import { attachBannerActions } from './attach-banner-actions';
 import type { CompleteCommitInput, DeferredCommitted } from './complete-commit';
+import type { ConsentBoot } from './consent-boot.model';
 import type * as StandInModule from './create-dialog-stand-in';
 import type { DialogStandIn } from './create-dialog-stand-in';
 import { declaresVendor } from './declares-vendor';
@@ -85,32 +82,21 @@ import {
 	readDialogDisableAnimation,
 	readDialogLegalLinks,
 } from './ensure-dialog-host';
+import { getWindow } from './get-window';
 import { loadDialog } from './load-dialog';
 import {
 	BANNER_OVERLAY_SELECTOR,
 	BANNER_ROOT_SELECTOR,
 	GLOBAL_KEY,
-	getWindow,
-	readPageNonce,
-} from './page-state';
+} from './page-state.model';
+import { readConsentBoot } from './read-consent-boot';
+import { readPageNonce } from './read-page-nonce';
+import { registerDeferredClient } from './register-deferred-client';
 import {
 	scheduleDeferredEngine,
 	unhideEarlyTap,
 } from './schedule-deferred-engine';
-
-/** Attribute on the boot data block. @internal */
-export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
-
-/** What the server leaves in the boot data block. @internal */
-export interface ConsentBoot {
-	/** The snapshot the server rendered the page from. */
-	s: ConsentSnapshot;
-	/**
-	 * Whether the engine may load after the page, as far as the server can
-	 * tell (see `canDeferEngine` in `../banner/deferred-boot.model`).
-	 */
-	d: boolean;
-}
+import { warmDialog } from './warm-dialog';
 
 /** A preference dialog the shell mounted before the engine. @internal */
 export interface EarlyDialog {
@@ -135,30 +121,6 @@ export interface EngineModule {
 		handoff: EngineHandoff
 	) => AstroEngineClient;
 }
-
-/**
- * Reads the boot data block.
- *
- * @param root - Where to look. Defaults to `document`.
- * @returns The boot data, or `null` without a parseable block.
- * @internal
- */
-export const readConsentBoot = function readConsentBoot(
-	root: ParentNode = document
-): ConsentBoot | null {
-	const text = root.querySelector(
-		`script[${CONSENT_BOOT_ATTRIBUTE}]`
-	)?.textContent;
-	if (!text) {
-		return null;
-	}
-	try {
-		const boot = JSON.parse(text) as ConsentBoot;
-		return boot?.s ? boot : null;
-	} catch {
-		return null;
-	}
-};
 
 /**
  * Whether this page can wait for the engine, given what only the browser

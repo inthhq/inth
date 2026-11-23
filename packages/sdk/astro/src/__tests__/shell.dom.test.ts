@@ -11,6 +11,7 @@ import {
 } from '../../../core/src/libs/page-globals';
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
 import type { InthClientOptionsExtension } from '../astro-consent-client.model';
+import { boot, EVENTS_KEY } from '../boot-client-engine';
 import { startDeferredClient } from '../browser/start-deferred-client';
 import type { EngineModule } from '../browser/start-deferred-client';
 import {
@@ -19,7 +20,6 @@ import {
 	registerRuntimeModules,
 } from '../client';
 import type { AstroConsentClient } from '../client';
-import { boot, EVENTS_KEY } from '../client-engine';
 import { resolveOptions } from '../integration';
 import type { InthAstroOptions } from '../inth-options.model';
 import { hosted as hostedMode } from '../mode';

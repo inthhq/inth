@@ -65,8 +65,11 @@ afterEach(() => {
 describe('lazy IAB loading', () => {
 	test.each([
 		'components/inth-provider.svelte',
+		'consent-context.model.ts',
 		'consent-manager-options.model.ts',
 		'get-consent-context.svelte.ts',
+		'get-headless-consent.ts',
+		'get-theme-context.ts',
 		'index.ts',
 		'lazy-create-iab.ts',
 	])('%s has no value import of `@inth/sdk/iab`', (file) => {

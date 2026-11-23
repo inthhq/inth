@@ -27,7 +27,7 @@ import { mount as mountComponent, unmount } from 'svelte';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
-import { rightsBundleOf } from '../lib/components/parts/use-surface-session.svelte';
+import { rightsBundleOf } from '../lib/components/parts/rights-bundle.model';
 import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import { testing } from '../lib/testing';
 import Fixture from './fixtures/consent-surfaces-fixture.svelte';

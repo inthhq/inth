@@ -3,7 +3,7 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 import { canDeferEngine } from '../banner/deferred-boot.model';
-import { CONSENT_BOOT_ATTRIBUTE } from '../browser/start-deferred-client';
+import { CONSENT_BOOT_ATTRIBUTE } from '../browser/consent-boot.model';
 import ConsentScript from '../components/consent-script.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
