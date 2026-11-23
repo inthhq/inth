@@ -437,6 +437,12 @@ export interface ComponentSlots {
 	consentBannerTag?: SlotStyle;
 	/** Backdrop overlay rendered behind the banner when enabled. */
 	consentBannerOverlay?: SlotStyle;
+	/** Privacy Choices: the options Customize opens in place, and a side Drawer's scroll area. */
+	consentBannerExpand?: SlotStyle;
+	/** Privacy Choices: one statutory rights row and its segmented control. */
+	consentBannerRightsRow?: SlotStyle;
+	/** Privacy Choices: "Save choices" in an expanded panel or a side Drawer. */
+	consentBannerSaveButton?: SlotStyle;
 
 	/** Root wrapper for the consent dialog modal. */
 	consentDialog?: SlotStyle;

@@ -72,6 +72,12 @@ export interface ConsentComponentSlots<T = Record<string, unknown>> {
 		rights?: T;
 		rightLink?: T;
 		overlay?: T;
+		/** Privacy Choices: the options Customize opens in place, and a side Drawer's scroll area. */
+		expand?: T;
+		/** Privacy Choices: one statutory rights row and its segmented control. */
+		rightsRow?: T;
+		/** Privacy Choices: "Save choices" in an expanded panel or a side Drawer. */
+		saveButton?: T;
 	};
 	dialog?: {
 		root?: T;
@@ -277,12 +283,15 @@ export const CONSENT_COMPONENT_SLOT_KEY_MAP = {
 		actions: true,
 		card: true,
 		cardShell: true,
+		expand: true,
 		footer: true,
 		header: true,
 		overlay: true,
 		rightLink: true,
 		rights: true,
+		rightsRow: true,
 		root: true,
+		saveButton: true,
 		title: true,
 	},
 	button: {

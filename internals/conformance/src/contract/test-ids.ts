@@ -41,6 +41,18 @@ export const TEST_IDS = {
 		rights: 'consent-banner-rights',
 		root: 'consent-banner-root',
 		title: 'consent-banner-title',
+		// Privacy Choices (v6) parts.
+		announcement: 'consent-banner-announcement',
+		body: 'consent-banner-body',
+		categoryGroup: 'consent-banner-category-group',
+		confirm: 'consent-banner-confirm',
+		confirmAllow: 'consent-banner-confirm-allow',
+		confirmCancel: 'consent-banner-confirm-cancel',
+		expandPanel: 'consent-banner-expand-panel',
+		preferencesRow: 'consent-banner-preferences-row',
+		saveButton: 'consent-banner-save-button',
+		shell: 'consent-banner-shell',
+		status: 'consent-banner-status',
 	},
 	consentDialog: {
 		branding: 'consent-dialog-branding',
@@ -162,6 +174,11 @@ export const TEST_ID_PATTERNS = [
 	// Persistent-right links in the banner footer, keyed by right
 	// (`opt-out`, `preferences`). Kept kebab-case so the dynamic probe matches.
 	/^consent-banner-right-link-[a-z][a-z0-9-]*$/u,
+	// Privacy Choices (v6): one rights row and its two options per right,
+	// and one switch per category in the banner's category group.
+	/^consent-banner-rights-row-[a-z][a-z0-9-]*$/u,
+	/^consent-banner-right-option-[a-z][a-z0-9-]*-(?:protect|allow)$/u,
+	/^consent-banner-category-switch-[a-z][a-z0-9-]*$/u,
 	/^consent-widget-accordion-item-[a-z][a-z0-9-]*$/u,
 	/^consent-widget-accordion-trigger-[a-z][a-z0-9-]*$/u,
 	/^consent-widget-accordion-arrow-[a-z][a-z0-9-]*$/u,
