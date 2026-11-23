@@ -21,8 +21,8 @@ import { IAB_STORAGE_KEYS } from '@inth/sdk-schema/types';
 
 import { CMP_VERSION_NUMBER, createPingData } from './cmp-defaults.model';
 import { assertValidCmpId } from './cmp-id.model';
-import { toTCDataRestrictions } from './publisher-restrictions.model';
 import { clearStubQueue, getStubQueue } from './initialize-iab-stub';
+import { toTCDataRestrictions } from './publisher-restrictions.model';
 import { decodeTCString, getDisclosedVendorIds } from './tc-string.model';
 
 const setCookie = function setCookie(

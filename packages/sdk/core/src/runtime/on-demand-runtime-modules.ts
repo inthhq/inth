@@ -1,3 +1,4 @@
+import type { ConsentRuntimeModules } from './consent-runtime.model';
 /**
  * Runtime modules a framework provider loads only when the page configures
  * them: the script loader, the network blocker, data clearing and a
@@ -40,7 +41,6 @@
 import { clearOnRevocationOnDemand } from './on-demand-clear-on-revocation';
 import { connectConsentSourceOnDemand } from './on-demand-consent-source';
 import { loaderAndBlockerOnDemand } from './on-demand-loader-and-blocker';
-import type { ConsentRuntimeModules } from './consent-runtime.model';
 
 /**
  * The module factories {@link onDemandRuntimeModules} names. Spread them

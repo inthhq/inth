@@ -12,12 +12,6 @@
  * @packageDocumentation
  */
 
-import type { AllConsentNames } from '../consent/consent-types';
-import { resolveOptOutState } from '../libs/opt-out-state.model';
-import type { PreferenceDraft } from '../preference-draft';
-import { markOptOutReloadIfDue } from '../surface-actions/opt-out';
-import { beginAction } from '../surface-actions/rules';
-import { saveConsentSurface, settleSurface } from '../surface-actions/save-consent-surface';
 import type {
 	ConsentKernel,
 	OptInResult,
@@ -25,6 +19,17 @@ import type {
 	SaveResult,
 	SaveUISource,
 } from '../consent-kernel.model';
+import type { AllConsentNames } from '../consent/consent-types';
+import { resolveOptOutState } from '../libs/opt-out-state.model';
+import type { PreferenceDraft } from '../preference-draft';
+import { markOptOutReloadIfDue } from '../surface-actions/opt-out';
+import { beginAction } from '../surface-actions/rules';
+import {
+	saveConsentSurface,
+	settleSurface,
+} from '../surface-actions/save-consent-surface';
+import { getSurfaceSession } from './session';
+import type { SurfaceCopyFinish, SurfaceCopyOptions } from './session';
 import {
 	resolveBannerCommit,
 	resolveRightPress,
@@ -36,8 +41,6 @@ import type {
 	RightOption,
 	RightPressOutcome,
 } from './surface-rights.model';
-import { getSurfaceSession } from './session';
-import type { SurfaceCopyFinish, SurfaceCopyOptions } from './session';
 
 /** Options for {@link commitBannerChoice}. */
 export interface BannerCommitOptions {

@@ -48,7 +48,8 @@ const loadLanguage = async function loadLanguage(
 	language: OtherLanguage
 ): Promise<Translations | undefined> {
 	try {
-		const { loadLanguageCopy } = await import('./manifest-browser-languages.model');
+		const { loadLanguageCopy } =
+			await import('./manifest-browser-languages.model');
 		const copy = await loadLanguageCopy(language);
 		if (copy) {
 			loadedLanguages.set(language, copy);

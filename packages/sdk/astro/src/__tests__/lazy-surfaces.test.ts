@@ -96,7 +96,10 @@ describe('framework surfaces are reachable only through import()', () => {
 	);
 
 	it('keeps the adapter registry empty of framework specifiers', () => {
-		const source = readFileSync(join(SOURCE_ROOT, 'ui', 'register-dialog-adapter.ts'), 'utf8');
+		const source = readFileSync(
+			join(SOURCE_ROOT, 'ui', 'register-dialog-adapter.ts'),
+			'utf8'
+		);
 		for (const name of ['./svelte', './react', './vue']) {
 			expect(source).not.toContain(`import('${name}')`);
 		}

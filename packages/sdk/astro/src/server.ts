@@ -49,8 +49,8 @@ import { baseTranslations } from '@inth/sdk/translations/all';
 import { generateThemeCSS } from '@inth/sdk/ui/theme';
 import type { Theme } from '@inth/sdk/ui/theme';
 
-import { assertIABAvailable } from './libs/iab-unavailable.model';
 import type { InthLocals, InthResolvedOptions } from './inth-options.model';
+import { assertIABAvailable } from './libs/iab-unavailable.model';
 
 /** Input for {@link resolveConsentContext}. */
 export interface ResolveConsentContextOptions {
@@ -512,8 +512,14 @@ export type {
 	BrandingModel,
 	BrandingModelInput,
 } from './banner/branding.model';
-export { iabPromptClassNames, joinClasses } from './banner/banner-class-names.model';
-export type { ClassNameMap, IABPromptClassNames } from './banner/banner-class-names.model';
+export {
+	iabPromptClassNames,
+	joinClasses,
+} from './banner/banner-class-names.model';
+export type {
+	ClassNameMap,
+	IABPromptClassNames,
+} from './banner/banner-class-names.model';
 export { resolveIABPromptModel } from './banner/iab-prompt.model';
 export type {
 	IABAction,
@@ -599,7 +605,10 @@ export type {
 	PromptModelInput,
 	PromptProps,
 } from './prompt/prompt.model';
-export { promptFirstPaintSheets, renderPromptHTML } from './prompt/render-prompt-html';
+export {
+	promptFirstPaintSheets,
+	renderPromptHTML,
+} from './prompt/render-prompt-html';
 
 // The first-paint rules the components inline (see `inline-styles.model.ts`).
 export {

@@ -20,9 +20,9 @@ import {
 } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions, InthIABOptions } from '../inth-options.model';
 import { buildConfigScript } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthIABOptions } from '../inth-options.model';
 import { registerDialogAdapter } from '../ui/register-dialog-adapter';
 import type { ConsentDialogHandle } from '../ui/register-dialog-adapter';
 import { createTestPageIAB } from './page-iab';

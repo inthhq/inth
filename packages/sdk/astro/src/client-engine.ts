@@ -68,11 +68,17 @@ import { setupColorScheme } from '@inth/sdk/ui/utils/color-scheme';
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk/ui/utils/dom';
 import { isLateEntry } from '@inth/sdk/ui/utils/late-entry';
 
+import type {
+	AstroConsentClient,
+	AstroConsentSaveInput,
+	AstroEngineClient,
+} from './astro-consent-client.model';
 import {
 	IAB_PROMPT_SLOT_ATTRIBUTE,
 	PROMPT_SLOT_ATTRIBUTE,
 	readIABSpotModels,
 } from './banner/prompt-slot.model';
+import { activateGatedScripts } from './browser/activate-gated-scripts';
 import {
 	attachBannerActions,
 	registerOptOutLinkHandler,
@@ -80,7 +86,6 @@ import {
 	warmDialog,
 } from './browser/attach-banner-actions';
 import type { DeferredCommitted } from './browser/complete-commit';
-import { reportUnhashedScripts } from './browser/report-unhashed-scripts';
 import {
 	ensureDialogHost,
 	readDialogDisableAnimation,
@@ -88,7 +93,8 @@ import {
 } from './browser/ensure-dialog-host';
 import { loadDialog } from './browser/load-dialog';
 import { keepDialogStylesOnSwap } from './browser/load-dialog-styles';
-import { activateGatedScripts } from './browser/activate-gated-scripts';
+import type * as PromptModule from './browser/mount-prompt';
+import type { PromptController } from './browser/mount-prompt';
 import {
 	COLOR_SCHEME_KEY,
 	CONFIG_KEY,
@@ -98,21 +104,30 @@ import {
 	nonceOf,
 	readPageNonce,
 } from './browser/page-state';
-import { syncPrivacyChoicesLinks } from './browser/sync-privacy-choices-links';
-import type * as PromptModule from './browser/mount-prompt';
-import type { PromptController } from './browser/mount-prompt';
 import type * as IABPromptRenderer from './browser/render-iab-prompt-into-slot';
-import type { EarlyDialog, EngineHandoff } from './browser/start-deferred-client';
-import { takeEarlyTaps, unhideEarlyTap } from './browser/schedule-deferred-engine';
+import { reportUnhashedScripts } from './browser/report-unhashed-scripts';
+import {
+	takeEarlyTaps,
+	unhideEarlyTap,
+} from './browser/schedule-deferred-engine';
 import type {
-	AstroConsentClient,
-	AstroConsentSaveInput,
-	AstroEngineClient,
-} from './astro-consent-client.model';
-import { assertIABAvailable, isIABUnavailable } from './libs/iab-unavailable.model';
+	EarlyDialog,
+	EngineHandoff,
+} from './browser/start-deferred-client';
+import { syncPrivacyChoicesLinks } from './browser/sync-privacy-choices-links';
+import type {
+	InthClientOptionsExtension,
+	InthResolvedOptions,
+} from './inth-options.model';
+import {
+	assertIABAvailable,
+	isIABUnavailable,
+} from './libs/iab-unavailable.model';
 import type { ResolveTransport } from './transport-resolvers.model';
-import type { InthClientOptionsExtension, InthResolvedOptions } from './inth-options.model';
-import type { ConsentDialogHandle, ConsentDialogKind } from './ui/register-dialog-adapter';
+import type {
+	ConsentDialogHandle,
+	ConsentDialogKind,
+} from './ui/register-dialog-adapter';
 
 /**
  * Property of the engine's client that makes an event dispatcher for its

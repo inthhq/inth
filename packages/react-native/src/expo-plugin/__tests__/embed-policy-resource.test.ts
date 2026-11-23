@@ -8,14 +8,14 @@ import { AndroidConfig } from 'expo/config-plugins';
 import { describe, expect, it, vi } from 'vitest';
 
 import { applyAndroidManifest } from '../apply-android-manifest';
-import { ANDROID_META, IOS_PLIST_KEY } from '../constants';
 import { applyInfoPlist } from '../apply-info-plist';
-import { resolveParams } from '../params';
+import { ANDROID_META, IOS_PLIST_KEY } from '../constants';
 import {
 	embedPolicyResource,
 	policyResourceProblem,
 	POLICY_RESOURCE_NAME,
 } from '../embed-policy-resource';
+import { resolveParams } from '../params';
 import { FIXTURE_DIR } from './helpers';
 
 const endpoint = 'https://demo.inth.app';

@@ -10,8 +10,8 @@ import type { HeadlessIABDisplayRow } from '@inth/sdk-iab/headless';
 
 import { classes } from '../generated/iab-styles';
 import { classes as shared } from '../generated/styles';
-import { resolveCopy } from '../ui/resolve-copy';
 import { h } from '../ui/dom';
+import { resolveCopy } from '../ui/resolve-copy';
 import type { SurfaceContext } from '../ui/surface';
 import { createVendorDisclosures } from './create-vendor-disclosures';
 

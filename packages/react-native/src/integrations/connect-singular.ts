@@ -1,4 +1,7 @@
-import { connectTrackingAndAds, settleAll } from './connect-consent-integration';
+import {
+	connectTrackingAndAds,
+	settleAll,
+} from './connect-consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,

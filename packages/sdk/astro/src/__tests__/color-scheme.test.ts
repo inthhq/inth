@@ -13,9 +13,9 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import ConsentScript from '../components/consent-script.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { inth, resolveOptions } from '../integration';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { buildColorSchemeScript, resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { testRule } from './policy-fixture';
 
 let container: AstroContainer;

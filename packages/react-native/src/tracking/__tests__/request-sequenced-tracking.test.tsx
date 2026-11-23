@@ -21,7 +21,10 @@ import {
 	resetNativeStub,
 	setAppState,
 } from '../../__tests__/helpers/react-native-stub';
-import { getConsentClient, resetConsentClient } from '../../native/create-consent-client';
+import {
+	getConsentClient,
+	resetConsentClient,
+} from '../../native/create-consent-client';
 import {
 	presentConsentPrompt,
 	presentPreferences,

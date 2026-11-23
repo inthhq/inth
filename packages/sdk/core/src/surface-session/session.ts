@@ -11,15 +11,25 @@
  * @packageDocumentation
  */
 
+import type {
+	ActiveUI,
+	ConsentKernel,
+	Unsubscribe,
+} from '../consent-kernel.model';
 import type { PreferenceDraft } from '../preference-draft';
 import {
 	onSurfaceNavigation,
 	showConsentSurface,
 } from '../surface-actions/rules';
-import type { ActiveUI, ConsentKernel, Unsubscribe } from '../consent-kernel.model';
 import { resolveSurfaceEscape } from './resolve-surface-escape';
-import type { SurfaceEscapeInput, SurfaceEscapeOutcome } from './resolve-surface-escape';
-import { initialSurfaceSession, reduceSurfaceSession } from './surface-session-state.model';
+import type {
+	SurfaceEscapeInput,
+	SurfaceEscapeOutcome,
+} from './resolve-surface-escape';
+import {
+	initialSurfaceSession,
+	reduceSurfaceSession,
+} from './surface-session-state.model';
 import type {
 	SurfaceRight,
 	SurfaceSessionAction,

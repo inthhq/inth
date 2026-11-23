@@ -8,8 +8,11 @@ import { createConsentKernel } from '../../../kernel';
 import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
 import { readStoredConsentRecord } from '../record-storage.store';
 import { persistenceTools } from '../tools';
+import {
+	buildStoredEnvelope,
+	writeChoiceToStorage,
+} from '../writer/persistence-write.store';
 import { createRecordStore } from '../writer/persistence-writer.store';
-import { buildStoredEnvelope, writeChoiceToStorage } from '../writer/persistence-write.store';
 import { clearStoredConsentRecords } from './record-writes';
 
 const store = createRecordStore(persistenceTools);

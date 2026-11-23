@@ -9,7 +9,10 @@
 import { resolvePolicyResolutionFromManifest } from '@inth/sdk-schema/types';
 import type { ConsentManifest, PolicyResolution } from '@inth/sdk-schema/types';
 
-import { experienceKey, hasLocationMatchers } from './manifest-browser-packs.model';
+import {
+	experienceKey,
+	hasLocationMatchers,
+} from './manifest-browser-packs.model';
 
 /** Stands in for a region no pack lists. Never a real subdivision code. */
 const UNLISTED_REGION = '?';

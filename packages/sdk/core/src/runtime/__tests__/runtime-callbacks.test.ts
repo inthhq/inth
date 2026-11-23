@@ -4,7 +4,10 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { createConsentKernel } from '../../kernel';
 import type { InternalKernel } from '../../kernel/kernel-internals.model';
-import { wireRuntimeCallbacks, stringifyRuntimeError } from '../wire-runtime-callbacks';
+import {
+	wireRuntimeCallbacks,
+	stringifyRuntimeError,
+} from '../wire-runtime-callbacks';
 
 const resolution = resolvePolicyRules({
 	countryCode: null,

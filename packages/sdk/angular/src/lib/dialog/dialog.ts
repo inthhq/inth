@@ -64,16 +64,16 @@ import { uniqueId } from '../core/unique-id';
 import { AdvertisingRow, CategoryGroup } from '../parts/category-group';
 import type { OpenVendorsRequest } from '../parts/category-group';
 import { ChoiceButton } from '../parts/choice-button';
-import { bool, cx, foldSlots, slotPart } from '../parts/part-class-names.model';
 import { CheckIcon, ChevronIcon } from '../parts/icons';
-import { RightsReceipt } from '../parts/rights-receipt';
-import { takeReceiptFocus } from '../parts/request-receipt-focus';
-import { hasSaleRight, SaleRightsRow } from '../parts/sale-rights-row';
-import { SurfaceDraft } from '../parts/surface-draft';
 import {
 	injectPhoneLayout,
 	injectSurfaceSession,
 } from '../parts/inject-surface-session';
+import { bool, cx, foldSlots, slotPart } from '../parts/part-class-names.model';
+import { takeReceiptFocus } from '../parts/request-receipt-focus';
+import { RightsReceipt } from '../parts/rights-receipt';
+import { hasSaleRight, SaleRightsRow } from '../parts/sale-rights-row';
+import { SurfaceDraft } from '../parts/surface-draft';
 import { DialogLayer } from './dialog-layer';
 import { DIALOG_SHEETS } from './dialog-sheets';
 

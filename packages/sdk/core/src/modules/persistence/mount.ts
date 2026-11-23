@@ -1,3 +1,8 @@
+import type {
+	ConsentSnapshot,
+	ConsentSubject,
+	HydrationRecords,
+} from '../../consent-kernel.model';
 /**
  * Persistence's first-load half: hydration, event wiring and lifecycle.
  * `index.ts` is the public entry; see it for the invariants.
@@ -16,11 +21,6 @@ import {
 	resolveStorageKeys,
 } from '../../libs/storage-keys';
 import { generateUuidV7 } from '../../libs/subject-uuid.model';
-import type {
-	ConsentSnapshot,
-	ConsentSubject,
-	HydrationRecords,
-} from '../../consent-kernel.model';
 import { clearStoredRecords } from './persistence-clear.store';
 import {
 	choiceSinceEpoch,
@@ -34,6 +34,10 @@ import {
 	readStoredRecordsFromCookieHeader,
 } from './persistence-hydrate.store';
 import type { StoredRecords } from './persistence-hydrate.store';
+import type {
+	PersistenceHandle,
+	PersistenceOptions,
+} from './persistence.model';
 import {
 	isNewerDenial,
 	readLegacyClearEpoch,
@@ -46,7 +50,6 @@ import {
 	readStoredVendorChoiceFromCookieHeader,
 } from './record-storage.store';
 import { persistenceTools } from './tools';
-import type { PersistenceHandle, PersistenceOptions } from './persistence.model';
 import { pageWriterLoader, preloadWriter } from './writer-loader';
 import type { WriterLoader, WriterModule } from './writer-loader';
 import type {

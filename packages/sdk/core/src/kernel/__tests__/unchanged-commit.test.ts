@@ -17,8 +17,12 @@ import {
 	NOW,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type {
+	ConsentSnapshot,
+	InitResponse,
+	KernelConfig,
+} from '../../consent-kernel.model';
 import { evaluateConsentRecord } from '../../consent-record/evaluate';
-import type { ConsentSnapshot, InitResponse, KernelConfig } from '../../consent-kernel.model';
 import type { InternalKernel } from '../kernel-internals.model';
 import type { SnapshotPatch } from '../kernel-patch.model';
 

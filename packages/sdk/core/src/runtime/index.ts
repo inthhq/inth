@@ -45,15 +45,15 @@ import { createScriptLoader } from '../modules/script-loader';
 import { createWindowDebug } from '../modules/window-debug';
 import { hosted } from '../transports/mode';
 import { assembleConsentRuntime } from './assemble';
-import { connectConsentSource } from './controls';
-import { mountRuntimeIAB } from './mount-runtime-iab';
-import { lazyRuntimeModule } from './lazy-runtime-module';
 import type {
 	ConsentRuntime,
 	ConsentRuntimeModules,
 	ConsentRuntimeOptions,
 	WithProjectUrl,
 } from './consent-runtime.model';
+import { connectConsentSource } from './controls';
+import { lazyRuntimeModule } from './lazy-runtime-module';
+import { mountRuntimeIAB } from './mount-runtime-iab';
 
 export { createConsentProviderRuntime } from './provider-runtime';
 export { streamPrefetch } from './stream-prefetch';

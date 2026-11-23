@@ -3,8 +3,11 @@
  */
 import type { WithProjectUrl } from '@inth/sdk-core/runtime';
 
+import type {
+	ConsentClient,
+	HostedConsentClientOptions,
+} from './consent-client.model';
 import { createHostedConsentClient } from './create-hosted-consent-client';
-import type { ConsentClient, HostedConsentClientOptions } from './consent-client.model';
 import { mountConsentUI } from './ui/mount-consent-ui';
 
 /**
@@ -35,7 +38,10 @@ export const init = function init(
 	return client;
 };
 
-export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './create-consent-client-with';
+export {
+	ACTION_ATTRIBUTE,
+	PREFERENCES_HASH,
+} from './create-consent-client-with';
 export type { PageAction } from './create-consent-client-with';
 export {
 	ACTIVATED_ATTRIBUTE,

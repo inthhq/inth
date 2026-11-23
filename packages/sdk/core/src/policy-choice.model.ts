@@ -5,12 +5,12 @@
  */
 import type { ResolvedPolicyRule } from '@inth/sdk-schema/types';
 
+import type { KernelModel } from './consent-kernel.model';
 import type {
 	ExplicitChoice,
 	OptionalConsentCategory,
 } from './consent-record/types';
 import { policyDefault } from './consent/consent-types';
-import type { KernelModel } from './consent-kernel.model';
 
 /**
  * Runtime model. An IAB rule only runs as `iab` when the IAB module is

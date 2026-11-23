@@ -14,8 +14,8 @@ import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { testing } from '../../testing';
-import { inthHandle } from '../inth-handle';
 import { hosted, manifest } from '../index';
+import { inthHandle } from '../inth-handle';
 import { loadConsent } from '../load-consent';
 import { setBuilding } from './app-env';
 import { CONSENTED_COOKIE, createEvent } from './event';

@@ -23,9 +23,9 @@ import type {
 import { baseTranslations } from '@inth/sdk-translations/all';
 import type { BaseTranslations } from '@inth/sdk-translations/all';
 
+import type { InitContext, KernelOverrides } from '../../consent-kernel.model';
 import { createUnreportedJourneys } from '../../libs/journey.store';
 import type { SessionReportHeaders } from '../../libs/session-report.model';
-import type { InitContext, KernelOverrides } from '../../consent-kernel.model';
 import {
 	fetchCachedAdTechProviders,
 	loadManifestAdTechProviders,
@@ -36,10 +36,10 @@ import { fetchCachedGvl } from '../gvl-cache.model';
 import { mapInitOutputToInitResponse } from '../init-output';
 import type { TransportInitResponse } from '../init-output';
 import { readApiError } from './inth-api-error';
-import { trimTrailingSlash, V1_ROUTES } from './v1-routes';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
 import { resolveProperty, resolveV1Fetch } from './v1-request.api';
+import { trimTrailingSlash, V1_ROUTES } from './v1-routes';
 import {
 	reportV1ConsentSession,
 	sendsV1ConsentSessionReport,

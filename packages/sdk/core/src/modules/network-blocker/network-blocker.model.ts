@@ -7,17 +7,12 @@
  * mirror the v2 surface so adapters can import either way.
  */
 
+import type { ConsentKernel } from '../../consent-kernel.model';
 import type { extractConsentNamesFromCondition } from '../../libs/has';
-import type {
-	BlockedRequestInfo,
-	NetworkBlockerConfig,
-	NetworkBlockerRule,
-} from './network-blocker-config.model';
 import type {
 	declareOwnedVendors,
 	forgetOwnedVendors,
 } from '../../libs/vendors';
-import type { ConsentKernel } from '../../consent-kernel.model';
 import type { evaluateConsent } from '../has';
 import type {
 	blockedResponse,
@@ -28,6 +23,11 @@ import type {
 	stashXhr,
 	XHR_REQUEST,
 } from './hold';
+import type {
+	BlockedRequestInfo,
+	NetworkBlockerConfig,
+	NetworkBlockerRule,
+} from './network-blocker-config.model';
 
 export type { BlockedRequestInfo, NetworkBlockerConfig, NetworkBlockerRule };
 

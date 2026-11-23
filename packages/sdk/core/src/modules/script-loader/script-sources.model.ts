@@ -1,5 +1,11 @@
-import type { Script, ScriptSource } from '../../libs/script-loader/script.model';
-import type { RegistryEntryVerdict, RegistrySignature } from './script-signature.model';
+import type {
+	Script,
+	ScriptSource,
+} from '../../libs/script-loader/script.model';
+import type {
+	RegistryEntryVerdict,
+	RegistrySignature,
+} from './script-signature.model';
 
 /** Script sources by script `id`, as `scriptLoader.sources` takes them. */
 export type ScriptSources = Readonly<Record<string, ScriptSource>>;

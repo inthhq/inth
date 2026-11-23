@@ -54,11 +54,13 @@ import type {
 	SessionJourney,
 } from '@inth/sdk-schema/types';
 
+import type { KernelConfig } from '../consent-kernel.model';
 import type { StorageConfig } from '../libs/cookie/cookie.model';
 import { experimentArmRef } from '../libs/experiment';
 import type { ExperimentState, ServerExperiment } from '../libs/experiment';
 import { readHeader, toHeaders } from '../libs/http-headers.model';
 import { isCleartextRemoteURL } from '../libs/identity-headers.model';
+import { inthProtocolHeaders } from '../libs/inth-protocol-headers';
 import { createJourneyId } from '../libs/journey.store';
 import type { ConsentJourneyOption, JourneyState } from '../libs/journey.store';
 import {
@@ -71,13 +73,15 @@ import type {
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
-import { warnManifestFallback } from '../libs/warn-manifest-fallback';
 import { resolveSessionReportProjectUrl } from '../libs/session-report.model';
 import { trimSlash } from '../libs/trim-slash';
-import { inthProtocolHeaders } from '../libs/inth-protocol-headers';
+import { warnManifestFallback } from '../libs/warn-manifest-fallback';
 import { readStoredRecordsFromCookieHeader } from '../modules/persistence/persistence-hydrate.store';
 import { fetchCachedAdTechProviders } from '../transports/ad-tech-provider-cache.model';
-import { deferInitGvl, deferInitGvlToRoute } from '../transports/gvl-reference.model';
+import {
+	deferInitGvl,
+	deferInitGvlToRoute,
+} from '../transports/gvl-reference.model';
 import {
 	mapInitOutputToInitResponse,
 	mergeInitResponseIntoKernelConfig,
@@ -86,7 +90,6 @@ import { createOfflineTransport } from '../transports/offline';
 import type { OfflineTransportOptions } from '../transports/offline';
 import { readApiError } from '../transports/v1/inth-api-error';
 import { V1_ROUTES } from '../transports/v1/v1-routes';
-import type { KernelConfig } from '../consent-kernel.model';
 import {
 	CONSENT_PROXY_FORWARDING_HEADERS,
 	filterCookieHeader,
@@ -97,7 +100,6 @@ import {
 	resolveConsentInit,
 } from './consent-route.api';
 import type { ConsentRouteFetchGvl } from './consent-route.api';
-import { fetchServerGvl } from './server-gvl-cache.api';
 import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
@@ -110,6 +112,7 @@ import {
 	toPathFetch,
 	writeConsentInputHeaders,
 } from './server-adapter.model';
+import { fetchServerGvl } from './server-gvl-cache.api';
 
 /**
  * Marks a hosted request a render sends to its own origin. If a page answers

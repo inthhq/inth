@@ -16,7 +16,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { flushPromises, renderTree } from '../../__tests__/helpers/fake-native';
 import { ConsentBanner } from '../../components';
 import type { ConsentClient } from '../../native/create-consent-client';
-import { getConsentClient, resetConsentClient } from '../../native/create-consent-client.web';
+import {
+	getConsentClient,
+	resetConsentClient,
+} from '../../native/create-consent-client.web';
 import {
 	claimPrompt,
 	UNCLAIMED_PROMPT_MS,

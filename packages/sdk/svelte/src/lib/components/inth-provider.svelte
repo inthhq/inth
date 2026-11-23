@@ -2,8 +2,9 @@
 	import type { ConsentProviderRuntime } from '@inth/sdk/runtime/provider';
 	import { untrack } from 'svelte';
 
-	import { modulePreloadMarker } from '../module-preload-marker';
+	import type { ConsentManagerOptions } from '../consent-manager-options.model';
 	import { createOwnedRuntime } from '../create-owned-runtime';
+	import { modulePreloadMarker } from '../module-preload-marker';
 	import {
 		resolveProviderOptions,
 		runtimeOptionsFor,
@@ -13,7 +14,6 @@
 		ProviderRuntimeProps,
 	} from '../resolve-provider-options';
 	import { selectedMode } from '../selected-mode';
-	import type { ConsentManagerOptions } from '../consent-manager-options.model';
 	import ProviderView from './provider-view.svelte';
 
 	type InthProviderProps =

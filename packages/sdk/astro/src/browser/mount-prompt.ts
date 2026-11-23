@@ -54,6 +54,8 @@ import { containerSheetsPresent, insertSheets } from '../parts/insert-sheets';
 import type { StyleSheet } from '../parts/insert-sheets';
 import { patchElement } from '../parts/vnode';
 import type { VElement } from '../parts/vnode';
+import type * as PanelModule from '../prompt/create-prompt-panel';
+import type { PromptPanel } from '../prompt/create-prompt-panel';
 import type { PromptClassNames } from '../prompt/prompt-class-names';
 import { resolvePromptModel } from '../prompt/prompt.model';
 import type {
@@ -62,8 +64,6 @@ import type {
 	PromptOptions,
 	PromptProps,
 } from '../prompt/prompt.model';
-import type * as PanelModule from '../prompt/create-prompt-panel';
-import type { PromptPanel } from '../prompt/create-prompt-panel';
 import {
 	PROMPT_ID_PREFIX,
 	promptIds,
@@ -148,7 +148,8 @@ export const loadContainerSheets = async function loadContainerSheets(
  *
  * @internal
  */
-let loadPanel = (): Promise<typeof PanelModule> => import('../prompt/create-prompt-panel');
+let loadPanel = (): Promise<typeof PanelModule> =>
+	import('../prompt/create-prompt-panel');
 
 /**
  * Tests only.

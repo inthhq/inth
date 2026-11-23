@@ -11,6 +11,14 @@
  * @internal
  */
 
+import type {
+	ConsentSnapshot,
+	ExplicitChoice,
+	NoticeDismissal,
+	SaveInput,
+	SavePayload,
+	SaveUISource,
+} from '../consent-kernel.model';
 import { decisionAnswersPrompt } from '../consent-record/decision-authority';
 import type {
 	ConsentSubject,
@@ -22,14 +30,6 @@ import type { ExperimentAssignment } from '../libs/experiment';
 import { createIdempotencyKey } from '../libs/subject-uuid.model';
 import { presentedSelection, scopeSelection } from '../policy-choice.model';
 import type { PresentedSelection } from '../policy-choice.model';
-import type {
-	ConsentSnapshot,
-	ExplicitChoice,
-	NoticeDismissal,
-	SaveInput,
-	SavePayload,
-	SaveUISource,
-} from '../consent-kernel.model';
 import type { SnapshotPatch } from './next-snapshot.model';
 
 /**

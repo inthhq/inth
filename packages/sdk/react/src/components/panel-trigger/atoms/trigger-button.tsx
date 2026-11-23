@@ -5,15 +5,18 @@ import styles from '@inth/sdk/ui/styles/components/consent-dialog-trigger';
 import { forwardRef as createForwardRef } from 'react';
 import type { FocusEvent, MouseEvent, PointerEvent, ReactNode } from 'react';
 
-import { useIdleDialogWarming, warmDialogChunk } from '~/warm-dialog-chunk';
 import { useTranslations } from '~/component-hooks/use-translations';
 import { useTriggerLabels } from '~/component-hooks/use-trigger-labels';
 import { usePolicyRule, useResolvedPresentation } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
+import { useIdleDialogWarming, warmDialogChunk } from '~/warm-dialog-chunk';
 
-import type { CornerPosition, TriggerSize } from '../consent-dialog-trigger.model';
+import type {
+	CornerPosition,
+	TriggerSize,
+} from '../consent-dialog-trigger.model';
 import { useTriggerContext } from './trigger-root';
 
 const cornerClassMap = {

@@ -20,7 +20,11 @@ import type * as DialogModuleNamespace from '../aggregate-components';
 import type { ConsentDialogProps } from '../components/dialog/consent-dialog.model';
 import type * as BannerModuleNamespace from '../components/prompt/index';
 import type { ConsentBannerProps } from '../components/prompt/index';
-import { DeferredSessionContext, read, recordOnce } from './deferred-session-context';
+import {
+	DeferredSessionContext,
+	read,
+	recordOnce,
+} from './deferred-session-context';
 
 // oxlint-disable-next-line typescript/no-explicit-any -- Props pass through unchanged.
 type AnyComponent = ComponentType<any>;

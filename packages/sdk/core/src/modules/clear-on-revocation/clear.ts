@@ -4,12 +4,12 @@
  * chunk. `index.ts` is the public entry.
  */
 import type { OptionalConsentCategory } from '../../consent-record/types';
-import { clearTargets } from './clear-targets';
 import type {
 	ClearOnRevocationHandle,
 	ClearOnRevocationOptions,
 	ClearOnRevocationTools,
 } from './clear-on-revocation.model';
+import { clearTargets } from './clear-targets';
 
 /**
  * Remove configured browser data for denied optional consent categories.

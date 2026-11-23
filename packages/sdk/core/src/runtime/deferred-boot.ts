@@ -13,16 +13,16 @@
  * @internal
  */
 
-import { hasGlobalPrivacyControlSignal } from '../libs/read-global-privacy-control';
+import type { KernelOverrides } from '../consent-kernel.model';
 import { hasStoredConsentRecord } from '../libs/journey.store';
 import { PREFETCH_WINDOW_KEY } from '../libs/page-globals';
 import { primeInitRequest } from '../libs/prefetch/prefetch';
 import type { PrefetchOptions } from '../libs/prefetch/prefetch.model';
+import { hasGlobalPrivacyControlSignal } from '../libs/read-global-privacy-control';
 import { DEFAULT_INIT_CREDENTIALS } from '../libs/request-context-headers.model';
 import type { SSRInitialData } from '../options/ssr-options.model';
 import { readHostedMode } from '../transports/hosted-modes.model';
 import type { ProviderTransportFactory } from '../transports/mode';
-import type { KernelOverrides } from '../consent-kernel.model';
 
 export { hasGlobalPrivacyControlSignal } from '../libs/read-global-privacy-control';
 export { primeInitRequest } from '../libs/prefetch/prefetch';

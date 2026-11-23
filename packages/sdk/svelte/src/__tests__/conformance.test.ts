@@ -43,9 +43,9 @@ import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { mount, unmount } from 'svelte';
 import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 
+import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import { whenIABReady } from '../lib/lazy-create-iab';
 import { testing } from '../lib/testing';
-import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 import { createPolicySession, probePolicyContract } from './policy-driver';

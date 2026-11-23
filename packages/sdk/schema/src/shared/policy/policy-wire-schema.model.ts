@@ -9,7 +9,6 @@
 import * as v from 'valibot';
 
 import { POLICY_CONTRACT_VERSION } from '../policy-resolution-wire';
-import type { ResolvedPolicyRule } from './policy-rule.model';
 import {
 	collectResolvedPolicyRuleIssues,
 	isPlainPolicyObject,
@@ -19,6 +18,7 @@ import {
 	POLICY_RIGHTS,
 	POLICY_RULE_MODELS,
 } from './policy-rule-invariants';
+import type { ResolvedPolicyRule } from './policy-rule.model';
 import {
 	CONSENT_BANNER_EDGES,
 	CONSENT_BLOCKING_CONSTRAINTS,

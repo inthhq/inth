@@ -46,12 +46,18 @@
 	import type { Snippet } from 'svelte';
 	import { onDestroy, onMount, untrack } from 'svelte';
 
-	import { setConsentContext, setThemeContext } from '../get-consent-context.svelte';
-	import type { ConsentDraftState, SvelteIABState } from '../get-consent-context.svelte';
+	import {
+		setConsentContext,
+		setThemeContext,
+	} from '../get-consent-context.svelte';
+	import type {
+		ConsentDraftState,
+		SvelteIABState,
+	} from '../get-consent-context.svelte';
 	import { isIABConfigured } from '../lazy-create-iab';
+	import { startOnServer } from '../register-server-script-start';
 	import { runtimeOptionsFor } from '../resolve-provider-options';
 	import type { ProviderOptionsInput } from '../resolve-provider-options';
-	import { startOnServer } from '../register-server-script-start';
 
 	interface ProviderViewProps {
 		children?: Snippet;

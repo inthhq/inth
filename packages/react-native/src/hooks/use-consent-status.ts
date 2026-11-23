@@ -2,7 +2,10 @@
  * Read the lifecycle flags a consent shell gates on.
  */
 
-import { isConsentStatusEqual, selectConsentStatus } from '../lib/consent-selectors.model';
+import {
+	isConsentStatusEqual,
+	selectConsentStatus,
+} from '../lib/consent-selectors.model';
 import type { ConsentStatus } from '../lib/consent-selectors.model';
 import { useConsentSelector } from './use-consent-selector';
 

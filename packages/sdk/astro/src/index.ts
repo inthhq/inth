@@ -49,7 +49,10 @@ export type {
 	ConsentDialogKind,
 	ConsentDialogSurfaceLoader,
 } from './ui/register-dialog-adapter';
-export { registerDialogAdapter, registerDialogSurface } from './ui/register-dialog-adapter';
+export {
+	registerDialogAdapter,
+	registerDialogSurface,
+} from './ui/register-dialog-adapter';
 export type { ConsentRuntime, ConsentRuntimeOptions } from '@inth/sdk/runtime';
 
 // Re-exported so an app can stay inside `@inth/astro` for the common types.

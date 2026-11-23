@@ -1,12 +1,12 @@
+import type {
+	NetworkBlockerHandle,
+	NetworkBlockerOptions,
+} from '../modules/network-blocker/network-blocker.model';
 /**
  * The network blocker as an on-demand runtime module. Its own file for the
  * reason `on-demand-script-loader.ts` gives.
  */
 import { networkBlockerTools } from '../modules/network-blocker/tools';
-import type {
-	NetworkBlockerHandle,
-	NetworkBlockerOptions,
-} from '../modules/network-blocker/network-blocker.model';
 import { lazyRuntimeModule } from './lazy-runtime-module';
 
 /**

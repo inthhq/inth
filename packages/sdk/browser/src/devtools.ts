@@ -23,9 +23,9 @@
 import type { DevToolsInstance } from '@inth/sdk-dev-tools';
 import { publishDevToolsLauncher } from '@inth/sdk-ui/utils/devtools-launcher';
 
+import type { ConsentClient } from './consent-client.model';
 import { createBrowserDevTools } from './create-browser-dev-tools';
 import type { BrowserDevToolsOptions } from './create-browser-dev-tools';
-import type { ConsentClient } from './consent-client.model';
 
 export type { BrowserDevToolsOptions } from './create-browser-dev-tools';
 

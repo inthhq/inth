@@ -2,10 +2,13 @@ import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve-manifest';
 import { vendorManifestContract } from '../../vendor-manifest.model';
-import type { SetGlobalPathStep, VendorManifest } from '../../vendor-manifest.model';
+import type {
+	SetGlobalPathStep,
+	VendorManifest,
+} from '../../vendor-manifest.model';
+import { createScriptReuse } from '../_shared/create-script-reuse';
 import { booleanDataAttribute } from '../_shared/data-attribute.model';
 import { readId, skipMissingId } from '../_shared/required-id.model';
-import { createScriptReuse } from '../_shared/create-script-reuse';
 import { trimToUndefined } from '../_shared/script-url.model';
 
 declare global {

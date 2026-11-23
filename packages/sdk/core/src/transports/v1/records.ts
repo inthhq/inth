@@ -9,7 +9,6 @@
 import { appendJourneyParams, V1_UUID_PATTERN } from '@inth/sdk-schema/types';
 import type { OptOutRecord, V1ConsentRecordLink } from '@inth/sdk-schema/types';
 
-import { validateOptOutRecord } from '../../consent-record/consent-record-validation.model';
 import type {
 	KernelTransport,
 	KernelUser,
@@ -20,14 +19,18 @@ import type {
 	SavePayload,
 	SaveResult,
 } from '../../consent-kernel.model';
+import { validateOptOutRecord } from '../../consent-record/consent-record-validation.model';
 import { buildDecisionAssertion } from '../decision-inputs.model';
 import type { RememberedDecisionInputs } from '../decision-inputs.model';
 import { readApiError } from './inth-api-error';
 import {
+	readOptOutFailure,
+	readSaveFailure,
+} from './inth-api-save-rejected-error';
+import {
 	buildV1ConsentOptOutBody,
 	buildV1ConsentOptOutLiftBody,
 } from './v1-opt-outs-body.model';
-import { trimTrailingSlash, V1_ROUTES } from './v1-routes';
 import { buildV1ConsentRecordBody } from './v1-records-body.model';
 import {
 	isUuidV7,
@@ -37,7 +40,7 @@ import {
 	subjectLinkPath,
 	V1_JSON_HEADERS,
 } from './v1-request.api';
-import { readOptOutFailure, readSaveFailure } from './inth-api-save-rejected-error';
+import { trimTrailingSlash, V1_ROUTES } from './v1-routes';
 
 /** Options for {@link createV1RecordTransport}. */
 export interface V1RecordTransportOptions {

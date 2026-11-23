@@ -6,16 +6,6 @@
 
 import { parseJourneyId } from '@inth/sdk-schema/types';
 
-import {
-	openJourney,
-	readEarlyJourney,
-	sessionStorageOf,
-} from '../libs/journey.store';
-import type { ConsentJourneyOption, JourneyStorage } from '../libs/journey.store';
-import {
-	C15T_JOURNEY_STORAGE_KEY,
-	JOURNEY_STORAGE_KEY,
-} from '../libs/storage-keys';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
@@ -23,6 +13,19 @@ import type {
 	KernelTransport,
 	SavePayload,
 } from '../consent-kernel.model';
+import {
+	openJourney,
+	readEarlyJourney,
+	sessionStorageOf,
+} from '../libs/journey.store';
+import type {
+	ConsentJourneyOption,
+	JourneyStorage,
+} from '../libs/journey.store';
+import {
+	C15T_JOURNEY_STORAGE_KEY,
+	JOURNEY_STORAGE_KEY,
+} from '../libs/storage-keys';
 
 export type { JourneyStorage } from '../libs/journey.store';
 

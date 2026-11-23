@@ -1,12 +1,12 @@
+import type {
+	ClearOnRevocationHandle,
+	ClearOnRevocationOptions,
+} from '../modules/clear-on-revocation/clear-on-revocation.model';
 /**
  * Data clearing as an on-demand runtime module. Its own file for the
  * reason `on-demand-script-loader.ts` gives.
  */
 import { clearOnRevocationTools } from '../modules/clear-on-revocation/tools';
-import type {
-	ClearOnRevocationHandle,
-	ClearOnRevocationOptions,
-} from '../modules/clear-on-revocation/clear-on-revocation.model';
 import { lazyRuntimeModule } from './lazy-runtime-module';
 
 /**

@@ -43,10 +43,10 @@ import type {
 
 import { engineNow } from '#engine-now';
 
-import { NEXT_CHUNKS } from './next-chunks';
-import type * as RootEngine from './root-engine';
 import { mergeOptions } from './inth-provider-options.model';
 import type { InthProviderProps } from './inth-provider-options.model';
+import { NEXT_CHUNKS } from './next-chunks';
+import type * as RootEngine from './root-engine';
 
 export type { InthProviderProps } from './inth-provider-options.model';
 

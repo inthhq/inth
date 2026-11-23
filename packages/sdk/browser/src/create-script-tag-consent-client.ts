@@ -6,17 +6,20 @@
  */
 import { manifest } from '@inth/sdk-core/transports/manifest-browser';
 
-import {
-	createConsentClientWith,
-	factoryMode,
-	hostedMode,
-} from './create-consent-client-with';
-import type { CreateConsentClientContext, ResolvedMode } from './create-consent-client-with';
 import type {
 	ConsentClient,
 	ConsentModeName,
 	ScriptTagClientOptions,
 } from './consent-client.model';
+import {
+	createConsentClientWith,
+	factoryMode,
+	hostedMode,
+} from './create-consent-client-with';
+import type {
+	CreateConsentClientContext,
+	ResolvedMode,
+} from './create-consent-client-with';
 
 const defaultModeName = function defaultModeName(
 	options: ScriptTagClientOptions

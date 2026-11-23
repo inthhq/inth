@@ -20,6 +20,7 @@ import {
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
+import type { KernelTransport } from '../../consent-kernel.model';
 import { buildPrefetchScript } from '../../libs/prefetch/prefetch';
 import {
 	C15T_JOURNEY_STORAGE_KEY,
@@ -29,16 +30,18 @@ import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/r
 import { hosted } from '../../transports/mode';
 import type { ProviderTransportFactory } from '../../transports/mode';
 import { recordAnswer } from '../../transports/v1/__tests__/fixtures';
-import type { KernelTransport } from '../../consent-kernel.model';
+import type {
+	ConsentRuntime,
+	ConsentRuntimeOptions,
+} from '../consent-runtime.model';
+import { createJourneyController } from '../create-journey-controller';
+import type { JourneyStorage } from '../create-journey-controller';
 import {
 	createConsentProviderRuntime,
 	createConsentRuntime,
 	defaultRuntimeModules,
 	streamPrefetch,
 } from '../index';
-import { createJourneyController } from '../create-journey-controller';
-import type { JourneyStorage } from '../create-journey-controller';
-import type { ConsentRuntime, ConsentRuntimeOptions } from '../consent-runtime.model';
 
 /**
  * Options a test passes over the defaults. Its mode is a transport factory,

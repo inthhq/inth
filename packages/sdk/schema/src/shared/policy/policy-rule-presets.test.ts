@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
 
 import { resolvePolicyRules } from './policy-resolution.model';
-import { inspectPolicyRules, normalizePolicyRule } from './policy-rule.model';
 import { createPolicyRuleFingerprints } from './policy-rule-fingerprint.model';
 import {
 	policyRulePresets,
 	recommendedPolicyRules,
 } from './policy-rule-presets';
+import { inspectPolicyRules, normalizePolicyRule } from './policy-rule.model';
 
 const presetNames = Object.keys(
 	policyRulePresets

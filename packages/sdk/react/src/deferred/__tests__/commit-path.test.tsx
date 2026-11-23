@@ -40,9 +40,9 @@ import { readConsentBoot } from '../boot';
 import type { ConsentBoot } from '../boot';
 import { ConsentBootData, ServerBootData } from '../consent-boot-data';
 import type { DeferredCommitConfig } from '../deferred-committed.model';
-import type * as EngineNamespace from '../engine';
-import { recordOnce } from '../deferred-session-context';
 import { DeferredConsentShell } from '../deferred-consent-shell';
+import { recordOnce } from '../deferred-session-context';
+import type * as EngineNamespace from '../engine';
 import { DeferredConsentBanner, DeferredConsentDialog } from '../surfaces';
 
 type EngineModule = typeof EngineNamespace;

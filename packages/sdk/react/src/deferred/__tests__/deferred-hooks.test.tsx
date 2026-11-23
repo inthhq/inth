@@ -12,11 +12,11 @@ import { render } from 'vitest-browser-react';
 
 import { policyFixture } from '../../__tests__/policy-fixture';
 import { KernelContext, ProviderServicesContext } from '../../context';
-import { useEventDispatcher } from '../../use-event-dispatcher';
 import { markIABProviderLoaded } from '../../hooks/use-iab-policy-guard';
 import { usePersistence } from '../../module-hooks/persistence';
 import { useScriptLoader } from '../../module-hooks/script-loader';
 import { testing } from '../../testing';
+import { useEventDispatcher } from '../../use-event-dispatcher';
 import { iabProviderLoaded, whenIABProviderLoads } from '../boot';
 import { createDeferredKernel } from '../create-deferred-kernel';
 import type { DeferredKernelHandle } from '../create-deferred-kernel';

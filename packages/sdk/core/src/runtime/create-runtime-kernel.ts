@@ -9,6 +9,14 @@
 import { deepMergeTranslations } from '@inth/sdk-translations';
 import type { I18nConfig } from '@inth/sdk-translations';
 
+import type {
+	KernelConfig,
+	KernelTranslations,
+	KernelTransport,
+	KernelUser,
+	ResolvedVendor,
+	TranslationsResponse,
+} from '../consent-kernel.model';
 import type { AllConsentNames } from '../consent/consent-types';
 import { createKernel } from '../kernel';
 import type { InternalKernel } from '../kernel/kernel-internals.model';
@@ -26,16 +34,8 @@ import type {
 	ProviderTransportContext,
 	ProviderTransportFactory,
 } from '../transports/mode';
-import type {
-	KernelConfig,
-	KernelTranslations,
-	KernelTransport,
-	KernelUser,
-	ResolvedVendor,
-	TranslationsResponse,
-} from '../consent-kernel.model';
-import { isIABConfigured } from './is-iab-configured';
 import type { ConsentRuntimeOptions } from './consent-runtime.model';
+import { isIABConfigured } from './is-iab-configured';
 
 const DEFAULT_TRANSLATIONS: KernelTranslations = {
 	language: 'en',

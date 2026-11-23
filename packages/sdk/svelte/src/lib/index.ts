@@ -116,7 +116,10 @@ export { manifest } from './transports/manifest';
 export { hosted, type HostedMode } from '@inth/sdk/modes';
 export type { BrowserManifestModeFactory } from '@inth/sdk/transports/manifest-browser';
 
-export type { ConsentManagerState, ConsentDraftState } from './get-consent-context.svelte';
+export type {
+	ConsentManagerState,
+	ConsentDraftState,
+} from './get-consent-context.svelte';
 export {
 	resolveActionLabels,
 	resolveConsentPresentation,

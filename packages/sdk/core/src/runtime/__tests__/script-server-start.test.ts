@@ -27,12 +27,15 @@ import {
 } from '../../modules/persistence/writer/record-encode.model';
 import { signRelease } from '../../modules/script-loader/__tests__/signing-fixtures';
 import { releaseServerStartedScripts } from '../../surface-actions/plain-scripts';
+import type {
+	ConsentRuntimeOptions,
+	RuntimePrefetch,
+} from '../consent-runtime.model';
 import {
 	serverScriptStart,
 	serverScriptStartPlan,
 	storedChoiceCheckScript,
 } from '../script-server-start';
-import type { ConsentRuntimeOptions, RuntimePrefetch } from '../consent-runtime.model';
 
 type StartedWindow = Window & {
 	__inthRender?: {

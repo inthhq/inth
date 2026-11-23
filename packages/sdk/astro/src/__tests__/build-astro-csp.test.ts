@@ -18,15 +18,15 @@ import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import { buildAstroCsp, buildInlineCodeHashes } from '../build-astro-csp';
 import ConsentScript from '../components/consent-script.astro';
 import IABConsentBanner from '../components/iab-prompt.astro';
 import ConsentBanner from '../components/prompt.astro';
-import { buildAstroCsp, buildInlineCodeHashes } from '../build-astro-csp';
 import { INLINE_IAB_STYLES_CSS } from '../inline-styles.model';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { testRule } from './policy-fixture';
 
 const NONCE = 'r4nd0m-n0nce';

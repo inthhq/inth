@@ -25,9 +25,9 @@ import type { AllThemeKeys } from '@inth/sdk/ui/theme';
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
 import { resolveNoStyle } from '../core/no-style-scope';
-import { bool, cx, slotPart } from './part-class-names.model';
 import { CheckIcon, ChevronIcon, CopyIcon } from './icons';
 import { injectSurfaceSession, rightsBundleOf } from './inject-surface-session';
+import { bool, cx, slotPart } from './part-class-names.model';
 
 /** How long the copy button shows its check. */
 const COPIED_MS = 1500;

@@ -11,12 +11,12 @@ import {
 import { boot, registerIAB } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions } from '../inth-options.model';
 import { promptClassNames } from '../prompt/prompt-class-names';
 import { resolvePromptModel } from '../prompt/prompt.model';
 import { renderPromptHTML } from '../prompt/render-prompt-html';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions } from '../inth-options.model';
 import { createTestPageIAB } from './page-iab';
 import { testResolution, testRule } from './policy-fixture';
 // The client imports the prompt, the IAB renderer, and @inth/sdk/iab for an IAB policy,

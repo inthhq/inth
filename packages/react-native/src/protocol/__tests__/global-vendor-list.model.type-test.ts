@@ -25,8 +25,8 @@ import type {
 } from '@inth/sdk/engine';
 import { expectTypeOf } from 'vitest';
 
-import type { GlobalVendorList, GVLVendor, NativeIABState } from '../index';
 import type { ConsentSnapshot } from '../consent-snapshot.model';
+import type { GlobalVendorList, GVLVendor, NativeIABState } from '../index';
 
 /**
  * The kernel's view of one vendor entry.

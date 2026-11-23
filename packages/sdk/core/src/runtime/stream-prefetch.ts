@@ -1,13 +1,16 @@
+import type { ConsentKernel } from '../consent-kernel.model';
 /**
  * `streamPrefetch`: a streamed `prefetch` with its resolver imported
  * statically. See `streamed-init.ts` for what the first `init()` does with
  * the resolved config, and `create-streamed-mode.ts` for the on-demand variant.
  */
 import type { ProviderTransportFactory } from '../transports/mode';
-import type { ConsentKernel } from '../consent-kernel.model';
+import type {
+	ConsentProviderRuntimeOptions,
+	RuntimePrefetch,
+} from './consent-runtime.model';
 import { createStreamedMode } from './create-streamed-mode';
 import { resolveStreamedInit } from './streamed-init';
-import type { ConsentProviderRuntimeOptions, RuntimePrefetch } from './consent-runtime.model';
 
 /**
  * Wrap a `mode` factory so its transport's first `init()` is answered by a

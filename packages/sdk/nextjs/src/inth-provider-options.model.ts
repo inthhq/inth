@@ -7,7 +7,10 @@
 import type { ReactNode } from 'react';
 
 import type { ConsentConfig } from './config';
-import type { ConsentClientOptions, ConsentState } from './consent-client-options.model';
+import type {
+	ConsentClientOptions,
+	ConsentState,
+} from './consent-client-options.model';
 
 export interface InthProviderProps extends ConsentClientOptions {
 	/**

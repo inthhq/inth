@@ -31,8 +31,14 @@ export type {
 	GVLVendorOverflow,
 	GVLVendorUrl,
 } from './global-vendor-list.model';
-export type { NativeInitializedEvent, NativeSnapshotEvent } from './native-events.model';
-export type { NativeOverrides, NativeOverridesInput } from './native-overrides.model';
+export type {
+	NativeInitializedEvent,
+	NativeSnapshotEvent,
+} from './native-events.model';
+export type {
+	NativeOverrides,
+	NativeOverridesInput,
+} from './native-overrides.model';
 export { defaultNativeOverrides } from './native-overrides.model';
 export type {
 	TrackingAuthorization,

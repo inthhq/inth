@@ -46,9 +46,9 @@ import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
 import { resolveNoStyle } from '../core/no-style-scope';
 import { ChoiceButton } from './choice-button';
-import { bool, cx, slotPart } from './part-class-names.model';
 import { CheckIcon } from './icons';
 import { injectSurfaceSession, rightsBundleOf } from './inject-surface-session';
+import { bool, cx, slotPart } from './part-class-names.model';
 
 /** Surfaces that render the rights row, by their test-id prefix. */
 export type RightsRowSurface = 'consent-banner' | 'consent-dialog';

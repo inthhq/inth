@@ -7,11 +7,11 @@ import {
 	noticeRule,
 	NOW,
 } from '../../../__tests__/fixtures/kernel-fixtures';
+import type { HydrationRecords } from '../../../consent-kernel.model';
 import { createConsentKernel } from '../../../kernel';
 import { readRequestConsent } from '../../../server/request-consent.api';
-import type { HydrationRecords } from '../../../consent-kernel.model';
-import { readStoredRecords } from '../persistence-hydrate.store';
 import { createPersistence } from '../index';
+import { readStoredRecords } from '../persistence-hydrate.store';
 import { readStoredConsentRecord } from '../record-storage.store';
 import {
 	clearStoredConsentRecords,

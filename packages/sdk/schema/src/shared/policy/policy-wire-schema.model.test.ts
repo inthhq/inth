@@ -7,9 +7,9 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from './policy-resolution.model';
+import { createPolicyRuleFingerprints } from './policy-rule-fingerprint.model';
 import { normalizePolicyRule } from './policy-rule.model';
 import type { PolicyRule } from './policy-rule.model';
-import { createPolicyRuleFingerprints } from './policy-rule-fingerprint.model';
 import {
 	policyResolutionWireSchema,
 	resolvedPolicyRuleSchema,

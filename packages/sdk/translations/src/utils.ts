@@ -1,10 +1,10 @@
-import { translations as enTranslations } from './translations/en';
 import type {
 	I18nConfig,
 	TranslationConfig,
 	TranslationInputConfig,
 	Translations,
 } from './translations.model';
+import { translations as enTranslations } from './translations/en';
 
 type TranslationSection =
 	| 'common'

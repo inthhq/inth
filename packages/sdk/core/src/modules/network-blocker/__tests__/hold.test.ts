@@ -8,11 +8,17 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
+import type {
+	InitResponse,
+	KernelTransport,
+} from '../../../consent-kernel.model';
 import { createConsentKernel } from '../../../kernel';
-import type { InitResponse, KernelTransport } from '../../../consent-kernel.model';
 import { holdNetworkRequests, releaseNetworkRequests } from '../hold';
 import { createNetworkBlocker } from '../index';
-import type { NetworkBlockerHandle, NetworkBlockerRule } from '../network-blocker.model';
+import type {
+	NetworkBlockerHandle,
+	NetworkBlockerRule,
+} from '../network-blocker.model';
 
 const rules: NetworkBlockerRule[] = [
 	{ category: 'measurement', domain: 'tracker.example' },

@@ -7,9 +7,9 @@ import type {
 } from '@inth/sdk/engine';
 import { createContext, useContext } from 'react';
 
-import type { DialogPreload } from '~/warm-dialog-chunk';
 import type { ReactComponentSlots } from '~/types/react-slots.model';
 import type { Theme } from '~/types/theme';
+import type { DialogPreload } from '~/warm-dialog-chunk';
 
 export interface V3UIConfigValue {
 	components?: ReactComponentSlots;

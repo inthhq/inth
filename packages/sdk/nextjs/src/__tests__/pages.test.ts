@@ -10,7 +10,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { defineConsentConfig } from '../config';
 import { toWebHeaders, toWebRequest } from '../node-bridge.model';
-import type { NodeApiRequestLike, NodeApiResponseLike } from '../node-bridge.model';
+import type {
+	NodeApiRequestLike,
+	NodeApiResponseLike,
+} from '../node-bridge.model';
 import {
 	createPagesConsentRoute,
 	resolveConsent,

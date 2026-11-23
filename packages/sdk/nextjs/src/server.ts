@@ -17,9 +17,9 @@ import { resolveRequestConsent } from '@inth/sdk/server';
 import * as React from 'react';
 
 import { createManifestFetchInit } from './api';
+import type { ConsentState } from './consent-client-options.model';
 import type { ConsentSourceOptions } from './resolve-consent-source';
 import { resolveConsentSource } from './resolve-consent-source';
-import type { ConsentState } from './consent-client-options.model';
 
 type Awaitable<Value> = Promise<Value> | Value;
 

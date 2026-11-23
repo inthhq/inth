@@ -11,8 +11,8 @@ import {
 } from '@inth/sdk-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { createTestingConsentClient } from '../testing-global';
 import type { ConsentClient, ConsentUIOptions } from '../consent-client.model';
+import { createTestingConsentClient } from '../testing-global';
 import { mountConsentUI } from '../ui/mount-consent-ui';
 
 const clients: ConsentClient[] = [];

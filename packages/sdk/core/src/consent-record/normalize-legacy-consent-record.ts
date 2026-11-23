@@ -13,13 +13,6 @@
  * @internal
  */
 
-import { OPTIONAL_CONSENT_CATEGORIES } from './types';
-import type {
-	CategoryDecision,
-	ChoiceBasis,
-	ConsentSubject,
-	ExplicitChoice,
-} from './types';
 import {
 	checkTimestamp,
 	isNonEmptyString,
@@ -29,6 +22,13 @@ import {
 	ownValue,
 } from './consent-record-validation.model';
 import type { RecordIssue } from './consent-record-validation.model';
+import { OPTIONAL_CONSENT_CATEGORIES } from './types';
+import type {
+	CategoryDecision,
+	ChoiceBasis,
+	ConsentSubject,
+	ExplicitChoice,
+} from './types';
 
 /** How the raw record was encoded before parsing. */
 export type LegacyRecordEncoding = 'json' | 'compact';

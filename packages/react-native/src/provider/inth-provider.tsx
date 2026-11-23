@@ -28,18 +28,6 @@ import {
 	sessionPrivacyPolicyUrl,
 } from '../native/presenter';
 import {
-	assertPrivacyPolicyUrl,
-	configureAutoPresent,
-	linksNativeUI,
-	recordConsentPresenter,
-} from './configure-auto-present';
-import { ConsentClientContext } from './consent-client-context';
-import {
-	ConsentSafeAreaContext,
-	useConsentSafeAreaInsets,
-} from './consent-safe-area-context';
-import type { ConsentSafeAreaInsets } from './consent-safe-area-context';
-import {
 	cancelSequence,
 	checkTrackingAtLaunch,
 	createSequenceToken,
@@ -56,6 +44,18 @@ import type {
 	ConsentTrackingReprompt,
 	ConsentTrackingRequest,
 } from '../tracking/request-sequenced-tracking';
+import {
+	assertPrivacyPolicyUrl,
+	configureAutoPresent,
+	linksNativeUI,
+	recordConsentPresenter,
+} from './configure-auto-present';
+import { ConsentClientContext } from './consent-client-context';
+import {
+	ConsentSafeAreaContext,
+	useConsentSafeAreaInsets,
+} from './consent-safe-area-context';
+import type { ConsentSafeAreaInsets } from './consent-safe-area-context';
 
 /**
  * Whether the provider presents the native consent prompt by itself.

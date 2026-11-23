@@ -47,27 +47,27 @@
 import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
 import type { OptOutRight } from '@inth/sdk-schema/types';
 
-import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
-import type { OptOutReceiptData } from '../libs/opt-out-state.model';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
 	KernelConfig,
 	SaveUISource,
 } from '../consent-kernel.model';
+import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
+import type { OptOutReceiptData } from '../libs/opt-out-state.model';
+import { buildSetters } from './build-setters';
 import { createChoiceRecorder } from './create-choice-recorder';
 import { createDispatcher } from './create-dispatcher';
 import { createEventBus } from './create-event-bus';
 import { createInitLifecycle } from './create-init-lifecycle';
+import { createRuntime } from './create-runtime';
 import type { InternalKernel } from './kernel-internals.model';
 import { buildOptOutPayload } from './kernel-opt-out.model';
 import { createRecordsBoundary } from './kernel-records.model';
-import { createRuntime } from './create-runtime';
+import { buildDraft, buildInitialSnapshot } from './kernel-snapshot.model';
 import { createBrowserOutboxStore, createSaveOutbox } from './save-outbox';
 import type { SaveOutboxOptions } from './save-outbox';
 import type { SaveOutboxStore } from './save-outbox/save-outbox.store';
-import { buildSetters } from './build-setters';
-import { buildDraft, buildInitialSnapshot } from './kernel-snapshot.model';
 
 /**
  * Seams a kernel is assembled with.

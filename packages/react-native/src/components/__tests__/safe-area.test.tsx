@@ -25,8 +25,8 @@ import {
 } from '../../__tests__/helpers/react-native-stub';
 import { RESERVED_BOTTOM_INSET } from '../../hooks/use-consent-safe-area';
 import { resetConsentClient } from '../../native/create-consent-client';
-import { InthProvider } from '../../provider/inth-provider';
 import type { ConsentSafeAreaInsets } from '../../provider/consent-safe-area-context';
+import { InthProvider } from '../../provider/inth-provider';
 import { ConsentBanner } from '../consent-banner';
 import { ConsentDialog } from '../consent-dialog';
 import { ConsentPreferences } from '../consent-preferences';

@@ -74,7 +74,10 @@ import { withRegisteredScripts } from './with-registered-scripts';
 import type { RegisteredScripts } from './with-registered-scripts';
 
 export type { VueConsentDisplayData } from './display-data.model';
-export { INIT_HEADER_NAMES, pickAllowedInitHeaders } from './init-headers.model';
+export {
+	INIT_HEADER_NAMES,
+	pickAllowedInitHeaders,
+} from './init-headers.model';
 export { provideVueConsentContext } from './provide-vue-consent-context';
 export type { RegisteredScripts } from './with-registered-scripts';
 export { withRegisteredScripts } from './with-registered-scripts';

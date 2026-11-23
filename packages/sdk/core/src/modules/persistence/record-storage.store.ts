@@ -35,6 +35,10 @@
 
 import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
 
+import {
+	isPlainRecord,
+	ownValue,
+} from '../../consent-record/consent-record-validation.model';
 import { normalizeLegacyConsentRecord } from '../../consent-record/normalize-legacy-consent-record';
 import type { LegacyRecordEncoding } from '../../consent-record/normalize-legacy-consent-record';
 import { unionOptOutCategories } from '../../consent-record/opt-out-rules.model';
@@ -43,7 +47,6 @@ import type {
 	ConsentSubject,
 	ExplicitChoice,
 } from '../../consent-record/types';
-import { isPlainRecord, ownValue } from '../../consent-record/consent-record-validation.model';
 import {
 	expandFlatKeys,
 	getRawCookieValue,

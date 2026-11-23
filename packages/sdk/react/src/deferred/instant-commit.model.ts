@@ -22,9 +22,12 @@ import {
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 
-import type { DeferredCommitConfig } from './deferred-committed.model';
 import type { DeferredKernelHandle } from './create-deferred-kernel';
-import { claimDeferredScripts, deferredScripts } from './deferred-registry.model';
+import type { DeferredCommitConfig } from './deferred-committed.model';
+import {
+	claimDeferredScripts,
+	deferredScripts,
+} from './deferred-registry.model';
 
 export { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 

@@ -7,9 +7,9 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type { OptOutRecord } from '../../consent-kernel.model';
 import { OPT_OUT_REPROMPT_WAIT_MS } from '../../consent-record';
 import { createConsentKernel } from '../../kernel';
-import type { OptOutRecord } from '../../consent-kernel.model';
 import {
 	isOptedOut,
 	resolveCategoryOptOutLock,

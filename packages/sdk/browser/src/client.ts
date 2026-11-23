@@ -1,13 +1,25 @@
+import type {
+	ConsentClient,
+	ConsentClientOptions,
+} from './consent-client.model';
 import {
 	createConsentClientWith,
 	factoryMode,
 	hostedMode,
 } from './create-consent-client-with';
-import type { CreateConsentClientContext, ResolvedMode } from './create-consent-client-with';
-import type { ConsentClient, ConsentClientOptions } from './consent-client.model';
+import type {
+	CreateConsentClientContext,
+	ResolvedMode,
+} from './create-consent-client-with';
 
-export { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './create-consent-client-with';
-export type { CreateConsentClientContext, PageAction } from './create-consent-client-with';
+export {
+	ACTION_ATTRIBUTE,
+	PREFERENCES_HASH,
+} from './create-consent-client-with';
+export type {
+	CreateConsentClientContext,
+	PageAction,
+} from './create-consent-client-with';
 
 /**
  * Read the transport from the options: a factory such as `manifest()`, a

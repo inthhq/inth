@@ -1,4 +1,7 @@
-import { connectConsentIntegration, settleAll } from './connect-consent-integration';
+import {
+	connectConsentIntegration,
+	settleAll,
+} from './connect-consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,

@@ -14,7 +14,11 @@
  * subscribers: a throwing listener is reported and skipped, and deliveries
  * reach every listener in the order they were made.
  */
-import type { KernelEvent, Listener, Unsubscribe } from '../consent-kernel.model';
+import type {
+	KernelEvent,
+	Listener,
+	Unsubscribe,
+} from '../consent-kernel.model';
 import { createDispatcher, createListenerSet } from './create-dispatcher';
 import type { Dispatcher, ListenerSet } from './create-dispatcher';
 

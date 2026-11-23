@@ -4,8 +4,8 @@
  */
 
 import type { ConsentKernel, SaveResult } from '../consent-kernel.model';
-import { saveIABConsentSurface } from './save-iab-consent-surface';
 import { saveConsentSurfaceWithOptInCheck } from './opt-in';
+import { saveIABConsentSurface } from './save-iab-consent-surface';
 
 /** The CMP handle calls a blanket action needs. */
 export interface ConsentSurfaceIAB {

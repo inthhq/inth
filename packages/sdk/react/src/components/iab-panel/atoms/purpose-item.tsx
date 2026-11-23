@@ -16,7 +16,11 @@ import { useTheme } from '~/hooks/use-theme';
 import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
-import type { ProcessedPurpose, ProcessedVendor, VendorId } from '../iab-consent-dialog.model';
+import type {
+	ProcessedPurpose,
+	ProcessedVendor,
+	VendorId,
+} from '../iab-consent-dialog.model';
 import { useIABTranslations } from '../use-iab-translations';
 
 interface PurposeItemProps {

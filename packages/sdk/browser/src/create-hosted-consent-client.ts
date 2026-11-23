@@ -1,14 +1,17 @@
 import type { ProviderTransportFactory } from '@inth/sdk-core';
 import { hosted } from '@inth/sdk-core/transports';
 
-import { createConsentClientWith, hostedMode } from './create-consent-client-with';
-import type { CreateConsentClientContext } from './create-consent-client-with';
-import { readHostedMarker } from './init/hosted-marker';
 import type {
 	ConsentClient,
 	HostedConsentClientOptions,
 	ScriptTagClientOptions,
 } from './consent-client.model';
+import {
+	createConsentClientWith,
+	hostedMode,
+} from './create-consent-client-with';
+import type { CreateConsentClientContext } from './create-consent-client-with';
+import { readHostedMarker } from './init/hosted-marker';
 
 /**
  * Create a hosted client with no manifest mode selection.

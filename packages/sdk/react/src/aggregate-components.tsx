@@ -7,10 +7,6 @@ import {
 import { useEffect } from 'react';
 import type { ComponentType } from 'react';
 
-import {
-	registerDialogChunkWarmer,
-	useIdleDialogWarming,
-} from './warm-dialog-chunk';
 import type { ConsentDialogProps } from './components/dialog/consent-dialog.model';
 import type { OptInConfirmationProps } from './components/opt-in-confirmation';
 import type {
@@ -36,6 +32,10 @@ import {
 } from './hooks/use-opt-out';
 import { useKernel } from './use-kernel-selector';
 import { createDeferredModule } from './utils/create-deferred-module';
+import {
+	registerDialogChunkWarmer,
+	useIdleDialogWarming,
+} from './warm-dialog-chunk';
 
 type AnyComponent = ComponentType<Record<string, unknown>>;
 

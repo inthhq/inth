@@ -30,11 +30,11 @@ import {
 	resetNativeStub,
 	setAppState,
 } from '../../__tests__/helpers/react-native-stub';
-import { MAX_TRACKING_REQUEST_TURNS } from '../tracking-journey.model';
 import { resetConsentClient } from '../../native/create-consent-client';
 import type { ConsentSnapshot } from '../../protocol';
 import type { OptionalConsentCategory } from '../../protocol/consent-vocabulary.model';
 import { InthProvider } from '../../provider/inth-provider';
+import { MAX_TRACKING_REQUEST_TURNS } from '../tracking-journey.model';
 import { useTrackingRequest } from '../use-tracking-request';
 import type { TrackingRequest } from '../use-tracking-request';
 

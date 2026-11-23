@@ -32,8 +32,8 @@ import { ConsentStyles, SURFACE_SCOPES } from '../core/consent-styles';
 import type { SurfaceStyleSheet } from '../core/consent-styles';
 import { resolveNoStyle } from '../core/no-style-scope';
 import { AdvertisingRow, CategoryGroup } from '../parts/category-group';
-import { bool, cx } from '../parts/part-class-names.model';
 import { ChevronIcon } from '../parts/icons';
+import { bool, cx } from '../parts/part-class-names.model';
 import { hasSaleRight } from '../parts/sale-rights-row';
 import { SurfaceDraft } from '../parts/surface-draft';
 

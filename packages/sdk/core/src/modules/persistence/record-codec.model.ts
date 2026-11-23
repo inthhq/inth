@@ -30,14 +30,7 @@ import type {
 	OptOutRight,
 } from '@inth/sdk-schema/types';
 
-import type {
-	CategoryDecision,
-	ChoiceBasis,
-	ConsentSubject,
-	ExplicitChoice,
-	NoticeDismissal,
-	OptionalConsentCategory,
-} from '../../consent-record/types';
+import type { VendorChoice } from '../../consent-kernel.model';
 import {
 	checkTimestamp,
 	isNonEmptyString,
@@ -49,9 +42,16 @@ import {
 	validateOptOutRecord,
 } from '../../consent-record/consent-record-validation.model';
 import type { RecordIssue } from '../../consent-record/consent-record-validation.model';
+import type {
+	CategoryDecision,
+	ChoiceBasis,
+	ConsentSubject,
+	ExplicitChoice,
+	NoticeDismissal,
+	OptionalConsentCategory,
+} from '../../consent-record/types';
 import type { OptOutLocalAct } from '../../libs/opt-out-state.model';
 import { isValidVendorId } from '../../libs/vendors';
-import type { VendorChoice } from '../../consent-kernel.model';
 
 /** Validated IAB transport metadata carried alongside category choices. */
 export interface StoredIabMetadata {

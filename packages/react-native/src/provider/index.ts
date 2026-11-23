@@ -12,6 +12,9 @@ export type {
 	ConsentTrackingReprompt,
 	ConsentTrackingRequest,
 } from '../tracking/request-sequenced-tracking';
-export { ConsentClientContext, useConsentClient } from './consent-client-context';
+export {
+	ConsentClientContext,
+	useConsentClient,
+} from './consent-client-context';
 export { ConsentSafeAreaContext } from './consent-safe-area-context';
 export type { ConsentSafeAreaInsets } from './consent-safe-area-context';

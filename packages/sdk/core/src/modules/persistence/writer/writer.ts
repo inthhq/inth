@@ -1,3 +1,7 @@
+import type {
+	ConsentSnapshot,
+	HydrationRecords,
+} from '../../../consent-kernel.model';
 /**
  * Persistence's write half: storing records after kernel events and
  * reconciling with other runtimes. Loaded on demand by `../index.ts`, which
@@ -19,9 +23,22 @@ import type {
 	ConsentSubject,
 	ExplicitChoice,
 } from '../../../consent-record/types';
-import type { ConsentSnapshot, HydrationRecords } from '../../../consent-kernel.model';
 import type { StoredRecords } from '../persistence-hydrate.store';
 import type { StoredIabMetadata } from '../record-codec.model';
+import { createWriteScheduler } from './create-write-scheduler';
+import {
+	writeChoiceToStorage,
+	writeNoticeToStorage,
+	writeOptOutToStorage,
+	writeVendorChoiceToStorage,
+} from './persistence-write.store';
+import type {
+	PersistenceContext,
+	PersistenceTools,
+	PersistenceWriter,
+	WriteKind,
+} from './persistence-writer.model';
+import { createRecordStore } from './persistence-writer.store';
 import {
 	choiceToWrite,
 	fingerprintStoredRecords,
@@ -33,21 +50,10 @@ import {
 	subjectAfterClear,
 	subjectToWrite,
 } from './writer-reconcile.model';
-import type { StorageFingerprints, StoredRecordKind } from './writer-reconcile.model';
-import { createWriteScheduler } from './create-write-scheduler';
-import { createRecordStore } from './persistence-writer.store';
 import type {
-	PersistenceContext,
-	PersistenceTools,
-	PersistenceWriter,
-	WriteKind,
-} from './persistence-writer.model';
-import {
-	writeChoiceToStorage,
-	writeNoticeToStorage,
-	writeOptOutToStorage,
-	writeVendorChoiceToStorage,
-} from './persistence-write.store';
+	StorageFingerprints,
+	StoredRecordKind,
+} from './writer-reconcile.model';
 
 /**
  * Create the write half of one persistence handle. It writes nothing until

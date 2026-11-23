@@ -14,6 +14,7 @@ import type { ConsentRuntimeGPPFactoryOptions } from '@inth/sdk-core/runtime';
 import { isValidCmpId, MAX_CMP_ID } from '../tcf/cmp-id.model';
 import { createGPPCmpApi } from './create-gpp-cmp-api';
 import type { GPPSectionState, GPPState } from './create-gpp-cmp-api';
+import type { GPPParsedSubsection, GPPPingData } from './gpp-api.model';
 import { encodeUSSection } from './gpp-encoder.model';
 import {
 	GPC_SUBSECTION_TYPE,
@@ -24,12 +25,15 @@ import {
 } from './gpp-sections.model';
 import { destroyGPPStub, initializeGPPStub } from './initialize-gpp-stub';
 import { parseTCFEUSection } from './parse-tcf-eu-section';
-import type { GPPParsedSubsection, GPPPingData } from './gpp-api.model';
 import {
 	resolveUSSectionDefinition,
 	resolveUSSectionValues,
 } from './us-section.model';
-import type { GPPMspaMode, GPPUSApproach, GPPUSFallback } from './us-section.model';
+import type {
+	GPPMspaMode,
+	GPPUSApproach,
+	GPPUSFallback,
+} from './us-section.model';
 
 /** CMP ID the GPP specification reserves for unregistered string creators. */
 const UNREGISTERED_CMP_ID = 1;

@@ -1,8 +1,8 @@
 import * as v from 'valibot';
 import { describe, expect, test } from 'vitest';
 
-import { subjectChoiceWireSchema } from './subject-choice-wire.model';
 import { subjectCookieBannerInputSchema } from './post-subject.model';
+import { subjectChoiceWireSchema } from './subject-choice-wire.model';
 
 const receipt = {
 	basis: { fingerprint: 'abc', kind: 'choice-v1' },

@@ -15,12 +15,12 @@ import {
 	isSubjectConflict,
 } from '../../consent-save-rejected-error';
 import { InthApiError, isInthApiError } from '../inth-api-error';
+import { InthApiSaveRejectedError } from '../inth-api-save-rejected-error';
+import { createV1RecordTransport } from '../records';
 import {
 	buildV1ConsentOptOutBody,
 	buildV1ConsentOptOutLiftBody,
 } from '../v1-opt-outs-body.model';
-import { createV1RecordTransport } from '../records';
-import { InthApiSaveRejectedError } from '../inth-api-save-rejected-error';
 import {
 	ACTION_AT,
 	bodyAt,

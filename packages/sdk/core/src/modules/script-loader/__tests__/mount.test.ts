@@ -7,8 +7,8 @@ import { createConsentKernel } from '../../../kernel';
 import { flushPendingMounts, mountScript, unmountScript } from '../mount';
 import type { MountDeps } from '../mount';
 import { createElementIdResolver } from '../normalize-scripts';
-import { scriptLoaderTools } from '../tools';
 import type { PendingMount, Script } from '../script-loader.model';
+import { scriptLoaderTools } from '../tools';
 
 const makeDeps = function makeDeps(): {
 	deps: MountDeps;

@@ -22,12 +22,15 @@
 	} from '@inth/sdk/ui/utils';
 	import { findFocusRestoreEquivalent } from '@inth/sdk/ui/utils/dom';
 
-	import { getConsentContext, getThemeContext } from '../../get-consent-context.svelte';
-	import { useOptOutConfirmationState } from './use-opt-out-confirmation-state.svelte';
+	import {
+		getConsentContext,
+		getThemeContext,
+	} from '../../get-consent-context.svelte';
 	import { Dialog, Portal } from '../../primitives';
 	import { WIDGET_SHEETS } from '../../widget-sheets';
-	import OptOutReceiptDetails from './opt-out-receipt-details.svelte';
 	import SurfaceStyles from '../surface-styles.svelte';
+	import OptOutReceiptDetails from './opt-out-receipt-details.svelte';
+	import { useOptOutConfirmationState } from './use-opt-out-confirmation-state.svelte';
 
 	const {
 		open: openProp,

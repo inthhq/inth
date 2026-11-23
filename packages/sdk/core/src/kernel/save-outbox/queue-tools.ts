@@ -10,11 +10,11 @@
  */
 import { CONSENT_MODELS } from '@inth/sdk-schema/types';
 
-import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import {
 	isPlainRecord,
 	validateExplicitChoice,
 } from '../../consent-record/consent-record-validation.model';
+import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import { warnInDevelopment } from '../../libs/is-production';
 import { generateUuidV7 } from '../../libs/subject-uuid.model';
 import {

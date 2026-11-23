@@ -9,8 +9,6 @@
  * @packageDocumentation
  */
 
-import { encodeGPPString } from './gpp-encoder.model';
-import { GPP_VERSION } from './gpp-sections.model';
 import type {
 	GPPApi,
 	GPPCallback,
@@ -21,6 +19,8 @@ import type {
 	GPPQueuedListener,
 	GPPSignalStatus,
 } from './gpp-api.model';
+import { encodeGPPString } from './gpp-encoder.model';
+import { GPP_VERSION } from './gpp-sections.model';
 
 /** One section in the published state. */
 export interface GPPSectionState {

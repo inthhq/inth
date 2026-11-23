@@ -3,7 +3,11 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { hosted as hostedMode, manifest as manifestMode } from '../mode';
 import { testing as testingMode } from '../testing';
-import { hostedTransport, lazyTransport, testingTransport } from '../transport-resolvers.model';
+import {
+	hostedTransport,
+	lazyTransport,
+	testingTransport,
+} from '../transport-resolvers.model';
 import { testRule } from './policy-fixture';
 
 const context: ProviderTransportContext = {

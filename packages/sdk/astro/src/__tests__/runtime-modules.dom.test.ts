@@ -11,8 +11,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { boot, registerRuntimeModules } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import type { InthAstroOptions } from '../inth-options.model';
+import { testing as testingMode } from '../testing';
 import { testResolution, testRule } from './policy-fixture';
 
 const OPTIONS: InthAstroOptions = {

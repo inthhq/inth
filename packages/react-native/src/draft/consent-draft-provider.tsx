@@ -13,7 +13,10 @@ import {
 import type { ReactNode } from 'react';
 
 import type { CommitResult } from '../protocol';
-import type { AllConsentNames, ConsentState } from '../protocol/consent-vocabulary.model';
+import type {
+	AllConsentNames,
+	ConsentState,
+} from '../protocol/consent-vocabulary.model';
 import { useConsentClient } from '../provider/consent-client-context';
 import { createConsentDraft, rootConsentDraft } from './create-consent-draft';
 import type { ConsentDraft, ConsentDraftState } from './create-consent-draft';

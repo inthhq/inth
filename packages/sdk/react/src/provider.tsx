@@ -73,7 +73,6 @@ import {
 	useSyncExternalStore,
 } from 'react';
 
-import type { DialogPreload } from './warm-dialog-chunk';
 import {
 	KernelContext,
 	ProviderServicesContext,
@@ -93,9 +92,10 @@ import type { UseIframeBlockerOptions } from './module-hooks/iframe-blocker';
 import { UNCOMMITTED_HOLD_MS } from './module-hooks/use-early-network-hold';
 import { V3ThemeProvider } from './theme-provider';
 import { selectedMode } from './transports/selected-mode';
-import type { ReactUIOptions } from './types/react-ui-options.model';
 import type { ReactComponentSlots } from './types/react-slots.model';
+import type { ReactUIOptions } from './types/react-ui-options.model';
 import type { V3UIConfigValue } from './use-ui-config';
+import type { DialogPreload } from './warm-dialog-chunk';
 
 /** Replaced by the app's bundler; see the development warnings below. */
 declare const process: { env: { NODE_ENV?: string } };

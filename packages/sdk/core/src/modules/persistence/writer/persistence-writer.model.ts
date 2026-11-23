@@ -18,13 +18,13 @@ import type {
 	vendorChoiceSinceEpoch,
 } from '../persistence-epoch.model';
 import type { StoredRecords } from '../persistence-hydrate.store';
+import type { StorageConfig } from '../persistence.model';
 import type {
 	decodeNoticeDismissal,
 	decodeOptOutRecord,
 	decodeVendorChoice,
 	validateStoredConsentEnvelope,
 } from '../record-codec.model';
-import type { StorageConfig } from '../persistence.model';
 
 /**
  * First-load functions the write code calls: the storage reads and record

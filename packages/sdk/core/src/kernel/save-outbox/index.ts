@@ -52,12 +52,6 @@
 import { OPT_OUT_RIGHTS } from '@inth/sdk-schema/types';
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
-import type { OptionalConsentCategory } from '../../consent-record/types';
-import { warnInDevelopment } from '../../libs/is-production';
-import {
-	isConsentSaveRejection,
-	isSubjectConflict,
-} from '../../transports/consent-save-rejected-error';
 import type {
 	ConsentSnapshot,
 	KernelTransport,
@@ -66,8 +60,14 @@ import type {
 	SavePayload,
 	SaveResult,
 } from '../../consent-kernel.model';
-import { applySyncedOptOut } from '../kernel-opt-out.model';
+import type { OptionalConsentCategory } from '../../consent-record/types';
+import { warnInDevelopment } from '../../libs/is-production';
+import {
+	isConsentSaveRejection,
+	isSubjectConflict,
+} from '../../transports/consent-save-rejected-error';
 import type { KernelRuntime } from '../create-runtime';
+import { applySyncedOptOut } from '../kernel-opt-out.model';
 import type {
 	EnqueueResult,
 	OptOutEnqueueOutcome,
@@ -91,7 +91,10 @@ export type {
 	PendingOptOutEntry,
 	SaveOutboxStore,
 } from './save-outbox.store';
-export { createBrowserOutboxStore, createMemoryOutboxStore } from './save-outbox.store';
+export {
+	createBrowserOutboxStore,
+	createMemoryOutboxStore,
+} from './save-outbox.store';
 
 /** One recorded action, as `commands.save()` hands it to the outbox. */
 export interface RecordedAction {

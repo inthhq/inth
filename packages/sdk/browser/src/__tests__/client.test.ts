@@ -12,9 +12,9 @@ import {
 } from '@inth/sdk-schema/types';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import type { ConsentClient } from '../consent-client.model';
 import { createScriptTagConsentClient } from '../create-script-tag-consent-client';
 import { createTestingConsentClient as createConsentClient } from '../testing-global';
-import type { ConsentClient } from '../consent-client.model';
 
 /** A transport factory that hands the client `transport`. */
 const custom = (

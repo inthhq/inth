@@ -44,7 +44,6 @@ import { expectTypeOf } from 'vitest';
 
 import type { KernelCommonCopy } from '../../index';
 import type { KernelUser, NativeSavePayload } from '../commit-payload.model';
-import type { NativeOverrides } from '../native-overrides.model';
 import type {
 	ConsentSnapshot,
 	NativeModel,
@@ -71,6 +70,7 @@ import type {
 	PromptRequirement,
 	RestrictionReason,
 } from '../consent-vocabulary.model';
+import type { NativeOverrides } from '../native-overrides.model';
 
 /**
  * Write every property as mutable and non-optional-but-undefinable.

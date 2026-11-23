@@ -42,9 +42,9 @@ import { IABConsentDialogOverlay } from './atoms/iab-consent-dialog-overlay';
 import { PurposeItem } from './atoms/purpose-item';
 import { StackItem } from './atoms/stack-item';
 import { VendorList } from './atoms/vendor-list';
-import { useIABDisplayModel } from './use-iab-display-model';
 import type { VendorId } from './iab-consent-dialog.model';
 import { useExitTransition } from './use-exit-transition';
+import { useIABDisplayModel } from './use-iab-display-model';
 import { useIABTranslations } from './use-iab-translations';
 
 const DEFAULT_MODELS: CoreTypes.Model[] = ['iab'];

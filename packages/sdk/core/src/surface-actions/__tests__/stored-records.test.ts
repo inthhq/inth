@@ -2,11 +2,11 @@
 import { afterEach, describe, expect, test } from 'vitest';
 
 import { NOW } from '../../__tests__/fixtures/kernel-fixtures';
+import type { SavePayload } from '../../consent-kernel.model';
 import {
 	createMemoryOutboxStore,
 	enqueueSave,
 } from '../../kernel/save-outbox/save-outbox.store';
-import type { SavePayload } from '../../consent-kernel.model';
 import { hasStoredClearEpoch } from '../instant-commit';
 import { clearStoredRecordsFor } from '../stored-records';
 

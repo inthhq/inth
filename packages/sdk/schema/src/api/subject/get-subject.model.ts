@@ -6,8 +6,8 @@
 
 import * as v from 'valibot';
 
-import { subjectChoiceWireSchema } from './subject-choice-wire.model';
 import { subjectIdSchema } from './post-subject.model';
+import { subjectChoiceWireSchema } from './subject-choice-wire.model';
 import { vendorChoiceWireSchema } from './vendor-choice-wire.model';
 
 /**

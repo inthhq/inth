@@ -8,7 +8,10 @@
  *
  * Listener errors never reach the loader.
  */
-import type { ScriptLoaderDebugEvent, ScriptLoaderTools } from './script-loader.model';
+import type {
+	ScriptLoaderDebugEvent,
+	ScriptLoaderTools,
+} from './script-loader.model';
 
 export interface DebugEmitterOptions {
 	/** Optional consumer listener. */

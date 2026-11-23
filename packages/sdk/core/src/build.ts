@@ -17,11 +17,11 @@ import {
 	renderStaticBannerSheets,
 } from './build-static-banner.model';
 import type { StaticBannerChunk } from './build-static-banner.model';
+import { buildPrefetchScript } from './libs/prefetch/prefetch';
 import {
 	PREFETCH_SCRIPT_ID,
 	prefetchScriptOffset,
 } from './libs/prefetch/prefetch-placement.model';
-import { buildPrefetchScript } from './libs/prefetch/prefetch';
 import type { PrefetchOptions } from './libs/prefetch/prefetch.model';
 import type { ConsentMode } from './modes';
 import { buildSnapshotSkipReason } from './server/server-mode.model';

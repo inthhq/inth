@@ -1,5 +1,5 @@
-import type { AllConsentNames } from '../consent/consent-types';
 import type { ConsentState } from '../consent-kernel.model';
+import type { AllConsentNames } from '../consent/consent-types';
 
 /**
  * Defines a flexible condition system for checking consent states.

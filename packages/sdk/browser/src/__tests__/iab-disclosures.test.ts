@@ -4,8 +4,8 @@ import { clearGVLCache } from '@inth/sdk-iab';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import { createVendorDisclosures } from '../iab/create-vendor-disclosures';
 import type { ConsentClient } from '../consent-client.model';
+import { createVendorDisclosures } from '../iab/create-vendor-disclosures';
 import { resolveCopy } from '../ui/resolve-copy';
 import { initIAB as init } from './fixtures/factory-init';
 

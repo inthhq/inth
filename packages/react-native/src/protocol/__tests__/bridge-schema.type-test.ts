@@ -24,9 +24,15 @@ import type {
 import type { BootstrapPayload } from '../bootstrap-payload.model';
 import type { BRIDGE_PAYLOADS } from '../bridge-schema';
 import type { CommitIntent, CommitResult } from '../commit-payload.model';
-import type { NativeInitializedEvent, NativeSnapshotEvent } from '../native-events.model';
+import type {
+	ConsentSnapshot,
+	NativeSnapshotError,
+} from '../consent-snapshot.model';
+import type {
+	NativeInitializedEvent,
+	NativeSnapshotEvent,
+} from '../native-events.model';
 import type { NativeOverridesInput } from '../native-overrides.model';
-import type { ConsentSnapshot, NativeSnapshotError } from '../consent-snapshot.model';
 import type {
 	NativeTrackingRequestOptions,
 	TrackingAuthorizationPayload,

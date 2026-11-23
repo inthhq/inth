@@ -1,7 +1,7 @@
 import type { ConsentSnapshot, KernelEvent, SaveResult } from '@inth/sdk-core';
 
-import { serializeDiagnostic } from './serialize-diagnostic';
 import type { DevToolsEvent } from './create-state-manager';
+import { serializeDiagnostic } from './serialize-diagnostic';
 
 const EVENT_TYPES = [
 	'records:cleared',

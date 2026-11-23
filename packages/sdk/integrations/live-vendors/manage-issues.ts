@@ -1,3 +1,4 @@
+import type { LiveVendorReport } from './live-vendor-probe.model';
 /**
  * Reconciles GitHub monitor issues with a live vendor report.
  *
@@ -11,9 +12,11 @@
  *   GITHUB_TOKEN=... GITHUB_REPOSITORY=owner/repo \
  *     bun live-vendors/manage-issues.ts --report live-vendors-report.json
  */
-import { MONITOR_ISSUE_TITLE_PREFIX, planMonitorIssueActions } from './monitor-issue.model';
+import {
+	MONITOR_ISSUE_TITLE_PREFIX,
+	planMonitorIssueActions,
+} from './monitor-issue.model';
 import type { ExistingMonitorIssue } from './monitor-issue.model';
-import type { LiveVendorReport } from './live-vendor-probe.model';
 
 const GITHUB_REQUEST_TIMEOUT_MS = 30_000;
 

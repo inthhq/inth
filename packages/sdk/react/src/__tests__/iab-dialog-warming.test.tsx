@@ -5,13 +5,13 @@ import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
 import { ConsentDialog } from '~/aggregate-components';
+import { ConsentBanner } from '~/components/prompt';
+import { IABConsentBanner, IABConsentDialog } from '~/iab';
+import { resetIABDialogWarmingForTests } from '~/iab-consent-dialog';
 import {
 	registerDialogChunkWarmer,
 	resetDialogChunkWarmingForTests,
 } from '~/warm-dialog-chunk';
-import { ConsentBanner } from '~/components/prompt';
-import { IABConsentBanner, IABConsentDialog } from '~/iab';
-import { resetIABDialogWarmingForTests } from '~/iab-consent-dialog';
 
 import { ComponentFixtureProvider } from './component-fixture-provider';
 import type { ComponentFixtureOptions } from './component-fixture-provider';

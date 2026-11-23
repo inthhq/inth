@@ -7,8 +7,8 @@ import type { ComponentProps, FC, ReactNode } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
 import { useTriggerLabels } from '~/component-hooks/use-trigger-labels';
-import { useDevToolsLauncherAvailable } from '~/use-dev-tools-launcher';
 import { useResolvedPresentation, useSnapshot } from '~/hooks';
+import { useDevToolsLauncherAvailable } from '~/use-dev-tools-launcher';
 
 import { TriggerButton } from './atoms/trigger-button';
 import type { TriggerButtonProps } from './atoms/trigger-button';
@@ -18,12 +18,15 @@ import { TriggerRoot, useTriggerContext } from './atoms/trigger-root';
 import type { TriggerRootProps } from './atoms/trigger-root';
 import { TriggerText } from './atoms/trigger-text';
 import type { TriggerTextProps } from './atoms/trigger-text';
-import { getTriggerToolbar, loadTriggerToolbar } from './trigger-toolbar-loader.model';
-import type { TriggerToolbarComponent } from './trigger-toolbar-loader.model';
 import type {
 	ConsentDialogTriggerProps,
 	ConsentDialogTriggerToolbarAction,
 } from './consent-dialog-trigger.model';
+import {
+	getTriggerToolbar,
+	loadTriggerToolbar,
+} from './trigger-toolbar-loader.model';
+import type { TriggerToolbarComponent } from './trigger-toolbar-loader.model';
 
 const EMPTY_ACTIONS: readonly ConsentDialogTriggerToolbarAction[] = [];
 

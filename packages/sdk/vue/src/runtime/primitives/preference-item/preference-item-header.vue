@@ -2,8 +2,8 @@
 import { PREFERENCE_ITEM_SLOTS } from '@inth/sdk/ui/primitives';
 import { computed } from 'vue';
 
-import { usePreferenceItemContext } from './use-preference-item-context';
 import { preferenceItemVariants } from './preference-item-variants';
+import { usePreferenceItemContext } from './use-preference-item-context';
 
 const props = withDefaults(defineProps<{ class?: string }>(), {
 	class: undefined,

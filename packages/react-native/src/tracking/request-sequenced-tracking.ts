@@ -18,7 +18,10 @@ import type {
 	TrackingAuthorization,
 	TrackingRequestPayload,
 } from '../protocol';
-import { isConsentScreenBusy, onConsentScreenChange } from '../provider/configure-auto-present';
+import {
+	isConsentScreenBusy,
+	onConsentScreenChange,
+} from '../provider/configure-auto-present';
 
 /**
  * When the provider asks for App Tracking Transparency.

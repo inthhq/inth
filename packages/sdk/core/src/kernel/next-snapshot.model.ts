@@ -16,6 +16,20 @@ import type {
 	ScriptRegistryWire,
 } from '@inth/sdk-schema/types';
 
+import type {
+	ConsentSnapshot,
+	ConsentState,
+	KernelActiveUI,
+	KernelBranding,
+	KernelHosting,
+	KernelIABState,
+	KernelOverrides,
+	KernelPrivacySignals,
+	KernelTranslations,
+	KernelUser,
+	KernelVendorsState,
+	VendorChoice,
+} from '../consent-kernel.model';
 import { evaluateConsentRecord } from '../consent-record/evaluate';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
 import type {
@@ -31,20 +45,6 @@ import { deriveActiveUI } from '../derive-surface';
 import type { ExperimentAssignment } from '../libs/experiment';
 import type { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
 import { deriveModel } from '../policy-choice.model';
-import type {
-	ConsentSnapshot,
-	ConsentState,
-	KernelActiveUI,
-	KernelBranding,
-	KernelHosting,
-	KernelIABState,
-	KernelOverrides,
-	KernelPrivacySignals,
-	KernelTranslations,
-	KernelUser,
-	KernelVendorsState,
-	VendorChoice,
-} from '../consent-kernel.model';
 import { evaluateExternalPermissions } from './external-permissions.model';
 
 /**

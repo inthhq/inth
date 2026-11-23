@@ -6,14 +6,14 @@ import {
 	matchedResolution,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
+import { normalizeScripts } from '../normalize-scripts';
 import {
 	buildReconcilePass,
 	hasScriptConsent,
 	isEligible,
 } from '../script-eligibility.model';
-import { normalizeScripts } from '../normalize-scripts';
-import { scriptLoaderTools } from '../tools';
 import type { Script } from '../script-loader.model';
+import { scriptLoaderTools } from '../tools';
 
 const snapshotForKernel = function snapshotForKernel(
 	opts: Parameters<typeof createConsentKernel>[0]

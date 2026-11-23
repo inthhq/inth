@@ -12,9 +12,9 @@ import type { ConsentRuntime } from '@inth/sdk/runtime';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { InthResolvedOptions } from '../inth-options.model';
+import { reactDialogAdapter } from '../ui/react';
 import { registerDialogSurface } from '../ui/register-dialog-adapter';
 import type { ConsentDialogKind } from '../ui/register-dialog-adapter';
-import { reactDialogAdapter } from '../ui/react';
 import { vueDialogAdapter } from '../ui/vue';
 // The Vue adapter imports its plugin on first mount. Vite compiles it on that
 // first import, which takes seconds on a busy machine; importing it here does

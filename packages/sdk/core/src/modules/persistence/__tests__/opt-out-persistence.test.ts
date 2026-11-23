@@ -26,11 +26,11 @@ import {
 	resolveStorageKeys,
 } from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent.api';
+import { createPersistence } from '../index';
 import {
 	readStoredRecords,
 	readStoredRecordsFromCookieHeader,
 } from '../persistence-hydrate.store';
-import { createPersistence } from '../index';
 import {
 	decodeOptOutCategoriesCompact,
 	decodeOptOutRecord,

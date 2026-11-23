@@ -67,20 +67,24 @@ import type { RuntimeConsentConfig } from '../../kernel';
 import { slotAttrs } from '../../utils/slot-attrs';
 import { loadConsentDialog } from '../dialog/load-consent-dialog';
 import ChoiceButton from '../parts/choice-button.vue';
+import InlineLegalLinks from '../parts/inline-legal-links.vue';
 import { provideChoiceDraft } from '../parts/use-choice-draft';
 import { useHydrationHold } from '../parts/use-hydration-hold';
-import InlineLegalLinks from '../parts/inline-legal-links.vue';
-import { useRetryableComponent } from '../parts/use-retryable-component';
 import { usePhoneLayout } from '../parts/use-phone-layout';
+import { useRetryableComponent } from '../parts/use-retryable-component';
 import {
 	rightsBundleOf,
 	useOptOutReceiptData,
 	useSurfaceSession,
 } from '../parts/use-surface-session';
-import EarlyTapScript from './early-tap-script';
 import { bannerPageRegionKey } from './banner-page-region-key';
+import EarlyTapScript from './early-tap-script';
+import type {
+	ActionGroups,
+	ContainerStyles,
+	PromptContainer,
+} from './prompt.model';
 import BannerTag from './tag.vue';
-import type { ActionGroups, ContainerStyles, PromptContainer } from './prompt.model';
 
 /** The options, loaded when Customize first opens them, or at once in a side Drawer. */
 const loadPanel = () => import('./panel.vue');

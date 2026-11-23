@@ -27,7 +27,6 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk-schema/types';
 
-import { warnNoConsentRecordsInDevelopment } from '../libs/no-records-warning';
 import type {
 	InitContext,
 	KernelBranding,
@@ -37,6 +36,7 @@ import type {
 	SaveResult,
 } from '../consent-kernel.model';
 import { DEFAULT_BRANDING } from '../consent-kernel.model';
+import { warnNoConsentRecordsInDevelopment } from '../libs/no-records-warning';
 import type { TransportInitResponse } from './init-output';
 import type { ProviderTransportFactory } from './mode';
 

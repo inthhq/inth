@@ -4,9 +4,12 @@ import { resolveManifest } from '../../resolve-manifest';
 import { vendorManifestContract } from '../../vendor-manifest.model';
 import type { VendorManifest } from '../../vendor-manifest.model';
 import { ANALYTICS_JS_QUEUE_METHODS } from '../_shared/analytics-js.model';
-import { readId, skipMissingId } from '../_shared/required-id.model';
 import { createScriptReuse } from '../_shared/create-script-reuse';
-import { resolveScriptUrl, stripTrailingSlashes } from '../_shared/script-url.model';
+import { readId, skipMissingId } from '../_shared/required-id.model';
+import {
+	resolveScriptUrl,
+	stripTrailingSlashes,
+} from '../_shared/script-url.model';
 
 declare global {
 	interface Window {

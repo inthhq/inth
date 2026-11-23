@@ -15,17 +15,16 @@
  *    consent change that does not touch a component cannot rerender it.
  */
 
-import {
-	denyAllSnapshot,
-	INVALID_NATIVE_SNAPSHOT_CODE,
-} from '../lib/deny-all-snapshot';
 import type { ConsentDecision } from '../lib/consent-selectors.model';
 import {
 	categoryDecision,
 	isCategoryAllowed,
 	isSnapshotReady,
 } from '../lib/consent-selectors.model';
-import { isTrackingPermitted } from '../tracking/tracking-permission.model';
+import {
+	denyAllSnapshot,
+	INVALID_NATIVE_SNAPSHOT_CODE,
+} from '../lib/deny-all-snapshot';
 import {
 	describeSnapshotWireDrift,
 	isProtocolVersionSupported,
@@ -54,9 +53,9 @@ import {
 	ADDITIVE_BOOTSTRAP_DEFAULTS,
 	withAdditiveIABDefaults,
 } from '../protocol/snapshot-wire-shape.model';
+import { isTrackingPermitted } from '../tracking/tracking-permission.model';
 import { parseWebViewConsent } from '../webview/webview-payload.model';
 import type { WebViewConsentPayload } from '../webview/webview-payload.model';
-import { NativeBridgeError } from './native-bridge-error';
 import { getNativeInth, getNativeInthEvents } from './get-native-inth';
 import type {
 	NativeInthTurboModule,
@@ -64,6 +63,7 @@ import type {
 	NativeEventsLike,
 } from './get-native-inth';
 import { InthProtocolMismatchError } from './inth-protocol-mismatch-error';
+import { NativeBridgeError } from './native-bridge-error';
 import { watchWithoutNativeUI } from './watch-without-native-ui';
 
 /**

@@ -11,8 +11,14 @@
  */
 
 import type { InthUIAdapterName } from '../inth-options.model';
-import { loadDialogAdapter, requireDialogSurface } from '../ui/register-dialog-adapter';
-import type { ConsentDialogAdapter, ConsentDialogKind } from '../ui/register-dialog-adapter';
+import {
+	loadDialogAdapter,
+	requireDialogSurface,
+} from '../ui/register-dialog-adapter';
+import type {
+	ConsentDialogAdapter,
+	ConsentDialogKind,
+} from '../ui/register-dialog-adapter';
 import { loadDialogStyles } from './load-dialog-styles';
 
 /**

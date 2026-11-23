@@ -15,6 +15,8 @@
  * and only that build knows whether `@astrojs/react` is present.
  */
 
+import { buildProviderProps } from './build-provider-props';
+import { closeDialogSurface } from './close-dialog-surface';
 import type {
 	ConsentDialogAdapter,
 	ConsentDialogContext,
@@ -22,8 +24,6 @@ import type {
 	ConsentDialogPreloadContext,
 } from './register-dialog-adapter';
 import { requireDialogSurface } from './register-dialog-adapter';
-import { closeDialogSurface } from './close-dialog-surface';
-import { buildProviderProps } from './build-provider-props';
 
 /** What the React island exports beside its component. */
 interface ReactDialogSurface {

@@ -29,6 +29,11 @@ import {
 	ConsentButton,
 } from './internal/consent-button';
 import {
+	isConsentCopyEqual,
+	selectConsentCopy,
+} from './internal/consent-copy.model';
+import type { ConsentCopy } from './internal/consent-copy.model';
+import {
 	ConsentSurface,
 	ConsentSurfaceBody,
 	ConsentSurfaceFooter,
@@ -36,8 +41,6 @@ import {
 	ConsentSurfaceTitle,
 	useConsentSurfaceFrame,
 } from './internal/consent-surface';
-import { isConsentCopyEqual, selectConsentCopy } from './internal/consent-copy.model';
-import type { ConsentCopy } from './internal/consent-copy.model';
 import { useAnnounceOnOpen } from './internal/use-announce-on-open';
 import type { ConsentPartStyles } from './theme/consent-theme-parts';
 import type { ConsentTheme } from './theme/create-consent-theme';

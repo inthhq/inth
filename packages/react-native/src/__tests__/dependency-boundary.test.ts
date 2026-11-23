@@ -196,7 +196,10 @@ test('no file an iOS or Android bundle reads names a web twin', () => {
 
 test('each platform twin exports what its native module exports', async () => {
 	const pairs = [
-		[await import('../native/create-consent-client'), await import('../native/create-consent-client.web')],
+		[
+			await import('../native/create-consent-client'),
+			await import('../native/create-consent-client.web'),
+		],
 		[
 			await import('../native/presenter'),
 			await import('../native/presenter.web'),

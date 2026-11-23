@@ -29,14 +29,14 @@ import {
 } from '@inth/sdk/server';
 import type { AstroIntegration } from 'astro';
 
-import { absoluteManifestUrl } from './libs/absolute-manifest-url';
-import { createClassMapPlugin } from './libs/create-class-map-plugin';
 import type {
 	InthAstroOptions,
 	InthMiddlewareOptions,
 	InthResolvedOptions,
 	InthUIAdapterName,
 } from './inth-options.model';
+import { absoluteManifestUrl } from './libs/absolute-manifest-url';
+import { createClassMapPlugin } from './libs/create-class-map-plugin';
 
 const VIRTUAL_ID = 'virtual:inth/options';
 const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ID}`;

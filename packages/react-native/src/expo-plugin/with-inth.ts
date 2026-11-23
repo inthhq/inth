@@ -5,8 +5,20 @@ import { join } from 'node:path';
 import type { ConfigPlugin, ExportedConfig } from 'expo/config-plugins';
 
 import { applyAndroidManifest } from './apply-android-manifest';
-import { withAndroidSdkFloor } from './with-android-sdk-floor';
-import { fetchBundledManifest, manifestBuild } from './fetch-bundled-manifest';
+import {
+	applyInfoPlist,
+	applyLocalizedMarkdownDescriptions,
+	buildPrivacyManifestDeclarations,
+	withIosDeploymentTargetFloor,
+} from './apply-info-plist';
+import { applyProjectBuildGradle } from './apply-project-build-gradle';
+import {
+	assertCustomNativeBuild,
+	assertNoManualAndroidRegistration,
+	assertNoManualGradleRegistration,
+	assertNoManualIosRegistration,
+} from './assert-custom-native-build';
+import type { WorkflowContext } from './assert-custom-native-build';
 import {
 	androidConfig,
 	iosConfig,
@@ -21,20 +33,6 @@ import {
 } from './config-plugins';
 import { EXTRA_KEY } from './constants';
 import {
-	applyGoogleConsentDefaultsToApplication,
-	applyGoogleConsentDefaultsToInfoPlist,
-} from './google-consent-defaults.model';
-import { applyProjectBuildGradle } from './apply-project-build-gradle';
-import {
-	applyInfoPlist,
-	applyLocalizedMarkdownDescriptions,
-	buildPrivacyManifestDeclarations,
-	withIosDeploymentTargetFloor,
-} from './apply-info-plist';
-import { resolveNativeUI, withInthNativeUI } from './with-inth-native-ui';
-import { resolveParams } from './params';
-import type { InthPluginProps, ResolvedInthParams } from './params';
-import {
 	embedPolicyResource,
 	androidPolicyDestination,
 	androidPolicyRulesDestination,
@@ -43,18 +41,20 @@ import {
 	removeXcodeResource,
 	writePolicyRules,
 } from './embed-policy-resource';
-import { resolveTheme, withInthTheme } from './with-inth-theme';
+import { fetchBundledManifest, manifestBuild } from './fetch-bundled-manifest';
+import {
+	applyGoogleConsentDefaultsToApplication,
+	applyGoogleConsentDefaultsToInfoPlist,
+} from './google-consent-defaults.model';
+import { resolveParams } from './params';
+import type { InthPluginProps, ResolvedInthParams } from './params';
 import {
 	assertUpdatesCannotOutrunTheBinary,
 	buildProtocolInfo,
 } from './protocol-info.model';
-import {
-	assertCustomNativeBuild,
-	assertNoManualAndroidRegistration,
-	assertNoManualGradleRegistration,
-	assertNoManualIosRegistration,
-} from './assert-custom-native-build';
-import type { WorkflowContext } from './assert-custom-native-build';
+import { withAndroidSdkFloor } from './with-android-sdk-floor';
+import { resolveNativeUI, withInthNativeUI } from './with-inth-native-ui';
+import { resolveTheme, withInthTheme } from './with-inth-theme';
 
 /** What the plugin publishes under `extra.inth`. */
 export interface InthExtraConfig {

@@ -8,10 +8,6 @@ import { describe, expect, test } from 'vitest';
 import { buildSnapshot } from '../../__tests__/helpers/fake-native';
 import type { ConsentSnapshot } from '../../protocol';
 import {
-	INVALID_NATIVE_SNAPSHOT_CODE,
-	denyAllSnapshot,
-} from '../deny-all-snapshot';
-import {
 	categoryDecision,
 	isCategoryAllowed,
 	isConsentStatusEqual,
@@ -21,6 +17,10 @@ import {
 	selectConsentStatus,
 	shallowEqual,
 } from '../consent-selectors.model';
+import {
+	INVALID_NATIVE_SNAPSHOT_CODE,
+	denyAllSnapshot,
+} from '../deny-all-snapshot';
 
 describe('isCategoryAllowed', () => {
 	test('always allows necessary', () => {

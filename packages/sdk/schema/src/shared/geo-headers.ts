@@ -174,7 +174,11 @@ export const consentInputsToOverrides = function consentInputsToOverrides(
 
 // Client IP derivation lives alongside geo: both recover request metadata
 // from proxy headers, and both are shared so two backends cannot disagree.
-export { getIpAddress, type IpAddressConfig, maskIpAddress } from './client-ip.model';
+export {
+	getIpAddress,
+	type IpAddressConfig,
+	maskIpAddress,
+} from './client-ip.model';
 
 // Origin allowlisting: shared for the same reason as the rest of this
 // module — a security decision that two live backends must not disagree on.

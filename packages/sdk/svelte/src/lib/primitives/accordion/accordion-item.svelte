@@ -7,7 +7,10 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	import { getAccordionRootContext, setAccordionItemContext } from './get-accordion-root-context';
+	import {
+		getAccordionRootContext,
+		setAccordionItemContext,
+	} from './get-accordion-root-context';
 
 	const componentId = $props.id();
 	const root = getAccordionRootContext();

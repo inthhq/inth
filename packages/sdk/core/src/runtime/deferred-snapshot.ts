@@ -16,14 +16,14 @@
 import { readPolicyResolutionWire } from '@inth/sdk-schema/types';
 import type { InitOutput, PolicyResolutionWire } from '@inth/sdk-schema/types';
 
-import { buildInitialSnapshot } from '../kernel/kernel-snapshot.model';
-import type { SSRInitialData } from '../options/ssr-options.model';
 import type {
 	ConsentSnapshot,
 	HydrationRecords,
 	KernelConfig,
 	KernelOverrides,
 } from '../consent-kernel.model';
+import { buildInitialSnapshot } from '../kernel/kernel-snapshot.model';
+import type { SSRInitialData } from '../options/ssr-options.model';
 
 export type { SSRInitialData } from '../options/ssr-options.model';
 // The light half, which a first-load chunk takes on its own.

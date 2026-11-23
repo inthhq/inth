@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { booleanDataAttribute, listDataAttribute } from './data-attribute.model';
+import {
+	booleanDataAttribute,
+	listDataAttribute,
+} from './data-attribute.model';
 
 describe('vendor attribute helpers', () => {
 	describe('booleanDataAttribute', () => {

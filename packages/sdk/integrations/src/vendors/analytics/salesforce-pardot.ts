@@ -3,8 +3,12 @@ import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 import { resolveManifest } from '../../resolve-manifest';
 import { vendorManifestContract } from '../../vendor-manifest.model';
 import type { VendorManifest } from '../../vendor-manifest.model';
-import { readId, skipMissingId, skipScript } from '../_shared/required-id.model';
 import { createScriptReuse } from '../_shared/create-script-reuse';
+import {
+	readId,
+	skipMissingId,
+	skipScript,
+} from '../_shared/required-id.model';
 import { resolveScriptUrl } from '../_shared/script-url.model';
 
 declare global {

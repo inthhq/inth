@@ -2,8 +2,8 @@
  * Category saves from a consent surface.
  */
 
-import { deriveActiveUI } from '../derive-surface';
 import type { ConsentKernel, SaveResult } from '../consent-kernel.model';
+import { deriveActiveUI } from '../derive-surface';
 import { actions, beginAction, isOpen } from './rules';
 
 /**

@@ -5,6 +5,13 @@
  */
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';
 
+import type {
+	ConsentSnapshot,
+	LiftOptOutPayload,
+	OptOutPayload,
+	SaveUISource,
+} from '../consent-kernel.model';
+import { validateOptOutRecord } from '../consent-record/consent-record-validation.model';
 import {
 	answersHeldOptOut,
 	carryOptOutCategories,
@@ -15,16 +22,9 @@ import {
 	policyOptOutCategories,
 } from '../consent-record/types';
 import type { OptionalConsentCategory } from '../consent-record/types';
-import { validateOptOutRecord } from '../consent-record/consent-record-validation.model';
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
 import type { OptOutReceiptData } from '../libs/opt-out-state.model';
 import { createIdempotencyKey } from '../libs/subject-uuid.model';
-import type {
-	ConsentSnapshot,
-	LiftOptOutPayload,
-	OptOutPayload,
-	SaveUISource,
-} from '../consent-kernel.model';
 import type { KernelRuntime } from './create-runtime';
 
 const inCanonicalOrder = function inCanonicalOrder(

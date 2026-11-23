@@ -25,8 +25,8 @@ import type { RuntimePrefetch } from '@inth/sdk/runtime';
 import { resolveRequestConsent, resolveServerMode } from '@inth/sdk/server';
 import type { ManifestFetch, ServerModeInput } from '@inth/sdk/server';
 
-import type { ConsentRoute } from './consent-route.api';
 import { addEarlyTapScript } from './add-early-tap-script';
+import type { ConsentRoute } from './consent-route.api';
 import { startScriptsOnServer } from './start-scripts-on-server';
 
 const ADAPTER = '@inth/angular';

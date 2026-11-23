@@ -3,7 +3,10 @@ import type { Script } from '@inth/sdk/engine';
 import { resolveManifest } from '../../resolve-manifest';
 import { vendorManifestContract } from '../../vendor-manifest.model';
 import type { VendorManifest } from '../../vendor-manifest.model';
-import { booleanDataAttribute, listDataAttribute } from '../_shared/data-attribute.model';
+import {
+	booleanDataAttribute,
+	listDataAttribute,
+} from '../_shared/data-attribute.model';
 import { readId, skipMissingId } from '../_shared/required-id.model';
 import { resolveScriptUrl } from '../_shared/script-url.model';
 

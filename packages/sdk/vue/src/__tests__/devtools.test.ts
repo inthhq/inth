@@ -12,7 +12,10 @@ import ConsentDevToolsDefault, {
 	DevTools,
 } from '../devtools';
 import { consentConfigKey } from '../runtime/composables/config';
-import { symbolKernelContext, symbolKernel } from '../runtime/utils/consent-symbols.model';
+import {
+	symbolKernelContext,
+	symbolKernel,
+} from '../runtime/utils/consent-symbols.model';
 import { createVueConsentKernelContext } from './test-kernel';
 
 const KernelProvider = defineComponent({

@@ -3,8 +3,8 @@ import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 import { resolveManifest } from '../../resolve-manifest';
 import { vendorManifestContract } from '../../vendor-manifest.model';
 import type { VendorManifest } from '../../vendor-manifest.model';
-import { readId, skipMissingId } from '../_shared/required-id.model';
 import { createScriptReuse, equalConfig } from '../_shared/create-script-reuse';
+import { readId, skipMissingId } from '../_shared/required-id.model';
 import { resolveScriptUrl } from '../_shared/script-url.model';
 
 /** JSON values accepted by the Gainsight PX configuration and identify APIs. */

@@ -31,14 +31,13 @@ import type { ConsentRuntime, ConsentRuntimeOptions } from '@inth/sdk/runtime';
 import { createV1HostedTransport, hosted } from '@inth/sdk/transports';
 
 import { normalizeProjectUrl } from '../expo-plugin/project-url';
-import { denyAllSnapshot } from '../lib/deny-all-snapshot';
 import {
 	categoryDecision,
 	isCategoryAllowed,
 	isPromptOwed,
 	isSnapshotReady,
 } from '../lib/consent-selectors.model';
-import { isTrackingPermitted } from '../tracking/tracking-permission.model';
+import { denyAllSnapshot } from '../lib/deny-all-snapshot';
 import type {
 	ConsentClient,
 	SnapshotEquality,
@@ -54,17 +53,18 @@ import type {
 	TrackingAuthorization,
 	TrackingRequestPayload,
 } from '../protocol';
+import type {
+	AllConsentNames,
+	OptionalConsentCategory,
+} from '../protocol/consent-vocabulary.model';
+import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/consent-vocabulary.model';
 import { DEFAULT_NATIVE_LANGUAGE } from '../protocol/native-overrides.model';
 import {
 	MAX_SUPPORTED_PROTOCOL_VERSION,
 	MIN_SUPPORTED_PROTOCOL_VERSION,
 	PROTOCOL_VERSION,
 } from '../protocol/protocol-version.model';
-import type {
-	AllConsentNames,
-	OptionalConsentCategory,
-} from '../protocol/consent-vocabulary.model';
-import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/consent-vocabulary.model';
+import { isTrackingPermitted } from '../tracking/tracking-permission.model';
 import type { WebConsentOptions } from './web-options-from-manifest.web';
 
 /**

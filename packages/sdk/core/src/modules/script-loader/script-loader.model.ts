@@ -10,6 +10,12 @@
  * can share them. They are not re-exported from `index.ts`.
  */
 
+import type {
+	ConsentKernel,
+	ConsentSnapshot,
+	ConsentState,
+	KernelIABState,
+} from '../../consent-kernel.model';
 import type { AllConsentNames } from '../../consent/consent-types';
 import type { extractConsentNamesFromCondition } from '../../libs/has';
 import type { dispatchScriptDebugEvent } from '../../libs/script-loader/debug';
@@ -25,12 +31,6 @@ import type {
 	vendorAxisActive,
 	withoutOwnedVendors,
 } from '../../libs/vendors';
-import type {
-	ConsentKernel,
-	ConsentSnapshot,
-	ConsentState,
-	KernelIABState,
-} from '../../consent-kernel.model';
 import type {
 	deniedVendorIds,
 	evaluateConsent,

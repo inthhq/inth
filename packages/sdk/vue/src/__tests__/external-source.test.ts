@@ -4,7 +4,10 @@ import { expect, test, vi } from 'vitest';
 import { defineComponent, h, inject, nextTick } from 'vue';
 
 import PanelTrigger from '../runtime/components/panel-trigger.vue';
-import { symbolKernel, symbolActiveUI } from '../runtime/utils/consent-symbols.model';
+import {
+	symbolKernel,
+	symbolActiveUI,
+} from '../runtime/utils/consent-symbols.model';
 import { inth } from './test-plugin';
 
 test('Vue plugin options own one external authority and share script lifecycle', async () => {

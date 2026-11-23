@@ -11,7 +11,10 @@
 export { DeferredConsentBanner, DeferredConsentDialog } from './surfaces';
 export { DeferredOptOutConfirmation } from './deferred-opt-out-confirmation';
 export type { ConsentBoot, RootEngineInputs } from './boot';
-export type { DeferredCommitConfig, DeferredCommitted } from './deferred-committed.model';
+export type {
+	DeferredCommitConfig,
+	DeferredCommitted,
+} from './deferred-committed.model';
 export {
 	awaitsChoice,
 	canDeferEngineAfterChoice,
@@ -27,10 +30,16 @@ export {
 	startsScriptsWithoutEngine,
 	useConsentBootPlan,
 } from './use-consent-boot-plan';
-export type { DeferredEngine, DeferredKernelHandle } from './create-deferred-kernel';
+export type {
+	DeferredEngine,
+	DeferredKernelHandle,
+} from './create-deferred-kernel';
 export { learnEngineChunks } from './engine-preload.store';
 export { isRunnableNow, scriptsNeedEngine } from './runnable-script.model';
 export { record, read, recordOnce } from './deferred-session-context';
 export type { Recorded } from './deferred-session-context';
-export type { DeferredConsentShellProps, DeferredShellOptions } from './deferred-consent-shell';
+export type {
+	DeferredConsentShellProps,
+	DeferredShellOptions,
+} from './deferred-consent-shell';
 export { DeferredConsentShell } from './deferred-consent-shell';

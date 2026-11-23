@@ -14,10 +14,10 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useConsentLabels } from '~/component-hooks/use-consent-labels';
 import { useTranslations } from '~/component-hooks/use-translations';
 import { useTriggerLabels } from '~/component-hooks/use-trigger-labels';
-import { useDevToolsLauncher } from '~/use-dev-tools-launcher';
 import { usePolicyRule, useResolvedPresentation } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import type { ClassNameStyle } from '~/types/theme';
+import { useDevToolsLauncher } from '~/use-dev-tools-launcher';
 import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
@@ -29,8 +29,8 @@ import type {
 	TriggerSize,
 } from '../consent-dialog-trigger.model';
 import { TriggerIcon } from './trigger-icon';
-import { useTriggerContext } from './trigger-root';
 import { DevToolsIcon } from './trigger-icons';
+import { useTriggerContext } from './trigger-root';
 
 const cornerClassMap = {
 	'bottom-left': styles.bottomLeft,

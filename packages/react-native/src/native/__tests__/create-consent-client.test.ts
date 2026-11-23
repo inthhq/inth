@@ -25,7 +25,6 @@ import {
 import { shallowEqual } from '../../lib/consent-selectors.model';
 import { TRACKING_AUTHORIZATION_STATUSES } from '../../protocol';
 import type { ConsentSnapshot } from '../../protocol';
-import { NativeBridgeError } from '../native-bridge-error';
 import {
 	createConsentClient,
 	getConsentClient,
@@ -35,6 +34,7 @@ import type { ConsentClient } from '../create-consent-client';
 import { getNativeInthEvents } from '../get-native-inth';
 import type { NativeInthTurboModule } from '../get-native-inth';
 import { InthProtocolMismatchError } from '../inth-protocol-mismatch-error';
+import { NativeBridgeError } from '../native-bridge-error';
 
 /** Build a client over a fresh fake module. */
 const makeClient = function makeClient(

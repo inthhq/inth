@@ -26,9 +26,9 @@ import {
 	resolveOptions,
 	toClientOptions,
 } from '../integration';
+import type { InthAstroOptions } from '../inth-options.model';
 import { hosted as hostedMode, manifest as manifestMode } from '../mode';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions } from '../inth-options.model';
 
 interface SetupCalls {
 	addMiddleware: ReturnType<typeof vi.fn>;

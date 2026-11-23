@@ -1,7 +1,7 @@
+import type { HydrationRecords } from '../packages/sdk/core/src/consent-kernel.model';
 import type { ConsentPresentation } from '../packages/sdk/core/src/libs/policy-actions';
 import type { ProviderTransportFactory } from '../packages/sdk/core/src/transports/mode';
 import { createOfflineTransport } from '../packages/sdk/core/src/transports/offline';
-import type { HydrationRecords } from '../packages/sdk/core/src/consent-kernel.model';
 import {
 	createPolicyRuleFingerprints,
 	normalizePolicyRule,

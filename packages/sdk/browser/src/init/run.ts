@@ -41,23 +41,29 @@ import {
 } from '@inth/sdk-core/surface-actions/plain-scripts';
 import { resolveOptOut } from '@inth/sdk-core/surface-state';
 
-import { mergeClientOptions, readPageOptions } from '../script-tag-options.model';
-import { dropRejection } from '../drop-rejection';
 import { activateGatedScripts } from '../activate-gated-scripts';
+import type {
+	ConsentClient,
+	ScriptTagClientOptions,
+} from '../consent-client.model';
 import type { GlobalApiBase, QueuedCall } from '../create-global-with';
+import { dropRejection } from '../drop-rejection';
 import { GLOBAL_NAME } from '../global-name';
 import { hasDecided } from '../has-decided';
 import { ACTION_ATTRIBUTE, PREFERENCES_HASH } from '../page-actions.model';
-import type { ConsentClient, ScriptTagClientOptions } from '../consent-client.model';
+import {
+	mergeClientOptions,
+	readPageOptions,
+} from '../script-tag-options.model';
 import { version } from '../version';
-import { BOOT_KEY } from './read-boot';
-import type { InitBoot, InitRecordsPart } from './read-boot';
-import { supportsEarlyStart } from './supports-early-start';
 import { hostedMarker, readHostedMarker } from './hosted-marker';
 import { partSrc } from './part-src';
 import type { InitFile } from './part-src';
 import { readPolicyCache, writePolicyCache } from './policy-cache.store';
+import { BOOT_KEY } from './read-boot';
+import type { InitBoot, InitRecordsPart } from './read-boot';
 import { scheduleEngine } from './schedule-engine';
+import { supportsEarlyStart } from './supports-early-start';
 
 /**
  * How long the engine waits for the init script's `/v1/consent/init`

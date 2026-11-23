@@ -24,7 +24,10 @@ import {
 } from '../../__tests__/helpers/react-native-stub';
 import { useInthBootstrap } from '../../hooks/use-inth-bootstrap';
 import { useSnapshot } from '../../hooks/use-snapshot';
-import { createConsentClient, resetConsentClient } from '../../native/create-consent-client';
+import {
+	createConsentClient,
+	resetConsentClient,
+} from '../../native/create-consent-client';
 import { NATIVE_INTH_MODULE_NAME } from '../../protocol';
 import { buildFakeSnapshot } from '../../testing/create-fake-native-inth';
 import { InthProvider } from '../inth-provider';

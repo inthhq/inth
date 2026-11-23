@@ -16,7 +16,10 @@ export {
 	policyTypeSchema,
 } from './consent-policy.model';
 
-export { type ConsentPurpose, consentPurposeSchema } from './consent-purpose.model';
+export {
+	type ConsentPurpose,
+	consentPurposeSchema,
+} from './consent-purpose.model';
 
 export { type Domain, domainSchema } from './domain.model';
 export {

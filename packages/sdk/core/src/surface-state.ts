@@ -22,7 +22,10 @@ export { has } from './libs/has';
 export type { HasCondition } from './libs/has';
 export { deniedVendorIds } from './modules/vendor-denial';
 export { vendorsListedUnder } from './libs/vendor-listing';
-export { IABUnavailableError, policyNeedsIAB } from './libs/iab-unavailable-error';
+export {
+	IABUnavailableError,
+	policyNeedsIAB,
+} from './libs/iab-unavailable-error';
 export { resolveConsentPresentation } from './libs/policy-actions';
 export { resolvePrivacyChoicesLink } from './libs/resolve-privacy-choices-link';
 export type { PrivacyChoicesLinkState } from './libs/resolve-privacy-choices-link';

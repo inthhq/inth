@@ -18,6 +18,11 @@
  * dropped, and the banner shows again.
  */
 
+import type {
+	ConsentKernel,
+	ConsentSnapshot,
+	SaveUISource,
+} from '../consent-kernel.model';
 import type { AllConsentNames } from '../consent/consent-types';
 import {
 	EARLY_TAP_ROOT,
@@ -28,7 +33,6 @@ import type {
 	EarlyConsentTap,
 	EarlyConsentTapQueue,
 } from '../libs/page-globals';
-import type { ConsentKernel, ConsentSnapshot, SaveUISource } from '../consent-kernel.model';
 import { optOutConsentSurface } from './opt-out';
 import { showConsentSurface } from './rules';
 import { saveConsentSurface } from './save-consent-surface';

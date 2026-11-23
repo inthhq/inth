@@ -31,9 +31,13 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type {
+	HydrationRecords,
+	InitResponse,
+	KernelConfig,
+} from '../../consent-kernel.model';
 import { createConsentKernel } from '../../kernel';
 import { readStoredRecordsFromCookieHeader } from '../../modules/persistence/persistence-hydrate.store';
-import type { HydrationRecords, InitResponse, KernelConfig } from '../../consent-kernel.model';
 
 /**
  * The fixture policy: opt-in, strict scope over marketing and measurement,

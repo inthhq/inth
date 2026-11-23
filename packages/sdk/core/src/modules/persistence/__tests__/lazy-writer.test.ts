@@ -18,6 +18,7 @@ import {
 	NOW,
 	optInRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
+import type { SaveResult } from '../../../consent-kernel.model';
 import { createKernel as createConsentKernel } from '../../../kernel';
 import type { InternalKernel } from '../../../kernel/kernel-internals.model';
 import { SURFACE_ROOT_ATTRIBUTE } from '../../../libs/page-globals';
@@ -26,11 +27,10 @@ import {
 	PENDING_SAVES_STORAGE_KEY,
 	STORAGE_KEY_V2,
 } from '../../../libs/storage-keys';
-import type { SaveResult } from '../../../consent-kernel.model';
 import { watchRevocationReload } from '../../revocation-reload';
 import { createScriptLoader } from '../../script-loader';
-import { readStoredRecordsForReconcile } from '../persistence-hydrate.store';
 import { mountPersistence as createPersistence, queuedWrites } from '../mount';
+import { readStoredRecordsForReconcile } from '../persistence-hydrate.store';
 import {
 	readStoredConsentRecord,
 	readStoredNoticeDismissal,

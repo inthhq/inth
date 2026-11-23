@@ -8,8 +8,12 @@
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
+import type {
+	KernelConfig,
+	SavePayload,
+	SaveResult,
+} from '../../consent-kernel.model';
 import { ConsentSaveRejectedError } from '../../index';
-import type { KernelConfig, SavePayload, SaveResult } from '../../consent-kernel.model';
 import { createKernel } from '../index';
 import type { InternalKernel } from '../kernel-internals.model';
 import { createMemoryOutboxStore } from '../save-outbox';

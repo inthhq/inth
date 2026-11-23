@@ -13,11 +13,11 @@ import { afterEach, expect, test, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
-import type { RootBoot } from '../lib/deferred/read-consent-boot';
-import { createRootEngine } from '../lib/deferred/engine';
+import { createOwnedRuntime } from '../lib/create-owned-runtime';
 import { createDeferredRuntime } from '../lib/deferred/create-deferred-runtime';
 import type { EngineFactory } from '../lib/deferred/create-deferred-runtime';
-import { createOwnedRuntime } from '../lib/create-owned-runtime';
+import { createRootEngine } from '../lib/deferred/engine';
+import type { RootBoot } from '../lib/deferred/read-consent-boot';
 import { runtimeOptionsFor } from '../lib/resolve-provider-options';
 import type { ProviderOptionsInput } from '../lib/resolve-provider-options';
 import { transportMode } from './fixtures/transport-mode';

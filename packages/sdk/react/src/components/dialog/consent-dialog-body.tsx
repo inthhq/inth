@@ -54,8 +54,8 @@ import {
 	AdvertisingRow,
 	CategoryGroup,
 } from '~/components/parts/category-group';
-import { RightsReceipt } from '~/components/parts/rights-receipt';
 import { takeReceiptFocus } from '~/components/parts/receipt-focus.model';
+import { RightsReceipt } from '~/components/parts/rights-receipt';
 import { SaleRightsRow } from '~/components/parts/sale-rights-row';
 import { usePhoneLayout } from '~/components/parts/use-phone-layout';
 import { useSurfaceSession } from '~/components/parts/use-surface-session';
@@ -83,8 +83,8 @@ import { useBrowserLayoutEffect } from '~/hooks/use-browser-layout-effect';
 import { useReducedMotion } from '~/hooks/use-reduced-motion';
 import { useResolvedPresentation } from '~/hooks/use-resolved-presentation';
 import { useTextDirection } from '~/hooks/use-text-direction';
-import { useKernel } from '~/use-kernel-selector';
 import type { ReactSlotProps } from '~/types/react-slots.model';
+import { useKernel } from '~/use-kernel-selector';
 import { useUIConfig } from '~/use-ui-config';
 import { inertProps } from '~/utils/inert-props';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';

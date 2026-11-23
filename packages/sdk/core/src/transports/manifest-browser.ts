@@ -20,16 +20,20 @@ import type {
 	ResolveInitFromManifestInputs,
 } from '@inth/sdk-schema/types';
 
-import { readGlobalPrivacyControl } from '../libs/read-global-privacy-control';
+import type {
+	InitContext,
+	KernelOverrides,
+	KernelTransport,
+} from '../consent-kernel.model';
 import { createUnreportedJourneys } from '../libs/journey.store';
-import { warnManifestFallback } from '../libs/warn-manifest-fallback';
+import { readGlobalPrivacyControl } from '../libs/read-global-privacy-control';
 import { trimSlash } from '../libs/trim-slash';
+import { warnManifestFallback } from '../libs/warn-manifest-fallback';
 import type {
 	ManifestModeBaseOptions,
 	ManifestModeInputs,
 	ManifestModeSourceOptions,
 } from '../modes';
-import type { InitContext, KernelOverrides, KernelTransport } from '../consent-kernel.model';
 import { earlyInitModes } from './early-init-modes';
 import type { EarlyInitMode } from './early-init-modes';
 import type { TransportInitResponse } from './init-output';

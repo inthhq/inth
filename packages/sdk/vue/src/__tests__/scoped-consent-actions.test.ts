@@ -10,7 +10,10 @@ import { defineComponent, h, ref } from 'vue';
 import ConsentActions from '../runtime/components/actions.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import { useConsentSave } from '../runtime/composables/use-consent';
-import { symbolInit, symbolKernel } from '../runtime/utils/consent-symbols.model';
+import {
+	symbolInit,
+	symbolKernel,
+} from '../runtime/utils/consent-symbols.model';
 
 describe('displayed consent actions', () => {
 	test.each(['all', 'none'] as const)(

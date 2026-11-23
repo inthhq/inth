@@ -181,7 +181,10 @@ export {
 	selectConsentStatus,
 	shallowEqual,
 } from './lib/consent-selectors.model';
-export type { ConsentDecision, ConsentStatus } from './lib/consent-selectors.model';
+export type {
+	ConsentDecision,
+	ConsentStatus,
+} from './lib/consent-selectors.model';
 export {
 	InthProtocolMismatchError,
 	createConsentClient,

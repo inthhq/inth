@@ -31,7 +31,10 @@ export type {
 } from './api/legal-document';
 export type { StatusOutput } from './api/meta';
 export { CONSENT_MODELS } from './api/consent-session.model';
-export type { ConsentSessionReport, ConsentSessionSource } from './api/consent-session.model';
+export type {
+	ConsentSessionReport,
+	ConsentSessionSource,
+} from './api/consent-session.model';
 export type {
 	ConsentItem,
 	GetSubjectInput,

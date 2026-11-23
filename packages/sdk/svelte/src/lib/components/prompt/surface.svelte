@@ -99,7 +99,10 @@
 	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 	import { onMount, untrack } from 'svelte';
 
-	import { getConsentContext, getThemeContext } from '../../get-consent-context.svelte';
+	import {
+		getConsentContext,
+		getThemeContext,
+	} from '../../get-consent-context.svelte';
 	import { registerDialogWarmer, warmDialog } from '../../warm-dialog';
 	import ConsentButton from '../action-button.svelte';
 	import BrandMark from '../icons/brand-mark.svelte';

@@ -1,7 +1,10 @@
 import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve-manifest';
-import { runtimeTimestampValue, vendorManifestContract } from '../../vendor-manifest.model';
+import {
+	runtimeTimestampValue,
+	vendorManifestContract,
+} from '../../vendor-manifest.model';
 import type { VendorManifest } from '../../vendor-manifest.model';
 import { readId, skipMissingId } from '../_shared/required-id.model';
 import { trimToUndefined } from '../_shared/script-url.model';

@@ -17,7 +17,10 @@
 import type { WithProjectUrl } from '@inth/sdk-core/runtime';
 
 import { createConsentClient as createClient } from './client';
-import type { ConsentClient, ConsentClientOptions } from './consent-client.model';
+import type {
+	ConsentClient,
+	ConsentClientOptions,
+} from './consent-client.model';
 
 const PKG = '@inth/sdk/headless';
 

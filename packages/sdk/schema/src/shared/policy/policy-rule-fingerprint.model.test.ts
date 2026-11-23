@@ -9,8 +9,6 @@ import {
 	SAFE_FALLBACK_POLICY_FINGERPRINTS,
 	safeFallbackPolicyRule,
 } from './policy-resolution.model';
-import { normalizePolicyRule } from './policy-rule.model';
-import type { PolicyRule, ResolvedPolicyRule } from './policy-rule.model';
 import {
 	CHOICE_PROMPT_FINGERPRINT_VERSION,
 	choicePromptFingerprintInput,
@@ -21,6 +19,8 @@ import {
 	POLICY_FINGERPRINT_VERSION,
 	policyFingerprintInput,
 } from './policy-rule-fingerprint.model';
+import { normalizePolicyRule } from './policy-rule.model';
+import type { PolicyRule, ResolvedPolicyRule } from './policy-rule.model';
 
 const choiceRule: PolicyRule = {
 	id: 'review',

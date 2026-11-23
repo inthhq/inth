@@ -22,9 +22,9 @@ import { offlineMode } from '../../__tests__/fixtures/transport-mode';
 import { ALL_CATEGORIES, testLocal } from '../../__tests__/test-local';
 import { ConsentManager } from '../core/consent-manager';
 import { provideInth } from '../core/provide-inth';
+import { ConsentBanner } from './consent-banner';
 import { PROMPT_LOADERS } from './prompt-loaders';
 import type { PromptLoaders } from './prompt-loaders';
-import { ConsentBanner } from './consent-banner';
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,

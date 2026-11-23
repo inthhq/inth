@@ -7,12 +7,12 @@ import {
 } from '@inth/sdk-iab/headless';
 import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
-import { classes } from '../generated/iab-styles';
 import type { ConsentUIOptions } from '../consent-client.model';
-import { renderActionFooter, resolveActions } from '../ui/render-action-footer';
+import { classes } from '../generated/iab-styles';
 import { renderBranding } from '../ui/branding';
-import { resolveCopy } from '../ui/resolve-copy';
 import { cx, h, markLateEntry, supportsStartingStyle } from '../ui/dom';
+import { renderActionFooter, resolveActions } from '../ui/render-action-footer';
+import { resolveCopy } from '../ui/resolve-copy';
 import { renderLegalLinks } from '../ui/surface';
 import type { Surface, SurfaceContext } from '../ui/surface';
 import { createIABPreferences } from './create-iab-preferences';

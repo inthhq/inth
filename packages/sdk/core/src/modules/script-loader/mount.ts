@@ -1,3 +1,4 @@
+import type { ConsentSnapshot } from '../../consent-kernel.model';
 /**
  * DOM mount / unmount.
  *
@@ -17,10 +18,13 @@ import type {
 	STARTED_KEY,
 	StartedElement,
 } from '../../libs/page-globals';
-import type { ConsentSnapshot } from '../../consent-kernel.model';
 import { isCallbackOnly } from './is-callback-only';
-import { buildCallbackInfo, hasAnyCallback, invokeCallback } from './script-callbacks.model';
 import type { ElementIdResolver } from './normalize-scripts';
+import {
+	buildCallbackInfo,
+	hasAnyCallback,
+	invokeCallback,
+} from './script-callbacks.model';
 import type {
 	PendingMount,
 	Script,

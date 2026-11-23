@@ -19,12 +19,6 @@ import * as v from 'valibot';
 
 import { isPlainPolicyObject } from '../../shared/policy/policy-rule.model';
 import {
-	v1CanonicalSubjectIdSchema,
-	v1IdempotencyKeySchema,
-	v1SubjectIdSchema,
-} from './v1-common.model';
-import { V1_DOCUMENT_HASH_PATTERN } from './v1-constants.model';
-import {
 	documentAcceptancesRequestSchema,
 	documentAcceptancesResponseSchema,
 	documentCheckResponseSchema,
@@ -35,6 +29,12 @@ import {
 	getV1DocumentsCheckQuerySchema,
 } from './generated/schemas';
 import { jsonObject } from './json-schema';
+import {
+	v1CanonicalSubjectIdSchema,
+	v1IdempotencyKeySchema,
+	v1SubjectIdSchema,
+} from './v1-common.model';
+import { V1_DOCUMENT_HASH_PATTERN } from './v1-constants.model';
 
 /** Document type: lowercase letters, digits and underscores. */
 export const v1DocumentTypeSchema =

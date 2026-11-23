@@ -14,23 +14,23 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type { ConsentKernel, KernelConfig } from '../../consent-kernel.model';
 import { createConsentKernel } from '../../kernel';
 import { createPreferenceDraft } from '../../preference-draft';
 import { showConsentSurface } from '../../surface-actions/rules';
-import type { ConsentKernel, KernelConfig } from '../../consent-kernel.model';
 import {
 	commitBannerChoice,
 	commitDialogChoice,
 	confirmSaleRight,
 	pressSaleRight,
 } from '../commands';
+import { getSurfaceSession } from '../session';
 import {
 	resolveBannerCommit,
 	resolveRightPress,
 	resolveSaleRight,
 } from '../surface-rights.model';
 import type { RightPressInput } from '../surface-rights.model';
-import { getSurfaceSession } from '../session';
 
 const CATEGORIES = [
 	'necessary',

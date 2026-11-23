@@ -8,11 +8,11 @@ import { baseTranslations } from '@inth/sdk/translations/all';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import { resolveOptions } from '../integration';
 import { createConsentMiddleware } from '../create-consent-middleware';
+import { resolveOptions } from '../integration';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { hosted as hostedMode, manifest as manifestMode } from '../mode';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { testRule, testWire } from './policy-fixture';
 
 interface RunInput {

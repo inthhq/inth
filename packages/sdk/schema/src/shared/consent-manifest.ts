@@ -5,8 +5,8 @@ import {
 	AD_TECH_PROVIDERS_URL,
 	normalizeAdTechProviderIds,
 } from './ad-tech-provider.model';
-import { DEFAULT_BRANDING, DEFAULT_GVL_ENDPOINT } from './schema-constants.model';
-import type { brandingValues, hostingValues } from './schema-constants.model';
+import { getTranslationsData } from './get-translations-data';
+import type { I18nOptions, LoggerLike } from './get-translations-data';
 import { createDeterministicFingerprintSync } from './policy/policy-fingerprint.model';
 import { primaryLanguage } from './policy/policy-i18n-validation.model';
 import {
@@ -15,14 +15,23 @@ import {
 	writePolicyResolutionWire,
 } from './policy/policy-resolution.model';
 import type { PolicyResolution } from './policy/policy-resolution.model';
-import { inspectPolicyRules, normalizePolicyRule } from './policy/policy-rule.model';
-import type { PolicyRule, ResolvedPolicyRule } from './policy/policy-rule.model';
 import { createPolicyRuleFingerprints } from './policy/policy-rule-fingerprint.model';
 import type { PolicyFingerprints } from './policy/policy-rule-fingerprint.model';
+import {
+	inspectPolicyRules,
+	normalizePolicyRule,
+} from './policy/policy-rule.model';
+import type {
+	PolicyRule,
+	ResolvedPolicyRule,
+} from './policy/policy-rule.model';
 import type { PolicyMatch } from './policy/policy-runtime.model';
+import {
+	DEFAULT_BRANDING,
+	DEFAULT_GVL_ENDPOINT,
+} from './schema-constants.model';
+import type { brandingValues, hostingValues } from './schema-constants.model';
 import type { ScriptRegistryWire } from './script-sources.model';
-import { getTranslationsData } from './get-translations-data';
-import type { I18nOptions, LoggerLike } from './get-translations-data';
 import type { Vendor } from './vendor.model';
 
 type ConsentManifestBranding = (typeof brandingValues)[number];

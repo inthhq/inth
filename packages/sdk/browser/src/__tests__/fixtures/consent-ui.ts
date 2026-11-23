@@ -13,12 +13,12 @@ import type {
 import type { PolicyRule } from '@inth/sdk-schema/types';
 import type { ComponentSlots } from '@inth/sdk-ui/theme';
 
-import { createTestingConsentClient } from '../../testing-global';
 import type {
 	ConsentBannerOptions,
 	ConsentClient,
 	ConsentDialogOptions,
 } from '../../consent-client.model';
+import { createTestingConsentClient } from '../../testing-global';
 import { mountConsentUI } from '../../ui/mount-consent-ui';
 
 export type Region = 'eu' | 'us-opt-in' | 'us-notice' | 'us-opt-out';

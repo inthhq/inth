@@ -7,9 +7,9 @@ import { CONSENT_BOOT_ATTRIBUTE } from '../browser/start-deferred-client';
 import ConsentScript from '../components/consent-script.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { testRule } from './policy-fixture';
 
 let container: AstroContainer;

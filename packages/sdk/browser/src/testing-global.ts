@@ -7,17 +7,17 @@
 import { createTestingMode } from '@inth/sdk-core/testing';
 import type { TestingModeOptions } from '@inth/sdk-core/testing';
 
-import { readList, readScriptOptions } from './script-tag-options.model';
-import { createConsentClientWith } from './create-consent-client-with';
-import type { CreateConsentClientContext } from './create-consent-client-with';
-import { createGlobalWith } from './create-global-with';
-import type { GlobalApiBase } from './create-global-with';
-import { resolveRules } from './policy-rules';
 import type {
 	ConsentClient,
 	ScriptTagClientOptions,
 	TestingScriptTagOptions,
 } from './consent-client.model';
+import { createConsentClientWith } from './create-consent-client-with';
+import type { CreateConsentClientContext } from './create-consent-client-with';
+import { createGlobalWith } from './create-global-with';
+import type { GlobalApiBase } from './create-global-with';
+import { resolveRules } from './policy-rules';
+import { readList, readScriptOptions } from './script-tag-options.model';
 
 const ENTRY = '@inth/sdk/testing';
 

@@ -19,6 +19,16 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type {
+	KernelConfig,
+	KernelTransport,
+	LiftOptOutPayload,
+	LiftOptOutTransportResult,
+	OptOutPayload,
+	OptOutTransportResult,
+	SavePayload,
+	SaveResult,
+} from '../../consent-kernel.model';
 import {
 	optInPromptAllowedAt,
 	OPT_OUT_REPROMPT_WAIT_MS,
@@ -37,16 +47,6 @@ import {
 	v1Error,
 } from '../../transports/v1/__tests__/fixtures';
 import { createV1HostedTransport } from '../../transports/v1/hosted';
-import type {
-	KernelConfig,
-	KernelTransport,
-	LiftOptOutPayload,
-	LiftOptOutTransportResult,
-	OptOutPayload,
-	OptOutTransportResult,
-	SavePayload,
-	SaveResult,
-} from '../../consent-kernel.model';
 import { clearKernelRecords } from '../clear-records.model';
 import { createKernel } from '../index';
 import type { InternalKernel } from '../kernel-internals.model';

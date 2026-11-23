@@ -5,6 +5,7 @@ import type {
 	ScriptRegistryWire,
 	ScriptSourcesWire,
 } from '../../../shared/script-sources.model';
+import type { components, operations } from '../generated/types';
 import type { v1ErrorBodySchema } from '../v1-common.model';
 import type {
 	v1ConsentInitOutputSchema,
@@ -26,7 +27,6 @@ import type {
 	v1DocumentPublishInputSchema,
 	v1DocumentPublishOutputSchema,
 } from '../v1-documents.model';
-import type { components, operations } from '../generated/types';
 import type {
 	v1SubjectIdentityTokenInputSchema,
 	v1SubjectIdentityTokenOutputSchema,

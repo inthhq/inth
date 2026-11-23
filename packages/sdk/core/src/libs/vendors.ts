@@ -15,13 +15,13 @@
 import { compareCanonical } from '@inth/sdk-schema/canonical-order';
 import type { Vendor } from '@inth/sdk-schema/types';
 
-import type { AllConsentNames } from '../consent/consent-types';
 import type {
 	ConsentKernel,
 	ConsentSnapshot,
 	ResolvedVendor,
 	VendorSource,
 } from '../consent-kernel.model';
+import type { AllConsentNames } from '../consent/consent-types';
 import type { HasCondition } from './has';
 import { extractConsentNamesFromCondition } from './has';
 import type { VendorDetails } from './script-loader/script.model';

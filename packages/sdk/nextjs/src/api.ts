@@ -10,7 +10,10 @@ import type {
 } from '@inth/sdk/server';
 
 import type { ConsentSourceOptions } from './resolve-consent-source';
-import { readConfigRoutePrefix, resolveConsentSource } from './resolve-consent-source';
+import {
+	readConfigRoutePrefix,
+	resolveConsentSource,
+} from './resolve-consent-source';
 
 const DEFAULT_MANIFEST_REVALIDATE_SECONDS = 300;
 

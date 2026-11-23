@@ -31,7 +31,6 @@ import {
 	useConsentInit,
 } from '#inth/composables';
 
-import { useResolvedPresentation } from '../composables/use-experiment';
 import {
 	useConsentKernel,
 	useConsentSnapshot,
@@ -41,6 +40,7 @@ import {
 	usePromptRequirement,
 } from '../composables/use-consent-kernel';
 import { useDevToolsLauncher } from '../composables/use-devtools-launcher';
+import { useResolvedPresentation } from '../composables/use-experiment';
 import { useMounted } from '../composables/use-mounted';
 import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import { slotAttrs } from '../utils/slot-attrs';

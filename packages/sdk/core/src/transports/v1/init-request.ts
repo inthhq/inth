@@ -5,6 +5,7 @@ import {
 	extractConsentRequestInputs,
 } from '@inth/sdk-schema/types';
 
+import type { InitContext } from '../../consent-kernel.model';
 import {
 	browserInitCredentials,
 	buildRequestContextHeaders,
@@ -12,7 +13,6 @@ import {
 	buildRequestContextSentHeaders,
 	DEFAULT_INIT_CREDENTIALS,
 } from '../../libs/request-context-headers.model';
-import type { InitContext } from '../../consent-kernel.model';
 import { trimTrailingSlash, V1_ROUTES } from './v1-routes';
 
 export interface V1InitRequest {

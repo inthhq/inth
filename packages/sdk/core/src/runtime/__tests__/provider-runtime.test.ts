@@ -10,22 +10,22 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { choiceRecords, NOW } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
+import type { KernelTransport } from '../../consent-kernel.model';
 import { createNetworkBlocker } from '../../modules/network-blocker';
 import type { NetworkHold } from '../../modules/network-blocker/hold';
 import type { ProviderTransportContext } from '../../transports/mode';
-import type { KernelTransport } from '../../consent-kernel.model';
-import {
-	createConsentProviderRuntime,
-	defaultRuntimeModules,
-	lazyRuntimeModule,
-	streamPrefetch,
-} from '../index';
 import type {
 	ConsentProviderRuntime,
 	ConsentProviderRuntimeOptions,
 	ConsentRuntimeModules,
 	RuntimePrefetch,
 } from '../consent-runtime.model';
+import {
+	createConsentProviderRuntime,
+	defaultRuntimeModules,
+	lazyRuntimeModule,
+	streamPrefetch,
+} from '../index';
 
 const RESOLVED_PREFETCH: RuntimePrefetch = {
 	initialPolicyResolution: resolvePolicyRules({

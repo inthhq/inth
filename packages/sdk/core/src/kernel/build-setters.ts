@@ -1,3 +1,13 @@
+import type {
+	ConsentState,
+	KernelActiveUI,
+	KernelConfig,
+	KernelIABState,
+	KernelOverrides,
+	KernelVendorsState,
+	ResolvedVendor,
+	VendorSource,
+} from '../consent-kernel.model';
 /**
  * Synchronous setters exposed at `kernel.set.*` for the inputs that are
  * neither a choice nor a record: surfaces, categories, overrides, signals,
@@ -16,19 +26,13 @@ import {
 	sameDeclaredVendors,
 	withoutSourceVendors,
 } from '../libs/vendors';
-import type {
-	ConsentState,
-	KernelActiveUI,
-	KernelConfig,
-	KernelIABState,
-	KernelOverrides,
-	KernelVendorsState,
-	ResolvedVendor,
-	VendorSource,
-} from '../consent-kernel.model';
-import { normalizeExternalPermissions } from './external-permissions.model';
 import type { KernelRuntime } from './create-runtime';
-import { copyIABAuthority, DEFAULT_IAB, DEFAULT_VENDORS } from './kernel-snapshot.model';
+import { normalizeExternalPermissions } from './external-permissions.model';
+import {
+	copyIABAuthority,
+	DEFAULT_IAB,
+	DEFAULT_VENDORS,
+} from './kernel-snapshot.model';
 
 /**
  * Merge an IAB patch onto the current IAB slice, returning the next

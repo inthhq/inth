@@ -1,8 +1,8 @@
 import { MINIMAL_GVL } from '@inth/conformance/fixtures/gvl';
 import { deferInitGvl } from '@inth/sdk/engine';
 
-import { hosted as hostedMode } from '../mode';
 import type { InthAstroOptions } from '../inth-options.model';
+import { hosted as hostedMode } from '../mode';
 import { testWire } from './policy-fixture';
 
 /**

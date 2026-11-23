@@ -16,6 +16,7 @@ import {
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
+import type { KernelTransport } from '../../consent-kernel.model';
 import type { InternalKernel } from '../../kernel/kernel-internals.model';
 import {
 	clearStoredConsentRecords,
@@ -33,9 +34,11 @@ import {
 } from '../../modules/persistence/record-storage.store';
 import { encodeStoredConsentEnvelopeCompact } from '../../modules/persistence/writer/record-encode.model';
 import type { ProviderTransportFactory } from '../../transports/mode';
-import type { KernelTransport } from '../../consent-kernel.model';
+import type {
+	ConsentRuntime,
+	ConsentRuntimeOptions,
+} from '../consent-runtime.model';
 import { createConsentRuntime } from '../index';
-import type { ConsentRuntime, ConsentRuntimeOptions } from '../consent-runtime.model';
 
 /**
  * Options a test passes over the defaults. Its mode is a transport factory,

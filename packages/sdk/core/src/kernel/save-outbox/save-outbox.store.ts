@@ -15,6 +15,11 @@
  *   without localStorage.
  */
 
+import type {
+	LiftOptOutPayload,
+	OptOutPayload,
+	SavePayload,
+} from '../../consent-kernel.model';
 import { getRawCookieValue } from '../../libs/cookie/cookie.store';
 import {
 	C15T_PENDING_SAVES_STORAGE_KEY,
@@ -26,11 +31,6 @@ import {
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../libs/storage-keys';
 import { decodeClearEpoch } from '../../modules/persistence/record-codec.model';
-import type {
-	LiftOptOutPayload,
-	OptOutPayload,
-	SavePayload,
-} from '../../consent-kernel.model';
 import { toStoredPayload, withoutStoredTokens } from './stored-payload.model';
 import type { PendingSaveEntry } from './supersession.model';
 

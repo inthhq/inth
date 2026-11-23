@@ -15,6 +15,7 @@ import { render } from 'svelte/server';
 import { afterEach, beforeAll, expect, test } from 'vitest';
 
 import InthProvider from '../lib/components/inth-provider.svelte';
+import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import { setRequestEvent } from '../lib/kit/__tests__/app-server';
 import { createEvent } from '../lib/kit/__tests__/event';
 import {
@@ -22,7 +23,6 @@ import {
 	loadServerScriptStart,
 } from '../lib/kit/load-server-script-start';
 import { testing } from '../lib/testing';
-import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 
 const pixel: Script = {
 	category: 'marketing',

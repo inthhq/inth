@@ -10,12 +10,12 @@
 import { describe, expect, test } from 'vitest';
 
 import { choiceRecords } from '../../__tests__/fixtures/kernel-fixtures';
-import { createConsentKernel } from '../../index';
 import type {
 	ConsentSnapshot,
 	KernelIABAuthority,
 	KernelIABState,
 } from '../../consent-kernel.model';
+import { createConsentKernel } from '../../index';
 import { evaluateConsent, has, hasIABConsent } from '../has';
 import type { IABConsentInputs } from '../has';
 

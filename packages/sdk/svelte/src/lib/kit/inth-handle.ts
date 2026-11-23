@@ -23,11 +23,14 @@ import type { RequestEvent } from '@sveltejs/kit';
 
 import { injectModulePreloads } from './inject-module-preloads';
 import {
+	injectSurfaceStyles,
+	nonceEarlyTapScript,
+} from './inject-surface-styles';
+import type { InthLocals, ConsentRequestOptions } from './kit-locals.model';
+import {
 	createServerStartInjector,
 	loadServerScriptStart,
 } from './load-server-script-start';
-import { injectSurfaceStyles, nonceEarlyTapScript } from './inject-surface-styles';
-import type { InthLocals, ConsentRequestOptions } from './kit-locals.model';
 
 export interface InthHandleOptions extends ConsentRequestOptions {
 	/**

@@ -58,9 +58,17 @@ import {
 	syncStoredAdditionalConsent,
 } from './tcf/cmp-api';
 import { CMP_VERSION_NUMBER } from './tcf/cmp-defaults.model';
-import { assertValidCmpId, createCmpIdError, isValidCmpId } from './tcf/cmp-id.model';
+import {
+	assertValidCmpId,
+	createCmpIdError,
+	isValidCmpId,
+} from './tcf/cmp-id.model';
 import { clearGVLCache, fetchGVL, narrowGVLToVendors } from './tcf/fetch-gvl';
 import { getTCFCore } from './tcf/get-tcf-core';
+import {
+	destroyIABStub as destroyStub,
+	initializeIABStub,
+} from './tcf/initialize-iab-stub';
 import {
 	copyPublisherRestrictionInput,
 	PublisherRestrictionError,
@@ -71,8 +79,10 @@ import {
 	inthConsentsToIabPurposes,
 	iabPurposesToInthConsents,
 } from './tcf/purpose-mapping.model';
-import { destroyIABStub as destroyStub, initializeIABStub } from './tcf/initialize-iab-stub';
-import { generateTCString, resolveIsServiceSpecific } from './tcf/tc-string.model';
+import {
+	generateTCString,
+	resolveIsServiceSpecific,
+} from './tcf/tc-string.model';
 
 export interface CreateIABOptions {
 	kernel: ConsentKernel;

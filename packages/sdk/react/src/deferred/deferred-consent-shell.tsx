@@ -63,23 +63,42 @@ import {
 import type { ConsentBoot } from './boot';
 import type * as CommitModule from './commit';
 import type { CommitTapInput, CommitTapResult } from './commit';
-import type { DeferredCommitConfig, DeferredCommitted } from './deferred-committed.model';
 import { createDeferredKernel } from './create-deferred-kernel';
 import type {
 	DeferredKernelHandle,
 	DeferredKernelOptions,
 } from './create-deferred-kernel';
-import { commitInstantly, readAheadOfTap, startPlainScripts } from './instant-commit.model';
-import type { InstantCommitAhead } from './instant-commit.model';
+import type {
+	DeferredCommitConfig,
+	DeferredCommitted,
+} from './deferred-committed.model';
 import {
 	deferredScripts,
 	loadDeferredScriptLoader,
 	setDeferredScriptStarter,
 } from './deferred-registry.model';
-import { acceptedPermissions, isPlainScript, isRunnableNow } from './runnable-script.model';
-import { DeferredSessionContext, read, record, recordOnce } from './deferred-session-context';
+import {
+	DeferredSessionContext,
+	read,
+	record,
+	recordOnce,
+} from './deferred-session-context';
 import type { DeferredSession, Recorded } from './deferred-session-context';
-import { importDialog, scheduleDeferredEngine } from './schedule-deferred-engine';
+import {
+	commitInstantly,
+	readAheadOfTap,
+	startPlainScripts,
+} from './instant-commit.model';
+import type { InstantCommitAhead } from './instant-commit.model';
+import {
+	acceptedPermissions,
+	isPlainScript,
+	isRunnableNow,
+} from './runnable-script.model';
+import {
+	importDialog,
+	scheduleDeferredEngine,
+} from './schedule-deferred-engine';
 
 /** The provider options the shell itself reads. @internal */
 export type DeferredShellOptions = Pick<

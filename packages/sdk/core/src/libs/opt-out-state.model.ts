@@ -7,6 +7,7 @@
 
 import type { OptOutRight } from '@inth/sdk-schema/types';
 
+import type { ConsentSnapshot } from '../consent-kernel.model';
 import {
 	optInPromptAllowedAt,
 	optOutDenyCategories,
@@ -18,7 +19,6 @@ import type {
 	OptionalConsentCategory,
 } from '../consent-record/types';
 import type { AllConsentNames } from '../consent/consent-types';
-import type { ConsentSnapshot } from '../consent-kernel.model';
 
 /** How an honored opt-out was recorded or is currently enforced. */
 export type OptOutVia = 'signal' | 'request';

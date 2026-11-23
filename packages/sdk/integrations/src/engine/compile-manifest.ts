@@ -4,7 +4,10 @@ import type {
 	ResolvedManifest,
 	VendorManifest,
 } from '../vendor-manifest.model';
-import { VENDOR_MANIFEST_KIND, VENDOR_MANIFEST_SCHEMA_VERSION } from '../vendor-manifest.model';
+import {
+	VENDOR_MANIFEST_KIND,
+	VENDOR_MANIFEST_SCHEMA_VERSION,
+} from '../vendor-manifest.model';
 
 const EXACT_PLACEHOLDER_PATTERN = /^\{\{(?<capture1>[A-Za-z0-9_]+)\}\}$/u;
 const PLACEHOLDER_PATTERN = /\{\{(?<capture1>[A-Za-z0-9_]+)\}\}/gu;

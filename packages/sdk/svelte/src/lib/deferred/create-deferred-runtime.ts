@@ -58,7 +58,11 @@ import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 
 import type { ProviderOptionsInput } from '../resolve-provider-options';
 import type { RootBoot } from './read-consent-boot';
-import { DIALOG_ROOT, scheduleDeferredEngine, whenIdle } from './schedule-deferred-engine';
+import {
+	DIALOG_ROOT,
+	scheduleDeferredEngine,
+	whenIdle,
+} from './schedule-deferred-engine';
 
 /** The engine as the deferred runtime takes it over. @internal */
 export interface LoadedEngine {

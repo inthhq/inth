@@ -5,8 +5,8 @@
  */
 import { afterEach, describe, expect, test } from 'vitest';
 
-import { ENGINE_CHUNKS_KEY, learnEngineChunks } from '../engine-preload.store';
 import { enginePreloadScript } from '../engine-preload-script';
+import { ENGINE_CHUNKS_KEY, learnEngineChunks } from '../engine-preload.store';
 
 const CHUNKS = '/_next/static/';
 

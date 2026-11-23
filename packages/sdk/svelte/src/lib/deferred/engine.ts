@@ -17,8 +17,8 @@ import type {
 } from '@inth/sdk/runtime/provider';
 import type { DeferredCommitted } from '@inth/sdk/surface-actions/early-commit';
 
-import { createOwnedRuntime } from '../create-owned-runtime';
 import type { InthProviderState } from '../consent-manager-options.model';
+import { createOwnedRuntime } from '../create-owned-runtime';
 
 export { preloadSavePath } from '@inth/sdk/runtime/save-preload';
 

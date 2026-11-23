@@ -45,8 +45,11 @@ import type { GlobalVendorList } from '@inth/sdk/schema/types';
 import { describe, expect, test } from 'vitest';
 
 import { testing } from '../../testing/src/testing';
+import type {
+	InthOptions,
+	InthProviderOptions,
+} from '../lib/core/inth-options';
 import { whenIABReady } from '../lib/core/lazy-create-iab';
-import type { InthOptions, InthProviderOptions } from '../lib/core/inth-options';
 import { bootClient, renderServer } from './conformance-app';
 import type { ClientApp } from './conformance-app';
 import { CONFORMANCE_COMPONENTS } from './conformance-registry';

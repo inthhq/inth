@@ -8,7 +8,10 @@
 	import type { BrandingSurface } from '@inth/sdk/ui/utils';
 	import { onMount } from 'svelte';
 
-	import { getConsentContext, getThemeContext } from '../get-consent-context.svelte';
+	import {
+		getConsentContext,
+		getThemeContext,
+	} from '../get-consent-context.svelte';
 	import BrandMark from './icons/brand-mark.svelte';
 
 	let {

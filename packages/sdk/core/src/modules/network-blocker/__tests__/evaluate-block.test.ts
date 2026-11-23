@@ -3,8 +3,8 @@ import { describe, expect, test } from 'vitest';
 import { choiceRecords } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../kernel';
 import { evaluateBlock } from '../evaluate-block';
-import { networkBlockerTools } from '../tools';
 import type { NetworkBlockerRule } from '../network-blocker.model';
+import { networkBlockerTools } from '../tools';
 
 const makeRule = function makeRule(
 	overrides: Partial<NetworkBlockerRule> = {}

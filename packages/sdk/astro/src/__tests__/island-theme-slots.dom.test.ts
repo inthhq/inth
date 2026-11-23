@@ -16,11 +16,14 @@ import type { AstroConsentClient } from '../client';
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import * as vuePanelSurface from '../components/islands/panel-surface.vue';
 import { resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import type { InthUIAdapterName } from '../inth-options.model';
-import { registerDialogAdapter, registerDialogSurface } from '../ui/register-dialog-adapter';
+import { testing as testingMode } from '../testing';
 import { buildProviderProps } from '../ui/build-provider-props';
 import { reactDialogAdapter } from '../ui/react';
+import {
+	registerDialogAdapter,
+	registerDialogSurface,
+} from '../ui/register-dialog-adapter';
 import { vueDialogAdapter } from '../ui/vue';
 // The Vue adapter imports its plugin on first mount. Importing it here
 // compiles it while this file loads, outside any test timeout.

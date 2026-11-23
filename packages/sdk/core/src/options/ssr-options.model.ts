@@ -1,6 +1,10 @@
 import type { InitOutput } from '@inth/sdk-schema/types';
 
-import type { GlobalVendorList, InitContext, KernelJourney } from '../consent-kernel.model';
+import type {
+	GlobalVendorList,
+	InitContext,
+	KernelJourney,
+} from '../consent-kernel.model';
 
 /**
  * Request context captured alongside server-fetched init data so the

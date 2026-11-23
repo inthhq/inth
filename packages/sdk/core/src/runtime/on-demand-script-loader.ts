@@ -1,3 +1,7 @@
+import type {
+	ScriptLoaderHandle,
+	ScriptLoaderOptions,
+} from '../modules/script-loader/script-loader.model';
 /**
  * The script loader as an on-demand runtime module.
  *
@@ -7,10 +11,6 @@
  * keeps that module in a chunk of its own.
  */
 import { scriptLoaderTools } from '../modules/script-loader/tools';
-import type {
-	ScriptLoaderHandle,
-	ScriptLoaderOptions,
-} from '../modules/script-loader/script-loader.model';
 import { lazyRuntimeModule } from './lazy-runtime-module';
 
 /**

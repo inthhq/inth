@@ -21,8 +21,11 @@ import type { PolicyRule } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
+import type {
+	ConsentClient,
+	ScriptTagClientOptions,
+} from '../consent-client.model';
 import { testing } from '../testing';
-import type { ConsentClient, ScriptTagClientOptions } from '../consent-client.model';
 import { init, initIAB } from './fixtures/factory-init';
 
 /** A transport factory that hands the client `transport`. */

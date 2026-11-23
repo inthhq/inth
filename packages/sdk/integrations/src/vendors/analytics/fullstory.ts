@@ -3,11 +3,11 @@ import type { Script } from '@inth/sdk/engine';
 import { resolveManifest } from '../../resolve-manifest';
 import { vendorManifestContract } from '../../vendor-manifest.model';
 import type { VendorManifest } from '../../vendor-manifest.model';
-import { readId, skipMissingId } from '../_shared/required-id.model';
 import {
 	createScriptReuse,
 	getScriptRegistrations,
 } from '../_shared/create-script-reuse';
+import { readId, skipMissingId } from '../_shared/required-id.model';
 import { resolveScriptUrl, trimToUndefined } from '../_shared/script-url.model';
 
 /** FullStory v2 dispatcher arguments, including Async completion callbacks. */

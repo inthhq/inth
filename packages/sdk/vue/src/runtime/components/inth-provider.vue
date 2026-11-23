@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { onMounted, provide, ref, watch } from 'vue';
 
+import { applyRootOverrides } from '../apply-root-overrides';
 import {
 	useConsentActiveUI,
 	useConsentInit,
@@ -13,7 +14,6 @@ import {
 	useOptOutConfirmationOpen,
 } from '../composables/use-consent-kernel';
 import { useMounted } from '../composables/use-mounted';
-import { applyRootOverrides } from '../apply-root-overrides';
 import { symbolConfirmationHosted } from '../utils/consent-symbols.model';
 import {
 	LazyConsentDialogTrigger,

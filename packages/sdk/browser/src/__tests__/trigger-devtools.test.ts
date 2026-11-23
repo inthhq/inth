@@ -5,15 +5,15 @@
 import type { DevToolsInstance } from '@inth/sdk-dev-tools';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { mountDevTools } from '../devtools';
-import type { GlobalApiBase } from '../create-global-with';
-import { createTestingConsentClient as createConsentClient } from '../testing-global';
 import type {
 	ConsentClient,
 	ConsentClientOptions,
 	ConsentUIHandle,
 	ConsentUIOptions,
 } from '../consent-client.model';
+import type { GlobalApiBase } from '../create-global-with';
+import { mountDevTools } from '../devtools';
+import { createTestingConsentClient as createConsentClient } from '../testing-global';
 import { mountConsentUI } from '../ui/mount-consent-ui';
 
 const testWindow = window as Window & { inth?: unknown };

@@ -19,6 +19,7 @@ import { decisionInputsMatchOverrides } from '@inth/sdk/engine';
 import type { RememberedDecisionInputs } from '@inth/sdk/engine';
 import { describe, expect, test } from 'vitest';
 
+import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-vocabulary.model';
 import type {
 	CommitFailureReason,
 	NativeOverrides,
@@ -35,7 +36,6 @@ import {
 	NATIVE_EVENT_NAMES,
 	PROTOCOL_VERSION,
 } from '../index';
-import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-vocabulary.model';
 
 const FIXTURE_DIR = resolve(
 	dirname(fileURLToPath(import.meta.url)),

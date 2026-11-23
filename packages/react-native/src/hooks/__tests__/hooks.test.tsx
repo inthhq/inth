@@ -28,6 +28,8 @@ import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
 import { resetConsentClient } from '../../native/create-consent-client';
 import type { ConsentSnapshot, TrackingAuthorization } from '../../protocol';
 import { InthProvider } from '../../provider/inth-provider';
+import { useIsTrackingAllowed } from '../../tracking/use-is-tracking-allowed';
+import { useTrackingAuthorization } from '../../tracking/use-tracking-authorization';
 import { useConsent } from '../use-consent';
 import type { ConsentActions } from '../use-consent-actions';
 import {
@@ -41,9 +43,7 @@ import { useConsentDecision } from '../use-consent-decision';
 import { useConsentSelector } from '../use-consent-selector';
 import { useConsentStatus } from '../use-consent-status';
 import { useGPPString } from '../use-gpp-string';
-import { useIsTrackingAllowed } from '../../tracking/use-is-tracking-allowed';
 import { useSnapshot } from '../use-snapshot';
-import { useTrackingAuthorization } from '../../tracking/use-tracking-authorization';
 
 /** The default permissions, with marketing granted. */
 const MARKETING_GRANTED: ConsentState = {

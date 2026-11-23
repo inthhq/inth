@@ -1,14 +1,14 @@
-import type { ResolvedBundleManifest } from './fetch-bundled-manifest';
 import {
 	CONSENT_CATEGORY_IDS,
 	LOCALE_TAG_PATTERN,
 	SK_AD_NETWORK_IDENTIFIER_PATTERN,
 } from './constants';
 import type { ConsentCategoryId } from './constants';
+import type { ResolvedBundleManifest } from './fetch-bundled-manifest';
 import { InthPluginError } from './inth-plugin-error';
+import { normalizeProjectUrl, ProjectUrlError } from './project-url';
 import { resolveAndroidMavenRepository } from './resolve-android-maven-repository';
 import type { InthAndroidMavenRepository } from './resolve-android-maven-repository';
-import { normalizeProjectUrl, ProjectUrlError } from './project-url';
 import type { InthThemePluginProps } from './with-inth-theme';
 
 /**

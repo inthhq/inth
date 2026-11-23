@@ -11,10 +11,10 @@
  * @packageDocumentation
  */
 
+import type { ConsentState, ConsentSnapshot } from '../consent-kernel.model';
 import { has } from '../libs/has';
 import { isProductionBuild } from '../libs/is-production';
 import { vendorAxisActive } from '../libs/vendors';
-import type { ConsentState, ConsentSnapshot } from '../consent-kernel.model';
 import { isVendorDenied } from './vendor-denial';
 
 /** Undeclared vendor ids already warned about, so each warns once. */

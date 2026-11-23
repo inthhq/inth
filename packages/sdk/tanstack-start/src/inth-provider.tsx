@@ -44,10 +44,13 @@ import type {
 
 import { engineNow } from '#engine-now';
 
-import type * as RootEngine from './root-engine';
 import type { InthProviderProps } from './inth-provider-options.model';
+import type * as RootEngine from './root-engine';
 
-export type { InthProviderOptions, InthProviderProps } from './inth-provider-options.model';
+export type {
+	InthProviderOptions,
+	InthProviderProps,
+} from './inth-provider-options.model';
 
 type EngineModule = typeof RootEngine;
 

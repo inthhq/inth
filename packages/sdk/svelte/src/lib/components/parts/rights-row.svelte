@@ -62,7 +62,10 @@
 	import type { AllThemeKeys } from '@inth/sdk/ui/theme';
 	import { untrack } from 'svelte';
 
-	import { getConsentContext, getThemeContext } from '../../get-consent-context.svelte';
+	import {
+		getConsentContext,
+		getThemeContext,
+	} from '../../get-consent-context.svelte';
 	import ConsentButton from '../action-button.svelte';
 	import Icon from './icon.svelte';
 	import { cx, part } from './surface-parts.model';

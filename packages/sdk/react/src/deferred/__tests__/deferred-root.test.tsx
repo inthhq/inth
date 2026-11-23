@@ -36,12 +36,12 @@ import {
 } from '../boot';
 import type { ConsentBoot } from '../boot';
 import { ConsentBootData, ServerBootData } from '../consent-boot-data';
-import { engineNeededAtLoad } from '../use-consent-boot-plan';
 import type { DeferredCommitConfig } from '../deferred-committed.model';
+import { DeferredConsentShell } from '../deferred-consent-shell';
 import type * as EngineNamespace from '../engine';
 import { ENGINE_CHUNKS_KEY } from '../engine-preload.store';
-import { DeferredConsentShell } from '../deferred-consent-shell';
 import { DeferredConsentBanner } from '../surfaces';
+import { engineNeededAtLoad } from '../use-consent-boot-plan';
 
 const policyConfig = function policyConfig(
 	rule: Partial<PolicyRule> = {},

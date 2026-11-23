@@ -7,7 +7,11 @@
  * a `Map<>` argument so callers don't have to plumb identity through.
  */
 import type { AllConsentNames } from '../../consent/consent-types';
-import type { NormalizedScript, Script, ScriptLoaderTools } from './script-loader.model';
+import type {
+	NormalizedScript,
+	Script,
+	ScriptLoaderTools,
+} from './script-loader.model';
 
 const anonymizedElementIds = new Map<string, string>();
 

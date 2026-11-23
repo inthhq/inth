@@ -14,8 +14,8 @@
  * caller that assembled the two answers itself.
  */
 
-import type { TrackingAuthorization } from '../protocol';
 import type { ConsentDecision } from '../lib/consent-selectors.model';
+import type { TrackingAuthorization } from '../protocol';
 
 /**
  * Whether the platform half of a tracking gate is satisfied.

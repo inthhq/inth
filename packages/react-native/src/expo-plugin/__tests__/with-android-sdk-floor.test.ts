@@ -25,6 +25,7 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { InthPluginError } from '../inth-plugin-error';
 import {
 	assertAndroidSdkFloor,
 	findAndroidSdkSettings,
@@ -32,7 +33,6 @@ import {
 	readAndroidSdkFiles,
 	stripGradleComments,
 } from '../with-android-sdk-floor';
-import { InthPluginError } from '../inth-plugin-error';
 import { FIXTURE_DIR, applyToFixture, runMod } from './helpers';
 
 const TEMPLATES = ['sdk-55', 'sdk-57', 'sdk-58'] as const;

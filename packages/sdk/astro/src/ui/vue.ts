@@ -15,14 +15,14 @@
  * and only that build knows whether `@astrojs/vue` is present.
  */
 
+import { buildProviderProps } from './build-provider-props';
+import { closeDialogSurface } from './close-dialog-surface';
 import type {
 	ConsentDialogAdapter,
 	ConsentDialogContext,
 	ConsentDialogHandle,
 } from './register-dialog-adapter';
 import { requireDialogSurface } from './register-dialog-adapter';
-import { closeDialogSurface } from './close-dialog-surface';
-import { buildProviderProps } from './build-provider-props';
 
 /** The Vue 3 dialog surface implementation. */
 export const vueDialogAdapter: ConsentDialogAdapter = {

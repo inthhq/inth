@@ -9,9 +9,9 @@ import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 
 import InthProvider from '../lib/components/inth-provider.svelte';
+import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import { injectModulePreloads } from '../lib/kit/inject-module-preloads';
 import { testing } from '../lib/testing';
-import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 
 const HREFS = {
 	'loader-and-blocker': '/_app/immutable/chunks/gates.js',

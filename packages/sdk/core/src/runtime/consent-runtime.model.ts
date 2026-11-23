@@ -10,6 +10,16 @@
 import type { Vendor } from '@inth/sdk-schema/types';
 import type { I18nConfig } from '@inth/sdk-translations';
 
+import type {
+	ConsentKernel,
+	ConsentSnapshot,
+	ConsentState,
+	GlobalVendorList,
+	KernelConfig,
+	KernelOverrides,
+	KernelUser,
+	Unsubscribe,
+} from '../consent-kernel.model';
 import type { AllConsentNames } from '../consent/consent-types';
 import type { StorageConfig } from '../libs/cookie';
 import type {
@@ -56,16 +66,6 @@ import type { IABConfig } from '../options/iab-options.model';
 import type { User } from '../options/user-options.model';
 import type { ProviderTransportFactory } from '../transports/mode';
 import type { ConsentTesting } from '../transports/testing';
-import type {
-	ConsentKernel,
-	ConsentSnapshot,
-	ConsentState,
-	GlobalVendorList,
-	KernelConfig,
-	KernelOverrides,
-	KernelUser,
-	Unsubscribe,
-} from '../consent-kernel.model';
 import type { RuntimeIABMountOptions } from './mount-runtime-iab';
 
 /** Script-loader tuning accepted by {@link ConsentRuntimeOptions}. */

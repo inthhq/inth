@@ -42,9 +42,9 @@
  */
 import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 
+import type { ConsentKernel } from '../consent-kernel.model';
 import { hasGlobalPrivacyControlSignal } from '../libs/read-global-privacy-control';
 import { evaluateConsent } from '../modules/has';
-import type { ConsentKernel } from '../consent-kernel.model';
 import type {
 	ConsentRuntimeModules,
 	ConsentRuntimeOptions,

@@ -28,13 +28,6 @@ import type { OptOutRecord, PolicyResolution } from '@inth/sdk-schema/types';
 import type { Translations } from '@inth/sdk-translations';
 import { deepMergeTranslations } from '@inth/sdk-translations';
 
-import type { RecordIssue } from '../consent-record/consent-record-validation.model';
-import { ownScriptRegistry } from '../libs/freeze-data.model';
-import { hasGlobalPrivacyControlSignal } from '../libs/read-global-privacy-control';
-import { isProductionBuild } from '../libs/is-production';
-import { resolveVendors, withoutManifestVendors } from '../libs/vendors';
-import { applyTranslationOverrides } from '../translations';
-import type { TranslationOverrides } from '../translations';
 import type {
 	ConsentSnapshot,
 	InitContext,
@@ -45,12 +38,22 @@ import type {
 	KernelTransport,
 	KernelTranslations,
 } from '../consent-kernel.model';
-import type { SnapshotPatch } from './kernel-patch.model';
-import { validateHydrationRecords } from './record-validation.model';
-import { foldServerRecords, syncAdoptedServerOptOutReceipt } from './kernel-records.model';
+import type { RecordIssue } from '../consent-record/consent-record-validation.model';
+import { ownScriptRegistry } from '../libs/freeze-data.model';
+import { isProductionBuild } from '../libs/is-production';
+import { hasGlobalPrivacyControlSignal } from '../libs/read-global-privacy-control';
+import { resolveVendors, withoutManifestVendors } from '../libs/vendors';
+import { applyTranslationOverrides } from '../translations';
+import type { TranslationOverrides } from '../translations';
 import type { KernelRuntime } from './create-runtime';
-import type { SaveOutbox } from './save-outbox';
+import type { SnapshotPatch } from './kernel-patch.model';
+import {
+	foldServerRecords,
+	syncAdoptedServerOptOutReceipt,
+} from './kernel-records.model';
 import { DEFAULT_IAB } from './kernel-snapshot.model';
+import { validateHydrationRecords } from './record-validation.model';
+import type { SaveOutbox } from './save-outbox';
 
 const DEFAULT_MAX_ATTEMPTS = 5;
 const DEFAULT_BASE_DELAY_MS = 1000;

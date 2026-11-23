@@ -1,11 +1,11 @@
 import * as v from 'valibot';
 import { assert, describe, expect, test } from 'vitest';
 
-import { v1ConsentInitOutputSchema } from '../../api/v1/v1-consent.model';
 import {
 	consentInitResponseSchema,
 	consentManifestResponseSchema,
 } from '../../api/v1/generated/schemas';
+import { v1ConsentInitOutputSchema } from '../../api/v1/v1-consent.model';
 import {
 	buildConsentManifestFromConfig,
 	createConsentManifestPolicyPack,
@@ -19,17 +19,17 @@ import {
 	writePolicyResolutionWire,
 } from './policy-resolution.model';
 import {
-	inspectPolicyRules,
-	normalizePolicyRule,
-	validatePolicyRules,
-} from './policy-rule.model';
-import type { PolicyRule } from './policy-rule.model';
-import {
 	createPolicyRuleFingerprints,
 	createPresentationFingerprint,
 	policySurfacePresentationInput,
 } from './policy-rule-fingerprint.model';
 import { collectResolvedPolicyRuleIssues } from './policy-rule-invariants';
+import {
+	inspectPolicyRules,
+	normalizePolicyRule,
+	validatePolicyRules,
+} from './policy-rule.model';
+import type { PolicyRule } from './policy-rule.model';
 import {
 	policyResolutionWireSchema,
 	resolvedPolicyRuleSchema,

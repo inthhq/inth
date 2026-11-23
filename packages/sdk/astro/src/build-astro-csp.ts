@@ -35,6 +35,7 @@ import {
 	INLINE_PARTS_STYLES_CSS,
 	INLINE_STYLES_CSS,
 } from './inline-styles.model';
+import type { BrowserCsp, InthResolvedOptions } from './inth-options.model';
 import { hashSource } from './libs/csp-hash.model';
 import type { CspHashAlgorithm, CspHashSource } from './libs/csp-hash.model';
 import { promptFirstPaintSheets } from './prompt/render-prompt-html';
@@ -44,7 +45,6 @@ import {
 	buildThemeCSS,
 	EARLY_CONSENT_TAP_SCRIPT,
 } from './server';
-import type { BrowserCsp, InthResolvedOptions } from './inth-options.model';
 
 export type { CspHashAlgorithm } from './libs/csp-hash.model';
 

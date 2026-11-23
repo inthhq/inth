@@ -10,18 +10,6 @@
 
 import type { OptOutRecord, PolicyResolution } from '@inth/sdk-schema/types';
 
-import { evaluateConsentRecord } from '../consent-record/evaluate';
-import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
-import type {
-	ExplicitChoice,
-	OptionalConsentCategory,
-} from '../consent-record/types';
-import { deriveActiveUI } from '../derive-surface';
-import { deepFreeze, ownScriptRegistry } from '../libs/freeze-data.model';
-import { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
-import { deriveModel } from '../policy-choice.model';
-import type { PresentedSelection } from '../policy-choice.model';
-import { applyTranslationOverrides } from '../translations';
 import type {
 	ConsentSnapshot,
 	ConsentState,
@@ -34,6 +22,18 @@ import type {
 	PromptSurface,
 } from '../consent-kernel.model';
 import { DEFAULT_BRANDING } from '../consent-kernel.model';
+import { evaluateConsentRecord } from '../consent-record/evaluate';
+import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
+import type {
+	ExplicitChoice,
+	OptionalConsentCategory,
+} from '../consent-record/types';
+import { deriveActiveUI } from '../derive-surface';
+import { deepFreeze, ownScriptRegistry } from '../libs/freeze-data.model';
+import { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
+import { deriveModel } from '../policy-choice.model';
+import type { PresentedSelection } from '../policy-choice.model';
+import { applyTranslationOverrides } from '../translations';
 import {
 	evaluateExternalPermissions,
 	normalizeExternalPermissions,

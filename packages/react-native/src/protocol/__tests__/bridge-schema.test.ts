@@ -25,8 +25,8 @@ import {
 	normalizeBridgeField,
 	renderBridgeSchema,
 } from '../bridge-schema';
-import { parseTrackingAnsweredAt } from '../tracking-protocol.model';
 import { withAdditiveSnapshotDefaults } from '../snapshot-wire-shape.model';
+import { parseTrackingAnsweredAt } from '../tracking-protocol.model';
 
 const PROTOCOL_DIR = resolve(
 	dirname(fileURLToPath(import.meta.url)),

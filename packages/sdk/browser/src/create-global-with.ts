@@ -9,14 +9,16 @@ import type {
 import type { ConsentRuntimeGPPFactory } from '@inth/sdk-core/runtime';
 import type { DevToolsInstance } from '@inth/sdk-dev-tools';
 
-import {
-	mergeClientOptions,
-	readPageOptions,
-	readScriptOptions,
-} from './script-tag-options.model';
+import type {
+	ConsentClient,
+	ConsentClientEventMap,
+	ScriptTagClientOptions,
+	ConsentUIHandle,
+	ConsentUIOptions,
+} from './consent-client.model';
+import type { PublishDevToolsLauncher } from './create-browser-dev-tools';
 import type { CreateConsentClientContext } from './create-consent-client-with';
 import { createDeferred } from './create-deferred';
-import type { PublishDevToolsLauncher } from './create-browser-dev-tools';
 import { GLOBAL_NAME } from './global-name';
 import {
 	adoptBoot,
@@ -25,13 +27,11 @@ import {
 	withInitPrefetch,
 } from './init/adopt-boot';
 import { readBoot } from './init/read-boot';
-import type {
-	ConsentClient,
-	ConsentClientEventMap,
-	ScriptTagClientOptions,
-	ConsentUIHandle,
-	ConsentUIOptions,
-} from './consent-client.model';
+import {
+	mergeClientOptions,
+	readPageOptions,
+	readScriptOptions,
+} from './script-tag-options.model';
 import { version } from './version';
 
 /** A call queued before the script loaded: `[method, ...args]`. */

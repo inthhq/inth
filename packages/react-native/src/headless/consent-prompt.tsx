@@ -10,7 +10,10 @@ import { useConsentActions } from '../hooks/use-consent-actions';
 import { useConsentStatus } from '../hooks/use-consent-status';
 import { isStatusPromptOwed } from '../lib/consent-selectors.model';
 import { claimPrompt } from '../native/watch-without-native-ui';
-import type { KernelActiveUI, PromptRequirement } from '../protocol/consent-vocabulary.model';
+import type {
+	KernelActiveUI,
+	PromptRequirement,
+} from '../protocol/consent-vocabulary.model';
 import { useConsentClient } from '../provider/consent-client-context';
 
 /**

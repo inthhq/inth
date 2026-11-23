@@ -2,8 +2,8 @@
 	import type { ConsentKernel } from '@inth/sdk/engine';
 
 	import InthProvider from '../../lib/components/inth-provider.svelte';
-	import type { ConsentManagerState } from '../../lib/get-consent-context.svelte';
 	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
+	import type { ConsentManagerState } from '../../lib/get-consent-context.svelte';
 	import ConformanceKernelCapture from './conformance-kernel-capture.svelte';
 
 	let {

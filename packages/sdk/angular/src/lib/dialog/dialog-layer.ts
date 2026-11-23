@@ -20,8 +20,8 @@ import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 
 import { ConsentTheme } from '../core/consent-theme';
 import { resolveNoStyle } from '../core/no-style-scope';
-import { cx, slotPart } from '../parts/part-class-names.model';
 import { CloseIcon } from '../parts/icons';
+import { cx, slotPart } from '../parts/part-class-names.model';
 
 /**
  * One card of the consent dialog: the main dialog or a phone

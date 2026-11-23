@@ -9,8 +9,9 @@
  * receipt.
  */
 
-import type { OptOutReceiptData } from '../../../libs/opt-out-state.model';
 import type { ConsentSnapshot } from '../../../consent-kernel.model';
+import type { OptOutReceiptData } from '../../../libs/opt-out-state.model';
+import type { StorageConfig } from '../persistence.model';
 import type {
 	StoredConsentEnvelope,
 	StoredIabMetadata,
@@ -18,7 +19,6 @@ import type {
 	StoredOptOutRecord,
 	StoredVendorChoice,
 } from '../record-codec.model';
-import type { StorageConfig } from '../persistence.model';
 import type { RecordStore } from './persistence-writer.store';
 
 /** Envelope a snapshot's explicit choice serializes to, or `null`. */

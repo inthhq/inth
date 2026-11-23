@@ -3,11 +3,11 @@ import type { Script, ScriptCallbackInfo } from '@inth/sdk/engine';
 import { resolveManifest } from '../../resolve-manifest';
 import { vendorManifestContract } from '../../vendor-manifest.model';
 import type { VendorManifest } from '../../vendor-manifest.model';
-import { readId, skipMissingId } from '../_shared/required-id.model';
 import {
 	createScriptReuse,
 	getScriptRegistrations,
 } from '../_shared/create-script-reuse';
+import { readId, skipMissingId } from '../_shared/required-id.model';
 
 /** Dynamic Yield page context from its Web implementation guide. */
 export interface DynamicYieldRecommendationContext {

@@ -47,7 +47,6 @@ import {
 } from 'react';
 import type { ReactNode, RefObject } from 'react';
 
-import { registerDialogChunkWarmer, warmDialogChunk } from '~/warm-dialog-chunk';
 import { useTranslations } from '~/component-hooks/use-translations';
 import { usePhoneLayout } from '~/components/parts/use-phone-layout';
 import {
@@ -79,6 +78,10 @@ import { useUIConfig } from '~/use-ui-config';
 import { createDeferredModule } from '~/utils/create-deferred-module';
 import { inertProps } from '~/utils/inert-props';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
+import {
+	registerDialogChunkWarmer,
+	warmDialogChunk,
+} from '~/warm-dialog-chunk';
 
 import { SurfaceStyles, useSurfaceSheetsReady } from '../shared/surface-styles';
 import type { SurfaceStyleSheet } from '../shared/surface-styles';
@@ -89,7 +92,9 @@ import { removeStaticBanner } from './static-banner-shell';
  * The options, loaded when Customize first opens them, or at once in a
  * side Drawer, which shows them from the start.
  */
-const panelModule = createDeferredModule(() => import('./prompt-options-panel'));
+const panelModule = createDeferredModule(
+	() => import('./prompt-options-panel')
+);
 const LazyPanel = panelModule.component((module) => module.PromptOptionsPanel);
 
 /** Exits are 160ms; the controllers add their own slack. */

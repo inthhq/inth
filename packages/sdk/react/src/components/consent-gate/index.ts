@@ -29,7 +29,10 @@ const ConsentGate = Object.assign(ConsentGateComponent, {
 }) as ConsentGateCompoundComponent;
 
 export { ConsentGateButton, ConsentGateRoot, ConsentGateTitle } from './atoms';
-export type { ConsentGateCompoundComponent, ConsentGateProps } from './consent-gate.model';
+export type {
+	ConsentGateCompoundComponent,
+	ConsentGateProps,
+} from './consent-gate.model';
 export { ConsentGate };
 export type { FrameCompoundComponent, FrameProps } from './frame';
 export { Frame, FrameButton, FrameRoot, FrameTitle } from './frame';

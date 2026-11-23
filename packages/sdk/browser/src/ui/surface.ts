@@ -7,10 +7,10 @@ import type {
 import type { LegalLinksTranslations } from '@inth/sdk-translations';
 import { resolveLegalLinkEntries } from '@inth/sdk-ui/utils/legal-links';
 
-import { classes } from '../generated/styles';
 import type { ConsentClient } from '../consent-client.model';
-import { h } from './dom';
+import { classes } from '../generated/styles';
 import type { SlotApplier } from './create-slot-applier';
+import { h } from './dom';
 
 /** What every surface renders against. */
 export interface SurfaceContext {

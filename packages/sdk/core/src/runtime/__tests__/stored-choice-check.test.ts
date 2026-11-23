@@ -17,11 +17,11 @@ import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { PAGE_RENDER_KEY } from '../../libs/page-globals';
 import type { Script } from '../../libs/script-loader/script.model';
 import { encodeStoredConsentEnvelopeJson } from '../../modules/persistence/writer/record-encode.model';
+import type { RuntimePrefetch } from '../consent-runtime.model';
 import {
 	serverScriptStartPlan,
 	storedChoiceCheckScript,
 } from '../script-server-start';
-import type { RuntimePrefetch } from '../consent-runtime.model';
 
 const mode = transportMode({ init: () => Promise.resolve({}) });
 

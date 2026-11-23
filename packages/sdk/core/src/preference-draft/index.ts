@@ -35,6 +35,14 @@
  */
 import { compareCanonical } from '@inth/sdk-schema/canonical-order';
 
+import type {
+	ConsentKernel,
+	ConsentSnapshot,
+	ConsentState,
+	SaveResult,
+	SaveUISource,
+	Unsubscribe,
+} from '../consent-kernel.model';
 import { saveWouldLiftOptOut } from '../consent-record/opt-out-rules.model';
 import {
 	DENIED_CONSENTS,
@@ -49,14 +57,6 @@ import { vendorAxisActive } from '../libs/vendors';
 import { deniedVendorIds, toggleableVendorIds } from '../modules/vendor-denial';
 import { openOptInConfirmation } from '../surface-actions/opt-in';
 import { saveConsentSurface } from '../surface-actions/save-consent-surface';
-import type {
-	ConsentKernel,
-	ConsentSnapshot,
-	ConsentState,
-	SaveResult,
-	SaveUISource,
-	Unsubscribe,
-} from '../consent-kernel.model';
 
 /** Granted flag per vendor id. */
 type Grants = Record<string, boolean>;

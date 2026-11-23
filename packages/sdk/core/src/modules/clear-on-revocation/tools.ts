@@ -10,8 +10,8 @@
 import { IAB_STORAGE_KEYS } from '@inth/sdk-schema/types';
 
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
-import { cookieDomainsOf } from '../../libs/cookie/resolve-cookie-domain';
 import type { StorageConfig } from '../../libs/cookie/cookie.model';
+import { cookieDomainsOf } from '../../libs/cookie/resolve-cookie-domain';
 import { legacySubjectIdKey } from '../../libs/legacy-subject-id.store';
 import {
 	C15T_EXPERIMENT_STORAGE_KEY,

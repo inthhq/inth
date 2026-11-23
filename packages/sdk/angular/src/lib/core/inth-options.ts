@@ -18,9 +18,9 @@ import type {
 import type { ConsentTesting } from '@inth/sdk/testing';
 import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 
-import type { DialogPreload } from './warm-dialog';
 import { isIABConfigured, lazyCreateIAB, loadGPP } from './lazy-create-iab';
 import { selectedMode } from './provide-mode-transports';
+import type { DialogPreload } from './warm-dialog';
 
 /** IAB options the provider accepts, or `false` to leave IAB unmounted. */
 export type ProviderIABOptions =

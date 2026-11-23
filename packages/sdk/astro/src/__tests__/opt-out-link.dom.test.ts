@@ -12,10 +12,13 @@ import type { AstroConsentClient } from '../client';
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import * as vuePanelSurface from '../components/islands/panel-surface.vue';
 import { resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import type { InthAstroOptions } from '../inth-options.model';
-import { registerDialogAdapter, registerDialogSurface } from '../ui/register-dialog-adapter';
+import { testing as testingMode } from '../testing';
 import { reactDialogAdapter } from '../ui/react';
+import {
+	registerDialogAdapter,
+	registerDialogSurface,
+} from '../ui/register-dialog-adapter';
 import { vueDialogAdapter } from '../ui/vue';
 import '@inth/vue/vue-plugin';
 

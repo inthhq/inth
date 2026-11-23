@@ -18,8 +18,8 @@ import {
 import type { PropType, WatchSource } from 'vue';
 
 import { useConsentConfig } from './runtime/composables/config';
-import { useResolvedPresentation } from './runtime/composables/use-experiment';
 import { useConsentKernel } from './runtime/composables/use-consent-kernel';
+import { useResolvedPresentation } from './runtime/composables/use-experiment';
 import { readDisplayedCategories } from './runtime/devtools/read-displayed-categories';
 import { symbolKernelContext } from './runtime/utils/consent-symbols.model';
 

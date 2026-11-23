@@ -15,6 +15,7 @@
  */
 import { writePolicyResolutionWire } from '@inth/sdk-schema/types';
 
+import type { ConsentSnapshot } from '../consent-kernel.model';
 import {
 	ENDED_RENDERS_KEY,
 	LOADER_RAN_KEY,
@@ -51,10 +52,12 @@ import {
 	rootNeedsEngine,
 	scriptsNeedEngine,
 } from '../surface-actions/plain-scripts';
-import type { ConsentSnapshot } from '../consent-kernel.model';
+import type {
+	ConsentRuntimeOptions,
+	RuntimePrefetch,
+} from './consent-runtime.model';
 import { createRuntimeKernel } from './create-runtime-kernel';
 import { scriptRegistrySignatures } from './script-registry';
-import type { ConsentRuntimeOptions, RuntimePrefetch } from './consent-runtime.model';
 
 type ServerScriptOptions = ConsentRuntimeOptions & {
 	prefetch?: RuntimePrefetch;

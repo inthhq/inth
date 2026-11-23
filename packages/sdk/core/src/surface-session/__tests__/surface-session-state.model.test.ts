@@ -13,7 +13,10 @@ import {
 	reduceSurfaceSession,
 	topLayer,
 } from '../surface-session-state.model';
-import type { SurfaceSessionAction, SurfaceSessionState } from '../surface-session-state.model';
+import type {
+	SurfaceSessionAction,
+	SurfaceSessionState,
+} from '../surface-session-state.model';
 
 const run = function run(
 	state: SurfaceSessionState,

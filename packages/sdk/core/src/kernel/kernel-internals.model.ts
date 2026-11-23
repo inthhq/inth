@@ -1,3 +1,10 @@
+import type {
+	ConsentKernel,
+	HydrationRecords,
+	HydrationResult,
+	InitResponse,
+	KernelEvent,
+} from '../consent-kernel.model';
 /**
  * Kernel verbs that only core's own modules call: the runtime, persistence
  * and the records clear. They exist on every kernel `createConsentKernel()`
@@ -9,13 +16,6 @@
  * @internal
  */
 import type { OptOutReceiptData } from '../libs/opt-out-state.model';
-import type {
-	ConsentKernel,
-	HydrationRecords,
-	HydrationResult,
-	InitResponse,
-	KernelEvent,
-} from '../consent-kernel.model';
 
 /** @internal */
 export interface InternalKernel extends ConsentKernel {

@@ -50,12 +50,12 @@ import type {
 } from '../provider';
 import { awaitsChoice, rootNeedsEngine } from './boot';
 import type * as ClientEngine from './client-engine';
-import type { DeferredCommitConfig } from './deferred-committed.model';
 import type { DeferredKernelHandle } from './create-deferred-kernel';
-import { read, recordOnce } from './deferred-session-context';
+import type { DeferredCommitConfig } from './deferred-committed.model';
 import { DeferredConsentShell } from './deferred-consent-shell';
-import { warmSurfaces } from './surface-warmers.model';
+import { read, recordOnce } from './deferred-session-context';
 import { scheduleDeferredEngine } from './schedule-deferred-engine';
+import { warmSurfaces } from './surface-warmers.model';
 
 type EngineModule = typeof ClientEngine;
 

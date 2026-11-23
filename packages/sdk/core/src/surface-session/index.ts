@@ -21,7 +21,10 @@ export type {
 	RightPressResult,
 } from './commands';
 export { resolveSurfaceEscape } from './resolve-surface-escape';
-export type { SurfaceEscapeInput, SurfaceEscapeOutcome } from './resolve-surface-escape';
+export type {
+	SurfaceEscapeInput,
+	SurfaceEscapeOutcome,
+} from './resolve-surface-escape';
 export {
 	resolveBannerCommit,
 	resolveRightPress,
@@ -40,7 +43,10 @@ export type {
 	SaleRightState,
 } from './surface-rights.model';
 export { planCategorySwitch, planVendorSwitch } from './category-switch.model';
-export type { CategorySwitchPlan, CategorySwitchState } from './category-switch.model';
+export type {
+	CategorySwitchPlan,
+	CategorySwitchState,
+} from './category-switch.model';
 export { resolveRightsReceipt } from './resolve-rights-receipt';
 export type { ReceiptSnapshot, RightsReceipt } from './resolve-rights-receipt';
 export { getSurfaceSession } from './session';

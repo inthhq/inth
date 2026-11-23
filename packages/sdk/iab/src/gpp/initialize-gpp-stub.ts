@@ -10,7 +10,6 @@
  * @packageDocumentation
  */
 
-import { GPP_VERSION } from './gpp-sections.model';
 import type {
 	GPPApi,
 	GPPCallback,
@@ -18,6 +17,7 @@ import type {
 	GPPPingData,
 	GPPQueuedListener,
 } from './gpp-api.model';
+import { GPP_VERSION } from './gpp-sections.model';
 
 const LOCATOR_NAME = '__gppLocator';
 

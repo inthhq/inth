@@ -17,8 +17,8 @@ import {
 	PREFETCH_WINDOW_KEY,
 } from '../../../core/src/libs/page-globals';
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
-import { autoInit, createGlobal, installGlobal } from '../global';
 import type { GlobalApiBase } from '../create-global-with';
+import { autoInit, createGlobal, installGlobal } from '../global';
 import { releaseBoot } from '../init/adopt-boot';
 import type { InitBoot } from '../init/read-boot';
 import { runInitScript } from '../init/run';

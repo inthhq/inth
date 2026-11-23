@@ -13,8 +13,8 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-import { resolvePolicyRules } from './policy/policy-resolution.model';
 import { readPolicyResolutionWire } from './policy-resolution-wire';
+import { resolvePolicyRules } from './policy/policy-resolution.model';
 
 const SHARED_DIR = dirname(fileURLToPath(import.meta.url));
 const SOURCE_DIR = join(SHARED_DIR, '..');

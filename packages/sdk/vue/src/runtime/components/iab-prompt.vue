@@ -20,7 +20,6 @@ import {
 	useIabTranslations,
 } from '#inth/composables';
 
-import { useIabPreferenceTab } from '../composables/use-iab-preference-tab';
 import {
 	useConsentKernel,
 	useConsentSnapshot,
@@ -31,6 +30,7 @@ import {
 	useFocusBlocking,
 } from '../composables/use-consent-policy-actions';
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
+import { useIabPreferenceTab } from '../composables/use-iab-preference-tab';
 import { useLateEntry } from '../composables/use-late-entry';
 import { useFocusTrap } from '../primitives/use-focus-trap';
 import { slotAttrs } from '../utils/slot-attrs';

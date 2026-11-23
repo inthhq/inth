@@ -11,6 +11,7 @@
  * @internal
  */
 import type { CookieWriteReport } from '../../../libs/cookie';
+import type { StorageConfig } from '../persistence.model';
 import type {
 	DecodeResult,
 	StorageIssue,
@@ -19,7 +20,7 @@ import type {
 	StoredOptOutRecord,
 	StoredVendorChoice,
 } from '../record-codec.model';
-import type { StorageConfig } from '../persistence.model';
+import type { RecordStoreTools } from './persistence-writer.model';
 import {
 	encodeNoticeDismissal,
 	encodeNoticeDismissalCompact,
@@ -32,7 +33,6 @@ import {
 	encodeVendorChoice,
 	encodeVendorChoiceCompact,
 } from './record-encode.model';
-import type { RecordStoreTools } from './persistence-writer.model';
 
 export interface WriteStoredConsentOptions {
 	/** Current time. Rejects envelopes carrying future timestamps. */

@@ -47,12 +47,12 @@ import { validateStoredConsentEnvelope } from '../../../core/src/modules/persist
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/record-encode.model';
 import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs.model';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
-import { resetDialogWarmingForTests } from '../lib/core/warm-dialog';
 import type {
 	InthCallbacks,
 	InthOptions,
 	InthProviderOptions,
 } from '../lib/core/inth-options';
+import { resetDialogWarmingForTests } from '../lib/core/warm-dialog';
 import { bootClient, renderServer } from './conformance-app';
 import type { ClientApp, FixtureContent } from './conformance-app';
 import { POLICY_SURFACES } from './conformance-registry';

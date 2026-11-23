@@ -43,12 +43,7 @@ import {
 import { hosted } from '@inth/sdk-core/transports';
 import type { Theme } from '@inth/sdk-ui/theme';
 
-import { createBrowserRuntime } from './create-runtime';
-import { createDeferred } from './create-deferred';
-import type { PublishDevToolsLauncher } from './create-browser-dev-tools';
 import { createGatedScriptActivator } from './activate-gated-scripts';
-import { hasDecided } from './has-decided';
-import { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions.model';
 import type {
 	ConsentClient,
 	ConsentClientEventMap,
@@ -59,6 +54,11 @@ import type {
 	ConsentUIMounter,
 	ConsentUIOptions,
 } from './consent-client.model';
+import type { PublishDevToolsLauncher } from './create-browser-dev-tools';
+import { createDeferred } from './create-deferred';
+import { createBrowserRuntime } from './create-runtime';
+import { hasDecided } from './has-decided';
+import { ACTION_ATTRIBUTE, PREFERENCES_HASH } from './page-actions.model';
 import {
 	closeOptInConfirmation,
 	closeOptOutConfirmation,

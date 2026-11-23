@@ -27,9 +27,9 @@
 
 import { FAILED_CONFIGURATION } from '../policy-resolution-wire';
 import type { PolicyResolution } from '../policy-resolution-wire';
+import { createPolicyRuleFingerprints } from './policy-rule-fingerprint.model';
 import { inspectPolicyRules, normalizePolicyRule } from './policy-rule.model';
 import type { PolicyRule } from './policy-rule.model';
-import { createPolicyRuleFingerprints } from './policy-rule-fingerprint.model';
 import type { PolicyMatch, PolicyMatchedBy } from './policy-runtime.model';
 
 export {

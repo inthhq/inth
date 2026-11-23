@@ -35,11 +35,11 @@
  */
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
+import type { VendorChoice } from '../../consent-kernel.model';
 import type {
 	ExplicitChoice,
 	NoticeDismissal,
 } from '../../consent-record/types';
-import type { VendorChoice } from '../../consent-kernel.model';
 
 /**
  * The choice without decisions made before the clear, or `null` when none

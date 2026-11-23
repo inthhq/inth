@@ -39,9 +39,9 @@ import { useMounted } from '../../composables/use-mounted';
 import { useHydrationHold } from '../parts/use-hydration-hold';
 import { useRetryableComponent } from '../parts/use-retryable-component';
 import type { RetryableComponent } from '../parts/use-retryable-component';
+import { bannerPageRegionKey } from './banner-page-region-key';
 import { promptContainers, promptContainersKey } from './prompt-containers';
 import type { PromptContainers } from './prompt-containers';
-import { bannerPageRegionKey } from './banner-page-region-key';
 
 /**
  * Local overrides for the prompt. Each one beats `presentation.prompt` and

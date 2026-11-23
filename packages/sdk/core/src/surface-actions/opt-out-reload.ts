@@ -6,9 +6,9 @@
  * graphs. Loaded with the engine runtime.
  */
 
+import type { ConsentKernel } from '../consent-kernel.model';
 import { resolveOptOutState } from '../libs/opt-out-state.model';
 import { OPT_OUT_CONFIRMATION_STORAGE_KEY } from '../libs/storage-keys';
-import type { ConsentKernel } from '../consent-kernel.model';
 import { openOptOutConfirmation } from './opt-out';
 
 const readSessionStorage = (): Storage | null => {

@@ -1,4 +1,8 @@
 import { createNetworkBlockerWith } from './blocker';
+import type {
+	NetworkBlockerHandle,
+	NetworkBlockerOptions,
+} from './network-blocker.model';
 /**
  * `@inth/sdk/modules/network-blocker`
  *
@@ -7,7 +11,6 @@ import { createNetworkBlockerWith } from './blocker';
  * block ones whose consent condition isn't satisfied. See `blocker.ts`.
  */
 import { networkBlockerTools } from './tools';
-import type { NetworkBlockerHandle, NetworkBlockerOptions } from './network-blocker.model';
 
 export type {
 	BlockDecision,

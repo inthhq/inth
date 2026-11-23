@@ -6,8 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as ClientModule from '../client';
 import type { AstroConsentClient, PageIAB } from '../client';
 import type * as IntegrationModule from '../integration';
-import { testing as testingMode } from '../testing';
 import type { InthAstroOptions } from '../inth-options.model';
+import { testing as testingMode } from '../testing';
 import { createTestPageIAB } from './page-iab';
 import { testResolution, testRule } from './policy-fixture';
 

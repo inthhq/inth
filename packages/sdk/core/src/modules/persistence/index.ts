@@ -79,9 +79,12 @@
  *   run.
  */
 import { STORAGE_KEY_V2 } from '../../libs/storage-keys';
-import type { StoredRecords as StoredRead } from './persistence-hydrate.store';
 import { mountPersistence } from './mount';
-import type { PersistenceHandle, PersistenceOptions } from './persistence.model';
+import type { StoredRecords as StoredRead } from './persistence-hydrate.store';
+import type {
+	PersistenceHandle,
+	PersistenceOptions,
+} from './persistence.model';
 
 export type {
 	PersistenceHandle,

@@ -5,6 +5,7 @@
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 import { describe, expect, it } from 'vitest';
 
+import { validateOptOutRecord } from '../consent-record-validation.model';
 import { evaluateConsentRecord } from '../evaluate';
 import {
 	answersHeldOptOut,
@@ -18,7 +19,6 @@ import {
 	policyOptOutCategories,
 } from '../types';
 import type { OptionalConsentCategory } from '../types';
-import { validateOptOutRecord } from '../consent-record-validation.model';
 import { makePolicy, NOW } from './fixtures';
 
 const ALL_OPTIONAL: readonly OptionalConsentCategory[] = [

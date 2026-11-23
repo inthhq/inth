@@ -21,7 +21,10 @@
 import type { WithProjectUrl } from '@inth/sdk-core/runtime';
 
 import { createConsentClient as createClient } from './client';
-import type { ConsentClient, ConsentClientOptions } from './consent-client.model';
+import type {
+	ConsentClient,
+	ConsentClientOptions,
+} from './consent-client.model';
 import { mountConsentUI } from './ui/mount-consent-ui';
 
 const PKG = '@inth/sdk';

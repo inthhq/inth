@@ -10,8 +10,8 @@
 import * as drawerSheet from '@inth/sdk-ui/styles/sheets/drawer';
 import * as surfaceSheet from '@inth/sdk-ui/styles/sheets/surface';
 
-import { classes } from '../../generated/ui/drawer';
 import type { ConsentBannerOptions } from '../../consent-client.model';
+import { classes } from '../../generated/ui/drawer';
 import type { SurfaceContext } from '../surface';
 import { createPromptSurface } from './create-prompt-surface';
 import type { PresentationEntry, PromptSurface } from './create-prompt-surface';

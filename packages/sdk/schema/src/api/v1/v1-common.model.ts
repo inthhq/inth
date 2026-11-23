@@ -18,17 +18,17 @@ import {
 } from '../../shared/opt-out.model';
 import type { OptOutRecord } from '../../shared/opt-out.model';
 import {
-	V1_LEGACY_SUBJECT_ID_PATTERN,
-	V1_UUID_PATTERN,
-	V1_UUID_V7_PATTERN,
-} from './v1-constants.model';
-import {
 	consentRecordRequestSchema,
 	consentRecordResponseSchema,
 	subjectLinkRequestSchema,
 	v1ErrorSchema,
 } from './generated/schemas';
 import { jsonObject, jsonRecord } from './json-schema';
+import {
+	V1_LEGACY_SUBJECT_ID_PATTERN,
+	V1_UUID_PATTERN,
+	V1_UUID_V7_PATTERN,
+} from './v1-constants.model';
 
 /**
  * A canonical subject ID, as every `/v1` response names it. The document

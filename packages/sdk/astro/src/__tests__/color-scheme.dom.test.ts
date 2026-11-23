@@ -16,10 +16,13 @@ import type { AstroConsentClient } from '../client';
 // loads, so no test timeout covers the compile.
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import { resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import type { InthAstroOptions, InthColorScheme } from '../inth-options.model';
-import { registerDialogAdapter, registerDialogSurface } from '../ui/register-dialog-adapter';
+import { testing as testingMode } from '../testing';
 import { reactDialogAdapter } from '../ui/react';
+import {
+	registerDialogAdapter,
+	registerDialogSurface,
+} from '../ui/register-dialog-adapter';
 import { testRule } from './policy-fixture';
 import { ISLAND_RENDER_TIMEOUT } from './react-dialog-island';
 

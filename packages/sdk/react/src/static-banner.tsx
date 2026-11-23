@@ -17,7 +17,10 @@ import { snapshotFromPrefetchedInit } from '@inth/sdk/runtime/deferred-snapshot'
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { CARD_SHEETS, CardSurface } from './components/prompt/card-surface';
-import { DRAWER_SHEETS, DrawerSurface } from './components/prompt/drawer-surface';
+import {
+	DRAWER_SHEETS,
+	DrawerSurface,
+} from './components/prompt/drawer-surface';
 import { ConsentBanner } from './components/prompt/index';
 import { PromptContainersContext } from './components/prompt/prompt';
 import type { PromptContainers } from './components/prompt/prompt';

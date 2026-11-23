@@ -11,6 +11,7 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type { ConsentKernel, KernelConfig } from '../../consent-kernel.model';
 import { createConsentKernel } from '../../kernel';
 import {
 	resolvePrivacyChoicesDialogCopy,
@@ -20,7 +21,6 @@ import {
 	resolveVendorTableCopy,
 } from '../../libs/consent-copy';
 import { createPreferenceDraft } from '../../preference-draft';
-import type { ConsentKernel, KernelConfig } from '../../consent-kernel.model';
 import { planCategorySwitch, planVendorSwitch } from '../category-switch.model';
 import { applyDialogCategories, commitDialogChoice } from '../commands';
 import { resolveRightsReceipt } from '../resolve-rights-receipt';

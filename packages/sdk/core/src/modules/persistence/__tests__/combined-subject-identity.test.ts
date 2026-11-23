@@ -17,6 +17,11 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
+import type {
+	ConsentKernel,
+	ConsentSnapshot,
+	SaveInput,
+} from '../../../consent-kernel.model';
 import { createConsentKernel } from '../../../index';
 import { getRawCookieValue } from '../../../libs/cookie';
 import { legacySubjectIdKey } from '../../../libs/legacy-subject-id.store';
@@ -25,7 +30,6 @@ import {
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent.api';
-import type { ConsentKernel, ConsentSnapshot, SaveInput } from '../../../consent-kernel.model';
 import { createClearOnRevocation } from '../../clear-on-revocation';
 import { createPersistence, readStoredRecordsFromCookieHeader } from '../index';
 import type { StorageConfig } from '../persistence.model';

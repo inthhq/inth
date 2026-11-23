@@ -21,8 +21,8 @@ import {
 	STORAGE_KEY_V2,
 	SUBJECT_REASSIGNMENTS_STORAGE_KEY,
 } from '../../../libs/storage-keys';
-import { createClearOnRevocation } from '../index';
 import type { ClearOnRevocationConfig } from '../clear-on-revocation.model';
+import { createClearOnRevocation } from '../index';
 
 const disposals: (() => void)[] = [];
 const attach = (

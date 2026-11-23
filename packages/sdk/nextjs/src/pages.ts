@@ -29,7 +29,11 @@ import type {
 	NodeApiResponseLike,
 	NodeRequestLike,
 } from './node-bridge.model';
-import { toWebHeaders, toWebRequest, writeWebResponse } from './node-bridge.model';
+import {
+	toWebHeaders,
+	toWebRequest,
+	writeWebResponse,
+} from './node-bridge.model';
 import type {
 	ConsentState,
 	KernelConfig,

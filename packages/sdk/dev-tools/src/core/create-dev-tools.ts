@@ -14,8 +14,7 @@ import {
 	subscribeScriptDiagnostics,
 } from '@inth/sdk-core/modules/script-loader';
 
-import { KERNEL_EVENT_TYPES, kernelEventToDevToolsEvent } from './kernel-events.model';
-import { readSelection } from './read-selection';
+import { createDevToolsView } from './create-dev-tools-view';
 import { createStateManager } from './create-state-manager';
 import type {
 	DevToolsDock,
@@ -24,7 +23,11 @@ import type {
 	DevToolsStateListener,
 	DevToolsTab,
 } from './create-state-manager';
-import { createDevToolsView } from './create-dev-tools-view';
+import {
+	KERNEL_EVENT_TYPES,
+	kernelEventToDevToolsEvent,
+} from './kernel-events.model';
+import { readSelection } from './read-selection';
 
 /** Options for a kernel-bound DevTools instance. */
 export interface DevToolsOptions {

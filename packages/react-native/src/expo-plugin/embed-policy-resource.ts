@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
-import { InthPluginError } from './inth-plugin-error';
 import { gvlEntryProblem } from './gvl-fields';
+import { InthPluginError } from './inth-plugin-error';
 
 /** The native readers use a fixed filename inside the app's resources/assets. */
 export const POLICY_RESOURCE_NAME = 'inth-policy.json';

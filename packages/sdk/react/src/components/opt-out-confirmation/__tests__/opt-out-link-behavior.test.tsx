@@ -13,8 +13,8 @@ import { ConsentDialogLink } from '~/components/consent-preferences-link/consent
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentBanner } from '~/components/prompt';
 import { useOptOut } from '~/hooks';
-import { useKernel } from '~/use-kernel-selector';
 import { testing } from '~/testing';
+import { useKernel } from '~/use-kernel-selector';
 
 const query = <Element extends HTMLElement>(testId: string) =>
 	document.querySelector<Element>(`[data-testid="${testId}"]`);

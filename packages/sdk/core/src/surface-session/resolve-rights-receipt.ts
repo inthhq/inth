@@ -5,9 +5,9 @@
  * @packageDocumentation
  */
 
+import type { ConsentSnapshot } from '../consent-kernel.model';
 import { resolveOptOutReceipt } from '../libs/opt-out-state.model';
 import type { OptOutReceiptData } from '../libs/opt-out-state.model';
-import type { ConsentSnapshot } from '../consent-kernel.model';
 import { resolveSaleRight } from './surface-rights.model';
 import type { RightOption, RightsSnapshot } from './surface-rights.model';
 

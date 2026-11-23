@@ -17,9 +17,12 @@ import {
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import type { Script } from '../../libs/script-loader/script.model';
 import type { ProviderTransportFactory } from '../../transports/mode';
+import type {
+	ConsentRuntimeOptions,
+	RuntimePrefetch,
+} from '../consent-runtime.model';
 import { createConsentRuntime } from '../index';
 import { serverScriptStart } from '../script-server-start';
-import type { ConsentRuntimeOptions, RuntimePrefetch } from '../consent-runtime.model';
 
 /**
  * Options a test passes over the defaults. Its mode is a transport factory,

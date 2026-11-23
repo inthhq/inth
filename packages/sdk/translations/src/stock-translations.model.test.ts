@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import manifest from '../package.json';
 import { baseTranslations } from './all';
-import { getStockTranslations, registerStockTranslations } from './stock-translations.model';
+import {
+	getStockTranslations,
+	registerStockTranslations,
+} from './stock-translations.model';
 import { translations as enTranslations } from './translations/en';
 
 describe('stock translations registry', () => {

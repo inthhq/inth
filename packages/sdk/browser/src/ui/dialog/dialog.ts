@@ -41,10 +41,15 @@ import { getTextDirection } from '@inth/sdk-ui/utils';
 import { resolveLegalLinkEntries } from '@inth/sdk-ui/utils/legal-links';
 import type { LegalLinkKeys } from '@inth/sdk-ui/utils/legal-links';
 
+import type { ConsentDialogOptions } from '../../consent-client.model';
 import { classes as styles } from '../../generated/ui/dialog';
 import { classes as expandStyles } from '../../generated/ui/expand';
-import type { ConsentDialogOptions } from '../../consent-client.model';
-import { advertisingRow, createCategoryGroup } from '../parts/create-category-group';
+import {
+	advertisingRow,
+	createCategoryGroup,
+} from '../parts/create-category-group';
+import { createRightsReceipt } from '../parts/create-rights-receipt';
+import { createSaleRightsRow } from '../parts/create-sale-rights-row';
 import {
 	activeElementOf,
 	cx,
@@ -63,8 +68,6 @@ import {
 	showConsentSurface,
 	takeReceiptFocus,
 } from '../parts/engine';
-import { createRightsReceipt } from '../parts/create-rights-receipt';
-import { createSaleRightsRow } from '../parts/create-sale-rights-row';
 import {
 	checkIcon,
 	chevron,

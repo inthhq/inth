@@ -19,10 +19,21 @@
  * @internal
  */
 
+import type {
+	ConsentSnapshot,
+	HydrationRecords,
+	KernelEvent,
+	SaveResult,
+	SavePayload,
+	SaveUISource,
+} from '../consent-kernel.model';
 import { recordCategoryPatch } from '../consent-record/consent-record.model';
 import type { OptionalConsentCategory } from '../consent-record/types';
 import { buildNextSnapshot } from '../kernel/next-snapshot.model';
-import type { PolicyResolvers, SnapshotPatch } from '../kernel/next-snapshot.model';
+import type {
+	PolicyResolvers,
+	SnapshotPatch,
+} from '../kernel/next-snapshot.model';
 import {
 	createBrowserOutboxStore,
 	enqueueSave,
@@ -41,27 +52,19 @@ import { removeLocalStorageKey } from '../libs/local-storage.store';
 import { storageFor } from '../libs/storage-for';
 import { resolveStorageKeys } from '../libs/storage-keys';
 import { generateUuidV7 } from '../libs/subject-uuid.model';
+import type { StorageConfig } from '../modules/persistence/persistence.model';
 import {
 	decodeNoticeDismissal,
 	decodeOptOutRecord,
 	decodeVendorChoice,
 	validateStoredConsentEnvelope,
 } from '../modules/persistence/record-codec.model';
-import type { StorageConfig } from '../modules/persistence/persistence.model';
-import { createRecordStore } from '../modules/persistence/writer/persistence-writer.store';
-import type { RecordStoreTools } from '../modules/persistence/writer/persistence-writer.model';
 import { buildStoredEnvelope } from '../modules/persistence/writer/persistence-write.store';
+import type { RecordStoreTools } from '../modules/persistence/writer/persistence-writer.model';
+import { createRecordStore } from '../modules/persistence/writer/persistence-writer.store';
 import type { Callbacks } from '../options/callback-options.model';
-import type { StandInKernelHandle } from '../runtime/stand-in-kernel';
 import type { ConsentRuntimeOptions } from '../runtime/consent-runtime.model';
-import type {
-	ConsentSnapshot,
-	HydrationRecords,
-	KernelEvent,
-	SaveResult,
-	SavePayload,
-	SaveUISource,
-} from '../consent-kernel.model';
+import type { StandInKernelHandle } from '../runtime/stand-in-kernel';
 import {
 	hasStoredClearEpoch,
 	kernelOnly,

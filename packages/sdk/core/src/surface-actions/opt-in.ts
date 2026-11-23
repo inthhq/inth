@@ -12,11 +12,6 @@
  * restoration, and avoids duplicate hosts without changing `KernelActiveUI`.
  */
 
-import {
-	optOutLiftBlocker,
-	saveWouldLiftOptOut,
-} from '../consent-record/opt-out-rules.model';
-import type { AllConsentNames } from '../consent/consent-types';
 import type {
 	ConsentKernel,
 	OptInResult,
@@ -24,6 +19,11 @@ import type {
 	SaveResult,
 	SaveUISource,
 } from '../consent-kernel.model';
+import {
+	optOutLiftBlocker,
+	saveWouldLiftOptOut,
+} from '../consent-record/opt-out-rules.model';
+import type { AllConsentNames } from '../consent/consent-types';
 import { readFocusedElement } from './opt-out';
 import { onSurfaceNavigation } from './rules';
 import { saveConsentSurface } from './save-consent-surface';

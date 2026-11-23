@@ -7,13 +7,16 @@ import { generateThemeCSS } from '@inth/sdk-ui/theme';
 import type { Theme } from '@inth/sdk-ui/theme';
 import { prefersReducedMotion } from '@inth/sdk-ui/utils/reduced-motion';
 
-import { dropRejection } from '../drop-rejection';
-import { stylesheet } from '../generated/styles';
 import type {
 	ConsentClient,
 	ConsentUIHandle,
 	ConsentUIOptions,
 } from '../consent-client.model';
+import { dropRejection } from '../drop-rejection';
+import { stylesheet } from '../generated/styles';
+import { createSlotApplier } from './create-slot-applier';
+import { createTrigger } from './create-trigger';
+import { createStyle, createUIRoot } from './create-ui-root';
 import { createDialog } from './dialog';
 import { h } from './dom';
 import {
@@ -22,10 +25,7 @@ import {
 	subscribeOptOutReceiptData,
 } from './opt-out-confirmation-state';
 import { createBannerSurface } from './prompt/prompt';
-import { createStyle, createUIRoot } from './create-ui-root';
-import { createSlotApplier } from './create-slot-applier';
 import type { Surface, SurfaceContext } from './surface';
-import { createTrigger } from './create-trigger';
 
 const resolveContainer = function resolveContainer(
 	container: ConsentUIOptions['container']

@@ -15,12 +15,6 @@
 import * as v from 'valibot';
 
 import {
-	v1CanonicalSubjectIdSchema,
-	v1EffectiveOptOutSchema,
-	v1SubjectIdSchema,
-} from './v1-common.model';
-import type { V1EffectiveOptOut } from './v1-common.model';
-import {
 	identityTokenRequestSchema,
 	identityTokenResponseSchema,
 	postV1SubjectsByIdLinkPathSchema,
@@ -28,6 +22,12 @@ import {
 	subjectLinkResponseSchema,
 } from './generated/schemas';
 import { jsonObject } from './json-schema';
+import {
+	v1CanonicalSubjectIdSchema,
+	v1EffectiveOptOutSchema,
+	v1SubjectIdSchema,
+} from './v1-common.model';
+import type { V1EffectiveOptOut } from './v1-common.model';
 
 export const v1SubjectLinkParamsSchema = jsonObject(
 	v.object({

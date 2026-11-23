@@ -63,14 +63,22 @@ import type {
 	AstroEngineClient,
 	AstroConsentSaveInput,
 } from '../astro-consent-client.model';
-import type { InthClientOptionsExtension, InthResolvedOptions } from '../inth-options.model';
-import type { ConsentDialogHandle, ConsentDialogKind } from '../ui/register-dialog-adapter';
+import type {
+	InthClientOptionsExtension,
+	InthResolvedOptions,
+} from '../inth-options.model';
+import type {
+	ConsentDialogHandle,
+	ConsentDialogKind,
+} from '../ui/register-dialog-adapter';
 import {
 	attachBannerActions,
 	registerDeferredClient,
 	warmDialog,
 } from './attach-banner-actions';
 import type { CompleteCommitInput, DeferredCommitted } from './complete-commit';
+import type * as StandInModule from './create-dialog-stand-in';
+import type { DialogStandIn } from './create-dialog-stand-in';
 import { declaresVendor } from './declares-vendor';
 import {
 	ensureDialogHost,
@@ -85,9 +93,10 @@ import {
 	getWindow,
 	readPageNonce,
 } from './page-state';
-import type * as StandInModule from './create-dialog-stand-in';
-import type { DialogStandIn } from './create-dialog-stand-in';
-import { scheduleDeferredEngine, unhideEarlyTap } from './schedule-deferred-engine';
+import {
+	scheduleDeferredEngine,
+	unhideEarlyTap,
+} from './schedule-deferred-engine';
 
 /** Attribute on the boot data block. @internal */
 export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';

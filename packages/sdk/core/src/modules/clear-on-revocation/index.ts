@@ -1,9 +1,9 @@
 import { createClearOnRevocationWith } from './clear';
-import { clearOnRevocationTools } from './tools';
 import type {
 	ClearOnRevocationHandle,
 	ClearOnRevocationOptions,
 } from './clear-on-revocation.model';
+import { clearOnRevocationTools } from './tools';
 
 export type {
 	ClearOnRevocationConfig,

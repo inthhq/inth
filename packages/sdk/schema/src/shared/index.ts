@@ -124,7 +124,11 @@ export {
 	CONSENT_ONLY_PURPOSES,
 	permittedLegitimateInterestPurposes,
 } from './tcf-purposes.model';
-export { getIpAddress, type IpAddressConfig, maskIpAddress } from './client-ip.model';
+export {
+	getIpAddress,
+	type IpAddressConfig,
+	maskIpAddress,
+} from './client-ip.model';
 export {
 	type ForwardedElement,
 	forwardedNodeAddress,

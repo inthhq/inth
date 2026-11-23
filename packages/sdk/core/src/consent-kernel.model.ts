@@ -31,6 +31,7 @@ import type { Translations } from '@inth/sdk-translations';
  * establish processing permissions.
  */
 
+import type { RecordIssue } from './consent-record/consent-record-validation.model';
 import type {
 	ConsentSubject,
 	EvaluationPolicy,
@@ -41,7 +42,6 @@ import type {
 	PromptRequirement,
 	RestrictionReason,
 } from './consent-record/types';
-import type { RecordIssue } from './consent-record/consent-record-validation.model';
 import type { AllConsentNames } from './consent/consent-types';
 import type { ExperimentAssignment, ExperimentGate } from './libs/experiment';
 import type { HasCondition } from './libs/has';

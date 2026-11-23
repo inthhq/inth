@@ -17,10 +17,6 @@ import type * as CoreTypes from '@inth/sdk/engine';
 import { useEffect, useState } from 'react';
 import type { ComponentType } from 'react';
 
-import {
-	registerDialogChunkWarmer,
-	useIdleDialogWarming,
-} from './warm-dialog-chunk';
 import type {
 	IABConsentDialogCompoundComponent,
 	IABConsentDialogProps,
@@ -30,6 +26,10 @@ import { useActiveUI, useModel } from './hooks';
 import { useIsHydrated } from './hooks/use-is-hydrated';
 import { useIAB } from './iab-provider';
 import { createDeferredModule } from './utils/create-deferred-module';
+import {
+	registerDialogChunkWarmer,
+	useIdleDialogWarming,
+} from './warm-dialog-chunk';
 
 type AnyComponent = ComponentType<Record<string, unknown>>;
 

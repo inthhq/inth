@@ -4,12 +4,10 @@
  * `index.ts` is the public entry and passes the shared implementations.
  */
 import type { ConsentSnapshot } from '../../consent-kernel.model';
-import { isCallbackOnly } from './is-callback-only';
-import { buildCallbackInfo, invokeCallback } from './script-callbacks.model';
 import { createDebugEmitter } from './create-debug-emitter';
 import { registerScriptDiagnostics } from './diagnostics';
 import type { ScriptDiagnostic, ScriptDiagnosticStatus } from './diagnostics';
-import { buildReconcilePass, hasScriptConsent } from './script-eligibility.model';
+import { isCallbackOnly } from './is-callback-only';
 import {
 	flushPendingMounts,
 	mountScript,
@@ -22,6 +20,21 @@ import {
 	hasSameResource,
 	normalizeScripts,
 } from './normalize-scripts';
+import { buildCallbackInfo, invokeCallback } from './script-callbacks.model';
+import {
+	buildReconcilePass,
+	hasScriptConsent,
+} from './script-eligibility.model';
+import type {
+	NormalizedScript,
+	PendingMount,
+	Script,
+	ScriptCallbackInfo,
+	ScriptLoaderHandle,
+	ScriptLoaderOptions,
+	ScriptLoaderDebugEvent,
+	ScriptLoaderTools,
+} from './script-loader.model';
 import { readScriptRegistry } from './script-registry.model';
 import {
 	createRegistryVerifier,
@@ -33,16 +46,6 @@ import type {
 	RegistryEntryCheck,
 	ScriptRegistryState,
 } from './script-sources.model';
-import type {
-	NormalizedScript,
-	PendingMount,
-	Script,
-	ScriptCallbackInfo,
-	ScriptLoaderHandle,
-	ScriptLoaderOptions,
-	ScriptLoaderDebugEvent,
-	ScriptLoaderTools,
-} from './script-loader.model';
 
 const MAX_RECONCILE_PASSES = 100;
 

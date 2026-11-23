@@ -17,8 +17,8 @@ import {
 } from '@inth/sdk/server';
 import type { ConsentRouteFetchGvl, ManifestFetch } from '@inth/sdk/server';
 
-import { absoluteManifestUrl } from '../libs/absolute-manifest-url';
 import type { InthResolvedOptions } from '../inth-options.model';
+import { absoluteManifestUrl } from '../libs/absolute-manifest-url';
 
 /**
  * The per-request context a route or the middleware can pass so a

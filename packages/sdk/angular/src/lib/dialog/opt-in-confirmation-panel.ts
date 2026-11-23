@@ -38,8 +38,8 @@ import { ConsentStyles, SURFACE_SCOPES } from '../core/consent-styles';
 import type { SurfaceStyleSheet } from '../core/consent-styles';
 import { ConsentTheme } from '../core/consent-theme';
 import { NoStyleScope, resolveNoStyle } from '../core/no-style-scope';
-import { InitialFocus } from '../overlay/initial-focus';
 import { FocusTrap } from '../overlay/focus-trap';
+import { InitialFocus } from '../overlay/initial-focus';
 import { Portal } from '../overlay/portal';
 import { ScrollLock } from '../overlay/scroll-lock';
 

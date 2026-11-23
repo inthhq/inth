@@ -1,8 +1,8 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 
-import type { InitOutput } from '../api/init-output.model';
 import { consentSessionReportSchema } from '../api/consent-session.model';
+import type { InitOutput } from '../api/init-output.model';
 import {
 	appendJourneyParams,
 	buildConsentSessionReport,

@@ -2,7 +2,10 @@ import { css as partsCSS } from '@inth/sdk/ui/styles/sheets/parts';
 import { css as widgetCSS } from '@inth/sdk/ui/styles/sheets/widget';
 import { describe, expect, test } from 'vitest';
 
-import { injectSurfaceStyles, nonceEarlyTapScript } from '../inject-surface-styles';
+import {
+	injectSurfaceStyles,
+	nonceEarlyTapScript,
+} from '../inject-surface-styles';
 
 const page = (head: string, body = '<p>page</p>') =>
 	`<html><head>${head}</head><body>${body}</body></html>`;

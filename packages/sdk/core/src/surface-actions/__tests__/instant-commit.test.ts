@@ -16,9 +16,9 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type { ConsentSnapshot, KernelConfig } from '../../consent-kernel.model';
 import { createKernel } from '../../kernel/index';
 import { createMemoryOutboxStore } from '../../kernel/save-outbox/save-outbox.store';
-import type { ConsentSnapshot, KernelConfig } from '../../consent-kernel.model';
 import { planEarlyCommit } from '../early-commit';
 import { planInstantCommit } from '../instant-commit';
 

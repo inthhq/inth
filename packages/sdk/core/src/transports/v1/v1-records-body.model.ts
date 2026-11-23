@@ -3,9 +3,9 @@ import type {
 	V1ConsentRecordInput,
 } from '@inth/sdk-schema/types';
 
+import type { SavePayload } from '../../consent-kernel.model';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type { ExplicitChoice } from '../../consent-record/types';
-import type { SavePayload } from '../../consent-kernel.model';
 import type { DecisionAssertion } from '../decision-inputs.model';
 
 /** The body, without the decision assertion the transport adds. */

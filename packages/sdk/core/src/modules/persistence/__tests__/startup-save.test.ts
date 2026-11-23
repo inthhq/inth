@@ -2,10 +2,10 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { NOW } from '../../../__tests__/fixtures/kernel-fixtures';
+import type { InitResponse } from '../../../consent-kernel.model';
 import { createConsentKernel } from '../../../kernel';
 import { STORAGE_KEY_V2 } from '../../../libs/storage-keys';
 import { createOfflineTransport } from '../../../transports/offline';
-import type { InitResponse } from '../../../consent-kernel.model';
 import { createPersistence } from '../index';
 import { readStoredConsentRecord } from '../record-storage.store';
 import { clearStoredConsentRecords } from './record-writes';

@@ -14,10 +14,13 @@ import {
 	NOW,
 	optInRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
+import type {
+	HydrationRecords,
+	KernelVendorsState,
+} from '../../../consent-kernel.model';
 import { createConsentKernel } from '../../../index';
 import { resolveStorageKeys } from '../../../libs/storage-keys';
 import { readRequestConsent } from '../../../server/request-consent.api';
-import type { HydrationRecords, KernelVendorsState } from '../../../consent-kernel.model';
 import { watchRevocationReload } from '../../revocation-reload';
 import { createPersistence } from '../index';
 import {

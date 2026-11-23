@@ -22,7 +22,10 @@
 	import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 	import type { Snippet } from 'svelte';
 
-	import { getConsentContext, getThemeContext } from '../get-consent-context.svelte';
+	import {
+		getConsentContext,
+		getThemeContext,
+	} from '../get-consent-context.svelte';
 	import ConsentButton from './action-button.svelte';
 	import OptOutIcon from './icons/opt-out-icon.svelte';
 

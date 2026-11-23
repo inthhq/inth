@@ -10,6 +10,7 @@ import {
 	EARLY_TAPS_WINDOW_KEY,
 } from '../../../core/src/libs/page-globals';
 import { PENDING_SAVES_STORAGE_KEY } from '../../../core/src/libs/storage-keys';
+import type { InthClientOptionsExtension } from '../astro-consent-client.model';
 import { startDeferredClient } from '../browser/start-deferred-client';
 import type { EngineModule } from '../browser/start-deferred-client';
 import {
@@ -19,12 +20,11 @@ import {
 } from '../client';
 import type { AstroConsentClient } from '../client';
 import { boot, EVENTS_KEY } from '../client-engine';
-import type { InthClientOptionsExtension } from '../astro-consent-client.model';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions } from '../inth-options.model';
 import { hosted as hostedMode } from '../mode';
 import { snapshotFromConfig } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions } from '../inth-options.model';
 import { registerDialogAdapter } from '../ui/register-dialog-adapter';
 import type { ConsentDialogContext } from '../ui/register-dialog-adapter';
 import { testResolution, testRule } from './policy-fixture';

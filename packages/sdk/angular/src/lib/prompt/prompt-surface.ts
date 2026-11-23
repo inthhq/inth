@@ -61,24 +61,24 @@ import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentStyles, SURFACE_SCOPES } from '../core/consent-styles';
 import { ConsentTheme } from '../core/consent-theme';
-import { registerDialogWarmer, warmDialog } from '../core/warm-dialog';
 import { NoStyleScope, resolveNoStyle } from '../core/no-style-scope';
 import { uniqueId } from '../core/unique-id';
+import { registerDialogWarmer, warmDialog } from '../core/warm-dialog';
 import { CategoryGroup } from '../parts/category-group';
 import { ChoiceButton } from '../parts/choice-button';
-import { bool, cx, slotPart } from '../parts/part-class-names.model';
-import { SaleRightsRow } from '../parts/sale-rights-row';
-import { SurfaceDraft } from '../parts/surface-draft';
 import {
 	injectPhoneLayout,
 	injectSurfaceSession,
 	rightsBundleOf,
 } from '../parts/inject-surface-session';
+import { bool, cx, slotPart } from '../parts/part-class-names.model';
+import { SaleRightsRow } from '../parts/sale-rights-row';
+import { SurfaceDraft } from '../parts/surface-draft';
 import { BrandMarkIcon } from '../shared/icons';
 import { InlineLegalLinks } from '../shared/inline-legal-links';
 import type { LegalLinkSelection } from '../shared/inline-legal-links';
-import type { ContainerModule, PromptSurfaceOptions } from './prompt-loaders';
 import { PromptOptionsPanel, PromptPreferences } from './panel';
+import type { ContainerModule, PromptSurfaceOptions } from './prompt-loaders';
 
 /** Exits are 160ms; the controllers add their own slack. */
 const EXIT_MS = 160;

@@ -9,16 +9,7 @@
  */
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
-import {
-	answersHeldOptOut,
-	carryOptOutCategories,
-} from '../consent-record/opt-out-rules.model';
-import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
-import type {
-	ConsentSubject,
-	ExplicitChoice,
-	NoticeDismissal,
-} from '../consent-record/types';
+import type { HydrationRecords, VendorChoice } from '../consent-kernel.model';
 import {
 	checkTimestamp,
 	isNonEmptyString,
@@ -30,9 +21,18 @@ import {
 	validateOptOutRecord,
 } from '../consent-record/consent-record-validation.model';
 import type { RecordIssue } from '../consent-record/consent-record-validation.model';
+import {
+	answersHeldOptOut,
+	carryOptOutCategories,
+} from '../consent-record/opt-out-rules.model';
+import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
+import type {
+	ConsentSubject,
+	ExplicitChoice,
+	NoticeDismissal,
+} from '../consent-record/types';
 import type { OptOutLocalAct } from '../libs/opt-out-state.model';
 import { isValidVendorId } from '../libs/vendors';
-import type { HydrationRecords, VendorChoice } from '../consent-kernel.model';
 
 /** Validated records with the same omit/clear semantics as the input. */
 export interface ValidatedRecords {

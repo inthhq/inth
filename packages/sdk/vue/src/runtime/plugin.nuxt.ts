@@ -22,11 +22,15 @@ import {
 
 import { COLOR_SCHEME_SCRIPT_KEY } from './color-scheme-script-key';
 import { loadConsentBanner } from './components/lazy-surfaces';
+import { createDeferredContext } from './deferred/create-deferred-context';
 import type { NuxtConsentBoot } from './deferred/deferred-boot.model';
 import type { NuxtEngineInput } from './deferred/engine';
 import { isDeferredBannerModule } from './deferred/is-deferred-banner-module';
-import { createDeferredContext } from './deferred/create-deferred-context';
-import { INIT_HEADER_NAMES, pickAllowedInitHeaders } from './init-headers.model';
+import {
+	INIT_HEADER_NAMES,
+	pickAllowedInitHeaders,
+} from './init-headers.model';
+import { isSharedNuxtRender } from './is-shared-nuxt-render';
 import type { RuntimeConsentConfig, VueConsentKernelContext } from './kernel';
 import {
 	readNuxtMode,
@@ -36,7 +40,6 @@ import {
 import type { NuxtConsentModeConfig } from './nuxt-mode';
 import { provideVueConsentContext } from './provide-vue-consent-context';
 import type { NuxtConsentRequest } from './resolve-nuxt-consent';
-import { isSharedNuxtRender } from './is-shared-nuxt-render';
 import { TOKENS_STYLE_ID } from './tokens-style-id';
 import { consentConfigKey } from './utils/consent-symbols.model';
 

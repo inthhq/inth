@@ -8,9 +8,9 @@ import {
 } from '@inth/sdk-schema/types';
 import type { InitOutput } from '@inth/sdk-schema/types';
 
+import type { InitContext, KernelJourney } from '../../consent-kernel.model';
 import type { SSRInitialData } from '../../options/ssr-options.model';
 import { V1_ROUTES } from '../../transports/v1/v1-routes';
-import type { InitContext, KernelJourney } from '../../consent-kernel.model';
 import {
 	claimEarlyExperimentArm,
 	experimentArmNames,

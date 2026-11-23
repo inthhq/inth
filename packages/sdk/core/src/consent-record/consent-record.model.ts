@@ -14,11 +14,6 @@
  * @internal
  */
 
-import type {
-	EvaluationPolicy,
-	ExplicitChoice,
-	OptionalConsentCategory,
-} from './types';
 import {
 	checkTimestamp,
 	isOptionalConsentCategory,
@@ -26,6 +21,11 @@ import {
 	ownKeys,
 } from './consent-record-validation.model';
 import type { RecordIssue } from './consent-record-validation.model';
+import type {
+	EvaluationPolicy,
+	ExplicitChoice,
+	OptionalConsentCategory,
+} from './types';
 
 export interface RecordPatchOptions {
 	policy: EvaluationPolicy;

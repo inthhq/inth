@@ -32,8 +32,8 @@ import type {
 } from '@inth/sdk/server';
 import type { RequestEvent, RequestHandler } from '@sveltejs/kit';
 
-import { readLocals, readServerMode } from './load-consent';
 import type { InthLocals } from './kit-locals.model';
+import { readLocals, readServerMode } from './load-consent';
 
 export type { ConsentProxyOptions } from '@inth/sdk/server';
 

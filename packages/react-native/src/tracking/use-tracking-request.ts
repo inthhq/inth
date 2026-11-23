@@ -5,18 +5,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { ConsentDecision } from '../lib/consent-selectors.model';
-import {
-	DEFAULT_TRACKING_CATEGORIES,
-	isAdditionalInformationPause,
-	MAX_TRACKING_REQUEST_TURNS,
-	mayAskPlatformAgain,
-} from './tracking-journey.model';
 import type {
 	TrackingAuthorization,
 	TrackingRequestPayload,
 } from '../protocol';
 import type { OptionalConsentCategory } from '../protocol/consent-vocabulary.model';
 import { useConsentClient } from '../provider/consent-client-context';
+import {
+	DEFAULT_TRACKING_CATEGORIES,
+	isAdditionalInformationPause,
+	MAX_TRACKING_REQUEST_TURNS,
+	mayAskPlatformAgain,
+} from './tracking-journey.model';
 import { useTrackingAuthorization } from './use-tracking-authorization';
 
 /**

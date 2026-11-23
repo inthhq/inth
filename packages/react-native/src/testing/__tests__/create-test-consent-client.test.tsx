@@ -14,8 +14,14 @@ import { useConsent } from '../../hooks/use-consent';
 import { useSaveConsents } from '../../hooks/use-consent-actions';
 import type { SaveConsentsInput } from '../../hooks/use-consent-actions';
 import { useConsentDecision } from '../../hooks/use-consent-decision';
-import { getConsentClient, resetConsentClient } from '../../native/create-consent-client';
-import { getNativeInth, NativeInthUnavailableError } from '../../native/get-native-inth';
+import {
+	getConsentClient,
+	resetConsentClient,
+} from '../../native/create-consent-client';
+import {
+	getNativeInth,
+	NativeInthUnavailableError,
+} from '../../native/get-native-inth';
 import {
 	onConsentPresenterOutcome,
 	presentConsentPrompt,

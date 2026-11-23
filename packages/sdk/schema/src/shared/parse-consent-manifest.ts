@@ -8,6 +8,7 @@ import type {
 	ConsentManifest,
 	ConsentManifestPolicyPack,
 } from './consent-manifest';
+import type { I18nMessageProfiles } from './get-translations-data';
 import { hostingSchema } from './hosting.model';
 import { nonIABVendorSchema } from './non-iab-vendor.model';
 import { isPlainPolicyObject } from './policy/policy-rule-invariants';
@@ -19,7 +20,6 @@ import {
 	resolvedPolicyRuleSchema,
 } from './policy/policy-wire-schema.model';
 import { scriptRegistrySchema } from './script-sources.model';
-import type { I18nMessageProfiles } from './get-translations-data';
 import { vendorSchema } from './vendor.model';
 
 /** Keep partial copy shaped like the default translations, including legacy frame copy. */

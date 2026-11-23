@@ -7,10 +7,10 @@ import ConsentDialogLink from '../components/panel-link.astro';
 import ConsentDialog from '../components/panel.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { hosted as hostedMode } from '../mode';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { testRule } from './policy-fixture';
 
 let container: AstroContainer;

@@ -22,8 +22,8 @@ import {
 import { deepMergeTranslations } from '@inth/sdk/translations';
 import type { Translations } from '@inth/sdk/translations';
 
-import { isIABConfigured } from '../lazy-create-iab';
 import type { InthResolvedOptions } from '../inth-options';
+import { isIABConfigured } from '../lazy-create-iab';
 import type { ConsentBoot } from './restore-boot';
 
 /**

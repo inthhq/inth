@@ -34,14 +34,14 @@ import type { AstroConsentClient } from '../client';
 import { setPromptLoaderForTest } from '../client-engine';
 import * as reactPanelSurface from '../components/islands/panel-surface';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions } from '../inth-options.model';
 import { promptClassNames } from '../prompt/prompt-class-names';
 import { resolvePromptModel } from '../prompt/prompt.model';
 import { renderPromptHTML } from '../prompt/render-prompt-html';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions } from '../inth-options.model';
-import { registerDialogSurface } from '../ui/register-dialog-adapter';
 import { reactDialogAdapter } from '../ui/react';
+import { registerDialogSurface } from '../ui/register-dialog-adapter';
 import { testRule } from './policy-fixture';
 import { ISLAND_RENDER_TIMEOUT } from './react-dialog-island';
 // The options load on demand; compiling them while this file loads keeps

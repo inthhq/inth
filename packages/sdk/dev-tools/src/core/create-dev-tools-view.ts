@@ -26,16 +26,16 @@ import {
 	createState,
 	createTextField,
 } from './create-element';
-import { renderIABPanel } from './render-iab-panel';
-import type { IABPanelState } from './render-iab-panel';
 import { createLogo } from './create-logo';
-import { readSelection } from './read-selection';
 import type {
 	DevToolsPosition,
 	DevToolsState,
 	DevToolsTab,
 	StateManager,
 } from './create-state-manager';
+import { readSelection } from './read-selection';
+import { renderIABPanel } from './render-iab-panel';
+import type { IABPanelState } from './render-iab-panel';
 
 import devToolsStyles from '../styles/dev-tools.css?raw';
 

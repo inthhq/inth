@@ -30,10 +30,10 @@ import type {
 	RuntimeEventDispatcherOptions,
 } from '@inth/sdk/events';
 
+import type { AstroConsentClient } from './astro-consent-client.model';
 import { warmDialogTarget } from './browser/attach-banner-actions';
 import { preloadDialogChunks } from './browser/load-dialog';
 import { GLOBAL_KEY, getWindow, readPageNonce } from './browser/page-state';
-import type { AstroConsentClient } from './astro-consent-client.model';
 import type { ConsentDialogKind } from './ui/register-dialog-adapter';
 
 /**
@@ -209,10 +209,17 @@ export type {
 } from '@inth/sdk/events';
 export type { ResolvedVendor, VendorChoice } from '@inth/sdk/engine';
 export type { ConsentDialogKind } from './ui/register-dialog-adapter';
-export { registerDialogAdapter, registerDialogSurface } from './ui/register-dialog-adapter';
+export {
+	registerDialogAdapter,
+	registerDialogSurface,
+} from './ui/register-dialog-adapter';
 export { registerDialogStyles } from './browser/load-dialog-styles';
 // The engine chunk registers one of these with `registerTransport()`.
-export { hostedTransport, lazyTransport, testingTransport } from './transport-resolvers.model';
+export {
+	hostedTransport,
+	lazyTransport,
+	testingTransport,
+} from './transport-resolvers.model';
 export type {
 	ConsentDialogAdapter,
 	ConsentDialogContext,

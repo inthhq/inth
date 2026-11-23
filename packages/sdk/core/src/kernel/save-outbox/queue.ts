@@ -22,18 +22,6 @@
 
 import type { CONSENT_MODELS, OptOutRecord } from '@inth/sdk-schema/types';
 
-import type { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
-import type {
-	isPlainRecord,
-	validateExplicitChoice,
-} from '../../consent-record/consent-record-validation.model';
-import { isExperimentAssignment } from '../../libs/experiment-record';
-import type { warnInDevelopment } from '../../libs/is-production';
-import type { generateUuidV7 } from '../../libs/subject-uuid.model';
-import type {
-	isConsentSaveRejection,
-	isSubjectConflict,
-} from '../../transports/consent-save-rejected-error';
 import type {
 	ConsentSubject,
 	KernelTransport,
@@ -42,8 +30,20 @@ import type {
 	OptOutPayload,
 	SavePayload,
 } from '../../consent-kernel.model';
-import type { applySyncedOptOut } from '../kernel-opt-out.model';
+import type {
+	isPlainRecord,
+	validateExplicitChoice,
+} from '../../consent-record/consent-record-validation.model';
+import type { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
+import { isExperimentAssignment } from '../../libs/experiment-record';
+import type { warnInDevelopment } from '../../libs/is-production';
+import type { generateUuidV7 } from '../../libs/subject-uuid.model';
+import type {
+	isConsentSaveRejection,
+	isSubjectConflict,
+} from '../../transports/consent-save-rejected-error';
 import type { KernelRuntime } from '../create-runtime';
+import type { applySyncedOptOut } from '../kernel-opt-out.model';
 import type {
 	appendOptOut,
 	appendSave,

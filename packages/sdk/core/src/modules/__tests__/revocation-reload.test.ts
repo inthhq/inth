@@ -10,6 +10,13 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type {
+	KernelConfig,
+	KernelVendorsState,
+	LiftOptOutTransportResult,
+	OptOutTransportResult,
+	SaveResult,
+} from '../../consent-kernel.model';
 import {
 	createConsentKernel,
 	createKernel as createInternalKernel,
@@ -34,13 +41,6 @@ import {
 	watchPendingOptOutConfirmation,
 } from '../../surface-actions/opt-out-reload';
 import { pressSaleRight } from '../../surface-session/commands';
-import type {
-	KernelConfig,
-	KernelVendorsState,
-	LiftOptOutTransportResult,
-	OptOutTransportResult,
-	SaveResult,
-} from '../../consent-kernel.model';
 import { watchRevocationReload } from '../revocation-reload';
 import { createScriptLoader } from '../script-loader';
 

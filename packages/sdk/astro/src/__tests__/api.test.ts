@@ -12,13 +12,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions } from '../inth-options.model';
 import { manifest as manifestMode } from '../mode';
 import {
 	createConsentRouteHandlers,
 	resolveConsentContext,
 	waitUntilFromLocals,
 } from '../server';
-import type { InthAstroOptions } from '../inth-options.model';
 
 const MANIFEST = await buildConsentManifestFromConfig({
 	branding: 'inth',

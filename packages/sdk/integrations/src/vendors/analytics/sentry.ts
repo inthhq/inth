@@ -11,6 +11,10 @@ import { ALL_DENIED } from '../../engine/vendor-consent.model';
 import { resolveManifest } from '../../resolve-manifest';
 import { vendorManifestContract } from '../../vendor-manifest.model';
 import type { VendorManifest } from '../../vendor-manifest.model';
+import {
+	createScriptReuse,
+	getScriptRegistrations,
+} from '../_shared/create-script-reuse';
 import { permitted } from '../_shared/permitted';
 import {
 	waitForReplayIdle,
@@ -18,10 +22,6 @@ import {
 	waitForReplayPaint,
 } from '../_shared/replay-scheduler';
 import { readId, skipMissingId } from '../_shared/required-id.model';
-import {
-	createScriptReuse,
-	getScriptRegistrations,
-} from '../_shared/create-script-reuse';
 import { trimToUndefined } from '../_shared/script-url.model';
 
 /** Recording mode that Sentry Replay reports while it records. */

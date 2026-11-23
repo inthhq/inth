@@ -1,3 +1,4 @@
+import type { ConsentSnapshot } from '../consent-kernel.model';
 /**
  * Snapshot patching for the kernel: `./next-snapshot.model.ts` with the policy
  * resolution from `../policy`.
@@ -11,7 +12,6 @@
  * Does not notify subscribers.
  */
 import { buildEvaluationPolicy, resolveEffectivePolicy } from '../policy';
-import type { ConsentSnapshot } from '../consent-kernel.model';
 import { buildNextSnapshot as buildNextSnapshotWith } from './next-snapshot.model';
 import type { SnapshotPatch } from './next-snapshot.model';
 

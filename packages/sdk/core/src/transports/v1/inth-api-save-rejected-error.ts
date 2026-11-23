@@ -1,7 +1,11 @@
 import type { V1ErrorCode } from '@inth/sdk-schema/types';
 
 import { ConsentSaveRejectedError } from '../consent-save-rejected-error';
-import { InthApiError, describeApiError, readApiErrorDetail } from './inth-api-error';
+import {
+	InthApiError,
+	describeApiError,
+	readApiErrorDetail,
+} from './inth-api-error';
 import type { InthApiErrorDetail } from './inth-api-error';
 
 /**

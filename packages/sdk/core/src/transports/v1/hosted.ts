@@ -10,9 +10,9 @@ import {
 } from '@inth/sdk-schema/types';
 import type { InitOutput } from '@inth/sdk-schema/types';
 
+import type { InitContext, KernelOverrides } from '../../consent-kernel.model';
 import { consumePrefetchedInitialData } from '../../libs/prefetch/prefetch';
 import type { SSRInitialData } from '../../options/ssr-options.model';
-import type { InitContext, KernelOverrides } from '../../consent-kernel.model';
 import {
 	decisionInputsMatchOverrides,
 	gpcFromHeaders,
@@ -21,12 +21,12 @@ import {
 import type { RememberedDecisionInputs } from '../decision-inputs.model';
 import { mapInitOutputToInitResponse } from '../init-output';
 import type { TransportInitResponse } from '../init-output';
-import { readApiError } from './inth-api-error';
 import { createV1InitRequest } from './init-request';
-import { trimTrailingSlash, V1_ROUTES } from './v1-routes';
+import { readApiError } from './inth-api-error';
 import { createV1RecordTransport } from './records';
 import type { V1RecordTransport, V1RecordTransportOptions } from './records';
 import { resolveV1Fetch } from './v1-request.api';
+import { trimTrailingSlash, V1_ROUTES } from './v1-routes';
 
 /** Options for {@link createV1HostedTransport}. */
 export interface V1HostedTransportOptions extends V1RecordTransportOptions {

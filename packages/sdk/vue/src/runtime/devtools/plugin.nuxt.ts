@@ -4,8 +4,8 @@ import { defineNuxtPlugin } from '#imports';
 
 import { consentConfigKey } from '../composables/config';
 import { symbolKernelContext } from '../utils/consent-symbols.model';
-import { registerDevToolsBridge } from './register-devtools-bridge';
 import { readDisplayedCategories } from './read-displayed-categories';
+import { registerDevToolsBridge } from './register-devtools-bridge';
 
 /**
  * Development-only client plugin: exposes the app's kernel to the Inth tab

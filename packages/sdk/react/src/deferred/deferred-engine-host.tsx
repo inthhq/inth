@@ -24,8 +24,8 @@ import type {
 	InthProviderOptions,
 	OwnedRuntimeProviderProps,
 } from '../provider';
-import type { DeferredCommitted } from './deferred-committed.model';
 import type { DeferredEngine } from './create-deferred-kernel';
+import type { DeferredCommitted } from './deferred-committed.model';
 import { loadDeferredScriptLoader } from './deferred-registry.model';
 import type { DeferredModules } from './deferred-registry.model';
 import type { Recorded } from './deferred-session-context';

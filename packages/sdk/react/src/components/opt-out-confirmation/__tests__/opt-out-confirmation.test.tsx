@@ -27,8 +27,8 @@ import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import * as headlessExports from '~/headless';
 import { useOptOut, useOptOutState } from '~/hooks';
 import * as rootExports from '~/index';
-import { useKernel } from '~/use-kernel-selector';
 import { testing } from '~/testing';
+import { useKernel } from '~/use-kernel-selector';
 
 const query = <Element extends HTMLElement>(testId: string) =>
 	document.querySelector<Element>(`[data-testid="${testId}"]`);

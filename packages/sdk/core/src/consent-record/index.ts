@@ -16,7 +16,10 @@ export {
 	OPT_OUT_REPROMPT_WAIT_MS,
 	optInPromptAllowedAt,
 } from './evaluate';
-export { optOutDenyCategories, saveWouldLiftOptOut } from './opt-out-rules.model';
+export {
+	optOutDenyCategories,
+	saveWouldLiftOptOut,
+} from './opt-out-rules.model';
 export type { SaveOptOutLiftSnapshot } from './opt-out-rules.model';
 export type { ConsentEvaluationInput } from './evaluate';
 export {
@@ -36,7 +39,10 @@ export type {
 	NormalizeLegacyResult,
 } from './normalize-legacy-consent-record';
 export { recordCategoryPatch } from './consent-record.model';
-export type { RecordPatchOptions, RecordPatchResult } from './consent-record.model';
+export type {
+	RecordPatchOptions,
+	RecordPatchResult,
+} from './consent-record.model';
 export { CONSENT_CATEGORIES, OPTIONAL_CONSENT_CATEGORIES } from './types';
 export type {
 	CategoryDecision,
@@ -71,4 +77,7 @@ export {
 	validateNoticeDismissal,
 	validateOptOutRecord,
 } from './consent-record-validation.model';
-export type { RecordIssue, ValidationResult } from './consent-record-validation.model';
+export type {
+	RecordIssue,
+	ValidationResult,
+} from './consent-record-validation.model';

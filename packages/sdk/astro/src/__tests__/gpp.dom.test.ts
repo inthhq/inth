@@ -4,8 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { boot } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
-import { testing as testingMode } from '../testing';
 import type { InthAstroOptions } from '../inth-options.model';
+import { testing as testingMode } from '../testing';
 
 interface PingData {
 	applicableSections: number[];

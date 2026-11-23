@@ -19,6 +19,7 @@
  * @internal
  */
 
+import type { ConsentSnapshot } from '../consent-kernel.model';
 import {
 	OPTIONAL_CONSENT_CATEGORIES,
 	optOutDecidingCategory,
@@ -35,7 +36,6 @@ import { readCookieValueFromHeader } from '../libs/cookie/read-cookie-value-from
 import { resolveStorageKeys } from '../libs/storage-keys';
 import { generateUuidV7 } from '../libs/subject-uuid.model';
 import type { StorageConfig } from '../modules/persistence/persistence.model';
-import type { ConsentSnapshot } from '../consent-kernel.model';
 
 export { generateUuidV7 } from '../libs/subject-uuid.model';
 

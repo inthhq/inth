@@ -18,7 +18,10 @@
 import type { LegalLinks } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 
-import type { InthResolvedOptions, InthUIAdapterName } from '../inth-options.model';
+import type {
+	InthResolvedOptions,
+	InthUIAdapterName,
+} from '../inth-options.model';
 
 /** Which dialog a caller asked for. */
 export type ConsentDialogKind = 'preferences' | 'iab';

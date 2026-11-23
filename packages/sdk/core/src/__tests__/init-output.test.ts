@@ -5,6 +5,7 @@
 import { enTranslations } from '@inth/sdk-translations';
 import { describe, expect, test } from 'vitest';
 
+import type { KernelConfig } from '../consent-kernel.model';
 import { buildInitialSnapshot } from '../kernel/kernel-snapshot.model';
 import {
 	initOutputToKernelConfig,
@@ -12,7 +13,6 @@ import {
 	mapInitOutputToInitResponse,
 	mergeInitResponseIntoKernelConfig,
 } from '../transports/init-output';
-import type { KernelConfig } from '../consent-kernel.model';
 import { matchedResolution, optInRule } from './fixtures/kernel-fixtures';
 
 const POLICY = {

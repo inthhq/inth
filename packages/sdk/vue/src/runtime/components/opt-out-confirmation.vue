@@ -29,12 +29,12 @@ import {
 	useConsentKernel,
 	useConsentSnapshot,
 } from '../composables';
-import { useResolvedPresentation } from '../composables/use-experiment';
 import {
 	useOptOutConfirmationOpen,
 	useOptOutState,
 } from '../composables/use-consent-kernel';
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
+import { useResolvedPresentation } from '../composables/use-experiment';
 import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import {
 	DialogContent,

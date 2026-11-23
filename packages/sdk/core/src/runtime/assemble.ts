@@ -1,3 +1,4 @@
+import type { HydrationRecords } from '../consent-kernel.model';
 /**
  * The consent runtime: a kernel plus every opt-in module, wired, with a
  * lifecycle hosts drive and do not re-derive.
@@ -28,24 +29,29 @@ import type { PersistenceHandle } from '../modules/persistence/persistence.model
 import type { ScriptLoaderHandle } from '../modules/script-loader/script-loader.model';
 import { resolveWindowDebugMode } from '../modules/window-debug';
 import { watchPendingOptOutConfirmation } from '../surface-actions/opt-out-reload';
-import type { HydrationRecords } from '../consent-kernel.model';
-import { stringifyRuntimeError, wireRuntimeCallbacks } from './wire-runtime-callbacks';
-import { mountRuntimeGPP } from './mount-runtime-gpp';
-import { createJourneyController, withJourney } from './create-journey-controller';
-import { afterModuleLoaded } from './lazy-runtime-module';
-import {
-	createRuntimeKernel,
-	hasResolvedPrefetch,
-	normalizeKernelUser,
-	requireTransportFactory,
-} from './create-runtime-kernel';
-import { scriptRegistry } from './script-registry';
 import type {
 	ConsentRuntime,
 	ConsentRuntimeIABHandle,
 	ConsentRuntimeModules,
 	ConsentRuntimeOptions,
 } from './consent-runtime.model';
+import {
+	createJourneyController,
+	withJourney,
+} from './create-journey-controller';
+import {
+	createRuntimeKernel,
+	hasResolvedPrefetch,
+	normalizeKernelUser,
+	requireTransportFactory,
+} from './create-runtime-kernel';
+import { afterModuleLoaded } from './lazy-runtime-module';
+import { mountRuntimeGPP } from './mount-runtime-gpp';
+import { scriptRegistry } from './script-registry';
+import {
+	stringifyRuntimeError,
+	wireRuntimeCallbacks,
+} from './wire-runtime-callbacks';
 
 /** What the provider runtime needs beyond the public interface. @internal */
 export interface AssembledRuntime {

@@ -25,17 +25,17 @@
 import { COMMIT_FAILURE_REASONS } from './commit-payload.model';
 import { POLICY_RESOLUTION_FAILURES } from './consent-snapshot.model';
 import {
-	TRACKING_AUTHORIZATION_STATUSES,
-	TRACKING_PRESENTATIONS,
-	TRACKING_REQUEST_STAGES,
-} from './tracking-protocol.model';
-import {
 	ACTIVE_SURFACES,
 	NATIVE_MODELS,
 	OPT_OUT_HOLDERS,
 	OPT_OUT_METHODS,
 	PROMPT_REASONS,
 } from './consent-vocabulary.model';
+import {
+	TRACKING_AUTHORIZATION_STATUSES,
+	TRACKING_PRESENTATIONS,
+	TRACKING_REQUEST_STAGES,
+} from './tracking-protocol.model';
 
 /** JSON value kinds a field can hold. */
 export type BridgeValueKind =

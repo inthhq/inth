@@ -5,8 +5,8 @@
 	import Provider from '../../lib/components/inth-provider.svelte';
 	import Link from '../../lib/components/panel-link.svelte';
 	import Banner from '../../lib/components/prompt/prompt.svelte';
-	import type { ConsentContextValue } from '../../lib/get-consent-context.svelte';
 	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
+	import type { ConsentContextValue } from '../../lib/get-consent-context.svelte';
 	import Reader from './policy-state-reader.svelte';
 
 	let {

@@ -2,13 +2,16 @@ import { policyRulePresets } from '@inth/sdk-core';
 import { resolvePolicyRules } from '@inth/sdk-schema/types';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type {
+	ConsentClient,
+	ConsentClientOptions,
+} from '../consent-client.model';
 import { installGlobal } from '../global';
 import {
 	createTestingGlobal as createGlobal,
 	createTestingConsentClient as createConsentClient,
 } from '../testing-global';
 import type { TestingGlobalApi as GlobalApi } from '../testing-global';
-import type { ConsentClient, ConsentClientOptions } from '../consent-client.model';
 
 const testWindow = window as Window & { inth?: unknown };
 const clients: ConsentClient[] = [];

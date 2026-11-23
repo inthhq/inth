@@ -15,9 +15,9 @@
  * asked once.
  */
 
+import type { ConsentDecision } from '../lib/consent-selectors.model';
 import type { TrackingRequestPayload } from '../protocol';
 import type { OptionalConsentCategory } from '../protocol/consent-vocabulary.model';
-import type { ConsentDecision } from '../lib/consent-selectors.model';
 
 /**
  * The categories a tracking request is treated as standing for, when a host names none.

@@ -14,8 +14,11 @@ import {
 } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { createAuthorityReceipt, validateAuthority } from '../iab-authority.store';
 import { isLegitimateInterestAllowed } from '../headless';
+import {
+	createAuthorityReceipt,
+	validateAuthority,
+} from '../iab-authority.store';
 import { createIAB } from '../index';
 import type { IABHandle } from '../index';
 import { PublisherRestrictionError } from '../tcf/publisher-restrictions.model';

@@ -12,6 +12,10 @@
 
 import { compareCanonical } from '@inth/sdk-schema/types';
 
+import {
+	isNonEmptyString,
+	isOptionalConsentCategory,
+} from './consent-record-validation.model';
 import type {
 	EvaluationPolicy,
 	OptionalConsentCategory,
@@ -19,7 +23,6 @@ import type {
 	PolicyPrompt,
 	RecordValidity,
 } from './types';
-import { isNonEmptyString, isOptionalConsentCategory } from './consent-record-validation.model';
 
 /** Fully specified policy input. Fingerprints are supplied, not computed. */
 export interface EvaluationPolicyInput {

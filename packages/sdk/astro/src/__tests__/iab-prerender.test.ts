@@ -13,10 +13,10 @@ import { IAB_PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
 import { buildIABPrompt } from '../browser/render-iab-prompt-into-slot';
 import IABConsentBanner from '../components/iab-prompt.astro';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions } from '../inth-options.model';
 import { hosted as hostedMode } from '../mode';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions } from '../inth-options.model';
 import { describeTree } from './dom-tree';
 
 let container: AstroContainer;

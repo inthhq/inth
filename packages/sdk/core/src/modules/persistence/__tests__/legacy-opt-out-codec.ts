@@ -20,7 +20,6 @@ import type {
 	OptOutRight,
 } from '@inth/sdk-schema/types';
 
-import type { ConsentSubject } from '../../../consent-record/types';
 import {
 	isNonEmptyString,
 	isPlainRecord,
@@ -31,6 +30,7 @@ import type {
 	RecordIssue,
 	ValidationResult,
 } from '../../../consent-record/consent-record-validation.model';
+import type { ConsentSubject } from '../../../consent-record/types';
 import type { OptOutLocalAct } from '../../../libs/opt-out-state.model';
 import { decodeComponent } from '../record-codec.model';
 import type {

@@ -107,7 +107,10 @@
 	import { tick } from 'svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 
-	import { getConsentContext, getThemeContext } from '../../get-consent-context.svelte';
+	import {
+		getConsentContext,
+		getThemeContext,
+	} from '../../get-consent-context.svelte';
 	import ChoiceSwitch from './choice-switch.svelte';
 	import { getSurfaceDraft } from './create-surface-draft.svelte';
 	import Icon from './icon.svelte';

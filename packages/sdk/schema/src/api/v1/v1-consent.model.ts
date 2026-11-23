@@ -16,6 +16,15 @@ import { POLICY_OPTIONAL_CATEGORIES } from '../../shared/policy/policy-rule-inva
 import { initOutputSchema } from '../init-output.model';
 import type { InitOutput } from '../init-output.model';
 import {
+	consentRecordRequestSchema,
+	consentRecordResponseSchema,
+	consentSessionRequestSchema,
+	getV1ConsentInitQuerySchema,
+	getV1ConsentManifestQuerySchema,
+	postV1ConsentRecordsQuerySchema,
+} from './generated/schemas';
+import { jsonObject, jsonRecord } from './json-schema';
+import {
 	v1CanonicalSubjectIdSchema,
 	v1EffectiveOptOutSchema,
 	v1EpochMillisecondsSchema,
@@ -28,15 +37,6 @@ import {
 	v1SubjectIdSchema,
 } from './v1-common.model';
 import type { V1EffectiveOptOut } from './v1-common.model';
-import {
-	consentRecordRequestSchema,
-	consentRecordResponseSchema,
-	consentSessionRequestSchema,
-	getV1ConsentInitQuerySchema,
-	getV1ConsentManifestQuerySchema,
-	postV1ConsentRecordsQuerySchema,
-} from './generated/schemas';
-import { jsonObject, jsonRecord } from './json-schema';
 
 // ---------------------------------------------------------------------------
 // GET /v1/consent/init and GET /v1/consent/manifest

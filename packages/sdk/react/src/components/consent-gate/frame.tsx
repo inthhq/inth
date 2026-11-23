@@ -10,7 +10,10 @@ import type { ElementType } from 'react';
 
 import * as atoms from './atoms';
 import { ConsentGate as ConsentGateComponent } from './consent-gate';
-import type { ConsentGateCompoundComponent, ConsentGateProps } from './consent-gate.model';
+import type {
+	ConsentGateCompoundComponent,
+	ConsentGateProps,
+} from './consent-gate.model';
 
 declare const process: { env: { NODE_ENV?: string } };
 

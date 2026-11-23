@@ -1,6 +1,9 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import type { ConsentKernel, ConsentSnapshot } from '../../consent-kernel.model';
+import type {
+	ConsentKernel,
+	ConsentSnapshot,
+} from '../../consent-kernel.model';
 import { pendingBootSnapshot } from '../pending-snapshot';
 import { createStandInKernel } from '../stand-in-kernel';
 

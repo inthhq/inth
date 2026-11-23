@@ -10,8 +10,6 @@
  */
 
 import type { NativeIABChoices } from './commit-payload.model';
-import type { GlobalVendorList } from './global-vendor-list.model';
-import type { NativeOverrides } from './native-overrides.model';
 import type {
 	AllConsentNames,
 	ConsentState,
@@ -27,6 +25,8 @@ import type {
 	PromptRequirement,
 	RestrictionReason,
 } from './consent-vocabulary.model';
+import type { GlobalVendorList } from './global-vendor-list.model';
+import type { NativeOverrides } from './native-overrides.model';
 
 /**
  * Consent model enforced on device.

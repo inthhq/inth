@@ -1,3 +1,9 @@
+import type {
+	ConsentKernel,
+	InitResponse,
+	KernelConfig,
+	KernelTransport,
+} from '../consent-kernel.model';
 /**
  * The transport wrapper behind a streamed `prefetch`: the first `init()`
  * waits for the prefetch promise and is answered from it.
@@ -15,13 +21,10 @@ import type {
 	ProviderTransportFactory,
 } from '../transports/mode';
 import type {
-	ConsentKernel,
-	InitResponse,
-	KernelConfig,
-	KernelTransport,
-} from '../consent-kernel.model';
+	ConsentProviderRuntimeOptions,
+	RuntimePrefetch,
+} from './consent-runtime.model';
 import type { StreamedInitOptions } from './streamed-init';
-import type { ConsentProviderRuntimeOptions, RuntimePrefetch } from './consent-runtime.model';
 
 /**
  * `resolveStreamedInit` from `@inth/sdk/runtime/streamed-init`, or a

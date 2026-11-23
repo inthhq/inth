@@ -14,8 +14,8 @@
 
 import type { Script } from '@inth/sdk/engine';
 
-import { hashSource } from '../libs/csp-hash.model';
 import type { BrowserCsp } from '../inth-options.model';
+import { hashSource } from '../libs/csp-hash.model';
 
 /**
  * Log an error for each inline script whose hash the policy lacks.

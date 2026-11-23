@@ -35,12 +35,15 @@ import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import { computed, nextTick, onBeforeUnmount, ref } from 'vue';
 
-import { useConsentKernel, useConsentSnapshot } from '../../composables/use-consent-kernel';
+import {
+	useConsentKernel,
+	useConsentSnapshot,
+} from '../../composables/use-consent-kernel';
 import { useSurfaceTranslations } from '../../composables/use-surface-translations';
 import { slotAttrs } from '../../utils/slot-attrs';
 import ChoiceSwitch from './choice-switch.vue';
-import { useChoiceDraft } from './use-choice-draft';
 import { isToggleClick, vendorOpenerKey } from './toggle-click.model';
+import { useChoiceDraft } from './use-choice-draft';
 import { useSurfaceSession } from './use-surface-session';
 import VendorTable from './vendor-table.vue';
 

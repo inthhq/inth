@@ -2,16 +2,19 @@
 
 import type { FC } from 'react';
 
+import { FeatureItem } from './atoms/feature-item';
 import { IABConsentDialogCard } from './atoms/iab-consent-dialog-card';
 import { IABConsentDialogContent } from './atoms/iab-consent-dialog-content';
-import { FeatureItem } from './atoms/feature-item';
 import { IABConsentDialogFooter } from './atoms/iab-consent-dialog-footer';
 import { IABConsentDialogHeader } from './atoms/iab-consent-dialog-header';
 import { IABConsentDialogOverlay } from './atoms/iab-consent-dialog-overlay';
-import { PurposeItem } from './atoms/purpose-item';
 import { IABConsentDialogRoot } from './atoms/iab-consent-dialog-root';
+import {
+	IABConsentDialogTabButton,
+	IABConsentDialogTabs,
+} from './atoms/iab-consent-dialog-tabs';
+import { PurposeItem } from './atoms/purpose-item';
 import { StackItem } from './atoms/stack-item';
-import { IABConsentDialogTabButton, IABConsentDialogTabs } from './atoms/iab-consent-dialog-tabs';
 import { VendorList } from './atoms/vendor-list';
 import { IABConsentDialog as IABConsentDialogComponent } from './iab-consent-dialog';
 import type { IABConsentDialogProps } from './iab-consent-dialog';
@@ -86,7 +89,10 @@ export { IABConsentDialogOverlay } from './atoms/iab-consent-dialog-overlay';
 export { PurposeItem } from './atoms/purpose-item';
 export { IABConsentDialogRoot } from './atoms/iab-consent-dialog-root';
 export { StackItem } from './atoms/stack-item';
-export { IABConsentDialogTabButton, IABConsentDialogTabs } from './atoms/iab-consent-dialog-tabs';
+export {
+	IABConsentDialogTabButton,
+	IABConsentDialogTabs,
+} from './atoms/iab-consent-dialog-tabs';
 export { VendorList } from './atoms/vendor-list';
 export {
 	type IABDisplayModel,

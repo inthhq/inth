@@ -16,8 +16,8 @@ import {
 } from '@inth/sdk-schema/types';
 import type { PolicyRule } from '@inth/sdk-schema/types';
 
-import type { TestingModeOptions, TestingMode } from '../modes';
 import type { InitContext, KernelTransport } from '../consent-kernel.model';
+import type { TestingModeOptions, TestingMode } from '../modes';
 import type { ProviderTransportFactory } from './mode';
 import { createOfflineTranslationSelector } from './offline';
 

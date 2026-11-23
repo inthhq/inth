@@ -3,8 +3,11 @@ import type { WithProjectUrl } from '@inth/sdk-core/runtime';
 import { createIAB, initializeIABStub, destroyIABStub } from '@inth/sdk-iab';
 
 import { createConsentClient as createClient } from './client';
+import type {
+	ConsentClient,
+	ConsentClientOptions,
+} from './consent-client.model';
 import { mountIABConsentUI } from './iab/mount-iab-consent-ui';
-import type { ConsentClient, ConsentClientOptions } from './consent-client.model';
 
 /**
  * Create an IAB-capable browser client without starting it.

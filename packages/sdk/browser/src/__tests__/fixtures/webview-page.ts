@@ -6,8 +6,8 @@
  */
 import { webViewConsentSource } from '@inth/sdk-core';
 
-import { createTestingConsentClient as createConsentClient } from '../../testing-global';
 import type { ConsentClient } from '../../consent-client.model';
+import { createTestingConsentClient as createConsentClient } from '../../testing-global';
 import { mountConsentUI } from '../../ui/mount-consent-ui';
 
 /** What the test reads from the page. */

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import type {
+	LiveVendorReport,
+	LiveVendorResult,
+} from './live-vendor-probe.model';
 import {
 	buildMonitorIssueBody,
 	buildMonitorIssueTitle,
@@ -9,7 +13,6 @@ import {
 	signatureFromIssueBody,
 	vendorFromMonitorIssueTitle,
 } from './monitor-issue.model';
-import type { LiveVendorReport, LiveVendorResult } from './live-vendor-probe.model';
 
 const makeResult = function makeResult(
 	overrides: Partial<LiveVendorResult>

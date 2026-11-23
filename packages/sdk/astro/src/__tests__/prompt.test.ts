@@ -12,16 +12,19 @@ import { canDeferEngine } from '../banner/deferred-boot.model';
 import { PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
 import PrivacyChoicesLink from '../components/privacy-choices-link.astro';
 import ConsentBanner from '../components/prompt.astro';
-import { DIALOG_SHEETS } from '../parts/dialog-sheets';
 import { resolveOptions } from '../integration';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
+import { DIALOG_SHEETS } from '../parts/dialog-sheets';
 import { CONTAINER_SHEET_IDS } from '../parts/insert-sheets';
 import { WIDGET_SHEETS } from '../parts/widget-sheets';
 import { promptClassNames } from '../prompt/prompt-class-names';
 import { resolvePromptModel, rightsBundleOf } from '../prompt/prompt.model';
-import { promptFirstPaintSheets, renderPromptHTML } from '../prompt/render-prompt-html';
+import {
+	promptFirstPaintSheets,
+	renderPromptHTML,
+} from '../prompt/render-prompt-html';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { testRule } from './policy-fixture';
 
 let container: AstroContainer;

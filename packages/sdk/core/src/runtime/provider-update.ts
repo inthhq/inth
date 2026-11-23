@@ -1,3 +1,4 @@
+import type { KernelUser } from '../consent-kernel.model';
 /**
  * The part of a provider runtime's `update()` that follows options after
  * mount: identity, configured categories, vendors and the modules whose
@@ -35,16 +36,15 @@ import type {
 	ScriptLoaderHandle,
 	ScriptLoaderOptions,
 } from '../modules/script-loader/script-loader.model';
-import type { KernelUser } from '../consent-kernel.model';
-import type { afterModuleLoaded } from './lazy-runtime-module';
-import type { LiveOption, ModuleSlot } from './provider-runtime';
-import type { normalizeKernelUser } from './create-runtime-kernel';
-import type { scriptRegistry } from './script-registry';
 import type {
 	ConsentProviderRuntimeOptions,
 	ConsentRuntime,
 	ConsentRuntimeUpdate,
 } from './consent-runtime.model';
+import type { normalizeKernelUser } from './create-runtime-kernel';
+import type { afterModuleLoaded } from './lazy-runtime-module';
+import type { LiveOption, ModuleSlot } from './provider-runtime';
+import type { scriptRegistry } from './script-registry';
 
 /** One of the provider's runtimes and its module slots. */
 export interface BuiltProviderRuntime {

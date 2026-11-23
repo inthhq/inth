@@ -12,6 +12,11 @@ import {
 	noticeRule,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type {
+	KernelConfig,
+	KernelEvent,
+	SavePayload,
+} from '../../consent-kernel.model';
 import { displayedCategories } from '../../consent/consent-types';
 import { createKernel } from '../../kernel/index';
 import { createMemoryOutboxStore } from '../../kernel/save-outbox/save-outbox.store';
@@ -20,7 +25,6 @@ import type { EarlyConsentTapQueue } from '../../libs/page-globals';
 import { clearStoredConsentRecords } from '../../modules/persistence/__tests__/record-writes';
 import { readStoredRecords } from '../../modules/persistence/persistence-hydrate.store';
 import { createStandInKernel } from '../../runtime/stand-in-kernel';
-import type { KernelConfig, KernelEvent, SavePayload } from '../../consent-kernel.model';
 import {
 	completeCommit,
 	hasStoredClearEpoch,

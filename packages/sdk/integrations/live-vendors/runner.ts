@@ -23,12 +23,6 @@ import type { Browser, Response } from 'playwright';
 
 import { getBuiltInScriptIntegrationByVendor } from '../src/registry';
 import { evaluateDeniedConsentProbe } from './evaluate-denied-consent-probe';
-import {
-	captureBrowserLoaderBody,
-	captureStreamLoaderBody,
-} from './loader-body.model';
-import { assertsRuntime, digestBody } from './probe-policy.model';
-import { failedPhases } from './monitor-issue.model';
 import type {
 	LiveProbeCheckResult,
 	LiveProbeLoadOutcome,
@@ -38,6 +32,12 @@ import type {
 	LiveVendorReport,
 	LiveVendorResult,
 } from './live-vendor-probe.model';
+import {
+	captureBrowserLoaderBody,
+	captureStreamLoaderBody,
+} from './loader-body.model';
+import { failedPhases } from './monitor-issue.model';
+import { assertsRuntime, digestBody } from './probe-policy.model';
 import { liveVendorProbeConfigs } from './vendors';
 
 const MAX_ATTEMPTS = 2;

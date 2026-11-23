@@ -3,13 +3,13 @@
  * Low-level cookie operations.
  */
 
+import type { StorageConfig } from './cookie.model';
+import { readCookieValueFromHeader } from './read-cookie-value-from-header';
 import {
 	cookieDomainsOf,
 	getRootDomain,
 	resolveCookieDomain,
 } from './resolve-cookie-domain';
-import { readCookieValueFromHeader } from './read-cookie-value-from-header';
-import type { StorageConfig } from './cookie.model';
 
 /**
  * Outcome of one attempt to store a cookie.

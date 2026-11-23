@@ -28,6 +28,7 @@ import {
 	encodeVendorChoice,
 } from '../../modules/persistence/writer/record-encode.model';
 import type { ScriptLoaderHandle } from '../../modules/script-loader/script-loader.model';
+import type { RuntimePrefetch } from '../consent-runtime.model';
 import {
 	createConsentProviderRuntime,
 	defaultRuntimeModules,
@@ -35,7 +36,6 @@ import {
 	streamPrefetch,
 } from '../index';
 import { preloadScriptLoaderWith } from '../script-loader-preload';
-import type { RuntimePrefetch } from '../consent-runtime.model';
 
 const resolution = matchedResolution(optInRule());
 const fingerprint = resolution.fingerprints.choice;

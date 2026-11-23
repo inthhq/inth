@@ -1,7 +1,10 @@
 import type { AllConsentNames, HasCondition, Script } from '@inth/sdk/engine';
 
 import { resolveManifest } from '../../resolve-manifest';
-import { runtimeTimestampValue, vendorManifestContract } from '../../vendor-manifest.model';
+import {
+	runtimeTimestampValue,
+	vendorManifestContract,
+} from '../../vendor-manifest.model';
 import type { VendorManifest } from '../../vendor-manifest.model';
 import {
 	GOOGLE_CONSENT_MODE_V2_DEFAULT_MAPPING,

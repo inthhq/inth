@@ -22,9 +22,9 @@ import {
 	storageKeyFamilies,
 	resolveStorageKeys,
 } from '../../libs/storage-keys';
+import type { StorageConfig } from './persistence.model';
 import { EPOCH_CLOCK_TOLERANCE_MS } from './record-codec.model';
 import { readStoredClearEpoch } from './record-storage.store';
-import type { StorageConfig } from './persistence.model';
 
 /**
  * Removes, for the configured family and every legacy family it reads,

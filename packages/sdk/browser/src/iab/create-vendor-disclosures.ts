@@ -10,8 +10,8 @@ import {
 } from '@inth/sdk-iab/headless';
 import type { HeadlessIABProcessedVendor } from '@inth/sdk-iab/headless';
 
-import type { SurfaceCopy } from '../ui/resolve-copy';
 import { h } from '../ui/dom';
+import type { SurfaceCopy } from '../ui/resolve-copy';
 
 type Vendor = GlobalVendorList['vendors'][number] | NonIABVendor;
 type NamedItems = Record<number, { name: string; description?: string }>;

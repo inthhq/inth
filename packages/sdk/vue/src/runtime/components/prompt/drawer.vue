@@ -13,8 +13,8 @@ import containerStyles from '@inth/sdk/ui/styles/components/consent-drawer';
 import '@inth/sdk/ui/styles/components/consent-surface.css';
 import '@inth/sdk/ui/styles/components/consent-drawer.css';
 
-import PromptSurface from './surface.vue';
 import type { ActionGroups, PromptContainer } from './prompt.model';
+import PromptSurface from './surface.vue';
 
 defineProps<{
 	container: PromptContainer;

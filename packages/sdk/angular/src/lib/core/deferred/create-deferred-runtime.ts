@@ -62,7 +62,11 @@ import {
 
 import type { InthResolvedOptions } from '../inth-options';
 import type { ConsentBoot } from './restore-boot';
-import { DIALOG_ROOT, scheduleDeferredEngine, whenIdle } from './schedule-deferred-engine';
+import {
+	DIALOG_ROOT,
+	scheduleDeferredEngine,
+	whenIdle,
+} from './schedule-deferred-engine';
 
 /** The engine as the deferred runtime takes it over. @internal */
 export interface LoadedEngine {

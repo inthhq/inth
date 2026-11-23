@@ -1,3 +1,4 @@
+import type { HydrationRecords } from '../../consent-kernel.model';
 /**
  * Read stored records into the kernel.
  *
@@ -11,12 +12,12 @@
  */
 import type { ConsentSubject } from '../../consent-record/types';
 import type { InternalKernel } from '../../kernel/kernel-internals.model';
-import type { HydrationRecords } from '../../consent-kernel.model';
 import {
 	noticeSinceEpoch,
 	optOutSinceEpoch,
 	vendorChoiceSinceEpoch,
 } from './persistence-epoch.model';
+import type { StorageConfig } from './persistence.model';
 import type {
 	StoredIabMetadata,
 	StoredNoticeDismissal,
@@ -37,7 +38,6 @@ import {
 	readStoredVendorChoiceFromCookieHeader,
 } from './record-storage.store';
 import type { StoredConsentSelection } from './record-storage.store';
-import type { StorageConfig } from './persistence.model';
 
 /** Stored records plus the IAB transport metadata the next save preserves. */
 export interface StoredRecords {

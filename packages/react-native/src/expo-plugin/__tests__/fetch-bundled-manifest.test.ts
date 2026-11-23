@@ -8,17 +8,17 @@ import { IOSConfig } from 'expo/config-plugins';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+	embedPolicyResource,
+	POLICY_RESOURCE_NAME,
+	removeXcodeResource,
+} from '../embed-policy-resource';
+import {
 	fetchBundledManifest,
 	manifestArguments,
 	manifestBuild,
 	resolveCli,
 } from '../fetch-bundled-manifest';
 import { resolveParams } from '../params';
-import {
-	embedPolicyResource,
-	POLICY_RESOURCE_NAME,
-	removeXcodeResource,
-} from '../embed-policy-resource';
 import { applyToFixture, FIXTURE_DIR, runMod } from './helpers';
 
 const projectUrl = 'https://acme.inth.app';

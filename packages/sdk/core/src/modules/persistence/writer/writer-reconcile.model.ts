@@ -38,15 +38,15 @@
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
 import type {
-	ConsentSubject,
-	ExplicitChoice,
-	NoticeDismissal,
-} from '../../../consent-record/types';
-import type {
 	ConsentSnapshot,
 	HydrationRecords,
 	VendorChoice,
 } from '../../../consent-kernel.model';
+import type {
+	ConsentSubject,
+	ExplicitChoice,
+	NoticeDismissal,
+} from '../../../consent-record/types';
 import type { StoredRecords } from '../persistence-hydrate.store';
 import type { PersistenceTools } from './persistence-writer.model';
 

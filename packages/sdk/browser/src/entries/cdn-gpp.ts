@@ -18,9 +18,9 @@ import {
 	initializeGPPStub,
 } from '@inth/sdk-iab/gpp';
 
+import type { ConsentClient } from '../consent-client.model';
 import type { GlobalApi, QueuedCall } from '../global';
 import { GLOBAL_NAME } from '../global-name';
-import type { ConsentClient } from '../consent-client.model';
 
 type GlobalWindow = Window & {
 	[GLOBAL_NAME]?: GlobalApi | QueuedCall[];

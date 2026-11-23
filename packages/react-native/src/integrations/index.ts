@@ -11,7 +11,11 @@ export type { AmplitudeClient } from './connect-amplitude';
 export { connectAppsFlyer } from './connect-appsflyer';
 export type { AppsFlyerClient } from './connect-appsflyer';
 export { connectBranch } from './connect-branch';
-export type { BranchAttribution, BranchClient, BranchOptions } from './connect-branch';
+export type {
+	BranchAttribution,
+	BranchClient,
+	BranchOptions,
+} from './connect-branch';
 export { connectBraze } from './connect-braze';
 export type { BrazeClient } from './connect-braze';
 export { connectFirebaseAnalytics } from './connect-firebase-analytics';

@@ -50,6 +50,7 @@ import type {
 } from '@inth/sdk-schema/types';
 
 import { markResponsePrivate } from '../libs/identity-headers.model';
+import { inthProtocolHeaders } from '../libs/inth-protocol-headers';
 import {
 	fetchCachedManifest,
 	getManifestAge,
@@ -63,7 +64,6 @@ import type {
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
 import { warnManifestFallback } from '../libs/warn-manifest-fallback';
-import { inthProtocolHeaders } from '../libs/inth-protocol-headers';
 import {
 	fetchCachedAdTechProviders,
 	loadManifestAdTechProviders,
@@ -91,7 +91,6 @@ import type {
 	ConsentProxyForwarding,
 	ConsentProxyOptions,
 } from './consent-proxy.api';
-import { fetchServerGvl } from './server-gvl-cache.api';
 import {
 	resolveRequestProjectUrl,
 	resolveRequestOrigin,
@@ -108,6 +107,7 @@ import {
 	toPathFetch,
 	trimPathSlashes,
 } from './server-adapter.model';
+import { fetchServerGvl } from './server-gvl-cache.api';
 
 /**
  * Request header a server render sets on its call to the init route: the

@@ -12,11 +12,11 @@ import {
 	NOW,
 	optInRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import type { KernelUser, SavePayload } from '../../consent-kernel.model';
 import {
 	planEarlyCommit,
 	storeEarlyCommit,
 } from '../../surface-actions/early-commit';
-import type { KernelUser, SavePayload } from '../../consent-kernel.model';
 import { createKernel } from '../index';
 import {
 	createBrowserOutboxStore,
