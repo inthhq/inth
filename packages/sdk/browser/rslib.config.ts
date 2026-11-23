@@ -132,31 +132,29 @@ const dialogModule = (name: string) =>
 				'./dialog-static'
 			);
 
+/**
+ * `inth.choices.js` takes the engine modules from the `inth.hosted.js`
+ * that loaded it (`window.__inthChoicesEngine`), so it carries no second
+ * copy.
+ */
+const choicesEngineExternal = function choicesEngineExternal({
+	context,
+	request,
+}: {
+	context?: string;
+	request?: string;
+}): Promise<string | undefined> {
+	const shared = CHOICES_ENGINE_REQUESTS.some(
+		(module) => module.request === request && module.context.test(context ?? '')
+	);
+	return Promise.resolve(shared ? 'window __inthChoicesEngine' : undefined);
+};
+
 const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 	const source: {
 		define?: Record<string, string>;
 		entry: Record<string, string>;
 	} = { entry: { [name]: entry } };
-	const externals =
-		name === 'inth.choices'
-			? [
-					(
-						{ context, request }: { context?: string; request?: string },
-						callback: (error?: Error, result?: string) => void
-					) => {
-						if (
-							CHOICES_ENGINE_REQUESTS.some(
-								(entry) =>
-									entry.request === request && entry.context.test(context ?? '')
-							)
-						) {
-							callback(undefined, 'window __inthChoicesEngine');
-							return;
-						}
-						callback();
-					},
-				]
-			: undefined;
 	// The testing file must let `testing()` run: it is for test pages.
 	if (name === 'inth.testing') {
 		source.define = { 'process.env.NODE_ENV': JSON.stringify('test') };
@@ -167,7 +165,7 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 		format: 'iife' as const,
 		output: {
 			distPath: { root: './dist' },
-			...(externals ? { externals } : {}),
+			externals: name === 'inth.choices' ? [choicesEngineExternal] : [],
 			filename: { js: '[name].js' },
 			// rslib minifies `iife` output as a module, which may unwrap the
 			// function: a classic `<script>` then declares its names globally,
