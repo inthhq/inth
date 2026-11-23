@@ -12,7 +12,6 @@ import {
 	deferredSheetSpecifier,
 	findPageBanner,
 	injectStaticBanner,
-	loadStaticBannerRenderer,
 	renderStaticBannerHtml,
 	renderStaticBannerSheets,
 } from './build-static-banner.model';
@@ -23,6 +22,7 @@ import {
 	prefetchScriptOffset,
 } from './libs/prefetch/prefetch-placement.model';
 import type { PrefetchOptions } from './libs/prefetch/prefetch.model';
+import { loadStaticBannerRenderer } from './load-static-banner-renderer';
 import type { ConsentMode } from './modes';
 import { buildSnapshotSkipReason } from './server/server-mode.model';
 import { loadStaticManifest } from './server/static-manifest.api';
