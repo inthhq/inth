@@ -117,8 +117,19 @@ PARITY_FRAMEWORKS=react,svelte,vue,astro,angular PARITY_SKIP_PIXEL=1 \
 | `PARITY_SKIP_PIXEL` | unset |
 | `PARITY_DEBUG` | unset — prints the first DOM/a11y diff |
 
-`--ignore-snapshots` skips the per-framework screenshot baselines, which
-are darwin-only. `--update-snapshots` regenerates them.
+`--ignore-snapshots` skips the per-framework screenshot baselines in
+`tests/parity.spec.ts-snapshots/`. CI always passes it, so there are no Linux
+baselines and CI never reads these files: CI's visual checks are the live
+React comparisons above. The committed baselines are macOS (`-darwin`) only,
+a local lock on each framework's own rendering. Regenerate them on a Mac after
+a visual change, deleting the old files first so renamed stories leave none
+behind:
+
+```sh
+rm apps/parity-runner/tests/parity.spec.ts-snapshots/*.png
+PARITY_FRAMEWORKS=react,svelte,vue \
+  bun run --cwd apps/parity-runner test:update-snapshots -g "screenshot baselines"
+```
 
 ## Pairing
 
