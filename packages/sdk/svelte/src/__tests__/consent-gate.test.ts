@@ -9,7 +9,7 @@ import type { PolicyRule } from '@inth/sdk/schema/types';
 import { render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 
-import type { ConsentManagerOptions } from '../lib/types';
+import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import Fixture from './fixtures/consent-gate-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';

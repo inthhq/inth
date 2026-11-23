@@ -11,9 +11,9 @@
 	import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 	import type { Snippet } from 'svelte';
 
-	import { getThemeContext } from '../../context.svelte';
+	import { getThemeContext } from '../../get-consent-context.svelte';
 	import Icon from '../parts/icon.svelte';
-	import { cx, part } from '../parts/parts';
+	import { cx, part } from '../parts/surface-parts.model';
 
 	let {
 		layerEl = $bindable(null),

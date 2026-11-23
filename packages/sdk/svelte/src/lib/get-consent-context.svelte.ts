@@ -48,8 +48,8 @@ import type { CompleteTranslations } from '@inth/sdk/translations';
 import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 import { getContext, setContext } from 'svelte';
 
-import type { DialogPreload } from './dialog-warming';
-import type { ConsentManagerOptions } from './types';
+import type { DialogPreload } from './warm-dialog';
+import type { ConsentManagerOptions } from './consent-manager-options.model';
 
 const CONSENT_CONTEXT_KEY = Symbol('inth-v3-consent');
 const THEME_CONTEXT_KEY = Symbol('inth-v3-theme');

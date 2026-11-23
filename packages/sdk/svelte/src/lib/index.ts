@@ -84,13 +84,13 @@ export {
 	getSnapshot,
 	type HeadlessConsentSurfaceState,
 	type SvelteIABState,
-} from './context.svelte';
+} from './get-consent-context.svelte';
 export {
 	getEventDispatcher,
 	type EventDispatcher,
 	type EventProperties,
 	type GetEventDispatcherOptions,
-} from './event-dispatcher';
+} from './get-event-dispatcher';
 export {
 	Accordion,
 	Collapsible,
@@ -108,15 +108,15 @@ export type {
 	UseNetworkBlockerOptions,
 	UsePersistenceOptions,
 	UseScriptLoaderOptions,
-} from './types';
-export type { DialogPreload } from './dialog-warming';
+} from './consent-manager-options.model';
+export type { DialogPreload } from './warm-dialog';
 export type { ConsentTesting } from '@inth/sdk/testing';
 export type { ManifestModeOptions } from './transports/manifest';
 export { manifest } from './transports/manifest';
 export { hosted, type HostedMode } from '@inth/sdk/modes';
 export type { BrowserManifestModeFactory } from '@inth/sdk/transports/manifest-browser';
 
-export type { ConsentManagerState, ConsentDraftState } from './context.svelte';
+export type { ConsentManagerState, ConsentDraftState } from './get-consent-context.svelte';
 export {
 	resolveActionLabels,
 	resolveConsentPresentation,

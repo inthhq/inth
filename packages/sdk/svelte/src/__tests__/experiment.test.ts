@@ -3,7 +3,7 @@ import type { ConsentExperiment, ConsentKernel } from '@inth/sdk/engine';
 import { render } from '@testing-library/svelte';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import type { ConsentManagerState } from '../lib/context.svelte';
+import type { ConsentManagerState } from '../lib/get-consent-context.svelte';
 import ProviderOnlyFixture from './fixtures/provider-only-fixture.svelte';
 import { testOffline } from './test-offline';
 

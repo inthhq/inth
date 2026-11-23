@@ -4,12 +4,12 @@
  */
 import { afterEach, beforeAll, expect, test } from 'vitest';
 
-import { startOnServer } from '../../server-script-start';
-import type { ServerStartOptions } from '../../server-script-start';
+import { startOnServer } from '../../register-server-script-start';
+import type { ServerStartOptions } from '../../register-server-script-start';
 import {
 	createServerStartInjector,
 	registerPageStart,
-} from '../server-script-start';
+} from '../load-server-script-start';
 import { setRequestEvent } from './app-server';
 import { createEvent } from './event';
 

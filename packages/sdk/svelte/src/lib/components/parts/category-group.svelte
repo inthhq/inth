@@ -107,12 +107,12 @@
 	import { tick } from 'svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 
-	import { getConsentContext, getThemeContext } from '../../context.svelte';
+	import { getConsentContext, getThemeContext } from '../../get-consent-context.svelte';
 	import ChoiceSwitch from './choice-switch.svelte';
-	import { getSurfaceDraft } from './draft.svelte';
+	import { getSurfaceDraft } from './create-surface-draft.svelte';
 	import Icon from './icon.svelte';
-	import { cx, part } from './parts';
-	import { useSurfaceSession } from './session.svelte';
+	import { cx, part } from './surface-parts.model';
+	import { useSurfaceSession } from './use-surface-session.svelte';
 
 	let {
 		idPrefix,

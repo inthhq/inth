@@ -15,9 +15,9 @@ import { canDeferEngine } from '@inth/sdk/server';
 import { deepMergeTranslations } from '@inth/sdk/translations';
 import type { Translations } from '@inth/sdk/translations';
 
-import type { ProviderOptionsInput } from '../provider-options';
-import { bootMarkup } from './boot';
-import type { RootBoot } from './boot';
+import type { ProviderOptionsInput } from '../resolve-provider-options';
+import { bootMarkup } from './read-consent-boot';
+import type { RootBoot } from './read-consent-boot';
 
 /**
  * The snapshot's copy with every key the English defaults have, so the

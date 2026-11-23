@@ -8,7 +8,7 @@ import type { GlobalVendorList } from '@inth/sdk/engine';
 import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 
-import type { ConsentManagerOptions } from '../lib/types';
+import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import BannerFixture from './fixtures/banner-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';

@@ -40,9 +40,9 @@
 	import { onMount, untrack } from 'svelte';
 
 	import { portal } from '../actions/portal';
-	import { getConsentContext, getThemeContext } from '../context.svelte';
-	import { holdIdleDialogWarming, warmDialog } from '../dialog-warming';
-	import { useOptOutConfirmationState } from '../opt-out-confirmation-state.svelte';
+	import { getConsentContext, getThemeContext } from '../get-consent-context.svelte';
+	import { holdIdleDialogWarming, warmDialog } from '../warm-dialog';
+	import { useOptOutConfirmationState } from '../use-opt-out-confirmation-state.svelte';
 	import { TRIGGER_SHEETS } from '../surface-styles';
 	import BrandMark from './icons/brand-mark.svelte';
 	import DevToolsIcon from './icons/dev-tools-icon.svelte';

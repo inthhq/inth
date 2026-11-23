@@ -14,7 +14,7 @@ import { afterEach, describe, expect, test } from 'vitest';
 import OptOutConfirmationFixture from '../../__tests__/fixtures/opt-out-confirmation-fixture.svelte';
 import { policyFixture } from '../../__tests__/policy-fixture';
 import { testOffline } from '../../__tests__/test-offline';
-import type { ConsentContextValue } from '../../lib/context.svelte';
+import type { ConsentContextValue } from '../../lib/get-consent-context.svelte';
 
 const CATEGORIES = ['functionality', 'marketing', 'measurement'] as const;
 

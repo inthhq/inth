@@ -15,7 +15,7 @@ import { describe, expect, test } from 'vitest';
 
 import InthProvider from '../lib/components/inth-provider.svelte';
 import { testing } from '../lib/testing';
-import type { ConsentManagerOptions } from '../lib/types';
+import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import BannerFixture from './fixtures/banner-fixture.svelte';
 
 const BANNER_POLICY = resolvePolicyRules({

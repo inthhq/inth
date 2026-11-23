@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { useOptOutReceiptData } from '../../lib/components/parts/session.svelte';
+	import { useOptOutReceiptData } from '../../lib/components/parts/use-surface-session.svelte';
 
 	const data = useOptOutReceiptData();
 </script>

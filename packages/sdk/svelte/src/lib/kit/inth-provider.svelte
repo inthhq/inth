@@ -43,16 +43,16 @@
 	import { createServerRoot } from '#server-root';
 
 	import ProviderView from '../components/provider-view.svelte';
-	import { readConsentBoot } from '../deferred/boot';
-	import { createDeferredRuntime } from '../deferred/runtime';
-	import type { EngineFactory } from '../deferred/runtime';
-	import { modulePreloadMarker } from '../module-preload';
+	import { readConsentBoot } from '../deferred/read-consent-boot';
+	import { createDeferredRuntime } from '../deferred/create-deferred-runtime';
+	import type { EngineFactory } from '../deferred/create-deferred-runtime';
+	import { modulePreloadMarker } from '../module-preload-marker';
 	import {
 		resolveProviderOptions,
 		runtimeOptionsFor,
-	} from '../provider-options';
-	import type { ProviderOptionsInput } from '../provider-options';
-	import type { ConsentManagerOptions, InthProviderState } from '../types';
+	} from '../resolve-provider-options';
+	import type { ProviderOptionsInput } from '../resolve-provider-options';
+	import type { ConsentManagerOptions, InthProviderState } from '../consent-manager-options.model';
 
 	type InthProviderProps = Omit<ConsentManagerOptions, 'mode' | 'prefetch'> & {
 		children?: Snippet;

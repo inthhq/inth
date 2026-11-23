@@ -2,7 +2,7 @@ import type { EventDispatcher } from '@inth/sdk/events';
 import { render } from '@testing-library/svelte';
 import { expect, test, vi } from 'vitest';
 
-import type { ConsentContextValue } from '../lib/context.svelte';
+import type { ConsentContextValue } from '../lib/get-consent-context.svelte';
 import Fixture from './fixtures/event-dispatcher-fixture.svelte';
 import { offlineMode } from './fixtures/transport-mode';
 import { TEST_OPT_IN_RULE } from './test-offline';

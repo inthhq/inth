@@ -2,7 +2,7 @@
 	import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
 
 	import PrivacyChoicesLink from '../../lib/components/privacy-choices-link.svelte';
-	import { getConsentContext } from '../../lib/context.svelte';
+	import { getConsentContext } from '../../lib/get-consent-context.svelte';
 
 	/**
 	 * The page under the consent prompt and dialog: a plain page action, the

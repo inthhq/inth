@@ -3,9 +3,9 @@ import { manifest as browserManifest } from '@inth/sdk/transports/manifest-brows
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { transportMode } from '../../../__tests__/fixtures/transport-mode';
-import { inthHandle } from '../handle';
-import { createConsentRoute } from '../routes';
-import type { InthLocals } from '../types';
+import { inthHandle } from '../inth-handle';
+import { createConsentRoute } from '../create-consent-route';
+import type { InthLocals } from '../kit-locals.model';
 import { CONSENTED_COOKIE, createEvent } from './event';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 

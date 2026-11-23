@@ -17,8 +17,8 @@ import type {
 import type { ConsentTesting } from '@inth/sdk/testing';
 import type { Theme, UIOptions } from '@inth/sdk/ui/theme';
 
-import type { DialogPreload } from './dialog-warming';
-import type { KitMode } from './kit/types';
+import type { DialogPreload } from './warm-dialog';
+import type { KitMode } from './kit/kit-locals.model';
 
 /** IAB options a provider accepts, or `false` to leave IAB unmounted. */
 export type ProviderIABOptions =

@@ -5,8 +5,8 @@
 	import {
 		getConsentKernel,
 		getConsentManager,
-	} from '../../lib/context.svelte';
-	import type { ConsentManagerState } from '../../lib/context.svelte';
+	} from '../../lib/get-consent-context.svelte';
+	import type { ConsentManagerState } from '../../lib/get-consent-context.svelte';
 
 	let {
 		onKernel,

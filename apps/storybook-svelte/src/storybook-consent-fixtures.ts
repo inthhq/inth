@@ -1,5 +1,5 @@
 import { mockGVL } from '../../../packages/sdk/react/src/components/iab/__tests__/fixtures/mock-consent-state';
-import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/types';
+import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/consent-manager-options.model';
 import { enTranslations } from '../../../packages/sdk/translations/src/index';
 import {
 	seedStorybookChoice,

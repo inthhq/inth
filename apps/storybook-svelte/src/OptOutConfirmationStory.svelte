@@ -6,7 +6,7 @@
 		OptOutConfirmation,
 	} from '@inth/svelte';
 
-	import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/types';
+	import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/consent-manager-options.model';
 	import {
 		storybookMode,
 		storybookOptOutConfirmationRecords,

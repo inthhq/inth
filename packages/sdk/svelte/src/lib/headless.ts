@@ -47,13 +47,13 @@ export {
 	getSnapshot,
 	type HeadlessConsentSurfaceState,
 	type SvelteIABState,
-} from './context.svelte';
+} from './get-consent-context.svelte';
 export {
 	getEventDispatcher,
 	type EventDispatcher,
 	type EventProperties,
 	type GetEventDispatcherOptions,
-} from './event-dispatcher';
+} from './get-event-dispatcher';
 export {
 	type HeadlessIABVendorId,
 	type ProcessedFeature,
@@ -65,4 +65,4 @@ export {
 	processGVLForDialog,
 	resolveIABBannerSummary,
 } from '@inth/sdk/iab/headless';
-export type { ConsentManagerOptions } from './types';
+export type { ConsentManagerOptions } from './consent-manager-options.model';

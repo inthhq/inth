@@ -7,7 +7,7 @@ import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { render, fireEvent, waitFor } from '@testing-library/svelte';
 import { describe, expect, test, vi } from 'vitest';
 
-import type { ConsentContextValue } from '../lib/context.svelte';
+import type { ConsentContextValue } from '../lib/get-consent-context.svelte';
 import { draftReady } from './draft-ready';
 import Fixture from './fixtures/policy-state-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';

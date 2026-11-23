@@ -39,23 +39,23 @@
  * export const handle = inthHandle({ routePrefix: '/api/inth' });
  * ```
  */
-export type { InthHandle, InthHandleOptions } from './handle';
-export { inthHandle } from './handle';
+export type { InthHandle, InthHandleOptions } from './inth-handle';
+export { inthHandle } from './inth-handle';
 export type { LoadConsentOptions } from './load-consent';
 export { loadConsent } from './load-consent';
 export type {
 	ConsentProxyOptions,
 	ConsentRouteHandlersFor,
 	ConsentRouteOptions,
-} from './routes';
-export { createConsentRoute } from './routes';
+} from './create-consent-route';
+export { createConsentRoute } from './create-consent-route';
 export type {
 	InthLocals,
 	ConsentRequestInputs,
 	ConsentRequestOptions,
 	ConsentState,
-} from './types';
-export type { InthProviderState } from '../types';
+} from './kit-locals.model';
+export type { InthProviderState } from '../consent-manager-options.model';
 
 export type {
 	ConsentMode,

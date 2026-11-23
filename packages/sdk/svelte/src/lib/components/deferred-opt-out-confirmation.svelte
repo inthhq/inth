@@ -24,8 +24,8 @@
 <script lang="ts">
 	import { claimOptOutConfirmationHost } from '@inth/sdk/surface-actions';
 
-	import { getConsentContext } from '../context.svelte';
-	import { useOptOutConfirmationState } from '../opt-out-confirmation-state.svelte';
+	import { getConsentContext } from '../get-consent-context.svelte';
+	import { useOptOutConfirmationState } from '../use-opt-out-confirmation-state.svelte';
 
 	const props: {
 		open?: boolean;

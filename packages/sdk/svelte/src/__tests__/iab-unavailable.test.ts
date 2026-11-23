@@ -14,7 +14,7 @@ import type { PolicyResolution } from '@inth/sdk/schema/types';
 import { render } from '@testing-library/svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import type { ConsentManagerOptions } from '../lib/types';
+import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import Fixture from './fixtures/iab-guard-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';

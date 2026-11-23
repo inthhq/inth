@@ -5,7 +5,7 @@ import path from 'node:path';
 import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { MODULE_PRELOAD_PLACEHOLDERS } from '../kit/module-preload';
+import { MODULE_PRELOAD_PLACEHOLDERS } from '../kit/inject-module-preloads';
 import { consentManifest, resolveChunkHrefs } from '../vite';
 
 /** The module-preload plugin `consentManifest()` includes. */

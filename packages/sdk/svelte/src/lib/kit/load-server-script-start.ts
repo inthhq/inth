@@ -12,8 +12,8 @@ import { getRequestEvent } from '$app/server';
 import { SAFE_NONCE } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';
 
-import { registerServerScriptStart } from '../server-script-start';
-import type { ServerStartOptions } from '../server-script-start';
+import { registerServerScriptStart } from '../register-server-script-start';
+import type { ServerStartOptions } from '../register-server-script-start';
 
 const NONCE_ATTRIBUTE = /\snonce="(?<nonce>[\w+/=-]+)"/u;
 /**

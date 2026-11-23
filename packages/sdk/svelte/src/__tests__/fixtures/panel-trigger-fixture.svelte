@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ConsentDialogTrigger } from '../../lib';
 	import InthProvider from '../../lib/components/inth-provider.svelte';
-	import type { ConsentManagerOptions } from '../../lib/types';
+	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
 
 	let {
 		options,

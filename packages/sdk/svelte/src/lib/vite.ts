@@ -22,8 +22,8 @@ import type {
 } from '@inth/sdk/build';
 
 // With its extension: Node loads this file straight from `dist`, unbundled.
-import { MODULE_PRELOAD_PLACEHOLDERS } from './kit/module-preload.js';
-import type { PreloadChunkName } from './kit/module-preload.js';
+import { MODULE_PRELOAD_PLACEHOLDERS } from './kit/inject-module-preloads.js';
+import type { PreloadChunkName } from './kit/inject-module-preloads.js';
 
 export type {
 	ConsentManifest,

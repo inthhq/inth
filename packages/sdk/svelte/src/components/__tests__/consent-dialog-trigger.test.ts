@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import FullFlowFixture from '../../__tests__/fixtures/full-flow-fixture.svelte';
 import { testOffline } from '../../__tests__/test-offline';
-import type { ConsentManagerOptions } from '../../lib/types';
+import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
 
 const getDefined = <Value>(
 	value: Value,

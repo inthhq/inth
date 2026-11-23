@@ -3,7 +3,7 @@
 
 	import ConsentGate from '../../lib/components/consent-gate.svelte';
 	import InthProvider from '../../lib/components/inth-provider.svelte';
-	import type { ConsentManagerOptions } from '../../lib/types';
+	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
 	import Capture from './conformance-kernel-capture.svelte';
 
 	let {

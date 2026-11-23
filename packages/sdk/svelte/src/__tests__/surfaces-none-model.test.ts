@@ -3,7 +3,7 @@ import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 
-import type { ConsentContextValue } from '../lib/context.svelte';
+import type { ConsentContextValue } from '../lib/get-consent-context.svelte';
 import Fixture from './fixtures/surfaces-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';

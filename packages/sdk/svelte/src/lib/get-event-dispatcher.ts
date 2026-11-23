@@ -4,7 +4,7 @@ import type {
 	RuntimeEventDispatcherOptions,
 } from '@inth/sdk/events';
 
-import { getConsentContext } from './context.svelte';
+import { getConsentContext } from './get-consent-context.svelte';
 
 /**
  * Get the app's event dispatcher. Call it while a component initialises,

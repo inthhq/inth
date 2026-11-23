@@ -20,7 +20,7 @@
 	import { focusTrap } from '../actions/focus-trap';
 	import { portal } from '../actions/portal';
 	import { scrollLock } from '../actions/scroll-lock';
-	import { getConsentContext, getThemeContext } from '../context.svelte';
+	import { getConsentContext, getThemeContext } from '../get-consent-context.svelte';
 	import { focusBlocking } from '../focus-blocking';
 	import { IAB_FIRST_PAINT_SHEETS } from '../iab-first-paint-sheets';
 	import { useBannerVisibility } from '../use-banner-visibility.svelte';

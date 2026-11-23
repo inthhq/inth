@@ -56,9 +56,9 @@ import {
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 import { startPlainScripts } from '@inth/sdk/surface-actions/plain-scripts';
 
-import type { ProviderOptionsInput } from '../provider-options';
-import type { RootBoot } from './boot';
-import { DIALOG_ROOT, scheduleDeferredEngine, whenIdle } from './trigger';
+import type { ProviderOptionsInput } from '../resolve-provider-options';
+import type { RootBoot } from './read-consent-boot';
+import { DIALOG_ROOT, scheduleDeferredEngine, whenIdle } from './schedule-deferred-engine';
 
 /** The engine as the deferred runtime takes it over. @internal */
 export interface LoadedEngine {

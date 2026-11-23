@@ -3,8 +3,8 @@
 	import { resolveAdvertisingRowCopy } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
-	import { getConsentContext } from '../../context.svelte';
-	import { cx } from './parts';
+	import { getConsentContext } from '../../get-consent-context.svelte';
+	import { cx } from './surface-parts.model';
 
 	let {
 		on,

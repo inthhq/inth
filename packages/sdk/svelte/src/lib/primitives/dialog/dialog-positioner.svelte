@@ -3,7 +3,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	import { getDialogRootContext } from './context';
+	import { getDialogRootContext } from './get-dialog-root-context';
 
 	const dialog = getDialogRootContext();
 

@@ -2,7 +2,7 @@ import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
 import type { ComponentProps } from 'svelte';
 import { render } from 'svelte/server';
 
-import type { ConsentManagerOptions } from '../lib/types';
+import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
 import KitProviderFixture from './fixtures/kit-provider-fixture.svelte';
 import PolicyFixture from './fixtures/policy-fixture.svelte';

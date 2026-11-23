@@ -3,8 +3,8 @@
 	import { attachDevToolsLauncher } from '@inth/sdk/ui/utils/devtools-launcher';
 	import { untrack } from 'svelte';
 
-	import { getConsentContext } from '../context.svelte';
-	import type { ConsentDevToolsProps } from '../devtools-options';
+	import { getConsentContext } from '../get-consent-context.svelte';
+	import type { ConsentDevToolsProps } from '../devtools-options.model';
 
 	let {
 		clearRecords,

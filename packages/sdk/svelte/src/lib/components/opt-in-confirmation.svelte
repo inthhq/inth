@@ -20,7 +20,7 @@
 	} from '@inth/sdk/ui/utils';
 	import { findFocusRestoreEquivalent } from '@inth/sdk/ui/utils/dom';
 
-	import { getConsentContext, getThemeContext } from '../context.svelte';
+	import { getConsentContext, getThemeContext } from '../get-consent-context.svelte';
 	import { Dialog, Portal } from '../primitives';
 	import { WIDGET_SHEETS } from '../widget-sheets';
 	import SurfaceStyles from './surface-styles.svelte';

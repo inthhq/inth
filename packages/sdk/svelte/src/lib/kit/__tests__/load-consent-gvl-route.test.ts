@@ -8,7 +8,7 @@ import type { ConsentManifest } from '@inth/sdk/schema/types';
 import { clearManifestCache } from '@inth/sdk/server';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { inthHandle } from '../handle';
+import { inthHandle } from '../inth-handle';
 import { manifest } from '../index';
 import { loadConsent } from '../load-consent';
 import { createEvent } from './event';

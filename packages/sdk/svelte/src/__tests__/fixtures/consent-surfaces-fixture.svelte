@@ -7,10 +7,10 @@
 	import type { Readable } from 'svelte/store';
 
 	import ConsentDialog from '../../lib/components/deferred-panel.svelte';
-	import type { ConsentDialogProps } from '../../lib/components/dialog/types';
+	import type { ConsentDialogProps } from '../../lib/components/dialog/consent-dialog-props.model';
 	import InthProvider from '../../lib/components/inth-provider.svelte';
 	import ConsentBanner from '../../lib/components/prompt/prompt.svelte';
-	import type { ConsentManagerOptions } from '../../lib/types';
+	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
 	import Page from './consent-surfaces-page.svelte';
 
 	/** The stock banner and, when asked, the stock dialog, over a page. */

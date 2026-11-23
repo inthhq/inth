@@ -4,7 +4,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	import { setAccordionRootContext } from './context';
+	import { setAccordionRootContext } from './get-accordion-root-context';
 
 	let {
 		children,

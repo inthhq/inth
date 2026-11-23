@@ -8,10 +8,10 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { setGenerated } from '../../__tests__/generated';
-import { inthHandle } from '../handle';
+import { inthHandle } from '../inth-handle';
 import { manifest as manifestMode } from '../index';
 import { loadConsent } from '../load-consent';
-import { createConsentRoute } from '../routes';
+import { createConsentRoute } from '../create-consent-route';
 import { createEvent } from './event';
 import { MANIFEST_FIXTURE } from './manifest-fixture';
 

@@ -3,7 +3,7 @@
 	import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 	import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 
-	import { getConsentContext, getThemeContext } from '../context.svelte';
+	import { getConsentContext, getThemeContext } from '../get-consent-context.svelte';
 
 	// No theme slot: the React and Vue legal links take only the stock link
 	// class, and the description's slot belongs to the description.

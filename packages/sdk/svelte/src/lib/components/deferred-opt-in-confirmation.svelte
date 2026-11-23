@@ -22,8 +22,8 @@
 </script>
 
 <script lang="ts">
-	import { getConsentContext } from '../context.svelte';
-	import { useOptInConfirmationHost } from '../opt-in-confirmation-state.svelte';
+	import { getConsentContext } from '../get-consent-context.svelte';
+	import { useOptInConfirmationHost } from '../use-opt-in-confirmation-host.svelte';
 
 	const props: {
 		noStyle?: boolean;

@@ -10,8 +10,8 @@
 import type { ConsentRuntime } from '@inth/sdk/runtime/provider';
 import type { Snippet } from 'svelte';
 
-import { isIABConfigured, lazyCreateIAB, loadGPP } from './iab-loader';
-import type { ConsentManagerOptions } from './types';
+import { isIABConfigured, lazyCreateIAB, loadGPP } from './lazy-create-iab';
+import type { ConsentManagerOptions } from './consent-manager-options.model';
 
 /** Provider options before `mode` is known. @internal */
 export type ProviderOptionsInput = Omit<ConsentManagerOptions, 'mode'> & {

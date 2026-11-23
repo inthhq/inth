@@ -17,9 +17,9 @@ import { fileURLToPath } from 'node:url';
 import { mount, unmount } from 'svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { isIABConfigured } from '../lib/iab-loader';
+import { isIABConfigured } from '../lib/lazy-create-iab';
 import { testing } from '../lib/testing';
-import type { ConsentManagerOptions } from '../lib/types';
+import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import ProviderOnlyFixture from './fixtures/provider-only-fixture.svelte';
 
 interface WindowWithTCF extends Window {

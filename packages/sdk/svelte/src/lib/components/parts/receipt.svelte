@@ -17,14 +17,14 @@
 	import type { AllThemeKeys } from '@inth/sdk/ui/theme';
 	import { tick } from 'svelte';
 
-	import { getConsentContext, getThemeContext } from '../../context.svelte';
+	import { getConsentContext, getThemeContext } from '../../get-consent-context.svelte';
 	import Icon from './icon.svelte';
-	import { cx, part } from './parts';
+	import { cx, part } from './surface-parts.model';
 	import {
 		rightsBundleOf,
 		useOptOutReceiptData,
 		useSurfaceSession,
-	} from './session.svelte';
+	} from './use-surface-session.svelte';
 
 	let {
 		idPrefix,

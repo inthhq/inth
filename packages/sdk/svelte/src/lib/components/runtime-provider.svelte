@@ -13,8 +13,8 @@
 	import type { ConsentRuntime } from '@inth/sdk/runtime/provider';
 	import type { Snippet } from 'svelte';
 
-	import { resolveProviderOptions } from '../provider-options';
-	import type { ProviderOptionsInput } from '../provider-options';
+	import { resolveProviderOptions } from '../resolve-provider-options';
+	import type { ProviderOptionsInput } from '../resolve-provider-options';
 	import ProviderView from './provider-view.svelte';
 
 	let props: {

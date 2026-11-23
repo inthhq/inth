@@ -11,7 +11,7 @@ import { mount, unmount } from 'svelte';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testing } from '../lib/testing';
-import type { ConsentManagerOptions } from '../lib/types';
+import type { ConsentManagerOptions } from '../lib/consent-manager-options.model';
 import Fixture from './fixtures/consent-surfaces-fixture.svelte';
 import { policyFixture } from './policy-fixture';
 

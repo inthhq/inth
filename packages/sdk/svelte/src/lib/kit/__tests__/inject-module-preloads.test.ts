@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { injectModulePreloads } from '../module-preload';
+import { injectModulePreloads } from '../inject-module-preloads';
 
 const HREFS = {
 	'loader-and-blocker': '/_app/immutable/chunks/gates.js',

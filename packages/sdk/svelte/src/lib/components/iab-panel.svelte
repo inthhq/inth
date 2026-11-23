@@ -25,7 +25,7 @@
 	import { focusTrap } from '../actions/focus-trap';
 	import { portal } from '../actions/portal';
 	import { scrollLock } from '../actions/scroll-lock';
-	import { getConsentContext, getThemeContext } from '../context.svelte';
+	import { getConsentContext, getThemeContext } from '../get-consent-context.svelte';
 	import { focusBlocking } from '../focus-blocking';
 	import { IAB_DIALOG_SHEETS } from '../iab-dialog-sheets';
 	import { Tabs } from '../primitives';

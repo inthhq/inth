@@ -14,7 +14,7 @@ import BannerDialogFixture from '../../__tests__/fixtures/banner-dialog-fixture.
 import BannerFixture from '../../__tests__/fixtures/banner-fixture.svelte';
 import FullFlowFixture from '../../__tests__/fixtures/full-flow-fixture.svelte';
 import { testOffline } from '../../__tests__/test-offline';
-import type { ConsentManagerOptions } from '../../lib/types';
+import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
 
 const getDefined = <Value>(
 	value: Value,

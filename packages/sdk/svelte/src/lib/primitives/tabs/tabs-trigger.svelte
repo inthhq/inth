@@ -7,7 +7,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	import { getTabsRootContext } from './context';
+	import { getTabsRootContext } from './get-tabs-root-context';
 
 	const root = getTabsRootContext();
 

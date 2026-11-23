@@ -4,7 +4,7 @@
 	import type { Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
 
-	import { setTabsRootContext } from './context';
+	import { setTabsRootContext } from './get-tabs-root-context';
 
 	const componentId = $props.id();
 

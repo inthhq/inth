@@ -99,22 +99,22 @@
 	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 	import { onMount, untrack } from 'svelte';
 
-	import { getConsentContext, getThemeContext } from '../../context.svelte';
-	import { registerDialogWarmer, warmDialog } from '../../dialog-warming';
+	import { getConsentContext, getThemeContext } from '../../get-consent-context.svelte';
+	import { registerDialogWarmer, warmDialog } from '../../warm-dialog';
 	import ConsentButton from '../action-button.svelte';
 	import BrandMark from '../icons/brand-mark.svelte';
 	import InlineLegalLinks from '../inline-legal-links.svelte';
-	import { createSurfaceDraft } from '../parts/draft.svelte';
-	import { cx, part } from '../parts/parts';
+	import { createSurfaceDraft } from '../parts/create-surface-draft.svelte';
+	import { cx, part } from '../parts/surface-parts.model';
 	import {
 		rightsBundleOf,
 		useOptOutReceiptData,
 		usePhoneLayout,
 		useReducedMotion,
 		useSurfaceSession,
-	} from '../parts/session.svelte';
+	} from '../parts/use-surface-session.svelte';
 	import SurfaceStyles from '../surface-styles.svelte';
-	import { presentationSheets } from './sheets';
+	import { presentationSheets } from './prompt-sheets.model';
 
 	type Phase = 'hidden' | 'shown' | 'leaving';
 

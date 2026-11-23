@@ -15,7 +15,7 @@ import type {
 } from '@inth/sdk/preference-draft';
 import { getContext, setContext, untrack } from 'svelte';
 
-import { getConsentContext } from '../../context.svelte';
+import { getConsentContext } from '../../get-consent-context.svelte';
 
 type CreatePreferenceDraft = typeof createPreferenceDraft;
 

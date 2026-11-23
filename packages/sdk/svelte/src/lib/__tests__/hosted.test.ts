@@ -5,7 +5,7 @@
 import { hosted } from '@inth/sdk/modes';
 import { afterEach, describe, expect, test } from 'vitest';
 
-import { selectedMode } from '../select-mode';
+import { selectedMode } from '../selected-mode';
 import { testing } from '../testing';
 import { setGenerated } from './generated';
 

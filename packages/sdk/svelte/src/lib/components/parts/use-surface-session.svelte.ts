@@ -25,7 +25,7 @@ import {
 	subscribeReducedMotion,
 } from '@inth/sdk/ui/utils';
 
-import { getConsentContext } from '../../context.svelte';
+import { getConsentContext } from '../../get-consent-context.svelte';
 
 /** The kernel's surface session and its current state. */
 export interface SurfaceSessionRead {

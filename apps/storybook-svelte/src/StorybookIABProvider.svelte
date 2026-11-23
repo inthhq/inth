@@ -3,7 +3,7 @@
 	import { untrack } from 'svelte';
 	import type { Snippet } from 'svelte';
 
-	import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/types';
+	import type { ConsentManagerOptions } from '../../../packages/sdk/svelte/src/lib/consent-manager-options.model';
 	import { storybookIABPolicy } from '../../storybook-consent-policy';
 	import {
 		defaultIABOptions,

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 
-	import { getThemeContext } from '../context.svelte';
+	import { getThemeContext } from '../get-consent-context.svelte';
 
 	/**
 	 * The overlay class names from the caller's own style map. The overlay
