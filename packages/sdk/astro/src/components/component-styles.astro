@@ -6,6 +6,8 @@ import {
 	INLINE_STYLES_CSS,
 	INLINE_STYLES_ID,
 	markStylesEmitted,
+	privacyChoicesFirstPaintSheets,
+	privacyChoicesPresentation,
 } from '@inth/astro/server';
 
 interface Props {
@@ -35,10 +37,20 @@ const emit =
 	needed &&
 	markStylesEmitted(Astro.locals);
 const nonce = Astro.props.nonce ?? inth?.nonce;
+// A page whose banner renders the Privacy Choices design carries its
+// shell and the one presentation it shows (Card, Banner or Drawer)
+// instead of the classic banner's rules, as React's banner does.
+const presentation =
+	emit && inth
+		? privacyChoicesPresentation(inth.snapshot, inth.options)
+		: null;
+const privacyChoicesSheets = presentation
+	? privacyChoicesFirstPaintSheets(presentation)
+	: [];
 ---
 
 {
-	emit && (
+	emit && !presentation && (
 		<style
 			is:inline
 			data-inth-styles={INLINE_STYLES_ID}
@@ -46,6 +58,17 @@ const nonce = Astro.props.nonce ?? inth?.nonce;
 			set:html={INLINE_STYLES_CSS}
 		/>
 	)
+}
+
+{
+	privacyChoicesSheets.map((sheet) => (
+		<style
+			is:inline
+			data-inth-styles={sheet.id}
+			nonce={nonce}
+			set:html={sheet.css}
+		/>
+	))
 }
 
 {

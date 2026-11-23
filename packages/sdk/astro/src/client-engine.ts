@@ -76,6 +76,7 @@ import {
 	attachBannerActions,
 	registerOptOutLinkHandler,
 	resetDialogWarming,
+	warmDialog,
 } from './browser/banner-actions';
 import type { DeferredCommitted } from './browser/commit';
 import { reportUnhashedScripts } from './browser/csp-report';
@@ -84,7 +85,7 @@ import {
 	readDialogDisableAnimation,
 	readDialogLegalLinks,
 } from './browser/dialog-host';
-import { loadDialog } from './browser/dialog-loading';
+import { dialogDesignFor, loadDialog } from './browser/dialog-loading';
 import { keepDialogStylesOnSwap } from './browser/dialog-styles';
 import { activateGatedScripts } from './browser/inline-scripts';
 import {
@@ -98,6 +99,7 @@ import {
 	nonceOf,
 	readPageNonce,
 } from './browser/page-state';
+import type { PrivacyChoicesController } from './browser/privacy-choices';
 import type * as PromptRenderer from './browser/render-prompt';
 import type { EarlyDialog, EngineHandoff } from './browser/shell';
 import type {
@@ -106,6 +108,7 @@ import type {
 	AstroEngineClient,
 } from './client-types';
 import { assertIABAvailable, isIABUnavailable } from './libs/iab-unavailable';
+import { usesPrivacyChoices } from './privacy-choices/design';
 import type { ResolveTransport } from './transport';
 import type { InthClientOptionsExtension, InthResolvedOptions } from './types';
 import type { ConsentDialogHandle, ConsentDialogKind } from './ui/adapter';
@@ -330,6 +333,21 @@ export const syncSurfaceVisibility = function syncSurfaceVisibility(
 	}
 };
 
+/** The Privacy Choices prompt, which its own controller shows and hides. */
+const PRIVACY_CHOICES_SELECTOR = '[data-design="privacy-choices"]';
+
+/** The first classic banner root, standard or IAB. */
+const classicBannerRoot = function classicBannerRoot(): HTMLElement | null {
+	for (const root of document.querySelectorAll<HTMLElement>(
+		BANNER_ROOT_SELECTOR
+	)) {
+		if (!root.matches(PRIVACY_CHOICES_SELECTOR)) {
+			return root;
+		}
+	}
+	return null;
+};
+
 /**
  * Show or hide the server-rendered banner to match the kernel.
  *
@@ -344,7 +362,7 @@ export const syncSurfaceVisibility = function syncSurfaceVisibility(
 export const syncBannerVisibility = function syncBannerVisibility(
 	snapshot: ConsentSnapshot
 ): void {
-	const banner = document.querySelector<HTMLElement>(BANNER_ROOT_SELECTOR);
+	const banner = classicBannerRoot();
 	if (!banner) {
 		releaseBlocking?.();
 		return;
@@ -371,6 +389,9 @@ export const syncBannerVisibility = function syncBannerVisibility(
 	for (const overlay of document.querySelectorAll<HTMLElement>(
 		BANNER_OVERLAY_SELECTOR
 	)) {
+		if (overlay.closest(PRIVACY_CHOICES_SELECTOR)) {
+			continue;
+		}
 		if (blocking) {
 			reveal(overlay);
 		}
@@ -573,6 +594,11 @@ const engineConfig = function engineConfig(
 /** Marks the first-paint `<style>` the components inline. */
 const FIRST_PAINT_SELECTOR = 'style[data-inth-styles="inth-first-paint"]';
 
+/** The tokens and buttons a Privacy Choices page inlines instead. */
+const hasPrivacyChoicesFirstPaint = (): boolean =>
+	document.querySelector('style[data-inth-styles="inth-tokens"]') !== null &&
+	document.querySelector('style[data-inth-styles="inth-button"]') !== null;
+
 /**
  * Add the first-paint rules a page left out. The server inlines them only
  * where the banner may show, so on a returning visitor's page the dialog,
@@ -584,7 +610,13 @@ const ensureFirstPaintStyles = async function ensureFirstPaintStyles(
 	options: InthResolvedOptions,
 	nonce: string | undefined
 ): Promise<void> {
-	if (!options.inlineStyles || document.querySelector(FIRST_PAINT_SELECTOR)) {
+	if (
+		!options.inlineStyles ||
+		document.querySelector(FIRST_PAINT_SELECTOR) ||
+		// A Privacy Choices page inlined the tokens and the buttons, which
+		// is what a classic dialog builds on.
+		hasPrivacyChoicesFirstPaint()
+	) {
 		return;
 	}
 	const { INLINE_STYLES_CSS, INLINE_STYLES_ID } =
@@ -599,6 +631,16 @@ const ensureFirstPaintStyles = async function ensureFirstPaintStyles(
 	}
 	style.textContent = INLINE_STYLES_CSS;
 	document.head.append(style);
+};
+
+/** The page's Privacy Choices prompt, once its chunk has mounted it. */
+let privacyChoices: PrivacyChoicesController | null = null;
+let privacyChoicesLoading: Promise<void> | null = null;
+
+/** Remove the Privacy Choices prompt with the client that mounted it. */
+const disposePrivacyChoices = function disposePrivacyChoices(): void {
+	privacyChoices?.dispose();
+	privacyChoices = null;
 };
 
 const createClient = function createClient(
@@ -718,9 +760,18 @@ const createClient = function createClient(
 				// The island and the stylesheets load beside the adapter, and
 				// the mount waits for them so the dialog never paints without
 				// its rules.
+				// The Privacy Choices dialog brings its own sheets, tokens and
+				// buttons included, and no classic one.
+				const design = dialogDesignFor(
+					options.ui,
+					kind,
+					usesPrivacyChoices(runtime.kernel.getSnapshot(), options)
+				);
 				const [adapter] = await Promise.all([
-					loadDialog(options.ui, kind, pageNonce),
-					ensureFirstPaintStyles(options, pageNonce),
+					loadDialog(options.ui, kind, pageNonce, design),
+					design === 'privacy-choices'
+						? undefined
+						: ensureFirstPaintStyles(options, pageNonce),
 				]);
 				if (disposed) {
 					return;
@@ -735,6 +786,7 @@ const createClient = function createClient(
 				}
 				const target = ensureDialogHost();
 				const handle = await adapter.mount({
+					design,
 					kind,
 					legalLinks:
 						kind === 'preferences' ? readDialogLegalLinks() : undefined,
@@ -818,6 +870,7 @@ const createClient = function createClient(
 			disposed = true;
 			resetDialogWarming();
 			detachPageSwapListeners();
+			disposePrivacyChoices();
 			releaseBlocking?.();
 			unsubscribeOptOutConfirmation();
 			unsubscribeOptInConfirmation();
@@ -1057,6 +1110,7 @@ const owesBanner = function owesBanner(client: AstroConsentClient): boolean {
 	return (
 		currentClient() === client &&
 		client.getConsent().activeUI === 'banner' &&
+		!usesPrivacyChoices(client.getConsent(), client.options) &&
 		document.querySelector(BANNER_ROOT_SELECTOR) === null
 	);
 };
@@ -1181,6 +1235,8 @@ const ensurePromptRendered = function ensurePromptRendered(
 	if (
 		promptRender?.client === client ||
 		snapshot.activeUI !== 'banner' ||
+		// The Privacy Choices prompt renders into the same spot itself.
+		usesPrivacyChoices(snapshot, client.options) ||
 		document.querySelector(BANNER_ROOT_SELECTOR) ||
 		!document.querySelector(SPOT_SELECTOR)
 	) {
@@ -1214,8 +1270,60 @@ const ensurePromptRendered = function ensurePromptRendered(
 	})();
 };
 
+/**
+ * Mount the Privacy Choices prompt when the banner's spot carries its
+ * class names and the snapshot resolves to that design. The prompt is a
+ * chunk of its own, so a page on the classic design never downloads it,
+ * and it subscribes to the kernel from then on. A `ClientRouter` swap
+ * replaces the spot, and the prompt moves to the new one.
+ */
+const ensurePrivacyChoices = function ensurePrivacyChoices(
+	client: AstroConsentClient,
+	snapshot: ConsentSnapshot
+): void {
+	if (privacyChoices && !privacyChoices.spot.isConnected) {
+		privacyChoices.dispose();
+		privacyChoices = null;
+	}
+	const { runtime } = client;
+	if (privacyChoices || privacyChoicesLoading || !runtime) {
+		return;
+	}
+	const spot = document.querySelector<HTMLElement>(
+		`[${PROMPT_SLOT_ATTRIBUTE}]`
+	);
+	if (
+		!spot?.getAttribute(PROMPT_SLOT_ATTRIBUTE)?.includes('"privacyChoices"') ||
+		!usesPrivacyChoices(snapshot, client.options)
+	) {
+		return;
+	}
+	privacyChoicesLoading = (async () => {
+		try {
+			const { mountPrivacyChoicesBanner } =
+				await import('./browser/privacy-choices');
+			if (currentClient() !== client || !spot.isConnected) {
+				return;
+			}
+			privacyChoices = mountPrivacyChoicesBanner(spot, {
+				kernel: runtime.kernel,
+				nonce: pageNonce,
+				options: client.options,
+				warmDialog: () => {
+					void warmDialog(client);
+				},
+			});
+		} catch (error) {
+			console.warn('@inth/astro: the consent banner failed to load.', error);
+		} finally {
+			privacyChoicesLoading = null;
+		}
+	})();
+};
+
 const attach = function attach(client: AstroConsentClient): void {
 	const snapshot = client.getConsent();
+	ensurePrivacyChoices(client, snapshot);
 	ensurePromptRendered(client, snapshot);
 	syncBannerVisibility(snapshot);
 	syncSurfaceVisibility(snapshot);
@@ -1279,6 +1387,7 @@ export const boot = function boot(
 			}
 			return;
 		}
+		ensurePrivacyChoices(client, snapshot);
 		ensurePromptRendered(client, snapshot);
 		syncBannerVisibility(snapshot);
 		syncSurfaceVisibility(snapshot);

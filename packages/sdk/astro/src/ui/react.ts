@@ -37,6 +37,9 @@ export const reactDialogAdapter: ConsentDialogAdapter = {
 		root.render(
 			createElement(surface.default as never, {
 				...buildProviderProps(context.runtime, context.options),
+				// React's own dialog for the Privacy Choices design, as its
+				// stock `ConsentDialog` renders it.
+				design: context.design ?? 'classic',
 				kind: context.kind,
 				legalLinks: context.legalLinks,
 				tab: context.tab,

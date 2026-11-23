@@ -42,6 +42,12 @@ export interface ConsentDialogContext {
 	 * Ignored by the IAB dialog.
 	 */
 	legalLinks?: (keyof LegalLinks)[] | null;
+	/**
+	 * `'privacy-choices'` when the design opts in and the island renders
+	 * its framework's Privacy Choices dialog; the React island does. Unset
+	 * or `'classic'` renders the classic dialog.
+	 */
+	design?: 'classic' | 'privacy-choices';
 }
 
 /**

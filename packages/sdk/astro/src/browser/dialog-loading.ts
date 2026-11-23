@@ -30,21 +30,68 @@ const startSurface = async function startSurface(
 };
 
 /**
+ * The islands that render the Privacy Choices dialog when the design opts
+ * in. Another island keeps its classic dialog under that design until its
+ * framework's port lands, and gets the classic stylesheets.
+ *
+ * @internal
+ */
+export const PRIVACY_CHOICES_DIALOG_ADAPTERS: ReadonlySet<InthUIAdapterName> =
+	new Set<InthUIAdapterName>(['react']);
+
+/**
+ * Which dialog an island renders: the Privacy Choices one when the design
+ * asks for it and the island has it, else the classic one.
+ *
+ * @internal
+ */
+export const dialogDesignFor = function dialogDesignFor(
+	ui: InthUIAdapterName,
+	kind: ConsentDialogKind,
+	privacyChoices: boolean
+): 'classic' | 'privacy-choices' {
+	return privacyChoices &&
+		kind === 'preferences' &&
+		PRIVACY_CHOICES_DIALOG_ADAPTERS.has(ui)
+		? 'privacy-choices'
+		: 'classic';
+};
+
+/** Put the Privacy Choices dialog's sheets in, from their own chunk. */
+const loadPrivacyChoicesDialogStyles =
+	async function loadPrivacyChoicesDialogStyles(
+		nonce: string | undefined
+	): Promise<void> {
+		try {
+			const { insertPrivacyChoicesDialogSheets } =
+				await import('../privacy-choices/dialog-sheets');
+			insertPrivacyChoicesDialogSheets(nonce);
+		} catch {
+			// An unstyled dialog beats one that never opens.
+		}
+	};
+
+/**
  * Download everything a dialog needs, in parallel, and resolve with the
  * adapter once the adapter and the stylesheets are in.
  *
  * @param nonce - The page's CSP nonce, for the stylesheet links.
+ * @param design - The dialog the island renders, which decides its
+ * stylesheets. The Privacy Choices dialog links no classic sheet.
  * @throws {Error} When the adapter is not registered or fails to load.
  */
 export const loadDialog = async function loadDialog(
 	ui: InthUIAdapterName,
 	kind: ConsentDialogKind,
-	nonce: string | undefined
+	nonce: string | undefined,
+	design: 'classic' | 'privacy-choices' = 'classic'
 ): Promise<ConsentDialogAdapter> {
 	const surface = startSurface(ui);
 	const [adapter] = await Promise.all([
 		loadDialogAdapter(ui),
-		loadDialogStyles(nonce, kind),
+		design === 'privacy-choices'
+			? loadPrivacyChoicesDialogStyles(nonce)
+			: loadDialogStyles(nonce, kind),
 		surface,
 	]);
 	return adapter;

@@ -41,6 +41,54 @@ const loadIABSurface = () => {
 	return iabSurfacePromise;
 };
 
+// React's stock dialog, which renders its Privacy Choices dialog when the
+// design opts in. Only a Privacy Choices site loads it, on its own chunk;
+// the classic dialog below stays the one every other site mounts.
+type StockDialog = ComponentType<Record<string, never>>;
+let loadedPrivacyChoicesDialog: StockDialog | undefined;
+let privacyChoicesDialogPromise: Promise<StockDialog> | undefined;
+const loadPrivacyChoicesDialog = () => {
+	privacyChoicesDialogPromise ??= (async () => {
+		const module = await import('@inth/react/consent-dialog');
+		loadedPrivacyChoicesDialog = module.ConsentDialog as StockDialog;
+		return loadedPrivacyChoicesDialog;
+	})();
+	return privacyChoicesDialogPromise;
+};
+
+const PrivacyChoicesDialogSurface = () => {
+	const [loadedComponent, setLoadedComponent] = useState(
+		() => loadedPrivacyChoicesDialog
+	);
+	const [failure, setFailure] = useState<{ error: unknown }>();
+	useEffect(() => {
+		if (loadedComponent) {
+			return;
+		}
+		let active = true;
+		void (async () => {
+			try {
+				const loaded = await loadPrivacyChoicesDialog();
+				if (active) {
+					setLoadedComponent(() => loaded);
+				}
+			} catch (error) {
+				if (active) {
+					setFailure({ error });
+				}
+			}
+		})();
+		return () => {
+			active = false;
+		};
+	}, [loadedComponent]);
+	if (failure) {
+		throw failure.error;
+	}
+	const Component = loadedComponent;
+	return Component ? <Component /> : null;
+};
+
 // This island only mounts in the browser. Resolve its component through state
 // so the first open does not wait for React's Suspense retry throttle.
 const IABDialogSurface = (props: IABDialogSurfaceProps) => {
@@ -88,6 +136,11 @@ export interface ConsentDialogSurfaceProps {
 	tab?: 'purposes' | 'vendors';
 	/** Which legal links the preferences dialog shows. */
 	legalLinks?: (keyof LegalLinks)[] | null;
+	/**
+	 * `'privacy-choices'` renders React's Privacy Choices dialog, as the
+	 * stock `ConsentDialog` does under that design.
+	 */
+	design?: 'classic' | 'privacy-choices';
 }
 
 const ConsentDialogSurface = ({
@@ -96,19 +149,28 @@ const ConsentDialogSurface = ({
 	kind = 'preferences',
 	tab,
 	legalLinks,
-}: ConsentDialogSurfaceProps) => (
-	<InthProvider
-		runtime={runtime}
-		options={options}
-	>
-		{kind === 'iab' ? (
-			<IABDialogSurface tab={tab} />
-		) : (
+	design = 'classic',
+}: ConsentDialogSurfaceProps) => {
+	let surface;
+	if (kind === 'iab') {
+		surface = <IABDialogSurface tab={tab} />;
+	} else if (design === 'privacy-choices') {
+		surface = <PrivacyChoicesDialogSurface />;
+	} else {
+		surface = (
 			<ConsentDraftProvider>
 				<ConsentDialog legalLinks={legalLinks} />
 			</ConsentDraftProvider>
-		)}
-	</InthProvider>
-);
+		);
+	}
+	return (
+		<InthProvider
+			runtime={runtime}
+			options={options}
+		>
+			{surface}
+		</InthProvider>
+	);
+};
 
 export default ConsentDialogSurface;
