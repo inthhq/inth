@@ -1,383 +1,1162 @@
 <script>
-window.addEventListener('load', () => {
-  window.setTimeout = (fn) => { fn(); return 0; };
-  const $ = (q) => document.querySelector(q);
-  const ctl = (g, v) => document.querySelector(`[data-group="${g}"] [data-val="${v}"]`).click();
-  const tap = (q) => { const el = $(q); if (!el) throw new Error('missing ' + q); el.click(); };
-  const key = (k, shift = false) => document.dispatchEvent(new KeyboardEvent('keydown', { key: k, shiftKey: shift, bubbles: true, cancelable: true }));
-  const R = []; const check = (n, c) => R.push(`${c ? 'PASS' : 'FAIL'} ${n}`);
-  const pres = (x) => {
-    if (['left', 'bottom', 'right', 'top'].includes(x)) { ctl('presUi', 'drawer'); ctl('loc', x); }
-    else if (x === 'bar-top' || x === 'bar-bottom') { ctl('presUi', 'banner'); ctl('barPos', x.slice(4)); }
-    else { ctl('presUi', 'card'); ctl('cardPos', x === 'center' ? 'center' : x === 'bottom-right' ? 'bottom-right' : 'bottom-left'); }
-  };
-  // Dialog-flow checks below use the summary banner (Customize opens the dialog): run them on the bottom drawer.
-  pres('bottom');
-  try {
-    // ---- cookie banner
-    const both = () => !$('#banner').hidden && S.open;
-    check('US opt-out preset (prompt none): nothing shown on first visit', $('#banner').hidden && !S.open);
-    check('US opt-out: categories allowed before a choice', S.cats.measurement === true);
-    ctl('usBanner', 'notice');
-    check('optional notice shows when enabled', !$('#banner').hidden && !S.open && /Privacy notice/.test($('#banner').textContent));
-    check('page not inert under banner', $('.fake-site').inert === false);
-    tap('[data-bn=expand]');
-    check('notice rights link expands the drawer in place', !S.open && $('#card-panel').dataset.open === 'true' && !!$('#card-panel [data-seg=sale]'));
-    tap('[data-bn=ok]');
-    check('notice acknowledged: banner does not return', $('#banner').hidden && !S.open);
-    ctl('regime', 'eu');
-    check('EU banner: Reject/Accept/Customize (expands in place)', !!$('[data-bn=reject]') && !!$('[data-bn=accept]') && !!$('[data-bn=expand]'));
-    tap('#reopen');
-    check('footer link opens the dialog, banner hidden', S.open && $('#banner').hidden && !both());
-    tap('[data-cat-toggle=measurement]');
-    tap('[data-layer=main] [data-act=close]');
-    check('close without deciding: banner returns, draft discarded, focus on banner', !$('#banner').hidden && S.cats.measurement === false && document.activeElement === $('.banner-card'));
-    tap('[data-bn=accept]');
-    check('accept: banner gone, all on, saved, focus to footer link', $('#banner').hidden && S.cats.measurement && S.cats.marketing && JSON.parse(S.euSaved).c.marketing && document.activeElement === $('#reopen'));
-    tap('#reopen'); tap('[data-layer=main] [data-act=close]');
-    check('after decision, closing dialog does not bring banner back', $('#banner').hidden);
-    ctl('regime', 'us-opt-in');
-    check('US opt-in preset: US consent banner (not the GDPR one), categories denied until choice', !$('#banner').hidden && /Your privacy choices/.test($('#bn-title').textContent) && !/We value your privacy/.test($('#banner').textContent) && /Don’t allow/.test($('[data-bn=reject]').textContent) && S.cats.measurement === false && S.cats.functionality === false);
-    check('telemetry reflects the banner', /banner .* us-consent/.test($('#fit').textContent));
-    tap('[data-bn=reject]');
-    check('US opt-in reject: sale not allowed (recorded), sensitive untouched', S.sale === 'optout' && S.saleSrc === 'user' && S.sensSrc === 'default');
-    ctl('regime', 'us-opt-out'); ctl('usBanner', 'none');
-    check('US opt-out with SDK preset none: no banner, nothing open', $('#banner').hidden && !S.open);
-    check('telemetry says no banner for opt-out', /no banner/.test($('#fit').textContent));
-    tap('#reopen');
-    check('footer link opens dialog when there is no banner', S.open);
-    ctl('usBanner', 'notice'); ctl('saleStart', 'gpc');
-    check('notice mentions GPC when honored', /Global Privacy Control signal is being honored/.test($('#banner').textContent));
-    ctl('saleStart', 'allow-default');
-    ctl('start', 'dialog');
-    check('start=dialog opens dialog', S.open && $('#banner').hidden);
-    // rights + receipt
-    const done = $('[data-layer=main] [data-act=close].is-done');
-    tap('[data-seg=sale][data-val=optout]');
-    check('opt out applied + receipt', S.saleSrc === 'user' && $('[data-key=receipt]').dataset.open === 'true');
-    check('Done keeps identity across cue', done.isConnected && done === $('[data-layer=main] .is-done'));
-    check('status region in dialog announces', /Opted out of sale, sharing and targeted ads/.test($('[data-layer=main] [role=status]').textContent));
-    tap('[data-seg=sale][data-val=allow]');
-    check('confirm focuses cancel', document.activeElement === $('.confirm[data-kind=sale] [data-act=confirm-cancel]'));
-    key('Escape');
-    check('esc closes confirm, focus to Allow', S.confirm === null && document.activeElement === $('[data-seg=sale][data-val=allow]'));
-    // nudge: Allow again while question open
-    ctl('sensStart', 'limit-user');
-    tap('[data-seg=sens][data-val=allow]');
-    tap('[data-seg=sens][data-val=allow]');
-    check('re-press Allow does not apply', S.sens === 'limit' && S.confirm === 'sens');
-    check('confirm turns red', $('.confirm[data-kind=sens]').dataset.nudged === 'true');
-    check('nudge focuses cancel', document.activeElement === $('.confirm[data-kind=sens] [data-act=confirm-cancel]'));
-    tap('.confirm[data-kind=sens] [data-act=confirm-cancel]');
-    check('cancel clears red', $('.confirm[data-kind=sens]').dataset.nudged === 'false');
-    ctl('sensStart', 'allow-default');
-    // rights copy follows bundle
-    ctl('rights', 'sale-ads'); ctl('saleStart', 'optout-user');
-    tap('[data-seg=sale][data-val=allow]');
-    check('sale-ads confirm wording', /selling and targeted ads/.test($('#cf-sale').textContent) && !/share/.test($('#cfd-sale').textContent));
-    ctl('rights', 'all');
-    // desktop accordions
-    ctl('saleStart', 'optout-user');
-    tap('[data-act=cookies]');
-    check('desktop cookies = accordion', S.stack.length === 0 && $('#cookie-panel').dataset.open === 'true' && $('[data-act=cookies]').getAttribute('aria-expanded') === 'true');
-    tap('#cookie-panel [data-act=vendors][data-cat=measurement]');
-    check('desktop vendors = accordion', $('#vl-measurement').dataset.open === 'true');
-    check('vendor toggle name starts with visible text', /^Hide 3 vendors for Analytics/.test($('#cookie-panel [data-act=vendors][data-cat=measurement]').textContent.trim()));
-    tap('#cookie-panel [data-cat-toggle=measurement]');
-    check('cookie toggle keeps rights date', S.rightsNow === false);
-    check('ads row follows sale (Off)', /Off/.test($('[data-key=cat-ads] .follows').textContent));
-    // focus trap from title, real check
-    const title = $('[data-layer=main] .card-title'); title.focus(); key('Tab', true);
-    const f = [...$('[data-layer=main]').querySelectorAll('button, a[href]')].filter((el) => !el.disabled && !el.closest('[inert]') && el.offsetParent !== null);
-    check('shift-tab from title wraps to last', document.activeElement === f[f.length - 1]);
-    check('background inert', $('.fake-site').inert === true);
-    // phone: two-level sheets
-    ctl('vp', 'phone');
-    tap('[data-act=cookies]');
-    check('phone cookies = sheet', S.stack[0] === 'cookies' && $('[data-layer=main]').hasAttribute('inert'));
-    check('phone vendors inside sheet = accordion', $('[data-layer=cookies] [data-act=vendors]').hasAttribute('aria-expanded'));
-    key('Escape');
-    check('esc pops sheet, focus to opener', S.stack.length === 0 && document.activeElement === $('[data-layer=main] [data-act=cookies]'));
-    // EU phone: vendor sheet mirrors category switch
-    ctl('regime', 'eu');
-    check('eu phone vendor link opens sheet', $('[data-act=vendors][data-cat=marketing]').hasAttribute('aria-haspopup'));
-    tap('[data-act=vendors][data-cat=marketing]');
-    check('vendor sheet has category switch', !!$('[data-layer="vendors:marketing"] [data-cat-toggle=marketing]'));
-    tap('[data-layer="vendors:marketing"] [data-cat-toggle=marketing]');
-    check('turn on in sheet enables vendors', S.cats.marketing && S.vendors.meta && S.vendors['google-ads']);
-    key('Escape');
-    tap('[data-layer=main] [data-act=close]'); tap('#reopen');
-    check('eu draft discarded on close', S.cats.marketing === false);
-    tap('[data-cat-toggle=measurement]');
-    // vendor switches stay usable; vendor-on revives category
-    ctl('vp', 'macbook');
-    tap('[data-act=vendors][data-cat=measurement]');
-    ['ga','posthog','datadog'].forEach((v) => { if (S.vendors[v] && S.cats.measurement) tap(`[data-vendor-toggle=${v}]`); });
-    check('last vendor off turns category off', S.cats.measurement === false);
-    check('vendor switches stay enabled', !$('[data-vendor-toggle=ga]').disabled);
-    tap('[data-vendor-toggle=posthog]');
-    check('vendor on revives category with only it', S.cats.measurement && S.vendors.posthog && !S.vendors.ga && !S.vendors.datadog);
-    tap('[data-cat-toggle=measurement]'); tap('[data-cat-toggle=measurement]');
-    tap('[data-cat-toggle=measurement]');
-    check('eu save disabled when effective state unchanged', $('[data-act=eu-save]').disabled);
-    tap('[data-layer=main] [data-act=close]'); tap('#reopen');
-    // GPC
-    ctl('vp', 'macbook'); ctl('regime', 'us-opt-out'); ctl('saleStart', 'gpc');
-    check('gpc receipt is live, not dated', /Honoring Global Privacy Control/.test($('.receipt-line').textContent) && !/Jan 15/.test($('.receipt-line').textContent));
-    check('gpc selected not disabled', !$('[data-seg=sale][data-val=optout]').hasAttribute('aria-disabled'));
-    check('gpc leaves sensitive alone', S.sens === 'allow');
-    // opt-in sensitive
-    ctl('regime', 'us-opt-in');
-    check('opt-in sens off', S.sens === 'limit' && S.sensSrc === 'default');
-    // branding decision + theme switch
-    ctl('start', 'banner'); ctl('regime', 'eu');
-    check('tag says "Consent by" (no assurance claim)', /Consent by/.test($('.brand-tag').textContent) && !/Secured|Protected/.test($('.brand-tag').textContent));
-    window.requestAnimationFrame = () => 0; // hold the switching flag so it can be observed
-    ctl('theme', 'dark');
-    check('theme switch disables transitions for the swap frame', document.documentElement.hasAttribute('data-theme-switching') && getComputedStyle($('.brand-tag')).transitionDuration === '0s');
-    window.requestAnimationFrame = (f) => { f(); return 0; };
-    ctl('theme', 'light'); ctl('start', 'dialog');
-    // ---- v5 presentation
-    ctl('start', 'banner'); ctl('regime', 'eu');
-    ['card', 'bottom', 'left', 'right'].forEach((pr) => {
-      pres(pr);
-      check(`pres ${pr}: banner shown with data-pres`, !$('#banner').hidden && $('#banner').dataset.pres === pr && !!$('[data-bn=accept]'));
-    });
-    pres('bottom-right');
-    { const b = $('#banner .banner-card').getBoundingClientRect(), v = $('#vp').getBoundingClientRect();
-      check('card bottom right: card sits in the bottom-right corner', Math.abs(v.right - b.right - 24) <= 2 && b.left - v.left >= 22); }
-    // ---- Banner (slim bar)
-    pres('bar-bottom'); ctl('drawerStyle', 'flush'); document.getAnimations().forEach((a) => a.finish());
-    { const c = $('#banner .banner-card').getBoundingClientRect(), v = $('#vp').getBoundingClientRect();
-      const stacked = getComputedStyle($('.bar-row')).flexDirection === 'column';
-      check('banner: full-width bar on the bottom edge; one row when wide, stacked when narrow', !!$('#banner .bar-row') && Math.abs(c.bottom - v.bottom) <= 2 && c.width >= v.width - 2 && (v.width > 760 ? !stacked && c.height <= 64 : stacked)); }
-    check('banner: Reject / Accept / Customize in the row', !!$('.bar-row [data-bn=reject]') && !!$('.bar-row [data-bn=accept]') && !!$('.bar-row [data-bn=expand]'));
-    tap('[data-bn=expand]');
-    check('banner: Customize expands to full content + options in place (no dialog)', !S.open && !$('#banner .bar-row') && $('#card-panel').dataset.open === 'true' && !!$('#card-panel .cat-list') && !!$('[data-bn=save]'));
-    key('Escape');
-    check('banner: Esc folds back to the slim row, focus on Customize', !!$('#banner .bar-row') && document.activeElement === $('.bar-row [data-bn=expand]'));
-    pres('bar-top'); document.getAnimations().forEach((a) => a.finish());
-    { const c = $('#banner .banner-card').getBoundingClientRect(), v = $('#vp').getBoundingClientRect();
-      check('banner top: anchored to the top edge', Math.abs(c.top - v.top) <= 2); }
-    ctl('drawerStyle', 'inset'); document.getAnimations().forEach((a) => a.finish());
-    { const c = $('#banner .banner-card').getBoundingClientRect(), v = $('#vp').getBoundingClientRect();
-      check('banner inset: rounded bar 12px from the edge', getComputedStyle($('#banner .banner-card')).borderTopLeftRadius === '16px' && Math.abs(c.top - v.top - 12) <= 2 && Math.abs(c.left - v.left - 12) <= 2); }
-    check('banner: edge-style control shown for Banner', document.querySelector('[data-edge-only]').dataset.hidden === 'false');
-    check('banner: Card and Drawer-only controls hidden', document.querySelector('[data-card-only]').dataset.hidden === 'true' && document.querySelector('[data-bar-only]').dataset.hidden === 'false');
-    check('no Modal presentation any more', !document.querySelector('[data-group=presUi] [data-val=modal]'));
-    pres('card');
-    check('card corner, block off: page usable, region role', $('.fake-site').inert === false && $('#banner .banner-card').getAttribute('role') === 'region' && $('#banner-backdrop').hidden);
-    pres('center');
-    check('card centre: centred and blocking forced (block setting still Off)', S.block === 'off' && $('#banner').hasAttribute('data-center') && !$('#banner-backdrop').hidden && document.querySelector('[data-group=block] [data-val=off]').disabled);
-    check('centre: Customize still expands in place', !!$('[data-bn=expand]'));
-    check('blocking: card border swapped for dark ring (no light halo)', $('#banner').hasAttribute('data-blocking') && getComputedStyle($('#banner .banner-card')).borderTopColor === 'rgba(0, 0, 0, 0)');
-    check('modal: role dialog + aria-modal on the shell (card + tag), page inert, focus on banner', $('#banner .banner-shell').getAttribute('role') === 'dialog' && $('#banner .banner-shell').getAttribute('aria-modal') === 'true' && $('#banner .banner-shell').contains($('#banner .brand-tag')) && $('.fake-site').inert === true && document.activeElement === $('#banner .banner-card'));
-    key('Escape');
-    check('modal: Esc does not dismiss', !$('#banner').hidden && !S.decided);
-    key('Tab', true);
-    check('modal: shift-tab from the card goes to the tag (DOM order, inside the modal)', document.activeElement === $('#banner .brand-tag'));
-    key('Tab', true);
-    check('modal: focus trapped (shift-tab from first wraps to last control)', document.activeElement === [...$('#banner .banner-shell').querySelectorAll('button, a[href]')].pop());
-    tap('[data-bn=reject]');
-    check('centre: choice closes it, page usable again, focus to footer link', $('#banner').hidden && $('.fake-site').inert === false && document.activeElement === $('#reopen'));
-    // US opt-out cannot be centred (it never blocks): falls back to the corner
-    ctl('regime', 'us-opt-out'); ctl('usBanner', 'notice');
-    check('centre + US opt-out notice: falls back to bottom left, no blocking', !$('#banner').hidden && !$('#banner').hasAttribute('data-center') && $('#banner-backdrop').hidden && $('.fake-site').inert === false);
-    ctl('usBanner', 'none'); ctl('regime', 'eu'); pres('card');
-    ctl('block', 'on');
-    // blocking works with every presentation
-    ['card', 'bottom', 'left', 'right'].forEach((pr) => {
-      pres(pr);
-      check(`block on + ${pr}: backdrop, inert page, scroll lock, dialog role`, !$('#banner-backdrop').hidden && $('.fake-site').inert === true && $('#vp').hasAttribute('data-scroll-locked') && $('#banner [aria-modal="true"]')?.contains($('#banner .banner-card')));
-    });
-    ctl('regime', 'us-opt-out'); ctl('usBanner', 'none');
-    check('block on + US opt-out preset (nothing shown): no backdrop, no inert, no scroll lock', $('#banner').hidden && $('#banner-backdrop').hidden && $('.fake-site').inert === false && !$('#vp').hasAttribute('data-scroll-locked'));
-    ctl('usBanner', 'notice');
-    check('block on + US opt-out optional notice: still never blocks', !$('#banner').hidden && $('#banner-backdrop').hidden && $('.fake-site').inert === false && !$('#vp').hasAttribute('data-scroll-locked'));
-    ctl('usBanner', 'none'); ctl('regime', 'eu'); ctl('block', 'off');
-    pres('left');
-    check('drawer is always all-in-one (left)', $('#banner').hasAttribute('data-aio') && !!$('#banner .banner-body .cat-list') && !$('[data-bn=customize]'));
-    check('side drawer, block off: non-blocking', $('.fake-site').inert === false && $('#banner .banner-card').getAttribute('role') === 'region' && $('#banner-backdrop').hidden);
-    check('inset is the default drawer style', S.drawerStyle === 'inset' && getComputedStyle($('#banner .banner-card')).borderTopRightRadius === '16px' && getComputedStyle($('#banner')).paddingTop === '12px');
-    ctl('drawerStyle', 'flush');
-    check('flush drawer: square corners', getComputedStyle($('#banner .banner-card')).borderTopRightRadius === '0px');
-    pres('bottom'); document.getAnimations().forEach((a) => a.finish());
-    check('flush bottom drawer: fully square', getComputedStyle($('#banner .banner-card')).borderTopLeftRadius === '0px');
-    pres('top');
-    check('flush top drawer: fully square', getComputedStyle($('#banner .banner-card')).borderBottomLeftRadius === '0px');
-    pres('left');
-    pres('bottom'); ctl('vp', 'phone');
-    check('phone flush bottom drawer: no margin', ['Top','Right','Bottom','Left'].every((k) => getComputedStyle($('#banner'))['padding' + k] === '0px'));
-    ctl('drawerStyle', 'inset');
-    check('phone inset bottom drawer: 12px sides and bottom', getComputedStyle($('#banner')).paddingBottom === '12px' && getComputedStyle($('#banner')).paddingLeft === '12px');
-    ctl('drawerStyle', 'flush'); ctl('vp', 'macbook'); pres('left');
-    ctl('vp', 'phone');
-    check('phone: side drawer falls back to bottom drawer', $('#banner').dataset.pres === 'bottom');
-    ctl('vp', 'macbook'); pres('card'); ctl('start', 'dialog'); ctl('regime', 'us-opt-out');
-    // ---- all-in-one side drawer
-    ctl('vp', 'macbook'); ctl('signedIn', 'no'); ctl('saleStart', 'allow-default'); ctl('sensStart', 'allow-default'); ctl('start', 'banner'); ctl('block', 'off'); ctl('regime', 'eu'); pres('left');
-    check('aio: tag overlays the scroll area (fade under it), body has clearance', !!$('#banner .aio-wrap > .banner-brand.is-overlay .brand-tag') && getComputedStyle($('#banner .banner-brand.is-overlay')).position === 'absolute' && parseInt(getComputedStyle($('#banner .banner-body')).paddingBottom) >= 56);
-    check('aio EU: categories inline in the drawer, no Customize', !!$('#banner .banner-body .cat-list') && !$('[data-bn=customize]') && !!$('[data-bn=save]'));
-    $('#banner [data-cat-toggle=measurement]').click();
-    check('aio EU: switch in drawer changes draft', S.cats.measurement === true && !S.decided);
-    tap('[data-bn=save]');
-    check('aio EU: Save records the draft and closes', $('#banner').hidden && JSON.parse(S.euSaved).c.measurement === true && S.decided);
-    ctl('regime', 'us-opt-out'); ctl('usBanner', 'notice');
-    check('aio US notice: rights rows inline, OK only', !!$('#banner [data-seg=sale]') && !!$('[data-bn=ok]') && !$('[data-bn=rights]'));
-    $('#banner [data-seg=sale][data-val=optout]').click();
-    check('aio US notice: opt-out applies immediately in drawer', S.sale === 'optout' && S.saleSrc === 'user' && !$('#banner').hidden);
-    ctl('regime', 'us-opt-in');
-    $('#banner [data-seg=sale][data-val=allow]').click();
-    check('aio US opt-in: allow needs the confirm, inside the drawer', S.confirm === 'sale' && !!$('#banner .confirm[data-kind=sale]') && document.activeElement === $('#banner .confirm[data-kind=sale] [data-act=confirm-cancel]'));
-    ctl('vp', 'phone');
-    check('drawer on phone: bottom drawer summary first', $('#banner').dataset.pres === 'bottom' && $('#card-panel').dataset.open === 'false' && !$('#banner').hasAttribute('data-aio'));
-    ctl('regime', 'eu'); tap('[data-bn=expand]');
-    check('phone: Customize expands the drawer in place (no dialog)', !S.open && $('#card-panel').dataset.open === 'true' && !!$('#card-panel .cat-list'));
-    ctl('vp', 'macbook'); pres('bottom');
-    check('bottom drawer desktop: summary first, Customize expands in place', $('#card-panel').dataset.open === 'false' && !$('#banner').hasAttribute('data-aio'));
-    tap('[data-bn=expand]');
-    check('bottom drawer desktop: options inline, footer Reject/Accept/Save, dialog not opened', !S.open && !!$('#card-panel .cat-list') && !!$('[data-bn=save]'));
-    key('Escape');
-    check('bottom drawer: Esc folds back', $('#card-panel').dataset.open === 'false' && !$('#banner').hidden);
-    pres('top');
-    { const c = $('#banner .banner-card').getBoundingClientRect(), v = $('#vp').getBoundingClientRect(), g = $('#banner .banner-shell > .brand-tag').getBoundingClientRect();
-      check('top drawer: anchored to the top, tag below the card', $('#banner').dataset.pres === 'top' && c.top - v.top <= 14 && g.top >= c.bottom - 1); }
-    tap('[data-bn=expand]');
-    check('top drawer: Customize expands in place (no dialog)', !S.open && $('#card-panel').dataset.open === 'true' && !!$('#card-panel .cat-list'));
-    key('Escape');
-    ctl('vp', 'phone');
-    check('top drawer on phone: stays top', $('#banner').dataset.pres === 'top');
-    ctl('vp', 'macbook');
-    pres('right');
-    check('right drawer desktop: all-in-one', $('#banner').hasAttribute('data-aio') && !!$('#banner .banner-body'));
-    ctl('vp', 'macbook'); ctl('usBanner', 'none'); pres('card');
-    // phone dialog sheet follows drawer style
-    ctl('start', 'dialog'); ctl('vp', 'phone'); ctl('drawerStyle', 'inset');
-    check('phone sheet inset: rounded all corners, 12px gap', getComputedStyle($('[data-layer=main]')).borderBottomLeftRadius === '16px' && getComputedStyle($('#stage')).paddingBottom === '12px');
-    ctl('drawerStyle', 'flush');
-    check('phone sheet flush: fully square (top corners too)', getComputedStyle($('[data-layer=main]')).borderTopLeftRadius === '0px');
-    check('phone sheet flush: square bottom, edge to edge', getComputedStyle($('[data-layer=main]')).borderBottomLeftRadius === '0px' && getComputedStyle($('#stage')).paddingBottom === '0px');
-    ctl('drawerStyle', 'inset'); ctl('vp', 'macbook');
-    // ---- card
-    ctl('vp', 'macbook'); ctl('start', 'banner'); ctl('block', 'off'); ctl('signedIn', 'no'); ctl('saleStart', 'allow-default'); ctl('regime', 'eu'); pres('card');
-    check('card: starts collapsed, Customize expands in place', $('#card-panel').dataset.open === 'false' && $('[data-bn=expand]')?.getAttribute('aria-expanded') === 'false');
-    tap('[data-bn=expand]');
-    check('card: options stacked in the card, dialog not opened, focus moved in', !S.open && $('#card-panel').dataset.open === 'true' && !!$('#card-panel .cat-list') && $('#card-panel').contains(document.activeElement));
-    check('card: footer becomes Reject/Accept + Save', !!$('[data-bn=reject]') && !!$('[data-bn=accept]') && !!$('[data-bn=save]') && !$('[data-bn=expand]'));
-    $('#card-panel [data-cat-toggle=marketing]').click();
-    check('card: switch changes draft', S.cats.marketing === true && !S.decided);
-    key('Escape');
-    check('card: Esc folds back, banner stays, focus on Customize', $('#card-panel').dataset.open === 'false' && !$('#banner').hidden && document.activeElement === $('[data-bn=expand]'));
-    tap('[data-bn=expand]'); tap('[data-bn=save]');
-    check('card: Save records and closes', $('#banner').hidden && JSON.parse(S.euSaved).c.marketing === true);
-    ctl('regime', 'us-opt-out'); ctl('usBanner', 'notice');
-    tap('[data-bn=expand]');
-    check('card US notice: rights link expands rights inline', !!$('#card-panel [data-seg=sale]'));
-    ctl('usBanner', 'none'); pres('card');
-    // ---- vendor table + trigger (decided)
-    ctl('vp', 'macbook'); ctl('start', 'dialog'); ctl('regime', 'eu');
-    if ($('[data-act=vendors][data-cat=measurement]').getAttribute('aria-expanded') !== 'true') tap('[data-act=vendors][data-cat=measurement]');
-    check('vendors: boxed table with 3 rows, labelled', $('#vl-measurement .v-table').getAttribute('aria-label') === 'Analytics vendors' && $('#vl-measurement').querySelectorAll('.v-row').length === 3);
-    { const lk = $('[data-act=vendors][data-cat=measurement]'); const cs = getComputedStyle(lk);
-      check('vendors: trigger is a 32px in-segment row with no divider and no press scale', cs.minHeight === '32px' && cs.borderTopWidth === '0px' && !/scale/.test(getComputedStyle(lk).transform)); }
-    // row click toggles (category and vendor), links don't
-    { const was = S.cats.experience; $('[data-key="cat-experience"] .cat-desc').click();
-      check('row click: category description toggles its switch', S.cats.experience === !was);
-      if (!S.cats.measurement) tap('[data-cat-toggle=measurement]');
-      const before = S.vendors.posthog; $('[data-key="v-posthog"] .desc').click();
-      check('row click: vendor purpose toggles its switch', S.vendors.posthog === !before);
-      const before2 = S.vendors.posthog; $('[data-key="v-posthog"] .ext').click();
-      check('row click: privacy-policy link does not toggle', S.vendors.posthog === before2); }
-    // ---- scroll fades
-    ctl('vp', 'macbook'); ctl('start', 'dialog'); ctl('regime', 'eu');
-    { const b = $('[data-layer=main] .card-body'); b.scrollTop = 0; updateFades(b);
-      check('fades: none at top, bottom fade when more below', !b.hasAttribute('data-fade-top') && b.hasAttribute('data-fade-bottom'));
-      b.scrollTop = Math.floor((b.scrollHeight - b.clientHeight) / 2); updateFades(b);
-      check('fades: both while mid-scroll', b.hasAttribute('data-fade-top') && b.hasAttribute('data-fade-bottom'));
-      b.scrollTop = b.scrollHeight; updateFades(b);
-      check('fades: no bottom fade at the end', b.hasAttribute('data-fade-top') && !b.hasAttribute('data-fade-bottom')); }
-    ctl('regime', 'us-opt-out'); ctl('signedIn', 'no'); ctl('saleStart', 'allow-default'); ctl('start', 'dialog');
-    { const b = $('[data-layer=main] .card-body'); updateFades(b);
-      check('fades: none when content fits', !b.hasAttribute('data-fade-top') && !b.hasAttribute('data-fade-bottom')); }
-    // ---- round 3 fixes
-    ctl('vp', 'macbook'); ctl('regime', 'us-opt-out'); ctl('signedIn', 'yes'); ctl('saleStart', 'gpc-past');
-    check('gpc-past: recorded, not locked', S.sale === 'optout' && S.saleSrc === 'user' && !$('[data-seg=sale][data-val=allow]').hasAttribute('aria-disabled'));
-    check('gpc-past: receipt names GPC source', /from your Global Privacy Control signal/.test($('.receipt-details').textContent));
-    ctl('signedIn', 'no');
-    ctl('regime', 'us-opt-in'); ctl('rights', 'sale-ads');
-    check('opt-in label from bundle', $('[data-key=sale]').getAttribute('aria-label') === 'Allow selling and targeted ads');
-    ctl('rights', 'all'); ctl('regime', 'us-opt-out'); ctl('saleStart', 'optout-user');
-    Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
-    tap('[data-act=receipt]'); tap('[data-act=copy]');
-    check('copy failure announced', /Couldn’t copy/.test($('[data-layer=main] [role=status]').textContent) && S.copied === false);
-    check('copy failure: labelled focusable field, focused', $('#ref-field')?.value === '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d' && document.activeElement === $('#ref-field') && !!$('label[for=ref-field]'));
-    // phone: Done keeps its label during the cue
-    ctl('vp', 'phone');
-    window.setTimeout = () => 0; // keep the cue up
-    tap('[data-seg=sens][data-val=limit]');
-    const doneBtn = $('[data-layer=main] .is-done');
-    check('phone cue keeps visible "Done"', doneBtn.dataset.cue === 'true' && doneBtn.textContent.trim() === 'Done');
-    window.setTimeout = (fn) => { fn(); return 0; };
-    // phone: tap on dimmed parent pops only the sheet
-    tap('[data-act=cookies]');
-    tap('[data-layer=cookies] [data-cat-toggle=measurement]');
-    check('sheet announcement in sheet', /Analytics off/.test($('[data-layer=cookies] [role=status]').textContent));
-    const parentX = $('[data-layer=main] .icon-btn');
-    parentX.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch' }));
-    parentX.click();
-    check('tap-through blocked: dialog still open', S.open === true && S.stack.length === 0);
-    check('no stale announcement on main after pop', $('[data-layer=main] [role=status]').textContent === '');
-    swallowClickUntil = 0; // test runs faster than a human; end the 450ms swallow window
-    // auto category change announced (desktop)
-    ctl('vp', 'macbook');
-    if ($('[data-act=cookies]').getAttribute('aria-expanded') !== 'true') tap('[data-act=cookies]');
-    if ($('#cookie-panel [data-act=vendors][data-cat=experience]').getAttribute('aria-expanded') !== 'true') tap('#cookie-panel [data-act=vendors][data-cat=experience]');
-    tap('[data-vendor-toggle=youtube]'); tap('[data-vendor-toggle=mapbox]');
-    check('auto category off announced', /Mapbox off\. Experience off\./.test($('[data-layer=main] [role=status]').textContent));
-    // EU phone sheet ids unique
-    ctl('vp', 'phone'); ctl('regime', 'eu'); tap('[data-act=vendors][data-cat=measurement]');
-    check('no duplicate ids', document.querySelectorAll('#cn-measurement').length === 1 && !!$('#sheet-cn-measurement'));
-    // signed-in scope + modal flag only on top
-    ctl('vp', 'macbook'); ctl('regime', 'us-opt-out'); ctl('signedIn', 'yes'); ctl('saleStart', 'optout-user');
-    check('signed-in scope in description', /for your Acme account/.test($('#d-sale').textContent));
-    ctl('signedIn', 'no'); ctl('vp', 'phone'); tap('[data-act=cookies]');
-    check('aria-modal only on top', !$('[data-layer=main]').hasAttribute('aria-modal') && $('[data-layer=cookies]').getAttribute('aria-modal') === 'true');
-    // opt-in sensitive: explicit refusal is not "by default"
-    ctl('vp', 'macbook'); ctl('regime', 'us-opt-in');
-    check('opt-in sens default says by default', /Off by default/.test($('#d-sens').textContent));
-    tap('[data-seg=sens][data-val=limit]');
-    check('opt-in sens recorded refusal drops "by default"', S.sensSrc === 'user' && !/by default/.test($('#d-sens').textContent));
-    // close resets copy state
-    ctl('regime', 'us-opt-out'); ctl('saleStart', 'optout-user');
-    S.copied = true; tap('[data-layer=main] [data-act=close]'); tap('#reopen');
-    check('copy state reset on reopen', S.copied === false && S.copyFailed === false);
-    // stale clipboard result after close/reopen is ignored
-    let rejectLater;
-    Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => new Promise((_, rej) => { rejectLater = rej; }) }, configurable: true });
-    ctl('vp', 'macbook'); ctl('regime', 'us-opt-out'); ctl('saleStart', 'optout-user');
-    tap('[data-act=receipt]'); tap('[data-act=copy]');
-    tap('[data-layer=main] [data-act=close]'); tap('#reopen');
-    rejectLater(new Error('late'));
-    Promise.resolve().then(() => Promise.resolve()).then(() => {
-      check('stale copy result ignored', S.copyFailed === false && !/Couldn’t copy/.test($('[data-layer=main] [role=status]').textContent));
-      // scenario switch invalidates; collapsed Details keeps fallback silently
-      let rej2; navigator.clipboard.writeText = () => new Promise((_, r) => { rej2 = r; });
-      tap('[data-act=receipt]'); tap('[data-act=copy]'); ctl('regime', 'eu'); rej2(new Error('late'));
-      let rej3;
-      Promise.resolve().then(() => Promise.resolve()).then(() => {
-        check('scenario switch invalidates pending copy', S.copyFailed === false);
-        ctl('regime', 'us-opt-out'); ctl('saleStart', 'optout-user');
-        navigator.clipboard.writeText = () => new Promise((_, r) => { rej3 = r; });
-        tap('[data-act=receipt]'); tap('[data-act=copy]'); tap('[data-act=receipt]'); rej3(new Error('late'));
-        return Promise.resolve().then(() => Promise.resolve());
-      }).then(() => {
-        check('collapsed details: fallback kept, no focus/announce', S.copyFailed === true && document.activeElement?.id !== 'ref-field' && !/Couldn’t copy/.test($('[data-layer=main] [role=status]').textContent));
-        console.log(`${R.filter((r) => r.startsWith('PASS')).length}/${R.length} pass (async2). ` + R.filter((r) => !r.startsWith('PASS')).join(' | '));
+  window.addEventListener("load", () => {
+    window.setTimeout = (fn) => {
+      fn();
+      return 0;
+    };
+    const $ = (q) => document.querySelector(q);
+    const ctl = (g, v) =>
+      document.querySelector(`[data-group="${g}"] [data-val="${v}"]`).click();
+    const tap = (q) => {
+      const el = $(q);
+      if (!el) throw new Error("missing " + q);
+      el.click();
+    };
+    const key = (k, shift = false) =>
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: k,
+          shiftKey: shift,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    const R = [];
+    const check = (n, c) => R.push(`${c ? "PASS" : "FAIL"} ${n}`);
+    const pres = (x) => {
+      if (["left", "bottom", "right", "top"].includes(x)) {
+        ctl("presUi", "drawer");
+        ctl("loc", x);
+      } else if (x === "bar-top" || x === "bar-bottom") {
+        ctl("presUi", "banner");
+        ctl("barPos", x.slice(4));
+      } else {
+        ctl("presUi", "card");
+        ctl(
+          "cardPos",
+          x === "center"
+            ? "center"
+            : x === "bottom-right"
+              ? "bottom-right"
+              : "bottom-left"
+        );
+      }
+    };
+    // Dialog-flow checks below use the summary banner (Customize opens the dialog): run them on the bottom drawer.
+    pres("bottom");
+    try {
+      // ---- cookie banner
+      const both = () => !$("#banner").hidden && S.open;
+      check(
+        "US opt-out preset (prompt none): nothing shown on first visit",
+        $("#banner").hidden && !S.open
+      );
+      check(
+        "US opt-out: categories allowed before a choice",
+        S.cats.measurement === true
+      );
+      ctl("usBanner", "notice");
+      check(
+        "optional notice shows when enabled",
+        !$("#banner").hidden &&
+          !S.open &&
+          /Privacy notice/.test($("#banner").textContent)
+      );
+      check("page not inert under banner", $(".fake-site").inert === false);
+      tap("[data-bn=expand]");
+      check(
+        "notice rights link expands the drawer in place",
+        !S.open &&
+          $("#card-panel").dataset.open === "true" &&
+          !!$("#card-panel [data-seg=sale]")
+      );
+      tap("[data-bn=ok]");
+      check(
+        "notice acknowledged: banner does not return",
+        $("#banner").hidden && !S.open
+      );
+      ctl("regime", "eu");
+      check(
+        "EU banner: Reject/Accept/Customize (expands in place)",
+        !!$("[data-bn=reject]") &&
+          !!$("[data-bn=accept]") &&
+          !!$("[data-bn=expand]")
+      );
+      tap("#reopen");
+      check(
+        "footer link opens the dialog, banner hidden",
+        S.open && $("#banner").hidden && !both()
+      );
+      tap("[data-cat-toggle=measurement]");
+      tap("[data-layer=main] [data-act=close]");
+      check(
+        "close without deciding: banner returns, draft discarded, focus on banner",
+        !$("#banner").hidden &&
+          S.cats.measurement === false &&
+          document.activeElement === $(".banner-card")
+      );
+      tap("[data-bn=accept]");
+      check(
+        "accept: banner gone, all on, saved, focus to footer link",
+        $("#banner").hidden &&
+          S.cats.measurement &&
+          S.cats.marketing &&
+          JSON.parse(S.euSaved).c.marketing &&
+          document.activeElement === $("#reopen")
+      );
+      tap("#reopen");
+      tap("[data-layer=main] [data-act=close]");
+      check(
+        "after decision, closing dialog does not bring banner back",
+        $("#banner").hidden
+      );
+      ctl("regime", "us-opt-in");
+      check(
+        "US opt-in preset: US consent banner (not the GDPR one), categories denied until choice",
+        !$("#banner").hidden &&
+          /Your privacy choices/.test($("#bn-title").textContent) &&
+          !/We value your privacy/.test($("#banner").textContent) &&
+          /Don’t allow/.test($("[data-bn=reject]").textContent) &&
+          S.cats.measurement === false &&
+          S.cats.functionality === false
+      );
+      check(
+        "telemetry reflects the banner",
+        /banner .* us-consent/.test($("#fit").textContent)
+      );
+      tap("[data-bn=reject]");
+      check(
+        "US opt-in reject: sale not allowed (recorded), sensitive untouched",
+        S.sale === "optout" && S.saleSrc === "user" && S.sensSrc === "default"
+      );
+      ctl("regime", "us-opt-out");
+      ctl("usBanner", "none");
+      check(
+        "US opt-out with SDK preset none: no banner, nothing open",
+        $("#banner").hidden && !S.open
+      );
+      check(
+        "telemetry says no banner for opt-out",
+        /no banner/.test($("#fit").textContent)
+      );
+      tap("#reopen");
+      check("footer link opens dialog when there is no banner", S.open);
+      ctl("usBanner", "notice");
+      ctl("saleStart", "gpc");
+      check(
+        "notice mentions GPC when honored",
+        /Global Privacy Control signal is being honored/.test(
+          $("#banner").textContent
+        )
+      );
+      ctl("saleStart", "allow-default");
+      ctl("start", "dialog");
+      check("start=dialog opens dialog", S.open && $("#banner").hidden);
+      // rights + receipt
+      const done = $("[data-layer=main] [data-act=close].is-done");
+      tap("[data-seg=sale][data-val=optout]");
+      check(
+        "opt out applied + receipt",
+        S.saleSrc === "user" && $("[data-key=receipt]").dataset.open === "true"
+      );
+      check(
+        "Done keeps identity across cue",
+        done.isConnected && done === $("[data-layer=main] .is-done")
+      );
+      check(
+        "status region in dialog announces",
+        /Opted out of sale, sharing and targeted ads/.test(
+          $("[data-layer=main] [role=status]").textContent
+        )
+      );
+      tap("[data-seg=sale][data-val=allow]");
+      check(
+        "confirm focuses cancel",
+        document.activeElement ===
+          $(".confirm[data-kind=sale] [data-act=confirm-cancel]")
+      );
+      key("Escape");
+      check(
+        "esc closes confirm, focus to Allow",
+        S.confirm === null &&
+          document.activeElement === $("[data-seg=sale][data-val=allow]")
+      );
+      // nudge: Allow again while question open
+      ctl("sensStart", "limit-user");
+      tap("[data-seg=sens][data-val=allow]");
+      tap("[data-seg=sens][data-val=allow]");
+      check(
+        "re-press Allow does not apply",
+        S.sens === "limit" && S.confirm === "sens"
+      );
+      check(
+        "confirm turns red",
+        $(".confirm[data-kind=sens]").dataset.nudged === "true"
+      );
+      check(
+        "nudge focuses cancel",
+        document.activeElement ===
+          $(".confirm[data-kind=sens] [data-act=confirm-cancel]")
+      );
+      tap(".confirm[data-kind=sens] [data-act=confirm-cancel]");
+      check(
+        "cancel clears red",
+        $(".confirm[data-kind=sens]").dataset.nudged === "false"
+      );
+      ctl("sensStart", "allow-default");
+      // rights copy follows bundle
+      ctl("rights", "sale-ads");
+      ctl("saleStart", "optout-user");
+      tap("[data-seg=sale][data-val=allow]");
+      check(
+        "sale-ads confirm wording",
+        /selling and targeted ads/.test($("#cf-sale").textContent) &&
+          !/share/.test($("#cfd-sale").textContent)
+      );
+      ctl("rights", "all");
+      // desktop accordions
+      ctl("saleStart", "optout-user");
+      tap("[data-act=cookies]");
+      check(
+        "desktop cookies = accordion",
+        S.stack.length === 0 &&
+          $("#cookie-panel").dataset.open === "true" &&
+          $("[data-act=cookies]").getAttribute("aria-expanded") === "true"
+      );
+      tap("#cookie-panel [data-act=vendors][data-cat=measurement]");
+      check(
+        "desktop vendors = accordion",
+        $("#vl-measurement").dataset.open === "true"
+      );
+      check(
+        "vendor toggle name starts with visible text",
+        /^Hide 3 vendors for Analytics/.test(
+          $(
+            "#cookie-panel [data-act=vendors][data-cat=measurement]"
+          ).textContent.trim()
+        )
+      );
+      tap("#cookie-panel [data-cat-toggle=measurement]");
+      check("cookie toggle keeps rights date", S.rightsNow === false);
+      check(
+        "ads row follows sale (Off)",
+        /Off/.test($("[data-key=cat-ads] .follows").textContent)
+      );
+      // focus trap from title, real check
+      const title = $("[data-layer=main] .card-title");
+      title.focus();
+      key("Tab", true);
+      const f = [
+        ...$("[data-layer=main]").querySelectorAll("button, a[href]"),
+      ].filter(
+        (el) =>
+          !el.disabled && !el.closest("[inert]") && el.offsetParent !== null
+      );
+      check(
+        "shift-tab from title wraps to last",
+        document.activeElement === f[f.length - 1]
+      );
+      check("background inert", $(".fake-site").inert === true);
+      // phone: two-level sheets
+      ctl("vp", "phone");
+      tap("[data-act=cookies]");
+      check(
+        "phone cookies = sheet",
+        S.stack[0] === "cookies" && $("[data-layer=main]").hasAttribute("inert")
+      );
+      check(
+        "phone vendors inside sheet = accordion",
+        $("[data-layer=cookies] [data-act=vendors]").hasAttribute(
+          "aria-expanded"
+        )
+      );
+      key("Escape");
+      check(
+        "esc pops sheet, focus to opener",
+        S.stack.length === 0 &&
+          document.activeElement === $("[data-layer=main] [data-act=cookies]")
+      );
+      // EU phone: vendor sheet mirrors category switch
+      ctl("regime", "eu");
+      check(
+        "eu phone vendor link opens sheet",
+        $("[data-act=vendors][data-cat=marketing]").hasAttribute(
+          "aria-haspopup"
+        )
+      );
+      tap("[data-act=vendors][data-cat=marketing]");
+      check(
+        "vendor sheet has category switch",
+        !!$('[data-layer="vendors:marketing"] [data-cat-toggle=marketing]')
+      );
+      tap('[data-layer="vendors:marketing"] [data-cat-toggle=marketing]');
+      check(
+        "turn on in sheet enables vendors",
+        S.cats.marketing && S.vendors.meta && S.vendors["google-ads"]
+      );
+      key("Escape");
+      tap("[data-layer=main] [data-act=close]");
+      tap("#reopen");
+      check("eu draft discarded on close", S.cats.marketing === false);
+      tap("[data-cat-toggle=measurement]");
+      // vendor switches stay usable; vendor-on revives category
+      ctl("vp", "macbook");
+      tap("[data-act=vendors][data-cat=measurement]");
+      ["ga", "posthog", "datadog"].forEach((v) => {
+        if (S.vendors[v] && S.cats.measurement)
+          tap(`[data-vendor-toggle=${v}]`);
       });
-      console.log(`${R.filter((r) => r.startsWith('PASS')).length}/${R.length} pass (async). ` + R.filter((r) => !r.startsWith('PASS')).join(' | '));
-    });
-    check('no floating / no summary-drawer controls', !document.querySelector('[data-group=pres]') && !document.querySelector('[data-group=aio]') && !document.querySelector('[data-val=floating]'));
-  } catch (err) { R.push('ERROR ' + err.message); }
-  console.log(`${R.filter((r) => r.startsWith('PASS')).length}/${R.length} pass. ` + R.filter((r) => !r.startsWith('PASS')).join(' | '));
-});
+      check("last vendor off turns category off", S.cats.measurement === false);
+      check(
+        "vendor switches stay enabled",
+        !$("[data-vendor-toggle=ga]").disabled
+      );
+      tap("[data-vendor-toggle=posthog]");
+      check(
+        "vendor on revives category with only it",
+        S.cats.measurement &&
+          S.vendors.posthog &&
+          !S.vendors.ga &&
+          !S.vendors.datadog
+      );
+      tap("[data-cat-toggle=measurement]");
+      tap("[data-cat-toggle=measurement]");
+      tap("[data-cat-toggle=measurement]");
+      check(
+        "eu save disabled when effective state unchanged",
+        $("[data-act=eu-save]").disabled
+      );
+      tap("[data-layer=main] [data-act=close]");
+      tap("#reopen");
+      // GPC
+      ctl("vp", "macbook");
+      ctl("regime", "us-opt-out");
+      ctl("saleStart", "gpc");
+      check(
+        "gpc receipt is live, not dated",
+        /Honoring Global Privacy Control/.test(
+          $(".receipt-line").textContent
+        ) && !/Jan 15/.test($(".receipt-line").textContent)
+      );
+      check(
+        "gpc selected not disabled",
+        !$("[data-seg=sale][data-val=optout]").hasAttribute("aria-disabled")
+      );
+      check("gpc leaves sensitive alone", S.sens === "allow");
+      // opt-in sensitive
+      ctl("regime", "us-opt-in");
+      check("opt-in sens off", S.sens === "limit" && S.sensSrc === "default");
+      // branding decision + theme switch
+      ctl("start", "banner");
+      ctl("regime", "eu");
+      check(
+        'tag says "Consent by" (no assurance claim)',
+        /Consent by/.test($(".brand-tag").textContent) &&
+          !/Secured|Protected/.test($(".brand-tag").textContent)
+      );
+      window.requestAnimationFrame = () => 0; // hold the switching flag so it can be observed
+      ctl("theme", "dark");
+      check(
+        "theme switch disables transitions for the swap frame",
+        document.documentElement.hasAttribute("data-theme-switching") &&
+          getComputedStyle($(".brand-tag")).transitionDuration === "0s"
+      );
+      window.requestAnimationFrame = (f) => {
+        f();
+        return 0;
+      };
+      ctl("theme", "light");
+      ctl("start", "dialog");
+      // ---- v5 presentation
+      ctl("start", "banner");
+      ctl("regime", "eu");
+      ["card", "bottom", "left", "right"].forEach((pr) => {
+        pres(pr);
+        check(
+          `pres ${pr}: banner shown with data-pres`,
+          !$("#banner").hidden &&
+            $("#banner").dataset.pres === pr &&
+            !!$("[data-bn=accept]")
+        );
+      });
+      pres("bottom-right");
+      {
+        const b = $("#banner .banner-card").getBoundingClientRect(),
+          v = $("#vp").getBoundingClientRect();
+        check(
+          "card bottom right: card sits in the bottom-right corner",
+          Math.abs(v.right - b.right - 24) <= 2 && b.left - v.left >= 22
+        );
+      }
+      // ---- Banner (slim bar)
+      pres("bar-bottom");
+      ctl("drawerStyle", "flush");
+      document.getAnimations().forEach((a) => a.finish());
+      {
+        const c = $("#banner .banner-card").getBoundingClientRect(),
+          v = $("#vp").getBoundingClientRect();
+        const stacked =
+          getComputedStyle($(".bar-row")).flexDirection === "column";
+        check(
+          "banner: full-width bar on the bottom edge; one row when wide, stacked when narrow",
+          !!$("#banner .bar-row") &&
+            Math.abs(c.bottom - v.bottom) <= 2 &&
+            c.width >= v.width - 2 &&
+            (v.width > 760 ? !stacked && c.height <= 64 : stacked)
+        );
+      }
+      check(
+        "banner: Reject / Accept / Customize in the row",
+        !!$(".bar-row [data-bn=reject]") &&
+          !!$(".bar-row [data-bn=accept]") &&
+          !!$(".bar-row [data-bn=expand]")
+      );
+      tap("[data-bn=expand]");
+      check(
+        "banner: Customize expands to full content + options in place (no dialog)",
+        !S.open &&
+          !$("#banner .bar-row") &&
+          $("#card-panel").dataset.open === "true" &&
+          !!$("#card-panel .cat-list") &&
+          !!$("[data-bn=save]")
+      );
+      key("Escape");
+      check(
+        "banner: Esc folds back to the slim row, focus on Customize",
+        !!$("#banner .bar-row") &&
+          document.activeElement === $(".bar-row [data-bn=expand]")
+      );
+      pres("bar-top");
+      document.getAnimations().forEach((a) => a.finish());
+      {
+        const c = $("#banner .banner-card").getBoundingClientRect(),
+          v = $("#vp").getBoundingClientRect();
+        check(
+          "banner top: anchored to the top edge",
+          Math.abs(c.top - v.top) <= 2
+        );
+      }
+      ctl("drawerStyle", "inset");
+      document.getAnimations().forEach((a) => a.finish());
+      {
+        const c = $("#banner .banner-card").getBoundingClientRect(),
+          v = $("#vp").getBoundingClientRect();
+        check(
+          "banner inset: rounded bar 12px from the edge",
+          getComputedStyle($("#banner .banner-card")).borderTopLeftRadius ===
+            "16px" &&
+            Math.abs(c.top - v.top - 12) <= 2 &&
+            Math.abs(c.left - v.left - 12) <= 2
+        );
+      }
+      check(
+        "banner: edge-style control shown for Banner",
+        document.querySelector("[data-edge-only]").dataset.hidden === "false"
+      );
+      check(
+        "banner: Card and Drawer-only controls hidden",
+        document.querySelector("[data-card-only]").dataset.hidden === "true" &&
+          document.querySelector("[data-bar-only]").dataset.hidden === "false"
+      );
+      check(
+        "no Modal presentation any more",
+        !document.querySelector("[data-group=presUi] [data-val=modal]")
+      );
+      pres("card");
+      check(
+        "card corner, block off: page usable, region role",
+        $(".fake-site").inert === false &&
+          $("#banner .banner-card").getAttribute("role") === "region" &&
+          $("#banner-backdrop").hidden
+      );
+      pres("center");
+      check(
+        "card centre: centred and blocking forced (block setting still Off)",
+        S.block === "off" &&
+          $("#banner").hasAttribute("data-center") &&
+          !$("#banner-backdrop").hidden &&
+          document.querySelector("[data-group=block] [data-val=off]").disabled
+      );
+      check(
+        "centre: Customize still expands in place",
+        !!$("[data-bn=expand]")
+      );
+      check(
+        "blocking: card border swapped for dark ring (no light halo)",
+        $("#banner").hasAttribute("data-blocking") &&
+          getComputedStyle($("#banner .banner-card")).borderTopColor ===
+            "rgba(0, 0, 0, 0)"
+      );
+      check(
+        "modal: role dialog + aria-modal on the shell (card + tag), page inert, focus on banner",
+        $("#banner .banner-shell").getAttribute("role") === "dialog" &&
+          $("#banner .banner-shell").getAttribute("aria-modal") === "true" &&
+          $("#banner .banner-shell").contains($("#banner .brand-tag")) &&
+          $(".fake-site").inert === true &&
+          document.activeElement === $("#banner .banner-card")
+      );
+      key("Escape");
+      check("modal: Esc does not dismiss", !$("#banner").hidden && !S.decided);
+      key("Tab", true);
+      check(
+        "modal: shift-tab from the card goes to the tag (DOM order, inside the modal)",
+        document.activeElement === $("#banner .brand-tag")
+      );
+      key("Tab", true);
+      check(
+        "modal: focus trapped (shift-tab from first wraps to last control)",
+        document.activeElement ===
+          [
+            ...$("#banner .banner-shell").querySelectorAll("button, a[href]"),
+          ].pop()
+      );
+      tap("[data-bn=reject]");
+      check(
+        "centre: choice closes it, page usable again, focus to footer link",
+        $("#banner").hidden &&
+          $(".fake-site").inert === false &&
+          document.activeElement === $("#reopen")
+      );
+      // US opt-out cannot be centred (it never blocks): falls back to the corner
+      ctl("regime", "us-opt-out");
+      ctl("usBanner", "notice");
+      check(
+        "centre + US opt-out notice: falls back to bottom left, no blocking",
+        !$("#banner").hidden &&
+          !$("#banner").hasAttribute("data-center") &&
+          $("#banner-backdrop").hidden &&
+          $(".fake-site").inert === false
+      );
+      ctl("usBanner", "none");
+      ctl("regime", "eu");
+      pres("card");
+      ctl("block", "on");
+      // blocking works with every presentation
+      ["card", "bottom", "left", "right"].forEach((pr) => {
+        pres(pr);
+        check(
+          `block on + ${pr}: backdrop, inert page, scroll lock, dialog role`,
+          !$("#banner-backdrop").hidden &&
+            $(".fake-site").inert === true &&
+            $("#vp").hasAttribute("data-scroll-locked") &&
+            $('#banner [aria-modal="true"]')?.contains(
+              $("#banner .banner-card")
+            )
+        );
+      });
+      ctl("regime", "us-opt-out");
+      ctl("usBanner", "none");
+      check(
+        "block on + US opt-out preset (nothing shown): no backdrop, no inert, no scroll lock",
+        $("#banner").hidden &&
+          $("#banner-backdrop").hidden &&
+          $(".fake-site").inert === false &&
+          !$("#vp").hasAttribute("data-scroll-locked")
+      );
+      ctl("usBanner", "notice");
+      check(
+        "block on + US opt-out optional notice: still never blocks",
+        !$("#banner").hidden &&
+          $("#banner-backdrop").hidden &&
+          $(".fake-site").inert === false &&
+          !$("#vp").hasAttribute("data-scroll-locked")
+      );
+      ctl("usBanner", "none");
+      ctl("regime", "eu");
+      ctl("block", "off");
+      pres("left");
+      check(
+        "drawer is always all-in-one (left)",
+        $("#banner").hasAttribute("data-aio") &&
+          !!$("#banner .banner-body .cat-list") &&
+          !$("[data-bn=customize]")
+      );
+      check(
+        "side drawer, block off: non-blocking",
+        $(".fake-site").inert === false &&
+          $("#banner .banner-card").getAttribute("role") === "region" &&
+          $("#banner-backdrop").hidden
+      );
+      check(
+        "inset is the default drawer style",
+        S.drawerStyle === "inset" &&
+          getComputedStyle($("#banner .banner-card")).borderTopRightRadius ===
+            "16px" &&
+          getComputedStyle($("#banner")).paddingTop === "12px"
+      );
+      ctl("drawerStyle", "flush");
+      check(
+        "flush drawer: square corners",
+        getComputedStyle($("#banner .banner-card")).borderTopRightRadius ===
+          "0px"
+      );
+      pres("bottom");
+      document.getAnimations().forEach((a) => a.finish());
+      check(
+        "flush bottom drawer: fully square",
+        getComputedStyle($("#banner .banner-card")).borderTopLeftRadius ===
+          "0px"
+      );
+      pres("top");
+      check(
+        "flush top drawer: fully square",
+        getComputedStyle($("#banner .banner-card")).borderBottomLeftRadius ===
+          "0px"
+      );
+      pres("left");
+      pres("bottom");
+      ctl("vp", "phone");
+      check(
+        "phone flush bottom drawer: no margin",
+        ["Top", "Right", "Bottom", "Left"].every(
+          (k) => getComputedStyle($("#banner"))["padding" + k] === "0px"
+        )
+      );
+      ctl("drawerStyle", "inset");
+      check(
+        "phone inset bottom drawer: 12px sides and bottom",
+        getComputedStyle($("#banner")).paddingBottom === "12px" &&
+          getComputedStyle($("#banner")).paddingLeft === "12px"
+      );
+      ctl("drawerStyle", "flush");
+      ctl("vp", "macbook");
+      pres("left");
+      ctl("vp", "phone");
+      check(
+        "phone: side drawer falls back to bottom drawer",
+        $("#banner").dataset.pres === "bottom"
+      );
+      ctl("vp", "macbook");
+      pres("card");
+      ctl("start", "dialog");
+      ctl("regime", "us-opt-out");
+      // ---- all-in-one side drawer
+      ctl("vp", "macbook");
+      ctl("signedIn", "no");
+      ctl("saleStart", "allow-default");
+      ctl("sensStart", "allow-default");
+      ctl("start", "banner");
+      ctl("block", "off");
+      ctl("regime", "eu");
+      pres("left");
+      check(
+        "aio: tag overlays the scroll area (fade under it), body has clearance",
+        !!$("#banner .aio-wrap > .banner-brand.is-overlay .brand-tag") &&
+          getComputedStyle($("#banner .banner-brand.is-overlay")).position ===
+            "absolute" &&
+          parseInt(getComputedStyle($("#banner .banner-body")).paddingBottom) >=
+            56
+      );
+      check(
+        "aio EU: categories inline in the drawer, no Customize",
+        !!$("#banner .banner-body .cat-list") &&
+          !$("[data-bn=customize]") &&
+          !!$("[data-bn=save]")
+      );
+      $("#banner [data-cat-toggle=measurement]").click();
+      check(
+        "aio EU: switch in drawer changes draft",
+        S.cats.measurement === true && !S.decided
+      );
+      tap("[data-bn=save]");
+      check(
+        "aio EU: Save records the draft and closes",
+        $("#banner").hidden &&
+          JSON.parse(S.euSaved).c.measurement === true &&
+          S.decided
+      );
+      ctl("regime", "us-opt-out");
+      ctl("usBanner", "notice");
+      check(
+        "aio US notice: rights rows inline, OK only",
+        !!$("#banner [data-seg=sale]") &&
+          !!$("[data-bn=ok]") &&
+          !$("[data-bn=rights]")
+      );
+      $("#banner [data-seg=sale][data-val=optout]").click();
+      check(
+        "aio US notice: opt-out applies immediately in drawer",
+        S.sale === "optout" && S.saleSrc === "user" && !$("#banner").hidden
+      );
+      ctl("regime", "us-opt-in");
+      $("#banner [data-seg=sale][data-val=allow]").click();
+      check(
+        "aio US opt-in: allow needs the confirm, inside the drawer",
+        S.confirm === "sale" &&
+          !!$("#banner .confirm[data-kind=sale]") &&
+          document.activeElement ===
+            $("#banner .confirm[data-kind=sale] [data-act=confirm-cancel]")
+      );
+      ctl("vp", "phone");
+      check(
+        "drawer on phone: bottom drawer summary first",
+        $("#banner").dataset.pres === "bottom" &&
+          $("#card-panel").dataset.open === "false" &&
+          !$("#banner").hasAttribute("data-aio")
+      );
+      ctl("regime", "eu");
+      tap("[data-bn=expand]");
+      check(
+        "phone: Customize expands the drawer in place (no dialog)",
+        !S.open &&
+          $("#card-panel").dataset.open === "true" &&
+          !!$("#card-panel .cat-list")
+      );
+      ctl("vp", "macbook");
+      pres("bottom");
+      check(
+        "bottom drawer desktop: summary first, Customize expands in place",
+        $("#card-panel").dataset.open === "false" &&
+          !$("#banner").hasAttribute("data-aio")
+      );
+      tap("[data-bn=expand]");
+      check(
+        "bottom drawer desktop: options inline, footer Reject/Accept/Save, dialog not opened",
+        !S.open && !!$("#card-panel .cat-list") && !!$("[data-bn=save]")
+      );
+      key("Escape");
+      check(
+        "bottom drawer: Esc folds back",
+        $("#card-panel").dataset.open === "false" && !$("#banner").hidden
+      );
+      pres("top");
+      {
+        const c = $("#banner .banner-card").getBoundingClientRect(),
+          v = $("#vp").getBoundingClientRect(),
+          g = $("#banner .banner-shell > .brand-tag").getBoundingClientRect();
+        check(
+          "top drawer: anchored to the top, tag below the card",
+          $("#banner").dataset.pres === "top" &&
+            c.top - v.top <= 14 &&
+            g.top >= c.bottom - 1
+        );
+      }
+      tap("[data-bn=expand]");
+      check(
+        "top drawer: Customize expands in place (no dialog)",
+        !S.open &&
+          $("#card-panel").dataset.open === "true" &&
+          !!$("#card-panel .cat-list")
+      );
+      key("Escape");
+      ctl("vp", "phone");
+      check(
+        "top drawer on phone: stays top",
+        $("#banner").dataset.pres === "top"
+      );
+      ctl("vp", "macbook");
+      pres("right");
+      check(
+        "right drawer desktop: all-in-one",
+        $("#banner").hasAttribute("data-aio") && !!$("#banner .banner-body")
+      );
+      ctl("vp", "macbook");
+      ctl("usBanner", "none");
+      pres("card");
+      // phone dialog sheet follows drawer style
+      ctl("start", "dialog");
+      ctl("vp", "phone");
+      ctl("drawerStyle", "inset");
+      check(
+        "phone sheet inset: rounded all corners, 12px gap",
+        getComputedStyle($("[data-layer=main]")).borderBottomLeftRadius ===
+          "16px" && getComputedStyle($("#stage")).paddingBottom === "12px"
+      );
+      ctl("drawerStyle", "flush");
+      check(
+        "phone sheet flush: fully square (top corners too)",
+        getComputedStyle($("[data-layer=main]")).borderTopLeftRadius === "0px"
+      );
+      check(
+        "phone sheet flush: square bottom, edge to edge",
+        getComputedStyle($("[data-layer=main]")).borderBottomLeftRadius ===
+          "0px" && getComputedStyle($("#stage")).paddingBottom === "0px"
+      );
+      ctl("drawerStyle", "inset");
+      ctl("vp", "macbook");
+      // ---- card
+      ctl("vp", "macbook");
+      ctl("start", "banner");
+      ctl("block", "off");
+      ctl("signedIn", "no");
+      ctl("saleStart", "allow-default");
+      ctl("regime", "eu");
+      pres("card");
+      check(
+        "card: starts collapsed, Customize expands in place",
+        $("#card-panel").dataset.open === "false" &&
+          $("[data-bn=expand]")?.getAttribute("aria-expanded") === "false"
+      );
+      tap("[data-bn=expand]");
+      check(
+        "card: options stacked in the card, dialog not opened, focus moved in",
+        !S.open &&
+          $("#card-panel").dataset.open === "true" &&
+          !!$("#card-panel .cat-list") &&
+          $("#card-panel").contains(document.activeElement)
+      );
+      check(
+        "card: footer becomes Reject/Accept + Save",
+        !!$("[data-bn=reject]") &&
+          !!$("[data-bn=accept]") &&
+          !!$("[data-bn=save]") &&
+          !$("[data-bn=expand]")
+      );
+      $("#card-panel [data-cat-toggle=marketing]").click();
+      check(
+        "card: switch changes draft",
+        S.cats.marketing === true && !S.decided
+      );
+      key("Escape");
+      check(
+        "card: Esc folds back, banner stays, focus on Customize",
+        $("#card-panel").dataset.open === "false" &&
+          !$("#banner").hidden &&
+          document.activeElement === $("[data-bn=expand]")
+      );
+      tap("[data-bn=expand]");
+      tap("[data-bn=save]");
+      check(
+        "card: Save records and closes",
+        $("#banner").hidden && JSON.parse(S.euSaved).c.marketing === true
+      );
+      ctl("regime", "us-opt-out");
+      ctl("usBanner", "notice");
+      tap("[data-bn=expand]");
+      check(
+        "card US notice: rights link expands rights inline",
+        !!$("#card-panel [data-seg=sale]")
+      );
+      ctl("usBanner", "none");
+      pres("card");
+      // ---- vendor table + trigger (decided)
+      ctl("vp", "macbook");
+      ctl("start", "dialog");
+      ctl("regime", "eu");
+      if (
+        $("[data-act=vendors][data-cat=measurement]").getAttribute(
+          "aria-expanded"
+        ) !== "true"
+      )
+        tap("[data-act=vendors][data-cat=measurement]");
+      check(
+        "vendors: boxed table with 3 rows, labelled",
+        $("#vl-measurement .v-table").getAttribute("aria-label") ===
+          "Analytics vendors" &&
+          $("#vl-measurement").querySelectorAll(".v-row").length === 3
+      );
+      {
+        const lk = $("[data-act=vendors][data-cat=measurement]");
+        const cs = getComputedStyle(lk);
+        check(
+          "vendors: trigger is a 32px in-segment row with no divider and no press scale",
+          cs.minHeight === "32px" &&
+            cs.borderTopWidth === "0px" &&
+            !/scale/.test(getComputedStyle(lk).transform)
+        );
+      }
+      // row click toggles (category and vendor), links don't
+      {
+        const was = S.cats.experience;
+        $('[data-key="cat-experience"] .cat-desc').click();
+        check(
+          "row click: category description toggles its switch",
+          S.cats.experience === !was
+        );
+        if (!S.cats.measurement) tap("[data-cat-toggle=measurement]");
+        const before = S.vendors.posthog;
+        $('[data-key="v-posthog"] .desc').click();
+        check(
+          "row click: vendor purpose toggles its switch",
+          S.vendors.posthog === !before
+        );
+        const before2 = S.vendors.posthog;
+        $('[data-key="v-posthog"] .ext').click();
+        check(
+          "row click: privacy-policy link does not toggle",
+          S.vendors.posthog === before2
+        );
+      }
+      // ---- scroll fades
+      ctl("vp", "macbook");
+      ctl("start", "dialog");
+      ctl("regime", "eu");
+      {
+        const b = $("[data-layer=main] .card-body");
+        b.scrollTop = 0;
+        updateFades(b);
+        check(
+          "fades: none at top, bottom fade when more below",
+          !b.hasAttribute("data-fade-top") && b.hasAttribute("data-fade-bottom")
+        );
+        b.scrollTop = Math.floor((b.scrollHeight - b.clientHeight) / 2);
+        updateFades(b);
+        check(
+          "fades: both while mid-scroll",
+          b.hasAttribute("data-fade-top") && b.hasAttribute("data-fade-bottom")
+        );
+        b.scrollTop = b.scrollHeight;
+        updateFades(b);
+        check(
+          "fades: no bottom fade at the end",
+          b.hasAttribute("data-fade-top") && !b.hasAttribute("data-fade-bottom")
+        );
+      }
+      ctl("regime", "us-opt-out");
+      ctl("signedIn", "no");
+      ctl("saleStart", "allow-default");
+      ctl("start", "dialog");
+      {
+        const b = $("[data-layer=main] .card-body");
+        updateFades(b);
+        check(
+          "fades: none when content fits",
+          !b.hasAttribute("data-fade-top") &&
+            !b.hasAttribute("data-fade-bottom")
+        );
+      }
+      // ---- round 3 fixes
+      ctl("vp", "macbook");
+      ctl("regime", "us-opt-out");
+      ctl("signedIn", "yes");
+      ctl("saleStart", "gpc-past");
+      check(
+        "gpc-past: recorded, not locked",
+        S.sale === "optout" &&
+          S.saleSrc === "user" &&
+          !$("[data-seg=sale][data-val=allow]").hasAttribute("aria-disabled")
+      );
+      check(
+        "gpc-past: receipt names GPC source",
+        /from your Global Privacy Control signal/.test(
+          $(".receipt-details").textContent
+        )
+      );
+      ctl("signedIn", "no");
+      ctl("regime", "us-opt-in");
+      ctl("rights", "sale-ads");
+      check(
+        "opt-in label from bundle",
+        $("[data-key=sale]").getAttribute("aria-label") ===
+          "Allow selling and targeted ads"
+      );
+      ctl("rights", "all");
+      ctl("regime", "us-opt-out");
+      ctl("saleStart", "optout-user");
+      Object.defineProperty(navigator, "clipboard", {
+        value: undefined,
+        configurable: true,
+      });
+      tap("[data-act=receipt]");
+      tap("[data-act=copy]");
+      check(
+        "copy failure announced",
+        /Couldn’t copy/.test(
+          $("[data-layer=main] [role=status]").textContent
+        ) && S.copied === false
+      );
+      check(
+        "copy failure: labelled focusable field, focused",
+        $("#ref-field")?.value === "0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d" &&
+          document.activeElement === $("#ref-field") &&
+          !!$("label[for=ref-field]")
+      );
+      // phone: Done keeps its label during the cue
+      ctl("vp", "phone");
+      window.setTimeout = () => 0; // keep the cue up
+      tap("[data-seg=sens][data-val=limit]");
+      const doneBtn = $("[data-layer=main] .is-done");
+      check(
+        'phone cue keeps visible "Done"',
+        doneBtn.dataset.cue === "true" && doneBtn.textContent.trim() === "Done"
+      );
+      window.setTimeout = (fn) => {
+        fn();
+        return 0;
+      };
+      // phone: tap on dimmed parent pops only the sheet
+      tap("[data-act=cookies]");
+      tap("[data-layer=cookies] [data-cat-toggle=measurement]");
+      check(
+        "sheet announcement in sheet",
+        /Analytics off/.test(
+          $("[data-layer=cookies] [role=status]").textContent
+        )
+      );
+      const parentX = $("[data-layer=main] .icon-btn");
+      parentX.dispatchEvent(
+        new PointerEvent("pointerdown", {
+          bubbles: true,
+          cancelable: true,
+          pointerType: "touch",
+        })
+      );
+      parentX.click();
+      check(
+        "tap-through blocked: dialog still open",
+        S.open === true && S.stack.length === 0
+      );
+      check(
+        "no stale announcement on main after pop",
+        $("[data-layer=main] [role=status]").textContent === ""
+      );
+      swallowClickUntil = 0; // test runs faster than a human; end the 450ms swallow window
+      // auto category change announced (desktop)
+      ctl("vp", "macbook");
+      if ($("[data-act=cookies]").getAttribute("aria-expanded") !== "true")
+        tap("[data-act=cookies]");
+      if (
+        $("#cookie-panel [data-act=vendors][data-cat=experience]").getAttribute(
+          "aria-expanded"
+        ) !== "true"
+      )
+        tap("#cookie-panel [data-act=vendors][data-cat=experience]");
+      tap("[data-vendor-toggle=youtube]");
+      tap("[data-vendor-toggle=mapbox]");
+      check(
+        "auto category off announced",
+        /Mapbox off\. Experience off\./.test(
+          $("[data-layer=main] [role=status]").textContent
+        )
+      );
+      // EU phone sheet ids unique
+      ctl("vp", "phone");
+      ctl("regime", "eu");
+      tap("[data-act=vendors][data-cat=measurement]");
+      check(
+        "no duplicate ids",
+        document.querySelectorAll("#cn-measurement").length === 1 &&
+          !!$("#sheet-cn-measurement")
+      );
+      // signed-in scope + modal flag only on top
+      ctl("vp", "macbook");
+      ctl("regime", "us-opt-out");
+      ctl("signedIn", "yes");
+      ctl("saleStart", "optout-user");
+      check(
+        "signed-in scope in description",
+        /for your Acme account/.test($("#d-sale").textContent)
+      );
+      ctl("signedIn", "no");
+      ctl("vp", "phone");
+      tap("[data-act=cookies]");
+      check(
+        "aria-modal only on top",
+        !$("[data-layer=main]").hasAttribute("aria-modal") &&
+          $("[data-layer=cookies]").getAttribute("aria-modal") === "true"
+      );
+      // opt-in sensitive: explicit refusal is not "by default"
+      ctl("vp", "macbook");
+      ctl("regime", "us-opt-in");
+      check(
+        "opt-in sens default says by default",
+        /Off by default/.test($("#d-sens").textContent)
+      );
+      tap("[data-seg=sens][data-val=limit]");
+      check(
+        'opt-in sens recorded refusal drops "by default"',
+        S.sensSrc === "user" && !/by default/.test($("#d-sens").textContent)
+      );
+      // close resets copy state
+      ctl("regime", "us-opt-out");
+      ctl("saleStart", "optout-user");
+      S.copied = true;
+      tap("[data-layer=main] [data-act=close]");
+      tap("#reopen");
+      check(
+        "copy state reset on reopen",
+        S.copied === false && S.copyFailed === false
+      );
+      // stale clipboard result after close/reopen is ignored
+      let rejectLater;
+      Object.defineProperty(navigator, "clipboard", {
+        value: {
+          writeText: () =>
+            new Promise((_, rej) => {
+              rejectLater = rej;
+            }),
+        },
+        configurable: true,
+      });
+      ctl("vp", "macbook");
+      ctl("regime", "us-opt-out");
+      ctl("saleStart", "optout-user");
+      tap("[data-act=receipt]");
+      tap("[data-act=copy]");
+      tap("[data-layer=main] [data-act=close]");
+      tap("#reopen");
+      rejectLater(new Error("late"));
+      Promise.resolve()
+        .then(() => Promise.resolve())
+        .then(() => {
+          check(
+            "stale copy result ignored",
+            S.copyFailed === false &&
+              !/Couldn’t copy/.test(
+                $("[data-layer=main] [role=status]").textContent
+              )
+          );
+          // scenario switch invalidates; collapsed Details keeps fallback silently
+          let rej2;
+          navigator.clipboard.writeText = () =>
+            new Promise((_, r) => {
+              rej2 = r;
+            });
+          tap("[data-act=receipt]");
+          tap("[data-act=copy]");
+          ctl("regime", "eu");
+          rej2(new Error("late"));
+          let rej3;
+          Promise.resolve()
+            .then(() => Promise.resolve())
+            .then(() => {
+              check(
+                "scenario switch invalidates pending copy",
+                S.copyFailed === false
+              );
+              ctl("regime", "us-opt-out");
+              ctl("saleStart", "optout-user");
+              navigator.clipboard.writeText = () =>
+                new Promise((_, r) => {
+                  rej3 = r;
+                });
+              tap("[data-act=receipt]");
+              tap("[data-act=copy]");
+              tap("[data-act=receipt]");
+              rej3(new Error("late"));
+              return Promise.resolve().then(() => Promise.resolve());
+            })
+            .then(() => {
+              check(
+                "collapsed details: fallback kept, no focus/announce",
+                S.copyFailed === true &&
+                  document.activeElement?.id !== "ref-field" &&
+                  !/Couldn’t copy/.test(
+                    $("[data-layer=main] [role=status]").textContent
+                  )
+              );
+              console.log(
+                `${R.filter((r) => r.startsWith("PASS")).length}/${R.length} pass (async2). ` +
+                  R.filter((r) => !r.startsWith("PASS")).join(" | ")
+              );
+            });
+          console.log(
+            `${R.filter((r) => r.startsWith("PASS")).length}/${R.length} pass (async). ` +
+              R.filter((r) => !r.startsWith("PASS")).join(" | ")
+          );
+        });
+      check(
+        "no floating / no summary-drawer controls",
+        !document.querySelector("[data-group=pres]") &&
+          !document.querySelector("[data-group=aio]") &&
+          !document.querySelector("[data-val=floating]")
+      );
+    } catch (err) {
+      R.push("ERROR " + err.message);
+    }
+    console.log(
+      `${R.filter((r) => r.startsWith("PASS")).length}/${R.length} pass. ` +
+        R.filter((r) => !r.startsWith("PASS")).join(" | ")
+    );
+  });
 </script>

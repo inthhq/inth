@@ -4,7 +4,7 @@ These notes cover the cookie banner and the "Your Privacy Choices" dialog, from 
 
 **Two companion files:**
 
-- `PRIVACY-CHOICES-REGRESSIONS.md` is the rulebook. It holds every invariant, with an ID, its reason and its test. These notes say *what to build*; the regressions file says *what must never break*. Cite its IDs in test names.
+- `PRIVACY-CHOICES-REGRESSIONS.md` is the rulebook. It holds every invariant, with an ID, its reason and its test. These notes say _what to build_; the regressions file says _what must never break_. Cite its IDs in test names.
 - `privacy-choices-explorer.html` with `selftest.html` is the living reference. It has 146 scripted checks, and every number in these notes comes from it. Build `selftest.html`, `perm.html` and `perm2.html` with `node prototypes/privacy-choices-tests/build.mjs`; they land in `prototypes/privacy-choices-tests/out/`.
 
 **Who decided:** the product owner, testing by hand, and seven council review rounds (Claude Opus 5.5, GPT 6.2 Sol, Gemini 4 Neon).
@@ -72,14 +72,14 @@ There are three presentations: **Card**, **Banner** and **Drawer**. All three re
 
 ```ts
 type ConsentPresentation =
-  | { type: 'card';   position?: 'bottom-left' | 'bottom-right' | 'center' } // default type; position default 'bottom-left'
-  | { type: 'banner'; edge?: 'bottom' | 'top' }                              // default 'bottom'
-  | { type: 'drawer'; side?: 'bottom' | 'top' | 'left' | 'right' };          // default 'bottom'
+  | { type: "card"; position?: "bottom-left" | "bottom-right" | "center" } // default type; position default 'bottom-left'
+  | { type: "banner"; edge?: "bottom" | "top" } // default 'bottom'
+  | { type: "drawer"; side?: "bottom" | "top" | "left" | "right" }; // default 'bottom'
 
 interface ConsentPromptOptions {
-  presentation?: ConsentPresentation;   // default { type: 'card', position: 'bottom-left' }
-  edgeStyle?: 'inset' | 'flush';        // default 'inset'; applies to Banner, Drawer and phone sheets, never to Card
-  blockUntilChoice?: boolean;           // default false; forced true for card + center; ignored under US opt-out
+  presentation?: ConsentPresentation; // default { type: 'card', position: 'bottom-left' }
+  edgeStyle?: "inset" | "flush"; // default 'inset'; applies to Banner, Drawer and phone sheets, never to Card
+  blockUntilChoice?: boolean; // default false; forced true for card + center; ignored under US opt-out
 }
 ```
 
@@ -160,7 +160,7 @@ US opt-in short phrases, by rights bundle:
 **Headings and narrow layout:**
 
 - **Visually hidden heading:** "We value your privacy", "Your privacy choices" or "Privacy notice". This keeps a proper `aria-labelledby`.
-- **Narrow layout** uses a **container query** on the card (`container-type: inline-size; @container (max-width: 720px)`), not a media query, so a narrow desktop window stacks too. When stacked, text sits on top and the buttons are full width (`flex: 1 1 0`) at a 40px minimum height. *Port TODO:* use 44px on `pointer: coarse`.
+- **Narrow layout** uses a **container query** on the card (`container-type: inline-size; @container (max-width: 720px)`), not a media query, so a narrow desktop window stacks too. When stacked, text sits on top and the buttons are full width (`flex: 1 1 0`) at a 40px minimum height. _Port TODO:_ use 44px on `pointer: coarse`.
 
 **Expanding:**
 
@@ -191,7 +191,7 @@ US opt-in short phrases, by rights bundle:
   - **US notice:** the rights rows, which apply immediately, then OK. The separate "Do not sell or share" link is dropped, because the control is right there.
 - **Layering:**
   - The choices scroll down to the footer divider, with a 64px bottom fade over the end.
-  - The "Consent by" tag floats *on top of* the fade, centred, 14px above the divider.
+  - The "Consent by" tag floats _on top of_ the fade, centred, 14px above the divider.
   - The body has 60px of bottom padding, so the last row can scroll clear of the tag.
   - Only the tag takes pointer events; its wrapper is `pointer-events: none`.
 - **No Customize**, because the choices are already showing.
@@ -255,7 +255,7 @@ US opt-in short phrases, by rights bundle:
 - The page is released.
 - Focus moves to "Your Privacy Choices".
 
-**EU note:** blocking until *a* choice, with Reject as easy as Accept, is not a cookie wall. Keep EU-01 whenever blocking is on.
+**EU note:** blocking until _a_ choice, with Reject as easy as Accept, is not a cookie wall. Keep EU-01 whenever blocking is on.
 
 ### 3.6 Rules that hold across every combination
 
@@ -299,7 +299,7 @@ This is the full settings surface, opened from the persistent page link.
 
 **Order on the first view (US):**
 
-1. **Intro:** "Your choices apply right away." on one line. The GPC note *replaces* this text rather than adding to it.
+1. **Intro:** "Your choices apply right away." on one line. The GPC note _replaces_ this text rather than adding to it.
 2. **Rights rows**, each a **segmented control**:
    - Options are "Opt out | Allow" or "Limit | Allow", or in opt-in "Don't allow | Allow". The protective option is always first.
    - Build it as a `role="group"` of `aria-pressed` buttons, **not radios**. Arrow keys on a radio group would silently apply a legal choice.
@@ -337,7 +337,7 @@ This is the full settings surface, opened from the persistent page link.
 **Footers:**
 
 - **US:** only "Done", which closes and commits nothing. Done's label never changes; the phone save cue is a check that slides in beside it (SR-07, FOC-06).
-- **EU:** Reject all and Accept all (stroke style, equal weight), plus **Save choices** (primary), which stays disabled until the *effective* state differs from the saved one (EU-01, EU-03).
+- **EU:** Reject all and Accept all (stroke style, equal weight), plus **Save choices** (primary), which stays disabled until the _effective_ state differs from the saved one (EU-01, EU-03).
   - Closing without saving discards the draft (EU-02).
   - Nested EU sheets say "Changes apply when you save in Privacy settings." (EU-05).
 
@@ -360,7 +360,7 @@ This is the full settings surface, opened from the persistent page link.
 
 - Never call `Element.scrollIntoView` inside the dialog; it also scrolls the card and pushes the header out of view.
 - Scroll only the body, with `scrollBy`.
-- When an accordion opens, reveal as much of it as fits *without scrolling its trigger out* (LAY-05).
+- When an accordion opens, reveal as much of it as fits _without scrolling its trigger out_ (LAY-05).
 
 **Scroll edge fades (LAY-08)** apply to every scroll area:
 
@@ -469,14 +469,14 @@ The house ease-out curve is `--ease-out: cubic-bezier(.23,1,.32,1)`.
 - No shake; the check renders fully drawn.
 - The "Saved" cue is removed by a 1.7s JS timer rather than by an animation (MOT-03).
 
-**Persistence:** every animation runs on nodes that persist. A key change must recreate a node only when you *want* the entrance to play again (ARCH-01).
+**Persistence:** every animation runs on nodes that persist. A key change must recreate a node only when you _want_ the entrance to play again (ARCH-01).
 
 ---
 
 ## 8. Accessibility checklist for each port
 
 - [ ] Rights controls are a `role="group"` of `aria-pressed` buttons, not radios.
-- [ ] Under GPC, only the *unselected* option has `aria-disabled` (GPC-03).
+- [ ] Under GPC, only the _unselected_ option has `aria-disabled` (GPC-03).
 - [ ] Every switch is `role="switch"`, with `aria-labelledby` pointing at its name and `aria-describedby` pointing at its inline description (SR-06).
 - [ ] Each disclosure button has `aria-expanded` and `aria-controls`, and its accessible name starts with the visible label (WCAG 2.5.3).
 - [ ] Each modal layer has its own `role="status"`. Announcements are cleared when a layer opens or closes, and a repeated message still gets announced (SR-01 to SR-03).
@@ -495,6 +495,7 @@ The house ease-out curve is `--ease-out: cubic-bezier(.23,1,.32,1)`.
   4. expanded banner panel, which folds back.
 
   Esc never dismisses a banner.
+
 - [ ] Hit areas are at least 44px on touch and 40px on desktop, extended with `::before`, and never overlapping.
 - [ ] Hover styles sit behind `(hover: hover) and (pointer: fine)`.
 - [ ] Contrast is AA for text and 3:1 for UI parts, in light and dark mode (section 6.2).
@@ -511,6 +512,7 @@ The house ease-out curve is `--ease-out: cubic-bezier(.23,1,.32,1)`.
   - the copy generators (`scopePhrase`, the strings built from the rights bundle).
 
   React, Vue, Svelte and HTML only render.
+
 - **Source of each value matters:**
   - `src: 'default' | 'user' | 'gpc'` drives the copy ("Off by default" appears only for defaults, COPY-02), the receipt, and whether Save records something.
   - Any explicit sale choice clears `viaGpc` (GPC-07).
@@ -582,8 +584,8 @@ All sale-row wording is **generated from the rights bundle**. Nothing hard-codes
 Each of these was tried and rejected. Each needs a new decision before it comes back.
 
 - **Presentations:**
-  - A separate *Floating* presentation: Card is the same card and does more.
-  - A separate *Modal*: use Card → Centre.
+  - A separate _Floating_ presentation: Card is the same card and does more.
+  - A separate _Modal_: use Card → Centre.
   - Separate Left, Bottom and Right presentations: use one Drawer with a side.
   - A Summary versus All-in-one setting for drawers: the side decides.
 - **Dialog flows:**
