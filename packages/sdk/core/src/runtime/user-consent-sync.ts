@@ -39,7 +39,10 @@ export interface UserConsentSyncController {
 		options?: { readonly initialStart?: boolean }
 	) => void;
 	/** Reset hold tracking and fence any in-flight Promise on user change/logout. */
-	onUserChanged: (externalId: string | null) => void;
+	onUserChanged: (
+		externalId: string | null,
+		options?: { readonly preservePending?: boolean }
+	) => void;
 	/** Cancel timers and fence any in-flight Promise on runtime disposal. */
 	dispose: () => void;
 }
@@ -63,6 +66,10 @@ export const createUserConsentSyncController =
 		let holdEpoch = 0;
 		let activeTimeout: ReturnType<typeof setTimeout> | null = null;
 		let lastPromise: PromiseLike<UserConsent | null | undefined> | null = null;
+		let lastResolved: {
+			readonly externalId: string;
+			readonly value: UserConsent | null | undefined;
+		} | null = null;
 		let disposed = false;
 
 		const cancelTimer = (): void => {
@@ -120,6 +127,10 @@ export const createUserConsentSyncController =
 				return;
 			}
 			cancelTimer();
+			const externalId = kernel.getSnapshot().user?.externalId ?? null;
+			if (externalId !== null) {
+				lastResolved = { externalId, value: resolved };
+			}
 			kernel.settleUserConsent(resolved, { clearPending: true });
 		};
 
@@ -137,6 +148,7 @@ export const createUserConsentSyncController =
 				}
 				if (value === null) {
 					lastPromise = null;
+					lastResolved = null;
 					activePromiseGeneration += 1;
 					cancelTimer();
 					kernel.settleUserConsent(null, { clearPending: true });
@@ -144,9 +156,23 @@ export const createUserConsentSyncController =
 				}
 				if (isUserConsentPromise(value)) {
 					if (value === lastPromise) {
+						// If this memoized Promise already settled before `start()` mounted
+						// persistence, re-sync with `forceClientSync` so persistence writes it.
+						if (
+							options?.initialStart &&
+							lastResolved !== null &&
+							lastResolved.externalId === currentExternalId &&
+							lastResolved.value !== undefined
+						) {
+							kernel.settleUserConsent(lastResolved.value, {
+								clearPending: true,
+								forceClientSync: true,
+							});
+						}
 						return;
 					}
 					lastPromise = value;
+					lastResolved = null;
 					activePromiseGeneration += 1;
 					const myPromiseGen = activePromiseGeneration;
 					const mySyncGen = kernel.getAccountSyncGeneration();
@@ -159,6 +185,7 @@ export const createUserConsentSyncController =
 				}
 
 				lastPromise = null;
+				lastResolved = null;
 				activePromiseGeneration += 1;
 				cancelTimer();
 				kernel.settleUserConsent(value, {
@@ -170,15 +197,21 @@ export const createUserConsentSyncController =
 			dispose() {
 				disposed = true;
 				lastPromise = null;
+				lastResolved = null;
 				activePromiseGeneration += 1;
 				clearHold();
 			},
 
-			onUserChanged() {
+			onUserChanged(_externalId, options) {
 				holdArmedForExternalId = null;
 				lastPromise = null;
+				lastResolved = null;
 				activePromiseGeneration += 1;
-				clearHold();
+				if (options?.preservePending) {
+					cancelTimer();
+				} else {
+					clearHold();
+				}
 			},
 		};
 	};

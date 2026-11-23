@@ -145,6 +145,9 @@ const canWait = function canWait(
 		// and they are the engine's and the panel's, so neither waits.
 		!document.querySelector(`${EARLY_TAP_ROOT}[data-flow="all-in-one"]`) &&
 		snapshot.activeUI === 'banner' &&
+		!snapshot.userConsentPending &&
+		!snapshot.hasAccountLayer &&
+		extension.userConsent === undefined &&
 		!extension.consentSource &&
 		!(blocker && blocker.enabled !== false) &&
 		!scripts.some((script) => isRunnableNow(script, snapshot)) &&
@@ -430,7 +433,12 @@ export const startDeferredClient = function startDeferredClient(
 	// it a short case (see `canDeferEngine`) and nothing the browser adds,
 	// such as a consent source or a script naming a vendor, takes it away.
 	const commitsEarly =
-		boot.d && !extension.consentSource && !scripts.some(declaresVendor);
+		boot.d &&
+		!snapshot.userConsentPending &&
+		!snapshot.hasAccountLayer &&
+		extension.userConsent === undefined &&
+		!extension.consentSource &&
+		!scripts.some(declaresVendor);
 
 	/**
 	 * Commit a choice before the engine, in this task. `null` when only the

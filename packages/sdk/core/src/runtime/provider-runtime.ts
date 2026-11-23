@@ -49,6 +49,7 @@ import { afterModuleLoaded } from './lazy-runtime-module';
 import type * as ProviderUpdateModule from './provider-update';
 import type { ProviderUpdateHost } from './provider-update';
 import { scriptRegistry } from './script-registry';
+import { isUserConsentPromise } from './user-consent-sync';
 
 type Callbacks = NonNullable<ConsentRuntimeUpdate['callbacks']>;
 
@@ -379,10 +380,22 @@ export const createConsentProviderRuntime =
 			permissive = build(false);
 		}
 		let streamedUserConsentAdopted = false;
+		let streamedCleared = false;
+		let pendingStreamedUserConsent: RuntimePrefetch | undefined;
+		main.runtime.kernel.events.on('records:cleared', () => {
+			streamedCleared = true;
+			pendingStreamedUserConsent = undefined;
+		});
 		const adoptStreamedUserConsent = function adoptStreamedUserConsent(
 			config: RuntimePrefetch | undefined
 		): void {
-			if (streamedUserConsentAdopted || disposed || permissive || !config) {
+			if (
+				streamedUserConsentAdopted ||
+				streamedCleared ||
+				disposed ||
+				permissive ||
+				!config
+			) {
 				return;
 			}
 			const hasUser = config.initialUser !== undefined;
@@ -390,7 +403,6 @@ export const createConsentProviderRuntime =
 			if (!hasUser && !hasConsent) {
 				return;
 			}
-			streamedUserConsentAdopted = true;
 			if (
 				hasUser &&
 				current.user === undefined &&
@@ -398,7 +410,15 @@ export const createConsentProviderRuntime =
 			) {
 				main.setUser(normalizeKernelUser(config.initialUser) ?? null);
 			}
-			if (started && hasConsent && current.userConsent === undefined) {
+			if (!started) {
+				// Keep the streamed raw document until `start()` mounts persistence
+				// so it is applied and persisted once the runtime actually starts.
+				pendingStreamedUserConsent = config;
+				return;
+			}
+			streamedUserConsentAdopted = true;
+			pendingStreamedUserConsent = undefined;
+			if (hasConsent && current.userConsent === undefined) {
 				main.runtime.syncUserConsent(config.initialUserConsent);
 			}
 		};
@@ -646,7 +666,7 @@ export const createConsentProviderRuntime =
 			const userChanged =
 				(prevUser?.externalId ?? null) !== (nextUser?.externalId ?? null);
 			if (userChanged) {
-				main.setUser(nextUser ?? null);
+				main.setUser(nextUser ?? null, isUserConsentPromise(next.userConsent));
 			}
 			if (userChanged || next.userConsent !== previous.userConsent) {
 				runtime.syncUserConsent(next.userConsent);
@@ -729,6 +749,11 @@ export const createConsentProviderRuntime =
 				started = true;
 				active().runtime.start();
 				streamedRecordsGeneration = main.runtime.kernel.getRecordsGeneration();
+				if (pendingStreamedUserConsent) {
+					const pending = pendingStreamedUserConsent;
+					pendingStreamedUserConsent = undefined;
+					adoptStreamedUserConsent(pending);
+				}
 				// The kernel already carries these owners from construction;
 				// registering them keeps them when another module re-declares.
 				declareOwnedVendors(runtime.kernel, ownersOf(current), ownerSource);

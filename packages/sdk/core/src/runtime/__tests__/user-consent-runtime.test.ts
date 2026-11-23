@@ -902,3 +902,255 @@ describe('runtime regressions (set 1)', () => {
 		runtime.dispose();
 	});
 });
+
+describe('runtime regressions (set 2)', () => {
+	test('switching from user A (denied marketing) to user B with a pending Promise under opt-out never grants marketing or inserts marketing script', async () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const resolution = matchedResolution(rule);
+		const fp = resolution.fingerprints.choice;
+		const docA = makeUserConsent({
+			checkedAt: NOW,
+			choices: {
+				marketing: {
+					basis: { fingerprint: fp, kind: 'choice-v1' },
+					confirmedAt: NOW - 1000,
+					value: false,
+				},
+			},
+			externalId: 'user_a',
+		});
+		const base = {
+			consentCategories: ['marketing'] as const,
+			mode: testing({ policy: [rule] }),
+			persistence: false as const,
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				now: NOW,
+			},
+			scripts: [
+				{
+					category: 'marketing' as const,
+					id: 'mkt-script',
+					src: 'https://cdn.example.test/mkt-s3.js',
+				},
+			],
+		};
+
+		const runtime = createConsentProviderRuntime(
+			{ ...base, user: { externalId: 'user_a' }, userConsent: docA },
+			defaultRuntimeModules
+		);
+		const seenMarketing: boolean[] = [];
+		const unsub = runtime.kernel.subscribe((snap) => {
+			seenMarketing.push(snap.effectivePermissions.marketing);
+		});
+		runtime.start();
+		await vi.advanceTimersByTimeAsync(50);
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			false
+		);
+		expect(
+			document.querySelector('script[src="https://cdn.example.test/mkt-s3.js"]')
+		).toBeNull();
+
+		// Switch to user B with a pending Promise: MUST commit user change + dropped A + userConsentPending: true atomically!
+		const promiseB = Promise.withResolvers<UserConsent | null>();
+		void runtime.update({
+			...base,
+			user: { externalId: 'user_b' },
+			userConsent: promiseB.promise,
+		});
+		await vi.advanceTimersByTimeAsync(50);
+
+		expect(runtime.kernel.getSnapshot().userConsentPending).toBe(true);
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			false
+		);
+		expect(seenMarketing.includes(true)).toBe(false);
+		expect(
+			document.querySelector('script[src="https://cdn.example.test/mkt-s3.js"]')
+		).toBeNull();
+
+		unsub();
+		runtime.dispose();
+	});
+
+	test('clearRecords() during a pending SSR stream fences the streamed initialUserConsent', async () => {
+		const rule = optInRule();
+		const resolution = matchedResolution(rule);
+		const fp = resolution.fingerprints.choice;
+		const prefetchDeferred = Promise.withResolvers<RuntimePrefetch>();
+
+		const runtime = createConsentProviderRuntime(
+			{
+				consentCategories: ['marketing'],
+				mode: testing({ policy: [rule] }),
+				prefetch: prefetchDeferred.promise,
+			},
+			{
+				...defaultRuntimeModules,
+				streamPrefetch: streamPrefetchWith(resolveStreamedInit),
+			}
+		);
+		runtime.start();
+
+		// Visitor clears records while SSR stream is still in flight.
+		runtime.clearRecords();
+
+		const doc = makeUserConsent({
+			checkedAt: NOW,
+			choices: {
+				marketing: {
+					basis: { fingerprint: fp, kind: 'choice-v1' },
+					confirmedAt: NOW - 1000,
+					value: true,
+				},
+			},
+			externalId: 'user_a',
+		});
+		const resolvedPrefetch: RuntimePrefetch = {
+			initialPolicyPending: false,
+			initialPolicyResolution: resolution,
+			initialUser: { externalId: 'user_a' },
+			initialUserConsent: doc,
+			now: NOW,
+		};
+		runtime.streamed?.adopt(resolvedPrefetch);
+		prefetchDeferred.resolve(resolvedPrefetch);
+		await vi.advanceTimersByTimeAsync(50);
+
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			false
+		);
+		expect(readStoredAccountLayer(undefined)).toBeNull();
+		runtime.dispose();
+	});
+
+	test('streamed prefetch that settles before start() still applies and persists initialUserConsent on start()', async () => {
+		const rule = optInRule();
+		const resolution = matchedResolution(rule);
+		const fp = resolution.fingerprints.choice;
+		const prefetchDeferred = Promise.withResolvers<RuntimePrefetch>();
+
+		const runtime = createConsentProviderRuntime(
+			{
+				consentCategories: ['marketing'],
+				mode: testing({ policy: [rule] }),
+				prefetch: prefetchDeferred.promise,
+			},
+			{
+				...defaultRuntimeModules,
+				streamPrefetch: streamPrefetchWith(resolveStreamedInit),
+			}
+		);
+
+		// Prefetch settles BEFORE runtime.start() is called!
+		const doc = makeUserConsent({
+			checkedAt: NOW,
+			choices: {
+				marketing: {
+					basis: { fingerprint: fp, kind: 'choice-v1' },
+					confirmedAt: NOW - 1000,
+					value: true,
+				},
+			},
+			externalId: 'user_a',
+		});
+		const resolvedPrefetch: RuntimePrefetch = {
+			initialPolicyPending: false,
+			initialPolicyResolution: resolution,
+			initialUser: { externalId: 'user_a' },
+			initialUserConsent: doc,
+			now: NOW,
+		};
+		prefetchDeferred.resolve(resolvedPrefetch);
+		await flushMicrotasks();
+
+		// Now start() runs.
+		runtime.start();
+		await vi.advanceTimersByTimeAsync(50);
+
+		expect(runtime.kernel.getSnapshot().user?.externalId).toBe('user_a');
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			true
+		);
+		expect(readStoredAccountLayer(undefined)?.externalId).toBe('user_a');
+		runtime.dispose();
+	});
+
+	test('memoized Promise that settles before start() is not overwritten by an older stored account layer', async () => {
+		const rule = optInRule();
+		const resolution = matchedResolution(rule);
+		const fp = resolution.fingerprints.choice;
+		const keys = resolveAccountStorageKeys();
+
+		// Pre-populate storage with an OLDER account layer (`checkedAt: NOW - 5000`, marketing: false).
+		const olderStored = {
+			appliedAt: NOW - 5000,
+			checkedAt: NOW - 5000,
+			choices: {
+				marketing: {
+					basis: { fingerprint: fp, kind: 'choice-v1' as const },
+					rawConfirmedAt: NOW - 6000,
+					value: false,
+				},
+			},
+			externalId: 'user_a',
+			optOut: null,
+			skew: 0,
+			vendors: {},
+		};
+		window.localStorage.setItem(
+			keys.accountState,
+			encodeAccountLocalJson(olderStored, 'rev_old')
+		);
+		document.cookie = `${keys.accountChoices}=${encodeAccountChoicesCookie(olderStored, 'rev_old')}; path=/`;
+
+		const deferred = Promise.withResolvers<UserConsent | null>();
+		const base = {
+			consentCategories: ['marketing'] as const,
+			mode: testing({ policy: [rule] }),
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				now: NOW,
+			},
+			user: { externalId: 'user_a' },
+		};
+		const runtime = createConsentProviderRuntime(
+			{ ...base, userConsent: deferred.promise },
+			defaultRuntimeModules
+		);
+
+		// Pass the Promise and let it settle BEFORE runtime.start()!
+		runtime.syncUserConsent(deferred.promise);
+		deferred.resolve(
+			makeUserConsent({
+				checkedAt: NOW + 1000,
+				choices: {
+					marketing: {
+						basis: { fingerprint: fp, kind: 'choice-v1' },
+						confirmedAt: NOW,
+						value: true,
+					},
+				},
+				externalId: 'user_a',
+			})
+		);
+		await flushMicrotasks();
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			true
+		);
+
+		// Now start() mounts persistence and hydrates the older stored layer -> newer settled Promise MUST win!
+		runtime.start();
+		await vi.advanceTimersByTimeAsync(50);
+
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			true
+		);
+		expect(readStoredAccountLayer(undefined)?.checkedAt).toBe(NOW + 1000);
+		runtime.dispose();
+	});
+});

@@ -810,4 +810,23 @@ describe('the first-load shell', () => {
 		await settle();
 		expect(loadEngine).not.toHaveBeenCalled();
 	});
+
+	it('#13: hands off early taps and choices to the engine when userConsent is set (pending Promise)', async () => {
+		renderPage();
+		const pendingConsent = new Promise<null>(() => {
+			/* pending userConsent Promise */
+		});
+		// Queue a pre-shell early tap.
+		(window as unknown as Record<string, unknown>).__inthEarlyTaps = [
+			{ action: 'accept', at: Date.now() },
+		];
+		const { client: shell, loadEngine } = startShell(engineLoader(), {
+			user: { externalId: 'user_a' },
+			userConsent: pendingConsent,
+		});
+		// Must NOT commit early or wait for hero load; hands off immediately to engine!
+		expect(loadEngine).toHaveBeenCalledTimes(1);
+		expect(localStorage.getItem('inth')).toBeNull();
+		await shell.ready;
+	});
 });

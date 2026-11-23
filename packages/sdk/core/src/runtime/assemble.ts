@@ -68,10 +68,11 @@ export interface AssembledRuntime {
 	 */
 	adoptJourney: (id: string | null | undefined) => void;
 	/**
-	 * Update `kernel.set.user` and notify the `userConsent` sync controller
-	 * synchronously whenever `externalId` changes or clears.
+	 * Atomically update the user, drop any mismatched account layer, optionally
+	 * arm/release `userConsentPending` in one kernel commit, and notify the
+	 * `userConsent` sync controller whenever `externalId` changes or clears.
 	 */
-	setUser: (user: KernelUser | null) => void;
+	setUser: (user: KernelUser | null, pendingUserConsent?: boolean) => void;
 	runtime: ConsentRuntime;
 	/**
 	 * Unmount every module and `window.__inthDebug` and detach callbacks, keeping
@@ -530,12 +531,21 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		hold = null;
 		held?.release()();
 	};
-	const setUser = function setUser(user: KernelUser | null): void {
+	const setUser = function setUser(
+		user: KernelUser | null,
+		pendingUserConsent?: boolean
+	): void {
 		const prevExternalId = kernel.getSnapshot().user?.externalId ?? null;
 		const nextExternalId = user?.externalId ?? null;
-		kernel.set.user(user);
+		const nextPending =
+			prevExternalId === nextExternalId
+				? undefined
+				: Boolean(nextExternalId && pendingUserConsent);
+		kernel.setUserWithPending(user, nextPending);
 		if (prevExternalId !== nextExternalId) {
-			userConsentSync.onUserChanged(nextExternalId);
+			userConsentSync.onUserChanged(nextExternalId, {
+				preservePending: nextPending === true,
+			});
 		}
 	};
 	return { adoptJourney: journey.adopt, releaseHold, runtime, setUser, stop };
