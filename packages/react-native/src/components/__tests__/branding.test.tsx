@@ -166,7 +166,7 @@ describe('ConsentBrandingTag', () => {
 		expect(style.backgroundColor).toBe(defaultConsentTheme.colors.primary);
 		// The tab is filled with the accent, so its border has to be darker than
 		// the fill or the shape dissolves into it.
-		expect(style.borderColor).toBe('#2C4FDB');
+		expect(style.borderColor).toBe('#2055CA');
 		expect(style.borderTopColor).toBe('rgba(255, 255, 255, 0.16)');
 		expect(style.minHeight).toBe(28);
 		expect(style.paddingHorizontal).toBe(10);

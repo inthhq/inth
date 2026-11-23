@@ -70,7 +70,8 @@ const BUTTON = {
 	lineHeight: 17.5,
 	paddingHorizontal: 12,
 	paddingVertical: 8,
-	radius: 8,
+	// `--inth-radius-md`, 10 since the web's one consent UI.
+	radius: 10,
 } as const;
 
 /** The action a subject takes, named by the label on its control. */
@@ -352,9 +353,9 @@ afterEach(() => {
 
 describe('heading tracking', () => {
 	test('is the em figure multiplied out by the size that draws it', () => {
-		// `prompt.module.css` tracks the 16pt banner heading at `-0.011em`, which is
-		// -0.176, and `panel.module.css` tracks the 14pt dialog heading at
-		// `-0.025em`, which is -0.35. React Native takes an absolute length, so the
+		// `consent-surface.module.css` tracks the 16pt banner heading at `-0.011em`,
+		// which is -0.176, and `consent-dialog.module.css` tracks the 17pt dialog
+		// heading at `-0.015em`, which is -0.255. React Native takes an absolute length, so the
 		// product is what has to land on the part, and one figure cannot serve both.
 		const banner = mountSurface(<ConsentBanner />, englishSnapshot());
 
@@ -376,7 +377,7 @@ describe('heading tracking', () => {
 		expect(
 			nodeStyle(roleNodes(dialog.container(), 'header')[0] as HTMLElement)
 				.letterSpacing
-		).toBe(-0.35);
+		).toBe(-0.255);
 
 		dialog.unmount();
 	});
@@ -723,10 +724,11 @@ describe('dialog card', () => {
 
 describe('card height', () => {
 	test('adds up to the web card at four category rows', () => {
-		// The live dialog card is 499 tall with four collapsed categories, which is the
-		// same 499 that `cardMaxHeightFor` sizes the cap against, and every point of those
-		// 499 belongs to a part this package owns: the card's two hairlines; a heading band
-		// of 24, a 14pt title box, the 8 step, three 24-point lines of copy and 24 again;
+		// The classic dialog card was 499 tall with four collapsed categories, the 499
+		// `cardMaxHeightFor` sizes the cap against. With the dialog's type pair it is
+		// 492.75, and every point belongs to a part this package owns: the card's two
+		// hairlines; a heading band of 24, a 21.25 title box (17 over `tight`), the 8
+		// step, three 19.5-point lines of 13pt copy and 24 again;
 		// four 42-point cards 12 apart; the 24 the stack leaves under the last card; and a
 		// footer that opens on 24, holds two 35.5 rows 8 apart, and closes on 24. Nothing
 		// in the sum is a spacing literal, so any band that moves moves the total -- which
@@ -757,8 +759,8 @@ describe('card height', () => {
 
 		expect(rows).toBe(4);
 
-		// The web's copy is 16pt over `--inth-line-height-normal`, and the live card
-		// carries the English notice across three of those lines at the card's own width.
+		// The web's intro is 13pt over `--inth-line-height-normal`, and the sum keeps the
+		// English notice across three of those lines at the card's own width.
 		const description = 3 * lightRoles.body.lineHeight;
 		const heading =
 			points(bands.header, 'paddingTop') +
@@ -779,10 +781,10 @@ describe('card height', () => {
 			points(stack, 'paddingBottom') +
 			actions;
 
-		expect(heightAt(rows)).toBe(499);
+		expect(heightAt(rows)).toBe(492.75);
 
 		// One category more costs one row pitch and nothing else, which is the number to
-		// normalise a five-row capture against the 499 above.
+		// normalise a five-row capture against the total above.
 		expect(heightAt(rows + 1) - heightAt(rows)).toBe(54);
 
 		tree.unmount();
@@ -863,7 +865,7 @@ describe('category accordion', () => {
 		expect(trigger.padding).toBe(8);
 		expect(drawn).toBe(40);
 		expect(nodeStyle(card)).toMatchObject({
-			borderRadius: 8,
+			borderRadius: 10,
 			borderWidth: 1,
 		});
 		expect(drawn + 2).toBe(42);

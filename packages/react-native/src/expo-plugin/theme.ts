@@ -110,6 +110,7 @@ export const JS_ONLY_COLOR_NAMES = [
 	'focus',
 	'overlay',
 	'primaryBorder',
+	'primaryText',
 	'surfaceHover',
 	'switchThumb',
 	'switchTrack',

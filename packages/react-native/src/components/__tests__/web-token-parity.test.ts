@@ -16,7 +16,9 @@
  * instead of shipping as an app banner that quietly stopped matching the site
  * next to it. That drift has already happened once: the banner was built from
  * the dialog's type scale, which put a 14 semibold heading over 16 body copy
- * where the web banner leads with 16 medium over 14.
+ * where the web banner leads with 16 medium over 14. It happened again when the
+ * web moved to its one consent UI, with a new accent, larger radii and a new
+ * dialog type pair, and this file was still reading the retired sheets.
  *
  * `@inth/sdk/ui` is deliberately not imported. It is not a dependency of this
  * package, runtime or otherwise, and a parity test is not a reason to give an
@@ -50,8 +52,8 @@ const ui = function ui(path: string): string {
 };
 
 const THEME_SOURCE = ui('src/theme/utils.ts');
-const PROMPT_CSS = ui('src/styles/components/prompt.module.css');
-const PANEL_CSS = ui('src/styles/components/panel.module.css');
+const SURFACE_CSS = ui('src/styles/components/consent-surface.module.css');
+const DIALOG_CSS = ui('src/styles/components/consent-dialog.module.css');
 const BUTTON_CSS = ui('src/styles/primitives/button.module.css');
 const SWITCH_CSS = ui('src/styles/primitives/switch.module.css');
 
@@ -208,7 +210,7 @@ const variablePaths = function variablePaths(): Map<string, string[]> {
 	for (const groups of source
 		.slice(source.indexOf('themeCSSVariableResolvers'))
 		.matchAll(
-			/^\t*'?(?<suffix>[a-z][\w-]*)'?\s*:\s*\([^)]*\)\s*=>\s*(?<body>[^,\n]*(?:\n\s*[^,\n]*)?),$/gmu
+			/^\t*'?(?<suffix>[a-z][\w-]*)'?\s*:\s*\([^)]*\)\s*=>\s*(?<body>[^,\n]*(?:\n\s*[^,\n]*)*?),$/gmu
 		)) {
 		const walk = /(?<root>(?:theme|colors)\??(?:\.[\w$]+\??)+)/u.exec(
 			groups.groups?.body ?? ''
@@ -320,15 +322,15 @@ const tokenBySuffix = function tokenBySuffix(
 	return themeValue(path, dark);
 };
 
-// `var(--name)`, or `var(--name, fallback)` as the classic sheets read their
-// own variables; the fallback is found again by `readFallback` when `--name`
+// `var(--name)`, or `var(--name, fallback)` as the sheets read their own
+// hooks; the fallback is found again by `readFallback` when `--name`
 // is never declared.
 const VAR_REFERENCE = /^var\(\s*(?<reference>--[\w-]+)\s*(?:,[\s\S]*)?\)$/u;
 
 /**
  * The default a stylesheet gives a variable it reads but never declares: the
- * fallback in its first `var(name, fallback)`. The classic sheets read their
- * own variables this way, so that a value a site sets on any ancestor wins.
+ * fallback in its first `var(name, fallback)`. The sheets read their own hooks
+ * this way, so that a value a site sets on any ancestor wins.
  *
  * @param source - The stylesheet the variable is read in.
  * @param variable - The variable, with its `--` prefix.
@@ -410,14 +412,52 @@ const HUE_SECTORS: readonly (readonly [number, number, number])[] = [
 const HSL =
 	/^hsla?\((?<h>[\d.]+),\s*(?<s>[\d.]+)%,\s*(?<l>[\d.]+)%(?:,\s*(?<a>[\d.]+))?\)$/u;
 
+const HEX = /^#(?<digits>[\da-f]{3}|[\da-f]{6})$/iu;
+
+const RGB =
+	/^rgba?\((?<r>\d+),\s*(?<g>\d+),\s*(?<b>\d+)(?:,\s*(?<a>[\d.]+))?\)$/u;
+
+/** Red, green and blue as the hex this package writes, or `rgba()` with an alpha. */
+const nativeFromChannels = function nativeFromChannels(
+	channels: readonly [number, number, number],
+	alpha?: string
+): string {
+	const [red, green, blue] = channels;
+	if (alpha !== undefined) {
+		return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+	}
+
+	return `#${channels
+		.map((one) => one.toString(16).padStart(2, '0'))
+		.join('')
+		.toUpperCase()}`;
+};
+
 /**
- * A CSS colour in the shape `packages/sdk/ui` writes it, as the shape this package
+ * A CSS colour in a shape `packages/sdk/ui` writes it, as the shape this package
  * writes it: hex for an opaque colour, `rgba()` when there is an alpha.
  *
- * @param value - An `hsl()` or `hsla()` literal.
+ * @param value - A hex, `rgb()`, `rgba()`, `hsl()` or `hsla()` literal.
  * @returns The same colour as React Native can apply it.
  */
 const asNativeColor = function asNativeColor(value: string): string {
+	const hex = HEX.exec(value)?.groups?.digits;
+	if (hex !== undefined) {
+		const full =
+			hex.length === 3
+				? [...hex].map((digit) => `${digit}${digit}`).join('')
+				: hex;
+		return `#${full.toUpperCase()}`;
+	}
+
+	const rgb = RGB.exec(value)?.groups;
+	if (rgb?.r !== undefined && rgb.g !== undefined && rgb.b !== undefined) {
+		return nativeFromChannels(
+			[Number(rgb.r), Number(rgb.g), Number(rgb.b)],
+			rgb.a
+		);
+	}
+
 	const channels = HSL.exec(value)?.groups;
 	if (
 		channels?.h === undefined ||
@@ -441,20 +481,10 @@ const asNativeColor = function asNativeColor(value: string): string {
 	const sector = HUE_SECTORS[
 		clamp(Math.floor(hue), HUE_SECTORS.length - 1)
 	] as readonly [number, number, number];
-	const [red, green, blue] = [
-		channel(sector[0]),
-		channel(sector[1]),
-		channel(sector[2]),
-	];
-
-	if (channels.a !== undefined) {
-		return `rgba(${red}, ${green}, ${blue}, ${channels.a})`;
-	}
-
-	return `#${[red, green, blue]
-		.map((one) => one.toString(16).padStart(2, '0'))
-		.join('')
-		.toUpperCase()}`;
+	return nativeFromChannels(
+		[channel(sector[0]), channel(sector[1]), channel(sector[2])],
+		channels.a
+	);
 };
 
 const RATIO = /^[\d.]+$/u;
@@ -473,6 +503,39 @@ const measure = function measure(value: string, againstFont?: number): number {
 		return Number(value) * againstFont;
 	}
 	return Number.parseFloat(value) * 16;
+};
+
+const CALC = /^calc\(\s*(?<operand>[\s\S]+?)\s*\*\s*(?<factor>[\d.]+)\s*\)$/u;
+
+/**
+ * A declared value with every `var()` hop followed, as a browser would.
+ *
+ * @param source - The stylesheet the value is declared in.
+ * @param raw - The value as written.
+ */
+const resolved = function resolved(source: string, raw: string): string {
+	const reference = VAR_REFERENCE.exec(raw.trim())?.groups?.reference;
+	return reference === undefined ? raw.trim() : webToken(source, reference);
+};
+
+/**
+ * {@link measure} for a declared value, which may be a `var()` or a
+ * `calc(<length> * <factor>)`, the one shape of `calc` the sheets size type
+ * with.
+ */
+const length = function length(
+	source: string,
+	raw: string,
+	againstFont?: number
+): number {
+	const value = resolved(source, raw);
+	const product = CALC.exec(value)?.groups;
+	if (product?.operand !== undefined && product.factor !== undefined) {
+		return (
+			length(source, product.operand, againstFont) * Number(product.factor)
+		);
+	}
+	return measure(value, againstFont);
 };
 
 const DECLARATION = /(?<property>[\w-]+):\s*(?<value>[^;]+);/gu;
@@ -517,24 +580,44 @@ const webType = function webType(
 		blocks.push(cssBlock(source, fallback));
 	}
 
-	const declared = function declared(property: string): string {
-		const raw = blocks
-			.map((block) => block[property])
-			.find((value) => value !== undefined);
+	const declared = function declared(
+		property: string,
+		inherited?: string
+	): string {
+		const raw =
+			blocks
+				.map((block) => block[property])
+				.find((value) => value !== undefined) ?? inherited;
 		if (raw === undefined) {
 			throw new Error(`${selector} declares no ${property}`);
 		}
-
-		const reference = VAR_REFERENCE.exec(raw)?.groups?.reference;
-		return reference === undefined ? raw : webToken(source, reference);
+		return raw;
 	};
 
-	const fontSize = measure(declared('font-size'));
+	// A rule that sets no weight draws at the one it inherits, and no consent
+	// surface sets a weight above its text rules, so that is `normal`.
+	const weight = resolved(source, declared('font-weight', 'normal'));
+	const fontSize = length(source, declared('font-size'));
 	return {
 		fontSize,
-		fontWeight: Number(declared('font-weight')),
-		lineHeight: measure(declared('line-height'), fontSize),
+		fontWeight: weight === 'normal' ? 400 : Number(weight),
+		lineHeight: length(source, declared('line-height'), fontSize),
 	};
+};
+
+/**
+ * One React Native text role against the web rule that draws it.
+ *
+ * The sheets write some sizes as `calc(sm * 0.9286)`, a rounded 13/14, so the
+ * points are compared to a hundredth rather than exactly.
+ */
+const expectType = function expectType(
+	role: { fontSize: number; lineHeight: number; weight: string },
+	web: { fontSize: number; fontWeight: number; lineHeight: number }
+): void {
+	expect(role.weight).toBe(String(web.fontWeight));
+	expect(role.fontSize).toBeCloseTo(web.fontSize, 2);
+	expect(role.lineHeight).toBeCloseTo(web.lineHeight, 2);
 };
 
 /** Maps a web colour token onto the part of a consent surface it paints. */
@@ -545,6 +628,7 @@ const COLOR_PARITY: readonly (readonly [
 	['border', 'border'],
 	['overlay', 'overlay'],
 	['primary', 'primary'],
+	['primary-text', 'primaryText'],
 	['surface', 'surface'],
 	['surface-hover', 'surfaceHover'],
 	['switch-thumb', 'switchThumb'],
@@ -573,8 +657,9 @@ describe('web token parity', () => {
 	});
 
 	test('corners follow the web radii', () => {
-		// The card is `radius.lg` and a control is `radius.md`, which is what
-		// `--consent-banner-border-radius` and `--button-border-radius` ask for.
+		// The card is `radius.lg` and a control is `radius.md`: the banner card
+		// and the dialog round at `--inth-radius-lg`, a dialog control at
+		// `--inth-radius-md`.
 		expect(defaultConsentTheme.radius.lg).toBe(
 			measure(tokenBySuffix('radius-lg'))
 		);
@@ -594,58 +679,27 @@ describe('web token parity', () => {
 	});
 
 	test('the banner leads with its own heading pair', () => {
-		// `prompt.module.css` is the banner, and it is not the dialog: the
-		// heading is larger than the copy underneath it. Getting this pair the
-		// wrong way round is the exact drift this test exists to catch.
-		const prompt = read(PROMPT_CSS);
-		const title = webType(prompt, '.title:not(:global(.headless))');
-		const body = webType(
-			prompt,
-			".description[data-context='banner']:not(:global(.headless))"
-		);
+		// `consent-surface.module.css` draws the banner card's head, and it is not
+		// the dialog: the heading is larger than the copy underneath it. Getting
+		// this pair the wrong way round is the exact drift this test exists to
+		// catch.
+		const surface = read(SURFACE_CSS);
 
-		expect(lightRoles.bannerTitle).toEqual({
-			fontSize: title.fontSize,
-			lineHeight: title.lineHeight,
-			weight: String(title.fontWeight) as '500',
-		});
-		expect(lightRoles.bannerBody).toEqual({
-			fontSize: body.fontSize,
-			lineHeight: body.lineHeight,
-			weight: String(body.fontWeight) as '400',
-		});
+		expectType(lightRoles.bannerTitle, webType(surface, '.title'));
+		expectType(lightRoles.bannerBody, webType(surface, '.description'));
 		expect(lightRoles.bannerTitle.fontSize).toBeGreaterThan(
 			lightRoles.bannerBody.fontSize
 		);
 	});
 
 	test('the dialog follows its own heading pair', () => {
-		const panel = read(PANEL_CSS);
-		const title = cssBlock(panel, '.title:not(:global(.headless))');
-		const description = webType(
-			panel,
-			".description[data-context='dialog']:not(:global(.headless))"
-		);
+		// The dialog heading is a step above `base`, over an intro a step under
+		// `sm`, each through its own `--consent-dialog-*` hook.
+		const dialog = read(DIALOG_CSS);
 
-		// The dialog heading is smaller than its body, the opposite of a banner,
-		// which is why the theme carries a pair per surface. Its line-height is a
-		// hard `1`, so the heading sits tight against the copy below it.
-		const titleSize = measure(
-			webToken(panel, '--consent-dialog-title-font-size')
-		);
-		expect(lightRoles.title).toEqual({
-			fontSize: titleSize,
-			lineHeight: measure(title['line-height'] as string, titleSize),
-			weight: String(
-				webToken(panel, '--consent-dialog-title-font-weight')
-			) as '600',
-		});
-		expect(lightRoles.body).toEqual({
-			fontSize: description.fontSize,
-			lineHeight: description.lineHeight,
-			weight: String(description.fontWeight) as '400',
-		});
-		expect(lightRoles.title.fontSize).toBeLessThan(lightRoles.body.fontSize);
+		expectType(lightRoles.title, webType(dialog, '.title'));
+		expectType(lightRoles.body, webType(dialog, '.intro'));
+		expect(lightRoles.title.fontSize).toBeGreaterThan(lightRoles.body.fontSize);
 	});
 
 	test('a button label is the web small button label', () => {

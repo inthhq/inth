@@ -252,14 +252,14 @@ const BUTTON_PADDING_HORIZONTAL = 12;
  *
  * Web writes `letter-spacing` in `em` and React Native only takes an absolute
  * length, so `track` multiplies the figure by the size the same rule draws it at:
- * `-0.011em` on a 16pt banner heading is `-0.176`, `-0.025em` on the 14pt dialog
- * heading is `-0.35`. The product is taken per render rather than written out as
+ * `-0.011em` on a 16pt banner heading is `-0.176`, `-0.015em` on the 17pt dialog
+ * heading is `-0.255`. The product is taken per render rather than written out as
  * a literal so a host that scales its type keeps the same relative squeeze.
  *
  * A role missing from this table is tracked at nothing, which is also a measured
  * choice. `.trigger` and `.content` in the consent accordion both say
  * `letter-spacing: inherit` under a card that never sets it, and the dialog's own
- * `.description` declares none, so a category row and the dialog's supporting copy
+ * `.intro` declares none, so a category row and the dialog's supporting copy
  * run at the platform default. Only the banner's small copy declares `-0.006em` of
  * its own, and it belongs to the banner alone.
  */
@@ -268,7 +268,7 @@ const TRACKING_EM = {
 	bannerTitle: -0.011,
 	brandingLabel: 0.01,
 	brandingWordmark: -0.03,
-	dialogTitle: -0.025,
+	dialogTitle: -0.015,
 } as const;
 
 /**
@@ -1200,7 +1200,7 @@ export const useConsentStyles = function useConsentStyles(
 				paddingTop: facts.headerPaddingTop,
 			},
 			label: {
-				...textStyle(typography.label, colors.primary),
+				...textStyle(typography.label, colors.primaryText),
 				textAlign: 'center',
 			},
 			// The Object / Objected control on a partner's legitimate-interest leg.
@@ -1248,7 +1248,7 @@ export const useConsentStyles = function useConsentStyles(
 				paddingVertical: BUTTON_PADDING_VERTICAL - HAIRLINE,
 			},
 			primaryLabel: {
-				...textStyle(typography.label, colors.primary),
+				...textStyle(typography.label, colors.primaryText),
 				textAlign: 'center',
 			},
 			row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
