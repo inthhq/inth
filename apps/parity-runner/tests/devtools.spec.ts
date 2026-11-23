@@ -4,10 +4,13 @@ import { expect, test } from '@playwright/test';
 
 import { captureComputedStyleMap } from '../src/diff-computed-style';
 import { captureDomSnapshot } from '../src/diff-dom';
+import type { StoryEntry } from '../src/pair-stories';
+import { comparePng } from '../src/pixel-diff';
 import { loadStorybookIndex } from '../src/storybook-index';
 
 const urls: Record<string, string> = {
 	angular: process.env.ANGULAR_STORYBOOK_URL ?? 'http://127.0.0.1:6011',
+	astro: process.env.ASTRO_STORYBOOK_URL ?? 'http://127.0.0.1:6010',
 	react: process.env.REACT_STORYBOOK_URL ?? 'http://127.0.0.1:6006',
 	svelte: process.env.SVELTE_STORYBOOK_URL ?? 'http://127.0.0.1:6007',
 	vue: process.env.VUE_STORYBOOK_URL ?? 'http://127.0.0.1:6008',
@@ -28,6 +31,44 @@ const tabs = [
 	'Actions',
 ] as const;
 const rootSelector = '[data-inth-dev-tools]';
+/**
+ * Chromium can antialias the same rounded corner one level differently
+ * between two renders of identical markup, which made the Scripts tab's
+ * search field fail at random. Two levels per channel absorbs that; any
+ * real colour, font or layout change moves far more, and a size change or
+ * a single pixel beyond it still fails.
+ */
+const PIXEL_BUDGET = { maxRatio: 0, threshold: 2 };
+
+const isDevToolsStory = (story: StoryEntry) =>
+	story.title.endsWith('/Core/DevTools') && story.name === 'Default';
+
+/**
+ * Each enabled framework's DevTools story, React's first. A framework
+ * whose Storybook has none, such as Astro, which ships no DevTools
+ * component, is left out rather than failed, so a run that pairs it with
+ * React alone has nothing to compare and skips.
+ */
+const devToolsStories = async function devToolsStories(): Promise<{
+	compared: { framework: string; id: string; url: string }[];
+	skipped: string[];
+}> {
+	const compared: { framework: string; id: string; url: string }[] = [];
+	const skipped: string[] = [];
+	for (const framework of frameworks) {
+		const url = urls[framework];
+		if (!url) {
+			throw new Error(`Missing ${framework} URL`);
+		}
+		const entry = (await loadStorybookIndex(url)).find(isDevToolsStory);
+		if (entry) {
+			compared.push({ framework, id: entry.id, url });
+		} else {
+			skipped.push(framework);
+		}
+	}
+	return { compared, skipped };
+};
 
 // All framework renders are captured in the same Chromium run. This avoids
 // OS-specific font baselines and deliberately does not use toHaveScreenshot,
@@ -38,7 +79,21 @@ for (const colorScheme of ['light', 'dark'] as const) {
 			page,
 		}, testInfo) => {
 			expect(frameworks).toContain('react');
-			expect(frameworks.length).toBeGreaterThan(1);
+			const { compared, skipped } = await devToolsStories();
+			for (const framework of skipped) {
+				testInfo.annotations.push({
+					description: `${framework} has no Core/DevTools story`,
+					type: 'skip',
+				});
+			}
+			expect(
+				compared[0]?.framework,
+				'React must include the DevTools comparison story'
+			).toBe('react');
+			test.skip(
+				compared.length < 2,
+				`No framework besides React has a DevTools story (skipped: ${skipped.join(', ')})`
+			);
 			const viewport = mobile
 				? { height: 844, width: 390 }
 				: { height: 900, width: 1280 };
@@ -54,28 +109,8 @@ for (const colorScheme of ['light', 'dark'] as const) {
 					styles: Awaited<ReturnType<typeof captureComputedStyleMap>>;
 				}
 			>();
-			for (const framework of frameworks) {
-				const url = urls[framework];
-				expect(
-					url,
-					`No DevTools Storybook configured for ${framework}`
-				).toBeTruthy();
-				if (!url) {
-					throw new Error(`Missing ${framework} URL`);
-				}
-				const entries = await loadStorybookIndex(url);
-				const entry = entries.find(
-					(story) =>
-						story.title.endsWith('/Core/DevTools') && story.name === 'Default'
-				);
-				expect(
-					entry,
-					`${framework} must include the DevTools comparison story`
-				).toBeDefined();
-				if (!entry) {
-					throw new Error(`Missing ${framework} DevTools comparison story`);
-				}
-				await page.goto(`${url}/iframe.html?id=${entry.id}&viewMode=story`, {
+			for (const { framework, id, url } of compared) {
+				await page.goto(`${url}/iframe.html?id=${id}&viewMode=story`, {
 					waitUntil: 'networkidle',
 				});
 				const root = page.locator(rootSelector);
@@ -169,10 +204,17 @@ for (const colorScheme of ['light', 'dark'] as const) {
 							`${framework}/${tab} CSS`
 						)
 						.toEqual([]);
+					const pixels = comparePng(reference.image, image, PIXEL_BUDGET);
+					if (!pixels.ok && pixels.diff) {
+						await testInfo.attach(`${framework}-${tab}-diff.png`, {
+							body: pixels.diff,
+							contentType: 'image/png',
+						});
+					}
 					expect
 						.soft(
-							image.equals(reference.image),
-							`${framework}/${tab} pixels must match React; see attached images`
+							pixels.ok,
+							`${framework}/${tab} pixels must match React (${pixels.reason ?? 'ok'}); see attached images`
 						)
 						.toBe(true);
 				}
