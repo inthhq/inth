@@ -68,7 +68,7 @@ describe('lazy chunk names', () => {
 		);
 		const files = imports.map(({ specifier }) => basename(specifier));
 		expect(files).toEqual(
-			expect.arrayContaining(['card.vue', 'drawer.vue', 'dialog.vue'])
+			expect.arrayContaining(['card', 'drawer', 'strip', 'dialog.vue'])
 		);
 		expect(
 			imports.filter(({ specifier }) =>
