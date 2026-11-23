@@ -170,6 +170,9 @@ const canWait = function canWait(
 		!document.querySelector('iframe[data-vendor]') &&
 		// A blocking banner's focus trap is the engine's.
 		!document.querySelector('[data-blocking="true"]') &&
+		// An all-in-one side Drawer shows its choices from the first paint,
+		// and they are the engine's and the panel's, so neither waits.
+		!document.querySelector(`${EARLY_TAP_ROOT}[data-flow="all-in-one"]`) &&
 		snapshot.activeUI === 'banner' &&
 		!extension.consentSource &&
 		!(blocker && blocker.enabled !== false) &&
