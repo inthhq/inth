@@ -12,7 +12,7 @@ New theme tokens. They are all optional. When your theme leaves one out, it foll
 | CSS variable | Theme key | When your theme leaves it out |
 | --- | --- | --- |
 | `--inth-primary-text` | `colors.primaryText` | Follows `colors.primary` |
-| `--inth-primary-tint` | `colors.primaryTint` | `colors.primary` mixed into `colors.surface`: 10% in light mode, 18% in dark mode. Always opaque, even when `colors.primary` has alpha |
+| `--inth-primary-tint` | `colors.primaryTint` | `colors.primary` mixed into `colors.surface`: 10% in light mode, 18% in dark mode. Opaque even when `colors.primary` or `colors.surface` has alpha. If the SDK can't read a colour's alpha from its text (a named colour or `var()`), the CSS from `generateThemeCSS` makes the tint opaque in browsers that support relative colour syntax |
 | `--inth-danger` | `colors.danger` | `#dc2626` (dark mode: `#f87171`) |
 | `--inth-border-strong` | `colors.borderStrong` | `rgba(15, 23, 42, 0.16)` (dark mode: `#3a404e`) |
 | `--inth-overlay-block` | `colors.overlayBlock` | `rgba(15, 23, 42, 0.62)` (dark mode: `rgba(0, 0, 0, 0.72)`) |

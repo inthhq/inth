@@ -359,13 +359,13 @@ describe('v6 consent tokens', () => {
 		// surface is 95% opaque. Folding the alpha into the share gives the
 		// colour the relative-colour form gives, at full opacity.
 		const theme: Theme = {
-			colors: { primary: 'rgb(37 99 235 / 50%)' },
+			colors: { primary: 'rgb(37 99 235 / 50%)', surface: '#ffffff' },
 			dark: { primary: '#2563eb80', surface: '#14161a' },
 		};
 
 		// 10% at alpha 0.5 weighs 5 against the surface's 90: 5 / 95.
 		expect(themeToVars(theme)['--inth-primary-tint']).toBe(
-			'color-mix(in srgb, rgb(37 99 235) 5.2632%, var(--inth-surface))'
+			'color-mix(in srgb, rgb(37 99 235) 5.2632%, #ffffff)'
 		);
 		// 18% at alpha 128/255 weighs 9.035 against 82: 9.035 / 91.035.
 		expect(themeToVars(theme, true)['--inth-primary-tint']).toBe(
@@ -376,7 +376,11 @@ describe('v6 consent tokens', () => {
 	test.each([
 		['rgba(37, 99, 235, 0.5)', 'rgb(37 99 235) 5.2632%'],
 		['hsl(220 83% 53% / 0.5)', 'rgb(36 102 235) 5.2632%'],
+		['hsla(220, 83%, 53%, .5)', 'rgb(36 102 235) 5.2632%'],
 		['#2563eb00', 'rgb(37 99 235) 0%'],
+		['oklch(0.55 0.2 262 / 50%)', 'oklch(0.55 0.2 262) 5.2632%'],
+		['color(srgb 0.1 0.4 0.9 / .5)', 'color(srgb 0.1 0.4 0.9) 5.2632%'],
+		['lab(50 20 -60 / 0.5)', 'lab(50 20 -60) 5.2632%'],
 	])('[VIS-03] reads the alpha of %s', (primary, mixed) => {
 		expect(
 			themeToVars({ colors: { primary, surface: '#fff' } })[
@@ -385,24 +389,99 @@ describe('v6 consent tokens', () => {
 		).toBe(`color-mix(in srgb, ${mixed}, #fff)`);
 	});
 
-	test('[VIS-03] the primary tint drops the alpha of a colour it cannot read', () => {
-		expect(
-			themeToVars({ colors: { primary: 'oklch(0.55 0.2 262 / 50%)' } })[
-				'--inth-primary-tint'
-			]
-		).toBe(
-			'rgb(from color-mix(in srgb, oklch(0.55 0.2 262 / 50%) 10%, var(--inth-surface)) r g b / 1)'
-		);
-	});
+	test.each([
+		['oklch(0.55 0.2 262 / 50%)', 'var(--inth-surface)'],
+		['var(--brand)', '#ffffff'],
+		['rebeccapurple', 'rgba(255, 255, 255, 0.8)'],
+		['rgb(37 99 235 / 50%)', 'white'],
+		['rgb(from red r g b / 50%)', '#ffffff'],
+		['rgb(37 99 235 / calc(1 / 2))', '#ffffff'],
+	])(
+		'[VIS-03] the primary tint is the plain mix when the alpha of %s or %s is unknown',
+		(primary, surface) => {
+			// Relative colour syntax here would make a browser without it drop
+			// the whole value, and the tint would go transparent; the
+			// `@supports` block in the generated CSS makes it opaque instead.
+			expect(
+				themeToVars({ colors: { primary, surface } })['--inth-primary-tint']
+			).toBe(`color-mix(in srgb, ${primary} 10%, ${surface})`);
+		}
+	);
 
 	test('[VIS-03] the primary tint is opaque over a translucent surface', () => {
+		// 10 against 90 at alpha 0.8, which is 72: 10 / 82.
 		expect(
 			themeToVars({
 				colors: { primary: '#2563eb', surface: 'rgba(255, 255, 255, 0.8)' },
 			})['--inth-primary-tint']
-		).toBe(
-			'rgb(from color-mix(in srgb, #2563eb 10%, rgba(255, 255, 255, 0.8)) r g b / 1)'
+		).toBe('color-mix(in srgb, #2563eb 12.1951%, rgb(255 255 255))');
+		// 10 at alpha 0.5 is 5, against 90 at alpha 0.5, which is 45: 5 / 50.
+		expect(
+			themeToVars({
+				colors: {
+					primary: 'oklch(0.55 0.2 262 / 50%)',
+					surface: 'color(srgb 1 1 1 / .5)',
+				},
+			})['--inth-primary-tint']
+		).toBe('color-mix(in srgb, oklch(0.55 0.2 262) 10%, color(srgb 1 1 1))');
+	});
+
+	test('[VIS-03] generated theme CSS makes a derived tint opaque behind @supports', () => {
+		const css = generateThemeCSS(
+			{
+				colors: { primary: 'oklch(0.55 0.2 262 / 50%)' },
+				dark: { primary: 'var(--brand-dark)', primaryTint: '#101020' },
+			},
+			'system'
 		);
+		const [base, supports] = css.split(
+			'@supports (color: rgb(from red r g b / 1))'
+		);
+
+		// The base value is the plain mix every browser reads.
+		expect(base).toContain(
+			'--inth-primary-tint: color-mix(in srgb, oklch(0.55 0.2 262 / 50%) 10%, var(--inth-surface));'
+		);
+		expect(supports).toContain(
+			':root:root,:host,.inth-theme-root.inth-theme-root{--inth-primary-tint: rgb(from color-mix(in srgb, oklch(0.55 0.2 262 / 50%) 10%, var(--inth-surface)) r g b / 1);}'
+		);
+		// The dark tint is set as written, so nothing overrides it.
+		expect(supports).not.toContain('#101020');
+		expect(supports).not.toContain('prefers-color-scheme');
+		expect(supports?.match(/\{/gu)?.length).toBe(
+			supports?.match(/\}/gu)?.length
+		);
+	});
+
+	test('[VIS-03] generated theme CSS covers the dark and system tints', () => {
+		const theme: Theme = {
+			colors: { primary: 'var(--brand)' },
+			dark: { surface: 'var(--brand-surface)' },
+		};
+		const darkTint =
+			'rgb(from color-mix(in srgb, var(--brand) 18%, var(--brand-surface)) r g b / 1)';
+
+		const system = generateThemeCSS(theme, 'system');
+		expect(system).toContain(
+			`@media(prefers-color-scheme:dark){:root:root,:host,.inth-theme-root.inth-theme-root{--inth-primary-tint: ${darkTint};}}`
+		);
+		expect(system).toContain(
+			`.inth-dark .inth-theme-root.inth-theme-root{--inth-primary-tint: ${darkTint};}`
+		);
+
+		const dark = generateThemeCSS(theme, 'dark');
+		expect(dark).toContain(
+			`:root:root,:host,.inth-theme-root.inth-theme-root{--inth-primary-tint: ${darkTint};}`
+		);
+	});
+
+	test('[VIS-03] generated theme CSS adds no @supports block without a derived tint', () => {
+		expect(generateThemeCSS({ radius: { lg: '4px' } })).not.toContain(
+			'@supports'
+		);
+		expect(
+			generateThemeCSS({ colors: { primary: '#000', primaryTint: '#eef' } })
+		).not.toContain('@supports');
 	});
 
 	test('[VIS-03] the stylesheet tint is opaque where relative colour syntax works', () => {

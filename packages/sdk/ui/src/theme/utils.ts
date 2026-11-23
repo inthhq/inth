@@ -359,45 +359,119 @@ const parseColor = function parseColor(value: string): RGBColor | null {
 	return parseHexColor(value) ?? parseRGBColor(value) ?? parseHSLColor(value);
 };
 
-/**
- * The alpha of a colour {@link parseColor} reads: `#rgba`, `#rrggbbaa`, a
- * fourth comma channel, or the part after `/`. `null` when it is unreadable.
- */
-const parseAlpha = function parseAlpha(value: string): number | null {
+/** The CSS colour functions whose alpha follows a `/`. */
+const SLASH_ALPHA_FUNCTION =
+	/^(?<name>rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\((?<body>[^()]+)\)$/iu;
+
+/** The legacy forms whose alpha may be a fourth comma-separated channel. */
+const COMMA_ALPHA_FUNCTION = /^(?:rgba?|hsla?)$/iu;
+
+/** An alpha as CSS writes it, a number or a percentage, clamped to 0–1. */
+const parseAlphaValue = function parseAlphaValue(value: string): number | null {
 	const trimmed = value.trim();
-	const hex = trimmed.match(/^#(?<digits>[\da-f]+)$/iu)?.groups?.digits;
-	if (hex !== undefined) {
-		if (hex.length === 4) {
-			return Number.parseInt(`${hex[3]}${hex[3]}`, 16) / 255;
-		}
-		return hex.length === 8 ? Number.parseInt(hex.slice(6), 16) / 255 : 1;
-	}
-	const body = trimmed.match(/^(?:rgba?|hsla?)\((?<body>.+)\)$/iu)?.groups
-		?.body;
-	if (body === undefined) {
+	if (!/^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?%?$/iu.test(trimmed)) {
 		return null;
 	}
-	// `rgb(r g b / a)` or `rgba(r, g, b, a)`; neither form means opaque.
-	const [, slashAlpha] = body.split('/');
-	const [, , , commaAlpha] = body.split(',');
-	const alpha = slashAlpha ?? commaAlpha;
-	if (alpha === undefined) {
-		return 1;
-	}
-	const percent = parsePercentage(alpha);
+	const percent = parsePercentage(trimmed);
 	if (percent !== null) {
 		return percent;
 	}
-	const parsed = Number.parseFloat(alpha);
-	return Number.isFinite(parsed) ? clamp(parsed) : null;
+	return clamp(Number.parseFloat(trimmed));
 };
 
-const parseColorWithAlpha = function parseColorWithAlpha(
-	value: string
-): (RGBColor & { alpha: number }) | null {
-	const color = parseColor(value);
-	const alpha = color ? parseAlpha(value) : null;
-	return color && alpha !== null ? { ...color, alpha } : null;
+/** A colour at full opacity, and the alpha it was written with. */
+interface AlphaSplit {
+	alpha: number;
+	opaque: string;
+}
+
+const splitHexAlpha = function splitHexAlpha(hex: string): AlphaSplit | null {
+	const digits = hex.match(/^#(?<digits>[\da-f]+)$/iu)?.groups?.digits;
+	switch (digits?.length) {
+		case 3:
+		case 6: {
+			return { alpha: 1, opaque: hex };
+		}
+		case 4: {
+			return {
+				alpha: Number.parseInt(`${digits[3]}${digits[3]}`, 16) / 255,
+				opaque: hex.slice(0, 4),
+			};
+		}
+		case 8: {
+			return {
+				alpha: Number.parseInt(digits.slice(6), 16) / 255,
+				opaque: hex.slice(0, 7),
+			};
+		}
+		default: {
+			return null;
+		}
+	}
+};
+
+const splitFunctionAlpha = function splitFunctionAlpha(
+	color: string
+): AlphaSplit | null {
+	const groups = color.match(SLASH_ALPHA_FUNCTION)?.groups;
+	const name = groups?.name;
+	const body = groups?.body;
+	if (name === undefined || body === undefined || /\bfrom\b/iu.test(body)) {
+		return null;
+	}
+	const slash = body.split('/');
+	if (slash.length > 2) {
+		return null;
+	}
+	if (slash.length === 2) {
+		const alpha = parseAlphaValue(slash[1] ?? '');
+		return alpha === null
+			? null
+			: { alpha, opaque: `${name}(${(slash[0] ?? '').trim()})` };
+	}
+	const commas = body.split(',');
+	if (commas.length !== 4 || !COMMA_ALPHA_FUNCTION.test(name)) {
+		return { alpha: 1, opaque: color };
+	}
+	const alpha = parseAlphaValue(commas[3] ?? '');
+	// `rgb()` and `hsl()` take the same three channels without the alpha.
+	return alpha === null
+		? null
+		: {
+				alpha,
+				opaque: `${name.replace(/a$/iu, '')}(${commas.slice(0, 3).join(',')})`,
+			};
+};
+
+/**
+ * A colour split into the same colour at full opacity and its alpha, for
+ * any literal colour whose alpha is written in it: hex, a legacy comma
+ * form, or any functional syntax with a trailing `/ <alpha>`, such as
+ * `color(srgb 1 1 1 / .5)` or `oklch(0.6 0.2 262 / 50%)`. `null` when the
+ * alpha cannot be known from the text: a named colour, `var()`, `calc()`,
+ * or relative colour syntax, whose omitted alpha is the origin's.
+ */
+const splitAlpha = function splitAlpha(value: string): AlphaSplit | null {
+	const trimmed = value.trim();
+	return trimmed.startsWith('#')
+		? splitHexAlpha(trimmed)
+		: splitFunctionAlpha(trimmed);
+};
+
+/**
+ * The same colour at full opacity: as written when it already is, else as
+ * `rgb()` when this file can read it, else as the text with its alpha
+ * removed.
+ */
+const opaqueColor = function opaqueColor(
+	value: string,
+	split: AlphaSplit
+): string {
+	if (split.alpha >= 1) {
+		return value;
+	}
+	const color = parseColor(split.opaque);
+	return color ? `rgb(${color.r} ${color.g} ${color.b})` : split.opaque;
 };
 
 /**
@@ -405,11 +479,16 @@ const parseColorWithAlpha = function parseColorWithAlpha(
  * of the mix dropped (§5, VIS-03).
  *
  * The tint sits over the blocking overlay, so it must never let the page
- * show through. When `primary` is a colour this file can read, the alpha
- * is folded into the share instead, which gives the same colour as the
- * relative-colour form without needing a browser that supports it; that
- * also covers the common theme that sets only `primary` and leaves
- * `surface` to the stylesheet. Anything else uses the relative-colour form.
+ * show through. When the alpha of both colours can be read from their
+ * text, a translucent one is mixed at full opacity with its alpha folded
+ * into the share, which gives the same colour as the relative-colour form
+ * without needing a browser that supports it.
+ *
+ * When either alpha is unknown (a named colour, `var()`, a CSS-only
+ * surface) the plain mix is returned. Wrapping it in relative colour
+ * syntax would make a browser without that syntax drop the whole value,
+ * and the tint would go transparent; {@link generateThemeCSS} adds the
+ * opaque form behind `@supports` instead.
  */
 const primaryTint = function primaryTint(
 	primary: string,
@@ -417,22 +496,25 @@ const primaryTint = function primaryTint(
 	isDark: boolean
 ): string {
 	const share = PRIMARY_TINT_SHARE[isDark ? 'dark' : 'light'];
-	const primaryColor = parseColorWithAlpha(primary);
-	const surfaceColor = parseColorWithAlpha(surface);
-	if (!primaryColor || (surfaceColor && surfaceColor.alpha < 1)) {
-		return opaque(tintMix(primary, surface, share));
-	}
-	if (primaryColor.alpha >= 1) {
+	const primarySplit = splitAlpha(primary);
+	const surfaceSplit = splitAlpha(surface);
+	if (
+		!primarySplit ||
+		!surfaceSplit ||
+		(primarySplit.alpha >= 1 && surfaceSplit.alpha >= 1)
+	) {
 		return tintMix(primary, surface, share);
 	}
-	// `color-mix` premultiplies: a primary at alpha `a` weighs `share * a`
-	// against the surface's `100 - share`, and dropping the alpha
-	// renormalises that pair.
-	const weight = share * primaryColor.alpha;
-	const { b, g, r } = primaryColor;
-	return `color-mix(in srgb, rgb(${r} ${g} ${b}) ${formatShare(
-		(weight / (weight + 100 - share)) * 100
-	)}%, ${surface})`;
+	// `color-mix` premultiplies: each colour weighs its share times its
+	// alpha, and dropping the alpha of the result renormalises the pair.
+	const primaryWeight = share * primarySplit.alpha;
+	const surfaceWeight = (100 - share) * surfaceSplit.alpha;
+	if (primaryWeight + surfaceWeight === 0) {
+		return tintMix(primary, surface, share);
+	}
+	return `color-mix(in srgb, ${opaqueColor(primary, primarySplit)} ${formatShare(
+		(primaryWeight / (primaryWeight + surfaceWeight)) * 100
+	)}%, ${opaqueColor(surface, surfaceSplit)})`;
 };
 
 const srgbToLinear = function srgbToLinear(channel: number): number {
@@ -665,21 +747,64 @@ const THEME_OVERRIDE_SELECTORS: ThemeSelectors = {
 	root: ':root:root,:host,.inth-theme-root.inth-theme-root',
 };
 
-const buildThemeCSS = function buildThemeCSS(
+/**
+ * The primary tint {@link themeToVars} derives for a mode, or `undefined`
+ * when the theme sets the tint itself or derives none.
+ */
+const derivedPrimaryTint = function derivedPrimaryTint(
+	theme: Theme,
+	isDark: boolean
+): string | undefined {
+	const colors = isDark ? { ...theme.colors, ...theme.dark } : theme.colors;
+	return colors?.primaryTint
+		? undefined
+		: themeToVars(theme, isDark)['--inth-primary-tint'];
+};
+
+/**
+ * Makes the theme's derived primary tints opaque where the browser supports
+ * relative colour syntax (VIS-03). The base value stays the plain mix, which
+ * a browser without that syntax still reads; wrapped unconditionally, the
+ * whole declaration would be dropped there and the tint would go
+ * transparent. Same selectors, later in the sheet, so this wins.
+ */
+const buildPrimaryTintSupportsCSS = function buildPrimaryTintSupportsCSS(
 	theme: Theme,
 	colorScheme: ThemeColorScheme | undefined,
 	selectors: ThemeSelectors
+): string {
+	const light = derivedPrimaryTint(theme, false);
+	const dark = derivedPrimaryTint(theme, true);
+	const rule = (selector: string, tint: string | undefined): string =>
+		tint ? `${selector}{--inth-primary-tint: ${opaque(tint)};}` : '';
+	const rules =
+		rule(selectors.root, colorScheme === 'dark' ? dark : light) +
+		(colorScheme === 'system' && dark
+			? `@media(prefers-color-scheme:dark){${rule(selectors.root, dark)}}`
+			: '') +
+		rule(selectors.dark, dark);
+	return rules ? `\n@supports (color: rgb(from red r g b / 1)){${rules}}` : '';
+};
+
+const buildThemeCSS = function buildThemeCSS(
+	theme: Theme,
+	colorScheme: ThemeColorScheme | undefined,
+	selectors: ThemeSelectors,
+	{ opaqueTint = false }: { opaqueTint?: boolean } = {}
 ): string {
 	const { root } = selectors;
 	const dark =
 		(colorScheme
 			? serializeThemeVars({ colors: defaultDarkColors }, true)
 			: '') + serializeThemeVars(theme, true);
+	const tintSupports = opaqueTint
+		? buildPrimaryTintSupportsCSS(theme, colorScheme, selectors)
+		: '';
 	// A CSS escape keeps token values intact without letting one close the
 	// surrounding `<style>` element.
 	return `${root}{${colorScheme === 'dark' ? dark : serializeThemeVars(theme, false)}}
 ${colorScheme === 'system' ? `@media(prefers-color-scheme:dark){${root}{${dark}}}` : ''}
-${selectors.dark}{${dark}}
+${selectors.dark}{${dark}}${tintSupports}
 .inth-no-transitions,.inth-no-transitions *,.inth-no-transitions *::before,.inth-no-transitions *::after{transition: none !important;animation: none !important;}`.replace(
 		/</gu,
 		'\\3c '
@@ -699,6 +824,8 @@ ${selectors.dark}{${dark}}
  * document the result overrides them whether it lands before or after the
  * package stylesheet. `:host` keeps the defaults' specificity, so inside a
  * shadow root put the result after the package stylesheet.
+ * A primary tint derived from the theme's `primary` and `surface` is made
+ * opaque behind `@supports`, for browsers with relative colour syntax.
  * Apply `inth-no-transitions` while switching themes to suppress animations.
  * @param colorScheme - Select a scheme before hydration; defaults to root classes.
  * @returns Theme CSS, including system preference rules when requested.
@@ -707,7 +834,9 @@ export const generateThemeCSS = function generateThemeCSS(
 	theme: Theme,
 	colorScheme?: ThemeColorScheme
 ): string {
-	return buildThemeCSS(theme, colorScheme, THEME_OVERRIDE_SELECTORS);
+	return buildThemeCSS(theme, colorScheme, THEME_OVERRIDE_SELECTORS, {
+		opaqueTint: true,
+	});
 };
 
 /**
