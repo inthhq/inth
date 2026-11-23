@@ -17,10 +17,12 @@ import type { AllConsentNames, BannerCommitAction } from '@inth/sdk/engine';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	announcementText,
+	defaultTranslationConfig,
 	resolveCategoryTitle,
+	resolveConsentPresentation,
 	resolvePreferencesRowCopy,
 	resolvePrivacyChoicesDialogCopy,
-	resolvePrivacyChoicesVariant,
+	resolvePrivacyChoicesRegime,
 	resolveVendorTableCopy,
 } from '@inth/sdk/surface-state';
 import {
@@ -40,7 +42,7 @@ import {
 	useCallback,
 	useEffect,
 	useId,
-	useLayoutEffect,
+	useMemo,
 	useRef,
 	useState,
 } from 'react';
@@ -52,6 +54,7 @@ import {
 	CategoryGroup,
 } from '~/components/privacy-choices/category-group';
 import { RightsReceipt } from '~/components/privacy-choices/receipt';
+import { takeReceiptFocus } from '~/components/privacy-choices/receipt-focus';
 import { SaleRightsRow } from '~/components/privacy-choices/rights-row';
 import { usePhoneLayout } from '~/components/privacy-choices/use-phone-layout';
 import { useSurfaceSession } from '~/components/privacy-choices/use-surface-session';
@@ -61,16 +64,26 @@ import {
 	useLegalLinkTranslations,
 } from '~/components/shared/primitives/legal-links';
 import { toSaveUISource } from '~/context/consent-tracking-context';
+import { LocalThemeContext } from '~/context/theme-context';
 import {
 	ConsentDraftProvider,
 	useConsentDraftSlice,
 	useConsentDraftStore,
 } from '~/draft';
-import { useHasConsentUI, useModel, useSnapshot } from '~/hooks';
+import {
+	useHasConsentUI,
+	useModel,
+	usePolicyRule,
+	useSnapshot,
+	useTranslations as useKernelTranslations,
+} from '~/hooks';
+import { useBrowserLayoutEffect } from '~/hooks/use-browser-layout-effect';
 import { useReducedMotion } from '~/hooks/use-reduced-motion';
 import { useResolvedPresentation } from '~/hooks/use-resolved-presentation';
+import { useTextDirection } from '~/hooks/use-text-direction';
 import { useKernel } from '~/kernel-selector';
 import { useUIConfig } from '~/ui-config-context';
+import { inertProps } from '~/utils/inert';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { SurfaceStyles, useSurfaceSheetsReady } from '../shared/surface-styles';
@@ -89,7 +102,14 @@ const VENDOR_SHEET_PREFIX = 'vendors:';
 export interface PrivacyChoicesDialogProps {
 	noStyle?: boolean;
 	disableAnimation?: boolean;
-	/** Override the open state. Defaults to `activeUI === 'dialog'`. */
+	/**
+	 * Control the open state. `true` asks the consent manager to show the
+	 * dialog, so the banner leaves and sheets, Escape and the receipt work
+	 * as for any open dialog; Close and Escape then close it through the
+	 * consent manager, and `open` must turn `false` and back to `true` to
+	 * ask again. `false` hides it whatever the consent manager shows.
+	 * Omitted, it follows `activeUI === 'dialog'`.
+	 */
 	open?: boolean;
 	models?: string[];
 	uiSource?: string;
@@ -155,7 +175,7 @@ const useLayerStatus = function useLayerStatus(
 	text: string
 ): void {
 	const region = useRef<LiveRegion | null>(null);
-	useLayoutEffect(() => {
+	useBrowserLayoutEffect(() => {
 		if (!ref.current) {
 			return;
 		}
@@ -166,7 +186,7 @@ const useLayerStatus = function useLayerStatus(
 			region.current = null;
 		};
 	}, [ref]);
-	useLayoutEffect(() => {
+	useBrowserLayoutEffect(() => {
 		region.current?.render(text);
 	}, [text]);
 };
@@ -326,7 +346,9 @@ const Layer = ({
 					'--consent-dialog-depth': depth,
 				} as CSSProperties
 			}
-			inert={!top || closing}
+			// Only the top layer is exposed; a covered or closing one is not
+			// reachable by keyboard or assistive technology (NEST-03).
+			{...inertProps(!top || closing)}
 			data-testid={nested ? 'consent-dialog-sheet' : 'consent-dialog-card'}
 		>
 			<header
@@ -398,6 +420,12 @@ const Layer = ({
 	);
 };
 
+/** Where focus goes when the dialog's opener is gone (FOC-03). */
+const RETURN_TARGETS = [
+	'[data-testid="privacy-choices-link"]',
+	'[data-testid="consent-dialog-trigger"]',
+];
+
 /** How many frames to wait for a returning banner, which may still be loading. */
 const BANNER_RETURN_FRAMES = 60;
 
@@ -441,6 +469,11 @@ const DialogContent = ({
 	const translations = useTranslations();
 	const { components } = useUIConfig();
 	const presentation = useResolvedPresentation();
+	const policy = usePolicyRule();
+	const kernelTranslations = useKernelTranslations();
+	const textDirection = useTextDirection(
+		kernelTranslations?.language ?? defaultTranslationConfig.defaultLanguage
+	);
 	const { session, state } = useSurfaceSession();
 	const draft = useConsentDraftStore();
 	const hasChanges = useConsentDraftSlice(
@@ -468,38 +501,89 @@ const DialogContent = ({
 	const preferencesPanelRef = useRef<HTMLDivElement>(null);
 	const opener = useRef<Element | null>(null);
 
-	const variant = resolvePrivacyChoicesVariant(snapshot.policyRule);
-	const eu = variant === 'choice';
+	// The model and the US markers decide the body, never the prompt: an EU
+	// opt-in policy that shows no banner still gets the EU dialog.
+	const eu = resolvePrivacyChoicesRegime(snapshot.policyRule) === 'eu';
 	const activeUI = snapshot.activeUI ?? 'none';
 	const modelAllowed = !models || model === null || models.includes(model);
+	// A controlled `open` goes through the consent manager, so the session,
+	// sheets and Escape follow this dialog and the banner hands over to it.
+	// It asks once each time it turns true; Close and Escape then close the
+	// dialog as usual.
+	const openRequested = useRef(false);
+	useBrowserLayoutEffect(() => {
+		if (openProp !== true) {
+			openRequested.current = false;
+			return;
+		}
+		if (openRequested.current || !hasConsentUI || !modelAllowed) {
+			return;
+		}
+		openRequested.current = true;
+		if (kernel.getSnapshot().activeUI !== 'dialog') {
+			showConsentSurface(kernel, 'dialog');
+		}
+	}, [openProp, hasConsentUI, modelAllowed, kernel]);
 	const open =
-		(openProp ?? activeUI === 'dialog') &&
+		openProp !== false &&
+		activeUI === 'dialog' &&
 		hasConsentUI &&
 		modelAllowed &&
 		sheetsReady;
-	// Edge style applies to phone sheets too, whatever the prompt's
-	// presentation (a Card itself ignores it).
-	const edgeStyle = presentation?.prompt?.edgeStyle ?? 'inset';
+	// Phone sheets take the prompt's resolved phone edge style, which the
+	// policy and a Card's own rule (always inset) have already settled.
+	const container = useMemo(
+		() =>
+			resolveConsentPresentation({
+				policy,
+				presentation,
+				surface: 'prompt',
+			}).container,
+		[policy, presentation]
+	);
+	const edgeStyle = container?.phone.edgeStyle ?? 'inset';
 	const saveSource = toSaveUISource(uiSource ?? 'dialog');
 	const copy = resolvePrivacyChoicesDialogCopy(translations, { eu });
 	const sale = resolveSaleRight(snapshot);
 	const gpcLocked = sale.available && sale.lock === 'gpc-active';
+	// The categories on under Preferences, outside the sale right's.
+	const preferencesCount = useConsentDraftSlice(
+		draft,
+		(draftState) =>
+			draftState.displayedCategories.filter(
+				(name) =>
+					name !== 'necessary' &&
+					name !== sale.category &&
+					draftState.values[name]
+			).length
+	);
 
 	// The sheet on top, kept for its exit while it animates out (NEST-03).
 	const topSheet = state.sheets[state.sheets.length - 1] ?? null;
 	const [shownSheet, setShownSheet] = useState<ShownSheet | null>(null);
-	if (topSheet && shownSheet?.id !== topSheet.id) {
+	// Nothing is left to animate under reduced motion, on desktop or in a
+	// closed dialog, so a sheet leaves at once there (NEST-06).
+	const exitsAtOnce = reducedMotion || !phone || !open;
+	if (topSheet && (shownSheet?.id !== topSheet.id || shownSheet.closing)) {
+		// A sheet reopened while it animates out shows again at once, and
+		// its exit timer goes with the closing state (NEST-03).
 		setShownSheet({ closing: false, id: topSheet.id });
-	} else if (!topSheet && shownSheet && !shownSheet.closing) {
-		setShownSheet(reducedMotion ? null : { ...shownSheet, closing: true });
+	} else if (!topSheet && shownSheet && (exitsAtOnce || !shownSheet.closing)) {
+		setShownSheet(exitsAtOnce ? null : { ...shownSheet, closing: true });
 	}
+	const exitingSheet = shownSheet?.closing ? shownSheet : null;
 	useEffect(() => {
-		if (!shownSheet?.closing) {
+		if (!exitingSheet) {
 			return;
 		}
-		const timer = setTimeout(() => setShownSheet(null), SHEET_EXIT_MS);
+		// Clears only the exit it was set for, never a sheet shown since.
+		const timer = setTimeout(
+			() =>
+				setShownSheet((current) => (current === exitingSheet ? null : current)),
+			SHEET_EXIT_MS
+		);
 		return () => clearTimeout(timer);
-	}, [shownSheet]);
+	}, [exitingSheet]);
 
 	// Keep the draft in step with the dialog: unsaved EU edits are dropped
 	// whenever it closes (EU-02).
@@ -515,7 +599,7 @@ const DialogContent = ({
 
 	// Open: the page is inert, focus moves to the title and is trapped in
 	// the top layer, and returns to the opener on close (FOC-01..03).
-	useLayoutEffect(() => {
+	useBrowserLayoutEffect(() => {
 		const backdrop = backdropRef.current;
 		const main = mainRef.current;
 		if (!(open && backdrop && main)) {
@@ -523,8 +607,16 @@ const DialogContent = ({
 		}
 		opener.current = document.activeElement;
 		const release = attachPageBlock(backdrop);
+		// Back from an opt-out (after its revocation reload, or from a
+		// one-click opt-out link), the dialog opens on the receipt that
+		// confirms it.
+		const receipt = takeReceiptFocus(kernel)
+			? main.querySelector<HTMLElement>(
+					'[data-testid="consent-dialog-receipt"][data-open="true"]'
+				)
+			: null;
 		const untrap = attachTopLayerTrap(main, {
-			initialFocus: mainTitleRef.current,
+			initialFocus: receipt ?? mainTitleRef.current,
 			returnFocus: () => {
 				const target = opener.current;
 				opener.current = null;
@@ -533,11 +625,16 @@ const DialogContent = ({
 				if (kernel.getSnapshot().activeUI === 'banner') {
 					focusReturningBanner();
 				}
-				return target instanceof HTMLElement && target.isConnected
-					? target
-					: document.querySelector<HTMLElement>(
-							'[data-testid="privacy-choices-link"]'
-						);
+				if (target instanceof HTMLElement && target.isConnected) {
+					return target;
+				}
+				for (const selector of RETURN_TARGETS) {
+					const fallback = document.querySelector<HTMLElement>(selector);
+					if (fallback) {
+						return fallback;
+					}
+				}
+				return null;
 			},
 		});
 		return () => {
@@ -550,7 +647,7 @@ const DialogContent = ({
 	// A sheet is the top layer while it shows: it holds focus, and closing
 	// it returns focus to the row that opened it (NEST-04).
 	const sheetOpen = Boolean(shownSheet && !shownSheet.closing);
-	useLayoutEffect(() => {
+	useBrowserLayoutEffect(() => {
 		const sheet = sheetRef.current;
 		if (!(open && sheetOpen && sheet)) {
 			return;
@@ -707,14 +804,6 @@ const DialogContent = ({
 		/>
 	);
 
-	const preferencesCount = draft
-		.getState()
-		.displayedCategories.filter(
-			(name) =>
-				name !== 'necessary' &&
-				name !== saleCategory &&
-				draft.getState().values[name]
-		).length;
 	const preferencesCopy = resolvePreferencesRowCopy(
 		translations,
 		preferencesCount
@@ -748,7 +837,10 @@ const DialogContent = ({
 						{preferencesCopy.summary} · {preferencesCopy.onCount}
 					</span>
 				</span>
-				<span className={cx(noStyle, styles.chevron)}>
+				<span
+					className={cx(noStyle, styles.chevron)}
+					data-direction={phone ? 'end' : 'down'}
+				>
 					<Chevron direction={phone ? 'end' : 'down'} />
 				</span>
 			</button>
@@ -758,7 +850,7 @@ const DialogContent = ({
 					className={cx(noStyle, styles.disclosure)}
 					id={preferencesPanelId}
 					data-open={preferencesOpen}
-					inert={!preferencesOpen}
+					{...inertProps(!preferencesOpen)}
 					data-testid="consent-dialog-preferences-panel"
 				>
 					<div className={cx(noStyle, styles.disclosureInner)}>
@@ -976,6 +1068,7 @@ const DialogContent = ({
 				data-regime={eu ? 'eu' : 'us'}
 				data-layout={phone ? 'phone' : 'desktop'}
 				data-testid="consent-dialog-root"
+				dir={textDirection}
 			>
 				<Layer
 					layerRef={mainRef}
@@ -1013,8 +1106,18 @@ const DialogContent = ({
  *
  * @internal
  */
-export const PrivacyChoicesDialog = (props: PrivacyChoicesDialogProps) => (
-	<ConsentDraftProvider>
-		<DialogContent {...props} />
-	</ConsentDraftProvider>
-);
+export const PrivacyChoicesDialog = (props: PrivacyChoicesDialogProps) => {
+	const { noStyle, disableAnimation } = props;
+	// The stock buttons read `noStyle` from here, as under the classic root.
+	const theme = useMemo(
+		() => ({ disableAnimation, noStyle }),
+		[disableAnimation, noStyle]
+	);
+	return (
+		<LocalThemeContext.Provider value={theme}>
+			<ConsentDraftProvider>
+				<DialogContent {...props} />
+			</ConsentDraftProvider>
+		</LocalThemeContext.Provider>
+	);
+};

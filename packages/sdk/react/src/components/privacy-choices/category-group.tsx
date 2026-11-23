@@ -42,6 +42,7 @@ import { useVendorChoice } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
 import { useKernel, useKernelSelector } from '~/kernel-selector';
 import { useUIConfig } from '~/ui-config-context';
+import { inertProps } from '~/utils/inert';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { ChoiceSwitch } from './switch';
@@ -511,6 +512,9 @@ export const CategoryGroup = ({
 		noStyle,
 	});
 
+	// A sheet comes in from the end; an accordion opens downwards.
+	const chevronDirection = vendorMode === 'sheet' ? 'end' : 'down';
+
 	return (
 		<div
 			{...groupProps}
@@ -638,10 +642,11 @@ export const CategoryGroup = ({
 								</span>
 								<span className={cx(noStyle, styles.vendorMeta)}>
 									{triggerCopy.onCount}
-									<span className={cx(noStyle, styles.chevron)}>
-										<Chevron
-											direction={vendorMode === 'sheet' ? 'end' : 'down'}
-										/>
+									<span
+										className={cx(noStyle, styles.chevron)}
+										data-direction={chevronDirection}
+									>
+										<Chevron direction={chevronDirection} />
 									</span>
 								</span>
 							</button>
@@ -658,7 +663,7 @@ export const CategoryGroup = ({
 								className={cx(noStyle, styles.disclosure)}
 								id={tablePanelId}
 								data-open={open}
-								inert={!open}
+								{...inertProps(!open)}
 							>
 								<div className={cx(noStyle, styles.disclosureInner)}>
 									{table}

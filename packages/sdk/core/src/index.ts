@@ -308,8 +308,11 @@ export {
 export {
 	PROMPT_VARIANT_DEFAULT_POSITION,
 	PROMPT_VARIANT_POSITIONS,
+	resolveConsentDesign,
 	resolveConsentPresentation,
 } from './libs/policy-actions';
+export { resolvePrivacyChoicesLink } from './libs/privacy-choices-link';
+export type { PrivacyChoicesLinkState } from './libs/privacy-choices-link';
 export {
 	DEFAULT_CONSENT_CONTAINER,
 	PHONE_LAYOUT_MAX_WIDTH,
@@ -453,6 +456,7 @@ export {
 	resolvePrivacyChoicesBannerCopy,
 	resolvePrivacyChoicesCopy,
 	resolvePrivacyChoicesDialogCopy,
+	resolvePrivacyChoicesRegime,
 	resolvePrivacyChoicesVariant,
 	resolvePromptCopy,
 	resolveReceiptScope,

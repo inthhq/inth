@@ -23,7 +23,12 @@ export type { HasCondition } from './libs/has';
 export { deniedVendorIds } from './modules/vendor-denial';
 export { vendorsListedUnder } from './libs/vendor-listing';
 export { IABUnavailableError, policyNeedsIAB } from './libs/iab-unavailable';
-export { resolveConsentPresentation } from './libs/policy-actions';
+export {
+	resolveConsentDesign,
+	resolveConsentPresentation,
+} from './libs/policy-actions';
+export { resolvePrivacyChoicesLink } from './libs/privacy-choices-link';
+export type { PrivacyChoicesLinkState } from './libs/privacy-choices-link';
 export {
 	PHONE_LAYOUT_MAX_WIDTH,
 	PHONE_LAYOUT_QUERY,
@@ -48,6 +53,7 @@ export {
 	resolvePrivacyChoicesBannerCopy,
 	resolvePrivacyChoicesCopy,
 	resolvePrivacyChoicesDialogCopy,
+	resolvePrivacyChoicesRegime,
 	resolvePrivacyChoicesVariant,
 	resolvePromptCopy,
 	resolveReceiptScope,

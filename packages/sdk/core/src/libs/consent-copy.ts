@@ -726,6 +726,17 @@ export type PrivacyChoicesPromptVariant =
 	| 'none';
 
 /**
+ * Whether a policy carries a US marker: the `opt-out` right, or Global
+ * Privacy Control handling, which only the US presets set.
+ */
+const hasUSMarker = (policy: {
+	rights: readonly PolicyRight[];
+	privacySignals?: { gpc?: { denyCategories?: readonly string[] } };
+}): boolean =>
+	policy.rights.includes('opt-out') ||
+	(policy.privacySignals?.gpc?.denyCategories?.length ?? 0) > 0;
+
+/**
  * The Privacy Choices prompt's first layer for the active policy.
  *
  * An opt-in choice asks in US terms when the policy carries a US marker:
@@ -750,10 +761,28 @@ export const resolvePrivacyChoicesVariant =
 		if (policy.prompt === 'notice') {
 			return 'notice';
 		}
-		const usMarker =
-			policy.rights.includes('opt-out') ||
-			(policy.privacySignals?.gpc?.denyCategories?.length ?? 0) > 0;
-		return policy.model === 'opt-in' && usMarker ? 'us-consent' : 'choice';
+		return policy.model === 'opt-in' && hasUSMarker(policy)
+			? 'us-consent'
+			: 'choice';
+	};
+
+/**
+ * Which body the "Your Privacy Choices" dialog shows: `'us'`, the statutory
+ * rights, a receipt and Preferences that apply at once; or `'eu'`, the
+ * cookie categories with a staged Save.
+ *
+ * It reads the model and the US markers, never the prompt: an opt-out
+ * policy, or an opt-in policy with the `opt-out` right or a GPC mapping, is
+ * US. An EU opt-in policy that shows no banner (`prompt: 'none'`) still
+ * gets the EU dialog when it opens.
+ */
+export const resolvePrivacyChoicesRegime =
+	function resolvePrivacyChoicesRegime(policy: {
+		model: string;
+		rights: readonly PolicyRight[];
+		privacySignals?: { gpc?: { denyCategories?: readonly string[] } };
+	}): 'us' | 'eu' {
+		return policy.model === 'opt-out' || hasUSMarker(policy) ? 'us' : 'eu';
 	};
 
 /** Every label and sentence a Privacy Choices banner renders. */

@@ -33,6 +33,7 @@ import {
 	markPendingOptOutConfirmation,
 	watchPendingOptOutConfirmation,
 } from '../../surface-actions/opt-out-reload';
+import { pressSaleRight } from '../../surface-session/commands';
 import type {
 	KernelConfig,
 	KernelVendorsState,
@@ -1003,6 +1004,53 @@ describe('opt-out confirmation across a revocation reload', () => {
 		const stopThird = watchPendingOptOutConfirmation(third);
 		expect(isOptOutConfirmationOpen(third)).toBe(false);
 		stopThird();
+	});
+
+	const createSaleRightKernel = (config: Partial<KernelConfig> = {}) =>
+		createKernel({
+			consentCategories: ['necessary', 'marketing', 'measurement'],
+			initialPolicyResolution: matchedResolution(
+				optOutRule({
+					categories: ['marketing', 'measurement'],
+					privacySignals: { gpc: { denyCategories: ['marketing'] } },
+				})
+			),
+			...config,
+		});
+
+	it('[RIGHT-08] a Privacy Choices opt-out sets the marker when it reloads, so the next load opens the receipt', async () => {
+		const first = createSaleRightKernel();
+		const { reload } = watch(first);
+		first.set.activeUI('dialog');
+
+		const { outcome, result } = pressSaleRight(first, 'protect');
+		expect(outcome).toBe('apply-protect');
+		// The dialog stays open on this document: no flash of anything else.
+		expect(isOptOutConfirmationOpen(first)).toBe(false);
+		expect(first.getSnapshot().activeUI).toBe('dialog');
+		expect(hasPendingOptOutConfirmation()).toBe(true);
+
+		await result;
+		await vi.runAllTimersAsync();
+		// The reload is not delayed for the marker.
+		expect(reload).toHaveBeenCalledOnce();
+
+		const second = createSaleRightKernel({
+			initialRecords: { optOut: first.getSnapshot().optOut ?? undefined },
+		});
+		const stop = watchPendingOptOutConfirmation(second);
+		expect(isOptOutConfirmationOpen(second)).toBe(true);
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+		stop();
+	});
+
+	it('[RIGHT-08] a Privacy Choices opt-out sets no marker when no reload is due', async () => {
+		const kernel = createSaleRightKernel();
+		watch(kernel, { enabled: false });
+		kernel.set.activeUI('dialog');
+		await pressSaleRight(kernel, 'protect').result;
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+		expect(isOptOutConfirmationOpen(kernel)).toBe(false);
 	});
 
 	it('opens confirmation immediately when reload is disabled or nothing granted was turned off', async () => {

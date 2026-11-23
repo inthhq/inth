@@ -462,9 +462,9 @@ const resolvePromptContainer = function resolvePromptContainer(
  * `container` from the host, in `presentation` or in a component override,
  * opts in to `privacy-choices`, since only that design reads it.
  */
-const resolveDesign = function resolveDesign(
+export const resolveConsentDesign = function resolveConsentDesign(
 	presentation: ConsentPresentation | undefined,
-	override: PromptPresentation | PreferencesPresentation | undefined
+	override?: PromptPresentation | PreferencesPresentation
 ): ConsentDesign {
 	const requested = presentation?.design;
 	if (requested === 'classic' || requested === 'privacy-choices') {
@@ -586,7 +586,7 @@ export const resolveConsentPresentation =
 				input.policy,
 				geometry
 			),
-			design: resolveDesign(input.presentation, input.override),
+			design: resolveConsentDesign(input.presentation, input.override),
 			diagnostics,
 			direction,
 			equivalentActions,

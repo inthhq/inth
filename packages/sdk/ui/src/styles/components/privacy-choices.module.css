@@ -658,8 +658,16 @@
 			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1));
 	}
 
-	[aria-expanded='true'] > .chevron {
+	/* The chevron sits inside the trigger's label spans, not always as a
+	   direct child. */
+	[aria-expanded='true'] .chevron {
 		transform: rotate(180deg);
+	}
+
+	/* A chevron that points to where a sheet comes from follows the
+	   reading direction. */
+	.chevron[data-direction='end']:dir(rtl) {
+		transform: scaleX(-1);
 	}
 
 	.receiptDetails {

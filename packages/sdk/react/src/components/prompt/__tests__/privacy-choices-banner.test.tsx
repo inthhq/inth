@@ -428,7 +428,12 @@ describe('card:', () => {
 		expect(getComputedStyle(must('consent-banner-announcement')).position).toBe(
 			'absolute'
 		);
-		expect(document.activeElement).toBe($('consent-dialog-trigger'));
+		// The "Your Privacy Choices" link stays on the page under an opt-in
+		// policy, with no opt-out icon: the way back in.
+		const link = must('privacy-choices-link');
+		expect(document.activeElement).toBe(link);
+		expect(link).toHaveTextContent('Your Privacy Choices');
+		expect(link.querySelector('svg')).toBeNull();
 		expect(probe.snapshot?.explicitChoice?.categories?.marketing?.value).toBe(
 			false
 		);
@@ -805,7 +810,7 @@ describe('blocking:', () => {
 		expect(pageAction().closest('[inert]')).toBeNull();
 		expect(document.body.style.overflow).not.toBe('hidden');
 		await vi.waitFor(() =>
-			expect(document.activeElement).toBe($('consent-dialog-trigger'))
+			expect(document.activeElement).toBe($('privacy-choices-link'))
 		);
 	});
 });

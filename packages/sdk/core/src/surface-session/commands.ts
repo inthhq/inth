@@ -13,7 +13,9 @@
  */
 
 import type { AllConsentNames } from '../consent/consent-types';
+import { resolveOptOutState } from '../libs/opt-out-state';
 import type { PreferenceDraft } from '../preference-draft';
+import { markOptOutReloadIfDue } from '../surface-actions/opt-out';
 import { beginAction } from '../surface-actions/rules';
 import { saveConsentSurface, settleSurface } from '../surface-actions/save';
 import type {
@@ -218,8 +220,30 @@ export const pressSaleRight = function pressSaleRight(
 			{ [category]: value },
 			{ rightsControl: true, uiSource }
 		);
-	const optOut = () =>
-		kernel.commands.optOut({ rightsControl: true, uiSource });
+	// The opt-out may reload the page (`reloadOnConsentRevoked`). The
+	// marker brings the visitor back to the receipt on the next document,
+	// as the one-click opt-out does; without it they would see nothing.
+	const optOut = () => {
+		const result = kernel.commands.optOut({ rightsControl: true, uiSource });
+		const after = kernel.getSnapshot();
+		if (resolveOptOutState(after).honored) {
+			markOptOutReloadIfDue(kernel, snapshot, after);
+		} else {
+			// A deferred kernel records once its engine settles, before the
+			// reload, which waits for the command to complete.
+			// oxlint-disable-next-line promise/prefer-await-to-then -- The press must not wait on the network.
+			void result.then(
+				(recorded) => {
+					const settled = kernel.getSnapshot();
+					if (recorded.ok && resolveOptOutState(settled).honored) {
+						markOptOutReloadIfDue(kernel, snapshot, settled);
+					}
+				},
+				() => undefined
+			);
+		}
+		return result;
+	};
 	switch (outcome) {
 		case 'apply-protect': {
 			session.closeConfirmation();

@@ -15,6 +15,7 @@ import { useTranslations } from '~/component-hooks/use-translations';
 import { useSnapshot } from '~/hooks';
 import { useKernel } from '~/kernel-selector';
 import { useUIConfig } from '~/ui-config-context';
+import { inertProps } from '~/utils/inert';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 import {
@@ -182,9 +183,11 @@ export const RightsReceipt = ({
 		<div
 			{...rootProps}
 			data-open={receipt.show}
-			inert={!receipt.show}
+			{...inertProps(!receipt.show)}
 			data-receipt-kind={receipt.show ? receipt.kind : undefined}
 			data-testid="consent-dialog-receipt"
+			// Focusable from code only: the dialog opens on it after an opt-out.
+			tabIndex={-1}
 		>
 			<div className={cx(noStyle, styles.disclosureInner)}>
 				<div className={cx(noStyle, styles.receipt)}>
@@ -211,7 +214,7 @@ export const RightsReceipt = ({
 						className={cx(noStyle, styles.disclosure)}
 						id={ids.details}
 						data-open={detailsOpen}
-						inert={!detailsOpen}
+						{...inertProps(!detailsOpen)}
 						data-testid="consent-dialog-receipt-details"
 					>
 						<div className={cx(noStyle, styles.disclosureInner)}>
