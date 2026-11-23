@@ -200,7 +200,7 @@ export const vendorOpenerKey = (category: AllConsentNames): string =>
 						<button
 							inth-choice-switch
 							[checked]="shown()(vendor)"
-							size="small"
+							[size]="'small'"
 							[attr.aria-labelledby]="nameId(vendor)"
 							[attr.aria-describedby]="
 								vendor.description ? nameId(vendor) + '-purpose' : null

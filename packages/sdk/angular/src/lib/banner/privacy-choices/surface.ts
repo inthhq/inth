@@ -58,8 +58,10 @@ import { ConsentTheme } from '../../core/consent-theme';
 import { registerDialogWarmer, warmDialog } from '../../core/dialog-warming';
 import { NoStyleScope, resolveNoStyle } from '../../core/no-style';
 import { uniqueId } from '../../core/unique-id';
+import { CategoryGroup } from '../../privacy-choices/category-group';
 import { ChoiceButton } from '../../privacy-choices/choice-button';
 import { bool, cx, slotPart } from '../../privacy-choices/parts';
+import { SaleRightsRow } from '../../privacy-choices/rights-row';
 import { SurfaceDraft } from '../../privacy-choices/surface-draft';
 import {
 	injectPhoneLayout,
@@ -69,7 +71,7 @@ import {
 import { BrandMarkIcon } from '../../shared/icons';
 import { InlineLegalLinks } from '../../shared/inline-legal-links';
 import type { LegalLinkSelection } from '../../shared/inline-legal-links';
-import { PrivacyChoicesPanel } from './panel';
+import { PrivacyChoicesPanel, PrivacyChoicesPreferences } from './panel';
 import type {
 	PresentationModule,
 	PrivacyChoicesBannerOptions,
@@ -134,7 +136,10 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 		ChoiceButton,
 		InlineLegalLinks,
 		NgTemplateOutlet,
+		CategoryGroup,
 		PrivacyChoicesPanel,
+		PrivacyChoicesPreferences,
+		SaleRightsRow,
 	],
 	providers: [NoStyleScope, SurfaceDraft],
 	selector: 'inth-pc-surface',
@@ -354,9 +359,9 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 										/>
 										<button
 											inth-choice-button
-											consentAction="save"
+											[consentAction]="'save'"
 											[primary]="true"
-											slot="consentBannerSaveButton"
+											[slot]="'consentBannerSaveButton'"
 											data-testid="consent-banner-save-button"
 											(click)="commit('save')"
 										>
@@ -419,12 +424,35 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 				data-testid="consent-banner-body"
 			>
 				@defer (when wantPanel(); prefetch when warmPanel()) {
-					<inth-pc-panel
-						[variant]="variant()"
-						[idPrefix]="idPrefix"
-						[uiSource]="'banner'"
+					<ng-container
+						inthPcPanel
+						#panel="inthPcPanel"
 						(ready)="panelReady.set(true)"
-					/>
+					>
+						@if (variant() === 'choice') {
+							<div
+								inth-pc-category-group
+								[idPrefix]="idPrefix"
+								[testIdPrefix]="'consent-banner'"
+							></div>
+						} @else if (variant() === 'us-consent' || variant() === 'notice') {
+							@if (panel.saleAvailable()) {
+								<section
+									inth-pc-rights-row
+									[idPrefix]="idPrefix"
+									[testIdPrefix]="'consent-banner'"
+									[uiSource]="'banner'"
+									[slot]="'consentBannerRightsRow'"
+								></section>
+							}
+							@if (variant() === 'us-consent') {
+								<div
+									inth-pc-preferences
+									[idPrefix]="idPrefix"
+								></div>
+							}
+						}
+					</ng-container>
 				}
 			</div>
 		</ng-template>
@@ -460,7 +488,7 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 			} @else {
 				<button
 					inth-choice-button
-					consentAction="customize"
+					[consentAction]="'customize'"
 					[primary]="true"
 					[attr.aria-expanded]="bool(expanded())"
 					[attr.aria-controls]="inBar ? null : ids.panel"
@@ -510,7 +538,7 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 		>
 			<button
 				inth-choice-button
-				consentAction="reject"
+				[consentAction]="'reject'"
 				data-testid="consent-banner-reject-button"
 				(click)="commit('refuse')"
 			>
@@ -523,7 +551,7 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 		>
 			<button
 				inth-choice-button
-				consentAction="accept"
+				[consentAction]="'accept'"
 				data-testid="consent-banner-accept-button"
 				(click)="commit('allow')"
 			>
@@ -533,7 +561,7 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 		<ng-template #okTemplate>
 			<button
 				inth-choice-button
-				consentAction="dismiss"
+				[consentAction]="'dismiss'"
 				[primary]="true"
 				data-testid="consent-banner-dismiss-button"
 				(click)="acknowledge()"

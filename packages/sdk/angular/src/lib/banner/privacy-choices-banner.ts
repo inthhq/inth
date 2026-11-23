@@ -50,7 +50,8 @@ export class PrivacyChoicesBanner {
 	readonly options = input.required<PrivacyChoicesBannerOptions>();
 
 	private readonly outlet = viewChild('outlet', { read: ViewContainerRef });
-	readonly #owed = signal(false);
+	/** Whether a choice was owed while this design was on the page. */
+	readonly #owed = signal(this.#consent.activeUI() === 'banner');
 	/** The presentation the prompt loaded with; a later container keeps it. */
 	readonly #type = computed(() => this.options().container.desktop.type);
 	/** The presentation loading or loaded, or `null` after a failed load. */
@@ -60,10 +61,19 @@ export class PrivacyChoicesBanner {
 	#surface: ComponentRef<PrivacyChoicesSurfaceType> | undefined;
 
 	constructor() {
-		effect(() => {
-			if (this.#consent.activeUI() === 'banner') {
-				this.#owed.set(true);
-			}
+		// The kernel's own listener sees every state, where an effect sees
+		// only the last one before it runs: a page that opens the dialog as
+		// soon as the prompt is owed would otherwise skip the prompt, and
+		// with it the page's announcement region, which React keeps.
+		effect((onCleanup) => {
+			const kernel = this.#consent.kernel();
+			const follow = (activeUI: unknown) => {
+				if (activeUI === 'banner') {
+					this.#owed.set(true);
+				}
+			};
+			untracked(() => follow(kernel.getSnapshot().activeUI));
+			onCleanup(kernel.subscribe((snapshot) => follow(snapshot.activeUI)));
 		});
 		// The classic banner stays off the page under this design, so a
 		// failed load must not be the end: the next sync (new options) or

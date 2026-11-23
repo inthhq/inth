@@ -180,10 +180,10 @@ interface ShownSheet {
 						<div
 							inth-pc-category-group
 							[idPrefix]="prefix + '-main'"
-							testIdPrefix="consent-dialog"
+							[testIdPrefix]="'consent-dialog'"
 							[vendors]="phone() ? 'sheet' : 'accordion'"
-							slot="consentDialogCategoryGroup"
-							vendorTableSlot="consentDialogVendorTable"
+							[slot]="'consentDialogCategoryGroup'"
+							[vendorTableSlot]="'consentDialogVendorTable'"
 							(openVendors)="openVendors($event)"
 						></div>
 					} @else {
@@ -191,16 +191,16 @@ interface ShownSheet {
 							<section
 								inth-pc-rights-row
 								[idPrefix]="prefix + '-main'"
-								testIdPrefix="consent-dialog"
-								uiSource="dialog"
-								slot="consentDialogRightsRow"
+								[testIdPrefix]="'consent-dialog'"
+								[uiSource]="'dialog'"
+								[slot]="'consentDialogRightsRow'"
 								(recorded)="showCue()"
 							></section>
 						}
 						<div
 							inth-pc-receipt
 							[idPrefix]="prefix + '-main'"
-							slot="consentDialogReceipt"
+							[slot]="'consentDialogReceipt'"
 						></div>
 						<button
 							type="button"
@@ -274,11 +274,11 @@ interface ShownSheet {
 							<div
 								inth-pc-category-group
 								[idPrefix]="prefix + '-sheet'"
-								testIdPrefix="consent-dialog"
+								[testIdPrefix]="'consent-dialog'"
 								[only]="category"
-								vendors="inline"
-								slot="consentDialogCategoryGroup"
-								vendorTableSlot="consentDialogVendorTable"
+								[vendors]="'inline'"
+								[slot]="'consentDialogCategoryGroup'"
+								[vendorTableSlot]="'consentDialogVendorTable'"
 							></div>
 						} @else {
 							<ng-container
@@ -297,13 +297,13 @@ interface ShownSheet {
 			<div
 				inth-pc-category-group
 				[idPrefix]="idPrefix"
-				testIdPrefix="consent-dialog"
+				[testIdPrefix]="'consent-dialog'"
 				[exclude]="usExclude()"
-				apply="immediate"
-				uiSource="dialog"
-				vendors="accordion"
-				slot="consentDialogCategoryGroup"
-				vendorTableSlot="consentDialogVendorTable"
+				[apply]="'immediate'"
+				[uiSource]="'dialog'"
+				[vendors]="'accordion'"
+				[slot]="'consentDialogCategoryGroup'"
+				[vendorTableSlot]="'consentDialogVendorTable'"
 				(applied)="showCue()"
 			>
 				@if (saleCategory()) {
@@ -311,7 +311,7 @@ interface ShownSheet {
 						inth-pc-advertising-row
 						[on]="saleOn()"
 						[idPrefix]="prefix"
-						testId="consent-dialog-advertising-row"
+						[testId]="'consent-dialog-advertising-row'"
 					></div>
 				}
 			</div>
@@ -337,9 +337,9 @@ interface ShownSheet {
 				@if (eu()) {
 					<button
 						inth-choice-button
-						consentAction="reject"
-						variant="neutral"
-						mode="stroke"
+						[consentAction]="'reject'"
+						[variant]="'neutral'"
+						[mode]="'stroke'"
 						data-testid="consent-dialog-reject-all"
 						(click)="commit('refuse')"
 					>
@@ -347,9 +347,9 @@ interface ShownSheet {
 					</button>
 					<button
 						inth-choice-button
-						consentAction="accept"
-						variant="neutral"
-						mode="stroke"
+						[consentAction]="'accept'"
+						[variant]="'neutral'"
+						[mode]="'stroke'"
 						data-testid="consent-dialog-accept-all"
 						(click)="commit('allow')"
 					>
@@ -358,9 +358,9 @@ interface ShownSheet {
 					<!-- Enabled only once what would run differs from the record (EU-03). -->
 					<button
 						inth-choice-button
-						consentAction="save"
+						[consentAction]="'save'"
 						[primary]="true"
-						slot="consentDialogSaveButton"
+						[slot]="'consentDialogSaveButton'"
 						[disabled]="!hasChanges()"
 						data-testid="consent-dialog-save-button"
 						(click)="commit('save')"
@@ -416,7 +416,7 @@ interface ShownSheet {
 			<button
 				inth-choice-button
 				[primary]="true"
-				slot="consentDialogDoneButton"
+				[slot]="'consentDialogDoneButton'"
 				[baseClass]="styles.done"
 				[attr.data-cue]="cue > 0 ? 'true' : null"
 				[attr.data-testid]="testId"

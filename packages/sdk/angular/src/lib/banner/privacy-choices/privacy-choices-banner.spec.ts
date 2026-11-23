@@ -9,7 +9,12 @@
  * browser-mode React suite and the parity runner. Everything about markup,
  * ARIA, focus, keys and what is recorded is checked here.
  */
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	effect,
+	inject,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type {
 	ConsentContainer,
@@ -54,11 +59,31 @@ const RULES: Record<Region, Partial<PolicyRule>> = {
 const bannerInputs: {
 	layout?: ConsentBannerLayout;
 	noStyle?: boolean;
+	openDialog?: boolean;
 } = {};
+
+/** Opens the dialog once the page renders, as a page link would. */
+@Component({
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	selector: 'test-open-dialog',
+	template: '',
+})
+class OpenDialog {
+	readonly #consent = inject(ConsentManager);
+	constructor() {
+		let opened = false;
+		effect(() => {
+			if (!opened && this.#consent.hasConsentUi()) {
+				opened = true;
+				this.#consent.setActiveUI('dialog');
+			}
+		});
+	}
+}
 
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ConsentBanner],
+	imports: [ConsentBanner, OpenDialog],
 	selector: 'test-pc-banner-host',
 	template: `<button type="button">Page action</button>
 		<button
@@ -71,7 +96,10 @@ const bannerInputs: {
 			[disableAnimation]="true"
 			[layout]="inputs.layout"
 			[noStyle]="inputs.noStyle"
-		/>`,
+		/>
+		@if (inputs.openDialog) {
+			<test-open-dialog />
+		}`,
 })
 class BannerHost {
 	protected readonly inputs = { ...bannerInputs };
@@ -95,6 +123,8 @@ interface MountOptions {
 	layout?: ConsentBannerLayout;
 	/** `noStyle` on the banner itself, not the provider. */
 	bannerNoStyle?: boolean;
+	/** Open the dialog as soon as the page can, from a later sibling. */
+	openDialog?: boolean;
 }
 
 let fixtureId = 0;
@@ -149,11 +179,13 @@ const mount = async function mount({
 	language,
 	layout,
 	bannerNoStyle,
+	openDialog,
 }: MountOptions = {}) {
 	fixtureId += 1;
 	stubViewport(phone);
 	bannerInputs.layout = layout;
 	bannerInputs.noStyle = bannerNoStyle;
+	bannerInputs.openDialog = openDialog;
 	TestBed.configureTestingModule({
 		providers: [
 			provideInth({
@@ -577,6 +609,50 @@ describe('aio', () => {
 		expect(must('consent-banner-card').getAttribute('role')).toBe('region');
 	});
 
+	test('[ARCH-01] the options sit straight in the scroll area, with no inputs written as attributes', async () => {
+		await mount({
+			container: { side: 'start', type: 'drawer' },
+			region: 'us-opt-in',
+		});
+		await waitForRoot();
+		await waitForPanel();
+		await vi.waitFor(() =>
+			expect($('consent-banner-preferences-row')).not.toBeNull()
+		);
+		const body = must('consent-banner-body');
+		// React's markup has no element between the scroll area and the
+		// rights row or Preferences.
+		expect(body.querySelector('inth-pc-panel')).toBeNull();
+		expect(
+			[...body.children].map((child) => child.getAttribute('data-testid'))
+		).toEqual(['consent-banner-rights-row-sale', null]);
+		expect(body.lastElementChild?.firstElementChild).toBe(
+			must('consent-banner-preferences-row')
+		);
+		// A static attribute in an Angular template is written into the DOM
+		// as well as set as the input. Bound inputs are not.
+		const leaked = [
+			'consentaction',
+			'testidprefix',
+			'testid',
+			'slot',
+			'vendortableslot',
+			'uisource',
+			'mode',
+			'variant',
+			'size',
+			'apply',
+			'vendors',
+		];
+		for (const element of must('consent-banner-root').querySelectorAll('*')) {
+			for (const name of leaked) {
+				expect(element.hasAttribute(name), `${element.outerHTML} ${name}`).toBe(
+					false
+				);
+			}
+		}
+	});
+
 	test('[BNR-14] the tag floats in its slot after the scroll area', async () => {
 		await mount({ container: { side: 'end', type: 'drawer' } });
 		await waitForRoot();
@@ -744,6 +820,18 @@ describe('blocking:', () => {
 		await vi.waitFor(() =>
 			expect(document.activeElement).toBe($('privacy-choices-link'))
 		);
+	});
+});
+
+describe('owed, then the dialog at once', () => {
+	test('[BNR-06] a dialog the page opens as the prompt is owed leaves the page announcement in place', async () => {
+		const { consent } = await mount({ openDialog: true });
+		await vi.waitFor(
+			() => expect($('consent-banner-announcement')).not.toBeNull(),
+			{ timeout: 4000 }
+		);
+		expect(consent.activeUI()).toBe('dialog');
+		expect($('consent-banner-root')).toBeNull();
 	});
 });
 

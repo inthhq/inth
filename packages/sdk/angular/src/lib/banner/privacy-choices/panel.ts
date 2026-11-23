@@ -12,6 +12,7 @@ import {
 	ChangeDetectionStrategy,
 	Component,
 	computed,
+	Directive,
 	effect,
 	inject,
 	input,
@@ -19,9 +20,8 @@ import {
 	signal,
 } from '@angular/core';
 import { resolveSaleRight } from '@inth/sdk/engine';
-import type { AllConsentNames, SaveUISource } from '@inth/sdk/engine';
+import type { AllConsentNames } from '@inth/sdk/engine';
 import { resolvePreferencesRowCopy } from '@inth/sdk/surface-state';
-import type { PrivacyChoicesPromptVariant } from '@inth/sdk/surface-state';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import styles from '@inth/sdk/ui/styles/components/privacy-choices';
 import * as expand from '@inth/sdk/ui/styles/sheets/expand-deferred';
@@ -37,7 +37,7 @@ import {
 } from '../../privacy-choices/category-group';
 import { ChevronIcon } from '../../privacy-choices/icons';
 import { bool, cx } from '../../privacy-choices/parts';
-import { hasSaleRight, SaleRightsRow } from '../../privacy-choices/rights-row';
+import { hasSaleRight } from '../../privacy-choices/rights-row';
 import { SurfaceDraft } from '../../privacy-choices/surface-draft';
 
 /**
@@ -56,7 +56,7 @@ const NO_CATEGORIES: readonly AllConsentNames[] = [];
  * The options for the prompt's variant (BNR-14, BNR-15):
  *
  * - EU: the cookie categories, staged on the prompt's draft until a Save,
- *   Accept or Reject.
+ *   which applies them.
  * - US opt-in: the rights row, which applies as in the dialog, then
  *   Preferences: the cookie categories behind a disclosure. The category
  *   that decides sale follows the rights row instead of having a switch of
@@ -65,90 +65,102 @@ const NO_CATEGORIES: readonly AllConsentNames[] = [];
  *
  * Banner panels always use accordions, never sheets (PERM-01).
  *
+ * The prompt renders the options itself, inside its deferred block; this
+ * directive sits on an `<ng-container>` around them. A component would add
+ * its own element between the scroll area and the options, which React's
+ * markup has no counterpart for. It loads the options' stylesheets and
+ * tells the prompt once they render.
+ *
  * @internal
  */
-@Component({
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	host: { style: 'display: contents' },
-	imports: [AdvertisingRow, CategoryGroup, ChevronIcon, SaleRightsRow],
-	selector: 'inth-pc-panel',
-	template: `@if (variant() === 'choice') {
-			<div
-				inth-pc-category-group
-				[idPrefix]="idPrefix()"
-				testIdPrefix="consent-banner"
-			></div>
-		} @else if (variant() === 'us-consent' || variant() === 'notice') {
-			@if (saleAvailable()) {
-				<section
-					inth-pc-rights-row
-					[idPrefix]="idPrefix()"
-					testIdPrefix="consent-banner"
-					[uiSource]="uiSource()"
-					slot="consentBannerRightsRow"
-				></section>
-			}
-			@if (variant() === 'us-consent') {
-				<div>
-					<button
-						type="button"
-						[attr.class]="cx(styles.navRow)"
-						[attr.aria-expanded]="bool(preferencesOpen())"
-						[attr.aria-controls]="preferencesPanelId()"
-						data-testid="consent-banner-preferences-row"
-						(click)="preferencesOpen.set(!preferencesOpen())"
-					>
-						<span [attr.class]="cx(styles.navRowLabel)"
-							>{{ preferencesCopy().title
-							}}<span [attr.class]="cx(styles.navRowMeta)">{{
-								preferencesCopy().summary + ' · ' + preferencesCopy().onCount
-							}}</span></span
-						>
-						<span [attr.class]="cx(styles.chevron)"
-							><svg inth-pc-chevron></svg
-						></span>
-					</button>
-					<div
-						[attr.class]="cx(expandStyles.panel)"
-						[attr.id]="preferencesPanelId()"
-						[attr.data-open]="bool(preferencesOpen())"
-						[attr.inert]="preferencesOpen() ? null : ''"
-					>
-						<div [attr.class]="cx(expandStyles.inner)">
-							<div [attr.class]="cx(styles.preferencesBody)">
-								<div
-									inth-pc-category-group
-									[idPrefix]="idPrefix()"
-									testIdPrefix="consent-banner"
-									[exclude]="saleExclude()"
-								>
-									@if (saleCategory()) {
-										<div
-											inth-pc-advertising-row
-											[on]="saleOn()"
-											[idPrefix]="idPrefix()"
-										></div>
-									}
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			}
-		}`,
+@Directive({
+	exportAs: 'inthPcPanel',
+	selector: '[inthPcPanel]',
 })
 export class PrivacyChoicesPanel {
 	readonly #consent = inject(ConsentManager);
 	readonly #styles = inject(ConsentStyles);
-	readonly #draft = inject(SurfaceDraft);
 
-	readonly variant = input.required<PrivacyChoicesPromptVariant>();
-	/** Prefix for element ids inside the panel (SR-05). */
-	readonly idPrefix = input.required<string>();
-	readonly uiSource = input<SaveUISource | undefined>(undefined);
 	readonly noStyle = input<boolean | undefined>(undefined);
 	/** Emits once the options render, so the prompt can focus the first one. */
 	readonly ready = output();
+
+	readonly #noStyle = resolveNoStyle(this.noStyle);
+	/** Whether the rights row has a sale right to show. */
+	readonly saleAvailable = computed(() =>
+		hasSaleRight(this.#consent.snapshot())
+	);
+
+	constructor() {
+		effect(() => {
+			this.#styles.ensure(PANEL_SHEETS, this.#noStyle(), SURFACE_SCOPES.banner);
+		});
+		afterNextRender(() => {
+			this.ready.emit();
+		});
+	}
+}
+
+/**
+ * The US opt-in prompt's Preferences: a row that opens the cookie
+ * categories in place. The category that decides sale shows as a row that
+ * follows the rights row, with no switch of its own (LAW-05, CAT-08).
+ *
+ * @internal
+ */
+@Component({
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [AdvertisingRow, CategoryGroup, ChevronIcon],
+	selector: 'div[inth-pc-preferences]',
+	template: `<button
+			type="button"
+			[attr.class]="cx(styles.navRow)"
+			[attr.aria-expanded]="bool(preferencesOpen())"
+			[attr.aria-controls]="preferencesPanelId()"
+			data-testid="consent-banner-preferences-row"
+			(click)="preferencesOpen.set(!preferencesOpen())"
+		>
+			<span [attr.class]="cx(styles.navRowLabel)"
+				>{{ preferencesCopy().title
+				}}<span [attr.class]="cx(styles.navRowMeta)">{{
+					preferencesCopy().summary + ' · ' + preferencesCopy().onCount
+				}}</span></span
+			>
+			<span [attr.class]="cx(styles.chevron)"><svg inth-pc-chevron></svg></span>
+		</button>
+		<div
+			[attr.class]="cx(expandStyles.panel)"
+			[attr.id]="preferencesPanelId()"
+			[attr.data-open]="bool(preferencesOpen())"
+			[attr.inert]="preferencesOpen() ? null : ''"
+		>
+			<div [attr.class]="cx(expandStyles.inner)">
+				<div [attr.class]="cx(styles.preferencesBody)">
+					<div
+						inth-pc-category-group
+						[idPrefix]="idPrefix()"
+						[testIdPrefix]="'consent-banner'"
+						[exclude]="saleExclude()"
+					>
+						@if (saleCategory()) {
+							<div
+								inth-pc-advertising-row
+								[on]="saleOn()"
+								[idPrefix]="idPrefix()"
+							></div>
+						}
+					</div>
+				</div>
+			</div>
+		</div>`,
+})
+export class PrivacyChoicesPreferences {
+	readonly #consent = inject(ConsentManager);
+	readonly #draft = inject(SurfaceDraft);
+
+	/** Prefix for element ids inside the panel (SR-05). */
+	readonly idPrefix = input.required<string>();
+	readonly noStyle = input<boolean | undefined>(undefined);
 
 	/** @internal */
 	protected readonly styles = styles;
@@ -162,10 +174,6 @@ export class PrivacyChoicesPanel {
 	protected readonly preferencesOpen = signal(false);
 
 	readonly #sale = computed(() => resolveSaleRight(this.#consent.snapshot()));
-	/** @internal */
-	protected readonly saleAvailable = computed(() =>
-		hasSaleRight(this.#consent.snapshot())
-	);
 	/** @internal */
 	protected readonly saleCategory = computed(() => {
 		const right = this.#sale();
@@ -191,15 +199,6 @@ export class PrivacyChoicesPanel {
 	protected readonly preferencesPanelId = computed(
 		() => `${this.idPrefix()}-preferences`
 	);
-
-	constructor() {
-		effect(() => {
-			this.#styles.ensure(PANEL_SHEETS, this.#noStyle(), SURFACE_SCOPES.banner);
-		});
-		afterNextRender(() => {
-			this.ready.emit();
-		});
-	}
 
 	/** @internal */
 	protected cx(...names: (string | undefined)[]): string | null {

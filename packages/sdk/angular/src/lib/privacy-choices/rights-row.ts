@@ -205,8 +205,8 @@ export const hasSaleRight = function hasSaleRight(
 						<button
 							#cancel
 							inth-choice-button
-							variant="neutral"
-							mode="stroke"
+							[variant]="'neutral'"
+							[mode]="'stroke'"
 							[attr.id]="ids().cancel"
 							[attr.data-testid]="testIds().confirmCancel"
 							(click)="session().closeConfirmation()"
@@ -215,8 +215,8 @@ export const hasSaleRight = function hasSaleRight(
 						</button>
 						<button
 							inth-choice-button
-							variant="neutral"
-							mode="stroke"
+							[variant]="'neutral'"
+							[mode]="'stroke'"
 							[attr.data-testid]="testIds().confirmAllow"
 							(click)="confirmAllow()"
 						>
