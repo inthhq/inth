@@ -1,7 +1,7 @@
 /**
  * Wiring of `@inth/svelte/kit` onto the core consent route handler. The
  * route behaviour itself is pinned once, in
- * `packages/sdk/core/src/server/__tests__/consent-route.test.ts`.
+ * `packages/sdk/core/src/server/__tests__/consent-route.api.test.ts`.
  */
 import { clearManifestCache } from '@inth/sdk/server';
 import type { RequestEvent } from '@sveltejs/kit';

@@ -2,7 +2,7 @@
  * The boot a server render leaves for the browser: the snapshot it rendered
  * with, so the browser hydrates against it before the consent engine loads.
  * It travels in `TransferState`, next to the server-resolved state
- * (`../server-state.ts`). The writer is in `boot-server.ts`, so the
+ * (`../server-state-gate.ts`). The writer is in `plan-server-boot.ts`, so the
  * first-load chunk carries only the key.
  *
  * @packageDocumentation
@@ -16,7 +16,7 @@ import type { ConsentExperiment, ConsentSnapshot } from '@inth/sdk/engine';
 export interface ConsentBoot {
 	/** The snapshot the server rendered the page from. */
 	s: ConsentSnapshot;
-	/** `1` when the engine may wait for the page (see `boot-server.ts`). */
+	/** `1` when the engine may wait for the page (see `plan-server-boot.ts`). */
 	d?: 1;
 	/** The experiment the server's runtime assigned from, when there is one. */
 	x?: ConsentExperiment;

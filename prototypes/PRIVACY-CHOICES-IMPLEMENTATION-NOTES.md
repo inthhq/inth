@@ -40,7 +40,7 @@ If a ported component breaks any of these, it is not done.
 
 ## 2. Region: what shows on first visit
 
-The source is `packages/sdk/schema/src/shared/policy-rule-presets.ts`.
+The source is `packages/sdk/schema/src/shared/policy/policy-rule-presets.ts`.
 
 | Preset | First layer (`bannerVariant`) | Buttons | Can it block the page? |
 | --- | --- | --- | --- |
@@ -536,7 +536,7 @@ The house ease-out curve is `--ease-out: cubic-bezier(.23,1,.32,1)`.
 
 | Prototype piece | SDK location (today) | Port action |
 | --- | --- | --- |
-| Presets → `bannerVariant` | `packages/sdk/schema/src/shared/policy-rule-presets.ts` | Add a `notice` option to the US opt-out presets. Resolve DEF-09 (whether GPC denies `measurement`). |
+| Presets → `bannerVariant` | `packages/sdk/schema/src/shared/policy/policy-rule-presets.ts` | Add a `notice` option to the US opt-out presets. Resolve DEF-09 (whether GPC denies `measurement`). |
 | Card, Banner and Drawer containers | `packages/sdk/react/src/components/prompt/*` | Add the `presentation`, `edgeStyle` and `blockUntilChoice` props, and the in-place expand panel. |
 | Dialog body and accordions | `packages/sdk/ui/src/styles/components/accordion.module.css` | Use one bordered group: set `--accordion-stack-gap: 0` plus an outer wrapper, or change the default (DEF-05). |
 | Attribution tag | `packages/sdk/ui/src/utils/branding.ts` (`BRAND_MARKS`) | Change "Secured by" to **"Consent by"** and make the tag a neutral 8px-radius surface. |

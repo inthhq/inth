@@ -131,7 +131,7 @@ than by this table.
   no key and lost none, so an install written before the fix reads correctly
   after it. What changed is which values those keys hold.
 - The wire reason needed no new vocabulary either. `reason` is already optional
-  on the prompt object (`packages/react-native/src/protocol/wire-shape.ts:93`),
+  on the prompt object (`packages/react-native/src/protocol/snapshot-wire-shape.model.ts:93`),
   and Swift already wrote all three values. The Android core was the one
   collapsing them: `SnapshotWire.reasonOf` derived the reason from `purpose`, so
   `expired` was unreachable from that platform no matter what its evaluator

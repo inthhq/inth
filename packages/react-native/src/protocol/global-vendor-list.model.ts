@@ -15,19 +15,19 @@
  * A rename is invisible to Swift, to Kotlin, and to a type check, and it lands
  * as a disclosure row with no name behind it.
  *
- * This is a copy rather than an import for the reason `./vocabulary` gives for
+ * This is a copy rather than an import for the reason `./consent-vocabulary.model` gives for
  * the same choice: naming `@inth/sdk/schema`, `@inth/sdk/engine`, or `@inth/sdk/iab` from
  * here would put a web consent dependency into every phone app's graph and into
  * every published declaration file. Two gates keep the copy honest, and `@inth/sdk/engine`
  * is a devDependency for exactly this:
  *
- * - `__tests__/gvl.type-test.ts` compares every interface below with the kernel's
+ * - `__tests__/global-vendor-list.model.type-test.ts` compares every interface below with the kernel's
  *   re-export of the schema type, and runs under `bun run check-types`.
- * - `__tests__/gvl.test.ts` reads the names off the schema source and off both
+ * - `__tests__/global-vendor-list.model.test.ts` reads the names off the schema source and off both
  *   native cores' declarations and refuses an invention on any of the four.
  *
  * Key order is not load bearing in this document, unlike the category tables in
- * `./vocabulary`: every collection here is keyed by an id, and a GVL skips ids by
+ * `./consent-vocabulary.model`: every collection here is keyed by an id, and a GVL skips ids by
  * design, so the sequence a core enumerates in belongs to that core. What a
  * consumer may rely on is the name set and each name's type.
  *
@@ -156,7 +156,7 @@ export interface GVLVendor {
 	 * encode when it holds nothing. A reader therefore gets one spelling, and the
 	 * mirror takes the one it can test.
 	 *
-	 * `iab-display-model.ts` still takes `number | null` on its own rows, because
+	 * `iab-display.model.ts` still takes `number | null` on its own rows, because
 	 * by then the display model has already normalised the absence away.
 	 */
 	cookieMaxAgeSeconds?: number;
@@ -181,7 +181,7 @@ export interface GVLVendor {
 	 * Duplicates the key of this entry in {@link GlobalVendorList.vendors}.
 	 *
 	 * Both web readers trust the key over this field: `processPurposes` in
-	 * `packages/sdk/iab/src/headless/dialog-data.ts` takes the id from the key it is
+	 * `packages/sdk/iab/src/headless/dialog-data.model.ts` takes the id from the key it is
 	 * holding, and `@iabtechlabtcf/core`'s `GVL` overwrites `vendor.id` with the
 	 * key before the encoder asks. Read the key.
 	 */

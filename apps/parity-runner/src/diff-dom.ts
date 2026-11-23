@@ -400,7 +400,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			attribute.name === 'aria-labelledby';
 
 		// A modal surface makes the page around it inert by setting `inert` on
-		// each sibling along its path to <body> (page-block.ts). Above a
+		// each sibling along its path to <body> (attach-page-block.ts). Above a
 		// captured root, that path runs through each adapter's own wrappers,
 		// which this snapshot already treats as framework-specific: React's
 		// announcement region is a sibling on the dialog's path and carries

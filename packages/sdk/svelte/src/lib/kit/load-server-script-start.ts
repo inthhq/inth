@@ -4,7 +4,7 @@
  * page.
  *
  * The provider hands its options to the start registered here (see
- * `../server-script-start.ts`), which keeps the code for the request it
+ * `../register-server-script-start.ts`), which keeps the code for the request it
  * renders. The page transform for that request adds it before `</body>`.
  * Nothing in the HTML decides what runs.
  */

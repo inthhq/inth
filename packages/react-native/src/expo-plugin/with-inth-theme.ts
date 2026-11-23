@@ -82,7 +82,7 @@ const key = (ios: string, android: string): ThemeKey => ({
  * Prop colour field to native key.
  *
  * Transcribed from `ConsentTheme.InfoPlistKey` in `consent-theme.swift` and
- * `ConsentTheme.Meta` in `consent-theme.kt`; `__tests__/theme.test.ts` checks
+ * `ConsentTheme.Meta` in `consent-theme.kt`; `__tests__/with-inth-theme.test.ts` checks
  * every key against those sources.
  */
 export const THEME_COLOR_KEYS: Readonly<Record<InthThemeColorName, ThemeKey>> =
@@ -101,7 +101,7 @@ export const THEME_COLOR_KEYS: Readonly<Record<InthThemeColorName, ThemeKey>> =
 /**
  * Colours only the React Native components draw. The prop accepts them so the
  * object `createConsentTheme` takes passes here too, and writes none of them.
- * `__tests__/theme.test.ts` checks the list against the components' palette.
+ * `__tests__/with-inth-theme.test.ts` checks the list against the components' palette.
  */
 export const JS_ONLY_COLOR_NAMES = [
 	'border',

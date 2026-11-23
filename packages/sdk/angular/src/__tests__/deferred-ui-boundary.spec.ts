@@ -32,21 +32,24 @@ const ENTRIES: Record<string, string> = {
  * loaders that reach the rest of the prompt.
  */
 const EAGER_PROMPT_MODULES = new Set([
-	'containers.ts',
+	'consent-banner.ts',
 	'index.ts',
-	'prompt.ts',
+	'prompt-loaders.ts',
 ]);
 
 /**
  * The modules loaded on demand: the prompt's surface and containers, the
- * dialog's body, and the parts they share. `receipt-focus.ts` is the one
+ * dialog's body, and the parts they share. `request-receipt-focus.ts` is the one
  * part the dialog link reads eagerly; it holds no UI.
  */
 const isDeferredModule = (file: string): boolean =>
 	(file.includes('/src/lib/prompt/') &&
 		!EAGER_PROMPT_MODULES.has(basename(file))) ||
-	/\/src\/lib\/dialog\/(?:dialog|layer|sheets)\.ts$/u.test(file) ||
-	(file.includes('/src/lib/parts/') && !file.endsWith('/receipt-focus.ts'));
+	/\/src\/lib\/dialog\/(?:dialog|dialog-layer|dialog-sheets)\.ts$/u.test(
+		file
+	) ||
+	(file.includes('/src/lib/parts/') &&
+		!file.endsWith('/request-receipt-focus.ts'));
 
 const DEFERRED_SPECIFIERS = [
 	/^@inth\/sdk\/ui\/styles\/components\/consent-(?:banner|card|dialog|drawer|expand|surface)$/u,
@@ -150,14 +153,17 @@ describe('the prompt and dialog bodies load on demand', () => {
 	test('the walk sees the modules the loaders reach', () => {
 		// Guards the test itself: following the dynamic imports finds them.
 		expect(
-			readFileSync(resolve(ROOT, 'src/lib/dialog/dialog-loader.ts'), 'utf8')
+			readFileSync(
+				resolve(ROOT, 'src/lib/dialog/load-consent-dialog-body.ts'),
+				'utf8'
+			)
 		).toContain("import('./dialog')");
 		expect(
-			readFileSync(resolve(ROOT, 'src/lib/prompt/containers.ts'), 'utf8')
-		).toContain("import('./surface')");
+			readFileSync(resolve(ROOT, 'src/lib/prompt/prompt-loaders.ts'), 'utf8')
+		).toContain("import('./prompt-surface')");
 		for (const body of [
 			'src/lib/dialog/dialog.ts',
-			'src/lib/prompt/surface.ts',
+			'src/lib/prompt/prompt-surface.ts',
 		]) {
 			const { externals, files } = eagerGraph(body);
 			const reached = [...files].filter((file) => file !== resolve(ROOT, body));

@@ -85,7 +85,7 @@ __pycache__/
 .*.vars
 
 # SDK: `genversion` output. These paths only, so the hand-written
-# packages/react-native/src/protocol/version.ts stays tracked.
+# packages/react-native/src/protocol/protocol-version.model.ts stays tracked.
 **/src/version.ts
 **/src/lib/version.ts
 

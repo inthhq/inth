@@ -1,7 +1,7 @@
 /**
  * Validation and newest-wins merging for records that enter the kernel
  * without creating a choice: SSR seeds, storage hydration and server-mapped
- * receipts. The records boundary (`records.ts`) and persistence use these.
+ * receipts. The records boundary (`kernel-records.model.ts`) and persistence use these.
  *
  * Pure. Every record is checked with the reviewed validators against the
  * supplied `now`; one invalid record rejects the whole input so nothing is

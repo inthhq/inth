@@ -5,7 +5,7 @@
  * Everything here is types and constants. There is no runtime consent logic
  * in this package on purpose — the Swift and Kotlin cores own consent state,
  * and the JavaScript layer renders it. The names it renders are this package's
- * own: see `./vocabulary`, which holds them instead of importing the web
+ * own: see `./consent-vocabulary.model`, which holds them instead of importing the web
  * kernel, and is checked against that kernel by the vocabulary tests.
  */
 

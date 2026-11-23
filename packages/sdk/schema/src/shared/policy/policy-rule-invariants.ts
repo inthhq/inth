@@ -3,7 +3,7 @@
  *
  * The browser reads a resolved rule off the wire and checks it against these
  * invariants, but never validates, normalizes, matches or hashes an authored
- * pack. Keeping them apart from `policy-rule.ts` keeps that work, and the
+ * pack. Keeping them apart from `policy-rule.model.ts` keeps that work, and the
  * fingerprint hashing it pulls in, out of client bundles.
  */
 import type { AllConsentNames } from '@inth/sdk-translations';

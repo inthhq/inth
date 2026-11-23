@@ -20,7 +20,7 @@ import kotlinx.serialization.json.JsonObject
  * narrowed to three vendors still has to be able to say what purpose 7 means and which
  * `tcfPolicyVersion` its TC String is graded against. Thinning the unreferenced ones for tidiness
  * would also install a second, silent reading rule -- `processPurposes` in
- * `packages/sdk/iab/src/headless/dialog-data.ts` walks the served `purposes` record to draw the purposes
+ * `packages/sdk/iab/src/headless/dialog-data.model.ts` walks the served `purposes` record to draw the purposes
  * leg of a dialog, and a copy of it pruned here would change what that dialog claims independently of
  * the scope anybody configured.
  *

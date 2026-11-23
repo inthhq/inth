@@ -6,8 +6,8 @@
  * Each setter computes a `SnapshotPatch` and hands it to the runtime,
  * which re-derives dependent fields, skips no-ops and keeps the deadline
  * timer current. `set.draft` belongs to choice
- * recording (`choice.ts`); `set.subjectId` to the records boundary
- * (`records.ts`).
+ * recording (`create-choice-recorder.ts`); `set.subjectId` to the records boundary
+ * (`kernel-records.model.ts`).
  */
 import type { AllConsentNames } from '../consent/consent-types';
 import type { ExperimentAssignment, ExperimentGate } from '../libs/experiment';

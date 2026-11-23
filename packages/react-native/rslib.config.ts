@@ -18,10 +18,10 @@ const RELATIVE_JS_SPECIFIER =
 /**
  * Keep imports of platform-split modules extensionless.
  *
- * A module with a `.web.ts` twin, such as `native/client`, is chosen by the
- * bundler's platform extensions: Metro tries `client.web.js` on web and
- * `client.js` on iOS and Android. It only tries them for a specifier without
- * an extension; `./client.js` names one file on every platform.
+ * A module with a `.web.ts` twin, such as `native/create-consent-client`, is chosen by the
+ * bundler's platform extensions: Metro tries `create-consent-client.web.js` on web and
+ * `create-consent-client.js` on iOS and Android. It only tries them for a specifier without
+ * an extension; `./create-consent-client.js` names one file on every platform.
  * Bundleless output adds `.js` to every relative import, so this takes it off
  * again for exactly those modules. A twin's own import of its native sibling
  * keeps the extension, since without it the web bundle would resolve the twin

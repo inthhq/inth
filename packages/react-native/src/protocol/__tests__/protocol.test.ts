@@ -7,7 +7,7 @@
  * would silently move the contract for Swift and Kotlin, because both read these
  * files as truth. A device may hold a vendor list there; what the fixtures pin is
  * that the generator has never put one in, and the shape of a body is graded by
- * name in `gvl.test.ts`.
+ * name in `global-vendor-list.model.test.ts`.
  */
 
 import { createHash } from 'node:crypto';

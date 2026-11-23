@@ -36,7 +36,7 @@ const SURFACES = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]`;
  * focuses a stock consent surface, or `ENGINE_TIMEOUT_MS` passed.
  *
  * Input inside the stock banner does not load the engine: a tap there is
- * recorded without it (see `runtime.ts`), and the engine loads after.
+ * recorded without it (see `create-deferred-runtime.ts`), and the engine loads after.
  *
  * @returns Removes the listeners.
  * @internal

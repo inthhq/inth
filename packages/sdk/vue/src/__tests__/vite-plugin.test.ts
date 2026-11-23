@@ -51,7 +51,7 @@ describe('Vue manifest module', () => {
 });
 
 describe('Vue production builds', () => {
-	const modesPath = join(packageDir, 'src/runtime/modes.ts');
+	const modesPath = join(packageDir, 'src/runtime/modes.model.ts');
 	/** Builds an app entry that imports the Vue plugin's modes. */
 	const buildApp = async (source: string, fetch: typeof globalThis.fetch) => {
 		const root = await mkdtemp(join(tmpdir(), 'inth-vue-build-'));

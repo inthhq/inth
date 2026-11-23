@@ -1,5 +1,5 @@
 /**
- * The engine's loader for `inth.choices.js` (`ui/choices-file.ts`):
+ * The engine's loader for `inth.choices.js` (`ui/load-choices-file.ts`):
  * it publishes the engine's shared functions first, carries the nonce,
  * accepts only a file from its own release, and tries again after a
  * failed load. The built files run in Chromium in

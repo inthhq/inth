@@ -3,7 +3,7 @@
  *
  * A server render already put the banner, its first-paint styles and the
  * early-tap script in the HTML. For a visitor the engine can wait for (see
- * `boot.ts`), the browser's first-load chunk holds only this: refs filled
+ * `deferred-boot.model.ts`), the browser's first-load chunk holds only this: refs filled
  * from the snapshot the server rendered with, over a stand-in kernel
  * (`stand-in.ts`), so the app hydrates and every composable reads the
  * server's state. The engine (`engine.ts`, which also brings the stock

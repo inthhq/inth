@@ -14,7 +14,7 @@
  *   as `0`.
  *
  * This file holds the decoders and validators, which reading stored
- * records needs in the first load. The encoders are in `writer/encode.ts`
+ * records needs in the first load. The encoders are in `writer/record-encode.model.ts`
  * and load with the first write.
  *
  * Nothing here touches storage, the clock or callbacks. Callers supply
@@ -149,7 +149,7 @@ const KEY_VALUE_SEPARATOR = '=';
 const LIST_SEPARATOR = '|';
 const TUPLE_SEPARATOR = '.';
 
-/** Compact category codes. The encoder repeats them (`writer/encode.ts`). @internal */
+/** Compact category codes. The encoder repeats them (`writer/record-encode.model.ts`). @internal */
 export const CATEGORY_CODES = {
 	experience: 'ex',
 	functionality: 'fn',
@@ -891,7 +891,7 @@ export const decodeVendorChoiceCompact = function decodeVendorChoiceCompact(
 	return decodeVendorChoice(candidate, now);
 };
 
-/** Compact opt-out right codes. The encoder repeats them (`writer/encode.ts`). @internal */
+/** Compact opt-out right codes. The encoder repeats them (`writer/record-encode.model.ts`). @internal */
 export const OPT_OUT_RIGHT_CODES = {
 	sale: 'sa',
 	share: 'sh',

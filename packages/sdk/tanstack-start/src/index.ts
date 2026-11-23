@@ -69,7 +69,7 @@ export type {
 export { hosted, manifest } from '@inth/sdk/modes';
 // oxlint-disable-next-line oxc/no-barrel-file -- Preserve declaration order, interface shape, and public compatibility.
 export * from '@inth/react';
-// Their code loads with the deferred root's engine; see `./root`.
+// Their code loads with the deferred root's engine; see `./inth-provider`.
 export {
 	DeferredConsentBanner as ConsentBanner,
 	DeferredConsentDialog as ConsentDialog,

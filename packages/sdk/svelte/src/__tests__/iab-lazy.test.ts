@@ -65,10 +65,10 @@ afterEach(() => {
 describe('lazy IAB loading', () => {
 	test.each([
 		'components/inth-provider.svelte',
-		'context.svelte.ts',
-		'iab-loader.ts',
+		'consent-manager-options.model.ts',
+		'get-consent-context.svelte.ts',
 		'index.ts',
-		'types.ts',
+		'lazy-create-iab.ts',
 	])('%s has no value import of `@inth/sdk/iab`', (file) => {
 		const text = source(file);
 		const imports = text.match(

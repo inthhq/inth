@@ -12,7 +12,7 @@ import kotlinx.serialization.json.longOrNull
 /**
  * A single opt-out right a durable opt-out record can refuse, in canonical order.
  *
- * Mirrors `OPT_OUT_RIGHTS` in `packages/sdk/schema/src/shared/opt-out.ts`.
+ * Mirrors `OPT_OUT_RIGHTS` in `packages/sdk/schema/src/shared/opt-out.model.ts`.
  */
 @Serializable
 enum class OptOutRight(val wireName: String) {
@@ -35,7 +35,7 @@ enum class OptOutRight(val wireName: String) {
 /**
  * How a durable opt-out record was created.
  *
- * Mirrors `OPT_OUT_METHODS` in `packages/sdk/schema/src/shared/opt-out.ts`.
+ * Mirrors `OPT_OUT_METHODS` in `packages/sdk/schema/src/shared/opt-out.model.ts`.
  */
 @Serializable
 enum class OptOutMethod(val wireName: String) {
@@ -61,7 +61,7 @@ enum class OptOutMethod(val wireName: String) {
 /**
  * Who holds a durable opt-out record.
  *
- * Mirrors `OPT_OUT_HOLDERS` in `packages/sdk/schema/src/shared/opt-out.ts`.
+ * Mirrors `OPT_OUT_HOLDERS` in `packages/sdk/schema/src/shared/opt-out.model.ts`.
  */
 @Serializable
 enum class OptOutHolder(val wireName: String) {
@@ -84,7 +84,7 @@ enum class OptOutHolder(val wireName: String) {
 /**
  * Durable opt-out record, separate from per-category [ExplicitChoice] receipts.
  *
- * Mirrors `OptOutRecord` in `packages/sdk/schema/src/shared/opt-out.ts`. While held,
+ * Mirrors `OptOutRecord` in `packages/sdk/schema/src/shared/opt-out.model.ts`. While held,
  * `marketing` and `measurement` in the matched rule's scope carry the `opt-out`
  * restriction regardless of model, expiry or policy fingerprint changes.
  *
@@ -165,7 +165,7 @@ data class OptOutRecord(
 /**
  * Payload for `POST /v1/consent/opt-outs`, built once per local opt-out act.
  *
- * Mirrors `OptOutPayload` in `packages/sdk/core/src/types.ts`. Never carries `rights`
+ * Mirrors `OptOutPayload` in `packages/sdk/core/src/consent-kernel.model.ts`. Never carries `rights`
  * (the backend derives applicable rights from the visitor's location) and never stores
  * an identity token.
  */
@@ -196,7 +196,7 @@ data class OptOutPayload(
 /**
  * Payload for `POST /v1/consent/opt-outs/lift`, built once per opt-out lift.
  *
- * Mirrors `LiftOptOutPayload` in `packages/sdk/core/src/types.ts`. Never carries `rights`
+ * Mirrors `LiftOptOutPayload` in `packages/sdk/core/src/consent-kernel.model.ts`. Never carries `rights`
  * and never stores an identity token.
  */
 @Serializable

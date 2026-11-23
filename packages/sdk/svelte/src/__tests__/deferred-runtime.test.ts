@@ -1,5 +1,5 @@
 /**
- * The deferred runtime's commit path (`lib/deferred/runtime.ts`) when the
+ * The deferred runtime's commit path (`lib/deferred/create-deferred-runtime.ts`) when the
  * commit chunk cannot finish a choice the stand-in already shows: the
  * engine records it, once, and announces it once.
  */

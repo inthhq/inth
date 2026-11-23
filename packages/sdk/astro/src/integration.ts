@@ -605,7 +605,7 @@ export interface BootScripts {
  * runtime, its transport, persistence and the runtime modules) is
  * `virtual:inth/engine`, behind `import()`.
  *
- * The adapter and island specifiers are written here, not in `adapter.ts`
+ * The adapter and island specifiers are written here, not in `register-dialog-adapter.ts`
  * or the `.astro` components, because this is the one place that knows
  * `ui` before the app's bundler runs. A static reference to all three
  * would make a Svelte-only site's build resolve `@inth/react` and `vue`.

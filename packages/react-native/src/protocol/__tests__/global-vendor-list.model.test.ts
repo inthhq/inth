@@ -1,8 +1,8 @@
 /**
  * One vendor list, four spellings, and no compiler that sees them together.
  *
- * `src/protocol/gvl.ts` copies the served vendor list so a phone app can read one
- * without the web schema in its bundle, and `gvl.type-test.ts` holds that copy
+ * `src/protocol/global-vendor-list.model.ts` copies the served vendor list so a phone app can read one
+ * without the web schema in its bundle, and `global-vendor-list.model.type-test.ts` holds that copy
  * against `@inth/sdk/engine` at compile time. What neither can see is the pair of
  * producers that put the bytes on the bridge: a key renamed in Swift's
  * `GlobalVendorList.swift`, or one Kotlin's `GlobalVendorList.kt` adds, compiles
@@ -11,7 +11,7 @@
  *
  * So the name sets are read off all four sources and compared here, with the
  * schema as the spelling both cores say they follow. Key *order* is not compared,
- * for the reason `gvl.ts` gives: every collection in this document is keyed by an
+ * for the reason `global-vendor-list.model.ts` gives: every collection in this document is keyed by an
  * id that skips numbers by design. Containment stands in for equality where one
  * core stores five of these shapes as one type.
  */
@@ -38,7 +38,7 @@ const KOTLIN_ENVELOPE = `${KOTLIN_PACKAGE}/store/SnapshotEnvelope.kt`;
 const KOTLIN_KERNEL = `${KOTLIN_PACKAGE}/ConsentCore.kt`;
 
 /**
- * The names `gvl.ts` declares, which every source below has to agree with.
+ * The names `global-vendor-list.model.ts` declares, which every source below has to agree with.
  *
  * This is the mirror's own claim written as data, so a producer that renames a
  * key fails here rather than in a type checker that only sees one language. Each

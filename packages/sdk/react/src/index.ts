@@ -145,7 +145,7 @@ export type {
 	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
 
-// Values, one group per file; see `index-parts/core.ts` for why.
+// Values, one group per file; see `index-parts/create-consent-kernel.ts` for why.
 // oxlint-disable oxc/no-barrel-file -- The package entry; star exports keep unused groups out of esbuild's first chunk.
 export * from './index-parts/create-consent-kernel';
 export * from './index-parts/presets';

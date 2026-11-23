@@ -601,7 +601,7 @@ export type {
 } from './prompt/prompt.model';
 export { promptFirstPaintSheets, renderPromptHTML } from './prompt/render-prompt-html';
 
-// The first-paint rules the components inline (see `inline-styles.ts`).
+// The first-paint rules the components inline (see `inline-styles.model.ts`).
 export {
 	INLINE_IAB_STYLES_CSS,
 	INLINE_IAB_STYLES_ID,

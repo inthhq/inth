@@ -1,7 +1,7 @@
 /**
  * Wiring of `createConsentRoute` onto the core consent route handler. The
  * route behaviour itself is pinned once, in
- * `packages/sdk/core/src/server/__tests__/consent-route.test.ts`; these check
+ * `packages/sdk/core/src/server/__tests__/consent-route.api.test.ts`; these check
  * the prefix, the methods, the in-process fetch and the Node middleware.
  */
 import { createServer } from 'node:http';

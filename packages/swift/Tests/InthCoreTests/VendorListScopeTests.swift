@@ -202,7 +202,7 @@ final class VendorListScopeTests: XCTestCase {
     ///
     /// `purposes`, `specialPurposes`, `features`, `specialFeatures`, `stacks`, `dataCategories` and
     /// `lastUpdated` name what a consent row says: `processPurposes` in
-    /// `packages/sdk/iab/src/headless/dialog-data.ts` walks the served `purposes` record and never asks
+    /// `packages/sdk/iab/src/headless/dialog-data.model.ts` walks the served `purposes` record and never asks
     /// a vendor scope's permission. The two versions are the expensive pair -- a TC String writes
     /// both -- so the versions vector numbers the list 431 under policy 4 and expects to still read
     /// 431 and 4 back after a scope of two ids.

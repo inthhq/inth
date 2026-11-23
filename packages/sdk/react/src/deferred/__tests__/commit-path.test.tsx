@@ -1,7 +1,7 @@
 /**
  * A choice before a deferred root's engine has loaded: a page's accept or
  * reject through the stand-in's commands is committed in its own task
- * (`instant.ts`), completed by the commit path (`commit.ts`) without the
+ * (`instant-commit.model.ts`), completed by the commit path (`commit.ts`) without the
  * engine, which loads afterwards and takes over without saving again. The
  * stock banner leaves its own taps to the engine, which replays them. Each test
  * streams a real server render into an iframe and hydrates it. React runs

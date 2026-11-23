@@ -8,7 +8,7 @@
  * It imports no module of this package: a module the engine chunk shared
  * with the page's first-load graph would make Rolldown (Vite 8) put the
  * engine in a chunk the page imports statically. Callers build the runtime
- * options with `runtimeOptionsFor` (`provider-options.ts`).
+ * options with `runtimeOptionsFor` (`resolve-provider-options.ts`).
  *
  * @packageDocumentation
  * @internal

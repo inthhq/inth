@@ -1,7 +1,7 @@
 /**
  * The `/v1` route paths of an Inth backend. Code on first load (the init
  * script, the prefetch, the manifest URL) reads only these, so they are a
- * module of their own: the request helpers in `routes.ts` stay out of
+ * module of their own: the request helpers in `v1-request.api.ts` stay out of
  * first load.
  *
  * @internal

@@ -5,7 +5,7 @@
  * pack itself. This module carries the outcome types, the contract version,
  * the safe fallback, and `readPolicyResolutionWire`, and depends only on the
  * resolved-rule invariants. Resolving and hashing a pack live in
- * `policy-resolution.ts`, which a client bundle then never needs.
+ * `policy/policy-resolution.model.ts`, which a client bundle then never needs.
  */
 
 import { compareCanonical } from './canonical-order';

@@ -16,7 +16,7 @@ import type { ScriptServerStartModule } from '@inth/react/deferred/engine';
 import { InthProvider as ReactProvider } from '@inth/react/provider';
 import type { InthProviderOptions as ReactProviderOptions } from '@inth/react/provider';
 /**
- * The engine side of `InthProvider`, loaded on demand by `./root`.
+ * The engine side of `InthProvider`, loaded on demand by `./inth-provider`.
  *
  * `EagerRoot` is the whole root: the React provider around the page,
  * then the boot data and the scripts the server starts. The server always
@@ -167,7 +167,7 @@ if (typeof document === 'undefined') {
 /**
  * The boot data a deferred root reads, with the stored-choice check
  * (`storedChoiceCheckScript`). Core leaves the check out for a root that
- * needs the engine at once, by the rule `./root` applies in the browser (a
+ * needs the engine at once, by the rule `./inth-provider` applies in the browser (a
  * network blocker, an experiment, `enabled: false`, a script the root
  * cannot start, counting a `serverStart` entry as started only when the
  * server start emits it), so the browser starts the engine's download as

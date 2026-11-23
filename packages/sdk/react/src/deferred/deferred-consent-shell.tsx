@@ -5,7 +5,7 @@
  *
  * The page under it hydrates at once. Until the engine loads, Inth's hooks
  * read the snapshots the server rendered with, and their actions ask for
- * the engine and run on it when it attaches (see `deferred-kernel.ts`).
+ * the engine and run on it when it attaches (see `create-deferred-kernel.ts`).
  * The stock banner keeps its server HTML until then; its inline script
  * records taps and hides it.
  *
@@ -665,7 +665,7 @@ const createSession = function createSession<EngineModule>(
 
 	/**
 	 * Records an accept, reject or selection without the engine, then loads
-	 * the engine. In the short case (`instant.ts`) the stand-in commits in
+	 * the engine. In the short case (`instant-commit.model.ts`) the stand-in commits in
 	 * this task and the commit chunk completes it; otherwise the commit
 	 * chunk records it. Resolves `null` when neither can, and the engine
 	 * records it.

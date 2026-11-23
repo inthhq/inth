@@ -51,7 +51,7 @@ final class DeclaredVendorScopeTests: XCTestCase {
     ///
     /// The list the vector serves carries 54 vendors and the declaration names 32, and the answer has
     /// to be the 32 the web returned on `snapshot.iab.gvl` -- the key
-    /// `packages/react-native/src/protocol/snapshot.ts` declares and a dialog draws its partner rows
+    /// `packages/react-native/src/protocol/consent-snapshot.model.ts` declares and a dialog draws its partner rows
     /// out of -- and on ``ConsentCore/globalVendorList()``, which is one value read two ways. A prune
     /// that landed only on the accessor would pass one half of that pair and fail the other.
     func testAWideServedListAndADeclaredScopeGiveANarrowSnapshot() async throws {

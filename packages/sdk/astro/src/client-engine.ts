@@ -6,7 +6,7 @@
  * page script that starts one client per page; islands, plain `<script>`
  * tags and any framework on the page all read that one object.
  *
- * The page script starts the first-load shell (`./browser/shell`), which
+ * The page script starts the first-load shell (`./browser/start-deferred-client`), which
  * loads this module with `import()`, after the page for a visitor the
  * banner asks to choose and at once for everyone else. `boot()` then
  * builds the runtime and takes over from the shell.

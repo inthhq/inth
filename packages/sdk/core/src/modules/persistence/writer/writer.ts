@@ -10,7 +10,7 @@
  * chunks of their own.
  *
  * The ordering rules (per-category merge, ties, subjects, the clear epoch)
- * are in `reconcile.ts`; the write-before-send timing in `schedule.ts`.
+ * are in `writer-reconcile.model.ts`; the write-before-send timing in `create-write-scheduler.ts`.
  *
  * @internal
  */

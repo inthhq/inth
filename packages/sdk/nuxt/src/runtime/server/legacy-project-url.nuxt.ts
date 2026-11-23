@@ -2,7 +2,7 @@
  * Nitro plugin: applies the c15t project URL variables to each request's
  * runtime config before Nuxt renders or the consent route answers, so the
  * server render, the route and the browser (through the payload) read one
- * value. See `./legacy-project-url`.
+ * value. See `./apply-legacy-project-url`.
  */
 import { defineNitroPlugin, useRuntimeConfig } from 'nitropack/runtime';
 

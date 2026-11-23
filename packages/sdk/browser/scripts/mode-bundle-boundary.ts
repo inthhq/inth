@@ -14,13 +14,13 @@ const COMMON_EXCLUSIONS = [
 const TESTING_ONLY = [
 	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:transports\/(?:offline|testing)|testing)\.[jt]s(?:$|[?|])/u,
 	/\/(?:packages\/(?:sdk\/)?browser|@inth\/sdk-browser)\/(?:src|dist)\/(?:policy-rules|testing-global)\.[jt]s(?:$|[?|])/u,
-	/\/(?:packages\/(?:sdk\/)?schema|@inth\/sdk-schema)\/(?:src|dist)\/shared\/policy-rule-presets\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?schema|@inth\/sdk-schema)\/(?:src|dist)\/shared\/policy\/policy-rule-presets\.[jt]s(?:$|[?|])/u,
 ];
 const HOSTED_EXCLUSIONS = [
 	...COMMON_EXCLUSIONS,
 	...TESTING_ONLY,
 	/\/(?:packages\/(?:sdk\/)?browser|@inth\/sdk-browser)\/(?:src|dist)\/policy-rules\.[jt]s(?:$|[?|])/u,
-	/\/(?:packages\/(?:sdk\/)?schema|@inth\/sdk-schema)\/(?:src|dist)\/shared\/(?:policy-rule-presets|policy-resolution|policy-rule|policy-rule-fingerprint)\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?schema|@inth\/sdk-schema)\/(?:src|dist)\/shared\/policy\/(?:policy-rule-presets|policy-resolution\.model|policy-rule\.model|policy-rule-fingerprint\.model)\.[jt]s(?:$|[?|])/u,
 ];
 const TESTING_EXCLUSIONS = [
 	...COMMON_EXCLUSIONS,

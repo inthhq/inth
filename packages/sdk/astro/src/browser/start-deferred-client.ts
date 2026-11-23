@@ -21,11 +21,11 @@
  *   (`acceptAll()`, `rejectAll()`, `save()`) is committed in its own task
  *   (`planInstantCommit`): the snapshot changes, listeners hear it, the
  *   prompt hides and the plain `scripts` the choice allows start. The
- *   commit chunk (`./commit`) stores the record and queues the save a task
+ *   commit chunk (`./complete-commit`) stores the record and queues the save a task
  *   later, and the engine starts from that record without recording it
  *   again.
  * - A dialog link opens the preference dialog against a stand-in runtime
- *   (`./stand-in`) that reads the same snapshot, without the engine: only
+ *   (`./create-dialog-stand-in`) that reads the same snapshot, without the engine: only
  *   the dialog's chunks share the connection with the page. The engine
  *   loads once the dialog is on screen and takes the dialog over; a save
  *   from the dialog waits for it. That needs an island whose provider
@@ -98,7 +98,7 @@ export interface ConsentBoot {
 	s: ConsentSnapshot;
 	/**
 	 * Whether the engine may load after the page, as far as the server can
-	 * tell (see `canDeferEngine` in `../banner/deferred-boot`).
+	 * tell (see `canDeferEngine` in `../banner/deferred-boot.model`).
 	 */
 	d: boolean;
 }

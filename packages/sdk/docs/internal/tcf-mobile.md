@@ -708,7 +708,7 @@ What our code does today, verified on this branch:
 | No TCF at all: "IAB TCF is out of scope for this phase. No TC string, no GVL state, no `IABTCF_*` keys." | `packages/native-protocol/CONTRACT.md:7-8` |
 | Consent expiry is server-driven: the evaluator derives `nextDeadline` from `policy.choiceMaxAgeMs` | `packages/swift/Sources/InthCore/PolicyEvaluator.swift:111,285`; `ConsentCore.swift:516` |
 | The only local timer-like constant is a 7-day cap on queued saves, not on consent | `packages/swift/Sources/InthCore/PendingSaveQueue.swift:96` (`maxAgeMs = 7 * 24 * 60 * 60 * 1000`) |
-| Web side: TC string cookie max-age 395 days, and a 395-day retention constant | `packages/sdk/iab/src/tcf/cmp-api.ts:397`; `packages/sdk/iab/src/authority.ts:7` |
+| Web side: TC string cookie max-age 395 days, and a 395-day retention constant | `packages/sdk/iab/src/tcf/cmp-api.ts:397`; `packages/sdk/iab/src/iab-authority.store.ts:7` |
 | iOS Keychain items survive uninstall, so a reinstall is not a fresh install; Android needs `pm clear` | `packages/native-protocol/CONTRACT.md:566` |
 | `reset()` must leave no `explicitChoice`, notice dismissal, policy claim or queued save, while keeping subject id, overrides and privacy signals | `packages/native-protocol/CONTRACT.md:560-575` |
 
@@ -818,7 +818,7 @@ these are the spec duties it would miss. Ordered by how much they matter.
 11. **`reset()` does not yet clear a bus**, and iOS Keychain persistence across uninstall means a
     naive reset leaves a live signal behind (section 6, point 3 and 4).
 12. **The GVL proxy question transfers.** Inth operates `gvl.inth.app`
-    (`DEFAULT_GVL_ENDPOINT` in `packages/sdk/schema/src/shared/constants.ts`). A mobile SDK pointed at a proxy we run
+    (`DEFAULT_GVL_ENDPOINT` in `packages/sdk/schema/src/shared/schema-constants.model.ts`). A mobile SDK pointed at a proxy we run
     inherits the same staleness and availability duties, and S2's caching rules above are
     the only licence for using an archived version offline.
 

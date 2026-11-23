@@ -15,7 +15,7 @@
  *
  * The check stops at the top of the vendor list inside `iab`. That document belongs
  * to the IAB framework, and any of its fields may be absent on every platform, so
- * a key name inside one of its records is a question for `gvl.ts`, which the vendor
+ * a key name inside one of its records is a question for `global-vendor-list.model.ts`, which the vendor
  * list tests compare against all four places it is written.
  *
  * @packageDocumentation
@@ -188,7 +188,7 @@ export const withAdditiveIABDefaults = function withAdditiveIABDefaults(
  * stay the core's own business.
  *
  * `gvl` is a required key with a nullable value inside `iab`, which is what
- * `KernelIABState` declares in `packages/sdk/core/src/types.ts`: Swift encodes it
+ * `KernelIABState` declares in `packages/sdk/core/src/consent-kernel.model.ts`: Swift encodes it
  * unconditionally and refuses any other name inside the object. Kotlin's
  * `KernelIabState` types the field non-null, so it refuses `{"gvl":null}` where Swift
  * reads an object carrying no list. Neither core publishes those bytes -- both build

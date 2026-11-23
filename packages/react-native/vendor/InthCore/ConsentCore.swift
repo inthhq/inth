@@ -2436,7 +2436,7 @@ public final class ConsentCore: @unchecked Sendable {
                 additionalConsentList = AdditionalConsentList(providers: providers, fetchedAt: bundle == nil ? nowMs : bundle?.atpFetchedAt ?? -1)
             }
             // An unreadable list is none. An absent one keeps the list held, as
-            // `init-lifecycle.ts` does on the web, except in a live answer for a matched IAB
+            // `create-init-lifecycle.ts` does on the web, except in a live answer for a matched IAB
             // policy: the backend sends the key whenever it declares custom vendors there, so
             // leaving it out means it declares none. A bundle from an older CLI has no key and
             // keeps the list. A grant for a vendor no longer listed goes with it.

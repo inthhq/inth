@@ -2,7 +2,7 @@
 /* oxlint-disable promise/prefer-await-to-then */
 /**
  * The consent UI's parts in `inth.hosted.js`: `inth.choices.js`, loaded
- * the first time the page needs one (`../choices-file.ts`).
+ * the first time the page needs one (`../load-choices-file.ts`).
  * `rslib.config.ts` swaps this in for `./load.ts` in that build.
  *
  * The file's URL is the backend's `__inthChoicesSrc`, the init tag's

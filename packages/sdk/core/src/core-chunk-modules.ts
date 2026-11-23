@@ -2,7 +2,7 @@
  * Core modules that framework build plugins place by name when they split
  * an app's bundle into chunks. Each is a path inside core's `src` without
  * its extension; the bundleless build writes it to the same path under
- * `dist`. `chunk-modules.test.ts` checks that each file exists, so moving
+ * `dist`. `core-chunk-modules.test.ts` checks that each file exists, so moving
  * one fails core's tests instead of silently changing a framework's chunks.
  */
 export const CORE_CHUNK_MODULES = {

@@ -6,7 +6,7 @@ import type {
 import type { InthProviderOptions as ReactProviderOptions } from '@inth/react/provider';
 /**
  * `InthProvider`'s props and the checks on its state, shared by the
- * first-load shell (`./root`) and the engine it loads (`./root-engine`).
+ * first-load shell (`./inth-provider`) and the engine it loads (`./root-engine`).
  *
  * @internal
  */

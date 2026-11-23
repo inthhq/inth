@@ -150,7 +150,7 @@ describe('buildColorSchemeScript', () => {
 
 describe('<ConsentScript />', () => {
 	// The inlined first-paint stylesheet styles `.inth-dark` too; these
-	// tests read the scripts (`inline-styles.test.ts` covers the styles).
+	// tests read the scripts (`inline-styles.model.test.ts` covers the styles).
 	const render = async function render(locals: InthLocals): Promise<string> {
 		const html = await container.renderToString(ConsentScript, {
 			locals: { inth: locals },

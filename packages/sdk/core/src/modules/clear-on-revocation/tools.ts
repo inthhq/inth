@@ -1,9 +1,9 @@
 /**
- * What data clearing calls but does not import, passed to `clear.ts` so it
+ * What data clearing calls but does not import, passed to `persistence-clear.store.ts` so it
  * can load on demand as one chunk that imports nothing the first load has.
  *
  * Imported by the public entry and by `onDemandRuntimeModules`, never by
- * `clear.ts` itself.
+ * `persistence-clear.store.ts` itself.
  *
  * @internal
  */

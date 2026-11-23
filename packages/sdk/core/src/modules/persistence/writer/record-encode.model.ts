@@ -1,7 +1,7 @@
 /**
  * Encoders for every stored record: the JSON written to localStorage and
  * the compact forms written to cookies. Their decoders live in
- * `../record-codec.ts`, which the first load needs to read stored records;
+ * `../record-codec.model.ts`, which the first load needs to read stored records;
  * these only run on a write, so they load with the write code.
  *
  * The codes below are the wire format the decoders read back. They are

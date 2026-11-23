@@ -1,7 +1,7 @@
 /**
  * The first-paint rules the Astro components inline into the HTML:
  * `first-paint` for a page that cannot know its prompt's container yet
- * (`./browser/first-paint-styles`), and the IAB banner's rules with the
+ * (`./browser/first-paint-styles.model`), and the IAB banner's rules with the
  * shared parts they render.
  */
 import {

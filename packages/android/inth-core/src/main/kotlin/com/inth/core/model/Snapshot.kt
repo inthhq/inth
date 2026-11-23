@@ -271,7 +271,7 @@ data class DecisionInputs(
 /**
  * The IAB half of a [ConsentSnapshot]: the vendor list this device was served.
  *
- * The key name is `KernelIABState`'s, from `packages/sdk/core/src/types.ts`, because
+ * The key name is `KernelIABState`'s, from `packages/sdk/core/src/consent-kernel.model.ts`, because
  * a renamed key is invisible across the bridge: the snapshot crosses into
  * JavaScript as text, so the declared type can say `iab.gvl` while the device
  * sends `iab.list`, and every app on that platform reads `undefined` with nothing
@@ -286,7 +286,7 @@ data class DecisionInputs(
  * from "no answer given". The price is that stored bytes reading `{"gvl":null}` --
  * which `core-swift` takes as a container holding no list -- are unreadable here,
  * and neither core writes them. Absence is carried by [ConsentSnapshot.iab] being
- * `null`, which is also what `packages/react-native/src/protocol/wire-shape.ts`
+ * `null`, which is also what `packages/react-native/src/protocol/snapshot-wire-shape.model.ts`
  * grades.
  *
  * The spellings inside the list are the served document's, not this core's: see
@@ -302,7 +302,7 @@ data class KernelIabState(
  * [revision].
  *
  * Field set and semantics follow `packages/native-protocol/CONTRACT.md`, which is the mobile
- * projection of `ConsentSnapshot` in `packages/sdk/core/src/types.ts`. The IAB half
+ * projection of `ConsentSnapshot` in `packages/sdk/core/src/consent-kernel.model.ts`. The IAB half
  * is the served vendor list on [iab], the same seam `KernelIABState` is on the
  * web and in `core-swift`.
  * Every mutation produces a new instance and bumps [revision]; readers never see

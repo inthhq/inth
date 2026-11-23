@@ -13,7 +13,7 @@ import type { LegacyMaterialCompatibility } from './legacy-material-policy.model
  *
  * The domain name and its version are part of the hashed bytes, so a choice
  * hash can never equal a notice hash for the same rule, and neither can
- * collide with the legacy material fingerprint kept in `policy-fingerprint.ts`.
+ * collide with the legacy material fingerprint kept in `policy-fingerprint.model.ts`.
  *
  * Everything here is synchronous and runs once per resolution on the
  * producer side (backend, manifest builder, offline transport). Nothing in a

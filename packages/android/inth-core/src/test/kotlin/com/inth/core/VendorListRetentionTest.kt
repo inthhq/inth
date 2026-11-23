@@ -49,7 +49,7 @@ class VendorListRetentionTest {
 	 * A list on the body reaches the snapshot the bridge reads, and is stored once.
 	 *
 	 * Three places, one document. A drawer that names partners reads `snapshot.iab.gvl`, which is the
-	 * key `packages/react-native/src/protocol/snapshot.ts` declares and the key `core-swift` fills, so
+	 * key `packages/react-native/src/protocol/consent-snapshot.model.ts` declares and the key `core-swift` fills, so
 	 * a body parked only behind a kernel accessor left that drawer empty on Android while the same
 	 * build worked on iOS. [com.inth.core.ConsentCore.vendorList] is now that same field read a second
 	 * way, which is what keeps a native disclosure and a JavaScript one naming the same vendors.

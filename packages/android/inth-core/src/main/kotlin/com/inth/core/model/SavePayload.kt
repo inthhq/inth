@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 /**
  * The unit of a consent write, built once per explicit action.
  *
- * Mirrors `SavePayload` in `packages/sdk/core/src/types.ts`. It is persisted before
+ * Mirrors `SavePayload` in `packages/sdk/core/src/consent-kernel.model.ts`. It is persisted before
  * the request goes out and replayed unchanged on every retry, so a later init
  * that changes the policy never rewrites a queued payload: the receipts, the
  * captured action time, and the decision inputs all stay as the subject left

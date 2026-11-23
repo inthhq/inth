@@ -2,7 +2,7 @@ import { manifest } from '@inth/sdk/modes';
 /**
  * Wiring of `@inth/nextjs/api` onto the core consent route handler. The
  * route behaviour itself is pinned once, in
- * `packages/sdk/core/src/server/__tests__/consent-route.test.ts`.
+ * `packages/sdk/core/src/server/__tests__/consent-route.api.test.ts`.
  */
 import { clearManifestCache } from '@inth/sdk/server';
 import { beforeEach, describe, expect, test, vi } from 'vitest';

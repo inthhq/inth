@@ -712,7 +712,7 @@ const digest = async function digest(value: string): Promise<string> {
 /**
  * Request headers every upstream manifest request carries. A function, not
  * a module-level object: browser bundles reach this module through
- * `transports/gvl-cache`, and an object spread at module level is kept by
+ * `transports/gvl-cache.model`, and an object spread at module level is kept by
  * bundlers even when nothing reads it.
  */
 const defaultRequestHeaders = function defaultRequestHeaders(): Record<

@@ -1,7 +1,7 @@
 /**
  * The stylesheet class names the consent prompt's markup uses.
  *
- * Imported on the server only, like `../banner/class-names`. The browser
+ * Imported on the server only, like `../banner/banner-class-names.model`. The browser
  * reads them from the spot `<ConsentBanner />` leaves beside the prompt,
  * because in the browser these modules also import their stylesheets, and
  * Astro links every stylesheet a page script can reach.

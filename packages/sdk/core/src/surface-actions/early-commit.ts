@@ -5,7 +5,7 @@
  * When the visitor's first input is a tap on the banner, waiting for the
  * whole kernel would hold their choice back by its download. This records
  * the tap from the snapshot the page rendered with, with the kernel's own
- * save code (`kernel/save-plan.ts`, `buildNextSnapshot`):
+ * save code (`kernel/save-plan.model.ts`, `buildNextSnapshot`):
  *
  * - {@link planEarlyCommit} builds what `commands.save('all' | 'none')`
  *   would commit: the next snapshot, the records, the events and the

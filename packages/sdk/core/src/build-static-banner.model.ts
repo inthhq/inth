@@ -1,6 +1,6 @@
 /**
  * Node-only: the static banner `consentManifest()` puts in a client-rendered
- * page's `index.html`. See `libs/static-banner.ts` for what the page does
+ * page's `index.html`. See `libs/static-banner.model.ts` for what the page does
  * with it.
  *
  * @packageDocumentation

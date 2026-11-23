@@ -1,7 +1,7 @@
 /**
  * The mobile vocabulary against the JavaScript kernel's, type by type.
  *
- * `src/protocol/vocabulary.ts` copies the consent vocabulary out of `@inth/sdk/engine`
+ * `src/protocol/consent-vocabulary.model.ts` copies the consent vocabulary out of `@inth/sdk/engine`
  * so a phone app never installs the web kernel. A copy is only safe while it is
  * still a copy, and a consent category that quietly disappears from one side is a
  * subject's decision going unrecorded, not a type error.
@@ -11,7 +11,7 @@
  * file runs through `tsc -p tsconfig.type-tests.json`, which the package's
  * `check-types` script calls, and a drift is a compile error naming the pair.
  *
- * The runtime half of the same guarantee is in `vocabulary.test.ts`, which also
+ * The runtime half of the same guarantee is in `consent-vocabulary.model.test.ts`, which also
  * checks the spellings the Swift and Kotlin cores declare.
  */
 

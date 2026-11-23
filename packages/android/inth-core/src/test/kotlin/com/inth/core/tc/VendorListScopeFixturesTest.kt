@@ -170,7 +170,7 @@ class VendorListScopeFixturesTest {
 	 * the survivor under key 7 still states 11 in its body. Neither core rewrites it: Kotlin reads
 	 * the document as served and takes the identity from the key at [toTcVendorList], where
 	 * `@iabtechlabtcf/core`'s `GVL` overwrites `vendor.id` with the key and `mapGvlVendor` in
-	 * `dialog-data.ts` does `id: Number(vendorId)`. The graded claim is therefore what the encoder
+	 * `dialog-data.model.ts` does `id: Number(vendorId)`. The graded claim is therefore what the encoder
 	 * is told, which is the last place a wrong answer could still reach a subject.
 	 */
 	@Test
@@ -248,7 +248,7 @@ class VendorListScopeFixturesTest {
 	 *
 	 * `purposes`, `specialPurposes`, `features`, `specialFeatures`, `stacks`, `dataCategories` and
 	 * `lastUpdated` describe the framework rather than the audience, and `processPurposes` in
-	 * `packages/sdk/iab/src/headless/dialog-data.ts` walks the served `purposes` record to draw a
+	 * `packages/sdk/iab/src/headless/dialog-data.model.ts` walks the served `purposes` record to draw a
 	 * dialog: pruning an unreferenced purpose for tidiness changes what that dialog claims
 	 * independently of the scope anybody configured. The two versions are the expensive pair --
 	 * `toTcVendorList` reads them straight into a TC String's VendorListVersion and

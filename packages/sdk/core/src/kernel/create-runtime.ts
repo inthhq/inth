@@ -14,8 +14,8 @@
  * - The records generation is a fence counter: the records boundary bumps
  *   it, async work started under an older value must not apply.
  *
- * The init lifecycle (`init-lifecycle.ts`), choice recording (`choice.ts`),
- * the records boundary (`records.ts`), the setters and the save outbox all
+ * The init lifecycle (`create-init-lifecycle.ts`), choice recording (`create-choice-recorder.ts`),
+ * the records boundary (`kernel-records.model.ts`), the setters and the save outbox all
  * write through this cell and own nothing of it.
  */
 import type { OptOutRecord, OptOutRight } from '@inth/sdk-schema/types';

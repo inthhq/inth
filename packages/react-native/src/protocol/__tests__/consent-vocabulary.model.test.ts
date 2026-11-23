@@ -1,8 +1,8 @@
 /**
  * One consent vocabulary, three implementations, no shared compiler.
  *
- * `src/protocol/vocabulary.ts` owns the category names and wire spellings this
- * package renders, and `vocabulary.type-test.ts` holds them against `@inth/sdk/engine`
+ * `src/protocol/consent-vocabulary.model.ts` owns the category names and wire spellings this
+ * package renders, and `consent-vocabulary.model.type-test.ts` holds them against `@inth/sdk/engine`
  * at compile time. That leaves the half a type checker cannot see: Swift and
  * Kotlin declare the same names in languages nothing here compiles together, and
  * a category that exists on one platform and not another is a subject's decision

@@ -30,7 +30,7 @@ import kotlinx.serialization.json.JsonObject
  *     the first gap. They are keyed maps here for that reason, in the ascending id order the served
  *     document arrives in, which is also the order `Object.entries` hands the web.
  *   * The id inside an entry duplicates its key, and both web readers trust the key:
- *     `processPurposes` in `packages/sdk/iab/src/headless/dialog-data.ts` sets `id: Number(id)` from the
+ *     `processPurposes` in `packages/sdk/iab/src/headless/dialog-data.model.ts` sets `id: Number(id)` from the
  *     key it is holding, and `@iabtechlabtcf/core`'s `GVL` overwrites `vendor.id` with the key the
  *     same way before the encoder ever asks. [toTcVendorList] does the same, so an entry whose body
  *     disagrees with its key cannot rename itself into a signal about somebody else.
@@ -134,7 +134,7 @@ data class GvlStack(
  *
  * The four purpose lists are what a TC String is written against and so the only fields
  * [TcSemanticPreEncoder] consults. The rest is disclosure, which the bridge still forwards because
- * the dialog renders it: `mapGvlVendor` in `packages/sdk/iab/src/headless/dialog-data.ts` reads names,
+ * the dialog renders it: `mapGvlVendor` in `packages/sdk/iab/src/headless/dialog-data.model.ts` reads names,
  * retention, the policy link, and the cookie claims off this same record.
  *
  * @property deletedDate Present means withdrawn, and the encoder drops a positive signal for a

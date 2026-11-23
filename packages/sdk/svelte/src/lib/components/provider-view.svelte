@@ -4,7 +4,7 @@
 	handed. `InthProvider` from `@inth/svelte` hands it the engine it creates
 	(or the one it was given); the one from `@inth/svelte/kit` hands it the
 	server's engine, and in the browser the deferred runtime that stands in
-	for the engine until it loads (`../deferred/runtime.ts`). Both render through this component, so
+	for the engine until it loads (`../deferred/create-deferred-runtime.ts`). Both render through this component, so
 	the browser hydrates the server's markup whichever one it got.
 
 	@internal

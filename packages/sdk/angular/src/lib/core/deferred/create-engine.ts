@@ -1,6 +1,6 @@
 /**
  * The consent engine chunk: the runtime `provideInth()` owns, with its
- * kernel and modules. The deferred runtime (`deferred-runtime.ts`) loads it
+ * kernel and modules. The deferred runtime (`create-deferred-runtime.ts`) loads it
  * after the page for a visitor who still has to choose, at once for every
  * other visitor, and before the render on the server.
  *

@@ -56,7 +56,7 @@ test('the dialog chunk carries no embedded widget', async () => {
 	warmDialogChunk();
 	await vi.waitFor(
 		() =>
-			expect(moduleRequested('/src/components/dialog/dialog.tsx')).toBe(true),
+			expect(moduleRequested('/src/components/dialog/consent-dialog-body.tsx')).toBe(true),
 		{ timeout: 5000 }
 	);
 	// `ConsentWidget` and its sheets load only on a page that renders it.

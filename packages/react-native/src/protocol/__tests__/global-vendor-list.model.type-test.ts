@@ -1,8 +1,8 @@
 /**
  * The mobile vendor list against the JavaScript kernel's, type by type.
  *
- * `src/protocol/gvl.ts` copies the served vendor list so a phone app never
- * installs the web consent stack, and `gvl.test.ts` compares the copy's names
+ * `src/protocol/global-vendor-list.model.ts` copies the served vendor list so a phone app never
+ * installs the web consent stack, and `global-vendor-list.model.test.ts` compares the copy's names
  * with the ones Swift and Kotlin declare. Neither of those sees whether a copy
  * is still a copy in the ways a type checker can see: a member that changed
  * nullability, a key one side grew, the pair of them, which is how a vendor list
@@ -10,7 +10,7 @@
  *
  * `@inth/sdk/engine` is the oracle here, exactly as `packages/native-protocol/CONTRACT.md` rule 4 makes
  * it the oracle for both native cores, and exactly as
- * `vocabulary.type-test.ts` already uses it. Vitest does not check types, so
+ * `consent-vocabulary.model.type-test.ts` already uses it. Vitest does not check types, so
  * this file runs through `tsc -p tsconfig.type-tests.json`, which the package's
  * `check-types` script calls, and a drift is a compile error that names the pair.
  *
@@ -40,7 +40,7 @@ type KernelGVLVendor = KernelGlobalVendorList['vendors'][string];
 /**
  * The vendor record without the one field a device cannot spell the web's way.
  *
- * `gvl.ts` explains the field; `Omit` on both sides keeps the comparison honest
+ * `global-vendor-list.model.ts` explains the field; `Omit` on both sides keeps the comparison honest
  * about the rest, which is fifteen names and four lists with nothing to argue
  * about.
  */

@@ -1,6 +1,6 @@
 /**
  * Nitro plugin: preloads the stock banner's own chunks at low priority on a
- * page that renders no banner. See `./banner-preload-priority`.
+ * page that renders no banner. See `./banner-preload-priority.model`.
  */
 import { defineNitroPlugin } from 'nitropack/runtime';
 

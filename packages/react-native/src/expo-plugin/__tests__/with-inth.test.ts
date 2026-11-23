@@ -322,7 +322,7 @@ describe('withInth standard install', () => {
 	});
 
 	it('leaves gradle SDK levels to the host', async () => {
-		// The floor is checked after prebuild (android-sdk-floor.test.ts), never
+		// The floor is checked after prebuild (with-android-sdk-floor.test.ts), never
 		// rewritten: a level below it was set on purpose and fails loudly.
 		const config = applyToFixture(STANDARD_PROPS);
 		const files = [

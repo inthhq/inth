@@ -29,7 +29,7 @@ package com.inth.core.tc
  *
  * @property confirmedAtMillis When the user decided, in epoch milliseconds. Both date fields in the
  * string are this floored to a UTC day, which is what the format carries. There is no separate
- * creation time: TCF requires Created and LastUpdated to hold the same value, and `tc-string.ts`
+ * creation time: TCF requires Created and LastUpdated to hold the same value, and `tc-string.model.ts`
  * sets both to the confirmation day.
  */
 data class TcConsentInput(
@@ -51,7 +51,7 @@ data class TcConsentInput(
 	val vendorsDisclosed: List<Int> = emptyList(),
 ) {
 	companion object {
-		/** `config.consentScreen ?? 1` in `tc-string.ts`. */
+		/** `config.consentScreen ?? 1` in `tc-string.model.ts`. */
 		const val DEFAULT_CONSENT_SCREEN = 1
 
 		/** `config.publisherCountryCode ?? 'US'`. */
@@ -160,7 +160,7 @@ object TcStringEncoder {
 
 	/**
 	 * Floor [millis] to its UTC day and express it in deciseconds, which is the unit both date
-	 * fields hold. `tc-string.ts` floors the confirmation time to a day before the model sees it,
+	 * fields hold. `tc-string.model.ts` floors the confirmation time to a day before the model sees it,
 	 * and the format asks for `Date.UTC(...)/100` of a day-level UTC timestamp. A string built from
 	 * a raw millisecond clock reads back as a different instant in every timezone but one.
 	 */

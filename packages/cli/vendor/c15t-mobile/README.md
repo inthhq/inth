@@ -18,6 +18,6 @@ The CLI ships as one native binary built by Scriptc, with no npm runtime depende
 ## What reads these files
 
 - `scripts/export-mobile-policy.ts` imports `src/mobile/export-manifest.ts`.
-- `packages/react-native/src/expo-plugin/__tests__/policy-resource.test.ts` checks that `src/mobile/gvl-fields.ts` matches the Expo plugin's copy byte for byte.
+- `packages/react-native/src/expo-plugin/__tests__/embed-policy-resource.test.ts` checks that `src/mobile/gvl-fields.ts` matches the Expo plugin's copy byte for byte.
 
 When the manifest command is ported, move the code to `packages/cli/src`, update those two readers, and delete this folder.

@@ -1,7 +1,7 @@
 /**
  * The consent prompt: a Card, Banner or Drawer that shows the same
  * content, copy and decisions in every container. The modules beside this
- * file (`card.ts`, `banner.ts`, `drawer.ts`) name the stylesheets of one
+ * file (`card-container.ts`, `banner.ts`, `drawer-container.ts`) name the stylesheets of one
  * container each, so a page downloads only the container it renders.
  *
  * @packageDocumentation

@@ -35,7 +35,7 @@ const buildLocals = async function buildLocals(
 
 /**
  * The banner's markup. The first-paint stylesheet it inlines names every
- * class, so it is left out (`inline-styles.test.ts` covers it).
+ * class, so it is left out (`inline-styles.model.test.ts` covers it).
  */
 const render = async function render(
 	locals: InthLocals,

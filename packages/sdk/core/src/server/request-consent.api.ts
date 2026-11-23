@@ -15,7 +15,7 @@
  *    locally with {@link resolveConsentInit}; hosted mode asks a backend
  *    `/v1/consent/init`; offline mode resolves bundled policy rules.
  * 3. **Target.** A relative URL resolves against the request with the one
- *    trust rule in `request-origin.ts`. A render never fetches the app's own
+ *    trust rule in `request-origin.model.ts`. A render never fetches the app's own
  *    consent routes over the network (the self-route guard); an adapter
  *    with an in-process fetch reaches them through it instead.
  * 4. **Forwarding.** Upstream requests carry only what the backend needs.

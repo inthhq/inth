@@ -15,7 +15,7 @@ const groovyString = (value: string): string =>
 /**
  * Configure an explicit, exclusive binary repository.
  *
- * SDK levels are checked, not raised, by `android-sdk-floor.ts`.
+ * SDK levels are checked, not raised, by `with-android-sdk-floor.ts`.
  *
  * @param gradleFile - The root `build.gradle` the mod was given.
  * @param repository - Validated build-only repository, or null to remove its managed block.

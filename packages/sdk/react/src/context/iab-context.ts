@@ -30,7 +30,7 @@ export interface IABContextValue {
 /**
  * Context carrying the IAB CMP handle.
  *
- * It lives in its own module, away from `iab-context.tsx`, because that
+ * It lives in its own module, away from `iab-provider.tsx`, because that
  * file statically imports `createIAB` from `@inth/sdk/iab`. A provider handed
  * an externally owned runtime already has a CMP and must be able to publish
  * it here without pulling the TCF encoder into its chunk.

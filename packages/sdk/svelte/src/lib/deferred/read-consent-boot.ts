@@ -1,6 +1,6 @@
 /**
  * The boot data the SvelteKit `InthProvider` leaves in the server HTML, and the
- * browser side that reads it back. The writer is in `boot-server.ts`, so
+ * browser side that reads it back. The writer is in `plan-server-boot.ts`, so
  * the first-load chunk carries only the reader.
  *
  * @packageDocumentation
@@ -16,7 +16,7 @@ export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
 export interface RootBoot {
 	/** The snapshot the server rendered the page from. */
 	s: ConsentSnapshot;
-	/** `1` when the engine may wait for the page (see `boot-server.ts`). */
+	/** `1` when the engine may wait for the page (see `plan-server-boot.ts`). */
 	d?: 1;
 	/** The experiment the server's runtime assigned from, when there is one. */
 	x?: ConsentExperiment;

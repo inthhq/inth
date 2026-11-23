@@ -1,7 +1,7 @@
 /**
  * The Nuxt plugin's consent engine: the runtime the app renders once it
  * has loaded. The plugin loads it at once for a visitor it cannot defer,
- * and otherwise when `deferred/shell.ts` asks for it, with the stock
+ * and otherwise when `deferred/create-deferred-context.ts` asks for it, with the stock
  * banner's chunk in parallel.
  *
  * @packageDocumentation

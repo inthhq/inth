@@ -170,7 +170,7 @@ State model
 -----------
 
 Native holds one immutable `ConsentSnapshot`, versioned by `revision`. It mirrors
-the fields of `ConsentSnapshot` in `packages/sdk/core/src/types.ts` that matter on
+the fields of `ConsentSnapshot` in `packages/sdk/core/src/consent-kernel.model.ts` that matter on
 mobile:
 
     revision: number                  // monotonic, bumps on every mutation
@@ -258,10 +258,10 @@ a notice/acknowledge/purpose triple. `subject` is keyed `subjectId`, not `id`.
 object (`{ rights, method, recordedAt, heldBy } | null`) added without a protocol
 bump; older binaries omit it and the client reads it as `null`.
 
-The declaration is `ConsentSnapshot` in `packages/react-native/src/protocol/snapshot.ts`,
+The declaration is `ConsentSnapshot` in `packages/react-native/src/protocol/consent-snapshot.model.ts`,
 which says plainly that it is the shape on the wire and that the JavaScript layer never
-derives it. It takes all four types from `src/protocol/vocabulary.ts`, a copy that keeps
-`@inth/sdk-core` out of a phone app; `vocabulary.type-test.ts` fails the type check when the
+derives it. It takes all four types from `src/protocol/consent-vocabulary.model.ts`, a copy that keeps
+`@inth/sdk-core` out of a phone app; `consent-vocabulary.model.type-test.ts` fails the type check when the
 copy and `@inth/sdk-core` disagree. The fixtures are
 generated from the TypeScript kernel, so where a native model and a fixture disagree
 about a key name, the fixture is right.
@@ -1007,7 +1007,7 @@ plus the IAB and bundled-policy refusals `bundled-policy-unusable`,
 `additional-consent-list-stale`, `additional-consent-unavailable`,
 `iab-draft-required`, `iab-unavailable`, `iab-list-stale`, `iab-choices-required`,
 `invalid-iab-choices` and `invalid-action-time`. `COMMIT_FAILURE_REASONS` in
-`packages/react-native/src/protocol/commit.ts` is the list.
+`packages/react-native/src/protocol/commit-payload.model.ts` is the list.
 These are the values of `CommitResult.reason` when `ok` is false. Delivery
 failures such as `transport-unavailable`, `save-rejected` and
 `save-undeliverable` are error-event codes, not commit refusal reasons.
@@ -1566,7 +1566,7 @@ and the headless commit write, and the refused selections. The web encoder
 writes restriction vendors that are adjacent in the narrowed list as one range,
 which also covers the IDs between them; both native encoders write each vendor,
 so the fixture avoids such groups. These keys are additive without a protocol
-bump: `ADDITIVE_IAB_DEFAULTS` in `wire-shape.ts` reads an older bridge as
+bump: `ADDITIVE_IAB_DEFAULTS` in `snapshot-wire-shape.model.ts` reads an older bridge as
 `committed: null, disclosure: null, editable: false, acceptAll: null,
 headlessUnsupported: [], customVendors: []`, so JavaScript offers no edit it
 cannot commit. `BRIDGE_PAYLOADS` types the `iab` object with these keys, so both
@@ -1578,7 +1578,7 @@ pod drops `vendor/InthConsentUI` and `InthConsentHost.swift` and compiles with
 `INTH_NO_NATIVE_UI`; Android compiles `src/withoutNativeUi` instead of
 `src/nativeUi` and drops `inth-consent-ui`. `getBootstrap()` reports `nativeUI`,
 and the presenter methods reject with `INTH_NATIVE_UI_EXCLUDED`. `nativeUI` is
-additive without a protocol bump: `ADDITIVE_BOOTSTRAP_DEFAULTS` in `wire-shape.ts`
+additive without a protocol bump: `ADDITIVE_BOOTSTRAP_DEFAULTS` in `snapshot-wire-shape.model.ts`
 reads an older binary, which sends no flag and always links the screens, as `true`.
 
 Events: `snapshot`, `error`, `initialized`, and `onConsentPresenterOutcome` for the
@@ -1680,7 +1680,7 @@ against an older embedded native build.
 
 A snapshot key added without a protocol bump must be additive: its absence has to
 mean "this build has no such state". The key goes in `ADDITIVE_SNAPSHOT_DEFAULTS`
-(`packages/react-native/src/protocol/wire-shape.ts`) with that default, and the
+(`packages/react-native/src/protocol/snapshot-wire-shape.model.ts`) with that default, and the
 client fills it before reading or grading the snapshot, so an older binary is
 neither `undefined` behind a typed field nor reported as drift. `gppString` is
 one: an older binary has no GPP, so it reads as `null`. `optOut` is another: an
@@ -1789,7 +1789,7 @@ Recorded here as the pieces land, so the Swift, Kotlin, and JavaScript workers
 build against the same reality.
 
 - `packages/react-native/src/protocol/` is the TypeScript source of truth for the
-  boundary types. `PROTOCOL_VERSION` and the supported range live in `version.ts`.
+  boundary types. `PROTOCOL_VERSION` and the supported range live in `protocol-version.model.ts`.
 - The Codegen spec is `packages/react-native/src/specs/NativeInth.ts`. The
   codegen config name is `InthSpec` and the module name is `Inth`. Native targets
   must register exactly that module name.
@@ -2058,7 +2058,7 @@ The `theme` prop writes the native theme keys, `com.inth.consent.*`, that
 `consent-theme.kt` read. Its field names follow the web `Theme` in `@inth/sdk-ui`,
 and so do the native token names. The prop is the `ConsentThemeOptions` type
 `createConsentTheme` takes, so one object themes both renderers. The plugin
-maps it in `src/expo-plugin/theme.ts`:
+maps it in `src/expo-plugin/with-inth-theme.ts`:
 
     theme field              web token                 iOS / Android key suffix
     colors.primary           --inth-primary            primary / PRIMARY
@@ -2097,7 +2097,7 @@ key only. The body readers know no keywords, so `fontFamily: 'serif'` fails too.
 With `theme` set the plugin owns every key above and clears the ones the prop no
 longer names; without it the plugin registers no theme write, so an app-owned
 config plugin keeps working. The copy keys (`headline`, `introduction`) are not
-part of the prop. `__tests__/theme.test.ts` checks every key against both reader
+part of the prop. `__tests__/with-inth-theme.test.ts` checks every key against both reader
 sources.
 
 Rules the plugin enforces at build time
@@ -2154,7 +2154,7 @@ Rules the plugin enforces at build time
   Android mod, which runs after every other plugin's mods, reads
   `gradle.properties` and the root and app `build.gradle(.kts)` and fails the
   prebuild when the level Gradle applies (an app-module literal, else the last root `ext` assignment, else the last `gradle.properties` entry; comments never count) is below the floor, naming that setting and where to change it.
-  `__tests__/android-sdk-floor.test.ts` runs it against the unchanged SDK 55,
+  `__tests__/with-android-sdk-floor.test.ts` runs it against the unchanged SDK 55,
   57 and 58 templates. `targetSdkVersion` is never read.
 - Expo Go fails the build with a message rather than failing at runtime. The
   check stays quiet when an `EAS_BUILD*` variable is set, when the command is a
@@ -2344,7 +2344,7 @@ declares that are not on the Global Vendor List. Both cores read `/init`'s
 `customVendors` with `nonIABVendorSchema`'s rules (`IABCustomVendor`,
 `IabCustomVendor`). An entry that breaks them, or two entries with one id, makes the
 core hold none, as for ad tech providers. An absent key keeps the list held, as
-`init-lifecycle.ts` does on the web, with one exception. The backend sends the key
+`create-init-lifecycle.ts` does on the web, with one exception. The backend sends the key
 in every answer for a matched IAB policy when the publisher declares custom vendors,
 and leaves it out when it declares none. So a live answer for a matched IAB policy
 without the key withdraws the list and its grants, and removing every custom vendor
@@ -2457,9 +2457,9 @@ The iOS bridge reads `com.inth.policy.resource` from Info.plist. Android reads
 
 Both cores encode the IAB Global Privacy Platform string with the same rules as
 `@c15t/iab/gpp` on the web. `GppEncoder.kt` and `GPPEncoder.swift` port
-`packages/sdk/iab/src/gpp/encoder.ts`; `GppResolver.kt` and `GPPResolver.swift` port
+`packages/sdk/iab/src/gpp/gpp-encoder.model.ts`; `GppResolver.kt` and `GPPResolver.swift` port
 `resolveUSSectionDefinition` and `resolveUSSectionValues` from
-`packages/sdk/iab/src/gpp/us-section.ts`, restricted to the two sections a device
+`packages/sdk/iab/src/gpp/us-section.model.ts`, restricted to the two sections a device
 encodes. State sections (`usca`, `usva` and the rest) are not encoded on mobile.
 
 **GPP is off by default.** A US section reports notices as given, and that is

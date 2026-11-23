@@ -23,8 +23,8 @@ const DIST = join(dirname(fileURLToPath(import.meta.url)), '../../dist');
  * and Nuxt names its chunks by hash.
  */
 const SERVER_ONLY = new Set([
-	'runtime/plugin.nuxt.js ./server-consent',
-	'runtime/plugin.nuxt.js ./server/banner-preload-priority',
+	'runtime/plugin.nuxt.js ./resolve-nuxt-consent',
+	'runtime/plugin.nuxt.js ./server/banner-preload-priority.model',
 ]);
 
 /** Every relative `import()` in the built package, by importer. */

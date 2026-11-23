@@ -38,7 +38,7 @@ describe('the prompt containers in a Nuxt server render', () => {
 			const loader = new RegExp(
 				`${type}: \\(\\) => import\\('(?<specifier>[^']+)'\\)`,
 				'u'
-			).exec(read('containers.ts'))?.groups?.specifier;
+			).exec(read('prompt-containers.ts'))?.groups?.specifier;
 			expect(loader).toBe(`./chunks/${file}`);
 			expect(read(`chunks/${file}.ts`)).toContain(
 				`export { default } from '../${file}.vue';`

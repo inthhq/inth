@@ -1,5 +1,5 @@
 /**
- * The Nuxt plugin's deferred context (`runtime/deferred/shell.ts`): the
+ * The Nuxt plugin's deferred context (`runtime/deferred/create-deferred-context.ts`): the
  * browser starts from the server's snapshot, records a dialog save in its
  * own task without the consent engine, and the engine adopts that record
  * when it loads. A banner tap before the engine loads the engine, and the

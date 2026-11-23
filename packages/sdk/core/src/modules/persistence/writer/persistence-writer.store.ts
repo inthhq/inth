@@ -1,7 +1,7 @@
 /**
  * Storage writes for every Inth record: the v3 envelope, the notice
  * dismissal and the vendor denials. The reads that pair with them are in
- * `../record-storage.ts`; clearing them all is first-load code, in
+ * `../record-storage.store.ts`; clearing them all is first-load code, in
  * `../clear.ts`.
  *
  * Each record is validated with the reader's own validator before it is

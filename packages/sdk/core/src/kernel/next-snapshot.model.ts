@@ -268,7 +268,7 @@ const deriveNextActiveUI = function deriveNextActiveUI(input: {
  * The policy resolution `buildNextSnapshot` runs when a patch changes the
  * resolution or the consent categories. Passed in, so a caller that only
  * records a choice (`surface-actions/early-commit.ts`) leaves that code
- * out of its chunk. `./patch.ts` passes `../policy`'s.
+ * out of its chunk. `./kernel-patch.model.ts` passes `../policy`'s.
  *
  * @internal
  */

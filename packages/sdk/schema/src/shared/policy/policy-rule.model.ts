@@ -23,7 +23,7 @@ import type { LegacyMaterialCompatibility } from './legacy-material-policy.model
  * authored normalization, the client wire reader and the valibot schema.
  *
  * No valibot here so `@inth/sdk/schema/types` consumers can validate without the
- * runtime. The valibot mirror lives in `policy-wire-schema.ts`.
+ * runtime. The valibot mirror lives in `policy-wire-schema.model.ts`.
  */
 import {
 	canonicalizePolicySet,

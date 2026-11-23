@@ -3,7 +3,7 @@
  * input confirms, the acknowledgement and subject it records, how it is
  * attributed, and the payload the backend receives.
  *
- * `choice.ts` records every save with these. A deferred root's commit path
+ * `create-choice-recorder.ts` records every save with these. A deferred root's commit path
  * (`@inth/sdk/surface-actions/early-commit`) records a banner tap made
  * before its kernel loads with the same functions, so both write and send
  * the same thing. Pure, and small: the commit path loads them on a tap.

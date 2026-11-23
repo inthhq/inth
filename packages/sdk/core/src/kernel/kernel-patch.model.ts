@@ -1,5 +1,5 @@
 /**
- * Snapshot patching for the kernel: `./next-snapshot.ts` with the policy
+ * Snapshot patching for the kernel: `./next-snapshot.model.ts` with the policy
  * resolution from `../policy`.
  *
  * Callers describe which input fields change; `buildNextSnapshot` merges

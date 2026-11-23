@@ -14,7 +14,7 @@ package com.inth.core.tc
  * string the framework calls invalid on exactly the path where a real vendor list is involved.
  *
  * The web's equivalent of this function is `new GVL(gvlData)` in `generateTCString`
- * (`packages/sdk/iab/src/tcf/tc-string.ts`), which is the only way the reference gets a vendor list into
+ * (`packages/sdk/iab/src/tcf/tc-string.model.ts`), which is the only way the reference gets a vendor list into
  * `TCModel` at all.
  */
 fun GlobalVendorList.toTcVendorList(): TcVendorList = TcVendorList(
@@ -38,7 +38,7 @@ fun GlobalVendorList.toTcVendorList(): TcVendorList = TcVendorList(
  *
  * The id comes from the key and not from the entry's own `id` field, because the web takes it from
  * the key: `GVL` overwrites `vendor.id` with `Number.parseInt(id, 10)` while it converts the record,
- * and `mapGvlVendor` in `dialog-data.ts` does `id: Number(vendorId)` for the dialog's copy. An entry
+ * and `mapGvlVendor` in `dialog-data.model.ts` does `id: Number(vendorId)` for the dialog's copy. An entry
  * whose body disagrees with its key is therefore not a vendor with two names, it is the key's vendor,
  * and reading the body would let it claim a signal belonging to somebody else.
  */

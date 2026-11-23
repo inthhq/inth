@@ -22,7 +22,7 @@ export type GoogleConsentType = (typeof GOOGLE_CONSENT_TYPES)[number];
  * The Inth category that grants each Google Consent Mode v2 type.
  *
  * The same mapping the web's gtag.js and Google Tag Manager helpers use.
- * `src/integrations/__tests__/google-consent-mode.test.ts` checks it against
+ * `src/integrations/__tests__/google-consent-mode.model.test.ts` checks it against
  * `packages/native-protocol/google-consent-mode/consent-mode-v2.json`, which is
  * generated from the web module, as are the Swift and Kotlin copies.
  */

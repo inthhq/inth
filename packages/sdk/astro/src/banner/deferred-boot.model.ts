@@ -1,5 +1,5 @@
 /**
- * Server side of the first-load shell (`../browser/shell`): whether the
+ * Server side of the first-load shell (`../browser/start-deferred-client`): whether the
  * browser may load the consent engine after the page for this visitor, and
  * the boot data block the shell reads. Only the server render imports it.
  *

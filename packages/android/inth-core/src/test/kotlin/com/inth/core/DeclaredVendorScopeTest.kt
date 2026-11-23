@@ -57,7 +57,7 @@ class DeclaredVendorScopeTest {
 	 *
 	 * The list the fixture serves carries 54 vendors and the declaration names 32, and the answer has
 	 * to be the 32 the web returned on the field the dialog draws from (`snapshot.iab.gvl`, which
-	 * `packages/react-native/src/protocol/snapshot.ts` declares and `core-swift` already fills) and on
+	 * `packages/react-native/src/protocol/consent-snapshot.model.ts` declares and `core-swift` already fills) and on
 	 * the accessor a host's own Kotlin reads, which is one value read two ways -- so a prune on the
 	 * fold would show up here rather than hiding behind a helper that passes.
 	 *

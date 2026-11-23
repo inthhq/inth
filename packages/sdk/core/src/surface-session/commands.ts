@@ -1,5 +1,5 @@
 /**
- * Surface commands: the rights decisions in `rights.ts`, carried out
+ * Surface commands: the rights decisions in `surface-rights.model.ts`, carried out
  * through the kernel's own commands.
  *
  * The kernel enforces what it already knows: `commands.optOut()` records a

@@ -28,7 +28,7 @@ export const generateRandomId = function generateRandomId(): string {
 
 /**
  * Normalize raw `Script` configs by precomputing the metadata
- * `eligibility.ts` consults on every reconcile. Pure: same input
+ * `script-eligibility.model.ts` consults on every reconcile. Pure: same input
  * always produces the same output.
  */
 export const normalizeScripts = function normalizeScripts(

@@ -2,7 +2,7 @@
  * The consent client on web, over the browser engine from `@inth/sdk/engine`.
  *
  * iOS and Android run consent in the native core, and the client in
- * `native/client.ts` only reads its snapshot. A web build has no native core,
+ * `native/create-consent-client.ts` only reads its snapshot. A web build has no native core,
  * so this file runs the same engine the Inth web SDKs run: a `@inth/sdk/engine`
  * runtime with persistence, talking to the same Inth project. It implements
  * the {@link ConsentClient} contract, so the provider, the hooks, the headless

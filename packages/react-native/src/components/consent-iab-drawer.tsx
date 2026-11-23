@@ -142,7 +142,7 @@ export type ConsentIabInitialSelection = Partial<ConsentIabSelection>;
 /**
  * The strings the disclosure renders, and the shape that writes over them.
  *
- * Published from here rather than from `internal/iab-copy`, which is where they
+ * Published from here rather than from `internal/iab-copy.model`, which is where they
  * are resolved: `copy` is a prop a host sets, so the type has to be reachable
  * without naming a module the package calls private.
  */

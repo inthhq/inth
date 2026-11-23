@@ -16,10 +16,10 @@
  * Two gates keep the copy honest, and both read `@inth/sdk/engine` as the oracle,
  * which is why that package is a devDependency rather than a dependency:
  *
- * - `src/protocol/__tests__/vocabulary.test.ts` compares the tables below with
+ * - `src/protocol/__tests__/consent-vocabulary.model.test.ts` compares the tables below with
  *   the kernel's, and with the spellings the Swift and Kotlin cores declare, so
  *   JavaScript, Swift, and Kotlin cannot quietly disagree.
- * - `src/protocol/__tests__/vocabulary.type-test.ts` compares every type below
+ * - `src/protocol/__tests__/consent-vocabulary.model.type-test.ts` compares every type below
  *   with its kernel counterpart, and runs under `bun run check-types`.
  *
  * Where a comment calls an order load bearing, treat a reordering as a wire
@@ -75,13 +75,13 @@ export const OPTIONAL_CONSENT_CATEGORIES = [
  *
  * This is the readable set: what `/init` may serve a device, and what both cores
  * are graded against. `@inth/sdk/schema` names the same four in `POLICY_RULE_MODELS`
- * (`packages/sdk/schema/src/shared/policy-rule.ts`), and that package is not in this
- * one's graph, so `__tests__/vocabulary.type-test.ts` is the gate that keeps this
+ * (`packages/sdk/schema/src/shared/policy/policy-rule.model.ts`), and that package is not in this
+ * one's graph, so `__tests__/consent-vocabulary.model.type-test.ts` is the gate that keeps this
  * a copy and not a second opinion -- it pins {@link KernelModel} below to the
  * kernel's `Model` union at compile time.
  *
  * Order is load bearing. Swift's `ConsentModel` and Kotlin's declare this
- * sequence, and `__tests__/vocabulary.test.ts` compares all three as sequences,
+ * sequence, and `__tests__/consent-vocabulary.model.test.ts` compares all three as sequences,
  * which is what turns a model added on one platform and not another into a
  * failure here instead of a policy silently unread on a phone.
  */
@@ -100,7 +100,7 @@ export const NATIVE_MODELS = ['opt-in', 'opt-out', 'iab', 'none'] as const;
  * Permission model the policy enforces, in the kernel's whole vocabulary.
  *
  * {@link POLICY_MODELS} verbatim, which is the kernel's `Model` union and is
- * pinned to it by `__tests__/vocabulary.type-test.ts`. Native snapshots and save
+ * pinned to it by `__tests__/consent-vocabulary.model.type-test.ts`. Native snapshots and save
  * payloads can carry all four values; see {@link NATIVE_MODELS}.
  */
 export type KernelModel = (typeof POLICY_MODELS)[number];

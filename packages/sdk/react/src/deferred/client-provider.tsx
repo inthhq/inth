@@ -4,7 +4,7 @@
  * `InthProvider` for client-rendered apps, whose consent engine loads
  * after the page's priority images when the visitor still has to choose.
  *
- * The page renders at once, under a stand-in kernel (`deferred-kernel.ts`).
+ * The page renders at once, under a stand-in kernel (`create-deferred-kernel.ts`).
  * The `/v1/consent/init` request, from the inline prefetch that `consentManifest()` or
  * `buildPrefetchScript()` put in the HTML or else started by the provider
  * as it first renders, carries the policy and the copy, so once it

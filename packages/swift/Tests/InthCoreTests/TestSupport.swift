@@ -449,7 +449,7 @@ enum Fixture {
 
     /// A vendor list document, in the sparse-object shape
     /// `globalVendorListSchema` declares unless `denseArrays` asks for the array shape
-    /// older GVL publications use. Both have to read, because `dialog-data.ts` runs
+    /// older GVL publications use. Both have to read, because `dialog-data.model.ts` runs
     /// `Object.entries` over either.
     static func gvlDocument(
         vendorListVersion: Int = 177,

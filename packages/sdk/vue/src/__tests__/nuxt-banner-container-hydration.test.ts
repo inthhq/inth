@@ -1,6 +1,6 @@
 /**
  * The consent banner rendered by the server and hydrated under the Nuxt
- * plugin's deferred context (`runtime/deferred/shell.ts`): its container,
+ * plugin's deferred context (`runtime/deferred/create-deferred-context.ts`): its container,
  * and an all-in-one Drawer's options, arrive in chunks
  * of their own after the banner hydrated, and must still hydrate against
  * the snapshot the server rendered; and a tap on the server's HTML before

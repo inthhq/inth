@@ -2,7 +2,7 @@
  * The records boundary: how stored and server records enter the kernel
  * without creating a choice.
  *
- * - Every record is validated (`record-validation.ts`) against the time it
+ * - Every record is validated (`record-validation.model.ts`) against the time it
  *   applies at; one invalid record rejects the whole input.
  * - `hydrate()` replaces records (SSR seeds, storage, a clear with `null`s).
  *   Replacing or clearing the choice or the subject bumps the records
@@ -14,7 +14,7 @@
  *   the backend's link answer carries an effective opt-out, `identify()`
  *   applies it to the snapshot and emits `opt-out:synced`.
  *
- * Clearing (`clear-records.ts`) is `hydrate()` with `null`s followed by
+ * Clearing (`clear-records.model.ts`) is `hydrate()` with `null`s followed by
  * `records:cleared`, which the save outbox listens for.
  */
 import type { OptOutRecord } from '@inth/sdk-schema/types';

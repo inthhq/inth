@@ -265,7 +265,7 @@ const ENGINE_SOURCES = [
 ];
 
 /**
- * The client manifest key `runtime/deferred/boot.ts` names. Kept equal by a
+ * The client manifest key `runtime/deferred/deferred-boot.model.ts` names. Kept equal by a
  * test.
  */
 export const DEFERRED_ENGINE_MANIFEST_KEY = 'inth:deferred-engine';
@@ -360,7 +360,7 @@ const SCRIPT_FILE = /\.m?js$/u;
 /**
  * The stock banner's own files: its chunk and the chunks it imports, less
  * any the app or the consent engine needs. The server lowers the priority
- * of their preloads (`runtime/server/banner-preload-priority.ts`), so they
+ * of their preloads (`runtime/server/banner-preload-priority.model.ts`), so they
  * download behind the page's own images and scripts.
  *
  * Only the banner's: the app hydrates without it (`LazyConsentBanner` is
@@ -453,7 +453,7 @@ export const bannerOnlyFiles = function bannerOnlyFiles(
 /**
  * Drop the entry from the `imports` of chunks the entry itself imports
  * statically. Rolldown can list the entry there for a chunk that only loads
- * on demand from it, such as the Inth chunk group (`chunk-group.ts`), which
+ * on demand from it, such as the Inth chunk group (`group-consent-chunks.ts`), which
  * makes a cycle. Nuxt's renderer reads a cycle's far end as having no
  * dependencies, so the page would stop preloading the Inth chunk and the
  * browser would fetch it only after parsing the entry. The entry loads

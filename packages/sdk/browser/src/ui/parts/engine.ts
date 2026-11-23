@@ -7,7 +7,7 @@
  * In the ESM build and the one-file script builds this only re-exports.
  * In `inth.choices.js` it is the engine's copy instead: the engine
  * publishes this module on `__inthChoicesEngine` before loading the file
- * (`../privacy-choices-file.ts`), and the build reads it from there, so
+ * (`../load-choices-file.ts`), and the build reads it from there, so
  * the file and the engine share one session per kernel. A stateful module
  * the file bundles anyway fails its build (`scripts/mode-bundle-boundary.ts`).
  *

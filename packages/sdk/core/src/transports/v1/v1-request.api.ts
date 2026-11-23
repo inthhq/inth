@@ -1,6 +1,6 @@
 /**
  * The request helpers the clients of the `/v1` routes share. The paths
- * are in `paths.ts`, which first-load code reads alone.
+ * are in `v1-routes.ts`, which first-load code reads alone.
  *
  * @internal
  */

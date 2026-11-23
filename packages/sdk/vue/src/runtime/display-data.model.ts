@@ -1,6 +1,6 @@
 /**
  * Snapshot-to-ref mappings shared by the consent runtime (`kernel.ts`) and
- * the Nuxt plugin's deferred context (`deferred/shell.ts`). Kept apart from
+ * the Nuxt plugin's deferred context (`deferred/create-deferred-context.ts`). Kept apart from
  * `kernel.ts`, which imports the whole runtime, so the first-load chunk can
  * use them.
  *

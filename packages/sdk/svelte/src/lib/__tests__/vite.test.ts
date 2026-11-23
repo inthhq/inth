@@ -32,7 +32,7 @@ const CLIENT_BUNDLE = {
 	]),
 	'_app/immutable/chunks/e.js': chunk('_app/immutable/chunks/e.js', [
 		'/app/node_modules/@inth/svelte/dist/deferred/engine.js',
-		'/app/node_modules/@inth/svelte/dist/owned-runtime.js',
+		'/app/node_modules/@inth/svelte/dist/create-owned-runtime.js',
 	]),
 	'_app/immutable/entry/app.js': chunk(
 		'_app/immutable/entry/app.js',

@@ -3,7 +3,7 @@
  *
  * Public types (`NetworkBlockerOptions`, `NetworkBlockerHandle`) are
  * re-exported by `index.ts`. Internal `BlockDecision` is exported here
- * so `decide.ts` and the patch installers can share it. Re-exports
+ * so `evaluate-block.ts` and the patch installers can share it. Re-exports
  * mirror the v2 surface so adapters can import either way.
  */
 

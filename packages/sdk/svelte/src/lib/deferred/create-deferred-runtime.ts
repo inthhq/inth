@@ -3,12 +3,12 @@
  * engine has loaded.
  *
  * A server render already put the banner, its first-paint styles and the
- * boot data (`boot.ts`) in the HTML. The browser's first-load chunk holds
+ * boot data (`read-consent-boot.ts`) in the HTML. The browser's first-load chunk holds
  * only this: a runtime over a stand-in kernel (`stand-in.ts`) that reads
  * the snapshot the server rendered with, so the page hydrates and every
  * component reads the server's state. The engine (`engine.ts`) loads after
  * the page's priority images, on the first input or scroll outside the
- * banner, or when page code needs it (`trigger.ts`); at once for a
+ * banner, or when page code needs it (`schedule-deferred-engine.ts`); at once for a
  * visitor the engine must serve now.
  *
  * A banner accept or reject, or a dialog save, made before the engine is

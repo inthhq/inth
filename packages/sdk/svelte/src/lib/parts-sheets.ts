@@ -10,7 +10,7 @@ import type { SurfaceStyleSheet } from './surface-styles';
  * legal-link rules with the variables they read.
  *
  * The consent prompt, the trigger and the ConsentGate have sheets of their
- * own (`components/prompt/sheets.ts`, `TRIGGER_SHEETS` and
+ * own (`components/prompt/prompt-sheets.model.ts`, `TRIGGER_SHEETS` and
  * `CONSENT_GATE_SHEETS`), so a page that renders only the prompt never
  * inserts these.
  *

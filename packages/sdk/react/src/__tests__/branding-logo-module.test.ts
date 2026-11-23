@@ -14,7 +14,7 @@ const rawSources = import.meta.glob(
 
 describe('branding logo module', () => {
 	test('holds only the branding marks', () => {
-		const logo = rawSources['../components/shared/ui/logo.tsx'];
+		const logo = rawSources['../components/shared/ui/brand-mark-icon.tsx'];
 
 		expect(logo).toBeDefined();
 		expect(logo).not.toMatch(/FingerprintIcon|SettingsIcon/u);
@@ -28,8 +28,8 @@ describe('branding logo module', () => {
 
 		// The trigger's icon and its DevTools toolbar.
 		expect(importers).toEqual([
-			'../components/panel-trigger/atoms/icon.tsx',
-			'../components/panel-trigger/atoms/toolbar.tsx',
+			'../components/panel-trigger/atoms/trigger-icon.tsx',
+			'../components/panel-trigger/atoms/trigger-toolbar.tsx',
 		]);
 	});
 });

@@ -4,7 +4,7 @@
  * Reads raw stored candidates with their provenance and decodes them into
  * the reviewed per-category receipt model. Reading is what the first
  * banner needs, so this file is in the first load. The writes, which run
- * only when the kernel explicitly asks, are in `writer/store.ts` and load
+ * only when the kernel explicitly asks, are in `writer/persistence-writer.store.ts` and load
  * on demand.
  *
  * Read guarantees:

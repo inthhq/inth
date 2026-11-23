@@ -9,7 +9,7 @@
  * (`inth.choices.js`) beside it, so the banner waits for neither in turn.
  * Otherwise it loads the engine after the page's priority images, at the
  * first input, or after `ENGINE_TIMEOUT_MS`, and hands it everything
- * through the boot object (`./boot.ts`). Every consent call made before
+ * through the boot object (`./read-boot.ts`). Every consent call made before
  * the engine waits for it, and runs once it has loaded.
  *
  * It runs nothing early it cannot run the way the engine would: any option

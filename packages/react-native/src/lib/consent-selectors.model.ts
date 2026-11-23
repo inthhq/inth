@@ -5,7 +5,7 @@
  * permission, and they decide nothing: they read `effectivePermissions` and
  * apply the two lifecycle flags. The native cores own the state, and
  * Nothing here evaluates policy: the vocabulary comes from
- * `../protocol/vocabulary`, and the Swift and Kotlin cores own the state that
+ * `../protocol/consent-vocabulary.model`, and the Swift and Kotlin cores own the state that
  * produced the numbers.
  */
 

@@ -1,6 +1,6 @@
 /**
  * `InthProvider`'s props and option merging, shared by the first-load shell
- * (`./root`) and the engine it loads (`./root-engine`).
+ * (`./inth-provider`) and the engine it loads (`./root-engine`).
  *
  * @internal
  */

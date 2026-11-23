@@ -2,8 +2,8 @@
  * Rights decisions for consent surfaces, as pure functions over a snapshot.
  *
  * The kernel already owns what an opt-out is, when one is held, when GPC
- * locks it and when a save would lift it (`libs/opt-out-state.ts`,
- * `consent-record/opt-out-rules.ts`). These functions read those rules and
+ * locks it and when a save would lift it (`libs/opt-out-state.model.ts`,
+ * `consent-record/opt-out-rules.model.ts`). These functions read those rules and
  * answer the questions a surface asks before it calls a command: what the
  * sale control shows, what pressing one of its options does, and what a
  * banner's Allow, Don't allow or Save records.

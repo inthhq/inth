@@ -1,7 +1,7 @@
 /**
  * `streamPrefetch`: a streamed `prefetch` with its resolver imported
  * statically. See `streamed-init.ts` for what the first `init()` does with
- * the resolved config, and `stream-mode.ts` for the on-demand variant.
+ * the resolved config, and `create-streamed-mode.ts` for the on-demand variant.
  */
 import type { ProviderTransportFactory } from '../transports/mode';
 import type { ConsentKernel } from '../consent-kernel.model';

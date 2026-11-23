@@ -1,7 +1,7 @@
 /**
  * Server side of the Nuxt plugin's deferred engine: whether the browser may
  * render this visitor from the server's snapshot and load the consent
- * engine later (`shell.ts`), and the manifest key of the engine chunk.
+ * engine later (`create-deferred-context.ts`), and the manifest key of the engine chunk.
  * Only the server render imports it.
  *
  * @packageDocumentation

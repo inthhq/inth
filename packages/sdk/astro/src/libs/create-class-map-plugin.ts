@@ -11,7 +11,7 @@
  *
  * The islands' stylesheet imports resolve to an empty module here: the
  * inlined first-paint rules and the dialog and primitive rules the client
- * links when the dialog opens (see `browser/dialog-styles.ts`) cover them.
+ * links when the dialog opens (see `browser/load-dialog-styles.ts`) cover them.
  * Left alone, a build either drops them or ships the same rules a second
  * time.
  */

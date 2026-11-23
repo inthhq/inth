@@ -91,10 +91,10 @@ describe('client policy reader', () => {
 		expect(staticGraph(join(SHARED_DIR, 'policy-resolution-wire.ts'))).toEqual(
 			new Set([
 				'shared/canonical-order.ts',
-				'shared/policy-contract.ts',
+				'shared/policy/policy-contract.ts',
 				'shared/policy-resolution-wire.ts',
-				'shared/policy-rule-invariants.ts',
-				'shared/policy-surface.ts',
+				'shared/policy/policy-rule-invariants.ts',
+				'shared/policy/policy-surface.ts',
 			])
 		);
 	});

@@ -1,6 +1,6 @@
 /**
  * The SvelteKit `InthProvider`'s consent engine in the browser: the runtime it
- * renders once loaded. The deferred runtime (`runtime.ts`) loads this chunk
+ * renders once loaded. The deferred runtime (`create-deferred-runtime.ts`) loads this chunk
  * after the page for a visitor who still has to choose, and at once for every
  * other visitor, whose server render preloads it.
  *

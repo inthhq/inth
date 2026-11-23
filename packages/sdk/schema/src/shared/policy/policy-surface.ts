@@ -14,7 +14,7 @@
  *
  * These are the container types core's layout resolver reads
  * (`@inth/sdk-core`'s `resolveLayout`). No valibot here, for the same reason
- * as `policy-rule.ts`.
+ * as `policy-rule.model.ts`.
  */
 
 /**

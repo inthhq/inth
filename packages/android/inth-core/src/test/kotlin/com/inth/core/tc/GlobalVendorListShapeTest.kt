@@ -162,7 +162,7 @@ class GlobalVendorListShapeTest {
 	/**
 	 * A record this build cannot name costs the list, and that is a tightening rather than parity.
 	 * 
-	 * `fetchGVL` stops at its four keys and lets `dialog-data.ts` render whatever of the rest
+	 * `fetchGVL` stops at its four keys and lets `dialog-data.model.ts` render whatever of the rest
 	 * survives; here a `stacks` that arrived as a string takes the purposes and the vendors down
 	 * with it, because a Kotlin decode is all-or-nothing and the alternative is a vendor list this
 	 * build read only part of, which `TcSemanticPreEncoder` would then prune against -- emptying
@@ -193,7 +193,7 @@ class GlobalVendorListShapeTest {
 	 * A vendor's id is its key, which is what both web readers hold.
 	 *
 	 * `GVL` overwrites `vendor.id` with the parsed key while it converts the record, and
-	 * `mapGvlVendor` in `dialog-data.ts` writes `id: Number(vendorId)` for the dialog's copy. The body
+	 * `mapGvlVendor` in `dialog-data.model.ts` writes `id: Number(vendorId)` for the dialog's copy. The body
 	 * keeps the entry's own field, because it is the served document; what must not happen is the
 	 * *encoder* being told about the entry's id, which would advertise 755 and write a signal for 404.
 	 */

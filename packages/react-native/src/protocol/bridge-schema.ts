@@ -181,7 +181,7 @@ export const BRIDGE_PAYLOADS = {
 					nullable: true,
 				},
 				// Older binaries leave out `customVendors` and `disclosure`;
-				// `ADDITIVE_IAB_DEFAULTS` in `wire-shape.ts` fills them before a snapshot
+				// `ADDITIVE_IAB_DEFAULTS` in `snapshot-wire-shape.model.ts` fills them before a snapshot
 				// is read or graded.
 				customVendors: 'array',
 				disclosure: {

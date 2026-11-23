@@ -2,7 +2,7 @@
  * Content Security Policy source hashes, computed the way a browser checks
  * an inline element.
  *
- * Shared by the config-time hashes in `csp.ts` and the browser's check of
+ * Shared by the config-time hashes in `build-astro-csp.ts` and the browser's check of
  * `clientEntrypoint` scripts, so both produce the same string.
  *
  * @internal

@@ -5,7 +5,8 @@ import type { Ref } from 'vue';
 import { useIabPreferenceTab } from './use-iab-preference-tab';
 // Imported from the sibling module (not `#imports`) to avoid a circular
 // evaluation through the plain-Vue `#imports` shim, which re-exports this
-// file: `iabSelection -> #imports -> composables/index -> iabSelection`.
+// file: `use-consent-iab-selection -> #imports -> composables/index ->
+// use-consent-iab-selection`.
 import { useConsentInit } from './use-consent-init';
 import { useConsentKernel, useConsentKernelContext } from './use-consent-kernel';
 

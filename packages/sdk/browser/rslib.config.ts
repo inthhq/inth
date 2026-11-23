@@ -85,7 +85,7 @@ const partsModule = (name: string) =>
 /**
  * In `inth.choices.js`, the functions that keep per-kernel state are the
  * engine's, which it publishes on `__inthChoicesEngine` before loading
- * the file (`ui/choices-file.ts`).
+ * the file (`ui/load-choices-file.ts`).
  */
 const CHOICES_ENGINE_MODULES = [
 	fileURLToPath(new URL('./src/ui/parts/engine', import.meta.url)),

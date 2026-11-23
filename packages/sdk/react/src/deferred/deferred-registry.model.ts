@@ -174,7 +174,7 @@ export const claimDeferredScripts = function claimDeferredScripts(
 
 /**
  * Sets how a deferred root starts the plain scripts its committed choice
- * allows (see `instant.ts`), for a loader that registers after the choice.
+ * allows (see `instant-commit.model.ts`), for a loader that registers after the choice.
  *
  * @param start - Inserts the scripts; ignores those it cannot.
  * @internal

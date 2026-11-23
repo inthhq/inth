@@ -82,7 +82,7 @@ export { withRegisteredScripts } from './with-registered-scripts';
 /**
  * What the stock banner reads while it waits to hydrate under the Nuxt
  * plugin's deferred context: the server's snapshot until it has hydrated,
- * then the live one. See `deferred/shell.ts`.
+ * then the live one. See `deferred/create-deferred-context.ts`.
  *
  * @internal
  */
