@@ -40,7 +40,7 @@ renders the provider.
 | `banner.isVisible`, `dialog.isVisible` | Whether that surface is due now. |
 | `banner.actionGroups`, `banner.orderedActions` | The allowed actions, grouped or flat, in the order the policy asks for. |
 | `banner.requiredActions`, `banner.primaryActions` | Actions you must show, and those to emphasize. |
-| `banner.variant`, `banner.position`, `banner.blocking` | The resolved shape, position and blocking behavior, if you want to follow them. |
+| `banner.container`, `banner.blocking` | The resolved container (`desktop` and `phone`, each with its type, placement, flow and edge style) and blocking behavior, if you want to follow them. |
 | `activeUI` | `'banner'`, `'dialog'` or `'none'`. |
 | `performAction(action)` | `accept`, `reject`, `dismiss`, `save` or `customize`. Customize opens the dialog. |
 | `openBanner()`, `openDialog()`, `closeUI()` | Show or hide a surface. |

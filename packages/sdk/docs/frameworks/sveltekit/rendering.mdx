@@ -375,12 +375,13 @@ The browser resolves consent through the backend's `/v1/consent/init`.
 A banner in the server HTML shows before the page's JavaScript runs. The
 banner puts a small inline `<script>` ahead of its markup that holds a tap on
 Accept all, Reject all, Customize or the notice's acknowledge button in that
-gap. Accept and Reject hide the banner at once. When the banner hydrates, it
-records the held choice at the time of the tap, through the same path as a tap
-after hydration: before the consent engine loads, the allowed `scripts` start
-and the record is stored at once. A held Customize opens the dialog. If the
-policy that resolves is not the one the banner showed, the tap is dropped and
-the banner shows again. The React and Vue banners do the same.
+gap. Accept and Reject hide the banner at once. Once the banner has hydrated
+and the consent engine has loaded, the banner replays the held tap through
+its own buttons: Accept and Reject record the choice at the time of the tap,
+and Customize opens the choices in place. Nothing is recorded before the
+engine is ready. If the policy that resolves is not the one the banner
+showed, the tap is dropped and the banner shows again. The React banner does
+the same.
 
 The script needs no configuration; see the
 [Content Security Policy guide](./content-security-policy#allow-the-banners-tap-script)
@@ -408,8 +409,8 @@ the choice allows start, if they are a plain `src` with element attributes. A
 moment later Inth stores the consent record, queues the save and calls
 `onChoiceRecorded` and `onPermissionsChanged`. The engine then loads, starts
 from that record and sends the save. It records nothing a second time.
-Customize opens the dialog without the engine, and a save from the dialog
-takes the same path. Once the engine has loaded, the code that stores and
+Customize opens the choices in place without the engine, and a save from
+them takes the same path. Once the engine has loaded, the code that stores and
 sends a choice loads in idle time, so a later tap downloads only the scripts
 it allows.
 

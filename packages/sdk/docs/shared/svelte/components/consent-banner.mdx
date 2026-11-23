@@ -1,24 +1,37 @@
 {/* Shared by the Svelte and SvelteKit ConsentBanner pages, after each page's usage section. */}
 
-## Change the shape
+## Choose a container
 
-`variant` and `position` set the shape for one banner. The provider's
-`presentation` prop sets them for every surface; a prop on `ConsentBanner`
-wins. This banner is a full-width bar along the bottom edge:
+The policy decides which actions appear. The container decides where the
+prompt sits. A Card, a Banner and a Drawer all show the same copy and the
+same choices. This banner runs full width along the bottom edge:
 
 <include src="../../examples/storybook-svelte/bottom-bar.mdx" />
 
-| `variant` | Positions |
-| --- | --- |
-| `floating` | `bottom-left` (default), `bottom-right`, `top-left`, `top-right`, `bottom-center`, `top-center` |
-| `bar` | `bottom` (default), `top` |
-| `widget` | `bottom-right` (default), `bottom-left`, `top-left`, `top-right` |
-| `wall` | `center` |
+| Container | Positions | Default | Shape |
+| --- | --- | --- | --- |
+| `{ type: 'card', position }` | `start`, `end`, `center` | `start` | A floating card in a bottom corner, or centred over a backdrop. |
+| `{ type: 'banner', edge }` | `bottom`, `top` | `bottom` | A full-width banner along one edge. |
+| `{ type: 'drawer', side }` | `bottom`, `top`, `start`, `end` | `bottom` | A panel that slides in from one side and shows every choice at once on desktop. |
 
-A notice defaults to `bar` and a choice prompt to `floating`. A position that
-does not fit the variant falls back to the variant's default and logs a
-warning in development. When the page's text direction is right to left and
-you set no position, a corner position flips to the other side.
+`start` and `end` are logical, like CSS `inset-inline-start`. On a
+right-to-left page, `start` is the bottom-right corner. On phones, a `start`
+or `end` Drawer becomes a bottom Drawer.
+
+Set a container in three places. The first one that is set wins:
+
+1. The `container` prop on `ConsentBanner`.
+2. `presentation.prompt.container` in the provider options.
+3. The policy rule's `surface.container`, set in the dashboard.
+
+`edgeStyle` follows the same order, with `surface.edgeStyle` last.
+
+**Blocking.** `blockUntilChoice` dims the page, locks scroll and keeps focus
+inside the prompt until the visitor chooses. A centred Card always blocks. A
+notice never blocks, and neither does a prompt under an opt-out model. Where
+blocking is not possible, a centred Card moves to the `start` corner. The
+policy's `surface.blocking` is a hard rule: `forbidden` never blocks, and
+`required` always blocks a choice prompt.
 
 The [design gallery](/docs/customization/recipes) has more banner designs
 with tested Svelte code.
@@ -27,25 +40,23 @@ with tested Svelte code.
 
 | Prop | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `variant` | `'floating'`, `'bar'`, `'widget'` or `'wall'` | from the policy | Shape of the banner. |
-| `position` | see the table above | the variant's default | Where the banner sits. |
-| `blocking` | `boolean` | `false` | Adds a backdrop, locks scrolling, traps focus and ignores outside clicks. `wall` is always blocking; a notice never is. |
+| `container` | `ConsentContainer` | `{ type: 'card', position: 'start' }` | The Card, Banner or Drawer, and where it sits. See [Choose a container](#choose-a-container). |
+| `edgeStyle` | `'inset'` or `'flush'` | `'inset'` | `inset` floats a Banner or Drawer off the viewport edges with rounded corners. `flush` runs it edge to edge. A Card is always inset. |
+| `blockUntilChoice` | `boolean` | `false` | Blocks the page until the visitor chooses: backdrop, scroll lock, focus trap and no outside dismissal. |
 | `layout` | array of `'accept'`, `'reject'`, `'customize'`, `'dismiss'` or nested groups | from the policy | Button order and grouping, such as `[['reject', 'accept'], 'customize']`. |
-| `primaryButton` | one action or an array | from the policy | Which buttons get the primary style. |
 | `title`, `description` | `string` | translated copy | Replace the heading and body for this banner. |
 | `acceptButtonText`, `rejectButtonText`, `customizeButtonText`, `dismissButtonText` | `string` | translated copy | Replace one button label for this banner. |
 | `legalLinks` | array of `LegalLinks` keys, or `null` | every configured link | Which of the provider's `legalLinks` to show after the description. `null` shows none. |
 | `hideBranding` | `boolean` | `false` | Hides the "Consent by" tag. |
-| `models` | `Model[]` | `['opt-in', 'opt-out', 'iab']` | Policy models this banner renders for. |
+| `models` | `Model[]` | `['opt-in', 'opt-out']` | Policy models this banner renders for. |
 | `noStyle` | `boolean` | provider's `noStyle` | Drops Inth's classes, keeping markup and behavior. |
 | `disableAnimation` | `boolean` | provider's value | Shows and hides without a transition. |
-| `scrollLock`, `trapFocus` | `boolean` | from `presentation` | Lock page scroll or trap focus while the banner shows. |
 | `class` | `string` | none | Extra class on the root element. |
 
-The policy wins where it conflicts with `layout` or `primaryButton`. A policy
-that requires a reject button next to accept keeps it, whatever the layout
-says. For copy used across the site, use the provider's `i18n` or your
-backend's translations; see [translations](../translations).
+The policy wins where it conflicts with `layout`. A policy that requires a
+reject button next to accept keeps it, whatever the layout says. For copy
+used across the site, use the provider's `i18n` or your backend's
+translations; see [translations](../translations).
 
 ## When the banner shows
 
@@ -60,45 +71,32 @@ A visitor in a region without a consent law, or one who already chose, gets
 no banner. That is a policy result; see
 [why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent).
 
-A choice prompt shows Accept, Reject and Customize, in the order the policy
-asks for. A notice, such as an opt-out policy that only informs, shows a
-dismiss button and its own title and description from the `noticeTitle` and
-`noticeDescription` translations. Dismissing a notice records the dismissal,
-not a grant.
+A choice prompt shows Reject, Accept and Customize, in the order the policy
+asks for. Customize opens the choices inside the same container: the visitor
+never leaves the banner to make a choice, and Save records exactly what the
+switches show. A notice, such as an opt-out policy that only informs, shows
+an acknowledgement button and a link that opens the choices in place. Acknowledging a notice records the dismissal, not a grant.
 
-When the policy grants the `opt-out` right, the banner shows an underlined
-opt-out link whose action follows the resolved `presentation.optOutLink` title.
-With the default `'do-not-sell'` ("Do Not Sell or Share My Personal
-Information"), activating the link records the opt-out in one click and opens
-`OptOutConfirmation` with a receipt showing the honored status line, covered
-scope and backend-confirmed rights, recorded time and local reference when this
-browser created the opt-out (reloading first when that turns off a running
-category and `reloadOnConsentRevoked` is enabled; rendered lazily by
-`ConsentDialog` or a standalone `OptOutConfirmation`). With `'privacy-choices'` or
-`'california-privacy-choices'`, the link renders with the California Privacy
-Protection Agency opt-out icon and opens `ConsentDialog` without recording an
-opt-out. Programmatic calls to `requestOptOut()` still opt out in one step
-whatever `presentation.optOutLink` is set to. When only the `preferences` right
-is shown, the link opens `ConsentDialog`.
+Accept and Reject record the choice and close the banner in the same task.
+Accept never lifts an opt-out the visitor holds. The backend request runs
+after; a failed request is retried and does not reopen the banner. After a
+choice, the outcome is announced and focus moves to the page's
+`PrivacyChoicesLink` or `ConsentDialogTrigger`, so render one of them.
+
+A tap on a server-rendered banner before the page hydrates is held, and
+replayed once the engine has loaded. Nothing is recorded before then.
 
 <include src="../../privacy-choices-link.mdx" />
 
-Accept and Reject record the choice and close the banner in the same task.
-Under an `opt-out` policy while an opt-out is held, Accept opens the two-step
-opt-in confirmation dialog instead of saving right away.
-The backend request runs after; a failed request is retried and does not
-reopen the banner. Customize opens `ConsentDialog`, so render the dialog too.
-
 ## Accessibility
 
-- The banner card is a `region` labelled by the banner title. With `blocking`,
-  it becomes a `dialog` with `aria-modal="true"`, and focus stays inside it
-  until the visitor chooses.
+- The prompt is a `region` labelled by its title. While it blocks, it is a
+  `dialog` with `aria-modal="true"`, focus moves into it and stays there
+  until the visitor chooses, and the rest of the page is inert.
 - The title is an `h2`. Buttons are `<button type="button">` with their
   visible text as the accessible name.
-- The banner does not move focus when it appears, unless focus trapping is on.
-  Visitors reach it with Tab.
-- With `prefers-reduced-motion`, the banner appears and leaves without a
+- Escape folds the choices Customize opened; it never dismisses the prompt.
+- With `prefers-reduced-motion`, the prompt appears and leaves without a
   transition.
 - The root sets `dir` from the active language, so right-to-left copy lays out
   correctly.
@@ -106,21 +104,24 @@ reopen the banner. Customize opens `ConsentDialog`, so render the dialog too.
 ## Style the banner
 
 `ConsentBanner` reads these theme slots from the provider's `theme` prop:
-`consentBanner`, `consentBannerCard`, `consentBannerHeader`,
-`consentBannerTitle`, `consentBannerDescription`, `consentBannerFooter`,
-`consentBannerFooterSubGroup`, `consentBannerRights` and
-`consentBannerRightLink`. [Customize](../customize) shows how to pass them.
+`consentBanner`, `consentBannerOverlay`, `consentBannerCard`,
+`consentBannerHeader`, `consentBannerTitle`, `consentBannerDescription`,
+`consentBannerExpand`, `consentBannerFooter`, `consentBannerFooterSubGroup`,
+`consentBannerSaveButton` and `consentBannerTag`.
+[Customize](../customize) shows how to pass them.
 
 The root element carries `data-testid="consent-banner-root"` and these
 attributes for CSS and tests:
 
-| Attribute | Value |
+| Attribute | Values |
 | --- | --- |
-| `data-prompt` | `choice` or `notice` |
-| `data-model` | `opt-in`, `opt-out` or `iab` |
-| `data-variant` | the resolved variant |
-| `data-position` | the resolved position |
-| `data-blocking` | `true` when blocking |
+| `data-placement` | `card-start`, `card-end`, `card-center`, `banner-bottom`, `banner-top`, `drawer-bottom`, `drawer-top`, `drawer-start`, `drawer-end` |
+| `data-flow` | `expand-in-place`, `all-in-one` |
+| `data-variant` | `choice`, `us-consent`, `notice` |
+| `data-edge-style` | `inset`, `flush` |
+| `data-blocking` | `true`, present only while blocking |
+| `data-expanded` | `true`, present while Customize shows the choices |
+| `data-state` | `open`, `closed` |
 
-Each button carries `data-action` with `accept`, `reject`, `customize` or
-`dismiss`.
+Each action button carries `data-action` with `accept`, `reject`,
+`customize`, `dismiss` or `save`.
