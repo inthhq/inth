@@ -410,6 +410,54 @@ describe('<ConsentBanner /> under a none rule', () => {
 	});
 });
 
+describe('<ConsentDialogLink right="opt-out" />', () => {
+	const optOutLocals = () =>
+		buildLocals(
+			{
+				mode: testingMode({
+					policy: [
+						{
+							...testRule,
+							id: 'astro_us_opt_out',
+							model: 'opt-out',
+							prompt: 'none',
+							rights: ['opt-out', 'preferences'],
+						},
+					],
+				}),
+				presentation: { optOutLink: 'privacy-choices' },
+			},
+			{ 'x-vercel-ip-country': 'US', 'x-vercel-ip-country-region': 'CA' }
+		);
+	const icon = (html: string): Element | null =>
+		new JSDOM(html).window.document.querySelector(
+			'[data-testid="consent-dialog-link"] svg[aria-hidden="true"]'
+		);
+
+	it('sizes the CPPA icon, as <PrivacyChoicesLink /> does', async () => {
+		const html = await container.renderToString(ConsentDialogLink, {
+			locals: { inth: await optOutLocals() },
+			props: { right: 'opt-out' },
+		});
+		// A page that loads no sheet sizing it would let it fill the line.
+		expect(icon(html)?.getAttribute('height')).toBe('14');
+		expect(icon(html)?.getAttribute('width')).toBe('30');
+		expect(icon(html)?.getAttribute('class')).toContain(
+			legalLinkStyles.optOutIcon
+		);
+	});
+
+	it('leaves the icon unsized and unclassed under noStyle', async () => {
+		const html = await container.renderToString(ConsentDialogLink, {
+			locals: { inth: await optOutLocals() },
+			props: { noStyle: true, right: 'opt-out' },
+		});
+		expect(icon(html)).not.toBeNull();
+		expect(icon(html)?.hasAttribute('height')).toBe(false);
+		expect(icon(html)?.hasAttribute('class')).toBe(false);
+	});
+});
+
 describe('<ConsentDialog />', () => {
 	it('carries its legalLinks to the island on the host element', async () => {
 		const withLinks = await container.renderToString(ConsentDialog, {
