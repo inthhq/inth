@@ -19,8 +19,8 @@ import {
 	createCategoryGroup,
 } from '../parts/create-category-group';
 import { createSaleRightsRow } from '../parts/create-sale-rights-row';
-import { cx, el } from '../parts/dom';
-import type { PartChild } from '../parts/dom';
+import { cx, el } from '../parts/el';
+import type { PartChild } from '../parts/el';
 import { chevron } from '../parts/shared';
 import type { PartEnv } from '../parts/shared';
 

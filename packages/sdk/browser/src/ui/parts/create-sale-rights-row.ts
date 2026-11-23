@@ -27,8 +27,8 @@ import {
 import { classes as styles } from '../../generated/ui/dialog';
 import { classes as expandStyles } from '../../generated/ui/expand';
 import type { BrowserSlotKey } from '../create-slot-applier';
-import { activeElementOf, cx, el } from './dom';
-import type { PartRef } from './dom';
+import { activeElementOf, cx, el } from './el';
+import type { PartRef } from './el';
 import {
 	confirmSaleRight,
 	getOptOutReceiptData,

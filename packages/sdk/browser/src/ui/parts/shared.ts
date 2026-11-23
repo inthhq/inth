@@ -31,8 +31,8 @@ import { classes } from '../../generated/styles';
 import { classes as dialogStyles } from '../../generated/ui/dialog';
 import type { BrowserSlotKey } from '../create-slot-applier';
 import type { SurfaceContext } from '../surface.model';
-import { el, icon } from './dom';
-import type { PartChild, PartProps } from './dom';
+import { el, icon } from './el';
+import type { PartChild, PartProps } from './el';
 import { getSurfaceSession } from './engine';
 
 /** What a UI part renders against, refreshed on every render. */

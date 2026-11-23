@@ -55,8 +55,8 @@ import {
 	focusFirstIn,
 	owned,
 	patch,
-} from '../parts/dom';
-import type { PartChild, PartRef } from '../parts/dom';
+} from '../parts/el';
+import type { PartChild, PartRef } from '../parts/el';
 import {
 	commitBannerChoice,
 	createPreferenceDraft,

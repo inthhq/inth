@@ -33,7 +33,7 @@ import {
 import { classes as styles } from '../../generated/ui/dialog';
 import { classes as expandStyles } from '../../generated/ui/expand';
 import type { BrowserSlotKey } from '../create-slot-applier';
-import { cx, el, icon } from './dom';
+import { cx, el, icon } from './el';
 import { applyDialogCategories } from './engine';
 import { chevron, choiceSwitch, isToggleClick } from './shared';
 import type { PartEnv } from './shared';
