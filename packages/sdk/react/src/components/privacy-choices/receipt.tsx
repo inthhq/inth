@@ -92,6 +92,12 @@ export interface RightsReceiptProps {
 	business?: string;
 	slotKey?: ConsentComponentSlotKey;
 	noStyle?: boolean;
+	/**
+	 * The receipt's panel shows although its banner is not expanded, as in
+	 * an all-in-one side drawer, so a failed copy may still reveal the
+	 * fallback field there.
+	 */
+	panelVisible?: boolean;
 }
 
 /**
@@ -113,6 +119,7 @@ export const RightsReceipt = ({
 	business,
 	slotKey,
 	noStyle,
+	panelVisible,
 }: RightsReceiptProps) => {
 	const kernel = useKernel();
 	const snapshot = useSnapshot();
@@ -149,7 +156,9 @@ export const RightsReceipt = ({
 		if (!reference) {
 			return;
 		}
-		const finish = await copySurfaceReference(kernel, reference);
+		const finish = await copySurfaceReference(kernel, reference, undefined, {
+			panelVisible,
+		});
 		if (!(finish.applied && finish.reveal)) {
 			return;
 		}
