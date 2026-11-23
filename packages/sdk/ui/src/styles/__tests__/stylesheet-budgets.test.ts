@@ -71,8 +71,11 @@ const EXISTING = {
  * the switch, category row and disclosure rules, so neither the v6 dialog
  * nor a banner panel loads the classic `dialog` sheet (about 7.5 KB gzip).
  *
- * The Tailwind 3 twin measured 8,454 gzip once the stacked Banner's action
- * group became a real grid box, so its gzip budget is 8,500.
+ * The React dialog's rules, each reading its classic-variable fallback,
+ * with the underlined policy links and the bar's heavier button selector,
+ * brought `styles/privacy-choices.css` to 8,204 / 9,327 and its Tailwind 3
+ * twin to 8,093 / 9,191, so their budgets are 8,250 / 9,400 and
+ * 8,150 / 9,250.
  */
 const V6 = {
 	'privacy-choices-dialog': {
@@ -81,14 +84,14 @@ const V6 = {
 		sheet: 'privacy-choices-dialog',
 	},
 	'styles/privacy-choices.css': {
-		brotli: 7700,
+		brotli: 8250,
 		file: 'styles/privacy-choices.css',
-		gzip: 8700,
+		gzip: 9400,
 	},
 	'styles/privacy-choices.tw3.css': {
-		brotli: 7600,
+		brotli: 8150,
 		file: 'styles/privacy-choices.tw3.css',
-		gzip: 8550,
+		gzip: 9250,
 	},
 } as const;
 
