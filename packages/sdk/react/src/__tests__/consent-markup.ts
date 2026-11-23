@@ -2,6 +2,15 @@
 export const consentMarkup = (container: HTMLElement) => {
 	const copy = container.cloneNode(true) as HTMLElement;
 	copy.querySelectorAll('style#inth-theme').forEach((style) => style.remove());
+	// The page announcement becomes a live region once mounted: a region
+	// the server rendered live would announce its first text twice.
+	copy
+		.querySelectorAll('[data-testid="consent-banner-announcement"]')
+		.forEach((region) => {
+			for (const name of ['role', 'aria-live', 'aria-atomic']) {
+				region.removeAttribute(name);
+			}
+		});
 	// Branding appends the browser hostname after mount, without affecting consent.
 	copy.querySelectorAll('a[data-branding]').forEach((link) => {
 		const href = link.getAttribute('href');
