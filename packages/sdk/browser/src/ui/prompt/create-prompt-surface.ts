@@ -72,8 +72,8 @@ import {
 	watchPhoneLayout,
 } from '../parts/shared';
 import type { PartEnv } from '../parts/shared';
-import { renderLegalLinks } from '../surface';
-import type { SurfaceContext } from '../surface';
+import { renderLegalLinks } from '../surface.model';
+import type { SurfaceContext } from '../surface.model';
 import type { PromptPanel } from './panel';
 
 /** Exits are 160ms; the controllers add their own slack. */

@@ -25,7 +25,7 @@ import {
 	subscribeOptOutReceiptData,
 } from './opt-out-confirmation-state';
 import { createBannerSurface } from './prompt/prompt';
-import type { Surface, SurfaceContext } from './surface';
+import type { Surface, SurfaceContext } from './surface.model';
 
 const resolveContainer = function resolveContainer(
 	container: ConsentUIOptions['container']

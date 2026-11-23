@@ -77,7 +77,7 @@ import {
 	watchPhoneLayout,
 } from '../parts/shared';
 import type { PartEnv } from '../parts/shared';
-import type { Surface, SurfaceContext } from '../surface';
+import type { Surface, SurfaceContext } from '../surface.model';
 import { OPTIONS_SHEETS } from './options-sheets';
 
 /** The "Saved" cue stays this long, on a timer, not an animation (MOT-03). */

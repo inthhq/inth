@@ -20,7 +20,7 @@ import {
 	takeOptInConfirmationOpener,
 } from './opt-out-confirmation-state';
 import { resolveCopy } from './resolve-copy';
-import type { Surface, SurfaceContext } from './surface';
+import type { Surface, SurfaceContext } from './surface.model';
 
 const DEFAULT_DURATION_MS = 200;
 

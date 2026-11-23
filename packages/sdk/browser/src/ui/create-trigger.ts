@@ -28,7 +28,7 @@ import { createTriggerToolbar } from './create-trigger-toolbar';
 import type { TriggerToolbar } from './create-trigger-toolbar';
 import { cx, h } from './dom';
 import { isOptOutConfirmationOpen } from './opt-out-confirmation-state';
-import type { Surface, SurfaceContext } from './surface';
+import type { Surface, SurfaceContext } from './surface.model';
 
 const POSITION_CLASS: Record<CornerPosition, keyof typeof classes.trigger> = {
 	'bottom-left': 'bottomLeft',

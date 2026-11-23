@@ -13,8 +13,8 @@ import { renderBranding } from '../ui/branding';
 import { cx, h, markLateEntry, supportsStartingStyle } from '../ui/dom';
 import { renderActionFooter, resolveActions } from '../ui/render-action-footer';
 import { resolveCopy } from '../ui/resolve-copy';
-import { renderLegalLinks } from '../ui/surface';
-import type { Surface, SurfaceContext } from '../ui/surface';
+import { renderLegalLinks } from '../ui/surface.model';
+import type { Surface, SurfaceContext } from '../ui/surface.model';
 import { createIABPreferences } from './create-iab-preferences';
 import type { IABPreferences } from './create-iab-preferences';
 
