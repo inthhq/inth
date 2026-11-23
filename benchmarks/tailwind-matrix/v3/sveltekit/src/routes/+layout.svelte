@@ -1,5 +1,10 @@
 <script lang="ts">
-	import { ConsentBanner, ConsentDialog, InthProvider } from '@inth/svelte';
+	import {
+		ConsentBanner,
+		ConsentDialog,
+		ConsentDialogLink,
+		InthProvider,
+	} from '@inth/svelte';
 
 	import '../app.css';
 
@@ -15,6 +20,7 @@
 	styles={false}
 >
 	{@render children()}
+	<ConsentDialogLink />
 	<!-- #region docs:slot -->
 	<ConsentBanner class="!p-[7px] dark:!p-[11px]" />
 	<!-- #endregion docs:slot -->

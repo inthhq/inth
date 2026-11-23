@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { InthProvider } from '@inth/vue/vue-plugin';
+import { ConsentDialogLink, InthProvider } from '@inth/vue/vue-plugin';
 </script>
 
 <template>
@@ -9,5 +9,6 @@ import { InthProvider } from '@inth/vue/vue-plugin';
 	>
 		Tailwind utilities are active on this page.
 	</p>
+	<ConsentDialogLink />
 	<InthProvider />
 </template>
