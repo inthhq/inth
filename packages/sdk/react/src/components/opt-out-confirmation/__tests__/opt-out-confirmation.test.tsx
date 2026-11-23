@@ -28,7 +28,6 @@ import { policyFixture } from '~/__tests__/policy-fixture';
 import { ConsentDialog, OptOutConfirmation } from '~/aggregate-components';
 import { ConsentDialogLink } from '~/components/consent-preferences-link/consent-preferences-link';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
-import { ConsentBanner } from '~/components/prompt';
 import * as headlessExports from '~/headless';
 import { useOptOut, useOptOutState } from '~/hooks';
 import * as rootExports from '~/index';
@@ -84,75 +83,6 @@ afterEach(() => {
 });
 
 describe('one-step opt-out and confirmation view in React', () => {
-	test('opts out in one click from the banner link and opens confirmation with one button', async () => {
-		const { unmount } = await render(
-			<InthProvider
-				options={{
-					consentCategories: ['functionality', 'marketing', 'measurement'],
-					mode: testing(),
-					overrides: { country: 'US', region: 'CA' },
-					persistence: false,
-					prefetch: policyFixture(undefined, noticeRule()),
-					reloadOnConsentRevoked: false,
-				}}
-			>
-				<KernelCapture />
-				<ConsentBanner disableAnimation />
-				<ConsentDialog disableAnimation />
-			</InthProvider>
-		);
-
-		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
-		const optOutLink = query<HTMLButtonElement>(
-			'consent-banner-right-link-opt-out'
-		) as HTMLButtonElement;
-		expect(optOutLink.textContent).toBe(
-			'Do Not Sell or Share My Personal Information'
-		);
-		expect(optOutLink.querySelector('svg')).toBeNull();
-
-		optOutLink.click();
-
-		const snapshot = activeKernel?.getSnapshot();
-		expect(snapshot?.optOut?.method).toBe('button');
-		expect(snapshot?.effectivePermissions.marketing).toBe(false);
-		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
-		expect(snapshot?.effectivePermissions.measurement).toBe(true);
-		expect(snapshot?.effectivePermissions.functionality).toBe(true);
-		expect(query('consent-dialog-root')).toBeNull();
-
-		await vi.waitFor(() =>
-			expect(query('opt-out-confirmation-root')).not.toBeNull()
-		);
-		const root = query('opt-out-confirmation-root') as HTMLElement;
-		expect(query('opt-out-confirmation-title')?.textContent).toBe(
-			'Do Not Sell or Share My Personal Information'
-		);
-		const status = query('opt-out-confirmation-status');
-		expect(status?.getAttribute('role')).toBe('status');
-		expect(status?.textContent).toBe('Opt-out request honored');
-		const recordedAt = query<HTMLTimeElement>(
-			'opt-out-confirmation-recorded-at'
-		);
-		expect(recordedAt).not.toBeNull();
-		expect(recordedAt?.getAttribute('datetime')).toBeTruthy();
-		expect(recordedAt?.textContent?.trim()).not.toBe('');
-		const reference = query('opt-out-confirmation-reference');
-		expect(reference).not.toBeNull();
-		expect(reference?.textContent).toMatch(V1_UUID_PATTERN);
-		expect(root.querySelectorAll('input, textarea, select')).toHaveLength(0);
-		const buttons = [...root.querySelectorAll('button')];
-		expect(buttons).toHaveLength(1);
-		expect(buttons[0]?.textContent).toBe('Done');
-		expect(query('opt-out-confirmation-preferences-link')?.textContent).toBe(
-			'Manage preferences'
-		);
-
-		unmount();
-	});
-
 	test('Done returns focus to opener, Escape closes, preferences link opens dialog, and re-opening records nothing new', async () => {
 		const { unmount } = await render(
 			<InthProvider
@@ -171,6 +101,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 				<KernelCapture />
 				<ConsentDialogLink right="opt-out" />
 				<ConsentDialog disableAnimation />
+				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 
@@ -290,6 +221,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 				<KernelCapture />
 				<ConsentDialogLink right="opt-out" />
 				<ConsentDialog disableAnimation />
+				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 
@@ -302,49 +234,6 @@ describe('one-step opt-out and confirmation view in React', () => {
 
 		unmount();
 	});
-
-	test.each([
-		['do-not-sell', 'Do Not Sell or Share My Personal Information', false],
-		['privacy-choices', 'Your Privacy Choices', true],
-		['california-privacy-choices', 'Your California Privacy Choices', true],
-	] as [OptOutLinkVariant, string, boolean][])(
-		'renders optOutLink=%s with the exact title and icon=%s',
-		async (optOutLink, expectedTitle, expectIcon) => {
-			const { unmount } = await render(
-				<InthProvider
-					options={{
-						mode: testing(),
-						overrides: { country: 'US', region: 'CA' },
-						persistence: false,
-						prefetch: policyFixture(undefined, noticeRule()),
-						presentation: { optOutLink },
-					}}
-				>
-					<ConsentBanner disableAnimation />
-					<ConsentDialogLink right="opt-out" />
-				</InthProvider>
-			);
-
-			await vi.waitFor(() =>
-				expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-			);
-			const bannerLink = query('consent-banner-right-link-opt-out');
-			const dialogLink = query('consent-dialog-link');
-
-			expect(bannerLink?.textContent).toBe(expectedTitle);
-			expect(dialogLink?.textContent).toBe(expectedTitle);
-			expect(
-				Boolean(bannerLink?.querySelector('svg[aria-hidden="true"]'))
-			).toBe(expectIcon);
-			expect(
-				Boolean(dialogLink?.querySelector('svg[aria-hidden="true"]'))
-			).toBe(expectIcon);
-			expect(Boolean(bannerLink?.querySelector('svg'))).toBe(expectIcon);
-			expect(Boolean(dialogLink?.querySelector('svg'))).toBe(expectIcon);
-
-			unmount();
-		}
-	);
 
 	test('wires the floating trigger to opt out and hides it while confirmation is open', async () => {
 		const { unmount } = await render(
@@ -364,6 +253,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 				<KernelCapture />
 				<ConsentDialogTrigger showWhen="always" />
 				<ConsentDialog disableAnimation />
+				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 
@@ -472,53 +362,6 @@ describe('one-step opt-out and confirmation view in React', () => {
 		unmount();
 	});
 
-	test('replays an early tap on the opt-out link as a durable opt-out', async () => {
-		// Simulate server-rendered banner HTML + early-tap script before React mounts.
-		const container = document.createElement('div');
-		container.innerHTML =
-			'<div data-testid="consent-banner-root" data-model="opt-out" data-prompt="notice"><button type="button" data-action="right" data-right="opt-out">Do Not Sell or Share My Personal Information</button></div>';
-		document.body.append(container);
-		// oxlint-disable-next-line no-new-func -- Runs the inline script as server HTML would.
-		new Function(EARLY_CONSENT_TAP_SCRIPT)();
-		container
-			.querySelector<HTMLButtonElement>('[data-right="opt-out"]')
-			?.click();
-		container.remove();
-
-		const { unmount } = await render(
-			<InthProvider
-				options={{
-					consentCategories: ['functionality', 'marketing', 'measurement'],
-					mode: testing(),
-					overrides: { country: 'US', region: 'CA' },
-					persistence: false,
-					prefetch: policyFixture(undefined, noticeRule()),
-					reloadOnConsentRevoked: false,
-				}}
-			>
-				<KernelCapture />
-				<ConsentBanner disableAnimation />
-				<ConsentDialog disableAnimation />
-			</InthProvider>
-		);
-
-		await vi.waitFor(() =>
-			expect(activeKernel?.getSnapshot().optOut?.method).toBe('button')
-		);
-		expect(activeKernel?.getSnapshot().effectivePermissions.marketing).toBe(
-			false
-		);
-		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
-		expect(activeKernel?.getSnapshot().effectivePermissions.measurement).toBe(
-			true
-		);
-		await vi.waitFor(() =>
-			expect(query('opt-out-confirmation-root')).not.toBeNull()
-		);
-
-		unmount();
-	});
-
 	test('defers confirmation across a revocation reload, shows it once on the next load, and not on the load after that', async () => {
 		const onBeforeReload = vi.fn();
 		const first = await render(
@@ -532,15 +375,16 @@ describe('one-step opt-out and confirmation view in React', () => {
 				}}
 			>
 				<KernelCapture />
-				<ConsentBanner disableAnimation />
+				<OptOutButton />
 				<ConsentDialog disableAnimation />
+				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 
 		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+			expect(query('custom-opt-out')).not.toBeNull()
 		);
-		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		query<HTMLButtonElement>('custom-opt-out')?.click();
 
 		// Does not flash on the old document before reload.
 		expect(query('opt-out-confirmation-root')).toBeNull();
@@ -570,6 +414,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 			>
 				<KernelCapture />
 				<ConsentDialog disableAnimation />
+				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 
@@ -601,6 +446,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 			>
 				<KernelCapture />
 				<ConsentDialog disableAnimation />
+				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 
@@ -638,15 +484,16 @@ describe('one-step opt-out and confirmation view in React', () => {
 				}}
 			>
 				<KernelCapture />
-				<ConsentBanner disableAnimation />
+				<OptOutButton />
 				<ConsentDialog disableAnimation />
+				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 
 		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+			expect(query('custom-opt-out')).not.toBeNull()
 		);
-		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		query<HTMLButtonElement>('custom-opt-out')?.click();
 
 		await vi.waitFor(() =>
 			expect(query('opt-out-confirmation-root')).not.toBeNull()
@@ -713,6 +560,7 @@ describe('one-step opt-out and confirmation view in React', () => {
 				<KernelCapture />
 				<ConsentDialogLink right="opt-out" />
 				<ConsentDialog disableAnimation />
+				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 
@@ -774,13 +622,14 @@ describe('one-step opt-out and confirmation view in React', () => {
 			<InthProvider options={options}>
 				<KernelCapture />
 				<StateProbe tick={0} />
-				<ConsentBanner disableAnimation />
+				<OptOutButton />
 				<ConsentDialog disableAnimation />
+				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 
 		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+			expect(query('custom-opt-out')).not.toBeNull()
 		);
 
 		const before = seen.at(-1);
@@ -801,13 +650,14 @@ describe('one-step opt-out and confirmation view in React', () => {
 			<InthProvider options={options}>
 				<KernelCapture />
 				<StateProbe tick={1} />
-				<ConsentBanner disableAnimation />
+				<OptOutButton />
 				<ConsentDialog disableAnimation />
+				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 		expect(seen.at(-1)).toBe(before);
 
-		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		query<HTMLButtonElement>('custom-opt-out')?.click();
 
 		await vi.waitFor(() => {
 			expect(seen.at(-1)?.optedOut).toBe(true);

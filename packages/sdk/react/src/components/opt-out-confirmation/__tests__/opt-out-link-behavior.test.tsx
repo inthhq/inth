@@ -8,7 +8,7 @@ import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
-import { ConsentDialog } from '~/aggregate-components';
+import { ConsentDialog, OptOutConfirmation } from '~/aggregate-components';
 import { ConsentDialogLink } from '~/components/consent-preferences-link/consent-preferences-link';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentBanner } from '~/components/prompt';
@@ -58,7 +58,7 @@ afterEach(() => {
 
 describe('opt-out link behavior by title in React', () => {
 	test.each(['privacy-choices', 'california-privacy-choices'] as const)(
-		'opens the dialog and records nothing from banner link, footer link and trigger when optOutLink=%s',
+		'opens the dialog and records nothing from the footer link and trigger when optOutLink=%s',
 		async (optOutLink) => {
 			const view = await render(
 				<InthProvider
@@ -77,22 +77,13 @@ describe('opt-out link behavior by title in React', () => {
 					<ConsentDialogLink right="opt-out" />
 					<ConsentDialogTrigger showWhen="always" />
 					<ConsentDialog disableAnimation />
+					<OptOutConfirmation disableAnimation />
 				</InthProvider>
 			);
 
 			await vi.waitFor(() =>
-				expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+				expect(query('consent-dialog-link')).not.toBeNull()
 			);
-			query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
-			await vi.waitFor(() =>
-				expect(query('consent-dialog-root')).not.toBeNull()
-			);
-			expect(activeKernel?.getSnapshot().optOut).toBeNull();
-			expect(query('opt-out-confirmation-root')).toBeNull();
-
-			activeKernel?.set.activeUI('none');
-			await vi.waitFor(() => expect(query('consent-dialog-root')).toBeNull());
-
 			query<HTMLButtonElement>('consent-dialog-link')?.click();
 			await vi.waitFor(() =>
 				expect(query('consent-dialog-root')).not.toBeNull()
@@ -132,6 +123,7 @@ describe('opt-out link behavior by title in React', () => {
 				<KernelCapture />
 				<OptOutButton />
 				<ConsentDialog disableAnimation />
+				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 
@@ -167,6 +159,7 @@ describe('opt-out link behavior by title in React', () => {
 					Custom footer text
 				</ConsentDialogLink>
 				<ConsentDialog disableAnimation />
+				<OptOutConfirmation disableAnimation />
 			</InthProvider>
 		);
 

@@ -1,6 +1,9 @@
 'use client';
 
-import { showConsentSurface } from '@inth/sdk/surface-actions';
+import {
+	claimOptOutConfirmationHost,
+	showConsentSurface,
+} from '@inth/sdk/surface-actions';
 import { useEffect } from 'react';
 import type { ComponentType } from 'react';
 
@@ -206,7 +209,16 @@ const LazyConsentDialog = (props: ConsentDialogProps) => {
 };
 
 const LazyOptOutConfirmation = (props: OptOutConfirmationProps) => {
+	const kernel = useKernel();
 	const confirmationOpen = useOptOutConfirmationOpen();
+	// Claim the host from the first render, not once the lazy view loads, so
+	// a mounted `ConsentDialog` never adopts the confirmation this one shows.
+	useEffect(() => {
+		if (props.embedded) {
+			return;
+		}
+		return claimOptOutConfirmationHost(kernel, Symbol('OptOutConfirmation'));
+	}, [kernel, props.embedded]);
 	if (props.open !== true && !confirmationOpen) {
 		return null;
 	}

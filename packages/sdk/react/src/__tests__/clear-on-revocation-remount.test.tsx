@@ -82,7 +82,7 @@ test('a provider remounted before its revocation is stored keeps the integration
 	await first.getByTestId('consent-banner-accept-button').click();
 	await vi.waitFor(() => expect(onLoad).toHaveBeenCalledOnce());
 	await first.getByText('Privacy settings', { exact: true }).click();
-	await first.getByTestId('consent-widget-reject-button').click();
+	await first.getByTestId('consent-dialog-reject-all').click();
 	await expect.element(first.getByText('Measurement denied')).toBeVisible();
 	expect(localStorage.getItem(consentKey)).toBeNull();
 
