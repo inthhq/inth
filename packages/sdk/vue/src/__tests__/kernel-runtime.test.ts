@@ -179,6 +179,21 @@ const mountRoot = async function mountRoot() {
 	return { fetchMock, subjectBodies, wrapper };
 };
 
+/** The banner's container loads in a chunk of its own. */
+const waitForBanner = async (): Promise<HTMLElement> => {
+	await vi.waitFor(
+		() => {
+			expect(
+				document.querySelector('[data-testid="consent-banner-root"]')
+			).toBeTruthy();
+		},
+		{ timeout: 10_000 }
+	);
+	return document.querySelector(
+		'[data-testid="consent-banner-root"]'
+	) as HTMLElement;
+};
+
 const mountRootWithConsentProbe = async function mountRootWithConsentProbe() {
 	const { fetchMock, subjectBodies } = createFetchMock();
 	vi.stubGlobal('fetch', fetchMock);
@@ -467,10 +482,10 @@ describe('@inth/vue kernel runtime', () => {
 	test('renders the banner from kernel init state', async () => {
 		const { wrapper } = await mountRoot();
 
+		const banner = await waitForBanner();
 		expect(
-			document.querySelector('[data-testid="consent-banner-root"]')
+			banner.querySelector('[data-testid="consent-banner-accept-button"]')
 		).toBeTruthy();
-		expect(document.body.textContent).toContain('Cookie choices');
 
 		wrapper.unmount();
 	});
@@ -565,6 +580,7 @@ describe('@inth/vue kernel runtime', () => {
 
 	test('hides the banner on consent and posts through the hosted transport', async () => {
 		const { wrapper, subjectBodies } = await mountRoot();
+		await waitForBanner();
 
 		document
 			.querySelector<HTMLButtonElement>(
@@ -574,9 +590,12 @@ describe('@inth/vue kernel runtime', () => {
 		await flushPromises();
 		await Promise.resolve();
 
-		expect(
-			document.querySelector('[data-testid="consent-banner-root"]')
-		).toBeNull();
+		// The banner leaves once its exit has played.
+		await vi.waitFor(() => {
+			expect(
+				document.querySelector('[data-testid="consent-banner-root"]')
+			).toBeNull();
+		});
 		// The kernel defers transport.save a macrotask so the UI commit paints
 		// first — the POST lands shortly after the banner is gone.
 		await vi.waitFor(() => {
@@ -599,14 +618,14 @@ describe('@inth/vue kernel runtime', () => {
 
 	test('persists consent when accepting all from the dialog', async () => {
 		const { wrapper } = await mountRoot();
+		await waitForBanner();
 
-		const customizeButton = document.querySelector<HTMLButtonElement>(
-			'[data-testid="consent-banner-customize-button"]'
-		);
-		if (!customizeButton) {
-			throw new Error('Customize button was not rendered');
-		}
-		customizeButton.click();
+		// The dialog opens from the page, such as its "Your Privacy Choices"
+		// link: Customize opens the options in the banner.
+		const activeUI = wrapper.vm.$.appContext.provides[
+			symbolActiveUI as symbol
+		] as { value: unknown };
+		activeUI.value = 'manager';
 		await flushPromises();
 
 		// The dialog is an async component; its first import on a cold CI
@@ -614,15 +633,13 @@ describe('@inth/vue kernel runtime', () => {
 		await vi.waitFor(
 			() => {
 				expect(
-					document.querySelector(
-						'[data-testid="consent-widget-footer-accept-all-button"]'
-					)
+					document.querySelector('[data-testid="consent-dialog-accept-all"]')
 				).toBeTruthy();
 			},
 			{ timeout: 10_000 }
 		);
 		const acceptAllButton = document.querySelector<HTMLButtonElement>(
-			'[data-testid="consent-widget-footer-accept-all-button"]'
+			'[data-testid="consent-dialog-accept-all"]'
 		);
 		if (!acceptAllButton) {
 			throw new Error('Dialog accept-all button was not rendered');
@@ -651,6 +668,7 @@ describe('@inth/vue kernel runtime', () => {
 
 	test('persists a canonical explicit reject receipt', async () => {
 		const { wrapper } = await mountRoot();
+		await waitForBanner();
 
 		document
 			.querySelector<HTMLButtonElement>(

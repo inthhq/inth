@@ -89,7 +89,7 @@ export const useExperiment =
  * @example
  * ```ts
  * const presentation = useResolvedPresentation();
- * const variant = computed(() => presentation.value?.prompt?.variant);
+ * const container = computed(() => presentation.value?.prompt?.container);
  * ```
  */
 export const useResolvedPresentation =

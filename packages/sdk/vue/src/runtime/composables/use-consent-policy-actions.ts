@@ -1,10 +1,10 @@
-import { resolveLegacyConsentPresentation } from '@inth/sdk/engine';
+import { resolveConsentPresentation } from '@inth/sdk/engine';
 import type {
 	PreferencesPresentation,
 	PromptPresentation,
 } from '@inth/sdk/engine';
 import { computed, toValue, watch } from 'vue';
-import type { MaybeRefOrGetter } from 'vue';
+import type { ComputedRef, MaybeRefOrGetter } from 'vue';
 
 import { useConsentConfig } from './config';
 import { useResolvedPresentation } from './experiment';
@@ -22,23 +22,12 @@ export const useConsentPolicyActions = function useConsentPolicyActions(
 	// computed keeps the presentation, and every component using it, from
 	// recomputing on kernel changes that leave the rule alone.
 	const policyRule = computed(() => snapshot.value.policyRule);
-	const config = useConsentConfig();
 	const hostPresentation = useResolvedPresentation();
 	const presentation = computed(() =>
-		resolveLegacyConsentPresentation({
+		resolveConsentPresentation({
 			override: toValue(override),
 			policy: policyRule.value,
-			presentation: {
-				...hostPresentation.value,
-				preferences: {
-					trapFocus: config.value.trapFocus,
-					...hostPresentation.value?.preferences,
-				},
-				prompt: {
-					trapFocus: config.value.trapFocus,
-					...hostPresentation.value?.prompt,
-				},
-			},
+			presentation: hostPresentation.value,
 			surface,
 		})
 	);
@@ -56,16 +45,34 @@ export const useConsentPolicyActions = function useConsentPolicyActions(
 		/** Backdrop, scroll lock, focus trap and no outside dismissal as one value. */
 		blocking: computed(() => presentation.value.blocking),
 		direction: computed(() => presentation.value.direction),
-		/** Resolved position, valid for the resolved variant. */
-		position: computed(() => presentation.value.position),
-		/** Whether the host chose the position or the variant default applied. */
-		positionSource: computed(() => presentation.value.positionSource),
 		/** Additional preferences buttons recommended for the stock UI. */
 		preferenceControls: computed(() => presentation.value.preferenceControls),
 		presentation,
 		primaryActions: computed(() => presentation.value.primaryActions),
 		shouldFillActions: computed(() => presentation.value.shouldFillActions),
-		/** Surface shape: floating card, edge bar, compact widget or centered wall. */
-		variant: computed(() => presentation.value.variant),
 	};
+};
+
+/**
+ * The blocking the IAB banner and dialog take from the config's
+ * `trapFocus`, as the presentation's `blocking`. Explicit `blocking` (or
+ * `blockUntilChoice`) in the host presentation wins over it, so this is
+ * `undefined` then, as it is when `trapFocus` is unset.
+ *
+ * @internal
+ */
+export const useFocusBlocking = function useFocusBlocking(
+	surface: 'prompt' | 'preferences'
+): ComputedRef<boolean | undefined> {
+	const config = useConsentConfig();
+	const hostPresentation = useResolvedPresentation();
+	return computed(() => {
+		const tier = hostPresentation.value?.[surface] as
+			| (PreferencesPresentation & { blockUntilChoice?: boolean })
+			| undefined;
+		if ((tier?.blockUntilChoice ?? tier?.blocking) !== undefined) {
+			return undefined;
+		}
+		return config.value.trapFocus;
+	});
 };

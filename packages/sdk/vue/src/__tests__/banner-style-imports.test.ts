@@ -3,9 +3,10 @@
  *
  * A `@inth/sdk/ui` class map imports its stylesheet, so a banner module that
  * imports the dialog's map puts the dialog stylesheet wherever the banner
- * goes. `description.vue` did, and in Nuxt that made the dialog's rules
- * (14.7 KB raw) part of every page's render-blocking entry CSS. The dialog
- * loads them with its own lazy chunk.
+ * goes. A shared description component once did, and in Nuxt that made the
+ * dialog's rules (14.7 KB raw) part of every page's render-blocking entry
+ * CSS. The dialog, and the options Customize opens in place, load them
+ * with their own lazy chunks.
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -15,7 +16,7 @@ import { describe, expect, test } from 'vitest';
 const componentsDir = join(__dirname, '../runtime/components');
 
 const DIALOG_STYLE_MAPS = [
-	'@inth/sdk/ui/styles/components/legacy-panel',
+	'@inth/sdk/ui/styles/components/consent-dialog',
 	'@inth/sdk/ui/styles/components/iab-consent-dialog',
 ];
 
@@ -62,22 +63,25 @@ const staticGraph = function staticGraph(entry: string): Map<string, string[]> {
 };
 
 describe('banner style imports', () => {
-	test('no module the banner imports statically imports a dialog style map', () => {
-		const graph = staticGraph(join(componentsDir, 'prompt.vue'));
-		const offenders = [...graph.entries()]
-			.filter(([, specifiers]) =>
-				specifiers.some((specifier) => DIALOG_STYLE_MAPS.includes(specifier))
-			)
-			.map(([file]) => file.replace(`${componentsDir}/`, ''));
+	test.each(['prompt/prompt.vue', 'prompt/surface.vue'])(
+		'no module %s imports statically imports a dialog style map',
+		(entry) => {
+			const graph = staticGraph(join(componentsDir, entry));
+			const offenders = [...graph.entries()]
+				.filter(([, specifiers]) =>
+					specifiers.some((specifier) => DIALOG_STYLE_MAPS.includes(specifier))
+				)
+				.map(([file]) => file.replace(`${componentsDir}/`, ''));
 
-		expect(graph.size).toBeGreaterThan(5);
-		expect(offenders).toEqual([]);
-	});
+			expect(graph.size).toBeGreaterThan(5);
+			expect(offenders).toEqual([]);
+		}
+	);
 
 	test('the dialog still imports its own style map', () => {
-		const graph = staticGraph(join(componentsDir, 'manager.vue'));
+		const graph = staticGraph(join(componentsDir, 'dialog/dialog.vue'));
 		const importers = [...graph.entries()].filter(([, specifiers]) =>
-			specifiers.includes('@inth/sdk/ui/styles/components/legacy-panel')
+			specifiers.includes('@inth/sdk/ui/styles/components/consent-dialog')
 		);
 
 		expect(importers.length).toBeGreaterThan(0);

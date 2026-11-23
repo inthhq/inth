@@ -34,7 +34,10 @@ import {
 	useConsentSnapshot,
 	useHasConsentUi,
 } from '../composables/kernel';
-import { useConsentPolicyActions } from '../composables/use-consent-policy-actions';
+import {
+	useConsentPolicyActions,
+	useFocusBlocking,
+} from '../composables/use-consent-policy-actions';
 import { useConsentScrollLock } from '../composables/use-consent-scroll-lock';
 import { TabsContent, TabsList, TabsRoot, TabsTrigger } from '../primitives';
 import { useFocusTrap } from '../primitives/use-focus-trap';
@@ -317,10 +320,12 @@ const handleVendorClick = function handleVendorClick(vendorId: IabVendorId) {
 	activeTab.value = 'vendors';
 };
 
-const { presentation } = useConsentPolicyActions('preferences', {
+const focusBlocking = useFocusBlocking('preferences');
+const { presentation } = useConsentPolicyActions('preferences', () => ({
+	blocking: focusBlocking.value,
 	layout: IAB_DIALOG_LAYOUT,
-});
-const scrollLock = computed(() => presentation.value.scrollLock);
+}));
+const scrollLock = computed(() => presentation.value.blocking);
 
 useConsentScrollLock(computed(() => Boolean(isOpen.value && scrollLock.value)));
 

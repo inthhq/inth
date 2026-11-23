@@ -63,7 +63,7 @@ describe('generateTokensCSS', () => {
 		const css = generateTokensCSS({ 'inth-primary': '#2f6f4e' });
 		expect(css).toMatch(/^:root,:host\{/u);
 		expect(css).toContain('--inth-primary:#2f6f4e;');
-		expect(css).toContain('--inth-radius-md:0.5rem;');
+		expect(css).toContain('--inth-radius-md:0.625rem;');
 	});
 
 	test('[VIS-03] the dark palette derives its tint from the dark primary', () => {
@@ -76,7 +76,7 @@ describe('generateTokensCSS', () => {
 		expect(dark).toContain(
 			'--inth-primary-tint: color-mix(in srgb, var(--inth-primary) 18%, var(--inth-surface));'
 		);
-		expect(dark).toContain('--inth-primary-text: var(--inth-primary);');
+		expect(dark).toContain('--inth-primary-text: #8ab4ff;');
 		expect(dark).toContain('--inth-switch-track-active: var(--inth-primary);');
 	});
 

@@ -8,23 +8,18 @@
  * resolved from `presentation.optOutLink` (or the `variant` prop), with the
  * California Privacy Protection Agency opt-out icon beside both Privacy
  * Choices titles and none beside "Do Not Sell or Share My Personal
- * Information". Under `design: 'privacy-choices'` it is also the way back
- * into the dialog under an opt-in policy, in the US or the EU: it reads
- * "Your Privacy Choices" there, with no opt-out icon, since no opt-out
- * right is offered.
+ * Information". It is also the way back into the dialog under an opt-in
+ * policy, in the US or the EU: it reads "Your Privacy Choices" there, with
+ * no opt-out icon, since no opt-out right is offered.
  *
- * Renders nothing when the active policy gives no opt-out right (on the
- * classic design), when no policy has resolved yet, or when an external
+ * Renders nothing when no policy has resolved yet, or when an external
  * consent source owns consent.
  */
 import type { OptOutLinkVariant } from '@inth/sdk/surface-state';
-import {
-	resolveConsentDesign,
-	resolvePrivacyChoicesLink,
-} from '@inth/sdk/surface-state';
+import { resolvePrivacyChoicesLink } from '@inth/sdk/surface-state';
+import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 
-import '@inth/sdk/ui/styles/components/legacy-prompt.css';
-import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
+import '@inth/sdk/ui/styles/components/legal-links.css';
 import { CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils/opt-out-icon';
 import { computed } from 'vue';
 
@@ -48,15 +43,14 @@ const presentation = useResolvedPresentation();
 
 const link = computed(() =>
 	resolvePrivacyChoicesLink(snapshot.value, translations.value, {
-		design: resolveConsentDesign(presentation.value),
 		variant: props.variant ?? presentation.value?.optOutLink,
 	})
 );
 
 /**
  * The icon's own size, 14px tall at the glyph's proportions, for a page
- * where the banner's `optOutIcon` rule is not applied, such as one whose
- * banner is the Privacy Choices design. The rule, when present, wins.
+ * where the `optOutIcon` rule is not applied, such as one without the
+ * stock stylesheets. The rule, when present, wins.
  */
 const ICON_HEIGHT = 14;
 const [, , boxWidth = ICON_HEIGHT, boxHeight = ICON_HEIGHT] =
@@ -85,7 +79,7 @@ const onClick = function onClick() {
 		<OptOutIcon
 			v-if="link.icon"
 			v-bind="iconSize"
-			:class="bannerStyles.optOutIcon"
+			:class="legalLinkStyles.optOutIcon"
 		/>
 		<slot>{{ link.label }}</slot>
 	</button>

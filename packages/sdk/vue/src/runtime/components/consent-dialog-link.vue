@@ -2,9 +2,9 @@
 import type { PolicyRight } from '@inth/sdk/schema/types';
 import { activateOptOutLink } from '@inth/sdk/surface-actions';
 import { resolveOptOutLink } from '@inth/sdk/surface-state';
+import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 
-import '@inth/sdk/ui/styles/components/legacy-prompt.css';
-import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
+import '@inth/sdk/ui/styles/components/legal-links.css';
 import { computed } from 'vue';
 
 import {
@@ -69,7 +69,7 @@ const onClick = function onClick() {
 	>
 		<OptOutIcon
 			v-if="showOptOutIcon"
-			:class="bannerStyles.optOutIcon"
+			:class="legalLinkStyles.optOutIcon"
 		/>
 		<slot>{{ label }}</slot>
 	</button>

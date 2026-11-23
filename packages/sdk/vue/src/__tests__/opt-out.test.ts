@@ -20,7 +20,6 @@ import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 
-import ConsentManager from '../runtime/components/manager.vue';
 import ConsentWidget from '../runtime/components/preferences.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import { useOptOutState } from '../runtime/composables/kernel';
@@ -125,7 +124,6 @@ afterEach(async () => {
 });
 
 const mountSurface = async (options: {
-	dialog?: boolean;
 	gpc?: boolean;
 	initialRecords?: NonNullable<
 		Parameters<typeof createVueConsentKernelContext>[0]['initialRecords']
@@ -173,9 +171,7 @@ const mountSurface = async (options: {
 						{ 'data-testid': 'opt-out-composable' },
 						JSON.stringify(optOutState.value)
 					),
-					options.dialog
-						? h(ConsentManager, { disableAnimation: true })
-						: h(ConsentWidget),
+					h(ConsentWidget),
 				]);
 		},
 	});
@@ -420,10 +416,9 @@ describe('Vue consent widget opt-out parity', () => {
 	});
 });
 
-describe('sale-and-sharing block in dialog and widget', () => {
+describe('sale-and-sharing block in the widget', () => {
 	test('renders before the category list outside accordion items, opts out in one click, and shows the receipt on reopen', async () => {
 		const { context } = await mountSurface({
-			dialog: true,
 			now: Date.now(),
 			presentation: { optOutLink: 'privacy-choices' },
 			theme: {
@@ -433,7 +428,6 @@ describe('sale-and-sharing block in dialog and widget', () => {
 			},
 		});
 
-		context.kernel.set.activeUI('dialog');
 		await vi.waitFor(() =>
 			expect(part('consent-widget-opt-out')).not.toBeNull()
 		);
@@ -460,11 +454,9 @@ describe('sale-and-sharing block in dialog and widget', () => {
 			expect(context.snapshot.value.optOut).not.toBeNull()
 		);
 		expect(context.snapshot.value.effectivePermissions.marketing).toBe(false);
-		expect(context.snapshot.value.activeUI).not.toBe('dialog');
 
-		// Reopen the dialog and confirm the block shows status, time, and reference without a button.
+		// The block now shows the status, time and reference without a button.
 		closeOptOutConfirmation(context.kernel);
-		context.kernel.set.activeUI('dialog');
 		await vi.waitFor(() =>
 			expect(part('consent-widget-opt-out-status')).not.toBeNull()
 		);
@@ -533,8 +525,7 @@ describe('sale-and-sharing block in dialog and widget', () => {
 
 	test('shows the signal status inside the block when GPC is active under a policy that maps it', async () => {
 		const now = Date.now();
-		const { context } = await mountSurface({
-			dialog: true,
+		await mountSurface({
 			gpc: true,
 			initialRecords: {
 				now,
@@ -549,7 +540,6 @@ describe('sale-and-sharing block in dialog and widget', () => {
 			presentation: { optOutLink: 'privacy-choices' },
 		});
 
-		context.kernel.set.activeUI('dialog');
 		await vi.waitFor(() =>
 			expect(part('consent-widget-opt-out')).not.toBeNull()
 		);
@@ -567,22 +557,18 @@ describe('sale-and-sharing block in dialog and widget', () => {
 		).toBeNull();
 	});
 
-	test('omits the block under an opt-in policy and keeps the existing dialog structure', async () => {
-		const { context } = await mountSurface({
-			dialog: true,
+	test('omits the block under an opt-in policy and keeps the widget structure', async () => {
+		await mountSurface({
 			now: Date.now(),
 			rule: OPT_IN_RULE,
 		});
 
-		context.kernel.set.activeUI('dialog');
 		await vi.waitFor(() =>
 			expect(part('consent-widget-accordion')).not.toBeNull()
 		);
 
 		expect(part('consent-widget-opt-out')).toBeNull();
 		expect(part('consent-widget-opt-out-status')).toBeNull();
-		expect(part('consent-dialog-title')).not.toBeNull();
-		expect(part('consent-dialog-description')).not.toBeNull();
 		expect(part('consent-widget-accordion-item-necessary')).not.toBeNull();
 		expect(part('consent-widget-footer')).not.toBeNull();
 	});

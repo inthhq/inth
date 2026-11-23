@@ -6,8 +6,8 @@
  * it's the LCP-critical surface and must server-render into the first
  * HTML. Nuxt's root loads it as its own chunk too (see `nuxt-inth-provider.vue`).
  * Everything else is split:
- * - manager/dialog: mounted once first needed, chunk prefetched on idle so
- *   the first "customize" click never pays network+parse
+ * - dialog: mounted once first needed; the banner warms its chunk on
+ *   intent, so the first open rarely pays network+parse
  * - IAB surfaces: load only when the resolved policy is IAB (`init.gvl`)
  * - dialog trigger: mounted only in the browser, when `showTrigger` is set
  *
@@ -15,17 +15,19 @@
  * tax was ~345-530ms; the weight was parse/hydration
  * of surfaces most visitors never see.
  */
+import { claimOptOutConfirmationHost } from '@inth/sdk/surface-actions';
 import {
 	defineAsyncComponent,
 	defineComponent,
 	h,
-	onScopeDispose,
+	onBeforeUnmount,
+	onMounted,
 	provide,
-	watch,
 } from 'vue';
 import type { Component } from 'vue';
 
 import {
+	useConsentKernel,
 	useConsentKernelContext,
 	useOptInConfirmationHost,
 } from '../composables/kernel';
@@ -37,75 +39,39 @@ import {
 	symbolKernelContext,
 	symbolSnapshot,
 } from '../utils/symbols';
-import { loadPrivacyChoicesDialog } from './privacy-choices-dialog/load';
-import { usePrivacyChoicesDesign } from './privacy-choices/use-design';
+import type OptOutConfirmationComponent from './opt-out-confirmation.vue';
 
+/**
+ * The stock consent dialog, with the opt-in confirmation it hosts. Its
+ * chunk loads when the dialog first opens.
+ */
 export const LazyConsentManager = defineAsyncComponent(
-	() => import('./manager.vue')
+	() => import('./dialog/manager.vue')
 );
-/**
- * The Privacy Choices dialog (`design: 'privacy-choices'`), in a chunk of
- * its own with its stylesheets. A page on the classic design never loads
- * it.
- */
-export const LazyPrivacyChoicesDialog = defineAsyncComponent(
-	loadPrivacyChoicesDialog
-);
-
-/**
- * The Privacy Choices dialog with the opt-in confirmation it hosts, for the
- * stock root.
- */
-const LazyPrivacyChoicesDialogHost = defineAsyncComponent(
-	() => import('./privacy-choices-dialog/host.vue')
-);
-
-type DialogDesign = 'classic' | 'privacy-choices';
-
-/**
- * Mounted dialog hosts by the design each renders, so idle warming loads
- * only the dialogs a page can open: never the classic chunk and its sheets
- * for a Privacy Choices page, whatever the banner did before.
- */
-const mountedDesigns: Record<DialogDesign, number> = {
-	classic: 0,
-	'privacy-choices': 0,
-};
-
-/**
- * Count the design this root's dialog renders while it is mounted, so
- * {@link prefetchConsentManager} warms only the dialogs on the page.
- *
- * @internal
- */
-export const useWarmableDialogDesign = function useWarmableDialogDesign(
-	design: () => DialogDesign
-): void {
-	if (typeof window === 'undefined') {
-		return;
-	}
-	let current: DialogDesign | null = null;
-	watch(
-		design,
-		(value) => {
-			if (current) {
-				mountedDesigns[current] -= 1;
-			}
-			current = value;
-			mountedDesigns[value] += 1;
-		},
-		{ immediate: true }
-	);
-	onScopeDispose(() => {
-		if (current) {
-			mountedDesigns[current] -= 1;
-			current = null;
-		}
-	});
-};
-export const LazyOptOutConfirmation = defineAsyncComponent(
+const OptOutConfirmationView = defineAsyncComponent(
 	() => import('./opt-out-confirmation.vue')
 );
+/**
+ * The standalone opt-out confirmation. It claims the host as soon as it
+ * mounts, before its chunk arrives, so the dialog never opens on its
+ * receipt in its place meanwhile.
+ */
+export const LazyOptOutConfirmation = defineComponent({
+	inheritAttrs: false,
+	name: 'OptOutConfirmation',
+	setup(_props, { attrs, slots }) {
+		const kernel = useConsentKernel();
+		let release: (() => void) | undefined;
+		onMounted(() => {
+			release = claimOptOutConfirmationHost(
+				kernel,
+				Symbol('OptOutConfirmation')
+			);
+		});
+		onBeforeUnmount(() => release?.());
+		return () => h(OptOutConfirmationView, { ...attrs, embedded: true }, slots);
+	},
+}) as unknown as typeof OptOutConfirmationComponent;
 export const LazyOptInConfirmation = defineAsyncComponent(
 	() => import('./opt-in-confirmation.vue')
 );
@@ -140,7 +106,7 @@ export const LazyIabConsentDialog = defineAsyncComponent(
  *
  * @internal
  */
-export const loadConsentBanner = () => import('./prompt.vue');
+export const loadConsentBanner = () => import('./prompt/prompt.vue');
 
 /**
  * The banner as its own chunk, for Nuxt's root. Its stylesheets then
@@ -262,38 +228,13 @@ export const prefetchSurfaceAfterLoad = function prefetchSurfaceAfterLoad(
 };
 
 /**
- * The classic dialog warms in idle time. The Privacy Choices dialog does
- * not: importing its chunk applies its stylesheets, which include the
- * banner's in-place panel rules, and React's banner shows its folded panel
- * unstyled until the visitor reaches for it. It warms on intent instead,
- * from the banner's buttons.
+ * The IAB dialog warms in idle time. The consent dialog does not:
+ * importing its chunk applies its stylesheets, which include the banner's
+ * in-place panel rules, and a banner whose options are folded would show
+ * them unstyled until the visitor reaches for them. It warms on intent
+ * instead, from the banner's buttons.
  */
-const loadConsentManager = () =>
-	mountedDesigns.classic > 0 ? import('./manager.vue') : Promise.resolve();
 const loadIabConsentDialog = () => import('./iab-panel.vue');
 
-export const prefetchConsentManager = () =>
-	prefetchSurfaceAfterLoad(loadConsentManager);
 export const prefetchIabConsentDialog = () =>
 	prefetchSurfaceAfterLoad(loadIabConsentDialog);
-
-export const warmConsentManager = () => undefined;
-export const warmIabConsentDialog = () => undefined;
-
-/**
- * The stock dialog for `InthProvider`: the Privacy Choices dialog when the
- * design opts in, else the classic `ConsentManager`. Each loads in its own
- * chunk, so a page downloads only the dialog it shows.
- *
- * @internal
- */
-export const ConsentDialogHost = defineComponent({
-	name: 'ConsentDialogHost',
-	setup() {
-		const privacyChoices = usePrivacyChoicesDesign();
-		return () =>
-			h(
-				privacyChoices.value ? LazyPrivacyChoicesDialogHost : LazyConsentManager
-			);
-	},
-});

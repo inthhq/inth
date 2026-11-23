@@ -7,7 +7,7 @@ import { flushPromises, mount } from '@vue/test-utils';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { inth } from '../index';
-import ConsentManager from '../runtime/components/manager.vue';
+import ConsentManager from '../runtime/components/dialog/manager.vue';
 import { useConsentKernelContext } from '../runtime/composables';
 import { testing } from '../testing';
 
@@ -51,7 +51,7 @@ test('offline() gives the dialog its English title without a request', async () 
 			expect(
 				document.querySelector('[data-testid="consent-dialog-title"]')
 					?.textContent
-			).toBe('Privacy Settings');
+			).toBe('Privacy settings');
 		});
 		expect(fetch).not.toHaveBeenCalled();
 	} finally {
