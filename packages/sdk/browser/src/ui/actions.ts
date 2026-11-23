@@ -1,13 +1,12 @@
 import {
 	actionAppearanceFromTheme,
-	resolveLegacyConsentPresentation,
+	resolveConsentPresentation,
 } from '@inth/sdk-core';
 import type {
+	ConsentPresentation,
 	ConsentSnapshot,
-	LegacyConsentPresentation as ConsentPresentation,
-	LegacyPromptPresentation as PromptPresentation,
-	LegacyResolvedConsentPresentation,
 	PresentationAction,
+	PromptPresentation,
 	ResolvedConsentPresentation,
 } from '@inth/sdk-core';
 import { resolveActionAppearance } from '@inth/sdk-ui/theme';
@@ -17,15 +16,15 @@ import { classes } from '../generated/styles';
 import { cx, h } from './dom';
 import type { BrowserSlotKey, SlotApplier } from './slots';
 
-/** Resolve buttons and geometry with the same policy constraints as React. */
+/** Resolve buttons and the container with the same policy constraints as React. */
 export const resolveActions = function resolveActions(
 	snapshot: ConsentSnapshot,
 	surface: 'prompt' | 'preferences',
 	presentation?: ConsentPresentation,
 	override?: PromptPresentation,
 	theme?: Theme
-): LegacyResolvedConsentPresentation {
-	return resolveLegacyConsentPresentation({
+): ResolvedConsentPresentation {
+	return resolveConsentPresentation({
 		actionAppearance: actionAppearanceFromTheme(theme),
 		override,
 		policy: snapshot.policyRule,

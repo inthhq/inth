@@ -27,17 +27,10 @@ const WAKE_EVENTS = ['pointerdown', 'keydown', 'scroll'] as const;
  * visitor presses a pointer or key or scrolls, or {@link ENGINE_TIMEOUT_MS}
  * passed. A page already scrolled loads at once.
  *
- * A press `holds` claims does not load the engine: the init script records
- * that accept or reject itself and loads the engine once the choice is
- * stored, so the gated scripts and `inth.commit.js` get the connection
- * first.
- *
- * @param holds - Whether a press is one the init script handles first.
  * @returns Cancels the schedule.
  */
 export const scheduleEngine = function scheduleEngine(
-	load: () => void,
-	holds?: (event: Event) => boolean
+	load: () => void
 ): () => void {
 	const cleanups: (() => void)[] = [];
 	let done = false;
@@ -57,15 +50,10 @@ export const scheduleEngine = function scheduleEngine(
 		fire();
 		return cancel;
 	}
-	const wake = (event: Event): void => {
-		if (!holds?.(event)) {
-			fire();
-		}
-	};
 	for (const type of WAKE_EVENTS) {
 		// Capture on window: scroll does not bubble.
-		window.addEventListener(type, wake, true);
-		cleanups.push(() => window.removeEventListener(type, wake, true));
+		window.addEventListener(type, fire, true);
+		cleanups.push(() => window.removeEventListener(type, fire, true));
 	}
 	cleanups.push(afterPriorityImages(fire, { timeoutMs: ENGINE_TIMEOUT_MS }));
 	return cancel;

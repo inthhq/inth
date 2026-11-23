@@ -1,5 +1,5 @@
 /**
- * What the Privacy Choices parts call that keeps per-kernel state: the
+ * What the UI parts call that keeps per-kernel state: the
  * surface session, the confirmations, the opt-out receipt, the receipt
  * focus and what reads them. The parts import these from here, never from
  * their packages.
@@ -35,4 +35,4 @@ export {
 	showConsentSurface,
 	takeOptInConfirmationOpener,
 } from '@inth/sdk-core/surface-actions';
-export { takeReceiptFocus } from '../receipt-focus';
+export { takeReceiptFocus } from './receipt-focus';

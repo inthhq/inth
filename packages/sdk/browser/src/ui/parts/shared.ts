@@ -1,5 +1,5 @@
 /**
- * What every Privacy Choices part shares: the render environment, the
+ * What every UI part shares: the render environment, the
  * stock button and switch, the rights bundle, the phone layout query and
  * the icons. Mirrors `@inth/react`'s `components/privacy-choices`.
  *
@@ -27,16 +27,16 @@ import { EARLY_TAP_OPT_OUT } from '@inth/sdk-core/surface-actions';
 import { resolveActionAppearance } from '@inth/sdk-ui/theme';
 import type { ConsentActionKey } from '@inth/sdk-ui/theme';
 
-import { classes as dialogStyles } from '../../generated/privacy-choices/dialog';
 import { classes } from '../../generated/styles';
+import { classes as dialogStyles } from '../../generated/ui/dialog';
 import type { BrowserSlotKey } from '../slots';
 import type { SurfaceContext } from '../surface';
 import { el, icon } from './dom';
-import type { PcChild, PcProps } from './dom';
+import type { PartChild, PartProps } from './dom';
 import { getSurfaceSession } from './engine';
 
-/** What a Privacy Choices part renders against, refreshed on every render. */
-export interface PcEnv {
+/** What a UI part renders against, refreshed on every render. */
+export interface PartEnv {
 	ctx: SurfaceContext;
 	kernel: ConsentKernel;
 	snapshot: ConsentSnapshot;
@@ -109,7 +109,7 @@ export const prefersReducedMotionNow = (): boolean =>
 
 /** What {@link consentButton} renders. */
 export interface ConsentButtonParams {
-	env: Pick<PcEnv, 'ctx' | 'noStyle'>;
+	env: Pick<PartEnv, 'ctx' | 'noStyle'>;
 	/** The consent action, for `data-action` and the theme's appearance. */
 	consentAction?: ConsentActionKey;
 	isPrimary?: boolean;
@@ -120,8 +120,8 @@ export interface ConsentButtonParams {
 	slotKey?: BrowserSlotKey;
 	/** Extra class after the button's own. */
 	className?: string;
-	attrs?: PcProps;
-	children: PcChild[];
+	attrs?: PartProps;
+	children: PartChild[];
 }
 
 /** Actions the static banner's early-tap script would replay. */
@@ -180,11 +180,11 @@ export interface ChoiceSwitchParams {
 	/** The vendor table's switches are smaller. */
 	size?: 'default' | 'small';
 	noStyle: boolean;
-	attrs: PcProps;
+	attrs: PartProps;
 }
 
 /**
- * A Privacy Choices switch: a `role="switch"` button the row names with
+ * A choice switch: a `role="switch"` button the row names with
  * `aria-labelledby` and describes with `aria-describedby` (SR-06). Never
  * `disabled` for a vendor (CAT-03).
  */

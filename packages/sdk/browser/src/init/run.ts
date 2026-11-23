@@ -2,29 +2,27 @@
  * The init script (`inth.js`): the part of the script tag that runs before
  * the page's largest image has loaded.
  *
- * It installs a stand-in `window.inth`, starts `/v1/consent/init`, renders the stock
- * banner from the answer, records an accept or reject tapped on it, and
- * starts the scripts a stored or new choice allows. A Customize tap on its
- * banner opens the stock preference dialog from `inth.dialog.js` without
- * the engine. Then it loads the engine (`inth.hosted.js`) after the page's
- * priority images, at the first input, once a tapped choice is stored or
- * the dialog is on screen, or after `ENGINE_TIMEOUT_MS`, and hands it
- * everything through the boot object (`./boot.ts`).
+ * It installs a stand-in `window.inth`, starts `/v1/consent/init`, and
+ * starts the scripts a stored choice allows. It renders no UI and records
+ * no choice: when the answer owes a banner, it loads the engine
+ * (`inth.hosted.js`) at once and starts fetching the consent UI
+ * (`inth.choices.js`) beside it, so the banner waits for neither in turn.
+ * Otherwise it loads the engine after the page's priority images, at the
+ * first input, or after `ENGINE_TIMEOUT_MS`, and hands it everything
+ * through the boot object (`./boot.ts`). Every consent call made before
+ * the engine waits for it, and runs once it has loaded.
  *
  * It runs nothing early it cannot run the way the engine would: any option
- * the engine reads differently (a theme, custom copy, an experiment, a
- * custom transport or storage) leaves that part to the engine, which then
- * loads at once.
+ * the engine reads differently (custom copy, an experiment, a custom
+ * transport or storage) leaves that part to the engine, which then loads
+ * at once.
  *
  * @packageDocumentation
  * @internal
  */
 
-import {
-	OPT_OUT_CONFIRMATION_STORAGE_KEY,
-	resolveLegacyConsentPresentation,
-} from '@inth/sdk-core';
-import type { ConsentSnapshot, KernelEvent, SaveResult } from '@inth/sdk-core';
+import { OPT_OUT_CONFIRMATION_STORAGE_KEY } from '@inth/sdk-core';
+import type { ConsentSnapshot } from '@inth/sdk-core';
 import {
 	configFromPrefetchedInit,
 	hasStoredConsent,
@@ -37,59 +35,33 @@ import type {
 	SSRInitialData,
 } from '@inth/sdk-core/runtime/deferred-snapshot';
 import {
-	generateUuidV7,
-	hasStoredClearEpoch,
-	planInstantCommit,
-} from '@inth/sdk-core/surface-actions/instant-commit';
-import {
 	isPlainScript,
 	isRunnableNow,
 	startPlainScripts,
 } from '@inth/sdk-core/surface-actions/plain-scripts';
 import { resolveOptOut } from '@inth/sdk-core/surface-state';
-import { prefersReducedMotion } from '@inth/sdk-ui/utils/reduced-motion';
 
 import { mergeClientOptions, readPageOptions } from '../auto-init';
 import { dropRejection } from '../drop-rejection';
 import { activateGatedScripts } from '../gated-scripts';
-import { stylesheet } from '../generated/styles';
 import type { GlobalApiBase, QueuedCall } from '../global-base';
 import { GLOBAL_NAME } from '../global-name';
 import { hasDecided } from '../has-decided';
 import { ACTION_ATTRIBUTE, PREFERENCES_HASH } from '../page-actions';
 import type { ConsentClient, ScriptTagClientOptions } from '../types';
-import { createBanner } from '../ui/banner';
-import type { BannerSurface } from '../ui/banner';
-import { shareLocks } from '../ui/locks';
-import { createUIRoot } from '../ui/root';
 import { version } from '../version';
 import { BOOT_KEY } from './boot';
-import type {
-	InitBoot,
-	InitCommit,
-	InitCommitPart,
-	InitRecordsPart,
-} from './boot';
-import { hasBannerCopy } from './copy';
-import { DIALOG_KEY } from './dialog-file';
-import type { DialogFile } from './dialog-file';
-import type { EarlyDialog, EarlyDialogHost } from './early-dialog';
+import type { InitBoot, InitRecordsPart } from './boot';
 import { supportsEarlyStart } from './eligibility';
 import { hostedMarker, readHostedMarker } from './hosted-marker';
 import { partSrc } from './part-src';
 import type { InitFile } from './part-src';
-import {
-	clearPendingTap,
-	readPendingTap,
-	writePendingTap,
-} from './pending-tap';
-import type { PendingTap } from './pending-tap';
 import { readPolicyCache, writePolicyCache } from './policy-cache';
 import { scheduleEngine } from './schedule';
 
 /**
- * How long the engine waits for the init script's `/v1/consent/init` answer, and the
- * init script for `inth.commit.js`, `inth.records.js` or `inth.dialog.js`.
+ * How long the engine waits for the init script's `/v1/consent/init`
+ * answer, and the init script for `inth.records.js`.
  */
 const INIT_WAIT_MS = 3000;
 
@@ -98,6 +70,8 @@ const ENGINE_RETRY_MS = [1000, 2000];
 
 /** Calls that act on consent or the UI. They load the engine at once. */
 const ACTIONS = [
+	'acceptAll',
+	'rejectAll',
 	'save',
 	'saveIAB',
 	'dismissNotice',
@@ -141,71 +115,9 @@ type SettledCall = QueuedCall & {
 	settle?: (result: unknown, failed?: boolean) => void;
 };
 
-/** Calls `callbacks` the way the engine's runtime calls them for `event`. */
-const announce = function announce(
-	callbacks: ScriptTagClientOptions['callbacks'],
-	event: KernelEvent
-): void {
-	const { type, ...payload } = event;
-	try {
-		if (type === 'permissions:changed') {
-			callbacks?.onPermissionsChanged?.(payload as never);
-		} else if (type === 'choice:recorded') {
-			callbacks?.onChoiceRecorded?.(payload as never);
-		} else if (type === 'surface:shown') {
-			callbacks?.onSurfaceShown?.(payload as never);
-		}
-	} catch (error) {
-		// oxlint-disable-next-line no-console -- A page callback failed.
-		console.error('[inth] A consent callback threw.', error);
-	}
-};
-
 const usesPrivacyChoicesLink = (options: ScriptTagClientOptions): boolean =>
 	options.presentation?.optOutLink === 'privacy-choices' ||
 	options.presentation?.optOutLink === 'california-privacy-choices';
-
-/**
- * Whether the engine's banner would look the same as the one the init
- * script renders: the stock banner in a shadow root, the stock sheet, no
- * theme, custom copy source or container.
- */
-const supportsEarlyBanner = function supportsEarlyBanner(
-	options: ScriptTagClientOptions
-): boolean {
-	const { ui } = options;
-	return (
-		ui !== false &&
-		ui?.banner !== false &&
-		!(
-			options.i18n ||
-			usesPrivacyChoicesLink(options) ||
-			ui?.theme ||
-			ui?.css ||
-			ui?.stylesheetUrls?.length ||
-			ui?.noStyle ||
-			ui?.styles === false ||
-			ui?.container !== undefined ||
-			ui?.shadow === false
-		)
-	);
-};
-
-/**
- * Whether the stock banner renders the Privacy Choices design, which only
- * the engine renders: the init script then shows no banner of its own.
- *
- * @internal
- */
-export const usesPrivacyChoicesDesign = (
-	options: ScriptTagClientOptions,
-	resolved: ConsentSnapshot
-): boolean =>
-	resolveLegacyConsentPresentation({
-		policy: resolved.policyRule,
-		presentation: options.presentation,
-		surface: 'prompt',
-	}).design === 'privacy-choices';
 
 /**
  * Run the init script for `script`: install the stand-in `window.inth`,
@@ -231,20 +143,10 @@ export const runInitScript = function runInitScript(
 	let options: ScriptTagClientOptions | null = null;
 	let snapshot: ConsentSnapshot | null = null;
 	let lastInit: SSRInitialData | undefined;
-	let banner: BannerSurface | null = null;
-	/** The dialog opened before the engine, from `inth.dialog.js`. */
-	let dialog: EarlyDialog | null = null;
-	let dialogLoading = false;
-	/** What the dialog closes back to before the engine. */
-	let beforeDialog: ConsentSnapshot['activeUI'] = 'banner';
 	let engineRequested = false;
 	/** Set once `inth.hosted.js` failed on every try. */
 	let engineError: Error | null = null;
-	let ahead: { clearEpoch: boolean; subjectId: string } | undefined;
-	let persist: (() => void) | null = null;
-	/** Shows the banner again for a tap only the engine could record. */
-	let revertTap: (() => void) | null = null;
-	const parts: { commit?: InitCommitPart; records?: InitRecordsPart } = {};
+	const parts: { records?: InitRecordsPart } = {};
 	const partLoads: Partial<Record<InitFile, Promise<unknown>>> = {};
 	const configs: ScriptTagClientOptions[] = [];
 	const listeners = new Set<(next: ConsentSnapshot) => void>();
@@ -261,14 +163,6 @@ export const runInitScript = function runInitScript(
 	const boot: InitBoot = {
 		attach(engine) {
 			api = engine;
-			// The dialog on screen stays open: the engine opens it first, and
-			// its UI takes this one over (`takeDialog`).
-			if (dialog && snapshot?.activeUI === 'dialog') {
-				boot.calls.unshift(['openDialog']);
-			}
-			// A choice still waiting for its write is stored before the engine
-			// reads storage.
-			persist?.();
 			for (const cleanup of cleanups.splice(0)) {
 				cleanup();
 			}
@@ -280,14 +174,11 @@ export const runInitScript = function runInitScript(
 					if (next.explicitChoice) {
 						off();
 						cachePolicy();
-						// The engine recorded the tap the init script handed it.
-						clearPendingTap();
 					}
 				});
 			});
 		},
 		calls: [],
-		commit: null,
 		disposed: false,
 		prefetch: null,
 		provide(part) {
@@ -298,7 +189,6 @@ export const runInitScript = function runInitScript(
 		},
 		script,
 		settled: null,
-		ui: null,
 		version,
 	};
 
@@ -321,8 +211,6 @@ export const runInitScript = function runInitScript(
 		engineError = new Error(message);
 		// oxlint-disable-next-line no-console -- The engine is not coming.
 		console.error(message);
-		revertTap?.();
-		revertTap = null;
 		for (const call of boot.calls.splice(0) as SettledCall[]) {
 			call.settle?.(engineError, true);
 		}
@@ -376,13 +264,10 @@ export const runInitScript = function runInitScript(
 	};
 
 	/**
-	 * Fetch `inth.commit.js`, `inth.records.js` or `inth.dialog.js`, once.
-	 * Settles when it has run, failed, or after {@link INIT_WAIT_MS}; `parts`
-	 * or the dialog global holds what it provided.
+	 * Fetch `inth.records.js`, once. Settles when it has run, failed, or
+	 * after {@link INIT_WAIT_MS}; `parts` holds what it provided.
 	 */
-	const loadPart = function loadPart(
-		file: Exclude<InitFile, 'hosted'>
-	): Promise<unknown> {
+	const loadPart = function loadPart(file: 'records'): Promise<unknown> {
 		// oxlint-disable-next-line promise/avoid-new -- Settled by the script element.
 		partLoads[file] ??= new Promise((resolve) => {
 			const src = fileSrc(file);
@@ -396,6 +281,28 @@ export const runInitScript = function runInitScript(
 			setTimeout(resolve, INIT_WAIT_MS);
 		});
 		return partLoads[file];
+	};
+
+	/**
+	 * Start fetching `inth.choices.js`, the consent UI the engine loads to
+	 * render a banner, so it arrives with the engine instead of after it.
+	 * The URL is the one the engine computes: next to `inth.hosted.js`,
+	 * unless the backend or the tag names it.
+	 */
+	const preloadChoices = function preloadChoices(): void {
+		const src = partSrc('choices', script, fileSrc('hosted'));
+		if (!src) {
+			return;
+		}
+		const link = document.createElement('link');
+		link.rel = 'preload';
+		link.as = 'script';
+		link.href = src;
+		const nonce = options?.nonce ?? scriptOptions.nonce;
+		if (nonce) {
+			link.nonce = nonce;
+		}
+		document.head.append(link);
 	};
 
 	const queue = function queue(call: SettledCall): void {
@@ -432,8 +339,6 @@ export const runInitScript = function runInitScript(
 
 	const setSnapshot = function setSnapshot(next: ConsentSnapshot): void {
 		snapshot = next;
-		banner?.sync(next);
-		dialog?.surface.sync(next);
 		for (const listener of listeners) {
 			try {
 				listener(next);
@@ -442,40 +347,6 @@ export const runInitScript = function runInitScript(
 				console.error('@inth/sdk: a subscribe listener threw.', error);
 			}
 		}
-	};
-
-	/**
-	 * Show `surface` from `next`: the snapshot the page reads, with the
-	 * surface's first impression stamped now, as the engine's kernel stamps
-	 * one it paints. The stamp times an early choice's save, and the engine
-	 * starts from it instead of stamping its own when it attaches, so the
-	 * impression is announced once, here.
-	 */
-	const showSurface = function showSurface(
-		next: ConsentSnapshot,
-		surface: 'banner' | 'dialog'
-	): void {
-		const at = Date.now();
-		const shown =
-			next.surfaceShownAt[surface] === null
-				? {
-						...next,
-						surfaceShownAt: { ...next.surfaceShownAt, [surface]: at },
-					}
-				: next;
-		setSnapshot(shown);
-		if (boot.prefetch) {
-			boot.prefetch.config = {
-				...boot.prefetch.config,
-				initialSurfaceShownAt: shown.surfaceShownAt,
-			};
-		}
-		announce(options?.callbacks, {
-			shownAt: at,
-			snapshot: shown,
-			surface,
-			type: 'surface:shown',
-		});
 	};
 
 	/**
@@ -512,289 +383,6 @@ export const runInitScript = function runInitScript(
 			document.addEventListener('DOMContentLoaded', scan, { once: true });
 		}
 		scan();
-	};
-
-	/** Whether an accept or reject now can be recorded without the engine. */
-	const canTapEarly = (): boolean =>
-		Boolean(
-			!api && snapshot && ahead && !ahead.clearEpoch && !boot.commit && options
-		);
-
-	/**
-	 * Records an accept, a reject or a save of category choices from the
-	 * dialog without the engine, when it can.
-	 */
-	const tap = function tap(choice: PendingTap['c']): unknown {
-		const [method, ...args]: QueuedCall =
-			typeof choice === 'object'
-				? ['save', choice]
-				: [choice === 'all' ? 'acceptAll' : 'rejectAll'];
-		if (api) {
-			return act(method, args);
-		}
-		const actionAt = Date.now();
-		const plan =
-			snapshot && ahead && canTapEarly()
-				? planInstantCommit({
-						actionAt,
-						choice,
-						snapshot,
-						subjectId: ahead.subjectId,
-					})
-				: null;
-		if (!(plan && options)) {
-			return act(method, args);
-		}
-		const current = options;
-		const commit: InitCommit = { queued: null, snapshot: plan.snapshot };
-		boot.commit = commit;
-		// Kept until the choice is stored, so a visitor who leaves before
-		// `inth.commit.js` arrives still has it recorded on the next page.
-		writePendingTap(choice, plan.previous, actionAt);
-		setSnapshot(plan.snapshot);
-		startScripts(plan.snapshot);
-		cachePolicy();
-		const chunk = loadPart('commit');
-		// An engine that arrives first waits for the file, so it starts from
-		// the stored record, but not for long.
-		// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
-		boot.settled = Promise.all([boot.settled, chunk]).then(() => undefined);
-		// oxlint-disable-next-line promise/avoid-new -- Settled by the write below.
-		return new Promise<SaveResult>((resolve) => {
-			// The record is written in a task after the tap, once
-			// `inth.commit.js` has run, so the tap's own task only hides the
-			// banner and starts the scripts. An engine that takes over sooner
-			// flushes it first, or records the tap itself without the file.
-			persist = () => {
-				persist = null;
-				const module = parts.commit;
-				const early =
-					!module || hasStoredClearEpoch()
-						? null
-						: module.planEarlyCommit({
-								actionAt,
-								choice,
-								now: plan.now,
-								snapshot: plan.previous,
-								subjectId: plan.subjectId,
-							});
-				if (!(module && early)) {
-					// The engine records it instead. If it never loads, the
-					// banner asks again; the pending tap still covers a visitor
-					// who leaves.
-					revertTap = () => {
-						if (boot.commit === commit) {
-							boot.commit = null;
-							setSnapshot(plan.previous);
-						}
-					};
-					queue([method, ...args]);
-					loadEngine();
-					resolve({ ok: false });
-					return;
-				}
-				const stored = module.storeEarlyCommit(early);
-				clearPendingTap();
-				// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
-				commit.queued = stored.catch(() => false);
-				void (async () => {
-					const queuedSave = await stored.catch(() => false);
-					if (queuedSave) {
-						// The callbacks hear a choice once it is recorded.
-						for (const event of early.events) {
-							announce(current.callbacks, event);
-						}
-					} else {
-						// The record is stored, but the outbox could not keep its
-						// save: the engine records the tap itself, so the backend
-						// still gets it, and its callbacks announce it.
-						queue([method, ...args]);
-					}
-					loadEngine();
-					resolve({
-						confirmed: Object.keys(
-							early.payload.confirmed.categories
-						) as SaveResult['confirmed'],
-						ok: true,
-						subjectId: early.payload.subjectId,
-					});
-				})();
-			};
-			// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
-			void chunk.then(() => {
-				setTimeout(() => persist?.(), 0);
-			});
-		});
-	};
-
-	/** Whether a Customize tap now can open the dialog without the engine. */
-	const canOpenEarly = function canOpenEarly(): boolean {
-		const ui = options?.ui || undefined;
-		return Boolean(
-			!api &&
-			boot.ui &&
-			snapshot &&
-			!snapshot.policyPending &&
-			!boot.commit &&
-			ui?.dialog !== false &&
-			snapshot.policyRule.model !== 'iab'
-		);
-	};
-
-	/**
-	 * Fetch `inth.dialog.js`, once. Settles with what it published, or
-	 * `undefined` when it failed, came from another release, or took longer
-	 * than {@link INIT_WAIT_MS}.
-	 */
-	const loadDialog = function loadDialog(): Promise<DialogFile | undefined> {
-		// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
-		return loadPart('dialog').then(() => {
-			const file = target[DIALOG_KEY] as DialogFile | undefined;
-			// A file from another release may not match this script's markup.
-			return file?.version === version ? file : undefined;
-		});
-	};
-
-	/**
-	 * Saves the dialog's categories without the engine, when it can, as an
-	 * accept is recorded. A save that moves a vendor waits for the engine,
-	 * which declares the vendors.
-	 */
-	const saveFromDialog = function saveFromDialog(
-		input: Record<string, unknown>
-	): unknown {
-		const { vendors, ...categories } = input;
-		if (api || (vendors && Object.keys(vendors).length)) {
-			return act('save', [input]);
-		}
-		return tap(categories as Record<string, boolean>);
-	};
-
-	/** Closes the dialog opened before the engine, back to the banner. */
-	const closeDialog = function closeDialog(): unknown {
-		if (api || !dialog || snapshot?.activeUI !== 'dialog') {
-			return act('closeDialog', []);
-		}
-		const restored = { ...snapshot, activeUI: beforeDialog };
-		if (beforeDialog === 'banner') {
-			showSurface(restored, 'banner');
-		} else {
-			setSnapshot(restored);
-		}
-		return undefined;
-	};
-
-	/** Render the dialog from `file` over the banner. */
-	const showDialog = function showDialog(file: DialogFile): void {
-		const { ui } = boot;
-		const current = options;
-		const shown = snapshot;
-		if (!(ui && current && shown)) {
-			return;
-		}
-		shareLocks();
-		dialog ??= file.openEarlyDialog({
-			closeDialog,
-			options: current,
-			presentation: () => api?.client?.presentation ?? current.presentation,
-			save: saveFromDialog,
-			// `window.inth`, this stand-in: once the engine has taken over, it
-			// forwards every call there.
-			standIn: target[GLOBAL_NAME] as EarlyDialogHost['standIn'],
-			ui,
-		});
-		beforeDialog = shown.activeUI;
-		showSurface({ ...shown, activeUI: 'dialog' }, 'dialog');
-		// Once the dialog is on screen: the commit file, for a choice made
-		// in it, and the engine.
-		requestAnimationFrame(() => {
-			setTimeout(() => {
-				void loadPart('commit');
-				loadEngine();
-			}, 0);
-		});
-	};
-
-	/**
-	 * Opens the preference dialog: from `inth.dialog.js` before the engine
-	 * when it can, else through the engine, which then loads at once, as it
-	 * does when the file fails to load.
-	 */
-	const openDialog = function openDialog(): unknown {
-		if (!canOpenEarly()) {
-			return act('openDialog', []);
-		}
-		if (dialogLoading || snapshot?.activeUI === 'dialog') {
-			return undefined;
-		}
-		dialogLoading = true;
-		// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
-		void loadDialog().then((file) => {
-			dialogLoading = false;
-			if (file && canOpenEarly()) {
-				showDialog(file);
-			} else {
-				act('openDialog', []);
-			}
-		});
-		return undefined;
-	};
-
-	const renderBanner = function renderBanner(next: ConsentSnapshot): void {
-		const current = options;
-		if (!current || api || banner || !document.body) {
-			return;
-		}
-		const ui = current.ui === false ? {} : (current.ui ?? {});
-		const root = createUIRoot(document.body, ui, stylesheet, current.nonce);
-		const client = {
-			acceptAll: () => tap('all'),
-			dismissNotice: () => act('dismissNotice', []),
-			openDialog,
-			optOut: () => act('optOut', []),
-			presentation: current.presentation,
-			rejectAll: () => tap('none'),
-		} as unknown as ConsentClient;
-		banner = createBanner(
-			{
-				client,
-				disableAnimation: ui.disableAnimation ?? prefersReducedMotion(),
-				legalLinks: current.legalLinks,
-				noStyle: false,
-				root: root.themeRoot,
-				slot: (element) => element,
-			},
-			typeof ui.banner === 'object' ? ui.banner : {}
-		);
-		boot.ui = {
-			...root,
-			takeBanner() {
-				const handed = banner?.handoff() ?? null;
-				banner = null;
-				return handed;
-			},
-			takeDialog() {
-				const early = dialog;
-				const rendered = snapshot;
-				dialog = null;
-				if (!early) {
-					return null;
-				}
-				if (rendered?.activeUI !== 'dialog') {
-					early.surface.destroy();
-					return null;
-				}
-				return {
-					adopt: (engine) => early.handOver(rendered, engine),
-					destroy: () => early.surface.destroy(),
-				};
-			},
-		};
-		ahead = {
-			clearEpoch: hasStoredClearEpoch(),
-			subjectId: generateUuidV7(),
-		};
-		showSurface(next, 'banner');
 	};
 
 	/** Start `/v1/consent/init` and everything that follows from its answer. */
@@ -836,9 +424,6 @@ export const runInitScript = function runInitScript(
 			return;
 		}
 		const stored = hasStoredConsent();
-		// A tap a previous page showed but could not store: the engine
-		// records it, so this page shows no early banner.
-		const pendingTap = readPendingTap();
 		let answered = false;
 		const markAnswered = () => {
 			answered = true;
@@ -876,7 +461,7 @@ export const runInitScript = function runInitScript(
 			: true;
 		// oxlint-disable-next-line promise/prefer-await-to-then -- Not in an async function.
 		const handled = Promise.all([pending, records]).then(([data, readable]) => {
-			if (api || boot.commit || boot.disposed) {
+			if (api || boot.disposed) {
 				return;
 			}
 			lastInit = data;
@@ -915,27 +500,11 @@ export const runInitScript = function runInitScript(
 				}
 				return;
 			}
-			if (
-				pendingTap ||
-				!supportsEarlyBanner(current) ||
-				usesPrivacyChoicesDesign(current, resolved) ||
-				!hasBannerCopy(resolved)
-			) {
-				loadEngine();
-				return;
-			}
-			if (document.body) {
-				renderBanner(resolved);
-			} else {
-				document.addEventListener(
-					'DOMContentLoaded',
-					() => {
-						if (snapshot === resolved) {
-							renderBanner(resolved);
-						}
-					},
-					{ once: true }
-				);
+			// A banner is owed: only the engine renders it, from the consent UI
+			// file. Fetch both now, side by side.
+			loadEngine();
+			if (current.ui !== false && current.ui?.banner !== false) {
+				preloadChoices();
 			}
 		});
 		// The engine waits for this before it takes over, so it starts from
@@ -973,13 +542,7 @@ export const runInitScript = function runInitScript(
 			return;
 		}
 		event.preventDefault();
-		if (action === 'acceptAll' || action === 'rejectAll') {
-			dropRejection(tap(action === 'acceptAll' ? 'all' : 'none'));
-		} else if (action === 'openDialog') {
-			void openDialog();
-		} else {
-			dropRejection(act(action, []));
-		}
+		dropRejection(act(action, []));
 	};
 	document.addEventListener('click', onPageClick);
 	cleanups.push(() => document.removeEventListener('click', onPageClick));
@@ -1026,7 +589,6 @@ export const runInitScript = function runInitScript(
 
 	const standIn = {
 		[BOOT_KEY]: boot,
-		acceptAll: () => tap('all'),
 		get client() {
 			return api?.client ?? null;
 		},
@@ -1049,8 +611,6 @@ export const runInitScript = function runInitScript(
 			if (api) {
 				return api.dispose();
 			}
-			persist = null;
-			revertTap = null;
 			const disposed = new Error(
 				'@inth/sdk: dispose() ran before inth.hosted.js loaded.'
 			);
@@ -1062,13 +622,6 @@ export const runInitScript = function runInitScript(
 				engineError = null;
 				engineRequested = false;
 			}
-			banner?.destroy();
-			banner = null;
-			dialog?.surface.destroy();
-			dialog = null;
-			boot.ui?.releaseScheme();
-			boot.ui?.host.remove();
-			boot.ui = null;
 			options = null;
 			snapshot = null;
 			// No later input, image load or timer loads the engine, and an
@@ -1175,7 +728,6 @@ export const runInitScript = function runInitScript(
 		},
 		ready: () =>
 			api ? api.ready() : withClient((client) => client.ready(), true),
-		rejectAll: () => tap('none'),
 		subscribe(listener: (next: ConsentSnapshot) => void) {
 			if (api) {
 				return api.subscribe(listener);
@@ -1201,7 +753,6 @@ export const runInitScript = function runInitScript(
 		(standIn as Record<string, unknown>)[method] = (...args: unknown[]) =>
 			act(method, args);
 	}
-	Object.assign(standIn, { closeDialog, openDialog });
 	target[GLOBAL_NAME] = standIn;
 
 	// Calls queued on the array before this tag, in order.
@@ -1211,72 +762,6 @@ export const runInitScript = function runInitScript(
 	if (!manual) {
 		begin();
 	}
-	/**
-	 * The action an input lands on: a `data-inth-action` button, or a stock
-	 * button in the init script's UI. `onUI` is whether it lands in that UI.
-	 */
-	const pressed = function pressed(event: Event): {
-		action: string | null;
-		onUI: boolean;
-	} {
-		const path = event.composedPath();
-		const onUI = Boolean(boot.ui && path.includes(boot.ui.host));
-		for (const node of path) {
-			const action =
-				node instanceof Element
-					? (node.getAttribute(ACTION_ATTRIBUTE) ??
-						(onUI ? node.getAttribute('data-action') : null))
-					: null;
-			if (action) {
-				return { action, onUI };
-			}
-		}
-		return { action: null, onUI };
-	};
-
-	/**
-	 * A press fetches what its tap needs, so it has usually run by the time
-	 * the click lands: `inth.dialog.js` for Customize, `inth.commit.js` for
-	 * anything else in the init script's UI.
-	 */
-	const onPress = function onPress(event: Event): void {
-		const { action, onUI } = pressed(event);
-		if (action === 'customize') {
-			if (canOpenEarly()) {
-				void loadDialog();
-			}
-		} else if (action === 'opt-out') {
-			// Opt-out runs in the engine; holdsEngine returns false so the
-			// press loads the engine at once instead of fetching inth.commit.js.
-		} else if (onUI) {
-			// Never rejects; the tap reads what it provided.
-			void loadPart('commit');
-		}
-	};
-	document.addEventListener('pointerdown', onPress, true);
-	cleanups.push(() =>
-		document.removeEventListener('pointerdown', onPress, true)
-	);
-
-	/**
-	 * A press on an accept or reject the init script will record itself, or
-	 * on a Customize it will open the dialog for, on the stock banner or a
-	 * `data-inth-action` button. The engine (`inth.hosted.js`) then starts
-	 * once the choice is stored or the dialog is on screen instead of with
-	 * the press, so the gated scripts the tap starts, `inth.commit.js` and
-	 * `inth.dialog.js` do not share the connection with it. Any other press
-	 * loads the engine at once.
-	 */
-	const holdsEngine = function holdsEngine(event: Event): boolean {
-		if (event.type === 'scroll') {
-			return false;
-		}
-		const { action } = pressed(event);
-		return (
-			((action === 'accept' || action === 'reject') && canTapEarly()) ||
-			(action === 'customize' && canOpenEarly())
-		);
-	};
-	cleanups.push(scheduleEngine(loadEngine, holdsEngine));
+	cleanups.push(scheduleEngine(loadEngine));
 	return standIn as unknown as GlobalApiBase;
 };

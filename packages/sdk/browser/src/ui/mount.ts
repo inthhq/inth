@@ -9,23 +9,20 @@ import { prefersReducedMotion } from '@inth/sdk-ui/utils/reduced-motion';
 
 import { dropRejection } from '../drop-rejection';
 import { stylesheet } from '../generated/styles';
-import { takeInitUI } from '../init/adopt';
-import type { AdoptedBanner, AdoptedDialog, InitUI } from '../init/boot';
 import type {
 	ConsentClient,
 	ConsentUIHandle,
 	ConsentUIOptions,
 } from '../types';
-import { createDialog } from './dialog-surface';
+import { createDialog } from './dialog';
 import { h } from './dom';
 import {
 	subscribeOptInConfirmation,
 	subscribeOptOutConfirmation,
 	subscribeOptOutReceiptData,
 } from './opt-out-confirmation-state';
-import { createBannerSurface } from './privacy-choices-design';
-import { applyColorScheme, createStyle, createUIRoot } from './root';
-import type { UIRoot } from './root';
+import { createBannerSurface } from './prompt/prompt';
+import { createStyle, createUIRoot } from './root';
 import { createSlotApplier } from './slots';
 import type { Surface, SurfaceContext } from './surface';
 import { createTrigger } from './trigger';
@@ -86,85 +83,6 @@ const appendStylesheetLinks = function appendStylesheetLinks(
 	}
 };
 
-/** The dialog the init script opened, unless this mount has none. */
-const takeInitDialog = function takeInitDialog(
-	adopted: InitUI,
-	options: ConsentUIOptions
-): AdoptedDialog | undefined {
-	const dialog = adopted.takeDialog() ?? undefined;
-	if (dialog && options.dialog === false) {
-		dialog.destroy();
-		return undefined;
-	}
-	return dialog;
-};
-
-/**
- * The UI root to render into: the init script's, when it rendered the
- * banner where this mounts, else a new one.
- *
- * The init script's banner sheet becomes the full one, a superset, so
- * nothing on screen changes, and the banner it rendered is handed over
- * for the banner surface to take over.
- */
-const mountRoot = function mountRoot(
-	options: ConsentUIOptions,
-	styleText: string,
-	nonce: string | undefined,
-	extended: boolean
-): {
-	ui: UIRoot;
-	banner: AdoptedBanner | undefined;
-	dialog: AdoptedDialog | undefined;
-} {
-	const adopted = takeInitUI(
-		options.container === undefined &&
-			(options.shadow ?? true) &&
-			!extended &&
-			!options.stylesheetUrls?.length
-	);
-	if (!adopted) {
-		return {
-			banner: undefined,
-			dialog: undefined,
-			ui: createUIRoot(
-				resolveContainer(options.container),
-				options,
-				styleText,
-				nonce,
-				(root) => {
-					appendStylesheetLinks(root, options, nonce);
-				}
-			),
-		};
-	}
-	adopted.releaseScheme();
-	if (adopted.style && styleText) {
-		adopted.style.textContent = styleText;
-	} else {
-		adopted.style?.remove();
-	}
-	const banner = adopted.takeBanner() ?? undefined;
-	if (banner && options.banner === false) {
-		banner.release();
-		banner.element.remove();
-		banner.overlay?.remove();
-	}
-	return {
-		banner: options.banner === false ? undefined : banner,
-		dialog: takeInitDialog(adopted, options),
-		ui: {
-			...adopted,
-			releaseScheme: applyColorScheme(
-				adopted.wrapper,
-				adopted.host,
-				options.colorScheme === undefined ? 'system' : options.colorScheme
-			),
-			style: styleText ? adopted.style : null,
-		},
-	};
-};
-
 /**
  * Mount the banner, preference centre and trigger for a client.
  *
@@ -218,11 +136,15 @@ export const mountConsentUI = function mountConsentUI(
 		extension?.stylesheet
 	);
 	const { nonce } = client.options;
-	const {
-		banner: adoptedBanner,
-		dialog: adoptedDialog,
-		ui,
-	} = mountRoot(options, styleText, nonce, extension !== undefined);
+	const ui = createUIRoot(
+		resolveContainer(options.container),
+		options,
+		styleText,
+		nonce,
+		(created) => {
+			appendStylesheetLinks(created, options, nonce);
+		}
+	);
 	const { host, releaseScheme, root, themeRoot } = ui;
 	let styleEl = ui.style;
 
@@ -281,22 +203,15 @@ export const mountConsentUI = function mountConsentUI(
 
 	const surfaces: Surface[] = [];
 	surfaces.push(...(extension?.createSurfaces(ctx) ?? []));
-	if (adoptedDialog) {
-		// The dialog the init script opened, synced before the banner: it
-		// holds the init script's scroll lock, which it must release before
-		// a banner that locks scrolling takes this bundle's.
-		surfaces.push(adoptedDialog.adopt(client));
-	}
 	if (options.banner !== false) {
 		surfaces.push(
 			createBannerSurface(
 				ctx,
-				options.banner === true ? {} : (options.banner ?? {}),
-				adoptedBanner
+				options.banner === true ? {} : (options.banner ?? {})
 			)
 		);
 	}
-	if (options.dialog !== false && !adoptedDialog) {
+	if (options.dialog !== false) {
 		surfaces.push(
 			createDialog(
 				ctx,

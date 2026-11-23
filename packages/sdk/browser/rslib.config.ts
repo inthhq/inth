@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { defineConfig, rspack } from '@rslib/core';
@@ -17,29 +18,21 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  * - `dist/postcss-tailwind3.js` — a re-export of `@inth/sdk-ui/postcss-tailwind3`
  *   for Tailwind 3 PostCSS configs.
  * - `dist/inth.js` — the hosted script tag's init script: it starts
- *   `/v1/consent/init`, shows the banner with only the banner's styles, records an
- *   early accept or reject, and loads `dist/inth.hosted.js` after the
- *   page's priority images.
- * - `dist/inth.commit.js` — what the init script fetches when the visitor
- *   taps Accept or Reject on its banner: the record write and the queued
- *   save for that choice. Served next to `dist/inth.hosted.js`.
+ *   `/v1/consent/init`, starts the scripts a stored choice allows, and
+ *   loads `dist/inth.hosted.js` (with `dist/inth.choices.js` beside it when
+ *   a banner is owed). It renders no UI.
  * - `dist/inth.records.js` — what the init script fetches at once for a
  *   returning visitor: the stored-record reader. Served next to
  *   `dist/inth.hosted.js`.
- * - `dist/inth.dialog.js` — the stock preference centre and the full
- *   stylesheet. The init script fetches it when the visitor taps Customize
- *   before the engine and opens the dialog without the engine; the engine
- *   fetches it the first time it needs the dialog. Served next to
+ * - `dist/inth.choices.js` — the consent UI: the prompt in each container,
+ *   the in-place options, the dialog and the opt-in confirmation. The
+ *   engine fetches it the first time the page needs one of them, and
+ *   shares its per-kernel state with it. Served next to
  *   `dist/inth.hosted.js`.
- * - `dist/inth.choices.js` — the Privacy Choices design: its prompt in each
- *   presentation, the in-place options, the dialog and the opt-in
- *   confirmation. The engine fetches it the first time the design applies,
- *   and shares its per-kernel state with it. Served next to
- *   `dist/inth.hosted.js`.
- * - `dist/inth.hosted.js` — the hosted engine: runtime, the vanilla banner
- *   and trigger, the stylesheet, and auto-init from the `<script>` tag's
- *   `data-*` attributes. It also works as a tag of its own, with
- *   `dist/inth.dialog.js` next to it.
+ * - `dist/inth.hosted.js` — the hosted engine: runtime, the banner and
+ *   dialog hosts, the trigger, the stock stylesheet, and auto-init from the
+ *   `<script>` tag's `data-*` attributes. It also works as a tag of its
+ *   own, with `dist/inth.choices.js` next to it.
  * - `dist/inth.testing.js` — the stock UI with `testing()`, for test
  *   pages: it resolves a policy in the browser with no backend. Built
  *   without `NODE_ENV=production`, so `testing()` runs; no other file
@@ -59,39 +52,30 @@ const INIT_SNAPSHOT_TRANSLATIONS = fileURLToPath(
 const IAB_BUNDLES = new Set(['inth.iab', 'inth.gpp']);
 
 /** Script builds that run hosted mode only. */
-const HOSTED_BUNDLES = new Set([
-	'inth',
-	'inth.commit',
-	'inth.dialog',
-	'inth.hosted',
-	'inth.records',
-]);
+const HOSTED_BUNDLES = new Set(['inth', 'inth.hosted', 'inth.records']);
 
 /** Hosted script builds the init script runs before the engine. */
-const INIT_BUNDLES = new Set([
-	'inth',
-	'inth.commit',
-	'inth.dialog',
-	'inth.records',
-]);
+const INIT_BUNDLES = new Set(['inth', 'inth.records']);
 
-/** The Privacy Choices parts, from the ESM build's chunks (`ui/privacy-choices/pc-import.ts`). */
-const PC_IMPORT = /(?:^|\/)pc-import$/u;
+/** The UI parts' loader, from the ESM build's chunks (`ui/parts/load.ts`). */
+const PARTS_LOADER = /(?:^|\/)(?:\.\.\/parts\/)?load$/u;
 
 /**
- * Where each script build gets the Privacy Choices parts. `inth.hosted.js`
- * loads `inth.choices.js` (`ui/privacy-choices/pc-import-script.ts`), so a
- * classic site never downloads them; that file, and the other script
- * builds, which stay one file, carry them (`pc-import-static.ts`).
+ * Where each script build gets the UI parts. `inth.hosted.js` loads
+ * `inth.choices.js` (`ui/parts/load-script.ts`), so a returning visitor
+ * who never sees the UI never downloads it; that file, and the other
+ * script builds, which stay one file, carry them (`load-static.ts`).
  */
-const privacyChoicesModule = (name: string) =>
-	new rspack.NormalModuleReplacementPlugin(PC_IMPORT, (resource) => {
-		if (/[\\/]src[\\/]ui(?:[\\/]privacy-choices)?$/u.test(resource.context)) {
+const partsModule = (name: string) =>
+	new rspack.NormalModuleReplacementPlugin(PARTS_LOADER, (resource) => {
+		if (
+			/[\\/]src[\\/]ui[\\/](?:parts|prompt|dialog)$/u.test(resource.context)
+		) {
 			resource.request = fileURLToPath(
 				new URL(
 					name === 'inth.hosted'
-						? './src/ui/privacy-choices/pc-import-script.ts'
-						: './src/ui/privacy-choices/pc-import-static.ts',
+						? './src/ui/parts/load-script.ts'
+						: './src/ui/parts/load-static.ts',
 					import.meta.url
 				)
 			);
@@ -101,36 +85,17 @@ const privacyChoicesModule = (name: string) =>
 /**
  * In `inth.choices.js`, the functions that keep per-kernel state are the
  * engine's, which it publishes on `__inthChoicesEngine` before loading
- * the file (`ui/privacy-choices-file.ts`).
+ * the file (`ui/choices-file.ts`).
  */
-const CHOICES_ENGINE_REQUESTS = [
-	{ context: /[\\/]src[\\/]ui[\\/]privacy-choices$/u, request: './engine' },
-	{
-		context: /[\\/]src[\\/]ui$/u,
-		request: './opt-out-confirmation-state',
-	},
+const CHOICES_ENGINE_MODULES = [
+	fileURLToPath(new URL('./src/ui/parts/engine', import.meta.url)),
+	fileURLToPath(
+		new URL('./src/ui/opt-out-confirmation-state', import.meta.url)
+	),
 ];
 
 /** Script builds that run hosted or manifest mode: no testing transport. */
 const PRODUCTION_BUNDLES = new Set(['inth.headless', 'inth.iab', 'inth.gpp']);
-
-/**
- * The ESM build loads the preference centre on demand
- * (`ui/dialog-surface.ts`). A script tag has nowhere to load a chunk from:
- * `inth.hosted.js` loads `inth.dialog.js` instead
- * (`ui/dialog-import-script.ts`), and the other script-tag builds use the
- * dialog modules directly (`ui/dialog-static.ts`).
- */
-const dialogModule = (name: string) =>
-	name === 'inth.hosted'
-		? new rspack.NormalModuleReplacementPlugin(
-				/^\.\/dialog-import$/u,
-				'./dialog-import-script'
-			)
-		: new rspack.NormalModuleReplacementPlugin(
-				/^\.\/dialog-surface$/u,
-				'./dialog-static'
-			);
 
 /**
  * `inth.choices.js` takes the engine modules from the `inth.hosted.js`
@@ -144,9 +109,11 @@ const choicesEngineExternal = function choicesEngineExternal({
 	context?: string;
 	request?: string;
 }): Promise<string | undefined> {
-	const shared = CHOICES_ENGINE_REQUESTS.some(
-		(module) => module.request === request && module.context.test(context ?? '')
-	);
+	const shared =
+		Boolean(context && request?.startsWith('.')) &&
+		CHOICES_ENGINE_MODULES.includes(
+			resolve(context ?? '', request ?? '').replace(/\.[jt]s$/u, '')
+		);
 	return Promise.resolve(shared ? 'window __inthChoicesEngine' : undefined);
 };
 
@@ -188,18 +155,7 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 						/^\.\/create-runtime$/u,
 						'./create-runtime-static'
 					),
-					dialogModule(name),
-					privacyChoicesModule(name),
-					// `inth.dialog.js` locks scrolling and traps focus with the
-					// functions of the bundle that loaded it (`ui/locks-shared.ts`).
-					...(name === 'inth.dialog'
-						? [
-								new rspack.NormalModuleReplacementPlugin(
-									/^\.\/locks$/u,
-									'./locks-shared'
-								),
-							]
-						: []),
+					partsModule(name),
 					// The write code is in the file already: no loader, no preload.
 					new rspack.NormalModuleReplacementPlugin(
 						/^\.\/writer-loader(?:\.js)?$/u,
@@ -215,37 +171,11 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 						? [modeBundleBoundary(INIT_BUNDLES.has(name) ? 'init' : 'hosted')]
 						: []),
 					...(name === 'inth.choices' ? [modeBundleBoundary('choices')] : []),
-					// The init script renders only the banner: it carries the
-					// banner's share of the stylesheet and class names, and no
-					// copy of its own (`src/init/copy.ts`,
-					// `src/init/snapshot-translations.ts`).
+					// The init script reads copy only through core's snapshot
+					// code, and carries no translations of its own
+					// (`src/init/snapshot-translations.ts`).
 					...(name === 'inth'
 						? [
-								new rspack.NormalModuleReplacementPlugin(
-									/generated[\\/]styles(?:\.ts)?$/u,
-									(resource) => {
-										resource.request = resource.request.replace(
-											/styles(?:\.ts)?$/u,
-											'banner-styles'
-										);
-									}
-								),
-								new rspack.NormalModuleReplacementPlugin(
-									/^\.\/copy$/u,
-									(resource) => {
-										if (/[\\/]src[\\/]ui$/u.test(resource.context)) {
-											resource.request = '../init/copy';
-										}
-									}
-								),
-								new rspack.NormalModuleReplacementPlugin(
-									/^\.\/opt-out-icon$/u,
-									(resource) => {
-										if (/[\\/]src[\\/]ui$/u.test(resource.context)) {
-											resource.request = '../init/opt-out-icon';
-										}
-									}
-								),
 								new rspack.NormalModuleReplacementPlugin(
 									/^\.\.\/translations\/index\.js$/u,
 									(resource) => {
@@ -292,9 +222,7 @@ export default defineConfig({
 		},
 		scriptTagLib('inth', './src/entries/cdn-init.ts'),
 		scriptTagLib('inth.hosted', './src/entries/cdn.ts'),
-		scriptTagLib('inth.commit', './src/entries/cdn-commit.ts'),
 		scriptTagLib('inth.records', './src/entries/cdn-records.ts'),
-		scriptTagLib('inth.dialog', './src/entries/cdn-dialog.ts'),
 		scriptTagLib('inth.choices', './src/entries/cdn-choices.ts'),
 		scriptTagLib('inth.testing', './src/entries/cdn-testing.ts'),
 		scriptTagLib('inth.headless', './src/entries/cdn-headless.ts'),

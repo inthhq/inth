@@ -1,33 +1,35 @@
-// A promise chain, not an async function: see `./dialog-surface.ts`.
+// A promise chain, not an async function: see `./prompt/prompt.ts`.
 /* oxlint-disable promise/prefer-await-to-then */
 /**
- * `inth.choices.js`, the Privacy Choices design as a file of its own.
+ * `inth.choices.js`, the consent UI as a file of its own.
  *
- * The engine (`inth.hosted.js`) carries only the switch between the
- * designs (`./privacy-choices-design.ts`). The prompt, its presentations,
- * the in-place options, the dialog and the opt-in confirmation it hosts
- * are this one file, which the engine loads the first time the design
- * applies, so a classic site never downloads them. They share one copy of
+ * The engine (`inth.hosted.js`) carries the banner and dialog hosts
+ * (`./prompt/prompt.ts`, `./dialog/index.ts`). The prompt in each
+ * container, the in-place options, the dialog and the opt-in confirmation
+ * it hosts are this one file, which the engine loads the first time the
+ * page needs one of them, so a returning visitor who never sees them
+ * never downloads them. The init script starts fetching it alongside the
+ * engine when a banner is owed (`../init/run.ts`). They share one copy of
  * the morph registry and of the page block, so they stay one file.
  *
  * The file calls the engine's copy of everything that keeps per-kernel
  * state (the surface session, the confirmations, the receipt focus), which
  * the engine publishes on {@link CHOICES_ENGINE_KEY} before it loads the
  * file: two copies of that state would disagree about what is open. The
- * build swaps `./privacy-choices/engine.ts` for that global in the file
- * and checks no stateful module slips in (`scripts/mode-bundle-boundary.ts`).
+ * build swaps `./parts/engine.ts` for that global in the file and checks
+ * no stateful module slips in (`scripts/mode-bundle-boundary.ts`).
  *
  * @packageDocumentation
  * @internal
  */
 
+import type * as dialog from './dialog/dialog';
 import type * as optInConfirmation from './opt-in-confirmation';
-import type * as bar from './privacy-choices/bar';
-import type * as card from './privacy-choices/card';
-import type * as dialog from './privacy-choices/dialog';
-import type * as drawer from './privacy-choices/drawer';
-import type * as engine from './privacy-choices/engine';
-import type * as panel from './privacy-choices/panel';
+import type * as engine from './parts/engine';
+import type * as banner from './prompt/banner';
+import type * as card from './prompt/card';
+import type * as drawer from './prompt/drawer';
+import type * as panel from './prompt/panel';
 
 /** Global `inth.choices.js` publishes its {@link ChoicesFile} on. */
 export const CHOICES_KEY = '__inthChoices';
@@ -37,7 +39,7 @@ export const CHOICES_ENGINE_KEY = '__inthChoicesEngine';
 
 /** What `inth.choices.js` publishes. @internal */
 export interface ChoicesFile {
-	bar: typeof bar;
+	banner: typeof banner;
 	card: typeof card;
 	drawer: typeof drawer;
 	panel: typeof panel;

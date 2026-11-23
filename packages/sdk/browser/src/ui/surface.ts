@@ -32,7 +32,7 @@ export interface SurfaceContext {
 	onOptOutLink?: (variant: ResolvedOptOutLink['variant']) => void;
 	/**
 	 * Add `@inth/sdk-ui` sheets the stock stylesheet leaves out, once each,
-	 * after it. The Privacy Choices surfaces add their presentation's rules
+	 * after it. The prompt and the dialog add their own rules
 	 * this way. Does nothing when the mount ships no stock styles.
 	 */
 	addSheets?: (sheets: readonly { id: string; css: string }[]) => void;

@@ -9,13 +9,13 @@
 
 import { resolveRightsReceipt, resolveRightsReceiptCopy } from '@inth/sdk-core';
 
-import { classes as styles } from '../../generated/privacy-choices/dialog';
+import { classes as styles } from '../../generated/ui/dialog';
 import type { BrowserSlotKey } from '../slots';
 import { cx, el, icon } from './dom';
-import type { PcRef } from './dom';
+import type { PartRef } from './dom';
 import { copySurfaceReference, getOptOutReceiptData } from './engine';
 import { checkIcon, chevron, rightsBundleOf } from './shared';
-import type { PcEnv } from './shared';
+import type { PartEnv } from './shared';
 
 /** How long the copy button shows its check. */
 const COPIED_MS = 1500;
@@ -41,8 +41,8 @@ export interface RightsReceiptProps {
 
 /** One mounted receipt. */
 export interface RightsReceiptPart {
-	render: (env: PcEnv, props: RightsReceiptProps) => HTMLElement;
-	after: (env: PcEnv) => void;
+	render: (env: PartEnv, props: RightsReceiptProps) => HTMLElement;
+	after: (env: PartEnv) => void;
 	dispose: () => void;
 }
 
@@ -58,13 +58,13 @@ export interface RightsReceiptPart {
 // oxlint-disable-next-line max-lines-per-function -- One receipt: its line, Details and copy feedback.
 export const createRightsReceipt =
 	function createRightsReceipt(): RightsReceiptPart {
-		const fieldRef: PcRef = { current: null };
+		const fieldRef: PartRef = { current: null };
 		let copiedTimer: ReturnType<typeof setTimeout> | undefined;
 		let fieldFrame = 0;
 		let focusField = false;
 
 		const render = function render(
-			env: PcEnv,
+			env: PartEnv,
 			props: RightsReceiptProps
 		): HTMLElement {
 			const { kernel, snapshot, t, session, state, noStyle } = env;
@@ -257,7 +257,7 @@ export const createRightsReceipt =
 			return props.slotKey ? env.ctx.slot(root, props.slotKey) : root;
 		};
 
-		const after = function after(env: PcEnv): void {
+		const after = function after(env: PartEnv): void {
 			const { status } = env.state.copy;
 			// The check on the copy button goes after a moment.
 			if (status === 'copied' && copiedTimer === undefined) {
