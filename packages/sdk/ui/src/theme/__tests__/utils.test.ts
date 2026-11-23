@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import type { Theme } from '../types';
 import {
+	defaultDarkColors,
 	defaultTheme,
 	defaultThemeReferences,
 	generateDefaultThemeCSS,
@@ -85,6 +86,18 @@ describe('defaultTheme', () => {
 		expect(defaultTheme.colors.surface).toBeDefined();
 		expect(defaultTheme.colors.text).toBeDefined();
 		expect(defaultTheme.colors.border).toBeDefined();
+	});
+
+	test("mixes each mode's own primary into its surface for the default tint, as the stock sheet does", () => {
+		expect(defaultTheme.colors.primaryTint).toBe(
+			`color-mix(in srgb, ${defaultTheme.colors.primary} 10%, ${defaultTheme.colors.surface})`
+		);
+		expect(defaultDarkColors.primaryTint).toBe(
+			`color-mix(in srgb, ${defaultDarkColors.primary} 18%, ${defaultDarkColors.surface})`
+		);
+		expect(defaultThemeReferences.dark.primaryTint).toBe(
+			'color-mix(in srgb, var(--inth-primary) 18%, var(--inth-surface))'
+		);
 	});
 
 	test('has typography settings', () => {

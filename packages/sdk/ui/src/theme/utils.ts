@@ -87,7 +87,7 @@ export const defaultDarkColors: Required<ColorTokens> = {
 	primaryHover: '#4f83f1',
 	// Blue text on the dark card: the primary itself is only 3.5:1 (VIS-02).
 	primaryText: '#8ab4ff',
-	primaryTint: tintMix('#4f83f1', 'hsl(0, 0%, 7%)', PRIMARY_TINT_SHARE.dark),
+	primaryTint: tintMix('#2f66df', 'hsl(0, 0%, 7%)', PRIMARY_TINT_SHARE.dark),
 	surface: 'hsl(0, 0%, 7%)',
 	surfaceHover: 'hsl(0, 0%, 10%)',
 	switchThumb: 'hsl(0, 0%, 93%)',
