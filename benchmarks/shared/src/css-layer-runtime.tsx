@@ -102,7 +102,6 @@ const Surface = ({ surface }: { surface: CssLayerSurface | 'widget' }) => {
 			<ConsentBanner
 				disableAnimation
 				legalLinks={['privacyPolicy', 'termsOfService']}
-				primaryButton={['accept']}
 			/>
 		);
 	}
