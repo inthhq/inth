@@ -27,6 +27,7 @@ import { PARTS_SHEETS } from './components/shared/parts-sheets';
 import { preloadSurfaceSheets } from './components/shared/surface-styles';
 import { importDialog } from './deferred/trigger';
 import { useActiveUI, useModel } from './hooks';
+import { useIABPolicyGuard } from './hooks/use-iab-policy-guard';
 import {
 	useHasOptOutConfirmationHost,
 	useOptInConfirmationHost,
@@ -144,6 +145,9 @@ const canDialogShow = (
 	(!models || model === null || models.includes(model)) && open !== false;
 
 const LazyConsentDialog = (props: ConsentDialogProps) => {
+	// A policy that needs <IABProvider> fails loudly wherever the dialog is
+	// mounted, open or not, as the banner does.
+	useIABPolicyGuard();
 	const kernel = useKernel();
 	const activeUI = useActiveUI();
 	const confirmationOpen = useOptOutConfirmationOpen();

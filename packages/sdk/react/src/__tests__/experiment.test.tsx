@@ -37,8 +37,8 @@ const resolution = resolvePolicyRules({
 
 const experiment: NonNullable<InthProviderOptions['experiment']> = {
 	arms: {
-		bar: { prompt: { variant: 'bar' } },
-		floating: { prompt: { variant: 'floating' } },
+		bar: { prompt: { container: { type: 'banner' } } },
+		floating: { prompt: { container: { type: 'card' } } },
 	},
 	id: 'banner-shape',
 };
@@ -60,7 +60,9 @@ const PresentationProbe = () => {
 	const presentation = useResolvedPresentation();
 	return (
 		<output data-testid="presentation">
-			{presentation?.prompt?.variant ?? 'none'}
+			{presentation?.prompt?.container?.type === 'banner'
+				? 'bar'
+				: (presentation?.prompt?.container?.type ?? 'none')}
 		</output>
 	);
 };
@@ -147,7 +149,7 @@ test('useExperiment() reports the host arm and the banner renders it', async () 
 		);
 		await vi.waitFor(() =>
 			expect(
-				document.querySelector('[data-variant="bar"]'),
+				document.querySelector('[data-placement="banner-bottom"]'),
 				'the banner root carries the arm variant'
 			).not.toBeNull()
 		);
@@ -191,7 +193,7 @@ test('a server-resolved experiment in the state runs without a client option', a
 			})
 		);
 		await vi.waitFor(() =>
-			expect(document.querySelector('[data-variant="bar"]')).not.toBeNull()
+			expect(document.querySelector('[data-placement="banner-bottom"]')).not.toBeNull()
 		);
 	} finally {
 		mounted.unmount();
@@ -218,9 +220,9 @@ test('the server-resolved arm wins over a client built-in split', () => {
 			<ConsentBanner />
 		</InthProvider>
 	);
-	// Known on the server, so the banner renders the arm straight away.
-	expect(html).toContain('consent-banner-root');
-	expect(html).toContain('data-variant="floating"');
+	// Known on the server, so the arm's presentation is the one rendered
+	// straight away. The banner's container streams in once its chunk loads.
+	expect(html).toContain('<output data-testid="presentation">card</output>');
 });
 
 test('a streamed state with an experiment warns when the client has none', async () => {
@@ -449,7 +451,7 @@ test('the experiment is read once: a changed option keeps the mounted arm', asyn
 	try {
 		render(experiment.arms);
 		await vi.waitFor(() => expect(readText('presentation')).toBe('bar'));
-		render({ bar: { prompt: { variant: 'wall' } } });
+		render({ bar: { prompt: { container: { position: 'center', type: 'card' } } } });
 		await vi.waitFor(() => expect(warn).toHaveBeenCalled());
 		expect(readText('presentation')).toBe('bar');
 	} finally {
@@ -564,7 +566,7 @@ test('a server render whose policy rejects the arm does not throw', () => {
 					enabled: true,
 					experiment: {
 						arm: 'wall',
-						arms: { wall: { prompt: { variant: 'wall' } } },
+						arms: { wall: { prompt: { container: { position: 'center', type: 'card' } } } },
 						id: 'banner-shape',
 					},
 					mode: Object.assign(() => ({ save: vi.fn() }), {
