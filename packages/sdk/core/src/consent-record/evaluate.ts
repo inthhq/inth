@@ -83,12 +83,23 @@ const collectRestrictions = function collectRestrictions(
 		optOutDenyCategories(input.policy, input.optOut).includes(category)
 	) {
 		const deciding = optOutDecidingCategory(input.policy);
+		const decidingValue =
+			deciding === null ? undefined : input.choice?.categories[deciding]?.value;
+		// A held opt-out already refuses the deciding category, so a grant of
+		// another category stands once the visitor confirms it after opting
+		// out, as Preferences does when it saves only the switched category.
+		// One made before the opt-out stands only beside an explicit refusal
+		// of the deciding category in the same choice. The deciding category
+		// itself, or a choice that grants it, never stands: lifting the
+		// opt-out takes `optIn()` or a confirmed save.
 		const explicitGrantStands =
 			deciding !== null &&
 			category !== deciding &&
 			decision?.value === true &&
 			authority === 'valid' &&
-			input.choice?.categories[deciding]?.value === false;
+			(decidingValue === false ||
+				(decidingValue === undefined &&
+					decision.confirmedAt > input.optOut.recordedAt));
 		if (!explicitGrantStands) {
 			restrictions.push('opt-out');
 		}
