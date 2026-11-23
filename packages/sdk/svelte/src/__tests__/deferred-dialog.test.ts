@@ -87,7 +87,7 @@ describe('ConsentDialog first load', () => {
 	test.each([
 		'components/deferred-panel.svelte',
 		'components/prompt/prompt.svelte',
-		'components/panel-link.svelte',
+		'components/consent-dialog-link.svelte',
 		'components/panel-trigger.svelte',
 		'components/inth-provider.svelte',
 	])('%s does not statically reach the dialog', (entry) => {
