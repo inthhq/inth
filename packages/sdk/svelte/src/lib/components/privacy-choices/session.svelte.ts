@@ -15,10 +15,15 @@ import type {
 } from '@inth/sdk/engine';
 import {
 	getOptOutReceiptData,
+	getServerOptOutReceiptData,
 	subscribeOptOutReceiptData,
 } from '@inth/sdk/surface-actions';
 import { resolveRightsBundle } from '@inth/sdk/surface-state';
 import type { OptOutReceiptData, RightsBundle } from '@inth/sdk/surface-state';
+import {
+	prefersReducedMotion,
+	subscribeReducedMotion,
+} from '@inth/sdk/ui/utils';
 
 import { getConsentContext } from '../../context.svelte';
 
@@ -65,6 +70,10 @@ export const useSurfaceSession =
  * This browser's local opt-out receipt data, which says whether a backend
  * answer confirmed the held record's rights.
  *
+ * It starts from the data the server rendered with, so hydration adopts
+ * the server's markup, and follows this browser's own data once mounted,
+ * as React's `useSyncExternalStore` does.
+ *
  * Call while a component initializes.
  *
  * @internal
@@ -73,8 +82,8 @@ export const useOptOutReceiptData = function useOptOutReceiptData(): {
 	readonly current: Readonly<OptOutReceiptData>;
 } {
 	const consent = getConsentContext();
-	let current = $state.raw(getOptOutReceiptData(consent.kernel));
-	$effect.pre(() => {
+	let current = $state.raw(getServerOptOutReceiptData(consent.kernel));
+	$effect(() => {
 		const { kernel } = consent;
 		current = getOptOutReceiptData(kernel);
 		return subscribeOptOutReceiptData(kernel, () => {
@@ -133,6 +142,31 @@ export const usePhoneLayout = function usePhoneLayout(): {
 	return {
 		get phone() {
 			return phone;
+		},
+	};
+};
+
+/**
+ * Whether the visitor's system asks for reduced motion. Off on the server
+ * and until mounted, so hydration adopts the server's markup.
+ *
+ * Call while a component initializes.
+ *
+ * @internal
+ */
+export const useReducedMotion = function useReducedMotion(): {
+	readonly reduced: boolean;
+} {
+	let reduced = $state(false);
+	$effect(() => {
+		reduced = prefersReducedMotion();
+		return subscribeReducedMotion((next) => {
+			reduced = next;
+		});
+	});
+	return {
+		get reduced() {
+			return reduced;
 		},
 	};
 };

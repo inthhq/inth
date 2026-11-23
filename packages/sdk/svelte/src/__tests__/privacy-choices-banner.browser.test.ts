@@ -1113,3 +1113,92 @@ describe('wave B round 1', () => {
 		);
 	});
 });
+
+describe('wave C round 1', () => {
+	test("ConsentBanner's class reaches the Privacy Choices root, with and without noStyle", async () => {
+		await mount({
+			bannerProps: { class: 'host-banner' },
+			extra: {
+				theme: { slots: { consentBanner: 'slot-banner' } },
+			} as Partial<ConsentManagerOptions>,
+		});
+		await waitForRoot();
+		expect(root()).toHaveClass('host-banner');
+		expect(root()).toHaveClass('slot-banner');
+		if (mounted) {
+			await unmount(mounted);
+			mounted = undefined;
+		}
+		await mount({ bannerProps: { class: 'host-banner', noStyle: true } });
+		await waitForRoot();
+		expect(root().className).toBe('host-banner');
+	});
+
+	test('[MOT-03] the system reduced motion setting skips the exit, even with animation on', async () => {
+		const matchMedia = window.matchMedia.bind(window);
+		vi.spyOn(window, 'matchMedia').mockImplementation((query: string) =>
+			query.includes('prefers-reduced-motion')
+				? ({
+						addEventListener: () => undefined,
+						addListener: () => undefined,
+						dispatchEvent: () => false,
+						matches: true,
+						media: query,
+						onchange: null,
+						removeEventListener: () => undefined,
+						removeListener: () => undefined,
+					} as MediaQueryList)
+				: matchMedia(query)
+		);
+		await mount({
+			bannerProps: { disableAnimation: false },
+			extra: { disableAnimation: false } as Partial<ConsentManagerOptions>,
+		});
+		await waitForRoot();
+		let closing = false;
+		const watcher = new MutationObserver(() => {
+			if ($('consent-banner-root')?.getAttribute('data-state') === 'closed') {
+				closing = true;
+			}
+		});
+		watcher.observe(document.body, {
+			attributes: true,
+			childList: true,
+			subtree: true,
+		});
+		must('consent-banner-accept-button').click();
+		await vi.waitFor(() => expect($('consent-banner-root')).toBeNull());
+		watcher.disconnect();
+		expect(closing).toBe(false);
+	});
+
+	test('[COPY-01] the opt-out icon carries its own size where no banner sheet sizes it', async () => {
+		const presentation: ConsentPresentation = {
+			design: 'privacy-choices',
+			optOutLink: 'privacy-choices',
+		};
+		await mount({
+			extra: { presentation } as Partial<ConsentManagerOptions>,
+			region: 'us-opt-out',
+		});
+		const link = await vi.waitFor(() => must('privacy-choices-link'));
+		const icon = link.querySelector('svg');
+		expect(icon).toHaveAttribute('height', '14');
+		expect(icon).toHaveAttribute('width', '30');
+		expect(icon?.getBoundingClientRect().height).toBeGreaterThan(0);
+		expect(icon?.getBoundingClientRect().height).toBeLessThanOrEqual(16);
+		if (mounted) {
+			await unmount(mounted);
+			mounted = undefined;
+		}
+		await mount({
+			extra: { noStyle: true, presentation } as Partial<ConsentManagerOptions>,
+			region: 'us-opt-out',
+		});
+		const bare = await vi.waitFor(() => must('privacy-choices-link'));
+		const bareIcon = bare.querySelector('svg');
+		expect(bareIcon).not.toBeNull();
+		expect(bareIcon).not.toHaveAttribute('width');
+		expect(bareIcon).not.toHaveAttribute('height');
+	});
+});

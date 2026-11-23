@@ -18,7 +18,8 @@ export interface PartAttributes {
 
 /**
  * The attributes of one part: its stock classes unless `noStyle`, then the
- * theme slot's classes and style when the part has a slot.
+ * theme slot's classes and style when the part has a slot, then the
+ * component's own `class` (the root's), which `noStyle` keeps.
  *
  * @internal
  */
@@ -26,18 +27,19 @@ export const part = function part(
 	themeKey: AllThemeKeys | undefined,
 	theme: Theme | undefined,
 	baseClassName: ClassValue,
-	noStyle: boolean
+	noStyle: boolean,
+	className?: string
 ): PartAttributes {
 	if (!themeKey) {
 		return {
-			class: noStyle ? undefined : cn(baseClassName) || undefined,
+			class: cn(noStyle ? undefined : baseClassName, className) || undefined,
 			style: undefined,
 		};
 	}
 	const resolved = resolveStyles(
 		themeKey,
 		theme,
-		{ baseClassName, noStyle },
+		{ baseClassName, className, noStyle },
 		noStyle
 	);
 	return {

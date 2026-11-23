@@ -348,6 +348,7 @@
 {#if privacyChoices}
 	<PrivacyChoicesBanner
 		container={privacyChoices}
+		class={className}
 		{actionGroups}
 		{noStyle}
 		{disableAnimation}

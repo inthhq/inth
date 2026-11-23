@@ -100,6 +100,8 @@ const mount = async function mount({
 	oneClickOptOut = false,
 	banner = true,
 	open,
+	presentation,
+	extra,
 }: {
 	region?: Region;
 	design?: ConsentPresentation['design'] | null;
@@ -114,6 +116,10 @@ const mount = async function mount({
 	banner?: boolean;
 	/** A controlled `open` the test can change. */
 	open?: Readable<boolean>;
+	/** A presentation the test can change, over the one `design` sets. */
+	presentation?: Readable<ConsentPresentation | undefined>;
+	/** More provider options, such as `theme`. */
+	extra?: Partial<ConsentManagerOptions>;
 } = {}) {
 	fixture += 1;
 	const prefetch = policyFixture(undefined, {
@@ -146,6 +152,7 @@ const mount = async function mount({
 						prompt: { container, edgeStyle },
 					},
 		vendors: VENDORS,
+		...extra,
 	} as ConsentManagerOptions;
 	// A page control opens the dialog in every region.
 	mounted = mountComponent(Fixture, {
@@ -156,6 +163,7 @@ const mount = async function mount({
 			oneClickOptOut,
 			open,
 			options,
+			presentation,
 			probe,
 			triggerLabel: 'Privacy settings',
 		},
@@ -1029,4 +1037,107 @@ describe('wave B round 2', () => {
 			expect($('consent-dialog-legal-link-privacyPolicy') !== null).toBe(shown);
 		}
 	);
+});
+
+describe('wave C round 1', () => {
+	const PRIVACY_CHOICES: ConsentPresentation = {
+		design: 'privacy-choices',
+		prompt: { container: { type: 'card' } },
+	};
+
+	test('[PERM-01] a design change to Privacy Choices while the dialog is open loads its dialog', async () => {
+		const presentation = writable<ConsentPresentation | undefined>(undefined);
+		// No idle warming, which would load the dialog anyway.
+		await mount({
+			extra: { preloadDialog: 'intent' } as Partial<ConsentManagerOptions>,
+			presentation,
+			region: 'eu',
+		});
+		link().click();
+		await waitFor(() => expect($('consent-dialog-root')).toBeInTheDocument());
+		expect(must('consent-dialog-root')).not.toHaveAttribute('data-design');
+		presentation.set(PRIVACY_CHOICES);
+		await waitFor(() =>
+			expect(must('consent-dialog-root')).toHaveAttribute(
+				'data-design',
+				'privacy-choices'
+			)
+		);
+		expect(probe.snapshot?.activeUI).toBe('dialog');
+	});
+
+	test('[PERM-01] a dismissed controlled dialog stays closed when it mounts again, and opens when open turns true again', async () => {
+		const open = writable(true);
+		const presentation = writable<ConsentPresentation | undefined>(
+			PRIVACY_CHOICES
+		);
+		await mount({ open, presentation, region: 'eu' });
+		await waitFor(() => expect($('consent-dialog-card')).toBeInTheDocument());
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(probe.snapshot?.activeUI).toBe('banner'));
+		// The dialog unmounts and mounts again while `open` stays true.
+		presentation.set({ ...PRIVACY_CHOICES, design: 'classic' });
+		await new Promise((resolve) => {
+			setTimeout(resolve, 0);
+		});
+		presentation.set(PRIVACY_CHOICES);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 200);
+		});
+		expect(probe.snapshot?.activeUI).toBe('banner');
+		expect($('consent-dialog-card')).toBeNull();
+		open.set(false);
+		await new Promise((resolve) => {
+			setTimeout(resolve, 0);
+		});
+		open.set(true);
+		await waitFor(() => expect($('consent-dialog-card')).toBeInTheDocument());
+		expect(probe.snapshot?.activeUI).toBe('dialog');
+	});
+
+	test('the dialog root is a consent surface root and takes the consentDialog slot', async () => {
+		await mount({
+			extra: {
+				theme: { slots: { consentDialog: 'host-dialog-root' } },
+			} as Partial<ConsentManagerOptions>,
+		});
+		await openDialog();
+		const root = must('consent-dialog-root');
+		expect(root).toHaveAttribute('data-inth-surface', 'dialog');
+		expect(root).toHaveClass('host-dialog-root');
+	});
+
+	test('[LAY-05] a vendor reveal scheduled as the dialog unmounts never runs', async () => {
+		await mount({ region: 'eu' });
+		await openDialog();
+		const scheduled: number[] = [];
+		const cleared = new Set<number>();
+		const setTimer = window.setTimeout.bind(window);
+		const clearTimer = window.clearTimeout.bind(window);
+		vi.spyOn(window, 'setTimeout').mockImplementation(((
+			handler: TimerHandler,
+			delay?: number,
+			...args: unknown[]
+		) => {
+			const id = setTimer(handler, delay, ...args);
+			// The reveal waits for the table's opening motion.
+			if (delay === 230) {
+				scheduled.push(id);
+			}
+			return id;
+		}) as typeof window.setTimeout);
+		vi.spyOn(window, 'clearTimeout').mockImplementation((id) => {
+			cleared.add(id as number);
+			clearTimer(id);
+		});
+		must('consent-dialog-vendor-trigger-measurement').click();
+		if (mounted) {
+			await unmount(mounted);
+			mounted = undefined;
+		}
+		await new Promise((resolve) => {
+			setTimeout(resolve, 50);
+		});
+		expect(scheduled.filter((id) => !cleared.has(id))).toEqual([]);
+	});
 });

@@ -35,6 +35,7 @@
 		customizeButtonText?: string;
 		dismissButtonText?: string;
 		actionGroups?: readonly (readonly PresentationAction[])[];
+		class?: string;
 	} = $props();
 
 	const consent = getConsentContext();

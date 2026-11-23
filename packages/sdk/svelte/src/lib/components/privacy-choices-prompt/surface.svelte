@@ -105,6 +105,7 @@
 		rightsBundleOf,
 		useOptOutReceiptData,
 		usePhoneLayout,
+		useReducedMotion,
 		useSurfaceSession,
 	} from '../privacy-choices/session.svelte';
 	import SurfaceStyles from '../surface-styles.svelte';
@@ -136,6 +137,7 @@
 		customizeButtonText,
 		dismissButtonText,
 		actionGroups = DEFAULT_ACTION_GROUPS,
+		class: className,
 	}: {
 		container: NonNullable<ResolvedConsentPresentation['container']>;
 		noStyle?: boolean;
@@ -154,6 +156,8 @@
 		 * groups. Absent, every action shows in the default order.
 		 */
 		actionGroups?: readonly (readonly PresentationAction[])[];
+		/** `ConsentBanner`'s `class`, merged into the root's `consentBanner` slot. */
+		class?: string;
 	} = $props();
 
 	const consent = getConsentContext();
@@ -161,6 +165,7 @@
 	const surface = useSurfaceSession();
 	const receiptData = useOptOutReceiptData();
 	const phoneLayout = usePhoneLayout();
+	const systemMotion = useReducedMotion();
 	const surfaceDraft = createSurfaceDraft();
 	const uid = $props.id();
 	const ids = {
@@ -195,9 +200,12 @@
 			models.includes(model) &&
 			variant !== 'none'
 	);
-	const noMotion = $derived(
+	const animationOff = $derived(
 		disableAnimation || theme.disableAnimation === true
 	);
+	// The system setting counts even when the host turned animation on, as
+	// in React: a prompt that should not move never plays its exit.
+	const noMotion = $derived(animationOff || systemMotion.reduced);
 	const textDirection = $derived(
 		getTextDirection(consent.state.translations?.language)
 	);
@@ -367,6 +375,23 @@
 		return () => document.removeEventListener('keydown', onKeyDown);
 	});
 
+	// A failed load leaves the options empty, so the next trigger (a warm,
+	// Customize, or the prompt showing again) loads them again. Only the
+	// latest load fills them.
+	let panelAttempt = $state(0);
+	let panelFailed = false;
+	const retryPanel = function retryPanel() {
+		if (panelFailed) {
+			panelFailed = false;
+			panelAttempt += 1;
+		}
+	};
+	$effect(() => {
+		if (phase === 'shown') {
+			untrack(retryPanel);
+		}
+	});
+
 	// The options load with Customize; warm them on intent and with the
 	// dialog's idle warming while the prompt shows.
 	$effect(() => {
@@ -375,10 +400,13 @@
 		}
 		return registerDialogWarmer(() => {
 			void preloadPanel();
+			retryPanel();
 		});
 	});
 
 	$effect(() => {
+		// Read so each retry starts a new load.
+		void panelAttempt;
 		if (!wantPanel || Panel) {
 			return;
 		}
@@ -390,7 +418,9 @@
 					Panel = loaded;
 				}
 			} catch {
-				// The next warm or Customize retries the import.
+				if (active) {
+					panelFailed = true;
+				}
 			}
 		};
 		void fill();
@@ -473,6 +503,7 @@
 	};
 	const expand = function expand() {
 		void preloadPanel();
+		retryPanel();
 		panelWanted = true;
 		pendingPanelFocus = true;
 		surface.session.expand();
@@ -480,6 +511,7 @@
 	};
 	const warm = function warm() {
 		void preloadPanel();
+		retryPanel();
 		warmDialog();
 	};
 
@@ -527,7 +559,8 @@
 			'consentBanner',
 			theme.theme,
 			[surfaceStyles.root, presentation.root],
-			noStyle
+			noStyle,
+			className
 		)
 	);
 	const overlayPart = $derived(
@@ -840,7 +873,7 @@
 		data-state={phase === 'leaving' ? 'closed' : 'open'}
 		data-variant={variant}
 		data-design="privacy-choices"
-		data-animation={noMotion ? 'off' : undefined}
+		data-animation={animationOff ? 'off' : undefined}
 		data-testid="consent-banner-root"
 		{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
 		dir={textDirection}

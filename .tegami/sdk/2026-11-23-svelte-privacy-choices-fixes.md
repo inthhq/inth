@@ -15,6 +15,10 @@ Banner:
 - The rights row names the rights a backend confirmed for this browser's opt-out.
 - The slim Banner's title, description and actions take the `consentBannerTitle`, `consentBannerDescription` and `consentBannerFooter` theme slots.
 - The banner root sets `dir` from its language, carries `data-inth-surface="banner"`, and sets `data-animation="off"` with `disableAnimation`. The spacing under the Preferences row comes from the stylesheet, so `noStyle` removes it.
+- `<ConsentBanner class="…">` now reaches the Privacy Choices banner root, merged with the `consentBanner` theme slot, also under `noStyle`.
+- When the visitor's system asks for reduced motion, the banner leaves at once, even if you set `disableAnimation: false`.
+- If the banner's options fail to download, they download again the next time the banner shows or the visitor presses Customize. Before, a side Drawer stayed empty.
+- The receipt and the rights row render the opt-out data the server used, then switch to this browser's data after hydration, so SvelteKit hydrates without a mismatch.
 
 Dialog:
 
@@ -27,4 +31,9 @@ Dialog:
 - Phone sheets take the prompt's resolved phone edge style. A Card is always inset, so a Card prompt with `edgeStyle: 'flush'` now gives inset sheets.
 - Chevrons that point to a sheet mirror on right-to-left pages, and the dialog sets `dir` from its language.
 - `disableAnimation` on `ConsentDialog` now stops the dialog's motion: the backdrop, the card and phone sheets show at once, and the root gets `data-animation="off"`, as on the banner.
+- If the design changes to Privacy Choices while the dialog is open, the Privacy Choices dialog now loads and shows.
+- `<ConsentDialog open />` opens the dialog once each time `open` turns `true`. A dialog the visitor closed no longer opens again on its own when it mounts again while `open` stays `true`.
+- The dialog root carries `data-inth-surface="dialog"` and takes the `consentDialog` theme slot, as the classic dialog does. Phone sheets leave at once when the visitor's system asks for reduced motion.
+- A vendor table opened just before the dialog closes no longer schedules a scroll after the dialog is gone.
+- `PrivacyChoicesLink` gives the opt-out icon its own size (14px tall), so the icon does not show at full SVG size on pages that do not load the classic banner styles. `noStyle` leaves it unsized.
 - `legalLinks` on `ConsentDialog` now applies to the Privacy Choices dialog's footer link (the Cookie Policy in the EU, the Privacy Policy in the US): `null` hides it, and a list shows it only when its key is in the list.

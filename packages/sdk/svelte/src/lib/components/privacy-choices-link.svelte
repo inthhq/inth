@@ -79,6 +79,7 @@
 	>
 		{#if optOutLink.icon}<OptOutIcon
 				class={theme.noStyle ? '' : bannerStyles.optOutIcon || ''}
+				sized={!theme.noStyle}
 			/>{/if}{#if children}{@render children()}{:else}{optOutLink.label}{/if}
 	</ConsentButton>
 {/if}

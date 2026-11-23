@@ -160,8 +160,43 @@
 		return () => clearTimeout(timer);
 	});
 
-	const load = async function load() {
-		const v6 = untrack(() => privacyChoices);
+	// A controlled `open` on the Privacy Choices design goes through the
+	// consent manager, so the session, sheets and Escape follow the dialog
+	// and the banner hands over to it. It asks once each time `open` turns
+	// true; Close and Escape then close the dialog as usual. The latch lives
+	// here, not in the dialog: the dialog unmounts and mounts again while
+	// `open` stays true (a design change, for one), and a fresh latch there
+	// would reopen a dialog the visitor dismissed.
+	let openRequested = false;
+	const modelAllowed = $derived(
+		!props.models || props.models.includes(consent.state.model)
+	);
+	$effect.pre(() => {
+		if (props.open !== true) {
+			openRequested = false;
+			return;
+		}
+		if (
+			openRequested ||
+			!privacyChoices ||
+			!consent.state.hasConsentUi ||
+			!modelAllowed
+		) {
+			return;
+		}
+		openRequested = true;
+		const { kernel } = consent;
+		untrack(() => {
+			if (kernel.getSnapshot().activeUI !== 'dialog') {
+				showConsentSurface(kernel, 'dialog');
+			}
+		});
+	});
+
+	// The design is passed in, not read here: a caller that tracks it then
+	// loads the other design's dialog when the design changes while the
+	// dialog is wanted.
+	const load = async function load(v6: boolean) {
 		if (v6 ? PrivacyChoicesDialog : Panel) {
 			return;
 		}
@@ -175,7 +210,10 @@
 			// The banner and the trigger hide while the dialog is open, so a
 			// dialog that failed to load would leave no consent UI. Put back the
 			// surface it replaced; the next warm or open retries the import.
-			if (props.open === undefined && consent.state.activeUI === 'dialog') {
+			if (
+				(props.open === undefined || openRequested) &&
+				consent.state.activeUI === 'dialog'
+			) {
 				consent.state.setActiveUI(surfaceBeforeDialog);
 			}
 		}
@@ -183,7 +221,7 @@
 
 	onMount(() =>
 		registerDialogWarmer(() => {
-			void load();
+			void load(untrack(() => privacyChoices));
 		})
 	);
 
@@ -208,7 +246,7 @@
 
 	$effect(() => {
 		if (needed) {
-			void load();
+			void load(privacyChoices);
 		}
 	});
 
@@ -245,10 +283,7 @@
 	// The dialog can render now: its `models` allow the policy's model, and
 	// a controlled `open={false}` does not keep it hidden. Only then can it
 	// take the opt-out confirmation over.
-	const dialogCanShow = $derived(
-		(!props.models || props.models.includes(consent.state.model)) &&
-			props.open !== false
-	);
+	const dialogCanShow = $derived(modelAllowed && props.open !== false);
 	const adoptConfirmation = $derived(
 		privacyChoices && embeddedConfirmation && dialogCanShow
 	);

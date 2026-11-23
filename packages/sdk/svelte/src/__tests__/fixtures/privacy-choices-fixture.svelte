@@ -1,5 +1,9 @@
 <script lang="ts">
-	import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
+	import type {
+		ConsentKernel,
+		ConsentPresentation,
+		ConsentSnapshot,
+	} from '@inth/sdk/engine';
 	import type { Readable } from 'svelte/store';
 
 	import ConsentDialog from '../../lib/components/deferred-panel.svelte';
@@ -21,6 +25,7 @@
 		link = true,
 		triggerLabel,
 		open,
+		presentation,
 	}: {
 		options: ConsentManagerOptions;
 		probe: {
@@ -40,10 +45,16 @@
 		triggerLabel?: string;
 		/** A controlled `open` for the dialog that the test can change. */
 		open?: Readable<boolean>;
+		/** A presentation the test can change, over `options.presentation`. */
+		presentation?: Readable<ConsentPresentation | undefined>;
 	} = $props();
+
+	const resolved = $derived(
+		presentation ? { ...options, presentation: $presentation } : options
+	);
 </script>
 
-<InthProvider {options}>
+<InthProvider options={resolved}>
 	<Page
 		{probe}
 		{triggerLabel}

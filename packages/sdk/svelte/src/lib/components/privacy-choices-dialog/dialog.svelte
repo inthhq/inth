@@ -68,6 +68,7 @@
 		Model,
 	} from '@inth/sdk/engine';
 	import { createPreferenceDraft } from '@inth/sdk/preference-draft';
+	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import { showConsentSurface } from '@inth/sdk/surface-actions';
 	import {
 		announcementText,
@@ -103,6 +104,7 @@
 	import SaleRightsRow from '../privacy-choices/rights-row.svelte';
 	import {
 		usePhoneLayout,
+		useReducedMotion,
 		useSurfaceSession,
 	} from '../privacy-choices/session.svelte';
 	import SurfaceStyles from '../surface-styles.svelte';
@@ -120,8 +122,8 @@
 		noStyle?: boolean;
 		disableAnimation?: boolean;
 		/**
-		 * Control the open state. `true` asks the consent manager to show the
-		 * dialog, so the banner leaves and sheets, Escape and the receipt work
+		 * Control the open state. `true` (through `ConsentDialog`, which
+		 * holds the request) asks the consent manager to show the dialog, so the banner leaves and sheets, Escape and the receipt work
 		 * as for any open dialog; Close and Escape then close it through the
 		 * consent manager, and `open` must turn `false` and back to `true` to
 		 * ask again. `false` hides it whatever the consent manager shows, and
@@ -143,6 +145,7 @@
 	const theme = getThemeContext();
 	const surface = useSurfaceSession();
 	const phoneLayout = usePhoneLayout();
+	const systemMotion = useReducedMotion();
 	const surfaceDraft = createSurfaceDraft();
 	surfaceDraft.provide(createPreferenceDraft);
 	const uid = $props.id();
@@ -150,9 +153,11 @@
 	const saveSource = 'dialog';
 
 	const noStyle = $derived(localNoStyle ?? theme.noStyle ?? false);
-	const reducedMotion = $derived(
+	const animationOff = $derived(
 		disableAnimation || theme.disableAnimation === true
 	);
+	// Sheets leave at once under the system setting too, as in React.
+	const reducedMotion = $derived(animationOff || systemMotion.reduced);
 	const snapshot = $derived(consent.snapshot);
 	const translations = $derived(consent.state.copy);
 	const phone = $derived(phoneLayout.phone);
@@ -167,27 +172,8 @@
 	const textDirection = $derived(
 		getTextDirection(consent.state.translations?.language)
 	);
-	// A controlled `open` goes through the consent manager, so the session,
-	// sheets and Escape follow this dialog and the banner hands over to it.
-	// It asks once each time it turns true; Close and Escape then close the
-	// dialog as usual.
-	let openRequested = false;
-	$effect.pre(() => {
-		if (openProp !== true) {
-			openRequested = false;
-			return;
-		}
-		if (openRequested || !consent.state.hasConsentUi || !modelAllowed) {
-			return;
-		}
-		openRequested = true;
-		const { kernel } = consent;
-		untrack(() => {
-			if (kernel.getSnapshot().activeUI !== 'dialog') {
-				showConsentSurface(kernel, 'dialog');
-			}
-		});
-	});
+	// `ConsentDialog`, which outlives this component, asks the consent
+	// manager to show the dialog when a controlled `open` turns true.
 	const open = $derived(
 		openProp !== false &&
 			activeUI === 'dialog' &&
@@ -509,8 +495,10 @@
 	const preferencesRowPart = $derived(
 		part('consentDialogPreferencesRow', theme.theme, styles.navRow, noStyle)
 	);
+	// The dialog root takes the `consentDialog` slot, as the classic
+	// dialog's root does.
 	const backdropPart = $derived(
-		part(undefined, theme.theme, styles.backdrop, noStyle)
+		part('consentDialog', theme.theme, styles.backdrop, noStyle)
 	);
 
 	const vendorCategory = $derived(
@@ -748,12 +736,13 @@
 		bind:this={backdropEl}
 		class={backdropPart.class}
 		style={backdropPart.style}
-		data-animation={reducedMotion ? 'off' : undefined}
+		data-animation={animationOff ? 'off' : undefined}
 		data-edge-style={edgeStyle}
 		data-design="privacy-choices"
 		data-regime={eu ? 'eu' : 'us'}
 		data-layout={phone ? 'phone' : 'desktop'}
 		data-testid="consent-dialog-root"
+		{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
 		dir={textDirection}
 	>
 		<Layer

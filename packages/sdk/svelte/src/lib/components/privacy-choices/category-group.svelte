@@ -273,9 +273,16 @@
 	 * out (LAY-05), unless the surface moved on (PERM-16).
 	 */
 	let cancelReveal: (() => void) | undefined;
+	let destroyed = false;
 	const reveal = async function reveal(category: AllConsentNames) {
 		await tick();
 		cancelReveal?.();
+		cancelReveal = undefined;
+		// Unmounted while the table rendered: nothing is left to reveal, and
+		// a reveal scheduled now would outlive the component.
+		if (destroyed) {
+			return;
+		}
 		const { session } = surface;
 		const { token } = session.getState();
 		cancelReveal = scheduleReveal(
@@ -289,7 +296,10 @@
 			{ isCurrent: () => session.isCurrent(token) }
 		);
 	};
-	$effect(() => () => cancelReveal?.());
+	$effect(() => () => {
+		destroyed = true;
+		cancelReveal?.();
+	});
 
 	const onTrigger = function onTrigger(category: AllConsentNames) {
 		if (vendorMode === 'sheet') {
