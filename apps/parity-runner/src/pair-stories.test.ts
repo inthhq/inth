@@ -198,6 +198,26 @@ test('storyVisitTimeout grows with every story the test opens', () => {
 	expect(storyVisitTimeout([pair('react', 'svelte')], 120_000)).toBe(120_000);
 });
 
+test('a Privacy Choices story pairs React with Angular and every other port', () => {
+	const entry = (framework: string, title: string): StoryEntry => ({
+		id: `components-${framework}-x--card`,
+		name: 'Card',
+		title: `COMPONENTS - ${framework.toUpperCase()}/${title}`,
+	});
+	const pairs = selectComparablePairs(
+		{
+			angular: [entry('angular', 'Privacy Choices/Banner')],
+			react: [entry('react', 'Privacy Choices/Banner')],
+			solid: [entry('solid', 'Privacy Choices/Banner')],
+			vue: [entry('vue', 'Privacy Choices/Banner')],
+		},
+		{ frameworks: ['react', 'vue', 'angular', 'solid'] }
+	);
+	expect(pairs.map((pair) => Object.keys(pair.entries).sort())).toEqual([
+		['angular', 'react', 'vue'],
+	]);
+});
+
 test('a story not yet ported is compared only where it is ported, and never missing elsewhere', () => {
 	const entry = (framework: string, title: string): StoryEntry => ({
 		id: `components-${framework}-x--card`,
@@ -222,6 +242,7 @@ test('a story not yet ported is compared only where it is ported, and never miss
 	};
 	expect(portedFrameworks('Privacy Choices/Banner/Card')).toEqual([
 		'react',
+		'angular',
 		'svelte',
 		'vue',
 	]);
