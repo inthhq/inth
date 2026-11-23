@@ -8,7 +8,7 @@ import {
 	permittedLegitimateInterestPurposes,
 } from '@inth/sdk-schema/types';
 
-import { additionalConsentFor } from './tcf/additional-consent.api';
+import { additionalConsentFor } from './tcf/additional-consent-for.model';
 import { sameListedRestrictions } from './tcf/publisher-restrictions.model';
 import { decodeTCString } from './tcf/tc-string.model';
 import type { DecodedTCString } from './tcf/tc-string.model';
