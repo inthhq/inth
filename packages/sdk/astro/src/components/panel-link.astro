@@ -63,6 +63,12 @@ const optOutLink = isOptOut
 		)
 	: null;
 const showOptOutIcon = optOutLink?.variant === 'privacy-choices';
+// Without children the link reads as the dialog's title, as React's does,
+// so it is never an empty, zero-size button.
+const defaultLabel = optOutLink
+	? optOutLink.label
+	: (inth?.snapshot.translations?.translations?.consentManagerDialog?.title ??
+		'');
 // The `legal-links` sheet's `.optOutIcon` rule sizes it, as React's link.
 // A page that loads no such sheet still gets a 14px icon, as on
 // `<PrivacyChoicesLink />`, unless the host asked for no styling.
@@ -86,7 +92,7 @@ const policyRights = inth ? inth.snapshot.policyRule.rights.join(' ') : undefine
 	hidden={hasConsentUi ? undefined : true}
 	href={as === 'a' ? '#inth-preferences' : undefined}
 	type={as === 'button' ? 'button' : undefined}
->{showOptOutIcon && <Fragment set:html={privacyChoicesLinkIconSvg(optOutIconClass, !noStyle)} />}<slot>{optOutLink ? optOutLink.label : ''}</slot></Tag>
+>{showOptOutIcon && <Fragment set:html={privacyChoicesLinkIconSvg(optOutIconClass, !noStyle)} />}<slot>{defaultLabel}</slot></Tag>
 
 <script>
 	import { attachBannerActions } from '@inth/astro/client';
