@@ -13,22 +13,23 @@ import type { BoilerplateOptions, BoilerplateTemplate } from './types.ts';
 
 const consent = (options: BoilerplateOptions): string => {
 	const offline = options.mode === 'offline';
-	const mode = offline ? 'offline' : 'hosted';
 	return `${sortImports([
 		...scriptImports(options.scripts),
 		`import {
 	ConsentBanner,
 	ConsentDialog,
 	ConsentDialogLink,
-	InthProvider,
-	${mode},
+	InthProvider,${offline ? '\n\toffline,' : ''}
 } from '@inth/react';`,
 		"import type { ReactNode } from 'react';",
 	])}
 
 const options = {
-	// ${offline ? 'The recommended policy, resolved in the browser.' : `Asks ${BACKEND_URL_ENV.vite} for each visitor's policy.`}
-	mode: ${mode}(),
+${
+	offline
+		? '\t// The recommended policy, resolved in the browser.\n\tmode: offline(),'
+		: `\t// Your Inth project URL, from ${BACKEND_URL_ENV.vite} in .env.\n\tprojectUrl: import.meta.env.${BACKEND_URL_ENV.vite} as string,`
+}
 ${scriptsProperty(options.scripts, '\t')}};
 
 export const Consent = ({ children }: { children: ReactNode }) => (

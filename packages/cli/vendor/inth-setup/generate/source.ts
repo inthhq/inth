@@ -3,11 +3,11 @@ import type { BoilerplateOptions } from './types.ts';
 
 /** The public env var each framework's build integration reads. */
 export const BACKEND_URL_ENV = {
-	astro: 'PUBLIC_C15T_BACKEND_URL',
-	next: 'NEXT_PUBLIC_C15T_BACKEND_URL',
-	nuxt: 'NUXT_PUBLIC_C15T_BACKEND_URL',
-	sveltekit: 'PUBLIC_C15T_BACKEND_URL',
-	vite: 'VITE_C15T_BACKEND_URL',
+	astro: 'PUBLIC_INTH_PROJECT_URL',
+	next: 'NEXT_PUBLIC_INTH_PROJECT_URL',
+	nuxt: 'NUXT_PUBLIC_INTH_PROJECT_URL',
+	sveltekit: 'PUBLIC_INTH_PROJECT_URL',
+	vite: 'VITE_INTH_PROJECT_URL',
 } as const;
 
 // No capture group: the native scriptc build can't lower
@@ -153,43 +153,15 @@ const envLinePattern = (key: string): RegExp =>
 	new RegExp(`^\\s*(?:export\\s+)?${key}\\s*=`, 'u');
 
 /**
- * Whether `lines` set the Inth project URL that stands in for `key`, such
- * as `VITE_INTH_PROJECT_URL` for `VITE_C15T_BACKEND_URL`, to a value.
- */
-const setsInthProjectURL = (lines: string[], key: string): boolean => {
-	if (!key.endsWith('_C15T_BACKEND_URL')) {
-		return false;
-	}
-	const inth = envLinePattern(
-		key.replace(/C15T_BACKEND_URL$/u, 'INTH_PROJECT_URL')
-	);
-	return lines.some((line) => {
-		const match = inth.exec(line);
-		if (!match) {
-			return false;
-		}
-		// As dotenv reads it: `#` starts a comment even right after `=`, so
-		// `KEY=# TODO` is empty.
-		const value = (line.slice(match[0].length).split('#', 1)[0] ?? '').trim();
-		return value !== '' && value !== '""' && value !== "''";
-	});
-};
-
-/**
  * Merge generated `KEY=value` lines into an existing `.env`. A key that is
  * already set takes the generated value in place; other lines, comments
  * and keys stay as they are. New keys are appended.
- *
- * A backend URL variable such as `VITE_C15T_BACKEND_URL` is not added to a
- * file that already sets the matching `VITE_INTH_PROJECT_URL`: the build
- * integrations read either, and the c15t name would win over the project
- * URL the file already names.
  * @param existing Current `.env` contents, or `null` when there is none.
  * @param generated Generated `KEY=value` lines.
  * @returns The merged file contents.
  * @example
- * mergeEnvFile('SECRET=1\n', 'VITE_C15T_BACKEND_URL=https://x.inth.app\n');
- * // 'SECRET=1\nVITE_C15T_BACKEND_URL=https://x.inth.app\n'
+ * mergeEnvFile('SECRET=1\n', 'VITE_INTH_PROJECT_URL=https://x.inth.app\n');
+ * // 'SECRET=1\nVITE_INTH_PROJECT_URL=https://x.inth.app\n'
  */
 export const mergeEnvFile = (
 	existing: string | null,
@@ -206,7 +178,7 @@ export const mergeEnvFile = (
 		const index = lines.findIndex((current) => pattern.test(current));
 		if (index !== -1) {
 			lines[index] = line;
-		} else if (!setsInthProjectURL(lines, key)) {
+		} else {
 			appended.push(line);
 		}
 	}

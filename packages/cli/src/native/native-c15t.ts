@@ -575,7 +575,7 @@ class Setup {
     const draft = await runGenerationWorkflow(
       ["setup", "--framework", framework],
       { generation: { backendURL: "https://new-project.invalid" } },
-      { cwd, signal }
+      { cwd, inthRelease: this.product.inthRelease, signal }
     );
     // Omit contents, which hold the placeholder URL.
     const files = draft.plan.files.map((file) => ({
@@ -820,6 +820,7 @@ export const runSetup = async (
   await setup.recover(cwd);
   const preview = await runGenerationWorkflow(args, generation, {
     cwd,
+    inthRelease: product.inthRelease,
     signal,
   });
   const pending = preview.plan.files.filter((file) => !file.exists).length;
@@ -851,6 +852,7 @@ export const runSetup = async (
   }
   const result = await runGenerationWorkflow(args, generation, {
     cwd,
+    inthRelease: product.inthRelease,
     packageManager: manager,
     signal,
   });

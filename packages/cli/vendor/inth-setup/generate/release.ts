@@ -68,7 +68,6 @@ export const LINKED_C15T_PACKAGES: ReadonlySet<string> = new Set([
  * ```ts
  * c15tReleaseSpecifier('3.0.0-alpha.3'); // 'alpha'
  * c15tReleaseSpecifier('3.2.1'); // '3'
- * c15tReleaseSpecifier('0.1.0'); // '0.1'
  * c15tReleaseSpecifier('3.2.1', '@c15t/scripts'); // 'latest'
  * ```
  */
@@ -84,9 +83,8 @@ export const c15tReleaseSpecifier = function c15tReleaseSpecifier(
 	if (!LINKED_C15T_PACKAGES.has(name)) {
 		return 'latest';
 	}
-	const [major = version, minor = '0'] = version.split('.');
-	// Below 1.0, a minor release can break the API, so pin the minor.
-	return major === '0' ? `${major}.${minor}` : major;
+	const [major = version] = version.split('.');
+	return major;
 };
 
 /**

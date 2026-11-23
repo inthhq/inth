@@ -50,11 +50,19 @@ export interface SetupProduct {
   name: string;
   // Branding for a project setup creates.
   branding: string;
+  // npm specifier the scaffold installs the @inth packages from. Unset keeps
+  // the generator's release line.
+  inthRelease?: string;
 }
 
 export const SETUP_PRODUCTS: Record<SetupCommand, SetupProduct> = {
   c15t: { branding: "c15t", command: "c15t", name: "c15t" },
-  init: { branding: "inth", command: "init", name: "Inth" },
+  init: {
+    branding: "inth",
+    command: "init",
+    inthRelease: "latest",
+    name: "Inth",
+  },
 };
 
 const setupUsage = (command: SetupCommand): string =>

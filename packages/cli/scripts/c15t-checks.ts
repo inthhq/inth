@@ -155,7 +155,7 @@ const verifyExistingProject = async (
   );
   assert.equal(preview.status, 0, preview.stderr);
   const previewData = envelope.parse(JSON.parse(preview.stdout)).data;
-  assert.deepEqual(previewData.plan?.dependencies, ["@inth/nextjs@0.1"]);
+  assert.deepEqual(previewData.plan?.dependencies, ["@inth/nextjs@3"]);
   assert.deepEqual(await readdir(directory), [
     "app",
     "package.json",
@@ -243,14 +243,14 @@ const verifyScaffold = async (
   assert.match(manager, /from '@inth\/nextjs'/u);
   assert.equal(
     await readFile(path.join(directory, ".env"), "utf-8"),
-    `NEXT_PUBLIC_C15T_BACKEND_URL=${BACKEND}\n`
+    `NEXT_PUBLIC_INTH_PROJECT_URL=${BACKEND}\n`
   );
   if (!windows) {
     const installer = await readFile(log, "utf-8");
     assert.deepEqual(installer.trim().split("\n"), [
       directory,
       "add",
-      "@inth/nextjs@0.1",
+      "@inth/nextjs@3",
     ]);
   }
   // An interrupted apply leaves c15t's journal directory behind.
@@ -487,19 +487,19 @@ const verifyFrameworks = async (
     const { data } = envelope.parse(JSON.parse(result.stdout));
     assert.equal(data.framework, framework);
     const dependencies = {
-      astro: ["@inth/astro@0.1", "@astrojs/node", "@astrojs/svelte", "svelte"],
-      "astro-static": ["@inth/astro@0.1", "@astrojs/svelte", "svelte"],
+      astro: ["@inth/astro@3", "@astrojs/node", "@astrojs/svelte", "svelte"],
+      "astro-static": ["@inth/astro@3", "@astrojs/svelte", "svelte"],
       html: [],
-      javascript: ["@inth/sdk@0.1"],
-      "next-app": ["@inth/nextjs@0.1"],
-      "next-pages": ["@inth/nextjs@0.1"],
-      nuxt: ["@inth/nuxt@0.1"],
-      react: ["@inth/react@0.1"],
-      solid: ["@inth/sdk@0.1"],
-      svelte: ["@inth/svelte@0.1"],
-      sveltekit: ["@inth/svelte@0.1", "@sveltejs/adapter-auto"],
-      "tanstack-start": ["@inth/tanstack-start@0.1"],
-      vue: ["@inth/vue@0.1"],
+      javascript: ["@inth/sdk@3"],
+      "next-app": ["@inth/nextjs@3"],
+      "next-pages": ["@inth/nextjs@3"],
+      nuxt: ["@inth/nuxt@3"],
+      react: ["@inth/react@3"],
+      solid: ["@inth/sdk@3"],
+      svelte: ["@inth/svelte@3"],
+      sveltekit: ["@inth/svelte@3", "@sveltejs/adapter-auto"],
+      "tanstack-start": ["@inth/tanstack-start@3"],
+      vue: ["@inth/vue@3"],
     }[framework];
     assert.deepEqual(data.plan?.dependencies, dependencies, framework);
     assert.ok(data.created?.length);
@@ -1398,7 +1398,7 @@ const verifyEnvironmentGuidance = async (
   test: string,
   parent: string
 ): Promise<void> => {
-  const assignment = `VITE_C15T_BACKEND_URL=${BACKEND}`;
+  const assignment = `VITE_INTH_PROJECT_URL=${BACKEND}`;
   for (const [name, existing, expected] of [
     [
       "missing",
@@ -1407,24 +1407,24 @@ const verifyEnvironmentGuidance = async (
     ],
     [
       "different",
-      "PRIVATE_KEY=private-env-value\nVITE_C15T_BACKEND_URL=https://old-backend.invalid\n",
-      `Replace the VITE_C15T_BACKEND_URL assignment in .env with:\n${assignment}`,
+      "PRIVATE_KEY=private-env-value\nVITE_INTH_PROJECT_URL=https://old-backend.invalid\n",
+      `Replace the VITE_INTH_PROJECT_URL assignment in .env with:\n${assignment}`,
     ],
     [
       "exported",
-      "PRIVATE_KEY=private-env-value\n  export VITE_C15T_BACKEND_URL = 'https://old-backend.invalid'\n",
-      `Replace the VITE_C15T_BACKEND_URL assignment in .env with:\n${assignment}`,
+      "PRIVATE_KEY=private-env-value\n  export VITE_INTH_PROJECT_URL = 'https://old-backend.invalid'\n",
+      `Replace the VITE_INTH_PROJECT_URL assignment in .env with:\n${assignment}`,
     ],
     ["matching", `${assignment}\nPRIVATE_KEY=private-env-value\n`, ""],
     [
-      "alternate",
-      "VITE_INTH_PROJECT_URL=https://old-backend.invalid\nPRIVATE_KEY=private-env-value\n",
-      "",
+      "legacy",
+      "VITE_C15T_BACKEND_URL=https://old-backend.invalid\nPRIVATE_KEY=private-env-value\n",
+      `Add to .env:\n${assignment}`,
     ],
     [
       "duplicates",
-      `${assignment}\nVITE_C15T_BACKEND_URL=https://old-backend.invalid\nPRIVATE_KEY=private-env-value\n`,
-      `Replace all VITE_C15T_BACKEND_URL assignments in .env with this single assignment:\n${assignment}`,
+      `${assignment}\nVITE_INTH_PROJECT_URL=https://old-backend.invalid\nPRIVATE_KEY=private-env-value\n`,
+      `Replace all VITE_INTH_PROJECT_URL assignments in .env with this single assignment:\n${assignment}`,
     ],
   ] as const) {
     const directory = await app(parent, `env-guidance-${name}`, {
@@ -1800,6 +1800,61 @@ const verifyCodemodsWithoutAccount = async (
   ]);
 };
 
+// A create-vite React app already has its own entry and Vite config.
+const verifyExistingViteApp = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  const directory = await app(parent, "vite-react", { react: "19.2.0" });
+  await mkdir(path.join(directory, "src"));
+  const entry =
+    "import { createRoot } from 'react-dom/client';\nimport App from './App.tsx';\ncreateRoot(document.getElementById('root')!).render(<App />);\n";
+  const config =
+    "import react from '@vitejs/plugin-react';\nimport { defineConfig } from 'vite';\nexport default defineConfig({ plugins: [react()] });\n";
+  await writeFile(path.join(directory, "src", "main.tsx"), entry);
+  await writeFile(path.join(directory, "vite.config.js"), config);
+  await writeFile(
+    path.join(directory, "src", "App.tsx"),
+    "export default function App() { return null; }\n"
+  );
+  const result = run(
+    test,
+    [
+      "init",
+      "scaffold",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--skip-install",
+      "--yes",
+      "--json",
+    ],
+    directory
+  );
+  assert.equal(result.status, 0, result.stderr);
+  const { data } = envelope.parse(JSON.parse(result.stdout));
+  assert.deepEqual(data.created?.toSorted(), [".env", "src/consent.tsx"]);
+  assert.equal(
+    await readFile(path.join(directory, "src", "main.tsx"), "utf-8"),
+    entry
+  );
+  assert.equal(
+    await readFile(path.join(directory, "vite.config.js"), "utf-8"),
+    config
+  );
+  const entries = await readdir(directory);
+  assert.ok(!entries.includes("vite.config.ts"));
+  for (const file of ["src/main.tsx", "vite.config.js"]) {
+    assert.ok(
+      data.plan?.instructions.some((instruction) =>
+        instruction.startsWith(`Update ${file}:`)
+      ),
+      file
+    );
+  }
+};
+
 // `inth init` runs the same flow for the Inth SDK, with Inth's prompt and
 // project branding.
 const verifyInit = (
@@ -1866,7 +1921,13 @@ const verifyInit = (
   assert.equal(created.status, 0, created.stderr);
   const { data } = envelope.parse(JSON.parse(created.stdout));
   assert.equal(data.framework, "react");
-  assert.deepEqual(data.plan?.dependencies, ["@inth/react@0.1"]);
+  assert.deepEqual(data.plan?.dependencies, ["@inth/react@latest"]);
+  assert.ok(
+    data.plan?.instructions.includes(
+      "Install dependencies: @inth/react@latest."
+    ),
+    JSON.stringify(data.plan?.instructions)
+  );
   assert.deepEqual(calls(created.stderr), [
     'POST /v1/projects?organizationId=org_acme {"consent":{"branding":"inth"},"name":"Created","region":"eu"}',
     "GET /v1/projects/prj_created",
@@ -1902,6 +1963,7 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await verifySvelteKitAdapter(test, parent);
     await verifySvelteKitVersions(test, parent);
     await verifyReactEntry(test, parent);
+    await verifyExistingViteApp(test, parent);
     await verifyEnvironmentGuidance(test, parent);
     await verifyAstroOutput(test, parent);
     await verifyPartialHtml(test, parent);

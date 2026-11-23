@@ -112,14 +112,13 @@ function ConsentControls() {
 	);
 }
 `,
-			'src/consent/consent-runtime.ts': `import { ${hosted ? 'hosted' : 'offline'} } from '@inth/sdk/engine';
-import { createConsentRuntime } from '@inth/sdk/runtime';
+			'src/consent/consent-runtime.ts': `${hosted ? '' : "import { offline } from '@inth/sdk/engine';\n"}import { createConsentRuntime } from '@inth/sdk/runtime';
 ${generateScriptsImport(options.scripts)}
 
 // Construction is pure; the Solid component starts this only after mounting.
 export function createSiteConsent() {
 	return createConsentRuntime({
-		mode: ${hosted ? `hosted({ projectUrl: ${JSON.stringify(options.backendURL)} })` : `offline({ policyRules: ${DEFAULT_OFFLINE_RULES} })`},
+		${hosted ? `projectUrl: ${JSON.stringify(options.backendURL)}` : `mode: offline({ policyRules: ${DEFAULT_OFFLINE_RULES} })`},
 		scripts: ${generateScriptsArrayValue(options.scripts)},
 	});
 }
