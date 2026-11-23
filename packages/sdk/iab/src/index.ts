@@ -50,7 +50,7 @@ import {
 	readAuthorityReceiptText,
 	storeAuthority,
 	validateAuthority,
-} from './iab-authority.store';
+} from './iab-authority.model';
 import { fetchAdTechProviders } from './tcf/additional-consent.api';
 import { CMP_VERSION_NUMBER } from './tcf/cmp-defaults.model';
 import {

@@ -18,7 +18,7 @@ import { isLegitimateInterestAllowed } from '../headless';
 import {
 	createAuthorityReceipt,
 	validateAuthority,
-} from '../iab-authority.store';
+} from '../iab-authority.model';
 import { createIAB } from '../index';
 import type { IABHandle } from '../index';
 import { PublisherRestrictionError } from '../tcf/publisher-restrictions.model';
