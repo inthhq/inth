@@ -32,7 +32,7 @@
  * "show nobody" empties a preference centre for a publisher who never scoped anything.
  */
 
-import { narrowGVLToVendors } from '../../sdk/iab/src/tcf/fetch-gvl';
+import { narrowGVLToVendors } from '../../sdk/iab/src/tcf/fetch-gvl.api';
 import type { GVLVendor, GlobalVendorList } from '../../sdk/schema/src/types';
 
 // -- The oracle -------------------------------------------------------------
