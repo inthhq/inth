@@ -39,3 +39,29 @@ test('warming the dialog loads the chunk the deferred root opens early', async (
 	);
 	await screen.unmount();
 });
+
+test('the dialog chunk carries no embedded widget', async () => {
+	const screen = await render(
+		<ComponentFixtureProvider
+			options={{
+				disableAnimation: true,
+				mode: transportMode({}),
+				persistence: false,
+				prefetch: policyFixture({}, { model: 'opt-in' }),
+			}}
+		>
+			<ConsentDialog />
+		</ComponentFixtureProvider>
+	);
+	warmDialogChunk();
+	await vi.waitFor(
+		() => expect(moduleRequested('/src/components/dialog/dialog.tsx')).toBe(true),
+		{ timeout: 5000 }
+	);
+	// `ConsentWidget` and its sheets load only on a page that renders it.
+	await new Promise((resolve) => {
+		setTimeout(resolve, 200);
+	});
+	expect(moduleRequested('/src/components/preferences/index.ts')).toBe(false);
+	await screen.unmount();
+});
