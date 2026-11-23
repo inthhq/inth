@@ -105,11 +105,9 @@
 	import RightsReceipt from '../parts/receipt.svelte';
 	import SaleRightsRow from '../parts/rights-row.svelte';
 	import { cx, foldSlots, part } from '../parts/surface-parts.model';
-	import {
-		usePhoneLayout,
-		useReducedMotion,
-		useSurfaceSession,
-	} from '../parts/use-surface-session.svelte';
+	import { usePhoneLayout } from '../parts/use-phone-layout.svelte';
+	import { useReducedMotion } from '../parts/use-reduced-motion.svelte';
+	import { useSurfaceSession } from '../parts/use-surface-session.svelte';
 	import SurfaceStyles from '../surface-styles.svelte';
 	import { DIALOG_SHEETS } from './dialog-sheets';
 	import DoneButton from './done-button.svelte';

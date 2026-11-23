@@ -108,14 +108,12 @@
 	import BrandMark from '../icons/brand-mark.svelte';
 	import InlineLegalLinks from '../inline-legal-links.svelte';
 	import { createSurfaceDraft } from '../parts/create-surface-draft.svelte';
+	import { rightsBundleOf } from '../parts/rights-bundle.model';
 	import { cx, part } from '../parts/surface-parts.model';
-	import {
-		rightsBundleOf,
-		useOptOutReceiptData,
-		usePhoneLayout,
-		useReducedMotion,
-		useSurfaceSession,
-	} from '../parts/use-surface-session.svelte';
+	import { useOptOutReceiptData } from '../parts/use-opt-out-receipt-data.svelte';
+	import { usePhoneLayout } from '../parts/use-phone-layout.svelte';
+	import { useReducedMotion } from '../parts/use-reduced-motion.svelte';
+	import { useSurfaceSession } from '../parts/use-surface-session.svelte';
 	import SurfaceStyles from '../surface-styles.svelte';
 	import { presentationSheets } from './prompt-sheets.model';
 

@@ -23,11 +23,9 @@
 	} from '../../get-consent-context.svelte';
 	import Icon from './icon.svelte';
 	import { cx, part } from './surface-parts.model';
-	import {
-		rightsBundleOf,
-		useOptOutReceiptData,
-		useSurfaceSession,
-	} from './use-surface-session.svelte';
+	import { rightsBundleOf } from './rights-bundle.model';
+	import { useOptOutReceiptData } from './use-opt-out-receipt-data.svelte';
+	import { useSurfaceSession } from './use-surface-session.svelte';
 
 	let {
 		idPrefix,
