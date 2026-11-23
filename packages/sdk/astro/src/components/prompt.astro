@@ -40,7 +40,6 @@ import {
 	buildLocalsBootJSON,
 	buildThemeCSS,
 	buildConfigJSON,
-	canDeferEngine,
 	EARLY_CONSENT_TAP_SCRIPT,
 	markConfigEmitted,
 	PROMPT_SLOT_ATTRIBUTE,
@@ -128,17 +127,19 @@ const model = inth.hasPolicy
 			snapshot,
 		})
 	: null;
-// Records a tap that lands before the page script runs, for a banner whose
-// engine may load after the page. A server island is inserted after the
-// page script ran, and the script would then hold the banner's clicks with
-// nothing to release them, so it gets none.
+// Holds a tap on the server-rendered prompt until the prompt's chunk takes
+// it over, which waits for the engine: the tap is replayed through the
+// prompt's own handlers, so Customize opens the options in place and a
+// choice commits through the prompt's plan. A server island is inserted
+// after the page script ran, so it gets none, as does a prompt the page
+// ships hidden to every visitor.
 const earlyTaps =
 	inlineStyles &&
 	shouldRender &&
+	model !== null &&
 	!hidden &&
 	inth.shouldShowBanner &&
-	!inth.prerendered &&
-	canDeferEngine(snapshot, inth.options, Date.now(), inth.config);
+	!inth.prerendered;
 ---
 
 {

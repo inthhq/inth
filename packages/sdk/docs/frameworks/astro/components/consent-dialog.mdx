@@ -107,8 +107,10 @@ flight waits for the answer.
 The page carries only the prompt's rules. The first time a visitor reaches
 for the dialog, Inth adds the dialog's stylesheets (the theme tokens, the
 buttons, and the dialog's own rules) and waits for them before the dialog
-paints. The Svelte and Vue islands also link the widget stylesheet, and the
-Svelte island the primitives stylesheet. With `styles: false`, import
+paints. Every island renders with these, and a confirmation the dialog
+shows brings its own rules, so no island links a stylesheet for the
+preferences dialog. The IAB dialog links its rules when it opens. With
+`styles: false`, import
 `@inth/astro/styles.css` yourself, which holds the dialog's rules too, and
 `@inth/astro/primitives.css` for the Svelte dialog. See
 [load the stylesheet yourself](/docs/frameworks/astro/customize#load-the-stylesheet-yourself).

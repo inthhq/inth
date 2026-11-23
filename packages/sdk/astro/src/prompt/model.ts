@@ -101,6 +101,8 @@ export interface PromptModel {
 	container: PromptLayouts;
 	presentation: PromptContainerType;
 	variant: PrivacyChoicesPromptVariant;
+	/** The policy rule's model and prompt, for the root's data attributes. */
+	rule: { model: string; prompt: string };
 	copy: PrivacyChoicesBannerCopy;
 	/**
 	 * The policy's first-layer actions, in the host's order and groups,
@@ -409,6 +411,10 @@ export const resolvePromptModel = function resolvePromptModel(
 		noStyle,
 		parts,
 		presentation,
+		rule: {
+			model: snapshot.policyRule.model,
+			prompt: snapshot.policyRule.prompt,
+		},
 		summaryGroups: summaryGroupsOf(resolved.actionGroups),
 		tag: branding
 			? {

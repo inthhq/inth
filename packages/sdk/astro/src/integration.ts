@@ -88,10 +88,10 @@ export const createOwnEntryResolver =
 	};
 
 /**
- * The preference widget's rules: the opt-out confirmation, and the IAB
- * dialog's tabs, switches and vendor list. No first paint needs them.
+ * The preference widget's rules: the IAB dialog's tabs, switches and vendor
+ * list. No first paint needs them.
  */
-const DIALOG_STYLESHEET = '@inth/sdk/ui/styles/sheets/widget.css';
+const WIDGET_STYLESHEET = '@inth/sdk/ui/styles/sheets/widget.css';
 const IAB_DIALOG_STYLESHEET = '@inth/sdk/ui/styles/sheets/iab-dialog.css';
 
 /**
@@ -109,22 +109,12 @@ const UI_ADAPTERS: Record<
 		adapterModule: string;
 		adapterExport: string;
 		surfaceModule: string;
-		/**
-		 * The stylesheets the island's preferences dialog needs beyond the
-		 * sheets the client puts in for it. The client links them when the
-		 * dialog opens. The IAB dialog links them too, with the widget's
-		 * and its own rules.
-		 */
-		dialogStyles: string[];
 	}
 > = {
 	react: {
 		adapterExport: 'reactDialogAdapter',
 		adapterModule: '@inth/astro/ui/react',
 		astroIntegration: '@astrojs/react',
-		// React's dialog renders the sheets the client puts in, and hosts its
-		// confirmations with the widget's, so it links nothing more.
-		dialogStyles: [],
 		packages: ['@astrojs/react', '@inth/react', 'react', 'react-dom'],
 		surfaceModule: '@inth/astro/islands/panel-surface.tsx',
 	},
@@ -132,9 +122,6 @@ const UI_ADAPTERS: Record<
 		adapterExport: 'svelteDialogAdapter',
 		adapterModule: '@inth/astro/ui/svelte',
 		astroIntegration: '@astrojs/svelte',
-		// The Svelte components also read the `@inth/sdk/ui/styles/primitives`
-		// class maps, whose rules live in their own stylesheet.
-		dialogStyles: [DIALOG_STYLESHEET, '@inth/sdk/ui/styles/primitives.css'],
 		packages: ['@astrojs/svelte', 'svelte'],
 		surfaceModule: '@inth/astro/islands/panel-surface.svelte',
 	},
@@ -142,7 +129,6 @@ const UI_ADAPTERS: Record<
 		adapterExport: 'vueDialogAdapter',
 		adapterModule: '@inth/astro/ui/vue',
 		astroIntegration: '@astrojs/vue',
-		dialogStyles: [DIALOG_STYLESHEET],
 		packages: ['@astrojs/vue', '@inth/vue', 'vue'],
 		surfaceModule: '@inth/astro/islands/panel-surface.vue',
 	},
@@ -642,29 +628,16 @@ export const buildBootScript = function buildBootScript(
 		`registerDialogAdapter(${serializedUI}, async () => (await import(${quote(adapter.adapterModule)})).${adapter.adapterExport});`,
 		`registerDialogSurface(${serializedUI}, () => import(${quote(adapter.surfaceModule)}));`,
 	];
+	// Every island's preferences dialog renders with the sheets the client
+	// puts in (tokens, button, expand and dialog), and each confirmation it
+	// hosts brings or gets the widget's, so it links no stylesheet.
+	//
 	// `?url` makes each stylesheet an emitted file and the import a string,
 	// so none of its rules reach the page until the client links it. Pages
-	// that link `styles.css` already have the dialog's rules.
-	const dialogStyles = resolved.inlineStyles
-		? adapter.dialogStyles
-		: adapter.dialogStyles.filter(
-				(specifier) => specifier !== DIALOG_STYLESHEET
-			);
-	if (resolved.styles !== false && dialogStyles.length > 0) {
-		const names = dialogStyles.map((_, index) => `dialogStyle${index}`);
-		dialogStyles.forEach((specifier, index) => {
-			page.push(
-				`import ${names[index]} from ${JSON.stringify(`${resolveEntry(specifier)}?url`)};`
-			);
-		});
-		page.push(`registerDialogStyles([${names.join(', ')}]);`);
-	}
+	// that link `styles.css` already have the IAB dialog's rules.
 	if (resolved.inlineStyles && isIABConfigured(resolved.iab)) {
 		// The IAB dialog renders the widget's tabs, switches and vendor list.
-		const iabStyles = [
-			...(dialogStyles.includes(DIALOG_STYLESHEET) ? [] : [DIALOG_STYLESHEET]),
-			IAB_DIALOG_STYLESHEET,
-		];
+		const iabStyles = [WIDGET_STYLESHEET, IAB_DIALOG_STYLESHEET];
 		const names = iabStyles.map((_, index) => `iabDialogStyle${index}`);
 		iabStyles.forEach((specifier, index) => {
 			page.push(

@@ -173,10 +173,9 @@ const consentButton = function consentButton(
 		'button',
 		{
 			class: style.class,
+			// The early-tap script holds a tap on Reject, Allow, Customize or
+			// OK until the prompt's chunk replays it through its handlers.
 			'data-action': action,
-			// React marks the buttons whose clicks its pre-hydration script
-			// must not replay; Save is not one of its replayed actions.
-			'data-early-tap': action === 'save' ? undefined : 'off',
 			'data-mode': style.mode,
 			'data-size': model.noStyle ? undefined : 'small',
 			'data-testid': `consent-banner-${action}-button`,
@@ -224,6 +223,9 @@ export const renderPrompt = function renderPrompt(
 				{
 					...aria,
 					class: cx(model, surface.rightLink),
+					// Held and replayed like Customize: it opens the rights in
+					// place.
+					'data-action': 'customize',
 					'data-testid': 'consent-banner-right-link-opt-out',
 					type: 'button',
 				},
@@ -393,7 +395,11 @@ export const renderPrompt = function renderPrompt(
 			'data-edge-style': layout.edgeStyle,
 			'data-expanded': expanded ? 'true' : undefined,
 			'data-flow': layout.flow,
+			// The policy a held tap was made under: the replay drops a tap
+			// for another model or prompt than the one that resolves.
+			'data-model': model.rule.model,
 			'data-placement': layout.placement,
+			'data-prompt': model.rule.prompt,
 			'data-state': state.phase === 'leaving' ? 'closed' : 'open',
 			'data-testid': 'consent-banner-root',
 			'data-variant': model.variant,
