@@ -1,7 +1,9 @@
 import { defaultConsentConfig } from '@inth/sdk/schema/config';
 import {
 	defaultDarkColors,
+	defaultThemeReferences,
 	generateDefaultThemeCSS,
+	generatePrimaryTintSupportsCSS,
 	generateThemeCSS,
 } from '@inth/sdk/ui/theme';
 
@@ -19,9 +21,13 @@ export { TOKENS_STYLE_ID };
  * React and Svelte get it from `@inth/sdk/ui/styles.css`. The Vue components
  * import per-component stylesheets that carry no tokens, so it ships here,
  * on the same selectors: one class above the `tokens` rule, and one below a
- * `theme`.
+ * `theme`. The derived tokens are the stylesheet's `var()` references, not
+ * fixed colours, so a dark `--inth-primary` or `--inth-surface` set anywhere
+ * (a dark rule in the site's CSS, say) moves the dark tint and switch too.
  */
-const DEFAULT_DARK_CSS = generateDefaultThemeCSS({ dark: defaultDarkColors });
+const DEFAULT_DARK_CSS = generateDefaultThemeCSS({
+	dark: { ...defaultDarkColors, ...defaultThemeReferences.dark },
+});
 
 /**
  * The CSS that applies `tokens` as `--{key}` custom properties, over the
@@ -65,12 +71,18 @@ export const generateTokensCSS = function generateTokensCSS(
 		.filter(([, value]) => value !== undefined && value !== null)
 		.map(([key, value]) => `--${key}:${String(value)};`)
 		.join('');
+	// The opaque tint comes after the `tokens` rule at the same specificity,
+	// so its light half stays out when the page sets its own tint.
+	const tintCSS = generatePrimaryTintSupportsCSS({
+		light: tokens?.['inth-primary-tint'] === undefined,
+	});
 	// Escaped the way `generateThemeCSS` escapes it, so a token value cannot
 	// close the surrounding `<style>` element.
-	const base = `:root,:host{${declarations}}\n${DEFAULT_DARK_CSS}`.replace(
-		/</gu,
-		'\\3c '
-	);
+	const base =
+		`:root,:host{${declarations}}\n${DEFAULT_DARK_CSS}\n${tintCSS}`.replace(
+			/</gu,
+			'\\3c '
+		);
 	const { colorScheme, theme } = options;
 	if (!theme && (colorScheme === undefined || colorScheme === null)) {
 		return base;
