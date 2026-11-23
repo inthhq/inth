@@ -54,6 +54,7 @@ import ConsentActions from './actions.vue';
 import DescriptionContent from './description-content.vue';
 import EarlyTapScript from './early-tap-script';
 import OptOutIcon from './opt-out-icon.vue';
+import PrivacyChoicesBanner from './prompt/privacy-choices-banner.vue';
 import ConsentTag from './tag.vue';
 
 /**
@@ -134,9 +135,21 @@ const {
 const translations = useSurfaceTranslations();
 const promptKind = computed(() => snapshot.value.policyRule.prompt);
 
+/**
+ * The Privacy Choices design (`design: 'privacy-choices'`) renders its own
+ * prompt, which loads with the resolved container's stylesheet. The
+ * classic banner below then stays closed, so its scroll lock and focus
+ * trap never apply.
+ */
+const privacyChoicesContainer = computed(() =>
+	surface.value.design === 'privacy-choices'
+		? (surface.value.container ?? null)
+		: null
+);
+
 const hasConsentUi = useHasConsentUi();
 const isOpen = computed(() => {
-	if (!hasConsentUi.value) {
+	if (!hasConsentUi.value || privacyChoicesContainer.value) {
 		return false;
 	}
 	const { model } = snapshot.value.policyRule;
@@ -232,11 +245,17 @@ const onAction = function onAction(action: PresentationAction) {
 </script>
 
 <template>
+	<PrivacyChoicesBanner
+		v-if="privacyChoicesContainer"
+		:container="privacyChoicesContainer"
+		:disable-animation="props.disableAnimation"
+	/>
 	<LazyOptInConfirmation
-		v-if="optInConfirmationActive"
+		v-if="!privacyChoicesContainer && optInConfirmationActive"
 		:disable-animation="props.disableAnimation"
 	/>
 	<Teleport
+		v-if="!privacyChoicesContainer"
 		to="body"
 		:disabled="!mounted"
 	>

@@ -61,27 +61,10 @@ const MUST_BE_REACHABLE_SLOTS = [
 	'consent-gate.button',
 ] as const;
 
-/**
- * Privacy Choices (v6) slots React renders first (banner and dialog). Vue binds them in its own
- * v6 port, which removes them from this list.
- */
-const PENDING_V6_PORT: ReadonlySet<string> = new Set([
-	'banner.expand',
-	'banner.rightsRow',
-	'banner.saveButton',
-	'dialog.categoryGroup',
-	'dialog.doneButton',
-	'dialog.footer',
-	'dialog.preferencesRow',
-	'dialog.receipt',
-	'dialog.rightsRow',
-	'dialog.saveButton',
-	'dialog.sheet',
-	'dialog.vendorTable',
-]);
-
+/** Every `.vue` file under `runtime/components`, nested ones included. */
 const getVueComponentSources = function getVueComponentSources() {
-	return readdirSync(runtimeComponentsDir)
+	return readdirSync(runtimeComponentsDir, { recursive: true })
+		.map(String)
 		.filter((file) => file.endsWith('.vue'))
 		.map((file) => readFileSync(join(runtimeComponentsDir, file), 'utf8'));
 };
@@ -138,9 +121,7 @@ const extractReachableSlotPaths = function extractReachableSlotPaths() {
 
 describe('Vue theme slot contract', () => {
 	test('every declared schema slot has an exact reachable Vue binding', () => {
-		const declared = [...CONSENT_COMPONENT_SLOT_KEYS]
-			.filter((slot) => !PENDING_V6_PORT.has(slot))
-			.sort();
+		const declared = [...CONSENT_COMPONENT_SLOT_KEYS].sort();
 		const reachable = extractReachableSlotPaths();
 
 		expect(reachable).toEqual(declared);

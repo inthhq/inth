@@ -15,8 +15,8 @@ import { applyRootOverrides } from '../root-overrides';
 import { consentConfigKey, symbolConfirmationHosted } from '../utils/symbols';
 import {
 	ConsentBannerHost as ConsentBanner,
+	ConsentDialogHost,
 	LazyConsentDialogTrigger,
-	LazyConsentManager,
 	LazyIabConsentBanner,
 	LazyIabConsentDialog,
 	LazyOptOutConfirmation,
@@ -93,7 +93,7 @@ onMounted(() => {
 		<LazyIabConsentDialog
 			v-if="(init?.gvl || init?.gvlReference) && iabDialogNeeded"
 		/>
-		<LazyConsentManager
+		<ConsentDialogHost
 			v-else-if="!(init?.gvl || init?.gvlReference) && managerNeeded"
 		/>
 		<LazyOptOutConfirmation

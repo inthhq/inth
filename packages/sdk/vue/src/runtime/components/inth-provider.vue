@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, provide, watch } from 'vue';
+import { onMounted, provide, ref, watch } from 'vue';
 
 import {
 	useConsentActiveUI,
@@ -15,14 +15,15 @@ import { useMounted } from '../composables/use-mounted';
 import { applyRootOverrides } from '../root-overrides';
 import { symbolConfirmationHosted } from '../utils/symbols';
 import {
+	ConsentDialogHost,
 	LazyConsentDialogTrigger,
-	LazyConsentManager,
 	LazyIabConsentBanner,
 	LazyIabConsentDialog,
 	LazyOptOutConfirmation,
 	prefetchConsentManager,
 	prefetchIabConsentDialog,
 } from './lazy-surfaces';
+import { usePrivacyChoicesDesign } from './privacy-choices/use-design';
 import ConsentBanner from './prompt.vue';
 
 // The default slot renders after the surfaces, so a root that wraps the
@@ -45,6 +46,16 @@ provide(symbolConfirmationHosted, true);
 const { iabUnavailable } = context;
 // The trigger shows only after mount, so its chunk loads after mount too.
 const mounted = useMounted();
+// The Privacy Choices banner stays mounted once shown, so its exit, the
+// page announcement and the focus return outlive the prompt (BNR-06). The
+// classic banner still mounts only while it shows.
+const privacyChoices = usePrivacyChoicesDesign();
+const bannerShown = ref(activeUI.value === 'banner');
+watch(activeUI, (ui) => {
+	if (ui === 'banner') {
+		bannerShown.value = true;
+	}
+});
 
 onMounted(() => {
 	// Warm the dialog chunk during idle so the first open is instant.
@@ -74,12 +85,12 @@ watch(
 		<LazyIabConsentDialog
 			v-else-if="(init?.gvl || init?.gvlReference) && activeUI === 'manager'"
 		/>
-		<ConsentBanner
-			v-else-if="!(init?.gvl || init?.gvlReference) && activeUI === 'banner'"
-		/>
-		<LazyConsentManager
-			v-else-if="!(init?.gvl || init?.gvlReference) && activeUI === 'manager'"
-		/>
+		<template v-else-if="!(init?.gvl || init?.gvlReference)">
+			<ConsentBanner
+				v-if="activeUI === 'banner' || (privacyChoices && bannerShown)"
+			/>
+			<ConsentDialogHost v-if="activeUI === 'manager'" />
+		</template>
 		<LazyOptOutConfirmation
 			v-if="
 				!(init?.gvl || init?.gvlReference) &&

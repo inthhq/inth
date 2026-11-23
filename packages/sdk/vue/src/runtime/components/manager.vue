@@ -41,9 +41,14 @@ import {
 import { slotAttrs } from '../utils/slot-attrs';
 import { symbolConfirmationHosted } from '../utils/symbols';
 import ConsentDescription from './description.vue';
-import { LazyOptInConfirmation, LazyOptOutConfirmation } from './lazy-surfaces';
+import {
+	LazyOptInConfirmation,
+	LazyOptOutConfirmation,
+	LazyPrivacyChoicesDialog,
+} from './lazy-surfaces';
 import { consentWidgetManagerKey } from './preferences-manager-context';
 import ConsentWidget from './preferences.vue';
+import { usePrivacyChoicesDesign } from './privacy-choices/use-design';
 import ConsentTag from './tag.vue';
 
 const props = withDefaults(
@@ -70,6 +75,11 @@ const hasStandaloneConfirmation = useHasOptOutConfirmationHost();
 const optInConfirmationActive = useOptInConfirmationHost();
 
 const { presentation: surface } = useConsentPolicyActions('preferences');
+/**
+ * The Privacy Choices design (`design: 'privacy-choices'`) renders its own
+ * dialog, loaded on open, in place of this one.
+ */
+const privacyChoices = usePrivacyChoicesDesign();
 let actionSequence = 0;
 const draftState = useConsentDraft();
 const { isDirty, isStale, reset: resetDraft, save: saveDraft } = draftState;
@@ -125,7 +135,12 @@ watch(
 );
 
 useConsentScrollLock(
-	computed(() => activeUI.value === 'manager' && surface.value.scrollLock)
+	computed(
+		() =>
+			!privacyChoices.value &&
+			activeUI.value === 'manager' &&
+			surface.value.scrollLock
+	)
 );
 
 watch(
@@ -180,122 +195,129 @@ provide(consentWidgetManagerKey, { draft: draftState, onAction });
 </script>
 
 <template>
-	<LazyOptOutConfirmation
-		v-if="
-			!confirmationHostedByProvider &&
-			confirmationOpen &&
-			!hasStandaloneConfirmation
-		"
-		embedded
+	<LazyPrivacyChoicesDialog
+		v-if="privacyChoices"
 		:disable-animation="props.disableAnimation"
 	/>
-	<LazyOptInConfirmation
-		v-if="optInConfirmationActive"
-		:disable-animation="props.disableAnimation"
-	/>
-	<div
-		v-if="hasConsentUi && isStale"
-		role="status"
-	>
-		Privacy choices have changed.
-		<button
-			type="button"
-			@click="resetDraft"
+	<template v-else>
+		<LazyOptOutConfirmation
+			v-if="
+				!confirmationHostedByProvider &&
+				confirmationOpen &&
+				!hasStandaloneConfirmation
+			"
+			embedded
+			:disable-animation="props.disableAnimation"
+		/>
+		<LazyOptInConfirmation
+			v-if="optInConfirmationActive"
+			:disable-animation="props.disableAnimation"
+		/>
+		<div
+			v-if="hasConsentUi && isStale"
+			role="status"
 		>
-			Review updated choices
-		</button>
-	</div>
-	<DialogRoot
-		v-if="hasConsentUi"
-		:open="activeUI === 'manager'"
-		:modal="surface.blocking"
-		@update:open="(open) => (activeUI = open ? 'manager' : null)"
-	>
-		<DialogPortal>
-			<DialogOverlay
-				v-if="surface.blocking"
-				:style="overlayFallbackStyle"
-				v-bind="slotAttrs(config.components?.dialog?.overlay, overlayClasses)"
-				data-testid="consent-dialog-overlay"
-			/>
-			<!-- The outer element only positions the panel over the
+			Privacy choices have changed.
+			<button
+				type="button"
+				@click="resetDraft"
+			>
+				Review updated choices
+			</button>
+		</div>
+		<DialogRoot
+			v-if="hasConsentUi"
+			:open="activeUI === 'manager'"
+			:modal="surface.blocking"
+			@update:open="(open) => (activeUI = open ? 'manager' : null)"
+		>
+			<DialogPortal>
+				<DialogOverlay
+					v-if="surface.blocking"
+					:style="overlayFallbackStyle"
+					v-bind="slotAttrs(config.components?.dialog?.overlay, overlayClasses)"
+					data-testid="consent-dialog-overlay"
+				/>
+				<!-- The outer element only positions the panel over the
 			     viewport. `DialogContent` is the panel itself: it carries the
 			     dialog semantics, the focus trap and the
 			     `consent-dialog-root` testid, so those name the same element
 			     they do in React and Svelte. -->
-			<div
-				v-bind="config.components?.dialog?.root"
-				data-mode="dialog"
-				data-slot="dialog-positioner"
-				:class="dialogStyles.root"
-				:data-disable-animation="disableAnimation ? true : undefined"
-				aria-labelledby="consent-dialog-title"
-				aria-describedby="consent-dialog-description"
-			>
-				<DialogContent
-					v-bind="
-						slotAttrs(config.components?.dialog?.container, [
-							dialogStyles.container,
-							dialogStyles.contentVisible,
-						])
-					"
-					:data-blocking="surface.blocking ? 'true' : undefined"
-					data-testid="consent-dialog-root"
-					:[SURFACE_ROOT_ATTRIBUTE]="'dialog'"
-					:dir="textDirection"
+				<div
+					v-bind="config.components?.dialog?.root"
+					data-mode="dialog"
+					data-slot="dialog-positioner"
+					:class="dialogStyles.root"
+					:data-disable-animation="disableAnimation ? true : undefined"
 					aria-labelledby="consent-dialog-title"
 					aria-describedby="consent-dialog-description"
 				>
-					<div
+					<DialogContent
 						v-bind="
-							slotAttrs(config.components?.dialog?.card, dialogStyles.card)
+							slotAttrs(config.components?.dialog?.container, [
+								dialogStyles.container,
+								dialogStyles.contentVisible,
+							])
 						"
-						data-testid="consent-dialog-card"
-						tabindex="-1"
+						:data-blocking="surface.blocking ? 'true' : undefined"
+						data-testid="consent-dialog-root"
+						:[SURFACE_ROOT_ATTRIBUTE]="'dialog'"
+						:dir="textDirection"
+						aria-labelledby="consent-dialog-title"
+						aria-describedby="consent-dialog-description"
 					>
 						<div
 							v-bind="
-								slotAttrs(
-									config.components?.dialog?.header,
-									dialogStyles.header
-								)
+								slotAttrs(config.components?.dialog?.card, dialogStyles.card)
 							"
-							data-testid="consent-dialog-header"
+							data-testid="consent-dialog-card"
+							tabindex="-1"
 						>
-							<h2
+							<div
 								v-bind="
 									slotAttrs(
-										config.components?.dialog?.title,
-										dialogStyles.title
+										config.components?.dialog?.header,
+										dialogStyles.header
 									)
 								"
-								data-testid="consent-dialog-title"
-								id="consent-dialog-title"
+								data-testid="consent-dialog-header"
 							>
-								{{
-									init?.translations?.translations?.consentManagerDialog?.title
-								}}
-							</h2>
-							<ConsentDescription context="dialog" />
+								<h2
+									v-bind="
+										slotAttrs(
+											config.components?.dialog?.title,
+											dialogStyles.title
+										)
+									"
+									data-testid="consent-dialog-title"
+									id="consent-dialog-title"
+								>
+									{{
+										init?.translations?.translations?.consentManagerDialog
+											?.title
+									}}
+								</h2>
+								<ConsentDescription context="dialog" />
+							</div>
+							<div
+								v-bind="
+									slotAttrs(
+										config.components?.dialog?.content,
+										dialogStyles.content
+									)
+								"
+								data-testid="consent-dialog-content"
+							>
+								<ConsentWidget />
+							</div>
+							<ConsentTag
+								v-if="!(config.dialogHideBranding ?? config.hideBranding)"
+								surface="dialog"
+							/>
 						</div>
-						<div
-							v-bind="
-								slotAttrs(
-									config.components?.dialog?.content,
-									dialogStyles.content
-								)
-							"
-							data-testid="consent-dialog-content"
-						>
-							<ConsentWidget />
-						</div>
-						<ConsentTag
-							v-if="!(config.dialogHideBranding ?? config.hideBranding)"
-							surface="dialog"
-						/>
-					</div>
-				</DialogContent>
-			</div>
-		</DialogPortal>
-	</DialogRoot>
+					</DialogContent>
+				</div>
+			</DialogPortal>
+		</DialogRoot>
+	</template>
 </template>
