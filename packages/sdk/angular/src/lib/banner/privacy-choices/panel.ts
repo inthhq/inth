@@ -115,7 +115,7 @@ const NO_CATEGORIES: readonly AllConsentNames[] = [];
 						[attr.inert]="preferencesOpen() ? null : ''"
 					>
 						<div [attr.class]="cx(expandStyles.inner)">
-							<div style="padding-top: 8px">
+							<div [attr.class]="cx(styles.preferencesBody)">
 								<div
 									inth-pc-category-group
 									[idPrefix]="idPrefix()"

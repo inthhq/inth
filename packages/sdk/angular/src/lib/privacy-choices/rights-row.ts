@@ -280,7 +280,9 @@ export class SaleRightsRow {
 	protected readonly nudges = computed(() =>
 		this.open() ? (this.#surface.state().confirmation?.nudges ?? 0) : 0
 	);
-	readonly #bundle = computed(() => rightsBundleOf(this.#consent.snapshot()));
+	readonly #bundle = computed(() =>
+		rightsBundleOf(this.#consent.snapshot(), this.#consent.ɵoptOutReceiptData())
+	);
 	/** @internal */
 	protected readonly copy = computed(() => {
 		const right = this.right();

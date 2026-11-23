@@ -361,6 +361,14 @@ export class ConsentManager {
 	 */
 	readonly ɵhasStandaloneOptOutConfirmation: Signal<boolean> =
 		this.#hasStandaloneOptOutConfirmation.asReadonly();
+	/**
+	 * This browser's local opt-out receipt data, which says whether a
+	 * backend answer confirmed the held record's rights.
+	 *
+	 * @internal
+	 */
+	readonly ɵoptOutReceiptData: Signal<Readonly<OptOutReceiptData>> =
+		this.#optOutReceiptData.asReadonly();
 	/** GPC and other privacy signals. */
 	readonly privacySignals: Signal<ConsentSnapshot['privacySignals']>;
 	/** How the policy was resolved. */

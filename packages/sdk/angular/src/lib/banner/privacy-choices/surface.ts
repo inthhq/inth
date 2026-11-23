@@ -28,6 +28,7 @@ import {
 import { commitBannerChoice, resolveOptOutState } from '@inth/sdk/engine';
 import type {
 	BannerCommitAction,
+	PresentationAction,
 	ResolvedConsentLayout,
 } from '@inth/sdk/engine';
 import {
@@ -49,6 +50,7 @@ import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import surfaceStyles from '@inth/sdk/ui/styles/components/consent-surface';
 import type { AllThemeKeys } from '@inth/sdk/ui/theme';
 import { resolveBrandingTag, tabbableElements } from '@inth/sdk/ui/utils';
+import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 
 import { ConsentManager } from '../../core/consent-manager';
 import { ConsentStyles, SURFACE_SCOPES } from '../../core/consent-styles';
@@ -78,10 +80,22 @@ const EXIT_MS = 160;
 
 const CARD_LINKS: LegalLinkSelection = ['privacyPolicy', 'cookiePolicy'];
 
+/** The summary's actions, in order, when the banner passes no groups. */
+const DEFAULT_ACTION_GROUPS: readonly (readonly PresentationAction[])[] = [
+	['reject', 'accept'],
+	['customize'],
+];
+
+/** The first-layer actions the summary renders as buttons. */
+type SummaryAction = 'reject' | 'accept' | 'customize';
+
+const isSummaryAction = (action: PresentationAction): action is SummaryAction =>
+	action === 'reject' || action === 'accept' || action === 'customize';
+
 /**
  * Where focus goes after a choice (BNR-06, ARCH-03): the page's "Your
- * Privacy Choices" control. Angular's `[inthConsentDialogLink]` takes the
- * place of React's `PrivacyChoicesLink`.
+ * Privacy Choices" control (`<inth-privacy-choices-link>`), the floating
+ * trigger, or a `[inthConsentDialogLink]`.
  */
 const RETURN_TARGETS = [
 	'[data-testid="privacy-choices-link"]',
@@ -144,7 +158,10 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 				[attr.data-state]="phase() === 'leaving' ? 'closed' : 'open'"
 				[attr.data-variant]="variant()"
 				data-design="privacy-choices"
+				[attr.data-animation]="options().disableAnimation ? 'off' : null"
 				data-testid="consent-banner-root"
+				data-inth-surface="banner"
+				[attr.dir]="textDirection()"
 				[attr.inert]="phase() === 'leaving' ? '' : null"
 			>
 				@if (layout().blocking) {
@@ -185,7 +202,11 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 					>
 						@if (barCollapsed()) {
 							<h2
-								[attr.class]="cx(surfaceStyles.visuallyHidden)"
+								[attr.class]="
+									part('consentBannerTitle', surfaceStyles.visuallyHidden)
+										.className
+								"
+								[attr.style]="part('consentBannerTitle').style"
 								[attr.id]="ids.title"
 								data-testid="consent-banner-title"
 							>
@@ -193,7 +214,11 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 							</h2>
 							<div [attr.class]="cx(presentationStyles().row)">
 								<p
-									[attr.class]="cx(presentationStyles().text)"
+									[attr.class]="
+										part('consentBannerDescription', presentationStyles().text)
+											.className
+									"
+									[attr.style]="part('consentBannerDescription').style"
 									data-testid="consent-banner-description"
 								>
 									{{ options().description ?? copy().barDescription }}
@@ -206,29 +231,33 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 									}
 								</p>
 								<div
-									[attr.class]="cx(presentationStyles().actions)"
+									[attr.class]="
+										part('consentBannerFooter', presentationStyles().actions)
+											.className
+									"
+									[attr.style]="part('consentBannerFooter').style"
 									data-testid="consent-banner-footer"
 								>
-									@if (!notice()) {
-										<ng-container
-											[ngTemplateOutlet]="refuseTemplate"
-											[ngTemplateOutletContext]="{ $implicit: copy().reject }"
-										/>
-										<ng-container
-											[ngTemplateOutlet]="allowTemplate"
-											[ngTemplateOutletContext]="{ $implicit: copy().accept }"
-										/>
-									}
-									<ng-container
-										[ngTemplateOutlet]="expandTemplate"
-										[ngTemplateOutletContext]="{
-											$implicit:
-												options().customizeButtonText ?? copy().expandBar,
-											inBar: true,
-										}"
-									/>
 									@if (notice()) {
+										<ng-container
+											[ngTemplateOutlet]="expandTemplate"
+											[ngTemplateOutletContext]="{
+												$implicit:
+													options().customizeButtonText ?? copy().expandBar,
+												inBar: true,
+											}"
+										/>
 										<ng-container [ngTemplateOutlet]="okTemplate" />
+									} @else {
+										@for (action of summaryActions(); track action) {
+											<ng-container
+												[ngTemplateOutlet]="summaryTemplate"
+												[ngTemplateOutletContext]="{
+													$implicit: action,
+													inBar: true,
+												}"
+											/>
+										}
 									}
 								</div>
 							</div>
@@ -349,20 +378,39 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 									/>
 									<ng-container [ngTemplateOutlet]="okTemplate" />
 								} @else {
-									<ng-container
-										[ngTemplateOutlet]="actionGroupTemplate"
-										[ngTemplateOutletContext]="{
-											reject: copy().reject,
-											accept: copy().accept,
-										}"
-									/>
-									<ng-container
-										[ngTemplateOutlet]="expandTemplate"
-										[ngTemplateOutletContext]="{
-											$implicit: options().customizeButtonText ?? copy().expand,
-											inBar: false,
-										}"
-									/>
+									<!-- The policy's first-layer actions, in the host's order. -->
+									@for (group of summaryGroups(); track $index) {
+										@if (group.length > 1) {
+											<div
+												[attr.class]="
+													part(
+														'consentBannerFooterSubGroup',
+														surfaceStyles.actionGroup
+													).className
+												"
+												[attr.style]="part('consentBannerFooterSubGroup').style"
+												data-testid="consent-banner-footer-sub-group"
+											>
+												@for (action of group; track action) {
+													<ng-container
+														[ngTemplateOutlet]="summaryTemplate"
+														[ngTemplateOutletContext]="{
+															$implicit: action,
+															inBar: false,
+														}"
+													/>
+												}
+											</div>
+										} @else {
+											<ng-container
+												[ngTemplateOutlet]="summaryTemplate"
+												[ngTemplateOutletContext]="{
+													$implicit: group[0],
+													inBar: false,
+												}"
+											/>
+										}
+									}
 								}
 							</div>
 						}
@@ -457,6 +505,37 @@ type Phase = 'hidden' | 'shown' | 'leaving';
 				>
 					{{ label }}
 				</button>
+			}
+		</ng-template>
+		<ng-template
+			#summaryTemplate
+			let-action
+			let-inBar="inBar"
+		>
+			@switch (action) {
+				@case ('reject') {
+					<ng-container
+						[ngTemplateOutlet]="refuseTemplate"
+						[ngTemplateOutletContext]="{ $implicit: copy().reject }"
+					/>
+				}
+				@case ('accept') {
+					<ng-container
+						[ngTemplateOutlet]="allowTemplate"
+						[ngTemplateOutletContext]="{ $implicit: copy().accept }"
+					/>
+				}
+				@default {
+					<ng-container
+						[ngTemplateOutlet]="expandTemplate"
+						[ngTemplateOutletContext]="{
+							$implicit:
+								options().customizeButtonText ??
+								(inBar ? copy().expandBar : copy().expand),
+							inBar: inBar,
+						}"
+					/>
+				}
 			}
 		</ng-template>
 		<ng-template
@@ -650,8 +729,31 @@ export class PrivacyChoicesSurface {
 	protected readonly panelReady = signal(false);
 	/** @internal */
 	protected readonly notice = computed(() => this.variant() === 'notice');
+	/**
+	 * The policy's first-layer actions, in the host's order and groups. A
+	 * notice's "Your Privacy Choices" is the opt-out right, not an action,
+	 * so it stays.
+	 *
+	 * @internal
+	 */
+	protected readonly summaryGroups = computed(
+		(): readonly (readonly SummaryAction[])[] =>
+			(this.options().actionGroups ?? DEFAULT_ACTION_GROUPS)
+				.map((group) => group.filter(isSummaryAction))
+				.filter((group) => group.length > 0)
+	);
+	/** @internal */
+	protected readonly summaryActions = computed(() =>
+		this.summaryGroups().flat()
+	);
+	/** @internal */
+	protected readonly textDirection = computed(() =>
+		getTextDirection(this.#consent.translations()?.language)
+	);
 
-	readonly #bundle = computed(() => rightsBundleOf(this.#consent.snapshot()));
+	readonly #bundle = computed(() =>
+		rightsBundleOf(this.#consent.snapshot(), this.#consent.ɵoptOutReceiptData())
+	);
 	readonly #gpc = computed(
 		() => resolveOptOutState(this.#consent.snapshot()).lock === 'gpc-active'
 	);
@@ -737,6 +839,18 @@ export class PrivacyChoicesSurface {
 		this.#followBlocking();
 		this.#followEscape();
 		this.#followFocus();
+		// All-in-one has nothing to fold. An expansion left from the phone
+		// Drawer would reopen when the viewport narrows again, and Escape
+		// would spend a press folding it with no Customize to focus (PERM-13).
+		effect(() => {
+			if (!this.allInOne()) {
+				return;
+			}
+			this.#pendingExpandFocus = false;
+			if (this.#surface.state().expanded) {
+				untracked(() => this.#surface.session().collapse());
+			}
+		});
 		// The options load with Customize; warm them with the dialog's idle
 		// warming while the prompt shows.
 		effect((onCleanup) => {

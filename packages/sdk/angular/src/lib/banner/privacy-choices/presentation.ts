@@ -10,6 +10,7 @@ import type { Type } from '@angular/core';
 import type {
 	ConsentContainer,
 	Model,
+	PresentationAction,
 	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
 
@@ -28,6 +29,11 @@ export interface PresentationModule {
 /** What the stock `<inth-consent-banner>` passes on to the Privacy Choices prompt. */
 export interface PrivacyChoicesBannerOptions {
 	readonly container: NonNullable<ResolvedConsentPresentation['container']>;
+	/**
+	 * The first-layer actions the policy allows, in the host's order and
+	 * groups (`layout` on the stock banner).
+	 */
+	readonly actionGroups: readonly (readonly PresentationAction[])[];
 	readonly noStyle: boolean;
 	readonly disableAnimation: boolean;
 	readonly legalLinks: LegalLinkSelection | undefined;

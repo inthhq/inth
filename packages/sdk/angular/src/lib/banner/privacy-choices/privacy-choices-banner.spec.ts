@@ -17,6 +17,7 @@ import type {
 	ConsentPresentation,
 	PolicyRule,
 } from '@inth/sdk/engine';
+import { openOptInConfirmation } from '@inth/sdk/surface-actions';
 import type { Theme } from '@inth/sdk/ui/theme';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -24,7 +25,9 @@ import { offlineMode } from '../../../__tests__/fixtures/transport-mode';
 import { ALL_CATEGORIES } from '../../../__tests__/test-local';
 import { ConsentManager } from '../../core/consent-manager';
 import { provideInth } from '../../core/provide-inth';
+import { rightsBundleOf } from '../../privacy-choices/surface-session';
 import { ConsentBanner } from '../consent-banner';
+import type { ConsentBannerLayout } from '../consent-banner';
 
 type Region = 'eu' | 'us-opt-in' | 'us-notice' | 'us-opt-out';
 
@@ -47,6 +50,12 @@ const RULES: Record<Region, Partial<PolicyRule>> = {
 	},
 };
 
+/** The banner's own inputs for the next mount. */
+const bannerInputs: {
+	layout?: ConsentBannerLayout;
+	noStyle?: boolean;
+} = {};
+
 @Component({
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ConsentBanner],
@@ -58,9 +67,15 @@ const RULES: Record<Region, Partial<PolicyRule>> = {
 		>
 			Your Privacy Choices
 		</button>
-		<inth-consent-banner [disableAnimation]="true" />`,
+		<inth-consent-banner
+			[disableAnimation]="true"
+			[layout]="inputs.layout"
+			[noStyle]="inputs.noStyle"
+		/>`,
 })
-class BannerHost {}
+class BannerHost {
+	protected readonly inputs = { ...bannerInputs };
+}
 
 interface MountOptions {
 	/** `null` sets no container. */
@@ -72,6 +87,14 @@ interface MountOptions {
 	phone?: boolean;
 	theme?: Theme;
 	noStyle?: boolean;
+	/** Merged over the region's policy rule. */
+	rule?: Partial<PolicyRule>;
+	/** The visitor's language, which sets the prompt's `dir`. */
+	language?: string;
+	/** `layout` on the banner. */
+	layout?: ConsentBannerLayout;
+	/** `noStyle` on the banner itself, not the provider. */
+	bannerNoStyle?: boolean;
 }
 
 let fixtureId = 0;
@@ -122,13 +145,20 @@ const mount = async function mount({
 	phone = false,
 	theme,
 	noStyle,
+	rule,
+	language,
+	layout,
+	bannerNoStyle,
 }: MountOptions = {}) {
 	fixtureId += 1;
 	stubViewport(phone);
+	bannerInputs.layout = layout;
+	bannerInputs.noStyle = bannerNoStyle;
 	TestBed.configureTestingModule({
 		providers: [
 			provideInth({
 				consentCategories: [...ALL_CATEGORIES],
+				i18n: language ? { locale: language } : undefined,
 				legalLinks: { privacyPolicy: { href: '/privacy' } },
 				mode: offlineMode([
 					{
@@ -137,6 +167,7 @@ const mount = async function mount({
 						model: 'opt-in',
 						prompt: 'choice',
 						...RULES[region],
+						...rule,
 					} as PolicyRule,
 				]),
 				noStyle,
@@ -779,5 +810,164 @@ describe('customization', () => {
 		expect(
 			document.head.querySelector('style[data-inth-styles="inth-card"]')
 		).toBeNull();
+	});
+});
+
+describe('council fixes', () => {
+	test('[BNR-13] an opt-in confirmation opens under the Privacy Choices design', async () => {
+		const { consent, fixture } = await mount({ region: 'us-opt-in' });
+		await waitForRoot();
+		const confirmed = vi.fn();
+		openOptInConfirmation(consent.kernel(), confirmed, null);
+		fixture.detectChanges();
+		const confirm = await vi.waitFor(
+			() => must<HTMLButtonElement>('opt-in-confirmation-confirm-button'),
+			{ timeout: 4000 }
+		);
+		confirm.click();
+		await vi.waitFor(() => expect(confirmed).toHaveBeenCalledTimes(1));
+	});
+
+	test('[PERM-05][SR-05] collapsed panels carry a real inert attribute', async () => {
+		await mount();
+		await waitForRoot();
+		const panel = must('consent-banner-expand-panel');
+		expect(panel.getAttribute('inert')).toBe('');
+		must('consent-banner-customize-button').click();
+		await waitForPanel();
+		await vi.waitFor(() => expect(panel.hasAttribute('inert')).toBe(false));
+		expect(root().hasAttribute('inert')).toBe(false);
+	});
+
+	test('[BNR-15] the summary shows only the actions the policy allows, in every presentation', async () => {
+		const actions = { actions: ['accept', 'reject'] } as Partial<PolicyRule>;
+		await mount({ rule: actions });
+		await waitForRoot();
+		expect($('consent-banner-customize-button')).toBeNull();
+		expect($('consent-banner-reject-button')).not.toBeNull();
+		expect($('consent-banner-accept-button')).not.toBeNull();
+		TestBed.resetTestingModule();
+		document.body.replaceChildren();
+		await mount({ container: { type: 'banner' }, rule: actions });
+		await waitForRoot();
+		expect(root().getAttribute('data-placement')).toBe('banner-bottom');
+		expect($('consent-banner-customize-button')).toBeNull();
+		expect($('consent-banner-reject-button')).not.toBeNull();
+	});
+
+	test('[BNR-15] the summary follows the host layout order', async () => {
+		await mount({ layout: ['customize', ['accept', 'reject']] });
+		await waitForRoot();
+		const footer = must('consent-banner-footer');
+		expect(footer.firstElementChild).toBe($('consent-banner-customize-button'));
+		const group = must('consent-banner-footer-sub-group');
+		expect(group.firstElementChild).toBe($('consent-banner-accept-button'));
+	});
+
+	test('[PERM-13] an expansion made on phone does not survive a pass through all-in-one', async () => {
+		const { fixture } = await mount({
+			container: { side: 'start', type: 'drawer' },
+			phone: true,
+		});
+		await waitForRoot();
+		must('consent-banner-customize-button').click();
+		await vi.waitFor(() =>
+			expect(root().getAttribute('data-expanded')).toBe('true')
+		);
+		setPhone(false);
+		fixture.detectChanges();
+		await vi.waitFor(() =>
+			expect(root().getAttribute('data-flow')).toBe('all-in-one')
+		);
+		await fixture.whenStable();
+		// Esc on desktop has nothing to fold, so it is left to the page.
+		const escape = new KeyboardEvent('keydown', {
+			bubbles: true,
+			cancelable: true,
+			key: 'Escape',
+		});
+		document.dispatchEvent(escape);
+		expect(escape.defaultPrevented).toBe(false);
+		setPhone(true);
+		fixture.detectChanges();
+		await vi.waitFor(() =>
+			expect(root().getAttribute('data-flow')).toBe('expand-in-place')
+		);
+		expect(root().hasAttribute('data-expanded')).toBe(false);
+		expect(must('consent-banner-expand-panel').getAttribute('data-open')).toBe(
+			'false'
+		);
+	});
+
+	test('[COPY-01][SR-04] the rights bundle reads the backend-confirmed rights from the local receipt', () => {
+		const snapshot = {
+			optOut: {
+				heldBy: 'device',
+				method: 'button',
+				recordedAt: 1,
+				rights: ['sale', 'share'],
+			},
+		} as unknown as Parameters<typeof rightsBundleOf>[0];
+		expect(
+			rightsBundleOf(snapshot, {
+				localAct: 'button',
+				reference: 'ref',
+				rightsConfirmed: true,
+			})
+		).toBe('sale-share');
+		expect(rightsBundleOf(snapshot, null)).toBe('all');
+	});
+
+	test('a local noStyle reaches the stock buttons', async () => {
+		await mount({ bannerNoStyle: true });
+		await waitForRoot();
+		for (const id of [
+			'consent-banner-reject-button',
+			'consent-banner-accept-button',
+			'consent-banner-customize-button',
+		]) {
+			expect(must(id).getAttribute('class') ?? '').toBe('');
+		}
+	});
+
+	test('the collapsed bar takes the title, description and footer slots', async () => {
+		await mount({
+			container: { type: 'banner' },
+			theme: {
+				slots: {
+					consentBannerDescription: 'description-marker',
+					consentBannerFooter: 'footer-marker',
+					consentBannerTitle: 'title-marker',
+				},
+			},
+		});
+		await waitForRoot();
+		expect(must('consent-banner-title').classList).toContain('title-marker');
+		expect(must('consent-banner-description').classList).toContain(
+			'description-marker'
+		);
+		expect(must('consent-banner-footer').classList).toContain('footer-marker');
+	});
+
+	test('the root matches the classic root: direction, surface marker, animation switch', async () => {
+		await mount({ language: 'he' });
+		await waitForRoot();
+		expect(root().getAttribute('dir')).toBe('rtl');
+		expect(root().getAttribute('data-inth-surface')).toBe('banner');
+		expect(root().getAttribute('data-animation')).toBe('off');
+	});
+
+	test('the Preferences body spacing lives in the stylesheet, so noStyle drops it', async () => {
+		await mount({ container: { type: 'banner' }, region: 'us-opt-in' });
+		await waitForRoot();
+		must('consent-banner-customize-button').click();
+		const row = await vi.waitFor(() => must('consent-banner-preferences-row'), {
+			timeout: 4000,
+		});
+		const body = document
+			.getElementById(row.getAttribute('aria-controls') ?? '')
+			?.querySelector(':scope > * > *') as HTMLElement;
+		expect(body.getAttribute('style')).toBeNull();
+		expect(body.className).not.toBe('');
 	});
 });

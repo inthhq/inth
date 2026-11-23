@@ -106,8 +106,11 @@ const samePrivacyChoicesOptions = function samePrivacyChoicesOptions(
 	}
 	return (
 		(Object.keys(a) as (keyof PrivacyChoicesBannerOptions)[]).every(
-			(key) => key === 'container' || a[key] === b[key]
-		) && JSON.stringify(a.container) === JSON.stringify(b.container)
+			(key) =>
+				key === 'container' || key === 'actionGroups' || a[key] === b[key]
+		) &&
+		JSON.stringify(a.container) === JSON.stringify(b.container) &&
+		JSON.stringify(a.actionGroups) === JSON.stringify(b.actionGroups)
 	);
 };
 
@@ -153,13 +156,14 @@ const samePrivacyChoicesOptions = function samePrivacyChoicesOptions(
 	// Its parts resolve `noStyle` through this surface.
 	providers: [NoStyleScope],
 	selector: 'inth-consent-banner',
-	template: `@if (privacyChoices(); as options) {
+	// Either design hosts the opt-in confirmation: the confirmation claims
+	// the host here, so no other surface renders it.
+	template: `<inth-opt-in-confirmation
+			[noStyle]="resolvedNoStyle()"
+			[disableAnimation]="resolvedDisableAnimation()"
+		/>
+		@if (privacyChoices(); as options) {
 			<inth-pc-banner [options]="options" />
-		} @else {
-			<inth-opt-in-confirmation
-				[noStyle]="resolvedNoStyle()"
-				[disableAnimation]="resolvedDisableAnimation()"
-			/>
 		}
 		@if (!privacyChoices() && visibility.shouldRender()) {
 			<div inthPortal>
@@ -499,6 +503,7 @@ export class ConsentBanner {
 			}
 			return {
 				acceptButtonText: this.acceptButtonText(),
+				actionGroups: presentation.actionGroups,
 				container: presentation.container,
 				customizeButtonText: this.customizeButtonText(),
 				description: this.description(),

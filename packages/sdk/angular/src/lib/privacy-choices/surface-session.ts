@@ -21,7 +21,7 @@ import {
 	resolveOptOutReceipt,
 	resolveRightsBundle,
 } from '@inth/sdk/surface-state';
-import type { RightsBundle } from '@inth/sdk/surface-state';
+import type { OptOutReceiptData, RightsBundle } from '@inth/sdk/surface-state';
 
 import { ConsentManager } from '../core/consent-manager';
 
@@ -57,16 +57,20 @@ export const injectSurfaceSession =
 	};
 
 /**
- * The rights bundle the sale row names (COPY-01): the confirmed rights of a
- * held opt-out, else sale, sharing and targeted ads, which every US preset
- * covers.
+ * The rights bundle the sale row names (COPY-01, SR-04): the confirmed
+ * rights of a held opt-out, else sale, sharing and targeted ads, which
+ * every US preset covers. The rights count as confirmed only through the
+ * local receipt data, so it must be passed.
  *
  * @internal
  */
 export const rightsBundleOf = function rightsBundleOf(
-	snapshot: ConsentSnapshot
+	snapshot: Pick<ConsentSnapshot, 'optOut'>,
+	local: Partial<OptOutReceiptData> | null
 ): RightsBundle {
-	return resolveRightsBundle(resolveOptOutReceipt(snapshot).rights) ?? 'all';
+	return (
+		resolveRightsBundle(resolveOptOutReceipt(snapshot, local).rights) ?? 'all'
+	);
 };
 
 /** A Privacy Choices banner the server rendered and the browser hydrates. */

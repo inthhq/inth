@@ -204,7 +204,7 @@ export class RightsReceipt {
 	/** @internal */
 	protected readonly copy = computed(() =>
 		resolveRightsReceiptCopy(this.#consent.copy(), {
-			bundle: rightsBundleOf(this.#consent.snapshot()),
+			bundle: rightsBundleOf(this.#consent.snapshot(), this.#local()),
 			business: this.business(),
 			receipt: this.receipt(),
 		})
