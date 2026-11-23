@@ -51,7 +51,7 @@ inspect the matched policy, and check `/v1/consent/init` (`hosted()`) or `/v1/co
    `initFallback: false` and no `inputs` or `geoUrl`, every visitor gets your
    unknown-location policy. Switch to `hosted()` or configure location inputs.
 3. **`InthProvider` unmounts on navigation.** Move `<InthProvider />` to
-   `src/App.vue`.
+   `src/app.vue`.
 4. **The policy request failed.** Confirm `/v1/consent/init` or `/v1/consent/manifest` returns 200.
    A CORS error means your site's origin is missing from your Inth project's
    trusted origins. While resolution fails, Inth hides the UI and denies

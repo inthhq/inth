@@ -15,7 +15,7 @@ visitor's policy from Inth, and analytics wait until consent allows them.
   3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my project URL. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
   4. Add `consentManifest()` from `@inth/vue/vite` next to `vue()` in `vite.config.ts`. Add nothing to `.gitignore`.
   5. Install `inth` with `mode: hosted()` in `src/main.ts`. Move every analytics and marketing script into `scripts` with the matching helper from `@inth/integrations`, carry over settings such as PostHog's `region` or `apiHost`, and remove old loaders from `index.html` or app code. If a vendor has no helper, tell me.
-  6. Render `InthProvider` and a `ConsentDialogLink` in `src/App.vue`, and wrap third-party iframes in `ConsentGate`.
+  6. Render `InthProvider` and a `ConsentDialogLink` in `src/app.vue`, and wrap third-party iframes in `ConsentGate`.
   7. Run `vite build` and `vite preview`. In a browser, check that no vendor request fires before consent, that rejecting survives a reload, and that granting analytics from the footer link loads PostHog.
 
   Then list the files you changed, any script still outside consent, and how you checked the requests.
@@ -78,7 +78,7 @@ any existing PostHog loader.
 
 ## Mount the consent UI
 
-Render `InthProvider` and `ConsentDialogLink` in `src/App.vue`:
+Render `InthProvider` and `ConsentDialogLink` in `src/app.vue`:
 
 <include src="../../shared/examples/vue/app.mdx" />
 

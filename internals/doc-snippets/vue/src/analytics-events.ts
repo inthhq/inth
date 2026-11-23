@@ -4,7 +4,7 @@ import { watch } from 'vue';
 
 /**
  * Sends a PostHog pageview for each new path. Call it from a component's
- * `setup`, such as `App.vue`, with a getter for your router's path, such as
+ * `setup`, such as `app.vue`, with a getter for your router's path, such as
  * `() => useRoute().fullPath` from Vue Router.
  */
 export const usePageviews = (path: () => string) => {

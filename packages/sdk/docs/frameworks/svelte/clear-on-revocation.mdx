@@ -8,12 +8,12 @@ group: frameworks
 
 Gating stops new requests, but it leaves the cookies and storage keys a vendor
 already wrote. List the ones each optional category owns and pass them to
-`InthProvider` in `src/App.svelte`. When that category is denied,
+`InthProvider` in `src/app.svelte`. When that category is denied,
 Inth deletes them:
 
 {/* example: fragment */}
 
-```svelte title="src/App.svelte (partial)"
+```svelte title="src/app.svelte (partial)"
 <script lang="ts">
   import type { ConsentManagerOptions } from '@inth/svelte';
 
