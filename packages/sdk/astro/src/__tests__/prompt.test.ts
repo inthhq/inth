@@ -521,6 +521,36 @@ describe('the policy and the host', () => {
 		);
 	});
 
+	it('the notice\'s opt-out link takes the consentBannerRightLink slot', async () => {
+		const document = await render(
+			await buildLocals(
+				PC,
+				{
+					model: 'opt-out',
+					prompt: 'notice',
+					rights: ['disclosure', 'preferences', 'opt-out'],
+				},
+				{
+					theme: {
+						slots: {
+							consentBannerRightLink: {
+								className: 'right-link-marker',
+								style: { textDecorationThickness: '2px' },
+							},
+						},
+					},
+				}
+			)
+		);
+		const link = $(document, 'consent-banner-right-link-opt-out');
+		expect(link?.classList).toContain('right-link-marker');
+		// The slot adds to the stock class; it does not replace it.
+		expect(link?.classList).toContain(promptClassNames.surface.rightLink);
+		expect((link as HTMLElement | null)?.style.textDecorationThickness).toBe(
+			'2px'
+		);
+	});
+
 	it('the root carries the direction, the surface marker and the animation switch', async () => {
 		const locals = await buildLocals(PC, {}, { disableAnimation: true });
 		const model = resolvePromptModel({
