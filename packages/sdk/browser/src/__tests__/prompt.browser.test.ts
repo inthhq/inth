@@ -54,6 +54,23 @@ describe('opt-in', () => {
 		expect($('consent-banner-card')).not.toBeNull();
 	});
 
+	test("the root names the policy's model and prompt", async () => {
+		await mount();
+		await waitForRoot();
+		expect(root()).toHaveAttribute('data-model', 'opt-in');
+		expect(root()).toHaveAttribute('data-prompt', 'choice');
+	});
+
+	test('[BNR-13] banner scrollLock and trapFocus never block the stock banner: blockUntilChoice does', async () => {
+		await mount({ banner: { scrollLock: true, trapFocus: true } });
+		await waitForRoot();
+		expect(root()).not.toHaveAttribute('data-blocking');
+		expect($('consent-banner-overlay')).toBeNull();
+		expect(must('consent-banner-shell')).not.toHaveAttribute('role', 'dialog');
+		expect(pageAction().closest('[inert]')).toBeNull();
+		expect(document.body.style.overflow).not.toBe('hidden');
+	});
+
 	test('[BNR-13][BNR-10] US opt-out with no prompt shows nothing and never blocks', async () => {
 		await mount({ blockUntilChoice: true, region: 'us-opt-out' });
 		await new Promise((resolve) => {
@@ -688,6 +705,32 @@ describe('notice', () => {
 			blue.remove();
 		}
 	});
+
+	test("the root names the policy's model and prompt, and the right-link acts as Customize", async () => {
+		await mount({ region: 'us-notice' });
+		await waitForRoot();
+		expect(root()).toHaveAttribute('data-model', 'opt-out');
+		expect(root()).toHaveAttribute('data-prompt', 'notice');
+		const link = must('consent-banner-right-link-opt-out');
+		expect(link).toHaveAttribute('data-action', 'customize');
+		// The script tag replays no early tap, so the script must not hold one.
+		expect(link).toHaveAttribute('data-early-tap', 'off');
+	});
+
+	test.each(['card', 'banner'] as const)(
+		'the right-link takes the consentBannerRightLink slot in a %s',
+		async (type) => {
+			await mount({
+				container: { type },
+				region: 'us-notice',
+				slots: { consentBannerRightLink: 'right-link-marker' },
+			});
+			await waitForRoot();
+			const link = must('consent-banner-right-link-opt-out');
+			expect(link).toHaveClass('right-link-marker');
+			expect(link.getAttribute('part')).toBe('consentBannerRightLink');
+		}
+	);
 
 	test('OK records no consent and ends the prompt', async () => {
 		await mount({ region: 'us-notice' });
