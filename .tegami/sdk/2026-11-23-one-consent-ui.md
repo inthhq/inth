@@ -5,7 +5,7 @@ packages:
 
 ### Breaking: one consent UI, placed by `container`
 
-The stock banner and dialog now always render the consent UI that `design: 'privacy-choices'` used to select: the banner in a Card, a Banner or a Drawer, with Customize opening the choices inside it, and the "Your Privacy Choices" dialog. The classic banner and preference dialog are gone, and so is the `design` option. React, Next.js, TanStack Start, Vue and Nuxt move first; Svelte, Angular, Astro and the script tag follow in the next release.
+The stock banner and dialog now always render one consent UI in every framework and in the script tag: the banner in a Card, a Banner or a Drawer, with Customize opening the choices inside it, and the "Your Privacy Choices" dialog. The classic banner and preference dialog are gone, and so is the `design` option that used to choose between the two.
 
 **What to change**
 
@@ -22,34 +22,10 @@ The stock banner and dialog now always render the consent UI that `design: 'priv
 | `PromptVariant`, `PromptPosition`, `PROMPT_VARIANT_*`, `positionSource` | `ConsentContainer`, `ConsentPlacement` and the resolved `container` |
 | `containerFromLegacyPrompt`, `LegacyPromptPresentation` | `container` |
 | The `invalid-variant`, `invalid-position` and `legacy-presentation` diagnostics | The container's own diagnostics |
-| `managerMode`, `bannerPosition`, `ConsentBannerPosition`, `ConsentManagerMode` in the provider config | `presentation.prompt.container` |
-| `ConsentBanner.Root`, `.Card`, `.PolicyActions`, `.AcceptButton` and the other compound parts, `useConsentBannerSurface` | Slots, theme tokens, or the headless hooks |
-| `ConsentDialog.Root`, `.Card`, `.Overlay` and the other compound parts | Slots, theme tokens, or `ConsentWidget` in your own dialog |
 | `hideBranding` on `ConsentDialog` | Nothing: the dialog has no branding tag. |
 | `@inth/sdk/styles/privacy-choices.css` | `styles.css`, which now holds every rule |
 
 `container` is set on `ConsentBanner`, in `presentation.prompt.container`, or by the policy rule's `surface.container`, in that order. A policy's `surface.container` now places the prompt on every site, with no `design` switch. `edgeStyle` (`inset` or `flush`) works the same way.
-
-**What to change in Angular**
-
-| Removed from `@inth/angular` | Use instead |
-| --- | --- |
-| `variant="floating"` on `<inth-consent-banner>` | `[container]="{ type: 'card', position: 'start' }"` (the default) or `'end'` |
-| `variant="bar"`, `position="top"` / `"bottom"` | `[container]="{ type: 'banner', edge: 'top' }"` / `'bottom'` |
-| `variant="widget"` | `[container]="{ type: 'card', position: 'end' }"` |
-| `variant="wall"` | `[container]="{ type: 'card', position: 'center' }"`, which always blocks |
-| `blocking`, `scrollLock`, `trapFocus` on `<inth-consent-banner>` | `blockUntilChoice` |
-| `primaryButton` on `<inth-consent-banner>` | `layout` and the theme's `consentActions` |
-| `rootClass` on `<inth-consent-banner>` and `<inth-consent-dialog>` | The `consentBanner` and `consentDialog` theme slots |
-| `hideBranding` on `<inth-consent-dialog>` | Nothing: the dialog has no branding tag. `<inth-provider>` no longer passes it to the dialog. |
-| `ng-template` `inthConsentBannerTitle`, `inthConsentBannerDescription`, `inthConsentBannerAction` (`ConsentBannerTitle`, `ConsentBannerDescription`, `ConsentBannerAction`, `BannerCopyContext`, `BannerActionContext`) and projected footer content | The `heading`, `description` and button text inputs, theme slots, or `HeadlessConsent` for your own markup |
-| `BANNER_SHEETS` from `@inth/angular` | `PARTS_SHEETS` |
-| `DIALOG_SHEETS` from `@inth/angular/consent-widget` | `WIDGET_SHEETS` |
-| `variant`, `position`, `positionSource`, `scrollLock`, `trapFocus` and `design` on `HeadlessConsent.banner()` and `.dialog()` | `container` and `blocking`. Both signals now hold a `ResolvedConsentPresentation` plus `isVisible`. |
-| `ConsentBannerHarness.getVariant()` / `getPosition()` | `getPlacement()`, which reads `data-placement` |
-| `ConsentDialogHarness.getWidget()` | The dialog harness's own `getCategories()`, `isCategoryEnabled()`, `setCategory()` and `save()` |
-
-Customize on `<inth-consent-banner>` now opens the choices inside the banner. Add `<inth-privacy-choices-link>` to your footer so visitors can reopen the dialog. The provider's `scrollLock` and `trapFocus` now apply only to the IAB surfaces and the opt-in and opt-out confirmations. `ConsentWidget`, `ConsentGate`, the IAB components, `<inth-consent-dialog-trigger>`, `[inthConsentDialogLink]` and the confirmations keep their inputs.
 
 **What visitors see**
 
@@ -71,17 +47,17 @@ The classic banner and dialog CSS variables still apply: each part reads its own
 
 The per-surface sheets are renamed: `banner` is now `parts`, `bar` is `banner`, `dialog` is `widget`, and `privacy-choices-dialog` is `dialog`. The CSS modules `consent-bar` and `privacy-choices` are now `consent-banner` and `consent-dialog`. `styles.css` is the single full stylesheet.
 
-**Script tag and `@inth/sdk`**
+**React, Next.js and TanStack Start**
 
-- `ui.banner` takes `container`, `edgeStyle` and `blockUntilChoice`, which win over `presentation.prompt`. `ui.banner.scrollLock` and `ui.banner.trapFocus` now apply to the IAB banner only; use `blockUntilChoice` for the stock banner. `ui.dialog.hideBranding` applies to the IAB dialog only.
-- `inth.js` no longer renders a banner of its own or records a choice before the engine. When a banner is due it loads `inth.hosted.js` at once and starts fetching `inth.choices.js` beside it; a choice made before the engine (a page action, or `inth.acceptAll()`) waits for the engine, which records it. `inth.js` is about 17 KB smaller gzipped (35.7 KB to 18.9 KB).
-- `inth.dialog.js` and `inth.commit.js` are gone, with `data-dialog-src` and `data-commit-src`. `inth.choices.js` carries the banner in each container, its options and the dialog; `inth.hosted.js` loads it the first time the page shows one of them, so a returning visitor who sees no banner never downloads it. `inth.hosted.js` no longer carries the classic preference centre and is about 18 KB smaller gzipped (134.9 KB to 117.1 KB). If you host the files yourself, serve `inth.hosted.js`, `inth.records.js` and `inth.choices.js` next to `inth.js`, or set `data-hosted-src`, `data-records-src` and `data-choices-src`.
-- `@inth/sdk/styles.css`, for `shadow: false` with `styles: false`, now holds the banner's and the dialog's rules too.
-- The IAB banner stays in its bottom-left corner; `presentation.prompt.variant` and `position` no longer move it.
+| Removed | Use instead |
+| --- | --- |
+| `managerMode`, `bannerPosition`, `ConsentBannerPosition`, `ConsentManagerMode` in the provider config | `presentation.prompt.container` |
+| `ConsentBanner.Root`, `.Card`, `.PolicyActions`, `.AcceptButton` and the other compound parts, `useConsentBannerSurface` | Slots, theme tokens, or the headless hooks |
+| `ConsentDialog.Root`, `.Card`, `.Overlay` and the other compound parts | Slots, theme tokens, or `ConsentWidget` in your own dialog |
 
 **Vue and Nuxt**
 
-`ConsentBanner` and `ConsentManager` render the new banner and dialog, from `InthProvider` and when you mount them yourself.
+`ConsentBanner` and `ConsentManager` render the consent banner and dialog, from `InthProvider` and when you mount them yourself.
 
 | Removed | Use instead |
 | --- | --- |
@@ -101,6 +77,27 @@ The per-surface sheets are renamed: `banner` is now `parts`, `bar` is `banner`, 
 - `getHeadlessConsent()`'s `banner` and `dialog` carry the resolved `container` instead of `variant` and `position`.
 - The banner's root no longer carries `data-prompt`, `data-model` or `data-position`; read `data-variant`, `data-placement`, `data-flow` and `data-edge-style`.
 
+**Angular**
+
+| Removed from `@inth/angular` | Use instead |
+| --- | --- |
+| `variant="floating"` on `<inth-consent-banner>` | `[container]="{ type: 'card', position: 'start' }"` (the default) or `'end'` |
+| `variant="bar"`, `position="top"` / `"bottom"` | `[container]="{ type: 'banner', edge: 'top' }"` / `'bottom'` |
+| `variant="widget"` | `[container]="{ type: 'card', position: 'end' }"` |
+| `variant="wall"` | `[container]="{ type: 'card', position: 'center' }"`, which always blocks |
+| `blocking`, `scrollLock`, `trapFocus` on `<inth-consent-banner>` | `blockUntilChoice` |
+| `primaryButton` on `<inth-consent-banner>` | `layout` and the theme's `consentActions` |
+| `rootClass` on `<inth-consent-banner>` and `<inth-consent-dialog>` | The `consentBanner` and `consentDialog` theme slots |
+| `hideBranding` on `<inth-consent-dialog>` | Nothing: the dialog has no branding tag. `<inth-provider>` no longer passes it to the dialog. |
+| `ng-template` `inthConsentBannerTitle`, `inthConsentBannerDescription`, `inthConsentBannerAction` (`ConsentBannerTitle`, `ConsentBannerDescription`, `ConsentBannerAction`, `BannerCopyContext`, `BannerActionContext`) and projected footer content | The `heading`, `description` and button text inputs, theme slots, or `HeadlessConsent` for your own markup |
+| `BANNER_SHEETS` from `@inth/angular` | `PARTS_SHEETS` |
+| `DIALOG_SHEETS` from `@inth/angular/consent-widget` | `WIDGET_SHEETS` |
+| `variant`, `position`, `positionSource`, `scrollLock`, `trapFocus` and `design` on `HeadlessConsent.banner()` and `.dialog()` | `container` and `blocking`. Both signals now hold a `ResolvedConsentPresentation` plus `isVisible`. |
+| `ConsentBannerHarness.getVariant()` / `getPosition()` | `getPlacement()`, which reads `data-placement` |
+| `ConsentDialogHarness.getWidget()` | The dialog harness's own `getCategories()`, `isCategoryEnabled()`, `setCategory()` and `save()` |
+
+Customize on `<inth-consent-banner>` now opens the choices inside the banner. Add `<inth-privacy-choices-link>` to your footer so visitors can reopen the dialog. The provider's `scrollLock` and `trapFocus` now apply only to the IAB surfaces and the opt-in and opt-out confirmations. `ConsentWidget`, `ConsentGate`, the IAB components, `<inth-consent-dialog-trigger>`, `[inthConsentDialogLink]` and the confirmations keep their inputs.
+
 **Astro**
 
 `<ConsentBanner />` always renders the consent prompt, placed by `presentation.prompt.container` or the policy's `surface.container`, and every dialog island (`ui: 'react'`, `'svelte'` or `'vue'`) renders the "Your Privacy Choices" dialog with its own stylesheets. The classic banner markup is gone.
@@ -115,3 +112,11 @@ The per-surface sheets are renamed: `banner` is now `parts`, `bar` is `banner`, 
 | `data-variant` on the IAB banner root | Nothing: it floats at `data-position="bottom-left"`, as React's does |
 
 A page that knows its policy inlines the tokens, the buttons, the prompt's shell and the one container it shows. A page that does not yet, such as a prerendered page in `hosted()` or `manifest()` mode, inlines `first-paint`, which now holds every container. The prompt's opt-out icon takes the `legal-links` sheet's `optOutIcon` class.
+
+**Script tag and `@inth/sdk`**
+
+- `ui.banner` takes `container`, `edgeStyle` and `blockUntilChoice`, which win over `presentation.prompt`. `ui.banner.scrollLock` and `ui.banner.trapFocus` now apply to the IAB banner only; use `blockUntilChoice` for the stock banner. `ui.dialog.hideBranding` applies to the IAB dialog only.
+- `inth.js` no longer renders a banner of its own or records a choice before the engine. When a banner is due it loads `inth.hosted.js` at once and starts fetching `inth.choices.js` beside it; a choice made before the engine (a page action, or `inth.acceptAll()`) waits for the engine, which records it. `inth.js` is about 17 KB smaller gzipped (35.7 KB to 18.9 KB).
+- `inth.dialog.js` and `inth.commit.js` are gone, with `data-dialog-src` and `data-commit-src`. `inth.choices.js` carries the banner in each container, its options and the dialog; `inth.hosted.js` loads it the first time the page shows one of them, so a returning visitor who sees no banner never downloads it. `inth.hosted.js` no longer carries the classic preference centre and is about 18 KB smaller gzipped (134.9 KB to 117.1 KB). If you host the files yourself, serve `inth.hosted.js`, `inth.records.js` and `inth.choices.js` next to `inth.js`, or set `data-hosted-src`, `data-records-src` and `data-choices-src`.
+- `@inth/sdk/styles.css`, for `shadow: false` with `styles: false`, now holds the banner's and the dialog's rules too.
+- The IAB banner stays in its bottom-left corner; `presentation.prompt.variant` and `position` no longer move it.

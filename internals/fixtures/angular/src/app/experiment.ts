@@ -97,7 +97,9 @@ export const experimentFromSearch = function experimentFromSearch(
 		return undefined;
 	}
 	const experiment: ConsentExperiment = {
-		arms: { wall: { prompt: { variant: 'wall' } } },
+		arms: {
+			wall: { prompt: { container: { position: 'center', type: 'card' } } },
+		},
 		id: 'banner-shape',
 	};
 	const arm = params.get('arm');

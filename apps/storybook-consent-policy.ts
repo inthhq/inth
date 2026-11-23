@@ -88,7 +88,7 @@ export const storybookOptOutPolicyResolution: PolicyResolution =
  * Shared story presentation. The prompt keeps the resolver's non-blocking
  * default (a labelled region that never steals focus); the preference dialog
  * keeps its blocking default (backdrop, focus trap, scroll lock). Stories
- * that need a blocking banner pass `blocking` or the legacy `trapFocus`.
+ * that need a blocking banner pass `blockUntilChoice`.
  */
 export const storybookPresentation: ConsentPresentation = {
 	preferences: {

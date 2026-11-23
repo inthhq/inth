@@ -152,7 +152,9 @@ export default defineConfig({
 			],
 			...(experiment && {
 				experiment: {
-					arms: { wall: { prompt: { variant: 'wall' } } },
+					arms: {
+						wall: { prompt: { container: { position: 'center', type: 'card' } } },
+					},
 					id: 'banner-shape',
 				},
 				middleware: false,

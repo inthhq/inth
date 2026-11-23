@@ -17,7 +17,6 @@ packages:
 - An opt-in policy without a US marker (the `opt-out` right or a GPC rule) always gets the EU dialog, whatever its prompt.
 - Phone sheets take the prompt's resolved edge style. A Card is always inset, so a Card prompt with `edgeStyle: 'flush'` now gives inset sheets.
 - The vendor chevron turns when its table opens, and chevrons that point to a sheet mirror on right-to-left pages.
-- Hovering a link that opens the dialog before `<ConsentDialog />` mounts no longer downloads the classic dialog on a Privacy Choices page.
 - `noStyle` on `ConsentDialog` removes the styles of Done and the EU buttons. The dialog sets `dir` from its language, and the Preferences count updates as switches change.
 
-New in `@inth/sdk/surface-state`: `resolvePrivacyChoicesRegime` (US or EU dialog for a policy), `resolveConsentDesign` and `resolvePrivacyChoicesLink`.
+New in `@inth/sdk/surface-state`: `resolvePrivacyChoicesRegime` (US or EU dialog for a policy) and `resolvePrivacyChoicesLink`.
