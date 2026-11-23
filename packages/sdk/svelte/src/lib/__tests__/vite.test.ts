@@ -399,7 +399,7 @@ describe('consentManifest first-load chunk', () => {
 			'/app/node_modules/@inth/sdk/lib/core/dist/libs/vendors.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/libs/experiment.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/libs/experiment-storage.js',
-			'/app/node_modules/@inth/sdk/lib/core/dist/libs/cookie/operations.js',
+			'/app/node_modules/@inth/sdk/lib/core/dist/libs/cookie/cookie.store.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/modules/has.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/consent-record/evaluate.js',
 			'/app/node_modules/@inth/sdk/lib/core/dist/translations/index.js',
