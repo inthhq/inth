@@ -8,6 +8,7 @@ import {
 	hosted,
 } from '@inth/nextjs';
 import type { ConsentConfig, InthProviderProps } from '@inth/nextjs';
+import { ConsentDialogLink } from '@inth/nextjs/components/consent-dialog-link';
 import { manifest as browserManifest } from '@inth/sdk/transports/manifest-browser';
 import { useMemo } from 'react';
 import type { ReactNode } from 'react';
@@ -175,6 +176,9 @@ export const ConsentShell = ({
 				<h1>next-compat: {scenario}</h1>
 				{children}
 			</main>
+			<footer>
+				<ConsentDialogLink>Privacy settings</ConsentDialogLink>
+			</footer>
 		</InthProvider>
 	);
 };
