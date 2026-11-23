@@ -876,6 +876,43 @@ describe('wave B round 1', () => {
 		expect(group.firstElementChild).toBe($('consent-banner-accept-button'));
 	});
 
+	test('[BNR-15] the collapsed Banner keeps the host groups and their slot', async () => {
+		await mount({
+			bannerProps: { layout: ['customize', ['accept', 'reject']] },
+			components: { banner: { actionGroup: { className: 'group-marker' } } },
+			container: { type: 'banner' },
+		});
+		await waitForRoot();
+		expect(root()).toHaveAttribute('data-placement', 'banner-bottom');
+		const footer = must('consent-banner-footer');
+		expect(footer.firstElementChild).toBe($('consent-banner-customize-button'));
+		const group = must('consent-banner-footer-sub-group');
+		expect(group.parentElement).toBe(footer);
+		expect(group).toHaveClass('group-marker');
+		expect(group.firstElementChild).toBe($('consent-banner-accept-button'));
+		expect(group.lastElementChild).toBe($('consent-banner-reject-button'));
+		// Grouped buttons get the bar's button size, not the group.
+		expect(box('consent-banner-accept-button').height).toBeGreaterThanOrEqual(
+			32
+		);
+		expect(box('consent-banner-accept-button').width).toBeCloseTo(
+			box('consent-banner-reject-button').width,
+			0
+		);
+		// Stacked, every button takes an equal share of the row.
+		await page.viewport(390, 800);
+		await vi.waitFor(() =>
+			expect(box('consent-banner-customize-button').width).toBeCloseTo(
+				box('consent-banner-accept-button').width,
+				0
+			)
+		);
+		expect(box('consent-banner-reject-button').width).toBeCloseTo(
+			box('consent-banner-accept-button').width,
+			0
+		);
+	});
+
 	test('[PERM-13] an expansion made on phone does not survive a pass through all-in-one', async () => {
 		await page.viewport(390, 800);
 		await mount({ container: { side: 'start', type: 'drawer' } });

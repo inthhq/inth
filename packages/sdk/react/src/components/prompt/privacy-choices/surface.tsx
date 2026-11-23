@@ -584,7 +584,6 @@ const SurfaceContent = ({
 			)
 		)
 		.filter((group) => group.length > 0);
-	const summaryActions = summaryGroups.flat();
 	const links = legalLinks === undefined ? CARD_LINKS : legalLinks;
 	const barLinks = links?.filter((key) => key === 'privacyPolicy') ?? null;
 
@@ -668,7 +667,7 @@ const SurfaceContent = ({
 		<div
 			key={key}
 			{...mergeSlotProps(getSlotProps(components, 'banner.actionGroup'), {
-				baseClassName: surfaceStyles.actionGroup,
+				baseClassName: [surfaceStyles.actionGroup, presentation.actionGroup],
 				noStyle,
 			})}
 			data-testid="consent-banner-footer-sub-group"
@@ -689,6 +688,16 @@ const SurfaceContent = ({
 			inBar
 		);
 	};
+
+	// Every presentation, the collapsed Banner included, keeps the host's
+	// groups and their `banner.actionGroup` slot.
+	const summaryRow = (inBar: boolean) =>
+		summaryGroups.map((group) => {
+			const buttons = group.map((action) => summaryButton(action, inBar));
+			return group.length > 1
+				? actionGroup(buttons, group.join('-'))
+				: buttons[0];
+		});
 
 	let footerContent: ReactNode;
 	if (optionsOpen) {
@@ -713,12 +722,7 @@ const SurfaceContent = ({
 			</>
 		);
 	} else {
-		footerContent = summaryGroups.map((group) => {
-			const buttons = group.map((action) => summaryButton(action, false));
-			return group.length > 1
-				? actionGroup(buttons, group.join('-'))
-				: buttons[0];
-		});
+		footerContent = summaryRow(false);
 	}
 
 	const tag = hideBranding ? null : (
@@ -798,7 +802,7 @@ const SurfaceContent = ({
 								{okButton}
 							</>
 						) : (
-							summaryActions.map((action) => summaryButton(action, true))
+							summaryRow(true)
 						)}
 					</div>
 				</div>

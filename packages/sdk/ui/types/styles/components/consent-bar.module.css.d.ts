@@ -1,4 +1,5 @@
 declare const styles: {
+  readonly "actionGroup": string;
   readonly "actions": string;
   readonly "card": string;
   readonly "consentBarDown": string;
