@@ -13,7 +13,7 @@ step.
 
   1. Check that the site serves HTML templates without a framework adapter (Next.js, React, Vue, Svelte, Astro, Angular). If it uses one of those frameworks, stop and tell me.
   2. If `@inth/sdk` is installed locally, read `node_modules/@inth/sdk/AGENTS.md` and follow the HTML quickstart. Otherwise follow this HTML script tag setup directly without guessing API names.
-  3. Ask me for my Inth project URL, using `https://example-inth.inth.app` only for a demo. Add `<script src="<projectUrl>/inth.js" defer></script>` to the shared `<head>` rendered by every page.
+  3. Ask me for my Inth project URL. Add `<script src="<projectUrl>/inth.js" defer></script>` to the shared `<head>` rendered by every page.
   4. Find every analytics, marketing and ad script tag across templates. Change each to `<script type="text/plain" data-inth-category="measurement">` (or `marketing`) and remove any duplicate active loaders.
   5. For third-party iframes (YouTube, Google Maps), move `src` to `data-src` and add `data-category`.
   6. Add `<a href="#inth-preferences">Privacy settings</a>` to the shared footer.
@@ -31,9 +31,9 @@ step.
 
 ## Add the script tag
 
-Paste this tag into your shared `<head>`. Replace
-`https://your-project.inth.app` with your Inth project URL (or
-`https://example-inth.inth.app` for a demo) and keep `/inth.js` on the end:
+Paste this tag into your shared `<head>`.
+<ProjectUrlHint>Replace `https://your-project.inth.app` with your Inth project
+URL and keep `/inth.js` on the end:</ProjectUrlHint>
 
 <include src="../../shared/examples/html/script-tag.mdx" />
 

@@ -12,7 +12,7 @@ visitor's policy from Inth, and analytics wait until consent allows them.
 
   1. Check that the app is a Vue 3 app built with Vite. If it uses Nuxt or a custom Vue SSR server, stop and tell me.
   2. Install `@inth/vue` and `@inth/integrations`. Read `node_modules/@inth/vue/AGENTS.md`, then follow the Vue quickstart it links to, in order. Do not guess the API from memory.
-  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
+  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my project URL. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
   4. Add `consentManifest()` from `@inth/vue/vite` next to `vue()` in `vite.config.ts`. Add nothing to `.gitignore`.
   5. Install `inth` with `mode: hosted()` in `src/main.ts`. Move every analytics and marketing script into `scripts` with the matching helper from `@inth/integrations`, carry over settings such as PostHog's `region` or `apiHost`, and remove old loaders from `index.html` or app code. If a vendor has no helper, tell me.
   6. Render `InthProvider` and a `ConsentDialogLink` in `src/App.vue`, and wrap third-party iframes in `ConsentGate`.
@@ -40,10 +40,10 @@ Add your Inth project URL (including any path prefix) to `.env` and your
 host's build settings:
 
 ```sh title=".env"
-VITE_INTH_PROJECT_URL=https://example-inth.inth.app
+VITE_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-This URL is public; `https://example-inth.inth.app` is a demo project. Vite
+This URL is public. Vite
 inlines it at build time, so rebuild after changes. `VITE_INTH_PROJECT_URL`
 wins over any legacy `VITE_C15T_BACKEND_URL`, which is read as a fallback if
 unset.

@@ -14,7 +14,7 @@ consent allows them.
   1. Check that the app runs Angular 20, 21 or 22 with standalone components. If it uses NgModules or an older Angular version, stop and tell me.
   2. Install `@inth/angular` and `@inth/integrations`. Read `node_modules/@inth/angular/AGENTS.md`, then follow the Angular quickstart it links to, in order. Do not guess the API from memory.
   3. Create `src/scripts.ts`. Move every analytics and marketing script into it with the matching helper from `@inth/integrations`, carrying over each vendor's settings. Remove the old script tags from `index.html`, `angular.json` and SDK imports. If a vendor has no helper, tell me.
-  4. In `src/app/app.config.ts`, add `provideInth({ projectUrl, scripts })`. Ask me for my Inth project URL, and use `https://example-inth.inth.app` only for a demo. Keep `provideInth()` in `app.config.ts` so server configs inherit it.
+  4. In `src/app/app.config.ts`, add `provideInth({ projectUrl, scripts })`. Ask me for my Inth project URL. Keep `provideInth()` in `app.config.ts` so server configs inherit it.
   5. In the root component (`src/app/app.ts`), render `<inth-consent-banner />`, `<inth-consent-dialog />` from `@inth/angular/consent-dialog`, and a footer button with `inthConsentDialogLink`.
   6. Run `ng build` and serve `dist/<app>/browser`. In a private browser window, verify no vendor request fires before consent, rejecting survives a reload, and granting analytics from the footer button loads the vendor.
 
@@ -57,8 +57,8 @@ Add `provideInth()` to `providers` in `src/app/app.config.ts`:
 
 <include src="../../shared/examples/angular/app-config.mdx" />
 
-Replace `https://your-project.inth.app` with your public Inth project URL
-(or `https://example-inth.inth.app` for a demo). `provideInth()` registers
+<ProjectUrlHint>Replace `https://your-project.inth.app` with your public Inth
+project URL.</ProjectUrlHint> `provideInth()` registers
 `ConsentManager`, `HeadlessConsent` and `ConsentTheme` and resolves policy
 from Inth after first render. See
 [provideInth](/docs/frameworks/angular/provide-inth).

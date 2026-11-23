@@ -11,7 +11,7 @@ Add a consent banner and preference dialog to an Astro site on static or server 
 
   1. Check `astro.config.mjs` for `output: 'server'` with an adapter versus `output: 'static'`, and check if `@astrojs/svelte`, `@astrojs/react`, or `@astrojs/vue` is already installed.
   2. Install `@inth/astro` and `@inth/integrations`. If no UI framework integration is installed, install `@astrojs/svelte` and `svelte` for the preference dialog island. Read `node_modules/@inth/astro/AGENTS.md`, then follow the Astro quickstart it links to, in order. Do not guess the API from memory.
-  3. Set `PUBLIC_INTH_PROJECT_URL` in `.env`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `PUBLIC_INTH_PROJECT_URL` wins over any legacy `PUBLIC_C15T_BACKEND_URL`.
+  3. Set `PUBLIC_INTH_PROJECT_URL` in `.env`. Ask me for my project URL. `PUBLIC_INTH_PROJECT_URL` wins over any legacy `PUBLIC_C15T_BACKEND_URL`.
   4. In `astro.config.mjs`, register the UI framework before `inth()` from `@inth/astro`. Use `inth()` on server output and `inth({ mode: hosted() })` on static output. Pass `ui: 'react'` or `ui: 'vue'` if multiple UI frameworks are registered.
   5. Create `src/inth.client.ts` exporting `{ scripts: [...] }` as default. Move analytics and marketing scripts into it with `@inth/integrations`, carrying over settings like PostHog's `region` or `apiHost`, and remove old `<script>` tags or SDK imports. If a vendor has no helper, tell me.
   6. In the shared layout, render `ConsentScript` in `<head>`, plus `ConsentBanner`, `ConsentDialog`, and a footer `ConsentDialogLink` from `@inth/astro/components`.
@@ -36,10 +36,10 @@ Add a consent banner and preference dialog to an Astro site on static or server 
 Add your absolute Inth project URL to `.env` and your host's build settings:
 
 ```sh title=".env"
-PUBLIC_INTH_PROJECT_URL=https://example-inth.inth.app
+PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-The URL is public, not a secret. `https://example-inth.inth.app` is a demo project. Rebuild after changing it. `PUBLIC_INTH_PROJECT_URL` wins over any legacy `PUBLIC_C15T_BACKEND_URL`, which is read as a fallback if unset.
+The URL is public, not a secret. Rebuild after changing it. `PUBLIC_INTH_PROJECT_URL` wins over any legacy `PUBLIC_C15T_BACKEND_URL`, which is read as a fallback if unset.
 
 ## Configure the integration
 

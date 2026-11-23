@@ -11,7 +11,7 @@ Add a consent banner to a TanStack Start app. Your root loader resolves consent 
 
   1. Check that the app runs `@tanstack/react-start` 1.168.60 or later on a Start server. If it uses SPA mode or static prerendering, stop and tell me.
   2. Install `@inth/tanstack-start` and `@inth/integrations`. Read `node_modules/@inth/tanstack-start/AGENTS.md`, then follow the TanStack Start quickstart it links to, in order. Do not guess the API from memory.
-  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
+  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my project URL. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
   4. Add `consentManifest()` from `@inth/tanstack-start/build` before `tanstackStart()` in `vite.config.ts`. Add nothing to `.gitignore`.
   5. Update `src/routes/__root.tsx`: define a top-level `getConsentState` server function wrapping `createConsentStateHandler()`, await it in the root loader with `...consentLoaderOptions`, and render `InthProvider`, `ConsentBanner`, `ConsentDialog`, and a footer `ConsentDialogLink`.
   6. Move every analytics and marketing script into `scripts` in `src/routes/__root.tsx` using helpers from `@inth/integrations`, carry over settings such as PostHog's `region` or `apiHost`, and remove old loaders from `head()` or app code. If a vendor has no helper, tell me.
@@ -36,10 +36,10 @@ Components render their own `<style>` elements, so no stylesheet import is neede
 Add your Inth project URL, including any path prefix, to `.env` and your host's build settings:
 
 ```sh title=".env"
-VITE_INTH_PROJECT_URL=https://example-inth.inth.app
+VITE_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-This URL is public. `https://example-inth.inth.app` is a demo project for testing. Vite inlines it at build time, so rebuild after changing it. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`, which is read as a fallback if unset.
+This URL is public. Vite inlines it at build time, so rebuild after changing it. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`, which is read as a fallback if unset.
 
 ## Bundle your policy at build time
 
