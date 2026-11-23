@@ -18,7 +18,7 @@ import {
 	CustomizeButton,
 	RejectButton,
 	SaveButton,
-} from './atoms/button';
+} from './atoms/accept-all-button';
 import { Footer, FooterSubGroup } from './atoms/footer';
 import { OptOut } from './atoms/opt-out';
 import { OptOutStatus } from './atoms/opt-out-status';
@@ -160,7 +160,7 @@ export {
 	CustomizeButton,
 	RejectButton,
 	SaveButton,
-} from './atoms/button';
+} from './atoms/accept-all-button';
 export {
 	ConsentWidgetFooter,
 	ConsentWidgetFooterSubGroup,

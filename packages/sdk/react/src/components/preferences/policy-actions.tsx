@@ -12,7 +12,7 @@ import {
 	ConsentWidgetAcceptAllButton,
 	ConsentWidgetRejectButton,
 	ConsentWidgetSaveButton,
-} from './atoms/button';
+} from './atoms/accept-all-button';
 import {
 	ConsentWidgetFooter,
 	ConsentWidgetFooterSubGroup,
