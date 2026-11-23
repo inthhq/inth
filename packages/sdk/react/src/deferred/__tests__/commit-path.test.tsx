@@ -43,7 +43,7 @@ import type { DeferredCommitConfig } from '../deferred-committed.model';
 import { DeferredConsentShell } from '../deferred-consent-shell';
 import { recordOnce } from '../recorded-promise.model';
 import type * as EngineNamespace from '../engine';
-import { DeferredConsentBanner, DeferredConsentDialog } from '../surfaces';
+import { DeferredConsentBanner, DeferredConsentDialog } from '../surface-with-parts';
 
 type EngineModule = typeof EngineNamespace;
 

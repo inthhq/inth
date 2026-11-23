@@ -11,7 +11,7 @@
 
 import type * as DialogModuleNamespace from '../aggregate-components';
 import type { OptOutConfirmationCompoundComponent } from '../components/opt-out-confirmation';
-import { surfaceWithParts } from './surfaces';
+import { surfaceWithParts } from './surface-with-parts';
 
 type DialogModule = typeof DialogModuleNamespace;
 

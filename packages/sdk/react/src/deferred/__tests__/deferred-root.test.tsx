@@ -40,7 +40,7 @@ import type { DeferredCommitConfig } from '../deferred-committed.model';
 import { DeferredConsentShell } from '../deferred-consent-shell';
 import type * as EngineNamespace from '../engine';
 import { ENGINE_CHUNKS_KEY } from '../engine-preload.store';
-import { DeferredConsentBanner } from '../surfaces';
+import { DeferredConsentBanner } from '../surface-with-parts';
 import { engineNeededAtLoad } from '../use-consent-boot-plan';
 
 const policyConfig = function policyConfig(
