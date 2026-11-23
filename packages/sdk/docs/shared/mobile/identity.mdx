@@ -4,7 +4,27 @@ Account identity, consent state, and OS tracking permission have separate lifeti
 
 ## Link an app account
 
+</section>
+
+<section id="link-swift">
+
+Call `identify(KernelUser(externalId: userId))` once the user signs in and `logout()` when they sign out, then recheck native gates before resuming optional collection.
+
+</section>
+
+<section id="link-android">
+
+Call `identify(KernelUser(externalId = userId))` once the user signs in and `logout()` when they sign out, then recheck native gates before resuming optional collection.
+
+</section>
+
+<section id="link-react-native">
+
 Call `identify(externalId)` once the user signs in and `logout()` when they sign out. Await each call and recheck native gates before resuming optional collection.
+
+</section>
+
+<section id="link-account">
 
 The Inth subject identifies the consent record; an external ID links that subject to an app account. Calling `logout()` detaches the account without creating a new subject or deleting backend audit records. Category receipts stay with the subject, while IAB identity transitions retire existing authority and keep required withdrawal obligations.
 
