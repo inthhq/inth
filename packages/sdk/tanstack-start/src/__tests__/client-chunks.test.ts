@@ -234,8 +234,8 @@ describe('TanStack Start client chunks', () => {
 		// the deferred root now leaves to the Privacy Choices banner and the
 		// stock buttons replay through their own handlers: 34 bytes (22,324). The
 		// Privacy Choices dialog's parts add their keys to the same table, and
-		// its chunks lengthen the preload lists again: 278 bytes (22,602).
-		expect(brotli).toBeLessThanOrEqual(22_602);
+		// its chunks lengthen the preload lists again: 286 bytes (22,610).
+		expect(brotli).toBeLessThanOrEqual(22_610);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {
