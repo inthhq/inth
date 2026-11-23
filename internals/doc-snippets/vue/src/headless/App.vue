@@ -1,4 +1,4 @@
-<!-- #region docs:headless-app title="src/app.vue" -->
+<!-- #region docs:headless-app title="src/App.vue" -->
 <script setup lang="ts">
 import { useConsentActiveUI } from '@inth/vue/vue-plugin';
 

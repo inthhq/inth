@@ -15,7 +15,7 @@ or manage surface placement yourself:
 
 <include src="../../../shared/examples/vue/consent-surfaces.mdx" />
 
-Mount this in `src/app.vue` instead of `InthProvider`, alongside
+Mount this in `src/App.vue` instead of `InthProvider`, alongside
 `ConsentManager` so your page links can open the dialog. Statically importing
 `ConsentManager` includes it in your main bundle, whereas `InthProvider`
 code-splits it. Direct composition does not switch to IAB surfaces under an

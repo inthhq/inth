@@ -26,7 +26,7 @@ group: frameworks
 
 ## Consent requests go to the wrong backend
 
-**Check.** Inspect `VITE_INTH_PROJECT_URL` and `VITE_C15T_BACKEND_URL` in `.env`, `.env.local`, and the build environment, plus any `projectUrl` in `vite.config.ts` or `src/app.svelte`. `VITE_INTH_PROJECT_URL` wins if both are set; `VITE_C15T_BACKEND_URL` is read as a fallback when `VITE_INTH_PROJECT_URL` is unset. Vite inlines these variables at build time, so changing them has no effect until you rebuild.
+**Check.** Inspect `VITE_INTH_PROJECT_URL` and `VITE_C15T_BACKEND_URL` in `.env`, `.env.local`, and the build environment, plus any `projectUrl` in `vite.config.ts` or `src/App.svelte`. `VITE_INTH_PROJECT_URL` wins if both are set; `VITE_C15T_BACKEND_URL` is read as a fallback when `VITE_INTH_PROJECT_URL` is unset. Vite inlines these variables at build time, so changing them has no effect until you rebuild.
 
 **Fix.** Set `VITE_INTH_PROJECT_URL` to your Inth project URL, including any path prefix, remove any stale `VITE_C15T_BACKEND_URL`, and rebuild. Confirm your app's origin is listed in your Inth project's trusted origins.
 
