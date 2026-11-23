@@ -309,7 +309,7 @@ export default mergeConfig(
 				{
 					extends: true,
 					test: {
-						exclude: ['src/**/*.node.test.ts', '**/node_modules/**'],
+						exclude: ['src/**/*.node.test.ts', 'src/**/*.node.test.tsx', '**/node_modules/**'],
 						include: [
 							'src/**/*.test.tsx',
 							'src/**/*.test.ts',
@@ -327,7 +327,7 @@ export default mergeConfig(
 					test: {
 						browser: { enabled: false },
 						environment: 'node',
-						include: ['src/**/*.node.test.ts'],
+						include: ['src/**/*.node.test.ts', 'src/**/*.node.test.tsx'],
 						name: 'node',
 						setupFiles: [],
 					},

@@ -75,11 +75,26 @@ const drawerContainer = deferredContainer(
 	(module) => module.DrawerSurface
 );
 /**
- * Loads every container. The server runs it at module evaluation, so a
- * render finds its container in and never streams the prompt in a later
- * chunk.
+ * Loads the code of every container (Card, Banner and Drawer).
  *
- * @internal
+ * On the server this module starts it as it loads, but does not wait: a
+ * render on a cold first request can still find a container loading. A
+ * streaming render (`renderToPipeableStream`, `renderToReadableStream`, as
+ * the Next.js and TanStack Start adapters use) then sends the prompt in a
+ * later chunk of the same response. A synchronous one (`renderToString`)
+ * cannot wait and renders no banner, so await this first.
+ *
+ * @example
+ * ```tsx
+ * import { preloadContainers } from '@inth/react/components/consent-banner';
+ *
+ * await preloadContainers();
+ * const html = renderToString(<App />);
+ * ```
+ *
+ * @returns Settles once every container's code is in. A failed load
+ * settles too; the render then tries again.
+ * @public
  */
 export const preloadContainers =
 	async function preloadContainers(): Promise<void> {
@@ -98,11 +113,16 @@ const LazyBanner = bannerContainer.Container;
 const LazyDrawer = drawerContainer.Container;
 
 /**
- * Starts loading the container the server rendered, read from the
- * banner's `data-placement`, so the prompt hydrates without waiting for
- * its chunk.
+ * Loads the container a server-rendered banner in this document shows,
+ * read from its `data-placement`. Await it before hydrating a page you
+ * rendered on the server yourself: the banner then hydrates over the
+ * server's markup instead of waiting for its chunk inside a hydrating
+ * boundary, where an update makes React render it again on the client.
+ * The deferred roots of the framework adapters do this for you.
  *
- * @internal
+ * @returns Settles once that container's code is in, at once without a
+ * server-rendered banner or on the server.
+ * @public
  */
 export const preloadServerContainer =
 	function preloadServerContainer(): Promise<void> {
