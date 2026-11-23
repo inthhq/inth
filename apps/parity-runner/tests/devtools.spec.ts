@@ -2,8 +2,8 @@
 import { diffComputedStyleMap } from '@inth/conformance';
 import { expect, test } from '@playwright/test';
 
-import { captureComputedStyleMap } from '../src/diff-computed-style';
 import { NO_DEVTOOLS, pickDevToolsStories } from '../src/devtools-stories';
+import { captureComputedStyleMap } from '../src/diff-computed-style';
 import { captureDomSnapshot } from '../src/diff-dom';
 import type { StoryEntry } from '../src/pair-stories';
 import { comparePng } from '../src/pixel-diff';
