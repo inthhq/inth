@@ -62,13 +62,22 @@ const MUST_BE_REACHABLE_SLOTS = [
 ] as const;
 
 /**
- * Privacy Choices (v6) slots React renders first. Vue binds them in its own
+ * Privacy Choices (v6) slots React renders first (banner and dialog). Vue binds them in its own
  * v6 port, which removes them from this list.
  */
 const PENDING_V6_PORT: ReadonlySet<string> = new Set([
 	'banner.expand',
 	'banner.rightsRow',
 	'banner.saveButton',
+	'dialog.categoryGroup',
+	'dialog.doneButton',
+	'dialog.footer',
+	'dialog.preferencesRow',
+	'dialog.receipt',
+	'dialog.rightsRow',
+	'dialog.saveButton',
+	'dialog.sheet',
+	'dialog.vendorTable',
 ]);
 
 const getVueComponentSources = function getVueComponentSources() {
