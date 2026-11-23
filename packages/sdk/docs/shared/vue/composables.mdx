@@ -129,7 +129,7 @@ group: reference
   | Composable | Returns | Use it to |
   | --- | --- | --- |
   | `usePromptRequirement()` | Computed `{ kind }` (`'choice'`, `'notice'`, or `'none'`) | Decide whether to show a banner. |
-  | `useConsentPolicyActions(surface)` | Computed `actionGroups`, `primaryActions`, `variant`, `position`, `blocking`, `direction`, and `preferenceControls` | Render the required buttons for `'prompt'` or `'preferences'` in order. |
+  | `useConsentPolicyActions(surface)` | Computed `actionGroups`, `primaryActions`, `blocking`, `direction`, `shouldFillActions`, and `preferenceControls`, plus the full resolved `presentation` | Render the required buttons for `'prompt'` or `'preferences'` in order. |
   | `useHasConsentPolicy()` | Computed boolean | Check that a policy matched the visitor. |
   | `useHasConsentUi()` | Computed boolean | Check whether the policy requires any consent UI. Stock surfaces hide while `false`. |
   | `useHasConsentPreferences()` | Computed boolean | Check whether to render a preferences control. |

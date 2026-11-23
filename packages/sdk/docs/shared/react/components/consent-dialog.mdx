@@ -32,11 +32,10 @@ group: reference
   Without an `open` prop, the dialog follows the active surface and opens when it becomes `dialog`. These set that surface:
 
   - [`PrivacyChoicesLink`](./privacy-choices-link), `ConsentDialogLink`, and `ConsentDialogTrigger`.
-  - The opt-out link on a notice when `presentation.optOutLink` is `'privacy-choices'` or `'california-privacy-choices'`.
   - The button inside a `ConsentGate` placeholder.
   - `useSetActiveUI()('dialog')` in your component, or `openDialog()` from `useHeadlessConsentUI()` on the headless subpath.
 
-  The banner's Customize button does not open the dialog. It opens the choices inside the banner.
+  The banner's Customize button, and the opt-out link on a notice, do not open the dialog. They open the choices inside the banner.
 
   Inth splits the dialog code into its own chunk so it stays out of the first page load. It renders nothing until the chunk loads, which starts at the first of these events:
 
@@ -49,8 +48,6 @@ group: reference
   Inth skips idle loading when Save-Data is on (`navigator.connection.saveData`), on `2g` or `slow-2g` connections, and while offline; hover and focus still trigger the download. To load the chunk only on hover, focus, or open, set `preloadDialog: 'intent'` in the provider options. The default is `'idle'`. In Next.js, pass it through `InthProvider`'s `options` prop.
 
   If a preload fails while offline, nothing is cached and the next hover, focus, or open retries the download.
-
-  The dialog CSS travels inside the same chunk and applies before the dialog renders, keeping the first page load limited to banner rules.
 
   The dialog CSS travels inside the same chunk and applies before the dialog renders, keeping the first page load limited to banner rules.
 
@@ -76,11 +73,11 @@ group: reference
 <section id="customize">
   ## Customize
 
-  Style the dialog with [theme tokens](/docs/customization/tokens) and these provider component slots: `dialog.root`, `dialog.container`, `dialog.card`, `dialog.header`, `dialog.title`, `dialog.content`, `dialog.footer`, `dialog.sheet`, `dialog.categoryGroup`, `dialog.rightsRow`, `dialog.receipt`, `dialog.preferencesRow`, `dialog.saveButton`, `dialog.doneButton`, and `description.dialog`. `dialog.overlay` styles the backdrop, which is the dialog's root element.
+  Style the dialog with [theme tokens](/docs/customization/tokens) and these provider component slots: `dialog.root`, `dialog.container`, `dialog.card`, `dialog.header`, `dialog.title`, `dialog.content`, `dialog.footer`, `dialog.sheet`, `dialog.categoryGroup`, `dialog.vendorTable`, `dialog.rightsRow`, `dialog.receipt`, `dialog.preferencesRow`, `dialog.saveButton`, `dialog.doneButton`, and `description.dialog`. `dialog.overlay` styles the backdrop, which is the dialog's root element.
 
   The root carries `data-regime` (`eu` or `us`) and `data-layout` (`desktop` or `phone`).
 
-  `ConsentDialog` from the package root and `@inth/react/consent-dialog` is the deferred component described under Behavior. `@inth/react/components/consent-dialog` exports the dialog without deferral. Importing from that subpath puts the dialog code in the initial bundle so the first open needs no download, at the cost of shipping it to every visitor. For your own markup, use `ConsentWidget` or the headless hooks.
+  `ConsentDialog` from the package root, `@inth/react/consent-dialog`, and `@inth/react/components/consent-dialog` is the same deferred component described under Behavior: its code always loads in its own chunk. For your own markup, use `ConsentWidget` or the headless hooks.
 </section>
 
 <section id="verify">

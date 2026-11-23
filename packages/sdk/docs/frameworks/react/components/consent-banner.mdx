@@ -15,14 +15,14 @@ The [quickstart](/docs/frameworks/react/quickstart) mounts both in `src/consent.
 The banner adapts to the active policy rule:
 
 - A `choice` prompt renders the rule's actions: Reject and Accept at equal prominence, plus Customize when offered. Customize opens the category choices inside the banner, with a Save button.
-- A `notice` prompt renders an "OK" button and the policy's opt-out link. Notices never trap focus or lock scroll.
+- A `notice` prompt renders an "OK" button and an opt-out link that opens the rights row in the banner. Notices never trap focus or lock scroll.
 - A rule with `prompt: 'none'` renders nothing.
 
 An opt-out rule with `prompt: 'none'` still grants rights, so the dialog and its trigger stay available. A rule with `model: 'none'` owes no rights and renders nothing unless you add `rights: ['preferences']`. When no rule has resolved yet, no consent surface renders; all surfaces appear without remounting once a rule resolves. `testing()` without a custom `policy` resolves the recommended pack and displays the opt-in banner until you pass a country.
 
 Acknowledging a notice records dismissal only, without recording consent or changing permissions, denials, or privacy-signal restrictions. Customize the label via `common.acknowledge` in translations, or pass `dismissButtonText` for a single banner.
 
-Under an `opt-out` policy, the banner's opt-out link follows the resolved `presentation.optOutLink` title. With `'do-not-sell'` (the default), activating it records the opt-out in one click and opens `OptOutConfirmation` (reloading first when that turns off a running category and `reloadOnConsentRevoked` is enabled). With `'privacy-choices'` or `'california-privacy-choices'`, the link renders with the California Privacy Protection Agency opt-out icon and opens `ConsentDialog` without recording an opt-out. Programmatic calls to `useOptOut()` still opt out in one step whatever `presentation.optOutLink` is set to. Keep a [`PrivacyChoicesLink`](./privacy-choices-link) reachable after the banner closes.
+Under a notice, the banner's opt-out link ("Do not sell or share my data", `privacyChoices.noticeRightsAction` in translations) opens the sale-and-sharing rights row inside the banner, where the visitor can opt out. It never records an opt-out on its own and does not open `OptOutConfirmation` or the dialog. Programmatic calls to `useOptOut()` still opt out in one step. Keep a [`PrivacyChoicesLink`](./privacy-choices-link) reachable after the banner closes.
 
 <include src="../../../shared/privacy-choices-link.mdx" />
 

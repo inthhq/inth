@@ -24,7 +24,7 @@ The Markdown under `./docs` matches the installed version. Read it before writin
 
 ## Customize with the smallest change
 
-Copy and languages use i18n configuration. Position and layout use component props. Colors, type, radius and spacing use theme tokens. One part of a component uses slots. Different markup uses compound or headless components.
+Copy and languages use i18n configuration. Where the banner sits uses `container` (a Card, Banner or Drawer), `edgeStyle` and `blockUntilChoice`, on `ConsentBanner`, in `presentation.prompt` or from the policy's `surface`. Colors, type, radius and spacing use theme tokens. One part of a component uses slots. Different markup uses the headless API. Keep a `PrivacyChoicesLink` in the footer so visitors can reopen the dialog.
 Start at [Customization overview](./docs/customization/overview.md).
 
 ## Finish with a check

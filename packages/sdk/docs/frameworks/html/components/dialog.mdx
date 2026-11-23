@@ -14,14 +14,12 @@ The dialog stays closed until opened by:
 
 - a [`data-inth-action="customize"` button](/docs/frameworks/html/components/action-buttons);
 - a [link to `#inth-preferences`](/docs/frameworks/html/components/preferences-link);
-- a "Your Privacy Choices" link from `createPrivacyChoicesLink`, or the
-  banner's opt-out link when `presentation.optOutLink` is `'privacy-choices'`
-  or `'california-privacy-choices'`;
+- a "Your Privacy Choices" link from `createPrivacyChoicesLink`;
 - the [floating trigger](/docs/frameworks/html/components/trigger);
 - `inth.openDialog()` in JavaScript.
 
-The banner's **Customize** button does not open the dialog. It opens the
-choices inside the banner. Opening the dialog records nothing and changes no
+The banner's **Customize** button, and the opt-out link on a notice, do not
+open the dialog. They open the choices inside the banner. Opening the dialog records nothing and changes no
 permissions.
 
 ## Which categories it lists
