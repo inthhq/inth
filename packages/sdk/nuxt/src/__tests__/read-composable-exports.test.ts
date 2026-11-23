@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { expect, test } from 'vitest';
 
 import * as composables from '../../../vue/src/runtime/composables';
-import { readComposableExports } from '../composable-exports';
+import { readComposableExports } from '../read-composable-exports';
 
 test('finds every composable the index exports', () => {
 	const exported = Object.keys(composables)

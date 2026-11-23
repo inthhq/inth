@@ -4,7 +4,7 @@
  */
 import { describe, expect, test } from 'vitest';
 
-import { applyLegacyProjectUrl } from '../runtime/server/legacy-project-url';
+import { applyLegacyProjectUrl } from '../runtime/server/apply-legacy-project-url';
 
 const VARIABLES = [
 	{

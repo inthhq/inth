@@ -43,8 +43,8 @@ import { defu } from 'defu';
 import { joinURL } from 'ufo';
 import type { Plugin as VitePlugin } from 'vite';
 
-import { consentPackageDirs, groupConsentChunks } from './chunk-group';
-import { readComposableExports } from './composable-exports';
+import { consentPackageDirs, groupConsentChunks } from './group-consent-chunks';
+import { readComposableExports } from './read-composable-exports';
 import { GLOBAL_COMPONENTS } from './global-components';
 import type { InthNuxtConfig, ModuleOptions } from './nuxt-options';
 import {
@@ -55,8 +55,8 @@ import {
 	preloadDeferredEngine,
 	stopPrefetchingConsentChunks,
 } from './prefetch';
-import type { BuiltOptions } from './runtime/server/build-options';
-import type { LegacyProjectUrlEnv } from './runtime/server/legacy-project-url';
+import type { BuiltOptions } from './runtime/server/build-options.model';
+import type { LegacyProjectUrlEnv } from './runtime/server/apply-legacy-project-url';
 import {
 	collectStyleSources,
 	preloadInlinedConsentStyles,

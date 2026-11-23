@@ -15,7 +15,7 @@ import { readNuxtRoutePrefix } from '@inth/vue/nuxt';
 import { createApp, createRouter, toWebHandler } from 'h3';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { createConsentRoute } from '../runtime/server/route-factories';
+import { createConsentRoute } from '../runtime/server/create-consent-route';
 import { createServerFetch } from '../runtime/server/server-fetch';
 
 const mocks = vi.hoisted(() => ({

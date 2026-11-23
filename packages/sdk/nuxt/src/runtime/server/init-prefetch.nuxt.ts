@@ -19,8 +19,8 @@ import {
 
 import { useServerAppConfig } from '#@inth/sdk/server-app-config';
 
-import { buildInitPrefetchTag } from './init-prefetch';
-import type { InitPrefetchRouteRule } from './init-prefetch';
+import { buildInitPrefetchTag } from './build-init-prefetch-tag';
+import type { InitPrefetchRouteRule } from './build-init-prefetch-tag';
 
 export default defineNitroPlugin((nitroApp) => {
 	nitroApp.hooks.hook('render:html', (html, { event, streaming }) => {

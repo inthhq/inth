@@ -8,8 +8,8 @@ import { defineNitroPlugin, useRuntimeConfig } from 'nitropack/runtime';
 
 import variables from '#inth/legacy-project-url-env';
 
-import { applyLegacyProjectUrl } from './legacy-project-url';
-import type { LegacyProjectUrlRuntimeConfig } from './legacy-project-url';
+import { applyLegacyProjectUrl } from './apply-legacy-project-url';
+import type { LegacyProjectUrlRuntimeConfig } from './apply-legacy-project-url';
 
 export default defineNitroPlugin((nitroApp) => {
 	const env = globalThis.process?.env ?? {};

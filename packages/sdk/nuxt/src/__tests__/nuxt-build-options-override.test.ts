@@ -13,11 +13,11 @@ import {
 	createBuildOptionsGuard,
 	findOverriddenOptions,
 	pinBuildOptions,
-} from '../runtime/server/build-options';
+} from '../runtime/server/build-options.model';
 import type {
 	BuiltOptionName,
 	BuiltOptions,
-} from '../runtime/server/build-options';
+} from '../runtime/server/build-options.model';
 
 const BUILT: BuiltOptions = {
 	mode: {

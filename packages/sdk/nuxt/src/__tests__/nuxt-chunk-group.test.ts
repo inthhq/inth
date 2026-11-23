@@ -14,7 +14,7 @@ import {
 	groupConsentChunks,
 	nuxtConsentChunkGroup,
 	nuxtConsentConfigChunkGroup,
-} from '../chunk-group';
+} from '../group-consent-chunks';
 
 describe('nuxtConsentChunkGroup', () => {
 	const workspace = '/repo/packages/sdk/core';

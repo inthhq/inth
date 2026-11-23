@@ -22,7 +22,7 @@ declare module '#inth/manifest-snapshot' {
 
 /** A Nitro virtual the module registers for its build options plugin. */
 declare module '#@inth/sdk/build-options' {
-	import type { BuiltOptions } from './build-options';
+	import type { BuiltOptions } from './build-options.model';
 
 	/** The `mode` and `routePrefix` the build used. */
 	const built: BuiltOptions;
@@ -31,7 +31,7 @@ declare module '#@inth/sdk/build-options' {
 
 /** A Nitro virtual the module registers for its legacy project URL plugin. */
 declare module '#inth/legacy-project-url-env' {
-	import type { LegacyProjectUrlEnv } from './legacy-project-url';
+	import type { LegacyProjectUrlEnv } from './apply-legacy-project-url';
 
 	/** The c15t variables the server still applies. */
 	const variables: readonly LegacyProjectUrlEnv[];

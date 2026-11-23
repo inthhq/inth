@@ -16,8 +16,8 @@ import {
 	buildOptionVariable,
 	createBuildOptionsGuard,
 	readBuiltOption,
-} from './build-options';
-import type { BuiltOptionsRuntimeConfig } from './build-options';
+} from './build-options.model';
+import type { BuiltOptionsRuntimeConfig } from './build-options.model';
 
 export default defineNitroPlugin((nitroApp) => {
 	// Every request, not once at startup: Cloudflare and similar platforms
