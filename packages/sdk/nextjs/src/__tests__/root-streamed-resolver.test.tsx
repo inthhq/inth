@@ -12,8 +12,8 @@ import { useActiveUI, useModel } from '@inth/react';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { InthProvider } from '../root';
-import type { ConsentState } from '../types';
+import { InthProvider } from '../inth-provider';
+import type { ConsentState } from '../consent-client-options.model';
 import { policyFixture } from './policy-fixture';
 
 const streamedInit = vi.hoisted(() => ({ mounted: false }));

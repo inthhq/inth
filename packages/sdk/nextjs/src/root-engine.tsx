@@ -37,10 +37,10 @@ import type { ReactNode } from 'react';
 
 import type { ConsentConfig } from './config';
 import { readProjectUrlFromEnv } from './config';
-import { NEXT_CHUNKS } from './engine-chunks';
-import { mergeOptions } from './root-options';
-import type { InthProviderProps } from './root-options';
-import type { ConsentClientOptions, ConsentState } from './types';
+import { NEXT_CHUNKS } from './next-chunks';
+import { mergeOptions } from './inth-provider-options.model';
+import type { InthProviderProps } from './inth-provider-options.model';
+import type { ConsentClientOptions, ConsentState } from './consent-client-options.model';
 
 // The stock surfaces a deferred root renders come from this chunk, so
 // they share its modules instead of carrying copies.

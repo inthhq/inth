@@ -17,7 +17,7 @@ import packageJson from '../../package.json';
 import clientComponentsSource from '../client-components.ts?raw';
 import { defineConsentConfig } from '../config';
 import * as reactServer from '../index.react-server';
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 
 describe('@inth/nextjs react-server entry', () => {
 	test('resolves under the react-server condition', () => {

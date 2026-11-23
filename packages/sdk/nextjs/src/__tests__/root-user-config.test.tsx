@@ -8,7 +8,7 @@ import { writePolicyResolutionWire } from '@inth/sdk/schema/types';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 import { policyFixture } from './policy-fixture';
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- In an app build, the bundler alias `withConsentManifest` sets swaps this module for the app's inth.config.ts. The mock is that alias; InthProvider is real.

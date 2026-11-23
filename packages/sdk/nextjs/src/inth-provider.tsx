@@ -43,12 +43,12 @@ import type {
 
 import { engineNow } from '#engine-now';
 
-import { NEXT_CHUNKS } from './engine-chunks';
+import { NEXT_CHUNKS } from './next-chunks';
 import type * as RootEngine from './root-engine';
-import { mergeOptions } from './root-options';
-import type { InthProviderProps } from './root-options';
+import { mergeOptions } from './inth-provider-options.model';
+import type { InthProviderProps } from './inth-provider-options.model';
 
-export type { InthProviderProps } from './root-options';
+export type { InthProviderProps } from './inth-provider-options.model';
 
 type EngineModule = typeof RootEngine;
 

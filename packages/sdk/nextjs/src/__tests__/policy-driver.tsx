@@ -1,5 +1,5 @@
 import { createFrameworkPolicyDriver } from '../../../react/src/__tests__/framework-policy-driver';
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 import { resolveConsent } from '../server';
 
 export const { createPolicySession, probePolicyContract } =

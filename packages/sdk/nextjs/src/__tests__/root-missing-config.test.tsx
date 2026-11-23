@@ -8,7 +8,7 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 

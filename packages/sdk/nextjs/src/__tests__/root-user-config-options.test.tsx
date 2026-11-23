@@ -8,7 +8,7 @@ import { ConsentBanner } from '@inth/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 import { policyFixture } from './policy-fixture';
 
 const configured = vi.hoisted(() => ({

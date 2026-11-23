@@ -15,12 +15,12 @@ export {
 	InthProvider,
 	OptOutConfirmation,
 } from './client-components';
-export type { InthProviderProps } from './root';
+export type { InthProviderProps } from './inth-provider';
 export type {
 	ConsentClientOptions,
 	ConsentState,
 	InthProviderOptions,
-} from './types';
+} from './consent-client-options.model';
 export type { ConsentConfig } from './config';
 export { defineConsentConfig } from './config';
 export type {

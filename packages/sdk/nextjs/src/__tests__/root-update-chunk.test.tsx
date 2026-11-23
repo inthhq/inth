@@ -7,7 +7,7 @@
 import { expect, test } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { InthProvider } from '../root';
+import { InthProvider } from '../inth-provider';
 import { testing } from '../testing';
 import { policyFixture } from './policy-fixture';
 

@@ -41,13 +41,13 @@ export {
 	DeferredConsentDialog as ConsentDialog,
 	DeferredOptOutConfirmation as OptOutConfirmation,
 } from '@inth/react/deferred';
-export type { InthProviderProps } from './root';
-export { InthProvider } from './root';
+export type { InthProviderProps } from './inth-provider';
+export { InthProvider } from './inth-provider';
 export type {
 	ConsentClientOptions,
 	ConsentState,
 	InthProviderOptions,
-} from './types';
+} from './consent-client-options.model';
 export type { ConsentConfig } from './config';
 export { defineConsentConfig } from './config';
 // The data factories, in place of `@inth/react`'s transports.

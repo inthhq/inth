@@ -27,9 +27,9 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/record-encode.model';
-import { InthProvider } from '../root';
-import type { InthProviderProps } from '../root';
-import type { ConsentState } from '../types';
+import { InthProvider } from '../inth-provider';
+import type { InthProviderProps } from '../inth-provider';
+import type { ConsentState } from '../consent-client-options.model';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';
 

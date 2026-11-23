@@ -15,8 +15,8 @@ import {
 	NOW,
 	optInRule,
 } from '../../../core/src/__tests__/fixtures/kernel-fixtures';
-import { InthProvider } from '../root';
-import type { InthProviderProps } from '../root';
+import { InthProvider } from '../inth-provider';
+import type { InthProviderProps } from '../inth-provider';
 import { transportMode } from './fixtures/transport-mode';
 
 // A server process renders with the start module loaded; the first render
