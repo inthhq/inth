@@ -77,7 +77,8 @@ const optInConfirmationActive = useOptInConfirmationHost();
 const { presentation: surface } = useConsentPolicyActions('preferences');
 /**
  * The Privacy Choices design (`design: 'privacy-choices'`) renders its own
- * dialog, loaded on open, in place of this one.
+ * dialog in place of this one. Its chunk loads when it opens: importing it
+ * applies its stylesheets, which include the banner's in-place panel rules.
  */
 const privacyChoices = usePrivacyChoicesDesign();
 let actionSequence = 0;
@@ -195,10 +196,14 @@ provide(consentWidgetManagerKey, { draft: draftState, onAction });
 </script>
 
 <template>
-	<LazyPrivacyChoicesDialog
-		v-if="privacyChoices"
-		:disable-animation="props.disableAnimation"
-	/>
+	<template v-if="privacyChoices">
+		<!-- Loads on open, never with the banner (PERM-05: the banner leaves
+		     at once when it opens). -->
+		<LazyPrivacyChoicesDialog
+			v-if="activeUI === 'manager'"
+			:disable-animation="props.disableAnimation"
+		/>
+	</template>
 	<template v-else>
 		<LazyOptOutConfirmation
 			v-if="

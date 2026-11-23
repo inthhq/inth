@@ -56,11 +56,10 @@ import {
 import { useMounted } from '../../../composables/use-mounted';
 import { useSurfaceTranslations } from '../../../composables/use-surface-translations';
 import { slotAttrs } from '../../../utils/slot-attrs';
-import { prefetchSurfaceAfterLoad } from '../../lazy-surfaces';
-import LegalLinks from '../../legal-links.vue';
 import { loadPrivacyChoicesDialog } from '../../privacy-choices-dialog/load';
 import ChoiceButton from '../../privacy-choices/choice-button.vue';
 import { provideChoiceDraft } from '../../privacy-choices/draft';
+import InlineLegalLinks from '../../privacy-choices/inline-legal-links.vue';
 import { usePhoneLayout } from '../../privacy-choices/use-phone-layout';
 import {
 	rightsBundleOf,
@@ -313,13 +312,10 @@ watch(
 	{ immediate: true }
 );
 
-// The options load with Customize; warm them on intent, and in idle time
-// once the page has loaded while the prompt shows.
-onMounted(() => {
-	if (phase.value === 'shown' && !allInOne.value) {
-		prefetchSurfaceAfterLoad(loadPanel);
-	}
-});
+// The options load with Customize, and warm on intent (`warm`). Unlike
+// React's warming, importing the chunk applies its stylesheet, so it
+// never loads in idle time: the folded panel keeps its unstyled box until
+// the visitor reaches for the options, as React's does.
 
 const elementOf = (
 	value: HTMLElement | { element: HTMLElement | null } | null
@@ -539,11 +535,7 @@ const onPanelReady = () => {
 								:class="presentation.text"
 								data-testid="consent-banner-description"
 							>
-								{{ copy.barDescription
-								}}<LegalLinks
-									context="banner"
-									:links="barLinks"
-								/>
+								{{ copy.barDescription }}<InlineLegalLinks :links="barLinks" />
 							</p>
 							<div
 								:class="presentation.actions"
@@ -642,11 +634,7 @@ const onPanelReady = () => {
 								"
 								data-testid="consent-banner-description"
 							>
-								{{ copy.description
-								}}<LegalLinks
-									context="banner"
-									:links="links"
-								/>
+								{{ copy.description }}<InlineLegalLinks :links="links" />
 							</p>
 						</div>
 						<div

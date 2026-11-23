@@ -49,7 +49,8 @@ export const LazyPrivacyChoicesDialog = defineAsyncComponent(
 let warmDesign: 'classic' | 'privacy-choices' = 'classic';
 
 /**
- * Record the design the page renders, for {@link prefetchConsentManager}.
+ * Record the design the page renders, so {@link prefetchConsentManager}
+ * warms only the classic dialog.
  *
  * @internal
  */
@@ -200,9 +201,16 @@ export const prefetchSurfaceAfterLoad = function prefetchSurfaceAfterLoad(
 	}
 };
 
+/**
+ * The classic dialog warms in idle time. The Privacy Choices dialog does
+ * not: importing its chunk applies its stylesheets, which include the
+ * banner's in-place panel rules, and React's banner shows its folded panel
+ * unstyled until the visitor reaches for it. It warms on intent instead,
+ * from the banner's buttons.
+ */
 const loadConsentManager = () =>
 	warmDesign === 'privacy-choices'
-		? loadPrivacyChoicesDialog()
+		? Promise.resolve()
 		: import('./manager.vue');
 const loadIabConsentDialog = () => import('./iab-panel.vue');
 

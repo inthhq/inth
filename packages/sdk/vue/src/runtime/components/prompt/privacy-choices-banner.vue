@@ -24,7 +24,7 @@ const props = defineProps<{
 	disableAnimation?: boolean;
 }>();
 
-// Idle warming then loads this design's dialog, not the classic one.
+// Idle warming then skips the classic dialog, which this page never shows.
 setDialogWarmDesign('privacy-choices');
 
 const snapshot = useConsentSnapshot();
