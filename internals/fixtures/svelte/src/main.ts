@@ -1,7 +1,7 @@
 import { mount } from 'svelte';
 import type { Component } from 'svelte';
 
-import App from './app.svelte';
+import App from './App.svelte';
 
 import './style.css';
 
@@ -10,7 +10,7 @@ if (new URLSearchParams(location.search).get('design') === 'branded') {
 	await import('./consent-theme.css');
 }
 
-// `?experiment=1` mounts the banner-experiment variant of `app.svelte`.
+// `?experiment=1` mounts the banner-experiment variant of `App.svelte`.
 const Root: Component =
 	new URLSearchParams(location.search).get('experiment') === '1'
 		? (await import('./experiment-app.svelte')).default

@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
-	 * `app.svelte` with the banner-shape experiment. `src/main.ts` mounts it
-	 * for `?experiment=1`, so the published `app.svelte` stays unchanged.
+	 * `App.svelte` with the banner-shape experiment. `src/main.ts` mounts it
+	 * for `?experiment=1`, so the published `App.svelte` stays unchanged.
 	 */
 	import {
 		ConsentBanner,

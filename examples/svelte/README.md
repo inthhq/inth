@@ -8,7 +8,7 @@ measurement.
 
 - `vite.config.ts` adds `consentManifest`, which hands the backend URL to
   the app.
-- `src/app.svelte` mounts `InthProvider` in `hosted()` mode, with
+- `src/App.svelte` mounts `InthProvider` in `hosted()` mode, with
   PostHog, the banner, dialog and link.
 
 ## Run it
@@ -27,7 +27,7 @@ policy edits in the project apply without a rebuild. To use your own project,
 set `VITE_INTH_PROJECT_URL` in `.env.local` to its backend URL and add
 `http://127.0.0.1:5173` to its trusted origins.
 
-Rebuild after you change the backend URL. Replace `phc_your_project_key` in `src/app.svelte` with
+Rebuild after you change the backend URL. Replace `phc_your_project_key` in `src/App.svelte` with
 your PostHog project key.
 
 Docs: [Svelte quickstart](https://c15t.com/docs/frameworks/svelte/quickstart)

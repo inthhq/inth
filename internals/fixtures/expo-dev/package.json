@@ -12,7 +12,7 @@
 		"fmt": "oxfmt -c ../../../oxfmt.sdk.config.ts .",
 		"ios": "expo run:ios",
 		"ios:release": "expo run:ios --configuration Release",
-		"lint": "oxlint -c ../../../oxlint.sdk.config.ts app.tsx index.ts src app.config.ts metro.config.js metro-vendor-sources.js plugins",
+		"lint": "oxlint -c ../../../oxlint.sdk.config.ts App.tsx index.ts src app.config.ts metro.config.js metro-vendor-sources.js plugins",
 		"prebuild": "expo prebuild --clean",
 		"start": "expo start --dev-client"
 	},
