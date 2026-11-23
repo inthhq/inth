@@ -3,7 +3,7 @@ import { nextToolbarItem, toolbarOrder } from '@inth/sdk-ui/utils';
 import type { CornerPosition } from '@inth/sdk-ui/utils';
 
 import { classes } from '../generated/styles';
-import { h, svg } from './dom';
+import { h, svg } from './h';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 

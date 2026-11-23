@@ -3,7 +3,7 @@ import type { LegalLinksTranslations } from '@inth/sdk-translations';
 import { resolveLegalLinkEntries } from '@inth/sdk-ui/utils/legal-links';
 
 import { classes } from '../generated/styles';
-import { h } from './dom';
+import { h } from './h';
 
 /** What {@link renderLegalLinks} needs. */
 export interface LegalLinksParams {

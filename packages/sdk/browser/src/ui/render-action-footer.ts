@@ -14,7 +14,7 @@ import type { Theme } from '@inth/sdk-ui/theme';
 
 import { classes } from '../generated/styles';
 import type { BrowserSlotKey, SlotApplier } from './create-slot-applier';
-import { cx, h } from './dom';
+import { cx, h } from './h';
 
 /** Resolve buttons and the container with the same policy constraints as React. */
 export const resolveActions = function resolveActions(

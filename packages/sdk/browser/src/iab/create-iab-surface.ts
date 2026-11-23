@@ -10,7 +10,7 @@ import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 import type { ConsentUIOptions } from '../consent-client.model';
 import { classes } from '../generated/iab-styles';
 import { renderBranding } from '../ui/branding';
-import { cx, h, markLateEntry, supportsStartingStyle } from '../ui/dom';
+import { cx, h, markLateEntry, supportsStartingStyle } from '../ui/h';
 import { renderActionFooter, resolveActions } from '../ui/render-action-footer';
 import { renderLegalLinks } from '../ui/render-legal-links';
 import { resolveCopy } from '../ui/resolve-copy';

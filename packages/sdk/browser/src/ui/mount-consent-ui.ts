@@ -18,7 +18,7 @@ import { createSlotApplier } from './create-slot-applier';
 import { createTrigger } from './create-trigger';
 import { createStyle, createUIRoot } from './create-ui-root';
 import { createDialog } from './dialog';
-import { h } from './dom';
+import { h } from './h';
 import {
 	subscribeOptInConfirmation,
 	subscribeOptOutConfirmation,
