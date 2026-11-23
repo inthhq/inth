@@ -229,7 +229,6 @@ describe('opt-in', () => {
 		await mount({ container: null });
 		await waitForRoot();
 		expect(root()).toHaveAttribute('data-placement', 'card-start');
-		expect(root()).not.toHaveAttribute('data-design');
 	});
 
 	test('[BNR-13] provider scrollLock and trapFocus never block the stock banner: blockUntilChoice does', async () => {

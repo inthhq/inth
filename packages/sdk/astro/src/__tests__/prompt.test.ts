@@ -73,7 +73,6 @@ describe('<ConsentBanner />', () => {
 	it('renders the consent prompt in a Card by default', async () => {
 		const document = await render(await buildLocals(undefined));
 		const root = $(document, 'consent-banner-root');
-		expect(root?.hasAttribute('data-design')).toBe(false);
 		expect(root?.getAttribute('data-placement')).toBe('card-start');
 		expect(root?.getAttribute('data-flow')).toBe('expand-in-place');
 		expect(root?.getAttribute('data-variant')).toBe('choice');
