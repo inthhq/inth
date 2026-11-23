@@ -16,8 +16,8 @@ import { deepMergeTranslations } from '@inth/sdk/translations';
 import type { Translations } from '@inth/sdk/translations';
 
 import type { ProviderOptionsInput } from '../resolve-provider-options';
-import { bootMarkup } from './read-consent-boot';
-import type { RootBoot } from './read-consent-boot';
+import { bootMarkup } from './consent-boot.model';
+import type { RootBoot } from './consent-boot.model';
 
 /**
  * The snapshot's copy with every key the English defaults have, so the

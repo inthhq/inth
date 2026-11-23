@@ -2,10 +2,8 @@
 	import { resolveOptOutCopy } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/opt-out-confirmation';
 
-	import {
-		getConsentContext,
-		getThemeContext,
-	} from '../../get-consent-context.svelte';
+	import { getConsentContext } from '../../get-consent-context.svelte';
+	import { getThemeContext } from '../../get-theme-context';
 
 	const DEFAULT_LANGUAGE = 'en';
 

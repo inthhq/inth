@@ -11,10 +11,8 @@ import { forwardRef as createForwardRef, useId } from 'react';
 import type { Ref } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
-import {
-	OptOutConfirmationDescription,
-	OptOutConfirmationDetails,
-} from '~/components/opt-out-confirmation/atoms/parts';
+import { OptOutConfirmationDescription } from '~/components/opt-out-confirmation/atoms/opt-out-confirmation-description';
+import { OptOutConfirmationDetails } from '~/components/opt-out-confirmation/atoms/opt-out-confirmation-details';
 import { Box } from '~/components/shared/primitives/box';
 import type { BoxProps } from '~/components/shared/primitives/box';
 import {
@@ -23,7 +21,7 @@ import {
 } from '~/context/consent-tracking-context';
 import { useOptOut, useOptOutState, useResolvedPresentation } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
-import { useKernel } from '~/use-kernel-selector';
+import { useKernel } from '~/use-kernel';
 import { useUIConfig } from '~/use-ui-config';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 

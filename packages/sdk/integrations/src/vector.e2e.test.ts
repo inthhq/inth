@@ -10,7 +10,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { vector } from './vendors/ads-and-pixels/vector';
 
 describe('Vector core loader consent contract', () => {

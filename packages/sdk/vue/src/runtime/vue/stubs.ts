@@ -7,7 +7,7 @@
  */
 
 export * from '../composables/stubs/use-cookie';
-export * from '../composables/stubs/fetch';
+export * from '../composables/stubs/use-fetch';
 export * from '../composables/stubs/use-request-headers';
 export * from '../composables/stubs/use-state';
 

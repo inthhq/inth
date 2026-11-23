@@ -14,6 +14,7 @@ import type {
 	ResolvedManifest,
 	RuntimeValue,
 } from '../vendor-manifest.model';
+import { isRecord } from './is-record.model';
 import { mapConsentState } from './map-consent-state';
 import { signalConsents } from './vendor-consent.model';
 
@@ -73,12 +74,6 @@ const cloneStepValue = function cloneStepValue(value: unknown): unknown {
 	}
 
 	return value;
-};
-
-export const isRecord = function isRecord(
-	value: unknown
-): value is Record<string, unknown> {
-	return value !== null && typeof value === 'object' && !Array.isArray(value);
 };
 
 const getPathTarget = function getPathTarget(

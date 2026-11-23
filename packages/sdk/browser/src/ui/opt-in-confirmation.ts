@@ -10,7 +10,8 @@ import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 
 import type { ConsentDialogOptions } from '../consent-client.model';
 import { classes } from '../generated/styles';
-import { h, readDurationMs, supportsStartingStyle } from './dom';
+import { h } from './h';
+import { readDurationMs, supportsStartingStyle } from './mark-late-entry';
 import {
 	closeOptInConfirmation,
 	confirmOptInConfirmation,
@@ -20,7 +21,7 @@ import {
 	takeOptInConfirmationOpener,
 } from './opt-out-confirmation-state';
 import { resolveCopy } from './resolve-copy';
-import type { Surface, SurfaceContext } from './surface';
+import type { Surface, SurfaceContext } from './surface.model';
 
 const DEFAULT_DURATION_MS = 200;
 

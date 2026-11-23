@@ -38,19 +38,17 @@ import styles from '@inth/sdk/ui/styles/components/iab-consent-dialog';
 import switchStyles from '@inth/sdk/ui/styles/components/switch';
 import { switchVariants } from '@inth/sdk/ui/styles/primitives';
 
-import {
-	ChevronDownIcon,
-	CloseIcon,
-	ExternalLinkIcon,
-	GlobeIcon,
-	LayersIcon,
-	LegitimateInterestIcon,
-	LockIcon,
-	SearchIcon,
-	ShareIcon,
-} from './iab-icons';
+import { ChevronDownIcon } from './chevron-down-icon';
+import { CloseIcon } from './close-icon';
+import { ExternalLinkIcon } from './external-link-icon';
+import { GlobeIcon } from './globe-icon';
 import { PREFERENCE_ITEM, SWITCH } from './iab-purpose-item';
 import type { IABVendorChoice } from './iab-purpose-item';
+import { LayersIcon } from './layers-icon';
+import { LegitimateInterestIcon } from './legitimate-interest-icon';
+import { LockIcon } from './lock-icon';
+import { SearchIcon } from './search-icon';
+import { ShareIcon } from './share-icon';
 
 const sw = switchVariants();
 

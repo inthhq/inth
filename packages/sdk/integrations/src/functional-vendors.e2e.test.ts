@@ -9,8 +9,8 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
-import type { TestWindow } from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
+import type { TestWindow } from './__tests__/e2e-test-utils';
 import { crisp } from './vendors/functional/crisp';
 import { INTERCOM_API_BASES, intercom } from './vendors/functional/intercom';
 

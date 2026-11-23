@@ -43,6 +43,7 @@ import {
 } from './manifest-browser-packs.model';
 import type * as RemoteModule from './manifest-browser-remote.model';
 import type * as ResolveModule from './manifest-browser-resolve';
+import { resolveManifestFetch } from './manifest-browser.api';
 import { projectUrlOfManifest } from './manifest-url.model';
 import type {
 	ProviderTransportContext,
@@ -222,7 +223,7 @@ const createManifestSource = function createManifestSource(
 		);
 	}
 	const getFetch = (): typeof globalThis.fetch =>
-		options.fetch ?? globalThis.fetch.bind(globalThis);
+		resolveManifestFetch(options.fetch);
 	let cachedManifest: Promise<ConsentManifest> | undefined;
 	let cachedGeo: Promise<ManifestModeInputs | undefined> | undefined;
 

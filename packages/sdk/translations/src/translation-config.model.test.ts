@@ -1,0 +1,837 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { detectBrowserLanguage } from './detect-browser-language';
+import {
+	deepMergeTranslations,
+	mergeTranslationConfigs,
+	migrateLegacyTranslationKeys,
+	normalizeI18nConfig,
+	parseAcceptLanguage,
+	prepareTranslationConfig,
+	selectLanguage,
+	toTranslationConfig,
+} from './translation-config.model';
+import { baseTranslations as bundledTranslations } from './translations';
+import type {
+	I18nConfig,
+	TranslationConfig,
+	Translations,
+} from './translations.model';
+
+describe('bundled privacyChoices translations', () => {
+	const english = bundledTranslations.en.privacyChoices;
+
+	it('English defines every key', () => {
+		expect(english).toBeDefined();
+		for (const value of Object.values(english ?? {})) {
+			expect(value.trim()).not.toBe('');
+		}
+	});
+
+	it('[COPY-01] the bundle-dependent sentences take placeholders', () => {
+		expect(english?.optInDescription).toContain('{rights}');
+		expect(english?.optInBarDescription).toContain('{rights}');
+		expect(english?.gpcNote).toContain('{rights}');
+		expect(english?.gpcNote).toContain('{scope}');
+		expect(english?.bannerAllowedRightsOff).toContain('{rights}');
+		expect(english?.bannerAllowedRightsOffGpc).toContain('{rights}');
+	});
+
+	it('[GPC-04] never tells the visitor to turn the signal off', () => {
+		for (const value of Object.values(english ?? {})) {
+			expect(value).not.toMatch(/turn off the signal|turn the signal off/iu);
+		}
+	});
+
+	it('the attribution lead-in reads "Consent by"', () => {
+		expect(bundledTranslations.en.common.securedBy).toBe('Consent by');
+	});
+});
+
+describe('bundled consentGate translations', () => {
+	it.each(Object.entries(bundledTranslations))(
+		'%s defines loading and error copy',
+		(_language, translations) => {
+			expect(translations.consentGate.loading).toEqual(expect.any(String));
+			expect(translations.consentGate.loading).not.toBe('');
+			expect(translations.consentGate.error).toEqual(expect.any(String));
+			expect(translations.consentGate.error).not.toBe('');
+		}
+	);
+});
+
+describe('bundled vendor list translations', () => {
+	const expectNonEmpty = (value: string | undefined) => {
+		expect(value).toEqual(expect.any(String));
+		expect(value?.trim()).not.toBe('');
+	};
+
+	it.each(Object.entries(bundledTranslations))(
+		'%s defines the vendor list copy with its placeholders',
+		(_language, translations) => {
+			const { vendors } = translations.consentManagerDialog;
+			expectNonEmpty(vendors?.disabledByCategory);
+			expectNonEmpty(vendors?.privacyPolicy);
+			expect(vendors?.switchLabel).toContain('{vendor}');
+			expect(vendors?.title).toContain('{count}');
+		}
+	);
+
+	it.each(
+		Object.entries(bundledTranslations).filter(
+			([language]) => language !== 'en'
+		)
+	)('%s does not reuse the English vendor copy', (_language, translations) => {
+		// The React and Vue rows fall back to English on a missing key, so a
+		// locale that omits the block would show English inside localized
+		// copy without anything failing.
+		const english = bundledTranslations.en.consentManagerDialog.vendors;
+		const { vendors } = translations.consentManagerDialog;
+		expect(vendors?.disabledByCategory).not.toBe(english?.disabledByCategory);
+		expect(vendors?.switchLabel).not.toBe(english?.switchLabel);
+	});
+});
+
+describe('bundled notice and rights translations', () => {
+	const expectNonEmpty = (value: string) => {
+		expect(value).toEqual(expect.any(String));
+		expect(value.trim()).not.toBe('');
+	};
+
+	it('uses the statutory English opt-out link titles', () => {
+		expect(bundledTranslations.en.rights.optOut).toBe(
+			'Do Not Sell or Share My Personal Information'
+		);
+		expect(bundledTranslations.en.rights.privacyChoices).toBe(
+			'Your Privacy Choices'
+		);
+		expect(bundledTranslations.en.rights.californiaPrivacyChoices).toBe(
+			'Your California Privacy Choices'
+		);
+	});
+
+	it.each(Object.entries(bundledTranslations))(
+		'%s defines dismiss, notice copy, and rights labels',
+		(_language, translations) => {
+			expectNonEmpty(translations.common.dismiss);
+			expectNonEmpty(translations.common.acknowledge);
+			expectNonEmpty(translations.cookieBanner.noticeTitle);
+			expectNonEmpty(translations.cookieBanner.noticeDescription);
+			expectNonEmpty(translations.rights.optOut);
+			expectNonEmpty(translations.rights.preferences);
+			expectNonEmpty(translations.rights.privacyChoices);
+			expectNonEmpty(translations.rights.californiaPrivacyChoices);
+		}
+	);
+
+	it.each(
+		Object.entries(bundledTranslations).filter(
+			([language]) => language !== 'en'
+		)
+	)(
+		'%s does not reuse the English notice or rights copy',
+		(_language, translations) => {
+			const english = bundledTranslations.en;
+			expect(translations.cookieBanner.noticeDescription).not.toBe(
+				english.cookieBanner.noticeDescription
+			);
+			expect(translations.rights.optOut).not.toBe(english.rights.optOut);
+			expect(translations.rights.privacyChoices).not.toBe(
+				english.rights.privacyChoices
+			);
+			expect(translations.rights.californiaPrivacyChoices).not.toBe(
+				english.rights.californiaPrivacyChoices
+			);
+		}
+	);
+});
+
+describe('bundled optOut translations', () => {
+	const expectNonEmpty = (value: string | undefined) => {
+		expect(value).toEqual(expect.any(String));
+		expect(value?.trim()).not.toBe('');
+	};
+
+	it('uses the expected English opt-out confirmation and lock copy', () => {
+		expect(bundledTranslations.en.optOut).toEqual({
+			action: 'Opt out',
+			description:
+				'This site will not sell or share your personal information, and your choice is saved on this browser.',
+			done: 'Done',
+			headingAll:
+				'Sale and sharing of your personal information and targeted advertising',
+			headingSaleAndShare: 'Sale and sharing of your personal information',
+			headingSaleAndTargetedAds:
+				'Sale of your personal information and targeted advertising',
+			lockedByAccount:
+				'Your account has opted out, and you can change this after signing in.',
+			lockedByGpc:
+				"Your browser's Global Privacy Control signal is on, so this stays off.",
+			notOptedOut: "You haven't opted out on this browser.",
+			optInCancel: 'Stay opted out',
+			optInConfirm: 'Opt back in',
+			optInDescription: 'Confirming ends your opt-out on this browser.',
+			optInDescriptionWithRights:
+				'Confirming ends your opt-out of {rights} on this browser.',
+			optInLink: 'Opt back in…',
+			optInTitle: 'Opt back in?',
+			receiptAccount: "You're opted out on this browser and your account.",
+			receiptAccountWithRights:
+				"You're opted out of {rights} on this browser and your account.",
+			receiptBrowser: "You're opted out on this browser.",
+			receiptBrowserWithRights: "You're opted out of {rights} on this browser.",
+			recordedLabel: 'Recorded',
+			referenceLabel: 'Reference',
+			rightsAll: 'sale, sharing and targeted advertising',
+			rightsSaleAndShare: 'sale and sharing',
+			rightsSaleAndTargetedAds: 'sale and targeted advertising',
+			statusRequest: 'Opt-out request honored',
+			statusSignal: 'Opt-out preference signal honored',
+		});
+	});
+
+	const requiredOptOutKeys = [
+		'action',
+		'headingAll',
+		'headingSaleAndShare',
+		'headingSaleAndTargetedAds',
+		'notOptedOut',
+		'optInCancel',
+		'optInConfirm',
+		'optInDescription',
+		'optInDescriptionWithRights',
+		'optInLink',
+		'optInTitle',
+		'statusRequest',
+		'statusSignal',
+		'description',
+		'receiptBrowser',
+		'receiptAccount',
+		'receiptBrowserWithRights',
+		'receiptAccountWithRights',
+		'rightsSaleAndShare',
+		'rightsSaleAndTargetedAds',
+		'rightsAll',
+		'recordedLabel',
+		'referenceLabel',
+		'done',
+		'lockedByGpc',
+		'lockedByAccount',
+	] as const;
+
+	const localizedOptOutKeys = [
+		'action',
+		'headingAll',
+		'headingSaleAndShare',
+		'headingSaleAndTargetedAds',
+		'notOptedOut',
+		'optInCancel',
+		'optInConfirm',
+		'optInDescription',
+		'optInDescriptionWithRights',
+		'optInLink',
+		'optInTitle',
+		'statusRequest',
+		'statusSignal',
+		'description',
+		'receiptBrowser',
+		'receiptAccount',
+		'receiptBrowserWithRights',
+		'receiptAccountWithRights',
+		'rightsSaleAndShare',
+		'rightsSaleAndTargetedAds',
+		'rightsAll',
+		'recordedLabel',
+		'done',
+		'lockedByGpc',
+		'lockedByAccount',
+	] as const;
+
+	it.each(Object.entries(bundledTranslations))(
+		'%s defines every opt-out key',
+		(_language, translations) => {
+			const { optOut } = translations;
+			for (const key of requiredOptOutKeys) {
+				expectNonEmpty(optOut?.[key]);
+			}
+			expect(optOut?.receiptBrowserWithRights).toContain('{rights}');
+			expect(optOut?.receiptAccountWithRights).toContain('{rights}');
+			expect(optOut?.optInDescriptionWithRights).toContain('{rights}');
+		}
+	);
+
+	it.each(
+		Object.entries(bundledTranslations).filter(
+			([language]) => language !== 'en'
+		)
+	)('%s does not reuse the English opt-out copy', (_language, translations) => {
+		const english = bundledTranslations.en.optOut;
+		const { optOut } = translations;
+		for (const key of localizedOptOutKeys) {
+			expect(optOut?.[key]).not.toBe(english?.[key]);
+		}
+	});
+});
+
+describe('bundled IAB banner translations', () => {
+	// Existing mismatches; this list should only shrink. `bg` and `cs` also
+	// ship ICU plural syntax that nothing formats.
+	const knownMismatches = new Set(['bg', 'cs', 'he', 'pl']);
+
+	it.each(
+		Object.entries(bundledTranslations).filter(
+			([language]) => !knownMismatches.has(language)
+		)
+	)(
+		'%s contains the partners link inside the banner description',
+		(_language, translations) => {
+			// The stock IAB banners split the description on the link text to
+			// turn it into a button; without a match they repeat the count.
+			const { description, partnersLink } = translations.iab.banner;
+			expect(description.replace('{partnerCount}', '42')).toContain(
+				partnersLink.replace('{count}', '42')
+			);
+		}
+	);
+});
+
+describe('deepMergeTranslations', () => {
+	it('preserves an older notice label and prefers an explicit acknowledgement', () => {
+		const base = bundledTranslations.en;
+		expect(
+			deepMergeTranslations(base, { common: { dismiss: 'Understood' } }).common
+				.acknowledge
+		).toBe('Understood');
+		expect(
+			deepMergeTranslations(base, {
+				common: { acknowledge: 'Acknowledged', dismiss: 'Close' },
+			}).common.acknowledge
+		).toBe('Acknowledged');
+	});
+
+	const baseTranslations: Translations = {
+		common: {
+			acceptAll: 'Default Accept All',
+			customize: 'Default Customize',
+			rejectAll: 'Default Reject All',
+			save: 'Default Save',
+		},
+		consentGate: {
+			actionButton: 'Gate Button',
+			error: 'Content failed',
+			loading: 'Loading content',
+			title: 'Gate Title',
+		},
+		consentManagerDialog: {
+			title: 'Dialog Title',
+		},
+		consentTypes: {
+			necessary: {
+				description: 'These cookies are required',
+				title: 'Necessary',
+			},
+		},
+		cookieBanner: {
+			description: 'Base Description',
+			title: 'Base Title',
+		},
+	};
+
+	it('should merge translations with override taking priority', () => {
+		const override: Partial<Translations> = {
+			consentManagerDialog: {
+				description: 'Custom Dialog Description',
+			},
+			cookieBanner: {
+				title: 'Custom Title',
+			},
+		};
+
+		const result = deepMergeTranslations(baseTranslations, override);
+
+		expect(result).toEqual({
+			common: {
+				acceptAll: 'Default Accept All',
+				customize: 'Default Customize',
+				rejectAll: 'Default Reject All',
+				save: 'Default Save',
+			},
+			consentGate: {
+				actionButton: 'Gate Button',
+				error: 'Content failed',
+				loading: 'Loading content',
+				title: 'Gate Title',
+			},
+			consentManagerDialog: {
+				description: 'Custom Dialog Description',
+				title: 'Dialog Title',
+			},
+			consentTypes: {
+				necessary: {
+					description: 'These cookies are required',
+					title: 'Necessary',
+				},
+			},
+			cookieBanner: {
+				description: 'Base Description',
+				title: 'Custom Title',
+			},
+		});
+	});
+
+	it('should handle empty override object', () => {
+		const result = deepMergeTranslations(baseTranslations, {});
+		expect(result).toEqual(baseTranslations);
+	});
+
+	it("reads an override's old frame key as consentGate", () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const result = deepMergeTranslations(baseTranslations, {
+			frame: { title: 'Legacy Title' },
+		});
+		expect(result.consentGate).toEqual({
+			actionButton: 'Gate Button',
+			error: 'Content failed',
+			loading: 'Loading content',
+			title: 'Legacy Title',
+		});
+		expect(result).not.toHaveProperty('frame');
+		warn.mockRestore();
+	});
+
+	it('lets consentGate win over frame key by key', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const result = deepMergeTranslations(baseTranslations, {
+			consentGate: { title: 'New Title' },
+			frame: { actionButton: 'Legacy Button', title: 'Legacy Title' },
+		});
+		expect(result.consentGate?.title).toBe('New Title');
+		expect(result.consentGate?.actionButton).toBe('Legacy Button');
+		warn.mockRestore();
+	});
+
+	it('should merge the rights section', () => {
+		const result = deepMergeTranslations(
+			{ ...baseTranslations, rights: { optOut: 'Base Opt Out' } },
+			{ rights: { preferences: 'Custom Preferences' } }
+		);
+		expect(result.rights).toEqual({
+			optOut: 'Base Opt Out',
+			preferences: 'Custom Preferences',
+		});
+	});
+
+	it('merges the trigger section', () => {
+		const result = deepMergeTranslations(
+			{ ...baseTranslations, trigger: { label: 'Base label' } },
+			{ trigger: { toolbarLabel: 'Custom toolbar' } }
+		);
+		expect(result.trigger).toEqual({
+			label: 'Base label',
+			toolbarLabel: 'Custom toolbar',
+		});
+	});
+
+	it('merges the privacyChoices section', () => {
+		const result = deepMergeTranslations(
+			{ ...baseTranslations, privacyChoices: { nudge: 'Base nudge' } },
+			{ privacyChoices: { dialogIntro: 'Custom intro' } }
+		);
+		expect(result.privacyChoices).toEqual({
+			dialogIntro: 'Custom intro',
+			nudge: 'Base nudge',
+		});
+	});
+
+	it('merges the optOut section', () => {
+		const result = deepMergeTranslations(
+			{ ...baseTranslations, optOut: { statusRequest: 'Base status' } },
+			{ optOut: { done: 'Finished' } }
+		);
+		expect(result.optOut).toEqual({
+			done: 'Finished',
+			statusRequest: 'Base status',
+		});
+	});
+});
+
+describe('mergeTranslationConfigs', () => {
+	const defaultConfig: TranslationConfig = {
+		defaultLanguage: 'en',
+		translations: {
+			de: {
+				common: {
+					acceptAll: 'German Accept All',
+					customize: 'German Customize',
+					rejectAll: 'German Reject All',
+					save: 'German Save',
+				},
+				consentManagerDialog: {
+					title: 'German Dialog',
+				},
+				consentTypes: {
+					necessary: {
+						description: 'Diese Cookies sind erforderlich',
+						title: 'Notwendig',
+					},
+				},
+				cookieBanner: {
+					description: 'German Description',
+					title: 'German Title',
+				},
+			},
+			en: {
+				common: {
+					acceptAll: 'Default Accept All',
+					customize: 'Default Customize',
+					rejectAll: 'Default Reject All',
+					save: 'Default Save',
+				},
+				consentManagerDialog: {
+					title: 'Default Dialog',
+				},
+				consentTypes: {
+					necessary: {
+						description: 'These cookies are required',
+						title: 'Necessary',
+					},
+				},
+				cookieBanner: {
+					description: 'Default Description',
+					title: 'Default Title',
+				},
+			},
+		},
+	};
+
+	it('should merge configs with custom taking priority', () => {
+		const customConfig: Partial<TranslationConfig> = {
+			defaultLanguage: 'de',
+			translations: {
+				en: {
+					cookieBanner: {
+						title: 'Custom Title',
+					},
+				},
+			},
+		};
+
+		const result = mergeTranslationConfigs(defaultConfig, customConfig);
+		const enTranslations = result.translations.en;
+		const deTranslations = result.translations.de;
+
+		expect(result.defaultLanguage).toBe('de');
+		expect(enTranslations?.cookieBanner?.title).toBe('Custom Title');
+		expect(enTranslations?.cookieBanner?.description).toBe(
+			'Default Description'
+		);
+		// German translations should now be complete with English fallbacks
+		expect(deTranslations?.consentManagerDialog?.description).toBe(
+			'Customize your privacy settings here. You can choose which types of cookies and tracking technologies you allow.'
+		);
+		expect(deTranslations?.consentTypes?.experience?.title).toBe('Experience');
+		expect(deTranslations?.consentGate?.title).toBe(
+			'Accept {category} consent to view this content.'
+		);
+	});
+
+	it('should handle undefined custom config', () => {
+		const result = mergeTranslationConfigs(defaultConfig);
+		expect(result.defaultLanguage).toBe(defaultConfig.defaultLanguage);
+		expect(result.translations.en?.consentManagerDialog?.description).toBe(
+			'Customize your privacy settings here. You can choose which types of cookies and tracking technologies you allow.'
+		);
+		expect(result.translations.de?.consentTypes?.experience?.title).toBe(
+			'Experience'
+		);
+		expect(result.translations.de?.consentGate?.title).toBe(
+			'Accept {category} consent to view this content.'
+		);
+	});
+
+	it('should prioritize i18n over legacy fields when both are present', () => {
+		const result = mergeTranslationConfigs(
+			{
+				defaultLanguage: 'en',
+				i18n: {
+					detectBrowserLanguage: false,
+					locale: 'fr',
+					messages: {
+						fr: {
+							cookieBanner: {
+								title: 'Titre',
+							},
+						},
+					},
+				},
+				translations: defaultConfig.translations,
+			},
+			{
+				defaultLanguage: 'de',
+				translations: {
+					de: {
+						cookieBanner: {
+							title: 'Titel',
+						},
+					},
+				},
+			}
+		);
+
+		expect(result.defaultLanguage).toBe('de');
+		expect(result.translations.fr?.cookieBanner?.title).toBe('Titre');
+	});
+});
+
+describe('detectBrowserLanguage', () => {
+	const mockNavigator = {
+		language: 'en-US',
+	};
+
+	beforeEach(() => {
+		Object.defineProperty(window, 'navigator', {
+			configurable: true,
+			value: mockNavigator,
+		});
+	});
+
+	it('should return default language when auto-switch is disabled', () => {
+		const result = detectBrowserLanguage({ de: {}, en: {} }, 'de', true);
+		expect(result).toBe('de');
+	});
+
+	it('should return en when no default language is provided and auto-switch is disabled', () => {
+		const result = detectBrowserLanguage({ de: {}, en: {} }, undefined, true);
+		expect(result).toBe('en');
+	});
+
+	it('should detect browser language when available', () => {
+		mockNavigator.language = 'de-DE';
+		const result = detectBrowserLanguage({ de: {}, en: {} }, 'en', false);
+		expect(result).toBe('de');
+	});
+
+	it('should fall back to default language when browser language not available', () => {
+		mockNavigator.language = 'fr-FR';
+		const result = detectBrowserLanguage({ de: {}, en: {} }, 'en', false);
+		expect(result).toBe('en');
+	});
+});
+
+describe('parseAcceptLanguage', () => {
+	it('should return empty array when header is null or empty', () => {
+		expect(parseAcceptLanguage(null)).toEqual([]);
+		expect(parseAcceptLanguage(undefined)).toEqual([]);
+		expect(parseAcceptLanguage('')).toEqual([]);
+	});
+
+	it('should parse single language without region', () => {
+		expect(parseAcceptLanguage('de')).toEqual(['de']);
+	});
+
+	it('should normalize region codes and lowercase', () => {
+		expect(parseAcceptLanguage('DE-de')).toEqual(['de']);
+		expect(parseAcceptLanguage('en-US')).toEqual(['en']);
+	});
+
+	it('should parse multiple languages in order', () => {
+		expect(parseAcceptLanguage('de-DE,en;q=0.9,fr;q=0.8')).toEqual([
+			'de',
+			'en',
+			'fr',
+		]);
+	});
+
+	it('should order by quality values', () => {
+		expect(parseAcceptLanguage('en;q=0.1,de;q=0.9')).toEqual(['de', 'en']);
+	});
+});
+
+describe('selectLanguage', () => {
+	it('should return fallback when no available languages', () => {
+		expect(selectLanguage([], { fallback: 'en', header: 'de' })).toBe('en');
+	});
+
+	it('should return first matching language from header', () => {
+		const available = ['en', 'de'];
+		expect(
+			selectLanguage(available, {
+				fallback: 'en',
+				header: 'de-DE,en;q=0.9',
+			})
+		).toBe('de');
+	});
+
+	it('should fall back when header languages are unsupported', () => {
+		const available = ['en', 'de'];
+		expect(
+			selectLanguage(available, {
+				fallback: 'en',
+				header: 'xx-XX,yy;q=0.9',
+			})
+		).toBe('en');
+	});
+
+	it('should prefer second header language if first is unsupported but second is available', () => {
+		const available = ['en', 'de'];
+		expect(
+			selectLanguage(available, {
+				fallback: 'de',
+				header: 'xx-XX,en;q=0.9,de;q=0.8',
+			})
+		).toBe('en');
+	});
+
+	it('should default fallback to "en" when not provided', () => {
+		const available = ['de'];
+		expect(selectLanguage(available, { header: 'xx-XX' })).toBe('en');
+	});
+});
+
+describe('i18n normalization', () => {
+	it('should map legacy translation config into i18n shape', () => {
+		const normalized = normalizeI18nConfig({
+			defaultLanguage: 'en',
+			disableAutoLanguageSwitch: true,
+			translations: { en: { common: { acceptAll: 'Accept' } } },
+		});
+
+		expect(normalized).toEqual({
+			detectBrowserLanguage: false,
+			locale: 'en',
+			messages: { en: { common: { acceptAll: 'Accept' } } },
+		});
+	});
+
+	it('should prefer i18n values when both i18n and legacy values are provided', () => {
+		const normalized = normalizeI18nConfig({
+			defaultLanguage: 'en',
+			i18n: {
+				detectBrowserLanguage: true,
+				locale: 'de',
+				messages: { de: { common: { acceptAll: 'Neu' } } },
+			},
+			translations: { en: { common: { acceptAll: 'Legacy' } } },
+		});
+
+		expect(normalized).toEqual({
+			detectBrowserLanguage: true,
+			locale: 'de',
+			messages: { de: { common: { acceptAll: 'Neu' } } },
+		});
+	});
+
+	it('should map canonical i18n shape back to legacy translation config', () => {
+		const config: I18nConfig = {
+			detectBrowserLanguage: true,
+			locale: 'en',
+			messages: { en: { common: { acceptAll: 'Accept' } } },
+		};
+
+		expect(toTranslationConfig(config)).toEqual({
+			defaultLanguage: 'en',
+			disableAutoLanguageSwitch: false,
+			translations: { en: { common: { acceptAll: 'Accept' } } },
+		});
+	});
+});
+
+describe('prepareTranslationConfig', () => {
+	const defaultConfig: TranslationConfig = {
+		defaultLanguage: 'en',
+		translations: {
+			de: {
+				cookieBanner: {
+					title: 'German Title',
+				},
+			},
+			en: {
+				cookieBanner: {
+					title: 'Default Title',
+				},
+			},
+		},
+	};
+
+	const mockNavigator = {
+		language: 'de-DE',
+	};
+
+	beforeEach(() => {
+		Object.defineProperty(window, 'navigator', {
+			configurable: true,
+			value: mockNavigator,
+		});
+	});
+
+	it('should prepare config with detected language', () => {
+		const result = prepareTranslationConfig(defaultConfig);
+		expect(result.defaultLanguage).toBe('de');
+	});
+
+	it('should respect custom config settings', () => {
+		const customConfig: Partial<TranslationConfig> = {
+			defaultLanguage: 'en',
+			disableAutoLanguageSwitch: true,
+			translations: {
+				en: {
+					cookieBanner: {
+						title: 'Custom Title',
+					},
+				},
+			},
+		};
+
+		const result = prepareTranslationConfig(defaultConfig, customConfig);
+		expect(result.defaultLanguage).toBe('en');
+		expect(result.translations.en?.cookieBanner?.title).toBe('Custom Title');
+	});
+});
+
+describe('migrateLegacyTranslationKeys', () => {
+	it('moves frame to consentGate', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		expect(
+			migrateLegacyTranslationKeys({ frame: { title: 'Blocked' } })
+		).toEqual({ consentGate: { title: 'Blocked' } });
+		warn.mockRestore();
+	});
+
+	it('warns once per page outside production', async () => {
+		vi.resetModules();
+		const { migrateLegacyTranslationKeys: migrate } =
+			await import('./translation-config.model');
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		migrate({ frame: { title: 'Blocked' } });
+		migrate({ frame: { title: 'Again' } });
+		expect(warn).toHaveBeenCalledTimes(1);
+		expect(warn.mock.calls[0]?.[0]).toContain('consentGate');
+		warn.mockRestore();
+	});
+
+	it('returns translations without frame unchanged', () => {
+		const translations = { consentGate: { title: 'Blocked' } };
+		expect(migrateLegacyTranslationKeys(translations)).toBe(translations);
+	});
+});
+
+describe('mergeTranslationConfigs with the old frame key', () => {
+	it('reads custom frame copy as consentGate', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+		const result = mergeTranslationConfigs(
+			{ defaultLanguage: 'en', translations: {} },
+			{
+				translations: {
+					en: { frame: { actionButton: 'Allow {category}' } },
+				},
+			}
+		);
+		expect(result.translations.en?.consentGate?.actionButton).toBe(
+			'Allow {category}'
+		);
+		expect(result.translations.en?.consentGate?.title).toBe(
+			'Accept {category} consent to view this content.'
+		);
+		warn.mockRestore();
+	});
+});

@@ -44,23 +44,17 @@ import type { LegalLinkKeys } from '@inth/sdk-ui/utils/legal-links';
 import type { ConsentDialogOptions } from '../../consent-client.model';
 import { classes as styles } from '../../generated/ui/dialog';
 import { classes as expandStyles } from '../../generated/ui/expand';
+import { checkIcon } from '../parts/check-icon';
+import { chevron } from '../parts/chevron';
+import { consentButton } from '../parts/consent-button';
 import {
 	advertisingRow,
 	createCategoryGroup,
 } from '../parts/create-category-group';
 import { createRightsReceipt } from '../parts/create-rights-receipt';
 import { createSaleRightsRow } from '../parts/create-sale-rights-row';
-import {
-	activeElementOf,
-	cx,
-	el,
-	findInPage,
-	focusFirstIn,
-	icon,
-	owned,
-	patch,
-} from '../parts/dom';
-import type { PartChild, PartRef } from '../parts/dom';
+import { cx, el, icon, owned } from '../parts/el';
+import type { PartChild, PartRef } from '../parts/el';
 import {
 	commitDialogChoice,
 	createPreferenceDraft,
@@ -69,15 +63,16 @@ import {
 	takeReceiptFocus,
 } from '../parts/engine';
 import {
-	checkIcon,
-	chevron,
-	consentButton,
-	prefersReducedMotionNow,
-	surfaceBasics,
-	watchPhoneLayout,
-} from '../parts/shared';
-import type { PartEnv } from '../parts/shared';
-import type { Surface, SurfaceContext } from '../surface';
+	activeElementOf,
+	findInPage,
+	focusFirstIn,
+} from '../parts/focus-first-in';
+import { patch } from '../parts/morph';
+import { surfaceBasics } from '../parts/part-env.model';
+import type { PartEnv } from '../parts/part-env.model';
+import { prefersReducedMotionNow } from '../parts/prefers-reduced-motion-now';
+import { watchPhoneLayout } from '../parts/watch-phone-layout';
+import type { Surface, SurfaceContext } from '../surface.model';
 import { OPTIONS_SHEETS } from './options-sheets';
 
 /** The "Saved" cue stays this long, on a timer, not an animation (MOT-03). */

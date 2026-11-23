@@ -84,7 +84,7 @@ import { useReducedMotion } from '~/hooks/use-reduced-motion';
 import { useResolvedPresentation } from '~/hooks/use-resolved-presentation';
 import { useTextDirection } from '~/hooks/use-text-direction';
 import type { ReactSlotProps } from '~/types/react-slots.model';
-import { useKernel } from '~/use-kernel-selector';
+import { useKernel } from '~/use-kernel';
 import { useUIConfig } from '~/use-ui-config';
 import { inertProps } from '~/utils/inert-props';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';

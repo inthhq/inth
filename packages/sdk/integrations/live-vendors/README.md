@@ -82,6 +82,7 @@ logic is pure and unit-tested in `monitor-issue.model.test.ts`.
 - `runner.ts` — Playwright orchestration, phase assertions, JSON report
 - `monitor-issue.model.ts` — pure report/issue helpers (unit-tested)
 - `manage-issues.ts` — GitHub issue sync used by the workflow
+- `github-issues.api.ts` — the GitHub REST requests `manage-issues.ts` makes
 
 ## Known limitations
 
@@ -98,9 +99,8 @@ logic is pure and unit-tested in `monitor-issue.model.test.ts`.
   baked into the package scripts) because Bun otherwise applies the package
   tsconfig's `inth → dist-types` path mapping at runtime.
 - That tsconfig maps `~/*` to `../../core/src/*`. `stub-contract.test.ts`
-  reaches `src/e2e-test-utils.ts`, which imports the core script loader by
-  relative path, so core's own `~/*` sources join this project's type program.
-  The package tsconfig sidesteps this by excluding `e2e-test-utils.ts`
-  outright; excluding it here would leave the meta-test untyped instead. Keep
+  reaches `src/__tests__/e2e-test-utils.ts`, which imports the core script
+  loader, so core's own `~/*` sources can join this project's type program.
+  Excluding the helper here would leave the meta-test untyped. Keep
   the mapping narrow — Bun reads these paths at runtime too, so adding a
   `inth` entry here would point the runner at `.d.ts` files.

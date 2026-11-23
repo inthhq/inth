@@ -8,7 +8,7 @@ import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
 import { expect, test, vi } from 'vitest';
 
-import type { ConsentManagerState } from '../lib/get-consent-context.svelte';
+import type { ConsentManagerState } from '../lib/consent-context.model';
 import ConformanceFixture from './fixtures/conformance-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';

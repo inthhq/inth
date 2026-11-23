@@ -7,8 +7,8 @@
 import { createConsentRuntime } from '@inth/sdk/runtime';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { registerVendorContractCleanup } from './e2e-test-utils';
-import type { TestWindow } from './e2e-test-utils';
+import { registerVendorContractCleanup } from './__tests__/e2e-test-utils';
+import type { TestWindow } from './__tests__/e2e-test-utils';
 import { metaPixel } from './vendors/ads-and-pixels/meta-pixel';
 import { plausibleAnalytics } from './vendors/analytics/plausible-analytics';
 import { posthog } from './vendors/analytics/posthog';

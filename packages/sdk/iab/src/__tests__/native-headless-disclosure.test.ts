@@ -28,7 +28,7 @@ import { resolveIABBannerSummary } from '@inth/sdk-core';
 import { describe, expect, test } from 'vitest';
 
 import { applyPublisherRestrictionsToGVL } from '../headless';
-import { additionalConsentFor } from '../tcf/additional-consent.api';
+import { additionalConsentFor } from '../tcf/additional-consent-for.model';
 import { generateTCString } from '../tcf/tc-string.model';
 
 const IAB = resolve(import.meta.dirname, '../../../../native-protocol/iab');

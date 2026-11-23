@@ -3,7 +3,7 @@ import { createConsentKernel } from '@inth/sdk-core';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { createIAB, iab as createIABConfig } from '../index';
-import { setMockGVL } from '../tcf/fetch-gvl';
+import { setMockGVL } from '../tcf/fetch-gvl.api';
 import { completeGVL } from './fixtures/gvl-sample';
 
 const MOCK_GVL: GlobalVendorList = {

@@ -5,7 +5,7 @@
 	import Trigger from '../../lib/components/panel-trigger.svelte';
 	import Widget from '../../lib/components/preferences.svelte';
 	import Banner from '../../lib/components/prompt/prompt.svelte';
-	import type { ConsentContextValue } from '../../lib/get-consent-context.svelte';
+	import type { ConsentContextValue } from '../../lib/consent-context.model';
 	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 	import Reader from './policy-state-reader.svelte';
 

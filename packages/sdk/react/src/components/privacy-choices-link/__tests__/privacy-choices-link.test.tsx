@@ -16,7 +16,7 @@ import { ConsentDialog } from '~/aggregate-components';
 import { PrivacyChoicesLink } from '~/components/privacy-choices-link';
 import { InthProvider as RawInthProvider } from '~/provider';
 import { testing } from '~/testing';
-import { useKernel } from '~/use-kernel-selector';
+import { useKernel } from '~/use-kernel';
 
 const query = <Element extends HTMLElement>(testId: string) =>
 	document.querySelector<Element>(`[data-testid="${testId}"]`);

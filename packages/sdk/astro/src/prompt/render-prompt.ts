@@ -12,8 +12,8 @@ import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { BRAND_MARKS } from '@inth/sdk/ui/utils';
 import type { LegalLinkEntry } from '@inth/sdk/ui/utils';
 
-import { h, raw } from '../parts/vnode';
-import type { VAttributes, VChild, VElement } from '../parts/vnode';
+import { h, raw } from '../parts/vnode.model';
+import type { VAttributes, VChild, VElement } from '../parts/vnode.model';
 import type { PromptModel, PromptButton, SummaryAction } from './prompt.model';
 
 /** The prompt's live state. */

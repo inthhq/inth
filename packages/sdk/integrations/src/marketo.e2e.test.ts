@@ -6,7 +6,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { marketoMunchkin } from './vendors/analytics/marketo';
 
 const GLOBALS = [

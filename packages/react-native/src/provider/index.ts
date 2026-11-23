@@ -11,7 +11,7 @@ export type {
 export type {
 	ConsentTrackingReprompt,
 	ConsentTrackingRequest,
-} from '../tracking/request-sequenced-tracking';
+} from '../tracking/tracking-sequence.model';
 export {
 	ConsentClientContext,
 	useConsentClient,

@@ -45,6 +45,12 @@ import type * as HostedModule from '../transports/v1/hosted';
 import { createV1InitRequest } from '../transports/v1/init-request';
 import { createV1RecordTransport } from '../transports/v1/records';
 import { V1_ROUTES } from '../transports/v1/v1-routes';
+import {
+	readGlobalFetch,
+	sendEarly,
+	withEarlyRequest,
+} from './client-mode.api';
+import type { EarlyRequest } from './client-mode.api';
 
 /** Where a client root's transport sends requests. */
 export interface ClientModeOptions {
@@ -181,66 +187,6 @@ const createLazyInitTransport = function createLazyInitTransport(
 	};
 };
 
-/** A request sent before the transport that reads its response loaded. */
-interface EarlyRequest {
-	url: string;
-	init: RequestInit & { headers: Record<string, string> };
-	response: Promise<Response>;
-}
-
-/** Sends a request now; nothing reading it is not an unhandled rejection. */
-const sendEarly = function sendEarly(
-	fetch: typeof globalThis.fetch,
-	url: string,
-	init: EarlyRequest['init']
-): EarlyRequest {
-	const response = fetch(url, init);
-	void (async () => {
-		try {
-			await response;
-		} catch {
-			// The transport that reads the response reports the failure.
-		}
-	})();
-	return { init, response, url };
-};
-
-const isSameRequest = function isSameRequest(
-	early: EarlyRequest,
-	input: Parameters<typeof globalThis.fetch>[0],
-	init: RequestInit | undefined
-): boolean {
-	return (
-		input === early.url &&
-		init?.method === early.init.method &&
-		init?.credentials === early.init.credentials &&
-		JSON.stringify(init?.headers) === JSON.stringify(early.init.headers)
-	);
-};
-
-/**
- * Hands the early response to the loaded transport's first request that
- * matches it exactly; every other request goes out through `fetch`.
- */
-const withEarlyRequest = function withEarlyRequest(
-	fetch: typeof globalThis.fetch,
-	early: EarlyRequest
-): typeof globalThis.fetch {
-	let pending: EarlyRequest | undefined = early;
-	const fetchWithEarlyRequest = (
-		input: Parameters<typeof globalThis.fetch>[0],
-		init?: RequestInit
-	): Promise<Response> => {
-		if (pending && isSameRequest(pending, input, init)) {
-			const { response } = pending;
-			pending = undefined;
-			return response;
-		}
-		return fetch(input, init);
-	};
-	return fetchWithEarlyRequest as typeof globalThis.fetch;
-};
-
 /** Options for {@link lazyHosted}. */
 export interface LazyHostedOptions {
 	/** Project URL for saves, and for init without `initUrl`. */
@@ -316,7 +262,7 @@ export const lazyHosted = function lazyHosted(
 		options.assertDecisionInputs ?? options.initUrl !== undefined;
 	return Object.assign(
 		(): KernelTransport => {
-			const fetch = globalThis.fetch?.bind(globalThis);
+			const fetch = readGlobalFetch();
 			return createLazyInitTransport(
 				createV1RecordTransport(
 					{ fetch, projectUrl: options.projectUrl },
@@ -427,11 +373,7 @@ export const lazyBrowserManifest = function lazyBrowserManifest(
 ): ProviderTransportFactory {
 	return Object.assign(
 		(context?: ProviderTransportContext): KernelTransport => {
-			const fetch =
-				options.fetch ??
-				(typeof globalThis.fetch === 'function'
-					? globalThis.fetch.bind(globalThis)
-					: undefined);
+			const fetch = options.fetch ?? readGlobalFetch();
 			const manifestUrl =
 				options.manifestUrl ??
 				`${trimSlash(options.projectUrl)}${V1_ROUTES.manifest}`;

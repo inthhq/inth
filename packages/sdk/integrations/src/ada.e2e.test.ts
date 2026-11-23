@@ -15,7 +15,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import type { ada as createAda, AdaOptions } from './vendors/functional/ada';
 
 const SDK_URL = 'https://messaging-assets.ada.support/sdk.js';

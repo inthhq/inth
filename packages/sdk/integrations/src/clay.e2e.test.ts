@@ -10,7 +10,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { clay } from './vendors/analytics/clay';
 
 describe('Clay core loader consent contract', () => {

@@ -10,7 +10,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { adrollPixel } from './vendors/ads-and-pixels/adroll';
 
 describe('AdRoll core loader consent contract', () => {

@@ -7,7 +7,7 @@
  * can take over the root the init script mounted.
  */
 import type { ConsentUIOptions } from '../consent-client.model';
-import { h } from './dom';
+import { h } from './h';
 
 const HOST_ATTRIBUTE = 'data-inth-ui';
 

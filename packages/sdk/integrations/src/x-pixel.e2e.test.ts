@@ -11,7 +11,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	toArgs,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { xPixel } from './vendors/ads-and-pixels/x-pixel';
 
 describe('xPixel contract', () => {

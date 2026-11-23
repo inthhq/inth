@@ -11,7 +11,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { clearbit } from './vendors/analytics/clearbit';
 
 describe('clearbit contract', () => {

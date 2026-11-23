@@ -12,7 +12,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { optimizelyWeb } from './vendors/functional/optimizely';
 
 const grantedExperienceConsents = { ...ALL_DENIED, experience: true };

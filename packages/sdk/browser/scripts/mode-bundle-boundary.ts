@@ -57,8 +57,8 @@ const UI_PARTS = [
  */
 const CHOICES_EXCLUSIONS = [
 	...HOSTED_EXCLUSIONS,
-	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:surface-session\/session|surface-actions\/(?:rules|opt-in|opt-out|opt-out-reload|plain-scripts)|events|libs\/vendors)\.[jt]s(?:$|[?|])/u,
-	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:modules\/(?:iab-controls|revocation-reload|vendor-allowed|persistence\/mount|script-loader\/(?:mount|diagnostics)|network-blocker\/hold)|libs\/(?:manifest-cache-runtime|script-loader\/debug))\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:surface-session\/session|surface-actions\/(?:rules|opt-in|opt-out|opt-out-reload(?:\.store)?|plain-scripts)|events|libs\/vendors)\.[jt]s(?:$|[?|])/u,
+	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:modules\/(?:iab-controls|revocation-reload|vendor-allowed|persistence\/mount|script-loader\/(?:mount|diagnostics)|network-blocker\/hold)|libs\/(?:manifest-cache-runtime(?:\.api)?|script-loader\/debug))\.[jt]s(?:$|[?|])/u,
 	/\/(?:packages\/(?:sdk\/)?core|@inth\/sdk-core)\/(?:src|dist)\/(?:kernel|transports|runtime)\//u,
 	new RegExp(
 		`/${BROWSER}/ui/(?:parts/(?:receipt-focus|engine)|opt-out-confirmation-state)\\.[jt]s(?:$|[?|])`,

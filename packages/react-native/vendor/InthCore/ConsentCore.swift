@@ -64,7 +64,7 @@ public struct CoreConfig: @unchecked Sendable {
     ///
     /// `nil` and `[]` are the same answer: no scope declared, so every served list is
     /// kept as it arrived. Both web narrows read an empty array that way --
-    /// `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts` hands the document
+    /// `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts` hands the document
     /// back, and `gvlRequestUrl` in `packages/backend/src/http/gvl.ts` does not put the
     /// scope on the request line at all -- and a core that read `[]` as "show nobody"
     /// would leave a publisher who never scoped anything with an empty drawer under a

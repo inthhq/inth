@@ -9,8 +9,8 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
-import type { TestWindow } from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
+import type { TestWindow } from './__tests__/e2e-test-utils';
 import { hotjar } from './vendors/analytics/hotjar';
 import { matomoAnalytics } from './vendors/analytics/matomo-analytics';
 import { mixpanelAnalytics } from './vendors/analytics/mixpanel-analytics';

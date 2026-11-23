@@ -15,7 +15,7 @@
  * links go at the end of `<head>`, outside what Svelte hydrates.
  */
 
-import type { PreloadChunkName } from './kit/inject-module-preloads';
+import type { PreloadChunkName } from './kit/module-preload.model';
 
 /** Options that decide which on-demand chunks a runtime mounts on start. */
 interface ModulePreloadOptions {

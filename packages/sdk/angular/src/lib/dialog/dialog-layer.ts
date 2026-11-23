@@ -20,7 +20,7 @@ import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 
 import { ConsentTheme } from '../core/consent-theme';
 import { resolveNoStyle } from '../core/no-style-scope';
-import { CloseIcon } from '../parts/icons';
+import { CloseIcon } from '../parts/close-icon';
 import { cx, slotPart } from '../parts/part-class-names.model';
 
 /**

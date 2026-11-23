@@ -11,7 +11,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { adobeTarget } from './vendors/functional/adobe-target';
 import type { AdobeTargetOptions } from './vendors/functional/adobe-target';
 

@@ -11,7 +11,8 @@ import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
 
 import type { TriggerIcon as TriggerIconType } from '../panel-trigger.model';
-import { FingerprintIcon, SettingsIcon } from './trigger-icons';
+import { FingerprintIcon } from './fingerprint-icon';
+import { SettingsIcon } from './settings-icon';
 import { useTriggerContext } from './trigger-root';
 
 export interface TriggerIconProps {

@@ -5,10 +5,8 @@
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
 
-	import {
-		getConsentContext,
-		getThemeContext,
-	} from '../get-consent-context.svelte';
+	import { getConsentContext } from '../get-consent-context.svelte';
+	import { getThemeContext } from '../get-theme-context';
 	import { CONSENT_GATE_SHEETS } from '../surface-styles';
 	import ConsentButton from './action-button.svelte';
 	import SurfaceStyles from './surface-styles.svelte';

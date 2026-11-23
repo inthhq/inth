@@ -15,12 +15,10 @@ import { canDeferEngine } from '../../../core/src/surface-actions/can-defer-engi
 import { createVueConsentKernelContext } from '../../../vue/src/__tests__/test-kernel';
 import { DEFERRED_ENGINE_MANIFEST_KEY } from '../../../vue/src/runtime/deferred/deferred-boot.model';
 import { isDeferredBannerModule } from '../../../vue/src/runtime/deferred/is-deferred-banner-module';
-import type { RuntimeConsentConfig } from '../../../vue/src/runtime/kernel';
-import {
-	DEFERRED_ENGINE_MANIFEST_KEY as BUILD_KEY,
-	preloadDeferredEngine,
-} from '../prefetch';
-import type { ClientManifestChunk } from '../prefetch';
+import type { RuntimeConsentConfig } from '../../../vue/src/runtime/vue-consent-kernel-context.model';
+import { DEFERRED_ENGINE_MANIFEST_KEY as BUILD_KEY } from '../prefetch/consent-prefetch.model';
+import type { ClientManifestChunk } from '../prefetch/consent-prefetch.model';
+import { preloadDeferredEngine } from '../prefetch/preload-deferred-engine';
 
 const initFor = (rule: Partial<PolicyRule>): InitOutput => ({
 	branding: 'inth',

@@ -1,6 +1,5 @@
 import type { App } from 'vue';
 
-import type { VueConsentKernelContext } from './kernel';
 import {
 	symbolActiveUI,
 	symbolConsent,
@@ -9,6 +8,7 @@ import {
 	symbolKernelContext,
 	symbolSnapshot,
 } from './utils/consent-symbols.model';
+import type { VueConsentKernelContext } from './vue-consent-kernel-context.model';
 
 export const provideVueConsentContext = function provideVueConsentContext(
 	app: App,

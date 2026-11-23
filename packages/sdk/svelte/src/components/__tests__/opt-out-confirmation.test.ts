@@ -11,7 +11,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import OptOutConfirmationFixture from '../../__tests__/fixtures/opt-out-confirmation-fixture.svelte';
 import { transportMode } from '../../__tests__/fixtures/transport-mode';
 import { policyFixture } from '../../__tests__/policy-fixture';
-import type { ConsentContextValue } from '../../lib/get-consent-context.svelte';
+import type { ConsentContextValue } from '../../lib/consent-context.model';
 import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 
 const reload = vi.hoisted(() => vi.fn());

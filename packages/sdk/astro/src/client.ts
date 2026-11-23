@@ -31,9 +31,11 @@ import type {
 } from '@inth/sdk/events';
 
 import type { AstroConsentClient } from './astro-consent-client.model';
-import { warmDialogTarget } from './browser/attach-banner-actions';
+import { getWindow } from './browser/get-window';
 import { preloadDialogChunks } from './browser/load-dialog';
-import { GLOBAL_KEY, getWindow, readPageNonce } from './browser/page-state';
+import { GLOBAL_KEY } from './browser/page-state.model';
+import { readPageNonce } from './browser/read-page-nonce';
+import { warmDialogTarget } from './browser/warm-dialog';
 import type { ConsentDialogKind } from './ui/register-dialog-adapter';
 
 /**
@@ -98,7 +100,7 @@ export const optOut = async function optOut(
 	await getConsentClient()?.optOut(opener);
 };
 
-/** `EVENTS_KEY` in `./client-engine`; a test keeps them equal. */
+/** `EVENTS_KEY` in `./boot-client-engine`; a test keeps them equal. */
 const EVENTS_KEY = Symbol.for('inth.astro.events');
 
 type WithEvents = AstroConsentClient & {
@@ -183,24 +185,24 @@ export type {
 	AstroConsentSaveInput,
 	ConsentAction,
 } from './astro-consent-client.model';
+export { attachBannerActions } from './browser/attach-banner-actions';
 export {
 	ACTION_ATTRIBUTE,
-	attachBannerActions,
 	DIALOG_ATTRIBUTE,
 	DIALOG_TAB_ATTRIBUTE,
-} from './browser/attach-banner-actions';
+} from './browser/banner-actions.model';
 export { startDeferredClient } from './browser/start-deferred-client';
 export { activateGatedScripts } from './browser/activate-gated-scripts';
 export {
 	boot,
-	registerIAB,
-	registerRuntimeModules,
-	registerTransport,
 	setIABPromptRendererLoaderForTest,
 	syncBannerVisibility,
 	syncSurfaceVisibility,
-} from './client-engine';
-export type { PageIAB } from './client-engine';
+} from './boot-client-engine';
+export { registerIAB } from './register-iab';
+export { registerRuntimeModules } from './register-runtime-modules';
+export { registerTransport } from './register-transport';
+export type { PageIAB } from './register-iab';
 export type { ConsentRuntime } from '@inth/sdk/runtime';
 export type {
 	EventDispatcher,

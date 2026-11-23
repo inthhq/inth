@@ -9,7 +9,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { frontChat } from './vendors/functional/front-chat';
 
 const grantedConsents = { ...ALL_DENIED, functionality: true };

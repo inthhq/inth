@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 
 /**
  * The vendor scope applied to a served list, graded against `narrowGVLToVendors` in
- * `packages/sdk/iab/src/tcf/fetch-gvl.ts` and `narrowToVendorIds` in `packages/backend/src/http/gvl.ts`.
+ * `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts` and `narrowToVendorIds` in `packages/backend/src/http/gvl.ts`.
  *
  * Both web filters are two lines of pruning and one deliberate restraint: `vendors` is pruned and
  * everything else on the document comes back as it was served. The restraint is the part a port loses,

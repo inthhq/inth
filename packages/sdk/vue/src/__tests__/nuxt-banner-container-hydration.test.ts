@@ -18,17 +18,13 @@ import { createSSRApp, defineComponent, h } from 'vue';
 import type { App } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
-import { ConsentBannerHost } from '../runtime/components/lazy-surfaces';
+import { ConsentBannerHost } from '../runtime/components/prompt-host';
 import {
 	promptContainers,
 	promptContainersKey,
 } from '../runtime/components/prompt/prompt-containers';
 import type { PromptContainerLoader } from '../runtime/components/prompt/prompt-containers';
 import { createDeferredContext } from '../runtime/deferred/create-deferred-context';
-import type {
-	RuntimeConsentConfig,
-	VueConsentKernelContext,
-} from '../runtime/kernel';
 import {
 	consentConfigKey,
 	symbolActiveUI,
@@ -38,6 +34,10 @@ import {
 	symbolKernelContext,
 	symbolSnapshot,
 } from '../runtime/utils/consent-symbols.model';
+import type {
+	RuntimeConsentConfig,
+	VueConsentKernelContext,
+} from '../runtime/vue-consent-kernel-context.model';
 import { createVueConsentKernelContext } from './test-kernel';
 
 const init: InitOutput = {

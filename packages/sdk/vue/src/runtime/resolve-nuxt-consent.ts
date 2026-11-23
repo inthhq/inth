@@ -17,9 +17,9 @@ import type { ManifestFetch, RequestConsentState } from '@inth/sdk/server';
 
 import snapshot from '#@inth/sdk/server-manifest-snapshot';
 
-import type { RuntimeConsentConfig } from './kernel';
 import { readNuxtMode, readNuxtRoutePrefix } from './nuxt-mode';
 import type { NuxtResolvedModeConfig } from './nuxt-mode';
+import type { RuntimeConsentConfig } from './vue-consent-kernel-context.model';
 
 /** What the plugin read about the request with Nuxt's own composables. */
 export interface NuxtConsentRequest {

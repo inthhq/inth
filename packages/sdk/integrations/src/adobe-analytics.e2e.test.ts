@@ -10,7 +10,7 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { adobeAnalytics } from './vendors/analytics/adobe-analytics';
 
 describe('adobeAnalytics contract', () => {

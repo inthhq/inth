@@ -14,7 +14,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { klaviyo } from './vendors/email-and-sms/klaviyo';
 
 const LOADER_SRC = 'https://static.klaviyo.com/onsite/js/AbC123/klaviyo.js';

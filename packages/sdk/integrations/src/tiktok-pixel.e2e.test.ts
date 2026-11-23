@@ -9,8 +9,8 @@ import {
 	installHeadProbe,
 	loadScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
-import type { TikTokQueue } from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
+import type { TikTokQueue } from './__tests__/e2e-test-utils';
 import { tiktokPixel } from './vendors/ads-and-pixels/tiktok-pixel';
 
 describe('tiktokPixel contract', () => {

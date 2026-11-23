@@ -18,5 +18,6 @@ export * from './after-motion';
 export * from './attach-page-block';
 export * from './attach-scroll-fades';
 export * from './reveal-disclosure';
+export * from './scroll-reveal.model';
 export * from './attach-theme-switch-guard';
 export * from './attach-top-layer-trap';

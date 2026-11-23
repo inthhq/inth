@@ -1,7 +1,7 @@
 <script lang="ts">
 	import InthProvider from '../../lib/components/inth-provider.svelte';
 	import ConsentWidget from '../../lib/components/preferences.svelte';
-	import type { ConsentContextValue } from '../../lib/get-consent-context.svelte';
+	import type { ConsentContextValue } from '../../lib/consent-context.model';
 	import type { ConsentManagerOptions } from '../../lib/manager-options.model';
 	import Reader from './policy-state-reader.svelte';
 

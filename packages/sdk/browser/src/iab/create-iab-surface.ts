@@ -10,11 +10,12 @@ import { setupFocusTrap, setupScrollLock } from '@inth/sdk-ui/utils';
 import type { ConsentUIOptions } from '../consent-client.model';
 import { classes } from '../generated/iab-styles';
 import { renderBranding } from '../ui/branding';
-import { cx, h, markLateEntry, supportsStartingStyle } from '../ui/dom';
+import { cx, h } from '../ui/h';
+import { markLateEntry, supportsStartingStyle } from '../ui/mark-late-entry';
 import { renderActionFooter, resolveActions } from '../ui/render-action-footer';
+import { renderLegalLinks } from '../ui/render-legal-links';
 import { resolveCopy } from '../ui/resolve-copy';
-import { renderLegalLinks } from '../ui/surface';
-import type { Surface, SurfaceContext } from '../ui/surface';
+import type { Surface, SurfaceContext } from '../ui/surface.model';
 import { createIABPreferences } from './create-iab-preferences';
 import type { IABPreferences } from './create-iab-preferences';
 

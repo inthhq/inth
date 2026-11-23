@@ -4,17 +4,15 @@ import type { FC, ReactNode } from 'react';
 
 import { useComponentConfig } from '~/hooks/use-component-config';
 
-import {
-	OptOutConfirmationCard,
-	OptOutConfirmationDescription,
-	OptOutConfirmationDetails,
-	OptOutConfirmationDoneButton,
-	OptOutConfirmationFooter,
-	OptOutConfirmationHeader,
-	OptOutConfirmationPreferencesLink,
-	OptOutConfirmationStatus,
-	OptOutConfirmationTitle,
-} from './atoms/parts';
+import { OptOutConfirmationCard } from './atoms/opt-out-confirmation-card';
+import { OptOutConfirmationDescription } from './atoms/opt-out-confirmation-description';
+import { OptOutConfirmationDetails } from './atoms/opt-out-confirmation-details';
+import { OptOutConfirmationDoneButton } from './atoms/opt-out-confirmation-done-button';
+import { OptOutConfirmationFooter } from './atoms/opt-out-confirmation-footer';
+import { OptOutConfirmationHeader } from './atoms/opt-out-confirmation-header';
+import { OptOutConfirmationPreferencesLink } from './atoms/opt-out-confirmation-preferences-link';
+import { OptOutConfirmationStatus } from './atoms/opt-out-confirmation-status';
+import { OptOutConfirmationTitle } from './atoms/opt-out-confirmation-title';
 import { OptOutConfirmationRoot } from './atoms/root';
 
 /**

@@ -9,9 +9,10 @@ import { useTranslations } from '~/component-hooks/use-translations';
 import { useTriggerLabels } from '~/component-hooks/use-trigger-labels';
 import { usePolicyRule, useResolvedPresentation } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
+import { useIdleDialogWarming } from '~/use-idle-dialog-warming';
 import { useUIConfig } from '~/use-ui-config';
 import { mergeSlotProps } from '~/utils/merge-slot-props';
-import { useIdleDialogWarming, warmDialogChunk } from '~/warm-dialog-chunk';
+import { warmDialogChunk } from '~/warm-dialog-chunk';
 
 import type { CornerPosition, TriggerSize } from '../panel-trigger.model';
 import { useTriggerContext } from './trigger-root';

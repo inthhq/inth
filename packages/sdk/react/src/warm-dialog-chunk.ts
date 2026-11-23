@@ -17,9 +17,6 @@
  */
 
 import { afterPriorityImages } from '@inth/sdk/runtime/page-globals';
-import { useEffect } from 'react';
-
-import { useUIConfig } from './use-ui-config';
 
 type Warmer = () => void;
 
@@ -131,29 +128,18 @@ const scheduleIdleWarm = function scheduleIdleWarm(): void {
 };
 
 /**
- * Hold an idle-warming gate open while `active`: the dialog loads in the next
- * idle period after the page's load event, if a gate is still open then.
- * Consumers opt out with `preloadDialog: 'intent'`.
+ * Open an idle-warming gate: the dialog loads in the next idle period after
+ * the page's load event, if a gate is still open then.
  *
- * @param active - Whether the dialog can be opened soon from this component,
- * for example because the banner is shown or a trigger is mounted.
+ * @returns Closes the gate.
  * @internal
  */
-export const useIdleDialogWarming = function useIdleDialogWarming(
-	active: boolean
-): void {
-	const { preloadDialog = 'idle' } = useUIConfig();
-	const enabled = active && preloadDialog === 'idle';
-	useEffect(() => {
-		if (!enabled) {
-			return;
-		}
-		activeGates += 1;
-		scheduleIdleWarm();
-		return () => {
-			activeGates -= 1;
-		};
-	}, [enabled]);
+export const holdIdleWarmingGate = function holdIdleWarmingGate(): () => void {
+	activeGates += 1;
+	scheduleIdleWarm();
+	return () => {
+		activeGates -= 1;
+	};
 };
 
 /**

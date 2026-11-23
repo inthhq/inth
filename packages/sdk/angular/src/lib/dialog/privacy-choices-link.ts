@@ -16,7 +16,7 @@ import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
 import { holdIdleDialogWarming, warmDialog } from '../core/warm-dialog';
-import { OPT_OUT_ICON_SIZE, OptOutIcon } from '../shared/icons';
+import { OPT_OUT_ICON_SIZE, OptOutIcon } from '../shared/opt-out-icon';
 
 /**
  * The "Your Privacy Choices" footer link: an unstyled button that opens

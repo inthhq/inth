@@ -43,25 +43,21 @@ import { defu } from 'defu';
 import { joinURL } from 'ufo';
 import type { Plugin as VitePlugin } from 'vite';
 
+import { collectStyleSources } from './collect-style-sources';
 import { GLOBAL_COMPONENTS } from './global-components';
 import { consentPackageDirs, groupConsentChunks } from './group-consent-chunks';
 import type { InthNuxtConfig, ModuleOptions } from './nuxt-options';
-import {
-	breakEntryImportCycles,
-	createPackageCheck,
-	bannerOnlyFiles,
-	preloadBrowserResolver,
-	preloadDeferredEngine,
-	stopPrefetchingConsentChunks,
-} from './prefetch';
+import { bannerOnlyFiles } from './prefetch/banner-only-files';
+import { breakEntryImportCycles } from './prefetch/break-entry-import-cycles';
+import { createPackageCheck } from './prefetch/create-package-check';
+import { preloadBrowserResolver } from './prefetch/preload-browser-resolver';
+import { preloadDeferredEngine } from './prefetch/preload-deferred-engine';
+import { stopPrefetchingConsentChunks } from './prefetch/stop-prefetching-consent-chunks';
+import { preloadInlinedConsentStyles } from './preload-inlined-consent-styles';
 import { readComposableExports } from './read-composable-exports';
 import type { LegacyProjectUrlEnv } from './runtime/server/apply-legacy-project-url';
 import type { BuiltOptions } from './runtime/server/build-options.model';
-import {
-	collectStyleSources,
-	preloadInlinedConsentStyles,
-} from './stylesheets';
-import type { StyleSourceIndex } from './stylesheets';
+import type { StyleSourceIndex } from './style-sources.model';
 
 export {
 	hosted,

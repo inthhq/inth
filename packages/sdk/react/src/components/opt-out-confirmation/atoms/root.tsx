@@ -26,7 +26,7 @@ import { useTextDirection } from '~/hooks/use-text-direction';
 import { useTheme } from '~/hooks/use-theme';
 import { useTranslationLanguage } from '~/hooks/use-translation-language';
 import type { CSSPropertiesWithVars } from '~/types/theme';
-import { useKernel } from '~/use-kernel-selector';
+import { useKernel } from '~/use-kernel';
 import { useUIConfig } from '~/use-ui-config';
 import { cnExt as cn } from '~/utils/cn-ext';
 import { mergeSlotProps } from '~/utils/merge-slot-props';

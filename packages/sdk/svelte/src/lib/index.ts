@@ -76,15 +76,17 @@ export { default as IABConsentBanner } from './components/iab/iab-prompt.svelte'
 export { default as IABConsentDialog } from './components/iab/iab-panel.svelte';
 export { default as OptOutConfirmation } from './components/confirmation/deferred-opt-out-confirmation.svelte';
 export { default as PrivacyChoicesLink } from './components/privacy-choices-link.svelte';
+export type {
+	HeadlessConsentSurfaceState,
+	SvelteIABState,
+} from './consent-context.model';
 export {
 	getConsentKernel,
 	getConsentManager,
 	getHeadlessConsent,
 	getIAB,
 	getSnapshot,
-	type HeadlessConsentSurfaceState,
-	type SvelteIABState,
-} from './get-consent-context.svelte';
+} from './get-headless-consent';
 export {
 	getEventDispatcher,
 	type EventDispatcher,
@@ -119,7 +121,7 @@ export type { BrowserManifestModeFactory } from '@inth/sdk/transports/manifest-b
 export type {
 	ConsentManagerState,
 	ConsentDraftState,
-} from './get-consent-context.svelte';
+} from './consent-context.model';
 export {
 	resolveActionLabels,
 	resolveConsentPresentation,

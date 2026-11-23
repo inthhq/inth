@@ -3,7 +3,9 @@ import type { ComponentPropsWithRef, FC, ReactNode } from 'react';
 
 import type { Theme } from '~/types/theme';
 
-import type * as Atom from './atoms';
+import type { ConsentGateButton } from './consent-gate-button';
+import type { ConsentGateRoot } from './consent-gate-root';
+import type { ConsentGateTitle } from './consent-gate-title';
 
 export interface ConsentGateProps extends ComponentPropsWithRef<'div'> {
 	/**
@@ -39,7 +41,7 @@ export interface ConsentGateProps extends ComponentPropsWithRef<'div'> {
 }
 
 export interface ConsentGateCompoundComponent extends FC<ConsentGateProps> {
-	Root: typeof Atom.ConsentGateRoot;
-	Title: typeof Atom.ConsentGateTitle;
-	Button: typeof Atom.ConsentGateButton;
+	Root: typeof ConsentGateRoot;
+	Title: typeof ConsentGateTitle;
+	Button: typeof ConsentGateButton;
 }

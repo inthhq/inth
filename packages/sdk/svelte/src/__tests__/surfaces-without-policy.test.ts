@@ -7,7 +7,7 @@ import {
 import { render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 
-import type { ConsentContextValue } from '../lib/get-consent-context.svelte';
+import type { ConsentContextValue } from '../lib/consent-context.model';
 import Fixture from './fixtures/surfaces-fixture.svelte';
 import { transportMode } from './fixtures/transport-mode';
 import { policyFixture } from './policy-fixture';

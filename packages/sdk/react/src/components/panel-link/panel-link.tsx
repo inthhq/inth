@@ -21,7 +21,7 @@ import {
 	useResolvedPresentation,
 } from '~/hooks';
 import { useTheme } from '~/hooks/use-theme';
-import { useKernel } from '~/use-kernel-selector';
+import { useKernel } from '~/use-kernel';
 
 /**
  * Inline trigger for opening the consent dialog or exercising the opt-out

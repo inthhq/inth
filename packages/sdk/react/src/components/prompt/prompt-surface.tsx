@@ -73,7 +73,7 @@ import { useBrowserLayoutEffect } from '~/hooks/use-browser-layout-effect';
 import { useIsHydrated } from '~/hooks/use-is-hydrated';
 import { useReducedMotion } from '~/hooks/use-reduced-motion';
 import { useTextDirection } from '~/hooks/use-text-direction';
-import { useKernel } from '~/use-kernel-selector';
+import { useKernel } from '~/use-kernel';
 import { useUIConfig } from '~/use-ui-config';
 import { createDeferredModule } from '~/utils/create-deferred-module';
 import { inertProps } from '~/utils/inert-props';

@@ -52,7 +52,6 @@ import type {
 import { markResponsePrivate } from '../libs/identity-headers.model';
 import { inthProtocolHeaders } from '../libs/inth-protocol-headers';
 import {
-	fetchCachedManifest,
 	getManifestAge,
 	MANIFEST_PASSTHROUGH_HEADERS,
 	ManifestUnavailableError,
@@ -63,6 +62,7 @@ import type {
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
+import { fetchCachedManifest } from '../libs/manifest-cache-runtime.api';
 import { warnManifestFallback } from '../libs/warn-manifest-fallback';
 import {
 	fetchCachedAdTechProviders,

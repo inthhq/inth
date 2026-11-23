@@ -1,6 +1,7 @@
 /**
  * The page-level consent client's public shape, shared by the first-load
- * shell (`./browser/start-deferred-client`) and the engine (`./client-engine`). Types only.
+ * shell (`./browser/start-deferred-client`) and the engine
+ * (`./boot-client-engine`). Types only.
  */
 
 import type {

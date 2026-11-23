@@ -8,7 +8,7 @@ import {
 	loadScripts,
 	updateScripts,
 	registerVendorContractCleanup,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { appcues } from './vendors/functional/appcues';
 
 const granted = { ...ALL_DENIED, experience: true };

@@ -708,7 +708,7 @@ What our code does today, verified on this branch:
 | No TCF at all: "IAB TCF is out of scope for this phase. No TC string, no GVL state, no `IABTCF_*` keys." | `packages/native-protocol/CONTRACT.md:7-8` |
 | Consent expiry is server-driven: the evaluator derives `nextDeadline` from `policy.choiceMaxAgeMs` | `packages/swift/Sources/InthCore/PolicyEvaluator.swift:111,285`; `ConsentCore.swift:516` |
 | The only local timer-like constant is a 7-day cap on queued saves, not on consent | `packages/swift/Sources/InthCore/PendingSaveQueue.swift:96` (`maxAgeMs = 7 * 24 * 60 * 60 * 1000`) |
-| Web side: TC string cookie max-age 395 days, and a 395-day retention constant | `packages/sdk/iab/src/tcf/cmp-api.ts:397`; `packages/sdk/iab/src/iab-authority.store.ts:7` |
+| Web side: TC string cookie max-age 395 days, and a 395-day retention constant | `packages/sdk/iab/src/tcf/tc-string-storage.store.ts:154`; `packages/sdk/iab/src/iab-authority.model.ts:13` |
 | iOS Keychain items survive uninstall, so a reinstall is not a fresh install; Android needs `pm clear` | `packages/native-protocol/CONTRACT.md:566` |
 | `reset()` must leave no `explicitChoice`, notice dismissal, policy claim or queued save, while keeping subject id, overrides and privacy signals | `packages/native-protocol/CONTRACT.md:560-575` |
 
@@ -813,7 +813,7 @@ these are the spec duties it would miss. Ordered by how much they matter.
 10. **No consent-screen number, no consent language, no publisher country in native state.** All
     three are core-segment fields (3.2 #6, #7, #16) and all three must describe the UI that was
     actually shown. Defaulting them, as web does for `publisherCC: 'US'` and
-    `purposeOneTreatment: false` in `cmp-api.ts:159,170,175`, is the same bug class that makes
+    `purposeOneTreatment: false` in `create-cmp-api.ts:165,170`, is the same bug class that makes
     `TCData` reported over `__tcfapi` disagree with the TC String on web.
 11. **`reset()` does not yet clear a bus**, and iOS Keychain persistence across uninstall means a
     naive reset leaves a live signal behind (section 6, point 3 and 4).

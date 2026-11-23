@@ -4,7 +4,7 @@ import XCTest
 
 /// The publisher's vendor scope, applied to a served list, graded against the shared vectors.
 ///
-/// The oracle is `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts`: the generator calls
+/// The oracle is `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts`: the generator calls
 /// that function and writes down what came back, so a difference here is Swift and the browser
 /// build reading the same document differently, and `packages/native-protocol/CONTRACT.md` settles that argument in
 /// the web's favour. The claims are the ones the disclosure promise rests on: a publisher that

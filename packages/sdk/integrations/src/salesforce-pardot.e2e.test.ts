@@ -10,7 +10,7 @@ import {
 	loadScripts,
 	registerVendorContractCleanup,
 	updateScripts,
-} from './e2e-test-utils';
+} from './__tests__/e2e-test-utils';
 import { pardotTracking } from './vendors/analytics/salesforce-pardot';
 
 const GLOBALS = ['piAId', 'piCId', 'piHostname', 'piDomain', 'pdt'];

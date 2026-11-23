@@ -28,8 +28,8 @@ import type {
 	TriggerOrientation,
 	TriggerSize,
 } from '../panel-trigger.model';
+import { DevToolsIcon } from './dev-tools-icon';
 import { TriggerIcon } from './trigger-icon';
-import { DevToolsIcon } from './trigger-icons';
 import { useTriggerContext } from './trigger-root';
 
 const cornerClassMap = {

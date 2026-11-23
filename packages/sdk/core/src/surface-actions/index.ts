@@ -74,12 +74,12 @@ export {
 	subscribeOptOutReceiptData,
 	takeOptOutConfirmationOpener,
 } from './opt-out';
+export { watchPendingOptOutConfirmation } from './opt-out-reload';
 export {
 	clearPendingOptOutConfirmation,
 	hasPendingOptOutConfirmation,
 	markPendingOptOutConfirmation,
-	watchPendingOptOutConfirmation,
-} from './opt-out-reload';
+} from './opt-out-reload.store';
 export type { OptOutSurfaceContext } from './opt-out';
 export {
 	hasConsentPreferences,

@@ -45,8 +45,8 @@ import type { AllThemeKeys } from '@inth/sdk/ui/theme';
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
 import { resolveNoStyle } from '../core/no-style-scope';
+import { CheckIcon } from './check-icon';
 import { ChoiceButton } from './choice-button';
-import { CheckIcon } from './icons';
 import { injectSurfaceSession, rightsBundleOf } from './inject-surface-session';
 import { bool, cx, slotPart } from './part-class-names.model';
 

@@ -43,28 +43,27 @@ import {
 
 import {
 	checkAuthority,
-	clearAuthorityReceipt,
 	createAuthorityReceipt,
+	validateAuthority,
+} from './iab-authority.model';
+import {
+	clearAuthorityReceipt,
 	readAuthorityReceipt,
 	hasOwnReceipt,
 	readAuthorityReceiptText,
 	storeAuthority,
-	validateAuthority,
 } from './iab-authority.store';
 import { fetchAdTechProviders } from './tcf/additional-consent.api';
-import {
-	clearStoredTCString,
-	createCMPApi,
-	syncStoredAdditionalConsent,
-} from './tcf/cmp-api';
 import { CMP_VERSION_NUMBER } from './tcf/cmp-defaults.model';
 import {
 	assertValidCmpId,
 	createCmpIdError,
 	isValidCmpId,
 } from './tcf/cmp-id.model';
-import { clearGVLCache, fetchGVL, narrowGVLToVendors } from './tcf/fetch-gvl';
+import { createCMPApi } from './tcf/create-cmp-api';
+import { clearGVLCache, fetchGVL } from './tcf/fetch-gvl.api';
 import { getTCFCore } from './tcf/get-tcf-core';
+import { narrowGVLToVendors } from './tcf/gvl-narrowing.model';
 import {
 	destroyIABStub as destroyStub,
 	initializeIABStub,
@@ -79,6 +78,10 @@ import {
 	inthConsentsToIabPurposes,
 	iabPurposesToInthConsents,
 } from './tcf/purpose-mapping.model';
+import {
+	clearStoredTCString,
+	syncStoredAdditionalConsent,
+} from './tcf/tc-string-storage.store';
 import {
 	generateTCString,
 	resolveIsServiceSpecific,

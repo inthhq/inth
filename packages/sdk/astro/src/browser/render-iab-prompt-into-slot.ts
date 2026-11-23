@@ -29,7 +29,29 @@ import type {
 	IABPromptProps,
 } from '../banner/iab-prompt.model';
 import { IAB_PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
-import { element, hiddenBanner, readSpot, renderBrandingTag } from './dom';
+import { createElement } from './create-element';
+import { readSpot } from './read-spot';
+import { renderBrandingTag } from './render-branding-tag';
+
+/**
+ * Hide a freshly built banner until `syncBannerVisibility` decides, the
+ * same as a prerendered server banner, with its overlay in front of it.
+ *
+ * @param overlay - The backdrop, for blocking banners.
+ * @returns The nodes to insert, in document order.
+ */
+const hiddenBanner = function hiddenBanner(
+	root: HTMLElement,
+	overlay: HTMLElement | null
+): HTMLElement[] {
+	root.hidden = true;
+	root.setAttribute('data-inth-visible', 'false');
+	if (!overlay) {
+		return [root];
+	}
+	overlay.hidden = true;
+	return [overlay, root];
+};
 
 /** Site options the IAB banner reads. */
 export interface RenderIABPromptOptions {
@@ -72,7 +94,7 @@ const renderButton = function renderButton(
 	button: IABPromptButton,
 	extra: Record<string, string> = {}
 ): HTMLElement {
-	return element(
+	return createElement(
 		'button',
 		{
 			class: button.className,
@@ -92,14 +114,16 @@ const renderButton = function renderButton(
 
 const renderHeader = function renderHeader(model: IABPromptModel): HTMLElement {
 	const items: HTMLElement[] = model.displayItems.map((name) =>
-		element('li', {}, [name])
+		createElement('li', {}, [name])
 	);
 	if (model.copy.andMore) {
 		items.push(
-			element('li', { class: model.classes.purposeMore }, [model.copy.andMore])
+			createElement('li', { class: model.classes.purposeMore }, [
+				model.copy.andMore,
+			])
 		);
 	}
-	return element(
+	return createElement(
 		'div',
 		{
 			class: model.classes.header,
@@ -107,10 +131,10 @@ const renderHeader = function renderHeader(model: IABPromptModel): HTMLElement {
 			style: model.styles.header,
 		},
 		[
-			element('h2', { class: model.classes.title }, [model.copy.title]),
-			element('p', { class: model.classes.description }, [
+			createElement('h2', { class: model.classes.title }, [model.copy.title]),
+			createElement('p', { class: model.classes.description }, [
 				model.copy.descriptionBefore,
-				element(
+				createElement(
 					'button',
 					{
 						class: model.classes.partnersLink,
@@ -124,8 +148,8 @@ const renderHeader = function renderHeader(model: IABPromptModel): HTMLElement {
 				),
 				model.copy.descriptionAfter,
 			]),
-			element('ul', { class: model.classes.purposeList }, items),
-			element('p', { class: model.classes.notice }, [model.copy.notice]),
+			createElement('ul', { class: model.classes.purposeList }, items),
+			createElement('p', { class: model.classes.notice }, [model.copy.notice]),
 		]
 	);
 };
@@ -167,7 +191,7 @@ export const buildIABPrompt = function buildIABPrompt(
 	if (!model.canRender) {
 		return [];
 	}
-	const footer = element(
+	const footer = createElement(
 		'div',
 		{
 			class: model.classes.footer,
@@ -177,12 +201,12 @@ export const buildIABPrompt = function buildIABPrompt(
 			style: model.styles.footer,
 		},
 		[
-			element(
+			createElement(
 				'div',
 				{ class: model.classes.actionGroup, 'data-direction': 'row' },
 				model.choiceButtons.map((button) => renderButton(model, props, button))
 			),
-			element(
+			createElement(
 				'div',
 				{ class: model.classes.actionGroup, 'data-direction': 'row' },
 				[
@@ -193,7 +217,7 @@ export const buildIABPrompt = function buildIABPrompt(
 			),
 		]
 	);
-	const card = element(
+	const card = createElement(
 		'div',
 		{
 			'aria-label': model.copy.title,
@@ -216,7 +240,7 @@ export const buildIABPrompt = function buildIABPrompt(
 		},
 		model.copy.securedBy
 	);
-	const root = element(
+	const root = createElement(
 		'div',
 		{
 			class: model.classes.root,
@@ -230,7 +254,7 @@ export const buildIABPrompt = function buildIABPrompt(
 			tabindex: '-1',
 		},
 		[
-			element(
+			createElement(
 				'div',
 				{ class: model.classes.cardShell },
 				branding ? [branding, card] : [card]
@@ -240,7 +264,7 @@ export const buildIABPrompt = function buildIABPrompt(
 	return hiddenBanner(
 		root,
 		model.blocking
-			? element('div', {
+			? createElement('div', {
 					'aria-hidden': 'true',
 					class: model.classes.overlay,
 					'data-testid': 'iab-consent-banner-overlay',

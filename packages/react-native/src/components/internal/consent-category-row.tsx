@@ -25,7 +25,7 @@ import { MIN_TAP_TARGET } from '../theme/consent-theme-parts';
 import type { ConsentResolvedParts } from '../theme/consent-theme-parts';
 import type { ConsentTheme } from '../theme/create-consent-theme';
 import { CONSENT_DISCLOSURE_GEOMETRY } from '../theme/use-consent-styles';
-import type { ConsentCategoryRow as CategoryRow } from './categories';
+import type { ConsentCategoryRow as CategoryRow } from './consent-category-rows.model';
 import { ConsentDisclosureGlyph } from './consent-disclosure-glyph';
 import { ConsentSwitch } from './consent-switch';
 

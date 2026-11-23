@@ -27,15 +27,18 @@ import {
 import { classes as styles } from '../../generated/ui/dialog';
 import { classes as expandStyles } from '../../generated/ui/expand';
 import type { BrowserSlotKey } from '../create-slot-applier';
-import { activeElementOf, cx, el } from './dom';
-import type { PartRef } from './dom';
+import { checkIcon } from './check-icon';
+import { consentButton } from './consent-button';
+import { cx, el } from './el';
+import type { PartRef } from './el';
 import {
 	confirmSaleRight,
 	getOptOutReceiptData,
 	pressSaleRight,
 } from './engine';
-import { checkIcon, consentButton, rightsBundleOf } from './shared';
-import type { PartEnv } from './shared';
+import { activeElementOf } from './focus-first-in';
+import { rightsBundleOf } from './part-env.model';
+import type { PartEnv } from './part-env.model';
 
 /** Surfaces that render the rights row, by their test-id prefix. */
 export type RightsRowSurface = 'consent-banner' | 'consent-dialog';

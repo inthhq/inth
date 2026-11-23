@@ -3,7 +3,7 @@
  * The `vendor-list-scope` fixture kind: a served vendor list plus a publisher's declared
  * vendor scope, and the narrowed document the web filter produced from the two.
  *
- * The oracle is `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts` -- the function
+ * The oracle is `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts` -- the function
  * all four `createIAB` call sites route through -- and it is imported and called, never
  * paraphrased. Nothing in this file decides which vendor survives: every `expected` is the
  * object that function returned for `input`, so a native port that disagrees with these
@@ -32,7 +32,7 @@
  * "show nobody" empties a preference centre for a publisher who never scoped anything.
  */
 
-import { narrowGVLToVendors } from '../../sdk/iab/src/tcf/fetch-gvl';
+import { narrowGVLToVendors } from '../../sdk/iab/src/tcf/gvl-narrowing.model';
 import type { GVLVendor, GlobalVendorList } from '../../sdk/schema/src/types';
 
 // -- The oracle -------------------------------------------------------------
@@ -47,14 +47,14 @@ import type { GVLVendor, GlobalVendorList } from '../../sdk/schema/src/types';
  */
 export const VENDOR_LIST_SCOPE_ORACLE = {
 	function: 'narrowGVLToVendors',
-	module: 'packages/sdk/iab/src/tcf/fetch-gvl.ts',
+	module: 'packages/sdk/iab/src/tcf/gvl-narrowing.model.ts',
 	package: '@inth/sdk-iab',
 } as const;
 
 /**
  * The largest scope the web puts in a GVL request line.
  *
- * `MAX_GVL_QUERY_VENDOR_IDS` in `packages/sdk/iab/src/tcf/fetch-gvl.ts`, and the same cap in
+ * `MAX_GVL_QUERY_VENDOR_IDS` in `packages/sdk/iab/src/tcf/fetch-gvl.api.ts`, and the same cap in
  * `packages/backend/src/http/gvl.ts`: at or below it the scope travels as a `?vendorIds=`
  * parameter and the endpoint filters; above it the document arrives whole and every caller
  * narrows it locally. Native cores inherit that crossover, so the kind keeps a vector on each
