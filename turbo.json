@@ -663,6 +663,51 @@
       "dependsOn": ["build", "^build", "transit"],
       "outputs": []
     },
+    "@inth/nextjs#test": {
+      "dependsOn": ["build", "^build", "transit", "@inth/integrations#build"],
+      "outputs": [
+        "coverage/coverage-summary.json",
+        "coverage/coverage-final.json",
+        "coverage/html/**"
+      ],
+      "env": ["INTH_TEST_PG_URL", "INTH_TEST_MYSQL_URL"]
+    },
+    "@inth/react#test": {
+      "dependsOn": ["build", "^build", "transit", "@inth/integrations#build"],
+      "outputs": [
+        "coverage/coverage-summary.json",
+        "coverage/coverage-final.json",
+        "coverage/html/**"
+      ],
+      "env": ["INTH_TEST_PG_URL", "INTH_TEST_MYSQL_URL"]
+    },
+    "@inth/svelte#test": {
+      "dependsOn": ["build", "^build", "transit", "@inth/integrations#build"],
+      "outputs": [
+        "coverage/coverage-summary.json",
+        "coverage/coverage-final.json",
+        "coverage/html/**"
+      ],
+      "env": ["INTH_TEST_PG_URL", "INTH_TEST_MYSQL_URL"]
+    },
+    "@inth/tanstack-start#test": {
+      "dependsOn": ["build", "^build", "transit", "@inth/integrations#build"],
+      "outputs": [
+        "coverage/coverage-summary.json",
+        "coverage/coverage-final.json",
+        "coverage/html/**"
+      ],
+      "env": ["INTH_TEST_PG_URL", "INTH_TEST_MYSQL_URL"]
+    },
+    "@inth/vue#test": {
+      "dependsOn": ["build", "^build", "transit", "@inth/integrations#build"],
+      "outputs": [
+        "coverage/coverage-summary.json",
+        "coverage/coverage-final.json",
+        "coverage/html/**"
+      ],
+      "env": ["INTH_TEST_PG_URL", "INTH_TEST_MYSQL_URL"]
+    },
     "@inth/sdk-dev-tools#test": {
       "dependsOn": ["build", "^build", "transit", "@inth/sdk-iab#build"],
       "outputs": []

@@ -16,7 +16,6 @@ import type {
 	ConsentUIHandle,
 	ConsentUIOptions,
 } from '../types';
-import { createBanner } from './banner';
 import { createDialog } from './dialog-surface';
 import { h } from './dom';
 import {
@@ -24,6 +23,7 @@ import {
 	subscribeOptOutConfirmation,
 	subscribeOptOutReceiptData,
 } from './opt-out-confirmation-state';
+import { createBannerSurface } from './privacy-choices-design';
 import { applyColorScheme, createStyle, createUIRoot } from './root';
 import type { UIRoot } from './root';
 import { createSlotApplier } from './slots';
@@ -227,6 +227,8 @@ export const mountConsentUI = function mountConsentUI(
 	let styleEl = ui.style;
 
 	let slotApplier = createSlotApplier(renderedTheme?.slots);
+	const stylesOn = options.styles !== false && !options.noStyle;
+	const addedSheets = new Set<string>();
 
 	const ctx: SurfaceContext = {
 		acceptFromBanner: () =>
@@ -240,6 +242,28 @@ export const mountConsentUI = function mountConsentUI(
 					}),
 				{ categories: client.consentCategories }
 			),
+		addSheets: (sheets) => {
+			if (!stylesOn) {
+				return;
+			}
+			for (const sheet of sheets) {
+				if (addedSheets.has(sheet.id)) {
+					continue;
+				}
+				addedSheets.add(sheet.id);
+				// Before the stock `<style>`, which ends with the theme and the
+				// `css` option, and the `stylesheetUrls` links after it: the
+				// host's rules are documented to come last, and win ties. Each
+				// sheet opens with the same `@layer` order statement as the
+				// stock one, so the layer order is unchanged.
+				const style = createStyle(sheet.css, nonce);
+				style.setAttribute('data-inth-styles', sheet.id);
+				root.insertBefore(
+					style,
+					styleEl?.parentNode === root ? styleEl : ui.wrapper
+				);
+			}
+		},
 		client,
 		disableAnimation: options.disableAnimation ?? prefersReducedMotion(),
 		legalLinks: client.options.legalLinks,
@@ -265,7 +289,7 @@ export const mountConsentUI = function mountConsentUI(
 	}
 	if (options.banner !== false) {
 		surfaces.push(
-			createBanner(
+			createBannerSurface(
 				ctx,
 				options.banner === true ? {} : (options.banner ?? {}),
 				adoptedBanner

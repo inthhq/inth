@@ -30,6 +30,7 @@ manifest). Load files not served per project, such as `inth.devtools.js` or
 | `inth.js` | Default hosted tag. Small loader that starts `/v1/consent/init`, shows the stock banner and loads `inth.hosted.js`. Requires a project URL. |
 | `inth.hosted.js` | Full consent engine and remaining stock UI (such as the trigger). Loaded automatically by `inth.js`. |
 | `inth.dialog.js` | Preference dialog and vendor list. Loaded automatically on Customize or first open. |
+| `inth.choices.js` | The Privacy Choices design (`presentation.design: 'privacy-choices'`): its banner, options and dialog. Loaded automatically by `inth.hosted.js` when that design applies; a site on the classic design never loads it. |
 | `inth.commit.js` | Persists an Accept or Reject click made on the initial banner. Loaded automatically by `inth.js`. |
 | `inth.records.js` | Reads stored consent for returning visitors to start permitted scripts immediately. Loaded automatically by `inth.js`. |
 | `inth.testing.js` | Test pages only. Stock UI with `testing()` and built-in policy presets, with no network requests. |
@@ -99,7 +100,7 @@ Attributes are read once on startup. `inth.js` uses hosted mode and requires
 | `data-privacy-policy-url`, `data-cookie-policy-url`, `data-terms-url` | Show legal links in the banner and dialog. |
 | `data-color-scheme` | `light`, `dark` or `system` (default `system`). |
 | `data-trigger` | Show the [floating trigger](/docs/frameworks/html/components/trigger). |
-| `data-hide-branding` | Hide the "Secured by" tag (the IAB banner always keeps it). |
+| `data-hide-branding` | Hide the "Consent by" tag (the IAB banner always keeps it). |
 | `data-opt-out-link` | `do-not-sell` (default), `privacy-choices` ("Your Privacy Choices") or `california-privacy-choices` ("Your California Privacy Choices"). With `do-not-sell`, clicking the opt-out link records an opt-out in one click. With either "Privacy Choices" form, the California Privacy Protection Agency opt-out icon renders beside the label and clicking opens the preference dialog without recording an opt-out; see [Choose the opt-out link title](/docs/frameworks/html/components/banner#choose-the-opt-out-link-title). |
 | `data-shadow="false"` | Render into the page DOM so page CSS applies; see [style it with your own stylesheet](/docs/frameworks/html/customize#style-it-with-your-own-stylesheet). |
 | `data-no-ui` | Run without stock UI (load `inth.headless.js` instead to omit UI bytes). |

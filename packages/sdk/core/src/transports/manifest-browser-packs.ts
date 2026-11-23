@@ -25,9 +25,10 @@ export const hasLocationMatchers = function hasLocationMatchers(
 /**
  * What a visitor experiences under a pack: the behavior the fingerprints
  * hash (model, prompt, scope, defaults, validity, GPC handling, copy
- * revision) plus the message profile, which changes the banner's copy. The
- * policy id is left out on purpose: two packs with the same behavior show
- * the same banner.
+ * revision), the message profile, which changes the banner's copy, and the
+ * presentation fingerprint of the rule's `surface`, which changes its
+ * layout. The policy id is left out on purpose: two packs with the same
+ * behavior and layout show the same banner.
  */
 export const experienceKey = function experienceKey({
 	fingerprints,
@@ -39,6 +40,7 @@ export const experienceKey = function experienceKey({
 		fingerprints.notice,
 		fingerprints.legacyMaterial ?? null,
 		rule.i18n ?? null,
+		fingerprints.presentation ?? null,
 	]);
 };
 

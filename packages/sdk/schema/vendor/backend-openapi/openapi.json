@@ -4030,6 +4030,11 @@
 											"policy": {
 												"type": "string",
 												"minLength": 1
+											},
+											"presentation": {
+												"type": "string",
+												"minLength": 1,
+												"description": "The rule's surface, hashed in the presentation domain. Present only when policy.surface is."
 											}
 										},
 										"required": [
@@ -4236,6 +4241,99 @@
 													"permissive"
 												],
 												"type": "string"
+											},
+											"surface": {
+												"type": "object",
+												"properties": {
+													"blocking": {
+														"enum": [
+															"forbidden",
+															"allowed",
+															"required"
+														],
+														"type": "string",
+														"description": "Hard constraint on blocking the page until a choice. required needs a choice prompt outside the opt-out model."
+													},
+													"container": {
+														"oneOf": [
+															{
+																"type": "object",
+																"properties": {
+																	"position": {
+																		"enum": [
+																			"start",
+																			"end",
+																			"center"
+																		],
+																		"type": "string",
+																		"description": "Defaults to start. start and end follow the page’s writing direction: on a right-to-left page start is the bottom-right corner."
+																	},
+																	"type": {
+																		"const": "card"
+																	}
+																},
+																"required": [
+																	"type"
+																],
+																"additionalProperties": false
+															},
+															{
+																"type": "object",
+																"properties": {
+																	"edge": {
+																		"enum": [
+																			"bottom",
+																			"top"
+																		],
+																		"type": "string",
+																		"description": "Defaults to bottom."
+																	},
+																	"type": {
+																		"const": "banner"
+																	}
+																},
+																"required": [
+																	"type"
+																],
+																"additionalProperties": false
+															},
+															{
+																"type": "object",
+																"properties": {
+																	"side": {
+																		"enum": [
+																			"bottom",
+																			"top",
+																			"start",
+																			"end"
+																		],
+																		"type": "string",
+																		"description": "Defaults to bottom. start and end are the inline sides and follow the page’s writing direction."
+																	},
+																	"type": {
+																		"const": "drawer"
+																	}
+																},
+																"required": [
+																	"type"
+																],
+																"additionalProperties": false
+															}
+														],
+														"description": "Container the prompt uses when the host's presentation picks none."
+													},
+													"edgeStyle": {
+														"enum": [
+															"inset",
+															"flush"
+														],
+														"type": "string",
+														"description": "Edge style when the host's presentation picks none."
+													}
+												},
+												"required": [],
+												"additionalProperties": false,
+												"description": "Layout defaults and blocking constraint. Absent when the rule sets none. Never part of the policy, choice or notice fingerprints."
 											},
 											"validity": {
 												"type": "object",
@@ -4772,6 +4870,11 @@
 										"policy": {
 											"type": "string",
 											"minLength": 1
+										},
+										"presentation": {
+											"type": "string",
+											"minLength": 1,
+											"description": "The rule's surface, hashed in the presentation domain. Present only when policy.surface is."
 										}
 									},
 									"required": [
@@ -5012,6 +5115,99 @@
 												"permissive"
 											],
 											"type": "string"
+										},
+										"surface": {
+											"type": "object",
+											"properties": {
+												"blocking": {
+													"enum": [
+														"forbidden",
+														"allowed",
+														"required"
+													],
+													"type": "string",
+													"description": "Hard constraint on blocking the page until a choice. required needs a choice prompt outside the opt-out model."
+												},
+												"container": {
+													"oneOf": [
+														{
+															"type": "object",
+															"properties": {
+																"position": {
+																	"enum": [
+																		"start",
+																		"end",
+																		"center"
+																	],
+																	"type": "string",
+																	"description": "Defaults to start. start and end follow the page’s writing direction: on a right-to-left page start is the bottom-right corner."
+																},
+																"type": {
+																	"const": "card"
+																}
+															},
+															"required": [
+																"type"
+															],
+															"additionalProperties": false
+														},
+														{
+															"type": "object",
+															"properties": {
+																"edge": {
+																	"enum": [
+																		"bottom",
+																		"top"
+																	],
+																	"type": "string",
+																	"description": "Defaults to bottom."
+																},
+																"type": {
+																	"const": "banner"
+																}
+															},
+															"required": [
+																"type"
+															],
+															"additionalProperties": false
+														},
+														{
+															"type": "object",
+															"properties": {
+																"side": {
+																	"enum": [
+																		"bottom",
+																		"top",
+																		"start",
+																		"end"
+																	],
+																	"type": "string",
+																	"description": "Defaults to bottom. start and end are the inline sides and follow the page’s writing direction."
+																},
+																"type": {
+																	"const": "drawer"
+																}
+															},
+															"required": [
+																"type"
+															],
+															"additionalProperties": false
+														}
+													],
+													"description": "Container the prompt uses when the host's presentation picks none."
+												},
+												"edgeStyle": {
+													"enum": [
+														"inset",
+														"flush"
+													],
+													"type": "string",
+													"description": "Edge style when the host's presentation picks none."
+												}
+											},
+											"required": [],
+											"additionalProperties": false,
+											"description": "Layout defaults and blocking constraint. Absent when the rule sets none. Never part of the policy, choice or notice fingerprints."
 										},
 										"validity": {
 											"type": "object",

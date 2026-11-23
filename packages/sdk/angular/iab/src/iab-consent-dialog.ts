@@ -105,7 +105,7 @@ export class IABConsentDialog {
 	 * `disableAnimation`, which follows `prefers-reduced-motion`.
 	 */
 	readonly disableAnimation = input<boolean | undefined>(undefined);
-	/** Hide the "Secured by" attribution. */
+	/** Hide the "Consent by" attribution. */
 	readonly hideBranding = input(false);
 	/**
 	 * The tab the preference centre opens on. Lets a "N partners" link land

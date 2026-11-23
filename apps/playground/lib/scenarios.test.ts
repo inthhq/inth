@@ -310,9 +310,10 @@ describe('demo policy scenarios', () => {
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(true);
 		kernel.set.privacySignals({ gpc: true });
 		await kernel.commands.save('all');
+		// The US presets map GPC to sale and sharing, which is marketing alone.
 		expect(kernel.getSnapshot().effectivePermissions).toMatchObject({
 			marketing: false,
-			measurement: false,
+			measurement: true,
 		});
 		expect(kernel.getSnapshot().explicitChoice).not.toBeNull();
 		kernel.dispose();
@@ -329,9 +330,10 @@ describe('demo policy scenarios', () => {
 		kernel.set.privacySignals({ gpc: true });
 		await kernel.commands.dismissNotice();
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
+		// GPC opts out of sale and sharing only, so measurement stays on.
 		expect(kernel.getSnapshot().effectivePermissions).toMatchObject({
 			marketing: false,
-			measurement: false,
+			measurement: true,
 		});
 		expect(kernel.getSnapshot().promptRequirement.kind).toBe('none');
 		kernel.dispose();

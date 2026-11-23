@@ -81,7 +81,7 @@ export type {
 /**
  * Brand palette served by `/v1/consent/init` (or chosen offline). Drives default
  * UI theme but has no effect on consent semantics. `none` hides the
- * "Secured by" tag.
+ * "Consent by" tag.
  */
 export type KernelBranding = 'c15t' | 'consent' | 'inth' | 'none';
 
@@ -1209,6 +1209,17 @@ export interface ConsentKernel {
 				vendors?: Record<string, boolean>;
 				/** Surface to attribute the save to. Defaults to the snapshot's `activeUI`. */
 				uiSource?: SaveUISource;
+				/**
+				 * The save records a statutory right from a rights control on an
+				 * open surface, such as the sale control in Your Privacy Choices.
+				 * The surface stays open so the visitor sees the outcome, and
+				 * while a choice prompt is owed the save answers it with an
+				 * acknowledgement: the categories it does not record keep their
+				 * defaults (BNR-05, RIGHT-08).
+				 *
+				 * @internal
+				 */
+				rightsControl?: boolean;
 			}
 		) => Promise<SaveResult>;
 		/**
@@ -1229,6 +1240,13 @@ export interface ConsentKernel {
 		optOut: (context?: {
 			uiSource?: SaveUISource;
 			actionAt?: number;
+			/**
+			 * The opt-out comes from a rights control on an open surface,
+			 * which stays open so the visitor sees the outcome.
+			 *
+			 * @internal
+			 */
+			rightsControl?: boolean;
 		}) => Promise<OptOutResult>;
 		/**
 		 * Lift a device-held durable opt-out when GPC is not active.

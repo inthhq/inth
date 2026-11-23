@@ -236,7 +236,7 @@ export class IABConsentBanner {
 	readonly scrollLock = input<boolean | undefined>(undefined);
 	/** Trap focus in the banner. Overrides the provider's option. */
 	readonly trapFocus = input<boolean | undefined>(undefined);
-	/** Hide the "Secured by" attribution. */
+	/** Hide the "Consent by" attribution. */
 	readonly hideBranding = input(false);
 	/** The button drawn as the primary action. */
 	readonly primaryButton = input<IABBannerButton>('customize');

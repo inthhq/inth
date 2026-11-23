@@ -72,23 +72,25 @@ There are three presentations: **Card**, **Banner** and **Drawer**. All three re
 
 ```ts
 type ConsentPresentation =
-  | { type: "card"; position?: "bottom-left" | "bottom-right" | "center" } // default type; position default 'bottom-left'
+  | { type: "card"; position?: "start" | "end" | "center" } // default type; position default 'start'
   | { type: "banner"; edge?: "bottom" | "top" } // default 'bottom'
-  | { type: "drawer"; side?: "bottom" | "top" | "left" | "right" }; // default 'bottom'
+  | { type: "drawer"; side?: "bottom" | "top" | "start" | "end" }; // default 'bottom'
 
 interface ConsentPromptOptions {
-  presentation?: ConsentPresentation; // default { type: 'card', position: 'bottom-left' }
+  presentation?: ConsentPresentation; // default { type: 'card', position: 'start' }
   edgeStyle?: "inset" | "flush"; // default 'inset'; applies to Banner, Drawer and phone sheets, never to Card
   blockUntilChoice?: boolean; // default false; forced true for card + center; ignored under US opt-out
 }
 ```
 
+`start` and `end` are logical, like CSS `inset-inline-start`: they follow the page's writing direction. On a left-to-right page `start` is the left (the Card's bottom-left corner); on a right-to-left page it is the right.
+
 Put the whole decision matrix in **one pure resolver** in core, so every framework renders the same thing. Unit-test the resolver directly; it is easy to test and is where the regressions kept happening.
 
 ```ts
 resolveLayout({ presentation, edgeStyle, blockUntilChoice, variant, regime, viewport }) => {
-  placement: 'card-bottom-left' | 'card-bottom-right' | 'card-center'
-           | 'bar-top' | 'bar-bottom' | 'drawer-top' | 'drawer-bottom' | 'drawer-left' | 'drawer-right';
+  placement: 'card-start' | 'card-end' | 'card-center'
+           | 'bar-top' | 'bar-bottom' | 'drawer-top' | 'drawer-bottom' | 'drawer-start' | 'drawer-end';
   flow: 'expand-in-place' | 'all-in-one';
   blocking: boolean;
   edgeStyle: 'inset' | 'flush';
@@ -101,10 +103,10 @@ The prototype's equivalents are `effPres()`, `centerOn()`, `blockingOn()`, `expa
 
 | Input | Rule |
 | --- | --- |
-| Card, `center` | Always blocking. Under US opt-out (which never blocks) it falls back to `bottom-left`. |
+| Card, `center` | Always blocking. Under US opt-out (which never blocks) it falls back to `start`. |
 | `blockUntilChoice` | `blocking = (blockUntilChoice \|\| cardCenter) && regime !== 'us-opt-out' && variant !== 'none'` |
-| Drawer `left` or `right` on desktop | `flow = 'all-in-one'` |
-| Drawer `left` or `right` on phone | Becomes `drawer-bottom` with `flow = 'expand-in-place'`. |
+| Drawer `start` or `end` on desktop | `flow = 'all-in-one'` |
+| Drawer `start` or `end` on phone | Becomes `drawer-bottom` with `flow = 'expand-in-place'`. |
 | Drawer `top` on phone | Stays `drawer-top`. |
 | Card, Banner, Drawer `top` or `bottom` | `flow = 'expand-in-place'` |
 | Banner, collapsed | The slim one-line bar. Once expanded, it behaves exactly like the drawer on the same edge. |
@@ -177,10 +179,10 @@ US opt-in short phrases, by rights bundle:
 
 **Shared rules:**
 
-- One presentation with a **side** setting: Left, Top, Bottom (default) or Right.
+- One presentation with a **side** setting: Start, Top, Bottom (default) or End. Start and End follow the writing direction (left and right on a left-to-right page).
 - **There are two logic sets, with no option to switch between them** (decided by the product owner: "Left and right are one logic set. Bottom, middle is another."). The side decides which set applies.
 
-**Side set: left and right on desktop, "all-in-one".**
+**Side set: start and end on desktop, "all-in-one".**
 
 - **Size and layout:**
   - Full height, 460px wide (484px inset, which includes the 12px gaps).

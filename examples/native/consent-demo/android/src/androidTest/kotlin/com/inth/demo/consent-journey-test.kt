@@ -418,7 +418,7 @@ class ConsentJourneyTest {
             val headerLogo = if (provider == "custom") "custom" else provider
             compose.onNodeWithTag("inth.first-layer.brand-logo.$headerLogo", useUnmergedTree = true).assertIsDisplayed()
             compose.onNodeWithText("CONSENT DEMO").assertDoesNotExist()
-            waitFor("inth.first-layer.branding").assertContentDescriptionEquals("Secured by $name")
+            waitFor("inth.first-layer.branding").assertContentDescriptionEquals("Consent by $name")
             compose.onNodeWithTag("inth.first-layer.branding.logo", useUnmergedTree = true).assertIsDisplayed()
             val reject = waitFor("inth.first-layer.reject-all").fetchSemanticsNode().boundsInRoot
             val accept = waitFor("inth.first-layer.accept-all").fetchSemanticsNode().boundsInRoot
@@ -481,7 +481,7 @@ class ConsentJourneyTest {
         }
         // The brand is announced once; the mark beside it is decorative.
         compose.onAllNodes(hasContentDescription("Your brand here") or hasText("Your brand here")).assertCountEquals(1)
-        waitFor("inth.first-layer.branding").assertContentDescriptionEquals("Secured by Inth")
+        waitFor("inth.first-layer.branding").assertContentDescriptionEquals("Consent by Inth")
         capture("android-ax-first-layer")
         compose.onNodeWithTag("inth.first-layer.customize").performClick()
         waitFor("inth.prefs.title").assert(heading()).assertTextEquals("Privacy Settings")

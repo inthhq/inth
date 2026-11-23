@@ -462,9 +462,15 @@ describe('opt-out network sync and queue', () => {
 
 		expect(recordedRights).toEqual([[]]);
 		const held = kernel.getSnapshot().optOut;
-		expect(held).toEqual(serverOptOut);
+		// The backend never carries `categories`; the answer keeps the ones
+		// this browser fixed when it recorded the act.
+		const answered = {
+			...serverOptOut,
+			categories: ['measurement', 'marketing'],
+		};
+		expect(held).toEqual(answered);
 		expect.assert(held);
-		expect(synced).toEqual([serverOptOut]);
+		expect(synced).toEqual([answered]);
 		expect(optInPromptAllowedAt(held)).toBe(
 			serverTime + OPT_OUT_REPROMPT_WAIT_MS
 		);
@@ -472,6 +478,7 @@ describe('opt-out network sync and queue', () => {
 		expect(stored).toMatchObject({
 			ok: true,
 			record: {
+				categories: ['measurement', 'marketing'],
 				heldBy: 'both',
 				recordedAt: serverTime,
 				rights: ['sale', 'share'],

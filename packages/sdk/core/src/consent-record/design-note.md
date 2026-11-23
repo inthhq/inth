@@ -6,9 +6,9 @@ These helpers implement the record model used by the kernel, persistence, transp
 
 | File | Role |
 | --- | --- |
-| `types.ts` | One latest `CategoryDecision` per optional category, plus separate notice dismissal, policy and evaluation types, `optOutDenyCategories` and `optOutDecidingCategory`. |
+| `types.ts` | One latest `CategoryDecision` per optional category, plus separate notice dismissal, policy and evaluation types, `policyOptOutCategories` and `optOutDecidingCategory` (what a new opt-out withholds: the rule's GPC mapping). |
 | `validation.ts` | Checks own fields on objects with a plain or null prototype. Includes non-enumerable category keys and copies validated basis fields explicitly. Choice and notice timestamps must be safe non-negative integer milliseconds no later than the supplied `now`. Durable opt-out timestamps must be safe non-negative integer milliseconds and are never rejected for being in the future. |
-| `opt-out-rules.ts` | Pure opt-out reprompt timing and lift-blocker helpers shared across the evaluator, kernel and surface state. |
+| `opt-out-rules.ts` | Pure opt-out reprompt timing and lift-blocker helpers shared across the evaluator, kernel and surface state, plus `optOutDenyCategories` (what a held opt-out withholds: the policy's mapping joined with what the record was made with). |
 | `normalize.ts` | Reads raw v2 `{ consents, consentInfo }` with its encoding. Compact cookies restore omitted `false`; JSON keeps absent keys absent. Retains original times and legacy fingerprints. |
 | `record.ts` | Replaces each supplied own optional key at the captured action time with the current choice basis. Omitted decisions retain their time and basis. |
 | `evaluation-policy.ts` | Validates model, prompt and scope mode, fingerprints, durations, scope and GPC mappings. Copies validity fields explicitly. Fingerprints arrive precomputed. |

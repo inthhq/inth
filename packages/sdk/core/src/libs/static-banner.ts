@@ -24,6 +24,13 @@ export const STATIC_BANNER_ATTR = 'data-inth-static-banner';
 export interface StaticBannerKey {
 	/** `policyResolution.fingerprints.policy` of the rendered policy. */
 	policy: string;
+	/**
+	 * `policyResolution.fingerprints.presentation` of the rendered policy:
+	 * the layout its `surface` asks for. Two packs with the same behavior
+	 * and different layouts must not share a static banner. `null` or
+	 * absent when the policy has no `surface`.
+	 */
+	presentation?: string | null;
 	/** `translations.language` the banner was rendered in. */
 	language: string;
 	/** `branding` the banner was rendered with. */
@@ -31,6 +38,21 @@ export interface StaticBannerKey {
 	/** {@link staticBannerCopyHash} of the rendered copy. */
 	copy: number;
 }
+
+/**
+ * Whether a wire policy's `surface` asks for a layout, as ES5 source: what
+ * `canonicalizePolicySurface` leaves non-empty, which is the check the
+ * client's wire reader makes before it requires a presentation
+ * fingerprint. A container, an edge style beside no container, or a
+ * blocking constraint other than `allowed` and the one the rule implies.
+ * An implied-only surface such as `{ blocking: 'forbidden' }` on an
+ * opt-out rule asks for nothing, so it keeps the banner.
+ *
+ * Kept in step with `canonicalizePolicySurface` by a parity test.
+ * @internal
+ */
+export const SURFACE_LAYOUT_CHECK =
+	"function(o){var u=o&&o.surface,b;if(!u||typeof u!=='object')return false;if(u.container!==undefined||u.edgeStyle!==undefined)return true;b=u.blocking;return b!==undefined&&b!=='allowed'&&b!==(o.prompt==='choice'&&o.model!=='opt-out'?'allowed':'forbidden')}";
 
 /** The copy the stock choice banner renders, in a fixed order. */
 const COPY_PATHS = [
@@ -70,9 +92,11 @@ export const staticBannerCopyHash = function staticBannerCopyHash(
 /**
  * Source of the inline script that follows the static banner. It shows the
  * banner when the page's prefetched `/v1/consent/init` names the banner's policy,
- * language, branding and copy, and nothing is stored under the consent
+ * presentation, language, branding and copy, and nothing is stored under the consent
  * storage keys; otherwise it removes it. A stored choice removes it before
- * `/v1/consent/init` answers, so a returning visitor never sees it.
+ * `/v1/consent/init` answers, so a returning visitor never sees it. An
+ * answer whose policy has a `surface` but no presentation fingerprint is
+ * incomplete: the client reader rejects it, so the banner goes too.
  *
  * Plain ES5 apart from `Promise`, which the prefetch script already uses.
  * Must directly follow the banner's wrapper element.
@@ -93,7 +117,8 @@ export const buildStaticBannerScript = function buildStaticBannerScript(
 		f: key.policy,
 		k: stored,
 		l: key.language,
+		p: key.presentation ?? null,
 		x: COPY_PATHS,
 	});
-	return `(function(w,d,p){var e=d.currentScript,b=e&&e.previousElementSibling,m,k,o,H=${STORED_NAMES_CHECK};function x(){b&&b.parentNode&&b.parentNode.removeChild(b)}function s(){return H(p.k)}function h(t){var v=p.x.map(function(a){var g=t&&t[a[0]],y=g&&g[a[1]];return typeof y==='string'?y:''}).join('\\n'),n=2166136261,i;for(i=0;i<v.length;i++)n=Math.imul(n^v.charCodeAt(i),16777619)>>>0;return n}if(!b||!b.hasAttribute('${STATIC_BANNER_ATTR}'))return;if(s())return x();m=w['${PREFETCH_WINDOW_KEY}'];for(k in m)if(o){o=0;break}else o=m[k];if(!o)return x();o.promise.then(function(r){var i=r&&r.init,q=i&&i.policyResolution,t=i&&i.translations;if(b.parentNode&&q&&q.status==='matched'&&q.fingerprints&&q.fingerprints.policy===p.f&&t&&t.language===p.l&&(i.branding||null)===p.b&&!i.gvl&&!i.gvlReference&&!(i.vendors&&i.vendors.length)&&!(i.customVendors&&i.customVendors.length)&&h(t.translations)===p.c&&!s())b.hidden=false;else x()},x)})(window,document,${config})`;
+	return `(function(w,d,p){var e=d.currentScript,b=e&&e.previousElementSibling,m,k,o,H=${STORED_NAMES_CHECK},U=${SURFACE_LAYOUT_CHECK};function x(){b&&b.parentNode&&b.parentNode.removeChild(b)}function s(){return H(p.k)}function h(t){var v=p.x.map(function(a){var g=t&&t[a[0]],y=g&&g[a[1]];return typeof y==='string'?y:''}).join('\\n'),n=2166136261,i;for(i=0;i<v.length;i++)n=Math.imul(n^v.charCodeAt(i),16777619)>>>0;return n}if(!b||!b.hasAttribute('${STATIC_BANNER_ATTR}'))return;if(s())return x();m=w['${PREFETCH_WINDOW_KEY}'];for(k in m)if(o){o=0;break}else o=m[k];if(!o)return x();o.promise.then(function(r){var i=r&&r.init,q=i&&i.policyResolution,t=i&&i.translations;if(b.parentNode&&q&&q.status==='matched'&&q.fingerprints&&q.fingerprints.policy===p.f&&(q.fingerprints.presentation||null)===p.p&&!(!q.fingerprints.presentation&&U(q.policy))&&t&&t.language===p.l&&(i.branding||null)===p.b&&!i.gvl&&!i.gvlReference&&!(i.vendors&&i.vendors.length)&&!(i.customVendors&&i.customVendors.length)&&h(t.translations)===p.c&&!s())b.hidden=false;else x()},x)})(window,document,${config})`;
 };

@@ -376,6 +376,8 @@ describe('package exports: aggregated stylesheets', () => {
 		'styles.tw3.css',
 		'iab/styles.css',
 		'iab/styles.tw3.css',
+		'styles/privacy-choices.css',
+		'styles/privacy-choices.tw3.css',
 	]) {
 		test(`@inth/sdk-ui/${entry} aggregates component rules`, () => {
 			const resolvedPath = resolvePath(`@inth/sdk-ui/${entry}`);

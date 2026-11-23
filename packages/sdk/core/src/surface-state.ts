@@ -23,27 +23,70 @@ export type { HasCondition } from './libs/has';
 export { deniedVendorIds } from './modules/vendor-denial';
 export { vendorsListedUnder } from './libs/vendor-listing';
 export { IABUnavailableError, policyNeedsIAB } from './libs/iab-unavailable';
-export { resolveConsentPresentation } from './libs/policy-actions';
+export {
+	resolveConsentDesign,
+	resolveConsentPresentation,
+} from './libs/policy-actions';
+export { resolvePrivacyChoicesLink } from './libs/privacy-choices-link';
+export type { PrivacyChoicesLinkState } from './libs/privacy-choices-link';
+export {
+	PHONE_LAYOUT_MAX_WIDTH,
+	PHONE_LAYOUT_QUERY,
+	resolveLayout,
+} from './libs/consent-layout';
 export {
 	resolveActionLabels,
+	resolveBannerAllowedAnnouncement,
 	resolveCategoryTitle,
+	resolveGpcNote,
 	resolveIABCopy,
+	resolveNoticeBarDescription,
 	resolveOptInConfirmationSentence,
+	resolveOptInPromptCopy,
 	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
 	resolveOptOutLink,
 	resolveOptOutReceiptSentence,
 	resolvePreferenceControlLabels,
+	resolvePreferencesRowCopy,
+	resolveAdvertisingRowCopy,
+	resolvePrivacyChoicesBannerCopy,
+	resolvePrivacyChoicesCopy,
+	resolvePrivacyChoicesDialogCopy,
+	resolvePrivacyChoicesRegime,
+	resolvePrivacyChoicesVariant,
 	resolvePromptCopy,
+	resolveReceiptScope,
+	resolveRightsBundle,
+	resolveRightsPhrases,
+	resolveRightsReceiptCopy,
+	resolveSaleAnnouncement,
+	resolveSaleRightCopy,
+	resolveSwitchAnnouncement,
 	resolveSurfaceTranslations,
 	resolveTriggerLabels,
 	resolveVendorListCopy,
+	resolveVendorTableCopy,
+	scopePhrase,
 } from './libs/consent-copy';
 export type {
+	OptInPromptCopy,
 	OptOutLinkIcon,
 	OptOutLinkVariant,
+	PreferencesRowCopy,
+	PrivacyChoicesBannerCopy,
+	PrivacyChoicesDialogCopy,
+	PrivacyChoicesPromptVariant,
+	PrivacyChoicesSubject,
 	ResolvedIABCopy,
 	ResolvedOptOutLink,
+	RightsBundle,
+	RightsPhrases,
+	RightsReceiptCopy,
+	RightsReceiptInput,
+	SaleAnnouncementOutcome,
+	SaleRightCopy,
+	VendorTableCopy,
 } from './libs/consent-copy';
 export {
 	isOptedOut,
@@ -65,6 +108,37 @@ export type {
 	OptOutVia,
 	ResolvedOptOutState,
 } from './libs/opt-out-state';
+export { resolveSurfaceEscape } from './surface-session/escape';
+export type {
+	SurfaceEscapeInput,
+	SurfaceEscapeOutcome,
+} from './surface-session/escape';
+export {
+	planCategorySwitch,
+	planVendorSwitch,
+} from './surface-session/categories';
+export type {
+	CategorySwitchPlan,
+	CategorySwitchState,
+} from './surface-session/categories';
+export { resolveRightsReceipt } from './surface-session/receipt';
+export type { RightsReceipt } from './surface-session/receipt';
+export { resolveSaleRight } from './surface-session/rights';
+export type {
+	RightOption,
+	RightSource,
+	RightsSnapshot,
+	SaleRightState,
+} from './surface-session/rights';
+export {
+	announcementText,
+	MAIN_LAYER,
+	MAX_SURFACE_LAYERS,
+} from './surface-session/state';
+export type {
+	SurfaceAnnouncement,
+	SurfaceSessionState,
+} from './surface-session/state';
 export {
 	applyExperimentAssignment,
 	applyExperimentTheme,

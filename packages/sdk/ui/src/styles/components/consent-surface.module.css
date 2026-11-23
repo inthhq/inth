@@ -1,0 +1,541 @@
+/*
+ * The consent prompt's shell, shared by the Card, Banner and Drawer
+ * presentations: the fixed layer, the shell that holds the card and the
+ * "Consent by" tag, the card itself, its head and footer, the blocking
+ * scrim, and the phone rules.
+ *
+ * Each presentation adds its own sheet (`consent-card`, `consent-bar`,
+ * `consent-drawer`) whose classes sit on the same elements as these. The
+ * variants are data attributes on `.root`:
+ *
+ *   data-placement   card-start | card-end | card-center |
+ *                    banner-bottom | banner-top | drawer-bottom |
+ *                    drawer-top | drawer-start | drawer-end
+ *                    (`start` and `end` follow the writing direction)
+ *   data-flow        expand-in-place | all-in-one
+ *   data-edge-style  inset | flush
+ *   data-blocking    'true' while the page is blocked
+ *   data-expanded    'true' while Customize has the options open
+ *   data-state       'closed' while the layer plays its exit
+ *   data-animation   'off' when the host turned animation off
+ *
+ * Nothing here is declared on :root. The hooks are read with a fallback, so
+ * a palette scoped to `.inth-theme-root` or to the banner still reaches
+ * every part (a :root declaration resolves its tokens once, on :root):
+ *
+ *   --consent-surface-z-index        (999998)
+ *   --consent-surface-background     (--inth-surface)
+ *   --consent-surface-border-color   (--inth-border-strong)
+ *   --consent-surface-footer-background (--inth-surface-hover)
+ *   --consent-tag-background, --consent-tag-text-color,
+ *   --consent-tag-border-color, --consent-tag-radius (--inth-radius-nested)
+ *
+ * A site styled through the classic banner's variables keeps that styling:
+ * each part reads the classic variable after its v6 hook and before the
+ * token: `--consent-banner-z-index`, `-background-color`, `-text-color`,
+ * `-border-color`, `-border-width`, `-footer-background-color`,
+ * `-title-color`, `-description-color`, `-overlay-background-color` and
+ * their `-dark` twins, the font, the entry motion and the exit easing.
+ * The colours go through private properties so the `-dark` twin can take
+ * over in dark mode, as it does on the classic banner.
+ *
+ * Parts talk to each other through private `--_consent-*` properties that
+ * the presentation sheets set on `.root` (keyframe names stay out of them:
+ * CSS Modules renames keyframes, and a name inside a custom property would
+ * miss the rename). The blocking treatment (VIS-08)
+ * is the first value each part reads, so it wins over the edge-style rules
+ * without relying on specificity or source order (PERM-07).
+ */
+
+@layer components {
+	.root {
+		--_consent-ease: var(
+			--consent-banner-entry-timing,
+			var(--inth-easing-out-strong, cubic-bezier(0.23, 1, 0.32, 1))
+		);
+		--_consent-exit: calc(var(--inth-duration-slow) * 0.8)
+			var(--consent-banner-animation-timing, var(--inth-easing-in)) forwards;
+		--_consent-bg: var(--consent-banner-background-color);
+		--_consent-fg: var(--consent-banner-text-color);
+		--_consent-line: var(--consent-banner-border-color);
+		--_consent-foot: var(--consent-banner-footer-background-color);
+		--_consent-heading: var(--consent-banner-title-color);
+		--_consent-muted: var(--consent-banner-description-color);
+		--_consent-veil: var(--consent-banner-overlay-background-color);
+		--_consent-classic-shadow: var(--consent-banner-shadow);
+		position: fixed;
+		z-index: var(
+			--consent-surface-z-index,
+			var(--consent-banner-z-index, 999998)
+		);
+		display: flex;
+		flex-direction: column;
+		box-sizing: border-box;
+		pointer-events: none;
+		font-family: var(--consent-banner-font-family, var(--inth-font-family));
+		line-height: var(
+			--consent-banner-line-height,
+			var(--inth-line-height-normal)
+		);
+		color: var(--inth-text);
+		-webkit-font-smoothing: antialiased;
+		-webkit-text-size-adjust: var(--consent-banner-text-size-adjust, 100%);
+	}
+
+	/* The classic `-dark` twins, under every selector the dark tokens
+	   answer to. One rule per selector: written as one list, the minifier
+	   folds it into an `:is()`, which some engines don't match against a
+	   shadow host. It merges the separate rules back into a plain list. */
+	:global(.dark) .root {
+		--_consent-bg: var(--consent-banner-background-color-dark);
+		--_consent-fg: var(--consent-banner-text-color-dark);
+		--_consent-line: var(--consent-banner-border-color-dark);
+		--_consent-foot: var(--consent-banner-footer-background-color-dark);
+		--_consent-heading: var(--consent-banner-title-color-dark);
+		--_consent-muted: var(--consent-banner-description-color-dark);
+		--_consent-veil: var(--consent-banner-overlay-background-color-dark);
+		--_consent-classic-shadow: var(--consent-banner-shadow-dark);
+	}
+
+	:global(.inth-dark) .root {
+		--_consent-bg: var(--consent-banner-background-color-dark);
+		--_consent-fg: var(--consent-banner-text-color-dark);
+		--_consent-line: var(--consent-banner-border-color-dark);
+		--_consent-foot: var(--consent-banner-footer-background-color-dark);
+		--_consent-heading: var(--consent-banner-title-color-dark);
+		--_consent-muted: var(--consent-banner-description-color-dark);
+		--_consent-veil: var(--consent-banner-overlay-background-color-dark);
+		--_consent-classic-shadow: var(--consent-banner-shadow-dark);
+	}
+
+	:global(:host(.dark)) .root {
+		--_consent-bg: var(--consent-banner-background-color-dark);
+		--_consent-fg: var(--consent-banner-text-color-dark);
+		--_consent-line: var(--consent-banner-border-color-dark);
+		--_consent-foot: var(--consent-banner-footer-background-color-dark);
+		--_consent-heading: var(--consent-banner-title-color-dark);
+		--_consent-muted: var(--consent-banner-description-color-dark);
+		--_consent-veil: var(--consent-banner-overlay-background-color-dark);
+		--_consent-classic-shadow: var(--consent-banner-shadow-dark);
+	}
+
+	:global(:host(.inth-dark)) .root {
+		--_consent-bg: var(--consent-banner-background-color-dark);
+		--_consent-fg: var(--consent-banner-text-color-dark);
+		--_consent-line: var(--consent-banner-border-color-dark);
+		--_consent-foot: var(--consent-banner-footer-background-color-dark);
+		--_consent-heading: var(--consent-banner-title-color-dark);
+		--_consent-muted: var(--consent-banner-description-color-dark);
+		--_consent-veil: var(--consent-banner-overlay-background-color-dark);
+		--_consent-classic-shadow: var(--consent-banner-shadow-dark);
+	}
+
+	.root *,
+	.root *::before,
+	.root *::after {
+		box-sizing: border-box;
+	}
+
+	.root[data-state='closed'] {
+		pointer-events: none;
+	}
+
+	/* One page-wide overlay for every presentation while blocking. The
+	   overlay tokens carry the dark values, under every selector the dark
+	   palette answers to (`.dark`, `.inth-dark`, and both on the script
+	   tag's shadow host). */
+	.scrim {
+		position: fixed;
+		inset: 0;
+		pointer-events: auto;
+		background: var(
+			--_consent-veil,
+			var(--inth-overlay-block, rgba(15, 23, 42, 0.62))
+		);
+		-webkit-backdrop-filter: blur(3px);
+		backdrop-filter: blur(3px);
+		animation: consent-surface-fade-in
+			var(--consent-banner-entry-duration, var(--inth-duration-slow))
+			var(--_consent-ease);
+	}
+
+	.root[data-state='closed'] .scrim {
+		animation: consent-surface-fade-out var(--_consent-exit);
+	}
+
+	@media (prefers-reduced-transparency: reduce) {
+		.scrim {
+			-webkit-backdrop-filter: none;
+			backdrop-filter: none;
+			background: var(
+				--_consent-veil,
+				var(--inth-overlay-block-solid, rgba(15, 23, 42, 0.78))
+			);
+		}
+	}
+
+	/* The card and its tag. Blocking puts the modal boundary here, so the
+	   tag is inside the trap (PERM-08). */
+	.shell {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		pointer-events: auto;
+		animation: consent-surface-rise
+			var(
+				--consent-banner-entry-duration,
+				var(--_consent-enter-duration, calc(var(--inth-duration-slow) * 0.9))
+			)
+			var(--_consent-ease);
+	}
+
+	/* Exits are faster and ease in. A presentation that leaves another way
+	   sets only `animation-name`, on a selector one attribute heavier than
+	   its entrance. */
+	.root[data-state='closed'] .shell {
+		animation: consent-surface-sink var(--_consent-exit);
+	}
+
+	.card {
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		overflow: hidden;
+		background: var(
+			--consent-surface-background,
+			var(--_consent-bg, var(--inth-surface))
+		);
+		color: var(--_consent-fg, var(--inth-text));
+		border: var(--consent-banner-border-width, 1px) solid
+			var(
+				--_consent-blocking-border,
+				var(
+					--consent-surface-border-color,
+					var(
+						--_consent-line,
+						var(--inth-border-strong, rgba(15, 23, 42, 0.16))
+					)
+				)
+			);
+		border-radius: var(--_consent-radius, var(--inth-radius-lg));
+		box-shadow: var(
+			--_consent-blocking-shadow,
+			var(--_consent-shadow, var(--inth-shadow-lg))
+		);
+	}
+
+	.card:focus {
+		outline: none;
+	}
+
+	.head {
+		display: flex;
+		flex-direction: column;
+		gap: var(--inth-space-sm);
+		padding: var(--_consent-pad, var(--inth-space-lg));
+	}
+
+	.title {
+		margin: 0;
+		font-size: var(--inth-font-size-base);
+		font-weight: var(--inth-font-weight-medium);
+		line-height: var(--inth-line-height-normal);
+		letter-spacing: -0.011em;
+		color: var(--_consent-heading, var(--inth-text));
+	}
+
+	.description {
+		margin: 0;
+		font-size: var(--inth-font-size-sm);
+		line-height: var(--inth-line-height-normal);
+		letter-spacing: -0.006em;
+		color: var(--_consent-muted, var(--inth-text-muted));
+		/* The stock policy links read these. */
+		--legal-links-color: var(--inth-primary-text, var(--inth-primary));
+		--legal-links-text-decoration: underline;
+	}
+
+	/* Blue text on a surface uses the text-on-surface blue (VIS-02). A
+	   link in running text is underlined too: its blue alone does not set
+	   it apart from the muted text around it (WCAG 1.4.1). */
+	.description a {
+		color: var(--inth-primary-text, var(--inth-primary));
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+
+	.footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--inth-space-sm);
+		padding: var(--inth-space-md) var(--_consent-pad, var(--inth-space-lg));
+		background: var(
+			--consent-surface-footer-background,
+			var(--_consent-foot, var(--inth-surface-hover))
+		);
+		border-top: var(--consent-banner-border-width, 1px) solid
+			var(--_consent-line, var(--inth-border));
+	}
+
+	/* A lone action (the expanded notice's OK) sits where OK and Customize
+	   sat (PERM-11). */
+	.footer > :only-child {
+		margin-inline-start: auto;
+	}
+
+	/* Reject and Accept: one track each, so they are always the same size
+	   (EU-01). */
+	.actionGroup {
+		display: grid;
+		grid-auto-columns: minmax(0, 1fr);
+		grid-auto-flow: column;
+		gap: var(--inth-space-sm);
+	}
+
+	/* "Do not sell or share my data" on the notice: a link-style action,
+	   never a filled button, in the text-on-surface blue (VIS-02). */
+	.rightLink {
+		position: relative;
+		padding: var(--inth-space-xs) 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-size: var(--inth-font-size-sm);
+		color: var(--inth-primary-text, var(--inth-primary));
+		text-align: start;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+		cursor: pointer;
+	}
+
+	.rightLink::before {
+		content: '';
+		position: absolute;
+		inset: -8px -4px;
+	}
+
+	.rightLink:focus-visible {
+		outline: 2px solid var(--inth-text);
+		outline-offset: 2px;
+		border-radius: var(--inth-radius-sm);
+	}
+
+	.visuallyHidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		margin: -1px;
+		padding: 0;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	/* "Consent by [INTH]": a quiet neutral credit, never a trust badge.
+	   8px above the card by default; the presentations move it. */
+	.tag {
+		position: relative;
+		align-self: flex-end;
+		display: inline-flex;
+		align-items: center;
+		gap: calc(var(--inth-space-xs) * 1.5);
+		min-height: 26px;
+		margin: 0 0 var(--inth-space-sm);
+		padding: var(--inth-space-xs) calc(var(--inth-space-xs) * 2.5);
+		border-radius: var(--consent-tag-radius, var(--inth-radius-nested, 8px));
+		background: var(--consent-tag-background, var(--inth-surface));
+		color: var(--consent-tag-text-color, var(--inth-text-muted));
+		font-size: calc(var(--inth-font-size-sm) * 0.7857);
+		line-height: 1;
+		white-space: nowrap;
+		text-decoration: none;
+		box-shadow:
+			var(
+				--_consent-tag-ring-active,
+				var(
+					--_consent-tag-ring,
+					inset 0 0 0 1px
+						var(
+							--consent-tag-border-color,
+							var(--inth-border-strong, rgba(15, 23, 42, 0.16))
+						)
+				)
+			),
+			var(
+				--_consent-tag-drop,
+				0 1px 2px color-mix(in srgb, var(--inth-overlay) 10%, transparent)
+			);
+		transition:
+			background-color var(--inth-duration-normal) var(--inth-easing-out),
+			color var(--inth-duration-normal) var(--inth-easing-out),
+			box-shadow var(--inth-duration-normal) var(--inth-easing-out),
+			transform calc(var(--inth-duration-slow) * 0.6) var(--inth-easing-out);
+	}
+
+	/* A 44px hit area around the 26px tag. */
+	.tag::before {
+		content: '';
+		position: absolute;
+		inset: -9px -4px;
+	}
+
+	.tagMark {
+		display: block;
+		flex: none;
+		width: auto;
+		height: 15px;
+		aspect-ratio: 88 / 90;
+		color: var(--inth-text);
+	}
+
+	.tag:active {
+		transform: scale(0.97);
+	}
+
+	/* The tint is opaque: a translucent one went see-through over the
+	   scrim. */
+	.tag:focus-visible {
+		--_consent-tag-ring-active: inset 0 0 0 1px
+			var(--inth-primary-text, var(--inth-primary));
+		outline: 2px solid var(--inth-text);
+		outline-offset: 2px;
+		background: var(
+			--inth-primary-tint,
+			color-mix(in srgb, var(--inth-primary) 10%, var(--inth-surface))
+		);
+		color: var(--inth-primary-text, var(--inth-primary));
+	}
+
+	.tag:focus-visible .tagMark {
+		color: currentColor;
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.tag:hover {
+			--_consent-tag-ring-active: inset 0 0 0 1px
+				var(--inth-primary-text, var(--inth-primary));
+			background: var(
+				--inth-primary-tint,
+				color-mix(in srgb, var(--inth-primary) 10%, var(--inth-surface))
+			);
+			color: var(--inth-primary-text, var(--inth-primary));
+		}
+
+		.tag:hover .tagMark {
+			color: currentColor;
+		}
+	}
+
+	/* VIS-08: over the scrim a light border reads as a halo and soft
+	   shadows vanish. A faint ring in the text colour (dark on light, light
+	   on dark) and a deeper layered shadow replace them. */
+	.root[data-blocking='true'] {
+		--_consent-blocking-border: transparent;
+		--_consent-blocking-shadow:
+			0 0 0 1px color-mix(in srgb, var(--inth-text) 10%, transparent),
+			0 2px 6px color-mix(in srgb, var(--inth-overlay) 24%, transparent),
+			0 16px 40px -8px color-mix(in srgb, var(--inth-overlay) 70%, transparent),
+			0 40px 80px -24px color-mix(in srgb, var(--inth-overlay) 70%, transparent);
+		--_consent-tag-ring: 0 0 0 1px
+			color-mix(in srgb, var(--inth-text) 10%, transparent);
+		--_consent-tag-drop: 0 2px 8px
+			color-mix(in srgb, var(--inth-overlay) 50%, transparent);
+	}
+
+	/* Phone: 16px insets, 44px targets, Reject and Accept on one row and
+	   Customize full width below. Keep in step with PHONE_LAYOUT_QUERY. */
+	@media (max-width: 640px) {
+		.head {
+			padding: var(--_consent-pad, var(--inth-space-md));
+		}
+
+		.footer {
+			flex-direction: column;
+			align-items: stretch;
+			padding: var(--inth-space-md) var(--_consent-pad, var(--inth-space-md));
+		}
+
+		.footer > :only-child {
+			margin-inline-start: 0;
+		}
+
+		.footer button,
+		.footer a {
+			min-height: 44px;
+		}
+
+		.tag {
+			font-size: calc(var(--inth-font-size-sm) * 0.7143);
+		}
+
+		.tagMark {
+			height: 13px;
+		}
+	}
+
+	/* Theme switches flip every surface in the same frame (VIS-06). The
+	   guard sets the attribute on <html>, or on the shadow host when the
+	   script tag renders into a shadow root. */
+	:global(html[data-theme-switching]) .root,
+	:global(html[data-theme-switching]) .root *,
+	:global(html[data-theme-switching]) .root *::before,
+	:global(html[data-theme-switching]) .root *::after,
+	:global(:host([data-theme-switching])) .root,
+	:global(:host([data-theme-switching])) .root *,
+	:global(:host([data-theme-switching])) .root *::before,
+	:global(:host([data-theme-switching])) .root *::after {
+		transition: none !important;
+	}
+
+	@keyframes consent-surface-fade-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes consent-surface-fade-out {
+		to {
+			opacity: 0;
+		}
+	}
+
+	@keyframes consent-surface-rise {
+		from {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+	}
+
+	@keyframes consent-surface-sink {
+		to {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+	}
+
+	/* `disableAnimation`: the layer shows on its first frame. Renderers skip
+	   the exit themselves. The presentation sheets name their entrances on
+	   heavier selectors than these, so these must be important to win. */
+	.root[data-animation='off'] .scrim,
+	.root[data-animation='off'] .shell,
+	.root[data-animation='off'] .card,
+	.root[data-animation='off'] .tag {
+		animation: none !important;
+	}
+
+	/* The same selectors as the rules that animate, so these win on source
+	   order. Exits end at once; renderers must not wait for animationend. */
+	@media (prefers-reduced-motion: reduce) {
+		.scrim,
+		.root[data-state='closed'] .scrim,
+		.shell,
+		.root[data-state='closed'] .shell,
+		.tag {
+			transition: none;
+			animation: none;
+		}
+	}
+}

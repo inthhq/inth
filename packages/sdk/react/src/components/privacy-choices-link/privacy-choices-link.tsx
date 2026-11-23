@@ -1,7 +1,10 @@
 'use client';
 
 import type { OptOutLinkVariant } from '@inth/sdk/surface-state';
-import { resolveOptOutLink, resolveOptOutState } from '@inth/sdk/surface-state';
+import {
+	resolveConsentDesign,
+	resolvePrivacyChoicesLink,
+} from '@inth/sdk/surface-state';
 import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import {
 	createElement,
@@ -26,8 +29,14 @@ import { useTheme } from '~/hooks/use-theme';
  * "Do Not Sell or Share My Personal Information" title. Activating the link
  * always opens the preference dialog and never records an opt-out on its own.
  *
- * Renders nothing when the active policy gives no opt-out right, when no
- * policy has resolved yet, or when an external consent source owns consent.
+ * Under `design: 'privacy-choices'` it is also the way back into the
+ * dialog under an opt-in policy, in the US or the EU: it reads "Your
+ * Privacy Choices" there, with no opt-out icon, since no opt-out right is
+ * offered.
+ *
+ * Renders nothing when the active policy gives no opt-out right (on the
+ * classic design), when no policy has resolved yet, or when an external
+ * consent source owns consent.
  */
 export interface PrivacyChoicesLinkProps extends Omit<
 	ConsentButtonProps,
@@ -54,24 +63,19 @@ export const PrivacyChoicesLink = createForwardRef<
 	const presentation = useResolvedPresentation();
 	const { noStyle: themeNoStyle } = useTheme();
 
-	const hasOptOutRight =
-		snapshot.resolution.status === 'matched' &&
-		!snapshot.externalPermissions &&
-		resolveOptOutState(snapshot).available &&
-		snapshot.policyRule.rights.includes('opt-out');
+	const optOutLink = resolvePrivacyChoicesLink(snapshot, translations, {
+		design: resolveConsentDesign(presentation),
+		variant: variant ?? presentation?.optOutLink,
+	});
 
-	if (!hasOptOutRight) {
+	if (!optOutLink) {
 		return null;
 	}
 
-	const optOutLink = resolveOptOutLink(
-		translations,
-		variant ?? presentation?.optOutLink
-	);
-	const showOptOutIcon = optOutLink.variant === 'privacy-choices';
-	const icon = showOptOutIcon ? (
+	const icon = optOutLink.icon ? (
 		<OptOutIcon
 			className={themeNoStyle ? undefined : bannerStyles.optOutIcon}
+			sized={!themeNoStyle}
 		/>
 	) : null;
 
@@ -101,7 +105,9 @@ export const PrivacyChoicesLink = createForwardRef<
 			noStyle={noStyle}
 			data-testid="privacy-choices-link"
 			data-inth-rights={snapshot.policyRule.rights.join(' ')}
-			data-opt-out-variant={optOutLink.variant}
+			data-opt-out-variant={
+				optOutLink.variant === 'choices' ? undefined : optOutLink.variant
+			}
 			{...props}
 		>
 			{buttonContent}

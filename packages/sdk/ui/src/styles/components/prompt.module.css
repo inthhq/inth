@@ -1,55 +1,34 @@
 @import url('./animations/enter-exit.css');
 
 :root {
-	--consent-banner-font-family: var(--inth-font-family);
-	--consent-banner-line-height: var(--inth-line-height-normal);
-	--consent-banner-text-size-adjust: 100%;
 	--consent-banner-tab-size: 4;
 
 	--consent-banner-border-radius-sm: var(--inth-radius-sm);
-	--consent-banner-border-radius: var(--inth-radius-lg);
-	--consent-banner-max-width: 440px;
-	/* `widget` chips and `wall` cards size independently of the floating card. */
+	/* `widget` chips size independently of the floating card. */
 	--consent-banner-widget-max-width: 20rem;
-	--consent-banner-wall-max-width: 30rem;
 	--consent-banner-branding-tag-offset: 2rem;
 
-	/* Spacing. The header and footer share one inset, so the text and the
-	   buttons start on the same edge. */
-	--consent-banner-padding: var(--inth-space-lg);
-	--consent-banner-padding-mobile: var(--inth-space-md);
-
-	/* Animation variables. A banner that mounts after the page has painted
-	   fades in on the entry pair; hiding fades out on the exit pair. */
-	--consent-banner-entry-duration: var(--inth-duration-normal);
-	--consent-banner-entry-timing: var(--inth-easing-out);
-	--consent-banner-animation-duration: var(--inth-duration-fast);
-	--consent-banner-animation-timing: var(--inth-easing-in);
-
-	--consent-banner-border-width: 1px;
 	--consent-banner-border-width-hairline: 1px;
 
-	--consent-banner-shadow: var(--inth-shadow-lg);
-	--consent-banner-shadow-dark: var(--inth-shadow-lg);
-
-	--consent-banner-background-color: var(--inth-surface);
-	--consent-banner-background-color-dark: var(--inth-surface);
-	--consent-banner-footer-background-color: var(--inth-surface-hover);
-	--consent-banner-footer-background-color-dark: var(--inth-surface-hover);
-	--consent-banner-text-color: var(--inth-text);
-	--consent-banner-text-color-dark: var(--inth-text);
-	--consent-banner-border-color: var(--inth-border);
-	--consent-banner-border-color-dark: var(--inth-border);
-	--consent-banner-title-color: var(--inth-text);
-	--consent-banner-title-color-dark: var(--inth-text);
-	--consent-banner-description-color: var(--inth-text-muted);
-	--consent-banner-description-color-dark: var(--inth-text-muted);
-	--consent-banner-overlay-background-color: var(--inth-overlay);
-	--consent-banner-overlay-background-color-dark: var(--inth-overlay);
+	/* Adapters read this one's computed value to time the exit, so it keeps
+	   its declaration here. */
+	--consent-banner-animation-duration: var(--inth-duration-fast);
 
 	/* Stacking. A blocking banner's z-index must stay above its overlay's. */
-	--consent-banner-z-index: 999998;
 	--consent-banner-overlay-z-index: 999997;
+
+	/* The rest of the banner's variables are read with their default as a
+	   fallback instead of being declared here, because the v6 Privacy
+	   Choices sheets read them too: a value declared on :root would replace
+	   every v6 default whenever styles.css is on the page, and would resolve
+	   its tokens once, on :root, where a palette scoped to .inth-theme-root
+	   never reaches. Set any of them on an ancestor to restyle both. The
+	   header and footer share one inset (--consent-banner-padding), so the
+	   text and the buttons start on the same edge; a banner that mounts
+	   after the page has painted fades in on the entry pair
+	   (--consent-banner-entry-duration, --consent-banner-entry-timing) and
+	   hiding fades out over --consent-banner-animation-duration on
+	   --consent-banner-animation-timing. */
 }
 
 /* Hairline borders for retina displays */
@@ -66,12 +45,15 @@
 		flex-direction: column;
 		width: 100%;
 		display: flex;
-		z-index: var(--consent-banner-z-index);
+		z-index: var(--consent-banner-z-index, 999998);
 		position: fixed;
 		pointer-events: none;
-		font-family: var(--consent-banner-font-family);
-		line-height: var(--consent-banner-line-height);
-		-webkit-text-size-adjust: var(--consent-banner-text-size-adjust);
+		font-family: var(--consent-banner-font-family, var(--inth-font-family));
+		line-height: var(
+			--consent-banner-line-height,
+			var(--inth-line-height-normal)
+		);
+		-webkit-text-size-adjust: var(--consent-banner-text-size-adjust, 100%);
 		-webkit-font-smoothing: antialiased;
 		tab-size: var(--consent-banner-tab-size);
 	}
@@ -128,8 +110,9 @@
 	.bannerEntering[data-entry='late']:not(.bannerHidden):not(
 			:global(.headless)
 		) {
-		transition: opacity var(--consent-banner-entry-duration)
-			var(--consent-banner-entry-timing);
+		transition: opacity
+			var(--consent-banner-entry-duration, var(--inth-duration-normal))
+			var(--consent-banner-entry-timing, var(--inth-easing-out));
 	}
 
 	@starting-style {
@@ -141,7 +124,7 @@
 	/* Banner — Vue <Transition> leave classes */
 	.bannerLeaveActive:not(:global(.headless)) {
 		transition: opacity var(--consent-banner-animation-duration)
-			var(--consent-banner-animation-timing);
+			var(--consent-banner-animation-timing, var(--inth-easing-in));
 	}
 
 	.bannerLeaveTo:not(:global(.headless)) {
@@ -152,7 +135,7 @@
 	.bannerHidden:not(:global(.headless)) {
 		opacity: 0;
 		transition: opacity var(--consent-banner-animation-duration)
-			var(--consent-banner-animation-timing);
+			var(--consent-banner-animation-timing, var(--inth-easing-in));
 	}
 
 	@media (min-width: 640px) {
@@ -233,19 +216,19 @@
 	.root[data-variant='bar']:not(:global(.headless)) .card {
 		border-radius: 0;
 		border-width: 0;
-		box-shadow: var(--consent-banner-shadow);
+		box-shadow: var(--consent-banner-shadow, var(--inth-shadow-lg));
 	}
 
 	/* Only the inner edge keeps a border: the one facing the page. */
 	.root[data-variant='bar'][data-position='bottom']:not(:global(.headless))
 		.card {
-		border-top-width: var(--consent-banner-border-width);
+		border-top-width: var(--consent-banner-border-width, 1px);
 		border-top-style: solid;
 		padding-bottom: env(safe-area-inset-bottom);
 	}
 
 	.root[data-variant='bar'][data-position='top']:not(:global(.headless)) .card {
-		border-bottom-width: var(--consent-banner-border-width);
+		border-bottom-width: var(--consent-banner-border-width, 1px);
 		border-bottom-style: solid;
 		padding-top: env(safe-area-inset-top);
 	}
@@ -432,19 +415,22 @@
 	}
 
 	.root[data-variant='wall']:not(:global(.headless)) .cardShell {
-		width: min(calc(100vw - 2rem), var(--consent-banner-wall-max-width));
+		width: min(calc(100vw - 2rem), var(--consent-banner-wall-max-width, 30rem));
 	}
 
 	.card:not(:global(.headless)) {
 		position: relative;
 		width: 100%;
-		border-radius: var(--consent-banner-border-radius);
-		border-width: var(--consent-banner-border-width);
+		border-radius: var(--consent-banner-border-radius, var(--inth-radius-lg));
+		border-width: var(--consent-banner-border-width, 1px);
 		/* Explicit style: never rely on Tailwind preflight's `border-style`. */
 		border-style: solid;
-		border-color: var(--consent-banner-border-color);
-		background-color: var(--consent-banner-background-color);
-		box-shadow: var(--consent-banner-shadow);
+		border-color: var(--consent-banner-border-color, var(--inth-border));
+		background-color: var(
+			--consent-banner-background-color,
+			var(--inth-surface)
+		);
+		box-shadow: var(--consent-banner-shadow, var(--inth-shadow-lg));
 		overflow: hidden;
 	}
 
@@ -455,38 +441,41 @@
 	.cardShell:not(:global(.headless)) {
 		display: flex;
 		flex-direction: column;
-		width: min(calc(100vw - 2rem), var(--consent-banner-max-width));
+		width: min(calc(100vw - 2rem), var(--consent-banner-max-width, 440px));
 		container: inth-banner / inline-size;
 	}
 
 	@media (min-width: 640px) {
 		.cardShell:not(:global(.headless)) {
-			width: min(calc(100vw - 3rem), var(--consent-banner-max-width));
+			width: min(calc(100vw - 3rem), var(--consent-banner-max-width, 440px));
 		}
 	}
 
 	:global(.inth-dark) .card:not(:global(.headless)) {
-		background-color: var(--consent-banner-background-color-dark);
-		border-color: var(--consent-banner-border-color-dark);
-		box-shadow: var(--consent-banner-shadow-dark);
+		background-color: var(
+			--consent-banner-background-color-dark,
+			var(--inth-surface)
+		);
+		border-color: var(--consent-banner-border-color-dark, var(--inth-border));
+		box-shadow: var(--consent-banner-shadow-dark, var(--inth-shadow-lg));
 	}
 
 	:global(.inth-dark) .root[data-variant='bar']:not(:global(.headless)) .card {
-		box-shadow: var(--consent-banner-shadow-dark);
+		box-shadow: var(--consent-banner-shadow-dark, var(--inth-shadow-lg));
 	}
 
 	.card:not(:global(.headless)) > :not([hidden]) ~ :not([hidden]) {
-		border-top-width: var(--consent-banner-border-width);
+		border-top-width: var(--consent-banner-border-width, 1px);
 		/* Top only: never rely on Tailwind preflight's border reset. */
 		border-top-style: solid;
-		border-color: var(--consent-banner-border-color);
+		border-color: var(--consent-banner-border-color, var(--inth-border));
 	}
 
 	:global(.inth-dark)
 		.card:not(:global(.headless))
 		> :not([hidden])
 		~ :not([hidden]) {
-		border-color: var(--consent-banner-border-color-dark);
+		border-color: var(--consent-banner-border-color-dark, var(--inth-border));
 	}
 
 	/* Focus styles: the card is tabindex="-1" — it only receives
@@ -500,17 +489,17 @@
 	.header:not(:global(.headless)) {
 		display: flex;
 		flex-direction: column;
-		padding: var(--consent-banner-padding-mobile);
-		color: var(--consent-banner-text-color);
+		padding: var(--consent-banner-padding-mobile, var(--inth-space-md));
+		color: var(--consent-banner-text-color, var(--inth-text));
 	}
 
 	:global(.inth-dark) .header:not(:global(.headless)) {
-		color: var(--consent-banner-text-color-dark);
+		color: var(--consent-banner-text-color-dark, var(--inth-text));
 	}
 
 	@media (min-width: 640px) {
 		.header:not(:global(.headless)) {
-			padding: var(--consent-banner-padding);
+			padding: var(--consent-banner-padding, var(--inth-space-lg));
 		}
 	}
 
@@ -526,18 +515,24 @@
 		gap: 0.75rem;
 		justify-content: space-between;
 		padding-block: var(--inth-space-md);
-		padding-inline: var(--consent-banner-padding-mobile);
-		background-color: var(--consent-banner-footer-background-color);
+		padding-inline: var(--consent-banner-padding-mobile, var(--inth-space-md));
+		background-color: var(
+			--consent-banner-footer-background-color,
+			var(--inth-surface-hover)
+		);
 	}
 
 	:global(.inth-dark) .footer:not(:global(.headless)) {
-		background-color: var(--consent-banner-footer-background-color-dark);
+		background-color: var(
+			--consent-banner-footer-background-color-dark,
+			var(--inth-surface-hover)
+		);
 	}
 
 	@media (min-width: 640px) {
 		.footer:not(:global(.headless)) {
 			flex-direction: row;
-			padding-inline: var(--consent-banner-padding);
+			padding-inline: var(--consent-banner-padding, var(--inth-space-lg));
 		}
 	}
 
@@ -564,12 +559,12 @@
 		border: 0;
 		background: none;
 		font: inherit;
-		font-family: var(--consent-banner-font-family);
+		font-family: var(--consent-banner-font-family, var(--inth-font-family));
 		font-size: 0.875rem;
 		line-height: 1.25rem;
 		letter-spacing: -0.006em;
 		font-weight: 400;
-		color: var(--consent-banner-description-color);
+		color: var(--consent-banner-description-color, var(--inth-text-muted));
 		text-decoration: underline;
 		text-underline-offset: 0.15em;
 		text-align: start;
@@ -588,7 +583,7 @@
 	}
 
 	.rightLink:not(:global(.headless)):hover {
-		color: var(--consent-banner-text-color);
+		color: var(--consent-banner-text-color, var(--inth-text));
 	}
 
 	.rightLink:not(:global(.headless)):focus-visible {
@@ -600,11 +595,11 @@
 	}
 
 	:global(.inth-dark) .rightLink:not(:global(.headless)) {
-		color: var(--consent-banner-description-color-dark);
+		color: var(--consent-banner-description-color-dark, var(--inth-text-muted));
 	}
 
 	:global(.inth-dark) .rightLink:not(:global(.headless)):hover {
-		color: var(--consent-banner-text-color-dark);
+		color: var(--consent-banner-text-color-dark, var(--inth-text));
 	}
 
 	:global(.inth-dark) .rightLink:not(:global(.headless)):focus-visible {
@@ -743,11 +738,11 @@
 		line-height: 1.25rem;
 		letter-spacing: -0.006em;
 		font-weight: 400;
-		color: var(--consent-banner-description-color);
+		color: var(--consent-banner-description-color, var(--inth-text-muted));
 	}
 
 	:global(.inth-dark) .description:not(:global(.headless)) {
-		color: var(--consent-banner-description-color-dark);
+		color: var(--consent-banner-description-color-dark, var(--inth-text-muted));
 	}
 
 	.description[data-context='banner']:not(:global(.headless)) {
@@ -755,24 +750,33 @@
 		line-height: 1.25rem;
 		letter-spacing: -0.006em;
 		font-weight: 400;
-		color: var(--consent-banner-description-color);
+		color: var(--consent-banner-description-color, var(--inth-text-muted));
 	}
 
 	:global(.inth-dark)
 		.description[data-context='banner']:not(:global(.headless)) {
-		color: var(--consent-banner-description-color-dark);
+		color: var(--consent-banner-description-color-dark, var(--inth-text-muted));
 	}
 
 	.description[data-context='dialog']:not(:global(.headless)) {
-		color: var(--consent-dialog-muted-color);
-		font-size: var(--consent-dialog-description-font-size);
-		font-weight: var(--consent-dialog-description-font-weight);
-		line-height: var(--consent-dialog-description-line-height);
+		color: var(--consent-dialog-muted-color, var(--inth-text-muted));
+		font-size: var(
+			--consent-dialog-description-font-size,
+			var(--inth-font-size-base)
+		);
+		font-weight: var(
+			--consent-dialog-description-font-weight,
+			var(--inth-font-weight-normal)
+		);
+		line-height: var(
+			--consent-dialog-description-line-height,
+			var(--inth-line-height-normal)
+		);
 	}
 
 	:global(.inth-dark)
 		.description[data-context='dialog']:not(:global(.headless)) {
-		color: var(--consent-dialog-muted-color-dark);
+		color: var(--consent-dialog-muted-color-dark, var(--inth-text-muted));
 	}
 
 	.description[data-context='manager']:not(:global(.headless)) {
@@ -792,17 +796,20 @@
 		line-height: 1.5rem;
 		letter-spacing: -0.011em;
 		font-weight: 500;
-		color: var(--consent-banner-title-color);
+		color: var(--consent-banner-title-color, var(--inth-text));
 	}
 
 	:global(.inth-dark) .title:not(:global(.headless)) {
-		color: var(--consent-banner-title-color-dark);
+		color: var(--consent-banner-title-color-dark, var(--inth-text));
 	}
 
 	.overlay:not(:global(.headless)) {
 		position: fixed;
 		inset: 0px;
-		background-color: var(--consent-banner-overlay-background-color);
+		background-color: var(
+			--consent-banner-overlay-background-color,
+			var(--inth-overlay)
+		);
 		z-index: var(--consent-banner-overlay-z-index);
 	}
 
@@ -819,8 +826,9 @@
 	.overlayEntering[data-entry='late']:not(.overlayHidden):not(
 			:global(.headless)
 		) {
-		transition: opacity var(--consent-banner-entry-duration)
-			var(--consent-banner-entry-timing);
+		transition: opacity
+			var(--consent-banner-entry-duration, var(--inth-duration-normal))
+			var(--consent-banner-entry-timing, var(--inth-easing-out));
 	}
 
 	@starting-style {
@@ -832,7 +840,7 @@
 	/* Overlay — Vue <Transition> leave classes */
 	.overlayLeaveActive:not(:global(.headless)) {
 		transition: opacity var(--consent-banner-animation-duration)
-			var(--consent-banner-animation-timing);
+			var(--consent-banner-animation-timing, var(--inth-easing-in));
 	}
 
 	.overlayLeaveTo:not(:global(.headless)) {
@@ -843,11 +851,14 @@
 	.overlayHidden:not(:global(.headless)) {
 		opacity: 0;
 		transition: opacity var(--consent-banner-animation-duration)
-			var(--consent-banner-animation-timing);
+			var(--consent-banner-animation-timing, var(--inth-easing-in));
 	}
 
 	:global(.inth-dark) .overlay:not(:global(.headless)) {
-		background-color: var(--consent-banner-overlay-background-color-dark);
+		background-color: var(
+			--consent-banner-overlay-background-color-dark,
+			var(--inth-overlay)
+		);
 	}
 
 	/* The same selectors as the rules that animate, so these win on

@@ -515,7 +515,7 @@ export class IABConsentDialogBody {
 	readonly noStyle = input<boolean | undefined>(undefined);
 	/** Skip the backdrop's fade-in. */
 	readonly disableAnimation = input(false);
-	/** Hide the "Secured by" attribution. */
+	/** Hide the "Consent by" attribution. */
 	readonly hideBranding = input(false);
 	/** The tab the dialog opens on. */
 	readonly initialTab = input<'purposes' | 'vendors' | undefined>(undefined);

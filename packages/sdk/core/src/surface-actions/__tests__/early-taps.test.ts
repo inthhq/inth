@@ -159,12 +159,24 @@ describe('the inline script', () => {
 			{
 				action: 'accept',
 				at: expect.any(Number),
+				design: null,
 				model: 'opt-in',
 				prompt: 'choice',
 			},
 		]);
 		expect(queue()?.taps?.[0]?.at).toBeGreaterThanOrEqual(before);
 		expect(hidden()).toBe(true);
+	});
+
+	test('records the design of the banner it was made on', () => {
+		runScript();
+		document.body.innerHTML =
+			'<div data-testid="consent-banner-root" data-design="privacy-choices"><button data-action="reject">Reject</button></div>';
+		tap('reject');
+		expect(queue()?.taps?.[0]).toMatchObject({
+			action: 'reject',
+			design: 'privacy-choices',
+		});
 	});
 
 	test('keeps the banner up for customize, which opens a dialog later', () => {
@@ -412,6 +424,25 @@ describe('replayEarlyConsentTaps', () => {
 		await startAndInit(runtime);
 		expect(runtime.kernel.getSnapshot().resolution.status).toBe('failed');
 		expect(runtime.kernel.getSnapshot().explicitChoice).toBeNull();
+		expect(hidden()).toBe(false);
+	});
+
+	test('hands the tap to the banner’s own handler instead of the stock actions', async () => {
+		runScript();
+		renderBanner();
+		tap('customize');
+		const runtime = createRuntime();
+		const act = vi.fn();
+		replayEarlyConsentTaps(runtime.kernel, {
+			act,
+			started: () => runtime.started,
+		});
+		expect(act).not.toHaveBeenCalled();
+		await startAndInit(runtime);
+		expect(act).toHaveBeenCalledOnce();
+		expect(act.mock.calls[0]?.[0]).toMatchObject({ action: 'customize' });
+		// The handler decides: no dialog opens on its own.
+		expect(runtime.kernel.getSnapshot().activeUI).toBe('banner');
 		expect(hidden()).toBe(false);
 	});
 

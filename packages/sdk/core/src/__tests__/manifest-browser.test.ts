@@ -19,6 +19,7 @@ import {
 	withEarlyInit,
 } from '../transports/manifest-browser';
 import { manifestNeedsLocation } from '../transports/manifest-browser-location';
+import { mayBeLocationFree } from '../transports/manifest-browser-packs';
 import type { InitContext } from '../types';
 
 const everywhereManifest: ConsentManifest = {
@@ -407,6 +408,46 @@ describe('manifestNeedsLocation()', () => {
 	test('is true when some location gets a different banner or none', () => {
 		expect(manifestNeedsLocation(bannerSomewhere)).toBe(true);
 		expect(manifestNeedsLocation(geoManifest)).toBe(true);
+	});
+
+	test('is true when two locations get the same behavior in another layout', () => {
+		const [europe, quebec] = sameBannerEverywhere.policyPacks ?? [];
+		const drawer = createConsentManifestPolicyPack({
+			...policyRulePresets.europeOptIn(),
+			id: 'world_opt_in',
+			match: { isDefault: true },
+			surface: { container: { side: 'end', type: 'drawer' } },
+		});
+		expect(drawer.fingerprints.policy).toBe(europe?.fingerprints.policy);
+		const layouts = {
+			...everywhereManifest,
+			policyPacks: [europe, quebec, drawer].filter(
+				(pack) => pack !== undefined
+			),
+		};
+		expect(mayBeLocationFree(layouts)).toBe(false);
+		expect(manifestNeedsLocation(layouts)).toBe(true);
+	});
+
+	test('is false when every location gets the same layout from its policy', () => {
+		const surface = { container: { edge: 'top', type: 'banner' } } as const;
+		const layouts = {
+			...everywhereManifest,
+			policyPacks: [
+				createConsentManifestPolicyPack({
+					...policyRulePresets.europeOptIn(),
+					surface,
+				}),
+				createConsentManifestPolicyPack({
+					...policyRulePresets.europeOptIn(),
+					id: 'world_opt_in',
+					match: { isDefault: true },
+					surface,
+				}),
+			],
+		};
+		expect(mayBeLocationFree(layouts)).toBe(true);
+		expect(manifestNeedsLocation(layouts)).toBe(false);
 	});
 
 	test('is true when a country with region packs and no region fails to match', () => {

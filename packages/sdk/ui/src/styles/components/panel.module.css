@@ -1,59 +1,30 @@
 @import url('./animations/enter-exit.css');
 
 :root {
-	--consent-dialog-font-family: var(--inth-font-family);
-	--consent-dialog-line-height: var(--inth-line-height-tight);
-	--consent-dialog-title-font-size: var(--inth-font-size-sm);
-	--consent-dialog-title-font-weight: var(--inth-font-weight-semibold);
-	--consent-dialog-title-letter-spacing: -0.025em;
-	--consent-dialog-description-font-size: var(--inth-font-size-base);
-	--consent-dialog-description-font-weight: var(--inth-font-weight-normal);
-	--consent-dialog-description-line-height: var(--inth-line-height-normal);
-	--consent-dialog-footer-gap: var(--inth-space-sm);
-	--consent-dialog-footer-font-size: var(--inth-font-size-sm);
-
-	--consent-dialog-stroke-color: var(--inth-border);
-	--consent-dialog-stroke-color-dark: var(--inth-border);
 	--consent-dialog-link-text-color: var(--inth-text);
 	--consent-dialog-link-text-color-dark: var(--inth-text);
-	--consent-dialog-border-color: var(--inth-border);
-	--consent-dialog-border-color-dark: var(--inth-border);
-	--consent-dialog-background-color: var(--inth-surface);
-	--consent-dialog-background-color-dark: var(--inth-surface);
-	--consent-dialog-foreground-color: var(--inth-text);
-	--consent-dialog-foreground-color-dark: var(--inth-text);
-	--consent-dialog-muted-color: var(--inth-text-muted);
-	--consent-dialog-muted-color-dark: var(--inth-text-muted);
+
+	--consent-dialog-header-gap: var(--inth-space-xs);
+	--consent-dialog-content-gap: var(--inth-space-md);
+
+	--consent-dialog-height: 100%;
+	--consent-dialog-overlay-z-index: 999998;
+
+	--consent-dialog-border-width-hairline: 1px;
+
+	/* Adapters read these computed values, to time the exit and to tell
+	   whether this sheet is on the page, so they keep their declarations
+	   here. */
+	--consent-dialog-animation-duration: var(--inth-duration-normal);
 	--consent-dialog-overlay-background-color: var(--inth-overlay);
 	--consent-dialog-overlay-background-color-dark: var(--inth-overlay);
 
-	--consent-dialog-card-padding: var(--inth-space-lg);
-	--consent-dialog-card-padding-mobile: var(--inth-space-md);
-	--consent-dialog-card-gap: var(--inth-space-xs);
-	--consent-dialog-header-gap: var(--inth-space-xs);
-	--consent-dialog-content-gap: var(--inth-space-md);
-	--consent-dialog-footer-padding-y: var(--inth-space-md);
-
-	--consent-dialog-card-radius: var(--inth-radius-lg);
-	--consent-dialog-max-width: 28rem;
-	--consent-dialog-height: 100%;
-	/* The card never outgrows the viewport: content past this scrolls
-	   inside the card while the header and footer stay put. A viewport unit
-	   rather than a percentage, since the card's flex parent is auto-height
-	   and a percentage max-height against it computes to none. */
-	--consent-dialog-max-height: calc(
-		100dvh - 2 * var(--consent-dialog-card-padding-mobile)
-	);
-	--consent-dialog-z-index: 999999;
-	--consent-dialog-overlay-z-index: 999998;
-
-	--consent-dialog-card-shadow: var(--inth-shadow-sm);
-	--consent-dialog-border-width: 1px;
-	--consent-dialog-border-width-hairline: 1px;
-	--consent-dialog-border-style: solid;
-
-	--consent-dialog-animation-duration: var(--inth-duration-normal);
-	--consent-dialog-animation-timing: var(--inth-easing-out);
+	/* The rest of the dialog's variables are read with their default as a
+	   fallback instead of being declared here, because the v6 Privacy
+	   Choices dialog reads them too: a value declared on :root would replace
+	   every v6 default whenever styles.css is on the page, and would resolve
+	   its tokens once, on :root, where a palette scoped to .inth-theme-root
+	   never reaches. Set any of them on an ancestor to restyle both. */
 }
 
 /* Hairline borders for retina displays */
@@ -68,22 +39,25 @@
 		pointer-events: none;
 		box-sizing: border-box;
 		isolation: isolate;
-		font-family: var(--consent-dialog-font-family);
+		font-family: var(--consent-dialog-font-family, var(--inth-font-family));
 		color: var(--inth-text);
-		line-height: var(--consent-dialog-line-height);
+		line-height: var(
+			--consent-dialog-line-height,
+			var(--inth-line-height-tight)
+		);
 		-webkit-text-size-adjust: 100%;
 		tab-size: 4;
 		margin: 0;
-		padding: var(--consent-dialog-card-padding-mobile);
+		padding: var(--consent-dialog-card-padding-mobile, var(--inth-space-md));
 		border: 0;
 		background: none;
 		position: fixed;
 		inset: 0px;
-		z-index: var(--consent-dialog-z-index);
+		z-index: var(--consent-dialog-z-index, 999999);
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		border-radius: var(--consent-dialog-card-radius);
+		border-radius: var(--consent-dialog-card-radius, var(--inth-radius-lg));
 		background-color: transparent;
 		width: 100%;
 		height: var(--consent-dialog-height);
@@ -127,7 +101,7 @@
 
 	.overlay:not(:global(.headless))[data-state='open'] {
 		animation: consent-dialog-fade-in var(--consent-dialog-animation-duration)
-			var(--consent-dialog-animation-timing);
+			var(--consent-dialog-animation-timing, var(--inth-easing-out));
 	}
 
 	.overlay:not(:global(.headless))[data-state='closed'] {
@@ -137,7 +111,7 @@
 
 	.root:not(:global(.headless))[data-state='open'] {
 		animation: consent-dialog-fade-in var(--consent-dialog-animation-duration)
-			var(--consent-dialog-animation-timing);
+			var(--consent-dialog-animation-timing, var(--inth-easing-out));
 	}
 
 	.root:not(:global(.headless))[data-state='closed'] {
@@ -152,7 +126,7 @@
 
 	.root[data-state='closed'] .container:not(:global(.headless)) {
 		animation: exit var(--consent-dialog-animation-duration)
-			var(--consent-dialog-animation-timing);
+			var(--consent-dialog-animation-timing, var(--inth-easing-out));
 	}
 
 	.root:not(:global(.headless))[data-mode='dialog'] {
@@ -176,8 +150,8 @@
 	.root:not(:global(.headless))[data-mode='sidebar-right']
 		.container:not(:global(.headless)) {
 		position: relative;
-		z-index: var(--consent-dialog-z-index);
-		width: min(100%, var(--consent-dialog-max-width));
+		z-index: var(--consent-dialog-z-index, 999999);
+		width: min(100%, var(--consent-dialog-max-width, 28rem));
 		max-height: 100%;
 		height: 100%;
 	}
@@ -237,7 +211,7 @@
 		.container:not(:global(.headless)) {
 		animation: consent-dialog-slide-in-left
 			var(--consent-dialog-animation-duration)
-			var(--consent-dialog-animation-timing);
+			var(--consent-dialog-animation-timing, var(--inth-easing-out));
 	}
 
 	.root[data-mode='sidebar-left'][data-state='closed']
@@ -250,7 +224,7 @@
 		.container:not(:global(.headless)) {
 		animation: consent-dialog-slide-in-right
 			var(--consent-dialog-animation-duration)
-			var(--consent-dialog-animation-timing);
+			var(--consent-dialog-animation-timing, var(--inth-easing-out));
 	}
 
 	.root[data-mode='sidebar-right'][data-state='closed']
@@ -263,13 +237,13 @@
 	.dialogVisible:not(:global(.headless)) {
 		opacity: 1;
 		transition: opacity var(--consent-dialog-animation-duration)
-			var(--consent-dialog-animation-timing);
+			var(--consent-dialog-animation-timing, var(--inth-easing-out));
 	}
 
 	.dialogHidden:not(:global(.headless)) {
 		opacity: 0;
 		transition: opacity var(--consent-dialog-animation-duration)
-			var(--consent-dialog-animation-timing);
+			var(--consent-dialog-animation-timing, var(--inth-easing-out));
 	}
 
 	.contentVisible:not(:global(.headless)) {
@@ -277,7 +251,7 @@
 		transform: scale(1);
 		transition:
 			opacity var(--consent-dialog-animation-duration)
-				var(--consent-dialog-animation-timing),
+				var(--consent-dialog-animation-timing, var(--inth-easing-out)),
 			transform var(--consent-dialog-animation-duration)
 				var(--inth-easing-spring);
 	}
@@ -287,9 +261,9 @@
 		transform: scale(0.95);
 		transition:
 			opacity var(--consent-dialog-animation-duration)
-				var(--consent-dialog-animation-timing),
+				var(--consent-dialog-animation-timing, var(--inth-easing-out)),
 			transform var(--consent-dialog-animation-duration)
-				var(--consent-dialog-animation-timing);
+				var(--consent-dialog-animation-timing, var(--inth-easing-out));
 	}
 
 	/*
@@ -310,7 +284,7 @@
 
 	@media (min-width: 640px) {
 		.root:not(:global(.headless)) {
-			padding: var(--consent-dialog-card-padding);
+			padding: var(--consent-dialog-card-padding, var(--inth-space-lg));
 			width: auto;
 		}
 	}
@@ -348,7 +322,10 @@
 		color: var(--consent-dialog-link-text-color);
 		position: fixed;
 		inset: 0px;
-		background-color: var(--consent-dialog-overlay-background-color);
+		background-color: var(
+			--consent-dialog-overlay-background-color,
+			var(--inth-overlay)
+		);
 		z-index: var(--consent-dialog-overlay-z-index);
 	}
 
@@ -356,13 +333,13 @@
 	.overlayVisible:not(:global(.headless)) {
 		opacity: 1;
 		transition: opacity var(--consent-dialog-animation-duration)
-			var(--consent-dialog-animation-timing);
+			var(--consent-dialog-animation-timing, var(--inth-easing-out));
 	}
 
 	.overlayHidden:not(:global(.headless)) {
 		opacity: 0;
 		transition: opacity var(--consent-dialog-animation-duration)
-			var(--consent-dialog-animation-timing);
+			var(--consent-dialog-animation-timing, var(--inth-easing-out));
 	}
 
 	@starting-style {
@@ -372,83 +349,125 @@
 	}
 
 	:global(.inth-dark) .overlay:not(:global(.headless)) {
-		background-color: var(--consent-dialog-overlay-background-color-dark);
+		background-color: var(
+			--consent-dialog-overlay-background-color-dark,
+			var(--inth-overlay)
+		);
 		color: var(--consent-dialog-link-text-color-dark);
 	}
 
 	.card:not(:global(.headless)) {
 		position: relative;
 		box-sizing: border-box;
-		width: min(100%, var(--consent-dialog-max-width));
-		max-height: var(--consent-dialog-max-height);
+		width: min(100%, var(--consent-dialog-max-width, 28rem));
+		/* The card never outgrows the viewport: content past this scrolls
+		   inside the card while the header and footer stay put. A viewport
+		   unit rather than a percentage, since the card's flex parent is
+		   auto-height and a percentage max-height against it computes to
+		   none. */
+		max-height: var(
+			--consent-dialog-max-height,
+			calc(
+				100dvh - 2 *
+					var(--consent-dialog-card-padding-mobile, var(--inth-space-md))
+			)
+		);
 		margin: 0 auto;
-		border-radius: var(--consent-dialog-card-radius);
-		border: var(--consent-dialog-border-width)
-			var(--consent-dialog-border-style) var(--consent-dialog-border-color);
-		background-color: var(--consent-dialog-background-color);
-		color: var(--consent-dialog-foreground-color);
-		box-shadow: var(--consent-dialog-card-shadow);
+		border-radius: var(--consent-dialog-card-radius, var(--inth-radius-lg));
+		border: var(--consent-dialog-border-width, 1px)
+			var(--consent-dialog-border-style, solid)
+			var(--consent-dialog-border-color, var(--inth-border));
+		background-color: var(
+			--consent-dialog-background-color,
+			var(--inth-surface)
+		);
+		color: var(--consent-dialog-foreground-color, var(--inth-text));
+		box-shadow: var(--consent-dialog-card-shadow, var(--inth-shadow-sm));
 		display: flex;
 		flex-direction: column;
 		overflow: visible;
 	}
 
 	:global(.inth-dark) .card:not(:global(.headless)) {
-		background-color: var(--consent-dialog-background-color-dark);
-		color: var(--consent-dialog-foreground-color-dark);
-		border-color: var(--consent-dialog-border-color-dark);
+		background-color: var(
+			--consent-dialog-background-color-dark,
+			var(--inth-surface)
+		);
+		color: var(--consent-dialog-foreground-color-dark, var(--inth-text));
+		border-color: var(--consent-dialog-border-color-dark, var(--inth-border));
 	}
 
 	.header:not(:global(.headless)) {
 		display: flex;
 		flex-direction: column;
 		flex-shrink: 0;
-		padding: var(--consent-dialog-card-padding-mobile);
+		padding: var(--consent-dialog-card-padding-mobile, var(--inth-space-md));
 		gap: var(--consent-dialog-header-gap);
 	}
 
 	.header:not(:global(.headless)) > * + * {
-		margin-top: var(--consent-dialog-card-gap);
+		margin-top: var(--consent-dialog-card-gap, var(--inth-space-xs));
 	}
 
 	.title:not(:global(.headless)) {
 		/* Same heading-element reset as the banner: React's `<h2>` must not
 		   bring the user agent's margins with it. */
 		margin: 0;
-		font-weight: var(--consent-dialog-title-font-weight);
-		font-size: var(--consent-dialog-title-font-size);
+		font-weight: var(
+			--consent-dialog-title-font-weight,
+			var(--inth-font-weight-semibold)
+		);
+		font-size: var(--consent-dialog-title-font-size, var(--inth-font-size-sm));
 		line-height: 1;
-		letter-spacing: var(--consent-dialog-title-letter-spacing);
+		letter-spacing: var(--consent-dialog-title-letter-spacing, -0.025em);
 	}
 
 	.description:not(:global(.headless)) {
-		color: var(--consent-dialog-muted-color);
-		font-size: var(--consent-dialog-description-font-size);
-		font-weight: var(--consent-dialog-description-font-weight);
-		line-height: var(--consent-dialog-description-line-height);
+		color: var(--consent-dialog-muted-color, var(--inth-text-muted));
+		font-size: var(
+			--consent-dialog-description-font-size,
+			var(--inth-font-size-base)
+		);
+		font-weight: var(
+			--consent-dialog-description-font-weight,
+			var(--inth-font-weight-normal)
+		);
+		line-height: var(
+			--consent-dialog-description-line-height,
+			var(--inth-line-height-normal)
+		);
 	}
 
 	:global(.inth-dark) .description:not(:global(.headless)) {
-		color: var(--consent-dialog-muted-color-dark);
+		color: var(--consent-dialog-muted-color-dark, var(--inth-text-muted));
 	}
 
 	.description[data-context='dialog']:not(:global(.headless)) {
-		color: var(--consent-dialog-muted-color);
-		font-size: var(--consent-dialog-description-font-size);
-		font-weight: var(--consent-dialog-description-font-weight);
-		line-height: var(--consent-dialog-description-line-height);
+		color: var(--consent-dialog-muted-color, var(--inth-text-muted));
+		font-size: var(
+			--consent-dialog-description-font-size,
+			var(--inth-font-size-base)
+		);
+		font-weight: var(
+			--consent-dialog-description-font-weight,
+			var(--inth-font-weight-normal)
+		);
+		line-height: var(
+			--consent-dialog-description-line-height,
+			var(--inth-line-height-normal)
+		);
 	}
 
 	:global(.inth-dark)
 		.description[data-context='dialog']:not(:global(.headless)) {
-		color: var(--consent-dialog-muted-color-dark);
+		color: var(--consent-dialog-muted-color-dark, var(--inth-text-muted));
 	}
 
 	/* Whatever the content holds stays inside the capped card: custom
 	   children scroll here. The stock widget relaxes this below and scrolls
 	   its category list instead, so its action row stays in view. */
 	.content:not(:global(.headless)) {
-		padding: var(--consent-dialog-card-padding-mobile);
+		padding: var(--consent-dialog-card-padding-mobile, var(--inth-space-md));
 		padding-top: 0;
 		gap: var(--consent-dialog-content-gap);
 		flex: 1 1 auto;
@@ -463,11 +482,11 @@
 	   lines up with. */
 	@media (min-width: 640px) {
 		.header:not(:global(.headless)) {
-			padding: var(--consent-dialog-card-padding);
+			padding: var(--consent-dialog-card-padding, var(--inth-space-lg));
 		}
 
 		.content:not(:global(.headless)) {
-			padding: var(--consent-dialog-card-padding);
+			padding: var(--consent-dialog-card-padding, var(--inth-space-lg));
 			padding-top: 0;
 		}
 	}
@@ -526,12 +545,16 @@
 		flex-shrink: 0;
 		align-items: center;
 		justify-content: center;
-		gap: var(--consent-dialog-footer-gap);
-		font-size: var(--consent-dialog-footer-font-size);
-		padding-top: var(--consent-dialog-footer-padding-y);
-		padding-bottom: var(--consent-dialog-footer-padding-y);
-		border-top: var(--consent-dialog-border-width)
-			var(--consent-dialog-border-style) var(--consent-dialog-stroke-color);
+		gap: var(--consent-dialog-footer-gap, var(--inth-space-sm));
+		font-size: var(--consent-dialog-footer-font-size, var(--inth-font-size-sm));
+		padding-top: var(--consent-dialog-footer-padding-y, var(--inth-space-md));
+		padding-bottom: var(
+			--consent-dialog-footer-padding-y,
+			var(--inth-space-md)
+		);
+		border-top: var(--consent-dialog-border-width, 1px)
+			var(--consent-dialog-border-style, solid)
+			var(--consent-dialog-stroke-color, var(--inth-border));
 	}
 
 	.footer:not(:global(.headless)):empty {
@@ -540,7 +563,7 @@
 	}
 
 	:global(.inth-dark) .footer:not(:global(.headless)) {
-		border-color: var(--consent-dialog-stroke-color-dark);
+		border-color: var(--consent-dialog-stroke-color-dark, var(--inth-border));
 	}
 
 	/* The same selectors as the rules that animate, so these win on

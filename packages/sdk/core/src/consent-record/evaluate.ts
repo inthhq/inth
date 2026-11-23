@@ -13,15 +13,13 @@
 
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
+import { decisionAuthority, isBasisCompatible } from './decision-authority';
 import {
 	OPT_OUT_REPROMPT_WAIT_MS,
 	optInPromptAllowedAt,
-} from './opt-out-rules';
-import {
-	OPTIONAL_CONSENT_CATEGORIES,
-	optOutDecidingCategory,
 	optOutDenyCategories,
-} from './types';
+} from './opt-out-rules';
+import { OPTIONAL_CONSENT_CATEGORIES, optOutDecidingCategory } from './types';
 import type {
 	CategoryDecision,
 	CategoryEvaluation,
@@ -52,55 +50,6 @@ export interface ConsentEvaluationInput {
 	now: number;
 }
 
-/**
- * Whether a decision's basis is compatible with the current policy.
- * Legacy decisions without a material fingerprint are grandfathered, and
- * a legacy fingerprint is only compared to a legacy material fingerprint.
- */
-const isBasisCompatible = function isBasisCompatible(
-	decision: CategoryDecision,
-	policy: EvaluationPolicy
-): boolean {
-	const { basis } = decision;
-	if (basis.kind === 'choice-v1') {
-		return basis.fingerprint === policy.choice.fingerprint;
-	}
-	if (
-		basis.materialFingerprint === undefined ||
-		policy.legacyMaterialFingerprint === null
-	) {
-		return true;
-	}
-	return basis.materialFingerprint === policy.legacyMaterialFingerprint;
-};
-
-const decisionExpiry = function decisionExpiry(
-	decision: CategoryDecision,
-	policy: EvaluationPolicy
-): number | null {
-	return policy.choice.maxAgeMs === null
-		? null
-		: decision.confirmedAt + policy.choice.maxAgeMs;
-};
-
-const decisionAuthority = function decisionAuthority(
-	decision: CategoryDecision | undefined,
-	policy: EvaluationPolicy,
-	now: number
-): { authority: DecisionAuthority; expiresAt: number | null } {
-	if (!decision) {
-		return { authority: 'absent', expiresAt: null };
-	}
-	if (!isBasisCompatible(decision, policy)) {
-		return { authority: 'policy-changed', expiresAt: null };
-	}
-	const expiresAt = decisionExpiry(decision, policy);
-	if (expiresAt !== null && now >= expiresAt) {
-		return { authority: 'expired', expiresAt };
-	}
-	return { authority: 'valid', expiresAt };
-};
-
 const defaultPermission = function defaultPermission(
 	policy: EvaluationPolicy,
 	inScope: boolean
@@ -129,7 +78,10 @@ const collectRestrictions = function collectRestrictions(
 	if (input.gpc === true && input.policy.gpcDenyCategories.includes(category)) {
 		restrictions.push('gpc');
 	}
-	if (input.optOut && optOutDenyCategories(input.policy).includes(category)) {
+	if (
+		input.optOut &&
+		optOutDenyCategories(input.policy, input.optOut).includes(category)
+	) {
 		const deciding = optOutDecidingCategory(input.policy);
 		const explicitGrantStands =
 			deciding !== null &&
@@ -205,6 +157,51 @@ const acknowledgementExpiry = function acknowledgementExpiry(
 };
 
 /**
+ * When a current acknowledgement of the choice prompt runs out: `null` for
+ * never, `undefined` when there is none or it already ran out.
+ */
+const choiceAcknowledgedUntil = function choiceAcknowledgedUntil(
+	input: ConsentEvaluationInput
+): number | null | undefined {
+	const { policy } = input;
+	const dismissal = input.noticeDismissal;
+	if (!dismissal || dismissal.fingerprint !== policy.choice.fingerprint) {
+		return undefined;
+	}
+	const expiresAt = acknowledgementExpiry(dismissal, policy);
+	return expiresAt === null || input.now < expiresAt ? expiresAt : undefined;
+};
+
+/**
+ * When an acknowledgement that answers a choice prompt with categories to
+ * decide runs out, or `undefined` when none does. Only one recorded in the
+ * same action as a decision in the choice scope counts, as a rights control
+ * records it. An acknowledgement of an empty scope never answers once a
+ * category is displayed, though the choice fingerprint stays the same.
+ */
+const rightsAcknowledgedUntil = function rightsAcknowledgedUntil(
+	input: ConsentEvaluationInput
+): number | null | undefined {
+	const until = choiceAcknowledgedUntil(input);
+	const dismissal = input.noticeDismissal;
+	if (until === undefined || !dismissal) {
+		return undefined;
+	}
+	const { policy } = input;
+	const decisions = input.choice?.categories;
+	return policy.choiceScope.some((category) => {
+		const decision = decisions?.[category];
+		return (
+			decision !== undefined &&
+			decision.confirmedAt === dismissal.dismissedAt &&
+			isBasisCompatible(decision, policy)
+		);
+	})
+		? until
+		: undefined;
+};
+
+/**
  * When the choice prompt with nothing to decide stops being answered, or
  * `undefined` when it is not answered now. A choice acknowledgement is a
  * dismissal record made against the choice fingerprint; any decision still
@@ -215,14 +212,10 @@ const acknowledgedUntil = function acknowledgedUntil(
 	input: ConsentEvaluationInput,
 	categories: Record<OptionalConsentCategory, CategoryEvaluation>
 ): number | null | undefined {
-	const { policy } = input;
 	const expiries: (number | null)[] = [];
-	const dismissal = input.noticeDismissal;
-	if (dismissal && dismissal.fingerprint === policy.choice.fingerprint) {
-		const expiresAt = acknowledgementExpiry(dismissal, policy);
-		if (expiresAt === null || input.now < expiresAt) {
-			expiries.push(expiresAt);
-		}
+	const acknowledged = choiceAcknowledgedUntil(input);
+	if (acknowledged !== undefined) {
+		expiries.push(acknowledged);
 	}
 	for (const category of OPTIONAL_CONSENT_CATEGORIES) {
 		const evaluation = categories[category];
@@ -271,11 +264,15 @@ const deriveAcknowledgementRequirement =
 /**
  * Refusals suppress automatic choice prompts, including when another category
  * is new or a grant expires. Permissions still expire and users can open
- * preferences themselves. Otherwise aggregate: no usable record, then a
- * known material mismatch in the required scope, then any required
- * category without a decision, then any required positive decision past
- * its lifetime. Neither elapsed time nor a policy edit cancels a refusal.
- * An empty choice scope asks for an acknowledgement instead.
+ * preferences themselves. A current acknowledgement made with a decision
+ * answers the prompt too: a rights control records one when the visitor
+ * decides a statutory right without deciding every category (BNR-05,
+ * RIGHT-08). Otherwise aggregate:
+ * no usable record, then a known material mismatch in the required scope,
+ * then any required category without a decision, then any required
+ * positive decision past its lifetime. Neither elapsed time nor a policy
+ * edit cancels a refusal. An empty choice scope asks for an
+ * acknowledgement instead.
  */
 const deriveChoiceRequirement = function deriveChoiceRequirement(
 	input: ConsentEvaluationInput,
@@ -286,7 +283,10 @@ const deriveChoiceRequirement = function deriveChoiceRequirement(
 	if (choiceScope.length === 0) {
 		return deriveAcknowledgementRequirement(input, categories);
 	}
-	if (hasChoiceRefusal(policy, categories)) {
+	if (
+		hasChoiceRefusal(policy, categories) ||
+		rightsAcknowledgedUntil(input) !== undefined
+	) {
 		return { kind: 'none' };
 	}
 	const decisions = input.choice?.categories;
@@ -358,8 +358,10 @@ const derivePromptRequirement = function derivePromptRequirement(
 };
 
 /**
- * When an acknowledged empty choice scope asks again: once the last record
- * answering it runs out. Empty when it is not answered or never runs out.
+ * When an acknowledged choice prompt asks again: for an empty choice scope,
+ * once the last record answering it runs out; otherwise once the
+ * acknowledgement does, so the remaining categories are asked for. Empty
+ * when it is not answered or never runs out.
  */
 const acknowledgementDeadline = function acknowledgementDeadline(
 	input: ConsentEvaluationInput,
@@ -367,14 +369,13 @@ const acknowledgementDeadline = function acknowledgementDeadline(
 	promptRequirement: PromptRequirement
 ): number[] {
 	const { policy } = input;
-	if (
-		policy.prompt !== 'choice' ||
-		policy.choiceScope.length > 0 ||
-		promptRequirement.kind !== 'none'
-	) {
+	if (policy.prompt !== 'choice' || promptRequirement.kind !== 'none') {
 		return [];
 	}
-	const until = acknowledgedUntil(input, categories);
+	const until =
+		policy.choiceScope.length > 0
+			? rightsAcknowledgedUntil(input)
+			: acknowledgedUntil(input, categories);
 	return typeof until === 'number' ? [until] : [];
 };
 
@@ -411,7 +412,9 @@ const deriveNextDeadline = function deriveNextDeadline(
 		policy.prompt === 'choice' &&
 		promptRequirement.kind === 'none' &&
 		!hasChoiceRefusal(policy, categories);
-	const optOutDenied = input.optOut ? optOutDenyCategories(policy) : [];
+	const optOutDenied = input.optOut
+		? optOutDenyCategories(policy, input.optOut)
+		: [];
 	for (const category of policy.scope) {
 		const evaluation = categories[category];
 		const decision = input.choice?.categories[category];

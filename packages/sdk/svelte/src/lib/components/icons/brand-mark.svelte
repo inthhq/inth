@@ -2,7 +2,8 @@
 	import { BRAND_MARKS } from '@inth/sdk/ui/utils';
 	import type { BrandMark } from '@inth/sdk/ui/utils';
 
-	let { mark }: { mark: BrandMark } = $props();
+	let { mark, class: className }: { mark: BrandMark; class?: string } =
+		$props();
 
 	const glyph = $derived(BRAND_MARKS[mark]);
 </script>
@@ -12,6 +13,7 @@
 	viewBox={glyph.viewBox}
 	fill="none"
 	aria-hidden="true"
+	class={className}
 >
 	{#each glyph.paths as path (path.d)}
 		<path

@@ -297,6 +297,35 @@ test('an accept tapped before the engine commits in the tap’s own task', async
 	loader.dispose();
 });
 
+test('a Privacy Choices banner tap waits for the banner’s own handlers, and loads the engine', async () => {
+	renderBanner();
+	document
+		.querySelector('[data-testid="consent-banner-root"]')
+		?.setAttribute('data-design', 'privacy-choices');
+	const harness = createHarness();
+	const { context } = harness;
+	context.start();
+
+	tap('accept');
+
+	// No stock commit: the hydrated banner replays it through its own plan.
+	expect(context.snapshot.value.explicitChoice).toBeNull();
+	expect(document.getElementById('inth-early-commit')).toBeNull();
+	expect(harness.loadEngine).toHaveBeenCalledOnce();
+	await settle();
+	expect(harness.completeCommit).not.toHaveBeenCalled();
+	expect(context.snapshot.value.explicitChoice).toBeNull();
+	// The tap stays queued for the banner, which stops the script.
+	const queue = (
+		window as unknown as Record<
+			string,
+			{ taps?: unknown[]; stop?: () => void } | undefined
+		>
+	).__inthEarlyTaps;
+	expect(queue?.taps).toHaveLength(1);
+	queue?.stop?.();
+});
+
 test('the engine adopts the committed record and sends the queued save once', async () => {
 	renderBanner();
 	const harness = createHarness();

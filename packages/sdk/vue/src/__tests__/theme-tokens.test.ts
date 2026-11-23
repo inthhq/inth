@@ -66,6 +66,40 @@ describe('generateTokensCSS', () => {
 		expect(css).toContain('--inth-radius-md:0.5rem;');
 	});
 
+	test('[VIS-03] the dark palette derives its tint from the dark primary', () => {
+		// A fixed dark tint would ignore a dark `--inth-primary` from the
+		// site's CSS; the reference follows it, as in `styles.css`.
+		const css = generateTokensCSS({ 'inth-primary': '#2f6f4e' });
+		const dark = css.match(/\.inth-dark \.inth-theme-root\{(?<body>[^}]*)\}/u)
+			?.groups?.body;
+
+		expect(dark).toContain(
+			'--inth-primary-tint: color-mix(in srgb, var(--inth-primary) 18%, var(--inth-surface));'
+		);
+		expect(dark).toContain('--inth-primary-text: var(--inth-primary);');
+		expect(dark).toContain('--inth-switch-track-active: var(--inth-primary);');
+	});
+
+	test('[VIS-03] makes the tint opaque where relative colour syntax works', () => {
+		const css = generateTokensCSS({ 'inth-primary': 'rgb(37 99 235 / 50%)' });
+
+		expect(css).toContain(
+			':root,:host,.inth-theme-root{--inth-primary-tint: rgb(from color-mix(in srgb, var(--inth-primary) 10%, var(--inth-surface)) r g b / 1);}'
+		);
+		expect(css).toContain(
+			'--inth-primary-tint: rgb(from color-mix(in srgb, var(--inth-primary) 18%, var(--inth-surface)) r g b / 1);'
+		);
+	});
+
+	test('keeps a tint the page sets in tokens', () => {
+		const css = generateTokensCSS({ 'inth-primary-tint': '#eef' });
+
+		expect(css).toContain('--inth-primary-tint:#eef;');
+		expect(css).not.toContain(
+			':root,:host,.inth-theme-root{--inth-primary-tint: rgb(from'
+		);
+	});
+
 	test('cannot close the style element', () => {
 		expect(
 			generateTokensCSS({ 'inth-primary': 'red</style><script>' })

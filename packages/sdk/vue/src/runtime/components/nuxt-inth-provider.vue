@@ -7,6 +7,7 @@ import {
 	useConsentKernelContext,
 } from '../composables';
 import {
+	useConsentKernel,
 	useHasOptOutConfirmationHost,
 	useOptOutConfirmationOpen,
 } from '../composables/kernel';
@@ -15,14 +16,17 @@ import { applyRootOverrides } from '../root-overrides';
 import { consentConfigKey, symbolConfirmationHosted } from '../utils/symbols';
 import {
 	ConsentBannerHost as ConsentBanner,
+	ConsentDialogHost,
 	LazyConsentDialogTrigger,
-	LazyConsentManager,
 	LazyIabConsentBanner,
 	LazyIabConsentDialog,
 	LazyOptOutConfirmation,
 	prefetchConsentManager,
 	prefetchIabConsentDialog,
+	useWarmableDialogDesign,
 } from './lazy-surfaces';
+import { useAdoptOptOutConfirmation } from './privacy-choices/receipt-focus';
+import { usePrivacyChoicesDesign } from './privacy-choices/use-design';
 
 // The default slot renders after the surfaces, so a root that wraps the
 // app the way a React provider does keeps the app.
@@ -48,6 +52,20 @@ provide(symbolConfirmationHosted, true);
 const { iabUnavailable } = context;
 // The trigger shows only after mount, so its chunk loads after mount too.
 const mounted = useMounted();
+const privacyChoices = usePrivacyChoicesDesign();
+useWarmableDialogDesign(() =>
+	privacyChoices.value ? 'privacy-choices' : 'classic'
+);
+// The Privacy Choices design confirms an opt-out on its receipt, in the
+// dialog, unless a standalone `OptOutConfirmation` shows it.
+useAdoptOptOutConfirmation(
+	useConsentKernel(),
+	() =>
+		privacyChoices.value &&
+		!(init.value?.gvl || init.value?.gvlReference) &&
+		confirmationOpen.value &&
+		!hasStandaloneConfirmation.value
+);
 
 watch(
 	() => ({
@@ -93,12 +111,13 @@ onMounted(() => {
 		<LazyIabConsentDialog
 			v-if="(init?.gvl || init?.gvlReference) && iabDialogNeeded"
 		/>
-		<LazyConsentManager
+		<ConsentDialogHost
 			v-else-if="!(init?.gvl || init?.gvlReference) && managerNeeded"
 		/>
 		<LazyOptOutConfirmation
 			v-if="
 				!(init?.gvl || init?.gvlReference) &&
+				!privacyChoices &&
 				confirmationOpen &&
 				!hasStandaloneConfirmation
 			"

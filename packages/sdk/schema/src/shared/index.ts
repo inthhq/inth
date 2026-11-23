@@ -239,15 +239,40 @@ export {
 	policyFingerprintInput,
 	PRESENTATION_FINGERPRINT_VERSION,
 	type PresentationFingerprintInput,
+	policySurfacePresentationInput,
 } from './policy-rule-fingerprint';
+export {
+	type BannerEdge,
+	type CardPosition,
+	canPolicyBlock,
+	canonicalizePolicySurface,
+	collectPolicySurfaceRuleIssues,
+	collectPolicySurfaceFieldIssues,
+	CONSENT_BANNER_EDGES,
+	CONSENT_BLOCKING_CONSTRAINTS,
+	CONSENT_CARD_POSITIONS,
+	CONSENT_CONTAINER_TYPES,
+	CONSENT_DRAWER_SIDES,
+	CONSENT_EDGE_STYLES,
+	type ConsentBlockingConstraint,
+	type ConsentContainer,
+	type ConsentContainerType,
+	type ConsentEdgeStyle,
+	type DrawerSide,
+	POLICY_SURFACE_KEYS,
+	type PolicySurface,
+	type ResolvedPolicySurface,
+} from './policy-surface';
 export {
 	type EuropePolicyRuleMode,
 	type PolicyRulePresets,
 	policyRulePresets,
 	type RecommendedPolicyRulesOptions,
 	recommendedPolicyRules,
+	type UsOptOutPresetOptions,
 } from './policy-rule-presets';
 export {
+	consentContainerSchema,
 	policyActionConstraintsSchema,
 	policyFingerprintsSchema,
 	policyOptionalCategorySchema,
@@ -258,6 +283,7 @@ export {
 	policyResolutionWireSchema,
 	policyRightSchema,
 	policyRuleModelSchema,
+	policySurfaceSchema,
 	resolvedPolicyRuleSchema,
 } from './policy-wire-schema';
 export { BASE_LANGUAGES } from './base-languages';

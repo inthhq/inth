@@ -24,6 +24,7 @@ import {
 	encodeNoticeDismissal,
 	encodeNoticeDismissalCompact,
 	encodeNoticeSubjectCompact,
+	encodeOptOutCategoriesCompact,
 	encodeOptOutRecord,
 	encodeOptOutRecordCompact,
 	encodeStoredConsentEnvelopeCompact,
@@ -103,7 +104,9 @@ export interface RecordStore {
 	clearStoredVendorChoice: (config?: StorageConfig) => void;
 	/**
 	 * Writes the durable opt-out record to localStorage and its compact cookie
-	 * projection. The consent record and its cookie are never touched.
+	 * projection, and the categories it withholds to
+	 * `<key>-opt-out-categories` in both. The consent record and its cookie
+	 * are never touched.
 	 */
 	writeStoredOptOutRecord: (
 		record: StoredOptOutRecord,
@@ -198,7 +201,9 @@ export const createRecordStore = function createRecordStore(
 	const clearStoredOptOutRecord: RecordStore['clearStoredOptOutRecord'] = (
 		config
 	) => {
-		removeBoth(tools.keys(config).optOut, config);
+		const keys = tools.keys(config);
+		removeBoth(keys.optOut, config);
+		removeBoth(keys.optOutCategories, config);
 	};
 
 	return {
@@ -294,15 +299,23 @@ export const createRecordStore = function createRecordStore(
 			if (validated.ok === false) {
 				return validated;
 			}
-			return {
-				...validated,
-				written: writeBoth(
-					tools.keys(config).optOut,
-					encodeOptOutRecord(validated.record),
-					cookieText(() => encodeOptOutRecordCompact(validated.record)),
-					config
-				),
-			};
+			const keys = tools.keys(config);
+			const written = writeBoth(
+				keys.optOut,
+				encodeOptOutRecord(validated.record),
+				cookieText(() => encodeOptOutRecordCompact(validated.record)),
+				config
+			);
+			// The record stays readable by SDKs that predate `categories`; the
+			// list goes beside it, bound to the act. Without a list the record
+			// is legacy, so a companion left from an earlier act goes.
+			const categories = encodeOptOutCategoriesCompact(validated.record);
+			if (categories === null) {
+				removeBoth(keys.optOutCategories, config);
+			} else {
+				writeBoth(keys.optOutCategories, categories, categories, config);
+			}
+			return { ...validated, written };
 		},
 		writeStoredVendorChoice(record, config, now) {
 			const validated = tools.decodeVendors(record, now);

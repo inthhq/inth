@@ -8,7 +8,8 @@ import type { LegacyMaterialCompatibility } from './legacy-material-policy';
  * - `policy` hashes the exact resolved behavior of a rule.
  * - `choice` decides whether an explicit category choice is still current.
  * - `notice` decides whether a notice dismissal is still current.
- * - `presentation` is an optional diagnostic hash of intended copy and UI.
+ * - `presentation` hashes intended layout and UI: a rule's `surface`, or a
+ *   host's presentation. It never decides whether a prompt is owed.
  *
  * The domain name and its version are part of the hashed bytes, so a choice
  * hash can never equal a notice hash for the same rule, and neither can
@@ -31,6 +32,8 @@ import type {
 	ResolvedPolicyRule,
 } from './policy-rule';
 import type { PolicyScopeMode } from './policy-runtime';
+import { canonicalizePolicySurface } from './policy-surface';
+import type { ResolvedPolicySurface } from './policy-surface';
 
 export const POLICY_FINGERPRINT_VERSION = 1;
 export const CHOICE_PROMPT_FINGERPRINT_VERSION = 1;
@@ -56,6 +59,14 @@ export interface PolicyFingerprints {
 	notice: string;
 	/** Frozen v2 receipt comparator, retained for the lifetime of v3. */
 	legacyMaterial?: string;
+	/**
+	 * The rule's `surface`, hashed in the presentation domain. Present only
+	 * when the resolved rule has a `surface`. Caches keyed on what a visitor
+	 * sees include it, so two packs with the same behavior and different
+	 * layouts never share a rendered banner. Never decides whether a prompt
+	 * is owed.
+	 */
+	presentation?: string;
 }
 
 /** Hashed input for the exact-policy domain. */
@@ -130,8 +141,9 @@ const sortedGroups = function sortedGroups(
  * Builds the canonical input for the exact-policy fingerprint.
  *
  * @remarks
- * Excludes `id`, `match`, `i18n` and `review`: two rules with different ids
- * but identical behavior share a policy fingerprint. Every set is re-sorted
+ * Excludes `id`, `match`, `i18n`, `surface` and `review`: two rules with
+ * different ids but identical behavior share a policy fingerprint, and a
+ * layout change never re-prompts anyone. Every set is re-sorted
  * so the input does not depend on the caller having normalized it.
  */
 export const policyFingerprintInput = function policyFingerprintInput(
@@ -232,7 +244,49 @@ export const noticePromptFingerprintInput =
 	};
 
 /**
- * Computes the policy, choice and notice fingerprints for one resolved rule.
+ * Fingerprint of intended presentation (copy, layout, variants).
+ *
+ * @remarks
+ * It never affects prompt requirements. A policy pack carries it as
+ * `fingerprints.presentation` when its rule has a `surface`
+ * ({@link createPolicyRuleFingerprints}); otherwise it is computed only
+ * when a consumer asks for it. It does not prove what a headless
+ * application rendered. Object keys are sorted and `undefined`
+ * members are dropped; array order is preserved because presentation order
+ * is meaningful.
+ */
+export const createPresentationFingerprint =
+	function createPresentationFingerprint(presentation: JsonValue): string {
+		const input: PresentationFingerprintInput = {
+			domain: 'presentation',
+			presentation,
+			version: PRESENTATION_FINGERPRINT_VERSION,
+		};
+		return createDeterministicFingerprintSync(input);
+	};
+
+/**
+ * The presentation-domain input for a rule's `surface`, under a `surface`
+ * key so a host's own presentation hashed in the same domain cannot
+ * collide with it.
+ */
+export const policySurfacePresentationInput =
+	function policySurfacePresentationInput(
+		surface: ResolvedPolicySurface
+	): JsonValue {
+		return {
+			surface: {
+				blocking: surface.blocking,
+				container: surface.container && { ...surface.container },
+				edgeStyle: surface.edgeStyle,
+			},
+		};
+	};
+
+/**
+ * Computes the policy, choice and notice fingerprints for one resolved rule,
+ * plus the presentation fingerprint when the rule's canonical `surface`
+ * has anything in it.
  *
  * @remarks
  * Synchronous and pure. Call it once at resolution time on the producer
@@ -240,6 +294,7 @@ export const noticePromptFingerprintInput =
  *
  * @param rule - A normalized rule from {@link normalizePolicyRule}.
  * @returns Hex SHA-256 digests, one per domain.
+ * `surface` never changes `policy`, `choice` or `notice`.
  * @example
  * ```ts
  * const rule = normalizePolicyRule(policyRulePresets.europeOptIn());
@@ -254,6 +309,9 @@ export const createPolicyRuleFingerprints =
 		const policy = createDeterministicFingerprintSync(
 			policyFingerprintInput(rule)
 		);
+		// Hash the canonical form, so a rule read off the wire and the same
+		// rule normalized by the producer hash alike, and `{}` hashes nothing.
+		const surface = canonicalizePolicySurface(rule.surface, rule);
 		return {
 			choice: createDeterministicFingerprintSync(
 				choicePromptFingerprintInput(rule)
@@ -262,6 +320,11 @@ export const createPolicyRuleFingerprints =
 				noticePromptFingerprintInput(rule)
 			),
 			policy,
+			...(surface && {
+				presentation: createPresentationFingerprint(
+					policySurfacePresentationInput(surface)
+				),
+			}),
 			...(legacy && {
 				legacyMaterial:
 					policy === legacy.policyFingerprint
@@ -269,24 +332,4 @@ export const createPolicyRuleFingerprints =
 						: `policy-changed:${policy}`,
 			}),
 		};
-	};
-
-/**
- * Diagnostic fingerprint of intended presentation (copy, layout, variants).
- *
- * @remarks
- * Lazy and optional. It never affects prompt requirements and is omitted from
- * production payloads unless a consumer asks for it. It does not prove what a
- * headless application rendered. Object keys are sorted and `undefined`
- * members are dropped; array order is preserved because presentation order
- * is meaningful.
- */
-export const createPresentationFingerprint =
-	function createPresentationFingerprint(presentation: JsonValue): string {
-		const input: PresentationFingerprintInput = {
-			domain: 'presentation',
-			presentation,
-			version: PRESENTATION_FINGERPRINT_VERSION,
-		};
-		return createDeterministicFingerprintSync(input);
 	};

@@ -6,18 +6,13 @@
 
 	--consent-dialog-branding-focus-color: var(--inth-primary);
 	--consent-dialog-branding-focus-color-dark: var(--inth-primary);
-	--consent-dialog-foreground-color: var(--inth-text);
-	--consent-dialog-foreground-color-dark: var(--inth-text);
-
-	--consent-dialog-card-padding: var(--inth-space-lg);
-	--consent-dialog-card-padding-mobile: var(--inth-space-md);
 
 	--consent-dialog-branding-gap: var(--inth-space-sm);
 	--consent-dialog-branding-icon-height: 1.25rem;
 	--consent-dialog-branding-icon-width: auto;
 	--consent-dialog-branding-label-size: 0.6875rem;
 
-	/* "Secured by" tag. These are read with a fallback instead of being
+	/* "Consent by" tag. These are read with a fallback instead of being
 	   declared here: a variable declared on :root resolves var(--inth-primary)
 	   once, on :root, so a primary or dark palette scoped to a banner or to
 	   .inth-theme-root would stop reaching the tag. Set any of them to
@@ -42,7 +37,7 @@
 		font-weight: var(--consent-dialog-branding-font-weight);
 		line-height: var(--consent-dialog-branding-line-height);
 		letter-spacing: var(--consent-dialog-branding-letter-spacing);
-		color: var(--consent-dialog-foreground-color);
+		color: var(--consent-dialog-foreground-color, var(--inth-text));
 		text-decoration: none;
 		border-radius: 0.25rem;
 		padding: 0 0.5rem;
@@ -79,7 +74,7 @@
 	}
 
 	:global(.inth-dark) .branding:not(:global(.headless)) {
-		color: var(--consent-dialog-foreground-color-dark);
+		color: var(--consent-dialog-foreground-color-dark, var(--inth-text));
 	}
 
 	.brandingC15T:not(:global(.headless)) {
@@ -235,7 +230,7 @@
 	}
 
 	.brandingTagDialog:not(:global(.headless)) {
-		right: var(--consent-dialog-card-padding-mobile);
+		right: var(--consent-dialog-card-padding-mobile, var(--inth-space-md));
 		bottom: 0;
 		/* The 1px clears the card's own border. An edge drawn by the tag moves
 		   up to cover it, as the banner tag's does with its -1px margin. */
@@ -248,7 +243,7 @@
 
 	@media (min-width: 640px) {
 		.brandingTagDialog:not(:global(.headless)) {
-			right: var(--consent-dialog-card-padding);
+			right: var(--consent-dialog-card-padding, var(--inth-space-lg));
 		}
 	}
 

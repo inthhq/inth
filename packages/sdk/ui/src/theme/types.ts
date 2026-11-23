@@ -64,6 +64,22 @@ export interface ColorTokens {
 	primary?: string;
 	/** Hover/active state for primary elements. */
 	primaryHover?: string;
+	/**
+	 * Primary-coloured text and links on a surface. Follows `primary` when
+	 * omitted. Set it separately when `primary` is too dark or too light to
+	 * read as text on `surface`, as a dark theme's button colour often is.
+	 */
+	primaryText?: string;
+	/**
+	 * Opaque primary tint for hover backgrounds, such as the attribution tag.
+	 * When omitted, `primary` is mixed into `surface`: 10% in light mode and
+	 * 18% in dark mode. It stays opaque so it never shows through over the
+	 * blocking overlay: a translucent `primary` counts for less in the mix,
+	 * and the mix itself drops the alpha.
+	 */
+	primaryTint?: string;
+	/** Error and warning colour, such as the ring on a nudged confirmation. */
+	danger?: string;
 	/** Main background color for panels and containers. */
 	surface?: string;
 	/** Hover state for surface elements. */
@@ -72,6 +88,8 @@ export interface ColorTokens {
 	border?: string;
 	/** Hover state for bordered elements. */
 	borderHover?: string;
+	/** Stronger border for groups of rows, such as the category box. */
+	borderStrong?: string;
 	/** Primary text color for headings and body. */
 	text?: string;
 	/** Muted text color for secondary content. */
@@ -80,8 +98,21 @@ export interface ColorTokens {
 	textOnPrimary?: string;
 	/** Overlay color for modal backdrops. */
 	overlay?: string;
+	/** Overlay behind a consent prompt that blocks the page until a choice. */
+	overlayBlock?: string;
+	/**
+	 * Opaque version of `overlayBlock`, for visitors who ask for reduced
+	 * transparency.
+	 */
+	overlayBlockSolid?: string;
 	/** Toggle track color (off state). */
 	switchTrack?: string;
+	/**
+	 * Off-state toggle track with at least 3:1 contrast against `surface`
+	 * (WCAG 1.4.11). It never follows `switchTrack`, which is too faint for
+	 * that: a theme that sets only `switchTrack` gets the default here.
+	 */
+	switchTrackOff?: string;
 	/** Toggle track color (on state). Follows `primary` when omitted. */
 	switchTrackActive?: string;
 	/** Toggle thumb color. */
@@ -157,6 +188,19 @@ export interface RadiusTokens {
 	lg?: string;
 	/** @default '9999px' */
 	full?: string;
+	/**
+	 * Large containers inside a surface, such as the category box. When
+	 * omitted it follows `lg`, capped at 12px, so a container never matches
+	 * the surface around it and a square theme stays square.
+	 * @default '0.75rem' (12px)
+	 */
+	container?: string;
+	/**
+	 * Containers inside containers, such as the vendor box, and the
+	 * attribution tag. When omitted it follows `md`, capped at 8px.
+	 * @default '0.5rem' (8px)
+	 */
+	nested?: string;
 }
 
 /**
@@ -200,6 +244,13 @@ export interface MotionTokens {
 	 */
 	easingOut?: string;
 	/**
+	 * Stronger ease-out curve: a fast start that settles gently. The
+	 * consent surfaces use it for entrances, disclosures and the segmented
+	 * control's thumb.
+	 * @default 'cubic-bezier(0.23, 1, 0.32, 1)'
+	 */
+	easingOutStrong?: string;
+	/**
 	 * CSS easing function for exits.
 	 * Use for elements leaving the screen, so they speed up as they go.
 	 * @default 'cubic-bezier(0.55, 0.055, 0.675, 0.19)'
@@ -237,6 +288,12 @@ export interface ThemeCSSVariables {
 	'--inth-primary'?: string;
 	/** `colors.primaryHover` (default: `hsl(228, 100%, 55%)`) */
 	'--inth-primary-hover'?: string;
+	/** `colors.primaryText` (default: `colors.primary`) */
+	'--inth-primary-text'?: string;
+	/** `colors.primaryTint` (default: `colors.primary` mixed into `colors.surface`, 10% light and 18% dark, always opaque) */
+	'--inth-primary-tint'?: string;
+	/** `colors.danger` (default: `#dc2626`) */
+	'--inth-danger'?: string;
 	/** `colors.surface` (default: `hsl(0, 0%, 100%)`) */
 	'--inth-surface'?: string;
 	/** `colors.surfaceHover` (default: `hsl(0, 0%, 98%)`) */
@@ -245,6 +302,8 @@ export interface ThemeCSSVariables {
 	'--inth-border'?: string;
 	/** `colors.borderHover` (default: `hsl(0, 0%, 85%)`) */
 	'--inth-border-hover'?: string;
+	/** `colors.borderStrong` (default: `rgba(15, 23, 42, 0.16)`) */
+	'--inth-border-strong'?: string;
 	/** `colors.text` (default: `hsl(0, 0%, 10%)`) */
 	'--inth-text'?: string;
 	/** `colors.textMuted` (default: `hsl(0, 0%, 40%)`) */
@@ -253,8 +312,14 @@ export interface ThemeCSSVariables {
 	'--inth-text-on-primary'?: string;
 	/** `colors.overlay` (default: `hsla(0, 0%, 0%, 0.5)`) */
 	'--inth-overlay'?: string;
+	/** `colors.overlayBlock` (default: `rgba(15, 23, 42, 0.62)`) */
+	'--inth-overlay-block'?: string;
+	/** `colors.overlayBlockSolid` (default: `rgba(15, 23, 42, 0.78)`) */
+	'--inth-overlay-block-solid'?: string;
 	/** `colors.switchTrack` (default: `hsl(0, 0%, 85%)`) */
 	'--inth-switch-track'?: string;
+	/** `colors.switchTrackOff` (default: `#8492a6`, also when a theme sets only `colors.switchTrack`) */
+	'--inth-switch-track-off'?: string;
 	/** `colors.switchTrackActive` (default: `colors.primary`) */
 	'--inth-switch-track-active'?: string;
 	/** `colors.switchThumb` (default: `hsl(0, 0%, 100%)`) */
@@ -300,6 +365,10 @@ export interface ThemeCSSVariables {
 	'--inth-radius-lg'?: string;
 	/** `radius.full` (default: `9999px`) */
 	'--inth-radius-full'?: string;
+	/** `radius.container` (default: `radius.lg`, capped at `0.75rem`) */
+	'--inth-radius-container'?: string;
+	/** `radius.nested` (default: `radius.md`, capped at `0.5rem`) */
+	'--inth-radius-nested'?: string;
 
 	/** `shadows.sm` (default: `0 1px 2px hsla(0, 0%, 0%, 0.05)`) */
 	'--inth-shadow-sm'?: string;
@@ -318,6 +387,8 @@ export interface ThemeCSSVariables {
 	'--inth-easing'?: string;
 	/** `motion.easingOut` (default: `cubic-bezier(0.215, 0.61, 0.355, 1)`) */
 	'--inth-easing-out'?: string;
+	/** `motion.easingOutStrong` (default: `cubic-bezier(0.23, 1, 0.32, 1)`) */
+	'--inth-easing-out-strong'?: string;
 	/** `motion.easingIn` (default: `cubic-bezier(0.55, 0.055, 0.675, 0.19)`) */
 	'--inth-easing-in'?: string;
 	/** `motion.easingInOut` (default: `cubic-bezier(0.645, 0.045, 0.355, 1)`) */
@@ -366,6 +437,12 @@ export interface ComponentSlots {
 	consentBannerTag?: SlotStyle;
 	/** Backdrop overlay rendered behind the banner when enabled. */
 	consentBannerOverlay?: SlotStyle;
+	/** Privacy Choices: the options Customize opens in place, and a side Drawer's scroll area. */
+	consentBannerExpand?: SlotStyle;
+	/** Privacy Choices: one statutory rights row and its segmented control. */
+	consentBannerRightsRow?: SlotStyle;
+	/** Privacy Choices: "Save choices" in an expanded panel or a side Drawer. */
+	consentBannerSaveButton?: SlotStyle;
 
 	/** Root wrapper for the consent dialog modal. */
 	consentDialog?: SlotStyle;
@@ -383,6 +460,24 @@ export interface ComponentSlots {
 	consentDialogTag?: SlotStyle;
 	/** Backdrop overlay rendered behind the dialog. */
 	consentDialogOverlay?: SlotStyle;
+	/** Privacy Choices: the dialog's footer: Done, or Reject all, Accept all and Save choices. */
+	consentDialogFooter?: SlotStyle;
+	/** Privacy Choices: one statutory rights row in the dialog. */
+	consentDialogRightsRow?: SlotStyle;
+	/** Privacy Choices: the receipt line under the rights rows. */
+	consentDialogReceipt?: SlotStyle;
+	/** Privacy Choices: the Preferences row, an accordion on desktop and a sheet on phone. */
+	consentDialogPreferencesRow?: SlotStyle;
+	/** Privacy Choices: the bordered group of cookie categories. */
+	consentDialogCategoryGroup?: SlotStyle;
+	/** Privacy Choices: a category's vendor table. */
+	consentDialogVendorTable?: SlotStyle;
+	/** Privacy Choices: a nested phone sheet over the dialog. */
+	consentDialogSheet?: SlotStyle;
+	/** Privacy Choices: Done, in the dialog and its sheets. */
+	consentDialogDoneButton?: SlotStyle;
+	/** Privacy Choices: Save choices in the EU dialog. */
+	consentDialogSaveButton?: SlotStyle;
 
 	/** Root wrapper for the opt-out confirmation view. */
 	optOutConfirmation?: SlotStyle;

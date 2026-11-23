@@ -72,6 +72,152 @@ test('Angular selector markers normalize only on an Angular page and only when e
 	}
 });
 
+test('Angular counted ids match generated ids only on an Angular page', async ({
+	page,
+}) => {
+	const group = (prefix: string) =>
+		`<div data-testid="consent-banner-category-group"><span id="${prefix}-category-necessary">Strictly Necessary</span><button aria-labelledby="${prefix}-category-necessary" role="switch" type="button"></button></div>`;
+	const angularRoot = '<app-root ng-version="22.2.5"></app-root>';
+	await page.setContent(group('inth-pc-_r_1_'));
+	const react = await captureDomSnapshot(page, 'body');
+
+	await page.setContent(`${angularRoot}${group('inth-pc-3')}`);
+	expect(await captureDomSnapshot(page, 'body')).toBe(react);
+
+	// Outside Angular a number is part of the id.
+	await page.setContent(group('inth-pc-3'));
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+	// The parts around the count still compare.
+	await page.setContent(`${angularRoot}${group('inth-pcd-3')}`);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+	await page.setContent(
+		`${angularRoot}${group('inth-pc-3').replace('category-necessary"', 'category-other"')}`
+	);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+	// The DevTools number its instances the same way in every adapter.
+	const devtools =
+		'<div data-testid="dev-tools"><section id="inth-dev-tools-3-panel"></section></div>';
+	await page.setContent(devtools);
+	const plain = await captureDomSnapshot(page, 'body');
+	await page.setContent(`${angularRoot}${devtools}`);
+	expect(await captureDomSnapshot(page, 'body')).toBe(plain);
+});
+
+test('a captured root inert through an Angular host matches one inert itself', async ({
+	page,
+}) => {
+	const region =
+		'<div aria-live="polite" data-testid="consent-banner-announcement" role="status"></div>';
+	const angularRoot = '<app-root ng-version="22.2.5"></app-root>';
+	await page.setContent(
+		region.replace('role="status"', 'inert="" role="status"')
+	);
+	const react = await captureDomSnapshot(page, 'body');
+
+	await page.setContent(
+		`${angularRoot}<inth-consent-banner inert=""><inth-pc-surface>${region}</inth-pc-surface></inth-consent-banner>`
+	);
+	expect(await captureDomSnapshot(page, 'body')).toBe(react);
+
+	// A host that is not inert leaves the region live: still a difference.
+	await page.setContent(
+		`${angularRoot}<inth-consent-banner>${region}</inth-consent-banner>`
+	);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+	// Inside a surface, an element's own inertness is compared as it is.
+	await page.setContent(
+		`${angularRoot}<div data-testid="consent-banner-root"><inth-x inert="">${region.replace('data-testid="consent-banner-announcement" ', '')}</inth-x></div>`
+	);
+	const nested = await captureDomSnapshot(page, 'body');
+	await page.setContent(
+		`${angularRoot}<div data-testid="consent-banner-root"><inth-x inert="">${region.replace('data-testid="consent-banner-announcement" ', '').replace('role="status"', 'inert="" role="status"')}</inth-x></div>`
+	);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(nested);
+});
+
+test('Astro boot hooks normalize only on an Astro page and only by name', async ({
+	page,
+}) => {
+	const link = (attributes: string) =>
+		`<footer><button ${attributes} data-testid="privacy-choices-link" type="button">Your Privacy Choices</button></footer>`;
+	const astroConfig =
+		'<script data-inth-config type="application/json">{}</script>';
+	const hooks =
+		'data-inth-action="customize" data-inth-default-label="" data-inth-dialog="preferences" data-inth-icon-class="icon" data-inth-privacy-choices-link="" data-inth-visible="true"';
+	await page.setContent(link(''));
+	const plain = await captureDomSnapshot(page, 'body');
+
+	// Off an Astro page the hooks are real markup.
+	await page.setContent(link(hooks));
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(plain);
+
+	await page.setContent(`${astroConfig}${link(hooks)}`);
+	expect(await captureDomSnapshot(page, 'body')).toBe(plain);
+	// The page config the Storybook sets in place of the stripped script.
+	await page.setContent(link(hooks));
+	await page.evaluate(() => {
+		(window as unknown as Record<string, unknown>).__inthAstroConfig = {};
+	});
+	expect(await captureDomSnapshot(page, 'body')).toBe(plain);
+
+	// On an Astro page any other attribute still counts.
+	for (const attribute of [
+		'data-inth-rights="opt-out"',
+		'data-inth-surface="trigger"',
+		'aria-expanded="true"',
+		'hidden',
+	]) {
+		// oxlint-disable-next-line no-await-in-loop -- Each replacement uses the same page.
+		await page.setContent(`${astroConfig}${link(`${hooks} ${attribute}`)}`);
+		// oxlint-disable-next-line no-await-in-loop -- Compare before replacing the fixture again.
+		expect(await captureDomSnapshot(page, 'body')).not.toBe(plain);
+	}
+});
+
+test("Astro's fixed prompt id prefix matches React's generated one only on an Astro page", async ({
+	page,
+}) => {
+	const category = (prefix: string) =>
+		`<div data-testid="consent-banner-body"><span id="${prefix}-category-marketing">Marketing</span><button aria-labelledby="${prefix}-category-marketing" role="switch" type="button"></button></div>`;
+	const astroConfig =
+		'<script data-inth-config type="application/json">{}</script>';
+	await page.setContent(category('inth-pc-_r_1_'));
+	const react = await captureDomSnapshot(page, 'body');
+	// Off an Astro page the fixed prefix is an ordinary id.
+	await page.setContent(category('inth-pc-banner'));
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+	await page.setContent(`${astroConfig}${category('inth-pc-banner')}`);
+	expect(await captureDomSnapshot(page, 'body')).toBe(react);
+	// The rest of the id still counts.
+	await page.setContent(
+		`${astroConfig}${category('inth-pc-banner').replace(/marketing/gu, 'measurement')}`
+	);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+});
+
+test('a tagged root compares whether it is inert, not which element carries it', async ({
+	page,
+}) => {
+	const status =
+		'<div data-testid="consent-banner-announcement" role="status"></div>';
+	await page.setContent(
+		`<div>${status.replace('role=', 'inert="" role=')}</div>`
+	);
+	const own = await captureDomSnapshot(page, 'body');
+	await page.setContent(`<div inert="">${status}</div>`);
+	expect(await captureDomSnapshot(page, 'body')).toBe(own);
+	// A root that is not inert at all still differs.
+	await page.setContent(`<div>${status}</div>`);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(own);
+	// Inside a root, `inert` stays as written.
+	const panel = (attributes: string) =>
+		`<section data-testid="consent-banner-card"><div ${attributes}><button>Save</button></div></section>`;
+	await page.setContent(panel(''));
+	const open = await captureDomSnapshot(page, 'body');
+	await page.setContent(panel('inert=""'));
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(open);
+});
+
 test('native headings and explicit heading roles agree while wrong levels fail', async ({
 	page,
 }) => {
@@ -139,7 +285,7 @@ test('branding content wrappers and hidden icon metadata preserve rendered geome
 }) => {
 	const icon =
 		'<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>';
-	const content = `<span>Secured by</span>${icon}`;
+	const content = `<span>Consent by</span>${icon}`;
 	const fixture = (children: string) =>
 		`<style>a,.brandingContent{display:inline-flex;gap:6px;align-items:center}svg{width:16px;height:16px}</style><a data-testid="consent-banner-branding" href="/">${children}</a>`;
 	await page.setContent(

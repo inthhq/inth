@@ -15,7 +15,7 @@ export interface BrandingParams {
 	branding: ConsentSnapshot['branding'];
 	/** The surface the tag sits on. */
 	surface: BrandingSurface;
-	/** "Secured by", already translated. */
+	/** "Consent by", already translated. */
 	securedBy: string;
 	/** Drop the tag. */
 	hide: boolean;
@@ -51,7 +51,7 @@ export const createBrandMark = function createBrandMark(
 };
 
 /**
- * Render the "Secured by" tag, or nothing.
+ * Render the "Consent by" tag, or nothing.
  *
  * @returns The anchor, or `null` when hidden.
  */

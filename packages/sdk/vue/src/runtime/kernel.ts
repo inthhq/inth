@@ -97,6 +97,14 @@ export interface ConsentBannerView {
 	ready: Promise<void>;
 	/** Call once the banner has hydrated. */
 	hydrated: () => void;
+	/**
+	 * Keep the banner on the server's snapshot until the returned function
+	 * runs, after {@link ConsentBannerView.hydrated}. A part of the banner
+	 * whose chunk hydrates later than the banner, such as a Privacy Choices
+	 * presentation, takes one while it waits, so it hydrates against the
+	 * same snapshot the server rendered. Once released, it does nothing.
+	 */
+	hold: () => () => void;
 }
 
 export interface VueConsentKernelContext {

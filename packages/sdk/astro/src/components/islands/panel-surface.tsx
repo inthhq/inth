@@ -41,6 +41,110 @@ const loadIABSurface = () => {
 	return iabSurfacePromise;
 };
 
+/** The preference dialog an island renders. */
+export type DialogDesign = 'classic' | 'privacy-choices';
+
+type PreferencesDialog = ComponentType<{
+	legalLinks?: (keyof LegalLinks)[] | null;
+}>;
+
+// The classic dialog ships with the island, as before the Privacy Choices
+// design, so its open costs one download wave, not two. The Privacy
+// Choices dialog arrives on its own chunk, so a classic page never
+// downloads it. React's stock `ConsentDialog` renders its Privacy Choices
+// dialog when the design opts in, and hosts the opt-in confirmation and
+// the opt-out receipt there.
+const DIALOG_MODULES: Record<
+	Exclude<DialogDesign, 'classic'>,
+	() => Promise<PreferencesDialog>
+> = {
+	'privacy-choices': async () =>
+		(await import('@inth/react/consent-dialog'))
+			.ConsentDialog as PreferencesDialog,
+};
+const loadedDialogs: Partial<Record<DialogDesign, PreferencesDialog>> = {
+	classic: ConsentDialog as PreferencesDialog,
+};
+const dialogPromises: Partial<
+	Record<DialogDesign, Promise<PreferencesDialog>>
+> = {};
+
+/**
+ * Download one design's dialog. The adapter awaits it before it mounts,
+ * so the island renders the dialog on its first commit; a failed download
+ * is forgotten, so the next open tries again.
+ *
+ * @internal
+ */
+export const preloadDialog = function preloadDialog(
+	design: DialogDesign
+): Promise<PreferencesDialog> {
+	if (design === 'classic') {
+		return Promise.resolve(ConsentDialog as PreferencesDialog);
+	}
+	dialogPromises[design] ??= (async () => {
+		try {
+			const component = await DIALOG_MODULES[design]();
+			loadedDialogs[design] = component;
+			return component;
+		} catch (error) {
+			dialogPromises[design] = undefined;
+			throw error;
+		}
+	})();
+	return dialogPromises[design];
+};
+
+const PreferencesDialogSurface = ({
+	design,
+	legalLinks,
+}: {
+	design: DialogDesign;
+	legalLinks?: (keyof LegalLinks)[] | null;
+}) => {
+	const [loadedComponent, setLoadedComponent] = useState(
+		() => loadedDialogs[design]
+	);
+	const [failure, setFailure] = useState<{ error: unknown }>();
+	useEffect(() => {
+		if (loadedComponent) {
+			return;
+		}
+		let active = true;
+		void (async () => {
+			try {
+				const loaded = await preloadDialog(design);
+				if (active) {
+					setLoadedComponent(() => loaded);
+				}
+			} catch (error) {
+				if (active) {
+					setFailure({ error });
+				}
+			}
+		})();
+		return () => {
+			active = false;
+		};
+	}, [design, loadedComponent]);
+	if (failure) {
+		throw failure.error;
+	}
+	const Component = loadedComponent;
+	if (!Component) {
+		return null;
+	}
+	// React's Privacy Choices dialog stages its own draft. Its footer shows
+	// the regime's one legal link, which `legalLinks` may hide.
+	return design === 'privacy-choices' ? (
+		<Component legalLinks={legalLinks} />
+	) : (
+		<ConsentDraftProvider>
+			<Component legalLinks={legalLinks} />
+		</ConsentDraftProvider>
+	);
+};
+
 // This island only mounts in the browser. Resolve its component through state
 // so the first open does not wait for React's Suspense retry throttle.
 const IABDialogSurface = (props: IABDialogSurfaceProps) => {
@@ -88,6 +192,11 @@ export interface ConsentDialogSurfaceProps {
 	tab?: 'purposes' | 'vendors';
 	/** Which legal links the preferences dialog shows. */
 	legalLinks?: (keyof LegalLinks)[] | null;
+	/**
+	 * `'privacy-choices'` renders React's Privacy Choices dialog, as the
+	 * stock `ConsentDialog` does under that design.
+	 */
+	design?: DialogDesign;
 }
 
 const ConsentDialogSurface = ({
@@ -96,19 +205,25 @@ const ConsentDialogSurface = ({
 	kind = 'preferences',
 	tab,
 	legalLinks,
-}: ConsentDialogSurfaceProps) => (
-	<InthProvider
-		runtime={runtime}
-		options={options}
-	>
-		{kind === 'iab' ? (
+	design = 'classic',
+}: ConsentDialogSurfaceProps) => {
+	const surface =
+		kind === 'iab' ? (
 			<IABDialogSurface tab={tab} />
 		) : (
-			<ConsentDraftProvider>
-				<ConsentDialog legalLinks={legalLinks} />
-			</ConsentDraftProvider>
-		)}
-	</InthProvider>
-);
+			<PreferencesDialogSurface
+				design={design}
+				legalLinks={legalLinks}
+			/>
+		);
+	return (
+		<InthProvider
+			runtime={runtime}
+			options={options}
+		>
+			{surface}
+		</InthProvider>
+	);
+};
 
 export default ConsentDialogSurface;

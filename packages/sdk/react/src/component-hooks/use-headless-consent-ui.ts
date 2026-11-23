@@ -56,6 +56,7 @@ export const useHeadlessConsentUI = function useHeadlessConsentUI(
 	const globalTheme = useContext(GlobalThemeContext);
 	const presentation = useMemo(
 		() => ({
+			design: configuredPresentation?.design,
 			preferences: {
 				scrollLock: globalTheme.scrollLock,
 				trapFocus: globalTheme.trapFocus,

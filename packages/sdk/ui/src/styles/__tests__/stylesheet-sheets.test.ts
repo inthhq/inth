@@ -2,12 +2,14 @@
  * Guards `@inth/sdk/ui/styles/sheets/*`: the stylesheets React and Svelte
  * surfaces render themselves, and Astro inlines or links.
  *
- * Rendered in order, `first-paint` then `dialog` must apply exactly what
+ * Rendered in order, `first-paint` and `dialog` must apply exactly what
  * `styles.css` applies, rule for rule and in the same order (the variables
- * `dialog` repeats aside), so a surface
- * that brings its own styles looks the same as an app that imports
- * `styles.css`. `first-paint` must hold no dialog rule, so the dialog's
- * rules load only with the dialog.
+ * the later sheet repeats aside), so a surface that brings its own styles
+ * looks the same as an app that imports `styles.css`. The v6 presentation
+ * sheets and `privacy-choices-dialog` do the same for
+ * `styles/privacy-choices.css`. `first-paint` must hold no dialog rule, so
+ * the dialog's rules load only with the dialog, and no v6 rule or
+ * registered property, which no host that inlines it renders yet.
  *
  * These read the built artifacts: build `@inth/sdk/ui` first.
  */
@@ -19,7 +21,13 @@ import { parse } from 'postcss';
 import type { AtRule, ChildNode, Container, Declaration } from 'postcss';
 import { describe, expect, test } from 'vitest';
 
-import { DIALOG_COMPONENTS } from '../../../scripts/stylesheet-parts';
+import {
+	DIALOG_COMPONENTS,
+	PRESENTATION_COMPONENTS,
+	PRESENTATION_SHEETS,
+	PRIVACY_CHOICES_DIALOG_COMPONENTS,
+	PRIVACY_CHOICES_DIALOG_SHEET,
+} from '../../../scripts/stylesheet-parts';
 
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
 const SHEETS_DIR = join(DIST_DIR, 'styles', 'sheets');
@@ -106,7 +114,25 @@ describe('styles/sheets', async () => {
 	const primitives = await importSheet('primitives');
 	const iabFirstPaint = await importSheet('iab-first-paint');
 	const iabDialog = await importSheet('iab-dialog');
-	const sheets = [firstPaint, dialog, primitives, iabFirstPaint, iabDialog];
+	const privacyChoicesDialog = await importSheet(PRIVACY_CHOICES_DIALOG_SHEET);
+	const sheets = [
+		firstPaint,
+		dialog,
+		primitives,
+		iabFirstPaint,
+		iabDialog,
+		privacyChoicesDialog,
+	];
+	// In `styles/privacy-choices.css` order: each sheet's components, by
+	// PRESENTATION_COMPONENTS.
+	const presentationNames = Object.entries(PRESENTATION_SHEETS)
+		.sort(
+			([, a], [, b]) =>
+				PRESENTATION_COMPONENTS.indexOf(a[0]) -
+				PRESENTATION_COMPONENTS.indexOf(b[0])
+		)
+		.map(([name]) => name);
+	const presentations = await Promise.all(presentationNames.map(importSheet));
 
 	test('each sheet has its own id', () => {
 		expect(sheets.map((sheet) => sheet.id)).toEqual([
@@ -115,35 +141,58 @@ describe('styles/sheets', async () => {
 			'inth-primitives',
 			'inth-iab-first-paint',
 			'inth-iab-dialog',
+			'inth-privacy-choices-dialog',
 		]);
 	});
 
-	test('first-paint then dialog apply what styles.css applies, in order', () => {
+	// Only the token selectors' specificity differs (next test).
+	const asInStyles = (rule: string) =>
+		rule.replaceAll(':where(:root)', ':root').replaceAll('html.', ':root.');
+	// The later sheets repeat the variables they read, so they work after
+	// the per-surface sheets too. Those repeats are declarations first-paint
+	// already made.
+	const firstPaintDeclarations = declarationList(firstPaint.css);
+	const repeatedIn = (sheet: Sheet) =>
+		ruleList(sheet.css).filter((rule) => !rule.startsWith('@layer components'));
+	const ownRules = (sheet: Sheet) => {
+		const repeated = repeatedIn(sheet);
+		return ruleList(sheet.css).filter((rule) => !repeated.includes(rule));
+	};
+
+	test('first-paint and dialog apply what styles.css applies, in order', () => {
 		const styles = ruleList(readDist(join(DIST_DIR, 'styles.css')));
-		// Only the token selectors' specificity differs (next test).
-		const asInStyles = (rule: string) =>
-			rule.replaceAll(':where(:root)', ':root').replaceAll('html.', ':root.');
-		// The dialog repeats the variables it reads, so it works after the
-		// per-surface sheets too. Those repeats are declarations
-		// first-paint already made.
-		const firstPaintDeclarations = declarationList(firstPaint.css);
-		const repeated = ruleList(dialog.css).filter(
-			(rule) => !rule.startsWith('@layer components')
-		);
 
 		expect(styles.length).toBeGreaterThan(0);
-		expect(repeated.length).toBeGreaterThan(0);
+		expect(repeatedIn(dialog).length).toBeGreaterThan(0);
 		expect(
 			declarationList(dialog.css).filter(
 				(declaration) => !firstPaintDeclarations.includes(declaration)
 			)
 		).toEqual([]);
 		expect(
-			[
-				...ruleList(firstPaint.css),
-				...ruleList(dialog.css).filter((rule) => !repeated.includes(rule)),
-			].map(asInStyles)
+			[...ruleList(firstPaint.css), ...ownRules(dialog)].map(asInStyles)
 		).toEqual(styles);
+	});
+
+	test('the presentations and privacy-choices-dialog apply what styles/privacy-choices.css applies, in order', () => {
+		const privacyChoices = ruleList(
+			readDist(join(DIST_DIR, 'styles', 'privacy-choices.css'))
+		);
+
+		expect(privacyChoices.length).toBeGreaterThan(0);
+		for (const sheet of [...presentations, privacyChoicesDialog]) {
+			expect(
+				declarationList(sheet.css).filter(
+					(declaration) => !firstPaintDeclarations.includes(declaration)
+				)
+			).toEqual([]);
+		}
+		expect(
+			[
+				...presentations.flatMap(ownRules),
+				...ownRules(privacyChoicesDialog),
+			].map(asInStyles)
+		).toEqual(privacyChoices);
 	});
 
 	test("the default tokens rank below the app's own token rules", () => {
@@ -196,13 +245,55 @@ describe('styles/sheets', async () => {
 		);
 	});
 
+	test('first-paint and dialog hold no v6 rule or registered property', () => {
+		const presentationClasses = [
+			...PRESENTATION_COMPONENTS,
+			...PRIVACY_CHOICES_DIALOG_COMPONENTS,
+		].flatMap((name) =>
+			[
+				...readDist(
+					join(DIST_DIR, 'styles', 'components', `${name}.js`)
+				).matchAll(/inth-ui-[\w-]+/gu),
+			].map((match) => match[0])
+		);
+		const selectors = ruleList(firstPaint.css)
+			.map((rule) => rule.split('|')[1])
+			.join('\n');
+
+		const dialogSelectors = ruleList(dialog.css)
+			.map((rule) => rule.split('|')[1])
+			.join('\n');
+
+		expect(presentationClasses.length).toBeGreaterThan(0);
+		expect(
+			presentationClasses.filter(
+				(name) => selectors.includes(name) || dialogSelectors.includes(name)
+			)
+		).toEqual([]);
+		// A registered property is global: it would claim its name on every
+		// page that inlines first-paint.
+		expect(firstPaint.css).not.toContain('@property');
+		expect(dialog.css).not.toContain('@property');
+	});
+
 	test('dialog.css holds the dialog sheet', () => {
 		expect(readDist(join(SHEETS_DIR, 'dialog.css')).trim()).toBe(dialog.css);
 	});
 
+	test('privacy-choices-dialog.css holds the privacy-choices-dialog sheet, and its deferred twin loads it', async () => {
+		const deferred = (await importSheet(
+			`${PRIVACY_CHOICES_DIALOG_SHEET}-deferred`
+		)) as Sheet & { load: () => Promise<string> };
+
+		expect(
+			readDist(join(SHEETS_DIR, `${PRIVACY_CHOICES_DIALOG_SHEET}.css`)).trim()
+		).toBe(privacyChoicesDialog.css);
+		expect(deferred.id).toBe(privacyChoicesDialog.id);
+		expect(deferred.css).toBe('');
+		expect(await deferred.load()).toBe(privacyChoicesDialog.css);
+	});
+
 	test('IAB sheets preserve every aggregate rule without resetting variables', () => {
-		const asInStyles = (rule: string) =>
-			rule.replaceAll(':where(:root)', ':root').replaceAll('html.', ':root.');
 		// The aggregate keeps its original panel-before-prompt order. Their
 		// selectors are disjoint, so the prompt can arrive before the panel.
 		expect(

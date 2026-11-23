@@ -194,6 +194,9 @@ const freezeOptOut = function freezeOptOut(optOut: OptOutRecord | null): void {
 		return;
 	}
 	Object.freeze(optOut.rights);
+	if (optOut.categories) {
+		Object.freeze(optOut.categories);
+	}
 	Object.freeze(optOut);
 };
 

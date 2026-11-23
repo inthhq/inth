@@ -1,4 +1,5 @@
 /** Resolve host presentation under the active policy constraints. */
+import { canPolicyBlock } from '@inth/sdk-schema/types';
 import type {
 	PolicyConsentCategory,
 	PolicyRight,
@@ -6,6 +7,14 @@ import type {
 } from '@inth/sdk-schema/types';
 
 import type { OptOutLinkVariant } from './consent-copy';
+import { containerFromLegacyPrompt, resolveLayout } from './consent-layout';
+import type {
+	ConsentBlockingConstraint,
+	ConsentContainer,
+	ConsentLayoutDiagnostic,
+	ConsentLayoutOptions,
+	ResolvedConsentLayout,
+} from './consent-layout';
 
 /** Semantic control roles, independent of their visual variant. */
 export type PresentationAction =
@@ -88,17 +97,21 @@ export interface SurfacePresentation {
 	trapFocus?: boolean;
 	/**
 	 * Controls backdrop, scroll lock and focus trapping together. Explicit
-	 * `blocking` takes precedence over the deprecated scroll/focus options.
-	 * Notices never block. Choice walls always block. Preferences default to
-	 * blocking; other prompts default to non-blocking.
+	 * `blocking` takes precedence over the deprecated scroll/focus options,
+	 * and `blockUntilChoice` over all three. Notices never block. Choice
+	 * walls always block; where the policy forbids blocking, a wall becomes
+	 * floating. Preferences default to blocking; other prompts default to
+	 * non-blocking.
 	 */
 	blocking?: boolean;
 }
 
 /** Presentation of the first interaction required by a policy. */
-export interface PromptPresentation extends SurfacePresentation {
+export interface PromptPresentation
+	extends SurfacePresentation, ConsentLayoutOptions {
 	/**
 	 * Shape of the prompt. Defaults to `floating`. A notice cannot use `wall`.
+	 * Ignored by the resolved `container` when `container` is set.
 	 */
 	variant?: PromptVariant;
 	/**
@@ -114,8 +127,26 @@ export interface PreferencesPresentation extends SurfacePresentation {
 	defaults?: Partial<Record<PolicyConsentCategory, boolean>>;
 }
 
-/** Application-owned presentation; never part of a policy fingerprint. */
+/**
+ * Which consent UI the stock components render. `classic` is today's
+ * banner and dialog. `privacy-choices` is the v6 surface: Card, Banner or
+ * Drawer, with the options expanding in place.
+ */
+export type ConsentDesign = 'classic' | 'privacy-choices';
+
+/**
+ * Application-owned presentation; never part of a policy fingerprint. It
+ * overrides the policy's `surface` layout defaults, but not its blocking
+ * constraint.
+ */
 export interface ConsentPresentation {
+	/**
+	 * The consent UI to render. Setting `prompt.container` chooses
+	 * `privacy-choices` too, since only that design reads it; an explicit
+	 * value always wins.
+	 * @default 'classic'
+	 */
+	design?: ConsentDesign;
 	prompt?: PromptPresentation;
 	preferences?: PreferencesPresentation;
 	/**
@@ -160,6 +191,12 @@ export interface ResolvedConsentPresentation {
 	preferenceControls: Exclude<PolicyRight, 'disclosure'>[];
 	/** Resolved opt-out link form. Defaults to `'do-not-sell'`. */
 	optOutLink: OptOutLinkVariant;
+	/**
+	 * The consent UI the stock components render: the host's `design`, else
+	 * `privacy-choices` when the host set a prompt `container`, else
+	 * `classic`.
+	 */
+	design: ConsentDesign;
 	direction: 'row' | 'column';
 	uiProfile: 'balanced' | 'compact' | 'strict';
 	scrollLock: boolean;
@@ -177,6 +214,22 @@ export interface ResolvedConsentPresentation {
 	positionSource: 'host' | 'default';
 	/** Backdrop, scroll lock, focus trap and no outside dismissal, resolved. */
 	blocking: boolean;
+	/**
+	 * Card, Banner or Drawer layout for the prompt, resolved for desktop and
+	 * for phone (see `PHONE_LAYOUT_QUERY`). Built from `container`, or from
+	 * the legacy `variant` and `position` when `container` is absent. `null`
+	 * on the preferences surface.
+	 *
+	 * Renderers that read `container` take its `blocking`, not the top-level
+	 * `blocking`. Both read the same blocking request and the same policy
+	 * constraint, so they agree on it. Where the policy forbids blocking, as
+	 * under an opt-out model, a legacy `wall` resolves to `floating` and
+	 * maps to a `start` card, and neither blocks (BNR-13).
+	 */
+	container: {
+		desktop: ResolvedConsentLayout;
+		phone: ResolvedConsentLayout;
+	} | null;
 }
 
 /**
@@ -262,21 +315,81 @@ const resolvePreferenceControls = function resolvePreferenceControls(
 		: [];
 };
 
-/** Resolve focus, scrolling and backdrop as one mode. */
-const resolveBlocking = (
-	options: SurfacePresentation,
-	variant: PromptVariant,
-	notice: boolean,
-	preferences: boolean,
-	diagnostics: PresentationDiagnostic[]
-): boolean => {
-	// Legacy controls select one mode, never independent partial modes.
+/**
+ * Blocking the host asked for, reading the deprecated scroll and focus
+ * options when `blocking` is absent. Legacy controls select one mode,
+ * never independent partial modes.
+ */
+const requestedBlocking = function requestedBlocking(
+	options: SurfacePresentation
+): boolean | undefined {
 	const legacyBlocking =
 		options.scrollLock === false || options.trapFocus === false
 			? false
 			: (options.scrollLock ?? options.trapFocus);
-	let blocking =
-		options.blocking ?? legacyBlocking ?? (preferences || variant === 'wall');
+	return options.blocking ?? legacyBlocking;
+};
+
+/**
+ * The blocking the host asks for. An explicit request (`blockUntilChoice`,
+ * then `blocking`) wins in tier order: the override first, then the
+ * provider's presentation. Only when no tier asks explicitly do the
+ * deprecated `scrollLock` and `trapFocus` decide, again override first. So
+ * a provider's `blockUntilChoice: false` never beats an override's
+ * `blocking: true`, and explicit `blocking` always beats the deprecated
+ * options, whichever tier carries them.
+ */
+const requestedTierBlocking = function requestedTierBlocking(
+	override: PromptPresentation,
+	presentation: ConsentPresentation | undefined,
+	surface: 'prompt' | 'preferences'
+): boolean | undefined {
+	const tiers = [override, presentation?.[surface]].filter(
+		(tier): tier is PromptPresentation => tier !== undefined
+	);
+	for (const tier of tiers) {
+		const explicit = tier.blockUntilChoice ?? tier.blocking;
+		if (explicit !== undefined) {
+			return explicit;
+		}
+	}
+	for (const tier of tiers) {
+		const legacy = requestedBlocking({ ...tier, blocking: undefined });
+		if (legacy !== undefined) {
+			return legacy;
+		}
+	}
+	return undefined;
+};
+
+/**
+ * The policy's blocking constraint on the prompt. A rule that cannot block
+ * (a notice, or the opt-out model) forbids it, which is what its canonical
+ * `surface` leaves implied.
+ */
+const policyBlockingConstraint = function policyBlockingConstraint(
+	policy: ResolvedPolicyRule
+): ConsentBlockingConstraint {
+	if (!canPolicyBlock(policy)) {
+		return 'forbidden';
+	}
+	return policy.surface?.blocking ?? 'allowed';
+};
+
+/**
+ * Resolve focus, scrolling and backdrop as one mode. On the prompt, the
+ * policy's constraint wins over the host: `forbidden` never blocks, and
+ * `required` always blocks.
+ */
+const resolveBlocking = (
+	requested: boolean | undefined,
+	variant: PromptVariant,
+	notice: boolean,
+	preferences: boolean,
+	constraint: ConsentBlockingConstraint,
+	diagnostics: PresentationDiagnostic[]
+): boolean => {
+	let blocking = requested ?? (preferences || variant === 'wall');
 	if (notice && blocking) {
 		blocking = false;
 		diagnostics.push({
@@ -284,6 +397,23 @@ const resolveBlocking = (
 			code: 'blocking-forbidden',
 			message: 'A notice prompt is never blocking; blocking was disabled.',
 		});
+	} else if (!preferences && constraint === 'forbidden' && blocking) {
+		blocking = false;
+		diagnostics.push({
+			actions: [],
+			code: 'blocking-forbidden',
+			message: 'The policy forbids blocking; blocking was disabled.',
+		});
+	} else if (!preferences && constraint === 'required' && !blocking) {
+		blocking = true;
+		// Report it only when the host turned blocking off.
+		if (requested === false) {
+			diagnostics.push({
+				actions: [],
+				code: 'blocking-required',
+				message: 'The policy requires blocking; blocking was enabled.',
+			});
+		}
 	} else if (!preferences && variant === 'wall' && !blocking) {
 		blocking = true;
 		diagnostics.push({
@@ -305,14 +435,18 @@ const isValidPromptPosition = function isValidPromptPosition(
 };
 
 /**
- * Resolve the surface geometry. Variant comes first, position is validated
- * against it, and blocking is forced by the prompt kind or, on the prompt
- * surface, by the variant.
+ * Resolve the surface geometry. The policy's hard constraint comes first:
+ * where it forbids blocking, a `wall` becomes `floating`, so no renderer
+ * draws a wall that does not block. Then the variant, then the position,
+ * validated against it, then blocking, forced by the prompt kind or, on
+ * the prompt surface, by the constraint and the variant.
  */
 const resolveSurfaceGeometry = function resolveSurfaceGeometry(
 	options: PromptPresentation,
+	requested: boolean | undefined,
 	notice: boolean,
 	preferences: boolean,
+	constraint: ConsentBlockingConstraint,
 	diagnostics: PresentationDiagnostic[]
 ): Pick<
 	ResolvedConsentPresentation,
@@ -328,6 +462,14 @@ const resolveSurfaceGeometry = function resolveSurfaceGeometry(
 			actions: [],
 			code: 'invalid-variant',
 			message: 'A notice cannot use a blocking wall; using floating.',
+		});
+	} else if (!preferences && constraint === 'forbidden' && variant === 'wall') {
+		variant = 'floating';
+		diagnostics.push({
+			actions: [],
+			code: 'blocking-forbidden',
+			message:
+				'The policy forbids blocking, and a wall always blocks; using floating.',
 		});
 	}
 	if (
@@ -357,13 +499,128 @@ const resolveSurfaceGeometry = function resolveSurfaceGeometry(
 		}
 	}
 	const blocking = resolveBlocking(
-		options,
+		requested,
 		variant,
 		notice,
 		preferences,
+		constraint,
 		diagnostics
 	);
 	return { blocking, position, positionSource, variant };
+};
+
+/**
+ * The container one host tier asks for: its `container`, else its legacy
+ * `variant` or `position` mapped onto one, else nothing, so the next tier
+ * decides. The legacy mapping reads the validated geometry, which merges
+ * every tier the way the shipped renderers read it.
+ */
+const tierContainer = function tierContainer(
+	tier: PromptPresentation | undefined,
+	geometry: Pick<ResolvedConsentPresentation, 'variant' | 'position'>
+):
+	| { container: ConsentContainer; diagnostics: ConsentLayoutDiagnostic[] }
+	| undefined {
+	if (tier === undefined) {
+		return undefined;
+	}
+	if (tier.container !== undefined) {
+		return { container: tier.container, diagnostics: [] };
+	}
+	return tier.variant !== undefined || tier.position !== undefined
+		? containerFromLegacyPrompt(geometry)
+		: undefined;
+};
+
+/**
+ * Resolve the prompt's Card, Banner or Drawer layout for both viewports.
+ *
+ * Precedence, highest first:
+ *
+ * 1. The policy's `surface.blocking`, a hard constraint `resolveLayout`
+ *    applies whatever the host asks for.
+ * 2. An experiment arm or component override.
+ * 3. The provider's `presentation`.
+ * 4. The policy's `surface.container` and `surface.edgeStyle`, soft
+ *    defaults for installs without host presentation.
+ * 5. The SDK default, an inset Card in the `start` corner.
+ *
+ * The container is decided within each tier before the next one is read:
+ * a tier's `container`, else its legacy `variant` or `position` mapped onto
+ * a container. So an override's legacy `variant` beats a provider's
+ * `container`, and a provider's legacy geometry beats the policy's
+ * container. Edge style arrives merged in `options`; the blocking request
+ * arrives decided per tier, the same value the top-level `blocking` reads.
+ * Legacy `blocking`, `scrollLock` and `trapFocus` map onto
+ * `blockUntilChoice`.
+ */
+const resolvePromptContainer = function resolvePromptContainer(
+	surface: 'prompt' | 'preferences',
+	options: PromptPresentation,
+	requested: boolean | undefined,
+	override: PromptPresentation,
+	presentation: ConsentPresentation | undefined,
+	policy: ResolvedPolicyRule,
+	geometry: Pick<ResolvedConsentPresentation, 'variant' | 'position'>
+): ResolvedConsentPresentation['container'] {
+	if (surface === 'preferences') {
+		return null;
+	}
+	let host:
+		| { container: ConsentContainer; diagnostics: ConsentLayoutDiagnostic[] }
+		| undefined;
+	for (const tier of [override, presentation?.prompt]) {
+		host = tierContainer(tier, geometry);
+		if (host) {
+			break;
+		}
+	}
+	// A malformed `null` is forwarded so the resolver reports it.
+	const container: ConsentContainer | undefined = host
+		? host.container
+		: policy.surface?.container;
+	// The policy's edge style is a default for banners and drawers. A card
+	// is always inset, so on a card it stays silent instead of reporting
+	// `edge-style-ignored` for a choice the host never made.
+	const policyEdgeStyle =
+		typeof container === 'object' &&
+		container !== null &&
+		container.type !== 'card'
+			? policy.surface?.edgeStyle
+			: undefined;
+	const input = {
+		blockUntilChoice: requested,
+		blockingConstraint: policy.surface?.blocking,
+		container,
+		edgeStyle: options.edgeStyle ?? policyEdgeStyle,
+		model: policy.model,
+		prompt: policy.prompt,
+	};
+	const desktop = resolveLayout({ ...input, viewport: 'desktop' });
+	const phone = resolveLayout({ ...input, viewport: 'phone' });
+	const legacyDiagnostics = host?.diagnostics ?? [];
+	desktop.diagnostics.unshift(...legacyDiagnostics.map((d) => ({ ...d })));
+	phone.diagnostics.unshift(...legacyDiagnostics.map((d) => ({ ...d })));
+	return { desktop, phone };
+};
+
+/**
+ * The consent UI to render. An explicit `design` wins. Otherwise a prompt
+ * `container` from the host, in `presentation` or in a component override,
+ * opts in to `privacy-choices`, since only that design reads it.
+ */
+export const resolveConsentDesign = function resolveConsentDesign(
+	presentation: ConsentPresentation | undefined,
+	override?: PromptPresentation | PreferencesPresentation
+): ConsentDesign {
+	const requested = presentation?.design;
+	if (requested === 'classic' || requested === 'privacy-choices') {
+		return requested;
+	}
+	const container =
+		(override as PromptPresentation | undefined)?.container ??
+		presentation?.prompt?.container;
+	return container === undefined ? 'classic' : 'privacy-choices';
 };
 
 /**
@@ -383,13 +640,14 @@ export const resolveConsentPresentation =
 		>;
 	}): ResolvedConsentPresentation {
 		const preferences = input.surface === 'preferences';
+		const override: PromptPresentation = Object.fromEntries(
+			Object.entries(input.override ?? {}).filter(
+				([, value]) => value !== undefined
+			)
+		);
 		const options: PromptPresentation = {
 			...input.presentation?.[input.surface],
-			...Object.fromEntries(
-				Object.entries(input.override ?? {}).filter(
-					([, value]) => value !== undefined
-				)
-			),
+			...override,
 		};
 		// Prompt actions constrain the first layer; persistent preferences are a separate right.
 		const constraints = preferences
@@ -458,10 +716,19 @@ export const resolveConsentPresentation =
 		// `compact` sizes buttons to their labels so the default split layout
 		// reads as one row; `balanced` and `strict` fill and stack instead.
 		const uiProfile = options.uiProfile ?? 'compact';
+		// One blocking request for both the top-level `blocking` and the
+		// container, so the two agree on what the host asked for.
+		const requested = requestedTierBlocking(
+			override,
+			input.presentation,
+			input.surface
+		);
 		const geometry = resolveSurfaceGeometry(
 			options,
+			requested,
 			notice,
 			preferences,
+			policyBlockingConstraint(input.policy),
 			diagnostics
 		);
 		const scrollLock = geometry.blocking;
@@ -470,6 +737,16 @@ export const resolveConsentPresentation =
 			...geometry,
 			actionGroups,
 			allowedActions,
+			container: resolvePromptContainer(
+				input.surface,
+				options,
+				requested,
+				override,
+				input.presentation,
+				input.policy,
+				geometry
+			),
+			design: resolveConsentDesign(input.presentation, input.override),
 			diagnostics,
 			direction,
 			equivalentActions,

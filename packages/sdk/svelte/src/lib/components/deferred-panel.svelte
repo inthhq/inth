@@ -4,9 +4,16 @@
 >
 	import { findFocusRestoreEquivalent } from '@inth/sdk/ui/utils/dom';
 
+	import type ConsentDialogTriggerComponent from './panel-trigger.svelte';
 	import type PanelComponent from './panel.svelte';
+	import type PrivacyChoicesDialogComponent from './privacy-choices-dialog/dialog.svelte';
 
 	let pending: Promise<typeof PanelComponent> | null = null;
+	let pendingPrivacyChoices: Promise<
+		typeof PrivacyChoicesDialogComponent
+	> | null = null;
+	let pendingTrigger: Promise<typeof ConsentDialogTriggerComponent> | null =
+		null;
 
 	/**
 	 * One import shared by every `ConsentDialog` on the page. A failed import
@@ -23,6 +30,43 @@
 		})();
 		return pending;
 	};
+
+	/**
+	 * The v6 "Your Privacy Choices" dialog (`design: 'privacy-choices'`), in
+	 * a chunk of its own with its stylesheet. A page on the classic design
+	 * never loads it.
+	 */
+	const loadPrivacyChoicesDialog = function loadPrivacyChoicesDialog(): Promise<
+		typeof PrivacyChoicesDialogComponent
+	> {
+		pendingPrivacyChoices ??= (async () => {
+			try {
+				return (await import('./privacy-choices-dialog/dialog.svelte')).default;
+			} catch (error) {
+				pendingPrivacyChoices = null;
+				throw error;
+			}
+		})();
+		return pendingPrivacyChoices;
+	};
+
+	/**
+	 * The floating trigger a Privacy Choices `ConsentDialog` renders for
+	 * `showTrigger`. The classic dialog brings its own with its chunk.
+	 */
+	const loadTrigger = function loadTrigger(): Promise<
+		typeof ConsentDialogTriggerComponent
+	> {
+		pendingTrigger ??= (async () => {
+			try {
+				return (await import('./panel-trigger.svelte')).default;
+			} catch (error) {
+				pendingTrigger = null;
+				throw error;
+			}
+		})();
+		return pendingTrigger;
+	};
 </script>
 
 <script lang="ts">
@@ -35,18 +79,41 @@
 	 * focus of that button (see `preloadDialog`). Props are the dialog's own.
 	 */
 	import type { ActiveUI } from '@inth/sdk/engine';
-	import { onMount } from 'svelte';
+	import { resolveConsentPresentation } from '@inth/sdk/engine';
+	import { showConsentSurface } from '@inth/sdk/surface-actions';
+	import { onMount, untrack } from 'svelte';
 
-	import { getConsentContext } from '../context.svelte';
-	import { registerDialogWarmer } from '../dialog-warming';
+	import { getConsentContext, getThemeContext } from '../context.svelte';
+	import {
+		holdIdleDialogWarming,
+		registerDialogWarmer,
+	} from '../dialog-warming';
+	import { useOptOutConfirmationState } from '../opt-out-confirmation-state.svelte';
 	import DeferredOptInConfirmation from './deferred-opt-in-confirmation.svelte';
 	import DeferredOptOutConfirmation from './deferred-opt-out-confirmation.svelte';
-	import type { ConsentDialogProps } from './panel-props';
+	import type {
+		ConsentDialogProps,
+		ConsentDialogTriggerProps,
+	} from './panel-props';
+	import { requestReceiptFocus } from './privacy-choices/receipt-focus';
 
 	const props: ConsentDialogProps = $props();
 
 	const consent = getConsentContext();
 	let Panel = $state<typeof PanelComponent | null>(null);
+	let PrivacyChoicesDialog = $state<
+		typeof PrivacyChoicesDialogComponent | null
+	>(null);
+
+	// The design the banner renders, so warming and opening load only that
+	// design's dialog.
+	const privacyChoices = $derived(
+		resolveConsentPresentation({
+			policy: consent.snapshot.policyRule,
+			presentation: consent.state.presentation,
+			surface: 'prompt',
+		}).design === 'privacy-choices'
+	);
 
 	// The surface the dialog replaced when it opened, and the element that
 	// had focus then: the Customize button or link the visitor pressed. The
@@ -93,17 +160,86 @@
 		return () => clearTimeout(timer);
 	});
 
-	const load = async function load() {
-		if (Panel) {
+	// A controlled `open` on the Privacy Choices design goes through the
+	// consent manager, so the session, sheets and Escape follow the dialog
+	// and the banner hands over to it. It asks once each time `open` turns
+	// true; Close and Escape then close the dialog as usual. The latch lives
+	// here, not in the dialog: the dialog unmounts and mounts again while
+	// `open` stays true (a design change, for one), and a fresh latch there
+	// would reopen a dialog the visitor dismissed.
+	let openRequested = false;
+	/** Whether the dialog showing is the one `open` asked for (below). */
+	let claimed = false;
+	const modelAllowed = $derived(
+		!props.models || props.models.includes(consent.state.model)
+	);
+	$effect.pre(() => {
+		if (props.open !== true) {
+			openRequested = false;
+			return;
+		}
+		if (
+			openRequested ||
+			!privacyChoices ||
+			!consent.state.hasConsentUi ||
+			!modelAllowed
+		) {
+			return;
+		}
+		openRequested = true;
+		claimed = true;
+		const { kernel } = consent;
+		untrack(() => {
+			if (kernel.getSnapshot().activeUI !== 'dialog') {
+				showConsentSurface(kernel, 'dialog');
+			}
+		});
+	});
+
+	// A controlled `open` turning false closes the dialog it asked for.
+	// Once the dialog renders, it does that itself. Before that, while its chunk still loads, `open` turning
+	// false closes it here through the consent manager, as Close does, so
+	// an unanswered banner comes back and the dialog that arrives later
+	// stays closed. A dialog the consent manager opened while `open` was
+	// already false stays its own.
+	$effect.pre(() => {
+		if (props.open !== false) {
+			return;
+		}
+		const wasClaimed = claimed;
+		claimed = false;
+		if (!wasClaimed) {
+			return;
+		}
+		const { kernel } = consent;
+		untrack(() => {
+			if (!PrivacyChoicesDialog && kernel.getSnapshot().activeUI === 'dialog') {
+				showConsentSurface(kernel, 'none');
+			}
+		});
+	});
+
+	// The design is passed in, not read here: a caller that tracks it then
+	// loads the other design's dialog when the design changes while the
+	// dialog is wanted.
+	const load = async function load(v6: boolean) {
+		if (v6 ? PrivacyChoicesDialog : Panel) {
 			return;
 		}
 		try {
-			Panel = await loadPanel();
+			if (v6) {
+				PrivacyChoicesDialog = await loadPrivacyChoicesDialog();
+			} else {
+				Panel = await loadPanel();
+			}
 		} catch {
 			// The banner and the trigger hide while the dialog is open, so a
 			// dialog that failed to load would leave no consent UI. Put back the
 			// surface it replaced; the next warm or open retries the import.
-			if (props.open === undefined && consent.state.activeUI === 'dialog') {
+			if (
+				(props.open === undefined || openRequested) &&
+				consent.state.activeUI === 'dialog'
+			) {
 				consent.state.setActiveUI(surfaceBeforeDialog);
 			}
 		}
@@ -111,37 +247,126 @@
 
 	onMount(() =>
 		registerDialogWarmer(() => {
-			void load();
+			void load(untrack(() => privacyChoices));
 		})
 	);
 
+	// A shown v6 banner can open the dialog at any moment, and it has no
+	// Customize button that opens it, so the dialog holds the idle warming
+	// itself, as React's does. The classic banner's Customize holds it.
+	const theme = getThemeContext();
+	$effect(() => {
+		if (privacyChoices && consent.state.activeUI === 'banner') {
+			return holdIdleDialogWarming(theme.preloadDialog);
+		}
+	});
+
 	// The dialog is needed as soon as it opens, and at once when it renders
-	// its own trigger.
+	// its own trigger. The v6 dialog has no trigger of its own: it loads on
+	// open, never with the banner (PERM-05: the banner leaves at once when
+	// it opens).
 	const needed = $derived(
-		Boolean(props.showTrigger) ||
+		(!privacyChoices && Boolean(props.showTrigger)) ||
 			(props.open ?? consent.state.activeUI === 'dialog')
 	);
 
 	$effect(() => {
 		if (needed) {
-			void load();
+			void load(privacyChoices);
 		}
+	});
+
+	// The Privacy Choices design still renders the floating trigger for
+	// `showTrigger`, in a chunk of its own.
+	const triggerProps = $derived.by((): ConsentDialogTriggerProps | null => {
+		if (props.showTrigger === true) {
+			return {};
+		}
+		return props.showTrigger ? props.showTrigger : null;
+	});
+	let Trigger = $state<typeof ConsentDialogTriggerComponent | null>(null);
+	$effect(() => {
+		if (!(privacyChoices && triggerProps) || Trigger) {
+			return;
+		}
+		void (async () => {
+			try {
+				Trigger = await loadTrigger();
+			} catch {
+				// The next render that wants it retries.
+			}
+		})();
+	});
+
+	// The Privacy Choices design confirms an opt-out on its receipt, in the
+	// dialog: the opt-out confirmation (after a revocation reload, or from a
+	// one-click opt-out link) opens the dialog there instead. A standalone
+	// `OptOutConfirmation` the host mounted still shows it itself.
+	const confirmation = useOptOutConfirmationState(() => consent.kernel);
+	const embeddedConfirmation = $derived(
+		confirmation.open && !confirmation.hasStandaloneHost
+	);
+	// The dialog can render now: its `models` allow the policy's model, and
+	// a controlled `open={false}` does not keep it hidden. Only then can it
+	// take the opt-out confirmation over.
+	const dialogCanShow = $derived(modelAllowed && props.open !== false);
+	const adoptConfirmation = $derived(
+		privacyChoices && embeddedConfirmation && dialogCanShow
+	);
+	$effect(() => {
+		if (!adoptConfirmation) {
+			return;
+		}
+		const { kernel } = consent;
+		untrack(() => {
+			requestReceiptFocus(kernel);
+			// Opening the dialog closes the confirmation.
+			showConsentSurface(kernel, 'dialog');
+		});
 	});
 </script>
 
-<DeferredOptOutConfirmation
-	embedded
-	noStyle={props.noStyle}
-	disableAnimation={props.disableAnimation}
-/>
-<DeferredOptInConfirmation
-	noStyle={props.noStyle}
-	disableAnimation={props.disableAnimation}
-/>
-
-{#if Panel}
-	<Panel
-		{...props}
-		embedOptOutConfirmation={false}
+{#if privacyChoices}
+	{#if Trigger && triggerProps}
+		<Trigger {...triggerProps} />
+	{/if}
+	{#if embeddedConfirmation && !dialogCanShow}
+		<!-- This dialog does not open under the model, or the host keeps it
+		     closed, so the confirmation shows as on the classic design. -->
+		<DeferredOptOutConfirmation
+			embedded
+			noStyle={props.noStyle}
+			disableAnimation={props.disableAnimation}
+		/>
+	{/if}
+	<DeferredOptInConfirmation
+		noStyle={props.noStyle}
+		disableAnimation={props.disableAnimation}
 	/>
+	{#if PrivacyChoicesDialog && (props.open === true || consent.state.activeUI === 'dialog')}
+		<PrivacyChoicesDialog
+			open={props.open}
+			noStyle={props.noStyle}
+			disableAnimation={props.disableAnimation}
+			models={props.models}
+			legalLinks={props.legalLinks}
+		/>
+	{/if}
+{:else}
+	<DeferredOptOutConfirmation
+		embedded
+		noStyle={props.noStyle}
+		disableAnimation={props.disableAnimation}
+	/>
+	<DeferredOptInConfirmation
+		noStyle={props.noStyle}
+		disableAnimation={props.disableAnimation}
+	/>
+
+	{#if Panel}
+		<Panel
+			{...props}
+			embedOptOutConfirmation={false}
+		/>
+	{/if}
 {/if}

@@ -110,11 +110,19 @@ export const scheduleDeferredEngine = function scheduleDeferredEngine(
 		into.push(() => target.removeEventListener(type, handler, capture));
 	};
 
-	/** Input the root routes itself: on the stock banner. */
-	const routed = (event: Event): boolean =>
-		Boolean(
-			onTap && (event.target as Element | null)?.closest?.(EARLY_TAP_ROOT)
+	/**
+	 * Input the root routes itself: on the stock banner. The Privacy
+	 * Choices banner's taps wake the engine, whose banner replays them
+	 * through its own handlers.
+	 */
+	const routed = (event: Event): boolean => {
+		const root = onTap
+			? (event.target as Element | null)?.closest?.(EARLY_TAP_ROOT)
+			: null;
+		return Boolean(
+			root && root.getAttribute('data-design') !== 'privacy-choices'
 		);
+	};
 	const queue = earlyTapQueue();
 	if (onTap) {
 		if (queue?.taps) {

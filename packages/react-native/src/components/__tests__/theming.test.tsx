@@ -624,7 +624,7 @@ describe('theme', () => {
 		// `0.6875rem` at `line-height: 1`, so the line box is the font size rather
 		// than a step on the type scale. It is the one piece of text in a consent
 		// surface that is not the subject's own language.
-		expect(textStyleOf(tree, 'Secured by')).toEqual(
+		expect(textStyleOf(tree, 'Consent by')).toEqual(
 			expect.objectContaining({
 				color: defaultConsentTheme.colors.textOnPrimary,
 				fontSize: 11,

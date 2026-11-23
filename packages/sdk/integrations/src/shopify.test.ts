@@ -10,6 +10,7 @@ import type {
 } from './shopify';
 
 const FULL_SCOPE = {
+	gpcDenyCategories: [],
 	scope: ['functionality', 'marketing', 'measurement'],
 } as const;
 

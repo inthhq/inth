@@ -37,7 +37,7 @@ export const shouldShowBranding = function shouldShowBranding(
 };
 
 /**
- * The "Secured by" attribution link. The host is the `<a>`; render it only
+ * The "Consent by" attribution link. The host is the `<a>`; render it only
  * when {@link shouldShowBranding} is `true`.
  *
  * @example

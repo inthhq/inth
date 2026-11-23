@@ -530,7 +530,7 @@ def measure(args):
     title = next(
         (n for n in nodes if BANNER_TITLE in n["text"] or n["text"] == DIALOG_TITLE), None
     )
-    tab = next((n for n in nodes if "Secured by" in n["text"] + n["desc"]), None)
+    tab = next((n for n in nodes if "Consent by" in n["text"] + n["desc"]), None)
     findings["surface_found"] = tab is not None and title is not None
     print(f"actions {[n['text'] for n in labels]}")
 

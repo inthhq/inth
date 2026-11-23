@@ -75,6 +75,7 @@ export { default as ConsentGate } from './components/consent-gate.svelte';
 export { default as IABConsentBanner } from './components/iab-prompt.svelte';
 export { default as IABConsentDialog } from './components/iab-panel.svelte';
 export { default as OptOutConfirmation } from './components/deferred-opt-out-confirmation.svelte';
+export { default as PrivacyChoicesLink } from './components/privacy-choices-link.svelte';
 export {
 	getConsentKernel,
 	getConsentManager,

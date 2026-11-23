@@ -9,6 +9,10 @@
  */
 import type { OptOutRecord } from '@inth/sdk-schema/types';
 
+import {
+	answersHeldOptOut,
+	carryOptOutCategories,
+} from '../consent-record/opt-out-rules';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-record/types';
 import type {
 	ConsentSubject,
@@ -271,7 +275,10 @@ export const validateHydrationRecords = function validateHydrationRecords(
 
 /**
  * Keep the newer of two opt-out records. Ties keep the current one, so a
- * delayed server read never replaces a newer local opt-out.
+ * delayed server read never replaces a newer local opt-out. The kept
+ * record withholds every category either copy did (GPC-05): a server
+ * record, which never carries `categories`, takes the browser's list when
+ * it answers the browser's act, and joins it otherwise.
  */
 export const mergeNewestOptOut = function mergeNewestOptOut(
 	current: OptOutRecord | null,
@@ -283,7 +290,12 @@ export const mergeNewestOptOut = function mergeNewestOptOut(
 	if (!incoming) {
 		return current;
 	}
-	return incoming.recordedAt > current.recordedAt ? incoming : current;
+	const incomingWins = incoming.recordedAt > current.recordedAt;
+	return carryOptOutCategories(
+		incomingWins ? incoming : current,
+		incomingWins ? current : incoming,
+		answersHeldOptOut(incoming, current)
+	);
 };
 
 /**

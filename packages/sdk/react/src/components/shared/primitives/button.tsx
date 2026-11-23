@@ -54,14 +54,19 @@ const skipsEarlyTap = function skipsEarlyTap(params: {
 	action: string;
 	asChild: boolean | undefined;
 	dataAction: unknown;
+	earlyTap: boolean;
 	ownsClick: boolean;
 	performDefaultAction: boolean;
 }): boolean {
-	const { action, dataAction, ownsClick, performDefaultAction } = params;
+	const { action, dataAction, earlyTap, ownsClick, performDefaultAction } =
+		params;
+	// A surface that replays the tap through this button's own handler
+	// (the Privacy Choices prompt) keeps it, whatever the click does.
 	const replays =
-		!ownsClick &&
-		(performDefaultAction || action === 'open-consent-dialog') &&
-		EARLY_TAP_ACTIONS[action] === dataAction;
+		(earlyTap && params.asChild !== true) ||
+		(!ownsClick &&
+			(performDefaultAction || action === 'open-consent-dialog') &&
+			EARLY_TAP_ACTIONS[action] === dataAction);
 	return (
 		!replays &&
 		(params.asChild === true ||
@@ -149,6 +154,13 @@ export const ConsentButton = createForwardRef<
 			closeConsentDialog?: boolean;
 			closeConsentBanner?: boolean;
 			performDefaultAction?: boolean;
+			/**
+			 * The surface replays a tap the pre-hydration script held
+			 * through this button's own click handler, so the script keeps
+			 * taps on it even though the click does more than the stock
+			 * action. Off, such a button opts out of the script.
+			 */
+			earlyTap?: boolean;
 		}
 >(
 	(
@@ -171,6 +183,7 @@ export const ConsentButton = createForwardRef<
 			closeConsentBanner = false,
 			closeConsentDialog = false,
 			performDefaultAction = true,
+			earlyTap = false,
 			category,
 			...props
 		},
@@ -333,6 +346,7 @@ export const ConsentButton = createForwardRef<
 			action,
 			asChild,
 			dataAction: renderedProp('data-action', renderedLayers),
+			earlyTap,
 			ownsClick: ownsClick({
 				asChild,
 				onClick: forwardedOnClick,

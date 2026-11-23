@@ -18,7 +18,6 @@ import type {
 	OptOutHolder,
 	OptOutMethod,
 	OptOutRecord,
-	OptOutRight,
 } from '@inth/sdk-schema/types';
 
 import { OPTIONAL_CONSENT_CATEGORIES } from './types';
@@ -289,18 +288,52 @@ export const validateNoticeDismissal = function validateNoticeDismissal(
 	};
 };
 
-const OPT_OUT_KEYS = ['rights', 'method', 'recordedAt', 'heldBy'] as const;
-const OPT_OUT_RIGHT_SET: ReadonlySet<string> = new Set(OPT_OUT_RIGHTS);
+const OPT_OUT_KEYS = [
+	'rights',
+	'method',
+	'recordedAt',
+	'heldBy',
+	'categories',
+] as const;
 const OPT_OUT_METHOD_SET: ReadonlySet<string> = new Set(OPT_OUT_METHODS);
 const OPT_OUT_HOLDER_SET: ReadonlySet<string> = new Set(OPT_OUT_HOLDERS);
 
 /**
+ * Reads a list of unique names from `allowed`, returned in the order of
+ * `allowed`. Pushes an issue for a value that is not an array, and for each
+ * unknown or repeated entry.
+ */
+const readNameList = function readNameList<Name extends string>(
+	raw: unknown,
+	path: string,
+	allowed: readonly Name[],
+	issues: RecordIssue[]
+): Name[] {
+	if (!Array.isArray(raw)) {
+		issues.push({ code: 'not-an-object', path });
+		return [];
+	}
+	const seen = new Set<unknown>();
+	for (let index = 0; index < raw.length; index += 1) {
+		const entry: unknown = index in raw ? raw[index] : undefined;
+		if (!allowed.includes(entry as Name) || seen.has(entry)) {
+			issues.push({ code: 'invalid-value', path: `${path}[${index}]` });
+		}
+		seen.add(entry);
+	}
+	return allowed.filter((name) => seen.has(name));
+};
+
+/**
  * Validates a durable opt-out record. Rejects unknown keys, duplicate or
- * unknown rights, unknown methods or holders, and non-integer or negative
- * timestamps. Accepts an empty `rights` list for a local opt-out waiting for
- * the backend's answer. Future timestamps are accepted so a slow device clock
- * never drops a record stamped by the backend. Returns `rights` in canonical
- * order (`sale`, `share`, `targeted_ads`).
+ * unknown rights or categories, unknown methods or holders, and non-integer
+ * or negative timestamps. Accepts an empty `rights` list for a local opt-out
+ * waiting for the backend's answer. Future timestamps are accepted so a slow
+ * device clock never drops a record stamped by the backend. Returns `rights`
+ * in canonical order (`sale`, `share`, `targeted_ads`) and `categories`,
+ * when present, in canonical category order. An empty `categories` list is
+ * kept: unlike a missing one, which marks a record made before the field
+ * existed, it withholds nothing of its own.
  */
 export const validateOptOutRecord = function validateOptOutRecord(
 	input: unknown,
@@ -315,24 +348,12 @@ export const validateOptOutRecord = function validateOptOutRecord(
 			issues.push({ code: 'unknown-key', path: key });
 		}
 	}
-	const rawRights = ownValue(input, 'rights');
-	const seenRights = new Set<OptOutRight>();
-	if (Array.isArray(rawRights)) {
-		for (let index = 0; index < rawRights.length; index += 1) {
-			const entry: unknown = index in rawRights ? rawRights[index] : undefined;
-			if (
-				typeof entry !== 'string' ||
-				!OPT_OUT_RIGHT_SET.has(entry) ||
-				seenRights.has(entry as OptOutRight)
-			) {
-				issues.push({ code: 'invalid-value', path: `rights[${index}]` });
-				continue;
-			}
-			seenRights.add(entry as OptOutRight);
-		}
-	} else {
-		issues.push({ code: 'not-an-object', path: 'rights' });
-	}
+	const rights = readNameList(
+		ownValue(input, 'rights'),
+		'rights',
+		OPT_OUT_RIGHTS,
+		issues
+	);
 	const method = ownValue(input, 'method');
 	if (typeof method !== 'string' || !OPT_OUT_METHOD_SET.has(method)) {
 		issues.push({ code: 'invalid-value', path: 'method' });
@@ -345,16 +366,27 @@ export const validateOptOutRecord = function validateOptOutRecord(
 	if (typeof heldBy !== 'string' || !OPT_OUT_HOLDER_SET.has(heldBy)) {
 		issues.push({ code: 'invalid-value', path: 'heldBy' });
 	}
+	const rawCategories = ownValue(input, 'categories');
+	const categories =
+		rawCategories === undefined
+			? undefined
+			: readNameList(
+					rawCategories,
+					'categories',
+					OPTIONAL_CONSENT_CATEGORIES,
+					issues
+				);
 	if (issues.length > 0) {
 		return { issues, ok: false };
 	}
-	return {
-		ok: true,
-		record: {
-			heldBy: heldBy as OptOutHolder,
-			method: method as OptOutMethod,
-			recordedAt: recordedAt as number,
-			rights: OPT_OUT_RIGHTS.filter((right) => seenRights.has(right)),
-		},
+	const record: OptOutRecord = {
+		heldBy: heldBy as OptOutHolder,
+		method: method as OptOutMethod,
+		recordedAt: recordedAt as number,
+		rights,
 	};
+	if (categories !== undefined) {
+		record.categories = categories;
+	}
+	return { ok: true, record };
 };

@@ -61,8 +61,10 @@ const MUST_BE_REACHABLE_SLOTS = [
 	'consent-gate.button',
 ] as const;
 
+/** Every `.vue` file under `runtime/components`, nested ones included. */
 const getVueComponentSources = function getVueComponentSources() {
-	return readdirSync(runtimeComponentsDir)
+	return readdirSync(runtimeComponentsDir, { recursive: true })
+		.map(String)
 		.filter((file) => file.endsWith('.vue'))
 		.map((file) => readFileSync(join(runtimeComponentsDir, file), 'utf8'));
 };

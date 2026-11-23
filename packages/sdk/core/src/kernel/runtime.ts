@@ -32,7 +32,11 @@ import type {
 } from '../types';
 import { createListenerSet } from './dispatch';
 import type { Dispatcher, ListenerSet } from './dispatch';
-import { gpcOptOutDue, gpcSignalReportDue } from './opt-out';
+import {
+	gpcOptOutDue,
+	gpcSignalReportDue,
+	newLocalOptOutRecord,
+} from './opt-out';
 import { buildNextSnapshot, isUnchangedPatch, snapshotChanged } from './patch';
 import type { SnapshotPatch } from './patch';
 import { freezeSnapshot, isPromptSurface } from './snapshot';
@@ -438,12 +442,12 @@ export const createRuntime = function createRuntime(
 		// Explicit `optOut` patches (such as hydration, clear or commands)
 		// never trigger auto-recording in the same commit.
 		if (patch.optOut === undefined && gpcOptOutDue(next, live)) {
-			const optOut: OptOutRecord = {
-				heldBy: 'device',
-				method: 'gpc',
-				recordedAt: next.evaluatedAt,
-				rights: defaultOptOutRights(),
-			};
+			const optOut = newLocalOptOutRecord(
+				next,
+				'gpc',
+				next.evaluatedAt,
+				defaultOptOutRights()
+			);
 			const gpcPatch: SnapshotPatch = { ...patch, optOut };
 			if (!next.subject?.subjectId) {
 				gpcPatch.subject = { ...next.subject, subjectId: generateUuidV7() };

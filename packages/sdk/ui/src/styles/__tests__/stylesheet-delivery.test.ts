@@ -4,6 +4,9 @@
  * - `styles.css` / `styles.tw3.css`: default tokens, every variable, and the
  *   rules for the banner, dialog trigger, ConsentGate, dialog and preference
  *   widget. The app imports it once.
+ * - `styles/privacy-choices.css` / `.tw3.css`: the v6 Privacy Choices
+ *   rules, opt-in, loaded after `styles.css`. `styles.css` carries none of
+ *   them, so an app that doesn't render v6 doesn't download it.
  * - `styles/dialog.css`: empty, kept so existing imports resolve.
  * - `styles/primitives.css`: rules for the primitive class maps.
  * - `iab/styles.css`: IAB variables and rules, loaded next to `styles.css`.
@@ -31,6 +34,8 @@ import {
 	DIALOG_COMPONENTS,
 	FIRST_PAINT_COMPONENTS,
 	IAB_PREFIX,
+	PRESENTATION_COMPONENTS,
+	PRIVACY_CHOICES_DIALOG_COMPONENTS,
 } from '../../../scripts/stylesheet-parts';
 
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
@@ -143,13 +148,19 @@ const sheets = {
 	iab: ruleKeys(readDist(join(DIST_DIR, 'iab', 'styles.css'))),
 	iabTw3: ruleKeys(readDist(join(DIST_DIR, 'iab', 'styles.tw3.css'))),
 	primitives: ruleKeys(readDist(join(DIST_DIR, 'styles', 'primitives.css'))),
+	privacyChoices: ruleKeys(
+		readDist(join(DIST_DIR, 'styles', 'privacy-choices.css'))
+	),
+	privacyChoicesTw3: ruleKeys(
+		readDist(join(DIST_DIR, 'styles', 'privacy-choices.tw3.css'))
+	),
 	styles: ruleKeys(readDist(join(DIST_DIR, 'styles.css'))),
 	stylesTw3: ruleKeys(readDist(join(DIST_DIR, 'styles.tw3.css'))),
 };
 
 const groupOf = function groupOf(
 	file: string
-): 'dialog' | 'first-paint' | 'iab' {
+): 'dialog' | 'first-paint' | 'iab' | 'privacy-choices' {
 	const name = file.replace(/\.css$/u, '');
 	if (name.startsWith(IAB_PREFIX)) {
 		return 'iab';
@@ -160,7 +171,13 @@ const groupOf = function groupOf(
 	if ((FIRST_PAINT_COMPONENTS as readonly string[]).includes(name)) {
 		return 'first-paint';
 	}
-	throw new Error(`components/${file} is in neither stylesheet part`);
+	if (
+		(PRESENTATION_COMPONENTS as readonly string[]).includes(name) ||
+		(PRIVACY_CHOICES_DIALOG_COMPONENTS as readonly string[]).includes(name)
+	) {
+		return 'privacy-choices';
+	}
+	throw new Error(`components/${file} is in no stylesheet part`);
 };
 
 const missingFrom = (rules: string[], sheet: Set<string>) =>
@@ -184,6 +201,10 @@ const TARGETS = {
 	iab: {
 		rules: [sheets.iab, sheets.iabTw3],
 		variables: [sheets.iab, sheets.iabTw3],
+	},
+	'privacy-choices': {
+		rules: [sheets.privacyChoices, sheets.privacyChoicesTw3],
+		variables: [sheets.privacyChoices, sheets.privacyChoicesTw3],
 	},
 } as const;
 
@@ -217,7 +238,7 @@ describe('each component rule lands in the stylesheet for its surface', () => {
 	}
 });
 
-describe('styles.css holds no primitive or IAB rule', () => {
+describe('styles.css holds no primitive, IAB or v6 rule', () => {
 	/** Hashed class names of a class map in `dist/styles/<dir>/<name>.js`. */
 	const classNamesOf = function classNamesOf(path: string): string[] {
 		return [...readDist(path).matchAll(/inth-ui-[\w-]+/gu)].map(
@@ -231,9 +252,10 @@ describe('styles.css holds no primitive or IAB rule', () => {
 		...listFiles(PRIMITIVES_DIR, '.module.js').map(
 			(file) => `primitives/${file}`
 		),
-		...COMPONENT_STYLESHEETS.filter((file) => file.startsWith(IAB_PREFIX)).map(
-			(file) => `components/${file.replace(/\.css$/u, '.js')}`
-		),
+		...COMPONENT_STYLESHEETS.filter(
+			(file) =>
+				file.startsWith(IAB_PREFIX) || groupOf(file) === 'privacy-choices'
+		).map((file) => `components/${file.replace(/\.css$/u, '.js')}`),
 	];
 
 	for (const classMap of deferred) {
@@ -267,6 +289,30 @@ describe('styles.css holds no primitive or IAB rule', () => {
 		expect(sheets.dialog).toEqual(new Set());
 		expect(overlap(sheets.styles, sheets.primitives)).toEqual([]);
 		expect(overlap(sheets.styles, sheets.iab)).toEqual([]);
+		expect(overlap(sheets.styles, sheets.privacyChoices)).toEqual([]);
+	});
+
+	test('styles.css registers no property and the v6 entry only prefixed ones', () => {
+		// `@property` is global to the document, so an unprefixed name would
+		// break a host that uses it.
+		const registered = (file: string) =>
+			[
+				...readDist(join(DIST_DIR, file)).matchAll(
+					/@property\s+(?<name>--[\w-]+)/gu
+				),
+			].map((match) => match.groups?.name);
+
+		expect(registered('styles.css')).toEqual([]);
+		expect(registered('styles.tw3.css')).toEqual([]);
+		for (const file of [
+			'styles/privacy-choices.css',
+			'styles/privacy-choices.tw3.css',
+		]) {
+			expect(registered(file)).toEqual([
+				'--inth-fade-top',
+				'--inth-fade-bottom',
+			]);
+		}
 	});
 
 	test('the primitive sheet keeps its rules in @layer components', () => {

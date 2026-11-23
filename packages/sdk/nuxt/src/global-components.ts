@@ -17,4 +17,5 @@ export const GLOBAL_COMPONENTS = [
 	['ConsentDialogTrigger', 'panel-trigger'],
 	['ConsentGate', 'consent-gate'],
 	['OptOutConfirmation', 'opt-out-confirmation'],
+	['PrivacyChoicesLink', 'privacy-choices-link'],
 ] as const;

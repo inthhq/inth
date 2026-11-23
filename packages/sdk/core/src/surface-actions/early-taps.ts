@@ -100,6 +100,15 @@ const apply = (
 		unhide(view);
 		return;
 	}
+	if (options.act) {
+		options.act(tap);
+		if (tap.action === 'customize') {
+			unhide(view);
+		} else {
+			unhideWhenGone(kernel, view);
+		}
+		return;
+	}
 	if (tap.action === 'customize') {
 		showConsentSurface(kernel, 'dialog');
 		unhide(view);
@@ -151,6 +160,13 @@ export interface EarlyConsentTapReplayOptions {
 	 * it. Defaults to `banner`.
 	 */
 	uiSource?: SaveUISource;
+	/**
+	 * Record the tap through the banner's own handler for its action, in
+	 * place of the stock surface actions: the Privacy Choices banner
+	 * commits through its own plan and expands its options in place. Called
+	 * once, when the stock actions would run.
+	 */
+	act?: (tap: EarlyConsentTap) => void;
 }
 
 /**

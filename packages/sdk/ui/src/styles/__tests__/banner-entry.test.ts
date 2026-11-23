@@ -28,9 +28,27 @@ const MOTION_PROPERTY = /^(?:transition|animation|transform)(?:-[a-z-]+)?$/u;
 /** A transition of opacity alone, such as `opacity 150ms ease-out`. */
 const OPACITY_TRANSITION = /^opacity(?:\s|$)/u;
 
+/** `value` with each `var()` reduced to its name, so a fallback's comma
+ * doesn't read as a second transition. */
+const withoutFallbacks = (value: string): string => {
+	let previous = '';
+	let current = value;
+	while (current !== previous) {
+		previous = current;
+		current = current.replace(
+			/var\((?<name>--[\w-]+)[^()]*(?:\([^()]*\)[^()]*)*\)/gu,
+			'$<name>'
+		);
+	}
+	return current;
+};
+
 const allowedLate = function allowedLate(prop: string, value: string): boolean {
 	if (prop === 'transition') {
-		return OPACITY_TRANSITION.test(value.trim()) && !value.includes(',');
+		return (
+			OPACITY_TRANSITION.test(value.trim()) &&
+			!withoutFallbacks(value).includes(',')
+		);
 	}
 	return prop === 'transition-property' && value.trim() === 'opacity';
 };

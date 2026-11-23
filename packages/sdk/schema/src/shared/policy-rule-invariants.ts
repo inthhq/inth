@@ -19,6 +19,10 @@ import type {
 	PolicyRuleModel,
 	ResolvedPolicyRule,
 } from './policy-rule';
+import {
+	collectPolicySurfaceRuleIssues,
+	collectPolicySurfaceFieldIssues,
+} from './policy-surface';
 
 /**
  * The consent categories, in stable display order. Every other list of them
@@ -313,6 +317,14 @@ export const collectResolvedPolicyRuleIssues =
 		}
 		if (rule.copyRevision !== null && !rule.copyRevision.trim()) {
 			issues.push('copyRevision must be null or a non-empty string');
+		}
+		if (rule.surface !== undefined) {
+			const fieldIssues = collectPolicySurfaceFieldIssues(rule.surface);
+			issues.push(
+				...(fieldIssues.length > 0
+					? fieldIssues
+					: collectPolicySurfaceRuleIssues(rule.surface, rule))
+			);
 		}
 		return issues;
 	};

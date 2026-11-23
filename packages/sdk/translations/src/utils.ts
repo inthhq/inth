@@ -15,6 +15,7 @@ type TranslationSection =
 	| 'legalLinks'
 	| 'iab'
 	| 'optOut'
+	| 'privacyChoices'
 	| 'rights'
 	| 'trigger';
 
@@ -171,6 +172,7 @@ export const deepMergeTranslations = function deepMergeTranslations(
 		'legalLinks',
 		'iab',
 		'optOut',
+		'privacyChoices',
 		'rights',
 		'trigger',
 	];

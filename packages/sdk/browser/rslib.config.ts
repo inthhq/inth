@@ -31,6 +31,11 @@ import { modeBundleBoundary } from './scripts/mode-bundle-boundary';
  *   before the engine and opens the dialog without the engine; the engine
  *   fetches it the first time it needs the dialog. Served next to
  *   `dist/inth.hosted.js`.
+ * - `dist/inth.choices.js` — the Privacy Choices design: its prompt in each
+ *   presentation, the in-place options, the dialog and the opt-in
+ *   confirmation. The engine fetches it the first time the design applies,
+ *   and shares its per-kernel state with it. Served next to
+ *   `dist/inth.hosted.js`.
  * - `dist/inth.hosted.js` — the hosted engine: runtime, the vanilla banner
  *   and trigger, the stylesheet, and auto-init from the `<script>` tag's
  *   `data-*` attributes. It also works as a tag of its own, with
@@ -70,6 +75,42 @@ const INIT_BUNDLES = new Set([
 	'inth.records',
 ]);
 
+/** The Privacy Choices parts, from the ESM build's chunks (`ui/privacy-choices/pc-import.ts`). */
+const PC_IMPORT = /(?:^|\/)pc-import$/u;
+
+/**
+ * Where each script build gets the Privacy Choices parts. `inth.hosted.js`
+ * loads `inth.choices.js` (`ui/privacy-choices/pc-import-script.ts`), so a
+ * classic site never downloads them; that file, and the other script
+ * builds, which stay one file, carry them (`pc-import-static.ts`).
+ */
+const privacyChoicesModule = (name: string) =>
+	new rspack.NormalModuleReplacementPlugin(PC_IMPORT, (resource) => {
+		if (/[\\/]src[\\/]ui(?:[\\/]privacy-choices)?$/u.test(resource.context)) {
+			resource.request = fileURLToPath(
+				new URL(
+					name === 'inth.hosted'
+						? './src/ui/privacy-choices/pc-import-script.ts'
+						: './src/ui/privacy-choices/pc-import-static.ts',
+					import.meta.url
+				)
+			);
+		}
+	});
+
+/**
+ * In `inth.choices.js`, the functions that keep per-kernel state are the
+ * engine's, which it publishes on `__inthChoicesEngine` before loading
+ * the file (`ui/privacy-choices-file.ts`).
+ */
+const CHOICES_ENGINE_REQUESTS = [
+	{ context: /[\\/]src[\\/]ui[\\/]privacy-choices$/u, request: './engine' },
+	{
+		context: /[\\/]src[\\/]ui$/u,
+		request: './opt-out-confirmation-state',
+	},
+];
+
 /** Script builds that run hosted or manifest mode: no testing transport. */
 const PRODUCTION_BUNDLES = new Set(['inth.headless', 'inth.iab', 'inth.gpp']);
 
@@ -78,7 +119,7 @@ const PRODUCTION_BUNDLES = new Set(['inth.headless', 'inth.iab', 'inth.gpp']);
  * (`ui/dialog-surface.ts`). A script tag has nowhere to load a chunk from:
  * `inth.hosted.js` loads `inth.dialog.js` instead
  * (`ui/dialog-import-script.ts`), and the other script-tag builds use the
- * dialog module directly.
+ * dialog modules directly (`ui/dialog-static.ts`).
  */
 const dialogModule = (name: string) =>
 	name === 'inth.hosted'
@@ -88,8 +129,26 @@ const dialogModule = (name: string) =>
 			)
 		: new rspack.NormalModuleReplacementPlugin(
 				/^\.\/dialog-surface$/u,
-				'./dialog'
+				'./dialog-static'
 			);
+
+/**
+ * `inth.choices.js` takes the engine modules from the `inth.hosted.js`
+ * that loaded it (`window.__inthChoicesEngine`), so it carries no second
+ * copy.
+ */
+const choicesEngineExternal = function choicesEngineExternal({
+	context,
+	request,
+}: {
+	context?: string;
+	request?: string;
+}): Promise<string | undefined> {
+	const shared = CHOICES_ENGINE_REQUESTS.some(
+		(module) => module.request === request && module.context.test(context ?? '')
+	);
+	return Promise.resolve(shared ? 'window __inthChoicesEngine' : undefined);
+};
 
 const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 	const source: {
@@ -106,6 +165,7 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 		format: 'iife' as const,
 		output: {
 			distPath: { root: './dist' },
+			externals: name === 'inth.choices' ? [choicesEngineExternal] : [],
 			filename: { js: '[name].js' },
 			// rslib minifies `iife` output as a module, which may unwrap the
 			// function: a classic `<script>` then declares its names globally,
@@ -129,6 +189,7 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 						'./create-runtime-static'
 					),
 					dialogModule(name),
+					privacyChoicesModule(name),
 					// `inth.dialog.js` locks scrolling and traps focus with the
 					// functions of the bundle that loaded it (`ui/locks-shared.ts`).
 					...(name === 'inth.dialog'
@@ -153,6 +214,7 @@ const scriptTagLib = function scriptTagLib(name: string, entry: string) {
 					...(HOSTED_BUNDLES.has(name)
 						? [modeBundleBoundary(INIT_BUNDLES.has(name) ? 'init' : 'hosted')]
 						: []),
+					...(name === 'inth.choices' ? [modeBundleBoundary('choices')] : []),
 					// The init script renders only the banner: it carries the
 					// banner's share of the stylesheet and class names, and no
 					// copy of its own (`src/init/copy.ts`,
@@ -233,6 +295,7 @@ export default defineConfig({
 		scriptTagLib('inth.commit', './src/entries/cdn-commit.ts'),
 		scriptTagLib('inth.records', './src/entries/cdn-records.ts'),
 		scriptTagLib('inth.dialog', './src/entries/cdn-dialog.ts'),
+		scriptTagLib('inth.choices', './src/entries/cdn-choices.ts'),
 		scriptTagLib('inth.testing', './src/entries/cdn-testing.ts'),
 		scriptTagLib('inth.headless', './src/entries/cdn-headless.ts'),
 		scriptTagLib('inth.iab', './src/entries/cdn-iab.ts'),

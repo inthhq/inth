@@ -196,7 +196,8 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 		const snapshot = consent.snapshot();
 		expect(snapshot.optOut?.method).toBe('button');
 		expect(snapshot.effectivePermissions.marketing).toBe(false);
-		expect(snapshot.effectivePermissions.measurement).toBe(false);
+		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
+		expect(snapshot.effectivePermissions.measurement).toBe(true);
 		expect(snapshot.effectivePermissions.functionality).toBe(true);
 		expect(query('consent-dialog-root')).toBeNull();
 
@@ -476,7 +477,8 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 			expect(consent.snapshot().optOut?.method).toBe('button');
 		});
 		expect(consent.snapshot().effectivePermissions.marketing).toBe(false);
-		expect(consent.snapshot().effectivePermissions.measurement).toBe(false);
+		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
+		expect(consent.snapshot().effectivePermissions.measurement).toBe(true);
 		await vi.waitFor(async () => {
 			await fixture.whenStable();
 			expect(query('opt-out-confirmation-root')).not.toBeNull();

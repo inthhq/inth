@@ -1,5 +1,5 @@
 /**
- * The "Secured by" tag for `branding.astro` and the browser-rendered
+ * The "Consent by" tag for `branding.astro` and the browser-rendered
  * banner: the shared tag model with its `theme.slots` entry applied.
  */
 

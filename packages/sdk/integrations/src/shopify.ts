@@ -43,7 +43,10 @@ export type ShopifyConsentSnapshot = Pick<
 	| 'policyPending'
 	| 'promptRequirement'
 > & {
-	readonly evaluationPolicy: Pick<EvaluationPolicy, 'scope'>;
+	readonly evaluationPolicy: Pick<
+		EvaluationPolicy,
+		'gpcDenyCategories' | 'scope'
+	>;
 };
 
 /** A kernel, or anything else with the same snapshot store shape. */
