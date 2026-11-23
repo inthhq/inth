@@ -61,8 +61,9 @@ import {
 	isValidCmpId,
 } from './tcf/cmp-id.model';
 import { createCMPApi } from './tcf/create-cmp-api';
-import { clearGVLCache, fetchGVL, narrowGVLToVendors } from './tcf/fetch-gvl.api';
+import { clearGVLCache, fetchGVL } from './tcf/fetch-gvl.api';
 import { getTCFCore } from './tcf/get-tcf-core';
+import { narrowGVLToVendors } from './tcf/gvl-narrowing.model';
 import {
 	destroyIABStub as destroyStub,
 	initializeIABStub,

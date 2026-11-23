@@ -34,7 +34,7 @@ import com.inth.core.transport.InthProtocol
  *
  * `null` and an empty list are the same answer: no scope declared, so a served list is
  * kept exactly as it arrived. Both web narrows read an empty list that way --
- * `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts` hands the document back, and
+ * `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts` hands the document back, and
  * `gvlRequestUrl` in `packages/backend/src/http/gvl.ts` does not put the scope on the
  * request line at all -- and [com.inth.core.tc.narrowToVendorIds] says so on its own
  * terms. A core that read `emptyList()` as "show nobody" would leave a publisher who never

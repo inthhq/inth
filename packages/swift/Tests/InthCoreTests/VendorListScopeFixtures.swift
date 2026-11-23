@@ -48,7 +48,7 @@ struct VendorListScopeVector {
 ///
 /// The vectors lane owns `packages/native-protocol` and publishes through its `index.json`; this target
 /// reads that directory and writes nothing to it. The oracle behind these files is
-/// `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/fetch-gvl.ts`, called by the generator rather
+/// `narrowGVLToVendors` in `packages/sdk/iab/src/tcf/gvl-narrowing.model.ts`, called by the generator rather
 /// than restated, so an expectation here is the browser build's answer and not Swift's opinion
 /// about it.
 ///

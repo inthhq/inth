@@ -238,7 +238,7 @@ public struct GVLVendor: Sendable, Codable, Equatable {
 /// The IAB Global Vendor List as `/init` serves it.
 ///
 /// The document is a value: nothing here fetches, caches, or nudges a language file,
-/// which is `packages/sdk/iab/src/tcf/fetch-gvl.ts`'s job on the web and the backend's
+/// which is `packages/sdk/iab/src/tcf/fetch-gvl.api.ts`'s job on the web and the backend's
 /// job here (`resolveGvl`), and is the reason a mobile core can hold a whole list in
 /// a snapshot without owning a network call.
 ///
@@ -315,7 +315,7 @@ public struct GlobalVendorList: Sendable, Codable, Equatable {
 extension GlobalVendorList {
     /// Read `/init`'s `gvl`, or `nil` when the core has to read the field as absent.
     ///
-    /// The gate is `packages/sdk/iab/src/tcf/fetch-gvl.ts`, which accepts a list only when
+    /// The gate is `packages/sdk/iab/src/tcf/fetch-gvl.api.ts`, which accepts a list only when
     /// `vendorListVersion`, `purposes` and `vendors` are there and `tcfPolicyVersion`
     /// is a safe integer of at least 1, and otherwise throws the document away. Two
     /// deliberate differences from reading that line in JavaScript:
