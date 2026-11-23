@@ -292,10 +292,18 @@ export class ConsentDialog {
 		}
 	}
 
-	/** Creates the v6 dialog once, bound to this host's inputs. */
+	/**
+	 * Creates the v6 dialog once, bound to this host's inputs. Checks the
+	 * design again: an import that resolves after `updateOptions()` switched
+	 * back to the classic design attaches nothing.
+	 */
 	#attachPrivacyChoices(type: Type<PrivacyChoicesDialog>): void {
 		const body = this.body();
-		if (!body || this.#privacyChoicesDialog) {
+		if (
+			!body ||
+			this.#privacyChoicesDialog ||
+			!untracked(this.privacyChoices)
+		) {
 			return;
 		}
 		this.#privacyChoicesDialog = body.createComponent(type, {
@@ -356,7 +364,8 @@ export class ConsentDialog {
 	 */
 	#attach(type: Type<ConsentDialogPanel>): void {
 		const body = this.body();
-		if (!body || this.#panel) {
+		// As above: the design may have switched while the import ran.
+		if (!body || this.#panel || untracked(this.privacyChoices)) {
 			return;
 		}
 		this.#panel = body.createComponent(type, {
@@ -412,6 +421,22 @@ export class ConsentDialog {
 					void this.#load();
 				});
 			}
+		});
+		// Only the design in force keeps a body: each follows the consent
+		// state on its own, so after `updateOptions()` switched the design,
+		// the other one would open too. Its loaded code stays, so switching
+		// back attaches it again at once.
+		effect(() => {
+			const privacyChoices = this.privacyChoices();
+			untracked(() => {
+				if (privacyChoices) {
+					this.#panel?.destroy();
+					this.#panel = undefined;
+				} else {
+					this.#privacyChoicesDialog?.destroy();
+					this.#privacyChoicesDialog = undefined;
+				}
+			});
 		});
 		// A body that loaded before this host's view existed renders with it.
 		effect(() => {

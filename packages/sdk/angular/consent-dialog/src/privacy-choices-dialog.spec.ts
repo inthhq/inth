@@ -10,6 +10,7 @@
  * and the parity runner.
  */
 import {
+	ApplicationRef,
 	ChangeDetectionStrategy,
 	Component,
 	inject,
@@ -809,6 +810,85 @@ describe('loading', () => {
 		await openDialog();
 		expect(privacyChoices).toHaveBeenCalledTimes(1);
 		expect(classic).not.toHaveBeenCalled();
+	});
+});
+
+describe('design switch', () => {
+	const closeDialog = async (consent: ConsentManager) => {
+		consent.setActiveUI('none');
+		await TestBed.inject(ApplicationRef).whenStable();
+		await waitFor(() => expect($('consent-dialog-root')).toBeNull());
+	};
+	const roots = () =>
+		[...document.querySelectorAll('[data-testid="consent-dialog-root"]')].map(
+			(root) => root.getAttribute('data-design')
+		);
+
+	test('only the design in force opens after updateOptions switches it, with both bodies loaded', async () => {
+		const { consent } = await mount({ design: null, host: { banner: false } });
+		link().click();
+		await waitFor(() => expect(roots()).toEqual([null]));
+		await closeDialog(consent);
+
+		await consent.updateOptions({
+			presentation: { design: 'privacy-choices' },
+		});
+		await openDialog();
+		expect(roots()).toEqual(['privacy-choices']);
+		await closeDialog(consent);
+
+		await consent.updateOptions({ presentation: { design: 'classic' } });
+		link().click();
+		await waitFor(() => expect(roots()).toEqual([null]));
+		await closeDialog(consent);
+
+		await consent.updateOptions({
+			presentation: { design: 'privacy-choices' },
+		});
+		await openDialog();
+		expect(roots()).toEqual(['privacy-choices']);
+	});
+
+	test('a body whose import resolves after the design switched away is not attached', async () => {
+		let releaseClassic: () => void = () => undefined;
+		const classic = vi.fn(async () => {
+			await new Promise<void>((resolve) => {
+				releaseClassic = resolve;
+			});
+			return (await import('./consent-dialog-panel')).ConsentDialogPanel;
+		});
+		fixtureId += 1;
+		stubViewport(false);
+		hostConfig = { ...DEFAULT_HOST, banner: false };
+		TestBed.configureTestingModule({
+			providers: [
+				provideInth({
+					consentCategories: [...ALL_CATEGORIES],
+					mode: offlineMode([
+						{
+							id: `pcd-switch-${fixtureId}`,
+							match: { fallback: true, isDefault: true },
+							model: 'opt-in',
+							prompt: 'choice',
+						},
+					]),
+					persistence: false,
+				}),
+				{ provide: CONSENT_DIALOG_PANEL, useValue: classic },
+			],
+		});
+		const fixture = TestBed.createComponent(DialogHost);
+		const consent = TestBed.inject(ConsentManager);
+		fixture.detectChanges();
+		link().click();
+		await waitFor(() => expect(classic).toHaveBeenCalledTimes(1));
+		await consent.updateOptions({
+			presentation: { design: 'privacy-choices' },
+		});
+		await waitFor(() => expect(roots()).toEqual(['privacy-choices']));
+		releaseClassic();
+		await TestBed.inject(ApplicationRef).whenStable();
+		expect(roots()).toEqual(['privacy-choices']);
 	});
 });
 
