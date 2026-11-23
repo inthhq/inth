@@ -231,10 +231,10 @@ describe('accessibility roles', () => {
 		const tree = mountSurface(<ConsentBanner />);
 		const [tab] = roleNodes(tree.container(), 'link');
 
-		// The web tag is an anchor whose name is the text it wraps, "Secured by"
+		// The web tag is an anchor whose name is the text it wraps, "Consent by"
 		// then the wordmark. A reader on mobile has to hear the same sentence, not
 		// the mark announced as an unlabelled image.
-		expect(tab.getAttribute('aria-label')).toBe('Secured by c15t');
+		expect(tab.getAttribute('aria-label')).toBe('Consent by c15t');
 
 		// The card clips, so a tab inside it would be cut off along the very edge it
 		// is meant to merge into. Being the card's preceding sibling is the only

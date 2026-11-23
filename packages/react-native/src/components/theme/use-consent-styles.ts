@@ -97,7 +97,7 @@ const LARGE_TEXT_SCALE = 1.6;
 const MIN_BODY_HEIGHT = 148;
 
 /**
- * The height of the "Secured by c15t" tab, which shares the wrapper a card is
+ * The height of the "Consent by c15t" tab, which shares the wrapper a card is
  * mounted in rather than the card itself.
  *
  * `min-height: 1.75rem` on `.brandingTag`. It has to come off the height a card
@@ -995,7 +995,7 @@ export const useConsentStyles = function useConsentStyles(
 				flexDirection: 'column',
 				overflow: 'hidden',
 			},
-			// The "Secured by c15t" tab. Every measurement here is `.brandingTag`:
+			// The "Consent by c15t" tab. Every measurement here is `.brandingTag`:
 			// `min-height 1.75rem`, `padding .28125rem .625rem`, `gap .375rem`, and a
 			// `0.6875rem` label at `line-height: 1`, which is why the line height is the
 			// size rather than a step on the type scale. Which corners stay round, and
@@ -1029,7 +1029,7 @@ export const useConsentStyles = function useConsentStyles(
 			// carries the same `:not(.headless)` as the rule it displaces and comes
 			// later. Its own sibling `.brandingCopy` is spelled without the `:not()`
 			// in that query, so it loses, and stays at 11. The live banner at 411 wide
-			// measures "Secured by" at 11 and `c15t` at 10, and the crop shows the
+			// measures "Consent by" at 11 and `c15t` at 10, and the crop shows the
 			// brand sitting visibly smaller than the words in front of it -- a single
 			// part for both cannot draw that. Both carry a line of their own size,
 			// which is `.brandingText`'s and `.brandingWordmarkLabel`'s `line-height: 1`.

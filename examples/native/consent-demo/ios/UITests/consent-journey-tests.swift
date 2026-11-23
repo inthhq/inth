@@ -403,7 +403,7 @@ final class ConsentJourneyTests: XCTestCase {
             XCTAssertTrue(reject.waitForExistence(timeout: 10))
             let attribution = app.descendants(matching: .any)["inth.first-layer.branding"].firstMatch
             XCTAssertTrue(attribution.exists)
-            XCTAssertEqual(attribution.label, "Secured by \(name)")
+            XCTAssertEqual(attribution.label, "Consent by \(name)")
             XCTAssertEqual(app.staticTexts["inth.first-layer.brand"].label, "Your brand here")
             XCTAssertEqual(reject.frame.width, accept.frame.width, accuracy: 1)
             XCTAssertEqual(reject.frame.height, accept.frame.height, accuracy: 1)
@@ -633,7 +633,7 @@ final class ConsentJourneyTests: XCTestCase {
     }
     /// Findings of the iOS 27 audit that the accessibility review checked against the product and traced to
     /// the OS:
-    /// - one hit-region finding on a first layer or Privacy Settings with the provider attribution showing: "Secured by Inth" is
+    /// - one hit-region finding on a first layer or Privacy Settings with the provider attribution showing: "Consent by Inth" is
     ///   a labelled, static attribution with no action that the audit treats as a control. Reported with no
     ///   element, so matched by screen and category and counted once
     ///   (`test17FirstLayerHitRegionAuditIsolation` isolates it: hidden attribution, clean audit);
@@ -723,7 +723,7 @@ final class ConsentJourneyTests: XCTestCase {
         for id in ["inth.first-layer.reject-all", "inth.first-layer.accept-all", "inth.first-layer.customize"] { assertNamed(button(id), id) }
         XCTAssertEqual(button("inth.first-layer.reject-all").label, "Reject All")
         XCTAssertEqual(button("inth.first-layer.accept-all").label, "Accept All")
-        XCTAssertEqual(app.descendants(matching: .any)["inth.first-layer.branding"].firstMatch.label, "Secured by Inth")
+        XCTAssertEqual(app.descendants(matching: .any)["inth.first-layer.branding"].firstMatch.label, "Consent by Inth")
         // The brand mark is decorative: the brand name is announced once, not once per image.
         let brandLabels = labelled().filter { $0.label == "Your brand here" }
         XCTAssertEqual(brandLabels.count, 1, "brand announced \(brandLabels.count) times: \(brandLabels)")

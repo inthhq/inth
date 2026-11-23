@@ -1,5 +1,5 @@
 /**
- * The "Secured by c15t" tab welded to a consent surface.
+ * The "Consent by c15t" tab welded to a consent surface.
  *
  * On web this is an anchor rendered from an SVG path. React Native ships no SVG
  * renderer, so the glyph is the same path rasterised at build time by
@@ -125,7 +125,7 @@ const ATTACHMENT: Record<
 export interface ConsentBrandingTagProps {
 	/** Where the press goes. */
 	readonly href?: string;
-	/** "Secured by", already resolved to the subject's language. */
+	/** "Consent by", already resolved to the subject's language. */
 	readonly label: string;
 	/** Parts in force for this surface. */
 	readonly parts: ConsentResolvedParts;
@@ -141,7 +141,7 @@ export interface ConsentBrandingTagProps {
  * @example
  * ```tsx
  * <ConsentBrandingTag
- *     label="Secured by"
+ *     label="Consent by"
  *     parts={parts}
  *     presentation="banner"
  *     radius={12}

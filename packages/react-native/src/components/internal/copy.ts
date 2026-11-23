@@ -58,7 +58,7 @@ export interface ConsentCopy {
 	 * Lead-in of the branding tab, which the tab finishes with the brand name.
 	 *
 	 * It is a fragment rather than a whole sentence: the subject on web is
-	 * `Secured by c15t`, and the brand is the mark and wordmark the tab renders,
+	 * `Consent by c15t`, and the brand is the mark and wordmark the tab renders,
 	 * not a string a translation gets to change.
 	 */
 	readonly securedBy: string;
@@ -90,7 +90,7 @@ const ENGLISH: Omit<ConsentCopy, 'categories'> = {
 	rejectAll: 'Reject All',
 	save: 'Save Settings',
 	saveError: 'Your choices could not be saved. Try again.',
-	securedBy: 'Secured by',
+	securedBy: 'Consent by',
 };
 
 /**
