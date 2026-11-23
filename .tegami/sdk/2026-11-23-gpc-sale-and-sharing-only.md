@@ -30,4 +30,6 @@ An opt-out the account holds, or one the backend sends for another act, never ma
 
 The same holds between the browser's own copies. When the cookie and localStorage hold opt-outs from different times, the newer one is the visitor's opt-out, but it switches off every category either copy did. A record the backend says this device holds counts as the browser's own act only when it has the same time and method.
 
-When the backend confirms the opt-out this browser recorded, the browser now marks its rights as confirmed even though the backend's copy carries no categories. A newer opt-out adopted from the account no longer shows this browser's opt-out reference.
+When the backend confirms the opt-out this browser recorded, the browser now marks its rights as confirmed even though the backend's copy carries no categories. A newer opt-out adopted from the account, when the page loads or when `identify()` returns it, no longer shows this browser's opt-out reference or says it was recorded here.
+
+When localStorage holds a wider list of categories for the same opt-out the server-rendered page started with, the browser takes the wider list and still keeps the opt-out's reference and its GPC mark.

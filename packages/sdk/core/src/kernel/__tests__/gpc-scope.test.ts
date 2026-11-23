@@ -501,3 +501,93 @@ describe('adopting a server copy of a held opt-out', () => {
 		kernel.dispose();
 	});
 });
+
+describe('an account opt-out returned by identify()', () => {
+	const narrow = () =>
+		optOutRule({
+			privacySignals: { gpc: { denyCategories: ['marketing'] } },
+			prompt: 'none',
+		});
+	const local: OptOutRecord = {
+		categories: ['marketing'],
+		heldBy: 'device',
+		method: 'button',
+		recordedAt: NOW - 1000,
+		rights: ['sale'],
+	};
+	/** A kernel holding `local` with this browser's receipt for it. */
+	const identifiedWith = async (answer: OptOutRecord) => {
+		const kernel = createKernel(narrow(), {
+			initialRecords: {
+				now: NOW,
+				optOut: local,
+				optOutLocalAct: 'button',
+				optOutReference: 'ref_local_act',
+				optOutRightsConfirmed: false,
+				subject: { subjectId: 'sub_gpc_scope' },
+			},
+			transport: {
+				identify: () =>
+					Promise.resolve({ optOut: answer, subjectId: 'sub_gpc_scope' }),
+			},
+		});
+		await kernel.commands.init();
+		await kernel.commands.identify({
+			externalId: 'user_1',
+			identityToken: 'tok_1',
+		});
+		return kernel;
+	};
+
+	test('[GPC-05] a newer account act does not inherit this browser’s act or reference', async () => {
+		const kernel = await identifiedWith({
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW - 10,
+			rights: ['sale', 'share'],
+		});
+		expect(kernel.getSnapshot().optOut).toMatchObject({
+			heldBy: 'person',
+			recordedAt: NOW - 10,
+		});
+		expect(kernel.getOptOutReceiptData()).toEqual({
+			localAct: null,
+			reference: null,
+			rightsConfirmed: true,
+		});
+		kernel.dispose();
+	});
+
+	test('[GPC-05] an account act with the same method but another time is still another act', async () => {
+		const kernel = await identifiedWith({
+			heldBy: 'person',
+			method: 'button',
+			recordedAt: NOW - 10,
+			rights: ['sale', 'share'],
+		});
+		expect(kernel.getOptOutReceiptData()).toMatchObject({
+			localAct: null,
+			reference: null,
+		});
+		kernel.dispose();
+	});
+
+	test('[GPC-05] the account’s copy of this browser’s act keeps its act and reference', async () => {
+		const kernel = await identifiedWith({
+			heldBy: 'person',
+			method: 'button',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share'],
+		});
+		expect(kernel.getSnapshot().optOut).toMatchObject({
+			heldBy: 'person',
+			rights: ['sale', 'share'],
+		});
+		expect(kernel.getOptOutReceiptData()).toEqual({
+			localAct: 'button',
+			reference: 'ref_local_act',
+			rightsConfirmed: true,
+		});
+		kernel.dispose();
+	});
+});

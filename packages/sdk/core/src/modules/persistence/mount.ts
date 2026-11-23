@@ -793,9 +793,12 @@ export const mountPersistence = function mountPersistence(
 			// The seed came from the cookies alone; localStorage can hold the
 			// act's categories when the cookie companion was dropped. The kept
 			// record withholds what either copy does.
+			// A patched opt-out is applied with the patch's receipt and GPC
+			// mark, so start from the kernel's before merging the stored ones.
 			const held = carryOptOutCategories(keptOptOut, records.optOut, false);
 			if (held !== keptOptOut) {
 				patch.optOut = held;
+				keepKernelOptOutMeta(patch);
 			}
 			mergeSeededOptOutMeta(records, patch);
 			return;

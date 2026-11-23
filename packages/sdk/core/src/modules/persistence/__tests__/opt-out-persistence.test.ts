@@ -19,6 +19,7 @@ import {
 	optOutRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createConsentKernel } from '../../../index';
+import type { InternalKernel } from '../../../kernel/internals';
 import {
 	PENDING_OPT_OUTS_STORAGE_KEY,
 	STORAGE_KEY_V2,
@@ -1576,6 +1577,56 @@ describe('copies of an opt-out from different times (GPC-05)', () => {
 			recordedAt: NOW - 1000,
 		});
 		expect(kernel.getSnapshot().effectivePermissions.experience).toBe(false);
+		persistence.dispose();
+		kernel.dispose();
+	});
+
+	it('storage widening the categories of the seeded act keeps the receipt and the GPC mark', () => {
+		const act: StoredOptOutRecord = {
+			heldBy: 'device',
+			method: 'gpc',
+			recordedAt: NOW - 1000,
+			rights: ['sale', 'share', 'targeted_ads'],
+			version: 1,
+		};
+		// localStorage keeps the act's wider list; the seed, read from the
+		// cookies alone, has the narrower one.
+		expect(
+			writeStoredOptOutRecord(
+				{ ...act, categories: ['experience', 'marketing'] },
+				undefined,
+				NOW
+			).ok
+		).toBe(true);
+		const { version: _version, ...optOut } = act;
+		const kernel = createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialPolicyResolution: matchedResolution(
+				policyRulePresets.californiaOptOut()
+			),
+			initialRecords: {
+				now: NOW,
+				optOut: { ...optOut, categories: ['marketing'] },
+				optOutGpcReported: true,
+				optOutLocalAct: 'gpc',
+				optOutReference: 'ref_seeded_act',
+				optOutRightsConfirmed: true,
+			},
+			now: NOW,
+		});
+		const internal = kernel as InternalKernel;
+		// Mounting reads storage against the seed.
+		const persistence = createPersistence({ kernel, skipHydration: true });
+		expect(kernel.getSnapshot().optOut).toMatchObject({
+			categories: ['experience', 'marketing'],
+			recordedAt: NOW - 1000,
+		});
+		expect(internal.getOptOutReceiptData()).toEqual({
+			localAct: 'gpc',
+			reference: 'ref_seeded_act',
+			rightsConfirmed: true,
+		});
+		expect(internal.isOptOutGpcReported()).toBe(true);
 		persistence.dispose();
 		kernel.dispose();
 	});

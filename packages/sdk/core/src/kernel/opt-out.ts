@@ -257,16 +257,22 @@ export interface OptOutAnswerFence {
 	ownAct?: boolean;
 }
 
+/**
+ * The receipt after a backend answer. This browser's act and its reference
+ * stay only while the answer is that act (`localAct`); a different act was
+ * not made here, so the receipt drops them.
+ */
 const nextSyncedOptOutReceipt = function nextSyncedOptOutReceipt(
 	currentOptOut: Readonly<OptOutRecord> | null,
 	nextOptOut: OptOutRecord | null,
 	currentReceipt: Readonly<OptOutReceiptData>,
-	confirmed: boolean
+	confirmed: boolean,
+	localAct: boolean
 ): OptOutReceiptData {
 	if (nextOptOut === null) {
 		return EMPTY_OPT_OUT_RECEIPT_DATA;
 	}
-	if (currentOptOut === null) {
+	if (currentOptOut === null || !localAct) {
 		return {
 			localAct: null,
 			reference: null,
@@ -299,6 +305,23 @@ const answerWithHeldCategories = function answerWithHeldCategories(
 			(held !== null &&
 				(answer.heldBy === 'device' || answersHeldOptOut(answer, held)))
 	);
+};
+
+/**
+ * Whether a backend answer is the act this browser recorded, so its receipt
+ * (the local act and its reference) still describes it: the answer to this
+ * browser's own request, or a record with the same time and method. A
+ * different act, such as a newer one an account holds, was not made here.
+ */
+const answersLocalAct = function answersLocalAct(
+	answer: OptOutRecord | null,
+	held: Readonly<OptOutRecord> | null,
+	fence: Pick<OptOutAnswerFence, 'ownAct'>
+): boolean {
+	if (answer === null || held === null) {
+		return false;
+	}
+	return fence.ownAct === true || answersHeldOptOut(answer, held);
 };
 
 /**
@@ -336,6 +359,7 @@ export const applySyncedOptOut = function applySyncedOptOut(
 	if (next === null && optOutLiftBlocker(current) === 'gpc-active') {
 		return false;
 	}
+	const localAct = answersLocalAct(next, current.optOut, fence);
 	if (next !== null) {
 		next = answerWithHeldCategories(next, current.optOut, fence);
 	}
@@ -345,7 +369,8 @@ export const applySyncedOptOut = function applySyncedOptOut(
 		current.optOut,
 		next,
 		currentReceipt,
-		confirmed
+		confirmed,
+		localAct
 	);
 	const receiptChanged =
 		nextReceipt.localAct !== currentReceipt.localAct ||
