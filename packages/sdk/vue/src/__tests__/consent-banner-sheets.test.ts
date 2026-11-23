@@ -56,10 +56,18 @@ afterEach(async () => {
 });
 
 describe('consent banner stylesheets', () => {
-	test('each container component imports its own sheet and no other', () => {
-		expect(sheetsOf('card.vue')).toEqual(['consent-card']);
-		expect(sheetsOf('strip.vue')).toEqual(['consent-banner']);
-		expect(sheetsOf('drawer.vue')).toEqual(['consent-drawer']);
+	test("each container component imports its own sheet and no other container's", () => {
+		// The surface's sheet comes first, so a Nuxt server render inlines it
+		// ahead of the container's (see container-sheet-order.test.ts).
+		expect(sheetsOf('card.vue')).toEqual(['consent-surface', 'consent-card']);
+		expect(sheetsOf('strip.vue')).toEqual([
+			'consent-surface',
+			'consent-banner',
+		]);
+		expect(sheetsOf('drawer.vue')).toEqual([
+			'consent-surface',
+			'consent-drawer',
+		]);
 		// The shared shell brings no container's rules.
 		for (const file of ['prompt.vue', 'surface.vue', 'panel.vue', 'tag.vue']) {
 			for (const name of sheetsOf(file)) {
