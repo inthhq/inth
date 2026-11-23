@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getConsentManager, PrivacyChoicesLink } from '@inth/svelte';
 
-	import type { PrivacyChoicesRegion } from './privacy-choices-story-policies';
+	import type { StoryRegion } from './consent-story-policies';
 
 	/**
 	 * A plain page under the dialog, with the persistent page links, as
@@ -9,7 +9,7 @@
 	 * in the EU and under US opt-in, and the stock "Your Privacy Choices"
 	 * link elsewhere.
 	 */
-	let { region }: { region: PrivacyChoicesRegion } = $props();
+	let { region }: { region: StoryRegion } = $props();
 
 	const consent = getConsentManager();
 </script>

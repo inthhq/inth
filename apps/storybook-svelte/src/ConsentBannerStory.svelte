@@ -1,9 +1,5 @@
 <script lang="ts">
-	import type {
-		OptOutLinkVariant,
-		PromptPosition,
-		PromptVariant,
-	} from '@inth/sdk/engine';
+	import type { OptOutLinkVariant } from '@inth/sdk/engine';
 	import { ConsentBanner, ConsentDialog } from '@inth/svelte';
 
 	import {
@@ -15,22 +11,16 @@
 
 	let {
 		includeDialog = false,
-		trapFocus = undefined,
+		blockUntilChoice = undefined,
 		notice = false,
 		optOutLink = undefined,
 		disableAnimation = undefined,
-		variant = undefined,
-		position = undefined,
-		blocking = undefined,
 	}: {
 		includeDialog?: boolean;
-		trapFocus?: boolean;
+		blockUntilChoice?: boolean;
 		notice?: boolean;
 		optOutLink?: OptOutLinkVariant;
 		disableAnimation?: boolean;
-		variant?: PromptVariant;
-		position?: PromptPosition;
-		blocking?: boolean;
 	} = $props();
 
 	// A notice under an opt-out model: an opt-out link plus a primary OK.
@@ -50,21 +40,14 @@
 <StorybookConsentProvider
 	options={{
 		...editableConsentOptions,
-		trapFocus,
 		...(notice ? noticeOptions : {}),
 	}}
 >
 	<ConsentBanner
 		{disableAnimation}
-		{trapFocus}
-		{variant}
-		{position}
-		{blocking}
+		{blockUntilChoice}
 	/>
 	{#if includeDialog || notice}
-		<ConsentDialog
-			{disableAnimation}
-			{trapFocus}
-		/>
+		<ConsentDialog {disableAnimation} />
 	{/if}
 </StorybookConsentProvider>

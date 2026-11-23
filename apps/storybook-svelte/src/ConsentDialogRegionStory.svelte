@@ -6,16 +6,16 @@
 		storybookMode,
 		storybookVendors,
 	} from '../../storybook-consent-policy';
-	import { DIALOG_POLICIES } from './privacy-choices-story-policies';
-	import type { PrivacyChoicesRegion } from './privacy-choices-story-policies';
-	import PrivacyChoicesDialogPage from './PrivacyChoicesDialogPage.svelte';
-	import PrivacyChoicesOpenOnMount from './PrivacyChoicesOpenOnMount.svelte';
+	import { DIALOG_POLICIES } from './consent-story-policies';
+	import type { StoryRegion } from './consent-story-policies';
+	import ConsentDialogDemoPage from './ConsentDialogDemoPage.svelte';
+	import OpenDialogOnMount from './OpenDialogOnMount.svelte';
 	import { editableConsentOptions } from './storybook-consent-fixtures';
 	import StorybookConsentProvider from './StorybookConsentProvider.svelte';
 
 	/**
-	 * The stock `ConsentDialog` in the Privacy Choices design, open on a
-	 * page, or, for a full flow, starting on the v6 banner.
+	 * The stock `ConsentDialog`, open on a page, or, for a full flow,
+	 * starting on the banner.
 	 */
 	let {
 		region = 'us-opt-out',
@@ -23,8 +23,8 @@
 		container = { position: 'start', type: 'card' },
 		edgeStyle = undefined,
 	}: {
-		region?: PrivacyChoicesRegion;
-		/** Start on the v6 banner instead of the open dialog. */
+		region?: StoryRegion;
+		/** Start on the banner instead of the open dialog. */
 		flow?: boolean;
 		container?: ConsentContainer;
 		edgeStyle?: 'inset' | 'flush';
@@ -40,16 +40,15 @@
 		},
 		mode: storybookMode([DIALOG_POLICIES[region]]),
 		presentation: {
-			design: 'privacy-choices',
 			prompt: { container, edgeStyle },
 		},
 		vendors: storybookVendors,
 	}}
 >
-	<PrivacyChoicesDialogPage {region} />
+	<ConsentDialogDemoPage {region} />
 	<ConsentBanner />
 	<ConsentDialog />
 	{#if !flow}
-		<PrivacyChoicesOpenOnMount />
+		<OpenDialogOnMount />
 	{/if}
 </StorybookConsentProvider>
