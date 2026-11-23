@@ -423,10 +423,6 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			reloadOnConsentRevoked: false,
 		},
 		props: { disableAnimation: true },
-		// The Svelte island renders the standalone confirmation React's
-		// `<OptOutConfirmation />` does; React's island shows the dialog's
-		// receipt instead.
-		ui: 'svelte',
 	},
 	{
 		component: 'opt-out-confirmation',
@@ -441,10 +437,6 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			reloadOnConsentRevoked: false,
 		},
 		props: { disableAnimation: true },
-		// The Svelte island renders the standalone confirmation React's
-		// `<OptOutConfirmation />` does; React's island shows the dialog's
-		// receipt instead.
-		ui: 'svelte',
 	},
 	{
 		component: 'opt-out-confirmation',
@@ -459,13 +451,11 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			reloadOnConsentRevoked: false,
 		},
 		props: { disableAnimation: true },
-		// The Svelte island renders the standalone confirmation React's
-		// `<OptOutConfirmation />` does; React's island shows the dialog's
-		// receipt instead.
-		ui: 'svelte',
 	},
 	{
-		component: 'opt-out-confirmation',
+		// React's story renders `<ConsentDialog />`, not
+		// `<OptOutConfirmation />`, so the dialog confirms on its receipt.
+		component: 'consent-dialog',
 		id: 'opt-out-confirmation--signal-honored',
 		openOptOutConfirmation: 'signal',
 		optOutState: 'signal',
@@ -477,12 +467,12 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			reloadOnConsentRevoked: false,
 		},
 		props: { disableAnimation: true },
-		// React's story opens the dialog on its receipt here, as the
-		// default React island does.
 		withOptOutLink: true,
 	},
 	{
-		component: 'opt-out-confirmation',
+		// React's story renders `<ConsentDialog />`, not
+		// `<OptOutConfirmation />`, so the dialog confirms on its receipt.
+		component: 'consent-dialog',
 		id: 'opt-out-confirmation--account-adopted',
 		openOptOutConfirmation: 'request',
 		optOutState: 'account-adopted',
@@ -494,8 +484,6 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 			reloadOnConsentRevoked: false,
 		},
 		props: { disableAnimation: true },
-		// React's story opens the dialog on its receipt here, as the
-		// default React island does.
 		withOptOutLink: true,
 	},
 	{
