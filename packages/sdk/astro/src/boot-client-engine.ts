@@ -75,9 +75,8 @@ import { activateGatedScripts } from './browser/activate-gated-scripts';
 import {
 	attachBannerActions,
 	registerOptOutLinkHandler,
-	resetDialogWarming,
-	warmDialog,
 } from './browser/attach-banner-actions';
+import { resetDialogWarming, warmDialog } from './browser/warm-dialog';
 import type { DeferredCommitted } from './browser/complete-commit';
 import {
 	ensureDialogHost,

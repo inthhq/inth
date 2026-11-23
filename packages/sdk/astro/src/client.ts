@@ -31,7 +31,7 @@ import type {
 } from '@inth/sdk/events';
 
 import type { AstroConsentClient } from './astro-consent-client.model';
-import { warmDialogTarget } from './browser/attach-banner-actions';
+import { warmDialogTarget } from './browser/warm-dialog';
 import { preloadDialogChunks } from './browser/load-dialog';
 import { getWindow } from './browser/get-window';
 import { GLOBAL_KEY } from './browser/page-state.model';
@@ -185,12 +185,12 @@ export type {
 	AstroConsentSaveInput,
 	ConsentAction,
 } from './astro-consent-client.model';
+export { attachBannerActions } from './browser/attach-banner-actions';
 export {
 	ACTION_ATTRIBUTE,
-	attachBannerActions,
 	DIALOG_ATTRIBUTE,
 	DIALOG_TAB_ATTRIBUTE,
-} from './browser/attach-banner-actions';
+} from './browser/banner-actions.model';
 export { startDeferredClient } from './browser/start-deferred-client';
 export { activateGatedScripts } from './browser/activate-gated-scripts';
 export {

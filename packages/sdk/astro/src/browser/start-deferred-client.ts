@@ -71,11 +71,9 @@ import type {
 	ConsentDialogHandle,
 	ConsentDialogKind,
 } from '../ui/register-dialog-adapter';
-import {
-	attachBannerActions,
-	registerDeferredClient,
-	warmDialog,
-} from './attach-banner-actions';
+import { attachBannerActions } from './attach-banner-actions';
+import { registerDeferredClient } from './register-deferred-client';
+import { warmDialog } from './warm-dialog';
 import type { CompleteCommitInput, DeferredCommitted } from './complete-commit';
 import type * as StandInModule from './create-dialog-stand-in';
 import type { DialogStandIn } from './create-dialog-stand-in';
