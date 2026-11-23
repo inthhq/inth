@@ -78,6 +78,16 @@ const CONTAINERS = {
 	drawer: DrawerSurface,
 };
 
+/**
+ * The production containers, lazy and none of them loaded: the context's
+ * default, read before any render. Passed explicitly, because the server
+ * render's provider in this same window would otherwise leak its eager
+ * containers into the client's hydration.
+ */
+const LAZY_CONTAINERS = (
+	PromptContainersContext as unknown as { _currentValue: typeof CONTAINERS }
+)._currentValue;
+
 const Probe = () => {
 	const snapshot = useSnapshot();
 	const save = useSaveConsents();
@@ -99,7 +109,36 @@ const Probe = () => {
 	);
 };
 
-const ServerPage = ({ prefetch }: { prefetch: unknown }) => (
+/**
+ * What a production server renders: each container as the lazy wrapper
+ * renders it once its chunk is in (the server loads them at module
+ * evaluation), inside its own boundary.
+ */
+const SERVER_CONTAINERS = {
+	banner: (props: Parameters<typeof BannerSurface>[0]) => (
+		<Suspense fallback={null}>
+			<BannerSurface {...props} />
+		</Suspense>
+	),
+	card: (props: Parameters<typeof CardSurface>[0]) => (
+		<Suspense fallback={null}>
+			<CardSurface {...props} />
+		</Suspense>
+	),
+	drawer: (props: Parameters<typeof DrawerSurface>[0]) => (
+		<Suspense fallback={null}>
+			<DrawerSurface {...props} />
+		</Suspense>
+	),
+};
+
+const ServerPage = ({
+	containers = CONTAINERS,
+	prefetch,
+}: {
+	containers?: typeof CONTAINERS;
+	prefetch: unknown;
+}) => (
 	<html lang="en">
 		<head />
 		<body>
@@ -112,7 +151,7 @@ const ServerPage = ({ prefetch }: { prefetch: unknown }) => (
 				}}
 			>
 				<Probe />
-				<PromptContainersContext.Provider value={CONTAINERS}>
+				<PromptContainersContext.Provider value={containers}>
 					<DeferredConsentBanner />
 				</PromptContainersContext.Provider>
 				<Suspense fallback={null}>
@@ -215,6 +254,7 @@ const ClientPage = ({
 	commit,
 	defer,
 	hookScripts,
+	lazyContainers = false,
 	live,
 	liveHookScripts,
 	loadEngine,
@@ -227,6 +267,8 @@ const ClientPage = ({
 	commit?: DeferredCommitConfig;
 	defer: boolean;
 	hookScripts?: Script[];
+	/** Hydrate with the production lazy containers, none of them loaded. */
+	lazyContainers?: boolean;
 	live?: string;
 	liveHookScripts?: boolean;
 	loadEngine: () => Promise<EngineModule>;
@@ -269,7 +311,9 @@ const ClientPage = ({
 				<Probe />
 				{hookScripts ? <HookScripts scripts={hookScripts} /> : null}
 				{liveHookScripts ? <LiveHookScripts /> : null}
-				<PromptContainersContext.Provider value={CONTAINERS}>
+				<PromptContainersContext.Provider
+					value={lazyContainers ? LAZY_CONTAINERS : CONTAINERS}
+				>
 					<DeferredConsentBanner />
 				</PromptContainersContext.Provider>
 			</DeferredConsentShell>
@@ -315,9 +359,17 @@ const hasEnginePreload = (doc: Document): boolean =>
 	);
 
 /** Streams the server render with a streamed state, then reads its boot data. */
-const serve = async function serve(config: KernelConfig) {
+const serve = async function serve(
+	config: KernelConfig,
+	containers: typeof CONTAINERS = CONTAINERS
+) {
 	const server = deferred<KernelConfig>();
-	page = await streamPage(<ServerPage prefetch={server.promise} />);
+	page = await streamPage(
+		<ServerPage
+			containers={containers}
+			prefetch={server.promise}
+		/>
+	);
 	server.resolve(config);
 	await page.finish();
 	const boot = readConsentBoot(page.doc);
@@ -384,6 +436,82 @@ test('a fresh visitor: the page hydrates at once, the banner keeps its server HT
 	});
 	expect(hydrated.recoverableErrors).toEqual([]);
 	await hydrated.unmount();
+});
+
+/**
+ * Whether `element` rendered under a container still loading at mount: the
+ * lazy wrapper `createDeferredModule` renders, which suspends inside the
+ * hydrating boundary. A container already loaded renders directly.
+ */
+const underLazyContainer = (element: Element | null): boolean => {
+	const key = element
+		? Object.keys(element).find((name) => name.startsWith('__reactFiber'))
+		: undefined;
+	let fiber = key
+		? (element as unknown as Record<string, unknown>)[key]
+		: undefined;
+	while (fiber) {
+		const { elementType, return: parent } = fiber as {
+			elementType?: { displayName?: string } | null;
+			return?: unknown;
+		};
+		if (elementType?.displayName === 'DeferredComponent') {
+			return true;
+		}
+		fiber = parent;
+	}
+	return false;
+};
+
+test('[BNR-13] with lazy containers, the engine loads the server-rendered container before the banner hydrates, so the banner keeps its node', async () => {
+	const config = policyConfig();
+	const { boot, page: streamed } = await serve(config, SERVER_CONTAINERS);
+	const banner = streamed.doc.querySelector(BANNER);
+	const placement = banner?.getAttribute('data-placement');
+	expect(placement).toBeTruthy();
+	// Inth's modules run in the test's window and read the server banner's
+	// placement from its document.
+	const mirror = document.createElement('div');
+	mirror.dataset.testid = 'consent-banner-root';
+	mirror.dataset.placement = placement as string;
+	document.body.append(mirror);
+	try {
+		let start: () => void = () => undefined;
+		const hydrated = await streamed.hydrate(
+			<ClientPage
+				boot={boot}
+				defer
+				lazyContainers
+				loadEngine={() => import('../engine')}
+				prefetch={fulfilledThenable(config)}
+				schedule={(begin) => {
+					start = begin;
+					return () => undefined;
+				}}
+			/>
+		);
+		await act(() => {
+			start();
+		});
+		await vi.waitFor(() => {
+			expect(
+				reactProps(
+					streamed.doc.querySelector(
+						'[data-testid="consent-banner-accept-button"]'
+					)
+				)
+			).toBe(true);
+		});
+		// The same element: hydrated, not replaced by a client render.
+		expect(streamed.doc.querySelector(BANNER)).toBe(banner);
+		// The container was in before the banner hydrated, so nothing in
+		// the hydrating boundary waited for its chunk.
+		expect(underLazyContainer(banner)).toBe(false);
+		expect(hydrated.recoverableErrors).toEqual([]);
+		await hydrated.unmount();
+	} finally {
+		mirror.remove();
+	}
 });
 
 test('once the engine loads unprompted, the banner hydrates in place and works', async () => {

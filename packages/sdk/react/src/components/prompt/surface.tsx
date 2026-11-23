@@ -496,8 +496,9 @@ const SurfaceContent = ({
 	});
 	const saveSource = toSaveUISource(uiSource ?? 'banner');
 
-	const commit = (action: BannerCommitAction) => {
+	const commit = (action: BannerCommitAction, actionAt?: number) => {
 		const { plan } = commitBannerChoice(kernel, action, {
+			actionAt,
 			draft: action === 'save' ? draft : undefined,
 			uiSource: saveSource,
 		});
@@ -512,10 +513,10 @@ const SurfaceContent = ({
 		}
 		committed.current = message;
 	};
-	const acknowledge = () => {
+	const acknowledge = (actionAt?: number) => {
 		committed.current = '';
 		session.commit();
-		void dismissNotice();
+		void dismissNotice(actionAt === undefined ? undefined : { actionAt });
 	};
 	const expand = () => {
 		void panelModule.preload();
@@ -531,14 +532,14 @@ const SurfaceContent = ({
 	// A tap on the server-rendered prompt before it hydrated, which the
 	// inline script held. It replays through this prompt's own handlers,
 	// so a choice commits through this prompt's plan and Customize opens
-	// the options in place.
+	// the options in place. A choice records the time of the tap.
 	const replayTap = (tap: EarlyConsentTap) => {
 		if (tap.action === 'accept') {
-			commit('allow');
+			commit('allow', tap.at);
 		} else if (tap.action === 'reject') {
-			commit('refuse');
+			commit('refuse', tap.at);
 		} else if (tap.action === 'dismiss') {
-			acknowledge();
+			acknowledge(tap.at);
 		} else if (tap.action === 'customize' && !allInOne) {
 			expand();
 		}
@@ -601,6 +602,9 @@ const SurfaceContent = ({
 				aria-expanded={expanded}
 				// The collapsed bar has no panel to point at (PERM-09).
 				aria-controls={inBar ? undefined : ids.panel}
+				// A tap before hydration replays as Customize: the options
+				// expand in place.
+				data-action="customize"
 				data-testid="consent-banner-right-link-opt-out"
 				onClick={expand}
 				onFocus={warm}
@@ -663,7 +667,7 @@ const SurfaceContent = ({
 			earlyTap
 			isPrimary
 			data-testid="consent-banner-dismiss-button"
-			onClick={acknowledge}
+			onClick={() => acknowledge()}
 		>
 			{dismissButtonText ?? copy.ok}
 		</ConsentButton>
@@ -916,6 +920,11 @@ const SurfaceContent = ({
 				<div
 					ref={rootRef}
 					{...rootProps}
+					// The early-tap script records these with a tap, so a replay
+					// against another model or prompt than the one the visitor
+					// saw is dropped (`stillApplies` in core's `early-taps`).
+					data-model={model}
+					data-prompt={snapshot.policyRule.prompt}
 					data-placement={layout.placement}
 					data-flow={layout.flow}
 					data-edge-style={layout.edgeStyle}

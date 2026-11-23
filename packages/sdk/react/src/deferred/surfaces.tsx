@@ -33,6 +33,8 @@ interface EngineSurfaces {
 	ConsentBanner: AnyComponent;
 	ConsentDialog: AnyComponent;
 	OptOutConfirmation: AnyComponent;
+	/** Loads the container the server rendered the banner in. */
+	preloadServerContainer?: () => Promise<void>;
 }
 
 const deferredSurface = function deferredSurface<Module>(
@@ -48,13 +50,17 @@ const deferredSurface = function deferredSurface<Module>(
 	if (typeof window === 'undefined') {
 		loadDirect();
 	}
-	const fromEngine = (engine: unknown) =>
-		pick(
-			(engine as EngineSurfaces)[engineKey] as unknown as Record<
-				string,
-				AnyComponent
-			>
-		);
+	const fromEngine = async (engine: unknown): Promise<AnyComponent> => {
+		const surfaces = engine as EngineSurfaces;
+		// The banner hydrates over the server's markup: its container must be
+		// in before it renders, or the container suspends inside a boundary
+		// that is still hydrating, and an update there makes React replace
+		// the server's banner with a client render.
+		if (engineKey === 'ConsentBanner') {
+			await surfaces.preloadServerContainer?.();
+		}
+		return pick(surfaces[engineKey] as unknown as Record<string, AnyComponent>);
+	};
 	const Gate = (props: SurfaceProps): ReactNode => {
 		const session = useContext(DeferredSessionContext);
 		// Under a deferred root the surface comes from the engine's module,
