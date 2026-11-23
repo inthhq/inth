@@ -60,6 +60,7 @@ import { KernelContext } from '../context';
 import { InthProvider } from '../provider';
 import { consentMarkup } from './consent-markup';
 import { transportMode } from './fixtures/transport-mode';
+import { bannerLoaded, writesLanded } from './policy-driver-waits';
 
 // oxlint-disable-next-line promise/avoid-new -- Browser effects must settle between scenario operations.
 const settle = () =>
@@ -149,6 +150,8 @@ const isVisible = (element: Element | null): boolean => {
 	}
 	return true;
 };
+const bannerShown = () =>
+	isVisible(document.querySelector('[data-testid="consent-banner-root"]'));
 const getDom = (kernel: ConsentKernel): PolicyDomEvidence => {
 	const root = document.querySelector('[data-testid="consent-banner-root"]');
 	const actions: PolicyDomEvidence['actions'][number][] = [];
@@ -658,19 +661,24 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 
 	return {
 		baseline,
-		dispose() {
-			addon?.dispose();
-			root?.unmount();
-			container?.remove();
-			date.mockRestore();
-			warn.mockRestore();
-			window.fetch = originalFetch;
-			window.gtag = previousGtag;
-			window.removeEventListener('inth-policy-script-loaded', countScript);
-			if (previousGpc) {
-				Object.defineProperty(navigator, 'globalPrivacyControl', previousGpc);
-			} else {
-				Reflect.deleteProperty(navigator, 'globalPrivacyControl');
+		async dispose() {
+			try {
+				// A write still waiting would land in the next scenario.
+				await writesLanded();
+			} finally {
+				addon?.dispose();
+				root?.unmount();
+				container?.remove();
+				date.mockRestore();
+				warn.mockRestore();
+				window.fetch = originalFetch;
+				window.gtag = previousGtag;
+				window.removeEventListener('inth-policy-script-loaded', countScript);
+				if (previousGpc) {
+					Object.defineProperty(navigator, 'globalPrivacyControl', previousGpc);
+				} else {
+					Reflect.deleteProperty(navigator, 'globalPrivacyControl');
+				}
 			}
 		},
 		// oxlint-disable-next-line complexity -- Each branch executes one distinct shared scenario operation.
@@ -836,6 +844,8 @@ export const createPolicySession: CreatePolicySession = async (setup) => {
 				}
 			}
 			await settle();
+			await writesLanded();
+			await bannerLoaded(kernel, bannerShown);
 			if (setup.probeGates) {
 				networkAttempts += 1;
 				await window.fetch('https://inth-policy-probe.invalid/collect');
