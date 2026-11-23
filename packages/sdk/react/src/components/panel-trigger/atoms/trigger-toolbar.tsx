@@ -29,7 +29,7 @@ import type {
 	TriggerSize,
 } from '../consent-dialog-trigger.model';
 import { TriggerIcon } from './trigger-icon';
-import { DevToolsIcon } from './settings-icon';
+import { DevToolsIcon } from './dev-tools-icon';
 import { useTriggerContext } from './trigger-root';
 
 const cornerClassMap = {
