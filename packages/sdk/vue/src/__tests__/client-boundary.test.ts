@@ -1,10 +1,11 @@
 /**
  * What the shared Vue runtime and the Nuxt plugin may import statically.
  *
- * Every Nuxt page loads `kernel.ts` and `plugin.nuxt.ts` in its first load.
- * The kernel used to carry the Vue manifest transport, so the browser
- * resolver's code (and its error literals) shipped to every Nuxt page even
- * when the server resolved the policy. The modes now come in as transport
+ * Every Nuxt page loads `create-vue-consent-kernel-context.ts` and
+ * `plugin.nuxt.ts` in its first load. The kernel used to carry the Vue
+ * manifest transport, so the browser resolver's code (and its error
+ * literals) shipped to every Nuxt page even when the server resolved the
+ * policy. The modes now come in as transport
  * factories: the Nuxt plugin builds them with core's `clientMode()`, which
  * loads the resolver with `import()` only for `resolve: 'browser'`, and the
  * Vue plugin takes the one the app imported.
@@ -48,7 +49,10 @@ describe('client boundary', () => {
 	});
 
 	test('the kernel and the Nuxt plugin import no transport', () => {
-		for (const file of ['kernel.ts', 'plugin.nuxt.ts']) {
+		for (const file of [
+			'create-vue-consent-kernel-context.ts',
+			'plugin.nuxt.ts',
+		]) {
 			const source = readFileSync(join(runtimeDir, file), 'utf8');
 			expect(staticImports(source)).not.toContain(
 				'@inth/sdk/transports/manifest-browser'
@@ -65,8 +69,9 @@ describe('client boundary', () => {
 describe('first-load boundary', () => {
 	/**
 	 * The Nuxt plugin's deferred context (`runtime/deferred/*`) is the page's
-	 * first-load chunk; `runtime/kernel.ts` is the engine. A value import of
-	 * the engine from there puts it back on the first load. (A stacked
+	 * first-load chunk; `runtime/create-vue-consent-kernel-context.ts` is the
+	 * engine. A value import of the engine from there puts it back on the
+	 * first load. (A stacked
 	 * `useScriptLoader` change did so and cost 138 ms of LCP on the gate.)
 	 */
 	test('no deferred module imports the engine by value', () => {
@@ -81,7 +86,9 @@ describe('first-load boundary', () => {
 					),
 				].map((match) => match.groups?.specifier);
 				return valueImports
-					.filter((specifier) => specifier === '../kernel')
+					.filter(
+						(specifier) => specifier === '../create-vue-consent-kernel-context'
+					)
 					.map((specifier) => `${file} -> ${specifier}`);
 			});
 		expect(offenders).toEqual([]);

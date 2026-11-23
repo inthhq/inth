@@ -68,7 +68,7 @@ import { slotAttrs } from '../../utils/slot-attrs';
 import AdvertisingRow from '../parts/advertising-row.vue';
 import CategoryGroup from '../parts/category-group.vue';
 import ChoiceButton from '../parts/choice-button.vue';
-import { takeReceiptFocus } from '../parts/receipt-focus';
+import { takeReceiptFocus } from '../parts/receipt-focus.model';
 import RightsReceipt from '../parts/receipt.vue';
 import SaleRightsRow from '../parts/rights-row.vue';
 import { provideChoiceDraft } from '../parts/use-choice-draft';

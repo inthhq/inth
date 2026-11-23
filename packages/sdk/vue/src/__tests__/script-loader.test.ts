@@ -7,12 +7,12 @@ import { defineComponent, h, ref } from 'vue';
 import { inth } from '../index';
 import { useScriptLoader } from '../runtime/composables';
 import type { Script } from '../runtime/composables';
-import type { VueConsentKernelContext } from '../runtime/kernel';
 import {
 	symbolKernel,
 	symbolKernelContext,
 	symbolSnapshot,
 } from '../runtime/utils/consent-symbols.model';
+import type { VueConsentKernelContext } from '../runtime/vue-consent-kernel-context.model';
 import { testing } from '../testing';
 import { createVueConsentKernelContext } from './test-kernel';
 

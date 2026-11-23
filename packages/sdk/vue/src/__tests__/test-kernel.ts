@@ -1,5 +1,6 @@
 /**
- * `../runtime/kernel` for tests that build a context from a config alone.
+ * `../runtime/create-vue-consent-kernel-context` for tests that build a
+ * context from a config alone.
  * The plugin always passes a `mode`; these tests describe the hosted
  * transport through the config fields older tests used (`projectUrl`,
  * `customFetch`, `domain`), and this wrapper turns them into `hosted()`.
@@ -7,15 +8,16 @@
 
 import { hosted } from '@inth/sdk/transports';
 
-import { createVueConsentKernelContext as createContext } from '../runtime/kernel';
+import { createVueConsentKernelContext as createContext } from '../runtime/create-vue-consent-kernel-context';
 import type {
 	RuntimeConsentConfig as KernelConsentConfig,
 	VueConsentContextOptions,
 	VueConsentKernelContext,
-} from '../runtime/kernel';
+} from '../runtime/vue-consent-kernel-context.model';
 
 // oxlint-disable-next-line oxc/no-barrel-file -- A test stand-in for the kernel module.
-export * from '../runtime/kernel';
+export * from '../runtime/create-vue-consent-kernel-context';
+export type * from '../runtime/vue-consent-kernel-context.model';
 
 /** The hosted transport fields a test config may carry. */
 interface TestTransportConfig {

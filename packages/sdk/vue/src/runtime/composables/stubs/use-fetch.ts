@@ -2,6 +2,8 @@ import { joinURL, withQuery } from 'ufo';
 import { computed, ref, toValue, watch } from 'vue';
 import type { MaybeRefOrGetter, Ref } from 'vue';
 
+import { fetchStubJson } from './fetch-stub.api';
+
 type QueryPrimitive = string | number | boolean | null | undefined;
 type QueryValue = QueryPrimitive | MaybeRefOrGetter<QueryPrimitive>;
 export type SearchParams = Record<string, QueryValue>;
@@ -83,18 +85,10 @@ const createFetchEntry = function createFetchEntry<T>(
 		error.value = null;
 
 		try {
-			const response = await fetch(target, {
+			data.value = await fetchStubJson<T>(target, {
 				headers: toValue(options.headers),
 				method: toValue(options.method) ?? 'GET',
 			});
-
-			if (!response.ok) {
-				throw new Error(
-					`[inth] fetch failed (${response.status} ${response.statusText})`
-				);
-			}
-
-			data.value = (await response.json()) as T;
 		} catch (cause) {
 			error.value = cause instanceof Error ? cause : new Error(String(cause));
 			data.value = null;
