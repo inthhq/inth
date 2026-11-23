@@ -92,25 +92,13 @@ import {
 	BANNER_ROOT_SELECTOR,
 	GLOBAL_KEY,
 } from './page-state.model';
+import type { ConsentBoot } from './consent-boot.model';
 import { readPageNonce } from './read-page-nonce';
+import { readConsentBoot } from './read-consent-boot';
 import {
 	scheduleDeferredEngine,
 	unhideEarlyTap,
 } from './schedule-deferred-engine';
-
-/** Attribute on the boot data block. @internal */
-export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
-
-/** What the server leaves in the boot data block. @internal */
-export interface ConsentBoot {
-	/** The snapshot the server rendered the page from. */
-	s: ConsentSnapshot;
-	/**
-	 * Whether the engine may load after the page, as far as the server can
-	 * tell (see `canDeferEngine` in `../banner/deferred-boot.model`).
-	 */
-	d: boolean;
-}
 
 /** A preference dialog the shell mounted before the engine. @internal */
 export interface EarlyDialog {
@@ -135,30 +123,6 @@ export interface EngineModule {
 		handoff: EngineHandoff
 	) => AstroEngineClient;
 }
-
-/**
- * Reads the boot data block.
- *
- * @param root - Where to look. Defaults to `document`.
- * @returns The boot data, or `null` without a parseable block.
- * @internal
- */
-export const readConsentBoot = function readConsentBoot(
-	root: ParentNode = document
-): ConsentBoot | null {
-	const text = root.querySelector(
-		`script[${CONSENT_BOOT_ATTRIBUTE}]`
-	)?.textContent;
-	if (!text) {
-		return null;
-	}
-	try {
-		const boot = JSON.parse(text) as ConsentBoot;
-		return boot?.s ? boot : null;
-	} catch {
-		return null;
-	}
-};
 
 /**
  * Whether this page can wait for the engine, given what only the browser
