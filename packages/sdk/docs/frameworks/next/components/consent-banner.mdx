@@ -54,7 +54,10 @@ To change the container or the button order per policy rule, read the active rul
 import { ConsentBanner, usePolicyRule } from '@inth/nextjs';
 import type { ConsentBannerProps } from '@inth/nextjs';
 
-const banners: Record<string, Pick<ConsentBannerProps, 'container' | 'layout'>> = {
+const banners: Record<
+	string,
+	Pick<ConsentBannerProps, 'container' | 'layout'>
+> = {
 	europe_opt_in: {
 		container: { position: 'center', type: 'card' },
 		layout: [['reject', 'accept'], 'customize'],
