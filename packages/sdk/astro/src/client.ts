@@ -100,7 +100,7 @@ export const optOut = async function optOut(
 	await getConsentClient()?.optOut(opener);
 };
 
-/** `EVENTS_KEY` in `./client-engine`; a test keeps them equal. */
+/** `EVENTS_KEY` in `./boot-client-engine`; a test keeps them equal. */
 const EVENTS_KEY = Symbol.for('inth.astro.events');
 
 type WithEvents = AstroConsentClient & {
@@ -195,14 +195,14 @@ export { startDeferredClient } from './browser/start-deferred-client';
 export { activateGatedScripts } from './browser/activate-gated-scripts';
 export {
 	boot,
-	registerIAB,
-	registerRuntimeModules,
-	registerTransport,
 	setIABPromptRendererLoaderForTest,
 	syncBannerVisibility,
 	syncSurfaceVisibility,
 } from './boot-client-engine';
-export type { PageIAB } from './boot-client-engine';
+export { registerIAB } from './register-iab';
+export { registerRuntimeModules } from './register-runtime-modules';
+export { registerTransport } from './register-transport';
+export type { PageIAB } from './register-iab';
 export type { ConsentRuntime } from '@inth/sdk/runtime';
 export type {
 	EventDispatcher,

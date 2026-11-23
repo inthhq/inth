@@ -1,7 +1,7 @@
 /**
  * The standard banner's first-paint rules, on their own so the engine can
  * load them for a page that left them out (see `ensureFirstPaintStyles`
- * in `../client-engine`) without the IAB rules.
+ * in `../boot-client-engine`) without the IAB rules.
  *
  * `@inth/sdk/ui`'s first-paint sheet, plus the rule from `styles.css` that lets
  * the `hidden` attribute hide the banner: the browser runtime shows and
