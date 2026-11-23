@@ -2,12 +2,13 @@
  * Guards `@inth/sdk/ui/styles/sheets/*`: the stylesheets React and Svelte
  * surfaces render themselves, and Astro inlines or links.
  *
- * Rendered in order, `first-paint` then `dialog` must apply exactly what
- * `styles.css` applies, rule for rule and in the same order (the variables
- * `dialog` repeats aside), so a surface
+ * Rendered in order, `first-paint`, the v6 presentation sheets and `dialog`
+ * must apply exactly what `styles.css` applies, rule for rule and in the
+ * same order (the variables the later sheets repeat aside), so a surface
  * that brings its own styles looks the same as an app that imports
  * `styles.css`. `first-paint` must hold no dialog rule, so the dialog's
- * rules load only with the dialog.
+ * rules load only with the dialog, and no v6 presentation rule, which no
+ * host that inlines it renders yet.
  *
  * These read the built artifacts: build `@inth/sdk/ui` first.
  */
@@ -19,7 +20,11 @@ import { parse } from 'postcss';
 import type { AtRule, ChildNode, Container, Declaration } from 'postcss';
 import { describe, expect, test } from 'vitest';
 
-import { DIALOG_COMPONENTS } from '../../../scripts/stylesheet-parts';
+import {
+	DIALOG_COMPONENTS,
+	PRESENTATION_COMPONENTS,
+	PRESENTATION_SHEETS,
+} from '../../../scripts/stylesheet-parts';
 
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
 const SHEETS_DIR = join(DIST_DIR, 'styles', 'sheets');
@@ -107,6 +112,16 @@ describe('styles/sheets', async () => {
 	const iabFirstPaint = await importSheet('iab-first-paint');
 	const iabDialog = await importSheet('iab-dialog');
 	const sheets = [firstPaint, dialog, primitives, iabFirstPaint, iabDialog];
+	// In `styles.css` order: each sheet's components, by
+	// PRESENTATION_COMPONENTS.
+	const presentationNames = Object.entries(PRESENTATION_SHEETS)
+		.sort(
+			([, a], [, b]) =>
+				PRESENTATION_COMPONENTS.indexOf(a[0]) -
+				PRESENTATION_COMPONENTS.indexOf(b[0])
+		)
+		.map(([name]) => name);
+	const presentations = await Promise.all(presentationNames.map(importSheet));
 
 	test('each sheet has its own id', () => {
 		expect(sheets.map((sheet) => sheet.id)).toEqual([
@@ -118,7 +133,7 @@ describe('styles/sheets', async () => {
 		]);
 	});
 
-	test('first-paint then dialog apply what styles.css applies, in order', () => {
+	test('first-paint, the presentations and dialog apply what styles.css applies, in order', () => {
 		const styles = ruleList(readDist(join(DIST_DIR, 'styles.css')));
 		// Only the token selectors' specificity differs (next test).
 		const asInStyles = (rule: string) =>
@@ -127,21 +142,29 @@ describe('styles/sheets', async () => {
 		// per-surface sheets too. Those repeats are declarations
 		// first-paint already made.
 		const firstPaintDeclarations = declarationList(firstPaint.css);
-		const repeated = ruleList(dialog.css).filter(
-			(rule) => !rule.startsWith('@layer components')
-		);
+		const repeatedIn = (sheet: Sheet) =>
+			ruleList(sheet.css).filter(
+				(rule) => !rule.startsWith('@layer components')
+			);
+		const ownRules = (sheet: Sheet) => {
+			const repeated = repeatedIn(sheet);
+			return ruleList(sheet.css).filter((rule) => !repeated.includes(rule));
+		};
 
 		expect(styles.length).toBeGreaterThan(0);
-		expect(repeated.length).toBeGreaterThan(0);
-		expect(
-			declarationList(dialog.css).filter(
-				(declaration) => !firstPaintDeclarations.includes(declaration)
-			)
-		).toEqual([]);
+		expect(repeatedIn(dialog).length).toBeGreaterThan(0);
+		for (const sheet of [...presentations, dialog]) {
+			expect(
+				declarationList(sheet.css).filter(
+					(declaration) => !firstPaintDeclarations.includes(declaration)
+				)
+			).toEqual([]);
+		}
 		expect(
 			[
 				...ruleList(firstPaint.css),
-				...ruleList(dialog.css).filter((rule) => !repeated.includes(rule)),
+				...presentations.flatMap(ownRules),
+				...ownRules(dialog),
 			].map(asInStyles)
 		).toEqual(styles);
 	});
@@ -194,6 +217,24 @@ describe('styles/sheets', async () => {
 		expect(dialogClasses.filter((name) => selectors.includes(name))).toEqual(
 			[]
 		);
+	});
+
+	test('first-paint holds no v6 presentation rule', () => {
+		const presentationClasses = PRESENTATION_COMPONENTS.flatMap((name) =>
+			[
+				...readDist(
+					join(DIST_DIR, 'styles', 'components', `${name}.js`)
+				).matchAll(/inth-ui-[\w-]+/gu),
+			].map((match) => match[0])
+		);
+		const selectors = ruleList(firstPaint.css)
+			.map((rule) => rule.split('|')[1])
+			.join('\n');
+
+		expect(presentationClasses.length).toBeGreaterThan(0);
+		expect(
+			presentationClasses.filter((name) => selectors.includes(name))
+		).toEqual([]);
 	});
 
 	test('dialog.css holds the dialog sheet', () => {

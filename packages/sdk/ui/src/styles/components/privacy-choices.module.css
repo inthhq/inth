@@ -1,0 +1,1019 @@
+/*
+ * The "Your Privacy Choices" dialog (v6): one column with a fixed header
+ * and footer and a body that is the only scroller (LAY-01), the rights
+ * rows as segmented controls, the inline confirmation and its nudge, the
+ * receipt line, the vendor table, and the nested phone sheets.
+ *
+ * The body and the category group reuse the `consent-expand` classes
+ * (`scroll`, `group`), so that sheet renders before this one. The card
+ * sizes the scroll area through `--_consent-scroll-*`.
+ *
+ * Data attributes:
+ *
+ *   .backdrop[data-edge-style]   inset | flush, for phone sheets
+ *   .card[data-regime='eu']      the wider EU card
+ *   .card[data-nested='true']    a nested phone sheet
+ *   .card[data-nested-open]      dims and pushes back a parent layer; the
+ *                                renderer sets `--consent-dialog-depth` to
+ *                                the number of layers above it
+ *   .card[data-state='closed']   a nested sheet playing its exit
+ *   .segmented[data-selected]    '0' or '1', the pressed option
+ *   .confirm[data-nudged='true'] the red ring and shake (RIGHT-04)
+ *   .done[data-cue='true']       the phone save check
+ *
+ * Hooks, read with a fallback:
+ *
+ *   --consent-dialog-width       (520px; 560px for the EU)
+ *   --consent-dialog-max-height  (min(640px, 100%))
+ *   --consent-dialog-radius      (--inth-radius-lg)
+ */
+
+@layer components {
+	.backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: var(--consent-dialog-z-index, 999999);
+		display: grid;
+		place-items: center;
+		padding: var(--inth-space-lg);
+		background: var(--inth-overlay);
+		font-family: var(--inth-font-family);
+		line-height: var(--inth-line-height-normal);
+		color: var(--inth-text);
+		-webkit-font-smoothing: antialiased;
+		animation: privacy-choices-fade-in var(--inth-duration-slow)
+			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+	}
+
+	.backdrop *,
+	.backdrop *::before,
+	.backdrop *::after {
+		box-sizing: border-box;
+	}
+
+	.card {
+		--_depth: var(--consent-dialog-depth, 0);
+		--_consent-scroll-height: none;
+		--_consent-scroll-padding: var(--inth-space-md) var(--inth-space-lg)
+			calc(var(--inth-space-xs) * 5);
+		position: relative;
+		grid-area: 1 / 1;
+		display: flex;
+		flex-direction: column;
+		width: min(100%, var(--consent-dialog-width, 520px));
+		max-height: var(--consent-dialog-max-height, min(640px, 100%));
+		overflow: hidden;
+		background: var(--inth-surface);
+		color: var(--inth-text);
+		border-radius: var(--consent-dialog-radius, var(--inth-radius-lg));
+		box-shadow:
+			0 0 0 1px color-mix(in srgb, var(--inth-text) 6%, transparent),
+			var(--inth-shadow-lg);
+		transform-origin: 50% 0;
+		transform: translateY(calc(var(--_depth) * -32px))
+			scale(calc(1 - var(--_depth) * 0.05));
+		animation: privacy-choices-card-in var(--inth-duration-slow)
+			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+		transition: transform calc(var(--inth-duration-slow) * 1.3)
+			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+	}
+
+	.card[data-regime='eu'] {
+		width: min(100%, var(--consent-dialog-width, 560px));
+	}
+
+	/* A parent layer dims while a child sheet is open (VIS-05). */
+	.card::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		pointer-events: none;
+		background: color-mix(in srgb, var(--inth-overlay) 20%, transparent);
+		opacity: 0;
+		transition: opacity calc(var(--inth-duration-slow) * 1.3)
+			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+	}
+
+	:global(.inth-dark) .card::after {
+		background: color-mix(in srgb, var(--inth-overlay) 57%, transparent);
+	}
+
+	.card[data-nested-open]::after {
+		opacity: 1;
+	}
+
+	.card[data-nested='true'] {
+		width: min(100%, 480px);
+		max-height: min(600px, calc(100% - 40px));
+		translate: 0 12px;
+		animation: privacy-choices-child-in calc(var(--inth-duration-slow) * 1.3)
+			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+	}
+
+	.card[data-state='closed'] {
+		pointer-events: none;
+		animation: privacy-choices-child-out calc(var(--inth-duration-slow) * 0.8)
+			var(--inth-easing-in) forwards;
+	}
+
+	.card :focus-visible {
+		outline: 2px solid var(--inth-text);
+		outline-offset: 2px;
+	}
+
+	.card button,
+	.card a {
+		touch-action: manipulation;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	.header {
+		display: flex;
+		flex-shrink: 0;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: calc(var(--inth-space-sm) * 1.5);
+		padding: calc(var(--inth-space-xs) * 5) var(--inth-space-lg) 0;
+	}
+
+	.title {
+		margin: 0;
+		font-size: calc(var(--inth-font-size-base) * 1.0625);
+		font-weight: var(--inth-font-weight-semibold);
+		line-height: var(--inth-line-height-tight);
+		letter-spacing: -0.015em;
+		text-wrap: balance;
+	}
+
+	.title:focus {
+		outline: none;
+	}
+
+	.intro {
+		margin: var(--inth-space-xs) 0 0;
+		font-size: calc(var(--inth-font-size-sm) * 0.9286);
+		line-height: var(--inth-line-height-normal);
+		color: var(--inth-text-muted);
+	}
+
+	.close {
+		position: relative;
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		height: 28px;
+		margin: calc(var(--inth-space-xs) * -1) calc(var(--inth-space-xs) * -1.5) 0
+			0;
+		padding: 0;
+		border: 0;
+		border-radius: var(--inth-radius-sm);
+		background: transparent;
+		color: var(--inth-text-muted);
+		cursor: pointer;
+		transition:
+			background-color calc(var(--inth-duration-slow) * 0.6)
+				var(--inth-easing-out),
+			color calc(var(--inth-duration-slow) * 0.6) var(--inth-easing-out);
+	}
+
+	.close::before {
+		content: '';
+		position: absolute;
+		inset: -8px;
+	}
+
+	.footer {
+		display: flex;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: space-between;
+		gap: calc(var(--inth-space-sm) * 1.5);
+		padding: calc(var(--inth-space-sm) * 1.5) var(--inth-space-lg)
+			var(--inth-space-md);
+		border-top: 1px solid var(--inth-border);
+	}
+
+	.footerNote {
+		font-size: calc(var(--inth-font-size-sm) * 0.8929);
+		color: var(--inth-text-muted);
+	}
+
+	.footerActions {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: var(--inth-space-sm);
+		margin-inline-start: auto;
+	}
+
+	/* Absolutely placed so it never shifts Done (MOT-04). A timer removes
+	   it, not the animation (MOT-03). */
+	.savedCue {
+		position: absolute;
+		top: 50%;
+		right: calc(100% + 12px);
+		display: inline-flex;
+		align-items: center;
+		gap: calc(var(--inth-space-xs) * 1.25);
+		translate: 0 -50%;
+		white-space: nowrap;
+		pointer-events: none;
+		font-size: calc(var(--inth-font-size-sm) * 0.8929);
+		color: var(--inth-text-muted);
+		animation: privacy-choices-cue calc(var(--inth-duration-slow) * 8)
+			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1)) forwards;
+	}
+
+	.savedCue svg {
+		color: var(--inth-primary);
+	}
+
+	/* The phone save cue: a check slides in before Done. Done's label never
+	   changes (SR-07). */
+	.doneCheck {
+		display: inline-flex;
+		width: 0;
+		overflow: hidden;
+		opacity: 0;
+		transition:
+			width var(--inth-duration-slow)
+				var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1)),
+			opacity calc(var(--inth-duration-slow) * 0.6) var(--inth-easing-out);
+	}
+
+	/* Rights rows. Statutory rights sit on the first view (LAW-01). */
+	.right {
+		display: flex;
+		flex-direction: column;
+		gap: calc(var(--inth-space-xs) * 2.5);
+		padding-block: calc(var(--inth-space-xs) * 3.5);
+	}
+
+	.right:first-child {
+		padding-top: var(--inth-space-xs);
+	}
+
+	.right + .right {
+		border-top: 1px solid var(--inth-border);
+	}
+
+	.rightTitle {
+		margin: 0;
+		font-size: var(--inth-font-size-sm);
+		font-weight: var(--inth-font-weight-semibold);
+		line-height: var(--inth-line-height-tight);
+	}
+
+	.rightDescription {
+		max-width: 60ch;
+		margin: calc(var(--inth-space-xs) * 0.5) 0 0;
+		font-size: calc(var(--inth-font-size-sm) * 0.9286);
+		line-height: var(--inth-line-height-normal);
+		color: var(--inth-text-muted);
+	}
+
+	/* A group of aria-pressed buttons, not radios: arrow keys on a radio
+	   group would apply a legal choice. The selected option is raised,
+	   never greyed (RIGHT-02). */
+	.segmented {
+		position: relative;
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		padding: calc(var(--inth-space-xs) * 0.75);
+		isolation: isolate;
+		border-radius: var(--inth-radius-md);
+		background: var(--inth-surface-hover);
+		box-shadow: inset 0 0 0 1px var(--inth-border);
+	}
+
+	.segmentedThumb {
+		position: absolute;
+		z-index: -1;
+		top: 3px;
+		bottom: 3px;
+		left: 3px;
+		width: calc(50% - 3px);
+		border-radius: calc(var(--inth-radius-md) - 3px);
+		background: var(--inth-surface);
+		box-shadow:
+			0 0 0 1px color-mix(in srgb, var(--inth-text) 10%, transparent),
+			0 1px 2px color-mix(in srgb, var(--inth-overlay) 20%, transparent),
+			0 2px 6px -2px color-mix(in srgb, var(--inth-overlay) 20%, transparent);
+		transition: transform var(--inth-duration-slow)
+			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+	}
+
+	.segmented[data-selected='1'] .segmentedThumb {
+		transform: translateX(100%);
+	}
+
+	.segmentedOption {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0;
+		min-height: 34px;
+		padding: calc(var(--inth-space-xs) * 1.5) calc(var(--inth-space-xs) * 2.5);
+		border: 0;
+		border-radius: calc(var(--inth-radius-md) - 3px);
+		background: transparent;
+		color: var(--inth-text-muted);
+		font: inherit;
+		font-size: calc(var(--inth-font-size-sm) * 0.9286);
+		font-weight: var(--inth-font-weight-medium);
+		cursor: pointer;
+		transition: color calc(var(--inth-duration-slow) * 0.6)
+			var(--inth-easing-out);
+	}
+
+	.segmentedOption::before {
+		content: '';
+		position: absolute;
+		inset: -4px 0;
+	}
+
+	.segmentedOption[aria-pressed='true'] {
+		color: var(--inth-text);
+		font-weight: var(--inth-font-weight-semibold);
+		cursor: default;
+	}
+
+	.segmentedOption[aria-disabled='true'] {
+		cursor: not-allowed;
+	}
+
+	/* Under GPC only the unselected option is disabled (GPC-03). */
+	.segmentedOption[aria-disabled='true']:not([aria-pressed='true']) {
+		opacity: 0.45;
+	}
+
+	.segmentedCheck {
+		display: inline-flex;
+		width: 0;
+		overflow: hidden;
+		color: var(--inth-primary);
+		transition: width var(--inth-duration-slow)
+			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+	}
+
+	.segmentedCheck svg {
+		flex-shrink: 0;
+	}
+
+	.segmentedCheck path {
+		stroke-dasharray: 24;
+		stroke-dashoffset: 24;
+	}
+
+	.segmentedOption[aria-pressed='true'] .segmentedCheck {
+		width: 19px;
+	}
+
+	.segmentedOption[aria-pressed='true'] .segmentedCheck path {
+		animation: privacy-choices-draw calc(var(--inth-duration-slow) * 1.3)
+			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1))
+			calc(var(--inth-duration-slow) * 0.3) forwards;
+	}
+
+	/* The GPC note replaces the intro rather than adding to it (LAY-04). */
+	.note {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--inth-space-sm);
+		padding: calc(var(--inth-space-xs) * 2.25) calc(var(--inth-space-xs) * 2.75);
+		border-radius: var(--inth-radius-container, 12px);
+		background: color-mix(in srgb, var(--inth-primary) 10%, transparent);
+		font-size: calc(var(--inth-font-size-sm) * 0.8929);
+		line-height: var(--inth-line-height-normal);
+		color: var(--inth-text);
+	}
+
+	.note svg {
+		flex-shrink: 0;
+		margin-top: 1px;
+		color: var(--inth-primary);
+	}
+
+	.note[data-tone='quiet'] {
+		background: var(--inth-surface-hover);
+		color: var(--inth-text-muted);
+	}
+
+	/* Room for the shake and the focus rings inside the collapse's
+	   overflow: hidden (RIGHT-05). */
+	.bleed {
+		margin: calc(var(--inth-space-xs) * -1) calc(var(--inth-space-xs) * -2.5);
+		padding: var(--inth-space-xs) calc(var(--inth-space-xs) * 2.5);
+	}
+
+	/* Opting back in: the choice, then this confirmation (LAW-02). It opens
+	   on Cancel (RIGHT-06). */
+	.confirm {
+		display: flex;
+		flex-direction: column;
+		gap: var(--inth-space-sm);
+		margin-top: calc(var(--inth-space-xs) * 0.5);
+		padding: calc(var(--inth-space-sm) * 1.5);
+		border-radius: var(--inth-radius-container, 12px);
+		background: var(--inth-surface-hover);
+		box-shadow: inset 0 0 0 1px
+			var(--inth-border-strong, rgba(15, 23, 42, 0.16));
+		transition:
+			box-shadow var(--inth-duration-slow)
+				var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1)),
+			background-color var(--inth-duration-slow)
+				var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+	}
+
+	/* Pressing Allow again while the question is open. */
+	.confirm[data-nudged='true'] {
+		background: color-mix(
+			in srgb,
+			var(--inth-danger, #dc2626) 5%,
+			var(--inth-surface-hover)
+		);
+		box-shadow: inset 0 0 0 1.5px var(--inth-danger, #dc2626);
+		animation: privacy-choices-shake calc(var(--inth-duration-slow) * 1.8)
+			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+	}
+
+	:global(.inth-dark) .confirm[data-nudged='true'] {
+		background: color-mix(
+			in srgb,
+			var(--inth-danger, #f87171) 5%,
+			var(--inth-surface-hover)
+		);
+		box-shadow: inset 0 0 0 1.5px var(--inth-danger, #f87171);
+	}
+
+	.confirmTitle {
+		margin: 0;
+		font-size: calc(var(--inth-font-size-sm) * 0.9286);
+		font-weight: var(--inth-font-weight-semibold);
+	}
+
+	.confirmTitle:focus {
+		outline: none;
+	}
+
+	.confirmDescription {
+		margin: 0;
+		font-size: calc(var(--inth-font-size-sm) * 0.8929);
+		line-height: var(--inth-line-height-normal);
+		color: var(--inth-text-muted);
+	}
+
+	.confirmActions {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--inth-space-sm);
+		margin-top: calc(var(--inth-space-xs) * 0.5);
+	}
+
+	/* Receipt: "Saved for this browser · {date}" with a Details toggle. */
+	.receipt {
+		padding-top: calc(var(--inth-space-xs) * 0.5);
+		padding-bottom: calc(var(--inth-space-xs) * 3.5);
+	}
+
+	.receiptLine {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: calc(var(--inth-space-xs) * 2.5);
+		font-size: calc(var(--inth-font-size-sm) * 0.8929);
+		color: var(--inth-text-muted);
+	}
+
+	.receiptLead {
+		display: inline-flex;
+		align-items: center;
+		gap: calc(var(--inth-space-xs) * 1.5);
+		min-width: 0;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.receiptLead svg {
+		flex-shrink: 0;
+		color: var(--inth-primary);
+	}
+
+	.textButton {
+		position: relative;
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		gap: var(--inth-space-xs);
+		padding: calc(var(--inth-space-xs) * 0.5) 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-size: calc(var(--inth-font-size-sm) * 0.8929);
+		font-weight: var(--inth-font-weight-medium);
+		color: var(--inth-text);
+		cursor: pointer;
+	}
+
+	.textButton::before {
+		content: '';
+		position: absolute;
+		inset: -8px -6px;
+	}
+
+	.chevron {
+		display: inline-flex;
+		transition: transform var(--inth-duration-slow)
+			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+	}
+
+	[aria-expanded='true'] > .chevron {
+		transform: rotate(180deg);
+	}
+
+	.receiptDetails {
+		display: flex;
+		flex-direction: column;
+		gap: calc(var(--inth-space-xs) * 1.5);
+		margin-top: calc(var(--inth-space-xs) * 2.5);
+		padding: calc(var(--inth-space-xs) * 2.5) calc(var(--inth-space-sm) * 1.5);
+		border-radius: var(--inth-radius-container, 12px);
+		background: var(--inth-surface-hover);
+		font-size: calc(var(--inth-font-size-sm) * 0.8929);
+		line-height: var(--inth-line-height-normal);
+	}
+
+	.receiptDetails ul {
+		margin: 0;
+		padding-left: var(--inth-space-md);
+	}
+
+	.reference {
+		display: inline-flex;
+		align-items: center;
+		gap: calc(var(--inth-space-xs) * 1.5);
+		font-family: var(--inth-font-family-mono, ui-monospace, monospace);
+		font-size: calc(var(--inth-font-size-sm) * 0.8571);
+	}
+
+	/* Shown when copying fails, so the reference can be selected by hand
+	   (CLIP-01). */
+	.referenceField {
+		display: block;
+		width: 100%;
+		margin-top: calc(var(--inth-space-xs) * 1.5);
+		padding: calc(var(--inth-space-xs) * 1.5) var(--inth-space-sm);
+		border: 0;
+		border-radius: var(--inth-radius-sm);
+		background: var(--inth-surface);
+		box-shadow: inset 0 0 0 1px
+			var(--inth-border-strong, rgba(15, 23, 42, 0.16));
+		font-family: var(--inth-font-family-mono, ui-monospace, monospace);
+		font-size: calc(var(--inth-font-size-sm) * 0.8571);
+		color: var(--inth-text);
+	}
+
+	.copyButton {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 24px;
+		height: 24px;
+		padding: 0;
+		border: 0;
+		border-radius: var(--inth-radius-sm);
+		background: transparent;
+		color: var(--inth-text-muted);
+		cursor: pointer;
+	}
+
+	.copyButton::before {
+		content: '';
+		position: absolute;
+		inset: -10px;
+	}
+
+	/* The Preferences row: an accordion on desktop, a sheet on phone. */
+	.navRow {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: calc(var(--inth-space-sm) * 1.5);
+		width: 100%;
+		padding: calc(var(--inth-space-sm) * 1.5) calc(var(--inth-space-xs) * 3.5);
+		border: 0;
+		border-radius: var(--inth-radius-container, 12px);
+		background: var(--inth-surface);
+		box-shadow:
+			0 0 0 1px color-mix(in srgb, var(--inth-text) 12%, transparent),
+			0 1px 2px color-mix(in srgb, var(--inth-overlay) 10%, transparent);
+		font: inherit;
+		color: var(--inth-text);
+		text-align: start;
+		cursor: pointer;
+		transition: background-color calc(var(--inth-duration-slow) * 0.6)
+			var(--inth-easing-out);
+	}
+
+	.navRowLabel {
+		display: flex;
+		flex-direction: column;
+		gap: calc(var(--inth-space-xs) * 0.5);
+		min-width: 0;
+		font-size: calc(var(--inth-font-size-sm) * 0.9643);
+		font-weight: var(--inth-font-weight-medium);
+	}
+
+	.navRowMeta {
+		font-size: calc(var(--inth-font-size-sm) * 0.8571);
+		font-weight: var(--inth-font-weight-normal);
+		font-variant-numeric: tabular-nums;
+		color: var(--inth-text-muted);
+	}
+
+	/* "View N vendors": a 32px row in the category's segment with no
+	   divider and a 40px hit area. Ghost at rest, the stroke look on hover
+	   and focus, and no press scale: it opens something (CAT-09). */
+	.vendorTrigger {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: calc(var(--inth-space-sm) * 1.5);
+		width: calc(100% + 16px);
+		min-height: 32px;
+		margin: 0 calc(var(--inth-space-sm) * -1) var(--inth-space-sm);
+		padding: calc(var(--inth-space-xs) * 1.5) var(--inth-space-sm);
+		border: 0;
+		border-radius: var(--inth-radius-nested, 8px);
+		background: transparent;
+		font: inherit;
+		font-size: calc(var(--inth-font-size-sm) * 0.8929);
+		font-weight: var(--inth-font-weight-medium);
+		color: var(--inth-text);
+		text-align: start;
+		cursor: pointer;
+		transition:
+			background-color calc(var(--inth-duration-slow) * 0.6)
+				var(--inth-easing-out),
+			box-shadow calc(var(--inth-duration-slow) * 0.6) var(--inth-easing-out);
+	}
+
+	.vendorTrigger::before {
+		content: '';
+		position: absolute;
+		inset: -4px 0;
+	}
+
+	.vendorTrigger:focus-visible {
+		background: var(--inth-surface);
+		box-shadow:
+			0 0 0 1px color-mix(in srgb, var(--inth-text) 12%, transparent),
+			0 1px 2px color-mix(in srgb, var(--inth-overlay) 10%, transparent);
+	}
+
+	.vendorTrigger:active {
+		background: var(--inth-surface-hover);
+	}
+
+	.vendorMeta {
+		display: inline-flex;
+		align-items: center;
+		gap: calc(var(--inth-space-xs) * 1.5);
+		font-weight: var(--inth-font-weight-normal);
+		font-variant-numeric: tabular-nums;
+		color: var(--inth-text-muted);
+	}
+
+	/* The vendor table, nested in its category: one 40px line per vendor,
+	   the purpose in its own column. */
+	.vendorTable {
+		overflow: hidden;
+		margin-bottom: calc(var(--inth-space-xs) * 3.5);
+		border: 1px solid var(--inth-border);
+		border-radius: var(--inth-radius-nested, 8px);
+		background: var(--inth-surface-hover);
+	}
+
+	.vendorHead,
+	.vendorRow {
+		display: grid;
+		grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr) 20px 32px;
+		align-items: center;
+		gap: calc(var(--inth-space-xs) * 2.5);
+		padding: 0 calc(var(--inth-space-sm) * 1.5);
+	}
+
+	.vendorHead {
+		height: 30px;
+		border-bottom: 1px solid var(--inth-border);
+		font-size: calc(var(--inth-font-size-sm) * 0.7857);
+		font-weight: var(--inth-font-weight-medium);
+		letter-spacing: 0.02em;
+		color: var(--inth-text-muted);
+	}
+
+	.vendorRow {
+		min-height: 40px;
+		border-bottom: 1px solid var(--inth-border);
+	}
+
+	.vendorRow:last-child {
+		border-bottom: 0;
+	}
+
+	.vendorName,
+	.vendorPurpose {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.vendorName {
+		font-size: calc(var(--inth-font-size-sm) * 0.8929);
+		font-weight: var(--inth-font-weight-medium);
+	}
+
+	.vendorPurpose {
+		font-size: calc(var(--inth-font-size-sm) * 0.8571);
+		color: var(--inth-text-muted);
+	}
+
+	.vendorLink {
+		position: relative;
+		display: inline-flex;
+		border-radius: var(--inth-radius-sm);
+		color: var(--inth-text-muted);
+	}
+
+	.vendorLink::before {
+		content: '';
+		position: absolute;
+		inset: -10px;
+	}
+
+	/* A click on a row's name or description toggles its switch; the
+	   switch stays the only focus target (CAT-10). */
+	.card [data-row-toggle] {
+		cursor: pointer;
+	}
+
+	.card [data-row-toggle] .vendorName,
+	.card [data-row-toggle] .vendorPurpose,
+	.card [data-row-toggle] [data-row-text] {
+		-webkit-user-select: none;
+		user-select: none;
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.close:hover {
+			background: var(--inth-surface-hover);
+			color: var(--inth-text);
+		}
+
+		.copyButton:hover {
+			background: var(--inth-surface-hover);
+			color: var(--inth-text);
+		}
+
+		.segmentedOption:not([aria-pressed='true']):not(
+				[aria-disabled='true']
+			):hover {
+			color: var(--inth-text);
+		}
+
+		.navRow:hover {
+			background: var(--inth-surface-hover);
+		}
+
+		.vendorTrigger:hover {
+			background: var(--inth-surface);
+			box-shadow:
+				0 0 0 1px color-mix(in srgb, var(--inth-text) 12%, transparent),
+				0 1px 2px color-mix(in srgb, var(--inth-overlay) 10%, transparent);
+		}
+
+		.vendorLink:hover {
+			color: var(--inth-primary-text, var(--inth-primary));
+		}
+	}
+
+	/* Phone: nested sheets from the bottom, at most two layers (NEST-02).
+	   Flush sheets are square; inset sheets sit 12px from the edges with
+	   every corner rounded. Keep in step with PHONE_LAYOUT_QUERY. */
+	@media (max-width: 640px) {
+		.backdrop {
+			place-items: end center;
+			padding: 0;
+		}
+
+		.backdrop[data-edge-style='inset'] {
+			padding: 0 calc(var(--inth-space-sm) * 1.5)
+				calc(var(--inth-space-sm) * 1.5);
+		}
+
+		.card {
+			--_consent-scroll-padding: calc(var(--inth-space-xs) * 3.5)
+				var(--inth-space-md) calc(var(--inth-space-xs) * 4.5);
+			width: 100%;
+			max-height: calc(100% - 24px);
+			border-radius: 0;
+			transform-origin: 50% 100%;
+			transform: translateY(calc(var(--_depth) * -10px))
+				scale(calc(1 - var(--_depth) * 0.05));
+			animation-name: privacy-choices-sheet-in;
+		}
+
+		.card[data-regime='eu'] {
+			width: 100%;
+		}
+
+		.backdrop[data-edge-style='inset'] .card {
+			max-height: calc(100% - 36px);
+			border-radius: var(--consent-dialog-radius, var(--inth-radius-lg));
+		}
+
+		.card[data-nested='true'] {
+			width: 100%;
+			max-height: calc(100% - 72px);
+			translate: none;
+			animation-name: privacy-choices-sheet-in;
+		}
+
+		.backdrop[data-edge-style='inset'] .card[data-nested='true'] {
+			max-height: calc(100% - 84px);
+		}
+
+		.card[data-state='closed'] {
+			animation-name: privacy-choices-sheet-out;
+		}
+
+		.header {
+			padding: calc(var(--inth-space-xs) * 4.5) var(--inth-space-md) 0;
+		}
+
+		/* The privacy link centres on its own row; an empty slot takes no
+		   space; Done is full width and 44px tall (LAY-06). */
+		.footer {
+			flex-wrap: wrap;
+			padding: calc(var(--inth-space-sm) * 1.5) var(--inth-space-md)
+				calc(var(--inth-space-xs) * 3.5 + env(safe-area-inset-bottom, 0px));
+		}
+
+		.footer > :empty {
+			display: none;
+		}
+
+		.footerNote,
+		.footer > a {
+			flex: 1 0 100%;
+			text-align: center;
+		}
+
+		.footerActions {
+			flex: 1 0 100%;
+			flex-wrap: wrap;
+		}
+
+		.footerActions > * {
+			flex: 1 1 0;
+			min-height: 44px;
+		}
+
+		.card[data-regime='eu'] .footerActions > [data-action='save'] {
+			flex-basis: 100%;
+		}
+
+		.done {
+			flex: 1 0 100%;
+			order: 2;
+			min-height: 44px;
+		}
+
+		.savedCue {
+			display: none;
+		}
+
+		.done[data-cue='true'] .doneCheck {
+			width: 20px;
+			opacity: 1;
+		}
+	}
+
+	@keyframes privacy-choices-fade-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes privacy-choices-card-in {
+		from {
+			opacity: 0;
+			transform: translateY(6px) scale(0.98);
+		}
+	}
+
+	@keyframes privacy-choices-child-in {
+		from {
+			opacity: 0;
+			transform: translateY(14px) scale(0.96);
+		}
+	}
+
+	@keyframes privacy-choices-child-out {
+		to {
+			opacity: 0;
+			transform: translateY(10px) scale(0.97);
+		}
+	}
+
+	@keyframes privacy-choices-sheet-in {
+		from {
+			opacity: 0;
+			transform: translateY(24px);
+		}
+	}
+
+	@keyframes privacy-choices-sheet-out {
+		to {
+			opacity: 0;
+			transform: translateY(40px);
+		}
+	}
+
+	@keyframes privacy-choices-draw {
+		to {
+			stroke-dashoffset: 0;
+		}
+	}
+
+	@keyframes privacy-choices-shake {
+		0%,
+		100% {
+			transform: none;
+		}
+		20%,
+		60% {
+			transform: translateX(-4px);
+		}
+		40%,
+		80% {
+			transform: translateX(4px);
+		}
+	}
+
+	@keyframes privacy-choices-cue {
+		0% {
+			opacity: 0;
+			transform: translateY(3px);
+		}
+		12% {
+			opacity: 1;
+			transform: none;
+		}
+		80% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+
+	/* Everything is effectively instant: no shake (the ring stays), the
+	   check renders drawn, and the cue shows without fading (MOT-03). */
+	@media (prefers-reduced-motion: reduce) {
+		.backdrop,
+		.card,
+		.card::after,
+		.card[data-nested='true'],
+		.card[data-state='closed'],
+		.close,
+		.savedCue,
+		.doneCheck,
+		.segmentedThumb,
+		.segmentedOption,
+		.segmentedCheck,
+		.segmentedOption[aria-pressed='true'] .segmentedCheck path,
+		.confirm,
+		.confirm[data-nudged='true'],
+		.chevron,
+		.navRow,
+		.vendorTrigger {
+			transition: none;
+			animation: none;
+		}
+
+		.segmentedCheck path {
+			stroke-dashoffset: 0;
+		}
+
+		.savedCue {
+			opacity: 1;
+		}
+	}
+}

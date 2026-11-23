@@ -21,13 +21,14 @@
  *
  * | File | Holds | Loaded by |
  * | --- | --- | --- |
- * | `styles.css`, `styles.tw3.css` | default tokens, every `:root` variable and `@keyframes`, rules for the banner, dialog trigger, ConsentGate, dialog and preference widget | the app, once |
+ * | `styles.css`, `styles.tw3.css` | default tokens, every `:root` variable and `@keyframes`, rules for the banner, dialog trigger, ConsentGate, v6 presentations, dialog and preference widget | the app, once |
  * | `styles/primitives.css` | rules for the `@inth/sdk-ui/styles/primitives` class maps | Svelte's `styles.css` and hosts that render those class maps |
  * | `iab/styles.css`, `iab/styles.tw3.css` | IAB variables and rules only | the app, next to `styles.css` |
  * | `styles/dialog.css`, `styles/dialog.js` | nothing; kept so existing imports resolve | — |
  * | `styles/sheets/first-paint.js` | `styles.css` up to its dialog rules, as a string | Svelte surfaces, IAB banners and Astro, which render it as a `<style>` |
  * | `styles/sheets/tokens.js` | the default theme tokens, as a string | React surfaces, before their own sheet |
  * | `styles/sheets/{button,banner,trigger,consent-gate}.js` | one surface's rules and the component variables they read, as a string (see `SURFACE_SHEETS`) | React surfaces |
+ * | `styles/sheets/{surface,card,bar,drawer,expand}.js` | the v6 consent prompt, one presentation each, as a string (see `PRESENTATION_SHEETS`) | nothing yet; the v6 renderers |
  * | `styles/sheets/*-deferred.js` | the same `id` as the sheet it names, no text, and a `load()` for it | browser bundles of server-rendered apps (the Next.js adapter aliases them) |
  * | `styles/sheets/dialog.js`, `styles/sheets/dialog.css` | the dialog and preference-widget rules and the component variables they read, as a string and as a file | the dialog and widget, with their lazy code; Astro links the file when the dialog opens |
  * | `styles/sheets/primitives.js` | `styles/primitives.css`, as a string | the Svelte dialog |
@@ -70,6 +71,8 @@ import {
 	IAB_FIRST_PAINT_COMPONENTS,
 	IAB_PREFIX,
 	LAYER_ORDER,
+	PRESENTATION_COMPONENTS,
+	PRESENTATION_SHEETS,
 	SURFACE_SHEETS,
 } from './stylesheet-parts';
 
@@ -161,20 +164,32 @@ if (NON_IAB_COMPONENTS.length === 0) {
 }
 
 const firstPaintNames = new Set<string>(FIRST_PAINT_COMPONENTS);
+const presentationNames = new Set<string>(PRESENTATION_COMPONENTS);
 const dialogNames = new Set<string>(DIALOG_COMPONENTS);
 const unassigned = NON_IAB_COMPONENTS.filter(
-	(c) => !(firstPaintNames.has(c) || dialogNames.has(c))
+	(c) =>
+		!(firstPaintNames.has(c) || presentationNames.has(c) || dialogNames.has(c))
 );
 if (unassigned.length > 0) {
 	throw new Error(
 		`generate-css-entrypoints: add ${unassigned.join(
 			', '
-		)} to FIRST_PAINT_COMPONENTS or DIALOG_COMPONENTS in scripts/stylesheet-parts.ts`
+		)} to FIRST_PAINT_COMPONENTS, PRESENTATION_SHEETS or DIALOG_COMPONENTS in scripts/stylesheet-parts.ts`
 	);
 }
-const missing = [...firstPaintNames, ...dialogNames].filter(
-	(c) => !NON_IAB_COMPONENTS.includes(c)
+const listedTwice = [...presentationNames].filter(
+	(c) => firstPaintNames.has(c) || dialogNames.has(c)
 );
+if (listedTwice.length > 0) {
+	throw new Error(
+		`generate-css-entrypoints: ${listedTwice.join(', ')} must sit in one list in scripts/stylesheet-parts.ts`
+	);
+}
+const missing = [
+	...firstPaintNames,
+	...presentationNames,
+	...dialogNames,
+].filter((c) => !NON_IAB_COMPONENTS.includes(c));
 if (missing.length > 0) {
 	throw new Error(
 		`generate-css-entrypoints: scripts/stylesheet-parts.ts lists ${missing.join(
@@ -195,6 +210,23 @@ const surfaceSheetProblems = [
 if (surfaceSheetProblems.length > 0) {
 	throw new Error(
 		`generate-css-entrypoints: SURFACE_SHEETS in scripts/stylesheet-parts.ts must list each FIRST_PAINT_COMPONENTS entry once (check ${surfaceSheetProblems.join(', ')})`
+	);
+}
+
+const presentationSheetNames: string[] =
+	Object.values(PRESENTATION_SHEETS).flat();
+const presentationSheetProblems = [
+	...presentationSheetNames.filter(
+		(name, index) => presentationSheetNames.indexOf(name) !== index
+	),
+	...[...presentationNames].filter(
+		(name) => !presentationSheetNames.includes(name)
+	),
+	...presentationSheetNames.filter((name) => !presentationNames.has(name)),
+];
+if (presentationSheetProblems.length > 0) {
+	throw new Error(
+		`generate-css-entrypoints: PRESENTATION_SHEETS and PRESENTATION_COMPONENTS in scripts/stylesheet-parts.ts must list the same components once (check ${presentationSheetProblems.join(', ')})`
 	);
 }
 
@@ -516,10 +548,18 @@ if (firstPaintRules.length === 0) {
 		'generate-css-entrypoints: no component rules collected for styles.css'
 	);
 }
+/** The v6 presentation rules, in `PRESENTATION_COMPONENTS` order. */
+const presentationRulesOf = (components: readonly string[]): string[] =>
+	PRESENTATION_COMPONENTS.filter((name) => components.includes(name)).flatMap(
+		(name) => nonIab.ruleParts.get(name) ?? []
+	);
 // The dialog's rules follow the first-paint rules, the order the cascade had
-// while they shipped in a stylesheet of their own that loaded later.
+// while they shipped in a stylesheet of their own that loaded later. The v6
+// presentation rules sit between: their selectors match none of the
+// others' elements.
 const componentRules = [
 	...firstPaintRules,
+	...presentationRulesOf(PRESENTATION_COMPONENTS),
 	...rulesFor(nonIab.ruleParts, 'dialog', 'styles.css'),
 ];
 
@@ -615,6 +655,12 @@ const variablesFor = function variablesFor(rules: string): string {
 			declaration.remove();
 		}
 	});
+	// A registered property ships with the rules that read it.
+	root.walkAtRules('property', (atRule: AtRule) => {
+		if (!needed.has(atRule.params.trim())) {
+			atRule.remove();
+		}
+	});
 	root.walkRules((rule: Rule) => {
 		if (rule.nodes.length === 0) {
 			rule.remove();
@@ -665,13 +711,14 @@ const writeDeferredSheet = function writeDeferredSheet(name: string): void {
 // it downloads; a `<style>` in the server-rendered HTML, or one the banner's
 // code inserts, does not.
 //
-// `first-paint` holds what `styles.css` holds up to its dialog rules, so a
-// banner, trigger or ConsentGate needs nothing else. `dialog` holds the
-// dialog and preference-widget rules and the variables they read, and
-// `primitives` the primitive rules the Svelte dialog renders. Concatenated
-// in that order they apply exactly what `styles.css` and
-// `styles/primitives.css` apply; the variables `dialog` repeats from
-// `first-paint` are identical declarations.
+// `first-paint` holds what `styles.css` holds up to its v6 presentation
+// rules, so a banner, trigger or ConsentGate needs nothing else. The
+// presentation sheets hold the v6 rules, `dialog` the dialog and
+// preference-widget rules and the variables they read, and `primitives`
+// the primitive rules the Svelte dialog renders. Concatenated in that
+// order they apply exactly what `styles.css` and `styles/primitives.css`
+// apply; the variables the later sheets repeat from `first-paint` are
+// identical declarations.
 writeSheet(
 	'first-paint',
 	[
@@ -696,6 +743,28 @@ writeSheet(
 writeDeferredSheet('tokens');
 for (const [name, components] of Object.entries(SURFACE_SHEETS)) {
 	const rules = firstPaintRulesOf(components);
+	if (rules.length === 0) {
+		throw new Error(
+			`generate-css-entrypoints: no component rules collected for styles/sheets/${name}.js`
+		);
+	}
+	writeSheet(
+		name,
+		[
+			LAYER_ORDER,
+			variablesFor(rules.join('\n')),
+			`@layer components{${rules.join('\n')}}`,
+		]
+			.filter(Boolean)
+			.join('\n')
+	);
+	writeDeferredSheet(name);
+}
+// The v6 presentations, one sheet each, like the surface sheets. A page
+// renders `surface` and its presentation's sheet after `tokens` and
+// `button`, and `expand` when the options open in place.
+for (const [name, components] of Object.entries(PRESENTATION_SHEETS)) {
+	const rules = presentationRulesOf(components);
 	if (rules.length === 0) {
 		throw new Error(
 			`generate-css-entrypoints: no component rules collected for styles/sheets/${name}.js`

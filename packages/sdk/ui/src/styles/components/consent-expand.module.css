@@ -1,0 +1,161 @@
+/*
+ * The options Customize opens in place (Card, Banner, top and bottom
+ * Drawer), and the scroll area the all-in-one side Drawer shows from the
+ * start.
+ *
+ *   .panel[data-open]    A disclosure that animates its height through
+ *     > .inner           `grid-template-rows: 0fr -> 1fr`, so it never
+ *                        measures. Keep it mounted and toggle `data-open`.
+ *   .scroll              The scroll area, with edge fades. Set
+ *                        `data-fade-top` / `data-fade-bottom` only while
+ *                        more content lies in that direction (LAY-08).
+ *   .group               The cookie categories as one bordered group with
+ *                        dividers; each child is a row (the existing
+ *                        preference-item and switch classes render inside).
+ *
+ * The presentation sheets size the scroll area through private properties
+ * on their root (`--_consent-scroll-height`, `--_consent-gutter`). Hooks,
+ * read with a fallback:
+ *
+ *   --consent-expand-group-radius        (--inth-radius-container)
+ *   --consent-expand-group-border-color  (--inth-border-strong)
+ */
+
+@property --fade-top {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 0px;
+}
+
+@property --fade-bottom {
+	syntax: '<length>';
+	inherits: false;
+	initial-value: 0px;
+}
+
+@layer components {
+	.panel {
+		display: grid;
+		grid-template-rows: 0fr;
+		transition: grid-template-rows var(--inth-duration-slow)
+			var(--inth-ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+	}
+
+	.panel[data-open='true'] {
+		grid-template-rows: 1fr;
+	}
+
+	.inner {
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		overflow: hidden;
+		opacity: 0;
+		visibility: hidden;
+		border-top: 1px solid var(--inth-border);
+		/* Visibility stays visible for the whole fold, then hides, so a
+		   folded panel drops out of the tab order. */
+		transition:
+			opacity calc(var(--inth-duration-slow) * 0.6) var(--inth-easing-out),
+			visibility var(--inth-duration-slow) linear;
+	}
+
+	/* The content fades in once the height is under way. */
+	.panel[data-open='true'] > .inner {
+		opacity: 1;
+		visibility: visible;
+		transition: opacity calc(var(--inth-duration-slow) * 0.6)
+			var(--inth-easing-out) calc(var(--inth-duration-slow) * 0.3);
+	}
+
+	/* A mask, not an overlay colour, so the fade works on any surface. */
+	.scroll {
+		--fade-top: 0px;
+		--fade-bottom: 0px;
+		flex: 1 1 auto;
+		min-height: 0;
+		max-height: var(--_consent-scroll-height, 360px);
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		padding: var(
+			--_consent-scroll-padding,
+			var(--inth-space-md) var(--_consent-gutter, var(--inth-space-lg))
+		);
+		color: var(--inth-text);
+		-webkit-mask-image: linear-gradient(
+			to bottom,
+			transparent 0,
+			#000 var(--fade-top),
+			#000 calc(100% - var(--fade-bottom)),
+			transparent 100%
+		);
+		mask-image: linear-gradient(
+			to bottom,
+			transparent 0,
+			#000 var(--fade-top),
+			#000 calc(100% - var(--fade-bottom)),
+			transparent 100%
+		);
+		scrollbar-width: thin;
+		scrollbar-color: color-mix(in srgb, var(--inth-text) 18%, transparent)
+			transparent;
+		transition:
+			--fade-top var(--inth-duration-normal) var(--inth-easing-out),
+			--fade-bottom var(--inth-duration-normal) var(--inth-easing-out);
+	}
+
+	.scroll[data-fade-top] {
+		--fade-top: 20px;
+	}
+
+	.scroll[data-fade-bottom] {
+		--fade-bottom: var(--_consent-fade-end, 28px);
+	}
+
+	.scroll:focus-visible {
+		outline: 2px solid var(--inth-text);
+		outline-offset: -2px;
+	}
+
+	.group {
+		overflow: hidden;
+		background: var(--inth-surface);
+		border: 1px solid
+			var(
+				--consent-expand-group-border-color,
+				var(--inth-border-strong, rgba(15, 23, 42, 0.16))
+			);
+		border-radius: var(
+			--consent-expand-group-radius,
+			var(--inth-radius-container, 12px)
+		);
+	}
+
+	.group > * {
+		padding: calc(var(--inth-space-sm) * 1.5) calc(var(--inth-space-xs) * 3.5);
+	}
+
+	.group > * + * {
+		border-top: 1px solid var(--inth-border);
+	}
+
+	@media (max-width: 640px) {
+		.scroll {
+			padding: var(
+				--_consent-scroll-padding,
+				calc(var(--inth-space-xs) * 3.5)
+					var(--_consent-gutter, var(--inth-space-md))
+			);
+		}
+	}
+
+	/* Folding and fading end at once (PERM-14). */
+	@media (prefers-reduced-motion: reduce) {
+		.panel,
+		.inner,
+		.panel[data-open='true'] > .inner,
+		.scroll {
+			transition: none;
+		}
+	}
+}

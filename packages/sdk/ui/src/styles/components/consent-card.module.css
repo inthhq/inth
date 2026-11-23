@@ -1,0 +1,118 @@
+/*
+ * The Card presentation (the default): a floating card at the bottom left,
+ * the bottom right or the centre. Its classes sit next to the
+ * `consent-surface` classes on the same elements; see that sheet for the
+ * data attributes. Card ignores the edge style.
+ *
+ * Hooks, read with a fallback:
+ *
+ *   --consent-card-width          (min(440px, 100%); the centre card 480px)
+ *   --consent-card-offset         (--inth-space-lg; --inth-space-md on phone)
+ *   --consent-card-radius         (--inth-radius-lg)
+ *   --consent-card-shadow         (--inth-shadow-lg)
+ *   --consent-card-panel-height   (360px; 320px on phone)
+ */
+
+@layer components {
+	.root {
+		--_consent-radius: var(--consent-card-radius, var(--inth-radius-lg));
+		--_consent-shadow: var(--consent-card-shadow, var(--inth-shadow-lg));
+		--_consent-scroll-height: var(--consent-card-panel-height, 360px);
+		bottom: 0;
+		inset-inline-start: 0;
+		max-width: 100%;
+		padding: var(--consent-card-offset, var(--inth-space-lg));
+		padding-bottom: calc(
+			var(--consent-card-offset, var(--inth-space-lg)) +
+				env(safe-area-inset-bottom, 0px)
+		);
+	}
+
+	.shell {
+		width: var(--consent-card-width, min(440px, 100%));
+	}
+
+	/* The card grows upward from its anchor when Customize opens. */
+	.root[data-expanded='true'] .head {
+		padding-bottom: var(--inth-space-md);
+	}
+
+	/* A full-width root with the card pushed to the end. `right: 0` alone
+	   let the root overflow the left edge in narrow windows, which gave
+	   uneven margins. */
+	.root[data-placement='card-bottom-right'] {
+		inset-inline: 0;
+		align-items: flex-end;
+	}
+
+	/* The centred card always blocks. It enters with a scale and a fade. */
+	.root[data-placement='card-center'] {
+		--_consent-enter-duration: calc(var(--inth-duration-slow) * 1.1);
+		inset: 0;
+		display: grid;
+		place-items: center;
+		padding: var(--consent-card-offset, var(--inth-space-lg));
+	}
+
+	.root[data-placement='card-center'] .shell {
+		width: var(--consent-card-width, min(480px, 100%));
+		animation-name: consent-card-zoom-in;
+	}
+
+	.root[data-placement='card-center'][data-state='closed'] .shell {
+		animation-name: consent-card-zoom-out;
+	}
+
+	/* Centre the card, not card plus tag: the tag hangs 8px above it, out
+	   of the flow (PERM-06). */
+	.root[data-placement='card-center'] .tag {
+		position: absolute;
+		inset-inline-end: 0;
+		bottom: 100%;
+	}
+
+	@media (max-width: 640px) {
+		.root {
+			--_consent-scroll-height: var(--consent-card-panel-height, 320px);
+			inset-inline: 0;
+			padding: var(--consent-card-offset, var(--inth-space-md));
+			padding-bottom: calc(
+				var(--consent-card-offset, var(--inth-space-md)) +
+					env(safe-area-inset-bottom, 0px)
+			);
+		}
+
+		.shell {
+			width: 100%;
+		}
+
+		.root[data-placement='card-center'] {
+			padding: var(--consent-card-offset, var(--inth-space-md));
+		}
+
+		.root[data-placement='card-center'] .shell {
+			width: 100%;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.root[data-placement='card-center'] .shell,
+		.root[data-placement='card-center'][data-state='closed'] .shell {
+			animation: none;
+		}
+	}
+
+	@keyframes consent-card-zoom-in {
+		from {
+			opacity: 0;
+			transform: scale(0.96);
+		}
+	}
+
+	@keyframes consent-card-zoom-out {
+		to {
+			opacity: 0;
+			transform: scale(0.97);
+		}
+	}
+}

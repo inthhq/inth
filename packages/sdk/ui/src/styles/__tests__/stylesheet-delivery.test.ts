@@ -2,8 +2,8 @@
  * Guards the stylesheet contract: each component rule reaches the page once.
  *
  * - `styles.css` / `styles.tw3.css`: default tokens, every variable, and the
- *   rules for the banner, dialog trigger, ConsentGate, dialog and preference
- *   widget. The app imports it once.
+ *   rules for the banner, dialog trigger, ConsentGate, v6 presentations,
+ *   dialog and preference widget. The app imports it once.
  * - `styles/dialog.css`: empty, kept so existing imports resolve.
  * - `styles/primitives.css`: rules for the primitive class maps.
  * - `iab/styles.css`: IAB variables and rules, loaded next to `styles.css`.
@@ -31,6 +31,7 @@ import {
 	DIALOG_COMPONENTS,
 	FIRST_PAINT_COMPONENTS,
 	IAB_PREFIX,
+	PRESENTATION_COMPONENTS,
 } from '../../../scripts/stylesheet-parts';
 
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
@@ -149,7 +150,7 @@ const sheets = {
 
 const groupOf = function groupOf(
 	file: string
-): 'dialog' | 'first-paint' | 'iab' {
+): 'dialog' | 'first-paint' | 'iab' | 'presentation' {
 	const name = file.replace(/\.css$/u, '');
 	if (name.startsWith(IAB_PREFIX)) {
 		return 'iab';
@@ -160,7 +161,10 @@ const groupOf = function groupOf(
 	if ((FIRST_PAINT_COMPONENTS as readonly string[]).includes(name)) {
 		return 'first-paint';
 	}
-	throw new Error(`components/${file} is in neither stylesheet part`);
+	if ((PRESENTATION_COMPONENTS as readonly string[]).includes(name)) {
+		return 'presentation';
+	}
+	throw new Error(`components/${file} is in no stylesheet part`);
 };
 
 const missingFrom = (rules: string[], sheet: Set<string>) =>
@@ -184,6 +188,10 @@ const TARGETS = {
 	iab: {
 		rules: [sheets.iab, sheets.iabTw3],
 		variables: [sheets.iab, sheets.iabTw3],
+	},
+	presentation: {
+		rules: [sheets.styles, sheets.stylesTw3],
+		variables: [sheets.styles, sheets.stylesTw3],
 	},
 } as const;
 
