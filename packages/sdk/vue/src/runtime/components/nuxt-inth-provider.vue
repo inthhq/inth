@@ -23,7 +23,7 @@ import { LazyConsentManager } from './lazy-consent-manager';
 import { LazyIabConsentBanner } from './lazy-iab-consent-banner';
 import { LazyIabConsentDialog } from './lazy-iab-consent-dialog';
 import { prefetchIabConsentDialog } from './prefetch-iab-consent-dialog';
-import { useAdoptOptOutConfirmation } from './parts/receipt-focus';
+import { useAdoptOptOutConfirmation } from './parts/receipt-focus.model';
 
 // The default slot renders after the surfaces, so a root that wraps the
 // app the way a React provider does keeps the app.
