@@ -223,8 +223,15 @@ describe('TanStack Start client chunks', () => {
 		// deferred root now shares and which rejects a save waiting for an
 		// engine chunk that failed, replaces React's own copy. Core's build
 		// keeps its local names, which an app's minifier shortens, and the
-		// instant commit sits in a file of its own: 1,203 bytes (21,827).
-		expect(brotli).toBeLessThanOrEqual(21_827);
+		// instant commit sits in a file of its own: 1,203 bytes (21,827). The
+		// Privacy Choices banner's parts add their keys to the theme-slot table
+		// the provider reads (about 50 bytes). Its Card, Banner and Drawer load
+		// in chunks of their own that share modules with the classic prompt,
+		// so Rolldown moves those modules into files of their own, and the
+		// preload lists in the first load name more files (474 bytes). No
+		// Privacy Choices component code reaches the first load. With the rest
+		// of the banner work, 463 bytes (22,290).
+		expect(brotli).toBeLessThanOrEqual(22_290);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {
