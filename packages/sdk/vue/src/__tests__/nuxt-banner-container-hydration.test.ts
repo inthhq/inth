@@ -18,7 +18,7 @@ import { createSSRApp, defineComponent, h } from 'vue';
 import type { App } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
-import { ConsentBannerHost } from '../runtime/components/lazy-surfaces';
+import { ConsentBannerHost } from '../runtime/components/lazy-consent-banner';
 import {
 	promptContainers,
 	promptContainersKey,

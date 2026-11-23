@@ -22,7 +22,7 @@ import {
 	LazyIabConsentDialog,
 	OptInConfirmationHost,
 	prefetchIabConsentDialog,
-} from './lazy-surfaces';
+} from './lazy-consent-banner';
 import { useAdoptOptOutConfirmation } from './parts/receipt-focus';
 import ConsentBanner from './prompt/prompt.vue';
 

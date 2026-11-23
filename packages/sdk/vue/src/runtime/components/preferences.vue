@@ -58,7 +58,7 @@ import { useConsentPolicyActions } from '../composables/use-consent-policy-actio
 import { useSurfaceTranslations } from '../composables/use-surface-translations';
 import { switchVariants } from '../primitives/switch-variants';
 import { slotAttrs } from '../utils/slot-attrs';
-import { LazyOptInConfirmation } from './lazy-surfaces';
+import { LazyOptInConfirmation } from './lazy-consent-banner';
 import OptOutReceiptDetails from './opt-out-receipt-details.vue';
 import { consentWidgetManagerKey } from './preferences-manager-context';
 import ConsentTag from './tag.vue';

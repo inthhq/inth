@@ -24,7 +24,7 @@ import {
 	LazyIabConsentDialog,
 	LazyConsentManager,
 	prefetchIabConsentDialog,
-} from './lazy-surfaces';
+} from './lazy-consent-banner';
 import { useAdoptOptOutConfirmation } from './parts/receipt-focus';
 
 // The default slot renders after the surfaces, so a root that wraps the

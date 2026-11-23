@@ -21,7 +21,7 @@ import {
 } from '#imports';
 
 import { COLOR_SCHEME_SCRIPT_KEY } from './color-scheme-script-key';
-import { loadConsentBanner } from './components/lazy-surfaces';
+import { loadConsentBanner } from './components/lazy-consent-banner';
 import { createDeferredContext } from './deferred/create-deferred-context';
 import type { NuxtConsentBoot } from './deferred/deferred-boot.model';
 import type { NuxtEngineInput } from './deferred/engine';
