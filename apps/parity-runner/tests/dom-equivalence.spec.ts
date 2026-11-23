@@ -142,6 +142,94 @@ test('a captured root inert through an Angular host matches one inert itself', a
 	expect(await captureDomSnapshot(page, 'body')).not.toBe(nested);
 });
 
+test('Astro boot hooks normalize only on an Astro page and only by name', async ({
+	page,
+}) => {
+	const link = (attributes: string) =>
+		`<footer><button ${attributes} data-testid="privacy-choices-link" type="button">Your Privacy Choices</button></footer>`;
+	const astroConfig =
+		'<script data-inth-config type="application/json">{}</script>';
+	const hooks =
+		'data-inth-action="customize" data-inth-default-label="" data-inth-dialog="preferences" data-inth-icon-class="icon" data-inth-privacy-choices-link="" data-inth-visible="true"';
+	await page.setContent(link(''));
+	const plain = await captureDomSnapshot(page, 'body');
+
+	// Off an Astro page the hooks are real markup.
+	await page.setContent(link(hooks));
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(plain);
+
+	await page.setContent(`${astroConfig}${link(hooks)}`);
+	expect(await captureDomSnapshot(page, 'body')).toBe(plain);
+	// The page config the Storybook sets in place of the stripped script.
+	await page.setContent(link(hooks));
+	await page.evaluate(() => {
+		(window as unknown as Record<string, unknown>).__inthAstroConfig = {};
+	});
+	expect(await captureDomSnapshot(page, 'body')).toBe(plain);
+
+	// On an Astro page any other attribute still counts.
+	for (const attribute of [
+		'data-inth-rights="opt-out"',
+		'data-inth-surface="trigger"',
+		'aria-expanded="true"',
+		'hidden',
+	]) {
+		// oxlint-disable-next-line no-await-in-loop -- Each replacement uses the same page.
+		await page.setContent(`${astroConfig}${link(`${hooks} ${attribute}`)}`);
+		// oxlint-disable-next-line no-await-in-loop -- Compare before replacing the fixture again.
+		expect(await captureDomSnapshot(page, 'body')).not.toBe(plain);
+	}
+});
+
+test("Astro's fixed prompt id prefix matches React's generated one only on an Astro page", async ({
+	page,
+}) => {
+	const category = (prefix: string) =>
+		`<div data-testid="consent-banner-body"><span id="${prefix}-category-marketing">Marketing</span><button aria-labelledby="${prefix}-category-marketing" role="switch" type="button"></button></div>`;
+	const astroConfig =
+		'<script data-inth-config type="application/json">{}</script>';
+	await page.setContent(category('inth-pc-_r_1_'));
+	const react = await captureDomSnapshot(page, 'body');
+	// Off an Astro page the fixed prefix is an ordinary id.
+	await page.setContent(category('inth-pc-banner'));
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+	await page.setContent(`${astroConfig}${category('inth-pc-banner')}`);
+	expect(await captureDomSnapshot(page, 'body')).toBe(react);
+	// The rest of the id still counts.
+	await page.setContent(
+		`${astroConfig}${category('inth-pc-banner').replace(/marketing/gu, 'measurement')}`
+	);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(react);
+});
+
+test('a tagged root on an Astro page compares whether it is inert, not which element carries it', async ({
+	page,
+}) => {
+	const status =
+		'<div data-testid="consent-banner-announcement" role="status"></div>';
+	const astroConfig =
+		'<script data-inth-config type="application/json">{}</script>';
+	await page.setContent(
+		`<div>${status.replace('role=', 'inert="" role=')}</div>`
+	);
+	const own = await captureDomSnapshot(page, 'body');
+	await page.setContent(`${astroConfig}<div inert="">${status}</div>`);
+	expect(await captureDomSnapshot(page, 'body')).toBe(own);
+	// Off an Astro page an inherited `inert` is a difference.
+	await page.setContent(`<div inert="">${status}</div>`);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(own);
+	// A root that is not inert at all still differs.
+	await page.setContent(`${astroConfig}<div>${status}</div>`);
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(own);
+	// Inside a root, `inert` stays as written.
+	const panel = (attributes: string) =>
+		`${astroConfig}<section data-testid="consent-banner-card"><div ${attributes}><button>Save</button></div></section>`;
+	await page.setContent(panel(''));
+	const open = await captureDomSnapshot(page, 'body');
+	await page.setContent(panel('inert=""'));
+	expect(await captureDomSnapshot(page, 'body')).not.toBe(open);
+});
+
 test('native headings and explicit heading roles agree while wrong levels fail', async ({
 	page,
 }) => {

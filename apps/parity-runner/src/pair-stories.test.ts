@@ -3,6 +3,7 @@ import { expect, test } from 'bun:test';
 import {
 	frameworkOf,
 	missingFrameworks,
+	missingRequiredStories,
 	pairStories,
 	portedFrameworks,
 	selectComparablePairs,
@@ -268,4 +269,34 @@ test('a story not yet ported is compared only where it is ported, and never miss
 			frameworks
 		)
 	).toEqual(['svelte', 'vue']);
+});
+
+test('missingRequiredStories reads coverage from every indexed story', () => {
+	const entry = (framework: string, title: string, name: string) => ({
+		id: `${framework}-${title}--${name}`.toLowerCase(),
+		name,
+		title: `COMPONENTS - ${framework.toUpperCase()}/${title}`,
+	});
+	const byFramework = {
+		// Astro ships no Consent Gate, so React's gate story pairs with nothing.
+		astro: [entry('astro', 'Core/Consent Banner', 'Default')],
+		react: [
+			entry('react', 'Core/Consent Banner', 'Default'),
+			entry('react', 'Core/Consent Gate', 'Placeholder'),
+		],
+	};
+	const required = [
+		'Core/Consent Banner/Default',
+		'Core/Consent Gate/Placeholder',
+	];
+	expect(missingRequiredStories(byFramework, required, ['react'])).toEqual([]);
+	expect(
+		missingRequiredStories(byFramework, required, ['react', 'astro'])
+	).toEqual(['Core/Consent Gate/Placeholder: astro']);
+	expect(
+		missingRequiredStories({ astro: byFramework.astro }, required, ['react'])
+	).toEqual([
+		'Core/Consent Banner/Default: react',
+		'Core/Consent Gate/Placeholder: react',
+	]);
 });

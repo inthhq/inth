@@ -19,6 +19,7 @@
  *   - `SVELTE_STORYBOOK_URL` (default http://127.0.0.1:6007)
  *   - `VUE_STORYBOOK_URL` (default http://127.0.0.1:6008)
  *   - `ANGULAR_STORYBOOK_URL` (default http://127.0.0.1:6011)
+ *   - `ASTRO_STORYBOOK_URL` (default http://127.0.0.1:6010)
  *   - `PARITY_FRAMEWORKS` (comma list, default `react,svelte,vue`)
  * Solid is primitives-only and excluded from this core adapter contract.
  */
@@ -32,6 +33,7 @@ import { captureA11yTree } from '../src/diff-a11y';
 import { captureComputedStyleMap } from '../src/diff-computed-style';
 import { captureDomSnapshot } from '../src/diff-dom';
 import {
+	missingRequiredStories,
 	selectComparablePairs,
 	STORY_LOAD_TIMEOUT_MS,
 	storyVisitTimeout,
@@ -83,6 +85,35 @@ const REQUIRED_CORE_STORIES = [
 ] as const;
 
 /**
+ * The core stories Astro ships. Astro has no Consent Widget or Consent Gate
+ * component; its Consent Dialog Trigger is an inline button rather than
+ * React's floating widget, and its Consent Dialog Link has no styled
+ * button mode, so those stories pair with nothing. Its banner keeps its
+ * hidden server-rendered root after a choice, which the shared
+ * keyboard-accept play does not allow.
+ */
+const ASTRO_CORE_STORIES = [
+	'Core/Consent Banner/Default',
+	'Core/Consent Banner/Banner Contract',
+	'Core/Consent Banner/Banner Focus Management',
+	'Core/Consent Banner/Banner To Dialog Flow',
+	'Core/Consent Dialog/Default',
+	'Core/Consent Dialog/Dialog Contract',
+	'Core/Consent Dialog/Dialog Escape Closes',
+	'Core/Consent Dialog/Save Flow',
+] as const;
+
+/** The core stories `framework` must ship. */
+const requiredStoriesOf = function requiredStoriesOf(
+	framework: string
+): readonly string[] {
+	if (framework === 'astro') {
+		return ASTRO_CORE_STORIES;
+	}
+	return CORE_ADAPTERS.includes(framework) ? REQUIRED_CORE_STORIES : [];
+};
+
+/**
  * Load and pair stories once per worker. Playwright runs each spec file
  * in its own context, so this executes once per run unless sharded.
  */
@@ -107,16 +138,13 @@ const loadPairedStories = async function loadPairedStories(): Promise<
 		excludeKeyPrefixes: ['Core/DevTools/'],
 		frameworks: ENABLED_FRAMEWORKS,
 	});
-	for (const key of REQUIRED_CORE_STORIES) {
-		expect(
-			Object.keys(
-				paired.find((pair) => pair.key === key)?.entries ?? {}
-			).filter((framework) => CORE_ADAPTERS.includes(framework)),
-			key
-		).toEqual(
-			ENABLED_FRAMEWORKS.filter((entry) => CORE_ADAPTERS.includes(entry))
-		);
-	}
+	expect(
+		ENABLED_FRAMEWORKS.flatMap((framework) =>
+			missingRequiredStories(byFramework, requiredStoriesOf(framework), [
+				framework,
+			])
+		)
+	).toEqual([]);
 	console.log(
 		'[PARITY coverage]',
 		JSON.stringify(
@@ -125,7 +153,7 @@ const loadPairedStories = async function loadPairedStories(): Promise<
 					framework,
 					{
 						indexedStories: stories.length,
-						requiredCoreStories: REQUIRED_CORE_STORIES.length,
+						requiredCoreStories: requiredStoriesOf(framework).length,
 					},
 				])
 			)

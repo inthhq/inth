@@ -210,3 +210,31 @@ export const storyVisitTimeout = function storyVisitTimeout(
 	);
 	return Math.max(floorMs, visits * STORY_VISIT_BUDGET_MS);
 };
+
+/**
+ * The required stories each adapter in `adapters` does not ship.
+ *
+ * Read from every story an index lists, not from the compared pairs: a pair
+ * needs two frameworks, so a run of React against an adapter that never
+ * ships a story (Astro has no Consent Widget or Consent Gate component)
+ * would drop the pair and report React as the one missing it.
+ *
+ * @param entriesByFramework - Each enabled framework's index.
+ * @param required - Story keys every listed adapter must ship.
+ * @param adapters - The enabled frameworks held to `required`.
+ * @returns `key: framework, …` for each required story an adapter lacks.
+ */
+export const missingRequiredStories = function missingRequiredStories(
+	entriesByFramework: Readonly<Record<string, readonly StoryEntry[]>>,
+	required: readonly string[],
+	adapters: readonly string[]
+): string[] {
+	const shipped = new Map(
+		pairStories(entriesByFramework).map((pair) => [pair.key, pair.entries])
+	);
+	return required.flatMap((key) => {
+		const entries = shipped.get(key) ?? {};
+		const missing = adapters.filter((framework) => !entries[framework]);
+		return missing.length > 0 ? [`${key}: ${missing.join(', ')}`] : [];
+	});
+};

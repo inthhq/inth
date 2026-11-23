@@ -123,6 +123,20 @@ export const captureDomSnapshot = function captureDomSnapshot(
 				.join(';');
 		};
 
+		// An Astro page: one carrying the config its server render emits, as
+		// a `<script data-inth-config>` or (in the Storybook, which strips the
+		// script) the `window` global that script sets.
+		const astroPage =
+			'__inthAstroConfig' in window ||
+			document.querySelector('script[data-inth-config]') !== null;
+		// Astro's Privacy Choices prompt prefixes its element ids with a fixed
+		// `inth-pc-banner`: the server and the browser render the same ids,
+		// and a page has one prompt. React builds the same ids from `useId`
+		// (`inth-pc-_r_1_-category-…`), which the generated-token rules below
+		// already reduce to `__AUTO__`. On an Astro page the fixed prefix is
+		// that token; the rest of the id stays compared.
+		const ASTRO_PROMPT_ID = /^inth-pc-banner(?=-)/u;
+
 		const normAttr = function normAttr(
 			element: Element,
 			name: string,
@@ -160,13 +174,21 @@ export const captureDomSnapshot = function captureDomSnapshot(
 				if (AUTO_ID.test(value)) {
 					return '__AUTO__';
 				}
-				const counted = angularPage
-					? value
-							.split(/\s+/u)
-							.map((id) => id.replace(ANGULAR_ID, '$<prefix>-__AUTO__'))
-							.join(' ')
-					: value;
-				return counted
+				// Each adapter's own id scheme, only on its own page.
+				const normalizeId = (id: string): string => {
+					if (angularPage) {
+						return id.replace(ANGULAR_ID, '$<prefix>-__AUTO__');
+					}
+					if (astroPage) {
+						return id.replace(ASTRO_PROMPT_ID, 'inth-pc-__AUTO__');
+					}
+					return id;
+				};
+				const ids =
+					angularPage || astroPage
+						? value.split(/\s+/u).map(normalizeId).join(' ')
+						: value;
+				return ids
 					.replace(AUTO_ID_SEGMENT, '-__AUTO__-')
 					.replace(AUTO_ID_SUFFIX, '-__AUTO__');
 			}
@@ -351,6 +373,27 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			attribute.value === '' &&
 			/^inth[a-z0-9-]*$/u.test(attribute.name);
 
+		// Astro's components are server-rendered markup with no framework
+		// JavaScript of their own: each control carries the hooks the page's
+		// one client boot reads (`data-inth-action` and `data-inth-dialog` for
+		// what a click does, `data-inth-visible` for the banner's state, the
+		// `<PrivacyChoicesLink>` label and icon hooks). Other adapters keep the
+		// same facts in component state. The rule applies only on an Astro
+		// page, and only to these names, which no other adapter renders.
+		// `data-inth-surface` is not one: every adapter marks its surfaces
+		// with it. The controls' roles, names, behaviour and every other
+		// attribute stay compared.
+		const ASTRO_BOOT_HOOKS = new Set([
+			'data-inth-action',
+			'data-inth-default-label',
+			'data-inth-dialog',
+			'data-inth-icon-class',
+			'data-inth-privacy-choices-link',
+			'data-inth-visible',
+		]);
+		const astroBootHook = (attribute: Attr): boolean =>
+			astroPage && ASTRO_BOOT_HOOKS.has(attribute.name);
+
 		const hiddenSvgMetadata = (element: Element, attribute: Attr): boolean =>
 			element.tagName.toLowerCase() === 'svg' &&
 			Boolean(element.closest('[aria-hidden="true"]')) &&
@@ -358,23 +401,35 @@ export const captureDomSnapshot = function captureDomSnapshot(
 
 		// A modal surface makes the page around it inert by setting `inert` on
 		// each sibling along its path to <body> (page-block.ts). Above a
-		// captured root, that path runs through each adapter's own wrappers.
+		// captured root, that path runs through each adapter's own wrappers,
+		// so a root may carry `inert` itself or inherit it from a wrapper.
 		// React's announcement region is a sibling on the dialog's path, so it
-		// gets the attribute; Angular's sits inside the `<inth-consent-banner>`
-		// host, which gets it instead. The region is inert either way. Only a
-		// captured root's host ancestors count: inside a surface every element
-		// is compared, and an ordinary page element holding `inert` stays a
-		// difference.
-		const inertThroughAngularHost = (element: Element): boolean => {
+		// gets the attribute itself. Two adapters put it elsewhere:
+		//
+		// - Angular's region sits inside the `<inth-consent-banner>` host,
+		//   which gets it instead. Only a custom-element host counts, so an
+		//   ordinary page element holding `inert` stays a difference.
+		// - Astro portals its surfaces differently, so any wrapper above a
+		//   tagged root counts there.
+		//
+		// The root then records that it is inert, as React's does. Inside a
+		// surface every element is compared as written, and on any other page
+		// an inherited `inert` stays a difference.
+		const inheritsInert = (element: Element): boolean => {
 			if (
-				!angularPage ||
 				element.hasAttribute('inert') ||
 				element.parentElement?.closest('[data-testid]')
 			) {
 				return false;
 			}
 			const holder = element.parentElement?.closest('[inert]');
-			return Boolean(holder?.tagName.includes('-'));
+			if (!holder) {
+				return false;
+			}
+			if (angularPage) {
+				return holder.tagName.includes('-');
+			}
+			return astroPage && element.hasAttribute('data-testid');
 		};
 
 		const needsSwitchSize = (element: Element): boolean =>
@@ -438,6 +493,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		): boolean =>
 			STRIP.has(attribute.name) ||
 			angularSelectorMarker(attribute) ||
+			astroBootHook(attribute) ||
 			// The flag that pairs with the end marker above. It changes
 			// nothing once the marker is in the DOM.
 			(attribute.name === 'data-inth-streamed' &&
@@ -496,7 +552,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 			if (needsSwitchSize(element)) {
 				attrs.push('data-size="small"');
 			}
-			if (inertThroughAngularHost(element)) {
+			if (inheritsInert(element)) {
 				attrs.push('inert=""');
 			}
 			attrs.push(...triggerEvidence(element));
