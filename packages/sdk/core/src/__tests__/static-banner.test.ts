@@ -39,19 +39,19 @@ const createApp = async (): Promise<string> => {
 		join(react, 'package.json'),
 		JSON.stringify({
 			exports: {
-				'./banner': './dist/components/prompt/atoms/root.js',
+				'./banner': './dist/components/prompt/prompt.js',
 				'./part': './dist/index-parts/consent-banner.js',
 				'./static-banner': './dist/static-banner.js',
 			},
 			imports: {
-				'#consent-banner': './dist/components/prompt/atoms/root.js',
+				'#consent-banner': './dist/components/prompt/prompt.js',
 			},
 			name: '@inth/react',
 			type: 'module',
 		})
 	);
 	await write(
-		join(react, 'dist/components/prompt/atoms/root.js'),
+		join(react, 'dist/components/prompt/prompt.js'),
 		"import * as sheet from '@inth/sdk/ui/styles/sheets/banner';\nexport const banner = () => sheet.id + sheet.css;\n"
 	);
 	// `ConsentBanner`'s index part, and the gate a static-banner build
@@ -62,7 +62,7 @@ const createApp = async (): Promise<string> => {
 	);
 	await write(
 		join(react, 'dist/deferred/client-banner.js'),
-		"export const banner = () => import('../components/prompt/atoms/root.js').then((root) => root.banner());\n"
+		"export const banner = () => import('../components/prompt/prompt.js').then((root) => root.banner());\n"
 	);
 	await write(
 		join(react, 'dist/static-banner.js'),
