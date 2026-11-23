@@ -10,10 +10,12 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
 import {
-	consentPackageDirs,
-	groupConsentChunks,
 	nuxtConsentChunkGroup,
 	nuxtConsentConfigChunkGroup,
+} from '../consent-chunk-group.model';
+import {
+	consentPackageDirs,
+	groupConsentChunks,
 } from '../group-consent-chunks';
 
 describe('nuxtConsentChunkGroup', () => {
