@@ -460,6 +460,24 @@ export interface ComponentSlots {
 	consentDialogTag?: SlotStyle;
 	/** Backdrop overlay rendered behind the dialog. */
 	consentDialogOverlay?: SlotStyle;
+	/** Privacy Choices: the dialog's footer: Done, or Reject all, Accept all and Save choices. */
+	consentDialogFooter?: SlotStyle;
+	/** Privacy Choices: one statutory rights row in the dialog. */
+	consentDialogRightsRow?: SlotStyle;
+	/** Privacy Choices: the receipt line under the rights rows. */
+	consentDialogReceipt?: SlotStyle;
+	/** Privacy Choices: the Preferences row, an accordion on desktop and a sheet on phone. */
+	consentDialogPreferencesRow?: SlotStyle;
+	/** Privacy Choices: the bordered group of cookie categories. */
+	consentDialogCategoryGroup?: SlotStyle;
+	/** Privacy Choices: a category's vendor table. */
+	consentDialogVendorTable?: SlotStyle;
+	/** Privacy Choices: a nested phone sheet over the dialog. */
+	consentDialogSheet?: SlotStyle;
+	/** Privacy Choices: Done, in the dialog and its sheets. */
+	consentDialogDoneButton?: SlotStyle;
+	/** Privacy Choices: Save choices in the EU dialog. */
+	consentDialogSaveButton?: SlotStyle;
 
 	/** Root wrapper for the opt-out confirmation view. */
 	optOutConfirmation?: SlotStyle;

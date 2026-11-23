@@ -87,6 +87,24 @@ export interface ConsentComponentSlots<T = Record<string, unknown>> {
 		title?: T;
 		content?: T;
 		overlay?: T;
+		/** Privacy Choices: the dialog's footer: Done, or Reject all, Accept all and Save choices. */
+		footer?: T;
+		/** Privacy Choices: one statutory rights row in the dialog. */
+		rightsRow?: T;
+		/** Privacy Choices: the receipt line under the rights rows. */
+		receipt?: T;
+		/** Privacy Choices: the Preferences row, an accordion on desktop and a sheet on phone. */
+		preferencesRow?: T;
+		/** Privacy Choices: the bordered group of cookie categories. */
+		categoryGroup?: T;
+		/** Privacy Choices: a category's vendor table. */
+		vendorTable?: T;
+		/** Privacy Choices: a nested phone sheet over the dialog. */
+		sheet?: T;
+		/** Privacy Choices: Done, in the dialog and its sheets. */
+		doneButton?: T;
+		/** Privacy Choices: Save choices in the EU dialog. */
+		saveButton?: T;
 	};
 	manager?: {
 		root?: T;
@@ -310,12 +328,21 @@ export const CONSENT_COMPONENT_SLOT_KEY_MAP = {
 	},
 	dialog: {
 		card: true,
+		categoryGroup: true,
 		container: true,
 		content: true,
+		doneButton: true,
+		footer: true,
 		header: true,
 		overlay: true,
+		preferencesRow: true,
+		receipt: true,
+		rightsRow: true,
 		root: true,
+		saveButton: true,
+		sheet: true,
 		title: true,
+		vendorTable: true,
 	},
 	'iab-banner': {
 		actionGroup: true,
