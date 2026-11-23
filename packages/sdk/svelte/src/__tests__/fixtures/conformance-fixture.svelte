@@ -2,12 +2,12 @@
 	import type { ConsentKernel } from '@inth/sdk/engine';
 	import { untrack } from 'svelte';
 
+	import ConsentDialog from '../../lib/components/deferred-panel.svelte';
 	import IabConsentDialog from '../../lib/components/iab-panel.svelte';
 	import IabConsentBanner from '../../lib/components/iab-prompt.svelte';
 	import InthProvider from '../../lib/components/inth-provider.svelte';
-	import ConsentDialog from '../../lib/components/panel.svelte';
 	import ConsentWidget from '../../lib/components/preferences.svelte';
-	import ConsentBanner from '../../lib/components/prompt.svelte';
+	import ConsentBanner from '../../lib/components/prompt/prompt.svelte';
 	import type { ConsentManagerState } from '../../lib/context.svelte';
 	import type { ConsentManagerOptions } from '../../lib/types';
 	import ConformanceKernelCapture from './conformance-kernel-capture.svelte';
@@ -22,11 +22,14 @@
 	let {
 		component,
 		options,
+		blockUntilChoice = undefined,
 		onKernel,
 		onManager,
 	}: {
 		component: MountableComponent;
 		options: ConsentManagerOptions;
+		/** Make the banner block until a choice. */
+		blockUntilChoice?: boolean;
 		onKernel?: (kernel: ConsentKernel) => void;
 		onManager?: (manager: ConsentManagerState) => void;
 	} = $props();
@@ -38,7 +41,10 @@
 		{onManager}
 	/>
 	{#if component === 'consent-banner'}
-		<ConsentBanner />
+		<ConsentBanner
+			{blockUntilChoice}
+			hideBranding
+		/>
 		<ConsentDialog />
 	{:else if component === 'consent-dialog'}
 		<ConsentDialog />

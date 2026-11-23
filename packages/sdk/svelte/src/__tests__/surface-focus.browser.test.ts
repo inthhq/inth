@@ -88,7 +88,7 @@ describe('focus while a surface sheet loads', () => {
 		expect(holdElement()?.hasAttribute('data-inth-pending')).toBe(true);
 		expect(hidden(card)).toBe(true);
 
-		// A blocking banner is a modal: focus starts on it.
+		// A blocking prompt is a modal: focus starts on its card (BNR-13).
 		await vi.waitFor(() => {
 			expect(document.activeElement).toBe(card);
 		});
@@ -99,34 +99,46 @@ describe('focus while a surface sheet loads', () => {
 		expect(document.activeElement).toBe(accept);
 
 		release(':root{--inth-test-hold:1}');
+		// The surface's own deferred sheets hide it too until they land.
 		await vi.waitFor(() => {
-			expect(holdElement()?.hasAttribute('data-inth-pending')).toBe(false);
+			expect(
+				document.head.querySelector('style[data-inth-pending]')
+			).toBeNull();
 		});
 		expect(hidden(card)).toBe(false);
 		// Nothing moves focus once the sheet lands.
 		expect(document.activeElement).toBe(accept);
 	});
 
-	test('the dialog focuses its first control before its sheet lands, and keeps it after', async () => {
+	test('[FOC-02] the dialog focuses its title before its sheet lands, and keeps it after', async () => {
 		const release = holdSheet();
 		mountSurface('dialog');
-		const root = await element('consent-dialog-root');
 		const card = await element('consent-dialog-card');
+		const title = await element('consent-dialog-title');
 
 		expect(holdElement()?.hasAttribute('data-inth-pending')).toBe(true);
 		expect(hidden(card)).toBe(true);
 
-		const first = firstTabbable(root);
-		expect(first, 'the dialog has a tabbable control').toBeDefined();
+		// The dialog opens on its title, so a screen reader announces it.
 		await vi.waitFor(() => {
-			expect(document.activeElement).toBe(first);
+			expect(document.activeElement).toBe(title);
 		});
 
+		// Keyboard users reach its controls meanwhile.
+		const first = firstTabbable(card);
+		expect(first, 'the dialog has a tabbable control').toBeDefined();
+		first?.focus();
+		expect(document.activeElement).toBe(first);
+
 		release(':root{--inth-test-hold:1}');
+		// The surface's own deferred sheets hide it too until they land.
 		await vi.waitFor(() => {
-			expect(holdElement()?.hasAttribute('data-inth-pending')).toBe(false);
+			expect(
+				document.head.querySelector('style[data-inth-pending]')
+			).toBeNull();
 		});
 		expect(hidden(card)).toBe(false);
+		// Nothing moves focus once the sheet lands.
 		expect(document.activeElement).toBe(first);
 	});
 });

@@ -16,7 +16,9 @@ describe('server-rendered IAB styles', () => {
 			props: { options: iabStyleOptions({ nonce: 'request-nonce' }) },
 		});
 		expect(body).toContain('data-testid="iab-consent-banner-card"');
-		expect(head).toContain('inth-first-paint inth-iab-first-paint');
+		expect(head).toContain(
+			'inth-tokens inth-button inth-parts inth-iab-first-paint'
+		);
 		const html = documentHTML(head, body);
 		expect(html).toContain(
 			`<style data-inth-styles="inth-iab-first-paint" nonce="request-nonce">${iabFirstPaintCSS}</style>`
@@ -34,7 +36,7 @@ describe('server-rendered IAB styles', () => {
 		});
 		expect(body).toContain('data-testid="iab-consent-dialog-card"');
 		expect(head).toContain(
-			'inth-first-paint inth-dialog inth-primitives inth-iab-first-paint inth-iab-dialog'
+			'inth-tokens inth-button inth-parts inth-iab-first-paint inth-widget inth-primitives inth-iab-dialog'
 		);
 		const html = documentHTML(head, body);
 		expect(html).toContain(`>${iabFirstPaintCSS}</style>`);

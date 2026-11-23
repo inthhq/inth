@@ -232,20 +232,32 @@ describe('Consent Flow E2E Tests', () => {
 			});
 		});
 
-		test('should contain widget inside dialog', async () => {
+		test('should open as a modal dialog', async () => {
 			render(DialogFixture, { open: true, options: defaultOptions });
 
 			await waitFor(() => {
-				const widget = document.querySelector(
-					'[data-testid="consent-widget-root"]'
+				const card = document.querySelector(
+					'[data-testid="consent-dialog-card"]'
 				);
-				expect(widget).toBeInTheDocument();
+				expect(card).toBeInTheDocument();
+				expect(card?.getAttribute('aria-modal')).toBe('true');
+			});
+		});
+
+		test('should show the categories inside the dialog', async () => {
+			render(DialogFixture, { open: true, options: defaultOptions });
+
+			await waitFor(() => {
+				const group = document.querySelector(
+					'[data-testid="consent-dialog-category-group"]'
+				);
+				expect(group).toBeInTheDocument();
 			});
 		});
 	});
 
 	describe('Complete Flow', () => {
-		test('should complete full consent flow: banner -> customize -> save', async () => {
+		test('should complete full consent flow: banner -> customize in place -> save', async () => {
 			render(BannerDialogFixture, { options: defaultOptions });
 
 			await waitFor(() => {
@@ -263,21 +275,20 @@ describe('Consent Flow E2E Tests', () => {
 			await fireEvent.click(customizeButton);
 
 			await waitFor(() => {
-				const dialog = document.querySelector(
-					'[data-testid="consent-dialog-root"]'
-				);
-				expect(dialog).toBeInTheDocument();
+				expect(
+					document.querySelector(
+						'[data-testid="consent-banner-category-switch-marketing"]'
+					)
+				).toBeInTheDocument();
 			});
 
 			const marketingSwitch = document.querySelector(
-				'[data-testid="consent-widget-switch-marketing"]'
+				'[data-testid="consent-banner-category-switch-marketing"]'
 			);
 			await fireEvent.click(getDefined(marketingSwitch));
 
 			const saveButton = getDefined(
-				document.querySelector(
-					'[data-testid="consent-widget-footer-save-button"]'
-				)
+				document.querySelector('[data-testid="consent-banner-save-button"]')
 			);
 			await fireEvent.click(saveButton);
 

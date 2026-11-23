@@ -3,11 +3,11 @@
 	import { untrack } from 'svelte';
 
 	import ConsentGate from '../../lib/components/consent-gate.svelte';
+	import ConsentDialog from '../../lib/components/deferred-panel.svelte';
 	import Provider from '../../lib/components/inth-provider.svelte';
 	import ConsentDialogLink from '../../lib/components/panel-link.svelte';
 	import ConsentDialogTrigger from '../../lib/components/panel-trigger.svelte';
-	import ConsentDialog from '../../lib/components/panel.svelte';
-	import ConsentBanner from '../../lib/components/prompt.svelte';
+	import ConsentBanner from '../../lib/components/prompt/prompt.svelte';
 	import type { ConsentManagerOptions } from '../../lib/types';
 	import Capture from './conformance-kernel-capture.svelte';
 
