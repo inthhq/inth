@@ -4,8 +4,13 @@ import type { ActiveUI, ConsentPresentation } from '@inth/sdk/engine';
 import { useCallback } from 'react';
 
 import { useHeadlessConsentUI } from '../component-hooks/use-headless-consent-ui';
+import {
+	useActiveUI,
+	useModel,
+	useSetActiveUI,
+	useTranslations,
+} from '../hooks';
 import { useIAB } from '../iab-provider';
-import { useActiveUI, useModel, useSetActiveUI, useTranslations } from './';
 
 export const useIABConsentManager = function useIABConsentManager(
 	overrides?: ConsentPresentation
