@@ -27,9 +27,14 @@ import { ConsentButton } from '~/components/shared/primitives/button';
 import { useSnapshot } from '~/hooks';
 import { useKernel } from '~/kernel-selector';
 import { useUIConfig } from '~/ui-config-context';
+import { inertProps } from '~/utils/inert';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
-import { rightsBundleOf, useSurfaceSession } from './use-surface-session';
+import {
+	rightsBundleOf,
+	useOptOutReceiptData,
+	useSurfaceSession,
+} from './use-surface-session';
 
 /** Surfaces that render the rights row, by their test-id prefix. */
 export type RightsRowSurface = 'consent-banner';
@@ -112,6 +117,7 @@ export const SaleRightsRow = ({
 	const translations = useTranslations();
 	const { components } = useUIConfig();
 	const { session, state } = useSurfaceSession();
+	const receiptData = useOptOutReceiptData();
 	const right = resolveSaleRight(snapshot);
 	const confirmRef = useRef<HTMLDivElement>(null);
 	const cancelRef = useRef<HTMLButtonElement>(null);
@@ -156,7 +162,7 @@ export const SaleRightsRow = ({
 
 	const { model } = snapshot.evaluationPolicy;
 	const copy = resolveSaleRightCopy(translations, {
-		bundle: rightsBundleOf(snapshot),
+		bundle: rightsBundleOf(snapshot, receiptData),
 		business,
 		locked: right.locked,
 		model,
@@ -256,7 +262,7 @@ export const SaleRightsRow = ({
 				className={cls(noStyle, expandStyles.panel, styles.bleed)}
 				id={ids.panel}
 				data-open={open}
-				inert={!open}
+				{...inertProps(!open)}
 			>
 				<div className={cls(noStyle, expandStyles.inner)}>
 					<div
@@ -288,6 +294,7 @@ export const SaleRightsRow = ({
 								performDefaultAction={false}
 								variant="neutral"
 								mode="stroke"
+								noStyle={noStyle}
 								id={ids.cancel}
 								data-testid={testIds.confirmCancel}
 								onClick={() => session.closeConfirmation()}
@@ -299,6 +306,7 @@ export const SaleRightsRow = ({
 								performDefaultAction={false}
 								variant="neutral"
 								mode="stroke"
+								noStyle={noStyle}
 								data-testid={testIds.confirmAllow}
 								onClick={() => {
 									void confirmSaleRight(kernel, { uiSource });

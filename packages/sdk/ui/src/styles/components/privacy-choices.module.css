@@ -736,6 +736,11 @@
 		color: var(--inth-text-muted);
 	}
 
+	/* The categories under an open Preferences row, set off from the row. */
+	.preferencesBody {
+		padding-top: var(--inth-space-sm);
+	}
+
 	/* "View N vendors": a 32px row in the category's segment with no
 	   divider and a 40px hit area. Ghost at rest, the stroke look on hover
 	   and focus, and no press scale: it opens something (CAT-09). */

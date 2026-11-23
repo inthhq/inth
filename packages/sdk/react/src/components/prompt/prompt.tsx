@@ -270,27 +270,40 @@ const ConsentBannerContent: FC<ConsentBannerProps> = ({
 		trapFocus: banner.trapFocus,
 	});
 
+	// Either design hosts the opt-in confirmation: this banner claimed the
+	// host above, so no other surface renders it.
+	const optInConfirmation = optInConfirmationActive ? (
+		<LazyOptInConfirmation
+			disableAnimation={config.disableAnimation}
+			noStyle={config.noStyle}
+		/>
+	) : null;
+
 	if (banner.design === 'privacy-choices' && banner.container) {
 		return (
-			<ErrorBoundary
-				fallback={<div>Something went wrong with the Consent Banner.</div>}
-			>
-				<PrivacyChoicesBanner
-					container={banner.container}
-					noStyle={config.noStyle}
-					disableAnimation={config.disableAnimation}
-					legalLinks={legalLinks}
-					hideBranding={hideBranding}
-					models={models}
-					uiSource={uiSource}
-					title={title}
-					description={description}
-					rejectButtonText={rejectButtonText}
-					acceptButtonText={acceptButtonText}
-					customizeButtonText={customizeButtonText}
-					dismissButtonText={dismissButtonText}
-				/>
-			</ErrorBoundary>
+			<>
+				{optInConfirmation}
+				<ErrorBoundary
+					fallback={<div>Something went wrong with the Consent Banner.</div>}
+				>
+					<PrivacyChoicesBanner
+						container={banner.container}
+						actionGroups={banner.actionGroups}
+						noStyle={config.noStyle}
+						disableAnimation={config.disableAnimation}
+						legalLinks={legalLinks}
+						hideBranding={hideBranding}
+						models={models}
+						uiSource={uiSource}
+						title={title}
+						description={description}
+						rejectButtonText={rejectButtonText}
+						acceptButtonText={acceptButtonText}
+						customizeButtonText={customizeButtonText}
+						dismissButtonText={dismissButtonText}
+					/>
+				</ErrorBoundary>
+			</>
 		);
 	}
 
@@ -367,12 +380,7 @@ const ConsentBannerContent: FC<ConsentBannerProps> = ({
 
 	return (
 		<>
-			{optInConfirmationActive && (
-				<LazyOptInConfirmation
-					disableAnimation={config.disableAnimation}
-					noStyle={config.noStyle}
-				/>
-			)}
+			{optInConfirmation}
 			<ErrorBoundary
 				fallback={<div>Something went wrong with the Consent Banner.</div>}
 			>

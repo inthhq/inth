@@ -15,12 +15,15 @@ import {
 } from '@inth/sdk/engine';
 import type {
 	BannerCommitAction,
+	PresentationAction,
 	ResolvedConsentLayout,
 	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
 import type * as CoreTypes from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import {
 	announcementText,
+	defaultTranslationConfig,
 	resolveBannerAllowedAnnouncement,
 	resolvePrivacyChoicesBannerCopy,
 	resolvePrivacyChoicesVariant,
@@ -41,6 +44,7 @@ import {
 	useCallback,
 	useEffect,
 	useId,
+	useMemo,
 	useRef,
 	useState,
 	useSyncExternalStore,
@@ -51,6 +55,7 @@ import { registerDialogChunkWarmer, warmDialogChunk } from '~/chunk-warming';
 import { useTranslations } from '~/component-hooks/use-translations';
 import {
 	rightsBundleOf,
+	useOptOutReceiptData,
 	useSurfaceSession,
 } from '~/components/privacy-choices/use-surface-session';
 import { ConsentButton } from '~/components/shared/primitives/button';
@@ -58,6 +63,7 @@ import { InlineLegalLinks } from '~/components/shared/primitives/legal-links';
 import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links';
 import { BrandMarkIcon } from '~/components/shared/ui/logo';
 import { toSaveUISource } from '~/context/consent-tracking-context';
+import { LocalThemeContext } from '~/context/theme-context';
 import { ConsentDraftProvider, useConsentDraftStore } from '~/draft';
 import {
 	useBranding,
@@ -65,12 +71,16 @@ import {
 	useHasConsentUI,
 	useModel,
 	useSnapshot,
+	useTranslations as useKernelTranslations,
 } from '~/hooks';
+import { useBrowserLayoutEffect } from '~/hooks/use-browser-layout-effect';
 import { useIsHydrated } from '~/hooks/use-is-hydrated';
 import { useReducedMotion } from '~/hooks/use-reduced-motion';
+import { useTextDirection } from '~/hooks/use-text-direction';
 import { useKernel } from '~/kernel-selector';
 import { useUIConfig } from '~/ui-config-context';
 import { createDeferredModule } from '~/utils/deferred-module';
+import { inertProps } from '~/utils/inert';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 import {
@@ -78,6 +88,7 @@ import {
 	useSurfaceSheetsReady,
 } from '../../shared/surface-styles';
 import type { SurfaceStyleSheet } from '../../shared/surface-styles';
+import { removeStaticBanner } from '../static-banner-shell';
 
 /**
  * The options, loaded when Customize first opens them, or at once in a
@@ -107,6 +118,11 @@ export interface PrivacyChoicesBannerOptions {
 	acceptButtonText?: ReactNode;
 	customizeButtonText?: ReactNode;
 	dismissButtonText?: ReactNode;
+	/**
+	 * The first-layer actions the policy allows, in the host's order and
+	 * groups. Absent, every action shows in the default order.
+	 */
+	actionGroups?: readonly (readonly PresentationAction[])[];
 }
 
 interface SurfaceProps extends PrivacyChoicesBannerOptions {
@@ -116,6 +132,10 @@ interface SurfaceProps extends PrivacyChoicesBannerOptions {
 }
 
 const DEFAULT_MODELS: CoreTypes.Model[] = ['opt-in', 'opt-out'];
+const DEFAULT_ACTION_GROUPS: readonly (readonly PresentationAction[])[] = [
+	['reject', 'accept'],
+	['customize'],
+];
 const CARD_LINKS: NonNullable<InlineLegalLinksProps['links']> = [
 	'privacyPolicy',
 	'cookiePolicy',
@@ -247,14 +267,20 @@ const SurfaceContent = ({
 	acceptButtonText,
 	customizeButtonText,
 	dismissButtonText,
+	actionGroups = DEFAULT_ACTION_GROUPS,
 }: SurfaceProps) => {
 	const kernel = useKernel();
 	const snapshot = useSnapshot();
 	const hasConsentUI = useHasConsentUI();
 	const model = useModel() ?? 'opt-in';
 	const translations = useTranslations();
+	const kernelTranslations = useKernelTranslations();
+	const textDirection = useTextDirection(
+		kernelTranslations?.language ?? defaultTranslationConfig.defaultLanguage
+	);
 	const { components } = useUIConfig();
 	const { session, state } = useSurfaceSession();
+	const receiptData = useOptOutReceiptData();
 	const dismissNotice = useDismissNotice();
 	const draft = useConsentDraftStore();
 	const phone = usePhoneLayout();
@@ -321,6 +347,27 @@ const SurfaceContent = ({
 	if (nextPhase !== phase) {
 		setPhase(nextPhase);
 	}
+
+	// Before the browser paints this prompt, so it and the static banner
+	// from `index.html` never show together.
+	useBrowserLayoutEffect(() => {
+		if (wantsShow) {
+			removeStaticBanner();
+		}
+	}, [wantsShow]);
+
+	// All-in-one has nothing to fold. An expansion left from the phone
+	// Drawer would reopen when the viewport narrows again, and Escape would
+	// spend a press folding it with no Customize to focus (PERM-13).
+	useEffect(() => {
+		if (!allInOne) {
+			return;
+		}
+		pendingExpandFocus.current = false;
+		if (state.expanded) {
+			session.collapse();
+		}
+	}, [allInOne, state.expanded, session]);
 
 	useEffect(() => {
 		if (phase !== 'leaving' || !rootRef.current) {
@@ -462,7 +509,7 @@ const SurfaceContent = ({
 
 	const onPanelReady = useCallback(() => setPanelReady(true), []);
 
-	const bundle = rightsBundleOf(snapshot);
+	const bundle = rightsBundleOf(snapshot, receiptData);
 	const gpc = resolveOptOutState(snapshot).lock === 'gpc-active';
 	const copy = resolvePrivacyChoicesBannerCopy(translations, {
 		bundle,
@@ -527,11 +574,23 @@ const SurfaceContent = ({
 		noStyle,
 	});
 	const notice = variant === 'notice';
+	// The policy's first-layer actions, in the host's order. A notice's
+	// "Your Privacy Choices" is the opt-out right, not an action, so it stays.
+	const summaryGroups = actionGroups
+		.map((group) =>
+			group.filter(
+				(action) =>
+					action === 'reject' || action === 'accept' || action === 'customize'
+			)
+		)
+		.filter((group) => group.length > 0);
+	const summaryActions = summaryGroups.flat();
 	const links = legalLinks === undefined ? CARD_LINKS : legalLinks;
 	const barLinks = links?.filter((key) => key === 'privacyPolicy') ?? null;
 
 	const expandButton = (label: ReactNode, inBar: boolean) => (
 		<ConsentButton
+			key="customize"
 			ref={expandRef}
 			action="custom-consent"
 			performDefaultAction={false}
@@ -556,6 +615,7 @@ const SurfaceContent = ({
 	);
 	const refuseButton = (label: ReactNode) => (
 		<ConsentButton
+			key="reject"
 			action="custom-consent"
 			performDefaultAction={false}
 			consentAction="reject"
@@ -568,6 +628,7 @@ const SurfaceContent = ({
 	);
 	const allowButton = (label: ReactNode) => (
 		<ConsentButton
+			key="accept"
 			action="custom-consent"
 			performDefaultAction={false}
 			consentAction="accept"
@@ -603,8 +664,9 @@ const SurfaceContent = ({
 			{copy.save}
 		</ConsentButton>
 	);
-	const actionGroup = (children: ReactNode) => (
+	const actionGroup = (children: ReactNode, key?: string) => (
 		<div
+			key={key}
 			{...mergeSlotProps(getSlotProps(components, 'banner.actionGroup'), {
 				baseClassName: surfaceStyles.actionGroup,
 				noStyle,
@@ -614,6 +676,19 @@ const SurfaceContent = ({
 			{children}
 		</div>
 	);
+
+	const summaryButton = (action: PresentationAction, inBar: boolean) => {
+		if (action === 'reject') {
+			return refuseButton(copy.reject);
+		}
+		if (action === 'accept') {
+			return allowButton(copy.accept);
+		}
+		return expandButton(
+			customizeButtonText ?? (inBar ? copy.expandBar : copy.expand),
+			inBar
+		);
+	};
 
 	let footerContent: ReactNode;
 	if (optionsOpen) {
@@ -638,17 +713,12 @@ const SurfaceContent = ({
 			</>
 		);
 	} else {
-		footerContent = (
-			<>
-				{actionGroup(
-					<>
-						{refuseButton(copy.reject)}
-						{allowButton(copy.accept)}
-					</>
-				)}
-				{expandButton(customizeButtonText ?? copy.expand, false)}
-			</>
-		);
+		footerContent = summaryGroups.map((group) => {
+			const buttons = group.map((action) => summaryButton(action, false));
+			return group.length > 1
+				? actionGroup(buttons, group.join('-'))
+				: buttons[0];
+		});
 	}
 
 	const tag = hideBranding ? null : (
@@ -691,7 +761,10 @@ const SurfaceContent = ({
 		body = (
 			<>
 				<h2
-					className={cx(noStyle, surfaceStyles.visuallyHidden)}
+					{...mergeSlotProps(getSlotProps(components, 'banner.title'), {
+						baseClassName: surfaceStyles.visuallyHidden,
+						noStyle,
+					})}
 					id={ids.title}
 					data-testid="consent-banner-title"
 				>
@@ -699,7 +772,10 @@ const SurfaceContent = ({
 				</h2>
 				<div className={cx(noStyle, presentation.row)}>
 					<p
-						className={cx(noStyle, presentation.text)}
+						{...mergeSlotProps(getSlotProps(components, 'description.banner'), {
+							baseClassName: presentation.text,
+							noStyle,
+						})}
 						data-testid="consent-banner-description"
 					>
 						{description ?? copy.barDescription}
@@ -710,13 +786,20 @@ const SurfaceContent = ({
 						/>
 					</p>
 					<div
-						className={cx(noStyle, presentation.actions)}
+						{...mergeSlotProps(getSlotProps(components, 'banner.footer'), {
+							baseClassName: presentation.actions,
+							noStyle,
+						})}
 						data-testid="consent-banner-footer"
 					>
-						{notice ? null : refuseButton(copy.reject)}
-						{notice ? null : allowButton(copy.accept)}
-						{expandButton(customizeButtonText ?? copy.expandBar, true)}
-						{notice ? okButton : null}
+						{notice ? (
+							<>
+								{expandButton(customizeButtonText ?? copy.expandBar, true)}
+								{okButton}
+							</>
+						) : (
+							summaryActions.map((action) => summaryButton(action, true))
+						)}
 					</div>
 				</div>
 				{status}
@@ -778,7 +861,7 @@ const SurfaceContent = ({
 						})}
 						id={ids.panel}
 						data-open={expanded}
-						inert={!expanded}
+						{...inertProps(!expanded)}
 						data-testid="consent-banner-expand-panel"
 					>
 						<div className={cx(noStyle, expandStyles.inner)}>{scroll}</div>
@@ -817,9 +900,12 @@ const SurfaceContent = ({
 					data-state={phase === 'leaving' ? 'closed' : 'open'}
 					data-variant={variant}
 					data-design="privacy-choices"
+					data-animation={disableAnimation ? 'off' : undefined}
 					data-testid="consent-banner-root"
+					{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
+					dir={textDirection}
 					// A prompt on its way out takes no input (PERM-05).
-					inert={phase === 'leaving'}
+					{...inertProps(phase === 'leaving')}
 				>
 					{layout.blocking ? (
 						<div
@@ -870,8 +956,18 @@ const SurfaceContent = ({
  *
  * @internal
  */
-export const PrivacyChoicesSurface = (props: SurfaceProps) => (
-	<ConsentDraftProvider>
-		<SurfaceContent {...props} />
-	</ConsentDraftProvider>
-);
+export const PrivacyChoicesSurface = (props: SurfaceProps) => {
+	const { noStyle, disableAnimation } = props;
+	// The stock buttons read `noStyle` from here, as under the classic root.
+	const theme = useMemo(
+		() => ({ disableAnimation, noStyle }),
+		[disableAnimation, noStyle]
+	);
+	return (
+		<LocalThemeContext.Provider value={theme}>
+			<ConsentDraftProvider>
+				<SurfaceContent {...props} />
+			</ConsentDraftProvider>
+		</LocalThemeContext.Provider>
+	);
+};

@@ -17,6 +17,7 @@
  *   data-blocking    'true' while the page is blocked
  *   data-expanded    'true' while Customize has the options open
  *   data-state       'closed' while the layer plays its exit
+ *   data-animation   'off' when the host turned animation off
  *
  * Nothing here is declared on :root. The hooks are read with a fallback, so
  * a palette scoped to `.inth-theme-root` or to the banner still reaches
@@ -483,6 +484,16 @@
 			opacity: 0;
 			transform: translateY(8px);
 		}
+	}
+
+	/* `disableAnimation`: the layer shows on its first frame. Renderers skip
+	   the exit themselves. The presentation sheets name their entrances on
+	   heavier selectors than these, so these must be important to win. */
+	.root[data-animation='off'] .scrim,
+	.root[data-animation='off'] .shell,
+	.root[data-animation='off'] .card,
+	.root[data-animation='off'] .tag {
+		animation: none !important;
 	}
 
 	/* The same selectors as the rules that animate, so these win on source

@@ -20,6 +20,7 @@ declare const styles: {
   readonly "navRowLabel": string;
   readonly "navRowMeta": string;
   readonly "note": string;
+  readonly "preferencesBody": string;
   readonly "privacyChoicesCardIn": string;
   readonly "privacyChoicesChildIn": string;
   readonly "privacyChoicesChildOut": string;

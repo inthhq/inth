@@ -16,7 +16,7 @@ import styles from '@inth/sdk/ui/styles/components/privacy-choices';
 import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
 import * as expand from '@inth/sdk/ui/styles/sheets/expand';
 import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/privacy-choices-dialog';
-import { useLayoutEffect, useState } from 'react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { useTranslations } from '~/component-hooks/use-translations';
@@ -24,6 +24,8 @@ import { CategoryGroup } from '~/components/privacy-choices/category-group';
 import { SaleRightsRow } from '~/components/privacy-choices/rights-row';
 import { useConsentDraftSlice, useConsentDraftStore } from '~/draft';
 import { useSnapshot } from '~/hooks';
+import { useBrowserLayoutEffect } from '~/hooks/use-browser-layout-effect';
+import { inertProps } from '~/utils/inert';
 
 import { SurfaceStyles } from '../../shared/surface-styles';
 import type { SurfaceStyleSheet } from '../../shared/surface-styles';
@@ -118,10 +120,10 @@ const UsPreferences = ({
 				className={cx(noStyle, expandStyles.panel)}
 				id={panelId}
 				data-open={open}
-				inert={!open}
+				{...inertProps(!open)}
 			>
 				<div className={cx(noStyle, expandStyles.inner)}>
-					<div style={{ paddingTop: 8 }}>
+					<div className={cx(noStyle, styles.preferencesBody)}>
 						<CategoryGroup
 							idPrefix={idPrefix}
 							testIdPrefix="consent-banner"
@@ -155,7 +157,7 @@ export const PrivacyChoicesPanel = ({
 	noStyle,
 	onReady,
 }: PrivacyChoicesPanelProps) => {
-	useLayoutEffect(() => {
+	useBrowserLayoutEffect(() => {
 		onReady?.();
 	}, [onReady]);
 	const rights = (
