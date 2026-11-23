@@ -8,7 +8,7 @@
 
 import type { PingData, TCFApi, TCFApiCallback } from '@inth/sdk-core';
 
-import { CMP_VERSION_NUMBER, createPingData } from './cmp-defaults';
+import { CMP_VERSION_NUMBER, createPingData } from './cmp-defaults.model';
 
 let stubInitialized = false;
 /** The stub this module installed, distinct from a replacement CMP API. */

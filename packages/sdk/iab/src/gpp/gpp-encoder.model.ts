@@ -12,8 +12,8 @@ import {
 	GPC_SUBSECTION_TYPE,
 	GPP_HEADER_ID,
 	GPP_HEADER_VERSION,
-} from './sections';
-import type { GPPFieldSpec, USSectionDefinition } from './sections';
+} from './gpp-sections.model';
+import type { GPPFieldSpec, USSectionDefinition } from './gpp-sections.model';
 
 /** Values for one subsection, keyed by field name. */
 export type GPPFieldValues = Record<string, number | boolean | number[]>;

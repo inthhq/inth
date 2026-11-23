@@ -14,12 +14,12 @@ import {
 } from '@inth/sdk-schema/types';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { createAuthorityReceipt, validateAuthority } from '../authority';
+import { createAuthorityReceipt, validateAuthority } from '../iab-authority.store';
 import { isLegitimateInterestAllowed } from '../headless';
 import { createIAB } from '../index';
 import type { IABHandle } from '../index';
-import { PublisherRestrictionError } from '../tcf/publisher-restrictions';
-import { decodeTCString, generateTCString } from '../tcf/tc-string';
+import { PublisherRestrictionError } from '../tcf/publisher-restrictions.model';
+import { decodeTCString, generateTCString } from '../tcf/tc-string.model';
 import { completeGVL } from './fixtures/gvl-sample';
 
 /**

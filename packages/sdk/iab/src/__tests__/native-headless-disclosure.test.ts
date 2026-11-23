@@ -28,8 +28,8 @@ import { resolveIABBannerSummary } from '@inth/sdk-core';
 import { describe, expect, test } from 'vitest';
 
 import { applyPublisherRestrictionsToGVL } from '../headless';
-import { additionalConsentFor } from '../tcf/additional-consent';
-import { generateTCString } from '../tcf/tc-string';
+import { additionalConsentFor } from '../tcf/additional-consent.api';
+import { generateTCString } from '../tcf/tc-string.model';
 
 const IAB = resolve(import.meta.dirname, '../../../../native-protocol/iab');
 const FIXTURE = resolve(IAB, 'headless-disclosure-cases.json');

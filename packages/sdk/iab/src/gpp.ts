@@ -12,14 +12,14 @@
 
 export { createGPP } from './gpp/create-gpp';
 export type { CreateGPPOptions, GPPHandle } from './gpp/create-gpp';
-export { destroyGPPStub, initializeGPPStub } from './gpp/stub';
+export { destroyGPPStub, initializeGPPStub } from './gpp/initialize-gpp-stub';
 export {
 	encodeGPPString,
 	encodeUSSection,
 	type EncodedGPPSection,
 	type GPPFieldValues,
 	type USSectionValues,
-} from './gpp/encoder';
+} from './gpp/gpp-encoder.model';
 export {
 	GPP_VERSION,
 	US_NATIONAL_SECTION,
@@ -28,14 +28,14 @@ export {
 	type GPPFieldSpec,
 	type USSectionDefinition,
 	type USSectionPrefix,
-} from './gpp/sections';
+} from './gpp/gpp-sections.model';
 export {
 	resolveUSSectionDefinition,
 	resolveUSSectionValues,
 	type GPPMspaMode,
 	type GPPUSApproach,
 	type GPPUSFallback,
-} from './gpp/us-section';
+} from './gpp/us-section.model';
 export type {
 	GPPApi,
 	GPPCallback,
@@ -45,4 +45,4 @@ export type {
 	GPPParsedSubsection,
 	GPPPingData,
 	GPPSignalStatus,
-} from './gpp/types';
+} from './gpp/gpp-api.model';

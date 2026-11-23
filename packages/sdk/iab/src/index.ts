@@ -50,29 +50,29 @@ import {
 	readAuthorityReceiptText,
 	storeAuthority,
 	validateAuthority,
-} from './authority';
-import { fetchAdTechProviders } from './tcf/additional-consent';
+} from './iab-authority.store';
+import { fetchAdTechProviders } from './tcf/additional-consent.api';
 import {
 	clearStoredTCString,
 	createCMPApi,
 	syncStoredAdditionalConsent,
 } from './tcf/cmp-api';
-import { CMP_VERSION_NUMBER } from './tcf/cmp-defaults';
-import { assertValidCmpId, createCmpIdError, isValidCmpId } from './tcf/cmp-id';
+import { CMP_VERSION_NUMBER } from './tcf/cmp-defaults.model';
+import { assertValidCmpId, createCmpIdError, isValidCmpId } from './tcf/cmp-id.model';
 import { clearGVLCache, fetchGVL, narrowGVLToVendors } from './tcf/fetch-gvl';
-import { getTCFCore } from './tcf/lazy-load';
+import { getTCFCore } from './tcf/get-tcf-core';
 import {
 	copyPublisherRestrictionInput,
 	PublisherRestrictionError,
 	validatePublisherRestrictions,
-} from './tcf/publisher-restrictions';
+} from './tcf/publisher-restrictions.model';
 import {
 	CONSENT_TO_IAB_PURPOSE_MAP,
 	inthConsentsToIabPurposes,
 	iabPurposesToInthConsents,
-} from './tcf/purpose-mapping';
-import { destroyIABStub as destroyStub, initializeIABStub } from './tcf/stub';
-import { generateTCString, resolveIsServiceSpecific } from './tcf/tc-string';
+} from './tcf/purpose-mapping.model';
+import { destroyIABStub as destroyStub, initializeIABStub } from './tcf/initialize-iab-stub';
+import { generateTCString, resolveIsServiceSpecific } from './tcf/tc-string.model';
 
 export interface CreateIABOptions {
 	kernel: ConsentKernel;
@@ -187,14 +187,14 @@ const createIABProviderConfig = function createIABProviderConfig(
 };
 
 export { createIABProviderConfig as iab };
-export { initializeIABStub, destroyIABStub } from './tcf/stub';
+export { initializeIABStub, destroyIABStub } from './tcf/initialize-iab-stub';
 export { CONSENT_ONLY_PURPOSES } from '@inth/sdk-schema/types';
 export {
 	PUBLISHER_RESTRICTION_TYPES,
 	PublisherRestrictionError,
 	validatePublisherRestrictions,
-} from './tcf/publisher-restrictions';
-export type { PublisherRestrictionContext } from './tcf/publisher-restrictions';
+} from './tcf/publisher-restrictions.model';
+export type { PublisherRestrictionContext } from './tcf/publisher-restrictions.model';
 
 /** Handle returned by `createIAB`. */
 export interface IABHandle {

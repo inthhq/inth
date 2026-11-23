@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { encodeAdditionalConsent } from '../packages/sdk/iab/src/tcf/additional-consent-codec';
-import { getTCFCore } from '../packages/sdk/iab/src/tcf/lazy-load';
+import { encodeAdditionalConsent } from '../packages/sdk/iab/src/tcf/additional-consent-codec.model';
+import { getTCFCore } from '../packages/sdk/iab/src/tcf/get-tcf-core';
 import {
 	checkMobileGoogleEvidence,
 	parseMobileGoogleEvidence,

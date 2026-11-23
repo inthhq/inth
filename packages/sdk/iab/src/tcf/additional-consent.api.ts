@@ -22,13 +22,13 @@ import {
 import {
 	encodeAdditionalConsent,
 	isProviderId,
-} from './additional-consent-codec';
+} from './additional-consent-codec.model';
 
 export {
 	decodeAdditionalConsent,
 	encodeAdditionalConsent,
 	type AdditionalConsentSignal,
-} from './additional-consent-codec';
+} from './additional-consent-codec.model';
 
 /**
  * Builds the AC string for a confirmed choice.

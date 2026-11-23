@@ -10,14 +10,14 @@
  * @packageDocumentation
  */
 
-import { GPP_VERSION } from './sections';
+import { GPP_VERSION } from './gpp-sections.model';
 import type {
 	GPPApi,
 	GPPCallback,
 	GPPEventData,
 	GPPPingData,
 	GPPQueuedListener,
-} from './types';
+} from './gpp-api.model';
 
 const LOCATOR_NAME = '__gppLocator';
 

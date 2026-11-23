@@ -34,7 +34,7 @@ export {
 	countIABPartners,
 	iabDisplayTestId,
 	resolveIABDialogDisplayModel,
-} from './headless/display-model';
+} from './headless/iab-dialog-display.model';
 export {
 	formatVendorMaxAge,
 	mapCustomVendor,
@@ -47,12 +47,12 @@ export {
 	type ProcessedVendor,
 	processGVLForDialog,
 	type VendorMaxAgeCopy,
-} from './headless/dialog-data';
+} from './headless/dialog-data.model';
 export {
 	type IABVendorUrls,
 	resolveIABSafeUrl,
 	resolveIABVendorUrls,
-} from './headless/vendor-urls';
+} from './headless/vendor-urls.model';
 export type {
 	HeadlessIABBannerAction,
 	HeadlessIABBannerState,
@@ -67,4 +67,4 @@ export type {
 	HeadlessIABProcessedVendor,
 	HeadlessIABStateInput,
 	HeadlessIABVendorId,
-} from './headless/types';
+} from './headless/headless-iab.model';

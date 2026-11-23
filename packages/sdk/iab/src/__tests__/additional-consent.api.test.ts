@@ -16,7 +16,7 @@ import {
 	decodeAdditionalConsent,
 	encodeAdditionalConsent,
 	fetchAdTechProviders,
-} from '../tcf/additional-consent';
+} from '../tcf/additional-consent.api';
 import { completeGVL } from './fixtures/gvl-sample';
 
 describe('ACv2 string', () => {

@@ -2,9 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
-import { decodeAdditionalConsent } from '../packages/sdk/iab/src/tcf/additional-consent-codec';
-import { getTCFCore } from '../packages/sdk/iab/src/tcf/lazy-load';
-import type { TCFCoreModule } from '../packages/sdk/iab/src/tcf/lazy-load';
+import { decodeAdditionalConsent } from '../packages/sdk/iab/src/tcf/additional-consent-codec.model';
+import { getTCFCore } from '../packages/sdk/iab/src/tcf/get-tcf-core';
+import type { TCFCoreModule } from '../packages/sdk/iab/src/tcf/get-tcf-core';
 
 type Scenario = 'fresh' | 'decision' | 'reject' | 'withdrawn';
 type TCModel = InstanceType<Awaited<ReturnType<typeof getTCFCore>>['TCModel']>;

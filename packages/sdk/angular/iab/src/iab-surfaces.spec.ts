@@ -9,7 +9,7 @@ import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { afterEach, describe, expect, onTestFinished, test, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
-import { decodeTCString } from '../../../iab/src/tcf/tc-string';
+import { decodeTCString } from '../../../iab/src/tcf/tc-string.model';
 import { bootClient } from '../../src/__tests__/conformance-app';
 import { transportMode } from '../../src/__tests__/fixtures/transport-mode';
 import { settle } from '../../src/__tests__/test-local';

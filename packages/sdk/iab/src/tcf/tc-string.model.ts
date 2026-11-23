@@ -11,11 +11,11 @@ import type {
 	TCFConsentData,
 } from '@inth/sdk-core';
 
-import { getTCFCore } from './lazy-load';
+import { getTCFCore } from './get-tcf-core';
 import {
 	PublisherRestrictionError,
 	validatePublisherRestrictions,
-} from './publisher-restrictions';
+} from './publisher-restrictions.model';
 
 /**
  * The vendor IDs a disclosed-vendors record encodes.

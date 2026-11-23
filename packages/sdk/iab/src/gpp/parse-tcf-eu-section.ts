@@ -9,8 +9,8 @@
  * @packageDocumentation
  */
 
-import { getTCFCore } from '../tcf/lazy-load';
-import type { GPPParsedSubsection } from './types';
+import { getTCFCore } from '../tcf/get-tcf-core';
+import type { GPPParsedSubsection } from './gpp-api.model';
 
 const BASE64_URL =
 	'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';

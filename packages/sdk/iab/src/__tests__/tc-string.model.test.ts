@@ -9,8 +9,8 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { createIAB } from '../index';
 import { createCMPApi } from '../tcf/cmp-api';
-import { CMP_VERSION_NUMBER } from '../tcf/cmp-defaults';
-import { decodeTCString, generateTCString } from '../tcf/tc-string';
+import { CMP_VERSION_NUMBER } from '../tcf/cmp-defaults.model';
+import { decodeTCString, generateTCString } from '../tcf/tc-string.model';
 import { MINIMAL_TC_STRING } from './fixtures/tc-strings';
 import {
 	createMockGVL,

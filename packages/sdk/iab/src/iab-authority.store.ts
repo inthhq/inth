@@ -8,10 +8,10 @@ import {
 	permittedLegitimateInterestPurposes,
 } from '@inth/sdk-schema/types';
 
-import { additionalConsentFor } from './tcf/additional-consent';
-import { sameListedRestrictions } from './tcf/publisher-restrictions';
-import { decodeTCString } from './tcf/tc-string';
-import type { DecodedTCString } from './tcf/tc-string';
+import { additionalConsentFor } from './tcf/additional-consent.api';
+import { sameListedRestrictions } from './tcf/publisher-restrictions.model';
+import { decodeTCString } from './tcf/tc-string.model';
+import type { DecodedTCString } from './tcf/tc-string.model';
 
 const RETENTION_MS = 395 * 86_400_000;
 const DISCLOSURE_REQUIRED_AT = Date.UTC(2026, 1, 28);

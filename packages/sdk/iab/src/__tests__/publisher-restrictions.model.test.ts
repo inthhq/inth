@@ -11,8 +11,8 @@ import {
 	PublisherRestrictionError,
 	sameListedRestrictions,
 	validatePublisherRestrictions,
-} from '../tcf/publisher-restrictions';
-import { decodeTCString, generateTCString } from '../tcf/tc-string';
+} from '../tcf/publisher-restrictions.model';
+import { decodeTCString, generateTCString } from '../tcf/tc-string.model';
 import {
 	CONFLICTING_RESTRICTIONS_TC_STRING,
 	CONSENT_REQUIRED_TC_STRING,

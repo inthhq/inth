@@ -907,7 +907,7 @@ test('with `iab` set, mounts the shared CMP for a prefetched IAB reference and e
 		await context.iab?.whenReady?.();
 		context.iab?.acceptAll();
 		await context.iab?.save();
-		const { decodeTCString } = await import('../../../iab/src/tcf/tc-string');
+		const { decodeTCString } = await import('../../../iab/src/tcf/tc-string.model');
 		const tcString = context.snapshot.value.iab?.authority?.tcString;
 		expect(tcString).toBeTruthy();
 		if (!tcString) {
@@ -1172,7 +1172,7 @@ describe('IAB is opt-in', () => {
 test('IAB publisher restrictions configured in Vue reach the CMP and its TC string', async () => {
 	const { completeGVL } =
 		await import('../../../iab/src/__tests__/fixtures/gvl-sample');
-	const { decodeTCString } = await import('../../../iab/src/tcf/tc-string');
+	const { decodeTCString } = await import('../../../iab/src/tcf/tc-string.model');
 	// Vendor 755 must use legitimate interest for purpose 7.
 	const publisherRestrictions = [
 		{ purposeId: 7, restrictionType: 2 as const, vendorIds: [755] },

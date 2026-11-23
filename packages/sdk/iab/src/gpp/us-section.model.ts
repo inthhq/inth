@@ -10,9 +10,9 @@
 import type { AllConsentNames, ConsentSnapshot } from '@inth/sdk-core';
 import { isOptedOut } from '@inth/sdk-core/surface-state';
 
-import type { USSectionValues } from './encoder';
-import { US_NATIONAL_SECTION, US_STATE_SECTIONS } from './sections';
-import type { USSectionDefinition } from './sections';
+import type { USSectionValues } from './gpp-encoder.model';
+import { US_NATIONAL_SECTION, US_STATE_SECTIONS } from './gpp-sections.model';
+import type { USSectionDefinition } from './gpp-sections.model';
 
 /**
  * How US visitors are signalled.

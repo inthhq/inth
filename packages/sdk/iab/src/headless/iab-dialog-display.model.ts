@@ -33,13 +33,13 @@
 
 import type { AdTechProvider } from '@inth/sdk-core';
 
-import { processGVLForDialog } from './dialog-data';
+import { processGVLForDialog } from './dialog-data.model';
 import type {
 	HeadlessIABDialogData,
 	HeadlessIABProcessedPurpose,
 	HeadlessIABProcessedVendor,
 	HeadlessIABStateInput,
-} from './types';
+} from './headless-iab.model';
 
 /** What a row represents, and which section it belongs to. */
 export type HeadlessIABDisplayRowKind =

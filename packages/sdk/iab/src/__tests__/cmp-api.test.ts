@@ -3,9 +3,9 @@ import type { PingData } from '@inth/sdk-core';
 import { afterEach, expect, test, vi } from 'vitest';
 
 import { createCMPApi } from '../tcf/cmp-api';
-import { CMP_VERSION_NUMBER } from '../tcf/cmp-defaults';
-import { destroyIABStub, initializeIABStub } from '../tcf/stub';
-import { generateTCString } from '../tcf/tc-string';
+import { CMP_VERSION_NUMBER } from '../tcf/cmp-defaults.model';
+import { destroyIABStub, initializeIABStub } from '../tcf/initialize-iab-stub';
+import { generateTCString } from '../tcf/tc-string.model';
 import { completeGVL } from './fixtures/gvl-sample';
 
 const disposers: (() => void)[] = [];

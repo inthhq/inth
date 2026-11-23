@@ -27,8 +27,8 @@ import type {
 	HeadlessIABProcessedStack,
 	HeadlessIABProcessedVendor,
 	HeadlessIABStateInput,
-} from './types';
-import { resolveIABSafeUrl, resolveIABVendorUrls } from './vendor-urls';
+} from './headless-iab.model';
+import { resolveIABSafeUrl, resolveIABVendorUrls } from './vendor-urls.model';
 
 const STANDALONE_PURPOSE_ID = 1;
 

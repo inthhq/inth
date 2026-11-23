@@ -19,11 +19,11 @@ import type {
 } from '@inth/sdk-core';
 import { IAB_STORAGE_KEYS } from '@inth/sdk-schema/types';
 
-import { CMP_VERSION_NUMBER, createPingData } from './cmp-defaults';
-import { assertValidCmpId } from './cmp-id';
-import { toTCDataRestrictions } from './publisher-restrictions';
-import { clearStubQueue, getStubQueue } from './stub';
-import { decodeTCString, getDisclosedVendorIds } from './tc-string';
+import { CMP_VERSION_NUMBER, createPingData } from './cmp-defaults.model';
+import { assertValidCmpId } from './cmp-id.model';
+import { toTCDataRestrictions } from './publisher-restrictions.model';
+import { clearStubQueue, getStubQueue } from './initialize-iab-stub';
+import { decodeTCString, getDisclosedVendorIds } from './tc-string.model';
 
 const setCookie = function setCookie(
 	name: string,

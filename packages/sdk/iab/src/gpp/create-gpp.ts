@@ -11,25 +11,25 @@ import type {
 } from '@inth/sdk-core';
 import type { ConsentRuntimeGPPFactoryOptions } from '@inth/sdk-core/runtime';
 
-import { isValidCmpId, MAX_CMP_ID } from '../tcf/cmp-id';
-import { createGPPCmpApi } from './cmp-api';
-import type { GPPSectionState, GPPState } from './cmp-api';
-import { encodeUSSection } from './encoder';
+import { isValidCmpId, MAX_CMP_ID } from '../tcf/cmp-id.model';
+import { createGPPCmpApi } from './create-gpp-cmp-api';
+import type { GPPSectionState, GPPState } from './create-gpp-cmp-api';
+import { encodeUSSection } from './gpp-encoder.model';
 import {
 	GPC_SUBSECTION_TYPE,
 	TCF_EU_PREFIX,
 	TCF_EU_SECTION_ID,
 	US_NATIONAL_SECTION,
 	US_SECTIONS,
-} from './sections';
-import { destroyGPPStub, initializeGPPStub } from './stub';
-import { parseTCFEUSection } from './tcf-section';
-import type { GPPParsedSubsection, GPPPingData } from './types';
+} from './gpp-sections.model';
+import { destroyGPPStub, initializeGPPStub } from './initialize-gpp-stub';
+import { parseTCFEUSection } from './parse-tcf-eu-section';
+import type { GPPParsedSubsection, GPPPingData } from './gpp-api.model';
 import {
 	resolveUSSectionDefinition,
 	resolveUSSectionValues,
-} from './us-section';
-import type { GPPMspaMode, GPPUSApproach, GPPUSFallback } from './us-section';
+} from './us-section.model';
+import type { GPPMspaMode, GPPUSApproach, GPPUSFallback } from './us-section.model';
 
 /** CMP ID the GPP specification reserves for unregistered string creators. */
 const UNREGISTERED_CMP_ID = 1;
