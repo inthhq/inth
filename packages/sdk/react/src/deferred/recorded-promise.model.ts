@@ -1,15 +1,10 @@
 /**
- * What a deferred root shares with the deferred surfaces under it, and the
- * promise helpers they render with. Small: on first load.
+ * The promise helpers deferred surfaces render with: a promise that keeps
+ * its outcome where a render can read it. Small: on first load.
  *
  * @packageDocumentation
  * @internal
  */
-
-import * as React from 'react';
-import { createContext } from 'react';
-
-import type { DeferredKernelHandle } from './create-deferred-kernel';
 
 /** A promise that keeps its result where a render can read it. @internal */
 export type Recorded<Value> = Promise<Value> & {
@@ -78,53 +73,3 @@ export const recordOnce = function recordOnce<Value>(
 		return loading;
 	};
 };
-
-/** React 19's `use`, absent from React 18. */
-const { use } = React as {
-	use?: <Value>(value: Promise<Value>) => Value;
-};
-
-/**
- * Reads a recorded promise during render: its value once settled, else it
- * suspends. Render-only, like `use`.
- *
- * @internal
- */
-export const read = function read<Value>(promise: Recorded<Value>): Value {
-	if (promise.status === 'fulfilled') {
-		return promise.value as Value;
-	}
-	if (promise.status === 'rejected') {
-		throw promise.reason;
-	}
-	if (use) {
-		// oxlint-disable-next-line react-hooks/rules-of-hooks -- `read` is `use` with a React 18 fallback.
-		return use(promise);
-	}
-	throw promise;
-};
-
-/** One deferred root's engine load. @internal */
-export interface DeferredSession {
-	handle: DeferredKernelHandle;
-	/** Starts loading the engine and the banner. Idempotent. */
-	start: () => void;
-	/** The engine's module, once started and loaded. */
-	engine: () => Recorded<unknown>;
-	/**
-	 * A value from the engine's module, such as a stock surface, read once
-	 * the engine attached, so the surface hydrates against the engine's
-	 * kernel. `pick` may wait for more, such as the banner's container.
-	 * One read per `key`.
-	 */
-	surface: <Value>(
-		key: string,
-		pick: (engine: unknown) => Value | PromiseLike<Value>
-	) => Recorded<Value>;
-}
-
-/** @internal */
-export const DeferredSessionContext = createContext<DeferredSession | null>(
-	null
-);
-DeferredSessionContext.displayName = 'InthDeferredSessionContext';

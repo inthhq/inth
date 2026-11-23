@@ -53,7 +53,8 @@ import type * as ClientEngine from './client-engine';
 import type { DeferredKernelHandle } from './create-deferred-kernel';
 import type { DeferredCommitConfig } from './deferred-committed.model';
 import { DeferredConsentShell } from './deferred-consent-shell';
-import { read, recordOnce } from './recorded-promise.model';
+import { read } from './read';
+import { recordOnce } from './recorded-promise.model';
 import { scheduleDeferredEngine } from './schedule-deferred-engine';
 import { warmSurfaces } from './surface-warmers.model';
 
