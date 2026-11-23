@@ -217,7 +217,7 @@ export default mergeConfig(
 				'@inth/react/headless': resolve(__dirname, '../react/dist/headless.js'),
 				'@inth/react/components/consent-dialog-link': resolve(
 					__dirname,
-					'../react/dist/components/panel-link/index.js'
+					'../react/dist/components/consent-dialog-link/index.js'
 				),
 				'@inth/react/components/privacy-choices-link': resolve(
 					__dirname,

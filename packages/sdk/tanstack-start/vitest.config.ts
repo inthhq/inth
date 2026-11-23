@@ -155,7 +155,7 @@ const alias = {
 	'@inth/react/devtools': resolve(__dirname, '../react/dist/devtools.js'),
 	'@inth/react/components/consent-dialog-link': resolve(
 		__dirname,
-		'../react/dist/components/panel-link/index.js'
+		'../react/dist/components/consent-dialog-link/index.js'
 	),
 	'@inth/react/components/privacy-choices-link': resolve(
 		__dirname,

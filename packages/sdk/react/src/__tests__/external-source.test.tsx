@@ -3,7 +3,7 @@ import { useContext, useEffect, StrictMode } from 'react';
 import { expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
-import { ConsentDialogLink } from '../components/consent-preferences-link';
+import { ConsentDialogLink } from '../components/consent-dialog-link';
 import { KernelContext } from '../context';
 import { useHasConsentUI, useSetActiveUI } from '../hooks';
 import { IABProvider, useIAB } from '../iab-provider';
