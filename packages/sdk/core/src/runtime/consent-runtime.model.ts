@@ -520,7 +520,7 @@ export interface ConsentRuntimeOptions {
 	 * (signed out; drops the account layer), `undefined` (unknown; no-op), or a
 	 * `Promise` that holds consent outcomes until it settles or times out (3 s).
 	 */
-	userConsent?: UserConsent | null | Promise<UserConsent | null>;
+	userConsent?: UserConsent | null | Promise<UserConsent | null | undefined>;
 	/** Decision inputs (country, region, language, GPC) forced by the host. */
 	overrides?: KernelOverrides;
 	/**
@@ -769,7 +769,11 @@ export interface ConsentRuntime {
 	 * account consent layer. `undefined` is a no-op.
 	 */
 	syncUserConsent: (
-		value: UserConsent | null | Promise<UserConsent | null> | undefined
+		value:
+			| UserConsent
+			| null
+			| Promise<UserConsent | null | undefined>
+			| undefined
 	) => void;
 	/**
 	 * Merge decision-input overrides into the current ones: a key you pass

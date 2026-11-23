@@ -14,7 +14,7 @@ import type { InternalKernel } from '../kernel/internals';
 export type UserConsentOption =
 	| UserConsent
 	| null
-	| PromiseLike<UserConsent | null>;
+	| PromiseLike<UserConsent | null | undefined>;
 
 /** Default timeout (ms) before a pending `userConsent` Promise releases its hold. */
 export const DEFAULT_USER_CONSENT_TIMEOUT_MS = 3_000;
@@ -22,12 +22,13 @@ export const DEFAULT_USER_CONSENT_TIMEOUT_MS = 3_000;
 /** Whether `value` is a Promise / thenable. */
 export const isUserConsentPromise = function isUserConsentPromise(
 	value: UserConsentOption | undefined
-): value is PromiseLike<UserConsent | null> {
+): value is PromiseLike<UserConsent | null | undefined> {
 	return (
 		value !== null &&
 		value !== undefined &&
 		(typeof value === 'object' || typeof value === 'function') &&
-		typeof (value as PromiseLike<UserConsent | null>).then === 'function'
+		typeof (value as PromiseLike<UserConsent | null | undefined>).then ===
+			'function'
 	);
 };
 
@@ -59,11 +60,13 @@ export const createUserConsentSyncController =
 	): UserConsentSyncController {
 		let holdArmedForExternalId: string | null = null;
 		let activePromiseGeneration = 0;
+		let holdEpoch = 0;
 		let activeTimeout: ReturnType<typeof setTimeout> | null = null;
-		let lastPromise: PromiseLike<UserConsent | null> | null = null;
+		let lastPromise: PromiseLike<UserConsent | null | undefined> | null = null;
 		let disposed = false;
 
-		const clearTimer = (): void => {
+		const cancelTimer = (): void => {
+			holdEpoch += 1;
 			if (activeTimeout !== null) {
 				clearTimeout(activeTimeout);
 				activeTimeout = null;
@@ -71,56 +74,58 @@ export const createUserConsentSyncController =
 		};
 
 		const clearHold = (): void => {
-			clearTimer();
+			cancelTimer();
 			if (kernel.getSnapshot().userConsentPending) {
 				kernel.setUserConsentPending(false);
 			}
 		};
 
-		const armHoldFor = (externalId: string, myPromiseGen: number): void => {
+		const armHoldFor = (externalId: string): void => {
 			holdArmedForExternalId = externalId;
+			cancelTimer();
+			const myHoldEpoch = holdEpoch;
 			if (!kernel.getSnapshot().userConsentPending) {
 				kernel.setUserConsentPending(true);
 			}
-			clearTimer();
 			activeTimeout = setTimeout(() => {
 				activeTimeout = null;
-				if (!disposed && activePromiseGeneration === myPromiseGen) {
+				if (!disposed && holdEpoch === myHoldEpoch) {
 					kernel.setUserConsentPending(false);
 				}
 			}, timeoutMs);
 		};
 
 		const followPromise = async (
-			promise: PromiseLike<UserConsent | null>,
+			promise: PromiseLike<UserConsent | null | undefined>,
 			myPromiseGen: number,
 			mySyncGen: number
 		): Promise<void> => {
-			let resolved: UserConsent | null;
+			let resolved: UserConsent | null | undefined;
 			try {
 				resolved = await promise;
 			} catch {
-				if (activePromiseGeneration === myPromiseGen) {
+				if (!disposed && activePromiseGeneration === myPromiseGen) {
 					clearHold();
 				}
 				return;
-			}
-			if (activePromiseGeneration === myPromiseGen) {
-				clearHold();
 			}
 			if (
 				disposed ||
 				activePromiseGeneration !== myPromiseGen ||
 				kernel.getAccountSyncGeneration() !== mySyncGen
 			) {
+				if (!disposed && activePromiseGeneration === myPromiseGen) {
+					clearHold();
+				}
 				return;
 			}
-			kernel.syncUserConsent(resolved);
+			cancelTimer();
+			kernel.settleUserConsent(resolved, { clearPending: true });
 		};
 
 		return {
 			apply(value, options) {
-				if (disposed) {
+				if (disposed || value === undefined) {
 					return;
 				}
 				const currentExternalId = kernel.getSnapshot().user?.externalId ?? null;
@@ -130,19 +135,11 @@ export const createUserConsentSyncController =
 				) {
 					holdArmedForExternalId = null;
 				}
-				if (value === undefined) {
-					if (lastPromise !== null) {
-						lastPromise = null;
-						activePromiseGeneration += 1;
-						clearHold();
-					}
-					return;
-				}
 				if (value === null) {
 					lastPromise = null;
 					activePromiseGeneration += 1;
-					clearHold();
-					kernel.syncUserConsent(null);
+					cancelTimer();
+					kernel.settleUserConsent(null, { clearPending: true });
 					return;
 				}
 				if (isUserConsentPromise(value)) {
@@ -155,7 +152,7 @@ export const createUserConsentSyncController =
 					const mySyncGen = kernel.getAccountSyncGeneration();
 					const externalId = kernel.getSnapshot().user?.externalId ?? null;
 					if (externalId !== null && holdArmedForExternalId !== externalId) {
-						armHoldFor(externalId, myPromiseGen);
+						armHoldFor(externalId);
 					}
 					void followPromise(value, myPromiseGen, mySyncGen);
 					return;
@@ -163,12 +160,11 @@ export const createUserConsentSyncController =
 
 				lastPromise = null;
 				activePromiseGeneration += 1;
-				clearHold();
-				if (options?.initialStart) {
-					kernel.applyInitialUserConsent(value);
-				} else {
-					kernel.syncUserConsent(value);
-				}
+				cancelTimer();
+				kernel.settleUserConsent(value, {
+					clearPending: true,
+					forceClientSync: options?.initialStart === true,
+				});
 			},
 
 			dispose() {

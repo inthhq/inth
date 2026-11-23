@@ -370,6 +370,39 @@ export const createConsentProviderRuntime =
 
 		const main = build(true);
 		main.runtime.subscribe(notify);
+		let permissive: Built | null = null;
+		if (!enabled) {
+			// The main runtime stays detached until it runs, and holds nothing
+			// meanwhile: a disabled provider grants every category.
+			main.stop();
+			main.releaseHold();
+			permissive = build(false);
+		}
+		let streamedUserConsentAdopted = false;
+		const adoptStreamedUserConsent = function adoptStreamedUserConsent(
+			config: RuntimePrefetch | undefined
+		): void {
+			if (streamedUserConsentAdopted || disposed || permissive || !config) {
+				return;
+			}
+			const hasUser = config.initialUser !== undefined;
+			const hasConsent = config.initialUserConsent !== undefined;
+			if (!hasUser && !hasConsent) {
+				return;
+			}
+			streamedUserConsentAdopted = true;
+			if (
+				hasUser &&
+				current.user === undefined &&
+				main.runtime.kernel.getSnapshot().user === null
+			) {
+				main.setUser(normalizeKernelUser(config.initialUser) ?? null);
+			}
+			if (started && hasConsent && current.userConsent === undefined) {
+				main.runtime.syncUserConsent(config.initialUserConsent);
+			}
+		};
+
 		// Only a prefetch the runtime streams into its first init: without
 		// `streamPrefetch` the promise is ignored, the runtime's own init
 		// carries its own journey, and the save must carry that one too.
@@ -388,18 +421,11 @@ export const createConsentProviderRuntime =
 					main.adoptJourney(
 						streamed?.journey === null ? null : streamed?.journey?.id
 					);
+					adoptStreamedUserConsent(streamed);
 				} catch {
 					// The stream failed; the runtime keeps its own journey.
 				}
 			})();
-		}
-		let permissive: Built | null = null;
-		if (!enabled) {
-			// The main runtime stays detached until it runs, and holds nothing
-			// meanwhile: a disabled provider grants every category.
-			main.stop();
-			main.releaseHold();
-			permissive = build(false);
 		}
 		const active = (): Built => permissive ?? main;
 
@@ -466,6 +492,7 @@ export const createConsentProviderRuntime =
 								response,
 								started
 							);
+							adoptStreamedUserConsent(config);
 						},
 						settled: settle(
 							initial.prefetch as PromiseLike<RuntimePrefetch | undefined>
@@ -619,7 +646,7 @@ export const createConsentProviderRuntime =
 			const userChanged =
 				(prevUser?.externalId ?? null) !== (nextUser?.externalId ?? null);
 			if (userChanged) {
-				runtime.kernel.set.user(nextUser ?? null);
+				main.setUser(nextUser ?? null);
 			}
 			if (userChanged || next.userConsent !== previous.userConsent) {
 				runtime.syncUserConsent(next.userConsent);

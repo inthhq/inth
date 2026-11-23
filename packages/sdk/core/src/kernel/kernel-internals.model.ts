@@ -179,14 +179,6 @@ export interface InternalKernel extends ConsentKernel {
 			fromHydration: boolean
 		) => void
 	) => () => void;
-	/**
-	 * Apply the initial raw `userConsent` document on client `start()`:
-	 * converts with the client clock and triggers persistence even when the
-	 * server seed already carried the same document.
-	 */
-	applyInitialUserConsent: (
-		value: Parameters<ConsentKernel['syncUserConsent']>[0]
-	) => boolean;
 	readonly events: ConsentKernel['events'] & {
 		/** Announce an event the kernel did not produce itself. */
 		emit: (event: KernelEvent) => void;

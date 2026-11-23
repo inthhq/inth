@@ -1,4 +1,4 @@
-import type { HydrationRecords } from '../consent-kernel.model';
+import type { HydrationRecords, KernelUser } from '../consent-kernel.model';
 /**
  * The consent runtime: a kernel plus every opt-in module, wired, with a
  * lifecycle hosts drive and do not re-derive.
@@ -67,6 +67,11 @@ export interface AssembledRuntime {
 	 * `JourneyController.adopt`.
 	 */
 	adoptJourney: (id: string | null | undefined) => void;
+	/**
+	 * Update `kernel.set.user` and notify the `userConsent` sync controller
+	 * synchronously whenever `externalId` changes or clears.
+	 */
+	setUser: (user: KernelUser | null) => void;
 	runtime: ConsentRuntime;
 	/**
 	 * Unmount every module and `window.__inthDebug` and detach callbacks, keeping
@@ -525,5 +530,13 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		hold = null;
 		held?.release()();
 	};
-	return { adoptJourney: journey.adopt, releaseHold, runtime, stop };
+	const setUser = function setUser(user: KernelUser | null): void {
+		const prevExternalId = kernel.getSnapshot().user?.externalId ?? null;
+		const nextExternalId = user?.externalId ?? null;
+		kernel.set.user(user);
+		if (prevExternalId !== nextExternalId) {
+			userConsentSync.onUserChanged(nextExternalId);
+		}
+	};
+	return { adoptJourney: journey.adopt, releaseHold, runtime, setUser, stop };
 };

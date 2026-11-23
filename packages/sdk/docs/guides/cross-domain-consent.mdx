@@ -46,7 +46,7 @@ Always pass `user` alongside `userConsent`. Inth ignores `userConsent` when `use
 
 ### React
 
-Pass either the resolved `UserConsent` document or a memoized `Promise<UserConsent | null>`.
+Pass either the resolved `UserConsent` document or a memoized `Promise<UserConsent | null | undefined>`.
 
 ```tsx title="App.tsx"
 import { InthProvider } from '@inth/react';
@@ -56,9 +56,9 @@ export function App({ user, children }) {
 	const userConsent = useMemo(
 		() =>
 			user
-				? fetch('/api/user')
-						.then((res) => res.json())
-						.then((data) => data.userConsent ?? null)
+				? fetch('/api/user').then((res) =>
+						res.ok ? res.json().then((data) => data.userConsent) : undefined
+					)
 				: null,
 		[user?.externalId]
 	);
@@ -78,6 +78,8 @@ export function App({ user, children }) {
 	);
 }
 ```
+
+Keep `userConsent` as `undefined` when `/api/user` or `consents.check()` fails so the browser keeps its stored account consent layer. Pass `null` only when the visitor is signed out, which clears any stored account layer.
 
 ### Next.js
 

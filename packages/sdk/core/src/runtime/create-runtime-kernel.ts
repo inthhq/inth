@@ -340,10 +340,7 @@ export const createRuntimeKernel = function createRuntimeKernel(
 	}
 	const initialUserConsentPending =
 		enabled && !options.consentSource
-			? Boolean(
-					(userConsentIsPromise && initialUser?.externalId) ||
-					prefetch.initialUserConsentPending
-				)
+			? Boolean(userConsentIsPromise && initialUser?.externalId)
 			: false;
 
 	return createKernel({

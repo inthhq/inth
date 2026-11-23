@@ -126,6 +126,7 @@ const ENGINE_LIVE_OPTIONS = [
 	'overrides',
 	'scripts',
 	'user',
+	'userConsent',
 	'vendors',
 ] as const satisfies readonly (keyof ConsentRuntimeUpdate)[];
 
@@ -583,7 +584,6 @@ export const createDeferredRuntime = function createDeferredRuntime(
 		setEnabled: forward('setEnabled'),
 		setLanguage: forward('setLanguage'),
 		setOverrides: forward('setOverrides'),
-		syncUserConsent: forward('syncUserConsent'),
 		start() {
 			if (mounted || !active) {
 				return;
@@ -628,6 +628,7 @@ export const createDeferredRuntime = function createDeferredRuntime(
 				listeners.delete(listener);
 			};
 		},
+		syncUserConsent: forward('syncUserConsent'),
 		async update(next) {
 			const previous = applied;
 			applied = next;

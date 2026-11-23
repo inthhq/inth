@@ -18,14 +18,19 @@ import {
 import { resolveStorageKeys } from '../../libs/storage-keys';
 import {
 	encodeAccountChoicesCookie,
+	encodeAccountLocalJson,
 	encodeAccountOptOutCookie,
 	encodeAccountVendorsCookie,
+	readStoredAccountLayer,
 } from '../../modules/persistence/account-codec';
 import { resolveRequestConsent } from '../../server/request-consent';
 import { testing } from '../../testing';
 import { createConsentProviderRuntime, defaultRuntimeModules } from '../index';
 import { createRuntimeKernel } from '../runtime-kernel';
 import { serverScriptStart } from '../script-server-start';
+import { streamPrefetchWith } from '../stream-mode';
+import { resolveStreamedInit } from '../streamed-init';
+import type { RuntimePrefetch } from '../types';
 
 const clearBrowserStorage = () => {
 	window.localStorage.clear();
@@ -546,5 +551,354 @@ describe('SSR folding via resolveRequestConsent', () => {
 		expect(kernelB.getSnapshot().activeUI).toBe('banner');
 		expect(kernelB.getSnapshot().effectivePermissions.marketing).toBe(false);
 		kernelB.dispose();
+	});
+});
+
+describe('runtime regressions (set 1)', () => {
+	test('releasing userConsentPending and applying the resolved document happens in one atomic commit under opt-out policy', async () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const resolution = matchedResolution(rule);
+		const fp = resolution.fingerprints.choice;
+		const deferred = Promise.withResolvers<UserConsent | null>();
+
+		const runtime = createConsentProviderRuntime(
+			{
+				consentCategories: ['marketing'],
+				mode: testing({ policy: [rule] }),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: false,
+					initialPolicyResolution: resolution,
+					now: NOW,
+				},
+				user: { externalId: 'user_a' },
+				userConsent: deferred.promise,
+			},
+			defaultRuntimeModules
+		);
+
+		const seen: { pending: boolean; marketing: boolean }[] = [];
+		const unsub = runtime.kernel.subscribe((snap) => {
+			seen.push({
+				marketing: snap.effectivePermissions.marketing,
+				pending: snap.userConsentPending,
+			});
+		});
+
+		runtime.start();
+		expect(runtime.kernel.getSnapshot().userConsentPending).toBe(true);
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			false
+		);
+
+		deferred.resolve(
+			makeUserConsent({
+				checkedAt: NOW,
+				choices: {
+					marketing: {
+						basis: { fingerprint: fp, kind: 'choice-v1' },
+						confirmedAt: NOW - 1000,
+						value: false,
+					},
+				},
+				externalId: 'user_a',
+			})
+		);
+		await flushMicrotasks();
+
+		expect(runtime.kernel.getSnapshot().userConsentPending).toBe(false);
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			false
+		);
+		// Must NEVER emit an intermediate snapshot where pending is false and marketing is granted!
+		expect(seen.some((entry) => !entry.pending && entry.marketing)).toBe(false);
+		unsub();
+		runtime.dispose();
+	});
+
+	test('a second unmemoized Promise for the same user still releases the hold at 3 s', async () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const resolution = matchedResolution(rule);
+		const first = Promise.withResolvers<UserConsent | null>();
+		const second = Promise.withResolvers<UserConsent | null>();
+		const base = {
+			consentCategories: ['marketing'] as const,
+			mode: testing({ policy: [rule] }),
+			persistence: false as const,
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				now: NOW,
+			},
+			user: { externalId: 'user_a' },
+		};
+
+		const runtime = createConsentProviderRuntime(
+			{ ...base, userConsent: first.promise },
+			defaultRuntimeModules
+		);
+		runtime.start();
+		expect(runtime.kernel.getSnapshot().userConsentPending).toBe(true);
+
+		// At 1 s, an unmemoized re-render passes a fresh Promise that also never settles.
+		await vi.advanceTimersByTimeAsync(1000);
+		void runtime.update({ ...base, userConsent: second.promise });
+		expect(runtime.kernel.getSnapshot().userConsentPending).toBe(true);
+
+		// At 3 s from initial hold start, the hold MUST release!
+		await vi.advanceTimersByTimeAsync(2000);
+		expect(runtime.kernel.getSnapshot().userConsentPending).toBe(false);
+		runtime.dispose();
+	});
+
+	test('passing userConsent: undefined during an in-flight Promise is a true no-op', async () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const resolution = matchedResolution(rule);
+		const fp = resolution.fingerprints.choice;
+		const deferred = Promise.withResolvers<UserConsent | null>();
+		const base = {
+			consentCategories: ['marketing'] as const,
+			mode: testing({ policy: [rule] }),
+			persistence: false as const,
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				now: NOW,
+			},
+			user: { externalId: 'user_a' },
+		};
+
+		const runtime = createConsentProviderRuntime(
+			{ ...base, userConsent: deferred.promise },
+			defaultRuntimeModules
+		);
+		runtime.start();
+		expect(runtime.kernel.getSnapshot().userConsentPending).toBe(true);
+
+		// Updating with `userConsent: undefined` must NOT cancel the Promise or clear the hold!
+		void runtime.update({ ...base, userConsent: undefined });
+		expect(runtime.kernel.getSnapshot().userConsentPending).toBe(true);
+
+		deferred.resolve(
+			makeUserConsent({
+				checkedAt: NOW,
+				choices: {
+					marketing: {
+						basis: { fingerprint: fp, kind: 'choice-v1' },
+						confirmedAt: NOW - 1000,
+						value: false,
+					},
+				},
+				externalId: 'user_a',
+			})
+		);
+		await flushMicrotasks();
+
+		expect(runtime.kernel.getSnapshot().userConsentPending).toBe(false);
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			false
+		);
+		runtime.dispose();
+	});
+
+	test('prefetch.initialUserConsentPending alone does not lock userConsentPending permanently', () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const resolution = matchedResolution(rule);
+		const runtime = createConsentProviderRuntime(
+			{
+				consentCategories: ['marketing'],
+				mode: testing({ policy: [rule] }),
+				persistence: false,
+				prefetch: {
+					initialPolicyPending: false,
+					initialPolicyResolution: resolution,
+					initialUserConsentPending: true,
+					now: NOW,
+				},
+				user: { externalId: 'user_a' },
+			},
+			defaultRuntimeModules
+		);
+		runtime.start();
+		expect(runtime.kernel.getSnapshot().userConsentPending).toBe(false);
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			true
+		);
+		runtime.dispose();
+	});
+
+	test('user arriving after a memoized Promise applies A, and logout while the same Promise stays passed clears the hold', async () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const resolution = matchedResolution(rule);
+		const fp = resolution.fingerprints.choice;
+		const base = {
+			consentCategories: ['marketing'] as const,
+			mode: testing({ policy: [rule] }),
+			persistence: false as const,
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				now: NOW,
+			},
+		};
+
+		// Subcase A: memoized Promise passed BEFORE user arrives.
+		const promiseLateUser = Promise.withResolvers<UserConsent | null>();
+		const rtLate = createConsentProviderRuntime(
+			{ ...base, user: undefined, userConsent: promiseLateUser.promise },
+			defaultRuntimeModules
+		);
+		rtLate.start();
+		expect(rtLate.kernel.getSnapshot().userConsentPending).toBe(false);
+
+		// User A arrives while the SAME memoized Promise reference is passed.
+		void rtLate.update({
+			...base,
+			user: { externalId: 'user_a' },
+			userConsent: promiseLateUser.promise,
+		});
+		expect(rtLate.kernel.getSnapshot().userConsentPending).toBe(true);
+
+		promiseLateUser.resolve(
+			makeUserConsent({
+				checkedAt: NOW,
+				choices: {
+					marketing: {
+						basis: { fingerprint: fp, kind: 'choice-v1' },
+						confirmedAt: NOW - 1000,
+						value: false,
+					},
+				},
+				externalId: 'user_a',
+			})
+		);
+		await flushMicrotasks();
+		expect(rtLate.kernel.getSnapshot().userConsentPending).toBe(false);
+		expect(rtLate.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			false
+		);
+		rtLate.dispose();
+
+		// Subcase B: logout while the SAME Promise reference stays passed clears hold immediately.
+		const promiseLogout = Promise.withResolvers<UserConsent | null>();
+		const rtLogout = createConsentProviderRuntime(
+			{
+				...base,
+				user: { externalId: 'user_a' },
+				userConsent: promiseLogout.promise,
+			},
+			defaultRuntimeModules
+		);
+		rtLogout.start();
+		expect(rtLogout.kernel.getSnapshot().userConsentPending).toBe(true);
+
+		void rtLogout.update({
+			...base,
+			user: undefined,
+			userConsent: promiseLogout.promise,
+		});
+		expect(rtLogout.kernel.getSnapshot().userConsentPending).toBe(false);
+		rtLogout.dispose();
+	});
+
+	test('signed-out SSR resolveRequestConsent with userConsent: null propagates null so client deletes leftover account storage', async () => {
+		const rule = optInRule();
+		const fp = matchedResolution(rule).fingerprints.choice;
+		const keys = resolveStorageKeys();
+
+		// Pre-populate leftover account storage for user A on this browser.
+		const staleLayer = {
+			appliedAt: NOW - 1000,
+			checkedAt: NOW - 1000,
+			choices: {
+				marketing: {
+					basis: { fingerprint: fp, kind: 'choice-v1' as const },
+					rawConfirmedAt: NOW - 2000,
+					value: true,
+				},
+			},
+			externalId: 'user_a',
+			optOut: null,
+			skew: 0,
+			vendors: {},
+		};
+		window.localStorage.setItem(
+			keys.accountState,
+			encodeAccountLocalJson(staleLayer, 'rev_stale')
+		);
+		document.cookie = `${keys.accountChoices}=${encodeAccountChoicesCookie(staleLayer, 'rev_stale')}; path=/`;
+
+		// Signed-out SSR request (no `user`) explicitly passes `userConsent: null`.
+		const state = await resolveRequestConsent({
+			adapter: '@inth/test',
+			mode: 'offline',
+			now: NOW,
+			offline: { policy: [rule] },
+			request: { headers: new Headers() },
+			userConsent: null,
+		});
+		expect(state.initialUserConsent).toBeNull();
+
+		const runtime = createConsentProviderRuntime(
+			{
+				consentCategories: ['marketing'],
+				mode: testing({ policy: [rule] }),
+				prefetch: state,
+			},
+			defaultRuntimeModules
+		);
+		runtime.start();
+		expect(window.localStorage.getItem(keys.accountState)).toBeNull();
+		expect(document.cookie).not.toContain(`${keys.accountChoices}=`);
+		runtime.dispose();
+	});
+
+	test('streamed prefetch adopting initialUser and initialUserConsent after start applies and persists it', async () => {
+		const rule = optInRule();
+		const resolution = matchedResolution(rule);
+		const fp = resolution.fingerprints.choice;
+		const prefetchDeferred = Promise.withResolvers<RuntimePrefetch>();
+
+		const runtime = createConsentProviderRuntime(
+			{
+				consentCategories: ['marketing'],
+				mode: testing({ policy: [rule] }),
+				prefetch: prefetchDeferred.promise,
+			},
+			{
+				...defaultRuntimeModules,
+				streamPrefetch: streamPrefetchWith(resolveStreamedInit),
+			}
+		);
+		runtime.start();
+
+		const doc = makeUserConsent({
+			checkedAt: NOW,
+			choices: {
+				marketing: {
+					basis: { fingerprint: fp, kind: 'choice-v1' },
+					confirmedAt: NOW - 1000,
+					value: true,
+				},
+			},
+			externalId: 'user_a',
+		});
+		const resolvedPrefetch: RuntimePrefetch = {
+			initialPolicyPending: false,
+			initialPolicyResolution: resolution,
+			initialUser: { externalId: 'user_a' },
+			initialUserConsent: doc,
+			now: NOW,
+		};
+		runtime.streamed?.adopt(resolvedPrefetch);
+		prefetchDeferred.resolve(resolvedPrefetch);
+		await vi.advanceTimersByTimeAsync(50);
+
+		expect(runtime.kernel.getSnapshot().user?.externalId).toBe('user_a');
+		expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+			true
+		);
+		expect(readStoredAccountLayer(undefined)?.externalId).toBe('user_a');
+		runtime.dispose();
 	});
 });

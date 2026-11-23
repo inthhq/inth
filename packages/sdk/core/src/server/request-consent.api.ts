@@ -469,6 +469,9 @@ export const readRequestConsent = function readRequestConsent(
 			}
 		} else {
 			delete records.accountLayer;
+			if (options.userConsent === null) {
+				state.initialUserConsent = null;
+			}
 		}
 		state.initialRecords = records;
 		state.initialPrivacySignals = { gpc: inputs.gpc };

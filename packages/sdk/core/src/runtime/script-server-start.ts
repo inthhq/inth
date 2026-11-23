@@ -429,7 +429,6 @@ const serverStartCandidates = function serverStartCandidates(
 	if (
 		options.scriptLoader?.serverStart === false ||
 		isUserConsentPromise(options.userConsent) ||
-		prefetch?.initialUserConsentPending === true ||
 		!scripts.some((script) => script.serverStart && script.src)
 	) {
 		return [];
