@@ -35,8 +35,8 @@ import { classes as expandStyles } from '../../generated/ui/expand';
 import type { BrowserSlotKey } from '../create-slot-applier';
 import { cx, el, icon } from './el';
 import { applyDialogCategories } from './engine';
-import { chevron, choiceSwitch, isToggleClick } from './shared';
-import type { PartEnv } from './shared';
+import { chevron, choiceSwitch, isToggleClick } from './part-env.model';
+import type { PartEnv } from './part-env.model';
 
 /** Surfaces that render the category group, by their test-id prefix. */
 export type CategoryGroupSurface = 'consent-banner' | 'consent-dialog';

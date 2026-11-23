@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
 import { mountConsentUI } from '../ui/mount-consent-ui';
-import { rightsBundleOf } from '../ui/parts/shared';
+import { rightsBundleOf } from '../ui/parts/part-env.model';
 import {
 	$,
 	active,

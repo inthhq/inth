@@ -72,8 +72,8 @@ import {
 	prefersReducedMotionNow,
 	surfaceBasics,
 	watchPhoneLayout,
-} from '../parts/shared';
-import type { PartEnv } from '../parts/shared';
+} from '../parts/part-env.model';
+import type { PartEnv } from '../parts/part-env.model';
 import type { Surface, SurfaceContext } from '../surface.model';
 import { OPTIONS_SHEETS } from './options-sheets';
 

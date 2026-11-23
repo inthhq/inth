@@ -35,8 +35,8 @@ import {
 	pressSaleRight,
 } from './engine';
 import { activeElementOf } from './focus-first-in';
-import { checkIcon, consentButton, rightsBundleOf } from './shared';
-import type { PartEnv } from './shared';
+import { checkIcon, consentButton, rightsBundleOf } from './part-env.model';
+import type { PartEnv } from './part-env.model';
 
 /** Surfaces that render the rights row, by their test-id prefix. */
 export type RightsRowSurface = 'consent-banner' | 'consent-dialog';

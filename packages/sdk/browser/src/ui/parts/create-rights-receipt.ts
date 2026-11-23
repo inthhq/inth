@@ -14,8 +14,8 @@ import type { BrowserSlotKey } from '../create-slot-applier';
 import { cx, el, icon } from './el';
 import type { PartRef } from './el';
 import { copySurfaceReference, getOptOutReceiptData } from './engine';
-import { checkIcon, chevron, rightsBundleOf } from './shared';
-import type { PartEnv } from './shared';
+import { checkIcon, chevron, rightsBundleOf } from './part-env.model';
+import type { PartEnv } from './part-env.model';
 
 /** How long the copy button shows its check. */
 const COPIED_MS = 1500;

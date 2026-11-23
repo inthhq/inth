@@ -65,8 +65,8 @@ import {
 	rightsBundleOf,
 	surfaceBasics,
 	watchPhoneLayout,
-} from '../parts/shared';
-import type { PartEnv } from '../parts/shared';
+} from '../parts/part-env.model';
+import type { PartEnv } from '../parts/part-env.model';
 import { renderLegalLinks } from '../render-legal-links';
 import type { SurfaceContext } from '../surface.model';
 import type { PromptPanel } from './panel';
