@@ -2,11 +2,11 @@
 	import type { ConsentKernel } from '@inth/sdk/engine';
 	import { untrack } from 'svelte';
 
+	import type { ConsentManagerState } from '../../lib/consent-context.model';
 	import {
 		getConsentKernel,
 		getConsentManager,
 	} from '../../lib/get-headless-consent';
-	import type { ConsentManagerState } from '../../lib/consent-context.model';
 
 	let {
 		onKernel,

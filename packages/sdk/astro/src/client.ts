@@ -31,11 +31,11 @@ import type {
 } from '@inth/sdk/events';
 
 import type { AstroConsentClient } from './astro-consent-client.model';
-import { warmDialogTarget } from './browser/warm-dialog';
-import { preloadDialogChunks } from './browser/load-dialog';
 import { getWindow } from './browser/get-window';
+import { preloadDialogChunks } from './browser/load-dialog';
 import { GLOBAL_KEY } from './browser/page-state.model';
 import { readPageNonce } from './browser/read-page-nonce';
+import { warmDialogTarget } from './browser/warm-dialog';
 import type { ConsentDialogKind } from './ui/register-dialog-adapter';
 
 /**

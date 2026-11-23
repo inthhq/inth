@@ -76,18 +76,17 @@ import {
 	attachBannerActions,
 	registerOptOutLinkHandler,
 } from './browser/attach-banner-actions';
-import { resetDialogWarming, warmDialog } from './browser/warm-dialog';
 import type { DeferredCommitted } from './browser/complete-commit';
 import {
 	ensureDialogHost,
 	readDialogDisableAnimation,
 	readDialogLegalLinks,
 } from './browser/ensure-dialog-host';
+import { getWindow } from './browser/get-window';
 import { loadDialog } from './browser/load-dialog';
 import { keepDialogStylesOnSwap } from './browser/load-dialog-styles';
 import type * as PromptModule from './browser/mount-prompt';
 import type { PromptController } from './browser/mount-prompt';
-import { getWindow } from './browser/get-window';
 import {
 	COLOR_SCHEME_KEY,
 	CONFIG_KEY,
@@ -109,6 +108,7 @@ import type {
 	EngineHandoff,
 } from './browser/start-deferred-client';
 import { syncPrivacyChoicesLinks } from './browser/sync-privacy-choices-links';
+import { resetDialogWarming, warmDialog } from './browser/warm-dialog';
 import type {
 	InthClientOptionsExtension,
 	InthResolvedOptions,
@@ -576,7 +576,9 @@ const createClient = function createClient(
 			theme: options.theme,
 			vendors: options.vendors,
 		},
-		iab ? { ...registeredRuntimeModules(), mountIAB: iab.mount } : registeredRuntimeModules()
+		iab
+			? { ...registeredRuntimeModules(), mountIAB: iab.mount }
+			: registeredRuntimeModules()
 	);
 
 	let dialog: ConsentDialogHandle | null = null;

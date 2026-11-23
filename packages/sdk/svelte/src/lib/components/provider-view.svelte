@@ -46,12 +46,12 @@
 	import type { Snippet } from 'svelte';
 	import { onDestroy, onMount, untrack } from 'svelte';
 
-	import { setConsentContext } from '../get-consent-context.svelte';
-	import { setThemeContext } from '../get-theme-context';
 	import type {
 		ConsentDraftState,
 		SvelteIABState,
 	} from '../consent-context.model';
+	import { setConsentContext } from '../get-consent-context.svelte';
+	import { setThemeContext } from '../get-theme-context';
 	import { isIABConfigured } from '../lazy-create-iab';
 	import { startOnServer } from '../register-server-script-start';
 	import { runtimeOptionsFor } from '../resolve-provider-options';

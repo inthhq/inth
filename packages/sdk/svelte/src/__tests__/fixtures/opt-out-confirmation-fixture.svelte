@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
 	import type { ConsentContextValue } from '../../lib/consent-context.model';
+	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
 	import {
 		ConsentBanner,
 		ConsentDialog,

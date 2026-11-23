@@ -50,12 +50,16 @@ export const renderBrandingTag = function renderBrandingTag(
 			style: tag.root.style,
 		},
 		[
-			createElement('span', { class: classes.content, 'data-slot': 'tag-content' }, [
-				createElement('span', { class: classes.copy }, [
-					createElement('span', { class: classes.text }, [securedBy]),
-				]),
-				wordmark,
-			]),
+			createElement(
+				'span',
+				{ class: classes.content, 'data-slot': 'tag-content' },
+				[
+					createElement('span', { class: classes.copy }, [
+						createElement('span', { class: classes.text }, [securedBy]),
+					]),
+					wordmark,
+				]
+			),
 		]
 	);
 };

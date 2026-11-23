@@ -72,9 +72,8 @@ import type {
 	ConsentDialogKind,
 } from '../ui/register-dialog-adapter';
 import { attachBannerActions } from './attach-banner-actions';
-import { registerDeferredClient } from './register-deferred-client';
-import { warmDialog } from './warm-dialog';
 import type { CompleteCommitInput, DeferredCommitted } from './complete-commit';
+import type { ConsentBoot } from './consent-boot.model';
 import type * as StandInModule from './create-dialog-stand-in';
 import type { DialogStandIn } from './create-dialog-stand-in';
 import { declaresVendor } from './declares-vendor';
@@ -83,20 +82,21 @@ import {
 	readDialogDisableAnimation,
 	readDialogLegalLinks,
 } from './ensure-dialog-host';
-import { loadDialog } from './load-dialog';
 import { getWindow } from './get-window';
+import { loadDialog } from './load-dialog';
 import {
 	BANNER_OVERLAY_SELECTOR,
 	BANNER_ROOT_SELECTOR,
 	GLOBAL_KEY,
 } from './page-state.model';
-import type { ConsentBoot } from './consent-boot.model';
-import { readPageNonce } from './read-page-nonce';
 import { readConsentBoot } from './read-consent-boot';
+import { readPageNonce } from './read-page-nonce';
+import { registerDeferredClient } from './register-deferred-client';
 import {
 	scheduleDeferredEngine,
 	unhideEarlyTap,
 } from './schedule-deferred-engine';
+import { warmDialog } from './warm-dialog';
 
 /** A preference dialog the shell mounted before the engine. @internal */
 export interface EarlyDialog {

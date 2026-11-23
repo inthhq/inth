@@ -118,7 +118,9 @@ const renderHeader = function renderHeader(model: IABPromptModel): HTMLElement {
 	);
 	if (model.copy.andMore) {
 		items.push(
-			createElement('li', { class: model.classes.purposeMore }, [model.copy.andMore])
+			createElement('li', { class: model.classes.purposeMore }, [
+				model.copy.andMore,
+			])
 		);
 	}
 	return createElement(
