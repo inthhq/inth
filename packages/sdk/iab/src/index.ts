@@ -43,14 +43,16 @@ import {
 
 import {
 	checkAuthority,
-	clearAuthorityReceipt,
 	createAuthorityReceipt,
+	validateAuthority,
+} from './iab-authority.model';
+import {
+	clearAuthorityReceipt,
 	readAuthorityReceipt,
 	hasOwnReceipt,
 	readAuthorityReceiptText,
 	storeAuthority,
-	validateAuthority,
-} from './iab-authority.model';
+} from './iab-authority.store';
 import { fetchAdTechProviders } from './tcf/additional-consent.api';
 import { CMP_VERSION_NUMBER } from './tcf/cmp-defaults.model';
 import {
