@@ -8,7 +8,7 @@ import {
 import { resolveStyles, toStyleAttributeValue } from '@inth/sdk/ui/utils';
 
 import { ConsentTheme } from '../core/consent-theme';
-import { resolveNoStyle } from '../core/no-style';
+import { resolveNoStyle } from '../core/no-style-scope';
 
 /**
  * The overlay class names, from the caller's own style map. The overlay

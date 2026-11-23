@@ -44,11 +44,11 @@ import type { AllThemeKeys } from '@inth/sdk/ui/theme';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
-import { resolveNoStyle } from '../core/no-style';
+import { resolveNoStyle } from '../core/no-style-scope';
 import { ChoiceButton } from './choice-button';
-import { bool, cx, slotPart } from './class-names';
+import { bool, cx, slotPart } from './part-class-names.model';
 import { CheckIcon } from './icons';
-import { injectSurfaceSession, rightsBundleOf } from './surface-session';
+import { injectSurfaceSession, rightsBundleOf } from './inject-surface-session';
 
 /** Surfaces that render the rights row, by their test-id prefix. */
 export type RightsRowSurface = 'consent-banner' | 'consent-dialog';

@@ -16,8 +16,8 @@ import {
 import { describe, expect, test } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
-import { CARD_CONTAINER } from '../prompt/card';
-import { ConsentBanner } from '../prompt/prompt';
+import { CARD_CONTAINER } from '../prompt/card-container';
+import { ConsentBanner } from '../prompt/consent-banner';
 import { ConsentManager } from './consent-manager';
 import { STYLE_ATTRIBUTE } from './consent-styles';
 import { IfConsent } from './if-consent';

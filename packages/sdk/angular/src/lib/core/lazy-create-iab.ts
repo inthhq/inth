@@ -18,7 +18,7 @@
 import type { GPPModuleLoader } from '@inth/sdk/runtime';
 import { createLazyIABFactory } from '@inth/sdk/surface-state';
 
-import type { ProviderIABOptions } from './options';
+import type { ProviderIABOptions } from './inth-options';
 
 const factory = createLazyIABFactory(() => import('@inth/sdk/iab'));
 

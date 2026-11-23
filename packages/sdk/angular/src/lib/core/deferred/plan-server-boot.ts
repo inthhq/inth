@@ -22,9 +22,9 @@ import {
 import { deepMergeTranslations } from '@inth/sdk/translations';
 import type { Translations } from '@inth/sdk/translations';
 
-import { isIABConfigured } from '../iab-loader';
-import type { InthResolvedOptions } from '../options';
-import type { ConsentBoot } from './boot';
+import { isIABConfigured } from '../lazy-create-iab';
+import type { InthResolvedOptions } from '../inth-options';
+import type { ConsentBoot } from './restore-boot';
 
 /**
  * A decision that changes on its own this soon is left to the engine,

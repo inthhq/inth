@@ -5,8 +5,8 @@ import type { AllConsentNames } from '@inth/sdk/engine';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { CONSENT_ENGINE_MODULE } from '../../src/lib/core/consent-manager';
-import type { DeferredRuntime } from '../../src/lib/core/deferred/deferred-runtime';
-import { testing } from '../../testing/src/testing-mode';
+import type { DeferredRuntime } from '../../src/lib/core/deferred/create-deferred-runtime';
+import { testing } from '../../testing/src/testing';
 import { ConsentDevTools, provideInthDevTools } from './public-api';
 import type { ConsentDevToolsOptions } from './public-api';
 
@@ -240,7 +240,7 @@ describe('@inth/angular/devtools', () => {
 						loads += 1;
 						return loads === 1
 							? Promise.reject(new Error('chunk failed'))
-							: import('../../src/lib/core/deferred/engine');
+							: import('../../src/lib/core/deferred/create-engine');
 					},
 				},
 			],

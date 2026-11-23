@@ -9,8 +9,8 @@ import { settle, testOptions } from '../../src/__tests__/test-local';
 import {
 	resetDialogWarmingForTests,
 	warmDialog,
-} from '../../src/lib/core/dialog-warming';
-import type { InthProviderOptions } from '../../src/lib/core/options';
+} from '../../src/lib/core/warm-dialog';
+import type { InthProviderOptions } from '../../src/lib/core/inth-options';
 import { ConsentDialog } from './consent-dialog';
 
 let app: ClientApp | undefined;

@@ -24,10 +24,10 @@ import type { AllThemeKeys } from '@inth/sdk/ui/theme';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
-import { resolveNoStyle } from '../core/no-style';
-import { bool, cx, slotPart } from './class-names';
+import { resolveNoStyle } from '../core/no-style-scope';
+import { bool, cx, slotPart } from './part-class-names.model';
 import { CheckIcon, ChevronIcon, CopyIcon } from './icons';
-import { injectSurfaceSession, rightsBundleOf } from './surface-session';
+import { injectSurfaceSession, rightsBundleOf } from './inject-surface-session';
 
 /** How long the copy button shows its check. */
 const COPIED_MS = 1500;

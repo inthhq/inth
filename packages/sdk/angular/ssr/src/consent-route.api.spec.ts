@@ -12,7 +12,7 @@ import { clearManifestCache } from '@inth/sdk/server';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { MANIFEST_FIXTURE } from './__tests__/manifest-fixture';
-import { createConsentRoute } from './consent-route';
+import { createConsentRoute } from './consent-route.api';
 
 const BACKEND = 'https://consent.example.com';
 const SITE = 'https://shop.example';

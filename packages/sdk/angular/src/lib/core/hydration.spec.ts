@@ -26,9 +26,9 @@ import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../__tests__/test-local';
-import { PROMPT_LOADERS } from '../prompt/containers';
-import type { ContainerModule } from '../prompt/containers';
-import { ConsentBanner } from '../prompt/prompt';
+import { PROMPT_LOADERS } from '../prompt/prompt-loaders';
+import type { ContainerModule } from '../prompt/prompt-loaders';
+import { ConsentBanner } from '../prompt/consent-banner';
 import { ConsentManager } from './consent-manager';
 import { provideInth } from './provide-inth';
 
@@ -174,7 +174,7 @@ describe('a tap before hydration, on the server banner', () => {
 				left -= 1;
 				throw new Error('The container chunk failed to load.');
 			}
-			return (await import('../prompt/card')).CARD_CONTAINER;
+			return (await import('../prompt/card-container')).CARD_CONTAINER;
 		});
 		const hydrated = await hydrate(undefined, [
 			{
@@ -182,7 +182,7 @@ describe('a tap before hydration, on the server banner', () => {
 				useValue: {
 					container,
 					surface: async () =>
-						(await import('../prompt/surface')).PromptSurface,
+						(await import('../prompt/prompt-surface')).PromptSurface,
 				},
 			},
 		]);

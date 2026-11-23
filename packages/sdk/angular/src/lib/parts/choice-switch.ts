@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
-import { resolveNoStyle } from '../core/no-style';
+import { resolveNoStyle } from '../core/no-style-scope';
 
 /**
  * A choice switch: a `role="switch"` button the row names with

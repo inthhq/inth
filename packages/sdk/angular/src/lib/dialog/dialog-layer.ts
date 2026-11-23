@@ -19,8 +19,8 @@ import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 
 import { ConsentTheme } from '../core/consent-theme';
-import { resolveNoStyle } from '../core/no-style';
-import { cx, slotPart } from '../parts/class-names';
+import { resolveNoStyle } from '../core/no-style-scope';
+import { cx, slotPart } from '../parts/part-class-names.model';
 import { CloseIcon } from '../parts/icons';
 
 /**

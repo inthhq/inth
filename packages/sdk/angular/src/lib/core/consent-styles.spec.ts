@@ -5,7 +5,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { ConsentDialogTrigger } from '../../../consent-dialog-trigger/src/consent-dialog-trigger';
 import { ConsentWidget } from '../../../consent-widget/src/consent-widget';
 import { testOptions } from '../../__tests__/test-local';
-import { ConsentBanner } from '../prompt/prompt';
+import { ConsentBanner } from '../prompt/consent-banner';
 import { ConsentManager } from './consent-manager';
 import {
 	ensureSurfaceStyles,

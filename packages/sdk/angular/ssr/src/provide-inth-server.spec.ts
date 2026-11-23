@@ -28,9 +28,9 @@ import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { hosted } from '@inth/sdk/transports';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { testing } from '../../testing/src/testing-mode';
+import { testing } from '../../testing/src/testing';
 import { MANIFEST_FIXTURE } from './__tests__/manifest-fixture';
-import { createConsentRoute } from './consent-route';
+import { createConsentRoute } from './consent-route.api';
 import { provideInthServer } from './provide-inth-server';
 import type { InthServerOptions } from './provide-inth-server';
 

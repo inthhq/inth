@@ -78,12 +78,12 @@ export const PROMPT_LOADERS = new InjectionToken<PromptLoaders>(
 					case 'banner':
 						return (await import('./strip')).BANNER_CONTAINER;
 					case 'drawer':
-						return (await import('./drawer')).DRAWER_CONTAINER;
+						return (await import('./drawer-container')).DRAWER_CONTAINER;
 					default:
-						return (await import('./card')).CARD_CONTAINER;
+						return (await import('./card-container')).CARD_CONTAINER;
 				}
 			},
-			surface: async () => (await import('./surface')).PromptSurface,
+			surface: async () => (await import('./prompt-surface')).PromptSurface,
 		}),
 	}
 );

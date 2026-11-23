@@ -6,7 +6,7 @@ import type {
 } from '@inth/sdk/engine';
 import type { ConsentTesting } from '@inth/sdk/testing';
 
-import { testing } from '../../../testing/src/testing-mode';
+import { testing } from '../../../testing/src/testing';
 
 /**
  * A transport factory that hands the provider `transport`, for tests that

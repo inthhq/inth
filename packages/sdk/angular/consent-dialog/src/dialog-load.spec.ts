@@ -5,10 +5,10 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testOptions } from '../../src/__tests__/test-local';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
-import { warmDialog } from '../../src/lib/core/dialog-warming';
+import { warmDialog } from '../../src/lib/core/warm-dialog';
 import { provideInth } from '../../src/lib/core/provide-inth';
 import { ConsentDialogBody } from '../../src/lib/dialog/dialog';
-import { ConsentBanner } from '../../src/lib/prompt/prompt';
+import { ConsentBanner } from '../../src/lib/prompt/consent-banner';
 import { CONSENT_DIALOG_BODY, ConsentDialog } from './consent-dialog';
 
 @Component({

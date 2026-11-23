@@ -27,11 +27,11 @@ import { resolveConsentPresentation } from '@inth/sdk/surface-state';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
-import { NoStyleScope, resolveNoStyle } from '../core/no-style';
+import { NoStyleScope, resolveNoStyle } from '../core/no-style-scope';
 import { OptInConfirmation } from '../dialog/opt-in-confirmation';
 import type { LegalLinkSelection } from '../shared/inline-legal-links';
-import { PROMPT_LOADERS } from './containers';
-import type { PromptSurfaceOptions, PromptSurfaceType } from './containers';
+import { PROMPT_LOADERS } from './prompt-loaders';
+import type { PromptSurfaceOptions, PromptSurfaceType } from './prompt-loaders';
 
 /** The banner's buttons, by the action each one takes. */
 export type ConsentBannerButton = 'reject' | 'accept' | 'customize' | 'dismiss';

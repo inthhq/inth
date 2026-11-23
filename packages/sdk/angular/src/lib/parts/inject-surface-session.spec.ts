@@ -7,7 +7,7 @@ import { ApplicationRef, PendingTasks } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { injectPhoneLayout } from './surface-session';
+import { injectPhoneLayout } from './inject-surface-session';
 
 const stubPhone = function stubPhone(): void {
 	vi.stubGlobal('matchMedia', (query: string) => ({

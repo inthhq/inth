@@ -8,9 +8,9 @@
 
 export { ConsentDialog } from './consent-dialog';
 export { OptOutConfirmation } from './opt-out-confirmation';
-export { DEFAULT_DIALOG_MODELS } from './dialog-options';
+export { DEFAULT_DIALOG_MODELS } from './consent-dialog-options.model';
 export type {
 	ConsentDialogLegalLinks,
 	ConsentDialogModels,
 	ConsentDialogTriggerOptions,
-} from './dialog-options';
+} from './consent-dialog-options.model';

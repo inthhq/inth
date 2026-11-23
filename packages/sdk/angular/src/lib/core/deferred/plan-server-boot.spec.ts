@@ -2,7 +2,7 @@ import type { ConsentSnapshot } from '@inth/sdk/engine';
 import { pendingBootSnapshot } from '@inth/sdk/surface-state';
 import { describe, expect, test } from 'vitest';
 
-import { canDeferEngine } from './boot-server';
+import { canDeferEngine } from './plan-server-boot';
 
 const answered = (): ConsentSnapshot =>
 	({

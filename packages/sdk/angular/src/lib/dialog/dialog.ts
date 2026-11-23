@@ -59,23 +59,23 @@ import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentStyles, SURFACE_SCOPES } from '../core/consent-styles';
 import { ConsentTheme } from '../core/consent-theme';
-import { NoStyleScope, resolveNoStyle } from '../core/no-style';
+import { NoStyleScope, resolveNoStyle } from '../core/no-style-scope';
 import { uniqueId } from '../core/unique-id';
 import { AdvertisingRow, CategoryGroup } from '../parts/category-group';
 import type { OpenVendorsRequest } from '../parts/category-group';
 import { ChoiceButton } from '../parts/choice-button';
-import { bool, cx, foldSlots, slotPart } from '../parts/class-names';
+import { bool, cx, foldSlots, slotPart } from '../parts/part-class-names.model';
 import { CheckIcon, ChevronIcon } from '../parts/icons';
-import { RightsReceipt } from '../parts/receipt';
-import { takeReceiptFocus } from '../parts/receipt-focus';
-import { hasSaleRight, SaleRightsRow } from '../parts/rights-row';
+import { RightsReceipt } from '../parts/rights-receipt';
+import { takeReceiptFocus } from '../parts/request-receipt-focus';
+import { hasSaleRight, SaleRightsRow } from '../parts/sale-rights-row';
 import { SurfaceDraft } from '../parts/surface-draft';
 import {
 	injectPhoneLayout,
 	injectSurfaceSession,
-} from '../parts/surface-session';
-import { DialogLayer } from './layer';
-import { DIALOG_SHEETS } from './sheets';
+} from '../parts/inject-surface-session';
+import { DialogLayer } from './dialog-layer';
+import { DIALOG_SHEETS } from './dialog-sheets';
 
 /** Which of the provider's legal links the dialog shows (`ConsentDialogLegalLinks`). */
 type ConsentDialogLegalLinks = readonly (keyof LegalLinks)[] | null;

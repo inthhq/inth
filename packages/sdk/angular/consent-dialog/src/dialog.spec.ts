@@ -39,7 +39,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
 import { ALL_CATEGORIES } from '../../src/__tests__/test-local';
 import { CONSENT_DIALOG_BODY, ConsentDialog } from './consent-dialog';
-import type { ConsentDialogLegalLinks } from './dialog-options';
+import type { ConsentDialogLegalLinks } from './consent-dialog-options.model';
 
 type Region = 'eu' | 'us-opt-in' | 'us-opt-out';
 

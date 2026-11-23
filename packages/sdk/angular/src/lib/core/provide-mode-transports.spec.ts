@@ -1,13 +1,13 @@
 import { hosted } from '@inth/sdk/modes';
 import { describe, expect, test, vi } from 'vitest';
 
-import { testing } from '../../../testing/src/testing-mode';
+import { testing } from '../../../testing/src/testing';
 import {
 	hostedFor,
 	manifest,
 	provideModeTransports,
 	selectedMode,
-} from './modes';
+} from './provide-mode-transports';
 
 describe('the transports provideInth() selects', () => {
 	test('a backend URL alone is the hosted backend, with its options as data', () => {

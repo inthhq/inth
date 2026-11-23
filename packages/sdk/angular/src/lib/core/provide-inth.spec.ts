@@ -15,7 +15,7 @@ import {
 } from '../../__tests__/fixtures/transport-mode';
 import { TEST_OPT_IN_RULE, testOptions } from '../../__tests__/test-local';
 import { ConsentManager } from './consent-manager';
-import type { InthOptions, InthProviderOptions } from './options';
+import type { InthOptions, InthProviderOptions } from './inth-options';
 import { provideInth } from './provide-inth';
 
 @Component({

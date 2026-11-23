@@ -25,7 +25,7 @@ import {
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 
 import { ConsentManager } from '../lib/core/consent-manager';
-import type { InthProviderOptions } from '../lib/core/options';
+import type { InthProviderOptions } from '../lib/core/inth-options';
 import { provideInth } from '../lib/core/provide-inth';
 import { ConsentDialogLink } from '../lib/dialog/consent-dialog-link';
 import type { ConformanceEntry } from './conformance-registry';

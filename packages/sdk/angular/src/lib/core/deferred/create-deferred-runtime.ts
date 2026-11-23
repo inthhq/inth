@@ -60,9 +60,9 @@ import {
 	pendingBootSnapshot,
 } from '@inth/sdk/surface-state';
 
-import type { InthResolvedOptions } from '../options';
-import type { ConsentBoot } from './boot';
-import { DIALOG_ROOT, scheduleDeferredEngine, whenIdle } from './trigger';
+import type { InthResolvedOptions } from '../inth-options';
+import type { ConsentBoot } from './restore-boot';
+import { DIALOG_ROOT, scheduleDeferredEngine, whenIdle } from './schedule-deferred-engine';
 
 /** The engine as the deferred runtime takes it over. @internal */
 export interface LoadedEngine {

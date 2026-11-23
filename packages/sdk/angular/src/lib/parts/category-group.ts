@@ -50,12 +50,12 @@ import type { AllThemeKeys } from '@inth/sdk/ui/theme';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
-import { resolveNoStyle } from '../core/no-style';
-import { bool, cx, slotPart } from './class-names';
+import { resolveNoStyle } from '../core/no-style-scope';
+import { bool, cx, slotPart } from './part-class-names.model';
 import { ChevronIcon, ExternalIcon } from './icons';
 import { SurfaceDraft } from './surface-draft';
-import { injectSurfaceSession } from './surface-session';
-import { ChoiceSwitch } from './switch';
+import { injectSurfaceSession } from './inject-surface-session';
+import { ChoiceSwitch } from './choice-switch';
 
 /** Surfaces that render the category group, by their test-id prefix. */
 export type CategoryGroupSurface = 'consent-banner' | 'consent-dialog';

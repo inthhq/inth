@@ -18,7 +18,7 @@ import type { BrandingSurface } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
 import { ConsentTheme } from '../core/consent-theme';
-import { resolveNoStyle } from '../core/no-style';
+import { resolveNoStyle } from '../core/no-style-scope';
 import { BrandMarkIcon } from './icons';
 
 /**

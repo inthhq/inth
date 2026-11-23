@@ -11,7 +11,7 @@ import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
 import { TEST_OPT_IN_RULE } from '../../src/__tests__/test-local';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
 import { provideInth } from '../../src/lib/core/provide-inth';
-import { injectEventDispatcher } from './event-dispatcher';
+import { injectEventDispatcher } from './inject-event-dispatcher';
 
 const capture = vi.fn();
 const globals = { posthog: { capture } };

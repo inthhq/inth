@@ -11,10 +11,10 @@ import type { EnvironmentProviders } from '@angular/core';
 import { ConsentManager } from './consent-manager';
 import { ConsentStyles } from './consent-styles';
 import { ConsentTheme } from './consent-theme';
-import type { DeferredRuntime } from './deferred/deferred-runtime';
+import type { DeferredRuntime } from './deferred/create-deferred-runtime';
 import { HeadlessConsent } from './headless-consent';
-import { INTH_OPTIONS } from './options';
-import type { InthProviderOptions } from './options';
+import { INTH_OPTIONS } from './inth-options';
+import type { InthProviderOptions } from './inth-options';
 
 /**
  * Set up Inth consent management for an application.

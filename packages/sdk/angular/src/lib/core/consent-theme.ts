@@ -21,7 +21,7 @@ import {
 } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from './consent-manager';
-import type { DialogPreload } from './dialog-warming';
+import type { DialogPreload } from './warm-dialog';
 
 /**
  * The provider's theme and UI options, as signals, for the stock surfaces

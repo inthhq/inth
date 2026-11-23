@@ -8,8 +8,8 @@ import { pendingBootSnapshot } from '@inth/sdk/surface-state';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { testLocal } from '../../../__tests__/test-local';
-import type { InthResolvedOptions } from '../options';
-import { createDeferredRuntime } from './deferred-runtime';
+import type { InthResolvedOptions } from '../inth-options';
+import { createDeferredRuntime } from './create-deferred-runtime';
 
 const SRC = 'https://vendor.test/measure.js';
 

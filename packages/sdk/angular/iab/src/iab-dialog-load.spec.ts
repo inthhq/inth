@@ -6,10 +6,10 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
 import { testOptions } from '../../src/__tests__/test-local';
 import { ConsentManager } from '../../src/lib/core/consent-manager';
-import { warmDialog } from '../../src/lib/core/dialog-warming';
-import type { InthProviderOptions } from '../../src/lib/core/options';
+import { warmDialog } from '../../src/lib/core/warm-dialog';
+import type { InthProviderOptions } from '../../src/lib/core/inth-options';
 import { provideInth } from '../../src/lib/core/provide-inth';
-import { ConsentBanner } from '../../src/lib/prompt/prompt';
+import { ConsentBanner } from '../../src/lib/prompt/consent-banner';
 import { iabTestOptions } from '../../testing/src/__tests__/harness-test-bed';
 import { IABConsentBanner } from './iab-consent-banner';
 import {

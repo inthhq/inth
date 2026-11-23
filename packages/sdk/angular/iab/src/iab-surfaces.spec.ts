@@ -16,7 +16,7 @@ import { settle } from '../../src/__tests__/test-local';
 import type {
 	InthOptions,
 	InthProviderOptions,
-} from '../../src/lib/core/options';
+} from '../../src/lib/core/inth-options';
 import { IABConsentBanner } from './iab-consent-banner';
 import { IABConsentDialog } from './iab-consent-dialog';
 

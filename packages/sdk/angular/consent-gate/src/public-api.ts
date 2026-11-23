@@ -11,4 +11,4 @@ export {
 	ConsentGatePlaceholder,
 } from './consent-gate';
 export type { ConsentGatePlaceholderContext } from './consent-gate';
-export { injectEventDispatcher } from './event-dispatcher';
+export { injectEventDispatcher } from './inject-event-dispatcher';
