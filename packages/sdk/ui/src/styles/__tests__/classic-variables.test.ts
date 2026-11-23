@@ -3,12 +3,12 @@
  * and true. `classic-variables.browser.test.ts` checks each mapping against
  * computed styles; these check the list itself:
  *
- * - Every variable the classic banner and dialog sheets declare or read is
- *   either mapped or listed as unmapped with a reason.
- * - No stylesheet declares a mapped variable outside its rules. A `:root`
- *   default in `styles.css` would replace every v6 default whenever the
- *   whole stylesheets are imported together, and would resolve its tokens
- *   on `:root`, out of reach of a palette scoped to `.inth-theme-root`.
+ * - Every classic variable is listed once, mapped or unmapped with a
+ *   reason, and every mapped one is still read by a shipped stylesheet.
+ * - No stylesheet declares a classic variable outside its rules. A `:root`
+ *   default in `styles.css` would replace every default it falls back to,
+ *   and would resolve its tokens on `:root`, out of reach of a palette
+ *   scoped to `.inth-theme-root`.
  * - The docs table matches the list.
  *
  * These read the built artifacts: build `@inth/sdk/ui` first.
@@ -25,7 +25,6 @@ import {
 	CLASSIC_VARIABLES,
 } from '../../../scripts/classic-variables';
 
-const SOURCE_DIR = join(__dirname, '..', 'components');
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
 const DOCS = join(
 	__dirname,
@@ -45,17 +44,6 @@ const readDist = function readDist(path: string): string {
 		);
 	}
 	return readFileSync(path, 'utf8');
-};
-
-const classicNames = function classicNames(): Set<string> {
-	const names = new Set<string>();
-	for (const file of ['prompt.module.css', 'panel.module.css']) {
-		const source = readFileSync(join(SOURCE_DIR, file), 'utf8');
-		for (const match of source.matchAll(/(?<name>--consent-[\w-]+)/gu)) {
-			names.add(match.groups?.name ?? '');
-		}
-	}
-	return names;
 };
 
 /** Custom properties declared outside any rule's `@layer components`. */
@@ -88,7 +76,14 @@ describe('classic component variables', () => {
 		const listed = [...mapped, ...unmapped];
 
 		expect(new Set(listed).size).toBe(listed.length);
-		expect(new Set(listed)).toEqual(classicNames());
+	});
+
+	test('styles.css still reads each mapped one', () => {
+		const css = readDist(join(DIST_DIR, 'styles.css'));
+
+		expect(mapped.filter((name) => !css.includes(`var(${name}`))).toEqual(
+			[]
+		);
 	});
 
 	test('each mapping is tested, through each hook it names', () => {
@@ -111,19 +106,16 @@ describe('classic component variables', () => {
 		}
 	});
 
-	test('no stylesheet declares a mapped one outside its rules', () => {
-		const files = [
-			'styles.css',
-			'styles.tw3.css',
-			join('styles', 'privacy-choices.css'),
-			join('styles', 'privacy-choices.tw3.css'),
-			join('iab', 'styles.css'),
-		];
+	test('no stylesheet declares one outside its rules', () => {
+		const files = ['styles.css', 'styles.tw3.css', join('iab', 'styles.css')];
 		for (const file of files) {
 			const declared = declaredOutsideRules(readDist(join(DIST_DIR, file)));
 
 			expect({
-				declared: mapped.filter((name) => declared.has(name)),
+				// The preference widget's own variables stay declared for it.
+				declared: [...mapped, ...unmapped].filter(
+					(name) => declared.has(name) && !name.startsWith('--consent-manager-')
+				),
 				file,
 			}).toEqual({ declared: [], file });
 		}
@@ -131,7 +123,7 @@ describe('classic component variables', () => {
 
 	test('the docs table lists each one', () => {
 		const docs = readFileSync(DOCS, 'utf8');
-		const start = docs.indexOf('## Keep classic variables on Privacy Choices');
+		const start = docs.indexOf('## Classic variable compatibility');
 		const end = docs.indexOf('\n## ', start + 1);
 		const rows = docs
 			.slice(start, end)

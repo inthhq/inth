@@ -672,8 +672,6 @@
 			"default": "./lib/ui/dist/styles/dialog.js"
 		},
 		"./ui/styles/primitives.css": "./lib/ui/dist/styles/primitives.css",
-		"./ui/styles/privacy-choices.css": "./lib/ui/dist/styles/privacy-choices.css",
-		"./ui/styles/privacy-choices.tw3.css": "./lib/ui/dist/styles/privacy-choices.tw3.css",
 		"./ui/styles/sheets/*.css": "./lib/ui/dist/styles/sheets/*.css",
 		"./ui/styles/sheets/*": {
 			"types": "./lib/ui/dist-types/styles/sheets/*.d.ts",
@@ -762,21 +760,6 @@
 			"import": "./lib/ui/dist/styles/components/*.js",
 			"default": "./lib/ui/dist/styles/components/*.js"
 		},
-		"./ui/styles/components/consent-banner": {
-			"types": "./lib/ui/dist/styles/components/prompt.d.ts",
-			"style": "./lib/ui/dist/styles/components/prompt.css",
-			"node": "./lib/ui/dist/styles/components/prompt.node.js",
-			"import": "./lib/ui/dist/styles/components/prompt.js",
-			"default": "./lib/ui/dist/styles/components/prompt.js"
-		},
-		"./ui/styles/components/consent-banner.module.css": {
-			"types": "./lib/ui/dist/styles/components/prompt.d.ts",
-			"style": "./lib/ui/dist/styles/components/prompt.css",
-			"node": "./lib/ui/dist/styles/components/prompt.node.js",
-			"import": "./lib/ui/dist/styles/components/prompt.js",
-			"default": "./lib/ui/dist/styles/components/prompt.js"
-		},
-		"./ui/styles/components/consent-banner.css": "./lib/ui/dist/styles/components/prompt.css",
 		"./ui/styles/components/consent-dialog-trigger": {
 			"types": "./lib/ui/dist/styles/components/panel-trigger.d.ts",
 			"style": "./lib/ui/dist/styles/components/panel-trigger.css",
@@ -792,21 +775,6 @@
 			"default": "./lib/ui/dist/styles/components/panel-trigger.js"
 		},
 		"./ui/styles/components/consent-dialog-trigger.css": "./lib/ui/dist/styles/components/panel-trigger.css",
-		"./ui/styles/components/consent-dialog": {
-			"types": "./lib/ui/dist/styles/components/panel.d.ts",
-			"style": "./lib/ui/dist/styles/components/panel.css",
-			"node": "./lib/ui/dist/styles/components/panel.node.js",
-			"import": "./lib/ui/dist/styles/components/panel.js",
-			"default": "./lib/ui/dist/styles/components/panel.js"
-		},
-		"./ui/styles/components/consent-dialog.module.css": {
-			"types": "./lib/ui/dist/styles/components/panel.d.ts",
-			"style": "./lib/ui/dist/styles/components/panel.css",
-			"node": "./lib/ui/dist/styles/components/panel.node.js",
-			"import": "./lib/ui/dist/styles/components/panel.js",
-			"default": "./lib/ui/dist/styles/components/panel.js"
-		},
-		"./ui/styles/components/consent-dialog.css": "./lib/ui/dist/styles/components/panel.css",
 		"./ui/styles/components/consent-manager": {
 			"types": "./lib/ui/dist/styles/components/manager.d.ts",
 			"style": "./lib/ui/dist/styles/components/manager.css",
@@ -852,12 +820,6 @@
 			"default": "./lib/ui/dist/styles/components/iab-panel.js"
 		},
 		"./ui/styles/components/iab-consent-dialog.css": "./lib/ui/dist/styles/components/iab-panel.css",
-		"./ui/styles/components/consent-banner.js": "./lib/ui/dist/styles/components/prompt.js",
-		"./ui/styles/components/consent-banner.node.js": "./lib/ui/dist/styles/components/prompt.node.js",
-		"./ui/styles/components/consent-banner.d.ts": "./lib/ui/dist/styles/components/prompt.d.ts",
-		"./ui/styles/components/consent-dialog.js": "./lib/ui/dist/styles/components/panel.js",
-		"./ui/styles/components/consent-dialog.node.js": "./lib/ui/dist/styles/components/panel.node.js",
-		"./ui/styles/components/consent-dialog.d.ts": "./lib/ui/dist/styles/components/panel.d.ts",
 		"./ui/styles/components/consent-dialog-trigger.js": "./lib/ui/dist/styles/components/panel-trigger.js",
 		"./ui/styles/components/consent-dialog-trigger.node.js": "./lib/ui/dist/styles/components/panel-trigger.node.js",
 		"./ui/styles/components/consent-dialog-trigger.d.ts": "./lib/ui/dist/styles/components/panel-trigger.d.ts",

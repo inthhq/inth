@@ -82,19 +82,17 @@ export const defaultDarkColors: Required<ColorTokens> = {
 	overlay: 'hsla(0, 0%, 0%, 0.7)',
 	overlayBlock: 'rgba(0, 0, 0, 0.72)',
 	overlayBlockSolid: 'rgba(0, 0, 0, 0.85)',
-	primary: 'hsl(228, 100%, 70%)',
-	primaryHover: 'hsl(228, 100%, 65%)',
-	primaryText: 'hsl(228, 100%, 70%)',
-	primaryTint: tintMix(
-		'hsl(228, 100%, 70%)',
-		'hsl(0, 0%, 7%)',
-		PRIMARY_TINT_SHARE.dark
-	),
+	// White on this primary is 5.1:1 (VIS-01).
+	primary: '#2f66df',
+	primaryHover: '#4f83f1',
+	// Blue text on the dark card: the primary itself is only 3.5:1 (VIS-02).
+	primaryText: '#8ab4ff',
+	primaryTint: tintMix('#4f83f1', 'hsl(0, 0%, 7%)', PRIMARY_TINT_SHARE.dark),
 	surface: 'hsl(0, 0%, 7%)',
 	surfaceHover: 'hsl(0, 0%, 10%)',
 	switchThumb: 'hsl(0, 0%, 93%)',
 	switchTrack: 'hsl(0, 0%, 25%)',
-	switchTrackActive: 'hsl(228, 100%, 70%)',
+	switchTrackActive: '#2f66df',
 	switchTrackOff: '#64748b',
 	text: 'hsl(0, 0%, 93%)',
 	textMuted: 'hsl(0, 0%, 60%)',
@@ -110,19 +108,15 @@ export const defaultTheme: Required<Omit<Theme, 'slots'>> = {
 		overlay: 'hsla(0, 0%, 0%, 0.5)',
 		overlayBlock: 'rgba(15, 23, 42, 0.62)',
 		overlayBlockSolid: 'rgba(15, 23, 42, 0.78)',
-		primary: 'hsl(228, 100%, 60%)',
-		primaryHover: 'hsl(228, 100%, 55%)',
-		primaryText: 'hsl(228, 100%, 60%)',
-		primaryTint: tintMix(
-			'hsl(228, 100%, 60%)',
-			'hsl(0, 0%, 100%)',
-			PRIMARY_TINT_SHARE.light
-		),
+		primary: '#2563eb',
+		primaryHover: '#1d4ed8',
+		primaryText: '#2563eb',
+		primaryTint: tintMix('#2563eb', 'hsl(0, 0%, 100%)', PRIMARY_TINT_SHARE.light),
 		surface: 'hsl(0, 0%, 100%)',
 		surfaceHover: 'hsl(0, 0%, 98%)',
 		switchThumb: 'hsl(0, 0%, 100%)',
 		switchTrack: 'hsl(0, 0%, 85%)',
-		switchTrackActive: 'hsl(228, 100%, 60%)',
+		switchTrackActive: '#2563eb',
 		// 3.2:1 on white (VIS-03); `switchTrack` above is 1.4:1.
 		switchTrackOff: '#8492a6',
 		text: 'hsl(0, 0%, 10%)',
@@ -152,8 +146,9 @@ export const defaultTheme: Required<Omit<Theme, 'slots'>> = {
 	radius: {
 		container: RADIUS_CONTAINER_CAP,
 		full: '9999px',
-		lg: '0.75rem',
-		md: '0.5rem',
+		// 16px surfaces and 10px controls (VIS-07).
+		lg: '1rem',
+		md: '0.625rem',
 		nested: RADIUS_NESTED_CAP,
 		sm: '0.25rem',
 	},
@@ -867,7 +862,8 @@ export const defaultThemeReferences = {
 		switchTrackActive: 'var(--inth-primary)',
 	},
 	dark: {
-		primaryText: 'var(--inth-primary)',
+		// Not the primary: blue text needs more contrast on a dark card (VIS-02).
+		primaryText: '#8ab4ff',
 		primaryTint: PRIMARY_TINT_REFERENCE.dark,
 		switchTrackActive: 'var(--inth-primary)',
 	},

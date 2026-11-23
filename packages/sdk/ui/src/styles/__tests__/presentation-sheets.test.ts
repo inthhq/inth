@@ -1,6 +1,7 @@
 /**
- * Guards the v6 consent prompt's sheets: `surface`, then one of `card`,
- * `bar` or `drawer`, and `expand` (see `PRESENTATION_SHEETS`).
+ * Guards the consent prompt's sheets: `surface`, then one of `card`,
+ * `banner` or `drawer`, and `expand` (see `SURFACE_SHEETS` and
+ * `LATER_SHEETS`).
  *
  * The split exists so a site that uses one presentation ships only that
  * presentation's rules:
@@ -29,9 +30,25 @@ import type { AtRule, ChildNode, Container } from 'postcss';
 import { describe, expect, test } from 'vitest';
 
 import {
-	PRESENTATION_COMPONENTS,
-	PRESENTATION_SHEETS,
+	LATER_SHEETS,
+	SURFACE_SHEETS,
 } from '../../../scripts/stylesheet-parts';
+
+/** The prompt's sheets, one container each plus the shell and `expand`. */
+const PRESENTATION_SHEETS = {
+	banner: SURFACE_SHEETS.banner,
+	card: SURFACE_SHEETS.card,
+	drawer: SURFACE_SHEETS.drawer,
+	expand: LATER_SHEETS.expand,
+	surface: SURFACE_SHEETS.surface,
+} as const;
+const PRESENTATION_COMPONENTS = [
+	'consent-surface',
+	'consent-card',
+	'consent-banner',
+	'consent-drawer',
+	'consent-expand',
+] as const;
 
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
 const SHEETS_DIR = join(DIST_DIR, 'styles', 'sheets');
@@ -39,25 +56,23 @@ const SOURCE_DIR = join(__dirname, '..', 'components');
 
 /**
  * Brotli 11 and gzip 9 bytes of `tokens` + `button` + `surface` + `card`,
- * a Card's inline CSS. The same ceiling as today's banner
- * (`surface-sheets.test.ts`); 3,649 / 4,139 when set.
+ * a Card's inline CSS: 4,238 / 4,794 when the consent UI became the only
+ * UI, against 5,472 / 6,175 for the banner it replaced.
  */
-const CARD_BROTLI_CEILING = 5700;
-const CARD_GZIP_CEILING = 6450;
+const CARD_BROTLI_CEILING = 4350;
+const CARD_GZIP_CEILING = 4900;
 
 /**
- * Measured size plus about 10%, when set: `surface` + `bar` 2,442 / 2,764,
- * `surface` + `drawer` 2,666 / 3,009, `expand` 777 / 917. Raise only for
- * rules the presentation needs to paint.
- *
- * Reading the classic banner variables as fallbacks costs `surface` +
- * `bar` 252 / 264 bytes and `surface` + `drawer` 254 / 263 (2,698 / 3,028
- * and 2,967 / 3,317 after); both budgets rose by about that much.
+ * Measured size plus about 2%: `surface` + `banner` 2,912 / 3,251,
+ * `surface` + `drawer` 3,081 / 3,453, `expand` 762 / 904. Raise only for
+ * rules the container needs to paint. The fallbacks to the classic banner
+ * variables cost `surface` + `banner` 252 / 264 bytes and `surface` +
+ * `drawer` 254 / 263.
  */
 const BUDGETS = {
-	bar: { brotli: 2950, gzip: 3320, sheets: ['surface', 'bar'] },
-	drawer: { brotli: 3210, gzip: 3570, sheets: ['surface', 'drawer'] },
-	expand: { brotli: 860, gzip: 1010, sheets: ['expand'] },
+	banner: { brotli: 2950, gzip: 3320, sheets: ['surface', 'banner'] },
+	drawer: { brotli: 3150, gzip: 3550, sheets: ['surface', 'drawer'] },
+	expand: { brotli: 800, gzip: 950, sheets: ['expand'] },
 } as const;
 
 interface Sheet {
@@ -166,7 +181,7 @@ const brotli = (text: string): number =>
 	}).length;
 const gzip = (text: string): number => gzipSync(text, { level: 9 }).length;
 
-describe('v6 presentation sheets', async () => {
+describe('prompt container sheets', async () => {
 	const names = Object.keys(PRESENTATION_SHEETS);
 	const sheets = Object.fromEntries(
 		await Promise.all(
@@ -177,18 +192,20 @@ describe('v6 presentation sheets', async () => {
 	const button = await importSheet('button');
 	// The variables a page that imports whole stylesheets declares.
 	const declaredOnRoot = rootVariables(
-		[
-			readDist(join(DIST_DIR, 'styles.css')),
-			readDist(join(DIST_DIR, 'styles', 'privacy-choices.css')),
-		].join('\n')
+		readDist(join(DIST_DIR, 'styles.css'))
 	);
 	const dialogSource = readFileSync(
-		join(SOURCE_DIR, 'privacy-choices.module.css'),
+		join(SOURCE_DIR, 'consent-dialog.module.css'),
 		'utf8'
 	);
-	const privacyChoices = readDist(
-		join(DIST_DIR, 'styles', 'privacy-choices.css')
-	);
+	// The prompt's and the dialog's rules, as their sheets deliver them.
+	const consentUi = (
+		await Promise.all(
+			['surface', 'card', 'banner', 'drawer', 'expand', 'dialog'].map(
+				async (name) => (await importSheet(name)).css
+			)
+		)
+	).join('\n');
 
 	test('each sheet has its own id, and its deferred twin the same one', async () => {
 		const deferred = await Promise.all(
@@ -224,7 +241,7 @@ describe('v6 presentation sheets', async () => {
 
 	test('card holds no Banner or Drawer placement, and the other way round', () => {
 		const placements = {
-			bar: /data-placement=['"]?banner-/u,
+			banner: /data-placement=['"]?banner-/u,
 			card: /data-placement=['"]?card-/u,
 			drawer: /data-placement=['"]?drawer-/u,
 		};
@@ -396,7 +413,7 @@ describe('v6 presentation sheets', async () => {
 		);
 		// The presentations style edges through private properties and
 		// border widths only, never the card's shadow or border colour.
-		for (const name of ['card', 'bar', 'drawer'] as const) {
+		for (const name of ['card', 'banner', 'drawer'] as const) {
 			const direct = declarations(sheets[name].css).filter((entry) =>
 				/\|(?:box-shadow|border|border-color|border-(?:top|right|bottom|left)(?:-color)?)\|/u.test(
 					entry
@@ -470,7 +487,7 @@ describe('v6 presentation sheets', async () => {
 				unprefixed: /--fade-(?:top|bottom)/u.test(sheet.css),
 			}).toEqual({ name, unprefixed: false });
 		}
-		expect(privacyChoices).not.toMatch(/--fade-(?:top|bottom)/u);
+		expect(consentUi).not.toMatch(/--fade-(?:top|bottom)/u);
 	});
 
 	test('[VIS-05] dark values reach every selector the dark tokens answer to', () => {
@@ -494,29 +511,29 @@ describe('v6 presentation sheets', async () => {
 			});
 			return found;
 		};
-		const v6 = [
+		const shipped = [
 			...Object.values(sheets).map((sheet) => sheet.css),
-			privacyChoices,
+			consentUi,
 		].join('\n');
 
 		// Only the nested-sheet dim has no dark token; it lists all four.
 		const dim: string[][] = [];
-		parse(privacyChoices).walkDecls('background', (node) => {
+		parse(consentUi).walkDecls('background', (node) => {
 			const rule = node.parent as Container & { selectors?: string[] };
 			if (node.value.includes('57%') && rule.selectors) {
 				dim.push(rule.selectors.map((part) => part.split(' ')[0] ?? ''));
 			}
 		});
 		expect(dim).toEqual([darkSelectors]);
-		for (const prefixes of darkRules(v6)) {
+		for (const prefixes of darkRules(shipped)) {
 			expect(prefixes).toEqual(darkSelectors);
 		}
 		// A minifier that folds the list into `:is()` would put `:host` where
 		// some engines don't match it against the shadow host.
-		expect(v6).not.toMatch(/:is\([^{]*:host/u);
+		expect(shipped).not.toMatch(/:is\([^{]*:host/u);
 		// The scrim and the nudge take their dark values from tokens the
 		// dark palette sets.
-		const tokenReads = declarations(v6).filter((entry) =>
+		const tokenReads = declarations(shipped).filter((entry) =>
 			/\|(?:background|box-shadow)\|.*var\(--inth-(?:overlay-block|overlay-block-solid|danger),/u.test(
 				entry
 			)
@@ -563,27 +580,27 @@ describe('v6 presentation sheets', async () => {
 		const surfaceRoot = classNamesOf('consent-surface').find((name) =>
 			name.startsWith('inth-ui-root-')
 		);
-		const dialogRoot = classNamesOf('privacy-choices').find((name) =>
+		const dialogRoot = classNamesOf('consent-dialog').find((name) =>
 			name.startsWith('inth-ui-backdrop-')
 		);
 
 		expect(surfaceRoot).toBeDefined();
 		expect(dialogRoot).toBeDefined();
 		expect(guarded(sheets.surface.css, `.${surfaceRoot}`)).toEqual(expected);
-		expect(guarded(privacyChoices, `.${dialogRoot}`)).toEqual(expected);
+		expect(guarded(consentUi, `.${dialogRoot}`)).toEqual(expected);
 	});
 
 	test("[MOT-03] disableAnimation stops the dialog's backdrop, card and sheets", () => {
-		const backdrop = classNamesOf('privacy-choices').find((name) =>
+		const backdrop = classNamesOf('consent-dialog').find((name) =>
 			name.startsWith('inth-ui-backdrop-')
 		);
-		const card = classNamesOf('privacy-choices').find((name) =>
+		const card = classNamesOf('consent-dialog').find((name) =>
 			name.startsWith('inth-ui-card-')
 		);
 		expect(backdrop).toBeDefined();
 		expect(card).toBeDefined();
 		const reset: string[] = [];
-		parse(privacyChoices).walkRules((rule) => {
+		parse(consentUi).walkRules((rule) => {
 			const resets = (prop: string) =>
 				rule.nodes.some(
 					(node) =>
@@ -604,7 +621,7 @@ describe('v6 presentation sheets', async () => {
 	});
 
 	test("the phone rules, the dialog's too, use the resolver breakpoint", () => {
-		const widths = [...PRESENTATION_COMPONENTS, 'privacy-choices']
+		const widths = [...PRESENTATION_COMPONENTS, 'consent-dialog']
 			.flatMap((component) => [
 				...readFileSync(
 					join(SOURCE_DIR, `${component}.module.css`),

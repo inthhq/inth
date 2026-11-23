@@ -2,11 +2,9 @@
  * Guards the stylesheet contract: each component rule reaches the page once.
  *
  * - `styles.css` / `styles.tw3.css`: default tokens, every variable, and the
- *   rules for the banner, dialog trigger, ConsentGate, dialog and preference
- *   widget. The app imports it once.
- * - `styles/privacy-choices.css` / `.tw3.css`: the v6 Privacy Choices
- *   rules, opt-in, loaded after `styles.css`. `styles.css` carries none of
- *   them, so an app that doesn't render v6 doesn't download it.
+ *   rules for the prompt in every container, the dialog trigger,
+ *   ConsentGate, the dialog, the preference widget and the confirmations.
+ *   The app imports it once.
  * - `styles/dialog.css`: empty, kept so existing imports resolve.
  * - `styles/primitives.css`: rules for the primitive class maps.
  * - `iab/styles.css`: IAB variables and rules, loaded next to `styles.css`.
@@ -31,11 +29,10 @@ import type { AtRule, ChildNode, Container, Declaration } from 'postcss';
 import { describe, expect, test } from 'vitest';
 
 import {
-	DIALOG_COMPONENTS,
 	FIRST_PAINT_COMPONENTS,
 	IAB_PREFIX,
-	PRESENTATION_COMPONENTS,
-	PRIVACY_CHOICES_DIALOG_COMPONENTS,
+	LATER_SHEETS,
+	LEGACY_SHIM_COMPONENTS,
 } from '../../../scripts/stylesheet-parts';
 
 const DIST_DIR = join(__dirname, '..', '..', '..', 'dist');
@@ -114,6 +111,13 @@ const ruleKeys = function ruleKeys(css: string): Set<string> {
 };
 
 const COMPONENT_STYLESHEETS = listFiles(COMPONENTS_DIR, '.css');
+/** Every component except the legacy class-map shims, which ship no rule. */
+const SHIPPED_STYLESHEETS = COMPONENT_STYLESHEETS.filter(
+	(file) =>
+		!(LEGACY_SHIM_COMPONENTS as readonly string[]).includes(
+			file.replace(/\.css$/u, '')
+		)
+);
 
 describe('class maps carry no CSS', () => {
 	const classMaps = [
@@ -148,34 +152,22 @@ const sheets = {
 	iab: ruleKeys(readDist(join(DIST_DIR, 'iab', 'styles.css'))),
 	iabTw3: ruleKeys(readDist(join(DIST_DIR, 'iab', 'styles.tw3.css'))),
 	primitives: ruleKeys(readDist(join(DIST_DIR, 'styles', 'primitives.css'))),
-	privacyChoices: ruleKeys(
-		readDist(join(DIST_DIR, 'styles', 'privacy-choices.css'))
-	),
-	privacyChoicesTw3: ruleKeys(
-		readDist(join(DIST_DIR, 'styles', 'privacy-choices.tw3.css'))
-	),
 	styles: ruleKeys(readDist(join(DIST_DIR, 'styles.css'))),
 	stylesTw3: ruleKeys(readDist(join(DIST_DIR, 'styles.tw3.css'))),
 };
 
-const groupOf = function groupOf(
-	file: string
-): 'dialog' | 'first-paint' | 'iab' | 'privacy-choices' {
+const laterComponents: readonly string[] = Object.values(LATER_SHEETS).flat();
+
+const groupOf = function groupOf(file: string): 'first-paint' | 'iab' | 'later' {
 	const name = file.replace(/\.css$/u, '');
 	if (name.startsWith(IAB_PREFIX)) {
 		return 'iab';
 	}
-	if ((DIALOG_COMPONENTS as readonly string[]).includes(name)) {
-		return 'dialog';
+	if (laterComponents.includes(name)) {
+		return 'later';
 	}
 	if ((FIRST_PAINT_COMPONENTS as readonly string[]).includes(name)) {
 		return 'first-paint';
-	}
-	if (
-		(PRESENTATION_COMPONENTS as readonly string[]).includes(name) ||
-		(PRIVACY_CHOICES_DIALOG_COMPONENTS as readonly string[]).includes(name)
-	) {
-		return 'privacy-choices';
 	}
 	throw new Error(`components/${file} is in no stylesheet part`);
 };
@@ -190,10 +182,6 @@ const missingFrom = (rules: string[], sheet: Set<string>) =>
  * a sheet that loads later.
  */
 const TARGETS = {
-	dialog: {
-		rules: [sheets.styles, sheets.stylesTw3],
-		variables: [sheets.styles, sheets.stylesTw3],
-	},
 	'first-paint': {
 		rules: [sheets.styles, sheets.stylesTw3],
 		variables: [sheets.styles, sheets.stylesTw3],
@@ -202,14 +190,14 @@ const TARGETS = {
 		rules: [sheets.iab, sheets.iabTw3],
 		variables: [sheets.iab, sheets.iabTw3],
 	},
-	'privacy-choices': {
-		rules: [sheets.privacyChoices, sheets.privacyChoicesTw3],
-		variables: [sheets.privacyChoices, sheets.privacyChoicesTw3],
+	later: {
+		rules: [sheets.styles, sheets.stylesTw3],
+		variables: [sheets.styles, sheets.stylesTw3],
 	},
 } as const;
 
 describe('each component rule lands in the stylesheet for its surface', () => {
-	for (const file of COMPONENT_STYLESHEETS) {
+	for (const file of SHIPPED_STYLESHEETS) {
 		const group = groupOf(file);
 		const target = TARGETS[group];
 
@@ -238,7 +226,7 @@ describe('each component rule lands in the stylesheet for its surface', () => {
 	}
 });
 
-describe('styles.css holds no primitive, IAB or v6 rule', () => {
+describe('styles.css holds no primitive, IAB or legacy rule', () => {
 	/** Hashed class names of a class map in `dist/styles/<dir>/<name>.js`. */
 	const classNamesOf = function classNamesOf(path: string): string[] {
 		return [...readDist(path).matchAll(/inth-ui-[\w-]+/gu)].map(
@@ -254,7 +242,7 @@ describe('styles.css holds no primitive, IAB or v6 rule', () => {
 		),
 		...COMPONENT_STYLESHEETS.filter(
 			(file) =>
-				file.startsWith(IAB_PREFIX) || groupOf(file) === 'privacy-choices'
+				file.startsWith(IAB_PREFIX) || !SHIPPED_STYLESHEETS.includes(file)
 		).map((file) => `components/${file.replace(/\.css$/u, '.js')}`),
 	];
 
@@ -289,10 +277,9 @@ describe('styles.css holds no primitive, IAB or v6 rule', () => {
 		expect(sheets.dialog).toEqual(new Set());
 		expect(overlap(sheets.styles, sheets.primitives)).toEqual([]);
 		expect(overlap(sheets.styles, sheets.iab)).toEqual([]);
-		expect(overlap(sheets.styles, sheets.privacyChoices)).toEqual([]);
 	});
 
-	test('styles.css registers no property and the v6 entry only prefixed ones', () => {
+	test('styles.css registers prefixed properties only', () => {
 		// `@property` is global to the document, so an unprefixed name would
 		// break a host that uses it.
 		const registered = (file: string) =>
@@ -302,12 +289,7 @@ describe('styles.css holds no primitive, IAB or v6 rule', () => {
 				),
 			].map((match) => match.groups?.name);
 
-		expect(registered('styles.css')).toEqual([]);
-		expect(registered('styles.tw3.css')).toEqual([]);
-		for (const file of [
-			'styles/privacy-choices.css',
-			'styles/privacy-choices.tw3.css',
-		]) {
+		for (const file of ['styles.css', 'styles.tw3.css']) {
 			expect(registered(file)).toEqual([
 				'--inth-fade-top',
 				'--inth-fade-bottom',

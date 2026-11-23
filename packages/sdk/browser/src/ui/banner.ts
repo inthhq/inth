@@ -352,7 +352,8 @@ export const createBanner = function createBanner(
 		const duration = readDurationMs(
 			element,
 			'--consent-banner-animation-duration',
-			DEFAULT_DURATION_MS
+			DEFAULT_DURATION_MS,
+			'--inth-duration-fast'
 		);
 		element.classList.replace(styles.bannerVisible, styles.bannerHidden);
 		overlay?.classList.replace(styles.overlayVisible, styles.overlayHidden);

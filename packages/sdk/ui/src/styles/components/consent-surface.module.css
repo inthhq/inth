@@ -31,7 +31,7 @@
  *   --consent-tag-border-color, --consent-tag-radius (--inth-radius-nested)
  *
  * A site styled through the classic banner's variables keeps that styling:
- * each part reads the classic variable after its v6 hook and before the
+ * each part reads the classic variable after its own hook and before the
  * token: `--consent-banner-z-index`, `-background-color`, `-text-color`,
  * `-border-color`, `-border-width`, `-footer-background-color`,
  * `-title-color`, `-description-color`, `-overlay-background-color` and

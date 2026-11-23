@@ -121,11 +121,9 @@ const refreshOverlayFallback = async function refreshOverlayFallback() {
 
 	await nextTick();
 	const rootStyle = getComputedStyle(document.documentElement);
-	if (
-		rootStyle
-			.getPropertyValue('--consent-dialog-overlay-background-color')
-			.trim()
-	) {
+	// `styles.css` declares the theme tokens on `:root`; the classic
+	// `--consent-dialog-*` variables are no longer declared there.
+	if (rootStyle.getPropertyValue('--inth-overlay').trim()) {
 		overlayFallbackStyle.value = undefined;
 		return;
 	}

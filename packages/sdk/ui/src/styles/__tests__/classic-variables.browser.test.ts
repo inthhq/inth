@@ -1,35 +1,34 @@
 /**
- * A site that styled the classic banner or dialog through their component
- * variables keeps that styling on the v6 Privacy Choices UI: each mapped
- * classic variable, set on an ancestor, changes the computed style of the
- * v6 part it maps to, and the part's own v6 hook wins over it.
+ * A site that styled the old banner or dialog through their component
+ * variables keeps that styling: each mapped classic variable, set on an
+ * ancestor, changes the computed style of the part it maps to, and the
+ * part's own hook wins over it.
  *
  * The cases come from `scripts/classic-variables.ts`, the list the docs
  * table is checked against, so a newly mapped variable is tested here
  * without a new case.
  *
- * Both stylesheet deliveries are covered: the whole-stylesheet imports
- * (`styles.css` then `styles/privacy-choices.css`), where the classic rules
- * are on the page too, and the per-surface sheets. With nothing set, each
- * part must compute as it does with the variable set to `initial`, so no
- * classic default reaches a v6 part from either.
+ * Both stylesheet deliveries are covered: the whole `styles.css`, which
+ * also holds the widget's rules, and the per-surface sheets. With nothing
+ * set, each part must compute as it does with the variable set to
+ * `initial`, so no classic default reaches a part from either.
  *
  * These read the built artifacts: build `@inth/sdk/ui` first.
  */
 import { afterEach, beforeAll, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
-import bar from '../../../dist/styles/components/consent-bar.js';
+import bar from '../../../dist/styles/components/consent-banner.js';
 import card from '../../../dist/styles/components/consent-card.js';
 import drawer from '../../../dist/styles/components/consent-drawer.js';
 import surface from '../../../dist/styles/components/consent-surface.js';
-import dialog from '../../../dist/styles/components/privacy-choices.js';
-import * as barSheet from '../../../dist/styles/sheets/bar.js';
+import dialog from '../../../dist/styles/components/consent-dialog.js';
+import * as barSheet from '../../../dist/styles/sheets/banner.js';
 import * as buttonSheet from '../../../dist/styles/sheets/button.js';
 import * as cardSheet from '../../../dist/styles/sheets/card.js';
 import * as drawerSheet from '../../../dist/styles/sheets/drawer.js';
 import * as expandSheet from '../../../dist/styles/sheets/expand.js';
-import * as dialogSheet from '../../../dist/styles/sheets/privacy-choices-dialog.js';
+import * as dialogSheet from '../../../dist/styles/sheets/dialog.js';
 import * as surfaceSheet from '../../../dist/styles/sheets/surface.js';
 import * as tokensSheet from '../../../dist/styles/sheets/tokens.js';
 import { CLASSIC_VARIABLES } from '../../../scripts/classic-variables';
@@ -40,7 +39,6 @@ import type {
 } from '../../../scripts/classic-variables';
 
 import stylesCss from '../../../dist/styles.css?raw';
-import privacyChoicesCss from '../../../dist/styles/privacy-choices.css?raw';
 
 type ClassMap = Record<string, string>;
 
@@ -59,7 +57,7 @@ const DELIVERIES: Record<Delivery, string> = {
 	]
 		.map((sheet) => sheet.css)
 		.join('\n'),
-	whole: `${stylesCss}\n${privacyChoicesCss}`,
+	whole: stylesCss,
 };
 
 const PRESENTATION: Record<
@@ -222,7 +220,7 @@ afterEach(async () => {
 	await page.viewport(1280, 800);
 });
 
-describe('classic component variables on the v6 UI', () => {
+describe('classic component variables', () => {
 	test('every mapped variable has a case', () => {
 		expect(
 			CLASSIC_VARIABLES.filter((mapping) => mapping.probes.length === 0)

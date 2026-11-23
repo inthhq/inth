@@ -111,9 +111,19 @@ export const cx = function cx(
 export const readDurationMs = function readDurationMs(
 	element: Element,
 	name: string,
-	fallback: number
+	fallback: number,
+	/**
+	 * Read when `name` is unset. `styles.css` no longer declares the classic
+	 * `--consent-*-animation-duration` variables, so a site that never set
+	 * one times the exit on the theme's duration token instead.
+	 */
+	tokenName?: string
 ): number {
-	const value = getComputedStyle(element).getPropertyValue(name).trim();
+	const style = getComputedStyle(element);
+	const value = (
+		style.getPropertyValue(name).trim() ||
+		(tokenName ? style.getPropertyValue(tokenName).trim() : '')
+	).trim();
 	if (!value) {
 		return fallback;
 	}

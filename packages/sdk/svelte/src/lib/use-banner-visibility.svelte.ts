@@ -7,9 +7,12 @@ const readDurationMs = function readDurationMs(target: Element | null): number {
 	if (typeof document === 'undefined') {
 		return DEFAULT_DURATION_MS;
 	}
-	const value = getComputedStyle(target ?? document.documentElement)
-		.getPropertyValue('--consent-banner-animation-duration')
-		.trim();
+	const style = getComputedStyle(target ?? document.documentElement);
+	// `styles.css` no longer declares the classic variable, so an unset one
+	// falls back to the theme's duration token.
+	const value =
+		style.getPropertyValue('--consent-banner-animation-duration').trim() ||
+		style.getPropertyValue('--inth-duration-fast').trim();
 	if (!value) {
 		return DEFAULT_DURATION_MS;
 	}

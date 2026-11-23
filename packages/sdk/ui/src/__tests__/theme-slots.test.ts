@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import bannerStyles from '@inth/sdk-ui/styles/components/consent-banner';
+import cardStyles from '@inth/sdk-ui/styles/components/consent-card';
+import drawerStyles from '@inth/sdk-ui/styles/components/consent-drawer';
 import { describe, expect, expectTypeOf, test } from 'vitest';
 
 import type { ComponentSlots, Theme } from '../theme/types';
@@ -17,29 +19,20 @@ describe('theme keys for banner rights and dismiss', () => {
 			'dismiss'
 		);
 	});
-
-	test('built banner class map ships the rights classes', () => {
-		expect(bannerStyles.rights).toMatch(/^inth-ui-rights-/u);
-		expect(bannerStyles.rightLink).toMatch(/^inth-ui-rightLink-/u);
-	});
 });
 
-describe('banner variant stylesheet', () => {
+describe('prompt container stylesheet', () => {
 	const builtCss = readFileSync(
 		join(import.meta.dirname, '../../dist/styles.css'),
 		'utf-8'
 	);
 
 	test.each([
-		"[data-variant='bar']",
-		"[data-variant='widget']",
-		"[data-variant='wall']",
-		"[data-position='bottom-center']",
-	])('built stylesheet targets %s', (selector) => {
-		// Minified output may switch attribute quotes; accept either form.
-		const unquoted = selector.replaceAll("'", '');
-		expect(builtCss.includes(selector) || builtCss.includes(unquoted)).toBe(
-			true
-		);
+		['card', cardStyles.root],
+		['banner', bannerStyles.root],
+		['drawer', drawerStyles.root],
+	])('styles.css carries the %s container', (_name, className) => {
+		expect(className).toMatch(/^inth-ui-/u);
+		expect(builtCss).toContain(`.${className}`);
 	});
 });
