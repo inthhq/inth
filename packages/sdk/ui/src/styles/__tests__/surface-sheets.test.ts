@@ -37,8 +37,8 @@ const SHEETS_DIR = join(DIST_DIR, 'styles', 'sheets');
  * the inline CSS of a fresh visit with the default Card. See
  * `presentation-sheets.test.ts` for its measured size.
  */
-const CARD_BROTLI_CEILING = 4350;
-const CARD_GZIP_CEILING = 4900;
+const CARD_BROTLI_CEILING = 4400;
+const CARD_GZIP_CEILING = 4950;
 
 interface Sheet {
 	id: string;

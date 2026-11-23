@@ -57,21 +57,23 @@ const SOURCE_DIR = join(__dirname, '..', 'components');
 /**
  * Brotli 11 and gzip 9 bytes of `tokens` + `button` + `surface` + `card`,
  * a Card's inline CSS: 4,238 / 4,794 when the consent UI became the only
- * UI, against 5,472 / 6,175 for the banner it replaced.
+ * UI, against 5,472 / 6,175 for the banner it replaced. Fitting a short
+ * viewport and wrapping a long label brought it to about 4,350 / 4,920.
  */
-const CARD_BROTLI_CEILING = 4350;
-const CARD_GZIP_CEILING = 4900;
+const CARD_BROTLI_CEILING = 4400;
+const CARD_GZIP_CEILING = 4950;
 
 /**
  * Measured size plus about 2%: `surface` + `banner` 2,912 / 3,251,
  * `surface` + `drawer` 3,081 / 3,453, `expand` 762 / 904. Raise only for
  * rules the container needs to paint. The fallbacks to the classic banner
  * variables cost `surface` + `banner` 252 / 264 bytes and `surface` +
- * `drawer` 254 / 263.
+ * `drawer` 254 / 263. Fitting a short viewport, and wrapping a label
+ * before it is cut off, cost `surface` + `banner` about 75 / 125.
  */
 const BUDGETS = {
-	banner: { brotli: 2950, gzip: 3320, sheets: ['surface', 'banner'] },
-	drawer: { brotli: 3150, gzip: 3550, sheets: ['surface', 'drawer'] },
+	banner: { brotli: 3050, gzip: 3450, sheets: ['surface', 'banner'] },
+	drawer: { brotli: 3200, gzip: 3600, sheets: ['surface', 'drawer'] },
 	expand: { brotli: 800, gzip: 950, sheets: ['expand'] },
 } as const;
 

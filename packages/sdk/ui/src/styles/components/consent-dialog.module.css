@@ -594,9 +594,22 @@
 
 	.confirmActions {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 		gap: var(--inth-space-sm);
 		margin-top: calc(var(--inth-space-xs) * 0.5);
+	}
+
+	/* A label wraps before it is cut off: a long translation, or a narrow
+	   screen. The stock button keeps its label on one line; the doubled
+	   class outweighs it. The confirmation also opens in the prompt, whose
+	   card is not this sheet's, so its rule hangs off `.confirm`. */
+	.card.card .footerActions > *,
+	.confirm.confirm .confirmActions > *,
+	.card.card .done {
+		min-width: 0;
+		overflow-wrap: anywhere;
+		text-wrap: balance;
+		white-space: normal;
 	}
 
 	/* Receipt: "Saved for this browser · {date}" with a Details toggle. */
@@ -1036,7 +1049,12 @@
 		border-bottom: 0;
 	}
 
-	.vendorName,
+	/* A name wraps, so a narrow column never cuts it off. */
+	.vendorName {
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+
 	.vendorPurpose {
 		min-width: 0;
 		overflow: hidden;
@@ -1210,6 +1228,38 @@
 		.footerActions {
 			flex: 1 0 100%;
 			flex-wrap: wrap;
+		}
+
+		/* On a phone the purpose sits under the name and wraps, and a row
+		   grows with its text: two text columns leave a name about 50px
+		   at 320px, and a touch screen has no hover to read a cut-off
+		   line. The cells keep their order, so the table reads the same. */
+		.vendorHead,
+		.vendorRow {
+			grid-template-columns: minmax(0, 1fr) 20px 32px;
+			row-gap: 0;
+			padding-block: calc(var(--inth-space-xs) * 1.5);
+		}
+
+		.vendorHead {
+			height: auto;
+		}
+
+		.vendorHead > :nth-child(2),
+		.vendorRow > :nth-child(2) {
+			grid-row: 2;
+			grid-column: 1;
+		}
+
+		.vendorHead > :nth-child(n + 3),
+		.vendorRow > :nth-child(n + 3) {
+			grid-row: 1 / span 2;
+		}
+
+		.vendorPurpose {
+			overflow: visible;
+			overflow-wrap: anywhere;
+			white-space: normal;
 		}
 
 		.footerActions > * {

@@ -730,6 +730,28 @@ describe('EU', () => {
 });
 
 describe('phone sheets', () => {
+	test('a vendor name and purpose are whole at 320px wide', async () => {
+		await page.viewport(320, 568);
+		await mount({ region: 'eu' });
+		await openDialog();
+		(
+			await waitFor(() => must('consent-dialog-vendor-trigger-measurement'))
+		).click();
+		const table = await waitFor(() =>
+			must('consent-dialog-vendor-table-measurement')
+		);
+		// The name and purpose cells; the link and switch cells hold no text.
+		const cells = [
+			...table.querySelectorAll<HTMLElement>('[role="cell"]'),
+		].filter((cell) => cell.children.length === 0);
+		expect(cells.map((cell) => cell.textContent)).toContain(
+			'Page views and conversion funnels across the site.'
+		);
+		for (const cell of cells) {
+			expect(cell.scrollWidth).toBeLessThanOrEqual(cell.clientWidth + 1);
+		}
+	});
+
 	test('[NEST-02][NEST-03][NEST-04][SR-05][EU-05] the EU vendor sheet covers the dialog, and Escape closes only it', async () => {
 		await page.viewport(390, 800);
 		await mount({ region: 'eu' });

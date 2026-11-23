@@ -46,10 +46,11 @@ const gzip = (text: string): number => gzipSync(text, { level: 9 }).length;
  * 10,731 (7,971 / 9,068, without the prompt's containers), `dialog` 4,444
  * / 4,980 (as `privacy-choices-dialog`, 4,451 / 4,992), `widget` 4,916 /
  * 5,473 and `parts` 1,666 / 1,905. Raise only for rules the UI needs to
- * paint.
+ * paint. `dialog` grew by about 185 / 200 for the rules that fit the
+ * vendor table and long labels on a 320px screen.
  */
 const BUDGETS = {
-	dialog: { brotli: 4550, gzip: 5100, sheet: 'dialog' },
+	dialog: { brotli: 4700, gzip: 5250, sheet: 'dialog' },
 	'first-paint': { brotli: 9700, gzip: 10950, sheet: 'first-paint' },
 	parts: { brotli: 1700, gzip: 1950, sheet: 'parts' },
 	'styles.css': { brotli: 17600, file: 'styles.css', gzip: 20500 },
