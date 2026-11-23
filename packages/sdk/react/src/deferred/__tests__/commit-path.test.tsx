@@ -41,6 +41,7 @@ import type { ConsentBoot } from '../boot';
 import { ConsentBootData, ServerBootData } from '../boot-data';
 import type { DeferredCommitConfig } from '../committed';
 import type * as EngineNamespace from '../engine';
+import { recordOnce } from '../session';
 import { DeferredConsentShell } from '../shell';
 import { DeferredConsentBanner, DeferredConsentDialog } from '../surfaces';
 
@@ -555,6 +556,61 @@ test('a banner tap the engine was to replay shows the banner again when the engi
 	expect(banner.isConnected).toBe(true);
 	expect(getComputedStyle(banner).display).not.toBe('none');
 	expect(localStorage.getItem('inth')).toBeNull();
+	expect(unhandled).not.toHaveBeenCalled();
+	window.removeEventListener('unhandledrejection', unhandled);
+	await hydrated.unmount();
+});
+
+test('a banner tap after the engine failed to load is recorded once a later attempt loads it', async () => {
+	const state = config();
+	const { boot, page: streamed } = await serve(state);
+	const unhandled = vi.fn();
+	window.addEventListener('unhandledrejection', unhandled);
+	// The adapters' loader: a failed import loads again a second later.
+	// The first fails when the test says; the next loads the engine.
+	const failing = deferred<never>();
+	const importEngine = vi
+		.fn<() => Promise<EngineModule>>()
+		.mockReturnValueOnce(failing.promise)
+		.mockImplementation(() => import('../engine'));
+	const loadEngine = recordOnce(importEngine);
+	shareTapQueue(streamed);
+	const hydrated = await streamed.hydrate(
+		<ClientPage
+			boot={boot}
+			commit={{}}
+			loadEngine={loadEngine}
+			prefetch={fulfilledThenable(state)}
+			scripts={[]}
+		/>
+	);
+	const main = streamed.doc.querySelector('main');
+	await act(() => {
+		tapBanner(streamed, 'accept');
+	});
+	await vi.waitFor(() => {
+		expect(importEngine).toHaveBeenCalledTimes(1);
+	});
+	await act(() => {
+		failing.reject(new TypeError('Failed to fetch chunk'));
+	});
+	expect(main?.dataset.marketing).not.toBe('true');
+	expect(streamed.doc.querySelector(BANNER)).not.toBeNull();
+
+	await act(() => {
+		tapBanner(streamed, 'accept');
+	});
+	await vi.waitFor(
+		() => {
+			expect(importEngine).toHaveBeenCalledTimes(2);
+			expect(main?.dataset.marketing).toBe('true');
+			expect(transportSave).toHaveBeenCalled();
+		},
+		{ timeout: 5000 }
+	);
+	// Two taps, one choice.
+	expect(transportSave).toHaveBeenCalledTimes(1);
+	expect(hydrated.recoverableErrors).toEqual([]);
 	expect(unhandled).not.toHaveBeenCalled();
 	window.removeEventListener('unhandledrejection', unhandled);
 	await hydrated.unmount();
