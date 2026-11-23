@@ -13,17 +13,15 @@ import {
 	viewChild,
 } from '@angular/core';
 import type { TemplateRef } from '@angular/core';
-import {
-	ConsentTheme,
-	ɵPcCloseIcon as CloseIcon,
-	ɵpcCx as cx,
-	ɵpcSlotPart as slotPart,
-	ɵresolveNoStyle as resolveNoStyle,
-} from '@inth/angular';
 import { attachLiveRegion } from '@inth/sdk/ui/primitives/surface';
 import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+
+import { ConsentTheme } from '../../core/consent-theme';
+import { resolveNoStyle } from '../../core/no-style';
+import { CloseIcon } from '../icons';
+import { cx, slotPart } from '../parts';
 
 /**
  * One card of the Privacy Choices dialog: the main dialog or a phone

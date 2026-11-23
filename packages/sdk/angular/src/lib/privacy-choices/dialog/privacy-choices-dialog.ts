@@ -25,35 +25,15 @@ import {
 	viewChild,
 } from '@angular/core';
 import {
-	ConsentManager,
-	ConsentStyles,
-	ConsentTheme,
-	SURFACE_SCOPES,
-	ɵinjectPhoneLayout as injectPhoneLayout,
-	ɵinjectSurfaceSession as injectSurfaceSession,
-	ɵNoStyleScope as NoStyleScope,
-	ɵPcAdvertisingRow as AdvertisingRow,
-	ɵpcBool as bool,
-	ɵPcCategoryGroup as CategoryGroup,
-	ɵPcCheckIcon as CheckIcon,
-	ɵPcChevronIcon as ChevronIcon,
-	ɵPcChoiceButton as ChoiceButton,
-	ɵpcCx as cx,
-	ɵpcHasSaleRight as hasSaleRight,
-	ɵPcRightsReceipt as RightsReceipt,
-	ɵPcSaleRightsRow as SaleRightsRow,
-	ɵpcSlotPart as slotPart,
-	ɵPcSurfaceDraft as SurfaceDraft,
-	ɵresolveNoStyle as resolveNoStyle,
-	ɵuniqueId as uniqueId,
-} from '@inth/angular';
-import type { ɵPcOpenVendorsRequest as OpenVendorsRequest } from '@inth/angular';
-import {
 	commitDialogChoice,
 	MAIN_LAYER,
 	resolveSaleRight,
 } from '@inth/sdk/engine';
-import type { AllConsentNames, BannerCommitAction } from '@inth/sdk/engine';
+import type {
+	AllConsentNames,
+	BannerCommitAction,
+	LegalLinks,
+} from '@inth/sdk/engine';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	announcementText,
@@ -76,10 +56,26 @@ import styles from '@inth/sdk/ui/styles/components/privacy-choices';
 import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 
-import type { ConsentDialogLegalLinks } from './dialog-options';
+import { ConsentManager } from '../../core/consent-manager';
+import { ConsentStyles, SURFACE_SCOPES } from '../../core/consent-styles';
+import { ConsentTheme } from '../../core/consent-theme';
+import { NoStyleScope, resolveNoStyle } from '../../core/no-style';
+import { uniqueId } from '../../core/unique-id';
+import { AdvertisingRow, CategoryGroup } from '../category-group';
+import type { OpenVendorsRequest } from '../category-group';
+import { ChoiceButton } from '../choice-button';
+import { CheckIcon, ChevronIcon } from '../icons';
+import { bool, cx, slotPart } from '../parts';
+import { RightsReceipt } from '../receipt';
+import { takeReceiptFocus } from '../receipt-focus';
+import { hasSaleRight, SaleRightsRow } from '../rights-row';
+import { SurfaceDraft } from '../surface-draft';
+import { injectPhoneLayout, injectSurfaceSession } from '../surface-session';
 import { PrivacyChoicesLayer } from './privacy-choices-layer';
 import { PRIVACY_CHOICES_DIALOG_SHEETS } from './privacy-choices-sheets';
-import { takeReceiptFocus } from './receipt-focus';
+
+/** Which of the provider's legal links the dialog shows (`ConsentDialogLegalLinks`). */
+type ConsentDialogLegalLinks = readonly (keyof LegalLinks)[] | null;
 
 /** The "Saved" cue stays this long, on a timer, not an animation (MOT-03). */
 const CUE_MS = 1700;

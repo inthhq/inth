@@ -220,36 +220,13 @@ export {
 	shouldShowBranding as ɵshouldShowBranding,
 } from './lib/shared';
 export type { LegalLinkSelection as ɵLegalLinkSelection } from './lib/shared';
-// Private (`ɵ`): the Privacy Choices (v6) parts the banner's options and
-// the consent dialog's v6 body share.
-export {
-	AdvertisingRow as ɵPcAdvertisingRow,
-	CategoryGroup as ɵPcCategoryGroup,
-	vendorOpenerKey as ɵpcVendorOpenerKey,
-} from './lib/privacy-choices/category-group';
-export type { OpenVendorsRequest as ɵPcOpenVendorsRequest } from './lib/privacy-choices/category-group';
-export { ChoiceButton as ɵPcChoiceButton } from './lib/privacy-choices/choice-button';
-export {
-	CheckIcon as ɵPcCheckIcon,
-	ChevronIcon as ɵPcChevronIcon,
-	CloseIcon as ɵPcCloseIcon,
-} from './lib/privacy-choices/icons';
-export {
-	bool as ɵpcBool,
-	cx as ɵpcCx,
-	slotPart as ɵpcSlotPart,
-} from './lib/privacy-choices/parts';
-export type { PartAttributes as ɵPcPartAttributes } from './lib/privacy-choices/parts';
-export { RightsReceipt as ɵPcRightsReceipt } from './lib/privacy-choices/receipt';
-export {
-	hasSaleRight as ɵpcHasSaleRight,
-	SaleRightsRow as ɵPcSaleRightsRow,
-} from './lib/privacy-choices/rights-row';
-export { SurfaceDraft as ɵPcSurfaceDraft } from './lib/privacy-choices/surface-draft';
-export {
-	injectPhoneLayout as ɵinjectPhoneLayout,
-	injectSurfaceSession as ɵinjectSurfaceSession,
-} from './lib/privacy-choices/surface-session';
+// Private (`ɵ`): how the consent dialog reaches the Privacy Choices (v6)
+// dialog. The v6 parts stay out of this entry's eager code: they load only
+// through this loader and the stock banner's, so a classic page downloads
+// none of them.
+export { loadPrivacyChoicesDialog as ɵloadPrivacyChoicesDialog } from './lib/dialog/privacy-choices-dialog-loader';
+export type { PrivacyChoicesDialog as ɵPrivacyChoicesDialog } from './lib/privacy-choices/dialog/privacy-choices-dialog';
+export { requestReceiptFocus as ɵrequestReceiptFocus } from './lib/privacy-choices/receipt-focus';
 
 // Engine types the guides use; the helpers are in the `engine` entry.
 export type {

@@ -22,9 +22,12 @@ import type { ComponentRef, Type } from '@angular/core';
 import {
 	ConsentManager,
 	registerDialogWarmer,
+	ɵloadPrivacyChoicesDialog as loadPrivacyChoicesDialog,
 	ɵOptInConfirmation as OptInConfirmation,
+	ɵrequestReceiptFocus as requestReceiptFocus,
 	ɵreturnFocusAfterDialog as returnFocusAfterDialog,
 } from '@inth/angular';
+import type { ɵPrivacyChoicesDialog as PrivacyChoicesDialog } from '@inth/angular';
 import { ConsentDialogTrigger } from '@inth/angular/consent-dialog-trigger';
 import type { ActiveUI } from '@inth/sdk/engine';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
@@ -38,8 +41,6 @@ import type {
 	ConsentDialogTriggerOptions,
 } from './dialog-options';
 import { OptOutConfirmation } from './opt-out-confirmation';
-import type { PrivacyChoicesDialog } from './privacy-choices-dialog';
-import { requestReceiptFocus } from './receipt-focus';
 
 /**
  * Loads the dialog's body, a chunk of its own. Provide another to test a
@@ -64,8 +65,7 @@ export const CONSENT_DIALOG_PANEL = new InjectionToken<
 export const PRIVACY_CHOICES_DIALOG = new InjectionToken<
 	() => Promise<Type<PrivacyChoicesDialog>>
 >('INTH_PRIVACY_CHOICES_DIALOG', {
-	factory: () => async () =>
-		(await import('./privacy-choices-dialog')).PrivacyChoicesDialog,
+	factory: () => loadPrivacyChoicesDialog,
 });
 
 /**

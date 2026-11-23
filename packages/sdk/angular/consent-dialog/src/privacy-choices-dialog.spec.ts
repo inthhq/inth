@@ -21,6 +21,7 @@ import {
 	ConsentManager,
 	PrivacyChoicesLink,
 	provideInth,
+	ɵloadPrivacyChoicesDialog,
 } from '@inth/angular';
 import type {
 	ConsentContainer,
@@ -779,10 +780,7 @@ describe('loading', () => {
 		const classic = vi.fn(
 			async () => (await import('./consent-dialog-panel')).ConsentDialogPanel
 		);
-		const privacyChoices = vi.fn(
-			async () =>
-				(await import('./privacy-choices-dialog')).PrivacyChoicesDialog
-		);
+		const privacyChoices = vi.fn(ɵloadPrivacyChoicesDialog);
 		fixtureId += 1;
 		stubViewport(false);
 		TestBed.configureTestingModule({
