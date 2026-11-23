@@ -10,12 +10,19 @@
  * downloads none of them.
  */
 import type { ConsentContainer, ConsentEdgeStyle } from '@inth/sdk/engine';
+import {
+	EARLY_TAP_NOTIFY_KEY,
+	EARLY_TAP_ROOT,
+	EARLY_TAP_STYLE_ID,
+	earlyTapQueue,
+} from '@inth/sdk/runtime/page-globals';
 import { attachLiveRegion } from '@inth/sdk/ui/primitives/surface';
 import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
 import {
 	computed,
 	defineAsyncComponent,
 	inject,
+	onScopeDispose,
 	provide,
 	ref,
 	shallowRef,
@@ -100,11 +107,59 @@ const loaders = inject(promptContainersKey, promptContainers);
 const type = computed<keyof PromptContainers>(
 	() => resolvedContainer.value?.desktop.type ?? 'card'
 );
+// The server's prompt, while no container has mounted over it. A chunk
+// that fails while hydrating leaves that markup on the page, outside
+// Vue: a container that loads later mounts a new prompt of its own.
+let serverPrompt: Element[] = [];
+let containerMounted = false;
+let stopTapRetry: (() => void) | undefined;
+
+const onContainerMounted = () => {
+	releaseHydration();
+	containerMounted = true;
+	stopTapRetry?.();
+	for (const element of serverPrompt.splice(0)) {
+		element.remove();
+	}
+};
+
+// A container that failed: Vue loads it again on a trigger below.
+const onFailed = () => {
+	releaseHydration();
+	if (typeof document === 'undefined') {
+		return;
+	}
+	if (!containerMounted) {
+		serverPrompt = [...document.querySelectorAll(EARLY_TAP_ROOT)];
+	}
+	// A tap the early-tap script held hid the server's prompt for the
+	// container to replay. Show it again, and let the next tap on it load
+	// the container, which replays the newest tap once it mounts.
+	document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
+	const queue = earlyTapQueue();
+	if (!queue?.taps || stopTapRetry) {
+		return;
+	}
+	const previous = queue[EARLY_TAP_NOTIFY_KEY];
+	const notify = () => {
+		previous?.();
+		current.value.retry();
+	};
+	queue[EARLY_TAP_NOTIFY_KEY] = notify;
+	stopTapRetry = () => {
+		stopTapRetry = undefined;
+		if (queue[EARLY_TAP_NOTIFY_KEY] === notify) {
+			queue[EARLY_TAP_NOTIFY_KEY] = previous;
+		}
+	};
+};
+onScopeDispose(() => stopTapRetry?.());
+
 // One loader per container shown, made when first shown. A failed one
 // stays failed until the next trigger below.
 const loads: Partial<Record<keyof PromptContainers, RetryableComponent>> = {};
 const load = (name: keyof PromptContainers): RetryableComponent => {
-	loads[name] ??= useRetryableComponent(loaders[name], releaseHydration);
+	loads[name] ??= useRetryableComponent(loaders[name], onFailed);
 	return loads[name];
 };
 const current = shallowRef(load(type.value));
@@ -112,8 +167,9 @@ watch(type, (name) => {
 	current.value = load(name);
 });
 
-// A failed chunk leaves no consent UI. Load again the next time the
-// banner is owed, or on the next snapshot while it is.
+// A failed chunk leaves no consent UI of Vue's. Load again the next time
+// the banner is owed, on the next snapshot while it is, or on a tap on
+// the server's prompt (above).
 const retry = () => {
 	if (snapshot.value.activeUI === 'banner') {
 		current.value.retry();
@@ -187,6 +243,6 @@ provide(bannerPageRegionKey, {
 		:container="resolvedContainer"
 		:action-groups="actionGroups"
 		:disable-animation="props.disableAnimation"
-		@vue:mounted="releaseHydration"
+		@vue:mounted="onContainerMounted"
 	/>
 </template>
