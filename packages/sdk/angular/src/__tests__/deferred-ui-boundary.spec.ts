@@ -32,7 +32,7 @@ const ENTRIES: Record<string, string> = {
  * loaders that reach the rest of the prompt.
  */
 const EAGER_PROMPT_MODULES = new Set([
-	'consent-banner.ts',
+	'prompt.ts',
 	'index.ts',
 	'prompt-loaders.ts',
 ]);
