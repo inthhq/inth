@@ -13,12 +13,10 @@ import {
 	Switch,
 	VendorList,
 } from './atoms/accordion';
-import {
-	AcceptAllButton,
-	CustomizeButton,
-	RejectButton,
-	SaveButton,
-} from './atoms/accept-all-button';
+import { AcceptAllButton } from './atoms/accept-all-button';
+import { CustomizeButton } from './atoms/customize-button';
+import { RejectButton } from './atoms/reject-button';
+import { SaveButton } from './atoms/save-button';
 import { Footer, FooterSubGroup } from './atoms/footer';
 import { OptOut } from './atoms/opt-out';
 import { OptOutStatus } from './atoms/opt-out-status';
@@ -154,13 +152,19 @@ export {
 export {
 	AcceptAllButton,
 	ConsentWidgetAcceptAllButton,
-	ConsentWidgetCustomizeButton,
-	ConsentWidgetRejectButton,
-	ConsentWidgetSaveButton,
-	CustomizeButton,
-	RejectButton,
-	SaveButton,
 } from './atoms/accept-all-button';
+export {
+	ConsentWidgetCustomizeButton,
+	CustomizeButton,
+} from './atoms/customize-button';
+export {
+	ConsentWidgetRejectButton,
+	RejectButton,
+} from './atoms/reject-button';
+export {
+	ConsentWidgetSaveButton,
+	SaveButton,
+} from './atoms/save-button';
 export {
 	ConsentWidgetFooter,
 	ConsentWidgetFooterSubGroup,

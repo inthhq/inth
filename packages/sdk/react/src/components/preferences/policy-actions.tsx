@@ -8,11 +8,9 @@ import { useConsentDraft } from '~/draft';
 
 import { PolicyActionsRenderer } from '../shared/policy-actions-renderer';
 import type { PolicyActionRenderProps } from '../shared/policy-actions-renderer';
-import {
-	ConsentWidgetAcceptAllButton,
-	ConsentWidgetRejectButton,
-	ConsentWidgetSaveButton,
-} from './atoms/accept-all-button';
+import { ConsentWidgetAcceptAllButton } from './atoms/accept-all-button';
+import { ConsentWidgetRejectButton } from './atoms/reject-button';
+import { ConsentWidgetSaveButton } from './atoms/save-button';
 import {
 	ConsentWidgetFooter,
 	ConsentWidgetFooterSubGroup,
