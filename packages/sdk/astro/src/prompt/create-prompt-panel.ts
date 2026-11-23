@@ -56,8 +56,8 @@ import type { Theme } from '@inth/sdk/ui/theme';
 
 import { resolveSlotBinding } from '../banner/theme-slots.model';
 import { insertSheets } from '../parts/insert-sheets';
-import { h, raw } from '../parts/vnode';
-import type { VChild, VElement } from '../parts/vnode';
+import { h, raw } from '../parts/patch-element';
+import type { VChild, VElement } from '../parts/patch-element';
 import type { PromptClassNames } from './prompt-class-names';
 import { rightsBundleOf } from './prompt.model';
 
