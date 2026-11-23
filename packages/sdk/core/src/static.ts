@@ -16,10 +16,8 @@ import { resolveInitFromManifest } from '@inth/sdk-schema/types';
 import { baseTranslations } from '@inth/sdk-translations/all';
 
 import { hasGlobalPrivacyControlSignal } from './libs/read-global-privacy-control';
-import {
-	fetchGeoInputs,
-	readGeoInputs,
-} from './transports/manifest-browser-remote.model';
+import { fetchStaticGeo } from './static.api';
+import { readGeoInputs } from './transports/manifest-browser-remote.model';
 
 /** The manifest shape static resolvers and generated modules use. */
 export type { ConsentManifest } from '@inth/sdk-schema/types';
@@ -159,11 +157,7 @@ export const createStaticConsentResolver = function createStaticConsentResolver(
 			if (hasGeo || !options.geoUrl) {
 				return initial;
 			}
-			const fetchImpl = options.fetch ?? globalThis.fetch?.bind(globalThis);
-			if (!fetchImpl) {
-				return initial;
-			}
-			const resolvedGeo = await fetchGeoInputs(options.geoUrl, fetchImpl);
+			const resolvedGeo = await fetchStaticGeo(options.geoUrl, options.fetch);
 			if (!(resolvedGeo?.country || resolvedGeo?.region)) {
 				return initial;
 			}
