@@ -1,5 +1,5 @@
 /**
- * Shared setup for the Vue Privacy Choices stories: one offline rule per
+ * Shared setup for the Vue banner and dialog stories: one offline rule per
  * regime (§2), a plain page under the surfaces, and the provider config.
  */
 import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
@@ -69,7 +69,7 @@ const BANNER_US_OPT_IN: PolicyRule = {
 };
 
 /** The init a region's story resolves offline. */
-export const privacyChoicesInit = function privacyChoicesInit(
+export const regionInit = function regionInit(
 	region: Region,
 	surface: 'banner' | 'dialog' = 'dialog'
 ): InitOutput {
@@ -90,8 +90,8 @@ export const privacyChoicesInit = function privacyChoicesInit(
 	};
 };
 
-/** The provider config for a Privacy Choices story. */
-export const privacyChoicesConfig = function privacyChoicesConfig(
+/** The provider config for a container story. */
+export const containerConfig = function containerConfig(
 	container: ConsentContainer,
 	options: {
 		blockUntilChoice?: boolean;
@@ -105,7 +105,6 @@ export const privacyChoicesConfig = function privacyChoicesConfig(
 			privacyPolicy: { href: '#privacy' },
 		},
 		presentation: {
-			design: 'privacy-choices',
 			prompt: {
 				blockUntilChoice: options.blockUntilChoice,
 				container,
@@ -168,7 +167,7 @@ const SettingsLink = defineComponent({
  * link, as React's stories render it.
  */
 export const BannerDemoPage = defineComponent({
-	name: 'PrivacyChoicesBannerDemoPage',
+	name: 'BannerDemoPage',
 	setup() {
 		return () =>
 			h('main', { style: pageStyle }, [
@@ -185,7 +184,7 @@ export const BannerDemoPage = defineComponent({
 
 /** A plain page under the dialog, with the persistent page links. */
 export const DialogDemoPage = defineComponent({
-	name: 'PrivacyChoicesDialogDemoPage',
+	name: 'DialogDemoPage',
 	props: { region: { required: true, type: String } },
 	setup(props) {
 		return () =>
