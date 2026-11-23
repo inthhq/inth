@@ -1666,7 +1666,7 @@ export const consentGateBudgets = function consentGateBudgets(
 			'preferencesVisibleMs',
 			GATE_PREFERENCES_NOISE_MS,
 			GATE_PREFERENCES_NOISE_PERCENT,
-			'action.preferences-visible after Customize may not grow beyond the noise band.'
+			'action.preferences-visible after the Privacy settings link may not grow beyond the noise band.'
 		),
 		{
 			comparator: 'absolute-or-percent-lte',

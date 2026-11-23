@@ -5,6 +5,7 @@ import {
 	InthProvider,
 	ConsentBanner,
 	ConsentDialog,
+	ConsentDialogLink,
 	ConsentWidget,
 	hosted,
 	useActiveUI,
@@ -127,6 +128,8 @@ const Surface = ({ variant }: { variant: string }) => {
 export const LoaderAudit = ({ variant }: { variant: string }) => (
 	<InthProvider options={options}>
 		<ConsentBanner />
+		{/* Opens the audited surface, as a visitor's link does. */}
+		<ConsentDialogLink>Privacy settings</ConsentDialogLink>
 		<Surface variant={variant} />
 	</InthProvider>
 );

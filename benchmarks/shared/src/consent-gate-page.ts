@@ -39,13 +39,15 @@ export const gateAcceptCategories = ['measurement', 'marketing'] as const;
 export const gateSelectors = {
 	accept: '[data-testid="consent-banner-accept-button"]',
 	banner: '[data-testid="consent-banner-root"]',
-	customize: '[data-testid="consent-banner-customize-button"]',
 	overlay:
 		'[data-testid="consent-dialog-overlay"], [data-testid="consent-banner-overlay"]',
+	// The page's Privacy settings link opens the dialog. Customize on the
+	// banner expands it in place and opens no dialog.
 	preferencesLink:
-		'[data-testid="consent-dialog-link"], [data-testid="consent-dialog-trigger"]',
+		'[data-testid="privacy-choices-link"], [data-testid="consent-dialog-link"], [data-testid="consent-dialog-trigger"]',
 	preferencesPanel: '[data-testid="consent-dialog-root"]',
-	preferencesReject: '[data-testid="consent-widget-reject-button"]',
+	preferencesReject:
+		'[data-testid="consent-dialog-reject-all"], [data-testid="consent-widget-reject-button"]',
 	primaryContent: '#primary-content',
 	ready: 'html[data-consent-ready="true"]',
 } as const;
