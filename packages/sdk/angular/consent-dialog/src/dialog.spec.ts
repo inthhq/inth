@@ -33,6 +33,7 @@ import {
 	openOptInConfirmation,
 	watchPendingOptOutConfirmation,
 } from '@inth/sdk/surface-actions';
+import type { ComponentSlots } from '@inth/sdk/ui/theme';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { offlineMode } from '../../src/__tests__/fixtures/transport-mode';
@@ -932,6 +933,74 @@ describe('customization', () => {
 			'my-rights'
 		);
 	});
+
+	const mountWithSlots = async function mountWithSlots(
+		slots: ComponentSlots
+	): Promise<HTMLElement> {
+		TestBed.resetTestingModule();
+		fixtureId += 1;
+		stubViewport(false);
+		TestBed.configureTestingModule({
+			providers: [
+				provideInth({
+					consentCategories: [...ALL_CATEGORIES],
+					mode: offlineMode([
+						{
+							id: `pcd-overlay-${fixtureId}`,
+							match: { fallback: true, isDefault: true },
+							model: 'opt-in',
+							prompt: 'choice',
+							...RULES['us-opt-out'],
+						} as PolicyRule,
+					]),
+					persistence: false,
+					presentation: {},
+					theme: { slots },
+				}),
+			],
+		});
+		const fixture = TestBed.createComponent(DialogHost);
+		await fixture.whenStable();
+		await openDialog();
+		return must('consent-dialog-root');
+	};
+
+	test('the root takes consentDialogOverlay with consentDialog, as dialog.overlay does in React', async () => {
+		const root = await mountWithSlots({
+			consentDialog: { className: 'host-dialog', style: { opacity: 0.9 } },
+			consentDialogOverlay: {
+				className: 'host-overlay',
+				style: { opacity: 0.4, outlineWidth: 3 },
+			},
+		});
+		expect([...root.classList]).toEqual(
+			expect.arrayContaining(['host-dialog', 'host-overlay'])
+		);
+		// The stock backdrop class stays; the container wins a shared style.
+		expect(root.classList.length).toBeGreaterThan(2);
+		expect(root.style.opacity).toBe('0.9');
+		expect(root.style.outlineWidth).toBe('3px');
+	});
+
+	test.each(['consentDialog', 'consentDialogOverlay'] as const)(
+		'a noStyle %s drops only the stock backdrop class, not the other slot',
+		async (withNoStyle) => {
+			const root = await mountWithSlots({
+				consentDialog: {
+					className: 'host-dialog',
+					noStyle: withNoStyle === 'consentDialog',
+				},
+				consentDialogOverlay: {
+					className: 'host-overlay',
+					noStyle: withNoStyle === 'consentDialogOverlay',
+				},
+			});
+			expect([...root.classList].sort()).toEqual([
+				'host-dialog',
+				'host-overlay',
+			]);
+		}
+	);
 });
 
 describe('council fixes', () => {

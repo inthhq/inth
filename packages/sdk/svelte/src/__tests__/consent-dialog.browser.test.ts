@@ -1045,6 +1045,60 @@ describe('wave C round 1', () => {
 		expect(root).toHaveClass('host-dialog-root');
 	});
 
+	test('the root takes consentDialogOverlay with consentDialog, as dialog.overlay does in React', async () => {
+		await mount({
+			extra: {
+				theme: {
+					slots: {
+						consentDialog: {
+							className: 'host-dialog',
+							style: { opacity: 0.9 },
+						},
+						consentDialogOverlay: {
+							className: 'host-overlay',
+							style: { opacity: 0.4, outlineWidth: 3 },
+						},
+					},
+				},
+			} as Partial<ConsentManagerOptions>,
+		});
+		await openDialog();
+		const root = must('consent-dialog-root');
+		expect(root).toHaveClass('host-dialog', 'host-overlay');
+		// The stock backdrop class stays; the container wins a shared style.
+		expect(root.classList.length).toBeGreaterThan(2);
+		expect(root.style.opacity).toBe('0.9');
+		expect(root.style.outlineWidth).toBe('3px');
+	});
+
+	test.each(['consentDialog', 'consentDialogOverlay'] as const)(
+		'a noStyle %s drops only the stock backdrop class, not the other slot',
+		async (withNoStyle) => {
+			await mount({
+				extra: {
+					theme: {
+						slots: {
+							consentDialog: {
+								className: 'host-dialog',
+								noStyle: withNoStyle === 'consentDialog',
+							},
+							consentDialogOverlay: {
+								className: 'host-overlay',
+								noStyle: withNoStyle === 'consentDialogOverlay',
+							},
+						},
+					},
+				} as Partial<ConsentManagerOptions>,
+			});
+			await openDialog();
+			const root = must('consent-dialog-root');
+			expect([...root.classList].sort()).toEqual([
+				'host-dialog',
+				'host-overlay',
+			]);
+		}
+	);
+
 	test('the intro takes the consentDialogDescription slot, as description.dialog does in React', async () => {
 		await mount({
 			extra: {
