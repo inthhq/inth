@@ -88,6 +88,37 @@ describe('[C1] a chunk that failed to load', () => {
 	});
 });
 
+describe('[BNR-06] the page status region', () => {
+	test('is on the page while the container chunk is still loading, and the container hides and announces through it', async () => {
+		let arrive: () => void = () => undefined;
+		const arrived = new Promise<void>((resolve) => {
+			arrive = resolve;
+		});
+		await mount({
+			provide: {
+				[promptContainersKey as symbol]: {
+					...promptContainers,
+					card: async () => {
+						await arrived;
+						return promptContainers.card();
+					},
+				},
+			},
+		});
+		const region = must('consent-banner-announcement');
+		expect($('consent-banner-root')).toBeNull();
+		expect(region.getAttribute('role')).toBe('status');
+		expect(region.getAttribute('aria-live')).toBe('polite');
+		arrive();
+		await waitFor(() => expect($('consent-banner-root')).not.toBeNull());
+		// The same node, now visually hidden by the container's stylesheet.
+		expect($('consent-banner-announcement')).toBe(region);
+		expect(region.className).not.toBe('');
+		must('consent-banner-reject-button').click();
+		await waitFor(() => expect(region.textContent).not.toBe(''));
+	});
+});
+
 describe('[C2] Your Privacy Choices', () => {
 	test('the opt-out icon carries its own size, 14px tall at the glyph proportions', async () => {
 		await mount({

@@ -10,12 +10,16 @@
  * downloads none of them.
  */
 import type { ConsentContainer, ConsentEdgeStyle } from '@inth/sdk/engine';
+import { attachLiveRegion } from '@inth/sdk/ui/primitives/surface';
+import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
 import {
 	computed,
 	defineAsyncComponent,
 	inject,
+	provide,
 	ref,
 	shallowRef,
+	Teleport,
 	watch,
 } from 'vue';
 
@@ -24,11 +28,13 @@ import {
 	useOptInConfirmationHost,
 } from '../../composables/kernel';
 import { useConsentPolicyActions } from '../../composables/use-consent-policy-actions';
+import { useMounted } from '../../composables/use-mounted';
 import { useHydrationHold } from '../parts/hydration-hold';
 import { useRetryableComponent } from '../parts/retryable-component';
 import type { RetryableComponent } from '../parts/retryable-component';
 import { promptContainers, promptContainersKey } from './containers';
 import type { PromptContainers } from './containers';
+import { bannerPageRegionKey } from './page-region';
 
 /**
  * Local overrides for the prompt. Each one beats `presentation.prompt` and
@@ -123,6 +129,38 @@ watch(
 	{ flush: 'sync' }
 );
 watch(snapshot, retry);
+
+// The page's status region renders once a choice is owed, before the
+// container's chunk arrives, as React's renders with its prompt. It
+// outlives the prompt, so the outcome of a choice is read after the
+// prompt leaves (BNR-06), and it keeps its node.
+const mounted = useMounted();
+const regionRef = ref<HTMLElement | null>(null);
+const regionClass = ref<string | undefined>(undefined);
+let region: LiveRegion | null = null;
+watch(
+	regionRef,
+	(element, _previous, onCleanup) => {
+		if (!element) {
+			return;
+		}
+		const live = attachLiveRegion(element);
+		region = live;
+		onCleanup(() => {
+			live();
+			if (region === live) {
+				region = null;
+			}
+		});
+	},
+	{ flush: 'post' }
+);
+provide(bannerPageRegionKey, {
+	announce: (message) => region?.announce(message),
+	hide: (className) => {
+		regionClass.value = className;
+	},
+});
 </script>
 
 <template>
@@ -132,6 +170,17 @@ watch(snapshot, retry);
 		v-if="optInConfirmationActive"
 		:disable-animation="props.disableAnimation"
 	/>
+	<Teleport
+		v-if="owed"
+		to="body"
+		:disabled="!mounted"
+	>
+		<div
+			ref="regionRef"
+			:class="regionClass"
+			data-testid="consent-banner-announcement"
+		/>
+	</Teleport>
 	<component
 		:is="current.component.value"
 		v-if="resolvedContainer && owed && !current.failed.value"
