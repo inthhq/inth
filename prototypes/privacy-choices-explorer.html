@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Inth Privacy Choices — Full Interactive UI Explorer (US Opt-Out, US Opt-In, EU/UK)</title>
+  <title>Privacy Choices Explorer v6</title>
   <style>
     :root {
       --inth-font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
@@ -11,56 +11,70 @@
       --inth-surface: #ffffff;
       --inth-surface-subtle: #f8fafc;
       --inth-surface-hover: #f1f5f9;
+      --inth-surface-raised: #ffffff;
       --inth-border: rgba(15, 23, 42, 0.09);
       --inth-border-strong: rgba(15, 23, 42, 0.16);
       --inth-text: #0f172a;
       --inth-text-muted: #526071;
       --inth-primary: #2563eb;
       --inth-primary-hover: color-mix(in oklch, #2563eb 88%, black);
+      --inth-primary-soft: color-mix(in srgb, #2563eb 10%, transparent);
+      --inth-primary-tint: color-mix(in srgb, #2563eb 10%, #ffffff); /* opaque: safe over backdrops */
       --inth-focus: #334155;
+      --inth-primary-text: #2563eb;
+      --inth-danger: #dc2626;
       --inth-overlay: rgba(15, 23, 42, 0.48);
+      --inth-overlay-block: rgba(15, 23, 42, 0.62);
+      --inth-overlay-block-solid: rgba(15, 23, 42, 0.78);
       --inth-card-shadow:
         0 0 0 1px rgba(15, 23, 42, 0.06),
         0 8px 24px -4px rgba(15, 23, 42, 0.12),
         0 20px 44px -12px rgba(15, 23, 42, 0.14);
-      --inth-btn-shadow:
-        0 0 0 1px rgba(15, 23, 42, 0.12),
-        0 1px 2px rgba(15, 23, 42, 0.05);
-      --inth-radius-lg: 16px;
-      --inth-radius-md: 10px;
+      --inth-btn-shadow: 0 0 0 1px rgba(15, 23, 42, 0.12), 0 1px 2px rgba(15, 23, 42, 0.05);
+      --inth-thumb-shadow: 0 0 0 1px rgba(15, 23, 42, 0.10), 0 1px 2px rgba(15, 23, 42, 0.10), 0 2px 6px -2px rgba(15, 23, 42, 0.10);
+      --inth-radius-lg: 16px; /* surfaces: dialog, banner, sheets, drawers */
+      --inth-radius-container: 12px; /* large containers inside a surface */
+      --inth-radius-md: 10px; /* controls: buttons, segmented track, inputs */
+      --inth-radius-nested: 8px; /* containers nested in containers, the Consent-by tag */
       --inth-radius-sm: 6px;
       --inth-hairline: 1px;
-      --inth-switch-off: #cbd5e1;
+      --inth-switch-off: #8492a6;
       --inth-switch-on: #2563eb;
-      --proto-max-width: 832px;
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --dur-fast: 120ms;
+      --dur-base: 200ms;
     }
-
-    @media only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi) {
-      :root { --inth-hairline: 0.5px; }
-    }
+    @media only screen and (min-resolution: 192dpi) { :root { --inth-hairline: 0.5px; } }
 
     [data-theme="dark"] {
       --inth-surface: #14161a;
       --inth-surface-subtle: #1b1e24;
       --inth-surface-hover: #232730;
+      --inth-surface-raised: #2a2f3a;
       --inth-border: #2a2e38;
       --inth-border-strong: #3a404e;
       --inth-text: #f3f5f8;
       --inth-text-muted: #98a2b3;
-      --inth-primary: #4f83f1;
-      --inth-primary-hover: color-mix(in oklch, #4f83f1 88%, white);
+      --inth-primary: #2f66df;
+      --inth-primary-hover: color-mix(in oklch, #2f66df 88%, black);
+      --inth-primary-soft: color-mix(in srgb, #4f83f1 16%, transparent);
+      --inth-primary-tint: color-mix(in srgb, #4f83f1 18%, #14161a);
       --inth-focus: #e2e8f0;
+      --inth-primary-text: #8ab4ff; /* text-on-surface blue: #2f66df is only ~3.5:1 on the dark card */
+      --inth-danger: #f87171;
       --inth-overlay: rgba(0, 0, 0, 0.65);
+      --inth-overlay-block: rgba(0, 0, 0, 0.72);
+      --inth-overlay-block-solid: rgba(0, 0, 0, 0.85);
       --inth-card-shadow: 0 0 0 1px rgba(255, 255, 255, 0.09);
       --inth-btn-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
-      --inth-switch-off: #334155;
+      --inth-thumb-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10), 0 1px 2px rgba(0, 0, 0, 0.4);
+      --inth-switch-off: #64748b;
       --inth-switch-on: #4f83f1;
     }
 
     * { box-sizing: border-box; }
     html, body {
       margin: 0;
-      height: 100%;
       font-family: var(--inth-font);
       -webkit-font-smoothing: antialiased;
       background: #eef1f5;
@@ -68,967 +82,1688 @@
     }
     [data-theme="dark"] body { background: #0c0e12; }
 
-    .stage-shell {
-      min-height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      padding: 20px 300px 84px 20px;
-    }
-    @media (max-width: 1180px) {
-      .stage-shell { padding: 20px 20px 84px; justify-content: center; }
-    }
+    /* ---------- Prototype chrome (not part of the SDK) ---------- */
+    .stage-shell { display: flex; justify-content: center; padding: 20px 304px 20px 20px; }
+    @media (max-width: 1180px) { .stage-shell { padding: 20px; padding-bottom: 420px; } }
 
     .viewport-frame {
-      position: relative;
-      width: 100%;
-      height: calc(100dvh - 104px);
-      min-height: 540px;
-      border-radius: 12px;
-      overflow: hidden;
-      background:
-        radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.06), transparent 45%),
-        var(--inth-surface-subtle);
+      position: relative; width: 100%; height: 760px; border-radius: 12px; overflow: hidden;
+      background: radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.06), transparent 45%), var(--inth-surface-subtle);
       box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.08);
-      display: flex;
-      flex-direction: column;
     }
-    .viewport-frame[data-vp="macbook"] {
-      width: min(1160px, 100%);
-      height: 700px;
-      min-height: 0;
-      margin: 0 auto;
-    }
+    .viewport-frame[data-vp="macbook"] { width: min(1064px, 100%); height: 700px; }
     .viewport-frame[data-vp="phone"] {
-      width: 375px;
-      height: 700px;
-      min-height: 0;
-      margin: 0 auto;
-      border-radius: 28px;
+      width: 375px; height: 700px; border-radius: 28px;
       box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.14), 0 16px 40px rgba(0, 0, 0, 0.16);
     }
 
-    .fake-site {
-      position: absolute;
-      inset: 0;
-      padding: 28px 40px;
-      pointer-events: none;
-      user-select: none;
-      opacity: 0.45;
-    }
-    .fake-nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 18px;
-      border-bottom: 1px solid var(--inth-border);
-      font-size: 13px;
-      color: var(--inth-text-muted);
-    }
+    .fake-site { position: absolute; inset: 0; padding: 28px 40px; user-select: none; }
+    .viewport-frame[data-vp="phone"] .fake-site { padding: 24px 20px; }
+    .fake-nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 18px; border-bottom: 1px solid var(--inth-border); font-size: 13px; color: var(--inth-text-muted); }
     .fake-brand { font-weight: 600; color: var(--inth-text); }
-    .fake-hero { max-width: 560px; margin-top: 48px; display: flex; flex-direction: column; gap: 12px; }
+    .fake-hero { max-width: 560px; margin-top: 48px; display: flex; flex-direction: column; gap: 12px; opacity: 0.5; }
     .fake-bar { height: 14px; border-radius: 6px; background: var(--inth-border-strong); }
+    .fake-footer { position: absolute; left: 40px; right: 40px; bottom: 24px; display: flex; justify-content: flex-end; gap: 16px; font-size: 12px; color: var(--inth-text-muted); }
 
+    /* ---------- Cookie banner (mirrors @inth/sdk prompt: floating, bottom-left, 440px, branding tab) ---------- */
+    .banner-root { position: absolute; left: 0; bottom: 0; z-index: 5; padding: 24px; pointer-events: none; }
+    .banner-root[hidden] { display: none; }
+    .viewport-frame[data-vp="phone"] .banner-root { right: 0; padding: 16px; }
+    .banner-shell { width: min(440px, 100%); display: flex; flex-direction: column; pointer-events: auto; animation: banner-in 180ms var(--ease-out); }
+    .viewport-frame[data-vp="phone"] .banner-shell { width: 100%; }
+    @keyframes banner-in { from { opacity: 0; transform: translateY(8px); } }
+    .brand-tag { align-self: flex-end; margin: 0 12px -1px 0; display: inline-flex; align-items: center; gap: 6px; min-height: 26px; padding: 4px 10px; border-radius: 12px 12px 0 0; background: var(--inth-primary); color: #fff; font-size: 11px; text-decoration: none; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--inth-primary) 86%, black); }
+    .brand-tag > span:first-child { line-height: 1; white-space: nowrap; }
+    /* Decided (proto-branding, option 3): "Consent by" on a quiet neutral tab — no assurance claim, never competes with Reject/Accept. */
+    .brand-tag { position: relative; background: var(--inth-surface); color: var(--inth-text-muted); box-shadow: inset 0 1px 0 var(--inth-border-strong), inset 1px 0 0 var(--inth-border-strong), inset -1px 0 0 var(--inth-border-strong); transition: background-color 150ms ease-out, color 150ms ease-out; }
+    .brand-tag .inth-mark { color: var(--inth-text) !important; transition: color 150ms ease-out; }
+    .brand-tag::before { content: ""; position: absolute; inset: -18px -4px 0; } /* 44px hit area, upward only */
+    .brand-tag:focus-visible { outline: 2px solid var(--inth-focus); outline-offset: 2px; }
+    /* Quiet at rest; on hover (and keyboard focus) it reveals itself as Inth's link: primary text, tint and border. */
+    .brand-tag { transition: background-color 150ms ease-out, color 150ms ease-out, box-shadow 150ms ease-out, transform 120ms ease-out; }
+    .brand-tag:active { transform: scale(0.97); }
+    .brand-tag:focus-visible,
+    .banner-root .brand-tag:focus-visible { background: var(--inth-primary-tint); color: var(--inth-primary-text); box-shadow: inset 0 0 0 1px var(--inth-primary-text); }
+    .brand-tag:focus-visible .inth-mark { color: var(--inth-primary-text) !important; }
+    @media (hover: hover) and (pointer: fine) {
+      .brand-tag:hover,
+      .banner-root .brand-tag:hover,
+      .banner-root .banner-shell > .brand-tag:hover { background: var(--inth-primary-tint); color: var(--inth-primary-text); box-shadow: inset 0 0 0 1px var(--inth-primary-text), 0 1px 2px rgba(15, 23, 42, 0.05); }
+      .brand-tag:hover .inth-mark { color: var(--inth-primary-text) !important; }
+    }
+    /* Theme switch: every surface flips in the same frame (no per-component transition drift). */
+    html[data-theme-switching] *, html[data-theme-switching] *::before, html[data-theme-switching] *::after { transition: none !important; }
+    .brand-tag .inth-mark { display: block; height: 15px; width: auto; aspect-ratio: 88 / 90; flex: none; color: #fff; }
+    .viewport-frame[data-vp="phone"] .brand-tag .inth-mark { height: 13px; }
+    .viewport-frame[data-vp="phone"] .brand-tag { font-size: 10px; }
+    .banner-card { border: 1px solid var(--inth-border-strong); border-radius: var(--inth-radius-lg); background: var(--inth-surface); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); overflow: hidden; color: var(--inth-text); }
+    .banner-card:focus { outline: none; }
+    .banner-head { display: flex; flex-direction: column; gap: 8px; padding: 24px; }
+    .viewport-frame[data-vp="phone"] .banner-head { padding: 16px; }
+    .banner-title { margin: 0; font-size: 16px; line-height: 24px; font-weight: 500; letter-spacing: -0.011em; }
+    .banner-desc { margin: 0; font-size: 14px; line-height: 20px; color: var(--inth-text-muted); letter-spacing: -0.006em; }
+    .banner-desc a { color: var(--inth-primary-text); text-decoration: none; }
+    @media (hover: hover) and (pointer: fine) { .banner-desc a:hover { text-decoration: underline; } }
+    .banner-foot.is-end { justify-content: flex-end; }
+    .banner-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 16px 24px; background: var(--inth-surface-subtle); border-top: 1px solid var(--inth-border); }
+    .banner-group { display: flex; gap: 8px; }
+    .viewport-frame[data-vp="phone"] .banner-foot { flex-direction: column; align-items: stretch; padding: 16px; }
+    .viewport-frame[data-vp="phone"] .banner-group > .btn { flex: 1 1 0; }
+    .viewport-frame[data-vp="phone"] .banner-foot .btn { min-height: 44px; }
+    .btn-primary-stroke { background: var(--inth-surface); color: var(--inth-primary-text); box-shadow: inset 0 0 0 1px var(--inth-primary-text), 0 1px 2px rgba(0, 0, 0, 0.05); }
+    @media (hover: hover) and (pointer: fine) { .btn-primary-stroke:hover { background: var(--inth-primary-soft); } }
+    /* ---------- v5: banner presentation (same content, different container) ---------- */
+    .banner-root[data-pres="bottom"] { left: 0; right: 0; padding: 0; }
+    .banner-root[data-pres="bottom"] .banner-shell { width: 100%; animation-name: drawer-up; animation-duration: 280ms; }
+    /* Flush = attached to the edge: square on every corner (Inset is the rounded, floating style). */
+    .banner-root[data-pres="bottom"] .banner-card { border-radius: 0; border-left: 0; border-right: 0; border-bottom: 0; box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.10); }
+    .banner-root[data-pres="bottom"] .brand-tag { margin-right: max(24px, calc((100% - 960px) / 2)); }
+    .banner-root[data-pres="bottom"] .banner-head,
+    .banner-root[data-pres="bottom"] .banner-foot { padding-inline: max(24px, calc((100% - 960px) / 2)); }
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="bottom"] .banner-head,
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="bottom"] .banner-foot { padding-inline: 16px; }
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="bottom"] .brand-tag { margin-right: 16px; }
+    @keyframes drawer-up { from { transform: translateY(100%); } }
+
+    .banner-root[data-pres="left"], .banner-root[data-pres="right"] { top: 0; bottom: 0; padding: 0; width: 380px; }
+    .banner-root[data-pres="left"] { left: 0; }
+    .banner-root[data-pres="right"] { left: auto; right: 0; }
+    .banner-root[data-pres="left"] .banner-shell, .banner-root[data-pres="right"] .banner-shell { width: 100%; height: 100%; animation-duration: 280ms; }
+    .banner-root[data-pres="left"] .banner-shell { animation-name: drawer-left; }
+    .banner-root[data-pres="right"] .banner-shell { animation-name: drawer-right; }
+    @keyframes drawer-left { from { transform: translateX(-100%); } }
+    @keyframes drawer-right { from { transform: translateX(100%); } }
+    .banner-root[data-pres="left"] .banner-card, .banner-root[data-pres="right"] .banner-card { height: 100%; display: flex; flex-direction: column; }
+    /* Flush (default): square, edge to edge, a hairline only on the edge that faces the page. */
+    .banner-root[data-pres="left"] .banner-card { border-radius: 0; border: 0; border-right: 1px solid var(--inth-border-strong); box-shadow: 8px 0 24px rgba(0, 0, 0, 0.08); }
+    .banner-root[data-pres="right"] .banner-card { border-radius: 0; border: 0; border-left: 1px solid var(--inth-border-strong); box-shadow: -8px 0 24px rgba(0, 0, 0, 0.08); }
+    /* Inset: 12px from every edge, all corners rounded, layered shadow — a large modal that slides in. */
+    .banner-root[data-drawer="inset"][data-pres="left"], .banner-root[data-drawer="inset"][data-pres="right"] { padding: 12px; width: 404px; }
+    .banner-root[data-drawer="inset"][data-pres="bottom"] { padding: 0 12px 12px; }
+    /* Phone: the generic 16px banner padding must not leak into drawers (it made the flush drawer float with clipped square corners). */
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="bottom"] { padding: 0; }
+    .viewport-frame[data-vp="phone"] .banner-root[data-drawer="inset"][data-pres="bottom"] { padding: 0 12px 12px; }
+    .banner-root[data-drawer="inset"][data-pres="left"] .banner-card,
+    .banner-root[data-drawer="inset"][data-pres="right"] .banner-card,
+    .banner-root[data-drawer="inset"][data-pres="bottom"] .banner-card {
+      border-radius: 16px; border: 1px solid var(--inth-border-strong);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px -6px rgba(15, 23, 42, 0.14), 0 24px 48px -16px rgba(15, 23, 42, 0.18);
+    }
+    .banner-root[data-drawer="inset"][data-pres="left"] .banner-shell { animation-name: drawer-left-inset; }
+    .banner-root[data-drawer="inset"][data-pres="right"] .banner-shell { animation-name: drawer-right-inset; }
+    .banner-root[data-drawer="inset"][data-pres="bottom"] .banner-shell { animation-name: drawer-up-inset; }
+    @keyframes drawer-left-inset { from { transform: translateX(calc(-100% - 12px)); } }
+    @keyframes drawer-right-inset { from { transform: translateX(calc(100% + 12px)); } }
+    @keyframes drawer-up-inset { from { transform: translateY(calc(100% + 12px)); } }
+    .banner-root[data-leaving][data-drawer="inset"][data-pres="left"] .banner-shell { animation-name: drawer-out-left-inset; }
+    .banner-root[data-leaving][data-drawer="inset"][data-pres="right"] .banner-shell { animation-name: drawer-out-right-inset; }
+    .banner-root[data-leaving][data-drawer="inset"][data-pres="bottom"] .banner-shell { animation-name: drawer-down-inset; }
+    @keyframes drawer-out-left-inset { to { transform: translateX(calc(-100% - 12px)); } }
+    @keyframes drawer-out-right-inset { to { transform: translateX(calc(100% + 12px)); } }
+    @keyframes drawer-down-inset { to { transform: translateY(calc(100% + 12px)); } }
+    .banner-root[data-pres="left"] .banner-head, .banner-root[data-pres="right"] .banner-head { flex: 1 1 auto; padding-top: 32px; }
+    .banner-root[data-pres="left"] .banner-foot, .banner-root[data-pres="right"] .banner-foot { flex-direction: column; align-items: stretch; }
+    .banner-root[data-pres="left"] .banner-group > .btn, .banner-root[data-pres="right"] .banner-group > .btn { flex: 1 1 0; }
+    /* In a full-height drawer there is no room for a tab above the card: the tag sits in its own row at the foot. */
+    .banner-brand { display: flex; justify-content: center; padding: 0 24px 16px; }
+    /* Card: the floating card; Customize expands the options in place (the card grows upward from its bottom-left anchor). */
+    .card-panel > .collapse-inner { border-top: 1px solid var(--inth-border); }
+    .card-panel .banner-body { max-height: 360px; padding: 16px 24px 16px; color: var(--inth-text); }
+    .viewport-frame[data-vp="phone"] .card-panel .banner-body { max-height: 320px; padding: 14px 16px; }
+    /* Bottom drawer: the expanded options follow the drawer's 960px content column and get more height. */
+    .banner-root[data-pres="bottom"] .card-panel .banner-body { max-height: 400px; padding-inline: max(24px, calc((100% - 960px) / 2)); }
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="bottom"] .card-panel .banner-body { max-height: 300px; padding-inline: 16px; }
+    .banner-root[data-pres="card"][data-expanded] .banner-head { padding-bottom: 16px; }
+    /* All-in-one side drawer (desktop): intro, then the choices themselves in one scroll area. */
+    .banner-root[data-aio][data-pres="left"], .banner-root[data-aio][data-pres="right"] { width: 460px; max-width: 100%; }
+    .banner-root[data-aio][data-drawer="inset"][data-pres="left"], .banner-root[data-aio][data-drawer="inset"][data-pres="right"] { width: 484px; }
+    .banner-root[data-aio] .banner-head { flex: none; padding-bottom: 12px; }
+    /* Bottom drawer, all-in-one: grows up to the top margin, body scrolls; content column capped at 960px. */
+    .banner-root[data-aio][data-pres="bottom"] { top: 48px; display: flex; flex-direction: column; justify-content: flex-end; }
+    .banner-root[data-aio][data-pres="bottom"] .banner-shell { max-height: 100%; min-height: 0; }
+    .banner-root[data-aio][data-pres="bottom"] .banner-card { display: flex; flex-direction: column; min-height: 0; }
+    .banner-root[data-aio][data-pres="bottom"] .banner-body { padding-inline: max(24px, calc((100% - 960px) / 2)); }
+    .viewport-frame[data-vp="phone"] .banner-root[data-aio][data-pres="bottom"] { top: 24px; }
+    .viewport-frame[data-vp="phone"] .banner-root[data-aio][data-pres="bottom"] .banner-body { padding-inline: 16px; }
+    .banner-root[data-aio] .aio-wrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+    /* Bottom padding lets the last row scroll clear of the overlaid tag. */
+    .banner-root[data-aio] .banner-body { padding: 4px 24px 60px; color: var(--inth-text); }
+    .banner-root[data-aio] .banner-body[data-fade-bottom] { --fade-bottom: 64px; }
+    .banner-root[data-aio] .banner-brand.is-overlay { position: absolute; left: 0; right: 0; bottom: 14px; padding: 0; pointer-events: none; z-index: 1; }
+    .banner-root[data-aio] .banner-brand.is-overlay .brand-tag { pointer-events: auto; }
+    /* Experiment: tag as a detached floating pill above the card (floating, bottom drawer, modal). */
+    .banner-root .banner-shell > .brand-tag {
+      /* Flush with the card's right edge, 8px clear of it, near-flat shadow so it stays a quiet credit. */
+      margin: 0 0 8px 0; border-radius: var(--inth-radius-nested);
+      box-shadow: inset 0 0 0 1px var(--inth-border-strong), 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+    .banner-root .banner-shell > .brand-tag::before { inset: -9px -4px; }
+    .viewport-frame[data-vp="phone"] .banner-root .banner-shell > .brand-tag { margin-right: 0; }
+    /* Full-width bottom drawer: align to the content column's right edge instead of the screen edge. */
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="bottom"] .banner-shell > .brand-tag { margin-right: 16px; }
+    .banner-root[data-pres="bottom"] .banner-shell > .brand-tag { margin-right: max(24px, calc((100% - 960px) / 2)); }
+    .banner-brand .brand-tag { align-self: auto; margin: 0; border-radius: var(--inth-radius-nested); box-shadow: inset 0 0 0 1px var(--inth-border-strong); }
+    .banner-brand .brand-tag::before { inset: -9px -4px; } /* 44px hit area around a 26px pill */
+
+    .banner-root[data-pres="modal"], .banner-root[data-center] { inset: 0; padding: 24px; display: grid; place-items: center; }
+    /* Card, bottom right: mirror of bottom left (the tag already sits flush with the card's right edge). */
+    /* Full-width root, card pushed right: keeps the 24px margin on both sides when the viewport is narrow. */
+    .banner-root[data-corner-right] { left: 0; right: 0; display: flex; flex-direction: column; align-items: flex-end; }
+    .banner-root[data-center] .banner-shell { width: min(480px, 100%); animation-name: modal-in; animation-duration: 220ms; }
+    .banner-root[data-center][data-leaving] .banner-shell { animation-name: modal-out; }
+    /* Centre the card itself, not card + tag: the tag hangs 8px above it, out of the flow. */
+    .banner-root[data-center] .banner-shell { position: relative; }
+    .banner-root[data-center] .banner-shell > .brand-tag { position: absolute; right: 0; bottom: 100%; }
+    /* Block-until-choice: one backdrop for every presentation (floating, drawers, modal). */
+    /* Blocking overlay: darker than the dialog overlay plus a slight blur, so the banner is the only thing to act on. */
+    .banner-backdrop { position: absolute; inset: 0; z-index: 4; background: var(--inth-overlay-block); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); animation: backdrop-in 200ms var(--ease-out); }
+    @media (prefers-reduced-transparency: reduce) { .banner-backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--inth-overlay-block-solid); } }
+    .banner-backdrop[hidden] { display: none; }
+    /* Over the blocking overlay a light-grey 1px border reads as a pale halo, and soft light-mode shadows vanish.
+       Swap the border for a faint dark ring and use a deeper layered shadow that still shows on the scrim. */
+    #banner[data-blocking] .banner-card {
+      border-color: transparent;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.10), 0 2px 6px rgba(15, 23, 42, 0.12), 0 16px 40px -8px rgba(0, 0, 0, 0.35), 0 40px 80px -24px rgba(0, 0, 0, 0.35);
+    }
+    #banner[data-blocking] .banner-shell > .brand-tag,
+    #banner[data-blocking] .banner-brand .brand-tag { box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.10), 0 2px 8px rgba(0, 0, 0, 0.25); }
+    [data-theme="dark"] #banner[data-blocking] .banner-card { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10), 0 16px 40px -8px rgba(0, 0, 0, 0.6), 0 40px 80px -24px rgba(0, 0, 0, 0.6); }
+    [data-theme="dark"] #banner[data-blocking] .banner-shell > .brand-tag,
+    [data-theme="dark"] #banner[data-blocking] .banner-brand .brand-tag { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10), 0 2px 8px rgba(0, 0, 0, 0.5); }
+    #banner[data-blocking] .brand-tag:focus-visible,
+    [data-theme="dark"] #banner[data-blocking] .banner-shell > .brand-tag:focus-visible,
+    [data-theme="dark"] #banner[data-blocking] .banner-brand .brand-tag:focus-visible { box-shadow: inset 0 0 0 1px var(--inth-primary-text), 0 2px 8px rgba(0, 0, 0, 0.25); }
+    @media (hover: hover) and (pointer: fine) {
+      #banner[data-blocking] .brand-tag:hover,
+      [data-theme="dark"] #banner[data-blocking] .banner-shell > .brand-tag:hover,
+      [data-theme="dark"] #banner[data-blocking] .banner-brand .brand-tag:hover { box-shadow: inset 0 0 0 1px var(--inth-primary-text), 0 2px 8px rgba(0, 0, 0, 0.25); }
+    }
+    .banner-backdrop[data-leaving] { animation: backdrop-out 160ms ease-in forwards; }
+    .viewport-frame[data-scroll-locked] .fake-site { overflow: hidden; }
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="modal"], .viewport-frame[data-vp="phone"] .banner-root[data-center] { padding: 16px; }
+    .banner-root[data-pres="modal"] .banner-shell { width: min(480px, 100%); animation-name: modal-in; animation-duration: 220ms; }
+    @keyframes modal-in { from { opacity: 0; transform: scale(0.96); } }
+
+    /* Exit: faster, accelerating away (ease-in), per presentation. */
+    .banner-root[data-leaving] { pointer-events: none; }
+    .banner-root[data-leaving] .banner-shell { animation: banner-out 160ms ease-in forwards; }
+    .banner-root[data-leaving][data-pres="bottom"] .banner-shell { animation-name: drawer-down; }
+
+    /* ---------- Banner: slim one-line bar on the top or bottom edge, always flush. Expanded = the top/bottom drawer. ---------- */
+    /* Banner follows Edge style: flush = square edge-to-edge bar; inset = rounded bar 12px from the edges (drawer inset rules). */
+    .banner-root[data-bar][data-drawer="flush"] .banner-card { border-radius: 0; border-left: 0; border-right: 0; }
+    .banner-root[data-bar][data-drawer="flush"][data-pres="bottom"] .banner-card { border-bottom: 0; }
+    .banner-root[data-bar][data-drawer="flush"][data-pres="top"] .banner-card { border-top: 0; }
+    .banner-root[data-bar][data-expanded] .banner-shell { animation: bar-grow 220ms var(--ease-out); }
+    @keyframes bar-grow { from { opacity: 0.6; transform: translateY(var(--bar-dy, 8px)); } }
+    .banner-root[data-bar][data-pres="top"] { --bar-dy: -8px; }
+    .bar-row { display: flex; align-items: center; gap: 16px; padding: 10px max(24px, calc((100% - 960px) / 2)); }
+    .bar-text { flex: 1 1 auto; min-width: 0; margin: 0; font-size: 13.5px; line-height: 20px; color: var(--inth-text-muted); }
+    .bar-text a { color: var(--inth-primary-text); text-decoration: none; }
+    @media (hover: hover) and (pointer: fine) { .bar-text a:hover { text-decoration: underline; } }
+    .viewport-frame[data-vp="phone"] .bar-row { padding-inline: 16px; }
+    .bar-actions { flex: none; display: flex; align-items: center; gap: 8px; }
+    .bar-actions .btn { min-height: 32px; padding: 5px 12px; }
+    .bar-actions .right-link { margin-right: 8px; font-size: 13px; }
+    /* Stack by the bar's own width (narrow windows and phones), not by device. */
+    .banner-root[data-bar] .banner-card { container-type: inline-size; }
+    @container (max-width: 720px) {
+      .bar-row { flex-direction: column; align-items: stretch; gap: 10px; padding-block: 12px; }
+      .bar-actions .btn { flex: 1 1 0; min-height: 40px; }
+    }
+
+    /* ---------- Top drawer: mirror of bottom. Slides down; the "Consent by" tag hangs below the card. ---------- */
+    .banner-root[data-pres="top"] { top: 0; bottom: auto; left: 0; right: 0; padding: 0; }
+    .banner-root[data-pres="top"] .banner-shell { width: 100%; animation-name: drawer-from-top; animation-duration: 280ms; }
+    .banner-root[data-pres="top"] .banner-card { border-radius: 0; border-left: 0; border-right: 0; border-top: 0; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10); }
+    .banner-root[data-pres="top"] .banner-shell > .brand-tag { order: 2; margin: 8px max(24px, calc((100% - 960px) / 2)) 0 0; }
+    .banner-root[data-pres="top"] .banner-head,
+    .banner-root[data-pres="top"] .banner-foot,
+    .banner-root[data-pres="top"] .card-panel .banner-body { padding-inline: max(24px, calc((100% - 960px) / 2)); }
+    .banner-root[data-pres="top"] .card-panel .banner-body { max-height: 400px; }
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="top"] .banner-head,
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="top"] .banner-foot,
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="top"] .card-panel .banner-body { padding-inline: 16px; }
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="top"] .card-panel .banner-body { max-height: 300px; }
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="top"] .banner-shell > .brand-tag { margin-right: 16px; }
+    .viewport-frame[data-vp="phone"] .banner-root[data-pres="top"] { padding: 0; }
+    .banner-root[data-drawer="inset"][data-pres="top"],
+    .viewport-frame[data-vp="phone"] .banner-root[data-drawer="inset"][data-pres="top"] { padding: 12px 12px 0; }
+    .banner-root[data-drawer="inset"][data-pres="top"] .banner-card {
+      border-radius: 16px; border: 1px solid var(--inth-border-strong);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px -6px rgba(15, 23, 42, 0.14), 0 24px 48px -16px rgba(15, 23, 42, 0.18);
+    }
+    @keyframes drawer-from-top { from { transform: translateY(-100%); } }
+    @keyframes drawer-to-top { to { transform: translateY(-100%); } }
+    .banner-root[data-drawer="inset"][data-pres="top"] .banner-shell { animation-name: drawer-from-top-inset; }
+    @keyframes drawer-from-top-inset { from { transform: translateY(calc(-100% - 12px)); } }
+    @keyframes drawer-to-top-inset { to { transform: translateY(calc(-100% - 12px)); } }
+    .banner-root[data-leaving][data-pres="top"] .banner-shell { animation-name: drawer-to-top; }
+    .banner-root[data-leaving][data-drawer="inset"][data-pres="top"] .banner-shell { animation-name: drawer-to-top-inset; }
+    .banner-root[data-leaving][data-pres="left"] .banner-shell { animation-name: drawer-out-left; }
+    .banner-root[data-leaving][data-pres="right"] .banner-shell { animation-name: drawer-out-right; }
+    .banner-root[data-leaving][data-pres="modal"] .banner-shell { animation-name: modal-out; }
+    @keyframes banner-out { to { opacity: 0; transform: translateY(8px); } }
+    @keyframes drawer-down { to { transform: translateY(100%); } }
+    @keyframes drawer-out-left { to { transform: translateX(-100%); } }
+    @keyframes drawer-out-right { to { transform: translateX(100%); } }
+    @keyframes modal-out { to { opacity: 0; transform: scale(0.97); } }
+    @keyframes backdrop-out { to { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { .banner-root, .banner-root * { animation-duration: 1ms !important; transition-duration: 1ms !important; transition-delay: 0ms !important; } }
+
+    .right-link { border: 0; background: none; padding: 4px 0; font: inherit; font-size: 14px; color: var(--inth-text-muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-align: start; }
+    @media (hover: hover) and (pointer: fine) { .right-link:hover { color: var(--inth-text); } }
+    .viewport-frame[data-vp="phone"] .fake-footer { left: 20px; right: 20px; }
+    .reopen-link { border: 0; background: none; padding: 0; font: inherit; color: var(--inth-text); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+
+    /* ---------- Dialog ---------- */
+    .modal-backdrop { z-index: 6; }
     .modal-backdrop {
-      position: absolute;
-      inset: 0;
-      background: var(--inth-overlay);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      overflow-y: auto;
+      position: absolute; inset: 0; background: var(--inth-overlay);
+      display: grid; place-items: center; padding: 24px;
+      animation: backdrop-in var(--dur-base) var(--ease-out);
     }
-    .viewport-frame[data-vp="phone"] .modal-backdrop { align-items: flex-start; padding: 12px; }
+    .modal-backdrop[hidden] { display: none; }
+    @keyframes backdrop-in { from { opacity: 0; } }
 
-    .fit-badge {
-      position: absolute;
-      left: 14px;
-      bottom: 14px;
-      z-index: 20;
-      font-family: var(--inth-font-mono);
-      font-size: 11px;
-      padding: 5px 9px;
-      border-radius: 6px;
-      background: rgba(10, 10, 10, 0.78);
-      color: #f8fafc;
-      font-variant-numeric: tabular-nums;
-      pointer-events: none;
-    }
-    .fit-badge[data-overflow="true"] { background: rgba(185, 28, 28, 0.9); }
-
-    /* Adaptive dialog widths matching @inth/sdk-ui panel.module.css */
     .card {
       position: relative;
-      width: min(100%, var(--card-width, var(--proto-max-width)));
-      max-height: calc(100% - 8px);
-      overflow-y: auto;
+      width: min(100%, var(--card-w, 520px));
+      max-height: min(640px, 100%);
+      display: flex; flex-direction: column;
+      overflow: hidden;
       background: var(--inth-surface);
       color: var(--inth-text);
       border-radius: var(--inth-radius-lg);
       box-shadow: var(--inth-card-shadow);
-      padding: 22px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
+      animation: card-in var(--dur-base) var(--ease-out);
+      grid-area: 1 / 1;
+      /* Nested dialogs: each open child pushes the parent back (Base UI pattern). */
+      transform-origin: 50% 0;
+      transform: translateY(calc(var(--n, 0) * -32px)) scale(calc(1 - var(--n, 0) * 0.05));
+      transition: transform 260ms var(--ease-out);
     }
-    .card.is-single-us { --card-width: min(488px, var(--proto-max-width)); }
-    .card.is-medium-us { --card-width: min(680px, var(--proto-max-width)); }
-    .card.is-eu { --card-width: min(560px, var(--proto-max-width)); }
-    .viewport-frame[data-vp="phone"] .card { padding: 18px; max-height: none; width: 100%; }
+    .card::after {
+      content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+      background: rgba(15, 23, 42, 0.1); opacity: 0; transition: opacity 260ms var(--ease-out);
+    }
+    [data-theme="dark"] .card::after { background: rgba(0, 0, 0, 0.4); }
+    .card[data-nested-open]::after { opacity: 1; }
+    .card.is-child { --card-w: 480px; max-height: min(600px, calc(100% - var(--d, 1) * 40px)); translate: 0 calc(var(--d, 1) * 12px); animation: child-in 260ms var(--ease-out); }
+    @keyframes child-in { from { opacity: 0; transform: translateY(14px) scale(0.96); } }
+    .card[data-closing] { animation: child-out 160ms ease-in forwards; pointer-events: none; }
+    @keyframes child-out { to { opacity: 0; transform: translateY(10px) scale(0.97); } }
+    .footer-note { font-size: 12.5px; color: var(--inth-text-muted); }
+    .card.is-eu { --card-w: 560px; }
+    @keyframes card-in { from { opacity: 0; transform: translateY(6px) scale(0.98); } }
 
-    .card button, .card a { touch-action: manipulation; }
-    .card button:active:not(:disabled) { transform: scale(0.96); }
-    .card button:focus-visible, .card a:focus-visible { outline: 2px solid var(--inth-focus); outline-offset: 2px; }
+    .viewport-frame[data-vp="phone"] .modal-backdrop { place-items: end center; padding: 0; }
+    /* Inset drawer style applies to phone sheets too: 12px from the edges, all corners rounded. */
+    .viewport-frame[data-vp="phone"][data-drawer="inset"] .modal-backdrop { padding: 0 12px 12px; }
+    .viewport-frame[data-vp="phone"][data-drawer="inset"] .card { border-radius: var(--inth-radius-lg); max-height: calc(100% - 36px); }
+    .viewport-frame[data-vp="phone"][data-drawer="inset"] .card.is-child { max-height: calc(100% - 84px); }
+    .viewport-frame[data-vp="phone"] .card {
+      width: 100%; max-height: calc(100% - 24px); transform-origin: 50% 100%;
+      transform: translateY(calc(var(--n, 0) * -10px)) scale(calc(1 - var(--n, 0) * 0.05));
+      border-radius: 0; /* flush phone sheet: square; the Inset style rounds every corner */
+      animation-name: sheet-in;
+    }
+    @keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } }
+    .viewport-frame[data-vp="phone"] .card.is-child { max-height: calc(100% - 72px); translate: none; animation-name: sheet-in; }
+    .viewport-frame[data-vp="phone"] .card[data-closing] { animation: sheet-out 160ms ease-in forwards; }
+    @keyframes sheet-out { to { transform: translateY(40px); opacity: 0; } }
 
-    .card-header { display: flex; flex-direction: column; gap: 4px; }
+    .card button, .card a { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    .card :focus-visible { outline: 2px solid var(--inth-focus); outline-offset: 2px; }
+
+    .card-header { flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 20px 24px 0; }
+    .viewport-frame[data-vp="phone"] .card-header { padding: 18px 16px 0; }
     .card-title { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.3; letter-spacing: -0.015em; text-wrap: balance; }
-    .sec-head { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.35; text-wrap: balance; }
-    .sec-desc { margin: 0; font-size: 13px; line-height: 1.48; color: var(--inth-text-muted); max-width: 60ch; }
-
-    .split-body {
-      display: grid;
-      grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.96fr);
-      gap: 20px;
-      align-items: start;
-      padding-top: 14px;
-      border-top: var(--inth-hairline) solid var(--inth-border);
-    }
-    .split-body.is-single { grid-template-columns: 1fr; }
-    .viewport-frame[data-vp="phone"] .split-body,
-    .card[data-narrow] .split-body { grid-template-columns: 1fr; gap: 16px; }
-
-    .pane-left { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-    .right-block { display: flex; flex-direction: column; gap: 10px; }
-    .right-block + .right-block { padding-top: 16px; border-top: var(--inth-hairline) solid var(--inth-border); }
-    .right-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-    .right-status { font-size: 13px; font-weight: 500; flex-shrink: 0; }
-
-    .side-surface {
-      background: var(--inth-surface-subtle);
-      border-radius: calc(var(--inth-radius-lg) - 6px);
-      border: var(--inth-hairline) solid var(--inth-border);
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      min-width: 0;
-    }
-    .side-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-    .side-heading { margin: 0; font-size: 13px; font-weight: 600; color: var(--inth-text); }
-
-    .pane-scroll { max-height: 384px; overflow-y: auto; padding-right: 4px; }
-    .pane-scroll::-webkit-scrollbar { width: 6px; }
-    .pane-scroll::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.18); border-radius: 4px; }
-    [data-theme="dark"] .pane-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); }
-    .viewport-frame[data-vp="phone"] .pane-scroll { max-height: none; overflow: visible; padding-right: 0; }
-
-    /* Receipt rows (no "YOUR RECEIPT" title) */
-    .kv-list { margin: 0; padding: 0; display: flex; flex-direction: column; font-size: 13px; line-height: 1.45; }
-    .kv-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-block: 7px; border-bottom: var(--inth-hairline) solid var(--inth-border); }
-    .kv-row:first-child { padding-top: 0; }
-    .kv-row:last-child { border-bottom: 0; padding-bottom: 0; }
-    .kv-label { color: var(--inth-text-muted); flex-shrink: 0; font-weight: 400; }
-    .kv-val { color: var(--inth-text); font-weight: 500; text-align: end; min-width: 0; }
-    .kv-val.mono { font-family: var(--inth-font-mono); font-size: 12px; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 6px; }
-    .kv-val.tabular { font-variant-numeric: tabular-nums; }
-
-    .copy-btn {
-      position: relative; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+    .card-title:focus { outline: none; }
+    .card-intro { margin: 4px 0 0; font-size: 13px; line-height: 1.45; color: var(--inth-text-muted); }
+    .icon-btn {
+      position: relative; flex-shrink: 0; width: 28px; height: 28px; margin: -4px -6px 0 0; display: inline-flex; align-items: center; justify-content: center;
       border: 0; border-radius: var(--inth-radius-sm); background: transparent; color: var(--inth-text-muted); cursor: pointer;
+      transition: background-color var(--dur-fast) ease-out, color var(--dur-fast) ease-out;
     }
+    .icon-btn::before { content: ""; position: absolute; inset: -8px; }
+    @media (hover: hover) and (pointer: fine) { .icon-btn:hover { background: var(--inth-surface-hover); color: var(--inth-text); } }
+
+    .card-body {
+      flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+      padding: 16px 24px 20px;
+      /* Edge fades: shown only when there is more content in that direction (set by JS). A mask, so it works on any surface colour. */
+      --fade-top: 0px; --fade-bottom: 0px;
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+      transition: --fade-top 150ms ease-out, --fade-bottom 150ms ease-out;
+    }
+    .card-body[data-fade-top] { --fade-top: 20px; }
+    .card-body[data-fade-bottom] { --fade-bottom: 28px; }
+    @property --fade-top { syntax: '<length>'; inherits: false; initial-value: 0px; }
+    @property --fade-bottom { syntax: '<length>'; inherits: false; initial-value: 0px; }
+    .viewport-frame[data-vp="phone"] .card-body { padding: 14px 16px 18px; }
+    .card-body::-webkit-scrollbar { width: 6px; }
+    .card-body::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.18); border-radius: 4px; }
+    [data-theme="dark"] .card-body::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); }
+
+    .view { display: flex; flex-direction: column; gap: 0; }
+    .view[data-enter="fwd"] { animation: view-fwd var(--dur-base) var(--ease-out); }
+    .view[data-enter="back"] { animation: view-back var(--dur-base) var(--ease-out); }
+    @keyframes view-fwd { from { opacity: 0; transform: translateX(16px); } }
+    @keyframes view-back { from { opacity: 0; transform: translateX(-16px); } }
+
+    .card-footer {
+      flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px 24px 16px; border-top: var(--inth-hairline) solid var(--inth-border);
+    }
+    .viewport-frame[data-vp="phone"] .card-footer { padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); flex-wrap: wrap; } .viewport-frame[data-vp="phone"] .card-footer > .quiet-link, .viewport-frame[data-vp="phone"] .card-footer > .footer-note { flex: 1 0 100%; text-align: center; }
+    .footer-actions { position: relative; display: flex; align-items: center; gap: 8px; margin-inline-start: auto; }
+    .viewport-frame[data-vp="phone"] .card.is-eu .footer-actions .btn-primary { flex-basis: 100%; }
+    .viewport-frame[data-vp="phone"] .card-footer .btn-primary.is-done { flex: 1 0 100%; order: 2; min-height: 44px; }
+    .viewport-frame[data-vp="phone"] .footer-actions { flex: 1 0 100%; flex-wrap: wrap; }
+    .viewport-frame[data-vp="phone"] .footer-actions .btn { flex: 1 1 0; min-height: 44px; }
+
+    /* Absolutely placed so it never shifts Done; removed by a timer, not by the animation. */
+    .saved-cue { position: absolute; right: calc(100% + 12px); top: 50%; translate: 0 -50%; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--inth-text-muted); animation: cue-in 1600ms var(--ease-out) forwards; pointer-events: none; }
+    .viewport-frame[data-vp="phone"] .saved-cue { display: none; }
+    .viewport-frame[data-vp="phone"] .card-footer > span:empty { display: none; }
+    /* Phone save cue: a check slides in before "Done"; the visible label never changes (WCAG 2.5.3). */
+    .is-done { gap: 0; }
+    .done-check { display: inline-flex; width: 0; opacity: 0; overflow: hidden; transition: width var(--dur-base) var(--ease-out), opacity var(--dur-fast) ease-out; }
+    .viewport-frame[data-vp="phone"] .is-done[data-cue="true"] .done-check { width: 20px; opacity: 1; }
+    .saved-cue svg { color: var(--inth-primary); }
+    @keyframes cue-in { 0% { opacity: 0; transform: translateY(3px); } 12% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
+
+    /* ---------- Rights rows ---------- */
+    .right-row { display: flex; flex-direction: column; gap: 10px; padding-block: 14px; }
+    .right-row:first-child { padding-top: 4px; }
+    .right-row + .right-row { border-top: var(--inth-hairline) solid var(--inth-border); }
+    .row-title { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.35; }
+    .row-desc { margin: 2px 0 0; font-size: 13px; line-height: 1.48; color: var(--inth-text-muted); max-width: 60ch; }
+
+    /* Segmented control */
+    .seg {
+      position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 3px;
+      border-radius: var(--inth-radius-md); background: var(--inth-surface-hover);
+      box-shadow: inset 0 0 0 var(--inth-hairline) var(--inth-border);
+      isolation: isolate;
+    }
+    .seg-thumb {
+      position: absolute; z-index: -1; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px);
+      border-radius: calc(var(--inth-radius-md) - 3px); background: var(--inth-surface-raised); box-shadow: var(--inth-thumb-shadow);
+      transition: transform var(--dur-base) var(--ease-out);
+    }
+    .seg[data-sel="1"] .seg-thumb { transform: translateX(100%); }
+    .seg-opt {
+      position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 6px 10px;
+      border: 0; border-radius: calc(var(--inth-radius-md) - 3px); background: transparent; color: var(--inth-text-muted);
+      font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; gap: 0;
+      transition: color var(--dur-fast) ease-out;
+    }
+    .seg-opt::before { content: ""; position: absolute; inset: -4px 0; }
+    @media (hover: hover) and (pointer: fine) { .seg-opt:not([aria-pressed="true"]):not([aria-disabled="true"]):hover { color: var(--inth-text); } }
+    .seg-opt[aria-pressed="true"] { color: var(--inth-text); font-weight: 600; cursor: default; }
+    .seg-opt[aria-disabled="true"] { cursor: not-allowed; }
+    .seg-opt[aria-disabled="true"]:not([aria-pressed="true"]) { opacity: 0.45; }
+    .seg-check { display: inline-flex; width: 0; overflow: hidden; color: var(--inth-primary); transition: width var(--dur-base) var(--ease-out); }
+    .seg-opt[aria-pressed="true"] .seg-check { width: 19px; }
+    .seg-check svg { flex-shrink: 0; }
+    .seg-check path { stroke-dasharray: 24; stroke-dashoffset: 24; }
+    .seg-opt[aria-pressed="true"] .seg-check path { animation: draw 260ms 60ms var(--ease-out) forwards; }
+    @keyframes draw { to { stroke-dashoffset: 0; } }
+
+    .note {
+      display: flex; gap: 8px; align-items: flex-start; padding: 9px 11px; border-radius: var(--inth-radius-container);
+      background: var(--inth-primary-soft); font-size: 12.5px; line-height: 1.45; color: var(--inth-text);
+    }
+    .note svg { flex-shrink: 0; margin-top: 1px; color: var(--inth-primary); }
+    .note.is-quiet { background: var(--inth-surface-subtle); color: var(--inth-text-muted); }
+
+    /* Collapsible region (height animates without measuring) */
+    .collapse { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--dur-base) var(--ease-out); }
+    .collapse[data-open="true"] { grid-template-rows: 1fr; } /* Bleed: room for the shake and focus rings inside overflow:hidden. */ .collapse.is-bleed > .collapse-inner { margin-inline: -10px; padding-inline: 10px; margin-block: -4px; padding-block: 4px; }
+    .collapse > .collapse-inner { min-height: 0; overflow: hidden; opacity: 0; transition: opacity var(--dur-fast) ease-out; }
+    .collapse[data-open="true"] > .collapse-inner { opacity: 1; transition-delay: 60ms; }
+    .collapse:not([data-open="true"]) > .collapse-inner { visibility: hidden; transition: opacity var(--dur-fast) ease-out, visibility 0s var(--dur-base); }
+
+    .confirm {
+      margin-top: 2px; padding: 12px; border-radius: var(--inth-radius-container);
+      background: var(--inth-surface-subtle); box-shadow: inset 0 0 0 var(--inth-hairline) var(--inth-border-strong);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .confirm { transition: box-shadow var(--dur-base) var(--ease-out), background-color var(--dur-base) var(--ease-out); }
+    /* Pressing Allow again while the question is open: red ring + a short shake (motion handled in JS). */
+    .confirm[data-nudged="true"] { box-shadow: inset 0 0 0 1.5px var(--inth-danger); background: color-mix(in srgb, var(--inth-danger) 5%, var(--inth-surface-subtle)); }
+    .confirm-title { margin: 0; font-size: 13px; font-weight: 600; }
+    .confirm-title:focus { outline: none; }
+    .confirm-desc { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--inth-text-muted); }
+    .btn-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 2px; }
+
+    /* Receipt */
+    .receipt { padding-top: 2px; padding-bottom: 14px; animation: rise var(--dur-base) var(--ease-out); }
+    @keyframes rise { from { opacity: 0; transform: translateY(4px); } }
+    .receipt-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--inth-text-muted); }
+    .receipt-line .lead { display: inline-flex; align-items: center; gap: 6px; min-width: 0; font-variant-numeric: tabular-nums; }
+    .receipt-line .lead svg { color: var(--inth-primary); flex-shrink: 0; }
+    .text-btn {
+      position: relative; display: inline-flex; align-items: center; gap: 4px; border: 0; padding: 2px 0; background: none; flex-shrink: 0;
+      font: inherit; font-size: 12.5px; font-weight: 500; color: var(--inth-text); cursor: pointer;
+    }
+    .text-btn::before { content: ""; position: absolute; inset: -8px -6px; }
+    .text-btn .chev { display: inline-flex; transition: transform var(--dur-base) var(--ease-out); }
+    .text-btn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+    .receipt-details { margin-top: 10px; padding: 10px 12px; border-radius: var(--inth-radius-container); background: var(--inth-surface-subtle); font-size: 12.5px; line-height: 1.5; display: flex; flex-direction: column; gap: 6px; }
+    .receipt-details ul { margin: 0; padding-left: 16px; }
+    .receipt-details .muted { color: var(--inth-text-muted); }
+    .ref { display: inline-flex; align-items: center; gap: 6px; font-family: var(--inth-font-mono); font-size: 12px; }
+    .copy-fail { margin-top: 4px; color: var(--inth-text); }
+    .ref-field { display: block; width: 100%; margin-top: 6px; padding: 6px 8px; border: 0; border-radius: 6px; font-family: var(--inth-font-mono); font-size: 12px; color: var(--inth-text); background: var(--inth-surface); box-shadow: inset 0 0 0 1px var(--inth-border-strong); }
+    .copy-btn { position: relative; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: var(--inth-radius-sm); background: transparent; color: var(--inth-text-muted); cursor: pointer; }
     .copy-btn::before { content: ""; position: absolute; inset: -10px; }
     @media (hover: hover) and (pointer: fine) { .copy-btn:hover { color: var(--inth-text); background: var(--inth-surface-hover); } }
 
+    /* Nav row (cookie settings / vendors) */
+    .nav-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 12px 14px;
+      border: 0; border-radius: var(--inth-radius-container); background: var(--inth-surface); box-shadow: var(--inth-btn-shadow);
+      font: inherit; color: var(--inth-text); text-align: start; cursor: pointer;
+      transition: background-color var(--dur-fast) ease-out, transform var(--dur-fast) ease-out;
+    }
+    .nav-row:active { transform: scale(0.99); }
+    @media (hover: hover) and (pointer: fine) { .nav-row:hover { background: var(--inth-surface-hover); } }
+    .nav-row .label { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .nav-row .name { font-size: 13.5px; font-weight: 500; }
+    .nav-row .sub { font-size: 12px; color: var(--inth-text-muted); font-variant-numeric: tabular-nums; }
+    .nav-row .chev { color: var(--inth-text-muted); display: inline-flex; transition: transform var(--dur-fast) var(--ease-out); }
+    @media (hover: hover) and (pointer: fine) { .nav-row[aria-haspopup]:hover .chev { transform: translateX(2px); } }
+    .nav-row[aria-expanded] .chev { transition: transform var(--dur-base) var(--ease-out); }
+    .nav-row[aria-expanded="true"] .chev { transform: rotate(180deg); }
+
+    .back-btn {
+      position: relative; align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; margin: -2px 0 10px -4px; padding: 4px 6px 4px 2px;
+      border: 0; border-radius: var(--inth-radius-sm); background: none; font: inherit; font-size: 13px; font-weight: 500; color: var(--inth-text-muted); cursor: pointer;
+    }
+    @media (hover: hover) and (pointer: fine) { .back-btn:hover { color: var(--inth-text); } }
+    .view-title { margin: 0 0 2px; font-size: 15px; font-weight: 600; }
+    .view-title:focus { outline: none; }
+    .view-desc { margin: 0 0 8px; font-size: 12.5px; color: var(--inth-text-muted); line-height: 1.45; }
+
+    /* Category rows (description always inline) */
+    .cat-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-block: 10px; border-bottom: var(--inth-hairline) solid var(--inth-border); }
+    .cat-row:last-of-type { border-bottom: 0; }
+    /* Bordered accordion group, as in the shipped Inth dialog. */
+    .cat-list { border: 1px solid var(--inth-border-strong); border-radius: var(--inth-radius-container); background: var(--inth-surface); overflow: hidden; }
+    .cat-group { padding-inline: 14px; border-bottom: 1px solid var(--inth-border); }
+    .cat-group:last-child { border-bottom: 0; }
+    .cat-group > .cat-row { border-bottom: 0; padding-block: 12px; }
+    .vendor-list { margin: 0 0 14px; } /* holds the vendor table (decided: boxed table) */
+    /* Vendor table (decided from proto-vendors): boxed, one 40px line per vendor, purpose in its own column. */
+    .v-table { border: 1px solid var(--inth-border); border-radius: var(--inth-radius-nested); overflow: hidden; background: var(--inth-surface-subtle); }
+    .v-head, .v-row { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr) 20px 32px; align-items: center; gap: 10px; padding: 0 12px; }
+    .v-head { height: 30px; font-size: 11px; font-weight: 500; color: var(--inth-text-muted); letter-spacing: 0.02em; border-bottom: 1px solid var(--inth-border); }
+    .v-row { min-height: 40px; border-bottom: 1px solid var(--inth-border); }
+    .v-row:last-child { border-bottom: 0; }
+    .v-row .name { font-size: 12.5px; font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .v-row .desc { font-size: 12px; color: var(--inth-text-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ext { position: relative; display: inline-flex; color: var(--inth-text-muted); border-radius: 4px; }
+    .ext::before { content: ""; position: absolute; inset: -10px; }
+    @media (hover: hover) and (pointer: fine) { .ext:hover { color: var(--inth-primary-text); } }
+    .switch.is-sm { width: 32px; height: 18px; }
+    .switch.is-sm::after { width: 14px; height: 14px; }
+    .switch.is-sm[aria-checked="true"]::after { transform: translateX(14px); }
+    .switch.is-sm[aria-checked="true"]:active:not(:disabled)::after { transform: translateX(11px); }
+    .vendor-link[aria-expanded] .chev { transition: transform var(--dur-base) var(--ease-out); }
+    .vendor-link[aria-expanded="true"] .chev { transform: rotate(180deg); }
+    .cookie-panel { padding-top: 8px; }
+    .cue-slot { display: contents; }
+    .follows { flex-shrink: 0; font-size: 12px; font-weight: 500; color: var(--inth-text-muted); padding-top: 1px; text-align: end; }
+    .cat-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .cat-name { font-size: 13.5px; font-weight: 500; }
+    .cat-desc { font-size: 12.5px; color: var(--inth-text-muted); line-height: 1.45; }
+    /* Full-width disclosure strip at the foot of each category: a 40px target that says what it does. */
+    /* Vendor trigger (decided): in the segment, no divider, 32px "tight" row; ghost at rest, outline (stroke button) on hover.
+       No press scale — feedback is the disclosure itself (chevron + panel); press only dips the fill. */
+    .cat-group:has(> .vendor-link) > .cat-row { padding-bottom: 6px; }
+    .vendor-link {
+      position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      width: calc(100% + 16px); margin: 0 -8px 8px; min-height: 32px; padding: 6px 8px;
+      border: 0; border-radius: var(--inth-radius-nested); background: transparent;
+      font: inherit; font-size: 12.5px; font-weight: 500; color: var(--inth-text); text-align: start; cursor: pointer;
+      transition: background-color var(--dur-fast) ease-out, box-shadow var(--dur-fast) ease-out;
+    }
+    .vendor-link::before { content: ""; position: absolute; inset: -4px 0; } /* 40px hit area */
+    @media (hover: hover) and (pointer: fine) { .vendor-link:hover { background: var(--inth-surface); box-shadow: var(--inth-btn-shadow); } }
+    .vendor-link:active { background: var(--inth-surface-hover); }
+    .vendor-link:focus-visible { background: var(--inth-surface); box-shadow: var(--inth-btn-shadow); outline-offset: 2px; }
+    .vendor-link .meta { display: inline-flex; align-items: center; gap: 6px; color: var(--inth-text-muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+    .vendor-link .chev { display: inline-flex; transition: transform var(--dur-fast) var(--ease-out); }
+    @media (hover: hover) and (pointer: fine) { .vendor-link[aria-haspopup]:hover .chev { transform: translateX(2px); } }
+    /* The whole row is the toggle's hit area (pointer only; the switch stays the keyboard target). */
+    .cat-row:has([data-cat-toggle]), .v-row:has([data-vendor-toggle]) { cursor: pointer; }
+    .cat-row:has([data-cat-toggle]) .cat-text, .v-row .name, .v-row .desc { -webkit-user-select: none; user-select: none; }
+    .always-on { flex-shrink: 0; font-size: 12px; font-weight: 500; color: var(--inth-text-muted); padding-top: 1px; }
+    .vendor-policy { font-size: 12px; color: var(--inth-text-muted); text-decoration: underline; text-underline-offset: 2px; width: fit-content; }
+
+    /* Switch */
+    .switch {
+      position: relative; width: 36px; height: 20px; margin-top: 1px; border-radius: 999px; border: 0; padding: 0;
+      background: var(--inth-switch-off); cursor: pointer; flex-shrink: 0; transition: background-color var(--dur-fast) ease-out;
+    }
+    .switch::before { content: ""; position: absolute; inset: -12px -6px; }
+    .switch::after {
+      content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 999px;
+      background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); transition: transform var(--dur-base) var(--ease-out), width var(--dur-fast) ease-out;
+    }
+    .switch:active:not(:disabled)::after { width: 19px; }
+    .switch[aria-checked="true"] { background: var(--inth-switch-on); }
+    .switch[aria-checked="true"]::after { transform: translateX(16px); }
+    .switch[aria-checked="true"]:active:not(:disabled)::after { transform: translateX(13px); }
+    .switch:disabled { opacity: 0.45; cursor: not-allowed; }
+
     /* Buttons */
     .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 7px 14px;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 7px 16px;
       border-radius: var(--inth-radius-md); font-family: inherit; font-size: 13px; font-weight: 500; line-height: 1.25;
-      text-align: center; cursor: pointer; border: 0;
-      transition: background-color 150ms ease-out, color 150ms ease-out, box-shadow 150ms ease-out, transform 120ms ease-out;
+      cursor: pointer; border: 0;
+      transition: background-color var(--dur-fast) ease-out, color var(--dur-fast) ease-out, box-shadow var(--dur-fast) ease-out, transform var(--dur-fast) ease-out, opacity var(--dur-fast) ease-out;
     }
-    .btn:disabled { cursor: not-allowed; background: var(--inth-surface-hover); color: var(--inth-text-muted); box-shadow: none; }
+    .btn:active:not(:disabled) { transform: scale(0.97); }
+    .btn:disabled { cursor: not-allowed; opacity: 0.5; }
     .btn-primary { background: var(--inth-primary); color: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
     @media (hover: hover) and (pointer: fine) { .btn-primary:hover:not(:disabled) { background: var(--inth-primary-hover); } }
     .btn-stroke { background: var(--inth-surface); color: var(--inth-text); box-shadow: var(--inth-btn-shadow); }
     @media (hover: hover) and (pointer: fine) { .btn-stroke:hover:not(:disabled) { background: var(--inth-surface-hover); } }
-    .btn-selected { background: var(--inth-surface-hover); color: var(--inth-text); box-shadow: inset 0 0 0 1px var(--inth-border-strong); cursor: default; }
-    .btn-selected:active { transform: none; }
-    .btn-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .viewport-frame[data-vp="phone"] .btn-pair { grid-template-columns: 1fr; }
 
     .quiet-link {
-      position: relative; display: inline-flex; align-items: center; min-height: 30px; padding: 0; border: 0;
-      background: transparent; color: var(--inth-text-muted); font-family: inherit; font-size: 13px; font-weight: 400;
-      text-decoration: underline; text-underline-offset: 3px;
-      text-decoration-color: color-mix(in srgb, var(--inth-text-muted) 45%, transparent); cursor: pointer;
+      font-size: 13px; color: var(--inth-text-muted); text-decoration: underline; text-underline-offset: 3px;
+      text-decoration-color: color-mix(in srgb, var(--inth-text-muted) 45%, transparent);
     }
     @media (hover: hover) and (pointer: fine) { .quiet-link:hover { color: var(--inth-text); } }
 
-    .prefs-disclosure-btn {
-      display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 12px;
-      border-radius: var(--inth-radius-md); border: var(--inth-hairline) solid var(--inth-border-strong);
-      background: var(--inth-surface); color: var(--inth-text); font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer;
-    }
-    @media (hover: hover) and (pointer: fine) { .prefs-disclosure-btn:hover { background: var(--inth-surface-hover); } }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
-    /* =====================================================================
-       STYLE 1: c15t v3 Accordion (origin/main — bordered cards + nested vendors)
-       ===================================================================== */
-    .v3-acc-list { display: flex; flex-direction: column; gap: 8px; }
-    .v3-acc-item {
-      border-radius: var(--inth-radius-md);
-      border: var(--inth-hairline) solid var(--inth-border-strong);
-      background: var(--inth-surface);
-      overflow: hidden;
-    }
-    .v3-acc-header {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px;
-    }
-    .v3-acc-trigger {
-      display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; border: 0; padding: 0;
-      background: transparent; color: var(--inth-text); font-family: inherit; font-size: 13px; font-weight: 500;
-      text-align: start; cursor: pointer;
-    }
-    .v3-acc-glyph { color: var(--inth-text-muted); display: inline-flex; flex-shrink: 0; }
-    .v3-acc-body {
-      padding: 0 12px 12px; display: flex; flex-direction: column; gap: 10px;
-      font-size: 12.5px; color: var(--inth-text-muted); line-height: 1.48;
-    }
-    .v3-vendor-card {
-      border-radius: calc(var(--inth-radius-md) - 2px);
-      border: var(--inth-hairline) solid var(--inth-border);
-      background: var(--inth-surface-subtle);
-      overflow: hidden;
-    }
-    .v3-vendor-head {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px;
-    }
-    .v3-vendor-body {
-      padding: 0 10px 10px; display: flex; flex-direction: column; gap: 4px;
-      font-size: 12px; color: var(--inth-text-muted);
+    @media (prefers-reduced-motion: reduce) {
+      .card *, .card, .modal-backdrop { animation-duration: 1ms !important; animation-delay: 0ms !important; transition-duration: 1ms !important; transition-delay: 0ms !important; }
+      .seg-check path { stroke-dashoffset: 0; }
+      .saved-cue { animation: none !important; opacity: 1; }
     }
 
-    /* =====================================================================
-       STYLE 2 & 3: Inline Expandable & Drill-In
-       ===================================================================== */
-    .cat-list { display: flex; flex-direction: column; }
-    .cat-item { border-bottom: var(--inth-hairline) solid var(--inth-border); padding-block: 10px; }
-    .cat-item:first-child { padding-top: 2px; }
-    .cat-item:last-child { border-bottom: 0; padding-bottom: 2px; }
-    .cat-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-    .cat-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-    .cat-name { font-size: 13px; font-weight: 500; color: var(--inth-text); }
-    .cat-desc { font-size: 12px; color: var(--inth-text-muted); line-height: 1.4; }
-    .vendor-trigger {
-      display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; padding: 0; border: 0;
-      background: transparent; color: var(--inth-text-muted); font-family: inherit; font-size: 12px; font-weight: 500;
-      cursor: pointer; font-variant-numeric: tabular-nums;
-    }
-    .inline-vendors { margin-top: 10px; padding-left: 12px; border-left: 2px solid var(--inth-border-strong); display: flex; flex-direction: column; gap: 8px; }
-    .vendor-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding-block: 6px; border-bottom: var(--inth-hairline) solid var(--inth-border); }
-    .vendor-row:first-child { padding-top: 0; }
-    .vendor-row:last-child { border-bottom: 0; padding-bottom: 0; }
-    .vendor-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .vendor-name { font-size: 12.5px; font-weight: 500; color: var(--inth-text); }
-    .vendor-desc { font-size: 11.5px; color: var(--inth-text-muted); line-height: 1.4; }
-    .vendor-policy { font-size: 11.5px; color: var(--inth-text-muted); text-decoration: underline; text-underline-offset: 2px; width: fit-content; }
-    .drill-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 8px; border-bottom: var(--inth-hairline) solid var(--inth-border); }
-    .drill-back { display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 2px 6px 2px 0; background: transparent; color: var(--inth-text); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-
-    /* Switches */
-    .switch {
-      position: relative; width: 36px; height: 20px; border-radius: 999px; border: 0; padding: 0;
-      background: var(--inth-switch-off); cursor: pointer; flex-shrink: 0; transition: background-color 150ms ease-out;
-    }
-    .switch.is-sm { width: 32px; height: 18px; }
-    .switch::before { content: ""; position: absolute; inset: -10px -4px; }
-    .switch::after {
-      content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
-      border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-      transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
-    }
-    .switch.is-sm::after { width: 14px; height: 14px; }
-    .switch[aria-checked="true"] { background: var(--inth-switch-on); }
-    .switch[aria-checked="true"]::after { transform: translateX(16px); }
-    .switch.is-sm[aria-checked="true"]::after { transform: translateX(14px); }
-    .switch:disabled { opacity: 0.45; cursor: not-allowed; }
-
-    .card-footer {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
-      padding-top: 14px; border-top: var(--inth-hairline) solid var(--inth-border);
-    }
-    .footer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-inline-start: auto; }
-
-    /* PICKER.md — VERBATIM */
-    .proto-picker {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 2147483647;
-      display: flex; align-items: center; gap: 2px; padding: 4px; border-radius: 999px;
-      background: rgba(10, 10, 10, 0.82); -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4);
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 8px 24px rgba(0, 0, 0, 0.24), 0 2px 6px rgba(0, 0, 0, 0.12);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 13px; line-height: 1;
-      -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none;
-    }
-    .proto-picker-highlight { position: absolute; top: 4px; left: 0; height: 28px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); will-change: transform; }
-    .proto-picker[data-ready] .proto-picker-highlight { transition: transform 250ms cubic-bezier(0.23, 1, 0.32, 1), width 250ms cubic-bezier(0.23, 1, 0.32, 1); }
-    .proto-picker-item { position: relative; display: flex; align-items: center; height: 28px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: rgba(255, 255, 255, 0.55); font: inherit; cursor: pointer; white-space: nowrap; }
-    .proto-picker-item:hover { color: rgba(255, 255, 255, 0.85); }
-    .proto-picker-item[data-active] { color: #fff; }
-
-    /* CONTROLS.md */
+    /* ---------- Explorer controls ---------- */
     .proto-controls {
-      position: fixed; top: 16px; right: 16px; z-index: 2147483646; width: 268px; max-height: calc(100dvh - 32px); overflow-y: auto;
-      padding: 12px; border-radius: 12px; background: rgba(10, 10, 10, 0.86); -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4);
+      position: fixed; top: 16px; right: 16px; z-index: 2147483646; width: 272px; max-height: calc(100vh - 32px); overflow-y: auto;
+      padding: 12px; border-radius: 12px; background: rgba(10, 10, 10, 0.88); -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4);
       box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 8px 24px rgba(0, 0, 0, 0.24);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 12px; color: rgba(255, 255, 255, 0.88);
       display: flex; flex-direction: column; gap: 9px; user-select: none;
     }
+    @media (max-width: 1180px) { .proto-controls { top: auto; bottom: 16px; max-height: 380px; } }
     .ctrl-row { display: flex; flex-direction: column; gap: 4px; }
-    .ctrl-head { display: flex; justify-content: space-between; align-items: center; color: rgba(255, 255, 255, 0.58); font-size: 11px; }
-    .ctrl-val { font-family: var(--inth-font-mono); color: #fff; font-variant-numeric: tabular-nums; }
-    .proto-controls input[type="range"] { width: 100%; accent-color: #fff; cursor: pointer; }
+    .ctrl-row[data-hidden="true"] { display: none; }
+    .ctrl-head { color: rgba(255, 255, 255, 0.58); font-size: 11px; }
     .ctrl-pills { display: flex; flex-wrap: wrap; gap: 4px; }
     .ctrl-pill { border: 0; border-radius: 6px; padding: 4px 7px; font: inherit; font-size: 11px; background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.72); cursor: pointer; }
     .ctrl-pill[data-on] { background: rgba(255, 255, 255, 0.24); color: #fff; }
     .ctrl-sep { height: 1px; background: rgba(255, 255, 255, 0.1); margin: 1px 0; }
-    .ctrl-us-only[data-hidden="true"] { display: none; }
+    .fit { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; line-height: 1.4; padding: 6px 8px; border-radius: 6px; background: rgba(34, 197, 94, 0.18); color: #bbf7d0; font-variant-numeric: tabular-nums; }
+    .fit[data-overflow="true"] { background: rgba(239, 68, 68, 0.22); color: #fecaca; }
+    .preset { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10.5px; line-height: 1.5; padding: 6px 8px; border-radius: 6px; background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.78); }
+    .preset b { color: #fff; font-weight: 600; }
   </style>
 </head>
 <body>
   <div class="stage-shell">
     <div id="vp" class="viewport-frame" data-vp="macbook">
-      <div class="fake-site" aria-hidden="true">
-        <div class="fake-nav"><span class="fake-brand">Acme International Commerce</span><span>Products · Pricing · Privacy</span></div>
-        <div class="fake-hero">
+      <div class="fake-site">
+        <div class="fake-nav" aria-hidden="true"><span class="fake-brand">Acme</span><span>Products · Pricing</span></div>
+        <div class="fake-hero" aria-hidden="true">
           <div class="fake-bar" style="width: 68%; height: 26px;"></div>
           <div class="fake-bar" style="width: 92%;"></div>
           <div class="fake-bar" style="width: 84%;"></div>
         </div>
+        <div class="fake-footer"><button id="reopen" type="button" class="reopen-link"><svg class="optout-icon" width="30" height="14" viewBox="0 0 30 14" aria-hidden="true"><rect x="0.5" y="0.5" width="29" height="13" rx="6.5" fill="#fff" stroke="#0066ff"/><path d="M17 0.5h6.5a6.5 6.5 0 0 1 0 13H13z" fill="#0066ff"/><path d="M5 7.2l2.3 2.3L11.5 4.6" fill="none" stroke="#0066ff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 4.6l4.6 4.8M24.6 4.6L20 9.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>Your Privacy Choices</button><span>Terms</span></div>
       </div>
+      <div id="banner-backdrop" class="banner-backdrop" hidden></div>
+      <div id="banner" class="banner-root" hidden></div>
       <div id="stage" class="modal-backdrop"></div>
-      <div id="fit-badge" class="fit-badge"></div>
+      <div id="page-live" class="sr-only" role="status"></div>
     </div>
   </div>
 
   <aside class="proto-controls" aria-label="Explorer controls">
-    <div class="ctrl-row">
-      <div class="ctrl-head"><span>Regime</span></div>
+    <div id="fit" class="fit"></div>
+    <div class="ctrl-row"><div class="ctrl-head">Region → SDK policy preset</div>
       <div class="ctrl-pills" data-group="regime">
-        <button class="ctrl-pill" data-val="us-opt-out" data-on>US Opt-Out</button>
-        <button class="ctrl-pill" data-val="us-opt-in">US Opt-In</button>
-        <button class="ctrl-pill" data-val="eu">EU / UK</button>
+        <button class="ctrl-pill" data-val="us-opt-out">US · opt-out</button>
+        <button class="ctrl-pill" data-val="us-opt-in">US · opt-in</button>
+        <button class="ctrl-pill" data-val="eu">EU / UK · opt-in</button>
+      </div></div>
+    <div id="preset" class="preset"></div>
+    <div class="ctrl-row" data-optout-only><div class="ctrl-head">US opt-out first layer</div>
+      <div class="ctrl-pills" data-group="usBanner">
+        <button class="ctrl-pill" data-val="none">None (preset)</button>
+        <button class="ctrl-pill" data-val="notice">Optional notice</button>
+      </div></div>
+    <div class="ctrl-row"><div class="ctrl-head">Banner presentation</div>
+      <div class="ctrl-pills" data-group="presUi">
+        <button class="ctrl-pill" data-val="card">Card</button>
+        <button class="ctrl-pill" data-val="banner">Banner</button>
+        <button class="ctrl-pill" data-val="drawer">Drawer</button>
+      </div></div>
+    <div class="ctrl-row" data-bar-only><div class="ctrl-head">Banner position</div>
+      <div class="ctrl-pills" data-group="barPos">
+        <button class="ctrl-pill" data-val="top">Top</button>
+        <button class="ctrl-pill" data-val="bottom">Bottom</button>
       </div>
-    </div>
-
-    <div class="ctrl-row ctrl-us-only">
-      <div class="ctrl-head"><span>Opt-out rights</span></div>
+      <div class="ctrl-head">A slim one-line bar. Customize expands it in place to show everything, like Card.</div></div>
+    <div class="ctrl-row" data-card-only><div class="ctrl-head">Card position</div>
+      <div class="ctrl-pills" data-group="cardPos">
+        <button class="ctrl-pill" data-val="bottom-left">Bottom left</button>
+        <button class="ctrl-pill" data-val="bottom-right">Bottom right</button>
+        <button class="ctrl-pill" data-val="center">Centre</button>
+      </div>
+      <div class="ctrl-head">Centre always blocks the page. US opt-out (never blocks) falls back to bottom left.</div></div>
+    <div class="ctrl-row" data-drawer-only><div class="ctrl-head">Drawer location</div>
+      <div class="ctrl-pills" data-group="loc">
+        <button class="ctrl-pill" data-val="left">Left</button>
+        <button class="ctrl-pill" data-val="top">Top</button>
+        <button class="ctrl-pill" data-val="bottom">Bottom</button>
+        <button class="ctrl-pill" data-val="right">Right</button>
+      </div>
+      <div class="ctrl-head">Left/right: every option in the drawer. Top/bottom (and any drawer on phone): summary; Customize expands the drawer in place, like Card. Phone: left/right become bottom; top stays top.</div></div>
+    <div class="ctrl-row"><div class="ctrl-head">Block the page until a choice</div>
+      <div class="ctrl-pills" data-group="block">
+        <button class="ctrl-pill" data-val="off">Off</button>
+        <button class="ctrl-pill" data-val="on">On</button>
+      </div>
+      <div class="ctrl-head" id="block-note" hidden>Never applied under the US opt-out preset</div>
+      <div class="ctrl-head" id="block-forced" hidden>Always on while the card is centred</div></div>
+    <div class="ctrl-row" data-edge-only><div class="ctrl-head">Edge style</div>
+      <div class="ctrl-pills" data-group="drawerStyle">
+        <button class="ctrl-pill" data-val="inset">Inset</button>
+        <button class="ctrl-pill" data-val="flush">Flush</button>
+      </div></div>
+    <div class="ctrl-row"><div class="ctrl-head">First visit</div>
+      <div class="ctrl-pills" data-group="start">
+        <button class="ctrl-pill" data-val="banner">As the preset says</button>
+        <button class="ctrl-pill" data-val="dialog">Open dialog directly</button>
+      </div></div>
+    <div class="ctrl-row" data-us><div class="ctrl-head">Rights covered by the sale row</div>
       <div class="ctrl-pills" data-group="rights">
-        <button class="ctrl-pill" data-val="all" data-on>Sale + Share + Ads</button>
+        <button class="ctrl-pill" data-val="all">Sale + Share + Ads</button>
         <button class="ctrl-pill" data-val="sale-share">Sale + Share</button>
         <button class="ctrl-pill" data-val="sale-ads">Sale + Targeted ads</button>
-      </div>
-    </div>
-
-    <div class="ctrl-row ctrl-us-only">
-      <div class="ctrl-head"><span>Sale &amp; sharing state</span></div>
-      <div class="ctrl-pills" data-group="saleState">
-        <button class="ctrl-pill" data-val="opted-out" data-on>Opted out</button>
-        <button class="ctrl-pill" data-val="not-opted-out">Not opted out</button>
-        <button class="ctrl-pill" data-val="gpc">GPC</button>
-      </div>
-    </div>
-
-    <div class="ctrl-row ctrl-us-only">
-      <div class="ctrl-head"><span>Sensitive personal info</span></div>
-      <div class="ctrl-pills" data-group="sensitiveMode">
-        <button class="ctrl-pill" data-val="unset">None (unset)</button>
-        <button class="ctrl-pill" data-val="permitted-only">Permitted-only</button>
-        <button class="ctrl-pill" data-val="beyond-permitted" data-on>Beyond permitted</button>
-      </div>
-    </div>
-
-    <div class="ctrl-row ctrl-us-only" id="sen-state-row">
-      <div class="ctrl-head"><span>Sensitive state</span></div>
-      <div class="ctrl-pills" data-group="sensitiveState">
-        <button class="ctrl-pill" data-val="limited-recorded" data-on>Limited (recorded)</button>
-        <button class="ctrl-pill" data-val="limited-default">Limited (1st visit)</button>
-        <button class="ctrl-pill" data-val="allowed">Allowed</button>
-      </div>
-    </div>
-
-    <div class="ctrl-row ctrl-us-only">
-      <div class="ctrl-head"><span>US Preferences</span></div>
-      <div class="ctrl-pills" data-group="prefsMode">
-        <button class="ctrl-pill" data-val="off">Off</button>
-        <button class="ctrl-pill" data-val="collapsed">Collapsed toggle</button>
-        <button class="ctrl-pill" data-val="expanded" data-on>Expanded (Right)</button>
-      </div>
-    </div>
-
-    <div class="ctrl-row ctrl-us-only">
-      <div class="ctrl-head"><span>Opt-in button style</span></div>
-      <div class="ctrl-pills" data-group="buttonMode">
-        <button class="ctrl-pill" data-val="pair" data-on>Always-On Pair</button>
-        <button class="ctrl-pill" data-val="single">Stroke Swap</button>
-      </div>
-    </div>
-
-    <div class="ctrl-row ctrl-us-only">
-      <div class="ctrl-head"><span>Two-step confirm</span></div>
-      <div class="ctrl-pills" data-group="confirmKind">
-        <button class="ctrl-pill" data-val="none" data-on>Closed</button>
-        <button class="ctrl-pill" data-val="sale-share">Opt back in</button>
-        <button class="ctrl-pill" data-val="limit-sensitive">Allow sensitive</button>
-      </div>
-    </div>
-
+      </div></div>
+    <div class="ctrl-row" data-us><div class="ctrl-head">Sale &amp; sharing — starting state</div>
+      <div class="ctrl-pills" data-group="saleStart">
+        <button class="ctrl-pill" data-val="allow-default">Allowed (default)</button>
+        <button class="ctrl-pill" data-val="optout-default">Off (protective default)</button>
+        <button class="ctrl-pill" data-val="optout-user">Opted out (recorded)</button>
+        <button class="ctrl-pill" data-val="gpc">GPC signal on</button>
+        <button class="ctrl-pill" data-val="gpc-past">GPC earlier, signal now off</button>
+      </div></div>
+    <div class="ctrl-row" data-us><div class="ctrl-head">Sensitive personal information use</div>
+      <div class="ctrl-pills" data-group="sensMode">
+        <button class="ctrl-pill" data-val="none">None / permitted only</button>
+        <button class="ctrl-pill" data-val="beyond">Beyond permitted</button>
+      </div></div>
+    <div class="ctrl-row" data-us data-sens><div class="ctrl-head">Sensitive — starting state</div>
+      <div class="ctrl-pills" data-group="sensStart">
+        <button class="ctrl-pill" data-val="allow-default">Allowed (default)</button>
+        <button class="ctrl-pill" data-val="limit-default">Limited (protective default)</button>
+        <button class="ctrl-pill" data-val="limit-user">Limited (recorded)</button>
+      </div></div>
+    <div class="ctrl-row" data-us><div class="ctrl-head">Visitor</div>
+      <div class="ctrl-pills" data-group="signedIn">
+        <button class="ctrl-pill" data-val="no">Signed out</button>
+        <button class="ctrl-pill" data-val="yes">Signed in</button>
+      </div></div>
     <div class="ctrl-sep"></div>
-
-    <div class="ctrl-row">
-      <div class="ctrl-head"><span>Privacy policy link</span></div>
-      <div class="ctrl-pills" data-group="privacyLink">
-        <button class="ctrl-pill" data-val="set" data-on>Shown</button>
-        <button class="ctrl-pill" data-val="null">Hidden (null)</button>
-      </div>
-    </div>
-
-    <div class="ctrl-row">
-      <div class="ctrl-head"><span>Dialog max-width</span><span id="width-val" class="ctrl-val">832px</span></div>
-      <input id="width-slider" type="range" min="520" max="940" step="16" value="832" />
-    </div>
-
-    <div class="ctrl-row">
-      <div class="ctrl-head"><span>Viewport</span></div>
+    <div class="ctrl-row"><div class="ctrl-head">Privacy policy link</div>
+      <div class="ctrl-pills" data-group="link">
+        <button class="ctrl-pill" data-val="yes">Shown</button>
+        <button class="ctrl-pill" data-val="no">Hidden</button>
+      </div></div>
+    <div class="ctrl-row"><div class="ctrl-head">Viewport</div>
       <div class="ctrl-pills" data-group="vp">
-        <button class="ctrl-pill" data-val="macbook" data-on>MacBook 13"</button>
-        <button class="ctrl-pill" data-val="full">Full</button>
-        <button class="ctrl-pill" data-val="phone">Phone 375px</button>
-      </div>
-    </div>
-
-    <div class="ctrl-row">
-      <div class="ctrl-head"><span>Theme</span></div>
+        <button class="ctrl-pill" data-val="macbook">MacBook 13" (1064×700)</button>
+        <button class="ctrl-pill" data-val="full">Wide</button>
+        <button class="ctrl-pill" data-val="phone">Phone 375</button>
+      </div></div>
+    <div class="ctrl-row"><div class="ctrl-head">Theme</div>
       <div class="ctrl-pills" data-group="theme">
-        <button class="ctrl-pill" data-val="light" data-on>Light</button>
+        <button class="ctrl-pill" data-val="light">Light</button>
         <button class="ctrl-pill" data-val="dark">Dark</button>
-      </div>
-    </div>
+      </div></div>
   </aside>
-
-  <nav class="proto-picker" aria-label="Preferences style">
-    <span class="proto-picker-highlight" aria-hidden="true"></span>
-    <button class="proto-picker-item" data-active aria-current="true">c15t v3 Accordion (Real)</button>
-    <button class="proto-picker-item">Inline Expandable</button>
-    <button class="proto-picker-item">Drill-In Pane</button>
-  </nav>
 
   <script>
     const BUSINESS = 'Acme';
     const REF_FULL = '0193e5a8-8a00-7d3a-9b1c-6e3f8a0b1c2d';
     const REF_SHORT = '0193e5a8…1c2d';
-    const RECORDED = 'Jan 15, 2026, 12:00 PM';
+    const RECORDED_DATE = 'Jan 15, 2026';
+    const RECORDED_FULL = 'Jan 15, 2026, 12:00 PM';
 
-    const COPY_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
-    const CHECK_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
-    const CHECK_SM = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
-    const PLUS = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5v14"/></svg>';
-    const MINUS = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>';
-    const CHEV_DOWN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
-    const CHEV_UP = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>';
-    const CHEV_RIGHT = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>';
-    const CHEV_LEFT = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>';
-
-    const CATEGORIES = [
-      { id: 'necessary', name: 'Strictly Necessary', desc: 'These cookies are essential for the website to function properly and cannot be disabled.', alwaysOn: true, vendors: [] },
-      {
-        id: 'functionality', name: 'Functionality', desc: 'These cookies enable enhanced functionality and personalization of the website.',
-        vendors: [
-          { id: 'intercom', name: 'Intercom', desc: 'Live customer support chat widget.', url: '#intercom' },
-          { id: 'stripe-link', name: 'Stripe Link', desc: 'Saved checkout autofill preferences.', url: '#stripe' },
-        ],
-      },
-      {
-        id: 'experience', name: 'Experience', desc: 'These cookies help us provide a better user experience and test new features.',
-        vendors: [
-          { id: 'youtube', name: 'YouTube Embeds', desc: 'Embedded product walkthrough videos.', url: '#youtube' },
-          { id: 'mapbox', name: 'Mapbox', desc: 'Interactive store locator maps.', url: '#mapbox' },
-        ],
-      },
-      {
-        id: 'measurement', name: 'Analytics', desc: 'These cookies help us understand how visitors interact with the website and improve its performance.',
-        vendors: [
-          { id: 'ga', name: 'Google Analytics', desc: 'Aggregated page visits and traffic sources.', url: '#ga' },
-          { id: 'posthog', name: 'PostHog', desc: 'Product usage funnels and feature adoption.', url: '#posthog' },
-          { id: 'datadog', name: 'Datadog RUM', desc: 'Real user page-load and error diagnostics.', url: '#datadog' },
-        ],
-      },
-      {
-        id: 'marketing', name: 'Marketing', desc: 'Used to measure campaigns and deliver relevant ads.',
-        vendors: [
-          { id: 'meta', name: 'Meta Pixel', desc: 'Ad attribution and conversion tracking.', url: '#meta' },
-          { id: 'google-ads', name: 'Google Ads', desc: 'Campaign measurement and remarketing.', url: '#gads' },
-        ],
-      },
-    ];
-
-    const state = {
-      regime: 'us-opt-out',
-      rights: 'all',
-      saleState: 'opted-out',
-      sensitiveMode: 'beyond-permitted',
-      sensitiveState: 'limited-recorded',
-      prefsMode: 'expanded',
-      buttonMode: 'pair',
-      confirmKind: 'none',
-      privacyLink: 'set',
-      expandedCat: 'measurement',
-      expandedVendor: null,
-      drilledCat: null,
-      savedCats: { functionality: true, experience: false, measurement: true, marketing: false },
-      draftCats: { functionality: true, experience: false, measurement: true, marketing: false },
-      savedVendors: { intercom: true, 'stripe-link': true, youtube: false, mapbox: false, ga: true, posthog: true, datadog: true, meta: false, 'google-ads': false },
-      draftVendors: { intercom: true, 'stripe-link': true, youtube: false, mapbox: false, ga: true, posthog: true, datadog: true, meta: false, 'google-ads': false },
+    const svg = (d, s = 14, w = 2) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+    const I = {
+      check: svg('<path d="M20 6 9 17l-5-5"/>', 13, 2.5),
+      checkSm: svg('<path d="M20 6 9 17l-5-5"/>', 12, 2.5),
+      copy: svg('<rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>'),
+      x: svg('<path d="M18 6 6 18M6 6l12 12"/>', 16),
+      down: svg('<path d="m6 9 6 6 6-6"/>', 13),
+      right: svg('<path d="m9 18 6-6-6-6"/>', 14),
+      left: svg('<path d="m15 18-6-6 6-6"/>', 16),
+      shield: svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>', 15),
+      info: svg('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>', 15),
     };
 
-    let currentVariant = 0;
-
-    function isGpc() { return state.saleState === 'gpc'; }
-    function isSaleOptedOut() { return state.saleState === 'opted-out' || state.saleState === 'gpc'; }
-    function isSensitiveAllowed() { return state.sensitiveMode === 'beyond-permitted' && state.sensitiveState === 'allowed' && !isGpc(); }
-    function isSensitiveRecordedLimit() { return state.sensitiveMode === 'beyond-permitted' && (state.sensitiveState === 'limited-recorded' || isGpc()); }
-    function hasAnyReceipt() { return isSaleOptedOut() || isSensitiveRecordedLimit(); }
-    function showPrefsRightPane() { return state.regime === 'us-opt-in' || state.prefsMode === 'expanded'; }
-    function showPrefsDisclosureTrigger() { return state.regime === 'us-opt-out' && state.prefsMode !== 'off'; }
-    function visibleCategories() { return state.regime === 'eu' ? CATEGORIES : CATEGORIES.filter((c) => c.id !== 'marketing'); }
-    function isDirty() {
-      const catDirty = Object.keys(state.draftCats).some((k) => state.draftCats[k] !== state.savedCats[k]);
-      const venDirty = Object.keys(state.draftVendors).some((k) => state.draftVendors[k] !== state.savedVendors[k]);
-      return catDirty || venDirty;
-    }
-
-    function rightsText() {
-      const parts = [];
-      if (isSaleOptedOut()) {
-        if (state.rights === 'all') parts.push('Sale, sharing and targeted advertising');
-        else if (state.rights === 'sale-share') parts.push('Sale and sharing');
-        else parts.push('Sale and targeted advertising');
-      }
-      if (isSensitiveRecordedLimit()) parts.push('Limit sensitive info');
-      return parts.join(' · ');
-    }
-
-    function vendorCountLabel(cat) {
-      const onCount = cat.vendors.filter((v) => state.draftCats[cat.id] && state.draftVendors[v.id]).length;
-      return `${onCount}/${cat.vendors.length} vendors`;
-    }
-
-    function renderPreferencesBody(styleIdx) {
-      const cats = visibleCategories();
-
-      // Style 0: exact c15t v3 accordion (origin/main bordered cards + nested vendor cards)
-      if (styleIdx === 0) {
-        return `<div class="pane-scroll"><div class="v3-acc-list">${cats.map((cat) => {
-          const lockedByGpc = state.regime !== 'eu' && isGpc() && cat.id === 'measurement';
-          const checked = cat.alwaysOn ? true : (!lockedByGpc && Boolean(state.draftCats[cat.id]));
-          const open = state.expandedCat === cat.id;
-          return `
-            <div class="v3-acc-item">
-              <div class="v3-acc-header">
-                <button type="button" class="v3-acc-trigger" data-expand-cat="${cat.id}" aria-expanded="${String(open)}">
-                  <span class="v3-acc-glyph">${open ? MINUS : PLUS}</span>
-                  <span>${cat.name}</span>
-                </button>
-                <button type="button" role="switch" aria-checked="${String(checked)}" aria-label="${cat.name}" class="switch" ${cat.alwaysOn || lockedByGpc ? 'disabled' : ''} data-toggle-cat="${cat.id}"></button>
-              </div>
-              ${open ? `
-                <div class="v3-acc-body">
-                  <div>${lockedByGpc ? "Off while your browser's Global Privacy Control signal is on." : cat.desc}</div>
-                  ${cat.vendors.length > 0 && !checked ? '<div>Turn on this category to choose vendors.</div>' : ''}
-                  ${cat.vendors.map((v) => {
-                    const vOpen = state.expandedVendor === v.id;
-                    const vOn = checked && Boolean(state.draftVendors[v.id]);
-                    return `
-                      <div class="v3-vendor-card">
-                        <div class="v3-vendor-head">
-                          <button type="button" class="v3-acc-trigger" data-expand-vendor="${v.id}" aria-expanded="${String(vOpen)}">
-                            <span class="v3-acc-glyph">${vOpen ? MINUS : PLUS}</span>
-                            <span>${v.name}</span>
-                          </button>
-                          <button type="button" role="switch" aria-checked="${String(vOn)}" aria-label="${v.name}" class="switch is-sm" ${checked ? '' : 'disabled'} data-toggle-vendor="${v.id}"></button>
-                        </div>
-                        ${vOpen ? `<div class="v3-vendor-body"><span>${v.desc}</span><a class="vendor-policy" href="${v.url}" onclick="return false">Privacy policy</a></div>` : ''}
-                      </div>`;
-                  }).join('')}
-                </div>` : ''}
-            </div>`;
-        }).join('')}</div></div>`;
-      }
-
-      // Style 2: Drill-In pane
-      if (styleIdx === 2 && state.drilledCat) {
-        const cat = cats.find((c) => c.id === state.drilledCat);
-        if (cat) {
-          const lockedByGpc = state.regime !== 'eu' && isGpc() && cat.id === 'measurement';
-          const parentOn = Boolean(state.draftCats[cat.id]) && !lockedByGpc;
-          return `
-            <div class="drill-header">
-              <button type="button" class="drill-back" data-act="drill-back">${CHEV_LEFT}<span>${cat.name}</span></button>
-              <span class="kv-label">${vendorCountLabel(cat)}</span>
-            </div>
-            <div class="pane-scroll">${cat.vendors.map((v) => `
-              <div class="vendor-row">
-                <div class="vendor-meta">
-                  <span class="vendor-name">${v.name}</span>
-                  <span class="vendor-desc">${v.desc}</span>
-                  <a class="vendor-policy" href="${v.url}" onclick="return false">Privacy policy</a>
-                </div>
-                <button type="button" role="switch" aria-checked="${String(parentOn && Boolean(state.draftVendors[v.id]))}" aria-label="${v.name}" class="switch is-sm" ${parentOn ? '' : 'disabled'} data-toggle-vendor="${v.id}"></button>
-              </div>`).join('')}</div>`;
-        }
-      }
-
-      // Style 1 (Inline Expandable) & Style 2 root
-      return `<div class="pane-scroll"><div class="cat-list">${cats.map((cat) => {
-        const lockedByGpc = state.regime !== 'eu' && isGpc() && cat.id === 'measurement';
-        const checked = cat.alwaysOn ? true : (!lockedByGpc && Boolean(state.draftCats[cat.id]));
-        const open = styleIdx === 1 && state.expandedCat === cat.id;
-        return `
-          <div class="cat-item">
-            <div class="cat-head">
-              <div class="cat-text">
-                <span class="cat-name">${cat.name}</span>
-                <span class="cat-desc">${lockedByGpc ? "Off while your browser's Global Privacy Control signal is on." : cat.desc}</span>
-                ${cat.vendors.length > 0
-                  ? (styleIdx === 1
-                    ? `<button type="button" class="vendor-trigger" data-expand-cat="${cat.id}">${vendorCountLabel(cat)} ${open ? CHEV_UP : CHEV_DOWN}</button>`
-                    : `<button type="button" class="vendor-trigger" data-drill-cat="${cat.id}">${vendorCountLabel(cat)} ${CHEV_RIGHT}</button>`)
-                  : ''}
-              </div>
-              <button type="button" role="switch" aria-checked="${String(checked)}" aria-label="${cat.name}" class="switch" ${cat.alwaysOn || lockedByGpc ? 'disabled' : ''} data-toggle-cat="${cat.id}"></button>
-            </div>
-            ${open ? `<div class="inline-vendors">${cat.vendors.map((v) => `
-              <div class="vendor-row">
-                <div class="vendor-meta">
-                  <span class="vendor-name">${v.name}</span>
-                  <span class="vendor-desc">${v.desc}</span>
-                  <a class="vendor-policy" href="${v.url}" onclick="return false">Privacy policy</a>
-                </div>
-                <button type="button" role="switch" aria-checked="${String(checked && Boolean(state.draftVendors[v.id]))}" aria-label="${v.name}" class="switch is-sm" ${checked ? '' : 'disabled'} data-toggle-vendor="${v.id}"></button>
-              </div>`).join('')}</div>` : ''}
-          </div>`;
-      }).join('')}</div></div>`;
-    }
-
-    function receiptNodeMarkup() {
-      if (!hasAnyReceipt()) return '';
-      return `
-        <aside class="side-surface" aria-label="Browser receipt">
-          <div class="kv-list">
-            <div class="kv-row"><span class="kv-label">Covers</span><span class="kv-val">This browser</span></div>
-            <div class="kv-row"><span class="kv-label">Rights</span><span class="kv-val">${rightsText()}</span></div>
-            <div class="kv-row"><span class="kv-label">Recorded</span><span class="kv-val tabular">${RECORDED}</span></div>
-            <div class="kv-row"><span class="kv-label">Reference</span><span class="kv-val mono" title="${REF_FULL}">${REF_SHORT}<button type="button" class="copy-btn" data-act="copy-ref" aria-label="Copy reference">${COPY_ICON}</button></span></div>
-          </div>
-        </aside>`;
-    }
-
-    function privacyLinkMarkup() {
-      return state.privacyLink === 'set' ? '<a class="quiet-link" href="#privacy-rights" onclick="return false">Learn more about your rights</a>' : '';
-    }
-
-    function renderDialog(styleIdx) {
-      if (state.regime === 'eu') {
-        return `
-          <section class="card is-eu" role="dialog" aria-label="Privacy Settings">
-            <header class="card-header">
-              <h2 class="card-title">Privacy Settings</h2>
-              <p class="sec-desc">Customize your privacy settings here. You can choose which optional features, analytics, and marketing you allow.</p>
-            </header>
-            ${renderPreferencesBody(styleIdx)}
-            <footer class="card-footer">
-              ${privacyLinkMarkup()}
-              <div class="footer-actions">
-                <button type="button" class="btn btn-stroke" data-act="eu-reject">Reject All</button>
-                <button type="button" class="btn btn-stroke" data-act="eu-accept">Accept All</button>
-                <button type="button" class="btn btn-primary" data-act="save-cats" ${isDirty() ? '' : 'disabled'}>Save preferences</button>
-              </div>
-            </footer>
-          </section>`;
-      }
-
-      const withPrefs = showPrefsRightPane();
-      const hasReceipt = hasAnyReceipt();
-      const hasSecondPane = withPrefs || hasReceipt;
-      let cardClass = 'card';
-      if (!hasSecondPane) cardClass = 'card is-single-us';
-      else if (!withPrefs && state.sensitiveMode === 'unset') cardClass = 'card is-medium-us';
-
-      const saleStatus = isGpc() ? 'Opt-out preference signal honored' : (isSaleOptedOut() ? 'Opted out' : (state.regime === 'us-opt-in' ? 'Off' : 'Not opted out'));
-      const saleBody = isGpc()
-        ? "Your browser sent a Global Privacy Control signal, so we've opted you out."
-        : isSaleOptedOut()
-          ? "We won't sell or share your personal information, or use it for targeted advertising, on this browser."
-          : state.regime === 'us-opt-in'
-            ? `${BUSINESS} won't sell or share your personal information unless you allow it.`
-            : `${BUSINESS} may sell or share your personal information, including for targeted advertising. You can opt out at any time.`;
-
-      const dual = !isSaleOptedOut() && state.regime === 'us-opt-out' && isSensitiveAllowed();
-      let saleAction = '';
-      if (!isSaleOptedOut()) {
-        if (state.regime === 'us-opt-out') {
-          saleAction = `<button type="button" class="btn ${dual ? 'btn-stroke' : 'btn-primary'}" data-act="opt-out-sale">Opt out of sale and sharing</button>`;
-        }
-      } else if (!isGpc()) {
-        saleAction = state.buttonMode === 'pair'
-          ? `<div class="btn-pair"><button type="button" class="btn btn-selected" aria-pressed="true">${CHECK_SM} Opted out</button><button type="button" class="btn btn-stroke" data-act="opt-in-sale">Opt back in</button></div>`
-          : `<button type="button" class="btn btn-stroke" data-act="opt-in-sale">Opt back in</button>`;
-      }
-
-      let sensitiveBlock = '';
-      if (state.sensitiveMode === 'permitted-only') {
-        sensitiveBlock = `<div class="right-block"><p class="sec-desc">${BUSINESS} only uses sensitive personal information for purposes the law allows, so there's nothing to limit.</p></div>`;
-      } else if (state.sensitiveMode === 'beyond-permitted') {
-        const senStatus = isGpc() ? 'Opt-out preference signal honored' : (isSensitiveAllowed() ? 'Allowed' : 'Limited');
-        const senBody = isSensitiveAllowed()
-          ? `${BUSINESS} uses some sensitive personal information for more than the service you asked for. You can limit this at any time.`
-          : `${BUSINESS} only uses your sensitive personal information to provide the service you asked for.`;
-        let senAction = '';
-        if (isSensitiveAllowed()) {
-          senAction = `<button type="button" class="btn ${dual ? 'btn-stroke' : 'btn-primary'}" data-act="limit-sensitive">Limit the use of my sensitive personal information</button>`;
-        } else if (!isGpc()) {
-          senAction = state.buttonMode === 'pair'
-            ? `<div class="btn-pair"><button type="button" class="btn btn-selected" aria-pressed="true">${CHECK_SM} Limited</button><button type="button" class="btn btn-stroke" data-act="allow-sensitive">Allow wider use</button></div>`
-            : `<button type="button" class="btn btn-stroke" data-act="allow-sensitive">Allow wider use</button>`;
-        }
-        sensitiveBlock = `
-          <div class="right-block">
-            ${state.confirmKind === 'limit-sensitive'
-              ? `<h3 class="sec-head">Allow wider use of your sensitive personal information?</h3>
-                 <p class="sec-desc">${BUSINESS} may use your sensitive personal information for more than the service you asked for. You can limit this again at any time.</p>
-                 <div class="btn-pair"><button type="button" class="btn btn-stroke" data-act="confirm-cancel">Keep it limited</button><button type="button" class="btn btn-stroke" data-act="confirm-ok">Allow</button></div>`
-              : `<div class="right-top"><h3 class="sec-head">Sensitive personal information</h3><span class="right-status">${senStatus}</span></div>
-                 <p class="sec-desc">${senBody}</p>
-                 <div>${senAction}</div>`}
-          </div>`;
-      }
-
-      const disclosureBtn = showPrefsDisclosureTrigger()
-        ? `<button type="button" class="prefs-disclosure-btn" data-act="toggle-prefs"><span>Preferences</span><span>${withPrefs ? CHEV_UP : CHEV_DOWN}</span></button>`
-        : '';
-
-      const receipt = receiptNodeMarkup();
-      const rightPane = withPrefs
-        ? `<aside class="side-surface" aria-label="Preferences">
-            ${styleIdx === 2 && state.drilledCat ? '' : '<div class="side-header"><h3 class="side-heading">Preferences</h3></div>'}
-            ${renderPreferencesBody(styleIdx)}
-          </aside>`
-        : receipt;
-
-      const footerButtons = state.regime === 'us-opt-in'
-        ? `${isGpc() ? '' : '<button type="button" class="btn btn-stroke" data-act="eu-reject">Reject All</button><button type="button" class="btn btn-stroke" data-act="eu-accept">Accept All</button>'}
-           <button type="button" class="btn btn-primary" data-act="save-cats" ${isDirty() ? '' : 'disabled'}>Save preferences</button>`
-        : `${withPrefs ? `<button type="button" class="btn btn-stroke" data-act="save-cats" ${isDirty() ? '' : 'disabled'}>Save preferences</button>` : ''}
-           ${hasReceipt || withPrefs ? '<button type="button" class="btn btn-primary" data-act="done">Done</button>' : ''}`;
-
-      const link = privacyLinkMarkup();
-      const footer = (link || footerButtons.trim())
-        ? `<footer class="card-footer">${link}<div class="footer-actions">${footerButtons}</div></footer>`
-        : '';
-
-      return `
-        <section class="${cardClass}" role="dialog" aria-label="Your Privacy Choices">
-          <header class="card-header"><h2 class="card-title">Your Privacy Choices</h2></header>
-          <div class="split-body${hasSecondPane ? '' : ' is-single'}">
-            <div class="pane-left">
-              <div class="right-block">
-                ${state.confirmKind === 'sale-share'
-                  ? `<h3 class="sec-head">Opt back in to sale and sharing?</h3>
-                     <p class="sec-desc">${BUSINESS} may sell or share your personal information again, including for targeted advertising. You can opt out again at any time.</p>
-                     <div class="btn-pair"><button type="button" class="btn btn-stroke" data-act="confirm-cancel">Stay opted out</button><button type="button" class="btn btn-stroke" data-act="confirm-ok">Opt back in</button></div>`
-                  : `<div class="right-top"><h3 class="sec-head">Selling and sharing your personal information</h3><span class="right-status">${saleStatus}</span></div>
-                     <p class="sec-desc">${saleBody}</p>
-                     <div>${saleAction}</div>`}
-              </div>
-              ${sensitiveBlock}
-              ${withPrefs ? receipt : ''}
-              ${disclosureBtn}
-            </div>
-            ${rightPane}
-          </div>
-          ${footer}
-        </section>`;
-    }
-
-    const variants = [
-      { name: 'c15t v3 Accordion (Real)', render: () => renderDialog(0) },
-      { name: 'Inline Expandable', render: () => renderDialog(1) },
-      { name: 'Drill-In Pane', render: () => renderDialog(2) },
+    const CATEGORIES = [
+      { id: 'necessary', name: 'Strictly necessary', desc: 'Keep the site secure and working, such as sign-in and your cart.', alwaysOn: true, vendors: [] },
+      { id: 'functionality', name: 'Functionality', desc: 'Remember your settings and power features like live chat and saved checkout details.', vendors: [
+        { id: 'intercom', name: 'Intercom', desc: 'Live customer support chat.' },
+        { id: 'stripe-link', name: 'Stripe Link', desc: 'Saved checkout details.' } ] },
+      { id: 'experience', name: 'Experience', desc: 'Load embedded videos and maps, and test new features.', vendors: [
+        { id: 'youtube', name: 'YouTube', desc: 'Embedded product videos.' },
+        { id: 'mapbox', name: 'Mapbox', desc: 'Store locator maps.' } ] },
+      { id: 'measurement', name: 'Analytics', desc: 'Count visits and find errors so we can improve the site.', vendors: [
+        { id: 'ga', name: 'Google Analytics', desc: 'Page visits and traffic sources.' },
+        { id: 'posthog', name: 'PostHog', desc: 'Product usage and feature adoption.' },
+        { id: 'datadog', name: 'Datadog RUM', desc: 'Page-load speed and errors.' } ] },
+      { id: 'marketing', name: 'Marketing', desc: 'Measure ad campaigns and show ads based on your activity.', vendors: [
+        { id: 'meta', name: 'Meta Pixel', desc: 'Ad conversion tracking.' },
+        { id: 'google-ads', name: 'Google Ads', desc: 'Campaign measurement and remarketing.' } ] },
     ];
+    const ALL_VENDORS = CATEGORIES.flatMap((c) => c.vendors.map((v) => v.id));
+
+    const S = {
+      regime: 'us-opt-out', rights: 'all',
+      saleStart: 'allow-default', sensMode: 'beyond', sensStart: 'allow-default', signedIn: 'no',
+      link: 'yes', vp: 'macbook', theme: 'light', start: 'banner', usBanner: 'none', pres: 'card', presUi: 'card', cardPos: 'bottom-left', barPos: 'bottom', loc: 'bottom', drawerStyle: 'inset', block: 'off', banner: false, decided: false,
+      // live dialog state
+      open: true, stack: [], openers: [], closing: null, confirm: null, receiptOpen: false, cookiesOpen: false, vendorOpen: {}, liveMsg: '', liveFlip: false, copied: false,
+      sale: 'allow', saleSrc: 'default', sens: 'allow', sensSrc: 'default', rightsNow: false, cue: false,
+      cats: {}, vendors: {}, euSaved: null, savedTick: 0,
+    };
+
+    function resetDialog() {
+      const [sale, saleSrc] = { 'allow-default': ['allow', 'default'], 'optout-default': ['optout', 'default'], 'optout-user': ['optout', 'user'], gpc: ['optout', 'gpc'], 'gpc-past': ['optout', 'user'] }[S.saleStart];
+      const [sens, sensSrc] = { 'allow-default': ['allow', 'default'], 'limit-default': ['limit', 'default'], 'limit-user': ['limit', 'user'] }[S.sensStart];
+      Object.assign(S, { sale, saleSrc, sens, sensSrc, stack: [], openers: [], closing: null, confirm: null, receiptOpen: false, cookiesOpen: false, vendorOpen: {}, liveMsg: '', rightsNow: false, cue: false, savedTick: 0, open: true, copied: false, copyFailed: false });
+      clearTimeout(popTimer); copySeq += 1; // a pending copy from the previous scenario is now stale
+      // A GPC opt-out that was honoured is kept as a recorded opt-out after the signal stops (CPPA §7025).
+      S.viaGpc = S.saleStart === 'gpc-past';
+      if (S.regime === 'us-opt-in' && S.saleStart === 'allow-default') { S.sale = 'optout'; S.saleSrc = 'default'; }
+      // Opt-in regimes: sensitive data needs consent first, so it starts off.
+      if (S.regime === 'us-opt-in' && S.sensStart === 'allow-default') { S.sens = 'limit'; S.sensSrc = 'default'; }
+      // Only the opt-out preset allows optional categories before a choice; EU and US opt-in keep them denied.
+      const on = S.regime === 'us-opt-out';
+      S.cats = { functionality: on, experience: on, measurement: on, marketing: false };
+      // The category switch is the gate; vendors default on inside it.
+      S.vendors = Object.fromEntries(ALL_VENDORS.map((id) => [id, true]));
+      S.euSaved = S.regime === 'eu' ? JSON.stringify({ c: S.cats, v: S.vendors }) : undefined;
+    }
+
+    // ---------- derived ----------
+    const isUS = () => S.regime !== 'eu';
+    const optIn = () => S.regime === 'us-opt-in';
+    const gpc = () => S.saleSrc === 'gpc';
+    const sensRow = () => isUS() && S.sensMode === 'beyond';
+    const rightsPhrase = () => ({ all: 'sale, sharing and targeted ads', 'sale-share': 'sale and sharing', 'sale-ads': 'sale and targeted ads' })[S.rights];
+    const rightsTitle = () => ({ all: 'Selling, sharing and targeted ads', 'sale-share': 'Selling and sharing', 'sale-ads': 'Selling and targeted ads' })[S.rights];
+    const adsClause = () => (S.rights === 'sale-share' ? '' : ', including for targeted ads');
+    // All sale-row copy comes from the configured rights bundle, so each string names exactly what the choice controls.
+    const doPhrase = () => ({ all: 'sell or share your personal information, including for targeted ads', 'sale-share': 'sell or share your personal information', 'sale-ads': 'sell your personal information or use it for targeted ads' })[S.rights];
+    const dontPhrase = () => ({ all: 'won’t sell or share your personal information or use it for targeted ads', 'sale-share': 'won’t sell or share your personal information', 'sale-ads': 'won’t sell your personal information or use it for targeted ads' })[S.rights];
+    const rt = () => rightsTitle().toLowerCase();
+    const scopePhrase = () => (S.signedIn === 'yes' ? 'on this browser or for your Acme account' : 'on this browser');
+    const cap = (t) => t[0].toUpperCase() + t.slice(1);
+    // Phone: nested sheets, max two levels, and only inside the open dialog. Desktop, and every banner panel
+    // (expanded Card/Banner/Drawer, all-in-one drawer), use accordions: a banner never stacks sheets.
+    const nestedMode = () => S.vp === 'phone' && S.open;
+    // Controls inside the dialog and inside banner panels share helpers; look in whichever surface is showing.
+    const activeRoot = () => (S.open ? stage : document.getElementById('banner'));
+    const hasReceipt = () => isUS() && (S.saleSrc === 'user' || S.saleSrc === 'gpc' || (sensRow() && S.sensSrc === 'user'));
+    const visibleCats = () => (isUS() ? CATEGORIES.filter((c) => c.id !== 'marketing') : CATEGORIES);
+    // US: ad cookies are not a separate switch; they follow the sale/sharing right (Sling TV, Healthline).
+    const adsOn = () => S.sale === 'allow';
+    const saleLabel = () => (optIn() ? `Allow ${rt()}` : S.rights === 'sale-ads' ? 'Opt out of the sale of my personal data and targeted advertising' : 'Do Not Sell or Share My Personal Information');
+    // Compare what would actually run (a vendor only counts when its category is on).
+    const effective = (st) => JSON.stringify(CATEGORIES.map((c) => [c.id, Boolean(st.c[c.id]), c.vendors.map((v) => Boolean(st.c[c.id] && st.v[v.id]))]));
+    const euDirty = () => S.regime === 'eu' && Boolean(S.euSaved) && effective({ c: S.cats, v: S.vendors }) !== effective(JSON.parse(S.euSaved));
+    const optionalOnCount = () => { const c = visibleCats().filter((x) => !x.alwaysOn); return `${c.filter((x) => S.cats[x.id]).length} of ${c.length} on`; };
+
+    // ---------- cookie banner ----------
+    // EU and US opt-in need a choice before optional processing; US opt-out shows a notice (or nothing, as the SDK preset does).
+    const bannerVariant = () => (S.regime === 'us-opt-out' ? (S.usBanner === 'notice' ? 'notice' : 'none') : S.regime === 'us-opt-in' ? 'us-consent' : 'choice');
+
+    function brandTagHtml() {
+      return `<a class="brand-tag" href="https://inth.com" target="_blank" rel="noreferrer"><span>Consent by</span><svg class="inth-mark" aria-hidden="true" fill="none" viewBox="0 0 88 90" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M40.9164 0V8.26444H27.6933V26.7966H40.9164V35.0608H6.15594V26.7966H19.3788V8.26444H6.15594V0H40.9164Z"/><path fill="currentColor" d="M72.1149 20.1264V0H80.0343V35.0608H74.2747L54.9798 14.8193V35.0608H47.0604V0H52.964L72.1149 20.1264Z"/><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M71.36 41.6H88V89.6H0V41.6H61.12V31.04L71.36 41.6ZM6.15594 48.0891V56.4034H19.1784V83.2H27.4428V56.4034H40.5656V48.0891H6.15594ZM47.0603 48.1391V83.2H55.3247V70.2441H71.7531V83.2H80.0675V48.1391H71.7531V61.9797H55.3247V48.1391H47.0603Z"/></svg><span class="sr-only">Inth</span></a>`;
+    }
+
+    // Phone has no room for a side drawer: it becomes the bottom drawer.
+    // Blocking only applies to consent choices. The US opt-out preset shows nothing (or an optional notice):
+    // nothing to collect, so no backdrop, no inert page, no scroll lock — ever.
+    // Centred card = the old modal. A centred card is only acceptable as a blocking layer, so centre forces blocking.
+    // US opt-out never blocks, so it can't be centred: it falls back to the corner.
+    const centerOn = () => S.pres === 'card' && S.cardPos === 'center' && S.regime !== 'us-opt-out';
+    const blockingOn = () => (S.block === 'on' || centerOn()) && S.regime !== 'us-opt-out' && bannerVariant() !== 'none';
+    // Banner (slim bar) sits on the top or bottom edge; once expanded it behaves like that drawer.
+    const barCollapsed = () => S.pres === 'bar' && !S.bannerExpanded;
+    const effPres = () => S.pres === 'bar' ? S.barPos : (S.vp === 'phone' && (S.pres === 'left' || S.pres === 'right') ? 'bottom' : S.pres);
+
+    // All-in-one only exists for side drawers, so on phone (side -> bottom drawer) it never applies.
+    // Card and the bottom drawer (incl. every phone drawer) share one flow: summary, then Customize expands in place.
+    const expandsInPlace = () => S.pres === 'card' || effPres() === 'bottom' || effPres() === 'top';
+    const cardOpen = () => expandsInPlace() && Boolean(S.bannerExpanded);
+    // Two logic sets. Side drawers (left/right, desktop) are all-in-one.
+    // Card, Banner, top/bottom drawer and every phone drawer are a summary; Customize expands in place
+    // (never the dialog). effPres() already turns phone left/right into bottom. See IMPLEMENTATION-NOTES.md §3.
+    const aioOn = () => ['left', 'right'].includes(effPres());
+
+    function aioFoot() {
+      const v = bannerVariant();
+      if (v === 'notice') return `<div class="banner-foot is-end"><button type="button" class="btn btn-primary-stroke" data-bn="ok">OK</button></div>`;
+      const [no, yes] = v === 'us-consent' ? ['Don’t allow', 'Allow'] : ['Reject all', 'Accept all'];
+      return `<div class="banner-foot"><div class="banner-group"><button type="button" class="btn btn-stroke" data-bn="reject">${no}</button><button type="button" class="btn btn-stroke" data-bn="accept">${yes}</button></div>
+        <button type="button" class="btn btn-primary-stroke" data-bn="save">Save choices</button></div>`;
+    }
+
+    function renderBarContent() {
+      const v = bannerVariant();
+      // Collapsed bar keeps one link to stay on one line; both policies show once expanded.
+      const links = S.link === 'yes' ? ` <a href="#" onclick="return false">Privacy Policy</a>` : '';
+      const exp = (label) => `<button type="button" class="btn btn-primary-stroke" data-bn="expand" aria-expanded="false">${label}</button>`;
+      let text, actions;
+      if (v === 'notice') {
+        text = gpc() ? 'We use cookies to run this site and measure traffic. Your Global Privacy Control signal is honored.' : 'We use cookies to run this site, measure traffic and personalize ads. You can opt out at any time.';
+        actions = `<button type="button" class="right-link" data-bn="expand" aria-expanded="false">Do not sell or share my data</button><button type="button" class="btn btn-primary-stroke" data-bn="ok">OK</button>`;
+      } else if (v === 'us-consent') {
+        // One line: name what's asked in short form; the full wording appears once expanded.
+        const short = { all: 'selling or sharing your data for ads', 'sale-share': 'selling or sharing your data', 'sale-ads': 'selling your data or using it for ads' }[S.rights];
+        text = `${BUSINESS} asks before using optional cookies or ${short}.`;
+        actions = `<button type="button" class="btn btn-stroke" data-bn="reject">Don’t allow</button><button type="button" class="btn btn-stroke" data-bn="accept">Allow</button>${exp('Choose')}`;
+      } else {
+        text = 'We use cookies to improve your experience and analyze traffic.';
+        actions = `<button type="button" class="btn btn-stroke" data-bn="reject">Reject All</button><button type="button" class="btn btn-stroke" data-bn="accept">Accept All</button>${exp('Customize')}`;
+      }
+      return `<div class="banner-shell">${brandTagHtml()}<section class="banner-card bar-card" role="region" aria-labelledby="bn-title" tabindex="-1">
+        <h2 class="sr-only" id="bn-title">${v === 'notice' ? 'Privacy notice' : v === 'us-consent' ? 'Your privacy choices' : 'We value your privacy'}</h2>
+        <div class="bar-row" data-key="bar-row"><p class="bar-text">${text}${links}</p><div class="bar-actions">${actions}</div></div>
+      </section></div>`;
+    }
+
+    function renderBanner() {
+      let html = barCollapsed() ? renderBarContent() : renderBannerContent();
+      const pres = effPres();
+      if (aioOn()) {
+        // EU: the cookie categories. US: the same rights rows + cookie settings as the dialog (rights apply as in the dialog).
+        const inner = bannerVariant() === 'choice' ? catRows() : usMain();
+        const a = html.lastIndexOf('<div class="banner-foot">'), b = html.lastIndexOf('</section>');
+        const tag = brandTagHtml();
+        // The choices scroll to the footer divider; the bottom fade sits over the end, and the tag floats on top of the fade.
+        html = html.slice(0, a).replace(tag, '')
+          + `<div class="aio-wrap" data-key="aio-wrap"><div class="card-body banner-body" data-key="aio-body">${inner}</div><div class="banner-brand is-overlay">${tag}</div></div>`
+          + `<div class="sr-only" role="status" data-key="aio-status">${S.liveMsg}</div>`
+          + aioFoot() + html.slice(b);
+      }
+      if ((pres === 'card' || pres === 'bottom' || pres === 'top') && !barCollapsed()) {
+        const open = Boolean(S.bannerExpanded);
+        const inner = bannerVariant() === 'choice' ? catRows() : usMain();
+        const a = html.lastIndexOf('<div class="banner-foot">'), b = html.lastIndexOf('</section>');
+        let foot = html.slice(a, b);
+        if (open) foot = aioFoot();
+        else {
+          // Customize / the rights link expand the options in place instead of opening the dialog.
+          foot = foot.replace('data-bn="customize"', 'data-bn="expand" aria-expanded="false" aria-controls="card-panel"')
+            .replace('data-bn="rights"', 'data-bn="expand" aria-expanded="false" aria-controls="card-panel"');
+        }
+        html = html.slice(0, a)
+          + `<div class="collapse card-panel" id="card-panel" data-key="card-panel" data-open="${open}" ${open ? '' : 'inert'}><div class="collapse-inner"><div class="card-body banner-body" data-key="card-body">${open ? inner : ''}</div></div></div>`
+          + `<div class="sr-only" role="status" data-key="card-status">${open ? S.liveMsg : ''}</div>`
+          + foot + html.slice(b);
+      }
+      // Blocking: the modal boundary is the whole shell (card + "Consent by" tag), so nothing the trap reaches sits outside aria-modal.
+      if (blockingOn()) html = html.replace('<div class="banner-shell">', '<div class="banner-shell" role="dialog" aria-modal="true" aria-labelledby="bn-title">').replace(' role="region"', '');
+      if ((pres === 'left' || pres === 'right') && !aioOn()) {
+        const tag = brandTagHtml();
+        // No room for a tab above a full-height drawer: the tag floats as a centred pill at the foot of the content, just above the actions.
+        html = html.replace(tag, '').replace('<div class="banner-foot">', `<div class="banner-brand">${tag}</div><div class="banner-foot">`);
+      }
+      return html;
+    }
+
+    function renderBannerContent() {
+      const v = bannerVariant();
+      const links = S.link === 'yes' ? ` <a href="#" onclick="return false">Privacy Policy</a>, <a href="#" onclick="return false">Cookie Policy</a>` : '';
+      // INTH monogram (c15t InthMark = @inth/sdk-ui BRAND_MARKS.inth).
+      const tag = brandTagHtml();
+      if (v === 'notice') {
+        const gpcLine = gpc() ? ' Your browser’s Global Privacy Control signal is being honored.' : '';
+        return `<div class="banner-shell">${tag}<section class="banner-card" role="region" aria-labelledby="bn-title" tabindex="-1">
+          <div class="banner-head"><h2 class="banner-title" id="bn-title">Privacy notice</h2>
+            <p class="banner-desc">We use cookies and similar technologies to run this site, measure traffic, and personalize content and ads. You can opt out or manage your preferences at any time.${gpcLine}${links}</p></div>
+          <div class="banner-foot"><button type="button" class="right-link" data-bn="rights">Do not sell or share my data</button>
+            <button type="button" class="btn btn-primary-stroke" data-bn="ok">OK</button></div>
+        </section></div>`;
+      }
+      if (v === 'us-consent') {
+        // US opt-in: ask for the specific permission in US terms (sale, sharing, targeted ads), with equal-weight answers.
+        return `<div class="banner-shell">${tag}<section class="banner-card" role="region" aria-labelledby="bn-title" tabindex="-1">
+          <div class="banner-head"><h2 class="banner-title" id="bn-title">Your privacy choices</h2>
+            <p class="banner-desc">With your permission, ${BUSINESS} would use optional cookies for site features and analytics, and ${doPhrase()}. Nothing is turned on unless you allow it.${links}</p></div>
+          <div class="banner-foot"><div class="banner-group"><button type="button" class="btn btn-stroke" data-bn="reject">Don’t allow</button><button type="button" class="btn btn-stroke" data-bn="accept">Allow</button></div>
+            <button type="button" class="btn btn-primary-stroke" data-bn="customize">Choose what to allow</button></div>
+        </section></div>`;
+      }
+      return `<div class="banner-shell">${tag}<section class="banner-card" role="region" aria-labelledby="bn-title" tabindex="-1">
+        <div class="banner-head"><h2 class="banner-title" id="bn-title">We value your privacy</h2>
+          <p class="banner-desc">This site uses cookies to improve your browsing experience, analyze site traffic, and show personalized content.${links}</p></div>
+        <div class="banner-foot"><div class="banner-group"><button type="button" class="btn btn-stroke" data-bn="reject">Reject All</button><button type="button" class="btn btn-stroke" data-bn="accept">Accept All</button></div>
+          <button type="button" class="btn btn-primary-stroke" data-bn="customize">Customize</button></div>
+      </section></div>`;
+    }
+
+    // ---------- markup ----------
+    function seg({ key, label, describedby, options, selected, locked }) {
+      return `<div class="seg" role="group" aria-label="${label}" ${describedby ? `aria-describedby="${describedby}"` : ''} data-sel="${selected}" data-key="${key}">
+        <span class="seg-thumb" aria-hidden="true"></span>
+        ${options.map((o, i) => `<button type="button" class="seg-opt" data-seg="${key}" data-val="${o.val}" aria-pressed="${i === selected}" ${locked && i !== selected ? 'aria-disabled="true"' : ''}><span class="seg-check">${I.check}</span>${o.label}</button>`).join('')}
+      </div>`;
+    }
+
+    function confirmBlock(kind, open) {
+      const sale = kind === 'sale';
+      const title = sale ? (optIn() ? `Allow ${rt()}?` : `Allow ${rt()} again?`) : (optIn() ? 'Allow use of your sensitive information?' : 'Allow wider use of sensitive information?');
+      const desc = sale
+        ? `${BUSINESS} may ${doPhrase()}. ${optIn() ? 'You can change this at any time.' : 'You can opt out again at any time.'}`
+        : `${BUSINESS} may use your sensitive personal information for more than the service you asked for. ${optIn() ? 'You can change this at any time.' : 'You can limit this again at any time.'}`;
+      const keep = optIn() ? 'Don’t allow' : sale ? 'Keep opted out' : 'Keep limited';
+      return `<div class="collapse is-bleed" data-open="${open}" ${open ? '' : 'inert'}><div class="collapse-inner"><div class="confirm" role="group" aria-labelledby="cf-${kind}" aria-describedby="cfd-${kind}" data-kind="${kind}" data-nudged="${S.nudged === kind}">
+        <p class="confirm-title" id="cf-${kind}">${title}</p>
+        <p class="confirm-desc" id="cfd-${kind}">${desc}</p>
+        <div class="btn-pair"><button type="button" class="btn btn-stroke" data-act="confirm-cancel">${keep}</button><button type="button" class="btn btn-stroke" data-act="confirm-ok">Allow</button></div>
+      </div></div></div>`;
+    }
+
+    function saleRow() {
+      const out = S.sale === 'optout';
+      let desc;
+      if (out && S.saleSrc === 'default') desc = `Off by default. ${BUSINESS} ${dontPhrase()} unless you allow it.`;
+      else if (out) desc = `${BUSINESS} ${dontPhrase()} ${scopePhrase()}.`;
+      else desc = `${BUSINESS} may ${doPhrase()}.`;
+      const options = optIn() ? [{ val: 'optout', label: 'Don’t allow' }, { val: 'allow', label: 'Allow' }] : [{ val: 'optout', label: 'Opt out' }, { val: 'allow', label: 'Allow' }];
+      return `<section class="right-row" data-key="row-sale" aria-labelledby="t-sale">
+        <div><h3 class="row-title" id="t-sale">${rightsTitle()}</h3>${gpc() ? '' : `<p class="row-desc" id="d-sale">${desc}</p>`}</div>
+        ${gpc() ? `<div class="note" id="d-sale"><span>Your browser sent a Global Privacy Control signal, so ${BUSINESS} ${dontPhrase()} ${scopePhrase()}. Allow isn’t available while the signal is on.</span></div>` : ''}
+        ${seg({ key: 'sale', label: saleLabel(), describedby: 'd-sale', options, selected: out ? 0 : 1, locked: gpc() })}
+        ${confirmBlock('sale', S.confirm === 'sale')}
+      </section>`;
+    }
+
+    function sensRowMarkup() {
+      if (!sensRow()) return '';
+      const lim = S.sens === 'limit';
+      const desc = optIn()
+        ? (lim ? (S.sensSrc === 'default' ? `Off by default. ${BUSINESS} only uses your sensitive personal information to provide the service you asked for unless you allow more.` : `${BUSINESS} only uses your sensitive personal information to provide the service you asked for.`) : `${BUSINESS} may use some of your sensitive personal information for more than the service you asked for.`)
+        : lim
+          ? (S.sensSrc === 'default' ? `Limited by default. ${BUSINESS} only uses your sensitive personal information to provide the service you asked for.` : `${BUSINESS} only uses your sensitive personal information to provide the service you asked for.`)
+          : `${BUSINESS} uses some of your sensitive personal information for more than the service you asked for.`;
+      return `<section class="right-row" data-key="row-sens" aria-labelledby="t-sens">
+        <div><h3 class="row-title" id="t-sens">Sensitive personal information</h3><p class="row-desc" id="d-sens">${desc}</p></div>
+        ${seg({ key: 'sens', label: optIn() ? 'Allow use of my sensitive personal information' : 'Limit the Use of My Sensitive Personal Information', describedby: 'd-sens', options: [{ val: 'limit', label: optIn() ? 'Don’t allow' : 'Limit' }, { val: 'allow', label: 'Allow' }], selected: lim ? 0 : 1 })}
+        ${confirmBlock('sens', S.confirm === 'sens')}
+      </section>`;
+    }
+
+    function receiptMarkup() {
+      const when = S.rightsNow ? 'just now' : RECORDED_DATE;
+      const items = [];
+      if (S.saleSrc === 'gpc') items.push(`Opted out of ${rightsPhrase()} <span class="muted">· Global Privacy Control signal</span>`);
+      else if (S.saleSrc === 'user') items.push(`${S.sale === 'optout' ? 'Opted out of' : 'Allowed'} ${rightsPhrase()}${S.viaGpc && S.sale === 'optout' ? ' <span class="muted">· from your Global Privacy Control signal</span>' : ''}`);
+      if (sensRow() && S.sensSrc === 'user') items.push(S.sens === 'limit' ? 'Limited use of sensitive personal information' : 'Allowed wider use of sensitive personal information');
+      const scope = S.signedIn === 'yes' ? 'Applies to this browser and your Acme account.' : 'Applies to this browser. Sign in to apply it to your account too.';
+      const show = hasReceipt();
+      const stored = S.saleSrc === 'user' || (sensRow() && S.sensSrc === 'user');
+      const lead = stored ? `Saved ${S.signedIn === 'yes' ? 'to your account' : 'for this browser'} · ${when}` : 'Honoring Global Privacy Control from this browser';
+      return `<div class="collapse is-bleed" data-key="receipt" data-open="${show}" ${show ? '' : 'inert'}><div class="collapse-inner"><div class="receipt">
+        <div class="receipt-line"><span class="lead">${I.checkSm}<span>${lead}</span></span>
+          <button type="button" class="text-btn" data-act="receipt" aria-expanded="${S.receiptOpen}" aria-controls="receipt-details">Details <span class="chev">${I.down}</span></button></div>
+        <div class="collapse" id="receipt-details" data-open="${S.receiptOpen}" ${S.receiptOpen ? '' : 'inert'}><div class="collapse-inner"><div class="receipt-details">
+          <ul>${items.map((t) => `<li>${t}</li>`).join('')}</ul>
+          <div class="muted">${scope}</div>
+          ${stored ? `<div class="muted">Recorded ${S.rightsNow ? 'just now' : RECORDED_FULL} · Reference <span class="ref" title="${REF_FULL}">${REF_SHORT}<button type="button" class="copy-btn" data-act="copy" aria-label="Copy reference">${S.copied ? I.checkSm : I.copy}</button></span></div>${S.copyFailed ? `<div class="copy-fail" role="alert"><label for="ref-field">Couldn’t copy. Select and copy your reference:</label><input id="ref-field" class="ref-field" type="text" readonly value="${REF_FULL}"></div>` : ''}` : '<div class="muted">Read from your browser on every visit.</div>'}
+        </div></div></div>
+      </div></div></div>`;
+    }
+
+    const EXT = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>';
+    function vendorRows(c) {
+      const on = S.cats[c.id];
+      return `<div class="v-table" role="table" aria-label="${c.name} vendors"><div class="v-head" role="row"><span role="columnheader">Vendor</span><span role="columnheader">Purpose</span><span role="columnheader"><span class="sr-only">Privacy policy</span></span><span role="columnheader"><span class="sr-only">On</span></span></div>`
+        + c.vendors.map((v) => `<div class="v-row" role="row" data-key="v-${v.id}"><span class="name" role="cell" id="vn-${v.id}">${v.name}</span><span class="desc" role="cell" id="vd-${v.id}" title="${v.desc}">${v.desc}</span><span role="cell"><a class="ext" href="#" onclick="return false" aria-label="${v.name} privacy policy">${EXT}</a></span><span role="cell"><button type="button" role="switch" class="switch is-sm" aria-checked="${on && S.vendors[v.id]}" aria-labelledby="vn-${v.id}" aria-describedby="vd-${v.id}" data-vendor-toggle="${v.id}"></button></span></div>`).join('')
+        + '</div>';
+    }
+
+    function catGroup(c, { vendorMode = 'accordion', idp = '' } = {}) {
+      const on = c.alwaysOn || S.cats[c.id];
+      const vendorsOn = c.vendors.filter((v) => on && S.vendors[v.id]).length;
+      const open = vendorMode === 'accordion' && Boolean(S.vendorOpen[c.id]);
+      let link = '';
+      if (c.vendors.length && vendorMode !== 'none') {
+        const n = c.vendors.length;
+        const label = `<span>${open ? 'Hide' : 'View'} ${n} vendor${n === 1 ? '' : 's'}<span class="sr-only"> for ${c.name}</span></span>`;
+        const meta = (icon) => `<span class="meta">${vendorsOn} on <span class="chev">${icon}</span></span>`;
+        link = vendorMode === 'sheet'
+          ? `<button type="button" class="vendor-link" data-act="vendors" data-cat="${c.id}" aria-haspopup="dialog">${label}${meta(I.right)}</button>`
+          : `<button type="button" class="vendor-link" data-act="vendors" data-cat="${c.id}" aria-expanded="${open}" aria-controls="vl-${c.id}">${label}${meta(I.down)}</button>`;
+      }
+      return `<div class="cat-group" data-key="cat-${c.id}">
+        <div class="cat-row">
+          <div class="cat-text"><span class="cat-name" id="${idp}cn-${c.id}">${c.name}</span><span class="cat-desc" id="${idp}cd-${c.id}">${c.desc}</span></div>
+          ${c.alwaysOn ? '<span class="always-on">Always on</span>' : `<button type="button" role="switch" class="switch" aria-checked="${on}" aria-labelledby="${idp}cn-${c.id}" aria-describedby="${idp}cd-${c.id}" data-cat-toggle="${c.id}"></button>`}
+        </div>
+        ${link}
+        ${vendorMode === 'accordion' && c.vendors.length ? `<div class="collapse" id="vl-${c.id}" data-open="${open}" ${open ? '' : 'inert'}><div class="collapse-inner"><div class="vendor-list">${vendorRows(c)}</div></div></div>` : ''}
+      </div>`;
+    }
+
+    function catRows() {
+      // EU on phone: the vendor list is the second sheet. Everywhere else it expands in place.
+      const vendorMode = nestedMode() && !isUS() ? 'sheet' : 'accordion';
+      return `<div class="cat-list" data-key="cat-list">` + visibleCats().map((c) => catGroup(c, { vendorMode })).join('') + (isUS() ? `<div class="cat-group" data-key="cat-ads"><div class="cat-row">
+          <div class="cat-text"><span class="cat-name">Advertising</span><span class="cat-desc">Ad measurement and ads based on your activity. Set by your ${rt()} choice.</span></div>
+          <span class="follows">${adsOn() ? 'On' : 'Off'}</span>
+        </div></div>` : '') + '</div>';
+    }
+
+    // ---------- layers: main dialog + nested dialogs (Base UI–style stack) ----------
+    function layerMeta(layer) {
+      const eu = S.regime === 'eu';
+      if (layer === 'main') {
+        return {
+          title: eu ? 'Privacy settings' : 'Your Privacy Choices',
+          intro: eu ? '' : 'Your choices apply right away.',
+          body: eu ? euMain() : usMain(),
+          closeLabel: 'Close',
+          footer: mainFooter(),
+        };
+      }
+      if (layer === 'cookies') {
+        return {
+          title: 'Preferences',
+          intro: 'Changes apply right away.',
+          body: catRows(),
+          closeLabel: 'Close preferences',
+          footer: nestedFooter(),
+        };
+      }
+      const c = CATEGORIES.find((x) => x.id === layer.slice(8));
+      return {
+        title: `${c.name} vendors`,
+        intro: 'Turn vendors on or off. Changes apply when you save in Privacy settings.',
+        body: `<div class="cat-list" data-key="cat-list">${catGroup(c, { vendorMode: 'none', idp: 'sheet-' })}</div><div class="vendor-list" data-key="vl-sheet" style="margin-top:12px">${vendorRows(c)}</div>`,
+        closeLabel: `Close ${c.name} vendors`,
+        footer: nestedFooter(),
+      };
+    }
+
+    function usMain() {
+      return `${saleRow()}${sensRowMarkup()}${receiptMarkup()}
+        <button type="button" class="nav-row" data-act="cookies" data-key="nav-cookies-${nestedMode() ? 'sheet' : 'acc'}" ${nestedMode() ? 'aria-haspopup="dialog"' : `aria-expanded="${S.cookiesOpen}" aria-controls="cookie-panel"`}>
+          <span class="label"><span class="name">Preferences</span><span class="sub">Site features and analytics · ${optionalOnCount()}</span></span>
+          <span class="chev">${nestedMode() ? I.right : I.down}</span></button>
+        ${nestedMode() ? '' : `<div class="collapse" id="cookie-panel" data-key="cookie-panel" data-open="${S.cookiesOpen}" ${S.cookiesOpen ? '' : 'inert'}><div class="collapse-inner"><div class="cookie-panel">${catRows()}</div></div></div>`}`;
+    }
+
+    function euMain() {
+      return `<p class="view-desc" style="margin-bottom:12px">Choose which optional cookies ${BUSINESS} may use. Optional cookies stay off unless you turn them on.</p>${catRows()}`;
+    }
+
+    function cue() {
+      return S.cue ? `<span class="saved-cue" data-key="cue-${S.savedTick}" aria-hidden="true">${I.checkSm}Saved</span>` : '';
+    }
+
+    function mainFooter() {
+      const eu = S.regime === 'eu';
+      const link = S.link === 'yes' ? `<a class="quiet-link" href="#" onclick="return false">${eu ? 'Cookie policy' : 'Privacy policy'}</a>` : '<span></span>';
+      const actions = eu
+        ? `<div class="footer-actions"><button type="button" class="btn btn-stroke" data-act="eu-reject">Reject all</button><button type="button" class="btn btn-stroke" data-act="eu-accept">Accept all</button><button type="button" class="btn btn-primary" data-act="eu-save" ${euDirty() ? '' : 'disabled'}>Save choices</button></div>`
+        : `<div class="footer-actions"><span class="cue-slot" data-key="cue-slot">${S.stack.length ? '' : cue()}</span><button type="button" class="btn btn-primary is-done" data-act="close" data-cue="${S.cue && !S.stack.length}"><span class="done-check" aria-hidden="true">${I.checkSm}</span>Done</button></div>`;
+      return `${link}${actions}`;
+    }
+
+    function nestedFooter() {
+      const note = isUS() ? '<span class="footer-note">Saved automatically</span>' : '<span class="footer-note">Save your choices in Privacy settings</span>';
+      return `${note}<div class="footer-actions"><span class="cue-slot" data-key="cue-slot">${isUS() ? cue() : ''}</span><button type="button" class="btn btn-primary is-done" data-act="pop" data-cue="${S.cue && isUS()}"><span class="done-check" aria-hidden="true">${I.checkSm}</span>Done</button></div>`;
+    }
+
+    function render() {
+      const eu = S.regime === 'eu';
+      const layers = ['main', ...S.stack];
+      const live = layers.filter((l) => l !== S.closing);
+      const cards = layers.map((layer, i) => {
+        const m = layerMeta(layer);
+        const above = layer === S.closing ? 0 : live.length - 1 - live.indexOf(layer);
+        const nested = above > 0 || layer === S.closing;
+        const isTop = layer === live[live.length - 1];
+        return `<section class="card${eu && layer === 'main' ? ' is-eu' : ''}${layer === 'main' ? '' : ' is-child'}" role="dialog" ${isTop ? 'aria-modal="true"' : ''} aria-labelledby="dlg-title-${i}"
+            style="--n:${above};--d:${i}" ${above > 0 ? 'data-nested-open' : ''} ${nested ? 'inert' : ''} ${layer === S.closing ? 'data-closing' : ''} data-layer="${layer}" data-key="card-${S.regime}-${layer}">
+          <header class="card-header">
+            <div><h2 class="card-title" id="dlg-title-${i}" tabindex="-1">${m.title}</h2>${m.intro ? `<p class="card-intro">${m.intro}</p>` : ''}</div>
+            <button type="button" class="icon-btn" data-act="${layer === 'main' ? 'close' : 'pop'}" aria-label="${m.closeLabel}">${I.x}</button>
+          </header>
+          <div class="card-body">${m.body}</div>
+          <footer class="card-footer">${m.footer}</footer>
+          <div class="sr-only" role="status" data-key="status">${isTop && layer === S.liveLayer ? S.liveMsg : ''}</div>
+        </section>`;
+      }).join('');
+      return cards;
+    }
+
+    // ---------- tiny DOM morph: keeps nodes alive so transitions + focus survive ----------
+    function morphChildren(from, to) {
+      const b = [...to.childNodes];
+      b.forEach((nb, i) => {
+        const na = from.childNodes[i];
+        if (!na) { from.appendChild(nb.cloneNode(true)); return; }
+        if (na.nodeType !== nb.nodeType || na.nodeName !== nb.nodeName || (na.nodeType === 1 && na.getAttribute('data-key') !== nb.getAttribute('data-key'))) {
+          from.replaceChild(nb.cloneNode(true), na); return;
+        }
+        if (na.nodeType === 3 || na.nodeType === 8) { if (na.nodeValue !== nb.nodeValue) na.nodeValue = nb.nodeValue; return; }
+        for (const at of [...na.attributes]) if (!nb.hasAttribute(at.name)) na.removeAttribute(at.name);
+        for (const at of [...nb.attributes]) if (na.getAttribute(at.name) !== at.value) na.setAttribute(at.name, at.value);
+        morphChildren(na, nb);
+      });
+      while (from.childNodes.length > b.length) from.removeChild(from.lastChild);
+    }
 
     const stage = document.getElementById('stage');
-    const vp = document.getElementById('vp');
-    const fitBadge = document.getElementById('fit-badge');
-    const widthSlider = document.getElementById('width-slider');
-    const widthVal = document.getElementById('width-val');
-    const picker = document.querySelector('.proto-picker');
-    const highlight = picker.querySelector('.proto-picker-highlight');
-    const items = [...picker.querySelectorAll('.proto-picker-item')];
+    const vpEl = document.getElementById('vp');
+    const fitEl = document.getElementById('fit');
+    const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let pendingFocus = null;
+    let lastOpener = null;
+    const topCard = () => [...stage.querySelectorAll('.card:not([data-closing])')].pop();
 
-    function syncPills() {
-      const set = (g, v) => document.querySelectorAll(`[data-group="${g}"] .ctrl-pill`).forEach((b) => b.toggleAttribute('data-on', b.dataset.val === String(v)));
-      set('regime', state.regime);
-      set('rights', state.rights);
-      set('saleState', state.saleState);
-      set('sensitiveMode', state.sensitiveMode);
-      set('sensitiveState', state.sensitiveState);
-      set('prefsMode', state.regime === 'us-opt-in' ? 'expanded' : state.prefsMode);
-      set('buttonMode', state.buttonMode);
-      set('confirmKind', state.confirmKind);
-      set('privacyLink', state.privacyLink);
-      document.querySelectorAll('.ctrl-us-only').forEach((el) => { el.dataset.hidden = String(state.regime === 'eu'); });
-      const row = document.getElementById('sen-state-row');
-      if (row && state.regime !== 'eu') row.dataset.hidden = String(state.sensitiveMode !== 'beyond-permitted');
+    function paint() {
+      // Banner and dialog are never visible together (the SDK's single activeUI).
+      const bannerEl = document.getElementById('banner');
+      const showBanner = S.banner && !S.open && bannerVariant() !== 'none';
+      const pres = effPres();
+      // A side drawer that becomes all-in-one (phone -> desktop) has no expanded state; don't carry it back.
+      if (aioOn() && S.bannerExpanded) S.bannerExpanded = false;
+      if (showBanner) {
+        clearTimeout(bannerExitTimer); bannerEl.removeAttribute('data-leaving'); bannerEl.inert = false;
+        const entering = bannerEl.hidden || bannerEl.dataset.pres !== pres || bannerEl.hasAttribute('data-bar') !== (S.pres === 'bar') || bannerEl.hasAttribute('data-corner-right') !== (S.pres === 'card' && S.cardPos === 'bottom-right') || bannerEl.hasAttribute('data-aio') !== aioOn() || bannerEl.hasAttribute('data-center') !== centerOn();
+        bannerEl.dataset.pres = pres; bannerEl.toggleAttribute('data-bar', S.pres === 'bar'); bannerEl.toggleAttribute('data-center', centerOn()); bannerEl.toggleAttribute('data-corner-right', S.pres === 'card' && S.cardPos === 'bottom-right'); bannerEl.dataset.drawer = S.drawerStyle; bannerEl.toggleAttribute('data-aio', aioOn()); bannerEl.toggleAttribute('data-expanded', cardOpen());
+        if (entering) bannerEl.innerHTML = renderBanner();
+        else { const tpl = document.createElement('template'); tpl.innerHTML = renderBanner().trim(); morphChildren(bannerEl, tpl.content); }
+        bannerEl.hidden = false;
+        // A blocking banner takes focus; non-blocking banners never steal it.
+        if (entering && blockingOn()) bannerEl.querySelector('.banner-card')?.focus();
+        // Focus requests from controls inside an all-in-one drawer (confirm, accordions).
+        if (pendingFocus) { const el = bannerEl.querySelector(pendingFocus); pendingFocus = null; if (el) el.focus(); }
+      } else if (!bannerEl.hidden && (S.open || !bannerEl.hasAttribute('data-leaving'))) {
+        const finish = () => { bannerEl.removeAttribute('data-leaving'); bannerEl.inert = false; bannerEl.innerHTML = ''; bannerEl.hidden = true; };
+        if (reduced() || !bannerEl.firstElementChild || S.open) { clearTimeout(bannerExitTimer); finish(); }
+        else { bannerEl.setAttribute('data-leaving', ''); bannerEl.inert = true; clearTimeout(bannerExitTimer); bannerExitTimer = setTimeout(finish, 170); }
+      }
+      const blockingBanner = showBanner && blockingOn();
+      const backdrop = document.getElementById('banner-backdrop');
+      if (blockingBanner) { clearTimeout(backdropTimer); backdrop.removeAttribute('data-leaving'); backdrop.hidden = false; }
+      else if (!backdrop.hidden && (S.open || !backdrop.hasAttribute('data-leaving'))) {
+        const done = () => { backdrop.removeAttribute('data-leaving'); backdrop.hidden = true; };
+        if (reduced() || S.open) { clearTimeout(backdropTimer); done(); } else { backdrop.setAttribute('data-leaving', ''); clearTimeout(backdropTimer); backdropTimer = setTimeout(done, 170); }
+      }
+      vpEl.toggleAttribute('data-scroll-locked', blockingBanner);
+      document.getElementById('banner').toggleAttribute('data-blocking', blockingBanner);
+      stage.hidden = !S.open;
+      document.querySelector('.fake-site').inert = S.open || blockingBanner;
+      if (!S.open) { stage.innerHTML = ''; syncControls(); requestAnimationFrame(measure); return; }
+      const tpl = document.createElement('template');
+      tpl.innerHTML = render().trim();
+      morphChildren(stage, tpl.content);
+      if (pendingFocus) { const el = stage.querySelector(pendingFocus); pendingFocus = null; if (el) el.focus(); }
+      syncControls();
+      requestAnimationFrame(measure);
     }
 
-    function updateTelemetry() {
-      requestAnimationFrame(() => {
-        const card = stage.querySelector('.card');
-        if (!card) return;
-        const cardRect = card.getBoundingClientRect();
-        const vpRect = vp.getBoundingClientRect();
-        const fits = card.scrollHeight <= card.clientHeight + 1 && cardRect.height <= vpRect.height - 24;
-        card.toggleAttribute('data-narrow', cardRect.width < 640);
-        fitBadge.dataset.overflow = String(!fits);
-        fitBadge.textContent = `card ${Math.round(cardRect.width)}×${Math.round(card.scrollHeight)}px · viewport ${Math.round(vpRect.width)}×${Math.round(vpRect.height)}px · ${fits ? 'fits cleanly' : 'scrolls'}`;
-      });
+    let cueTimer, popTimer, copyTimer;
+    let swallowClickUntil = 0;
+    let bannerExitTimer, backdropTimer;
+    let copySeq = 0;
+    let surfaceSeq = 0; // bumped whenever the active surface changes (dialog opens/closes, banner commits)
+    function announce(msg) {
+      // Toggle a zero-width char so repeating the same message is still announced.
+      S.liveFlip = !S.liveFlip; S.liveMsg = msg + (S.liveFlip ? '\u200b' : '');
+      const liveStack = S.stack.filter((l) => l !== S.closing);
+      S.liveLayer = liveStack.length ? liveStack[liveStack.length - 1] : 'main';
+      paint();
     }
 
-    function renderCurrent() {
-      syncPills();
-      stage.innerHTML = variants[currentVariant].render();
-      bindActions();
-      updateTelemetry();
+    function saved(msg, { rights = false } = {}) {
+      if (rights) { S.rightsNow = true; S.decided = true; }
+      S.savedTick += 1; S.cue = true;
+      clearTimeout(cueTimer);
+      cueTimer = setTimeout(() => { S.cue = false; if (S.open) paint(); }, 1700);
+      announce(`${msg} Saved.`);
     }
 
-    function bindActions() {
-      stage.querySelectorAll('[data-toggle-cat]').forEach((sw) => sw.addEventListener('click', () => {
-        const id = sw.dataset.toggleCat;
-        state.draftCats[id] = !state.draftCats[id];
-        renderCurrent();
-      }));
-      stage.querySelectorAll('[data-toggle-vendor]').forEach((sw) => sw.addEventListener('click', () => {
-        state.draftVendors[sw.dataset.toggleVendor] = !state.draftVendors[sw.dataset.toggleVendor];
-        renderCurrent();
-      }));
-      stage.querySelectorAll('[data-expand-cat]').forEach((b) => b.addEventListener('click', () => {
-        state.expandedCat = state.expandedCat === b.dataset.expandCat ? null : b.dataset.expandCat;
-        renderCurrent();
-      }));
-      stage.querySelectorAll('[data-expand-vendor]').forEach((b) => b.addEventListener('click', () => {
-        state.expandedVendor = state.expandedVendor === b.dataset.expandVendor ? null : b.dataset.expandVendor;
-        renderCurrent();
-      }));
-      stage.querySelectorAll('[data-drill-cat]').forEach((b) => b.addEventListener('click', () => {
-        state.drilledCat = b.dataset.drillCat;
-        renderCurrent();
-      }));
-      stage.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => {
-        const act = b.dataset.act;
-        if (act === 'drill-back') state.drilledCat = null;
-        else if (act === 'toggle-prefs') state.prefsMode = state.prefsMode === 'expanded' ? 'collapsed' : 'expanded';
-        else if (act === 'opt-out-sale') { state.saleState = 'opted-out'; state.confirmKind = 'none'; }
-        else if (act === 'opt-in-sale') state.confirmKind = 'sale-share';
-        else if (act === 'limit-sensitive') { state.sensitiveState = 'limited-recorded'; state.confirmKind = 'none'; }
-        else if (act === 'allow-sensitive') {
-          if (state.sensitiveState === 'limited-recorded') state.confirmKind = 'limit-sensitive';
-          else state.sensitiveState = 'allowed';
+    // Element.scrollIntoView also scrolls the overflow:hidden card and pushes the header out of view. Scroll only the body.
+    function revealInBody(el, mode = 'nearest') {
+      const body = el?.closest('.card-body'); if (!body) return;
+      const b = body.getBoundingClientRect(), r = el.getBoundingClientRect();
+      let d = 0;
+      if (mode === 'start') d = r.top - b.top - 8;
+      else if (r.bottom > b.bottom) d = Math.min(r.bottom - b.bottom + 8, r.top - b.top - 8);
+      else if (r.top < b.top) d = r.top - b.top - 8;
+      if (d) body.scrollBy({ top: d, behavior: reduced() ? 'auto' : 'smooth' });
+    }
+
+    function openConfirm(kind) {
+      S.confirm = kind; S.nudged = null; pendingFocus = `.confirm[data-kind="${kind}"] [data-act="confirm-cancel"]`; paint();
+      const surf = surfaceSeq;
+      setTimeout(() => { if (surf === surfaceSeq) revealInBody(activeRoot().querySelector(`.confirm[data-kind="${kind}"]`)); }, 230);
+    }
+
+    function nudgeConfirm(kind) {
+      S.nudged = kind;
+      pendingFocus = `.confirm[data-kind="${kind}"] [data-act="confirm-cancel"]`;
+      announce('Choose one of the two buttons first.');
+      const box = activeRoot().querySelector(`.confirm[data-kind="${kind}"]`);
+      if (box && !reduced()) {
+        box.animate(
+          [{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(-3px)' }, { transform: 'translateX(2px)' }, { transform: 'translateX(0)' }],
+          { duration: 360, easing: 'cubic-bezier(0.36, 0.07, 0.19, 0.97)' },
+        );
+      }
+    }
+
+    function closeConfirm() {
+      const k = S.confirm; S.confirm = null; S.nudged = null;
+      pendingFocus = `[data-seg="${k}"][data-val="allow"]`; paint();
+    }
+
+    function push(layer, openerSel) {
+      if (S.closing) return;
+      S.confirm = null; S.liveMsg = '';
+      S.stack.push(layer); S.openers.push(openerSel);
+      pendingFocus = `[data-layer="${layer}"] .card-title`;
+      paint();
+    }
+
+    function pop() {
+      if (!S.stack.length || S.closing) return;
+      S.closing = S.stack[S.stack.length - 1]; S.liveMsg = '';
+      const sel = S.openers[S.openers.length - 1];
+      const parent = S.stack.length > 1 ? S.stack[S.stack.length - 2] : 'main';
+      pendingFocus = `[data-layer="${parent}"] ${sel}`; // focus moves now; the old layer is inert while it animates out
+      paint();
+      clearTimeout(popTimer);
+      popTimer = setTimeout(() => { S.stack.pop(); S.openers.pop(); S.closing = null; paint(); }, reduced() ? 0 : 160);
+    }
+
+    function toggleAccordion(key, triggerSel) {
+      if (key === 'cookies') S.cookiesOpen = !S.cookiesOpen; else S.vendorOpen[key] = !S.vendorOpen[key];
+      paint();
+      const opened = key === 'cookies' ? S.cookiesOpen : S.vendorOpen[key];
+      // Bring as much of the opened panel into view as fits, without scrolling its trigger out.
+      const surf = surfaceSeq;
+      if (opened) setTimeout(() => {
+        if (surf !== surfaceSeq) return;
+        const root = activeRoot(); const trig = root.querySelector(triggerSel); const panel = trig && root.querySelector('#' + trig.getAttribute('aria-controls'));
+        const body = trig?.closest('.card-body'); if (!panel || !body) return;
+        const over = panel.getBoundingClientRect().bottom - body.getBoundingClientRect().bottom + 8;
+        const room = trig.getBoundingClientRect().top - body.getBoundingClientRect().top - 8;
+        if (over > 0) body.scrollBy({ top: Math.min(over, room), behavior: reduced() ? 'auto' : 'smooth' });
+      }, 230);
+    }
+
+    // ---------- events (delegated) ----------
+    const dialogClick = (e) => {
+      if (performance.now() < swallowClickUntil) { e.preventDefault(); return; }
+      let t = e.target.closest('button');
+      // Clicking a category's (or vendor's) name/description toggles its switch, like a <label>. Links and text selection are left alone.
+      if (!t && !e.target.closest('a')) {
+        const row = e.target.closest('.cat-row, .v-row');
+        const sw = row && row.querySelector('[data-cat-toggle], [data-vendor-toggle]');
+        if (sw && !sw.disabled && !String(window.getSelection?.() || '')) t = sw;
+      }
+      if (!t || !(stage.contains(t) || document.getElementById('banner').contains(t)) || t.closest('[inert]')) return;
+      if (t.getAttribute('aria-disabled') === 'true') return;
+
+      if (t.dataset.seg) {
+        const which = t.dataset.seg, val = t.dataset.val;
+        // The question is open: Allow can't apply until one of its buttons is chosen.
+        if (S.confirm === which && val === 'allow') { nudgeConfirm(which); return; }
+        const src = which === 'sale' ? 'saleSrc' : 'sensSrc';
+        if (t.getAttribute('aria-pressed') === 'true') {
+          // Re-pressing the current option closes an open confirm, or turns a default into a recorded choice.
+          if (S.confirm === which) { S.confirm = null; S.nudged = null; paint(); }
+          else if (S[src] === 'default') { S[src] = 'user'; saved('Choice recorded.', { rights: true }); }
+          return;
         }
-        else if (act === 'confirm-cancel') state.confirmKind = 'none';
-        else if (act === 'confirm-ok') {
-          if (state.confirmKind === 'sale-share') state.saleState = 'not-opted-out';
-          else if (state.confirmKind === 'limit-sensitive') state.sensitiveState = 'allowed';
-          state.confirmKind = 'none';
+        if (which === 'sale') {
+          if (val === 'optout') { S.sale = 'optout'; S.saleSrc = 'user'; S.viaGpc = false; S.confirm = null; saved(optIn() ? `${cap(rt())} not allowed.` : `Opted out of ${rightsPhrase()}.`, { rights: true }); }
+          else if (S.saleSrc === 'user' || optIn()) openConfirm('sale');
+          else { S.sale = 'allow'; S.saleSrc = 'user'; S.confirm = null; saved(`${cap(rt())} allowed.`, { rights: true }); }
+        } else {
+          if (val === 'limit') { S.sens = 'limit'; S.sensSrc = 'user'; S.confirm = null; saved(optIn() ? 'Use of sensitive personal information not allowed.' : 'Use of sensitive personal information limited.', { rights: true }); }
+          else if (S.sensSrc === 'user' || optIn()) openConfirm('sens');
+          else { S.sens = 'allow'; S.sensSrc = 'user'; S.confirm = null; saved('Wider use of sensitive personal information allowed.', { rights: true }); }
         }
-        else if (act === 'save-cats') { state.savedCats = { ...state.draftCats }; state.savedVendors = { ...state.draftVendors }; }
-        else if (act === 'eu-accept') {
-          for (const k of Object.keys(state.draftCats)) state.draftCats[k] = true;
-          for (const k of Object.keys(state.draftVendors)) state.draftVendors[k] = true;
-          state.savedCats = { ...state.draftCats }; state.savedVendors = { ...state.draftVendors };
+        return;
+      }
+      if (t.dataset.catToggle) {
+        const id = t.dataset.catToggle; S.cats[id] = !S.cats[id];
+        const cat = CATEGORIES.find((c) => c.id === id);
+        if (S.cats[id] && !cat.vendors.some((v) => S.vendors[v.id])) cat.vendors.forEach((v) => { S.vendors[v.id] = true; });
+        if (isUS()) saved(`${CATEGORIES.find((c) => c.id === id).name} ${S.cats[id] ? 'on' : 'off'}.`); else paint();
+        return;
+      }
+      if (t.dataset.vendorToggle) {
+        const id = t.dataset.vendorToggle;
+        const cat = CATEGORIES.find((c) => c.vendors.some((v) => v.id === id));
+        const catWas = Boolean(S.cats[cat.id]);
+        if (!S.cats[cat.id]) {
+          // Category was off: switching one vendor on turns the category on with only that vendor.
+          cat.vendors.forEach((v) => { S.vendors[v.id] = v.id === id; }); S.cats[cat.id] = true;
+        } else {
+          S.vendors[id] = !S.vendors[id];
+          if (!cat.vendors.some((v) => S.vendors[v.id])) S.cats[cat.id] = false;
         }
-        else if (act === 'eu-reject') {
-          for (const k of Object.keys(state.draftCats)) state.draftCats[k] = false;
-          for (const k of Object.keys(state.draftVendors)) state.draftVendors[k] = false;
-          state.savedCats = { ...state.draftCats }; state.savedVendors = { ...state.draftVendors };
-        }
-        else if (act === 'copy-ref') {
-          navigator.clipboard?.writeText(REF_FULL).catch(() => {});
-          b.innerHTML = CHECK_ICON; setTimeout(() => { b.innerHTML = COPY_ICON; }, 1500); return;
-        }
-        else if (act === 'done') state.confirmKind = 'none';
-        renderCurrent();
-      }));
-    }
+        const vName = cat.vendors.find((v) => v.id === id).name;
+        const msg = `${vName} ${S.cats[cat.id] && S.vendors[id] ? 'on' : 'off'}.${catWas !== S.cats[cat.id] ? ` ${cat.name} ${S.cats[cat.id] ? 'on' : 'off'}.` : ''}`;
+        if (isUS()) saved(msg); else announce(msg);
+        return;
+      }
+      const act = t.dataset.act;
+      if (act === 'confirm-cancel') closeConfirm();
+      else if (act === 'confirm-ok') {
+        const k = S.confirm; S.confirm = null; S.nudged = null; pendingFocus = `[data-seg="${k}"][aria-pressed="true"]`;
+        if (k === 'sale') { S.sale = 'allow'; S.saleSrc = 'user'; S.viaGpc = false; saved(`${cap(rt())} allowed.`, { rights: true }); }
+        else { S.sens = 'allow'; S.sensSrc = 'user'; saved('Wider use of sensitive personal information allowed.', { rights: true }); }
+      }
+      else if (act === 'receipt') { S.receiptOpen = !S.receiptOpen; paint(); }
+      else if (act === 'copy') {
+        const attempt = ++copySeq; // a newer attempt, or closing the dialog, makes this one stale
+        const finish = (ok) => {
+          if (attempt !== copySeq || !(S.open || (S.banner && (aioOn() || cardOpen())))) return;
+          // The fallback stays in the receipt; focus and speak only if the receipt is actually visible now.
+          const visible = S.receiptOpen && hasReceipt() && !S.stack.length && !S.closing;
+          if (!ok && visible) pendingFocus = '#ref-field';
+          S.copied = ok; S.copyFailed = !ok; clearTimeout(copyTimer);
+          if (ok) copyTimer = setTimeout(() => { S.copied = false; paint(); }, 1500);
+          // Only speak if the receipt's dialog is still the active one; otherwise just update its state.
+          if (visible) announce(ok ? 'Reference copied.' : 'Couldn’t copy. Your full reference is shown in the receipt.');
+          else paint();
+        };
+        if (!navigator.clipboard?.writeText) finish(false);
+        else navigator.clipboard.writeText(REF_FULL).then(() => finish(true), () => finish(false));
+      }
+      else if (act === 'cookies') { if (nestedMode()) push('cookies', '[data-act="cookies"]'); else toggleAccordion('cookies', '[data-act="cookies"]'); }
+      else if (act === 'vendors') {
+        const sel = `[data-act="vendors"][data-cat="${t.dataset.cat}"]`;
+        if (t.hasAttribute('aria-haspopup')) push(`vendors:${t.dataset.cat}`, sel); else toggleAccordion(t.dataset.cat, sel);
+      }
+      else if (act === 'pop') pop();
+      else if (act === 'eu-save') { S.euSaved = JSON.stringify({ c: S.cats, v: S.vendors }); S.decided = true; closeDialog(); }
+      else if (act === 'eu-accept' || act === 'eu-reject') {
+        const v = act === 'eu-accept';
+        Object.keys(S.cats).forEach((k) => { S.cats[k] = v; }); ALL_VENDORS.forEach((k) => { S.vendors[k] = v; });
+        S.euSaved = JSON.stringify({ c: S.cats, v: S.vendors }); S.decided = true; closeDialog();
+      }
+      else if (act === 'close') closeDialog();
+    };
+    stage.addEventListener('click', dialogClick);
 
-    function moveHighlight() {
-      const el = items[currentVariant];
-      highlight.style.width = el.offsetWidth + 'px';
-      highlight.style.transform = `translateX(${el.offsetLeft}px)`;
-    }
-
-    function setActive(i) {
-      if (i < 0 || i >= variants.length) return;
-      currentVariant = i;
-      items.forEach((el, j) => {
-        el.toggleAttribute('data-active', j === i);
-        if (j === i) el.setAttribute('aria-current', 'true');
-        else el.removeAttribute('aria-current');
-      });
-      moveHighlight();
-      renderCurrent();
-    }
-
-    items.forEach((el, i) => el.addEventListener('click', () => setActive(i)));
-    window.addEventListener('resize', () => { moveHighlight(); updateTelemetry(); });
-    widthSlider.addEventListener('input', (e) => {
-      widthVal.textContent = `${e.target.value}px`;
-      document.documentElement.style.setProperty('--proto-max-width', `${e.target.value}px`);
-      updateTelemetry();
+    // Click on the dimmed parent closes the child, like Base UI's nested backdrop.
+    stage.addEventListener('pointerdown', (e) => {
+      if (S.stack.length && !e.target.closest('.card:not([data-nested-open])')) {
+        e.preventDefault();
+        swallowClickUntil = performance.now() + 450; // the tap's click would otherwise land on the now-active parent
+        pop();
+      }
     });
+
+    function closeDialog() {
+      if (S.regime === 'eu' && S.euSaved) { const saved = JSON.parse(S.euSaved); S.cats = saved.c; S.vendors = saved.v; }
+      clearTimeout(popTimer); clearTimeout(cueTimer); clearTimeout(copyTimer); S.open = false; S.stack = []; S.openers = []; S.closing = null; S.cue = false; S.copied = false; S.copyFailed = false; S.liveMsg = ''; S.confirm = null; S.nudged = null; S.receiptOpen = false; copySeq += 1; surfaceSeq += 1;
+      // Closing without deciding brings the banner back: dismissing the dialog is not consent.
+      S.banner = !S.decided && bannerVariant() !== 'none';
+      paint(); (S.banner ? document.querySelector('.banner-card') : (lastOpener || document.getElementById('reopen'))).focus(); }
+    function openDialog(opener) {
+      lastOpener = opener || null;
+      S.open = true; S.banner = false; S.stack = []; S.openers = []; S.confirm = null; S.nudged = null; S.receiptOpen = false; S.cue = false; S.liveMsg = '';
+      clearTimeout(copyTimer); S.copied = false; S.copyFailed = false; copySeq += 1; surfaceSeq += 1; // a banner copy still in flight must not land in the dialog
+      if (bannerVariant() === 'notice') S.decided = true; // opening choices from the notice acknowledges it
+      if (S.regime === 'eu') S.euSaved = S.euSaved || JSON.stringify({ c: S.cats, v: S.vendors });
+      pendingFocus = '[data-layer="main"] .card-title'; paint();
+    }
+    document.getElementById('reopen').addEventListener('click', (e) => openDialog(e.currentTarget));
+
+    function pageAnnounce(msg) { const el = document.getElementById('page-live'); el.textContent = ''; setTimeout(() => { el.textContent = msg; }, 30); }
+    document.getElementById('banner').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-bn]');
+      if (!b) { if (aioOn() || cardOpen()) dialogClick(e); return; }
+      const act = b.dataset.bn;
+      const reopen = document.getElementById('reopen');
+      if (act === 'save') {
+        // All-in-one: the visitor's current switches are the choice.
+        if (S.regime === 'eu') S.euSaved = JSON.stringify({ c: S.cats, v: S.vendors });
+        if (S.regime === 'us-opt-in') {
+          let recorded = false;
+          if (S.saleSrc === 'default') { S.saleSrc = 'user'; recorded = true; }
+          if (sensRow() && S.sensSrc === 'default') { S.sensSrc = 'user'; recorded = true; }
+          if (recorded) S.rightsNow = true;
+        }
+        endBanner();
+        pageAnnounce('Choices saved. You can change them in Your Privacy Choices.');
+        return;
+      }
+      if (act === 'expand') {
+        S.bannerExpanded = true; pendingFocus = '#card-panel button:not([disabled])'; paint();
+        announce('More options shown.');
+        return;
+      }
+      if (act === 'customize' || act === 'rights') { openDialog(reopen); return; }
+      if (act === 'accept' || act === 'reject') {
+        const on = act === 'accept';
+        Object.keys(S.cats).forEach((k) => { S.cats[k] = on; }); ALL_VENDORS.forEach((k) => { S.vendors[k] = true; });
+        if (S.regime === 'eu') S.euSaved = JSON.stringify({ c: S.cats, v: S.vendors });
+        // US opt-in: the banner decides sale/sharing only while it is an untouched default. A live GPC signal stays
+        // locked (GPC-03), and a recorded opt-out needs the two-step confirm in Your Privacy Choices (LAW-02).
+        // Sensitive data always needs its own explicit consent in the dialog (LAW-09).
+        let saleKept = false;
+        if (S.regime === 'us-opt-in') {
+          if (!on) {
+            // Refusing is one action and also revokes a sensitive-data grant made in the panel (an untouched default stays untouched, LAW-09); explicit choice owns the provenance (GPC-07).
+            if (S.saleSrc !== 'gpc') { const changed = !(S.sale === 'optout' && S.saleSrc === 'user' && !S.viaGpc); /* a provenance change (GPC -> visitor) is a change too */ S.sale = 'optout'; S.saleSrc = 'user'; S.viaGpc = false; if (changed) S.rightsNow = true; } // receipt time moves only on a real change (RCPT-02)
+            if (sensRow() && S.sens === 'allow') { S.sens = 'limit'; S.sensSrc = 'user'; S.rightsNow = true; }
+          }
+          else if (S.saleSrc === 'default') { S.sale = 'allow'; S.saleSrc = 'user'; S.rightsNow = true; }
+          else saleKept = S.sale === 'optout';
+        }
+        endBanner();
+        const usIn = S.regime === 'us-opt-in';
+        const keep = saleKept ? ` ${cap(rt())} stay off${gpc() ? ' because of your Global Privacy Control signal' : ''}.` : '';
+        pageAnnounce(on ? `${usIn ? (saleKept ? 'Optional cookies allowed.' : 'Allowed.') : 'All cookies accepted.'}${keep} You can change this in Your Privacy Choices.` : `${usIn ? 'Not allowed' : 'Optional cookies rejected'}. You can change this in Your Privacy Choices.`);
+        return;
+      }
+      if (act === 'ok') { endBanner(); pageAnnounce('Notice dismissed.'); }
+    });
+
+    // Every banner commit: record the decision, drop the expanded panel and any open confirm, release the page,
+    // and hand focus to the persistent "Your Privacy Choices" link.
+    function endBanner() {
+      S.decided = true; S.banner = false; S.bannerExpanded = false; S.confirm = null; S.nudged = null; pendingFocus = null;
+      clearTimeout(copyTimer); clearTimeout(cueTimer); S.copied = false; S.copyFailed = false; S.receiptOpen = false; S.cue = false; S.liveMsg = ''; copySeq += 1; surfaceSeq += 1;
+      paint(); document.getElementById('reopen').focus();
+    }
+
+    function applyStart() {
+      S.decided = false; S.bannerExpanded = false;
+      if (S.start === 'dialog') { S.banner = false; S.open = true; pendingFocus = '[data-layer="main"] .card-title'; return; }
+      // Preset prompt 'choice' / optional 'notice' shows the banner; prompt 'none' shows nothing until "Your Privacy Choices".
+      S.banner = bannerVariant() !== 'none'; S.open = false;
+    }
+
+    const PRESETS = {
+      'us-opt-out': { id: 'us_privacy_states_opt_out · california_opt_out', model: 'opt-out', prompt: 'none', gpc: 'deny marketing, measurement' },
+      'us-opt-in': { id: 'us_privacy_states_opt_in · california_opt_in', model: 'opt-in', prompt: 'choice', gpc: 'deny marketing, measurement' },
+      eu: { id: 'europe_opt_in', model: 'opt-in', prompt: 'choice', gpc: '—' },
+    };
+    function syncPreset() {
+      const pr = PRESETS[S.regime];
+      const prompt = S.regime === 'us-opt-out' && S.usBanner === 'notice' ? 'notice (optional)' : pr.prompt;
+      document.getElementById('preset').innerHTML = `<b>${pr.id}</b><br>model ${pr.model} · prompt ${prompt}<br>SDK GPC map: ${pr.gpc}`;
+    }
+    stage.addEventListener('focusin', (e) => { if (e.target.id === 'ref-field') e.target.select(); });
+    document.getElementById('banner').addEventListener('focusin', (e) => { if (e.target.id === 'ref-field') e.target.select(); });
+
+    // Esc closes the top layer first; Tab is trapped in the top layer.
+    document.addEventListener('keydown', (e) => {
+      const bannerEl = document.getElementById('banner');
+      // Expanded banner panel: Esc closes an open confirmation first, then folds the options back.
+      // Folding is not dismissing, so this also applies while the page is blocked.
+      const bannerUp = !S.open && S.banner && !bannerEl.hidden && !bannerEl.hasAttribute('data-leaving')
+        && (blockingOn() || bannerEl.contains(document.activeElement));
+      if (bannerUp && e.key === 'Escape' && S.confirm && (cardOpen() || aioOn())) { e.preventDefault(); closeConfirm(); return; }
+      if (bannerUp && e.key === 'Escape' && cardOpen()) {
+        e.preventDefault(); S.bannerExpanded = false; pendingFocus = '[data-bn="expand"]'; paint(); return;
+      }
+      if (!S.open && S.banner && blockingOn() && !bannerEl.hidden && !bannerEl.hasAttribute('data-leaving')) {
+        if (e.key === 'Escape') { e.preventDefault(); return; } // dismissing is not consent: a blocking banner stays until a choice
+        if (e.key === 'Tab') {
+          const f = [...bannerEl.querySelectorAll('button, a[href], input, [tabindex]:not([tabindex="-1"])')].filter((el) => !el.disabled && !el.closest('[inert]') && el.offsetParent !== null);
+          if (!f.length) { e.preventDefault(); return; }
+          const a = document.activeElement, i = f.indexOf(a);
+          if (i === -1) {
+            let target = e.shiftKey ? f[f.length - 1] : f[0];
+            if (bannerEl.contains(a)) {
+              const after = f.filter((el) => a.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
+              const before = f.filter((el) => a.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING);
+              target = e.shiftKey ? (before[before.length - 1] || f[f.length - 1]) : (after[0] || f[0]);
+            }
+            target.focus(); e.preventDefault();
+          }
+          else if (e.shiftKey && i === 0) { f[f.length - 1].focus(); e.preventDefault(); }
+          else if (!e.shiftKey && i === f.length - 1) { f[0].focus(); e.preventDefault(); }
+        }
+        return;
+      }
+      if (!S.open) return;
+      const card = topCard();
+      if (!card) return;
+      if (e.key === 'Escape') {
+        if (S.stack.length) pop();
+        else if (S.confirm) closeConfirm();
+        else closeDialog();
+        e.preventDefault(); return;
+      }
+      if (e.key === 'Tab') {
+        const f = [...card.querySelectorAll('button, a[href], input, [tabindex]:not([tabindex="-1"])')].filter((el) => !el.disabled && !el.closest('[inert]') && el.offsetParent !== null);
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        const a = document.activeElement;
+        const i = f.indexOf(a);
+        if (i === -1) {
+          let target = e.shiftKey ? last : first;
+          if (card.contains(a)) {
+            const after = f.filter((el) => a.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
+            const before = f.filter((el) => a.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING);
+            target = e.shiftKey ? (before[before.length - 1] || last) : (after[0] || first);
+          }
+          target.focus(); e.preventDefault();
+        }
+        else if (e.shiftKey && i === 0) { last.focus(); e.preventDefault(); }
+        else if (!e.shiftKey && i === f.length - 1) { first.focus(); e.preventDefault(); }
+      }
+    });
+
+    // ---------- explorer controls ----------
+    function syncControls() {
+      document.querySelectorAll('[data-group]').forEach((g) => {
+        const val = S[g.dataset.group];
+        g.querySelectorAll('.ctrl-pill').forEach((b) => b.toggleAttribute('data-on', b.dataset.val === String(val)));
+      });
+      document.querySelectorAll('[data-us]').forEach((r) => { r.dataset.hidden = String(!isUS() || (r.hasAttribute('data-sens') && S.sensMode !== 'beyond')); });
+      document.querySelector('[data-group="saleStart"] [data-val="allow-default"]').textContent = optIn() ? 'Not allowed (default)' : 'Allowed (default)';
+      document.querySelector('[data-group="saleStart"] [data-val="optout-default"]').style.display = optIn() ? 'none' : '';
+      document.querySelector('[data-group="sensStart"] [data-val="allow-default"]').textContent = optIn() ? 'Not allowed (default)' : 'Allowed (default)';
+      document.querySelector('[data-group="sensStart"] [data-val="limit-default"]').style.display = optIn() ? 'none' : '';
+      document.querySelector('.optout-icon').style.display = isUS() ? '' : 'none';
+      document.querySelectorAll('[data-optout-only]').forEach((r) => { r.dataset.hidden = String(S.regime !== 'us-opt-out'); });
+      syncPreset();
+      document.querySelectorAll('[data-drawer-only]').forEach((r) => { r.dataset.hidden = String(S.presUi !== 'drawer'); });
+      document.querySelectorAll('[data-edge-only]').forEach((r) => { r.dataset.hidden = String(S.presUi !== 'drawer' && S.presUi !== 'banner'); });
+      document.querySelectorAll('[data-card-only]').forEach((r) => { r.dataset.hidden = String(S.presUi !== 'card'); });
+      document.querySelectorAll('[data-bar-only]').forEach((r) => { r.dataset.hidden = String(S.presUi !== 'banner'); });
+      // Centre forces blocking: show On as selected and lock Off.
+      const forced = centerOn();
+      document.getElementById('block-forced').hidden = !forced;
+      const offPill = document.querySelector('[data-group="block"] [data-val="off"]');
+      offPill.disabled = forced; offPill.style.opacity = forced ? '0.4' : '';
+      if (forced) document.querySelectorAll('[data-group="block"] .ctrl-pill').forEach((b) => b.toggleAttribute('data-on', b.dataset.val === 'on'));
+      document.getElementById('block-note').hidden = !(S.block === 'on' && S.regime === 'us-opt-out');
+      vpEl.dataset.vp = S.vp; vpEl.dataset.drawer = S.drawerStyle;
+      const root = document.documentElement;
+      if (root.dataset.theme !== S.theme) {
+        root.setAttribute('data-theme-switching', '');
+        root.dataset.theme = S.theme;
+        void root.offsetHeight; // commit the new theme with transitions off
+        requestAnimationFrame(() => requestAnimationFrame(() => root.removeAttribute('data-theme-switching')));
+      }
+    }
+
+    // Scroll-edge fades for every scroll area.
+    function updateFades(el) {
+      const top = el.scrollTop > 1;
+      const bottom = el.scrollTop + el.clientHeight < el.scrollHeight - 1;
+      el.toggleAttribute('data-fade-top', top);
+      el.toggleAttribute('data-fade-bottom', bottom);
+    }
+    const updateAllFades = () => document.querySelectorAll('.card-body').forEach(updateFades);
+    stage.addEventListener('scroll', (e) => { if (e.target.classList?.contains('card-body')) updateFades(e.target); }, true);
+    document.getElementById('banner').addEventListener('scroll', (e) => { if (e.target.classList?.contains('card-body')) updateFades(e.target); }, true);
+    // Accordions change the content height after their transition.
+    stage.addEventListener('transitionend', (e) => { if (e.propertyName === 'grid-template-rows') updateAllFades(); });
+    document.getElementById('banner').addEventListener('transitionend', (e) => { if (e.propertyName === 'grid-template-rows') updateAllFades(); });
+
+    function measure() {
+      updateAllFades();
+      const card = topCard();
+      if (!card) {
+        const bn = document.querySelector('.banner-card');
+        fitEl.dataset.overflow = 'false';
+        fitEl.textContent = bn ? `banner ${Math.round(bn.getBoundingClientRect().width)}×${Math.round(bn.getBoundingClientRect().height)} · ${bannerVariant()}` : (bannerVariant() === 'none' && !S.decided ? 'no banner (preset prompt: none) — open “Your Privacy Choices” in the footer' : 'closed — use “Your Privacy Choices” in the page footer');
+        return;
+      }
+      const body = card.querySelector('.card-body');
+      const scrolls = body.scrollHeight > body.clientHeight + 1;
+      const r = card.getBoundingClientRect(), v = vpEl.getBoundingClientRect();
+      fitEl.dataset.overflow = String(scrolls);
+      fitEl.textContent = `${S.stack.length ? `layer ${S.stack.length + 1} · ` : ''}card ${Math.round(r.width)}×${Math.round(r.height)} in ${Math.round(v.width)}×${Math.round(v.height)} · ${scrolls ? 'body scrolls' : 'fits, no scroll'}`;
+    }
 
     document.querySelector('.proto-controls').addEventListener('click', (e) => {
-      const btn = e.target.closest('.ctrl-pill');
-      if (!btn) return;
-      const g = btn.parentElement.dataset.group;
-      const v = btn.dataset.val;
-      if (g === 'regime') { state.regime = v; state.confirmKind = 'none'; state.drilledCat = null; }
-      else if (g === 'rights') state.rights = v;
-      else if (g === 'saleState') { state.saleState = v; if (v !== 'opted-out') state.confirmKind = 'none'; }
-      else if (g === 'sensitiveMode') { state.sensitiveMode = v; if (v !== 'beyond-permitted') state.confirmKind = 'none'; }
-      else if (g === 'sensitiveState') { state.sensitiveState = v; if (v !== 'limited-recorded') state.confirmKind = 'none'; }
-      else if (g === 'prefsMode') { state.prefsMode = v; if (state.regime === 'us-opt-in' && v !== 'expanded') state.regime = 'us-opt-out'; }
-      else if (g === 'buttonMode') state.buttonMode = v;
-      else if (g === 'confirmKind') {
-        state.confirmKind = v;
-        if (v === 'sale-share') state.saleState = 'opted-out';
-        if (v === 'limit-sensitive') { state.sensitiveMode = 'beyond-permitted'; state.sensitiveState = 'limited-recorded'; }
-      }
-      else if (g === 'privacyLink') state.privacyLink = v;
-      else if (g === 'vp') { vp.dataset.vp = v; btn.parentElement.querySelectorAll('.ctrl-pill').forEach((b) => b.toggleAttribute('data-on', b === btn)); updateTelemetry(); return; }
-      else if (g === 'theme') { document.documentElement.dataset.theme = v; btn.parentElement.querySelectorAll('.ctrl-pill').forEach((b) => b.toggleAttribute('data-on', b === btn)); return; }
-      renderCurrent();
+      const b = e.target.closest('.ctrl-pill'); if (!b) return;
+      const g = b.parentElement.dataset.group, v = b.dataset.val;
+      S[g] = v;
+      if (g === 'vp') { clearTimeout(popTimer); S.stack = []; S.openers = []; S.closing = null; }
+      if (g === 'regime' && v === 'us-opt-in' && S.saleStart === 'optout-default') S.saleStart = 'allow-default';
+      if (g === 'presUi' || g === 'loc' || g === 'barPos') S.pres = S.presUi === 'drawer' ? S.loc : S.presUi === 'banner' ? 'bar' : 'card';
+      if (['regime', 'saleStart', 'sensStart', 'sensMode', 'rights', 'signedIn', 'start', 'usBanner', 'presUi', 'loc', 'drawerStyle', 'block', 'cardPos', 'barPos'].includes(g)) { const b = document.getElementById('banner'); clearTimeout(bannerExitTimer); b.removeAttribute('data-leaving'); b.innerHTML = ''; b.hidden = true; }
+      if (['regime', 'saleStart', 'sensStart', 'sensMode', 'rights', 'signedIn', 'start', 'usBanner', 'presUi', 'loc', 'drawerStyle', 'block', 'cardPos', 'barPos'].includes(g)) { resetDialog(); applyStart(); }
+      if (g === 'regime' && v === 'eu') S.euSaved = JSON.stringify({ c: S.cats, v: S.vendors });
+      paint();
     });
+    window.addEventListener('resize', () => requestAnimationFrame(measure));
+    new ResizeObserver(() => measure()).observe(stage);
 
-    document.addEventListener('keydown', (e) => {
-      if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.target.isContentEditable) return;
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const num = parseInt(e.key, 10);
-      if (num >= 1 && num <= variants.length) setActive(num - 1);
-      else if (e.key === 'ArrowRight') setActive((currentVariant + 1) % variants.length);
-      else if (e.key === 'ArrowLeft') setActive((currentVariant - 1 + variants.length) % variants.length);
-    });
-
-    setActive(0);
-    requestAnimationFrame(() => requestAnimationFrame(() => picker.setAttribute('data-ready', '')));
+    resetDialog();
+    applyStart();
+    paint();
   </script>
 </body>
 </html>
