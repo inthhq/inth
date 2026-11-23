@@ -10,7 +10,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { collectStyleSources } from '../collect-style-sources';
-import type { ClientManifestChunk } from '../prefetch';
+import type { ClientManifestChunk } from '../prefetch/consent-prefetch.model';
 import { preloadInlinedConsentStyles } from '../preload-inlined-consent-styles';
 import type { StyleSourceIndex } from '../style-sources.model';
 

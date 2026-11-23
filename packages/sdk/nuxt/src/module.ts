@@ -54,7 +54,7 @@ import {
 	preloadBrowserResolver,
 	preloadDeferredEngine,
 	stopPrefetchingConsentChunks,
-} from './prefetch';
+} from './prefetch/consent-prefetch.model';
 import { preloadInlinedConsentStyles } from './preload-inlined-consent-styles';
 import { readComposableExports } from './read-composable-exports';
 import type { LegacyProjectUrlEnv } from './runtime/server/apply-legacy-project-url';

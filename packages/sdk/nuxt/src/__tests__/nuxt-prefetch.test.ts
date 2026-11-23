@@ -13,8 +13,8 @@ import {
 	preloadBrowserResolver,
 	preloadConsentBanner,
 	stopPrefetchingConsentChunks,
-} from '../prefetch';
-import type { ClientManifestChunk } from '../prefetch';
+} from '../prefetch/consent-prefetch.model';
+import type { ClientManifestChunk } from '../prefetch/consent-prefetch.model';
 
 /** The shared parts @inth/sdk installs under its `lib/`. */
 const SDK_PARTS = new Set(['core', 'iab', 'schema', 'translations', 'ui']);

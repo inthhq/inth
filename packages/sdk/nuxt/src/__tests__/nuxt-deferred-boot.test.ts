@@ -19,8 +19,8 @@ import type { RuntimeConsentConfig } from '../../../vue/src/runtime/vue-consent-
 import {
 	DEFERRED_ENGINE_MANIFEST_KEY as BUILD_KEY,
 	preloadDeferredEngine,
-} from '../prefetch';
-import type { ClientManifestChunk } from '../prefetch';
+} from '../prefetch/consent-prefetch.model';
+import type { ClientManifestChunk } from '../prefetch/consent-prefetch.model';
 
 const initFor = (rule: Partial<PolicyRule>): InitOutput => ({
 	branding: 'inth',

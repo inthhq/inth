@@ -1,4 +1,4 @@
-import type { ClientManifestChunk } from './prefetch';
+import type { ClientManifestChunk } from './prefetch/consent-prefetch.model';
 import { QUERY_RE, baseName } from './style-sources.model';
 import type { StyleSourceIndex } from './style-sources.model';
 

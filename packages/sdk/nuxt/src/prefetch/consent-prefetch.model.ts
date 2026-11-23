@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 
 import { CORE_CHUNK_MODULES, coreModuleFile } from '@inth/sdk/build';
 
-import { GLOBAL_COMPONENTS } from './global-components';
+import { GLOBAL_COMPONENTS } from '../global-components';
 
 /**
  * The part of a Nuxt client manifest entry this module reads and writes.
