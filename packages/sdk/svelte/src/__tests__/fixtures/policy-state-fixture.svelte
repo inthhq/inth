@@ -3,7 +3,7 @@
 
 	import Dialog from '../../lib/components/deferred-panel.svelte';
 	import Provider from '../../lib/components/inth-provider.svelte';
-	import Link from '../../lib/components/panel-link.svelte';
+	import Link from '../../lib/components/consent-dialog-link.svelte';
 	import Banner from '../../lib/components/prompt/prompt.svelte';
 	import type { ConsentManagerOptions } from '../../lib/consent-manager-options.model';
 	import type { ConsentContextValue } from '../../lib/get-consent-context.svelte';
