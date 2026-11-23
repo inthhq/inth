@@ -31,7 +31,15 @@ const EAGER_CSS = '.banner{color:rebeccapurple}';
  * `@inth/react/static-banner` renders the title from the `/v1/consent/init` answer it
  * is given.
  */
-const createApp = async (): Promise<string> => {
+const createApp = async ({
+	containerSheets = false,
+}: {
+	/**
+	 * The renderer knows each container's sheets (`staticBannerSheets`)
+	 * and lists a drawer sheet besides the banner's.
+	 */
+	containerSheets?: boolean;
+} = {}): Promise<string> => {
 	const root = await mkdtemp(join(tmpdir(), 'inth-static-banner-'));
 	directories.push(root);
 	const react = join(root, 'node_modules/@inth/react');
@@ -73,6 +81,13 @@ const createApp = async (): Promise<string> => {
 			// oxlint-disable-next-line no-template-curly-in-string -- Source text of a module.
 			'\t\t? `<div data-testid="consent-banner-root">${init.translations.translations.cookieBanner.title}</div>`',
 			'\t\t: undefined;',
+			...(containerSheets
+				? [
+						"STATIC_BANNER_SHEETS.push({ id: 'inth-drawer', css: '.drawer{}' });",
+						'export const staticBannerSheets = (markup) =>',
+						'\tmarkup ? STATIC_BANNER_SHEETS.slice(0, 1) : STATIC_BANNER_SHEETS;',
+					]
+				: []),
 			'',
 		].join('\n')
 	);
@@ -218,6 +233,32 @@ describe('consentManifest staticBanner', () => {
 		// The page with no consent manager gets neither.
 		expect(pages['baseline.html']).not.toContain('data-inth-static-banner');
 		expect(pages['baseline.html']).not.toContain('data-precedence="inth"');
+	});
+
+	test("inlines only the shown container's sheets when the renderer can say, and every container's without a banner", async () => {
+		const root = await createApp({ containerSheets: true });
+		const { pages } = await buildApp(
+			root,
+			consentManifest({
+				fetch: fetchManifest(CHOICE_MANIFEST),
+				projectUrl: 'https://consent.example.com',
+			})
+		);
+		const html = pages['index.html'] ?? '';
+		expect(html).toContain(BANNER_TAG);
+		expect(html).toContain('<style data-href="inth-banner"');
+		expect(html).not.toContain('<style data-href="inth-drawer"');
+
+		const bare = await createApp({ containerSheets: true });
+		const { pages: noBanner } = await buildApp(
+			bare,
+			consentManifest({
+				fetch: fetchManifest(NO_BANNER_MANIFEST),
+				projectUrl: 'https://consent.example.com',
+			})
+		);
+		expect(noBanner['index.html']).not.toContain(BANNER_TAG);
+		expect(noBanner['index.html']).toContain('<style data-href="inth-drawer"');
 	});
 
 	test("a page with the static banner loads ConsentBanner's code after its own", async () => {

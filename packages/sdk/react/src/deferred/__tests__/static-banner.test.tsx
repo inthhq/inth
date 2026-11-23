@@ -4,6 +4,7 @@
  * that replaces it: one banner at any time, no second entry, the page's
  * stylesheets adopted, and a tap on the static banner recorded once.
  */
+import { createConsentManifestPolicyPack } from '@inth/sdk/schema/types';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -11,10 +12,15 @@ import { render } from 'vitest-browser-react';
 import { PREFETCH_WINDOW_KEY } from '../../../../core/src/libs/page-globals';
 import { STATIC_BANNER_ATTR as CORE_STATIC_BANNER_ATTR } from '../../../../core/src/libs/static-banner';
 import init from '../../../../core/src/runtime/__tests__/fixtures/hosted-init-gb.json' with { type: 'json' };
+import { resolveManifestInit } from '../../../../core/src/transports/manifest-cache';
 import { ConsentBanner } from '../../components/prompt';
 import { STATIC_BANNER_ATTR } from '../../components/prompt/static-banner-shell';
 import { useSnapshot } from '../../hooks';
-import { renderStaticBanner, STATIC_BANNER_SHEETS } from '../../static-banner';
+import {
+	renderStaticBanner,
+	STATIC_BANNER_SHEETS,
+	staticBannerSheets,
+} from '../../static-banner';
 import { InthProvider } from '../client-provider';
 
 /** What `POST /v1/consent/records` answers a save. */
@@ -151,6 +157,59 @@ test('the build renders the stock banner for an /init answer, and nothing withou
 		} as never)
 	).toBeUndefined();
 	expect(STATIC_BANNER_ATTR).toBe(CORE_STATIC_BANNER_ATTR);
+});
+
+/**
+ * The `/init` answer for an opt-in choice policy whose surface asks for
+ * `container`, resolved from a manifest as the build resolves it.
+ */
+const withContainer = (container: Record<string, unknown>) =>
+	resolveManifestInit({
+		inputs: { country: 'DE', gpc: false, language: 'en', region: null },
+		manifest: {
+			branding: 'inth',
+			policyPacks: [
+				createConsentManifestPolicyPack({
+					id: 'eu',
+					match: { isDefault: true },
+					model: 'opt-in',
+					prompt: 'choice',
+					surface: { container },
+				} as never),
+			],
+			revision: 'static-banner-containers',
+			schemaVersion: 2,
+		} as never,
+	}) as never;
+
+test("a static Card page inlines only the Card's sheets; a client container loads its own", () => {
+	const html = renderStaticBanner(init as never);
+	expect(html).toContain('data-placement="card-');
+	const ids = staticBannerSheets(html).map((sheet) => sheet.id);
+	const all = STATIC_BANNER_SHEETS.map((sheet) => sheet.id);
+	expect(ids.length).toBeLessThan(all.length);
+	expect(ids).toContain('inth-tokens');
+	expect(ids.some((id) => id.includes('card'))).toBe(true);
+	expect(ids.some((id) => id.includes('drawer'))).toBe(false);
+	// No static banner, no way to tell: every container's.
+	expect(staticBannerSheets(undefined)).toBe(STATIC_BANNER_SHEETS);
+
+	const drawer = renderStaticBanner(
+		withContainer({ side: 'bottom', type: 'drawer' })
+	);
+	expect(drawer).toContain('data-placement="drawer-');
+	expect(
+		staticBannerSheets(drawer).some((sheet) => sheet.id.includes('card'))
+	).toBe(false);
+});
+
+test('a side Drawer gets no static banner: its options cannot render without the app', () => {
+	expect(
+		renderStaticBanner(withContainer({ side: 'bottom', type: 'drawer' }))
+	).toContain('data-placement="drawer-bottom"');
+	expect(
+		renderStaticBanner(withContainer({ side: 'end', type: 'drawer' }))
+	).toBeUndefined();
 });
 
 test('the client banner takes the static banner’s place: one banner, same markup, no entry, sheets adopted', async () => {

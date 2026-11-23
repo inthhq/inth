@@ -35,6 +35,14 @@ export interface StaticBannerRenderer {
 	 * that answer shows no choice banner the static one can stand in for.
 	 */
 	renderStaticBanner: (init: InitOutput) => string | undefined;
+	/**
+	 * The sheets a page needs for `markup`: the shared ones and the
+	 * container it shows. A client banner in another container loads that
+	 * container's own. Without markup, every container's, as
+	 * `STATIC_BANNER_SHEETS`. Absent from releases before it, which inline
+	 * every container's.
+	 */
+	staticBannerSheets?: (markup: string | undefined) => readonly StaticBannerSheet[];
 }
 
 /**
