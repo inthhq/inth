@@ -70,3 +70,12 @@ The per-surface sheets are renamed: `banner` is now `parts`, `bar` is `banner`, 
 | The `PromptVariant` and `PromptPosition` types | `ConsentContainer`, `ConsentEdgeStyle`, `BannerEdge`, `CardPosition`, `DrawerSide` and `ResolvedConsentLayout`, now exported from `@inth/vue` |
 
 `trapFocus` in the plugin or module options now applies only to the IAB banner and dialog, as in React. `<ConsentManager>` takes one prop, `disableAnimation`, and hosts the opt-in confirmation while it is mounted. A one-click opt-out opens it on its receipt, unless a standalone `<OptOutConfirmation />` is on the page, which now claims the confirmation as soon as it mounts.
+
+**Svelte and SvelteKit**
+
+- `ConsentBanner` takes `container`, `edgeStyle` and `blockUntilChoice`, and drops `variant`, `position`, `blocking`, `scrollLock`, `trapFocus` and `primaryButton`. Its `models` default to `['opt-in', 'opt-out']`.
+- `ConsentDialog` drops `hideBranding` and `class`. Its `scrollLock` and `trapFocus` apply to the opt-in confirmation it hosts; the dialog itself always blocks.
+- The provider's `scrollLock` and `trapFocus` now apply to the IAB banner and dialog and to the confirmations, not to the consent banner or dialog.
+- `ConsentDialogPanel` from `@inth/svelte/dialog-panel` is the new dialog, without the trigger and confirmations `ConsentDialog` adds.
+- `getHeadlessConsent()`'s `banner` and `dialog` carry the resolved `container` instead of `variant` and `position`.
+- The banner's root no longer carries `data-prompt`, `data-model` or `data-position`; read `data-variant`, `data-placement`, `data-flow` and `data-edge-style`.
