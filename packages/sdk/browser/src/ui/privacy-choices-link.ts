@@ -5,13 +5,11 @@
  * @packageDocumentation
  */
 
-import {
-	resolveConsentDesign,
-	resolvePrivacyChoicesLink,
-} from '@inth/sdk-core';
+import { resolvePrivacyChoicesLink } from '@inth/sdk-core';
 import type { OptOutLinkVariant, Translations } from '@inth/sdk-core';
 import { CPPA_OPT_OUT_ICON } from '@inth/sdk-ui/utils/opt-out-icon';
 
+import { classes } from '../generated/styles';
 import type { ConsentClient } from '../types';
 import { createOptOutIcon } from './opt-out-icon';
 
@@ -47,16 +45,14 @@ export interface PrivacyChoicesLinkHandle {
  *
  * Under an opt-out policy with the `opt-out` right it reads the title for
  * the configured `presentation.optOutLink` (or `variant`), with the
- * California opt-out icon beside the Privacy Choices titles. Under
- * `presentation.design: 'privacy-choices'` it is also the way back into
- * the dialog under an opt-in policy, in the US or the EU: it reads "Your
- * Privacy Choices" there, with no opt-out icon, since no opt-out right is
- * offered.
+ * California opt-out icon beside the Privacy Choices titles. It is also
+ * the way back into the dialog under an opt-in policy, in the US or the
+ * EU: it reads "Your Privacy Choices" there, with no opt-out icon, since
+ * no opt-out right is offered.
  *
- * The button is `hidden` when the active policy gives no opt-out right (on
- * the classic design), before a policy resolves, and while an external
- * consent source owns consent. The Privacy Choices dialog returns focus to
- * it when the element that opened the dialog is gone.
+ * The button is `hidden` before a policy resolves and while an external
+ * consent source owns consent. The dialog returns focus to it when the
+ * element that opened the dialog is gone.
  *
  * @example
  * ```ts
@@ -84,10 +80,7 @@ export const createPrivacyChoicesLink = function createPrivacyChoicesLink(
 		const link = resolvePrivacyChoicesLink(
 			snapshot,
 			snapshot.translations?.translations as Partial<Translations> | undefined,
-			{
-				design: resolveConsentDesign(client.presentation),
-				variant: options.variant ?? client.presentation?.optOutLink,
-			}
+			{ variant: options.variant ?? client.presentation?.optOutLink }
 		);
 		const rights = snapshot.policyRule.rights.join(' ');
 		const key = link
@@ -113,13 +106,15 @@ export const createPrivacyChoicesLink = function createPrivacyChoicesLink(
 		}
 		const label = options.label ?? link.label;
 		if (link.icon) {
-			const icon = createOptOutIcon();
+			const icon = createOptOutIcon(
+				options.noStyle ? undefined : classes.legalLinks.optOutIcon
+			);
 			if (!options.noStyle) {
-				// No stock stylesheet reaches the page's link, the classic
-				// banner's `.optOutIcon` rule included, so the icon carries an
-				// intrinsic size from its glyph: 14px tall at the viewBox's
-				// ratio. Attributes, not a `style` attribute, which a strict
-				// CSP blocks.
+				// The legal links' `.optOutIcon` rule sizes it where the page
+				// loads `@inth/sdk/styles.css`. Without that sheet the icon
+				// still carries an intrinsic size from its glyph: 14px tall at
+				// the viewBox's ratio. Attributes, not a `style` attribute,
+				// which a strict CSP blocks.
 				const [, , width = 30, height = 14] = CPPA_OPT_OUT_ICON.viewBox
 					.split(/\s+/u)
 					.map(Number);

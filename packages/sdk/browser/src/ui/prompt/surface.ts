@@ -1,12 +1,12 @@
-// Promise chains, not async functions, as in `../dialog-surface.ts`.
+// Promise chains, not async functions, as in `./prompt.ts`.
 /* oxlint-disable promise/prefer-await-to-then, promise/prefer-await-to-callbacks, promise/prefer-catch */
 /**
- * The Privacy Choices consent prompt (v6): a Card, Banner or Drawer that
- * shows the same content, copy and decisions in every presentation. The
- * entry modules beside this file (`card.ts`, `bar.ts`, `drawer.ts`) pass
+ * The consent prompt: a Card, Banner or Drawer that shows the same
+ * content, copy and decisions in every container. The entry modules
+ * beside this file (`card.ts`, `banner.ts`, `drawer.ts`) pass
  * the stylesheet and class names of one presentation each, so a page
  * carries only the presentation it renders. Ported from `@inth/react`'s
- * `components/prompt/privacy-choices/surface.tsx`.
+ * `components/prompt/surface.tsx`.
  *
  * @packageDocumentation
  * @internal
@@ -43,30 +43,37 @@ import {
 } from '@inth/sdk-ui/utils';
 import { BRAND_MARKS } from '@inth/sdk-ui/utils/branding';
 
-import { classes as expandStyles } from '../../generated/privacy-choices/expand';
-import { classes as surfaceStyles } from '../../generated/privacy-choices/surface';
+import { classes as expandStyles } from '../../generated/ui/expand';
+import { classes as surfaceStyles } from '../../generated/ui/surface';
 import type { ConsentBannerOptions } from '../../types';
-import { renderLegalLinks } from '../surface';
-import type { SurfaceContext } from '../surface';
-import { activeElementOf, cx, el, focusFirstIn, owned, patch } from './dom';
-import type { PcChild, PcRef } from './dom';
+import type { PartSheet } from '../dialog/sheets';
+import {
+	activeElementOf,
+	cx,
+	el,
+	focusFirstIn,
+	owned,
+	patch,
+} from '../parts/dom';
+import type { PartChild, PartRef } from '../parts/dom';
 import {
 	commitBannerChoice,
 	createPreferenceDraft,
 	getOptOutReceiptData,
 	hasConsentUI,
-} from './engine';
-import type { PrivacyChoicesPanel } from './panel';
-import { importPanel } from './pc-import';
+} from '../parts/engine';
+import { importPanel } from '../parts/load';
 import {
 	consentButton,
 	prefersReducedMotionNow,
 	rightsBundleOf,
 	surfaceBasics,
 	watchPhoneLayout,
-} from './shared';
-import type { PcEnv } from './shared';
-import type { PcSheet } from './sheets';
+} from '../parts/shared';
+import type { PartEnv } from '../parts/shared';
+import { renderLegalLinks } from '../surface';
+import type { SurfaceContext } from '../surface';
+import type { PromptPanel } from './panel';
 
 /** Exits are 160ms; the controllers add their own slack. */
 const EXIT_MS = 160;
@@ -80,11 +87,10 @@ const RETURN_TARGETS = [
 const CARD_LINKS = ['privacyPolicy', 'cookiePolicy'] as const;
 
 /** The first-layer actions the policy allows, in the host's order and groups. */
-export type PrivacyChoicesActionGroups =
-	readonly (readonly PresentationAction[])[];
+export type PromptActionGroups = readonly (readonly PresentationAction[])[];
 
 /** Every action, in the default order, when the host passes none. */
-const DEFAULT_ACTION_GROUPS: PrivacyChoicesActionGroups = [
+const DEFAULT_ACTION_GROUPS: PromptActionGroups = [
 	['reject', 'accept'],
 	['customize'],
 ];
@@ -92,17 +98,17 @@ const DEFAULT_ACTION_GROUPS: PrivacyChoicesActionGroups = [
 /** One presentation's stylesheets and class names. */
 export interface PresentationEntry {
 	/** The shell, then this presentation's rules, in cascade order. */
-	sheets: readonly PcSheet[];
+	sheets: readonly PartSheet[];
 	classes: Readonly<Record<string, string>>;
 }
 
 /** The prompt's resolved container. */
-export type PrivacyChoicesContainer = NonNullable<
+export type PromptContainer = NonNullable<
 	ResolvedConsentPresentation['container']
 >;
 
-/** A mounted Privacy Choices prompt. */
-export interface PrivacyChoicesBanner {
+/** A mounted prompt. */
+export interface PromptSurface {
 	/**
 	 * Reconcile with a snapshot, the container resolved from it and the
 	 * first-layer actions the policy allows. Absent, every action shows in
@@ -110,10 +116,10 @@ export interface PrivacyChoicesBanner {
 	 */
 	sync: (
 		snapshot: ConsentSnapshot,
-		container: PrivacyChoicesContainer,
-		actionGroups?: PrivacyChoicesActionGroups
+		container: PromptContainer,
+		actionGroups?: PromptActionGroups
 	) => void;
-	/** Leave at once, as when the design no longer applies. */
+	/** Leave at once, as when the policy no longer asks for a prompt. */
 	hide: () => void;
 	destroy: () => void;
 }
@@ -151,7 +157,7 @@ const brandMark = function brandMark(
 
 /** The "Consent by [INTH]" tag (BNR-11, §5). */
 const consentTag = function consentTag(
-	env: PcEnv,
+	env: PartEnv,
 	className: string | undefined
 ): HTMLElement | null {
 	const tag = resolveBrandingTag({
@@ -193,15 +199,15 @@ const consentTag = function consentTag(
 };
 
 /**
- * The Privacy Choices prompt for one presentation. Its own draft backs the
+ * The prompt for one container. Its own draft backs the
  * category switches, so Save records exactly what the options show.
  */
 // oxlint-disable-next-line max-lines-per-function, max-statements, complexity -- One controller owns the prompt's lifecycle, focus and keys so they stay in step, as the React component does.
-export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
+export const createPromptSurface = function createPromptSurface(
 	ctx: SurfaceContext,
 	options: ConsentBannerOptions,
 	presentation: PresentationEntry
-): PrivacyChoicesBanner {
+): PromptSurface {
 	const { kernel } = ctx.client;
 	const { noStyle } = ctx;
 	const styles = presentation.classes;
@@ -215,15 +221,15 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 	const { session } = surfaceBasics(kernel, kernel.getSnapshot());
 
 	let snapshot: ConsentSnapshot | null = null;
-	let container: PrivacyChoicesContainer | null = null;
-	let actionGroups: PrivacyChoicesActionGroups = DEFAULT_ACTION_GROUPS;
+	let container: PromptContainer | null = null;
+	let actionGroups: PromptActionGroups = DEFAULT_ACTION_GROUPS;
 	let phase: Phase = 'hidden';
 	let panelReady = false;
 	let panelWanted = false;
 	let panelModule: {
-		createPrivacyChoicesPanel: () => PrivacyChoicesPanel;
+		createPromptPanel: () => PromptPanel;
 	} | null = null;
-	let panel: PrivacyChoicesPanel | null = null;
+	let panel: PromptPanel | null = null;
 	/** A choice was made here: release, announce and return focus as it leaves. */
 	let committed: string | null = null;
 	let pendingPanelFocus = false;
@@ -236,10 +242,10 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 	let render = (): void => undefined;
 
 	let rootEl: HTMLElement | null = null;
-	const shellRef: PcRef = { current: null };
-	const cardRef: PcRef = { current: null };
-	const scrollRef: PcRef = { current: null };
-	const expandRef: PcRef = { current: null };
+	const shellRef: PartRef = { current: null };
+	const cardRef: PartRef = { current: null };
+	const scrollRef: PartRef = { current: null };
+	const expandRef: PartRef = { current: null };
 
 	// The page's status region outlives the prompt, so the outcome of a
 	// choice is read after the prompt leaves (BNR-06). It keeps its node.
@@ -266,7 +272,7 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 		render();
 	});
 
-	const layoutOf = (current: PrivacyChoicesContainer): ResolvedConsentLayout =>
+	const layoutOf = (current: PromptContainer): ResolvedConsentLayout =>
 		phoneLayout.matches() ? current.phone : current.desktop;
 
 	const loadPanel = function loadPanel(): void {
@@ -342,8 +348,8 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 
 	// oxlint-disable-next-line max-lines-per-function, complexity -- The tree mirrors the React component's.
 	const build = function build(
-		env: PcEnv,
-		current: PrivacyChoicesContainer
+		env: PartEnv,
+		current: PromptContainer
 	): HTMLElement {
 		const layout = layoutOf(current);
 		const {
@@ -499,7 +505,7 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 				isPrimary: true,
 				slotKey: 'consentBannerSaveButton',
 			});
-		const actionGroup = (...children: PcChild[]) =>
+		const actionGroup = (...children: PartChild[]) =>
 			slot(
 				el(
 					'div',
@@ -533,7 +539,7 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 				return group.length > 1 ? actionGroup(...buttons) : buttons[0];
 			});
 
-		let footerContent: PcChild[];
+		let footerContent: PartChild[];
 		if (optionsOpen) {
 			footerContent = notice
 				? [okButton()]
@@ -554,9 +560,9 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 		}
 
 		const tag = options.hideBranding ? null : consentTag(env, styles.tag);
-		let panelContent: PcChild[] = [];
+		let panelContent: PartChild[] = [];
 		if (wantPanel && panelModule) {
-			panel ??= panelModule.createPrivacyChoicesPanel();
+			panel ??= panelModule.createPromptPanel();
 			panelContent = panel.render(env, {
 				idPrefix: id,
 				uiSource: 'banner',
@@ -583,7 +589,7 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 			announcementText(state.announcement)
 		);
 
-		let body: PcChild[];
+		let body: PartChild[];
 		if (barCollapsed) {
 			// The collapsed bar takes the same title, description and footer
 			// slots as the card.
@@ -724,7 +730,6 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 					class: cx(noStyle, surfaceStyles.root, styles.root),
 					'data-animation': disableAnimation ? 'off' : undefined,
 					'data-blocking': layout.blocking ? 'true' : undefined,
-					'data-design': 'privacy-choices',
 					'data-edge-style': layout.edgeStyle,
 					'data-expanded': expanded ? 'true' : undefined,
 					'data-flow': layout.flow,
@@ -782,8 +787,8 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 
 	// oxlint-disable-next-line max-statements, complexity -- The React component's effects, in its order.
 	const effects = function effects(
-		env: PcEnv,
-		current: PrivacyChoicesContainer
+		env: PartEnv,
+		current: PromptContainer
 	): void {
 		const layout = layoutOf(current);
 		const allInOne = layout.flow === 'all-in-one';
@@ -948,7 +953,7 @@ export const createPrivacyChoicesSurface = function createPrivacyChoicesSurface(
 				pageRegion = attachLiveRegion(pageStatus);
 			}
 			const { t } = surfaceBasics(kernel, snapshot);
-			const env: PcEnv = {
+			const env: PartEnv = {
 				ctx,
 				draft,
 				kernel,
