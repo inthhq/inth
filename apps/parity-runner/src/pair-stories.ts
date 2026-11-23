@@ -60,26 +60,6 @@ export const pairStories = function pairStories(
 };
 
 /**
- * Frameworks that were compared and that a pair is missing.
- *
- * A pair with fewer entries than the run enables is not automatically
- * wrong: the Storybook apps do not carry the same catalogue (React ships
- * 17 story files, Solid 5, Astro 4), so most pairs are legitimately
- * partial. What matters is that the gap is visible in the report rather
- * than silently absent, and that both comparisons compute it the same way.
- */
-export const missingFrameworks = function missingFrameworks(
-	pair: PairedStory,
-	frameworks: readonly string[]
-): string[] {
-	const ported = portedFrameworks(pair.key);
-	return frameworks.filter(
-		(framework) =>
-			!pair.entries[framework] && (!ported || ported.includes(framework))
-	);
-};
-
-/**
  * Stories a port has reached only some frameworks with, keyed by story-key
  * prefix, with the frameworks that ship them. The Privacy Choices design
  * lands in React first and in the other adapters in later changes; until a
@@ -103,6 +83,26 @@ export const portedFrameworks = function portedFrameworks(
 		key.startsWith(candidate)
 	);
 	return prefix === undefined ? null : (NOT_YET_PORTED[prefix] ?? null);
+};
+
+/**
+ * Frameworks that were compared and that a pair is missing.
+ *
+ * A pair with fewer entries than the run enables is not automatically
+ * wrong: the Storybook apps do not carry the same catalogue (React ships
+ * 17 story files, Solid 5, Astro 4), so most pairs are legitimately
+ * partial. What matters is that the gap is visible in the report rather
+ * than silently absent, and that both comparisons compute it the same way.
+ */
+export const missingFrameworks = function missingFrameworks(
+	pair: PairedStory,
+	frameworks: readonly string[]
+): string[] {
+	const ported = portedFrameworks(pair.key);
+	return frameworks.filter(
+		(framework) =>
+			!pair.entries[framework] && (!ported || ported.includes(framework))
+	);
 };
 
 /** `pair` without the entries of frameworks its story is not ported to. */
