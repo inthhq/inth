@@ -24,7 +24,7 @@ Next.js and TanStack Start use the React code from `@inth/nextjs` or `@inth/tans
 
 ![Full-width white consent bar along the bottom edge](../assets/v3/bottom-bar.png)
 
-In React and Vue, set `container` to `{ type: 'banner', edge: 'bottom' }` to render a full-width bottom banner. Astro and Svelte take `variant="bar"` and `position="bottom"`.
+In React, Vue and Svelte, set `container` to `{ type: 'banner', edge: 'bottom' }` on `ConsentBanner` to render a full-width bottom banner. Astro sets the same `container` in `presentation.prompt`.
 
 <Tabs items={['React', 'Vue', 'Astro', 'Svelte']}>
   <Tab value="React">

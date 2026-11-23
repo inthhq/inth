@@ -171,7 +171,9 @@ a custom middleware or your own components:
 | `buildColorSchemeScript(colorScheme)` | The first-paint color-scheme script, or an empty string |
 | `buildBannerRevealScript(storageConfig, testId)` | The inline script that shows a prerendered banner to visitors with nothing stored |
 | `markConfigEmitted(Astro.locals)` | Claims the one boot payload per request. Returns `true` for the first caller |
-| `resolvePromptModel(input)` and `resolveIABPromptModel(input)` | The copy, actions and class names of the banner and the IAB banner |
+| `resolvePromptModel(input)` and `resolveIABPromptModel(input)` | The copy, actions, container and class names of the consent prompt and the IAB banner |
+| `renderPromptHTML(model, hidden)` | The collapsed prompt and its page status region as HTML, as `ConsentBanner` renders them |
+| `promptContainerType(snapshot, options)` and `promptFirstPaintSheets(container)` | The container the prompt renders in for a snapshot, and the stylesheets a page inlines for it |
 | `snapshotFromConfig(config)` | Derives a consent snapshot from a resolved configuration |
 
 `resolveConsentContext` takes the integration options already resolved. Get
