@@ -309,7 +309,7 @@ export const translations: CompleteTranslations = {
 		rejectAll: 'Alle ablehnen',
 		rightsAllowed: '{rights} erlaubt.',
 		rightsNotAllowed: '{rights} nicht erlaubt.',
-		rightsOptedOut: 'Widerspruch gegen {rights} gespeichert.',
+		rightsOptedOut: 'Widerspruch gegen {rights} eingelegt.',
 		saleAllowed: '{business} darf {rights}.',
 		saleGroupOptIn: 'Erlauben: {rights}',
 		saleGroupSaleAndTargetedAds:

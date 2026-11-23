@@ -229,7 +229,7 @@ export const translations: CompleteTranslations = {
 		barDescription:
 			'Nous utilisons des cookies pour améliorer votre expérience et analyser le trafic.',
 		businessFallback: 'ce site',
-		choiceRecorded: 'Choix enregistré.',
+		choiceRecorded: 'Choix pris en compte.',
 		choicesSaved:
 			'Choix enregistrés. Vous pouvez les modifier dans « Vos choix de confidentialité ».',
 		choose: 'Choisir',

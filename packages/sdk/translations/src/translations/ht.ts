@@ -229,7 +229,7 @@ export const translations: CompleteTranslations = {
 		barDescription:
 			'Nou itilize cookie pou amelyore eksperyans ou epi analize trafik.',
 		businessFallback: 'sit sa a',
-		choiceRecorded: 'Chwa a anrejistre.',
+		choiceRecorded: 'Chwa a fèt.',
 		choicesSaved:
 			'Chwa yo anrejistre. Ou ka chanje yo nan Chwa Konfidansyalite Ou.',
 		choose: 'Chwazi',

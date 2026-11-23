@@ -234,7 +234,7 @@ export const translations: CompleteTranslations = {
 		barDescription:
 			'Deneyiminizi iyileştirmek ve trafiği analiz etmek için çerezler kullanıyoruz.',
 		businessFallback: 'bu site',
-		choiceRecorded: 'Seçim kaydedildi.',
+		choiceRecorded: 'Seçim alındı.',
 		choicesSaved:
 			'Seçimler kaydedildi. Bunları Gizlilik Tercihleriniz bölümünden değiştirebilirsiniz.',
 		choose: 'Seç',
