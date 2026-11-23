@@ -82,9 +82,11 @@
 		gap: var(--inth-space-sm);
 	}
 
-	/* Buttons sit in the row or in a group; the group is not a button. */
-	.root .actions > :not(.actionGroup),
-	.root .actions > .actionGroup > * {
+	/* Buttons sit in the row or in a group; the group is not a button.
+	   The row in the selector outweighs the stock button's size rule, so
+	   the bar's padding holds whichever sheet a page loads last. */
+	.root .row .actions > :not(.actionGroup),
+	.root .row .actions > .actionGroup > * {
 		min-height: 32px;
 		padding: calc(var(--inth-space-xs) * 1.25) calc(var(--inth-space-sm) * 1.5);
 	}

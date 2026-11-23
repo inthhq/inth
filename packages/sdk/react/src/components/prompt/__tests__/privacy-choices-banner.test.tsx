@@ -394,6 +394,10 @@ describe('card:', () => {
 			'role',
 			'status'
 		);
+		// Still visually hidden once the prompt has gone.
+		expect(getComputedStyle(must('consent-banner-announcement')).position).toBe(
+			'absolute'
+		);
 		expect(document.activeElement).toBe($('consent-dialog-trigger'));
 		expect(probe.snapshot?.explicitChoice?.categories?.marketing?.value).toBe(
 			false

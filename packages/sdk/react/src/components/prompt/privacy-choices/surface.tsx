@@ -578,10 +578,16 @@ const SurfaceContent = ({
 		/>
 	);
 	if (!showing) {
+		// The stylesheets stay, so the page status region stays visually
+		// hidden while the prompt is. The region keeps its place, and so
+		// its node.
 		return (
 			<>
 				{pageStatus}
-				{null}
+				<SurfaceStyles
+					sheets={sheets}
+					noStyle={noStyle}
+				/>
 			</>
 		);
 	}
