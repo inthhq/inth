@@ -846,6 +846,71 @@ describe('wave C round 1', () => {
 		expect(root).toHaveClass('host-dialog');
 	});
 
+	test('the root takes consentDialogOverlay with consentDialog, as dialog.overlay does in React', async () => {
+		await startConsentPage({
+			privacyChoicesLink: true,
+			region: 'us-opt-out',
+			slots: {
+				consentDialog: { className: 'host-dialog', style: { opacity: 0.9 } },
+				consentDialogOverlay: {
+					className: 'host-overlay',
+					style: { opacity: 0.4, outlineWidth: 3 },
+				},
+			},
+		});
+		await openDialog();
+		const root = must('consent-dialog-root');
+		const stock = root.classList.length;
+		expect(root.getAttribute('part')?.split(' ')).toEqual(
+			expect.arrayContaining(['consentDialog', 'consentDialogOverlay'])
+		);
+		expect(root).toHaveClass('host-dialog', 'host-overlay');
+		// The stock backdrop class stays; the container wins a shared style.
+		expect(stock).toBeGreaterThan(2);
+		expect(root.style.opacity).toBe('0.9');
+		expect(root.style.outlineWidth).toBe('3px');
+	});
+
+	test.each(['consentDialog', 'consentDialogOverlay'] as const)(
+		'a noStyle %s drops only the stock backdrop class, not the other slot',
+		async (withNoStyle) => {
+			await startConsentPage({
+				privacyChoicesLink: true,
+				region: 'us-opt-out',
+				slots: {
+					consentDialog: {
+						className: 'host-dialog',
+						noStyle: withNoStyle === 'consentDialog',
+					},
+					consentDialogOverlay: {
+						className: 'host-overlay',
+						noStyle: withNoStyle === 'consentDialogOverlay',
+					},
+				},
+			});
+			await openDialog();
+			const root = must('consent-dialog-root');
+			expect([...root.classList].sort()).toEqual([
+				'host-dialog',
+				'host-overlay',
+			]);
+		}
+	);
+
+	test('the intro takes the consentDialogDescription slot and part, as description.dialog does in React', async () => {
+		await startConsentPage({
+			privacyChoicesLink: true,
+			region: 'us-opt-out',
+			slots: { consentDialogDescription: 'host-intro' },
+		});
+		await openDialog();
+		const intro = must('consent-dialog-intro');
+		expect(intro).toHaveClass('host-intro');
+		expect(intro.getAttribute('part')?.split(' ')).toContain(
+			'consentDialogDescription'
+		);
+	});
+
 	test('[FOC-03] focus return skips an opener and a link that cannot take focus', async () => {
 		await mount();
 		await openDialog();

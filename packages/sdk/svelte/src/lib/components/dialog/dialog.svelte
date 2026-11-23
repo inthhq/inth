@@ -98,7 +98,7 @@
 	import CategoryGroup from '../parts/category-group.svelte';
 	import { createSurfaceDraft } from '../parts/draft.svelte';
 	import Icon from '../parts/icon.svelte';
-	import { cx, part } from '../parts/parts';
+	import { cx, foldSlots, part } from '../parts/parts';
 	import { takeReceiptFocus } from '../parts/receipt-focus';
 	import RightsReceipt from '../parts/receipt.svelte';
 	import SaleRightsRow from '../parts/rights-row.svelte';
@@ -496,9 +496,15 @@
 	const preferencesRowPart = $derived(
 		part('consentDialogPreferencesRow', theme.theme, styles.navRow, noStyle)
 	);
-	// The dialog root takes the `consentDialog` slot.
+	// The root is the backdrop and the dialog's surface: it takes the
+	// `consentDialog` slot and `consentDialogOverlay`, as React does.
 	const backdropPart = $derived(
-		part('consentDialog', theme.theme, styles.backdrop, noStyle)
+		part(
+			'consentDialog',
+			foldSlots(theme.theme, ['consentDialogOverlay', 'consentDialog']),
+			styles.backdrop,
+			noStyle
+		)
 	);
 
 	const vendorCategory = $derived(
