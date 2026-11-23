@@ -325,6 +325,17 @@ describe('resolveLayout: named rules', () => {
 		}
 	);
 
+	it('reports an edge style that cannot be printed without throwing', () => {
+		const result = resolveLayout({
+			...EU,
+			edgeStyle: { toString: null } as never,
+		});
+		expect(result.edgeStyle).toBe('inset');
+		expect(result.diagnostics.map((d) => d.code)).toEqual([
+			'invalid-edge-style',
+		]);
+	});
+
 	it('uses a 640px phone breakpoint', () => {
 		expect(PHONE_LAYOUT_QUERY).toBe('(max-width: 640px)');
 	});
@@ -512,6 +523,39 @@ describe('resolveConsentPresentation: container', () => {
 		expect(container?.phone.diagnostics.map((d) => d.code)).toEqual([
 			'legacy-presentation',
 		]);
+	});
+
+	it('reports a null container on both viewports', () => {
+		const { container } = resolveConsentPresentation({
+			policy: choice,
+			presentation: { prompt: { container: null as never, variant: 'bar' } },
+			surface: 'prompt',
+		});
+		expect(container?.desktop.placement).toBe('card-bottom-left');
+		expect(container?.desktop.diagnostics.map((d) => d.code)).toEqual([
+			'invalid-container',
+		]);
+		expect(container?.phone.diagnostics.map((d) => d.code)).toEqual([
+			'invalid-container',
+		]);
+	});
+
+	it('[BNR-13] a legacy wall under an opt-out model never blocks in the container', () => {
+		const result = resolveConsentPresentation({
+			policy: normalizePolicyRule({
+				id: 'opt-out-choice',
+				match: { fallback: true },
+				model: 'opt-out',
+				prompt: 'choice',
+			}),
+			presentation: { prompt: { variant: 'wall' } },
+			surface: 'prompt',
+		});
+		expect(result.blocking).toBe(true);
+		expect(result.container?.desktop).toMatchObject({
+			blocking: false,
+			placement: 'card-bottom-left',
+		});
 	});
 
 	it('lets a component override pick the container', () => {

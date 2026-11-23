@@ -313,7 +313,10 @@ const resolveEdgeStyle = function resolveEdgeStyle(
 	) {
 		diagnostics.push({
 			code: 'invalid-edge-style',
-			message: `Edge style "${String(requested)}" is not valid; using "inset".`,
+			message:
+				typeof requested === 'string'
+					? `Edge style "${requested}" is not valid; using "inset".`
+					: 'The edge style is not valid; using "inset".',
 		});
 		return 'inset';
 	}

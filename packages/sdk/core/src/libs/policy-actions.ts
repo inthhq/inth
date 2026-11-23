@@ -190,6 +190,11 @@ export interface ResolvedConsentPresentation {
 	 * for phone (see `PHONE_LAYOUT_QUERY`). Built from `container`, or from
 	 * the legacy `variant` and `position` when `container` is absent. `null`
 	 * on the preferences surface.
+	 *
+	 * Renderers that read `container` take its `blocking`, not the top-level
+	 * `blocking`. The two can differ: under an opt-out model a legacy `wall`
+	 * still sets the top-level value, while the container falls back to a
+	 * bottom-left card that never blocks (BNR-13).
 	 */
 	container: {
 		desktop: ResolvedConsentLayout;
@@ -414,8 +419,9 @@ const resolvePromptContainer = function resolvePromptContainer(
 		(options.variant !== undefined || options.position !== undefined)
 			? containerFromLegacyPrompt(geometry)
 			: undefined;
+	// Forward a malformed `null` so the resolver reports it.
 	const container: ConsentContainer | undefined =
-		options.container ?? legacy?.container;
+		options.container === undefined ? legacy?.container : options.container;
 	const input = {
 		blockUntilChoice: options.blockUntilChoice ?? requestedBlocking(options),
 		container,
@@ -425,8 +431,9 @@ const resolvePromptContainer = function resolvePromptContainer(
 	};
 	const desktop = resolveLayout({ ...input, viewport: 'desktop' });
 	const phone = resolveLayout({ ...input, viewport: 'phone' });
-	desktop.diagnostics.unshift(...(legacy?.diagnostics ?? []));
-	phone.diagnostics.unshift(...(legacy?.diagnostics ?? []));
+	const legacyDiagnostics = legacy?.diagnostics ?? [];
+	desktop.diagnostics.unshift(...legacyDiagnostics.map((d) => ({ ...d })));
+	phone.diagnostics.unshift(...legacyDiagnostics.map((d) => ({ ...d })));
 	return { desktop, phone };
 };
 
