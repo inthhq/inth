@@ -95,6 +95,16 @@ describe('verifyReleaseSignature', () => {
 		).toBe(true);
 	});
 
+	test('ignores an empty query, as the registry signs the URL without it', async () => {
+		expect(
+			await verifyReleaseSignature({
+				integrity: INTEGRITY,
+				signature: signed(),
+				url: 'https://cdn.vendor.example/vendor.js?',
+			})
+		).toBe(true);
+	});
+
 	test("resolves a path against the page's base URL, as the browser does", async () => {
 		vi.stubGlobal('location', { href: 'https://shop.example/cart' });
 		vi.stubGlobal('document', { baseURI: 'https://assets.example/' });

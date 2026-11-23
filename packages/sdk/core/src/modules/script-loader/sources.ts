@@ -61,6 +61,12 @@ export interface ResolvedScripts {
 	scripts: Script[];
 	/** Scripts held back, unchanged. */
 	held: HeldScript[];
+	/**
+	 * When the release signature of each script that loads from a signed
+	 * registry entry expires, as a time in milliseconds. A script must not
+	 * mount from it after that, though it resolved before.
+	 */
+	expiresAt: Map<Script, number>;
 }
 
 const SRI_STRENGTH: Readonly<Record<string, number>> = {
@@ -262,7 +268,11 @@ export const createScriptSourceResolver = function createScriptSourceResolver(
 		return copy;
 	};
 	return (scripts) => {
-		const resolved: ResolvedScripts = { held: [], scripts: [] };
+		const resolved: ResolvedScripts = {
+			expiresAt: new Map(),
+			held: [],
+			scripts: [],
+		};
 		const state = registry?.();
 		for (const script of scripts) {
 			const listed =
@@ -297,8 +307,14 @@ export const createScriptSourceResolver = function createScriptSourceResolver(
 			const reason = heldReason(script, entry, verify);
 			if (reason) {
 				resolved.held.push({ reason, script });
+			} else if (entry) {
+				const copy = applyOnce(script, entry);
+				resolved.scripts.push(copy);
+				if (entry.signature) {
+					resolved.expiresAt.set(copy, Date.parse(entry.signature.expiresAt));
+				}
 			} else {
-				resolved.scripts.push(entry ? applyOnce(script, entry) : script);
+				resolved.scripts.push(script);
 			}
 		}
 		return resolved;

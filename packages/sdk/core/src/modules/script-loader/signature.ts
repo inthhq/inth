@@ -164,8 +164,8 @@ const importKey = (spki: string): Promise<CryptoKey> => {
  * reads as https, the only scheme the registry serves. A path, such as
  * `/scripts/at.js`, resolves against the page's base URL, as the browser
  * resolves it; a server has no page, so it leaves that entry to the browser.
- * The `href` has no fragment and no trailing dot on its host, neither of
- * which changes the file a server sends.
+ * The `href` has no fragment, no empty query and no trailing dot on its
+ * host, none of which changes the file a server sends.
  */
 const vendorHref = (src: string): string | null => {
 	try {
@@ -174,6 +174,11 @@ const vendorHref = (src: string): string | null => {
 			globalThis.document?.baseURI ?? globalThis.location?.href
 		);
 		url.hash = '';
+		// An empty query names the same file; the registry signs the URL
+		// without its `?`
+		if (url.search === '') {
+			url.search = '';
+		}
 		if (url.hostname.endsWith('.')) {
 			url.hostname = url.hostname.slice(0, -1);
 		}

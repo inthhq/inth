@@ -1540,6 +1540,54 @@ describe('experimentalScriptRegistry', () => {
 			}
 		);
 
+		test('mounts no script whose signature expired between its check and consent', async () => {
+			const HOUR_MS = 60 * 60 * 1000;
+			const expiresAt = new Date(Date.now() + HOUR_MS).toISOString();
+			const verify = vi.spyOn(crypto.subtle, 'verify');
+			const onDebug = vi.fn();
+			const runtime = startWith({
+				experimentalScriptRegistry: { requireSignatures: true },
+				mode,
+				prefetch: prefetched(
+					signedEntry({
+						expiresAt,
+						signedAt: new Date(Date.now() - HOUR_MS).toISOString(),
+						url: `${VENDOR_SRC}?expiring`,
+					})
+				),
+				scriptLoader: { onDebug },
+				scripts: [
+					integrationScript({
+						category: 'measurement',
+						src: `${VENDOR_SRC}?expiring`,
+					}),
+				],
+			});
+			// The check settles while measurement is denied, so nothing mounts
+			await vi.waitFor(() => expect(verify).toHaveBeenCalled());
+			await new Promise((resolve) => {
+				setTimeout(resolve, 0);
+			});
+			expect(srcs()).toEqual([]);
+			verify.mockRestore();
+
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				vi.setSystemTime(new Date(expiresAt));
+				await runtime.kernel.commands.save('all');
+				await new Promise((resolve) => {
+					setTimeout(resolve, 0);
+				});
+				expect(srcs()).toEqual([]);
+				expect(debugMessages(onDebug)).toContainEqual(
+					expect.stringContaining('without a release signature Inth can verify')
+				);
+			} finally {
+				vi.useRealTimers();
+				runtime.dispose();
+			}
+		});
+
 		test('refuses an entry with no signature when signatures are required', async () => {
 			const onDebug = vi.fn();
 			const runtime = startWith({

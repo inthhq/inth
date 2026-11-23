@@ -168,9 +168,14 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	/** Scripts registered for consent but not mounted; see `HeldScript`. */
 	let held: HeldScript[] = [];
 	const refusedIds = new Set<string>();
+	/** When each script resolved from a signed registry entry stops being valid. */
+	const signatureExpiry = new WeakMap<Script, number>();
 	/** Resolve a list and keep what it holds back; returns what mounts. */
 	const resolveSources = (scripts: readonly Script[]): Script[] => {
 		const resolved = withSources(scripts);
+		for (const [script, expiresAt] of resolved.expiresAt) {
+			signatureExpiry.set(script, expiresAt);
+		}
 		// A held script is checked once it resolves, against the URL it then
 		// loads from, so it is not compared with its vendor URL meanwhile.
 		validateScripts(resolved.scripts);
@@ -475,6 +480,20 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 					typeof script.onConsentChange === 'function'
 				)
 			) {
+				continue;
+			}
+
+			// A script resolved while its signature was current may first mount
+			// later, once consent arrives. Past the expiry the list is resolved
+			// again instead, and the verifier holds the script back
+			const expiresAt = signatureExpiry.get(script);
+			if (
+				eligible &&
+				expiresAt !== undefined &&
+				!loadedElements.has(script.id) &&
+				!(Date.now() < expiresAt)
+			) {
+				pendingScripts ??= configured;
 				continue;
 			}
 
