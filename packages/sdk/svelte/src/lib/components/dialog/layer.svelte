@@ -99,6 +99,9 @@
 	const titlePart = $derived(
 		part('consentDialogTitle', theme.theme, styles.title, noStyle)
 	);
+	const introPart = $derived(
+		part('consentDialogDescription', theme.theme, styles.intro, noStyle)
+	);
 	const contentPart = $derived(
 		part(
 			'consentDialogContent',
@@ -148,7 +151,8 @@
 			</h2>
 			{#if intro}
 				<p
-					class={cx(noStyle, styles.intro)}
+					class={introPart.class}
+					style={introPart.style}
 					data-testid={nested ? undefined : 'consent-dialog-intro'}
 				>
 					{intro}
