@@ -29,7 +29,7 @@ import type {
 	IABPromptProps,
 } from '../banner/iab-prompt.model';
 import { IAB_PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
-import { element, hiddenBanner, readSpot, renderBrandingTag } from './dom';
+import { element, hiddenBanner, readSpot, renderBrandingTag } from './render-branding-tag';
 
 /** Site options the IAB banner reads. */
 export interface RenderIABPromptOptions {
