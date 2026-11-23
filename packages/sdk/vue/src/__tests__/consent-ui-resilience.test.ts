@@ -9,6 +9,7 @@ import { openOptInConfirmation } from '@inth/sdk/surface-actions';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { defineComponent, h, nextTick, ref } from 'vue';
 
+import ConsentDialogLink from '../runtime/components/consent-dialog-link.vue';
 import ConsentDialog from '../runtime/components/dialog/dialog.vue';
 import { useOptOutReceiptData } from '../runtime/components/parts/use-surface-session';
 import {
@@ -100,6 +101,25 @@ describe('[C2] Your Privacy Choices', () => {
 			region: 'us-opt-out',
 		});
 		const icon = must('privacy-choices-link').querySelector('svg');
+		expect(icon?.getAttribute('height')).toBe('14');
+		expect(icon?.getAttribute('width')).toBe('30');
+	});
+
+	test('ConsentDialogLink sizes the opt-out icon as PrivacyChoicesLink does', async () => {
+		await mount({
+			config: {
+				presentation: {
+					optOutLink: 'privacy-choices',
+					prompt: { container: { type: 'card' } },
+				},
+			},
+			page: () => h(ConsentDialogLink, { right: 'opt-out' }),
+			region: 'us-opt-out',
+		});
+		// A page that loads no sheet sizing it would let it fill the line.
+		const icon = must('consent-dialog-link').querySelector(
+			'svg[aria-hidden="true"]'
+		);
 		expect(icon?.getAttribute('height')).toBe('14');
 		expect(icon?.getAttribute('width')).toBe('30');
 	});
