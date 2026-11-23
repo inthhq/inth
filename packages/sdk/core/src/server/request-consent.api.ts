@@ -65,7 +65,6 @@ import { createJourneyId } from '../libs/journey.store';
 import type { ConsentJourneyOption, JourneyState } from '../libs/journey.store';
 import {
 	DEFAULT_RESOLVE_TIMEOUT_MS,
-	fetchCachedManifest,
 	ManifestUnavailableError,
 	withResolutionBudget,
 } from '../libs/manifest-cache-runtime';
@@ -73,6 +72,7 @@ import type {
 	ManifestCache,
 	ManifestFetch,
 } from '../libs/manifest-cache-runtime';
+import { fetchCachedManifest } from '../libs/manifest-cache-runtime.api';
 import { resolveSessionReportProjectUrl } from '../libs/session-report.model';
 import { trimSlash } from '../libs/trim-slash';
 import { warnManifestFallback } from '../libs/warn-manifest-fallback';

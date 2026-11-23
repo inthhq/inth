@@ -64,7 +64,6 @@ export {
 	createManifestCache,
 	DEFAULT_RESOLVE_TIMEOUT_MS,
 	createManifestRequestUrl,
-	fetchCachedManifest,
 	getManifestSMaxAge,
 	getManifestStaleWhileRevalidate,
 	MANIFEST_DEDUPE_TTL_SECONDS,
@@ -73,6 +72,7 @@ export {
 	resolveManifestSourceUrl,
 	withResolutionBudget,
 } from '../libs/manifest-cache-runtime';
+export { fetchCachedManifest } from '../libs/manifest-cache-runtime.api';
 export type {
 	ConsentProxyRouteMethodHandlers,
 	ConsentRouteMethodHandlers,
