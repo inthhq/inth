@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { useConsentKernel } from '#inth/composables';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
+
+import { useConsentKernel } from '#inth/composables';
 
 defineProps<{
 	scenario:
