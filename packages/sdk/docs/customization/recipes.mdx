@@ -22,7 +22,7 @@ Next.js and TanStack Start use the React code from `@inth/nextjs` or `@inth/tans
 
 ## Bottom bar
 
-![Full-width white consent bar along the bottom edge](../assets/v3/bottom-bar.png)
+![Full-width white consent banner along the bottom edge with Reject All, Accept All, and Customize](../assets/v3/bottom-bar.png)
 
 In React, Vue and Svelte, set `container` to `{ type: 'banner', edge: 'bottom' }` on `ConsentBanner` to render a full-width bottom banner. Astro sets the same `container` in `presentation.prompt`.
 
@@ -56,7 +56,7 @@ The HTML script tag uses `presentation.prompt`. See [customize the script tag](/
 
 ## Branded card
 
-![Bottom-left floating card with off-white surface, serif typography, 4px corners, and green primary buttons](../assets/v3/brand-card.png)
+![Bottom-left card with an off-white surface, serif typography, 4px corners, and a green Customize button](../assets/v3/brand-card.png)
 
 Theme tokens update colors, fonts, and corner radius without changing markup. This theme sets a green primary color, off-white surface, serif font, and 4px corners, and fills every policy primary action.
 
@@ -74,13 +74,13 @@ Render `ConsentTheme` in a Server Component or root layout so token CSS arrives 
 
 The preference dialog reads the same tokens:
 
-![Privacy Settings dialog styled with the same off-white surface, serif type, and green buttons](../assets/v3/brand-preferences.png)
+![Privacy settings dialog styled with the same off-white surface, serif type, and green Save choices button](../assets/v3/brand-preferences.png)
 
 See [theme tokens](/docs/customization/tokens) and your framework's customize guide for [Vue](/docs/frameworks/vue/customize), [Svelte](/docs/frameworks/svelte/customize), [Astro](/docs/frameworks/astro/customize), or [HTML](/docs/frameworks/html/customize).
 
 ## Choice wall
 
-![Centered consent card over a dimmed page backdrop with Reject All, Accept All, and Customize buttons](../assets/v3/choice-wall.png)
+![Centred consent card over a dimmed, blurred page with Reject All, Accept All, and Customize buttons](../assets/v3/choice-wall.png)
 
 A centred Card, `container={{ type: 'card', position: 'center' }}`, sits over a backdrop, locks scroll, and keeps focus inside until the visitor chooses. Use it when your policy requires a choice before access.
 
@@ -90,7 +90,7 @@ A centred Card always blocks. Notices never block, so a centred Card on a notice
 
 ## Slim bar
 
-![Single-row white bottom bar with heading, copy, and buttons inline](../assets/v3/slim-bar.png)
+![Single-row white bottom banner with copy and buttons inline](../assets/v3/slim-bar.png)
 
 The slim bar places heading, copy, and actions on one row. Svelte passes slot classes and preserves required policy actions. In React and Vue, use the stock banner with `container` set to `{ type: 'banner', edge: 'bottom' }`, or render your own markup with the [headless bar](#headless-bar).
 
