@@ -11,7 +11,7 @@ Add a consent banner to a React Vite app. The browser resolves each visitor's po
 
   1. Check that the app is a React app built with Vite. If it uses Next.js or TanStack Start, stop and tell me.
   2. Install `@inth/react` and `@inth/integrations`. Read `node_modules/@inth/react/AGENTS.md`, then follow the React quickstart it links to, in order. Do not guess the API from memory.
-  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
+  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my project URL. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
   4. Add `consentManifest()` from `@inth/react/build` to `vite.config.ts`. Add nothing to `.gitignore`.
   5. Create `src/consent.tsx` with `InthProvider`, `ConsentBanner`, `ConsentDialog`, and a footer `ConsentDialogLink`. Move every analytics and marketing script into `options.scripts` with the matching helper from `@inth/integrations`, carry over settings such as PostHog's `region` or `apiHost`, and remove old loaders from `index.html` or app code. If a vendor has no helper, tell me.
   6. Wrap `<App />` in `<Consent>` in `src/main.tsx` and wrap third-party iframes in `ConsentGate`.
@@ -36,10 +36,10 @@ Components render their own `<style>` elements, so no stylesheet import is neede
 Add your Inth project URL, including any path prefix, to `.env` and your host's build settings:
 
 ```sh title=".env"
-VITE_INTH_PROJECT_URL=https://example-inth.inth.app
+VITE_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-This URL is public. `https://example-inth.inth.app` is a demo project for testing. Vite inlines it at build time, so rebuild after changing it. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`, which is read as a fallback if unset.
+This URL is public. Vite inlines it at build time, so rebuild after changing it. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`, which is read as a fallback if unset.
 
 ## Add the Vite plugin
 

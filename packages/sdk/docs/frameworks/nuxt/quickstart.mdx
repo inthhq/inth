@@ -13,7 +13,7 @@ allows them.
 
   1. Check that the app runs on a Nuxt server (`nuxt build`). If it uses `nuxt generate` for static hosting or sets `ssr: false`, stop and tell me.
   2. Install `@inth/nuxt` and `@inth/integrations`. Read `node_modules/@inth/nuxt/AGENTS.md`, then follow the Nuxt quickstart it links to, in order. Do not guess the API from memory.
-  3. Set `NUXT_PUBLIC_INTH_PROJECT_URL` in `.env`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `NUXT_PUBLIC_INTH_PROJECT_URL` wins over any legacy `NUXT_PUBLIC_C15T_BACKEND_URL`.
+  3. Set `NUXT_PUBLIC_INTH_PROJECT_URL` in `.env`. Ask me for my project URL. `NUXT_PUBLIC_INTH_PROJECT_URL` wins over any legacy `NUXT_PUBLIC_C15T_BACKEND_URL`.
   4. Register `'@inth/nuxt'` in `modules` in `nuxt.config.ts`. Keep `scripts` and `callbacks` out of `nuxt.config.ts`.
   5. Add `InthProvider` and `ConsentDialogLink` to `app/app.vue`, outside `<NuxtPage />`. Wrap third-party iframes in `ConsentGate`.
   6. Register every analytics and marketing script under `inth.scripts` in `app/app.config.ts` with the matching helper from `@inth/integrations`, carry over settings such as PostHog's `region` or `apiHost`, and remove old loaders including `@nuxt/scripts` trackers and `nuxt-gtag`. If a vendor has no helper, tell me.
@@ -43,10 +43,10 @@ Add your Inth project URL (including any path prefix) to `.env` and your
 host's build settings:
 
 ```sh title=".env"
-NUXT_PUBLIC_INTH_PROJECT_URL=https://example-inth.inth.app
+NUXT_PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-This URL is public; `https://example-inth.inth.app` is a demo project.
+This URL is public.
 `NUXT_PUBLIC_INTH_PROJECT_URL` wins over any legacy
 `NUXT_PUBLIC_C15T_BACKEND_URL`, which is read as a fallback if unset.
 

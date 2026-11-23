@@ -11,7 +11,7 @@ Add a consent banner and preference dialog to a Svelte 5 Vite app. The browser r
 
   1. Check that the app uses Svelte 5.20 or later with Vite and without SvelteKit. If it uses SvelteKit, stop and tell me.
   2. Install `@inth/svelte` and `@inth/integrations`. Read `node_modules/@inth/svelte/AGENTS.md`, then follow the Svelte quickstart it links to, in order. Do not guess the API from memory.
-  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
+  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my project URL. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
   4. Add `consentManifest()` from `@inth/svelte/vite` to `plugins` in `vite.config.ts`. Add nothing to `.gitignore`: the plugin writes no files to the project.
   5. In `src/App.svelte`, wrap the app in `InthProvider` with `mode={hosted()}` and move analytics and marketing scripts into `scripts` using helpers from `@inth/integrations`. Carry over vendor settings such as PostHog's `region` or `apiHost`, and remove old `<script>` tags or SDK imports. If a vendor has no helper, tell me.
   6. Render `ConsentBanner`, `ConsentDialog`, and a `ConsentDialogLink` in the footer inside `InthProvider`.
@@ -36,10 +36,10 @@ Components inject their own styles on first render, so there is no stylesheet to
 Add your Inth project URL, including any path prefix, to `.env` and your host's build settings:
 
 ```sh title=".env"
-VITE_INTH_PROJECT_URL=https://example-inth.inth.app
+VITE_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-The URL is public, not a secret. `https://example-inth.inth.app` is a demo project. Vite inlines this value at build time, so rebuild after changing it. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`, which is read as a fallback if unset.
+The URL is public, not a secret. Vite inlines this value at build time, so rebuild after changing it. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`, which is read as a fallback if unset.
 
 ## Add the Vite plugin
 

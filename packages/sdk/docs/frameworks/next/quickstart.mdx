@@ -13,7 +13,7 @@ consent allows them.
 
   1. Check that the app uses the App Router on a Next.js server. If it uses the Pages Router, `output: 'export'` or cached pages, stop and tell me.
   2. Install `@inth/nextjs` and `@inth/integrations`. Read `node_modules/@inth/nextjs/AGENTS.md`, then follow the Next.js quickstart it links to, in order. Do not guess the API from memory.
-  3. Set `NEXT_PUBLIC_INTH_PROJECT_URL` in `.env.local`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `NEXT_PUBLIC_INTH_PROJECT_URL` wins over any legacy `NEXT_PUBLIC_C15T_BACKEND_URL`.
+  3. Set `NEXT_PUBLIC_INTH_PROJECT_URL` in `.env.local`. Ask me for my project URL. `NEXT_PUBLIC_INTH_PROJECT_URL` wins over any legacy `NEXT_PUBLIC_C15T_BACKEND_URL`.
   4. Wrap the Next.js config in `withConsentManifest` from `@inth/nextjs/build`. Add nothing to `.gitignore`.
   5. Create `inth.config.ts` at the project root. Move every analytics and marketing script into it with the matching helper from `@inth/integrations`, carry over vendor settings such as PostHog's `region` or `apiHost`, and remove old loaders (`next/script`, `@next/third-parties`, tag managers). If a vendor has no helper, tell me.
   6. In the root layout, render `InthProvider` with `state={resolveConsent()}` (not awaited), plus `ConsentBanner`, `ConsentDialog` and a footer `ConsentDialogLink`. Do not add `'use client'`, and mount a single `InthProvider` in the root layout.
@@ -38,10 +38,10 @@ Components render their own styles. On Tailwind CSS 3, [load the stylesheet your
 Add your project URL to `.env.local` and your host's build settings:
 
 ```sh title=".env.local"
-NEXT_PUBLIC_INTH_PROJECT_URL=https://example-inth.inth.app
+NEXT_PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-`https://example-inth.inth.app` is a public demo project. Rebuild after changing it. `NEXT_PUBLIC_INTH_PROJECT_URL` wins over legacy `NEXT_PUBLIC_C15T_BACKEND_URL` (used as a fallback when unset).
+The URL is public, not a secret. Rebuild after changing it. `NEXT_PUBLIC_INTH_PROJECT_URL` wins over legacy `NEXT_PUBLIC_C15T_BACKEND_URL` (used as a fallback when unset).
 
 ## Bundle the manifest during builds
 

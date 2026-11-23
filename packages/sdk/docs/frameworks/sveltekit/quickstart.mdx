@@ -11,7 +11,7 @@ Add a consent banner and preference dialog to a SvelteKit app. Your server resol
 
   1. Check that the app runs on a SvelteKit server (SvelteKit 2.63+ with Svelte 5.20+). If it uses `adapter-static`, prerendered-only pages, or SPA mode, stop and tell me.
   2. Install `@inth/svelte` and `@inth/integrations`. Read `node_modules/@inth/svelte/AGENTS.md`, then follow the SvelteKit quickstart it links to, in order. Do not guess the API from memory.
-  3. Set `PUBLIC_INTH_PROJECT_URL` in `.env`. Ask me for my project URL, and use `https://example-inth.inth.app` only for a demo. `PUBLIC_INTH_PROJECT_URL` wins over any legacy `PUBLIC_C15T_BACKEND_URL`.
+  3. Set `PUBLIC_INTH_PROJECT_URL` in `.env`. Ask me for my project URL. `PUBLIC_INTH_PROJECT_URL` wins over any legacy `PUBLIC_C15T_BACKEND_URL`.
   4. Add `consentManifest()` from `@inth/svelte/vite` to `plugins` in `vite.config.ts`. Add nothing to `.gitignore`: the plugin writes no files to the project.
   5. Export `inthHandle()` from `@inth/svelte/kit` in `src/hooks.server.ts`, type `locals.inth` in `src/app.d.ts`, and export `loadConsent as load` from `@inth/svelte/kit` in `src/routes/+layout.server.ts`.
   6. In `src/routes/+layout.svelte`, render `InthProvider` with `state={data.consent}`, `ConsentBanner`, `ConsentDialog`, and a footer `ConsentDialogLink`. Move analytics and marketing scripts into `InthProvider`'s `scripts` prop using `@inth/integrations`, and remove old `<script>` tags or SDK imports. If a vendor has no helper, tell me.
@@ -36,10 +36,10 @@ Components inject their own styles and `inthHandle` inlines banner styles into `
 Add your Inth project URL, including any path prefix, to `.env` and your host's build settings:
 
 ```sh title=".env"
-PUBLIC_INTH_PROJECT_URL=https://example-inth.inth.app
+PUBLIC_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
-The URL is public, not a secret. `https://example-inth.inth.app` is a demo project. Rebuild after changing it. `PUBLIC_INTH_PROJECT_URL` wins over any legacy `PUBLIC_C15T_BACKEND_URL`, which is read as a fallback if unset.
+The URL is public, not a secret. Rebuild after changing it. `PUBLIC_INTH_PROJECT_URL` wins over any legacy `PUBLIC_C15T_BACKEND_URL`, which is read as a fallback if unset.
 
 ## Bundle the manifest during builds
 

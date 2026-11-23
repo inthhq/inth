@@ -13,7 +13,7 @@ wait until consent allows them.
 
   1. Check that the app uses Vite or another JS bundler without a UI framework adapter (React, Vue, Svelte, Astro, Angular). If it uses a UI framework, stop and tell me.
   2. Install `@inth/sdk` and `@inth/integrations`. Read `node_modules/@inth/sdk/AGENTS.md`, then follow the JavaScript quickstart it links to, in order. Do not guess the API from memory.
-  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my Inth project URL, using `https://example-inth.inth.app` only for a demo. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
+  3. Set `VITE_INTH_PROJECT_URL` in `.env`. Ask me for my Inth project URL. `VITE_INTH_PROJECT_URL` wins over any legacy `VITE_C15T_BACKEND_URL`.
   4. Add `consentManifest()` from `@inth/sdk/build` to `plugins` in `vite.config.ts`. Add nothing to `.gitignore`.
   5. In the browser entry file (such as `src/main.ts`), call `init({ mode: manifest(), scripts })` from `@inth/sdk`, moving every analytics and marketing script into `scripts` using `@inth/integrations` helpers. Remove duplicate loaders from `index.html`.
   6. Gate third-party iframes with `data-src` and `data-category`, and add `<a href="#inth-preferences">Privacy settings</a>` in the footer.
@@ -38,11 +38,10 @@ shadow root, so no stylesheet import is needed.
 
 ## Set the project URL
 
-Add your public Inth project URL (or `https://example-inth.inth.app` for a
-demo) to `.env` and your host's build settings:
+Add your public Inth project URL to `.env` and your host's build settings:
 
 ```sh title=".env"
-VITE_INTH_PROJECT_URL=https://example-inth.inth.app
+VITE_INTH_PROJECT_URL=https://your-project.inth.app
 ```
 
 Vite reads this at build time, so rebuild after changes. `VITE_INTH_PROJECT_URL`
