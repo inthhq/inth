@@ -242,11 +242,15 @@
 	const embeddedConfirmation = $derived(
 		confirmation.open && !confirmation.hasStandaloneHost
 	);
-	const dialogAllowed = $derived(
-		!props.models || props.models.includes(consent.state.model)
+	// The dialog can render now: its `models` allow the policy's model, and
+	// a controlled `open={false}` does not keep it hidden. Only then can it
+	// take the opt-out confirmation over.
+	const dialogCanShow = $derived(
+		(!props.models || props.models.includes(consent.state.model)) &&
+			props.open !== false
 	);
 	const adoptConfirmation = $derived(
-		privacyChoices && embeddedConfirmation && dialogAllowed
+		privacyChoices && embeddedConfirmation && dialogCanShow
 	);
 	$effect(() => {
 		if (!adoptConfirmation) {
@@ -265,9 +269,9 @@
 	{#if Trigger && triggerProps}
 		<Trigger {...triggerProps} />
 	{/if}
-	{#if embeddedConfirmation && !dialogAllowed}
-		<!-- This dialog does not open under the model, so the confirmation
-		     shows as on the classic design. -->
+	{#if embeddedConfirmation && !dialogCanShow}
+		<!-- This dialog does not open under the model, or the host keeps it
+		     closed, so the confirmation shows as on the classic design. -->
 		<DeferredOptOutConfirmation
 			embedded
 			noStyle={props.noStyle}
@@ -284,6 +288,7 @@
 			noStyle={props.noStyle}
 			disableAnimation={props.disableAnimation}
 			models={props.models}
+			legalLinks={props.legalLinks}
 		/>
 	{/if}
 {:else}

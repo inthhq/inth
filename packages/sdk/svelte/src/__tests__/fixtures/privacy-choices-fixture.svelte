@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
+	import type { Readable } from 'svelte/store';
 
 	import ConsentDialog from '../../lib/components/deferred-panel.svelte';
 	import InthProvider from '../../lib/components/inth-provider.svelte';
@@ -19,6 +20,7 @@
 		oneClickOptOut = false,
 		link = true,
 		triggerLabel,
+		open,
 	}: {
 		options: ConsentManagerOptions;
 		probe: {
@@ -36,6 +38,8 @@
 		/** Render the stock "Your Privacy Choices" link, which warms the dialog. */
 		link?: boolean;
 		triggerLabel?: string;
+		/** A controlled `open` for the dialog that the test can change. */
+		open?: Readable<boolean>;
 	} = $props();
 </script>
 
@@ -53,6 +57,13 @@
 		/>
 	{/if}
 	{#if dialog}
-		<ConsentDialog {...dialogProps} />
+		{#if open}
+			<ConsentDialog
+				{...dialogProps}
+				open={$open}
+			/>
+		{:else}
+			<ConsentDialog {...dialogProps} />
+		{/if}
 	{/if}
 </InthProvider>

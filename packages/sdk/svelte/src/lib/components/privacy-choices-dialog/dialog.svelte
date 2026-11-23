@@ -64,6 +64,7 @@
 	import type {
 		AllConsentNames,
 		BannerCommitAction,
+		LegalLinks,
 		Model,
 	} from '@inth/sdk/engine';
 	import { createPreferenceDraft } from '@inth/sdk/preference-draft';
@@ -114,6 +115,7 @@
 		disableAnimation = false,
 		open: openProp,
 		models,
+		legalLinks: allowedLegalLinks,
 	}: {
 		noStyle?: boolean;
 		disableAnimation?: boolean;
@@ -122,11 +124,19 @@
 		 * dialog, so the banner leaves and sheets, Escape and the receipt work
 		 * as for any open dialog; Close and Escape then close it through the
 		 * consent manager, and `open` must turn `false` and back to `true` to
-		 * ask again. `false` hides it whatever the consent manager shows.
+		 * ask again. `false` hides it whatever the consent manager shows, and
+		 * turning it `false` while the dialog shows closes it through the
+		 * consent manager, as Close does.
 		 * Omitted, it follows `activeUI === 'dialog'`.
 		 */
 		open?: boolean;
 		models?: Model[];
+		/**
+		 * Which legal link the footer may show: the Cookie Policy for the EU,
+		 * the Privacy Policy for the US. `undefined` shows it, `null` hides
+		 * it, and a list shows it only when its key is in the list.
+		 */
+		legalLinks?: (keyof LegalLinks)[] | null;
 	} = $props();
 
 	const consent = getConsentContext();
@@ -184,6 +194,27 @@
 			consent.state.hasConsentUi &&
 			modelAllowed
 	);
+	// A controlled `open` turning false closes a shown dialog through the
+	// consent manager, as Close does, so an unanswered banner comes back and
+	// no sheet stays pushed under a hidden dialog.
+	let shown = false;
+	$effect.pre(() => {
+		const wasShown = shown;
+		shown = open;
+		if (!wasShown || openProp !== false) {
+			return;
+		}
+		const { kernel } = consent;
+		untrack(() => {
+			if (kernel.getSnapshot().activeUI !== 'dialog') {
+				return;
+			}
+			showConsentSurface(kernel, 'none');
+			if (kernel.getSnapshot().activeUI === 'banner') {
+				focusReturningBanner();
+			}
+		});
+	});
 	// Phone sheets take the prompt's resolved phone edge style, which the
 	// policy and a Card's own rule (always inset) have already settled.
 	const edgeStyle = $derived(
@@ -448,10 +479,14 @@
 		});
 	};
 
+	// The footer shows the regime's one link; `legalLinks` may hide it.
+	const legalKey = $derived(eu ? 'cookiePolicy' : 'privacyPolicy');
 	const legal = $derived(
 		resolveLegalLinkEntries(
 			consent.state.legalLinks,
-			[eu ? 'cookiePolicy' : 'privacyPolicy'],
+			allowedLegalLinks === undefined
+				? [legalKey]
+				: (allowedLegalLinks?.filter((key) => key === legalKey) ?? []),
 			translations.legalLinks
 		)[0]
 	);
@@ -713,6 +748,7 @@
 		bind:this={backdropEl}
 		class={backdropPart.class}
 		style={backdropPart.style}
+		data-animation={reducedMotion ? 'off' : undefined}
 		data-edge-style={edgeStyle}
 		data-design="privacy-choices"
 		data-regime={eu ? 'eu' : 'us'}

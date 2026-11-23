@@ -513,7 +513,6 @@
 			)
 			.filter((group) => group.length > 0)
 	);
-	const summaryActions = $derived(summaryGroups.flat());
 	const links = $derived(legalLinks === undefined ? CARD_LINKS : legalLinks);
 	const barLinks = $derived(
 		links?.filter((key) => key === 'privacyPolicy') ?? null
@@ -601,7 +600,7 @@
 		part(
 			'consentBannerFooterSubGroup',
 			theme.theme,
-			surfaceStyles.actionGroup,
+			[surfaceStyles.actionGroup, presentation.actionGroup],
 			noStyle
 		)
 	);
@@ -736,6 +735,28 @@
 			inBar
 		)}
 	{/if}
+{/snippet}
+
+<!-- Every presentation, the collapsed Banner included, keeps the host's
+     groups and their `consentBannerFooterSubGroup` part. -->
+{#snippet summaryRow(inBar: boolean)}
+	{#each summaryGroups as group (group.join('-'))}
+		{#if group.length > 1}
+			<div
+				class={actionGroupPart.class}
+				style={actionGroupPart.style}
+				data-testid="consent-banner-footer-sub-group"
+			>
+				{#each group as action (action)}
+					{@render summaryButton(action, inBar)}
+				{/each}
+			</div>
+		{:else}
+			{#each group as action (action)}
+				{@render summaryButton(action, inBar)}
+			{/each}
+		{/if}
+	{/each}
 {/snippet}
 
 {#snippet consentTag()}
@@ -887,9 +908,7 @@
 								)}
 								{@render okButton()}
 							{:else}
-								{#each summaryActions as action (action)}
-									{@render summaryButton(action, true)}
-								{/each}
+								{@render summaryRow(true)}
 							{/if}
 						</div>
 					</div>
@@ -963,23 +982,7 @@
 							{@render expandButton(customizeButtonText ?? copy.expand, false)}
 							{@render okButton()}
 						{:else}
-							{#each summaryGroups as group (group.join('-'))}
-								{#if group.length > 1}
-									<div
-										class={actionGroupPart.class}
-										style={actionGroupPart.style}
-										data-testid="consent-banner-footer-sub-group"
-									>
-										{#each group as action (action)}
-											{@render summaryButton(action, false)}
-										{/each}
-									</div>
-								{:else}
-									{#each group as action (action)}
-										{@render summaryButton(action, false)}
-									{/each}
-								{/if}
-							{/each}
+							{@render summaryRow(false)}
 						{/if}
 					</div>
 				{/if}
