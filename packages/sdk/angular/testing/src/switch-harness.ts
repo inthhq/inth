@@ -16,7 +16,7 @@ export interface SwitchHarnessFilters extends BaseHarnessFilters {
  * vendor switches inside the stock consent widget and IAB dialog.
  *
  * The switch renders where you put it, so the fixture's loader finds your
- * own switches. A switch inside a portaled surface, such as the consent
+ * own switches. A switch inside a portaled surface, such as the IAB
  * dialog, is found from that surface's harness or from
  * `TestbedHarnessEnvironment.documentRootLoader(fixture)`.
  *

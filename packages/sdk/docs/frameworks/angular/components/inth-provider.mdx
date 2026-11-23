@@ -27,17 +27,22 @@ see [ConsentDialog](./consent-dialog#how-the-dialog-loads).
 | Input | Type | Default | Behavior |
 | --- | --- | --- | --- |
 | `legalLinks` | array of `LegalLinks` keys, or `null` | all configured links | Legal links shown on both surfaces. |
-| `hideBranding` | `boolean` | `false` | Hides the "Consent by" tag on both surfaces. |
+| `hideBranding` | `boolean` | `false` | Hides the "Consent by" tag on the banner. The dialog has none. |
 | `showTrigger` | `boolean` or `ConsentDialogTriggerOptions` | `false` | Renders a floating `<inth-consent-dialog-trigger>` with the dialog. |
 | `noStyle` | `boolean` | provider `noStyle` | Drops `inth` classes on both surfaces. |
 | `disableAnimation` | `boolean` | provider value | Disables transitions on both surfaces. |
 
-To pass banner-specific inputs such as `variant` or copy, or to use banner
-`ng-template` slots, render `<inth-consent-banner>` and
-`<inth-consent-dialog>` separately.
+To pass banner inputs such as `container`, `blockUntilChoice` or copy,
+render `<inth-consent-banner>` and `<inth-consent-dialog>` separately, or set
+`presentation.prompt` in `provideInth()` to place the banner for the whole
+app. Content you put inside `<inth-provider>` renders after both surfaces.
+
+`<inth-provider>` renders no footer link. Add an
+[`<inth-privacy-choices-link>`](./privacy-choices-link) to your footer so
+visitors can reopen the dialog after the banner closes.
 
 ## Verify it
 
 Open the page in a private window. The banner appears once the policy
-resolves, and Customize opens the dialog. In DevTools Elements, both surfaces
-portal into `<body>`.
+resolves, and Customize opens the choices inside it. Make a choice, then
+click "Your Privacy Choices" in your footer and confirm the dialog opens.

@@ -3,9 +3,9 @@ packages:
   "group:sdk": patch
 ---
 
-### Angular: the Privacy Choices banner and dialog render the same markup as React
+### Angular: the consent banner and dialog render the same markup as React
 
-With `presentation.design: 'privacy-choices'`, the `@inth/angular` banner and dialog now produce the same DOM as `@inth/react`, so CSS and tests you write against one adapter's markup apply to the other:
+The `@inth/angular` banner and dialog now produce the same DOM as `@inth/react`, so CSS and tests you write against one adapter's markup apply to the other:
 
 - The buttons, rows and category groups no longer carry stray attributes such as `consentaction`, `testidprefix`, `slot`, `uisource`, `mode` or `variant`. Select them by their `data-testid`, `data-action` and `data-*` state attributes as before.
 - The banner's options sit directly in its scroll area (`data-testid="consent-banner-body"`), with no `<inth-pc-panel>` element in between. A selector such as `[data-testid="consent-banner-body"] > section` now matches in Angular as it does in React.

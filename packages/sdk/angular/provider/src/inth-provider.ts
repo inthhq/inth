@@ -9,10 +9,9 @@ import type { ConsentDialogTriggerOptions } from '@inth/angular/consent-dialog';
  * dialog.
  *
  * The dialog's body stays out of the first load: it loads when the dialog
- * opens, or earlier in idle time or on
- * hover or focus of the banner's Customize button. Use the two components
- * on their own to pass each its own inputs or templates. Content placed
- * inside the tag renders after the two surfaces.
+ * opens, or earlier in idle time or on hover or focus of a control that
+ * opens it. Use the two components on their own to pass each its own
+ * inputs. Content placed inside the tag renders after the two surfaces.
  *
  * @example
  * ```html
@@ -37,7 +36,6 @@ import type { ConsentDialogTriggerOptions } from '@inth/angular/consent-dialog';
 		<inth-consent-dialog
 			[noStyle]="noStyle()"
 			[disableAnimation]="disableAnimation()"
-			[hideBranding]="hideBranding()"
 			[legalLinks]="legalLinks()"
 			[showTrigger]="showTrigger()"
 		/>
@@ -48,7 +46,7 @@ export class InthProvider {
 	readonly noStyle = input<boolean | undefined>(undefined);
 	/** Skip enter and exit motion. Defaults to `provideInth()`'s setting. */
 	readonly disableAnimation = input<boolean | undefined>(undefined);
-	/** Hide the "Consent by" attribution on both surfaces. */
+	/** Hide the banner's attribution tag. */
 	readonly hideBranding = input(false);
 	/** Which of the legal links from `provideInth()` both surfaces show. */
 	readonly legalLinks = input<LegalLinkSelection | undefined>(undefined);

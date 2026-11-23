@@ -13,7 +13,7 @@ import {
 import type { PolicyRight } from '@inth/sdk/schema/types';
 import { activateOptOutLink } from '@inth/sdk/surface-actions';
 import { resolveOptOutLink } from '@inth/sdk/surface-state';
-import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
+import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import { CPPA_OPT_OUT_ICON } from '@inth/sdk/ui/utils';
 
 import { ConsentManager } from '../core/consent-manager';
@@ -127,7 +127,7 @@ export class ConsentDialogLink {
 			const host = this.#element.nativeElement;
 			const iconClass = this.#theme.noStyle()
 				? undefined
-				: bannerStyles.optOutIcon;
+				: legalLinkStyles.optOutIcon;
 			if (!link) {
 				this.#icon?.remove();
 				this.#icon = null;

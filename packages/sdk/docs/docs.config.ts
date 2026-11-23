@@ -741,6 +741,7 @@ export default defineDocsConfig({
 								'components/inth-provider',
 								'components/consent-widget',
 								'components/consent-dialog-link',
+								'components/privacy-choices-link',
 								'components/consent-dialog-trigger',
 								'components/consent-gate',
 								'components/consent-button',

@@ -42,7 +42,7 @@ export type {
 } from './lib/core/headless-consent';
 export { ConsentTheme } from './lib/core/consent-theme';
 export {
-	BANNER_SHEETS,
+	PARTS_SHEETS,
 	CONSENT_GATE_SHEETS,
 	ConsentStyles,
 	SURFACE_SCOPES,
@@ -178,18 +178,8 @@ export type {
 	ConsentButtonSize,
 	ConsentButtonVariant,
 } from './lib/shared';
-export {
-	ConsentBannerAction,
-	ConsentBannerDescription,
-	ConsentBannerTitle,
-	ConsentBanner,
-} from './lib/banner';
-export type {
-	BannerActionContext,
-	BannerCopyContext,
-	ConsentBannerButton,
-	ConsentBannerLayout,
-} from './lib/banner';
+export { ConsentBanner } from './lib/prompt';
+export type { ConsentBannerButton, ConsentBannerLayout } from './lib/prompt';
 
 // links
 export { PrivacyChoicesLink } from './lib/dialog/privacy-choices-link';
@@ -197,8 +187,8 @@ export { PrivacyChoicesLink } from './lib/dialog/privacy-choices-link';
 // Private (`ɵ`): building blocks the package's other entry points share.
 // An entry point imports another only by its package name, so these are
 // exported here; they are not part of the public API.
-export { bannerVisibility as ɵbannerVisibility } from './lib/banner/banner-visibility';
-export type { BannerVisibility as ɵBannerVisibility } from './lib/banner/banner-visibility';
+export { bannerVisibility as ɵbannerVisibility } from './lib/shared/banner-visibility';
+export type { BannerVisibility as ɵBannerVisibility } from './lib/shared/banner-visibility';
 export { Overlay as ɵOverlay } from './lib/overlay/overlay';
 export { OptInConfirmation as ɵOptInConfirmation } from './lib/dialog/opt-in-confirmation';
 export {
@@ -207,6 +197,7 @@ export {
 	returnFocusAfterDialog as ɵreturnFocusAfterDialog,
 } from './lib/overlay/dialog-focus';
 export { SURFACE_CLOSED as ɵSURFACE_CLOSED } from './lib/core/surface-close';
+export { focusBlocking as ɵfocusBlocking } from './lib/core/focus-blocking';
 export { uniqueId as ɵuniqueId } from './lib/core/unique-id';
 export {
 	NoStyleScope as ɵNoStyleScope,
@@ -220,13 +211,12 @@ export {
 	shouldShowBranding as ɵshouldShowBranding,
 } from './lib/shared';
 export type { LegalLinkSelection as ɵLegalLinkSelection } from './lib/shared';
-// Private (`ɵ`): how the consent dialog reaches the Privacy Choices (v6)
-// dialog. The v6 parts stay out of this entry's eager code: they load only
-// through this loader and the stock banner's, so a classic page downloads
-// none of them.
-export { loadPrivacyChoicesDialog as ɵloadPrivacyChoicesDialog } from './lib/dialog/privacy-choices-dialog-loader';
-export type { PrivacyChoicesDialog as ɵPrivacyChoicesDialog } from './lib/privacy-choices/dialog/privacy-choices-dialog';
-export { requestReceiptFocus as ɵrequestReceiptFocus } from './lib/privacy-choices/receipt-focus';
+// Private (`ɵ`): how the consent dialog reaches its body. The body stays
+// out of this entry's eager code: it loads only through this loader, so a
+// page loads it only when the dialog opens or warms.
+export { loadConsentDialogBody as ɵloadConsentDialogBody } from './lib/dialog/dialog-loader';
+export type { ConsentDialogBody as ɵConsentDialogBody } from './lib/dialog/dialog';
+export { requestReceiptFocus as ɵrequestReceiptFocus } from './lib/parts/receipt-focus';
 
 // Engine types the guides use; the helpers are in the `engine` entry.
 export type {

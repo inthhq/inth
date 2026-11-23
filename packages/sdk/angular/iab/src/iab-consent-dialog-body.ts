@@ -17,6 +17,7 @@ import {
 	Portal,
 	ScrollLock,
 	ɵBranding as Branding,
+	ɵfocusBlocking as focusBlocking,
 	ɵInitialFocus as InitialFocus,
 	ɵNoStyleScope as NoStyleScope,
 	ɵOverlay as Overlay,
@@ -38,7 +39,7 @@ import {
 import type { HeadlessIABVendorId } from '@inth/sdk/iab/headless';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 import {
-	resolveLegacyConsentPresentation,
+	resolveConsentPresentation,
 	resolveIABCopy,
 } from '@inth/sdk/surface-state';
 import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
@@ -556,15 +557,20 @@ export class IABConsentDialogBody {
 
 	/** @internal */
 	protected readonly preferences = computed(() =>
-		resolveLegacyConsentPresentation({
-			policy: this.#consent.snapshot().policyRule,
-			presentation: {
-				preferences: {
-					scrollLock: this.#theme.scrollLock(),
-					trapFocus: this.#theme.trapFocus(),
-					...this.#consent.presentation()?.preferences,
-				},
+		resolveConsentPresentation({
+			override: {
+				blocking: focusBlocking(
+					'preferences',
+					this.#consent.presentation(),
+					{},
+					{
+						scrollLock: this.#theme.scrollLock(),
+						trapFocus: this.#theme.trapFocus(),
+					}
+				),
 			},
+			policy: this.#consent.snapshot().policyRule,
+			presentation: this.#consent.presentation(),
 			surface: 'preferences',
 		})
 	);

@@ -5,7 +5,9 @@ group: frameworks
 ---
 
 Turn any button or link in your Angular app into a control that reopens the
-preference dialog with `inthConsentDialogLink`.
+"Your Privacy Choices" dialog with `inthConsentDialogLink`. Use it when you
+want your own element and label; for the stock "Your Privacy Choices" link,
+use [`<inth-privacy-choices-link>`](./privacy-choices-link).
 
 ## Add a preferences link
 
@@ -17,8 +19,8 @@ Import `ConsentDialogLink` and add `inthConsentDialogLink` to your own
 Clicking the element sets `activeUI` to `'dialog'`, opening
 `<inth-consent-dialog>`. With `right="opt-out"` under an opt-out policy, the
 action follows the resolved `presentation.optOutLink` title: `'do-not-sell'`
-(the default) records an opt-out in one click and opens
-`<inth-opt-out-confirmation>`, while `'privacy-choices'` and
+(the default) records an opt-out in one click and opens the dialog on its
+receipt, while `'privacy-choices'` and
 `'california-privacy-choices'` prepend the California Privacy Protection Agency
 opt-out icon and open `<inth-consent-dialog>` without recording an opt-out.
 When the host element is empty, the directive supplies the resolved statutory
@@ -48,6 +50,6 @@ design requires a link.
 
 ## Verify it
 
-Accept or reject in the banner, then click the link. The preference dialog
-opens showing your saved switches. Under a policy with no preferences, the
+Accept or reject in the banner, then click the link. The dialog opens showing
+your saved choice. Under a policy with no preferences, the
 element stays hidden.

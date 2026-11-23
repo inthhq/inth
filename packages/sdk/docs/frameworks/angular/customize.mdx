@@ -1,11 +1,11 @@
 ---
 title: Customize
-description: Style Inth consent components in Angular with CSS tokens, theme slots, component inputs and ng-template slots.
+description: Style Inth consent components in Angular with CSS tokens, theme slots and component inputs, and choose the banner's container.
 group: frameworks
 ---
 
-Change the colors, shape, button styles, copy and markup of Inth's Angular
-components using CSS variables, theme slots or templates.
+Change the colors, container, button styles and copy of Inth's Angular
+components using CSS variables, theme slots and component inputs.
 
 ## Pick the right tool
 
@@ -14,10 +14,9 @@ components using CSS variables, theme slots or templates.
 | Brand colors, radius, type, spacing | `--inth-*` variables in a global stylesheet |
 | One part of one component | `theme.slots` in `provideInth()` |
 | Button styles by action | `theme.consentActions` |
-| Shape, position, blocking, button order | `<inth-consent-banner>` inputs or `presentation` |
+| Container, edge style, blocking, button order | `<inth-consent-banner>` inputs or `presentation.prompt` |
 | Wording and languages | Banner text inputs, or [translations](/docs/frameworks/angular/translations) |
-| Markup inside the banner's title, description or buttons | `ng-template` slots on `<inth-consent-banner>` |
-| Different markup altogether | [Headless](/docs/frameworks/angular/headless) |
+| Different markup | [Headless](/docs/frameworks/angular/headless) |
 
 [Customization](/docs/customization/overview) explains how these layers fit
 together across frameworks.
@@ -37,7 +36,15 @@ or `@import` it from `src/styles.css`. Do not put it in a component's
 
 Pair a hover color and text color with the primary color so buttons remain
 readable in each state. [Theme tokens](/docs/customization/tokens) lists
-every variable.
+every variable and its default. The defaults are a `#2563eb` primary
+(`#2f66df` in dark mode), a 16px `--inth-radius-lg` and a 10px
+`--inth-radius-md`.
+
+If your stylesheet already sets the `--consent-banner-*` and
+`--consent-dialog-*` variables, keep them: each part reads its own variable
+first, then the matching `--consent-banner-*` or `--consent-dialog-*` one,
+then the theme token. [Classic variable compatibility](/docs/customization/tokens#classic-variable-compatibility)
+lists which variable reaches which part, and the few that no longer apply.
 
 Do not put colors, radius or other design tokens in the `theme` option. In
 the browser, `theme` applies slots and `consentActions` only; design tokens
@@ -73,8 +80,8 @@ encapsulation. Angular components read these slots:
 
 | Component | Slots |
 | --- | --- |
-| `<inth-consent-banner>` | `consentBanner`, `consentBannerCard`, `consentBannerHeader`, `consentBannerTitle`, `consentBannerDescription`, `consentBannerFooter`, `consentBannerFooterSubGroup`, `consentBannerRights`, `consentBannerRightLink`, `consentBannerTag`, `consentBannerOverlay` |
-| `<inth-consent-dialog>` | `consentDialog`, `consentDialogCard`, `consentDialogHeader`, `consentDialogTitle`, `consentDialogDescription`, `consentDialogContent`, `consentDialogTag`, `consentDialogOverlay` |
+| `<inth-consent-banner>` | `consentBanner`, `consentBannerOverlay`, `consentBannerCard`, `consentBannerHeader`, `consentBannerTitle`, `consentBannerDescription`, `consentBannerExpand`, `consentBannerRightsRow`, `consentBannerSaveButton`, `consentBannerFooter`, `consentBannerFooterSubGroup`, `consentBannerRightLink`, `consentBannerTag` |
+| `<inth-consent-dialog>` | `consentDialog` (the backdrop), `consentDialogCard`, `consentDialogSheet`, `consentDialogHeader`, `consentDialogTitle`, `consentDialogContent`, `consentDialogFooter`, `consentDialogCategoryGroup`, `consentDialogVendorTable`, `consentDialogRightsRow`, `consentDialogReceipt`, `consentDialogPreferencesRow`, `consentDialogSaveButton`, `consentDialogDoneButton` |
 | `<inth-consent-widget>` | `consentWidget`, `consentWidgetOptOut`, `consentWidgetOptOutStatus`, `consentWidgetAccordion`, `consentWidgetFooter`, `consentWidgetFooterSubGroup`, `consentWidgetTag` |
 | `<inth-consent-dialog-trigger>` | `consentDialogTrigger`, `consentDialogTriggerIcon`, and with dev tools `consentDialogTriggerToolbar`, `consentDialogTriggerToolbarItem`, `consentDialogTriggerToolbarIcon` |
 | `<inth-iab-consent-banner>` | `iabConsentBanner`, `iabConsentBannerCard`, `iabConsentBannerHeader`, `iabConsentBannerFooter`, `iabConsentBannerTag`, `iabConsentBannerOverlay` |
@@ -83,8 +90,9 @@ encapsulation. Angular components read these slots:
 | Buttons in every component | `buttonPrimary`, `buttonSecondary` |
 
 Slot names differ from React's `components.banner.card` keys. Use slots to
-style one part and tokens to change values globally. `rootClass` on any
-component adds a class to its root element.
+style one part and tokens to change values globally. The banner's root
+carries `data-placement`, so a slot class can target one container, such as
+`[data-placement='banner-bottom'] .brand-banner-card`.
 [Component parts](/docs/customization/slots) documents data attributes, and
 [Tailwind CSS](/docs/customization/tailwind) covers Tailwind 4 and 3.
 
@@ -94,44 +102,40 @@ component adds a class to its root element.
 order. A per-action entry overrides `primary`, which overrides `default`. The
 policy decides which action is primary.
 
-## Change the banner shape, position and copy
+## Choose the banner's container
 
-Set the shape on the banner component or globally via `presentation`:
+The banner renders as a Card, a full-width Banner or a Drawer. Set the
+container on the banner, or for the whole app as
+`presentation.prompt.container` in `provideInth()`. Without either, the
+policy rule's `surface.container` applies, so a region's placement can live
+in the dashboard instead of your code:
 
 <include src="../../shared/examples/angular/bottom-bar.mdx" />
 
-| `variant` | Positions |
+| Container | Positions |
 | --- | --- |
-| `floating` | `bottom-left` (default), `bottom-right`, `top-left`, `top-right`, `bottom-center`, `top-center` |
-| `bar` | `bottom` (default), `top` |
-| `widget` | `bottom-right` (default), `bottom-left`, `top-left`, `top-right` |
-| `wall` | `center` |
+| `{ type: 'card', position }` | `start` (default), `end`, `center` |
+| `{ type: 'banner', edge }` | `bottom` (default), `top` |
+| `{ type: 'drawer', side }` | `bottom` (default), `top`, `start`, `end` |
 
-`blocking` adds a backdrop, locks scroll, traps focus and blocks outside
-clicks. `layout` and `primaryButton` set button order and emphasis. Where
-they conflict, the policy wins: a policy requiring a reject button always
-keeps it.
+`start` and `end` follow the writing direction, so the same setting puts the
+Card in the right corner on a right-to-left page. `edgeStyle` (`inset` or
+`flush`) decides whether a Banner or Drawer floats off the viewport edges or
+runs edge to edge.
+
+`blockUntilChoice` adds a backdrop, locks scroll, traps focus and blocks
+outside clicks until the visitor chooses. A centred Card always blocks. A
+notice, an opt-out prompt, and a policy whose `surface.blocking` is
+`forbidden` never block. [ConsentBanner](./components/consent-banner#containers)
+covers every container and when blocking applies.
+
+`layout` sets button order and grouping. Where it conflicts with the policy,
+the policy wins: a policy that requires a reject button keeps it.
 
 Text inputs such as `heading` and `rejectButtonText` replace copy for that
 banner in every language. For site-wide copy, pass `i18n`; see
-[translations](./translations).
-
-## Replace parts of the banner's markup
-
-`<inth-consent-banner>` accepts three `ng-template` slots while the policy
-still controls which actions show and in what order:
-
-<include src="../../shared/examples/angular/banner-templates.mdx" />
-
-| Template | Replaces | Context |
-| --- | --- | --- |
-| `inthConsentBannerTitle` | Text inside the `<h2>` | `let-title`, resolved title; `let-notice="notice"` |
-| `inthConsentBannerDescription` | Description text (legal links follow it) | `let-description`; `let-notice="notice"` |
-| `inthConsentBannerAction` | Each action button | `let-action`, `label`, `primary`, `variant`, `mode` and `testId` |
-
-`ConsentButton` (`button[inth-consent-button]`) wires click handling and
-stock button styles so custom action templates stay functional. Import each
-template directive into your component's `imports`.
+[translations](./translations). For markup the stock banner cannot produce,
+build your own with [headless](./headless) state.
 
 ## Turn off animations
 

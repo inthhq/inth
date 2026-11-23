@@ -3,10 +3,10 @@
  * with no backend, and Angular CDK component harnesses for the Inth
  * consent surfaces, for your own TestBed tests.
  *
- * The banner, dialog, trigger and IAB surfaces render into `<body>`: find
- * them with `TestbedHarnessEnvironment.documentRootLoader(fixture)`. The
- * widget, gate, buttons and switches render in place, so
- * `TestbedHarnessEnvironment.loader(fixture)` finds them.
+ * The trigger and IAB surfaces render into `<body>`: find them with
+ * `TestbedHarnessEnvironment.documentRootLoader(fixture)`. The banner,
+ * dialog, widget, gate, buttons and switches render in place, so
+ * `TestbedHarnessEnvironment.loader(fixture)` finds them too.
  *
  * @packageDocumentation
  */

@@ -1,6 +1,6 @@
 ---
 title: ConsentBanner
-description: Render the Inth consent banner in Angular with inth-consent-banner, configuring layout, copy, templates and styling.
+description: Render the Inth consent banner in Angular with inth-consent-banner and choose its container, edge style and blocking.
 group: frameworks
 ---
 
@@ -9,73 +9,116 @@ Show the first-layer consent prompt in Angular with `<inth-consent-banner>`.
 ## Render the banner
 
 Import `ConsentBanner` and render `<inth-consent-banner>` once in your root
-component next to `<inth-consent-dialog>` so its Customize button can open
-preferences:
+component, next to `<inth-consent-dialog>` and a footer link that reopens
+the dialog:
 
 <include src="../../../shared/examples/angular/app-component.mdx" />
 
 Do not wrap it in `@if`: the banner decides when to show from the resolved
-policy. It portals into `<body>` via `inthPortal` after the first browser
-render to avoid stacking and overflow clipping while preserving SSR hydration.
+policy. Its container is fixed to the viewport, so where you place the tag
+does not change where the banner appears.
 
-## Change the shape
+The banner adapts to the active policy rule:
 
-Set `variant` and `position` on the banner, or configure them globally via
-`presentation` in `provideInth()`. Component inputs override provider
-defaults:
+- A `choice` prompt shows the rule's actions: Reject and Accept at equal
+  prominence, plus Customize when the rule offers it. Customize opens the
+  choices inside the banner, with a Save button: the cookie categories in the
+  EU, and the sale-and-sharing row and Preferences in the US. It does not open
+  the dialog, so the visitor makes the whole choice in one place.
+- A `notice` prompt shows an OK button and the policy's opt-out link. Notices
+  never trap focus or lock scroll.
+- A rule with `prompt: 'none'` renders nothing.
 
-<include src="../../../shared/examples/angular/bottom-bar.mdx" />
-
-| `variant` | Positions |
-| --- | --- |
-| `floating` | `bottom-left` (default), `bottom-right`, `top-left`, `top-right`, `bottom-center`, `top-center` |
-| `bar` | `bottom` (default), `top` |
-| `widget` | `bottom-right` (default), `bottom-left`, `top-left`, `top-right` |
-| `wall` | `center` |
-
-Notices default to `bar` and choice prompts default to `floating`. Invalid
-positions fall back to the variant default with a dev warning. In
-right-to-left languages with no explicit position, corner positions flip
-horizontally.
+Acknowledging a notice records dismissal only. It does not record consent or
+change permissions. Change the label with `common.acknowledge` in
+translations, or with `dismissButtonText` for one banner.
 
 ## Inputs
 
 | Input | Type | Default | Behavior |
 | --- | --- | --- | --- |
-| `variant` | `'floating'`, `'bar'`, `'widget'` or `'wall'` | from policy | Banner shape. |
-| `position` | see table above | variant default | Banner placement. |
-| `blocking` | `boolean` | `false` | Adds backdrop, locks scroll, traps focus and ignores outside clicks. `wall` is always blocking; notices never are. |
-| `layout` | `ConsentBannerLayout` | from policy | Button order and grouping, such as `[['reject', 'accept'], 'customize']`. |
-| `primaryButton` | one action or array | from policy | Buttons that receive primary styling. |
-| `heading`, `description` | `string` | translated copy | Override heading and body for this banner. |
-| `acceptButtonText`, `rejectButtonText`, `customizeButtonText`, `dismissButtonText` | `string` | translated copy | Override individual button labels. |
-| `legalLinks` | array of `LegalLinks` keys, or `null` | all configured links | Legal links shown after description. `null` hides all. |
+| `container` | `ConsentContainer` | `{ type: 'card', position: 'start' }` | The Card, Banner or Drawer, and where it sits. See [containers](#containers). |
+| `edgeStyle` | `'inset'` or `'flush'` | `'inset'` | `inset` floats a Banner or Drawer off the viewport edges with rounded corners. `flush` runs it edge to edge. A Card is always inset. |
+| `blockUntilChoice` | `boolean` | `false` | Blocks the page until the visitor chooses: backdrop, scroll lock, focus trap and no outside dismissal. A centred Card always blocks. |
+| `layout` | `ConsentBannerLayout` | from policy | Button order and grouping, such as `[['reject', 'accept'], 'customize']`. Actions the policy does not allow are dropped, and required ones restored. |
+| `heading`, `description` | `string` | translated copy | Replace the heading and description for this banner. |
+| `acceptButtonText`, `rejectButtonText`, `customizeButtonText`, `dismissButtonText` | `string` | translated copy | Replace one button label. |
+| `legalLinks` | array of `LegalLinks` keys, or `null` | privacy and cookie policies | Legal links shown after the description. `null` hides them. |
 | `hideBranding` | `boolean` | `false` | Hides the "Consent by" tag. |
-| `models` | `Model[]` | `['opt-in', 'opt-out']` | Policy models rendered by this banner. IAB uses `<inth-iab-consent-banner>`. |
+| `models` | `Model[]` | `['opt-in', 'opt-out']` | Policy models this banner renders for. IAB uses `<inth-iab-consent-banner>`. |
 | `noStyle` | `boolean` | provider `noStyle` | Drops `inth` classes while keeping markup and behavior. |
-| `disableAnimation` | `boolean` | provider value | Disables fade-in transition. |
-| `scrollLock`, `trapFocus` | `boolean` | from `presentation` | Lock scroll or trap focus while open. |
-| `rootClass` | `string` | none | Extra class on the root element. |
+| `disableAnimation` | `boolean` | provider value | Skips the enter and exit motion. |
 
-Where `layout` or `primaryButton` conflicts with the policy, the policy wins.
-For site-wide copy changes, see [translations](../translations).
+The text inputs replace copy in every language. For site-wide copy, see
+[translations](../translations).
 
-## Replace the title, description or buttons
+## Containers
 
-Pass `ng-template` slots inside `<inth-consent-banner>` and import their
-directives:
+The policy decides which actions appear. The container decides where the
+prompt sits. All three containers show the same copy and the same choices, so
+you can change the container without changing what a visitor agrees to.
 
-<include src="../../../shared/examples/angular/banner-templates.mdx" />
+| Container | Positions | Default | Shape |
+| --- | --- | --- | --- |
+| `{ type: 'card', position }` | `start`, `end`, `center` | `start` | A floating card in a bottom corner, or centred over a backdrop. |
+| `{ type: 'banner', edge }` | `bottom`, `top` | `bottom` | A full-width banner along one edge. |
+| `{ type: 'drawer', side }` | `bottom`, `top`, `start`, `end` | `bottom` | A panel that slides in from one side and shows every choice at once on desktop. |
 
-| Directive | Replaces | Template context |
-| --- | --- | --- |
-| `ng-template[inthConsentBannerTitle]` (`ConsentBannerTitle`) | Title text inside `<h2>` | `$implicit` (title), `notice` |
-| `ng-template[inthConsentBannerDescription]` (`ConsentBannerDescription`) | Description text (legal links stay) | `$implicit` (description), `notice` |
-| `ng-template[inthConsentBannerAction]` (`ConsentBannerAction`) | Each action button | `$implicit` (action id), `label`, `primary`, `variant`, `mode`, `testId` |
+<include src="../../../shared/examples/angular/bottom-bar.mdx" />
 
-Templates are strictly typed: `let-action` is a `ConsentBannerButton` and
-binds cleanly to `[action]` on `ConsentButton`. Preserve `testId` if your
-tests query stock test IDs.
+`start` and `end` are logical, like CSS `inset-inline-start`. On a
+right-to-left page, `start` is the bottom-right corner. A `start` or `end`
+Drawer has no room beside the page on a phone, so at 640px and narrower it
+becomes a bottom Drawer.
+
+Set a container in three places. The first one that is set wins:
+
+1. The `container` input on `<inth-consent-banner>`.
+2. `presentation.prompt.container` in `provideInth()`.
+3. The policy rule's `surface.container`, set in the dashboard.
+
+`edgeStyle` follows the same order, with `presentation.prompt.edgeStyle` and
+then `surface.edgeStyle`. Use the input for one page, the provider option for
+the whole app, and the policy when the placement belongs to a region rather
+than to your code.
+
+## Block the page until a choice
+
+`blockUntilChoice` dims the page, locks scroll and keeps focus inside the
+prompt until the visitor chooses. Set it on the banner or as
+`presentation.prompt.blockUntilChoice`.
+
+Some prompts cannot block, because blocking would force a choice the law
+does not ask for:
+
+- A notice never blocks, and neither does a prompt under an opt-out model.
+- A centred Card always blocks. Where blocking is not allowed, a centred Card
+  moves to the `start` corner.
+- The policy's `surface.blocking` is a hard rule: `forbidden` never blocks,
+  and `required` always blocks a choice prompt, whatever your inputs say.
+
+## Per-policy layouts
+
+`layout` controls action grouping. Any required action that `layout` leaves
+out is restored, and Accept and Reject keep equal prominence. To change the
+container or the button order by region, read the active rule from
+`ConsentManager.policyRule()` and bind the inputs to it. Here `consent` is the
+`ConsentManager` your component injects:
+
+{/* example: fragment */}
+
+```html
+<inth-consent-banner
+	[container]="
+		consent.policyRule().prompt === 'notice'
+			? { type: 'banner', edge: 'bottom' }
+			: { type: 'card', position: 'start' }
+	"
+/>
+```
+
+Style the primary action with `theme.consentActions`; see
+[customize](../customize#change-button-styles-by-action).
 
 ## When the banner shows
 
@@ -89,60 +132,67 @@ tests query stock test IDs.
 See [why the banner may be absent](/docs/concepts/policies#why-the-banner-may-be-absent)
 when no banner appears.
 
-Choice prompts show Accept, Reject and Customize in policy order. Notices show
-a dismiss button using `noticeTitle` and `noticeDescription`; dismissing a
-notice records acknowledgement rather than consent.
+The banner and its container load as their own chunks once a choice is owed,
+so a page that never owes one downloads neither. On a server-rendered page
+the load holds the application unstable, as a `@defer` block does, so the
+banner is in the server HTML.
 
-When the policy grants the `opt-out` right, the banner shows an underlined
-opt-out link whose action follows the resolved `presentation.optOutLink` title
-in `provideInth()`. With the default `'do-not-sell'` ("Do Not Sell or Share My
-Personal Information"), activating the link records the opt-out in one click
-and opens `<inth-opt-out-confirmation>` (reloading first when that turns off a
-running category and `reloadOnConsentRevoked` is enabled; rendered lazily by
-`<inth-consent-dialog>` or a standalone `<inth-opt-out-confirmation>`). The
-confirmation view displays a receipt with the status line, what the opt-out
-covers (naming rights only when confirmed by the backend), the recorded time,
-the local reference when this browser recorded it, Done and Manage
-preferences. With `'privacy-choices'` or `'california-privacy-choices'`, the
-link renders with the California Privacy Protection Agency opt-out icon and
-opens `<inth-consent-dialog>` without recording an opt-out. Programmatic calls
-to `ConsentManager.requestOptOut()` still opt out in one step whatever
-`presentation.optOutLink` is set to. When only the `preferences` right is
-shown, the link opens `<inth-consent-dialog>`.
+Accept and Reject record the choice and close the banner at once, then send
+the request to Inth in the background. Under an `opt-out` policy while an
+opt-out is held, Accept opens the two-step opt-in confirmation before saving.
+
+## The opt-out link and "Your Privacy Choices"
+
+When the policy grants the `opt-out` right, a notice shows an opt-out link
+whose action follows `presentation.optOutLink` in `provideInth()`. With the
+default `'do-not-sell'` ("Do Not Sell or Share My Personal Information"), the
+link records the opt-out in one click and shows the receipt (reloading first
+when that turns off a running category and `reloadOnConsentRevoked` is
+enabled). With `'privacy-choices'` or `'california-privacy-choices'`, the link
+carries the California Privacy Protection Agency opt-out icon and opens
+`<inth-consent-dialog>` without recording an opt-out.
+`ConsentManager.requestOptOut()` still opts out in one step whatever
+`presentation.optOutLink` says.
 
 <include src="../../../shared/privacy-choices-link.mdx" />
 
-Accept and Reject record the choice and close the banner immediately, then
-send the request to Inth in the background. Under an `opt-out` policy while an
-opt-out is held, Accept opens the two-step opt-in confirmation dialog before
-saving.
+After the banner closes, visitors need a way back to their choices. Keep a
+[`<inth-privacy-choices-link>`](./privacy-choices-link) in your footer. After
+a choice, the banner moves focus to that link, or else to
+`<inth-consent-dialog-trigger>` or a `[inthConsentDialogLink]`, so keyboard
+users land on the control that brings the choices back.
 
 ## Accessibility
 
-- Renders as a `region` labelled by its `<h2>` title, or a `dialog` with
-  `aria-modal="true"` and focus trap when `blocking` is enabled.
+- A non-blocking banner is a `region` labelled by its title and leaves the
+  page interactive.
+- A blocking banner puts `role="dialog"`, `aria-modal="true"` and
+  `aria-labelledby` on the shell around the card, and traps focus.
 - Uses native `<button type="button">` controls.
-- Does not steal focus on mount unless focus trapping is active.
+- Does not move focus on mount unless it blocks. After a choice, it announces
+  the outcome and moves focus to "Your Privacy Choices".
+- Escape folds open choices back. It never dismisses the banner.
 - Respects `prefers-reduced-motion` and sets `dir` from the active language.
 
 ## Style the banner
 
 `<inth-consent-banner>` reads these `theme.slots` keys: `consentBanner`,
-`consentBannerCard`, `consentBannerHeader`, `consentBannerTitle`,
-`consentBannerDescription`, `consentBannerFooter`,
-`consentBannerFooterSubGroup`, `consentBannerRights`,
-`consentBannerRightLink`, `consentBannerTag` and `consentBannerOverlay`. See
-[customize](../customize).
+`consentBannerOverlay`, `consentBannerCard`, `consentBannerHeader`,
+`consentBannerTitle`, `consentBannerDescription`, `consentBannerExpand`,
+`consentBannerRightsRow`, `consentBannerSaveButton`, `consentBannerFooter`,
+`consentBannerFooterSubGroup`, `consentBannerRightLink` and
+`consentBannerTag`. See [customize](../customize).
 
 The root carries `data-testid="consent-banner-root"` and these attributes:
 
-| Attribute | Value |
+| Attribute | Values |
 | --- | --- |
-| `data-prompt` | `choice` or `notice` |
-| `data-model` | `opt-in`, `opt-out` or `iab` |
-| `data-variant` | resolved variant |
-| `data-position` | resolved position |
-| `data-blocking` | `true` when blocking |
+| `data-placement` | `card-start`, `card-end`, `card-center`, `banner-bottom`, `banner-top`, `drawer-bottom`, `drawer-top`, `drawer-start`, `drawer-end` |
+| `data-flow` | `expand-in-place`, `all-in-one` |
+| `data-variant` | `choice`, `us-consent`, `notice` |
+| `data-edge-style` | `inset`, `flush` |
+| `data-blocking` | `true`, present only while blocking |
+| `data-expanded` | `true`, present while Customize shows the choices |
+| `data-state` | `open`, `closed` |
 
-Each button carries `data-action` set to `accept`, `reject`, `customize` or
-`dismiss`.
+Each action button carries `data-action`.

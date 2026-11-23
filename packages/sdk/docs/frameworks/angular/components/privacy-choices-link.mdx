@@ -1,0 +1,95 @@
+---
+title: PrivacyChoicesLink
+description: Add the Your Privacy Choices footer link in Angular with inth-privacy-choices-link so visitors can reopen the consent dialog.
+group: frameworks
+---
+
+Give visitors a lasting way back to their consent choices with
+`<inth-privacy-choices-link>`, a footer link that opens
+`<inth-consent-dialog>`.
+
+## Add the link to your footer
+
+The banner closes once a visitor chooses, and its Customize button no longer
+opens the dialog. This link is how visitors change their minds later. Import
+`PrivacyChoicesLink` from `@inth/angular`, add it to your component's
+`imports`, and place it in the footer of the component that renders
+`<inth-consent-dialog>`:
+
+{/* example: fragment */}
+
+```html
+<footer>
+	<nav aria-label="Legal">
+		<a href="/privacy">Privacy policy</a>
+		<a href="/terms">Terms</a>
+		<inth-privacy-choices-link rootClass="footer-link" />
+	</nav>
+</footer>
+```
+
+Content between the tags replaces the label. The opt-out icon, when there is
+one, stays.
+
+## Inputs
+
+| Input | Type | Default | Behavior |
+| --- | --- | --- | --- |
+| `variant` | `'do-not-sell'`, `'privacy-choices'` or `'california-privacy-choices'` | `presentation.optOutLink` | Overrides the opt-out link title for this link. |
+| `rootClass` | `string` | none | A class for the rendered `<button>`. |
+
+The button carries no `inth` classes, so your footer CSS controls how it
+looks.
+
+## What it shows
+
+Under an `opt-out` policy that grants the `opt-out` right, the link reads the
+title set by `presentation.optOutLink` or `variant`:
+
+- `'privacy-choices'`: "Your Privacy Choices", with the California Privacy
+  Protection Agency opt-out icon.
+- `'california-privacy-choices'`: "Your California Privacy Choices", with the
+  icon.
+- `'do-not-sell'`: "Do Not Sell or Share My Personal Information", with no
+  icon.
+
+Under an `opt-in` policy, in the US or the EU, it reads "Your Privacy
+Choices" with no icon, because no opt-out right is offered. It is still the
+way back into the dialog.
+
+Clicking it always opens `<inth-consent-dialog>`. It never records an
+opt-out on its own, so the visitor sees the choice before making it. A click
+handler that runs first and calls `event.preventDefault()` keeps the dialog
+closed.
+
+It renders nothing when no policy has resolved yet, under an IAB policy, or
+when an external consent source owns consent.
+
+<include src="../../../shared/privacy-choices-link.mdx" />
+
+## Behavior
+
+- The button carries `data-testid="privacy-choices-link"` and
+  `data-inth-rights` with the rights the policy grants.
+- It warms the deferred dialog chunk during idle time and on hover or focus,
+  so the dialog opens without a wait.
+- After a choice in the banner, focus moves to this link. When the dialog
+  closes and the control that opened it is gone, focus returns here.
+
+Use [`[inthConsentDialogLink]`](./consent-dialog-link) instead when you want
+your own button or link element with your own label.
+
+## Accessibility
+
+The link renders a native `<button type="button">` and activates with Enter
+and Space. The opt-out icon is decorative, so screen readers announce the
+visible label once.
+
+## Verify it
+
+Open the page under a US opt-out policy and check the footer. Confirm the
+link shows the opt-out icon for `'privacy-choices'` and
+`'california-privacy-choices'`, and no icon for `'do-not-sell'`. Click it and
+confirm `<inth-consent-dialog>` opens without recording an opt-out. Switch to
+an EU opt-in region and confirm the link reads "Your Privacy Choices" without
+an icon and still opens the dialog.

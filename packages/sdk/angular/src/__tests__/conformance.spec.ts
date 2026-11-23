@@ -81,10 +81,13 @@ const isIabComponent = function isIabComponent(
  *
  * @throws {DriverNotImplementedError} When nothing is registered for it.
  */
-const entriesFor = function entriesFor(component: MountableComponent) {
-	const entries = CONFORMANCE_COMPONENTS[component];
+const entriesFor = function entriesFor(opts: MountOptions) {
+	const provided = (opts.providerOptions ?? {}) as Partial<InthOptions>;
+	const entries = CONFORMANCE_COMPONENTS[opts.component]?.({
+		blocking: provided.trapFocus ?? false,
+	});
 	if (!entries?.length) {
-		throw new DriverNotImplementedError('angular', `mount(${component})`);
+		throw new DriverNotImplementedError('angular', `mount(${opts.component})`);
 	}
 	return entries;
 };
@@ -221,7 +224,7 @@ const driver: TestDriver = {
 		};
 	},
 	async mount(opts: MountOptions): Promise<MountResult> {
-		const entries = entriesFor(opts.component);
+		const entries = entriesFor(opts);
 		const options = buildProviderOptions(opts);
 		let resolveInit: (() => void) | undefined;
 		if (opts.initMode === 'pending') {
@@ -251,6 +254,11 @@ const driver: TestDriver = {
 			entries,
 		});
 		lastApp = app;
+		// The dialog mounts open, as the host opens it: through the consent
+		// state. The IAB dialog is opened by its `open` input instead.
+		if (opts.component === 'consent-dialog') {
+			app.consent.setActiveUI('dialog');
+		}
 
 		if (isIabComponent(opts.component)) {
 			// `@inth/sdk/iab` loads on demand, so an IAB surface only has a live
@@ -281,7 +289,7 @@ const driver: TestDriver = {
 	},
 	probePolicyContract,
 	async serverRender(opts: MountOptions): Promise<string> {
-		const entries = entriesFor(opts.component);
+		const entries = entriesFor(opts);
 		const options = buildProviderOptions(opts);
 		if (options.iab) {
 			options.iab.gvl = undefined;

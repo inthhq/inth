@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
 	ConsentBanner,
@@ -25,10 +25,7 @@ import {
 } from '@inth/sdk/runtime/page-globals';
 import type * as RuntimeProvider from '@inth/sdk/runtime/provider';
 import { V1_UUID_PATTERN, resolvePolicyRules } from '@inth/sdk/schema/types';
-import {
-	EARLY_CONSENT_TAP_SCRIPT,
-	closeOptOutConfirmation,
-} from '@inth/sdk/surface-actions';
+import { closeOptOutConfirmation } from '@inth/sdk/surface-actions';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { ConsentDialog } from './consent-dialog';
@@ -55,20 +52,34 @@ const noticeRule = () => ({
 });
 
 @Component({
-	imports: [ConsentBanner, ConsentDialog],
-	template: `<inth-consent-banner [disableAnimation]="true" />
-		<inth-consent-dialog [disableAnimation]="true" />`,
+	imports: [ConsentDialog, OptOutConfirmation],
+	template: `<button
+			type="button"
+			data-testid="custom-opt-out"
+			(click)="optOut()"
+		>
+			Opt out now
+		</button>
+		<inth-consent-dialog [disableAnimation]="true" />
+		<inth-opt-out-confirmation [disableAnimation]="true" />`,
 })
-class BannerDialogHost {}
+class OptOutButtonHost {
+	readonly #consent = inject(ConsentManager);
+
+	protected optOut(): void {
+		void this.#consent.requestOptOut();
+	}
+}
 
 @Component({
-	imports: [ConsentDialog, ConsentDialogLink],
+	imports: [ConsentDialog, ConsentDialogLink, OptOutConfirmation],
 	template: `<button
 			type="button"
 			inthConsentDialogLink
 			right="opt-out"
 		></button>
-		<inth-consent-dialog [disableAnimation]="true" />`,
+		<inth-consent-dialog [disableAnimation]="true" />
+		<inth-opt-out-confirmation [disableAnimation]="true" />`,
 })
 class LinkDialogHost {}
 
@@ -80,20 +91,20 @@ class LinkDialogHost {}
 class BannerStandaloneHost {}
 
 @Component({
-	imports: [ConsentBanner, ConsentDialogLink],
-	template: `<inth-consent-banner [disableAnimation]="true" />
-		<button
-			type="button"
-			inthConsentDialogLink
-			right="opt-out"
-		></button>`,
+	imports: [ConsentDialogLink],
+	template: `<button
+		type="button"
+		inthConsentDialogLink
+		right="opt-out"
+	></button>`,
 })
-class BannerAndLinkHost {}
+class LinkHost {}
 
 @Component({
-	imports: [ConsentDialog, ConsentDialogTrigger],
+	imports: [ConsentDialog, ConsentDialogTrigger, OptOutConfirmation],
 	template: `<inth-consent-dialog-trigger showWhen="always" />
-		<inth-consent-dialog [disableAnimation]="true" />`,
+		<inth-consent-dialog [disableAnimation]="true" />
+		<inth-opt-out-confirmation [disableAnimation]="true" />`,
 })
 class TriggerDialogHost {}
 
@@ -106,19 +117,19 @@ class BothHostsHost {}
 
 @Component({
 	imports: [
-		ConsentBanner,
 		ConsentDialog,
 		ConsentDialogLink,
 		ConsentDialogTrigger,
+		OptOutConfirmation,
 	],
-	template: `<inth-consent-banner [disableAnimation]="true" />
-		<button
+	template: `<button
 			type="button"
 			inthConsentDialogLink
 			right="opt-out"
 		></button>
 		<inth-consent-dialog-trigger showWhen="always" />
-		<inth-consent-dialog [disableAnimation]="true" />`,
+		<inth-consent-dialog [disableAnimation]="true" />
+		<inth-opt-out-confirmation [disableAnimation]="true" />`,
 })
 class AllControlsHost {}
 
@@ -176,21 +187,11 @@ afterEach(() => {
 });
 
 describe('one-step opt-out and confirmation view in Angular', () => {
-	test('opts out in one click from the banner link and opens confirmation with one button', async () => {
-		const { consent, fixture } = await boot(BannerDialogHost);
+	test('opts out in one click from requestOptOut and opens confirmation with one button', async () => {
+		const { consent, fixture } = await boot(OptOutButtonHost);
 
-		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
-		const optOutLink = query<HTMLButtonElement>(
-			'consent-banner-right-link-opt-out'
-		) as HTMLButtonElement;
-		expect(optOutLink.textContent?.trim()).toBe(
-			'Do Not Sell or Share My Personal Information'
-		);
-		expect(optOutLink.querySelector('svg')).toBeNull();
-
-		optOutLink.click();
+		await vi.waitFor(() => expect(query('custom-opt-out')).not.toBeNull());
+		query<HTMLButtonElement>('custom-opt-out')?.click();
 		await fixture.whenStable();
 
 		const snapshot = consent.snapshot();
@@ -340,27 +341,21 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 		['privacy-choices', 'Your Privacy Choices', true],
 		['california-privacy-choices', 'Your California Privacy Choices', true],
 	] as [OptOutLinkVariant, string, boolean][])(
-		'renders optOutLink=%s with exact title and icon=%s',
+		'renders optOutLink=%s on the footer link with exact title and icon=%s',
 		async (optOutLink, expectedTitle, expectIcon) => {
-			await boot(BannerAndLinkHost, {
+			await boot(LinkHost, {
 				presentation: { optOutLink },
 			});
 
 			await vi.waitFor(() =>
-				expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+				expect(query('consent-dialog-link')).not.toBeNull()
 			);
-			const bannerLink = query('consent-banner-right-link-opt-out');
 			const dialogLink = query('consent-dialog-link');
 
-			expect(bannerLink?.textContent?.trim()).toBe(expectedTitle);
 			expect(dialogLink?.textContent?.trim()).toBe(expectedTitle);
-			expect(
-				Boolean(bannerLink?.querySelector('svg[aria-hidden="true"]'))
-			).toBe(expectIcon);
 			expect(
 				Boolean(dialogLink?.querySelector('svg[aria-hidden="true"]'))
 			).toBe(expectIcon);
-			expect(Boolean(bannerLink?.querySelector('svg'))).toBe(expectIcon);
 			expect(Boolean(dialogLink?.querySelector('svg'))).toBe(expectIcon);
 		}
 	);
@@ -458,45 +453,16 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 		).toBe(true);
 	});
 
-	test('replays an early tap on the opt-out link as a durable opt-out', async () => {
-		const container = document.createElement('div');
-		container.innerHTML =
-			'<div data-testid="consent-banner-root" data-model="opt-out" data-prompt="notice"><button type="button" data-action="right" data-right="opt-out">Do Not Sell or Share My Personal Information</button></div>';
-		document.body.append(container);
-		// oxlint-disable-next-line no-new-func -- Runs the inline script as server HTML would.
-		new Function(EARLY_CONSENT_TAP_SCRIPT)();
-		container
-			.querySelector<HTMLButtonElement>('[data-right="opt-out"]')
-			?.click();
-		container.remove();
-
-		const { consent, fixture } = await boot(BannerDialogHost);
-
-		await vi.waitFor(async () => {
-			await fixture.whenStable();
-			expect(consent.snapshot().optOut?.method).toBe('button');
-		});
-		expect(consent.snapshot().effectivePermissions.marketing).toBe(false);
-		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
-		expect(consent.snapshot().effectivePermissions.measurement).toBe(true);
-		await vi.waitFor(async () => {
-			await fixture.whenStable();
-			expect(query('opt-out-confirmation-root')).not.toBeNull();
-		});
-	});
-
 	test('defers confirmation across a revocation reload, shows it once on the next load, and not on the load after that', async () => {
 		const onBeforeReload = vi.fn();
-		const first = await boot(BannerDialogHost, {
+		const first = await boot(OptOutButtonHost, {
 			callbacks: { onBeforeConsentRevocationReload: onBeforeReload },
 			persistence: true,
 			reloadOnConsentRevoked: true,
 		});
 
-		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
-		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		await vi.waitFor(() => expect(query('custom-opt-out')).not.toBeNull());
+		query<HTMLButtonElement>('custom-opt-out')?.click();
 		await first.fixture.whenStable();
 
 		// Does not flash on the old document before reload.
@@ -513,7 +479,7 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 
 		// Next load after reload: opens once with the honored status, clears the
 		// marker, records nothing again, and does not reload again.
-		const second = await boot(BannerDialogHost, {
+		const second = await boot(BothHostsHost, {
 			persistence: true,
 			prefetch: {
 				initialRecords: { optOut: recorded ?? undefined },
@@ -540,7 +506,7 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 		activeConsent = null;
 
 		// Load after that: marker is cleared, so confirmation does not reopen.
-		const third = await boot(BannerDialogHost, {
+		const third = await boot(BothHostsHost, {
 			persistence: true,
 			prefetch: {
 				initialRecords: { optOut: recorded ?? undefined },
@@ -555,29 +521,15 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 	});
 
 	test.each(['privacy-choices', 'california-privacy-choices'] as const)(
-		'opens the dialog and records nothing from banner link, footer link and trigger when optOutLink=%s',
+		'opens the dialog and records nothing from the footer link and trigger when optOutLink=%s',
 		async (optOutLink) => {
 			const { consent, fixture } = await boot(AllControlsHost, {
 				presentation: { optOutLink },
 			});
 
 			await vi.waitFor(() =>
-				expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+				expect(query('consent-dialog-link')).not.toBeNull()
 			);
-			query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
-			await vi.waitFor(async () => {
-				await fixture.whenStable();
-				expect(query('consent-dialog-root')).not.toBeNull();
-			});
-			expect(consent.snapshot().optOut).toBeNull();
-			expect(query('opt-out-confirmation-root')).toBeNull();
-
-			consent.setActiveUI('none');
-			await vi.waitFor(async () => {
-				await fixture.whenStable();
-				expect(query('consent-dialog-root')).toBeNull();
-			});
-
 			query<HTMLButtonElement>('consent-dialog-link')?.click();
 			await vi.waitFor(async () => {
 				await fixture.whenStable();
@@ -631,7 +583,7 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 			{ kind: 'offline' as const }
 		);
 
-		const { fixture } = await boot(BannerDialogHost, {
+		const { fixture } = await boot(OptOutButtonHost, {
 			mode: deferredOptOutMode,
 			prefetch: {
 				initialPolicyResolution: resolvePolicyRules({
@@ -642,10 +594,8 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 			},
 		});
 
-		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
-		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		await vi.waitFor(() => expect(query('custom-opt-out')).not.toBeNull());
+		query<HTMLButtonElement>('custom-opt-out')?.click();
 
 		await vi.waitFor(async () => {
 			await fixture.whenStable();
@@ -730,7 +680,7 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 			{ kind: 'offline' as const }
 		);
 
-		const { consent, fixture } = await boot(BannerDialogHost, {
+		const { consent, fixture } = await boot(OptOutButtonHost, {
 			mode: deferredOptOutMode,
 			prefetch: {
 				initialPolicyResolution: resolvePolicyRules({
@@ -741,9 +691,7 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 			},
 		});
 
-		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
+		await vi.waitFor(() => expect(query('custom-opt-out')).not.toBeNull());
 		expect(consent.optOutState()).toMatchObject({
 			at: null,
 			available: true,
@@ -758,7 +706,7 @@ describe('one-step opt-out and confirmation view in Angular', () => {
 		});
 		expect('optOutReceipt' in consent).toBe(false);
 
-		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		query<HTMLButtonElement>('custom-opt-out')?.click();
 		await fixture.whenStable();
 
 		const afterClick = consent.optOutState();
