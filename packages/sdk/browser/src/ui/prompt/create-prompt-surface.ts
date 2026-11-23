@@ -72,7 +72,7 @@ import {
 	watchPhoneLayout,
 } from '../parts/shared';
 import type { PartEnv } from '../parts/shared';
-import { renderLegalLinks } from '../surface.model';
+import { renderLegalLinks } from '../render-legal-links';
 import type { SurfaceContext } from '../surface.model';
 import type { PromptPanel } from './panel';
 

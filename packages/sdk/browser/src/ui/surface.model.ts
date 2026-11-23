@@ -4,13 +4,9 @@ import type {
 	ResolvedOptOutLink,
 	SaveResult,
 } from '@inth/sdk-core';
-import type { LegalLinksTranslations } from '@inth/sdk-translations';
-import { resolveLegalLinkEntries } from '@inth/sdk-ui/utils/legal-links';
 
 import type { ConsentClient } from '../consent-client.model';
-import { classes } from '../generated/styles';
 import type { SlotApplier } from './create-slot-applier';
-import { h } from './dom';
 
 /** What every surface renders against. */
 export interface SurfaceContext {
@@ -45,63 +41,3 @@ export interface Surface {
 	/** Remove the surface and release listeners. */
 	destroy: () => void;
 }
-
-/** What {@link renderLegalLinks} needs. */
-export interface LegalLinksParams {
-	/** Which links to render; `null` or empty renders none. */
-	keys: (keyof LegalLinks)[] | null | undefined;
-	/** The configured links. */
-	legalLinks: LegalLinks | undefined;
-	/** Translated labels, used when a link carries none of its own. */
-	labels: Partial<LegalLinksTranslations>;
-	/** Prefix for each link's test id. */
-	testIdPrefix: string;
-	/** Ship the DOM without class names. */
-	noStyle: boolean;
-}
-
-/**
- * Render the inline legal links a surface shows after its description.
- *
- * Matches the React banner's `InlineLegalLinks`: a space first, then each
- * link, with a comma inside every link but the last and a space after it.
- *
- * @returns A wrapper holding the links, or nothing when there are none.
- */
-export const renderLegalLinks = function renderLegalLinks(
-	params: LegalLinksParams
-): HTMLElement[] {
-	const entries = resolveLegalLinkEntries(
-		params.legalLinks,
-		params.keys,
-		params.labels
-	);
-	if (entries.length === 0) {
-		return [];
-	}
-	return [
-		h(
-			'span',
-			{},
-			' ',
-			...entries.map((link) =>
-				h(
-					'span',
-					{},
-					h(
-						'a',
-						{
-							class: params.noStyle ? '' : classes.legalLinks.legalLink,
-							'data-testid': `${params.testIdPrefix}-${link.key}`,
-							href: link.href,
-							rel: link.rel,
-							target: link.target,
-						},
-						link.separated ? `${link.label},` : link.label
-					),
-					link.separated ? ' ' : null
-				)
-			)
-		),
-	];
-};
