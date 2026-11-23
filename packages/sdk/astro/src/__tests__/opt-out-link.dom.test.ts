@@ -145,5 +145,43 @@ describe.each(['react', 'vue'] as const)(
 				document.querySelector('[data-testid="opt-out-confirmation-root"]')
 			).toBeNull();
 		});
+
+		// Without its own confirmation, the island's dialog adopted the
+		// confirmation and opened on its receipt, so a page that placed
+		// `<OptOutConfirmation />` never showed it.
+		it('shows the standalone confirmation when the page has <OptOutConfirmation />', async () => {
+			const host = document.createElement('div');
+			host.setAttribute('data-inth-opt-out-confirmation-host', '');
+			document.body.append(host);
+			cleanup.push(() => host.remove());
+			const client = mountClient(ui);
+			const footerLink = document.createElement('button');
+			footerLink.type = 'button';
+			footerLink.setAttribute('data-inth-action', 'opt-out');
+			footerLink.textContent = 'Do Not Sell or Share My Personal Information';
+			document.body.append(footerLink);
+			cleanup.push(() => footerLink.remove());
+
+			footerLink.click();
+
+			await vi.waitFor(
+				() =>
+					expect(
+						document.querySelector('[data-testid="opt-out-confirmation-root"]')
+					).not.toBeNull(),
+				ISLAND_RENDER_TIMEOUT
+			);
+			expect(client.getConsent().optOut).not.toBeNull();
+			// Give a dialog that wrongly adopts the confirmation time to open.
+			await new Promise((resolve) => {
+				setTimeout(resolve, 100);
+			});
+			expect(
+				document.querySelector('[data-testid="consent-dialog-root"]')
+			).toBeNull();
+			expect(
+				document.querySelector('[data-testid="opt-out-confirmation-root"]')
+			).not.toBeNull();
+		});
 	}
 );
