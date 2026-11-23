@@ -19,6 +19,7 @@ The stock banner and dialog now always render one consent UI in every framework 
 | `blocking`, `scrollLock`, `trapFocus` on `ConsentBanner` | `blockUntilChoice` |
 | `primaryButton`, `direction` on `ConsentBanner` | `layout` and the theme's `consentActions` |
 | `presentation.prompt.variant` / `position` / `blocking` | `presentation.prompt.container` / `blockUntilChoice` |
+| `blocking` on `PromptPresentation` and the experiment arm's `prompt` | `blockUntilChoice`, the prompt's one blocking option. The IAB banner reads it too. `presentation.preferences.blocking` stays, for the IAB dialog. |
 | `PromptVariant`, `PromptPosition`, `PROMPT_VARIANT_*`, `positionSource` | `ConsentContainer`, `ConsentPlacement` and the resolved `container` |
 | `containerFromLegacyPrompt`, `LegacyPromptPresentation` | `container` |
 | The `invalid-variant`, `invalid-position` and `legacy-presentation` diagnostics | The container's own diagnostics |
@@ -31,7 +32,7 @@ The stock banner and dialog now always render one consent UI in every framework 
 | `components.tag.dialog`, the `consentDialogTag` theme slot | Nothing: the dialog has no branding tag. Both are accepted and style nothing. |
 | `consentWidgetFooter` on the dialog's footer | `consentDialogFooter` (`components.dialog.footer`); `consentWidgetFooter` styles only `ConsentWidget` |
 
-`container` is set on `ConsentBanner`, in `presentation.prompt.container`, or by the policy rule's `surface.container`, in that order. A policy's `surface.container` now places the prompt on every site, with no `design` switch. `edgeStyle` (`inset` or `flush`) works the same way.
+`container` is set on `ConsentBanner`, in `presentation.prompt.container`, or by the policy rule's `surface.container`, in that order. The policy rule's `surface.blocking` (`forbidden`, `allowed` or `required`) still constrains `blockUntilChoice` as before. A policy's `surface.container` now places the prompt on every site, with no `design` switch. `edgeStyle` (`inset` or `flush`) works the same way.
 
 **What visitors see**
 
@@ -46,6 +47,7 @@ The stock banner and dialog now always render one consent UI in every framework 
 - The default primary color is `#2563eb` in light mode (hover `#1d4ed8`) and `#2f66df` in dark mode (hover `#4f83f1`). Dark-mode primary text is `#8ab4ff`.
 - `radius.lg` is `16px` (`1rem`) and `radius.md` is `10px` (`0.625rem`).
 - Switches read `--inth-switch-track-off` for the off track.
+- The JavaScript theme's default dark `primaryTint` now mixes the dark primary (`#2f66df`) into the surface, as the stylesheet does with `var(--inth-primary)`, instead of the hover blue `#4f83f1`.
 
 The classic banner and dialog CSS variables still apply: each part reads its own hook, then the classic variable, then the theme token. The stylesheets no longer declare the four variables that adapters read at runtime. Adapters that time an exit read `--consent-banner-animation-duration` and `--consent-dialog-animation-duration` and fall back to `--inth-duration-fast` and `--inth-duration-normal`. The backdrop reads `--inth-overlay` instead of `--consent-dialog-overlay-background-color` and its `-dark` twin. See "Classic variable compatibility" in the theme tokens docs.
 
