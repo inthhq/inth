@@ -15,7 +15,6 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
-import { resolveStorageKeys } from '../../libs/storage-keys';
 import {
 	encodeAccountChoicesCookie,
 	encodeAccountLocalJson,
@@ -23,6 +22,7 @@ import {
 	encodeAccountVendorsCookie,
 	readStoredAccountLayer,
 } from '../../modules/persistence/account-codec';
+import { resolveAccountStorageKeys } from '../../modules/persistence/account-keys';
 import { resolveRequestConsent } from '../../server/request-consent';
 import { testing } from '../../testing';
 import { createConsentProviderRuntime, defaultRuntimeModules } from '../index';
@@ -239,7 +239,7 @@ describe('runtime userConsent Promise hold, timeout, and fencing', () => {
 		const rule = optInRule();
 		const resolution = matchedResolution(rule);
 		const fp = resolution.fingerprints.choice;
-		const keys = resolveStorageKeys();
+		const keys = resolveAccountStorageKeys();
 		const promiseA = Promise.withResolvers<UserConsent | null>();
 		const promiseB = Promise.withResolvers<UserConsent | null>();
 
@@ -466,7 +466,7 @@ describe('SSR folding via resolveRequestConsent', () => {
 		const rule = optInRule();
 		const resolution = matchedResolution(rule);
 		const fp = resolution.fingerprints.choice;
-		const keys = resolveStorageKeys();
+		const keys = resolveAccountStorageKeys();
 
 		const layer = {
 			appliedAt: NOW,
@@ -804,7 +804,7 @@ describe('runtime regressions (set 1)', () => {
 	test('signed-out SSR resolveRequestConsent with userConsent: null propagates null so client deletes leftover account storage', async () => {
 		const rule = optInRule();
 		const fp = matchedResolution(rule).fingerprints.choice;
-		const keys = resolveStorageKeys();
+		const keys = resolveAccountStorageKeys();
 
 		// Pre-populate leftover account storage for user A on this browser.
 		const staleLayer = {
