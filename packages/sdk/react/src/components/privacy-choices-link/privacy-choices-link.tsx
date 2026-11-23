@@ -75,6 +75,7 @@ export const PrivacyChoicesLink = createForwardRef<
 	const icon = optOutLink.icon ? (
 		<OptOutIcon
 			className={themeNoStyle ? undefined : bannerStyles.optOutIcon}
+			sized={!themeNoStyle}
 		/>
 	) : null;
 

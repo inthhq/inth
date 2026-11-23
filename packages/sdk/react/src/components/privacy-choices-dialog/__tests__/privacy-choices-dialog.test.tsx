@@ -136,6 +136,7 @@ const mount = async function mount({
 	language,
 	children,
 	banner = true,
+	extra,
 }: {
 	region?: Region;
 	design?: ConsentPresentation['design'] | null;
@@ -147,6 +148,8 @@ const mount = async function mount({
 	children?: ReactNode;
 	/** Mount `ConsentBanner` too. Without it, the dialog hosts the confirmations. */
 	banner?: boolean;
+	/** More provider options, such as `theme` or `noStyle`. */
+	extra?: Partial<ComponentFixtureOptions>;
 } = {}) {
 	fixture += 1;
 	const prefetch: ComponentFixtureOptions['prefetch'] = policyFixture(
@@ -181,6 +184,7 @@ const mount = async function mount({
 								prompt: { container, edgeStyle },
 							},
 				vendors: VENDORS,
+				...extra,
 			}}
 		>
 			<button type="button">Page action</button>
@@ -1086,4 +1090,71 @@ describe('wave B round 2', () => {
 			expect($('consent-dialog-legal-link-privacyPolicy') !== null).toBe(shown);
 		}
 	);
+});
+
+describe('wave C round 1', () => {
+	test('the dialog root is a consent surface root and takes the consentDialog slot', async () => {
+		await mount({
+			extra: { theme: { slots: { consentDialog: 'host-dialog-root' } } },
+		});
+		await openDialog();
+		const root = must('consent-dialog-root');
+		expect(root).toHaveAttribute('data-inth-surface', 'dialog');
+		expect(root).toHaveClass('host-dialog-root');
+		// The stock backdrop stays beside the slot's class.
+		expect(getComputedStyle(root).position).toBe('fixed');
+	});
+
+	test('a noStyle consentDialog slot drops the stock backdrop', async () => {
+		await mount({
+			extra: {
+				theme: {
+					slots: {
+						consentDialog: { className: 'host-dialog-root', noStyle: true },
+					},
+				},
+			},
+		});
+		await openDialog();
+		const root = must('consent-dialog-root');
+		expect(root).toHaveClass('host-dialog-root');
+		expect(root.className.trim()).toBe('host-dialog-root');
+	});
+
+	const ICON_LINK = {
+		design: 'privacy-choices',
+		optOutLink: 'privacy-choices',
+		prompt: { container: { type: 'card' } },
+	} as const;
+
+	test('[C2] the opt-out icon carries its own size, with no banner sheet on the page', async () => {
+		await mount({ banner: false, extra: { presentation: ICON_LINK } });
+		const icon = await vi.waitFor(() => {
+			const svg = must('privacy-choices-link').querySelector('svg');
+			expect(svg).not.toBeNull();
+			return svg as SVGSVGElement;
+		});
+		expect(icon.getAttribute('height')).toBe('14');
+		expect(icon.getAttribute('width')).toBe('30');
+		// About one line of text, not the line's width. A classic banner
+		// sheet an earlier test left on the page may size it a little less.
+		const box = icon.getBoundingClientRect();
+		expect(box.height).toBeGreaterThan(0);
+		expect(box.height).toBeLessThanOrEqual(14);
+		expect(box.width).toBeLessThanOrEqual(30);
+	});
+
+	test('[C2] noStyle leaves the opt-out icon unsized', async () => {
+		await mount({
+			banner: false,
+			extra: { noStyle: true, presentation: ICON_LINK },
+		});
+		const icon = await vi.waitFor(() => {
+			const svg = must('privacy-choices-link').querySelector('svg');
+			expect(svg).not.toBeNull();
+			return svg as SVGSVGElement;
+		});
+		expect(icon.hasAttribute('height')).toBe(false);
+		expect(icon.hasAttribute('width')).toBe(false);
+	});
 });

@@ -14,6 +14,7 @@ import {
 	resolveSaleRight,
 } from '@inth/sdk/engine';
 import type { AllConsentNames, BannerCommitAction } from '@inth/sdk/engine';
+import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import { showConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	announcementText,
@@ -83,12 +84,16 @@ import { useReducedMotion } from '~/hooks/use-reduced-motion';
 import { useResolvedPresentation } from '~/hooks/use-resolved-presentation';
 import { useTextDirection } from '~/hooks/use-text-direction';
 import { useKernel } from '~/kernel-selector';
+import type { ReactSlotProps } from '~/types/slots';
 import { useUIConfig } from '~/ui-config-context';
 import { inertProps } from '~/utils/inert';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
 import { SurfaceStyles, useSurfaceSheetsReady } from '../shared/surface-styles';
 import { DIALOG_SHEETS } from './sheets';
+
+/** A `components` part, with the `noStyle` a `theme.slots` entry adds. */
+type SlotWithNoStyle = (ReactSlotProps & { noStyle?: boolean }) | undefined;
 
 /** The "Saved" cue stays this long, on a timer, not an animation (MOT-03). */
 const CUE_MS = 1700;
@@ -1093,6 +1098,27 @@ const DialogContent = ({
 	// The GPC note replaces the intro, never both (LAY-04).
 	const intro = !eu && gpcLocked ? null : copy.intro;
 
+	// The root is the backdrop and the dialog's surface. `dialog.root` and
+	// the `consentDialog` theme slot (`dialog.container`) both style it, as
+	// they style the classic dialog, and either one's `noStyle` drops the
+	// stock backdrop.
+	const rootSlot = getSlotProps(components, 'dialog.root') as SlotWithNoStyle;
+	const containerSlot = getSlotProps(
+		components,
+		'dialog.container'
+	) as SlotWithNoStyle;
+	const { className: containerClassName, ...containerProps } = mergeSlotProps(
+		containerSlot,
+		{}
+	);
+	const rootProps = mergeSlotProps(rootSlot, {
+		...containerProps,
+		baseClassName: styles.backdrop,
+		className: containerClassName,
+		noStyle:
+			noStyle || rootSlot?.noStyle === true || containerSlot?.noStyle === true,
+	});
+
 	return (
 		<>
 			<SurfaceStyles
@@ -1101,16 +1127,14 @@ const DialogContent = ({
 			/>
 			<div
 				ref={backdropRef}
-				{...mergeSlotProps(getSlotProps(components, 'dialog.root'), {
-					baseClassName: styles.backdrop,
-					noStyle,
-				})}
+				{...rootProps}
 				data-edge-style={edgeStyle}
 				data-design="privacy-choices"
 				data-regime={eu ? 'eu' : 'us'}
 				data-layout={phone ? 'phone' : 'desktop'}
 				data-animation={disableAnimation ? 'off' : undefined}
 				data-testid="consent-dialog-root"
+				{...{ [SURFACE_ROOT_ATTRIBUTE]: 'dialog' }}
 				dir={textDirection}
 			>
 				<Layer
