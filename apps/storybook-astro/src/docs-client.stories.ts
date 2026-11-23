@@ -5,7 +5,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { callbacks } from './docs-recipes/consent-callbacks';
 import ConsentStatus from './docs-recipes/consent-status';
-import { renderAstroStory } from './render-astro-story';
+import { renderAstroStory, whenPromptReady } from './render-astro-story';
 
 /**
  * The client API recipes the Astro docs publish: callbacks from a client
@@ -30,6 +30,9 @@ export const Callbacks: Story = {
 		document.addEventListener('consent:choice', onChoice);
 		document.addEventListener('consent:permissions', onChange);
 		try {
+			// A tap before the client boot mounts the prompt is not replayed:
+			// the story drops the server markup's inline scripts.
+			await whenPromptReady();
 			const body = within(document.body);
 			await userEvent.click(
 				await body.findByRole('button', { name: /^accept all$/iu })

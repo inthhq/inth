@@ -1,3 +1,7 @@
+import {
+	accountReceiptShown,
+	signalReceiptShown,
+} from '@inth/conformance/play/opt-out-confirmation';
 import type { Meta, StoryObj } from '@storybook/html-vite';
 import { expect, waitFor, within } from 'storybook/test';
 
@@ -51,25 +55,11 @@ export const AccountCovered: Story = {
 };
 
 export const SignalHonored: Story = {
-	play: async () => {
-		const status = await within(document.body).findByTestId(
-			'opt-out-confirmation-status'
-		);
-		await waitFor(() =>
-			expect(status).toHaveTextContent('Opt-out preference signal honored')
-		);
-	},
+	play: signalReceiptShown,
 	render: () => renderAstroStory('opt-out-confirmation--signal-honored'),
 };
 
 export const AccountAdopted: Story = {
-	play: async () => {
-		const status = await within(document.body).findByTestId(
-			'opt-out-confirmation-status'
-		);
-		await waitFor(() =>
-			expect(status).toHaveTextContent('Opt-out request honored')
-		);
-	},
+	play: accountReceiptShown,
 	render: () => renderAstroStory('opt-out-confirmation--account-adopted'),
 };

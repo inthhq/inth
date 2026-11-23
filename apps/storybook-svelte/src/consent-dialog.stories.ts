@@ -1,10 +1,12 @@
 import {
 	dialogContract,
 	dialogEscapeCloses,
+	optInConfirmation,
+	optInConfirmationConfirmedRights,
+	optOutGpcLocked,
 	saveFlow,
 } from '@inth/conformance/play/consent-dialog';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import type { ConsentContainer } from '../../../packages/sdk/core/src/libs/consent-layout';
 import ConsentDialogOptOutStory from './consent-dialog-opt-out-story.svelte';
@@ -76,36 +78,18 @@ export const OptOutConfirmedSaleAndShare: Story = {
 	}),
 };
 
-/** Opted out by an active GPC signal; no opt-in link is shown. */
+/** Opted out by an active GPC signal; Allow is unavailable while it is on. */
 export const OptOutGpcLocked: Story = {
-	play: async () => {
-		await within(document.body).findByTestId('consent-widget-opt-out-status');
-		await expect(
-			within(document.body).queryByTestId('consent-widget-opt-in-link')
-		).toBeNull();
-	},
+	play: optOutGpcLocked,
 	render: () => ({
 		Component: ConsentDialogOptOutStory,
 		props: { kind: 'gpc' },
 	}),
 };
 
-/** Two-step opt-in confirmation dialog opened from the opt-out block. */
+/** Two-step opt-in: Allow on the sale-and-sharing row asks first. */
 export const OptInConfirmation: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-widget-opt-in-link'
-		);
-		await userEvent.click(link);
-		const dialog = await within(document.body).findByTestId(
-			'opt-in-confirmation-root'
-		);
-		await expect(dialog).toBeVisible();
-		const cancel = within(dialog).getByTestId(
-			'opt-in-confirmation-cancel-button'
-		);
-		await waitFor(() => expect(document.activeElement).toBe(cancel));
-	},
+	play: optInConfirmation,
 	render: () => ({
 		Component: ConsentDialogOptOutStory,
 		props: { kind: 'request' },
@@ -114,16 +98,7 @@ export const OptInConfirmation: Story = {
 
 /** Two-step opt-in confirmation dialog when the backend confirmed the refused rights. */
 export const OptInConfirmationConfirmedRights: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-widget-opt-in-link'
-		);
-		await userEvent.click(link);
-		const dialog = await within(document.body).findByTestId(
-			'opt-in-confirmation-root'
-		);
-		await expect(dialog).toBeVisible();
-	},
+	play: optInConfirmationConfirmedRights,
 	render: () => ({
 		Component: ConsentDialogOptOutStory,
 		props: { kind: 'confirmed' },

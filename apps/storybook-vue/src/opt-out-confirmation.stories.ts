@@ -1,5 +1,9 @@
+import {
+	accountAdopted,
+	signalHonored,
+} from '@inth/conformance/play/opt-out-confirmation';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 
 import ConsentDialogLink from '../../../packages/sdk/vue/src/runtime/components/consent-dialog-link.vue';
 import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
@@ -90,18 +94,7 @@ export const AccountCovered: Story = {
 };
 
 export const SignalHonored: Story = {
-	play: async () => {
-		const link = await within(document.body).findByRole('button', {
-			name: 'Do Not Sell or Share My Personal Information',
-		});
-		await userEvent.click(link);
-		const status = await within(document.body).findByTestId(
-			'opt-out-confirmation-status'
-		);
-		await waitFor(() =>
-			expect(status).toHaveTextContent('Opt-out preference signal honored')
-		);
-	},
+	play: signalHonored,
 	render: () => ({
 		components: { ConsentDialogLink, ConsentManager },
 		setup() {
@@ -121,13 +114,7 @@ export const SignalHonored: Story = {
 };
 
 export const AccountAdopted: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-dialog-link'
-		);
-		await userEvent.click(link);
-		await expectRequestHonored();
-	},
+	play: accountAdopted,
 	render: () => ({
 		components: { ConsentDialogLink, ConsentManager },
 		setup() {

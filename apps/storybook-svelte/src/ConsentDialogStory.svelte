@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { ConsentBanner, ConsentDialog } from '@inth/svelte';
+	import {
+		ConsentBanner,
+		ConsentDialog,
+		PrivacyChoicesLink,
+	} from '@inth/svelte';
 
 	import {
 		editableConsentOptions,
@@ -23,6 +27,8 @@
 	storedConsent={useStoredConsent ? editableStoredConsent : undefined}
 >
 	{#if withBanner}
+		<!-- The page's "Your Privacy Choices" link opens the dialog. -->
+		<PrivacyChoicesLink />
 		<ConsentBanner />
 	{/if}
 	<ConsentDialog {open} />

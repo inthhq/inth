@@ -4,7 +4,11 @@ import {
 	ConsentDialog,
 	OptOutConfirmation,
 } from '@inth/angular/consent-dialog';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import {
+	accountAdopted,
+	signalHonored,
+} from '@inth/conformance/play/opt-out-confirmation';
+import { expect, waitFor, within } from 'storybook/test';
 
 import {
 	storybookMode,
@@ -119,18 +123,7 @@ export const AccountCovered: Story = {
 };
 
 export const SignalHonored: Story = {
-	play: async () => {
-		const link = await within(document.body).findByRole('button', {
-			name: 'Do Not Sell or Share My Personal Information',
-		});
-		await userEvent.click(link);
-		const status = await within(document.body).findByTestId(
-			'opt-out-confirmation-status'
-		);
-		await waitFor(() =>
-			expect(status).toHaveTextContent('Opt-out preference signal honored')
-		);
-	},
+	play: signalHonored,
 	render: () => ({
 		applicationConfig: consentApplication({
 			options: {
@@ -155,13 +148,7 @@ export const SignalHonored: Story = {
 };
 
 export const AccountAdopted: Story = {
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-dialog-link'
-		);
-		await userEvent.click(link);
-		await expectRequestHonored();
-	},
+	play: accountAdopted,
 	render: () => ({
 		applicationConfig: consentApplication({
 			options: {

@@ -1,5 +1,9 @@
+import {
+	accountAdopted,
+	signalHonored,
+} from '@inth/conformance/play/opt-out-confirmation';
 import type { Meta, StoryObj } from '@storybook/svelte-vite';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 
 import OptOutConfirmationStory from './OptOutConfirmationStory.svelte';
 
@@ -53,18 +57,7 @@ export const SignalHonored: Story = {
 		optOutLink: 'do-not-sell',
 		variant: 'signal',
 	},
-	play: async () => {
-		const link = await within(document.body).findByRole('button', {
-			name: 'Do Not Sell or Share My Personal Information',
-		});
-		await userEvent.click(link);
-		const status = await within(document.body).findByTestId(
-			'opt-out-confirmation-status'
-		);
-		await waitFor(() =>
-			expect(status).toHaveTextContent('Opt-out preference signal honored')
-		);
-	},
+	play: signalHonored,
 };
 
 export const AccountAdopted: Story = {
@@ -72,11 +65,5 @@ export const AccountAdopted: Story = {
 		optOutLink: 'do-not-sell',
 		variant: 'account-adopted',
 	},
-	play: async () => {
-		const link = await within(document.body).findByTestId(
-			'consent-dialog-link'
-		);
-		await userEvent.click(link);
-		await expectRequestHonored();
-	},
+	play: accountAdopted,
 };

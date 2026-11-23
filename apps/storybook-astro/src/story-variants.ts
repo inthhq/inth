@@ -108,6 +108,12 @@ export interface AstroStoryVariant {
 	/** Include a server-rendered `<ConsentDialogLink right="opt-out" />` beside the host. */
 	withOptOutLink?: boolean;
 	/**
+	 * Include a server-rendered `<PrivacyChoicesLink />` before the host, the
+	 * page link that opens `<ConsentDialog />`, as React's banner-and-dialog
+	 * stories render it.
+	 */
+	withPrivacyChoicesLink?: boolean;
+	/**
 	 * Render `<ConsentDialog />` after the component, as React's stories
 	 * put `<ConsentDialog />` beside the banner or link that opens it.
 	 */
@@ -350,6 +356,16 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		options: { colorScheme: 'light', consentCategories: CATEGORIES },
 		props: { force: true },
 		withDialog: true,
+	},
+	{
+		// The dialog stories: the page link opens the dialog, as Customize
+		// now opens the choices inside the banner.
+		component: 'consent-banner',
+		id: 'consent-banner--with-dialog-and-link',
+		options: { colorScheme: 'light', consentCategories: CATEGORIES },
+		props: { force: true },
+		withDialog: true,
+		withPrivacyChoicesLink: true,
 	},
 	{
 		// React's focus story blocks the page until a choice, as this does.
