@@ -246,10 +246,7 @@ const vueGraph = function vueGraph(packages: string): typeof graph {
 		// The banner: loads with the engine.
 		[`${vue}components/prompt/prompt.vue`]: {
 			code: `import { loadConsentDialog } from '../dialog/load-panel.js'; import { vendors } from '@inth/sdk/engine';`,
-			imports: [
-				`${vue}components/dialog/load-panel.js`,
-				`${core}index.js`,
-			],
+			imports: [`${vue}components/dialog/load-panel.js`, `${core}index.js`],
 		},
 		[`${vue}composables/kernel.js`]: { code: 'export const useKernel = 1;' },
 		[`${core}index.js`]: {
@@ -285,8 +282,7 @@ describe.each([
 			'sdk/lib/ui/dist/styles/components/panel.module.css':
 				'inth-dialog-styles',
 			'vue/dist/runtime/components/dialog/dialog.vue': 'inth-dialog',
-			'vue/dist/runtime/components/dialog/load-panel.js':
-				'inth-dialog-engine',
+			'vue/dist/runtime/components/dialog/load-panel.js': 'inth-dialog-engine',
 			'vue/dist/runtime/components/dialog/manager.vue': 'inth-dialog',
 			'vue/dist/runtime/composables/kernel.js': 'inth-dialog',
 		});

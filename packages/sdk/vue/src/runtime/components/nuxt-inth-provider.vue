@@ -17,13 +17,13 @@ import {
 	consentConfigKey,
 	symbolConfirmationHosted,
 } from '../utils/consent-symbols.model';
-import { ConsentBannerHost as ConsentBanner } from './prompt-host';
-import { LazyConsentDialogTrigger } from './lazy-panel-trigger';
-import { LazyConsentManager } from './lazy-manager';
-import { LazyIabConsentBanner } from './lazy-iab-prompt';
 import { LazyIabConsentDialog } from './lazy-iab-panel';
+import { LazyIabConsentBanner } from './lazy-iab-prompt';
+import { LazyConsentManager } from './lazy-manager';
+import { LazyConsentDialogTrigger } from './lazy-panel-trigger';
 import { useAdoptOptOutConfirmation } from './parts/use-adopt-opt-out-confirmation';
 import { prefetchIabConsentDialog } from './prefetch-iab-panel';
+import { ConsentBannerHost as ConsentBanner } from './prompt-host';
 
 // The default slot renders after the surfaces, so a root that wraps the
 // app the way a React provider does keeps the app.
