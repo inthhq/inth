@@ -16,12 +16,14 @@ import {
 	optOutRule,
 } from '../../../__tests__/fixtures/kernel-fixtures';
 import { createKernel } from '../../../kernel';
+import { LOADER_RAN_KEY, PAGE_RENDER_KEY } from '../../../libs/page-globals';
 import { storedChoiceNames } from '../../../libs/storage-keys';
 import { hasStoredConsent } from '../../../runtime/deferred-boot';
 import { serverScriptStart } from '../../../runtime/script-server-start';
 import { testing } from '../../../testing';
 import {
 	encodeAccountChoicesCookie,
+	encodeAccountLocalJson,
 	encodeAccountOptOutCookie,
 	encodeAccountVendorsCookie,
 	readStoredAccountLayer,
@@ -759,7 +761,7 @@ describe('persistence regressions (set 1)', () => {
 				initialUser: { externalId: 'user_a' },
 				now: NOW,
 			},
-			scripts: vendorScripts,
+			scripts: categoryScripts,
 		});
 		expect(code2).toBeDefined();
 		document.cookie = `${keys.accountChoices}=${encodeAccountChoicesCookie(
@@ -911,7 +913,7 @@ describe('persistence and SSR regressions (set 2)', () => {
 				checkedAt: NOW,
 				choices: {},
 				externalId: 'user_a',
-				liftedAt: NOW + 1000,
+				liftedRecordedAt: NOW - 5000,
 				optOut: null,
 				rev: 'rev_lift_tab2',
 				skew: 0,
@@ -1173,5 +1175,105 @@ describe('persistence and SSR regressions (set 2)', () => {
 		tabA.dispose();
 		p1.dispose();
 		tab1.dispose();
+	});
+});
+
+describe('persistence and SSR regressions (set 3)', () => {
+	test('SSR-seeded vendor cookie recovers the shown vendor list from localStorage at the same timestamp', () => {
+		const cookie = `inth-vendors=v=1&t=${NOW - 500}&d=vendor-y`;
+		document.cookie = `${cookie}; path=/`;
+		window.localStorage.setItem(
+			'inth-vendors',
+			JSON.stringify({
+				confirmedAt: NOW - 500,
+				denied: ['vendor-y'],
+				granted: [],
+				version: 1,
+			})
+		);
+		expect(readStoredRecords(undefined, NOW).records.vendorDeclared).toEqual([
+			'vendor-y',
+		]);
+		const kernel = createKernel({
+			initialPolicyResolution: matchedResolution(optOutRule()),
+			initialRecords: readStoredRecordsFromCookieHeader(cookie, undefined, NOW),
+			initialUser: { externalId: 'user_a' },
+			initialUserConsent: makeUserConsent({
+				externalId: 'user_a',
+				vendors: { 'vendor-x': { confirmedAt: NOW - 1000, value: false } },
+			}),
+			now: NOW,
+		});
+		const p = createPersistence({ kernel, skipHydration: true });
+		try {
+			expect(kernel.getBrowserRecords().vendorDeclared).toEqual(['vendor-y']);
+			expect(kernel.getSnapshot().vendorChoice?.denied).toContain('vendor-x');
+		} finally {
+			p.dispose();
+			kernel.dispose();
+		}
+	});
+
+	test('inline server start skips a vendor when its active account layer is only in localStorage', () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const resolution = matchedResolution(rule);
+		const code = serverScriptStart({
+			consentCategories: ['marketing'],
+			mode: testing({ policy: [rule] }),
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				initialRecords: { now: NOW },
+				initialUser: { externalId: 'user_a' },
+				now: NOW,
+			},
+			scripts: [
+				{
+					category: 'marketing',
+					id: 'vendor-script',
+					serverStart: () => ({ prelude: 'window.__v = 1;' }),
+					src: 'https://cdn.example.test/v.js',
+					vendor: 'ads-vendor',
+				},
+			],
+		});
+		expect(code).toBeDefined();
+		window.localStorage.setItem(
+			resolveAccountStorageKeys().accountState,
+			encodeAccountLocalJson(
+				{
+					appliedAt: NOW,
+					checkedAt: NOW,
+					choices: {},
+					externalId: 'user_a',
+					optOut: null,
+					skew: 0,
+					vendors: { 'ads-vendor': { rawConfirmedAt: NOW - 300, value: true } },
+				},
+				'rev_ls'
+			)
+		);
+		const w = window as unknown as Record<
+			string,
+			{ starts?: Record<string, number> } | undefined
+		>;
+		Reflect.deleteProperty(w, PAGE_RENDER_KEY);
+		Reflect.deleteProperty(w, LOADER_RAN_KEY);
+		const raf = vi
+			.spyOn(window, 'requestAnimationFrame')
+			.mockImplementation(() => 0);
+		try {
+			// oxlint-disable-next-line no-new-func -- Testing generated serverStart inline script
+			new Function(code as string)();
+			expect(
+				document.querySelector('script[src="https://cdn.example.test/v.js"]')
+			).toBeNull();
+			expect(w[PAGE_RENDER_KEY]?.starts?.['vendor-script']).not.toBe(1);
+		} finally {
+			raf.mockRestore();
+			document
+				.querySelector('script[src="https://cdn.example.test/v.js"]')
+				?.remove();
+		}
 	});
 });

@@ -296,7 +296,8 @@ const newerStoredDecision = function newerStoredDecision(
 	 * loads and applies it.
 	 */
 	anyNewer = false,
-	accountLayer: AccountConsentLayer | null = null
+	accountLayer: AccountConsentLayer | null = null,
+	hasVendorScript = false
 ): string {
 	const seed = seedOf(snapshot, accountLayer);
 	const { gpc } = snapshot.privacySignals;
@@ -313,6 +314,38 @@ const newerStoredDecision = function newerStoredDecision(
 		c: subject,
 		v: [...subject, 'd'],
 	};
+	// `z()` is true when the stored state differs from what the server rendered
+	// with. Without a configured cookie or local copy, `A` is the first legacy
+	// family's name (c15t's), which the client reads next, so a c15t record the
+	// server read can still pass. `L` notes that the client reads a legacy
+	// record (or, for the consent record, none at all), and only then do the
+	// legacy families' clear epochs count: a c15t clear never voids an Inth
+	// record. `c(name)` reads a cookie, unwrapping one URI-encoding layer as
+	// the client does; `l(key)` reads localStorage, `H(names)` whether any of
+	// them holds a record. `st(s)` converts an account-sourced seed timestamp
+	// into the browser's ordering time (`min(raw - skew, appliedAt)`) using the
+	// server account metadata (`AC`, `AS`, `AA`) and `Date.now()`, so a fast
+	// server clock cannot outrank a newer local denial. `d` tests one decision
+	// against the seed, `p` the fields of a compact record, `o` a parsed JSON
+	// one. `p` is also true for a field the client's decoder rejects: a field
+	// without a value, a repeated one, a malformed decision, or one outside `F`,
+	// the other fields each record may hold. For the consent cookie it also
+	// holds the decoder's other rules, since a cookie the client rejects sends
+	// it to the legacy record: a basis list of `c<fingerprint>` and `l` entries
+	// (`B` counts them), a decision naming one of them (`I` is the highest it
+	// names) and confirmed no later than now, and a subject id that decodes to
+	// text (`x` is true when one does not). IAB fields are not checked, so they
+	// fail it. The vendor cookie holds the same decoder's rules too: a time
+	// (`T` notes one) of digits no later than now, vendor ids that decode to
+	// the slug shape once each, and subject ids that decode. A local vendor
+	// copy from the server's vendor time (`V`) fails it when it denies a vendor
+	// the server's list (`Y`) allows: the client adds those denials to the
+	// cookie's (`readStoredVendorChoice`). For a signed-in user (`U`), `ak`
+	// (localStorage) and `ac`/`av`/`ao` (account cookies) also abort when a
+	// newer account document exists, when vendor cookie overflow (`ov=1`) or
+	// malformed vendor encoding is present, or when a vendor-gated script is
+	// being server-started (`HV`) while an account layer exists in localStorage
+	// or cookies. `D` is the time the server's decisions can next change.
 	const accountCheckedAt = accountLayer?.checkedAt ?? -1;
 	const accountSkew = accountLayer?.skew ?? 0;
 	const accountAppliedAt = accountLayer?.appliedAt ?? 0;
@@ -322,7 +355,7 @@ const newerStoredDecision = function newerStoredDecision(
 	const accountCheck =
 		accountExternalId === null
 			? ''
-			: `var U=${inlineJSON(accountExternalId)},UE=${inlineJSON(encodedAccountEid)},AH=${Boolean(snapshot.hasAccountLayer)},ak=l(K.acctState),ac=c(K.acctChoices),av=c(K.acctVendors),ao=c(K.acctOptOut),am=function(x){return x!==null&&x!==''&&('&'+x+'&').indexOf('&eid='+UE+'&')>=0},af=function(x,k){var m=('&'+x+'&').indexOf('&'+k+'=');if(m<0)return null;var r=x.slice(m+k.length+1),q=r.indexOf('&');return q<0?r:r.slice(0,q)},ah=function(x){var sk=+(af(x,'s')||0),ap=+(af(x,'a')||0),t=+(af(x,'c')||-1);return{ap:ap,ot:function(v){return Math.max(0,Math.min(+v-sk,ap))},sk:sk,t:t}};if(ak!==null&&ak!==''&&o(ak,function(v){if(v.version!==1)return false;if(v.externalId!==U)return false;if(AC>=0&&+v.checkedAt>AC)return true;if(${anyNewer}&&!AH)return true;var sk=+v.skew||0,ap=+v.appliedAt||0,ot=function(t){return Math.max(0,Math.min(+t-sk,ap))};for(g in v.choices||{})if(v.choices[g]&&d(g,v.choices[g].value,ot(v.choices[g].rawConfirmedAt)))return true;for(g in v.vendors||{})if(v.vendors[g]&&v.vendors[g].value===false&&Y.indexOf(g)<0)return true;if(v.optOut&&Array.isArray(v.optOut.rights)&&v.optOut.rights.length>0&&(O<0||ot(v.optOut.rawRecordedAt)>O))return true;return false}))return true;if(am(ac)){var ch=ah(ac);if(AC>=0&&ch.t>AC)return true;if(p(ac,'v=1',function(k,v){if(N.hasOwnProperty(k)){var q=v.split('.');if(q.length<3)return true;return d(N[k],q[0]==='1',ch.ot(+q[1]))}return false}))return true}if(am(av)){var vh=ah(av);if(AC>=0&&vh.t>AC)return true;if(p(av,'v=1',function(k,v){if(k==='ov')return true;if(k==='d'&&v!==''){for(var u=v.split('|'),j=0;j<u.length;j++){var q=u[j].lastIndexOf('.'),id='';if(q>0){try{id=decodeURIComponent(u[j].slice(0,q))}catch(y){return true}}if(id&&Y.indexOf(id)<0)return true}}return false}))return true}if(am(ao)){var oh=ah(ao),ov=af(ao,'o');if(AC>=0&&oh.t>AC)return true;if(ov!==null&&ov!==''){var oq=ov.split('.');if(oq.length<3||O<0||oh.ot(+oq[2])>O)return true}}if(${anyNewer}&&AH&&!(am(ac)||am(av)||am(ao)||ak!==null&&ak!==''))return true;`;
+			: `var U=${inlineJSON(accountExternalId)},UE=${inlineJSON(encodedAccountEid)},AH=${Boolean(snapshot.hasAccountLayer)},HV=${hasVendorScript},ak=l(K.acctState),ac=c(K.acctChoices),av=c(K.acctVendors),ao=c(K.acctOptOut),am=function(x){return x!==null&&x!==''&&('&'+x+'&').indexOf('&eid='+UE+'&')>=0},af=function(x,k){var m=('&'+x+'&').indexOf('&'+k+'=');if(m<0)return null;var r=x.slice(m+k.length+1),q=r.indexOf('&');return q<0?r:r.slice(0,q)},ah=function(x){var sk=+(af(x,'s')||0),ap=+(af(x,'a')||0),t=+(af(x,'c')||-1);return{ap:ap,ot:function(v){return Math.max(0,Math.min(+v-sk,ap))},sk:sk,t:t}};if(HV&&(am(ac)||am(av)||am(ao)))return true;if(ak!==null&&ak!==''&&o(ak,function(v){if(v.version!==1)return false;if(v.externalId!==U)return false;if(HV)return true;if(AC>=0&&+v.checkedAt>AC)return true;if(${anyNewer}&&!AH)return true;var sk=+v.skew||0,ap=+v.appliedAt||0,ot=function(t){return Math.max(0,Math.min(+t-sk,ap))};for(g in v.choices||{})if(v.choices[g]&&d(g,v.choices[g].value,ot(v.choices[g].rawConfirmedAt)))return true;for(g in v.vendors||{})if(v.vendors[g]&&v.vendors[g].value===false&&Y.indexOf(g)<0)return true;if(v.optOut&&Array.isArray(v.optOut.rights)&&v.optOut.rights.length>0&&(O<0||ot(v.optOut.rawRecordedAt)>O))return true;return false}))return true;if(am(ac)){var ch=ah(ac);if(AC>=0&&ch.t>AC)return true;if(p(ac,'v=1',function(k,v){if(N.hasOwnProperty(k)){var q=v.split('.');if(q.length<3)return true;return d(N[k],q[0]==='1',ch.ot(+q[1]))}return false}))return true}if(am(av)){var vh=ah(av);if(AC>=0&&vh.t>AC)return true;if(p(av,'v=1',function(k,v){if(k==='ov')return true;if(k==='d'&&v!==''){for(var u=v.split('|'),j=0;j<u.length;j++){var q=u[j].lastIndexOf('.'),id='';if(q>0){try{id=decodeURIComponent(u[j].slice(0,q))}catch(y){return true}}if(id&&Y.indexOf(id)<0)return true}}return false}))return true}if(am(ao)){var oh=ah(ao),ov=af(ao,'o');if(AC>=0&&oh.t>AC)return true;if(ov!==null&&ov!==''){var oq=ov.split('.');if(oq.length<3||O<0||oh.ot(+oq[2])>O)return true}}if(${anyNewer}&&AH&&!(am(ac)||am(av)||am(ao)||ak!==null&&ak!==''))return true;`;
 	const accountKeys = accountStorageKeysFor(keys.consent);
 	return `var D=${inlineJSON(snapshot.nextDeadline)},S=${inlineJSON(seed.categories)},AC=${inlineJSON(accountCheckedAt)},AS=${inlineJSON(accountSkew)},AA=${inlineJSON(accountAppliedAt)},O=${seed.optOutAt},V=${seed.vendorsAt},Y=${inlineJSON(seed.vendorsDenied)},M=${inlineJSON(seed.earliest)},N=${inlineJSON(names)},F=${inlineJSON(fields)},K=${inlineJSON({ acctChoices: accountKeys.accountChoices, acctOptOut: accountKeys.accountOptOut, acctState: accountKeys.accountState, acctVendors: accountKeys.accountVendors, consent: keys.consent, epochs: storageKeyFamilies(keys).map((family) => family.epoch), legacy: keys.legacy.map((family) => family.consent), legacyOptOut: keys.legacy.map((family) => family.optOut), legacyVendors: keys.legacy.map((family) => family.vendors), optOut: keys.optOut, vendors: keys.vendors })},H=${STORED_NAMES_CHECK},z=function(){${gpcCheck}if(D!==null&&!(Date.now()<D))return true;var c=function(n){try{for(var a=document.cookie.split(/;\\s*/),j=0;j<a.length;j++){var m=a[j].indexOf('=');if(a[j].slice(0,m)===n){var v=a[j].slice(m+1);if(v.indexOf('v=')&&v.indexOf('%')>=0)try{v=decodeURIComponent(v)}catch(x){}return v}}}catch(x){}return null},l=function(n){try{return localStorage.getItem(n)}catch(x){return null}},st=function(s){if(s.length>2&&AC>=0){var n=Date.now(),sk=Math.max(AS,Math.max(0,AC-n)),ap=Math.min(AA,n);return Math.max(0,Math.min(s[2]-sk,ap))}return s[1]},d=function(n,v,t){var s=S[n],u=s?st(s):-1,o=!s||!(t<=u);return v!==true?o||t===u&&s[0]:${anyNewer}&&o},e=function(t){return M!==null&&!(+t<M)},o=function(v,f){try{v=JSON.parse(v)}catch(x){return true}return!v||typeof v!=='object'||f(v)},p=function(v,h,f){if(v===null||v==='')return false;v=v.split('&');if(v[0]!==h)return true;for(var u=[],j=1;j<v.length;j++){var m=v[j].indexOf('='),k=v[j].slice(0,m);if(m<1||u.indexOf(k)>=0||f(k,v[j].slice(m+1)))return true;u.push(k)}return false},r=function(v,f){return v!==null&&v!==''&&o(v,f)},x=function(v){try{return!decodeURIComponent(v)}catch(y){return true}},A=c(K.consent)===null&&l(K.consent)===null&&K.legacy.length?K.legacy[0]:K.consent,L=A!==K.consent,a=c(A),b=l(A),B=0,I=-1,T,g;if(p(a,'v=3',function(k,v){if(k==='e')return e(v);if(k==='b'){B=v.split('|').length;return!/^(c[^|]+|l[^|]*)(\\|(c[^|]+|l[^|]*))*$/.test(v)||x(v)}if(N.hasOwnProperty(k)){if(!/^[01]\\.\\d+\\.\\d+$/.test(v))return true;v=v.split('.');if(+v[2]>I)I=+v[2];return!(+v[1]<=Date.now())||d(N[k],v[0]==='1',+v[1])}return F.c.indexOf(k)<0||x(v)})||I>=B||r(b,function(v){if(v.version!==3||v.epoch&&e(v.epoch))return true;for(g in v.categories||{})if(v.categories[g]&&d(g,v.categories[g].value,+v.categories[g].confirmedAt))return true})||!(a&&M!==null)&&H(K.legacy))return true;if((A=c(K.vendors)===null&&l(K.vendors)===null&&K.legacyVendors.length?K.legacyVendors[0]:K.vendors,a=c(A),L=L||A!==K.vendors&&(a!==null||l(A)!==null),T=0,p(a,'v=1',function(k,v){if(k==='t'){T=1;return!/^\\d+$/.test(v)||!(+v<=V)||!(+v<=Date.now())}if(k==='d'){if(v==='')return false;for(var u=v.split('|'),j=0,h=[],y;j<u.length;j++){try{y=decodeURIComponent(u[j])}catch(e){return true}if(!/^[a-z0-9][a-z0-9._-]{0,63}$/.test(y)||h.indexOf(y)>=0)return true;h.push(y)}return false}return F.v.indexOf(k)<0||x(v)})||a!==null&&a!==''&&!T)||r(l(A),function(v){if(v.version!==1||!(+v.confirmedAt<=V))return true;if(+v.confirmedAt===V){if(!Array.isArray(v.denied))return true;for(g=0;g<v.denied.length;g++)if(Y.indexOf(v.denied[g])<0)return true}})||!a&&H(K.legacyVendors))return true;var oa=c(K.optOut),ob=l(K.optOut);if(O<0?(oa!==null&&oa!==''||ob!==null&&ob!==''||H(K.legacyOptOut)):(oa===null&&ob===null?${anyNewer}:(oa!==null&&oa!==''&&p(oa,'v=1',function(k,v){if(k==='t')return!/^\\d+$/.test(v)||!(+v<=O);return k!=='r'&&k!=='m'&&k!=='h'&&F.c.indexOf(k)<0||x(v)})||r(ob,function(v){return v.version!==1||!(+v.recordedAt<=O)}))))return true;${accountCheck}for(g=0;g<(L?K.epochs.length:1);g++)if((a=c(K.epochs[g]))&&e(a)||(a=l(K.epochs[g]))&&e(a))return true;return false};if(z())return;`;
 };
@@ -626,12 +659,19 @@ export const serverScriptStartPlan = function serverScriptStartPlan(
 	if (starts.length === 0) {
 		return nothingStarted(renderId);
 	}
+	const hasVendorScript = scripts.some(
+		({ script }) =>
+			startedKeys.includes(resourceOf(script)) &&
+			script.vendor !== undefined &&
+			script.alwaysLoad !== true
+	);
 	const code = startCode({
 		check: newerStoredDecision(
 			snapshot,
 			resolveStorageKeys(storageFor(options)),
 			false,
-			accountLayer
+			accountLayer,
+			hasVendorScript
 		),
 		preludes: [...preludes],
 		renderId,

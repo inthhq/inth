@@ -108,7 +108,7 @@ export interface AccountPartHeader {
 	readonly checkedAt: number;
 	readonly skew: number;
 	readonly appliedAt: number;
-	readonly liftedAt?: number;
+	readonly liftedRecordedAt?: number;
 }
 
 interface DecodedChoicesPart {
@@ -172,8 +172,8 @@ const encodeHeaderFields = (
 		field('s', layer.skew),
 		field('a', layer.appliedAt),
 	];
-	if (layer.liftedAt !== undefined) {
-		fields.push(field('la', layer.liftedAt));
+	if (layer.liftedRecordedAt !== undefined) {
+		fields.push(field('lr', layer.liftedRecordedAt));
 	}
 	return fields;
 };
@@ -281,8 +281,8 @@ export const encodeAccountLocalJson = function encodeAccountLocalJson(
 		vendors: layer.vendors,
 		version: 1,
 	};
-	if (layer.liftedAt !== undefined) {
-		record.liftedAt = layer.liftedAt;
+	if (layer.liftedRecordedAt !== undefined) {
+		record.liftedRecordedAt = layer.liftedRecordedAt;
 	}
 	return JSON.stringify(record);
 };
@@ -348,9 +348,11 @@ const parseHeader = (fields: Map<string, string>): AccountPartHeader | null => {
 	const checkedAt = parseNonNegativeInt(fields.get('c'));
 	const skew = parseNonNegativeInt(fields.get('s'));
 	const appliedAt = parseNonNegativeInt(fields.get('a'));
-	const rawLiftedAt = fields.get('la');
-	const liftedAt =
-		rawLiftedAt === undefined ? undefined : parseNonNegativeInt(rawLiftedAt);
+	const rawLiftedRecordedAt = fields.get('lr');
+	const liftedRecordedAt =
+		rawLiftedRecordedAt === undefined
+			? undefined
+			: parseNonNegativeInt(rawLiftedRecordedAt);
 	if (
 		!rev ||
 		!REVISION_PATTERN.test(rev) ||
@@ -358,7 +360,7 @@ const parseHeader = (fields: Map<string, string>): AccountPartHeader | null => {
 		checkedAt === null ||
 		skew === null ||
 		appliedAt === null ||
-		liftedAt === null
+		liftedRecordedAt === null
 	) {
 		return null;
 	}
@@ -366,12 +368,12 @@ const parseHeader = (fields: Map<string, string>): AccountPartHeader | null => {
 	if (!externalId || externalId.length === 0) {
 		return null;
 	}
-	return liftedAt === undefined
+	return liftedRecordedAt === undefined
 		? { appliedAt, checkedAt, externalId, rev, skew }
-		: { appliedAt, checkedAt, externalId, liftedAt, rev, skew };
+		: { appliedAt, checkedAt, externalId, liftedRecordedAt, rev, skew };
 };
 
-const HEADER_KEYS = new Set(['r', 'eid', 'c', 's', 'a', 'la']);
+const HEADER_KEYS = new Set(['r', 'eid', 'c', 's', 'a', 'lr']);
 
 const parseBasisTable = (raw: string): ChoiceBasis[] | null => {
 	if (raw.length === 0) {
@@ -620,7 +622,7 @@ export const decodeAccountLocalJson = function decodeAccountLocalJson(
 		return null;
 	}
 	const header: AccountPartHeader =
-		layer.liftedAt === undefined
+		layer.liftedRecordedAt === undefined
 			? {
 					appliedAt: layer.appliedAt,
 					checkedAt: layer.checkedAt,
@@ -632,7 +634,7 @@ export const decodeAccountLocalJson = function decodeAccountLocalJson(
 					appliedAt: layer.appliedAt,
 					checkedAt: layer.checkedAt,
 					externalId: layer.externalId,
-					liftedAt: layer.liftedAt,
+					liftedRecordedAt: layer.liftedRecordedAt,
 					rev,
 					skew: layer.skew,
 				};
@@ -657,14 +659,14 @@ interface PartGroup {
 }
 
 const groupKey = (header: AccountPartHeader): string =>
-	`${header.rev}\0${header.externalId}\0${header.checkedAt}\0${header.skew}\0${header.appliedAt}\0${header.liftedAt ?? ''}`;
+	`${header.rev}\0${header.externalId}\0${header.checkedAt}\0${header.skew}\0${header.appliedAt}\0${header.liftedRecordedAt ?? ''}`;
 
 const compareGroups = (left: PartGroup, right: PartGroup): number => {
 	if (left.header.checkedAt !== right.header.checkedAt) {
 		return left.header.checkedAt - right.header.checkedAt;
 	}
-	const leftLift = left.header.liftedAt ?? -1;
-	const rightLift = right.header.liftedAt ?? -1;
+	const leftLift = left.header.liftedRecordedAt ?? -1;
+	const rightLift = right.header.liftedRecordedAt ?? -1;
 	if (leftLift !== rightLift) {
 		return leftLift - rightLift;
 	}
@@ -767,7 +769,8 @@ const assembleAccountPartsDetailed = function assembleAccountPartsDetailed(
 	if (!winner) {
 		return { layer: null, partial: false };
 	}
-	const { appliedAt, checkedAt, externalId, liftedAt, skew } = winner.header;
+	const { appliedAt, checkedAt, externalId, liftedRecordedAt, skew } =
+		winner.header;
 	const choices = winner.choices?.choices ?? winner.local?.layer.choices ?? {};
 	const optOut =
 		winner.optOut === undefined
@@ -785,7 +788,9 @@ const assembleAccountPartsDetailed = function assembleAccountPartsDetailed(
 		vendors: mergeGroupVendors(winner),
 	};
 	const withLift =
-		liftedAt === undefined ? baseLayer : { ...baseLayer, liftedAt };
+		liftedRecordedAt === undefined
+			? baseLayer
+			: { ...baseLayer, liftedRecordedAt };
 	return {
 		layer: vendorsOverflow ? { ...withLift, vendorsOverflow: true } : withLift,
 		partial,

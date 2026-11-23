@@ -137,9 +137,18 @@ export interface InternalKernel extends ConsentKernel {
 	getAccountLayerSource: () => AccountLayerSource;
 	/**
 	 * Atomically update the current user (dropping any mismatched account layer)
-	 * and optionally set `userConsentPending` in one single kernel commit.
+	 * and optionally set `userConsentPending` or apply a resolved `userConsent`
+	 * (`UserConsent | null`) in one single kernel commit.
 	 */
-	setUserWithPending: (user: KernelUser | null, pending?: boolean) => void;
+	setUserWithPending: (
+		user: KernelUser | null,
+		options?:
+			| boolean
+			| {
+					readonly pending?: boolean;
+					readonly userConsent?: UserConsent | null;
+			  }
+	) => void;
 	/**
 	 * Monotonic generation bumped on user change, logout, clear, dispose, and
 	 * successful account opt-out lift. Async `userConsent` Promises capture it

@@ -29,9 +29,9 @@ import type {
 import { isProductionBuild } from '../libs/is-production';
 import { EMPTY_OPT_OUT_RECEIPT_DATA } from '../libs/opt-out-state.model';
 import {
+	applyLiftFloorToIncoming,
 	normalizeUserConsent,
 	shouldAdoptAccountLayer,
-	splitServerOptOutForAccount,
 } from './account-layer';
 import type {
 	AccountConsentLayer,
@@ -130,9 +130,16 @@ export const syncAdoptedServerOptOutReceipt =
 			return;
 		}
 		const rightsConfirmed = incomingOptOut.rights.length > 0;
+		const coversBrowserDevice =
+			beforeOptOut !== null &&
+			beforeOptOut.heldBy === 'device' &&
+			incomingOptOut.heldBy === 'both' &&
+			beforeOptOut.rights.every((right) =>
+				incomingOptOut.rights.includes(right)
+			);
 		if (
 			beforeOptOut !== null &&
-			sameOptOutAnswer(beforeOptOut, incomingOptOut)
+			(sameOptOutAnswer(beforeOptOut, incomingOptOut) || coversBrowserDevice)
 		) {
 			if (!rightsConfirmed) {
 				return;
@@ -193,6 +200,16 @@ export interface RecordsBoundary {
 		value: UserConsent | null | undefined,
 		options?: SyncUserConsentOptions
 	) => boolean;
+	/** Atomically switch user and optionally apply pending/resolved userConsent. */
+	setUserAtomic: (
+		user: KernelUser | null,
+		options?:
+			| boolean
+			| {
+					readonly pending?: boolean;
+					readonly userConsent?: UserConsent | null;
+			  }
+	) => void;
 	setSubjectId: (id: string | null) => void;
 	/** See {@link InternalKernel.markProvisionalSubject}. */
 	markProvisionalSubject: (id: string | null) => void;
@@ -335,7 +352,10 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			})
 		) {
 			commitOptions = {
-				accountLayer: incomingAccountLayer,
+				accountLayer: applyLiftFloorToIncoming(
+					runtime.getAccountLayer(),
+					incomingAccountLayer
+				),
 				accountLayerSource: 'stored',
 				fromHydration: true,
 			};
@@ -557,9 +577,10 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			}
 			return null;
 		}
+		const currentAccount = runtime.getAccountLayer();
 		if (
 			!shouldAdoptAccountLayer({
-				current: runtime.getAccountLayer(),
+				current: currentAccount,
 				currentSource: runtime.getAccountLayerSource(),
 				forceClientSync: options?.forceClientSync,
 				incoming: normalized,
@@ -569,7 +590,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		) {
 			return null;
 		}
-		return normalized;
+		return applyLiftFloorToIncoming(currentAccount, normalized);
 	};
 
 	const syncUserConsent = function syncUserConsent(
@@ -737,6 +758,56 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				patch.subject = { ...subject, subjectId: id };
 			}
 			commit(patch);
+		},
+
+		setUserAtomic(user, options) {
+			const before = getSnapshot();
+			const at = runtime.now();
+			const nextUser = user ? { ...user } : null;
+			const resolvedOptions =
+				typeof options === 'boolean' ? { pending: options } : options;
+			const patch: SnapshotPatch = { now: at, user: nextUser };
+			let commitOptions: RuntimeCommitOptions | undefined;
+
+			if (resolvedOptions?.userConsent === null) {
+				patch.userConsentPending = false;
+				commitOptions = {
+					accountLayer: null,
+					forceAccountNotify: true,
+					preserveDialog: true,
+				};
+			} else if (resolvedOptions?.userConsent !== undefined) {
+				patch.userConsentPending = false;
+				const incoming = normalizeUserConsent(resolvedOptions.userConsent, at);
+				if (
+					incoming !== null &&
+					nextUser !== null &&
+					incoming.externalId === nextUser.externalId
+				) {
+					commitOptions = {
+						accountLayer: incoming,
+						accountLayerSource: 'incoming',
+						preserveDialog: true,
+					};
+				}
+			} else if (resolvedOptions?.pending !== undefined) {
+				patch.userConsentPending = resolvedOptions.pending;
+			}
+
+			runtime.batch(() => {
+				commit(patch, commitOptions);
+				const after = getSnapshot();
+				if (
+					resolvedOptions?.userConsent !== undefined &&
+					!sameOptOutRecord(before.optOut, after.optOut)
+				) {
+					emit({
+						optOut: after.optOut,
+						snapshot: after,
+						type: 'opt-out:synced',
+					});
+				}
+			});
 		},
 
 		syncUserConsent,

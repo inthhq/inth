@@ -35,6 +35,7 @@ import { deriveModel } from '../policy-choice.model';
 import type { PresentedSelection } from '../policy-choice.model';
 import { applyTranslationOverrides } from '../translations';
 import {
+	applyLiftFloorToIncoming,
 	deriveEffectiveRecords,
 	freezeAccountLayer,
 	normalizeUserConsent,
@@ -411,7 +412,9 @@ export const buildInitialKernelState = function buildInitialKernelState(
 					userExternalId,
 				})
 			) {
-				accountLayer = freezeAccountLayer(normalizedInitial);
+				accountLayer = freezeAccountLayer(
+					applyLiftFloorToIncoming(accountLayer, normalizedInitial)
+				);
 				accountLayerSource = 'incoming';
 			}
 		}

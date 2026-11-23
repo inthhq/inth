@@ -319,20 +319,7 @@ export const createKernel = function createKernel(
 		setUserConsentPending: (pending: boolean) => {
 			runtime.commit({ now: runtime.now(), userConsentPending: pending });
 		},
-		setUserWithPending: (user, pending) => {
-			const patch: {
-				now: number;
-				user: typeof user;
-				userConsentPending?: boolean;
-			} = {
-				now: runtime.now(),
-				user: user ? { ...user } : null,
-			};
-			if (pending !== undefined) {
-				patch.userConsentPending = pending;
-			}
-			runtime.commit(patch);
-		},
+		setUserWithPending: records.setUserAtomic,
 		settleUserConsent: records.syncUserConsent,
 		subscribe: runtime.subscribe,
 		syncUserConsent: (value) => records.syncUserConsent(value),

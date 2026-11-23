@@ -75,10 +75,11 @@ export interface AccountConsentLayer {
 	readonly skew: number;
 	readonly appliedAt: number;
 	/**
-	 * Local epoch ms when an account opt-out lift succeeded for this layer.
-	 * Rejects older pre-lift documents whose converted `checkedAt` precedes it.
+	 * Raw server `recordedAt` of the account opt-out that was lifted.
+	 * Compared in server time against incoming documents' raw `optOut.recordedAt`
+	 * so an already-lifted opt-out is ignored without blocking newer choices.
 	 */
-	readonly liftedAt?: number;
+	readonly liftedRecordedAt?: number;
 	readonly choices: Readonly<
 		Partial<Record<OptionalConsentCategory, AccountCategoryDecision>>
 	>;
@@ -392,13 +393,14 @@ export const validateAccountConsentLayer = function validateAccountConsentLayer(
 	const choices = normalizeAccountChoices(rawChoices, 'rawConfirmedAt', true);
 	const vendors = normalizeAccountVendors(rawVendors, 'rawConfirmedAt', true);
 	const optOut = normalizeAccountOptOut(rawOptOut, 'rawRecordedAt', true);
-	const rawLiftedAt = ownValue(input, 'liftedAt');
+	const rawLiftedRecordedAt = ownValue(input, 'liftedRecordedAt');
 	const rawOverflow = ownValue(input, 'vendorsOverflow');
 	if (
 		!choices ||
 		!vendors ||
 		!optOut.ok ||
-		(rawLiftedAt !== undefined && !isValidAccountTimestamp(rawLiftedAt)) ||
+		(rawLiftedRecordedAt !== undefined &&
+			!isValidAccountTimestamp(rawLiftedRecordedAt)) ||
 		(rawOverflow !== undefined && typeof rawOverflow !== 'boolean')
 	) {
 		return null;
@@ -413,7 +415,9 @@ export const validateAccountConsentLayer = function validateAccountConsentLayer(
 		vendors,
 	};
 	const withLifted =
-		rawLiftedAt === undefined ? layer : { ...layer, liftedAt: rawLiftedAt };
+		rawLiftedRecordedAt === undefined
+			? layer
+			: { ...layer, liftedRecordedAt: rawLiftedRecordedAt };
 	return rawOverflow === true
 		? { ...withLifted, vendorsOverflow: true }
 		: withLifted;
@@ -537,27 +541,43 @@ const isMoreCompleteAccountLayer = function isMoreCompleteAccountLayer(
 		Object.keys(incoming.vendors).length >
 			Object.keys(current.vendors).length ||
 		(current.optOut === null &&
-			current.liftedAt === undefined &&
+			current.liftedRecordedAt === undefined &&
 			incoming.optOut !== null) ||
 		(current.vendorsOverflow === true && !incoming.vendorsOverflow)
 	);
 };
 
-const passesLiftFloor = function passesLiftFloor(
-	current: AccountConsentLayer,
+/**
+ * Apply the current layer's server-time opt-out lift floor to an incoming
+ * candidate for the same user: ignore an opt-out whose raw server `recordedAt`
+ * is at or before `liftedRecordedAt`, while keeping newer choices/vendors and
+ * preserving the lift floor for future checks.
+ */
+export const applyLiftFloorToIncoming = function applyLiftFloorToIncoming(
+	current: AccountConsentLayer | null,
 	incoming: AccountConsentLayer
-): boolean {
-	if (current.liftedAt === undefined) {
-		return true;
+): AccountConsentLayer {
+	if (
+		!current ||
+		current.liftedRecordedAt === undefined ||
+		current.externalId !== incoming.externalId
+	) {
+		return incoming;
 	}
-	if (incoming.liftedAt !== undefined) {
-		return incoming.liftedAt >= current.liftedAt;
-	}
-	const incomingConvertedCheckedAt = Math.max(
-		0,
-		incoming.checkedAt - incoming.skew
+	const floor = Math.max(
+		current.liftedRecordedAt,
+		incoming.liftedRecordedAt ?? -1
 	);
-	return incomingConvertedCheckedAt >= current.liftedAt;
+	if (incoming.optOut !== null && incoming.optOut.rawRecordedAt <= floor) {
+		return { ...incoming, liftedRecordedAt: floor, optOut: null };
+	}
+	if (
+		incoming.liftedRecordedAt === undefined ||
+		incoming.liftedRecordedAt < floor
+	) {
+		return { ...incoming, liftedRecordedAt: floor };
+	}
+	return incoming;
 };
 
 /**
@@ -566,10 +586,13 @@ const passesLiftFloor = function passesLiftFloor(
  *
  * Order:
  * 1. Identity gate (`externalId` must match the current user).
- * 2. Lift floor (`checkedAt - skew` of a non-lifted doc cannot precede `current.liftedAt`).
- * 3. Strictly newer `checkedAt` wins.
- * 4. Equal `checkedAt`: stored beats incoming; between two stored candidates,
- *    higher `liftedAt`, then higher `appliedAt`, then more complete part set wins.
+ * 2. Strictly newer `checkedAt` wins (callers apply `applyLiftFloorToIncoming`
+ *    so an already-lifted opt-out with raw `recordedAt <= liftedRecordedAt` is
+ *    ignored while newer choices/vendors still adopt).
+ * 3. Equal `checkedAt`: stored beats incoming (never reconverting a stored
+ *    layer's established `skew`/`appliedAt`); between two stored candidates,
+ *    higher `liftedRecordedAt`, then higher `appliedAt`, then more complete
+ *    part set wins.
  */
 export const shouldAdoptAccountLayer = function shouldAdoptAccountLayer({
 	current,
@@ -585,9 +608,6 @@ export const shouldAdoptAccountLayer = function shouldAdoptAccountLayer({
 	if (!current || current.externalId !== userExternalId) {
 		return true;
 	}
-	if (!passesLiftFloor(current, incoming)) {
-		return false;
-	}
 	if (incoming.checkedAt > current.checkedAt) {
 		return true;
 	}
@@ -597,15 +617,16 @@ export const shouldAdoptAccountLayer = function shouldAdoptAccountLayer({
 	if (incomingSource === 'incoming') {
 		return (
 			forceClientSync &&
-			current.liftedAt === undefined &&
+			currentSource === 'incoming' &&
+			current.liftedRecordedAt === undefined &&
 			sameAccountLayerContent(current, incoming)
 		);
 	}
 	if (currentSource === 'incoming') {
 		return true;
 	}
-	const incomingLift = incoming.liftedAt ?? -1;
-	const currentLift = current.liftedAt ?? -1;
+	const incomingLift = incoming.liftedRecordedAt ?? -1;
+	const currentLift = current.liftedRecordedAt ?? -1;
 	if (incomingLift !== currentLift) {
 		return incomingLift > currentLift;
 	}
@@ -759,11 +780,12 @@ const deriveEffectiveVendorChoice = function deriveEffectiveVendorChoice(
 			? account.vendors[id]
 			: undefined;
 		// When the browser recorded which declared vendors it showed, its
-		// decision counts only for vendors it denied or explicitly showed; an
-		// unseen vendor keeps its account decision.
+		// decision counts only for vendors it denied or explicitly showed.
+		// When coverage is unknown (SSR cookie-only read or legacy vendor
+		// record), browser counts only for vendors it denied; account wins elsewhere.
 		const browserCoversId =
 			hasBrowser &&
-			(browserDenied.has(id) || declaredSet === null || declaredSet.has(id));
+			(browserDenied.has(id) || (declaredSet !== null && declaredSet.has(id)));
 		const winner = pickNewerVendor(
 			browserCoversId,
 			!browserDenied.has(id),

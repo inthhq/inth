@@ -866,7 +866,6 @@ export const mountPersistence = function mountPersistence(
 		function applyNewerStoredRecords(): ConsentSubject | null {
 			const at = now();
 			const read = readStoredRecordsForReconcile(storageConfig, at);
-			baseline = [read, false];
 			const records = withQueued(read.records);
 			const rawSnapshot = kernel.getSnapshot();
 			const browserRecords = kernel.getBrowserRecords();
@@ -917,6 +916,17 @@ export const mountPersistence = function mountPersistence(
 				if (records.vendorDeclared !== undefined) {
 					patch.vendorDeclared = records.vendorDeclared;
 				}
+			} else if (
+				(browserRecords.vendorDeclared === null ||
+					browserRecords.vendorDeclared === undefined) &&
+				records.vendorDeclared !== undefined &&
+				records.vendorDeclared !== null &&
+				keptVendors !== null &&
+				records.vendorChoice?.confirmedAt === keptVendors.confirmedAt
+			) {
+				// SSR seeded only the `<key>-vendors` cookie (no declared list);
+				// recover `vendorDeclared` from localStorage at the same timestamp.
+				patch.vendorDeclared = records.vendorDeclared;
 			}
 			patchSeededOptOut(
 				snapshot,
@@ -939,6 +949,7 @@ export const mountPersistence = function mountPersistence(
 			if (Object.keys(patch).length > 0) {
 				kernel.hydrate({ ...patch, now: at });
 			}
+			baseline = [read, false];
 			return recordedSubjectOf(read);
 		};
 
