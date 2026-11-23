@@ -16,22 +16,22 @@ import {
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
 
-import { runFrontendCommand } from "../../vendor/c15t/frontend/index.ts";
-import type { FrontendCommandContext } from "../../vendor/c15t/frontend/index.ts";
+import { runFrontendCommand } from "../../vendor/inth-setup/frontend/index.ts";
+import type { FrontendCommandContext } from "../../vendor/inth-setup/frontend/index.ts";
 import {
   parseGenerationWorkflowArguments,
   recoverGeneration,
-} from "../../vendor/c15t/frontend/runtime/index.ts";
+} from "../../vendor/inth-setup/frontend/runtime/index.ts";
 import type {
   GenerationRuntimeOptions,
   GenerationWorkflowResult,
-} from "../../vendor/c15t/frontend/runtime/index.ts";
-import type { GenerationPlan } from "../../vendor/c15t/generate/index.ts";
+} from "../../vendor/inth-setup/frontend/runtime/index.ts";
+import type { GenerationPlan } from "../../vendor/inth-setup/generate/index.ts";
 import {
   legacySnippetInstructions,
   legacySnippets,
   mergeFile,
-} from "../../vendor/c15t/generate/merge.ts";
+} from "../../vendor/inth-setup/generate/merge.ts";
 
 const filesystemCode = (error: Error): string | undefined => {
   // eslint-disable-next-line anti-slop/no-runtime-typeof -- Decode Node's errno at the filesystem boundary; Scriptc errors use the message prefix.

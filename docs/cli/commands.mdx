@@ -308,6 +308,19 @@ Keep the `clientAttachmentId` printed to stderr, or supply your own UUID. An exp
 
 These commands require a person's approved connection. Chat uploads and discards need `agents.write`; discovery and downloads need `agents.read`. Support upload, finalize and discard need an explicitly scoped agent connection with `support.write`. Ordinary browser login does not request that permission. Existing API scope, role, ownership, rollout and operational controls remain authoritative. Organization API keys cannot gain these capabilities.
 
+## How do I set up the Inth SDK in my app?
+
+Run `inth init` from your app directory to choose or create an Inth project and set up the `@inth/*` packages. It works like `inth c15t` below: agent setup is recommended, `prompt` prints a setup prompt for another agent, and `scaffold` writes the framework's quickstart files. Scaffold installs the latest `@inth` release and writes the project URL to `.env` under the `*_INTH_PROJECT_URL` name for your framework.
+
+```sh
+inth init
+inth init --codex --project Website --organization org_123
+inth init prompt --project Website --organization org_123 --json
+inth init scaffold --project Website --organization org_123 --dry-run --json
+```
+
+In an existing Vite React app, scaffold keeps your `src/main.*` and `vite.config.*` and lists the lines to add. `--dry-run`, `--yes`, `--skip-install` and `--resume` choose scaffold when you give no action.
+
 ## How do I set up c15t in my app?
 
 Run `inth c15t` from your app directory to choose an Inth project and set up c15t v3. Agent setup is recommended. The agent can adapt the integration to your app, move existing tracking behind consent, and verify the result in a browser. The picker selects agent setup first when an agent is installed. Otherwise, it selects a setup prompt to paste into your agent.

@@ -1,7 +1,13 @@
-import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
+import { boilerplateFrameworks } from "../vendor/inth-setup/generate/index.ts";
 import { requiresAgentConnection } from "./auth-types.ts";
 import { C15T_CODEMODS_USAGE } from "./c15t-codemods.ts";
-import { C15T_USAGE, CODING_AGENTS } from "./c15t.ts";
+import {
+  C15T_USAGE,
+  CODING_AGENTS,
+  INIT_USAGE,
+  SETUP_PRODUCTS,
+} from "./c15t.ts";
+import type { SetupCommand } from "./c15t.ts";
 import { DOCUMENT_HASH_USAGE } from "./document.ts";
 import { FEEDBACK_CATEGORIES, FEEDBACK_SURFACES } from "./feedback.ts";
 import { MCP_CLIENTS } from "./mcp-clients.ts";
@@ -918,25 +924,32 @@ const localCommand = (
   scopes: [],
   usage: `inth ${command}${action ? ` ${action}` : ""}${positional}`,
 });
-export const COMMAND_METADATA: CommandMetadata[] = [
-  {
+// `inth init` and `inth c15t` share their flow and options.
+const setupCommand = (
+  command: SetupCommand,
+  description: string,
+  scaffold: string,
+  usage: string
+): CommandMetadata => {
+  const { branding, name } = SETUP_PRODUCTS[command];
+  return {
     action: "",
     authentication: "browser-or-agent-or-api-key",
-    command: "c15t",
-    description: "Set up c15t v3 consent management in this app",
+    command,
+    description,
     effects: [
-      "Selects an Inth project or creates one with c15t branding. New projects require a region.",
+      `Selects an Inth project or creates one with ${branding} branding. New projects require a region.`,
       "Agent setup is recommended to adapt the integration to this app and verify consent in a browser. The picker defaults to an installed agent, or a prompt for another agent.",
       "Prompt prints public setup inputs. Agent flags start the chosen coding agent in this directory.",
-      "Scaffold writes framework quickstart files and installs c15t on the stable v3 release line. Existing files are preserved; conflicting generated files stop setup.",
+      scaffold,
       "Scaffold and prompt support --json. Agent sessions require a terminal.",
     ],
     examples: [
-      "inth c15t",
-      "inth c15t --codex --project Website",
-      "inth c15t prompt --project Website --json",
-      "inth c15t scaffold --project Website --dry-run --json",
-      "inth c15t scaffold --name Website --region eu --organization <id> --yes",
+      `inth ${command}`,
+      `inth ${command} --codex --project Website`,
+      `inth ${command} prompt --project Website --json`,
+      `inth ${command} scaffold --project Website --dry-run --json`,
+      `inth ${command} scaffold --name Website --region eu --organization <id> --yes`,
     ],
     options: [
       option(
@@ -979,7 +992,7 @@ export const COMMAND_METADATA: CommandMetadata[] = [
         option(
           agent.id,
           "boolean",
-          `Start ${agent.name} with the c15t setup prompt`
+          `Start ${agent.name} with the ${name} setup prompt`
         )
       ),
       option("json", "boolean", "Print scaffold, prompt, or help as JSON"),
@@ -988,8 +1001,22 @@ export const COMMAND_METADATA: CommandMetadata[] = [
     ],
     paginated: false,
     scopes: ["organizations.read", "projects.read", "projects.write"],
-    usage: C15T_USAGE.slice(7),
-  },
+    usage: usage.slice(7),
+  };
+};
+export const COMMAND_METADATA: CommandMetadata[] = [
+  setupCommand(
+    "init",
+    "Set up the Inth SDK in this app",
+    "Scaffold writes framework quickstart files and installs the latest @inth release. Existing files are preserved; conflicting generated files stop setup.",
+    INIT_USAGE
+  ),
+  setupCommand(
+    "c15t",
+    "Set up c15t v3 consent management in this app",
+    "Scaffold writes framework quickstart files and installs c15t on the stable v3 release line. Existing files are preserved; conflicting generated files stop setup.",
+    C15T_USAGE
+  ),
   {
     action: "codemods",
     authentication: "none",

@@ -1,8 +1,8 @@
-import { createAgentSetupPlan as upstreamAgentSetupPlan } from "../../vendor/c15t/frontend/agent/prompt.ts";
+import { createAgentSetupPlan as upstreamAgentSetupPlan } from "../../vendor/inth-setup/frontend/agent/prompt.ts";
 import type {
   AgentSetupOptions,
   AgentSetupPlan,
-} from "../../vendor/c15t/frontend/agent/prompt.ts";
+} from "../../vendor/inth-setup/frontend/agent/prompt.ts";
 
 /** Build the upstream setup task with Inth's explicit-upgrade policy. */
 export const createAgentSetupPlan = (

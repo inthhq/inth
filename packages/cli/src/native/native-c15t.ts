@@ -3,14 +3,15 @@ import { existsSync, readFileSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { basename, delimiter, dirname, join } from "node:path";
 
+import { createInthAgentSetupPlan } from "../../vendor/inth-setup/frontend/agent/inth.ts";
 import {
   requireProjectBackendURL,
   resolveProject,
-} from "../../vendor/c15t/frontend/projects.ts";
-import { recoverGeneration } from "../../vendor/c15t/frontend/runtime/index.ts";
-import type { GenerationWorkflowResult } from "../../vendor/c15t/frontend/runtime/index.ts";
-import { boilerplateFrameworks } from "../../vendor/c15t/generate/index.ts";
-import type { BoilerplateFramework } from "../../vendor/c15t/generate/index.ts";
+} from "../../vendor/inth-setup/frontend/projects.ts";
+import { recoverGeneration } from "../../vendor/inth-setup/frontend/runtime/index.ts";
+import type { GenerationWorkflowResult } from "../../vendor/inth-setup/frontend/runtime/index.ts";
+import { boilerplateFrameworks } from "../../vendor/inth-setup/generate/index.ts";
+import type { BoilerplateFramework } from "../../vendor/inth-setup/generate/index.ts";
 import type { CliArguments } from "../arguments.ts";
 import {
   defaultProjectName,
@@ -20,12 +21,14 @@ import {
   CODING_AGENTS,
   hostedProject,
   LOCKFILE_NAMES,
+  SETUP_PRODUCTS,
 } from "../c15t.ts";
 import type {
   ApiProject,
-  C15tOptions,
   CodingAgent,
   PackageManifest,
+  SetupOptions,
+  SetupProduct,
 } from "../c15t.ts";
 import { CliError } from "../cli-error.ts";
 import { chooseOrganization, terminalText } from "../organizations.ts";
@@ -72,7 +75,7 @@ interface RegionList {
 }
 
 const NEW_PROJECT = "__inth_new_project__";
-// Where c15t's runtime journals an apply; see vendor/c15t/frontend/runtime/files.ts.
+// Where c15t's runtime journals an apply; see vendor/inth-setup/frontend/runtime/files.ts.
 const RECOVERY_DIRECTORY = ".c15t-native-generation";
 // A new project's consent backend usually provisions within a minute.
 const PROVISION_ATTEMPTS = 30;
@@ -196,26 +199,29 @@ const planText = (result: GenerationWorkflowResult): string => {
 };
 
 // Scriptc classes cannot hold an AbortSignal, so the signal stays in closures.
-interface C15tTerminal {
+interface SetupTerminal {
   organizations: OrganizationUI;
   ui: (title: string) => OrganizationUI;
   wait: (ms: number) => Promise<void>;
 }
 
-class C15tSetup {
+class Setup {
   private readonly options: CliArguments;
-  private readonly c15t: C15tOptions;
+  private readonly setup: SetupOptions;
+  private readonly product: SetupProduct;
   private readonly api: NativeApi;
-  private readonly terminal: C15tTerminal;
+  private readonly terminal: SetupTerminal;
   private readonly interactive: boolean;
   constructor(
     options: CliArguments,
-    c15t: C15tOptions,
+    setup: SetupOptions,
+    product: SetupProduct,
     api: NativeApi,
-    terminal: C15tTerminal
+    terminal: SetupTerminal
   ) {
     this.options = options;
-    this.c15t = c15t;
+    this.setup = setup;
+    this.product = product;
     this.api = api;
     this.terminal = terminal;
     this.interactive = terminal.ui("").interactive;
@@ -294,8 +300,8 @@ class C15tSetup {
   }
 
   async region(): Promise<string> {
-    if (this.c15t.region) {
-      return this.c15t.region;
+    if (this.setup.region) {
+      return this.setup.region;
     }
     const response = await this.api.execute("/v1/regions", "GET");
     let regions: Region[];
@@ -327,7 +333,11 @@ class C15tSetup {
       "/v1/projects",
       "POST",
       // The project API nests branding under consent, like inth project create.
-      JSON.stringify({ consent: { branding: "c15t" }, name, region }),
+      JSON.stringify({
+        consent: { branding: this.product.branding },
+        name,
+        region,
+      }),
       organization
     );
     let created: ApiProject;
@@ -349,15 +359,15 @@ class C15tSetup {
     cwd: string
   ): Promise<ProjectSelection> {
     const name =
-      this.c15t.name ?? defaultProjectName(manifest?.name, basename(cwd));
-    if (this.c15t.name) {
+      this.setup.name ?? defaultProjectName(manifest?.name, basename(cwd));
+    if (this.setup.name) {
       return { name };
     }
     const projects = await this.projects(organization);
-    if (this.c15t.project) {
+    if (this.setup.project) {
       try {
         const match = resolveProject(
-          this.c15t.project,
+          this.setup.project,
           projects.map((project) => hostedProject(project))
         );
         const project = projects.find((entry) => entry.id === match.id);
@@ -399,7 +409,7 @@ class C15tSetup {
       if (attempt >= PROVISION_ATTEMPTS) {
         throw new CliError(
           "command_failed",
-          `Project ${terminalText(project.name)} is still provisioning. Retry with inth c15t --project ${project.id} in a minute.`
+          `Project ${terminalText(project.name)} is still provisioning. Retry with inth ${this.product.command} --project ${project.id} in a minute.`
         );
       }
       if (attempt === 0) {
@@ -414,8 +424,8 @@ class C15tSetup {
   }
 
   action(agents: CodingAgent[], scaffold: boolean): Promise<string> {
-    if (this.c15t.action) {
-      return Promise.resolve(this.c15t.action);
+    if (this.setup.action) {
+      return Promise.resolve(this.setup.action);
     }
     if (!this.interactive) {
       throw new CliError(
@@ -440,23 +450,26 @@ class C15tSetup {
         choice("scaffold", "Scaffold the framework quickstart files")
       );
     }
-    return this.select("How do you want to set up c15t?", choices);
+    return this.select(
+      `How do you want to set up ${this.product.name}?`,
+      choices
+    );
   }
 
   async agent(agents: CodingAgent[]): Promise<CodingAgent> {
-    const requested = this.c15t.agent;
+    const requested = this.setup.agent;
     if (requested) {
       const agent = CODING_AGENTS.find((entry) => entry.id === requested);
       if (process.platform === "win32") {
         throw new CliError(
           "usage_error",
-          "inth cannot start coding agents on Windows yet. Run inth c15t prompt and paste the prompt into your agent."
+          `inth cannot start coding agents on Windows yet. Run inth ${this.product.command} prompt and paste the prompt into your agent.`
         );
       }
       if (!agent || !agents.includes(agent)) {
         throw new CliError(
           "usage_error",
-          `${agent?.name ?? requested} is not installed: ${agent?.command ?? requested} is not on PATH. Install it, or run inth c15t prompt and paste the prompt into your agent.`
+          `${agent?.name ?? requested} is not installed: ${agent?.command ?? requested} is not on PATH. Install it, or run inth ${this.product.command} prompt and paste the prompt into your agent.`
         );
       }
       return agent;
@@ -467,7 +480,7 @@ class C15tSetup {
     );
     const agent = agents.find((entry) => entry.id === selected);
     if (!agent) {
-      throw new CliError("cancelled", "c15t setup cancelled.");
+      throw new CliError("cancelled", `${this.product.name} setup cancelled.`);
     }
     return agent;
   }
@@ -475,7 +488,7 @@ class C15tSetup {
   async framework(
     detected: BoilerplateFramework | undefined
   ): Promise<BoilerplateFramework> {
-    const requested = this.c15t.framework ?? detected;
+    const requested = this.setup.framework ?? detected;
     if (requested) {
       return requested;
     }
@@ -491,7 +504,7 @@ class C15tSetup {
     );
     const framework = boilerplateFrameworks.find((entry) => entry === selected);
     if (!framework) {
-      throw new CliError("cancelled", "c15t setup cancelled.");
+      throw new CliError("cancelled", `${this.product.name} setup cancelled.`);
     }
     return framework;
   }
@@ -501,25 +514,28 @@ class C15tSetup {
     if (!existsSync(join(cwd, RECOVERY_DIRECTORY))) {
       return;
     }
-    if (!this.c15t.resume) {
-      const message =
-        "An earlier inth c15t scaffold in this app was interrupted. Run inth c15t scaffold --resume to undo its partial files and try again.";
-      if (!this.interactive || this.c15t.dryRun) {
+    if (!this.setup.resume) {
+      const { command } = this.product;
+      const message = `An earlier inth ${command} scaffold in this app was interrupted. Run inth ${command} scaffold --resume to undo its partial files and try again.`;
+      if (!this.interactive || this.setup.dryRun) {
         throw new CliError("interaction_required", message);
       }
       const selected = await this.select(
-        "An earlier c15t setup in this app was interrupted",
+        `An earlier ${this.product.name} setup in this app was interrupted`,
         [
           choice("resume", "Undo its partial files and continue"),
           choice("cancel", "Cancel"),
         ]
       );
       if (selected !== "resume") {
-        throw new CliError("cancelled", "c15t setup cancelled.");
+        throw new CliError(
+          "cancelled",
+          `${this.product.name} setup cancelled.`
+        );
       }
     }
     if (recoverGeneration(cwd)) {
-      console.error("Undid the interrupted c15t setup.");
+      console.error(`Undid the interrupted ${this.product.name} setup.`);
     }
   }
 
@@ -559,14 +575,14 @@ class C15tSetup {
     const draft = await runGenerationWorkflow(
       ["setup", "--framework", framework],
       { generation: { backendURL: "https://new-project.invalid" } },
-      { cwd, signal }
+      { cwd, inthRelease: this.product.inthRelease, signal }
     );
     // Omit contents, which hold the placeholder URL.
     const files = draft.plan.files.map((file) => ({
       exists: file.exists,
       path: file.path,
     }));
-    if (this.c15t.dryRun) {
+    if (this.setup.dryRun) {
       printResult(
         this.options.json,
         `${planText(draft)}\nRun without --dry-run to create the project "${terminalText(name)}" and write these files.`,
@@ -591,7 +607,7 @@ class C15tSetup {
   }
 
   async confirm(count: number, install: boolean): Promise<void> {
-    if (this.c15t.yes) {
+    if (this.setup.yes) {
       return;
     }
     if (!this.interactive) {
@@ -606,18 +622,19 @@ class C15tSetup {
       choice("cancel", "Cancel"),
     ]);
     if (selected !== "write") {
-      throw new CliError("cancelled", "c15t setup cancelled.");
+      throw new CliError("cancelled", `${this.product.name} setup cancelled.`);
     }
   }
 }
 
 const requireManifest = (
-  manifest: PackageManifest | undefined
+  manifest: PackageManifest | undefined,
+  product: SetupProduct
 ): PackageManifest => {
   if (!manifest) {
     throw new CliError(
       "usage_error",
-      "Run inth c15t scaffold from the app directory that contains package.json."
+      `Run inth ${product.command} scaffold from the app directory that contains package.json.`
     );
   }
   return manifest;
@@ -640,10 +657,11 @@ const canScaffold = (
 
 const requireScaffoldApp = (
   manifest: PackageManifest | undefined,
-  framework: BoilerplateFramework | undefined
+  framework: BoilerplateFramework | undefined,
+  product: SetupProduct
 ): void => {
   if (framework !== "html") {
-    requireManifest(manifest);
+    requireManifest(manifest, product);
   }
 };
 
@@ -652,15 +670,16 @@ const shouldInstall = (skip: boolean, dependencies: string[]): boolean =>
 
 const resultText = (
   result: GenerationWorkflowResult,
-  manager: string
+  manager: string,
+  product: SetupProduct
 ): string => {
   const lines = [
     result.created.length
       ? `Created ${result.created.length} files.`
-      : "The c15t files are already in place.",
+      : `The ${product.name} files are already in place.`,
   ];
   if (result.installed) {
-    lines.push(`Installed c15t packages with ${manager}.`);
+    lines.push(`Installed ${product.name} packages with ${manager}.`);
   } else if (result.plan.dependencies.length) {
     lines.push(`Install the packages: ${result.plan.dependencies.join(" ")}`);
   }
@@ -676,10 +695,11 @@ const startAgent = async (
   prompt: string,
   cwd: string,
   project: string,
+  product: SetupProduct,
   signal: AbortSignal
 ): Promise<void> => {
   console.error(
-    `Starting ${agent.name} in ${cwd} to set up c15t for ${terminalText(project)}.`
+    `Starting ${agent.name} in ${cwd} to set up ${product.name} for ${terminalText(project)}.`
   );
   const status = await launchAgent(agent, prompt, cwd, signal);
   if (status !== 0) {
@@ -696,38 +716,61 @@ const startAgent = async (
   );
 };
 
-export const runC15t = async (
+const requireSetupOptions = (
+  options: CliArguments,
+  product: SetupProduct
+): SetupOptions => {
+  if (!options.setup) {
+    throw new CliError("usage_error", `Run inth ${product.command} --help.`);
+  }
+  return options.setup;
+};
+
+// `inth init` asks the agent for the Inth SDK; `inth c15t` for c15t.
+const agentSetupPlan = (
+  product: SetupProduct,
+  projectUrl: string,
+  framework: BoilerplateFramework | undefined
+): { prompt: string } =>
+  product.command === "init"
+    ? createInthAgentSetupPlan({ framework, projectUrl })
+    : createAgentSetupPlan({
+        backendURL: projectUrl,
+        framework,
+        mode: "hosted",
+      });
+
+/** Run `inth init` or `inth c15t`, as `options.command` names. */
+export const runSetup = async (
   options: CliArguments,
   api: NativeApi,
   context: NativeContext,
   signal: AbortSignal,
   allowInteractive: boolean
 ): Promise<void> => {
-  const { c15t } = options;
-  if (!c15t) {
-    throw new CliError("usage_error", "Run inth c15t --help.");
-  }
-  const setup = new C15tSetup(options, c15t, api, {
+  const product = SETUP_PRODUCTS[options.command === "init" ? "init" : "c15t"];
+  const flags = requireSetupOptions(options, product);
+  const setup = new Setup(options, flags, product, api, {
     organizations: nativeUI(signal, allowInteractive),
     ui: (title) =>
-      nativeUI(signal, allowInteractive, title, false, "c15t setup"),
+      nativeUI(signal, allowInteractive, title, false, `${product.name} setup`),
     wait: (ms) => sleep(ms, signal),
   });
   const cwd = process.cwd();
   const manifest = readManifest(cwd);
-  const detected = c15t.framework ?? scaffoldFramework(manifest, cwd);
+  const detected = flags.framework ?? scaffoldFramework(manifest, cwd);
   const agents = installedAgents();
   const organization = await setup.organization(context);
   const selection = await setup.chooseProject(organization, manifest, cwd);
   const action = await setup.action(agents, canScaffold(manifest, detected));
-  // c15t's installer refuses Windows, so write the files and print the command.
-  const skipInstall = c15t.skipInstall || process.platform === "win32";
+  // The installer refuses Windows, so write the files and print the command.
+  const skipInstall = flags.skipInstall || process.platform === "win32";
   // Check and confirm everything local before creating a project.
   const requestedAgent =
     action === "agent" ? await setup.agent(agents) : undefined;
   let scaffold: ScaffoldCheck | undefined;
   if (action === "scaffold") {
-    requireScaffoldApp(manifest, detected);
+    requireScaffoldApp(manifest, detected, product);
     scaffold = await setup.prepareScaffold(
       cwd,
       detected,
@@ -748,17 +791,14 @@ export const runC15t = async (
     name: project.name,
   };
   if (action === "agent" || action === "prompt") {
-    const plan = createAgentSetupPlan({
-      backendURL,
-      framework: detected,
-      mode: "hosted",
-    });
+    const plan = agentSetupPlan(product, backendURL, detected);
     if (action === "agent") {
       await startAgent(
         requestedAgent ?? (await setup.agent(agents)),
         plan.prompt,
         cwd,
         project.name,
+        product,
         signal
       );
       return;
@@ -780,10 +820,11 @@ export const runC15t = async (
   await setup.recover(cwd);
   const preview = await runGenerationWorkflow(args, generation, {
     cwd,
+    inthRelease: product.inthRelease,
     signal,
   });
   const pending = preview.plan.files.filter((file) => !file.exists).length;
-  if (c15t.dryRun) {
+  if (flags.dryRun) {
     printResult(
       options.json,
       planText(preview),
@@ -811,12 +852,13 @@ export const runC15t = async (
   }
   const result = await runGenerationWorkflow(args, generation, {
     cwd,
+    inthRelease: product.inthRelease,
     packageManager: manager,
     signal,
   });
   printResult(
     options.json,
-    resultText(result, manager),
+    resultText(result, manager, product),
     JSON.stringify({
       action,
       created: result.created,

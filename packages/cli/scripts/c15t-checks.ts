@@ -19,7 +19,7 @@ import path from "node:path";
 
 import { z } from "zod";
 
-import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
+import { boilerplateFrameworks } from "../vendor/inth-setup/generate/index.ts";
 import { fixture } from "./native-test-support.ts";
 
 const BACKEND = "https://acme-website.c15t.dev";
@@ -243,7 +243,7 @@ const verifyScaffold = async (
   assert.match(manager, /from '@inth\/nextjs'/u);
   assert.equal(
     await readFile(path.join(directory, ".env"), "utf-8"),
-    `NEXT_PUBLIC_C15T_BACKEND_URL=${BACKEND}\n`
+    `NEXT_PUBLIC_INTH_PROJECT_URL=${BACKEND}\n`
   );
   if (!windows) {
     const installer = await readFile(log, "utf-8");
@@ -1398,7 +1398,7 @@ const verifyEnvironmentGuidance = async (
   test: string,
   parent: string
 ): Promise<void> => {
-  const assignment = `VITE_C15T_BACKEND_URL=${BACKEND}`;
+  const assignment = `VITE_INTH_PROJECT_URL=${BACKEND}`;
   for (const [name, existing, expected] of [
     [
       "missing",
@@ -1407,24 +1407,24 @@ const verifyEnvironmentGuidance = async (
     ],
     [
       "different",
-      "PRIVATE_KEY=private-env-value\nVITE_C15T_BACKEND_URL=https://old-backend.invalid\n",
-      `Replace the VITE_C15T_BACKEND_URL assignment in .env with:\n${assignment}`,
+      "PRIVATE_KEY=private-env-value\nVITE_INTH_PROJECT_URL=https://old-backend.invalid\n",
+      `Replace the VITE_INTH_PROJECT_URL assignment in .env with:\n${assignment}`,
     ],
     [
       "exported",
-      "PRIVATE_KEY=private-env-value\n  export VITE_C15T_BACKEND_URL = 'https://old-backend.invalid'\n",
-      `Replace the VITE_C15T_BACKEND_URL assignment in .env with:\n${assignment}`,
+      "PRIVATE_KEY=private-env-value\n  export VITE_INTH_PROJECT_URL = 'https://old-backend.invalid'\n",
+      `Replace the VITE_INTH_PROJECT_URL assignment in .env with:\n${assignment}`,
     ],
     ["matching", `${assignment}\nPRIVATE_KEY=private-env-value\n`, ""],
     [
-      "alternate",
-      "VITE_INTH_PROJECT_URL=https://old-backend.invalid\nPRIVATE_KEY=private-env-value\n",
-      "",
+      "legacy",
+      "VITE_C15T_BACKEND_URL=https://old-backend.invalid\nPRIVATE_KEY=private-env-value\n",
+      `Add to .env:\n${assignment}`,
     ],
     [
       "duplicates",
-      `${assignment}\nVITE_C15T_BACKEND_URL=https://old-backend.invalid\nPRIVATE_KEY=private-env-value\n`,
-      `Replace all VITE_C15T_BACKEND_URL assignments in .env with this single assignment:\n${assignment}`,
+      `${assignment}\nVITE_INTH_PROJECT_URL=https://old-backend.invalid\nPRIVATE_KEY=private-env-value\n`,
+      `Replace all VITE_INTH_PROJECT_URL assignments in .env with this single assignment:\n${assignment}`,
     ],
   ] as const) {
     const directory = await app(parent, `env-guidance-${name}`, {
@@ -1800,6 +1800,188 @@ const verifyCodemodsWithoutAccount = async (
   ]);
 };
 
+// A create-vite React app already has its own entry and Vite config.
+const verifyExistingViteApp = async (
+  test: string,
+  parent: string
+): Promise<void> => {
+  const directory = await app(parent, "vite-react", { react: "19.2.0" });
+  await mkdir(path.join(directory, "src"));
+  const entry =
+    "import { createRoot } from 'react-dom/client';\nimport App from './App.tsx';\ncreateRoot(document.getElementById('root')!).render(<App />);\n";
+  const config =
+    "import react from '@vitejs/plugin-react';\nimport { defineConfig } from 'vite';\nexport default defineConfig({ plugins: [react()] });\n";
+  await writeFile(path.join(directory, "src", "main.tsx"), entry);
+  await writeFile(path.join(directory, "vite.config.js"), config);
+  await writeFile(
+    path.join(directory, "src", "App.tsx"),
+    "export default function App() { return null; }\n"
+  );
+  const args = [
+    "init",
+    "scaffold",
+    "--project",
+    "Website",
+    "--organization",
+    "org_acme",
+    "--skip-install",
+    "--yes",
+    "--json",
+  ];
+  const result = run(test, args, directory);
+  assert.equal(result.status, 0, result.stderr);
+  const { data } = envelope.parse(JSON.parse(result.stdout));
+  assert.deepEqual(data.created?.toSorted(), [".env", "src/consent.tsx"]);
+  assert.equal(
+    await readFile(path.join(directory, "src", "main.tsx"), "utf-8"),
+    entry
+  );
+  assert.equal(
+    await readFile(path.join(directory, "vite.config.js"), "utf-8"),
+    config
+  );
+  const entries = await readdir(directory);
+  assert.ok(!entries.includes("vite.config.ts"));
+  const quickstart = new Map<string, string>();
+  for (const file of ["src/main.tsx", "vite.config.js"]) {
+    const instruction = data.plan?.instructions.find((line) =>
+      line.startsWith(`Update ${file}:`)
+    );
+    assert.ok(instruction, file);
+    quickstart.set(
+      file,
+      `${instruction.split("The quickstart's version:\n")[1]}\n`
+    );
+  }
+
+  // A JavaScript app whose entry and config already match the quickstart
+  // gets no TypeScript copies beside them.
+  const javascript = await app(parent, "vite-react-js", { react: "19.2.0" });
+  await mkdir(path.join(javascript, "src"));
+  await writeFile(
+    path.join(javascript, "src", "App.jsx"),
+    "export default function App() { return null; }\n"
+  );
+  await writeFile(
+    path.join(javascript, "src", "main.jsx"),
+    quickstart.get("src/main.tsx") ?? ""
+  );
+  await writeFile(
+    path.join(javascript, "vite.config.js"),
+    quickstart.get("vite.config.js") ?? ""
+  );
+  const matching = run(test, [...args], javascript);
+  assert.equal(matching.status, 0, matching.stderr);
+  const matched = envelope.parse(JSON.parse(matching.stdout)).data;
+  assert.deepEqual(matched.created?.toSorted(), [".env", "src/consent.tsx"]);
+  assert.ok(
+    !matched.plan?.instructions.some(
+      (line) => line.startsWith("Update ") || line.includes("src/main.tsx")
+    ),
+    JSON.stringify(matched.plan?.instructions)
+  );
+};
+
+// `inth init` runs the same flow for the Inth SDK, with Inth's prompt and
+// project branding.
+const verifyInit = (
+  binary: string,
+  test: string,
+  next: string,
+  react: string
+): void => {
+  const top = run(binary, ["--help"], next);
+  assert.equal(top.status, 0, top.stderr);
+  assert.match(top.stdout, /^ {2}init +Set up the Inth SDK in this app$/mu);
+  const help = run(binary, ["init", "--help", "--json"], next);
+  assert.equal(help.status, 0, help.stderr);
+  const [definition] = JSON.parse(help.stdout).data.commandDefinitions;
+  assert.equal(definition.command, "init");
+  const usage = run(binary, ["init", "codemods"], next);
+  assert.equal(usage.status, 1);
+  assert.match(usage.stderr, /Usage: inth init/u);
+
+  const prompt = run(
+    test,
+    [
+      "init",
+      "prompt",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--json",
+    ],
+    next
+  );
+  assert.equal(prompt.status, 0, prompt.stderr);
+  const promptData = envelope.parse(JSON.parse(prompt.stdout)).data;
+  assert.equal(promptData.project.backendUrl, BACKEND);
+  assert.match(promptData.prompt ?? "", /^Set up Inth consent management/u);
+  assert.match(
+    promptData.prompt ?? "",
+    new RegExp(`"projectUrl": "${BACKEND}"`, "u")
+  );
+  assert.match(
+    promptData.prompt ?? "",
+    /https:\/\/inth\.com\/docs\/frameworks/u
+  );
+  assert.doesNotMatch(promptData.prompt ?? "", /c15t\.com|backendURL/u);
+
+  // A dry run without an action previews the scaffold; it starts no agent.
+  const preview = run(
+    test,
+    [
+      "init",
+      "--dry-run",
+      "--project",
+      "Website",
+      "--organization",
+      "org_acme",
+      "--json",
+    ],
+    react
+  );
+  assert.equal(preview.status, 0, preview.stderr);
+  assert.equal(
+    envelope.parse(JSON.parse(preview.stdout)).data.action,
+    "scaffold"
+  );
+
+  const created = run(
+    test,
+    [
+      "init",
+      "scaffold",
+      "--name",
+      "Created",
+      "--region",
+      "eu",
+      "--organization",
+      "org_acme",
+      "--yes",
+      "--skip-install",
+      "--json",
+    ],
+    react
+  );
+  assert.equal(created.status, 0, created.stderr);
+  const { data } = envelope.parse(JSON.parse(created.stdout));
+  assert.equal(data.framework, "react");
+  assert.deepEqual(data.plan?.dependencies, ["@inth/react@latest"]);
+  assert.ok(
+    data.plan?.instructions.includes(
+      "Install dependencies: @inth/react@latest."
+    ),
+    JSON.stringify(data.plan?.instructions)
+  );
+  assert.deepEqual(calls(created.stderr), [
+    'POST /v1/projects?organizationId=org_acme {"consent":{"branding":"inth"},"name":"Created","region":"eu"}',
+    "GET /v1/projects/prj_created",
+    "GET /v1/projects/prj_created",
+  ]);
+};
+
 export const verifyC15t = async (binary: string): Promise<void> => {
   const parent = await realpath(
     await mkdtemp(path.join(os.tmpdir(), "inth-c15t-"))
@@ -1828,12 +2010,19 @@ export const verifyC15t = async (binary: string): Promise<void> => {
     await verifySvelteKitAdapter(test, parent);
     await verifySvelteKitVersions(test, parent);
     await verifyReactEntry(test, parent);
+    await verifyExistingViteApp(test, parent);
     await verifyEnvironmentGuidance(test, parent);
     await verifyAstroOutput(test, parent);
     await verifyPartialHtml(test, parent);
     await verifyRedactedPlans(test, parent);
     await verifyHtmlSite(test, parent);
     verifyNewProject(test, await app(parent, "dashboard", { react: "19.0.0" }));
+    verifyInit(
+      binary,
+      test,
+      next,
+      await app(parent, "storefront", { react: "19.0.0" })
+    );
     if (!windows) {
       await verifyAgents(test, next, bin);
     }

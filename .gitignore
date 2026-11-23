@@ -121,3 +121,6 @@ packages/react-native/skills/
 # Vitest browser-mode failure output
 __screenshots__/
 .vitest-attachments/
+
+# Scratch copies from packages/cli/scripts/scaffold-build-checks.ts.
+/examples/.scaffold-check-*/

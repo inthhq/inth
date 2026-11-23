@@ -2,28 +2,29 @@ import { existsSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
 
-import { runFrontendCommand } from "../../vendor/c15t/frontend/index.ts";
-import type { FrontendCommandContext } from "../../vendor/c15t/frontend/index.ts";
+import { runFrontendCommand } from "../../vendor/inth-setup/frontend/index.ts";
+import type { FrontendCommandContext } from "../../vendor/inth-setup/frontend/index.ts";
 import {
   applyGeneration,
   installGenerationDependencies,
   parseGenerationWorkflowArguments,
   planGeneration,
   recoverGeneration,
-} from "../../vendor/c15t/frontend/runtime/index.ts";
+} from "../../vendor/inth-setup/frontend/runtime/index.ts";
 import type {
   ApplicationPlan,
   GenerationRuntimeOptions,
   GenerationWorkflowResult,
   PackageManager,
-} from "../../vendor/c15t/frontend/runtime/index.ts";
-import { requireNativeInstaller } from "../../vendor/c15t/frontend/runtime/install.ts";
-import type { GenerationPlan } from "../../vendor/c15t/generate/index.ts";
+} from "../../vendor/inth-setup/frontend/runtime/index.ts";
+import { requireNativeInstaller } from "../../vendor/inth-setup/frontend/runtime/install.ts";
+import type { GenerationPlan } from "../../vendor/inth-setup/generate/index.ts";
 import {
   legacySnippetInstructions,
   legacySnippets,
   mergeFile,
-} from "../../vendor/c15t/generate/merge.ts";
+} from "../../vendor/inth-setup/generate/merge.ts";
+import { dependencyName } from "../../vendor/inth-setup/generate/release.ts";
 import { adaptAstroGeneration } from "./c15t-astro.ts";
 import { runHtmlGenerationWorkflow } from "./c15t-html.ts";
 import { adaptNextGeneration, addNextConfigInstructions } from "./c15t-next.ts";
@@ -148,11 +149,34 @@ const installAppliedPlan = async (
   }
 };
 
+export interface SetupGenerationOptions extends GenerationRuntimeOptions {
+  /**
+   * npm specifier for the `@inth` packages, such as `latest`. Defaults to
+   * the generator's release line.
+   */
+  inthRelease?: string;
+}
+
+/** Install the `@inth` packages from `release` instead of the generator's line. */
+const pinInthPackages = (generation: GenerationPlan, release: string): void => {
+  const pinned = generation.dependencies.map((dependency) => {
+    const name = dependencyName(dependency);
+    return name.startsWith("@inth/") ? `${name}@${release}` : dependency;
+  });
+  const listed = `Install dependencies: ${generation.dependencies.join(" ")}.`;
+  generation.instructions = generation.instructions.map((instruction) =>
+    instruction === listed
+      ? `Install dependencies: ${pinned.join(" ")}.`
+      : instruction
+  );
+  generation.dependencies = pinned;
+};
+
 /** Adapt upstream plans before using its filesystem and installation runtime. */
 export const runGenerationWorkflow = async (
   args: string[],
   context: FrontendCommandContext,
-  options: GenerationRuntimeOptions
+  options: SetupGenerationOptions
 ): Promise<GenerationWorkflowResult> => {
   if (
     !existsSync(join(options.cwd, "package.json")) &&
@@ -177,6 +201,9 @@ export const runGenerationWorkflow = async (
   }
   if (shouldInstall) {
     requireNativeInstaller();
+  }
+  if (options.inthRelease) {
+    pinInthPackages(generation.data, options.inthRelease);
   }
   const recovered = flags.resume ? recoverGeneration(options.cwd) : false;
   adaptAstroGeneration(generation.data, options.cwd);

@@ -1,7 +1,7 @@
-import type { HostedProject } from "../vendor/c15t/frontend/projects.ts";
-import type { PackageManager } from "../vendor/c15t/frontend/runtime/install.ts";
-import { boilerplateFrameworks } from "../vendor/c15t/generate/index.ts";
-import type { BoilerplateFramework } from "../vendor/c15t/generate/index.ts";
+import type { HostedProject } from "../vendor/inth-setup/frontend/projects.ts";
+import type { PackageManager } from "../vendor/inth-setup/frontend/runtime/install.ts";
+import { boilerplateFrameworks } from "../vendor/inth-setup/generate/index.ts";
+import type { BoilerplateFramework } from "../vendor/inth-setup/generate/index.ts";
 import type { CliArguments } from "./arguments.ts";
 import { CliError } from "./cli-error.ts";
 
@@ -25,7 +25,7 @@ export const CODING_AGENTS: CodingAgent[] = [
   { args: ["ask"], command: "fx", id: "fx", name: "fx", resume: "fx -c" },
 ];
 
-export interface C15tOptions {
+export interface SetupOptions {
   // "agent", "scaffold", "prompt", or "" to choose interactively.
   action: string;
   // A CODING_AGENTS id when an agent flag was given.
@@ -41,24 +41,56 @@ export interface C15tOptions {
   yes: boolean;
 }
 
-export const C15T_USAGE =
-  "Usage: inth c15t [scaffold|prompt|--codex|--claude|--cursor|--grok|--fx] [--project <id|name>] [--name <name> --region <id>] [--framework <name>] [--organization <id>] [--yes] [--dry-run] [--skip-install] [--resume] [--json]";
+// `inth init` sets up the Inth SDK; `inth c15t` sets up c15t.
+export type SetupCommand = "c15t" | "init";
 
-export const c15tHelp = (): string =>
-  [
-    "Set up c15t v3 consent management in the current application.",
+export interface SetupProduct {
+  command: SetupCommand;
+  // What setup installs, as messages name it.
+  name: string;
+  // Branding for a project setup creates.
+  branding: string;
+  // npm specifier the scaffold installs the @inth packages from. Unset keeps
+  // the generator's release line.
+  inthRelease?: string;
+}
+
+export const SETUP_PRODUCTS: Record<SetupCommand, SetupProduct> = {
+  c15t: { branding: "c15t", command: "c15t", name: "c15t" },
+  init: {
+    branding: "inth",
+    command: "init",
+    inthRelease: "latest",
+    name: "Inth",
+  },
+};
+
+const setupUsage = (command: SetupCommand): string =>
+  `Usage: inth ${command} [scaffold|prompt|--codex|--claude|--cursor|--grok|--fx] [--project <id|name>] [--name <name> --region <id>] [--framework <name>] [--organization <id>] [--yes] [--dry-run] [--skip-install] [--resume] [--json]`;
+
+export const C15T_USAGE = setupUsage("c15t");
+export const INIT_USAGE = setupUsage("init");
+
+const setupHelp = (
+  command: SetupCommand,
+  summary: string,
+  extraActions: string[]
+): string => {
+  const { name } = SETUP_PRODUCTS[command];
+  return [
+    summary,
     "",
-    C15T_USAGE,
+    setupUsage(command),
     "",
-    "Recommended: use a coding agent to adapt c15t to this app and verify consent in a browser.",
+    `Recommended: use a coding agent to adapt ${name} to this app and verify consent in a browser.`,
     "If your agent is not installed here, use prompt and paste the output into it.",
     "",
     "Actions:",
     "  --codex, --claude, --cursor, --grok, --fx",
-    "            Start that coding agent here with the c15t setup prompt",
+    `            Start that coding agent here with the ${name} setup prompt`,
     "  prompt    Print the setup prompt for any other agent",
-    "  scaffold  Write framework quickstart files and install c15t packages",
-    "  codemods  Rewrite c15t v2 source for v3; needs no sign-in",
+    `  scaffold  Write framework quickstart files and install ${command === "init" ? "the latest Inth" : "c15t v3"} packages`,
+    ...extraActions,
     "",
     "Options:",
     "  --project <id|name>    Use an existing project (ID, name, or organization/name)",
@@ -74,6 +106,21 @@ export const c15tHelp = (): string =>
     "",
     "Without an action or project, inth asks in the terminal.",
   ].join("\n");
+};
+
+export const c15tHelp = (): string =>
+  setupHelp(
+    "c15t",
+    "Set up c15t v3 consent management in the current application.",
+    ["  codemods  Rewrite c15t v2 source for v3; needs no sign-in"]
+  );
+
+export const initHelp = (): string =>
+  setupHelp(
+    "init",
+    "Set up the Inth SDK for consent management in the current application.",
+    []
+  );
 
 const VALUE_OPTIONS = new Set([
   "project",
@@ -84,8 +131,8 @@ const VALUE_OPTIONS = new Set([
   "token",
 ]);
 
-/** Whether `arg` is a c15t option whose value is the next argument. */
-export const c15tOptionTakesValue = (arg: string): boolean =>
+/** Whether `arg` is a setup option whose value is the next argument. */
+export const setupOptionTakesValue = (arg: string): boolean =>
   arg.startsWith("--") && VALUE_OPTIONS.has(arg.slice(2));
 
 const readFramework = (value: string): BoilerplateFramework => {
@@ -101,7 +148,7 @@ const readFramework = (value: string): BoilerplateFramework => {
 
 const setValue = (
   result: CliArguments,
-  c15t: C15tOptions,
+  setup: SetupOptions,
   option: string,
   value: string
 ): void => {
@@ -109,23 +156,23 @@ const setValue = (
     throw new CliError("usage_error", `Provide a value for --${option}.`);
   }
   const seen =
-    (option === "project" && c15t.project !== undefined) ||
-    (option === "name" && c15t.name !== undefined) ||
-    (option === "region" && c15t.region !== undefined) ||
-    (option === "framework" && c15t.framework !== undefined) ||
+    (option === "project" && setup.project !== undefined) ||
+    (option === "name" && setup.name !== undefined) ||
+    (option === "region" && setup.region !== undefined) ||
+    (option === "framework" && setup.framework !== undefined) ||
     (option === "organization" && result.organization !== undefined) ||
     (option === "token" && result.token !== undefined);
   if (seen) {
     throw new CliError("usage_error", `Use --${option} only once.`);
   }
   if (option === "project") {
-    c15t.project = value;
+    setup.project = value;
   } else if (option === "name") {
-    c15t.name = value;
+    setup.name = value;
   } else if (option === "region") {
-    c15t.region = value;
+    setup.region = value;
   } else if (option === "framework") {
-    c15t.framework = readFramework(value);
+    setup.framework = readFramework(value);
   } else if (option === "organization") {
     result.organization = value;
   } else {
@@ -133,26 +180,26 @@ const setValue = (
   }
 };
 
-const validate = (c15t: C15tOptions): void => {
-  if (c15t.project !== undefined && (c15t.name || c15t.region)) {
+const validate = (setup: SetupOptions): void => {
+  if (setup.project !== undefined && (setup.name || setup.region)) {
     throw new CliError(
       "usage_error",
       "Use --project for an existing project, or --name and --region to create one."
     );
   }
-  if (c15t.region !== undefined && c15t.name === undefined) {
+  if (setup.region !== undefined && setup.name === undefined) {
     throw new CliError("usage_error", "Use --region with --name.");
   }
   if (
-    (c15t.action === "prompt" || c15t.action === "agent") &&
-    (c15t.dryRun || c15t.skipInstall || c15t.yes || c15t.resume)
+    (setup.action === "prompt" || setup.action === "agent") &&
+    (setup.dryRun || setup.skipInstall || setup.yes || setup.resume)
   ) {
     throw new CliError(
       "usage_error",
       "--yes, --dry-run, --skip-install, and --resume apply to scaffold."
     );
   }
-  if (c15t.resume && c15t.dryRun) {
+  if (setup.resume && setup.dryRun) {
     throw new CliError(
       "usage_error",
       "--resume removes files, so it cannot be combined with --dry-run."
@@ -160,42 +207,54 @@ const validate = (c15t: C15tOptions): void => {
   }
 };
 
-const setAction = (c15t: C15tOptions, action: string, agent = ""): void => {
-  if (c15t.action) {
+const setAction = (setup: SetupOptions, action: string, agent = ""): void => {
+  if (setup.action) {
     throw new CliError(
       "usage_error",
       "Choose one of scaffold, prompt, --codex, --claude, --cursor, --grok, or --fx."
     );
   }
-  c15t.action = action;
+  setup.action = action;
   if (agent) {
-    c15t.agent = agent;
+    setup.agent = agent;
   }
 };
 
 // Scaffold switches. Returns whether `arg` was one.
-const setScaffoldFlag = (c15t: C15tOptions, arg: string): boolean => {
+const setScaffoldFlag = (setup: SetupOptions, arg: string): boolean => {
   if (arg === "--yes" || arg === "-y") {
-    c15t.yes = true;
+    setup.yes = true;
   } else if (arg === "--dry-run") {
-    c15t.dryRun = true;
+    setup.dryRun = true;
   } else if (arg === "--skip-install") {
-    c15t.skipInstall = true;
+    setup.skipInstall = true;
   } else if (arg === "--resume") {
-    c15t.resume = true;
+    setup.resume = true;
   } else {
     return false;
   }
   return true;
 };
 
-// Parses everything after `c15t`, including the shared flags the main parser
-// would otherwise consume.
-export const parseC15tArguments = (
+// The scaffold-only flags choose scaffold, so a dry run never starts an
+// agent from the picker.
+const impliedScaffold = (setup: SetupOptions): void => {
+  if (
+    !setup.action &&
+    (setup.dryRun || setup.yes || setup.skipInstall || setup.resume)
+  ) {
+    setup.action = "scaffold";
+  }
+};
+
+// Parses everything after `c15t` or `init`, including the shared flags the
+// main parser would otherwise consume.
+export const parseSetupArguments = (
   result: CliArguments,
-  args: string[]
-): C15tOptions => {
-  const c15t: C15tOptions = {
+  args: string[],
+  command: SetupCommand
+): SetupOptions => {
+  const setup: SetupOptions = {
     action: "",
     dryRun: false,
     resume: false,
@@ -210,39 +269,40 @@ export const parseC15tArguments = (
       result.json = true;
     } else if (arg === "--non-interactive") {
       result.nonInteractive = true;
-    } else if (setScaffoldFlag(c15t, arg)) {
+    } else if (setScaffoldFlag(setup, arg)) {
       continue;
     } else if (CODING_AGENTS.some((agent) => arg === `--${agent.id}`)) {
-      setAction(c15t, "agent", arg.slice(2));
+      setAction(setup, "agent", arg.slice(2));
     } else if (arg.startsWith("--")) {
       const equals = arg.indexOf("=");
       const option = (equals === -1 ? arg : arg.slice(0, equals)).slice(2);
       if (!VALUE_OPTIONS.has(option)) {
         throw new CliError(
           "usage_error",
-          `Unknown option "--${option}". Run inth c15t --help.`
+          `Unknown option "--${option}". Run inth ${command} --help.`
         );
       }
       if (equals === -1) {
         index += 1;
-        setValue(result, c15t, option, args[index] ?? "");
+        setValue(result, setup, option, args[index] ?? "");
       } else {
-        setValue(result, c15t, option, arg.slice(equals + 1));
+        setValue(result, setup, option, arg.slice(equals + 1));
       }
     } else if (["scaffold", "prompt"].includes(arg)) {
-      setAction(c15t, arg);
+      setAction(setup, arg);
     } else {
-      throw new CliError("usage_error", C15T_USAGE);
+      throw new CliError("usage_error", setupUsage(command));
     }
   }
-  validate(c15t);
-  if (c15t.action === "agent" && result.json) {
+  impliedScaffold(setup);
+  validate(setup);
+  if (setup.action === "agent" && result.json) {
     throw new CliError(
       "usage_error",
-      "Agent sessions use this terminal. Use inth c15t prompt --json to export the prompt."
+      `Agent sessions use this terminal. Use inth ${command} prompt --json to export the prompt.`
     );
   }
-  return c15t;
+  return setup;
 };
 
 export interface PackageManifest {

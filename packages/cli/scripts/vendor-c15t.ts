@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Keep in sync with vendor/c15t/UPSTREAM.md.
+// The version of upstream c15t that inth c15t vendors.
 const VERSION = "3.0.0";
 
 const root = fileURLToPath(new URL("../", import.meta.url));

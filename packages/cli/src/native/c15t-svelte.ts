@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 // eslint-disable-next-line unicorn/import-style -- Scriptc requires named node:path imports.
 import { join } from "node:path";
 
-import type { GenerationPlan } from "../../vendor/c15t/generate/index.ts";
+import type { GenerationPlan } from "../../vendor/inth-setup/generate/index.ts";
 import type { PackageManifest } from "../c15t.ts";
 
 const requireSupportedKit = (version: string, declaredRange: boolean): void => {
@@ -20,7 +20,7 @@ const requireSupportedKit = (version: string, declaredRange: boolean): void => {
   const minor = Number(parts?.minor ?? "0");
   if (!parts || (major !== 2 && major !== 3) || (major === 2 && minor < 63)) {
     throw new Error(
-      "SvelteKit scaffolding requires @sveltejs/kit 2.63.0 or newer in 2.x, or stable 3.x, to match @inth/svelte@3. Upgrade and install the app's SvelteKit packages before scaffolding, or use agent setup to plan the upgrade."
+      "SvelteKit scaffolding requires @sveltejs/kit 2.63.0 or newer in 2.x, or stable 3.x, to match @inth/svelte. Upgrade and install the app's SvelteKit packages before scaffolding, or use agent setup to plan the upgrade."
     );
   }
 };
