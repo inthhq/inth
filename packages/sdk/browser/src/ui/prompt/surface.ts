@@ -28,6 +28,7 @@ import type {
 	ResolvedConsentPresentation,
 } from '@inth/sdk-core';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
+import { EARLY_TAP_OPT_OUT } from '@inth/sdk-core/surface-actions';
 import {
 	afterMotion,
 	attachLiveRegion,
@@ -364,6 +365,8 @@ export const createPromptSurface = function createPromptSurface(
 		const variant: PrivacyChoicesPromptVariant = resolvePrivacyChoicesVariant(
 			snap.policyRule
 		);
+		const model =
+			(snap.resolution.status === 'matched' ? snap.model : null) ?? 'opt-in';
 		const allInOne = layout.flow === 'all-in-one';
 		const bar = layout.type === 'banner';
 		const expanded = !allInOne && state.expanded;
@@ -433,18 +436,27 @@ export const createPromptSurface = function createPromptSurface(
 			// The notice's rights action reads as a link, in the
 			// text-on-surface blue in both palettes (VIS-02).
 			notice
-				? el(
-						'button',
-						{
-							'aria-controls': inBar ? undefined : ids.panel,
-							'aria-expanded': expanded ? 'true' : 'false',
-							class: cx(noStyle, surfaceStyles.rightLink),
-							'data-testid': 'consent-banner-right-link-opt-out',
-							on: { click: expand, focus: warm, pointerenter: warm },
-							ref: expandRef,
-							type: 'button',
-						},
-						label
+				? slot(
+						el(
+							'button',
+							{
+								'aria-controls': inBar ? undefined : ids.panel,
+								'aria-expanded': expanded ? 'true' : 'false',
+								class: cx(noStyle, surfaceStyles.rightLink),
+								// What React's early-tap replay reads: a tap on it
+								// expands the options in place. The script tag
+								// replays no tap, so it opts out, as its stock
+								// buttons do.
+								'data-action': 'customize',
+								'data-testid': 'consent-banner-right-link-opt-out',
+								on: { click: expand, focus: warm, pointerenter: warm },
+								ref: expandRef,
+								type: 'button',
+								[EARLY_TAP_OPT_OUT]: 'off',
+							},
+							label
+						),
+						'consentBannerRightLink'
 					)
 				: consentButton({
 						attrs: {
@@ -733,7 +745,11 @@ export const createPromptSurface = function createPromptSurface(
 					'data-edge-style': layout.edgeStyle,
 					'data-expanded': expanded ? 'true' : undefined,
 					'data-flow': layout.flow,
+					// The effective model and the policy's prompt, which React's
+					// root carries for its early-tap replay.
+					'data-model': model,
 					'data-placement': layout.placement,
+					'data-prompt': snap.policyRule.prompt,
 					'data-state': phase === 'leaving' ? 'closed' : 'open',
 					'data-testid': 'consent-banner-root',
 					'data-variant': variant,

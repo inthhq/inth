@@ -105,12 +105,15 @@ export interface ConsentBannerOptions {
 	blockUntilChoice?: boolean;
 	/**
 	 * IAB banner only: dim the page and stop it scrolling while it is up.
-	 * `presentation.prompt.blocking` wins over it.
+	 * `presentation.prompt.blockUntilChoice` wins over it. The stock banner
+	 * never reads it: it blocks only with `blockUntilChoice` (or a policy
+	 * that requires blocking).
 	 */
 	scrollLock?: boolean;
 	/**
 	 * IAB banner only: keep focus inside it while it is up.
-	 * `presentation.prompt.blocking` wins over it.
+	 * `presentation.prompt.blockUntilChoice` wins over it. The stock banner
+	 * traps focus only when it blocks (`blockUntilChoice`).
 	 */
 	trapFocus?: boolean;
 	/** Skip the enter and exit transitions. Defaults to the UI option. */
