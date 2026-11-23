@@ -275,6 +275,31 @@ describe('opening', () => {
 		expect(pageAction().closest('[inert]')).toBeNull();
 	});
 
+	test('[FOC-03] an opener that hides while the dialog is open hands focus to a page control, not the body', async () => {
+		await mount({
+			banner: false,
+			dialogProps: { disableAnimation: true, showTrigger: true },
+		});
+		const floating = await waitFor(() => {
+			const trigger = [
+				...document.querySelectorAll<HTMLButtonElement>(
+					'[data-testid="consent-dialog-trigger"]'
+				),
+			].find((button) => button.textContent !== 'Privacy settings');
+			expect(trigger).toBeDefined();
+			return trigger as HTMLButtonElement;
+		});
+		floating.focus();
+		floating.click();
+		await waitFor(() =>
+			expect(card().contains(document.activeElement)).toBe(true)
+		);
+		expect(floating.isConnected).toBe(false);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await waitFor(() => expect(document.activeElement).toBe(link()));
+	});
+
 	test('[PERM-05][BNR-02] the banner leaves at once when the dialog opens', async () => {
 		await mount({ region: 'eu' });
 		await waitFor(() => expect($('consent-banner-root')).toBeInTheDocument());

@@ -368,7 +368,13 @@ watch(
 				if (kernel.getSnapshot().activeUI === 'banner') {
 					focusReturningBanner();
 				}
-				if (target instanceof HTMLElement && target.isConnected) {
+				// An opener that unmounted while the dialog was open, such as
+				// the floating trigger, left focus on the body.
+				if (
+					target instanceof HTMLElement &&
+					target.isConnected &&
+					target !== target.ownerDocument.body
+				) {
 					return target;
 				}
 				for (const selector of RETURN_TARGETS) {
