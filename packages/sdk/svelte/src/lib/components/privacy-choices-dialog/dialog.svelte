@@ -12,6 +12,11 @@
 	const VENDOR_SHEET_PREFIX = 'vendors:';
 	/** How many frames to wait for a returning banner, which may still be loading. */
 	const BANNER_RETURN_FRAMES = 60;
+	/** Where focus goes when the dialog's opener is gone (FOC-03). */
+	const RETURN_TARGETS = [
+		'[data-testid="privacy-choices-link"]',
+		'[data-testid="consent-dialog-trigger"]',
+	];
 
 	/** Focus the banner card once it renders again. */
 	const focusReturningBanner = function focusReturningBanner(): void {
@@ -53,6 +58,7 @@
 	import {
 		commitDialogChoice,
 		MAIN_LAYER,
+		resolveConsentPresentation,
 		resolveSaleRight,
 	} from '@inth/sdk/engine';
 	import type {
@@ -67,7 +73,7 @@
 		resolveCategoryTitle,
 		resolvePreferencesRowCopy,
 		resolvePrivacyChoicesDialogCopy,
-		resolvePrivacyChoicesVariant,
+		resolvePrivacyChoicesRegime,
 		resolveVendorTableCopy,
 	} from '@inth/sdk/surface-state';
 	import {
@@ -81,6 +87,7 @@
 	import styles from '@inth/sdk/ui/styles/components/privacy-choices';
 	import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 	import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
+	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 	import { untrack } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../../context.svelte';
@@ -90,6 +97,7 @@
 	import { createSurfaceDraft } from '../privacy-choices/draft.svelte';
 	import Icon from '../privacy-choices/icon.svelte';
 	import { cx, part } from '../privacy-choices/parts';
+	import { takeReceiptFocus } from '../privacy-choices/receipt-focus';
 	import RightsReceipt from '../privacy-choices/receipt.svelte';
 	import SaleRightsRow from '../privacy-choices/rights-row.svelte';
 	import {
@@ -109,7 +117,14 @@
 	}: {
 		noStyle?: boolean;
 		disableAnimation?: boolean;
-		/** Override the open state. Defaults to `activeUI === 'dialog'`. */
+		/**
+		 * Control the open state. `true` asks the consent manager to show the
+		 * dialog, so the banner leaves and sheets, Escape and the receipt work
+		 * as for any open dialog; Close and Escape then close it through the
+		 * consent manager, and `open` must turn `false` and back to `true` to
+		 * ask again. `false` hides it whatever the consent manager shows.
+		 * Omitted, it follows `activeUI === 'dialog'`.
+		 */
 		open?: boolean;
 		models?: Model[];
 	} = $props();
@@ -131,20 +146,52 @@
 	const snapshot = $derived(consent.snapshot);
 	const translations = $derived(consent.state.copy);
 	const phone = $derived(phoneLayout.phone);
-	const variant = $derived(resolvePrivacyChoicesVariant(snapshot.policyRule));
-	const eu = $derived(variant === 'choice');
+	// The model and the US markers decide the body, never the prompt: an EU
+	// opt-in policy that shows no banner still gets the EU dialog.
+	const eu = $derived(
+		resolvePrivacyChoicesRegime(snapshot.policyRule) === 'eu'
+	);
 	const activeUI = $derived(snapshot.activeUI ?? 'none');
 	const model = $derived(consent.state.model);
 	const modelAllowed = $derived(!models || models.includes(model));
+	const textDirection = $derived(
+		getTextDirection(consent.state.translations?.language)
+	);
+	// A controlled `open` goes through the consent manager, so the session,
+	// sheets and Escape follow this dialog and the banner hands over to it.
+	// It asks once each time it turns true; Close and Escape then close the
+	// dialog as usual.
+	let openRequested = false;
+	$effect.pre(() => {
+		if (openProp !== true) {
+			openRequested = false;
+			return;
+		}
+		if (openRequested || !consent.state.hasConsentUi || !modelAllowed) {
+			return;
+		}
+		openRequested = true;
+		const { kernel } = consent;
+		untrack(() => {
+			if (kernel.getSnapshot().activeUI !== 'dialog') {
+				showConsentSurface(kernel, 'dialog');
+			}
+		});
+	});
 	const open = $derived(
-		(openProp ?? activeUI === 'dialog') &&
+		openProp !== false &&
+			activeUI === 'dialog' &&
 			consent.state.hasConsentUi &&
 			modelAllowed
 	);
-	// Edge style applies to phone sheets too, whatever the prompt's
-	// presentation (a Card itself ignores it).
+	// Phone sheets take the prompt's resolved phone edge style, which the
+	// policy and a Card's own rule (always inset) have already settled.
 	const edgeStyle = $derived(
-		consent.state.presentation?.prompt?.edgeStyle ?? 'inset'
+		resolveConsentPresentation({
+			policy: snapshot.policyRule,
+			presentation: consent.state.presentation,
+			surface: 'prompt',
+		}).container?.phone.edgeStyle ?? 'inset'
 	);
 	const copy = $derived(resolvePrivacyChoicesDialogCopy(translations, { eu }));
 	const sale = $derived(resolveSaleRight(snapshot));
@@ -184,24 +231,33 @@
 	const topSheet = $derived(
 		surface.state.sheets[surface.state.sheets.length - 1] ?? null
 	);
-	let shownSheet = $state<ShownSheet | null>(null);
+	let shownSheet = $state.raw<ShownSheet | null>(null);
+	// Nothing is left to animate under reduced motion, on desktop or in a
+	// closed dialog, so a sheet leaves at once there (NEST-06).
+	const exitsAtOnce = $derived(reducedMotion || !phone || !open);
 	$effect.pre(() => {
 		const top = topSheet;
-		const still = reducedMotion;
+		const atOnce = exitsAtOnce;
 		untrack(() => {
-			if (top && shownSheet?.id !== top.id) {
+			if (top && (shownSheet?.id !== top.id || shownSheet.closing)) {
+				// A sheet reopened while it animates out shows again at once,
+				// and its exit timer goes with the closing state (NEST-03).
 				shownSheet = { closing: false, id: top.id };
-			} else if (!top && shownSheet && !shownSheet.closing) {
-				shownSheet = still ? null : { ...shownSheet, closing: true };
+			} else if (!top && shownSheet && (atOnce || !shownSheet.closing)) {
+				shownSheet = atOnce ? null : { ...shownSheet, closing: true };
 			}
 		});
 	});
 	$effect(() => {
-		if (!shownSheet?.closing) {
+		const exiting = shownSheet?.closing ? shownSheet : null;
+		if (!exiting) {
 			return;
 		}
+		// Clears only the exit it was set for, never a sheet shown since.
 		const timer = setTimeout(() => {
-			shownSheet = null;
+			if (shownSheet === exiting) {
+				shownSheet = null;
+			}
 		}, SHEET_EXIT_MS);
 		return () => clearTimeout(timer);
 	});
@@ -236,8 +292,16 @@
 			opener = document.activeElement;
 			const { kernel } = consent;
 			const release = attachPageBlock(backdrop);
+			// Back from an opt-out (after its revocation reload, or from a
+			// one-click opt-out link), the dialog opens on the receipt that
+			// confirms it.
+			const receipt = takeReceiptFocus(kernel)
+				? main.querySelector<HTMLElement>(
+						'[data-testid="consent-dialog-receipt"][data-open="true"]'
+					)
+				: null;
 			const untrap = attachTopLayerTrap(main, {
-				initialFocus: mainTitleEl,
+				initialFocus: receipt ?? mainTitleEl,
 				returnFocus: () => {
 					const target = opener;
 					opener = null;
@@ -246,11 +310,16 @@
 					if (kernel.getSnapshot().activeUI === 'banner') {
 						focusReturningBanner();
 					}
-					return target instanceof HTMLElement && target.isConnected
-						? target
-						: document.querySelector<HTMLElement>(
-								'[data-testid="privacy-choices-link"]'
-							);
+					if (target instanceof HTMLElement && target.isConnected) {
+						return target;
+					}
+					for (const selector of RETURN_TARGETS) {
+						const fallback = document.querySelector<HTMLElement>(selector);
+						if (fallback) {
+							return fallback;
+						}
+					}
+					return null;
 				},
 			});
 			return () => {
@@ -512,7 +581,10 @@
 				{preferencesCopy.summary} · {preferencesCopy.onCount}
 			</span>
 		</span>
-		<span class={cx(noStyle, styles.chevron)}>
+		<span
+			class={cx(noStyle, styles.chevron)}
+			data-direction={phone ? 'end' : 'down'}
+		>
 			<Icon name={phone ? 'chevron-end' : 'chevron-down'} />
 		</span>
 	</button>
@@ -646,6 +718,7 @@
 		data-regime={eu ? 'eu' : 'us'}
 		data-layout={phone ? 'phone' : 'desktop'}
 		data-testid="consent-dialog-root"
+		dir={textDirection}
 	>
 		<Layer
 			bind:layerEl={mainEl}

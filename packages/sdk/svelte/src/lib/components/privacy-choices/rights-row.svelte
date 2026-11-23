@@ -66,7 +66,11 @@
 	import ConsentButton from '../action-button.svelte';
 	import Icon from './icon.svelte';
 	import { cx, part } from './parts';
-	import { rightsBundleOf, useSurfaceSession } from './session.svelte';
+	import {
+		rightsBundleOf,
+		useOptOutReceiptData,
+		useSurfaceSession,
+	} from './session.svelte';
 
 	let {
 		idPrefix,
@@ -101,6 +105,7 @@
 	const consent = getConsentContext();
 	const theme = getThemeContext();
 	const surface = useSurfaceSession();
+	const receiptData = useOptOutReceiptData();
 
 	let confirmEl = $state<HTMLDivElement | null>(null);
 	let cancelEl = $state<HTMLButtonElement | null>(null);
@@ -112,7 +117,7 @@
 	const open = $derived(surface.state.confirmation?.right === 'sale');
 	const nudges = $derived(open ? (surface.state.confirmation?.nudges ?? 0) : 0);
 	const model = $derived(snapshot.evaluationPolicy.model);
-	const bundle = $derived(rightsBundleOf(snapshot));
+	const bundle = $derived(rightsBundleOf(snapshot, receiptData.current));
 	const copy = $derived(
 		resolveSaleRightCopy(translations, {
 			bundle,

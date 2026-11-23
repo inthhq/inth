@@ -503,7 +503,11 @@
 					</span>
 					<span class={cx(noStyle, styles.vendorMeta)}>
 						{triggerCopy.onCount}
-						<span class={cx(noStyle, styles.chevron)}>
+						<!-- A sheet comes in from the end; an accordion opens downwards. -->
+						<span
+							class={cx(noStyle, styles.chevron)}
+							data-direction={vendorMode === 'sheet' ? 'end' : 'down'}
+						>
 							<Icon
 								name={vendorMode === 'sheet' ? 'chevron-end' : 'chevron-down'}
 							/>

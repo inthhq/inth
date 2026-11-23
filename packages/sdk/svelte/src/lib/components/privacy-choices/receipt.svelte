@@ -12,10 +12,6 @@
 	 * session tokens each attempt, so a late result is ignored (CLIP-02).
 	 */
 	import { copySurfaceReference, resolveRightsReceipt } from '@inth/sdk/engine';
-	import {
-		getOptOutReceiptData,
-		subscribeOptOutReceiptData,
-	} from '@inth/sdk/surface-actions';
 	import { resolveRightsReceiptCopy } from '@inth/sdk/surface-state';
 	import styles from '@inth/sdk/ui/styles/components/privacy-choices';
 	import type { AllThemeKeys } from '@inth/sdk/ui/theme';
@@ -24,7 +20,11 @@
 	import { getConsentContext, getThemeContext } from '../../context.svelte';
 	import Icon from './icon.svelte';
 	import { cx, part } from './parts';
-	import { rightsBundleOf, useSurfaceSession } from './session.svelte';
+	import {
+		rightsBundleOf,
+		useOptOutReceiptData,
+		useSurfaceSession,
+	} from './session.svelte';
 
 	let {
 		idPrefix,
@@ -55,21 +55,15 @@
 	const surface = useSurfaceSession();
 
 	// This browser's local opt-out receipt data: the reference it recorded.
-	let local = $state.raw(getOptOutReceiptData(consent.kernel));
-	$effect(() => {
-		const { kernel } = consent;
-		local = getOptOutReceiptData(kernel);
-		return subscribeOptOutReceiptData(kernel, () => {
-			local = getOptOutReceiptData(kernel);
-		});
-	});
+	const receiptData = useOptOutReceiptData();
+	const local = $derived(receiptData.current);
 
 	let fieldEl = $state<HTMLInputElement | null>(null);
 
 	const receipt = $derived(resolveRightsReceipt(consent.snapshot, local));
 	const copy = $derived(
 		resolveRightsReceiptCopy(consent.state.copy, {
-			bundle: rightsBundleOf(consent.snapshot),
+			bundle: rightsBundleOf(consent.snapshot, local),
 			business,
 			receipt,
 		})
@@ -130,6 +124,7 @@
 	inert={!receipt.show}
 	data-receipt-kind={receipt.show ? receipt.kind : undefined}
 	data-testid="consent-dialog-receipt"
+	tabindex="-1"
 >
 	<div class={cx(noStyle, styles.disclosureInner)}>
 		<div class={cx(noStyle, styles.receipt)}>

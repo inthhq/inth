@@ -147,7 +147,7 @@
 			inert={!preferencesOpen}
 		>
 			<div class={cx(noStyle, expandStyles.inner)}>
-				<div style="padding-top:8px">
+				<div class={cx(noStyle, styles.preferencesBody)}>
 					<CategoryGroup
 						{idPrefix}
 						testIdPrefix="consent-banner"

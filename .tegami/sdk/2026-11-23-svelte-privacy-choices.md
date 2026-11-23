@@ -29,7 +29,7 @@ What changes with the new design:
 - `ConsentDialog` opens the "Your Privacy Choices" dialog: the "Selling, sharing and targeted ads" control, the receipt and Preferences in the US, and the cookie categories with Save in the EU. On phones (640px and narrower), Preferences and vendor lists open as sheets over the dialog.
 - A server-rendered SvelteKit page renders the desktop container, and `inthHandle` writes only the stylesheets of the container it shows into the HTML.
 - The page loads only the stylesheet of the container it shows. The options load when the visitor first opens them, or at once in a side Drawer, and the dialog loads when it opens. A page on the classic design loads none of them.
-- After a choice, the result is announced to screen readers and focus moves to the element with `data-testid="privacy-choices-link"`, else to `data-testid="consent-dialog-trigger"`. Svelte has no stock "Your Privacy Choices" link yet, so give your own link one of these test ids.
+- After a choice, the result is announced to screen readers and focus moves to the element with `data-testid="privacy-choices-link"`, else to `data-testid="consent-dialog-trigger"`. The stock `PrivacyChoicesLink` carries the first; a link of your own can carry either.
 
 The new parts take the same theme slots as in React: `consentBannerExpand`, `consentBannerRightsRow` and `consentBannerSaveButton` on the banner, and `consentDialogFooter`, `consentDialogRightsRow`, `consentDialogReceipt`, `consentDialogPreferencesRow`, `consentDialogCategoryGroup`, `consentDialogVendorTable`, `consentDialogSheet`, `consentDialogDoneButton` and `consentDialogSaveButton` on the dialog. The other banner and dialog slots, the theme tokens and `noStyle` style the matching parts of the new design.
 

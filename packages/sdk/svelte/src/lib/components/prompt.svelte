@@ -338,9 +338,17 @@
 	);
 </script>
 
+<!-- Either design hosts the opt-in confirmation: this banner claims the
+     host, so no other surface renders it. -->
+<DeferredOptInConfirmation
+	{noStyle}
+	{disableAnimation}
+/>
+
 {#if privacyChoices}
 	<PrivacyChoicesBanner
 		container={privacyChoices}
+		{actionGroups}
 		{noStyle}
 		{disableAnimation}
 		{legalLinks}
@@ -352,11 +360,6 @@
 		{acceptButtonText}
 		{customizeButtonText}
 		{dismissButtonText}
-	/>
-{:else}
-	<DeferredOptInConfirmation
-		{noStyle}
-		{disableAnimation}
 	/>
 {/if}
 

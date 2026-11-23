@@ -4,6 +4,7 @@
 >
 	import { findFocusRestoreEquivalent } from '@inth/sdk/ui/utils/dom';
 
+	import type ConsentDialogTriggerComponent from './panel-trigger.svelte';
 	import type PanelComponent from './panel.svelte';
 	import type PrivacyChoicesDialogComponent from './privacy-choices-dialog/dialog.svelte';
 
@@ -11,6 +12,8 @@
 	let pendingPrivacyChoices: Promise<
 		typeof PrivacyChoicesDialogComponent
 	> | null = null;
+	let pendingTrigger: Promise<typeof ConsentDialogTriggerComponent> | null =
+		null;
 
 	/**
 	 * One import shared by every `ConsentDialog` on the page. A failed import
@@ -46,6 +49,24 @@
 		})();
 		return pendingPrivacyChoices;
 	};
+
+	/**
+	 * The floating trigger a Privacy Choices `ConsentDialog` renders for
+	 * `showTrigger`. The classic dialog brings its own with its chunk.
+	 */
+	const loadTrigger = function loadTrigger(): Promise<
+		typeof ConsentDialogTriggerComponent
+	> {
+		pendingTrigger ??= (async () => {
+			try {
+				return (await import('./panel-trigger.svelte')).default;
+			} catch (error) {
+				pendingTrigger = null;
+				throw error;
+			}
+		})();
+		return pendingTrigger;
+	};
 </script>
 
 <script lang="ts">
@@ -59,6 +80,7 @@
 	 */
 	import type { ActiveUI } from '@inth/sdk/engine';
 	import { resolveConsentPresentation } from '@inth/sdk/engine';
+	import { showConsentSurface } from '@inth/sdk/surface-actions';
 	import { onMount, untrack } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
@@ -66,9 +88,14 @@
 		holdIdleDialogWarming,
 		registerDialogWarmer,
 	} from '../dialog-warming';
+	import { useOptOutConfirmationState } from '../opt-out-confirmation-state.svelte';
 	import DeferredOptInConfirmation from './deferred-opt-in-confirmation.svelte';
 	import DeferredOptOutConfirmation from './deferred-opt-out-confirmation.svelte';
-	import type { ConsentDialogProps } from './panel-props';
+	import type {
+		ConsentDialogProps,
+		ConsentDialogTriggerProps,
+	} from './panel-props';
+	import { requestReceiptFocus } from './privacy-choices/receipt-focus';
 
 	const props: ConsentDialogProps = $props();
 
@@ -184,9 +211,73 @@
 			void load();
 		}
 	});
+
+	// The Privacy Choices design still renders the floating trigger for
+	// `showTrigger`, in a chunk of its own.
+	const triggerProps = $derived.by((): ConsentDialogTriggerProps | null => {
+		if (props.showTrigger === true) {
+			return {};
+		}
+		return props.showTrigger ? props.showTrigger : null;
+	});
+	let Trigger = $state<typeof ConsentDialogTriggerComponent | null>(null);
+	$effect(() => {
+		if (!(privacyChoices && triggerProps) || Trigger) {
+			return;
+		}
+		void (async () => {
+			try {
+				Trigger = await loadTrigger();
+			} catch {
+				// The next render that wants it retries.
+			}
+		})();
+	});
+
+	// The Privacy Choices design confirms an opt-out on its receipt, in the
+	// dialog: the opt-out confirmation (after a revocation reload, or from a
+	// one-click opt-out link) opens the dialog there instead. A standalone
+	// `OptOutConfirmation` the host mounted still shows it itself.
+	const confirmation = useOptOutConfirmationState(() => consent.kernel);
+	const embeddedConfirmation = $derived(
+		confirmation.open && !confirmation.hasStandaloneHost
+	);
+	const dialogAllowed = $derived(
+		!props.models || props.models.includes(consent.state.model)
+	);
+	const adoptConfirmation = $derived(
+		privacyChoices && embeddedConfirmation && dialogAllowed
+	);
+	$effect(() => {
+		if (!adoptConfirmation) {
+			return;
+		}
+		const { kernel } = consent;
+		untrack(() => {
+			requestReceiptFocus(kernel);
+			// Opening the dialog closes the confirmation.
+			showConsentSurface(kernel, 'dialog');
+		});
+	});
 </script>
 
 {#if privacyChoices}
+	{#if Trigger && triggerProps}
+		<Trigger {...triggerProps} />
+	{/if}
+	{#if embeddedConfirmation && !dialogAllowed}
+		<!-- This dialog does not open under the model, so the confirmation
+		     shows as on the classic design. -->
+		<DeferredOptOutConfirmation
+			embedded
+			noStyle={props.noStyle}
+			disableAnimation={props.disableAnimation}
+		/>
+	{/if}
+	<DeferredOptInConfirmation
+		noStyle={props.noStyle}
+		disableAnimation={props.disableAnimation}
+	/>
 	{#if PrivacyChoicesDialog && (props.open === true || consent.state.activeUI === 'dialog')}
 		<PrivacyChoicesDialog
 			open={props.open}

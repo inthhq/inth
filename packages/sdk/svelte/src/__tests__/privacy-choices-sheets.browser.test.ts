@@ -31,7 +31,9 @@ let mounted: Record<string, unknown> | undefined;
 
 const render = function render(options: ConsentManagerOptions) {
 	mounted = mount(Fixture, {
-		props: { options, probe: { snapshot: null } },
+		// No link that opens the dialog: its idle warming would load the
+		// options this file checks are left for Customize.
+		props: { link: false, options, probe: { snapshot: null } },
 		target: document.body,
 	});
 };

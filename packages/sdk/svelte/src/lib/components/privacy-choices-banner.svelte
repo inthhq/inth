@@ -10,6 +10,7 @@
 	import type {
 		LegalLinks as LegalLinksType,
 		Model,
+		PresentationAction,
 		ResolvedConsentPresentation,
 	} from '@inth/sdk/engine';
 	import { untrack } from 'svelte';
@@ -33,6 +34,7 @@
 		acceptButtonText?: string;
 		customizeButtonText?: string;
 		dismissButtonText?: string;
+		actionGroups?: readonly (readonly PresentationAction[])[];
 	} = $props();
 
 	const consent = getConsentContext();

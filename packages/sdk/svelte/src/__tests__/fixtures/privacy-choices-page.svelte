@@ -1,47 +1,43 @@
 <script lang="ts">
-	import type { ConsentSnapshot } from '@inth/sdk/engine';
-	import { resolveOptOutState } from '@inth/sdk/surface-state';
+	import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
 
+	import PrivacyChoicesLink from '../../lib/components/privacy-choices-link.svelte';
 	import { getConsentContext } from '../../lib/context.svelte';
 
 	/**
 	 * The page under a Privacy Choices surface: a plain page action, the
-	 * "Your Privacy Choices" link where the policy offers an opt-out right
-	 * (as React's `PrivacyChoicesLink` renders it), the site's own link to
-	 * the dialog, and a probe that hands the snapshot to the test.
+	 * stock "Your Privacy Choices" link, the site's own link to the dialog,
+	 * and a probe that hands the snapshot and the kernel to the test.
 	 */
 	let {
 		probe,
 		triggerLabel = 'Your Privacy Choices',
+		oneClickOptOut = false,
+		link = true,
 	}: {
-		probe: { snapshot: ConsentSnapshot | null };
+		probe: {
+			snapshot: ConsentSnapshot | null;
+			kernel?: ConsentKernel | null;
+		};
 		/** The site's own link to the dialog. */
 		triggerLabel?: string;
+		/** A page control that opts out in one click. */
+		oneClickOptOut?: boolean;
+		/** Render the stock link, which holds the dialog's idle warming. */
+		link?: boolean;
 	} = $props();
 
 	const consent = getConsentContext();
 
-	const hasOptOutRight = $derived(
-		consent.snapshot.resolution.status === 'matched' &&
-			!consent.snapshot.externalPermissions &&
-			resolveOptOutState(consent.snapshot).available &&
-			consent.snapshot.policyRule.rights.includes('opt-out')
-	);
-
 	$effect(() => {
 		probe.snapshot = consent.snapshot;
+		probe.kernel = consent.kernel;
 	});
 </script>
 
 <button type="button">Page action</button>
-{#if hasOptOutRight}
-	<button
-		type="button"
-		data-testid="privacy-choices-link"
-		onclick={() => consent.state.setActiveUI('dialog')}
-	>
-		Your Privacy Choices
-	</button>
+{#if link}
+	<PrivacyChoicesLink />
 {/if}
 <button
 	type="button"
@@ -50,3 +46,14 @@
 >
 	{triggerLabel}
 </button>
+{#if oneClickOptOut}
+	<button
+		type="button"
+		data-testid="one-click-opt-out"
+		onclick={() => {
+			void consent.state.requestOptOut();
+		}}
+	>
+		Do Not Sell
+	</button>
+{/if}

@@ -66,8 +66,10 @@
 		BannerCommitAction,
 		LegalLinks as LegalLinksType,
 		Model,
+		PresentationAction,
 		ResolvedConsentPresentation,
 	} from '@inth/sdk/engine';
+	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import {
 		announcementText,
 		resolveBannerAllowedAnnouncement,
@@ -89,6 +91,7 @@
 	import surfaceStyles from '@inth/sdk/ui/styles/components/consent-surface';
 	import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 	import { resolveBrandingTag, tabbableElements } from '@inth/sdk/ui/utils';
+	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
 	import { onMount, untrack } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../../context.svelte';
@@ -100,6 +103,7 @@
 	import { cx, part } from '../privacy-choices/parts';
 	import {
 		rightsBundleOf,
+		useOptOutReceiptData,
 		usePhoneLayout,
 		useSurfaceSession,
 	} from '../privacy-choices/session.svelte';
@@ -109,6 +113,10 @@
 	type Phase = 'hidden' | 'shown' | 'leaving';
 
 	const DEFAULT_MODELS: Model[] = ['opt-in', 'opt-out'];
+	const DEFAULT_ACTION_GROUPS: readonly (readonly PresentationAction[])[] = [
+		['reject', 'accept'],
+		['customize'],
+	];
 	const CARD_LINKS: (keyof LegalLinksType)[] = [
 		'privacyPolicy',
 		'cookiePolicy',
@@ -127,6 +135,7 @@
 		acceptButtonText,
 		customizeButtonText,
 		dismissButtonText,
+		actionGroups = DEFAULT_ACTION_GROUPS,
 	}: {
 		container: NonNullable<ResolvedConsentPresentation['container']>;
 		noStyle?: boolean;
@@ -140,11 +149,17 @@
 		acceptButtonText?: string;
 		customizeButtonText?: string;
 		dismissButtonText?: string;
+		/**
+		 * The first-layer actions the policy allows, in the host's order and
+		 * groups. Absent, every action shows in the default order.
+		 */
+		actionGroups?: readonly (readonly PresentationAction[])[];
 	} = $props();
 
 	const consent = getConsentContext();
 	const theme = getThemeContext();
 	const surface = useSurfaceSession();
+	const receiptData = useOptOutReceiptData();
 	const phoneLayout = usePhoneLayout();
 	const surfaceDraft = createSurfaceDraft();
 	const uid = $props.id();
@@ -182,6 +197,9 @@
 	);
 	const noMotion = $derived(
 		disableAnimation || theme.disableAnimation === true
+	);
+	const textDirection = $derived(
+		getTextDirection(consent.state.translations?.language)
 	);
 
 	let phase = $state<Phase>(untrack(() => (wantsShow ? 'shown' : 'hidden')));
@@ -231,6 +249,19 @@
 				phase = next;
 			}
 		});
+	});
+
+	// All-in-one has nothing to fold. An expansion left from the phone
+	// Drawer would reopen when the viewport narrows again, and Escape would
+	// spend a press folding it with no Customize to focus (PERM-13).
+	$effect(() => {
+		if (!allInOne) {
+			return;
+		}
+		pendingExpandFocus = false;
+		if (surface.state.expanded) {
+			untrack(() => surface.session.collapse());
+		}
 	});
 
 	$effect(() => {
@@ -413,7 +444,7 @@
 		panelReady = true;
 	};
 
-	const bundle = $derived(rightsBundleOf(snapshot));
+	const bundle = $derived(rightsBundleOf(snapshot, receiptData.current));
 	const gpc = $derived(resolveOptOutState(snapshot).lock === 'gpc-active');
 	const copy = $derived(
 		resolvePrivacyChoicesBannerCopy(translations, { bundle, gpc, variant })
@@ -470,6 +501,19 @@
 	);
 
 	const notice = $derived(variant === 'notice');
+	// The policy's first-layer actions, in the host's order. A notice's
+	// "Your Privacy Choices" is the opt-out right, not an action, so it stays.
+	const summaryGroups = $derived(
+		actionGroups
+			.map((group) =>
+				group.filter(
+					(action) =>
+						action === 'reject' || action === 'accept' || action === 'customize'
+				)
+			)
+			.filter((group) => group.length > 0)
+	);
+	const summaryActions = $derived(summaryGroups.flat());
 	const links = $derived(legalLinks === undefined ? CARD_LINKS : legalLinks);
 	const barLinks = $derived(
 		links?.filter((key) => key === 'privacyPolicy') ?? null
@@ -516,6 +560,20 @@
 	);
 	const titlePart = $derived(
 		part('consentBannerTitle', theme.theme, surfaceStyles.title, noStyle)
+	);
+	const barTitlePart = $derived(
+		part(
+			'consentBannerTitle',
+			theme.theme,
+			surfaceStyles.visuallyHidden,
+			noStyle
+		)
+	);
+	const barDescriptionPart = $derived(
+		part('consentBannerDescription', theme.theme, presentation.text, noStyle)
+	);
+	const barActionsPart = $derived(
+		part('consentBannerFooter', theme.theme, presentation.actions, noStyle)
 	);
 	const descriptionPart = $derived(
 		part(
@@ -667,6 +725,19 @@
 	</div>
 {/snippet}
 
+{#snippet summaryButton(action: PresentationAction, inBar: boolean)}
+	{#if action === 'reject'}
+		{@render refuseButton(copy.reject)}
+	{:else if action === 'accept'}
+		{@render allowButton(copy.accept)}
+	{:else}
+		{@render expandButton(
+			customizeButtonText ?? (inBar ? copy.expandBar : copy.expand),
+			inBar
+		)}
+	{/if}
+{/snippet}
+
 {#snippet consentTag()}
 	{#if tag}
 		<a
@@ -748,7 +819,10 @@
 		data-state={phase === 'leaving' ? 'closed' : 'open'}
 		data-variant={variant}
 		data-design="privacy-choices"
+		data-animation={noMotion ? 'off' : undefined}
 		data-testid="consent-banner-root"
+		{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
+		dir={textDirection}
 		inert={phase === 'leaving'}
 	>
 		{#if layout.blocking}
@@ -783,7 +857,8 @@
 			>
 				{#if barCollapsed}
 					<h2
-						class={cx(noStyle, surfaceStyles.visuallyHidden)}
+						class={barTitlePart.class}
+						style={barTitlePart.style}
 						id={ids.title}
 						data-testid="consent-banner-title"
 					>
@@ -791,7 +866,8 @@
 					</h2>
 					<div class={cx(noStyle, presentation.row)}>
 						<p
-							class={cx(noStyle, presentation.text)}
+							class={barDescriptionPart.class}
+							style={barDescriptionPart.style}
 							data-testid="consent-banner-description"
 						>
 							{description ?? copy.barDescription}<InlineLegalLinks
@@ -800,19 +876,20 @@
 							/>
 						</p>
 						<div
-							class={cx(noStyle, presentation.actions)}
+							class={barActionsPart.class}
+							style={barActionsPart.style}
 							data-testid="consent-banner-footer"
 						>
-							{#if !notice}
-								{@render refuseButton(copy.reject)}
-								{@render allowButton(copy.accept)}
-							{/if}
-							{@render expandButton(
-								customizeButtonText ?? copy.expandBar,
-								true
-							)}
 							{#if notice}
+								{@render expandButton(
+									customizeButtonText ?? copy.expandBar,
+									true
+								)}
 								{@render okButton()}
+							{:else}
+								{#each summaryActions as action (action)}
+									{@render summaryButton(action, true)}
+								{/each}
 							{/if}
 						</div>
 					</div>
@@ -886,8 +963,23 @@
 							{@render expandButton(customizeButtonText ?? copy.expand, false)}
 							{@render okButton()}
 						{:else}
-							{@render actionGroup(copy.reject, copy.accept)}
-							{@render expandButton(customizeButtonText ?? copy.expand, false)}
+							{#each summaryGroups as group (group.join('-'))}
+								{#if group.length > 1}
+									<div
+										class={actionGroupPart.class}
+										style={actionGroupPart.style}
+										data-testid="consent-banner-footer-sub-group"
+									>
+										{#each group as action (action)}
+											{@render summaryButton(action, false)}
+										{/each}
+									</div>
+								{:else}
+									{#each group as action (action)}
+										{@render summaryButton(action, false)}
+									{/each}
+								{/if}
+							{/each}
 						{/if}
 					</div>
 				{/if}
