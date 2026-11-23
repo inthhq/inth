@@ -18,7 +18,6 @@
 		theme: Theme;
 		description: string;
 		layout?: LayoutConfig;
-		primaryButton?: ButtonName[];
 	}
 
 	const showcaseThemes: ShowcaseTheme[] = [
@@ -91,7 +90,6 @@
 			description: 'Wide + customize first',
 			layout: ['customize', ['reject', 'accept']],
 			name: 'Brutalist',
-			primaryButton: ['accept', 'reject'],
 			theme: {
 				colors: {
 					border: '#000000',
@@ -139,9 +137,8 @@
 			},
 		},
 		{
-			description: 'All buttons primary',
+			description: 'Soft and rounded',
 			name: 'Soft',
-			primaryButton: ['accept', 'reject', 'customize'],
 			theme: {
 				colors: {
 					border: '#fbcfe8',
@@ -564,7 +561,6 @@
 			<ForceBannerShow />
 			<ConsentBanner
 				layout={currentThemeData.layout ?? [['reject', 'accept'], 'customize']}
-				primaryButton={currentThemeData.primaryButton ?? ['customize']}
 			/>
 		</InthProvider>
 	{/key}
