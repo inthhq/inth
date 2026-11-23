@@ -1,12 +1,12 @@
 /**
- * The offline rules the Privacy Choices stories resolve, one per regime,
- * the same rules React's Privacy Choices stories use. Built from the
+ * The offline rules the regime stories resolve, one per regime, the same
+ * rules React's banner and dialog stories use. Built from the
  * shared story policy, which the caller passes in: the prerender plugin
  * loads it through Vite, the stories import it directly.
  */
 
 import type { PolicyRule } from '../../../packages/sdk/schema/src/types';
-import type { PrivacyChoicesRegion } from './story-variants';
+import type { StoryRegion } from './story-variants';
 
 const US_GPC = { gpc: { denyCategories: ['marketing', 'measurement'] } };
 const US_RIGHTS: PolicyRule['rights'] = [
@@ -23,9 +23,9 @@ const US_RIGHTS: PolicyRule['rights'] = [
  * @param dialog - The dialog stories' rules, whose US opt-in rule also
  * carries the US rights, as React's dialog stories set it.
  */
-export const privacyChoicesPolicy = function privacyChoicesPolicy(
+export const regionPolicy = function regionPolicy(
 	base: PolicyRule,
-	region: PrivacyChoicesRegion,
+	region: StoryRegion,
 	dialog = false
 ): PolicyRule {
 	const prefix = dialog
