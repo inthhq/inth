@@ -16,19 +16,15 @@ import { useMounted } from '../composables/use-mounted';
 import { applyRootOverrides } from '../root-overrides';
 import { symbolConfirmationHosted } from '../utils/symbols';
 import {
-	ConsentDialogHost,
 	LazyConsentDialogTrigger,
+	LazyConsentManager,
 	LazyIabConsentBanner,
 	LazyIabConsentDialog,
-	LazyOptOutConfirmation,
 	OptInConfirmationHost,
-	prefetchConsentManager,
 	prefetchIabConsentDialog,
-	useWarmableDialogDesign,
 } from './lazy-surfaces';
-import { useAdoptOptOutConfirmation } from './privacy-choices/receipt-focus';
-import { usePrivacyChoicesDesign } from './privacy-choices/use-design';
-import ConsentBanner from './prompt.vue';
+import { useAdoptOptOutConfirmation } from './parts/receipt-focus';
+import ConsentBanner from './prompt/prompt.vue';
 
 // The default slot renders after the surfaces, so a root that wraps the
 // app the way a React provider does keeps the app.
@@ -50,24 +46,15 @@ provide(symbolConfirmationHosted, true);
 const { iabUnavailable } = context;
 // The trigger shows only after mount, so its chunk loads after mount too.
 const mounted = useMounted();
-// The Privacy Choices banner stays mounted once shown, so its exit, the
-// page announcement and the focus return outlive the prompt (BNR-06). The
-// classic banner still mounts only while it shows.
-const privacyChoices = usePrivacyChoicesDesign();
-useWarmableDialogDesign(() =>
-	privacyChoices.value ? 'privacy-choices' : 'classic'
-);
 const isIab = () => Boolean(init.value?.gvl || init.value?.gvlReference);
-// The Privacy Choices design confirms an opt-out on its receipt, in the
-// dialog, unless a standalone `OptOutConfirmation` shows it.
+// The dialog confirms an opt-out on its receipt, unless a standalone
+// `OptOutConfirmation` shows it.
 useAdoptOptOutConfirmation(
 	useConsentKernel(),
-	() =>
-		privacyChoices.value &&
-		!isIab() &&
-		confirmationOpen.value &&
-		!hasStandaloneConfirmation.value
+	() => !isIab() && confirmationOpen.value && !hasStandaloneConfirmation.value
 );
+// The banner stays mounted once shown, so its exit, the page announcement
+// and the focus return outlive the prompt (BNR-06).
 const bannerShown = ref(activeUI.value === 'banner');
 watch(activeUI, (ui) => {
 	if (ui === 'banner') {
@@ -76,11 +63,10 @@ watch(activeUI, (ui) => {
 });
 
 onMounted(() => {
-	// Warm the dialog chunk during idle so the first open is instant.
-	if (init.value?.gvl || init.value?.gvlReference) {
+	// Warm the IAB dialog chunk during idle so the first open is instant.
+	// The consent dialog warms on intent, from the banner.
+	if (isIab()) {
 		prefetchIabConsentDialog();
-	} else {
-		prefetchConsentManager();
 	}
 });
 
@@ -104,24 +90,12 @@ watch(
 			v-else-if="(init?.gvl || init?.gvlReference) && activeUI === 'manager'"
 		/>
 		<template v-else-if="!(init?.gvl || init?.gvlReference)">
-			<ConsentBanner
-				v-if="activeUI === 'banner' || (privacyChoices && bannerShown)"
-			/>
-			<ConsentDialogHost v-if="activeUI === 'manager'" />
+			<ConsentBanner v-if="activeUI === 'banner' || bannerShown" />
+			<LazyConsentManager v-if="activeUI === 'manager'" />
 			<!-- The banner and the dialog each host the opt-in confirmation.
-			     Under the Privacy Choices design, with neither on the page, the
-			     root hosts it. -->
-			<OptInConfirmationHost v-else-if="privacyChoices && !bannerShown" />
+			     With neither on the page, the root hosts it. -->
+			<OptInConfirmationHost v-else-if="!bannerShown" />
 		</template>
-		<LazyOptOutConfirmation
-			v-if="
-				!(init?.gvl || init?.gvlReference) &&
-				!privacyChoices &&
-				confirmationOpen &&
-				!hasStandaloneConfirmation
-			"
-			embedded
-		/>
 		<LazyConsentDialogTrigger v-if="config.showTrigger && mounted" />
 	</template>
 	<slot />

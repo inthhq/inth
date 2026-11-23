@@ -25,12 +25,12 @@ const listSources = function listSources(dir: string): string[] {
 
 /**
  * Class maps a file reads while another module of its chunk graph brings
- * the stylesheet. The Privacy Choices prompt names the in-place panel's
+ * the stylesheet. The consent prompt names the in-place panel's
  * classes before the panel loads; the lazy panel imports the `expand`
  * rules, so a prompt that never expands never downloads them.
  */
 const STYLESHEET_ELSEWHERE: Readonly<Record<string, readonly string[]>> = {
-	'components/prompt/privacy-choices/surface.vue': ['consent-expand'],
+	'components/prompt/surface.vue': ['consent-expand'],
 };
 
 const sources = listSources(RUNTIME_DIR)

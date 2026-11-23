@@ -16,17 +16,13 @@ import { applyRootOverrides } from '../root-overrides';
 import { consentConfigKey, symbolConfirmationHosted } from '../utils/symbols';
 import {
 	ConsentBannerHost as ConsentBanner,
-	ConsentDialogHost,
 	LazyConsentDialogTrigger,
 	LazyIabConsentBanner,
 	LazyIabConsentDialog,
-	LazyOptOutConfirmation,
-	prefetchConsentManager,
+	LazyConsentManager,
 	prefetchIabConsentDialog,
-	useWarmableDialogDesign,
 } from './lazy-surfaces';
-import { useAdoptOptOutConfirmation } from './privacy-choices/receipt-focus';
-import { usePrivacyChoicesDesign } from './privacy-choices/use-design';
+import { useAdoptOptOutConfirmation } from './parts/receipt-focus';
 
 // The default slot renders after the surfaces, so a root that wraps the
 // app the way a React provider does keeps the app.
@@ -52,16 +48,11 @@ provide(symbolConfirmationHosted, true);
 const { iabUnavailable } = context;
 // The trigger shows only after mount, so its chunk loads after mount too.
 const mounted = useMounted();
-const privacyChoices = usePrivacyChoicesDesign();
-useWarmableDialogDesign(() =>
-	privacyChoices.value ? 'privacy-choices' : 'classic'
-);
-// The Privacy Choices design confirms an opt-out on its receipt, in the
-// dialog, unless a standalone `OptOutConfirmation` shows it.
+// The dialog confirms an opt-out on its receipt, unless a standalone
+// `OptOutConfirmation` shows it.
 useAdoptOptOutConfirmation(
 	useConsentKernel(),
 	() =>
-		privacyChoices.value &&
 		!(init.value?.gvl || init.value?.gvlReference) &&
 		confirmationOpen.value &&
 		!hasStandaloneConfirmation.value
@@ -96,10 +87,9 @@ watch(
 	{ immediate: true }
 );
 onMounted(() => {
+	// The consent dialog warms on intent, from the banner.
 	if (init.value?.gvl || init.value?.gvlReference) {
 		prefetchIabConsentDialog();
-	} else {
-		prefetchConsentManager();
 	}
 });
 </script>
@@ -111,17 +101,8 @@ onMounted(() => {
 		<LazyIabConsentDialog
 			v-if="(init?.gvl || init?.gvlReference) && iabDialogNeeded"
 		/>
-		<ConsentDialogHost
+		<LazyConsentManager
 			v-else-if="!(init?.gvl || init?.gvlReference) && managerNeeded"
-		/>
-		<LazyOptOutConfirmation
-			v-if="
-				!(init?.gvl || init?.gvlReference) &&
-				!privacyChoices &&
-				confirmationOpen &&
-				!hasStandaloneConfirmation
-			"
-			embedded
 		/>
 		<LazyConsentDialogTrigger v-if="showTrigger && mounted" />
 	</template>

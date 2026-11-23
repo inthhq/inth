@@ -7,7 +7,7 @@ import ConsentManager from '@inth/vue/runtime/components/consent-manager.vue';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import type { Component } from 'vue';
 
-import ConsentBanner from '../../../packages/sdk/vue/src/runtime/components/prompt.vue';
+import ConsentBanner from '../../../packages/sdk/vue/src/runtime/components/prompt/prompt.vue';
 import RecipePage from './docs-recipe-page.vue';
 import BottomBar from './docs-recipes/bottom-bar.vue';
 import HeadlessBar from './docs-recipes/cookie-bar.vue';

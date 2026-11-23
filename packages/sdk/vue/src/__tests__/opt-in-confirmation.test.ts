@@ -20,9 +20,8 @@ import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { defineComponent, h } from 'vue';
 
-import ConsentManager from '../runtime/components/manager.vue';
 import ConsentWidget from '../runtime/components/preferences.vue';
-import ConsentBanner from '../runtime/components/prompt.vue';
+import ConsentBanner from '../runtime/components/prompt/prompt.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import type { ConsentConfig } from '../runtime/config';
 import {
@@ -120,7 +119,6 @@ const mountOptOutSurface = async function mountOptOutSurface(
 		now?: number;
 		rightsConfirmed?: boolean;
 		rule?: PolicyRule;
-		standaloneWidget?: boolean;
 	} = {}
 ) {
 	const rule = params.rule ?? NOTICE_OPT_OUT_RULE;
@@ -161,9 +159,7 @@ const mountOptOutSurface = async function mountOptOutSurface(
 	const Host = defineComponent({
 		render: () => [
 			h(ConsentBanner, { disableAnimation: true }),
-			params.standaloneWidget
-				? h(ConsentWidget)
-				: h(ConsentManager, { disableAnimation: true }),
+			h(ConsentWidget),
 		],
 	});
 	const wrapper = mount(Host, {
@@ -255,7 +251,6 @@ describe('never ask an opted-out visitor to opt back in automatically (Vue)', ()
 		expect(context.kernel.getSnapshot().activeUI).toBe('none');
 		expect(part('consent-banner-root')).toBeNull();
 
-		context.kernel.set.activeUI('dialog');
 		await vi.waitFor(() =>
 			expect(part('consent-widget-opt-out-status')).not.toBeNull()
 		);
@@ -264,9 +259,8 @@ describe('never ask an opted-out visitor to opt back in automatically (Vue)', ()
 });
 
 describe('two-step opt-in confirmation (Vue)', () => {
-	test('opt back in link requires separate confirmation, focuses cancel first, stays outside dialog content, and lifts on confirm', async () => {
+	test('opt back in link requires separate confirmation, focuses cancel first, stays outside the widget, and lifts on confirm', async () => {
 		const { context } = await mountOptOutSurface();
-		context.kernel.set.activeUI('dialog');
 		await vi.waitFor(() =>
 			expect(part('consent-widget-opt-in-link')).not.toBeNull()
 		);
@@ -283,8 +277,8 @@ describe('two-step opt-in confirmation (Vue)', () => {
 		);
 
 		const confirmationRoot = required('opt-in-confirmation-root');
-		const dialogContent = required('consent-dialog-content');
-		expect(dialogContent.contains(confirmationRoot)).toBe(false);
+		const widget = required('consent-widget-root');
+		expect(widget.contains(confirmationRoot)).toBe(false);
 		expect(confirmationRoot.getAttribute('role')).toBe('dialog');
 		expect(confirmationRoot.getAttribute('aria-modal')).toBe('true');
 
@@ -314,8 +308,7 @@ describe('two-step opt-in confirmation (Vue)', () => {
 	});
 
 	test('opt-in confirmation description names confirmed rights once answered by the backend', async () => {
-		const { context } = await mountOptOutSurface({ rightsConfirmed: true });
-		context.kernel.set.activeUI('dialog');
+		await mountOptOutSurface({ rightsConfirmed: true });
 		await vi.waitFor(() =>
 			expect(part('consent-widget-opt-in-link')).not.toBeNull()
 		);
@@ -336,9 +329,8 @@ describe('two-step opt-in confirmation (Vue)', () => {
 		await vi.waitFor(() => expect(part('opt-in-confirmation-root')).toBeNull());
 	});
 
-	test('opt back in link then cancel (button and Escape) leaves opt-out held, saves nothing, and keeps dialog open', async () => {
+	test('opt back in link then cancel (button and Escape) leaves opt-out held and saves nothing', async () => {
 		const { context } = await mountOptOutSurface();
-		context.kernel.set.activeUI('dialog');
 		await vi.waitFor(() =>
 			expect(part('consent-widget-opt-in-link')).not.toBeNull()
 		);
@@ -352,7 +344,6 @@ describe('two-step opt-in confirmation (Vue)', () => {
 		await vi.waitFor(() => expect(part('opt-in-confirmation-root')).toBeNull());
 		expect(context.kernel.getSnapshot().optOut).not.toBeNull();
 		expect(context.kernel.getSnapshot().explicitChoice).toBeNull();
-		expect(context.kernel.getSnapshot().activeUI).toBe('dialog');
 
 		// Open again and cancel with Escape.
 		required('consent-widget-opt-in-link').click();
@@ -365,12 +356,10 @@ describe('two-step opt-in confirmation (Vue)', () => {
 		await vi.waitFor(() => expect(part('opt-in-confirmation-root')).toBeNull());
 		expect(context.kernel.getSnapshot().optOut).not.toBeNull();
 		expect(context.kernel.getSnapshot().explicitChoice).toBeNull();
-		expect(context.kernel.getSnapshot().activeUI).toBe('dialog');
 	});
 
-	test('Accept All in the dialog defers save until confirmed, then lifts opt-out and grants categories', async () => {
+	test('Accept All in the widget defers save until confirmed, then lifts opt-out and grants categories', async () => {
 		const { context } = await mountOptOutSurface();
-		context.kernel.set.activeUI('dialog');
 		await vi.waitFor(() =>
 			expect(part('consent-widget-footer-accept-all-button')).not.toBeNull()
 		);
@@ -381,7 +370,6 @@ describe('two-step opt-in confirmation (Vue)', () => {
 		);
 		expect(context.kernel.getSnapshot().optOut).not.toBeNull();
 		expect(context.kernel.getSnapshot().explicitChoice).toBeNull();
-		expect(context.kernel.getSnapshot().activeUI).toBe('dialog');
 
 		required('opt-in-confirmation-confirm-button').click();
 		await vi.waitFor(() => {
@@ -396,10 +384,9 @@ describe('two-step opt-in confirmation (Vue)', () => {
 		expect(
 			context.kernel.getSnapshot().explicitChoice?.categories.marketing?.value
 		).toBe(true);
-		expect(context.kernel.getSnapshot().activeUI).not.toBe('dialog');
 	});
 
-	test('Accept All in a banner defers save until confirmed, then lifts opt-out and grants categories', async () => {
+	test('Accept All in a banner never lifts a held opt-out and asks nothing', async () => {
 		const { context } = await mountOptOutSurface({
 			rule: CHOICE_OPT_OUT_RULE,
 		});
@@ -409,23 +396,20 @@ describe('two-step opt-in confirmation (Vue)', () => {
 		);
 
 		required('consent-banner-accept-button').click();
-		await vi.waitFor(() =>
-			expect(part('opt-in-confirmation-root')).not.toBeNull()
-		);
-		expect(context.kernel.getSnapshot().optOut).not.toBeNull();
-		expect(context.kernel.getSnapshot().explicitChoice).toBeNull();
-
-		required('opt-in-confirmation-confirm-button').click();
+		// A banner commit keeps sale and sharing off (PERM-02); lifting the
+		// opt-out takes the dialog's or the widget's own confirmation.
 		await vi.waitFor(() => {
-			expect(context.kernel.getSnapshot().optOut).toBeNull();
+			expect(context.kernel.getSnapshot().activeUI).toBe('none');
 		});
+		expect(part('opt-in-confirmation-root')).toBeNull();
+		expect(context.kernel.getSnapshot().optOut).not.toBeNull();
 		expect(context.kernel.getSnapshot().effectivePermissions.marketing).toBe(
-			true
+			false
 		);
 	});
 
 	test('turning Marketing on then Save opens confirmation and cancelling leaves opt-out held', async () => {
-		const { context } = await mountOptOutSurface({ standaloneWidget: true });
+		const { context } = await mountOptOutSurface();
 		const marketing = required<HTMLButtonElement>(
 			'consent-widget-switch-marketing'
 		);
@@ -452,7 +436,7 @@ describe('two-step opt-in confirmation (Vue)', () => {
 	});
 
 	test('saving without granting the deciding category completes with no confirmation', async () => {
-		const { context } = await mountOptOutSurface({ standaloneWidget: true });
+		const { context } = await mountOptOutSurface();
 		const measurement = required<HTMLButtonElement>(
 			'consent-widget-switch-measurement'
 		);
@@ -474,8 +458,7 @@ describe('two-step opt-in confirmation (Vue)', () => {
 	});
 
 	test('with active GPC signal there is no opt back in link', async () => {
-		const { context } = await mountOptOutSurface({ gpc: true });
-		context.kernel.set.activeUI('dialog');
+		await mountOptOutSurface({ gpc: true });
 		await vi.waitFor(() =>
 			expect(part('consent-widget-opt-out-status')).not.toBeNull()
 		);
@@ -507,7 +490,6 @@ describe('two-step opt-in confirmation (Vue)', () => {
 			heldBy: 'person',
 			mode: refusingMode,
 		});
-		context.kernel.set.activeUI('dialog');
 
 		await vi.waitFor(() =>
 			expect(part('consent-widget-opt-in-link')).not.toBeNull()
@@ -530,7 +512,6 @@ describe('two-step opt-in confirmation (Vue)', () => {
 
 	test('under an opt-in policy with an opt-out held, Accept lifts in one step without confirmation', async () => {
 		const { context } = await mountOptOutSurface({ rule: OPT_IN_RULE });
-		context.kernel.set.activeUI('dialog');
 		await vi.waitFor(() =>
 			expect(part('consent-widget-footer-accept-all-button')).not.toBeNull()
 		);

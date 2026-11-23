@@ -4,7 +4,7 @@ import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import type { Meta, StoryObj } from '@storybook/vue3-vite';
 
 import ConsentDialogLink from '../../../packages/sdk/vue/src/runtime/components/consent-dialog-link.vue';
-import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/manager.vue';
+import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
 import { useStorybookConsent as setupStorybookConsent } from './storybook-consent-fixtures';
 
 /**

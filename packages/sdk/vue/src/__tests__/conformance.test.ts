@@ -43,11 +43,11 @@ import { renderToString } from 'vue/server-renderer';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { createIAB } from '../../../iab/src/index';
+import ConsentManager from '../runtime/components/dialog/manager.vue';
 import IabConsentDialog from '../runtime/components/iab-panel.vue';
 import IabConsentBanner from '../runtime/components/iab-prompt.vue';
-import ConsentManager from '../runtime/components/manager.vue';
 import ConsentWidget from '../runtime/components/preferences.vue';
-import ConsentBanner from '../runtime/components/prompt.vue';
+import ConsentBanner from '../runtime/components/prompt/prompt.vue';
 import { consentConfigKey } from '../runtime/composables/config';
 import type { ConsentConfig } from '../runtime/config';
 import {
@@ -353,13 +353,19 @@ const provideContext = function provideContext(
 	app.provide(symbolConsent, context.storedConsent);
 };
 
-const componentFor = function componentFor(component: MountableComponent) {
+const componentFor = function componentFor(
+	component: MountableComponent,
+	blockUntilChoice: boolean | undefined
+) {
 	switch (component) {
 		case 'consent-banner':
 			return defineComponent({
 				name: 'VueConformanceBannerAndDialog',
 				setup() {
-					return () => [h(ConsentBanner), h(ConsentManager)];
+					return () => [
+						h(ConsentBanner, { blockUntilChoice }),
+						h(ConsentManager),
+					];
 				},
 			});
 		case 'consent-dialog':
@@ -380,7 +386,10 @@ const createHarness = function createHarness(
 	_options: ProviderOptions,
 	context: VueConsentKernelContext
 ) {
-	const Child = componentFor(opts.component);
+	const Child = componentFor(
+		opts.component,
+		(opts.providerOptions as ProviderOptions | undefined)?.trapFocus
+	);
 	// Persistence mounts follow the real lifecycle: the kernel derives
 	// `activeUI` from the policy and storage hydration may dismiss it.
 	if (

@@ -132,3 +132,13 @@ describe('ConsentDialogTrigger disableAnimation', () => {
 		}
 	);
 });
+
+test('a branding trigger renders the current brand mark instead of a menu icon', async () => {
+	await renderTrigger('always', { triggerIcon: 'branding' });
+	const element = trigger();
+	expect(element?.getAttribute('data-inth-trigger')).toBe('true');
+	// No branding from the backend: the INTH mark.
+	expect(element?.querySelector('svg')?.getAttribute('viewBox')).toBe(
+		'0 0 88 90'
+	);
+});

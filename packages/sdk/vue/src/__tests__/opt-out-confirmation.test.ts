@@ -19,10 +19,7 @@ import {
 	resolvePolicyRules,
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
-import {
-	EARLY_CONSENT_TAP_SCRIPT,
-	closeOptOutConfirmation,
-} from '@inth/sdk/surface-actions';
+import { closeOptOutConfirmation } from '@inth/sdk/surface-actions';
 import { translations as enTranslations } from '@inth/sdk/translations/en';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
@@ -32,7 +29,6 @@ import type { Component, ComponentPublicInstance } from 'vue';
 
 import * as publicExports from '../index';
 import {
-	ConsentBanner,
 	ConsentDialogLink,
 	ConsentDialogTrigger,
 	ConsentManager,
@@ -209,73 +205,33 @@ afterEach(async () => {
 	document.body.innerHTML = '';
 });
 
+/** A page's own opt-out control. */
+const OptOutButton = defineComponent({
+	setup() {
+		const optOut = useOptOut();
+		return () =>
+			h(
+				'button',
+				{
+					'data-testid': 'custom-opt-out',
+					onClick: () => {
+						void optOut();
+					},
+					type: 'button',
+				},
+				'Opt out now'
+			);
+	},
+});
+
 describe('one-step opt-out and confirmation view in Vue', () => {
-	test('opts out in one click from the banner link and opens confirmation with one button', async () => {
-		const context = await mountTree(
-			defineComponent({
-				render: () => [
-					h(ConsentBanner, { disableAnimation: true }),
-					h(ConsentManager, { disableAnimation: true }),
-				],
-			})
-		);
-
-		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
-		const optOutLink = query<HTMLButtonElement>(
-			'consent-banner-right-link-opt-out'
-		) as HTMLButtonElement;
-		expect(optOutLink.textContent?.trim()).toBe(
-			'Do Not Sell or Share My Personal Information'
-		);
-		expect(optOutLink.querySelector('svg')).toBeNull();
-
-		optOutLink.click();
-		await flushPromises();
-
-		const snapshot = context.kernel.getSnapshot();
-		expect(snapshot.optOut?.method).toBe('button');
-		expect(snapshot.effectivePermissions.marketing).toBe(false);
-		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
-		expect(snapshot.effectivePermissions.measurement).toBe(true);
-		expect(snapshot.effectivePermissions.functionality).toBe(true);
-		expect(query('consent-dialog-root')).toBeNull();
-
-		await vi.waitFor(() =>
-			expect(query('opt-out-confirmation-root')).not.toBeNull()
-		);
-		const root = query('opt-out-confirmation-root') as HTMLElement;
-		expect(query('opt-out-confirmation-title')?.textContent?.trim()).toBe(
-			'Do Not Sell or Share My Personal Information'
-		);
-		const status = query('opt-out-confirmation-status');
-		expect(status?.getAttribute('role')).toBe('status');
-		expect(status?.textContent?.trim()).toBe('Opt-out request honored');
-		const recordedAt = query<HTMLTimeElement>(
-			'opt-out-confirmation-recorded-at'
-		);
-		expect(recordedAt).not.toBeNull();
-		expect(recordedAt?.getAttribute('datetime')).toBeTruthy();
-		expect(recordedAt?.textContent?.trim()).not.toBe('');
-		const reference = query('opt-out-confirmation-reference');
-		expect(reference).not.toBeNull();
-		expect(reference?.textContent?.trim()).toMatch(V1_UUID_PATTERN);
-		expect(root.querySelectorAll('input, textarea, select')).toHaveLength(0);
-		const buttons = [...root.querySelectorAll('button')];
-		expect(buttons).toHaveLength(1);
-		expect(buttons[0]?.textContent?.trim()).toBe('Done');
-		expect(
-			query('opt-out-confirmation-preferences-link')?.textContent?.trim()
-		).toBe('Manage preferences');
-	});
-
 	test('Done closes and restores focus, Escape closes, preferences link opens dialog, and re-opening records nothing new', async () => {
 		const context = await mountTree(
 			defineComponent({
 				render: () => [
 					h(ConsentDialogLink, { right: 'opt-out' }),
 					h(ConsentManager, { disableAnimation: true }),
+					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
 			{ rule: policyRulePresets.usPrivacyStatesOptOut() }
@@ -387,6 +343,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 				render: () => [
 					h(ConsentDialogLink, { right: 'opt-out' }),
 					h(ConsentManager, { disableAnimation: true }),
+					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
 			{
@@ -411,29 +368,20 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		async (optOutLink, expectedTitle, expectIcon) => {
 			await mountTree(
 				defineComponent({
-					render: () => [
-						h(ConsentBanner, { disableAnimation: true }),
-						h(ConsentDialogLink, { right: 'opt-out' }),
-					],
+					render: () => [h(ConsentDialogLink, { right: 'opt-out' })],
 				}),
 				{ optOutLink }
 			);
 
 			await vi.waitFor(() =>
-				expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+				expect(query('consent-dialog-link')).not.toBeNull()
 			);
-			const bannerLink = query('consent-banner-right-link-opt-out');
 			const dialogLink = query('consent-dialog-link');
 
-			expect(bannerLink?.textContent?.trim()).toBe(expectedTitle);
 			expect(dialogLink?.textContent?.trim()).toBe(expectedTitle);
-			expect(
-				Boolean(bannerLink?.querySelector('svg[aria-hidden="true"]'))
-			).toBe(expectIcon);
 			expect(
 				Boolean(dialogLink?.querySelector('svg[aria-hidden="true"]'))
 			).toBe(expectIcon);
-			expect(Boolean(bannerLink?.querySelector('svg'))).toBe(expectIcon);
 			expect(Boolean(dialogLink?.querySelector('svg'))).toBe(expectIcon);
 		}
 	);
@@ -444,6 +392,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 				render: () => [
 					h(ConsentDialogTrigger),
 					h(ConsentManager, { disableAnimation: true }),
+					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
 			{
@@ -569,50 +518,14 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		).toBe(true);
 	});
 
-	test('replays an early tap on the opt-out link as a durable opt-out', async () => {
-		const container = document.createElement('div');
-		container.innerHTML =
-			'<div data-testid="consent-banner-root" data-model="opt-out" data-prompt="notice"><button type="button" data-action="right" data-right="opt-out">Do Not Sell or Share My Personal Information</button></div>';
-		document.body.append(container);
-		// oxlint-disable-next-line no-new-func -- Runs the inline script as server HTML would.
-		new Function(EARLY_CONSENT_TAP_SCRIPT)();
-		container
-			.querySelector<HTMLButtonElement>('[data-right="opt-out"]')
-			?.click();
-		container.remove();
-
-		const context = await mountTree(
-			defineComponent({
-				render: () => [
-					h(ConsentBanner, { disableAnimation: true }),
-					h(ConsentManager, { disableAnimation: true }),
-				],
-			}),
-			{ start: true }
-		);
-
-		await vi.waitFor(() =>
-			expect(context.kernel.getSnapshot().optOut?.method).toBe('button')
-		);
-		expect(context.kernel.getSnapshot().effectivePermissions.marketing).toBe(
-			false
-		);
-		// [GPC-01] The US presets' opt-out covers sale and sharing, not analytics.
-		expect(context.kernel.getSnapshot().effectivePermissions.measurement).toBe(
-			true
-		);
-		await vi.waitFor(() =>
-			expect(query('opt-out-confirmation-root')).not.toBeNull()
-		);
-	});
-
 	test('defers confirmation across a revocation reload, shows it once on the next load, and not on the load after that', async () => {
 		const onBeforeReload = vi.fn();
 		const first = await mountTree(
 			defineComponent({
 				render: () => [
-					h(ConsentBanner, { disableAnimation: true }),
+					h(OptOutButton),
 					h(ConsentManager, { disableAnimation: true }),
+					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
 			{
@@ -624,10 +537,8 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 			}
 		);
 
-		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
-		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		await vi.waitFor(() => expect(query('custom-opt-out')).not.toBeNull());
+		query<HTMLButtonElement>('custom-opt-out')?.click();
 
 		// Does not flash on the old document before reload.
 		expect(query('opt-out-confirmation-root')).toBeNull();
@@ -647,7 +558,10 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		// marker, records nothing again, and does not reload again.
 		const second = await mountTree(
 			defineComponent({
-				render: () => [h(ConsentManager, { disableAnimation: true })],
+				render: () => [
+					h(ConsentManager, { disableAnimation: true }),
+					h(OptOutConfirmation, { disableAnimation: true }),
+				],
 			}),
 			{
 				config: {
@@ -678,7 +592,10 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		// Load after that: marker is cleared, so confirmation does not reopen.
 		await mountTree(
 			defineComponent({
-				render: () => [h(ConsentManager, { disableAnimation: true })],
+				render: () => [
+					h(ConsentManager, { disableAnimation: true }),
+					h(OptOutConfirmation, { disableAnimation: true }),
+				],
 			}),
 			{
 				config: {
@@ -695,15 +612,15 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 	});
 
 	test.each(['privacy-choices', 'california-privacy-choices'] as const)(
-		'opens the dialog and records nothing from banner link, footer link and trigger when optOutLink=%s',
+		'opens the dialog and records nothing from the footer link and trigger when optOutLink=%s',
 		async (optOutLink) => {
 			const context = await mountTree(
 				defineComponent({
 					render: () => [
-						h(ConsentBanner, { disableAnimation: true }),
 						h(ConsentDialogLink, { right: 'opt-out' }),
 						h(ConsentDialogTrigger),
 						h(ConsentManager, { disableAnimation: true }),
+						h(OptOutConfirmation, { disableAnimation: true }),
 					],
 				}),
 				{
@@ -713,18 +630,8 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 			);
 
 			await vi.waitFor(() =>
-				expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
+				expect(query('consent-dialog-link')).not.toBeNull()
 			);
-			query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
-			await vi.waitFor(() =>
-				expect(query('consent-dialog-root')).not.toBeNull()
-			);
-			expect(context.kernel.getSnapshot().optOut).toBeNull();
-			expect(query('opt-out-confirmation-root')).toBeNull();
-
-			context.kernel.set.activeUI('none');
-			await vi.waitFor(() => expect(query('consent-dialog-root')).toBeNull());
-
 			query<HTMLButtonElement>('consent-dialog-link')?.click();
 			await vi.waitFor(() =>
 				expect(query('consent-dialog-root')).not.toBeNull()
@@ -770,6 +677,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 				render: () => [
 					h(CustomButton),
 					h(ConsentManager, { disableAnimation: true }),
+					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
 			{ optOutLink: 'privacy-choices' }
@@ -801,17 +709,16 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		await mountTree(
 			defineComponent({
 				render: () => [
-					h(ConsentBanner, { disableAnimation: true }),
+					h(OptOutButton),
 					h(ConsentManager, { disableAnimation: true }),
+					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
 			{ mode: deferredOptOutMode }
 		);
 
-		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
-		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		await vi.waitFor(() => expect(query('custom-opt-out')).not.toBeNull());
+		query<HTMLButtonElement>('custom-opt-out')?.click();
 		await flushPromises();
 
 		await vi.waitFor(() =>
@@ -858,6 +765,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 				render: () => [
 					h(ConsentDialogLink, { right: 'opt-out' }),
 					h(ConsentManager, { disableAnimation: true }),
+					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
 			{
@@ -919,16 +827,15 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 			defineComponent({
 				render: () => [
 					h(StateProbe),
-					h(ConsentBanner, { disableAnimation: true }),
+					h(OptOutButton),
 					h(ConsentManager, { disableAnimation: true }),
+					h(OptOutConfirmation, { disableAnimation: true }),
 				],
 			}),
 			{ mode: deferredOptOutMode }
 		);
 
-		await vi.waitFor(() =>
-			expect(query('consent-banner-right-link-opt-out')).not.toBeNull()
-		);
+		await vi.waitFor(() => expect(query('custom-opt-out')).not.toBeNull());
 
 		const before = readState.value;
 		expect(before).toMatchObject({
@@ -951,7 +858,7 @@ describe('one-step opt-out and confirmation view in Vue', () => {
 		context.kernel.set.activeUI('banner');
 		await flushPromises();
 
-		query<HTMLButtonElement>('consent-banner-right-link-opt-out')?.click();
+		query<HTMLButtonElement>('custom-opt-out')?.click();
 		await flushPromises();
 
 		const afterClick = readState.value;

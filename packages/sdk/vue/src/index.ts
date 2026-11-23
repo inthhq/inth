@@ -18,7 +18,17 @@ import { mountTokensStyle } from './runtime/theme-tokens';
 
 export type {
 	AllConsentNames,
+	BannerEdge,
+	CardPosition,
 	ClearOnRevocationConfig,
+	ConsentContainer,
+	ConsentEdgeStyle,
+	ConsentPresentation,
+	DrawerSide,
+	PreferencesPresentation,
+	PromptPresentation,
+	ResolvedConsentLayout,
+	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
 export {
 	resolveActionLabels,

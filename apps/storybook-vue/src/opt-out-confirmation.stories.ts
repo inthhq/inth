@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import ConsentDialogLink from '../../../packages/sdk/vue/src/runtime/components/consent-dialog-link.vue';
-import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/manager.vue';
+import ConsentManager from '../../../packages/sdk/vue/src/runtime/components/dialog/manager.vue';
 import OptOutConfirmation from '../../../packages/sdk/vue/src/runtime/components/opt-out-confirmation.vue';
 import {
 	storybookMode as createOfflineStorybookMode,

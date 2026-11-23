@@ -24,7 +24,7 @@ import {
 import type { App, ShallowRef } from 'vue';
 import { renderToString } from 'vue/server-renderer';
 
-import ConsentBanner from '../runtime/components/prompt.vue';
+import ConsentBanner from '../runtime/components/prompt/prompt.vue';
 import { useConsentKernelContext } from '../runtime/composables/kernel';
 import type { VueConsentKernelContext } from '../runtime/kernel';
 
@@ -401,7 +401,9 @@ test('the server init fetch carries a fixed experiment arm until the visitor cho
 	};
 	nuxt.experiment = {
 		arm: 'wall',
-		arms: { wall: { prompt: { variant: 'wall' } } },
+		arms: {
+			wall: { prompt: { container: { position: 'center', type: 'card' } } },
+		},
 		id: 'banner-shape',
 	};
 	nuxt.headers = { cookie: '' };
