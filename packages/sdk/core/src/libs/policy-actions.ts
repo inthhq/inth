@@ -194,7 +194,7 @@ export interface ResolvedConsentPresentation {
 	 * Renderers that read `container` take its `blocking`, not the top-level
 	 * `blocking`. The two can differ: under an opt-out model a legacy `wall`
 	 * still sets the top-level value, while the container falls back to a
-	 * bottom-left card that never blocks (BNR-13).
+	 * card at `start` that never blocks (BNR-13).
 	 */
 	container: {
 		desktop: ResolvedConsentLayout;

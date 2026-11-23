@@ -9,14 +9,21 @@
  */
 import type { PolicyPrompt, PolicyRuleModel } from '@inth/sdk-schema/types';
 
-/** Corners and centre a Card may occupy. */
-export type CardPosition = 'bottom-left' | 'bottom-right' | 'center';
+/**
+ * Where a Card sits: a bottom corner or the centre. `start` and `end` are
+ * logical, like CSS `inset-inline-start`: they follow the page's writing
+ * direction, so on a right-to-left page `start` is the bottom-right corner.
+ */
+export type CardPosition = 'start' | 'end' | 'center';
 
 /** Viewport edges a Banner may occupy. */
 export type BannerEdge = 'bottom' | 'top';
 
-/** Viewport sides a Drawer may slide in from. */
-export type DrawerSide = 'bottom' | 'top' | 'left' | 'right';
+/**
+ * Viewport side a Drawer slides in from. `start` and `end` are the inline
+ * sides and follow the page's writing direction, as a Card's corners do.
+ */
+export type DrawerSide = 'bottom' | 'top' | 'start' | 'end';
 
 /**
  * The container a consent prompt renders in. All three show the same
@@ -25,7 +32,7 @@ export type DrawerSide = 'bottom' | 'top' | 'left' | 'right';
 export type ConsentContainer =
 	| {
 			type: 'card';
-			/** @default 'bottom-left' */
+			/** @default 'start' */
 			position?: CardPosition;
 	  }
 	| {
@@ -71,15 +78,15 @@ export const PHONE_LAYOUT_QUERY = `(max-width: ${PHONE_LAYOUT_MAX_WIDTH}px)`;
 
 /** Every resolved placement. One renderer branch per value. */
 export type ConsentPlacement =
-	| 'card-bottom-left'
-	| 'card-bottom-right'
+	| 'card-start'
+	| 'card-end'
 	| 'card-center'
 	| 'banner-bottom'
 	| 'banner-top'
 	| 'drawer-bottom'
 	| 'drawer-top'
-	| 'drawer-left'
-	| 'drawer-right';
+	| 'drawer-start'
+	| 'drawer-end';
 
 /**
  * `expand-in-place` shows a summary first; Customize opens the choices
@@ -90,7 +97,7 @@ export type ConsentFlow = 'expand-in-place' | 'all-in-one';
 
 /** Host layout options for the consent prompt. */
 export interface ConsentLayoutOptions {
-	/** @default { type: 'card', position: 'bottom-left' } */
+	/** @default { type: 'card', position: 'start' } */
 	container?: ConsentContainer;
 	/** @default 'inset' */
 	edgeStyle?: ConsentEdgeStyle;
@@ -142,19 +149,15 @@ export interface ResolvedConsentLayout {
 const describeValue = (value: unknown): string =>
 	typeof value === 'string' ? `"${value}"` : `a ${typeof value}`;
 
-const CARD_POSITIONS: readonly CardPosition[] = [
-	'bottom-left',
-	'bottom-right',
-	'center',
-];
+const CARD_POSITIONS: readonly CardPosition[] = ['start', 'end', 'center'];
 const BANNER_EDGES: readonly BannerEdge[] = ['bottom', 'top'];
-const DRAWER_SIDES: readonly DrawerSide[] = ['bottom', 'top', 'left', 'right'];
+const DRAWER_SIDES: readonly DrawerSide[] = ['bottom', 'top', 'start', 'end'];
 
 /** Default layout when the host supplies none. */
 export const DEFAULT_CONSENT_CONTAINER: Readonly<{
 	type: 'card';
-	position: 'bottom-left';
-}> = Object.freeze({ position: 'bottom-left', type: 'card' });
+	position: 'start';
+}> = Object.freeze({ position: 'start', type: 'card' });
 
 /**
  * Fill defaults and replace anything invalid with the type's default, so
@@ -173,19 +176,19 @@ const normalizeContainer = function normalizeContainer(
 	if (container === null || typeof container !== 'object') {
 		diagnostics.push({
 			code: 'invalid-container',
-			message: 'The container is not an object; using a bottom-left card.',
+			message: 'The container is not an object; using a card at "start".',
 		});
 		return DEFAULT_CONSENT_CONTAINER;
 	}
 	switch (container.type) {
 		case 'card': {
-			const position = container.position ?? 'bottom-left';
+			const position = container.position ?? 'start';
 			if (CARD_POSITIONS.includes(position)) {
 				return { position, type: 'card' };
 			}
 			diagnostics.push({
 				code: 'invalid-container',
-				message: `Card position ${describeValue(position)} is not valid; using "bottom-left".`,
+				message: `Card position ${describeValue(position)} is not valid; using "start".`,
 			});
 			return DEFAULT_CONSENT_CONTAINER;
 		}
@@ -214,7 +217,7 @@ const normalizeContainer = function normalizeContainer(
 		default: {
 			diagnostics.push({
 				code: 'invalid-container',
-				message: `Container type ${describeValue((container as { type?: unknown }).type)} is not valid; using a bottom-left card.`,
+				message: `Container type ${describeValue((container as { type?: unknown }).type)} is not valid; using a card at "start".`,
 			});
 			return DEFAULT_CONSENT_CONTAINER;
 		}
@@ -256,14 +259,14 @@ const placeContainer = function placeContainer(
 		diagnostics.push({
 			code: 'center-unavailable',
 			message:
-				'A centred card always blocks the page, and this policy cannot block; using "bottom-left".',
+				'A centred card always blocks the page, and this policy cannot block; using "start".',
 		});
 		return DEFAULT_CONSENT_CONTAINER;
 	}
 	if (
 		container.type === 'drawer' &&
 		viewport === 'phone' &&
-		(container.side === 'left' || container.side === 'right')
+		(container.side === 'start' || container.side === 'end')
 	) {
 		return { side: 'bottom', type: 'drawer' };
 	}
@@ -349,7 +352,7 @@ const toPlacement = function toPlacement(
 		default:
 			return {
 				flow:
-					container.side === 'left' || container.side === 'right'
+					container.side === 'start' || container.side === 'end'
 						? 'all-in-one'
 						: 'expand-in-place',
 				placement: `drawer-${container.side}`,
@@ -361,11 +364,11 @@ const toPlacement = function toPlacement(
  * Resolve the consent prompt's layout for one viewport.
  *
  * - A centred Card always blocks. Where blocking is not possible, it falls
- *   back to the bottom-left corner.
+ *   back to the `start` corner.
  * - Blocking applies when the host asks for it, the Card is centred or the
  *   policy requires it, and only for a choice prompt outside an opt-out
  *   model. A `forbidden` constraint always wins.
- * - Left and right Drawers show every choice at once on desktop. On phone
+ * - `start` and `end` Drawers show every choice at once on desktop. On phone
  *   they become a bottom Drawer that expands in place. A top Drawer stays
  *   on top.
  * - A Card is always inset; edge style applies to Banners and Drawers.
@@ -413,8 +416,10 @@ export interface LegacyPromptPresentation {
  * Map a legacy `variant` and `position` onto a {@link ConsentContainer}.
  *
  * - `floating` and `widget` become a Card in the bottom corner on the same
- *   side. Top and centre-edge positions have no Card equivalent: a right
- *   corner moves to bottom-right, anything else to bottom-left.
+ *   side: a `-right` position becomes `end`, anything else `start`. Top and
+ *   centre-edge positions have no Card equivalent and are reported. Legacy
+ *   positions are physical and `start`/`end` are logical, so on a
+ *   right-to-left page the mapped Card mirrors to the other corner.
  * - `bar` becomes a Banner on the same edge.
  * - `wall` becomes a centred Card, which blocks.
  *
@@ -442,17 +447,15 @@ export const containerFromLegacyPrompt = function containerFromLegacyPrompt(
 			if (position === undefined) {
 				return {
 					container: {
-						position: variant === 'widget' ? 'bottom-right' : 'bottom-left',
+						position: variant === 'widget' ? 'end' : 'start',
 						type: 'card',
 					},
 					diagnostics,
 				};
 			}
 			// Keep the prompt on the same side of the screen.
-			const corner = position.endsWith('-right')
-				? 'bottom-right'
-				: 'bottom-left';
-			if (position !== corner) {
+			const corner = position.endsWith('-right') ? 'end' : 'start';
+			if (position !== 'bottom-left' && position !== 'bottom-right') {
 				diagnostics.push({
 					code: 'legacy-presentation',
 					message: `The ${variant} position "${position}" has no card equivalent; using "${corner}".`,

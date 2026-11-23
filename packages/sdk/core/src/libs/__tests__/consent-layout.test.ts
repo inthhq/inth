@@ -24,8 +24,8 @@ const US_OPT_OUT_NOTICE = { model: 'opt-out', prompt: 'notice' } as const;
 const CONTAINERS: (ConsentContainer | undefined)[] = [
 	undefined,
 	{ type: 'card' },
-	{ position: 'bottom-left', type: 'card' },
-	{ position: 'bottom-right', type: 'card' },
+	{ position: 'start', type: 'card' },
+	{ position: 'end', type: 'card' },
 	{ position: 'center', type: 'card' },
 	{ type: 'banner' },
 	{ edge: 'bottom', type: 'banner' },
@@ -33,8 +33,8 @@ const CONTAINERS: (ConsentContainer | undefined)[] = [
 	{ type: 'drawer' },
 	{ side: 'bottom', type: 'drawer' },
 	{ side: 'top', type: 'drawer' },
-	{ side: 'left', type: 'drawer' },
-	{ side: 'right', type: 'drawer' },
+	{ side: 'start', type: 'drawer' },
+	{ side: 'end', type: 'drawer' },
 ];
 const EDGE_STYLES: (ConsentEdgeStyle | undefined)[] = [
 	undefined,
@@ -121,7 +121,7 @@ describe('resolveLayout: every combination', () => {
 		expect(unblocked).toEqual([]);
 	});
 
-	it('a centred card falls back to bottom-left where blocking is not possible', () => {
+	it('a centred card falls back to start where blocking is not possible', () => {
 		const wrong = cases
 			.filter(
 				(input) =>
@@ -132,7 +132,7 @@ describe('resolveLayout: every combination', () => {
 			.filter((input) => {
 				const result = resolveLayout(input);
 				return (
-					result.placement !== 'card-bottom-left' ||
+					result.placement !== 'card-start' ||
 					!result.diagnostics.some((d) => d.code === 'center-unavailable')
 				);
 			});
@@ -144,8 +144,8 @@ describe('resolveLayout: every combination', () => {
 			const result = resolveLayout(input);
 			const side =
 				input.viewport === 'desktop' &&
-				(result.placement === 'drawer-left' ||
-					result.placement === 'drawer-right');
+				(result.placement === 'drawer-start' ||
+					result.placement === 'drawer-end');
 			return result.flow !== (side ? 'all-in-one' : 'expand-in-place');
 		});
 		expect(wrong).toEqual([]);
@@ -158,8 +158,8 @@ describe('resolveLayout: every combination', () => {
 				const phone = resolveLayout(input);
 				const desktop = resolveLayout({ ...input, viewport: 'desktop' });
 				const expected =
-					desktop.placement === 'drawer-left' ||
-					desktop.placement === 'drawer-right'
+					desktop.placement === 'drawer-start' ||
+					desktop.placement === 'drawer-end'
 						? 'drawer-bottom'
 						: desktop.placement;
 				return (
@@ -184,13 +184,13 @@ describe('resolveLayout: every combination', () => {
 		expect(wrong).toEqual([]);
 	});
 
-	it('defaults to a bottom-left card, inset, not blocking', () => {
+	it('defaults to a card at start, inset, not blocking', () => {
 		expect(resolveLayout(EU)).toEqual({
 			blocking: false,
 			diagnostics: [],
 			edgeStyle: 'inset',
 			flow: 'expand-in-place',
-			placement: 'card-bottom-left',
+			placement: 'card-start',
 			type: 'card',
 		});
 	});
@@ -207,12 +207,12 @@ describe('resolveLayout: named rules', () => {
 		}
 	});
 
-	it('[BNR-13] a centred card under US opt-out falls back to bottom-left', () => {
+	it('[BNR-13] a centred card under US opt-out falls back to start', () => {
 		const result = resolveLayout({
 			...US_OPT_OUT_NOTICE,
 			container: { position: 'center', type: 'card' },
 		});
-		expect(result.placement).toBe('card-bottom-left');
+		expect(result.placement).toBe('card-start');
 		expect(result.blocking).toBe(false);
 	});
 
@@ -240,7 +240,7 @@ describe('resolveLayout: named rules', () => {
 			blockingConstraint: 'forbidden',
 			container: { position: 'center', type: 'card' },
 		});
-		expect(result.placement).toBe('card-bottom-left');
+		expect(result.placement).toBe('card-start');
 		expect(result.blocking).toBe(false);
 	});
 
@@ -254,10 +254,10 @@ describe('resolveLayout: named rules', () => {
 		expect(result.flow).toBe('expand-in-place');
 	});
 
-	it('a right drawer expands in place from the bottom on phone', () => {
+	it('an end drawer expands in place from the bottom on phone', () => {
 		const result = resolveLayout({
 			...EU,
-			container: { side: 'right', type: 'drawer' },
+			container: { side: 'end', type: 'drawer' },
 			viewport: 'phone',
 		});
 		expect(result.placement).toBe('drawer-bottom');
@@ -283,7 +283,7 @@ describe('resolveLayout: named rules', () => {
 		]);
 		expect(
 			resolveLayout({ ...EU, container: { type: 'modal' } as never }).placement
-		).toBe('card-bottom-left');
+		).toBe('card-start');
 	});
 
 	it('reports a centred card that overrides blockUntilChoice: false', () => {
@@ -300,14 +300,14 @@ describe('resolveLayout: named rules', () => {
 
 	it('falls back from a null container instead of throwing', () => {
 		const result = resolveLayout({ ...EU, container: null as never });
-		expect(result.placement).toBe('card-bottom-left');
+		expect(result.placement).toBe('card-start');
 		expect(result.diagnostics.map((d) => d.code)).toEqual([
 			'invalid-container',
 		]);
 	});
 
 	it.each([
-		[{ type: 'card' }, 'card-bottom-left'],
+		[{ type: 'card' }, 'card-start'],
 		[{ type: 'drawer' }, 'drawer-bottom'],
 	] as const)(
 		'replaces an unknown edge style with inset on %j',
@@ -356,18 +356,39 @@ describe('resolveLayout: named rules', () => {
 	});
 });
 
+describe('logical sides', () => {
+	it.each([
+		[{ position: 'bottom-left', type: 'card' }, 'card-start'],
+		[{ position: 'bottom-right', type: 'card' }, 'card-start'],
+		[{ side: 'left', type: 'drawer' }, 'drawer-bottom'],
+		[{ side: 'right', type: 'drawer' }, 'drawer-bottom'],
+	])(
+		'rejects the physical name in %j and reports it',
+		(container, placement) => {
+			const result = resolveLayout({
+				...EU,
+				container: container as unknown as ConsentContainer,
+			});
+			expect(result.placement).toBe(placement);
+			expect(result.diagnostics.map((d) => d.code)).toEqual([
+				'invalid-container',
+			]);
+		}
+	);
+});
+
 describe('containerFromLegacyPrompt', () => {
 	it.each([
-		[{}, { position: 'bottom-left', type: 'card' }],
-		[{ variant: 'floating' }, { position: 'bottom-left', type: 'card' }],
+		[{}, { position: 'start', type: 'card' }],
+		[{ variant: 'floating' }, { position: 'start', type: 'card' }],
 		[
 			{ position: 'bottom-right', variant: 'floating' },
-			{ position: 'bottom-right', type: 'card' },
+			{ position: 'end', type: 'card' },
 		],
-		[{ variant: 'widget' }, { position: 'bottom-right', type: 'card' }],
+		[{ variant: 'widget' }, { position: 'end', type: 'card' }],
 		[
 			{ position: 'bottom-left', variant: 'widget' },
-			{ position: 'bottom-left', type: 'card' },
+			{ position: 'start', type: 'card' },
 		],
 		[{ variant: 'bar' }, { edge: 'bottom', type: 'banner' }],
 		[
@@ -382,10 +403,10 @@ describe('containerFromLegacyPrompt', () => {
 	});
 
 	it.each([
-		['top-left', 'bottom-left'],
-		['top-right', 'bottom-right'],
-		['top-center', 'bottom-left'],
-		['bottom-center', 'bottom-left'],
+		['top-left', 'start'],
+		['top-right', 'end'],
+		['top-center', 'start'],
+		['bottom-center', 'start'],
 	])(
 		'maps a floating %s card to %s, on the same side, and reports it',
 		(position, corner) => {
@@ -406,7 +427,7 @@ describe('containerFromLegacyPrompt', () => {
 			variant: 'widget',
 		});
 		(first.container as { position: string }).position = 'center';
-		expect(resolveLayout(EU).placement).toBe('card-bottom-left');
+		expect(resolveLayout(EU).placement).toBe('card-start');
 		expect(Object.isFrozen(DEFAULT_CONSENT_CONTAINER)).toBe(true);
 	});
 });
@@ -432,26 +453,26 @@ describe('resolveConsentPresentation: container', () => {
 		).toBeNull();
 	});
 
-	it('defaults the prompt to a bottom-left card on both viewports', () => {
+	it('defaults the prompt to a card at start on both viewports', () => {
 		const { container } = resolveConsentPresentation({
 			policy: choice,
 			surface: 'prompt',
 		});
-		expect(container?.desktop.placement).toBe('card-bottom-left');
-		expect(container?.phone.placement).toBe('card-bottom-left');
+		expect(container?.desktop.placement).toBe('card-start');
+		expect(container?.phone.placement).toBe('card-start');
 	});
 
 	it('resolves a host drawer per viewport', () => {
 		const { container } = resolveConsentPresentation({
 			policy: choice,
 			presentation: {
-				prompt: { container: { side: 'left', type: 'drawer' } },
+				prompt: { container: { side: 'start', type: 'drawer' } },
 			},
 			surface: 'prompt',
 		});
 		expect(container?.desktop).toMatchObject({
 			flow: 'all-in-one',
-			placement: 'drawer-left',
+			placement: 'drawer-start',
 		});
 		expect(container?.phone).toMatchObject({
 			flow: 'expand-in-place',
@@ -522,7 +543,7 @@ describe('resolveConsentPresentation: container', () => {
 			surface: 'prompt',
 		});
 		expect(result.position).toBe('bottom-right');
-		expect(result.container?.desktop.placement).toBe('card-bottom-right');
+		expect(result.container?.desktop.placement).toBe('card-end');
 	});
 
 	it('copies legacy diagnostics to both viewports', () => {
@@ -531,7 +552,7 @@ describe('resolveConsentPresentation: container', () => {
 			presentation: { prompt: { position: 'top-right', variant: 'floating' } },
 			surface: 'prompt',
 		});
-		expect(container?.desktop.placement).toBe('card-bottom-right');
+		expect(container?.desktop.placement).toBe('card-end');
 		expect(container?.desktop.diagnostics.map((d) => d.code)).toEqual([
 			'legacy-presentation',
 		]);
@@ -546,7 +567,7 @@ describe('resolveConsentPresentation: container', () => {
 			presentation: { prompt: { container: null as never, variant: 'bar' } },
 			surface: 'prompt',
 		});
-		expect(container?.desktop.placement).toBe('card-bottom-left');
+		expect(container?.desktop.placement).toBe('card-start');
 		expect(container?.desktop.diagnostics.map((d) => d.code)).toEqual([
 			'invalid-container',
 		]);
@@ -569,7 +590,7 @@ describe('resolveConsentPresentation: container', () => {
 		expect(result.blocking).toBe(true);
 		expect(result.container?.desktop).toMatchObject({
 			blocking: false,
-			placement: 'card-bottom-left',
+			placement: 'card-start',
 		});
 	});
 
@@ -591,7 +612,7 @@ describe('resolveConsentPresentation: container', () => {
 		});
 		expect(container?.desktop).toMatchObject({
 			blocking: false,
-			placement: 'card-bottom-left',
+			placement: 'card-start',
 		});
 	});
 });
