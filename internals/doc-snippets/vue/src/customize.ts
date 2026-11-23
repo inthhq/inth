@@ -12,7 +12,7 @@ createApp(App)
 		},
 		mode: manifest(),
 		presentation: {
-			prompt: { position: 'bottom', variant: 'bar' },
+			prompt: { container: { edge: 'bottom', type: 'banner' } },
 		},
 		scripts,
 		tokens: {

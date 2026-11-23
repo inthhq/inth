@@ -1,6 +1,6 @@
 ---
 title: ConsentBanner
-description: Render the Inth first-layer consent banner directly in Nuxt, configure its variant and position, and style its parts.
+description: Render the Inth first-layer consent banner directly in Nuxt, choose its container, and style its parts.
 group: frameworks
 ---
 
@@ -11,13 +11,13 @@ instead of using global `InthProvider`.
 
 `InthProvider` already renders `ConsentBanner`. Because `@inth/nuxt` does not
 register `ConsentBanner` globally, import it from
-`@inth/nuxt/components/consent-banner` when you want to set its variant in
+`@inth/nuxt/components/consent-banner` when you want to set its container in
 templates or control placement:
 
 <include src="../../../shared/examples/nuxt/consent-surfaces.mdx" />
 
 Mount this in `app/app.vue` instead of `InthProvider`, alongside
-`ConsentManager` so Customize opens preferences. Statically importing
+`ConsentManager` so your page links can open the dialog. Statically importing
 `ConsentManager` adds it to your main bundle, whereas `InthProvider`
 code-splits it. Direct composition does not switch to IAB surfaces under an
 IAB policy. The module still writes your `tokens` to `<head>`.
@@ -26,7 +26,7 @@ IAB policy. The module still writes your `tokens` to `<head>`.
 
 <import src="../../../shared/vue/components/consent-banner.mdx#props" />
 
-To configure the banner variant globally without importing `ConsentBanner`,
+To configure the banner container globally without importing `ConsentBanner`,
 set `presentation.prompt` under `inth` in `nuxt.config.ts`. See
 [change the banner layout](/docs/frameworks/nuxt/customize#change-the-banner-layout).
 
@@ -39,7 +39,7 @@ set `presentation.prompt` under `inth` in `nuxt.config.ts`. See
 ## Next steps
 
 - [ConsentManager](/docs/frameworks/nuxt/components/consent-manager): the
-  dialog opened by Customize.
+  "Your Privacy Choices" dialog.
 - [Headless](/docs/frameworks/nuxt/headless): build a banner with your own
   markup.
 - [Banner designs](/docs/customization/recipes): explore five ready-made

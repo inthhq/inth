@@ -48,8 +48,8 @@ describe('generated example snippets', () => {
 
 describe('design recipes', () => {
 	// The docs show one design across adapters, so every copy of a recipe's
-	// stylesheet must match the others.
-	test.each(['headless-bar-css', 'slim-bar-css'])(
+	// stylesheet must match the others. The slim bar has one copy left.
+	test.each(['headless-bar-css'])(
 		'every %s copy matches',
 		(name) => {
 			const copies = regions.filter((region) => region.name === name);

@@ -53,23 +53,27 @@ in your own stylesheet can lose on cascade order, set token values through
 
 ## Change the banner layout
 
-`presentation.prompt` configures the banner's `variant`, `position`, `layout`,
-`primaryActions`, `direction`, `uiProfile`, and `blocking`.
-`presentation.preferences` sets the same layout fields for the dialog:
+`presentation.prompt` configures the banner's `container`, `edgeStyle`,
+`blockUntilChoice`, `layout`, `primaryActions`, `direction`, and `uiProfile`.
+`presentation.preferences` sets the layout fields for the dialog:
 
 {/* example: fragment */}
 
 ```ts title="nuxt.config.ts"
 export default defineNuxtConfig({
-	inth: { presentation: { prompt: { position: 'bottom', variant: 'bar' } } },
+	inth: {
+		presentation: { prompt: { container: { edge: 'bottom', type: 'banner' } } },
+	},
 });
 ```
 
-Valid positions depend on `variant`: `bar` accepts `top` or `bottom`; `wall`
-accepts `center`; `widget` accepts the four corners; `floating` accepts the
-four corners plus `top-center` and `bottom-center`. The policy keeps final
-authority: a choice wall always blocks, a notice never blocks, and the policy
-restores required buttons omitted from `layout`.
+`container` is a Card (`position`: `start`, `end`, or `center`), a Banner
+(`edge`: `bottom` or `top`), or a Drawer (`side`: `bottom`, `top`, `start`,
+or `end`). `start` and `end` follow the writing direction. A policy rule's
+`surface.container` applies when you set none. The policy keeps final
+authority: a centred Card always blocks, a notice never blocks, and the
+policy restores required buttons omitted from `layout`. See
+[containers](/docs/frameworks/nuxt/components/consent-banner#containers).
 
 ## Style one part of a component
 

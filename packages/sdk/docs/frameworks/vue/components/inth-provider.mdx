@@ -36,9 +36,9 @@ when `showTrigger: true` is configured.
 
 Nothing renders until the policy resolves. The dialog and IAB surfaces load as
 separate chunks (with IAB surfaces active only when `iab` is set and the
-policy uses `iab`). After `load`, `InthProvider` prefetches the dialog chunk
-during idle time so clicking Customize opens without waiting on the network.
-The dialog unmounts when closed.
+policy uses `iab`). The banner starts loading the dialog chunk when the
+visitor reaches for one of its buttons, so the dialog opens without waiting
+on the network. The dialog unmounts when closed.
 
 ## Theme tokens
 
@@ -76,7 +76,7 @@ see two banners.
 
 Open the app in a private window under an opt-in policy. Confirm the banner
 appears once the policy request finishes, `<style id="inth-css-vars">` holds
-your `--inth-*` tokens in `<head>`, Customize opens preferences, and rejecting
+your `--inth-*` tokens in `<head>`, Customize opens the choices in the banner, and rejecting
 stays closed after a reload.
 
 ## Next steps

@@ -43,8 +43,9 @@ routes, it mounts after browser resolution. See
 IAB surfaces activate only when `iab` is enabled and the policy uses `iab`.
 The banner, dialog, trigger, and IAB surfaces load as separate chunks: Nuxt
 inlines SSR banner styles with `features.inlineStyles` so no external consent
-stylesheet blocks first paint, prefetches the dialog chunk after `load` (and
-keeps it mounted after opening for close animations), and loads the trigger
+stylesheet blocks first paint, loads the dialog chunk when the visitor
+reaches for a banner button or the dialog opens (and keeps it mounted after
+opening for close animations), and loads the trigger
 chunk only when `showTrigger: true`.
 
 ## Theme tokens
@@ -78,7 +79,8 @@ see two banners.
 
 Run `nuxt build` and `node .output/server/index.mjs`, then view page source
 under an opt-in policy. Confirm `data-testid="consent-banner-root"` and
-`<style id="inth-css-vars">` are in the HTML, Customize opens preferences, and
+`<style id="inth-css-vars">` are in the HTML, Customize opens the choices in
+the banner, and
 rejecting stays closed after reload.
 
 ## Next steps

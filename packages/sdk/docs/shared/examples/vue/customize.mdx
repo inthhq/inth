@@ -11,7 +11,7 @@ createApp(App)
 	.use(inth, {
 		components: { banner: { card: { class: 'brand-consent-card' } } },
 		mode: manifest(),
-		presentation: { prompt: { position: 'bottom', variant: 'bar' } },
+		presentation: { prompt: { container: { edge: 'bottom', type: 'banner' } } },
 		scripts,
 		tokens: {
 			'inth-primary': '#6943a3',
