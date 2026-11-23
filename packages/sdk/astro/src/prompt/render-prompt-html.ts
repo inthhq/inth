@@ -14,16 +14,16 @@ import * as surfaceSheet from '@inth/sdk/ui/styles/sheets/surface';
 import * as tokensSheet from '@inth/sdk/ui/styles/sheets/tokens';
 import * as triggerSheet from '@inth/sdk/ui/styles/sheets/trigger';
 
-import type { StyleSheet } from '../parts/sheets';
+import type { StyleSheet } from '../parts/insert-sheets';
 import { toHTML } from '../parts/vnode';
 import type { VElement } from '../parts/vnode';
-import type { PromptContainerType, PromptModel } from './model';
+import type { PromptContainerType, PromptModel } from './prompt.model';
 import {
 	PROMPT_ID_PREFIX,
 	promptIds,
 	renderPageStatus,
 	renderPrompt,
-} from './view';
+} from './render-prompt';
 
 const CONTAINERS: Record<PromptContainerType, StyleSheet> = {
 	banner: bannerSheet,

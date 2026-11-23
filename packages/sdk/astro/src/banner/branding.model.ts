@@ -8,9 +8,9 @@ import type { Theme } from '@inth/sdk/ui/theme';
 import { resolveBrandingTag } from '@inth/sdk/ui/utils/branding';
 import type { BrandingSurface, BrandingTag } from '@inth/sdk/ui/utils/branding';
 
-import type { ClassNameMap } from './class-names';
-import { resolveSlotBinding } from './theme-slots';
-import type { SlotBinding } from './theme-slots';
+import type { ClassNameMap } from './banner-class-names.model';
+import { resolveSlotBinding } from './theme-slots.model';
+import type { SlotBinding } from './theme-slots.model';
 
 /** Input for {@link resolveBrandingModel}. */
 export interface BrandingModelInput {

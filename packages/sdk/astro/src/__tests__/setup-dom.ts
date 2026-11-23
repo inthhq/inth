@@ -18,7 +18,7 @@
  */
 
 import { registerTransport } from '../client';
-import { lazyTransport, testingTransport } from '../transport';
+import { lazyTransport, testingTransport } from '../transport-resolvers.model';
 
 class MemoryStorage implements Storage {
 	private readonly entries = new Map<string, string>();

@@ -16,8 +16,8 @@ import * as dialogSheet from '@inth/sdk/ui/styles/sheets/dialog';
 import * as expand from '@inth/sdk/ui/styles/sheets/expand';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
 
-import { insertSheets } from '../parts/sheets';
-import type { StyleSheet } from '../parts/sheets';
+import { insertSheets } from '../parts/insert-sheets';
+import type { StyleSheet } from '../parts/insert-sheets';
 
 /** The dialog's sheets, in cascade order. */
 export const DIALOG_SHEETS: readonly StyleSheet[] = [

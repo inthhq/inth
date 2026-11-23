@@ -8,9 +8,9 @@
 
 import type { APIContext, MiddlewareHandler } from 'astro';
 
-import { waitUntilFromLocals } from './api/handlers';
+import { waitUntilFromLocals } from './api/create-consent-route-handlers';
 import { resolveConsentContext } from './server';
-import type { InthResolvedOptions } from './types';
+import type { InthResolvedOptions } from './inth-options.model';
 
 /** Options for {@link createConsentMiddleware}. */
 export interface ConsentMiddlewareOptions {

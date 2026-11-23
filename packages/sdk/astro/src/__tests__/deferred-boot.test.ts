@@ -2,14 +2,14 @@ import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { canDeferEngine } from '../banner/deferred-boot';
-import { CONSENT_BOOT_ATTRIBUTE } from '../browser/shell';
+import { canDeferEngine } from '../banner/deferred-boot.model';
+import { CONSENT_BOOT_ATTRIBUTE } from '../browser/start-deferred-client';
 import ConsentScript from '../components/consent-script.astro';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { testRule } from './policy-fixture';
 
 let container: AstroContainer;

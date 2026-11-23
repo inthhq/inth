@@ -30,13 +30,13 @@ import {
 import type { AstroIntegration } from 'astro';
 
 import { absoluteManifestUrl } from './libs/absolute-manifest-url';
-import { createClassMapPlugin } from './libs/class-map-plugin';
+import { createClassMapPlugin } from './libs/create-class-map-plugin';
 import type {
 	InthAstroOptions,
 	InthMiddlewareOptions,
 	InthResolvedOptions,
 	InthUIAdapterName,
-} from './types';
+} from './inth-options.model';
 
 const VIRTUAL_ID = 'virtual:inth/options';
 const RESOLVED_VIRTUAL_ID = `\0${VIRTUAL_ID}`;
@@ -1026,7 +1026,7 @@ export const inth = function inth(
 				// can name the `clientEntrypoint` scripts the policy lacks.
 				// Loaded here so the package root, which browser code may
 				// import, does not pull in the server renderers.
-				const { buildAstroCsp } = await import('./csp');
+				const { buildAstroCsp } = await import('./build-astro-csp');
 				const csp = await buildAstroCsp(config, site);
 				const serialized = csp?.browser ? { ...site, csp: csp.browser } : site;
 				const bootScripts = buildBootScript(

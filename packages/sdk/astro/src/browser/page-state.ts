@@ -7,7 +7,7 @@
 
 import type { KernelConfig } from '@inth/sdk/engine';
 
-import type { AstroConsentClient } from '../client-types';
+import type { AstroConsentClient } from '../astro-consent-client.model';
 
 /** Where the page's consent client lives. */
 export const GLOBAL_KEY = '__inthAstro';

@@ -10,9 +10,9 @@ import type {
 	AstroConsentClient,
 	AstroEngineClient,
 	ConsentAction,
-} from '../client-types';
-import type { ConsentDialogKind } from '../ui/adapter';
-import { preloadDialogChunks } from './dialog-loading';
+} from '../astro-consent-client.model';
+import type { ConsentDialogKind } from '../ui/register-dialog-adapter';
+import { preloadDialogChunks } from './load-dialog';
 import { ACTIONS_KEY, getWindow, readPageNonce } from './page-state';
 
 /** Attribute the server-rendered banner puts on its action buttons. */

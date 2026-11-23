@@ -34,19 +34,19 @@ import {
 	INLINE_IAB_STYLES_CSS,
 	INLINE_PARTS_STYLES_CSS,
 	INLINE_STYLES_CSS,
-} from './inline-styles';
-import { hashSource } from './libs/csp-hash';
-import type { CspHashAlgorithm, CspHashSource } from './libs/csp-hash';
-import { promptFirstPaintSheets } from './prompt/server';
+} from './inline-styles.model';
+import { hashSource } from './libs/csp-hash.model';
+import type { CspHashAlgorithm, CspHashSource } from './libs/csp-hash.model';
+import { promptFirstPaintSheets } from './prompt/render-prompt-html';
 import {
 	buildBannerRevealScript,
 	buildColorSchemeScript,
 	buildThemeCSS,
 	EARLY_CONSENT_TAP_SCRIPT,
 } from './server';
-import type { BrowserCsp, InthResolvedOptions } from './types';
+import type { BrowserCsp, InthResolvedOptions } from './inth-options.model';
 
-export type { CspHashAlgorithm } from './libs/csp-hash';
+export type { CspHashAlgorithm } from './libs/csp-hash.model';
 
 /** Source hashes in the `sha256-…` form a CSP directive takes. */
 export interface InlineCodeHashes {

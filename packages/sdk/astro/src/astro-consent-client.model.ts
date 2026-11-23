@@ -13,8 +13,8 @@ import type {
 } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 
-import type { InthResolvedOptions } from './types';
-import type { ConsentDialogKind } from './ui/adapter';
+import type { InthResolvedOptions } from './inth-options.model';
+import type { ConsentDialogKind } from './ui/register-dialog-adapter';
 
 /** Actions the banner can trigger. */
 export type ConsentAction =

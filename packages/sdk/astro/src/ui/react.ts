@@ -20,10 +20,10 @@ import type {
 	ConsentDialogContext,
 	ConsentDialogHandle,
 	ConsentDialogPreloadContext,
-} from './adapter';
-import { requireDialogSurface } from './adapter';
-import { closeDialogSurface } from './close-dialog';
-import { buildProviderProps } from './provider-props';
+} from './register-dialog-adapter';
+import { requireDialogSurface } from './register-dialog-adapter';
+import { closeDialogSurface } from './close-dialog-surface';
+import { buildProviderProps } from './build-provider-props';
 
 /** What the React island exports beside its component. */
 interface ReactDialogSurface {

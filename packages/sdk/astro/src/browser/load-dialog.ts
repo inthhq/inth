@@ -10,10 +10,10 @@
  * @internal
  */
 
-import type { InthUIAdapterName } from '../types';
-import { loadDialogAdapter, requireDialogSurface } from '../ui/adapter';
-import type { ConsentDialogAdapter, ConsentDialogKind } from '../ui/adapter';
-import { loadDialogStyles } from './dialog-styles';
+import type { InthUIAdapterName } from '../inth-options.model';
+import { loadDialogAdapter, requireDialogSurface } from '../ui/register-dialog-adapter';
+import type { ConsentDialogAdapter, ConsentDialogKind } from '../ui/register-dialog-adapter';
+import { loadDialogStyles } from './load-dialog-styles';
 
 /**
  * Start the island's import, and the dialog it will render when the
@@ -53,7 +53,7 @@ const loadSheets = async function loadSheets(
 			insertPartsSheets(nonce);
 			return;
 		}
-		const { insertDialogSheets } = await import('../dialog/sheets');
+		const { insertDialogSheets } = await import('../dialog/dialog-sheets');
 		insertDialogSheets(nonce);
 	} catch {
 		// An unstyled dialog beats one that never opens.

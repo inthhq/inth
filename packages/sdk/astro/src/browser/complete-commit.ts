@@ -22,7 +22,7 @@ import type {
 } from '@inth/sdk/surface-actions/early-commit';
 import type { InstantCommit } from '@inth/sdk/surface-actions/instant-commit';
 
-import { activateGatedScripts } from './inline-scripts';
+import { activateGatedScripts } from './activate-gated-scripts';
 
 export type {
 	CompleteCommitResult,

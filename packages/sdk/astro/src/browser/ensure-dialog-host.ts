@@ -8,7 +8,7 @@
 
 import type { LegalLinks } from '@inth/sdk/engine';
 
-import type { ConsentDialogKind } from '../ui/adapter';
+import type { ConsentDialogKind } from '../ui/register-dialog-adapter';
 
 /** The element dialog islands mount into. @internal */
 export const DIALOG_HOST_ID = 'inth-dialog-host';

@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { resolveOptions } from '../integration';
 import { hosted as hostedMode } from '../mode';
 import { DEFAULT_RESOLVE_TIMEOUT_MS, resolveConsentContext } from '../server';
-import type { InthAstroOptions } from '../types';
+import type { InthAstroOptions } from '../inth-options.model';
 import { testWire } from './policy-fixture';
 
 const BACKEND = 'https://consent.example.com';

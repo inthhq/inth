@@ -8,12 +8,12 @@
 import type { Vendor } from '@inth/sdk/engine';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { activateGatedScripts } from '../browser/inline-scripts';
+import { activateGatedScripts } from '../browser/activate-gated-scripts';
 import { boot } from '../client';
-import type { AstroEngineClient } from '../client-types';
+import type { AstroEngineClient } from '../astro-consent-client.model';
 import { resolveOptions } from '../integration';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions } from '../types';
+import type { InthAstroOptions } from '../inth-options.model';
 import { testResolution, testRule } from './policy-fixture';
 
 const VENDORS: Vendor[] = [

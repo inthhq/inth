@@ -16,7 +16,7 @@
 import type { APIRoute, GetStaticPaths } from 'astro';
 import options from 'virtual:inth/options';
 
-import { createConsentRouteHandlers } from './handlers';
+import { createConsentRouteHandlers } from './create-consent-route-handlers';
 
 const handlers = createConsentRouteHandlers({ options });
 

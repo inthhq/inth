@@ -2,15 +2,15 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
+import { PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
 import ConsentBanner from '../components/prompt.astro';
 import { resolveOptions } from '../integration';
-import { createConsentMiddleware } from '../middleware-handler';
+import { createConsentMiddleware } from '../create-consent-middleware';
 import { hosted as hostedMode } from '../mode';
-import { promptClassNames } from '../prompt/class-names';
+import { promptClassNames } from '../prompt/prompt-class-names';
 import { buildBannerRevealScript, resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { testRule } from './policy-fixture';
 
 let container: AstroContainer;

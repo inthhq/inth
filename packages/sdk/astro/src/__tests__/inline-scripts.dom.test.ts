@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	ACTIVATED_ATTRIBUTE,
 	activateGatedScripts,
-} from '../browser/inline-scripts';
+} from '../browser/activate-gated-scripts';
 
 const snapshot = function snapshot(
 	consents: Partial<Record<string, boolean>>

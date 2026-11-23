@@ -21,12 +21,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import ConsentScript from '../components/consent-script.astro';
 import IABConsentBanner from '../components/iab-prompt.astro';
 import ConsentBanner from '../components/prompt.astro';
-import { buildAstroCsp, buildInlineCodeHashes } from '../csp';
-import { INLINE_IAB_STYLES_CSS } from '../inline-styles';
+import { buildAstroCsp, buildInlineCodeHashes } from '../build-astro-csp';
+import { INLINE_IAB_STYLES_CSS } from '../inline-styles.model';
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { testRule } from './policy-fixture';
 
 const NONCE = 'r4nd0m-n0nce';

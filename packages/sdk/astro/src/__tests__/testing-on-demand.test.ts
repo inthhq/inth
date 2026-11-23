@@ -19,13 +19,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { hosted as hostedMode } from '../mode';
 import { testing as testingMode } from '../testing';
-import { lazyTransport, testingTransport } from '../transport';
+import { lazyTransport, testingTransport } from '../transport-resolvers.model';
 import { testRule } from './policy-fixture';
 
 const testingModule = vi.hoisted(() => ({ loads: 0 }));
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is whether the client evaluates this module at all. The factory only counts loads and returns the real module.
-vi.mock('../testing-transport', async (importOriginal) => {
+vi.mock('../create-testing-mode', async (importOriginal) => {
 	testingModule.loads += 1;
 	return await importOriginal();
 });

@@ -14,7 +14,7 @@ import { IABUnavailableError, policyNeedsIAB } from '@inth/sdk/engine';
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 import { isIABConfigured } from '@inth/sdk/runtime';
 
-import type { InthAstroOptions } from '../types';
+import type { InthAstroOptions } from '../inth-options.model';
 
 /**
  * Whether the site cannot answer for the snapshot's policy.

@@ -15,7 +15,7 @@ import IABConsentBanner from '../components/iab-prompt.astro';
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 
 let container: AstroContainer;
 

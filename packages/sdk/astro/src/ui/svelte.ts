@@ -21,10 +21,10 @@ import type {
 	ConsentDialogAdapter,
 	ConsentDialogContext,
 	ConsentDialogHandle,
-} from './adapter';
-import { requireDialogSurface } from './adapter';
-import { closeDialogSurface } from './close-dialog';
-import { buildProviderProps } from './provider-props';
+} from './register-dialog-adapter';
+import { requireDialogSurface } from './register-dialog-adapter';
+import { closeDialogSurface } from './close-dialog-surface';
+import { buildProviderProps } from './build-provider-props';
 
 /** Svelte's runtime, loaded on demand like the island. */
 const loadSvelte = () => import('svelte');

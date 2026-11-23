@@ -21,14 +21,14 @@ import type {
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 import type { Theme } from '@inth/sdk/ui/theme';
 
-import type { IABPromptClassNames } from '../banner/class-names';
-import { resolveIABPromptModel } from '../banner/iab-prompt-model';
+import type { IABPromptClassNames } from '../banner/banner-class-names.model';
+import { resolveIABPromptModel } from '../banner/iab-prompt.model';
 import type {
 	IABPromptButton,
 	IABPromptModel,
 	IABPromptProps,
-} from '../banner/iab-prompt-model';
-import { IAB_PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
+} from '../banner/iab-prompt.model';
+import { IAB_PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
 import { element, hiddenBanner, readSpot, renderBrandingTag } from './dom';
 
 /** Site options the IAB banner reads. */

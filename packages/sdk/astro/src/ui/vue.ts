@@ -19,10 +19,10 @@ import type {
 	ConsentDialogAdapter,
 	ConsentDialogContext,
 	ConsentDialogHandle,
-} from './adapter';
-import { requireDialogSurface } from './adapter';
-import { closeDialogSurface } from './close-dialog';
-import { buildProviderProps } from './provider-props';
+} from './register-dialog-adapter';
+import { requireDialogSurface } from './register-dialog-adapter';
+import { closeDialogSurface } from './close-dialog-surface';
+import { buildProviderProps } from './build-provider-props';
 
 /** The Vue 3 dialog surface implementation. */
 export const vueDialogAdapter: ConsentDialogAdapter = {

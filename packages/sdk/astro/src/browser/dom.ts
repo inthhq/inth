@@ -4,8 +4,8 @@
 
 import { brandMarkSvg } from '@inth/sdk/ui/utils/branding';
 
-import { resolveBrandingModel } from '../banner/branding-model';
-import type { BrandingModelInput } from '../banner/branding-model';
+import { resolveBrandingModel } from '../banner/branding.model';
+import type { BrandingModelInput } from '../banner/branding.model';
 
 type Attributes = Record<string, string | undefined>;
 

@@ -18,7 +18,7 @@ import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import surfaceStyles from '@inth/sdk/ui/styles/components/consent-surface';
 import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 
-import type { ClassNameMap } from '../banner/class-names';
+import type { ClassNameMap } from '../banner/banner-class-names.model';
 
 /** The class maps the consent prompt and its options read. */
 export interface PromptClassNames {

@@ -72,23 +72,23 @@ import {
 	IAB_PROMPT_SLOT_ATTRIBUTE,
 	PROMPT_SLOT_ATTRIBUTE,
 	readIABSpotModels,
-} from './banner/slot';
+} from './banner/prompt-slot.model';
 import {
 	attachBannerActions,
 	registerOptOutLinkHandler,
 	resetDialogWarming,
 	warmDialog,
-} from './browser/banner-actions';
-import type { DeferredCommitted } from './browser/commit';
-import { reportUnhashedScripts } from './browser/csp-report';
+} from './browser/attach-banner-actions';
+import type { DeferredCommitted } from './browser/complete-commit';
+import { reportUnhashedScripts } from './browser/report-unhashed-scripts';
 import {
 	ensureDialogHost,
 	readDialogDisableAnimation,
 	readDialogLegalLinks,
-} from './browser/dialog-host';
-import { loadDialog } from './browser/dialog-loading';
-import { keepDialogStylesOnSwap } from './browser/dialog-styles';
-import { activateGatedScripts } from './browser/inline-scripts';
+} from './browser/ensure-dialog-host';
+import { loadDialog } from './browser/load-dialog';
+import { keepDialogStylesOnSwap } from './browser/load-dialog-styles';
+import { activateGatedScripts } from './browser/activate-gated-scripts';
 import {
 	COLOR_SCHEME_KEY,
 	CONFIG_KEY,
@@ -98,21 +98,21 @@ import {
 	nonceOf,
 	readPageNonce,
 } from './browser/page-state';
-import { syncPrivacyChoicesLinks } from './browser/privacy-choices-link';
-import type * as PromptModule from './browser/prompt';
-import type { PromptController } from './browser/prompt';
-import type * as IABPromptRenderer from './browser/render-iab-prompt';
-import type { EarlyDialog, EngineHandoff } from './browser/shell';
-import { takeEarlyTaps, unhideEarlyTap } from './browser/trigger';
+import { syncPrivacyChoicesLinks } from './browser/sync-privacy-choices-links';
+import type * as PromptModule from './browser/mount-prompt';
+import type { PromptController } from './browser/mount-prompt';
+import type * as IABPromptRenderer from './browser/render-iab-prompt-into-slot';
+import type { EarlyDialog, EngineHandoff } from './browser/start-deferred-client';
+import { takeEarlyTaps, unhideEarlyTap } from './browser/schedule-deferred-engine';
 import type {
 	AstroConsentClient,
 	AstroConsentSaveInput,
 	AstroEngineClient,
-} from './client-types';
-import { assertIABAvailable, isIABUnavailable } from './libs/iab-unavailable';
-import type { ResolveTransport } from './transport';
-import type { InthClientOptionsExtension, InthResolvedOptions } from './types';
-import type { ConsentDialogHandle, ConsentDialogKind } from './ui/adapter';
+} from './astro-consent-client.model';
+import { assertIABAvailable, isIABUnavailable } from './libs/iab-unavailable.model';
+import type { ResolveTransport } from './transport-resolvers.model';
+import type { InthClientOptionsExtension, InthResolvedOptions } from './inth-options.model';
+import type { ConsentDialogHandle, ConsentDialogKind } from './ui/register-dialog-adapter';
 
 /**
  * Property of the engine's client that makes an event dispatcher for its
@@ -1050,7 +1050,7 @@ let promptRender: PendingPromptRender | null = null;
 type PromptRendererModule = typeof IABPromptRenderer;
 
 const loadDefaultPromptRenderer = (): Promise<PromptRendererModule> =>
-	import('./browser/render-iab-prompt');
+	import('./browser/render-iab-prompt-into-slot');
 
 let loadPromptRenderer = loadDefaultPromptRenderer;
 
@@ -1241,7 +1241,7 @@ const ensureIABPromptRendered = function ensureIABPromptRendered(
 type PromptChunk = typeof PromptModule;
 
 const loadDefaultPrompt = (): Promise<PromptChunk> =>
-	import('./browser/prompt');
+	import('./browser/mount-prompt');
 
 let loadPrompt = loadDefaultPrompt;
 
@@ -1486,4 +1486,4 @@ export const boot = function boot(
 	return client;
 };
 
-export { activateGatedScripts } from './browser/inline-scripts';
+export { activateGatedScripts } from './browser/activate-gated-scripts';

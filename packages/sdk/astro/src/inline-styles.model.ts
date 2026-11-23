@@ -16,7 +16,7 @@ import {
 export {
 	INLINE_STYLES_CSS,
 	INLINE_STYLES_ID,
-} from './browser/first-paint-styles';
+} from './browser/first-paint-styles.model';
 
 /** Marks the IAB banner's inlined first-paint rules. */
 export const INLINE_IAB_STYLES_ID = iabFirstPaintID;

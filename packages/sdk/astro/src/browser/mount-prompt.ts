@@ -49,27 +49,27 @@ import {
 import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
 import { tabbableElements } from '@inth/sdk/ui/utils';
 
-import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
-import { containerSheetsPresent, insertSheets } from '../parts/sheets';
-import type { StyleSheet } from '../parts/sheets';
+import { PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
+import { containerSheetsPresent, insertSheets } from '../parts/insert-sheets';
+import type { StyleSheet } from '../parts/insert-sheets';
 import { patchElement } from '../parts/vnode';
 import type { VElement } from '../parts/vnode';
-import type { PromptClassNames } from '../prompt/class-names';
-import { resolvePromptModel } from '../prompt/model';
+import type { PromptClassNames } from '../prompt/prompt-class-names';
+import { resolvePromptModel } from '../prompt/prompt.model';
 import type {
 	PromptContainerType,
 	PromptModel,
 	PromptOptions,
 	PromptProps,
-} from '../prompt/model';
-import type * as PanelModule from '../prompt/panel';
-import type { PromptPanel } from '../prompt/panel';
+} from '../prompt/prompt.model';
+import type * as PanelModule from '../prompt/create-prompt-panel';
+import type { PromptPanel } from '../prompt/create-prompt-panel';
 import {
 	PROMPT_ID_PREFIX,
 	promptIds,
 	renderPageStatus,
 	renderPrompt,
-} from '../prompt/view';
+} from '../prompt/render-prompt';
 
 /** Exits are 160ms; the controllers add their own slack. */
 const EXIT_MS = 160;
@@ -148,7 +148,7 @@ export const loadContainerSheets = async function loadContainerSheets(
  *
  * @internal
  */
-let loadPanel = (): Promise<typeof PanelModule> => import('../prompt/panel');
+let loadPanel = (): Promise<typeof PanelModule> => import('../prompt/create-prompt-panel');
 
 /**
  * Tests only.
@@ -158,7 +158,7 @@ let loadPanel = (): Promise<typeof PanelModule> => import('../prompt/panel');
 export const setPanelLoaderForTest = function setPanelLoaderForTest(
 	loader?: () => Promise<typeof PanelModule>
 ): void {
-	loadPanel = loader ?? (() => import('../prompt/panel'));
+	loadPanel = loader ?? (() => import('../prompt/create-prompt-panel'));
 };
 
 /** Read the spot's JSON, or `null` without the prompt's class names. */

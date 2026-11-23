@@ -17,14 +17,14 @@ import * as reactPanelSurface from '../components/islands/panel-surface';
 import * as vuePanelSurface from '../components/islands/panel-surface.vue';
 import { resolveOptions } from '../integration';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions } from '../types';
+import type { InthAstroOptions } from '../inth-options.model';
 import {
 	registerDialogAdapter,
 	registerDialogSurface,
 	resetDialogRegistriesForTest,
-} from '../ui/adapter';
-import type { ConsentDialogContext } from '../ui/adapter';
-import { buildProviderProps } from '../ui/provider-props';
+} from '../ui/register-dialog-adapter';
+import type { ConsentDialogContext } from '../ui/register-dialog-adapter';
+import { buildProviderProps } from '../ui/build-provider-props';
 import { reactDialogAdapter } from '../ui/react';
 import { vueDialogAdapter } from '../ui/vue';
 // The Vue adapter imports its plugin on first mount. Importing it here

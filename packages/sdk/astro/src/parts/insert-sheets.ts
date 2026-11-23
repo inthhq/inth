@@ -13,7 +13,7 @@
  * @internal
  */
 
-import type { PromptContainerType } from '../prompt/presentation';
+import type { PromptContainerType } from '../prompt/prompt-presentation.model';
 
 /** A stylesheet from `@inth/sdk/ui/styles/sheets/*`. */
 export interface StyleSheet {

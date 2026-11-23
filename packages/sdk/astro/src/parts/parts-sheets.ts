@@ -12,8 +12,8 @@ import * as button from '@inth/sdk/ui/styles/sheets/button';
 import * as parts from '@inth/sdk/ui/styles/sheets/parts';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
 
-import { insertSheets } from './sheets';
-import type { StyleSheet } from './sheets';
+import { insertSheets } from './insert-sheets';
+import type { StyleSheet } from './insert-sheets';
 
 /** React's `PARTS_SHEETS`, in cascade order. */
 export const PARTS_SHEETS: readonly StyleSheet[] = [tokens, button, parts];

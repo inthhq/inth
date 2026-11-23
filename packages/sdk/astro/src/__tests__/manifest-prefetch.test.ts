@@ -7,9 +7,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { completeGVL } from '../../../iab/src/__tests__/fixtures/gvl-sample';
 import { resolveOptions } from '../integration';
-import { createConsentMiddleware } from '../middleware-handler';
+import { createConsentMiddleware } from '../create-consent-middleware';
 import { manifest as manifestMode } from '../mode';
-import type { InthAstroOptions, InthLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 
 const MANIFEST = await buildConsentManifestFromConfig({
 	branding: 'inth',

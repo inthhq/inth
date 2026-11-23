@@ -38,12 +38,12 @@ import {
 } from '@inth/sdk/ui/utils';
 import type { LegalLinkEntry } from '@inth/sdk/ui/utils';
 
-import { resolveSlotBinding } from '../banner/theme-slots';
-import type { PromptClassNames } from './class-names';
-import { containerTypeOf, resolvePromptPresentation } from './presentation';
-import type { PromptContainerType, PromptLayouts } from './presentation';
+import { resolveSlotBinding } from '../banner/theme-slots.model';
+import type { PromptClassNames } from './prompt-class-names';
+import { containerTypeOf, resolvePromptPresentation } from './prompt-presentation.model';
+import type { PromptContainerType, PromptLayouts } from './prompt-presentation.model';
 
-export type { PromptContainerType, PromptLayouts } from './presentation';
+export type { PromptContainerType, PromptLayouts } from './prompt-presentation.model';
 
 /** The `<ConsentBanner />` props that shape its markup. */
 export interface PromptProps {

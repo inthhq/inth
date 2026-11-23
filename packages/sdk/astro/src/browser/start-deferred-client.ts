@@ -62,22 +62,22 @@ import type {
 	AstroConsentClient,
 	AstroEngineClient,
 	AstroConsentSaveInput,
-} from '../client-types';
-import type { InthClientOptionsExtension, InthResolvedOptions } from '../types';
-import type { ConsentDialogHandle, ConsentDialogKind } from '../ui/adapter';
+} from '../astro-consent-client.model';
+import type { InthClientOptionsExtension, InthResolvedOptions } from '../inth-options.model';
+import type { ConsentDialogHandle, ConsentDialogKind } from '../ui/register-dialog-adapter';
 import {
 	attachBannerActions,
 	registerDeferredClient,
 	warmDialog,
-} from './banner-actions';
-import type { CompleteCommitInput, DeferredCommitted } from './commit';
-import { declaresVendor } from './deferred-scripts';
+} from './attach-banner-actions';
+import type { CompleteCommitInput, DeferredCommitted } from './complete-commit';
+import { declaresVendor } from './declares-vendor';
 import {
 	ensureDialogHost,
 	readDialogDisableAnimation,
 	readDialogLegalLinks,
-} from './dialog-host';
-import { loadDialog } from './dialog-loading';
+} from './ensure-dialog-host';
+import { loadDialog } from './load-dialog';
 import {
 	BANNER_OVERLAY_SELECTOR,
 	BANNER_ROOT_SELECTOR,
@@ -85,9 +85,9 @@ import {
 	getWindow,
 	readPageNonce,
 } from './page-state';
-import type * as StandInModule from './stand-in';
-import type { DialogStandIn } from './stand-in';
-import { scheduleDeferredEngine, unhideEarlyTap } from './trigger';
+import type * as StandInModule from './create-dialog-stand-in';
+import type { DialogStandIn } from './create-dialog-stand-in';
+import { scheduleDeferredEngine, unhideEarlyTap } from './schedule-deferred-engine';
 
 /** Attribute on the boot data block. @internal */
 export const CONSENT_BOOT_ATTRIBUTE = 'data-inth-boot';
@@ -414,7 +414,7 @@ export const startDeferredClient = function startDeferredClient(
 		})();
 	};
 
-	const loadCommit = () => import('./commit');
+	const loadCommit = () => import('./complete-commit');
 
 	// Whether a choice may be recorded without the engine: the server found
 	// it a short case (see `canDeferEngine`) and nothing the browser adds,
@@ -515,7 +515,7 @@ export const startDeferredClient = function startDeferredClient(
 
 	let standInModule: Promise<typeof StandInModule> | undefined;
 	const loadStandIn = (): Promise<typeof StandInModule> => {
-		standInModule ??= import('./stand-in');
+		standInModule ??= import('./create-dialog-stand-in');
 		return standInModule;
 	};
 

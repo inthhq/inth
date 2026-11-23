@@ -3,20 +3,20 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import { createPersistence } from '@inth/sdk/modules/persistence';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { iabPromptClassNames } from '../banner/class-names';
+import { iabPromptClassNames } from '../banner/banner-class-names.model';
 import {
 	IAB_PROMPT_SLOT_ATTRIBUTE,
 	PROMPT_SLOT_ATTRIBUTE,
-} from '../banner/slot';
+} from '../banner/prompt-slot.model';
 import { boot, registerIAB } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
-import { promptClassNames } from '../prompt/class-names';
-import { resolvePromptModel } from '../prompt/model';
-import { renderPromptHTML } from '../prompt/server';
+import { promptClassNames } from '../prompt/prompt-class-names';
+import { resolvePromptModel } from '../prompt/prompt.model';
+import { renderPromptHTML } from '../prompt/render-prompt-html';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions } from '../types';
+import type { InthAstroOptions } from '../inth-options.model';
 import { createTestPageIAB } from './page-iab';
 import { testResolution, testRule } from './policy-fixture';
 // The client imports the prompt, the IAB renderer, and @inth/sdk/iab for an IAB policy,
@@ -25,8 +25,8 @@ import { testResolution, testRule } from './policy-fixture';
 // that while this file loads.
 import '@inth/sdk/iab';
 
-import '../browser/prompt';
-import '../browser/render-iab-prompt';
+import '../browser/mount-prompt';
+import '../browser/render-iab-prompt-into-slot';
 
 /**
  * A prerendered page is built once and served to every visitor, so the

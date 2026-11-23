@@ -18,7 +18,7 @@ import {
 	resolveConsentContext,
 	waitUntilFromLocals,
 } from '../server';
-import type { InthAstroOptions } from '../types';
+import type { InthAstroOptions } from '../inth-options.model';
 
 const MANIFEST = await buildConsentManifestFromConfig({
 	branding: 'inth',

@@ -54,12 +54,12 @@ import * as dialogSheet from '@inth/sdk/ui/styles/sheets/dialog';
 import * as expandSheet from '@inth/sdk/ui/styles/sheets/expand';
 import type { Theme } from '@inth/sdk/ui/theme';
 
-import { resolveSlotBinding } from '../banner/theme-slots';
-import { insertSheets } from '../parts/sheets';
+import { resolveSlotBinding } from '../banner/theme-slots.model';
+import { insertSheets } from '../parts/insert-sheets';
 import { h, raw } from '../parts/vnode';
 import type { VChild, VElement } from '../parts/vnode';
-import type { PromptClassNames } from './class-names';
-import { rightsBundleOf } from './model';
+import type { PromptClassNames } from './prompt-class-names';
+import { rightsBundleOf } from './prompt.model';
 
 /** The options' rules: the in-place panel, then the dialog's rows over it. */
 export const PANEL_SHEETS = [expandSheet, dialogSheet] as const;

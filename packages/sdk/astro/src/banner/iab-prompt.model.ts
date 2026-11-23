@@ -22,9 +22,9 @@ import type { Translations } from '@inth/sdk/translations';
 import type { AllThemeKeys, Theme } from '@inth/sdk/ui/theme';
 import { getTextDirection } from '@inth/sdk/ui/utils';
 
-import type { IABPromptClassNames } from './class-names';
-import { joinClasses } from './class-names';
-import { resolveSlotBinding } from './theme-slots';
+import type { IABPromptClassNames } from './banner-class-names.model';
+import { joinClasses } from './banner-class-names.model';
+import { resolveSlotBinding } from './theme-slots.model';
 
 /** Where the IAB banner floats, as React's renders it. */
 const IAB_POSITION = 'bottom-left';

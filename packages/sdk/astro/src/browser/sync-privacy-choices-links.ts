@@ -14,8 +14,8 @@ import { resolvePrivacyChoicesLink } from '@inth/sdk/surface-state';
 import type { OptOutLinkVariant } from '@inth/sdk/surface-state';
 import type { Translations } from '@inth/sdk/translations';
 
-import { privacyChoicesLinkIconSvg } from '../parts/link-icon';
-import type { InthResolvedOptions } from '../types';
+import { privacyChoicesLinkIconSvg } from '../parts/privacy-choices-link-icon.model';
+import type { InthResolvedOptions } from '../inth-options.model';
 
 /** Marks a stock link; the value is its `variant` prop, or empty. */
 export const PRIVACY_CHOICES_LINK_ATTRIBUTE = 'data-inth-privacy-choices-link';

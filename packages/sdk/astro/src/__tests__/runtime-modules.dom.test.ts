@@ -12,7 +12,7 @@ import { boot, registerRuntimeModules } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions } from '../types';
+import type { InthAstroOptions } from '../inth-options.model';
 import { testResolution, testRule } from './policy-fixture';
 
 const OPTIONS: InthAstroOptions = {

@@ -30,11 +30,11 @@ import type {
 	RuntimeEventDispatcherOptions,
 } from '@inth/sdk/events';
 
-import { warmDialogTarget } from './browser/banner-actions';
-import { preloadDialogChunks } from './browser/dialog-loading';
+import { warmDialogTarget } from './browser/attach-banner-actions';
+import { preloadDialogChunks } from './browser/load-dialog';
 import { GLOBAL_KEY, getWindow, readPageNonce } from './browser/page-state';
-import type { AstroConsentClient } from './client-types';
-import type { ConsentDialogKind } from './ui/adapter';
+import type { AstroConsentClient } from './astro-consent-client.model';
+import type { ConsentDialogKind } from './ui/register-dialog-adapter';
 
 /**
  * The page's consent client, once the page script has run.
@@ -182,15 +182,15 @@ export type {
 	AstroConsentClient,
 	AstroConsentSaveInput,
 	ConsentAction,
-} from './client-types';
+} from './astro-consent-client.model';
 export {
 	ACTION_ATTRIBUTE,
 	attachBannerActions,
 	DIALOG_ATTRIBUTE,
 	DIALOG_TAB_ATTRIBUTE,
-} from './browser/banner-actions';
-export { startDeferredClient } from './browser/shell';
-export { activateGatedScripts } from './browser/inline-scripts';
+} from './browser/attach-banner-actions';
+export { startDeferredClient } from './browser/start-deferred-client';
+export { activateGatedScripts } from './browser/activate-gated-scripts';
 export {
 	boot,
 	registerIAB,
@@ -208,14 +208,14 @@ export type {
 	RuntimeEventDispatcherOptions as GetEventDispatcherOptions,
 } from '@inth/sdk/events';
 export type { ResolvedVendor, VendorChoice } from '@inth/sdk/engine';
-export type { ConsentDialogKind } from './ui/adapter';
-export { registerDialogAdapter, registerDialogSurface } from './ui/adapter';
-export { registerDialogStyles } from './browser/dialog-styles';
+export type { ConsentDialogKind } from './ui/register-dialog-adapter';
+export { registerDialogAdapter, registerDialogSurface } from './ui/register-dialog-adapter';
+export { registerDialogStyles } from './browser/load-dialog-styles';
 // The engine chunk registers one of these with `registerTransport()`.
-export { hostedTransport, lazyTransport, testingTransport } from './transport';
+export { hostedTransport, lazyTransport, testingTransport } from './transport-resolvers.model';
 export type {
 	ConsentDialogAdapter,
 	ConsentDialogContext,
 	ConsentDialogHandle,
 	ConsentDialogSurfaceLoader,
-} from './ui/adapter';
+} from './ui/register-dialog-adapter';

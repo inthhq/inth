@@ -10,7 +10,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { resolveOptions } from '../integration';
 import { resolveConsentContext } from '../server';
-import type { InthAstroOptions } from '../types';
+import type { InthAstroOptions } from '../inth-options.model';
 import { iabInitResponse, SITE_WITHOUT_IAB } from './iab-policy-fixture';
 import { testWire } from './policy-fixture';
 

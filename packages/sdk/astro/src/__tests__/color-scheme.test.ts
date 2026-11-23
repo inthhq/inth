@@ -15,7 +15,7 @@ import ConsentBanner from '../components/prompt.astro';
 import { inth, resolveOptions } from '../integration';
 import { buildColorSchemeScript, resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions, InthLocals } from '../types';
+import type { InthAstroOptions, InthLocals } from '../inth-options.model';
 import { testRule } from './policy-fixture';
 
 let container: AstroContainer;

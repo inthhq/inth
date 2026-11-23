@@ -10,7 +10,7 @@
 import { applyExperimentTheme } from '@inth/sdk/engine';
 import type { ConsentRuntime } from '@inth/sdk/runtime';
 
-import type { InthResolvedOptions } from '../types';
+import type { InthResolvedOptions } from '../inth-options.model';
 
 /**
  * The slice of the integration options a dialog island renders with.

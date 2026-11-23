@@ -9,8 +9,8 @@
 import type { ConsentSnapshot, KernelConfig } from '@inth/sdk/engine';
 import { canDeferEngine as canDeferCoreEngine } from '@inth/sdk/server';
 
-import { declaresVendor } from '../browser/deferred-scripts';
-import type { InthLocals, InthResolvedOptions } from '../types';
+import { declaresVendor } from '../browser/declares-vendor';
+import type { InthLocals, InthResolvedOptions } from '../inth-options.model';
 
 type DeferOptions = Pick<
 	InthResolvedOptions,

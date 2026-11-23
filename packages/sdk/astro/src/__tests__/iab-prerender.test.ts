@@ -8,15 +8,15 @@ import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { iabPromptClassNames } from '../banner/class-names';
-import { IAB_PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
-import { buildIABPrompt } from '../browser/render-iab-prompt';
+import { iabPromptClassNames } from '../banner/banner-class-names.model';
+import { IAB_PROMPT_SLOT_ATTRIBUTE } from '../banner/prompt-slot.model';
+import { buildIABPrompt } from '../browser/render-iab-prompt-into-slot';
 import IABConsentBanner from '../components/iab-prompt.astro';
 import { resolveOptions } from '../integration';
 import { hosted as hostedMode } from '../mode';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
-import type { InthAstroOptions } from '../types';
+import type { InthAstroOptions } from '../inth-options.model';
 import { describeTree } from './dom-tree';
 
 let container: AstroContainer;

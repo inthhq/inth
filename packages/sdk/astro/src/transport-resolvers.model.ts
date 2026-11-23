@@ -19,7 +19,7 @@ import { createV1HostedTransport } from '@inth/sdk/engine';
 import { testingOptionsOf } from '@inth/sdk/modes';
 import { clientMode } from '@inth/sdk/runtime/client-mode';
 
-import type { InthResolvedOptions } from './types';
+import type { InthResolvedOptions } from './inth-options.model';
 
 /** The options a transport is built from. */
 type TransportOptions = Pick<
@@ -57,7 +57,7 @@ export const testingTransport: ResolveTransport = ({ mode }) =>
 			const load = function load(): Promise<KernelTransport> {
 				loading ??= (async () => {
 					try {
-						const { createTestingMode } = await import('./testing-transport');
+						const { createTestingMode } = await import('./create-testing-mode');
 						return createTestingMode(
 							'@inth/astro/testing',
 							mode.type === 'testing' ? testingOptionsOf(mode) : {}
