@@ -11,20 +11,28 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { boot } from '../client';
 import type { AstroConsentClient } from '../client';
+// Vite compiles each island's whole component tree on first import. Static
+// imports do it while this file loads, so no test timeout covers it.
+import * as reactPanelSurface from '../components/islands/panel-surface';
+import * as vuePanelSurface from '../components/islands/panel-surface.vue';
 import { resolveOptions } from '../integration';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions } from '../types';
 import {
 	registerDialogAdapter,
+	registerDialogSurface,
 	resetDialogRegistriesForTest,
 } from '../ui/adapter';
 import type { ConsentDialogContext } from '../ui/adapter';
 import { buildProviderProps } from '../ui/provider-props';
+import { reactDialogAdapter } from '../ui/react';
+import { vueDialogAdapter } from '../ui/vue';
 // The Vue adapter imports its plugin on first mount. Importing it here
 // compiles it while this file loads, outside any test timeout.
 import '@inth/vue/vue-plugin';
 
 import { testRule } from './policy-fixture';
+import { ISLAND_RENDER_TIMEOUT } from './react-dialog-island';
 
 const cleanup: (() => Promise<void> | void)[] = [];
 
@@ -126,6 +134,40 @@ describe('disableAnimation on the dialog island', () => {
 				buildProviderProps(context.runtime, context.options).options
 					.disableAnimation
 			).toBe(expected);
+		}
+	);
+});
+
+describe.each(['react', 'vue'] as const)('the %s dialog island', (ui) => {
+	it.each([
+		{ disableAnimation: true, expected: 'off' },
+		{ disableAnimation: undefined, expected: null },
+	] as const)(
+		'marks its backdrop data-animation=$expected when disableAnimation is $disableAnimation',
+		async ({ disableAnimation, expected }) => {
+			renderDialogHost(undefined);
+			if (ui === 'react') {
+				registerDialogAdapter('react', () =>
+					Promise.resolve(reactDialogAdapter)
+				);
+				registerDialogSurface('react', () =>
+					Promise.resolve(reactPanelSurface)
+				);
+			} else {
+				registerDialogAdapter('vue', () => Promise.resolve(vueDialogAdapter));
+				registerDialogSurface('vue', () => Promise.resolve(vuePanelSurface));
+			}
+			await bootClient({ disableAnimation, ui }).openDialog();
+			// The stock sheet turns the dialog's motion off from this
+			// attribute, as it does the banner's.
+			const backdrop = await vi.waitFor(() => {
+				const found = document.querySelector(
+					'[data-testid="consent-dialog-root"]'
+				);
+				expect(found).not.toBeNull();
+				return found as HTMLElement;
+			}, ISLAND_RENDER_TIMEOUT);
+			expect(backdrop.getAttribute('data-animation')).toBe(expected);
 		}
 	);
 });

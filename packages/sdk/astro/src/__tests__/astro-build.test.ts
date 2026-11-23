@@ -217,6 +217,38 @@ describe('an Astro build', () => {
 	}, 60_000);
 
 	it.each(['react', 'svelte'] as const)(
+		'keeps the embedded widget out of the %s dialog island and everything it loads',
+		async (ui) => {
+			// The dialog never renders `ConsentWidget`; only a page that puts
+			// one on itself should download it.
+			const outDir = await buildFixture(ui);
+			const files = await lazyChunks(outDir);
+			const island = files.names.find((name) =>
+				name.startsWith('panel-surface.')
+			);
+			expect(island).toBeDefined();
+			// The island's download and the dialog's: each chunk that renders
+			// the dialog, with what it imports statically. A part the dialog
+			// imports on demand, such as a confirmation, is not part of it.
+			const dialogChunks = files.names.filter((name) =>
+				files.code(name).includes('consent-dialog-done')
+			);
+			const reached = new Set(
+				[island ?? '', ...dialogChunks].flatMap(files.staticClosure)
+			);
+			expect(
+				[...reached].some((name) => files.code(name).includes('consent-dialog-done'))
+			).toBe(true);
+			expect(
+				[...reached].filter((name) =>
+					files.code(name).includes('consent-widget-root')
+				)
+			).toEqual([]);
+		},
+		60_000
+	);
+
+	it.each(['react', 'svelte'] as const)(
 		'names no chunk a %s page loads on demand like a consent banner',
 		async (ui) => {
 			// Vite names a lazy chunk after the module it imports, and content
