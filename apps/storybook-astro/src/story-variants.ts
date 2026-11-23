@@ -112,6 +112,11 @@ export interface AstroStoryVariant {
 	/** Include a server-rendered `<ConsentDialogLink right="opt-out" />` beside the host. */
 	withOptOutLink?: boolean;
 	/**
+	 * Render `<ConsentDialog />` after the component, as React's stories
+	 * put `<ConsentDialog />` beside the banner or link that opens it.
+	 */
+	withDialog?: boolean;
+	/**
 	 * Render the component as a docs design recipe: over the demo page, with
 	 * a "Privacy settings" `<ConsentDialogTrigger>` in its footer and a
 	 * `<ConsentDialog />`, the scene every framework's recipe stories share.
@@ -344,6 +349,32 @@ export const astroStoryVariants: readonly AstroStoryVariant[] = [
 		id: 'consent-banner--default',
 		options: { colorScheme: 'light', consentCategories: CATEGORIES },
 		props: { force: true },
+	},
+	{
+		component: 'consent-banner',
+		id: 'consent-banner--with-dialog',
+		options: { colorScheme: 'light', consentCategories: CATEGORIES },
+		props: { force: true },
+		withDialog: true,
+	},
+	{
+		// React's focus story asks for the deprecated `trapFocus`, which
+		// makes its prompt blocking; Astro has only the policy's constraint.
+		component: 'consent-banner',
+		id: 'consent-banner--blocking',
+		options: {
+			colorScheme: 'light',
+			consentCategories: CATEGORIES,
+			presentation: { prompt: { blocking: true } },
+		},
+		props: { force: true },
+	},
+	{
+		component: 'consent-dialog-trigger',
+		id: 'consent-dialog-link--default',
+		options: { colorScheme: 'light', consentCategories: CATEGORIES },
+		slots: { default: 'Privacy preferences' },
+		withDialog: true,
 	},
 	{
 		component: 'consent-banner',

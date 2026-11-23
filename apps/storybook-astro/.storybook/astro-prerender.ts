@@ -226,12 +226,16 @@ const variantHeaders = function variantHeaders(
 	return new Headers(gpc ? { 'sec-gpc': '1' } : {});
 };
 
+/** Where `<PrivacyChoicesLink />` lives, for the Privacy Choices pages. */
+const PRIVACY_CHOICES_LINK_FILE = 'components/privacy-choices-link.astro';
+
 /**
  * The page under a Privacy Choices story, as React's stories render it: a
- * heading, two paragraphs and the persistent page links, then the prompt
- * and, for the dialog stories, `<ConsentDialog />`. The EU and US opt-in
- * pages link the dialog themselves; the others carry
- * `<ConsentDialogLink right="opt-out" />`.
+ * heading, the page text and the persistent `<PrivacyChoicesLink />`, then
+ * the prompt and, for the dialog stories, `<ConsentDialog />`. The dialog
+ * stories' EU and US opt-in pages link the dialog themselves, with a plain
+ * button the story wires up the way React's `SettingsLink` calls
+ * `setActiveUI`.
  */
 const privacyChoicesPage = async function privacyChoicesPage(
 	story: NonNullable<AstroStoryVariant['privacyChoices']>,
@@ -247,31 +251,24 @@ const privacyChoicesPage = async function privacyChoicesPage(
 		? { eu: 'Privacy settings', 'us-opt-in': 'Your Privacy Choices' }
 		: {};
 	const label = settings[story.region];
-	const ownLink = story.region === 'eu' || story.region === 'us-opt-in';
 	const links = [
 		label
-			? `<button type="button" data-testid="consent-dialog-trigger" data-inth-action="customize" style="background:none;border:0;color:inherit;cursor:pointer;font:inherit;padding:0;text-decoration:underline">${label}</button>`
+			? `<button type="button" data-testid="consent-dialog-trigger" style="background:none;border:0;color:inherit;cursor:pointer;font:inherit;padding:0;text-decoration:underline">${label}</button>`
 			: '',
-		ownLink && story.dialog
-			? ''
-			: clean(
-					await renderPart(
-						COMPONENT_FILES['consent-dialog-trigger'] as string,
-						{
-							right: 'opt-out',
-						}
-					)
-				),
+		label ? '' : clean(await renderPart(PRIVACY_CHOICES_LINK_FILE, {})),
 	].join('');
 	const dialog = story.dialog
 		? clean(await renderPart(COMPONENT_FILES['consent-dialog'] as string, {}))
 		: '';
+	// React's banner page lists the site's own links and leaves the footer
+	// in flow; its dialog page drops them and lays the footer out in a row.
 	return [
 		'<main style="font-family:system-ui,sans-serif;line-height:1.6;margin:0 auto;max-width:720px;min-height:160vh;padding:48px 24px">',
 		'<h1>Acme Outdoor</h1>',
 		'<p>Tents, packs and stoves for every season. Browse the catalogue, read the field guides, or find a store near you.</p>',
-		'<p><a href="#catalogue">Catalogue</a> · <a href="#guides">Field guides</a></p>',
-		`<footer style="display:flex;gap:24px;margin-top:48px">${links}</footer>`,
+		story.dialog
+			? `<footer style="display:flex;gap:24px;margin-top:48px">${links}</footer>`
+			: `<p><a href="#catalogue">Catalogue</a> · <a href="#guides">Field guides</a></p><footer style="margin-top:48px">${links}</footer>`,
 		'</main>',
 		prompt,
 		dialog,
@@ -415,6 +412,14 @@ const renderVariants = async function renderVariants(
 					{ right: 'opt-out' }
 				);
 				html = `${clean(link)}${html}`;
+			}
+			if (variant.withDialog) {
+				// oxlint-disable-next-line no-await-in-loop -- One shared container.
+				const dialog = await renderPart(
+					COMPONENT_FILES['consent-dialog'] as string,
+					{}
+				);
+				html = `${html}${clean(dialog)}`;
 			}
 			if (variant.recipePage) {
 				// oxlint-disable-next-line no-await-in-loop -- See above.

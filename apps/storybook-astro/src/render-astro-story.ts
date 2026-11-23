@@ -288,6 +288,16 @@ export const renderAstroStory = function renderAstroStory(
 		if (variant.openDialog) {
 			void client.openDialog(variant.openDialog);
 		}
+		// The Privacy Choices dialog pages' own "Privacy settings" link is the
+		// site's code, as React's story `SettingsLink` is: it opens the dialog
+		// through the client, not through a stock component's hooks.
+		if (variant.privacyChoices) {
+			host
+				.querySelector('[data-testid="consent-dialog-trigger"]')
+				?.addEventListener('click', () => {
+					void client.openDialog('preferences');
+				});
+		}
 		if (variant.openOptOutConfirmation) {
 			void client.optOut();
 		}
