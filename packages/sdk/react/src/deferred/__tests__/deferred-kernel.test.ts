@@ -7,10 +7,13 @@ import type { ConsentKernel, ConsentSnapshot } from '@inth/sdk/engine';
 import { describe, expect, test, vi } from 'vitest';
 
 import {
+	EARLY_TAP_HOLD_PRESSES_KEY,
 	EARLY_TAP_NOTIFY_KEY,
+	EARLY_TAP_STYLE_ID,
 	EARLY_TAPS_WINDOW_KEY,
 	SERVER_START_FAILED_EVENT,
 } from '../../../../core/src/libs/page-globals';
+import { EARLY_CONSENT_TAP_SCRIPT } from '../../../../core/src/surface-actions/early-tap-script';
 import {
 	DISPLAY_ONLY_OPTIONS,
 	liveRootKey,
@@ -297,6 +300,47 @@ describe('scheduleDeferredEngine', () => {
 			stopEarly();
 		} finally {
 			Reflect.deleteProperty(host, EARLY_TAPS_WINDOW_KEY);
+			image.remove();
+			banner.remove();
+		}
+	});
+
+	test('a press on the banner starts the engine though the early-tap script holds it', () => {
+		const image = document.createElement('img');
+		image.setAttribute('fetchpriority', 'high');
+		Object.defineProperty(image, 'complete', { value: false });
+		const banner = document.createElement('div');
+		banner.dataset.testid = 'consent-banner-root';
+		const accept = document.createElement('button');
+		accept.dataset.action = 'accept';
+		banner.append(accept);
+		document.body.append(image, banner);
+		const host = window as unknown as Record<string, Record<string, unknown>>;
+		// oxlint-disable-next-line no-new-func -- Runs the inline script as server HTML would.
+		new Function(EARLY_CONSENT_TAP_SCRIPT)();
+		const queue = host[EARLY_TAPS_WINDOW_KEY] as Record<string, unknown> & {
+			stop: () => void;
+		};
+		// The root holds presses on the banner until the engine renders.
+		queue[EARLY_TAP_HOLD_PRESSES_KEY] = 1;
+		try {
+			const start = vi.fn();
+			const onTap = vi.fn();
+			const stop = scheduleDeferredEngine(start, onTap);
+			expect(start).not.toHaveBeenCalled();
+			// The script stops the press at the document; the engine's wake-up
+			// listens on the window, which sees it first.
+			accept.dispatchEvent(
+				new PointerEvent('pointerdown', { bubbles: true, composed: true })
+			);
+			expect(start).toHaveBeenCalledTimes(1);
+			accept.click();
+			expect(onTap).toHaveBeenCalledTimes(1);
+			stop();
+		} finally {
+			queue.stop();
+			Reflect.deleteProperty(host, EARLY_TAPS_WINDOW_KEY);
+			document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
 			image.remove();
 			banner.remove();
 		}

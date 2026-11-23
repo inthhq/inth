@@ -16,7 +16,6 @@
 import {
 	generateUuidV7,
 	hasStoredClearEpoch,
-	isShortCase,
 	pendingIsInert,
 	planInstantCommit,
 } from '@inth/sdk/surface-actions/instant-commit';
@@ -55,26 +54,6 @@ export const readAheadOfTap = function readAheadOfTap(
 		clearEpoch: hasStoredClearEpoch(config.storageConfig),
 		subjectId: generateUuidV7(),
 	};
-};
-
-/**
- * Whether a tap now would commit instantly, as far as can be told before
- * the tap: a press on the banner then needs no preloads.
- *
- * @param ahead - From {@link readAheadOfTap}.
- * @internal
- */
-export const canCommitInstantly = function canCommitInstantly(
-	handle: DeferredKernelHandle,
-	ahead: InstantCommitAhead | undefined
-): boolean {
-	const now = Date.now();
-	return Boolean(
-		ahead &&
-		!ahead.clearEpoch &&
-		pendingIsInert(handle) &&
-		isShortCase(handle.kernel.getSnapshot(), now, now)
-	);
 };
 
 /**

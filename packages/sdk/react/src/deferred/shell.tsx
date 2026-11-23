@@ -69,12 +69,7 @@ import type {
 	DeferredKernelHandle,
 	DeferredKernelOptions,
 } from './deferred-kernel';
-import {
-	canCommitInstantly,
-	commitInstantly,
-	readAheadOfTap,
-	startPlainScripts,
-} from './instant';
+import { commitInstantly, readAheadOfTap, startPlainScripts } from './instant';
 import type { InstantCommitAhead } from './instant';
 import {
 	deferredScripts,
@@ -133,7 +128,7 @@ export interface DeferredConsentShellProps<EngineModule> {
 	schedule?: (
 		start: () => void,
 		handle: DeferredKernelHandle,
-		onTap?: (pressed?: string) => void,
+		onTap?: () => void,
 		renderId?: string
 	) => () => void;
 	/**
@@ -236,11 +231,11 @@ interface ShellSession extends DeferredSession {
 	/** The render whose boot data the session was created from. */
 	renderId: string | undefined;
 	/**
-	 * Routes the banner tap the early-tap script recorded. With `pressed`,
-	 * the `data-action` of a banner button a pointer went down on: fetch
-	 * ahead of the tap.
+	 * Routes the banner tap the early-tap script recorded: the engine loads,
+	 * and its banner replays the tap. A press before the click already
+	 * started it, as any input on the page does (`scheduleDeferredEngine`).
 	 */
-	routeTap: (pressed?: string) => void;
+	routeTap: () => void;
 	/** Set once a commit recorded a banner choice. */
 	committed: () => DeferredCommitted | undefined;
 	/**
@@ -492,9 +487,16 @@ const createSession = function createSession<EngineModule>(
 				})()
 			);
 			// Commands waiting for the engine reject, so a surface an answer
-			// hid shows again; the next one asks for a new attempt.
+			// hid shows again; the next one asks for a new attempt. A banner
+			// the early-tap script hid for a tap the engine was to replay
+			// shows again too, or it stays hidden for good.
 			// oxlint-disable-next-line promise/prefer-await-to-then -- Settles the waiting commands.
-			engineLoad.catch(handle.fail);
+			engineLoad.catch((error: unknown) => {
+				if (typeof document !== 'undefined') {
+					document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
+				}
+				handle.fail(error);
+			});
 		}
 		return engineLoad;
 	};
@@ -520,13 +522,8 @@ const createSession = function createSession<EngineModule>(
 	 * and, for an accept, the plain scripts it would allow, so their
 	 * download overlaps the commit's. Nothing runs before the commit.
 	 */
-	const prepare = (action: string, pressed = false): void => {
+	const prepare = (action: string): void => {
 		if (!commitConfig || handle.attached() || engineRendering) {
-			return;
-		}
-		// The click commits instantly and inserts the scripts itself: a
-		// press needs nothing ahead of it.
-		if (pressed && canCommitInstantly(handle, ahead)) {
 			return;
 		}
 		soon(loadCommit);
@@ -928,7 +925,10 @@ const createSession = function createSession<EngineModule>(
 		stopStoredChoice: () => {
 			stopWatching();
 		},
-		surface<Value>(key: string, pick: (loaded: unknown) => Value) {
+		surface<Value>(
+			key: string,
+			pick: (loaded: unknown) => Value | PromiseLike<Value>
+		) {
 			let value = surfaces.get(key) as Recorded<Value> | undefined;
 			if (!value) {
 				// oxlint-disable-next-line promise/prefer-await-to-then -- See above.

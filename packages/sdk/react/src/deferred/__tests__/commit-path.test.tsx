@@ -504,3 +504,58 @@ test('an instant accept that neither the commit chunk nor the engine can record 
 	window.removeEventListener('unhandledrejection', unhandled);
 	await hydrated.unmount();
 });
+
+test('a banner tap the engine was to replay shows the banner again when the engine fails to load', async () => {
+	const state = config();
+	const { boot, page: streamed } = await serve(state);
+	const unhandled = vi.fn();
+	window.addEventListener('unhandledrejection', unhandled);
+	// Fails once, when the test says, then never settles: the page stays
+	// on the stand-in.
+	const failing = deferred<never>();
+	const loadEngine = vi
+		.fn<() => Promise<never>>()
+		.mockReturnValueOnce(failing.promise)
+		.mockImplementation(
+			() =>
+				new Promise<never>(() => {
+					// Never settles.
+				})
+		);
+	shareTapQueue(streamed);
+	const hydrated = await streamed.hydrate(
+		<ClientPage
+			boot={boot}
+			commit={{}}
+			loadEngine={loadEngine}
+			prefetch={fulfilledThenable(state)}
+			scripts={[]}
+		/>
+	);
+	const banner = streamed.doc.querySelector(BANNER) as HTMLElement;
+	await act(() => {
+		tapBanner(streamed, 'accept');
+	});
+	// The script hid the banner in the frame it ran in. The root runs in
+	// this window, so the style it removes is the one in this document.
+	const hide = streamed.doc.getElementById(EARLY_TAP_STYLE_ID);
+	expect(hide).not.toBeNull();
+	expect(getComputedStyle(banner).display).toBe('none');
+	document.head.append(hide as HTMLStyleElement);
+
+	await vi.waitFor(() => {
+		expect(loadEngine).toHaveBeenCalled();
+	});
+	await act(() => {
+		failing.reject(new TypeError('Failed to fetch chunk'));
+	});
+	await vi.waitFor(() => {
+		expect(document.getElementById(EARLY_TAP_STYLE_ID)).toBeNull();
+	});
+	expect(banner.isConnected).toBe(true);
+	expect(getComputedStyle(banner).display).not.toBe('none');
+	expect(localStorage.getItem('inth')).toBeNull();
+	expect(unhandled).not.toHaveBeenCalled();
+	window.removeEventListener('unhandledrejection', unhandled);
+	await hydrated.unmount();
+});

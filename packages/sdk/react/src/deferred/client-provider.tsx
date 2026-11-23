@@ -104,7 +104,7 @@ interface DeferredPlan {
 	schedule: (
 		start: () => void,
 		handle: DeferredKernelHandle,
-		onTap?: (pressed?: string) => void
+		onTap?: () => void
 	) => () => void;
 }
 

@@ -48,6 +48,12 @@ export interface BannerCommitOptions {
 	draft?: PreferenceDraft;
 	/** Surface to attribute the save to. Defaults to `'banner'`. */
 	uiSource?: SaveUISource;
+	/**
+	 * When the visitor chose, such as a tap the early-tap script recorded
+	 * before the banner hydrated. Defaults to now. Allow and Don't allow
+	 * only: a Save records the panel, which a tap never reaches.
+	 */
+	actionAt?: number;
 }
 
 /** What {@link commitBannerChoice} did. */
@@ -84,6 +90,7 @@ export const commitBannerChoice = function commitBannerChoice(
 				: undefined,
 	});
 	const uiSource = options.uiSource ?? 'banner';
+	const { actionAt } = options;
 	const { categories } = plan;
 	const { draft } = options;
 	// Vendor edits in the panel are still the visitor's to keep when no
@@ -105,9 +112,9 @@ export const commitBannerChoice = function commitBannerChoice(
 				: kernel.commands.save(undefined, { categories, uiSource });
 		}
 		if (plan.input === 'all' && categories !== undefined) {
-			return kernel.commands.save('all', { categories, uiSource });
+			return kernel.commands.save('all', { actionAt, categories, uiSource });
 		}
-		return kernel.commands.save(plan.input, { uiSource });
+		return kernel.commands.save(plan.input, { actionAt, uiSource });
 	};
 	const result = saveConsentSurface(kernel, save);
 	getSurfaceSession(kernel).commit();
