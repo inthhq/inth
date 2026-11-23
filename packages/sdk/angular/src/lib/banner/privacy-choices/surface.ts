@@ -967,10 +967,11 @@ export class PrivacyChoicesSurface {
 
 	/**
 	 * Escape folds the options or closes a confirmation, never the prompt
-	 * (PERM-03, PERM-15).
+	 * (PERM-03, PERM-15). A render hook, so the server, which has no page to
+	 * listen on, never runs it.
 	 */
 	#followEscape(): void {
-		effect((onCleanup) => {
+		afterRenderEffect((onCleanup) => {
 			if (this.phase() !== 'shown') {
 				return;
 			}
