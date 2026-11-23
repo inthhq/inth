@@ -16,8 +16,8 @@ import { useConsentSelector } from '../hooks/use-consent-selector';
 import {
 	isConsentCategoryRowsEqual,
 	selectConsentCategoryRows,
-	useCategorySelection,
 } from './internal/consent-category-rows.model';
+import { useCategorySelection } from './internal/use-category-selection';
 import { ConsentBrandingTag } from './internal/consent-branding-tag';
 import {
 	CONSENT_BUTTON_ROW_ITEM,
