@@ -61,7 +61,7 @@ import {
 } from '@inth/sdk/surface-state';
 
 import type { InthResolvedOptions } from '../inth-options';
-import type { ConsentBoot } from './restore-boot';
+import type { ConsentBoot } from './consent-boot.model';
 import {
 	DIALOG_ROOT,
 	scheduleDeferredEngine,
