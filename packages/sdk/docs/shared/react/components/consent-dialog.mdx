@@ -11,28 +11,32 @@ group: reference
 
   | Prop | Type | Default | Description |
   | --- | --- | --- | --- |
-  | `open` | `boolean` | follows active surface | Controls the open state. When set, Escape and the dialog's Save Settings, Accept All, and Reject All buttons no longer close it; update the prop instead. A missing policy or unlisted model still keeps it closed. |
+  | `open` | `boolean` | follows active surface | Controls the open state. `true` asks Inth to show the dialog; Close and Escape then close it, and `open` must turn `false` and back to `true` to ask again. `false` hides it. A missing policy or unlisted model still keeps it closed. |
   | `showTrigger` | `boolean \| ConsentDialogTriggerProps` | `false` | Renders a floating `ConsentDialogTrigger` next to the dialog. Pass an object to configure the trigger. |
   | `models` | `Model[]` | `['opt-in', 'opt-out', 'none']` | Policy models the dialog handles. Under an unlisted model such as `iab`, it stays closed. |
-  | `legalLinks` | `(keyof LegalLinks)[] \| null` | none | Selects which links from provider `options.legalLinks` render after the description. Omitting the prop renders none; `null` hides them. |
-  | `hideBranding` | `boolean` | `false` | Hides the "Consent by" tag in the card. |
+  | `legalLinks` | `(keyof LegalLinks)[] \| null` | shown | The footer shows the Cookie Policy under a choice regime and the Privacy Policy under an opt-out regime. `null` hides it; an array shows it only when its key is listed. |
   | `uiSource` | `string` | `'dialog'` | Source identifier recorded with saves made from this dialog. |
-  | `scrollLock`, `trapFocus` | `boolean` | from `blocking` | Deprecated. Setting either to `false` makes the dialog non-blocking unless the provider sets `presentation.preferences.blocking`, which wins. Prefer the provider option. |
-  | `disableAnimation` | `boolean` | `false` | Skips enter and exit animations for the backdrop and card. |
+  | `scrollLock`, `trapFocus` | `boolean` | `true` | Apply to the opt-out and opt-in confirmations this dialog hosts. The dialog itself always blocks the page. |
+  | `disableAnimation` | `boolean` | `false` | Skips enter and exit animations. |
   | `noStyle` | `boolean` | `false` | Removes built-in styling from every part. |
 </section>
 
 <section id="behavior">
   ## Behavior
 
-  The dialog wraps the preference center in a modal. Its card contains a header with `consentManagerDialog.title`, `consentManagerDialog.description`, and optional legal links, followed by the same category accordion and Reject All, Accept All, and Save Settings actions rendered by `ConsentWidget`, plus the branding tag. It mounts into `document.body` through a portal after hydration, so it never appears in server HTML.
+  The dialog is the full consent manager: "Your Privacy Choices". It is centred on desktop and a bottom sheet on phones. Its content follows the policy regime:
 
-  Without an `open` prop, the dialog follows the active surface and opens when it becomes `dialog`. These triggers set that surface:
+  - **Choice regime** (opt-in, and opt-out rules that ask for a choice): one switch per category in scope, with its vendors, and Reject All, Accept All, and Save. Save stays disabled until a switch differs from the recorded choice.
+  - **Opt-out regime** (opt-out rules with a notice): the sale-and-sharing row with Protect and Allow, the receipt of the recorded choice, a Preferences row for the category switches, and Done. Allowing again after an opt-out asks to confirm first (11 CCR §7028(a)).
 
-  - The Customize button on `ConsentBanner`, and the "Manage preferences" or "Do Not Sell or Share My Personal Information" button on a notice.
-  - `ConsentDialogLink` and `ConsentDialogTrigger`.
+  Without an `open` prop, the dialog follows the active surface and opens when it becomes `dialog`. These set that surface:
+
+  - [`PrivacyChoicesLink`](./privacy-choices-link), `ConsentDialogLink`, and `ConsentDialogTrigger`.
+  - The opt-out link on a notice when `presentation.optOutLink` is `'privacy-choices'` or `'california-privacy-choices'`.
   - The button inside a `ConsentGate` placeholder.
   - `useSetActiveUI()('dialog')` in your component, or `openDialog()` from `useHeadlessConsentUI()` on the headless subpath.
+
+  The banner's Customize button does not open the dialog. It opens the choices inside the banner.
 
   Inth splits the dialog code into its own chunk so it stays out of the first page load. It renders nothing until the chunk loads, which starts at the first of these events:
 
@@ -48,60 +52,39 @@ group: reference
 
   The dialog CSS travels inside the same chunk and applies before the dialog renders, keeping the first page load limited to banner rules.
 
-  Without an `open` prop, Escape closes the dialog without saving. If the policy still owes a choice, the banner returns. Save Settings, Accept All, and Reject All close the dialog as soon as the browser records the choice in the same click task, while the exit animation plays. The network request to Inth runs afterwards and never reopens the dialog: a failed request keeps the local choice, reports through `onError`, and retries later. See [when a choice is saved](/docs/concepts/consent-state#when-a-choice-is-saved) for the exact order. A draft that went stale after a policy change keeps the dialog open for review. With `open={true}`, those actions leave the dialog open until the parent sets `open={false}`. Clicking the backdrop does not close it. Closing discards unsaved toggles so the next open starts from the recorded choice. After saving from an uncontrolled dialog, all consent UI hides unless the policy still owes a notice prompt, in which case the banner returns.
+  The dialog CSS travels inside the same chunk and applies before the dialog renders, keeping the first page load limited to banner rules.
 
-  The preference center is blocking by default, combining a backdrop, body scroll lock, and focus trap. Set `presentation.preferences.blocking` to `false` in the provider options to turn off all three; the deprecated `scrollLock` and `trapFocus` props do the same for one dialog. `variant` and `position` apply only to prompts. Setting them under `presentation.preferences` logs an `invalid-variant` diagnostic in development and has no effect; the dialog is always centered.
+  Escape and Close close the dialog without saving. If the policy still owes a choice, the banner returns. Reject All, Accept All, and Save close the dialog as soon as the browser records the choice, in the same click task. The network request to Inth runs afterwards and never reopens the dialog: a failed request keeps the local choice, reports through `onError`, and retries later. See [when a choice is saved](/docs/concepts/consent-state#when-a-choice-is-saved). Clicking the backdrop does not close it. Closing discards unsaved switches, so the next open starts from the recorded choice.
 
-  The dialog never opens without a resolved policy rule, even when the active surface is already `dialog`; it appears as soon as a rule resolves without remounting. A rule with `model: 'none'` and no rights owes no consent UI, so the dialog stays closed. When a `none` rule lists any right, such as `rights: ['disclosure']` or `rights: ['preferences']`, the dialog opens as a settings route and Save finishes without writing a consent record.
+  The dialog always blocks the page: backdrop, scroll lock, and focus trap.
 
-  Copy comes from `consentManagerDialog.title`, `consentManagerDialog.description`, `common.acceptAll`, `common.rejectAll`, `common.save`, `optOut.action`, `optOut.notOptedOut`, `optOut.headingSaleAndShare`, `optOut.headingSaleAndTargetedAds`, `optOut.headingAll`, `optOut.statusRequest`, `optOut.statusSignal`, `optOut.optInLink`, `optOut.optInTitle`, `optOut.optInDescription`, `optOut.optInDescriptionWithRights`, `optOut.optInConfirm`, `optOut.optInCancel`, `optOut.lockedByGpc`, `optOut.lockedByAccount`, and `consentTypes.<category>.title` and `.description` for each row.
+  The dialog never opens without a resolved policy rule, even when the active surface is already `dialog`; it appears as soon as a rule resolves, without remounting. A rule with `model: 'none'` and no rights owes no consent UI, so the dialog stays closed. When a `none` rule lists a right, such as `rights: ['preferences']`, the dialog opens as a settings route, and closing it writes no consent record.
 
-  Under an `opt-out` policy, the preference center inside the dialog renders a sale-and-sharing block first, above the category accordion and outside any accordion item. Before the visitor opts out, the block shows the configured opt-out link title, a neutral status sentence, and an `Opt out` button that records the opt-out in one click without touching category switches or Save Settings. Once a durable opt-out is held, the button disappears and the block shows the honored status line (`role="status"`), receipt sentence, recorded time, and local reference. When the backend confirms the refused rights, the heading updates to name them; before confirmation, it stays on the configured link title. When Global Privacy Control is not locking the opt-out, the block also shows an `Opt back in…` link. Under any other policy model, no block renders.
+  Copy comes from the `privacyChoices` translation section and `consentTypes.<category>.title` and `.description` for each category.
 
-  Under an `opt-out` policy while an opt-out is held, opting back in uses a two-step confirmation dialog (11 CCR §7028(a)). Clicking `Opt back in…`, clicking Accept All, or turning `marketing` back on and clicking Save Settings opens a separate modal dialog instead of saving right away (`measurement` decides when `marketing` is not in scope). Focus starts on `Stay opted out`, both buttons carry equal prominence, and pressing Escape cancels with nothing saved. Confirming runs the pending action and lifts a device opt-out, or asks the backend to lift an account opt-out. Under an `opt-in` policy, Accept still lifts a held opt-out in one step.
-
-  While Global Privacy Control is active under a policy that maps it, signal-restricted switches and `marketing` (or `measurement` when `marketing` is not in scope) stay off and disabled with the GPC notice below each locked row, no `Opt back in…` link renders, and Save Settings and Accept All skip locked categories. When an account holds the opt-out and GPC is off, the account notice shows below `marketing` (or `measurement` when `marketing` is not in scope) and the switches stay usable. Turning `measurement` on while `marketing` stays off allows `measurement` without lifting the opt-out and skips confirmation. Turning `marketing` back on and saving, or clicking `Opt back in…`, asks for confirmation before requesting the backend to lift the account's opt-out, which stays in force until the backend confirms it. Read the same state and receipt with `useOptOutState()`.
+  While Global Privacy Control is active under a policy that maps it, the signal-restricted categories stay off and their switches are disabled with the GPC note. Read the same state and receipt with `useOptOutState()`.
 </section>
 
 <section id="accessibility">
   ## Accessibility
 
-  The panel carries `role="dialog"`, `aria-labelledby="consent-dialog-title"`, `aria-describedby="consent-dialog-description"`, and `aria-modal="true"` while blocking. Its `dir` attribute matches the active language.
+  The dialog carries `role="dialog"`, `aria-modal="true"`, and `aria-labelledby` pointing at its title. Its `dir` attribute matches the active language. Opening moves focus inside the dialog, Tab and Shift+Tab wrap inside it, and closing returns focus to the element that opened it. Status messages, such as the saved cue, use a `role="status"` region.
 
-  While blocking, opening moves focus to the first tabbable control inside the panel so keyboard users see a focus ring on a control rather than the whole card, while `aria-labelledby` and `aria-describedby` let screen readers announce the title and description. Tab and Shift+Tab wrap inside the panel, and closing returns focus to the element that opened it. A non-blocking dialog does not move focus on open or close. The backdrop has `aria-hidden` and is not focusable.
-
-  Each category switch uses the category title as its accessible name. The `necessary` switch is disabled and always on. Under an `opt-out` policy, the sale-and-sharing block renders as a `section` labelled by its heading above the category list. An honored opt-out renders a status line with `role="status"` inside the block, and a GPC or account lock notice renders as an `output` element linked to its switch through `aria-describedby`.
+  Each category switch uses the category title as its accessible name. The `necessary` switch is disabled and always on. On phones, the Preferences row and each category's vendor list open as a nested sheet with its own title and close button.
 </section>
 
-<section id="composition">
-  ## Composition
+<section id="customize">
+  ## Customize
 
-  Every part is available as `ConsentDialog.<Part>`: `Root`, `Overlay`, `Card`, `Header`, `HeaderTitle`, `HeaderDescription`, `Content`, `Footer`, and `ConsentCustomizationCard`. `Root` owns the portal, open state, focus trap, scroll lock, and backdrop, and accepts `open`, `models`, `noStyle`, `disableAnimation`, `scrollLock`, `trapFocus`, `uiSource`, and `overlay`. Pass `overlay={false}` to omit the backdrop, or pass a node to replace it.
+  Style the dialog with [theme tokens](/docs/customization/tokens) and these provider component slots: `dialog.root`, `dialog.container`, `dialog.card`, `dialog.header`, `dialog.title`, `dialog.content`, `dialog.footer`, `dialog.sheet`, `dialog.categoryGroup`, `dialog.rightsRow`, `dialog.receipt`, `dialog.preferencesRow`, `dialog.saveButton`, `dialog.doneButton`, and `description.dialog`. `dialog.overlay` styles the backdrop, which is the dialog's root element.
 
-  ```tsx
-  <ConsentDialog.Root>
-    <ConsentDialog.Card>
-      <ConsentDialog.Header>
-        <ConsentDialog.HeaderTitle>Your privacy choices</ConsentDialog.HeaderTitle>
-        <ConsentDialog.HeaderDescription legalLinks={['privacyPolicy']} />
-      </ConsentDialog.Header>
-      <ConsentDialog.Content>
-        <ConsentWidget />
-      </ConsentDialog.Content>
-      <ConsentDialog.Footer hideBranding />
-    </ConsentDialog.Card>
-  </ConsentDialog.Root>
-  ```
+  The root carries `data-regime` (`eu` or `us`) and `data-layout` (`desktop` or `phone`).
 
-  Keep `ConsentWidget` inside `Content`: it owns the draft, switches, and policy actions, and inherits the dialog's `uiSource`. `Footer` renders the branding tag unless you pass children or `hideBranding`.
-
-  The positioner carries `data-slot="dialog-positioner"`, and both it and the panel carry `data-blocking="true"` while blocking. Provider component slots for the built-in layout are `dialog.root`, `dialog.container`, `dialog.card`, `dialog.header`, `dialog.title`, `dialog.content`, `dialog.overlay`, `description.dialog`, `manager.optOut`, `manager.optOutStatus`, `manager.footer`, and `tag.dialog`.
-
-  `ConsentDialog` from the package root and `@inth/react/consent-dialog` is the deferred component described under Behavior, and each `ConsentDialog.<Part>` loads from the same chunk. `@inth/react/components/consent-dialog` exports the dialog without deferral plus each part as a named export (`Card`, `Header`, `Overlay`, `Root`, and the rest). Importing from that subpath puts the dialog code in the initial bundle so the first open needs no download, at the cost of shipping it to every visitor.
+  `ConsentDialog` from the package root and `@inth/react/consent-dialog` is the deferred component described under Behavior. `@inth/react/components/consent-dialog` exports the dialog without deferral. Importing from that subpath puts the dialog code in the initial bundle so the first open needs no download, at the cost of shipping it to every visitor. For your own markup, use `ConsentWidget` or the headless hooks.
 </section>
 
 <section id="verify">
   ## Verify
 
-  Test with the default blocking, uncontrolled dialog and an optional in-scope category not restricted by policy or GPC. Open the dialog from the banner's Customize button or a preferences link. Confirm a centered card opens over a dimmed backdrop, background scroll locks, and Tab stays inside the card. Press Escape and confirm the dialog closes and focus returns to the trigger. Reopen it, enable a category, and click Save. Confirm the dialog closes and `useConsent('<category>')` returns `true`; under a choice prompt the banner stays closed, while a `notice` prompt stays visible until acknowledged. Reload the page and reopen the dialog to confirm the switch preserves the saved choice.
+  Test with an opt-in policy and an optional in-scope category not restricted by policy or GPC. Open the dialog from a `PrivacyChoicesLink`. Confirm a centred card opens over a dimmed backdrop, background scroll locks, and Tab stays inside the card. Press Escape and confirm the dialog closes and focus returns to the link. Reopen it, turn on a category, and click Save. Confirm the dialog closes and `useConsent('<category>')` returns `true`. Reload the page and reopen the dialog to confirm the switch keeps the saved choice.
 </section>

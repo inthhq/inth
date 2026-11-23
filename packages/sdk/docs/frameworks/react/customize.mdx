@@ -98,7 +98,7 @@ The provider `theme` option reads only `consentActions` and slot styles. Token f
 
 ## Change the banner shape
 
-`ConsentBanner` accepts `variant` (`floating`, `bar`, `widget`, or `wall`) and `position`. To apply one shape globally, set `presentation.prompt` in the provider options. This example uses a full-width bar for notices and a floating card for choices:
+`ConsentBanner` accepts `container`, `edgeStyle`, and `blockUntilChoice`. To apply one container globally, set `presentation.prompt.container` in the provider options. Without either, the policy rule's `surface.container` applies. This example uses a full-width banner for notices and a corner Card for choices:
 
 {/* example: fragment */}
 
@@ -108,12 +108,18 @@ import { ConsentBanner, usePolicyRule } from '@inth/react';
 export function RegionalBanner() {
 	const policy = usePolicyRule();
 	return (
-		<ConsentBanner variant={policy?.prompt === 'notice' ? 'bar' : 'floating'} />
+		<ConsentBanner
+			container={
+				policy?.prompt === 'notice'
+					? { edge: 'bottom', type: 'banner' }
+					: { position: 'start', type: 'card' }
+			}
+		/>
 	);
 }
 ```
 
-Render `RegionalBanner` instead of `ConsentBanner` inside the provider. [ConsentBanner](/docs/frameworks/react/components/consent-banner#variants) lists every variant, position, and per-policy button layout.
+Render `RegionalBanner` instead of `ConsentBanner` inside the provider. [ConsentBanner](/docs/frameworks/react/components/consent-banner#containers) lists every container and position.
 
 ## Style one component part
 

@@ -2,17 +2,17 @@ import type { ExperimentArmName } from '@inth/nextjs';
 import { defineExperiment } from '@inth/nextjs/engine';
 
 /**
- * Does a full-width bar at the bottom of the page get as many opt-ins as
- * the floating card, while covering less of the shop?
+ * Does a full-width Banner at the bottom of the page get as many opt-ins as
+ * the Card, while covering less of the shop?
  *
- * `control` is the stock banner in Northwind's theme: a card in the
- * bottom-left corner. The `bar` arm changes only the shape. The policy,
+ * `control` is the stock banner in Northwind's theme: a Card in the start
+ * corner. The `bar` arm changes only the container. The policy,
  * the copy and the buttons stay the same, so both arms record choices under
  * the same policy.
  */
 export const bannerExperiment = defineExperiment({
 	arms: {
-		bar: { prompt: { variant: 'bar' } },
+		bar: { prompt: { container: { edge: 'bottom', type: 'banner' } } },
 	},
 	id: 'banner-layout',
 	// Used only when the flag lookup returns nothing and Inth picks the arm.

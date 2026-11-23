@@ -1,24 +1,16 @@
 ---
 title: ConsentDialog
-description: Mount the modal ConsentDialog preference center in React, wire triggers, and control blocking and focus.
+description: Mount ConsentDialog, the Your Privacy Choices dialog, in React and open it from links, triggers, or your own code.
 group: frameworks
 ---
 
-Mount `ConsentDialog` once inside `InthProvider`, next to `ConsentBanner`, to provide a modal preference center.
+Mount `ConsentDialog` once inside `InthProvider`, next to `ConsentBanner`. It is the full consent manager: "Your Privacy Choices".
 
 ## Open the preference center
 
-`ConsentDialog` opens whenever `dialog` becomes the active surface: from the banner's Customize button, `ConsentDialogLink`, `ConsentDialogTrigger`, or your own code.
+`ConsentDialog` opens whenever `dialog` becomes the active surface: from `PrivacyChoicesLink`, `ConsentDialogLink`, `ConsentDialogTrigger`, or your own code.
 
 <include src="../../../shared/examples/react/consent.mdx" />
-
-To hide the "Consent by" tag in the dialog card, pass `hideBranding`:
-
-{/* example: fragment */}
-
-```tsx
-<ConsentDialog hideBranding />;
-```
 
 To open the dialog from a custom button or menu item, call `useSetActiveUI`:
 
@@ -35,7 +27,7 @@ export function PrivacyMenuItem() {
 }
 ```
 
-Use [ConsentDialogLink](./consent-dialog-link) for footer links with `data-inth-rights`, or [ConsentDialogTrigger](./consent-dialog-trigger) for a floating corner button. Under an IAB policy, mount `IABConsentDialog` from the [IAB TCF guide](/docs/frameworks/react/iab) because `ConsentDialog` stays closed under the `iab` model.
+Use [PrivacyChoicesLink](./privacy-choices-link) or [ConsentDialogLink](./consent-dialog-link) for footer links with `data-inth-rights`, or [ConsentDialogTrigger](./consent-dialog-trigger) for a floating corner button. Under an IAB policy, mount `IABConsentDialog` from the [IAB TCF guide](/docs/frameworks/react/iab) because `ConsentDialog` stays closed under the `iab` model.
 
 <import src="../../../shared/react/components/consent-dialog.mdx#props" />
 
@@ -43,8 +35,8 @@ Use [ConsentDialogLink](./consent-dialog-link) for footer links with `data-inth-
 
 <import src="../../../shared/react/components/consent-dialog.mdx#accessibility" />
 
-<import src="../../../shared/react/components/consent-dialog.mdx#composition" />
+<import src="../../../shared/react/components/consent-dialog.mdx#customize" />
 
-Import compound parts from `@inth/react` as properties of `ConsentDialog`, alongside `ConsentWidget`. See [Customize](/docs/frameworks/react/customize) for slots and tokens.
+See [Customize](/docs/frameworks/react/customize) for slots and tokens.
 
 <import src="../../../shared/react/components/consent-dialog.mdx#verify" />

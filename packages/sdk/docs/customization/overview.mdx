@@ -1,6 +1,6 @@
 ---
 title: Customize the interface
-description: Style Inth consent banners and dialogs with props, theme tokens, part classes, compound components, or headless hooks.
+description: Style Inth consent banners and dialogs with props, theme tokens, part classes, or headless hooks.
 group: customization
 ---
 
@@ -10,10 +10,10 @@ Customize Inth's consent banner and preference dialog from a single prop up to f
 
 Each step preserves what the step below it provides. Stop at the first one that fits:
 
-1. **Props and presentation.** Set banner shape, position, button order, or blocking. Inth keeps its markup, CSS, and policy behavior.
+1. **Props and presentation.** Set the container, its position, edge style, button order, or blocking. Inth keeps its markup, CSS, and policy behavior.
 2. **Theme tokens.** Change colors, fonts, radius, spacing, shadows, and motion across all surfaces. Dark mode uses a second token set.
 3. **Parts and classes.** Add classes or inline styles to one part, such as the banner card. Tailwind CSS, CSS Modules, and CSS-in-JS fit here.
-4. **Compose.** Arrange Inth's parts in your own layout while Inth renders required policy actions.
+4. **Compose.** Arrange Inth's parts in your own layout while Inth renders required policy actions. Vue, Svelte, and Angular offer this step.
 5. **Headless.** Render your own markup from Inth's state and actions. You own layout, focus handling, and labels.
 
 Most brand work only needs theme tokens and a few part classes. See [banner designs](/docs/customization/recipes) for five tested banners across these steps.
@@ -22,9 +22,9 @@ Most brand work only needs theme tokens and a few part classes. See [banner desi
 
 | Framework | Props and presentation | Tokens | Parts and classes | Compose | Headless |
 | --- | --- | --- | --- | --- | --- |
-| Next.js | `ConsentBanner`, `options.presentation` | `ConsentTheme` | `options.components`, `className` | [Compose](/docs/frameworks/next/compose) | [Headless](/docs/frameworks/next/headless) |
-| TanStack Start | `ConsentBanner`, `options.presentation` | `ConsentTheme` | `options.components`, `className` | [Compose](/docs/frameworks/tanstack-start/compose) | [Headless](/docs/frameworks/tanstack-start/headless) |
-| React | `ConsentBanner`, `presentation` | `ConsentTheme`, CSS vars | `components`, `className` | [Compose](/docs/frameworks/react/compose) | [Headless](/docs/frameworks/react/headless) |
+| Next.js | `ConsentBanner`, `options.presentation` | `ConsentTheme` | `options.components`, `className` | None | [Headless](/docs/frameworks/next/headless) |
+| TanStack Start | `ConsentBanner`, `options.presentation` | `ConsentTheme` | `options.components`, `className` | None | [Headless](/docs/frameworks/tanstack-start/headless) |
+| React | `ConsentBanner`, `presentation` | `ConsentTheme`, CSS vars | `components`, `className` | None | [Headless](/docs/frameworks/react/headless) |
 | Nuxt | `presentation` in `nuxt.config.ts` | `tokens` or `theme` | `components`, `class` | None | [Headless](/docs/frameworks/nuxt/headless) |
 | Vue | `presentation` in `inth` | `tokens` or `theme` | `components`, `class` | None | [Headless](/docs/frameworks/vue/headless) |
 | Astro | `presentation` in `inth()` | `theme` in `inth()` | `theme.slots`, `class` | None | None |
@@ -38,9 +38,9 @@ Part keys vary by adapter. React uses `components.banner.card`, Vue adds `class`
 
 ## Keep behavior and appearance separate
 
-Presentation controls shape, position, and blocking. Your Inth policy controls which actions and rights a visitor receives. Changing colors or button order never alters saved consent or policy scope.
+Presentation controls the container, its position, and blocking. Your Inth policy controls which actions and rights a visitor receives. Changing colors or button order never alters saved consent or policy scope.
 
-A choice wall always blocks. A notice never blocks, so `variant: 'wall'` on a notice falls back to a floating card. The preference dialog stays centered regardless of banner position. If a composed layout omits a policy-required action, Inth inserts it.
+A centred Card always blocks. A notice never blocks, so a centred Card on a notice moves to the `start` corner. The dialog stays centred whatever the banner's container. If a composed layout omits a policy-required action, Inth inserts it.
 
 ## Customization guides
 

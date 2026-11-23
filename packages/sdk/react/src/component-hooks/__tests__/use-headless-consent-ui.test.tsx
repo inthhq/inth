@@ -55,9 +55,9 @@ describe('useHeadlessConsentUI', () => {
 		const { result } = await renderHook(() => useHeadlessConsentUI(), {
 			wrapper: createWrapper({
 				banner: {
+					blocking: true,
 					direction: 'row',
 					layout: [['reject', 'accept']],
-					blocking: true,
 					primaryActions: ['accept'],
 					uiProfile: 'balanced',
 				},

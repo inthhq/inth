@@ -96,7 +96,7 @@ Colors, radii, shadows, typography, and motion come from `--inth-*` CSS variable
 
 ## Change the banner shape
 
-Pass `variant` (`floating`, `bar`, `widget`, or `wall`) and `position` to `ConsentBanner`, such as `<ConsentBanner variant="bar" position="bottom" />`, or set `options.presentation.prompt` on `InthProvider` for a global default. See [ConsentBanner](/docs/frameworks/tanstack-start/components/consent-banner#variants).
+Pass `container` to `ConsentBanner`, such as `<ConsentBanner container={{ type: 'banner', edge: 'bottom' }} />`, or set `options.presentation.prompt.container` on `InthProvider` for a global default. `edgeStyle` and `blockUntilChoice` work the same way. See [ConsentBanner](/docs/frameworks/tanstack-start/components/consent-banner#containers).
 
 ## Style one component part
 

@@ -205,7 +205,7 @@ const getDom = (kernel: ConsentKernel): PolicyDomEvidence => {
 			kernel.getSnapshot().promptRequirement.kind === 'notice'
 		),
 		preferencesOpen: !!document.querySelector(
-			'[data-testid="consent-widget-root"]'
+			'[data-testid="consent-dialog-root"]'
 		),
 		rights: (preferences?.getAttribute('data-inth-rights')?.split(' ') ??
 			[]) as PolicyDomEvidence['rights'],
@@ -619,6 +619,77 @@ export const createFrameworkPolicyDriver = ({
 				await click('opt-out-confirmation-preferences-link');
 			}
 		};
+		// Save stays disabled until a switch changes (EU-03), and the opt-out
+		// regime has no Save: its rows and switches record as they change. Without
+		// an enabled Save, the engine saves what is shown, and Done closes.
+		const saveCurrentInDialog = async () => {
+			await vi.waitFor(
+				() => {
+					if (!document.querySelector('[data-testid="consent-dialog-root"]')) {
+						throw new Error(
+							'Required rendered control missing: consent-dialog-root'
+						);
+					}
+				},
+				{ interval: 50, timeout: 5000 }
+			);
+			const save = document.querySelector<HTMLButtonElement>(
+				'[data-testid="consent-dialog-save-button"]'
+			);
+			if (save && !save.disabled) {
+				save.click();
+			} else {
+				// What the switches show: each category's current permission,
+				// with a live signal's restrictions applied.
+				const snapshot = kernel.getSnapshot();
+				const shown = Object.fromEntries(
+					snapshot.policyRule.scope
+						.filter((category) => category !== 'necessary')
+						.map((category) => [
+							category,
+							snapshot.effectivePermissions[category] === true,
+						])
+				);
+				await kernel.commands.save(shown, { uiSource: 'dialog' });
+				document
+					.querySelector<HTMLButtonElement>(
+						'[data-testid="consent-dialog-done"], [data-testid="consent-dialog-close"]'
+					)
+					?.click();
+			}
+			await settle();
+		};
+		// The dialog offers the one-click pair under a choice model and the
+		// rights rows under a notice model, where allowing asks to confirm.
+		const chooseInDialog = async (choice: 'accept' | 'reject') => {
+			const oneClick =
+				choice === 'accept'
+					? 'consent-dialog-accept-all'
+					: 'consent-dialog-reject-all';
+			const row =
+				choice === 'accept'
+					? 'consent-dialog-right-option-sale-allow'
+					: 'consent-dialog-right-option-sale-protect';
+			const control = await vi.waitFor(
+				() => {
+					const found = document.querySelector<HTMLElement>(
+						`[data-testid="${oneClick}"], [data-testid="${row}"]`
+					);
+					if (!found) {
+						throw new Error(`Required rendered control missing: ${oneClick}`);
+					}
+					return found;
+				},
+				{ interval: 50, timeout: 5000 }
+			);
+			control.click();
+			await settle();
+			if (
+				document.querySelector('[data-testid="consent-dialog-confirm-allow"]')
+			) {
+				await click('consent-dialog-confirm-allow');
+			}
+		};
 
 		return {
 			baseline,
@@ -655,7 +726,7 @@ export const createFrameworkPolicyDriver = ({
 							await click('consent-banner-accept-button');
 						} else {
 							await openPreferencesFromTrigger();
-							await click('consent-widget-footer-accept-all-button');
+							await chooseInDialog('accept');
 						}
 						break;
 					case 'reject':
@@ -667,14 +738,14 @@ export const createFrameworkPolicyDriver = ({
 							await click('consent-banner-reject-button');
 						} else {
 							await openPreferencesFromTrigger();
-							await click('consent-widget-reject-button');
+							await chooseInDialog('reject');
 						}
 						break;
 					case 'save-current':
 						if (kernel.getSnapshot().activeUI !== 'dialog') {
 							await openPreferencesFromTrigger();
 						}
-						await click('consent-widget-footer-save-button');
+						await saveCurrentInDialog();
 						break;
 					case 'dismiss-notice':
 						await click('consent-banner-dismiss-button');

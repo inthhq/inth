@@ -1,18 +1,17 @@
 ---
 title: ConsentDialog
-description: Mount ConsentDialog inside a Next.js InthProvider to open the modal preference center from banners, links and triggers.
+description: Mount ConsentDialog, the Your Privacy Choices dialog, inside a Next.js InthProvider and open it from links, triggers, or your own code.
 group: frameworks
 ---
 
 ## Open the preference center
 
-`ConsentDialog` is the modal preference center. Render it once inside
+`ConsentDialog` is the full consent manager: "Your Privacy Choices". Render it once inside
 `InthProvider` in your [App Router](/docs/frameworks/next/app-router) root
 layout or [Pages Router](/docs/frameworks/next/pages-router) `pages/_app.tsx`:
 
 <include src="../../../shared/examples/nextjs/quickstart-layout.mdx" />
 
-Pass props directly on the element, such as `<ConsentDialog hideBranding />`.
 `ConsentDialog` renders nothing on the server and mounts through a portal after
 hydration.
 
@@ -36,6 +35,7 @@ export function PrivacyMenuItem() {
 ```
 
 For footer links and floating controls, see
+[PrivacyChoicesLink](./privacy-choices-link),
 [ConsentDialogLink](./consent-dialog-link) and
 [ConsentDialogTrigger](./consent-dialog-trigger). For IAB TCF policies, mount
 `IABConsentDialog` from [IAB TCF](/docs/frameworks/next/iab) instead (this
@@ -47,10 +47,9 @@ dialog stays closed under the `iab` model).
 
 <import src="../../../shared/react/components/consent-dialog.mdx#accessibility" />
 
-<import src="../../../shared/react/components/consent-dialog.mdx#composition" />
+<import src="../../../shared/react/components/consent-dialog.mdx#customize" />
 
-Import compound parts (`ConsentDialog.*` and `ConsentWidget`) from
-`@inth/nextjs` inside a `'use client'` file. See
+See
 [Customize](/docs/frameworks/next/customize) for slots and tokens.
 
 <import src="../../../shared/react/components/consent-dialog.mdx#verify" />

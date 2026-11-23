@@ -315,24 +315,14 @@ const componentFor = function componentFor(opts: MountOptions): ReactElement {
 				<>
 					<ConsentBanner
 						disableAnimation
-						trapFocus={trapFocus}
+						blockUntilChoice={trapFocus}
 						hideBranding
 					/>
-					<ConsentDialog
-						disableAnimation
-						trapFocus={trapFocus}
-						hideBranding
-					/>
+					<ConsentDialog disableAnimation />
 				</>
 			);
 		case 'consent-dialog':
-			return (
-				<ConsentDialog
-					disableAnimation
-					trapFocus={trapFocus}
-					hideBranding
-				/>
-			);
+			return <ConsentDialog disableAnimation />;
 		case 'consent-widget':
 			return <ConsentWidget hideBranding />;
 		case 'iab-consent-banner':

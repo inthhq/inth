@@ -15,7 +15,7 @@ Each screenshot and code snippet comes from Storybook stories that CI runs to ve
 | [Bottom bar](#bottom-bar) | Props | React, Vue, Astro, Svelte |
 | [Branded card](#branded-card) | Theme tokens | React |
 | [Choice wall](#choice-wall) | Props | React |
-| [Slim bar](#slim-bar) | Compound parts or slots | React, Vue, Svelte |
+| [Slim bar](#slim-bar) | Slots | Vue, Svelte |
 | [Headless bar](#headless-bar) | Headless | React, Vue, Svelte, HTML |
 
 Next.js and TanStack Start use the React code from `@inth/nextjs` or `@inth/tanstack-start`. Nuxt uses the Vue code and SvelteKit uses the Svelte code. See [customize the interface](/docs/customization/overview) to choose a level. Your Inth policy controls which actions appear, and nothing saves consent until a visitor clicks.
@@ -24,7 +24,7 @@ Next.js and TanStack Start use the React code from `@inth/nextjs` or `@inth/tans
 
 ![Full-width white consent bar along the bottom edge](../assets/v3/bottom-bar.png)
 
-Set `variant="bar"` and `position="bottom"` to render a full-width bottom bar.
+In React, set `container={{ type: 'banner', edge: 'bottom' }}` to render a full-width bottom banner. Vue, Astro, and Svelte take `variant="bar"` and `position="bottom"`.
 
 <Tabs items={['React', 'Vue', 'Astro', 'Svelte']}>
   <Tab value="React">
@@ -82,25 +82,19 @@ See [theme tokens](/docs/customization/tokens) and your framework's customize gu
 
 ![Centered consent card over a dimmed page backdrop with Reject All, Accept All, and Customize buttons](../assets/v3/choice-wall.png)
 
-`variant="wall"` centers the banner over a backdrop, locks scroll, and traps focus until the visitor chooses. Use it when your policy requires a choice before access.
+A centred Card, `container={{ type: 'card', position: 'center' }}`, sits over a backdrop, locks scroll, and keeps focus inside until the visitor chooses. Use it when your policy requires a choice before access.
 
 <include src="../shared/examples/storybook-react/choice-wall.mdx" />
 
-Choice walls always block. Notices never block, so `variant="wall"` on a notice falls back to a floating card.
+A centred Card always blocks. Notices never block, so a centred Card on a notice moves to the `start` corner.
 
 ## Slim bar
 
 ![Single-row white bottom bar with heading, copy, and buttons inline](../assets/v3/slim-bar.png)
 
-The slim bar places heading, copy, and actions on one row. React composes `ConsentBanner` compound parts, while Vue and Svelte pass slot classes. All three share one stylesheet and preserve required policy actions.
+The slim bar places heading, copy, and actions on one row. Vue and Svelte pass slot classes. Both share one stylesheet and preserve required policy actions. In React, use the stock banner, `container={{ type: 'banner', edge: 'bottom' }}`, or render your own markup with the [headless bar](#headless-bar).
 
-<Tabs items={['React', 'Vue', 'Svelte']}>
-  <Tab value="React">
-    Mount this `CookieBanner` wrapper inside `InthProvider` next to `ConsentDialog`. `ConsentBanner.PolicyActions` keeps required policy buttons.
-
-    <include src="../shared/examples/storybook-react/slim-bar.mdx" />
-  </Tab>
-
+<Tabs items={['Vue', 'Svelte']}>
   <Tab value="Vue">
     Spread `slimBar` into `app.use(inth, ...)`. `InthProvider` renders the slim bar.
 

@@ -1,6 +1,6 @@
 ---
 title: ConsentBanner
-description: Render the Inth consent banner in TanStack Start, set its variant and position, and override labels.
+description: Render the Inth consent banner in TanStack Start, choose its container, and override labels.
 group: frameworks
 ---
 
@@ -16,10 +16,10 @@ The [quickstart](/docs/frameworks/tanstack-start/quickstart#resolve-consent-in-t
 import { ConsentBanner } from '@inth/tanstack-start';
 
 // Inside InthProvider:
-<ConsentBanner variant="bar" position="bottom" />;
+<ConsentBanner container={{ edge: 'bottom', type: 'banner' }} />;
 ```
 
-The banner adapts to the active policy rule. A `choice` prompt displays Reject and Accept at equal prominence plus Customize when offered. A `notice` prompt displays an "OK" button and an opt-out link. With the default `presentation.optOutLink: 'do-not-sell'` ("Do Not Sell or Share My Personal Information"), activating the link records an opt-out in one click and opens `OptOutConfirmation` (reloading first when that turns off a running category and `reloadOnConsentRevoked` is enabled). With `presentation.optOutLink` set to `'privacy-choices'` or `'california-privacy-choices'`, the link renders with the California Privacy Protection Agency opt-out icon and opens `ConsentDialog` without recording an opt-out. Programmatic calls to `useOptOut()` still opt out in one step whatever `presentation.optOutLink` is set to. A rule with `prompt: 'none'`, or an unresolved policy, renders nothing.
+The banner adapts to the active policy rule. A `choice` prompt displays Reject and Accept at equal prominence plus Customize when offered; Customize opens the choices inside the banner. A `notice` prompt displays an "OK" button and an opt-out link. With the default `presentation.optOutLink: 'do-not-sell'` ("Do Not Sell or Share My Personal Information"), activating the link records an opt-out in one click and opens `OptOutConfirmation` (reloading first when that turns off a running category and `reloadOnConsentRevoked` is enabled). With `presentation.optOutLink` set to `'privacy-choices'` or `'california-privacy-choices'`, the link renders with the California Privacy Protection Agency opt-out icon and opens `ConsentDialog` without recording an opt-out. Programmatic calls to `useOptOut()` still opt out in one step whatever `presentation.optOutLink` is set to. A rule with `prompt: 'none'`, or an unresolved policy, renders nothing.
 
 <include src="../../../shared/privacy-choices-link.mdx" />
 
@@ -27,15 +27,12 @@ The banner adapts to the active policy rule. A `choice` prompt displays Reject a
 
 <import src="../../../shared/react/components/consent-banner.mdx#props" />
 
-## Variants
+## Containers
 
-The policy determines which actions appear, while `variant` sets the banner shape. Pass `variant` on `ConsentBanner`, or configure `options.presentation.prompt` on `InthProvider` for a global default. The component prop takes precedence.
+<import src="../../../shared/react/components/consent-banner.mdx#containers" />
 
-| Variant | Positions | Default |
-| --- | --- | --- |
-| `floating` | `bottom-left`, `bottom-right`, `top-left`, `top-right`, `bottom-center`, `top-center` | `bottom-left` |
-| `bar` | `top`, `bottom` | `bottom` |
-| `widget` | `bottom-left`, `bottom-right`, `top-left`, `top-right` | `bottom-right` |
-| `wall` | `center` | `center` |
+See [Customize](/docs/frameworks/tanstack-start/customize) for tokens and slots, and [Headless](/docs/frameworks/tanstack-start/headless) for your own markup.
 
-A `wall` blocks page interaction until the visitor responds; notices never block, so a notice `wall` falls back to `floating`. Every part is available as `ConsentBanner.<Part>` (`Root`, `Card`, `PolicyActions`, and more) for custom layouts. See [Customize](/docs/frameworks/tanstack-start/customize) for tokens and slots.
+## Data attributes
+
+<import src="../../../shared/react/components/consent-banner.mdx#data-attributes" />

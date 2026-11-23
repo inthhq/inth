@@ -338,23 +338,15 @@ export const runFrameworkConformance = ({
 					<>
 						<ConsentBanner
 							disableAnimation
-							trapFocus={trapFocus}
+							blockUntilChoice={trapFocus}
 							hideBranding
 						/>
-						<ConsentDialog
-							disableAnimation
-							trapFocus={trapFocus}
-							hideBranding
-						/>
+						<ConsentDialog disableAnimation />
 					</>
 				);
 			case 'consent-dialog':
 				return (
-					<ConsentDialog
-						disableAnimation
-						trapFocus={trapFocus}
-						hideBranding
-					/>
+					<ConsentDialog disableAnimation />
 				);
 			case 'consent-widget':
 				return <ConsentWidget hideBranding />;

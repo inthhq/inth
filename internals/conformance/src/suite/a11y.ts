@@ -147,8 +147,9 @@ const waitForActiveElement = async function waitForActiveElement(
 };
 
 /**
- * A banner the host makes blocking through the legacy `trapFocus` option.
- * The resolver maps it onto `blocking`, so the card is a modal dialog.
+ * A banner the host makes blocking. Each driver maps `trapFocus: true` onto
+ * its framework's blocking option (`blockUntilChoice` in React), so the card
+ * is a modal dialog.
  */
 const mountBanner = function mountBanner(
 	driver: TestDriver
@@ -157,6 +158,13 @@ const mountBanner = function mountBanner(
 		component: 'consent-banner',
 		providerOptions: { trapFocus: true },
 	});
+};
+
+/** The dialog, open from the first render. */
+const mountDialog = function mountDialog(
+	driver: TestDriver
+): Promise<MountResult> {
+	return driver.mount({ component: 'consent-dialog' });
 };
 
 /** The default banner: non-blocking, a labelled region. */
@@ -218,9 +226,15 @@ export const runA11yConformance = function runA11yConformance(
 						ownerBody(mounted),
 						TEST_IDS.consentBanner.card
 					);
-					api.expect(card.getAttribute('role')).toBe('dialog');
-					api.expect(card.getAttribute('aria-modal')).toBe('true');
-					api.expect(hasAccessibleName(card)).toBe(true);
+					// The card carries the dialog role itself, or sits inside the
+					// element that does.
+					const dialog = card.closest<HTMLElement>('[role="dialog"]');
+					api.expect(dialog).not.toBeNull();
+					if (!dialog) {
+						return;
+					}
+					api.expect(dialog.getAttribute('aria-modal')).toBe('true');
+					api.expect(hasAccessibleName(dialog)).toBe(true);
 				} finally {
 					await mounted.unmount();
 				}
@@ -327,15 +341,9 @@ export const runA11yConformance = function runA11yConformance(
 			api,
 			'a11y dialog opens with correct semantics',
 			async () => {
-				const mounted = await mountBanner(driver);
+				const mounted = await mountDialog(driver);
 				try {
 					const body = ownerBody(mounted);
-					const customizeButton = await waitForElement(
-						body,
-						TEST_IDS.consentBanner.customizeButton
-					);
-					customizeButton.click();
-
 					await waitForElement(body, TEST_IDS.consentDialog.root);
 					const dialog = getDialogElement(body);
 					api.expect(dialog).not.toBeNull();
@@ -357,9 +365,6 @@ export const runA11yConformance = function runA11yConformance(
 					if (labelledBy) {
 						api.expect(body.querySelector(`#${labelledBy}`)).not.toBeNull();
 					}
-					const overlay = byTestId(body, TEST_IDS.consentDialog.overlay);
-					api.expect(overlay).not.toBeNull();
-					api.expect(overlay?.getAttribute('role')).toBe('presentation');
 				} finally {
 					await mounted.unmount();
 				}
@@ -367,14 +372,9 @@ export const runA11yConformance = function runA11yConformance(
 		);
 
 		conformanceTest(api, 'a11y Escape dismisses the dialog', async () => {
-			const mounted = await mountBanner(driver);
+			const mounted = await mountDialog(driver);
 			try {
 				const body = ownerBody(mounted);
-				const customizeButton = await waitForElement(
-					body,
-					TEST_IDS.consentBanner.customizeButton
-				);
-				customizeButton.click();
 				await waitForElement(body, TEST_IDS.consentDialog.root);
 				const dialog = getDialogElement(body);
 				api.expect(dialog).not.toBeNull();
@@ -391,9 +391,32 @@ export const runA11yConformance = function runA11yConformance(
 
 		conformanceTest(
 			api,
-			'a11y Escape on the dialog brings back a banner the visitor still owes',
+			'a11y dialog moves focus inside itself on open',
 			async () => {
-				const mounted = await mountBanner(driver);
+				const mounted = await mountDialog(driver);
+				try {
+					const body = ownerBody(mounted);
+					await waitForElement(body, TEST_IDS.consentDialog.root);
+					const dialog = getDialogElement(body);
+					api.expect(dialog).not.toBeNull();
+					if (!dialog) {
+						return;
+					}
+					const active = await waitForActiveElement(body.ownerDocument, (el) =>
+						dialog.contains(el)
+					);
+					api.expect(dialog.contains(active)).toBe(true);
+				} finally {
+					await mounted.unmount();
+				}
+			}
+		);
+
+		conformanceTest(
+			api,
+			'a11y Customize opens the choices inside the banner',
+			async () => {
+				const mounted = await mountDefaultBanner(driver);
 				try {
 					const body = ownerBody(mounted);
 					const customizeButton = await waitForElement(
@@ -401,62 +424,15 @@ export const runA11yConformance = function runA11yConformance(
 						TEST_IDS.consentBanner.customizeButton
 					);
 					customizeButton.click();
-					await waitForElement(body, TEST_IDS.consentDialog.root);
-					const dialog = getDialogElement(body);
-					api.expect(dialog).not.toBeNull();
-					if (!dialog) {
-						return;
-					}
-
-					keydown(dialog, 'Escape');
-					await waitForElementRemoved(body, TEST_IDS.consentDialog.root);
-
-					await waitForElement(body, TEST_IDS.consentBanner.root);
+					await waitForElement(body, TEST_IDS.consentBanner.saveButton);
+					// The banner keeps the visitor in place: no dialog opens over it.
+					api.expect(byTestId(body, TEST_IDS.consentDialog.root)).toBeNull();
+					api.expect(byTestId(body, TEST_IDS.consentBanner.root)).not.toBeNull();
 					api.expect(driver.getStore().getState().activeUI).toBe('banner');
 				} finally {
 					await mounted.unmount();
 				}
 			}
 		);
-
-		conformanceTest(api, 'a11y dialog restores focus on Escape', async () => {
-			const mounted = await mountBanner(driver);
-			try {
-				const body = ownerBody(mounted);
-				const customizeButton = await waitForElement(
-					body,
-					TEST_IDS.consentBanner.customizeButton
-				);
-				customizeButton.focus();
-				const returnTarget = body.ownerDocument.activeElement as HTMLElement;
-				customizeButton.click();
-				await waitForElement(body, TEST_IDS.consentDialog.root);
-				const dialog = getDialogElement(body);
-				api.expect(dialog).not.toBeNull();
-				if (!dialog) {
-					return;
-				}
-
-				keydown(dialog, 'Escape');
-				await waitForElementRemoved(body, TEST_IDS.consentDialog.root);
-
-				// The visitor still owes a choice, so the banner comes back and
-				// focus returns to its Customize button, whether the adapter kept
-				// the banner mounted or rendered it again. Focus restore runs on
-				// a deferred (setTimeout 0) tick; poll for the expected target
-				// rather than a fixed sleep.
-				await waitForElement(body, TEST_IDS.consentBanner.root);
-				const expected = returnTarget.isConnected
-					? returnTarget
-					: byTestId(body, TEST_IDS.consentBanner.customizeButton);
-				const active = await waitForActiveElement(
-					body.ownerDocument,
-					(el) => el === expected
-				);
-				api.expect(active).toBe(expected);
-			} finally {
-				await mounted.unmount();
-			}
-		});
 	});
 };
