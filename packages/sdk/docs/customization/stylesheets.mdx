@@ -40,7 +40,7 @@ Dialog CSS stays out of first paint:
 
 - **React, Next.js, TanStack Start, Svelte, SvelteKit.** `inth-expand` and `inth-dialog` load lazily with the dialog chunk. React 19 hoists `<style data-precedence="inth">` into `<head>`. React 18, and React 19 with `nonce`, render styles next to the component to keep the nonce.
 - **Nuxt and Vue.** The dialog component imports its stylesheet when the dialog chunk loads.
-- **Astro.** Inth links dialog CSS and `primitives.css` when a visitor hovers, focuses, or activates a trigger, waits before opening, and preserves them across `ClientRouter` navigation.
+- **Astro.** Inth adds the dialog's rules when a visitor hovers, focuses, or activates a trigger, and waits for them before opening. No island links a stylesheet for the preferences dialog. The IAB dialog links its rules when it opens, and Inth keeps them across `ClientRouter` navigation.
 - **IAB TCF.** `IABConsentBanner` and `IABConsentDialog` inject their own IAB rules automatically. Streamed React IAB banners stay hidden until card markup finishes parsing to prevent layout shift.
 
 ## Order the cascade layer against your CSS
