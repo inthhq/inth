@@ -128,6 +128,29 @@ const sameList = function sameList(
 	);
 };
 
+/**
+ * Whether two durable opt-out records agree on everything the backend
+ * sends. `categories` is left out because the backend never carries it, so
+ * its copy of a held record still matches the browser's.
+ */
+export const sameOptOutAnswer = function sameOptOutAnswer(
+	left: Readonly<OptOutRecord> | null | undefined,
+	right: Readonly<OptOutRecord> | null | undefined
+): boolean {
+	if (left === right) {
+		return true;
+	}
+	if (!left || !right) {
+		return false;
+	}
+	return (
+		left.heldBy === right.heldBy &&
+		left.method === right.method &&
+		left.recordedAt === right.recordedAt &&
+		sameList(left.rights, right.rights)
+	);
+};
+
 /** Structural equality for two durable opt-out records. */
 export const sameOptOutRecord = function sameOptOutRecord(
 	left: Readonly<OptOutRecord> | null,
@@ -140,10 +163,7 @@ export const sameOptOutRecord = function sameOptOutRecord(
 		return false;
 	}
 	return (
-		left.heldBy === right.heldBy &&
-		left.method === right.method &&
-		left.recordedAt === right.recordedAt &&
-		sameList(left.rights, right.rights) &&
+		sameOptOutAnswer(left, right) &&
 		(left.categories === undefined
 			? right.categories === undefined
 			: right.categories !== undefined &&
@@ -262,8 +282,10 @@ const nextSyncedOptOutReceipt = function nextSyncedOptOutReceipt(
 
 /**
  * The backend never carries `categories`. An answer to this browser's own
- * act keeps the list the browser fixed when it recorded it; any other
- * record, such as one an account holds, joins it.
+ * act keeps the list the browser fixed when it recorded it; so does an
+ * answer saying this device alone holds the opt-out, since that is the act
+ * this browser holds. Any other record, such as one an account holds,
+ * joins it.
  */
 const answerWithHeldCategories = function answerWithHeldCategories(
 	answer: OptOutRecord,
@@ -273,7 +295,9 @@ const answerWithHeldCategories = function answerWithHeldCategories(
 	return carryOptOutCategories(
 		answer,
 		held,
-		fence.ownAct === true || (held !== null && answersHeldOptOut(answer, held))
+		fence.ownAct === true ||
+			(held !== null &&
+				(answer.heldBy === 'device' || answersHeldOptOut(answer, held)))
 	);
 };
 

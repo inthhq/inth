@@ -1461,3 +1461,146 @@ describe('opt-out categories (DEF-09)', () => {
 		reloaded.dispose();
 	});
 });
+
+describe('copies of an opt-out from different times (GPC-05)', () => {
+	const older: StoredOptOutRecord = {
+		heldBy: 'device',
+		method: 'gpc',
+		recordedAt: NOW - 2000,
+		rights: ['sale', 'share', 'targeted_ads'],
+		version: 1,
+	};
+	const newer: StoredOptOutRecord = {
+		heldBy: 'both',
+		method: 'button',
+		recordedAt: NOW - 1000,
+		rights: ['sale'],
+		version: 1,
+	};
+	const setCookie = (key: string, value: string) => {
+		document.cookie = `${key}=${encodeURIComponent(value)}; path=/`;
+	};
+
+	it.each([
+		['localStorage', 'cookie'],
+		['cookie', 'localStorage'],
+	] as const)(
+		'a newer copy in %s keeps its act, and never lifts a category the older copy in %s withholds',
+		(newerIn, olderIn) => {
+			const keys = resolveStorageKeys(undefined);
+			const write = (
+				where: 'cookie' | 'localStorage',
+				record: StoredOptOutRecord,
+				companion: string
+			) => {
+				if (where === 'cookie') {
+					setCookie(keys.optOut, encodeOptOutRecordCompact(record));
+					setCookie(keys.optOutCategories, companion);
+				} else {
+					window.localStorage.setItem(keys.optOut, encodeOptOutRecord(record));
+					window.localStorage.setItem(keys.optOutCategories, companion);
+				}
+			};
+			write(olderIn, older, `v=1&t=${NOW - 2000}&m=g&k=ex|mk`);
+			write(newerIn, newer, `v=1&t=${NOW - 1000}&m=b&k=mk`);
+			expect(readStoredOptOutRecord(undefined, NOW)).toEqual({
+				ok: true,
+				record: {
+					...newer,
+					categories: ['experience', 'marketing'],
+				},
+			});
+		}
+	);
+
+	it('an older legacy copy still withholds marketing and measurement under a newer one', () => {
+		const keys = resolveStorageKeys(undefined);
+		setCookie(keys.optOut, encodeOptOutRecordCompact(older));
+		window.localStorage.setItem(keys.optOut, encodeOptOutRecord(newer));
+		window.localStorage.setItem(
+			keys.optOutCategories,
+			`v=1&t=${NOW - 1000}&m=b&k=ex`
+		);
+		expect(readStoredOptOutRecord(undefined, NOW)).toMatchObject({
+			ok: true,
+			record: {
+				categories: ['experience', 'measurement', 'marketing'],
+				recordedAt: NOW - 1000,
+			},
+		});
+	});
+
+	it('a copy from before the clear epoch adds nothing', () => {
+		const keys = resolveStorageKeys(undefined);
+		setCookie(keys.optOut, encodeOptOutRecordCompact(older));
+		setCookie(keys.optOutCategories, `v=1&t=${NOW - 2000}&m=g&k=ex|mk`);
+		writeStoredClearEpoch(NOW - 1500, undefined);
+		window.localStorage.setItem(keys.optOut, encodeOptOutRecord(newer));
+		window.localStorage.setItem(
+			keys.optOutCategories,
+			`v=1&t=${NOW - 1000}&m=b&k=mk`
+		);
+		expect(readStoredOptOutRecord(undefined, NOW)).toEqual({
+			ok: true,
+			record: { ...newer, categories: ['marketing'] },
+		});
+	});
+
+	const seedKernel = (seed: StoredOptOutRecord) => {
+		const { version: _version, ...optOut } = seed;
+		return createConsentKernel({
+			initialLocation: { countryCode: 'US', regionCode: 'CA' },
+			initialPolicyResolution: matchedResolution(
+				policyRulePresets.californiaOptOut()
+			),
+			initialRecords: { now: NOW, optOut },
+			now: NOW,
+		});
+	};
+
+	it('a seed from the cookies keeps the categories of an older act storage holds', async () => {
+		expect(
+			writeStoredOptOutRecord(
+				{ ...older, categories: ['experience', 'marketing'] },
+				undefined,
+				NOW
+			).ok
+		).toBe(true);
+		const kernel = seedKernel({ ...newer, categories: ['marketing'] });
+		const persistence = createPersistence({ kernel, skipHydration: true });
+		await kernel.commands.init();
+		await flushWrites();
+		expect(kernel.getSnapshot().optOut).toMatchObject({
+			categories: ['experience', 'marketing'],
+			method: 'button',
+			recordedAt: NOW - 1000,
+		});
+		expect(kernel.getSnapshot().effectivePermissions.experience).toBe(false);
+		persistence.dispose();
+		kernel.dispose();
+	});
+
+	it('a newer act in storage replaces the seed but keeps the categories the seed withholds', async () => {
+		expect(
+			writeStoredOptOutRecord(
+				{ ...newer, categories: ['marketing'] },
+				undefined,
+				NOW
+			).ok
+		).toBe(true);
+		const kernel = seedKernel({
+			...older,
+			categories: ['experience', 'marketing'],
+		});
+		const persistence = createPersistence({ kernel, skipHydration: true });
+		await kernel.commands.init();
+		await flushWrites();
+		expect(kernel.getSnapshot().optOut).toMatchObject({
+			categories: ['experience', 'marketing'],
+			method: 'button',
+			recordedAt: NOW - 1000,
+		});
+		persistence.dispose();
+		kernel.dispose();
+	});
+});

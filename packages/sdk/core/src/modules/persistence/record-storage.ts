@@ -1246,9 +1246,10 @@ const readOptOutCategories = function readOptOutCategories(
 
 /**
  * Reads the durable opt-out record from cookie and localStorage. When both
- * projections are valid, the newer one wins; on equal times, rights and
- * withheld categories are unioned in canonical order so a dropped cookie
- * write never loses an opt-out right or category. Each copy is cut to the
+ * projections are valid, the newer one's act wins; on equal times, rights
+ * are unioned in canonical order so a dropped cookie write never loses an
+ * opt-out right. Withheld categories are always unioned, so a newer copy
+ * never lifts a category an older one withholds. Each copy is cut to the
  * clear epoch first.
  */
 export const readStoredOptOutRecord = function readStoredOptOutRecord(
@@ -1292,26 +1293,28 @@ export const readStoredOptOutRecord = function readStoredOptOutRecord(
 				companions
 			);
 			if (fromCookie?.ok && fromLocal?.ok) {
-				if (fromLocal.record.recordedAt < fromCookie.record.recordedAt) {
-					return fromCookie;
+				const cookieAt = fromCookie.record.recordedAt;
+				const localAt = fromLocal.record.recordedAt;
+				let { rights } = fromLocal.record;
+				if (localAt < cookieAt) {
+					({ rights } = fromCookie.record);
+				} else if (localAt === cookieAt) {
+					const mergedRights = new Set([
+						...fromCookie.record.rights,
+						...fromLocal.record.rights,
+					]);
+					rights = OPT_OUT_RIGHTS.filter((right) => mergedRights.has(right));
 				}
-				if (fromLocal.record.recordedAt > fromCookie.record.recordedAt) {
-					return fromLocal;
-				}
-				const mergedRights = new Set([
-					...fromCookie.record.rights,
-					...fromLocal.record.rights,
-				]);
-				const rights = OPT_OUT_RIGHTS.filter((right) =>
-					mergedRights.has(right)
-				);
-				// A copy without a list is a legacy record, which withholds
-				// marketing and measurement, never nothing.
+				// The newer copy's act wins, but neither copy lifts a category
+				// the other withholds. A copy without a list is a legacy
+				// record, which withholds marketing and measurement, never
+				// nothing.
+				const newer = localAt < cookieAt ? fromCookie : fromLocal;
 				const categories = unionOptOutCategories(
 					fromCookie.record.categories,
 					fromLocal.record.categories
 				);
-				const record: StoredOptOutRecord = { ...fromLocal.record, rights };
+				const record: StoredOptOutRecord = { ...newer.record, rights };
 				if (categories === undefined) {
 					delete record.categories;
 				} else {

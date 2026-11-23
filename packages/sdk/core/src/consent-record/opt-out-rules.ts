@@ -81,20 +81,21 @@ export const unionOptOutCategories = function unionOptOutCategories(
 };
 
 /**
- * Whether `answer`, an opt-out record the backend sent, describes the act
- * `held` records: the same time and method, or a record the backend says
- * this device alone holds. The backend never carries `categories`, so such
- * an answer takes the held record's list; any other answer is a separate
+ * Whether two copies of an opt-out record describe the same act: the same
+ * time and method. The backend never carries `categories`, so its copy of
+ * that act takes the held record's list; any other record is a separate
  * opt-out and joins it.
+ *
+ * `heldBy` is deliberately not consulted: a stored or server record can
+ * say this device holds it and still be another act. Only a backend answer
+ * to a request this browser made may treat it as its own (see
+ * `applySyncedOptOut`).
  */
 export const answersHeldOptOut = function answersHeldOptOut(
-	answer: Pick<OptOutRecord, 'heldBy' | 'method' | 'recordedAt'>,
+	answer: Pick<OptOutRecord, 'method' | 'recordedAt'>,
 	held: Pick<OptOutRecord, 'method' | 'recordedAt'>
 ): boolean {
-	return (
-		answer.heldBy === 'device' ||
-		(answer.recordedAt === held.recordedAt && answer.method === held.method)
-	);
+	return answer.recordedAt === held.recordedAt && answer.method === held.method;
 };
 
 /**

@@ -27,3 +27,7 @@ The change alters the US presets' policy, choice and notice fingerprints, so vis
 The categories go in a cookie and localStorage entry of their own, `<storageKey>-opt-out-categories`, beside the opt-out record, which keeps its old form. An older SDK on the same site, or a rollback, still reads the opt-out and keeps switching off `marketing` and `measurement`. If you list your cookies for a cookie banner or a scanner, add the new one; `clear()` removes it with the rest.
 
 An opt-out the account holds, or one the backend sends for another act, never makes the browser switch off less than it did: the browser joins its categories with the ones it already held.
+
+The same holds between the browser's own copies. When the cookie and localStorage hold opt-outs from different times, the newer one is the visitor's opt-out, but it switches off every category either copy did. A record the backend says this device holds counts as the browser's own act only when it has the same time and method.
+
+When the backend confirms the opt-out this browser recorded, the browser now marks its rights as confirmed even though the backend's copy carries no categories. A newer opt-out adopted from the account no longer shows this browser's opt-out reference.

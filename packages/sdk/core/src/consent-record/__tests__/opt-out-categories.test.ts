@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { evaluateConsentRecord } from '../evaluate';
 import {
+	answersHeldOptOut,
 	carryOptOutCategories,
 	optOutDenyCategories,
 	unionOptOutCategories,
@@ -180,5 +181,24 @@ describe('joining copies of a held opt-out (GPC-05)', () => {
 			'categories'
 		);
 		expect(carryOptOutCategories(held, null, false)).toBe(held);
+	});
+});
+
+describe('answersHeldOptOut (GPC-05)', () => {
+	const held: OptOutRecord = {
+		categories: ['marketing'],
+		heldBy: 'device',
+		method: 'gpc',
+		recordedAt: NOW - 1000,
+		rights: ['sale'],
+	};
+
+	it('needs the same time and method, whoever holds the answer', () => {
+		const answer: OptOutRecord = { ...held, heldBy: 'both' };
+		expect(answersHeldOptOut(answer, held)).toBe(true);
+		expect(answersHeldOptOut({ ...held, recordedAt: NOW - 10 }, held)).toBe(
+			false
+		);
+		expect(answersHeldOptOut({ ...held, method: 'button' }, held)).toBe(false);
 	});
 });

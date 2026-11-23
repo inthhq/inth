@@ -27,7 +27,7 @@ import type {
 	KernelTransport,
 	KernelUser,
 } from '../types';
-import { applySyncedOptOut, sameOptOutRecord } from './opt-out';
+import { applySyncedOptOut, sameOptOutAnswer } from './opt-out';
 import type { SnapshotPatch } from './patch';
 import {
 	mergeNewestChoice,
@@ -84,6 +84,10 @@ export const foldServerRecords = function foldServerRecords(
  * Update local opt-out receipt metadata after folding a server opt-out record.
  * Preserves local click/GPC metadata only when the server record confirms the
  * same held opt-out; clears it whenever a different server record is adopted.
+ *
+ * Both checks compare by value and ignore `categories`, which the backend
+ * never sends: the fold can clone the winning record to carry the held
+ * categories, so neither identity nor the full record says which copy won.
  */
 export const syncAdoptedServerOptOutReceipt =
 	function syncAdoptedServerOptOutReceipt(
@@ -99,7 +103,7 @@ export const syncAdoptedServerOptOutReceipt =
 		const rightsConfirmed = incomingOptOut.rights.length > 0;
 		if (
 			beforeOptOut !== null &&
-			sameOptOutRecord(beforeOptOut, incomingOptOut)
+			sameOptOutAnswer(beforeOptOut, incomingOptOut)
 		) {
 			if (!rightsConfirmed) {
 				return;
@@ -117,7 +121,7 @@ export const syncAdoptedServerOptOutReceipt =
 			}
 			return;
 		}
-		if (foldedOptOut === incomingOptOut) {
+		if (sameOptOutAnswer(foldedOptOut, incomingOptOut)) {
 			runtime.setOptOutReceiptData(
 				{ localAct: null, reference: null, rightsConfirmed },
 				fromHydration

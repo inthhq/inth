@@ -715,6 +715,20 @@ export const mountPersistence = function mountPersistence(
 		}
 	};
 
+	/**
+	 * Restates the receipt and GPC mark the kernel holds, so hydrating a
+	 * widened copy of the same record does not reset them.
+	 */
+	const keepKernelOptOutMeta = function keepKernelOptOutMeta(
+		patch: HydrationRecords
+	): void {
+		const receipt = kernel.getOptOutReceiptData();
+		patch.optOutGpcReported = kernel.isOptOutGpcReported();
+		patch.optOutLocalAct = receipt.localAct;
+		patch.optOutReference = receipt.reference;
+		patch.optOutRightsConfirmed = receipt.rightsConfirmed;
+	};
+
 	const mergeSeededOptOutMeta = function mergeSeededOptOutMeta(
 		records: HydrationRecords,
 		patch: HydrationRecords
@@ -758,18 +772,24 @@ export const mountPersistence = function mountPersistence(
 			outranks ||
 				(records.optOut?.recordedAt ?? -1) > (keptOptOut?.recordedAt ?? -1)
 		);
+		// Only a seed the clear epoch keeps, from the family storage was read
+		// from, is a second copy of the visitor's opt-out. A legacy family's
+		// seed yields whole, as the browser reader picks one family.
+		const seededCopy = keptOptOut === snapshot.optOut && !outranks;
 		if (optOut) {
-			patch.optOut = optOut.value;
+			patch.optOut =
+				seededCopy && optOut.value !== null
+					? carryOptOutCategories(optOut.value, keptOptOut, false)
+					: optOut.value;
 			if (optOut.value !== null) {
 				copySeededOptOutMeta(records, patch);
 			}
 			return;
 		}
-		if (
-			keptOptOut !== null &&
-			records.optOut &&
-			sameOptOut(keptOptOut, records.optOut)
-		) {
+		if (keptOptOut === null || !records.optOut) {
+			return;
+		}
+		if (sameOptOut(keptOptOut, records.optOut)) {
 			// The seed came from the cookies alone; localStorage can hold the
 			// act's categories when the cookie companion was dropped. The kept
 			// record withholds what either copy does.
@@ -778,6 +798,16 @@ export const mountPersistence = function mountPersistence(
 				patch.optOut = held;
 			}
 			mergeSeededOptOutMeta(records, patch);
+			return;
+		}
+		if (seededCopy) {
+			// The seed is the newer act, but the older stored one may withhold
+			// a category the seed does not; the seed never lifts it.
+			const held = carryOptOutCategories(keptOptOut, records.optOut, false);
+			if (held !== keptOptOut) {
+				patch.optOut = held;
+				keepKernelOptOutMeta(patch);
+			}
 		}
 	};
 

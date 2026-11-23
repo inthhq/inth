@@ -410,3 +410,94 @@ describe('backend copies of a held opt-out', () => {
 		kernel.dispose();
 	});
 });
+
+describe('adopting a server copy of a held opt-out', () => {
+	const narrow = () =>
+		optOutRule({
+			privacySignals: { gpc: { denyCategories: ['marketing'] } },
+			prompt: 'none',
+		});
+	const local: OptOutRecord = {
+		categories: ['experience', 'marketing'],
+		heldBy: 'device',
+		method: 'button',
+		recordedAt: NOW - 1000,
+		rights: ['sale'],
+	};
+	/** A kernel holding `local` with this browser's receipt for it. */
+	const withServerRecord = (server: OptOutRecord) =>
+		createKernel(narrow(), {
+			initialRecords: {
+				now: NOW,
+				optOut: local,
+				optOutLocalAct: 'button',
+				optOutReference: 'ref_local_act',
+				optOutRightsConfirmed: false,
+			},
+			transport: {
+				init: () =>
+					Promise.resolve({
+						policyResolution: {
+							...matchedResolution(narrow(), 'region'),
+							version: 1,
+						},
+						records: { optOut: server },
+					}),
+			},
+		});
+
+	test('[GPC-05] the server confirming this browser’s act confirms its rights, though it sends no categories', async () => {
+		const { categories: _categories, ...answer } = local;
+		const kernel = withServerRecord(answer);
+		await kernel.commands.init();
+		expect(kernel.getSnapshot().optOut?.categories).toEqual([
+			'experience',
+			'marketing',
+		]);
+		expect(kernel.getOptOutReceiptData()).toEqual({
+			localAct: 'button',
+			reference: 'ref_local_act',
+			rightsConfirmed: true,
+		});
+		kernel.dispose();
+	});
+
+	test('[GPC-05] a newer account record adopted with the held categories does not inherit this browser’s receipt', async () => {
+		const kernel = withServerRecord({
+			heldBy: 'person',
+			method: 'api',
+			recordedAt: NOW - 10,
+			rights: ['sale', 'share'],
+		});
+		await kernel.commands.init();
+		// The fold copies the record to carry the held categories.
+		expect(kernel.getSnapshot().optOut).toMatchObject({
+			categories: ['experience', 'measurement', 'marketing'],
+			heldBy: 'person',
+		});
+		expect(kernel.getOptOutReceiptData()).toEqual({
+			localAct: null,
+			reference: null,
+			rightsConfirmed: true,
+		});
+		kernel.dispose();
+	});
+
+	test('[GPC-05] a stored record this device holds is another act unless it has the same time and method', async () => {
+		const kernel = withServerRecord({
+			heldBy: 'device',
+			method: 'gpc',
+			recordedAt: NOW - 10,
+			rights: ['sale', 'share'],
+		});
+		await kernel.commands.init();
+		// A legacy record of another act: the lists join, so measurement
+		// is withheld too and experience stays withheld.
+		expect(kernel.getSnapshot().optOut).toMatchObject({
+			categories: ['experience', 'measurement', 'marketing'],
+			method: 'gpc',
+			recordedAt: NOW - 10,
+		});
+		kernel.dispose();
+	});
+});
