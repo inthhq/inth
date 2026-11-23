@@ -204,10 +204,15 @@ test('a story not yet ported is compared only where it is ported, and never miss
 		name: 'Card',
 		title: `COMPONENTS - ${framework.toUpperCase()}/${title}`,
 	});
+	// Solid stands in for a framework the port has not reached.
 	const byFramework = {
 		react: [
 			entry('react', 'Privacy Choices/Banner'),
 			entry('react', 'Core/Consent Banner'),
+		],
+		solid: [
+			entry('solid', 'Privacy Choices/Banner'),
+			entry('solid', 'Core/Consent Banner'),
 		],
 		svelte: [
 			entry('svelte', 'Privacy Choices/Banner'),
@@ -217,15 +222,20 @@ test('a story not yet ported is compared only where it is ported, and never miss
 	};
 	expect(portedFrameworks('Privacy Choices/Banner/Card')).toEqual([
 		'react',
+		'svelte',
 		'vue',
 	]);
 	expect(portedFrameworks('Core/Consent Banner/Card')).toBeNull();
-	const pairs = selectComparablePairs(byFramework, {
-		frameworks: ['react', 'svelte', 'vue'],
-	});
-	// A story ported to React and Vue is compared only between them, even
-	// when another framework happens to ship a story of the same name.
-	expect(pairs.map((pair) => pair.key)).toEqual(['Core/Consent Banner/Card']);
+	const frameworks = ['react', 'solid', 'svelte', 'vue'];
+	const pairs = selectComparablePairs(byFramework, { frameworks });
+	// A ported story pairs only the frameworks it is ported to, even when
+	// another framework happens to ship a story of the same name.
+	expect(
+		pairs.map((pair) => [pair.key, Object.keys(pair.entries).sort()])
+	).toEqual([
+		['Core/Consent Banner/Card', ['react', 'solid', 'svelte', 'vue']],
+		['Privacy Choices/Banner/Card', ['react', 'svelte']],
+	]);
 	// A framework it is ported to is missing it; one it is not is not.
 	expect(
 		missingFrameworks(
@@ -233,7 +243,7 @@ test('a story not yet ported is compared only where it is ported, and never miss
 				entries: { react: entry('react', 'Privacy Choices/Banner') },
 				key: 'Privacy Choices/Banner/Card',
 			},
-			['react', 'svelte', 'vue']
+			frameworks
 		)
-	).toEqual(['vue']);
+	).toEqual(['svelte', 'vue']);
 });
