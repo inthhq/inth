@@ -385,12 +385,13 @@ export const mountPrompt = function mountPrompt(
 		return false;
 	};
 
-	const commit = (action: BannerCommitAction): void => {
+	const commit = (action: BannerCommitAction, actionAt?: number): void => {
 		const model = lastModel;
 		if (!model) {
 			return;
 		}
 		const { plan } = commitBannerChoice(kernel, action, {
+			actionAt,
 			draft: action === 'save' ? draft : undefined,
 			uiSource: 'banner',
 		});
@@ -407,10 +408,12 @@ export const mountPrompt = function mountPrompt(
 		invalidate();
 	};
 
-	const acknowledge = (): void => {
+	const acknowledge = (actionAt?: number): void => {
 		committed = '';
 		session.commit();
-		void kernel.commands.dismissNotice();
+		void kernel.commands.dismissNotice(
+			actionAt === undefined ? undefined : { actionAt }
+		);
 		invalidate();
 	};
 
@@ -770,14 +773,15 @@ export const mountPrompt = function mountPrompt(
 	// handlers work: stop the script and replay the tap through them, so a
 	// choice commits through the prompt's plan and Customize opens the
 	// options in place. The engine started the runtime before it mounted
-	// the prompt; the replay still waits for the policy.
+	// the prompt; the replay still waits for the policy. A choice records
+	// the time of the tap, not of the replay.
 	const replayTap = (tap: EarlyConsentTap): void => {
 		if (tap.action === 'accept') {
-			commit('allow');
+			commit('allow', tap.at);
 		} else if (tap.action === 'reject') {
-			commit('refuse');
+			commit('refuse', tap.at);
 		} else if (tap.action === 'dismiss') {
-			acknowledge();
+			acknowledge(tap.at);
 		} else if (lastModel) {
 			const layout = phone
 				? lastModel.container.phone

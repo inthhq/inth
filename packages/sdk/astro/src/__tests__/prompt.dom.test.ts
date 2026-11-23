@@ -248,23 +248,24 @@ describe('a tap before the prompt chunk mounted', () => {
 	 * after a choice.
 	 */
 	const holdTap = function holdTap(
-		action: 'accept' | 'reject' | 'customize',
+		action: 'accept' | 'reject' | 'customize' | 'dismiss',
 		policy: { model: string | null; prompt: string | null } = {
 			model: null,
 			prompt: null,
 		}
 	) {
 		const stop = vi.fn();
+		const at = Date.now() - 50;
 		globals[EARLY_TAPS_WINDOW_KEY] = {
 			stop,
-			taps: [{ action, at: Date.now() - 50, ...policy }],
+			taps: [{ action, at, ...policy }],
 		};
 		if (action !== 'customize') {
 			const style = document.createElement('style');
 			style.id = EARLY_TAP_STYLE_ID;
 			document.head.append(style);
 		}
-		return stop;
+		return Object.assign(stop, { at });
 	};
 
 	afterEach(() => {
@@ -297,6 +298,26 @@ describe('a tap before the prompt chunk mounted', () => {
 		);
 		expect(page.getConsent().activeUI).toBe('banner');
 		expect(page.getConsent().explicitChoice).toBeNull();
+	});
+
+	it('a choice records the time of the tap, not of the replay', async () => {
+		const { at } = holdTap('reject');
+		const page = await mount();
+		await vi.waitFor(() =>
+			expect(page.getConsent().explicitChoice).not.toBeNull()
+		);
+		expect(
+			page.getConsent().explicitChoice?.categories?.marketing?.confirmedAt
+		).toBe(at);
+	});
+
+	it('an OK on the notice records the time of the tap', async () => {
+		const { at } = holdTap('dismiss', { model: 'opt-out', prompt: 'notice' });
+		const page = await mount({ region: 'us-notice' });
+		await vi.waitFor(() =>
+			expect(page.getConsent().noticeDismissal).toBeTruthy()
+		);
+		expect(page.getConsent().noticeDismissal?.dismissedAt).toBe(at);
 	});
 
 	it('drops a tap made under another policy, and shows the prompt again', async () => {
