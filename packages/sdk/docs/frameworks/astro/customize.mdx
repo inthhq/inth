@@ -19,7 +19,7 @@ serialization, so they hold values, not functions.
 | Light or dark surfaces | `colorScheme` and `theme.dark` |
 | One part of a component | `theme.slots`, or `class` on `ConsentBanner` |
 | Animation | `disableAnimation` |
-| Banner position and blocking | `presentation` |
+| Prompt container and blocking | `presentation` |
 | Links to your policies | `legalLinks`, and the banner's `legalLinks` prop |
 | Your own CSS from scratch | `noStyle` on the banner, or `styles: false` |
 
@@ -111,17 +111,26 @@ For one banner, pass the `title`, `description`, `acceptButtonText`,
 instead. [Translations](/docs/frameworks/astro/translations) covers languages
 and the message keys the banner reads.
 
-## Change the banner's shape and position
+## Change the prompt's container
 
-`presentation.prompt` sets the banner's shape and where it sits:
+`presentation.prompt.container` sets the prompt's shape and where it sits:
 
 ```js title="astro.config.mjs (partial)"
-inth({ presentation: { prompt: { variant: 'bar', position: 'bottom' } } });
+inth({
+	presentation: {
+		prompt: { container: { type: 'banner', edge: 'bottom' } },
+	},
+});
 ```
 
-`variant` is `'floating'` (default), `'bar'`, `'widget'` or `'wall'`. The policy
-still decides which actions the banner must offer, and a notice never becomes a
-blocking wall. [Keep behavior and appearance separate](/docs/customization/overview#keep-behavior-and-appearance-separate)
+The container is a Card (`{ type: 'card', position }`, the default, at
+`start`), a Banner (`{ type: 'banner', edge }`) or a Drawer
+(`{ type: 'drawer', side }`). `edgeStyle: 'flush'` runs a Banner or Drawer
+edge to edge, and `blockUntilChoice: true` blocks the page until the visitor
+chooses. Without a container here, the policy's `surface.container` places
+the prompt. The policy still decides which actions the prompt must offer, and
+a notice never blocks. See
+[Containers](/docs/frameworks/astro/components/consent-banner#containers). [Keep behavior and appearance separate](/docs/customization/overview#keep-behavior-and-appearance-separate)
 explains what presentation can and cannot change.
 
 ## Set light or dark mode

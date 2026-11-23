@@ -1,6 +1,6 @@
 ---
 title: ConsentBanner
-description: Render the Inth consent banner as server HTML on an Astro site, with props for copy, legal links, and styling attributes.
+description: Render the Inth consent prompt as server HTML on an Astro site, in a Card, Banner or Drawer, with props for copy, legal links, and styling attributes.
 group: frameworks
 ---
 
@@ -11,9 +11,11 @@ content:
 
 <include src="../../../shared/examples/astro/layout.mdx" />
 
-`ConsentBanner` renders on the server from `Astro.locals.inth`. It ships no
-framework JavaScript. A small shared script adds one click listener to the
-document, and that listener turns the banner's buttons into consent actions.
+`ConsentBanner` renders the consent prompt on the server from
+`Astro.locals.inth`, collapsed, in its Card, Banner or Drawer. It ships no
+framework JavaScript. Once the consent engine runs, a small chunk takes the
+prompt over: Customize opening the choices in place, the phone layout,
+blocking, and the commit.
 
 ## When the banner renders
 
@@ -34,9 +36,10 @@ the consent runtime decides once it has read the cookie. In `hosted()` and
 placeholder and the browser renders the banner after `/v1/consent/init`. See
 [Rendering and deployment](/docs/frameworks/astro/rendering).
 
-After a save, the browser hides the banner by setting the `hidden` attribute.
-After a `ClientRouter` navigation, it shows or hides the new page's banner to
-match the visitor's state.
+After a choice, the prompt leaves, the outcome is announced to screen
+readers, and focus moves to your "Your Privacy Choices" link. After a
+`ClientRouter` navigation, the prompt moves to the new page's markup and shows
+or hides to match the visitor's state.
 
 ## Props
 
@@ -48,10 +51,11 @@ match the visitor's state.
 | `rejectButtonText` | `string` | `common.rejectAll` | Reject button label |
 | `customizeButtonText` | `string` | `common.customize` | Customize button label |
 | `dismissButtonText` | `string` | `common.acknowledge` | Label of the button that acknowledges a notice |
-| `legalLinks` | `('privacyPolicy' \| 'cookiePolicy' \| 'termsOfService')[] \| null` | None | Which links from the integration's `legalLinks` render after the description |
+| `legalLinks` | `('privacyPolicy' \| 'cookiePolicy' \| 'termsOfService')[] \| null` | `['privacyPolicy', 'cookiePolicy']` | Which links from the integration's `legalLinks` render after the description. A Banner shows only the Privacy Policy. `null` shows none |
 | `hideBranding` | `boolean` | `false` | Removes the "Consent by" tag |
+| `disableAnimation` | `boolean` | The integration's `disableAnimation` | Skips the enter and exit animations |
 | `noStyle` | `boolean` | `false` | Renders the markup without Inth's class names or button styles |
-| `class` | `string` | None | Extra class on the banner root, kept with `noStyle` |
+| `class` | `string` | None | Extra class on the prompt root, kept with `noStyle` |
 | `force` | `boolean` | `false` | Renders the banner even when the server decided to hide it, for visual tests |
 | `nonce` | `string` | `Astro.locals.inth.nonce` | Content Security Policy nonce for this banner's inline scripts and style. See [Content Security Policy](/docs/frameworks/astro/content-security-policy#allow-inth-with-a-nonce) |
 
@@ -65,20 +69,19 @@ page, `force` also renders the banner visible.
 
 ## Actions come from the policy
 
-The resolved policy rule decides which buttons the banner shows and in which
+The resolved policy rule decides which buttons the prompt shows and in which
 order. The same resolver runs for the React, Vue and Svelte banners, so a rule
 produces the same actions on every framework:
 
 - A `choice` prompt shows Reject and Accept at equal prominence, plus
-  Customize when the rule offers it. Customize is the primary action by
-  default.
-- A `notice` prompt shows an acknowledgement button and, under an opt-out
-  rule, an opt-out link (by default "Do Not Sell or Share My Personal
-  Information"). The acknowledgement records that the visitor saw the notice.
-  It records no consent and changes no permission.
-- A rule that keeps preferences reachable adds a "Manage preferences" button.
+  Customize when the rule offers it. Customize opens the choices inside the
+  prompt: the cookie categories in the EU, and the sale-and-sharing row and
+  Preferences in the US. Save records them.
+- A `notice` prompt shows **OK** and, under an opt-out rule, an opt-out link
+  (by default "Do not sell or share my data"). **OK** records that the
+  visitor saw the notice. It records no consent and changes no permission.
 
-Under an opt-out rule, the banner's opt-out link follows the resolved
+Under an opt-out rule, the prompt's opt-out link follows the resolved
 `presentation.optOutLink` title in the integration options. With the default
 `'do-not-sell'` ("Do Not Sell or Share My Personal Information"), activating
 the link records the opt-out in one click and switches off `marketing` and
@@ -108,26 +111,45 @@ and recorded choices.
 
 <include src="../../../shared/privacy-choices-link.mdx" />
 
-## Shape and position
+## Containers
 
-The integration's `presentation.prompt` option sets the banner's variant and
-position for every page. The policy still decides the actions:
+The integration's `presentation.prompt` option places the prompt for every
+page. The policy still decides the actions:
 
-| Variant | Positions | Default position |
-| --- | --- | --- |
-| `floating` (default) | `bottom-left`, `bottom-right`, `top-left`, `top-right`, `bottom-center`, `top-center` | `bottom-left` |
-| `bar` | `top`, `bottom` | `bottom` |
-| `widget` | `bottom-left`, `bottom-right`, `top-left`, `top-right` | `bottom-right` |
-| `wall` | `center` | `center` |
+| Container | Positions | Default | Shape |
+| --- | --- | --- | --- |
+| `{ type: 'card', position }` | `start`, `end`, `center` | `start` | A floating card in a bottom corner, or centred over a backdrop |
+| `{ type: 'banner', edge }` | `bottom`, `top` | `bottom` | A full-width banner along one edge |
+| `{ type: 'drawer', side }` | `bottom`, `top`, `start`, `end` | `bottom` | A panel along one side that shows every choice at once on desktop |
 
-Right-to-left languages keep the same position; only the text direction
-changes. A choice `wall` always blocks the page. A
-notice never blocks, and asking for a notice `wall` falls back to `floating`.
-See [change the banner's shape and position](/docs/frameworks/astro/customize#change-the-banners-shape-and-position)
-and the [design gallery](/docs/customization/recipes).
+```js title="astro.config.mjs (partial)"
+inth({
+	presentation: {
+		prompt: {
+			container: { type: 'banner', edge: 'bottom' },
+			edgeStyle: 'flush',
+		},
+	},
+});
+```
 
-The banner has no per-page variant or layout prop. Every banner on the site
-shares `presentation.prompt`.
+`start` and `end` are logical: on a right-to-left page, `start` is the
+bottom-right corner. On phones, a `start` or `end` Drawer becomes a bottom
+Drawer. `edgeStyle: 'inset'` (the default) floats a Banner or Drawer 12px off
+the viewport edges with rounded corners; `'flush'` runs it edge to edge.
+
+Without `presentation.prompt.container`, the policy rule's
+`surface.container`, set in the dashboard, places the prompt. `edgeStyle`
+follows the same order.
+
+**Blocking.** `blockUntilChoice: true` dims the page, locks scroll, and keeps
+focus inside the prompt until the visitor chooses. A centred Card always
+blocks. A notice never blocks, and neither does a prompt under an opt-out
+model. The policy's `surface.blocking` is a hard rule: `forbidden` never
+blocks, and `required` always blocks a choice prompt.
+
+The prompt has no per-page container prop. Every prompt on the site shares
+`presentation.prompt`. See the [design gallery](/docs/customization/recipes).
 
 ## Legal links
 
@@ -150,17 +172,16 @@ takes the same `legalLinks` list.
 
 ## Accessibility
 
-- The card has `role="region"` and an `aria-label` set to the banner title.
-  It leaves the page usable by keyboard and pointer.
-- A blocking banner, such as a choice `wall`, has `role="dialog"` and
-  `aria-modal="true"`. The browser locks page scroll, traps focus inside the
-  card and shows a backdrop until the visitor answers.
-- The root carries `lang` and `dir` for the translation's language, so screen
-  readers pronounce the copy correctly and right-to-left text lays out
-  correctly.
-- Every action is a `<button type="button">`. Until the consent runtime
-  starts, a click does nothing, because the page has not loaded the handler
-  yet.
+- The card is labelled by its heading. A non-blocking prompt leaves the page
+  usable by keyboard and pointer.
+- A blocking prompt puts `role="dialog"` and `aria-modal="true"` on the shell
+  around the card. The browser makes the page behind it inert, locks scroll,
+  keeps focus inside it and shows a backdrop until the visitor answers. Esc
+  folds the choices and never closes the prompt.
+- The root carries `dir` for the translation's language, so right-to-left
+  text lays out correctly.
+- Every action is a `<button type="button">`. Until the prompt's chunk has
+  loaded, a click does nothing.
 
 ## Style the banner
 
@@ -172,24 +193,24 @@ To write your own CSS, target the attributes. They stay with `noStyle`:
 
 | Element | Attributes |
 | --- | --- |
-| Root | `data-testid="consent-banner-root"`, `data-prompt` (`choice` or `notice`), `data-model`, `data-variant`, `data-position`, `data-blocking`, `data-inth-visible` |
-| Backdrop | `data-testid="consent-banner-overlay"`, rendered only for a blocking banner |
-| Card | `data-testid="consent-banner-card"` |
+| Root | `data-testid="consent-banner-root"`, `data-placement` (`card-start`, `card-end`, `card-center`, `banner-bottom`, `banner-top`, `drawer-bottom`, `drawer-top`, `drawer-start`, `drawer-end`), `data-flow` (`expand-in-place` or `all-in-one`), `data-variant` (`choice`, `us-consent` or `notice`), `data-edge-style`, `data-blocking`, `data-expanded`, `data-state` |
+| Backdrop | `data-testid="consent-banner-overlay"`, rendered only for a blocking prompt |
+| Shell and card | `data-testid="consent-banner-shell"`, `data-testid="consent-banner-card"` |
 | Title and description | `data-testid="consent-banner-title"`, `data-testid="consent-banner-description"` |
-| Footer and button groups | `data-testid="consent-banner-footer"`, `data-direction`, `data-split`, `data-fill` |
+| Footer and button groups | `data-testid="consent-banner-footer"`, `data-testid="consent-banner-footer-sub-group"` |
 | Each action | `data-action` (`accept`, `reject`, `customize` or `dismiss`), `data-testid="consent-banner-<action>-button"` |
-| Each rights button | `data-action="right"`, `data-right` (`opt-out` or `preferences`) |
+| The choices Customize opens | `data-testid="consent-banner-expand-panel"`, or `data-testid="consent-banner-body"` in a side Drawer |
 | Each legal link | `data-testid="consent-banner-legal-link-<key>"` |
 
-Keep Inth's rules loaded when you restyle the banner. The browser hides the
-banner with the `hidden` attribute, and Inth's rules make `hidden` win over
-the banner's `display` rule.
+Keep Inth's rules loaded when you restyle the prompt. A prerendered page
+ships it with the `hidden` attribute, and Inth's rules make `hidden` win over
+the prompt's `display` rule.
 
 ## Next steps
 
 - [ConsentBannerDeferred](/docs/frameworks/astro/components/consent-banner-deferred)
   renders this banner in a server island for cached pages.
 - [ConsentDialog](/docs/frameworks/astro/components/consent-dialog) is what
-  Customize opens.
+  "Your Privacy Choices" opens.
 - [IABConsentBanner](/docs/frameworks/astro/components/iab-consent-banner)
   replaces this banner under an IAB TCF policy.
