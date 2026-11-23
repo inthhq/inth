@@ -523,7 +523,6 @@ export const createDeferredRuntime = function createDeferredRuntime(
 		setEnabled: forward('setEnabled'),
 		setLanguage: forward('setLanguage'),
 		setOverrides: forward('setOverrides'),
-		syncUserConsent: forward('syncUserConsent'),
 		start() {
 			if (mounted || !active) {
 				return;
@@ -560,6 +559,7 @@ export const createDeferredRuntime = function createDeferredRuntime(
 				listeners.delete(listener);
 			};
 		},
+		syncUserConsent: forward('syncUserConsent'),
 		async update(next) {
 			// Before the engine, it reads the options when it is created.
 			if (engine) {
