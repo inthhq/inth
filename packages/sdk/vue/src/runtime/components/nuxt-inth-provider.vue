@@ -17,14 +17,12 @@ import {
 	consentConfigKey,
 	symbolConfirmationHosted,
 } from '../utils/consent-symbols.model';
-import {
-	ConsentBannerHost as ConsentBanner,
-	LazyConsentDialogTrigger,
-	LazyIabConsentBanner,
-	LazyIabConsentDialog,
-	LazyConsentManager,
-	prefetchIabConsentDialog,
-} from './lazy-consent-banner';
+import { ConsentBannerHost as ConsentBanner } from './consent-banner-host';
+import { LazyConsentDialogTrigger } from './lazy-consent-dialog-trigger';
+import { LazyConsentManager } from './lazy-consent-manager';
+import { LazyIabConsentBanner } from './lazy-iab-consent-banner';
+import { LazyIabConsentDialog } from './lazy-iab-consent-dialog';
+import { prefetchIabConsentDialog } from './prefetch-iab-consent-dialog';
 import { useAdoptOptOutConfirmation } from './parts/receipt-focus';
 
 // The default slot renders after the surfaces, so a root that wraps the

@@ -15,14 +15,12 @@ import {
 } from '../composables/use-consent-kernel';
 import { useMounted } from '../composables/use-mounted';
 import { symbolConfirmationHosted } from '../utils/consent-symbols.model';
-import {
-	LazyConsentDialogTrigger,
-	LazyConsentManager,
-	LazyIabConsentBanner,
-	LazyIabConsentDialog,
-	OptInConfirmationHost,
-	prefetchIabConsentDialog,
-} from './lazy-consent-banner';
+import { LazyConsentDialogTrigger } from './lazy-consent-dialog-trigger';
+import { LazyConsentManager } from './lazy-consent-manager';
+import { LazyIabConsentBanner } from './lazy-iab-consent-banner';
+import { LazyIabConsentDialog } from './lazy-iab-consent-dialog';
+import { OptInConfirmationHost } from './opt-in-confirmation-host';
+import { prefetchIabConsentDialog } from './prefetch-iab-consent-dialog';
 import { useAdoptOptOutConfirmation } from './parts/receipt-focus';
 import ConsentBanner from './prompt/prompt.vue';
 
