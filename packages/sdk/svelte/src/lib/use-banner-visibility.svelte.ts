@@ -8,7 +8,7 @@ const readDurationMs = function readDurationMs(target: Element | null): number {
 		return DEFAULT_DURATION_MS;
 	}
 	const style = getComputedStyle(target ?? document.documentElement);
-	// `styles.css` no longer declares the classic variable, so an unset one
+	// `styles.css` no longer declares this compatibility variable, so an unset one
 	// falls back to the theme's duration token.
 	const value =
 		style.getPropertyValue('--consent-banner-animation-duration').trim() ||

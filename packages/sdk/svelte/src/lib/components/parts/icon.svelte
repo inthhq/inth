@@ -1,5 +1,5 @@
 <script lang="ts">
-	/** The Privacy Choices icons, as the React port draws them. */
+	/** The prompt's and dialog's icons, as React draws them. */
 	let {
 		name,
 		size = 14,

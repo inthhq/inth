@@ -55,7 +55,7 @@
 
 <script lang="ts">
 	/**
-	 * The Privacy Choices consent prompt (v6): a Card, Banner or Drawer that
+	 * The consent prompt: a Card, Banner or Drawer that
 	 * shows the same content, copy and decisions in every presentation. The
 	 * stylesheets of one presentation reach the page, so it downloads only
 	 * the presentation it renders. Its own draft backs the category
@@ -70,6 +70,11 @@
 		ResolvedConsentPresentation,
 	} from '@inth/sdk/engine';
 	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
+	import type { EarlyConsentTap } from '@inth/sdk/runtime/page-globals';
+	import {
+		EARLY_CONSENT_TAP_SCRIPT,
+		replayEarlyConsentTaps,
+	} from '@inth/sdk/surface-actions';
 	import {
 		announcementText,
 		resolveBannerAllowedAnnouncement,
@@ -99,15 +104,15 @@
 	import ConsentButton from '../action-button.svelte';
 	import BrandMark from '../icons/brand-mark.svelte';
 	import InlineLegalLinks from '../inline-legal-links.svelte';
-	import { createSurfaceDraft } from '../privacy-choices/draft.svelte';
-	import { cx, part } from '../privacy-choices/parts';
+	import { createSurfaceDraft } from '../parts/draft.svelte';
+	import { cx, part } from '../parts/parts';
 	import {
 		rightsBundleOf,
 		useOptOutReceiptData,
 		usePhoneLayout,
 		useReducedMotion,
 		useSurfaceSession,
-	} from '../privacy-choices/session.svelte';
+	} from '../parts/session.svelte';
 	import SurfaceStyles from '../surface-styles.svelte';
 	import { presentationSheets } from './sheets';
 
@@ -126,7 +131,7 @@
 	let {
 		container,
 		noStyle = false,
-		disableAnimation = false,
+		disableAnimation: localDisableAnimation,
 		legalLinks,
 		hideBranding = false,
 		models = DEFAULT_MODELS,
@@ -191,17 +196,27 @@
 		}
 	});
 	const sheets = $derived(presentationSheets(container.desktop.type));
-	const variant = $derived(resolvePrivacyChoicesVariant(snapshot.policyRule));
 	const activeUI = $derived(snapshot.activeUI ?? 'none');
-	const model = $derived(consent.state.model ?? 'opt-in');
+	// The kernel's effective model, as React reads it: a policy that is
+	// not `iab` keeps its own model while an IAB vendor list is loaded.
+	const model = $derived(
+		(snapshot.resolution.status === 'matched' ? snapshot.model : null) ??
+			'opt-in'
+	);
+	// The effective model: an `iab` rule whose vendor list is unavailable
+	// falls back to the standard opt-in prompt.
+	const variant = $derived(
+		resolvePrivacyChoicesVariant({ ...snapshot.policyRule, model })
+	);
 	const wantsShow = $derived(
 		consent.state.hasConsentUi &&
 			activeUI === 'banner' &&
 			models.includes(model) &&
 			variant !== 'none'
 	);
+	// The component's own setting wins over the provider's.
 	const animationOff = $derived(
-		disableAnimation || theme.disableAnimation === true
+		localDisableAnimation ?? theme.disableAnimation ?? false
 	);
 	// The system setting counts even when the host turned animation on, as
 	// in React: a prompt that should not move never plays its exit.
@@ -515,6 +530,51 @@
 		warmDialog();
 	};
 
+	// The script that holds a tap on the server-rendered prompt made before
+	// hydration. The browser renders the same markup, so hydration adopts
+	// it; a script the browser inserts never runs. `inthHandle` gives it the
+	// page's nonce when the provider has none.
+	const earlyTapMarkup = `<script data-inth-early-tap${
+		theme.nonce ? ` nonce="${theme.nonce.replaceAll('"', '&quot;')}"` : ''
+	}>${EARLY_CONSENT_TAP_SCRIPT}</${'script'}>`;
+
+	// A tap on the server-rendered prompt before it hydrated, which the
+	// inline script held. It replays through this prompt's own handlers once
+	// the engine has started and the policy resolved, so a choice commits
+	// through this prompt's plan and Customize opens the options in place.
+	const replayTap = function replayTap(tap: EarlyConsentTap) {
+		if (tap.action === 'accept') {
+			commit('allow');
+		} else if (tap.action === 'reject') {
+			commit('refuse');
+		} else if (tap.action === 'dismiss') {
+			acknowledge();
+		} else if (tap.action === 'customize' && !allInOne) {
+			expand();
+		}
+	};
+
+	// From here the prompt's own handlers work: stop the script, and replay
+	// its tap once the runtime has started, which the provider does after
+	// its children mounted.
+	onMount(() => {
+		let stop: (() => void) | undefined;
+		let active = true;
+		queueMicrotask(() => {
+			if (active) {
+				stop = replayEarlyConsentTaps(consent.kernel, {
+					act: replayTap,
+					categories: () => consent.state.consentCategories,
+					started: () => consent.runtime.started,
+				});
+			}
+		});
+		return () => {
+			active = false;
+			stop?.();
+		};
+	});
+
 	// The "Consent by [INTH]" tag (BNR-11, §5).
 	let hostname = $state<string | undefined>(undefined);
 	onMount(() => {
@@ -675,7 +735,6 @@
 			aria-expanded={expanded}
 			aria-controls={inBar ? undefined : ids.panel}
 			data-action="customize"
-			data-early-tap="off"
 			data-testid="consent-banner-customize-button"
 			onclick={expand}
 			onfocus={warm}
@@ -693,7 +752,6 @@
 		{...appearance('reject', false)}
 		{noStyle}
 		data-action="reject"
-		data-early-tap="off"
 		data-testid="consent-banner-reject-button"
 		onclick={() => commit('refuse')}
 	>
@@ -708,7 +766,6 @@
 		{...appearance('accept', false)}
 		{noStyle}
 		data-action="accept"
-		data-early-tap="off"
 		data-testid="consent-banner-accept-button"
 		onclick={() => commit('allow')}
 	>
@@ -723,7 +780,6 @@
 		{...appearance('dismiss', true)}
 		{noStyle}
 		data-action="dismiss"
-		data-early-tap="off"
 		data-testid="consent-banner-dismiss-button"
 		onclick={acknowledge}
 	>
@@ -853,6 +909,8 @@
 ></div>
 
 {#if showing}
+	<!-- Before the buttons, so a tap on them is never missed. -->
+	{@html earlyTapMarkup}
 	<!-- Keyed: a new presentation inserts its own sheet. -->
 	{#key sheets}
 		<SurfaceStyles
@@ -872,12 +930,11 @@
 		data-expanded={expanded ? 'true' : undefined}
 		data-state={phase === 'leaving' ? 'closed' : 'open'}
 		data-variant={variant}
-		data-design="privacy-choices"
 		data-animation={animationOff ? 'off' : undefined}
 		data-testid="consent-banner-root"
 		{...{ [SURFACE_ROOT_ATTRIBUTE]: 'banner' }}
 		dir={textDirection}
-		inert={phase === 'leaving'}
+		inert={phase === 'leaving' || undefined}
 	>
 		{#if layout.blocking}
 			<div

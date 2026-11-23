@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * A Privacy Choices switch: a `role="switch"` button the row names with
+	 * A category switch: a `role="switch"` button the row names with
 	 * `aria-labelledby` and describes with `aria-describedby` (SR-06). Never
 	 * `disabled` for a vendor (CAT-03); a category that cannot change shows
 	 * "Always on" instead of a switch.

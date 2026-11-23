@@ -21,8 +21,8 @@
 	import { findFocusRestoreEquivalent } from '@inth/sdk/ui/utils/dom';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
-	import { DIALOG_SHEETS } from '../dialog-sheets';
 	import { Dialog, Portal } from '../primitives';
+	import { WIDGET_SHEETS } from '../widget-sheets';
 	import SurfaceStyles from './surface-styles.svelte';
 
 	const DEFAULT_LANGUAGE = 'en';
@@ -169,7 +169,7 @@
 	});
 </script>
 
-<SurfaceStyles sheets={DIALOG_SHEETS} />
+<SurfaceStyles sheets={WIDGET_SHEETS} />
 
 <Dialog.Root
 	bind:open={dialogOpen}

@@ -12,8 +12,8 @@
 	import type { Snippet } from 'svelte';
 
 	import { getThemeContext } from '../../context.svelte';
-	import Icon from '../privacy-choices/icon.svelte';
-	import { cx, part } from '../privacy-choices/parts';
+	import Icon from '../parts/icon.svelte';
+	import { cx, part } from '../parts/parts';
 
 	let {
 		layerEl = $bindable(null),

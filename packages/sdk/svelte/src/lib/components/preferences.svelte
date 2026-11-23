@@ -2,7 +2,7 @@
 	import type { AllConsentNames, SaveUISource } from '@inth/sdk/engine';
 	import {
 		actionAppearanceFromTheme,
-		resolveLegacyConsentPresentation,
+		resolveConsentPresentation,
 	} from '@inth/sdk/engine';
 	import { createPreferenceDraft } from '@inth/sdk/preference-draft';
 	import { optInConsentSurface } from '@inth/sdk/surface-actions';
@@ -26,8 +26,8 @@
 	} from '@inth/sdk/ui/utils';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';
-	import { DIALOG_SHEETS } from '../dialog-sheets';
 	import { PreferenceItem, Switch } from '../primitives';
+	import { WIDGET_SHEETS } from '../widget-sheets';
 	import ConsentButton from './action-button.svelte';
 	import Branding from './branding.svelte';
 	import DeferredOptInConfirmation from './deferred-opt-in-confirmation.svelte';
@@ -209,7 +209,7 @@
 	);
 
 	const presentation = $derived(
-		resolveLegacyConsentPresentation({
+		resolveConsentPresentation({
 			actionAppearance: actionAppearanceFromTheme(theme.theme),
 			policy: consent.snapshot.policyRule,
 			presentation: consent.state.presentation,
@@ -223,7 +223,7 @@
 </script>
 
 {#if consent.state.hasConsentUi}
-	<SurfaceStyles sheets={DIALOG_SHEETS} />
+	<SurfaceStyles sheets={WIDGET_SHEETS} />
 	<DeferredOptInConfirmation
 		{noStyle}
 		disableAnimation={theme.disableAnimation}

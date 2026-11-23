@@ -1,5 +1,5 @@
 /**
- * The preference draft behind one Privacy Choices surface: the prompt's
+ * The preference draft behind one consent surface: the prompt's
  * options, or the dialog. The React port's `ConsentDraftProvider`.
  *
  * The prompt ships on first load and its options do not, so the draft
@@ -104,7 +104,7 @@ export const getSurfaceDraft = function getSurfaceDraft(): SurfaceDraft {
 	const found = getContext<SurfaceDraft | undefined>(DRAFT_KEY);
 	if (!found) {
 		throw new Error(
-			'inth: a Privacy Choices part rendered outside its surface.'
+			'inth: a consent prompt or dialog part rendered outside its surface.'
 		);
 	}
 	return found;
