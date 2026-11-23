@@ -6,7 +6,7 @@ import type {
 } from '@inth/sdk/engine';
 import { has } from '@inth/sdk/engine';
 
-import { isRecord } from '../../engine/runtime';
+import { isRecord } from '../../engine/is-record.model';
 import { ALL_DENIED } from '../../engine/vendor-consent.model';
 import { resolveManifest } from '../../resolve-manifest';
 import { vendorManifestContract } from '../../vendor-manifest.model';
