@@ -18,7 +18,7 @@ import {
 	useOptOutConfirmationOpen,
 } from '../../composables/use-consent-kernel';
 import { symbolConfirmationHosted } from '../../utils/consent-symbols.model';
-import { useAdoptOptOutConfirmation } from '../parts/receipt-focus.model';
+import { useAdoptOptOutConfirmation } from '../parts/use-adopt-opt-out-confirmation';
 import { loadConsentDialog } from './load-consent-dialog';
 
 // Vue reads an absent boolean prop as `false`; `undefined` lets the
