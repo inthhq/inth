@@ -60,25 +60,9 @@ import { gpcFromHeaders } from '../../../core/src/transports/decision-inputs';
 import { createIAB } from '../../../iab/src/index';
 import type { IABHandle } from '../../../iab/src/index';
 import { gtag } from '../../../integrations/src/vendors/analytics/google-tag';
+import { consentMarkup } from './consent-markup';
 import { transportMode } from './fixtures/transport-mode';
 import type { FrameworkRoot } from './framework-root';
-
-// Theme styles load after mount; compare the consent markup and track hydration warnings separately.
-const consentMarkup = (container: HTMLElement) => {
-	const copy = container.cloneNode(true) as HTMLElement;
-	copy.querySelectorAll('style#inth-theme').forEach((style) => style.remove());
-	// Branding appends the browser hostname after mount, without affecting consent.
-	copy.querySelectorAll('a[data-branding]').forEach((link) => {
-		const href = link.getAttribute('href');
-		if (!href) {
-			return;
-		}
-		const url = new URL(href);
-		url.searchParams.delete('ref');
-		link.setAttribute('href', url.toString().replace(/\/$/u, ''));
-	});
-	return copy.innerHTML;
-};
 
 // oxlint-disable-next-line promise/avoid-new -- Browser effects must settle between scenario operations.
 const settle = () =>

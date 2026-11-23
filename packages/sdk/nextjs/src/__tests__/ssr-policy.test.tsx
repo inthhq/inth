@@ -16,6 +16,7 @@ import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { encodeStoredConsentEnvelopeJson } from '../../../core/src/modules/persistence/writer/encode';
+import { preloadContainers } from '@inth/react/components/consent-banner';
 import { InthProvider } from '../root';
 import { resolveConsent } from '../server';
 import { transportMode } from './fixtures/transport-mode';
@@ -99,6 +100,9 @@ const hydrate = async (config: KernelConfig) => {
 			<Probe />
 		</InthProvider>
 	);
+	// `renderToString` cannot wait for the prompt's container chunk; a
+	// server loads every container at module evaluation.
+	await preloadContainers();
 	container = document.createElement('div');
 	document.body.append(container);
 	container.innerHTML = renderToString(app);

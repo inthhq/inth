@@ -16,7 +16,7 @@
  * so a streamed banner doesn't wait for one more request after the engine.
  * Both routes here mount a deferred root, so the small modules the shell
  * shares with the engine, the commit path and the other route each get a
- * file of their own: 11 files, about 21 KB after Brotli. An app whose
+ * file of their own: 10 files, about 21 KB after Brotli. An app whose
  * routes all use `InthProvider` loads 9.
  */
 import { dirname, join } from 'node:path';
@@ -168,8 +168,8 @@ const deferredModules = [
 
 describe('TanStack Start client chunks', () => {
 	test.each([
-		['root-route', 11],
-		['provider-route', 22],
+		['root-route', 10],
+		['provider-route', 16],
 	])(
 		'a %s loads at most %i files first',
 		async (route, bound) => {
@@ -239,8 +239,10 @@ describe('TanStack Start client chunks', () => {
 		// chunks share, lengthens their preload lists: 66 bytes (22,676). The
 		// stored opt-out record now carries the categories it withholds, so the
 		// first load's record reader validates and decodes them, and the deciding
-		// category follows the rule's GPC mapping: 114 bytes (22,790).
-		expect(brotli).toBeLessThanOrEqual(22_790);
+		// category follows the rule's GPC mapping: 114 bytes (22,790). With one
+		// consent UI, the classic prompt and dialog are gone and the banner
+		// replays its own early taps: 1,006 fewer (21,730 measured).
+		expect(brotli).toBeLessThanOrEqual(21_800);
 	}, 60_000);
 
 	test('a root route applies a streamed state with code its engine brings', async () => {
