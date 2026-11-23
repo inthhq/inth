@@ -15,9 +15,10 @@ import {
 	commitDialogChoice,
 	MAIN_LAYER,
 	resolveCategoryTitle,
+	resolveConsentPresentation,
 	resolvePreferencesRowCopy,
 	resolvePrivacyChoicesDialogCopy,
-	resolvePrivacyChoicesVariant,
+	resolvePrivacyChoicesRegime,
 	resolveSaleRight,
 	resolveVendorTableCopy,
 } from '@inth/sdk-core';
@@ -42,11 +43,13 @@ import {
 	scheduleReveal,
 } from '@inth/sdk-ui/primitives/surface';
 import type { LiveRegion } from '@inth/sdk-ui/primitives/surface';
+import { getTextDirection } from '@inth/sdk-ui/utils';
 import { resolveLegalLinkEntries } from '@inth/sdk-ui/utils/legal-links';
 
 import { classes as styles } from '../../generated/privacy-choices/dialog';
 import { classes as expandStyles } from '../../generated/privacy-choices/expand';
 import type { ConsentDialogOptions } from '../../types';
+import { takeReceiptFocus } from '../receipt-focus';
 import type { Surface, SurfaceContext } from '../surface';
 import { advertisingRow, createCategoryGroup } from './category-group';
 import { cx, el, findInPage, icon, owned, patch } from './dom';
@@ -72,6 +75,11 @@ const SHEET_EXIT_MS = 160;
 const PREFERENCES_OPENER = 'preferences';
 const PREFERENCES_SHEET = 'preferences';
 const VENDOR_SHEET_PREFIX = 'vendors:';
+/** Where focus goes when the dialog's opener is gone (FOC-03). */
+const RETURN_TARGETS = [
+	'[data-testid="privacy-choices-link"]:not([hidden])',
+	'[data-testid="consent-dialog-trigger"]',
+];
 /** How many frames to wait for a returning banner, which may still be loading. */
 const BANNER_RETURN_FRAMES = 60;
 
@@ -408,22 +416,41 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 		session.pushSheet(sheet, openerKey);
 	};
 
+	const clearSheetTimer = function clearSheetTimer(): void {
+		if (sheetTimer !== undefined) {
+			clearTimeout(sheetTimer);
+			sheetTimer = undefined;
+		}
+	};
+
 	const followSheets = function followSheets(env: PcEnv): void {
 		const topSheet = env.state.sheets[env.state.sheets.length - 1] ?? null;
-		if (topSheet && shownSheet?.id !== topSheet.id) {
-			if (sheetTimer !== undefined) {
-				clearTimeout(sheetTimer);
-				sheetTimer = undefined;
-			}
+		// Nothing is left to animate under reduced motion, on desktop or in a
+		// closed dialog, so a sheet leaves at once there (NEST-06).
+		const exitsAtOnce =
+			prefersReducedMotionNow() || disableAnimation || !env.phone || !isOpen;
+		if (topSheet && (shownSheet?.id !== topSheet.id || shownSheet.closing)) {
+			// A sheet reopened while it animates out shows again at once, and
+			// its exit timer goes with the closing state (NEST-03).
+			clearSheetTimer();
 			shownSheet = { closing: false, id: topSheet.id };
-		} else if (!topSheet && shownSheet && !shownSheet.closing) {
-			const reduced = prefersReducedMotionNow() || disableAnimation;
-			shownSheet = reduced ? null : { ...shownSheet, closing: true };
-			if (shownSheet) {
+		} else if (
+			!topSheet &&
+			shownSheet &&
+			(exitsAtOnce || !shownSheet.closing)
+		) {
+			clearSheetTimer();
+			shownSheet = exitsAtOnce ? null : { ...shownSheet, closing: true };
+			const exiting = shownSheet;
+			if (exiting) {
 				sheetTimer = setTimeout(() => {
 					sheetTimer = undefined;
-					shownSheet = null;
-					render();
+					// Clears only the exit it was set for, never a sheet shown
+					// since.
+					if (shownSheet === exiting) {
+						shownSheet = null;
+						render();
+					}
 				}, SHEET_EXIT_MS);
 			}
 		}
@@ -432,9 +459,17 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 	// oxlint-disable-next-line max-lines-per-function, complexity -- The tree mirrors the React component's.
 	const build = function build(env: PcEnv): HTMLElement {
 		const { snapshot: snap, t, phone } = env;
-		const variant = resolvePrivacyChoicesVariant(snap.policyRule);
-		const eu = variant === 'choice';
-		const edgeStyle = ctx.client.presentation?.prompt?.edgeStyle ?? 'inset';
+		// The model and the US markers decide the body, never the prompt: an
+		// EU opt-in policy that shows no banner still gets the EU dialog.
+		const eu = resolvePrivacyChoicesRegime(snap.policyRule) === 'eu';
+		// Phone sheets take the prompt's resolved phone edge style, which the
+		// policy and a Card's own rule (always inset) have already settled.
+		const edgeStyle =
+			resolveConsentPresentation({
+				policy: snap.policyRule,
+				presentation: ctx.client.presentation,
+				surface: 'prompt',
+			}).container?.phone.edgeStyle ?? 'inset';
 		const copy = resolvePrivacyChoicesDialogCopy(t, { eu });
 		const sale = resolveSaleRight(snap);
 		const gpcLocked = sale.available && sale.lock === 'gpc-active';
@@ -529,7 +564,10 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 					),
 					el(
 						'span',
-						{ class: cx(noStyle, styles.chevron) },
+						{
+							class: cx(noStyle, styles.chevron),
+							'data-direction': phone ? 'end' : 'down',
+						},
 						chevron(phone ? 'end' : 'down')
 					)
 				),
@@ -722,6 +760,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 				'data-layout': phone ? 'phone' : 'desktop',
 				'data-regime': eu ? 'eu' : 'us',
 				'data-testid': 'consent-dialog-root',
+				dir: getTextDirection(snap.translations?.language),
 				[SURFACE_ROOT_ATTRIBUTE]: 'dialog',
 			},
 			layer({
@@ -795,8 +834,16 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 		// in the top layer, and returns to the opener on close (FOC-01..03).
 		if (backdrop && mainRef.current && !releaseOpen) {
 			const release = attachPageBlock(backdrop);
+			// Back from an opt-out (after its revocation reload, or from a
+			// one-click opt-out link), the dialog opens on the receipt that
+			// confirms it.
+			const receiptElement = takeReceiptFocus(kernel)
+				? mainRef.current.querySelector<HTMLElement>(
+						'[data-testid="consent-dialog-receipt"][data-open="true"]'
+					)
+				: null;
 			const untrap = attachTopLayerTrap(mainRef.current, {
-				initialFocus: mainTitleRef.current,
+				initialFocus: receiptElement ?? mainTitleRef.current,
 				returnFocus: () => {
 					const target = opener;
 					opener = null;
@@ -805,9 +852,16 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 					if (kernel.getSnapshot().activeUI === 'banner') {
 						focusReturningBanner();
 					}
-					return target instanceof HTMLElement && target.isConnected
-						? target
-						: findInPage('[data-testid="privacy-choices-link"]', ctx.root);
+					if (target instanceof HTMLElement && target.isConnected) {
+						return target;
+					}
+					for (const selector of RETURN_TARGETS) {
+						const fallback = findInPage(selector, ctx.root);
+						if (fallback) {
+							return fallback;
+						}
+					}
+					return null;
 				},
 			});
 			releaseOpen = () => {
@@ -939,10 +993,7 @@ export const createPrivacyChoicesDialog = function createPrivacyChoicesDialog(
 		// The trap returns focus once the dialog has left the page.
 		releaseOpen?.();
 		releaseOpen = undefined;
-		if (sheetTimer !== undefined) {
-			clearTimeout(sheetTimer);
-			sheetTimer = undefined;
-		}
+		clearSheetTimer();
 		shownSheet = null;
 		// A closed dialog starts over: Preferences folded.
 		preferencesOpen = false;

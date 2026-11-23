@@ -81,6 +81,11 @@ export type {
 	TriggerPosition,
 } from './types';
 export { mountConsentUI } from './ui/mount';
+export { createPrivacyChoicesLink } from './ui/privacy-choices-link';
+export type {
+	PrivacyChoicesLinkHandle,
+	PrivacyChoicesLinkOptions,
+} from './ui/privacy-choices-link';
 export { version } from './version';
 export type {
 	ConsentSnapshot,

@@ -9,6 +9,7 @@
 
 import type { ConsentContainer } from '@inth/sdk-core';
 
+import * as optInConfirmation from '../opt-in-confirmation';
 import * as bar from './bar';
 import * as card from './card';
 import * as dialog from './dialog';
@@ -29,3 +30,6 @@ export const importPanel = (): Promise<typeof panel> => Promise.resolve(panel);
 
 export const importPrivacyChoicesDialog = (): Promise<typeof dialog> =>
 	Promise.resolve(dialog);
+
+export const importOptInConfirmation = (): Promise<typeof optInConfirmation> =>
+	Promise.resolve(optInConfirmation);

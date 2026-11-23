@@ -8,6 +8,7 @@ import type {
 	ConsentContainer,
 	ConsentEdgeStyle,
 	ConsentPresentation,
+	PresentationAction,
 } from '@inth/sdk-core';
 import type { PolicyRule } from '@inth/sdk-schema/types';
 
@@ -80,6 +81,18 @@ export interface PrivacyChoicesPageOptions {
 	rule?: Partial<PolicyRule>;
 	/** `false` mounts no dialog, so nothing warms its chunks. */
 	dialog?: false;
+	/** `false` mounts no banner. */
+	banner?: false;
+	/** Mount the stock floating trigger. */
+	stockTrigger?: boolean;
+	/** The prompt's host layout: action order and groups. */
+	layout?: readonly (PresentationAction | readonly PresentationAction[])[];
+	/** `theme.slots`, keyed like `consentBannerTitle`. */
+	slots?: Record<string, string>;
+	/** The visitor's language; the page carries copy for it. */
+	language?: string;
+	/** Play the enter and exit motion, which the suites otherwise skip. */
+	animate?: boolean;
 }
 
 let fixture = 0;
@@ -97,6 +110,12 @@ export const startPrivacyChoicesPage = async function startPrivacyChoicesPage({
 	vendors = false,
 	rule,
 	dialog,
+	banner,
+	stockTrigger,
+	layout,
+	slots,
+	language,
+	animate = false,
 }: PrivacyChoicesPageOptions = {}): Promise<ConsentClient> {
 	fixture += 1;
 	const pageAction = document.createElement('button');
@@ -125,6 +144,7 @@ export const startPrivacyChoicesPage = async function startPrivacyChoicesPage({
 						blockUntilChoice,
 						container: container ?? undefined,
 						edgeStyle,
+						layout,
 					},
 				};
 	const client = createTestingConsentClient(
@@ -136,8 +156,12 @@ export const startPrivacyChoicesPage = async function startPrivacyChoicesPage({
 				'experience',
 				'marketing',
 			],
+			// Offline mode renders a language only when it has copy for it.
+			i18n: language
+				? { messages: { [language]: { cookieBanner: { title: 'פרטיות' } } } }
+				: undefined,
 			legalLinks: { privacyPolicy: { href: '/privacy' } },
-			overrides: { country: region === 'eu' ? 'DE' : 'US', gpc },
+			overrides: { country: region === 'eu' ? 'DE' : 'US', gpc, language },
 			policy: [
 				{
 					id: `pc-${region}-${fixture}`,
@@ -152,7 +176,14 @@ export const startPrivacyChoicesPage = async function startPrivacyChoicesPage({
 			presentation,
 			// A revoked grant would reload the test page.
 			reloadOnConsentRevoked: false,
-			ui: { colorScheme: 'light', dialog, disableAnimation: true },
+			ui: {
+				banner,
+				colorScheme: 'light',
+				dialog,
+				disableAnimation: !animate,
+				theme: slots ? { slots } : undefined,
+				trigger: stockTrigger,
+			},
 			vendors: vendors ? VENDORS : undefined,
 		},
 		{ mountUI: mountConsentUI, pkg: '@inth/sdk/test' }

@@ -263,9 +263,13 @@ const vendorTrigger = function vendorTrigger(params: {
 			'span',
 			{ class: cx(noStyle, styles.vendorMeta) },
 			copy.onCount,
+			// A sheet comes in from the end; an accordion opens downwards.
 			el(
 				'span',
-				{ class: cx(noStyle, styles.chevron) },
+				{
+					class: cx(noStyle, styles.chevron),
+					'data-direction': mode === 'sheet' ? 'end' : 'down',
+				},
 				chevron(mode === 'sheet' ? 'end' : 'down')
 			)
 		)

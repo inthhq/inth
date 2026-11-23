@@ -6,10 +6,18 @@
  * announcements. Each test names the invariant it guards
  * (`prototypes/PRIVACY-CHOICES-REGRESSIONS.md`).
  */
-import type { ConsentPresentation } from '@inth/sdk-core';
+import type { ConsentContainer, ConsentPresentation } from '@inth/sdk-core';
+import {
+	hasPendingOptOutConfirmation,
+	markPendingOptOutConfirmation,
+	openOptInConfirmation,
+	watchPendingOptOutConfirmation,
+} from '@inth/sdk-core/surface-actions';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 
+import { mountConsentUI } from '../ui/mount';
+import { createPrivacyChoicesLink } from '../ui/privacy-choices-link';
 import {
 	$,
 	active,
@@ -21,25 +29,37 @@ import {
 	startPrivacyChoicesPage,
 	stopPrivacyChoicesPages,
 } from './fixtures/privacy-choices';
-import type { Region } from './fixtures/privacy-choices';
+import type {
+	PrivacyChoicesPageOptions,
+	Region,
+} from './fixtures/privacy-choices';
 
 const mount = ({
 	region = 'us-opt-out',
 	design = 'privacy-choices',
 	edgeStyle,
 	gpc,
+	container = { type: 'card' },
+	privacyChoicesLink = region !== 'eu',
+	...rest
 }: {
 	region?: Region;
 	design?: ConsentPresentation['design'] | null;
 	edgeStyle?: 'inset' | 'flush';
 	gpc?: boolean;
-} = {}) =>
+	container?: ConsentContainer;
+	privacyChoicesLink?: boolean;
+} & Pick<
+	PrivacyChoicesPageOptions,
+	'animate' | 'banner' | 'language' | 'stockTrigger'
+> = {}) =>
 	startPrivacyChoicesPage({
-		container: design === null ? null : { type: 'card' },
+		...rest,
+		container: design === null ? null : container,
 		design,
 		edgeStyle,
 		gpc,
-		privacyChoicesLink: region !== 'eu',
+		privacyChoicesLink,
 		region,
 		// The React dialog suite's GPC rule denies marketing only.
 		rule:
@@ -518,7 +538,10 @@ describe('phone sheets', () => {
 
 	test('[NEST-01][COPY-05][NEST-08] US Preferences opens a sheet; its Done closes only it', async () => {
 		await page.viewport(390, 800);
-		await mount({ edgeStyle: 'flush' });
+		await mount({
+			container: { edge: 'bottom', type: 'banner' },
+			edgeStyle: 'flush',
+		});
 		await openDialog();
 		expect(must('consent-dialog-root')).toHaveAttribute(
 			'data-edge-style',
@@ -550,5 +573,240 @@ describe('phone sheets', () => {
 		close.click();
 		await waitFor(() => expect($('consent-dialog-sheet')).toBeNull());
 		expect($('consent-dialog-card')).not.toBeNull();
+	});
+});
+
+describe('wave B round 1', () => {
+	test('[BNR-13] the dialog hosts an opt-in confirmation when no banner does', async () => {
+		const client = await mount({ banner: false, region: 'us-opt-in' });
+		const confirmed = vi.fn();
+		openOptInConfirmation(client.kernel, confirmed, null);
+		const confirm = await waitFor(() =>
+			must<HTMLButtonElement>('opt-in-confirmation-confirm-button')
+		);
+		confirm.click();
+		await waitFor(() => expect(confirmed).toHaveBeenCalledTimes(1));
+	});
+
+	test('the floating trigger renders under the Privacy Choices design', async () => {
+		await mount({ stockTrigger: true });
+		await waitFor(() =>
+			expect(all('[data-testid="consent-dialog-trigger"]')).toHaveLength(1)
+		);
+		expect($('consent-dialog-card')).toBeNull();
+	});
+
+	test('[RCPT-01][FOC-03] the opt-out confirmation opens the Privacy Choices dialog on its receipt', async () => {
+		// A one-click opt-out with no reload due opens the confirmation; on
+		// this design it is the dialog, focused on the receipt.
+		const client = await mount();
+		await client.optOut();
+		const receipt = await waitFor(() => must('consent-dialog-receipt'));
+		await waitFor(() => expect(active()).toBe(receipt));
+		expect(receipt).toHaveAttribute('data-open', 'true');
+		expect(receipt).toHaveAttribute('tabindex', '-1');
+		expect(receipt).toHaveTextContent(/opted out/iu);
+		expect($('opt-out-confirmation-card')).toBeNull();
+		expect(snapshotOf()?.optOut).not.toBeNull();
+		// A later open starts on the title again.
+		must('consent-dialog-close').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await openDialog();
+	});
+
+	test('[RIGHT-08] after a revocation reload, the Privacy Choices dialog reopens on the receipt', async () => {
+		const client = await mount();
+		await openDialog();
+		must('consent-dialog-right-option-sale-protect').click();
+		await waitFor(() => expect(snapshotOf()?.optOut).not.toBeNull());
+		must('consent-dialog-close').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		// What the next document does when the opt-out reloaded the page:
+		// the marker opens the confirmation once, which is this dialog.
+		markPendingOptOutConfirmation();
+		const stop = watchPendingOptOutConfirmation(client.kernel);
+		const receipt = await waitFor(() => must('consent-dialog-receipt'));
+		await waitFor(() => expect(active()).toBe(receipt));
+		expect(hasPendingOptOutConfirmation()).toBe(false);
+		expect($('opt-out-confirmation-card')).toBeNull();
+		stop();
+	});
+
+	test('[BNR-05] Your Privacy Choices stays a way back in under US opt-in, without the opt-out icon', async () => {
+		const client = await mount({
+			privacyChoicesLink: false,
+			region: 'us-opt-in',
+		});
+		const choices = createPrivacyChoicesLink(client);
+		document.body.append(choices.element);
+		expect(choices.element.hidden).toBe(false);
+		expect(choices.element).toHaveTextContent('Your Privacy Choices');
+		expect(choices.element.querySelector('svg')).toBeNull();
+		expect(choices.element).not.toHaveAttribute('data-opt-out-variant');
+		await openDialog();
+		must('consent-dialog-close').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await waitFor(() => expect(active()).toBe(choices.element));
+		choices.destroy();
+	});
+
+	test('[BNR-05] under an opt-out policy the link is the opt-out link, with the icon', async () => {
+		const client = await mount({ privacyChoicesLink: false });
+		const choices = createPrivacyChoicesLink(client, {
+			variant: 'privacy-choices',
+		});
+		expect(choices.element.hidden).toBe(false);
+		expect(choices.element).toHaveAttribute(
+			'data-opt-out-variant',
+			'privacy-choices'
+		);
+		expect(choices.element.querySelector('svg')).not.toBeNull();
+		choices.destroy();
+	});
+
+	test('the classic design keeps Your Privacy Choices to opt-out policies', async () => {
+		const client = await mount({
+			design: null,
+			privacyChoicesLink: false,
+			region: 'us-opt-in',
+		});
+		const choices = createPrivacyChoicesLink(client);
+		expect(choices.element.hidden).toBe(true);
+		choices.destroy();
+	});
+
+	test('[FOC-03] with the opener and the link gone, focus returns to the trigger', async () => {
+		const client = await mount({ privacyChoicesLink: false, region: 'eu' });
+		pageAction().focus();
+		client.openDialog();
+		await waitFor(() => expect(active()).toBe(must('consent-dialog-title')));
+		pageAction().remove();
+		must('consent-dialog-close').click();
+		await waitFor(() => expect($('consent-dialog-card')).toBeNull());
+		await waitFor(() => expect(active()).toBe(must('consent-dialog-trigger')));
+	});
+
+	test('[NEST-03] only the top layer is exposed: covered and folded parts carry a real inert', async () => {
+		await page.viewport(390, 800);
+		await mount();
+		await openDialog();
+		// The receipt is folded until there is something to show.
+		expect(must('consent-dialog-receipt')).toHaveAttribute('inert');
+		must('consent-dialog-preferences-row').click();
+		const sheet = await waitFor(() => must('consent-dialog-sheet'));
+		expect(card()).toHaveAttribute('inert', '');
+		expect(sheet).not.toHaveAttribute('inert');
+		await page.viewport(1280, 800);
+		await waitFor(() => expect($('consent-dialog-sheet')).toBeNull());
+		expect(card()).not.toHaveAttribute('inert');
+		expect(must('consent-dialog-preferences-panel')).toHaveAttribute(
+			'inert',
+			''
+		);
+	});
+
+	test('[NEST-03][NEST-06] a sheet reopened during its exit stays open', async () => {
+		await page.viewport(390, 800);
+		await mount({ animate: true });
+		await openDialog();
+		const row = must('consent-dialog-preferences-row');
+		row.click();
+		await waitFor(() => expect($('consent-dialog-sheet')).not.toBeNull());
+		must('consent-dialog-sheet-close').click();
+		await waitFor(() =>
+			expect(must('consent-dialog-sheet')).toHaveAttribute(
+				'data-state',
+				'closed'
+			)
+		);
+		row.click();
+		await waitFor(() =>
+			expect(must('consent-dialog-sheet')).toHaveAttribute('data-state', 'open')
+		);
+		// Past the old exit timer, the reopened sheet is still there.
+		await new Promise((resolve) => {
+			setTimeout(resolve, 300);
+		});
+		expect(must('consent-dialog-sheet')).toHaveAttribute('data-state', 'open');
+		expect(must('consent-dialog-sheet')).not.toHaveAttribute('inert');
+		// A move to desktop clears a closing sheet at once.
+		must('consent-dialog-sheet-close').click();
+		await page.viewport(1280, 800);
+		await waitFor(() => expect($('consent-dialog-sheet')).toBeNull());
+	});
+
+	test('[NEST-01] phone sheets take the resolved phone edge style: a Card is always inset', async () => {
+		await page.viewport(390, 800);
+		await mount({ edgeStyle: 'flush' });
+		await openDialog();
+		expect(must('consent-dialog-root')).toHaveAttribute(
+			'data-edge-style',
+			'inset'
+		);
+	});
+
+	test('[CAT-09] the vendor chevron turns when its table opens', async () => {
+		await mount({ region: 'eu' });
+		await openDialog();
+		const trigger = must('consent-dialog-vendor-trigger-measurement');
+		const chevron = trigger.querySelector<HTMLElement>('[data-direction]');
+		expect(chevron).not.toBeNull();
+		const transform = () => getComputedStyle(chevron as HTMLElement).transform;
+		expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(transform());
+		trigger.click();
+		await waitFor(() =>
+			expect(transform()).toMatch(/^matrix\(-1, [-0-9.e]+, [-0-9.e]+, -1,/u)
+		);
+	});
+
+	test('[CAT-09] the phone Preferences chevron points the reading direction', async () => {
+		await page.viewport(390, 800);
+		await mount({ language: 'he' });
+		await openDialog();
+		expect(must('consent-dialog-root')).toHaveAttribute('dir', 'rtl');
+		const chevron = must('consent-dialog-preferences-row').querySelector(
+			'[data-direction="end"]'
+		) as HTMLElement;
+		await waitFor(() =>
+			expect(getComputedStyle(chevron).transform).toBe(
+				'matrix(-1, 0, 0, 1, 0, 0)'
+			)
+		);
+	});
+
+	test('noStyle reaches Done and the EU buttons', async () => {
+		const client = await mount({ privacyChoicesLink: false, region: 'eu' });
+		client.ui?.destroy();
+		const handle = mountConsentUI(client, {
+			disableAnimation: true,
+			noStyle: true,
+		});
+		client.openDialog();
+		const part = (testId: string) =>
+			handle.root.querySelector(`[data-testid="${testId}"]`);
+		await waitFor(() =>
+			expect(part('consent-dialog-save-button')).not.toBeNull()
+		);
+		for (const id of [
+			'consent-dialog-reject-all',
+			'consent-dialog-accept-all',
+			'consent-dialog-save-button',
+		]) {
+			expect(part(id)?.getAttribute('class') ?? '').toBe('');
+		}
+		handle.destroy();
+	});
+
+	test('[COPY-05] the Preferences count follows the draft as it changes', async () => {
+		await mount();
+		await openDialog();
+		const row = must('consent-dialog-preferences-row');
+		const before = row.textContent;
+		row.click();
+		const toggle = await waitFor(() =>
+			must('consent-dialog-category-switch-measurement')
+		);
+		toggle.click();
+		await waitFor(() => expect(row.textContent).not.toBe(before));
 	});
 });

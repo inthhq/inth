@@ -14,6 +14,12 @@
  */
 
 import type { ConsentSnapshot } from '@inth/sdk-core';
+import {
+	hasOptOutConfirmationHost,
+	isOptInConfirmationOpen,
+	isOptOutConfirmationOpen,
+	showConsentSurface,
+} from '@inth/sdk-core/surface-actions';
 
 import type { AdoptedBanner } from '../init/boot';
 import type { ConsentBannerOptions, ConsentDialogOptions } from '../types';
@@ -21,15 +27,43 @@ import { resolveActions } from './actions';
 import { createBanner } from './banner';
 import type { BannerSurface } from './banner';
 import {
+	importOptInConfirmation,
 	importPanel,
 	importPresentation,
 	importPrivacyChoicesDialog,
 } from './privacy-choices/pc-import';
 import type {
+	PrivacyChoicesActionGroups,
 	PrivacyChoicesBanner,
 	PrivacyChoicesContainer,
 } from './privacy-choices/surface';
+import { requestReceiptFocus } from './receipt-focus';
 import type { Surface, SurfaceContext } from './surface';
+
+/**
+ * The prompt's container and the first-layer actions the policy allows
+ * when the Privacy Choices design applies, else `null` for the classic
+ * design.
+ */
+const privacyChoicesPrompt = function privacyChoicesPrompt(
+	ctx: SurfaceContext,
+	snapshot: ConsentSnapshot,
+	options: Pick<ConsentBannerOptions, 'scrollLock' | 'trapFocus'>
+): {
+	container: PrivacyChoicesContainer;
+	actionGroups: PrivacyChoicesActionGroups;
+} | null {
+	const resolved = resolveActions(
+		snapshot,
+		'prompt',
+		ctx.client.presentation,
+		{ scrollLock: options.scrollLock, trapFocus: options.trapFocus },
+		ctx.client.theme
+	);
+	return resolved.design === 'privacy-choices' && resolved.container
+		? { actionGroups: resolved.actionGroups, container: resolved.container }
+		: null;
+};
 
 /**
  * The prompt's container when the Privacy Choices design applies, else
@@ -40,14 +74,7 @@ export const privacyChoicesContainer = function privacyChoicesContainer(
 	snapshot: ConsentSnapshot,
 	options: Pick<ConsentBannerOptions, 'scrollLock' | 'trapFocus'> = {}
 ): PrivacyChoicesContainer | null {
-	const resolved = resolveActions(
-		snapshot,
-		'prompt',
-		ctx.client.presentation,
-		{ scrollLock: options.scrollLock, trapFocus: options.trapFocus },
-		ctx.client.theme
-	);
-	return resolved.design === 'privacy-choices' ? resolved.container : null;
+	return privacyChoicesPrompt(ctx, snapshot, options)?.container ?? null;
 };
 
 // Safari has no requestIdleCallback; a short delay stands in.
@@ -76,6 +103,7 @@ export const createBannerSurface = function createBannerSurface(
 	let latest: {
 		snapshot: ConsentSnapshot;
 		container: PrivacyChoicesContainer;
+		actionGroups: PrivacyChoicesActionGroups;
 	} | null = null;
 	let owed = false;
 	let destroyed = false;
@@ -95,7 +123,7 @@ export const createBannerSurface = function createBannerSurface(
 				prompt = module.createSurface(ctx, options);
 				promptType = type;
 				if (latest) {
-					prompt.sync(latest.snapshot, latest.container);
+					prompt.sync(latest.snapshot, latest.container, latest.actionGroups);
 				}
 			},
 			reportLoadError
@@ -111,22 +139,23 @@ export const createBannerSurface = function createBannerSurface(
 		},
 		handoff: () => classic.handoff(),
 		sync(snapshot) {
-			const container = privacyChoicesContainer(ctx, snapshot, options);
-			if (!container) {
+			const resolved = privacyChoicesPrompt(ctx, snapshot, options);
+			if (!resolved) {
 				latest = null;
 				prompt?.hide();
 				classic.sync(snapshot);
 				return;
 			}
+			const { actionGroups, container } = resolved;
 			// The classic banner leaves at once, the init script's included.
 			classic.destroy();
-			latest = { container, snapshot };
+			latest = { actionGroups, container, snapshot };
 			owed ||= snapshot.activeUI === 'banner';
 			if (!owed) {
 				return;
 			}
 			const { type } = container.desktop;
-			prompt?.sync(snapshot, container);
+			prompt?.sync(snapshot, container, actionGroups);
 			if (promptType !== type) {
 				load(type);
 			}
@@ -139,6 +168,12 @@ export const createBannerSurface = function createBannerSurface(
  * dialog when the design opts in. The Privacy Choices dialog loads when it
  * opens, warmed while a banner shows, never with the banner (PERM-05: the
  * banner leaves at once when it opens).
+ *
+ * On either design this surface hosts the opt-in confirmation, which the
+ * Privacy Choices design loads on its own, without the classic dialog. The
+ * Privacy Choices design confirms an opt-out on its receipt: the opt-out
+ * confirmation (after a revocation reload, or from a one-click opt-out
+ * link) opens the dialog there instead.
  */
 export const withPrivacyChoicesDialog = function withPrivacyChoicesDialog(
 	ctx: SurfaceContext,
@@ -151,6 +186,58 @@ export const withPrivacyChoicesDialog = function withPrivacyChoicesDialog(
 	let classicShown = false;
 	let warming = false;
 	let destroyed = false;
+	let optIn: Surface | null = null;
+	let optInLoading = false;
+	let adopting = false;
+
+	const loadOptIn = function loadOptIn(): void {
+		if (optIn || optInLoading || destroyed) {
+			return;
+		}
+		optInLoading = true;
+		importOptInConfirmation().then(
+			(module) => {
+				optInLoading = false;
+				if (destroyed || !latest) {
+					return;
+				}
+				optIn = module.createOptInConfirmation(ctx, options);
+				optIn.sync(latest);
+			},
+			(error: unknown) => {
+				optInLoading = false;
+				// oxlint-disable-next-line no-console -- The confirmation failed to load.
+				console.error(
+					'@inth/sdk: the opt-in confirmation failed to load.',
+					error
+				);
+			}
+		);
+	};
+
+	/** Open the dialog on its receipt in place of the opt-out confirmation. */
+	const adoptOptOutConfirmation = function adoptOptOutConfirmation(): void {
+		if (adopting) {
+			return;
+		}
+		adopting = true;
+		// After the sync that saw it, so the kernel is not re-entered.
+		queueMicrotask(() => {
+			adopting = false;
+			const { kernel } = ctx.client;
+			if (
+				destroyed ||
+				!latest ||
+				!isOptOutConfirmationOpen(kernel) ||
+				hasOptOutConfirmationHost(kernel)
+			) {
+				return;
+			}
+			requestReceiptFocus(kernel);
+			// Opening the dialog closes the confirmation.
+			showConsentSurface(kernel, 'dialog');
+		});
+	};
 
 	const load = function load(): void {
 		if (loading || dialog || destroyed) {
@@ -185,12 +272,17 @@ export const withPrivacyChoicesDialog = function withPrivacyChoicesDialog(
 			classic.destroy();
 			dialog?.destroy();
 			dialog = null;
+			optIn?.destroy();
+			optIn = null;
 		},
 		sync(snapshot) {
 			if (!privacyChoicesContainer(ctx, snapshot)) {
 				latest = null;
 				dialog?.destroy();
 				dialog = null;
+				// The classic dialog hosts its own confirmations.
+				optIn?.destroy();
+				optIn = null;
 				classicShown = true;
 				classic.sync(snapshot);
 				return;
@@ -201,6 +293,19 @@ export const withPrivacyChoicesDialog = function withPrivacyChoicesDialog(
 				classic.sync({ ...snapshot, activeUI: 'none' });
 			}
 			latest = snapshot;
+			const { kernel } = ctx.client;
+			if (optIn) {
+				optIn.sync(snapshot);
+			} else if (isOptInConfirmationOpen(kernel)) {
+				loadOptIn();
+			}
+			if (
+				snapshot.policyRule.model !== 'iab' &&
+				isOptOutConfirmationOpen(kernel) &&
+				!hasOptOutConfirmationHost(kernel)
+			) {
+				adoptOptOutConfirmation();
+			}
 			if (dialog) {
 				dialog.sync(snapshot);
 			} else if (snapshot.activeUI === 'dialog') {

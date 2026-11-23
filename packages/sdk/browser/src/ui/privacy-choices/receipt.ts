@@ -71,12 +71,10 @@ export const createRightsReceipt =
 			props: RightsReceiptProps
 		): HTMLElement {
 			const { kernel, snapshot, t, session, state, noStyle } = env;
-			const receipt = resolveRightsReceipt(
-				snapshot,
-				getOptOutReceiptData(kernel)
-			);
+			const local = getOptOutReceiptData(kernel);
+			const receipt = resolveRightsReceipt(snapshot, local);
 			const copy = resolveRightsReceiptCopy(t, {
-				bundle: rightsBundleOf(snapshot),
+				bundle: rightsBundleOf(snapshot, local),
 				business: props.business,
 				receipt,
 			});
@@ -152,6 +150,9 @@ export const createRightsReceipt =
 					'data-receipt-kind': receipt.show ? receipt.kind : undefined,
 					'data-testid': 'consent-dialog-receipt',
 					inert: !receipt.show,
+					// Focusable from code only: the dialog opens on it after an
+					// opt-out.
+					tabindex: '-1',
 				},
 				el(
 					'div',

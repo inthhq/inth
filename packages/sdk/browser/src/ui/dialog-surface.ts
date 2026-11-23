@@ -72,7 +72,8 @@ const warmWhenIdle = function warmWhenIdle(): void {
  * replace this module with `./dialog` at build time and stay one file.
  *
  * @param warmOnMount - Truthy when something else on screen opens the
- * dialog (the trigger options), so the chunk warms without a banner.
+ * dialog (the trigger options), so the chunk warms without a banner, once
+ * the first snapshot shows the classic design applies.
  */
 const createClassicDialog = function createClassicDialog(
 	ctx: SurfaceContext,
@@ -91,9 +92,6 @@ const createClassicDialog = function createClassicDialog(
 			warmWhenIdle();
 		}
 	};
-	if (warmOnMount) {
-		warm();
-	}
 
 	const open = function open(): void {
 		loadDialog().then(
@@ -127,7 +125,10 @@ const createClassicDialog = function createClassicDialog(
 				return;
 			}
 			latest = snapshot;
-			if (snapshot.activeUI === 'banner') {
+			// Only on the classic design: `withPrivacyChoicesDialog` syncs
+			// this dialog only while the classic design applies, so a Privacy
+			// Choices page never downloads it.
+			if (warmOnMount || snapshot.activeUI === 'banner') {
 				warm();
 			}
 			if (
