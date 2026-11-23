@@ -81,6 +81,7 @@ export const ConsentDialogLink = createForwardRef<
 	const icon = showOptOutIcon ? (
 		<OptOutIcon
 			className={themeNoStyle ? undefined : legalLinkStyles.optOutIcon}
+			sized={!themeNoStyle}
 		/>
 	) : null;
 
