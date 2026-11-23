@@ -495,6 +495,20 @@ describe('preferences', () => {
 	});
 });
 
+describe('disableAnimation', () => {
+	test('[MOT-03] the Protect check renders drawn, with no animation', async () => {
+		await mount();
+		await openDialog();
+		const protect = must('consent-dialog-right-option-sale-protect');
+		protect.click();
+		await waitFor(() => expect(protect).toHaveAttribute('aria-pressed', 'true'));
+		const path = protect.querySelector('path') as SVGPathElement;
+		const style = getComputedStyle(path);
+		expect(style.animationName).toBe('none');
+		expect(style.strokeDashoffset).toBe('0px');
+	});
+});
+
 describe('preferences under a held opt-out', () => {
 	test('[PERM-02] a category switched on stays on when the opt-out lists no categories', async () => {
 		// `/v1/consent/init` sends the opt-out without its categories, so it

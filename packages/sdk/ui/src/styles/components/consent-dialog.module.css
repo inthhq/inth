@@ -1261,6 +1261,36 @@
 		animation: none !important;
 	}
 
+	/* The rest of the motion goes too, as under reduced motion, wherever
+	   these parts render: the dialog, or the banner's options, whose root
+	   carries the same attribute. The check renders drawn. */
+	[data-animation='off'] .close,
+	[data-animation='off'] .savedCue,
+	[data-animation='off'] .doneCheck,
+	[data-animation='off'] .segmentedThumb,
+	[data-animation='off'] .segmentedOption,
+	[data-animation='off'] .segmentedCheck,
+	[data-animation='off'] .segmentedCheck path,
+	[data-animation='off'] .confirm,
+	[data-animation='off'] .chevron,
+	[data-animation='off'] .navRow,
+	[data-animation='off'] .vendorTrigger,
+	[data-animation='off'] .switch,
+	[data-animation='off'] .switch::after,
+	[data-animation='off'] .disclosure,
+	[data-animation='off'] .disclosureInner {
+		transition: none !important;
+		animation: none !important;
+	}
+
+	[data-animation='off'] .segmentedCheck path {
+		stroke-dashoffset: 0;
+	}
+
+	[data-animation='off'] .savedCue {
+		opacity: 1;
+	}
+
 	@keyframes consent-dialog-fade-in {
 		from {
 			opacity: 0;
