@@ -123,6 +123,7 @@ export interface ConsentLayoutDiagnostic {
 		| 'blocking-forbidden'
 		| 'blocking-required'
 		| 'edge-style-ignored'
+		| 'invalid-edge-style'
 		| 'legacy-presentation';
 	message: string;
 }
@@ -146,10 +147,10 @@ const BANNER_EDGES: readonly BannerEdge[] = ['bottom', 'top'];
 const DRAWER_SIDES: readonly DrawerSide[] = ['bottom', 'top', 'left', 'right'];
 
 /** Default layout when the host supplies none. */
-export const DEFAULT_CONSENT_CONTAINER = {
-	position: 'bottom-left',
-	type: 'card',
-} as const satisfies ConsentContainer;
+export const DEFAULT_CONSENT_CONTAINER: Readonly<{
+	type: 'card';
+	position: 'bottom-left';
+}> = Object.freeze({ position: 'bottom-left', type: 'card' });
 
 /**
  * Fill defaults and replace anything invalid with the type's default, so
@@ -163,6 +164,13 @@ const normalizeContainer = function normalizeContainer(
 	| { type: 'banner'; edge: BannerEdge }
 	| { type: 'drawer'; side: DrawerSide } {
 	if (container === undefined) {
+		return DEFAULT_CONSENT_CONTAINER;
+	}
+	if (container === null || typeof container !== 'object') {
+		diagnostics.push({
+			code: 'invalid-container',
+			message: 'The container is not an object; using a bottom-left card.',
+		});
 		return DEFAULT_CONSENT_CONTAINER;
 	}
 	switch (container.type) {
@@ -280,10 +288,13 @@ const resolveContainerBlocking = function resolveContainerBlocking(
 		});
 		return false;
 	}
-	if (constraint === 'required' && input.blockUntilChoice === false) {
+	if (wantsBlocking && input.blockUntilChoice === false) {
 		diagnostics.push({
 			code: 'blocking-required',
-			message: 'The policy requires blocking; the prompt blocks the page.',
+			message:
+				constraint === 'required'
+					? 'The policy requires blocking; the prompt blocks the page.'
+					: 'A centred card always blocks the page; the prompt blocks.',
 		});
 	}
 	return wantsBlocking;
@@ -295,12 +306,25 @@ const resolveEdgeStyle = function resolveEdgeStyle(
 	container: NormalizedContainer,
 	diagnostics: ConsentLayoutDiagnostic[]
 ): ConsentEdgeStyle {
-	if (container.type === 'card' && requested === 'flush') {
+	if (
+		requested !== undefined &&
+		requested !== 'inset' &&
+		requested !== 'flush'
+	) {
 		diagnostics.push({
-			code: 'edge-style-ignored',
-			message:
-				'A card is always inset; edge style applies to banners and drawers.',
+			code: 'invalid-edge-style',
+			message: `Edge style "${String(requested)}" is not valid; using "inset".`,
 		});
+		return 'inset';
+	}
+	if (container.type === 'card') {
+		if (requested === 'flush') {
+			diagnostics.push({
+				code: 'edge-style-ignored',
+				message:
+					'A card is always inset; edge style applies to banners and drawers.',
+			});
+		}
 		return 'inset';
 	}
 	return requested ?? 'inset';
@@ -371,7 +395,11 @@ export const resolveLayout = function resolveLayout(
 	};
 };
 
-/** Legacy prompt shapes accepted until every renderer uses {@link ConsentContainer}. */
+/**
+ * Legacy prompt geometry, accepted until every renderer uses
+ * {@link ConsentContainer}.
+ * @internal
+ */
 export interface LegacyPromptPresentation {
 	variant?: 'floating' | 'bar' | 'widget' | 'wall';
 	position?: string;
@@ -380,10 +408,15 @@ export interface LegacyPromptPresentation {
 /**
  * Map a legacy `variant` and `position` onto a {@link ConsentContainer}.
  *
- * - `floating` and `widget` become a Card in the same bottom corner. Top
- *   and centre-edge positions have no Card equivalent and use bottom-left.
+ * - `floating` and `widget` become a Card in the bottom corner on the same
+ *   side. Top and centre-edge positions have no Card equivalent: a right
+ *   corner moves to bottom-right, anything else to bottom-left.
  * - `bar` becomes a Banner on the same edge.
  * - `wall` becomes a centred Card, which blocks.
+ *
+ * Pass a position already validated for its variant. Kept only until every
+ * renderer reads `container`.
+ * @internal
  */
 export const containerFromLegacyPrompt = function containerFromLegacyPrompt(
 	legacy: LegacyPromptPresentation
@@ -402,26 +435,26 @@ export const containerFromLegacyPrompt = function containerFromLegacyPrompt(
 		case 'wall':
 			return { container: { position: 'center', type: 'card' }, diagnostics };
 		default: {
-			if (
-				position === undefined ||
-				position === 'bottom-left' ||
-				position === 'bottom-right'
-			) {
+			if (position === undefined) {
 				return {
 					container: {
-						position:
-							position ??
-							(variant === 'widget' ? 'bottom-right' : 'bottom-left'),
+						position: variant === 'widget' ? 'bottom-right' : 'bottom-left',
 						type: 'card',
 					},
 					diagnostics,
 				};
 			}
-			diagnostics.push({
-				code: 'legacy-presentation',
-				message: `The ${variant} position "${position}" has no card equivalent; using "bottom-left".`,
-			});
-			return { container: DEFAULT_CONSENT_CONTAINER, diagnostics };
+			// Keep the prompt on the same side of the screen.
+			const corner = position.endsWith('-right')
+				? 'bottom-right'
+				: 'bottom-left';
+			if (position !== corner) {
+				diagnostics.push({
+					code: 'legacy-presentation',
+					message: `The ${variant} position "${position}" has no card equivalent; using "${corner}".`,
+				});
+			}
+			return { container: { position: corner, type: 'card' }, diagnostics };
 		}
 	}
 };

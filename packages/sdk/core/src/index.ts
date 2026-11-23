@@ -311,7 +311,6 @@ export {
 	resolveConsentPresentation,
 } from './libs/policy-actions';
 export {
-	containerFromLegacyPrompt,
 	DEFAULT_CONSENT_CONTAINER,
 	PHONE_LAYOUT_MAX_WIDTH,
 	PHONE_LAYOUT_QUERY,
@@ -330,7 +329,6 @@ export type {
 	ConsentPlacement,
 	ConsentViewport,
 	DrawerSide,
-	LegacyPromptPresentation,
 	ResolvedConsentLayout,
 	ResolveLayoutInput,
 } from './libs/consent-layout';

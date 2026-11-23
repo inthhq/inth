@@ -280,6 +280,21 @@ const resolvePreferenceControls = function resolvePreferenceControls(
 		: [];
 };
 
+/**
+ * Blocking the host asked for, reading the deprecated scroll and focus
+ * options when `blocking` is absent. Legacy controls select one mode,
+ * never independent partial modes.
+ */
+const requestedBlocking = function requestedBlocking(
+	options: SurfacePresentation
+): boolean | undefined {
+	const legacyBlocking =
+		options.scrollLock === false || options.trapFocus === false
+			? false
+			: (options.scrollLock ?? options.trapFocus);
+	return options.blocking ?? legacyBlocking;
+};
+
 /** Resolve focus, scrolling and backdrop as one mode. */
 const resolveBlocking = (
 	options: SurfacePresentation,
@@ -288,13 +303,8 @@ const resolveBlocking = (
 	preferences: boolean,
 	diagnostics: PresentationDiagnostic[]
 ): boolean => {
-	// Legacy controls select one mode, never independent partial modes.
-	const legacyBlocking =
-		options.scrollLock === false || options.trapFocus === false
-			? false
-			: (options.scrollLock ?? options.trapFocus);
 	let blocking =
-		options.blocking ?? legacyBlocking ?? (preferences || variant === 'wall');
+		requestedBlocking(options) ?? (preferences || variant === 'wall');
 	if (notice && blocking) {
 		blocking = false;
 		diagnostics.push({
@@ -386,37 +396,38 @@ const resolveSurfaceGeometry = function resolveSurfaceGeometry(
 
 /**
  * Resolve the prompt's Card, Banner or Drawer layout for both viewports.
- * Legacy `variant`, `position` and `blocking` map onto the new options
- * when `container` and `blockUntilChoice` are absent.
+ * When `container` is absent and the host set a legacy `variant` or
+ * `position`, the validated legacy geometry maps onto a container. Legacy
+ * `blocking`, `scrollLock` and `trapFocus` map onto `blockUntilChoice`.
  */
 const resolvePromptContainer = function resolvePromptContainer(
 	surface: 'prompt' | 'preferences',
 	options: PromptPresentation,
-	policy: ResolvedPolicyRule
+	policy: ResolvedPolicyRule,
+	geometry: Pick<ResolvedConsentPresentation, 'variant' | 'position'>
 ): ResolvedConsentPresentation['container'] {
 	if (surface === 'preferences') {
 		return null;
 	}
-	let container: ConsentContainer | undefined = options.container;
 	const legacy =
-		container === undefined &&
+		options.container === undefined &&
 		(options.variant !== undefined || options.position !== undefined)
-			? containerFromLegacyPrompt({
-					position: options.position,
-					variant: options.variant,
-				})
+			? containerFromLegacyPrompt(geometry)
 			: undefined;
-	container ??= legacy?.container;
+	const container: ConsentContainer | undefined =
+		options.container ?? legacy?.container;
 	const input = {
-		blockUntilChoice: options.blockUntilChoice ?? options.blocking,
+		blockUntilChoice: options.blockUntilChoice ?? requestedBlocking(options),
 		container,
 		edgeStyle: options.edgeStyle,
 		model: policy.model,
 		prompt: policy.prompt,
 	};
 	const desktop = resolveLayout({ ...input, viewport: 'desktop' });
+	const phone = resolveLayout({ ...input, viewport: 'phone' });
 	desktop.diagnostics.unshift(...(legacy?.diagnostics ?? []));
-	return { desktop, phone: resolveLayout({ ...input, viewport: 'phone' }) };
+	phone.diagnostics.unshift(...(legacy?.diagnostics ?? []));
+	return { desktop, phone };
 };
 
 /**
@@ -523,7 +534,12 @@ export const resolveConsentPresentation =
 			...geometry,
 			actionGroups,
 			allowedActions,
-			container: resolvePromptContainer(input.surface, options, input.policy),
+			container: resolvePromptContainer(
+				input.surface,
+				options,
+				input.policy,
+				geometry
+			),
 			diagnostics,
 			direction,
 			equivalentActions,

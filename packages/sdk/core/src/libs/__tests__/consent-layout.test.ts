@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
 	containerFromLegacyPrompt,
+	DEFAULT_CONSENT_CONTAINER,
 	PHONE_LAYOUT_QUERY,
 	resolveLayout,
 } from '../consent-layout';
@@ -285,6 +286,45 @@ describe('resolveLayout: named rules', () => {
 		).toBe('card-bottom-left');
 	});
 
+	it('reports a centred card that overrides blockUntilChoice: false', () => {
+		const result = resolveLayout({
+			...EU,
+			blockUntilChoice: false,
+			container: { position: 'center', type: 'card' },
+		});
+		expect(result.blocking).toBe(true);
+		expect(result.diagnostics.map((d) => d.code)).toEqual([
+			'blocking-required',
+		]);
+	});
+
+	it('falls back from a null container instead of throwing', () => {
+		const result = resolveLayout({ ...EU, container: null as never });
+		expect(result.placement).toBe('card-bottom-left');
+		expect(result.diagnostics.map((d) => d.code)).toEqual([
+			'invalid-container',
+		]);
+	});
+
+	it.each([
+		[{ type: 'card' }, 'card-bottom-left'],
+		[{ type: 'drawer' }, 'drawer-bottom'],
+	] as const)(
+		'replaces an unknown edge style with inset on %j',
+		(container, placement) => {
+			const result = resolveLayout({
+				...EU,
+				container,
+				edgeStyle: 'rounded' as never,
+			});
+			expect(result.placement).toBe(placement);
+			expect(result.edgeStyle).toBe('inset');
+			expect(result.diagnostics.map((d) => d.code)).toEqual([
+				'invalid-edge-style',
+			]);
+		}
+	);
+
 	it('uses a 640px phone breakpoint', () => {
 		expect(PHONE_LAYOUT_QUERY).toBe('(max-width: 640px)');
 	});
@@ -315,22 +355,34 @@ describe('containerFromLegacyPrompt', () => {
 		expect(result.diagnostics).toEqual([]);
 	});
 
-	it.each(['top-left', 'top-right', 'top-center', 'bottom-center'])(
-		'maps a floating %s card to bottom-left and reports it',
-		(position) => {
+	it.each([
+		['top-left', 'bottom-left'],
+		['top-right', 'bottom-right'],
+		['top-center', 'bottom-left'],
+		['bottom-center', 'bottom-left'],
+	])(
+		'maps a floating %s card to %s, on the same side, and reports it',
+		(position, corner) => {
 			const result = containerFromLegacyPrompt({
 				position,
 				variant: 'floating',
 			});
-			expect(result.container).toEqual({
-				position: 'bottom-left',
-				type: 'card',
-			});
+			expect(result.container).toEqual({ position: corner, type: 'card' });
 			expect(result.diagnostics.map((d) => d.code)).toEqual([
 				'legacy-presentation',
 			]);
 		}
 	);
+
+	it('returns a fresh container, never the shared default', () => {
+		const first = containerFromLegacyPrompt({
+			position: 'top-left',
+			variant: 'widget',
+		});
+		(first.container as { position: string }).position = 'center';
+		expect(resolveLayout(EU).placement).toBe('card-bottom-left');
+		expect(Object.isFrozen(DEFAULT_CONSENT_CONTAINER)).toBe(true);
+	});
 });
 
 describe('resolveConsentPresentation: container', () => {
@@ -411,6 +463,55 @@ describe('resolveConsentPresentation: container', () => {
 			surface: 'prompt',
 		});
 		expect(container?.desktop.blocking).toBe(true);
+	});
+
+	it.each([{ scrollLock: true }, { trapFocus: true }])(
+		'maps legacy %j onto blockUntilChoice',
+		(prompt) => {
+			const result = resolveConsentPresentation({
+				policy: choice,
+				presentation: { prompt },
+				surface: 'prompt',
+			});
+			expect(result.blocking).toBe(true);
+			expect(result.container?.desktop.blocking).toBe(true);
+			expect(result.container?.phone.blocking).toBe(true);
+		}
+	);
+
+	it('a legacy scrollLock: false keeps the prompt from blocking', () => {
+		const result = resolveConsentPresentation({
+			policy: choice,
+			presentation: { prompt: { scrollLock: false, trapFocus: true } },
+			surface: 'prompt',
+		});
+		expect(result.blocking).toBe(false);
+		expect(result.container?.desktop.blocking).toBe(false);
+	});
+
+	it('maps an invalid legacy position to the same corner as the legacy geometry', () => {
+		const result = resolveConsentPresentation({
+			policy: choice,
+			presentation: { prompt: { position: 'center', variant: 'widget' } },
+			surface: 'prompt',
+		});
+		expect(result.position).toBe('bottom-right');
+		expect(result.container?.desktop.placement).toBe('card-bottom-right');
+	});
+
+	it('copies legacy diagnostics to both viewports', () => {
+		const { container } = resolveConsentPresentation({
+			policy: choice,
+			presentation: { prompt: { position: 'top-right', variant: 'floating' } },
+			surface: 'prompt',
+		});
+		expect(container?.desktop.placement).toBe('card-bottom-right');
+		expect(container?.desktop.diagnostics.map((d) => d.code)).toEqual([
+			'legacy-presentation',
+		]);
+		expect(container?.phone.diagnostics.map((d) => d.code)).toEqual([
+			'legacy-presentation',
+		]);
 	});
 
 	it('lets a component override pick the container', () => {
