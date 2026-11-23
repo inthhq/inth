@@ -6,6 +6,7 @@ import type {
 	PresentationAction,
 } from '@inth/sdk/engine';
 import type * as CoreTypes from '@inth/sdk/engine';
+import { EARLY_TAP_STYLE_ID } from '@inth/sdk/runtime/page-globals';
 import { Suspense, createContext, useContext, useState } from 'react';
 import type { ComponentType, FC, ReactNode } from 'react';
 
@@ -25,18 +26,53 @@ const LazyOptInConfirmation = createDeferredModule(
 	() => import('~/components/opt-in-confirmation')
 ).component((module) => module.OptInConfirmation);
 
-/*
+/** Loads of a container's chunk in the browser before its failure stays. */
+const CONTAINER_LOADS = 3;
+
+/**
+ * Imports a container's chunk. In the browser a failed import shows a
+ * banner the early-tap script hid again, and loads again a second later,
+ * up to `CONTAINER_LOADS` loads: until then the banner waits on the chunk,
+ * so a hydrating banner keeps the server's markup and the taps the script
+ * holds, which it replays once the chunk is in.
+ */
+const importContainer = async function importContainer<Module>(
+	importModule: () => Promise<Module>,
+	retryMs: number
+): Promise<Module> {
+	for (let load = 1; ; load += 1) {
+		try {
+			// oxlint-disable-next-line no-await-in-loop -- One load at a time.
+			return await importModule();
+		} catch (error) {
+			if (typeof document === 'undefined' || load >= CONTAINER_LOADS) {
+				throw error;
+			}
+			// Otherwise the banner stays hidden for a tap nothing replays yet.
+			document.getElementById(EARLY_TAP_STYLE_ID)?.remove();
+			// oxlint-disable-next-line no-await-in-loop -- Waits before the next load.
+			await new Promise((resolve) => {
+				setTimeout(resolve, retryMs);
+			});
+		}
+	}
+};
+
+/**
  * One chunk per container, each with its own stylesheet, so a page
  * downloads only the container it shows. A page that never owes a choice
  * downloads none of them.
+ *
+ * @internal Exported for tests.
  */
-const deferredContainer = function deferredContainer<Module>(
+export const deferredContainer = function deferredContainer<Module>(
 	importModule: () => Promise<Module>,
-	pick: (module: Module) => ComponentType<PromptSurfaceOptions>
+	pick: (module: Module) => ComponentType<PromptSurfaceOptions>,
+	retryMs = 1000
 ) {
 	let loaded: ComponentType<PromptSurfaceOptions> | undefined;
 	const deferred = createDeferredModule(async () => {
-		const module = await importModule();
+		const module = await importContainer(importModule, retryMs);
 		loaded = pick(module);
 		return module;
 	});
