@@ -1,5 +1,5 @@
 import { compareCanonical } from './canonical-order';
-import type { LegacyMaterialCompatibility } from './legacy-material-policy';
+import type { LegacyMaterialCompatibility } from './legacy-material-policy.model';
 /**
  * Versioned fingerprint domains for v3 policy rules.
  *
@@ -22,16 +22,16 @@ import type { LegacyMaterialCompatibility } from './legacy-material-policy';
 import {
 	createMaterialPolicyFingerprintSync,
 	createDeterministicFingerprintSync,
-} from './policy-fingerprint';
-import { canonicalizePolicySet as sorted } from './policy-rule';
+} from './policy-fingerprint.model';
+import { canonicalizePolicySet as sorted } from './policy-rule.model';
 import type {
 	PolicyOptionalCategory,
 	PolicyPromptAction,
 	PolicyRight,
 	PolicyRuleModel,
 	ResolvedPolicyRule,
-} from './policy-rule';
-import type { PolicyScopeMode } from './policy-runtime';
+} from './policy-rule.model';
+import type { PolicyScopeMode } from './policy-runtime.model';
 import { canonicalizePolicySurface } from './policy-surface';
 import type { ResolvedPolicySurface } from './policy-surface';
 

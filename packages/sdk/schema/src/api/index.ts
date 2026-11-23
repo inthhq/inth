@@ -12,11 +12,11 @@ export {
 	titleDescriptionSchema,
 	translationsSchema,
 	vendorListTranslationsSchema,
-} from './init';
+} from './init-output.model';
 export * from './legal-document';
 
 export * from './meta';
 
-export * from './session';
+export * from './consent-session.model';
 
 export * from './subject';

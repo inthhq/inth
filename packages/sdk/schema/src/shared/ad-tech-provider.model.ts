@@ -14,7 +14,7 @@
 
 import * as v from 'valibot';
 
-import { DEFAULT_GVL_ENDPOINT } from './constants';
+import { DEFAULT_GVL_ENDPOINT } from './schema-constants.model';
 
 export const adTechProviderSchema = v.object({
 	/** Google ATP ID. */

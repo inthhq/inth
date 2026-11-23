@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { getAppScheme } from './app-scheme';
-import { isOriginTrusted } from './trusted-origin';
+import { getAppScheme } from './get-app-scheme';
+import { isOriginTrusted } from './trusted-origin.model';
 
 describe('getAppScheme', () => {
 	it('returns the scheme for native WebView origins', () => {

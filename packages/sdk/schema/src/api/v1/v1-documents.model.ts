@@ -17,13 +17,13 @@
 
 import * as v from 'valibot';
 
-import { isPlainPolicyObject } from '../../shared/policy-rule';
+import { isPlainPolicyObject } from '../../shared/policy-rule.model';
 import {
 	v1CanonicalSubjectIdSchema,
 	v1IdempotencyKeySchema,
 	v1SubjectIdSchema,
-} from './common';
-import { V1_DOCUMENT_HASH_PATTERN } from './constants';
+} from './v1-common.model';
+import { V1_DOCUMENT_HASH_PATTERN } from './v1-constants.model';
 import {
 	documentAcceptancesRequestSchema,
 	documentAcceptancesResponseSchema,

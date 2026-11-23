@@ -6,9 +6,9 @@
 
 import * as v from 'valibot';
 
-import { subjectChoiceWireSchema } from './choice-wire';
-import { subjectIdSchema } from './post';
-import { vendorChoiceWireSchema } from './vendor-choice-wire';
+import { subjectChoiceWireSchema } from './subject-choice-wire.model';
+import { subjectIdSchema } from './post-subject.model';
+import { vendorChoiceWireSchema } from './vendor-choice-wire.model';
 
 /**
  * GET /subject/:id combined input schema (path param + query params).

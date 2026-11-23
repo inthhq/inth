@@ -13,8 +13,8 @@ import * as v from 'valibot';
 
 import type { ConsentManifest } from '../../shared/consent-manifest';
 import { POLICY_OPTIONAL_CATEGORIES } from '../../shared/policy-rule-invariants';
-import { initOutputSchema } from '../init';
-import type { InitOutput } from '../init';
+import { initOutputSchema } from '../init-output.model';
+import type { InitOutput } from '../init-output.model';
 import {
 	v1CanonicalSubjectIdSchema,
 	v1EffectiveOptOutSchema,
@@ -26,8 +26,8 @@ import {
 	v1OptOutRightsSchema,
 	v1PropertySchema,
 	v1SubjectIdSchema,
-} from './common';
-import type { V1EffectiveOptOut } from './common';
+} from './v1-common.model';
+import type { V1EffectiveOptOut } from './v1-common.model';
 import {
 	consentRecordRequestSchema,
 	consentRecordResponseSchema,

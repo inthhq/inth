@@ -16,7 +16,7 @@ export {
 	V1_REQUEST_ID_HEADER,
 	V1_UUID_PATTERN,
 	V1_UUID_V7_PATTERN,
-} from './constants';
+} from './v1-constants.model';
 
 export {
 	type V1EffectiveOptOut,
@@ -34,7 +34,7 @@ export {
 	v1PropertySchema,
 	v1SubjectIdSchema,
 	v1ValidationDetailsSchema,
-} from './common';
+} from './v1-common.model';
 
 export {
 	type V1AnswerCategory,
@@ -68,7 +68,7 @@ export {
 	v1ConsentRecordQuerySchema,
 	v1ConsentSessionJourneySchema,
 	v1ConsentSessionReportSchema,
-} from './consent';
+} from './v1-consent.model';
 
 export {
 	type V1Document,
@@ -98,7 +98,7 @@ export {
 	v1DocumentSchema,
 	v1DocumentTypeSchema,
 	v1RecordedAcceptanceSchema,
-} from './documents';
+} from './v1-documents.model';
 
 export {
 	type V1SubjectIdentityTokenInput,
@@ -111,4 +111,4 @@ export {
 	v1SubjectLinkInputSchema,
 	v1SubjectLinkOutputSchema,
 	v1SubjectLinkParamsSchema,
-} from './subjects';
+} from './v1-subjects.model';

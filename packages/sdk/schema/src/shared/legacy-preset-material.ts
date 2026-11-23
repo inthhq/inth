@@ -1,4 +1,4 @@
-import type { LegacyMaterialCompatibility } from './legacy-material-policy';
+import type { LegacyMaterialCompatibility } from './legacy-material-policy.model';
 
 /** Frozen preset receipt inputs. Do not update when current preset behavior changes. */
 export const legacyPresetMaterial = {

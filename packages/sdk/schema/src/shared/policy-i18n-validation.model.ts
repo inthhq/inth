@@ -1,5 +1,5 @@
 import { BASE_LANGUAGES } from './base-languages';
-import type { PolicyRule } from './policy-rule';
+import type { PolicyRule } from './policy-rule.model';
 
 const DEFAULT_PROFILE = 'default';
 

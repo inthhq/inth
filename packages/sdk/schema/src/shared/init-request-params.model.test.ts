@@ -4,11 +4,11 @@ import {
 	appendInitParams,
 	applyInitParamsToHeaders,
 	INIT_PARAM_HEADERS,
-} from './init-request-params';
+} from './init-request-params.model';
 import {
 	CONSENT_EXPERIMENT_HEADER,
 	parseExperimentHeader,
-} from './session-report';
+} from './session-report.model';
 
 describe('init query parameters', () => {
 	it('names the header each parameter stands for', () => {

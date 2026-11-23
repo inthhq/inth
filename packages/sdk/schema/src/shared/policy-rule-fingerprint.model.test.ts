@@ -4,13 +4,13 @@ import { legacyPresetMaterial } from './legacy-preset-material';
 import {
 	createMaterialPolicyFingerprint,
 	createMaterialPolicyFingerprintSync,
-} from './policy-fingerprint';
+} from './policy-fingerprint.model';
 import {
 	SAFE_FALLBACK_POLICY_FINGERPRINTS,
 	safeFallbackPolicyRule,
-} from './policy-resolution';
-import { normalizePolicyRule } from './policy-rule';
-import type { PolicyRule, ResolvedPolicyRule } from './policy-rule';
+} from './policy-resolution.model';
+import { normalizePolicyRule } from './policy-rule.model';
+import type { PolicyRule, ResolvedPolicyRule } from './policy-rule.model';
 import {
 	CHOICE_PROMPT_FINGERPRINT_VERSION,
 	choicePromptFingerprintInput,
@@ -20,7 +20,7 @@ import {
 	noticePromptFingerprintInput,
 	POLICY_FINGERPRINT_VERSION,
 	policyFingerprintInput,
-} from './policy-rule-fingerprint';
+} from './policy-rule-fingerprint.model';
 
 const choiceRule: PolicyRule = {
 	id: 'review',

@@ -10,10 +10,10 @@ import {
 	consentPolicyTypeSchema,
 	legalDocumentPolicyTypeSchema,
 	policyTypeSchema,
-} from '../../domain/consent-policy';
-import { ADDITIONAL_CONSENT_V2_PATTERN } from '../../shared/ad-tech-provider';
-import { subjectChoiceWireSchema } from './choice-wire';
-import { vendorChoiceWireSchema } from './vendor-choice-wire';
+} from '../../domain/consent-policy.model';
+import { ADDITIONAL_CONSENT_V2_PATTERN } from '../../shared/ad-tech-provider.model';
+import { subjectChoiceWireSchema } from './subject-choice-wire.model';
+import { vendorChoiceWireSchema } from './vendor-choice-wire.model';
 
 export const subjectIdSchema = v.pipe(
 	v.string(),

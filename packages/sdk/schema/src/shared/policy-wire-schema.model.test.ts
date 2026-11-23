@@ -1,19 +1,19 @@
 import * as v from 'valibot';
 import { describe, expect, test } from 'vitest';
 
-import { initOutputSchema } from '../api/init';
+import { initOutputSchema } from '../api/init-output.model';
 import {
 	readPolicyResolutionWire,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from './policy-resolution';
-import { normalizePolicyRule } from './policy-rule';
-import type { PolicyRule } from './policy-rule';
-import { createPolicyRuleFingerprints } from './policy-rule-fingerprint';
+} from './policy-resolution.model';
+import { normalizePolicyRule } from './policy-rule.model';
+import type { PolicyRule } from './policy-rule.model';
+import { createPolicyRuleFingerprints } from './policy-rule-fingerprint.model';
 import {
 	policyResolutionWireSchema,
 	resolvedPolicyRuleSchema,
-} from './policy-wire-schema';
+} from './policy-wire-schema.model';
 
 const authored: PolicyRule = {
 	categories: ['marketing'],

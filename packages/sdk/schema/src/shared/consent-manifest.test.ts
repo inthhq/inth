@@ -8,7 +8,7 @@ import {
 	createConsentManifestPolicyPack,
 } from './consent-manifest';
 import type { ConsentManifest } from './consent-manifest';
-import { readPolicyResolutionWire } from './policy-resolution';
+import { readPolicyResolutionWire } from './policy-resolution.model';
 import {
 	policyRulePresets,
 	recommendedPolicyRules,

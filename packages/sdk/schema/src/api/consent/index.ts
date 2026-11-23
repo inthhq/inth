@@ -6,4 +6,4 @@ export {
 	checkConsentOutputSchema,
 	checkConsentQuerySchema,
 	consentCheckResultSchema,
-} from './check';
+} from './consent-check.model';

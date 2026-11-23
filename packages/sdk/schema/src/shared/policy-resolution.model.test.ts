@@ -12,14 +12,14 @@ import {
 	safeFallbackPolicyInput,
 	safeFallbackPolicyRule,
 	writePolicyResolutionWire,
-} from './policy-resolution';
-import type { PolicyResolutionWire } from './policy-resolution';
+} from './policy-resolution.model';
+import type { PolicyResolutionWire } from './policy-resolution.model';
 import {
 	collectResolvedPolicyRuleIssues,
 	normalizePolicyRule,
-} from './policy-rule';
-import type { PolicyRule } from './policy-rule';
-import { createPolicyRuleFingerprints } from './policy-rule-fingerprint';
+} from './policy-rule.model';
+import type { PolicyRule } from './policy-rule.model';
+import { createPolicyRuleFingerprints } from './policy-rule-fingerprint.model';
 
 const europe: PolicyRule = {
 	id: 'europe',

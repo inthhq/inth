@@ -1,29 +1,29 @@
 import type { BaseTranslations, Translations } from '@inth/sdk-translations';
 
-import type { InitOutput } from '../api/init';
+import type { InitOutput } from '../api/init-output.model';
 import {
 	AD_TECH_PROVIDERS_URL,
 	normalizeAdTechProviderIds,
-} from './ad-tech-provider';
-import { DEFAULT_BRANDING, DEFAULT_GVL_ENDPOINT } from './constants';
-import type { brandingValues, hostingValues } from './constants';
-import { createDeterministicFingerprintSync } from './policy-fingerprint';
-import { primaryLanguage } from './policy-i18n-validation';
+} from './ad-tech-provider.model';
+import { DEFAULT_BRANDING, DEFAULT_GVL_ENDPOINT } from './schema-constants.model';
+import type { brandingValues, hostingValues } from './schema-constants.model';
+import { createDeterministicFingerprintSync } from './policy-fingerprint.model';
+import { primaryLanguage } from './policy-i18n-validation.model';
 import {
 	matchPolicyRules,
 	readPolicyResolutionWire,
 	writePolicyResolutionWire,
-} from './policy-resolution';
-import type { PolicyResolution } from './policy-resolution';
-import { inspectPolicyRules, normalizePolicyRule } from './policy-rule';
-import type { PolicyRule, ResolvedPolicyRule } from './policy-rule';
-import { createPolicyRuleFingerprints } from './policy-rule-fingerprint';
-import type { PolicyFingerprints } from './policy-rule-fingerprint';
-import type { PolicyMatch } from './policy-runtime';
-import type { ScriptRegistryWire } from './script-sources';
-import { getTranslationsData } from './translations-runtime';
-import type { I18nOptions, LoggerLike } from './translations-runtime';
-import type { Vendor } from './vendor';
+} from './policy-resolution.model';
+import type { PolicyResolution } from './policy-resolution.model';
+import { inspectPolicyRules, normalizePolicyRule } from './policy-rule.model';
+import type { PolicyRule, ResolvedPolicyRule } from './policy-rule.model';
+import { createPolicyRuleFingerprints } from './policy-rule-fingerprint.model';
+import type { PolicyFingerprints } from './policy-rule-fingerprint.model';
+import type { PolicyMatch } from './policy-runtime.model';
+import type { ScriptRegistryWire } from './script-sources.model';
+import { getTranslationsData } from './get-translations-data';
+import type { I18nOptions, LoggerLike } from './get-translations-data';
+import type { Vendor } from './vendor.model';
 
 type ConsentManifestBranding = (typeof brandingValues)[number];
 type ConsentManifestHosting = (typeof hostingValues)[number];

@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import type { PolicyOptionalCategory } from './policy-rule';
+import type { PolicyOptionalCategory } from './policy-rule.model';
 
 /** Opt-out rights in canonical order. */
 export const OPT_OUT_RIGHTS = ['sale', 'share', 'targeted_ads'] as const;

@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 
-import { postSubjectInputSchema } from './post';
+import { postSubjectInputSchema } from './post-subject.model';
 
 const baseInput = {
 	domain: 'example.com',

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { getIpAddress } from './client-ip';
-import { forwardedNodeAddress, parseForwarded } from './forwarded';
+import { getIpAddress } from './client-ip.model';
+import { forwardedNodeAddress, parseForwarded } from './forwarded-header.model';
 
 describe('parseForwarded', () => {
 	it('reads each element of an RFC 7239 header', () => {

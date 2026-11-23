@@ -2,14 +2,14 @@ import { enTranslations } from '@inth/sdk-translations';
 import type { Translations } from '@inth/sdk-translations';
 import * as v from 'valibot';
 
-import { brandingSchema } from './branding';
+import { brandingSchema } from './branding.model';
 import { resolvePolicyResolutionFromManifest } from './consent-manifest';
 import type {
 	ConsentManifest,
 	ConsentManifestPolicyPack,
 } from './consent-manifest';
-import { hostingSchema } from './hosting';
-import { nonIABVendorSchema } from './non-iab-vendor';
+import { hostingSchema } from './hosting.model';
+import { nonIABVendorSchema } from './non-iab-vendor.model';
 import { isPlainPolicyObject } from './policy-rule-invariants';
 import { isPolicySurfaceUnfingerprinted } from './policy-surface';
 import {
@@ -17,10 +17,10 @@ import {
 	POLICY_SURFACE_FINGERPRINT_ISSUE,
 	policyFingerprintsSchema,
 	resolvedPolicyRuleSchema,
-} from './policy-wire-schema';
-import { scriptRegistrySchema } from './script-sources';
-import type { I18nMessageProfiles } from './translations-runtime';
-import { vendorSchema } from './vendor';
+} from './policy-wire-schema.model';
+import { scriptRegistrySchema } from './script-sources.model';
+import type { I18nMessageProfiles } from './get-translations-data';
+import { vendorSchema } from './vendor.model';
 
 /** Keep partial copy shaped like the default translations, including legacy frame copy. */
 const translationTemplate = {

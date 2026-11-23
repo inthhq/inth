@@ -5,11 +5,11 @@ import {
 	postSubjectInputSchema,
 	postSubjectOutputSchema,
 	subjectPolicyBasedInputSchema,
-} from '../api/subject/post';
+} from '../api/subject/post-subject.model';
 import {
 	consentPolicySchema,
 	legalDocumentPolicyTypeSchema,
-} from './consent-policy';
+} from './consent-policy.model';
 
 describe('legalDocumentPolicyTypeSchema', () => {
 	it.each(['privacy_policy', 'dpa', 'terms_and_conditions'])(

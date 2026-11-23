@@ -6,11 +6,11 @@ import {
 	createDeterministicFingerprintSync,
 	hashSha256Hex,
 	stableStringify,
-} from './policy-fingerprint';
-import { resolvePolicyRules } from './policy-resolution';
-import { inspectPolicyRules } from './policy-rule';
-import type { PolicyRule } from './policy-rule';
-import { policyMatchers } from './policy-runtime';
+} from './policy-fingerprint.model';
+import { resolvePolicyRules } from './policy-resolution.model';
+import { inspectPolicyRules } from './policy-rule.model';
+import type { PolicyRule } from './policy-rule.model';
+import { policyMatchers } from './policy-runtime.model';
 
 const originalCrypto = globalThis.crypto;
 

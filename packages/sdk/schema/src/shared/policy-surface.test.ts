@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { assert, describe, expect, test } from 'vitest';
 
-import { v1ConsentInitOutputSchema } from '../api/v1/consent';
+import { v1ConsentInitOutputSchema } from '../api/v1/v1-consent.model';
 import {
 	consentInitResponseSchema,
 	consentManifestResponseSchema,
@@ -12,28 +12,28 @@ import {
 	resolveInitFromManifest,
 	resolvePolicyResolutionFromManifest,
 } from './consent-manifest';
-import { parseConsentManifest } from './consent-manifest-schema';
+import { parseConsentManifest } from './parse-consent-manifest';
 import {
 	readPolicyResolutionWire,
 	resolvePolicyRules,
 	writePolicyResolutionWire,
-} from './policy-resolution';
+} from './policy-resolution.model';
 import {
 	inspectPolicyRules,
 	normalizePolicyRule,
 	validatePolicyRules,
-} from './policy-rule';
-import type { PolicyRule } from './policy-rule';
+} from './policy-rule.model';
+import type { PolicyRule } from './policy-rule.model';
 import {
 	createPolicyRuleFingerprints,
 	createPresentationFingerprint,
 	policySurfacePresentationInput,
-} from './policy-rule-fingerprint';
+} from './policy-rule-fingerprint.model';
 import { collectResolvedPolicyRuleIssues } from './policy-rule-invariants';
 import {
 	policyResolutionWireSchema,
 	resolvedPolicyRuleSchema,
-} from './policy-wire-schema';
+} from './policy-wire-schema.model';
 
 const optIn: PolicyRule = {
 	id: 'eu',

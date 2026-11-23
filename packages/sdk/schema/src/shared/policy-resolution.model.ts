@@ -27,10 +27,10 @@
 
 import { FAILED_CONFIGURATION } from './policy-resolution-wire';
 import type { PolicyResolution } from './policy-resolution-wire';
-import { inspectPolicyRules, normalizePolicyRule } from './policy-rule';
-import type { PolicyRule } from './policy-rule';
-import { createPolicyRuleFingerprints } from './policy-rule-fingerprint';
-import type { PolicyMatch, PolicyMatchedBy } from './policy-runtime';
+import { inspectPolicyRules, normalizePolicyRule } from './policy-rule.model';
+import type { PolicyRule } from './policy-rule.model';
+import { createPolicyRuleFingerprints } from './policy-rule-fingerprint.model';
+import type { PolicyMatch, PolicyMatchedBy } from './policy-runtime.model';
 
 export {
 	parsePolicyContractHeader,

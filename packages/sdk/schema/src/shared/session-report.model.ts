@@ -6,13 +6,13 @@
  * resolution the same way and a consumer never has to reconcile two shapes.
  */
 
-import type { InitOutput } from '../api/init';
+import type { InitOutput } from '../api/init-output.model';
 import type {
 	ConsentSessionReport,
 	ConsentSessionSource,
-} from '../api/session';
+} from '../api/consent-session.model';
 import type { ConsentManifest } from './consent-manifest';
-import { appendSearchParams, readSearchParams } from './search-params';
+import { appendSearchParams, readSearchParams } from './search-params.model';
 
 /**
  * Request header a host puts the visitor's IP on when it reports a session.

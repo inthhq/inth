@@ -1,16 +1,16 @@
 import * as v from 'valibot';
 
-import type { LegalDocumentPolicyType } from '../shared/legal-document-types';
-import { isLegalDocumentType } from '../shared/legal-document-types';
+import type { LegalDocumentPolicyType } from '../shared/legal-document-type.model';
+import { isLegalDocumentType } from '../shared/legal-document-type.model';
 
 export type {
 	LegalDocumentPolicyType,
 	LegalDocumentTypePrefix,
-} from '../shared/legal-document-types';
+} from '../shared/legal-document-type.model';
 export {
 	isLegalDocumentType,
 	LEGAL_DOCUMENT_TYPE_PREFIXES,
-} from '../shared/legal-document-types';
+} from '../shared/legal-document-type.model';
 
 /**
  * Valibot schema validating a legal-document policy `type`.

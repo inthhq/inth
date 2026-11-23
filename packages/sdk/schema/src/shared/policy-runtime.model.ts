@@ -1,4 +1,4 @@
-import { dedupeDefinedValues } from './policy-utils';
+import { dedupeDefinedValues } from './dedupe-defined-values';
 
 export type PolicyModel = 'opt-in' | 'opt-out' | 'iab' | 'none';
 export type PolicyScopeMode = 'strict' | 'permissive';

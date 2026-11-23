@@ -1,5 +1,5 @@
 import { compareCanonical } from './canonical-order';
-import type { LegacyMaterialPolicyInput } from './legacy-material-policy';
+import type { LegacyMaterialPolicyInput } from './legacy-material-policy.model';
 
 export const stableStringify = function stableStringify(
 	value: unknown

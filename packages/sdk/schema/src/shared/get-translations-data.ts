@@ -11,8 +11,8 @@ import {
 	primaryLanguage,
 	resolveActiveProfile,
 	resolveFallbackLanguage,
-} from './policy-i18n-validation';
-import type { PolicyRule } from './policy-rule';
+} from './policy-i18n-validation.model';
+import type { PolicyRule } from './policy-rule.model';
 
 type SupportedBaseLanguage = Extract<keyof BaseTranslations, string>;
 

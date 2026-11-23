@@ -1,8 +1,8 @@
 import { assert, describe, expect, test } from 'vitest';
 
 import { createConsentManifestPolicyPack } from './consent-manifest';
-import { createMaterialPolicyFingerprintSync } from './policy-fingerprint';
-import { resolvePolicyRules } from './policy-resolution';
+import { createMaterialPolicyFingerprintSync } from './policy-fingerprint.model';
+import { resolvePolicyRules } from './policy-resolution.model';
 import { policyRulePresets } from './policy-rule-presets';
 
 // The California presets are not here: narrowing their GPC mapping to

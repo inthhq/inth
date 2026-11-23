@@ -1,12 +1,12 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 
-import { vendorChoiceWireSchema } from '../api/subject/vendor-choice-wire';
+import { vendorChoiceWireSchema } from '../api/subject/vendor-choice-wire.model';
 import {
 	buildConsentManifestFromConfig,
 	resolveInitFromManifest,
 } from './consent-manifest';
-import { vendorCategoryConditionSchema, vendorSchema } from './vendor';
+import { vendorCategoryConditionSchema, vendorSchema } from './vendor.model';
 
 const NOW = 1_800_000_000_000;
 

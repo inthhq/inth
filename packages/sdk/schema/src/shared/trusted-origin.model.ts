@@ -12,7 +12,7 @@
  * second implementation would drift on an edge case rather than obviously.
  */
 
-import { getAppScheme } from './app-scheme';
+import { getAppScheme } from './get-app-scheme';
 
 /** Just enough of a logger to trace a decision, without a dependency. */
 export interface LoggerLike {

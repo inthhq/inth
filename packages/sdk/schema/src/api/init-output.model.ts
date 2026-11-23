@@ -1,13 +1,13 @@
 import * as v from 'valibot';
 
-import { adTechProviderSchema } from '../shared/ad-tech-provider';
-import { brandingSchema } from '../shared/branding';
+import { adTechProviderSchema } from '../shared/ad-tech-provider.model';
+import { brandingSchema } from '../shared/branding.model';
 import { globalVendorListSchema } from '../shared/gvl';
-import { hostingSchema } from '../shared/hosting';
-import { nonIABVendorSchema } from '../shared/non-iab-vendor';
-import { policyResolutionWireSchema } from '../shared/policy-wire-schema';
-import { scriptRegistrySchema } from '../shared/script-sources';
-import { vendorSchema } from '../shared/vendor';
+import { hostingSchema } from '../shared/hosting.model';
+import { nonIABVendorSchema } from '../shared/non-iab-vendor.model';
+import { policyResolutionWireSchema } from '../shared/policy-wire-schema.model';
+import { scriptRegistrySchema } from '../shared/script-sources.model';
+import { vendorSchema } from '../shared/vendor.model';
 
 /**
  * A title and description pair. Either may be omitted; the client fills

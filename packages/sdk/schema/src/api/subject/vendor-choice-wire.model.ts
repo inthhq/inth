@@ -12,9 +12,9 @@
 
 import * as v from 'valibot';
 
-import { isPlainPolicyObject } from '../../shared/policy-rule';
-import { vendorIdSchema } from '../../shared/vendor';
-import { wireTimestampSchema } from './choice-wire';
+import { isPlainPolicyObject } from '../../shared/policy-rule.model';
+import { vendorIdSchema } from '../../shared/vendor.model';
+import { wireTimestampSchema } from './subject-choice-wire.model';
 
 const plainObjectSchema = v.custom<Record<string, unknown>>(
 	(input) => isPlainPolicyObject(input),

@@ -11,8 +11,8 @@ import {
 	POLICY_PROMPTS,
 	POLICY_RULE_MODELS,
 	validatePolicyRules,
-} from './policy-rule';
-import type { PolicyRule, ResolvedPolicyRule } from './policy-rule';
+} from './policy-rule.model';
+import type { PolicyRule, ResolvedPolicyRule } from './policy-rule.model';
 
 const DAY_MS = 86_400_000;
 

@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 
-import { resolvePolicyRules } from './policy-resolution';
-import { inspectPolicyRules, normalizePolicyRule } from './policy-rule';
-import { createPolicyRuleFingerprints } from './policy-rule-fingerprint';
+import { resolvePolicyRules } from './policy-resolution.model';
+import { inspectPolicyRules, normalizePolicyRule } from './policy-rule.model';
+import { createPolicyRuleFingerprints } from './policy-rule-fingerprint.model';
 import {
 	policyRulePresets,
 	recommendedPolicyRules,

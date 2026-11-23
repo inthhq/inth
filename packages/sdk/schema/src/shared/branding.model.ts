@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { brandingValues, DEFAULT_BRANDING } from './constants';
+import { brandingValues, DEFAULT_BRANDING } from './schema-constants.model';
 
 export const brandingSchema = v.picklist(brandingValues);
 

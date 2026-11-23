@@ -7,7 +7,7 @@ import {
 	MAX_AD_TECH_PROVIDER_QUERY_IDS,
 	normalizeAdTechProviderIds,
 	parseAdTechProviderList,
-} from './ad-tech-provider';
+} from './ad-tech-provider.model';
 import { buildConsentManifestFromConfig } from './consent-manifest';
 
 const payload = {

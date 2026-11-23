@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { legalDocumentPolicyTypeSchema } from '../../domain/consent-policy';
+import { legalDocumentPolicyTypeSchema } from '../../domain/consent-policy.model';
 
 export const legalDocumentCurrentParamsSchema = v.object({
 	type: v.pipe(

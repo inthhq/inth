@@ -18,7 +18,7 @@ import type {
 	PolicyRight,
 	PolicyRuleModel,
 	ResolvedPolicyRule,
-} from './policy-rule';
+} from './policy-rule.model';
 import {
 	collectPolicySurfaceRuleIssues,
 	collectPolicySurfaceFieldIssues,

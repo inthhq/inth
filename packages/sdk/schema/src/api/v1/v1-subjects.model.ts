@@ -18,8 +18,8 @@ import {
 	v1CanonicalSubjectIdSchema,
 	v1EffectiveOptOutSchema,
 	v1SubjectIdSchema,
-} from './common';
-import type { V1EffectiveOptOut } from './common';
+} from './v1-common.model';
+import type { V1EffectiveOptOut } from './v1-common.model';
 import {
 	identityTokenRequestSchema,
 	identityTokenResponseSchema,

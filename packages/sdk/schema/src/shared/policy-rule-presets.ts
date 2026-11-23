@@ -1,6 +1,6 @@
 import { legacyPresetMaterial } from './legacy-preset-material';
-import type { PolicyRule, PolicyRuleReview } from './policy-rule';
-import { policyMatchers } from './policy-runtime';
+import type { PolicyRule, PolicyRuleReview } from './policy-rule.model';
+import { policyMatchers } from './policy-runtime.model';
 
 /**
  * Preset Europe pack mode used by {@link policyRulePresets}.

@@ -19,12 +19,12 @@
  * backend reads it as that input.
  */
 
-import { appendSearchParams, readSearchParams } from './search-params';
+import { appendSearchParams, readSearchParams } from './search-params.model';
 import {
 	CONSENT_EXPERIMENT_HEADER,
 	formatExperimentHeader,
-} from './session-report';
-import type { SessionExperiment } from './session-report';
+} from './session-report.model';
+import type { SessionExperiment } from './session-report.model';
 
 /** Country override, an ISO 3166-1 alpha-2 code (`x-inth-country`). */
 export const INIT_COUNTRY_PARAM = 'country';

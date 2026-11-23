@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 
-import { getSubjectOutputSchema } from './get';
+import { getSubjectOutputSchema } from './get-subject.model';
 
 describe('getSubjectOutputSchema', () => {
 	// 3.0.0-alpha.0 to alpha.3 backends return `privacyDirectives`. A newer

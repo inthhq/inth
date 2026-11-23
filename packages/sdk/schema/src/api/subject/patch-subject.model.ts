@@ -6,7 +6,7 @@
 
 import * as v from 'valibot';
 
-import { subjectIdSchema } from './post';
+import { subjectIdSchema } from './post-subject.model';
 
 export const patchSubjectParamsSchema = v.object({
 	/** Subject ID from path parameter */

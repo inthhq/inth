@@ -6,7 +6,7 @@
 
 import * as v from 'valibot';
 
-import { consentItemSchema } from './get';
+import { consentItemSchema } from './get-subject.model';
 
 export const listSubjectsQuerySchema = v.object({
 	externalId: v.pipe(

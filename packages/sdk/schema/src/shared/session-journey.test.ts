@@ -1,8 +1,8 @@
 import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 
-import type { InitOutput } from '../api/init';
-import { consentSessionReportSchema } from '../api/session';
+import type { InitOutput } from '../api/init-output.model';
+import { consentSessionReportSchema } from '../api/consent-session.model';
 import {
 	appendJourneyParams,
 	buildConsentSessionReport,
@@ -12,7 +12,7 @@ import {
 	readJourneyParams,
 	readSessionJourney,
 	SPECULATION_HEADERS,
-} from './session-report';
+} from './session-report.model';
 
 const ID = '3b241101-e2bb-4255-8caf-4136c566a962';
 

@@ -1,10 +1,10 @@
 import * as v from 'valibot';
 import { describe, expect, test } from 'vitest';
 
-import { initOutputSchema } from '../api/init';
+import { initOutputSchema } from '../api/init-output.model';
 import { resolveInitFromManifest } from './consent-manifest';
 import type { ConsentManifest } from './consent-manifest';
-import { parseConsentManifest } from './consent-manifest-schema';
+import { parseConsentManifest } from './parse-consent-manifest';
 
 const scriptSources = {
 	// Inth checks each entry when it loads the script, so the schema keeps

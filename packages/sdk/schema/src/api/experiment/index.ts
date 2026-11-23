@@ -7,4 +7,4 @@ export {
 	experimentSummaryOutputSchema,
 	experimentSummaryQuerySchema,
 	experimentArmSummarySchema,
-} from './summary';
+} from './experiment-summary.model';

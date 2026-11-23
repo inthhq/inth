@@ -15,8 +15,8 @@ import type {
 	PolicyPromptAction,
 	PolicyRight,
 	ResolvedPolicyRule,
-} from './policy-rule';
-import type { PolicyFingerprints } from './policy-rule-fingerprint';
+} from './policy-rule.model';
+import type { PolicyFingerprints } from './policy-rule-fingerprint.model';
 import {
 	collectResolvedPolicyRuleIssues,
 	isPlainPolicyObject,
@@ -26,7 +26,7 @@ import {
 	isPolicyRuleModel,
 	POLICY_PROMPT_ACTIONS,
 } from './policy-rule-invariants';
-import type { PolicyMatchedBy } from './policy-runtime';
+import type { PolicyMatchedBy } from './policy-runtime.model';
 import {
 	CONSENT_BANNER_EDGES,
 	CONSENT_BLOCKING_CONSTRAINTS,

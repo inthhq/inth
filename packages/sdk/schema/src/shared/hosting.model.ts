@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { hostingValues } from './constants';
+import { hostingValues } from './schema-constants.model';
 
 /**
  * Schema for the backend operator reported on `/v1/consent/init` and the manifest

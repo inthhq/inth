@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-import { resolvePolicyRules } from './policy-resolution';
+import { resolvePolicyRules } from './policy-resolution.model';
 import { readPolicyResolutionWire } from './policy-resolution-wire';
 
 const SHARED_DIR = dirname(fileURLToPath(import.meta.url));

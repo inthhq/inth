@@ -12,7 +12,7 @@
  * a consent record, so the default errs toward the smaller footprint.
  */
 
-import { forwardedNodeAddress, parseForwarded } from './forwarded';
+import { forwardedNodeAddress, parseForwarded } from './forwarded-header.model';
 
 const DEFAULT_IP_HEADERS = [
 	'x-client-ip',

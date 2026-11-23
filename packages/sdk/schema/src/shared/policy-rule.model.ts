@@ -1,5 +1,5 @@
-import { isLegacyMaterialCompatibility } from './legacy-material-policy';
-import type { LegacyMaterialCompatibility } from './legacy-material-policy';
+import { isLegacyMaterialCompatibility } from './legacy-material-policy.model';
+import type { LegacyMaterialCompatibility } from './legacy-material-policy.model';
 /**
  * v3 policy rules: the behavior contract a policy pack entry declares.
  *
@@ -48,7 +48,7 @@ import type {
 	PolicyMatch,
 	PolicyScopeMode,
 	PolicyValidationResult,
-} from './policy-runtime';
+} from './policy-runtime.model';
 import {
 	canonicalizePolicySurface,
 	collectPolicySurfaceRuleIssues,
