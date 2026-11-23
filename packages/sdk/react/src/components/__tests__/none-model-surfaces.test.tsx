@@ -127,7 +127,7 @@ describe('consent surfaces under a none rule', () => {
 		expect(snapshot?.explicitChoice).toBeNull();
 	});
 
-	test('keeps a settings route when the rule lists the preferences right, and saving records nothing', async () => {
+	test('keeps a settings route when the rule lists the preferences right, and closing records nothing', async () => {
 		// Other test files in this browser context may have left consent keys
 		// behind; start clean so the storage assertion below is about this save.
 		localStorage.clear();
@@ -159,17 +159,17 @@ describe('consent surfaces under a none rule', () => {
 			expect(queryTestId('consent-dialog-root')).toBeInTheDocument();
 		});
 
-		const save = await vi.waitFor(() => {
+		const done = await vi.waitFor(() => {
 			const button = document.querySelector<HTMLButtonElement>(
-				'[data-testid="consent-dialog-root"] [data-testid="consent-widget-footer-save-button"]'
+				'[data-testid="consent-dialog-root"] [data-testid="consent-dialog-close"]'
 			);
 			expect(button).toBeInTheDocument();
 			return button as HTMLButtonElement;
 		});
-		save.click();
+		done.click();
 
-		// The kernel completes the save without writing a record, and the
-		// dialog closes because no prompt is owed.
+		// Closing writes no record, and the dialog leaves because no prompt
+		// is owed.
 		await vi.waitFor(() => {
 			expect(queryTestId('consent-dialog-root')).toBeNull();
 		});

@@ -8,8 +8,16 @@ import { ConsentDialog } from '../aggregate-components';
 import { KernelContext } from '../context';
 import { InthProvider } from '../provider';
 
-for (const scenario of ['notice', 'scoped', 'necessary-only'] as const) {
-	for (const action of ['accept', 'reject', 'save'] as const) {
+// The dialog under a US notice shows the rights rows and Done, not the
+// one-click pair, and its Save stays disabled until a switch changes
+// (EU-03); `dialog.test.tsx` covers both. The scenario stays in the type so
+// the shared assertions below read the same.
+for (const scenario of ['scoped', 'necessary-only'] as (
+	| 'notice'
+	| 'scoped'
+	| 'necessary-only'
+)[]) {
+	for (const action of ['accept', 'reject'] as const) {
 		test(`${scenario} actual React ${action} saves displayed scope and respects the remaining prompt`, async () => {
 			const pending = Promise.withResolvers<{ ok: boolean }>();
 			const save = vi.fn(() => pending.promise);
@@ -74,20 +82,19 @@ for (const scenario of ['notice', 'scoped', 'necessary-only'] as const) {
 				if (scenario !== 'notice') {
 					expect(
 						document.querySelector(
-							'[data-testid="consent-widget-switch-marketing"]'
+							'[data-testid="consent-dialog-category-switch-marketing"]'
 						)
 					).toBeNull();
 					expect(
 						document.querySelector(
-							'[data-testid="consent-widget-switch-measurement"]'
+							'[data-testid="consent-dialog-category-switch-measurement"]'
 						)
 					).not.toBeNull();
 				}
 				/* oxlint-enable vitest/no-conditional-expect */
 				const id = {
-					accept: 'consent-widget-footer-accept-all-button',
-					reject: 'consent-widget-reject-button',
-					save: 'consent-widget-footer-save-button',
+					accept: 'consent-dialog-accept-all',
+					reject: 'consent-dialog-reject-all',
 				}[action];
 				const button = document.querySelector<HTMLButtonElement>(
 					`[data-testid="${id}"]`
