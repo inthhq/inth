@@ -448,6 +448,28 @@ describe('the first-load shell', () => {
 		}
 	);
 
+	// The side Drawer's choices show from the first paint, so a page that
+	// waited for the hero left them dead until the engine came in.
+	it('loads the engine at once under an all-in-one side Drawer', async () => {
+		renderPage();
+		document
+			.querySelector(EARLY_TAP_ROOT)
+			?.setAttribute('data-flow', 'all-in-one');
+		const { client: shell, loadEngine } = startShell();
+		await shell.ready;
+		expect(loadEngine).toHaveBeenCalledOnce();
+	});
+
+	it('waits for the hero under an expand-in-place prompt', async () => {
+		renderPage();
+		document
+			.querySelector(EARLY_TAP_ROOT)
+			?.setAttribute('data-flow', 'expand-in-place');
+		const { loadEngine } = startShell();
+		await settle();
+		expect(loadEngine).not.toHaveBeenCalled();
+	});
+
 	it('records nothing without the engine when the server ruled it out', async () => {
 		renderPage(false);
 		const { client: shell, loadEngine } = startShell();
