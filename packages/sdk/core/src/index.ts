@@ -307,20 +307,6 @@ export {
 	safeFallbackPolicyRule,
 } from '@inth/sdk-schema/types';
 export { resolveConsentPresentation } from './libs/policy-actions';
-export {
-	resolveConsentDesign,
-	resolveLegacyConsentPresentation,
-} from './libs/legacy-presentation-shim';
-export type {
-	ConsentDesign,
-	LegacyConsentPresentation,
-	LegacyPreferencesPresentation,
-	LegacyPresentationFields,
-	LegacyPromptPresentation,
-	LegacyResolvedConsentPresentation,
-	PromptPosition,
-	PromptVariant,
-} from './libs/legacy-presentation-shim';
 export { resolvePrivacyChoicesLink } from './libs/privacy-choices-link';
 export type { PrivacyChoicesLinkState } from './libs/privacy-choices-link';
 export {

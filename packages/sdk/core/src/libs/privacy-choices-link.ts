@@ -56,14 +56,7 @@ export const resolvePrivacyChoicesLink = function resolvePrivacyChoicesLink(
 		| 'resolution'
 	>,
 	translations: Partial<Translations> | undefined,
-	options: {
-		/**
-		 * @deprecated temporary — removed in phase B. Ignored: there is one
-		 * consent UI.
-		 */
-		design?: unknown;
-		variant?: OptOutLinkVariant;
-	} = {}
+	options: { variant?: OptOutLinkVariant } = {}
 ): PrivacyChoicesLinkState | null {
 	if (
 		snapshot.resolution.status !== 'matched' ||

@@ -85,17 +85,6 @@ export const LATER_SHEETS = {
 	dialog: ['consent-dialog'],
 } as const satisfies Record<string, readonly string[]>;
 
-/**
- * Class maps kept only so the adapters that have not moved to the current
- * consent UI keep compiling. Their rules ship in no stylesheet.
- *
- * @deprecated temporary — removed in phase B
- */
-export const LEGACY_SHIM_COMPONENTS = [
-	'legacy-panel',
-	'legacy-prompt',
-] as const;
-
 /** Prefix of the IAB TCF components, which go into `iab/styles.css`. */
 export const IAB_PREFIX = 'iab-';
 
