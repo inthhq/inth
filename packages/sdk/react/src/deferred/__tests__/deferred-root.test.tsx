@@ -37,6 +37,10 @@ import type { DeferredCommitConfig } from '../committed';
 import type * as EngineNamespace from '../engine';
 import { ENGINE_CHUNKS_KEY } from '../engine-preload';
 import { DeferredConsentShell } from '../shell';
+import { BannerSurface } from '../../components/prompt/banner';
+import { CardSurface } from '../../components/prompt/card';
+import { DrawerSurface } from '../../components/prompt/drawer';
+import { PromptContainersContext } from '../../components/prompt/prompt';
 import { DeferredConsentBanner } from '../surfaces';
 
 const policyConfig = function policyConfig(
@@ -62,6 +66,18 @@ const mode = transportMode({ init: transportInit, save: transportSave });
 const consentCategories = ['necessary', 'marketing'] as const;
 
 /** Page content that reads consent and saves it, outside the banner. */
+/*
+ * The server and the client render in one page here, so the server's
+ * streamed prompt container would share React's context stack with the
+ * client's hydration. The containers render at once instead, as they do
+ * on a server that loaded them at module evaluation.
+ */
+const CONTAINERS = {
+	banner: BannerSurface,
+	card: CardSurface,
+	drawer: DrawerSurface,
+};
+
 const Probe = () => {
 	const snapshot = useSnapshot();
 	const save = useSaveConsents();
@@ -96,7 +112,9 @@ const ServerPage = ({ prefetch }: { prefetch: unknown }) => (
 				}}
 			>
 				<Probe />
-				<DeferredConsentBanner />
+				<PromptContainersContext.Provider value={CONTAINERS}>
+					<DeferredConsentBanner />
+				</PromptContainersContext.Provider>
 				<Suspense fallback={null}>
 					<ServerBootData
 						chunks="/_next/static/"
@@ -251,7 +269,9 @@ const ClientPage = ({
 				<Probe />
 				{hookScripts ? <HookScripts scripts={hookScripts} /> : null}
 				{liveHookScripts ? <LiveHookScripts /> : null}
-				<DeferredConsentBanner />
+				<PromptContainersContext.Provider value={CONTAINERS}>
+					<DeferredConsentBanner />
+				</PromptContainersContext.Provider>
 			</DeferredConsentShell>
 		</body>
 	</html>

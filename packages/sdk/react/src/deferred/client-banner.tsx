@@ -62,6 +62,9 @@ const listeners = new Set<() => void>();
  */
 export const loadClientBanner = recordOnce(async (): Promise<BannerModule> => {
 	const module = await bannerChunk.load();
+	// The container the server rendered loads with it, so hydration keeps
+	// the server's markup without waiting on a second chunk.
+	await module.preloadServerContainer();
 	loaded = module;
 	for (const listener of listeners) {
 		listener();
