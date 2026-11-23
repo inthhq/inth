@@ -1588,6 +1588,80 @@ describe('experimentalScriptRegistry', () => {
 			}
 		});
 
+		test('loads an entry whose signature expired when signatures are not required, and reports it', async () => {
+			const DAY_MS = 24 * 60 * 60 * 1000;
+			const onDebug = vi.fn();
+			const runtime = startWith({
+				experimentalScriptRegistry: true,
+				mode,
+				// As a manifest bundled at build time carries it weeks later
+				prefetch: prefetched(
+					signedEntry({
+						expiresAt: new Date(Date.now() - DAY_MS).toISOString(),
+						signedAt: new Date(Date.now() - 15 * DAY_MS).toISOString(),
+					})
+				),
+				scriptLoader: { onDebug },
+				scripts: [integrationScript()],
+			});
+
+			await vi.waitFor(() =>
+				expect(fetchAttributes('vendor')).toMatchObject({
+					integrity: HASH_INTEGRITY,
+					src: HASH_SRC,
+				})
+			);
+			expect(debugMessages(onDebug)).toContainEqual(
+				expect.stringContaining('with an expired release signature')
+			);
+			runtime.dispose();
+		});
+
+		test('mounts every other script once when a signature has expired by the time consent comes', async () => {
+			const HOUR_MS = 60 * 60 * 1000;
+			const expiresAt = new Date(Date.now() + HOUR_MS).toISOString();
+			const onBeforeLoad = vi.fn();
+			const verify = vi.spyOn(crypto.subtle, 'verify');
+			const runtime = startWith({
+				experimentalScriptRegistry: { requireSignatures: true },
+				mode,
+				prefetch: prefetched(
+					signedEntry({
+						expiresAt,
+						signedAt: new Date(Date.now() - HOUR_MS).toISOString(),
+						url: `${VENDOR_SRC}?siblings`,
+					})
+				),
+				scripts: [
+					{ ...otherScript, onBeforeLoad },
+					integrationScript({
+						category: 'measurement',
+						src: `${VENDOR_SRC}?siblings`,
+					}),
+				],
+			});
+			await vi.waitFor(() => expect(verify).toHaveBeenCalled());
+			await new Promise((resolve) => {
+				setTimeout(resolve, 0);
+			});
+			verify.mockRestore();
+
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				vi.setSystemTime(new Date(expiresAt));
+				await runtime.kernel.commands.save('all');
+				await new Promise((resolve) => {
+					setTimeout(resolve, 0);
+				});
+				expect(onBeforeLoad).toHaveBeenCalledOnce();
+				expect(element('other')).not.toBeNull();
+				expect(element('vendor')).toBeNull();
+			} finally {
+				vi.useRealTimers();
+				runtime.dispose();
+			}
+		});
+
 		test('refuses an entry with no signature when signatures are required', async () => {
 			const onDebug = vi.fn();
 			const runtime = startWith({

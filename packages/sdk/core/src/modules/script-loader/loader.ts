@@ -23,7 +23,10 @@ import {
 	normalizeScripts,
 } from './normalize';
 import { readScriptRegistry } from './registry';
-import { createRegistryVerifier } from './signature';
+import {
+	createRegistryVerifier,
+	isRegistrySignatureCurrent,
+} from './signature';
 import { createScriptSourceResolver } from './sources';
 import type {
 	HeldScript,
@@ -137,16 +140,18 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		});
 		verifyEntry = (script, entry) => {
 			const verdict = verifier(script.src ?? '', entry);
+			const expired =
+				!!entry.signature && !isRegistrySignatureCurrent(entry.signature);
 			if (
 				verdict === 'load' &&
-				!entry.signature &&
+				(!entry.signature || expired) &&
 				!unsignedIds.has(script.id)
 			) {
 				unsignedIds.add(script.id);
 				// Reported, not counted as a failure: the script loads.
 				emitDebug({
 					action: 'error',
-					message: `The script registry lists ${script.id} with no release signature. It loads from the registry on its integrity hash; set experimentalScriptRegistry.requireSignatures to refuse entries without one.`,
+					message: `The script registry lists ${script.id} with ${expired ? 'an expired' : 'no'} release signature. It loads from the registry on its integrity hash; set experimentalScriptRegistry.requireSignatures to refuse entries without a current one.`,
 					scope: 'step',
 					scriptId: script.id,
 					source: 'script-loader',
@@ -173,8 +178,12 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 	/** Resolve a list and keep what it holds back; returns what mounts. */
 	const resolveSources = (scripts: readonly Script[]): Script[] => {
 		const resolved = withSources(scripts);
-		for (const [script, expiresAt] of resolved.expiresAt) {
-			signatureExpiry.set(script, expiresAt);
+		// Only a site that requires signatures refuses an expired one, so
+		// only there must a script not mount past its expiry
+		if (options.registry?.requireSignatures) {
+			for (const [script, expiresAt] of resolved.expiresAt) {
+				signatureExpiry.set(script, expiresAt);
+			}
 		}
 		// A held script is checked once it resolves, against the URL it then
 		// loads from, so it is not compared with its vendor URL meanwhile.
@@ -467,6 +476,19 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 		lastIab = snapshot.iab;
 
 		const pass = buildReconcilePass(snapshot, tools);
+		// A script resolved while its signature was current may first mount
+		// later, once consent arrives. Past the expiry the list is resolved
+		// again before anything mounts, and the verifier holds it back
+		if (
+			normalized.some(
+				(entry) =>
+					signatureExpiredBeforeMount(entry.script) &&
+					(entry.script.alwaysLoad === true || hasScriptConsent(entry, pass))
+			)
+		) {
+			pendingScripts ??= configured;
+			return;
+		}
 		const batch: PendingMount[] = [];
 
 		for (const entry of normalized) {
@@ -489,14 +511,6 @@ export const createScriptLoaderWith = function createScriptLoaderWith(
 					typeof script.onConsentChange === 'function'
 				)
 			) {
-				continue;
-			}
-
-			// A script resolved while its signature was current may first mount
-			// later, once consent arrives. Past the expiry the list is resolved
-			// again instead, and the verifier holds the script back
-			if (eligible && signatureExpiredBeforeMount(script)) {
-				pendingScripts ??= configured;
 				continue;
 			}
 

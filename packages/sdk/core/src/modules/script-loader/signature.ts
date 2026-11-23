@@ -68,6 +68,18 @@ const isCurrent = (
 	);
 };
 
+/**
+ * Whether `signature` is current now: not expired, valid for no longer
+ * than 14 days, and not dated more than a day ahead.
+ *
+ * @internal
+ */
+export const isRegistrySignatureCurrent = function isRegistrySignatureCurrent(
+	signature: Pick<RegistrySignature, 'signedAt' | 'expiresAt'>
+): boolean {
+	return isCurrent(signature, Date.now());
+};
+
 /** P-256 signatures are `r` and `s`, 32 bytes each. */
 const SIGNATURE_LENGTH = 64;
 
@@ -340,9 +352,11 @@ export const createRegistryVerifier = function createRegistryVerifier(options: {
 			return 'refuse';
 		}
 		// Read the clock on every call: a verdict kept from before the
-		// signature expired must not load it after
-		if (!isCurrent(signature, Date.now())) {
-			return 'refuse';
+		// signature expired must not load it after. An expired signature
+		// counts as none, so a build-time snapshot of the list keeps loading
+		// by default, and only a site that requires signatures refuses it
+		if (!isRegistrySignatureCurrent(signature)) {
+			return options.requireSignatures ? 'refuse' : 'load';
 		}
 		const key = checkKey(options.keys, href, entry.integrity, signature);
 		const result = decided.get(key) ?? settled.get(key);

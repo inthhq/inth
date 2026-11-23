@@ -352,43 +352,51 @@ describe('createRegistryVerifier', () => {
 		});
 	});
 
-	test('refuses an entry its verdict loaded once its signature expires', async () => {
-		const url = 'https://cdn.vendor.example/expiring.js';
-		const expiresAt = new Date(Date.now() + DAY_MS).toISOString();
-		const entry = {
-			integrity: INTEGRITY,
-			signature: signed({
-				expiresAt,
-				signedAt: new Date(Date.now() - DAY_MS).toISOString(),
-				url,
-			}),
-		};
-		let done: () => void = () => undefined;
-		const settled = new Promise<void>((resolve) => {
-			done = resolve;
-		});
-		const verify = createRegistryVerifier({
-			keys: 'production',
-			onSettled: () => done(),
-			requireSignatures: false,
-		});
-		expect(verify(url, entry)).toBe('wait');
-		await settled;
-		expect(verify(url, entry)).toBe('load');
-		vi.useFakeTimers({ toFake: ['Date'] });
-		try {
-			vi.setSystemTime(new Date(expiresAt));
-			expect(verify(url, entry)).toBe('refuse');
-			expect(
-				createRegistryVerifier({
-					keys: 'production',
-					requireSignatures: false,
-				})(url, entry)
-			).toBe('refuse');
-		} finally {
-			vi.useRealTimers();
+	test.each([
+		[true, 'refuse'],
+		[false, 'load'],
+	] as const)(
+		'with requireSignatures: %s, turns a loaded verdict to %s once its signature expires',
+		async (requireSignatures, afterExpiry) => {
+			const url = `https://cdn.vendor.example/expiring-${requireSignatures}.js`;
+			const expiresAt = new Date(Date.now() + DAY_MS).toISOString();
+			const entry = {
+				integrity: INTEGRITY,
+				signature: signed({
+					expiresAt,
+					signedAt: new Date(Date.now() - DAY_MS).toISOString(),
+					url,
+				}),
+			};
+			let done: () => void = () => undefined;
+			const settled = new Promise<void>((resolve) => {
+				done = resolve;
+			});
+			const verify = createRegistryVerifier({
+				keys: 'production',
+				onSettled: () => done(),
+				requireSignatures,
+			});
+			expect(verify(url, entry)).toBe('wait');
+			await settled;
+			expect(verify(url, entry)).toBe('load');
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				// An expired signature counts as none: refused only where one is
+				// required, so a build-time snapshot of the list keeps loading
+				vi.setSystemTime(new Date(expiresAt));
+				expect(verify(url, entry)).toBe(afterExpiry);
+				expect(
+					createRegistryVerifier({ keys: 'production', requireSignatures })(
+						url,
+						entry
+					)
+				).toBe(afterExpiry);
+			} finally {
+				vi.useRealTimers();
+			}
 		}
-	});
+	);
 
 	test('checks each entry once, across verifiers', async () => {
 		const verify = vi.spyOn(crypto.subtle, 'verify');
