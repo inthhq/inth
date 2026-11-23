@@ -28,13 +28,12 @@ import { buildProviderProps } from './provider-props';
 /** What the React island exports beside its component. */
 interface ReactDialogSurface {
 	default: unknown;
-	preloadDialog?: (design: 'classic' | 'privacy-choices') => Promise<unknown>;
+	preloadDialog?: () => Promise<unknown>;
 }
 
 /**
- * Import the island and the one preference dialog it will render. Each
- * design's dialog is a chunk of its own, so a Privacy Choices page never
- * downloads the classic one.
+ * Import the island and the dialog it will render, which is a chunk of its
+ * own, so an IAB page never downloads it.
  */
 const loadSurface = async function loadSurface(
 	context: ConsentDialogPreloadContext
@@ -42,7 +41,7 @@ const loadSurface = async function loadSurface(
 	const surface = (await requireDialogSurface('react')()) as ReactDialogSurface;
 	if (context.kind !== 'iab') {
 		try {
-			await surface.preloadDialog?.(context.design ?? 'classic');
+			await surface.preloadDialog?.();
 		} catch {
 			// The island loads it again and reports the failure.
 		}
@@ -63,9 +62,6 @@ export const reactDialogAdapter: ConsentDialogAdapter = {
 		root.render(
 			createElement(surface.default as never, {
 				...buildProviderProps(context.runtime, context.options),
-				// React's own dialog for the Privacy Choices design, as its
-				// stock `ConsentDialog` renders it.
-				design: context.design ?? 'classic',
 				kind: context.kind,
 				legalLinks: context.legalLinks,
 				tab: context.tab,

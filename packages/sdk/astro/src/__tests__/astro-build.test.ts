@@ -13,9 +13,10 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
+import dialogClasses from '@inth/sdk/ui/styles/components/consent-dialog';
 import iabBannerClasses from '@inth/sdk/ui/styles/components/iab-consent-banner';
 import iabPanelClasses from '@inth/sdk/ui/styles/components/iab-consent-dialog';
-import panelClasses from '@inth/sdk/ui/styles/components/panel';
+import managerClasses from '@inth/sdk/ui/styles/components/manager';
 import { preferenceItemVariants } from '@inth/sdk/ui/styles/primitives';
 import { afterAll, describe, expect, it } from 'vitest';
 
@@ -74,7 +75,8 @@ const buildFixture = async function buildFixture(
  *
  * @param ui - The dialog adapter to build with.
  * @param iab - Whether to build the IAB banner and dialog.
- * @returns The HTML, inline and linked initial CSS, and reachable deferred CSS.
+ * @returns The HTML, inline and linked initial CSS, reachable deferred CSS,
+ * and the page's scripts, which carry the sheets the client puts in.
  */
 const buildReachableCSS = async function buildReachableCSS(
 	ui: 'react' | 'svelte',
@@ -84,6 +86,7 @@ const buildReachableCSS = async function buildReachableCSS(
 	html: string;
 	initialCSS: string;
 	deferredCSS: string;
+	scripts: string;
 }> {
 	const outDir = await buildFixture(ui, iab);
 	const html = await readFile(join(outDir, 'index.html'), 'utf8');
@@ -112,27 +115,34 @@ const buildReachableCSS = async function buildReachableCSS(
 		deferredCSS: linked.join('\n'),
 		html,
 		initialCSS: [...initialLinked, ...inline].join('\n'),
+		scripts: scripts.join('\n'),
 	};
 };
 
 describe('an Astro build', () => {
 	// The dialog renders these class names; without rules for them it opens
-	// as unstyled text at the bottom of the page.
-	const dialogSelectors = [`.${panelClasses.root}`, `.${panelClasses.card}`];
+	// as unstyled text at the bottom of the page. Its sheets are modules the
+	// client puts in, so their rules reach the page through a script.
+	const dialogSelectors = [
+		`.${dialogClasses.card}`,
+		`.${dialogClasses.backdrop}`,
+	];
 
 	it('gives the React dialog its stylesheet', async () => {
-		const { css } = await buildReachableCSS('react');
+		const { scripts } = await buildReachableCSS('react');
 		for (const selector of dialogSelectors) {
-			expect(css).toContain(selector);
+			expect(scripts).toContain(selector);
 		}
 	}, 60_000);
 
 	it('gives the Svelte dialog its stylesheets', async () => {
-		const { css } = await buildReachableCSS('svelte');
+		const { css, scripts } = await buildReachableCSS('svelte');
 		for (const selector of dialogSelectors) {
-			expect(css).toContain(selector);
+			expect(scripts).toContain(selector);
 		}
-		// The Svelte dialog also renders the primitive class maps.
+		// The Svelte island links the widget's rules and the primitive class
+		// maps it renders.
+		expect(css).toContain(`.${managerClasses.manager}`);
 		const [itemClass] = preferenceItemVariants().root().split(' ');
 		expect(itemClass).toBeTruthy();
 		expect(css).toContain(`.${itemClass}`);
@@ -155,14 +165,14 @@ describe('an Astro build', () => {
 			expect(html).not.toMatch(/<link[^>]*rel="stylesheet"/u);
 			expect(initialCSS).toContain(`.${iabBannerClasses.card}`);
 			expect(initialCSS).not.toContain(`.${iabPanelClasses.card}`);
-			expect(initialCSS).not.toContain(`.${panelClasses.card}`);
+			expect(initialCSS).not.toContain(`.${managerClasses.manager}`);
 			expect(deferredCSS).toContain(`.${iabPanelClasses.card}`);
-			expect(deferredCSS).toContain(`.${panelClasses.card}`);
+			expect(deferredCSS).toContain(`.${managerClasses.manager}`);
 		},
 		60_000
 	);
 
-	it('ships first-paint rules once in the outer page without repeating them in a server island', async () => {
+	it('ships the prompt sheets once in the outer page without repeating them in a server island', async () => {
 		const outDir = await buildFixture('svelte', false, true);
 		const { stdout } = await promisify(execFile)(process.execPath, [
 			join(FIXTURE, 'render-deferred.mjs'),
@@ -172,7 +182,8 @@ describe('an Astro build', () => {
 			html: string;
 			island: string;
 		};
-		expect(html.match(/data-inth-styles="inth-first-paint"/gu)).toHaveLength(1);
+		expect(html.match(/data-inth-styles="inth-tokens"/gu)).toHaveLength(1);
+		expect(html.match(/data-inth-styles="inth-card"/gu)).toHaveLength(1);
 		expect(island).toContain('data-testid="consent-banner-root"');
 		expect(island).not.toContain('data-inth-styles');
 	}, 60_000);

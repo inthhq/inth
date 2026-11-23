@@ -5,14 +5,22 @@ import type { Theme } from '@inth/sdk/ui/theme';
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import {
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from 'vitest';
 
-import { promptClassNames } from '../banner/class-names';
-import { PROMPT_SLOT_ATTRIBUTE } from '../banner/slot';
-import { buildPrompt, renderPromptIntoSlot } from '../browser/render-prompt';
 import { boot } from '../client';
 import type { AstroConsentClient } from '../client';
 import { resolveOptions } from '../integration';
+import { promptClassNames } from '../prompt/class-names';
+import { resolvePromptModel } from '../prompt/model';
+import { renderPromptHTML } from '../prompt/server';
 import { resolveConsentContext } from '../server';
 import { testing as testingMode } from '../testing';
 import type { InthAstroOptions } from '../types';
@@ -110,22 +118,32 @@ const renderReactBanner = async function renderReactBanner(
 		);
 		await Promise.resolve();
 	});
-	return readButtons(document.body);
+	// React's prompt arrives on a chunk of its own, after the provider.
+	await vi.waitFor(
+		() =>
+			expect(
+				host.querySelector('[data-testid="consent-banner-root"]')
+			).not.toBeNull(),
+		{ timeout: 4000 }
+	);
+	return readButtons(host);
 };
 
-/** The Astro banner's buttons, from the browser renderer. */
+/** The Astro prompt's buttons, from the markup the server and browser share. */
 const renderAstroBanner = function renderAstroBanner(
 	booted: AstroConsentClient,
 	options: { presentation?: ConsentPresentation; theme?: Theme },
 	props: { noStyle?: boolean } = {}
 ): ButtonStyles {
 	const host = document.createElement('div');
-	host.append(
-		...buildPrompt(
-			booted.getConsent(),
-			{ classNames: promptClassNames, props },
-			options
-		)
+	host.innerHTML = renderPromptHTML(
+		resolvePromptModel({
+			classNames: promptClassNames,
+			options,
+			props,
+			snapshot: booted.getConsent(),
+		}),
+		false
 	);
 	return readButtons(host);
 };
@@ -176,8 +194,10 @@ describe('theme.consentActions on the Astro banner', () => {
 		]);
 		expect(astro).toEqual(react);
 		// Pinned too, so a change to both banners at once still shows up.
+		// Accept and reject keep equal prominence, so the host's primary
+		// accept does not lift it.
 		expect(astro).toEqual({
-			accept: { mode: 'stroke', variant: 'primary' },
+			accept: { mode: 'filled', variant: 'neutral' },
 			customize: { mode: 'ghost', variant: 'neutral' },
 			reject: { mode: 'filled', variant: 'neutral' },
 		});
@@ -198,26 +218,6 @@ describe('theme.consentActions on the Astro banner', () => {
 
 		expect(astro).toEqual(react);
 		expect(astro.dismiss).toEqual({ mode: 'filled', variant: 'primary' });
-	});
-
-	it('renders the integration theme into the spot a prerendered page left', async () => {
-		const booted = await start({ presentation: PRESENTATION, theme: THEME });
-		const spot = document.createElement('div');
-		spot.setAttribute(
-			PROMPT_SLOT_ATTRIBUTE,
-			JSON.stringify({ classNames: promptClassNames, props: {} })
-		);
-		document.body.append(spot);
-
-		// The boot script hands the renderer the whole resolved options.
-		expect(renderPromptIntoSlot(booted.getConsent(), booted.options)).toBe(
-			true
-		);
-		expect(readButtons(document.body)).toEqual({
-			accept: { mode: 'stroke', variant: 'primary' },
-			customize: { mode: 'ghost', variant: 'neutral' },
-			reject: { mode: 'filled', variant: 'neutral' },
-		});
 	});
 
 	it('drops the button styles with `noStyle`', async () => {

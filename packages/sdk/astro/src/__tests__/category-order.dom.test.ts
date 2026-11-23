@@ -15,8 +15,6 @@ import { reactDialogAdapter } from '../ui/react';
 import { vueDialogAdapter } from '../ui/vue';
 import { testRule } from './policy-fixture';
 
-const ITEM_PREFIX = 'consent-widget-accordion-item-';
-
 const cleanup: (() => Promise<void> | void)[] = [];
 
 // jsdom has no `matchMedia`; the React surface reads reduced motion from it.
@@ -43,12 +41,13 @@ afterEach(async () => {
 	localStorage.clear();
 });
 
+/** The dialog's category rows, in the order it lists them. */
 const listedRows = (): (string | undefined)[] =>
 	[
 		...document.querySelectorAll<HTMLElement>(
-			`[data-testid^="${ITEM_PREFIX}"]`
+			'[data-testid="consent-dialog-root"] [data-category]'
 		),
-	].map((item) => item.dataset.testid?.slice(ITEM_PREFIX.length));
+	].map((row) => row.dataset.category);
 
 describe.each(['react', 'vue'] as const)('the %s dialog island', (ui) => {
 	it(

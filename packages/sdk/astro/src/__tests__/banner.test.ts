@@ -1,11 +1,8 @@
-import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { JSDOM } from 'jsdom';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { promptClassNames } from '../banner/class-names';
-import { resolvePromptModel } from '../banner/prompt-model';
 import ConsentDialogLink from '../components/panel-link.astro';
 import ConsentDialog from '../components/panel.astro';
 import ConsentBanner from '../components/prompt.astro';
@@ -72,15 +69,6 @@ describe('<ConsentBanner />', () => {
 		}
 	});
 
-	it('wires the buttons to runtime actions with data attributes only', async () => {
-		const html = await render(await buildLocals());
-		expect(html).toContain('data-inth-action="accept"');
-		expect(html).toContain('data-inth-action="reject"');
-		expect(html).toContain('data-inth-action="customize"');
-		// The shell itself carries no inline handlers.
-		expect(html).not.toContain('onclick=');
-	});
-
 	it('inlines the resolved config so the browser skips /v1/consent/init', async () => {
 		const html = await render(await buildLocals());
 		// A data block: it never runs, so no CSP has to allow it.
@@ -123,7 +111,7 @@ describe('<ConsentBanner />', () => {
 		const locals = await buildLocals({
 			experiment: {
 				arm: 'bar',
-				arms: { bar: { prompt: { variant: 'bar' } } },
+				arms: { bar: { prompt: { container: { type: 'banner' } } } },
 				id: 'banner-shape',
 			},
 			mode: testingMode({ policy: [testRule] }),
@@ -135,7 +123,7 @@ describe('<ConsentBanner />', () => {
 			id: 'banner-shape',
 		});
 		const html = await render(locals);
-		expect(html).toContain('data-variant="bar"');
+		expect(html).toContain('data-placement="banner-bottom"');
 		expect(html).toContain('data-inth-config');
 		expect(html).toContain('"initialExperiment"');
 	});
@@ -157,79 +145,8 @@ describe('<ConsentBanner />', () => {
 				{ 'accept-language': 'de' }
 			)
 		);
-		expect(german).toContain('lang="de"');
 		expect(german).not.toBe(english);
-	});
-
-	describe('entry animation', () => {
-		const rootClass = (html: string) =>
-			/<div[^>]*class="(?<classes>[^"]*)"[^>]*data-testid="consent-banner-root"/u.exec(
-				html
-			)?.groups?.classes ?? '';
-		const entering = bannerStyles.bannerEntering ?? 'bannerEntering';
-
-		it('plays by default', async () => {
-			expect(rootClass(await render(await buildLocals()))).toContain(entering);
-		});
-
-		it('is skipped with the `disableAnimation` prop', async () => {
-			const html = await render(await buildLocals(), {
-				disableAnimation: true,
-			});
-			expect(rootClass(html)).toContain(bannerStyles.bannerVisible);
-			expect(rootClass(html)).not.toContain(entering);
-		});
-
-		it('is skipped with the integration option, unless the prop is false', async () => {
-			const locals = await buildLocals({
-				disableAnimation: true,
-				mode: testingMode({ policy: [testRule] }),
-			});
-			expect(rootClass(await render(locals))).not.toContain(entering);
-			expect(
-				rootClass(await render(locals, { disableAnimation: false }))
-			).toContain(entering);
-		});
-
-		it('is skipped with `theme.slots` applied to the same parts', async () => {
-			const html = await render(
-				await buildLocals({
-					mode: testingMode({ policy: [testRule] }),
-					presentation: { prompt: { blocking: true } },
-					theme: {
-						slots: {
-							consentBanner: 'brand-banner',
-							consentBannerOverlay: {
-								className: 'brand-overlay',
-								style: { opacity: '0.5' },
-							},
-						},
-					},
-				}),
-				{ class: 'page-banner', disableAnimation: true }
-			);
-			const overlay =
-				/<[^>]*data-testid="consent-banner-overlay"[^>]*>/u.exec(html)?.[0] ??
-				'';
-
-			expect(rootClass(html)).toBe(
-				`${bannerStyles.root} ${bannerStyles.bannerVisible} brand-banner page-banner`
-			);
-			expect(overlay).toContain(
-				`class="${bannerStyles.overlay} ${bannerStyles.overlayVisible} brand-overlay"`
-			);
-			expect(overlay).toContain('style="opacity:0.5"');
-			expect(html).not.toContain(entering);
-			expect(html).not.toContain(
-				bannerStyles.overlayEntering ?? 'overlayEntering'
-			);
-		});
-	});
-
-	it('drops the styling class names with `noStyle`', async () => {
-		const html = await render(await buildLocals(), { noStyle: true });
-		expect(html).not.toContain('inth-ui-root');
-		expect(html).toContain('data-testid="consent-banner-root"');
+		expect(german).toContain('"language":"de"');
 	});
 
 	it('drops the themed button styles with `noStyle`', async () => {
@@ -247,84 +164,6 @@ describe('<ConsentBanner />', () => {
 		expect(accept).toBeDefined();
 		expect(accept).not.toContain('data-mode=');
 		expect(accept).not.toContain('data-variant=');
-	});
-
-	it('styles the buttons from `theme.consentActions`', async () => {
-		const html = await render(
-			await buildLocals({
-				mode: testingMode({ policy: [testRule] }),
-				presentation: { prompt: { primaryActions: ['accept'] } },
-				theme: {
-					consentActions: {
-						customize: { mode: 'ghost', variant: 'neutral' },
-						default: { mode: 'filled' },
-						primary: { mode: 'stroke', variant: 'primary' },
-					},
-				},
-			})
-		);
-		const button = (action: string) =>
-			new RegExp(
-				`<button[^>]*data-testid="consent-banner-${action}-button"[^>]*>`,
-				'u'
-			).exec(html)?.[0];
-
-		// The React banner's order (`resolveConsentButtonStyle`): the
-		// action's own key, then `primary`, then `default`, then stroke.
-		expect(button('accept')).toContain('data-mode="stroke"');
-		expect(button('accept')).toContain('data-variant="primary"');
-		expect(button('reject')).toContain('data-mode="filled"');
-		expect(button('reject')).toContain('data-variant="neutral"');
-		expect(button('customize')).toContain('data-mode="ghost"');
-		expect(button('customize')).toContain('data-variant="neutral"');
-	});
-
-	it('adds `theme.slots` classes and styles to the parts they name', async () => {
-		const html = await render(
-			await buildLocals({
-				mode: testingMode({ policy: [testRule] }),
-				presentation: { prompt: { primaryActions: ['accept'] } },
-				theme: {
-					slots: {
-						buttonPrimary: 'brand-primary',
-						buttonSecondary: 'brand-secondary',
-						consentBanner: 'brand-banner',
-						consentBannerCard: {
-							className: 'brand-card',
-							style: { '--brand-accent': '#0a66ff', borderTopWidth: '4px' },
-						},
-						consentBannerDescription: 'brand-description',
-						consentBannerFooter: 'brand-footer',
-						consentBannerFooterSubGroup: 'brand-group',
-						consentBannerHeader: 'brand-header',
-						consentBannerTag: 'brand-tag',
-						consentBannerTitle: {
-							className: 'brand-title',
-							noStyle: true,
-						},
-					},
-				},
-			})
-		);
-		const tag = (testId: string) =>
-			new RegExp(`<[^>]*data-testid="${testId}"[^>]*>`, 'u').exec(html)?.[0];
-
-		expect(tag('consent-banner-card')).toMatch(
-			new RegExp(`class="${bannerStyles.card} brand-card"`, 'u')
-		);
-		expect(tag('consent-banner-card')).toContain(
-			'style="--brand-accent:#0a66ff;border-top-width:4px"'
-		);
-		expect(tag('consent-banner-root')).toContain('brand-banner');
-		expect(tag('consent-banner-header')).toContain('brand-header');
-		expect(tag('consent-banner-description')).toContain('brand-description');
-		expect(tag('consent-banner-footer')).toContain('brand-footer');
-		expect(tag('consent-banner-footer-sub-group')).toContain('brand-group');
-		expect(tag('consent-banner-branding')).toContain('brand-tag');
-		expect(tag('consent-banner-accept-button')).toContain('brand-primary');
-		expect(tag('consent-banner-reject-button')).toContain('brand-secondary');
-		// A slot with `noStyle` replaces that part's stock classes.
-		expect(tag('consent-banner-title')).toContain('class="brand-title"');
 	});
 
 	it('applies the host-resolved arm theme slots', async () => {
@@ -379,25 +218,6 @@ describe('<ConsentBanner />', () => {
 		expect(
 			/<[^>]*data-testid="consent-banner-card"[^>]*>/u.exec(html)?.[0]
 		).toContain('class="brand-card"');
-	});
-
-	it('renders the branding tag with the shared markup', async () => {
-		const html = await render(await buildLocals());
-		// Matched as one element: separate `toContain` checks would pass
-		// with the testid, the variant and the branding on three different
-		// nodes.
-		const branding = /<[^>]*data-testid="consent-banner-branding"[^>]*>/u.exec(
-			html
-		)?.[0];
-		expect(branding).toBeDefined();
-		expect(branding).toContain('data-variant="banner-tag"');
-		expect(branding).toContain('data-branding="inth"');
-		expect(html).toContain('Consent by');
-		// It sits beside the card, not inside it, so the tag can overlap the
-		// card's top edge the way the Svelte and React banners do.
-		expect(html.indexOf('consent-banner-branding')).toBeLessThan(
-			html.indexOf('consent-banner-card')
-		);
 	});
 
 	it('labels a legal link without a `label` from the translations', async () => {
@@ -458,22 +278,6 @@ describe('<ConsentBanner />', () => {
 			})
 		);
 		expect(unstyled.querySelector('a')?.hasAttribute('class')).toBe(false);
-	});
-
-	it('resolves a class map built before it carried legal links', async () => {
-		const { legalLinks: _omitted, ...olderClassNames } = promptClassNames;
-		const locals = await buildLocals({
-			legalLinks: { privacyPolicy: { href: '/privacy' } },
-			mode: testingMode({ policy: [testRule] }),
-		});
-		const model = resolvePromptModel({
-			classNames: olderClassNames,
-			legalLinks: locals.options.legalLinks,
-			props: { legalLinks: ['privacyPolicy'] },
-			snapshot: locals.snapshot,
-		});
-		expect(model.classes.legalLink).toBe('');
-		expect(model.legalLinks.map((link) => link.key)).toEqual(['privacyPolicy']);
 	});
 
 	it('drops the branding tag with `hideBranding`', async () => {
@@ -548,302 +352,6 @@ describe('<ConsentBanner /> without a resolved policy', () => {
 		)?.[0];
 		expect(visible).toBeDefined();
 		expect(visible).not.toContain('hidden');
-	});
-});
-
-describe('<ConsentBanner /> under a notice prompt', () => {
-	const noticeLocals = () =>
-		buildLocals({
-			mode: testingMode({
-				policy: [
-					{
-						...testRule,
-						id: 'notice',
-						model: 'opt-out',
-						prompt: 'notice',
-					},
-				],
-			}),
-		});
-
-	it('marks the root with the prompt kind and model', async () => {
-		const html = await render(await noticeLocals());
-		const root = /<[^>]*data-testid="consent-banner-root"[^>]*>/u.exec(
-			html
-		)?.[0];
-		expect(root).toBeDefined();
-		expect(root).toContain('data-prompt="notice"');
-		expect(root).toContain('data-model="opt-out"');
-	});
-
-	it('renders the opt-out button before an acknowledgement with notice copy', async () => {
-		const html = await render(await noticeLocals());
-
-		// The inlined config carries the whole bundle, so read the element.
-		const heading =
-			/<h2[^>]*data-testid="consent-banner-title"[^>]*>(?<text>[^<]*)<\/h2>/u.exec(
-				html
-			)?.groups?.text;
-		expect(heading).toBe('Privacy notice');
-
-		const optOut = html.indexOf(
-			'data-testid="consent-banner-right-link-opt-out"'
-		);
-		const dismiss = html.indexOf('data-testid="consent-banner-dismiss-button"');
-		expect(optOut).toBeGreaterThan(-1);
-		expect(dismiss).toBeGreaterThan(optOut);
-		// The opt-out control opens the preference center, so it also covers
-		// the preferences right and no second button renders.
-		expect(html).not.toContain('consent-banner-right-link-preferences');
-
-		expect(html).toContain('data-testid="consent-banner-rights"');
-		const optOutButton = /<button[^>]*data-right="opt-out"[^>]*>/u.exec(
-			html
-		)?.[0];
-		expect(optOutButton).toBeDefined();
-		// An underlined button keeps acknowledgement as the primary action in the
-		// row. It records the opt-out in one click through the delegated handler.
-		expect(optOutButton).toContain('data-action="right"');
-		expect(optOutButton).toContain('data-inth-action="opt-out"');
-		expect(optOutButton).toContain(
-			'data-inth-rights="disclosure opt-out preferences"'
-		);
-		expect(optOutButton).toContain('data-opt-out-variant="do-not-sell"');
-		expect(optOutButton).toContain(bannerStyles.rightLink);
-		expect(optOutButton).not.toContain('data-variant=');
-		expect(optOutButton).not.toContain('data-mode=');
-		expect(html).toContain('Do Not Sell or Share My Personal Information');
-		expect(
-			new JSDOM(html).window.document.querySelector(
-				'[data-testid="consent-banner-right-link-opt-out"] svg'
-			)
-		).toBeNull();
-		expect(html).toContain('data-action="dismiss"');
-		expect(html).toContain('data-inth-action="dismiss"');
-		// The only button leads, as it does in the React and Svelte banners.
-		expect(
-			/<button[^>]*data-action="dismiss"[^>]*>/u.exec(html)?.[0]
-		).toContain('data-variant="primary"');
-		// Acknowledgement dismisses the notice without recording consent.
-		expect(html).toContain('>OK<');
-		expect(html).not.toContain('>Dismiss<');
-		expect(html).not.toContain('consent-banner-accept-button');
-	});
-
-	it('localizes the notice copy and rights from the negotiated language', async () => {
-		const html = await render(
-			await buildLocals(
-				{
-					mode: testingMode({
-						policy: [
-							{ ...testRule, id: 'notice', model: 'opt-out', prompt: 'notice' },
-						],
-					}),
-				},
-				{ 'accept-language': 'de' }
-			)
-		);
-		expect(html).toContain('lang="de"');
-		const heading =
-			/<h2[^>]*data-testid="consent-banner-title"[^>]*>(?<text>[^<]*)<\/h2>/u.exec(
-				html
-			)?.groups?.text;
-		expect(heading).toBeDefined();
-		expect(heading).not.toBe('Privacy notice');
-		const optOut =
-			/<button[^>]*data-right="opt-out"[^>]*>(?<text>[^<]*)<\/button>/u.exec(
-				html
-			)?.groups?.text;
-		expect(optOut).toBe('Meine Daten nicht verkaufen oder weitergeben');
-		const dismiss =
-			/<button[^>]*data-action="dismiss"[^>]*>(?<text>[^<]*)<\/button>/u.exec(
-				html
-			)?.groups?.text;
-		expect(dismiss).toBe('OK');
-	});
-
-	it('renders the Privacy Choices title with the decorative CPPA icon for both Privacy Choices variants', async () => {
-		for (const [variant, title] of [
-			['privacy-choices', 'Your Privacy Choices'],
-			['california-privacy-choices', 'Your California Privacy Choices'],
-		] as const) {
-			// oxlint-disable-next-line no-await-in-loop -- Small two-variant check.
-			const locals = await buildLocals({
-				mode: testingMode({
-					policy: [
-						{ ...testRule, id: 'notice', model: 'opt-out', prompt: 'notice' },
-					],
-				}),
-				presentation: { optOutLink: variant },
-			});
-			// oxlint-disable-next-line no-await-in-loop -- Small two-variant check.
-			const html = await render(locals);
-			const link = new JSDOM(html).window.document.querySelector(
-				'[data-testid="consent-banner-right-link-opt-out"]'
-			);
-			expect(link?.getAttribute('data-inth-action')).toBe('opt-out');
-			expect(link?.getAttribute('data-opt-out-variant')).toBe(
-				'privacy-choices'
-			);
-			expect(link?.textContent?.trim()).toBe(title);
-			const icon = link?.querySelector('svg');
-			expect(icon).not.toBeNull();
-			expect(icon?.getAttribute('aria-hidden')).toBe('true');
-
-			// oxlint-disable-next-line no-await-in-loop -- Small two-variant check.
-			const footerLinkHtml = await container.renderToString(ConsentDialogLink, {
-				locals: { inth: locals },
-				props: { right: 'opt-out' },
-			});
-			const footerLink = new JSDOM(
-				footerLinkHtml
-			).window.document.querySelector('[data-testid="consent-dialog-link"]');
-			expect(footerLink?.getAttribute('data-inth-action')).toBe('opt-out');
-			expect(footerLink?.getAttribute('data-inth-rights')).toBe(
-				'disclosure opt-out preferences'
-			);
-			expect(footerLink?.getAttribute('data-opt-out-variant')).toBe(
-				'privacy-choices'
-			);
-			expect(footerLink?.textContent?.trim()).toBe(title);
-			expect(
-				footerLink?.querySelector('svg')?.getAttribute('aria-hidden')
-			).toBe('true');
-		}
-	});
-
-	it('renders no rights group when the prompt already covers them', async () => {
-		const html = await render(await buildLocals());
-		expect(html).toContain('data-prompt="choice"');
-		expect(html).toContain('data-model="opt-in"');
-		expect(html).not.toContain('data-testid="consent-banner-rights"');
-		expect(html).toContain('data-testid="consent-banner-customize-button"');
-	});
-});
-
-describe('<ConsentBanner /> surface shape', () => {
-	const readRoot = (html: string) =>
-		/<[^>]*data-testid="consent-banner-root"[^>]*>/u.exec(html)?.[0] ?? '';
-	const readCard = (html: string) =>
-		/<[^>]*data-testid="consent-banner-card"[^>]*>/u.exec(html)?.[0] ?? '';
-	const noticeRule = {
-		...testRule,
-		id: 'notice',
-		model: 'opt-out' as const,
-		prompt: 'notice' as const,
-	};
-
-	it('renders a notice as a non-blocking floating card', async () => {
-		const html = await render(
-			await buildLocals({ mode: testingMode({ policy: [noticeRule] }) })
-		);
-		const root = readRoot(html);
-		expect(root).toContain('data-variant="floating"');
-		expect(root).toContain('data-position="bottom-left"');
-		expect(root).not.toContain('data-blocking');
-		expect(html).not.toContain('data-testid="consent-banner-overlay"');
-		expect(readCard(html)).not.toContain('aria-modal');
-		expect(readCard(html)).toContain('role="region"');
-	});
-
-	it('renders a choice as a floating card at the leading bottom corner', async () => {
-		const html = await render(await buildLocals());
-		const root = readRoot(html);
-		expect(root).toContain('data-variant="floating"');
-		expect(root).toContain('data-position="bottom-left"');
-		expect(root).not.toContain('data-blocking');
-		// A choice prompt is non-blocking by default, so the card is a labelled
-		// region that never claims modal semantics.
-		expect(readCard(html)).not.toContain('aria-modal');
-		expect(readCard(html)).toContain('role="region"');
-	});
-
-	it('renders a choice as a region when the host turns the focus trap off', async () => {
-		const html = await render(
-			await buildLocals({
-				mode: testingMode({ policy: [testRule] }),
-				presentation: { prompt: { trapFocus: false } },
-			})
-		);
-		expect(readCard(html)).not.toContain('aria-modal');
-		expect(readCard(html)).toContain('role="region"');
-	});
-
-	it('renders a blocking choice as a modal dialog', async () => {
-		const html = await render(
-			await buildLocals({
-				mode: testingMode({ policy: [testRule] }),
-				presentation: { prompt: { blocking: true } },
-			})
-		);
-		expect(readRoot(html)).toContain('data-blocking="true"');
-		expect(readCard(html)).toContain('aria-modal="true"');
-		expect(readCard(html)).toContain('role="dialog"');
-	});
-
-	it('keeps the default and host corners for right-to-left text', async () => {
-		const defaulted = await render(
-			await buildLocals(
-				{ mode: testingMode({ policy: [testRule] }) },
-				{ 'accept-language': 'he' }
-			)
-		);
-		expect(readRoot(defaulted)).toContain('dir="rtl"');
-		expect(readRoot(defaulted)).toContain('data-position="bottom-left"');
-
-		const kept = await render(
-			await buildLocals(
-				{
-					mode: testingMode({ policy: [testRule] }),
-					presentation: { prompt: { position: 'top-left' } },
-				},
-				{ 'accept-language': 'he' }
-			)
-		);
-		expect(readRoot(kept)).toContain('data-position="top-left"');
-	});
-
-	it('renders a notice as a bottom bar when the host asks for one', async () => {
-		const html = await render(
-			await buildLocals({
-				mode: testingMode({ policy: [noticeRule] }),
-				presentation: { prompt: { variant: 'bar' } },
-			})
-		);
-		const root = readRoot(html);
-		expect(root).toContain('data-variant="bar"');
-		expect(root).toContain('data-position="bottom"');
-		expect(root).not.toContain('data-blocking');
-	});
-
-	it('renders a wall as a blocking modal with an overlay', async () => {
-		const html = await render(
-			await buildLocals({
-				mode: testingMode({ policy: [testRule] }),
-				presentation: { prompt: { variant: 'wall' } },
-			})
-		);
-		const root = readRoot(html);
-		expect(root).toContain('data-variant="wall"');
-		expect(root).toContain('data-position="center"');
-		expect(root).toContain('data-blocking="true"');
-		expect(html).toContain('data-testid="consent-banner-overlay"');
-		expect(html.indexOf('consent-banner-overlay')).toBeLessThan(
-			html.indexOf('consent-banner-root')
-		);
-		expect(readCard(html)).toContain('aria-modal="true"');
-		expect(readCard(html)).toContain('role="dialog"');
-	});
-
-	it('never blocks a notice, even when the host asks', async () => {
-		const html = await render(
-			await buildLocals({
-				mode: testingMode({ policy: [noticeRule] }),
-				presentation: { prompt: { blocking: true } },
-			})
-		);
-		expect(readRoot(html)).not.toContain('data-blocking');
-		expect(html).not.toContain('data-testid="consent-banner-overlay"');
 	});
 });
 

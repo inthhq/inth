@@ -120,12 +120,6 @@ describe.each(['react', 'vue'] as const)('the %s dialog island', (ui) => {
 		expect(part('[data-testid="consent-dialog-title"]')?.classList).toContain(
 			'brand-dialog-title'
 		);
-		await vi.waitFor(() =>
-			expect(part('[data-testid="consent-widget-root"]')?.classList).toContain(
-				'brand-widget'
-			)
-		);
-		expect(part('[role="switch"]')?.classList).toContain('brand-toggle');
 	});
 });
 

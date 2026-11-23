@@ -171,8 +171,8 @@ export const preloadDialog = async function preloadDialog(): Promise<void> {
 		return;
 	}
 	try {
-		const { design, kind } = warmDialogTarget(client);
-		await preloadDialogChunks(client.options.ui, kind, readPageNonce(), design);
+		const { kind } = warmDialogTarget(client);
+		await preloadDialogChunks(client.options.ui, kind, readPageNonce());
 	} catch {
 		// The open reports its own failure.
 	}
@@ -196,7 +196,7 @@ export {
 	registerIAB,
 	registerRuntimeModules,
 	registerTransport,
-	setPromptRendererLoaderForTest,
+	setIABPromptRendererLoaderForTest,
 	syncBannerVisibility,
 	syncSurfaceVisibility,
 } from './client-engine';

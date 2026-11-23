@@ -36,8 +36,8 @@ export const ensureDialogHost = function ensureDialogHost(): HTMLElement {
  * the page a ClientRouter navigation swapped in.
  *
  * @returns The link keys, or `undefined` when the page left them unset.
- *   `legalLinks={null}` reads as an empty list, so the Privacy Choices
- *   dialog hides its footer link.
+ *   `legalLinks={null}` reads as an empty list, so the dialog hides its
+ *   footer link.
  * @internal
  */
 export const readDialogLegalLinks = function readDialogLegalLinks():

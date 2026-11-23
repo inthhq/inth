@@ -1,11 +1,11 @@
 /**
- * The server half of the Privacy Choices prompt: its first-paint
+ * The server half of the consent prompt: its first-paint
  * stylesheets and its markup as HTML. Only the server render imports it.
  *
  * @internal
  */
 
-import * as barSheet from '@inth/sdk/ui/styles/sheets/banner';
+import * as bannerSheet from '@inth/sdk/ui/styles/sheets/banner';
 import * as buttonSheet from '@inth/sdk/ui/styles/sheets/button';
 import * as cardSheet from '@inth/sdk/ui/styles/sheets/card';
 import * as gateSheet from '@inth/sdk/ui/styles/sheets/consent-gate';
@@ -14,19 +14,19 @@ import * as surfaceSheet from '@inth/sdk/ui/styles/sheets/surface';
 import * as tokensSheet from '@inth/sdk/ui/styles/sheets/tokens';
 import * as triggerSheet from '@inth/sdk/ui/styles/sheets/trigger';
 
-import type { PrivacyChoicesModel, PrivacyChoicesPresentation } from './model';
-import type { PrivacyChoicesSheet } from './sheets';
+import type { StyleSheet } from '../parts/sheets';
+import { toHTML } from '../parts/vnode';
+import type { VElement } from '../parts/vnode';
+import type { PromptContainerType, PromptModel } from './model';
 import {
-	PRIVACY_CHOICES_ID_PREFIX,
+	PROMPT_ID_PREFIX,
 	promptIds,
 	renderPageStatus,
 	renderPrompt,
 } from './view';
-import { toHTML } from './vnode';
-import type { VElement } from './vnode';
 
-const PRESENTATIONS: Record<PrivacyChoicesPresentation, PrivacyChoicesSheet> = {
-	bar: barSheet,
+const CONTAINERS: Record<PromptContainerType, StyleSheet> = {
+	banner: bannerSheet,
 	card: cardSheet,
 	drawer: drawerSheet,
 };
@@ -35,48 +35,47 @@ const PRESENTATIONS: Record<PrivacyChoicesPresentation, PrivacyChoicesSheet> = {
  * Lets the `hidden` attribute hide a prerendered prompt, whose own
  * `display` would otherwise beat the user-agent rule.
  */
-const HIDDEN_SHEET: PrivacyChoicesSheet = {
+const HIDDEN_SHEET: StyleSheet = {
 	css: '[data-testid=consent-banner-root][hidden]{display:none!important}',
 	id: 'inth-astro-hidden-banner',
 };
 
 /**
- * The sheets a Privacy Choices page inlines, in cascade order: the
- * tokens, the buttons, the dialog trigger and the ConsentGate placeholder
- * (which the classic first-paint sheet would have carried), the prompt's
- * shell, and the one presentation it shows. Never another presentation's.
+ * The sheets a page inlines once it knows the prompt's container, in
+ * cascade order: the tokens, the buttons, the dialog trigger and the
+ * ConsentGate placeholder (which a page may also render), the prompt's
+ * shell, and the one container it shows. Never another container's.
  *
- * @param presentation - The desktop container's presentation.
+ * @param container - The desktop layout's container.
  */
-export const privacyChoicesFirstPaintSheets =
-	function privacyChoicesFirstPaintSheets(
-		presentation: PrivacyChoicesPresentation
-	): PrivacyChoicesSheet[] {
-		return [
-			tokensSheet,
-			buttonSheet,
-			triggerSheet,
-			gateSheet,
-			surfaceSheet,
-			PRESENTATIONS[presentation],
-			HIDDEN_SHEET,
-		];
-	};
+export const promptFirstPaintSheets = function promptFirstPaintSheets(
+	container: PromptContainerType
+): StyleSheet[] {
+	return [
+		tokensSheet,
+		buttonSheet,
+		triggerSheet,
+		gateSheet,
+		surfaceSheet,
+		CONTAINERS[container],
+		HIDDEN_SHEET,
+	];
+};
 
 /**
  * The page status region and the collapsed prompt on its desktop layout,
  * as HTML.
  *
- * @param model - From `resolvePrivacyChoicesModel`.
+ * @param model - From `resolvePromptModel`.
  * @param hidden - Ship it hidden, for a page every visitor shares.
  */
-export const renderPrivacyChoicesHTML = function renderPrivacyChoicesHTML(
-	model: PrivacyChoicesModel,
+export const renderPromptHTML = function renderPromptHTML(
+	model: PromptModel,
 	hidden: boolean
 ): string {
 	const tree = renderPrompt(model, {
 		expanded: false,
-		ids: promptIds(PRIVACY_CHOICES_ID_PREFIX),
+		ids: promptIds(PROMPT_ID_PREFIX),
 		layout: model.container.desktop,
 		panel: null,
 		phase: 'shown',

@@ -2,20 +2,20 @@
 /**
  * The "Consent by" tag.
  *
- * Server-rendered with the same markup, classes and `data-testid` as the
- * Svelte and React banners, so the shared stylesheet positions it
- * identically and cross-framework tests compare like with like.
+ * The IAB banner's tag, server-rendered with the same markup, classes and
+ * `data-testid` as the React and Svelte IAB banners, so the shared
+ * stylesheet positions it identically and cross-framework tests compare
+ * like with like.
  *
- * Rendered by `<ConsentBanner />`; a site turns it off with
- * `<ConsentBanner hideBranding />`. Which brand it shows comes from the
- * consent snapshot, not from a prop. The browser-rendered banner builds the
- * same markup from the same model.
+ * A site turns it off with `<IABConsentBanner hideBranding />`. Which
+ * brand it shows comes from the consent snapshot, not from a prop. The
+ * browser-rendered IAB banner builds the same markup from the same model.
  */
 import type { ConsentSnapshot } from '@inth/sdk/engine';
 import type { Theme } from '@inth/sdk/ui/theme';
 import { brandMarkSvg } from '@inth/sdk/ui/utils/branding';
 import type { BrandingSurface } from '@inth/sdk/ui/utils/branding';
-import { promptClassNames, resolveBrandingModel } from '@inth/astro/server';
+import { iabPromptClassNames, resolveBrandingModel } from '@inth/astro/server';
 
 interface Props {
 	/** Render nothing. */
@@ -37,7 +37,7 @@ interface Props {
 const { securedBy, ...input } = Astro.props;
 const tag = resolveBrandingModel({
 	...input,
-	styles: promptClassNames.branding,
+	styles: iabPromptClassNames.branding,
 });
 ---
 

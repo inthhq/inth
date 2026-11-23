@@ -61,7 +61,10 @@ const optOutLink = isOptOut
 		)
 	: null;
 const showOptOutIcon = optOutLink?.variant === 'privacy-choices';
-const optOutIconClass = noStyle ? undefined : promptClassNames.banner.optOutIcon;
+// The `legal-links` sheet's `.optOutIcon` rule sizes it, as React's link.
+const optOutIconClass = noStyle
+	? undefined
+	: promptClassNames.legalLinks.optOutIcon;
 const policyRights = inth ? inth.snapshot.policyRule.rights.join(' ') : undefined;
 ---
 

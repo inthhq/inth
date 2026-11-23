@@ -1,5 +1,5 @@
 /**
- * The stylesheet class names the Privacy Choices markup uses.
+ * The stylesheet class names the consent prompt's markup uses.
  *
  * Imported on the server only, like `../banner/class-names`. The browser
  * reads them from the spot `<ConsentBanner />` leaves beside the prompt,
@@ -10,9 +10,9 @@
  */
 
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
-import barStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
 import cardStyles from '@inth/sdk/ui/styles/components/consent-card';
-import choicesStyles from '@inth/sdk/ui/styles/components/consent-dialog';
+import dialogStyles from '@inth/sdk/ui/styles/components/consent-dialog';
 import drawerStyles from '@inth/sdk/ui/styles/components/consent-drawer';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import surfaceStyles from '@inth/sdk/ui/styles/components/consent-surface';
@@ -20,18 +20,18 @@ import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 
 import type { ClassNameMap } from '../banner/class-names';
 
-/** The class maps the Privacy Choices prompt and its options read. */
-export interface PrivacyChoicesClassNames {
-	/** The shell every presentation renders (`consent-surface`). */
+/** The class maps the consent prompt and its options read. */
+export interface PromptClassNames {
+	/** The shell every container renders (`consent-surface`). */
 	surface: ClassNameMap;
-	/** One map per presentation: `consent-card`, `consent-bar`, `consent-drawer`. */
+	/** One map per container: `consent-card`, `consent-banner`, `consent-drawer`. */
 	card: ClassNameMap;
-	bar: ClassNameMap;
+	banner: ClassNameMap;
 	drawer: ClassNameMap;
 	/** The in-place panel and the scroll area (`consent-expand`). */
 	expand: ClassNameMap;
-	/** The rows inside the options (`privacy-choices`). */
-	choices: ClassNameMap;
+	/** The rows inside the options, which the dialog shares (`consent-dialog`). */
+	dialog: ClassNameMap;
 	button: ClassNameMap;
 	legalLinks: ClassNameMap;
 }
@@ -44,8 +44,8 @@ const pick = function pick(
 };
 
 /** What the prompt and its options use, trimmed so the spot stays small. */
-export const privacyChoicesClassNames: PrivacyChoicesClassNames = {
-	bar: pick(barStyles, [
+export const promptClassNames: PromptClassNames = {
+	banner: pick(bannerStyles, [
 		'actionGroup',
 		'actions',
 		'card',
@@ -59,7 +59,7 @@ export const privacyChoicesClassNames: PrivacyChoicesClassNames = {
 	]),
 	button: pick(buttonStyles, ['button']),
 	card: pick(cardStyles, ['card', 'head', 'root', 'shell', 'tag']),
-	choices: pick(choicesStyles, [
+	dialog: pick(dialogStyles, [
 		'bleed',
 		'category',
 		'categoryDescription',
@@ -108,7 +108,7 @@ export const privacyChoicesClassNames: PrivacyChoicesClassNames = {
 		'tagSlot',
 	]),
 	expand: pick(expandStyles, ['group', 'inner', 'panel', 'scroll']),
-	legalLinks: pick(legalLinkStyles, ['legalLink']),
+	legalLinks: pick(legalLinkStyles, ['legalLink', 'optOutIcon']),
 	surface: pick(surfaceStyles, [
 		'actionGroup',
 		'card',

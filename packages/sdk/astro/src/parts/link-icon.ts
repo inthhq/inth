@@ -1,11 +1,12 @@
 /**
  * The CCPA opt-out icon beside "Your Privacy Choices", sized on its own.
  *
- * The icon's size comes from the classic banner sheet's `.optOutIcon`
- * rule, which a Privacy Choices page never loads. So unless the host
- * asked for no styling, the SVG carries the glyph's intrinsic size: 14px
- * tall and as wide as its `viewBox` ratio. A stylesheet that sizes it
- * still wins, since CSS beats presentation attributes.
+ * The `legal-links` sheet's `.optOutIcon` rule sizes it, but a page that
+ * shows only the prompt never loads that sheet. So unless the host asked
+ * for no styling, the SVG carries the glyph's intrinsic size: 14px tall
+ * and as wide as its `viewBox` ratio, as React's `OptOutIcon` does. A
+ * stylesheet that sizes it still wins, since CSS beats presentation
+ * attributes.
  *
  * @internal
  */
@@ -27,7 +28,7 @@ export const OPT_OUT_ICON_WIDTH = (() => {
 })();
 
 /**
- * The opt-out icon's markup for a Privacy Choices link.
+ * The opt-out icon's markup for a "Your Privacy Choices" link.
  *
  * @param className - The icon's class, or none under `noStyle`.
  * @param sized - Give the SVG its intrinsic size; `false` under `noStyle`.
