@@ -63,7 +63,9 @@ const importContainer = async function importContainer<Module>(
  * downloads only the container it shows. A page that never owes a choice
  * downloads none of them.
  *
- * @internal Exported for tests.
+ * Exported for tests.
+ *
+ * @internal
  */
 export const deferredContainer = function deferredContainer<Module>(
 	importModule: () => Promise<Module>,
