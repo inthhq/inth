@@ -771,7 +771,11 @@ describe('initPrefetch', () => {
 					// A browser's init never sends cookies; `omit` passes through.
 					credentials: 'omit',
 					experiment: {
-						arms: { wall: { prompt: { container: { position: 'center', type: 'card' } } } },
+						arms: {
+							wall: {
+								prompt: { container: { position: 'center', type: 'card' } },
+							},
+						},
 						id: 'banner-shape',
 						split: { control: 60, wall: 40 },
 					},

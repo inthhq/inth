@@ -36,8 +36,8 @@ import { useUIConfig } from '~/ui-config-context';
 import { cnExt as cn } from '~/utils/cn';
 import { getSlotProps, mergeSlotProps } from '~/utils/merge-slot-props';
 
-import { WIDGET_SHEETS } from '../shared/widget-sheets';
 import { SurfaceStyles, useSurfaceSheetsReady } from '../shared/surface-styles';
+import { WIDGET_SHEETS } from '../shared/widget-sheets';
 
 /** Props for the two-step opt-in confirmation dialog. */
 export interface OptInConfirmationProps {

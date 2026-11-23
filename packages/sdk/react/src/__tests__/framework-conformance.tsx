@@ -345,9 +345,7 @@ export const runFrameworkConformance = ({
 					</>
 				);
 			case 'consent-dialog':
-				return (
-					<ConsentDialog disableAnimation />
-				);
+				return <ConsentDialog disableAnimation />;
 			case 'consent-widget':
 				return <ConsentWidget hideBranding />;
 			case 'iab-consent-banner':

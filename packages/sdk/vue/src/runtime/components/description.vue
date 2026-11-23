@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
+import dialogStyles from '@inth/sdk/ui/styles/components/legacy-panel';
 
 import '@inth/sdk/ui/styles/components/legacy-prompt.css';
-import dialogStyles from '@inth/sdk/ui/styles/components/legacy-panel';
+import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 
 import '@inth/sdk/ui/styles/components/legacy-panel.css';
 import { computed } from 'vue';

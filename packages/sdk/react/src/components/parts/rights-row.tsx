@@ -23,8 +23,8 @@ import {
 	revealInScrollBody,
 	scheduleReveal,
 } from '@inth/sdk/ui/primitives/surface';
-import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
+import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 

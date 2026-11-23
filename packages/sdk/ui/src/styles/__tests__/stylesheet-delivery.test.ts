@@ -158,7 +158,9 @@ const sheets = {
 
 const laterComponents: readonly string[] = Object.values(LATER_SHEETS).flat();
 
-const groupOf = function groupOf(file: string): 'first-paint' | 'iab' | 'later' {
+const groupOf = function groupOf(
+	file: string
+): 'first-paint' | 'iab' | 'later' {
 	const name = file.replace(/\.css$/u, '');
 	if (name.startsWith(IAB_PREFIX)) {
 		return 'iab';

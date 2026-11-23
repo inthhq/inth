@@ -148,9 +148,7 @@ describe('styles/sheets', async () => {
 			).toEqual([]);
 		}
 		expect(
-			[...ruleList(firstPaint.css), ...later.flatMap(ownRules)].map(
-				asInStyles
-			)
+			[...ruleList(firstPaint.css), ...later.flatMap(ownRules)].map(asInStyles)
 		).toEqual(styles);
 	});
 
@@ -201,9 +199,7 @@ describe('styles/sheets', async () => {
 			.join('\n');
 
 		expect(laterClasses.length).toBeGreaterThan(0);
-		expect(laterClasses.filter((name) => selectors.includes(name))).toEqual(
-			[]
-		);
+		expect(laterClasses.filter((name) => selectors.includes(name))).toEqual([]);
 	});
 
 	test.each(Object.keys(LATER_SHEETS))(

@@ -1,4 +1,14 @@
 import { SAFE_NONCE } from '@inth/sdk/server';
+import * as bar from '@inth/sdk/ui/styles/sheets/banner';
+import * as button from '@inth/sdk/ui/styles/sheets/button';
+import * as card from '@inth/sdk/ui/styles/sheets/card';
+import * as consentGate from '@inth/sdk/ui/styles/sheets/consent-gate';
+import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/dialog';
+import * as drawer from '@inth/sdk/ui/styles/sheets/drawer';
+import * as expand from '@inth/sdk/ui/styles/sheets/expand';
+import * as firstPaint from '@inth/sdk/ui/styles/sheets/first-paint';
+import * as iabDialog from '@inth/sdk/ui/styles/sheets/iab-dialog';
+import * as iabFirstPaint from '@inth/sdk/ui/styles/sheets/iab-first-paint';
 /**
  * Writes the stylesheets a server-rendered surface named into the page.
  *
@@ -10,21 +20,11 @@ import { SAFE_NONCE } from '@inth/sdk/server';
  * the surfaces find these elements and add no second copy.
  */
 import * as banner from '@inth/sdk/ui/styles/sheets/parts';
-import * as bar from '@inth/sdk/ui/styles/sheets/banner';
-import * as button from '@inth/sdk/ui/styles/sheets/button';
-import * as card from '@inth/sdk/ui/styles/sheets/card';
-import * as consentGate from '@inth/sdk/ui/styles/sheets/consent-gate';
-import * as dialog from '@inth/sdk/ui/styles/sheets/widget';
-import * as drawer from '@inth/sdk/ui/styles/sheets/drawer';
-import * as expand from '@inth/sdk/ui/styles/sheets/expand';
-import * as firstPaint from '@inth/sdk/ui/styles/sheets/first-paint';
-import * as iabDialog from '@inth/sdk/ui/styles/sheets/iab-dialog';
-import * as iabFirstPaint from '@inth/sdk/ui/styles/sheets/iab-first-paint';
 import * as primitives from '@inth/sdk/ui/styles/sheets/primitives';
-import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/dialog';
 import * as surface from '@inth/sdk/ui/styles/sheets/surface';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
 import * as trigger from '@inth/sdk/ui/styles/sheets/trigger';
+import * as dialog from '@inth/sdk/ui/styles/sheets/widget';
 
 import { STYLE_ATTRIBUTE, STYLES_MARKER } from '../surface-styles';
 import type { SurfaceStyleSheet } from '../surface-styles';

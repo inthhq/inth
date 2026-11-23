@@ -21,10 +21,10 @@ import {
 import { isDialogDismissKey, onDialogDismiss } from '@inth/sdk/ui/primitives';
 import buttonStyles from '@inth/sdk/ui/styles/components/button';
 import styles from '@inth/sdk/ui/styles/components/opt-out-confirmation';
-import * as banner from '@inth/sdk/ui/styles/sheets/parts-deferred';
 import * as button from '@inth/sdk/ui/styles/sheets/button-deferred';
-import * as dialog from '@inth/sdk/ui/styles/sheets/widget';
+import * as banner from '@inth/sdk/ui/styles/sheets/parts-deferred';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens-deferred';
+import * as dialog from '@inth/sdk/ui/styles/sheets/widget';
 import type { ClassNameStyle } from '@inth/sdk/ui/theme';
 import {
 	findFocusRestoreEquivalent,

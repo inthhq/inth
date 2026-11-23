@@ -193,7 +193,9 @@ test('a server-resolved experiment in the state runs without a client option', a
 			})
 		);
 		await vi.waitFor(() =>
-			expect(document.querySelector('[data-placement="banner-bottom"]')).not.toBeNull()
+			expect(
+				document.querySelector('[data-placement="banner-bottom"]')
+			).not.toBeNull()
 		);
 	} finally {
 		mounted.unmount();
@@ -451,7 +453,9 @@ test('the experiment is read once: a changed option keeps the mounted arm', asyn
 	try {
 		render(experiment.arms);
 		await vi.waitFor(() => expect(readText('presentation')).toBe('bar'));
-		render({ bar: { prompt: { container: { position: 'center', type: 'card' } } } });
+		render({
+			bar: { prompt: { container: { position: 'center', type: 'card' } } },
+		});
 		await vi.waitFor(() => expect(warn).toHaveBeenCalled());
 		expect(readText('presentation')).toBe('bar');
 	} finally {
@@ -566,7 +570,11 @@ test('a server render whose policy rejects the arm does not throw', () => {
 					enabled: true,
 					experiment: {
 						arm: 'wall',
-						arms: { wall: { prompt: { container: { position: 'center', type: 'card' } } } },
+						arms: {
+							wall: {
+								prompt: { container: { position: 'center', type: 'card' } },
+							},
+						},
 						id: 'banner-shape',
 					},
 					mode: Object.assign(() => ({ save: vi.fn() }), {

@@ -20,15 +20,15 @@ import { page } from 'vitest/browser';
 
 import bar from '../../../dist/styles/components/consent-banner.js';
 import card from '../../../dist/styles/components/consent-card.js';
+import dialog from '../../../dist/styles/components/consent-dialog.js';
 import drawer from '../../../dist/styles/components/consent-drawer.js';
 import surface from '../../../dist/styles/components/consent-surface.js';
-import dialog from '../../../dist/styles/components/consent-dialog.js';
 import * as barSheet from '../../../dist/styles/sheets/banner.js';
 import * as buttonSheet from '../../../dist/styles/sheets/button.js';
 import * as cardSheet from '../../../dist/styles/sheets/card.js';
+import * as dialogSheet from '../../../dist/styles/sheets/dialog.js';
 import * as drawerSheet from '../../../dist/styles/sheets/drawer.js';
 import * as expandSheet from '../../../dist/styles/sheets/expand.js';
-import * as dialogSheet from '../../../dist/styles/sheets/dialog.js';
 import * as surfaceSheet from '../../../dist/styles/sheets/surface.js';
 import * as tokensSheet from '../../../dist/styles/sheets/tokens.js';
 import { CLASSIC_VARIABLES } from '../../../scripts/classic-variables';

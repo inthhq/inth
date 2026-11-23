@@ -63,8 +63,10 @@ export type LegacyPreferencesPresentation = PreferencesPresentation &
 	LegacyGeometry;
 
 /** @deprecated temporary — removed in phase B */
-export interface LegacyConsentPresentation
-	extends Omit<ConsentPresentation, 'prompt' | 'preferences'> {
+export interface LegacyConsentPresentation extends Omit<
+	ConsentPresentation,
+	'prompt' | 'preferences'
+> {
 	design?: string;
 	prompt?: LegacyPromptPresentation;
 	preferences?: LegacyPreferencesPresentation;
@@ -96,7 +98,10 @@ const containerOf = function containerOf(
 			return { position: 'center', type: 'card' };
 		default:
 			if (position === undefined) {
-				return { position: variant === 'widget' ? 'end' : 'start', type: 'card' };
+				return {
+					position: variant === 'widget' ? 'end' : 'start',
+					type: 'card',
+				};
 			}
 			return {
 				position: position.endsWith('-right') ? 'end' : 'start',

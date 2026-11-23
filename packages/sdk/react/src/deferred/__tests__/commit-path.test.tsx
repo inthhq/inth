@@ -241,7 +241,6 @@ let page: StreamedPage | undefined;
 /** `Storage.prototype.setItem`, while a test refuses the outbox's writes. */
 let refusedOutbox: MockInstance | undefined;
 
-
 beforeEach(() => {
 	(
 		globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -505,4 +504,3 @@ test('an instant accept that neither the commit chunk nor the engine can record 
 	window.removeEventListener('unhandledrejection', unhandled);
 	await hydrated.unmount();
 });
-

@@ -591,9 +591,7 @@ export const containerOf = function containerOf(
 				? { side: position, type }
 				: { type };
 		default:
-			return position === 'start' ||
-				position === 'end' ||
-				position === 'center'
+			return position === 'start' || position === 'end' || position === 'center'
 				? { position, type }
 				: { type };
 	}
@@ -697,7 +695,8 @@ export const autoContainerFor = function autoContainerFor(
 	rule: Pick<PolicyRule, 'id' | 'prompt'>
 ): ConsentContainerType {
 	return (
-		presentationForRule(rule)?.container?.type ?? defaultContainerFor(rule.prompt)
+		presentationForRule(rule)?.container?.type ??
+		defaultContainerFor(rule.prompt)
 	);
 };
 

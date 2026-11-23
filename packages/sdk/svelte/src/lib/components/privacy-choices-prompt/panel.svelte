@@ -18,10 +18,10 @@
 	import { createPreferenceDraft } from '@inth/sdk/preference-draft';
 	import { resolvePreferencesRowCopy } from '@inth/sdk/surface-state';
 	import type { PrivacyChoicesPromptVariant } from '@inth/sdk/surface-state';
-	import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
-	import * as expand from '@inth/sdk/ui/styles/sheets/expand';
+	import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 	import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/dialog';
+	import * as expand from '@inth/sdk/ui/styles/sheets/expand';
 	import { onMount } from 'svelte';
 
 	import { getConsentContext } from '../../context.svelte';

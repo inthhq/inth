@@ -8,8 +8,8 @@
  * @internal
  */
 
-import * as expand from '@inth/sdk-ui/styles/sheets/expand';
 import * as privacyChoicesDialog from '@inth/sdk-ui/styles/sheets/dialog';
+import * as expand from '@inth/sdk-ui/styles/sheets/expand';
 
 /** One of `@inth/sdk-ui`'s sheets. */
 export interface PcSheet {

@@ -981,7 +981,7 @@ describe('wave B round 2', () => {
 			persistence: false,
 			prefetch: policyFixture(undefined, { id: `pcd-controlled-${fixture}` }),
 			presentation: {
-								prompt: { container: { type: 'card' } as const },
+				prompt: { container: { type: 'card' } as const },
 			},
 			vendors: VENDORS,
 		};

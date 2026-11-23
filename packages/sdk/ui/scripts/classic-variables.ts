@@ -887,13 +887,11 @@ export const CLASSIC_UNMAPPED: readonly ClassicUnmapped[] = [
 	},
 	{
 		classic: '--consent-dialog-overlay-background-color',
-		reason:
-			'The backdrop reads `--inth-overlay`.',
+		reason: 'The backdrop reads `--inth-overlay`.',
 	},
 	{
 		classic: '--consent-dialog-overlay-background-color-dark',
-		reason:
-			'The backdrop reads `--inth-overlay`.',
+		reason: 'The backdrop reads `--inth-overlay`.',
 	},
 	{
 		classic: '--consent-dialog-overlay-z-index',

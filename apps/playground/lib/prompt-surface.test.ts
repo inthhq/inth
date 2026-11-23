@@ -64,8 +64,7 @@ describe('prompt surface params', () => {
 		// `control` is the base presentation, so it is never listed in `arms`.
 		expect(Object.keys(picked?.arms ?? {})).toEqual(['banner']);
 		expect(
-			demoExperiment({ ...EMPTY_SURFACE, arm: 'banner', experiment: true })
-				?.arm
+			demoExperiment({ ...EMPTY_SURFACE, arm: 'banner', experiment: true })?.arm
 		).toBe('banner');
 		expect(
 			demoExperiment({ ...EMPTY_SURFACE, arm: 'control', experiment: true })

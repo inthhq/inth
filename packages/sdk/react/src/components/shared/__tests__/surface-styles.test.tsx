@@ -73,7 +73,12 @@ describe('surface styles', () => {
 		const ids = [
 			...html.matchAll(/<style[^>]*data-href="(?<ids>[^"]+)"/gu),
 		].flatMap((match) => match.groups?.ids?.split(' ') ?? []);
-		expect(ids).toEqual(['inth-tokens', 'inth-button', 'inth-surface', 'inth-card']);
+		expect(ids).toEqual([
+			'inth-tokens',
+			'inth-button',
+			'inth-surface',
+			'inth-card',
+		]);
 		// Not the trigger's, the ConsentGate's, another container's or the
 		// dialog's rules.
 		expect(html).not.toContain('inth-first-paint');

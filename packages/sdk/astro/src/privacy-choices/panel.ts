@@ -50,8 +50,8 @@ import {
 	revealInScrollBody,
 	scheduleReveal,
 } from '@inth/sdk/ui/primitives/surface';
-import * as expandSheet from '@inth/sdk/ui/styles/sheets/expand';
 import * as choicesSheet from '@inth/sdk/ui/styles/sheets/dialog';
+import * as expandSheet from '@inth/sdk/ui/styles/sheets/expand';
 import type { Theme } from '@inth/sdk/ui/theme';
 
 import { resolveSlotBinding } from '../banner/theme-slots';

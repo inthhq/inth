@@ -11,10 +11,10 @@ import { resolveSaleRight } from '@inth/sdk/engine';
 import type { SaveUISource } from '@inth/sdk/engine';
 import { resolvePreferencesRowCopy } from '@inth/sdk/surface-state';
 import type { PrivacyChoicesPromptVariant } from '@inth/sdk/surface-state';
-import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import styles from '@inth/sdk/ui/styles/components/consent-dialog';
-import * as expand from '@inth/sdk/ui/styles/sheets/expand';
+import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
 import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
+import * as expand from '@inth/sdk/ui/styles/sheets/expand';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 

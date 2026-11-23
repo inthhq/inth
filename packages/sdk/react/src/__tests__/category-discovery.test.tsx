@@ -4,8 +4,8 @@ import { useContext, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 
-import { ConsentGate } from '../components/consent-gate';
 import { ConsentDialog } from '../aggregate-components';
+import { ConsentGate } from '../components/consent-gate';
 import { ConsentBanner } from '../components/prompt';
 import { KernelContext } from '../context';
 import { InthProvider } from '../provider';

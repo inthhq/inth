@@ -1,3 +1,4 @@
+import * as primitives from '@inth/sdk/ui/styles/sheets/primitives';
 /**
  * What the dialog and the preference widget need: the banner's sheets,
  * which carry the button, branding, action and legal-link rules they share,
@@ -8,7 +9,6 @@
  * dialog rules.
  */
 import * as dialog from '@inth/sdk/ui/styles/sheets/widget';
-import * as primitives from '@inth/sdk/ui/styles/sheets/primitives';
 
 import { BANNER_SHEETS } from './surface-styles';
 import type { SurfaceStyleSheet } from './surface-styles';

@@ -11,18 +11,18 @@ import {
 	registerDialogChunkWarmer,
 	useIdleDialogWarming,
 } from './chunk-warming';
+import type { ConsentDialogProps } from './components/dialog/types';
 import type { OptInConfirmationProps } from './components/opt-in-confirmation';
 import type {
 	OptOutConfirmationCompoundComponent,
 	OptOutConfirmationProps,
 } from './components/opt-out-confirmation';
-import type { ConsentDialogProps } from './components/dialog/types';
 import type { ConsentDialogTriggerProps } from './components/panel-trigger';
+import { requestReceiptFocus } from './components/parts/receipt-focus';
 import type {
 	ConsentWidgetCompoundComponent,
 	ConsentWidgetProps,
 } from './components/preferences';
-import { requestReceiptFocus } from './components/parts/receipt-focus';
 import { PARTS_SHEETS } from './components/shared/parts-sheets';
 import { preloadSurfaceSheets } from './components/shared/surface-styles';
 import { importDialog } from './deferred/trigger';

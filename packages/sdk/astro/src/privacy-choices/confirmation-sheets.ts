@@ -11,10 +11,10 @@
  * @internal
  */
 
-import * as banner from '@inth/sdk/ui/styles/sheets/parts';
 import * as button from '@inth/sdk/ui/styles/sheets/button';
-import * as dialog from '@inth/sdk/ui/styles/sheets/widget';
+import * as banner from '@inth/sdk/ui/styles/sheets/parts';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
+import * as dialog from '@inth/sdk/ui/styles/sheets/widget';
 
 import { insertSheets } from './sheets';
 import type { PrivacyChoicesSheet } from './sheets';

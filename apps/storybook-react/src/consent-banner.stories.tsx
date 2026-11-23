@@ -228,7 +228,6 @@ export const PrivacyChoicesLink: Story = {
 	),
 };
 
-
 export const CardStartEU: Story = containerStory('eu', {
 	position: 'start',
 	type: 'card',

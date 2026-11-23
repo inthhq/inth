@@ -97,8 +97,8 @@ const config: StorybookConfig = {
 							'packages/sdk/react/src/components/prompt/index.ts'
 						),
 					},
-					// The React island loads the stock dialog from this subpath for
-					// the Privacy Choices design; it must share the sources above.
+					// The React island loads the stock dialog from this subpath; it
+					// must share the sources above.
 					{
 						find: /^@inth\/react\/consent-dialog$/u,
 						replacement: workspace('packages/sdk/react/src/panel.ts'),
@@ -106,7 +106,7 @@ const config: StorybookConfig = {
 					{
 						find: /^@inth\/react\/components\/consent-dialog$/u,
 						replacement: workspace(
-							'packages/sdk/react/src/components/panel/index.ts'
+							'packages/sdk/react/src/components/dialog/index.ts'
 						),
 					},
 					{

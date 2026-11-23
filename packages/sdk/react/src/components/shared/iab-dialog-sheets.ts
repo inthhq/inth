@@ -1,5 +1,5 @@
-import * as widget from '@inth/sdk/ui/styles/sheets/widget';
 import * as iabDialog from '@inth/sdk/ui/styles/sheets/iab-dialog';
+import * as widget from '@inth/sdk/ui/styles/sheets/widget';
 
 import { IAB_FIRST_PAINT_SHEETS } from './iab-first-paint-sheets';
 import type { SurfaceStyleSheet } from './surface-styles';

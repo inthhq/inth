@@ -26,18 +26,15 @@ const gate = vi.hoisted(() => {
 });
 
 // oxlint-disable-next-line anti-slop/no-module-mocking -- The property under test is what happens while the dialog's deferred sheet loads, and only a framework that put the sheet in the server HTML gives it a load. The factory keeps the real sheets and adds one whose load waits on this file.
-vi.mock(
-	'~/components/dialog/sheets',
-	async (importOriginal) => {
-		const actual = await importOriginal<typeof DialogSheets>();
-		return {
-			DIALOG_SHEETS: [
-				...actual.DIALOG_SHEETS,
-				{ id: 'inth-test-gated-dialog', load: () => gate.loaded },
-			],
-		};
-	}
-);
+vi.mock('~/components/dialog/sheets', async (importOriginal) => {
+	const actual = await importOriginal<typeof DialogSheets>();
+	return {
+		DIALOG_SHEETS: [
+			...actual.DIALOG_SHEETS,
+			{ id: 'inth-test-gated-dialog', load: () => gate.loaded },
+		],
+	};
+});
 
 const probe: { snapshot: ReturnType<typeof useSnapshot> | null } = {
 	snapshot: null,
