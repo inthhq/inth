@@ -38,13 +38,10 @@ export interface UserConsentSyncController {
 		value: UserConsentOption | undefined,
 		options?: { readonly initialStart?: boolean }
 	) => void;
-	/** Reset hold tracking and fence any in-flight Promise on user change/logout. */
-	onUserChanged: (
-		externalId: string | null,
-		options?: { readonly preservePending?: boolean }
-	) => void;
-	/** Fence any in-flight or settled Promise when records are cleared. */
-	onRecordsCleared: () => void;
+	/** Fence in-flight Promises, clear timers/replays, and optionally preserve hold. */
+	onIdentityEpochChanged: (options?: {
+		readonly preservePending?: boolean;
+	}) => void;
 	/** Cancel timers and fence any in-flight Promise on runtime disposal. */
 	dispose: () => void;
 }
@@ -55,13 +52,14 @@ export interface UserConsentSyncController {
  * - Each new user's first Promise arms the `userConsentPending` hold and a
  *   3-second timeout. Later Promise identities for the same user start a new
  *   generation without re-arming the hold.
- * - A late result arriving after the 3-second timeout still syncs if no user
- *   change, logout, newer Promise, clear, dispose, or opt-out lift fenced it.
+ * - A late result arriving after the 3-second timeout still syncs if no
+ *   identity-epoch bump, newer Promise, or opt-out lift fenced it.
  */
 export const createUserConsentSyncController =
 	function createUserConsentSyncController(
 		kernel: InternalKernel,
-		timeoutMs: number = DEFAULT_USER_CONSENT_TIMEOUT_MS
+		timeoutMs: number = DEFAULT_USER_CONSENT_TIMEOUT_MS,
+		getIdentityEpoch: () => number = () => 0
 	): UserConsentSyncController {
 		let holdArmedForExternalId: string | null = null;
 		let activePromiseGeneration = 0;
@@ -70,6 +68,7 @@ export const createUserConsentSyncController =
 		let lastPromise: PromiseLike<UserConsent | null | undefined> | null = null;
 		let lastResolved: {
 			readonly externalId: string;
+			readonly identityEpoch: number;
 			readonly value: UserConsent | null | undefined;
 		} | null = null;
 		let disposed = false;
@@ -107,13 +106,18 @@ export const createUserConsentSyncController =
 		const followPromise = async (
 			promise: PromiseLike<UserConsent | null | undefined>,
 			myPromiseGen: number,
-			mySyncGen: number
+			mySyncGen: number,
+			myIdentityEpoch: number
 		): Promise<void> => {
 			let resolved: UserConsent | null | undefined;
 			try {
 				resolved = await promise;
 			} catch {
-				if (!disposed && activePromiseGeneration === myPromiseGen) {
+				if (
+					!disposed &&
+					activePromiseGeneration === myPromiseGen &&
+					getIdentityEpoch() === myIdentityEpoch
+				) {
 					clearHold();
 				}
 				return;
@@ -121,9 +125,14 @@ export const createUserConsentSyncController =
 			if (
 				disposed ||
 				activePromiseGeneration !== myPromiseGen ||
+				getIdentityEpoch() !== myIdentityEpoch ||
 				kernel.getAccountSyncGeneration() !== mySyncGen
 			) {
-				if (!disposed && activePromiseGeneration === myPromiseGen) {
+				if (
+					!disposed &&
+					activePromiseGeneration === myPromiseGen &&
+					getIdentityEpoch() === myIdentityEpoch
+				) {
 					clearHold();
 				}
 				return;
@@ -131,9 +140,51 @@ export const createUserConsentSyncController =
 			cancelTimer();
 			const externalId = kernel.getSnapshot().user?.externalId ?? null;
 			if (externalId !== null) {
-				lastResolved = { externalId, value: resolved };
+				lastResolved = {
+					externalId,
+					identityEpoch: myIdentityEpoch,
+					value: resolved,
+				};
 			}
 			kernel.settleUserConsent(resolved, { clearPending: true });
+		};
+
+		const applyPromise = (
+			value: PromiseLike<UserConsent | null | undefined>,
+			currentExternalId: string | null,
+			initialStart: boolean
+		): void => {
+			if (value === lastPromise) {
+				// If this memoized Promise already settled before `start()` mounted
+				// persistence and the identity epoch has not moved, re-sync with
+				// `forceClientSync` so persistence writes it.
+				if (
+					initialStart &&
+					lastResolved !== null &&
+					lastResolved.identityEpoch === getIdentityEpoch() &&
+					lastResolved.externalId === currentExternalId &&
+					lastResolved.value !== undefined
+				) {
+					kernel.settleUserConsent(lastResolved.value, {
+						clearPending: true,
+						forceClientSync: true,
+					});
+				}
+				return;
+			}
+			lastPromise = value;
+			lastResolved = null;
+			activePromiseGeneration += 1;
+			const myPromiseGen = activePromiseGeneration;
+			const mySyncGen = kernel.getAccountSyncGeneration();
+			const myIdentityEpoch = getIdentityEpoch();
+			if (
+				currentExternalId !== null &&
+				holdArmedForExternalId !== currentExternalId
+			) {
+				armHoldFor(currentExternalId);
+			}
+			void followPromise(value, myPromiseGen, mySyncGen, myIdentityEpoch);
 		};
 
 		return {
@@ -157,32 +208,11 @@ export const createUserConsentSyncController =
 					return;
 				}
 				if (isUserConsentPromise(value)) {
-					if (value === lastPromise) {
-						// If this memoized Promise already settled before `start()` mounted
-						// persistence, re-sync with `forceClientSync` so persistence writes it.
-						if (
-							options?.initialStart &&
-							lastResolved !== null &&
-							lastResolved.externalId === currentExternalId &&
-							lastResolved.value !== undefined
-						) {
-							kernel.settleUserConsent(lastResolved.value, {
-								clearPending: true,
-								forceClientSync: true,
-							});
-						}
-						return;
-					}
-					lastPromise = value;
-					lastResolved = null;
-					activePromiseGeneration += 1;
-					const myPromiseGen = activePromiseGeneration;
-					const mySyncGen = kernel.getAccountSyncGeneration();
-					const externalId = kernel.getSnapshot().user?.externalId ?? null;
-					if (externalId !== null && holdArmedForExternalId !== externalId) {
-						armHoldFor(externalId);
-					}
-					void followPromise(value, myPromiseGen, mySyncGen);
+					applyPromise(
+						value,
+						currentExternalId,
+						options?.initialStart === true
+					);
 					return;
 				}
 
@@ -204,14 +234,7 @@ export const createUserConsentSyncController =
 				clearHold();
 			},
 
-			onRecordsCleared() {
-				holdArmedForExternalId = null;
-				lastResolved = null;
-				activePromiseGeneration += 1;
-				clearHold();
-			},
-
-			onUserChanged(_externalId, options) {
+			onIdentityEpochChanged(options) {
 				holdArmedForExternalId = null;
 				lastPromise = null;
 				lastResolved = null;

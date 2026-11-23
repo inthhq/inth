@@ -70,10 +70,15 @@ export interface AssembledRuntime {
 	 */
 	adoptJourney: (id: string | null | undefined) => void;
 	/**
+	 * Monotonic identity epoch bumped on real user change/sign-out,
+	 * `userConsent: null`, `clearRecords()`, and `dispose()`.
+	 */
+	getIdentityEpoch: () => number;
+	/**
 	 * Atomically update the user, drop any mismatched account layer, optionally
 	 * arm/release `userConsentPending` or apply a resolved `userConsent` in one
-	 * kernel commit, and notify the `userConsent` sync controller whenever
-	 * `externalId` changes or clears.
+	 * kernel commit, and bump the identity epoch whenever `externalId` changes
+	 * or `userConsent` is `null`.
 	 */
 	setUser: (
 		user: KernelUser | null,
@@ -203,13 +208,31 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		await kernel.commands.init();
 	};
 
-	const userConsentSync = createUserConsentSyncController(kernel);
-	let clearedBeforeStart = false;
+	let identityEpoch = 0;
+	const getIdentityEpoch = (): number => identityEpoch;
+	const userConsentSync = createUserConsentSyncController(
+		kernel,
+		undefined,
+		getIdentityEpoch
+	);
+	const bumpIdentityEpoch = (epochOptions?: {
+		readonly preservePending?: boolean;
+	}): number => {
+		identityEpoch += 1;
+		userConsentSync.onIdentityEpochChanged(epochOptions);
+		return identityEpoch;
+	};
+	// Value of `userConsent` in force when `records:cleared` ran: a clear
+	// applies until the option value changes (so `start()` / re-enable never
+	// reapplies the cleared value).
+	let clearedOption: { readonly value: unknown } | null = null;
+	const currentOptionConsent = (): unknown =>
+		options.userConsent === undefined
+			? options.prefetch?.initialUserConsent
+			: options.userConsent;
 	const stopRecordsClearedWatch = kernel.events.on('records:cleared', () => {
-		if (!started) {
-			clearedBeforeStart = true;
-		}
-		userConsentSync.onRecordsCleared();
+		clearedOption = { value: currentOptionConsent() };
+		bumpIdentityEpoch();
 	});
 
 	const stop = function stop(): void {
@@ -235,6 +258,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		dispose() {
 			disposed = true;
 			stopRecordsClearedWatch();
+			bumpIdentityEpoch();
 			userConsentSync.dispose();
 			stop();
 			kernel.dispose();
@@ -254,7 +278,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			const prevExternalId = kernel.getSnapshot().user?.externalId ?? null;
 			if (!nextUser) {
 				if (prevExternalId !== null) {
-					userConsentSync.onUserChanged(null);
+					bumpIdentityEpoch();
 				}
 				// Signing out: no one is identified from here on, and an answer
 				// to a request the previous account started no longer applies.
@@ -262,7 +286,7 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 				return;
 			}
 			if (prevExternalId !== nextUser.externalId) {
-				userConsentSync.onUserChanged(nextUser.externalId);
+				bumpIdentityEpoch();
 			}
 			try {
 				await kernel.commands.identify(nextUser);
@@ -341,18 +365,19 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			}
 			// After hydrating both browser and stored account layers, sync the
 			// initial `userConsent` value or Promise (converting raw SSR docs
-			// with the client clock and persisting them), unless records were
-			// cleared before `start()`.
-			if (enabled && !consentSource && !clearedBeforeStart) {
+			// with the client clock and persisting them), unless that exact value
+			// was cleared by `clearRecords()`.
+			if (enabled && !consentSource) {
 				const initialUserConsent =
 					options.userConsent === undefined
 						? options.prefetch?.initialUserConsent
 						: options.userConsent;
-				if (initialUserConsent !== undefined) {
+				const isClearedValue =
+					clearedOption !== null && initialUserConsent === clearedOption.value;
+				if (initialUserConsent !== undefined && !isClearedValue) {
 					userConsentSync.apply(initialUserConsent, { initialStart: true });
 				}
 			}
-			clearedBeforeStart = false;
 			// Persistence gives a browser runtime its subject ID at startup.
 			// Without it the ID lives in memory for the page.
 			const { externalPermissions, subject } = kernel.getSnapshot();
@@ -542,6 +567,16 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			if (!enabled || consentSource) {
 				return;
 			}
+			if (
+				clearedOption !== null &&
+				value !== undefined &&
+				value !== clearedOption.value
+			) {
+				clearedOption = null;
+			}
+			if (value === null) {
+				bumpIdentityEpoch();
+			}
 			userConsentSync.apply(value);
 		},
 	};
@@ -572,15 +607,27 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 						nextUserConsent === undefined &&
 						setOptions?.pending
 					);
+		if (
+			clearedOption !== null &&
+			nextUserConsent !== undefined &&
+			nextUserConsent !== clearedOption.value
+		) {
+			clearedOption = null;
+		}
 		kernel.setUserWithPending(user, {
 			pending: nextPending,
 			userConsent: nextUserConsent,
 		});
-		if (prevExternalId !== nextExternalId) {
-			userConsentSync.onUserChanged(nextExternalId, {
-				preservePending: nextPending === true,
-			});
+		if (prevExternalId !== nextExternalId || nextUserConsent === null) {
+			bumpIdentityEpoch({ preservePending: nextPending === true });
 		}
 	};
-	return { adoptJourney: journey.adopt, releaseHold, runtime, setUser, stop };
+	return {
+		adoptJourney: journey.adopt,
+		getIdentityEpoch,
+		releaseHold,
+		runtime,
+		setUser,
+		stop,
+	};
 };
