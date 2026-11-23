@@ -34,7 +34,7 @@ import {
 	presentPreferences,
 } from '../../native/presenter';
 import type { ConsentSnapshot } from '../../protocol';
-import { InthProvider } from '../inth-provider';
+import { InthProvider } from '../../provider/inth-provider';
 import type { ConsentTrackingRequest } from '../request-sequenced-tracking';
 
 const URL = 'https://example.com/privacy';

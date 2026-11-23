@@ -10,7 +10,7 @@ import {
 	isAdditionalInformationPause,
 	MAX_TRACKING_REQUEST_TURNS,
 	mayAskPlatformAgain,
-} from '../lib/tracking-journey.model';
+} from './tracking-journey.model';
 import type {
 	TrackingAuthorization,
 	TrackingRequestPayload,

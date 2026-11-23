@@ -27,8 +27,8 @@ import {
 	presentPreferences,
 } from '../../native/presenter';
 import type { ConsentSnapshot, TrackingAuthorization } from '../../protocol';
-import { InthProvider } from '../inth-provider';
-import type { InthProviderProps } from '../inth-provider';
+import { InthProvider } from '../../provider/inth-provider';
+import type { InthProviderProps } from '../../provider/inth-provider';
 import {
 	isRepromptDue,
 	shouldRequestTracking,

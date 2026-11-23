@@ -38,7 +38,7 @@ import {
 	isPromptOwed,
 	isSnapshotReady,
 } from '../lib/consent-selectors.model';
-import { isTrackingPermitted } from '../lib/tracking-permission.model';
+import { isTrackingPermitted } from '../tracking/tracking-permission.model';
 import type {
 	ConsentClient,
 	SnapshotEquality,

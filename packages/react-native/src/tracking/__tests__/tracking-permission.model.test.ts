@@ -16,7 +16,7 @@ import { describe, expect, test } from 'vitest';
 
 import type { TrackingAuthorization } from '../../protocol';
 import { TRACKING_AUTHORIZATION_STATUSES } from '../../protocol';
-import type { ConsentDecision } from '../consent-selectors.model';
+import type { ConsentDecision } from '../../lib/consent-selectors.model';
 import { isPlatformTrackingSatisfied, isTrackingPermitted } from '../tracking-permission.model';
 
 /** Every arm, plus a value no native core may send. */

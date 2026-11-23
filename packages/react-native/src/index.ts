@@ -162,7 +162,7 @@ export {
 	isAdditionalInformationPause,
 	MAX_TRACKING_REQUEST_TURNS,
 	mayAskPlatformAgain,
-} from './lib/tracking-journey.model';
+} from './tracking/tracking-journey.model';
 export {
 	denyAllSnapshot,
 	INVALID_NATIVE_SNAPSHOT_CODE,
@@ -170,7 +170,7 @@ export {
 export {
 	isPlatformTrackingSatisfied,
 	isTrackingPermitted,
-} from './lib/tracking-permission.model';
+} from './tracking/tracking-permission.model';
 export {
 	categoryDecision,
 	isCategoryAllowed,

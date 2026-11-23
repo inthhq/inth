@@ -51,11 +51,11 @@ import {
 	setTrackingInformationHandled,
 	setTrackingReprompt,
 	syncBeforeConsentPrompt,
-} from './request-sequenced-tracking';
+} from '../tracking/request-sequenced-tracking';
 import type {
 	ConsentTrackingReprompt,
 	ConsentTrackingRequest,
-} from './request-sequenced-tracking';
+} from '../tracking/request-sequenced-tracking';
 
 /**
  * Whether the provider presents the native consent prompt by itself.

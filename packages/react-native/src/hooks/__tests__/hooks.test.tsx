@@ -41,9 +41,9 @@ import { useConsentDecision } from '../use-consent-decision';
 import { useConsentSelector } from '../use-consent-selector';
 import { useConsentStatus } from '../use-consent-status';
 import { useGPPString } from '../use-gpp-string';
-import { useIsTrackingAllowed } from '../use-is-tracking-allowed';
+import { useIsTrackingAllowed } from '../../tracking/use-is-tracking-allowed';
 import { useSnapshot } from '../use-snapshot';
-import { useTrackingAuthorization } from '../use-tracking-authorization';
+import { useTrackingAuthorization } from '../../tracking/use-tracking-authorization';
 
 /** The default permissions, with marketing granted. */
 const MARKETING_GRANTED: ConsentState = {
