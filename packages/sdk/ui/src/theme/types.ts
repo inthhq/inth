@@ -603,13 +603,21 @@ export interface UIOptions {
 	disableAnimation?: boolean;
 
 	/**
-	 * Whether to lock scroll when dialogs are open.
+	 * Locks page scroll while a modal surface other than the stock banner
+	 * and dialog is open: the IAB banner and dialog, and the opt-out and
+	 * opt-in confirmations (standalone, or hosted by the dialog). The stock
+	 * banner blocks only with `presentation.prompt.blockUntilChoice` (or a
+	 * policy that requires it); the stock dialog always blocks.
 	 * @default false
 	 */
 	scrollLock?: boolean;
 
 	/**
-	 * Whether to trap focus within dialogs.
+	 * Traps focus in a modal surface other than the stock banner and
+	 * dialog: the IAB banner and dialog, and the opt-out and opt-in
+	 * confirmations (standalone, or hosted by the dialog). The stock banner
+	 * traps focus only when it blocks (`blockUntilChoice`); the stock dialog
+	 * always does.
 	 * @default true
 	 */
 	trapFocus?: boolean;
