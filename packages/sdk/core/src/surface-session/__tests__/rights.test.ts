@@ -20,6 +20,7 @@ import { showConsentSurface } from '../../surface-actions/rules';
 import type { ConsentKernel, KernelConfig } from '../../types';
 import {
 	commitBannerChoice,
+	commitDialogChoice,
 	confirmSaleRight,
 	pressSaleRight,
 } from '../commands';
@@ -564,6 +565,48 @@ describe('[PERM-02] banner commits respect existing state', () => {
 		expect(plan.keptOff).toBe('opt-out');
 		expect(plan.categories).not.toContain('marketing');
 		expect(kernel.getSnapshot().effectivePermissions.marketing).toBe(false);
+	});
+
+	describe('[EU-01] an EU refusal is a cookie choice, not an opt-out', () => {
+		const euRule = optInRule({
+			categories: ['functionality', 'marketing', 'measurement'],
+		});
+		const refusedEU = function refusedEU(): ConsentKernel {
+			vi.spyOn(Date, 'now').mockReturnValue(NOW);
+			return createConsentKernel({
+				consentCategories: CATEGORIES,
+				initialPolicyResolution: matchedResolution(euRule),
+				initialRecords: choiceRecords(
+					{ marketing: false, measurement: false },
+					{ fingerprint: matchedResolution(euRule).fingerprints.choice }
+				),
+				now: NOW,
+				transport: { save: () => Promise.resolve({ ok: true }) },
+			});
+		};
+
+		test('Save records the category the visitor switched back on', () => {
+			const kernel = refusedEU();
+			expect(resolveSaleRight(kernel.getSnapshot()).source).toBe('user');
+			const draft = createPreferenceDraft(kernel);
+			draft.set('marketing', true);
+			const { plan } = commitDialogChoice(kernel, 'save', { draft });
+			expect(plan).toMatchObject({ categories: undefined, keptOff: null });
+			expect(kernel.getSnapshot().effectivePermissions).toMatchObject({
+				marketing: true,
+				measurement: false,
+			});
+		});
+
+		test('Accept all grants every category the visitor refused', () => {
+			const kernel = refusedEU();
+			const { plan } = commitDialogChoice(kernel, 'allow');
+			expect(plan.keptOff).toBeNull();
+			expect(kernel.getSnapshot().effectivePermissions).toMatchObject({
+				marketing: true,
+				measurement: true,
+			});
+		});
 	});
 
 	test('[GPC-03] Allow never overrides a live GPC lock', () => {
