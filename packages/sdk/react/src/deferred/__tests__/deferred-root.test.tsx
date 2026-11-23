@@ -24,7 +24,7 @@ import type { StreamedPage } from '../../__tests__/streamed-ssr-harness';
 import { CardSurface } from '../../components/prompt/card-surface';
 import { DrawerSurface } from '../../components/prompt/drawer-surface';
 import { PromptContainersContext } from '../../components/prompt/prompt';
-import { BannerSurface } from '../../components/prompt/banner-surface';
+import { BannerSurface } from '../../components/prompt/strip';
 import { useSaveConsents, useSnapshot } from '../../hooks';
 import { InthProvider } from '../../index';
 import { useScriptLoader } from '../../module-hooks/script-loader';

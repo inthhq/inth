@@ -107,7 +107,7 @@ const cardContainer = deferredContainer(
 	(module) => module.CardSurface
 );
 const bannerContainer = deferredContainer(
-	() => import('./banner-surface'),
+	() => import('./strip'),
 	(module) => module.BannerSurface
 );
 const drawerContainer = deferredContainer(

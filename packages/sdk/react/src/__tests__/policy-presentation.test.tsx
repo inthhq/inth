@@ -17,7 +17,7 @@ import { ConsentBanner } from '../components/prompt';
 import { CardSurface } from '../components/prompt/card-surface';
 import { DrawerSurface } from '../components/prompt/drawer-surface';
 import { PromptContainersContext } from '../components/prompt/prompt';
-import { BannerSurface } from '../components/prompt/banner-surface';
+import { BannerSurface } from '../components/prompt/strip';
 import { KernelContext } from '../context';
 import { ConsentDraftProvider, useConsentDraft } from '../draft';
 import { InthProvider } from '../provider';

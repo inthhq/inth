@@ -21,7 +21,7 @@ import { DRAWER_SHEETS, DrawerSurface } from './components/prompt/drawer-surface
 import { ConsentBanner } from './components/prompt/index';
 import { PromptContainersContext } from './components/prompt/prompt';
 import type { PromptContainers } from './components/prompt/prompt';
-import { BANNER_SHEETS, BannerSurface } from './components/prompt/banner-surface';
+import { BANNER_SHEETS, BannerSurface } from './components/prompt/strip';
 import { DeferredConsentShell } from './deferred/deferred-consent-shell';
 
 interface StaticSheet {
