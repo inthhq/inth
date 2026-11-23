@@ -26,7 +26,7 @@ import {
 	getNativeInthEvents,
 	hasNativeInthSurface,
 	NativeInthUnavailableError,
-} from '../module';
+} from '../get-native-inth';
 
 describe('getNativeInth', () => {
 	beforeEach(() => {

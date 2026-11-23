@@ -13,9 +13,9 @@ import {
 	GPP_NO_OPT_OUT_CATEGORIES,
 	RETIRED_ANDROID_META_KEYS,
 } from './constants';
-import { InthPluginError } from './errors';
+import { InthPluginError } from './inth-plugin-error';
 import type { ResolvedInthParams } from './params';
-import { POLICY_RESOURCE_NAME, POLICY_RULES_NAME } from './policy-resource';
+import { POLICY_RESOURCE_NAME, POLICY_RULES_NAME } from './embed-policy-resource';
 
 /** A `<meta-data>` element, as the manifest is held after `xml2js` parsing. */
 interface ManifestMetaDataEntry {

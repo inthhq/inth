@@ -9,8 +9,8 @@
  * and a nested provider all see the same record.
  */
 
-import { isProduction } from '../native/client';
-import type { ConsentClient } from '../native/client';
+import { isProduction } from '../native/create-consent-client';
+import type { ConsentClient } from '../native/create-consent-client';
 import {
 	configureNativeAutoPresent,
 	onConsentPresenterOutcome,

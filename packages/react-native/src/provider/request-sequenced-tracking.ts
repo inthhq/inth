@@ -10,15 +10,15 @@
 
 import { AppState } from 'react-native';
 
-import { isPromptOwed, isSnapshotReady } from '../lib/selectors';
-import type { ConsentDecision } from '../lib/selectors';
-import type { ConsentClient } from '../native/client';
+import { isPromptOwed, isSnapshotReady } from '../lib/consent-selectors.model';
+import type { ConsentDecision } from '../lib/consent-selectors.model';
+import type { ConsentClient } from '../native/create-consent-client';
 import { setBeforeConsentPrompt } from '../native/presenter';
 import type {
 	TrackingAuthorization,
 	TrackingRequestPayload,
 } from '../protocol';
-import { isConsentScreenBusy, onConsentScreenChange } from './auto-present';
+import { isConsentScreenBusy, onConsentScreenChange } from './configure-auto-present';
 
 /**
  * When the provider asks for App Tracking Transparency.

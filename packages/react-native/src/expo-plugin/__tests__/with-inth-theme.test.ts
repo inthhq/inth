@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createConsentTheme } from '../../components/theme/create-consent-theme';
 import type { ConsentThemeOptions } from '../../components/theme/create-consent-theme';
-import { InthPluginError } from '../errors';
+import { InthPluginError } from '../inth-plugin-error';
 import type { InthPluginProps } from '../params';
 import {
 	JS_ONLY_COLOR_NAMES,
@@ -16,8 +16,8 @@ import {
 	THEME_SLOT_FIELDS,
 	THEME_SLOTS,
 	resolveTheme,
-} from '../theme';
-import type { InthThemePluginProps } from '../theme';
+} from '../with-inth-theme';
+import type { InthThemePluginProps } from '../with-inth-theme';
 import { FIXTURE_DIR, applyToFixture, runInfoPlist, runMod } from './helpers';
 
 const NATIVE_ROOT = resolve(

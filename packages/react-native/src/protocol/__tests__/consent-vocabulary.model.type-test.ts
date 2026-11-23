@@ -43,13 +43,13 @@ import type {
 import { expectTypeOf } from 'vitest';
 
 import type { KernelCommonCopy } from '../../index';
-import type { KernelUser, NativeSavePayload } from '../commit';
-import type { NativeOverrides } from '../overrides';
+import type { KernelUser, NativeSavePayload } from '../commit-payload.model';
+import type { NativeOverrides } from '../native-overrides.model';
 import type {
 	ConsentSnapshot,
 	NativeModel,
 	PolicyResolutionFailure,
-} from '../snapshot';
+} from '../consent-snapshot.model';
 import type {
 	AllConsentNames,
 	CategoryDecision,
@@ -70,7 +70,7 @@ import type {
 	PromptReason,
 	PromptRequirement,
 	RestrictionReason,
-} from '../vocabulary';
+} from '../consent-vocabulary.model';
 
 /**
  * Write every property as mutable and non-optional-but-undefinable.

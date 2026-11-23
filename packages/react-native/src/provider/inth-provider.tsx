@@ -19,9 +19,9 @@ import type { ReactNode } from 'react';
 import { useContext, useEffect, useMemo } from 'react';
 import { AppState } from 'react-native';
 
-import { isSnapshotReady } from '../lib/selectors';
-import { getConsentClient } from '../native/client';
-import type { ConsentClient } from '../native/client';
+import { isSnapshotReady } from '../lib/consent-selectors.model';
+import { getConsentClient } from '../native/create-consent-client';
+import type { ConsentClient } from '../native/create-consent-client';
 import {
 	onConsentPresenterOutcome,
 	presentPreferences,
@@ -32,13 +32,13 @@ import {
 	configureAutoPresent,
 	linksNativeUI,
 	recordConsentPresenter,
-} from './auto-present';
-import { ConsentClientContext } from './consent-context';
+} from './configure-auto-present';
+import { ConsentClientContext } from './consent-client-context';
 import {
 	ConsentSafeAreaContext,
 	useConsentSafeAreaInsets,
-} from './safe-area-context';
-import type { ConsentSafeAreaInsets } from './safe-area-context';
+} from './consent-safe-area-context';
+import type { ConsentSafeAreaInsets } from './consent-safe-area-context';
 import {
 	cancelSequence,
 	checkTrackingAtLaunch,
@@ -51,11 +51,11 @@ import {
 	setTrackingInformationHandled,
 	setTrackingReprompt,
 	syncBeforeConsentPrompt,
-} from './tracking-sequence';
+} from './request-sequenced-tracking';
 import type {
 	ConsentTrackingReprompt,
 	ConsentTrackingRequest,
-} from './tracking-sequence';
+} from './request-sequenced-tracking';
 
 /**
  * Whether the provider presents the native consent prompt by itself.

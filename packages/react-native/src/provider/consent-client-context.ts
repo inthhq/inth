@@ -9,7 +9,7 @@
 
 import { createContext, useContext } from 'react';
 
-import type { ConsentClient } from '../native/client';
+import type { ConsentClient } from '../native/create-consent-client';
 
 /**
  * Context holding the app's {@link ConsentClient}, or `null` outside a

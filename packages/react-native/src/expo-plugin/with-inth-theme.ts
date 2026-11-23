@@ -18,7 +18,7 @@ import {
 	withAndroidManifest,
 	withInfoPlist,
 } from './config-plugins';
-import { InthPluginError } from './errors';
+import { InthPluginError } from './inth-plugin-error';
 
 /**
  * Colour fields of the `theme` prop that the native consent screens draw.

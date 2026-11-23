@@ -18,7 +18,7 @@ import {
 	describeSnapshotWireDrift,
 	KERNEL_OWNED_KEYS,
 	SNAPSHOT_KEYS,
-} from '../wire-shape';
+} from '../snapshot-wire-shape.model';
 
 const FIXTURE_DIR = resolve(
 	dirname(fileURLToPath(import.meta.url)),

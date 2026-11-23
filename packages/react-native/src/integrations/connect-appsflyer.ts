@@ -1,9 +1,9 @@
-import { connectTrackingAndAds, settleAll } from './consent-integration';
+import { connectTrackingAndAds, settleAll } from './connect-consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
-} from './consent-integration';
-import type { GoogleAdsConsent } from './google-consent-mode';
+} from './connect-consent-integration';
+import type { GoogleAdsConsent } from './google-consent-mode.model';
 
 /** The AppsFlyer functions supplied by the app. No vendor dependency is loaded. */
 export interface AppsFlyerClient {

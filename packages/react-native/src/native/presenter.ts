@@ -1,4 +1,4 @@
-import { getNativeInth, getNativeInthEvents } from './module';
+import { getNativeInth, getNativeInthEvents } from './get-native-inth';
 
 /** What an open native session shows: the owed prompt or standing settings. */
 export type ConsentPresenterPresentation = 'prompt' | 'preferences';

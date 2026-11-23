@@ -5,7 +5,7 @@
 import { useMemo } from 'react';
 
 import type { BootstrapPayload } from '../protocol';
-import { useConsentClient } from '../provider/consent-context';
+import { useConsentClient } from '../provider/consent-client-context';
 
 /**
  * The payload `getBootstrap()` reported once at mount.

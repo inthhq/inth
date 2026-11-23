@@ -18,9 +18,9 @@ import {
 	renderTree,
 } from '../../__tests__/helpers/fake-native';
 import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
-import { resetConsentClient } from '../../native/client';
+import { resetConsentClient } from '../../native/create-consent-client';
 import { InthProvider } from '../../provider/inth-provider';
-import { normalizeWebViewOrigin, parseWebViewConsent } from '../payload';
+import { normalizeWebViewOrigin, parseWebViewConsent } from '../webview-payload.model';
 import { DOCUMENT_START_SCRIPT, UPDATE_SCRIPT } from '../scripts.generated';
 import { useWebViewConsent } from '../use-webview-consent';
 import type {

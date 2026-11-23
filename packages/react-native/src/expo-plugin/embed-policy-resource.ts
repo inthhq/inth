@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
-import { InthPluginError } from './errors';
+import { InthPluginError } from './inth-plugin-error';
 import { gvlEntryProblem } from './gvl-fields';
 
 /** The native readers use a fixed filename inside the app's resources/assets. */

@@ -1,4 +1,4 @@
-import type { AllConsentNames } from '../protocol/vocabulary';
+import type { AllConsentNames } from '../protocol/consent-vocabulary.model';
 
 /**
  * Every Google Consent Mode v2 consent type, in Google's documented order.

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 
-import { InthPluginError } from './errors';
+import { InthPluginError } from './inth-plugin-error';
 
 /** Release builds fail when the manifest fetch fails; debug builds warn and continue. */
 export type ManifestBuild = 'release' | 'debug';

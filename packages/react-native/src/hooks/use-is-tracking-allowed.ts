@@ -4,8 +4,8 @@
 
 import { useCallback, useSyncExternalStore } from 'react';
 
-import type { AllConsentNames } from '../protocol/vocabulary';
-import { useConsentClient } from '../provider/consent-context';
+import type { AllConsentNames } from '../protocol/consent-vocabulary.model';
+import { useConsentClient } from '../provider/consent-client-context';
 
 /**
  * Whether tracking behaviour may run for one category.

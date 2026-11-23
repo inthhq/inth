@@ -15,7 +15,7 @@
  */
 
 import type { TrackingAuthorization } from '../protocol';
-import type { ConsentDecision } from './selectors';
+import type { ConsentDecision } from './consent-selectors.model';
 
 /**
  * Whether the platform half of a tracking gate is satisfied.

@@ -30,7 +30,7 @@ import { ConsentIabDrawer } from '../consent-iab-drawer';
 import type {
 	ConsentIabDisplayModel,
 	ConsentIabSelection,
-} from '../iab-display-model';
+} from '../iab-display.model';
 import { defaultConsentTheme } from '../theme/create-consent-theme';
 import type { SurfaceTree } from './harness';
 import { mountSurface, nodeStyle, roleNodes, tap } from './harness';

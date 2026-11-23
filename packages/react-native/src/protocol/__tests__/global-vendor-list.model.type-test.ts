@@ -26,7 +26,7 @@ import type {
 import { expectTypeOf } from 'vitest';
 
 import type { GlobalVendorList, GVLVendor, NativeIABState } from '../index';
-import type { ConsentSnapshot } from '../snapshot';
+import type { ConsentSnapshot } from '../consent-snapshot.model';
 
 /**
  * The kernel's view of one vendor entry.

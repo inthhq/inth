@@ -9,7 +9,7 @@
  * goes back to a first launch, and the presenter opens and closes sessions.
  */
 
-import type { NativeInthTurboModule } from '../native/module';
+import type { NativeInthTurboModule } from '../native/get-native-inth';
 import type { NativeAutoPresentSettings } from '../native/presenter';
 import type {
 	CommitIntent,
@@ -23,8 +23,8 @@ import type {
 	CategoryDecision,
 	ExplicitChoice,
 	OptionalConsentCategory,
-} from '../protocol/vocabulary';
-import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/vocabulary';
+} from '../protocol/consent-vocabulary.model';
+import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/consent-vocabulary.model';
 import { isPrivacyPolicyUrl } from '../provider/privacy-policy-url';
 
 /** The handshake a current native build reports. */

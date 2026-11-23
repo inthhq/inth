@@ -20,7 +20,7 @@ import {
 	isStatusPromptOwed,
 	selectConsentStatus,
 	shallowEqual,
-} from '../selectors';
+} from '../consent-selectors.model';
 
 describe('isCategoryAllowed', () => {
 	test('always allows necessary', () => {

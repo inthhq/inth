@@ -1,8 +1,8 @@
-import { connectConsentIntegration } from './consent-integration';
+import { connectConsentIntegration } from './connect-consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
-} from './consent-integration';
+} from './connect-consent-integration';
 
 /** The Amplitude function supplied by the app. No vendor dependency is loaded. */
 export interface AmplitudeClient {

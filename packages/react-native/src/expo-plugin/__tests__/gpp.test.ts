@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { AndroidConfig } from 'expo/config-plugins';
 import { describe, expect, it } from 'vitest';
 
-import { applyAndroidManifest } from '../android';
+import { applyAndroidManifest } from '../apply-android-manifest';
 import {
 	ANDROID_GPP_META_KEYS,
 	ANDROID_META,
@@ -11,8 +11,8 @@ import {
 	IOS_GPP_PLIST_KEYS,
 	IOS_PLIST_KEY,
 } from '../constants';
-import { InthPluginError } from '../errors';
-import { applyInfoPlist } from '../ios';
+import { InthPluginError } from '../inth-plugin-error';
+import { applyInfoPlist } from '../apply-info-plist';
 import { resolveParams } from '../params';
 import { FIXTURE_DIR } from './helpers';
 

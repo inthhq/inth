@@ -12,13 +12,13 @@ import {
 	manifestArguments,
 	manifestBuild,
 	resolveCli,
-} from '../bundle-manifest';
+} from '../fetch-bundled-manifest';
 import { resolveParams } from '../params';
 import {
 	embedPolicyResource,
 	POLICY_RESOURCE_NAME,
 	removeXcodeResource,
-} from '../policy-resource';
+} from '../embed-policy-resource';
 import { applyToFixture, FIXTURE_DIR, runMod } from './helpers';
 
 const projectUrl = 'https://acme.inth.app';

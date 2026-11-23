@@ -22,19 +22,19 @@ import {
 	nativeListenerCount,
 	resetNativeStub,
 } from '../../__tests__/helpers/react-native-stub';
-import { shallowEqual } from '../../lib/selectors';
+import { shallowEqual } from '../../lib/consent-selectors.model';
 import { TRACKING_AUTHORIZATION_STATUSES } from '../../protocol';
 import type { ConsentSnapshot } from '../../protocol';
-import { NativeBridgeError } from '../bridge-error';
+import { NativeBridgeError } from '../native-bridge-error';
 import {
 	createConsentClient,
 	getConsentClient,
 	resetConsentClient,
-} from '../client';
-import type { ConsentClient } from '../client';
-import { getNativeInthEvents } from '../module';
-import type { NativeInthTurboModule } from '../module';
-import { InthProtocolMismatchError } from '../protocol-mismatch-error';
+} from '../create-consent-client';
+import type { ConsentClient } from '../create-consent-client';
+import { getNativeInthEvents } from '../get-native-inth';
+import type { NativeInthTurboModule } from '../get-native-inth';
+import { InthProtocolMismatchError } from '../inth-protocol-mismatch-error';
 
 /** Build a client over a fresh fake module. */
 const makeClient = function makeClient(

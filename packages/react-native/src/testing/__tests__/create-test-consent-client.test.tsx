@@ -14,15 +14,15 @@ import { useConsent } from '../../hooks/use-consent';
 import { useSaveConsents } from '../../hooks/use-consent-actions';
 import type { SaveConsentsInput } from '../../hooks/use-consent-actions';
 import { useConsentDecision } from '../../hooks/use-consent-decision';
-import { getConsentClient, resetConsentClient } from '../../native/client';
-import { getNativeInth, NativeInthUnavailableError } from '../../native/module';
+import { getConsentClient, resetConsentClient } from '../../native/create-consent-client';
+import { getNativeInth, NativeInthUnavailableError } from '../../native/get-native-inth';
 import {
 	onConsentPresenterOutcome,
 	presentConsentPrompt,
 	presentPreferences,
 } from '../../native/presenter';
 import type { ConsentPresenterOutcome } from '../../native/presenter';
-import { isConsentScreenBusy } from '../../provider/auto-present';
+import { isConsentScreenBusy } from '../../provider/configure-auto-present';
 import { InthProvider } from '../../provider/inth-provider';
 import { createTestConsentClient } from '../index';
 import type { TestConsentClient } from '../index';

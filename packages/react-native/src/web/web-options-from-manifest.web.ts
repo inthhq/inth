@@ -5,7 +5,7 @@
  * into the native binary, so a universal app configures Inth once.
  */
 
-import type { AllConsentNames } from '../protocol/vocabulary';
+import type { AllConsentNames } from '../protocol/consent-vocabulary.model';
 
 /**
  * The web engine's configuration: the values the Expo config plugin writes to

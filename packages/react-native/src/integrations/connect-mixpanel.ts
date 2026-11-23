@@ -1,8 +1,8 @@
-import { connectConsentIntegration } from './consent-integration';
+import { connectConsentIntegration } from './connect-consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
-} from './consent-integration';
+} from './connect-consent-integration';
 
 /** App-owned Mixpanel client. No Mixpanel dependency is loaded by Inth. */
 export interface MixpanelClient {

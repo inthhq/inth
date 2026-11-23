@@ -1,13 +1,13 @@
-import { isCategoryAllowed } from '../lib/selectors';
-import { getConsentClient } from '../native/client';
-import type { ConsentClient } from '../native/client';
-import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/vocabulary';
+import { isCategoryAllowed } from '../lib/consent-selectors.model';
+import { getConsentClient } from '../native/create-consent-client';
+import type { ConsentClient } from '../native/create-consent-client';
+import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/consent-vocabulary.model';
 import type {
 	AllConsentNames,
 	OptionalConsentCategory,
-} from '../protocol/vocabulary';
-import { resolveGoogleAdsConsent } from './google-consent-mode';
-import type { GoogleAdsConsent } from './google-consent-mode';
+} from '../protocol/consent-vocabulary.model';
+import { resolveGoogleAdsConsent } from './google-consent-mode.model';
+import type { GoogleAdsConsent } from './google-consent-mode.model';
 
 /** An app-owned connection between native consent and one vendor SDK. */
 export interface ConsentIntegration {

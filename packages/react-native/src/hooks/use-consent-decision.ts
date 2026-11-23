@@ -4,10 +4,10 @@
 
 import { useCallback } from 'react';
 
-import type { ConsentDecision } from '../lib/selectors';
-import { categoryDecision } from '../lib/selectors';
+import type { ConsentDecision } from '../lib/consent-selectors.model';
+import { categoryDecision } from '../lib/consent-selectors.model';
 import type { ConsentSnapshot } from '../protocol';
-import type { AllConsentNames } from '../protocol/vocabulary';
+import type { AllConsentNames } from '../protocol/consent-vocabulary.model';
 import { useConsentSelector } from './use-consent-selector';
 
 /**

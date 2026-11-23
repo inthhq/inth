@@ -6,17 +6,17 @@ import { join, resolve } from 'node:path';
 import { AndroidConfig } from 'expo/config-plugins';
 import { describe, expect, it } from 'vitest';
 
-import { applyAndroidManifest } from '../android';
+import { applyAndroidManifest } from '../apply-android-manifest';
 import { ANDROID_META, IOS_PLIST_KEY } from '../constants';
-import { InthPluginError } from '../errors';
-import { applyInfoPlist } from '../ios';
+import { InthPluginError } from '../inth-plugin-error';
+import { applyInfoPlist } from '../apply-info-plist';
 import { resolveParams } from '../params';
 import type { InCodePolicyRule } from '../params';
 import {
 	androidPolicyRulesDestination,
 	POLICY_RULES_NAME,
 	writePolicyRules,
-} from '../policy-resource';
+} from '../embed-policy-resource';
 import { FIXTURE_DIR, WITH_POLICY, IN_CODE_POLICY } from './helpers';
 
 const BACKEND = 'https://acme.inth.app';

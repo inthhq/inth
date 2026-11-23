@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 import type { ConsentActions } from '../hooks/use-consent-actions';
 import { useConsentActions } from '../hooks/use-consent-actions';
 import { useConsentStatus } from '../hooks/use-consent-status';
-import type { ConsentStatus } from '../lib/selectors';
+import type { ConsentStatus } from '../lib/consent-selectors.model';
 
 /**
  * What the readiness gate hands its children.

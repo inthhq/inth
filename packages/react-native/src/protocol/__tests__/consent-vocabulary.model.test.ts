@@ -38,7 +38,7 @@ import {
 	POLICY_MODELS,
 	PROMPT_REASONS,
 	RESTRICTION_REASONS,
-} from '../vocabulary';
+} from '../consent-vocabulary.model';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 

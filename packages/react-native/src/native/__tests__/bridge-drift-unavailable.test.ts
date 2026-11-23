@@ -7,7 +7,7 @@
 
 import { expect, test, vi } from 'vitest';
 
-import { reportBridgeDrift } from '../client';
+import { reportBridgeDrift } from '../create-consent-client';
 
 test('a drift checker that cannot load is skipped, not a rejection', async () => {
 	const refused = Promise.reject(

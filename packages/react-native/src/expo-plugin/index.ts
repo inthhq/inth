@@ -41,7 +41,7 @@ export default withInthOnce;
 
 export { withInth } from './with-inth';
 export { applyParamsOnConfig, type InthExtraConfig } from './with-inth';
-export { InthPluginError } from './errors';
+export { InthPluginError } from './inth-plugin-error';
 export type {
 	InthGppMspaMode,
 	InthGppPluginProps,
@@ -58,11 +58,11 @@ export {
 	ProjectUrlError,
 } from './project-url';
 export type { ProjectUrlOptions, ProjectUrlReason } from './project-url';
-export type { WorkflowContext } from './workflow';
+export type { WorkflowContext } from './assert-custom-native-build';
 
-export type { InthAndroidMavenRepository } from './maven';
+export type { InthAndroidMavenRepository } from './resolve-android-maven-repository';
 export type {
 	InthThemeColorName,
 	InthThemeColors,
 	InthThemePluginProps,
-} from './theme';
+} from './with-inth-theme';

@@ -4,25 +4,25 @@ import {
 	createConsentClient,
 	resetConsentClient,
 	setConsentClient,
-} from '../native/client';
-import type { ConsentClient } from '../native/client';
-import { installNativeInth } from '../native/module';
-import type { NativeEventsLike } from '../native/module';
+} from '../native/create-consent-client';
+import type { ConsentClient } from '../native/create-consent-client';
+import { installNativeInth } from '../native/get-native-inth';
+import type { NativeEventsLike } from '../native/get-native-inth';
 import type {
 	CommitIntent,
 	ConsentSnapshot,
 	TrackingAuthorization,
 } from '../protocol';
-import type { OptionalConsentCategory } from '../protocol/vocabulary';
-import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/vocabulary';
-import { releaseConsentPresenter } from '../provider/auto-present';
+import type { OptionalConsentCategory } from '../protocol/consent-vocabulary.model';
+import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/consent-vocabulary.model';
+import { releaseConsentPresenter } from '../provider/configure-auto-present';
 import {
 	buildFakeSnapshot,
 	createFakeNativeInth,
 	FAKE_BOOTSTRAP,
 	FAKE_EVALUATED_AT,
 	withExplicitChoice,
-} from './fake-native-inth';
+} from './create-fake-native-inth';
 
 /**
  * The consent a test starts from, or moves to.

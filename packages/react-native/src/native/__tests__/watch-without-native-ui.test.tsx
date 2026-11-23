@@ -16,11 +16,11 @@ import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
 import { ConsentPrompt } from '../../headless/consent-prompt';
 import type { ConsentSnapshot } from '../../protocol';
 import { InthProvider } from '../../provider/inth-provider';
-import { getConsentClient, resetConsentClient } from '../client';
+import { getConsentClient, resetConsentClient } from '../create-consent-client';
 import {
 	UNCLAIMED_PROMPT_MS,
 	watchWithoutNativeUI,
-} from '../without-native-ui';
+} from '../watch-without-native-ui';
 
 const WITHOUT_UI = { ...FAKE_BOOTSTRAP, nativeUI: false };
 

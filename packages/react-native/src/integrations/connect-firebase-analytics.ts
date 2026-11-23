@@ -1,9 +1,9 @@
-import { connectConsentState, settleAll } from './consent-integration';
+import { connectConsentState, settleAll } from './connect-consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
-} from './consent-integration';
-import { resolveGoogleConsentMode } from './google-consent-mode';
+} from './connect-consent-integration';
+import { resolveGoogleConsentMode } from './google-consent-mode.model';
 
 /**
  * The four Consent Mode v2 types Firebase Analytics takes, each driven by

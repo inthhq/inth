@@ -8,10 +8,10 @@ import type { ReactNode } from 'react';
 import type { ConsentActions } from '../hooks/use-consent-actions';
 import { useConsentActions } from '../hooks/use-consent-actions';
 import { useConsentStatus } from '../hooks/use-consent-status';
-import { isStatusPromptOwed } from '../lib/selectors';
-import { claimPrompt } from '../native/without-native-ui';
-import type { KernelActiveUI, PromptRequirement } from '../protocol/vocabulary';
-import { useConsentClient } from '../provider/consent-context';
+import { isStatusPromptOwed } from '../lib/consent-selectors.model';
+import { claimPrompt } from '../native/watch-without-native-ui';
+import type { KernelActiveUI, PromptRequirement } from '../protocol/consent-vocabulary.model';
+import { useConsentClient } from '../provider/consent-client-context';
 
 /**
  * What the prompt slot hands its children.

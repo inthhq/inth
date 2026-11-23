@@ -37,14 +37,14 @@ import {
 	isCategoryAllowed,
 	isPromptOwed,
 	isSnapshotReady,
-} from '../lib/selectors';
-import { isTrackingPermitted } from '../lib/tracking';
+} from '../lib/consent-selectors.model';
+import { isTrackingPermitted } from '../lib/tracking-permission.model';
 import type {
 	ConsentClient,
 	SnapshotEquality,
 	SnapshotSelector,
-} from '../native/client';
-import { watchWithoutNativeUI } from '../native/without-native-ui';
+} from '../native/create-consent-client';
+import { watchWithoutNativeUI } from '../native/watch-without-native-ui';
 import type {
 	BootstrapPayload,
 	CommitIntent,
@@ -54,18 +54,18 @@ import type {
 	TrackingAuthorization,
 	TrackingRequestPayload,
 } from '../protocol';
-import { DEFAULT_NATIVE_LANGUAGE } from '../protocol/overrides';
+import { DEFAULT_NATIVE_LANGUAGE } from '../protocol/native-overrides.model';
 import {
 	MAX_SUPPORTED_PROTOCOL_VERSION,
 	MIN_SUPPORTED_PROTOCOL_VERSION,
 	PROTOCOL_VERSION,
-} from '../protocol/version';
+} from '../protocol/protocol-version.model';
 import type {
 	AllConsentNames,
 	OptionalConsentCategory,
-} from '../protocol/vocabulary';
-import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/vocabulary';
-import type { WebConsentOptions } from './expo-extra.web';
+} from '../protocol/consent-vocabulary.model';
+import { OPTIONAL_CONSENT_CATEGORIES } from '../protocol/consent-vocabulary.model';
+import type { WebConsentOptions } from './web-options-from-manifest.web';
 
 /**
  * Whether this is a production bundle.

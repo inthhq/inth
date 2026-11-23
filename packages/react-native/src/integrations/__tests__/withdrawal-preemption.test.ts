@@ -5,7 +5,7 @@ import {
 	createFakeNativeModule,
 } from '../../__tests__/helpers/fake-native';
 import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
-import { resetConsentClient } from '../../native/client';
+import { resetConsentClient } from '../../native/create-consent-client';
 import type { ConsentSnapshot } from '../../protocol';
 import {
 	connectAdjust,

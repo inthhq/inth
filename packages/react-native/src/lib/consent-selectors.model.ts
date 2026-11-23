@@ -14,7 +14,7 @@ import type {
 	AllConsentNames,
 	KernelActiveUI,
 	PromptRequirement,
-} from '../protocol/vocabulary';
+} from '../protocol/consent-vocabulary.model';
 
 /**
  * The lifecycle slice a gate needs before it trusts a permission.

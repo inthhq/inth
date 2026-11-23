@@ -15,7 +15,7 @@ import {
 	uiState,
 } from '../../__tests__/helpers/react-native-stub';
 import { useConsentStatus } from '../../hooks/use-consent-status';
-import { resetConsentClient } from '../../native/client';
+import { resetConsentClient } from '../../native/create-consent-client';
 import { ConsentDialog } from '../consent-dialog';
 import { ConsentPreferences } from '../consent-preferences';
 import {

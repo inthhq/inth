@@ -19,9 +19,9 @@ import {
 	IOS_PLIST_KEY,
 	RETIRED_IOS_PLIST_KEYS,
 } from './constants';
-import { InthPluginError } from './errors';
+import { InthPluginError } from './inth-plugin-error';
 import type { ResolvedInthParams } from './params';
-import { POLICY_RESOURCE_NAME, POLICY_RULES_NAME } from './policy-resource';
+import { POLICY_RESOURCE_NAME, POLICY_RULES_NAME } from './embed-policy-resource';
 
 const minimumDeploymentTarget = (
 	value: string | undefined,

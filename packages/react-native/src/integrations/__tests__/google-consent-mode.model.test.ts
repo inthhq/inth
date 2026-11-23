@@ -4,12 +4,12 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import type { AllConsentNames } from '../../protocol/vocabulary';
+import type { AllConsentNames } from '../../protocol/consent-vocabulary.model';
 import {
 	GOOGLE_CONSENT_MODE_CATEGORIES,
 	GOOGLE_CONSENT_TYPES,
 	resolveGoogleConsentMode,
-} from '../google-consent-mode';
+} from '../google-consent-mode.model';
 
 /**
  * The web's Consent Mode v2 mapping, through

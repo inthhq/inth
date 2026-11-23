@@ -19,13 +19,13 @@ import {
 	denyAllSnapshot,
 	INVALID_NATIVE_SNAPSHOT_CODE,
 } from '../lib/deny-all-snapshot';
-import type { ConsentDecision } from '../lib/selectors';
+import type { ConsentDecision } from '../lib/consent-selectors.model';
 import {
 	categoryDecision,
 	isCategoryAllowed,
 	isSnapshotReady,
-} from '../lib/selectors';
-import { isTrackingPermitted } from '../lib/tracking';
+} from '../lib/consent-selectors.model';
+import { isTrackingPermitted } from '../lib/tracking-permission.model';
 import {
 	describeSnapshotWireDrift,
 	isProtocolVersionSupported,
@@ -48,23 +48,23 @@ import type {
 } from '../protocol';
 import type * as BridgeSchema from '../protocol/bridge-schema';
 import type { BridgePayloadName } from '../protocol/bridge-schema';
-import type { AllConsentNames } from '../protocol/vocabulary';
-import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
+import type { AllConsentNames } from '../protocol/consent-vocabulary.model';
+import { CONSENT_CATEGORIES } from '../protocol/consent-vocabulary.model';
 import {
 	ADDITIVE_BOOTSTRAP_DEFAULTS,
 	withAdditiveIABDefaults,
-} from '../protocol/wire-shape';
-import { parseWebViewConsent } from '../webview/payload';
-import type { WebViewConsentPayload } from '../webview/payload';
-import { NativeBridgeError } from './bridge-error';
-import { getNativeInth, getNativeInthEvents } from './module';
+} from '../protocol/snapshot-wire-shape.model';
+import { parseWebViewConsent } from '../webview/webview-payload.model';
+import type { WebViewConsentPayload } from '../webview/webview-payload.model';
+import { NativeBridgeError } from './native-bridge-error';
+import { getNativeInth, getNativeInthEvents } from './get-native-inth';
 import type {
 	NativeInthTurboModule,
 	NativeEventSubscription,
 	NativeEventsLike,
-} from './module';
-import { InthProtocolMismatchError } from './protocol-mismatch-error';
-import { watchWithoutNativeUI } from './without-native-ui';
+} from './get-native-inth';
+import { InthProtocolMismatchError } from './inth-protocol-mismatch-error';
+import { watchWithoutNativeUI } from './watch-without-native-ui';
 
 /**
  * Read one field out of a snapshot.

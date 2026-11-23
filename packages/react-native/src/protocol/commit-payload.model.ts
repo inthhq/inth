@@ -10,7 +10,7 @@ import type {
 	KernelActiveUI,
 	KernelModel,
 	OptionalConsentCategory,
-} from './vocabulary';
+} from './consent-vocabulary.model';
 
 /**
  * A consent action forwarded to the native core.

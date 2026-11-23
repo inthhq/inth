@@ -14,9 +14,9 @@ import type { ConsentSnapshot } from '../../protocol';
 import type {
 	AllConsentNames,
 	OptionalConsentCategory,
-} from '../../protocol/vocabulary';
-import { OPTIONAL_CONSENT_CATEGORIES } from '../../protocol/vocabulary';
-import { resolveConsentCopy } from './copy';
+} from '../../protocol/consent-vocabulary.model';
+import { OPTIONAL_CONSENT_CATEGORIES } from '../../protocol/consent-vocabulary.model';
+import { resolveConsentCopy } from './consent-copy.model';
 
 /** One row in a category list. */
 export interface ConsentCategoryRow {

@@ -13,9 +13,9 @@
  * where the configuration comes from.
  */
 
-import { createWebConsentClient } from '../web/consent-client.web';
-import { webOptionsFromManifest } from '../web/expo-extra.web';
-import type { ConsentClient } from './client.js';
+import { createWebConsentClient } from '../web/create-web-consent-client.web';
+import { webOptionsFromManifest } from '../web/web-options-from-manifest.web';
+import type { ConsentClient } from './create-consent-client.js';
 
 // The native module by its exact name: the pure parts are shared, and the
 // extension keeps a web bundler from resolving the import back to this file.
@@ -23,12 +23,12 @@ export {
 	createConsentClient,
 	isProduction,
 	reportBridgeDrift,
-} from './client.js';
+} from './create-consent-client.js';
 export type {
 	ConsentClient,
 	SnapshotEquality,
 	SnapshotSelector,
-} from './client.js';
+} from './create-consent-client.js';
 
 /** The one client for the page, or `null` before the first provider. */
 let client: ConsentClient | null = null;

@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	applyGoogleConsentDefaultsToApplication,
 	applyGoogleConsentDefaultsToInfoPlist,
-} from '../google-consent-mode';
+} from '../google-consent-defaults.model';
 import {
 	GOOGLE_CONSENT_META_DATA,
 	GOOGLE_CONSENT_PLIST_DEFAULTS,

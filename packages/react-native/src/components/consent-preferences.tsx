@@ -13,7 +13,7 @@ import { Text, View } from 'react-native';
 
 import { useSaveConsents } from '../hooks/use-consent-actions';
 import { useConsentSelector } from '../hooks/use-consent-selector';
-import { ConsentBrandingTag } from './internal/branding-tag';
+import { ConsentBrandingTag } from './internal/consent-branding-tag';
 import {
 	isConsentCategoryRowsEqual,
 	selectConsentCategoryRows,
@@ -32,8 +32,8 @@ import {
 	ConsentSurfaceTitle,
 	useConsentSurfaceFrame,
 } from './internal/consent-surface';
-import { isConsentCopyEqual, selectConsentCopy } from './internal/copy';
-import type { ConsentCopy } from './internal/copy';
+import { isConsentCopyEqual, selectConsentCopy } from './internal/consent-copy.model';
+import type { ConsentCopy } from './internal/consent-copy.model';
 import { useAnnounceOnOpen } from './internal/use-announce-on-open';
 import type { ConsentPartStyles } from './theme/consent-theme-parts';
 import type { ConsentTheme } from './theme/create-consent-theme';

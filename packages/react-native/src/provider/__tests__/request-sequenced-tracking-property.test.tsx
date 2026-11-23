@@ -28,14 +28,14 @@ import {
 	resetNativeStub,
 	setAppState,
 } from '../../__tests__/helpers/react-native-stub';
-import { resetConsentClient } from '../../native/client';
+import { resetConsentClient } from '../../native/create-consent-client';
 import {
 	presentConsentPrompt,
 	presentPreferences,
 } from '../../native/presenter';
 import type { ConsentSnapshot } from '../../protocol';
 import { InthProvider } from '../inth-provider';
-import type { ConsentTrackingRequest } from '../tracking-sequence';
+import type { ConsentTrackingRequest } from '../request-sequenced-tracking';
 
 const URL = 'https://example.com/privacy';
 const MODES: readonly ConsentTrackingRequest[] = [

@@ -12,7 +12,7 @@ import type { ConsentSnapshot } from '../../protocol';
 import type {
 	AllConsentNames,
 	KernelTranslations,
-} from '../../protocol/vocabulary';
+} from '../../protocol/consent-vocabulary.model';
 
 /** Title and description pair for one consent category. */
 export interface ConsentCategoryCopy {

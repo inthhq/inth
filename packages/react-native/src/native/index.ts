@@ -6,25 +6,25 @@
  * the same client the provider uses.
  */
 
-export { createConsentClient, getConsentClient } from './client';
+export { createConsentClient, getConsentClient } from './create-consent-client';
 export type {
 	ConsentClient,
 	SnapshotEquality,
 	SnapshotSelector,
-} from './client';
-export { NativeBridgeError } from './bridge-error';
-export { InthProtocolMismatchError } from './protocol-mismatch-error';
+} from './create-consent-client';
+export { NativeBridgeError } from './native-bridge-error';
+export { InthProtocolMismatchError } from './inth-protocol-mismatch-error';
 export {
 	getNativeInth,
 	getNativeInthEvents,
 	hasNativeInthSurface,
 	NativeInthUnavailableError,
-} from './module';
+} from './get-native-inth';
 export type {
 	NativeInthTurboModule,
 	NativeEventSubscription,
 	NativeEventsLike,
-} from './module';
+} from './get-native-inth';
 export {
 	closeConsentPresenter,
 	onConsentPresenterOutcome,

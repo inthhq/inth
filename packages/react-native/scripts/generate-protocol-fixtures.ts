@@ -120,12 +120,12 @@ import type {
 	SavePayload,
 } from '@inth/sdk/engine';
 
-import type { CommitIntent } from '../src/protocol/commit';
-import { DEFAULT_NATIVE_LANGUAGE } from '../src/protocol/overrides';
+import type { CommitIntent } from '../src/protocol/commit-payload.model';
+import { DEFAULT_NATIVE_LANGUAGE } from '../src/protocol/native-overrides.model';
 import {
 	isProtocolVersionSupported,
 	PROTOCOL_VERSION,
-} from '../src/protocol/version';
+} from '../src/protocol/protocol-version.model';
 import {
 	buildSubjectPostBody,
 	isValidSubjectId,

@@ -1,9 +1,9 @@
-import { connectTrackingAndAds } from './consent-integration';
+import { connectTrackingAndAds } from './connect-consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
-} from './consent-integration';
-import type { GoogleAdsConsent } from './google-consent-mode';
+} from './connect-consent-integration';
+import type { GoogleAdsConsent } from './google-consent-mode.model';
 
 /** The Adjust functions supplied by the app. No vendor dependency is loaded. */
 export interface AdjustClient {

@@ -1,8 +1,8 @@
-import { connectConsentIntegration, settleAll } from './consent-integration';
+import { connectConsentIntegration, settleAll } from './connect-consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
-} from './consent-integration';
+} from './connect-consent-integration';
 
 /** The Meta SDK functions supplied by the app. No vendor dependency is loaded. */
 export interface MetaAppEventsClient {

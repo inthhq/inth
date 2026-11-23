@@ -5,7 +5,7 @@
  * and an IAB configuration no custom screen can disclose.
  */
 
-import { isStatusPromptOwed, selectConsentStatus } from '../lib/selectors';
+import { isStatusPromptOwed, selectConsentStatus } from '../lib/consent-selectors.model';
 import type { ConsentSnapshot } from '../protocol';
 
 /** How long an owed prompt may go unclaimed before a development build warns. */

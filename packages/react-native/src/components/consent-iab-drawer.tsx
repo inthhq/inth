@@ -37,7 +37,7 @@ import type {
 	ConsentIabProcessedVendor,
 	ConsentIabSelection,
 	ConsentIabTab,
-} from './iab-display-model';
+} from './iab-display.model';
 import {
 	CONSENT_BUTTON_ROW_ITEM,
 	ConsentButton,
@@ -53,8 +53,8 @@ import {
 import type {
 	ConsentIabCopy,
 	ConsentIabCopyOverrides,
-} from './internal/iab-copy';
-import { resolveIabCopy, withTotal } from './internal/iab-copy';
+} from './internal/iab-copy.model';
+import { resolveIabCopy, withTotal } from './internal/iab-copy.model';
 import {
 	ConsentIabFeatureSection,
 	ConsentIabLockedSection,
@@ -149,7 +149,7 @@ export type ConsentIabInitialSelection = Partial<ConsentIabSelection>;
 export type {
 	ConsentIabCopy,
 	ConsentIabCopyOverrides,
-} from './internal/iab-copy';
+} from './internal/iab-copy.model';
 
 /**
  * The complete set of decisions the disclosure can express, seeded from what the

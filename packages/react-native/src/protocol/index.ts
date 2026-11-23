@@ -9,15 +9,15 @@
  * kernel, and is checked against that kernel by the vocabulary tests.
  */
 
-export type { BootstrapPayload } from './bootstrap';
+export type { BootstrapPayload } from './bootstrap-payload.model';
 export type {
 	CommitFailureReason,
 	CommitIntent,
 	NativeIABChoices,
 	CommitResult,
 	NativeSavePayload,
-} from './commit';
-export { COMMIT_FAILURE_REASONS } from './commit';
+} from './commit-payload.model';
+export { COMMIT_FAILURE_REASONS } from './commit-payload.model';
 export type {
 	GlobalVendorList,
 	GVLDataCategory,
@@ -30,10 +30,10 @@ export type {
 	GVLVendorDataRetention,
 	GVLVendorOverflow,
 	GVLVendorUrl,
-} from './gvl';
-export type { NativeInitializedEvent, NativeSnapshotEvent } from './events';
-export type { NativeOverrides, NativeOverridesInput } from './overrides';
-export { defaultNativeOverrides } from './overrides';
+} from './global-vendor-list.model';
+export type { NativeInitializedEvent, NativeSnapshotEvent } from './native-events.model';
+export type { NativeOverrides, NativeOverridesInput } from './native-overrides.model';
+export { defaultNativeOverrides } from './native-overrides.model';
 export type {
 	TrackingAuthorization,
 	TrackingAuthorizationPayload,
@@ -41,7 +41,7 @@ export type {
 	TrackingPresentation,
 	TrackingRequestPayload,
 	TrackingRequestStage,
-} from './tracking';
+} from './tracking-protocol.model';
 export {
 	parseTrackingAnsweredAt,
 	parseTrackingAuthorization,
@@ -49,7 +49,7 @@ export {
 	TRACKING_AUTHORIZATION_STATUSES,
 	TRACKING_PRESENTATIONS,
 	TRACKING_REQUEST_STAGES,
-} from './tracking';
+} from './tracking-protocol.model';
 export type {
 	ConsentSnapshot,
 	NativeAdTechProvider,
@@ -67,8 +67,8 @@ export type {
 	NativeSnapshotError,
 	PolicyResolutionFailure,
 	SnapshotResolution,
-} from './snapshot';
-export { POLICY_RESOLUTION_FAILURES } from './snapshot';
+} from './consent-snapshot.model';
+export { POLICY_RESOLUTION_FAILURES } from './consent-snapshot.model';
 export type {
 	AllConsentNames,
 	CategoryDecision,
@@ -94,7 +94,7 @@ export type {
 	PromptReason,
 	PromptRequirement,
 	RestrictionReason,
-} from './vocabulary';
+} from './consent-vocabulary.model';
 export {
 	ACTIVE_SURFACES,
 	CONSENT_CATEGORIES,
@@ -105,14 +105,14 @@ export {
 	OPTIONAL_CONSENT_CATEGORIES,
 	PROMPT_REASONS,
 	RESTRICTION_REASONS,
-} from './vocabulary';
+} from './consent-vocabulary.model';
 export {
 	describeProtocolMismatch,
 	isProtocolVersionSupported,
 	MAX_SUPPORTED_PROTOCOL_VERSION,
 	MIN_SUPPORTED_PROTOCOL_VERSION,
 	PROTOCOL_VERSION,
-} from './version';
+} from './protocol-version.model';
 
 export {
 	ADDITIVE_SNAPSHOT_DEFAULTS,
@@ -121,8 +121,8 @@ export {
 	SNAPSHOT_KEYS,
 	describeSnapshotWireDrift,
 	withAdditiveSnapshotDefaults,
-} from './wire-shape';
-export type { WireDriftOptions } from './wire-shape';
+} from './snapshot-wire-shape.model';
+export type { WireDriftOptions } from './snapshot-wire-shape.model';
 
 /**
  * Events the native module emits. The payload of each is a JSON string.

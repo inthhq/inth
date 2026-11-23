@@ -6,7 +6,7 @@ import type { ExportedConfig, Mod } from 'expo/config-plugins';
 
 import type { InthPluginProps } from '../params';
 import { applyParamsOnConfig } from '../with-inth';
-import type { WorkflowContext } from '../workflow';
+import type { WorkflowContext } from '../assert-custom-native-build';
 import fixtureAppJson from './fixtures/app.json';
 
 const thisDirectory = dirname(fileURLToPath(import.meta.url));

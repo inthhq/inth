@@ -15,7 +15,7 @@ import {
 	isAdditionalInformationPause,
 	MAX_TRACKING_REQUEST_TURNS,
 	mayAskPlatformAgain,
-} from '../tracking-journey';
+} from '../tracking-journey.model';
 
 describe('mayAskPlatformAgain', () => {
 	test('comes back to Apple while one of the named categories is granted', () => {

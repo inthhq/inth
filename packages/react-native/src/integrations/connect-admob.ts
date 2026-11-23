@@ -1,10 +1,10 @@
-import { connectConsentState } from './consent-integration';
+import { connectConsentState } from './connect-consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
-} from './consent-integration';
-import { resolveGoogleAdsConsent } from './google-consent-mode';
-import type { GoogleAdsConsent } from './google-consent-mode';
+} from './connect-consent-integration';
+import { resolveGoogleAdsConsent } from './google-consent-mode.model';
+import type { GoogleAdsConsent } from './google-consent-mode.model';
 
 /** The AdMob function supplied by the app. No vendor dependency is loaded. */
 export interface AdMobClient {

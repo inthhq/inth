@@ -5,7 +5,7 @@ import type { ConfigPlugin } from 'expo/config-plugins';
 
 import { withFinalizedMod } from './config-plugins';
 import { MIN_ANDROID_COMPILE_SDK, MIN_ANDROID_MIN_SDK } from './constants';
-import { InthPluginError } from './errors';
+import { InthPluginError } from './inth-plugin-error';
 
 /** The generated Android files that can set an SDK level, by path under `android/`. */
 export interface AndroidSdkFiles {

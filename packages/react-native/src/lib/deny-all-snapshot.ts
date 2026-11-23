@@ -11,9 +11,9 @@ import type { ConsentSnapshot } from '../protocol';
 import {
 	DEFAULT_NATIVE_LANGUAGE,
 	defaultNativeOverrides,
-} from '../protocol/overrides';
-import type { ConsentState } from '../protocol/vocabulary';
-import { CONSENT_CATEGORIES } from '../protocol/vocabulary';
+} from '../protocol/native-overrides.model';
+import type { ConsentState } from '../protocol/consent-vocabulary.model';
+import { CONSENT_CATEGORIES } from '../protocol/consent-vocabulary.model';
 
 /**
  * Error code carried by a fail-closed snapshot built in JavaScript.

@@ -1,11 +1,11 @@
-import type { AllConsentNames } from '../protocol/vocabulary';
-import { connectConsentState, settleAll } from './consent-integration';
+import type { AllConsentNames } from '../protocol/consent-vocabulary.model';
+import { connectConsentState, settleAll } from './connect-consent-integration';
 import type {
 	AnalyticsIntegrationOptions,
 	ConsentIntegration,
-} from './consent-integration';
-import { resolveGoogleAdsConsent } from './google-consent-mode';
-import type { GoogleAdsConsent } from './google-consent-mode';
+} from './connect-consent-integration';
+import { resolveGoogleAdsConsent } from './google-consent-mode.model';
+import type { GoogleAdsConsent } from './google-consent-mode.model';
 
 /**
  * The Branch consumer protection attribution level {@link connectBranch} sets:

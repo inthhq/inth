@@ -21,7 +21,7 @@ import type {
 } from '../../__tests__/helpers/fake-native';
 import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
 import { useSaveConsents } from '../../hooks/use-consent-actions';
-import { resetConsentClient } from '../../native/client';
+import { resetConsentClient } from '../../native/create-consent-client';
 import type { ConsentSnapshot } from '../../protocol';
 import { InthProvider } from '../../provider/inth-provider';
 import {

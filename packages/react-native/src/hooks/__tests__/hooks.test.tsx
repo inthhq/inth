@@ -25,7 +25,7 @@ import type {
 	RenderHandle,
 } from '../../__tests__/helpers/fake-native';
 import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
-import { resetConsentClient } from '../../native/client';
+import { resetConsentClient } from '../../native/create-consent-client';
 import type { ConsentSnapshot, TrackingAuthorization } from '../../protocol';
 import { InthProvider } from '../../provider/inth-provider';
 import { useConsent } from '../use-consent';

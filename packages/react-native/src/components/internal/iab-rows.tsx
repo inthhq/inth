@@ -23,7 +23,7 @@ import type {
 	ConsentIabDisplayRow,
 	ConsentIabDisplayStackRow,
 	ConsentIabProcessedVendor,
-} from '../iab-display-model';
+} from '../iab-display.model';
 import { MIN_TAP_TARGET } from '../theme/consent-theme-parts';
 import type { ConsentResolvedParts } from '../theme/consent-theme-parts';
 import type { ConsentTheme } from '../theme/create-consent-theme';
@@ -33,8 +33,8 @@ import {
 } from '../theme/use-consent-styles';
 import { ConsentDisclosureGlyph } from './consent-disclosure-glyph';
 import { ConsentSwitch } from './consent-switch';
-import type { ConsentIabCopy } from './iab-copy';
-import { partnerClaims, withCount, withTotal } from './iab-copy';
+import type { ConsentIabCopy } from './iab-copy.model';
+import { partnerClaims, withCount, withTotal } from './iab-copy.model';
 
 /** The text column takes what the glyph and the control do not need. */
 const TEXT_COLUMN: ViewStyle = { flex: 1, minWidth: 0 };

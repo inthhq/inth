@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { InthPluginError } from '../errors';
+import { InthPluginError } from '../inth-plugin-error';
 import {
 	NATIVE_UI_PROPERTY,
 	applyNativeUIGradleProperties,
 	applyNativeUIPodfileProperties,
 	resolveNativeUI,
-} from '../native-ui';
+} from '../with-inth-native-ui';
 import { applyToFixture } from './helpers';
 
 const BACKEND = 'https://acme.inth.app';

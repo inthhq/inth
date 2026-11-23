@@ -15,18 +15,18 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { flushPromises, renderTree } from '../../__tests__/helpers/fake-native';
 import { ConsentBanner } from '../../components';
-import type { ConsentClient } from '../../native/client';
-import { getConsentClient, resetConsentClient } from '../../native/client.web';
+import type { ConsentClient } from '../../native/create-consent-client';
+import { getConsentClient, resetConsentClient } from '../../native/create-consent-client.web';
 import {
 	claimPrompt,
 	UNCLAIMED_PROMPT_MS,
-} from '../../native/without-native-ui';
+} from '../../native/watch-without-native-ui';
 import { ConsentClientContext, InthProvider } from '../../provider';
 import {
 	createWebConsentClient,
 	WEB_CONFIGURATION_DRY_RUN_CODE,
-} from '../consent-client.web';
-import { webOptionsFromManifest } from '../expo-extra.web';
+} from '../create-web-consent-client.web';
+import { webOptionsFromManifest } from '../web-options-from-manifest.web';
 
 const PROJECT = 'https://your-project.inth.app';
 

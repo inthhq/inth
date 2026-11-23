@@ -9,9 +9,9 @@
  * object from `getSnapshot()`; the JavaScript layer never derives it.
  */
 
-import type { NativeIABChoices } from './commit';
-import type { GlobalVendorList } from './gvl';
-import type { NativeOverrides } from './overrides';
+import type { NativeIABChoices } from './commit-payload.model';
+import type { GlobalVendorList } from './global-vendor-list.model';
+import type { NativeOverrides } from './native-overrides.model';
 import type {
 	AllConsentNames,
 	ConsentState,
@@ -26,7 +26,7 @@ import type {
 	PolicyResolutionStatus,
 	PromptRequirement,
 	RestrictionReason,
-} from './vocabulary';
+} from './consent-vocabulary.model';
 
 /**
  * Consent model enforced on device.

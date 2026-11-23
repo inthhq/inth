@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, test } from 'vitest';
 
-import { COMMIT_FAILURE_REASONS } from '../commit';
+import { COMMIT_FAILURE_REASONS } from '../commit-payload.model';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '../../../../..');

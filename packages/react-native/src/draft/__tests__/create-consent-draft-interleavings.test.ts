@@ -22,12 +22,12 @@ import {
 	emitNativeEvent,
 	resetNativeStub,
 } from '../../__tests__/helpers/react-native-stub';
-import { createConsentClient } from '../../native/client';
-import type { ConsentClient } from '../../native/client';
-import { getNativeInthEvents } from '../../native/module';
+import { createConsentClient } from '../../native/create-consent-client';
+import type { ConsentClient } from '../../native/create-consent-client';
+import { getNativeInthEvents } from '../../native/get-native-inth';
 import type { CommitResult, ConsentSnapshot } from '../../protocol';
-import type { OptionalConsentCategory } from '../../protocol/vocabulary';
-import { createConsentDraft } from '../consent-draft';
+import type { OptionalConsentCategory } from '../../protocol/consent-vocabulary.model';
+import { createConsentDraft } from '../create-consent-draft';
 
 const CATEGORIES = ['measurement', 'marketing'] as const;
 type Category = (typeof CATEGORIES)[number];

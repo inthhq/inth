@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { InthPluginError } from './errors';
+import { InthPluginError } from './inth-plugin-error';
 import type { ResolvedInthParams } from './params';
 
 /**

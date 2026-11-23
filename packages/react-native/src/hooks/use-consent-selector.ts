@@ -11,9 +11,9 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
-import type { SnapshotEquality, SnapshotSelector } from '../native/client';
+import type { SnapshotEquality, SnapshotSelector } from '../native/create-consent-client';
 import type { ConsentSnapshot } from '../protocol';
-import { useConsentClient } from '../provider/consent-context';
+import { useConsentClient } from '../provider/consent-client-context';
 
 /**
  * Subscribe to one slice of the native snapshot.

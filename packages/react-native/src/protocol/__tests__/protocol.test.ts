@@ -35,7 +35,7 @@ import {
 	NATIVE_EVENT_NAMES,
 	PROTOCOL_VERSION,
 } from '../index';
-import { OPTIONAL_CONSENT_CATEGORIES } from '../vocabulary';
+import { OPTIONAL_CONSENT_CATEGORIES } from '../consent-vocabulary.model';
 
 const FIXTURE_DIR = resolve(
 	dirname(fileURLToPath(import.meta.url)),

@@ -14,7 +14,7 @@ import {
 	parseTrackingAuthorization,
 	parseTrackingRequest,
 	TRACKING_AUTHORIZATION_STATUSES,
-} from '../tracking';
+} from '../tracking-protocol.model';
 
 describe('parseTrackingAuthorization', () => {
 	test.each(TRACKING_AUTHORIZATION_STATUSES)(

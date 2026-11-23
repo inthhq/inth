@@ -1,7 +1,7 @@
 import type { AndroidConfig, ConfigPlugin } from 'expo/config-plugins';
 
 import { withGradleProperties, withPodfileProperties } from './config-plugins';
-import { InthPluginError } from './errors';
+import { InthPluginError } from './inth-plugin-error';
 
 /**
  * The build property both native builds read: `Podfile.properties.json` for

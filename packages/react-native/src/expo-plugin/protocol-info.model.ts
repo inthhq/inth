@@ -5,8 +5,8 @@ import {
 	MAX_SUPPORTED_PROTOCOL_VERSION,
 	MIN_SUPPORTED_PROTOCOL_VERSION,
 	PROTOCOL_VERSION,
-} from '../protocol/version';
-import { InthPluginError } from './errors';
+} from '../protocol/protocol-version.model';
+import { InthPluginError } from './inth-plugin-error';
 
 /** The protocol range this JavaScript package speaks, as embeddable data. */
 export interface ProtocolInfo {

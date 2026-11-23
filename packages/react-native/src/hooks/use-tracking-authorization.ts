@@ -5,7 +5,7 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
 import type { TrackingAuthorization } from '../protocol';
-import { useConsentClient } from '../provider/consent-context';
+import { useConsentClient } from '../provider/consent-client-context';
 
 /**
  * What the operating system says about tracking, on its own.

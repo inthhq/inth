@@ -10,4 +10,4 @@ export type {
 	ConsentDraftHandle,
 	ConsentDraftProviderProps,
 } from './consent-draft-provider';
-export type { ConsentDraftState } from './consent-draft';
+export type { ConsentDraftState } from './create-consent-draft';

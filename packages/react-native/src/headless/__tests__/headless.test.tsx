@@ -14,7 +14,7 @@ import {
 } from '../../__tests__/helpers/fake-native';
 import type { FakeNativeModule } from '../../__tests__/helpers/fake-native';
 import { resetNativeStub } from '../../__tests__/helpers/react-native-stub';
-import { resetConsentClient } from '../../native/client';
+import { resetConsentClient } from '../../native/create-consent-client';
 import { InthProvider } from '../../provider/inth-provider';
 import { ConsentGate } from '../consent-gate';
 import { ConsentPrompt } from '../consent-prompt';

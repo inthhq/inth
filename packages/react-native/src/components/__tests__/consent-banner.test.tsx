@@ -13,7 +13,7 @@ import {
 	setReduceMotion,
 	uiState,
 } from '../../__tests__/helpers/react-native-stub';
-import { resetConsentClient } from '../../native/client';
+import { resetConsentClient } from '../../native/create-consent-client';
 import type { ConsentSnapshot } from '../../protocol';
 import { ConsentBanner } from '../consent-banner';
 import { MIN_TAP_TARGET } from '../theme/consent-theme-parts';

@@ -1,4 +1,4 @@
-import { InthPluginError } from './errors';
+import { InthPluginError } from './inth-plugin-error';
 
 /** Explicit repository for the versioned Android core and platform binaries. */
 export interface InthAndroidMavenRepository {

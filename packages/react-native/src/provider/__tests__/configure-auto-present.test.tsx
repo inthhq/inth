@@ -24,12 +24,12 @@ import {
 	resetNativeStub,
 	setAppState,
 } from '../../__tests__/helpers/react-native-stub';
-import { getConsentClient, resetConsentClient } from '../../native/client';
+import { getConsentClient, resetConsentClient } from '../../native/create-consent-client';
 import {
 	presentConsentPrompt,
 	presentPreferences,
 } from '../../native/presenter';
-import { isConsentScreenBusy } from '../auto-present';
+import { isConsentScreenBusy } from '../configure-auto-present';
 import { InthProvider } from '../inth-provider';
 
 const URL = 'https://example.com/privacy';

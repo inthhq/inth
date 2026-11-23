@@ -21,7 +21,7 @@ import {
 	resetNativeStub,
 	setAppState,
 } from '../../__tests__/helpers/react-native-stub';
-import { getConsentClient, resetConsentClient } from '../../native/client';
+import { getConsentClient, resetConsentClient } from '../../native/create-consent-client';
 import {
 	presentConsentPrompt,
 	presentPreferences,
@@ -33,7 +33,7 @@ import {
 	isRepromptDue,
 	shouldRequestTracking,
 	TRACKING_REPROMPT_INTERVAL_MS,
-} from '../tracking-sequence';
+} from '../request-sequenced-tracking';
 
 const URL = 'https://example.com/privacy';
 

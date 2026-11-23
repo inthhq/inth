@@ -1,7 +1,7 @@
 import type { AndroidConfig } from 'expo/config-plugins';
 
-import { InthPluginError } from './errors';
-import type { InthAndroidMavenRepository } from './maven';
+import { InthPluginError } from './inth-plugin-error';
+import type { InthAndroidMavenRepository } from './resolve-android-maven-repository';
 
 /** A `build.gradle` as the mod hands it over. */
 export type GradleFile = AndroidConfig.Paths.GradleProjectFile;

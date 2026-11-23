@@ -25,7 +25,7 @@ import {
 	setPlatformOS,
 	setReduceMotion,
 } from '../../__tests__/helpers/react-native-stub';
-import { resetConsentClient } from '../../native/client';
+import { resetConsentClient } from '../../native/create-consent-client';
 import { ConsentBanner } from '../consent-banner';
 import { ConsentDialog } from '../consent-dialog';
 import {

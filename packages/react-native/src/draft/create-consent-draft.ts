@@ -10,8 +10,8 @@
  * different policy.
  */
 
-import { isProduction } from '../native/client';
-import type { ConsentClient } from '../native/client';
+import { isProduction } from '../native/create-consent-client';
+import type { ConsentClient } from '../native/create-consent-client';
 import type {
 	CommitResult,
 	ConsentSnapshot,
@@ -20,13 +20,13 @@ import type {
 import {
 	CONSENT_CATEGORIES,
 	OPTIONAL_CONSENT_CATEGORIES,
-} from '../protocol/vocabulary';
+} from '../protocol/consent-vocabulary.model';
 import type {
 	AllConsentNames,
 	ConsentState,
 	OptionalConsentCategory,
-} from '../protocol/vocabulary';
-import { sameIABChoices, seedIABChoices } from './iab-choices';
+} from '../protocol/consent-vocabulary.model';
+import { sameIABChoices, seedIABChoices } from './iab-choices.model';
 
 /** What a draft holds at one moment. */
 export interface ConsentDraftState {
