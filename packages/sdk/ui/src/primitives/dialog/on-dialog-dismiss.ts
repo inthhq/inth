@@ -1,12 +1,4 @@
-import { getOpenState } from '../data-state.model';
-
-export const getDialogState = function getDialogState(open: boolean) {
-	return getOpenState(open);
-};
-
-export const isDialogDismissKey = function isDialogDismissKey(key: string) {
-	return key === 'Escape';
-};
+import { isDialogDismissKey } from './dialog.model';
 
 /** The dialogs open in one document and its one Escape listener. */
 interface OpenDialogs {
