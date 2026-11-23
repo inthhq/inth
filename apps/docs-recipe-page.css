@@ -1,4 +1,9 @@
-/* The plain site page every Storybook renders its design recipes over. Demo scaffolding only. */
+/*
+ * The plain site page every Storybook renders its design recipes over. Demo
+ * scaffolding only. The recipe renders inside the page, so each rule names
+ * the page's own parts (`> header`, `> main`, `> footer`): a bare `footer`
+ * would also reach the dialog's footer.
+ */
 .recipe-page {
 	min-height: 100vh;
 	display: flex;
@@ -9,8 +14,8 @@
 		16px/1.6 system-ui,
 		sans-serif;
 }
-.recipe-page header,
-.recipe-page footer {
+.recipe-page > header,
+.recipe-page > footer {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -18,24 +23,25 @@
 	padding: 1rem 2rem;
 	border-bottom: 1px solid #e5e7eb;
 }
-.recipe-page nav {
+.recipe-page > header nav {
 	display: flex;
 	gap: 1.25rem;
 }
-.recipe-page a {
+.recipe-page > header a,
+.recipe-page > footer a {
 	color: inherit;
 }
-.recipe-page main {
+.recipe-page > main {
 	flex: 1;
 	max-width: 60rem;
 	padding: 2.5rem 2rem;
 }
-.recipe-page h1 {
+.recipe-page > main h1 {
 	margin: 0 0 0.75rem;
 	font-size: 2.25rem;
 	line-height: 1.2;
 }
-.recipe-page main > p {
+.recipe-page > main > p {
 	max-width: 36rem;
 	margin: 0 0 2rem;
 	color: #4b5563;
@@ -58,7 +64,7 @@
 	margin: 0;
 	color: #4b5563;
 }
-.recipe-page footer {
+.recipe-page > footer {
 	border-top: 1px solid #e5e7eb;
 	border-bottom: 0;
 	color: #4b5563;
