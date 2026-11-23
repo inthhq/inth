@@ -13,7 +13,11 @@ import type {
 import type { PolicyRule } from '@inth/sdk-schema/types';
 
 import { createTestingConsentClient } from '../../testing-global';
-import type { ConsentClient, ConsentDialogOptions } from '../../types';
+import type {
+	ConsentBannerOptions,
+	ConsentClient,
+	ConsentDialogOptions,
+} from '../../types';
 import { mountConsentUI } from '../../ui/mount';
 
 export type Region = 'eu' | 'us-opt-in' | 'us-notice' | 'us-opt-out';
@@ -82,8 +86,8 @@ export interface ConsentPageOptions {
 	 * passes the dialog's options.
 	 */
 	dialog?: false | ConsentDialogOptions;
-	/** `false` mounts no banner. */
-	banner?: false;
+	/** `false` mounts no banner; an object passes the banner's options. */
+	banner?: false | ConsentBannerOptions;
 	/** Mount the stock floating trigger. */
 	stockTrigger?: boolean;
 	/** The prompt's host layout: action order and groups. */
