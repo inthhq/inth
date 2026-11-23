@@ -30,7 +30,7 @@ import type * as DialogModule from './dialog';
  * both. It lives in this module, which both already import, so it adds no
  * file to the first load.
  *
- * @returns The dialog wrapper and its panel and preferences modules.
+ * @returns The dialog wrapper and the dialog's own module.
  * @internal
  */
 export const importDialog = (): Promise<typeof DialogModule> =>
