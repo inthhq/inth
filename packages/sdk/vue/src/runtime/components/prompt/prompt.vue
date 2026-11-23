@@ -123,6 +123,9 @@ const onContainerMounted = () => {
 	}
 };
 
+// One loader per container shown, made when first shown (`load` below).
+const loads: Partial<Record<keyof PromptContainers, RetryableComponent>> = {};
+
 // A container that failed: Vue loads it again on a trigger below.
 const onFailed = () => {
 	releaseHydration();
@@ -143,7 +146,7 @@ const onFailed = () => {
 	const previous = queue[EARLY_TAP_NOTIFY_KEY];
 	const notify = () => {
 		previous?.();
-		current.value.retry();
+		loads[type.value]?.retry();
 	};
 	queue[EARLY_TAP_NOTIFY_KEY] = notify;
 	stopTapRetry = () => {
@@ -155,9 +158,7 @@ const onFailed = () => {
 };
 onScopeDispose(() => stopTapRetry?.());
 
-// One loader per container shown, made when first shown. A failed one
-// stays failed until the next trigger below.
-const loads: Partial<Record<keyof PromptContainers, RetryableComponent>> = {};
+// A failed one stays failed until the next trigger below.
 const load = (name: keyof PromptContainers): RetryableComponent => {
 	loads[name] ??= useRetryableComponent(loaders[name], onFailed);
 	return loads[name];

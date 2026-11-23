@@ -15,7 +15,7 @@ const isDevToolsStory = (story: StoryEntry) =>
  * order given. A framework in `NO_DEVTOOLS` is skipped whether or not it
  * has one.
  *
- * @throws When a framework outside `NO_DEVTOOLS` has no DevTools story.
+ * @throws {Error} When a framework outside `NO_DEVTOOLS` has no DevTools story.
  */
 export const pickDevToolsStories = function pickDevToolsStories(
 	indexes: readonly { framework: string; stories: readonly StoryEntry[] }[]
