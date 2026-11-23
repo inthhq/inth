@@ -210,10 +210,22 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 
 	let identityEpoch = 0;
 	const getIdentityEpoch = (): number => identityEpoch;
+	// Value of `userConsent` in force when `records:cleared`, imperative
+	// `syncUserConsent(null)`, or a `null`-resolving Promise ran: applies until
+	// the option value changes so `start()` and re-enable never reapply it.
+	let clearedOption: { readonly value: unknown } | null = null;
+	const currentOptionConsent = (): unknown =>
+		options.userConsent === undefined
+			? options.prefetch?.initialUserConsent
+			: options.userConsent;
+	const markClearedAndBumpRef: { run?: () => void } = {};
 	const userConsentSync = createUserConsentSyncController(
 		kernel,
 		undefined,
-		getIdentityEpoch
+		getIdentityEpoch,
+		() => {
+			markClearedAndBumpRef.run?.();
+		}
 	);
 	const bumpIdentityEpoch = (epochOptions?: {
 		readonly preservePending?: boolean;
@@ -222,18 +234,16 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 		userConsentSync.onIdentityEpochChanged(epochOptions);
 		return identityEpoch;
 	};
-	// Value of `userConsent` in force when `records:cleared` ran: a clear
-	// applies until the option value changes (so `start()` / re-enable never
-	// reapplies the cleared value).
-	let clearedOption: { readonly value: unknown } | null = null;
-	const currentOptionConsent = (): unknown =>
-		options.userConsent === undefined
-			? options.prefetch?.initialUserConsent
-			: options.userConsent;
-	const stopRecordsClearedWatch = kernel.events.on('records:cleared', () => {
+	const markOptionClearedAndBump = (): void => {
 		clearedOption = { value: currentOptionConsent() };
 		bumpIdentityEpoch();
-	});
+	};
+	markClearedAndBumpRef.run = markOptionClearedAndBump;
+	const stopRecordsClearedWatch = kernel.events.on(
+		'records:cleared',
+		markOptionClearedAndBump
+	);
+	let hasStartedOnce = false;
 
 	const stop = function stop(): void {
 		started = false;
@@ -366,7 +376,10 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			// After hydrating both browser and stored account layers, sync the
 			// initial `userConsent` value or Promise (converting raw SSR docs
 			// with the client clock and persisting them), unless that exact value
-			// was cleared by `clearRecords()`.
+			// was cleared by `clearRecords()`, `syncUserConsent(null)`, or a
+			// `null`-resolving Promise. Only the first `start()` passes `initialStart`.
+			const isFirstStart = !hasStartedOnce;
+			hasStartedOnce = true;
 			if (enabled && !consentSource) {
 				const initialUserConsent =
 					options.userConsent === undefined
@@ -375,7 +388,9 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 				const isClearedValue =
 					clearedOption !== null && initialUserConsent === clearedOption.value;
 				if (initialUserConsent !== undefined && !isClearedValue) {
-					userConsentSync.apply(initialUserConsent, { initialStart: true });
+					userConsentSync.apply(initialUserConsent, {
+						initialStart: isFirstStart,
+					});
 				}
 			}
 			// Persistence gives a browser runtime its subject ID at startup.
@@ -567,15 +582,17 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 			if (!enabled || consentSource) {
 				return;
 			}
+			if (value === null) {
+				markOptionClearedAndBump();
+				userConsentSync.apply(null);
+				return;
+			}
 			if (
 				clearedOption !== null &&
 				value !== undefined &&
 				value !== clearedOption.value
 			) {
 				clearedOption = null;
-			}
-			if (value === null) {
-				bumpIdentityEpoch();
 			}
 			userConsentSync.apply(value);
 		},
@@ -607,7 +624,9 @@ export const assembleConsentRuntime = function assembleConsentRuntime(
 						nextUserConsent === undefined &&
 						setOptions?.pending
 					);
-		if (
+		if (nextUserConsent === null) {
+			clearedOption = { value: currentOptionConsent() };
+		} else if (
 			clearedOption !== null &&
 			nextUserConsent !== undefined &&
 			nextUserConsent !== clearedOption.value

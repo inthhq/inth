@@ -289,9 +289,11 @@ export const createConsentProviderRuntime =
 		};
 		// One monotonic identity epoch (owned by `main`) fences streamed SSR
 		// user/consent adoption against clear, logout, user switch, `userConsent: null`
-		// (at construction or later), and dispose.
+		// (at construction or later), and dispose. When the stream adopts its own
+		// user/consent, `streamEpoch` advances to the epoch that adoption produced
+		// so the stream does not fence its own records.
 		const mainEpochRef: { read?: () => number } = {};
-		const streamEpoch = initial.userConsent === null ? -1 : 0;
+		let streamEpoch = initial.userConsent === null ? -1 : 0;
 		let pendingStreamPersist:
 			| { readonly doc: UserConsent | null; readonly epoch: number }
 			| undefined;
@@ -334,7 +336,8 @@ export const createConsentProviderRuntime =
 							selectedMode,
 							initial.prefetch as PromiseLike<RuntimePrefetch>,
 							initial,
-							() => built.runtime?.kernel
+							() => built.runtime?.kernel,
+							isStreamEpochCurrent
 						)
 					: selectedMode;
 			const view = new Proxy({} as ConsentRuntimeOptions, {
@@ -450,18 +453,26 @@ export const createConsentProviderRuntime =
 			if (shouldSetUser) {
 				if (isUserConsentPromise(current.userConsent)) {
 					main.setUser(streamedUser, { pending: true });
+					streamEpoch = main.getIdentityEpoch();
 					main.runtime.syncUserConsent(current.userConsent);
 				} else if (applyConsent) {
 					main.setUser(streamedUser, {
 						userConsent: config.initialUserConsent,
 					});
+					if (config.initialUserConsent !== null) {
+						streamEpoch = main.getIdentityEpoch();
+					}
 					queueStreamPersist(config.initialUserConsent);
 				} else {
 					main.setUser(streamedUser);
+					streamEpoch = main.getIdentityEpoch();
 				}
 				return;
 			}
 			main.runtime.syncUserConsent(config.initialUserConsent);
+			if (config.initialUserConsent !== null) {
+				streamEpoch = main.getIdentityEpoch();
+			}
 			queueStreamPersist(config.initialUserConsent);
 		};
 

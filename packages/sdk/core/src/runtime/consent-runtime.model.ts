@@ -391,7 +391,8 @@ export interface ConsentRuntimeModules {
 		mode: ProviderTransportFactory,
 		prefetch: PromiseLike<RuntimePrefetch>,
 		options: Pick<ConsentProviderRuntimeOptions, 'experiment' | 'overrides'>,
-		getKernel: () => ConsentKernel | undefined
+		getKernel: () => ConsentKernel | undefined,
+		isStreamAllowed?: () => boolean
 	) => ProviderTransportFactory;
 	/**
 	 * Lets the provider runtime start loading the script loader before

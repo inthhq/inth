@@ -50,7 +50,8 @@ export const createStreamedMode = function createStreamedMode(
 	prefetch: PromiseLike<RuntimePrefetch>,
 	options: Pick<ConsentProviderRuntimeOptions, 'experiment' | 'overrides'>,
 	getKernel: () => ConsentKernel | undefined,
-	loadResolver: () => ResolveStreamedInit | Promise<ResolveStreamedInit>
+	loadResolver: () => ResolveStreamedInit | Promise<ResolveStreamedInit>,
+	isStreamAllowed?: () => boolean
 ): ProviderTransportFactory {
 	const factory = (context: ProviderTransportContext): KernelTransport => {
 		let resolved: KernelConfig | undefined;
@@ -76,6 +77,7 @@ export const createStreamedMode = function createStreamedMode(
 				const resolveInit = await loadResolver();
 				return resolveInit({
 					context: initContext,
+					isStreamAllowed,
 					kernel,
 					onResolved: (config) => {
 						resolved = config;
@@ -110,7 +112,8 @@ export const lazyStreamPrefetch = function lazyStreamPrefetch(
 	mode: ProviderTransportFactory,
 	prefetch: PromiseLike<RuntimePrefetch>,
 	options: Pick<ConsentProviderRuntimeOptions, 'experiment' | 'overrides'>,
-	getKernel: () => ConsentKernel | undefined
+	getKernel: () => ConsentKernel | undefined,
+	isStreamAllowed?: () => boolean
 ): ProviderTransportFactory {
 	const loading = import('./streamed-init');
 	return createStreamedMode(
@@ -118,7 +121,8 @@ export const lazyStreamPrefetch = function lazyStreamPrefetch(
 		prefetch,
 		options,
 		getKernel,
-		async () => (await loading).resolveStreamedInit
+		async () => (await loading).resolveStreamedInit,
+		isStreamAllowed
 	);
 };
 
@@ -139,6 +143,13 @@ export const lazyStreamPrefetch = function lazyStreamPrefetch(
 export const streamPrefetchWith = function streamPrefetchWith(
 	resolveInit: ResolveStreamedInit
 ): typeof lazyStreamPrefetch {
-	return (mode, prefetch, options, getKernel) =>
-		createStreamedMode(mode, prefetch, options, getKernel, () => resolveInit);
+	return (mode, prefetch, options, getKernel, isStreamAllowed) =>
+		createStreamedMode(
+			mode,
+			prefetch,
+			options,
+			getKernel,
+			() => resolveInit,
+			isStreamAllowed
+		);
 };

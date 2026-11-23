@@ -15,6 +15,8 @@ import {
 	optInRule,
 	optOutRule,
 } from '../../__tests__/fixtures/kernel-fixtures';
+import { resolveStorageKeys } from '../../libs/storage-keys';
+import { isVendorAllowed } from '../../modules/has';
 import {
 	encodeAccountChoicesCookie,
 	encodeAccountLocalJson,
@@ -23,6 +25,7 @@ import {
 	readStoredAccountLayer,
 } from '../../modules/persistence/account-codec';
 import { resolveAccountStorageKeys } from '../../modules/persistence/account-keys';
+import { encodeVendorChoiceCompact } from '../../modules/persistence/writer/encode';
 import { resolveRequestConsent } from '../../server/request-consent';
 import { testing } from '../../testing';
 import { createConsentProviderRuntime, defaultRuntimeModules } from '../index';
@@ -30,6 +33,7 @@ import { createRuntimeKernel } from '../runtime-kernel';
 import { serverScriptStart } from '../script-server-start';
 import { streamPrefetchWith } from '../stream-mode';
 import { resolveStreamedInit } from '../streamed-init';
+import { streamPrefetch } from '../streamed-prefetch';
 import type { RuntimePrefetch } from '../types';
 
 const clearBrowserStorage = () => {
@@ -2206,6 +2210,447 @@ describe('runtime regressions (set 5): identity epoch', () => {
 			expect(runtime.kernel.getSnapshot().user?.externalId).toBe('a');
 			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
 				false
+			);
+		} finally {
+			runtime.dispose();
+		}
+	});
+});
+
+describe('runtime regressions (set 6)', () => {
+	const r3Fixture = (rule = optInRule()) => {
+		const resolution = matchedResolution(rule);
+		const base = {
+			consentCategories: ['marketing'] as const,
+			mode: testing({ policy: [rule] }),
+			prefetch: {
+				initialPolicyPending: false,
+				initialPolicyResolution: resolution,
+				now: NOW,
+			},
+		};
+		const documentFor = (externalId: string, value: boolean) =>
+			makeUserConsent({
+				choices: {
+					marketing: {
+						basis: {
+							fingerprint: resolution.fingerprints.choice,
+							kind: 'choice-v1',
+						},
+						confirmedAt: NOW - 1000,
+						value,
+					},
+				},
+				externalId,
+			});
+		return { base, documentFor, resolution };
+	};
+
+	test('a stream identity adopted by the Promise listener keeps account-cookie decisions when the UI adopts the same stream', async () => {
+		const rule = optOutRule({ prompt: 'none' });
+		const { base, documentFor } = r3Fixture(rule);
+		const choice = documentFor('a', false).sync.choices.marketing;
+		expect(choice).toBeDefined();
+		if (!choice) {
+			return;
+		}
+		const layer = {
+			appliedAt: NOW,
+			checkedAt: NOW,
+			choices: {
+				marketing: {
+					basis: choice.basis,
+					rawConfirmedAt: choice.confirmedAt,
+					value: false,
+				},
+			},
+			externalId: 'a',
+			optOut: null,
+			skew: 0,
+			vendors: {},
+		};
+		const pending = Promise.withResolvers<RuntimePrefetch>();
+		const runtime = createConsentProviderRuntime(
+			{ ...base, prefetch: pending.promise },
+			{
+				...defaultRuntimeModules,
+				streamPrefetch: streamPrefetchWith(resolveStreamedInit),
+			}
+		);
+		try {
+			const config: RuntimePrefetch = {
+				...base.prefetch,
+				initialRecords: { accountLayer: layer, now: NOW },
+				initialUser: { externalId: 'a' },
+			};
+			pending.resolve(config);
+			await runtime.streamed?.settled;
+			expect(runtime.kernel.getSnapshot().user?.externalId).toBe('a');
+			runtime.streamed?.adopt(config);
+			expect({
+				account: runtime.kernel.getSnapshot().hasAccountLayer,
+				marketing: runtime.kernel.getSnapshot().effectivePermissions.marketing,
+			}).toEqual({ account: true, marketing: false });
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('a null Promise result fences an older stream for the same identity', async () => {
+		const { base, documentFor } = r3Fixture(optOutRule({ prompt: 'none' }));
+		const choice = documentFor('a', false).sync.choices.marketing;
+		expect(choice).toBeDefined();
+		if (!choice) {
+			return;
+		}
+		const layer = {
+			appliedAt: NOW,
+			checkedAt: NOW,
+			choices: {
+				marketing: {
+					basis: choice.basis,
+					rawConfirmedAt: choice.confirmedAt,
+					value: false,
+				},
+			},
+			externalId: 'a',
+			optOut: null,
+			skew: 0,
+			vendors: {},
+		};
+		const pending = Promise.withResolvers<RuntimePrefetch>();
+		const consent = Promise.withResolvers<UserConsent | null>();
+		const runtime = createConsentProviderRuntime(
+			{
+				...base,
+				prefetch: pending.promise,
+				user: { externalId: 'a' },
+				userConsent: consent.promise,
+			},
+			{
+				...defaultRuntimeModules,
+				streamPrefetch: streamPrefetchWith(resolveStreamedInit),
+			}
+		);
+		try {
+			runtime.start();
+			consent.resolve(null);
+			await flushMicrotasks();
+			expect(runtime.kernel.getSnapshot().userConsentPending).toBe(false);
+			const config: RuntimePrefetch = {
+				...base.prefetch,
+				initialRecords: { accountLayer: layer, now: NOW },
+				initialUser: { externalId: 'a' },
+			};
+			pending.resolve(config);
+			runtime.streamed?.adopt(config);
+			expect(Boolean(runtime.kernel.getSnapshot().hasAccountLayer)).toBe(false);
+			expect(runtime.kernel.getAccountLayer()).toBeNull();
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('startup does not replay an option document from before an explicit sign-out', () => {
+		const { base, documentFor } = r3Fixture(optOutRule({ prompt: 'none' }));
+		const runtime = createConsentProviderRuntime(
+			{
+				...base,
+				user: { externalId: 'a' },
+				userConsent: documentFor('a', false),
+			},
+			defaultRuntimeModules
+		);
+		try {
+			expect(runtime.kernel.getSnapshot().hasAccountLayer).toBe(true);
+			runtime.syncUserConsent(null);
+			expect(runtime.kernel.getSnapshot().hasAccountLayer).toBeFalsy();
+			runtime.start();
+			expect(runtime.kernel.getSnapshot().hasAccountLayer).toBeFalsy();
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('the default streamed init path cannot install cookie records after explicit signed-out null', async () => {
+		const { base, documentFor } = r3Fixture(optOutRule({ prompt: 'none' }));
+		const choice = documentFor('a', false).sync.choices.marketing;
+		expect(choice).toBeDefined();
+		if (!choice) {
+			return;
+		}
+		const layer = {
+			appliedAt: NOW,
+			checkedAt: NOW,
+			choices: {
+				marketing: {
+					basis: choice.basis,
+					rawConfirmedAt: choice.confirmedAt,
+					value: false,
+				},
+			},
+			externalId: 'a',
+			optOut: null,
+			skew: 0,
+			vendors: {},
+		};
+		const pending = Promise.withResolvers<RuntimePrefetch>();
+		const runtime = createConsentProviderRuntime(
+			{
+				...base,
+				prefetch: pending.promise,
+				user: { externalId: 'a' },
+			},
+			{
+				...defaultRuntimeModules,
+				streamPrefetch: streamPrefetchWith(resolveStreamedInit),
+			}
+		);
+		try {
+			runtime.start();
+			runtime.syncUserConsent(null);
+			const applied = new Promise<void>((resolve) => {
+				runtime.kernel.events.on('init:applied', () => {
+					resolve();
+				});
+			});
+			pending.resolve({
+				...base.prefetch,
+				initialRecords: { accountLayer: layer, now: NOW },
+				initialUser: { externalId: 'a' },
+			});
+			await applied;
+			expect(runtime.kernel.getSnapshot().hasAccountLayer).toBeFalsy();
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('a newer cookie-only vendor record cannot inherit grants from the older localStorage record', () => {
+		const { base } = r3Fixture(optOutRule({ prompt: 'none' }));
+		const keys = resolveStorageKeys();
+		const stale = { confirmedAt: NOW - 1000, denied: [], version: 1 as const };
+		window.localStorage.setItem(
+			keys.vendors,
+			JSON.stringify({ ...stale, vendorTimes: { x: NOW - 1000 } })
+		);
+		document.cookie = `${keys.vendors}=${encodeVendorChoiceCompact(stale)}; path=/`;
+		const runtime = createConsentProviderRuntime(
+			{
+				...base,
+				user: { externalId: 'a' },
+				userConsent: makeUserConsent({
+					externalId: 'a',
+					vendors: { x: { confirmedAt: NOW - 4000, value: false } },
+				}),
+				vendors: [{ category: 'marketing', id: 'x' }],
+			},
+			defaultRuntimeModules
+		);
+		try {
+			runtime.start();
+			expect(isVendorAllowed(runtime.kernel.getSnapshot(), 'x')).toBe(true);
+			document.cookie = `${keys.vendors}=${encodeVendorChoiceCompact({
+				confirmedAt: NOW,
+				denied: ['y'],
+				version: 1,
+			})}; path=/`;
+			runtime.reconcileStorage();
+			const browser = runtime.kernel.getBrowserRecords();
+			expect(browser.vendorChoice?.confirmedAt).toBe(NOW);
+			expect({
+				allowed: isVendorAllowed(runtime.kernel.getSnapshot(), 'x'),
+				times: browser.vendorTimes ?? null,
+			}).toEqual({ allowed: false, times: null });
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('streamed.adopt() keeps initialRecords.accountLayer after Promise listener installs streamed user', async () => {
+		const rule = optOutRule();
+		const optOutResolution = matchedResolution(rule);
+		const pending = Promise.withResolvers<RuntimePrefetch>();
+
+		const runtime = createConsentProviderRuntime(
+			{
+				mode: Object.assign(() => ({ init: () => Promise.resolve({}) }), {
+					kind: 'testing' as const,
+				}),
+				persistence: false,
+				prefetch: pending.promise,
+			},
+			{ ...defaultRuntimeModules, streamPrefetch }
+		);
+
+		try {
+			const streamedConfig: RuntimePrefetch = {
+				initialPolicyResolution: optOutResolution,
+				initialRecords: {
+					accountLayer: {
+						appliedAt: NOW,
+						checkedAt: NOW,
+						choices: {
+							marketing: {
+								basis: {
+									fingerprint: optOutResolution.fingerprints.choice,
+									kind: 'choice-v1' as const,
+								},
+								rawConfirmedAt: NOW - 1000,
+								value: false,
+							},
+						},
+						externalId: 'user-a',
+						optOut: null,
+						skew: 0,
+						vendors: {},
+					},
+					now: NOW,
+				},
+				initialUser: { externalId: 'user-a' },
+				now: NOW,
+			};
+
+			pending.resolve(streamedConfig);
+			const settledConfig = await runtime.streamed?.settled;
+			expect(settledConfig).toBeDefined();
+			if (settledConfig) {
+				runtime.streamed?.adopt(settledConfig);
+			}
+
+			expect(runtime.kernel.getSnapshot().user?.externalId).toBe('user-a');
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false);
+			expect(runtime.kernel.getSnapshot().hasAccountLayer).toBe(true);
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				false
+			);
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('resolveStreamedInit does not install streamed initialRecords.accountLayer when constructed with userConsent: null', async () => {
+		const rule = optOutRule();
+		const optOutResolution = matchedResolution(rule);
+		const pending = Promise.withResolvers<RuntimePrefetch>();
+
+		const runtime = createConsentProviderRuntime(
+			{
+				mode: Object.assign(() => ({ init: () => Promise.resolve({}) }), {
+					kind: 'testing' as const,
+				}),
+				persistence: false,
+				prefetch: pending.promise,
+				user: { externalId: 'user-a' },
+				userConsent: null,
+			},
+			{ ...defaultRuntimeModules, streamPrefetch }
+		);
+
+		try {
+			runtime.start();
+			pending.resolve({
+				initialPolicyResolution: optOutResolution,
+				initialRecords: {
+					accountLayer: {
+						appliedAt: NOW,
+						checkedAt: NOW,
+						choices: {
+							marketing: {
+								basis: {
+									fingerprint: optOutResolution.fingerprints.choice,
+									kind: 'choice-v1' as const,
+								},
+								rawConfirmedAt: NOW - 1000,
+								value: false,
+							},
+						},
+						externalId: 'user-a',
+						optOut: null,
+						skew: 0,
+						vendors: {},
+					},
+					now: NOW,
+				},
+				initialUser: { externalId: 'user-a' },
+				now: NOW,
+			});
+			await flushMicrotasks();
+			await flushMicrotasks();
+
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false);
+			expect(Boolean(runtime.kernel.getSnapshot().hasAccountLayer)).toBe(false);
+			expect(runtime.kernel.getAccountLayer()).toBeNull();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				true
+			);
+		} finally {
+			runtime.dispose();
+		}
+	});
+
+	test('resolveStreamedInit does not install streamed initialRecords.accountLayer after update({ user, userConsent: null }) fences the stream', async () => {
+		const rule = optOutRule();
+		const optOutResolution = matchedResolution(rule);
+		const pending = Promise.withResolvers<RuntimePrefetch>();
+
+		const runtime = createConsentProviderRuntime(
+			{
+				mode: Object.assign(() => ({ init: () => Promise.resolve({}) }), {
+					kind: 'testing' as const,
+				}),
+				persistence: false,
+				prefetch: pending.promise,
+			},
+			{ ...defaultRuntimeModules, streamPrefetch }
+		);
+
+		try {
+			runtime.start();
+			await runtime.update({
+				mode: Object.assign(() => ({ init: () => Promise.resolve({}) }), {
+					kind: 'testing' as const,
+				}),
+				persistence: false,
+				prefetch: pending.promise,
+				user: { externalId: 'user-a' },
+				userConsent: null,
+			});
+
+			pending.resolve({
+				initialPolicyResolution: optOutResolution,
+				initialRecords: {
+					accountLayer: {
+						appliedAt: NOW,
+						checkedAt: NOW,
+						choices: {
+							marketing: {
+								basis: {
+									fingerprint: optOutResolution.fingerprints.choice,
+									kind: 'choice-v1' as const,
+								},
+								rawConfirmedAt: NOW - 1000,
+								value: false,
+							},
+						},
+						externalId: 'user-a',
+						optOut: null,
+						skew: 0,
+						vendors: {},
+					},
+					now: NOW,
+				},
+				initialUser: { externalId: 'user-a' },
+				now: NOW,
+			});
+			await flushMicrotasks();
+			await flushMicrotasks();
+
+			expect(runtime.kernel.getSnapshot().policyPending).toBe(false);
+			expect(Boolean(runtime.kernel.getSnapshot().hasAccountLayer)).toBe(false);
+			expect(runtime.kernel.getAccountLayer()).toBeNull();
+			expect(runtime.kernel.getSnapshot().effectivePermissions.marketing).toBe(
+				true
 			);
 		} finally {
 			runtime.dispose();

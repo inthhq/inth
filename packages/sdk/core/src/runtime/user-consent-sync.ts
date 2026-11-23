@@ -59,7 +59,8 @@ export const createUserConsentSyncController =
 	function createUserConsentSyncController(
 		kernel: InternalKernel,
 		timeoutMs: number = DEFAULT_USER_CONSENT_TIMEOUT_MS,
-		getIdentityEpoch: () => number = () => 0
+		getIdentityEpoch: () => number = () => 0,
+		onNullResolved?: () => void
 	): UserConsentSyncController {
 		let holdArmedForExternalId: string | null = null;
 		let activePromiseGeneration = 0;
@@ -138,6 +139,11 @@ export const createUserConsentSyncController =
 				return;
 			}
 			cancelTimer();
+			if (resolved === null) {
+				onNullResolved?.();
+				kernel.settleUserConsent(null, { clearPending: true });
+				return;
+			}
 			const externalId = kernel.getSnapshot().user?.externalId ?? null;
 			if (externalId !== null) {
 				lastResolved = {
