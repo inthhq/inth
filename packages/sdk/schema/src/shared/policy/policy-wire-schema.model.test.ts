@@ -1,7 +1,7 @@
 import * as v from 'valibot';
 import { describe, expect, test } from 'vitest';
 
-import { initOutputSchema } from '../api/init-output.model';
+import { initOutputSchema } from '../../api/init-output.model';
 import {
 	readPolicyResolutionWire,
 	resolvePolicyRules,

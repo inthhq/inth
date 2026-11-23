@@ -13,8 +13,8 @@
 
 import * as v from 'valibot';
 
-import { POLICY_CONSENT_CATEGORIES } from './policy-rule.model';
-import type { PolicyConsentCategory } from './policy-rule.model';
+import { POLICY_CONSENT_CATEGORIES } from './policy/policy-rule.model';
+import type { PolicyConsentCategory } from './policy/policy-rule.model';
 
 /**
  * Category condition a vendor sits under. Mirrors the core `HasCondition`

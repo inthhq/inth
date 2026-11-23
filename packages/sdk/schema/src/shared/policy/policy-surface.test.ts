@@ -1,18 +1,18 @@
 import * as v from 'valibot';
 import { assert, describe, expect, test } from 'vitest';
 
-import { v1ConsentInitOutputSchema } from '../api/v1/v1-consent.model';
+import { v1ConsentInitOutputSchema } from '../../api/v1/v1-consent.model';
 import {
 	consentInitResponseSchema,
 	consentManifestResponseSchema,
-} from '../api/v1/generated/schemas';
+} from '../../api/v1/generated/schemas';
 import {
 	buildConsentManifestFromConfig,
 	createConsentManifestPolicyPack,
 	resolveInitFromManifest,
 	resolvePolicyResolutionFromManifest,
-} from './consent-manifest';
-import { parseConsentManifest } from './parse-consent-manifest';
+} from '../consent-manifest';
+import { parseConsentManifest } from '../parse-consent-manifest';
 import {
 	readPolicyResolutionWire,
 	resolvePolicyRules,

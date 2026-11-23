@@ -8,11 +8,11 @@ import {
 	createConsentManifestPolicyPack,
 } from './consent-manifest';
 import type { ConsentManifest } from './consent-manifest';
-import { readPolicyResolutionWire } from './policy-resolution.model';
+import { readPolicyResolutionWire } from './policy/policy-resolution.model';
 import {
 	policyRulePresets,
 	recommendedPolicyRules,
-} from './policy-rule-presets';
+} from './policy/policy-rule-presets';
 
 const manifest = {
 	branding: 'inth',

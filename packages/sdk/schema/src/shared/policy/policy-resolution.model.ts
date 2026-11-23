@@ -25,8 +25,8 @@
  * render path.
  */
 
-import { FAILED_CONFIGURATION } from './policy-resolution-wire';
-import type { PolicyResolution } from './policy-resolution-wire';
+import { FAILED_CONFIGURATION } from '../policy-resolution-wire';
+import type { PolicyResolution } from '../policy-resolution-wire';
 import { inspectPolicyRules, normalizePolicyRule } from './policy-rule.model';
 import type { PolicyRule } from './policy-rule.model';
 import { createPolicyRuleFingerprints } from './policy-rule-fingerprint.model';
@@ -42,7 +42,7 @@ export {
 	safeFallbackPolicyInput,
 	safeFallbackPolicyRule,
 	writePolicyResolutionWire,
-} from './policy-resolution-wire';
+} from '../policy-resolution-wire';
 export type {
 	PolicyResolution,
 	PolicyResolutionFailed,
@@ -52,7 +52,7 @@ export type {
 	PolicyResolutionUnconfigured,
 	PolicyResolutionWire,
 	SafeFallbackPolicyInput,
-} from './policy-resolution-wire';
+} from '../policy-resolution-wire';
 
 const normalizeCountryCode = function normalizeCountryCode(
 	countryCode: string | null | undefined

@@ -5,7 +5,7 @@ import { brandingSchema } from '../shared/branding.model';
 import { globalVendorListSchema } from '../shared/gvl';
 import { hostingSchema } from '../shared/hosting.model';
 import { nonIABVendorSchema } from '../shared/non-iab-vendor.model';
-import { policyResolutionWireSchema } from '../shared/policy-wire-schema.model';
+import { policyResolutionWireSchema } from '../shared/policy/policy-wire-schema.model';
 import { scriptRegistrySchema } from '../shared/script-sources.model';
 import { vendorSchema } from '../shared/vendor.model';
 

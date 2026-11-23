@@ -1,4 +1,4 @@
-import type { PolicyRuleModel } from '../shared/policy-rule.model';
+import type { PolicyRuleModel } from '../shared/policy/policy-rule.model';
 
 export type ButtonVariant = 'primary' | 'neutral';
 

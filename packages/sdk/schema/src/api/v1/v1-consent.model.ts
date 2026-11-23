@@ -12,7 +12,7 @@
 import * as v from 'valibot';
 
 import type { ConsentManifest } from '../../shared/consent-manifest';
-import { POLICY_OPTIONAL_CATEGORIES } from '../../shared/policy-rule-invariants';
+import { POLICY_OPTIONAL_CATEGORIES } from '../../shared/policy/policy-rule-invariants';
 import { initOutputSchema } from '../init-output.model';
 import type { InitOutput } from '../init-output.model';
 import {

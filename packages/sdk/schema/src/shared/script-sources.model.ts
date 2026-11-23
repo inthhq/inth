@@ -1,6 +1,6 @@
 import * as v from 'valibot';
 
-import { isPlainPolicyObject } from './policy-rule-invariants';
+import { isPlainPolicyObject } from './policy/policy-rule-invariants';
 
 /**
  * Where a script registry serves one script, as the manifest and `/v1/consent/init`

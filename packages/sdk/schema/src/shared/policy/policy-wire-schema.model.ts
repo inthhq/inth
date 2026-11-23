@@ -8,7 +8,7 @@
 
 import * as v from 'valibot';
 
-import { POLICY_CONTRACT_VERSION } from './policy-resolution-wire';
+import { POLICY_CONTRACT_VERSION } from '../policy-resolution-wire';
 import type { ResolvedPolicyRule } from './policy-rule.model';
 import {
 	collectResolvedPolicyRuleIssues,

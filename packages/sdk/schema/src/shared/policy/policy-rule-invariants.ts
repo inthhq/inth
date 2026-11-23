@@ -8,7 +8,7 @@
  */
 import type { AllConsentNames } from '@inth/sdk-translations';
 
-import { compareCanonical } from './canonical-order';
+import { compareCanonical } from '../canonical-order';
 import type {
 	PolicyActionConstraints,
 	PolicyChoiceAction,

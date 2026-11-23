@@ -13,7 +13,7 @@
 
 import baseX from 'base-x';
 
-import { hashSha256Hex } from './policy-fingerprint.model';
+import { hashSha256Hex } from './policy/policy-fingerprint.model';
 
 /** Table name to id prefix. Prefixes are part of the id format. */
 const PREFIXES = {

@@ -1,4 +1,4 @@
-import { compareCanonical } from './canonical-order';
+import { compareCanonical } from '../canonical-order';
 import type { LegacyMaterialCompatibility } from './legacy-material-policy.model';
 /**
  * Versioned fingerprint domains for v3 policy rules.

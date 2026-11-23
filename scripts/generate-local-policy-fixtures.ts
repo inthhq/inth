@@ -21,18 +21,18 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { resolvePolicyRules } from '../packages/sdk/schema/src/shared/policy-resolution.model';
+import { resolvePolicyRules } from '../packages/sdk/schema/src/shared/policy/policy-resolution.model';
 import { writePolicyResolutionWire } from '../packages/sdk/schema/src/shared/policy-resolution-wire';
 import {
 	inspectPolicyRules,
 	normalizePolicyRule,
-} from '../packages/sdk/schema/src/shared/policy-rule.model';
-import type { PolicyRule } from '../packages/sdk/schema/src/shared/policy-rule.model';
+} from '../packages/sdk/schema/src/shared/policy/policy-rule.model';
+import type { PolicyRule } from '../packages/sdk/schema/src/shared/policy/policy-rule.model';
 import {
 	choicePromptFingerprintInput,
 	noticePromptFingerprintInput,
 	policyFingerprintInput,
-} from '../packages/sdk/schema/src/shared/policy-rule-fingerprint.model';
+} from '../packages/sdk/schema/src/shared/policy/policy-rule-fingerprint.model';
 
 const rules: PolicyRule[] = [
 	{

@@ -20,7 +20,7 @@ import * as v from 'valibot';
 import {
 	isPlainPolicyObject,
 	POLICY_OPTIONAL_CATEGORIES,
-} from '../../shared/policy-rule.model';
+} from '../../shared/policy/policy-rule.model';
 
 /** Plain object guard applied before every projection layer. */
 const plainObjectSchema = v.custom<Record<string, unknown>>(

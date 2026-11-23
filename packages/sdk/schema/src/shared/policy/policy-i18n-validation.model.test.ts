@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { validatePolicyI18nConfig } from './policy-i18n-validation.model';
 import { policyRulePresets } from './policy-rule-presets';
-import { getTranslationsData } from './get-translations-data';
+import { getTranslationsData } from '../get-translations-data';
 
 describe('stock policy message profiles', () => {
 	it('accepts recommended policy presets without custom translations', () => {

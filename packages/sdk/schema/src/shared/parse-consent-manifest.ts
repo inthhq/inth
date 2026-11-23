@@ -10,14 +10,14 @@ import type {
 } from './consent-manifest';
 import { hostingSchema } from './hosting.model';
 import { nonIABVendorSchema } from './non-iab-vendor.model';
-import { isPlainPolicyObject } from './policy-rule-invariants';
-import { isPolicySurfaceUnfingerprinted } from './policy-surface';
+import { isPlainPolicyObject } from './policy/policy-rule-invariants';
+import { isPolicySurfaceUnfingerprinted } from './policy/policy-surface';
 import {
 	plainObjectSchema,
 	POLICY_SURFACE_FINGERPRINT_ISSUE,
 	policyFingerprintsSchema,
 	resolvedPolicyRuleSchema,
-} from './policy-wire-schema.model';
+} from './policy/policy-wire-schema.model';
 import { scriptRegistrySchema } from './script-sources.model';
 import type { I18nMessageProfiles } from './get-translations-data';
 import { vendorSchema } from './vendor.model';

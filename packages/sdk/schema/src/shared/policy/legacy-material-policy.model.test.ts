@@ -1,6 +1,6 @@
 import { assert, describe, expect, test } from 'vitest';
 
-import { createConsentManifestPolicyPack } from './consent-manifest';
+import { createConsentManifestPolicyPack } from '../consent-manifest';
 import { createMaterialPolicyFingerprintSync } from './policy-fingerprint.model';
 import { resolvePolicyRules } from './policy-resolution.model';
 import { policyRulePresets } from './policy-rule-presets';

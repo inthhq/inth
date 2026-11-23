@@ -159,13 +159,13 @@ export {
 	createMaterialPolicyFingerprintSync,
 	hashSha256Hex,
 	stableStringify,
-} from './policy-fingerprint.model';
+} from './policy/policy-fingerprint.model';
 export {
 	matchPolicyRules,
 	type PolicyMatchEntry,
 	type PolicyMatchOutcome,
 	resolvePolicyRules,
-} from './policy-resolution.model';
+} from './policy/policy-resolution.model';
 export {
 	POLICY_CONTRACT_HEADER,
 	POLICY_CONTRACT_VERSION,
@@ -203,7 +203,7 @@ export {
 	POLICY_RIGHTS,
 	POLICY_RULE_MODELS,
 	requiredPolicyRights,
-} from './policy-rule-invariants';
+} from './policy/policy-rule-invariants';
 export { compareCanonical } from './canonical-order';
 export {
 	DEFAULT_CHOICE_VALIDITY_DAYS,
@@ -222,7 +222,7 @@ export {
 	type PolicyRuleReview,
 	type ResolvedPolicyRule,
 	validatePolicyRules,
-} from './policy-rule.model';
+} from './policy/policy-rule.model';
 export {
 	CHOICE_PROMPT_FINGERPRINT_VERSION,
 	type ChoicePromptFingerprintInput,
@@ -240,7 +240,7 @@ export {
 	PRESENTATION_FINGERPRINT_VERSION,
 	type PresentationFingerprintInput,
 	policySurfacePresentationInput,
-} from './policy-rule-fingerprint.model';
+} from './policy/policy-rule-fingerprint.model';
 export {
 	type BannerEdge,
 	type CardPosition,
@@ -262,7 +262,7 @@ export {
 	POLICY_SURFACE_KEYS,
 	type PolicySurface,
 	type ResolvedPolicySurface,
-} from './policy-surface';
+} from './policy/policy-surface';
 export {
 	type EuropePolicyRuleMode,
 	type PolicyRulePresets,
@@ -270,7 +270,7 @@ export {
 	type RecommendedPolicyRulesOptions,
 	recommendedPolicyRules,
 	type UsOptOutPresetOptions,
-} from './policy-rule-presets';
+} from './policy/policy-rule-presets';
 export {
 	consentContainerSchema,
 	policyActionConstraintsSchema,
@@ -285,7 +285,7 @@ export {
 	policyRuleModelSchema,
 	policySurfaceSchema,
 	resolvedPolicyRuleSchema,
-} from './policy-wire-schema.model';
+} from './policy/policy-wire-schema.model';
 export { BASE_LANGUAGES } from './base-languages';
 export {
 	type PolicyI18nMessageProfileLike,
@@ -293,7 +293,7 @@ export {
 	type PolicyI18nValidationResult,
 	primaryLanguage,
 	validatePolicyI18nConfig,
-} from './policy-i18n-validation.model';
+} from './policy/policy-i18n-validation.model';
 export {
 	EEA_COUNTRY_CODES,
 	EU_COUNTRY_CODES,
@@ -305,8 +305,8 @@ export {
 	type PolicyValidationResult,
 	policyMatchers,
 	UK_COUNTRY_CODES,
-} from './policy-runtime.model';
-export { dedupeDefinedValues } from './dedupe-defined-values';
+} from './policy/policy-runtime.model';
+export { dedupeDefinedValues } from './policy/dedupe-defined-values';
 export {
 	getTranslationsData,
 	type I18nMessageProfile,
@@ -319,4 +319,4 @@ export type {
 	LegacyMaterialCompatibility,
 	LegacyMaterialPolicyInput,
 	LegacyMaterialSurfaceInput,
-} from './legacy-material-policy.model';
+} from './policy/legacy-material-policy.model';

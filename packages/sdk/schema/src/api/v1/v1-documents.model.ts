@@ -17,7 +17,7 @@
 
 import * as v from 'valibot';
 
-import { isPlainPolicyObject } from '../../shared/policy-rule.model';
+import { isPlainPolicyObject } from '../../shared/policy/policy-rule.model';
 import {
 	v1CanonicalSubjectIdSchema,
 	v1IdempotencyKeySchema,
