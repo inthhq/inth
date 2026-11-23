@@ -26,41 +26,29 @@ import {
 } from "@/components/ui/card"
 
 /**
- * Where the banner sits, from `presentation.prompt.variant` and `position`.
- * A default corner follows the text direction and a corner the host chose
- * doesn't, as in the stock banner.
+ * Where the banner sits, from the resolved container's desktop placement.
+ * `start` and `end` follow the text direction, as in the stock banner.
  */
-function placementClassName({
-  variant,
-  position,
-  positionSource,
-}: HeadlessConsentBannerState) {
-  if (variant === "wall") {
-    return "top-1/2 left-1/2 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2"
+function placementClassName({ container }: HeadlessConsentBannerState) {
+  const placement = container?.desktop.placement ?? "card-start"
+  switch (placement) {
+    case "card-center":
+      return "top-1/2 left-1/2 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2"
+    case "banner-top":
+    case "drawer-top":
+      return "inset-x-0 top-0"
+    case "banner-bottom":
+    case "drawer-bottom":
+      return "inset-x-0 bottom-0"
+    case "drawer-start":
+      return "inset-y-0 start-0 w-full sm:max-w-md"
+    case "drawer-end":
+      return "inset-y-0 end-0 w-full sm:max-w-md"
+    case "card-end":
+      return "bottom-4 start-4 end-4 sm:w-full sm:max-w-md sm:start-auto"
+    default:
+      return "bottom-4 start-4 end-4 sm:w-full sm:max-w-md sm:end-auto"
   }
-  if (variant === "bar") {
-    return cn("inset-x-0", position === "top" ? "top-0" : "bottom-0")
-  }
-  const edge = position.startsWith("top") ? "top-4" : "bottom-4"
-  const width = variant === "widget" ? "sm:max-w-sm" : "sm:max-w-md"
-  if (position.endsWith("-center")) {
-    return cn(edge, width, "inset-x-4 mx-auto sm:w-full")
-  }
-  const left = position.endsWith("-left")
-  if (positionSource === "host") {
-    return cn(
-      edge,
-      width,
-      "right-4 left-4 sm:w-full",
-      left ? "sm:right-auto" : "sm:left-auto"
-    )
-  }
-  return cn(
-    edge,
-    width,
-    "start-4 end-4 sm:w-full",
-    left ? "sm:end-auto" : "sm:start-auto"
-  )
 }
 
 function ConsentBannerContent({ className }: { className?: string }) {
@@ -89,8 +77,9 @@ function ConsentBannerContent({ className }: { className?: string }) {
   // A column direction, or the strict and balanced profiles, stack the
   // actions at full width.
   const stacked = banner.direction === "column" || banner.shouldFillActions
-  const bar = banner.variant === "bar"
-  const topBar = bar && banner.position === "top"
+  const placement = banner.container?.desktop.placement ?? "card-start"
+  const bar = !placement.startsWith("card")
+  const topBar = placement.endsWith("-top")
 
   return (
     <>
@@ -120,7 +109,7 @@ function ConsentBannerContent({ className }: { className?: string }) {
           )}
         />
         <Card
-          size={banner.variant === "widget" ? "sm" : "default"}
+          size="default"
           className={cn("shadow-lg", bar && "rounded-none")}
         >
           <CardHeader>

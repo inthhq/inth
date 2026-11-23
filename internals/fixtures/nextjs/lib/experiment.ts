@@ -9,7 +9,7 @@ import type {
  * arm blocks the page until the visitor chooses.
  */
 export const bannerExperiment = defineExperiment({
-	arms: { wall: { prompt: { variant: 'wall' } } },
+	arms: { wall: { prompt: { container: { position: 'center', type: 'card' } } } },
 	id: 'banner-shape',
 });
 

@@ -144,7 +144,7 @@ const DemoPage = ({ region }: { region: Region }) => (
 );
 
 interface DialogStoryOptions {
-	/** Start on the v6 banner instead of the open dialog. */
+	/** Start on the banner instead of the open dialog. */
 	flow?: boolean;
 	container?: ConsentContainer;
 	gpc?: boolean;

@@ -2,13 +2,13 @@ import { policyRulePresets } from '@inth/sdk/schema/types';
 import { describe, expect, it } from 'vitest';
 
 import {
-	autoVariantFor,
+	autoContainerFor,
 	buildBackendSnippet,
 	buildProviderSnippet,
 	DEFAULT_PRESENTATION_FORM,
 	DEMO_NOTICE_PRESENTATION,
 	DEMO_PRESENTATION_BY_RULE,
-	defaultVariantFor,
+	defaultContainerFor,
 	describeMatch,
 	fromPolicyRule,
 	getPlaygroundPreset,
@@ -17,7 +17,7 @@ import {
 	positionOptionsFor,
 	presentationForRule,
 	resolvePlaygroundPresentation,
-	setPresentationVariant,
+	setPresentationContainer,
 	toConsentPresentation,
 	toPolicyRule,
 	isRecommendedPreset,
@@ -119,55 +119,59 @@ describe('policy playground helpers', () => {
 		expect(describeMatch({})).toBe('matches nothing');
 	});
 
-	it('narrows position options to the variant and drops invalid positions', () => {
+	it('narrows position options to the container and drops invalid positions', () => {
 		expect(positionOptionsFor('auto', 'choice')).toEqual(
-			positionOptionsFor('floating', 'choice')
+			positionOptionsFor('card', 'choice')
 		);
-		expect(defaultVariantFor('notice')).toBe('floating');
-		expect(positionOptionsFor('auto', 'notice')).toEqual(
-			positionOptionsFor('floating', 'notice')
-		);
-		expect(positionOptionsFor('auto', 'notice', 'bar')).toEqual([
-			'top',
+		expect(defaultContainerFor('notice')).toBe('card');
+		expect(positionOptionsFor('auto', 'notice', 'banner')).toEqual([
 			'bottom',
+			'top',
 		]);
-		expect(positionOptionsFor('wall', 'choice')).toEqual(['center']);
-		const floating = setPresentationVariant(
-			{ ...DEFAULT_PRESENTATION_FORM, position: 'bottom-right' },
-			'floating',
+		expect(positionOptionsFor('card', 'choice')).toEqual([
+			'start',
+			'end',
+			'center',
+		]);
+		const card = setPresentationContainer(
+			{ ...DEFAULT_PRESENTATION_FORM, position: 'end' },
+			'card',
 			'choice'
 		);
-		expect(floating.position).toBe('bottom-right');
-		const bar = setPresentationVariant(floating, 'bar', 'choice');
-		expect(bar.variant).toBe('bar');
-		expect(bar.position).toBe('auto');
-		const widget = setPresentationVariant(floating, 'widget', 'choice');
-		expect(widget.position).toBe('bottom-right');
+		expect(card.position).toBe('end');
+		const banner = setPresentationContainer(card, 'banner', 'choice');
+		expect(banner.container).toBe('banner');
+		expect(banner.position).toBe('auto');
+		const drawer = setPresentationContainer(card, 'drawer', 'choice');
+		expect(drawer.position).toBe('end');
 	});
 
 	it('turns the presentation form into host presentation only when set', () => {
 		expect(toConsentPresentation(DEFAULT_PRESENTATION_FORM)).toBeUndefined();
 		expect(
 			toConsentPresentation({
-				blocking: true,
+				blockUntilChoice: true,
+				container: 'banner',
 				position: 'top',
-				variant: 'bar',
 			})
-		).toEqual({ prompt: { blocking: true, position: 'top', variant: 'bar' } });
+		).toEqual({
+			prompt: {
+				blockUntilChoice: true,
+				container: { edge: 'top', type: 'banner' },
+			},
+		});
 	});
 
 	it('maps each shipped preset to a demo presentation by rule id', () => {
 		const europe = policyRulePresets.europeOptIn();
 		expect(presentationForRule(europe)).toEqual({
-			position: 'bottom-left',
-			variant: 'floating',
+			container: { position: 'start', type: 'card' },
 		});
 		expect(presentationForRule(policyRulePresets.quebecOptIn())).toEqual({
-			variant: 'wall',
+			container: { position: 'center', type: 'card' },
 		});
 		expect(presentationForRule(policyRulePresets.californiaOptIn())).toEqual({
-			position: 'bottom-center',
-			variant: 'floating',
+			container: { edge: 'bottom', type: 'banner' },
 		});
 		// No prompt means no banner; the toolbar is the persistent route.
 		expect(
@@ -265,10 +269,12 @@ describe('policy playground helpers', () => {
 		expect(presentationForRule({ id: 'europe_opt_in', prompt: 'notice' })).toBe(
 			DEMO_NOTICE_PRESENTATION
 		);
-		expect(autoVariantFor(notice)).toBe('floating');
-		expect(autoVariantFor(policyRulePresets.quebecOptIn())).toBe('wall');
-		expect(autoVariantFor({ id: 'unmapped', prompt: 'choice' })).toBe(
-			defaultVariantFor('choice')
+		expect(autoContainerFor(notice)).toBe('card');
+		expect(autoContainerFor(policyRulePresets.californiaOptIn())).toBe(
+			'banner'
+		);
+		expect(autoContainerFor({ id: 'unmapped', prompt: 'choice' })).toBe(
+			defaultContainerFor('choice')
 		);
 	});
 
@@ -277,27 +283,32 @@ describe('policy playground helpers', () => {
 		const europe = policyRulePresets.europeOptIn();
 		expect(
 			resolvePlaygroundPresentation(DEFAULT_PRESENTATION_FORM, europe)
-		).toEqual({ prompt: { position: 'bottom-left', variant: 'floating' } });
-		// A manual variant drops the mapped position, which may not fit it.
+		).toEqual({ prompt: { container: { position: 'start', type: 'card' } } });
+		// A manual container type drops the mapped position, which may not fit it.
 		expect(
 			resolvePlaygroundPresentation(
-				{ ...DEFAULT_PRESENTATION_FORM, variant: 'bar' },
+				{ ...DEFAULT_PRESENTATION_FORM, container: 'banner' },
 				europe
 			)
-		).toEqual({ prompt: { variant: 'bar' } });
-		// A manual position keeps the mapped variant.
+		).toEqual({ prompt: { container: { type: 'banner' } } });
+		// A manual position keeps the mapped container type.
 		expect(
 			resolvePlaygroundPresentation(
-				{ ...DEFAULT_PRESENTATION_FORM, position: 'top-right' },
+				{ ...DEFAULT_PRESENTATION_FORM, position: 'end' },
 				europe
 			)
-		).toEqual({ prompt: { position: 'top-right', variant: 'floating' } });
+		).toEqual({ prompt: { container: { position: 'end', type: 'card' } } });
 		expect(
 			resolvePlaygroundPresentation(
-				{ ...DEFAULT_PRESENTATION_FORM, blocking: true },
+				{ ...DEFAULT_PRESENTATION_FORM, blockUntilChoice: true },
 				quebec
 			)
-		).toEqual({ prompt: { blocking: true, variant: 'wall' } });
+		).toEqual({
+			prompt: {
+				blockUntilChoice: true,
+				container: { position: 'center', type: 'card' },
+			},
+		});
 		// Unmapped rules with an untouched form pass nothing to the provider.
 		expect(
 			resolvePlaygroundPresentation(DEFAULT_PRESENTATION_FORM, {
@@ -305,10 +316,10 @@ describe('policy playground helpers', () => {
 				prompt: 'choice',
 			})
 		).toBeUndefined();
-		// Position options follow the mapped variant while the form is auto.
+		// Position options follow the mapped container while the form is auto.
 		expect(
-			positionOptionsFor('auto', 'choice', autoVariantFor(quebec))
-		).toEqual(['center']);
+			positionOptionsFor('auto', 'choice', autoContainerFor(quebec))
+		).toEqual(['start', 'end', 'center']);
 	});
 
 	it('resolves the prompt surface and reports presentation diagnostics', () => {
@@ -320,27 +331,31 @@ describe('policy playground helpers', () => {
 			country: 'US',
 			region: 'CA',
 		});
-		expect(defaults.presentation?.variant).toBe('floating');
-		expect(defaults.presentation?.position).toBe('bottom-left');
-		expect(defaults.presentation?.positionSource).toBe('default');
+		expect(defaults.presentation?.container?.desktop.placement).toBe(
+			'card-start'
+		);
 		expect(defaults.presentationDiagnostics).toEqual([]);
 		const blocked = inspectPlaygroundRule(
 			notice,
 			{ country: 'US', region: 'CA' },
-			{ prompt: { blocking: true, position: 'center', variant: 'bar' } }
+			{
+				prompt: {
+					blockUntilChoice: true,
+					container: { edge: 'top', type: 'banner' },
+				},
+			}
 		);
 		expect(blocked.presentation?.blocking).toBe(false);
-		expect(blocked.presentation?.position).toBe('bottom');
-		expect(
-			blocked.presentationDiagnostics.map((diagnostic) => diagnostic.code)
-		).toEqual(
-			expect.arrayContaining(['blocking-forbidden', 'invalid-position'])
+		expect(blocked.presentation?.container?.desktop.placement).toBe(
+			'banner-top'
 		);
 		const invalid = inspectPlaygroundRule(
 			toPolicyRule({ ...fromPolicyRule(rule), prompt: 'none' }),
 			{ country: 'US', region: 'CA' }
 		);
-		expect(invalid.presentation?.variant).toBe('floating');
+		expect(invalid.presentation?.container?.desktop.placement).toBe(
+			'card-start'
+		);
 	});
 
 	it('emits the preset factory for untouched presets and JSON otherwise', () => {
@@ -360,9 +375,11 @@ describe('policy playground helpers', () => {
 		);
 		expect(
 			buildProviderSnippet(rule, 'quebecOptIn', {
-				prompt: { variant: 'wall' },
+				prompt: { container: { position: 'center', type: 'card' } },
 			})
-		).toContain('presentation: {"prompt":{"variant":"wall"}}');
+		).toContain(
+			'presentation: {"prompt":{"container":{"position":"center","type":"card"}}}'
+		);
 		expect(buildProviderSnippet(rule, 'quebecOptIn')).not.toContain(
 			'ConsentDialogTriggerToolbar'
 		);

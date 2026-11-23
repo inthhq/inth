@@ -162,8 +162,7 @@ describe('demo policy scenarios', () => {
 		// The scenario's own rule is what the pack selected, so the demo card
 		// describes exactly what the visitor gets.
 		expect(presentationForRule(resolution.policy)).toEqual({
-			position: 'bottom-left',
-			variant: 'floating',
+			container: { position: 'start', type: 'card' },
 		});
 	});
 	it('does not create a choice for the explicit no-prompt default', () => {
@@ -217,13 +216,12 @@ describe('demo policy scenarios', () => {
 		expect(prompt.orderedActions).toEqual(['accept', 'reject']);
 		expect(prompt.preferenceControls).toEqual(['preferences']);
 	});
-	it('renders the US notice as a floating bottom-left card through the demo map', () => {
+	it('renders the US notice as a start corner Card through the demo map', () => {
 		const scenario = getScenarioById('custom-us-notice');
 		expect(scenario.presentation).toBeUndefined();
 		const demoPresentation = presentationForRule(scenario.policy);
 		expect(demoPresentation).toEqual({
-			position: 'bottom-left',
-			variant: 'floating',
+			container: { position: 'start', type: 'card' },
 		});
 		expect(scenario.runtimePresentation).toEqual({ prompt: demoPresentation });
 		// Explicit presentation wins over the map.
@@ -242,9 +240,7 @@ describe('demo policy scenarios', () => {
 			presentation: { prompt: demoPresentation },
 			surface: 'prompt',
 		});
-		expect(prompt.variant).toBe('floating');
-		expect(prompt.position).toBe('bottom-left');
-		expect(prompt.positionSource).toBe('host');
+		expect(prompt.container?.desktop.placement).toBe('card-start');
 		expect(prompt.blocking).toBe(false);
 		expect(prompt.diagnostics).toEqual([]);
 	});
@@ -264,11 +260,8 @@ describe('demo policy scenarios', () => {
 			presentation: scenario.presentation,
 			surface: 'prompt',
 		});
-		expect(prompt.variant).toBe('wall');
-		expect(prompt.position).toBe('center');
+		expect(prompt.container?.desktop.placement).toBe('card-center');
 		expect(prompt.blocking).toBe(true);
-		expect(prompt.trapFocus).toBe(true);
-		expect(prompt.scrollLock).toBe(true);
 		expect(prompt.diagnostics).toEqual([]);
 	});
 	it('keeps unknown scenario links usable', () => {

@@ -15,9 +15,11 @@ const config = {
 		process.env.NEXT_PUBLIC_INTH_PROJECT_URL ?? 'https://your-project.inth.app',
 };
 
-// A wall blocks the page until the visitor answers. Inth reports it as
+// A centred Card blocks the page until the visitor answers. Inth reports it as
 // `banner.blocking`, and refuses it for a notice, which must never block.
-const presentation: ConsentPresentation = { prompt: { variant: 'wall' } };
+const presentation: ConsentPresentation = {
+	prompt: { container: { position: 'center', type: 'card' } },
+};
 
 /**
  * The Inth runtime with Northwind's own consent UI. No stock banner, dialog

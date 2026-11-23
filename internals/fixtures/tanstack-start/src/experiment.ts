@@ -138,6 +138,6 @@ export const experimentSearch = function experimentSearch(
  * blocks the page until the visitor chooses.
  */
 export const bannerExperiment: ConsentExperiment<'wall'> = {
-	arms: { wall: { prompt: { variant: 'wall' } } },
+	arms: { wall: { prompt: { container: { position: 'center', type: 'card' } } } },
 	id: 'banner-shape',
 };

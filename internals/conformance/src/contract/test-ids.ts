@@ -195,12 +195,12 @@ export const TEST_ID_PATTERNS = [
 	// Persistent-right links in the banner footer, keyed by right
 	// (`opt-out`, `preferences`). Kept kebab-case so the dynamic probe matches.
 	/^consent-banner-right-link-[a-z][a-z0-9-]*$/u,
-	// Privacy Choices (v6): one rights row and its two options per right,
+	// The consent UI: one rights row and its two options per right,
 	// and one switch per category in the banner's category group.
 	/^consent-banner-rights-row-[a-z][a-z0-9-]*$/u,
 	/^consent-banner-right-option-[a-z][a-z0-9-]*-(?:protect|allow)$/u,
 	/^consent-banner-category-switch-[a-z][a-z0-9-]*$/u,
-	// Privacy Choices (v6) vendors: a trigger and a table per category, and
+	// The consent UI vendors: a trigger and a table per category, and
 	// one switch per vendor, keyed `<category>-<vendor id>` as in the widget.
 	/^consent-banner-vendor-trigger-[a-z][a-z0-9-]*$/u,
 	/^consent-banner-vendor-table-[a-z][a-z0-9-]*$/u,
