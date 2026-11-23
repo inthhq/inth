@@ -151,7 +151,9 @@ describe('themeToVars', () => {
 
 	test('the on-track follows a custom primary, in a JS theme and in the stock sheet', () => {
 		expect(
-			themeToVars({ colors: { primary: '#ff0000' } })['--inth-switch-track-active']
+			themeToVars({ colors: { primary: '#ff0000' } })[
+				'--inth-switch-track-active'
+			]
 		).toBe('#ff0000');
 		expect(
 			themeToVars({ dark: { primary: '#00ff00' } }, true)[
