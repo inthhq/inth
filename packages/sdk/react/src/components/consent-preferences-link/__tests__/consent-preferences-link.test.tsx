@@ -1,3 +1,4 @@
+import { policyRulePresets } from '@inth/sdk/engine';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
@@ -47,6 +48,36 @@ describe('ConsentDialogLink', () => {
 			});
 		}
 	);
+
+	test('sizes the CPPA icon of an opt-out link, as PrivacyChoicesLink does', async () => {
+		const view = await render(
+			<InthProvider
+				options={{
+					mode: testing(),
+					overrides: { country: 'US', region: 'CA' },
+					persistence: false,
+					prefetch: policyFixture(
+						undefined,
+						policyRulePresets.usPrivacyStatesOptOut()
+					),
+					presentation: { optOutLink: 'privacy-choices' },
+				}}
+			>
+				<ConsentDialogLink right="opt-out" />
+			</InthProvider>
+		);
+		const icon = await vi.waitFor(() => {
+			const svg = document.querySelector(
+				'[data-testid="consent-dialog-link"] svg[aria-hidden="true"]'
+			);
+			expect(svg).not.toBeNull();
+			return svg as SVGSVGElement;
+		});
+		// A page that loads no sheet sizing it would let it fill the line.
+		expect(icon).toHaveAttribute('height', '14');
+		expect(icon.getBoundingClientRect().height).toBe(14);
+		await view.unmount();
+	});
 
 	test('renders custom text and opens the dialog when clicked', async () => {
 		render(
