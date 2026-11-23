@@ -16,11 +16,15 @@ Call `inth.consents.check()` without `property` so choices from every domain in 
 import { Inth } from '@inth/node';
 
 const inth = new Inth();
+const noStore = { 'cache-control': 'private, no-store' };
 
 export async function GET(request: Request) {
 	const user = await getSessionUser(request);
 	if (!user) {
-		return Response.json({ user: null, userConsent: null });
+		return Response.json(
+			{ user: null, userConsent: null },
+			{ headers: noStore }
+		);
 	}
 
 	const [consentResult, tokenResult] = await Promise.all([
@@ -28,17 +32,24 @@ export async function GET(request: Request) {
 		inth.users.createIdentityToken({ externalId: user.id }),
 	]);
 
-	return Response.json({
-		user: {
-			externalId: user.id,
-			identityToken: tokenResult.error ? undefined : tokenResult.data.token,
+	return Response.json(
+		{
+			user: {
+				externalId: user.id,
+				identityToken: tokenResult.error ? undefined : tokenResult.data.token,
+			},
+			userConsent: consentResult.error ? undefined : consentResult.data,
 		},
-		userConsent: consentResult.error ? undefined : consentResult.data,
-	});
+		{ headers: noStore }
+	);
 }
 ```
 
 Omit `property` on `consents.check()`. Passing `property` restricts the answer to one host name and hides decisions made on your other domains.
+
+Send `Cache-Control: private, no-store` on this response. See [Don't cache `userConsent`](#dont-cache-userconsent).
+
+You don't need a separate endpoint. Any server response you already send works, such as an existing session endpoint or the page HTML itself. See [Without a `GET /user` endpoint](#without-a-get-user-endpoint).
 
 ## Pass `user` and `userConsent` to your framework
 
@@ -142,8 +153,8 @@ On reload, if you omit `userConsent` (`undefined`) and still pass `user: { exter
 ### TanStack Start
 
 ```tsx title="src/routes/__root.tsx"
-import { resolveConsent } from '@inth/tanstack-start/server';
 import { Inth } from '@inth/node';
+import { resolveConsent } from '@inth/tanstack-start/server';
 
 const inth = new Inth();
 
@@ -246,6 +257,53 @@ Pass `userConsent` in `window.inth.init()` / `config`, or sync later with `windo
 </script>
 ```
 
+### Without a `GET /user` endpoint
+
+The browser can't read a user's consent from Inth by itself. `consents.check()` and `users.createIdentityToken()` both need your secret key, so your server always makes these two calls. What you can skip is the extra browser request: render `user` and `userConsent` into the page your server already sends.
+
+```ts title="Server: render the page"
+const [consentResult, tokenResult] = await Promise.all([
+	inth.consents.check({ externalId: user.id }),
+	inth.users.createIdentityToken({ externalId: user.id }),
+]);
+
+const inthConfig = {
+	user: {
+		externalId: user.id,
+		identityToken: tokenResult.error ? undefined : tokenResult.data.token,
+	},
+	userConsent: consentResult.error ? undefined : consentResult.data,
+};
+
+// Escape `<` so the JSON can't close the script tag
+const inthAccount = JSON.stringify(inthConfig).replaceAll('<', '\\u003c');
+
+return new Response(renderPage({ inthAccount }), {
+	headers: {
+		'cache-control': 'private, no-store',
+		'content-type': 'text/html',
+	},
+});
+```
+
+Write `inthAccount` into a JSON script tag, then merge it into your Inth config:
+
+```html title="Page HTML"
+<script type="application/json" id="inth-account">
+	<!-- inthAccount goes here -->
+</script>
+<script>
+	var account = JSON.parse(document.getElementById('inth-account').textContent);
+	window.inth = window.inth || [];
+	window.inth.push(['config', Object.assign({ consentCategories: ['measurement', 'marketing'] }, account)]);
+</script>
+<script src="/inth.js" defer></script>
+```
+
+For a signed-out visitor, render `{ "userConsent": null }` and leave out `user`.
+
+Inth applies the account's consent before it decides on the banner and scripts, so the page never waits on a network request for it. The page HTML now carries one user's consent and identity token, so it must not be cached for other users. See [Don't cache `userConsent`](#dont-cache-userconsent).
+
 ## `undefined` vs `null`
 
 - **`undefined`** means the consent document is unknown or was not fetched on this pass. Inth makes no change to any stored account layer. On SSR, `resolveConsent()` reads the account cookies for `user.externalId`.
@@ -261,6 +319,18 @@ When you pass a `Promise<UserConsent | null>`, memoize it per user (for example 
 - Passing a new `Promise` identity for the same user starts a new generation without re-arming the hold, and older Promises that resolve late are dropped.
 - A `Promise` `userConsent` disables `serverScriptStart` for that render.
 - Resolved values are compared by content, so re-rendering with an equal object is a no-op.
+
+## Don't cache `userConsent`
+
+Inth can only apply decisions that reach it. A cached response that carries `userConsent`, whether from `GET /user` or a rendered page, hides changes made on your other domains until the cache expires.
+
+- **Shared caches leak between users.** A CDN or proxy that caches the response can serve one user's consent and identity token to another user. Inth can't catch this, because the cached `user` and `userConsent` match each other.
+- **Long caches delay revocations.** If a user denies marketing on `shop.example`, a cached response on `checkout.example` still says granted until it expires, so marketing scripts keep loading there.
+- **Don't cache `consents.check()` on your server either.** If you must, keep the cache to a few seconds.
+
+Send `Cache-Control: private, no-store` on every response that carries `userConsent`.
+
+Client-side caches such as TanStack Query or SWR are fine. Pass the fresh value to the provider when it arrives, and Inth applies the newest decision. A stale document never overrides a newer decision this browser already holds.
 
 ## Clock trade-off
 
