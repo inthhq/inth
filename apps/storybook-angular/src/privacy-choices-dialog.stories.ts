@@ -131,7 +131,7 @@ const dialogStory = function dialogStory(
 					StorybookSettingsLink,
 				],
 			},
-			template: `${demoPage(pageLinks(region))}<inth-consent-banner /><inth-consent-dialog />${
+			template: `${demoPage(pageLinks(region), 'dialog')}<inth-consent-banner /><inth-consent-dialog />${
 				options.flow ? '' : '<storybook-open-dialog />'
 			}`,
 		}),
