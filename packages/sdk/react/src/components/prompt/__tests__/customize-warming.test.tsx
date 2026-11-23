@@ -1,10 +1,13 @@
-import { expect, test, vi } from 'vitest';
+import { beforeEach, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 import { userEvent } from 'vitest/browser';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
-import { registerDialogChunkWarmer } from '~/chunk-warming';
+import {
+	registerDialogChunkWarmer,
+	resetDialogChunkWarmingForTests,
+} from '~/chunk-warming';
 import { ConsentDialogLink } from '~/components/panel-link';
 import { ConsentDialogTrigger } from '~/components/panel-trigger';
 import { ConsentBanner } from '~/components/prompt';
@@ -29,6 +32,15 @@ const button = (testId: string) => {
 	}
 	return element;
 };
+
+beforeEach(async () => {
+	// A test that ran before, in this file or an earlier one, can leave the
+	// pointer where a banner button renders, and Chromium then reports a
+	// pointer enter, which warms the dialog on intent. Park it in the corner,
+	// and forget an earlier warm, which would warm each new warmer at once.
+	await userEvent.hover(document.documentElement, { position: { x: 1, y: 1 } });
+	resetDialogChunkWarmingForTests();
+});
 
 test('the stock banner Customize button warms the deferred dialog on focus', async () => {
 	const warmer = vi.fn();
