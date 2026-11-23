@@ -23,7 +23,13 @@ The stock banner and dialog now always render one consent UI in every framework 
 | `containerFromLegacyPrompt`, `LegacyPromptPresentation` | `container` |
 | The `invalid-variant`, `invalid-position` and `legacy-presentation` diagnostics | The container's own diagnostics |
 | `hideBranding` on `ConsentDialog` | Nothing: the dialog has no branding tag. |
-| `@inth/sdk/styles/privacy-choices.css` | `styles.css`, which now holds every rule |
+| `@inth/sdk/ui/styles/privacy-choices.css` | Delete the import: `@inth/sdk/ui/styles.css`, or your framework's `styles.css` (such as `@inth/react/styles.css`), now holds every rule |
+| `@inth/sdk/ui/styles/privacy-choices.tw3.css` (Tailwind CSS 3) | Delete the import: `@inth/sdk/ui/styles.tw3.css`, or your framework's `styles.tw3.css`, now holds every rule |
+| `components.banner.actions` | `components.banner.footer` (`consentBannerFooter`) and `components.banner.actionGroup` (`consentBannerFooterSubGroup`) |
+| `components.banner.rights`, the `consentBannerRights` theme slot | `components.banner.rightsRow` (`consentBannerRightsRow`) for the rights row Customize opens; the notice's opt-out link is `components.banner.rightLink` (`consentBannerRightLink`) |
+| `components.description.manager` | `components.description.dialog` (`consentDialogDescription`), the dialog's intro |
+| `components.tag.dialog`, the `consentDialogTag` theme slot | Nothing: the dialog has no branding tag. Both are accepted and style nothing. |
+| `consentWidgetFooter` on the dialog's footer | `consentDialogFooter` (`components.dialog.footer`); `consentWidgetFooter` styles only `ConsentWidget` |
 
 `container` is set on `ConsentBanner`, in `presentation.prompt.container`, or by the policy rule's `surface.container`, in that order. A policy's `surface.container` now places the prompt on every site, with no `design` switch. `edgeStyle` (`inset` or `flush`) works the same way.
 
@@ -47,6 +53,10 @@ The classic banner and dialog CSS variables still apply: each part reads its own
 
 The per-surface sheets are renamed: `banner` is now `parts`, `bar` is `banner`, `dialog` is `widget`, and `privacy-choices-dialog` is `dialog`. The CSS modules `consent-bar` and `privacy-choices` are now `consent-banner` and `consent-dialog`. `styles.css` is the single full stylesheet.
 
+The old import paths `@inth/sdk/ui/styles/components/consent-banner` and `consent-dialog` (with `.module.css`, `.css` or `.js`, and the same paths under `@inth/sdk-ui`) still resolve, but they now load different modules. They used to alias the classic banner's `prompt` and the classic dialog's `panel` class maps. They now load the Banner container's module and the consent dialog's module, whose class names are different, so code that reads classes from them gets `undefined`. Read the prompt shell from `consent-surface`, the containers from `consent-card`, `consent-banner` and `consent-drawer`, the options Customize opens from `consent-expand`, and the dialog from `consent-dialog`. Better still, target the parts through slots, `data-testid` or `data-*` attributes, which don't change between builds.
+
+The banner's "Consent by" tag is now a neutral credit that reads `--consent-tag-background`, `--consent-tag-text-color`, `--consent-tag-border-color` and `--consent-tag-radius`. The `--consent-branding-tag-*` variables still style the tags on `ConsentWidget` and the IAB TCF banner and dialog, and no longer reach the banner's tag.
+
 **React, Next.js and TanStack Start**
 
 | Removed | Use instead |
@@ -63,7 +73,6 @@ The per-surface sheets are renamed: `banner` is now `parts`, `bar` is `banner`, 
 | --- | --- |
 | `variant`, `position` and `blocking` props on `ConsentBanner` | `container`, `edgeStyle` and `blockUntilChoice` props |
 | `ConsentDescription` (and `@inth/nuxt/components/consent-description`) | The banner's and dialog's own descriptions, styled through `components.description.banner` and `components.description.dialog` |
-| `components.banner.actions`, `components.banner.rights`, `components.description.manager` | `components.banner.footer`, `components.banner.actionGroup`, `components.banner.rightLink` |
 | The `PromptVariant` and `PromptPosition` types | `ConsentContainer`, `ConsentEdgeStyle`, `BannerEdge`, `CardPosition`, `DrawerSide` and `ResolvedConsentLayout`, now exported from `@inth/vue` |
 
 `trapFocus` in the plugin or module options now applies only to the IAB banner and dialog, as in React. `<ConsentManager>` takes one prop, `disableAnimation`, and hosts the opt-in confirmation while it is mounted. A one-click opt-out opens it on its receipt, unless a standalone `<OptOutConfirmation />` is on the page, which now claims the confirmation as soon as it mounts.
