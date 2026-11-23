@@ -74,18 +74,17 @@ export const collectExperimentDiagnostics =
 					)
 				: (options.actionAppearance ??
 					actionAppearanceFromTheme(options.theme));
-			const found = (['prompt', 'preferences'] as const).flatMap(
-				(surface) =>
-					resolveConsentPresentation({
-						actionAppearance,
-						policy,
-						presentation,
-						surface,
-					}).diagnostics.filter(
-						// A removed option does nothing, so it changes nothing an
-						// arm shows; the prompt warns about it on its own.
-						(diagnostic) => diagnostic.code !== 'removed-option'
-					)
+			const found = (['prompt', 'preferences'] as const).flatMap((surface) =>
+				resolveConsentPresentation({
+					actionAppearance,
+					policy,
+					presentation,
+					surface,
+				}).diagnostics.filter(
+					// A removed option does nothing, so it changes nothing an
+					// arm shows; the prompt warns about it on its own.
+					(diagnostic) => diagnostic.code !== 'removed-option'
+				)
 			);
 			if (found.length > 0) {
 				diagnostics[name] = found;
