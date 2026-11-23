@@ -13,6 +13,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest';
 import {
 	acceptButton,
 	categoryControl,
+	closePreferences,
 	expandCategory,
 	expectNoTracking,
 	holdAppScripts,
@@ -324,7 +325,7 @@ for (const target of selectedTargets()) {
 				await rejectButton(page).click();
 				await openPreferences(page, hasRuntimeGlobal);
 				await expect.poll(() => saveButton(page).isVisible()).toBe(true);
-				await saveButton(page).click();
+				await closePreferences(page);
 				await expectNoTracking(page, requests);
 				expect(blocked).toEqual([]);
 			});
@@ -375,7 +376,15 @@ for (const target of selectedTargets()) {
 				expect(await categoryControl(page, 'Marketing').isChecked()).toBe(
 					false
 				);
-				await saveButton(page).click();
+				if (
+					(await saveButton(page).getAttribute('data-testid')) ===
+					'consent-dialog-save-button'
+				) {
+					// The stock dialog shows the stored rejection, so nothing is
+					// left to save until a switch moves (EU-01).
+					expect(await saveButton(page).isDisabled()).toBe(true);
+				}
+				await closePreferences(page);
 				await expectNoTracking(page, requests);
 			});
 
