@@ -1,6 +1,6 @@
 /**
  * The page `fetch` the FullStory snippet saves and wraps, as
- * @fullstory/snippet 2.1.0 does.
+ * `@fullstory/snippet` 2.1.0 does.
  */
 
 /** The page's `fetch`, read before FullStory wraps it. */
