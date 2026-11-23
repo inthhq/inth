@@ -841,8 +841,11 @@ export class PrivacyChoicesSurface {
 			this.#pageRegionController = null;
 		});
 		this.#followExit();
-		this.#followCommit();
+		// Before the commit's focus return: render effects run in the order
+		// they are made, and a blocking prompt must release the page before
+		// focus moves onto it, or the focus lands on an inert control.
 		this.#followBlocking();
+		this.#followCommit();
 		this.#followEscape();
 		this.#followFocus();
 		// All-in-one has nothing to fold. An expansion left from the phone

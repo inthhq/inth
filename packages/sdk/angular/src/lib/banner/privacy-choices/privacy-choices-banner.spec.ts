@@ -747,6 +747,30 @@ describe('blocking:', () => {
 	});
 });
 
+describe('blocking commit', () => {
+	test('[BNR-06][BNR-13] a blocking choice releases the page before focus returns', async () => {
+		await mount({ container: { position: 'center', type: 'card' } });
+		await waitForRoot();
+		await vi.waitFor(() =>
+			expect(document.activeElement).toBe($('consent-banner-card'))
+		);
+		// jsdom lets an inert element take focus, so record whether the
+		// page was still inert when focus was asked for.
+		const target = must('privacy-choices-link');
+		const inertWhenFocused: boolean[] = [];
+		const focus = target.focus.bind(target);
+		target.focus = (options?: FocusOptions) => {
+			inertWhenFocused.push(target.closest('[inert]') !== null);
+			focus(options);
+		};
+		must('consent-banner-accept-button').click();
+		await vi.waitFor(() => expect($('consent-banner-root')).toBeNull());
+		await vi.waitFor(() => expect(inertWhenFocused.length).toBeGreaterThan(0));
+		expect(inertWhenFocused).toEqual([false]);
+		expect(document.activeElement).toBe(target);
+	});
+});
+
 describe('notice', () => {
 	test('[BNR-01][BNR-10] the US notice offers "Do not sell or share my data" and OK, and expands to the rights', async () => {
 		await mount({ region: 'us-notice' });
