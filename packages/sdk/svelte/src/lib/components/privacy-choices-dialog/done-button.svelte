@@ -6,7 +6,7 @@
 	 * label. The cue's slot is always there, so Done keeps its node and
 	 * focus (FOC-06).
 	 */
-	import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 	import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 
 	import { getThemeContext } from '../../context.svelte';

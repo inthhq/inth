@@ -5,22 +5,22 @@ import {
 	demoExperiment,
 	EMPTY_SURFACE,
 	parseSurfaceParams,
-	setSurfaceVariant,
+	setSurfaceContainer,
 	surfacePositionOptions,
 	withSurface,
 } from './prompt-surface';
 
 describe('prompt surface params', () => {
-	it('reads a valid variant, position and blocking flag', () => {
+	it('reads a valid container, position and blocking flag', () => {
 		expect(
 			parseSurfaceParams(
-				new URLSearchParams('variant=bar&position=top&blocking=1')
+				new URLSearchParams('container=banner&position=top&blocking=1')
 			)
 		).toEqual({
 			...EMPTY_SURFACE,
 			blocking: true,
+			container: 'banner',
 			position: 'top',
-			variant: 'bar',
 		});
 		expect(parseSurfaceParams(new URLSearchParams(''))).toEqual(EMPTY_SURFACE);
 	});
@@ -31,26 +31,26 @@ describe('prompt surface params', () => {
 			experiment: true,
 		});
 		expect(
-			parseSurfaceParams(new URLSearchParams('experiment=1&arm=bar'))
-		).toEqual({ ...EMPTY_SURFACE, arm: 'bar', experiment: true });
+			parseSurfaceParams(new URLSearchParams('experiment=1&arm=banner'))
+		).toEqual({ ...EMPTY_SURFACE, arm: 'banner', experiment: true });
 		// An unknown arm is dropped; an arm without the experiment is ignored.
 		expect(
 			parseSurfaceParams(new URLSearchParams('experiment=1&arm=wall'))
 		).toEqual({ ...EMPTY_SURFACE, experiment: true });
-		expect(parseSurfaceParams(new URLSearchParams('arm=bar'))).toEqual(
+		expect(parseSurfaceParams(new URLSearchParams('arm=banner'))).toEqual(
 			EMPTY_SURFACE
 		);
 		expect(
-			applySurfaceParams(new URLSearchParams('arm=bar'), {
+			applySurfaceParams(new URLSearchParams('arm=banner'), {
 				...EMPTY_SURFACE,
-				arm: 'bar',
+				arm: 'banner',
 				experiment: true,
 			}).toString()
-		).toBe('experiment=1&arm=bar');
+		).toBe('experiment=1&arm=banner');
 		expect(
-			applySurfaceParams(new URLSearchParams('experiment=1&arm=bar'), {
+			applySurfaceParams(new URLSearchParams('experiment=1&arm=banner'), {
 				...EMPTY_SURFACE,
-				arm: 'bar',
+				arm: 'banner',
 			}).toString()
 		).toBe('');
 	});
@@ -62,45 +62,40 @@ describe('prompt surface params', () => {
 		// Inth picks the arm when the URL names none.
 		expect(picked).not.toHaveProperty('arm');
 		// `control` is the base presentation, so it is never listed in `arms`.
-		expect(Object.keys(picked?.arms ?? {})).toEqual(['bar']);
+		expect(Object.keys(picked?.arms ?? {})).toEqual(['banner']);
 		expect(
-			demoExperiment({ ...EMPTY_SURFACE, arm: 'bar', experiment: true })?.arm
-		).toBe('bar');
+			demoExperiment({ ...EMPTY_SURFACE, arm: 'banner', experiment: true })
+				?.arm
+		).toBe('banner');
 		expect(
 			demoExperiment({ ...EMPTY_SURFACE, arm: 'control', experiment: true })
 				?.arm
 		).toBe('control');
 	});
 
-	it('keeps the bar arm valid for an opt-out notice prompt', () => {
+	it('keeps the banner arm valid for an opt-out notice prompt', () => {
 		const forced = demoExperiment({
 			...EMPTY_SURFACE,
-			arm: 'bar',
+			arm: 'banner',
 			experiment: true,
 		});
-		// A notice is never blocking and cannot use `wall`, so the arm under
-		// test is a bottom bar, which both `choice` and `notice` accept.
-		expect(forced?.arms.bar).toEqual({
-			prompt: { position: 'bottom', variant: 'bar' },
+		// A notice never blocks, so the arm under test is a bottom Banner,
+		// which both `choice` and `notice` accept.
+		expect(forced?.arms.banner).toEqual({
+			prompt: { container: { edge: 'bottom', type: 'banner' } },
 		});
-		expect(forced?.arms.bar?.prompt?.blocking).toBeUndefined();
+		expect(forced?.arms.banner?.prompt?.blocking).toBeUndefined();
 	});
 
-	it('drops unknown variants and positions the variant does not accept', () => {
-		// An unknown variant is dropped; the position survives on its own
-		// because some variant accepts it and the resolver validates the pair.
+	it('drops unknown containers and positions the container does not accept', () => {
+		// An unknown container is dropped; the position survives on its own
+		// because some container accepts it.
 		expect(
-			parseSurfaceParams(new URLSearchParams('variant=sheet&position=center'))
+			parseSurfaceParams(new URLSearchParams('container=sheet&position=center'))
 		).toEqual({ ...EMPTY_SURFACE, position: 'center' });
 		expect(
-			parseSurfaceParams(new URLSearchParams('variant=bar&position=middle'))
-		).toEqual({ ...EMPTY_SURFACE, variant: 'bar' });
-		expect(
-			parseSurfaceParams(new URLSearchParams('variant=widget&position=top'))
-		).toEqual({ ...EMPTY_SURFACE, variant: 'widget' });
-		expect(
-			parseSurfaceParams(new URLSearchParams('position=bottom-center'))
-		).toEqual({ ...EMPTY_SURFACE, position: 'bottom-center' });
+			parseSurfaceParams(new URLSearchParams('container=banner&position=start'))
+		).toEqual({ ...EMPTY_SURFACE, container: 'banner' });
 		expect(parseSurfaceParams(new URLSearchParams('blocking=true'))).toEqual(
 			EMPTY_SURFACE
 		);
@@ -108,29 +103,34 @@ describe('prompt surface params', () => {
 
 	it('round-trips through search params and clears stale keys', () => {
 		const params = applySurfaceParams(
-			new URLSearchParams('country=DE&variant=wall&position=center'),
-			{ ...EMPTY_SURFACE, blocking: true, position: 'bottom', variant: 'bar' }
+			new URLSearchParams('country=DE&container=card&position=center'),
+			{
+				...EMPTY_SURFACE,
+				blocking: true,
+				container: 'banner',
+				position: 'bottom',
+			}
 		);
 		expect(params.toString()).toBe(
-			'country=DE&variant=bar&position=bottom&blocking=1'
+			'country=DE&container=banner&position=bottom&blocking=1'
 		);
 		expect(
 			applySurfaceParams(
-				new URLSearchParams('variant=bar'),
+				new URLSearchParams('container=banner'),
 				EMPTY_SURFACE
 			).toString()
 		).toBe('');
 	});
 
-	it('narrows positions when the variant changes', () => {
-		const floating = setSurfaceVariant(
-			{ ...EMPTY_SURFACE, position: 'bottom-right' },
-			'floating'
+	it('narrows positions when the container changes', () => {
+		const card = setSurfaceContainer(
+			{ ...EMPTY_SURFACE, position: 'end' },
+			'card'
 		);
-		expect(floating.position).toBe('bottom-right');
-		expect(setSurfaceVariant(floating, 'bar').position).toBe('');
-		expect(setSurfaceVariant(floating, 'widget').position).toBe('bottom-right');
-		expect(surfacePositionOptions('wall')).toEqual(['center']);
+		expect(card.position).toBe('end');
+		expect(setSurfaceContainer(card, 'banner').position).toBe('');
+		expect(setSurfaceContainer(card, 'drawer').position).toBe('end');
+		expect(surfacePositionOptions('card')).toEqual(['start', 'end', 'center']);
 		expect(surfacePositionOptions('')).toEqual([]);
 	});
 
@@ -142,15 +142,14 @@ describe('prompt surface params', () => {
 			withSurface(base, {
 				...EMPTY_SURFACE,
 				blocking: true,
+				container: 'banner',
 				position: 'top',
-				variant: 'bar',
 			})
 		).toEqual({
 			prompt: {
-				blocking: true,
+				blockUntilChoice: true,
+				container: { edge: 'top', type: 'banner' },
 				layout: ['accept', 'reject'],
-				position: 'top',
-				variant: 'bar',
 			},
 		});
 	});

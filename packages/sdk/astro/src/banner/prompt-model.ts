@@ -12,7 +12,7 @@ import {
 	actionAppearanceFromTheme,
 	defaultTranslationConfig,
 	resolveActionLabels,
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 	resolveOptOutLink,
 	resolvePreferenceControlLabels,
 	resolvePromptCopy,
@@ -307,7 +307,7 @@ export const resolvePromptModel = function resolvePromptModel(
 
 	// Same policy-driven action resolution the Svelte and React banners use,
 	// so an opt-out or IAB policy produces the same buttons in the same order.
-	const presentation = resolveConsentPresentation({
+	const presentation = resolveLegacyConsentPresentation({
 		actionAppearance: actionAppearanceFromTheme(input.theme),
 		policy: snapshot.policyRule,
 		presentation: input.presentation,

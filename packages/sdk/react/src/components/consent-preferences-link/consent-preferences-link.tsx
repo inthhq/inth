@@ -3,7 +3,7 @@
 import type { PolicyRight } from '@inth/sdk/schema/types';
 import { activateOptOutLink } from '@inth/sdk/surface-actions';
 import { resolveOptOutLink } from '@inth/sdk/surface-state';
-import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import legalLinkStyles from '@inth/sdk/ui/styles/components/legal-links';
 import {
 	cloneElement,
 	forwardRef as createForwardRef,
@@ -80,7 +80,7 @@ export const ConsentDialogLink = createForwardRef<
 		: translations.consentManagerDialog.title;
 	const icon = showOptOutIcon ? (
 		<OptOutIcon
-			className={themeNoStyle ? undefined : bannerStyles.optOutIcon}
+			className={themeNoStyle ? undefined : legalLinkStyles.optOutIcon}
 		/>
 	) : null;
 

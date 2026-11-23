@@ -58,7 +58,7 @@
 	import {
 		commitDialogChoice,
 		MAIN_LAYER,
-		resolveConsentPresentation,
+		resolveLegacyConsentPresentation,
 		resolveSaleRight,
 	} from '@inth/sdk/engine';
 	import type {
@@ -86,7 +86,7 @@
 		revealDisclosure,
 		scheduleReveal,
 	} from '@inth/sdk/ui/primitives/surface';
-	import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 	import { resolveActionAppearance } from '@inth/sdk/ui/theme';
 	import { resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 	import { getTextDirection } from '@inth/sdk/ui/utils/text-direction';
@@ -204,7 +204,7 @@
 	// Phone sheets take the prompt's resolved phone edge style, which the
 	// policy and a Card's own rule (always inset) have already settled.
 	const edgeStyle = $derived(
-		resolveConsentPresentation({
+		resolveLegacyConsentPresentation({
 			policy: snapshot.policyRule,
 			presentation: consent.state.presentation,
 			surface: 'prompt',

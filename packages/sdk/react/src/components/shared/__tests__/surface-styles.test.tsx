@@ -4,7 +4,7 @@ import { render } from 'vitest-browser-react';
 
 import { ComponentFixtureProvider } from '~/__tests__/component-fixture-provider';
 import type { ComponentFixtureOptions } from '~/__tests__/component-fixture-provider';
-import { ConsentDialog } from '~/components/panel';
+import { ConsentDialog } from '~/aggregate-components';
 import { ConsentBanner } from '~/components/prompt';
 
 import { testing } from '../../../testing';
@@ -73,10 +73,12 @@ describe('surface styles', () => {
 		const ids = [
 			...html.matchAll(/<style[^>]*data-href="(?<ids>[^"]+)"/gu),
 		].flatMap((match) => match.groups?.ids?.split(' ') ?? []);
-		expect(ids).toEqual(['inth-tokens', 'inth-button', 'inth-banner']);
-		// Not the trigger's, the ConsentGate's or the dialog's rules.
+		expect(ids).toEqual(['inth-tokens', 'inth-button', 'inth-surface', 'inth-card']);
+		// Not the trigger's, the ConsentGate's, another container's or the
+		// dialog's rules.
 		expect(html).not.toContain('inth-first-paint');
 		expect(html).not.toContain('inth-dialog');
+		expect(html).not.toContain('inth-drawer');
 		// The rules reach the HTML as written, not entity-escaped.
 		expect(html).not.toMatch(/<style[^>]*>[^<]*&gt;/u);
 	});
@@ -96,7 +98,7 @@ describe('surface styles', () => {
 					/<style data-inth-styles="(?<id>[^"]+)" nonce="test-nonce">/gu
 				),
 			].map((match) => match.groups?.id)
-		).toEqual(['inth-tokens', 'inth-button', 'inth-banner']);
+		).toEqual(['inth-tokens', 'inth-button', 'inth-surface', 'inth-card']);
 		expect(html).not.toContain('data-precedence="inth"');
 		expect(html).not.toMatch(/<style[^>]*>[^<]*&gt;/u);
 	});
@@ -114,7 +116,8 @@ describe('surface styles', () => {
 		expect(hoistedStyles()).toEqual([
 			'inth-tokens',
 			'inth-button',
-			'inth-banner',
+			'inth-surface',
+			'inth-card',
 		]);
 		await banner.unmount();
 
@@ -147,7 +150,9 @@ describe('surface styles', () => {
 		expect(hoistedStyles()).toEqual([
 			'inth-tokens',
 			'inth-button',
-			'inth-banner',
+			'inth-surface',
+			'inth-card',
+			'inth-expand',
 			'inth-dialog',
 		]);
 		const card = document.querySelector<HTMLElement>(

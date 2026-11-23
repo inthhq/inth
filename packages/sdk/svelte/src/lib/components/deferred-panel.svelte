@@ -79,7 +79,7 @@
 	 * focus of that button (see `preloadDialog`). Props are the dialog's own.
 	 */
 	import type { ActiveUI } from '@inth/sdk/engine';
-	import { resolveConsentPresentation } from '@inth/sdk/engine';
+	import { resolveLegacyConsentPresentation } from '@inth/sdk/engine';
 	import { showConsentSurface } from '@inth/sdk/surface-actions';
 	import { onMount, untrack } from 'svelte';
 
@@ -108,7 +108,7 @@
 	// The design the banner renders, so warming and opening load only that
 	// design's dialog.
 	const privacyChoices = $derived(
-		resolveConsentPresentation({
+		resolveLegacyConsentPresentation({
 			policy: consent.snapshot.policyRule,
 			presentation: consent.state.presentation,
 			surface: 'prompt',

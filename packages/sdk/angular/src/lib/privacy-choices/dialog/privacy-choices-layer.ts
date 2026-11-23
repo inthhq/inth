@@ -16,7 +16,7 @@ import type { TemplateRef } from '@angular/core';
 import { attachLiveRegion } from '@inth/sdk/ui/primitives/surface';
 import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
 import { ConsentTheme } from '../../core/consent-theme';
 import { resolveNoStyle } from '../../core/no-style';

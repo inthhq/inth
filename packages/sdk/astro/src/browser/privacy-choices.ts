@@ -121,7 +121,7 @@ const PRESENTATION_SHEETS: Record<
 	PrivacyChoicesPresentation,
 	() => Promise<PrivacyChoicesSheet>
 > = {
-	bar: () => import('@inth/sdk/ui/styles/sheets/bar'),
+	bar: () => import('@inth/sdk/ui/styles/sheets/banner'),
 	card: () => import('@inth/sdk/ui/styles/sheets/card'),
 	drawer: () => import('@inth/sdk/ui/styles/sheets/drawer'),
 };

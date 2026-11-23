@@ -6,7 +6,7 @@ import { policyFixture } from './policy-fixture';
 
 // Vitest's browser mode serves each source module as its own request, so the
 // resource timeline shows which modules this document has loaded.
-const DIALOG_MODULE = '/src/components/panel/panel.tsx';
+const DIALOG_MODULE = '/src/components/dialog/dialog.tsx';
 const WIDGET_MODULE = '/src/components/preferences/preferences.tsx';
 
 const recordModuleRequests = () => {

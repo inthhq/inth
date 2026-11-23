@@ -15,7 +15,7 @@ import { describe, expect, test } from 'vitest';
 const componentsDir = join(__dirname, '../runtime/components');
 
 const DIALOG_STYLE_MAPS = [
-	'@inth/sdk/ui/styles/components/consent-dialog',
+	'@inth/sdk/ui/styles/components/legacy-panel',
 	'@inth/sdk/ui/styles/components/iab-consent-dialog',
 ];
 
@@ -77,7 +77,7 @@ describe('banner style imports', () => {
 	test('the dialog still imports its own style map', () => {
 		const graph = staticGraph(join(componentsDir, 'manager.vue'));
 		const importers = [...graph.entries()].filter(([, specifiers]) =>
-			specifiers.includes('@inth/sdk/ui/styles/components/consent-dialog')
+			specifiers.includes('@inth/sdk/ui/styles/components/legacy-panel')
 		);
 
 		expect(importers.length).toBeGreaterThan(0);

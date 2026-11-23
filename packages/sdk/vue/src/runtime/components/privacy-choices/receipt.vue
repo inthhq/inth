@@ -5,9 +5,9 @@
  */
 import { copySurfaceReference, resolveRightsReceipt } from '@inth/sdk/engine';
 import { resolveRightsReceiptCopy } from '@inth/sdk/surface-state';
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
-import '@inth/sdk/ui/styles/components/privacy-choices.css';
+import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 import { useConsentKernel, useConsentSnapshot } from '../../composables/kernel';

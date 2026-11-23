@@ -13,7 +13,6 @@ import { ConsentUI as BrandCard } from './docs-recipes/brand-card';
 import { CookieBanner as ChoiceWall } from './docs-recipes/choice-wall';
 import { brandTheme } from './docs-recipes/consent-theme';
 import { CookieBar as HeadlessBar } from './docs-recipes/headless-bar';
-import { CookieBanner as SlimBar } from './docs-recipes/slim-bar';
 import {
 	editableConsentOptions,
 	StorybookConsentProvider,
@@ -57,10 +56,9 @@ type Story = StoryObj<typeof meta>;
 const bottomBar = { recipe: BottomBar };
 const brandCard = { recipe: BrandCard, themed: true, withDialog: false };
 const choiceWall = { recipe: ChoiceWall };
-const slimBar = { recipe: SlimBar };
 const headlessBar = { recipe: HeadlessBar };
 
-/** Stock banner, `variant="bar"`. */
+/** Stock banner as a bottom Banner (`container={{ type: 'banner' }}`). */
 export const BottomBarDesign: Story = { args: bottomBar, play: recipeRenders };
 export const BottomBarAccept: Story = { args: bottomBar, play: recipeAccepts };
 export const BottomBarReject: Story = { args: bottomBar, play: recipeRejects };
@@ -70,7 +68,7 @@ export const BrandCardDesign: Story = { args: brandCard, play: recipeRenders };
 export const BrandCardAccept: Story = { args: brandCard, play: recipeAccepts };
 export const BrandCardReject: Story = { args: brandCard, play: recipeRejects };
 
-/** Stock banner, `variant="wall"`. */
+/** Stock banner as a centred Card, which blocks. */
 export const ChoiceWallDesign: Story = {
 	args: choiceWall,
 	play: recipeRenders,
@@ -83,11 +81,6 @@ export const ChoiceWallReject: Story = {
 	args: choiceWall,
 	play: recipeRejects,
 };
-
-/** Compound parts in a one-row bar. */
-export const SlimBarDesign: Story = { args: slimBar, play: recipeRenders };
-export const SlimBarAccept: Story = { args: slimBar, play: recipeAccepts };
-export const SlimBarReject: Story = { args: slimBar, play: recipeRejects };
 
 /** Own markup on `useHeadlessConsentUI`, stock dialog for preferences. */
 export const HeadlessBarDesign: Story = {

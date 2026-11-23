@@ -21,7 +21,7 @@ import {
 	PendingTasks,
 	PLATFORM_ID,
 } from '@angular/core';
-import * as banner from '@inth/sdk/ui/styles/sheets/banner-deferred';
+import * as banner from '@inth/sdk/ui/styles/sheets/parts-deferred';
 import * as button from '@inth/sdk/ui/styles/sheets/button-deferred';
 import * as consentGate from '@inth/sdk/ui/styles/sheets/consent-gate-deferred';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens-deferred';

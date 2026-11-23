@@ -23,9 +23,9 @@ import { resolveSaleRight } from '@inth/sdk/engine';
 import type { AllConsentNames } from '@inth/sdk/engine';
 import { resolvePreferencesRowCopy } from '@inth/sdk/surface-state';
 import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import * as expand from '@inth/sdk/ui/styles/sheets/expand-deferred';
-import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/privacy-choices-dialog-deferred';
+import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/dialog-deferred';
 
 import { ConsentManager } from '../../core/consent-manager';
 import { ConsentStyles, SURFACE_SCOPES } from '../../core/consent-styles';

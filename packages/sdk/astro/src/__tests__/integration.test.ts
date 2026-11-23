@@ -893,12 +893,12 @@ describe('astro:config:setup', () => {
 	);
 
 	it.each([
-		['react', ['@inth/sdk/ui/styles/sheets/dialog.css']],
-		['vue', ['@inth/sdk/ui/styles/sheets/dialog.css']],
+		['react', ['@inth/sdk/ui/styles/sheets/widget.css']],
+		['vue', ['@inth/sdk/ui/styles/sheets/widget.css']],
 		[
 			'svelte',
 			[
-				'@inth/sdk/ui/styles/sheets/dialog.css',
+				'@inth/sdk/ui/styles/sheets/widget.css',
 				'@inth/sdk/ui/styles/primitives.css',
 			],
 		],

@@ -139,7 +139,6 @@ describe('Privacy Choices stylesheets', () => {
 
 	test('a Drawer never loads or inserts the Card or Bar sheet', async () => {
 		const loaders = await mount({
-			design: 'privacy-choices',
 			prompt: { container: { side: 'bottom', type: 'drawer' } },
 		});
 		await vi.waitFor(() =>
@@ -165,7 +164,7 @@ describe('Privacy Choices stylesheets', () => {
 			.mockRejectedValueOnce(new Error('chunk failed'));
 		const consent = await mountWith(
 			{ presentation: vi.fn(realPresentation), surface },
-			{ design: 'privacy-choices', prompt: { container: { type: 'card' } } }
+			{ prompt: { container: { type: 'card' } } }
 		);
 		await vi.waitFor(() => expect(surface).toHaveBeenCalledTimes(1));
 		await TestBed.inject(ApplicationRef).whenStable();
@@ -192,13 +191,12 @@ describe('Privacy Choices stylesheets', () => {
 		);
 		const consent = await mountWith(
 			{ presentation, surface: vi.fn(realSurface) },
-			{ design: 'privacy-choices', prompt: { container: { type: 'card' } } },
+			{ prompt: { container: { type: 'card' } } },
 			{ stable: false }
 		);
 		await vi.waitFor(() => expect(presentation).toHaveBeenCalledWith('card'));
 		await consent.updateOptions({
 			presentation: {
-				design: 'privacy-choices',
 				prompt: { container: { side: 'bottom', type: 'drawer' } },
 			},
 		});

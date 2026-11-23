@@ -38,7 +38,7 @@ import {
 import type { HeadlessIABVendorId } from '@inth/sdk/iab/headless';
 import { saveIABConsentSurface } from '@inth/sdk/surface-actions';
 import {
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 	resolveIABCopy,
 } from '@inth/sdk/surface-state';
 import { isDialogDismissKey } from '@inth/sdk/ui/primitives/dialog';
@@ -556,7 +556,7 @@ export class IABConsentDialogBody {
 
 	/** @internal */
 	protected readonly preferences = computed(() =>
-		resolveConsentPresentation({
+		resolveLegacyConsentPresentation({
 			policy: this.#consent.snapshot().policyRule,
 			presentation: {
 				preferences: {

@@ -59,7 +59,7 @@ test('reveals a cold aggregate dialog as soon as its module is ready', async () 
 		);
 		// A DOM click runs the banner action without hover/focus chunk warming.
 		customize?.click();
-		await import('../components/panel');
+		await import('../components/dialog/dialog');
 		// Allow effects and a browser paint, without waiting out Suspense's 300ms.
 		await new Promise(requestAnimationFrame);
 		await new Promise(requestAnimationFrame);

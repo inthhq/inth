@@ -1,4 +1,4 @@
-import { resolveConsentPresentation } from '@inth/sdk-core';
+import { resolveLegacyConsentPresentation } from '@inth/sdk-core';
 import type { ConsentSnapshot } from '@inth/sdk-core';
 import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk-core/runtime/page-globals';
 
@@ -73,7 +73,7 @@ export const createDialog = function createDialog(
 				{
 					'aria-describedby': 'consent-dialog-description',
 					'aria-labelledby': 'consent-dialog-title',
-					'aria-modal': resolveConsentPresentation({
+					'aria-modal': resolveLegacyConsentPresentation({
 						policy: snapshot.policyRule,
 						presentation: ctx.client.presentation,
 						surface: 'preferences',
@@ -253,7 +253,7 @@ export const createDialog = function createDialog(
 		// page must still reach it.
 		document.addEventListener('keydown', onKeyDown);
 		cleanups.push(() => document.removeEventListener('keydown', onKeyDown));
-		const { blocking } = resolveConsentPresentation({
+		const { blocking } = resolveLegacyConsentPresentation({
 			policy: snapshot.policyRule,
 			presentation: ctx.client.presentation,
 			surface: 'preferences',

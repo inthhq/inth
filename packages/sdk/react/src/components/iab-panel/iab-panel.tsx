@@ -28,6 +28,7 @@ import { LocalThemeContext } from '~/context/theme-context';
 import { useComponentConfig } from '~/hooks/use-component-config';
 import { useFocusTrap } from '~/hooks/use-focus-trap';
 import { useHeadlessIABConsentUI } from '~/hooks/use-headless-iab-consent-ui';
+import { useFocusBlocking } from '~/hooks/use-focus-blocking';
 import { useIABConsentManager } from '~/hooks/use-iab-manager';
 import { useScrollLock } from '~/hooks/use-scroll-lock';
 import { useTextDirection } from '~/hooks/use-text-direction';
@@ -158,7 +159,9 @@ export const IABConsentDialog: FC<IABConsentDialogProps> = ({
 		language,
 		model,
 	} = useIABConsentManager({
-		preferences: { scrollLock: localScrollLock, trapFocus: localTrapFocus },
+		preferences: {
+			blocking: useFocusBlocking('preferences', localScrollLock, localTrapFocus),
+		},
 	});
 	const { banner, closeUI, openDialog, performDialogAction } =
 		useHeadlessIABConsentUI();

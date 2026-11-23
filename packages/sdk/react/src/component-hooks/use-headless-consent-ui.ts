@@ -9,9 +9,8 @@ import type {
 	PresentationAction,
 	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
-import { useCallback, useContext, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
-import { GlobalThemeContext } from '../context/theme-context';
 import { useConsentSaveAction } from '../draft-context';
 import {
 	useActiveUI,
@@ -52,24 +51,7 @@ export const useHeadlessConsentUI = function useHeadlessConsentUI(
 ) {
 	const activeUI = useActiveUI();
 	const policy = usePolicyRule();
-	const configuredPresentation = useResolvedPresentation();
-	const globalTheme = useContext(GlobalThemeContext);
-	const presentation = useMemo(
-		() => ({
-			design: configuredPresentation?.design,
-			preferences: {
-				scrollLock: globalTheme.scrollLock,
-				trapFocus: globalTheme.trapFocus,
-				...configuredPresentation?.preferences,
-			},
-			prompt: {
-				scrollLock: globalTheme.scrollLock,
-				trapFocus: globalTheme.trapFocus,
-				...configuredPresentation?.prompt,
-			},
-		}),
-		[configuredPresentation, globalTheme.scrollLock, globalTheme.trapFocus]
-	);
+	const presentation = useResolvedPresentation();
 	const { theme } = useTheme();
 	const appearance = useMemo(() => actionAppearanceFromTheme(theme), [theme]);
 	const saveConsents = useConsentSaveAction();
@@ -113,7 +95,12 @@ export const useHeadlessConsentUI = function useHeadlessConsentUI(
 				diagnostic.actions
 			);
 		}
-	}, [banner.diagnostics, dialog.diagnostics]);
+		// The container's findings are the same on both viewports but a
+		// side Drawer's phone fallback, which is not a misconfiguration.
+		for (const diagnostic of banner.container?.desktop.diagnostics ?? []) {
+			console.warn(`inth presentation: ${diagnostic.message}`);
+		}
+	}, [banner.diagnostics, banner.container, dialog.diagnostics]);
 	const openBanner = useCallback(() => setActiveUI('banner'), [setActiveUI]);
 	const openDialog = useCallback(() => setActiveUI('dialog'), [setActiveUI]);
 	const closeUI = useCallback(() => setActiveUI('none'), [setActiveUI]);

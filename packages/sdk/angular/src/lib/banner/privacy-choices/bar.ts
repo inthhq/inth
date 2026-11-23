@@ -6,8 +6,8 @@
  * @packageDocumentation
  */
 
-import presentation from '@inth/sdk/ui/styles/components/consent-bar';
-import * as barSheet from '@inth/sdk/ui/styles/sheets/bar-deferred';
+import presentation from '@inth/sdk/ui/styles/components/consent-banner';
+import * as barSheet from '@inth/sdk/ui/styles/sheets/banner-deferred';
 import * as button from '@inth/sdk/ui/styles/sheets/button-deferred';
 import * as surface from '@inth/sdk/ui/styles/sheets/surface-deferred';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens-deferred';

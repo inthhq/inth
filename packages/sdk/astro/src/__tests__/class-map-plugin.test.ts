@@ -41,7 +41,7 @@ const resolveWith = async function resolveWith(
 describe('class maps without CSS', () => {
 	it('points a browser class-map import at the variant with no CSS', async () => {
 		const { result } = await resolveWith(
-			'@inth/sdk/ui/styles/components/consent-dialog',
+			'@inth/sdk/ui/styles/components/legacy-panel',
 			withCSS
 		);
 		expect(result).toBe(join(directory, 'panel.node.js'));
@@ -52,7 +52,7 @@ describe('class maps without CSS', () => {
 		['a server environment', {}, 'server'],
 	])('leaves %s alone', async (_name, options, consumer) => {
 		const { resolve, result } = await resolveWith(
-			'@inth/sdk/ui/styles/components/consent-dialog',
+			'@inth/sdk/ui/styles/components/legacy-panel',
 			withCSS,
 			options,
 			consumer

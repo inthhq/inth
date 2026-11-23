@@ -9,7 +9,7 @@
  */
 
 import * as expand from '@inth/sdk-ui/styles/sheets/expand';
-import * as privacyChoicesDialog from '@inth/sdk-ui/styles/sheets/privacy-choices-dialog';
+import * as privacyChoicesDialog from '@inth/sdk-ui/styles/sheets/dialog';
 
 /** One of `@inth/sdk-ui`'s sheets. */
 export interface PcSheet {

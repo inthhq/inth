@@ -1,7 +1,7 @@
 <script lang="ts">
 	import {
 		resolveIABBannerSummary,
-		resolveConsentPresentation,
+		resolveLegacyConsentPresentation,
 	} from '@inth/sdk/engine';
 	import type { Model } from '@inth/sdk/engine';
 	import { resolveIABBannerCopy } from '@inth/sdk/iab/headless';
@@ -55,7 +55,7 @@
 		localDisableAnimation ?? theme.disableAnimation ?? false
 	);
 	const presentation = $derived(
-		resolveConsentPresentation({
+		resolveLegacyConsentPresentation({
 			override: { scrollLock: localScrollLock, trapFocus: localTrapFocus },
 			policy: consent.snapshot.policyRule,
 			presentation: {

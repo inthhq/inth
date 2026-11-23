@@ -25,7 +25,7 @@ import { showConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	announcementText,
 	resolveCategoryTitle,
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 	resolvePreferencesRowCopy,
 	resolvePrivacyChoicesDialogCopy,
 	resolvePrivacyChoicesRegime,
@@ -39,9 +39,9 @@ import {
 	revealDisclosure,
 	scheduleReveal,
 } from '@inth/sdk/ui/primitives/surface';
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
-import '@inth/sdk/ui/styles/components/privacy-choices.css';
+import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import { getTextDirection, resolveLegalLinkEntries } from '@inth/sdk/ui/utils';
 import { prefersReducedMotion } from '@inth/sdk/ui/utils/reduced-motion';
 import {
@@ -205,7 +205,7 @@ const open = computed(
 // policy and a Card's own rule (always inset) have already settled.
 const edgeStyle = computed(
 	() =>
-		resolveConsentPresentation({
+		resolveLegacyConsentPresentation({
 			policy: snapshot.value.policyRule,
 			presentation: presentation.value,
 			surface: 'prompt',

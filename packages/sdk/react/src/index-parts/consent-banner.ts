@@ -8,4 +8,3 @@
 // static banner in `index.html` resolves this to `deferred/client-banner.tsx`
 // instead, whose banner code loads in a chunk of its own.
 export { ConsentBanner } from '#consent-banner';
-export { useConsentBannerSurface } from '../components/prompt/surface-context';

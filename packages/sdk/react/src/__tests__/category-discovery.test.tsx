@@ -5,7 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { expect, test, vi } from 'vitest';
 
 import { ConsentGate } from '../components/consent-gate';
-import { ConsentDialog } from '../components/panel';
+import { ConsentDialog } from '../aggregate-components';
 import { ConsentBanner } from '../components/prompt';
 import { KernelContext } from '../context';
 import { InthProvider } from '../provider';

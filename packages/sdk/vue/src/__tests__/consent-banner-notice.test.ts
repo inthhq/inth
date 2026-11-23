@@ -4,7 +4,7 @@ import {
 	writePolicyResolutionWire,
 } from '@inth/sdk/schema/types';
 import { translations as enTranslations } from '@inth/sdk/translations/en';
-import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import { flushPromises, mount } from '@vue/test-utils';
 import type { VueWrapper } from '@vue/test-utils';
 import { afterEach, describe, expect, test, vi } from 'vitest';

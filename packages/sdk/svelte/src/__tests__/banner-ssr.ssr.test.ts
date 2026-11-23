@@ -10,7 +10,7 @@ import { createConsentKernel } from '@inth/sdk/engine';
 import type { ConsentPresentation, KernelConfig } from '@inth/sdk/engine';
 import { resolvePolicyRules } from '@inth/sdk/schema/types';
 import { EARLY_CONSENT_TAP_SCRIPT } from '@inth/sdk/surface-actions';
-import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 import { render } from 'svelte/server';
 import { describe, expect, test } from 'vitest';
 

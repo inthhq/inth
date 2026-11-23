@@ -4,7 +4,7 @@
  * Which design the stock surfaces render, and the switch between them.
  *
  * The classic banner and dialog stay as they are. When `presentation.design`
- * resolves to `'privacy-choices'` (core's `resolveConsentPresentation`, as
+ * resolves to `'privacy-choices'` (core's `resolveLegacyConsentPresentation`, as
  * in React), the banner and dialog surfaces hand over to the Privacy
  * Choices ones in `./privacy-choices/`, which load on demand: a page on the
  * classic design loads none of them.

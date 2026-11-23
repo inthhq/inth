@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { resolveAdvertisingRowCopy } from '@inth/sdk/surface-state';
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 
-import '@inth/sdk/ui/styles/components/privacy-choices.css';
+import '@inth/sdk/ui/styles/components/consent-dialog.css';
 import { computed } from 'vue';
 
 import { useSurfaceTranslations } from '../../composables/use-surface-translations';

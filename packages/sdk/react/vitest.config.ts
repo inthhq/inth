@@ -54,9 +54,9 @@ export default mergeConfig(
 				// and coverage, rather than importing a second copy from dist.
 				[
 					'@inth/react/components/consent-dialog',
-					resolve(__dirname, './src/components/panel/index.ts'),
+					resolve(__dirname, './src/components/dialog/index.ts'),
 				],
-				// The island's Privacy Choices dialog chunk, for the same reason.
+				// The island's dialog chunk, for the same reason.
 				['@inth/react/consent-dialog', resolve(__dirname, './src/panel.ts')],
 				['@inth/react/iab', resolve(__dirname, './src/iab.ts')],
 				['@inth/react/context', resolve(__dirname, './src/context.ts')],

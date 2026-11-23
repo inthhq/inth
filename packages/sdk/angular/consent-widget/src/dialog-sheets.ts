@@ -11,9 +11,9 @@
  */
 
 import type { SurfaceStyleSheet } from '@inth/angular';
-import * as banner from '@inth/sdk/ui/styles/sheets/banner-deferred';
+import * as banner from '@inth/sdk/ui/styles/sheets/parts-deferred';
 import * as button from '@inth/sdk/ui/styles/sheets/button-deferred';
-import * as dialog from '@inth/sdk/ui/styles/sheets/dialog';
+import * as dialog from '@inth/sdk/ui/styles/sheets/widget';
 import * as primitives from '@inth/sdk/ui/styles/sheets/primitives';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens-deferred';
 

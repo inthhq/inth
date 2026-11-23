@@ -4,7 +4,7 @@
  */
 import { CONSENT_COMPONENT_SLOT_KEY_MAP } from '@inth/sdk/schema/config';
 import type { ConsentComponentSlotKey } from '@inth/sdk/schema/config';
-import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+import bannerStyles from '@inth/sdk/ui/styles/components/consent-surface';
 import { THEME_SLOT_COMPONENT_KEYS } from '@inth/sdk/ui/utils';
 import { describe, expect, test, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
@@ -107,7 +107,7 @@ describe('theme.slots in React', () => {
 		expect(title?.classList).not.toContain(bannerStyles.title);
 		// Parts without the flag keep their stock classes.
 		expect(part('consent-banner-header')?.classList).toContain(
-			bannerStyles.header
+			bannerStyles.head
 		);
 		unmount();
 	});

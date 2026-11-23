@@ -84,7 +84,7 @@
 		attachTopLayerTrap,
 	} from '@inth/sdk/ui/primitives/surface';
 	import type { LiveRegion } from '@inth/sdk/ui/primitives/surface';
-	import barStyles from '@inth/sdk/ui/styles/components/consent-bar';
+	import barStyles from '@inth/sdk/ui/styles/components/consent-banner';
 	import cardStyles from '@inth/sdk/ui/styles/components/consent-card';
 	import drawerStyles from '@inth/sdk/ui/styles/components/consent-drawer';
 	import expandStyles from '@inth/sdk/ui/styles/components/consent-expand';

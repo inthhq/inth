@@ -105,7 +105,7 @@ describe('IAB styles without CSS imports', () => {
 		expect(styleIds(parsed)).toEqual([
 			'inth-tokens',
 			'inth-button',
-			'inth-banner',
+			'inth-parts',
 			'inth-iab-first-paint',
 		]);
 		for (const style of parsed.querySelectorAll('style[data-inth-styles]')) {
@@ -153,9 +153,9 @@ describe('IAB styles without CSS imports', () => {
 			expect(styleIds()).toEqual([
 				'inth-tokens',
 				'inth-button',
-				'inth-banner',
+				'inth-parts',
 				'inth-iab-first-paint',
-				'inth-dialog',
+				'inth-widget',
 				'inth-iab-dialog',
 			]);
 			for (const style of document.querySelectorAll<HTMLStyleElement>(
@@ -193,7 +193,7 @@ describe('IAB styles without CSS imports', () => {
 		expect(hoistedIds()).toEqual([
 			'inth-tokens',
 			'inth-button',
-			'inth-banner',
+			'inth-parts',
 			'inth-iab-first-paint',
 		]);
 		await screen.getByTestId('iab-consent-banner-customize-button').click();
@@ -203,9 +203,9 @@ describe('IAB styles without CSS imports', () => {
 		expect(hoistedIds()).toEqual([
 			'inth-tokens',
 			'inth-button',
-			'inth-banner',
+			'inth-parts',
 			'inth-iab-first-paint',
-			'inth-dialog',
+			'inth-widget',
 			'inth-iab-dialog',
 		]);
 		await screen.unmount();

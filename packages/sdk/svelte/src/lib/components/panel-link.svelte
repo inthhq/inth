@@ -2,7 +2,7 @@
 	import type { PolicyRight } from '@inth/sdk/schema/types';
 	import { activateOptOutLink } from '@inth/sdk/surface-actions';
 	import { resolveOptOutLink } from '@inth/sdk/surface-state';
-	import bannerStyles from '@inth/sdk/ui/styles/components/consent-banner';
+	import bannerStyles from '@inth/sdk/ui/styles/components/legacy-prompt';
 	import type { Snippet } from 'svelte';
 
 	import { getConsentContext, getThemeContext } from '../context.svelte';

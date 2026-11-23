@@ -11,7 +11,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-react';
 
 import { IABConsentBanner } from '../components/iab-prompt';
-import { ConsentDialog } from '../components/panel';
+import { ConsentDialog } from '../aggregate-components';
 import { ConsentBanner } from '../components/prompt';
 import { IABProvider } from '../iab-context';
 import { InthProvider } from '../provider';

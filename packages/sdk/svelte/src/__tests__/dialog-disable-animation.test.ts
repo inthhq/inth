@@ -1,4 +1,4 @@
-import styles from '@inth/sdk/ui/styles/components/consent-dialog';
+import styles from '@inth/sdk/ui/styles/components/legacy-panel';
 import { render, waitFor } from '@testing-library/svelte';
 import { describe, expect, test } from 'vitest';
 

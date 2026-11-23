@@ -7,7 +7,7 @@
  * @internal
  */
 
-import * as barSheet from '@inth/sdk-ui/styles/sheets/bar';
+import * as barSheet from '@inth/sdk-ui/styles/sheets/banner';
 import * as surfaceSheet from '@inth/sdk-ui/styles/sheets/surface';
 
 import { classes } from '../../generated/privacy-choices/bar';

@@ -32,10 +32,12 @@ const outputDir = resolve(import.meta.dirname, '../src/generated');
 const COMPONENTS = {
 	accordion: 'accordion',
 	actions: 'consent-actions',
-	banner: 'consent-banner',
+	// @deprecated temporary — removed in phase B: the classic banner and
+	// dialog class maps, whose rules no stylesheet ships any more.
+	banner: 'legacy-prompt',
 	branding: 'branding',
 	button: 'button',
-	dialog: 'consent-dialog',
+	dialog: 'legacy-panel',
 	legalLinks: 'legal-links',
 	manager: 'consent-manager',
 	optOutConfirmation: 'opt-out-confirmation',
@@ -45,11 +47,11 @@ const COMPONENTS = {
 	vendorList: 'vendor-list',
 } as const;
 
-/** The Privacy Choices design's class maps, by generated file name. */
+/** The consent UI's class maps, by generated file name. */
 const PRIVACY_CHOICES_COMPONENTS = {
-	bar: 'consent-bar',
+	bar: 'consent-banner',
 	card: 'consent-card',
-	dialog: 'privacy-choices',
+	dialog: 'consent-dialog',
 	drawer: 'consent-drawer',
 	expand: 'consent-expand',
 	surface: 'consent-surface',
@@ -133,7 +135,7 @@ const main = async function main(): Promise<void> {
 	// `@inth/sdk-ui`'s per-surface sheets, each an exact subset of the full
 	// sheet above. The engine swaps in the full sheet when it takes over.
 	const bannerSheets = await Promise.all(
-		['tokens', 'button', 'banner'].map(async (name) => {
+		['tokens', 'button', 'parts'].map(async (name) => {
 			const module = (await import(`@inth/sdk-ui/styles/sheets/${name}`)) as {
 				css: string;
 			};
@@ -169,7 +171,7 @@ const main = async function main(): Promise<void> {
 	// the banner sheet drops for the dialog. No rule repeats one of the
 	// banner sheet's, so inserted after it no override changes order.
 	const { css: dialogSheet } =
-		(await import('@inth/sdk-ui/styles/sheets/dialog')) as { css: string };
+		(await import('@inth/sdk-ui/styles/sheets/widget')) as { css: string };
 	const dialogStylesheet = compactStylesheet(
 		[
 			pruneStylesheet(

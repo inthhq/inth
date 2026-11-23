@@ -4,7 +4,7 @@ import {
 	applyExperimentTheme,
 	consentTypes as defaultConsentTypes,
 	has as evaluateHas,
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 	vendorsListedUnder,
 } from '@inth/sdk/engine';
 import type {
@@ -607,7 +607,7 @@ const resolveHeadlessSurface = (
 	consent: ConsentManagerState,
 	surface: 'banner' | 'dialog'
 ): HeadlessConsentSurfaceState => ({
-	...resolveConsentPresentation({
+	...resolveLegacyConsentPresentation({
 		policy: consent.policyRule,
 		presentation: consent.presentation,
 		surface: surface === 'banner' ? 'prompt' : 'preferences',

@@ -63,8 +63,8 @@ export const useHeadlessIABConsentUI =
 			activeUI,
 			model,
 			iab,
-			policyBanner: { scrollLock: policyBannerScrollLock },
-			policyDialog: { scrollLock: policyDialogScrollLock },
+			policyBanner: { blocking: policyBannerScrollLock },
+			policyDialog: { blocking: policyDialogScrollLock },
 			setActiveUI,
 		} = useIABConsentManager();
 		const isIABEnabled = Boolean(iab?.config.enabled);

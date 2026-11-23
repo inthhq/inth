@@ -111,7 +111,8 @@ interface MountOptions {
 	edgeStyle?: ConsentEdgeStyle;
 	blockUntilChoice?: boolean;
 	region?: Region;
-	design?: ConsentPresentation['design'] | null;
+	/** @deprecated temporary — removed in phase B. Ignored: one consent UI. */
+	design?: string | null;
 	phone?: boolean;
 	theme?: Theme;
 	noStyle?: boolean;
@@ -205,7 +206,6 @@ const mount = async function mount({
 				noStyle,
 				persistence: false,
 				presentation: {
-					design: design === null ? undefined : design,
 					prompt: {
 						blockUntilChoice,
 						container: container ?? undefined,

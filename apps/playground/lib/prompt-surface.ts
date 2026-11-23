@@ -1,33 +1,33 @@
 /**
  * URL-driven prompt surface for the demo pages.
  *
- * `variant`, `position` and `blocking=1` search params layer over a
- * scenario's own presentation so a visitor can try every shape without
- * editing config. Kept free of React so `prompt-surface.test.ts` runs in
- * Node.
+ * `container`, `position` and `blocking=1` search params layer over a
+ * scenario's own presentation so a visitor can try every Card, Banner and
+ * Drawer without editing config. Kept free of React so
+ * `prompt-surface.test.ts` runs in Node.
  */
 
-import { PROMPT_VARIANT_POSITIONS } from '@inth/sdk/engine';
 import type {
+	ConsentContainer,
+	ConsentContainerType,
 	ConsentExperiment,
 	ConsentPresentation,
-	PromptPosition,
 	PromptPresentation,
-	PromptVariant,
 } from '@inth/sdk/engine';
 
 /**
  * Arms of the demo's banner-shape experiment (`?experiment=1`). `control`
  * is the default banner shape.
  */
-export const EXPERIMENT_ARMS = ['control', 'bar'] as const;
+export const EXPERIMENT_ARMS = ['control', 'banner'] as const;
 
 export type ExperimentArm = (typeof EXPERIMENT_ARMS)[number];
 
-/** Prompt shape chosen in the URL. Empty strings mean "let the resolver pick". */
+/** Prompt container chosen in the URL. Empty strings mean "let the resolver pick". */
 export interface SurfaceParams {
-	variant: PromptVariant | '';
-	position: PromptPosition | '';
+	container: ConsentContainerType | '';
+	/** The Card's position, the Banner's edge or the Drawer's side. */
+	position: string;
 	blocking: boolean;
 	/** `experiment=1`: run the banner-shape experiment instead of `presentation`. */
 	experiment: boolean;
@@ -38,9 +38,9 @@ export interface SurfaceParams {
 export const EMPTY_SURFACE: SurfaceParams = {
 	arm: '',
 	blocking: false,
+	container: '',
 	experiment: false,
 	position: '',
-	variant: '',
 };
 
 export const isExperimentArm = function isExperimentArm(
@@ -49,50 +49,56 @@ export const isExperimentArm = function isExperimentArm(
 	return (EXPERIMENT_ARMS as readonly string[]).includes(value);
 };
 
-export const PROMPT_VARIANTS = [
-	'floating',
-	'bar',
-	'widget',
-	'wall',
-] as const satisfies readonly PromptVariant[];
+export const CONTAINER_TYPES = [
+	'card',
+	'banner',
+	'drawer',
+] as const satisfies readonly ConsentContainerType[];
 
-export const isPromptVariant = function isPromptVariant(
+/** Where each container type may sit. Positions are logical. */
+export const CONTAINER_POSITIONS = {
+	banner: ['bottom', 'top'],
+	card: ['start', 'end', 'center'],
+	drawer: ['bottom', 'top', 'start', 'end'],
+} as const satisfies Record<ConsentContainerType, readonly string[]>;
+
+export const isContainerType = function isContainerType(
 	value: string
-): value is PromptVariant {
-	return (PROMPT_VARIANTS as readonly string[]).includes(value);
+): value is ConsentContainerType {
+	return (CONTAINER_TYPES as readonly string[]).includes(value);
 };
 
-/** Whether a variant accepts a position. Any variant when `variant` is empty. */
+/** Whether a container accepts a position. Any container when `type` is empty. */
 export const isPositionFor = function isPositionFor(
-	variant: PromptVariant | '',
+	type: ConsentContainerType | '',
 	value: string
-): value is PromptPosition {
-	const variants = variant ? [variant] : PROMPT_VARIANTS;
-	return variants.some((item) =>
-		(PROMPT_VARIANT_POSITIONS[item] as readonly string[]).includes(value)
+): boolean {
+	const types = type ? [type] : CONTAINER_TYPES;
+	return types.some((item) =>
+		(CONTAINER_POSITIONS[item] as readonly string[]).includes(value)
 	);
 };
 
 /**
- * Read the surface from search params. Unknown variants and positions the
- * variant does not accept are dropped rather than passed to the resolver.
+ * Read the surface from search params. Unknown containers and positions the
+ * container does not accept are dropped rather than passed to the resolver.
  */
 export const parseSurfaceParams = function parseSurfaceParams(
 	searchParams: URLSearchParams
 ): SurfaceParams {
-	const rawVariant = searchParams.get('variant') ?? '';
-	const variant = isPromptVariant(rawVariant) ? rawVariant : '';
+	const rawContainer = searchParams.get('container') ?? '';
+	const container = isContainerType(rawContainer) ? rawContainer : '';
 	const rawPosition = searchParams.get('position') ?? '';
-	const position = isPositionFor(variant, rawPosition) ? rawPosition : '';
+	const position = isPositionFor(container, rawPosition) ? rawPosition : '';
 	const experiment = searchParams.get('experiment') === '1';
 	const rawArm = searchParams.get('arm') ?? '';
 	return {
 		// An arm without the experiment has nothing to force.
 		arm: experiment && isExperimentArm(rawArm) ? rawArm : '',
 		blocking: searchParams.get('blocking') === '1',
+		container,
 		experiment,
 		position,
-		variant,
 	};
 };
 
@@ -101,13 +107,13 @@ export const applySurfaceParams = function applySurfaceParams(
 	params: URLSearchParams,
 	surface: SurfaceParams
 ): URLSearchParams {
-	params.delete('variant');
+	params.delete('container');
 	params.delete('position');
 	params.delete('blocking');
 	params.delete('experiment');
 	params.delete('arm');
-	if (surface.variant) {
-		params.set('variant', surface.variant);
+	if (surface.container) {
+		params.set('container', surface.container);
 	}
 	if (surface.position) {
 		params.set('position', surface.position);
@@ -124,23 +130,57 @@ export const applySurfaceParams = function applySurfaceParams(
 	return params;
 };
 
-/** Change the variant and drop a position it cannot accept. */
-export const setSurfaceVariant = function setSurfaceVariant(
+/** Change the container and drop a position it cannot accept. */
+export const setSurfaceContainer = function setSurfaceContainer(
 	surface: SurfaceParams,
-	variant: PromptVariant | ''
+	container: ConsentContainerType | ''
 ): SurfaceParams {
 	const position =
-		surface.position && isPositionFor(variant, surface.position)
+		surface.position && isPositionFor(container, surface.position)
 			? surface.position
 			: '';
-	return { ...surface, position, variant };
+	return { ...surface, container, position };
 };
 
-/** Positions the position control may offer for the chosen variant. */
+/** Positions the position control may offer for the chosen container. */
 export const surfacePositionOptions = function surfacePositionOptions(
-	variant: PromptVariant | ''
-): readonly PromptPosition[] {
-	return variant ? PROMPT_VARIANT_POSITIONS[variant] : [];
+	container: ConsentContainerType | ''
+): readonly string[] {
+	return container ? CONTAINER_POSITIONS[container] : [];
+};
+
+/** The container the URL asks for, or `undefined` when it asks for none. */
+export const surfaceContainer = function surfaceContainer(
+	surface: Pick<SurfaceParams, 'container' | 'position'>
+): ConsentContainer | undefined {
+	switch (surface.container) {
+		case 'card':
+			return {
+				position: (surface.position || undefined) as
+					| 'start'
+					| 'end'
+					| 'center'
+					| undefined,
+				type: 'card',
+			};
+		case 'banner':
+			return {
+				edge: (surface.position || undefined) as 'bottom' | 'top' | undefined,
+				type: 'banner',
+			};
+		case 'drawer':
+			return {
+				side: (surface.position || undefined) as
+					| 'bottom'
+					| 'top'
+					| 'start'
+					| 'end'
+					| undefined,
+				type: 'drawer',
+			};
+		default:
+			return undefined;
+	}
 };
 
 /** Layer the URL surface over a scenario's own presentation. */
@@ -148,28 +188,26 @@ export const withSurface = function withSurface(
 	presentation: ConsentPresentation | undefined,
 	surface: SurfaceParams
 ): ConsentPresentation | undefined {
-	if (!surface.variant && !surface.position && !surface.blocking) {
+	if (!surface.container && !surface.blocking) {
 		return presentation;
 	}
 	const prompt: PromptPresentation = { ...presentation?.prompt };
-	if (surface.variant) {
-		prompt.variant = surface.variant;
-	}
-	if (surface.position) {
-		prompt.position = surface.position;
+	const container = surfaceContainer(surface);
+	if (container) {
+		prompt.container = container;
 	}
 	if (surface.blocking) {
-		prompt.blocking = true;
+		prompt.blockUntilChoice = true;
 	}
 	return { ...presentation, prompt };
 };
 
 /**
  * The demo's banner-shape experiment, or `undefined` when the URL did not
- * ask for one. `control` is the default shape; `bar` is the arm under test.
- * A bar is valid for both `choice` and `notice` prompts; a wall would trip
- * `blocking-forbidden` under the opt-out notice scenario.
- * An `arm` in the URL shows host-resolved assignment; otherwise Inth picks.
+ * ask for one. `control` is the default Card; `banner` is the arm under
+ * test, a bottom Banner, which is valid for both `choice` and `notice`
+ * prompts. An `arm` in the URL shows host-resolved assignment; otherwise
+ * Inth picks.
  */
 export const demoExperiment = function demoExperiment(
 	surface: Pick<SurfaceParams, 'arm' | 'experiment'>
@@ -177,8 +215,8 @@ export const demoExperiment = function demoExperiment(
 	if (!surface.experiment) {
 		return undefined;
 	}
-	const experiment: ConsentExperiment<'bar'> = {
-		arms: { bar: { prompt: { position: 'bottom', variant: 'bar' } } },
+	const experiment: ConsentExperiment<'banner'> = {
+		arms: { banner: { prompt: { container: { edge: 'bottom', type: 'banner' } } } },
 		id: 'banner-shape',
 	};
 	return surface.arm ? { ...experiment, arm: surface.arm } : experiment;

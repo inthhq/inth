@@ -9,5 +9,5 @@
 
 /* oxlint-disable oxc/no-barrel-file -- The early dialog's chunk. */
 export { ConsentDialog } from '../aggregate-components';
-export * as panel from '../components/panel';
+export * as dialog from '../components/dialog/dialog';
 export * as preferences from '../components/preferences';

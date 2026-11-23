@@ -12,7 +12,7 @@ import { page } from 'vitest/browser';
 
 import { ComponentFixtureProvider as InthProvider } from '~/__tests__/component-fixture-provider';
 import { policyFixture } from '~/__tests__/policy-fixture';
-import { ConsentDialog } from '~/components/panel';
+import { ConsentDialog } from '~/aggregate-components';
 import { ConsentWidget } from '~/components/preferences';
 import { KernelContext } from '~/context';
 import { useOptOutState } from '~/hooks';

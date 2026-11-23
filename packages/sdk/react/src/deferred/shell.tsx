@@ -171,36 +171,6 @@ export interface DeferredConsentShellProps<EngineModule> {
 	children?: ReactNode;
 }
 
-/**
- * Before hydration, when this chunk has run but no root routes taps yet:
- * a banner tap starts fetching what will handle it (the commit's chunk, or
- * the dialog's), so the root that mounts finds it loaded. The root's tap
- * router replaces this once it is scheduled.
- */
-const warmForEarlyTaps = function warmForEarlyTaps(): void {
-	const queue = earlyTapQueue();
-	if (!queue?.taps || queue.n) {
-		return;
-	}
-	const warm = (): void => {
-		// The Privacy Choices banner replays its taps itself, with the engine.
-		const actions = (earlyTapQueue()?.taps ?? [])
-			.filter((tap) => tap.design !== 'privacy-choices')
-			.map((tap) => tap.action);
-		if (actions.includes('accept') || actions.includes('reject')) {
-			void import('./commit');
-		} else if (actions.includes('customize')) {
-			void importDialog();
-		}
-	};
-	queue.n = warm;
-	warm();
-};
-
-if (typeof document !== 'undefined') {
-	warmForEarlyTaps();
-}
-
 const isPromiseLike = function isPromiseLike(
 	value: unknown
 ): value is PromiseLike<unknown> {
@@ -228,24 +198,6 @@ const DIALOG_ROOT = '[data-testid="consent-dialog-root"]';
 
 /** Load the engine anyway this long after an early dialog's code arrived. */
 const DIALOG_SHOWN_MS = 3000;
-
-/**
- * Hides the stock banner the way the early-tap script does for an accept,
- * for a Customize tap the engine replays: the replay removes the style
- * once it opened the dialog, or when the tap no longer applies.
- */
-const hideBanner = function hideBanner(nonce: string | undefined): void {
-	if (document.getElementById(EARLY_TAP_STYLE_ID)) {
-		return;
-	}
-	const style = document.createElement('style');
-	style.id = EARLY_TAP_STYLE_ID;
-	if (nonce) {
-		style.nonce = nonce;
-	}
-	style.textContent = `${EARLY_TAP_ROOT},[data-testid="consent-banner-overlay"]{display:none!important}`;
-	document.head.append(style);
-};
 
 /** Longest wait for the engine to replace the tapped banner's markup. */
 const BANNER_LEAVE_MS = 10_000;
@@ -865,71 +817,15 @@ const createSession = function createSession<EngineModule>(
 		).then((saved) => saved ?? onEngine());
 	};
 
-	/**
-	 * A Customize tap before the engine: hides the banner and opens the
-	 * dialog from the stand-in. `false` when only the engine can open it.
-	 */
-	const customize = (): boolean => {
-		hideBanner(commitConfig?.nonce ?? options.nonce);
-		if (commitConfig && !engineRendering) {
-			claimTaps(false);
-			handle.kernel.set.activeUI('dialog');
-			return true;
-		}
-		// The engine's banner replays it and opens the dialog.
-		return false;
-	};
-
-	const routePressed = (pressed: string): void => {
-		if (pressed === 'accept' || pressed === 'reject') {
-			prepare(pressed, true);
-		} else if (pressed === 'opt-out') {
-			start();
-		} else if (pressed === 'customize') {
-			// Once the engine is on its way, it opens the dialog: an
-			// early one's chunks would only share the connection with it.
-			if (commitConfig && !requested) {
-				void loadDialog();
-			} else {
-				// Only the engine opens the dialog.
-				start();
-			}
-		}
-	};
-
-	const routeTap = (pressed?: string): void => {
-		if (pressed !== undefined) {
-			routePressed(pressed);
-			return;
-		}
+	const routeTap = (): void => {
 		const taps = earlyTapQueue()?.taps ?? [];
-		// The last accept or reject is what the visitor decided.
-		const decided = taps.filter((entry) => entry.action !== 'customize');
-		const tap = decided[decided.length - 1] ?? taps[taps.length - 1];
-		if (!tap || routing) {
+		if (taps.length === 0 || routing) {
 			return;
 		}
-		// The Privacy Choices banner replays the tap through its own
-		// handlers once the engine renders it: its commit plan and its
-		// in-place options are not the stock banner's.
-		if (tap.design === 'privacy-choices') {
-			start();
-			return;
-		}
-		if (
-			tap.action === 'customize' &&
-			!handle.attached() &&
-			!requested &&
-			customize()
-		) {
-			return;
-		}
-		if ((tap.action !== 'accept' && tap.action !== 'reject') || !canCommit()) {
-			// The engine's banner replays the tap.
-			start();
-			return;
-		}
-		void commitChoice(tap.action === 'accept' ? 'all' : 'none', tap.at);
+		// The banner replays the tap through its own handlers once the
+		// engine renders it: its commit plan and its in-place options are
+		// its own.
+		start();
 	};
 
 	return {

@@ -314,7 +314,9 @@ export {
 export type {
 	ConsentDesign,
 	LegacyConsentPresentation,
+	LegacyPreferencesPresentation,
 	LegacyPresentationFields,
+	LegacyPromptPresentation,
 	LegacyResolvedConsentPresentation,
 	PromptPosition,
 	PromptVariant,

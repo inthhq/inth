@@ -39,19 +39,22 @@ export interface StaticBannerRenderer {
 
 /**
  * Sheets `@inth/react` imports that a page with the static banner or a
- * server-rendered banner already holds (`tokens`, `button`, `banner`), or
- * that only a surface rendered later needs (`trigger`, `consent-gate`);
- * `first-paint` is the one earlier `@inth/react` releases rendered for the
- * IAB banner. A client build gets each one's `-deferred` module: the same
- * `id`, no text, and a `load()` used only when the page lacks the sheet.
- * A sheet the installed `@inth/sdk/ui` has no deferred module for keeps its
- * text.
+ * server-rendered banner already holds (`tokens`, `button`, `surface` and
+ * the containers `card`, `banner` and `drawer`), or that only a surface
+ * rendered later needs (`trigger`, `consent-gate`); `first-paint` is the
+ * one earlier `@inth/react` releases rendered for the IAB banner. A client
+ * build gets each one's `-deferred` module: the same `id`, no text, and a
+ * `load()` used only when the page lacks the sheet. A sheet the installed
+ * `@inth/sdk/ui` has no deferred module for keeps its text.
  */
 export const DEFERRED_SHEET_SPECIFIERS: readonly string[] = [
 	'first-paint',
 	'tokens',
 	'button',
+	'surface',
+	'card',
 	'banner',
+	'drawer',
 	'trigger',
 	'consent-gate',
 ].map((name) => `@inth/sdk/ui/styles/sheets/${name}`);
@@ -61,12 +64,12 @@ const DEFERRED_SHEETS: ReadonlySet<string> = new Set(DEFERRED_SHEET_SPECIFIERS);
 const REACT_PACKAGE = /[\\/]node_modules[\\/]@inth[\\/]react[\\/]/u;
 
 /**
- * The stock banner's root component in `@inth/react`'s build, or the
+ * The stock banner's component in `@inth/react`'s build, or the
  * `ConsentBanner` a browser build imports (`deferred/client-banner.js`),
  * which loads that component in a chunk of its own.
  */
 const BANNER_MODULE =
-	/[\\/]@inth[\\/]react[\\/]dist[\\/](?:components[\\/]prompt[\\/]atoms[\\/]root|deferred[\\/]client-banner)\.js$/u;
+	/[\\/]@inth[\\/]react[\\/]dist[\\/](?:components[\\/]prompt[\\/]prompt|deferred[\\/]client-banner)\.js$/u;
 
 /**
  * The `-deferred` twin of a sheet `@inth/react` imports, or `undefined` for

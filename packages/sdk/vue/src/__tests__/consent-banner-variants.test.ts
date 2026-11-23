@@ -1,4 +1,13 @@
-import type { PromptPresentation } from '@inth/sdk/engine';
+// @deprecated temporary — removed in phase B: the classic banner's geometry.
+import type {
+	ConsentPresentation,
+	LegacyConsentPresentation,
+	LegacyPromptPresentation as PromptPresentation,
+} from '@inth/sdk/engine';
+
+/** The classic geometry, as the config type no longer takes it. */
+const legacy = (presentation: LegacyConsentPresentation) =>
+	presentation as ConsentPresentation;
 import type { InitOutput, PolicyRule } from '@inth/sdk/schema/types';
 import {
 	resolvePolicyRules,
@@ -163,7 +172,7 @@ describe('ConsentBanner surface variants', () => {
 	test('a notice prompt defaults to a floating card and never blocks', async () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		await renderBanner(buildInit(noticeRule), {
-			config: { presentation: { prompt: { blocking: true } } },
+			config: { presentation: legacy({ prompt: { blocking: true } }) },
 		});
 		expect(rootAttributes()).toEqual({
 			blocking: null,
@@ -180,7 +189,7 @@ describe('ConsentBanner surface variants', () => {
 
 	test('a wall blocks: backdrop, modal semantics and a blocking marker', async () => {
 		await renderBanner(buildInit(choiceRule), {
-			config: { presentation: { prompt: { variant: 'wall' } } },
+			config: { presentation: legacy({ prompt: { variant: 'wall' } }) },
 		});
 		expect(rootAttributes()).toEqual({
 			blocking: 'true',
@@ -201,14 +210,14 @@ describe('ConsentBanner surface variants', () => {
 
 	test('keeps a host-chosen corner under right-to-left text', async () => {
 		await renderBanner(buildInit(choiceRule, 'he'), {
-			config: { presentation: { prompt: { position: 'top-left' } } },
+			config: { presentation: legacy({ prompt: { position: 'top-left' } }) },
 		});
 		expect(rootAttributes().position).toBe('top-left');
 	});
 
 	test('renders a notice as a bottom bar when the host asks for one', async () => {
 		await renderBanner(buildInit(noticeRule), {
-			config: { presentation: { prompt: { variant: 'bar' } } },
+			config: { presentation: legacy({ prompt: { variant: 'bar' } }) },
 		});
 		expect(rootAttributes()).toEqual({
 			blocking: null,
@@ -219,7 +228,7 @@ describe('ConsentBanner surface variants', () => {
 
 	test('keeps a bar edge under right-to-left text', async () => {
 		await renderBanner(buildInit(noticeRule, 'he'), {
-			config: { presentation: { prompt: { variant: 'bar' } } },
+			config: { presentation: legacy({ prompt: { variant: 'bar' } }) },
 		});
 		expect(rootAttributes()).toMatchObject({
 			position: 'bottom',
@@ -231,7 +240,7 @@ describe('ConsentBanner surface variants', () => {
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		await renderBanner(buildInit(choiceRule), {
 			config: {
-				presentation: { prompt: { position: 'bottom-left', variant: 'bar' } },
+				presentation: legacy({ prompt: { position: 'bottom-left', variant: 'bar' } }),
 			},
 		});
 		expect(rootAttributes()).toMatchObject({
@@ -248,7 +257,7 @@ describe('ConsentBanner surface variants', () => {
 	test('component props beat the host presentation', async () => {
 		await renderBanner(buildInit(choiceRule), {
 			config: {
-				presentation: { prompt: { position: 'top', variant: 'bar' } },
+				presentation: legacy({ prompt: { position: 'top', variant: 'bar' } }),
 			},
 			props: { position: 'top-right', variant: 'widget' },
 		});
@@ -269,6 +278,5 @@ describe('ConsentBanner surface variants', () => {
 		expect(query('consent-banner-card')?.getAttribute('aria-modal')).toBe(
 			'true'
 		);
-	});
 	});
 });

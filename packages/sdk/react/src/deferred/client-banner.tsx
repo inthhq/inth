@@ -14,9 +14,6 @@
  * render. While hydrating a banner the server rendered, it waits for its
  * code, so React keeps the server's markup.
  *
- * Compound parts (`ConsentBanner.Root`, ...) load the same code at first
- * render.
- *
  * @packageDocumentation
  * @internal
  */
@@ -31,7 +28,7 @@ import {
 } from 'react';
 
 import type * as BannerModuleNamespace from '../components/prompt/index';
-import type { ConsentBannerCompoundComponent } from '../components/prompt/index';
+import type { ConsentBannerProps } from '../components/prompt/index';
 import { KernelContext } from '../context';
 import { useIsHydrated } from '../hooks/use-is-hydrated';
 import { useServerSnapshot } from '../kernel-selector';
@@ -145,46 +142,16 @@ const Gate = ({ eager, pick, props }: GateProps): ReactNode => {
 	return null;
 };
 
-const PARTS = [
-	'Root',
-	'Card',
-	'Header',
-	'Title',
-	'Description',
-	'PolicyActions',
-	'Footer',
-	'FooterSubGroup',
-	'RejectButton',
-	'CustomizeButton',
-	'AcceptButton',
-	'DismissButton',
-	'Rights',
-	'RightLink',
-	'Overlay',
-] as const;
-
 const pickBanner = (module: BannerModule): AnyComponent => module.ConsentBanner;
 
 const ClientConsentBanner = (props: Record<string, unknown>): ReactNode =>
 	createElement(Gate, { eager: false, pick: pickBanner, props });
 
-for (const name of PARTS) {
-	const pickPart = (module: BannerModule): AnyComponent =>
-		module.ConsentBanner[name] as AnyComponent;
-	const Part = (props: Record<string, unknown>): ReactNode =>
-		createElement(Gate, { eager: true, pick: pickPart, props });
-	Object.defineProperty(ClientConsentBanner, name, {
-		configurable: true,
-		enumerable: true,
-		value: Part,
-	});
-}
-
 /**
  * The stock consent banner. See `ConsentBanner` in
- * `components/prompt/index.ts` for its props and parts.
+ * `components/prompt/prompt.tsx` for its props.
  *
  * @internal
  */
 export const ConsentBanner =
-	ClientConsentBanner as unknown as ConsentBannerCompoundComponent;
+	ClientConsentBanner as unknown as ComponentType<ConsentBannerProps>;

@@ -77,16 +77,9 @@ export type {
 	ConsentBannerButton,
 	ConsentBannerLayout,
 	ConsentBannerProps,
-	ConsentBannerRight,
-	ConsentBannerRightLinkProps,
-	ConsentBannerRightsProps,
-	ConsentBannerSurface,
 } from './components/prompt';
 // -- UI components ----------------------------------------------------------
-export type {
-	ConsentDialogCompoundComponent,
-	ConsentDialogProps,
-} from './components/panel';
+export type { ConsentDialogProps } from './components/dialog/types';
 export type {
 	OptOutConfirmationCompoundComponent,
 	OptOutConfirmationDoneButtonProps,
@@ -136,16 +129,19 @@ export type {
 } from './provider';
 export type { ConsentThemeProps } from './consent-theme';
 export type { Theme } from './types/theme';
-export type { ConsentBannerCompoundComponent } from './components/prompt';
 export type { ReactUIOptions } from './types/manager';
 
 export type {
+	BannerEdge,
+	CardPosition,
+	ConsentContainer,
+	ConsentEdgeStyle,
 	ConsentPresentation,
+	DrawerSide,
 	PromptPresentation,
 	PreferencesPresentation,
 	PresentationAction,
-	PromptPosition,
-	PromptVariant,
+	ResolvedConsentLayout,
 	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
 

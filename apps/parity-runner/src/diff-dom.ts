@@ -129,7 +129,7 @@ export const captureDomSnapshot = function captureDomSnapshot(
 		const astroPage =
 			'__inthAstroConfig' in window ||
 			document.querySelector('script[data-inth-config]') !== null;
-		// Astro's Privacy Choices prompt prefixes its element ids with a fixed
+		// Astro's consent prompt prefixes its element ids with a fixed
 		// `inth-pc-banner`: the server and the browser render the same ids,
 		// and a page has one prompt. React builds the same ids from `useId`
 		// (`inth-pc-_r_1_-category-…`), which the generated-token rules below

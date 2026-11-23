@@ -14,7 +14,7 @@
 
 import * as button from '@inth/sdk/ui/styles/sheets/button';
 import * as expand from '@inth/sdk/ui/styles/sheets/expand';
-import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/privacy-choices-dialog';
+import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/dialog';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens';
 
 import { insertSheets } from './sheets';

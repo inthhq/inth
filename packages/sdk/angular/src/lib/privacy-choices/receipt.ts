@@ -19,7 +19,7 @@ import {
 } from '@angular/core';
 import { copySurfaceReference, resolveRightsReceipt } from '@inth/sdk/engine';
 import { resolveRightsReceiptCopy } from '@inth/sdk/surface-state';
-import styles from '@inth/sdk/ui/styles/components/privacy-choices';
+import styles from '@inth/sdk/ui/styles/components/consent-dialog';
 import type { AllThemeKeys } from '@inth/sdk/ui/theme';
 
 import { ConsentManager } from '../core/consent-manager';

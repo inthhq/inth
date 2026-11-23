@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { Model } from '@inth/sdk/engine';
-	import { resolveConsentPresentation } from '@inth/sdk/engine';
+	import { resolveLegacyConsentPresentation } from '@inth/sdk/engine';
 	import { SURFACE_ROOT_ATTRIBUTE } from '@inth/sdk/runtime/page-globals';
 	import { isDialogDismissKey } from '@inth/sdk/ui/primitives';
-	import styles from '@inth/sdk/ui/styles/components/consent-dialog';
+	import styles from '@inth/sdk/ui/styles/components/legacy-panel';
 	import {
 		getTextDirection,
 		resolveStyles,
@@ -41,7 +41,7 @@
 	const consent = getConsentContext();
 	const theme = getThemeContext();
 	const preferences = $derived(
-		resolveConsentPresentation({
+		resolveLegacyConsentPresentation({
 			policy: consent.snapshot.policyRule,
 			presentation: {
 				...consent.state.presentation,

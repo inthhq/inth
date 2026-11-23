@@ -11,7 +11,7 @@
 
 import * as button from '@inth/sdk/ui/styles/sheets/button-deferred';
 import * as expand from '@inth/sdk/ui/styles/sheets/expand-deferred';
-import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/privacy-choices-dialog-deferred';
+import * as privacyChoicesDialog from '@inth/sdk/ui/styles/sheets/dialog-deferred';
 import * as tokens from '@inth/sdk/ui/styles/sheets/tokens-deferred';
 
 import type { SurfaceStyleSheet } from '../../core/consent-styles';

@@ -8,7 +8,7 @@
 
 import {
 	defaultTranslationConfig,
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 	resolveIABBannerCopy,
 	resolveIABBannerSummary,
 	resolveIABCopy,
@@ -288,7 +288,7 @@ export const resolveIABPromptModel = function resolveIABPromptModel(
 ): IABPromptModel {
 	const { snapshot, props } = input;
 	const models = props.models ?? ['iab'];
-	const presentation = resolveConsentPresentation({
+	const presentation = resolveLegacyConsentPresentation({
 		override: { scrollLock: props.scrollLock },
 		policy: snapshot.policyRule,
 		presentation: input.presentation,

@@ -4,7 +4,7 @@ import styles from '@inth/sdk/ui/styles/components/consent-manager';
 import { useMemo } from 'react';
 import type { FC, ReactNode } from 'react';
 
-import { DIALOG_SHEETS } from '~/components/shared/dialog-sheets';
+import { WIDGET_SHEETS } from '~/components/shared/widget-sheets';
 import { Box } from '~/components/shared/primitives/box';
 import {
 	SurfaceStyles,
@@ -101,7 +101,7 @@ const ConsentWidgetRoot: FC<ConsentWidgetRootProps> = ({
 		[resolvedUiSource]
 	);
 	const hasConsentUI = useHasConsentUI();
-	const sheetsReady = useSurfaceSheetsReady(DIALOG_SHEETS, noStyle);
+	const sheetsReady = useSurfaceSheetsReady(WIDGET_SHEETS, noStyle);
 	const optInConfirmationActive = useOptInConfirmationHost();
 	if (!(hasConsentUI && sheetsReady)) {
 		// No resolved policy, or a `none` rule with no right to exercise: there
@@ -112,7 +112,7 @@ const ConsentWidgetRoot: FC<ConsentWidgetRootProps> = ({
 	const content = (
 		<>
 			<SurfaceStyles
-				sheets={DIALOG_SHEETS}
+				sheets={WIDGET_SHEETS}
 				noStyle={noStyle}
 			/>
 			{optInConfirmationActive && (

@@ -5,7 +5,7 @@
  * @internal
  */
 
-import * as barSheet from '@inth/sdk/ui/styles/sheets/bar';
+import * as barSheet from '@inth/sdk/ui/styles/sheets/banner';
 import * as buttonSheet from '@inth/sdk/ui/styles/sheets/button';
 import * as cardSheet from '@inth/sdk/ui/styles/sheets/card';
 import * as gateSheet from '@inth/sdk/ui/styles/sheets/consent-gate';

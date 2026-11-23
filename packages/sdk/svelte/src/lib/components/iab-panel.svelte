@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {
-		resolveConsentPresentation,
+		resolveLegacyConsentPresentation,
 		resolveIABBannerSummary,
 	} from '@inth/sdk/engine';
 	import type { Model } from '@inth/sdk/engine';
@@ -113,7 +113,7 @@
 	);
 
 	const preferences = $derived(
-		resolveConsentPresentation({
+		resolveLegacyConsentPresentation({
 			policy: consent.snapshot.policyRule,
 			presentation: {
 				preferences: {

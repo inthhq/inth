@@ -133,8 +133,11 @@ export interface MountOptions {
 	edgeStyle?: ConsentEdgeStyle;
 	blockUntilChoice?: boolean;
 	region?: Region;
-	/** `null` leaves the design to the resolver. */
-	design?: ConsentPresentation['design'] | null;
+	/**
+	 * @deprecated temporary — removed in phase B. Ignored: there is one
+	 * consent UI.
+	 */
+	design?: string | null;
 	config?: Partial<ConsentConfig>;
 	/** Declare {@link VENDORS}. */
 	vendors?: boolean;
@@ -224,7 +227,6 @@ export const mountPrivacyChoices = async function mountPrivacyChoices({
 		domain: 'consent.example',
 		legalLinks: { privacyPolicy: { href: '/privacy' } },
 		presentation: {
-			design: design === null ? undefined : design,
 			prompt: {
 				blockUntilChoice,
 				container: container ?? undefined,

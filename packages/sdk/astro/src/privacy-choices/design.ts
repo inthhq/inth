@@ -7,12 +7,13 @@
 
 import {
 	applyExperimentAssignment,
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 } from '@inth/sdk/engine';
 import type {
 	ConsentExperiment,
 	ConsentPresentation,
 	ConsentSnapshot,
+	LegacyResolvedConsentPresentation,
 	ResolvedConsentPresentation,
 } from '@inth/sdk/engine';
 
@@ -29,8 +30,8 @@ export interface DesignOptions {
 export const resolvePromptPresentation = function resolvePromptPresentation(
 	snapshot: ConsentSnapshot,
 	options: DesignOptions
-): ResolvedConsentPresentation {
-	return resolveConsentPresentation({
+): LegacyResolvedConsentPresentation {
+	return resolveLegacyConsentPresentation({
 		policy: snapshot.policyRule,
 		presentation: applyExperimentAssignment(
 			options.presentation,

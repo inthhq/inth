@@ -45,7 +45,7 @@ import { optInConsentSurface } from '@inth/sdk/surface-actions';
 import {
 	resolveCategoryOptOutLock,
 	resolveCategoryTitle,
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 	resolveOptOutBlockHeading,
 	resolveOptOutCopy,
 	resolveOptOutReceiptSentence,
@@ -612,7 +612,7 @@ export class ConsentWidgetRoot {
 	}
 	/** @internal */
 	protected readonly presentation = computed(() =>
-		resolveConsentPresentation({
+		resolveLegacyConsentPresentation({
 			actionAppearance: actionAppearanceFromTheme(this.#theme.theme()),
 			policy: this.consent.snapshot().policyRule,
 			presentation: this.consent.presentation(),

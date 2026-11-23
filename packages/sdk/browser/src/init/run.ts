@@ -22,7 +22,7 @@
 
 import {
 	OPT_OUT_CONFIRMATION_STORAGE_KEY,
-	resolveConsentPresentation,
+	resolveLegacyConsentPresentation,
 } from '@inth/sdk-core';
 import type { ConsentSnapshot, KernelEvent, SaveResult } from '@inth/sdk-core';
 import {
@@ -201,7 +201,7 @@ export const usesPrivacyChoicesDesign = (
 	options: ScriptTagClientOptions,
 	resolved: ConsentSnapshot
 ): boolean =>
-	resolveConsentPresentation({
+	resolveLegacyConsentPresentation({
 		policy: resolved.policyRule,
 		presentation: options.presentation,
 		surface: 'prompt',
