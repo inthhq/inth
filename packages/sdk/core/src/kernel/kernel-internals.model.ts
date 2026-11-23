@@ -15,6 +15,7 @@ import type {
  *
  * @internal
  */
+import type { UserConsent } from '@inth/sdk-schema/types';
 import type { OptOutReceiptData } from '../libs/opt-out-state.model';
 import type {
 	AccountConsentLayer,
@@ -140,6 +141,15 @@ export interface InternalKernel extends ConsentKernel {
 	bumpAccountSyncGeneration: () => number;
 	/** Arm or release the `userConsentPending` hold on the kernel snapshot. */
 	setUserConsentPending: (pending: boolean) => void;
+	/**
+	 * Sync a `UserConsent` document and optionally release `userConsentPending`
+	 * in one atomic commit so no intermediate snapshot runs with `pending: false`
+	 * before the resolved document applies.
+	 */
+	settleUserConsent: (
+		value: UserConsent | null | undefined,
+		options?: { clearPending?: boolean; forceClientSync?: boolean }
+	) => boolean;
 	/**
 	 * Subscribe to changes to the account consent layer so persistence can
 	 * schedule writes or synchronously delete account storage on drop.

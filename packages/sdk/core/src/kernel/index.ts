@@ -262,6 +262,8 @@ export const createKernel = function createKernel(
 		defaultOptOutRights,
 		getProvisionalSubject: records.getProvisionalSubject,
 		initialDraft: buildDraft(config.initialDraft),
+		isSubjectLinked: records.isSubjectLinked,
+		markSubjectLinked: records.markSubjectLinked,
 		noteRecordedSubject: records.noteRecordedSubject,
 		outbox,
 		runtime,
@@ -315,8 +317,9 @@ export const createKernel = function createKernel(
 		setUserConsentPending: (pending: boolean) => {
 			runtime.commit({ now: runtime.now(), userConsentPending: pending });
 		},
+		settleUserConsent: records.syncUserConsent,
 		subscribe: runtime.subscribe,
-		syncUserConsent: records.syncUserConsent,
+		syncUserConsent: (value) => records.syncUserConsent(value),
 	};
 };
 

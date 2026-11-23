@@ -310,6 +310,9 @@ export const encodeVendorChoice = function encodeVendorChoice(
 		denied: [...record.denied].sort(),
 		version: 1,
 	};
+	if (record.granted !== undefined) {
+		encoded.granted = [...record.granted].sort();
+	}
 	if (record.subject && Object.keys(record.subject).length > 0) {
 		encoded.subject = { ...record.subject };
 	}
@@ -319,7 +322,7 @@ export const encodeVendorChoice = function encodeVendorChoice(
 /**
  * Compact vendor denials for the `<key>-vendors` cookie:
  * `v=1&t=<confirmedAt>&d=<uri-encoded id>|<uri-encoded id>`, followed by the
- * subject fields the consent envelope also uses (`sid`, `eid`, `idp`).
+ * optional `g=<granted ids>` and subject fields (`sid`, `eid`, `idp`).
  * The `d` field is omitted when nothing is denied.
  */
 export const encodeVendorChoiceCompact = function encodeVendorChoiceCompact(
@@ -331,6 +334,17 @@ export const encodeVendorChoiceCompact = function encodeVendorChoiceCompact(
 			field(
 				'd',
 				[...record.denied]
+					.sort()
+					.map((id) => encodeURIComponent(id))
+					.join(LIST_SEPARATOR)
+			)
+		);
+	}
+	if (record.granted !== undefined) {
+		fields.push(
+			field(
+				'g',
+				[...record.granted]
 					.sort()
 					.map((id) => encodeURIComponent(id))
 					.join(LIST_SEPARATOR)

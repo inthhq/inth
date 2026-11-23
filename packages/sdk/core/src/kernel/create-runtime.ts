@@ -76,10 +76,14 @@ export type AnnouncedEvent = Extract<
 export interface RuntimeCommitOptions {
 	/** Replace or clear the internal account consent layer in this commit. */
 	accountLayer?: AccountConsentLayer | null;
+	/** Notify account persistence even when `accountLayer` stayed `null`. */
+	forceAccountNotify?: boolean;
 	/** Suppress persistence write-back when hydrating the account layer. */
 	fromHydration?: boolean;
 	/** Keep an open preference dialog open even when derived choices changed. */
 	preserveDialog?: boolean;
+	/** Declared vendor IDs covered by the browser vendor decision. */
+	vendorDeclared?: readonly string[] | null;
 }
 
 export interface KernelRuntime {
@@ -536,6 +540,9 @@ export const createRuntime = function createRuntime(
 			Object.freeze(records.vendorChoice.denied);
 			Object.freeze(records.vendorChoice);
 		}
+		if (records.vendorDeclared && !Object.isFrozen(records.vendorDeclared)) {
+			Object.freeze(records.vendorDeclared);
+		}
 		if (records.choice && !Object.isFrozen(records.choice)) {
 			for (const decision of Object.values(records.choice.categories)) {
 				if (decision) {
@@ -567,32 +574,66 @@ export const createRuntime = function createRuntime(
 		return accountLayer;
 	};
 
-	const resolveNextLayers = function resolveNextLayers(
-		current: ConsentSnapshot,
+	const resolveNextBrowser = function resolveNextBrowser(
 		patch: SnapshotPatch,
+		accountDroppedOrReplaced: boolean,
 		commitOptions?: RuntimeCommitOptions
-	) {
+	): { browserChanged: boolean; nextBrowser: BrowserConsentRecords } {
+		let nextOptOut =
+			patch.optOut === undefined ? browserRecords.optOut : patch.optOut;
+		if (
+			patch.optOut === undefined &&
+			accountDroppedOrReplaced &&
+			nextOptOut?.heldBy === 'person'
+		) {
+			nextOptOut = null;
+		}
+		let nextVendorDeclared: readonly string[] | null | undefined;
+		if (commitOptions?.vendorDeclared !== undefined) {
+			nextVendorDeclared = commitOptions.vendorDeclared;
+		} else if (patch.vendorChoice === null) {
+			nextVendorDeclared = null;
+		} else {
+			nextVendorDeclared = browserRecords.vendorDeclared;
+		}
 		const nextBrowser: BrowserConsentRecords = {
 			choice:
 				patch.explicitChoice === undefined
 					? browserRecords.choice
 					: patch.explicitChoice,
-			optOut: patch.optOut === undefined ? browserRecords.optOut : patch.optOut,
+			optOut: nextOptOut,
 			vendorChoice:
 				patch.vendorChoice === undefined
 					? browserRecords.vendorChoice
 					: patch.vendorChoice,
+			vendorDeclared: nextVendorDeclared,
 		};
 		const browserChanged =
 			nextBrowser.choice !== browserRecords.choice ||
 			nextBrowser.optOut !== browserRecords.optOut ||
-			nextBrowser.vendorChoice !== browserRecords.vendorChoice;
+			nextBrowser.vendorChoice !== browserRecords.vendorChoice ||
+			nextBrowser.vendorDeclared !== browserRecords.vendorDeclared;
+		return { browserChanged, nextBrowser };
+	};
+
+	const resolveNextLayers = function resolveNextLayers(
+		current: ConsentSnapshot,
+		patch: SnapshotPatch,
+		commitOptions?: RuntimeCommitOptions
+	) {
 		const nextUser = patch.user === undefined ? current.user : patch.user;
 		const userExternalIdChanged =
 			(nextUser?.externalId ?? null) !== (current.user?.externalId ?? null);
 		const nextAccount = resolveNextAccount(
 			nextUser,
 			userExternalIdChanged,
+			commitOptions
+		);
+		const accountDroppedOrReplaced =
+			accountLayer !== null && nextAccount !== accountLayer;
+		const { browserChanged, nextBrowser } = resolveNextBrowser(
+			patch,
+			accountDroppedOrReplaced,
 			commitOptions
 		);
 		const nextPolicy =
@@ -727,7 +768,8 @@ export const createRuntime = function createRuntime(
 		nextAccount: AccountConsentLayer | null,
 		accountChanged: boolean,
 		syncGenShouldBump: boolean,
-		fromHydration: boolean
+		fromHydration: boolean,
+		forceAccountNotify = false
 	): void {
 		if (browserChanged) {
 			browserRecords = freezeBrowser(nextBrowser);
@@ -737,6 +779,8 @@ export const createRuntime = function createRuntime(
 		}
 		if (accountChanged) {
 			accountLayer = nextAccount;
+			notifyAccountLayerChange(accountLayer, fromHydration);
+		} else if (forceAccountNotify) {
 			notifyAccountLayerChange(accountLayer, fromHydration);
 		}
 	};
@@ -788,6 +832,7 @@ export const createRuntime = function createRuntime(
 		let recordedGpcOptOut = false;
 		let recordedBrowserOptOut: OptOutRecord | null = null;
 		const previousAccount = accountLayer;
+		const forceAccountNotify = commitOptions?.forceAccountNotify === true;
 		const syncGenShouldBump =
 			userExternalIdChanged ||
 			(previousAccount !== null && nextAccount === null && !fromHydration);
@@ -803,6 +848,9 @@ export const createRuntime = function createRuntime(
 		) {
 			if (syncGenShouldBump) {
 				accountSyncGeneration += 1;
+			}
+			if (forceAccountNotify) {
+				notifyAccountLayerChange(accountLayer, fromHydration);
 			}
 			if (!impressionDue(current)) {
 				return false;
@@ -824,7 +872,8 @@ export const createRuntime = function createRuntime(
 					nextAccount,
 					accountChanged,
 					syncGenShouldBump,
-					fromHydration
+					fromHydration,
+					forceAccountNotify
 				);
 				return false;
 			}
@@ -836,7 +885,8 @@ export const createRuntime = function createRuntime(
 			nextAccount,
 			accountChanged,
 			syncGenShouldBump,
-			fromHydration
+			fromHydration,
+			forceAccountNotify
 		);
 		snapshot = adopted;
 		const shown = nextShownSurface(current, adopted, patch);

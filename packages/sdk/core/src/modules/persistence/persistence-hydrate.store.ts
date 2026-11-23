@@ -13,7 +13,7 @@ import type { HydrationRecords } from '../../consent-kernel.model';
 import type { ConsentSubject } from '../../consent-record/types';
 import type { InternalKernel } from '../../kernel/kernel-internals.model';
 import {
-	readStoredAccountLayer,
+	readStoredAccountLayerDetailed,
 	readStoredAccountLayerFromCookieHeader,
 } from './account-codec';
 import {
@@ -79,11 +79,16 @@ export interface StoredRecords {
 	 * above already exclude everything confirmed before it.
 	 */
 	epoch: number;
+	/** True when reading stored account parts threw or encountered undecodable bytes. */
+	accountDegraded?: boolean;
+	/** True when stored account parts had mixed revisions or incomplete cookie-only parts. */
+	accountPartial?: boolean;
 }
 
 /**
  * The kernel's own vendor record shape. The stored record also carries the
- * subject, which the kernel validator does not know, so it is split off.
+ * subject and optional granted list, which the kernel vendorChoice validator
+ * does not know, so they are split off.
  */
 const kernelVendorChoice = function kernelVendorChoice(
 	record: StoredVendorChoice | null
@@ -91,8 +96,18 @@ const kernelVendorChoice = function kernelVendorChoice(
 	if (!record) {
 		return null;
 	}
-	const { subject: _subject, ...vendorChoice } = record;
+	const { granted: _granted, subject: _subject, ...vendorChoice } = record;
 	return vendorChoice;
+};
+
+/** Declared vendor IDs covered by the stored browser vendor record, if known. */
+const kernelVendorDeclared = function kernelVendorDeclared(
+	record: StoredVendorChoice | null
+): HydrationRecords['vendorDeclared'] {
+	if (!record || record.granted === undefined) {
+		return undefined;
+	}
+	return [...new Set([...record.denied, ...record.granted])].sort();
 };
 
 /** Strip storage-only identity before applying a notice to the kernel. */
@@ -227,6 +242,10 @@ const composeRecords = function composeRecords(
 		subject: recorded,
 		vendorChoice: kernelVendorChoice(vendorRecord),
 	};
+	const vendorDeclared = kernelVendorDeclared(vendorRecord);
+	if (vendorDeclared !== undefined) {
+		records.vendorDeclared = vendorDeclared;
+	}
 	attachOptOutMeta(records, optOutRecord);
 	return {
 		candidates: selection.candidates,
@@ -341,9 +360,11 @@ const readRecords = function readRecords(
 		clearEpoch,
 		now
 	);
-	const accountLayer = readStoredAccountLayer(storageConfig);
-	if (accountLayer !== null) {
-		stored.records.accountLayer = accountLayer;
+	const accountRead = readStoredAccountLayerDetailed(storageConfig);
+	stored.accountDegraded = accountRead.degraded;
+	stored.accountPartial = accountRead.partial;
+	if (accountRead.layer !== null) {
+		stored.records.accountLayer = accountRead.layer;
 		stored.found = true;
 	}
 	// An absent value only clears memory when every candidate was readable.
@@ -365,6 +386,7 @@ const readRecords = function readRecords(
 	}
 	if (!vendors?.ok && vendorsUnavailable) {
 		delete stored.records.vendorChoice;
+		delete stored.records.vendorDeclared;
 	}
 	if (!optOut?.ok && optOutUnavailable) {
 		delete stored.records.optOut;

@@ -93,6 +93,12 @@ export type StoredNoticeDismissal = NoticeDismissal & {
 /** Local vendor denial list. Version 1 matches the kernel record. */
 export type StoredVendorChoice = VendorChoice & {
 	/**
+	 * Declared vendor IDs explicitly covered as granted by this browser vendor
+	 * decision, when known. Distinguishes "shown and granted on this site"
+	 * from "never shown on this site" when merging with an account layer.
+	 */
+	granted?: readonly string[];
+	/**
 	 * Subject identity, carried so a visitor whose first act only decided
 	 * vendors keeps the same subject after a reload. The consent envelope needs
 	 * a category choice to exist and cannot hold it for that visitor.
@@ -780,8 +786,38 @@ const VENDOR_CHOICE_KEYS = [
 	'version',
 	'confirmedAt',
 	'denied',
+	'granted',
 	'subject',
 ] as const;
+
+const validateVendorIdList = function validateVendorIdList(
+	raw: unknown,
+	fieldName: 'denied' | 'granted',
+	issues: StorageIssue[]
+): string[] {
+	const ids: string[] = [];
+	if (Array.isArray(raw)) {
+		for (const [index, entry] of raw.entries()) {
+			// The same slug shape a declaration must have. A stored id outside
+			// it would ride into every later grant map and fail the wire schema.
+			if (!isNonEmptyString(entry) || !isValidVendorId(entry)) {
+				issues.push({
+					code: 'invalid-identifier',
+					path: `${fieldName}[${index}]`,
+				});
+				continue;
+			}
+			if (ids.includes(entry)) {
+				issues.push({ code: 'duplicate-key', path: `${fieldName}[${index}]` });
+				continue;
+			}
+			ids.push(entry);
+		}
+	} else {
+		issues.push({ code: 'not-an-object', path: fieldName });
+	}
+	return ids;
+};
 
 /** Validates a parsed vendor denial list. */
 export const decodeVendorChoice = function decodeVendorChoice(
@@ -811,25 +847,16 @@ export const decodeVendorChoice = function decodeVendorChoice(
 		issues.push({ code: timestampIssue, path: 'confirmedAt' });
 	}
 	const subject = validateSubject(ownValue(input, 'subject'), issues);
-	const rawDenied = ownValue(input, 'denied');
-	const denied: string[] = [];
-	if (Array.isArray(rawDenied)) {
-		for (const [index, entry] of rawDenied.entries()) {
-			// The same slug shape a declaration must have. A stored id outside
-			// it would ride into every later grant map and fail the wire schema.
-			if (!isNonEmptyString(entry) || !isValidVendorId(entry)) {
-				issues.push({ code: 'invalid-identifier', path: `denied[${index}]` });
-				continue;
-			}
-			if (denied.includes(entry)) {
-				issues.push({ code: 'duplicate-key', path: `denied[${index}]` });
-				continue;
-			}
-			denied.push(entry);
-		}
-	} else {
-		issues.push({ code: 'not-an-object', path: 'denied' });
-	}
+	const denied = validateVendorIdList(
+		ownValue(input, 'denied'),
+		'denied',
+		issues
+	);
+	const rawGranted = ownValue(input, 'granted');
+	const granted =
+		rawGranted === undefined
+			? undefined
+			: validateVendorIdList(rawGranted, 'granted', issues);
 	if (issues.length > 0) {
 		return { issues, ok: false };
 	}
@@ -838,10 +865,35 @@ export const decodeVendorChoice = function decodeVendorChoice(
 		denied: denied.sort(),
 		version: 1,
 	};
+	if (granted !== undefined) {
+		record.granted = granted.sort();
+	}
 	if (subject) {
 		record.subject = subject;
 	}
 	return { ok: true, record };
+};
+
+const decodeCompactVendorList = function decodeCompactVendorList(
+	list: string | undefined,
+	fieldName: string
+): { ok: true; ids: string[] } | { ok: false; issues: StorageIssue[] } {
+	const ids: string[] = [];
+	if (list !== undefined && list !== '') {
+		for (const [index, entry] of list.split(LIST_SEPARATOR).entries()) {
+			const id = decodeComponent(entry);
+			if (id === null) {
+				return {
+					issues: [
+						{ code: 'malformed-encoding', path: `${fieldName}[${index}]` },
+					],
+					ok: false,
+				};
+			}
+			ids.push(id);
+		}
+	}
+	return { ids, ok: true };
 };
 
 /** Decodes compact vendor denials through the shared validator. */
@@ -859,32 +911,29 @@ export const decodeVendorChoiceCompact = function decodeVendorChoiceCompact(
 		if (readSubjectField(key, value, subject, issues)) {
 			continue;
 		}
-		if (key !== 't' && key !== 'd') {
+		if (key !== 't' && key !== 'd' && key !== 'g') {
 			issues.push({ code: 'unknown-key', path: key });
 		}
 	}
 	if (issues.length > 0) {
 		return { issues, ok: false };
 	}
-	const list = fields.get('d');
-	const denied: unknown[] = [];
-	if (list !== undefined && list !== '') {
-		for (const [index, entry] of list.split(LIST_SEPARATOR).entries()) {
-			const id = decodeComponent(entry);
-			if (id === null) {
-				return {
-					issues: [{ code: 'malformed-encoding', path: `d[${index}]` }],
-					ok: false,
-				};
-			}
-			denied.push(id);
-		}
+	const deniedResult = decodeCompactVendorList(fields.get('d'), 'd');
+	if (!deniedResult.ok) {
+		return deniedResult;
 	}
 	const candidate: Record<string, unknown> = {
 		confirmedAt: parseCompactInteger(fields.get('t')),
-		denied,
+		denied: deniedResult.ids,
 		version: 1,
 	};
+	if (fields.has('g')) {
+		const grantedResult = decodeCompactVendorList(fields.get('g'), 'g');
+		if (!grantedResult.ok) {
+			return grantedResult;
+		}
+		candidate.granted = grantedResult.ids;
+	}
 	if (Object.keys(subject).length > 0) {
 		candidate.subject = subject;
 	}

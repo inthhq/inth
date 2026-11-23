@@ -79,12 +79,24 @@ export interface AccountConsentLayer {
 	>;
 	readonly vendors: Readonly<Record<string, AccountVendorDecision>>;
 	readonly optOut: AccountOptOutRecord | null;
+	/**
+	 * True when the `<key>-acct-v` cookie exceeded its size budget and dropped
+	 * its entries on SSR (so server-side vendor decisions are incomplete).
+	 */
+	readonly vendorsOverflow?: boolean;
 }
 
 /** Browser-made consent records kept apart from the account layer. */
 export interface BrowserConsentRecords {
 	readonly choice: Readonly<ExplicitChoice> | null;
 	readonly vendorChoice: Readonly<VendorChoice> | null;
+	/**
+	 * Declared vendor IDs covered by `vendorChoice`, when known. While present,
+	 * `vendorChoice` only overrides an account vendor decision for IDs listed
+	 * here or in `vendorChoice.denied` — never for a vendor never shown on this
+	 * site.
+	 */
+	readonly vendorDeclared?: readonly string[] | null;
 	readonly optOut: Readonly<OptOutRecord> | null;
 }
 
@@ -358,10 +370,16 @@ export const validateAccountConsentLayer = function validateAccountConsentLayer(
 	const choices = normalizeAccountChoices(rawChoices, 'rawConfirmedAt', true);
 	const vendors = normalizeAccountVendors(rawVendors, 'rawConfirmedAt', true);
 	const optOut = normalizeAccountOptOut(rawOptOut, 'rawRecordedAt', true);
-	if (!choices || !vendors || !optOut.ok) {
+	const rawOverflow = ownValue(input, 'vendorsOverflow');
+	if (
+		!choices ||
+		!vendors ||
+		!optOut.ok ||
+		(rawOverflow !== undefined && typeof rawOverflow !== 'boolean')
+	) {
 		return null;
 	}
-	return {
+	const layer: AccountConsentLayer = {
 		appliedAt,
 		checkedAt,
 		choices,
@@ -370,6 +388,7 @@ export const validateAccountConsentLayer = function validateAccountConsentLayer(
 		skew,
 		vendors,
 	};
+	return rawOverflow === true ? { ...layer, vendorsOverflow: true } : layer;
 };
 
 const sameBasis = function sameBasis(
@@ -601,6 +620,7 @@ const pickNewerVendor = function pickNewerVendor(
 
 const deriveEffectiveVendorChoice = function deriveEffectiveVendorChoice(
 	browserVendors: Readonly<VendorChoice> | null,
+	browserDeclared: readonly string[] | null | undefined,
 	account: AccountConsentLayer
 ): Readonly<VendorChoice> | null {
 	const accountIds = Object.keys(account.vendors);
@@ -608,6 +628,10 @@ const deriveEffectiveVendorChoice = function deriveEffectiveVendorChoice(
 		return browserVendors;
 	}
 	const browserDenied = new Set(browserVendors?.denied);
+	const declaredSet =
+		browserDeclared !== null && browserDeclared !== undefined
+			? new Set(browserDeclared)
+			: null;
 	const allIds = new Set<string>([...browserDenied, ...accountIds]);
 	const denied: string[] = [];
 	const hasBrowser = browserVendors !== null;
@@ -618,8 +642,14 @@ const deriveEffectiveVendorChoice = function deriveEffectiveVendorChoice(
 		const accountEntry = Object.hasOwn(account.vendors, id)
 			? account.vendors[id]
 			: undefined;
+		// When the browser recorded which declared vendors it showed, its
+		// decision counts only for vendors it denied or explicitly showed; an
+		// unseen vendor keeps its account decision.
+		const browserCoversId =
+			hasBrowser &&
+			(browserDenied.has(id) || declaredSet === null || declaredSet.has(id));
 		const winner = pickNewerVendor(
-			hasBrowser,
+			browserCoversId,
 			!browserDenied.has(id),
 			browserAt,
 			accountEntry,
@@ -650,15 +680,20 @@ const deriveEffectiveOptOut = function deriveEffectiveOptOut(
 	browserOptOut: Readonly<OptOutRecord> | null,
 	account: AccountConsentLayer
 ): Readonly<OptOutRecord> | null {
+	// While an account layer is active, ignore any legacy `heldBy: 'person'`
+	// record already stored in browser records so only device opt-outs merge
+	// with the account layer.
+	const deviceOptOut =
+		browserOptOut?.heldBy === 'person' ? null : browserOptOut;
 	const accountOptOut = account.optOut;
 	if (!accountOptOut || accountOptOut.rights.length === 0) {
-		return browserOptOut;
+		return deviceOptOut;
 	}
 	const accountRecordedAt = accountOrderingTime(
 		accountOptOut.rawRecordedAt,
 		account
 	);
-	if (!browserOptOut) {
+	if (!deviceOptOut) {
 		return {
 			heldBy: 'person',
 			method: accountOptOut.method,
@@ -667,14 +702,14 @@ const deriveEffectiveOptOut = function deriveEffectiveOptOut(
 		};
 	}
 	const mergedRights = new Set<OptOutRight>([
-		...browserOptOut.rights,
+		...deviceOptOut.rights,
 		...accountOptOut.rights,
 	]);
 	const rights = OPT_OUT_RIGHTS.filter((right) => mergedRights.has(right));
-	const recordedAt = Math.max(browserOptOut.recordedAt, accountRecordedAt);
+	const recordedAt = Math.max(deviceOptOut.recordedAt, accountRecordedAt);
 	const method =
-		browserOptOut.recordedAt >= accountRecordedAt
-			? browserOptOut.method
+		deviceOptOut.recordedAt >= accountRecordedAt
+			? deviceOptOut.method
 			: accountOptOut.method;
 	return {
 		heldBy: 'both',
@@ -783,7 +818,11 @@ export const deriveEffectiveRecords = function deriveEffectiveRecords(
 		? deriveEffectiveOptOut(browser.optOut, activeAccount)
 		: browser.optOut;
 	const rawVendorChoice = activeAccount
-		? deriveEffectiveVendorChoice(browser.vendorChoice, activeAccount)
+		? deriveEffectiveVendorChoice(
+				browser.vendorChoice,
+				browser.vendorDeclared,
+				activeAccount
+			)
 		: browser.vendorChoice;
 	return {
 		activeAccount,
@@ -799,73 +838,5 @@ export const deriveEffectiveRecords = function deriveEffectiveRecords(
 			previous && sameEffectiveVendors(previous.vendorChoice, rawVendorChoice)
 				? previous.vendorChoice
 				: rawVendorChoice,
-	};
-};
-
-/**
- * Route the person and device parts of a backend opt-out answer when an
- * account layer for the current `externalId` is active.
- */
-const cloneOptOut = (
-	record: Readonly<OptOutRecord> | null
-): OptOutRecord | null =>
-	record ? { ...record, rights: [...record.rights] } : null;
-
-export const splitServerOptOutForAccount = function splitServerOptOutForAccount(
-	incoming: OptOutRecord | null,
-	browserOptOut: Readonly<OptOutRecord> | null,
-	activeAccount: AccountConsentLayer,
-	allowClear: boolean
-): {
-	readonly browserOptOut: OptOutRecord | null;
-	readonly accountOptOut: AccountOptOutRecord | null;
-} {
-	if (incoming === null) {
-		return {
-			accountOptOut: null,
-			browserOptOut: null,
-		};
-	}
-	const supportedRights = filterSupportedOptOutRights(incoming.rights);
-	if (supportedRights.length === 0) {
-		return {
-			accountOptOut: allowClear ? null : activeAccount.optOut,
-			browserOptOut: allowClear ? null : cloneOptOut(browserOptOut),
-		};
-	}
-	if (incoming.heldBy === 'person') {
-		return {
-			accountOptOut: {
-				method: incoming.method,
-				rawRecordedAt: incoming.recordedAt,
-				rights: supportedRights,
-			},
-			browserOptOut: allowClear ? null : cloneOptOut(browserOptOut),
-		};
-	}
-	if (incoming.heldBy === 'device') {
-		return {
-			accountOptOut: allowClear ? null : activeAccount.optOut,
-			browserOptOut: {
-				heldBy: 'device',
-				method: incoming.method,
-				recordedAt: incoming.recordedAt,
-				rights: supportedRights,
-			},
-		};
-	}
-	// `heldBy === 'both'`
-	return {
-		accountOptOut: {
-			method: incoming.method,
-			rawRecordedAt: incoming.recordedAt,
-			rights: supportedRights,
-		},
-		browserOptOut: {
-			heldBy: 'device',
-			method: incoming.method,
-			recordedAt: incoming.recordedAt,
-			rights: supportedRights,
-		},
 	};
 };

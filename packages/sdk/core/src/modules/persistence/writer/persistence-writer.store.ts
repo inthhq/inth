@@ -118,12 +118,13 @@ export interface RecordStore {
 	/**
 	 * Writes the account consent layer across its three compact cookies and
 	 * localStorage under one shared revision. Empty parts are written explicitly.
+	 * Returns `true` when at least one storage backend accepted the write.
 	 */
 	writeStoredAccountLayer: (
 		layer: AccountConsentLayer,
 		config: StorageConfig | undefined,
 		now: number
-	) => void;
+	) => boolean;
 	clearStoredAccountLayer: (config?: StorageConfig) => void;
 }
 
@@ -235,31 +236,37 @@ export const createRecordStore = function createRecordStore(
 			!tools.encodeAccountVendorsCookie ||
 			!tools.encodeAccountOptOutCookie
 		) {
-			return;
+			return false;
 		}
 		const keys = tools.keys(config);
 		const rev = tools.createAccountRevision(now);
 		const encodeChoices = tools.encodeAccountChoicesCookie;
 		const encodeVendors = tools.encodeAccountVendorsCookie;
 		const encodeOptOut = tools.encodeAccountOptOutCookie;
-		writeLocalStorageText(
+		const localWritten = writeLocalStorageText(
 			keys.accountState,
 			tools.encodeAccountLocalJson(layer, rev)
 		);
-		writeCookieText(
+		const choicesWritten = writeCookieText(
 			keys.accountChoices,
 			cookieText(() => encodeChoices(layer, rev)),
 			config
 		);
-		writeCookieText(
+		const vendorsWritten = writeCookieText(
 			keys.accountVendors,
 			cookieText(() => encodeVendors(layer, rev)),
 			config
 		);
-		writeCookieText(
+		const optOutWritten = writeCookieText(
 			keys.accountOptOut,
 			cookieText(() => encodeOptOut(layer, rev)),
 			config
+		);
+		return (
+			localWritten ||
+			(choicesWritten.attempted && choicesWritten.verified) ||
+			(vendorsWritten.attempted && vendorsWritten.verified) ||
+			(optOutWritten.attempted && optOutWritten.verified)
 		);
 	};
 

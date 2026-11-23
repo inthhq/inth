@@ -8,6 +8,7 @@ import type { ConsentSnapshot, SavePayload } from '../../consent-kernel.model';
 import { OPTIONAL_CONSENT_CATEGORIES } from '../../consent-record/types';
 import type { OptionalConsentCategory } from '../../consent-record/types';
 import { DENIED_CONSENTS } from '../../consent/consent-types';
+import type { BrowserConsentRecords } from '../account-layer';
 
 /** A save waiting for a replay. */
 export interface PendingSaveEntry {
@@ -91,18 +92,21 @@ export const withoutSuperseded = function withoutSuperseded(
 };
 
 /**
- * What the live state covers of a save sent from `action`, the snapshot the
- * save committed: every category whose receipt changed since, and the
- * vendor map once another one replaced it.
+ * What the live browser records cover of a save sent from `action`, the
+ * browser records the save committed: every category whose browser receipt
+ * changed since, and the browser vendor map once another one replaced it.
+ *
+ * Compares browser records rather than merged snapshots so an account
+ * layer sync or sign-out never supersedes an in-flight browser save.
  */
 export const liveSupersession = function liveSupersession(
-	action: ConsentSnapshot,
-	current: ConsentSnapshot
+	action: Pick<BrowserConsentRecords, 'choice' | 'vendorChoice'>,
+	current: Pick<BrowserConsentRecords, 'choice' | 'vendorChoice'>
 ): Supersession {
 	return {
 		category: (category) =>
-			current.explicitChoice?.categories[category] !==
-			action.explicitChoice?.categories[category],
+			current.choice?.categories[category] !==
+			action.choice?.categories[category],
 		vendors: current.vendorChoice !== action.vendorChoice,
 	};
 };

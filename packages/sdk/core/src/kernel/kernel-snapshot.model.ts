@@ -363,32 +363,46 @@ export const buildInitialKernelState = function buildInitialKernelState(
 	const browserChoice = records?.choice ?? null;
 	const browserOptOut = records?.optOut ?? null;
 	const browserVendorChoice = records?.vendorChoice ?? null;
+	const browserVendorDeclared = records?.vendorDeclared ?? null;
 	freezeChoice(browserChoice);
 	freezeOptOut(browserOptOut);
 	freezeVendorChoice(browserVendorChoice);
+	if (browserVendorDeclared) {
+		Object.freeze(browserVendorDeclared);
+	}
 	const browserRecords: BrowserConsentRecords = {
 		choice: browserChoice,
 		optOut: browserOptOut,
 		vendorChoice: browserVendorChoice,
+		vendorDeclared: browserVendorDeclared,
 	};
 
-	let accountLayer: AccountConsentLayer | null = null;
-	if (config.initialUserConsent !== undefined) {
-		if (
-			config.initialUserConsent !== null &&
-			user !== null &&
-			config.initialUserConsent.sync?.externalId === user.externalId
-		) {
-			accountLayer = freezeAccountLayer(
-				normalizeUserConsent(config.initialUserConsent, now)
-			);
-		}
-	} else if (
+	const storedAccount =
 		records?.accountLayer &&
 		user !== null &&
 		records.accountLayer.externalId === user.externalId
-	) {
-		accountLayer = freezeAccountLayer(records.accountLayer);
+			? records.accountLayer
+			: null;
+	let accountLayer: AccountConsentLayer | null = null;
+	if (config.initialUserConsent === null) {
+		accountLayer = null;
+	} else if (config.initialUserConsent !== undefined) {
+		const normalizedInitial =
+			user !== null &&
+			config.initialUserConsent.sync?.externalId === user.externalId
+				? normalizeUserConsent(config.initialUserConsent, now)
+				: null;
+		if (
+			normalizedInitial !== null &&
+			(storedAccount === null ||
+				normalizedInitial.checkedAt >= storedAccount.checkedAt)
+		) {
+			accountLayer = freezeAccountLayer(normalizedInitial);
+		} else if (storedAccount !== null) {
+			accountLayer = freezeAccountLayer(storedAccount);
+		}
+	} else if (storedAccount !== null) {
+		accountLayer = freezeAccountLayer(storedAccount);
 	}
 
 	const derivedRecords = deriveEffectiveRecords(

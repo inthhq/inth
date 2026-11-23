@@ -841,6 +841,39 @@ export const mountPersistence = function mountPersistence(
 		}
 	};
 
+	const shouldAdoptStoredAccount = function shouldAdoptStoredAccount(
+		storedAccount: HydrationRecords['accountLayer'],
+		currentAccount: ReturnType<InternalKernel['getAccountLayer']>,
+		user: ConsentSnapshot['user']
+	): storedAccount is NonNullable<HydrationRecords['accountLayer']> {
+		if (
+			!storedAccount ||
+			!user ||
+			storedAccount.externalId !== user.externalId
+		) {
+			return false;
+		}
+		if (currentAccount === null) {
+			return true;
+		}
+		if (storedAccount.checkedAt > currentAccount.checkedAt) {
+			return true;
+		}
+		if (storedAccount.checkedAt < currentAccount.checkedAt) {
+			return false;
+		}
+		return (
+			storedAccount.appliedAt > currentAccount.appliedAt ||
+			Object.keys(storedAccount.choices).length >
+				Object.keys(currentAccount.choices).length ||
+			Object.keys(storedAccount.vendors).length >
+				Object.keys(currentAccount.vendors).length ||
+			(currentAccount.optOut === null && storedAccount.optOut !== null) ||
+			(currentAccount.vendorsOverflow === true &&
+				!storedAccount.vendorsOverflow)
+		);
+	};
+
 	const applyNewerStoredRecords =
 		function applyNewerStoredRecords(): ConsentSubject | null {
 			const at = now();
@@ -893,6 +926,9 @@ export const mountPersistence = function mountPersistence(
 			);
 			if (vendors) {
 				patch.vendorChoice = vendors.value;
+				if (records.vendorDeclared !== undefined) {
+					patch.vendorDeclared = records.vendorDeclared;
+				}
 			}
 			patchSeededOptOut(
 				snapshot,
@@ -904,14 +940,11 @@ export const mountPersistence = function mountPersistence(
 			const storedAccount = records.accountLayer;
 			const currentAccount = kernel.getAccountLayer();
 			if (
-				storedAccount &&
-				rawSnapshot.user &&
-				storedAccount.externalId === rawSnapshot.user.externalId &&
-				(currentAccount === null ||
-					storedAccount.checkedAt > currentAccount.checkedAt ||
-					(storedAccount.checkedAt === currentAccount.checkedAt &&
-						Object.keys(storedAccount.vendors).length >
-							Object.keys(currentAccount.vendors).length))
+				shouldAdoptStoredAccount(
+					storedAccount,
+					currentAccount,
+					rawSnapshot.user
+				)
 			) {
 				patch.accountLayer = storedAccount;
 			}

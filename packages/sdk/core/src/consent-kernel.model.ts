@@ -382,6 +382,11 @@ export interface HydrationRecords {
 	/** Vendors the subject turned off. `null` clears the denial list. */
 	vendorChoice?: VendorChoice | null;
 	/**
+	 * Declared vendor IDs covered by `vendorChoice`, when known from storage.
+	 * `null` clears the covered set.
+	 */
+	vendorDeclared?: readonly string[] | null;
+	/**
 	 * Stored account consent layer, hydrated separately from browser records.
 	 * Gated by `user.externalId`. `null` clears it.
 	 */

@@ -101,7 +101,8 @@ export const writeVendorChoiceToStorage = function writeVendorChoiceToStorage(
 	store: RecordStore,
 	snapshot: ConsentSnapshot,
 	storageConfig: StorageConfig | undefined,
-	now: number
+	now: number,
+	vendorDeclared?: readonly string[] | null
 ): void {
 	if (typeof document === 'undefined') {
 		return;
@@ -114,6 +115,10 @@ export const writeVendorChoiceToStorage = function writeVendorChoiceToStorage(
 	// vendors keeps one identity: the envelope cannot hold it without a
 	// category choice.
 	const record: StoredVendorChoice = { ...snapshot.vendorChoice };
+	if (vendorDeclared !== null && vendorDeclared !== undefined) {
+		const deniedSet = new Set(snapshot.vendorChoice.denied);
+		record.granted = vendorDeclared.filter((id) => !deniedSet.has(id)).sort();
+	}
 	if (snapshot.subject && Object.keys(snapshot.subject).length > 0) {
 		record.subject = { ...snapshot.subject };
 	}
@@ -192,13 +197,13 @@ export const writeAccountLayerToStorage = function writeAccountLayerToStorage(
 	layer: AccountConsentLayer | null,
 	storageConfig: StorageConfig | undefined,
 	now: number
-): void {
+): boolean {
 	if (typeof document === 'undefined') {
-		return;
+		return true;
 	}
 	if (!layer) {
 		store.clearStoredAccountLayer(storageConfig);
-		return;
+		return true;
 	}
-	store.writeStoredAccountLayer(layer, storageConfig, now);
+	return store.writeStoredAccountLayer(layer, storageConfig, now);
 };

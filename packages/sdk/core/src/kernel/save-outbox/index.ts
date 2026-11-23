@@ -66,6 +66,7 @@ import {
 	isConsentSaveRejection,
 	isSubjectConflict,
 } from '../../transports/consent-save-rejected-error';
+import type { BrowserConsentRecords } from '../account-layer';
 import type { KernelRuntime } from '../create-runtime';
 import { answerOwnedBy, applySyncedOptOut } from '../kernel-opt-out.model';
 import type {
@@ -98,6 +99,8 @@ export {
 
 /** One recorded action, as `commands.save()` hands it to the outbox. */
 export interface RecordedAction {
+	/** Browser records the action committed (apart from any account layer). */
+	browserRecords?: Pick<BrowserConsentRecords, 'choice' | 'vendorChoice'>;
 	/** Records generation the action landed in. */
 	generation: number;
 	/** Local opt-out act counter when the action landed. */
@@ -712,15 +715,28 @@ export const createSaveOutbox = function createSaveOutbox({
 		// refuses every id costs one extra request, not a loop.
 		reassign: boolean
 	): Promise<SaveResult> {
-		const { confirmed, generation, snapshot: actionSnapshot } = action;
+		const {
+			browserRecords: actionBrowser,
+			confirmed,
+			generation,
+			snapshot: actionSnapshot,
+		} = action;
+		const effectiveActionBrowser = actionBrowser ?? {
+			choice: actionSnapshot.explicitChoice,
+			vendorChoice: actionSnapshot.vendorChoice,
+		};
 		if (payload.idempotencyKey !== undefined) {
 			saveActVersions.set(payload.idempotencyKey, action.optOutActVersion);
 		}
 		const currentPayload = (): SavePayload | null => {
 			const current = getSnapshot();
+			const switchedToDifferentUser =
+				current.user !== null &&
+				(actionSnapshot.user === null ||
+					current.user.externalId !== actionSnapshot.user.externalId);
 			if (
 				runtime.getGeneration() !== generation ||
-				current.user !== actionSnapshot.user ||
+				switchedToDifferentUser ||
 				current.evaluationPolicy.choice.fingerprint !==
 					actionSnapshot.evaluationPolicy.choice.fingerprint
 			) {
@@ -728,7 +744,7 @@ export const createSaveOutbox = function createSaveOutbox({
 			}
 			return withoutSuperseded(
 				payload,
-				liveSupersession(actionSnapshot, current)
+				liveSupersession(effectiveActionBrowser, runtime.getBrowserRecords())
 			);
 		};
 		const save = transport?.save;

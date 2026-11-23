@@ -1105,3 +1105,473 @@ describe('pending hold across script loader, network blocker, iframe blocker, cl
 		}
 	});
 });
+
+describe('kernel regressions (set 1)', () => {
+	test('account lift on an unlinked real subject requires token and links first, failing cleanly without token or on failed link', async () => {
+		const resolution = matchedResolution(optOutRule());
+		const fp = resolution.fingerprints.choice;
+		const liftOptOut = vi.fn(() =>
+			Promise.resolve({ ok: true, optOut: null, subjectId: SUBJECT_UUID })
+		);
+
+		// Case 1: unlinked real subject WITHOUT identityToken -> must NOT call liftOptOut or clear account opt-out.
+		const noToken = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: resolution,
+				initialRecords: {
+					choice: {
+						categories: {
+							measurement: {
+								basis: { fingerprint: fp, kind: 'choice-v1' },
+								confirmedAt: NOW - 5000,
+								value: true,
+							},
+						},
+						version: 3,
+					},
+					now: NOW,
+					subject: { subjectId: SUBJECT_UUID },
+				},
+				initialUser: { externalId: 'user_a' },
+				now: NOW,
+				transport: {
+					identify: vi.fn(),
+					liftOptOut,
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		noToken.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW,
+				externalId: 'user_a',
+				optOut: {
+					method: 'button',
+					recordedAt: NOW - 2000,
+					rights: ['sale', 'share'],
+				},
+			})
+		);
+		const resNoToken = await noToken.commands.optIn();
+		expect(resNoToken).toEqual({ ok: false, reason: 'held-by-account' });
+		expect(liftOptOut).not.toHaveBeenCalled();
+		expect(noToken.getAccountLayer()?.optOut).not.toBeNull();
+		noToken.dispose();
+
+		// Case 2: unlinked real subject WITH token, but link fails -> must NOT call liftOptOut or clear account opt-out.
+		const failingLink = vi.fn(() => Promise.reject(new Error('link failed')));
+		const failedLinkKernel = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: resolution,
+				initialRecords: {
+					now: NOW,
+					subject: { subjectId: SUBJECT_UUID },
+				},
+				initialUser: { externalId: 'user_a', identityToken: 'tok_a' },
+				now: NOW,
+				transport: {
+					identify: failingLink,
+					liftOptOut,
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		failedLinkKernel.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW,
+				externalId: 'user_a',
+				optOut: {
+					method: 'button',
+					recordedAt: NOW - 2000,
+					rights: ['sale', 'share'],
+				},
+			})
+		);
+		const resFailLink = await failedLinkKernel.commands.optIn();
+		expect(resFailLink).toEqual({ ok: false, reason: 'held-by-account' });
+		expect(failingLink).toHaveBeenCalledTimes(1);
+		expect(liftOptOut).not.toHaveBeenCalled();
+		expect(failedLinkKernel.getAccountLayer()?.optOut).not.toBeNull();
+		failedLinkKernel.dispose();
+	});
+
+	test('re-passing an equal copy of the pre-lift document does not restore the lifted opt-out', async () => {
+		const resolution = matchedResolution(optOutRule());
+		const preLiftDoc = makeUserConsent({
+			checkedAt: NOW,
+			externalId: 'user_a',
+			optOut: {
+				method: 'button',
+				recordedAt: NOW - 1000,
+				rights: ['sale', 'share'],
+			},
+		});
+		const kernel = createKernel(
+			{
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'user_a', identityToken: 'tok_a' },
+				now: NOW,
+				transport: {
+					identify: (_u, subjectId) =>
+						Promise.resolve({ subjectId: subjectId ?? SUBJECT_UUID }),
+					liftOptOut: (payload) =>
+						Promise.resolve({
+							ok: true,
+							optOut: null,
+							subjectId: payload.subjectId,
+						}),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		kernel.syncUserConsent(preLiftDoc);
+		expect(kernel.getSnapshot().optOut?.heldBy).toBe('person');
+
+		const lifted = await kernel.commands.optIn();
+		expect(lifted).toEqual({ ok: true, optOut: null });
+		expect(kernel.getSnapshot().optOut).toBeNull();
+
+		// Re-pass a fresh equal copy of the pre-lift document (same checkedAt = NOW).
+		const reapplied = kernel.syncUserConsent(structuredClone(preLiftDoc));
+		expect(reapplied).toBe(false);
+		expect(kernel.getSnapshot().optOut).toBeNull();
+		expect(kernel.getAccountLayer()?.optOut).toBeNull();
+		kernel.dispose();
+	});
+
+	test('server opt-out answers with heldBy person/both never write to browser records or move appliedAt, and legacy browser person optOut is ignored and removed', async () => {
+		const resolution = matchedResolution(optOutRule());
+		const kernel = createKernel(
+			{
+				initialPolicyResolution: resolution,
+				initialRecords: {
+					now: NOW,
+					optOut: {
+						heldBy: 'device',
+						method: 'button',
+						recordedAt: NOW - 2000,
+						rights: ['targeted_ads'],
+					},
+					subject: { subjectId: SUBJECT_UUID },
+				},
+				initialUser: { externalId: 'user_a', identityToken: 'tok_a' },
+				now: NOW,
+				transport: {
+					identify: () =>
+						Promise.resolve({
+							optOut: {
+								heldBy: 'both',
+								method: 'button',
+								recordedAt: NOW + 5000,
+								rights: ['sale', 'targeted_ads'],
+							},
+							subjectId: SUBJECT_UUID,
+						}),
+				},
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+
+		kernel.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW,
+				externalId: 'user_a',
+				optOut: {
+					method: 'button',
+					recordedAt: NOW - 3000,
+					rights: ['sale'],
+				},
+			})
+		);
+		const appliedBefore = kernel.getAccountLayer()?.appliedAt;
+
+		// Advance clock and receive a `both` answer from identify.
+		vi.spyOn(Date, 'now').mockReturnValue(NOW + 10_000);
+		await kernel.commands.identify({
+			externalId: 'user_a',
+			identityToken: 'tok_a',
+		});
+
+		// appliedAt must NOT move on identify answer (#8).
+		expect(kernel.getAccountLayer()?.appliedAt).toBe(appliedBefore);
+		// Browser records keep ONLY its own `targeted_ads` device opt-out, never `sale` from `both` (#9).
+		expect(kernel.getBrowserRecords().optOut?.rights).toEqual(['targeted_ads']);
+
+		// After logout -> switch to B, browser records still hold ONLY `targeted_ads`.
+		kernel.set.user(null);
+		kernel.set.user({ externalId: 'user_b' });
+		expect(kernel.getBrowserRecords().optOut?.rights).toEqual(['targeted_ads']);
+		expect(kernel.getSnapshot().optOut?.rights).toEqual(['targeted_ads']);
+		kernel.dispose();
+
+		// Legacy browser `heldBy: 'person'` record stored before this feature:
+		// ignored while account layer is active with `sync.optOut: null`, and removed when account layer drops!
+		const legacyKernel = createKernel({
+			initialPolicyResolution: resolution,
+			initialRecords: {
+				now: NOW,
+				optOut: {
+					heldBy: 'person',
+					method: 'propagated',
+					recordedAt: NOW - 5000,
+					rights: ['sale', 'share'],
+				},
+				subject: { subjectId: SUBJECT_UUID },
+			},
+			initialUser: { externalId: 'user_a' },
+			now: NOW,
+		});
+		legacyKernel.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW,
+				externalId: 'user_a',
+				optOut: null,
+			})
+		);
+		expect(legacyKernel.getSnapshot().optOut).toBeNull();
+
+		// Dropping account layer removes the stale browser `heldBy: 'person'` record.
+		legacyKernel.set.user(null);
+		expect(legacyKernel.getBrowserRecords().optOut).toBeNull();
+		expect(legacyKernel.getSnapshot().optOut).toBeNull();
+		legacyKernel.dispose();
+	});
+
+	test('browser vendor save on manifest without X does not override account denial of X when X is later declared', async () => {
+		const resolution = matchedResolution(optInRule());
+		const fp = resolution.fingerprints.choice;
+
+		// Domain B starts with ONLY vendor Y declared (not X), and saves Y BEFORE syncing account layer.
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'user_a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'measurement',
+							id: 'vendor-y',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now: NOW,
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		const persistence = createPersistence({ kernel });
+
+		// Domain B saves Y at NOW + 1000 while X is NOT declared on domain B.
+		vi.spyOn(Date, 'now').mockReturnValue(NOW + 1000);
+		await kernel.commands.save({ vendors: { 'vendor-y': false } });
+
+		// Account denies X earlier (at NOW - 5000) on domain A; sync arrives on domain B.
+		kernel.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW + 1000,
+				choices: {
+					marketing: {
+						basis: { fingerprint: fp, kind: 'choice-v1' },
+						confirmedAt: NOW - 5000,
+						value: true,
+					},
+					measurement: {
+						basis: { fingerprint: fp, kind: 'choice-v1' },
+						confirmedAt: NOW - 5000,
+						value: true,
+					},
+				},
+				externalId: 'user_a',
+				vendors: {
+					'vendor-x': { confirmedAt: NOW - 5000, value: false },
+				},
+			})
+		);
+		await flushMacrotasks();
+		persistence.dispose();
+		kernel.dispose();
+
+		// Domain B later declares BOTH X and Y and reloads: X MUST stay denied!
+		vi.spyOn(Date, 'now').mockReturnValue(NOW + 2000);
+		const reloaded = createKernel(
+			{
+				consentCategories: ['marketing', 'measurement'],
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'user_a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'marketing',
+							id: 'vendor-x',
+							presentable: true,
+							source: 'config',
+						},
+						{
+							category: 'measurement',
+							id: 'vendor-y',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v2',
+				},
+				now: NOW + 2000,
+			},
+			{ outboxStore: createMemoryOutboxStore() }
+		);
+		const p2 = createPersistence({ kernel: reloaded });
+		expect(reloaded.getSnapshot().vendorChoice?.denied).toContain('vendor-x');
+		expect(reloaded.getSnapshot().vendorChoice?.denied).toContain('vendor-y');
+		p2.dispose();
+		reloaded.dispose();
+	});
+
+	test('failed vendor save stays queued for retry when a sync or logout happens while in flight', async () => {
+		const resolution = matchedResolution(optInRule());
+		const store = createMemoryOutboxStore();
+		const saveDeferred = Promise.withResolvers<{ ok: boolean }>();
+		const kernel = createKernel(
+			{
+				consentCategories: ['marketing'],
+				initialPolicyResolution: resolution,
+				initialUser: { externalId: 'user_a' },
+				initialVendors: {
+					declared: [
+						{
+							category: 'marketing',
+							id: 'meta-pixel',
+							presentable: true,
+							source: 'config',
+						},
+						{
+							category: 'marketing',
+							id: 'other-pixel',
+							presentable: true,
+							source: 'config',
+						},
+					],
+					listVersion: 'v1',
+				},
+				now: NOW,
+				transport: {
+					save: () => saveDeferred.promise,
+				},
+			},
+			{ outboxStore: store }
+		);
+
+		const pendingSave = kernel.commands.save({
+			vendors: { 'meta-pixel': false },
+		});
+		await flushMacrotasks();
+
+		// While save is in flight, sync an account vendor denial AND then log out.
+		kernel.syncUserConsent(
+			makeUserConsent({
+				checkedAt: NOW,
+				externalId: 'user_a',
+				vendors: {
+					'other-pixel': { confirmedAt: NOW - 1000, value: false },
+				},
+			})
+		);
+		kernel.set.user(null);
+
+		// In-flight save fails: must remain queued in the outbox for retry!
+		saveDeferred.reject(new Error('offline'));
+		const result = await pendingSave;
+		expect(result.ok).toBe(false);
+		const queued = await store.transact(
+			(tx) => (tx.read('saves') as unknown[] | undefined) ?? []
+		);
+		expect(queued).toHaveLength(1);
+		kernel.dispose();
+	});
+
+	test('signed-out syncUserConsent(null) clears leftover account storage for a previous user', async () => {
+		const resolution = matchedResolution(optInRule());
+		const first = createKernel({
+			initialPolicyResolution: resolution,
+			initialUser: { externalId: 'user_a' },
+			now: NOW,
+		});
+		const p1 = createPersistence({ kernel: first });
+		first.syncUserConsent(
+			makeUserConsent({ checkedAt: NOW, externalId: 'user_a' })
+		);
+		await flushMacrotasks();
+		expect(window.localStorage.getItem('inth-acct')).not.toBeNull();
+		p1.dispose();
+		first.dispose();
+
+		// Cold signed-out page load (no user) calls syncUserConsent(null): must wipe A's storage!
+		const anon = createKernel({
+			initialPolicyResolution: resolution,
+			now: NOW + 1000,
+		});
+		const p2 = createPersistence({ kernel: anon });
+		anon.syncUserConsent(null);
+		expect(window.localStorage.getItem('inth-acct')).toBeNull();
+		expect(document.cookie).not.toContain('inth-acct-c=');
+		p2.dispose();
+		anon.dispose();
+	});
+
+	test('SSR keeps newer account cookie over older initialUserConsent and falls back on malformed initialUserConsent', () => {
+		const resolution = matchedResolution(optInRule());
+		const fp = resolution.fingerprints.choice;
+		const newerCookieLayer = {
+			appliedAt: NOW,
+			checkedAt: NOW + 5000,
+			choices: {
+				marketing: {
+					basis: { fingerprint: fp, kind: 'choice-v1' as const },
+					rawConfirmedAt: NOW + 4000,
+					value: false,
+				},
+			},
+			externalId: 'user_a',
+			optOut: null,
+			skew: 0,
+			vendors: {},
+		};
+		const olderServerDoc = makeUserConsent({
+			checkedAt: NOW,
+			choices: {
+				marketing: {
+					basis: { fingerprint: fp, kind: 'choice-v1' },
+					confirmedAt: NOW - 1000,
+					value: true,
+				},
+			},
+			externalId: 'user_a',
+		});
+
+		const kNewer = createKernel({
+			initialPolicyResolution: resolution,
+			initialRecords: { accountLayer: newerCookieLayer, now: NOW },
+			initialUser: { externalId: 'user_a' },
+			initialUserConsent: olderServerDoc,
+			now: NOW,
+		});
+		expect(kNewer.getAccountLayer()?.checkedAt).toBe(NOW + 5000);
+		expect(kNewer.getSnapshot().effectivePermissions.marketing).toBe(false);
+		kNewer.dispose();
+
+		const kMalformed = createKernel({
+			initialPolicyResolution: resolution,
+			initialRecords: { accountLayer: newerCookieLayer, now: NOW },
+			initialUser: { externalId: 'user_a' },
+			initialUserConsent: { bad: true } as unknown as UserConsent,
+			now: NOW,
+		});
+		expect(kMalformed.getAccountLayer()?.checkedAt).toBe(NOW + 5000);
+		expect(kMalformed.getSnapshot().effectivePermissions.marketing).toBe(false);
+		kMalformed.dispose();
+	});
+});

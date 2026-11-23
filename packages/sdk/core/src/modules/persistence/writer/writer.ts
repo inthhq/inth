@@ -384,7 +384,8 @@ export const createPersistenceWriter = function createPersistenceWriter(
 			store,
 			{ ...snapshot, subject },
 			storageConfig,
-			at
+			at,
+			kernel.getBrowserRecords().vendorDeclared
 		);
 		markWritten('vendors', sameRecord(subject, snapshot.subject));
 	});
@@ -435,8 +436,22 @@ export const createPersistenceWriter = function createPersistenceWriter(
 	const accountWrites = createWriteScheduler(() => {
 		const layer = kernel.getAccountLayer();
 		const at = now();
-		writeAccountLayerToStorage(store, layer, storageConfig, at);
-		seenAccount = accountPrint(layer);
+		if (layer !== null) {
+			const existing = tools.read(storageConfig, at).records.accountLayer;
+			if (
+				existing &&
+				existing.externalId === layer.externalId &&
+				(existing.checkedAt > layer.checkedAt ||
+					(existing.checkedAt === layer.checkedAt &&
+						existing.appliedAt > layer.appliedAt))
+			) {
+				return;
+			}
+		}
+		const wrote = writeAccountLayerToStorage(store, layer, storageConfig, at);
+		if (wrote) {
+			seenAccount = accountPrint(layer);
+		}
 	});
 	const writes = {
 		account: accountWrites,
@@ -485,18 +500,28 @@ export const createPersistenceWriter = function createPersistenceWriter(
 	};
 
 	const selectAccountReconcile = function selectAccountReconcile(
-		storedAccount: StoredRecords['records']['accountLayer']
+		stored: StoredRecords
 	): StoredRecords['records']['accountLayer'] {
-		const normalized = storedAccount ?? null;
+		if (stored.accountDegraded) {
+			return undefined;
+		}
+		const normalized = stored.records.accountLayer ?? null;
 		const nextPrint = accountPrint(normalized);
 		if (nextPrint === seenAccount) {
 			return undefined;
 		}
-		seenAccount = nextPrint;
 		const currentAccount = kernel.getAccountLayer();
 		if (normalized === null) {
+			if (stored.accountPartial) {
+				return undefined;
+			}
+			seenAccount = nextPrint;
 			return currentAccount === null ? undefined : null;
 		}
+		if (stored.accountPartial && currentAccount !== null) {
+			return undefined;
+		}
+		seenAccount = nextPrint;
 		const currentUser = kernel.getSnapshot().user;
 		if (
 			currentUser === null ||
@@ -504,9 +529,17 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		) {
 			return undefined;
 		}
+		if (currentAccount === null) {
+			return normalized;
+		}
+		if (normalized.checkedAt > currentAccount.checkedAt) {
+			return normalized;
+		}
 		if (
-			currentAccount === null ||
-			normalized.checkedAt >= currentAccount.checkedAt
+			normalized.checkedAt === currentAccount.checkedAt &&
+			normalized.appliedAt > currentAccount.appliedAt &&
+			currentAccount.optOut !== null &&
+			normalized.optOut === null
 		) {
 			return normalized;
 		}
@@ -547,7 +580,7 @@ export const createPersistenceWriter = function createPersistenceWriter(
 		unadopted.clear();
 		rememberSubject(stored.records);
 		memoryEpoch = stored.epoch;
-		const accountPatch = selectAccountReconcile(stored.records.accountLayer);
+		const accountPatch = selectAccountReconcile(stored);
 		const { records } = next;
 		if (!records && accountPatch === undefined) {
 			restoreLostWrites(stored);

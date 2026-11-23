@@ -118,10 +118,14 @@ interface DecodedChoicesPart {
 	>;
 }
 
+/** Maximum byte length for `<key>-acct-v` before emitting an overflow marker. */
+export const ACCOUNT_VENDORS_COOKIE_BUDGET = 2048;
+
 interface DecodedVendorsPart {
 	readonly kind: 'vendors';
 	readonly header: AccountPartHeader;
 	readonly denied: Readonly<Record<string, AccountVendorDecision>>;
+	readonly overflow?: boolean;
 }
 
 interface DecodedOptOutPart {
@@ -213,7 +217,8 @@ export const encodeAccountVendorsCookie = function encodeAccountVendorsCookie(
 	layer: AccountConsentLayer,
 	rev: string
 ): string {
-	const fields = encodeHeaderFields(layer, rev);
+	const headerFields = encodeHeaderFields(layer, rev);
+	const fields = [...headerFields];
 	const deniedEntries = Object.keys(layer.vendors)
 		.filter((id) => layer.vendors[id]?.value === false)
 		.sort()
@@ -224,7 +229,11 @@ export const encodeAccountVendorsCookie = function encodeAccountVendorsCookie(
 	if (deniedEntries.length > 0) {
 		fields.push(field('d', deniedEntries.join(LIST_SEPARATOR)));
 	}
-	return fields.join(FIELD_SEPARATOR);
+	const encoded = fields.join(FIELD_SEPARATOR);
+	if (encoded.length > ACCOUNT_VENDORS_COOKIE_BUDGET) {
+		return [...headerFields, field('ov', '1')].join(FIELD_SEPARATOR);
+	}
+	return encoded;
 };
 
 /** Encode the `<key>-acct-o` cookie. A null opt-out is written explicitly. */
@@ -468,11 +477,19 @@ export const decodeAccountVendorsCookie = function decodeAccountVendorsCookie(
 		return null;
 	}
 	const denied: Record<string, AccountVendorDecision> = {};
+	let overflow = false;
 	for (const [key, value] of fields) {
 		if (HEADER_KEYS.has(key)) {
 			continue;
 		}
-		if (key !== 'd') {
+		if (key === 'ov') {
+			if (value !== '1' || Object.keys(denied).length > 0) {
+				return null;
+			}
+			overflow = true;
+			continue;
+		}
+		if (key !== 'd' || overflow) {
 			return null;
 		}
 		if (value === '') {
@@ -501,7 +518,9 @@ export const decodeAccountVendorsCookie = function decodeAccountVendorsCookie(
 			});
 		}
 	}
-	return { denied, header, kind: 'vendors' };
+	return overflow
+		? { denied, header, kind: 'vendors', overflow: true }
+		: { denied, header, kind: 'vendors' };
 };
 
 const parseOptOutTuple = (raw: string): AccountOptOutRecord | null => {
@@ -663,13 +682,34 @@ const mergeGroupVendors = function mergeGroupVendors(
 	return vendors;
 };
 
-/**
- * Assemble an `AccountConsentLayer` from decoded parts. Parts whose revision
- * differs from the winning group are treated as missing.
- */
-export const assembleAccountParts = function assembleAccountParts(
+/** Detailed result of reading stored account consent parts from browser storage. */
+export interface AccountLayerReadResult {
+	readonly layer: AccountConsentLayer | null;
+	/** True when localStorage threw or any non-empty stored value failed decoding. */
+	readonly degraded: boolean;
+	/** True when parts belong to mixed revisions or cookie-only parts are incomplete. */
+	readonly partial: boolean;
+}
+
+const isPartialAccountGroup = function isPartialAccountGroup(
+	winner: PartGroup,
+	groupCount: number,
+	vendorsOverflow: boolean
+): boolean {
+	if (groupCount > 1) {
+		return true;
+	}
+	if (winner.local) {
+		return false;
+	}
+	return (
+		!winner.choices || !winner.vendors || !winner.optOut || vendorsOverflow
+	);
+};
+
+const assembleAccountPartsDetailed = function assembleAccountPartsDetailed(
 	parts: readonly (DecodedAccountPart | null)[]
-): AccountConsentLayer | null {
+): { readonly layer: AccountConsentLayer | null; readonly partial: boolean } {
 	const groups = new Map<string, PartGroup>();
 	for (const part of parts) {
 		if (!part) {
@@ -690,7 +730,7 @@ export const assembleAccountParts = function assembleAccountParts(
 		}
 	}
 	if (!winner) {
-		return null;
+		return { layer: null, partial: false };
 	}
 	const { appliedAt, checkedAt, externalId, skew } = winner.header;
 	const choices = winner.choices?.choices ?? winner.local?.layer.choices ?? {};
@@ -698,7 +738,9 @@ export const assembleAccountParts = function assembleAccountParts(
 		winner.optOut === undefined
 			? (winner.local?.layer.optOut ?? null)
 			: winner.optOut.optOut;
-	return {
+	const vendorsOverflow = winner.vendors?.overflow === true && !winner.local;
+	const partial = isPartialAccountGroup(winner, groups.size, vendorsOverflow);
+	const baseLayer: AccountConsentLayer = {
 		appliedAt,
 		checkedAt,
 		choices,
@@ -707,30 +749,110 @@ export const assembleAccountParts = function assembleAccountParts(
 		skew,
 		vendors: mergeGroupVendors(winner),
 	};
+	return {
+		layer: vendorsOverflow
+			? { ...baseLayer, vendorsOverflow: true }
+			: baseLayer,
+		partial,
+	};
 };
 
-const readLocalText = (key: string): string | null => {
+/**
+ * Assemble an `AccountConsentLayer` from decoded parts. Parts whose revision
+ * differs from the winning group are treated as missing.
+ */
+export const assembleAccountParts = function assembleAccountParts(
+	parts: readonly (DecodedAccountPart | null)[]
+): AccountConsentLayer | null {
+	return assembleAccountPartsDetailed(parts).layer;
+};
+
+const readLocalTextDetailed = (
+	key: string
+): { readonly text: string | null; readonly threw: boolean } => {
 	try {
 		if (typeof window !== 'undefined' && window.localStorage) {
-			return window.localStorage.getItem(key);
+			return { text: window.localStorage.getItem(key), threw: false };
 		}
 	} catch {
-		// Blocked storage: cookies still supply the account layer.
+		return { text: null, threw: true };
 	}
-	return null;
+	return { text: null, threw: false };
 };
+
+const decodePartTrackingDegraded = function decodePartTrackingDegraded<
+	T extends DecodedAccountPart,
+>(
+	raw: string | null,
+	decode: (value: string | null) => T | null,
+	markDegraded: () => void
+): T | null {
+	if (raw === null || raw.trim() === '') {
+		return null;
+	}
+	const decoded = decode(raw);
+	if (decoded === null) {
+		markDegraded();
+	}
+	return decoded;
+};
+
+/**
+ * Browser read of the stored account consent layer with degradation and
+ * partial-assembly flags so cross-tab reconcile never clears or overwrites
+ * memory from an unreadable or mid-write storage state.
+ */
+export const readStoredAccountLayerDetailed =
+	function readStoredAccountLayerDetailed(
+		config: StorageConfig | undefined
+	): AccountLayerReadResult {
+		const keys = resolveStorageKeys(config);
+		let degraded = false;
+		const markDegraded = () => {
+			degraded = true;
+		};
+		const localRead = readLocalTextDetailed(keys.accountState);
+		if (localRead.threw) {
+			degraded = true;
+		}
+		const choicesPart = decodePartTrackingDegraded(
+			getRawCookieValue(keys.accountChoices),
+			decodeAccountChoicesCookie,
+			markDegraded
+		);
+		const vendorsPart = decodePartTrackingDegraded(
+			getRawCookieValue(keys.accountVendors),
+			decodeAccountVendorsCookie,
+			markDegraded
+		);
+		const optOutPart = decodePartTrackingDegraded(
+			getRawCookieValue(keys.accountOptOut),
+			decodeAccountOptOutCookie,
+			markDegraded
+		);
+		const localPart = decodePartTrackingDegraded(
+			localRead.text,
+			decodeAccountLocalJson,
+			markDegraded
+		);
+		const assembled = assembleAccountPartsDetailed([
+			choicesPart,
+			vendorsPart,
+			optOutPart,
+			localPart,
+		]);
+		return {
+			degraded,
+			layer: assembled.layer,
+			partial: assembled.partial,
+		};
+	};
 
 /** Browser read of the stored account consent layer (3 cookies + localStorage). */
 export const readStoredAccountLayer = function readStoredAccountLayer(
 	config: StorageConfig | undefined
 ): AccountConsentLayer | null {
-	const keys = resolveStorageKeys(config);
-	return assembleAccountParts([
-		decodeAccountChoicesCookie(getRawCookieValue(keys.accountChoices)),
-		decodeAccountVendorsCookie(getRawCookieValue(keys.accountVendors)),
-		decodeAccountOptOutCookie(getRawCookieValue(keys.accountOptOut)),
-		decodeAccountLocalJson(readLocalText(keys.accountState)),
-	]);
+	return readStoredAccountLayerDetailed(config).layer;
 };
 
 /** Server read of the stored account consent layer from a request Cookie header. */

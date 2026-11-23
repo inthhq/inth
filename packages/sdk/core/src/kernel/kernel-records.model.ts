@@ -72,7 +72,6 @@ export const foldServerRecords = function foldServerRecords(
 	activeAccount: AccountConsentLayer | null = null
 ): { patch: SnapshotPatch; nextAccount?: AccountConsentLayer } {
 	const patch: SnapshotPatch = { now };
-	let nextAccount: AccountConsentLayer | undefined;
 	if (records.choice !== undefined) {
 		patch.explicitChoice = mergeNewestChoice(browser.choice, records.choice);
 	}
@@ -90,26 +89,15 @@ export const foldServerRecords = function foldServerRecords(
 			: current.subject;
 	}
 	if (records.optOut !== undefined) {
-		if (activeAccount !== null && records.optOut !== null) {
-			const routed = splitServerOptOutForAccount(
-				records.optOut,
-				browser.optOut,
-				activeAccount,
-				false
-			);
-			patch.optOut = mergeNewestOptOut(browser.optOut, routed.browserOptOut);
-			if (routed.accountOptOut !== null) {
-				const currentRaw = activeAccount.optOut?.rawRecordedAt ?? -1;
-				if (routed.accountOptOut.rawRecordedAt > currentRaw) {
-					nextAccount = {
-						...activeAccount,
-						appliedAt: Math.max(activeAccount.appliedAt, now),
-						optOut: routed.accountOptOut,
-					};
-				}
-			}
-		} else {
+		if (activeAccount === null) {
 			patch.optOut = mergeNewestOptOut(browser.optOut, records.optOut);
+		} else if (records.optOut !== null && records.optOut.heldBy === 'device') {
+			// While an account layer for the current `externalId` is active,
+			// server opt-out answers with `heldBy` `'person'` or `'both'`
+			// never write to browser records or mutate the account layer.
+			const browserDeviceOptOut =
+				browser.optOut?.heldBy === 'person' ? null : browser.optOut;
+			patch.optOut = mergeNewestOptOut(browserDeviceOptOut, records.optOut);
 		}
 	}
 	if (records.vendorChoice !== undefined) {
@@ -118,7 +106,7 @@ export const foldServerRecords = function foldServerRecords(
 			records.vendorChoice
 		);
 	}
-	return nextAccount ? { nextAccount, patch } : { patch };
+	return { patch };
 };
 
 /**
@@ -186,12 +174,25 @@ export interface RecordsBoundaryOptions {
 	) => Promise<string | null>;
 }
 
+export interface SyncUserConsentOptions {
+	/** Atomically release `userConsentPending` in the same commit. */
+	clearPending?: boolean;
+	/**
+	 * Allow re-normalizing an equal-`checkedAt` identical document against the
+	 * browser clock (used when client `start()` re-syncs an SSR-seeded doc).
+	 */
+	forceClientSync?: boolean;
+}
+
 export interface RecordsBoundary {
 	hydrate: (records: HydrationRecords) => HydrationResult;
 	identify: (user: KernelUser) => Promise<void>;
 	/** See {@link InternalKernel.clearIdentity}. */
 	clearIdentity: () => void;
-	syncUserConsent: (value: UserConsent | null | undefined) => boolean;
+	syncUserConsent: (
+		value: UserConsent | null | undefined,
+		options?: SyncUserConsentOptions
+	) => boolean;
 	setSubjectId: (id: string | null) => void;
 	/** See {@link InternalKernel.markProvisionalSubject}. */
 	markProvisionalSubject: (id: string | null) => void;
@@ -199,6 +200,10 @@ export interface RecordsBoundary {
 	getProvisionalSubject: () => string | null;
 	/** A record now carries `id`, so it is no longer provisional. */
 	noteRecordedSubject: (id: string | undefined) => void;
+	/** Whether `subjectId` was proven linked to `externalId` in this session. */
+	isSubjectLinked: (subjectId: string | null, externalId: string) => boolean;
+	/** Record a proven link between `subjectId` and `externalId` in this session. */
+	markSubjectLinked: (subjectId: string, externalId: string) => void;
 }
 
 export const createRecordsBoundary = function createRecordsBoundary({
@@ -214,6 +219,9 @@ export const createRecordsBoundary = function createRecordsBoundary({
 	// An ID Inth generated that no record carries yet. It lives in memory
 	// only and is gone on the next page load.
 	let provisionalSubjectId: string | null = null;
+	// Proven (subjectId -> externalId) links established with an identityToken
+	// in this session, cleared when records or subject are reset.
+	const verifiedLinks = new Map<string, string>();
 
 	const applyHydratedGpcMark = function applyHydratedGpcMark(
 		before: ConsentSnapshot,
@@ -306,6 +314,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			optOutLocalAct: _localAct,
 			optOutReference: _reference,
 			optOutRightsConfirmed: _rightsConfirmed,
+			vendorDeclared,
 			...rest
 		} = validated;
 		const patch: SnapshotPatch = { ...rest, now: at };
@@ -325,7 +334,13 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				fromHydration: true,
 			};
 		}
+		if (vendorDeclared !== undefined) {
+			commitOptions = { ...commitOptions, vendorDeclared };
+		}
 		const reset = choice === null || rest.subject === null;
+		if (reset) {
+			verifiedLinks.clear();
+		}
 		if (reset && before.iab) {
 			patch.iab = { ...before.iab, authority: null, tcString: null };
 		}
@@ -477,6 +492,13 @@ export const createRecordsBoundary = function createRecordsBoundary({
 				effectiveSubjectId = adopted;
 			}
 		}
+		if (
+			user.identityToken &&
+			linkedId !== null &&
+			effectiveSubjectId !== null
+		) {
+			verifiedLinks.set(effectiveSubjectId, user.externalId);
+		}
 		if (attempt === identifyGeneration() && linked?.optOut !== undefined) {
 			applySyncedOptOut(runtime, linked.optOut, {
 				actVersion: optOutActVersion,
@@ -489,30 +511,94 @@ export const createRecordsBoundary = function createRecordsBoundary({
 		return effectiveSubjectId;
 	};
 
+	const clearPendingIfRequested = function clearPendingIfRequested(
+		before: ConsentSnapshot,
+		at: number,
+		clearPending: boolean
+	): void {
+		if (clearPending && before.userConsentPending) {
+			commit({ now: at, userConsentPending: false }, { preserveDialog: true });
+		}
+	};
+
+	const validateIncomingUserConsent = function validateIncomingUserConsent(
+		before: ConsentSnapshot,
+		value: UserConsent,
+		at: number,
+		options?: SyncUserConsentOptions
+	): AccountConsentLayer | null {
+		const { user } = before;
+		if (!user || !user.externalId) {
+			if (!isProductionBuild()) {
+				console.warn(
+					'[inth] Ignoring userConsent because no user with an externalId is set.'
+				);
+			}
+			return null;
+		}
+		const normalized = normalizeUserConsent(value, at);
+		if (!normalized) {
+			if (!isProductionBuild()) {
+				console.warn('[inth] Ignoring malformed userConsent document.');
+			}
+			return null;
+		}
+		if (normalized.externalId !== user.externalId) {
+			if (!isProductionBuild()) {
+				console.warn(
+					'[inth] Ignoring userConsent because user.externalId does not match userConsent.sync.externalId.'
+				);
+			}
+			return null;
+		}
+		const currentAccount = runtime.getAccountLayer();
+		if (
+			currentAccount !== null &&
+			currentAccount.externalId === normalized.externalId
+		) {
+			const allowEqualClientReconvert =
+				options?.forceClientSync === true &&
+				normalized.checkedAt === currentAccount.checkedAt &&
+				sameAccountLayerContent(currentAccount, normalized);
+			if (
+				normalized.checkedAt <= currentAccount.checkedAt &&
+				!allowEqualClientReconvert
+			) {
+				return null;
+			}
+		}
+		return normalized;
+	};
+
 	const syncUserConsent = function syncUserConsent(
-		value: UserConsent | null | undefined
+		value: UserConsent | null | undefined,
+		options?: SyncUserConsentOptions
 	): boolean {
-		if (value === undefined) {
-			return false;
-		}
+		const clearPending = options?.clearPending === true;
 		const before = getSnapshot();
-		if (before.externalPermissions) {
+		const at = runtime.now();
+		if (value === undefined || before.externalPermissions) {
+			clearPendingIfRequested(before, at, clearPending);
 			return false;
 		}
-		const at = runtime.now();
 		if (value === null) {
-			if (runtime.getAccountLayer() === null) {
-				runtime.bumpAccountSyncGeneration();
-				return false;
+			const hadAccount = runtime.getAccountLayer() !== null;
+			const patch: SnapshotPatch = { now: at };
+			if (clearPending) {
+				patch.userConsentPending = false;
 			}
 			let changed = false;
 			runtime.batch(() => {
-				changed = commit(
-					{ now: at },
-					{ accountLayer: null, preserveDialog: true }
-				);
+				if (!hadAccount) {
+					runtime.bumpAccountSyncGeneration();
+				}
+				changed = commit(patch, {
+					accountLayer: null,
+					forceAccountNotify: true,
+					preserveDialog: true,
+				});
 				const after = getSnapshot();
-				if (!sameOptOutRecord(before.optOut, after.optOut)) {
+				if (hadAccount && !sameOptOutRecord(before.optOut, after.optOut)) {
 					emit({
 						optOut: after.optOut,
 						snapshot: after,
@@ -523,50 +609,22 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			return changed;
 		}
 
-		const { user } = before;
-		if (!user || !user.externalId) {
-			if (!isProductionBuild()) {
-				console.warn(
-					'[inth] Ignoring userConsent because no user with an externalId is set.'
-				);
-			}
-			return false;
-		}
-		const normalized = normalizeUserConsent(value, at);
+		const normalized = validateIncomingUserConsent(before, value, at, options);
 		if (!normalized) {
-			if (!isProductionBuild()) {
-				console.warn('[inth] Ignoring malformed userConsent document.');
-			}
-			return false;
-		}
-		if (normalized.externalId !== user.externalId) {
-			if (!isProductionBuild()) {
-				console.warn(
-					'[inth] Ignoring userConsent because user.externalId does not match userConsent.sync.externalId.'
-				);
-			}
+			clearPendingIfRequested(before, at, clearPending);
 			return false;
 		}
 
-		const currentAccount = runtime.getAccountLayer();
-		if (
-			currentAccount !== null &&
-			currentAccount.externalId === normalized.externalId
-		) {
-			if (normalized.checkedAt < currentAccount.checkedAt) {
-				return false;
-			}
-			if (sameAccountLayerContent(currentAccount, normalized)) {
-				return false;
-			}
+		const patch: SnapshotPatch = { now: at };
+		if (clearPending) {
+			patch.userConsentPending = false;
 		}
-
 		let changed = false;
 		runtime.batch(() => {
-			changed = commit(
-				{ now: at },
-				{ accountLayer: normalized, preserveDialog: true }
-			);
+			changed = commit(patch, {
+				accountLayer: normalized,
+				preserveDialog: true,
+			});
 			const after = getSnapshot();
 			if (!sameOptOutRecord(before.optOut, after.optOut)) {
 				emit({
@@ -640,8 +698,16 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			await loadSubjectRecord(linkedId, attempt);
 		},
 
+		isSubjectLinked(subjectId, externalId) {
+			return subjectId !== null && verifiedLinks.get(subjectId) === externalId;
+		},
+
 		markProvisionalSubject(id) {
 			provisionalSubjectId = id;
+		},
+
+		markSubjectLinked(subjectId, externalId) {
+			verifiedLinks.set(subjectId, externalId);
 		},
 
 		noteRecordedSubject(id) {
@@ -655,6 +721,7 @@ export const createRecordsBoundary = function createRecordsBoundary({
 			if ((subject?.subjectId ?? null) === id) {
 				return;
 			}
+			verifiedLinks.clear();
 			runtime.invalidateRecords();
 			const patch: SnapshotPatch = {};
 			if (iab) {

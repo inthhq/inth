@@ -283,24 +283,6 @@ export interface OptOutAnswerFence {
 	ownAct?: boolean;
 }
 
-const sameAccountOptOut = function sameAccountOptOut(
-	left: AccountOptOutRecord | null,
-	right: AccountOptOutRecord | null
-): boolean {
-	if (left === right) {
-		return true;
-	}
-	if (!left || !right) {
-		return false;
-	}
-	return (
-		left.method === right.method &&
-		left.rawRecordedAt === right.rawRecordedAt &&
-		left.rights.length === right.rights.length &&
-		left.rights.every((rightName, index) => rightName === right.rights[index])
-	);
-};
-
 /**
  * The backend never carries `categories`. An answer to this browser's own
  * act keeps the list the browser fixed when it recorded it; so does an
@@ -436,55 +418,46 @@ const applySyncedOptOutWithAccount = function applySyncedOptOutWithAccount(
 	runtime: KernelRuntime,
 	current: ConsentSnapshot,
 	next: OptOutRecord | null,
-	activeAccount: NonNullable<ReturnType<KernelRuntime['getAccountLayer']>>,
 	fence: OptOutAnswerFence
 ): boolean {
+	// While an account layer for the current `externalId` is active, server
+	// opt-out answers held by `'person'` or `'both'` never write to browser
+	// records and never mutate the account layer (`appliedAt` or `optOut`).
+	// Only a device-only answer or an explicit clear updates browser records.
+	if (next !== null && next.heldBy !== 'device') {
+		return false;
+	}
 	const at = runtime.now();
 	const browserOptOut = runtime.getBrowserRecords().optOut;
-	const routed = splitServerOptOutForAccount(
-		next,
-		browserOptOut,
-		activeAccount,
-		fence.allowClear
-	);
+	const effectiveBrowserOptOut =
+		browserOptOut?.heldBy === 'person' ? null : browserOptOut;
+	const localAct = answersLocalAct(next, effectiveBrowserOptOut, fence);
 	const nextBrowserOptOut =
-		routed.browserOptOut !== null
-			? answerWithHeldCategories(routed.browserOptOut, browserOptOut, fence)
+		next !== null
+			? answerWithHeldCategories(next, effectiveBrowserOptOut, fence)
 			: null;
-	const accountChanged = !sameAccountOptOut(
-		activeAccount.optOut,
-		routed.accountOptOut
+	const browserChanged = !sameOptOutRecord(
+		effectiveBrowserOptOut,
+		nextBrowserOptOut
 	);
-	const browserChanged = !sameOptOutRecord(browserOptOut, nextBrowserOptOut);
 	const currentReceipt = runtime.getOptOutReceiptData();
-	const localAct = answersLocalAct(nextBrowserOptOut, browserOptOut, fence);
 	const nextReceipt = nextSyncedOptOutReceipt(
-		browserOptOut,
+		effectiveBrowserOptOut,
 		nextBrowserOptOut,
 		currentReceipt,
 		fence.confirmed !== false,
 		localAct
 	);
-	if (!accountChanged && !browserChanged) {
+	if (!browserChanged) {
 		if (!receiptChangedFrom(currentReceipt, nextReceipt)) {
 			return false;
 		}
 		runtime.setOptOutReceiptData(nextReceipt);
 		return true;
 	}
-	const nextAccount = accountChanged
-		? {
-				...activeAccount,
-				appliedAt: Math.max(activeAccount.appliedAt, at),
-				optOut: routed.accountOptOut,
-			}
-		: activeAccount;
 	runtime.batch(() => {
 		runtime.setOptOutReceiptData(nextReceipt);
-		runtime.commit(
-			{ now: at, optOut: nextBrowserOptOut },
-			accountChanged ? { accountLayer: nextAccount } : undefined
-		);
+		runtime.commit({ now: at, optOut: nextBrowserOptOut });
 		const after = runtime.getSnapshot();
 		if (!sameOptOutRecord(current.optOut, after.optOut) || browserChanged) {
 			runtime.emit({
@@ -553,13 +526,7 @@ export const applySyncedOptOut = function applySyncedOptOut(
 		current.user !== null &&
 		accountLayer.externalId === current.user.externalId
 	) {
-		return applySyncedOptOutWithAccount(
-			runtime,
-			current,
-			next,
-			accountLayer,
-			fence
-		);
+		return applySyncedOptOutWithAccount(runtime, current, next, fence);
 	}
 	const localAct = answersLocalAct(next, current.optOut, fence);
 	if (next !== null) {

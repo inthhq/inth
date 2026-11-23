@@ -47,6 +47,7 @@ export interface ValidatedRecords {
 	optOutLocalAct?: OptOutLocalAct | null;
 	optOutRightsConfirmed?: boolean;
 	vendorChoice?: VendorChoice | null;
+	vendorDeclared?: readonly string[] | null;
 	accountLayer?: AccountConsentLayer | null;
 }
 
@@ -184,6 +185,40 @@ const validateOptOutMetaFields = function validateOptOutMetaFields(
 	}
 };
 
+const validateVendorDeclaredField = function validateVendorDeclaredField(
+	input: HydrationRecords,
+	records: ValidatedRecords,
+	issues: RecordIssue[]
+): void {
+	if (input.vendorDeclared === undefined) {
+		return;
+	}
+	if (input.vendorDeclared === null) {
+		records.vendorDeclared = null;
+		return;
+	}
+	if (!Array.isArray(input.vendorDeclared)) {
+		issues.push({ code: 'not-an-object', path: 'vendorDeclared' });
+		return;
+	}
+	const declared = new Set<string>();
+	let valid = true;
+	for (const [index, entry] of input.vendorDeclared.entries()) {
+		if (!isNonEmptyString(entry) || !isValidVendorId(entry)) {
+			issues.push({
+				code: 'invalid-identifier',
+				path: `vendorDeclared[${index}]`,
+			});
+			valid = false;
+			continue;
+		}
+		declared.add(entry);
+	}
+	if (valid) {
+		records.vendorDeclared = [...declared].sort();
+	}
+};
+
 /**
  * Validate hydration input. Keys that are omitted stay omitted so the
  * caller can preserve current values; `null` passes through as an explicit
@@ -269,6 +304,7 @@ export const validateHydrationRecords = function validateHydrationRecords(
 			}
 		}
 	}
+	validateVendorDeclaredField(input, records, issues);
 	if (input.accountLayer !== undefined) {
 		if (input.accountLayer === null) {
 			records.accountLayer = null;
