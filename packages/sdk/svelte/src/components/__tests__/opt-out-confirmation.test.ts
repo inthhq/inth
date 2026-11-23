@@ -28,6 +28,16 @@ vi.mock('@inth/sdk/engine', async (importOriginal) => {
 const query = <Element extends HTMLElement>(testId: string) =>
 	document.querySelector<Element>(`[data-testid="${testId}"]`);
 
+/**
+ * Waits for the preference dialog. Its code is a chunk of its own that
+ * loads on the first open, which a busy run can take more than the default
+ * second to compile and import.
+ */
+const dialogOpened = () =>
+	waitFor(() => expect(query('consent-dialog-root')).not.toBeNull(), {
+		timeout: 5000,
+	});
+
 let activeContext: ConsentContextValue | null = null;
 
 const noticeRule = () => ({
@@ -146,7 +156,7 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 			) as HTMLAnchorElement
 		);
 		await waitFor(() => expect(query('opt-out-confirmation-root')).toBeNull());
-		await waitFor(() => expect(query('consent-dialog-root')).not.toBeNull());
+		await dialogOpened();
 
 		view.unmount();
 	});
@@ -195,7 +205,7 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 		await fireEvent.click(
 			query<HTMLButtonElement>('consent-dialog-link') as HTMLButtonElement
 		);
-		await waitFor(() => expect(query('consent-dialog-root')).not.toBeNull());
+		await dialogOpened();
 		expect(query('opt-out-confirmation-root')).toBeNull();
 		expect(activeContext?.kernel.getSnapshot().optOut).toBeNull();
 
@@ -391,7 +401,7 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 			await fireEvent.click(
 				query<HTMLButtonElement>('consent-dialog-link') as HTMLButtonElement
 			);
-			await waitFor(() => expect(query('consent-dialog-root')).not.toBeNull());
+			await dialogOpened();
 			expect(activeContext?.kernel.getSnapshot().optOut).toBeNull();
 			expect(query('opt-out-confirmation-root')).toBeNull();
 
@@ -403,7 +413,7 @@ describe('one-step opt-out and confirmation view in Svelte', () => {
 			await fireEvent.click(
 				query<HTMLButtonElement>('consent-dialog-trigger') as HTMLButtonElement
 			);
-			await waitFor(() => expect(query('consent-dialog-root')).not.toBeNull());
+			await dialogOpened();
 			expect(activeContext?.kernel.getSnapshot().optOut).toBeNull();
 			expect(query('opt-out-confirmation-root')).toBeNull();
 
