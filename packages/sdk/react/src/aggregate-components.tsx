@@ -168,6 +168,17 @@ const LazyOptInConfirmationHost = (props: OptInConfirmationProps) => {
 	return <LazyOptInConfirmationComponent {...props} />;
 };
 
+/**
+ * Whether the dialog can render now: its `models` allow the policy's model,
+ * and a controlled `open={false}` does not keep it hidden. Only then can it
+ * take the opt-out confirmation over.
+ */
+const canDialogShow = (
+	{ models, open }: ConsentDialogProps,
+	model: ReturnType<typeof useModel>
+): boolean =>
+	(!models || model === null || models.includes(model)) && open !== false;
+
 const LazyConsentDialog = (props: ConsentDialogProps) => {
 	const kernel = useKernel();
 	const activeUI = useActiveUI();
@@ -185,10 +196,9 @@ const LazyConsentDialog = (props: ConsentDialogProps) => {
 	// `OptOutConfirmation` the host mounted still shows it itself.
 	const model = useModel();
 	const embeddedConfirmation = confirmationOpen && !hasStandaloneConfirmation;
-	const dialogAllowed =
-		!props.models || model === null || props.models.includes(model);
+	const dialogCanShow = canDialogShow(props, model);
 	const adoptConfirmation =
-		privacyChoices && embeddedConfirmation && dialogAllowed;
+		privacyChoices && embeddedConfirmation && dialogCanShow;
 	useEffect(() => {
 		if (!adoptConfirmation) {
 			return;
@@ -205,9 +215,10 @@ const LazyConsentDialog = (props: ConsentDialogProps) => {
 		return (
 			<>
 				{triggerProps ? <LazyConsentDialogTrigger {...triggerProps} /> : null}
-				{embeddedConfirmation && !dialogAllowed ? (
-					// This dialog does not open under the model, so the
-					// confirmation shows as on the classic design.
+				{embeddedConfirmation && !dialogCanShow ? (
+					// This dialog does not open under the model, or the host
+					// keeps it closed, so the confirmation shows as on the
+					// classic design.
 					<LazyOptOutConfirmationComponent
 						embedded
 						noStyle={props.noStyle}
@@ -231,6 +242,7 @@ const LazyConsentDialog = (props: ConsentDialogProps) => {
 						disableAnimation={props.disableAnimation}
 						models={props.models}
 						uiSource={props.uiSource}
+						legalLinks={props.legalLinks}
 					/>
 				) : null}
 			</>

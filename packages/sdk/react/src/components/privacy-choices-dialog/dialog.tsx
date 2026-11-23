@@ -63,6 +63,7 @@ import {
 	useLegalLinksConfig,
 	useLegalLinkTranslations,
 } from '~/components/shared/primitives/legal-links';
+import type { InlineLegalLinksProps } from '~/components/shared/primitives/legal-links';
 import { toSaveUISource } from '~/context/consent-tracking-context';
 import { LocalThemeContext } from '~/context/theme-context';
 import {
@@ -107,12 +108,20 @@ export interface PrivacyChoicesDialogProps {
 	 * dialog, so the banner leaves and sheets, Escape and the receipt work
 	 * as for any open dialog; Close and Escape then close it through the
 	 * consent manager, and `open` must turn `false` and back to `true` to
-	 * ask again. `false` hides it whatever the consent manager shows.
+	 * ask again. `false` hides it whatever the consent manager shows, and
+	 * turning it `false` while the dialog shows closes it through the
+	 * consent manager, as Close does.
 	 * Omitted, it follows `activeUI === 'dialog'`.
 	 */
 	open?: boolean;
 	models?: string[];
 	uiSource?: string;
+	/**
+	 * Which legal link the footer may show: the Cookie Policy for the EU,
+	 * the Privacy Policy for the US. `undefined` shows it, `null` hides it,
+	 * and a list shows it only when its key is in the list.
+	 */
+	legalLinks?: InlineLegalLinksProps['links'];
 }
 
 const cx = (noStyle: boolean | undefined, ...names: (string | undefined)[]) =>
@@ -461,6 +470,7 @@ const DialogContent = ({
 	open: openProp,
 	models,
 	uiSource,
+	legalLinks: allowedLegalLinks,
 }: PrivacyChoicesDialogProps) => {
 	const kernel = useKernel();
 	const snapshot = useSnapshot();
@@ -530,6 +540,25 @@ const DialogContent = ({
 		hasConsentUI &&
 		modelAllowed &&
 		sheetsReady;
+	// A controlled `open` turning false closes a shown dialog through the
+	// consent manager, as Close does, so an unanswered banner comes back and
+	// no sheet stays pushed under a hidden dialog.
+	const shownRef = useRef(false);
+	useBrowserLayoutEffect(() => {
+		const wasShown = shownRef.current;
+		shownRef.current = open;
+		if (
+			!wasShown ||
+			openProp !== false ||
+			kernel.getSnapshot().activeUI !== 'dialog'
+		) {
+			return;
+		}
+		showConsentSurface(kernel, 'none');
+		if (kernel.getSnapshot().activeUI === 'banner') {
+			focusReturningBanner();
+		}
+	}, [open, openProp, kernel]);
 	// Phone sheets take the prompt's resolved phone edge style, which the
 	// policy and a Card's own rule (always inset) have already settled.
 	const container = useMemo(
@@ -755,9 +784,13 @@ const DialogContent = ({
 	}
 
 	const legalKey = eu ? 'cookiePolicy' : 'privacyPolicy';
+	const legalKeys: NonNullable<InlineLegalLinksProps['links']> =
+		allowedLegalLinks === undefined
+			? [legalKey]
+			: (allowedLegalLinks?.filter((key) => key === legalKey) ?? []);
 	const [legal] = resolveLegalLinkEntries(
 		legalLinks,
-		[legalKey],
+		legalKeys,
 		legalTranslations
 	);
 	const legalLink = legal ? (
@@ -1067,6 +1100,7 @@ const DialogContent = ({
 				data-design="privacy-choices"
 				data-regime={eu ? 'eu' : 'us'}
 				data-layout={phone ? 'phone' : 'desktop'}
+				data-animation={disableAnimation ? 'off' : undefined}
 				data-testid="consent-dialog-root"
 				dir={textDirection}
 			>

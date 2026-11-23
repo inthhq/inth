@@ -979,3 +979,111 @@ describe('wave B round 1', () => {
 		await waitFor(() => expect(row.textContent).not.toBe(before));
 	});
 });
+
+describe('wave B round 2', () => {
+	test('[RCPT-01] a controlled open={false} leaves the opt-out confirmation on its own', async () => {
+		await mount({
+			children: <OptOutNow />,
+			dialogProps: { disableAnimation: true, open: false },
+		});
+		const button = await waitFor(() => must('one-click-opt-out'));
+		button.click();
+		// The dialog can't show, so it doesn't adopt the confirmation.
+		await waitFor(() =>
+			expect($('opt-out-confirmation-card')).toBeInTheDocument()
+		);
+		expect($('consent-dialog-card')).toBeNull();
+		expect(probe.snapshot?.activeUI).not.toBe('dialog');
+	});
+
+	test('[PERM-01][NEST-06] a controlled open turning false closes the shown dialog through the consent manager', async () => {
+		await page.viewport(390, 800);
+		const options = {
+			consentCategories: ['necessary', 'measurement', 'marketing'] as const,
+			mode: testing(),
+			persistence: false,
+			prefetch: policyFixture(undefined, { id: `pcd-controlled-${fixture}` }),
+			presentation: {
+				design: 'privacy-choices' as const,
+				prompt: { container: { type: 'card' } as const },
+			},
+			vendors: VENDORS,
+		};
+		fixture += 1;
+		const tree = (open: boolean) => (
+			<InthProvider
+				options={{
+					...options,
+					consentCategories: [...options.consentCategories],
+				}}
+			>
+				<ConsentBanner disableAnimation />
+				<ConsentDialog
+					disableAnimation
+					open={open}
+				/>
+				<SnapshotProbe />
+			</InthProvider>
+		);
+		const screen = await render(tree(true));
+		await waitFor(() => expect($('consent-dialog-card')).toBeInTheDocument());
+		expect($('consent-banner-root')).toBeNull();
+		must('consent-dialog-vendor-trigger-measurement').click();
+		await waitFor(() => expect($('consent-dialog-sheet')).toBeInTheDocument());
+		await screen.rerender(tree(false));
+		// The unanswered banner comes back, and the session drops the sheet.
+		await waitFor(() => expect(probe.snapshot?.activeUI).toBe('banner'));
+		await waitFor(() => expect($('consent-banner-root')).toBeInTheDocument());
+		expect($('consent-dialog-card')).toBeNull();
+		await screen.rerender(tree(true));
+		await waitFor(() => expect($('consent-dialog-card')).toBeInTheDocument());
+		expect($('consent-dialog-sheet')).toBeNull();
+		expect(card()).not.toHaveAttribute('data-nested-open');
+	});
+
+	test('[MOT-03] disableAnimation turns the dialog motion off and drops a sheet at once', async () => {
+		await page.viewport(390, 800);
+		const animated = await mount({ dialogProps: {} });
+		await openDialog();
+		expect(must('consent-dialog-root')).not.toHaveAttribute('data-animation');
+		expect(getComputedStyle(card()).animationName).not.toBe('none');
+		await animated.unmount();
+
+		await mount();
+		await openDialog();
+		const root = must('consent-dialog-root');
+		expect(root).toHaveAttribute('data-animation', 'off');
+		expect(getComputedStyle(root).animationName).toBe('none');
+		expect(getComputedStyle(card()).animationName).toBe('none');
+		expect(getComputedStyle(card()).transitionDuration).toBe('0s');
+		must('consent-dialog-preferences-row').click();
+		const sheet = await waitFor(() => must('consent-dialog-sheet'));
+		expect(getComputedStyle(sheet).animationName).toBe('none');
+		// The sheet never plays an exit: it goes without a closing state.
+		let closing = false;
+		const watcher = new MutationObserver(() => {
+			if ($('consent-dialog-sheet')?.getAttribute('data-state') === 'closed') {
+				closing = true;
+			}
+		});
+		watcher.observe(root, { attributes: true, childList: true, subtree: true });
+		must('consent-dialog-sheet-close').click();
+		await waitFor(() => expect($('consent-dialog-sheet')).toBeNull());
+		watcher.disconnect();
+		expect(closing).toBe(false);
+	});
+
+	test.each<[ComponentProps<typeof ConsentDialog>['legalLinks'], boolean]>([
+		[undefined, true],
+		[null, false],
+		[['cookiePolicy'], false],
+		[['privacyPolicy'], true],
+	])(
+		'legalLinks=%j on ConsentDialog: null hides the footer link, a list allows it (shown: %s)',
+		async (legalLinks, shown) => {
+			await mount({ dialogProps: { disableAnimation: true, legalLinks } });
+			await openDialog();
+			expect($('consent-dialog-legal-link-privacyPolicy') !== null).toBe(shown);
+		}
+	);
+});

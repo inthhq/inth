@@ -11,6 +11,7 @@
  * Data attributes:
  *
  *   .backdrop[data-edge-style]   inset | flush, for phone sheets
+ *   .backdrop[data-animation]    'off' when the host turned animation off
  *   .card[data-regime='eu']      the wider EU card
  *   .card[data-nested='true']    a nested phone sheet
  *   .card[data-nested-open]      dims and pushes back a parent layer; the
@@ -1247,6 +1248,17 @@
 	:global(:host([data-theme-switching])) .backdrop *::before,
 	:global(:host([data-theme-switching])) .backdrop *::after {
 		transition: none !important;
+	}
+
+	/* `disableAnimation`: the backdrop, the card and its sheets show and
+	   move on their first frame, and a closing sheet leaves at once (the
+	   renderer drops it without waiting). The phone rules rename the
+	   animations on heavier selectors, so these must be important to win. */
+	.backdrop[data-animation='off'],
+	.backdrop[data-animation='off'] .card,
+	.backdrop[data-animation='off'] .card::after {
+		transition: none !important;
+		animation: none !important;
 	}
 
 	@keyframes privacy-choices-fade-in {

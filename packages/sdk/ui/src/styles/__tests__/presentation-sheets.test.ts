@@ -541,8 +541,13 @@ describe('v6 presentation sheets', async () => {
 						node.important
 				);
 				if (reset) {
+					// The `disableAnimation` reset shares the declaration.
 					selectors.push(
-						...rule.selectors.filter((selector) => selector.includes(className))
+						...rule.selectors.filter(
+							(selector) =>
+								selector.includes(className) &&
+								selector.includes('data-theme-switching')
+						)
 					);
 				}
 			});
@@ -566,6 +571,36 @@ describe('v6 presentation sheets', async () => {
 		expect(dialogRoot).toBeDefined();
 		expect(guarded(sheets.surface.css, `.${surfaceRoot}`)).toEqual(expected);
 		expect(guarded(privacyChoices, `.${dialogRoot}`)).toEqual(expected);
+	});
+
+	test("[MOT-03] disableAnimation stops the dialog's backdrop, card and sheets", () => {
+		const backdrop = classNamesOf('privacy-choices').find((name) =>
+			name.startsWith('inth-ui-backdrop-')
+		);
+		const card = classNamesOf('privacy-choices').find((name) =>
+			name.startsWith('inth-ui-card-')
+		);
+		expect(backdrop).toBeDefined();
+		expect(card).toBeDefined();
+		const reset: string[] = [];
+		parse(privacyChoices).walkRules((rule) => {
+			const resets = (prop: string) =>
+				rule.nodes.some(
+					(node) =>
+						node.type === 'decl' &&
+						node.prop === prop &&
+						node.value === 'none' &&
+						node.important
+				);
+			if (resets('animation') && resets('transition')) {
+				reset.push(...rule.selectors);
+			}
+		});
+		const off = `.${backdrop}[data-animation=off]`;
+		// The phone sheets rename their animations on `.card`, under it.
+		expect(reset).toEqual(
+			expect.arrayContaining([off, `${off} .${card}`, `${off} .${card}:after`])
+		);
 	});
 
 	test("the phone rules, the dialog's too, use the resolver breakpoint", () => {
