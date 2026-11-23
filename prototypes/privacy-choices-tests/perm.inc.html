@@ -1,0 +1,236 @@
+<script>
+// Exhaustive permutation sweep: viewport × placement × edge style × blocking × region/variant,
+// each checked collapsed → expanded → Esc → re-expand → commit, plus collapsed commit.
+window.addEventListener('load', () => {
+  window.setTimeout = (fn) => { fn(); return 0; };
+  const $ = (q, r = document) => r.querySelector(q);
+  const $$ = (q, r = document) => [...r.querySelectorAll(q)];
+  const ctl = (g, v) => { const b = document.querySelector(`[data-group="${g}"] [data-val="${v}"]`); if (!b) throw new Error('no ctl ' + g + '=' + v); b.click(); };
+  const key = (k, shift = false) => { const t = document.activeElement || document.body; t.dispatchEvent(new KeyboardEvent('keydown', { key: k, shiftKey: shift, bubbles: true, cancelable: true })); };
+  const settle = () => { document.getAnimations().forEach((a) => { try { a.finish(); } catch (e) {} }); };
+  const errors = [];
+  window.addEventListener('error', (e) => errors.push(e.message));
+  const fails = {}; let total = 0, passed = 0;
+  const check = (name, ok, combo, detail = '') => {
+    total += 1; if (ok) { passed += 1; return; }
+    (fails[name] ||= []).push(combo + (detail ? ` [${detail}]` : ''));
+  };
+  const near = (a, b, t = 1.5) => Math.abs(a - b) <= t;
+  const visible = (el) => { if (!el || el.closest('[inert]') || el.disabled) return false; const r = el.getBoundingClientRect(); if (r.width < 1 || r.height < 1) return false; const cs = getComputedStyle(el); return cs.visibility !== 'hidden' && cs.display !== 'none'; };
+  const tabbables = (root) => $$('button, a[href], input, [tabindex]:not([tabindex="-1"])', root).filter(visible);
+
+  const VPS = ['macbook', 'full', 'phone'];
+  const PLACES = [['card', 'bottom-left'], ['card', 'bottom-right'], ['card', 'center'], ['banner', 'bottom'], ['banner', 'top'], ['drawer', 'left'], ['drawer', 'right'], ['drawer', 'top'], ['drawer', 'bottom']];
+  const REGS = [['eu', 'none'], ['us-opt-in', 'none'], ['us-opt-out', 'none'], ['us-opt-out', 'notice']];
+
+  const setup = (vp, ui, pos, edge, block, reg, usb) => {
+    ctl('start', 'banner'); ctl('vp', vp); ctl('theme', 'light');
+    ctl('regime', 'eu'); ctl('presUi', ui);
+    if (ui === 'card') ctl('cardPos', pos); else if (ui === 'banner') ctl('barPos', pos); else ctl('loc', pos);
+    ctl('drawerStyle', edge);
+    if (!(ui === 'card' && pos === 'center')) ctl('block', block);
+    ctl('usBanner', usb); ctl('regime', reg);
+    settle();
+  };
+
+  for (const vp of VPS) for (const [ui, pos] of PLACES) for (const edge of ['inset', 'flush']) for (const block of ['off', 'on']) for (const [reg, usb] of REGS) {
+    if (ui === 'card' && pos === 'center' && block === 'off') continue; // centre forces blocking; the control is locked
+    const combo = `${vp}/${ui}-${pos}/${edge}/block-${block}/${reg}${usb === 'notice' ? '+notice' : ''}`;
+    try {
+      setup(vp, ui, pos, edge, block, reg, usb);
+      const banner = $('#banner'), frame = $('#vp'), F = frame.getBoundingClientRect();
+      const variant = reg === 'eu' ? 'choice' : reg === 'us-opt-in' ? 'us-consent' : usb === 'notice' ? 'notice' : 'none';
+      const show = variant !== 'none';
+      check('banner shown iff variant != none', banner.hidden === !show, combo);
+      check('dialog closed on first visit', !S.open, combo);
+      if (!show) {
+        check('no blocking when nothing shown', !banner.hasAttribute('data-blocking') && $('#banner-backdrop').hidden && !$('.fake-site').inert && !frame.hasAttribute('data-scroll-locked'), combo);
+        continue;
+      }
+      const optOut = reg === 'us-opt-out';
+      const center = ui === 'card' && pos === 'center' && !optOut;
+      const expBlock = (block === 'on' || (ui === 'card' && pos === 'center')) && !optOut;
+      const phone = vp === 'phone';
+      const side = ui === 'drawer' && (pos === 'left' || pos === 'right');
+      const aio = side && !phone;
+      const expPres = ui === 'card' ? 'card' : ui === 'banner' ? pos : (side && phone ? 'bottom' : pos);
+      const fullWidth = ui === 'banner' || (ui === 'drawer' && !aio);
+
+      // ---- structure
+      check('data-pres resolves', banner.dataset.pres === expPres, combo, banner.dataset.pres);
+      check('data-aio iff desktop side drawer', banner.hasAttribute('data-aio') === aio, combo);
+      check('data-center iff centred (opt-out falls back)', banner.hasAttribute('data-center') === center, combo);
+      // ---- blocking
+      const card = $('.banner-card', banner);
+      const isBlock = banner.hasAttribute('data-blocking');
+      check('blocking attr matches rule', isBlock === expBlock, combo, `got ${isBlock}`);
+      check('backdrop matches blocking', $('#banner-backdrop').hidden === !expBlock, combo);
+      check('page inert matches blocking', $('.fake-site').inert === expBlock, combo);
+      check('scroll lock matches blocking', frame.hasAttribute('data-scroll-locked') === expBlock, combo);
+      { const sh = $('.banner-shell', banner); check('aria-modal matches blocking (on the shell: card + tag)', (sh.getAttribute('aria-modal') === 'true') === expBlock && (sh.getAttribute('role') === 'dialog') === expBlock && !card.hasAttribute('aria-modal'), combo); }
+      check('focus: taken iff blocking', banner.contains(document.activeElement) === expBlock, combo, document.activeElement?.className);
+      if (expBlock) check('VIS-08 border transparent over scrim', getComputedStyle(card).borderTopColor === 'rgba(0, 0, 0, 0)' || getComputedStyle(card).borderTopWidth === '0px', combo, getComputedStyle(card).borderTopColor);
+
+      // ---- geometry (collapsed)
+      const geom = (phase) => {
+        settle();
+        const C = card.getBoundingClientRect();
+        const tag = $('.brand-tag', banner); const T = tag?.getBoundingClientRect();
+        check(`${phase}: card inside frame`, C.left >= F.left - 0.5 && C.right <= F.right + 0.5 && C.top >= F.top - 0.5 && C.bottom <= F.bottom + 0.5, combo, `C ${Math.round(C.left - F.left)},${Math.round(C.top - F.top)} ${Math.round(C.width)}x${Math.round(C.height)} F ${Math.round(F.width)}x${Math.round(F.height)}`);
+        check(`${phase}: tag present`, !!tag, combo);
+        if (tag) {
+          check(`${phase}: tag inside frame`, T.left >= F.left - 0.5 && T.right <= F.right + 0.5 && T.top >= F.top - 0.5 && T.bottom <= F.bottom + 0.5, combo, `T top ${Math.round(T.top - F.top)} bottom ${Math.round(F.bottom - T.bottom)}`);
+          if (aio) check(`${phase}: aio tag centred inside card`, near((T.left + T.right) / 2, (C.left + C.right) / 2, 2) && T.top > C.top && T.bottom < C.bottom, combo);
+          else {
+            const overlap = !(T.bottom <= C.top + 0.5 || T.top >= C.bottom - 0.5);
+            check(`${phase}: tag does not overlap card`, !overlap, combo);
+            const gap = T.bottom <= C.top + 0.5 ? C.top - T.bottom : T.top - C.bottom;
+            check(`${phase}: tag 8px from card`, near(gap, 8, 1), combo, `gap ${gap.toFixed(1)}`);
+            const below = expPres === 'top';
+            check(`${phase}: tag above (bottom) / below (top)`, below ? T.top >= C.bottom - 0.5 : T.bottom <= C.top + 0.5, combo);
+            if (!fullWidth) check(`${phase}: tag right = card right`, near(T.right, C.right), combo, `${(T.right - C.right).toFixed(1)}`);
+            else {
+              const btns = $$('.banner-foot .btn, .banner-foot .right-link, .bar-actions .btn, .bar-actions .right-link', card).filter(visible);
+              const r = Math.max(...btns.map((b) => b.getBoundingClientRect().right));
+              check(`${phase}: tag right = content column right`, near(T.right, r), combo, `${(T.right - r).toFixed(1)}`);
+            }
+          }
+        }
+        // edges
+        const gL = C.left - F.left, gR = F.right - C.right, gB = F.bottom - C.bottom, gT = C.top - F.top;
+        if (ui === 'card' && !center) {
+          const m = phone ? 16 : 24;
+          check(`${phase}: card corner margins`, near(gB, m) && (pos === 'bottom-right' && !phone ? near(gR, m) : near(gL, m)) && gL >= m - 1.5 && gR >= m - 1.5, combo, `L${gL.toFixed(0)} R${gR.toFixed(0)} B${gB.toFixed(0)}`);
+        }
+        if (center) check(`${phase}: centred`, near(gL, gR, 2) && near(gT, gB, 2), combo, `L${gL.toFixed(0)} R${gR.toFixed(0)} T${gT.toFixed(0)} B${gB.toFixed(0)}`);
+        if (ui !== 'card') {
+          const g = edge === 'inset' ? 12 : 0;
+          const edges = expPres === 'left' ? [gL, gT, gB] : expPres === 'right' ? [gR, gT, gB] : expPres === 'top' ? [gL, gR, gT] : [gL, gR, gB];
+          check(`${phase}: ${edge} edge gaps = ${g}`, edges.every((x) => near(x, g)), combo, edges.map((x) => x.toFixed(0)).join(','));
+          const rad = parseFloat(getComputedStyle(card).borderTopLeftRadius) + parseFloat(getComputedStyle(card).borderBottomRightRadius);
+          check(`${phase}: radius ${edge === 'inset' ? 16 : 0}`, edge === 'inset' ? rad === 32 : rad === 0, combo, String(rad));
+        } else check(`${phase}: card radius 16`, parseFloat(getComputedStyle(card).borderTopLeftRadius) === 16, combo);
+        // overflow
+        const over = $$('*', card).filter((el) => { if (el.closest('.sr-only') || el.closest('[inert]')) return false; const r = el.getBoundingClientRect(); if (r.width < 1 || r.height < 1) return false; return r.right > C.right + 0.5 || r.left < C.left - 0.5; });
+        check(`${phase}: no element overflows card horizontally`, over.length === 0, combo, over.slice(0, 2).map((e) => e.className || e.tagName).join(','));
+        // equal Reject/Accept
+        const rj = $('[data-bn=reject]', card), ac = $('[data-bn=accept]', card);
+        if (rj && ac && visible(rj)) {
+          const a = rj.getBoundingClientRect(), b = ac.getBoundingClientRect();
+          check(`${phase}: reject/accept equal`, rj.className === ac.className && near(a.height, b.height, 0.5) && getComputedStyle(rj).fontWeight === getComputedStyle(ac).fontWeight, combo);
+        }
+        // hit sizes
+        const small = tabbables(card).filter((b) => b.matches('.btn') && b.getBoundingClientRect().height < (phone ? 40 : 32) - 0.5);
+        check(`${phase}: button heights`, small.length === 0, combo, small.map((b) => `${b.textContent.trim()}:${b.getBoundingClientRect().height.toFixed(0)}`).join(','));
+        // unique ids
+        const ids = $$('[id]').map((e) => e.id); const dup = ids.filter((x, i) => ids.indexOf(x) !== i);
+        check(`${phase}: unique ids`, dup.length === 0, combo, dup.join(','));
+        // aria-controls targets exist
+        const bad = $$('[aria-controls]', banner).filter((e) => !document.getElementById(e.getAttribute('aria-controls')));
+        check(`${phase}: aria-controls resolve`, bad.length === 0, combo);
+        // fades on scrollable bodies
+        $$('.card-body', banner).forEach((b) => { if (b.clientHeight > 0 && visible(b)) { const more = b.scrollTop + b.clientHeight < b.scrollHeight - 1; check(`${phase}: bottom fade iff more below`, b.hasAttribute('data-fade-bottom') === more, combo, `more=${more}`); } });
+        // trap
+        if (expBlock) {
+          const f = tabbables(banner); // the trap covers the whole banner: the tag sits outside the card on Card/Banner/top/bottom
+          if (f.length > 1) {
+            f[f.length - 1].focus(); key('Tab');
+            check(`${phase}: trap wraps Tab last→first`, document.activeElement === f[0], combo, `${document.activeElement?.textContent?.trim().slice(0, 20)} vs ${f[0].textContent.trim().slice(0, 20)}`);
+            f[0].focus(); key('Tab', true);
+            check(`${phase}: trap wraps Shift+Tab first→last`, document.activeElement === f[f.length - 1], combo);
+          }
+        }
+        return C;
+      };
+      const C0 = geom('collapsed');
+      if (ui === 'banner' && !phone && F.width >= 1000) {
+        check('bar collapsed height ≈53 (one line)', C0.height <= 56, combo, C0.height.toFixed(0));
+      }
+
+      // ---- Esc on collapsed never dismisses
+      key('Escape'); settle();
+      check('Esc collapsed: banner stays', !banner.hidden && !S.decided, combo);
+
+      // ---- expand flow
+      const exp = $('[data-bn=expand]', banner);
+      check('expand control iff expand-in-place', !!exp === !aio, combo);
+      if (aio) {
+        check('aio: choices inline + commit button', !!$('.aio-wrap .card-body', banner) && !!$(variant === 'notice' ? '[data-bn=ok]' : '[data-bn=save]', banner), combo);
+      }
+      if (exp) {
+        check('expand has aria-expanded=false', exp.getAttribute('aria-expanded') === 'false', combo);
+        exp.click(); settle();
+        check('expanded: panel open', $('#card-panel')?.dataset.open === 'true' && banner.hasAttribute('data-expanded'), combo);
+        check('expanded: still blocking iff rule', banner.hasAttribute('data-blocking') === expBlock && $('.fake-site').inert === expBlock, combo);
+        check('expanded: focus inside panel', $('#card-panel')?.contains(document.activeElement), combo, document.activeElement?.className);
+        check('expanded: commit button present', !!$(variant === 'notice' ? '[data-bn=ok]' : '[data-bn=save]', banner), combo);
+        check('expanded: dialog not open', !S.open, combo);
+        geom('expanded');
+        if (reg === 'us-opt-in') {
+          const allow = $('#card-panel [data-seg=sale][data-val=allow]', banner);
+          allow?.click(); settle();
+          check('expanded: Allow opens the confirm in place', S.confirm === 'sale' && !S.open && banner.hasAttribute('data-expanded'), combo);
+          check('expanded: confirm focuses Cancel', document.activeElement?.dataset?.act === 'confirm-cancel', combo, document.activeElement?.className);
+          key('Escape'); settle();
+          check('expanded Esc #1 closes confirm only', S.confirm === null && banner.hasAttribute('data-expanded') && !banner.hidden, combo);
+          check('expanded Esc #1 focus back to Allow', document.activeElement?.dataset?.seg === 'sale' && document.activeElement?.dataset?.val === 'allow', combo, document.activeElement?.className);
+          check('expanded: confirm did not apply', S.sale === 'optout', combo);
+        }
+        // Esc folds back (even while blocking: folding is not dismissing)
+        key('Escape'); settle();
+        check('expanded Esc: folds back, banner stays', !banner.hidden && !banner.hasAttribute('data-expanded') && !S.decided, combo);
+        check('expanded Esc: focus to expand control', document.activeElement?.dataset?.bn === 'expand', combo, document.activeElement?.className);
+        // re-expand and commit
+        $('[data-bn=expand]', banner)?.click(); settle();
+        $(variant === 'notice' ? '[data-bn=ok]' : '[data-bn=save]', banner)?.click(); settle();
+        check('commit from panel: banner gone + released', banner.hidden && S.decided && !$('.fake-site').inert && !frame.hasAttribute('data-scroll-locked') && $('#banner-backdrop').hidden, combo);
+        check('commit from panel: focus to reopen', document.activeElement === $('#reopen'), combo);
+      }
+      // ---- collapsed commit (fresh)
+      setup(vp, ui, pos, edge, block, reg, usb);
+      const btn = $(variant === 'notice' ? '[data-bn=ok]' : '[data-bn=reject]', banner);
+      check('collapsed commit control visible', visible(btn), combo);
+      btn?.click(); settle();
+      check('collapsed commit: banner gone + released', banner.hidden && !$('.fake-site').inert && !frame.hasAttribute('data-scroll-locked') && $('#banner-backdrop').hidden, combo);
+      check('collapsed commit: focus to reopen', document.activeElement === $('#reopen'), combo);
+      check('collapsed commit: dialog/banner never together', !(S.open && !banner.hidden), combo);
+    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
+  }
+
+  // ---- VIS-08 in dark mode: light ring, no light border
+  for (const [ui, pos] of PLACES) for (const edge of ['inset', 'flush']) {
+    const combo = `dark/${ui}-${pos}/${edge}`;
+    try {
+      setup('macbook', ui, pos, edge, 'on', 'eu', 'none'); ctl('theme', 'dark'); settle();
+      const cs = getComputedStyle($('.banner-card'));
+      check('dark VIS-08: light ring + no border', cs.boxShadow.includes('rgba(255, 255, 255, 0.1)') && (cs.borderTopColor === 'rgba(0, 0, 0, 0)' || cs.borderTopWidth === '0px'), combo, cs.borderTopColor);
+    } catch (err) { (fails['ERROR'] ||= []).push(combo + ': ' + err.message); }
+  }
+  ctl('theme', 'light');
+
+  // ---- state carried across viewport switch while expanded (no reset on vp)
+  try {
+    setup('phone', 'drawer', 'left', 'inset', 'off', 'eu', 'none');
+    $('[data-bn=expand]').click(); settle();
+    ctl('vp', 'macbook'); settle();
+    check('vp switch phone→desktop while expanded: side drawer is aio, no stale expand', $('#banner').hasAttribute('data-aio') && !$('#banner').hasAttribute('data-expanded'), 'vp-switch');
+    ctl('vp', 'phone'); settle();
+    check('vp switch back to phone: drawer starts collapsed', !$('#banner').hasAttribute('data-expanded'), 'vp-switch', `expanded=${S.bannerExpanded}`);
+  } catch (err) { (fails['ERROR'] ||= []).push('vp-switch: ' + err.message); }
+
+  // ---- bar copy one line per rights bundle, desktop
+  for (const rights of ['all', 'sale-share', 'sale-ads']) for (const reg of ['eu', 'us-opt-in']) for (const vp of ['macbook', 'full']) {
+    try {
+      setup(vp, 'banner', 'bottom', 'inset', 'off', reg, 'none'); ctl('rights', rights); settle();
+      if ($('#vp').getBoundingClientRect().width < 1000) continue; const t = $('.bar-text'); const lh = parseFloat(getComputedStyle(t).lineHeight);
+      check('bar text one line per rights bundle', t.getBoundingClientRect().height <= lh + 1, `${vp}/${reg}/${rights}`, `${t.getBoundingClientRect().height}`);
+    } catch (err) { (fails['ERROR'] ||= []).push('bar-rights: ' + err.message); }
+  }
+  ctl('rights', 'all');
+
+  const lines = Object.entries(fails).map(([k, v]) => `FAIL ${k} ×${v.length}: ${v.slice(0, 4).join(' ; ')}`);
+  console.log(`PERM ${passed}/${total} pass, ${Object.keys(fails).length} failing checks, js errors: ${errors.length ? errors.slice(0, 3).join(' | ') : 'none'}`);
+  lines.forEach((l) => console.log(l));
+  window.__perm = { passed, total, fails };
+});
+</script>
