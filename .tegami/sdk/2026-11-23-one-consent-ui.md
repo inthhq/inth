@@ -53,7 +53,7 @@ The classic banner and dialog CSS variables still apply: each part reads its own
 
 **Stylesheets and bundles**
 
-The per-surface sheets are renamed: `banner` is now `parts`, `bar` is `banner`, `dialog` is `widget`, and `privacy-choices-dialog` is `dialog`. The CSS modules `consent-bar` and `privacy-choices` are now `consent-banner` and `consent-dialog`. `styles.css` is the single full stylesheet.
+The per-surface sheets are renamed: `banner` is now `parts`, `bar` is `banner`, `dialog` is `widget`, and `privacy-choices-dialog` is `dialog`. The CSS modules `consent-bar` and `privacy-choices` are now `consent-banner` and `consent-dialog`. `styles.css` is the single full stylesheet. It grows from 13.1 KB to 17.2 KB with brotli, because it now holds every container and the dialog, but a page that rendered the current UI used to pay 21.3 KB for `styles.css` plus `privacy-choices.css`.
 
 The old import paths `@inth/sdk/ui/styles/components/consent-banner` and `consent-dialog` (with `.module.css`, `.css` or `.js`, and the same paths under `@inth/sdk-ui`) still resolve, but they now load different modules. They used to alias the classic banner's `prompt` and the classic dialog's `panel` class maps. They now load the Banner container's module and the consent dialog's module, whose class names are different, so code that reads classes from them gets `undefined`. Read the prompt shell from `consent-surface`, the containers from `consent-card`, `consent-banner` and `consent-drawer`, the options Customize opens from `consent-expand`, and the dialog from `consent-dialog`. Better still, target the parts through slots, `data-testid` or `data-*` attributes, which don't change between builds.
 
