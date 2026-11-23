@@ -40,7 +40,7 @@ const inserted = (id: string): boolean =>
 const realContainer: PromptLoaders['container'] = async (type) => {
 	switch (type) {
 		case 'banner':
-			return (await import('./banner')).BANNER_CONTAINER;
+			return (await import('./strip')).BANNER_CONTAINER;
 		case 'drawer':
 			return (await import('./drawer')).DRAWER_CONTAINER;
 		default:
@@ -85,7 +85,7 @@ const mount = async function mount(presentation?: ConsentPresentation) {
 			async (type: ConsentContainer['type']) => {
 				switch (type) {
 					case 'banner':
-						return (await import('./banner')).BANNER_CONTAINER;
+						return (await import('./strip')).BANNER_CONTAINER;
 					case 'drawer':
 						return (await import('./drawer')).DRAWER_CONTAINER;
 					default:

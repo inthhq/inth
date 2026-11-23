@@ -7,6 +7,9 @@
  * `rslib.config.ts` swaps in `./load-static.ts` for the script-tag builds
  * that stay one file, and `./load-script.ts` for `inth.hosted.js`.
  *
+ * Keep the loaded modules' filenames neutral: each chunk is named after
+ * its module, and content blockers drop files named like a consent banner.
+ *
  * @packageDocumentation
  * @internal
  */
@@ -26,7 +29,7 @@ export const importPresentation = (
 	type: ConsentContainer['type']
 ): Promise<PresentationModule> => {
 	if (type === 'banner') {
-		return import('../prompt/banner');
+		return import('../prompt/strip');
 	}
 	if (type === 'drawer') {
 		return import('../prompt/drawer');

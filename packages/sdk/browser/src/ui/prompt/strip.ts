@@ -1,7 +1,9 @@
 /**
  * The consent prompt as a Banner. Only this module carries the
  * `bar` stylesheet and class names, so a page that shows another
- * presentation never bundles or adds them.
+ * presentation never bundles or adds them. The file is named `strip`,
+ * not `banner`: the ES module build loads it as a chunk named after it,
+ * and content blockers drop files named like a consent banner.
  *
  * @packageDocumentation
  * @internal

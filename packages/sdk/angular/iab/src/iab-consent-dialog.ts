@@ -32,7 +32,7 @@ import {
 } from '@inth/angular';
 import type { ActiveUI, Model } from '@inth/sdk/engine';
 
-import type { IABConsentDialogBody } from './iab-consent-dialog-body';
+import type { IABConsentDialogBody } from './iab-dialog-body';
 import { IAB_DIALOG_SHEETS } from './iab-dialog-sheets';
 
 /**
@@ -45,7 +45,7 @@ export const IAB_CONSENT_DIALOG_BODY = new InjectionToken<
 	() => Promise<Type<IABConsentDialogBody>>
 >('INTH_IAB_CONSENT_DIALOG_BODY', {
 	factory: () => async () =>
-		(await import('./iab-consent-dialog-body')).IABConsentDialogBody,
+		(await import('./iab-dialog-body')).IABConsentDialogBody,
 });
 
 /** A tab of the IAB preference centre. */

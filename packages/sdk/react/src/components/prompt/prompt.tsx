@@ -62,12 +62,14 @@ const deferredContainer = function deferredContainer<Module>(
 	return { Container, preload: deferred.preload };
 };
 
+// Keep lazy module filenames neutral: bundlers name chunks after them, and
+// content blockers drop files named like a consent banner.
 const cardContainer = deferredContainer(
 	() => import('./card'),
 	(module) => module.CardSurface
 );
 const bannerContainer = deferredContainer(
-	() => import('./banner'),
+	() => import('./strip'),
 	(module) => module.BannerSurface
 );
 const drawerContainer = deferredContainer(

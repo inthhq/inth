@@ -8,7 +8,7 @@
  */
 await Promise.all([
 	import('../../ui/prompt/card'),
-	import('../../ui/prompt/banner'),
+	import('../../ui/prompt/strip'),
 	import('../../ui/prompt/drawer'),
 	import('../../ui/prompt/panel'),
 	import('../../ui/dialog/dialog'),

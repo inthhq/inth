@@ -2,9 +2,9 @@
 /**
  * The consent prompt: a Card, Banner or Drawer that shows the same
  * content, copy and decisions in every container. The entry components
- * beside this file (`card.vue`, `banner.vue`, `drawer.vue`) import the
- * stylesheet of one container each and pass its class names, so a page
- * downloads only the container it renders.
+ * beside this file (`card.vue`, `strip.vue` for the Banner, and
+ * `drawer.vue`) import the stylesheet of one container each and pass its
+ * class names, so a page downloads only the container it renders.
  *
  * The in-place options load with `panel.vue`, which brings the `expand`
  * stylesheet; this file reads only its class names.
