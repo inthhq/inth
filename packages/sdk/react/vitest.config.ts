@@ -309,7 +309,11 @@ export default mergeConfig(
 				{
 					extends: true,
 					test: {
-						exclude: ['src/**/*.node.test.ts', 'src/**/*.node.test.tsx', '**/node_modules/**'],
+						exclude: [
+							'src/**/*.node.test.ts',
+							'src/**/*.node.test.tsx',
+							'**/node_modules/**',
+						],
 						include: [
 							'src/**/*.test.tsx',
 							'src/**/*.test.ts',

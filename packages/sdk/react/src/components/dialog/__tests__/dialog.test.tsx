@@ -501,7 +501,9 @@ describe('disableAnimation', () => {
 		await openDialog();
 		const protect = must('consent-dialog-right-option-sale-protect');
 		protect.click();
-		await waitFor(() => expect(protect).toHaveAttribute('aria-pressed', 'true'));
+		await waitFor(() =>
+			expect(protect).toHaveAttribute('aria-pressed', 'true')
+		);
 		const path = protect.querySelector('path') as SVGPathElement;
 		const style = getComputedStyle(path);
 		expect(style.animationName).toBe('none');
@@ -550,9 +552,10 @@ describe('preferences under a held opt-out', () => {
 		await new Promise((resolve) => {
 			setTimeout(resolve, 100);
 		});
-		expect(
-			must('consent-dialog-category-switch-measurement')
-		).toHaveAttribute('aria-checked', 'true');
+		expect(must('consent-dialog-category-switch-measurement')).toHaveAttribute(
+			'aria-checked',
+			'true'
+		);
 		expect(probe.snapshot?.effectivePermissions.measurement).toBe(true);
 		expect(probe.snapshot?.optOut).toBeTruthy();
 		expect(probe.snapshot?.effectivePermissions.marketing).toBe(false);

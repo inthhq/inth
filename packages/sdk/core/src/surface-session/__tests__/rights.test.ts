@@ -519,7 +519,7 @@ describe('[PERM-02] banner commits respect existing state', () => {
 		});
 	});
 
-	test('[BNR-06] Allow and Don\'t allow record the time the visitor chose', () => {
+	test("[BNR-06] Allow and Don't allow record the time the visitor chose", () => {
 		for (const action of ['allow', 'refuse'] as const) {
 			const kernel = openBanner(kernelFor('opt-in'));
 			const tappedAt = Date.now() - 500;

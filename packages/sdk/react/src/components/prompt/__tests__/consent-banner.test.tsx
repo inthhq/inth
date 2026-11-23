@@ -1213,7 +1213,7 @@ describe('[BNR-06] a tap before hydration', () => {
 		);
 	});
 
-	test('a tap on the notice\'s right-link before hydration expands the rights in place', async () => {
+	test("a tap on the notice's right-link before hydration expands the rights in place", async () => {
 		tapBeforeHydration('customize');
 		await mount({ region: 'us-notice' });
 		await waitForRoot();
