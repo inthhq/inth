@@ -31,7 +31,7 @@ Bare RN `0.84.x` and `0.87.x` are also supported (`0.87` and `0.88` require comp
 
 ## Choose versions for a new app
 
-Target React Native `0.88` with React `19.3`, or Expo SDK `58`, for new apps and complete the [mobile verification checklist](/docs/guides/mobile-verify) before release.
+Target React Native `0.88` with React `19.3`, or Expo SDK `58`, for new apps and complete the [mobile verification checklist](/docs/frameworks/react-native/verify) before release.
 
 Inth compatibility does not extend upstream framework maintenance. As of November 3, 2026, RN `0.87` and `0.88` are active upstream, `0.86` is End of Cycle, and `0.83` through `0.85` are unsupported upstream. Check [React Native releases](https://reactnative.dev/releases/overview) and the [Expo upgrade walkthrough](https://docs.expo.dev/workflow/upgrading-expo-sdk-walkthrough/). We review each stable RN and Expo release before adding support and drop older versions or raise OS floors only in major Inth releases.
 
@@ -61,4 +61,4 @@ When `updates.url` is enabled, the config plugin requires `runtimeVersion` (the 
 
 Keep one `InthProvider`, move optional SDK initialization behind native gates, and replace custom web-style dialogs with the native presenter from the [React Native quickstart](/docs/frameworks/react-native/quickstart) while keeping Privacy settings reachable. Map brand styling to [native customization](/docs/frameworks/react-native/customize), or follow [Build your own UI](/docs/frameworks/react-native/headless) for React-rendered controls.
 
-Preserve stored consent across upgrades; use `reset()` only for explicit user or QA resets. Complete [Verify mobile consent](/docs/guides/mobile-verify) and check [mobile availability](/docs/guides/mobile-status) before release.
+Preserve stored consent across upgrades; use `reset()` only for explicit user or QA resets. Complete [Verify mobile consent](/docs/frameworks/react-native/verify) and check [mobile availability](/docs/frameworks/react-native/availability) before release.

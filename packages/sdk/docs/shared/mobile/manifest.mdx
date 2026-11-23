@@ -1,10 +1,22 @@
----
-title: Mobile manifest
-description: Fetch your Inth project manifest at build time and bundle it into iOS or Android apps for offline first launches.
-group: cli
----
+<section id="intro-swift">
+
+Fetch your Inth project's `/v1/consent/manifest` at build time and write a policy JSON resource that the Swift SDK loads before the first network response.
+
+</section>
+
+<section id="intro-android">
+
+Fetch your Inth project's `/v1/consent/manifest` at build time and write a policy JSON resource that the Android SDK loads before the first network response.
+
+</section>
+
+<section id="intro-react-native">
 
 Fetch your Inth project's `/v1/consent/manifest` at build time and write a policy JSON resource that the iOS and Android SDKs load before the first network response.
+
+</section>
+
+<section id="command">
 
 ## Command syntax
 
@@ -46,7 +58,17 @@ npx @c15t/cli mobile-manifest \
   --dry-run
 ```
 
-Never pass `--dry-run` on release builds, because release apps refuse `dryRun`. Expo's `bundleManifest` passes `--dry-run` automatically when `dryRun` is enabled.
+Never pass `--dry-run` on release builds, because release apps refuse `dryRun`.
+
+</section>
+
+<section id="dry-run-expo">
+
+Expo's `bundleManifest` passes `--dry-run` automatically when `dryRun` is enabled.
+
+</section>
+
+<section id="failures">
 
 ## Failure behavior
 
@@ -56,9 +78,33 @@ Network errors and HTTP `5xx`, `408`, or `429` count as fetch failures:
 - **Debug builds** warn, continue, and delete any existing file at `--out` to avoid shipping stale policy.
 - **`--allow-stale-manifest`** reuses an existing file at `--out` matching `--backend-url` for air-gapped CI.
 
-Configuration errors (`404`, non-manifest responses, invalid manifests, or missing conservative opt-in/IAB fallback with no preselected optional categories) fail every build. Expired manifests still prompt and save choices offline while emitting `policyStale`; see [mobile offline consent](/docs/guides/mobile-offline).
+Configuration errors (`404`, non-manifest responses, invalid manifests, or missing conservative opt-in/IAB fallback with no preselected optional categories) fail every build. Expired manifests still prompt and save choices offline while emitting `policyStale`.
+
+</section>
+
+<section id="offline-swift">
+
+See [Offline consent](/docs/frameworks/swift/offline).
+
+</section>
+
+<section id="offline-android">
+
+See [Offline consent](/docs/frameworks/android/offline).
+
+</section>
+
+<section id="offline-react-native">
+
+See [Offline consent](/docs/frameworks/react-native/offline).
+
+</section>
+
+<section id="verify">
 
 ## Verify the output
 
 1. Run the command with `--build release` against your Inth project URL and confirm exit code `0` and valid JSON at `--out`.
 2. Re-run with `--build release` against an unreachable URL (without `--allow-stale-manifest`) and confirm a non-zero exit.
+
+</section>

@@ -12,7 +12,7 @@ c15t.com yet. Read them from either place:
 
 - The Inth source your maintainer supplied: `docs/frameworks/android/`
   (`quickstart.mdx`, `configuration.mdx`, `headless.mdx`, `customize.mdx`) and
-  `docs/guides/mobile-*.mdx` (IAB, offline startup, identity, verification).
+  `docs/frameworks/android/` and `docs/shared/mobile/` (IAB, offline startup, identity, verification).
 - The `@inth/react-native` package, which bundles the same pages as Markdown
   under `docs/frameworks/android/` and `docs/guides/`.
 

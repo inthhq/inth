@@ -57,7 +57,7 @@ The bundled Amplitude helper in `InthApple`, `inth-android`, and `@inth/react-na
 
 ### Before you start
 
-Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add `measurement` to your native config and Inth policy. See [mobile availability](/docs/guides/mobile-status).
+Complete the [Swift](/docs/frameworks/swift/quickstart), [Android](/docs/frameworks/android/quickstart), or [React Native](/docs/frameworks/react-native/quickstart) quickstart and add `measurement` to your native config and Inth policy. See mobile availability for [Swift](/docs/frameworks/swift/availability), [Android](/docs/frameworks/android/availability), or [React Native](/docs/frameworks/react-native/availability).
 
 Install the current [iOS Swift](https://amplitude.com/docs/sdks/analytics/ios/ios-swift-sdk), [Android Kotlin](https://amplitude.com/docs/sdks/analytics/android/android-kotlin-sdk), or [React Native](https://amplitude.com/docs/sdks/analytics/react-native/react-native-sdk) Analytics SDK, not the legacy maintenance library. Initialize Amplitude with `optOut` enabled and configure automatic tracking, ad IDs, location, and session replay separately. For strict startup gating, defer initialization behind a [native startup gate](/docs/frameworks/react-native/native-behaviour) because a JS helper cannot block an earlier native initializer. Expo requires a custom native build, not Expo Go.
 
@@ -138,4 +138,4 @@ Opt-out stops collection of new covered events, but previously queued events can
 3. Withdraw `measurement` and confirm Amplitude drops new events.
 4. Relaunch after grant and refusal, toggle an unrelated category to confirm no extra opt-out call runs, then reset Amplitude and call `sync()`.
 
-Checked against `@amplitude/analytics-react-native` `1.13.1`, `com.amplitude:analytics-android` `1.37.1`, and `AmplitudeSwift` `1.20.0`. Complete [mobile verification](/docs/guides/mobile-verify) on real devices.
+Checked against `@amplitude/analytics-react-native` `1.13.1`, `com.amplitude:analytics-android` `1.37.1`, and `AmplitudeSwift` `1.20.0`. Complete mobile verification for [Swift](/docs/frameworks/swift/verify), [Android](/docs/frameworks/android/verify), or [React Native](/docs/frameworks/react-native/verify) on real devices.

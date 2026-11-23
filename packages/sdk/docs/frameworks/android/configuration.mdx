@@ -24,7 +24,7 @@ An invalid value throws `InthProjectUrlException` with `reason` (`empty`, `malfo
 backendUrl must be the project URL from your Inth dashboard, such as https://your-project.inth.app. Got "https://consent.example.com": the host must be a project host under inth.app.
 ```
 
-The installer handles HTTP transport, foreground refresh, and reconnect retry. With an [offline policy](/docs/guides/mobile-offline), it queues offline choices and delivers them on reconnect.
+The installer handles HTTP transport, foreground refresh, and reconnect retry. With an [offline policy](/docs/frameworks/android/offline), it queues offline choices and delivers them on reconnect.
 
 ## Run without sending records
 
@@ -123,4 +123,4 @@ For explicit withdrawal, save `CommitIntent.Necessary` and check the commit resu
 
 ## Handle policy or storage failures
 
-`Inth.decision(category)` distinguishes `PENDING`, `DENIED`, and `GRANTED`. Keep optional collection off while policy or storage is unavailable, keep necessary features usable, and register a retained `onError` callback. Never show a save confirmation after a durable write failure. See [Save a category form](/docs/frameworks/android/headless#save-a-category-form) and [Verify mobile consent](/docs/guides/mobile-verify).
+`Inth.decision(category)` distinguishes `PENDING`, `DENIED`, and `GRANTED`. Keep optional collection off while policy or storage is unavailable, keep necessary features usable, and register a retained `onError` callback. Never show a save confirmation after a durable write failure. See [Save a category form](/docs/frameworks/android/headless#save-a-category-form) and [Verify mobile consent](/docs/frameworks/android/verify).

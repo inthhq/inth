@@ -31,7 +31,7 @@ Invoke saves only from explicit user actions. Reading permissions or mounting `I
 | `queued` | `true` when backend delivery was durably queued (not a queue-length count). |
 | `delivered` | `true` when the backend accepted the save before returning (when reported). |
 
-`ok: true, queued: true` confirms durable local success so your UI and SDK gates can update immediately, even offline (iOS reports backend delivery asynchronously rather than setting `delivered: true` on the local result). Common refusal reasons include `policy-pending`, `queue-write-failed`, `concurrent-change`, and invalid intent. A later network failure never reverses a durable withdrawal; see [Mobile offline consent](/docs/guides/mobile-offline).
+`ok: true, queued: true` confirms durable local success so your UI and SDK gates can update immediately, even offline (iOS reports backend delivery asynchronously rather than setting `delivered: true` on the local result). Common refusal reasons include `policy-pending`, `queue-write-failed`, `concurrent-change`, and invalid intent. A later network failure never reverses a durable withdrawal; see [Mobile offline consent](/docs/frameworks/react-native/offline).
 
 ## Open the native screens
 
@@ -81,4 +81,4 @@ Draft toggle changes do not emit bridge events; React hooks update from committe
 | `setOverrides(overrides)` | Override QA country, region, language, or GPC inputs. |
 | `requestTrackingAuthorization()` | Request Apple ATT manually (automatic after consent unless `trackingRequest="manual"`). |
 
-Await asynchronous actions and handle errors. See [Identity, reset and withdrawal](/docs/frameworks/react-native/identity), [Configuration](/docs/frameworks/react-native/configuration), and [ATT](/docs/frameworks/react-native/iab#keep-att-separate). For TCF vendor and purpose choices, use the native presenter or headless IAB hooks rather than category commands; see [Mobile IAB and ads](/docs/guides/mobile-iab).
+Await asynchronous actions and handle errors. See [Identity, reset and withdrawal](/docs/frameworks/react-native/identity), [Configuration](/docs/frameworks/react-native/configuration), and [ATT](/docs/frameworks/react-native/iab#keep-att-separate). For TCF vendor and purpose choices, use the native presenter or headless IAB hooks rather than category commands; see [Mobile IAB and ads](/docs/frameworks/react-native/iab).

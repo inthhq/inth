@@ -11,7 +11,7 @@ Add native SwiftUI and Compose consent screens, durable preference storage, and 
 - React Native `0.83.x` through `0.88.x` (New Architecture, React `>=19.2.0 <19.4.0`) or Expo SDK 55 through 58 with a custom native build (Expo Go is unsupported). Target RN 0.88 or Expo 58 for new apps; see [compatibility](/docs/frameworks/react-native/platform-support).
 - iOS 16.4+ and Android API 24+.
 - An [Inth project](https://inth.com) with regional policies, your categories (`measurement`, `marketing`), its HTTPS project URL (`https://your-project.inth.app`), and your HTTPS privacy policy URL.
-- Private prerelease `@inth/react-native` tarball and Android Maven access; see [mobile availability](/docs/guides/mobile-status).
+- Private prerelease `@inth/react-native` tarball and Android Maven access; see [mobile availability](/docs/frameworks/react-native/availability).
 
 ## Install the package
 
@@ -65,13 +65,13 @@ Build a native binary and test under an opt-in policy:
 3. Open **Privacy settings**, enable measurement, and save: gate opens.
 4. Disable measurement and save: gate closes and collection stops.
 
-`committed` confirms durable local storage; backend delivery can finish after reconnect. See [Commands and outcomes](/docs/frameworks/react-native/usage) and [Verify mobile consent](/docs/guides/mobile-verify).
+`committed` confirms durable local storage; backend delivery can finish after reconnect. See [Commands and outcomes](/docs/frameworks/react-native/usage) and [Verify mobile consent](/docs/frameworks/react-native/verify).
 
 ## Next steps
 
 - [Connect mobile SDKs](/docs/integrations/overview#mobile-sdks): wire Firebase Analytics and PostHog.
 - [Customize](/docs/frameworks/react-native/customize): theme native screens, branding, and attribution.
 - [Build your own UI](/docs/frameworks/react-native/headless): render custom screens or [exclude stock native screens](/docs/frameworks/react-native/headless#build-without-the-stock-native-screens).
-- [Mobile IAB and ads](/docs/guides/mobile-iab): configure TCF, Additional Consent, and ATT.
-- [Mobile offline consent](/docs/guides/mobile-offline): bundle an offline startup policy.
+- [Mobile IAB and ads](/docs/frameworks/react-native/iab): configure TCF, Additional Consent, and ATT.
+- [Mobile offline consent](/docs/frameworks/react-native/offline): bundle an offline startup policy.
 - [Examples](/docs/frameworks/react-native/examples): run SwiftUI, UIKit, Android, bare RN, and Expo demos.

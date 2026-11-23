@@ -1,3 +1,5 @@
+<section id="link">
+
 Account identity, consent state, and OS tracking permission have separate lifetimes. Always update consent through the native engine so stored decisions, platform signals, and the delivery queue stay in sync.
 
 ## Link an app account
@@ -8,7 +10,27 @@ The Inth subject identifies the consent record; an external ID links that subjec
 
 ## Withdraw optional consent
 
-Record an explicit refusal or withdrawal with `saveConsents('none')` in React Native, `.necessary` in Swift, or `CommitIntent.Necessary` in Kotlin. Check the commit result (`CommitResult.ok` in React Native, commit status in Swift, or native commit result in Kotlin) before confirming the save. Stock presenters keep drafts open if storage refuses a write.
+</section>
+
+<section id="withdraw-swift">
+
+Record an explicit refusal or withdrawal with the `.necessary` commit intent. Check the commit status before confirming the save. Stock presenters keep drafts open if storage refuses a write.
+
+</section>
+
+<section id="withdraw-android">
+
+Record an explicit refusal or withdrawal with `CommitIntent.Necessary`. Check the native commit result before confirming the save. Stock presenters keep drafts open if storage refuses a write.
+
+</section>
+
+<section id="withdraw-react-native">
+
+Record an explicit refusal or withdrawal with `saveConsents('none')`. Check `CommitResult.ok` before confirming the save. Stock presenters keep drafts open if storage refuses a write.
+
+</section>
+
+<section id="reset">
 
 Withdrawal applies locally immediately, even offline, and queues delivery to Inth. Never delete app storage, clear the queue, or edit IAB keys directly instead of recording a withdrawal.
 
@@ -16,16 +38,38 @@ Withdrawal applies locally immediately, even offline, and queues delivery to Int
 
 Reset clears local consent authority so policy resolves again and the app can re-prompt. It preserves the subject and configuration and does not mean reject-all, account erasure, or backend deletion.
 
-| Platform | Reset command |
-| --- | --- |
-| React Native | `useConsentActions().reset()` |
-| Swift | `reset()` on the installed `ConsentCore` |
-| Kotlin | `reset()` on the installed kernel (`Inth.current`) |
+</section>
 
-Kotlin's `Inth.uninstall()` only tears down the process singleton and leaves stored consent untouched.
+<section id="reset-swift">
+
+Call `reset()` on the installed `ConsentCore`.
+
+</section>
+
+<section id="reset-android">
+
+Call `reset()` on the installed kernel (`Inth.current`). `Inth.uninstall()` only tears down the process singleton and leaves stored consent untouched.
+
+</section>
+
+<section id="reset-react-native">
+
+Call `useConsentActions().reset()`.
+
+</section>
+
+<section id="deletion">
 
 Reset preserves pending IAB withdrawal obligations. If storage refuses a reset, surface the error and keep optional collection off.
 
 ## Handle deletion separately
 
-Implement account deletion and backend erasure in your app and server workflows; `reset()` does not delete remote records. On iOS, Keychain items can persist after uninstalling the app, so uninstalling is not a reliable reset.
+Implement account deletion and backend erasure in your app and server workflows; `reset()` does not delete remote records.
+
+</section>
+
+<section id="deletion-ios">
+
+On iOS, Keychain items can persist after uninstalling the app, so uninstalling is not a reliable reset.
+
+</section>

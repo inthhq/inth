@@ -11,7 +11,7 @@ Add a native consent prompt and Privacy settings entry to a SwiftUI app with one
 - iOS 16.4+ and Xcode with Swift 5.9+.
 - An [Inth project](https://inth.com) with regional policies, `measurement` and `marketing` categories, and its HTTPS project URL (`https://your-project.inth.app`).
 - Your app's HTTPS privacy policy URL.
-- Private prerelease source access; see [mobile availability](/docs/guides/mobile-status).
+- Private prerelease source access; see [mobile availability](/docs/frameworks/swift/availability).
 
 ## Add the Swift package
 
@@ -60,7 +60,7 @@ Run under an opt-in policy:
 3. Open **Privacy settings**, enable measurement, and save: settings show it enabled.
 4. Disable measurement, save, and relaunch: it stays off.
 
-Local saves queue backend delivery; complete [Verify mobile consent](/docs/guides/mobile-verify) before release.
+Local saves queue backend delivery; complete [Verify mobile consent](/docs/frameworks/swift/verify) before release.
 
 ## Next steps
 
@@ -68,5 +68,5 @@ Local saves queue backend delivery; complete [Verify mobile consent](/docs/guide
 - [UIKit](/docs/frameworks/swift/uikit): host native screens in UIKit.
 - [Customize](/docs/frameworks/swift/customize): theme colors, branding, layout, and copy.
 - [Build your own UI](/docs/frameworks/swift/headless): build custom screens and SDK subscriptions.
-- [Mobile IAB and ads](/docs/guides/mobile-iab): configure TCF, Additional Consent, and ATT.
-- [Mobile offline consent](/docs/guides/mobile-offline): bundle an offline startup policy.
+- [Mobile IAB and ads](/docs/frameworks/swift/iab): configure TCF, Additional Consent, and ATT.
+- [Mobile offline consent](/docs/frameworks/swift/offline): bundle an offline startup policy.

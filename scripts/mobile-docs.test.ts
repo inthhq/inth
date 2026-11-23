@@ -47,8 +47,8 @@ test('advertised mobile README guides have public source pages', () => {
 			'frameworks/react-native/expo',
 			'frameworks/swift/quickstart',
 			'frameworks/android/quickstart',
-			'guides/mobile-iab',
-			'guides/mobile-verify',
+			'frameworks/react-native/iab',
+			'frameworks/react-native/verify',
 			'integrations/overview',
 		])
 	);
@@ -80,8 +80,10 @@ test('the mobile bundle covers every public mobile guide and advertises native s
 		'frameworks/swift/quickstart.mdx',
 		'frameworks/swift/uikit.mdx',
 		'frameworks/android/quickstart.mdx',
-		'guides/mobile-iab.mdx',
-		'guides/mobile-verify.mdx',
+		'frameworks/swift/iab.mdx',
+		'frameworks/android/iab.mdx',
+		'frameworks/swift/verify.mdx',
+		'frameworks/android/verify.mdx',
 		'integrations/overview.mdx',
 		'integrations/firebase-analytics.mdx',
 		'integrations/posthog.mdx',

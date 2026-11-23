@@ -25,7 +25,7 @@ their own UI can omit `InthConsentUI`.
 
 These are currently private source artifacts. In Xcode, add the authorized
 checkout's root as a local Swift package. A separate Swift repository is not
-required. See [mobile availability](../sdk/docs/guides/mobile-status.mdx) for
+required. See [mobile availability](../sdk/docs/frameworks/swift/availability.mdx) for
 distribution and release status.
 
 ## Guides and examples
@@ -34,9 +34,9 @@ distribution and release status.
 - [UIKit integration](../sdk/docs/frameworks/swift/uikit.mdx)
 - [Native gates and custom UI](../sdk/docs/frameworks/swift/headless.mdx)
 - [Colors, identity and copy](../sdk/docs/frameworks/swift/customize.mdx)
-- [IAB and advertising](../sdk/docs/guides/mobile-iab.mdx)
-- [Offline startup and persistence](../sdk/docs/guides/mobile-offline.mdx)
-- [App verification](../sdk/docs/guides/mobile-verify.mdx)
+- [IAB and advertising](../sdk/docs/frameworks/swift/iab.mdx)
+- [Offline startup and persistence](../sdk/docs/frameworks/swift/offline.mdx)
+- [App verification](../sdk/docs/frameworks/swift/verify.mdx)
 
 `Examples/AppleInstallation/Quickstart` contains the quickstart's checked source
 files. Select either the SwiftUI or UIKit entry point, not both. The

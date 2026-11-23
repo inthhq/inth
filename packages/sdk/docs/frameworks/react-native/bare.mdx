@@ -35,7 +35,7 @@ Add these keys inside the root `<dict>` of your app target's `Info.plist`:
 
 <include src="../../shared/examples/react-native-bare/bare-ios-configuration.mdx" />
 
-Set the project URL in this snippet to your Inth project URL (any other host stops launch with `INTH_CONFIGURATION_BACKEND_URL`) and match `com.inth.categories` to your app. Remove `com.inth.policy.resource` unless you bundle `inth-policy.json` in Copy Bundle Resources following [Mobile offline consent](/docs/guides/mobile-offline). Keep App Transport Security enabled for production HTTPS traffic.
+Set the project URL in this snippet to your Inth project URL (any other host stops launch with `INTH_CONFIGURATION_BACKEND_URL`) and match `com.inth.categories` to your app. Remove `com.inth.policy.resource` unless you bundle `inth-policy.json` in Copy Bundle Resources following [Mobile offline consent](/docs/frameworks/react-native/offline). Keep App Transport Security enabled for production HTTPS traffic.
 
 ## Set up Android
 
@@ -79,4 +79,4 @@ Automatic startup handles standard category consent and IAB CMP metadata from [T
 - **iOS.** Set `com.inth.reactnative.AutoBootstrap` to `false`, call `InthApple.install(InthAppleConfiguration(backendURL:))` from the `InthReactNative` module with `configuration.platform = "rn"`, and attach via `InthReactNativeBootstrap.install(core)`.
 - **Android.** Set `com.inth.reactnative.AUTO_BOOTSTRAP` to `false`, call `InthAndroid.install` before starting the React host, and set `platform = InthProtocol.PLATFORM_REACT_NATIVE` in `NativeConfig`.
 
-See [Mobile IAB and ads](/docs/guides/mobile-iab) for native CMP and publisher configuration.
+See [Mobile IAB and ads](/docs/frameworks/react-native/iab) for native CMP and publisher configuration.

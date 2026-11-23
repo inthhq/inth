@@ -46,7 +46,7 @@ so the module is safe to import on the server.
 | `scriptLoader` | `{ onDebug? }` | none | `onDebug` receives script loader lifecycle events (read at start). |
 | `iab` | IAB options or `false` | none | CMP settings (requires `createIAB`). |
 | `createIAB` | `createIAB` from `@inth/sdk/iab` | none | IAB module factory. |
-| `consentSource` | `{ getPermissions, subscribe, openPreferences }` | none | Delegates authority to an external CMP or `webViewConsentSource()`; see [consent in WebViews](/docs/guides/mobile-webview). Read once. |
+| `consentSource` | `{ getPermissions, subscribe, openPreferences }` | none | Delegates authority to an external CMP or `webViewConsentSource()`; see Consent in WebViews in the Swift, Android, or React Native docs. Read once. |
 | `enabled` | `boolean` | `true` | `false` grants all categories, skips init and loads all scripts immediately. |
 | `windowDebug` | `boolean` | `true` | Exposes `window.inth` debug info (`version`, `pkg`, `mode`) on `start()`. |
 | `pkg` | `string` | `'@inth/sdk/engine'` | Package name reported on `window.inth`. |

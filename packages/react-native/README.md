@@ -27,7 +27,7 @@ Native consent screens, saved privacy choices and SDK gates for React Native and
 
 ## Installation
 
-The mobile SDK is a private prerelease. Obtain the package tarball and its matching Android artifacts from the maintainer, then follow the [React Native quickstart](https://inth.com/docs/frameworks/react-native/quickstart) or [Expo setup](https://inth.com/docs/frameworks/react-native/expo). [Mobile availability](https://inth.com/docs/guides/mobile-status) records distribution and first-release scope.
+The mobile SDK is a private prerelease. Obtain the package tarball and its matching Android artifacts from the maintainer, then follow the [React Native quickstart](https://inth.com/docs/frameworks/react-native/quickstart) or [Expo setup](https://inth.com/docs/frameworks/react-native/expo). [Mobile availability](https://inth.com/docs/frameworks/react-native/availability) records distribution and first-release scope.
 
 ## Documentation
 
@@ -59,9 +59,9 @@ Start with the guide for your app. The package also includes version-matched Mar
 - [SwiftUI quickstart and UIKit](https://inth.com/docs/frameworks/swift/quickstart)
 - [Kotlin Android quickstart](https://inth.com/docs/frameworks/android/quickstart)
 - [Mobile SDK integrations](https://inth.com/docs/integrations/overview#mobile-sdks)
-- [Offline consent](https://inth.com/docs/guides/mobile-offline)
-- [IAB and advertising](https://inth.com/docs/guides/mobile-iab)
-- [Verify mobile consent](https://inth.com/docs/guides/mobile-verify)
+- [Offline consent](https://inth.com/docs/frameworks/react-native/offline)
+- [IAB and advertising](https://inth.com/docs/frameworks/react-native/iab)
+- [Verify mobile consent](https://inth.com/docs/frameworks/react-native/verify)
 
 ## IAB and ads
 
@@ -73,7 +73,7 @@ The mobile SDK works only with Inth hosted projects. Set `projectUrl` to the pro
 
 ## First release scope
 
-The first release includes native presenters, RN hooks and category commands, app-owned native installation, IAB CMP settings through the Expo plugin or native metadata, and standalone Swift/Kotlin APIs. A separate UI-free RN package is deferred. See [mobile availability](https://inth.com/docs/guides/mobile-status) for the supported integration paths.
+The first release includes native presenters, RN hooks and category commands, app-owned native installation, IAB CMP settings through the Expo plugin or native metadata, and standalone Swift/Kotlin APIs. A separate UI-free RN package is deferred. See [mobile availability](https://inth.com/docs/frameworks/react-native/availability) for the supported integration paths.
 
 ## Docs for AI Agents
 

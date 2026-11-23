@@ -170,8 +170,8 @@ test.each([
 	['integrations/google-tag-manager.mdx', 'Google Tag Manager'],
 	['shared/mobile/posthog.mdx', 'PostHog for mobile'],
 	['shared/examples/react-native-bare/rn-posthog-integration.mdx', 'PostHog'],
-	['guides/mobile-iab.mdx', 'Mobile IAB'],
-	['guides/mobile-verify.mdx', 'Verify mobile consent'],
+	['frameworks/swift/iab.mdx', 'IAB and ads'],
+	['frameworks/android/verify.mdx', 'Verify consent'],
 	['frameworks/swift/quickstart.mdx', 'Quickstart'],
 	['frameworks/react/vendor-consent.mdx', 'Vendor consent'],
 ])('allows %s', async (path, title) => {

@@ -1,12 +1,22 @@
----
-title: Consent in WebViews
-description: Sync consent from a Swift, Kotlin, or React Native app into a WebView so your website follows app consent without showing a second banner.
-group: guides
-seoTitle: Sync app consent into WebViews with Inth
-seoDescription: Hand native consent from a Swift, Kotlin, or React Native app to web Inth in a WebView with origin allowlisting and no second banner.
----
+<section id="intro-swift">
 
-Pass consent from a Swift, Kotlin, or React Native app into your website inside a WebView so web Inth follows the app's choice without showing a second banner.
+Pass consent from a Swift app into your website inside a WebView so web Inth follows the app's choice without showing a second banner.
+
+</section>
+
+<section id="intro-android">
+
+Pass consent from an Android app into your website inside a WebView so web Inth follows the app's choice without showing a second banner.
+
+</section>
+
+<section id="intro-react-native">
+
+Pass consent from a React Native app into your website inside a WebView so web Inth follows the app's choice without showing a second banner.
+
+</section>
+
+<section id="website">
 
 The app remains the consent authority. The web page gets a read-only copy, shows no banner or dialog, writes no cookie, and sends no consent records. A "Cookie settings" link on the page opens the app's native preferences screen.
 
@@ -52,7 +62,9 @@ For IAB TCF, the page does not mount `__tcfapi` from the app's TC String; read `
 
 Attach the helper before loading the first URL and keep the handle alive with the WebView.
 
-### Swift
+</section>
+
+<section id="app-swift">
 
 `ConsentWebView` in `InthApple` adds a main-frame user script to `WKUserContentController` and pushes updates when consent changes:
 
@@ -87,7 +99,9 @@ final class SiteViewController: UIViewController {
 
 The initializer throws on invalid origins or if the `WKUserContentController` already serves a different core or allowlist (one controller equals one scope). The callback runs on the main actor; call `close()` to stop syncing while keeping the WebView open.
 
-### Kotlin
+</section>
+
+<section id="app-android">
 
 `ConsentWebView` in `com.inth.android` uses `WebViewCompat.addDocumentStartJavaScript`:
 
@@ -118,7 +132,9 @@ class SiteActivity : AppCompatActivity() {
 
 `attach` throws `IllegalArgumentException` on invalid origins and returns `null` when `ConsentWebView.isSupported()` is `false`. Re-attaching replaces the previous helper.
 
-### React Native
+</section>
+
+<section id="app-react-native">
 
 Call `useWebViewConsent()` under `InthProvider` and spread its props onto `WebView` from `react-native-webview`:
 
@@ -140,6 +156,10 @@ export function Site({ onOpenPrivacy }: { onOpenPrivacy: () => void }) {
 
 If your `WebView` sets `onMessage`, forward events to `consent.onMessage(event)`. Rebuild the native app after updating `@inth/react-native`.
 
+</section>
+
+<section id="security">
+
 ## Preferences and security
 
 - **One-way flow.** Calls like `acceptAll()` are refused on the page. Opening preferences triggers `onPreferencesRequested` using a top-frame token so iframes cannot call it.
@@ -149,6 +169,26 @@ If your `WebView` sets `onMessage`, forward events to `consent.onMessage(event)`
 ## Verify the sync
 
 1. Save a choice in the app, then open a listed origin in the WebView.
-2. Confirm no banner shows. In Safari Web Inspector (iOS) or `chrome://inspect` (Android), run `window.__inthNativeConsent.getState()` and compare `permissions`.
+2. Confirm no banner shows. In the WebView's inspector, run `window.__inthNativeConsent.getState()` and compare `permissions`.
 3. Change consent in the app while the page stays open. Confirm `getState().revision` increments and allowed scripts start.
 4. Open an unlisted origin. Confirm `window.__inthNativeConsent` is `undefined` and the site's own banner shows.
+
+</section>
+
+<section id="inspector-swift">
+
+Inspect the WebView with Safari Web Inspector.
+
+</section>
+
+<section id="inspector-android">
+
+Inspect the WebView with `chrome://inspect`.
+
+</section>
+
+<section id="inspector-react-native">
+
+Inspect the WebView with Safari Web Inspector on iOS or `chrome://inspect` on Android.
+
+</section>

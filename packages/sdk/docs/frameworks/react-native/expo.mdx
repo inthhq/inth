@@ -16,7 +16,7 @@ Install the private prerelease tarball from your Expo project root:
 npm install /absolute/path/to/inth-react-native.tgz
 ```
 
-Obtain your Android Maven repository URL and build credentials from your maintainer; the plugin defines no default artifact repository. See [mobile availability](/docs/guides/mobile-status).
+Obtain your Android Maven repository URL and build credentials from your maintainer; the plugin defines no default artifact repository. See [mobile availability](/docs/frameworks/react-native/availability).
 
 The package ships an `inth-react-native` agent skill. On Expo SDK 58 and later, run `npx @expo/agent-cli skills:sync` to link it for your coding agent.
 
@@ -38,7 +38,7 @@ Update these values before building:
 | Maven credential env var names | Environment variable names present locally and in EAS (never inline secrets in `app.config.ts`). |
 | `policyResource` | Optional build-exported policy file; omit if not bundling an offline policy. |
 
-If you keep `policyResource`, export `inth-policy.json` beside `app.config.ts` following [Mobile offline consent](/docs/guides/mobile-offline). For development and CI without sending consent records, set `dryRun: true` (refused in release builds; see [Use dryRun in development and CI](/docs/frameworks/react-native/configuration#use-dryrun-in-development-and-ci)).
+If you keep `policyResource`, export `inth-policy.json` beside `app.config.ts` following [Mobile offline consent](/docs/frameworks/react-native/offline). For development and CI without sending consent records, set `dryRun: true` (refused in release builds; see [Use dryRun in development and CI](/docs/frameworks/react-native/configuration#use-dryrun-in-development-and-ci)).
 
 The plugin writes native launch metadata, Android startup and internet permissions, iOS privacy declarations, and denied [Firebase Consent Mode defaults](/docs/integrations/firebase-analytics#deny-consent-mode-signals-by-default) in `Info.plist` and `AndroidManifest.xml` (harmless without Firebase). Do not pass a project URL to `InthProvider` in JavaScript.
 
@@ -139,6 +139,6 @@ If your app requires Apple tracking authorization, enable `enableAppTrackingTran
 
 Set the plugin's `iab` option with your registered `cmpId`, `cmpVersion`, `publisherCountryCode`, and optional `consentScreen`. Prebuild validates ranges and fails on missing values; see [Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf).
 
-`iab` cannot combine with an in-code `policy` because the Global Vendor List comes from `/v1/consent/init`. `vendors` narrows disclosures without enabling IAB. For publisher restrictions or custom purposes, follow [Mobile IAB and ads](/docs/guides/mobile-iab).
+`iab` cannot combine with an in-code `policy` because the Global Vendor List comes from `/v1/consent/init`. `vendors` narrows disclosures without enabling IAB. For publisher restrictions or custom purposes, follow [Mobile IAB and ads](/docs/frameworks/react-native/iab).
 
 For EAS telemetry, see [Expo Observe](/docs/integrations/expo-observe) and [PostHog](/docs/integrations/posthog#apps-set-up-with-the-eas-posthog-integration).

@@ -90,15 +90,15 @@ Offline saves with `ok: true, queued: true` succeeded locally and do not need ma
 
 ## Fresh offline launch shows no prompt
 
-Export and embed a bundled policy manifest for the same `projectUrl` and rebuild the binary. Expired or mismatched bundles block new optional grants while keeping withdrawal working. See [Mobile offline consent](/docs/guides/mobile-offline).
+Export and embed a bundled policy manifest for the same `projectUrl` and rebuild the binary. Expired or mismatched bundles block new optional grants while keeping withdrawal working. See [Mobile offline consent](/docs/frameworks/react-native/offline).
 
 ## Consent records never appear in Inth
 
-Check whether `dryRun` is enabled (which drops all outgoing records while reporting local success). If using an in-code `policy`, make sure its rules match your Inth dashboard policy so the backend does not reject records with HTTP `422`. See [define the policy in code](/docs/guides/mobile-offline#define-the-policy-in-code).
+Check whether `dryRun` is enabled (which drops all outgoing records while reporting local success). If using an in-code `policy`, make sure its rules match your Inth dashboard policy so the backend does not reject records with HTTP `422`. See [define the policy in code](/docs/frameworks/react-native/offline#define-the-policy-in-code).
 
 ## IAB choices are unavailable
 
-`consentCategories` and `vendors` do not enable IAB TCF. Configure `iab` (or native CMP installation), ensure your Inth project serves an IAB policy and current GVL, and refresh stale disclosures rather than editing `IABTCF_*` keys directly. See [Mobile IAB and ads](/docs/guides/mobile-iab).
+`consentCategories` and `vendors` do not enable IAB TCF. Configure `iab` (or native CMP installation), ensure your Inth project serves an IAB policy and current GVL, and refresh stale disclosures rather than editing `IABTCF_*` keys directly. See [Mobile IAB and ads](/docs/frameworks/react-native/iab).
 
 ## Optional SDK sends requests before consent
 
@@ -114,4 +114,4 @@ Verify `NSUserTrackingUsageDescription` is present in `Info.plist` and rebuild i
 
 ## Expo rejects `updates.url`
 
-Set `runtimeVersion` (such as Expo's fingerprint policy) before enabling EAS Updates so OTA JavaScript never ships to an incompatible binary. After fixing any issue, re-run the affected flow against [Verify mobile consent](/docs/guides/mobile-verify).
+Set `runtimeVersion` (such as Expo's fingerprint policy) before enabling EAS Updates so OTA JavaScript never ships to an incompatible binary. After fixing any issue, re-run the affected flow against [Verify mobile consent](/docs/frameworks/react-native/verify).

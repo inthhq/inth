@@ -1,3 +1,5 @@
+<section id="prepare">
+
 ## Prepare your Inth project
 
 Configure an IAB policy in your Inth project for regions using TCF. The policy must serve the current Global Vendor List (GVL) and disclosures for every Google Additional Consent provider you offer. A category-only policy does not supply vendor disclosures.
@@ -8,35 +10,67 @@ Set the CMP ID and internal CMP version assigned to your deployment (separate fr
 
 Install the native engine once before showing consent or starting ad SDKs, and share that engine across your presenter and gates.
 
-### Swift
+</section>
+
+<section id="install-swift">
 
 This helper installs the core with Apple transport, protected storage, and the `UserDefaults` signal bus. Pass your approved deployment settings:
 
 <include src="../examples/native/core-swift/AppleInstallation/swift-iab-config.mdx" />
 
-### Kotlin
+</section>
+
+<section id="install-android">
 
 Pass `IabConfiguration` inside `NativeConfig` to `InthAndroid.install(context, config)`:
 
 <include src="../examples/native/examples/consent-demo/android-iab-config.mdx" />
 
-### React Native and Expo
+</section>
+
+<section id="install-react-native">
 
 In Expo, configure the plugin's `iab` option with `cmpId`, `cmpVersion`, `publisherCountryCode`, and optional `consentScreen`. In bare React Native, set the matching `com.inth.iab.*` `Info.plist` keys and `com.inth.IAB_*` Android metadata. Automatic startup installs the engine with IAB TCF enabled and writes CMP metadata to platform storage. See [Turn on IAB TCF](/docs/frameworks/react-native/configuration#turn-on-iab-tcf).
 
-The plugin's `vendors` option narrows disclosures but does not enable IAB. If you need publisher restrictions or custom purposes, disable automatic startup, install the engine natively with the Swift or Kotlin setup above, and attach the React Native adapter to it.
+The plugin's `vendors` option narrows disclosures but does not enable IAB. If you need publisher restrictions or custom purposes, disable automatic startup, install the engine natively with the Swift or Kotlin setup below, and attach the React Native adapter to it (see [iOS native installation](/docs/frameworks/react-native/apple) and [Android native dependencies](/docs/frameworks/react-native/android)).
+
+</section>
+
+<section id="present">
 
 ## Present the consent flow
 
 Use the native presenter from your platform quickstart. The stock flow covers purpose and vendor consent, legitimate-interest objections, special features, publisher restrictions, Additional Consent providers, and custom partners. Keep a Privacy settings entry point available after dismissal so users can update or withdraw consent.
 
-In React Native, you can also build custom IAB screens with `useIAB()` and `useTCString()`, backed by native validation and commits; see [Build your own IAB screen](/docs/frameworks/react-native/headless#build-your-own-iab-screen).
+</section>
+
+<section id="present-react-native">
+
+You can also build custom IAB screens with `useIAB()` and `useTCString()`, backed by native validation and commits; see [Build your own IAB screen](/docs/frameworks/react-native/headless#build-your-own-iab-screen).
+
+</section>
+
+<section id="custom-partners">
 
 ### Custom partners
 
 Custom vendors configured in your Inth policy appear on a dedicated Custom Partners page in the stock flow, separate from IAB partners. Accept all grants them and Reject all withdraws them.
 
-Because the TC String encodes IAB vendors only, check custom partner permissions with `isCustomVendorAllowed(id)` (string ID) on Swift and Kotlin. In React Native, read `useIABSnapshot()?.customVendors` and update choices through `useIAB()` (`setVendorConsent` and `setVendorLegitimateInterest`).
+</section>
+
+<section id="custom-partners-native">
+
+Because the TC String encodes IAB vendors only, check custom partner permissions with `isCustomVendorAllowed(id)` (string ID).
+
+</section>
+
+<section id="custom-partners-react-native">
+
+Because the TC String encodes IAB vendors only, read custom partner choices from `useIABSnapshot()?.customVendors` and update them through `useIAB()` (`setVendorConsent` and `setVendorLegitimateInterest`).
+
+</section>
+
+<section id="drafts">
 
 Draft edits are not active consent until saved. If vendor disclosures change while the visitor is editing, keep the draft visible and ask them to review the updated list.
 
@@ -44,16 +78,62 @@ Draft edits are not active consent until saved. If vendor disclosures change whi
 
 Disable automatic startup on your ad SDKs. Before initializing an SDK or requesting ads, check the native gate for the vendor, purpose, and legal basis:
 
+</section>
+
+<section id="gates-swift">
+
+- **TCF vendors.** `isIABAllowed`.
+- **Google Additional Consent.** `isAdTechProviderAllowed` (requires TCF consent for purposes 1, 3, and 4).
+- **Custom partners.** `isCustomVendorAllowed(id)`.
+- **Derived categories.** `iabPurposeCategories()` maps committed IAB and custom partner choices to Inth categories.
+
+</section>
+
+<section id="gates-android">
+
+- **TCF vendors.** `isIabAllowed`.
+- **Google Additional Consent.** `isAdTechProviderAllowed` (requires TCF consent for purposes 1, 3, and 4).
+- **Custom partners.** `isCustomVendorAllowed(id)`.
+- **Derived categories.** `iabPurposeCategories()` maps committed IAB and custom partner choices to Inth categories.
+
+</section>
+
+<section id="gates-react-native">
+
 - **TCF vendors.** `isIABAllowed` (Swift) or `isIabAllowed` (Kotlin).
 - **Google Additional Consent.** `isAdTechProviderAllowed` (requires TCF consent for purposes 1, 3, and 4).
 - **Custom partners.** `isCustomVendorAllowed(id)`.
 - **Derived categories.** `iabPurposeCategories()` maps committed IAB and custom partner choices to Inth categories.
 
+</section>
+
+<section id="gate-subscriptions">
+
 Keep gate subscriptions active so withdrawals stop or reconfigure ad collection. A category grant or non-empty TC String does not replace these checks.
 
 ## Inspect platform signals
 
+</section>
+
+<section id="signals-swift">
+
+The platform adapter mirrors committed signals into standard `UserDefaults` while keeping protected storage as the authority:
+
+</section>
+
+<section id="signals-android">
+
+The platform adapter mirrors committed signals into default `SharedPreferences` while keeping protected storage as the authority:
+
+</section>
+
+<section id="signals-react-native">
+
 Platform adapters mirror committed signals into standard `UserDefaults` on iOS and default `SharedPreferences` on Android while keeping protected storage as the authority:
+
+</section>
+
+<section id="signals">
 
 | Signal | Meaning |
 | --- | --- |
@@ -63,35 +143,121 @@ Platform adapters mirror committed signals into standard `UserDefaults` on iOS a
 | Purpose and vendor LI fields | Legitimate-interest bit vectors |
 | `IABTCF_AddtlConsent` | Additional Consent v2 provider selections |
 
+</section>
+
+<section id="signals-authority-native">
+
+Never write these keys manually or cache them as permanent authority; resets, identity changes, and expired disclosures invalidate them.
+
+</section>
+
+<section id="signals-authority-react-native">
+
 Never write these keys manually or cache them in JavaScript as permanent authority; resets, identity changes, and expired disclosures invalidate them.
+
+</section>
+
+<section id="att">
 
 ## Keep ATT separate
 
-On iOS, App Tracking Transparency (ATT) authorizes cross-app tracking. Request ATT only if your app tracks users, with a clear usage description. An ATT grant never grants Inth category or vendor consent, and Inth consent never bypasses ATT denial. Android has no ATT prompt.
+On iOS, App Tracking Transparency (ATT) authorizes cross-app tracking. Request ATT only if your app tracks users, with a clear usage description. An ATT grant never grants Inth category or vendor consent, and Inth consent never bypasses ATT denial.
 
-In React Native, `useTrackingAuthorization()` reads ATT status and `useIsTrackingAllowed(category)` combines ATT with category consent. Neither replaces IAB vendor and purpose checks.
+</section>
+
+<section id="att-react-native">
+
+Android has no ATT prompt.
+
+`useTrackingAuthorization()` reads ATT status and `useIsTrackingAllowed(category)` combines ATT with category consent. Neither replaces IAB vendor and purpose checks.
 
 ## Ask for ATT after the consent prompt
 
 When ATT is enabled (`enableAppTrackingTransparency` in Expo or `NSUserTrackingUsageDescription` in `Info.plist`), the stock prompt coordinates Apple's ATT alert. By default (`afterConsent`), the consent prompt appears first, and Apple's alert follows only if the visitor granted marketing.
 
-Configure the timing with `trackingRequest` on `<InthProvider>` in React Native, or on `.inth(...)` and `ConsentRootViewController` in Swift:
+Configure the timing with `trackingRequest` on `<InthProvider>`:
 
 | Value | Behavior |
 | --- | --- |
 | `afterConsent` (default) | Shows the consent prompt first, then Apple's ATT alert after dismissal only if marketing is granted. |
 | `beforeConsent` | Shows Apple's ATT alert before the consent prompt. Not recommended; use only if product or legal review requires it. |
-| `manual` | No automatic ATT request. Call `requestTrackingAuthorization()`, `useTrackingRequest()`, or `InthApple.tracking.request` directly. |
+| `manual` | No automatic ATT request. Call `requestTrackingAuthorization()` or `useTrackingRequest()` directly. |
 
-The SDK requests ATT only when ATT is enabled, Apple's status is not determined, marketing is not refused (by a stored choice, GPC, or TC String), the app is foregrounded, no Inth screen is open, and an Inth root is mounted. Under `afterConsent`, ATT fires after closing a prompt with marketing granted, on a later launch where stored consent already grants marketing and ATT is undetermined, or after enabling marketing in privacy settings. With `autoPresent` off, nothing fires at launch, and custom JS consent UIs must call `useTrackingRequest()` or `requestTrackingAuthorization()` themselves.
+</section>
+
+<section id="att-swift">
+
+## Ask for ATT after the consent prompt
+
+When ATT is enabled (`NSUserTrackingUsageDescription` in `Info.plist`), the stock prompt coordinates Apple's ATT alert. By default (`afterConsent`), the consent prompt appears first, and Apple's alert follows only if the visitor granted marketing.
+
+Configure the timing with `trackingRequest` on `.inth(...)` and `ConsentRootViewController`:
+
+| Value | Behavior |
+| --- | --- |
+| `afterConsent` (default) | Shows the consent prompt first, then Apple's ATT alert after dismissal only if marketing is granted. |
+| `beforeConsent` | Shows Apple's ATT alert before the consent prompt. Not recommended; use only if product or legal review requires it. |
+| `manual` | No automatic ATT request. Call `InthApple.tracking.request` directly. |
+
+</section>
+
+<section id="att-conditions">
+
+The SDK requests ATT only when ATT is enabled, Apple's status is not determined, marketing is not refused (by a stored choice, GPC, or TC String), the app is foregrounded, no Inth screen is open, and an Inth root is mounted. Under `afterConsent`, ATT fires after closing a prompt with marketing granted, on a later launch where stored consent already grants marketing and ATT is undetermined, or after enabling marketing in privacy settings.
+
+</section>
+
+<section id="att-auto-present-swift">
+
+With `autoPresent` off, nothing fires at launch, and custom consent UIs must call `InthApple.tracking.request` themselves.
+
+</section>
+
+<section id="att-auto-present-react-native">
+
+With `autoPresent` off, nothing fires at launch, and custom JS consent UIs must call `useTrackingRequest()` or `requestTrackingAuthorization()` themselves.
+
+</section>
+
+<section id="att-before-consent">
 
 With `beforeConsent`, Apple's alert runs right before an owed or programmatically opened consent prompt (or at launch if no prompt is owed and marketing is not refused), at most once per launch, and never delays user-opened privacy settings.
 
-On Apple's expanded EU ATT sheet (shown in Germany, France, Italy, Poland, Romania, and the rest of the EU when preferred; optional rich copy via `NSUserTrackingMarkdownUsageDescription` or `trackingMarkdownUsageDescription`), tapping Additional Information opens Inth's privacy settings. Custom UIs receive this button by passing `onTrackingAdditionalInformation` on `<InthProvider>` or `onAdditionalInformation:` in Swift.
+</section>
+
+<section id="att-eu-sheet-swift">
+
+On Apple's expanded EU ATT sheet (shown in Germany, France, Italy, Poland, Romania, and the rest of the EU when preferred; optional rich copy via `NSUserTrackingMarkdownUsageDescription`), tapping Additional Information opens Inth's privacy settings. Custom UIs receive this button by passing `onAdditionalInformation:`.
 
 ### Ask again after a year (EU)
 
-In the EU, Apple allows re-prompting ATT one year after a previous answer. Enable it with `trackingReprompt="yearly"` on `<InthProvider>` or `trackingReprompt: .yearly` in Swift (defaults to `never`). When enabled, the SDK re-requests once per launch if status is `authorized` or `denied`, marketing is granted, and 365 days have passed since the last recorded answer. It never re-prompts when marketing is refused, tracking is restricted, or `trackingRequest` is `manual`. Android ignores `trackingRequest` and `trackingReprompt`.
+In the EU, Apple allows re-prompting ATT one year after a previous answer. Enable it with `trackingReprompt: .yearly` (defaults to `never`).
+
+</section>
+
+<section id="att-eu-sheet-react-native">
+
+On Apple's expanded EU ATT sheet (shown in Germany, France, Italy, Poland, Romania, and the rest of the EU when preferred; optional rich copy via `NSUserTrackingMarkdownUsageDescription` or `trackingMarkdownUsageDescription`), tapping Additional Information opens Inth's privacy settings. Custom UIs receive this button by passing `onTrackingAdditionalInformation` on `<InthProvider>`.
+
+### Ask again after a year (EU)
+
+In the EU, Apple allows re-prompting ATT one year after a previous answer. Enable it with `trackingReprompt="yearly"` on `<InthProvider>` (defaults to `never`).
+
+</section>
+
+<section id="att-reprompt">
+
+When enabled, the SDK re-requests once per launch if status is `authorized` or `denied`, marketing is granted, and 365 days have passed since the last recorded answer. It never re-prompts when marketing is refused, tracking is restricted, or `trackingRequest` is `manual`.
+
+</section>
+
+<section id="att-reprompt-react-native">
+
+Android ignores `trackingRequest` and `trackingReprompt`.
+
+</section>
+
+<section id="att-tcf">
 
 ### ATT and IAB TCF
 
@@ -101,8 +267,34 @@ Under an IAB TCF policy, the after-consent ATT check treats `marketing` as conse
 
 Apple's [user privacy and data use](https://developer.apple.com/app-store/user-privacy-and-data-use/) guidance advises against showing ATT to users who already opted out in a consent prompt, and App Review Guidelines 5.1.1(iv) and 5.1.2(i) prohibit forcing or rewarding tracking consent.
 
+</section>
+
+<section id="verify-swift">
+
 ## Verify the integration
 
-Run the [mobile verification checklist](/docs/guides/mobile-verify) with your actual ad and mediation SDK versions across fresh startup, rejection, granular save, accept-all, withdrawal, and restart, checking decoded TC Strings and typed platform storage.
+Run the [mobile verification checklist](/docs/frameworks/swift/verify) with your actual ad and mediation SDK versions across fresh startup, rejection, granular save, accept-all, withdrawal, and restart, checking decoded TC Strings and typed platform storage.
 
-This guide does not provide an AdMob adapter or UMP replacement. See [mobile availability](/docs/guides/mobile-status) for certification status and release scope.
+This guide does not provide an AdMob adapter or UMP replacement. See [Availability](/docs/frameworks/swift/availability) for certification status and release scope.
+
+</section>
+
+<section id="verify-android">
+
+## Verify the integration
+
+Run the [mobile verification checklist](/docs/frameworks/android/verify) with your actual ad and mediation SDK versions across fresh startup, rejection, granular save, accept-all, withdrawal, and restart, checking decoded TC Strings and typed platform storage.
+
+This guide does not provide an AdMob adapter or UMP replacement. See [Availability](/docs/frameworks/android/availability) for certification status and release scope.
+
+</section>
+
+<section id="verify-react-native">
+
+## Verify the integration
+
+Run the [mobile verification checklist](/docs/frameworks/react-native/verify) with your actual ad and mediation SDK versions across fresh startup, rejection, granular save, accept-all, withdrawal, and restart, checking decoded TC Strings and typed platform storage.
+
+This guide does not provide an AdMob adapter or UMP replacement. See [Availability](/docs/frameworks/react-native/availability) for certification status and release scope.
+
+</section>

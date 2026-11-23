@@ -153,7 +153,7 @@ test('framework sidebars follow the shared group template', async () => {
 	for (const slug of ['react-native', 'swift', 'android']) {
 		const framework = frameworks?.children.find((group) => group.slug === slug);
 		expect(framework?.pages.map((page) => page.urlPath)).toContain(
-			'/docs/guides/mobile-status'
+			`/docs/frameworks/${slug}/availability`
 		);
 	}
 	for (const framework of frameworks?.children ?? []) {
@@ -178,10 +178,8 @@ test('framework sidebars follow the shared group template', async () => {
 			.find((group) => group.title === 'Verify and troubleshoot')
 			?.pages.map((page) => page.urlPath);
 		let verifyRoute = '/docs/guides/verify-consent';
-		if (['swift', 'android'].includes(framework.slug)) {
-			verifyRoute = '/docs/guides/mobile-verify';
-		} else if (framework.slug === 'react-native') {
-			verifyRoute = '/docs/frameworks/react-native/verify';
+		if (['swift', 'android', 'react-native'].includes(framework.slug)) {
+			verifyRoute = `/docs/frameworks/${framework.slug}/verify`;
 		}
 		expect(verify).toContain(verifyRoute);
 	}
