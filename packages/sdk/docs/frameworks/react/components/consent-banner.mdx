@@ -44,7 +44,10 @@ To change the container or the button order per policy rule, read the active rul
 import { ConsentBanner, usePolicyRule } from '@inth/react';
 import type { ConsentBannerProps } from '@inth/react';
 
-const banners: Record<string, Pick<ConsentBannerProps, 'container' | 'layout'>> = {
+const banners: Record<
+	string,
+	Pick<ConsentBannerProps, 'container' | 'layout'>
+> = {
 	europe_opt_in: {
 		container: { position: 'center', type: 'card' },
 		layout: [['reject', 'accept'], 'customize'],
