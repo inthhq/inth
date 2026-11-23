@@ -39,6 +39,7 @@ export type {
 export { getSurfaceSession } from './session';
 export type {
 	SurfaceCopyFinish,
+	SurfaceCopyOptions,
 	SurfaceEscapeContext,
 	SurfaceSession,
 } from './session';

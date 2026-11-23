@@ -34,7 +34,7 @@ import type {
 	RightPressOutcome,
 } from './rights';
 import { getSurfaceSession } from './session';
-import type { SurfaceCopyFinish } from './session';
+import type { SurfaceCopyFinish, SurfaceCopyOptions } from './session';
 
 /** Options for {@link commitBannerChoice}. */
 export interface BannerCommitOptions {
@@ -58,9 +58,9 @@ export interface BannerCommitOutcome {
  * banner: the save closes it as any surface save does, and the session
  * drops its expanded panel, confirmation, copy state and announcement.
  *
- * When live GPC withholds every category the commit could record, there
- * is nothing to save: the signal already refused them, which answers the
- * prompt, so the banner closes at once.
+ * When live GPC withholds every category the commit could record, the
+ * signal already refused them, which answers the prompt, so the banner
+ * closes at once. Only vendor edits in `draft` are still saved then.
  *
  * The renderer then moves focus to "Your Privacy Choices" and announces
  * the outcome on the page; `plan.keptOff` says whether sale and sharing
@@ -81,16 +81,25 @@ export const commitBannerChoice = function commitBannerChoice(
 	});
 	const uiSource = options.uiSource ?? 'banner';
 	const { categories } = plan;
-	if (categories?.length === 0) {
+	const { draft } = options;
+	// Vendor edits in the panel are still the visitor's to keep, even when
+	// no category is left to record.
+	const withheld =
+		categories?.length === 0 &&
+		draft?.toSaveInput(categories)?.vendors !== undefined;
+	if (categories?.length === 0 && !withheld) {
 		beginAction(kernel);
 		settleSurface(kernel);
 		getSurfaceSession(kernel).commit();
 		return { plan, result: Promise.resolve({ confirmed: [], ok: true }) };
 	}
 	const save = (): Promise<SaveResult> => {
+		if (withheld && draft) {
+			return draft.save({ categories: [], uiSource });
+		}
 		if (plan.input === 'draft') {
-			return options.draft
-				? options.draft.save({ categories, uiSource })
+			return draft
+				? draft.save({ categories, uiSource })
 				: kernel.commands.save(undefined, { categories, uiSource });
 		}
 		if (plan.input === 'all' && categories !== undefined) {
@@ -237,12 +246,15 @@ export const confirmSaleRight = function confirmSaleRight(
  * that lands after the surface changed, changes nothing.
  *
  * @param write - Writes the text; defaults to `navigator.clipboard.writeText`.
+ * @param options - Pass `panelVisible: true` from an all-in-one layout,
+ * whose panel shows without the banner being expanded.
  * @returns What the renderer should do: see {@link SurfaceCopyFinish}.
  */
 export const copySurfaceReference = async function copySurfaceReference(
 	kernel: ConsentKernel,
 	text: string,
-	write?: (text: string) => Promise<void>
+	write?: (text: string) => Promise<void>,
+	options: SurfaceCopyOptions = {}
 ): Promise<SurfaceCopyFinish> {
 	const session = getSurfaceSession(kernel);
 	const attempt = session.beginCopy();
@@ -261,5 +273,5 @@ export const copySurfaceReference = async function copySurfaceReference(
 			ok = false;
 		}
 	}
-	return session.finishCopy(attempt, ok);
+	return session.finishCopy(attempt, ok, options);
 };

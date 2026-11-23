@@ -39,6 +39,15 @@ export interface SurfaceCopyFinish {
 	readonly reveal: boolean;
 }
 
+/** What a renderer knows about where the receipt shows. */
+export interface SurfaceCopyOptions {
+	/**
+	 * The panel holding the receipt is on screen though the banner is not
+	 * expanded: an all-in-one side drawer shows it from the start.
+	 */
+	readonly panelVisible?: boolean;
+}
+
 /** The Escape keys a renderer reports; the session supplies the rest. */
 export type SurfaceEscapeContext = Pick<
 	SurfaceEscapeInput,
@@ -76,7 +85,17 @@ export interface SurfaceSession {
 	clearAnnouncement: () => void;
 	/** Start a copy attempt. @returns Its attempt number. */
 	beginCopy: () => number;
-	finishCopy: (attempt: number, ok: boolean) => SurfaceCopyFinish;
+	/**
+	 * Finish a copy attempt.
+	 *
+	 * @param options.panelVisible - The panel holding the receipt shows
+	 * although the banner is not expanded, as in an all-in-one side drawer.
+	 */
+	finishCopy: (
+		attempt: number,
+		ok: boolean,
+		options?: SurfaceCopyOptions
+	) => SurfaceCopyFinish;
 	/** Clear the copied or failed feedback. */
 	resetCopy: () => void;
 	/** End the banner after a commit: fold it, drop its transient state. */
@@ -241,21 +260,24 @@ const createSurfaceSession = function createSurfaceSession(
 			follow();
 			dispatch({ type: 'expand' });
 		},
-		finishCopy(attempt, ok) {
+		finishCopy(attempt, ok, options = {}) {
 			follow();
 			if (attempt !== state.copy.attempt) {
 				return { applied: false, reveal: false };
 			}
 			dispatch({ attempt, ok, type: 'finish-copy' });
 			// The receipt shows only while Details is open, no sheet covers
-			// it and, in a banner, the panel holding it is expanded. Hidden,
-			// the failure waits for it to reopen (CLIP-03).
+			// it and, in a banner, the panel holding it shows: expanded, or
+			// always shown, as in an all-in-one drawer. Hidden, the failure
+			// waits for it to reopen (CLIP-03).
 			return {
 				applied: true,
 				reveal:
 					state.receiptOpen &&
 					state.sheets.length === 0 &&
-					(state.surface !== 'banner' || state.expanded),
+					(state.surface !== 'banner' ||
+						state.expanded ||
+						options.panelVisible === true),
 			};
 		},
 		getState() {

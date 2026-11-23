@@ -181,6 +181,28 @@ describe('[PERM-16] the session follows the kernel', () => {
 		expect(session.getState().copy.status).toBe('failed');
 	});
 
+	test('[CLIP-03] a failure in an all-in-one drawer reveals the fallback, though the banner is not expanded', async () => {
+		const kernel = kernelFor();
+		kernel.set.activeUI('banner');
+		const session = getSurfaceSession(kernel);
+		session.toggleReceipt(true);
+		expect(session.getState()).toMatchObject({
+			expanded: false,
+			surface: 'banner',
+		});
+		const fail = () => Promise.reject(new Error('denied'));
+
+		await expect(
+			copySurfaceReference(kernel, 'ref', fail, { panelVisible: true })
+		).resolves.toEqual({ applied: true, reveal: true });
+		// A folded banner panel is still hidden without the hint.
+		await expect(copySurfaceReference(kernel, 'ref', fail)).resolves.toEqual({
+			applied: true,
+			reveal: false,
+		});
+		expect(session.getState().copy.status).toBe('failed');
+	});
+
 	test('[CLIP-01] no clipboard is a visible failure', async () => {
 		const kernel = kernelFor();
 		showConsentSurface(kernel, 'dialog');

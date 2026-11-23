@@ -368,6 +368,7 @@ export type {
 	SurfaceConfirmation,
 	SurfaceCopy,
 	SurfaceCopyFinish,
+	SurfaceCopyOptions,
 	SurfaceCopyStatus,
 	SurfaceEscapeContext,
 	SurfaceEscapeInput,

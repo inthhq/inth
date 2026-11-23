@@ -377,6 +377,36 @@ describe('[BNR-05][RIGHT-08] a rights choice in the dialog', () => {
 		expect(kernel.getSnapshot().promptRequirement).toEqual({ kind: 'none' });
 	});
 
+	test('Refuse, then Allow, then Done keeps the banner away in US opt-in', async () => {
+		const kernel = kernelFor('opt-in');
+		const now = vi.spyOn(Date, 'now');
+		showConsentSurface(kernel, 'dialog');
+
+		now.mockReturnValue(NOW + 1000);
+		await pressSaleRight(kernel, 'protect').result;
+		expect(kernel.getSnapshot().promptRequirement).toEqual({ kind: 'none' });
+
+		now.mockReturnValue(NOW + 1001);
+		expect(pressSaleRight(kernel, 'allow').outcome).toBe('confirm');
+		await confirmSaleRight(kernel);
+		const snapshot = kernel.getSnapshot();
+		expect(snapshot.explicitChoice?.categories.marketing).toMatchObject({
+			confirmedAt: NOW + 1001,
+			value: true,
+		});
+		// The grant left the other categories undecided, so it answers the
+		// prompt only with an acknowledgement from the same action.
+		expect(snapshot.noticeDismissal?.dismissedAt).toBe(NOW + 1001);
+		expect(undecided(kernel)).toEqual({
+			functionality: undefined,
+			measurement: undefined,
+		});
+
+		showConsentSurface(kernel, 'none');
+		expect(kernel.getSnapshot().activeUI).toBe('none');
+		expect(kernel.getSnapshot().promptRequirement).toEqual({ kind: 'none' });
+	});
+
 	test('the answer outlives a reload, through the stored acknowledgement', async () => {
 		const kernel = kernelFor('opt-in');
 		showConsentSurface(kernel, 'dialog');
@@ -538,6 +568,49 @@ describe('[PERM-02] banner commits respect existing state', () => {
 		expect(save).not.toHaveBeenCalled();
 		await expect(result).resolves.toMatchObject({ ok: true });
 		expect(kernel.getSnapshot().explicitChoice).toBeNull();
+	});
+
+	test('[GPC-03] a commit with every category withheld by GPC still saves the vendor edits in the panel', async () => {
+		vi.spyOn(Date, 'now').mockReturnValue(NOW);
+		const kernel = createConsentKernel({
+			consentCategories: CATEGORIES,
+			initialPolicyResolution: matchedResolution(
+				optInRule({
+					categories: ['marketing', 'measurement'],
+					privacySignals: {
+						gpc: { denyCategories: ['marketing', 'measurement'] },
+					},
+				})
+			),
+			initialPrivacySignals: { gpc: true },
+			initialVendors: {
+				declared: [
+					{
+						category: 'functionality',
+						id: 'chat-widget',
+						name: 'Chat widget',
+						presentable: true,
+						privacyPolicyUrl: 'https://chat.example/privacy',
+						source: 'config',
+					},
+				],
+				listVersion: '1',
+			},
+			now: NOW,
+			transport: { save: () => Promise.resolve({ ok: true }) },
+		});
+		openBanner(kernel);
+		const draft = createPreferenceDraft(kernel);
+		draft.setVendor('chat-widget', false);
+		const save = vi.spyOn(draft, 'save');
+
+		const { plan, result } = commitBannerChoice(kernel, 'save', { draft });
+		expect(plan).toMatchObject({ categories: [], keptOff: 'gpc' });
+		expect(save).toHaveBeenCalledWith({ categories: [], uiSource: 'banner' });
+		await expect(result).resolves.toMatchObject({ ok: true });
+		expect(kernel.getSnapshot().vendorChoice?.denied).toEqual(['chat-widget']);
+		expect(kernel.getSnapshot().explicitChoice).toBeNull();
+		expect(kernel.getSnapshot().activeUI).toBe('none');
 	});
 
 	test('[RCPT-02] a refusal from an untouched opt-in default moves the date', () => {

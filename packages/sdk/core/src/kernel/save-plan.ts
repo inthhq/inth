@@ -74,6 +74,26 @@ export const resolveSaveSelection = function resolveSaveSelection(
 };
 
 /**
+ * Whether a save decides a category in the choice scope and leaves another
+ * one in it without a decision.
+ */
+const leavesScopeUndecided = function leavesScopeUndecided(
+	scope: readonly OptionalConsentCategory[],
+	recorded:
+		| {
+				choice: ExplicitChoice;
+				confirmed: readonly OptionalConsentCategory[];
+		  }
+		| undefined
+): boolean {
+	return (
+		recorded !== undefined &&
+		recorded.confirmed.some((category) => scope.includes(category)) &&
+		scope.some((category) => recorded.choice.categories[category] === undefined)
+	);
+};
+
+/**
  * The acknowledgement a save records when the choice prompt has no category
  * to decide, or `null` when the choice scope has one. It is a dismissal
  * record bound to the choice fingerprint, so persistence, cross-tab
@@ -85,11 +105,21 @@ export const resolveSaveSelection = function resolveSaveSelection(
  * choice prompt is owed: recording a statutory right answers the prompt
  * (BNR-05, RIGHT-08), and the categories it did not record keep their
  * defaults instead of being granted or refused on the visitor's behalf.
+ * It records a fresh one whatever the prompt is when it decides a scoped
+ * category and leaves another undecided: the answer only holds beside a
+ * decision made in the same action, so a refusal that answered the prompt
+ * and is then changed to a grant would otherwise bring the banner back.
+ *
+ * @param recorded - What the save records, when it records categories.
  */
 export const choiceAcknowledgement = function choiceAcknowledgement(
 	snapshot: ConsentSnapshot,
 	actionAt: number,
-	rightsControl = false
+	rightsControl = false,
+	recorded?: {
+		choice: ExplicitChoice;
+		confirmed: readonly OptionalConsentCategory[];
+	}
 ): NoticeDismissal | null {
 	const policy = snapshot.evaluationPolicy;
 	if (policy.prompt !== 'choice') {
@@ -97,7 +127,11 @@ export const choiceAcknowledgement = function choiceAcknowledgement(
 	}
 	if (
 		policy.choiceScope.length > 0 &&
-		!(rightsControl && snapshot.promptRequirement.kind === 'choice')
+		!(
+			rightsControl &&
+			(snapshot.promptRequirement.kind === 'choice' ||
+				leavesScopeUndecided(policy.choiceScope, recorded))
+		)
 	) {
 		return null;
 	}
