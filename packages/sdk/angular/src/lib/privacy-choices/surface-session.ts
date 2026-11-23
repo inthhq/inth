@@ -1,5 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import {
+	ApplicationRef,
 	computed,
 	DestroyRef,
 	effect,
@@ -79,8 +80,8 @@ const SERVER_RENDERED_PROMPT =
 
 /**
  * Whether the phone layout applies (`PHONE_LAYOUT_QUERY`). The server
- * renders desktop, and so does the browser's first render over a
- * server-rendered prompt, which it then switches after hydration; a
+ * renders desktop, and so does the browser over a server-rendered prompt
+ * until the application is stable, after hydration; a
  * browser-only render reads the viewport at once. Call it in an injection
  * context.
  *
@@ -96,11 +97,28 @@ export const injectPhoneLayout = function injectPhoneLayout(): Signal<boolean> {
 	const query = window.matchMedia(PHONE_LAYOUT_QUERY);
 	const hydrating = document.querySelector(SERVER_RENDERED_PROMPT) !== null;
 	const phone = signal(hydrating ? false : query.matches);
-	const sync = () => phone.set(query.matches);
+	// Over server markup, the desktop layout holds until the application is
+	// stable, which is when hydration has finished: a switch before then
+	// would render markup the server did not send.
+	let ready = !hydrating;
+	const sync = () => {
+		if (ready) {
+			phone.set(query.matches);
+		}
+	};
 	if (hydrating) {
-		queueMicrotask(sync);
+		// oxlint-disable-next-line promise/prefer-await-to-then -- Fire and forget inside an injection context.
+		void inject(ApplicationRef)
+			.whenStable()
+			.then(() => {
+				ready = true;
+				sync();
+			});
 	}
 	query.addEventListener('change', sync);
-	inject(DestroyRef).onDestroy(() => query.removeEventListener('change', sync));
+	inject(DestroyRef).onDestroy(() => {
+		ready = false;
+		query.removeEventListener('change', sync);
+	});
 	return phone.asReadonly();
 };
