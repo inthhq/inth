@@ -1,4 +1,4 @@
-import { getOpenState } from './data-state.model';
+import { getOpenState } from '../data-state.model';
 
 export type AccordionType = 'single' | 'multiple';
 

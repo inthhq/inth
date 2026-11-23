@@ -1,1 +1,1 @@
-export * from './shared/data-state.model';
+export * from './data-state.model';

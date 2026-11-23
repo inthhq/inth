@@ -1,2 +1,2 @@
-export * from '../shared/data-state.model';
-export * from '../shared/tabs.model';
+export * from '../data-state.model';
+export * from './tabs.model';

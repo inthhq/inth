@@ -1,4 +1,4 @@
-import { getCheckedState } from './data-state.model';
+import { getCheckedState } from '../data-state.model';
 
 export const getSwitchState = function getSwitchState(checked: boolean) {
 	return getCheckedState(checked);

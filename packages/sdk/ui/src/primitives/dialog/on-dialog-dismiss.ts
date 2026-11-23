@@ -1,4 +1,4 @@
-import { getOpenState } from './data-state.model';
+import { getOpenState } from '../data-state.model';
 
 export const getDialogState = function getDialogState(open: boolean) {
 	return getOpenState(open);
