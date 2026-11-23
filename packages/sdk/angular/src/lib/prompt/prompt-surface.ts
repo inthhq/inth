@@ -77,7 +77,8 @@ import { SurfaceDraft } from '../parts/surface-draft';
 import { BrandMarkIcon } from '../shared/brand-mark-icon';
 import { InlineLegalLinks } from '../shared/inline-legal-links';
 import type { LegalLinkSelection } from '../shared/inline-legal-links';
-import { PromptOptionsPanel, PromptPreferences } from './prompt-preferences';
+import { PromptOptionsPanel } from './prompt-options-panel';
+import { PromptPreferences } from './prompt-preferences';
 import type { ContainerModule, PromptSurfaceOptions } from './prompt-loaders';
 
 /** Exits are 160ms; the controllers add their own slack. */
