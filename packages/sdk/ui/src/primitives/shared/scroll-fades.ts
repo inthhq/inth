@@ -3,8 +3,10 @@
  *
  * The fade is a `mask-image` driven by `--inth-fade-top` and
  * `--inth-fade-bottom`, which the stylesheet registers with `@property` so
- * they animate. The prefix keeps the registration from claiming a name a
- * host page already uses. The stylesheet sets their lengths (20px and 28px)
+ * they animate. Chromium ignores `@property` inside a shadow root, so for
+ * an area there this controller registers them on the document through
+ * `CSS.registerProperty` instead. The prefix keeps the registration from
+ * claiming a name a host page already uses. The stylesheet sets their lengths (20px and 28px)
  * when the area carries
  * `data-fade-top` or `data-fade-bottom`, and animates them over 150ms. This
  * controller only says which edges have more content beyond them, so the
@@ -21,6 +23,46 @@ export interface ScrollFades {
 
 /** Pixels of slack, so sub-pixel layouts don't show a sliver of fade. */
 const SLACK = 1;
+
+/** The fade lengths, as the stylesheet's `@property` rules declare them. */
+const FADE_PROPERTIES = ['--inth-fade-top', '--inth-fade-bottom'] as const;
+
+/** The `CSS` namespaces the fade properties were registered through. */
+const registered = new WeakSet<object>();
+
+/**
+ * Register the fade lengths at document scope for an area inside a shadow
+ * root, once per document, where `@property` in the shadow tree's
+ * stylesheet does not register them (Chromium). Without it the fades jump
+ * instead of animating in the script-tag build.
+ */
+const registerFadeProperties = function registerFadeProperties(
+	area: HTMLElement
+): void {
+	if (
+		typeof ShadowRoot === 'undefined' ||
+		!(area.getRootNode() instanceof ShadowRoot)
+	) {
+		return;
+	}
+	const css = area.ownerDocument.defaultView?.CSS ?? globalThis.CSS;
+	if (!css || !('registerProperty' in css) || registered.has(css)) {
+		return;
+	}
+	registered.add(css);
+	for (const name of FADE_PROPERTIES) {
+		try {
+			css.registerProperty({
+				inherits: false,
+				initialValue: '0px',
+				name,
+				syntax: '<length>',
+			});
+		} catch {
+			// Already registered, by another copy of the SDK or the page.
+		}
+	}
+};
 
 /** Which edges of `area` have more content beyond them. */
 export const readScrollFades = function readScrollFades(
@@ -41,6 +83,7 @@ export const readScrollFades = function readScrollFades(
 export const attachScrollFades = function attachScrollFades(
 	area: HTMLElement
 ): ScrollFades {
+	registerFadeProperties(area);
 	const update = () => {
 		const { bottom, top } = readScrollFades(area);
 		area.toggleAttribute('data-fade-top', top);

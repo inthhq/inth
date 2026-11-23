@@ -314,6 +314,74 @@ describe('scroll fades', () => {
 	});
 });
 
+describe('scroll fade registration', () => {
+	const shadowArea = () => {
+		const host = document.createElement('div');
+		document.body.append(host);
+		const element = document.createElement('div');
+		host.attachShadow({ mode: 'open' }).append(element);
+		return element;
+	};
+
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	test('[LAY-08] an area in a shadow root registers the fade lengths on the document once', () => {
+		const registerProperty = vi.fn();
+		vi.stubGlobal('CSS', { registerProperty });
+
+		attachScrollFades(shadowArea())();
+		attachScrollFades(shadowArea())();
+
+		expect(registerProperty).toHaveBeenCalledTimes(2);
+		expect(registerProperty).toHaveBeenCalledWith({
+			inherits: false,
+			initialValue: '0px',
+			name: '--inth-fade-top',
+			syntax: '<length>',
+		});
+		expect(registerProperty).toHaveBeenCalledWith({
+			inherits: false,
+			initialValue: '0px',
+			name: '--inth-fade-bottom',
+			syntax: '<length>',
+		});
+	});
+
+	test('[LAY-08] a registration that throws does not stop the controller', () => {
+		const registerProperty = vi.fn(() => {
+			throw new DOMException('already registered', 'InvalidModificationError');
+		});
+		vi.stubGlobal('CSS', { registerProperty });
+		const element = shadowArea();
+		Object.defineProperties(element, {
+			clientHeight: { configurable: true, value: 100 },
+			scrollHeight: { configurable: true, value: 300 },
+		});
+
+		const stop = attachScrollFades(element);
+		expect(registerProperty).toHaveBeenCalledTimes(2);
+		expect(element.hasAttribute('data-fade-bottom')).toBe(true);
+		stop();
+	});
+
+	test('[LAY-08] the light DOM keeps the stylesheet registration', () => {
+		const registerProperty = vi.fn();
+		vi.stubGlobal('CSS', { registerProperty });
+		const element = document.createElement('div');
+		document.body.append(element);
+
+		attachScrollFades(element)();
+		expect(registerProperty).not.toHaveBeenCalled();
+	});
+
+	test('[LAY-08] a browser without registerProperty is left alone', () => {
+		vi.stubGlobal('CSS', {});
+		expect(() => attachScrollFades(shadowArea())()).not.toThrow();
+	});
+});
+
 describe('scroll reveal', () => {
 	const rect = (top: number, bottom: number) => ({ bottom, top });
 
