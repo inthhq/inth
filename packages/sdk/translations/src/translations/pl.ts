@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Zamknij',
 		rejectAll: 'Odrzuć wszystkie',
 		save: 'Zapisz ustawienia',
-		securedBy: 'Zabezpieczone przez',
+		securedBy: 'Zgody obsługuje',
 	},
 	consentGate: {
 		actionButton: 'Włącz zgodę na {category}',
@@ -205,6 +205,143 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'sprzedaży i reklam ukierunkowanych',
 		statusRequest: 'Żądanie rezygnacji zostało uwzględnione',
 		statusSignal: 'Sygnał preferencji rezygnacji został uwzględniony',
+	},
+	privacyChoices: {
+		acceptAll: 'Zaakceptuj wszystkie',
+		advertisingFollowsSale: 'Reklamy zależą od Twojego wyboru powyżej.',
+		advertisingTitle: 'Reklamy',
+		allow: 'Zezwól',
+		alwaysOn: 'Zawsze włączone',
+		announceSaved: '{message} Zapisano.',
+		askAll:
+			'sprzedawać lub udostępniać Twoje dane osobowe, także na potrzeby reklam ukierunkowanych',
+		askSaleAndShare: 'sprzedawać lub udostępniać Twoje dane osobowe',
+		askSaleAndTargetedAds:
+			'sprzedawać Twoje dane osobowe lub używać ich do reklam ukierunkowanych',
+		bannerAllowedRightsOff:
+			'Opcjonalne pliki cookie dozwolone. {rights} pozostają wyłączone. Możesz to zmienić w sekcji Twoje wybory dotyczące prywatności.',
+		bannerAllowedRightsOffGpc:
+			'Opcjonalne pliki cookie dozwolone. {rights} pozostają wyłączone ze względu na Twój sygnał Global Privacy Control. Możesz to zmienić w sekcji Twoje wybory dotyczące prywatności.',
+		bannerRejected:
+			'Opcjonalne pliki cookie odrzucone. Możesz to zmienić w sekcji Twoje wybory dotyczące prywatności.',
+		barDescription:
+			'Używamy plików cookie, aby poprawić Twoje wrażenia i analizować ruch.',
+		businessFallback: 'ta witryna',
+		choiceRecorded: 'Wybór zapisany.',
+		choicesSaved:
+			'Wybory zapisane. Możesz je zmienić w sekcji Twoje wybory dotyczące prywatności.',
+		choose: 'Wybierz',
+		chooseWhatToAllow: 'Wybierz, na co zezwalasz',
+		close: 'Zamknij',
+		confirmDescriptionOptIn:
+			'{business} może {rights}. Możesz to zmienić w każdej chwili.',
+		confirmDescriptionOptOut:
+			'{business} może {rights}. W każdej chwili możesz ponownie zrezygnować.',
+		confirmKeepOptedOut: 'Pozostań przy rezygnacji',
+		confirmTitleOptIn: 'Zezwolić na: {rights}?',
+		confirmTitleOptOut: 'Ponownie zezwolić na: {rights}?',
+		copyFailed:
+			'Nie udało się skopiować. Zaznacz i skopiuj swój numer referencyjny:',
+		copyFailedAnnouncement:
+			'Nie udało się skopiować. Pełny numer referencyjny znajdziesz w potwierdzeniu.',
+		copyReference: 'Kopiuj numer referencyjny',
+		dialogIntro: 'Twoje wybory obowiązują od razu.',
+		dialogTitle: 'Twoje wybory dotyczące prywatności',
+		done: 'Gotowe',
+		dontAllow: 'Nie zezwalaj',
+		euDialogIntro:
+			'Wybierz, których opcjonalnych plików cookie może używać {business}. Opcjonalne pliki cookie pozostają wyłączone, dopóki ich nie włączysz.',
+		euDialogTitle: 'Ustawienia prywatności',
+		gpcNote:
+			'Twoja przeglądarka wysłała sygnał Global Privacy Control, więc {business} {rights} {scope}. Opcja „Zezwól” jest niedostępna, dopóki sygnał jest włączony.',
+		justNow: 'przed chwilą',
+		nestedSheetNote:
+			'Zmiany zaczną obowiązywać po zapisaniu w Ustawieniach prywatności.',
+		noticeBarDescription:
+			'Używamy plików cookie, aby obsługiwać tę stronę, mierzyć ruch i personalizować reklamy. W każdej chwili możesz zrezygnować.',
+		noticeBarDescriptionGpc:
+			'Używamy plików cookie, aby obsługiwać tę stronę i mierzyć ruch. Twój sygnał Global Privacy Control jest respektowany.',
+		noticeGpcHonored:
+			'Sygnał Global Privacy Control z Twojej przeglądarki jest respektowany.',
+		noticeRightsAction: 'Nie sprzedawaj ani nie udostępniaj moich danych',
+		nudge: 'Najpierw wybierz jeden z dwóch przycisków.',
+		optInBarDescription:
+			'{business} prosi o zgodę na opcjonalne pliki cookie oraz na {rights}.',
+		optInDescription:
+			'Za Twoją zgodą {business} może używać opcjonalnych plików cookie do funkcji strony i analityki oraz {rights}. Nic nie zostanie włączone, dopóki na to nie zezwolisz.',
+		optInTitle: 'Twoje wybory dotyczące prywatności',
+		optOutOption: 'Zrezygnuj',
+		panelExpanded: 'Wyświetlono więcej opcji.',
+		policyColumn: 'Polityka prywatności',
+		preferencesClose: 'Zamknij preferencje',
+		preferencesOnCount: 'Włączone: {count}',
+		preferencesSheetIntro: 'Zmiany obowiązują od razu.',
+		preferencesSummary: 'Funkcje strony i analityka',
+		preferencesTitle: 'Preferencje',
+		purposeColumn: 'Cel',
+		receiptAllowed: 'Zezwolono na: {rights}',
+		receiptDetails: 'Szczegóły',
+		receiptFromGpc: 'na podstawie Twojego sygnału Global Privacy Control',
+		receiptLive:
+			'Respektujemy sygnał Global Privacy Control z tej przeglądarki',
+		receiptLiveDetail: 'Odczytywany z Twojej przeglądarki przy każdej wizycie.',
+		receiptOptedOut: 'Rezygnacja: {rights}',
+		receiptRecorded: 'Zapisano: {date}',
+		receiptReference: 'Numer referencyjny',
+		receiptSavedAccount: 'Zapisano na Twoim koncie · {date}',
+		receiptSavedBrowser: 'Zapisano dla tej przeglądarki · {date}',
+		receiptScopeAccount: 'Dotyczy tej przeglądarki i Twojego konta {business}.',
+		receiptScopeAccountUnnamed: 'Dotyczy tej przeglądarki i Twojego konta.',
+		receiptScopeBrowser:
+			'Dotyczy tej przeglądarki. Zaloguj się, aby zastosować wybór także na swoim koncie.',
+		receiptViaGpc: 'Sygnał Global Privacy Control',
+		referenceCopied: 'Skopiowano numer referencyjny.',
+		refuseAll:
+			'nie będzie sprzedawać ani udostępniać Twoich danych osobowych ani używać ich do reklam ukierunkowanych',
+		refuseSaleAndShare:
+			'nie będzie sprzedawać ani udostępniać Twoich danych osobowych',
+		refuseSaleAndTargetedAds:
+			'nie będzie sprzedawać Twoich danych osobowych ani używać ich do reklam ukierunkowanych',
+		rejectAll: 'Odrzuć wszystkie',
+		rightsAllowed: '{rights}: dozwolone.',
+		rightsNotAllowed: '{rights}: niedozwolone.',
+		rightsOptedOut: 'Rezygnacja: {rights}.',
+		saleAllowed: '{business} może {rights}.',
+		saleGroupOptIn: 'Zezwól na: {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Zrezygnuj ze sprzedaży moich danych osobowych i reklam ukierunkowanych',
+		saleOffByDefault:
+			'Domyślnie wyłączone. {business} {rights}, dopóki na to nie zezwolisz.',
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Zapisz wybory',
+		saveInSettings: 'Zapisz swoje wybory w Ustawieniach prywatności',
+		savedAutomatically: 'Zapisywane automatycznie',
+		savedCue: 'Zapisano',
+		scopeAccount: 'w tej przeglądarce ani na Twoim koncie {business}',
+		scopeAccountUnnamed: 'w tej przeglądarce ani na Twoim koncie',
+		scopeBrowser: 'w tej przeglądarce',
+		shortAll: 'sprzedaż lub udostępnianie Twoich danych na potrzeby reklam',
+		shortSaleAndShare: 'sprzedaż lub udostępnianie Twoich danych',
+		shortSaleAndTargetedAds:
+			'sprzedaż Twoich danych lub używanie ich do reklam',
+		stateOff: 'Wyłączone',
+		stateOn: 'Włączone',
+		switchColumn: 'Włączone',
+		switchedOff: '{name}: wyłączono.',
+		switchedOn: '{name}: włączono.',
+		titleAll: 'Sprzedaż, udostępnianie i reklamy ukierunkowane',
+		titleSaleAndShare: 'Sprzedaż i udostępnianie',
+		titleSaleAndTargetedAds: 'Sprzedaż i reklamy ukierunkowane',
+		vendorColumn: 'Dostawca',
+		vendorPolicy: 'Polityka prywatności: {vendor}',
+		vendorsClose: 'Zamknij listę dostawców: {category}',
+		vendorsFor: 'w kategorii {category}',
+		vendorsHide: 'Ukryj {count} dostawców',
+		vendorsHideOne: 'Ukryj 1 dostawcę',
+		vendorsOnCount: 'Włączone: {count}',
+		vendorsTable: 'Dostawcy: {category}',
+		vendorsView: 'Pokaż {count} dostawców',
+		vendorsViewOne: 'Pokaż 1 dostawcę',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Twoje wybory dotyczące prywatności w Kalifornii',

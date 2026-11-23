@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Zatvori',
 		rejectAll: 'Odbij sve',
 		save: 'Spremi postavke',
-		securedBy: 'Zaštitu pruža',
+		securedBy: 'Privolama upravlja',
 	},
 	consentGate: {
 		actionButton: 'Omogući {category} privolu',
@@ -204,6 +204,141 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'prodaje i ciljanog oglašavanja',
 		statusRequest: 'Zahtjev za isključivanje je uvažen',
 		statusSignal: 'Signal postavke isključivanja je uvažen',
+	},
+	privacyChoices: {
+		acceptAll: 'Prihvati sve',
+		advertisingFollowsSale: 'Oglašavanje slijedi vaš izbor iznad.',
+		advertisingTitle: 'Oglašavanje',
+		allow: 'Dopusti',
+		alwaysOn: 'Uvijek uključeno',
+		announceSaved: '{message} Spremljeno.',
+		askAll:
+			'prodavati ili dijeliti vaše osobne podatke, među ostalim i za ciljano oglašavanje',
+		askSaleAndShare: 'prodavati ili dijeliti vaše osobne podatke',
+		askSaleAndTargetedAds:
+			'prodavati vaše osobne podatke ili ih koristiti za ciljano oglašavanje',
+		bannerAllowedRightsOff:
+			'Neobavezni kolačići su dopušteni. {rights}: i dalje isključeno. To možete promijeniti u odjeljku „Vaši izbori privatnosti”.',
+		bannerAllowedRightsOffGpc:
+			'Neobavezni kolačići su dopušteni. {rights}: i dalje isključeno zbog vašeg signala Global Privacy Control. To možete promijeniti u odjeljku „Vaši izbori privatnosti”.',
+		bannerRejected:
+			'Neobavezni kolačići su odbijeni. To možete promijeniti u odjeljku „Vaši izbori privatnosti”.',
+		barDescription:
+			'Koristimo kolačiće za poboljšanje vašeg iskustva i analizu prometa.',
+		businessFallback: 'ova stranica',
+		choiceRecorded: 'Izbor je zabilježen.',
+		choicesSaved:
+			'Izbori su spremljeni. Možete ih promijeniti u odjeljku „Vaši izbori privatnosti”.',
+		choose: 'Odaberi',
+		chooseWhatToAllow: 'Odaberite što želite dopustiti',
+		close: 'Zatvori',
+		confirmDescriptionOptIn:
+			'{business} će smjeti {rights}. To možete promijeniti u bilo kojem trenutku.',
+		confirmDescriptionOptOut:
+			'{business} će smjeti {rights}. U bilo kojem trenutku možete se ponovno odjaviti.',
+		confirmKeepOptedOut: 'Ostani odjavljen',
+		confirmTitleOptIn: 'Dopustiti sljedeće: {rights}?',
+		confirmTitleOptOut: 'Ponovno dopustiti sljedeće: {rights}?',
+		copyFailed: 'Kopiranje nije uspjelo. Označite i kopirajte svoju referencu:',
+		copyFailedAnnouncement:
+			'Kopiranje nije uspjelo. Cijela referenca prikazana je u potvrdi.',
+		copyReference: 'Kopiraj referencu',
+		dialogIntro: 'Vaši se izbori primjenjuju odmah.',
+		dialogTitle: 'Vaši izbori privatnosti',
+		done: 'Gotovo',
+		dontAllow: 'Ne dopusti',
+		euDialogIntro:
+			'Odaberite koje neobavezne kolačiće {business} smije koristiti. Neobavezni kolačići ostaju isključeni dok ih ne uključite.',
+		euDialogTitle: 'Postavke privatnosti',
+		gpcNote:
+			'Vaš je preglednik poslao signal Global Privacy Control, pa {business} {rights} {scope}. Opcija „Dopusti” nije dostupna dok je signal uključen.',
+		justNow: 'upravo sada',
+		nestedSheetNote:
+			'Promjene se primjenjuju kada ih spremite u Postavkama privatnosti.',
+		noticeBarDescription:
+			'Koristimo kolačiće za rad ove stranice, mjerenje prometa i personalizaciju oglasa. U bilo kojem trenutku možete se odjaviti.',
+		noticeBarDescriptionGpc:
+			'Koristimo kolačiće za rad ove stranice i mjerenje prometa. Vaš signal Global Privacy Control se poštuje.',
+		noticeGpcHonored:
+			'Signal Global Privacy Control vašeg preglednika se poštuje.',
+		noticeRightsAction: 'Ne prodajte i ne dijelite moje podatke',
+		nudge: 'Najprije odaberite jedan od dva gumba.',
+		optInBarDescription:
+			'{business} traži vaše dopuštenje prije korištenja neobaveznih kolačića te prije {rights}.',
+		optInDescription:
+			'Uz vaše dopuštenje {business} će koristiti neobavezne kolačiće za značajke stranice i analitiku te će smjeti {rights}. Ništa se ne uključuje ako to ne dopustite.',
+		optInTitle: 'Vaši izbori privatnosti',
+		optOutOption: 'Odustani',
+		panelExpanded: 'Prikazano je više opcija.',
+		policyColumn: 'Pravila o privatnosti',
+		preferencesClose: 'Zatvori postavke',
+		preferencesOnCount: 'Uključeno: {count}',
+		preferencesSheetIntro: 'Promjene se primjenjuju odmah.',
+		preferencesSummary: 'Značajke stranice i analitika',
+		preferencesTitle: 'Postavke',
+		purposeColumn: 'Svrha',
+		receiptAllowed: 'Dopušteno: {rights}',
+		receiptDetails: 'Pojedinosti',
+		receiptFromGpc: 'na temelju vašeg signala Global Privacy Control',
+		receiptLive: 'Poštuje se signal Global Privacy Control iz ovog preglednika',
+		receiptLiveDetail: 'Očitava se iz vašeg preglednika pri svakom posjetu.',
+		receiptOptedOut: 'Odjava: {rights}',
+		receiptRecorded: 'Zabilježeno: {date}',
+		receiptReference: 'Referenca',
+		receiptSavedAccount: 'Spremljeno na vašem računu · {date}',
+		receiptSavedBrowser: 'Spremljeno za ovaj preglednik · {date}',
+		receiptScopeAccount:
+			'Vrijedi za ovaj preglednik i vaš korisnički račun {business}.',
+		receiptScopeAccountUnnamed: 'Vrijedi za ovaj preglednik i vaš račun.',
+		receiptScopeBrowser:
+			'Vrijedi za ovaj preglednik. Prijavite se da bi vrijedilo i za vaš račun.',
+		receiptViaGpc: 'Signal Global Privacy Control',
+		referenceCopied: 'Referenca je kopirana.',
+		refuseAll:
+			'neće prodavati ni dijeliti vaše osobne podatke niti ih koristiti za ciljano oglašavanje',
+		refuseSaleAndShare: 'neće prodavati ni dijeliti vaše osobne podatke',
+		refuseSaleAndTargetedAds:
+			'neće prodavati vaše osobne podatke niti ih koristiti za ciljano oglašavanje',
+		rejectAll: 'Odbij sve',
+		rightsAllowed: '{rights}: dopušteno.',
+		rightsNotAllowed: '{rights}: nije dopušteno.',
+		rightsOptedOut: 'Odjava: {rights}.',
+		saleAllowed: '{business} smije {rights}.',
+		saleGroupOptIn: 'Dopusti: {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Odjava od prodaje mojih osobnih podataka i ciljanog oglašavanja',
+		saleOffByDefault:
+			'Isključeno prema zadanim postavkama. {business} {rights} ako to ne dopustite.',
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Spremi izbore',
+		saveInSettings: 'Spremite svoje izbore u Postavkama privatnosti',
+		savedAutomatically: 'Automatski spremljeno',
+		savedCue: 'Spremljeno',
+		scopeAccount: 'u ovom pregledniku ni za vaš korisnički račun {business}',
+		scopeAccountUnnamed: 'u ovom pregledniku ni za vaš račun',
+		scopeBrowser: 'u ovom pregledniku',
+		shortAll: 'prodaje ili dijeljenja vaših podataka za oglase',
+		shortSaleAndShare: 'prodaje ili dijeljenja vaših podataka',
+		shortSaleAndTargetedAds:
+			'prodaje vaših podataka ili njihova korištenja za oglase',
+		stateOff: 'Isključeno',
+		stateOn: 'Uključeno',
+		switchColumn: 'Uključeno',
+		switchedOff: '{name}: isključeno.',
+		switchedOn: '{name}: uključeno.',
+		titleAll: 'Prodaja, dijeljenje i ciljano oglašavanje',
+		titleSaleAndShare: 'Prodaja i dijeljenje',
+		titleSaleAndTargetedAds: 'Prodaja i ciljano oglašavanje',
+		vendorColumn: 'Prodavač',
+		vendorPolicy: 'Pravila o privatnosti: {vendor}',
+		vendorsClose: 'Zatvori prodavače: {category}',
+		vendorsFor: 'za kategoriju {category}',
+		vendorsHide: 'Sakrij prodavače ({count})',
+		vendorsHideOne: 'Sakrij 1 prodavača',
+		vendorsOnCount: 'Uključeno: {count}',
+		vendorsTable: 'Prodavači: {category}',
+		vendorsView: 'Prikaži prodavače ({count})',
+		vendorsViewOne: 'Prikaži 1 prodavača',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Vaši izbori privatnosti u Kaliforniji',

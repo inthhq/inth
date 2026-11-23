@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Bezárás',
 		rejectAll: 'Összes elutasítása',
 		save: 'Beállítások mentése',
-		securedBy: 'Védelmét biztosítja',
+		securedBy: 'Hozzájárulás-kezelés:',
 	},
 	consentGate: {
 		actionButton: 'A(z) {category} hozzájárulás engedélyezése',
@@ -207,6 +207,142 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'értékesítés és célzott hirdetés',
 		statusRequest: 'Leiratkozási kérelem teljesítve',
 		statusSignal: 'Leiratkozási preferenciajelzés teljesítve',
+	},
+	privacyChoices: {
+		acceptAll: 'Összes elfogadása',
+		advertisingFollowsSale: 'A hirdetésekre a fenti választása érvényes.',
+		advertisingTitle: 'Hirdetések',
+		allow: 'Engedélyezés',
+		alwaysOn: 'Mindig bekapcsolva',
+		announceSaved: '{message} Mentve.',
+		askAll:
+			'eladhatja vagy megoszthatja a személyes adatait, célzott hirdetésekhez is',
+		askSaleAndShare: 'eladhatja vagy megoszthatja a személyes adatait',
+		askSaleAndTargetedAds:
+			'eladhatja a személyes adatait, vagy felhasználhatja őket célzott hirdetésekhez',
+		bannerAllowedRightsOff:
+			'Az opcionális sütik engedélyezve. {rights}: továbbra is kikapcsolva. Ezt „Az Ön adatvédelmi beállításai” részben módosíthatja.',
+		bannerAllowedRightsOffGpc:
+			'Az opcionális sütik engedélyezve. {rights}: a Global Privacy Control jelzése miatt továbbra is kikapcsolva. Ezt „Az Ön adatvédelmi beállításai” részben módosíthatja.',
+		bannerRejected:
+			'Az opcionális sütik elutasítva. Ezt „Az Ön adatvédelmi beállításai” részben módosíthatja.',
+		barDescription:
+			'Sütiket használunk a felhasználói élmény javításához és a forgalom elemzéséhez.',
+		businessFallback: 'ez a webhely',
+		choiceRecorded: 'A választását rögzítettük.',
+		choicesSaved:
+			'A beállításokat mentettük. „Az Ön adatvédelmi beállításai” részben módosíthatja őket.',
+		choose: 'Választás',
+		chooseWhatToAllow: 'Válassza ki, mit engedélyez',
+		close: 'Bezárás',
+		confirmDescriptionOptIn: '{business} {rights}. Ezt bármikor módosíthatja.',
+		confirmDescriptionOptOut:
+			'{business} {rights}. Bármikor újra leiratkozhat.',
+		confirmKeepOptedOut: 'Maradjon letiltva',
+		confirmTitleOptIn: 'Engedélyezi a következőket: {rights}?',
+		confirmTitleOptOut: 'Újra engedélyezi a következőket: {rights}?',
+		copyFailed:
+			'A másolás nem sikerült. Jelölje ki és másolja ki a hivatkozását:',
+		copyFailedAnnouncement:
+			'A másolás nem sikerült. A teljes hivatkozás a visszaigazolásban látható.',
+		copyReference: 'Hivatkozás másolása',
+		dialogIntro: 'A választásai azonnal érvénybe lépnek.',
+		dialogTitle: 'Az Ön adatvédelmi beállításai',
+		done: 'Kész',
+		dontAllow: 'Tiltás',
+		euDialogIntro:
+			'Válassza ki, mely opcionális sütiket használhatja {business}. Az opcionális sütik kikapcsolva maradnak, amíg be nem kapcsolja őket.',
+		euDialogTitle: 'Adatvédelmi beállítások',
+		gpcNote:
+			'A böngészője Global Privacy Control jelzést küldött, ezért {business} {rights} {scope}. Amíg a jelzés be van kapcsolva, az Engedélyezés nem választható.',
+		justNow: 'az imént',
+		nestedSheetNote:
+			'A módosítások akkor lépnek érvénybe, amikor menti őket az Adatvédelmi beállításokban.',
+		noticeBarDescription:
+			'Sütiket használunk a webhely működtetéséhez, a forgalom méréséhez és a hirdetések személyre szabásához. Bármikor leiratkozhat.',
+		noticeBarDescriptionGpc:
+			'Sütiket használunk a webhely működtetéséhez és a forgalom méréséhez. A Global Privacy Control jelzését figyelembe vesszük.',
+		noticeGpcHonored:
+			'A böngészője Global Privacy Control jelzését figyelembe vesszük.',
+		noticeRightsAction: 'Ne adják el és ne osszák meg az adataimat',
+		nudge: 'Előbb válasszon a két gomb közül.',
+		optInBarDescription:
+			'{business} engedélyt kér, mielőtt opcionális sütiket használna, illetve {rights}.',
+		optInDescription:
+			'Ha engedélyezi, {business} opcionális sütiket használ a webhely funkcióihoz és az elemzéshez, továbbá {rights}. Semmi sem kapcsol be, amíg Ön nem engedélyezi.',
+		optInTitle: 'Az Ön adatvédelmi beállításai',
+		optOutOption: 'Leiratkozás',
+		panelExpanded: 'További lehetőségek láthatók.',
+		policyColumn: 'Adatvédelmi szabályzat',
+		preferencesClose: 'Beállítások bezárása',
+		preferencesOnCount: '{count} bekapcsolva',
+		preferencesSheetIntro: 'A módosítások azonnal érvénybe lépnek.',
+		preferencesSummary: 'Webhelyfunkciók és elemzés',
+		preferencesTitle: 'Beállítások',
+		purposeColumn: 'Cél',
+		receiptAllowed: 'Engedélyezve: {rights}',
+		receiptDetails: 'Részletek',
+		receiptFromGpc: 'a Global Privacy Control jelzése alapján',
+		receiptLive:
+			'A böngésző Global Privacy Control jelzését figyelembe vesszük',
+		receiptLiveDetail: 'Minden látogatáskor a böngészőjéből olvassuk ki.',
+		receiptOptedOut: 'Leiratkozás: {rights}',
+		receiptRecorded: 'Rögzítve: {date}',
+		receiptReference: 'Hivatkozás',
+		receiptSavedAccount: 'Mentve a fiókjába · {date}',
+		receiptSavedBrowser: 'Mentve ehhez a böngészőhöz · {date}',
+		receiptScopeAccount:
+			'Erre a böngészőre és az Ön {business}-fiókjára érvényes.',
+		receiptScopeAccountUnnamed: 'Erre a böngészőre és a fiókjára érvényes.',
+		receiptScopeBrowser:
+			'Erre a böngészőre érvényes. Jelentkezzen be, hogy a fiókjára is érvényes legyen.',
+		receiptViaGpc: 'Global Privacy Control jelzés',
+		referenceCopied: 'Hivatkozás kimásolva.',
+		refuseAll:
+			'nem adja el és nem osztja meg a személyes adatait, és nem használja fel őket célzott hirdetésekhez',
+		refuseSaleAndShare: 'nem adja el és nem osztja meg a személyes adatait',
+		refuseSaleAndTargetedAds:
+			'nem adja el a személyes adatait, és nem használja fel őket célzott hirdetésekhez',
+		rejectAll: 'Összes elutasítása',
+		rightsAllowed: '{rights}: engedélyezve.',
+		rightsNotAllowed: '{rights}: nincs engedélyezve.',
+		rightsOptedOut: 'Leiratkozott a következőkről: {rights}.',
+		saleAllowed: '{business} {rights}.',
+		saleGroupOptIn: 'Engedélyezés: {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Leiratkozás a személyes adataim értékesítéséről és a célzott hirdetésekről',
+		saleOffByDefault:
+			'Alapértelmezés szerint kikapcsolva. {business} {rights}, hacsak Ön nem engedélyezi.',
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Beállítások mentése',
+		saveInSettings: 'Mentse a választásait az Adatvédelmi beállításokban',
+		savedAutomatically: 'Automatikusan mentve',
+		savedCue: 'Mentve',
+		scopeAccount: 'ebben a böngészőben és az Ön {business}-fiókjában',
+		scopeAccountUnnamed: 'ebben a böngészőben és a fiókjában',
+		scopeBrowser: 'ebben a böngészőben',
+		shortAll: 'hirdetési célból eladná vagy megosztaná az adatait',
+		shortSaleAndShare: 'eladná vagy megosztaná az adatait',
+		shortSaleAndTargetedAds:
+			'eladná az adatait, vagy hirdetésekhez használná fel őket',
+		stateOff: 'Kikapcsolva',
+		stateOn: 'Bekapcsolva',
+		switchColumn: 'Bekapcsolva',
+		switchedOff: '{name}: kikapcsolva.',
+		switchedOn: '{name}: bekapcsolva.',
+		titleAll: 'Értékesítés, megosztás és célzott hirdetések',
+		titleSaleAndShare: 'Értékesítés és megosztás',
+		titleSaleAndTargetedAds: 'Értékesítés és célzott hirdetések',
+		vendorColumn: 'Szolgáltató',
+		vendorPolicy: 'Adatvédelmi szabályzat: {vendor}',
+		vendorsClose: 'Szolgáltatók bezárása: {category}',
+		vendorsFor: 'ehhez: {category}',
+		vendorsHide: '{count} szolgáltató elrejtése',
+		vendorsHideOne: '1 szolgáltató elrejtése',
+		vendorsOnCount: '{count} bekapcsolva',
+		vendorsTable: 'Szolgáltatók: {category}',
+		vendorsView: '{count} szolgáltató megjelenítése',
+		vendorsViewOne: '1 szolgáltató megjelenítése',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Az Ön kaliforniai adatvédelmi beállításai',

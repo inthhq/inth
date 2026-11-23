@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Скрыть',
 		rejectAll: 'Отклонить все',
 		save: 'Сохранить настройки',
-		securedBy: 'Защищено с помощью',
+		securedBy: 'Согласие с помощью',
 	},
 	consentGate: {
 		actionButton: 'Дать согласие на «{category}»',
@@ -209,6 +209,144 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'продажи и таргетированной рекламы',
 		statusRequest: 'Запрос на отказ выполнен',
 		statusSignal: 'Сигнал предпочтения отказа выполнен',
+	},
+	privacyChoices: {
+		acceptAll: 'Принять все',
+		advertisingFollowsSale: 'Реклама зависит от вашего выбора выше.',
+		advertisingTitle: 'Реклама',
+		allow: 'Разрешить',
+		alwaysOn: 'Всегда включено',
+		announceSaved: '{message} Сохранено.',
+		askAll:
+			'продавать или передавать ваши персональные данные, в том числе для таргетированной рекламы',
+		askSaleAndShare: 'продавать или передавать ваши персональные данные',
+		askSaleAndTargetedAds:
+			'продавать ваши персональные данные или использовать их для таргетированной рекламы',
+		bannerAllowedRightsOff:
+			'Необязательные файлы cookie разрешены. {rights} остаются отключёнными. Изменить это можно в разделе «Ваши настройки конфиденциальности».',
+		bannerAllowedRightsOffGpc:
+			'Необязательные файлы cookie разрешены. {rights} остаются отключёнными из-за сигнала Global Privacy Control вашего браузера. Изменить это можно в разделе «Ваши настройки конфиденциальности».',
+		bannerRejected:
+			'Необязательные файлы cookie отклонены. Изменить это можно в разделе «Ваши настройки конфиденциальности».',
+		barDescription:
+			'Мы используем файлы cookie, чтобы сделать сайт удобнее и анализировать посещаемость.',
+		businessFallback: 'этот сайт',
+		choiceRecorded: 'Выбор записан.',
+		choicesSaved:
+			'Выбор сохранён. Изменить его можно в разделе «Ваши настройки конфиденциальности».',
+		choose: 'Выбрать',
+		chooseWhatToAllow: 'Выбрать, что разрешить',
+		close: 'Закрыть',
+		confirmDescriptionOptIn:
+			'{business} сможет {rights}. Вы можете изменить это в любое время.',
+		confirmDescriptionOptOut:
+			'{business} сможет {rights}. Вы можете снова отказаться в любое время.',
+		confirmKeepOptedOut: 'Оставить отказ',
+		confirmTitleOptIn: 'Разрешить: {rights}?',
+		confirmTitleOptOut: 'Снова разрешить: {rights}?',
+		copyFailed:
+			'Не удалось скопировать. Выделите и скопируйте номер обращения:',
+		copyFailedAnnouncement:
+			'Не удалось скопировать. Полный номер обращения показан в подтверждении.',
+		copyReference: 'Скопировать номер обращения',
+		dialogIntro: 'Ваш выбор применяется сразу.',
+		dialogTitle: 'Ваши настройки конфиденциальности',
+		done: 'Готово',
+		dontAllow: 'Не разрешать',
+		euDialogIntro:
+			'Выберите, какие необязательные файлы cookie может использовать {business}. Необязательные файлы cookie остаются отключёнными, пока вы их не включите.',
+		euDialogTitle: 'Настройки конфиденциальности',
+		gpcNote:
+			'Ваш браузер отправил сигнал Global Privacy Control, поэтому {business} {rights} {scope}. Кнопка «Разрешить» недоступна, пока сигнал включён.',
+		justNow: 'только что',
+		nestedSheetNote:
+			'Изменения применяются после сохранения в разделе «Настройки конфиденциальности».',
+		noticeBarDescription:
+			'Мы используем файлы cookie для работы этого сайта, оценки посещаемости и персонализации рекламы. Вы можете отказаться в любое время.',
+		noticeBarDescriptionGpc:
+			'Мы используем файлы cookie для работы этого сайта и оценки посещаемости. Ваш сигнал Global Privacy Control учитывается.',
+		noticeGpcHonored:
+			'Сигнал Global Privacy Control вашего браузера учитывается.',
+		noticeRightsAction: 'Не продавать и не передавать мои данные',
+		nudge: 'Сначала выберите одну из двух кнопок.',
+		optInBarDescription:
+			'{business} спрашивает разрешение, прежде чем использовать необязательные файлы cookie или {rights}.',
+		optInDescription:
+			'С вашего разрешения {business} будет использовать необязательные файлы cookie для функций сайта и аналитики, а также {rights}. Ничего не включается, пока вы этого не разрешите.',
+		optInTitle: 'Ваши настройки конфиденциальности',
+		optOutOption: 'Отказаться',
+		panelExpanded: 'Показаны дополнительные параметры.',
+		policyColumn: 'Политика конфиденциальности',
+		preferencesClose: 'Закрыть настройки',
+		preferencesOnCount: 'Включено: {count}',
+		preferencesSheetIntro: 'Изменения применяются сразу.',
+		preferencesSummary: 'Функции сайта и аналитика',
+		preferencesTitle: 'Настройки',
+		purposeColumn: 'Цель',
+		receiptAllowed: 'Разрешено: {rights}',
+		receiptDetails: 'Подробности',
+		receiptFromGpc: 'по сигналу Global Privacy Control вашего браузера',
+		receiptLive: 'Учитывается сигнал Global Privacy Control этого браузера',
+		receiptLiveDetail: 'Считывается из вашего браузера при каждом посещении.',
+		receiptOptedOut: 'Отказ: {rights}',
+		receiptRecorded: 'Записано: {date}',
+		receiptReference: 'Номер обращения',
+		receiptSavedAccount: 'Сохранено в вашей учётной записи · {date}',
+		receiptSavedBrowser: 'Сохранено для этого браузера · {date}',
+		receiptScopeAccount:
+			'Действует в этом браузере и в вашей учётной записи {business}.',
+		receiptScopeAccountUnnamed:
+			'Действует в этом браузере и в вашей учётной записи.',
+		receiptScopeBrowser:
+			'Действует в этом браузере. Войдите, чтобы применить выбор и к своей учётной записи.',
+		receiptViaGpc: 'Сигнал Global Privacy Control',
+		referenceCopied: 'Номер обращения скопирован.',
+		refuseAll:
+			'не будет продавать или передавать ваши персональные данные и не будет использовать их для таргетированной рекламы',
+		refuseSaleAndShare:
+			'не будет продавать или передавать ваши персональные данные',
+		refuseSaleAndTargetedAds:
+			'не будет продавать ваши персональные данные или использовать их для таргетированной рекламы',
+		rejectAll: 'Отклонить все',
+		rightsAllowed: '{rights}: разрешено.',
+		rightsNotAllowed: '{rights}: не разрешено.',
+		rightsOptedOut: 'Отказ оформлен: {rights}.',
+		saleAllowed: '{business} может {rights}.',
+		saleGroupOptIn: 'Разрешить: {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Отказаться от продажи моих персональных данных и от таргетированной рекламы',
+		saleOffByDefault:
+			'По умолчанию отключено. {business} {rights}, пока вы этого не разрешите.',
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Сохранить выбор',
+		saveInSettings: 'Сохраните выбор в разделе «Настройки конфиденциальности»',
+		savedAutomatically: 'Сохраняется автоматически',
+		savedCue: 'Сохранено',
+		scopeAccount: 'в этом браузере и для вашей учётной записи {business}',
+		scopeAccountUnnamed: 'в этом браузере и для вашей учётной записи',
+		scopeBrowser: 'в этом браузере',
+		shortAll: 'продавать или передавать ваши данные для рекламы',
+		shortSaleAndShare: 'продавать или передавать ваши данные',
+		shortSaleAndTargetedAds:
+			'продавать ваши данные или использовать их для рекламы',
+		stateOff: 'Отключено',
+		stateOn: 'Включено',
+		switchColumn: 'Включено',
+		switchedOff: '{name}: отключено.',
+		switchedOn: '{name}: включено.',
+		titleAll: 'Продажа, передача и таргетированная реклама',
+		titleSaleAndShare: 'Продажа и передача',
+		titleSaleAndTargetedAds: 'Продажа и таргетированная реклама',
+		vendorColumn: 'Поставщик',
+		vendorPolicy: 'Политика конфиденциальности {vendor}',
+		vendorsClose: 'Закрыть список поставщиков: {category}',
+		vendorsFor: 'для категории «{category}»',
+		vendorsHide: 'Скрыть поставщиков ({count})',
+		vendorsHideOne: 'Скрыть 1 поставщика',
+		vendorsOnCount: 'Включено: {count}',
+		vendorsTable: 'Поставщики: {category}',
+		vendorsView: 'Показать поставщиков ({count})',
+		vendorsViewOne: 'Показать 1 поставщика',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Ваши настройки конфиденциальности в Калифорнии',

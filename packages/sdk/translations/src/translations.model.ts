@@ -172,6 +172,16 @@ export interface PrivacyChoicesTranslations {
 	titleSaleAndShare: string;
 	/** Name of the rights as a sentence subject, `sale` and `targeted_ads`. */
 	titleSaleAndTargetedAds: string;
+	/**
+	 * The rights' name inside a sentence, `sale`, `share` and `targeted_ads`.
+	 * Unset, the title is lower-cased. Set it where that is wrong: German
+	 * and Luxembourgish capitalise their nouns.
+	 */
+	inlineAll?: string;
+	/** The rights' name inside a sentence, `sale` and `share`. */
+	inlineSaleAndShare?: string;
+	/** The rights' name inside a sentence, `sale` and `targeted_ads`. */
+	inlineSaleAndTargetedAds?: string;
 	/** Announced when pressing Allow while the opt-in confirmation is open. */
 	nudge: string;
 	/** Announced when a banner's Customize expands its options in place. */

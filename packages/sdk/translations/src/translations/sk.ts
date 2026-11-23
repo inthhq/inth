@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Zavrieť',
 		rejectAll: 'Odmietnuť všetko',
 		save: 'Uložiť nastavenia',
-		securedBy: 'Zabezpečuje',
+		securedBy: 'Súhlas spravuje',
 	},
 	consentGate: {
 		actionButton: 'Povoliť súhlas pre {category}',
@@ -203,6 +203,141 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'predaja a cielenej reklamy',
 		statusRequest: 'Žiadosť o odhlásenie bola splnená',
 		statusSignal: 'Signál predvoľby odhlásenia bol splnený',
+	},
+	privacyChoices: {
+		acceptAll: 'Prijať všetko',
+		advertisingFollowsSale: 'Reklama sa riadi vašou voľbou vyššie.',
+		advertisingTitle: 'Reklama',
+		allow: 'Povoliť',
+		alwaysOn: 'Vždy zapnuté',
+		announceSaved: '{message} Uložené.',
+		askAll:
+			'predávať alebo zdieľať vaše osobné údaje, a to aj na cielenú reklamu',
+		askSaleAndShare: 'predávať alebo zdieľať vaše osobné údaje',
+		askSaleAndTargetedAds:
+			'predávať vaše osobné údaje alebo ich používať na cielenú reklamu',
+		bannerAllowedRightsOff:
+			'Voliteľné cookies sú povolené. {rights} zostávajú vypnuté. Môžete to zmeniť v časti Vaše voľby ochrany súkromia.',
+		bannerAllowedRightsOffGpc:
+			'Voliteľné cookies sú povolené. {rights} zostávajú vypnuté pre váš signál Global Privacy Control. Môžete to zmeniť v časti Vaše voľby ochrany súkromia.',
+		bannerRejected:
+			'Voliteľné cookies boli odmietnuté. Môžete to zmeniť v časti Vaše voľby ochrany súkromia.',
+		barDescription:
+			'Cookies používame na zlepšenie vášho prehliadania a analýzu návštevnosti.',
+		businessFallback: 'táto stránka',
+		choiceRecorded: 'Voľba bola zaznamenaná.',
+		choicesSaved:
+			'Voľby boli uložené. Môžete ich zmeniť v časti Vaše voľby ochrany súkromia.',
+		choose: 'Vybrať',
+		chooseWhatToAllow: 'Vybrať, čo povoliť',
+		close: 'Zavrieť',
+		confirmDescriptionOptIn:
+			'{business} bude môcť {rights}. Kedykoľvek to môžete zmeniť.',
+		confirmDescriptionOptOut:
+			'{business} bude môcť {rights}. Kedykoľvek sa môžete znova odhlásiť.',
+		confirmKeepOptedOut: 'Ponechať odhlásenie',
+		confirmTitleOptIn: 'Povoliť {rights}?',
+		confirmTitleOptOut: 'Znova povoliť {rights}?',
+		copyFailed: 'Kopírovanie zlyhalo. Označte a skopírujte svoju referenciu:',
+		copyFailedAnnouncement:
+			'Kopírovanie zlyhalo. Celá referencia je zobrazená v potvrdení.',
+		copyReference: 'Kopírovať referenciu',
+		dialogIntro: 'Vaše voľby platia okamžite.',
+		dialogTitle: 'Vaše voľby ochrany súkromia',
+		done: 'Hotovo',
+		dontAllow: 'Nepovoliť',
+		euDialogIntro:
+			'Vyberte, ktoré voliteľné cookies môže {business} používať. Voliteľné cookies zostanú vypnuté, kým ich nezapnete.',
+		euDialogTitle: 'Nastavenia súkromia',
+		gpcNote:
+			'Váš prehliadač odoslal signál Global Privacy Control, takže {business} {rights} {scope}. Možnosť Povoliť nie je dostupná, kým je signál zapnutý.',
+		justNow: 'práve teraz',
+		nestedSheetNote:
+			'Zmeny sa použijú, keď ich uložíte v Nastaveniach súkromia.',
+		noticeBarDescription:
+			'Cookies používame na prevádzku tejto stránky, meranie návštevnosti a personalizáciu reklám. Kedykoľvek sa môžete odhlásiť.',
+		noticeBarDescriptionGpc:
+			'Cookies používame na prevádzku tejto stránky a meranie návštevnosti. Váš signál Global Privacy Control rešpektujeme.',
+		noticeGpcHonored:
+			'Signál Global Privacy Control vášho prehliadača rešpektujeme.',
+		noticeRightsAction: 'Nepredávajte ani nezdieľajte moje údaje',
+		nudge: 'Najprv vyberte jedno z dvoch tlačidiel.',
+		optInBarDescription:
+			'{business} sa vás opýta skôr, než začne používať voliteľné cookies alebo {rights}.',
+		optInDescription:
+			'S vaším súhlasom bude {business} používať voliteľné cookies na funkcie stránky a analytiku a {rights}. Nič sa nezapne, kým to nepovolíte.',
+		optInTitle: 'Vaše voľby ochrany súkromia',
+		optOutOption: 'Odhlásiť sa',
+		panelExpanded: 'Zobrazili sa ďalšie možnosti.',
+		policyColumn: 'Zásady ochrany súkromia',
+		preferencesClose: 'Zavrieť predvoľby',
+		preferencesOnCount: 'Zapnuté: {count}',
+		preferencesSheetIntro: 'Zmeny platia okamžite.',
+		preferencesSummary: 'Funkcie stránky a analytika',
+		preferencesTitle: 'Predvoľby',
+		purposeColumn: 'Účel',
+		receiptAllowed: 'Povolené: {rights}',
+		receiptDetails: 'Podrobnosti',
+		receiptFromGpc: 'na základe vášho signálu Global Privacy Control',
+		receiptLive:
+			'Rešpektujeme signál Global Privacy Control z tohto prehliadača',
+		receiptLiveDetail: 'Načítava sa z vášho prehliadača pri každej návšteve.',
+		receiptOptedOut: 'Odmietnuté: {rights}',
+		receiptRecorded: 'Zaznamenané: {date}',
+		receiptReference: 'Referencia',
+		receiptSavedAccount: 'Uložené vo vašom účte · {date}',
+		receiptSavedBrowser: 'Uložené pre tento prehliadač · {date}',
+		receiptScopeAccount: 'Platí pre tento prehliadač a váš účet {business}.',
+		receiptScopeAccountUnnamed: 'Platí pre tento prehliadač a váš účet.',
+		receiptScopeBrowser:
+			'Platí pre tento prehliadač. Prihláste sa, aby platilo aj pre váš účet.',
+		receiptViaGpc: 'Signál Global Privacy Control',
+		referenceCopied: 'Referencia bola skopírovaná.',
+		refuseAll:
+			'nebude predávať ani zdieľať vaše osobné údaje ani ich používať na cielenú reklamu',
+		refuseSaleAndShare: 'nebude predávať ani zdieľať vaše osobné údaje',
+		refuseSaleAndTargetedAds:
+			'nebude predávať vaše osobné údaje ani ich používať na cielenú reklamu',
+		rejectAll: 'Odmietnuť všetko',
+		rightsAllowed: '{rights}: povolené.',
+		rightsNotAllowed: '{rights}: nepovolené.',
+		rightsOptedOut: 'Odmietli ste {rights}.',
+		saleAllowed: '{business} môže {rights}.',
+		saleGroupOptIn: 'Povoliť {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Odhlásiť sa z predaja mojich osobných údajov a z cielenej reklamy',
+		saleOffByDefault:
+			'Predvolene vypnuté. {business} {rights}, pokiaľ to nepovolíte.',
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Uložiť voľby',
+		saveInSettings: 'Uložte svoje voľby v Nastaveniach súkromia',
+		savedAutomatically: 'Ukladá sa automaticky',
+		savedCue: 'Uložené',
+		scopeAccount: 'v tomto prehliadači ani pre váš účet {business}',
+		scopeAccountUnnamed: 'v tomto prehliadači ani pre váš účet',
+		scopeBrowser: 'v tomto prehliadači',
+		shortAll: 'predávať alebo zdieľať vaše údaje na reklamu',
+		shortSaleAndShare: 'predávať alebo zdieľať vaše údaje',
+		shortSaleAndTargetedAds:
+			'predávať vaše údaje alebo ich používať na reklamu',
+		stateOff: 'Vypnuté',
+		stateOn: 'Zapnuté',
+		switchColumn: 'Zapnuté',
+		switchedOff: '{name}: vypnuté.',
+		switchedOn: '{name}: zapnuté.',
+		titleAll: 'Predaj, zdieľanie a cielené reklamy',
+		titleSaleAndShare: 'Predaj a zdieľanie',
+		titleSaleAndTargetedAds: 'Predaj a cielené reklamy',
+		vendorColumn: 'Dodávateľ',
+		vendorPolicy: 'Zásady ochrany súkromia: {vendor}',
+		vendorsClose: 'Zavrieť dodávateľov: {category}',
+		vendorsFor: 'pre kategóriu {category}',
+		vendorsHide: 'Skryť dodávateľov ({count})',
+		vendorsHideOne: 'Skryť 1 dodávateľa',
+		vendorsOnCount: 'Zapnuté: {count}',
+		vendorsTable: 'Dodávatelia: {category}',
+		vendorsView: 'Zobraziť dodávateľov ({count})',
+		vendorsViewOne: 'Zobraziť 1 dodávateľa',
 	},
 	rights: {
 		californiaPrivacyChoices: 'Vaše voľby ochrany súkromia v Kalifornii',

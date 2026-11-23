@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Închide',
 		rejectAll: 'Respinge toate',
 		save: 'Salvează setările',
-		securedBy: 'Securizat de',
+		securedBy: 'Consimțământ prin',
 	},
 	consentGate: {
 		actionButton: 'Activează consimțământul pentru {category}',
@@ -206,6 +206,142 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'vânzare și publicitate direcționată',
 		statusRequest: 'Solicitarea de renunțare a fost respectată',
 		statusSignal: 'Semnalul de preferință pentru renunțare a fost respectat',
+	},
+	privacyChoices: {
+		acceptAll: 'Acceptă toate',
+		advertisingFollowsSale: 'Publicitatea urmează alegerea ta de mai sus.',
+		advertisingTitle: 'Publicitate',
+		allow: 'Permite',
+		alwaysOn: 'Mereu active',
+		announceSaved: '{message} Salvat.',
+		askAll:
+			'vinde sau partaja informațiile tale personale, inclusiv pentru publicitate direcționată',
+		askSaleAndShare: 'vinde sau partaja informațiile tale personale',
+		askSaleAndTargetedAds:
+			'vinde sau folosi pentru publicitate direcționată informațiile tale personale',
+		bannerAllowedRightsOff:
+			'Cookie-urile opționale au fost permise. {rights} rămân dezactivate. Poți schimba asta în „Opțiunile dumneavoastră de confidențialitate”.',
+		bannerAllowedRightsOffGpc:
+			'Cookie-urile opționale au fost permise. {rights} rămân dezactivate din cauza semnalului tău Global Privacy Control. Poți schimba asta în „Opțiunile dumneavoastră de confidențialitate”.',
+		bannerRejected:
+			'Cookie-urile opționale au fost respinse. Poți schimba asta în „Opțiunile dumneavoastră de confidențialitate”.',
+		barDescription:
+			'Folosim cookie-uri pentru a-ți îmbunătăți experiența și a analiza traficul.',
+		businessFallback: 'acest site',
+		choiceRecorded: 'Alegere înregistrată.',
+		choicesSaved:
+			'Alegeri salvate. Le poți schimba în „Opțiunile dumneavoastră de confidențialitate”.',
+		choose: 'Alege',
+		chooseWhatToAllow: 'Alege ce permiți',
+		close: 'Închide',
+		confirmDescriptionOptIn:
+			'{business} va putea {rights}. Poți schimba asta oricând.',
+		confirmDescriptionOptOut:
+			'{business} va putea {rights}. Poți renunța din nou oricând.',
+		confirmKeepOptedOut: 'Păstrează renunțarea',
+		confirmTitleOptIn: 'Permiți {rights}?',
+		confirmTitleOptOut: 'Permiți din nou {rights}?',
+		copyFailed: 'Copierea nu a reușit. Selectează și copiază referința:',
+		copyFailedAnnouncement:
+			'Copierea nu a reușit. Referința completă este afișată în confirmare.',
+		copyReference: 'Copiază referința',
+		dialogIntro: 'Alegerile tale se aplică imediat.',
+		dialogTitle: 'Opțiunile dumneavoastră de confidențialitate',
+		done: 'Gata',
+		dontAllow: 'Nu permite',
+		euDialogIntro:
+			'Alege ce cookie-uri opționale poate folosi {business}. Cookie-urile opționale rămân dezactivate dacă nu le activezi.',
+		euDialogTitle: 'Setări de confidențialitate',
+		gpcNote:
+			'Browserul tău a trimis un semnal Global Privacy Control, așa că {business} {rights} {scope}. Opțiunea „Permite” nu este disponibilă cât timp semnalul este activ.',
+		justNow: 'chiar acum',
+		nestedSheetNote:
+			'Modificările se aplică atunci când salvezi în „Setări de confidențialitate”.',
+		noticeBarDescription:
+			'Folosim cookie-uri pentru a opera acest site, a măsura traficul și a personaliza reclamele. Poți renunța oricând.',
+		noticeBarDescriptionGpc:
+			'Folosim cookie-uri pentru a opera acest site și a măsura traficul. Semnalul tău Global Privacy Control este respectat.',
+		noticeGpcHonored:
+			'Semnalul Global Privacy Control al browserului tău este respectat.',
+		noticeRightsAction: 'Nu vindeți și nu partajați datele mele',
+		nudge: 'Alege mai întâi unul dintre cele două butoane.',
+		optInBarDescription:
+			'{business} îți cere acordul înainte de a folosi cookie-uri opționale sau de a {rights}.',
+		optInDescription:
+			'Cu permisiunea ta, {business} ar folosi cookie-uri opționale pentru funcțiile site-ului și analiză și ar {rights}. Nimic nu este activat dacă nu permiți.',
+		optInTitle: 'Opțiunile tale de confidențialitate',
+		optOutOption: 'Renunță',
+		panelExpanded: 'Sunt afișate mai multe opțiuni.',
+		policyColumn: 'Politica de confidențialitate',
+		preferencesClose: 'Închide preferințele',
+		preferencesOnCount: '{count} active',
+		preferencesSheetIntro: 'Modificările se aplică imediat.',
+		preferencesSummary: 'Funcții ale site-ului și analiză',
+		preferencesTitle: 'Preferințe',
+		purposeColumn: 'Scop',
+		receiptAllowed: 'Ai permis {rights}',
+		receiptDetails: 'Detalii',
+		receiptFromGpc: 'din semnalul tău Global Privacy Control',
+		receiptLive: 'Respectăm semnalul Global Privacy Control din acest browser',
+		receiptLiveDetail: 'Citit din browserul tău la fiecare vizită.',
+		receiptOptedOut: 'Ai renunțat la {rights}',
+		receiptRecorded: 'Înregistrat: {date}',
+		receiptReference: 'Referință',
+		receiptSavedAccount: 'Salvat în contul tău · {date}',
+		receiptSavedBrowser: 'Salvat pentru acest browser · {date}',
+		receiptScopeAccount:
+			'Se aplică acestui browser și contului tău {business}.',
+		receiptScopeAccountUnnamed: 'Se aplică acestui browser și contului tău.',
+		receiptScopeBrowser:
+			'Se aplică acestui browser. Autentifică-te pentru a aplica alegerea și contului tău.',
+		receiptViaGpc: 'Semnal Global Privacy Control',
+		referenceCopied: 'Referință copiată.',
+		refuseAll:
+			'nu va vinde, nu va partaja și nu va folosi pentru publicitate direcționată informațiile tale personale',
+		refuseSaleAndShare:
+			'nu va vinde și nu va partaja informațiile tale personale',
+		refuseSaleAndTargetedAds:
+			'nu va vinde și nu va folosi pentru publicitate direcționată informațiile tale personale',
+		rejectAll: 'Respinge toate',
+		rightsAllowed: '{rights} sunt permise.',
+		rightsNotAllowed: '{rights} nu sunt permise.',
+		rightsOptedOut: 'Ai renunțat la {rights}.',
+		saleAllowed: '{business} poate {rights}.',
+		saleGroupOptIn: 'Permite {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Renunț la vânzarea datelor mele personale și la publicitatea direcționată',
+		saleOffByDefault:
+			'Dezactivat implicit. {business} {rights} decât dacă permiți.',
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Salvează alegerile',
+		saveInSettings: 'Salvează alegerile în „Setări de confidențialitate”',
+		savedAutomatically: 'Salvat automat',
+		savedCue: 'Salvat',
+		scopeAccount: 'în acest browser sau pentru contul tău {business}',
+		scopeAccountUnnamed: 'în acest browser sau pentru contul tău',
+		scopeBrowser: 'în acest browser',
+		shortAll: 'vinde sau partaja datele tale pentru publicitate',
+		shortSaleAndShare: 'vinde sau partaja datele tale',
+		shortSaleAndTargetedAds:
+			'vinde datele tale sau a le folosi pentru publicitate',
+		stateOff: 'Dezactivat',
+		stateOn: 'Activat',
+		switchColumn: 'Activ',
+		switchedOff: '{name}: dezactivat.',
+		switchedOn: '{name}: activat.',
+		titleAll: 'Vânzarea, partajarea și publicitatea direcționată',
+		titleSaleAndShare: 'Vânzarea și partajarea',
+		titleSaleAndTargetedAds: 'Vânzarea și publicitatea direcționată',
+		vendorColumn: 'Furnizor',
+		vendorPolicy: 'Politica de confidențialitate {vendor}',
+		vendorsClose: 'Închide furnizorii pentru {category}',
+		vendorsFor: 'pentru {category}',
+		vendorsHide: 'Ascunde furnizorii ({count})',
+		vendorsHideOne: 'Ascunde 1 furnizor',
+		vendorsOnCount: '{count} activi',
+		vendorsTable: 'Furnizori pentru {category}',
+		vendorsView: 'Afișează furnizorii ({count})',
+		vendorsViewOne: 'Afișează 1 furnizor',
 	},
 	rights: {
 		californiaPrivacyChoices:

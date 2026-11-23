@@ -147,6 +147,31 @@ describe('resolveSaleRightCopy', () => {
 		).toBe('Allow selling and targeted ads');
 	});
 
+	it('lower-cases the rights inside a sentence, unless the language sets its own form', () => {
+		const optIn = { ...base, model: 'opt-in' };
+		expect(resolveSaleRightCopy(undefined, optIn).groupLabel).toBe(
+			'Allow selling, sharing and targeted ads'
+		);
+		// German capitalises nouns, so its form is used as written.
+		const german = {
+			privacyChoices: {
+				inlineAll: 'Verkauf, Weitergabe und zielgerichtete Werbung',
+				saleGroupOptIn: 'Erlauben: {rights}',
+				titleAll: 'Verkauf, Weitergabe und zielgerichtete Werbung',
+			},
+		};
+		expect(resolveSaleRightCopy(german, optIn).groupLabel).toBe(
+			'Erlauben: Verkauf, Weitergabe und zielgerichtete Werbung'
+		);
+		// A language without its own form gets the lower-cased title.
+		expect(
+			resolveSaleRightCopy(
+				{ privacyChoices: { titleAll: 'Vente et Partage' } },
+				optIn
+			).groupLabel
+		).toBe('Allow vente et partage');
+	});
+
 	it('names the signal only when a signal holds the refusal', () => {
 		const held = { ...base, locked: true, selected: 'protect' as const };
 		expect(

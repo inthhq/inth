@@ -9,7 +9,7 @@ export const translations: CompleteTranslations = {
 		dismiss: 'Agħlaq',
 		rejectAll: 'Irrifjuta kollox',
 		save: 'Issejvja s-settings',
-		securedBy: 'Protett minn',
+		securedBy: 'Kunsens minn',
 	},
 	consentGate: {
 		actionButton: "Attiva l-kunsens ta' {category}",
@@ -208,6 +208,143 @@ export const translations: CompleteTranslations = {
 		rightsSaleAndTargetedAds: 'bejgħ u reklamar immirat',
 		statusRequest: 'It-talba għall-ħruġ ġiet rispettata',
 		statusSignal: 'Is-sinjal tal-preferenza għall-ħruġ ġie rispettat',
+	},
+	privacyChoices: {
+		acceptAll: 'Aċċetta kollox',
+		advertisingFollowsSale: "Ir-reklamar isegwi l-għażla tiegħek ta' hawn fuq.",
+		advertisingTitle: 'Reklamar',
+		allow: 'Ippermetti',
+		alwaysOn: 'Dejjem mixgħul',
+		announceSaved: '{message} Issejvjat.',
+		askAll:
+			'jbigħ jew jaqsam l-informazzjoni personali tiegħek, inkluż għal reklamar immirat',
+		askSaleAndShare: 'jbigħ jew jaqsam l-informazzjoni personali tiegħek',
+		askSaleAndTargetedAds:
+			'jbigħ l-informazzjoni personali tiegħek jew jużaha għal reklamar immirat',
+		bannerAllowedRightsOff:
+			"Cookies fakultattivi permessi. {rights} jibqgħu mitfija. Tista' tibdel dan taħt L-Għażliet tal-Privatezza Tiegħek.",
+		bannerAllowedRightsOffGpc:
+			"Cookies fakultattivi permessi. {rights} jibqgħu mitfija minħabba s-sinjal Global Privacy Control tiegħek. Tista' tibdel dan taħt L-Għażliet tal-Privatezza Tiegħek.",
+		bannerRejected:
+			"Cookies fakultattivi rrifjutati. Tista' tibdel dan taħt L-Għażliet tal-Privatezza Tiegħek.",
+		barDescription:
+			'Nużaw cookies biex intejbu l-esperjenza tiegħek u nanalizzaw it-traffiku.',
+		businessFallback: 'dan is-sit',
+		choiceRecorded: 'L-għażla ġiet irreġistrata.',
+		choicesSaved:
+			"L-għażliet ġew issejvjati. Tista' tibdilhom taħt L-Għażliet tal-Privatezza Tiegħek.",
+		choose: 'Agħżel',
+		chooseWhatToAllow: "Agħżel x'tippermetti",
+		close: 'Agħlaq',
+		confirmDescriptionOptIn:
+			"{business} jista' {rights}. Tista' tibdel dan fi kwalunkwe ħin.",
+		confirmDescriptionOptOut:
+			"{business} jista' {rights}. Tista' terġa' tagħżel li toħroġ fi kwalunkwe ħin.",
+		confirmKeepOptedOut: "Ibqa' eskluż",
+		confirmTitleOptIn: 'Tippermetti {rights}?',
+		confirmTitleOptOut: "Terġa' tippermetti {rights}?",
+		copyFailed: 'Ma setax jiġi kkupjat. Agħżel u kkopja r-referenza tiegħek:',
+		copyFailedAnnouncement:
+			'Ma setax jiġi kkupjat. Ir-referenza sħiħa tiegħek tidher fl-irċevuta.',
+		copyReference: 'Ikkopja r-referenza',
+		dialogIntro: 'L-għażliet tiegħek japplikaw minnufih.',
+		dialogTitle: 'L-Għażliet tal-Privatezza Tiegħek',
+		done: 'Lest',
+		dontAllow: 'Tippermettix',
+		euDialogIntro:
+			"Agħżel liema cookies fakultattivi jista' juża {business}. Il-cookies fakultattivi jibqgħu mitfija sakemm ma tixgħelhomx int.",
+		euDialogTitle: 'Settings tal-privatezza',
+		gpcNote:
+			'Il-brawżer tiegħek bagħat sinjal Global Privacy Control, għalhekk {business} {rights} {scope}. Ippermetti mhuwiex disponibbli sakemm is-sinjal ikun mixgħul.',
+		justNow: 'issa stess',
+		nestedSheetNote:
+			'Il-bidliet japplikaw meta tissejvja fis-Settings tal-privatezza.',
+		noticeBarDescription:
+			"Nużaw cookies biex inħaddmu dan is-sit, inkejlu t-traffiku u nippersonalizzaw ir-reklami. Tista' tagħżel li toħroġ fi kwalunkwe ħin.",
+		noticeBarDescriptionGpc:
+			'Nużaw cookies biex inħaddmu dan is-sit u nkejlu t-traffiku. Is-sinjal Global Privacy Control tiegħek qed jiġi rispettat.',
+		noticeGpcHonored:
+			'Is-sinjal Global Privacy Control tal-brawżer tiegħek qed jiġi rispettat.',
+		noticeRightsAction: 'Tbigħx u taqsamx id-data tiegħi',
+		nudge: 'L-ewwel agħżel waħda miż-żewġ buttuni.',
+		optInBarDescription:
+			'{business} jitlob il-permess qabel juża cookies fakultattivi jew {rights}.',
+		optInDescription:
+			"Bil-permess tiegħek, {business} juża cookies fakultattivi għall-funzjonijiet tas-sit u l-analitika, u jkun jista' {rights}. Xejn ma jinxtegħel sakemm ma tippermettihx int.",
+		optInTitle: 'L-għażliet tal-privatezza tiegħek',
+		optOutOption: 'Agħżel li toħroġ',
+		panelExpanded: 'Qed jintwerew aktar għażliet.',
+		policyColumn: 'Politika tal-privatezza',
+		preferencesClose: 'Agħlaq il-preferenzi',
+		preferencesOnCount: '{count} mixgħula',
+		preferencesSheetIntro: 'Il-bidliet japplikaw minnufih.',
+		preferencesSummary: 'Funzjonijiet tas-sit u analitika',
+		preferencesTitle: 'Preferenzi',
+		purposeColumn: 'Skop',
+		receiptAllowed: 'Permess: {rights}',
+		receiptDetails: 'Dettalji',
+		receiptFromGpc: 'mis-sinjal Global Privacy Control tiegħek',
+		receiptLive:
+			'Qed nirrispettaw il-Global Privacy Control minn dan il-brawżer',
+		receiptLiveDetail: "Jinqara mill-brawżer tiegħek f'kull żjara.",
+		receiptOptedOut: 'Għażilt li toħroġ minn {rights}',
+		receiptRecorded: 'Irreġistrat: {date}',
+		receiptReference: 'Referenza',
+		receiptSavedAccount: 'Issejvjat fil-kont tiegħek · {date}',
+		receiptSavedBrowser: 'Issejvjat għal dan il-brawżer · {date}',
+		receiptScopeAccount:
+			"Japplika għal dan il-brawżer u għall-kont tiegħek ta' {business}.",
+		receiptScopeAccountUnnamed:
+			'Japplika għal dan il-brawżer u għall-kont tiegħek.',
+		receiptScopeBrowser:
+			'Japplika għal dan il-brawżer. Idħol fil-kont tiegħek biex japplika għalih ukoll.',
+		receiptViaGpc: 'Sinjal Global Privacy Control',
+		referenceCopied: 'Ir-referenza ġiet ikkupjata.',
+		refuseAll:
+			'mhux se jbigħ jew jaqsam l-informazzjoni personali tiegħek u mhux se jużaha għal reklamar immirat',
+		refuseSaleAndShare:
+			'mhux se jbigħ jew jaqsam l-informazzjoni personali tiegħek',
+		refuseSaleAndTargetedAds:
+			'mhux se jbigħ l-informazzjoni personali tiegħek u mhux se jużaha għal reklamar immirat',
+		rejectAll: 'Irrifjuta kollox',
+		rightsAllowed: '{rights}: permess.',
+		rightsNotAllowed: '{rights}: mhux permess.',
+		rightsOptedOut: 'Għażilt li toħroġ minn {rights}.',
+		saleAllowed: "{business} jista' {rights}.",
+		saleGroupOptIn: 'Ippermetti {rights}',
+		saleGroupSaleAndTargetedAds:
+			'Irrid noħroġ mill-bejgħ tad-data personali tiegħi u mir-reklamar immirat',
+		saleOffByDefault:
+			"Mitfi b'mod awtomatiku. {business} {rights} sakemm ma tippermettihx int.",
+		saleRefused: '{business} {rights} {scope}.',
+		saveChoices: 'Issejvja l-għażliet',
+		saveInSettings: 'Issejvja l-għażliet tiegħek fis-Settings tal-privatezza',
+		savedAutomatically: 'Jiġi ssejvjat awtomatikament',
+		savedCue: 'Issejvjat',
+		scopeAccount: "fuq dan il-brawżer jew għall-kont tiegħek ta' {business}",
+		scopeAccountUnnamed: 'fuq dan il-brawżer jew għall-kont tiegħek',
+		scopeBrowser: 'fuq dan il-brawżer',
+		shortAll: 'ibigħ jew jaqsam id-data tiegħek għar-reklami',
+		shortSaleAndShare: 'ibigħ jew jaqsam id-data tiegħek',
+		shortSaleAndTargetedAds: 'ibigħ id-data tiegħek jew jużaha għar-reklami',
+		stateOff: 'Mitfi',
+		stateOn: 'Mixgħul',
+		switchColumn: 'Mixgħul',
+		switchedOff: '{name} mitfi.',
+		switchedOn: '{name} mixgħul.',
+		titleAll: 'Bejgħ, qsim u reklamar immirat',
+		titleSaleAndShare: 'Bejgħ u qsim',
+		titleSaleAndTargetedAds: 'Bejgħ u reklamar immirat',
+		vendorColumn: 'Bejjiegħ',
+		vendorPolicy: "Politika tal-privatezza ta' {vendor}",
+		vendorsClose: "Agħlaq il-bejjiegħa ta' {category}",
+		vendorsFor: 'għal {category}',
+		vendorsHide: 'Aħbi {count} bejjiegħa',
+		vendorsHideOne: 'Aħbi bejjiegħ wieħed',
+		vendorsOnCount: '{count} mixgħula',
+		vendorsTable: "Bejjiegħa ta' {category}",
+		vendorsView: 'Ara {count} bejjiegħa',
+		vendorsViewOne: 'Ara bejjiegħ wieħed',
 	},
 	rights: {
 		californiaPrivacyChoices: "L-Għażliet tal-Privatezza Tiegħek f'Kalifornja",

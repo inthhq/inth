@@ -46,6 +46,45 @@ describe('bundled privacyChoices translations', () => {
 	it('the attribution lead-in reads "Consent by"', () => {
 		expect(bundledTranslations.en.common.securedBy).toBe('Consent by');
 	});
+
+	const placeholders = (value: string) =>
+		[...value.matchAll(/\{[a-z]+\}/gu)].map(([token]) => token).toSorted();
+	const others = Object.entries(bundledTranslations).filter(
+		([language]) => language !== 'en'
+	);
+
+	it.each(others)(
+		'%s translates every key, with the placeholders English has',
+		(_language, translations) => {
+			const block: Record<string, string | undefined> =
+				translations.privacyChoices ?? {};
+			for (const [key, source] of Object.entries(english ?? {})) {
+				const value = block[key];
+				expect(value?.trim(), key).toBeTruthy();
+				expect(placeholders(value ?? ''), key).toEqual(placeholders(source));
+			}
+		}
+	);
+
+	it.each(others)(
+		'%s does not show the English prompt and dialog',
+		(_language, translations) => {
+			const block = translations.privacyChoices;
+			expect(block?.euDialogTitle).not.toBe(english?.euDialogTitle);
+			expect(block?.saveChoices).not.toBe(english?.saveChoices);
+			expect(block?.alwaysOn).not.toBe(english?.alwaysOn);
+			expect(block?.barDescription).not.toBe(english?.barDescription);
+			expect(translations.common.securedBy).not.toBe('Consent by');
+		}
+	);
+
+	it('[GPC-04] no language tells the visitor to turn the signal off', () => {
+		for (const [, translations] of others) {
+			for (const value of Object.values(translations.privacyChoices ?? {})) {
+				expect(value).not.toMatch(/turn off the signal|turn the signal off/iu);
+			}
+		}
+	});
 });
 
 describe('bundled consentGate translations', () => {

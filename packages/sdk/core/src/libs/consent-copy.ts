@@ -451,10 +451,19 @@ export const resolvePrivacyChoicesCopy = function resolvePrivacyChoicesCopy(
 	translations: Partial<Translations> | undefined
 ): PrivacyChoicesTranslations {
 	// English always carries the section.
-	return mergeOver(
+	const copy = mergeOver(
 		enTranslations.privacyChoices as PrivacyChoicesTranslations,
 		translations?.privacyChoices
 	);
+	// English has no in-sentence forms, so the merge would drop a
+	// language's own.
+	const own = translations?.privacyChoices;
+	return {
+		...copy,
+		inlineAll: own?.inlineAll,
+		inlineSaleAndShare: own?.inlineSaleAndShare,
+		inlineSaleAndTargetedAds: own?.inlineSaleAndTargetedAds,
+	};
 };
 
 /** Who the visitor is and which site they are on, for the sentences below. */
@@ -520,6 +529,11 @@ export interface RightsPhrases {
 	short: string;
 	/** The rights as a sentence subject: "Selling and sharing". */
 	title: string;
+	/**
+	 * The rights inside a sentence: "selling and sharing". The title
+	 * lower-cased, unless the language sets its own form.
+	 */
+	inline: string;
 }
 
 /**
@@ -540,6 +554,8 @@ export const resolveRightsPhrases = function resolveRightsPhrases(
 	if (bundle === 'sale-share') {
 		return {
 			ask: copy.askSaleAndShare,
+			inline:
+				copy.inlineSaleAndShare ?? copy.titleSaleAndShare.toLocaleLowerCase(),
 			refuse: copy.refuseSaleAndShare,
 			short: copy.shortSaleAndShare,
 			title: copy.titleSaleAndShare,
@@ -548,6 +564,9 @@ export const resolveRightsPhrases = function resolveRightsPhrases(
 	if (bundle === 'sale-ads') {
 		return {
 			ask: copy.askSaleAndTargetedAds,
+			inline:
+				copy.inlineSaleAndTargetedAds ??
+				copy.titleSaleAndTargetedAds.toLocaleLowerCase(),
 			refuse: copy.refuseSaleAndTargetedAds,
 			short: copy.shortSaleAndTargetedAds,
 			title: copy.titleSaleAndTargetedAds,
@@ -555,6 +574,7 @@ export const resolveRightsPhrases = function resolveRightsPhrases(
 	}
 	return {
 		ask: copy.askAll,
+		inline: copy.inlineAll ?? copy.titleAll.toLocaleLowerCase(),
 		refuse: copy.refuseAll,
 		short: copy.shortAll,
 		title: copy.titleAll,
@@ -943,7 +963,7 @@ export const resolveSaleRightCopy = function resolveSaleRightCopy(
 	);
 	const phrases = resolveRightsPhrases(translations, input.bundle);
 	const optIn = input.model === 'opt-in';
-	const lower = phrases.title.toLocaleLowerCase();
+	const lower = phrases.inline;
 	const sentence = (template: string, values: Record<string, string>) =>
 		fill(template, {
 			...values,
@@ -1073,7 +1093,7 @@ export const resolveSaleAnnouncement = function resolveSaleAnnouncement(
 	}
 ): string {
 	const copy = resolvePrivacyChoicesCopy(translations);
-	const { title } = resolveRightsPhrases(translations, input.bundle);
+	const { inline, title } = resolveRightsPhrases(translations, input.bundle);
 	let message: string;
 	if (input.outcome === 'recorded') {
 		message = copy.choiceRecorded;
@@ -1082,9 +1102,7 @@ export const resolveSaleAnnouncement = function resolveSaleAnnouncement(
 	} else if (input.model === 'opt-in') {
 		message = fill(copy.rightsNotAllowed, { rights: title });
 	} else {
-		message = fill(copy.rightsOptedOut, {
-			rights: title.toLocaleLowerCase(),
-		});
+		message = fill(copy.rightsOptedOut, { rights: inline });
 	}
 	return fill(copy.announceSaved, { message });
 };
@@ -1253,10 +1271,7 @@ export const resolveRightsReceiptCopy = function resolveRightsReceiptCopy(
 ): RightsReceiptCopy {
 	const copy = resolvePrivacyChoicesCopy(translations);
 	const { receipt } = input;
-	const rights = resolveRightsPhrases(
-		translations,
-		input.bundle
-	).title.toLocaleLowerCase();
+	const rights = resolveRightsPhrases(translations, input.bundle).inline;
 	const when = (time: boolean) =>
 		formatWhen(receipt.at, {
 			justNow: copy.justNow,
